@@ -1,4 +1,4 @@
-/*	$OpenBSD: preen.c,v 1.10 2002/05/26 09:24:35 deraadt Exp $	*/
+/*	$OpenBSD: preen.c,v 1.11 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ static int nrun = 0, ndisks = 0;
 
 static struct diskentry *finddisk(const char *);
 static void addpart(const char *, const char *, const char *, void *);
-static int startdisk(struct diskentry *, 
+static int startdisk(struct diskentry *,
     int (*)(const char *, const char *, const char *, void *, pid_t *));
 static void printpart(void);
 

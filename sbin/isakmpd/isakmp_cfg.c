@@ -244,7 +244,7 @@ cfg_initiator_send_ATTR (struct message *msg)
 	  conf_free_list (alist);
 	}
     }
-  
+
   if (attrlen == 0)
     {
       /* No data found.  */
@@ -362,11 +362,11 @@ cfg_initiator_send_ATTR (struct message *msg)
 
 	off += ISAKMP_ATTR_SZ + length;
       }
-  
+
   if (msg->exchange->phase == 2)
     if (cfg_finalize_hash (msg, hashp, attrp, attrlen))
       goto fail;
-  
+
   return 0;
 
  fail:
@@ -433,7 +433,7 @@ cfg_initiator_recv_ATTR (struct message *msg)
   attribute_map (attrp->p + ISAKMP_ATTRIBUTE_ATTRS_OFF,
 		 GET_ISAKMP_GEN_LENGTH (attrp->p)
 		 - ISAKMP_TRANSFORM_SA_ATTRS_OFF, cfg_decode_attribute, ie);
-  
+
   switch (ie->cfg_type)
     {
     case ISAKMP_CFG_ACK:
@@ -442,7 +442,7 @@ cfg_initiator_recv_ATTR (struct message *msg)
 	msg->transport->vtbl->get_src (isakmp_sa->transport, &sa);
 	if (sockaddr2text (sa, &addr, 0) < 0)
 	  addr = (char *)uk_addr;
-      
+
 	for (attr = LIST_FIRST (&ie->attrs); attr;
 	     attr = LIST_NEXT (attr, link))
 	  LOG_DBG ((LOG_NEGOTIATION, 50, "cfg_initiator_recv_ATTR: "
@@ -460,7 +460,7 @@ cfg_initiator_recv_ATTR (struct message *msg)
 	msg->transport->vtbl->get_src (isakmp_sa->transport, &sa);
 	if (sockaddr2text (sa, &addr, 0) < 0)
 	  addr = (char *)uk_addr;
-      
+
 	for (attr = LIST_FIRST (&ie->attrs); attr;
 	     attr = LIST_NEXT (attr, link))
 	  LOG_DBG ((LOG_NEGOTIATION, 50, "cfg_initiator_recv_ATTR: "
@@ -533,7 +533,7 @@ cfg_responder_recv_ATTR (struct message *msg)
 	msg->transport->vtbl->get_dst (isakmp_sa->transport, &sa);
 	if (sockaddr2text (sa, &addr, 0) < 0)
 	  addr = (char *)uk_addr;
-      
+
 	for (attr = LIST_FIRST (&ie->attrs); attr;
 	     attr = LIST_NEXT (attr, link))
 	  LOG_DBG ((LOG_NEGOTIATION, 50, "cfg_responder_recv_ATTR: "
@@ -600,7 +600,7 @@ cfg_responder_send_ATTR (struct message *msg)
       return -1;
     }
   free (id_string);
-      
+
   if (message_add_payload (msg, ISAKMP_PAYLOAD_ATTRIBUTE, attrp, attrlen, 1))
     {
       free (attrp);
@@ -783,7 +783,7 @@ cfg_encode_attributes (struct isakmp_cfg_attr_head *attrs, u_int32_t type,
       /* With ACK we only include the attrs we've actually used.  */
       if (type == ISAKMP_CFG_ACK && attr->attr_used == 0)
 	continue;
-      
+
       switch (attr->type)
 	{
 	case ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS:
@@ -882,22 +882,22 @@ cfg_encode_attributes (struct isakmp_cfg_attr_head *attrs, u_int32_t type,
         case ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET:
           field = "Network"; /* XXX or just "Address" */
           break;
-          
+
         case ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK:
         case ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK:
           field = "Netmask";
           break;
-          
+
         case ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP:
         case ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP:
           field = "DHCP-server";
           break;
-          
+
         case ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS:
         case ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS:
           field = "Nameserver";
           break;
-          
+
         case ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS:
         case ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS:
           field = "WINS-server";

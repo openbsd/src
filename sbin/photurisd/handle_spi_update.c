@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_spi_update.c,v 1.7 2001/01/28 22:45:10 niklas Exp $	*/
+/*	$OpenBSD: handle_spi_update.c,v 1.8 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_spi_update.c,v 1.7 2001/01/28 22:45:10 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_spi_update.c,v 1.8 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -62,7 +62,7 @@ static char rcsid[] = "$OpenBSD: handle_spi_update.c,v 1.7 2001/01/28 22:45:10 n
 #endif
 
 int
-handle_spi_update(u_char *packet, int size, char *address, 
+handle_spi_update(u_char *packet, int size, char *address,
 			char *local_address)
 {
         struct packet_sub parts[] = {
@@ -71,7 +71,7 @@ handle_spi_update(u_char *packet, int size, char *address,
 	     { NULL }
 	};
         struct packet spi_msg = {
-	     "SPI Update", 
+	     "SPI Update",
 	     SPI_UPDATE_MIN, 0, parts
 	};
 	struct spi_update *header;
@@ -155,14 +155,14 @@ handle_spi_update(u_char *packet, int size, char *address,
 	     spi_value_reset(spi);
 	     spi_unlink(spi);
 	     return 0;
-	} 
+	}
 
 	/* The State object always retains the latest SPI pairs */
 	bcopy(header->SPI, st->uSPI, SPI_SIZE);
 
 	if ((spi = spi_new(st->address, header->SPI)) == NULL) {
-	     log_print("spi_new() in handle_spi_update()"); 
-	     return -1; 
+	     log_print("spi_new() in handle_spi_update()");
+	     return -1;
 	}
 	if ((spi->local_address = strdup(local_address)) == NULL) {
 	     log_error("strdup() in handle_spi_update()");

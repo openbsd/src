@@ -1,4 +1,4 @@
-/* $OpenBSD: photuris.h,v 1.4 2001/11/30 20:31:49 provos Exp $ */
+/* $OpenBSD: photuris.h,v 1.5 2002/06/09 08:13:08 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -32,7 +32,7 @@
  * photuris.h:
  * general header file
  */
- 
+
 #ifndef _PHOTURIS_H_
 #define _PHOTURIS_H_
 
@@ -74,16 +74,16 @@ EXTERN int num_ifs;
 /* Packet creation functions */
 
 int photuris_cookie_request(struct stateob *, u_char *, int *);
-int photuris_cookie_response(struct stateob *, u_char *, int *, u_int8_t *, 
+int photuris_cookie_response(struct stateob *, u_char *, int *, u_int8_t *,
 		   u_int8_t, u_int8_t *, u_int16_t, u_int8_t *, u_int16_t);
 int photuris_value_request(struct stateob *, u_char *, int *);
 int photuris_value_response(struct stateob *, u_char *, int *);
 int photuris_identity_request(struct stateob *, u_char *, int *);
 int photuris_identity_response(struct stateob *, u_char *, int *);
 int photuris_spi_update(struct stateob *, u_char *, int *);
-int photuris_spi_needed(struct stateob *, u_char *, int *, u_int8_t *, 
+int photuris_spi_needed(struct stateob *, u_char *, int *, u_int8_t *,
 			u_int16_t);
-int photuris_error_message(struct stateob *, u_char *, int *, char *, char *, 
+int photuris_error_message(struct stateob *, u_char *, int *, char *, char *,
 			   u_int8_t, u_int8_t);
 
 /* Packet handling functions */

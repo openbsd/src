@@ -1,27 +1,27 @@
 
                        How to use Photuris with IPsec ?
-                                       
+
 What is IPsec ?
 
    IP Security is a framework providing authentication/integrity and
    privacy to network traffic. Authenticated data can not be modified by
    third parties and encryption conceals the content of packets.
-   
+
 What has Photuris to do with IPsec ?
 
    In order to transmit encrypted or authenticated data between two
    hosts, those two hosts have to agree on session keys which are used
    as input for the encryption and authentication functions.
-   
+
    The Photuris protocol exchanges keys in such a way that no
    eavesdropper will have knowledge of the session keys. It also allows
    for frequent changes of the session keys, forward secrecy and party
    privacy protection.
-   
+
 How to get it working ?
 
   Compiling the daemon
-  
+
    Get the Photuris sources and also the following libraries:
    gmp-2.0.2 and libdes-4.01. Put those libraries in one dir and if
    you like you can do the following steps afterwards:
@@ -39,7 +39,7 @@ How to get it working ?
    If you compiled the photuris daemon with -DDEBUG you should see an
    exchange of values now and finally the shared secret from which the
    session keys are derived.
-   
+
    If you compiled the photuris daemon with -DIPSEC and also have a kernel
    with IPsec compiled into it, you could start for example
 
@@ -53,15 +53,15 @@ How to get it working ?
 11. netstat -rn
 
    will show you some information also.
-   
+
   Enabling IPsec in the OpenBSD kernel
-  
+
    Add the following two lines into your kernel config file:
 config IPSEC
 pseudo-device enc 1
 
   Possible configuration
-  
+
    There are three files which can be configured locally.
      * photuris.conf - contains the moduli for the Diffie-Hellmann
        Keyexchange, the offered schemes and various timeouts.
@@ -69,8 +69,8 @@ pseudo-device enc 1
        parties
      * secrets.conf - the preconfigured symmetric secrets which should
        hopefully soon be replaced by public keys.
-       
+
      _________________________________________________________________
-                                      
+
    If you have any questions write mail to
    provos@physnet.uni-hamburg.de

@@ -6,23 +6,23 @@
 
 /*
  * Copyright 1997,1998 by Apple Computer, Inc.
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 
@@ -90,7 +90,7 @@ deblock_init(void)
 	return;
     }
     deblock_inited = 1;
-    
+
     deblock_info.kind = allocate_media_kind();
 }
 
@@ -107,11 +107,11 @@ open_deblock_media(long new_block_size, MEDIA m)
 {
     DEBLOCK_MEDIA   a;
     unsigned long   block_size;
-    
+
     if (deblock_inited == 0) {
 	deblock_init();
     }
-    
+
     a = 0;
     if (m != 0) {
 	block_size = media_granularity(m);
@@ -237,7 +237,7 @@ write_deblock_media(MEDIA m, long long offset, unsigned long count, void *addres
     long long cur_offset;
     unsigned long remainder;
     unsigned char *addr;
-    
+
     a = (DEBLOCK_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
@@ -301,7 +301,7 @@ long
 close_deblock_media(MEDIA m)
 {
     DEBLOCK_MEDIA a;
-    
+
     a = (DEBLOCK_MEDIA) m;
     if (a == 0) {
 	return 0;
@@ -309,7 +309,7 @@ close_deblock_media(MEDIA m)
 	/* XXX need to error here - this is an internal problem */
 	return 0;
     }
-    
+
     close_media(a->next_media);
     free(a->buffer);
     return 1;
@@ -320,7 +320,7 @@ long
 os_reload_deblock_media(MEDIA m)
 {
     DEBLOCK_MEDIA a;
-    
+
     a = (DEBLOCK_MEDIA) m;
     if (a == 0) {
 	return 0;
@@ -328,7 +328,7 @@ os_reload_deblock_media(MEDIA m)
 	/* XXX need to error here - this is an internal problem */
 	return 0;
     }
-    
+
     os_reload_media(a->next_media);
     return 1;
 }

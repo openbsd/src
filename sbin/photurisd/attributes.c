@@ -1,4 +1,4 @@
-/*	$OpenBSD: attributes.c,v 1.3 2001/01/28 22:45:06 niklas Exp $	*/
+/*	$OpenBSD: attributes.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: attributes.c,v 1.3 2001/01/28 22:45:06 niklas Exp $";
+static char rcsid[] = "$OpenBSD: attributes.c,v 1.4 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #define _ATTRIBUTES_C_
@@ -63,7 +63,7 @@ putattrib(attrib_t *attrib)
 }
 
 attrib_t *
-getattrib(u_int8_t id) 
+getattrib(u_int8_t id)
 {
      u_int8_t hashval = id % ATTRIBHASHMOD;
      attrib_t *attrib;
@@ -94,7 +94,7 @@ isinattrib(u_int8_t *attributes, u_int16_t attribsize, u_int8_t attribute)
      while(attribsize>0) {
 	  if(*attributes==attribute)
 	       return 1;
-	  if(attribsize - (*(attributes+1)+2) > attribsize) 
+	  if(attribsize - (*(attributes+1)+2) > attribsize)
 	       return 0;
 
 	  attribsize -= *(attributes+1)+2;
@@ -104,7 +104,7 @@ isinattrib(u_int8_t *attributes, u_int16_t attribsize, u_int8_t attribute)
 }
 
 void
-get_attrib_section(u_int8_t *set, u_int16_t setsize, 
+get_attrib_section(u_int8_t *set, u_int16_t setsize,
 		   u_int8_t **subset, u_int16_t *subsetsize,
 		   u_int8_t section)
 {
@@ -138,8 +138,8 @@ get_attrib_section(u_int8_t *set, u_int16_t setsize,
 }
 
 
-int 
-isattribsubset(u_int8_t *set, u_int16_t setsize, 
+int
+isattribsubset(u_int8_t *set, u_int16_t setsize,
 	       u_int8_t *subset, u_int16_t subsetsize)
 {
      while(subsetsize>0) {
@@ -164,7 +164,7 @@ attrib_insert(attribute_list *ob)
 	  attribob = ob;
 	  return 1;
      }
-     
+
      tmp=attribob;
      while(tmp->next!=NULL)
 	  tmp = tmp->next;
@@ -206,7 +206,7 @@ attrib_new(void)
 
 int
 attrib_value_reset(attribute_list *ob)
-{ 
+{
      if (ob->address != NULL)
 	  free(ob->address);
      if (ob->attributes != NULL)
@@ -216,7 +216,7 @@ attrib_value_reset(attribute_list *ob)
      return 1;
 }
 
-/* 
+/*
  * find the attributes to the address or 0 address.
  * if passed a null pointer as first argument we return our default
  * list.

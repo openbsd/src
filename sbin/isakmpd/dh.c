@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.6 2001/04/09 22:09:51 ho Exp $	*/
+/*	$OpenBSD: dh.c,v 1.7 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: dh.c,v 1.5 1999/04/17 23:20:22 niklas Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ dh_getlen (struct group *group)
  * Each time this function is called a new value is created, that
  * means the application has to save the exchange value itself,
  * dh_create_exchange should only be called once.
- */ 
+ */
 int
 dh_create_exchange (struct group *group, u_int8_t *buf)
 {

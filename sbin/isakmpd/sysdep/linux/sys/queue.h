@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.3 2001/01/26 11:34:05 niklas Exp $	*/
+/*	$OpenBSD: queue.h,v 1.4 2002/06/09 08:13:07 todd Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
 #define LIST_HEAD(name, type)						\
 struct name {								\
 	struct type *lh_first;	/* first element */			\
-} 
+}
 
 #define LIST_ENTRY(type)						\
 struct {								\

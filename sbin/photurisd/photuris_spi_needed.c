@@ -1,4 +1,4 @@
-/*	$OpenBSD: photuris_spi_needed.c,v 1.3 2001/01/28 22:45:14 niklas Exp $	*/
+/*	$OpenBSD: photuris_spi_needed.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -31,11 +31,11 @@
  */
 /*
  * photuris_spi_needed:
- * 
+ *
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: photuris_spi_needed.c,v 1.3 2001/01/28 22:45:14 niklas Exp $";
+static char rcsid[] = "$OpenBSD: photuris_spi_needed.c,v 1.4 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -53,56 +53,56 @@ photuris_spi_needed(struct stateob *st, u_char *buffer, int *size,
         struct spi_needed *header;
         u_int16_t rsize, asize, tmp;
         u_int8_t *p;
- 
+
         rsize = *size;
         if (rsize < SPI_NEEDED_MIN)
           return -1;    /* buffer not large enough */
 
 	asize = SPI_NEEDED_MIN;                     /* Actual size */
         rsize -= asize;                             /* Remaining size */
- 
+
         header = (struct spi_needed *) buffer;
         header->type = SPI_NEEDED;
 
 	bzero(header->reserved, sizeof(header->reserved));
- 
+
         /* Copy the cookies */
         bcopy(st->icookie, header->icookie, COOKIE_SIZE);
         bcopy(st->rcookie, header->rcookie, COOKIE_SIZE);
 
 	p = SPI_NEEDED_VERIFICATION(header);
 
-        /* Leave space for verification data */ 
-        tmp = get_validity_verification_size(st); 
- 
-        if (rsize < tmp) 
-          return -1; /* buffer not large enough */ 
- 
+        /* Leave space for verification data */
+        tmp = get_validity_verification_size(st);
+
+        if (rsize < tmp)
+          return -1; /* buffer not large enough */
+
         p += tmp; asize += tmp; rsize -= tmp;
- 
+
         if (rsize < attribsize)
           return -1; /* buffer not large enough */
- 
+
         /* Copy attributes and padding */
         bcopy(attributes, p, attribsize);
         asize += attribsize;
 	rsize -= attribsize;
 	p += attribsize;
- 
-	tmp = rsize;
-        if(packet_create_padding(st, asize - SPI_NEEDED_MIN, p, &tmp) == -1)  
-	     return -1;  
-  
-        p += tmp; asize += tmp; rsize -= tmp;  
 
-        /* Create verification data */ 
+	tmp = rsize;
+        if(packet_create_padding(st, asize - SPI_NEEDED_MIN, p, &tmp) == -1)
+	     return -1;
+
+        p += tmp; asize += tmp; rsize -= tmp;
+
+        /* Create verification data */
         create_validity_verification(st,SPI_UPDATE_VERIFICATION(header),
-				     (u_int8_t *)header,asize); 
- 
+				     (u_int8_t *)header,asize);
+
         /* Encrypt the packet after header if wished for */
         packet_encrypt(st, SPI_NEEDED_VERIFICATION(header),
                        asize - SPI_NEEDED_MIN);
- 
+
         *size = asize;
         return 0;
 }

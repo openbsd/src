@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.47 2002/06/04 00:09:08 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.48 2002/06/09 08:13:08 todd Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -395,10 +395,10 @@ mntsrv(rqstp, transp)
 	case RPCMNT_MOUNT:
 		if (debug)
 			fprintf(stderr,
-			    "Got mount request from %s\n", 
+			    "Got mount request from %s\n",
 			    inet_ntoa(transp->xp_raddr.sin_addr));
 		if (sport >= IPPORT_RESERVED && resvport_only) {
-			syslog(LOG_NOTICE, 
+			syslog(LOG_NOTICE,
 			    "Refused mount RPC from host %s port %d",
 			    inet_ntoa(transp->xp_raddr.sin_addr), sport);
 			svcerr_weakauth(transp);
@@ -1379,7 +1379,7 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 				opt_flags |= OP_MAPALL;
 			} else
 				opt_flags |= OP_MAPROOT;
-		} else 
+		} else
 		    if (cpoptarg && (!strcmp(cpopt, "mask") ||
 				     !strcmp(cpopt, "m"))) {
 			if (get_net(cpoptarg, &grp->gr_ptr.gt_net, 1)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.21 2001/10/26 12:23:46 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.22 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -139,14 +139,14 @@ int
 sysdep_cleartext (int fd, int af)
 {
   int level, sw;
-  struct { 
+  struct {
     int ip_proto;		/* IP protocol */
     int auth_level;
     int esp_trans_level;
     int esp_network_level;
     int ipcomp_level;
   } optsw[] =
-    { 
+    {
       {
 	IPPROTO_IP,
 	IP_AUTH_LEVEL,
@@ -170,7 +170,7 @@ sysdep_cleartext (int fd, int af)
 #endif
       },
     };
-  
+
   if (app_none)
     return 0;
 

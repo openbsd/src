@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.h,v 1.11 2001/10/26 11:37:16 ho Exp $	*/
+/*	$OpenBSD: transport.h,v 1.12 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ struct transport {
   struct msg_head sendq;
 
   /*
-   * Prioritized send queue.  Messages in this queue will be transmitted 
+   * Prioritized send queue.  Messages in this queue will be transmitted
    * before the normal sendq, they will also all be transmitted prior
    * to a daemon shutdown.  Currently only used for DELETE notifications.
    */

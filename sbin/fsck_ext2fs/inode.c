@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.9 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: inode.c,v 1.10 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ findino(idesc)
 	if (ino == 0)
 		return (KEEPON);
 	if (strcmp(dirp->e2d_name, idesc->id_name) == 0 &&
-	    (ino == EXT2_ROOTINO || ino >= EXT2_FIRSTINO) 
+	    (ino == EXT2_ROOTINO || ino >= EXT2_FIRSTINO)
 		&& ino <= maxino) {
 		idesc->id_parent = ino;
 		return (STOP|FOUND);

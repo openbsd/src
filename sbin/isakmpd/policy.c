@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.52 2002/06/01 07:44:22 deraadt Exp $	*/
+/*	$OpenBSD: policy.c,v 1.53 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -757,7 +757,7 @@ policy_callback (char *name)
 	  remote_id_type = "IPv6 address";
 	  my_inet_ntop6 (id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
 			 remote_id_addr_upper, sizeof remote_id_addr_upper);
-	  strlcpy (remote_id_addr_lower, remote_id_addr_upper, 
+	  strlcpy (remote_id_addr_lower, remote_id_addr_upper,
 		   sizeof remote_id_addr_lower);
 	  remote_id = strdup (remote_id_addr_upper);
 	  if (!remote_id)
@@ -2064,7 +2064,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 
 	snprintf (file, len + id_len, "%s/", dirname);
 	memcpy (file + strlen (dirname) + 1, id, id_len);
-	snprintf (file + strlen (dirname) + 1 + id_len, 
+	snprintf (file + strlen (dirname) + 1 + id_len,
 		  len - strlen (dirname) - 1, "/%s", CREDENTIAL_FILE);
 	break;
       }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.9 2002/02/17 19:42:27 millert Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.10 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * From: @(#)mount.c	8.19 (Berkeley) 4/19/94
- * From: NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp 
+ * From: NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp
  *
  */
 
@@ -257,7 +257,7 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 	argv[argc] = NULL;
 
 	if (flags & (CHECK_DEBUG|CHECK_VERBOSE)) {
-		(void)printf("start %s %swait %s", mntpt, 
+		(void)printf("start %s %swait %s", mntpt,
 			pidp ? "no" : "", fsname);
 		for (i = 1; i < argc; i++)
 			(void)printf(" %s", argv[i]);

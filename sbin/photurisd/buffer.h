@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.h,v 1.3 2001/01/28 22:45:06 niklas Exp $ */
+/* $OpenBSD: buffer.h,v 1.4 2002/06/09 08:13:08 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,10 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * buffer.h: 
+ * buffer.h:
  * variables with buffers.
  */
- 
+
 #ifndef _BUFFER_H_
 #define _BUFFER_H_
 

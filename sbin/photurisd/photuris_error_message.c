@@ -1,4 +1,4 @@
-/*	$OpenBSD: photuris_error_message.c,v 1.3 2001/01/28 22:45:13 niklas Exp $	*/
+/*	$OpenBSD: photuris_error_message.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: photuris_error_message.c,v 1.3 2001/01/28 22:45:13 niklas Exp $";
+static char rcsid[] = "$OpenBSD: photuris_error_message.c,v 1.4 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -54,12 +54,12 @@ photuris_error_message(struct stateob *st, u_char *buffer, int *size,
 {
 	struct error_message *header;
 
-	if (*size < ERROR_MESSAGE_PACKET_SIZE + 
+	if (*size < ERROR_MESSAGE_PACKET_SIZE +
 	    (error_type == RESOURCE_LIMIT ? 1 : 0))
 	  return -1;	/* buffer not large enough */
 
 	header = (struct error_message *) buffer;
-	*size = ERROR_MESSAGE_PACKET_SIZE + 
+	*size = ERROR_MESSAGE_PACKET_SIZE +
 	     (error_type == RESOURCE_LIMIT ? 1 : 0);
 	
 	bcopy(icookie, header->icookie, COOKIE_SIZE);
@@ -70,7 +70,7 @@ photuris_error_message(struct stateob *st, u_char *buffer, int *size,
 	if (error_type == RESOURCE_LIMIT) {
 	     int i;
 	     buffer[ERROR_MESSAGE_PACKET_SIZE] = counter;
-	     
+	
 	     for(i = 0; i<COOKIE_SIZE; i++)
 		  if (rcookie[i] != 0)
 		       break;

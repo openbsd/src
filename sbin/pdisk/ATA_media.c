@@ -6,23 +6,23 @@
 
 /*
  * Copyright 1997,1998 by Apple Computer, Inc.
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 
@@ -237,7 +237,7 @@ ATAHardwarePresent(void)
 
     // Hardware configuration flags
     configFlags = LMGetHWCfgFlags();
-    
+
     return ((configFlags & 0x0080) != 0);
 }
 
@@ -262,7 +262,7 @@ ata_init(void)
 	return;
     }
     ata_inited = 1;
-    
+
     if (ATAManagerPresent() == 0) {
 	ata_mgr.exists = 0;
 	return;
@@ -272,12 +272,12 @@ ata_init(void)
     ata_mgr.kind = allocate_media_kind();
 
     clear_memory((void *)&pb, sizeof(pb));
-    
+
     pb.ataPBFunctionCode =  kATAMgrManagerInquiry;
     pb.ataPBVers =          kATAPBVers1;
 
     status = ataManager((ataPB*) &pb );
-    
+
     if (status != noErr) {
 	ata_mgr.exists = 0;
 	return;
@@ -302,7 +302,7 @@ long
 compute_id(long bus, long device)
 {
     long id;
-    
+
     id = -1;
     if (ata_mgr.version.major < 3) {
 	if (device != 0) {
@@ -346,7 +346,7 @@ get_info(long id, struct ATA_identify_drive_info *ip)
     pb.ataPBFlags           =   mATAFlagIORead | mATAFlagByteSwap;
     pb.ataPBTimeOut         =   kATAtimeout;
     pb.ataPBBuffer          =   (void*) ip;
-    
+
     status = ataManager((ataPB*) &pb );
 
     if (status != noErr) {
@@ -397,11 +397,11 @@ open_ata_as_media(long bus, long device)
     struct ATA_identify_drive_info  info;
     unsigned char *buf;
     unsigned long total;
-    
+
     if (ata_inited == 0) {
 	ata_init();
     }
-    
+
     if (ata_mgr.exists == 0) {
 	//printf("ATA manager does not exist\n");
 	return 0;
@@ -475,7 +475,7 @@ read_ata_media(MEDIA m, long long offset, unsigned long count, void *address)
     long block_size;
     unsigned char *buffer;
     int i;
-    
+
     a = (ATA_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
@@ -518,7 +518,7 @@ write_ata_media(MEDIA m, long long offset, unsigned long count, void *address)
     long block_size;
     unsigned char *buffer;
     int i;
-    
+
     a = (ATA_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
@@ -555,7 +555,7 @@ long
 close_ata_media(MEDIA m)
 {
     ATA_MEDIA a;
-    
+
     a = (ATA_MEDIA) m;
     if (a == 0) {
 	return 0;
@@ -590,7 +590,7 @@ ATA_ReadBlock(UInt32 deviceID, ATA_INFO info, UInt32 block_size, UInt32 block, U
     pb.ataPBDeviceID        =   deviceID;
     pb.ataPBFlags           =   mATAFlagTFRead | mATAFlagIORead ;
     pb.ataPBTimeOut         =   kATAtimeout;
-    
+
     pb.ataPBLogicalBlockSize =  block_size;
     pb.ataPBBuffer          =   address;
     pb.ataPBByteCount = block_size;
@@ -644,7 +644,7 @@ ATA_WriteBlock(UInt32 deviceID, ATA_INFO info, UInt32 block_size, UInt32 block, 
     pb.ataPBDeviceID        =   deviceID;
     pb.ataPBFlags           =   mATAFlagTFRead | mATAFlagIOWrite ;
     pb.ataPBTimeOut         =   kATAtimeout;
-    
+
     pb.ataPBLogicalBlockSize =  block_size;
     pb.ataPBBuffer          =   address;
     pb.ataPBByteCount = block_size;
@@ -707,7 +707,7 @@ get_pi_info(long id, struct ATAPI_identify_drive_info *ip)
     pb.ataPBFlags           =   mATAFlagIORead | mATAFlagByteSwap | mATAFlagProtocol1;
     pb.ataPBTimeOut         =   kATAtimeout;
     pb.ataPBBuffer          =   (void*) ip;
-    
+
     status = ataManager((ataPB*) &pb );
 
     if (status != noErr) {
@@ -728,12 +728,12 @@ open_atapi_as_media(long bus, long device)
     struct ATAPI_identify_drive_info    info;
     unsigned char *buf;
     unsigned long block_size;
-    unsigned long blocks;   
-    
+    unsigned long blocks;
+
     if (ata_inited == 0) {
 	ata_init();
     }
-    
+
     if (ata_mgr.exists == 0) {
 	return 0;
     }
@@ -786,7 +786,7 @@ read_atapi_media(MEDIA m, long long offset, unsigned long count, void *address)
     long block_size;
     unsigned char *buffer;
     int i;
-    
+
     a = (ATA_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
@@ -821,7 +821,7 @@ read_atapi_media(MEDIA m, long long offset, unsigned long count, void *address)
 
 long
 write_atapi_media(MEDIA m, long long offset, unsigned long count, void *address)
-{   
+{
     return 0;
 }
 
@@ -842,7 +842,7 @@ ATAPI_ReadBlock(UInt32 deviceID, UInt32 block_size, UInt32 block, UInt8 *address
     pb.ataPBDeviceID        =   deviceID;
     pb.ataPBFlags           =   mATAFlagTFRead | mATAFlagIORead | mATAFlagProtocol1;
     pb.ataPBTimeOut         =   kATAtimeout;
-    
+
     pb.ataPBBuffer          =   address;
     pb.ataPBByteCount = block_size;
     pb.ataPBTaskFile.ataTFCylinder = block_size;
@@ -855,7 +855,7 @@ ATAPI_ReadBlock(UInt32 deviceID, UInt32 block_size, UInt32 block, UInt8 *address
     pb.ataPBTaskFile.ataTFSDH = 0xA0 | 0x40 | slave;
     pb.ataPBTaskFile.ataTFCommand = kATAcmdATAPIPacket;
     pb.ataPBPacketPtr = &cmdPacket;
-    
+
     cmdPacket.atapiPacketSize = 16;
     clear_memory((void *)&cmdPacket.atapiCommandByte, 16);
     gRead = (SCSI_10_Byte_Command *) &cmdPacket.atapiCommandByte[0];
@@ -898,7 +898,7 @@ ATAPI_TestUnitReady(UInt32 deviceID)
     pb.ataPBDeviceID        =   deviceID;
     pb.ataPBFlags           =   mATAFlagTFRead | mATAFlagIORead | mATAFlagProtocol1;
     pb.ataPBTimeOut         =   kATAtimeout;
-    
+
     if (deviceID & 0x0FF00) {
 	slave = 0x10;
     } else {
@@ -908,7 +908,7 @@ ATAPI_TestUnitReady(UInt32 deviceID)
     pb.ataPBTaskFile.ataTFSDH = 0xA0 | 0x40 | slave;
     pb.ataPBTaskFile.ataTFCommand = kATAcmdATAPIPacket;
     pb.ataPBPacketPtr = &cmdPacket;
-    
+
     cmdPacket.atapiPacketSize = 16;
     clear_memory((void *)&cmdPacket.atapiCommandByte, 16);
     gTestUnit = (SCSI_10_Byte_Command *) &cmdPacket.atapiCommandByte[0];
@@ -946,7 +946,7 @@ ATAPI_ReadCapacity(UInt32 deviceID, unsigned long *block_size, unsigned long *bl
     pb.ataPBDeviceID        =   deviceID;
     pb.ataPBFlags           =   mATAFlagTFRead | mATAFlagIORead | mATAFlagProtocol1;
     pb.ataPBTimeOut         =   kATAtimeout;
-    
+
     pb.ataPBBuffer          =   (unsigned char *)&rcd;
     pb.ataPBByteCount = 8;
     pb.ataPBTaskFile.ataTFCylinder = 8;
@@ -959,7 +959,7 @@ ATAPI_ReadCapacity(UInt32 deviceID, unsigned long *block_size, unsigned long *bl
     pb.ataPBTaskFile.ataTFSDH = 0xA0 | 0x40 | slave;
     pb.ataPBTaskFile.ataTFCommand = kATAcmdATAPIPacket;
     pb.ataPBPacketPtr = &cmdPacket;
-    
+
     cmdPacket.atapiPacketSize = 16;
     clear_memory((void *)&cmdPacket.atapiCommandByte, 16);
     gReadCap = (SCSI_10_Byte_Command *) &cmdPacket.atapiCommandByte[0];
@@ -994,10 +994,10 @@ ATA_FindDevice(long dRefNum)
 	pb.ataPBDeviceID        =   0xFFFF;
 	pb.ataPBTimeOut         =   kATAtimeout;
 	
-	pb.ataDeviceNextID = 1;     
+	pb.ataDeviceNextID = 1;
 	do {
 	    status = ataManager((ataPB*) &pb);
-	    
+	
 	    if (status != noErr) {
 		break;
 	    } else if (pb.ataDrvrRefNum == dRefNum
@@ -1027,11 +1027,11 @@ MEDIA_ITERATOR
 create_ata_iterator(void)
 {
     ATA_MEDIA_ITERATOR a;
-    
+
     if (ata_inited == 0) {
 	ata_init();
     }
-    
+
     if (ata_mgr.exists == 0) {
 	return 0;
     }
@@ -1055,7 +1055,7 @@ void
 reset_ata_iterator(MEDIA_ITERATOR m)
 {
     ATA_MEDIA_ITERATOR a;
-    
+
     a = (ATA_MEDIA_ITERATOR) m;
     if (a == 0) {
 	/* no media */
@@ -1072,7 +1072,7 @@ step_ata_iterator(MEDIA_ITERATOR m)
 {
     ATA_MEDIA_ITERATOR a;
     char *result;
-    
+
     a = (ATA_MEDIA_ITERATOR) m;
     if (a == 0) {
 	/* no media */
@@ -1134,7 +1134,7 @@ open_mklinux_ata_as_media(long index)
 {
     long bus;
     long id;
-    
+
     bus = index / 2;
     id = index % 2;
 

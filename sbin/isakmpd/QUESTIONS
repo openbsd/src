@@ -1,4 +1,4 @@
-$OpenBSD: QUESTIONS,v 1.3 1998/11/17 11:10:06 niklas Exp $
+$OpenBSD: QUESTIONS,v 1.4 2002/06/09 08:13:06 todd Exp $
 $EOM: QUESTIONS,v 1.12 1998/10/11 17:11:06 niklas Exp $
 
 Does the spec limit the count of SA payloads in a message?  Where if so?
@@ -29,6 +29,6 @@ IV generation is not described precisely in Appendix B of -oakley-08.txt:
 'Subsequent messages MUST use the last CBC encryption block from the previous
 message as their IV'. This probably means that we take the new IV from the
 last encrypted block of the last message we sent. The SSH testing site uses
-the last block from the last message they received. This is probably not 
+the last block from the last message they received. This is probably not
 what was meant and should be clarified on ipsec@tis.com.
 [ From what we have gathered this is what is meant.  ]

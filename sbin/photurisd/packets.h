@@ -1,4 +1,4 @@
-/* $OpenBSD: packets.h,v 1.3 2001/01/28 22:45:12 niklas Exp $ */
+/* $OpenBSD: packets.h,v 1.4 2002/06/09 08:13:08 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -130,39 +130,39 @@ struct identity_message {
 #define IDENTITY_MESSAGE_CHOICE(p) (((u_int8_t *)(p))+IDENTITY_MESSAGE_MIN)
 #define IDENTITY_MESSAGE_IDENT(p) (IDENTITY_MESSAGE_CHOICE(p)+*((u_int8_t *)(p)+1))
 
-struct spi_needed { 
-        u_int8_t icookie[COOKIE_SIZE]; 
-        u_int8_t rcookie[COOKIE_SIZE]; 
-        u_int8_t type; 
-        u_int8_t reserved[7]; 
-}; 
+struct spi_needed {
+        u_int8_t icookie[COOKIE_SIZE];
+        u_int8_t rcookie[COOKIE_SIZE];
+        u_int8_t type;
+        u_int8_t reserved[7];
+};
 
 #define SPI_NEEDED_MIN sizeof(struct spi_needed)
 #define SPI_NEEDED_VERIFICATION(p) (((u_int8_t *)(p))+SPI_NEEDED_MIN)
 
-struct spi_update { 
-        u_int8_t icookie[COOKIE_SIZE]; 
-        u_int8_t rcookie[COOKIE_SIZE]; 
-        u_int8_t type; 
-        u_int8_t lifetime[3]; 
-        u_int8_t SPI[SPI_SIZE]; 
-}; 
+struct spi_update {
+        u_int8_t icookie[COOKIE_SIZE];
+        u_int8_t rcookie[COOKIE_SIZE];
+        u_int8_t type;
+        u_int8_t lifetime[3];
+        u_int8_t SPI[SPI_SIZE];
+};
 
-#define SPI_UPDATE_MIN sizeof(struct spi_update) 
-#define SPI_UPDATE_VERIFICATION(p) (((u_int8_t *)(p))+SPI_UPDATE_MIN) 
+#define SPI_UPDATE_MIN sizeof(struct spi_update)
+#define SPI_UPDATE_VERIFICATION(p) (((u_int8_t *)(p))+SPI_UPDATE_MIN)
 
-struct error_message {  
-        u_int8_t icookie[COOKIE_SIZE];  
-        u_int8_t rcookie[COOKIE_SIZE];  
-        u_int8_t type;  
+struct error_message {
+        u_int8_t icookie[COOKIE_SIZE];
+        u_int8_t rcookie[COOKIE_SIZE];
+        u_int8_t type;
 };
 
 #define ERROR_MESSAGE_PACKET_SIZE sizeof(struct error_message)
 
-struct message_reject {  
-        u_int8_t icookie[COOKIE_SIZE];  
-        u_int8_t rcookie[COOKIE_SIZE];  
-        u_int8_t type;  
+struct message_reject {
+        u_int8_t icookie[COOKIE_SIZE];
+        u_int8_t rcookie[COOKIE_SIZE];
+        u_int8_t type;
         u_int8_t badtype;
         u_int16_t offset;
 };

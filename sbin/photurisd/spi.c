@@ -1,4 +1,4 @@
-/*	$OpenBSD: spi.c,v 1.8 2001/01/28 22:45:17 niklas Exp $	*/
+/*	$OpenBSD: spi.c,v 1.9 2002/06/09 08:13:09 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: spi.c,v 1.8 2001/01/28 22:45:17 niklas Exp $";
+static char rcsid[] = "$OpenBSD: spi.c,v 1.9 2002/06/09 08:13:09 todd Exp $";
 #endif
 
 #define _SPI_C_
@@ -46,9 +46,9 @@ static char rcsid[] = "$OpenBSD: spi.c,v 1.8 2001/01/28 22:45:17 niklas Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/socket.h> 
-#include <netinet/in.h> 
-#include <arpa/inet.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "config.h"
 #include "photuris.h"
 #include "state.h"
@@ -100,7 +100,7 @@ make_spi(struct stateob *st, char *local_address,
 	       flags |= IPSEC_OPT_ENC;
 	  else if ((*attributes)[i] == AT_AH_ATTRIB)
 	       flags |= IPSEC_OPT_AUTH;
-     
+
      tmp = kernel_reserve_spi(local_address, st->address, flags);
 #else
      /* Just grab a random number, this should be uniq */
@@ -110,7 +110,7 @@ make_spi(struct stateob *st, char *local_address,
 	  SPI[i] = tmp & 0xFF;
 	  tmp = tmp >> 8;
      }
-	  
+	
      *lifetime = getspilifetime(st) + (arc4random() & 0x1F);
 
      return (0);
@@ -153,13 +153,13 @@ spi_new(char *address, u_int8_t *spi)
 	  return (NULL);
      }
      bcopy(spi, p->SPI, SPI_SIZE);
-     
+
      return (p);
 }
 
 int
 spi_value_reset(struct spiob *ob)
-{ 
+{
 	if (ob->address != NULL) {
 		free(ob->address);
 		ob->address = NULL;
@@ -182,16 +182,16 @@ spi_value_reset(struct spiob *ob)
 }
 
 
-struct spiob * 
-spi_find_attrib(char *address, u_int8_t *attrib, u_int16_t attribsize) 
-{ 
-     struct spiob *tmp; 
+struct spiob *
+spi_find_attrib(char *address, u_int8_t *attrib, u_int16_t attribsize)
+{
+     struct spiob *tmp;
      u_int16_t i;
 
-     for (tmp = TAILQ_FIRST(&spihead); tmp; tmp = TAILQ_NEXT(tmp, next)) { 
+     for (tmp = TAILQ_FIRST(&spihead); tmp; tmp = TAILQ_NEXT(tmp, next)) {
           if (!strcmp(address, tmp->address)) {
 	       for (i = 0; i < attribsize; i += attrib[i + 1] + 2) {
-		    if (attrib[i] == AT_AH_ATTRIB || 
+		    if (attrib[i] == AT_AH_ATTRIB ||
 			attrib[i] == AT_ESP_ATTRIB)
 			    continue;
 		    if (!isinattrib(tmp->attributes, tmp->attribsize, attrib[i]))
@@ -200,12 +200,12 @@ spi_find_attrib(char *address, u_int8_t *attrib, u_int16_t attribsize)
 	       if (i == attribsize)
 		    return (tmp);
 	  }
-     } 
+     }
 
-     return (NULL); 
-} 
+     return (NULL);
+}
 
-/* 
+/*
  * find the spi ob with matching address
  * Alas this is tweaked, for SPI_OWNER compare with local_address
  * and for user compare with address.
@@ -299,7 +299,7 @@ spi_update(int sock, u_int8_t *spinr)
 
 
 	if ((st = state_find_cookies(spi->address, spi->icookie, NULL)) == NULL) {
-		/* 
+		/*
 		 * This happens always when an exchange expires but
 		 * updates are still scheduled for it.
 		 */
@@ -323,23 +323,23 @@ spi_update(int sock, u_int8_t *spinr)
 		return;
 	}
 
-	packet_size = PACKET_BUFFER_SIZE; 
+	packet_size = PACKET_BUFFER_SIZE;
 	if (photuris_spi_update(st, packet_buffer, &packet_size) == -1) {
 		log_print(__FUNCTION__": photuris_spi_update()");
 		return;
 	}
 
 	/* Send the packet */
-	sin.sin_port = htons(st->port); 
-	sin.sin_family = AF_INET; 
+	sin.sin_port = htons(st->port);
+	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = inet_addr(st->address);
-		    
+		
 	if (sendto(sock, packet_buffer, packet_size, 0,
 		   (struct sockaddr *) &sin, sizeof(sin)) != packet_size) {
 		log_error("sendto() in schedule_process()");
 		return;
 	}
-	       
+	
 #ifdef DEBUG
 	printf("Sending SPI UPDATE to %s.\n", st->address);
 #endif

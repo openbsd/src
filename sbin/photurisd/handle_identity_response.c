@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_identity_response.c,v 1.6 2001/01/28 22:45:09 niklas Exp $	*/
+/*	$OpenBSD: handle_identity_response.c,v 1.7 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_identity_response.c,v 1.6 2001/01/28 22:45:09 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_identity_response.c,v 1.7 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -137,8 +137,8 @@ handle_identity_response(u_char *packet, int size, char *address,
 
 
 	/* Fill the state object */
-	if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) { 
-	     log_error("calloc() in handle_identity_response()"); 
+	if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) {
+	     log_error("calloc() in handle_identity_response()");
 	     goto verification_failed;
 	}
 	bcopy(signature, st->uSPIidentver, i);
@@ -152,7 +152,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 	st->uSPIidentchoicesize = parts[0].size;
 
 	if((st->uSPIident = calloc(parts[1].size, sizeof(u_int8_t))) == NULL) {
-	     log_error("calloc() in handle_identity_response()"); 
+	     log_error("calloc() in handle_identity_response()");
 	     goto verification_failed;
 	}
 	bcopy(parts[1].where, st->uSPIident, parts[1].size);
@@ -170,8 +170,8 @@ handle_identity_response(u_char *packet, int size, char *address,
 	}
 
 	if (!verify_identity_verification(st, signature, packet, size)) {
-	     /* 
-	      * Clean up everything used from this packet 
+	     /*
+	      * Clean up everything used from this packet
 	      */
 	     free(st->uSPIidentchoice);
 	     st->uSPIidentchoice = NULL; st->uSPIidentchoicesize = 0;
@@ -196,7 +196,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 	}
 
 	bcopy(header->SPI, st->uSPI, SPI_SIZE);
-	st->ulifetime = (header->lifetime[0] << 16) + 
+	st->ulifetime = (header->lifetime[0] << 16) +
 	     (header->lifetime[1] << 8) + header->lifetime[2];
 
 	st->lifetime = st->exchange_lifetime + time(NULL) + random() % 20;
@@ -211,7 +211,7 @@ handle_identity_response(u_char *packet, int size, char *address,
 	     st->packet = NULL;
 	     st->packetlen = 0;
 	}
-		  
+		
 	/* At this point we do not need the exchange values any longer */
 	free(st->texchange); st->texchange = NULL;
 	free(st->exchangevalue); st->exchangevalue = NULL;

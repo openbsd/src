@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.10 2002/03/14 06:51:41 mpech Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.11 2002/06/09 08:13:06 todd Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@ int returntosingle = 0;
 struct dinode *curinode;
 ino_t curinum;
 
-static void 
+static void
 usage()
 {
 	fprintf(stderr, "usage: %s [-d] -f <fsname>\n", __progname);
@@ -207,7 +207,7 @@ helpfn(argc, argv)
 
     printf("Commands are:\n%-10s %5s %5s   %s\n",
 	   "command", "min argc", "max argc", "what");
-    
+
     for (cmdtp = cmds; cmdtp->cmd; cmdtp++)
 	printf("%-10s %5u %5u   %s\n",
 	       cmdtp->cmd, cmdtp->minargc, cmdtp->maxargc, cmdtp->helptxt);
@@ -386,7 +386,7 @@ static const char *typename[] = {
     "unregistered #13",
     "whiteout",
 };
-    
+
 static int slot;
 
 static int
@@ -449,7 +449,7 @@ CMDFUNCSTART(focusname)
 	return 1;
 
     ocurrent = curinum;
-    
+
     if (argv[1][0] == '/') {
 	curinum = ROOTINO;
 	curinode = ginode(ROOTINO);
@@ -526,7 +526,7 @@ CMDFUNCSTART(chinum)
     char *cp;
     ino_t inum;
     struct inodesc idesc;
-    
+
     slotcount = 0;
     if (!checkactivedir())
 	return 1;
@@ -577,7 +577,7 @@ CMDFUNCSTART(chname)
     int rval;
     char *cp;
     struct inodesc idesc;
-    
+
     slotcount = 0;
     if (!checkactivedir())
 	return 1;
@@ -655,11 +655,11 @@ CMDFUNCSTART(chmode)
 	return 1;
 
     modebits = strtol(argv[1], &cp, 8);
-    if (cp == argv[1] || *cp != '\0' ) { 
+    if (cp == argv[1] || *cp != '\0' ) {
 	warnx("bad modebits `%s'", argv[1]);
 	return 1;
     }
-    
+
     curinode->di_mode &= ~07777;
     curinode->di_mode |= modebits;
     inodirty();
@@ -698,11 +698,11 @@ CMDFUNCSTART(chaflags)
 	return 1;
 
     flags = strtoul(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) { 
+    if (cp == argv[1] || *cp != '\0' ) {
 	warnx("bad flags `%s'", argv[1]);
 	return 1;
     }
-    
+
     if (flags > UINT_MAX) {
 	warnx("flags set beyond 32-bit range of field (%lx)", flags);
 	return(1);
@@ -723,11 +723,11 @@ CMDFUNCSTART(chgen)
 	return 1;
 
     gen = strtol(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) { 
+    if (cp == argv[1] || *cp != '\0' ) {
 	warnx("bad gen `%s'", argv[1]);
 	return 1;
     }
-    
+
     if (gen > INT_MAX || gen < INT_MIN) {
 	warnx("gen set beyond 32-bit range of field (%lx)", gen);
 	return(1);
@@ -748,7 +748,7 @@ CMDFUNCSTART(linkcount)
 	return 1;
 
     lcnt = strtol(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) { 
+    if (cp == argv[1] || *cp != '\0' ) {
 	warnx("bad link count `%s'", argv[1]);
 	return 1;
     }
@@ -756,7 +756,7 @@ CMDFUNCSTART(linkcount)
 	warnx("max link count is %d", USHRT_MAX);
 	return 1;
     }
-    
+
     curinode->di_nlink = lcnt;
     inodirty();
     printactive();
@@ -774,7 +774,7 @@ CMDFUNCSTART(chowner)
 	return 1;
 
     uid = strtoul(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) { 
+    if (cp == argv[1] || *cp != '\0' ) {
 	/* try looking up name */
 	if ((pwd = getpwnam(argv[1]))) {
 	    uid = pwd->pw_uid;
@@ -783,7 +783,7 @@ CMDFUNCSTART(chowner)
 	    return 1;
 	}
     }
-    
+
     curinode->di_uid = uid;
     inodirty();
     printactive();
@@ -801,7 +801,7 @@ CMDFUNCSTART(chgroup)
 	return 1;
 
     gid = strtoul(argv[1], &cp, 0);
-    if (cp == argv[1] || *cp != '\0' ) { 
+    if (cp == argv[1] || *cp != '\0' ) {
 	if ((grp = getgrnam(argv[1]))) {
 	    gid = grp->gr_gid;
 	} else {
@@ -809,7 +809,7 @@ CMDFUNCSTART(chgroup)
 	    return 1;
 	}
     }
-    
+
     curinode->di_gid = gid;
     inodirty();
     printactive();
@@ -844,7 +844,7 @@ badformat:
     for (p = name; *p; p++)
 	if (*p < '0' || *p > '9')
 	    goto badformat;
-    
+
     p = name;
 #define VAL() ((*p++) - '0')
     t.tm_year = VAL();

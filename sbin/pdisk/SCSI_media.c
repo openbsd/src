@@ -6,23 +6,23 @@
 
 /*
  * Copyright 1997,1998 by Apple Computer, Inc.
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 
@@ -162,12 +162,12 @@ scsi_init(void)
 {
     int i;
     int old_scsi;
-    
+
     if (scsi_inited != 0) {
 	return;
     }
     scsi_inited = 1;
-    
+
     scsi_mgr.exists = 1;
     scsi_mgr.kind = allocate_media_kind();
 
@@ -180,10 +180,10 @@ scsi_init(void)
 	scsi_mgr.bus_count = 1;
 	old_scsi = 1;
     }
-    
+
     scsi_mgr.bus_list = (struct bus_entry *)
 	    calloc(scsi_mgr.bus_count, sizeof(struct bus_entry));
-	    
+	
     if (scsi_mgr.bus_list == 0) {
 	scsi_mgr.bus_count = 0;
     } else {
@@ -200,7 +200,7 @@ scsi_init(void)
 		sizeof(struct bus_entry),   /* size of element */
 		bus_entry_compare);         /* element comparison routine */
     }
-    
+
     init_mklinux_cache();
 }
 
@@ -257,10 +257,10 @@ int
 bus_entry_compare(const void* a, const void* b)
 {
     long result;
-    
+
     const struct bus_entry *x = (const struct bus_entry *) a;
     const struct bus_entry *y = (const struct bus_entry *) b;
-    
+
     result = x->sort_value - y->sort_value;
     if (result == 0) {
 	result = x->bus - y->bus;
@@ -289,11 +289,11 @@ open_scsi_as_media(long bus, long device)
     SCSI_MEDIA  a;
     UInt32 blockCount;
     UInt32 blockSize;
-    
+
     if (scsi_inited == 0) {
 	scsi_init();
     }
-    
+
     if (scsi_mgr.exists == 0) {
 	return 0;
     }
@@ -329,7 +329,7 @@ read_scsi_media(MEDIA m, long long offset, unsigned long count, void *address)
     long block_size;
     unsigned char *buffer;
     int i;
-    
+
     block = (long) offset;
 //printf("scsi %d count %d\n", block, count);
     a = (SCSI_MEDIA) m;
@@ -374,7 +374,7 @@ write_scsi_media(MEDIA m, long long offset, unsigned long count, void *address)
     long block_size;
     unsigned char *buffer;
     int i;
-    
+
     a = (SCSI_MEDIA) m;
     rtn_value = 0;
     if (a == 0) {
@@ -411,7 +411,7 @@ long
 close_scsi_media(MEDIA m)
 {
     SCSI_MEDIA a;
-    
+
     a = (SCSI_MEDIA) m;
     if (a == 0) {
 	return 0;
@@ -675,7 +675,7 @@ SCSI_FindDevice(long dRefNum)
     SCSIDriverPB            pb;
     OSErr                   status;
     short                   targetID;
-    
+
     status = nsvErr;
     if (AsyncSCSIPresent()) {
 	clear_memory((Ptr) &pb, sizeof pb);
@@ -688,7 +688,7 @@ SCSI_FindDevice(long dRefNum)
 	
 	do {
 	    status = SCSIAction((SCSI_PB *) &pb);
-	    
+	
 	    if (status != noErr) {
 		break;
 	    } else if (pb.scsiDriver == dRefNum
@@ -728,11 +728,11 @@ MEDIA_ITERATOR
 create_scsi_iterator(void)
 {
     SCSI_MEDIA_ITERATOR a;
-    
+
     if (scsi_inited == 0) {
 	scsi_init();
     }
-    
+
     if (scsi_mgr.exists == 0) {
 	return 0;
     }
@@ -757,7 +757,7 @@ void
 reset_scsi_iterator(MEDIA_ITERATOR m)
 {
     SCSI_MEDIA_ITERATOR a;
-    
+
     a = (SCSI_MEDIA_ITERATOR) m;
     if (a == 0) {
 	/* no media */
@@ -774,7 +774,7 @@ step_scsi_iterator(MEDIA_ITERATOR m)
 {
     SCSI_MEDIA_ITERATOR a;
     char *result;
-    
+
     a = (SCSI_MEDIA_ITERATOR) m;
     if (a == 0) {
 	/* no media */
@@ -852,13 +852,13 @@ open_mklinux_scsi_as_media(long index, int is_cdrom)
     MEDIA m;
     long bus;
     long id;
-    
+
     if (lookup_scsi_index(index, is_cdrom, &bus, &id) > 0) {
 	m = open_scsi_as_media(bus, id);
     } else {
 	m = 0;
     }
-    
+
     return m;
 }
 
@@ -930,7 +930,7 @@ void
 probe_scsi_device(long bus, long id, int unsure)
 {
     UInt32 devType;
-    
+
     if (DoInquiry(id, bus, &devType)) {
     	if (devType == kScsiDevTypeDirect || devType == kScsiDevTypeWorm
     		|| devType == kScsiDevTypeOptical) {
@@ -954,7 +954,7 @@ lookup_scsi_device(long bus, long id, int *is_cdrom, int *unsure)
     struct cache_item *next;
     long result = -1;
     int count = 0;
-    
+
     if (scsi_inited == 0) {
 	scsi_init();
     }
@@ -991,7 +991,7 @@ lookup_scsi_index(long index, int is_cdrom, long *bus, long *id)
     struct cache_item *next;
     long result = 0;
     int count = 0;
-    
+
     if (scsi_inited == 0) {
 	scsi_init();
     }
@@ -1022,7 +1022,7 @@ void
 add_to_cache(long bus, long id, int is_cdrom, int unsure)
 {
     struct cache_item *item;
-    
+
     item = malloc(sizeof(struct cache_item));
     if (item == NULL) {
 	return;
@@ -1063,7 +1063,7 @@ clear_mklinux_cache(void)
 {
     struct cache_item *item;
     struct cache_item *next;
-    
+
     for (item = mklinux_order.first; item != NULL; item = next) {
 	next = item->next;
 	free(item);

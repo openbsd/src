@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_value_response.c,v 1.5 2001/01/28 22:45:10 niklas Exp $	*/
+/*	$OpenBSD: handle_value_response.c,v 1.6 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_value_response.c,v 1.5 2001/01/28 22:45:10 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_value_response.c,v 1.6 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdlib.h>
@@ -60,7 +60,7 @@ static char rcsid[] = "$OpenBSD: handle_value_response.c,v 1.5 2001/01/28 22:45:
 #endif
 
 int
-handle_value_response(u_char *packet, int size, char *address, 
+handle_value_response(u_char *packet, int size, char *address,
 		      char *local_address)
 
 {
@@ -113,16 +113,16 @@ handle_value_response(u_char *packet, int size, char *address,
 	     state_unlink(st);
 	     return -1;
 	}
-	bcopy(parts[1].where, st->uSPIoattrib, parts[1].size);  
-	st->uSPIoattribsize = parts[1].size;  
+	bcopy(parts[1].where, st->uSPIoattrib, parts[1].size);
+	st->uSPIoattribsize = parts[1].size;
 
-#ifdef DEBUG 
+#ifdef DEBUG
 	{
-	     int i = BUFFER_SIZE; 
+	     int i = BUFFER_SIZE;
 	     bin2hex(buffer, &i, parts[0].where, parts[0].size);
-	     printf("Got exchange value 0x%s\n", buffer); 
+	     printf("Got exchange value 0x%s\n", buffer);
 	}
-#endif 
+#endif
 
 	/* Set exchange value */
 	st->texchangesize = parts[0].size;
@@ -135,13 +135,13 @@ handle_value_response(u_char *packet, int size, char *address,
 
 	/* Compute the shared secret now */
 	compute_shared_secret(st, &(st->shared), &(st->sharedsize));
-#ifdef DEBUG  
+#ifdef DEBUG
 	{
 	     int i = BUFFER_SIZE;
 	     bin2hex(buffer, &i, st->shared, st->sharedsize);
-	     printf("Shared secret is: 0x%s\n", buffer);  
+	     printf("Shared secret is: 0x%s\n", buffer);
 	}
-#endif  
+#endif
 
 	/* Create SPI + choice of attributes */
 	if (make_spi(st, local_address, st->oSPI, &(st->olifetime),

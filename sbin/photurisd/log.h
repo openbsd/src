@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.3 2000/12/15 07:29:45 provos Exp $	*/
+/*	$OpenBSD: log.h,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 /*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #define LOG_SIZE	200
 
 enum log_classes {
-  LOG_MISC, LOG_PROTOCOL, LOG_CRYPTO, LOG_TIMER, LOG_SPI, LOG_KERNEL, 
+  LOG_MISC, LOG_PROTOCOL, LOG_CRYPTO, LOG_TIMER, LOG_SPI, LOG_KERNEL,
   LOG_ENDCLASS
 };
 #define LOG_CLASSES_TEXT \

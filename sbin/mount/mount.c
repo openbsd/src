@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.26 2002/02/17 19:42:28 millert Exp $	*/
+/*	$OpenBSD: mount.c,v 1.27 2002/06/09 08:13:07 todd Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.26 2002/02/17 19:42:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.27 2002/06/09 08:13:07 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -458,7 +458,7 @@ prmount(sf)
 			flags &= ~o->o_opt;
 		}
 	if (flags)
-		(void)printf("%sunknown flag%s %#x", !f++ ? " (" : ", ", 
+		(void)printf("%sunknown flag%s %#x", !f++ ? " (" : ", ",
 		    flags & (flags - 1) ? "s" : "", flags);
 
 

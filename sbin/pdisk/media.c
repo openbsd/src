@@ -6,23 +6,23 @@
 
 /*
  * Copyright 1997,1998 by Apple Computer, Inc.
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 
@@ -113,7 +113,7 @@ long
 read_media(MEDIA m, long long offset, unsigned long count, void *address)
 {
     long result;
-    
+
     if (m != 0 && m->do_read != 0) {
 	//printf("media: read type %d, offset %Ld, count %d\n\t", m->kind, offset, count);
 	result = (*m->do_read)(m, offset, count, address);
@@ -129,7 +129,7 @@ long
 write_media(MEDIA m, long long offset, unsigned long count, void *address)
 {
     long result;
-    
+
     if (m != 0 && m->do_write != 0) {
 	//printf("media: write type %d, offset %Ld, count %d\n\t", m->kind, offset, count);
 	result = (*m->do_write)(m, offset, count, address);
@@ -200,7 +200,7 @@ char *
 step_media_iterator(MEDIA_ITERATOR m)
 {
     char *result;
-    
+
     if (m != 0 && m->do_step != 0) {
 	result = (*m->do_step)(m);
     } else {

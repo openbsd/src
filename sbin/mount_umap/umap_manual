@@ -1,4 +1,4 @@
-%	$OpenBSD: umap_manual,v 1.2 1996/06/23 14:31:41 deraadt Exp $
+%	$OpenBSD: umap_manual,v 1.3 2002/06/09 08:13:08 todd Exp $
 %	$NetBSD: umap_manual,v 1.2 1995/03/18 14:58:19 cgd Exp $
 
 \appendix
@@ -9,10 +9,10 @@
 Normally, the file system is expected to span a single administrative domain.
 An administrative domain, for these purposes, is a machine or set of
 machines that share common password file information, usually through
-the yellow pages mechanism.  File hierarchies that span more 
-than one domain leads to certain problems, since the same numerical 
-UID in one domain may correspond to a different user in another domain.  
-If the system administrator is very careful to ensure that both domains 
+the yellow pages mechanism.  File hierarchies that span more
+than one domain leads to certain problems, since the same numerical
+UID in one domain may correspond to a different user in another domain.
+If the system administrator is very careful to ensure that both domains
 contain identical user ID information, The umap layer can be used to
 run between those domains without changes
 
@@ -32,12 +32,12 @@ identifier used by Unix systems to identify groups of users.  ``Group
 name'' is the character string name attached to a particular GID in the
 local {\sf /etc/groups} file or the yellow pages groups file.
 
-In order for the umap layer to work properly, all users 
-in either domain must have password file entries in both domains.  
-They do not, however, have to have the same numerical UID, nor even the 
-same character string login name (the latter is highly recommended, 
-if possible, however).  Any user not having a UID in one domain will be 
-treated as the special user NOBODY by the other domain, probably with 
+In order for the umap layer to work properly, all users
+in either domain must have password file entries in both domains.
+They do not, however, have to have the same numerical UID, nor even the
+same character string login name (the latter is highly recommended,
+if possible, however).  Any user not having a UID in one domain will be
+treated as the special user NOBODY by the other domain, probably with
 undesirable consequences.  Any user not owning any files in the shared
 sub-trees need not be given a UID in the other domain.
 
@@ -49,30 +49,30 @@ known in the other domain, that group will be treated as being NULLGROUP.
 The umap layer has no provisions for enrolling UID's from other domains
 as group members, but, since each user from each domain must have some
 UID in every domain, the UID in the local domain can be used to enroll
-the user in the local groups.  
+the user in the local groups.
 
 NOBODY and NULLGROUP are special reserved UID's and GID's, respectively.
 NOBODY is user 32767.  NULLGROUP is group 65534.  If the system administrator
 wants to have an appropriate text string appear when these UID's are
 encountered by programs like {\sf ls -l}, he should add these values to
-the password and {\sf /etc/groups} file, or to the appropriate yellow pages.  
-If these IDs are already in use in that domain, different values can be 
-used for NOBODY and NULLGROUP, but that will require a recompilation of 
-the umap layer code and, as a result, the entire kernel.  These 
-values are defined in the {\sf umap\_info.h} file, kept with the rest of the 
+the password and {\sf /etc/groups} file, or to the appropriate yellow pages.
+If these IDs are already in use in that domain, different values can be
+used for NOBODY and NULLGROUP, but that will require a recompilation of
+the umap layer code and, as a result, the entire kernel.  These
+values are defined in the {\sf umap\_info.h} file, kept with the rest of the
 umap source code.
 
-When the umap layer is in use, one of the participating domains is declared 
-to be the master.  All UID and GID information stored for participating files 
-will be stored in vnodes using its mappings, no matter what site the copies of 
-the files are stored at.  The master domain therefore need not run a copy 
-of the umap layer, as it already has all of the correct mappings.  All 
+When the umap layer is in use, one of the participating domains is declared
+to be the master.  All UID and GID information stored for participating files
+will be stored in vnodes using its mappings, no matter what site the copies of
+the files are stored at.  The master domain therefore need not run a copy
+of the umap layer, as it already has all of the correct mappings.  All
 other domains must run a umap layer on top of any other layers they use.
 
 \subsection{Setting Up a umap Layer}
 
-The system administrator of a system needing to use the umap layer 
-must take several actions.  
+The system administrator of a system needing to use the umap layer
+must take several actions.
 First, he must create files containing the necessary UID
 and GID mappings.  There is a separate file for user and group IDs.  The
 format of the files is the same.  The first line contains the total number
@@ -83,7 +83,7 @@ UID for the same user on the master machine.  The maximum number of users
 that can be mapped for a single shared sub-tree is 64.  The maximum number of
 groups that can be mapped for a single sub-tree is 16.  These constants
 are set in the {\sf umap\_info.h} file, and can be changed, but changing them
-requires recompilation.  Separate mapping files can be used for each shared 
+requires recompilation.  Separate mapping files can be used for each shared
 subtree, or the same mapping files can be shared by several sub-trees.
 
 Below is a sample UID mapping file.  There are four entries.  UID 5 is mapped
@@ -92,7 +92,7 @@ machine, the UID's for users 5, 521, and 7000 are the same as on the master,
 but UID 2002 is for a user whose UID on the master machine is 604.  All
 files in the sub-tree belonging to that user have UID 604 in their inodes,
 even on this machine, but the umap layer will ensure that anyone running
-under UID 2002 will have all files in this sub-tree owned by 604 treated as if 
+under UID 2002 will have all files in this sub-tree owned by 604 treated as if
 they were owned by 2002.  An {\sf ls -l} on a file owned by 604 in this sub-tree
 will show the login name associated with UID 2002 as the owner.
 
@@ -126,9 +126,9 @@ problems, and what to do about them.
 
 \item{Problem: A file belongs to NOBODY, or group NULLGROUP.
 
-Fixes: The mapping files don't know about this file's real user or group.  
-Either they are not in the mapping files, or the counts on the number of 
-entries in the mapping files are too low, so entries at the end (including 
+Fixes: The mapping files don't know about this file's real user or group.
+Either they are not in the mapping files, or the counts on the number of
+entries in the mapping files are too low, so entries at the end (including
 these) are being ignored.  Add the entries or fix the counts, and either
 unmount and remount the sub-tree, or reboot.}
 
@@ -138,13 +138,13 @@ Fixes: Possibly, some mapping has not been set properly.  Check to
 see which files are used by the operation and who they appear to be
 owned by.  If they are owned by NOBODY or some other suspicious user,
 there may be a problem in the mapping files.  Be sure to check groups,
-too.  As above, if the counts of mappings in the mapping files are lower 
-than the actual numbers of pairs, pairs at the end of the file will be 
-ignored.  If any changes are made in the mapping files, you will need to 
+too.  As above, if the counts of mappings in the mapping files are lower
+than the actual numbers of pairs, pairs at the end of the file will be
+ignored.  If any changes are made in the mapping files, you will need to
 either unmount and remount or reboot before they will take effect.
 
 Another possible problem can arise because not all Unix utilities
-rely exclusively on numeric UID for identification.  For instance, 
+rely exclusively on numeric UID for identification.  For instance,
 SCCS saves the login name in files.  If a user's login name on two machines
 isn't the same, SCCS may veto an operation even though Unix file permissions,
 as checked by the umap layer, may say it's OK.  There's not much to be
@@ -154,9 +154,9 @@ where similar problems arise, some of which may be even harder to handle.}
 
 \item{Problem: Someone has access permissions he should not have.
 
-Fixes: This is probably caused by a mistake in the mapping files.  Check 
-both user and group mapping files.  If any changes are made in the mapping 
-files, you will need to unmount and remount the sub-tree or reboot before they 
+Fixes: This is probably caused by a mistake in the mapping files.  Check
+both user and group mapping files.  If any changes are made in the mapping
+files, you will need to unmount and remount the sub-tree or reboot before they
 will take effect.}
 
 \item{Problem: {\sf ls -l} (or a similar program) shows the wrong user for a file.
@@ -168,8 +168,8 @@ not be what was intended.  (Generally speaking, mapping two local UIDs to
 a single master UID is a bad idea, but the software will not prevent it.
 Similarly, mapping a single local UID to two master UIDs is a bad idea,
 but will not be prevented.  In this case, only the first mapping of the
-local UID will be done.  The second, and all subsequent ones, will be 
-ignored.) If any changes are made in the mapping files, you will need to 
+local UID will be done.  The second, and all subsequent ones, will be
+ignored.) If any changes are made in the mapping files, you will need to
 unmount and remount the sub-tree or reboot before they will take effect.}
 
 \end{itemize}

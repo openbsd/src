@@ -1,4 +1,4 @@
-/* $OpenBSD: modulus.h,v 1.4 2001/01/28 22:45:12 niklas Exp $ */
+/* $OpenBSD: modulus.h,v 1.5 2002/06/09 08:13:08 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -28,10 +28,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* 
- * modulus.h: 
+/*
+ * modulus.h:
  * modulus handling functions
- */ 
+ */
 
 #ifndef _MODULUS_H_
 #define _MODULUS_H_

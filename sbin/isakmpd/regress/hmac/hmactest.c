@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmactest.c,v 1.3 1998/12/21 01:02:34 niklas Exp $	*/
+/*	$OpenBSD: hmactest.c,v 1.4 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: hmactest.c,v 1.3 1998/08/09 19:16:24 niklas Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ int
 main (void)
 {
   char key[100];
-    
+
   memset(key, 11, 20);
   test_hmac ("HMAC-MD5 Test Case 1", hash_get (HASH_MD5),
 	     key, 16, "Hi There", 8, "9294727a3638bb1c13f48ef8158bfc9d");
@@ -58,12 +58,12 @@ main (void)
 	     "what do ya want for nothing?", 28,
 	     "750c783e6ab0b503eaa86e310a5db738");
   test_hmac ("HMAC-SHA1 Test Case 1", hash_get (HASH_SHA1),
-	     key, 20, "Hi There", 8, 
+	     key, 20, "Hi There", 8,
 	     "b617318655057264e28bc0b6fb378c8ef146be00");
   test_hmac ("HMAC-SHA1 Test Case 2", hash_get (HASH_SHA1),
-	     "Jefe", 4, "what do ya want for nothing?", 28, 
+	     "Jefe", 4, "what do ya want for nothing?", 28,
 	     "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79");
-  
+
   return 1;
 }
 
@@ -87,7 +87,7 @@ test_hmac(char *test, struct hash *hash, char *key, int klen,
     }
   output[2*i] = 0;
 
-  if (!strcmp(output, cmp)) 
+  if (!strcmp(output, cmp))
     {
       printf("OKAY\n");
       return 1;

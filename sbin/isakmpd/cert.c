@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.21 2002/06/06 02:15:27 ho Exp $	*/
+/*	$OpenBSD: cert.c,v 1.22 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: cert.c,v 1.18 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -57,8 +57,8 @@
 struct cert_handler cert_handler[] = {
 #ifdef USE_X509
   {
-    ISAKMP_CERTENC_X509_SIG, 
-    x509_cert_init, x509_cert_get, x509_cert_validate, 
+    ISAKMP_CERTENC_X509_SIG,
+    x509_cert_init, x509_cert_get, x509_cert_validate,
     x509_cert_insert, x509_cert_free,
     x509_certreq_validate, x509_certreq_decode, x509_free_aca,
     x509_cert_obtain, x509_cert_get_key, x509_cert_get_subjects,

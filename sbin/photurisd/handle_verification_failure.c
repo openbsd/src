@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_verification_failure.c,v 1.4 2001/01/28 22:45:10 niklas Exp $	*/
+/*	$OpenBSD: handle_verification_failure.c,v 1.5 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_verification_failure.c,v 1.4 2001/01/28 22:45:10 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_verification_failure.c,v 1.5 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -63,9 +63,9 @@ handle_verification_failure(u_char *packet, int size, char *address)
 
 	header = (struct error_message *) packet;
 
-	if ((st = state_find_cookies(address, header->icookie, 
+	if ((st = state_find_cookies(address, header->icookie,
 				     header->rcookie)) == NULL) {
-	     log_print("No state for VERIFICATION_FAILURE message from %s", 
+	     log_print("No state for VERIFICATION_FAILURE message from %s",
 		       address);
 	     return -1;
 	}

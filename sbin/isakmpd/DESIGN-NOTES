@@ -1,4 +1,4 @@
-$OpenBSD: DESIGN-NOTES,v 1.18 2002/04/23 12:51:11 ho Exp $
+$OpenBSD: DESIGN-NOTES,v 1.19 2002/06/09 08:13:06 todd Exp $
 $EOM: DESIGN-NOTES,v 1.48 1999/08/12 22:34:25 niklas Exp $
 
 General coding conventions
@@ -59,7 +59,7 @@ ike_main_mode.c	IKE's main mode exchange logic.
 ike_phase_1.c	Common parts IKE's main & aggressive modes' exchange logic.
 ike_quick_mode.c
 		IKE's quick mode logic.
-init.c		Initialization of all modules (might be autogenned in the 
+init.c		Initialization of all modules (might be autogenned in the
 		future).
 ipsec.c		The IPsec DOI.
 ipsec_fld.fld	Description of IPsec DOI-specific packet layouts.
@@ -103,7 +103,7 @@ struct hash		A hashing class
 struct ipsec_exch	IPsec-specific exchange fields.
 struct ipsec_proto	IPsec-specific protocol attributes.
 struct ipsec_sa		IPsec-specific SA stuff.
-struct message		A generic ISAKMP message. 
+struct message		A generic ISAKMP message.
 struct payload		A "fat" payload reference pointing into message buffers
 struct prf		A pseudo random function class
 struct proto		Per-protocol attributes.
@@ -133,7 +133,7 @@ ISAKMP SA		Cookie pair.  I.e. there exists a one-to-one
 
 Phase 2 exchange	Cookie pair + message ID.
 
-Generic SA		Cookie pair + message ID + SPI. 
+Generic SA		Cookie pair + message ID + SPI.
 
 However it would be really nice to have a name of any SA that is natural
 to use for human beings, for things like deleting SAs manually.  The simplest
@@ -251,11 +251,11 @@ The FIFO UI is also described in the isakmpd(8) man page.
 
 In addition to giving commands over the FIFO, you may send signals to the
 daemon. Currently two such signals are implemented:
-         
+
 SIGHUP 	  Re-initialize isakmpd (not fully implemented yet)
 SIGUSR1   Generate a report, much as the "r" FIFO command.
 
-For example, to generate a report, you do: 
+For example, to generate a report, you do:
 
 unix# kill -USR1 <PID of isakmpd process>
 

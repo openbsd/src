@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_spi_needed.c,v 1.5 2001/01/28 22:45:09 niklas Exp $	*/
+/*	$OpenBSD: handle_spi_needed.c,v 1.6 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_spi_needed.c,v 1.5 2001/01/28 22:45:09 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_spi_needed.c,v 1.6 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -61,7 +61,7 @@ static char rcsid[] = "$OpenBSD: handle_spi_needed.c,v 1.5 2001/01/28 22:45:09 n
 #endif
 
 int
-handle_spi_needed(u_char *packet, int size, char *address, 
+handle_spi_needed(u_char *packet, int size, char *address,
 			char *local_address)
 {
         struct packet_sub parts[] = {
@@ -70,7 +70,7 @@ handle_spi_needed(u_char *packet, int size, char *address,
 	     { NULL }
 	};
         struct packet spi_msg = {
-	     "SPI Needed", 
+	     "SPI Needed",
 	     SPI_NEEDED_MIN, 0, parts
 	};
 	struct spi_needed *header;
@@ -158,12 +158,12 @@ handle_spi_needed(u_char *packet, int size, char *address,
 		     &(st->oSPIattrib), &(st->oSPIattribsize)) == -1)
 	     return -1;
 
-	packet_size = PACKET_BUFFER_SIZE; 
+	packet_size = PACKET_BUFFER_SIZE;
 	if (photuris_spi_update(st, packet_buffer, &packet_size) == -1) {
 	     log_print("photuris_spi_update() in handle_spi_needed()");
 	     return -1;
 	}
-	send_packet(); 
+	send_packet();
 
 	/* Insert Owner SPI */
 	if ((spi = spi_new(st->address, st->oSPI)) == NULL) {

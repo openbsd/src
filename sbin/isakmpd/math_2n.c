@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_2n.c,v 1.9 2002/01/23 17:43:24 ho Exp $	*/
+/*	$OpenBSD: math_2n.c,v 1.10 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  * B2N is a module for doing arithmetic on the Field GF(2**n) which is
  * isomorph to ring of polynomials GF(2)[x]/p(x) where p(x) is an
  * irreduciable polynomial over GF(2)[x] with grade n.
- * 
+ *
  * First we need functions which operate on GF(2)[x], operation
  * on GF(2)[x]/p(x) can be done as for Z_p then.
  */
@@ -128,7 +128,7 @@ b2n_resize (b2n_ptr n, unsigned int chunks)
 
   if (chunks == old)
     return 0;
-  
+
   size = CHUNK_BYTES * chunks;
 
   new = realloc (n->limp, size);
@@ -317,7 +317,7 @@ u_int32_t
 b2n_sigbit (b2n_ptr n)
 {
   int i, j;
-  
+
   if (!n->dirty)
     return n->bits;
 
@@ -331,7 +331,7 @@ b2n_sigbit (b2n_ptr n)
   for (j = CHUNK_MASK; j > 0; j--)
     if (n->limp[i] & b2n_mask[j])
       break;
-  
+
   n->bits = (i << CHUNK_SHIFTS) + j + 1;
   n->dirty = 0;
   return n->bits;
@@ -352,22 +352,22 @@ b2n_add (b2n_ptr d, b2n_ptr a, b2n_ptr b)
 
   bmin = B2N_MIN (a,b);
   bmax = B2N_MAX (a,b);
-    
+
   if (b2n_resize (d, bmax->chunks))
     return -1;
 
   for (i = 0; i < bmin->chunks; i++)
       d->limp[i] = bmax->limp[i] ^ bmin->limp[i];
 
-  /* 
+  /*
    * If d is not bmax, we have to copy the rest of the bytes, and also
    * need to adjust to number of relevant bits.
    */
   if (d != bmax)
     {
-      for ( ; i < bmax->chunks; i++) 
+      for ( ; i < bmax->chunks; i++)
 	  d->limp[i] = bmax->limp[i];
-      
+
       d->bits = bmax->bits;
     }
 
@@ -375,7 +375,7 @@ b2n_add (b2n_ptr d, b2n_ptr a, b2n_ptr b)
    * Help to converse memory. When the result of the addition is zero
    * truncate the used amount of memory.
    */
-  if (d != bmax && !b2n_cmp_null (d)) 
+  if (d != bmax && !b2n_cmp_null (d))
     return b2n_set_null (d);
   else
     d->dirty = 1;
@@ -402,7 +402,7 @@ b2n_cmp (b2n_ptr n, b2n_ptr m)
       return 1;
     else if (n->limp[i] < m->limp[i])
       return -1;
-  
+
   return 0;
 }
 
@@ -444,7 +444,7 @@ b2n_lshift (b2n_ptr d, b2n_ptr n, unsigned int s)
 
   if (maj)
     memset (d->limp, 0, CHUNK_BYTES * maj);
-  if (add) 
+  if (add)
     d->limp[d->chunks - 1] = 0;
 
   /* If !min there are no bit shifts, we are done */
@@ -517,7 +517,7 @@ b2n_mul (b2n_ptr d, b2n_ptr n, b2n_ptr m)
 
   if (b2n_sigbit (n) == 1)
     return b2n_set (d, m);
-  
+
   b2n_init (tmp);
   b2n_init (tmp2);
 
@@ -533,10 +533,10 @@ b2n_mul (b2n_ptr d, b2n_ptr n, b2n_ptr m)
     if (tmp2->limp[i])
       for (j = 0; j < CHUNK_BITS; j++)
 	{
-	  if (tmp2->limp[i] & b2n_mask[j]) 
+	  if (tmp2->limp[i] & b2n_mask[j])
 	    if (b2n_add (d, d, tmp))
 	      goto fail;
-	  
+	
 	  if (b2n_lshift (tmp, tmp, 1))
 	    goto fail;
 	}
@@ -594,7 +594,7 @@ b2n_square (b2n_ptr d, b2n_ptr n)
 	}
     else
       chunk += 2;
- 
+
   t->dirty = 1;
   B2N_SWAP (d, t);
   b2n_clear (t);
@@ -676,7 +676,7 @@ b2n_div (b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
     goto fail;
   if (b2n_lshift (mask, mask, sn - sm))
     goto fail;
-  
+
   /* Number of significant octets */
   len = (sn - 1) >> CHUNK_SHIFTS;
   /* The first iteration is done over the relevant bits */
@@ -747,7 +747,7 @@ b2n_gcd (b2n_ptr e, b2n_ptr go, b2n_ptr ho)
     goto fail;
   if (b2n_set (h, ho))
     goto fail;
-  
+
   while (b2n_cmp_null (h))
     {
       if (b2n_mod (g, g, h))
@@ -850,9 +850,9 @@ fail:
 }
 
 /*
- * The trace tells us if there do exist any square roots 
+ * The trace tells us if there do exist any square roots
  * for 'a' in GF(2)[x]/p(x). The number of square roots is
- * 2 - 2*Trace. 
+ * 2 - 2*Trace.
  * If z is a square root, z + 1 is the other.
  */
 int
@@ -864,7 +864,7 @@ b2n_trace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
   b2n_init (h);
   if (b2n_set (h, a))
     goto fail;
-  
+
   for (i = 0; i < m - 1; i++)
     {
       if (b2n_square (h, h))
@@ -898,7 +898,7 @@ b2n_halftrace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
   b2n_init (h);
   if (b2n_set (h, a))
     goto fail;
-  
+
   for (i = 0; i < (m - 1) / 2; i++)
     {
       if (b2n_square (h, h))
@@ -925,7 +925,7 @@ b2n_halftrace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
 }
 
 /*
- * Solving the equation: y**2 + y = b in GF(2**m) where ip is the 
+ * Solving the equation: y**2 + y = b in GF(2**m) where ip is the
  * irreduceable polynomial. If m is odd, use the half trace.
  */
 int
@@ -1007,7 +1007,7 @@ b2n_exp_mod (b2n_ptr d, b2n_ptr b0, u_int32_t e, b2n_ptr p)
     goto fail;
   if (b2n_mod (b, b0, p))
     goto fail;
-  
+
   while (e)
     {
       if (e & 1)
@@ -1040,7 +1040,7 @@ b2n_exp_mod (b2n_ptr d, b2n_ptr b0, u_int32_t e, b2n_ptr p)
  * Low-level function to speed up scalar multiplication with
  * elliptic curves.
  * Multiplies a normal number by 3.
- */ 
+ */
 
 /* Normal addition behaves as Z_{2**n} and not F_{2**n}.  */
 int
@@ -1071,7 +1071,7 @@ b2n_nadd (b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
       d->limp[i] = a->limp[i] + b->limp[i] + carry;
       carry = (d->limp[i] < a->limp[i] ? 1 : 0);
     }
-  
+
   for (; i < a->chunks && carry; i++)
     {
       d->limp[i] = a->limp[i] + carry;
@@ -1097,7 +1097,7 @@ b2n_nsub (b2n_ptr d0, b2n_ptr a, b2n_ptr b)
 
   if (b2n_cmp (a, b) <= 0)
     return b2n_set_null (d0);
-  
+
   b2n_init (d);
   if (b2n_resize (d, a->chunks))
     {
@@ -1110,7 +1110,7 @@ b2n_nsub (b2n_ptr d0, b2n_ptr a, b2n_ptr b)
       d->limp[i] = a->limp[i] - b->limp[i] - carry;
       carry = (d->limp[i] > a->limp[i] ? 1 : 0);
     }
-  
+
   for (; i < a->chunks && carry; i++)
     {
       d->limp[i] = a->limp[i] - carry;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.4 2001/01/28 22:45:12 niklas Exp $	*/
+/*	$OpenBSD: packet.c,v 1.5 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,20 +35,20 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: packet.c,v 1.4 2001/01/28 22:45:12 niklas Exp $";
+static char rcsid[] = "$OpenBSD: packet.c,v 1.5 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #define _PACKET_C_
 
 #include <stdlib.h>
-#include <stdio.h> 
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <sys/types.h> 
-#include <sys/socket.h> 
-#include <netinet/in.h> 
-#include <sys/time.h> 
-#include <arpa/inet.h> 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/time.h>
+#include <arpa/inet.h>
 #include "state.h"
 #include "photuris.h"
 #include "packets.h"
@@ -81,17 +81,17 @@ int handle_packet(int sock, char *address)
 #ifdef DEBUG
 	i = BUFFER_SIZE;
 	bin2hex(buffer, &i, header->icookie, 16);
-	printf("%s: Received %d bytes from %s, type %d with icookie: 0x%s\n", 
+	printf("%s: Received %d bytes from %s, type %d with icookie: 0x%s\n",
 	       address, size,
 	       inet_ntoa(sin.sin_addr), header->type, buffer);
 #endif
 
 	switch(header->type) {
 	case COOKIE_REQUEST:
-	     if (handle_cookie_request(recv_buffer, size, 
-				       inet_ntoa(sin.sin_addr), 
+	     if (handle_cookie_request(recv_buffer, size,
+				       inet_ntoa(sin.sin_addr),
 				       ntohs(sin.sin_port),
-				       global_schemes, global_schemesize) 
+				       global_schemes, global_schemesize)
 		 == -1) {
 		  log_print("handle_cookie_request() in handle_packet()");
 		  return -1;
@@ -101,9 +101,9 @@ int handle_packet(int sock, char *address)
 	     if (handle_cookie_response(recv_buffer, size,
 					inet_ntoa(sin.sin_addr),
 					ntohs(sin.sin_port)) == -1) {
-		  log_print("handle_cookie_response() in handle_packet()"); 
-                  return -1; 
-             } 
+		  log_print("handle_cookie_response() in handle_packet()");
+                  return -1;
+             }
 	     break;
 	case VALUE_REQUEST:
 	     if (handle_value_request(recv_buffer, size,
@@ -111,49 +111,49 @@ int handle_packet(int sock, char *address)
 				       ntohs(sin.sin_port),
 				       global_schemes, global_schemesize)
 		 == -1) {
-		  log_print("handle_value_request() in handle_packet()"); 
-                  return -1; 
-             } 
+		  log_print("handle_value_request() in handle_packet()");
+                  return -1;
+             }
              break;
 	case VALUE_RESPONSE:
-	     if (handle_value_response(recv_buffer, size, 
+	     if (handle_value_response(recv_buffer, size,
 				       inet_ntoa(sin.sin_addr),
-				       address) == -1) { 
-                  log_print("handle_value_response() in handle_packet()");  
-                  return -1;  
-             }  
+				       address) == -1) {
+                  log_print("handle_value_response() in handle_packet()");
+                  return -1;
+             }
              break;
 	case IDENTITY_REQUEST:
-	     if (handle_identity_request(recv_buffer, size,  
+	     if (handle_identity_request(recv_buffer, size,
 					 inet_ntoa(sin.sin_addr),
-					 address) == -1) {  
-                  log_print("handle_identity_request() in handle_packet()");   
-                  return -1;   
-             }   
+					 address) == -1) {
+                  log_print("handle_identity_request() in handle_packet()");
+                  return -1;
+             }
              break;
-        case IDENTITY_RESPONSE: 
-             if (handle_identity_response(recv_buffer, size,   
-					  inet_ntoa(sin.sin_addr), 
-					  address) == -1) {   
+        case IDENTITY_RESPONSE:
+             if (handle_identity_response(recv_buffer, size,
+					  inet_ntoa(sin.sin_addr),
+					  address) == -1) {
                   log_print("handle_identity_response() in handle_packet()");
-                  return -1;    
-             }    
-             break; 
+                  return -1;
+             }
+             break;
 	case SPI_UPDATE:
 	     if (handle_spi_update(recv_buffer, size,
 				   inet_ntoa(sin.sin_addr),
 				   address) == -1) {
                   log_print("handle_spi_update() in handle_packet()");
-                  return -1;    
-             }    
+                  return -1;
+             }
              break;
 	case SPI_NEEDED:
 	     if (handle_spi_needed(recv_buffer, size,
 				   inet_ntoa(sin.sin_addr),
 				   address) == -1) {
                   log_print("handle_spi_needed() in handle_packet()");
-                  return -1;    
-             }    
+                  return -1;
+             }
              break;
 	case BAD_COOKIE:
 	     if (handle_bad_cookie(recv_buffer, size,
@@ -163,28 +163,28 @@ int handle_packet(int sock, char *address)
 	     }
 	     break;
 	case RESOURCE_LIMIT:
-             if (handle_resource_limit(recv_buffer, size, 
-				       inet_ntoa(sin.sin_addr)) == -1) { 
-                  log_print("handle_resource_limit() in handle_packet()"); 
-                  return -1; 
-             } 
+             if (handle_resource_limit(recv_buffer, size,
+				       inet_ntoa(sin.sin_addr)) == -1) {
+                  log_print("handle_resource_limit() in handle_packet()");
+                  return -1;
+             }
 	     break;
 	case VERIFICATION_FAILURE:
-             if (handle_verification_failure(recv_buffer, size,  
-					     inet_ntoa(sin.sin_addr)) == -1) {  
+             if (handle_verification_failure(recv_buffer, size,
+					     inet_ntoa(sin.sin_addr)) == -1) {
                   log_print("handle_verification_failure() in handle_packet()");
-                  return -1;  
-             }  
-             break; 
+                  return -1;
+             }
+             break;
 	case MESSAGE_REJECT:
-	     if (handle_message_reject(recv_buffer, size,   
+	     if (handle_message_reject(recv_buffer, size,
 				       inet_ntoa(sin.sin_addr)) == -1) {
                   log_print("handle_message_reject() in handle_packet()");
                   return -1;
              }
 	     break;
 	default:
-	     log_print("Unknown packet type %d in handle_packet()", 
+	     log_print("Unknown packet type %d in handle_packet()",
 		       header->type);
 	     return 0;
 	}
@@ -195,20 +195,20 @@ int handle_packet(int sock, char *address)
 void
 send_packet(void)
 {
-#ifdef DEBUG 
+#ifdef DEBUG
      struct cookie_request *header = (struct cookie_request *)packet_buffer;
-     int i = BUFFER_SIZE; 
-     bin2hex(buffer, &i, header->icookie, 16); 
-     printf("Sending %d bytes to %s, type %d with icookie: 0x%s\n", 
-	    packet_size, inet_ntoa(sin.sin_addr), header->type, buffer); 
-#endif 
+     int i = BUFFER_SIZE;
+     bin2hex(buffer, &i, header->icookie, 16);
+     printf("Sending %d bytes to %s, type %d with icookie: 0x%s\n",
+	    packet_size, inet_ntoa(sin.sin_addr), header->type, buffer);
+#endif
      /* We constructed a valid response packet here, send it off. */
-     if (sendto(global_socket, packet_buffer, packet_size, 0,  
-		(struct sockaddr *) &sin, sizeof(sin)) != packet_size) { 
-	  /* XXX Code to notify kernel of failure */ 
-	  log_error("sendto() in handle_packet()"); 
-	  return; 
-     } 
+     if (sendto(global_socket, packet_buffer, packet_size, 0,
+		(struct sockaddr *) &sin, sizeof(sin)) != packet_size) {
+	  /* XXX Code to notify kernel of failure */
+	  log_error("sendto() in handle_packet()");
+	  return;
+     }
 }
 
 /*
@@ -319,7 +319,7 @@ packet_dump(u_int8_t *packet, u_int16_t plen, u_int16_t start)
 {
      char tmp[73], dump[33];
      int i, size, len, off;
-     
+
      off = 0;
      while (off < plen) {
 	  memset(tmp, ' ', sizeof(tmp));

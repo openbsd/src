@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.h,v 1.14 2001/11/03 13:15:35 ho Exp $	*/
+/*	$OpenBSD: x509.h,v 1.15 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct x509_attribval {
 };
 
 /*
- * The acceptable certification authority. 
+ * The acceptable certification authority.
  * XXX We only support two names at the moment, as of ASN this can
  * be dynamic but we don't care for now.
  */

@@ -6,23 +6,23 @@
 
 /*
  * Copyright 1996,1997,1998 by Apple Computer, Inc.
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 // for *printf()
@@ -124,7 +124,7 @@ dump(char *name)
     dump_partition_map(map, 1);
 
     close_partition_map(map);
-    
+
     return 1;
 }
 
@@ -154,7 +154,7 @@ dump_block_zero(partition_map_header *map)
 	printf("Drivers-\n");
 	m = (DDMap *) p->sbMap;
 	for (i = 0; i < p->sbDrvrCount; i++) {
-	    printf("%u: @ %lu for %u, type=0x%x\n", i+1, 
+	    printf("%u: @ %lu for %u, type=0x%x\n", i+1,
 		   get_align_long(&m[i].ddBlock),
 		   m[i].ddSize, m[i].ddType);
 	}
@@ -272,7 +272,7 @@ dump_partition_entry(partition_map *entry, int type_length, int name_length, int
     } else {
 	printf("@~%-*lu", digits, p->dpme_pblock_start + p->dpme_lblock_start);
     }
-    
+
     bytes = ((double)size) * map->logical_block;
     adjust_value_and_compute_prefix(&bytes, &j);
     if (j != ' ' && j != 'K') {
@@ -346,7 +346,7 @@ list_all_disks()
 	error(errno, "can't allocate memory for try buffer");
 	return;
     }
-    
+
     for (iter = first_media_kind(&mark); iter != 0; iter = next_media_kind(&mark)) {
 
     	while ((name = step_media_iterator(iter)) != 0) {
@@ -415,7 +415,7 @@ show_data_structures(partition_map_header *map)
 		    (zp->sbDrvrCount>1)?"s":kStringEmpty);
 	    m = (DDMap *) zp->sbMap;
 	    for (i = 0; i < zp->sbDrvrCount; i++) {
-            printf("%u: @ %lu for %u, type=0x%x\n", i+1, 
+            printf("%u: @ %lu for %u, type=0x%x\n", i+1,
 		   get_align_long(&m[i].ddBlock),
 		   m[i].ddSize, m[i].ddType);
 	    }
@@ -531,7 +531,7 @@ full_dump_partition_entry(partition_map_header *map, int index)
 	printf("No such partition\n");
 	return;
     }
-    
+
     p = cur->data;
     printf("             signature: 0x%x\n", p->dpme_signature);
     printf("             reserved1: 0x%x\n", p->dpme_reserved_1);
@@ -564,7 +564,7 @@ full_dump_partition_entry(partition_map_header *map, int index)
     printf("boot length (in bytes): %10lu\n", p->dpme_boot_bytes);
     printf("          load address: 0x%08lx  0x%08lx\n",
 		(u32)p->dpme_load_addr, (u32)p->dpme_load_addr_2);
-    printf("         start address: 0x%08lx  0x%08lx\n", 
+    printf("         start address: 0x%08lx  0x%08lx\n",
 		(u32)p->dpme_goto_addr, (u32)p->dpme_goto_addr_2);
     printf("              checksum: 0x%08lx\n", p->dpme_checksum);
     printf("             processor: '%.32s'\n", p->dpme_process_id);
@@ -663,7 +663,7 @@ display_patches(partition_map *entry)
     long long offset;
     MEDIA m;
     static unsigned char *patch_block;
-    
+
     offset = entry->data->dpme_pblock_start;
     m = entry->the_map->m;
     offset = ((long long) entry->data->dpme_pblock_start) * entry->the_map->logical_block;

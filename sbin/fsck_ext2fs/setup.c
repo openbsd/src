@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.8 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: setup.c,v 1.9 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -221,11 +221,11 @@ setup(dev)
 	if (typemap == NULL) {
 		printf("cannot alloc %u bytes for typemap\n",
 		    (unsigned)(maxino + 1));
-		goto badsblabel; 
+		goto badsblabel;
 	}
 	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
-		printf("cannot alloc %u bytes for lncntp\n", 
+		printf("cannot alloc %u bytes for lncntp\n",
 			(unsigned)((maxino + 1) * sizeof(int16_t)));
 		goto badsblabel;
 	}
@@ -239,7 +239,7 @@ setup(dev)
 	inphead = (struct inoinfo **)calloc((unsigned)numdirs,
 		sizeof(struct inoinfo *));
 	if (inpsort == NULL || inphead == NULL) {
-		printf("cannot alloc %u bytes for inphead\n", 
+		printf("cannot alloc %u bytes for inphead\n",
 			(unsigned)(numdirs * sizeof(struct inoinfo *)));
 		goto badsblabel;
 	}

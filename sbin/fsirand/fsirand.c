@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.14 2002/02/16 21:27:35 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.15 2002/06/09 08:13:06 todd Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -27,9 +27,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.14 2002/02/16 21:27:35 millert Exp $";
-#endif /* not lint */                                                        
+#ifndef lint
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.15 2002/06/09 08:13:06 todd Exp $";
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/disklabel.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_message_reject.c,v 1.4 2001/01/28 22:45:09 niklas Exp $	*/
+/*	$OpenBSD: handle_message_reject.c,v 1.5 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_message_reject.c,v 1.4 2001/01/28 22:45:09 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_message_reject.c,v 1.5 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -63,15 +63,15 @@ handle_message_reject(u_char *packet, int size, char *address)
 
 	header = (struct message_reject *) packet;
 
-	if ((st = state_find_cookies(address, header->icookie, 
+	if ((st = state_find_cookies(address, header->icookie,
 				     header->rcookie)) == NULL) {
-	     log_print("No state for MESSAGE_REJECT message from %s", 
+	     log_print("No state for MESSAGE_REJECT message from %s",
 		       address);
 	     return -1;
 	}
 	
 	log_print("Received MESSAGE_REJECT from %s on message type %d "
 		  "offending offset %d", address, header->badtype,
-		  header->offset); 
+		  header->offset);
 	return 0;
 }

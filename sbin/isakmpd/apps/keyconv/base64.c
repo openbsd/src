@@ -1,4 +1,4 @@
-/* $OpenBSD: base64.c,v 1.2 2001/08/22 15:25:32 ho Exp $ */
+/* $OpenBSD: base64.c,v 1.3 2002/06/09 08:13:07 todd Exp $ */
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -109,9 +109,9 @@ static const char Pad64 = '=';
    end of the data is performed using the '=' character.
 
    Since all base64 input is an integral number of octets, only the
-         -------------------------------------------------                       
+         -------------------------------------------------
    following cases can arise:
-   
+
        (1) the final quantum of encoding input is an integral
            multiple of 24 bits; here, the final unit of encoded
 	   output will be an integral multiple of 4 characters
@@ -153,7 +153,7 @@ b64_ntop(u_char const *src, size_t srclength, char *target, size_t targsize) {
 		target[datalength++] = Base64[output[2]];
 		target[datalength++] = Base64[output[3]];
 	}
-    
+
 	/* Now we worry about padding. */
 	if (0 != srclength) {
 		/* Get what's left. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: api.c,v 1.6 2001/11/30 20:31:49 provos Exp $	*/
+/*	$OpenBSD: api.c,v 1.7 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: api.c,v 1.6 2001/11/30 20:31:49 provos Exp $";
+static char rcsid[] = "$OpenBSD: api.c,v 1.7 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #define _API_C_
@@ -73,7 +73,7 @@ start_exchange(int sd, struct stateob *st, char *address, int port)
      st->address[15] = '\0';
      st->port = port;
      st->initiator = 1;
-	     
+	
 
      /* Determine sender address before we invalidate buffer */
      sin.sin_addr.s_addr = inet_addr(st->address);
@@ -90,7 +90,7 @@ start_exchange(int sd, struct stateob *st, char *address, int port)
      /* Save the packets for later retransmits */
      packet_save(st, packet_buffer, packet_size);
 
-     if (sendto(sd, packet_buffer, packet_size, 0, 
+     if (sendto(sd, packet_buffer, packet_size, 0,
 		(struct sockaddr *) &sin, sizeof(sin)) != packet_size) {
 	  /* XXX Code to notify kernel of failure */
 	  log_error("sendto() in start_exchange() for %s:%d",
@@ -99,6 +99,6 @@ start_exchange(int sd, struct stateob *st, char *address, int port)
      }
 
      schedule_insert(TIMEOUT, retrans_timeout, st->icookie, COOKIE_SIZE);
-     
+
      return 0;
 }

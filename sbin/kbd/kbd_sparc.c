@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_sparc.c,v 1.5 1999/08/21 20:27:43 maja Exp $ */
+/*	$OpenBSD: kbd_sparc.c,v 1.6 2002/06/09 08:13:07 todd Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -168,7 +168,7 @@ kbd_find_default()
 	}
 	snprintf(defaultmap,sizeof(defaultmap),"type_%d_layout_%02x\0",t,l);
 
-	/* Check if it exist, if not use "type_4_layout_00" */ 
+	/* Check if it exist, if not use "type_4_layout_00" */
 	
 	ret = keymaps[0].name[0];
 	
@@ -176,8 +176,8 @@ kbd_find_default()
 		ok = 0;
 		for (j = 1; j < NUM_NAMES && keymaps[i].name[j]; j++)
 			ok |= (strcmp(keymaps[i].name[j],defaultmap) == 0);
-		if (ok) ret = keymaps[i].name[0]; 
-	}	  
+		if (ok) ret = keymaps[i].name[0];
+	}	
 
 	return(ret);
 
@@ -199,7 +199,7 @@ kbd_list()
 			printf(" %s", keymaps[i].name[j]);
 		if (keymaps[i].name[0] == defmap) printf(" default");
 		printf("\n");
-	}	  
+	}	
 }
 
 void

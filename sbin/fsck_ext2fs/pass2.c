@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.6 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.7 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ pass2check(idesc)
 	char namebuf[MAXPATHLEN + 1];
 	char pathbuf[MAXPATHLEN + 1];
 
-	/* 
+	/*
 	 * check for "."
 	 */
 	if (idesc->id_entryno != 0)
@@ -284,7 +284,7 @@ chk1:
 		dirp->e2d_reclen = proto.e2d_reclen;
 	}
 	if (fs2h32(dirp->e2d_ino) != 0 &&
-	    dirp->e2d_namlen == 2 && 
+	    dirp->e2d_namlen == 2 &&
 	    strncmp(dirp->e2d_name, "..", 2) == 0) {
 		inp->i_dotdot = fs2h32(dirp->e2d_ino);
 		if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&

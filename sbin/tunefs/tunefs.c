@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.19 2002/02/16 21:27:38 millert Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.20 2002/06/09 08:13:09 todd Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
 static const char rcsid[] =
-	"$OpenBSD: tunefs.c,v 1.19 2002/02/16 21:27:38 millert Exp $";
+	"$OpenBSD: tunefs.c,v 1.20 2002/06/09 08:13:09 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(argc, argv)
 	struct fstab *fs;
 	char *chg[2], device[MAXPATHLEN];
 
-	argc--, argv++; 
+	argc--, argv++;
 	if (argc < 2)
 		usage();
 	special = argv[argc - 1];

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 3.t,v 1.4 1996/10/20 08:36:45 tholo Exp $
+.\"	$OpenBSD: 3.t,v 1.5 2002/06/09 08:13:06 todd Exp $
 .\"	$NetBSD: 3.t,v 1.4 1996/10/11 20:15:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1982, 1993
@@ -73,11 +73,11 @@ Normally
 is run non-interactively.
 In this mode it will only fix
 corruptions that are expected to occur from an unclean halt.
-These actions are a proper subset of the actions that 
+These actions are a proper subset of the actions that
 .I fsck_ffs
 will take when it is running interactively.
-Throughout this paper we assume that 
-.I fsck_ffs 
+Throughout this paper we assume that
+.I fsck_ffs
 is being run interactively,
 and all possible errors can be encountered.
 When an inconsistency is discovered in this mode,
@@ -137,7 +137,7 @@ since they are statically determined by
 can check that these sizes are within reasonable bounds.
 All other file system checks require that these sizes be correct.
 If
-.I fsck_ffs 
+.I fsck_ffs
 detects corruption in the static parameters of the default super-block,
 .I fsck_ffs
 requests the operator to specify the location of an alternate super-block.
@@ -355,7 +355,7 @@ When found,
 will prompt the user to adjust the length of the offending directory
 which is done by shortening the size of the directory to the end of the
 last allocated block preceeding the hole.
-Unfortunately, this means that another Phase 1 run has to be done. 
+Unfortunately, this means that another Phase 1 run has to be done.
 .I Fsck
 will remind the user to rerun fsck after repairing a
 directory containing an unallocated block.
@@ -403,7 +403,7 @@ This condition only occurs when there has been a hardware failure.
 .SH
 \s+2Acknowledgements\s0
 .PP
-I thank Bill Joy, Sam Leffler, Robert Elz and Dennis Ritchie 
+I thank Bill Joy, Sam Leffler, Robert Elz and Dennis Ritchie
 for their suggestions and help in implementing the new file system.
 Thanks also to Robert Henry for his editorial input to
 get this document together.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheme.c,v 1.5 2001/01/28 22:45:16 niklas Exp $	*/
+/*	$OpenBSD: scheme.c,v 1.6 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,16 +35,16 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scheme.c,v 1.5 2001/01/28 22:45:16 niklas Exp $";
+static char rcsid[] = "$OpenBSD: scheme.c,v 1.6 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #define _SCHEME_C_
 
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/socket.h> 
-#include <netinet/in.h> 
-#include <arpa/inet.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "config.h"
 #include "attributes.h"
 #include "buffer.h"
@@ -55,20 +55,20 @@ u_int8_t *
 scheme_get_gen(u_int8_t *scheme)
 {
      int header;
-     switch(ntohs(*(u_int16_t *)scheme)) { 
-     case DH_G_2_MD5: 
-     case DH_G_3_MD5:  
-     case DH_G_2_DES_MD5:  
-     case DH_G_5_MD5:  
-     case DH_G_3_DES_MD5:  
-     case DH_G_2_3DES_SHA1:  
-     case DH_G_5_DES_MD5:  
-     case DH_G_3_3DES_SHA1:  
+     switch(ntohs(*(u_int16_t *)scheme)) {
+     case DH_G_2_MD5:
+     case DH_G_3_MD5:
+     case DH_G_2_DES_MD5:
+     case DH_G_5_MD5:
+     case DH_G_3_DES_MD5:
+     case DH_G_2_3DES_SHA1:
+     case DH_G_5_DES_MD5:
+     case DH_G_3_3DES_SHA1:
      case DH_G_5_3DES_SHA1:
 	  return NULL;
-     case DH_G_VAR_MD5: 
-     case DH_G_VAR_DES_MD5: 
-     case DH_G_VAR_3DES_SHA1: 
+     case DH_G_VAR_MD5:
+     case DH_G_VAR_DES_MD5:
+     case DH_G_VAR_3DES_SHA1:
 	  if (scheme[2] == 255 && scheme[3] == 255)
 	       header = 8;
 	  else if (scheme[2] == 255)
@@ -76,26 +76,26 @@ scheme_get_gen(u_int8_t *scheme)
 	  else
 	       header = 2;
 	  return scheme+2+header;
-     default: 
-          log_print("Unknown scheme in scheme_get_gen()"); 
-          return NULL; 
+     default:
+          log_print("Unknown scheme in scheme_get_gen()");
+          return NULL;
      }
 }
- 
-u_int8_t * 
-scheme_get_mod(u_int8_t *scheme) 
+
+u_int8_t *
+scheme_get_mod(u_int8_t *scheme)
 {
      int header;
      switch(ntohs(*(u_int16_t *)scheme)) {
      case DH_G_2_MD5:
-     case DH_G_3_MD5: 
-     case DH_G_2_DES_MD5: 
-     case DH_G_5_MD5: 
-     case DH_G_3_DES_MD5: 
-     case DH_G_2_3DES_SHA1: 
-     case DH_G_5_DES_MD5: 
-     case DH_G_3_3DES_SHA1: 
-     case DH_G_5_3DES_SHA1: 
+     case DH_G_3_MD5:
+     case DH_G_2_DES_MD5:
+     case DH_G_5_MD5:
+     case DH_G_3_DES_MD5:
+     case DH_G_2_3DES_SHA1:
+     case DH_G_5_DES_MD5:
+     case DH_G_3_3DES_SHA1:
+     case DH_G_5_3DES_SHA1:
 	  return scheme+2;
 	  break;
      case DH_G_VAR_MD5:
@@ -121,36 +121,36 @@ scheme_get_mod(u_int8_t *scheme)
 size_t
 scheme_get_len(u_int8_t *scheme)
 {
-     return 2 + varpre2octets(scheme + 2); 
+     return 2 + varpre2octets(scheme + 2);
 }
 
 u_int16_t
 scheme_get_ref(u_int8_t *scheme)
 {
-     switch(ntohs(*(u_int16_t *)scheme)) { 
-     case DH_G_2_MD5: 
-     case DH_G_2_DES_MD5:  
-     case DH_G_2_3DES_SHA1:  
+     switch(ntohs(*(u_int16_t *)scheme)) {
+     case DH_G_2_MD5:
+     case DH_G_2_DES_MD5:
+     case DH_G_2_3DES_SHA1:
 	  return DH_G_2_MD5;
-     case DH_G_3_MD5:  
-     case DH_G_3_DES_MD5:  
-     case DH_G_3_3DES_SHA1: 
+     case DH_G_3_MD5:
+     case DH_G_3_DES_MD5:
+     case DH_G_3_3DES_SHA1:
 	  return DH_G_3_MD5;
-     case DH_G_5_MD5:  
-     case DH_G_5_DES_MD5:  
-     case DH_G_5_3DES_SHA1: 
+     case DH_G_5_MD5:
+     case DH_G_5_DES_MD5:
+     case DH_G_5_3DES_SHA1:
 	  return DH_G_5_MD5;
-     case DH_G_VAR_MD5: 
-     case DH_G_VAR_DES_MD5: 
-     case DH_G_VAR_3DES_SHA1: 
+     case DH_G_VAR_MD5:
+     case DH_G_VAR_DES_MD5:
+     case DH_G_VAR_3DES_SHA1:
           return DH_G_VAR_MD5;
-     default: 
-          log_print("Unknown scheme in scheme_get_ref()"); 
-          return 0; 
-     } 
+     default:
+          log_print("Unknown scheme in scheme_get_ref()");
+          return 0;
+     }
 }
 
-size_t 
+size_t
 varpre2octets(u_int8_t *varpre)
 {
 	int blocks, header;
@@ -159,7 +159,7 @@ varpre2octets(u_int8_t *varpre)
 	/* XXX - only support a few octets at the moment */
 	if(varpre[0] == 255 && varpre[1] == 255)
 		return (0);
-     
+
 	size = 0;
 	if (varpre[0] == 255) {
 		blocks = 3;

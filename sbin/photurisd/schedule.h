@@ -1,4 +1,4 @@
-/* $OpenBSD: schedule.h,v 1.3 2001/01/28 22:45:16 niklas Exp $ */
+/* $OpenBSD: schedule.h,v 1.4 2002/06/09 08:13:08 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,10 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * schedule.h: 
+ * schedule.h:
  * schedule events like retransmission and clean ups.
  */
- 
+
 #ifndef _SCHEDULE_H_
 #define _SCHEDULE_H_
 
@@ -40,7 +40,7 @@
 #include "packets.h"
 
 #undef EXTERN
- 
+
 #ifdef _SCHEDULE_C_
 #define EXTERN
 #else
@@ -73,7 +73,7 @@ struct schedule {
 EXTERN void schedule_process(int sock);
 EXTERN int schedule_next(void);
 EXTERN int schedule_offset(int type, u_int8_t *cookie);
-EXTERN void schedule_insert(int type, int off, u_int8_t *cookie, 
+EXTERN void schedule_insert(int type, int off, u_int8_t *cookie,
 			    u_int16_t cookie_size);
 EXTERN void schedule_remove(int type, u_int8_t *cookie);
 EXTERN void init_schedule(void);

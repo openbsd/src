@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: log.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -88,11 +88,11 @@ _log_get_class (int error_class)
 }
 
 static void
-_log_print (int error, int syslog_level, const char *fmt, va_list ap, 
+_log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	    int class, int level)
 {
   char buffer[LOG_SIZE], nbuf[LOG_SIZE + 32];
-  static const char fallback_msg[] = 
+  static const char fallback_msg[] =
     "write to log file failed (errno %d), redirecting output to syslog";
   int len;
   struct tm *tm;
@@ -108,11 +108,11 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
       t = now.tv_sec;
       tm = localtime (&t);
       if (class >= 0)
-	sprintf (nbuf, "%02d%02d%02d.%06ld %s %02d ", tm->tm_hour, 
-		 tm->tm_min, tm->tm_sec, now.tv_usec, _log_get_class (class), 
+	sprintf (nbuf, "%02d%02d%02d.%06ld %s %02d ", tm->tm_hour,
+		 tm->tm_min, tm->tm_sec, now.tv_usec, _log_get_class (class),
 		 level);
       else /* LOG_PRINT (-1) or LOG_REPORT (-2) */
-	sprintf (nbuf, "%02d%02d%02d.%06ld %s ", tm->tm_hour, 
+	sprintf (nbuf, "%02d%02d%02d.%06ld %s ", tm->tm_hour,
 		 tm->tm_min, tm->tm_sec, now.tv_usec,
 		 class == LOG_PRINT ? "Default" : "Report>");	
       strcat (nbuf, buffer);
@@ -124,11 +124,11 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	  syslog (LOG_ALERT, fallback_msg, errno);
 	  fprintf (log_output, fallback_msg, errno);
 
-	  /* 
+	  /*
 	   * Close log_output to prevent isakmpd from locking the file.
 	   * We may need to explicitly close stdout to do this properly.
 	   * XXX - Figure out how to match two FILE *'s and rewrite.
-	   */  
+	   */
 	  if (fileno (log_output) != -1)
 	    if (fileno (stdout) == fileno (log_output))
 	      fclose (stdout);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.7 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.8 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: badsect.c,v 1.7 2002/02/16 21:27:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: badsect.c,v 1.8 2002/06/09 08:13:05 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ main(argc, argv)
 	}
 
 	/*
-	 * We've found the block device, but since the filesystem 
+	 * We've found the block device, but since the filesystem
 	 * is mounted, we must write to the raw (character) device
 	 * instead. This is not guaranteed to work if someone has a
 	 * /dev that doesn't follow standard naming conventions, but

@@ -1,4 +1,4 @@
-/*	$OpenBSD: attributes.h,v 1.3 2001/01/28 22:45:06 niklas Exp $	*/
+/*	$OpenBSD: attributes.h,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -56,7 +56,7 @@
 /* XXX - Only for the moment */
 #define DH_G_2_MD5          2
 #define DH_G_3_MD5          3
-#define DH_G_2_DES_MD5      4    
+#define DH_G_2_DES_MD5      4
 #define DH_G_5_MD5          5
 #define DH_G_3_DES_MD5      6
 #define DH_G_VAR_MD5        7
@@ -91,9 +91,9 @@ EXTERN void clearattrib(void);
 EXTERN void get_attrib_section(u_int8_t *, u_int16_t, u_int8_t **, u_int16_t *,
 			       u_int8_t);
 
-EXTERN int isinattrib(u_int8_t *attributes, u_int16_t attribsize, 
+EXTERN int isinattrib(u_int8_t *attributes, u_int16_t attribsize,
 		      u_int8_t attribute);
-EXTERN int isattribsubset(u_int8_t *set, u_int16_t setsize, 
+EXTERN int isattribsubset(u_int8_t *set, u_int16_t setsize,
 			  u_int8_t *subset, u_int16_t subsetsize);
 EXTERN attribute_list *attrib_new(void);
 EXTERN int attrib_insert(attribute_list *);

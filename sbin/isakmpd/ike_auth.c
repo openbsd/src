@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.63 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.64 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -1251,7 +1251,7 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
   else
     LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: file %s not found",
 	     filename));
-  
+
   return (*rsa ? 0 : -1);
 }
 #endif /* USE_RAWKEY */

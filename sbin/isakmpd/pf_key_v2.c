@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.106 2002/06/07 06:37:08 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.107 2002/06/09 08:13:06 todd Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ pf_key_v2_read (u_int32_t seq)
 	  if (!fds)
 	    {
 	      log_error ("pf_key_v2_read: calloc (%lu, %lu) failed",
-			 (unsigned long)howmany (pf_key_v2_socket + 1, 
+			 (unsigned long)howmany (pf_key_v2_socket + 1,
 						 NFDBITS),
 			 (unsigned long)sizeof (fd_mask));
 	      goto cleanup;
@@ -2199,7 +2199,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 	return 0;
       snprintf (addrbuf + strlen (addrbuf), ADDRESS_MAX - strlen (addrbuf),
 		"/%d", pf_key_v2_mask_to_bits ((u_int32_t)
-					       *(addr + 
+					       *(addr +
 						 sizeof (struct in_addr))));
       *reslen = strlen (addrbuf);
       res = strdup (addrbuf);
@@ -2214,7 +2214,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
       if (inet_ntop (AF_INET6, addr, addrbuf, ADDRESS_MAX) == NULL)
 	return 0;
       snprintf (addrbuf + strlen (addrbuf), ADDRESS_MAX - strlen (addrbuf),
-		"/%d", pf_key_v2_mask6_to_bits (addr + 
+		"/%d", pf_key_v2_mask6_to_bits (addr +
 						sizeof (struct in6_addr)));
       *reslen = strlen (addrbuf);
       res = strdup (addrbuf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.74 2002/05/22 08:21:01 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.75 2002/06/09 08:13:05 todd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.74 2002/05/22 08:21:01 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.75 2002/06/09 08:13:05 todd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -417,7 +417,7 @@ writelabel(f, boot, lp)
 		struct partition *pp = &lp->d_partitions[2];
 
 		/*
-		 * If OpenBSD DOS partition is missing, or if 
+		 * If OpenBSD DOS partition is missing, or if
 		 * the label to be written is not within partition,
 		 * prompt first. Need to allow this in case operator
 		 * wants to convert the drive for dedicated use.
@@ -953,7 +953,7 @@ makedisktab(f, lp)
 			(void)fprintf(f, "o%c#%u:", c, pp->p_offset);
 			if (pp->p_fstype != FS_UNUSED) {
 				if ((unsigned) pp->p_fstype < FSMAXTYPES)
-					(void)fprintf(f, "t%c=%s:", c, 
+					(void)fprintf(f, "t%c=%s:", c,
 					    fstypenames[pp->p_fstype]);
 				else
 					(void)fprintf(f, "t%c=unknown%d:",
@@ -1077,7 +1077,7 @@ display_partition(f, lp, mp, i, unit, width)
 			else
 				putc(' ', f);
 			fprintf(f, "- %u",
-			    (pp->p_offset + 
+			    (pp->p_offset +
 			    pp->p_size + lp->d_secpercyl - 1) /
 			    lp->d_secpercyl - 1);
 			if ((pp->p_offset + pp->p_size) % lp->d_secpercyl)

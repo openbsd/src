@@ -1,4 +1,4 @@
-/*	$OpenBSD: validity.c,v 1.4 2001/01/28 22:45:18 niklas Exp $	*/
+/*	$OpenBSD: validity.c,v 1.5 2002/06/09 08:13:09 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: validity.c,v 1.4 2001/01/28 22:45:18 niklas Exp $";
+static char rcsid[] = "$OpenBSD: validity.c,v 1.5 2002/06/09 08:13:09 todd Exp $";
 #endif
 
 #define _VALIDITY_C_
@@ -44,9 +44,9 @@ static char rcsid[] = "$OpenBSD: validity.c,v 1.4 2001/01/28 22:45:18 niklas Exp
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/socket.h> 
-#include <netinet/in.h> 
-#include <arpa/inet.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <md5.h>
 #include <sha1.h>
 #include "config.h"
@@ -80,96 +80,96 @@ get_validity_verification_size(struct stateob *st)
      case DH_G_5_3DES_SHA1:
 	  return (160/8)+2;
      default:
-	  log_print("validitiy.c: Unknown exchange scheme: %d\n", 
+	  log_print("validitiy.c: Unknown exchange scheme: %d\n",
 		    *((u_int16_t *)st->scheme));
 	  return 0;
      }
 }
 
 int
-create_validity_verification(struct stateob *st, u_int8_t *buffer, 
+create_validity_verification(struct stateob *st, u_int8_t *buffer,
 			     u_int8_t *packet, u_int16_t size)
 {
      struct idxform *hash;
 
-     switch(ntohs(*((u_int16_t *)st->scheme))) { 
-     case DH_G_2_MD5: 
-     case DH_G_3_MD5: 
-     case DH_G_5_MD5: 
-     case DH_G_2_DES_MD5: 
-     case DH_G_3_DES_MD5: 
-     case DH_G_5_DES_MD5: 
+     switch(ntohs(*((u_int16_t *)st->scheme))) {
+     case DH_G_2_MD5:
+     case DH_G_3_MD5:
+     case DH_G_5_MD5:
+     case DH_G_2_DES_MD5:
+     case DH_G_3_DES_MD5:
+     case DH_G_5_DES_MD5:
 	  hash = get_hash(HASH_MD5);
 	  break;
-     case DH_G_2_3DES_SHA1: 
-     case DH_G_3_3DES_SHA1: 
-     case DH_G_5_3DES_SHA1: 
+     case DH_G_2_3DES_SHA1:
+     case DH_G_3_3DES_SHA1:
+     case DH_G_5_3DES_SHA1:
           hash = get_hash(HASH_SHA1);
 	  break;
-     default: 
-          log_print("validity.c: Unknown exchange scheme: %d\n",  
-                    *((u_int16_t *)st->scheme)); 
-          return 0; 
+     default:
+          log_print("validity.c: Unknown exchange scheme: %d\n",
+                    *((u_int16_t *)st->scheme));
+          return 0;
      }
 
-     if(valsign(st, hash, buffer+2, packet, size)) { 
-          /* Create varpre number from digest */ 
-          buffer[0] = (hash->hashsize >> 5) & 0xFF; 
-          buffer[1] = (hash->hashsize << 3) & 0xFF; 
-     } 
+     if(valsign(st, hash, buffer+2, packet, size)) {
+          /* Create varpre number from digest */
+          buffer[0] = (hash->hashsize >> 5) & 0xFF;
+          buffer[1] = (hash->hashsize << 3) & 0xFF;
+     }
 
      state_save_verification(st, buffer, hash->hashsize+2);
 
      return hash->hashsize+2;
 }
 
-int 
-verify_validity_verification(struct stateob *st, u_int8_t *buffer,  
-                    u_int8_t *packet, u_int16_t size) 
-{ 
+int
+verify_validity_verification(struct stateob *st, u_int8_t *buffer,
+                    u_int8_t *packet, u_int16_t size)
+{
      struct idxform *hash;
 
-     switch(ntohs(*((u_int16_t *)st->scheme))) {  
-     case DH_G_2_MD5:  
-     case DH_G_3_MD5:  
-     case DH_G_5_MD5:  
-     case DH_G_2_DES_MD5:  
-     case DH_G_3_DES_MD5:  
-     case DH_G_5_DES_MD5:  
+     switch(ntohs(*((u_int16_t *)st->scheme))) {
+     case DH_G_2_MD5:
+     case DH_G_3_MD5:
+     case DH_G_5_MD5:
+     case DH_G_2_DES_MD5:
+     case DH_G_3_DES_MD5:
+     case DH_G_5_DES_MD5:
 	  if (varpre2octets(buffer) != 18)
 	       return 0;
 	  hash = get_hash(HASH_MD5);
 	  break;
-     case DH_G_2_3DES_SHA1:  
-     case DH_G_3_3DES_SHA1:  
-     case DH_G_5_3DES_SHA1:  
+     case DH_G_2_3DES_SHA1:
+     case DH_G_3_3DES_SHA1:
+     case DH_G_5_3DES_SHA1:
 	  if (varpre2octets(buffer) != 22)
 	       return 0;
 	  hash = get_hash(HASH_SHA1);
 	  break;
-     default:  
-	  log_print("validity.c: Unknown exchange scheme: %d\n",   
-                    *((u_int16_t *)st->scheme));  
-          return 0;  
-     }  
+     default:
+	  log_print("validity.c: Unknown exchange scheme: %d\n",
+                    *((u_int16_t *)st->scheme));
+          return 0;
+     }
 
      state_save_verification(st, buffer, hash->hashsize+2);
 
      return valverify(st, hash, buffer+2, packet, size);
-} 
+}
 
 
 int
-valsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,  
-	u_int8_t *packet, u_int16_t psize) 
+valsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
+	u_int8_t *packet, u_int16_t psize)
 {
      u_int8_t key[HASH_MAX];
      u_int16_t keylen = HASH_MAX;
 
      create_verification_key(st, key, &keylen, 1); /* Owner direction */
- 
-     hash->Init(hash->ctx); 
- 
+
+     hash->Init(hash->ctx);
+
      hash->Update(hash->ctx, key, keylen);
 
      hash->Update(hash->ctx, st->icookie, COOKIE_SIZE);
@@ -181,15 +181,15 @@ valsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
      hash->Update(hash->ctx, st->oSPIidentver, st->oSPIidentversize);
      hash->Update(hash->ctx, st->uSPIidentver, st->uSPIidentversize);
 
-     packet += 4 + SPI_SIZE + hash->hashsize + 2; 
+     packet += 4 + SPI_SIZE + hash->hashsize + 2;
      psize -=  4 + SPI_SIZE + hash->hashsize + 2;
      hash->Update(hash->ctx, packet, psize);
 
      /* Data fill */
-     hash->Final(NULL, hash->ctx); 
+     hash->Final(NULL, hash->ctx);
 
      hash->Update(hash->ctx, key, keylen);
-     hash->Final(signature, hash->ctx); 
+     hash->Final(signature, hash->ctx);
 
      return hash->hashsize;
 }
@@ -197,7 +197,7 @@ valsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
 /* We assume that the verification field is zeroed */
 
 int
-valverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,   
+valverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,
 	  u_int8_t *packet, u_int16_t psize)
 {
      u_int8_t digest[HASH_MAX];
@@ -205,9 +205,9 @@ valverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,
      u_int16_t keylen = HASH_MAX;
 
      create_verification_key(st, key, &keylen, 0); /* User direction */
- 
-     hash->Init(hash->ctx); 
- 
+
+     hash->Init(hash->ctx);
+
      hash->Update(hash->ctx, key, keylen);
 
      hash->Update(hash->ctx, st->icookie, COOKIE_SIZE);
@@ -219,15 +219,15 @@ valverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,
      hash->Update(hash->ctx, st->uSPIidentver, st->uSPIidentversize);
      hash->Update(hash->ctx, st->oSPIidentver, st->oSPIidentversize);
 
-     packet += 4 + SPI_SIZE + hash->hashsize + 2; 
+     packet += 4 + SPI_SIZE + hash->hashsize + 2;
      psize -=  4 + SPI_SIZE + hash->hashsize + 2;
      hash->Update(hash->ctx, packet, psize);
 
      /* Data fill */
-     hash->Final(NULL, hash->ctx); 
+     hash->Final(NULL, hash->ctx);
 
      hash->Update(hash->ctx, key, keylen);
-     hash->Final(digest, hash->ctx); 
+     hash->Final(digest, hash->ctx);
 
      return !bcmp(digest,signature,hash->hashsize);
 }

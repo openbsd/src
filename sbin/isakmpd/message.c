@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.53 2002/06/06 02:42:29 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.54 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1229,13 +1229,13 @@ message_send (struct message *msg)
 #endif
   msg->flags |= MSG_IN_TRANSIT;
   exchange->in_transit = msg;
-  
+
   /*
    * If we get a retransmission of a message before our response
    * has left the queue, don't queue it again, as it will result
    * in a circular list.
    */
-  q = msg->flags & MSG_PRIORITIZED ? &msg->transport->prio_sendq : 
+  q = msg->flags & MSG_PRIORITIZED ? &msg->transport->prio_sendq :
     &msg->transport->sendq;
 
   for (m = TAILQ_FIRST (q); m; m = TAILQ_NEXT (m, link))
@@ -1537,7 +1537,7 @@ message_dump_raw (char *header, struct message *msg, int class)
   for (i = 0; i < msg->iovlen; i++)
     for (j = 0; j < msg->iov[i].iov_len; j++)
       {
-	snprintf (p, 80 - (int)(p - buf), "%02x", 
+	snprintf (p, 80 - (int)(p - buf), "%02x",
 		  ((u_int8_t *)msg->iov[i].iov_base)[j]);
 	p += 2;
 	if (++k % 32 == 0)

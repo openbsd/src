@@ -1,4 +1,4 @@
-/* $OpenBSD: encrypt.h,v 1.3 2001/01/28 22:45:07 niklas Exp $ */
+/* $OpenBSD: encrypt.h,v 1.4 2002/06/09 08:13:08 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,24 +33,24 @@
  * prototypes for photuris_packet_encrypt.c
  */
 
-#ifndef _ENCRYPT_H_ 
-#define _ENCRYPT_H_ 
- 
-#include "state.h" 
- 
-#undef EXTERN 
-  
-#ifdef _ENCRYPT_C_ 
-#define EXTERN 
-#else 
-#define EXTERN extern 
+#ifndef _ENCRYPT_H_
+#define _ENCRYPT_H_
+
+#include "state.h"
+
+#undef EXTERN
+
+#ifdef _ENCRYPT_C_
+#define EXTERN
+#else
+#define EXTERN extern
 #endif
 
-EXTERN int packet_create_padding(struct stateob *st, u_int16_t size, 
+EXTERN int packet_create_padding(struct stateob *st, u_int16_t size,
 				 u_int8_t *padd,  u_int16_t *rsize);
-EXTERN int packet_encrypt(struct stateob *st, 
+EXTERN int packet_encrypt(struct stateob *st,
 			  u_int8_t *payload, u_int16_t payloadlen);
-EXTERN int packet_decrypt(struct stateob *st, 
+EXTERN int packet_decrypt(struct stateob *st,
 			  u_int8_t *payload, u_int16_t *payloadlen);
 
 #endif /* _ENCRYPT_H_ */

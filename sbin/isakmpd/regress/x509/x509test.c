@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.18 2002/01/03 16:27:41 ho Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.19 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ x509_check_subjectaltname (u_char *id, u_int id_len, X509 *scert)
       return 0;
     }
 
-  /* 
+  /*
    * Now that we have the X509 certicate in native form, get the
    * subjectAltName extension and verify that it matches our ID.
    */
@@ -129,15 +129,15 @@ x509_check_subjectaltname (u_char *id, u_int id_len, X509 *scert)
   switch (idtype)
     {
     case IPSEC_ID_IPV4_ADDR:
-      if (type == X509v3_IP_ADDR) 
+      if (type == X509v3_IP_ADDR)
 	ret = 1;
       break;
     case IPSEC_ID_FQDN:
-      if (type == X509v3_DNS_NAME) 
+      if (type == X509v3_DNS_NAME)
 	ret = 1;
       break;
     case IPSEC_ID_USER_FQDN:
-      if (type == X509v3_RFC_NAME) 
+      if (type == X509v3_RFC_NAME)
 	ret = 1;
       break;
     default:
@@ -201,7 +201,7 @@ main (int argc, char *argv[])
 
   printf ("Reading private key %s\n", argv[1]);
   keyfile = LC (BIO_new, (LC (BIO_s_file, ())));
-  if (LC (BIO_read_filename, (keyfile, argv[1])) == -1) 
+  if (LC (BIO_read_filename, (keyfile, argv[1])) == -1)
     {
       perror ("read");
       exit (1);
@@ -221,7 +221,7 @@ main (int argc, char *argv[])
   /* Use a certificate created by ssleay.  */
   printf ("Reading ssleay created certificate %s\n", argv[2]);
   certfile = LC (BIO_new, (LC (BIO_s_file, ())));
-  if (LC (BIO_read_filename, (certfile, argv[2])) == -1) 
+  if (LC (BIO_read_filename, (certfile, argv[2])) == -1)
     {
       perror ("read");
       exit (1);
@@ -232,7 +232,7 @@ main (int argc, char *argv[])
   cert = LC (PEM_read_bio_X509, (certfile, NULL, NULL));
 #endif
   LC (BIO_free, (certfile));
-  if (cert == NULL) 
+  if (cert == NULL)
     {
       printf("PEM_read_bio_X509 () failed\n");
       exit (1);
@@ -252,7 +252,7 @@ main (int argc, char *argv[])
   strlcpy (dec, "Eine kleine Testmeldung", 256);
   if ((len = LC (RSA_private_encrypt, (strlen (dec), dec, enc, priv_key,
 				       RSA_PKCS1_PADDING))) == -1)
-  
+
     printf ("SIGN FAILED ");
   else
     err = LC (RSA_public_decrypt, (len, enc, dec, pub_key, RSA_PKCS1_PADDING));
@@ -262,7 +262,7 @@ main (int argc, char *argv[])
   else
     printf ("OKAY");
   printf ("\n");
-  
+
 
   printf ("Validate SIGNED: ");
   err = LC (X509_verify, (cert, pkey_pub));

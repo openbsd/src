@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.15 2002/01/18 08:38:26 kjell Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.16 2002/06/09 08:13:05 todd Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -110,7 +110,7 @@ MBR_parse(disk, mbr_buf, offset, reloff, mbr)
 	mbr->signature = getshort(&mbr_buf[MBR_SIG_OFF]);
 
 	for (i = 0; i < NDOSPART; i++)
-		PRT_parse(disk, &mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i], 
+		PRT_parse(disk, &mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i],
 		    offset, reloff, &mbr->part[i], i);
 }
 
@@ -125,7 +125,7 @@ MBR_make(mbr, mbr_buf)
 	putshort(&mbr_buf[MBR_SIG_OFF], mbr->signature);
 
 	for (i = 0; i < NDOSPART; i++)
-		PRT_make(&mbr->part[i], mbr->offset, mbr->reloffset, 
+		PRT_make(&mbr->part[i], mbr->offset, mbr->reloffset,
 		    &mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i]);
 }
 
@@ -185,14 +185,14 @@ MBR_write(fd, where, buf)
 	return (0);
 }
 
-void 
+void
 MBR_pcopy(disk, mbr)
 	disk_t *disk;
 	mbr_t *mbr;
 {
-	/* 
+	/*
 	 * Copy partition table from the disk indicated
-	 * to the supplied mbr structure 
+	 * to the supplied mbr structure
 	 */
 
 	int i, fd, offset = 0, reloff = 0;
@@ -205,7 +205,7 @@ MBR_pcopy(disk, mbr)
 	MBR_parse(disk, mbr_disk, offset, reloff, &mbrd);
 	for (i = 0; i < NDOSPART; i++) {
 		PRT_parse(disk, &mbr_disk[MBR_PART_OFF +
-					 MBR_PART_SIZE * i], 
+					 MBR_PART_SIZE * i],
 			  offset, reloff, &mbr->part[i], i);
 		PRT_print(i, &mbr->part[i], NULL);
 	}

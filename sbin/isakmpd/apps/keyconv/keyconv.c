@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyconv.c,v 1.3 2002/01/23 18:13:50 ho Exp $	*/
+/*	$OpenBSD: keyconv.c,v 1.4 2002/06/09 08:13:07 todd Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Hakan Olsson.  All rights reserved.
@@ -698,7 +698,7 @@ convert_openssl_to_dns (char *file_in, char *file_out)
     {
       /*
        * OpenSSL never stores private and public key values, so
-       * we have to regenerate them from p and g. 
+       * we have to regenerate them from p and g.
        */
       if (DH_generate_key (dh) == 0)
 	{

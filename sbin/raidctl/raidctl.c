@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.17 2002/03/31 13:12:09 tdeval Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.18 2002/06/09 08:13:09 todd Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -37,8 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
- * This program is a re-write of the original rf_ctrl program 
+/*
+ * This program is a re-write of the original rf_ctrl program
  * distributed by CMU with RAIDframe 1.1.
  *
  * This program is the userland interface to the RAIDframe kernel
@@ -133,7 +133,7 @@ main(argc, argv)
 	force = 0;
 	actionstr = NULL;
 
-	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:r:R:sSpPuv")) 
+	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:r:R:sSpPuv"))
 	       != -1)
 		switch(ch) {
 		case 'a':
@@ -193,7 +193,7 @@ main(argc, argv)
 			serial_number = atoi(optarg);
 			num_options++;
 			break;
-		case 'l': 
+		case 'l':
 			action = RAIDFRAME_SET_COMPONENT_LABEL;
 			strlcpy(component, optarg, PATH_MAX);
 			num_options++;
@@ -238,7 +238,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((num_options > 1) || (argc == NULL)) 
+	if ((num_options > 1) || (argc == NULL))
 		usage();
 
 	strlcpy(name, argv[0], PATH_MAX);
@@ -305,7 +305,7 @@ main(argc, argv)
 	case RAIDFRAME_REWRITEPARITY:
 		i = nfd;
 		while (i--) {
-			do_ioctl(fds[i].fd, RAIDFRAME_REWRITEPARITY, NULL, 
+			do_ioctl(fds[i].fd, RAIDFRAME_REWRITEPARITY, NULL,
 				 "RAIDFRAME_REWRITEPARITY");
 		}
 		actionstr = "Parity Re-Write";
@@ -377,10 +377,10 @@ rf_configure(fds, config_file, force)
 	
 	cfg.force = force;
 
-	/* 
+	/*
 	 * Note the extra level of redirection needed here, since
-	 * what we really want to pass in is a pointer to the pointer to 
-	 * the configuration structure. 
+	 * what we really want to pass in is a pointer to the pointer to
+	 * the configuration structure.
 	 */
 
 	generic = (void *) &cfg;
@@ -432,14 +432,14 @@ rf_get_device_status(fds, nfd)
 
 		printf("raid%d Components:\n", fds[i].id);
 		for (j = 0; j < device_config.ndevs; j++) {
-			printf("%20s: %s\n", device_config.devs[j].devname, 
+			printf("%20s: %s\n", device_config.devs[j].devname,
 			       device_status(device_config.devs[j].status));
 		}
 		if (device_config.nspares > 0) {
 			printf("Spares:\n");
 			for (j = 0; j < device_config.nspares; j++) {
 				printf("%20s: %s\n",
-				       device_config.spares[j].devname, 
+				       device_config.spares[j].devname,
 				       device_status(device_config.spares[j].status));
 			}
 		} else {
@@ -461,11 +461,11 @@ rf_get_device_status(fds, nfd)
 
 			if (device_config.nspares > 0) {
 				for(j=0; j < device_config.nspares; j++) {
-					if ((device_config.spares[j].status == 
+					if ((device_config.spares[j].status ==
 					     rf_ds_optimal) ||
-					    (device_config.spares[j].status == 
+					    (device_config.spares[j].status ==
 					     rf_ds_used_spare)) {
-						get_component_label(&fds[i], 
+						get_component_label(&fds[i],
 						   device_config.spares[j].devname);
 					} else {
 						printf("%s status is: %s.  "
@@ -554,8 +554,8 @@ rf_output_configuration(fds, nfd)
 		    "# sectPerSU SUsPerParityUnit SUsPerReconUnit "
 		    "RAID_level_%c\n",
 		    (char) component_label.parityConfig);
-		printf("%d %d %d %c\n", 
-		    component_label.sectPerSU, component_label.SUsPerPU, 
+		printf("%d %d %d %c\n",
+		    component_label.sectPerSU, component_label.SUsPerPU,
 		    component_label.SUsPerRU,
 		    (char) component_label.parityConfig);
 		printf("\n");
@@ -595,14 +595,14 @@ get_component_number(fds, component_name, component_number, num_columns)
 	}
 	if (!found) { /* maybe it's a spare? */
 		for (i = 0; i < device_config.nspares; i++) {
-			if (strncmp(component_name, 
+			if (strncmp(component_name,
 				    device_config.spares[i].devname,
 				    PATH_MAX) == 0) {
 				found = 1;
 				*component_number = i + device_config.ndevs;
 				/* the way spares are done should
 				   really change... */
-				*num_columns = device_config.cols + 
+				*num_columns = device_config.cols +
 					device_config.nspares;
 			}
 		}
@@ -631,7 +631,7 @@ rf_fail_disk(fds, component_to_fail, do_recon)
 	} else {
 		recon_request.flags = RF_FDFLAGS_NONE;
 	}
-	do_ioctl(fds->fd, RAIDFRAME_FAIL_DISK, &recon_request, 
+	do_ioctl(fds->fd, RAIDFRAME_FAIL_DISK, &recon_request,
 		 "RAIDFRAME_FAIL_DISK");
 	if (do_recon && verbose) {
 		printf("Reconstruction status:\n");
@@ -663,22 +663,22 @@ get_component_label(fds, component)
 	printf("Component label for %s:\n", component);
 
 	printf("   Row: %d, Column: %d, Num Rows: %d, Num Columns: %d\n",
-	       component_label.row, component_label.column, 
+	       component_label.row, component_label.column,
 	       component_label.num_rows, component_label.num_columns);
 	printf("   Version: %d, Serial Number: %d, Mod Counter: %d\n",
 	       component_label.version, component_label.serial_number,
 	       component_label.mod_counter);
 	printf("   Clean: %s, Status: %d\n",
-	       component_label.clean ? "Yes" : "No", 
+	       component_label.clean ? "Yes" : "No",
 	       component_label.status);
 	printf("   sectPerSU: %d, SUsPerPU: %d, SUsPerRU: %d\n",
-	       component_label.sectPerSU, component_label.SUsPerPU, 
+	       component_label.sectPerSU, component_label.SUsPerPU,
 	       component_label.SUsPerRU);
 	printf("   Queue size: %d, blocksize: %d, numBlocks: %d\n",
 	       component_label.maxOutstanding, component_label.blockSize,
 	       component_label.numBlocks);
 	printf("   RAID Level: %c\n", (char) component_label.parityConfig);
-	printf("   Autoconfig: %s\n", 
+	printf("   Autoconfig: %s\n",
 	       component_label.autoconfigure ? "Yes" : "No");
 	printf("   Root partition: %s\n",
 	       component_label.root_partition ? "Yes" : "No");
@@ -733,7 +733,7 @@ init_component_labels(fds, serial_number)
 	do_ioctl(fds->fd, RAIDFRAME_INIT_LABELS, &component_label,
 		 "RAIDFRAME_SET_COMPONENT_LABEL");
 }
- 
+
 static void
 set_autoconfig(fds, autoconf)
 	fdidpair *fds;
@@ -778,7 +778,7 @@ add_hot_spare(fds, component)
 
 	hot_spare.row = 0;
 	hot_spare.column = 0;
-	strlcpy(hot_spare.component_name, component, 
+	strlcpy(hot_spare.component_name, component,
 		sizeof(hot_spare.component_name));
 	
 	do_ioctl(fds->fd, RAIDFRAME_ADD_HOT_SPARE, &hot_spare,
@@ -799,7 +799,7 @@ remove_hot_spare(fds, component)
 	hot_spare.row = component_num / num_cols;
 	hot_spare.column = component_num % num_cols;
 
-	strlcpy(hot_spare.component_name, component, 
+	strlcpy(hot_spare.component_name, component,
 		sizeof(hot_spare.component_name));
 	
 	do_ioctl(fds->fd, RAIDFRAME_REMOVE_HOT_SPARE, &hot_spare,
@@ -882,9 +882,9 @@ check_parity(fds, nfd, do_rewrite)
 		} else {
 			i = nfd;
 			while (i--) {
-				do_ioctl(fds[i].fd, 
-				 	RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
-				 	&percent_done, 
+				do_ioctl(fds[i].fd,
+				 	RAIDFRAME_CHECK_PARITYREWRITE_STATUS,
+				 	&percent_done,
 				 	"RAIDFRAME_CHECK_PARITYREWRITE_STATUS"
 				 	);
 				if (percent_done == 100) {
@@ -919,15 +919,15 @@ check_status(fds, nfd, meter)
 			printf("raid%d Status:\n", fds[i].id);
 		}
 		do_ioctl(fds[i].fd, RAIDFRAME_CHECK_RECON_STATUS,
-			 &recon_percent_done, 
+			 &recon_percent_done,
 			 "RAIDFRAME_CHECK_RECON_STATUS");
 		printf("Reconstruction is %d%% complete.\n",
 			recon_percent_done);
 		if (recon_percent_done < 100) {
 			do_recon |= 1 << fds[i].id;
 		}
-		do_ioctl(fds[i].fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS, 
-			 &parity_percent_done, 
+		do_ioctl(fds[i].fd, RAIDFRAME_CHECK_PARITYREWRITE_STATUS,
+			 &parity_percent_done,
 			 "RAIDFRAME_CHECK_PARITYREWRITE_STATUS");
 		printf("Parity Re-write is %d%% complete.\n",
 			parity_percent_done);
@@ -935,7 +935,7 @@ check_status(fds, nfd, meter)
 			do_parity |= 1 << fds[i].id;
 		}
 		do_ioctl(fds[i].fd, RAIDFRAME_CHECK_COPYBACK_STATUS,
-			 &copyback_percent_done, 
+			 &copyback_percent_done,
 			 "RAIDFRAME_CHECK_COPYBACK_STATUS");
 		printf("Copyback is %d%% complete.\n",
 			copyback_percent_done);
@@ -1044,7 +1044,7 @@ do_meter(fds, nfd, option)
 			elapsed_sec--;
 		}
 
-		elapsed = (double) elapsed_sec + 
+		elapsed = (double) elapsed_sec +
 			  (double) elapsed_usec / 1000000.0;
 
 		if (amount <= 0) { /* we don't do negatives (yet?) */
@@ -1058,14 +1058,14 @@ do_meter(fds, nfd, option)
 
 		if (rate > 0.0) {
 			simple_eta = (int)
-				(((double)progress_total - 
-				  (double) progress_completed) 
+				(((double)progress_total -
+				  (double) progress_completed)
 				 / rate);
 		} else {
 			simple_eta = -1;
 		}
 
-		if (simple_eta <= 0) { 
+		if (simple_eta <= 0) {
 			simple_eta = last_eta;
 		} else {
 			last_eta = simple_eta;
@@ -1081,7 +1081,7 @@ do_meter(fds, nfd, option)
 		write(fileno(stdout), buffer, strlen(buffer));
 		fflush(stdout);
 
-		if (++tbit_value > 3) 
+		if (++tbit_value > 3)
 			tbit_value = 0;
 
 		if (not_done)
@@ -1117,7 +1117,7 @@ get_bar(string, percent, max_strlen)
 	if (max_strlen > STAR_MIDPOINT) {
 		max_strlen = STAR_MIDPOINT;
 	}
-	offset = STAR_MIDPOINT - 
+	offset = STAR_MIDPOINT -
 		(int)((percent * max_strlen) / 100);
 	if (offset < 0)
 		offset = 0;

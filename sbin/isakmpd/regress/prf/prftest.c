@@ -1,4 +1,4 @@
-/*	$OpenBSD: prftest.c,v 1.5 2001/08/17 14:11:05 niklas Exp $	*/
+/*	$OpenBSD: prftest.c,v 1.6 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: prftest.c,v 1.2 1998/10/07 16:40:50 niklas Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ int
 main (void)
 {
   char key[100];
-    
+
   memset (key, 11, 20);
   test_prf ("PRF MD5 Test Case 1", HASH_MD5,
 	    key, 16, "Hi There", 8, "9294727a3638bb1c13f48ef8158bfc9d");
@@ -65,17 +65,17 @@ main (void)
 	    "what do ya want for nothing?", 28,
 	    "750c783e6ab0b503eaa86e310a5db738");
   test_prf ("PRF SHA1 Test Case 1", HASH_SHA1,
-	    key, 20, "Hi There", 8, 
+	    key, 20, "Hi There", 8,
 	    "b617318655057264e28bc0b6fb378c8ef146be00");
   test_prf ("PRF SHA1 Test Case 2",  HASH_SHA1,
-	    "Jefe", 4, "what do ya want for nothing?", 28, 
+	    "Jefe", 4, "what do ya want for nothing?", 28,
 	    "effcdf6ae5eb2fa2d27416d5f184df9c259a7c79");
   test_prf ("PRF SHA1 Test Case 3",  HASH_SHA1,
 	    "Bloody long key, this one, eben longer than the blocksize "
 	    "of ordinary keyed HMAC functions", 90,
-	    "what do ya want for nothing?", 28, 
+	    "what do ya want for nothing?", 28,
 	    "52ca5fbcd7d4821bc6bf8b6e95e131109dff901b");
-  
+
   return 0;
 }
 
@@ -91,7 +91,7 @@ test_prf (char *test, enum hashes hash, char *key, int klen,
   printf ("Testing %s: ", test);
 
   prf = prf_alloc (PRF_HMAC, hash, key, klen);
-  if (!prf) 
+  if (!prf)
     {
       printf("prf_alloc () failed\n");
       return 0;
@@ -110,7 +110,7 @@ test_prf (char *test, enum hashes hash, char *key, int klen,
     }
   output[2 * i] = 0;
 
-  if (strcmp (output, cmp) == 0) 
+  if (strcmp (output, cmp) == 0)
     {
       printf ("OKAY\n");
       return 1;

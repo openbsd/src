@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.7 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: dir.c,v 1.8 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: dir.c,v 1.5 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 
 char	*lfname = "lost+found";
 int	lfmode = 01777;
-struct	ext2fs_dirtemplate emptydir = { 0, DIRBLKSIZ }; 
+struct	ext2fs_dirtemplate emptydir = { 0, DIRBLKSIZ };
 struct	ext2fs_dirtemplate dirhead = {
 	0, 12, 1, EXT2_FT_DIR, ".",
 	0, DIRBLKSIZ - 12, 2, EXT2_FT_DIR, ".."

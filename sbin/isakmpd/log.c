@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.28 2002/05/10 15:13:12 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.29 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -137,11 +137,11 @@ _log_get_class (int error_class)
 }
 
 static void
-_log_print (int error, int syslog_level, const char *fmt, va_list ap, 
+_log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	    int class, int level)
 {
   char buffer[LOG_SIZE], nbuf[LOG_SIZE + 32];
-  static const char fallback_msg[] = 
+  static const char fallback_msg[] =
     "write to log file failed (errno %d), redirecting output to syslog";
   int len;
   struct tm *tm;
@@ -161,7 +161,7 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 		  tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec,
 		  _log_get_class (class), level);
       else /* LOG_PRINT (-1) or LOG_REPORT (-2) */
-	snprintf (nbuf, LOG_SIZE + 32, "%02d%02d%02d.%06ld %s ", tm->tm_hour, 
+	snprintf (nbuf, LOG_SIZE + 32, "%02d%02d%02d.%06ld %s ", tm->tm_hour,
 		  tm->tm_min, tm->tm_sec, now.tv_usec,
 		  class == LOG_PRINT ? "Default" : "Report>");	
       strlcat (nbuf, buffer, LOG_SIZE + 32);
@@ -173,11 +173,11 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	  syslog (LOG_ALERT, fallback_msg, errno);
 	  fprintf (log_output, fallback_msg, errno);
 
-	  /* 
+	  /*
 	   * Close log_output to prevent isakmpd from locking the file.
 	   * We may need to explicitly close stdout to do this properly.
 	   * XXX - Figure out how to match two FILE *'s and rewrite.
-	   */  
+	   */
 	  if (fileno (log_output) != -1
 	      && fileno (stdout) == fileno (log_output))
 	    fclose (stdout);
@@ -358,12 +358,12 @@ log_packet_init (char *newname)
 
   if (!packet_log)
     {
-      log_error ("log_packet_init: fopen (\"%s\", \"w\") failed", 
+      log_error ("log_packet_init: fopen (\"%s\", \"w\") failed",
 		 pcaplog_file);
       return;
     }
 
-  log_print ("log_packet_init: starting IKE packet capture to file \"%s\"", 
+  log_print ("log_packet_init: starting IKE packet capture to file \"%s\"",
 	     pcaplog_file);
 
   sf_hdr.magic = TCPDUMP_MAGIC;
@@ -393,7 +393,7 @@ log_packet_restart (char *newname)
   if (newname)
     {
       if (stat (newname, &st) == 0)
-	log_print ("log_packet_restart: won't overwrite existing \"%s\"", 
+	log_print ("log_packet_restart: won't overwrite existing \"%s\"",
 		   newname);
       else
 	log_packet_init (newname);
@@ -407,7 +407,7 @@ log_packet_restart (char *newname)
       /* Re-activate capture on current file.  */
       packet_log = fopen (pcaplog_file, "a");
       if (!packet_log)
-	log_error ("log_packet_restart: fopen (\"%s\", \"a\") failed", 
+	log_error ("log_packet_restart: fopen (\"%s\", \"a\") failed",
 		   pcaplog_file);
       else
 	log_print ("log_packet_restart: capture restarted on file \"%s\"",
@@ -439,12 +439,12 @@ log_packet_iov (struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
 
   for (i = 0, datalen = 0; i < iovcnt; i++)
     datalen += iov[i].iov_len;
-  
+
   if (!packet_log || datalen > SNAPLEN)
     return;
-  
+
   /* copy packet into buffer */
-  for (i = 0, off = 0; i < iovcnt; i++) 
+  for (i = 0, off = 0; i < iovcnt; i++)
     {
       memcpy (packet_buf + off, iov[i].iov_base, iov[i].iov_len);
       off += iov[i].iov_len;
@@ -452,16 +452,16 @@ log_packet_iov (struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
 
   memset (&hdr, 0, sizeof hdr);
   memset (&udp, 0, sizeof udp);
-  
+
   /* isakmp - turn off the encryption bit in the isakmp hdr */
   isakmphdr = (struct isakmp_hdr *)packet_buf;
   isakmphdr->flags &= ~(ISAKMP_FLAGS_ENC);
-  
+
   /* udp */
   udp.uh_sport = udp.uh_dport = htons (500);
   datalen += sizeof udp;
   udp.uh_ulen = htons (datalen);
-  
+
   /* ip */
   hdr.sa_family = htonl (src->sa_family);
   switch (src->sa_family)
@@ -470,7 +470,7 @@ log_packet_iov (struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
       /* Assume IPv4. XXX Can 'default' ever happen here?  */
       hdr.sa_family = htonl (AF_INET);
       hdr.ip.ip4.ip_src.s_addr = 0x02020202;
-      hdr.ip.ip4.ip_dst.s_addr = 0x01010101; 
+      hdr.ip.ip4.ip_dst.s_addr = 0x01010101;
       /* The rest of the setup is common to AF_INET.  */
       goto setup_ip4;
 
@@ -592,18 +592,18 @@ udp_cksum (struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
   sp = (u_int16_t *)u;
   for (i = 0; i < sizeof (struct udphdr); i += 2)
     sum += *sp++;
-  
+
   sp = d;
   for (i = 0; i < (tlen&~1); i += 2)
     sum += *sp++;
-  
+
   if (tlen & 1)
     sum += htons ((*(const char *)sp) << 8);
-  
+
   while (sum > 0xffff)
     sum = (sum & 0xffff) + (sum >> 16);
   sum = ~sum & 0xffff;
-  
+
   return sum;
 }
 
@@ -613,14 +613,14 @@ in_cksum (const u_int16_t *w, int len)
 {
   int nleft = len, sum = 0;
   u_int16_t answer;
-  
+
   while (nleft > 1)  {
     sum += *w++;
     nleft -= 2;
   }
   if (nleft == 1)
     sum += htons (*(u_char *)w << 8);
-  
+
   sum = (sum >> 16) + (sum & 0xffff);     /* add hi 16 to low 16 */
   sum += (sum >> 16);                     /* add carry */
   answer = ~sum;                          /* truncate to 16 bits */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 4.t,v 1.3 1996/10/20 08:36:46 tholo Exp $
+.\"	$OpenBSD: 4.t,v 1.4 2002/06/09 08:13:06 todd Exp $
 .\"	$NetBSD: 4.t,v 1.3 1996/04/05 01:45:48 cgd Exp $
 .\"
 .\" Copyright (c) 1982, 1993
@@ -37,7 +37,7 @@
 .ds RH Appendix A \- Fsck_ffs Error Conditions
 .NH
 Appendix A \- Fsck_ffs Error Conditions
-.NH 2 
+.NH 2
 Conventions
 .PP
 .I Fsck_ffs
@@ -65,7 +65,7 @@ the file systems after an unclean halt.
 While preen'ing a file system,
 it will only fix corruptions that are expected
 to occur from an unclean halt.
-These actions are a proper subset of the actions that 
+These actions are a proper subset of the actions that
 .I fsck_ffs
 will take when it is running interactively.
 Throughout this appendix many errors have several options
@@ -91,7 +91,7 @@ program in which they can occur.
 The error conditions that may occur
 in more than one Phase
 will be discussed in initialization.
-.NH 2 
+.NH 2
 Initialization
 .PP
 Before a file system check can be performed, certain
@@ -279,7 +279,7 @@ and will be followed by the message:
 .br
 .B "SUPER-BLOCK TO SUPPLY NEEDED INFORMATION; SEE fsck_ffs(8)."
 .br
-The super block has been corrupted. 
+The super block has been corrupted.
 An alternative super block must be selected from among those
 listed by
 .I newfs
@@ -337,7 +337,7 @@ It will retry the read and print out the message:
 .B "THE FOLLOWING SECTORS COULD NOT BE READ: \fIN\fP"
 .br
 where \fIN\fP indicates the sectors that could not be read.
-If 
+If
 .I fsck_ffs
 ever tries to write back one of the blocks on which the read failed
 it will print the message:
@@ -392,11 +392,11 @@ terminate the program.
 .B "bad inode number DDD to ginode"
 .br
 An internal error has attempted to read non-existent inode \fIDDD\fP.
-This error causes 
+This error causes
 .I fsck_ffs
 to exit.
 See a guru.
-.NH 2 
+.NH 2
 Phase 1 \- Check Blocks and Sizes
 .PP
 This phase concerns itself with
@@ -436,7 +436,7 @@ has found inode \fII\fP whose size is shorter than the number of
 blocks allocated to it.
 This condition should only occur if the system crashes while in the
 midst of truncating a file.
-When preen'ing the file system, 
+When preen'ing the file system,
 .I fsck_ffs
 completes the truncation to the specified size.
 .LP
@@ -504,11 +504,11 @@ terminate the program.
 .LP
 .B "BAD STATE DDD TO BLKERR"
 .br
-An internal error has scrambled 
+An internal error has scrambled
 .I fsck_ffs 's
 state map to have the impossible value \fIDDD\fP.
 .I Fsck_ffs
-exits immediately. 
+exits immediately.
 See a guru.
 .sp
 .LP
@@ -584,7 +584,7 @@ Possible responses to the CORRECT prompt are:
 replace the block count of inode \fII\fP with \fIY\fP.
 .IP NO
 ignore this error condition.
-.NH 2 
+.NH 2
 Phase 1B: Rescan for More Dups
 .PP
 When a duplicate block is found in the file system, the file system is
@@ -601,7 +601,7 @@ This error condition will always invoke the
 error condition in Phase 2.
 You can determine which inodes have overlapping blocks by examining
 this error condition and the DUP error condition in Phase 1.
-.NH 2 
+.NH 2
 Phase 2 \- Check Pathnames
 .PP
 This phase concerns itself with removing directory entries
@@ -838,7 +838,7 @@ leave the directory unchanged.
 .br
 A directory \fII\fP has been found whose first entry is \fIF\fP.
 .I Fsck_ffs
-cannot resolve this problem. 
+cannot resolve this problem.
 The file system should be mounted and the offending entry \fIF\fP
 moved elsewhere.
 The file system should then be unmounted and
@@ -898,7 +898,7 @@ leave the directory unchanged.
 .br
 A directory \fII\fP has been found whose second entry is \fIF\fP.
 .I Fsck_ffs
-cannot resolve this problem. 
+cannot resolve this problem.
 The file system should be mounted and the offending entry \fIF\fP
 moved elsewhere.
 The file system should then be unmounted and
@@ -969,7 +969,7 @@ to the root inode.
 .I Fsck_ffs
 exits.
 See a guru.
-.NH 2 
+.NH 2
 Phase 3 \- Check Connectivity
 .PP
 This phase concerns itself with the directory connectivity seen in
@@ -1062,13 +1062,13 @@ There is no space to add another entry to the
 .I lost+found
 directory in the root directory
 of the file system.
-When preen'ing the 
+When preen'ing the
 .I lost+found
 directory is expanded.
 .LP
 Possible responses to the EXPAND prompt are:
 .IP YES
-the 
+the
 .I lost+found
 directory is expanded to make room for the new entry.
 If the attempted expansion fails
@@ -1122,7 +1122,7 @@ routine that descends the file system directory structure.
 .I Fsck_ffs
 exits.
 See a guru.
-.NH 2 
+.NH 2
 Phase 4 \- Check Reference Counts
 .PP
 This phase concerns itself with the link count information
@@ -1234,13 +1234,13 @@ There is no space to add another entry to the
 .I lost+found
 directory in the root directory
 of the file system.
-When preen'ing the 
+When preen'ing the
 .I lost+found
 directory is expanded.
 .LP
 Possible responses to the EXPAND prompt are:
 .IP YES
-the 
+the
 .I lost+found
 directory is expanded to make room for the new entry.
 If the attempted expansion fails
@@ -1315,7 +1315,7 @@ Possible responses to the CLEAR prompt are:
 de-allocate inode \fII\fP by zeroing its contents.
 .IP NO
 ignore this error condition.
-.NH 2 
+.NH 2
 Phase 5 - Check Cyl groups
 .PP
 This phase concerns itself with the free-block and used-inode maps.
@@ -1374,7 +1374,7 @@ Possible responses to the SALVAGE prompt are:
 reconstruct the superblock free block information.
 .IP NO
 ignore this error condition.
-.NH 2 
+.NH 2
 Cleanup
 .PP
 Once a file system has been checked, a few cleanup functions are performed.
@@ -1408,7 +1408,7 @@ UNIX keeps.
 When preen'ing,
 .I fsck_ffs
 will exit with a code of 4.
-The standard auto-reboot script distributed with 4.3BSD 
+The standard auto-reboot script distributed with 4.3BSD
 interprets an exit code of 4 by issuing a reboot system call.
 .sp
 .LP

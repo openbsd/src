@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2001/01/27 12:03:38 niklas Exp $
+#	$OpenBSD: Makefile,v 1.13 2002/06/09 08:13:07 todd Exp $
 #	$EOM: Makefile,v 1.10 2000/03/28 21:23:24 ho Exp $
 
 #
@@ -76,8 +76,8 @@ DPADD+=		${LIBCRYPTO}
 
 PROG=
 .else
-# USE_X509 is required for libcrypto.h to include the correct headers, 
-# but it is not set by ${OS}/Makefile.sysdep - setting it manually here 
+# USE_X509 is required for libcrypto.h to include the correct headers,
+# but it is not set by ${OS}/Makefile.sysdep - setting it manually here
 # should be safe enough.
 CFLAGS+=	-DUSE_X509
 .endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cookie.c,v 1.3 2001/01/28 22:45:07 niklas Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: cookie.c,v 1.3 2001/01/28 22:45:07 niklas Exp $";
+static char rcsid[] = "$OpenBSD: cookie.c,v 1.4 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #define _COOKIE_C_
@@ -63,13 +63,13 @@ secret_generate(u_int8_t *secret, u_int16_t size)
     size--;
     if (i++ % 4 == 0)
       tmp = arc4random();
-    
+
     secret[size] = tmp & 0xFF;
     tmp = tmp >> 8;
   }
   return 1;
 }
-      
+
 int
 cookie_generate(struct stateob *st, u_int8_t *cookie, u_int16_t size,
 		u_int8_t *data, u_int16_t dsize)
@@ -84,7 +84,7 @@ cookie_generate(struct stateob *st, u_int8_t *cookie, u_int16_t size,
   } else
     secret = rsecret;
 
-  /* Generate a cookie which depends on both parties and on local 
+  /* Generate a cookie which depends on both parties and on local
    * information, which is fast computed.
    */
   MD5Init(&ctx);

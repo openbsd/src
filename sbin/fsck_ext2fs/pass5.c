@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.9 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.10 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: pass5.c,v 1.7 2000/01/28 16:01:46 bouyer Exp $ */
 
 /*
@@ -104,7 +104,7 @@ pass5()
 		memset(&idesc[0], 0, sizeof idesc);
 		for (i = 0; i < 3; i++) {
 			idesc[i].id_type = ADDR;
-		}       
+		}
 
 		j = fs->e2fs.e2fs_ipg * c + 1;
 
@@ -143,7 +143,7 @@ pass5()
 
 		/* fill in unused par of the inode map */
 		for (i = fs->e2fs.e2fs_ipg / NBBY; i < fs->e2fs_bsize; i++)
-			ibmap[i] = 0xff; 
+			ibmap[i] = 0xff;
 
 		dbase = c * sblock.e2fs.e2fs_bpg +
 		    sblock.e2fs.e2fs_first_dblock;
@@ -233,7 +233,7 @@ pass5()
 	}
 }
 
-void 
+void
 print_bmap(map, size)
 	u_char *map;
 	u_int32_t size;

@@ -1,4 +1,4 @@
-/* $OpenBSD: scheme.h,v 1.3 2001/01/28 22:45:16 niklas Exp $ */
+/* $OpenBSD: scheme.h,v 1.4 2002/06/09 08:13:08 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,10 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * scheme.h: 
+ * scheme.h:
  * security paramter index creation.
  */
- 
+
 #ifndef _SCHEME_H_
 #define _SCHEME_H_
 
@@ -40,7 +40,7 @@
 #include "state.h"
 
 #undef EXTERN
- 
+
 #ifdef _SCHEME_C_
 #define EXTERN
 #else

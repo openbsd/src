@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.9 2002/05/28 10:09:46 ho Exp $	*/
+/*	$OpenBSD: timer.c,v 1.10 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: timer.c,v 1.13 2000/02/20 19:58:42 niklas Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ timer_add_event (char *name, void (*func) (void *), void *arg,
   else
     {
       LOG_DBG ((LOG_TIMER, 10, "timer_add_event: event %s(%p) added last, "
-		"expiration in %lds", name, arg, 
+		"expiration in %lds", name, arg,
 		expiration->tv_sec - now.tv_sec));
       TAILQ_INSERT_TAIL (&events, ev, link);
     }
@@ -141,8 +141,8 @@ timer_report (void)
   gettimeofday (&now, 0);
 
   for (ev = TAILQ_FIRST (&events); ev; ev = TAILQ_NEXT (ev, link))
-    LOG_DBG ((LOG_REPORT, 0, 
+    LOG_DBG ((LOG_REPORT, 0,
 	      "timer_report: event %s(%p) scheduled in %d seconds",
-	      (ev->name ? ev->name : "<unknown>"), ev, 
+	      (ev->name ? ev->name : "<unknown>"), ev,
 	      (int)(ev->expiration.tv_sec - now.tv_sec)));
 }

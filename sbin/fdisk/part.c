@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.29 2002/02/12 17:56:35 kjell Exp $	*/
+/*	$OpenBSD: part.c,v 1.30 2002/06/09 08:13:05 todd Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -221,11 +221,11 @@ int
 PRT_check_chs(partn)
 	prt_t *partn;
 {
-	if ( (partn->shead > 255) || 
-		(partn->ssect >63) || 
-		(partn->scyl > 1023) || 
-		(partn->ehead >255) || 
-		(partn->esect >63) || 
+	if ( (partn->shead > 255) ||
+		(partn->ssect >63) ||
+		(partn->scyl > 1023) ||
+		(partn->ehead >255) ||
+		(partn->esect >63) ||
 		(partn->ecyl > 1023) )
 	{
 		return 0;
@@ -247,8 +247,8 @@ PRT_make(partn, offset, reloff, prt)
 	if ((partn->scyl > 1023) || (partn->ecyl > 1023)) {
 		scsave = partn->scyl;
 		ecsave = partn->ecyl;
-		partn->scyl = (partn->scyl > 1023)? 1023: partn->scyl; 
-		partn->ecyl = (partn->ecyl > 1023)? 1023: partn->ecyl; 
+		partn->scyl = (partn->scyl > 1023)? 1023: partn->scyl;
+		partn->ecyl = (partn->ecyl > 1023)? 1023: partn->ecyl;
 		modified = 1;
 	}
 	if ((partn->id == DOSPTYP_EXTEND) || (partn->id == DOSPTYP_EXTENDL))
@@ -304,7 +304,7 @@ PRT_print(num, partn, units)
 		printf(" #: id    C   H  S -    C   H  S [       start:      size   ]\n");
 		printf("------------------------------------------------------------------------\n");
 	} else {
-		size = (double)partn->ns * DEV_BSIZE / 
+		size = (double)partn->ns * DEV_BSIZE /
 		    unit_types[i].conversion;
 		printf("%c%1d: %.2X %4d %3d %2d - %4d %3d %2d [%12d:%12.f%s] %s\n",
 			(partn->flag == 0x80)?'*':' ',

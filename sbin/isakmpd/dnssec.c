@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.12 2002/01/03 16:27:41 ho Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.13 2002/06/09 08:13:06 todd Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -95,7 +95,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
       /* algorithm = DNS_KEYALG_DSS; */
       return 0;
 
-    case IKE_AUTH_PRE_SHARED: 
+    case IKE_AUTH_PRE_SHARED:
     default:
       return 0;
     }
@@ -121,7 +121,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
       if (id_len < sizeof ip4)
 	return 0;
       memcpy (&ip4, id + ISAKMP_ID_DATA_OFF, sizeof ip4);
-      snprintf (name, MAXHOSTNAMELEN, "%d.%d.%d.%d.in-addr.arpa.", ip4 >> 24, 
+      snprintf (name, MAXHOSTNAMELEN, "%d.%d.%d.%d.in-addr.arpa.", ip4 >> 24,
 	       (ip4 >> 16) & 0xFF, (ip4 >> 8) & 0xFF, ip4 & 0xFF);
       break;
 
@@ -173,16 +173,16 @@ dns_get_key (int type, struct message *msg, int *keylen)
 
   if (ret)
     {
-      LOG_DBG ((LOG_MISC, 30, "dns_get_key: no DNS responses (error %d)", 
+      LOG_DBG ((LOG_MISC, 30, "dns_get_key: no DNS responses (error %d)",
 		ret));
       return 0;
     }
-  
-  LOG_DBG ((LOG_MISC, 80, 
+
+  LOG_DBG ((LOG_MISC, 80,
 	    "dns_get_key: rrset class %d type %d ttl %d nrdatas %d nrsigs %d",
-	    rr->rri_rdclass, rr->rri_rdtype, rr->rri_ttl, rr->rri_nrdatas, 
+	    rr->rri_rdclass, rr->rri_rdtype, rr->rri_ttl, rr->rri_nrdatas,
 	    rr->rri_nsigs));
-  
+
   /* We don't accept unvalidated data. */
   if (!(rr->rri_flags & RRSET_VALIDATED))
     {
@@ -190,18 +190,18 @@ dns_get_key (int type, struct message *msg, int *keylen)
       freerrset (rr);
       return 0;
     }
-  
+
   /* Sanity. */
   if (rr->rri_nrdatas == 0 || rr->rri_rdtype != T_KEY)
     {
       LOG_DBG ((LOG_MISC, 30, "dns_get_key: no KEY RRs received"));
       freerrset (rr);
       return 0;
-    } 
+    }
 
   memset (&key_rr, 0, sizeof key_rr);
 
-  /* 
+  /*
    * Find a key with the wanted algorithm, if any.
    * XXX If there are several keys present, we currently only find the first.
    */

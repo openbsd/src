@@ -1,4 +1,4 @@
-/* $OpenBSD: state.h,v 1.7 2001/01/28 22:45:18 niklas Exp $ */
+/* $OpenBSD: state.h,v 1.8 2002/06/09 08:13:09 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * state.h: 
+ * state.h:
  * state object
  */
 
@@ -65,7 +65,7 @@ struct stateob {
 
   char *user;                      /* User name for which do the exchange */
   int flags;                       /* Possible flags for this exchange */
-  
+
   char address[16];                /* Remote address */
   u_int16_t port;                  /* Remote port for Photuris daemon */
   u_int16_t sport, dport;          /* Only used by notify at the moment */
@@ -85,7 +85,7 @@ struct stateob {
   u_int8_t *roschemes;              /* Responder offered schemes */
   u_int16_t roschemesize;           /* Responder offered schemes size */
 
-  u_int8_t oSPI[SPI_SIZE];          /* Owner SPI */ 
+  u_int8_t oSPI[SPI_SIZE];          /* Owner SPI */
   u_int8_t oSPITBV[3];              /* Three Byte Value */
   u_int8_t *oSPIident;              /* Owner SPI identification */
   u_int8_t *oSPIattrib;             /* Owner SPI attributes */

@@ -6,23 +6,23 @@
 
 /*
  * Copyright 1996,1997,1998 by Apple Computer, Inc.
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * APPLE COMPUTER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL APPLE COMPUTER BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 // for *printf()
@@ -501,7 +501,7 @@ create_partition_map(char *name, partition_map_header *oldmap)
 	default_number = number;
 	flush_to_newline(0);
 	do {
-	    if (get_number_argument("what should be the size? ", 
+	    if (get_number_argument("what should be the size? ",
 		    (long *)&number, default_number) == 0) {
 		printf("Not a number\n");
 		flush_to_newline(1);
@@ -613,7 +613,7 @@ add_partition_to_map(const char *name, const char *dptype, u32 base, u32 length,
 	// find a block that starts includes base and length
     cur = map->base_order;
     while (cur != NULL) {
-	if (cur->data->dpme_pblock_start <= base 
+	if (cur->data->dpme_pblock_start <= base
 		&& (base + length) <=
 		    (cur->data->dpme_pblock_start + cur->data->dpme_pblocks)) {
 	    break;
@@ -769,7 +769,7 @@ compute_device_size(partition_map_header *map, partition_map_header *oldmap)
     if (fstat(fd, &info) < 0) {
 	printf("stat of device failed\n");
     } else {
-	printf("stat: mode = 0%o, type=%s\n", info.st_mode, 
+	printf("stat: mode = 0%o, type=%s\n", info.st_mode,
 		(S_ISREG(info.st_mode)? "Regular":
 		(S_ISBLK(info.st_mode)?"Block":"Other")));
 	printf("size = %d, blocks = %d\n",
@@ -809,9 +809,9 @@ compute_device_size(partition_map_header *map, partition_map_header *oldmap)
     if (size != 0) {
     	return (long)(size / map->logical_block);
     }
- 
+
     // else case
- 
+
     data = (char *) malloc(PBLOCK_SIZE);
     if (data == NULL) {
 	error(errno, "can't allocate memory for try buffer");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: klips.c,v 1.8 2001/06/29 19:08:12 ho Exp $	*/
+/*	$OpenBSD: klips.c,v 1.9 2002/06/09 08:13:07 todd Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -254,7 +254,7 @@ klips_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	  break;
 
 	default:
-	  LOG_DBG ((LOG_SYSDEP, 10, 
+	  LOG_DBG ((LOG_SYSDEP, 10,
 		    "klips_set_spi: Unsupported enc/auth alg negotiated"));
 	  return -1;
 	}
@@ -424,7 +424,7 @@ klips_set_spi (struct sa *sa, struct proto *proto, int incoming,
     free (emsg);
   return -1;
 }
- 
+
 /*
  * Delete the IPsec SA represented by the INCOMING direction in protocol PROTO
  * of the IKE security association SA.
@@ -481,7 +481,7 @@ klips_hex_decode (char *src, u_char *dst, int dstsize)
     {
       ch = tolower (p[0]);
       cl = tolower (p[1]);
-       
+
       if ((ch >= '0') && (ch <= '9'))
 	ch -= '0';
       else if ((ch >= 'a') && (ch <= 'f'))
@@ -498,7 +498,7 @@ klips_hex_decode (char *src, u_char *dst, int dstsize)
 
       *q++ = (ch << 4) | cl;
     }
-  
+
   return (int)(q - dst);
 }
 
@@ -527,7 +527,7 @@ klips_route_get (u_long dst)
       klips_hex_decode (netbuf, (u_char *)&net, sizeof net);
       klips_hex_decode (gatebuf, (u_char *)&gate, sizeof gate);
       klips_hex_decode (maskbuf, (u_char *)&mask, sizeof mask);
-      
+
       net = htonl (net);
       gate = htonl (gate);
       mask = htonl (mask);

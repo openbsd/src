@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.80 2002/05/22 08:21:01 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.81 2002/06/09 08:13:05 todd Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.80 2002/05/22 08:21:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.81 2002/06/09 08:13:05 todd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1772,7 +1772,7 @@ editor_countfree(lp, freep)
 	for (i = 0; i < lp->d_npartitions; i++) {
 		    pp = &lp->d_partitions[i];
 		    if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT &&
-			pp->p_size > 0 && 
+			pp->p_size > 0 &&
 			pp->p_offset + pp->p_size <= ending_sector &&
 			pp->p_offset >= starting_sector)
 			*freep -= pp->p_size;
@@ -2031,7 +2031,7 @@ mpsave(lp, mp, cdev, fstabfile)
 	}
 	bdev[strlen(bdev) - 1] = '\0';
 
-	/* Sort mountpoints so we don't try to mount /usr/local before /usr */ 
+	/* Sort mountpoints so we don't try to mount /usr/local before /usr */
 	qsort((void *)mi, MAXPARTITIONS, sizeof(struct mountinfo), micmp);
 
 	if ((fp = fopen(fstabfile, "w")) == NULL)
@@ -2360,7 +2360,7 @@ get_geometry(f, dgpp, bgpp)
 	struct disklabel **bgpp;
 {
 #ifdef CPU_BIOS
-	int mib[4]; 
+	int mib[4];
 	size_t size;
 	dev_t devno;
 	bios_diskinfo_t di;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.61 2002/06/07 15:59:37 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.62 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ sa_dump (int cls, int level, char *header, struct sa *sa)
     {
       LOG_DBG ((cls, level, "%s: suite %d proto %d", header, proto->no,
 		proto->proto));
-      LOG_DBG ((cls, level, 
+      LOG_DBG ((cls, level,
 		"%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p", header,
 		proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
 		proto->spi[1]));
@@ -555,7 +555,7 @@ report_proto (FILE *fd, struct proto *proto)
 	case IPSEC_AUTH_DES_MAC:
 	case IPSEC_AUTH_KPDK:
 	  /* XXX We should be supporting KPDK */
-	  fprintf (fd, "unknown (%d)", iproto->auth); 
+	  fprintf (fd, "unknown (%d)", iproto->auth);
 	  break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: photurisd.c,v 1.12 2001/07/07 18:26:18 deraadt Exp $	*/
+/*	$OpenBSD: photurisd.c,v 1.13 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -29,23 +29,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* 
+/*
  * photurisd.c: photuris daemon and stuff.
  */
 
-#ifndef lint 
-static char rcsid[] = "$OpenBSD: photurisd.c,v 1.12 2001/07/07 18:26:18 deraadt Exp $";
-#endif 
+#ifndef lint
+static char rcsid[] = "$OpenBSD: photurisd.c,v 1.13 2002/06/09 08:13:08 todd Exp $";
+#endif
 
 #define _PHOTURIS_C_
 
-#include <stdio.h> 
+#include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <signal.h> 
-#include <errno.h> 
+#include <signal.h>
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include "config.h"
@@ -78,9 +78,9 @@ usage(void)
      fprintf(f, "\t-p  specifies the local port to bind to\n");
      exit(1);
 }
-     
 
-static int 
+
+static int
 init_vars(void)
 {
      global_schemes = NULL;
@@ -161,11 +161,11 @@ main(int argc, char **argv)
 
      if (chdir(dir) == -1)
 	  log_fatal("chdir(\"%s\") in main()", dir);
-	  
+	
 
      argc -= optind;
      argv += optind;
-     
+
      spi_init();
      state_init();
 
@@ -189,11 +189,11 @@ main(int argc, char **argv)
 #endif
 
      /* Depends on the available attributes in the kernel, init_kernel() */
-     init_attributes(); 
+     init_attributes();
 
      if (init_identities(NULL,NULL) == -1)
 	  exit(1);
-     
+
      init_schedule();
 
      init_server();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: photuris_identity_response.c,v 1.3 2001/01/28 22:45:14 niklas Exp $	*/
+/*	$OpenBSD: photuris_identity_response.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: photuris_identity_response.c,v 1.3 2001/01/28 22:45:14 niklas Exp $";
+static char rcsid[] = "$OpenBSD: photuris_identity_response.c,v 1.4 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -83,22 +83,22 @@ photuris_identity_response(struct stateob *st, u_char *buffer, int *size)
 
 	/* Choose and Copy choice */
 	if (choose_identity(st, p, &tmp, st->uSPIoattrib,
-			    st->uSPIoattribsize) == -1 )   
+			    st->uSPIoattribsize) == -1 )
 	     return -1;
 
 	p += tmp; asize += tmp; rsize -= tmp;
 
-        verifyp = p; 
- 
-        /* Leave space for verification data */  
-        tmp = get_identity_verification_size(st, IDENTITY_MESSAGE_CHOICE(header));  
-  
-        if (rsize < tmp)  
-	     return -1; /* buffer not large enough */  
+        verifyp = p;
 
-        /* Zero the buffer, so we can hash over it */ 
-        bzero(verifyp, tmp); 
- 
+        /* Leave space for verification data */
+        tmp = get_identity_verification_size(st, IDENTITY_MESSAGE_CHOICE(header));
+
+        if (rsize < tmp)
+	     return -1; /* buffer not large enough */
+
+        /* Zero the buffer, so we can hash over it */
+        bzero(verifyp, tmp);
+
         p += tmp; asize += tmp; rsize -= tmp;
 
 	if (rsize < st->oSPIattribsize)
@@ -111,22 +111,22 @@ photuris_identity_response(struct stateob *st, u_char *buffer, int *size)
 	p += st->oSPIattribsize;
 
 	tmp = rsize;
-	if(packet_create_padding(st, asize - IDENTITY_MESSAGE_MIN, 
+	if(packet_create_padding(st, asize - IDENTITY_MESSAGE_MIN,
 				 p, &tmp) == -1)
 	  return -1;
 
 	p += tmp; asize += tmp; rsize -= tmp;
 
-        /* Create verification data */  
-        create_identity_verification(st, verifyp, (u_int8_t *)header, asize);  
+        /* Create verification data */
+        create_identity_verification(st, verifyp, (u_int8_t *)header, asize);
 
 #ifdef DEBUG2
 	printf("Identity-Response (before encryption):\n");
 	packet_dump((u_int8_t *)header, asize, 0);
 #endif
- 
+
         /* Encrypt the packet after SPI if wished for */
-	packet_encrypt(st, IDENTITY_MESSAGE_CHOICE(header), 
+	packet_encrypt(st, IDENTITY_MESSAGE_CHOICE(header),
 		       asize - IDENTITY_MESSAGE_MIN);
 
 	*size = asize;

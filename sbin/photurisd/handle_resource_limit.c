@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_resource_limit.c,v 1.4 2001/01/28 22:45:09 niklas Exp $	*/
+/*	$OpenBSD: handle_resource_limit.c,v 1.5 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_resource_limit.c,v 1.4 2001/01/28 22:45:09 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_resource_limit.c,v 1.5 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -66,14 +66,14 @@ handle_resource_limit(u_char *packet, int size, char *address)
 	counter = packet[ERROR_MESSAGE_PACKET_SIZE];
 
 	if ((st = state_find_cookies(NULL, header->icookie, NULL)) == NULL) {
-	     log_print("No state for RESOURCE_LIMIT message from %s", 
+	     log_print("No state for RESOURCE_LIMIT message from %s",
 		       address);
 	     return -1;
 	}
 	
 	switch(st->phase) {
 	case COOKIE_REQUEST:
-	     /* 
+	     /*
 	      * The other party has still an exchange which has been
 	      * purged on our side.
 	      */
@@ -94,7 +94,7 @@ handle_resource_limit(u_char *packet, int size, char *address)
 		  if (offset > exchange_timeout/2)
 		       offset = exchange_timeout/2;
 	     }
-	     
+	
 	     schedule_remove(TIMEOUT, st->icookie);
 	     schedule_insert(TIMEOUT, offset, st->icookie, COOKIE_SIZE);
 	     break;
@@ -102,8 +102,8 @@ handle_resource_limit(u_char *packet, int size, char *address)
 	     /* XXX - we have to wait for expiring of another SPI */
 	     break;
 	default:
-	     log_print("Wrong phase for RESOURCE_LIMIT from %s",  
-		       address); 
+	     log_print("Wrong phase for RESOURCE_LIMIT from %s",
+		       address);
 	     return 0;
 	}
 

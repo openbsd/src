@@ -1,4 +1,4 @@
-/*	$OpenBSD: identity.c,v 1.5 2001/01/28 22:45:10 niklas Exp $	*/
+/*	$OpenBSD: identity.c,v 1.6 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: identity.c,v 1.5 2001/01/28 22:45:10 niklas Exp $";
+static char rcsid[] = "$OpenBSD: identity.c,v 1.6 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #define _IDENTITY_C_
@@ -48,9 +48,9 @@ static char rcsid[] = "$OpenBSD: identity.c,v 1.5 2001/01/28 22:45:10 niklas Exp
 #include <sys/types.h>
 #include <pwd.h>
 #include <sys/stat.h>
-#include <sys/socket.h> 
-#include <netinet/in.h> 
-#include <arpa/inet.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <md5.h>
 #include <ssl/bn.h>
 #include <sha1.h>
@@ -80,15 +80,15 @@ static union {
 /* XXX - argh, cast the funtions */
 
 static struct idxform idxform[] = {
-     { HASH_MD5, 5, MD5_SIZE, (void *)&Ctx.md5ctx, 
+     { HASH_MD5, 5, MD5_SIZE, (void *)&Ctx.md5ctx,
        sizeof(MD5_CTX), (void *)&Ctx2.md5ctx,
-       (void (*)(void *))MD5Init, 
-       (void (*)(void *, unsigned char *, unsigned int))MD5Update, 
+       (void (*)(void *))MD5Init,
+       (void (*)(void *, unsigned char *, unsigned int))MD5Update,
        (void (*)(unsigned char *, void *))MD5Final },
-     { HASH_SHA1, 6, SHA1_SIZE, (void *)&Ctx.sha1ctx, 
+     { HASH_SHA1, 6, SHA1_SIZE, (void *)&Ctx.sha1ctx,
        sizeof(SHA1_CTX), (void *)&Ctx2.sha1ctx,
-       (void (*)(void *))SHA1Init, 
-       (void (*)(void *, unsigned char *, unsigned int))SHA1Update, 
+       (void (*)(void *))SHA1Init,
+       (void (*)(void *, unsigned char *, unsigned int))SHA1Update,
        (void (*)(unsigned char *, void *))SHA1Final },
 };
 
@@ -162,9 +162,9 @@ init_identities(char *name, struct identity *root)
 	  p2 = p;
 	  if (!isspace(*p2))
 	       continue;
-	  
+	
 	  /* Tokens are braced with "token" */
-	  if((p=strsep(&p2, "\"\'")) == NULL || 
+	  if((p=strsep(&p2, "\"\'")) == NULL ||
 	     (p=strsep(&p2, "\"\'")) == NULL)
 	       continue;
 
@@ -185,7 +185,7 @@ init_identities(char *name, struct identity *root)
 		    }
 	       }
 	       /* Tokens are braced with "token" */
-	       if((p=strsep(&p2, "\"\'")) == NULL || 
+	       if((p=strsep(&p2, "\"\'")) == NULL ||
 		  (p=strsep(&p2, "\"\'")) == NULL) {
 		    identity_value_reset(tmp);
 		    continue;
@@ -194,14 +194,14 @@ init_identities(char *name, struct identity *root)
 	       break;
 	  case ID_LOCALPAIR:
 	       /* Tokens are braced with "token" */
-	       if((p=strsep(&p2, "\"\'")) == NULL || 
+	       if((p=strsep(&p2, "\"\'")) == NULL ||
 		  (p=strsep(&p2, "\"\'")) == NULL) {
 		    identity_value_reset(tmp);
 		    continue;
 	       }
 	       tmp->pairid = strdup(p);
 	       /* Tokens are braced with "token" */
-	       if((p=strsep(&p2, "\"\'")) == NULL || 
+	       if((p=strsep(&p2, "\"\'")) == NULL ||
 		  (p=strsep(&p2, "\"\'")) == NULL) {
 		    identity_value_reset(tmp);
 		    continue;
@@ -254,7 +254,7 @@ init_identities(char *name, struct identity *root)
      return 0;
 }
 
-/* 
+/*
  * Get shared symmetric keys and identity, put the values in
  * the state object. If a SPI User ident is given, we look up
  * the matching remote secret.
@@ -265,7 +265,7 @@ get_secrets(struct stateob *st, int mode)
 {
      u_int8_t local_ident[MAX_IDENT];
      u_int8_t local_secret[MAX_IDENT_SECRET];
-     u_int8_t remote_secret[MAX_IDENT_SECRET]; 
+     u_int8_t remote_secret[MAX_IDENT_SECRET];
 
      struct identity *id, *root = idob;
 
@@ -273,34 +273,34 @@ get_secrets(struct stateob *st, int mode)
      local_secret[0] = '\0';
      remote_secret[0] = '\0';
 
-     /* 
-      * Remote secret first, if we find the remote secret in 
+     /*
+      * Remote secret first, if we find the remote secret in
       * a user secret file, we restrict our local searches
       * to that tree.
       */
 
-     if(st->uSPIident != NULL && st->uSPIsecret == NULL && 
+     if(st->uSPIident != NULL && st->uSPIsecret == NULL &&
 	(mode & ID_REMOTE)) {
 	  int skip;
 
-	  if (st->uSPIident[0] == 255 && st->uSPIident[1] == 255) 
-	       skip = 8; 
-	  else if (st->uSPIident[0] == 255) 
-	       skip = 4; 
-	  else 
-	       skip = 2; 
+	  if (st->uSPIident[0] == 255 && st->uSPIident[1] == 255)
+	       skip = 8;
+	  else if (st->uSPIident[0] == 255)
+	       skip = 4;
+	  else
+	       skip = 2;
 
 	  id = identity_find(root, st->uSPIident+skip, ID_REMOTE);
 	  if (id != NULL) {
-               strncpy(remote_secret, id->object, MAX_IDENT_SECRET-1); 
-               remote_secret[MAX_IDENT_SECRET-1] = '\0';  
- 
+               strncpy(remote_secret, id->object, MAX_IDENT_SECRET-1);
+               remote_secret[MAX_IDENT_SECRET-1] = '\0';
+
 	       if (id->root)
 		    root = (struct identity *)id->root->object;
 	  }
      }
-     
-     if (st->user != NULL && 
+
+     if (st->user != NULL &&
 	 (id = identity_find(idob, st->user, ID_LOOKUP)) != NULL) {
 	  /* User keying */
 	  id = identity_find((struct identity *)id->object, NULL, ID_LOCAL);
@@ -318,14 +318,14 @@ get_secrets(struct stateob *st, int mode)
 	       strncpy(local_ident, id->root->tag, MAX_IDENT-1);
 	       local_ident[MAX_IDENT-1] = '\0';
 	  }
-	  strncpy(local_ident+strlen(local_ident), id->tag, 
+	  strncpy(local_ident+strlen(local_ident), id->tag,
 		  MAX_IDENT-1-strlen(local_ident));
-	  local_ident[MAX_IDENT_SECRET-1] = '\0'; 
+	  local_ident[MAX_IDENT_SECRET-1] = '\0';
 
 	  strncpy(local_secret, id->object, MAX_IDENT_SECRET-1);
-	  local_secret[MAX_IDENT_SECRET-1] = '\0'; 
+	  local_secret[MAX_IDENT_SECRET-1] = '\0';
      }
-     if (st->uSPIident != NULL && st->oSPIident == NULL && 
+     if (st->uSPIident != NULL && st->oSPIident == NULL &&
 	 (mode & (ID_LOCAL|ID_LOCALPAIR))) {
 	  int skip;
 	  if (st->uSPIident[0] == 255 && st->uSPIident[1] == 255)
@@ -343,15 +343,15 @@ get_secrets(struct stateob *st, int mode)
 		    strncpy(local_ident, id->root->tag, MAX_IDENT-1);
 		    local_ident[MAX_IDENT-1] = '\0';
 	       }
-	       strncpy(local_ident+strlen(local_ident), id->pairid, 
+	       strncpy(local_ident+strlen(local_ident), id->pairid,
 		       MAX_IDENT-1-strlen(local_ident));
-               local_ident[MAX_IDENT-1] = '\0'; 
- 
-               strncpy(local_secret, id->object, MAX_IDENT_SECRET-1); 
-               local_secret[MAX_IDENT_SECRET-1] = '\0';  
+               local_ident[MAX_IDENT-1] = '\0';
+
+               strncpy(local_secret, id->object, MAX_IDENT_SECRET-1);
+               local_secret[MAX_IDENT_SECRET-1] = '\0';
 	  }
      }
-	  
+	
      if(strlen(remote_secret) == 0 && (mode & ID_REMOTE)) {
 	  log_print("Can't find remote secret for %s in get_secrets()",
 		st->uSPIident+2);
@@ -366,7 +366,7 @@ get_secrets(struct stateob *st, int mode)
      if(st->oSPIident == NULL && (mode & (ID_LOCAL|ID_LOCALPAIR))) {
 	  st->oSPIident = calloc(2+strlen(local_ident)+1,sizeof(u_int8_t));
 	  if(st->oSPIident == NULL)
-	       return -1; 
+	       return -1;
 	  strcpy(st->oSPIident+2,local_ident);
 	  st->oSPIident[0] = ((strlen(local_ident)+1) >> 5) & 0xFF;
 	  st->oSPIident[1] = ((strlen(local_ident)+1) << 3) & 0xFF;
@@ -374,17 +374,17 @@ get_secrets(struct stateob *st, int mode)
 	  st->oSPIsecretsize = strlen(local_secret);
 	  st->oSPIsecret = calloc(st->oSPIsecretsize,sizeof(u_int8_t));
 	  if(st->oSPIsecret == NULL)
-	       return -1; 
+	       return -1;
 	  strncpy(st->oSPIsecret, local_secret, st->oSPIsecretsize);
      }
-     if(st->uSPIident != NULL && st->uSPIsecret == NULL && 
+     if(st->uSPIident != NULL && st->uSPIsecret == NULL &&
 	(mode & ID_REMOTE)) {
 	  st->uSPIsecretsize = strlen(remote_secret);
-          st->uSPIsecret = calloc(st->uSPIsecretsize,sizeof(u_int8_t)); 
-          if(st->uSPIsecret == NULL) 
-               return -1;  
-          strncpy(st->uSPIsecret, remote_secret, st->uSPIsecretsize); 
-     } 
+          st->uSPIsecret = calloc(st->uSPIsecretsize,sizeof(u_int8_t));
+          if(st->uSPIsecret == NULL)
+               return -1;
+          strncpy(st->uSPIsecret, remote_secret, st->uSPIsecretsize);
+     }
      return 0;
 }
 
@@ -418,7 +418,7 @@ choose_identity(struct stateob *st, u_int8_t *packet, u_int16_t *size,
 		    "in choose_identity()");
 	  return -1;
      }
-     
+
      if(rsize < *(attributes+1)+2)
 	  return -1;
 
@@ -448,7 +448,7 @@ choose_identity(struct stateob *st, u_int8_t *packet, u_int16_t *size,
      tmp = varpre2octets(st->oSPIident);
      if(rsize < tmp)
 	  return -1;
-     
+
      bcopy(st->oSPIident, packet, tmp);
 
      *size = asize + tmp;
@@ -502,7 +502,7 @@ create_verification_key(struct stateob *st, u_int8_t *buffer, u_int16_t *size,
 
      if ((hash = get_hash_id(id)) == NULL) {
 	  log_print("Unkown identity choice %d in create_verification_key", id);
-          return -1; 
+          return -1;
      }
 
      if (*size < hash->hashsize)
@@ -522,7 +522,7 @@ create_verification_key(struct stateob *st, u_int8_t *buffer, u_int16_t *size,
 }
 
 int
-create_identity_verification(struct stateob *st, u_int8_t *buffer, 
+create_identity_verification(struct stateob *st, u_int8_t *buffer,
 			     u_int8_t *packet, u_int16_t size)
 {
      int hash_size;
@@ -531,7 +531,7 @@ create_identity_verification(struct stateob *st, u_int8_t *buffer,
      if ((hash = get_hash_id(*(st->oSPIidentchoice))) == NULL) {
 	  log_print("Unkown identity choice %d in create_verification_key",
 		    *(st->oSPIidentchoice));
-          return 0; 
+          return 0;
      }
 
      hash_size = idsign(st, hash, buffer+2, packet,size);
@@ -558,16 +558,16 @@ create_identity_verification(struct stateob *st, u_int8_t *buffer,
      return hash_size+2;
 }
 
-int 
-verify_identity_verification(struct stateob *st, u_int8_t *buffer,  
-			     u_int8_t *packet, u_int16_t size) 
-{ 
+int
+verify_identity_verification(struct stateob *st, u_int8_t *buffer,
+			     u_int8_t *packet, u_int16_t size)
+{
      struct idxform *hash;
 
      if ((hash = get_hash_id(*(st->uSPIidentchoice))) == NULL) {
 	  log_print("Unkown identity choice %d in create_verification_key",
 		    *(st->uSPIidentchoice));
-          return 0; 
+          return 0;
      }
 
      if (varpre2octets(buffer) != hash->hashsize +2)
@@ -575,13 +575,13 @@ verify_identity_verification(struct stateob *st, u_int8_t *buffer,
 
      state_save_verification(st, buffer, hash->hashsize+2);
 
-     return idverify(st, hash, buffer+2, packet, size); 
-} 
+     return idverify(st, hash, buffer+2, packet, size);
+}
 
 
 int
-idsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,  
-       u_int8_t *packet, u_int16_t psize) 
+idsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
+       u_int8_t *packet, u_int16_t psize)
 {
      u_int8_t key[HASH_MAX];
      u_int16_t keylen = HASH_MAX;
@@ -591,15 +591,15 @@ idsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
      hash->Init(hash->ctx);
 
      /* Our verification key */
-     hash->Update(hash->ctx, key, keylen); 
+     hash->Update(hash->ctx, key, keylen);
      /* Key fill */
      hash->Final(NULL, hash->ctx);
 
-     /* 
+     /*
       * Hash Cookies, type, lifetime + spi fields +
-      * SPI owner Identity Choice + Identity 
+      * SPI owner Identity Choice + Identity
       */
-     hash->Update(hash->ctx, packet, IDENTITY_MESSAGE_MIN + 
+     hash->Update(hash->ctx, packet, IDENTITY_MESSAGE_MIN +
 		  st->oSPIidentchoicesize + varpre2octets(st->oSPIident));
 
      if(st->uSPIident != NULL) {
@@ -617,7 +617,7 @@ idsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
 
      /* Our exchange value */
      hash->Update(hash->ctx, st->oSPITBV, 3);
-     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize); 
+     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize);
      hash->Update(hash->ctx, st->oSPIoattrib, st->oSPIoattribsize);
 
      /* Their exchange value */
@@ -640,7 +640,7 @@ idsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
 }
 
 int
-idverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,   
+idverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,
 	 u_int8_t *packet, u_int16_t psize)
 {
      u_int8_t digest[HASH_MAX];
@@ -649,26 +649,26 @@ idverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,
      struct identity_message *p = (struct identity_message *)packet;
 
      create_verification_key(st, key, &keylen, 0); /* User direction */
- 
-     hash->Init(hash->ctx); 
- 
+
+     hash->Init(hash->ctx);
+
      /* Their verification key */
-     hash->Update(hash->ctx, key, keylen); 
+     hash->Update(hash->ctx, key, keylen);
      /* Key fill */
      hash->Final(NULL, hash->ctx);
- 
-     /* 
+
+     /*
       * Hash Cookies, type, lifetime + spi fields +
-      * SPI owner Identity Choice + Identity 
+      * SPI owner Identity Choice + Identity
       */
      hash->Update(hash->ctx, packet, IDENTITY_MESSAGE_MIN +
-		  st->uSPIidentchoicesize + varpre2octets(st->uSPIident)); 
+		  st->uSPIidentchoicesize + varpre2octets(st->uSPIident));
 
      /* Determine if the sender knew our secret already */
      if(p->type != IDENTITY_REQUEST) {
-	  hash->Update(hash->ctx, st->oSPIidentver, st->oSPIidentversize); 
+	  hash->Update(hash->ctx, st->oSPIidentver, st->oSPIidentversize);
      }
- 
+
      packet += IDENTITY_MESSAGE_MIN;
      psize -= IDENTITY_MESSAGE_MIN + packet[1] + 2;
      packet += packet[1] + 2;
@@ -676,26 +676,26 @@ idverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,
      packet += varpre2octets(packet) + 2 + hash->hashsize;
      hash->Update(hash->ctx, packet, psize);
 
-     /* Their exchange value */ 
+     /* Their exchange value */
      hash->Update(hash->ctx, st->uSPITBV, 3);
-     hash->Update(hash->ctx, st->texchange, st->texchangesize); 
-     hash->Update(hash->ctx, st->uSPIoattrib, st->uSPIoattribsize); 
- 
-     /* Our exchange value */ 
+     hash->Update(hash->ctx, st->texchange, st->texchangesize);
+     hash->Update(hash->ctx, st->uSPIoattrib, st->uSPIoattribsize);
+
+     /* Our exchange value */
      hash->Update(hash->ctx, st->oSPITBV, 3);
-     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize);  
-     hash->Update(hash->ctx, st->oSPIoattrib, st->oSPIoattribsize); 
+     hash->Update(hash->ctx, st->exchangevalue, st->exchangesize);
+     hash->Update(hash->ctx, st->oSPIoattrib, st->oSPIoattribsize);
 
      /* Responder offered schemes */
-     hash->Update(hash->ctx, st->roschemes, st->roschemesize); 
- 
+     hash->Update(hash->ctx, st->roschemes, st->roschemesize);
+
      /* Data fill */
-     hash->Final(NULL, hash->ctx); 
+     hash->Final(NULL, hash->ctx);
 
      /* And finally the trailing key */
      hash->Update(hash->ctx, key, keylen);
 
-     hash->Final(digest, hash->ctx); 
+     hash->Final(digest, hash->ctx);
 
      return !bcmp(digest, signature, hash->hashsize);
 }
@@ -713,7 +713,7 @@ identity_insert(struct identity **idob, struct identity *ob)
 	  *idob = ob;
 	  return 1;
      }
-     
+
      tmp=*idob;
      while(tmp->next!=NULL)
 	  tmp = tmp->next;
@@ -755,7 +755,7 @@ identity_new(void)
 
 int
 identity_value_reset(struct identity *ob)
-{ 
+{
      if (ob->tag != NULL)
 	  free(ob->tag);
      if (ob->pairid != NULL)
@@ -766,7 +766,7 @@ identity_value_reset(struct identity *ob)
      return 1;
 }
 
-/* 
+/*
  * find the state ob with matching address
  */
 

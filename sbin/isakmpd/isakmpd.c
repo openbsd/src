@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.42 2002/06/07 01:07:18 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.43 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -301,10 +301,10 @@ daemon_shutdown (void)
   if (transport_prio_sendqs_empty ())
     {
       /*
-       * When the prioritized transport sendq:s are empty, i.e all 
+       * When the prioritized transport sendq:s are empty, i.e all
        * the DELETE notifications have been sent, we can shutdown.
        */
-	 
+	
 #ifdef USE_DEBUG
       log_packet_stop ();
 #endif
@@ -418,7 +418,7 @@ main (int argc, char *argv[])
        * indicated we should start a shutdown of the daemon.
        *
        * Note: Since _one_ message is sent per iteration of this enclosing
-       * while-loop, and we want to send a number of DELETE notifications, 
+       * while-loop, and we want to send a number of DELETE notifications,
        * we must loop atleast this number of times. The daemon_shutdown()
        * function starts by queueing the DELETEs, all other calls just
        * increments the 'sigtermed' variable until it reaches a "safe"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_cookie_request.c,v 1.3 2001/01/28 22:45:08 niklas Exp $	*/
+/*	$OpenBSD: handle_cookie_request.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
  /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_cookie_request.c,v 1.3 2001/01/28 22:45:08 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_cookie_request.c,v 1.4 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -53,8 +53,8 @@ static char rcsid[] = "$OpenBSD: handle_cookie_request.c,v 1.3 2001/01/28 22:45:
 
 int
 handle_cookie_request(u_char *packet, int size,
-		      u_int8_t *address, u_int16_t port, 
-		      u_int8_t *schemes, u_int16_t ssize) 
+		      u_int8_t *address, u_int16_t port,
+		      u_int8_t *schemes, u_int16_t ssize)
 
 {
 	struct cookie_request *header;
@@ -75,7 +75,7 @@ handle_cookie_request(u_char *packet, int size,
 
 	     st = prev_st;
 
-	     /* 
+	     /*
 	      * Find exchanges which are not timed out and the rcookie doesnt
 	      * match any exchange -> resource limit.
 	      */
@@ -88,9 +88,9 @@ handle_cookie_request(u_char *packet, int size,
 		  if (prev_st->lifetime > st->lifetime)
 		       st = prev_st;
 
-		  if ((!prev_st->initiator && 
+		  if ((!prev_st->initiator &&
 		       !bcmp(prev_st->rcookie, header->rcookie, COOKIE_SIZE))||
-		       (prev_st->initiator && 
+		       (prev_st->initiator &&
 			!bcmp(prev_st->icookie, header->rcookie, COOKIE_SIZE)))
 		       match = 1;
 		  prev_st = state_find_next(prev_st, address);
@@ -109,8 +109,8 @@ handle_cookie_request(u_char *packet, int size,
 	bcopy(header->icookie, icookie, COOKIE_SIZE);
 
 	packet_size = PACKET_BUFFER_SIZE;
-	if (photuris_cookie_response(st != NULL && 
-				     st->lifetime > tm ? st : NULL, 
+	if (photuris_cookie_response(st != NULL &&
+				     st->lifetime > tm ? st : NULL,
 				     packet_buffer, &packet_size,
 				     icookie, header->counter,
 				     address, port,

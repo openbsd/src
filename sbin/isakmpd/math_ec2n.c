@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_ec2n.c,v 1.7 1999/04/20 11:32:57 niklas Exp $	*/
+/*	$OpenBSD: math_ec2n.c,v 1.8 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: math_ec2n.c,v 1.9 1999/04/20 09:23:31 niklas Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ ec2np_ison (ec2np_ptr p, ec2ng_ptr g)
   int res;
 
   b2n_t x, y, temp;
-  
+
   if (p->inf)
     return 1;
 
@@ -346,7 +346,7 @@ ec2np_mul (ec2np_ptr d, ec2np_ptr a, b2n_ptr e, ec2ng_ptr g)
   if (b2n_resize (k, h->chunks))
     goto fail;
 
-  /* 
+  /*
    * This is low level but can not be avoided, since we have to do single
    * bit checks on h and k.
    */
@@ -362,7 +362,7 @@ ec2np_mul (ec2np_ptr d, ec2np_ptr a, b2n_ptr e, ec2ng_ptr g)
       bits = ((bits - 1) & CHUNK_MASK);
     }
 
-  /* 
+  /*
    * This is the addition, subtraction method which is faster because
    * we avoid one out of three additions (mean).
    */

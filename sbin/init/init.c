@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.26 2002/05/22 08:21:02 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.27 2002/06/09 08:13:06 todd Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.26 2002/05/22 08:21:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.27 2002/06/09 08:13:06 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -652,9 +652,9 @@ single_user()
 		return (state_func_t) requested_transition;
 
 	if (!WIFEXITED(status)) {
-		if (WTERMSIG(status) == SIGKILL) { 
-			/* 
-			 *  reboot(8) killed shell? 
+		if (WTERMSIG(status) == SIGKILL) {
+			/*
+			 *  reboot(8) killed shell?
 			 */
 			warning("single user shell terminated.");
 			sleep(STALL_TIMEOUT);
@@ -1023,7 +1023,7 @@ start_window_system(sp)
  * Start a login session running.
  * For first open, man-handle tty directly to determine if it
  * really exists. It is not efficient to spawn gettys on devices
- * that do not exist. 
+ * that do not exist.
  */
 pid_t
 start_getty(sp)
@@ -1190,7 +1190,7 @@ multi_user()
 	/*
 	 * If the administrator has not set the security level to -1
 	 * to indicate that the kernel should not run multiuser in secure
-	 * mode, and the run script has not set a higher level of security 
+	 * mode, and the run script has not set a higher level of security
 	 * than level 1, then put the kernel into secure mode.
 	 */
 	if (getsecuritylevel() == 0)

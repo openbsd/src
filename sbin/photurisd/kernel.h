@@ -1,4 +1,4 @@
-/* $OpenBSD: kernel.h,v 1.12 2001/01/28 22:45:11 niklas Exp $ */
+/* $OpenBSD: kernel.h,v 1.13 2002/06/09 08:13:08 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,10 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * kernel.h: 
+ * kernel.h:
  * security paramter index creation.
  */
- 
+
 #ifndef _KERNEL_H_
 #define _KERNEL_H_
 
@@ -55,7 +55,7 @@ typedef struct {
      int kernel_id, flags;
 } transform;
 
-/* 
+/*
  * Translation from Photuris Attributes to Kernel Transforms.
  * For the actual ids see: draft-simpson-photuris-*.txt and
  * draft-simpson-photuris-schemes-*.txt
@@ -84,7 +84,7 @@ int kernel_xf_set(int sd, char *buf, int blen, struct iovec *io, int cnt,
 int kernel_xf_read(int sd, char *buf, int blen, int seq);
 
 int kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac);
-int kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, 
+int kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI,
 	       u_int8_t *secrets);
 
 int kernel_group_spi(char *address, u_int8_t *spi);
@@ -104,7 +104,7 @@ EXTERN int kernel_known_transform(int id);
 EXTERN int kernel_valid(attrib_t *enc, attrib_t *auth);
 EXTERN int kernel_valid_auth(attrib_t *auth, u_int8_t *flag, u_int16_t size);
 
-EXTERN u_int32_t kernel_reserve_spi(char *srcaddress, char *dstaddress, 
+EXTERN u_int32_t kernel_reserve_spi(char *srcaddress, char *dstaddress,
 				    int options);
 EXTERN u_int32_t kernel_reserve_single_spi(char *srcaddress, char *dstaddress,
 					   u_int32_t spi, int proto);

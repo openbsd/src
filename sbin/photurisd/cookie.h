@@ -1,4 +1,4 @@
-/* $OpenBSD: cookie.h,v 1.3 2001/01/28 22:45:07 niklas Exp $ */
+/* $OpenBSD: cookie.h,v 1.4 2002/06/09 08:13:08 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -28,29 +28,29 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* 
- * cookie.h: 
+/*
+ * cookie.h:
  * cookie generation header file
- */ 
+ */
 
 #ifndef _COOKIE_H_
 #define _COOKIE_H_
 #include "state.h"
- 
+
 #define SECRET_SIZE       16
 
 #undef EXTERN
 #ifdef _COOKIE_C_
 #define EXTERN
 
-static u_int8_t rsecret[SECRET_SIZE];      /* Responder secret */ 
+static u_int8_t rsecret[SECRET_SIZE];      /* Responder secret */
 #else
 #define EXTERN extern
 #endif
 
 EXTERN void reset_secret(void);
 EXTERN int secret_generate(u_int8_t *secret, u_int16_t size);
-EXTERN int cookie_generate(struct stateob *st, 
+EXTERN int cookie_generate(struct stateob *st,
 			   u_int8_t *cookie, u_int16_t size,
 			   u_int8_t *data, u_int16_t dsize);
 #endif

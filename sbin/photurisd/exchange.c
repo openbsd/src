@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.5 2001/01/28 22:45:07 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.6 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: exchange.c,v 1.5 2001/01/28 22:45:07 niklas Exp $";
+static char rcsid[] = "$OpenBSD: exchange.c,v 1.6 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #define _EXCHANGE_C_
@@ -44,9 +44,9 @@ static char rcsid[] = "$OpenBSD: exchange.c,v 1.5 2001/01/28 22:45:07 niklas Exp
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include <sys/socket.h> 
-#include <netinet/in.h> 
-#include <arpa/inet.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <ssl/bn.h>
 
 #include "config.h"
@@ -64,26 +64,26 @@ static char rcsid[] = "$OpenBSD: exchange.c,v 1.5 2001/01/28 22:45:07 niklas Exp
  * Get the number of bits from a variable precision number
  * according to draft-simpson-photuris-11
  */
- 
+
 u_int8_t *
 varpre_get_number_bits(size_t *nbits, u_int8_t *varpre)
-{    
+{
      int blocks;
      size_t bits;
 
      if (varpre == NULL)
 	  return (NULL);
-     
+
      /* We don't support numbers, that long */
      if (*varpre == 255 && *(varpre+1) == 255)
 	     return (NULL);
 
      bits = 0;
-     if (*varpre == 255) { 
+     if (*varpre == 255) {
 	  blocks = 3;
 	  bits = 65280;
-          varpre++; 
-     } else 
+          varpre++;
+     } else
 	  blocks = 2;
 
      while (blocks-- > 0) {
@@ -123,7 +123,7 @@ BN_varpre2bn(u_int8_t *varpre, size_t size, BIGNUM *a)
 	  bytes--;
 	  p++;
      }
-     
+
      return (p);
 }
 
@@ -163,7 +163,7 @@ BN_bn2varpre(BIGNUM *p, u_int8_t *value, size_t *size)
 	while (bytes > 0) {
 		bytes--;
 		value[bytes + header] = BN_mod_word(a, 256);
-		BN_rshift(a, a, 8); 
+		BN_rshift(a, a, 8);
 	}
 	BN_clear_free(a);
 
@@ -176,7 +176,7 @@ exchange_check_value(BIGNUM *exchange, BIGNUM *gen, BIGNUM *mod)
 {
      size_t bits;
      BIGNUM *test;
-     
+
      bits = BN_num_bits(mod);
      if (BN_num_bits(exchange) < bits/2)
 	  return (0);
@@ -195,7 +195,7 @@ exchange_check_value(BIGNUM *exchange, BIGNUM *gen, BIGNUM *mod)
      return (1);
 }
 
-/* 
+/*
  * Finds to a given modulus and generator cached information
  * which is used to create the private value and exchange value
  */
@@ -237,19 +237,19 @@ exchange_make_values(struct stateob *st, BIGNUM *modulus, BIGNUM *generator)
 			 log_error("calloc() in exchange_make_values()");
 			 return (-1);
 		    }
-		    bcopy(tmp->exchangevalue, p->exchangevalue, 
+		    bcopy(tmp->exchangevalue, p->exchangevalue,
 			  tmp->exchangesize);
 		    p->exchangesize = tmp->exchangesize;
 	       } else
 		    p->exchangevalue = NULL;
-		   
+		
 	       p->iterations = tmp->iterations;
 	       p->status = tmp->status;
 	       p->lifetime = tmp->lifetime;
 	  } else {
 		  size_t bits;
 
-	       /* 
+	       /*
 		* Make a new private value and change responder secrets
 		* as required by draft.
 		*/
@@ -280,7 +280,7 @@ exchange_make_values(struct stateob *st, BIGNUM *modulus, BIGNUM *generator)
 	       BN_mod_exp(tmp, p->generator, p->private_value, p->modulus,
 			  ctx);
 
-	       /* 
+	       /*
 		* If our exchange value is defective we need to make a new one
 		* to avoid subgroup confinement.
 		*/
@@ -341,17 +341,17 @@ exchange_set_generator(BIGNUM *generator, u_int8_t *scheme, u_int8_t *gen)
 	case DH_G_5_MD5:
 	case DH_G_5_DES_MD5:
 	case DH_G_5_3DES_SHA1:
-             BN_set_word(generator,5); 
+             BN_set_word(generator,5);
 	     break;
 	default:
 	     log_print("Unsupported exchange scheme %d",
-		       *((u_int16_t *)scheme)); 
+		       *((u_int16_t *)scheme));
 	     return (-1);
 	}
 	return (0);
 }
 
-/* 
+/*
  * Generates the exchange values needed for the value_request
  * and value_response packets.
  */

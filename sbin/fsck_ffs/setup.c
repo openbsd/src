@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.15 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: setup.c,v 1.16 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.15 2002/02/16 21:27:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.16 2002/06/09 08:13:05 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,7 @@ setup(dev)
 			sbdirty();
 		}
 	}
-	if (sblock.fs_interleave < 1 || 
+	if (sblock.fs_interleave < 1 ||
 	    sblock.fs_interleave > sblock.fs_nsect) {
 		pwarn("IMPOSSIBLE INTERLEAVE=%d IN SUPERBLOCK",
 			sblock.fs_interleave);
@@ -197,7 +197,7 @@ setup(dev)
 			dirty(&asblk);
 		}
 	}
-	if (sblock.fs_npsect < sblock.fs_nsect || 
+	if (sblock.fs_npsect < sblock.fs_nsect ||
 	    sblock.fs_npsect > sblock.fs_nsect*2) {
 		pwarn("IMPOSSIBLE NPSECT=%d IN SUPERBLOCK",
 			sblock.fs_npsect);
@@ -372,7 +372,7 @@ setup(dev)
 	}
 	lncntp = (int16_t *)calloc((unsigned)(maxino + 1), sizeof(int16_t));
 	if (lncntp == NULL) {
-		printf("cannot alloc %lu bytes for lncntp\n", 
+		printf("cannot alloc %lu bytes for lncntp\n",
 		    (unsigned long)(maxino + 1) * sizeof(int16_t));
 		goto badsblabel;
 	}
@@ -384,7 +384,7 @@ setup(dev)
 	inphead = (struct inoinfo **)calloc((unsigned)numdirs,
 	    sizeof(struct inoinfo *));
 	if (inpsort == NULL || inphead == NULL) {
-		printf("cannot alloc %lu bytes for inphead\n", 
+		printf("cannot alloc %lu bytes for inphead\n",
 		    (unsigned long)numdirs * sizeof(struct inoinfo *));
 		goto badsblabel;
 	}

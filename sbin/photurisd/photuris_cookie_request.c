@@ -1,4 +1,4 @@
-/*	$OpenBSD: photuris_cookie_request.c,v 1.4 2001/01/28 22:45:13 niklas Exp $	*/
+/*	$OpenBSD: photuris_cookie_request.c,v 1.5 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: photuris_cookie_request.c,v 1.4 2001/01/28 22:45:13 niklas Exp $";
+static char rcsid[] = "$OpenBSD: photuris_cookie_request.c,v 1.5 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -72,7 +72,7 @@ photuris_cookie_request(struct stateob *st, u_char *buffer, int *size)
 		       old_st = prev_st;
 		  }
 	     }
-	     
+	
 	     /* Check if we have an exchange going already */
 	     if (old_st != NULL && old_st != st && timeout > time(NULL)) {
 		  if (old_st->initiator) {

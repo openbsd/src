@@ -38,7 +38,7 @@
 #include "state.h"
 
 #undef EXTERN
- 
+
 #ifdef _VALIDITY_C_
 #define EXTERN
 #else

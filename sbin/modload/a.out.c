@@ -1,4 +1,4 @@
-/*	$OpenBSD: a.out.c,v 1.2 2002/01/09 00:02:52 ericj Exp $	*/
+/*	$OpenBSD: a.out.c,v 1.3 2002/06/09 08:13:07 todd Exp $	*/
 /*	$NetBSD: a.out.c,v 1.1 1999/06/13 12:54:40 mrg Exp $	*/
 
 /*
@@ -69,15 +69,15 @@ extern int symtab;
 void
 a_out_linkcmd(char *buf,
 	      size_t len,
-	      const char *kernel, 
-	      const char *entry, 
-	      const char *outfile, 
-	      const void *address, 
+	      const char *kernel,
+	      const char *entry,
+	      const char *outfile,
+	      const void *address,
 	      const char *object)
 {
 	ssize_t n;
 
-	n = snprintf(buf, len, LINKCMD, kernel, entry, 
+	n = snprintf(buf, len, LINKCMD, kernel, entry,
 		     outfile, address, object);
 	if (n >= len)
 		errx(1, "link command longer than %lu bytes", (u_long)len);
@@ -93,7 +93,7 @@ a_out_read_header(int fd, struct exec *info_buf)
 		err(1, "failed reading %lu bytes", (u_long)sizeof(*info_buf));
 	if (n != sizeof(*info_buf)) {
 		if (debug)
-			fprintf(stderr, "failed to read %lu bytes", 
+			fprintf(stderr, "failed to read %lu bytes",
 				(u_long)sizeof(*info_buf));
 		return -1;
 	}

@@ -7,8 +7,8 @@ For quick installation instructions read INSTALL, or otherwise
 README.howtouse for more complete information.
 
 At the moment only the PF_ENCAP kernel interface for John Ioannidis'
-and Angelos D. Keromytis' IPsec as to be found in OpenBSD is supported. 
-It should be fairly easy to adapt the daemon to other implementations, 
+and Angelos D. Keromytis' IPsec as to be found in OpenBSD is supported.
+It should be fairly easy to adapt the daemon to other implementations,
 just look at the sections found by 'grep IPSEC *.c'
 
 I am grateful for the help provided by Angelos D. Keromytis

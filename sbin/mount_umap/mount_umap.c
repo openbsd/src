@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_umap.c,v 1.9 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: mount_umap.c,v 1.10 2002/06/09 08:13:08 todd Exp $	*/
 /*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.9 2002/02/16 21:27:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.10 2002/06/09 08:13:08 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,12 +76,12 @@ static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.9 2002/02/16 21:27:36 millert 
 
 /*
  * This routine provides the user interface to mounting a umap layer.
- * It takes 4 mandatory parameters.  The mandatory arguments are the place 
+ * It takes 4 mandatory parameters.  The mandatory arguments are the place
  * where the next lower level is mounted, the place where the umap layer is to
  * be mounted, the name of the user mapfile, and the name of the group
  * mapfile.  The routine checks the ownerships and permissions on the
  * mapfiles, then opens and reads them.  Then it calls mount(), which
- * will, in turn, call the umap version of mount. 
+ * will, in turn, call the umap version of mount.
  */
 
 const struct mntopt mopts[] = {
@@ -139,7 +139,7 @@ main(argc, argv)
 #ifdef MAPSECURITY
 	/*
 	 * Check that group and other don't have write permissions on
-	 * this umapfile, and that the umapfile belongs to root. 
+	 * this umapfile, and that the umapfile belongs to root.
 	 */
 	if (fstat(fileno(fp), &statbuf))
 		err(1, "%s%s", umapfile, not);
@@ -187,7 +187,7 @@ main(argc, argv)
 #ifdef MAPSECURITY
 	/*
 	 * Check that group and other don't have write permissions on
-	 * this group mapfile, and that the file belongs to root. 
+	 * this group mapfile, and that the file belongs to root.
 	 */
 	if (fstat(fileno(gfp), &statbuf))
 		err(1, "%s%s", gmapfile, not);

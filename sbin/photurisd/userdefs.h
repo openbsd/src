@@ -1,4 +1,4 @@
-/* $OpenBSD: userdefs.h,v 1.4 2002/02/17 19:42:28 millert Exp $ */
+/* $OpenBSD: userdefs.h,v 1.5 2002/06/09 08:13:09 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * userdefs.h: 
+ * userdefs.h:
  * handling userdefs
  */
 

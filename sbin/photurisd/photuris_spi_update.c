@@ -1,4 +1,4 @@
-/*	$OpenBSD: photuris_spi_update.c,v 1.3 2001/01/28 22:45:15 niklas Exp $	*/
+/*	$OpenBSD: photuris_spi_update.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: photuris_spi_update.c,v 1.3 2001/01/28 22:45:15 niklas Exp $";
+static char rcsid[] = "$OpenBSD: photuris_spi_update.c,v 1.4 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -71,7 +71,7 @@ photuris_spi_update(struct stateob *st, u_char *buffer, int *size)
 	bcopy(st->rcookie, header->rcookie, COOKIE_SIZE);
 
 	/* Copy SPI and life time */
-	bcopy(st->oSPI, header->SPI, SPI_SIZE ); 
+	bcopy(st->oSPI, header->SPI, SPI_SIZE );
 	header->lifetime[0] = (st->olifetime >> 16) & 0xFF;
 	header->lifetime[1] = (st->olifetime >>  8) & 0xFF;
 	header->lifetime[2] =  st->olifetime        & 0xFF;
@@ -96,17 +96,17 @@ photuris_spi_update(struct stateob *st, u_char *buffer, int *size)
 	p += st->oSPIattribsize;
 
 	tmp = rsize;
-        if(packet_create_padding(st, asize - SPI_UPDATE_MIN, p, &tmp) == -1)  
-	     return -1;  
-  
-        p += tmp; asize += tmp; rsize -= tmp;  
+        if(packet_create_padding(st, asize - SPI_UPDATE_MIN, p, &tmp) == -1)
+	     return -1;
+
+        p += tmp; asize += tmp; rsize -= tmp;
 
 	/* Create validity verification data */
 	create_validity_verification(st,SPI_UPDATE_VERIFICATION(header),
 				     (u_int8_t *)header,asize);
 
         /* Encrypt the packet after SPI if wished for */
-	packet_encrypt(st, SPI_UPDATE_VERIFICATION(header), 
+	packet_encrypt(st, SPI_UPDATE_VERIFICATION(header),
 		       asize - SPI_UPDATE_MIN);
 
 	*size = asize;

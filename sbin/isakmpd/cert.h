@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.h,v 1.9 2001/07/01 19:48:42 niklas Exp $	*/
+/*	$OpenBSD: cert.h,v 1.10 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 
-/* 
+/*
  * CERT handler for each kind of certificate:
  *
  * cert_init - Initialize CERT handler - called only once.
@@ -61,7 +61,7 @@
 struct cert_handler {
   u_int16_t id;				/* ISAKMP Cert Encoding ID */
   int (*cert_init) (void);		
-  void *(*cert_get) (u_int8_t *, u_int32_t); 
+  void *(*cert_get) (u_int8_t *, u_int32_t);
   int (*cert_validate) (void *);
   int (*cert_insert) (int, void *);
   void (*cert_free) (void *);

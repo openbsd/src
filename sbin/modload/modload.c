@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.33 2002/02/16 21:27:35 millert Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.34 2002/06/09 08:13:07 todd Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -71,16 +71,16 @@ static	void	cleanup(void);
 
 /* prelink the module */
 static int
-prelink(const char *kernel, 
-	const char *entry, 
-	const char *outfile, 
-	const void *address, 
+prelink(const char *kernel,
+	const char *entry,
+	const char *outfile,
+	const void *address,
 	const char *object)
 {
 	char cmdbuf[1024];
 	int error = 0;
 
-	linkcmd(cmdbuf, sizeof(cmdbuf), 
+	linkcmd(cmdbuf, sizeof(cmdbuf),
 		kernel, entry, outfile, address, object);
 
 	if (debug)
@@ -173,8 +173,8 @@ verify_entry(const char *entry, char *filename)
 	return n;
 }
 
-/* 
- * Transfer data to kernel memory in chunks 
+/*
+ * Transfer data to kernel memory in chunks
  * of MODIOBUF size at a time.
  */
 void
@@ -210,8 +210,8 @@ loadspace(size_t len)
 	}
 }
 
-/* 
- * Transfer symbol table to kernel memory in chunks 
+/*
+ * Transfer symbol table to kernel memory in chunks
  * of MODIOBUF size at a time.
  */
 void
@@ -339,7 +339,7 @@ main(int argc, char **argv)
 		errx(1, "can't prelink `%s' creating `%s'", modobj, out);
 	if (Sflag == 0)
 		fileopen |= OUTFILE_CREAT;
-  
+
  	/*
  	 * Pre-open the 0-linked module to get the size information
  	 */

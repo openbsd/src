@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.10 2001/10/26 13:29:26 ho Exp $	*/
+/*	$OpenBSD: if.c,v 1.11 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ siocgifconf (struct ifconf *ifcp)
     }
   close (s);
   return 0;
-  
+
 err:
   if (buf)
     free (buf);

@@ -105,7 +105,7 @@ int get_secrets(struct stateob *st, int mode);
 int choose_identity(struct stateob *st, u_int8_t *packet, u_int16_t *size,
 		     u_int8_t *attributes, u_int16_t attribsize);
 u_int16_t get_identity_verification_size(struct stateob *st, u_int8_t *choice);
-int create_identity_verification(struct stateob *st, u_int8_t *buffer, 
+int create_identity_verification(struct stateob *st, u_int8_t *buffer,
 				 u_int8_t *packet, u_int16_t size);
 int  verify_identity_verification(struct stateob *st, u_int8_t *buffer,
 				  u_int8_t *packet, u_int16_t size);
@@ -114,8 +114,8 @@ struct idxform *get_hash_id(int id);
 struct idxform *get_hash(enum hashes hashtype);
 int create_verification_key(struct stateob *, u_int8_t *, u_int16_t *, int);
 
-int idsign(struct stateob *, struct idxform *, u_int8_t *, 
+int idsign(struct stateob *, struct idxform *, u_int8_t *,
 	   u_int8_t *, u_int16_t);
-int idverify(struct stateob *, struct idxform *, u_int8_t *, 
+int idverify(struct stateob *, struct idxform *, u_int8_t *,
 	     u_int8_t *, u_int16_t);
 #endif

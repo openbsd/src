@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.3 1998/12/21 01:02:29 niklas Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.4 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: dhtest.c,v 1.1 1998/07/18 21:14:20 provos Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ main (void)
     printf ("FAILED ");
   else
     printf ("OKAY ");
-  
+
 
   printf ("\n");
   return 1;

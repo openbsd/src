@@ -1,4 +1,4 @@
-/*	$OpenBSD: keynote_compat.c,v 1.3 2000/12/12 01:49:48 niklas Exp $	*/
+/*	$OpenBSD: keynote_compat.c,v 1.4 2002/06/09 08:13:07 todd Exp $	*/
 /*	$EOM: keynote_compat.c,v 1.1 2000/10/15 19:18:26 niklas Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  *
  * THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR
  * IMPLIED WARRANTY. IN PARTICULAR, THE AUTHORS MAKES NO

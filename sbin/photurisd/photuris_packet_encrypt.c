@@ -1,4 +1,4 @@
-/*	$OpenBSD: photuris_packet_encrypt.c,v 1.4 2001/01/28 22:45:14 niklas Exp $	*/
+/*	$OpenBSD: photuris_packet_encrypt.c,v 1.5 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -34,13 +34,13 @@
  * encrypts packets with the privacy choice.
  */
 
-#ifndef lint 
-static char rcsid[] = "$OpenBSD: photuris_packet_encrypt.c,v 1.4 2001/01/28 22:45:14 niklas Exp $";
-#endif 
+#ifndef lint
+static char rcsid[] = "$OpenBSD: photuris_packet_encrypt.c,v 1.5 2002/06/09 08:13:08 todd Exp $";
+#endif
 
 #define _ENCRYPT_C_
- 
-#include <stdio.h> 
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -48,9 +48,9 @@ static char rcsid[] = "$OpenBSD: photuris_packet_encrypt.c,v 1.4 2001/01/28 22:4
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <des.h>
-#include "config.h" 
-#include "packets.h" 
-#include "state.h" 
+#include "config.h"
+#include "packets.h"
+#include "state.h"
 #include "attributes.h"
 #include "encrypt.h"
 #include "secrets.h"
@@ -68,15 +68,15 @@ packet_mask(u_int8_t *packet, u_int16_t len, u_int8_t *key)
 }
 
 int
-packet_create_padding(struct stateob *st, u_int16_t size, u_int8_t *padd, 
+packet_create_padding(struct stateob *st, u_int16_t size, u_int8_t *padd,
 		      u_int16_t *rsize)
 {
      u_int8_t padlength, i;
 
-     switch(ntohs(*((u_int16_t *)st->scheme))) { 
-     case DH_G_2_MD5:    
-     case DH_G_3_MD5:    
-     case DH_G_5_MD5:    
+     switch(ntohs(*((u_int16_t *)st->scheme))) {
+     case DH_G_2_MD5:
+     case DH_G_3_MD5:
+     case DH_G_5_MD5:
 	  padlength = (arc4random() & 0xf0) - (size%16);
 	  if (padlength < 8)
 	       padlength += 8;
@@ -87,13 +87,13 @@ packet_create_padding(struct stateob *st, u_int16_t size, u_int8_t *padd,
 	       padlength += 8;
 	  break;
      }
- 
-     if(*rsize < padlength) 
-          return -1; 
- 
-     /* Pad the rest of the payload */ 
-     for(i=1;i<=padlength;i++) 
-          padd[i-1] = i; 
+
+     if(*rsize < padlength)
+          return -1;
+
+     /* Pad the rest of the payload */
+     for(i=1;i<=padlength;i++)
+          padd[i-1] = i;
 
      *rsize = padlength;
 
@@ -108,14 +108,14 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
      u_int8_t *pkey;
      u_int16_t order = 0;
      int i;
-     
+
      input = (des_cblock *)payload;
 
      /* No encryption needed */
      switch(ntohs(*((u_int16_t *)st->scheme))) {
-     case DH_G_2_MD5:   
-     case DH_G_3_MD5:   
-     case DH_G_5_MD5:   
+     case DH_G_2_MD5:
+     case DH_G_3_MD5:
+     case DH_G_5_MD5:
 #ifdef DEBUG
 	  printf("[Packet encryption: None]\n");
 #endif
@@ -124,24 +124,24 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 	       log_error("Not enough memory for privacy secret");
 	       return -1;
 	  }
-	  if(compute_privacy_key(st, pkey, 
+	  if(compute_privacy_key(st, pkey,
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				 payloadlen*8, &order, 1) == -1)
 	       return -1;
-#ifdef DEBUG 
-	  {  
-	       int i; 
-	       char buffer[3000]; 
-	       i = 3000; 
-	       bin2hex(buffer, &i, pkey, payloadlen); 
-	       printf("Encrypt key: %s\n", buffer ); 
-	  } 
-#endif 
+#ifdef DEBUG
+	  {
+	       int i;
+	       char buffer[3000];
+	       i = 3000;
+	       bin2hex(buffer, &i, pkey, payloadlen);
+	       printf("Encrypt key: %s\n", buffer );
+	  }
+#endif
 	  packet_mask(payload, payloadlen, pkey);
 	  return 0;
-     case DH_G_2_DES_MD5:   
-     case DH_G_3_DES_MD5:   
-     case DH_G_5_DES_MD5:   
+     case DH_G_2_DES_MD5:
+     case DH_G_3_DES_MD5:
+     case DH_G_5_DES_MD5:
 #ifdef DEBUG
 	  printf("[Packet encryption: DES]\n");
 #endif
@@ -151,24 +151,24 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 	       return -1;
 	  }
 	  /* XOR Mask */
-	  if(compute_privacy_key(st, pkey, 
+	  if(compute_privacy_key(st, pkey,
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				 payloadlen*8, &order, 1) == -1)
 	       return -1;
 	  /* DES Key */
-	  if(compute_privacy_key(st, pkey+payloadlen, 
+	  if(compute_privacy_key(st, pkey+payloadlen,
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				 64, &order, 1) == -1)
 	       return -1;
-#ifdef DEBUG 
-	  {  
-	       int i; 
-	       char buffer[3000]; 
-	       i = 3000; 
-	       bin2hex(buffer, &i, pkey, payloadlen+8); 
-	       printf("Encrypt key: %s\n", buffer ); 
-	  } 
-#endif 
+#ifdef DEBUG
+	  {
+	       int i;
+	       char buffer[3000];
+	       i = 3000;
+	       bin2hex(buffer, &i, pkey, payloadlen+8);
+	       printf("Encrypt key: %s\n", buffer );
+	  }
+#endif
 	  bcopy(pkey+payloadlen, &keys[0], 8);
 	  des_set_odd_parity(&keys[0]);
 
@@ -181,9 +181,9 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 
 	  des_cbc_encrypt(input,input,payloadlen, key1,&keys[1], DES_ENCRYPT);
 	  break;
-     case DH_G_2_3DES_SHA1:   
-     case DH_G_3_3DES_SHA1:   
-     case DH_G_5_3DES_SHA1:   
+     case DH_G_2_3DES_SHA1:
+     case DH_G_3_3DES_SHA1:
+     case DH_G_5_3DES_SHA1:
 #ifdef DEBUG
 	  printf("[Packet encryption: 3DES]\n");
 #endif
@@ -193,19 +193,19 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 	       return -1;
 	  }
 	  /* XOR Mask */
-	  if(compute_privacy_key(st, pkey, 
+	  if(compute_privacy_key(st, pkey,
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				 payloadlen*8, &order, 1) == -1)
 	       return -1;
 	  /* 3 DES Keys */
 	  for (i=0; i<3; i++) {
-	       if(compute_privacy_key(st, pkey+payloadlen + (i<<3), 
+	       if(compute_privacy_key(st, pkey+payloadlen + (i<<3),
 				      payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				      64, &order, 1) == -1)
 		    return -1;
 	  }
 #ifdef DEBUG
-	  { 
+	  {
 	       int i;
 	       char buffer[3000];
 	       i = 3000;
@@ -232,16 +232,16 @@ packet_encrypt(struct stateob *st, u_int8_t *payload, u_int16_t payloadlen)
 	  des_ede3_cbc_encrypt(input, input, payloadlen,
 			   key1, key2, key3, &keys[3], DES_ENCRYPT);
 	  break;
-     default:   
-          log_print("Unknown exchange scheme: %d\n",    
-                    *((u_int16_t *)st->scheme));   
-          return -1;   
+     default:
+          log_print("Unknown exchange scheme: %d\n",
+                    *((u_int16_t *)st->scheme));
+          return -1;
      }
 
      free(pkey);
 
      return 0;
-}   
+}
 
 int
 packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
@@ -256,9 +256,9 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 
      /* No encryption needed */
      switch(ntohs(*((u_int16_t *)st->scheme))) {
-     case DH_G_2_MD5:   
-     case DH_G_3_MD5:   
-     case DH_G_5_MD5:   
+     case DH_G_2_MD5:
+     case DH_G_3_MD5:
+     case DH_G_5_MD5:
 #ifdef DEBUG
 	  printf("[Packet decryption: None]\n");
 #endif
@@ -267,23 +267,23 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 	       log_error("Not enough memory for privacy secret");
 	       return -1;
 	  }
-	  if(compute_privacy_key(st, pkey, 
+	  if(compute_privacy_key(st, pkey,
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				 *payloadlen*8, &order, 0) == -1)
 	       return -1;
-#ifdef DEBUG 
-	  {  
-	       int i = 3000; 
-	       char buffer[3000]; 
-	       bin2hex(buffer, &i, pkey, *payloadlen); 
-	       printf("Decrypt key: %s\n", buffer ); 
-	  } 
-#endif 
+#ifdef DEBUG
+	  {
+	       int i = 3000;
+	       char buffer[3000];
+	       bin2hex(buffer, &i, pkey, *payloadlen);
+	       printf("Decrypt key: %s\n", buffer );
+	  }
+#endif
 	  packet_mask(payload, *payloadlen, pkey);
 	  return 0;
-     case DH_G_2_DES_MD5:   
-     case DH_G_3_DES_MD5:   
-     case DH_G_5_DES_MD5:   
+     case DH_G_2_DES_MD5:
+     case DH_G_3_DES_MD5:
+     case DH_G_5_DES_MD5:
 #ifdef DEBUG
 	  printf("[Packet decryption: DES]\n");
 #endif
@@ -293,23 +293,23 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 	       return -1;
 	  }
 	  /* XOR Mask */
-	  if(compute_privacy_key(st, pkey, 
+	  if(compute_privacy_key(st, pkey,
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				 *payloadlen*8, &order, 0) == -1)
 	       return -1;
 	  /* DES Key */
-	  if(compute_privacy_key(st, pkey + *payloadlen, 
+	  if(compute_privacy_key(st, pkey + *payloadlen,
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				 64, &order, 0) == -1)
 	       return -1;
-#ifdef DEBUG 
-	  {  
-	       int i = 3000; 
-	       char buffer[3000]; 
-	       bin2hex(buffer, &i, pkey, *payloadlen + 8); 
-	       printf("Decrypt key: %s\n", buffer ); 
-	  } 
-#endif 
+#ifdef DEBUG
+	  {
+	       int i = 3000;
+	       char buffer[3000];
+	       bin2hex(buffer, &i, pkey, *payloadlen + 8);
+	       printf("Decrypt key: %s\n", buffer );
+	  }
+#endif
 	  bcopy(pkey+*payloadlen, &keys[0], 8);
 	  des_set_odd_parity(&keys[0]);
 
@@ -322,9 +322,9 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 
 	  packet_mask(payload, *payloadlen, pkey);
 	  break;
-     case DH_G_2_3DES_SHA1:   
-     case DH_G_3_3DES_SHA1:   
-     case DH_G_5_3DES_SHA1:   
+     case DH_G_2_3DES_SHA1:
+     case DH_G_3_3DES_SHA1:
+     case DH_G_5_3DES_SHA1:
 #ifdef DEBUG
 	  printf("[Packet decryption: 3DES]\n");
 #endif
@@ -334,19 +334,19 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 	       return -1;
 	  }
 	  /* XOR Mask */
-	  if(compute_privacy_key(st, pkey, 
+	  if(compute_privacy_key(st, pkey,
 				 payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				 *payloadlen*8, &order, 0) == -1)
 	       return -1;
 	  /* 3 DES keys + 1 DES IV */
 	  for (i=0; i<3; i++) {
-	       if(compute_privacy_key(st, pkey + *payloadlen + (i<<3), 
+	       if(compute_privacy_key(st, pkey + *payloadlen + (i<<3),
 				      payload - 2*COOKIE_SIZE - 4 - SPI_SIZE,
 				      64, &order, 0) == -1)
 		    return -1;
 	  }
 #ifdef DEBUG
-	  { 
+	  {
 	       int i = 3000;
 	       char buffer[3000];
 	       bin2hex(buffer, &i, pkey, *payloadlen+24);
@@ -372,10 +372,10 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 
 	  packet_mask(payload, *payloadlen, pkey);
 	  break;
-     default:   
-          log_error("Unknown exchange scheme: %d\n",    
-                    *((u_int16_t *)st->scheme));   
-          return -1;   
+     default:
+          log_error("Unknown exchange scheme: %d\n",
+                    *((u_int16_t *)st->scheme));
+          return -1;
      }
 
      padlength = *(payload+(*payloadlen)-1);
@@ -392,5 +392,5 @@ packet_decrypt(struct stateob *st, u_int8_t *payload, u_int16_t *payloadlen)
 	       return -1;
 
      return 0;
-}   
-     
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.28 2002/03/21 21:16:07 millert Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.29 2002/06/09 08:13:08 todd Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ main(argc, argv)
 			if (altflags & ALTF_PORT)
 				port_no = atoi(strstr(optarg, "port=") + 5);
 			if (altflags & ALTF_NOAC) {
-				nfsargsp->flags 
+				nfsargsp->flags
 				    |= (NFSMNT_ACREGMIN | NFSMNT_ACREGMAX |
 					NFSMNT_ACDIRMIN | NFSMNT_ACDIRMAX);
 				nfsargsp->acregmin = 0;

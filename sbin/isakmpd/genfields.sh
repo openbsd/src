@@ -1,4 +1,4 @@
-#	$OpenBSD: genfields.sh,v 1.6 2001/01/27 12:03:32 niklas Exp $
+#	$OpenBSD: genfields.sh,v 1.7 2002/06/09 08:13:06 todd Exp $
 #	$EOM: genfields.sh,v 1.5 1999/04/02 01:15:55 niklas Exp $
 
 #
@@ -46,7 +46,7 @@ locase_function='function locase (str) {
   return retval;
 }'
 
-$awk " 
+$awk "
 $locase_function
 "'
 BEGIN {

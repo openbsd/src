@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.12 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.13 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ des3_encrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
   u_int8_t iv[MAXBLK];
 
   memcpy (iv, ks->riv, ks->xf->blocksize);
-  des_ede3_cbc_encrypt (DC data, DC data, len, ks->ks_des[0], ks->ks_des[1], 
+  des_ede3_cbc_encrypt (DC data, DC data, len, ks->ks_des[0], ks->ks_des[1],
 			ks->ks_des[2], DC iv, DES_ENCRYPT);
 }
 
@@ -153,12 +153,12 @@ des3_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
   u_int8_t iv[MAXBLK];
 
   memcpy (iv, ks->riv, ks->xf->blocksize);
-  des_ede3_cbc_encrypt (DC data, DC data, len, ks->ks_des[0], ks->ks_des[1], 
+  des_ede3_cbc_encrypt (DC data, DC data, len, ks->ks_des[0], ks->ks_des[1],
 			ks->ks_des[2], DC iv, DES_DECRYPT);
 }
 #undef DC
 #endif /* USE_TRIPLEDES */
- 
+
 #ifdef USE_BLOWFISH
 enum cryptoerr
 blf_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
@@ -194,7 +194,7 @@ blf_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
   u_int16_t i, blocksize = ks->xf->blocksize;
   u_int32_t xl, xr;
-  
+
   data += len - blocksize;
   for (i = len - blocksize; i >= blocksize; data -= blocksize, i -= blocksize)
     {

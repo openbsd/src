@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.10 2002/02/16 21:27:35 millert Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.11 2002/06/09 08:13:07 todd Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknod.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: mknod.c,v 1.10 2002/02/16 21:27:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: mknod.c,v 1.11 2002/06/09 08:13:07 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ domkfifo(argc, argv, mode)
 	int rv;
 
 	for (rv = 0; *argv; ++argv) {
-		if (mkfifo(*argv, mode) < 0) {  
+		if (mkfifo(*argv, mode) < 0) {
 			warn("%s", *argv);
 			rv = 1;
 		}

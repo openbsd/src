@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.15 2002/06/08 12:50:42 gluk Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.16 2002/06/09 08:13:05 todd Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -468,7 +468,7 @@ valtostr(val, vinfo)
 void
 device_dump(argc, argv)
 	int argc;
-	char *argv[]; 
+	char *argv[];
 {
 	unsigned char buf[131072];
 	int error;
@@ -1170,7 +1170,7 @@ device_attr(argc, argv)
 }
 
 /*
- * Set the automatic acoustic management on the disk. 
+ * Set the automatic acoustic management on the disk.
  */
 void
 device_acoustic(argc, argv)
@@ -1268,7 +1268,7 @@ usage:
 
 /*
  * En/disable features (the automatic acoustic managmement, Advanced Power
- * Management) on the disk. 
+ * Management) on the disk.
  */
 void
 device_feature(argc, argv)

@@ -1,4 +1,4 @@
-/* $OpenBSD: secrets.h,v 1.4 2001/01/28 22:45:16 niklas Exp $ */
+/* $OpenBSD: secrets.h,v 1.5 2002/06/09 08:13:09 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,29 +33,29 @@
  * prototypes for compute_secrets.c
  */
 
-#ifndef _SECRETS_H_ 
-#define _SECRETS_H_ 
- 
-#include "state.h" 
+#ifndef _SECRETS_H_
+#define _SECRETS_H_
+
+#include "state.h"
 #include "spi.h"
- 
-#undef EXTERN 
-  
-#ifdef _SECRETS_C_ 
-#define EXTERN 
-#else 
-#define EXTERN extern 
+
+#undef EXTERN
+
+#ifdef _SECRETS_C_
+#define EXTERN
+#else
+#define EXTERN extern
 #endif
 
 EXTERN int compute_shared_secret(struct stateob *, u_int8_t **, size_t *);
-EXTERN int compute_session_key(struct stateob *st, u_int8_t *key, 
-			       u_int8_t *attribute, int owner, 
+EXTERN int compute_session_key(struct stateob *st, u_int8_t *key,
+			       u_int8_t *attribute, int owner,
 			       u_int16_t *order);
 EXTERN int get_session_key_length(u_int8_t *attribute);
 
 EXTERN int init_privacy_key(struct stateob *st, int owner);
-EXTERN int compute_privacy_key(struct stateob *st, u_int8_t *key, 
-			       u_int8_t *packet, u_int16_t bits, 
+EXTERN int compute_privacy_key(struct stateob *st, u_int8_t *key,
+			       u_int8_t *packet, u_int16_t bits,
 			       u_int16_t *order, int owner);
 EXTERN int make_session_keys(struct stateob *st, struct spiob *spi);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: photuris_value_response.c,v 1.3 2001/01/28 22:45:15 niklas Exp $	*/
+/*	$OpenBSD: photuris_value_response.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: photuris_value_response.c,v 1.3 2001/01/28 22:45:15 niklas Exp $";
+static char rcsid[] = "$OpenBSD: photuris_value_response.c,v 1.4 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -49,29 +49,29 @@ static char rcsid[] = "$OpenBSD: photuris_value_response.c,v 1.3 2001/01/28 22:4
 
 int
 photuris_value_response(struct stateob *st, u_char *buffer, int *size)
-			 
+			
 {
 	struct value_response *header;
 	u_int16_t asize, rsize, tmp;
 
 	rsize = *size;
-        if (rsize < VALUE_RESPONSE_MIN + st->oSPIoattribsize) 
-             return -1; /* buffer not large enough */ 
- 
+        if (rsize < VALUE_RESPONSE_MIN + st->oSPIoattribsize)
+             return -1; /* buffer not large enough */
+
 	header = (struct value_response *)buffer;
 
-        asize = VALUE_RESPONSE_MIN + st->oSPIoattribsize; 
-        rsize -= asize; 
- 
-        /* Generate an exchangevalue if not done already */ 
-        tmp = rsize; 
+        asize = VALUE_RESPONSE_MIN + st->oSPIoattribsize;
+        rsize -= asize;
+
+        /* Generate an exchangevalue if not done already */
+        tmp = rsize;
         if(exchange_value_generate(st, VALUE_RESPONSE_VALUE(header), &tmp) == -1\
-) 
-             return -1; 
- 
-        asize += tmp; 
-        bcopy(st->oSPIoattrib, VALUE_RESPONSE_VALUE(header)+tmp, 
-	      st->oSPIoattribsize); 
+)
+             return -1;
+
+        asize += tmp;
+        bcopy(st->oSPIoattrib, VALUE_RESPONSE_VALUE(header)+tmp,
+	      st->oSPIoattribsize);
 
 	header = (struct value_response *) buffer;
 	header->type = VALUE_RESPONSE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.21 2002/05/29 09:19:52 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.22 2002/06/09 08:13:08 todd Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.21 2002/05/29 09:19:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.22 2002/06/09 08:13:08 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -413,7 +413,7 @@ recalc:
 			    fsize, sblock.fs_fsize);
 		exit(23);
 	}
-	/* 
+	/*
 	 * Calculate the number of cylinders per group
 	 */
 	sblock.fs_cpg = cpg;
@@ -688,7 +688,7 @@ next:
 			sblock.fs_cssize - i < sblock.fs_bsize ?
 			    sblock.fs_cssize - i : sblock.fs_bsize,
 			((char *)fscs) + i);
-	/* 
+	/*
 	 * Write out the duplicate super blocks
 	 */
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++)
@@ -756,7 +756,7 @@ initcg(cylno, utime)
 		acg.cg_nclusterblks = acg.cg_ndblk / sblock.fs_frag;
 	acg.cg_btotoff = &acg.cg_space[0] - (u_char *)(&acg.cg_firstfield);
 	acg.cg_boff = acg.cg_btotoff + sblock.fs_cpg * sizeof(int32_t);
-	acg.cg_iusedoff = acg.cg_boff + 
+	acg.cg_iusedoff = acg.cg_boff +
 		sblock.fs_cpg * sblock.fs_nrpos * sizeof(int16_t);
 	acg.cg_freeoff = acg.cg_iusedoff + howmany(sblock.fs_ipg, NBBY);
 	if (sblock.fs_contigsumsize <= 0) {
@@ -1161,7 +1161,7 @@ calloc(size, numelm)
 	void	*base;
 
 	size *= numelm;
-	if ((base = malloc(size)) != 0) 
+	if ((base = malloc(size)) != 0)
 		memset(base, 0, size);
 	return (base);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopctl.c,v 1.1.1.1 2001/07/05 02:07:46 mickey Exp $	*/
+/*	$OpenBSD: iopctl.c,v 1.2 2002/06/09 08:13:06 todd Exp $	*/
 /*	$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $	*/
 
 /*-
@@ -270,7 +270,7 @@ showlct(char **argv)
 		show("local tid", "%d", letoh16(ent->localtid) & 4095);
 		show("change indicator", "%d", letoh32(ent->changeindicator));
 		show("flags", "%x", letoh32(ent->deviceflags));
-		show("class id", "%x (%s)", classid & 4095, 
+		show("class id", "%x (%s)", classid & 4095,
 		    class2str(classid & 4095));
 		show("version", "%x", (classid >> 12) & 15);
 		show("organisation id", "%x", classid >> 16);

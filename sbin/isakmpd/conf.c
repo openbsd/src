@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.41 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.42 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -470,7 +470,7 @@ conf_load_defaults (int tr)
 	    conf_set (tr, sect, "AUTHENTICATION_METHOD", mm_auth[auth], 0, 1);
 
 	    /* XXX Always DH group 2 (MODP_1024) */
-	    conf_set (tr, sect, "GROUP_DESCRIPTION", 
+	    conf_set (tr, sect, "GROUP_DESCRIPTION",
 		      dh_group[group < group_max ? group : 1], 0, 1);
 
 	    conf_set (tr, sect, "Life", CONF_DFLT_TAG_LIFE_MAIN_MODE, 0, 1);
@@ -505,7 +505,7 @@ conf_load_defaults (int tr)
 		  char tmp[CONF_MAX];
 
 		  snprintf (tmp, CONF_MAX, "QM-%s%s%s%s%s%s", PROTO (proto),
-			    MODE_p (mode), qm_enc_p[enc], qm_hash_p[hash], 
+			    MODE_p (mode), qm_enc_p[enc], qm_hash_p[hash],
 			    PFS (pfs), dh_group_p[group]);
 
 		  strlcpy (sect, tmp, CONF_MAX);
@@ -545,7 +545,7 @@ conf_load_defaults (int tr)
 
 		      /* XXX Another shortcut -- to keep length down.  */
 		      if (pfs)
-			conf_set (tr, sect, "GROUP_DESCRIPTION", 
+			conf_set (tr, sect, "GROUP_DESCRIPTION",
 				  dh_group[group < group_max ? group : 1], 0,
 				  1);
 		    }

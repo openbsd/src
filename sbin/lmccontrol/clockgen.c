@@ -1,12 +1,12 @@
-/* $OpenBSD: clockgen.c,v 1.1 2000/10/13 16:22:07 chris Exp $ */
-/* $Id: clockgen.c,v 1.1 2000/10/13 16:22:07 chris Exp $ */
+/* $OpenBSD: clockgen.c,v 1.2 2002/06/09 08:13:07 todd Exp $ */
+/* $Id: clockgen.c,v 1.2 2002/06/09 08:13:07 todd Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
  * All rights reserved.  www.lanmedia.com
  *
  * This code is written by Michael Graff (explorer@vix.com) for LMC.
- * The code is derived from permitted modifications to software created 
+ * The code is derived from permitted modifications to software created
  * by Matt Thomas (matt@3am-software.com).
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All marketing or advertising materials mentioning features or use of this 
+ * 3. All marketing or advertising materials mentioning features or use of this
  *    software must display the following acknowledgement:
  *      This product includes software developed by LAN Media Corporation
  *      and its contributors.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_bad_cookie.c,v 1.4 2001/01/28 22:45:08 niklas Exp $	*/
+/*	$OpenBSD: handle_bad_cookie.c,v 1.5 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_bad_cookie.c,v 1.4 2001/01/28 22:45:08 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_bad_cookie.c,v 1.5 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -68,19 +68,19 @@ handle_bad_cookie(u_char *packet, int size, char *address)
 
 	header = (struct error_message *) packet;
 
-	if ((st = state_find_cookies(address, header->icookie, 
+	if ((st = state_find_cookies(address, header->icookie,
 				     header->rcookie)) == NULL) {
-	     log_print("No state for BAD_COOKIE message from %s", 
+	     log_print("No state for BAD_COOKIE message from %s",
 		       address);
 	     return -1;
 	}
 
-	if ((st->retries < max_retries && 
+	if ((st->retries < max_retries &&
 	     (st->phase == VALUE_REQUEST || st->phase == IDENTITY_REQUEST)) ||
 	     (st->phase != VALUE_REQUEST && st->phase != IDENTITY_REQUEST &&
 	      st->phase != SPI_NEEDED && st->phase != SPI_UPDATE)) {
-	     log_print("Ignored BAD_COOKIE message from %s", address); 
-	     
+	     log_print("Ignored BAD_COOKIE message from %s", address);
+	
 	     return 0;                 /* Nothing needs to be done */
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: spi.h,v 1.7 2001/01/28 22:45:17 niklas Exp $ */
+/* $OpenBSD: spi.h,v 1.8 2002/06/09 08:13:09 todd Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -29,17 +29,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * spi.h: 
+ * spi.h:
  * security paramter index creation.
  */
- 
+
 #ifndef _SPI_H_
 #define _SPI_H_
 #include <sys/queue.h>
 #include "state.h"
 
 #undef EXTERN
- 
+
 #ifdef _SPI_C_
 #define EXTERN
 #else
@@ -59,19 +59,19 @@ struct spiob {
      char *address;
      char *local_address;
      int flags;
-     u_int8_t SPI[SPI_SIZE];           /* SPI */ 
+     u_int8_t SPI[SPI_SIZE];           /* SPI */
      u_int8_t icookie[COOKIE_SIZE];    /* Initator cookie */
      u_int8_t *attributes;             /* SPI attributes */
      u_int16_t attribsize;
      u_int8_t *sessionkey;             /* to be delete after use */
-     u_int16_t sessionkeysize; 
+     u_int16_t sessionkeysize;
      time_t lifetime;                  /* Lifetime for the SPI */
 };
 
 EXTERN void spi_init(void);
 EXTERN time_t getspilifetime(struct stateob *st);
 EXTERN int make_spi(struct stateob *st, char *local_address,
-		    u_int8_t *SPI, time_t *lifetime, 
+		    u_int8_t *SPI, time_t *lifetime,
 		    u_int8_t **attributes, u_int16_t *attribsize);
 
 EXTERN int spi_insert(struct spiob *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_identity_request.c,v 1.6 2001/01/28 22:45:08 niklas Exp $	*/
+/*	$OpenBSD: handle_identity_request.c,v 1.7 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_identity_request.c,v 1.6 2001/01/28 22:45:08 niklas Exp $";
+static char rcsid[] = "$OpenBSD: handle_identity_request.c,v 1.7 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -64,7 +64,7 @@ static char rcsid[] = "$OpenBSD: handle_identity_request.c,v 1.6 2001/01/28 22:4
 #endif
 
 int
-handle_identity_request(u_char *packet, int size, char *address, 
+handle_identity_request(u_char *packet, int size, char *address,
 			char *local_address)
 {
         struct packet_sub parts[] = {
@@ -76,7 +76,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	};
 
         struct packet id_msg = {
-	     "Identity Request", 
+	     "Identity Request",
 	     IDENTITY_MESSAGE_MIN, 0, parts
 	};
 
@@ -133,7 +133,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	MD5Final(signature, &ctx);
 
 	if (st->phase != VALUE_RESPONSE) {
-	     /* 
+	     /*
 	      * Compare with the identity request which got verified
 	      * initially. If matching resend our response.
 	      */
@@ -144,7 +144,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	     /* We got send the old packet again */
 	     bcopy(st->packet, packet_buffer, st->packetlen);
 	     packet_size = st->packetlen;
-	     
+	
 	     send_packet();
 	     return 0;
 	} else
@@ -169,8 +169,8 @@ handle_identity_request(u_char *packet, int size, char *address,
 
 	/* Fill the state object, but only if we have not dont so before */
 	if (st->uSPIidentver == NULL) {
-	     if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) { 
-		  log_error("calloc() in handle_identity_request()"); 
+	     if((st->uSPIidentver = calloc(i, sizeof(u_int8_t))) == NULL) {
+		  log_error("calloc() in handle_identity_request()");
 		  goto verification_failed;
 	     }
 	     bcopy(signature, st->uSPIidentver, i);
@@ -190,7 +190,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	p += p[1] + 2;
 	if (st->uSPIident == NULL) {
 	     if((st->uSPIident = calloc(varpre2octets(p), sizeof(u_int8_t))) == NULL) {
-		  log_error("calloc() in handle_identity_request()"); 
+		  log_error("calloc() in handle_identity_request()");
 		  goto verification_failed;
 	     }
 	     bcopy(p, st->uSPIident, varpre2octets(p));
@@ -205,15 +205,15 @@ handle_identity_request(u_char *packet, int size, char *address,
 	     st->uSPIattribsize = attribsize;
 	}
 	
-	if (st->oSPIident == NULL && 
+	if (st->oSPIident == NULL &&
 	    get_secrets(st, (ID_REMOTE|ID_LOCAL)) == -1) {
 	     log_print("get_secrets() in in handle_identity_request()");
 	     goto verification_failed;
 	}
 	
 	if (!verify_identity_verification(st, signature, packet, size)) {
-	     /* 
-	      * Clean up everything used from this packet 
+	     /*
+	      * Clean up everything used from this packet
 	      * but only if we did not get a valid packet before.
 	      * Otherwise this could be used as Denial of Service.
 	      */
@@ -227,13 +227,13 @@ handle_identity_request(u_char *packet, int size, char *address,
 	     st->uSPIident = NULL;
 	     free(st->oSPIident);
 	     st->oSPIident = NULL;
-	     
+	
 	     /* Clean up secrets */
 	     free(st->oSPIsecret);
 	     st->oSPIsecret = NULL; st->oSPIsecretsize = 0;
 	     free(st->uSPIsecret);
 	     st->uSPIsecret = NULL; st->uSPIsecretsize = 0;
-	     
+	
 	verification_failed:
 	     log_print("verification failed in handle_identity_request()");
 	     packet_size = PACKET_BUFFER_SIZE;
@@ -245,7 +245,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 	}
 
 	/* Create SPI + choice of attributes */
-	if(make_spi(st, local_address, st->oSPI, &(st->olifetime), 
+	if(make_spi(st, local_address, st->oSPI, &(st->olifetime),
 		    &(st->oSPIattrib), &(st->oSPIattribsize)) == -1) {
 	     log_print("make_spi() in handle_identity_request()");
 	     return -1;
@@ -264,37 +264,37 @@ handle_identity_request(u_char *packet, int size, char *address,
 	free(st->exchangevalue); st->exchangevalue = NULL;
 
 	bcopy(header->SPI, st->uSPI, SPI_SIZE);
-	st->ulifetime = (header->lifetime[0] << 16) + 
+	st->ulifetime = (header->lifetime[0] << 16) +
 	     (header->lifetime[1] << 8) + header->lifetime[2];
 	
 	if (st->oSPI[0] || st->oSPI[1] || st->oSPI[2] || st->oSPI[3]) {
-             /* Insert Owner SPI */ 
-             if ((spi = spi_new(st->address, st->oSPI)) == NULL) { 
-                  log_print("spi_new() in handle_identity_request()"); 
-                  return -1; 
-             } 
+             /* Insert Owner SPI */
+             if ((spi = spi_new(st->address, st->oSPI)) == NULL) {
+                  log_print("spi_new() in handle_identity_request()");
+                  return -1;
+             }
 	     if ((spi->local_address = strdup(local_address)) == NULL) {
 		  log_print("strdup() in handle_identity_request()");
 		  return -1;
 	     }
-             bcopy(st->icookie, spi->icookie, COOKIE_SIZE); 
+             bcopy(st->icookie, spi->icookie, COOKIE_SIZE);
 	     spi->flags |= SPI_OWNER;
-             spi->attribsize = st->oSPIattribsize; 
-             spi->attributes = calloc(spi->attribsize, sizeof(u_int8_t)); 
-             if (spi->attributes == NULL) { 
-                  log_error("calloc() in handle_identity_request()"); 
-                  spi_value_reset(spi); 
-                  return -1; 
-             } 
-             bcopy(st->oSPIattrib, spi->attributes, spi->attribsize); 
-             spi->lifetime = time(NULL) + st->olifetime; 
+             spi->attribsize = st->oSPIattribsize;
+             spi->attributes = calloc(spi->attribsize, sizeof(u_int8_t));
+             if (spi->attributes == NULL) {
+                  log_error("calloc() in handle_identity_request()");
+                  spi_value_reset(spi);
+                  return -1;
+             }
+             bcopy(st->oSPIattrib, spi->attributes, spi->attribsize);
+             spi->lifetime = time(NULL) + st->olifetime;
 
 	     /* Cludge for getting the right verification field */
 	     state_save_verification(st, st->oSPIidentver, st->oSPIidentversize);
 	     /* Make session keys for Owner */
 	     make_session_keys(st, spi);
 
-             spi_insert(spi); 
+             spi_insert(spi);
 #ifdef IPSEC
 	     kernel_insert_spi(st, spi);
 #endif

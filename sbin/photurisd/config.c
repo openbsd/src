@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.8 2001/11/17 19:54:57 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.9 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: config.c,v 1.8 2001/11/17 19:54:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: config.c,v 1.9 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -78,7 +78,7 @@ static char rcsid[] = "$OpenBSD: config.c,v 1.8 2001/11/17 19:54:57 deraadt Exp 
 static FILE *config_fp;
 static struct cfgx *cfgxroot;
 
-static void 
+static void
 open_config_file(char *file)
 {
      char *p;
@@ -88,12 +88,12 @@ open_config_file(char *file)
      else
 	  p = config_file;
 
-     if (p == NULL) 
-          log_fatal("no file in open_config_file()"); 
- 
-     config_fp = fopen(p, "r"); 
-     if (config_fp == (FILE *) NULL) 
-          log_fatal("can't open file %s in open_config_file()", p); 
+     if (p == NULL)
+          log_fatal("no file in open_config_file()");
+
+     config_fp = fopen(p, "r");
+     if (config_fp == (FILE *) NULL)
+          log_fatal("can't open file %s in open_config_file()", p);
 }
 
 static void
@@ -107,18 +107,18 @@ config_get(char *token)
 {
      char *p;
      while(fgets(buffer, BUFFER_SIZE, config_fp)) {
-	  p = buffer; 
+	  p = buffer;
 	  chomp(p);
-          while(isspace(*p)) 
-               p++; 
+          while(isspace(*p))
+               p++;
 	  while(isspace(p[strlen(p)-1]))
 	       p[strlen(p)-1] = '\0';
 
-          if (*p == '#') 
-               continue; 
- 
-          if (!strncmp(p, token, strlen(token))) 
-               return p; 
+          if (*p == '#')
+               continue;
+
+          if (!strncmp(p, token, strlen(token)))
+               return p;
 
      }
 
@@ -146,7 +146,7 @@ struct cfgx *
 cfgx_get(char *name)
 {
      struct cfgx *ob;
-     
+
      for(ob = cfgxroot; ob; ob = ob->next)
 	  if (ob->name && !strcmp(name, ob->name))
 	       break;
@@ -170,7 +170,7 @@ cfgx_clear(void)
  */
 
 int
-parse_type(char *line) 
+parse_type(char *line)
 {
 
      int type = 0;
@@ -220,7 +220,7 @@ init_attributes(void)
 	  if (p == NULL)
 	       continue;
 
-	  if (p2 == NULL || inet_addr(p) == -1 || 
+	  if (p2 == NULL || inet_addr(p) == -1 ||
 	       inet_network(p2) == -1) {  /* Attributes follow now */
 
 	       cfgattrib = cfgx_get(p);
@@ -256,7 +256,7 @@ init_attributes(void)
 			 continue;
 		    }
 
-		    while (isspace(*p3)) 
+		    while (isspace(*p3))
 			 p3++;
 		    i = strlen(p3) - 1;
 		    while (isspace(p3[i]) && i > 0)
@@ -274,7 +274,7 @@ init_attributes(void)
 			 continue;
 		    }
 #endif
-		    
+		
 		    if ((ob = calloc(1, sizeof(attrib_t))) == NULL)
 			 log_fatal("calloc() in init_attributes()");
 
@@ -288,21 +288,21 @@ init_attributes(void)
 	       }
 
 	       if (cfgattrib == NULL) {
-		    log_print("Unknown attribute %s in init_attributes()", 
+		    log_print("Unknown attribute %s in init_attributes()",
 			      p);
 		    continue;
 	       }
 
-	       if (ob == NULL && (ob = attrib_new()) == NULL) 
+	       if (ob == NULL && (ob = attrib_new()) == NULL)
                     log_fatal("attribute_new() in init_attributes()");
-	       else 
+	       else
 		    def_flag = 1;
 
 	       attrib[0] = cfgattrib->id;
 	       attrib[1] = 0;
-		    
+		
 	       /* Copy attributes in object */
-	       newbuf = realloc(ob->attributes, 
+	       newbuf = realloc(ob->attributes,
 				ob->attribsize + attrib[1] +2);
 	       if (newbuf == NULL) {
 		    if (ob->attributes != NULL)
@@ -310,7 +310,7 @@ init_attributes(void)
 		    log_fatal("realloc() in init_attributes()");
 	       }
 	       ob->attributes = newbuf;
-	       
+	
 	       bcopy(attrib, ob->attributes + ob->attribsize, attrib[1] + 2);
 	       ob->attribsize += attrib[1] + 2;
 			
@@ -332,7 +332,7 @@ init_attributes(void)
 
 	       ob->netmask = inet_addr(p2);
 	       in.s_addr = inet_addr(p) & ob->netmask;
-	       if ((ob->address = calloc(strlen(inet_ntoa(in))+1, 
+	       if ((ob->address = calloc(strlen(inet_ntoa(in))+1,
 					 sizeof(char))) == NULL)
 		    log_fatal("calloc() in init_attributes()");
 	       strcpy(ob->address, inet_ntoa(in));
@@ -381,13 +381,13 @@ init_schemes(void)
 	       p = p2 + 11;
 	       BN_set_word(generator, 2);
 	       *(u_int16_t *)buffer = htons(DH_G_2_MD5);
-	  } else if (!strncmp(p2, "DH_G_2_DES_MD5", 14)) { 
+	  } else if (!strncmp(p2, "DH_G_2_DES_MD5", 14)) {
 	       p = p2 + 15;
-               BN_set_word(generator, 2); 
+               BN_set_word(generator, 2);
                *(u_int16_t *)buffer = htons(DH_G_2_DES_MD5);
-	  } else if (!strncmp(p2, "DH_G_2_3DES_SHA1", 16)) { 
+	  } else if (!strncmp(p2, "DH_G_2_3DES_SHA1", 16)) {
 	       p  = p2 + 17;
-               BN_set_word(generator, 2); 
+               BN_set_word(generator, 2);
                *(u_int16_t *)buffer = htons(DH_G_2_3DES_SHA1);
 	  } else {
 	       log_print("Unknown scheme %s in init_schemes()", p2);
@@ -395,12 +395,12 @@ init_schemes(void)
 	  }
 
 	  /* Base schemes need a modulus */
-	  if ((scheme_bits = strtol(p, NULL, 10)) == 0 && 
+	  if ((scheme_bits = strtol(p, NULL, 10)) == 0 &&
 	       ntohs(*(u_int16_t *)buffer) == scheme_get_ref(buffer) ) {
 	       log_print("No bits in scheme %s in init_schemes()", p2);
 	       continue;
 	  }
-	       
+	
 	  if (scheme_bits != 0) {
 	       if ((tmp = mod_find_generator(generator)) == NULL)
 		    continue;
@@ -423,7 +423,7 @@ init_schemes(void)
 	       size = 2;
 	       buffer[2] = buffer[3] = 0;
 	  }
-	       
+	
 	  newbuf = realloc(global_schemes, global_schemesize + size + 2);
 	  if (newbuf == NULL) {
 	       if (global_schemes != NULL)
@@ -446,14 +446,14 @@ init_schemes(void)
 
      if (!gen_flag) {
 	  log_print("DH_G_2_MD5 not in config file, inserting it");
-	  BN_set_word(generator, 2); 
-	  if ((tmp = mod_find_generator(generator)) == NULL) 
+	  BN_set_word(generator, 2);
+	  if ((tmp = mod_find_generator(generator)) == NULL)
 	       log_fatal("no modulus for generator 2 in init_schemes()");
 
-	  size = BUFFER_SIZE - 2; 
-	  if (BN_bn2varpre(tmp->modulus, buffer+2, &size) == -1) 
+	  size = BUFFER_SIZE - 2;
+	  if (BN_bn2varpre(tmp->modulus, buffer+2, &size) == -1)
 	       log_fatal("BN_bn2varpre() in init_schemes()");
-                
+
 	  *(u_int16_t *)buffer = htons(DH_G_2_MD5);
      }
 
@@ -472,7 +472,7 @@ init_moduli(int primes)
      mod_init();
 
      open_config_file(NULL);
- 
+
 #ifdef DEBUG
      printf("[Bootstrapping moduli]\n");
 #endif
@@ -495,7 +495,7 @@ init_moduli(int primes)
 	      p += 2;
 	  if (!BN_hex2bn(&a, p))
 	       continue;
-	  
+	
 	  /* Get modulus */
 	  a = m;
 	  if (!strncmp(p2, "0x", 2))
@@ -513,7 +513,7 @@ init_moduli(int primes)
 	       tmp->status = MOD_PRIME;
 	  }
      }
-     
+
      close_config_file();
 
      BN_free(m);
@@ -532,7 +532,7 @@ init_times(void)
      char *p, *p2;
      int i, *value;
      open_config_file(NULL);
- 
+
 #ifdef DEBUG
      printf("[Setting up times]\n");
 #endif
@@ -602,7 +602,7 @@ startup_parse(struct stateob *st, char *p2)
 		    log_error("invalid destination address: %s", p3);
 		    continue;
 	       }
-	       if (hp == NULL) 
+	       if (hp == NULL)
 		    strncpy(st->address, p3, 15);
 	       else {
 		    struct sockaddr_in sin;
@@ -668,7 +668,7 @@ startup_end(struct stateob *st)
 	  st->flags = IPSEC_OPT_ENC | IPSEC_OPT_AUTH;
 
 #ifdef DEBUG
-     printf("Starting exchange with: %s:%d and options:", 
+     printf("Starting exchange with: %s:%d and options:",
 	    st->address, st->port);
      if (st->flags & IPSEC_OPT_ENC)
 	  printf("%s ", OPT_ENC);
@@ -678,12 +678,12 @@ startup_end(struct stateob *st)
 	  printf("for user %s", st->user);
      printf("\n");
 #endif
-     if (start_exchange(global_socket, st, 
+     if (start_exchange(global_socket, st,
 			st->address, st->port) == -1) {
 	  log_print("start_exchange in startup_end()");
 	  state_value_reset(st);
 	  free(st);
-     } else 
+     } else
 	  state_insert(st);
 }
 
@@ -736,7 +736,7 @@ reconfig(int sig)
 
      identity_cleanup(NULL);
      mod_cleanup();
-     
+
      free(global_schemes); global_schemes = NULL;
      global_schemesize = 0;
 
@@ -772,8 +772,8 @@ init_signals(void)
 }
 #endif
 
-int 
-pick_scheme(u_int8_t **scheme, u_int16_t *schemesize, 
+int
+pick_scheme(u_int8_t **scheme, u_int16_t *schemesize,
 	    u_int8_t *offered, u_int16_t offeredsize)
 {
      u_int32_t size = 0;
@@ -791,7 +791,7 @@ pick_scheme(u_int8_t **scheme, u_int16_t *schemesize,
 	       p = scheme_get_mod(offered + osize);
 	       actsize = varpre2octets(p);
 
-	       if (schemep == NULL && 
+	       if (schemep == NULL &&
 		   !bcmp(offered+osize, global_schemes + size, 2)) {
 		    /* We found a scheme we want use, now we need to get the
 		     * modulus for it.
@@ -828,7 +828,7 @@ pick_scheme(u_int8_t **scheme, u_int16_t *schemesize,
 			 modsize = actsize;
 		    }
 	       }
-	  
+	
 	       osize += scheme_get_len(offered + osize);
 	  }
      } else {
@@ -868,17 +868,17 @@ pick_scheme(u_int8_t **scheme, u_int16_t *schemesize,
      return 0;
 }
 
-/* 
+/*
  * Fills attrib, with attributes we offer to other parties,
  * read the necessary values from some config file
  */
 
-int 
+int
 pick_attrib(struct stateob *st, u_int8_t **attrib, u_int16_t *attribsize)
 {
      attribute_list *ob;
      int mode = 0, i, n, count, first;
-     
+
      if ((ob = attrib_find(st->address)) == NULL) {
 	  log_print("attrib_find() in pick_attrib()");
 	  return -1;
@@ -901,7 +901,7 @@ pick_attrib(struct stateob *st, u_int8_t **attrib, u_int16_t *attribsize)
 			 count += 2;
 			 first = 0;
 		    }
-		    bcopy(ob->attributes+i, buffer+count, 
+		    bcopy(ob->attributes+i, buffer+count,
 			  ob->attributes[i+1]+2);
 		    count += ob->attributes[i+1]+2;
 	       }
@@ -914,8 +914,8 @@ pick_attrib(struct stateob *st, u_int8_t **attrib, u_int16_t *attribsize)
      }
 
      if ((*attrib = calloc(count, sizeof(u_int8_t))) == NULL) {
-	  log_error("calloc() in in pick_attrib()"); 
-          return -1; 
+	  log_error("calloc() in in pick_attrib()");
+          return -1;
      }
      bcopy(buffer, *attrib, count);
      *attribsize = count;
@@ -934,28 +934,28 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
      u_int16_t count = 0;
      u_int8_t *wantesp, *wantah, *offeresp, *offerah, *p;
      u_int16_t wantespsize, wantahsize, offerespsize, offerahsize;
-     attribute_list *ob; 
+     attribute_list *ob;
      attrib_t *attprop;
-     
-     if ((ob = attrib_find(NULL)) == NULL) { 
+
+     if ((ob = attrib_find(NULL)) == NULL) {
 	  log_print("attrib_find() for default in select_attrib() in "
-		    "exchange to %s", st->address); 
-	  return -1; 
-     } 
-     
+		    "exchange to %s", st->address);
+	  return -1;
+     }
+
      /* Take from Owner */
-     get_attrib_section(ob->attributes, ob->attribsize, 
+     get_attrib_section(ob->attributes, ob->attribsize,
 			&wantesp, &wantespsize, AT_ESP_ATTRIB);
-     get_attrib_section(ob->attributes, ob->attribsize, 
+     get_attrib_section(ob->attributes, ob->attribsize,
 			&wantah, &wantahsize, AT_AH_ATTRIB);
 
-     
+
      /* Take from User */
      get_attrib_section(st->uSPIoattrib, st->uSPIoattribsize,
 			&offeresp, &offerespsize, AT_ESP_ATTRIB);
      get_attrib_section(st->uSPIoattrib, st->uSPIoattribsize,
 			&offerah, &offerahsize, AT_AH_ATTRIB);
-     
+
      p = buffer;
      if (wantesp != NULL && offeresp != NULL && (st->flags & IPSEC_OPT_ENC)) {
 	  /* Take the ESP section */
@@ -964,8 +964,8 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
 	  u_int8_t flag[20], flagc, hmac = 0;
 	  int res;
 	  attrib_t *attah = NULL;
-	  
-	  /* 
+	
+	  /*
 	   * We travers the ESP section and look for flags,
 	   * perhaps mutually exclusive flags should be handled
 	   * but at the moment we only support the HMAC indicator
@@ -1015,23 +1015,23 @@ select_attrib(struct stateob *st, u_int8_t **attributes, u_int16_t *attribsize)
 			 res = 0;
 #endif
 			 if (res == AT_ENC) {
-			      /* 
-			       * Our ESP attribute does not allow AH, but 
-			       * since the ESP attribute is our first choice, 
+			      /*
+			       * Our ESP attribute does not allow AH, but
+			       * since the ESP attribute is our first choice,
 			       * dont try for other.
 			       */
 			      attah = NULL;
 			      break;
-			 } else if (res != AT_AUTH) 
+			 } else if (res != AT_AUTH)
 			      break;
 		    }
 	       }
-	       
+	
 	       tasize += ta[tasize+1]+2;
 	  }
 	  if (tasize >= wantespsize)
 	       attah = NULL;
-	       
+	
 	  if (attprop != NULL) {
 	       /* Put proper header in there */
 	       p[0] = AT_ESP_ATTRIB;
@@ -1151,9 +1151,9 @@ chomp(char *p)
      return p;
 }
 
-static const char hextab[] = { 
-     '0', '1', '2', '3', '4', '5', '6', '7', 
-     '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' 
+static const char hextab[] = {
+     '0', '1', '2', '3', '4', '5', '6', '7',
+     '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
 };
 
 int
@@ -1163,7 +1163,7 @@ bin2hex(char *buffer, int *size, u_int8_t *data, u_int16_t len)
 
      if (*size < 2*len+1)
 	  return -1;
-     
+
      off = 0;
      while(len > 0) {
 	  buffer[off++] = hextab[*data >> 4];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.12 2002/03/29 20:35:55 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.13 2002/06/09 08:13:09 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -37,27 +37,27 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: server.c,v 1.12 2002/03/29 20:35:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: server.c,v 1.13 2002/06/09 08:13:09 todd Exp $";
 #endif
 
 #define _SERVER_C_
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <fcntl.h>
-#include <sys/types.h>  
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/socket.h>  
-#include <netinet/in.h>  
-#include <arpa/inet.h>  
-#include <netdb.h> 
-#include <sys/ioctl.h> 
-#include <net/if.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef _AIX 
-#include <sys/select.h> 
-#endif 
+#ifdef _AIX
+#include <sys/select.h>
+#endif
 #include <errno.h>
 #include "config.h"
 #include "photuris.h"
@@ -76,56 +76,56 @@ static char rcsid[] = "$OpenBSD: server.c,v 1.12 2002/03/29 20:35:55 deraadt Exp
 int
 init_server(void)
 {
-     struct sockaddr_in sin, *sin2; 
-     struct protoent *proto; 
-     int sock, d, i, ip, on = 1; 
-     struct ifconf ifconf; 
+     struct sockaddr_in sin, *sin2;
+     struct protoent *proto;
+     int sock, d, i, ip, on = 1;
+     struct ifconf ifconf;
      void *newbuf;
      char buf[4096];
 
      readfds = normfds = NULL;
 
      if (global_port == 0) {
-#ifndef PHOTURIS_PORT  
+#ifndef PHOTURIS_PORT
 	  struct servent *ser;
 
 	  if ((ser = getservbyname("photuris", "udp")) == (struct servent *) NULL)
 	       log_fatal("getservbyname(\"photuris\") in init_server()");
 
 	  global_port = ser->s_port;
-#else  
+#else
 	  global_port = PHOTURIS_PORT;
-#endif  
+#endif
      }
 
      if ((proto = getprotobyname("udp")) == (struct protoent *) NULL)
-          log_fatal("getprotobyname() in init_server()"); 
- 
+          log_fatal("getprotobyname() in init_server()");
+
      if ((global_socket = socket(PF_INET, SOCK_DGRAM, proto->p_proto)) < 0)
-          log_fatal("socket() in init_server()"); 
-     
-     setsockopt(global_socket, SOL_SOCKET, SO_REUSEADDR, (void *)&on, 
+          log_fatal("socket() in init_server()");
+
+     setsockopt(global_socket, SOL_SOCKET, SO_REUSEADDR, (void *)&on,
 		sizeof(on));
 #ifdef IPSEC
      kernel_set_socket_policy(global_socket);
-#endif	  
+#endif	
 
-     /* get the local addresses */ 
- 
-     ifconf.ifc_len = sizeof(buf); 
-     ifconf.ifc_buf = buf; 
-     bzero(buf, 1024); 
- 
-     if (ioctl(global_socket, SIOCGIFCONF, &ifconf) == -1) 
-          log_fatal("ioctl() in init_server()"); 
+     /* get the local addresses */
+
+     ifconf.ifc_len = sizeof(buf);
+     ifconf.ifc_buf = buf;
+     bzero(buf, 1024);
+
+     if (ioctl(global_socket, SIOCGIFCONF, &ifconf) == -1)
+          log_fatal("ioctl() in init_server()");
 
      sin.sin_port = htons(global_port);
-     sin.sin_addr.s_addr = INADDR_ANY; 
-     sin.sin_family = AF_INET; 
-     
+     sin.sin_addr.s_addr = INADDR_ANY;
+     sin.sin_family = AF_INET;
+
      if (bind(global_socket, (struct sockaddr *)&sin, sizeof(struct sockaddr)) < 0)
-	  log_fatal("bind() in init_server()"); 
- 
+	  log_fatal("bind() in init_server()");
+
      /* Save interfaces addresses here */
      addresses = NULL;
      sockets = NULL;
@@ -133,15 +133,15 @@ init_server(void)
 
 #ifdef IPSEC
      /* We also listen on pfkeyv2 for notify messages */
-     newbuf = realloc(addresses, (i + 1) * sizeof(char *)); 
+     newbuf = realloc(addresses, (i + 1) * sizeof(char *));
      if (newbuf == NULL) {
 	  if (addresses != NULL)
 	       free (addresses);
-	  log_fatal("realloc() in init_server()"); 
+	  log_fatal("realloc() in init_server()");
      }
      addresses = (char **) newbuf;
-     
-     addresses[i + 1] = (char *) NULL; 
+
+     addresses[i + 1] = (char *) NULL;
 
      newbuf = realloc(sockets, (i + 1) * sizeof(int));
      if (newbuf == NULL) {
@@ -156,31 +156,31 @@ init_server(void)
      i++;                    /* Next interface */
 #endif
 
-     for (ip = 0, d = 0; d < ifconf.ifc_len; d += IFNAMSIZ + 
+     for (ip = 0, d = 0; d < ifconf.ifc_len; d += IFNAMSIZ +
 #if defined(__NetBSD__) || defined(__OpenBSD__) || defined(_AIX)
-	       buf[IFNAMSIZ + d] 
-#else 
-	       sizeof(struct sockaddr) 
-#endif 
+	       buf[IFNAMSIZ + d]
+#else
+	       sizeof(struct sockaddr)
+#endif
 	       , i++, ip++) {
-	  sin2 = (struct sockaddr_in *) &buf[IFNAMSIZ + d]; 
- 
-	  if (sin2->sin_family != AF_INET) { 
+	  sin2 = (struct sockaddr_in *) &buf[IFNAMSIZ + d];
+
+	  if (sin2->sin_family != AF_INET) {
 	       i--; ip--;
-	       continue; 
-	  } 
- 
-	  newbuf =  realloc(addresses, (i + 1) * sizeof(char *)); 
+	       continue;
+	  }
+
+	  newbuf =  realloc(addresses, (i + 1) * sizeof(char *));
 	  if (newbuf == NULL) {
 	       if (addresses != NULL)
 		    free (addresses);
-	       log_fatal("realloc() in init_server()"); 
+	       log_fatal("realloc() in init_server()");
 	  }
 	  addresses = (char **) newbuf;
-	     
-	  addresses[i] = strdup(inet_ntoa(sin2->sin_addr)); 
-	  if (addresses[i] == (char *) NULL) 
-	       log_fatal("strdup() in init_server()"); 
+	
+	  addresses[i] = strdup(inet_ntoa(sin2->sin_addr));
+	  if (addresses[i] == (char *) NULL)
+	       log_fatal("strdup() in init_server()");
 
 	  newbuf = realloc(sockets, (i + 1)* sizeof(int));
 	  if (newbuf == NULL) {
@@ -191,43 +191,43 @@ init_server(void)
 	  sockets = (int *) newbuf;
 
 	  if ((sock = socket(PF_INET, SOCK_DGRAM, proto->p_proto)) < 0)
-	       log_fatal("socket() in init_server()"); 
-	  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&on, 
-		     sizeof(on)); 
+	       log_fatal("socket() in init_server()");
+	  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&on,
+		     sizeof(on));
 #ifdef IPSEC
 	  kernel_set_socket_policy(sock);
-#endif	  
+#endif	
 	  sockets[i] = sock;
 
-#ifdef DEBUG 
-	  printf("Local interface %s, address %s.\n", buf + d, 
-		 addresses[i]); 
-#endif 
+#ifdef DEBUG
+	  printf("Local interface %s, address %s.\n", buf + d,
+		 addresses[i]);
+#endif
 
 	  bzero((void *)&sin, sizeof(sin));
 	  sin.sin_port = htons(global_port);
 	  sin.sin_addr.s_addr = inet_addr(addresses[i]);
-	  sin.sin_family = AF_INET; 
-     
+	  sin.sin_family = AF_INET;
+
 	  if (bind(sockets[i], (struct sockaddr *)&sin, sizeof(struct sockaddr)) < 0)
-	       log_fatal("bind() in init_server()"); 
-  
-     } 
+	       log_fatal("bind() in init_server()");
+
+     }
 
      num_ifs = i;
- 
-#ifdef DEBUG 
-     printf("%d local interfaces supporting IP found.\n", ip); 
-#endif 
+
+#ifdef DEBUG
+     printf("%d local interfaces supporting IP found.\n", ip);
+#endif
 
      return 1;
 }
 
-int 
+int
 server(void)
 {
-     struct sockaddr_in sin; 
-     struct timeval timeout; 
+     struct sockaddr_in sin;
+     struct timeval timeout;
      int i, d, size;
 
      setvbuf(stdout, (char *)NULL, _IOLBF, 0);
@@ -241,7 +241,7 @@ server(void)
      if (readfds == NULL)
 	  log_fatal("malloc(%d) for fd_set", size);
 
-     memset((void *)normfds, 0, size); 
+     memset((void *)normfds, 0, size);
 
      for (i = 0; i < num_ifs; i++)
 	  FD_SET(sockets[i], normfds);
@@ -264,13 +264,13 @@ server(void)
 	  printf("Sleeping for %ld seconds\n", timeout.tv_sec);
 #endif
 
-	  if (select(sockets[num_ifs-1]+1, 
-		     readfds, (fd_set *) NULL, (fd_set *) NULL, 
+	  if (select(sockets[num_ifs-1]+1,
+		     readfds, (fd_set *) NULL, (fd_set *) NULL,
 		     (timeout.tv_sec == -1 ? NULL : &timeout)) < 0) {
-	       if (errno == EINTR) 
-                    continue; 
+	       if (errno == EINTR)
+                    continue;
 	       else
-                    log_fatal("select() in server()"); 
+                    log_fatal("select() in server()");
 	  }
 
 	  for (i=0; i<num_ifs; i++) {
@@ -281,15 +281,15 @@ server(void)
 		    else {
 #endif
 			    d = sizeof(struct sockaddr_in);
-			    if (recvfrom(sockets[i], 
+			    if (recvfrom(sockets[i],
 #ifdef BROKEN_RECVFROM
 				    (char *) buffer, 1,
 #else
-				    (char *) NULL, 0, 
+				    (char *) NULL, 0,
 #endif
 				    MSG_PEEK,
 				    (struct sockaddr *)&sin, &d) == -1) {
-				    log_error("recvfrom() in server()"); 
+				    log_error("recvfrom() in server()");
 				    return -1;
 			    }
 			    handle_packet(sockets[i], addresses[i]);
@@ -298,7 +298,7 @@ server(void)
 	  }
 
 #ifdef IPSEC
-	  /* 
+	  /*
 	   * Deal with queue acquire and expire message, since we
 	   * dont have proper timeout code, it needs to go here.
 	   */

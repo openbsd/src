@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.66 2002/06/07 04:56:13 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.67 2002/06/09 08:13:06 todd Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -211,13 +211,13 @@ ipsec_sa_check (struct sa *sa, void *v_arg)
     return 0;
 
   sa->transport->vtbl->get_dst (sa->transport, &dst);
-  if (memcmp (sockaddr_addrdata (dst), sockaddr_addrdata (arg->dst), 
+  if (memcmp (sockaddr_addrdata (dst), sockaddr_addrdata (arg->dst),
 	      sockaddr_addrlen (dst)) == 0)
     incoming = 0;
   else
     {
       sa->transport->vtbl->get_src (sa->transport, &src);
-      if (memcmp (sockaddr_addrdata (src), sockaddr_addrdata (arg->dst), 
+      if (memcmp (sockaddr_addrdata (src), sockaddr_addrdata (arg->dst),
 		  sockaddr_addrlen (src)) == 0)
 	incoming = 1;
       else
@@ -256,7 +256,7 @@ ipsec_sa_check_flow (struct sa *sa, void *v_arg)
       || (sa->flags & (SA_FLAG_READY | SA_FLAG_REPLACED)) != SA_FLAG_READY)
     return 0;
 
-  if (isa->tproto != isa2->tproto || isa->sport != isa2->sport 
+  if (isa->tproto != isa2->tproto || isa->sport != isa2->sport
       || isa->dport != isa2->dport)
     return 0;
 
@@ -270,7 +270,7 @@ ipsec_sa_check_flow (struct sa *sa, void *v_arg)
     && memcmp (sockaddr_addrdata (isa->dst_net),
 	       sockaddr_addrdata (isa2->dst_net),
 	       sockaddr_addrlen (isa->dst_net)) == 0
-    && memcmp (sockaddr_addrdata (isa->dst_mask), 
+    && memcmp (sockaddr_addrdata (isa->dst_mask),
 	       sockaddr_addrdata (isa2->dst_mask),
 	       sockaddr_addrlen (isa->dst_mask)) == 0;
 }
@@ -373,7 +373,7 @@ ipsec_finalize_exchange (struct message *msg)
 		addr2 = 0;
 	      if (sockaddr2text (isa->dst_mask, &mask2, 0))
 		mask2 = 0;
-		  
+		
 	      LOG_DBG ((LOG_EXCHANGE, 50,
 			"ipsec_finalize_exchange: "
 			"src %s %s dst %s %s tproto %u sport %u dport %u",
@@ -422,7 +422,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     {
     case IPSEC_ID_IPV4_ADDR:
     case IPSEC_ID_IPV4_ADDR_SUBNET:
-      isa->src_net = 
+      isa->src_net =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->src_net)
 	return -1;
@@ -431,7 +431,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->src_net->sa_len = sizeof (struct sockaddr_in);
 #endif
 
-      isa->src_mask = 
+      isa->src_mask =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->src_mask)
 	return -1;
@@ -443,7 +443,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 
     case IPSEC_ID_IPV6_ADDR:
     case IPSEC_ID_IPV6_ADDR_SUBNET:
-      isa->src_net = 
+      isa->src_net =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->src_net)
 	return -1;
@@ -452,7 +452,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->src_net->sa_len = sizeof (struct sockaddr_in6);
 #endif
 
-      isa->src_mask = 
+      isa->src_mask =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->src_mask)
 	return -1;
@@ -472,7 +472,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     {
     case IPSEC_ID_IPV4_ADDR:
     case IPSEC_ID_IPV6_ADDR:
-      memset (sockaddr_addrdata (isa->src_mask), 0xff, 
+      memset (sockaddr_addrdata (isa->src_mask), 0xff,
 	      sockaddr_addrlen (isa->src_mask));
       break;
     case IPSEC_ID_IPV4_ADDR_SUBNET:
@@ -492,7 +492,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     {
     case IPSEC_ID_IPV4_ADDR:
     case IPSEC_ID_IPV4_ADDR_SUBNET:
-      isa->dst_net = 
+      isa->dst_net =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->dst_net)
 	return -1;
@@ -501,7 +501,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->dst_net->sa_len = sizeof (struct sockaddr_in);
 #endif
 
-      isa->dst_mask = 
+      isa->dst_mask =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in));
       if (!isa->dst_mask)
 	return -1;
@@ -513,7 +513,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 
     case IPSEC_ID_IPV6_ADDR:
     case IPSEC_ID_IPV6_ADDR_SUBNET:
-      isa->dst_net = 
+      isa->dst_net =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->dst_net)
 	return -1;
@@ -522,7 +522,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
       isa->dst_net->sa_len = sizeof (struct sockaddr_in6);
 #endif
 
-      isa->dst_mask = 
+      isa->dst_mask =
 	(struct sockaddr *)calloc (1, sizeof (struct sockaddr_in6));
       if (!isa->dst_mask)
 	return -1;
@@ -542,7 +542,7 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     {
     case IPSEC_ID_IPV4_ADDR:
     case IPSEC_ID_IPV6_ADDR:
-      memset (sockaddr_addrdata (isa->dst_mask), 0xff, 
+      memset (sockaddr_addrdata (isa->dst_mask), 0xff,
 	      sockaddr_addrlen (isa->dst_mask));
       break;
     case IPSEC_ID_IPV4_ADDR_SUBNET:
@@ -954,25 +954,25 @@ ipsec_initiator (struct message *msg)
  * or 4-octet otherwise.
  */
 static void
-ipsec_delete_spi_list (struct sockaddr *addr, u_int8_t proto, 
+ipsec_delete_spi_list (struct sockaddr *addr, u_int8_t proto,
                        u_int8_t *spis, int nspis, char *type)
 {
   struct sa *sa;
   int i;
 
-  for (i = 0; i < nspis; i++) 
+  for (i = 0; i < nspis; i++)
     {
       if (proto == ISAKMP_PROTO_ISAKMP)
         {
           u_int8_t *spi = spis + i * ISAKMP_HDR_COOKIES_LEN;
 
-          /* 
+          /*
            * This really shouldn't happen in IPSEC DOI
            * code, but Cisco VPN 3000 sends ISAKMP DELETE's
            * this way.
            */
           sa = sa_lookup_isakmp_sa (addr, spi);
-        } 
+        }
       else
         {
           u_int32_t spi = ((u_int32_t *)spis)[i];
@@ -1009,7 +1009,7 @@ ipsec_invalid_spi (struct message *msg, struct payload *p)
   u_int16_t totsiz;
   u_int8_t spisz;
 
-  /* 
+  /*
    * get the invalid spi out of the variable sized notification data
    * field, which is after the variable sized SPI field [which specifies
    * the receiving entity's phase-1 SPI, not the invalid spi]
@@ -1914,7 +1914,7 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
 	  util_ntoa (&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
-	  util_ntoa (&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF + 
+	  util_ntoa (&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF +
 		     sizeof (struct in6_addr));
 	  snprintf (buf, size, "%08x%08x%08x%08x/%08x%08x%08x%08x: %s/%s",
 		    *idp, *(idp + 1), *(idp + 2), *(idp + 3), *(idp + 4),
@@ -2007,7 +2007,7 @@ ipsec_build_id (char *section, size_t *sz)
   memcpy (p + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (addr),
 	  sockaddr_addrlen (addr));
   if (subnet)
-    memcpy (p + ISAKMP_ID_DATA_OFF + sockaddr_addrlen (addr), 
+    memcpy (p + ISAKMP_ID_DATA_OFF + sockaddr_addrlen (addr),
 	    sockaddr_addrdata (mask), sockaddr_addrlen (mask));
 
   SET_IPSEC_ID_PROTO (p + ISAKMP_ID_DOI_DATA_OFF, tproto);

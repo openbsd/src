@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_lfs.c,v 1.7 2002/04/23 18:54:12 espie Exp $	*/
+/*	$OpenBSD: mount_lfs.c,v 1.8 2002/06/09 08:13:07 todd Exp $	*/
 /*	$NetBSD: mount_lfs.c,v 1.4 1996/04/13 05:35:44 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_lfs.c,v 1.7 2002/04/23 18:54:12 espie Exp $";
+static char rcsid[] = "$OpenBSD: mount_lfs.c,v 1.8 2002/06/09 08:13:07 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ main(argc, argv)
 			if (mntflags & MNT_UPDATE)
 				errcause =
 			    "specified device does not match mounted device";
-			else 
+			else
 				errcause = "incorrect super block";
 			break;
 		default:

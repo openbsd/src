@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.20 2002/06/06 17:25:16 mickey Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.21 2002/06/09 08:13:04 todd Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -1103,7 +1103,7 @@ an_readcache()
 
 	an_getval(&areq);
 
-	an_sigitems = (int *) &areq.an_val; 
+	an_sigitems = (int *) &areq.an_val;
 	pt = ((char *) &areq.an_val);
 	pt += sizeof(int);
 	sc = (struct an_sigcache *) pt;

@@ -1,11 +1,11 @@
-/*	$OpenBSD: schedule.c,v 1.7 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: schedule.c,v 1.8 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
- * 
- * Parts derived from code by Angelos D. Keromytis, kermit@forthnet.gr 
- * 
+ *
+ * Parts derived from code by Angelos D. Keromytis, kermit@forthnet.gr
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: schedule.c,v 1.7 2001/09/19 10:58:07 mpech Exp $";
+static char rcsid[] = "$OpenBSD: schedule.c,v 1.8 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #define _SCHEDULE_C_
@@ -47,10 +47,10 @@ static char rcsid[] = "$OpenBSD: schedule.c,v 1.7 2001/09/19 10:58:07 mpech Exp 
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
-#include <sys/socket.h> 
-#include <netinet/in.h> 
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <sys/time.h>
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 #include "state.h"
 #include "spi.h"
 #include "photuris.h"
@@ -85,7 +85,7 @@ schedule_insert(int type, int off, u_int8_t *cookie, u_int16_t cookie_size)
 		 type, off, cookie == NULL ? "None" : (char *)buffer);
      }
 #endif
-     
+
      if ((tmp = calloc(1, sizeof(struct schedule))) == NULL) {
 	  log_error("calloc() in schedule_insert()");
 	  return;
@@ -143,9 +143,9 @@ int
 schedule_offset(int type, u_int8_t *cookie)
 {
      struct schedule *tmp = schedob;
-     while (tmp != NULL) { 
-          if (tmp->event == type &&  
-              ((tmp->cookie == NULL && cookie == NULL) ||  
+     while (tmp != NULL) {
+          if (tmp->event == type &&
+              ((tmp->cookie == NULL && cookie == NULL) ||
                !bcmp(tmp->cookie, cookie, tmp->cookie_size)))
 	       return tmp->offset;
 	  tmp = tmp->next;
@@ -161,8 +161,8 @@ schedule_remove(int type, u_int8_t *cookie)
 
      tmp = schedob;
      while (tmp != NULL) {
-	  if (tmp->event == type && 
-	      ((tmp->cookie == NULL && cookie == NULL) || 
+	  if (tmp->event == type &&
+	      ((tmp->cookie == NULL && cookie == NULL) ||
 	       !bcmp(tmp->cookie, cookie, tmp->cookie_size))) {
 	       if (tmp == schedob)
 		    schedob = tmp->next;
@@ -202,13 +202,13 @@ schedule_process(int sock)
 	       reset_secret();
 	       tmp->tm = time(NULL) + REKEY_TIMEOUT;
 	       break;
-          case MODULUS: 
+          case MODULUS:
 #ifdef DEBUG2
-	       printf("Checking moduli\n"); 
-#endif 
-	       mod_check_prime(MOD_PRIME_ITER, MOD_PRIME_TIME); 
-	       tmp->tm = time(NULL) + MODULUS_TIMEOUT; 
-	       break; 
+	       printf("Checking moduli\n");
+#endif
+	       mod_check_prime(MOD_PRIME_ITER, MOD_PRIME_TIME);
+	       tmp->tm = time(NULL) + MODULUS_TIMEOUT;
+	       break;
 	  case CLEANUP:
 #ifdef DEBUG2
 	       printf("Cleaning up states\n");
@@ -257,7 +257,7 @@ schedule_process(int sock)
 		    }
 	       }
 
-	       
+	
 	       if (st->packet == NULL || st->packetlen == 0) {
 		    log_print("no packet in schedule_process()");
 		    remove = 1;
@@ -268,18 +268,18 @@ schedule_process(int sock)
 	       if (!remove) {
 		    st->retries++;
 
-		    sin.sin_port = htons(st->port); 
-		    sin.sin_family = AF_INET; 
+		    sin.sin_port = htons(st->port);
+		    sin.sin_family = AF_INET;
 		    sin.sin_addr.s_addr = inet_addr(st->address);
-		    
+		
 		    if (sendto(sock, st->packet, st->packetlen, 0,
-			       (struct sockaddr *) &sin, sizeof(sin)) 
+			       (struct sockaddr *) &sin, sizeof(sin))
 			!= st->packetlen) {
 			 log_error("sendto() in schedule_process()");
 			 remove = 1;
 			 break;
 		    }
-		    
+		
 #ifdef DEBUG
 		    printf("Resending packet to %s type %d, length %d.\n",
 			   st->address, st->phase, st->packetlen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.10 2001/10/26 12:23:45 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.11 2002/06/09 08:13:07 todd Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -84,8 +84,8 @@ sysdep_random ()
       u_int32_t *tmp = (u_int32_t *)&sig[i * 4];
       rndval ^= *tmp;
     }
-		 
-  return rndval; 
+		
+  return rndval;
 }
 
 char *

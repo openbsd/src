@@ -1,4 +1,4 @@
-/* $OpenBSD: lmccontrol.c,v 1.3 2001/06/04 14:59:48 mickey Exp $ */
+/* $OpenBSD: lmccontrol.c,v 1.4 2002/06/09 08:13:07 todd Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -6,7 +6,7 @@
  *
  * This code is written by Michael Graff (explorer@vix.com) and
  * Rob Braun (bbraun@vix.com) for LMC.
- * The code is derived from permitted modifications to software created 
+ * The code is derived from permitted modifications to software created
  * by Matt Thomas (matt@3am-software.com).
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All marketing or advertising materials mentioning features or use of this 
+ * 3. All marketing or advertising materials mentioning features or use of this
  *    software must display the following acknowledgement:
  *      This product includes software developed by LAN Media Corporation
  *      and its contributors.
@@ -155,7 +155,7 @@ main(int argc, char **argv)
 			just_print = 0;
 			wanted.keepalive_onoff = LMC_CTL_OFF;
 			break;
-		case 'p': 
+		case 'p':
 #if defined(linux)
 			fd = socket(AF_INET, SOCK_DGRAM, 0);
 			if (fd < 0) {
@@ -175,7 +175,7 @@ main(int argc, char **argv)
 			fprintf (stderr, "This option is not yet supported\n");
 #endif
 			break;
-		case 'P': 
+		case 'P':
 			fd = socket(AF_INET, SOCK_DGRAM, 0);
 			if (fd < 0) {
 				fprintf(stderr, "socket: %s\n", strerror(errno));

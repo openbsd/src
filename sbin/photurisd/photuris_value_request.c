@@ -1,4 +1,4 @@
-/*	$OpenBSD: photuris_value_request.c,v 1.3 2001/01/28 22:45:15 niklas Exp $	*/
+/*	$OpenBSD: photuris_value_request.c,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: photuris_value_request.c,v 1.3 2001/01/28 22:45:15 niklas Exp $";
+static char rcsid[] = "$OpenBSD: photuris_value_request.c,v 1.4 2002/06/09 08:13:08 todd Exp $";
 #endif
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ static char rcsid[] = "$OpenBSD: photuris_value_request.c,v 1.3 2001/01/28 22:45
 
 int
 photuris_value_request(struct stateob *st, u_char *buffer, int *size)
-			 
+			
 {
 	struct value_request *header;
 	u_int16_t rsize, asize, tmp;
@@ -70,7 +70,7 @@ photuris_value_request(struct stateob *st, u_char *buffer, int *size)
 	     return -1;
 
 	asize += tmp;
-	bcopy(st->oSPIoattrib, VALUE_REQUEST_VALUE(header)+tmp, 
+	bcopy(st->oSPIoattrib, VALUE_REQUEST_VALUE(header)+tmp,
 	      st->oSPIoattribsize);
 	
 	header = (struct value_request *) buffer;
