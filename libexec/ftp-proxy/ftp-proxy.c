@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.11 2001/08/19 20:43:56 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.12 2001/08/22 05:28:16 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -78,7 +78,9 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <grp.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -139,7 +141,9 @@ char ClientName[NI_MAXHOST];
 char RealServerName[NI_MAXHOST];
 char OurName[NI_MAXHOST];
 
-char *argstr = "m:M:D:t:AnVwr";
+char *User, *Group;
+
+char *argstr = "D:g:m:M:t:u:AnVwr";
 
 extern int Debug_Level;
 extern int Use_Rdns;
@@ -165,6 +169,71 @@ usage()
 	    __progname, "[-m min_port] [-M max_port ]\n");
 	exit(EX_USAGE);
 }
+
+
+static void 
+close_client_data()
+{
+	if (client_data_socket >= 0) { 
+		shutdown(client_data_socket,2);
+		close(client_data_socket);
+		client_data_socket = -1;
+	}
+}
+
+
+static void
+close_server_data()
+{ 
+	if (server_data_socket >= 0)  {
+		shutdown(server_data_socket,2);
+		close(server_data_socket);
+		server_data_socket = -1;
+	}
+}
+
+
+static void
+drop_privs()
+{
+	struct passwd *pw;
+	struct group *gr; 	
+	int uid = 0;
+	int gid = 0;
+
+	if (User != NULL) {
+		pw = getpwnam(User);
+		if (pw == NULL) {
+			syslog(LOG_ERR, "can't find user %s (%m)", User);
+			exit(EX_USAGE);
+		}
+		uid = pw->pw_uid;
+		gid = pw->pw_gid;
+	}
+
+	if (Group != NULL) {
+		gr = getgrnam(User);
+		if (gr == NULL) {
+			syslog(LOG_ERR, "can't find group %s (%m)", Group);
+			exit(EX_USAGE);
+		}
+		gid = gr->gr_gid;
+	} 
+	
+
+	if (gid != 0 && (setegid(gid) == -1 || setgid(gid) == -1)) {
+		syslog(LOG_ERR, "can't drop group privs (%m)");
+		exit(EX_CONFIG);
+	}
+
+	if (uid != 0 && (seteuid(uid) == -1 || setuid(uid) == -1)) {
+		syslog(LOG_ERR, "can't drop root privs (%m)");
+		exit(EX_CONFIG);
+	}
+}
+
+
+	
 
 /*
  * Check a connection against the tcpwrapper, log if we're going to
@@ -355,20 +424,13 @@ new_dataconn(int server)
 		close(client_listen_socket);
 		client_listen_socket = -1;
 	}
-	if (client_data_socket != -1) {
-		shutdown(client_data_socket,2);
-		close(client_data_socket);
-		client_data_socket = -1;
-	}
+	close_client_data();
+
 	if (server_listen_socket != -1) {
 		close(server_listen_socket);
 		server_listen_socket = -1;
 	}
-	if (server_data_socket != -1) {
-		shutdown(server_data_socket,2);
-		close(server_data_socket);
-		server_data_socket = -1;
-	}
+	close_server_data();
 
 	if (server) {
 		bzero (&server_listen_sa, sizeof(server_listen_sa));
@@ -380,7 +442,7 @@ new_dataconn(int server)
 			exit(EX_OSERR);
 		}
 		if (listen(server_listen_socket, 5) != 0) {
-			syslog(LOG_INFO, "listen on server socket failed (%m)");
+			syslog(LOG_INFO, "server socket listen failed (%m)");
 			exit(EX_OSERR);
 		}
 	} else {
@@ -401,6 +463,138 @@ new_dataconn(int server)
 	}
 	return(0);
 }
+
+
+
+static void 
+connect_pasv_backchannel()
+{
+	struct sockaddr_in listen_sa;
+	int salen;
+
+	/*
+	 * We are about to accept a connection from the client.
+	 * This is a PASV data connection.
+	 */
+
+	debuglog(2, "client listen socket ready\n");
+
+	close_server_data();
+	close_client_data();
+
+	salen = sizeof(listen_sa);
+	client_data_socket = accept(client_listen_socket,
+	    (struct sockaddr *)&listen_sa, &salen);
+
+	if (client_data_socket < 0) {
+		syslog(LOG_NOTICE, "accept failed (%m)");
+		exit(EX_OSERR);
+	}
+	close(client_listen_socket);
+	client_listen_socket = -1;
+	memset(&listen_sa, 0, sizeof(listen_sa));
+
+	server_data_socket = get_backchannel_socket(SOCK_STREAM, min_port,
+	    max_port, -1, 1, &listen_sa);
+	if (server_data_socket < 0) {
+		syslog(LOG_NOTICE, "backchannel failed (%m)");
+		exit(EX_OSERR);
+	}
+	if (connect(server_data_socket, (struct sockaddr *) &server_listen_sa,
+	    sizeof(server_listen_sa)) != 0) {
+		syslog(LOG_NOTICE, "connect failed (%m)");
+		exit(EX_NOHOST);
+	}
+	client_data_bytes = 0;
+	server_data_bytes = 0;
+	xfer_start_time = wallclock_time();
+}
+
+
+
+static void 
+connect_port_backchannel()
+{
+	struct sockaddr_in listen_sa;
+	int salen;
+
+	/*
+	 * We are about to accept a connection from the server.
+	 * This is a PORT or EPRT data connection.
+	 */
+
+	debuglog(2, "server listen socket ready\n");
+
+	close_server_data();
+	close_client_data();
+
+	salen = sizeof(listen_sa);
+	server_data_socket = accept(server_listen_socket,
+	    (struct sockaddr *)&listen_sa, &salen);
+	if (server_data_socket < 0) {
+		syslog(LOG_NOTICE, "accept failed (%m)");
+		exit(EX_OSERR);
+	}
+	close(server_listen_socket);
+	server_listen_socket = -1;
+
+	if (getuid() != 0)  {
+
+		/* 
+		 * We're not running as root, so we get a backchannel
+		 * socket bound in our designated range, instead of 
+		 * getting one bound to port 20 - This is deliberately
+		 * not RFC compliant.
+		 */
+	  
+		bzero(&listen_sa.sin_addr,
+		     sizeof(struct in_addr));
+		client_data_socket =  get_backchannel_socket(SOCK_STREAM,
+		    min_port, max_port, -1, 1, &listen_sa);
+		if (client_data_socket < 0) {
+			syslog(LOG_NOTICE,  "backchannel failed (%m)");
+			exit(EX_OSERR);
+		}
+
+	} else {
+
+		/*
+		 * We're root, get our backchannel socket bound to port
+		 * 20 here, so we're fully RFC compliant.  
+		 */
+	
+		client_data_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+		salen = 1;
+		listen_sa.sin_family = AF_INET;
+		bzero(&listen_sa.sin_addr,
+		     sizeof(struct in_addr));
+		listen_sa.sin_port = htons(20);
+
+		if (setsockopt(client_data_socket, SOL_SOCKET, SO_REUSEADDR,
+		    &salen, sizeof(salen)) == -1) {
+			syslog(LOG_NOTICE, "setsockopt failed (%m)");
+			exit(EX_OSERR);
+		}
+
+		if (bind(client_data_socket, (struct sockaddr *)&listen_sa,
+		    sizeof(listen_sa)) == - 1) {
+			syslog(LOG_NOTICE, "bind to port 20 failed (%m)");
+			exit(EX_OSERR);
+		}
+	}
+	
+	if (connect(client_data_socket, (struct sockaddr *) &client_listen_sa,
+	    sizeof(client_listen_sa)) != 0) {
+		syslog(LOG_INFO, "can't connect data connection (%m)");
+		exit(EX_NOHOST);
+	}
+
+	client_data_bytes = 0;
+	server_data_bytes = 0;
+	xfer_start_time = wallclock_time();
+}
+
 
 void
 do_client_cmd(struct csiob *client, struct csiob *server)
@@ -547,8 +741,8 @@ out:
 					j += rv;
 			} while (j >= 0 && j < i);
 		}
-	} else if (!NatMode && (strncasecmp((char *)client->line_buffer, "epsv",
-	    strlen("epsv")) == 0)) {
+	} else if (!NatMode && (strncasecmp((char *)client->line_buffer, 
+	    "epsv", strlen("epsv")) == 0)) {
 
 		/*
 		 * If we aren't in NAT mode, deal with EPSV.
@@ -563,6 +757,7 @@ out:
 		 * in the meantime we just tell the client we don't do it,
 		 * and most clients should fall back to using PASV.
 		 */
+
 		snprintf(tbuf, sizeof(tbuf),
 		    "500 EPSV command not understood\r\n");
 		debuglog(1, "to client(modified):  %s\n", tbuf);
@@ -717,8 +912,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 		}
 		for (i=0; i<6; i++)
 			if (values[i] > 255) {
-				syslog(LOG_INFO, 
-				    "malformed PASV reply(%s)",
+				syslog(LOG_INFO, "malformed PASV reply(%s)",
 				     client->line_buffer);
 				exit(EX_DATAERR);
 			}
@@ -784,27 +978,13 @@ main(int argc, char **argv)
 		case 'A':
 			AnonFtpOnly = 1; /* restrict to anon usernames only */
 			break;
-		case 'w':
-			use_tcpwrapper = 1; /* do the libwrap thing */
-			break;
-		case 'V':
-			Verbose = 1;
-			break;
-		case 't':
-			timeout_seconds = strtol(optarg, &p, 10);
-			if (!*optarg || *p)
-				usage();
-			break;
 		case 'D':
 			Debug_Level = strtol(optarg, &p, 10);
 			if (!*optarg || *p)
 				usage();
 			break;
-		case 'r':
-			Use_Rdns = 1; /* look up hostnames */
-			break;
-		case 'n':
-			NatMode = 1; /* pass all passives, we're using NAT */
+		case 'g':
+			Group = optarg;
 			break;
 		case 'm':
 			min_port = strtol(optarg, &p, 10);
@@ -819,6 +999,26 @@ main(int argc, char **argv)
 				usage();
 			if (max_port < 0 || max_port > USHRT_MAX)
 				usage();
+			break;
+		case 'n':
+			NatMode = 1; /* pass all passives, we're using NAT */
+			break;
+		case 'r':
+			Use_Rdns = 1; /* look up hostnames */
+			break;
+		case 't':
+			timeout_seconds = strtol(optarg, &p, 10);
+			if (!*optarg || *p)
+				usage();
+			break;
+		case 'u':
+			User = optarg;
+			break;
+		case 'V':
+			Verbose = 1;
+			break;
+		case 'w':
+			use_tcpwrapper = 1; /* do the libwrap thing */
 			break;
 		default:
 			usage();
@@ -841,6 +1041,17 @@ main(int argc, char **argv)
 
 	if (get_proxy_env(0, &real_server_sa, &client_iob.sa) == -1)
 		exit(EX_PROTOCOL);
+
+	/*
+	 * We may now drop root privs, as we have done our ioctl for
+	 * pf. If we do drop root, we can't make backchannel connections
+	 * for PORT and EPRT come from port 20, which is not strictly
+	 * RFC compliant. This shouldn't cause problems for all but
+	 * the stupidest ftp clients and the stupidest packet filters.
+	 */
+	
+	drop_privs();
+
 
 	/*
 	 * We check_host after get_proxy_env so that checks are done
@@ -1019,9 +1230,9 @@ main(int argc, char **argv)
 			tv.tv_usec = 0;
 
 		doselect:
-			switch (sval = select(maxfd + 1, fdsp, NULL, NULL,
-			    (tv.tv_sec == 0) ? NULL : &tv)) {
-			case 0:
+			sval = select(maxfd + 1, fdsp, NULL, NULL,
+			    (tv.tv_sec == 0) ? NULL : &tv);
+			if (sval == 0) {
 				/*
 				 * This proxy has timed out. Expire it
 				 * quietly with an obituary in the syslogs
@@ -1031,218 +1242,79 @@ main(int argc, char **argv)
 				   "timeout, no data for %ld seconds",
 				   timeout_seconds);
 				exit(EX_OK);
-				break;
-
-			case -1:
+			}
+			if (sval == -1) {
 				if (errno == EINTR || errno == EAGAIN)
 					goto doselect;
 				syslog(LOG_NOTICE,
-				    "select failed (%m) - exiting");
+				     "select failed (%m) - exiting");
 				exit(EX_OSERR);
-				break;
-
-			default:
-				if (client_data_socket >= 0 &&
-				    FD_ISSET(client_data_socket,fdsp)) {
-					int rval;
-
-					debuglog(3, "xfer client to server\n");
-					rval = xfer_data("client to server",
-					    client_data_socket,
-					    server_data_socket,
-					    client_iob.sa.sin_addr,
-					    real_server_sa.sin_addr);
-					if (rval <= 0) {
-						shutdown(client_data_socket,2);
-						close(client_data_socket);
-						client_data_socket = -1;
-						shutdown(server_data_socket,2);
-						close(server_data_socket);
-						server_data_socket = -1;
-						show_xfer_stats();
-					} else
-						client_data_bytes += rval;
-				}
-				if (server_data_socket >= 0 &&
-				    FD_ISSET(server_data_socket,fdsp)) {
-					int rval;
-
-					debuglog(3, "xfer server to client\n");
-					rval = xfer_data("server to client",
-					    server_data_socket,
-					    client_data_socket,
-					    real_server_sa.sin_addr,
-					    client_iob.sa.sin_addr);
-					if (rval <= 0) {
-						shutdown(client_data_socket,2);
-						close(client_data_socket);
-						client_data_socket = -1;
-						shutdown(server_data_socket,2);
-						close(server_data_socket);
-						server_data_socket = -1;
-						show_xfer_stats();
-					} else
-						server_data_bytes += rval;
-				}
-				if (server_listen_socket >= 0 &&
-				    FD_ISSET(server_listen_socket,fdsp)) {
-					struct sockaddr_in listen_sa;
-
-					/*
-					 * We are about to accept a
-					 * connection from the server.
-					 * This is a PORT or EPRT data
-					 * connection.
-					 */
-					debuglog(2, 
-					    "server listen socket ready\n");
-
-					if (server_data_socket >= 0) {
-						shutdown(server_data_socket,2);
-						close(server_data_socket);
-						server_data_socket = -1;
-					}
-					if (client_data_socket >= 0) {
-						shutdown(client_data_socket,2);
-						close(client_data_socket);
-						client_data_socket = -1;
-					}
-					salen = sizeof(listen_sa);
-					server_data_socket =
-					    accept(server_listen_socket,
-					    (struct sockaddr *)&listen_sa,
-					    &salen);
-					if (server_data_socket < 0) {
-						syslog(LOG_NOTICE,
-						    "accept failed (%m)");
-						exit(EX_OSERR);
-					}
-					close(server_listen_socket);
-					server_listen_socket = -1;
-					client_data_socket = socket(AF_INET,
-				    	    SOCK_STREAM, 0);
-					salen = 1;
-
-					listen_sa.sin_family = AF_INET;
-
-					bzero(&listen_sa.sin_addr,
-					    sizeof(struct in_addr));
-
-					debuglog(2, "setting sin_addr to %s\n",
-					    inet_ntoa(client_iob.sa.sin_addr));
-
-					listen_sa.sin_port = htons(20);
-					salen = 1;
-					setsockopt(client_data_socket,
-					    SOL_SOCKET, SO_REUSEADDR, &salen,
-					    sizeof(salen));
-					if (bind(client_data_socket,
-					    (struct sockaddr *)&listen_sa,
-					    sizeof(listen_sa)) < 0) {
-						syslog(LOG_NOTICE,
-						    "bind to 20 failed (%m)");
-						exit(EX_OSERR);
-					}
-
-					if (connect(client_data_socket,
-					    (struct sockaddr *)
-					    &client_listen_sa,
-					    sizeof(client_listen_sa)) != 0) {
-						syslog(LOG_INFO,
-						   "can't connect (%m)");
-						exit(EX_NOHOST);
-					}
-					client_data_bytes = 0;
-					server_data_bytes = 0;
-					xfer_start_time = wallclock_time();
-				}
-				if (client_listen_socket >= 0 &&
-				    FD_ISSET(client_listen_socket,fdsp)) {
-					struct sockaddr_in listen_sa;
-					int salen;
-
-					/*
-					 * We are about to accept a
-					 * connection from the client.
-					 * This is a PASV data
-					 * connection.
-					 */
-					debuglog(2,
-					    "client listen socket ready\n");
-
-					if (server_data_socket >= 0) {
-						shutdown(server_data_socket,2);
-						close(server_data_socket);
-						server_data_socket = -1;
-					}
-					if (client_data_socket >= 0) {
-						shutdown(client_data_socket,2);
-						close(client_data_socket);
-						client_data_socket = -1;
-					}
-					salen = sizeof(listen_sa);
-					client_data_socket =
-					    accept(client_listen_socket,
-					    (struct sockaddr *)&listen_sa,
-					    &salen);
-					if (client_data_socket < 0) {
-						syslog(LOG_NOTICE,
-						   "accept failed (%m)");
-						exit(EX_OSERR);
-					}
-
-					close(client_listen_socket);
-					client_listen_socket = -1;
-					memset(&listen_sa, 0,
-					    sizeof(listen_sa));
-					server_data_socket =
-					    get_backchannel_socket(SOCK_STREAM,
-					    min_port, max_port, -1, 1,
-					    &listen_sa);
-					if (server_data_socket < 0) {
-						syslog(LOG_NOTICE,
-						    "backchannel failed (%m)");
-						exit(EX_OSERR);
-					}
-					if (connect(server_data_socket,
-					    (struct sockaddr *)
-					    &server_listen_sa,
-					    sizeof(server_listen_sa)) != 0) {
-						syslog(LOG_NOTICE,
-						    "connect failed (%m)");
-						exit(EX_NOHOST);
-					}
-					client_data_bytes = 0;
-					server_data_bytes = 0;
-					xfer_start_time = wallclock_time();
-				}
-				if (client_iob.alive &&
-				    FD_ISSET(client_iob.fd,fdsp)) {
-					client_iob.data_available = 1;
-				}
-
-				if (server_iob.alive &&
-				    FD_ISSET(server_iob.fd,fdsp)) {
-					server_iob.data_available = 1;
-				}
-
 			}
-			free(fdsp);
-		}
+			if (client_data_socket >= 0 &&
+			    FD_ISSET(client_data_socket,fdsp)) {
+				int rval;
 
+				debuglog(3, "xfer client to server\n");
+				rval = xfer_data("client to server",
+				    client_data_socket,
+				    server_data_socket,
+				    client_iob.sa.sin_addr,
+				    real_server_sa.sin_addr);
+				if (rval <= 0) {
+					close_client_data();
+					close_server_data();
+					show_xfer_stats();
+				} else
+					client_data_bytes += rval;
+			}
+			if (server_data_socket >= 0 &&
+			    FD_ISSET(server_data_socket,fdsp)) {
+				int rval;
+
+				debuglog(3, "xfer server to client\n");
+				rval = xfer_data("server to client",
+				    server_data_socket,
+				    client_data_socket,
+				    real_server_sa.sin_addr,
+				    client_iob.sa.sin_addr);
+				if (rval <= 0) {
+					close_client_data();
+					close_server_data();
+					show_xfer_stats();
+				} else
+					server_data_bytes += rval;
+			}
+			if (server_listen_socket >= 0 &&
+			    FD_ISSET(server_listen_socket,fdsp)) {
+				connect_port_backchannel();
+			}
+			if (client_listen_socket >= 0 &&
+			    FD_ISSET(client_listen_socket,fdsp)) {
+				connect_pasv_backchannel();
+			}
+			if (client_iob.alive &&
+			    FD_ISSET(client_iob.fd,fdsp)) {
+				client_iob.data_available = 1;
+			}
+			if (server_iob.alive &&
+			    FD_ISSET(server_iob.fd,fdsp)) {
+				server_iob.data_available = 1;
+			}
+		}
+		free(fdsp);
 		if (client_iob.got_eof) {
 			shutdown(server_iob.fd, 1);
 			shutdown(client_iob.fd, 0);
 			client_iob.got_eof = 0;
 			client_iob.alive = 0;
 		}
-
 		if (server_iob.got_eof) {
-			shutdown(client_iob.fd, 1);
-			shutdown(server_iob.fd, 0);
+			shutdown(client_iob.fd,1);
+			shutdown(server_iob.fd,0);
 			server_iob.got_eof = 0;
 			server_iob.alive = 0;
-		}
+                }
+
 	}
 	exit(EX_OK);
 }
