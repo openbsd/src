@@ -57,6 +57,12 @@
 #include <sys/socket.h>
 #include <sys/systm.h>
 
+#include "fd.h"
+#if NFD > 0
+#include <sys/ioctl.h>
+#include <sys/mtio.h>
+#endif /* NFD */
+
 #include <net/if.h>
 
 #include <machine/autoconf.h>
@@ -77,9 +83,7 @@ int	cold;		/* if 1, still working on cold-start */
 int	dkn;		/* number of iostat dk numbers assigned so far */
 int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
-int	cpumod;		/* CPU model,
-			 * XXX currently valid only if cputyp == CPU_SUN4
-			 */
+int	cpumod;		/* CPU model, valid only if cputyp==CPU_SUN4 */
 int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
 
 extern	struct promvec *promvec;
@@ -171,6 +175,7 @@ bootstrap()
 #if defined(SUN4)
 	extern void oldmon_w_cmd();
 	extern struct msgbuf *msgbufp;
+	extern int msgbufmapped;
 
 	if (cputyp == CPU_SUN4) {
 		/*
@@ -243,6 +248,7 @@ bootstrap()
 	}
 #endif /* SUN4C || SUN4M */
 	pmap_bootstrap(ncontext, nregion, nsegment);
+	msgbufmapped = 1;
 #ifdef KGDB
 	zs_kgdb_init();			/* XXX */
 #endif
@@ -264,9 +270,7 @@ bootstrap()
  * } else {
  *	val[0] is a sbus slot, and val[1] is an sbus offset [if sbus]
  * }
- *
  */
-
 static void 
 bootpath_build()
 {
@@ -372,7 +376,6 @@ bootpath_build()
  * Fake a ROM generated bootpath.
  * The argument `cp' points to a string such as "xd(0,0,0)netbsd"
  */
-
 static void
 bootpath_fake(bp, cp)
 	struct bootpath *bp;
@@ -517,7 +520,6 @@ bootpath_fake(bp, cp)
 /*
  * print out the bootpath
  */
-
 static void 
 bootpath_print(bp)
 	struct bootpath *bp;
@@ -533,7 +535,6 @@ bootpath_print(bp)
 	printf("\n");
 }
 
-
 /*
  * save or read a bootpath pointer from the boothpath store.
  *
@@ -541,7 +542,6 @@ bootpath_print(bp)
  * device, so we can't set boot device there.   we patch in with 
  * dk_establish(), and use this to recover the bootpath.
  */
-
 struct bootpath *
 bootpath_store(storep, bp)
 	int storep;
@@ -579,7 +579,7 @@ crazymap(prop, map)
 		 */
 		propval = getpropstring(optionsnode, prop);
 		if (propval == NULL || strlen(propval) != 8) {
- build_default_map:
+build_default_map:
 			printf("WARNING: %s map is bogus, using default\n",
 				prop);
 			for (i = 0; i < 8; ++i)
@@ -657,17 +657,17 @@ configure()
 		struct cfdata *cf, *memregcf = NULL;
 		register short *p;
 
+		/*
+		 * On the 4/100 obio addresses must be mapped at
+		 * 0x0YYYYYYY, but alias higher up (we avoid the
+		 * alias condition because it causes pmap difficulties)
+		 * XXX: We also assume that 4/[23]00 obio addresses
+		 * must be 0xZYYYYYYY, where (Z != 0)
+		 * make sure we get the correct memreg cfdriver!
+		 */
 		for (cf = cfdata; memregcf==NULL && cf->cf_driver; cf++) {
 			if (cf->cf_driver != &memregcd)
 				continue;
-			/*
-			 * On the 4/100 obio addresses must be mapped at
-			 * 0x0YYYYYYY, but alias higher up (we avoid the
-			 * alias condition because it causes pmap difficulties)
-			 * XXX: We also assume that 4/[23]00 obio addresses
-			 * must be 0xZYYYYYYY, where (Z != 0)
-			 * make sure we get the correct memreg cfdriver!
-			 */
 			if (cpumod==SUN4_100 && (cf->cf_loc[0] & 0xf0000000))
 				continue;
 			if (cpumod!=SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
@@ -678,7 +678,8 @@ configure()
 		}
 		if (memregcf==NULL)
 			panic("configure: no memreg found!");
-		par_err_reg = (int *)bus_map(memregcf->cf_loc[0], NBPG, BUS_OBIO);
+		par_err_reg = (int *)bus_map((void *)memregcf->cf_loc[0],
+		    NBPG, BUS_OBIO);
 		if (par_err_reg == NULL)
 			panic("configure: ROM hasn't mapped memreg!");
 	}
@@ -724,7 +725,6 @@ clockfreq(freq)
 	register int freq;
 {
 	register char *p;
-int n;
 	static char buf[10];
 
 	freq /= 1000;
@@ -875,12 +875,15 @@ mainbus_attach(parent, dev, aux)
 #ifdef L1A_HACK
 	int nzs = 0, audio = 0;
 #endif
+#if defined(SUN4)
 	static const char *const oldmon_special[] = {
 		"vmel",
 		"vmes",
 		NULL
 	};
+#endif /* SUN4 */
 
+#if defined(SUN4C) || defined(SUN4M)
 	static const char *const openboot_special[] = {
 		/* find these first (end with empty string) */
 		"memory-error",	/* as early as convenient, in case of error */
@@ -899,6 +902,7 @@ mainbus_attach(parent, dev, aux)
 		"virtual-memory",
 		NULL
 	};
+#endif /* SUN4C || SUN4M */
 
 	printf("\n");
 
@@ -932,9 +936,10 @@ mainbus_attach(parent, dev, aux)
 			oca.ca_ra.ra_name = sp;
 			(void)config_found(dev, (void *)&oca, mbprint);
 		}
-	} else
+	}
 #endif
-	{
+#if defined(SUN4C) || defined(SUN4M)
+	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M) {
 
 		/* remember which frame buffer, if any, is to be /dev/fb */
 		fbnode = getpropint(node, "fb", 0);
@@ -983,6 +988,7 @@ mainbus_attach(parent, dev, aux)
 			}
 		}
 	}
+#endif /* SUN4C || SUN4M */
 }
 
 struct cfdriver mainbuscd =
@@ -1024,7 +1030,7 @@ findzs(zs)
 			panic("findzs: unknown zs device %d", zs);
 		}
 
-		addr = bus_map(paddr, NBPG, BUS_OBIO);
+		addr = (int)bus_map(paddr, NBPG, BUS_OBIO);
 		if (addr)
 			return ((void *)addr);
 	}
@@ -1508,6 +1514,7 @@ setroot()
 		/*
 		 * because swap must be on same device as root, for
 		 * network devices this is easy.
+		 * XXX: IS THIS STILL TRUE?
 		 */
 		if (bootdv->dv_class == DV_IFNET) {
 			goto gotswap;
@@ -1520,6 +1527,19 @@ setroot()
 					bootdv->dv_class == DV_DISK?'b':' ');
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
+#if NFD > 0
+			/*
+			 * I will go punish myself now.
+			 */
+			if (len > 0 && strcmp(buf, "fdeject")==0) {
+				struct mtop mtop;
+
+				bzero(&mtop, sizeof mtop);
+				mtop.mt_op = MTOFFL;
+				(void) fdioctl(0, MTIOCTOP, &mtop, 0);
+				continue;
+			}
+#endif /* NFD */
 			if (len == 0 && bootdv != NULL) {
 				switch (bootdv->dv_class) {
 				case DV_IFNET:
@@ -1544,15 +1564,10 @@ gotswap:
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
-
 	} else if (mountroot == NULL) {
-
 		/*
 		 * `swap generic': Use the device the ROM told us to use.
 		 */
-		if (bootdv == NULL)
-			panic("boot device not known");
-
 		majdev = findblkmajor(bootdv);
 		if (majdev >= 0) {
 			/*
@@ -1581,7 +1596,8 @@ gotswap:
 		 */
 		return;
 	}
-
+	if (bootdv == NULL)
+		panic("boot device not known");
 	switch (bootdv->dv_class) {
 #if defined(NFSCLIENT)
 	case DV_IFNET:
@@ -1603,6 +1619,7 @@ gotswap:
 		return;
 	}
 
+#if 0
 	/*
 	 * XXX: What is this doing?
 	 */
@@ -1626,6 +1643,7 @@ gotswap:
 	 */
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
+#endif
 }
 
 static int
