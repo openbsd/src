@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.44 2004/12/26 01:09:17 marco Exp $
+#	$OpenBSD: GENERIC,v 1.45 2004/12/26 01:10:57 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -393,7 +393,7 @@ lofn*	at pci?			# Hi/fn 6500 crypto card
 nofn*	at pci?			# Hi/fn 7814/7851/7854 crypto card
 ubsec*	at pci?			# Bluesteel Networks 5xxx crypto card
 safe*	at pci?			# SafeNet SafeXcel 1141/1741
-ises*	at pci?			# Pijnenburg PCC-ISES
+#ises*	at pci?			# Pijnenburg PCC-ISES
 
 # I2O
 #iop*	at pci?			# I2O
