@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.34 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.35 2001/12/08 06:15:15 jason Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -467,9 +467,9 @@ in_arpinput(m)
 		goto out;
 	}
 #endif
-	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof (isaddr));
-	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof (itaddr));
-	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
+	bcopy((caddr_t)ea->arp_spa, (caddr_t)&isaddr, sizeof(isaddr));
+	bcopy((caddr_t)ea->arp_tpa, (caddr_t)&itaddr, sizeof(itaddr));
+	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 		if (ia->ia_ifp == &ac->ac_if ||
 		    (ia->ia_ifp->if_bridge &&
 		    ia->ia_ifp->if_bridge == ac->ac_if.if_bridge)) {
@@ -478,6 +478,7 @@ in_arpinput(m)
 			    isaddr.s_addr == ia->ia_addr.sin_addr.s_addr)
 				break;
 		}
+	}
 	if (maybe_ia == 0)
 		goto out;
 	myaddr = ia ? ia->ia_addr.sin_addr : maybe_ia->ia_addr.sin_addr;
@@ -513,7 +514,7 @@ in_arpinput(m)
 				   "entry for %s by %s on %s\n", 
 				   inet_ntoa(isaddr),
 				   ether_sprintf(ea->arp_sha),
-				   (&ac->ac_if)->if_xname);
+				   ac->ac_if.if_xname);
 				goto out;
 			} else if (rt->rt_ifp != &ac->ac_if) {
 			        log(LOG_WARNING,
@@ -521,14 +522,14 @@ in_arpinput(m)
 				   "on %s by %s on %s\n",
 				   inet_ntoa(isaddr), rt->rt_ifp->if_xname,
 				   ether_sprintf(ea->arp_sha),
-				   (&ac->ac_if)->if_xname);
+				   ac->ac_if.if_xname);
 				goto out;
 			} else {
 				log(LOG_INFO,
 				   "arp info overwritten for %s by %s on %s\n",
 			    	   inet_ntoa(isaddr), 
 				   ether_sprintf(ea->arp_sha),
-				   (&ac->ac_if)->if_xname);
+				   ac->ac_if.if_xname);
 				rt->rt_expire = 1; /* no longer static */
 			}
 		    }
@@ -539,7 +540,7 @@ in_arpinput(m)
 			"on %s by %s on %s\n",
 			inet_ntoa(isaddr), rt->rt_ifp->if_xname,
 			ether_sprintf(ea->arp_sha),
-			(&ac->ac_if)->if_xname);
+			ac->ac_if.if_xname);
 		    goto out;
 		}
 		bcopy((caddr_t)ea->arp_sha, LLADDR(sdl),
