@@ -1,10 +1,10 @@
-/*	$OpenBSD: tcdevs.h,v 1.6 2002/05/02 22:56:06 miod Exp $	*/
+/*	$OpenBSD: tcdevs.h,v 1.7 2002/05/03 20:27:58 miod Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD
+ *	OpenBSD: tcdevs,v 1.7 2002/05/03 20:27:44 miod Exp 
  */
 /* $NetBSD: tcdevs,v 1.17 2000/12/17 13:56:05 ad Exp $ */
 
@@ -42,7 +42,7 @@
 #define	TC_DEVICE_AV01B_AA	"lofi"
 #define	TC_DESCRIPTION_AV01B_AA	"DecAudio \"LoFi\" audio/isdn"
 
-#define	TC_DEVICE_AV300_AA	"???"
+#define	TC_DEVICE_AV300_AA	NULL
 #define	TC_DESCRIPTION_AV300_AA	"Video capture option card"
 
 #define	TC_DEVICE_DGLTA_FA	"otto"
@@ -60,6 +60,9 @@
 #define	TC_DEVICE_PMAD_AA	"le"
 #define	TC_DESCRIPTION_PMAD_AA	"LANCE Ethernet"
 
+#define	TC_DEVICE_PMAD_AB	"le"
+#define	TC_DESCRIPTION_PMAD_AB	"LANCE Ethernet"
+
 #define	TC_DEVICE_PMAF_AA	"fza"
 #define	TC_DESCRIPTION_PMAF_AA	"DEC FDDIcontroller 700 (DEFZA; fiber optic)"
 
@@ -75,8 +78,17 @@
 #define	TC_DEVICE_PMAG_CA	"px"
 #define	TC_DESCRIPTION_PMAG_CA	"2D Graphics (PX 2DA)"
 
+#define	TC_DEVICE_PMAG_CB	"px"
+#define	TC_DESCRIPTION_PMAG_CB	"2D Graphics (PX 2DA)"
+
 #define	TC_DEVICE_PMAG_DA	"pxg"
 #define	TC_DESCRIPTION_PMAG_DA	"3D Graphics (PXG LM-3DA)"
+
+#define	TC_DEVICE_PMAG_DB	"pxg"
+#define	TC_DESCRIPTION_PMAG_DB	"3D Graphics (PXG LM-3DA)"
+
+#define	TC_DEVICE_PMAG_EB	"pxg"
+#define	TC_DESCRIPTION_PMAG_EB	"3D Graphics (PXG MID-3DA)"
 
 #define	TC_DEVICE_PMAG_FA	"pxg"
 #define	TC_DESCRIPTION_PMAG_FA	"3D Graphics (PXG HE-3DA)"
@@ -84,49 +96,73 @@
 #define	TC_DEVICE_PMAG_FB	"pxg"
 #define	TC_DESCRIPTION_PMAG_FB	"3D Graphics (PXG HE+3DA)"
 
+#define	TC_DEVICE_PMAGB_BA	"sfb"
+#define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer (HX8)"
+
 #define	TC_DEVICE_PMAGB_FA	"pxg"
 #define	TC_DESCRIPTION_PMAGB_FA	"3D Graphics (PXG HE+3DA)"
 
 #define	TC_DEVICE_PMAGB_FB	"pxg"
 #define	TC_DESCRIPTION_PMAGB_FB	"3D Graphics (PXG HE+3DA)"
 
+#define	TC_DEVICE_PMAGC_AA	"pvg"
+#define	TC_DESCRIPTION_PMAGC_AA	"2D Graphics (PV-LO)"
+
+#define	TC_DEVICE_PMAGC_BA	"pvg"
+#define	TC_DESCRIPTION_PMAGC_BA	"2D Graphics (PV-MID)"
+
+#define	TC_DEVICE_PMAGD_AA	"sfbp"
+#define	TC_DESCRIPTION_PMAGD_AA	"Smart Frame Buffer Plus, 8bpp (ZLX-E1)"
+
+#define	TC_DEVICE_PMAGD_BA	"sfbp"
+#define	TC_DESCRIPTION_PMAGD_BA	"Smart Frame Buffer Plus, 32bpp (ZLX-E2)"
+
+#define	TC_DEVICE_PMAGD_CA	"sfbp"
+#define	TC_DESCRIPTION_PMAGD_CA	"Smart Frame Buffer Plus, 32bpp (ZLX-E3)"
+
+#define	TC_DEVICE_PMAZ_AB	"asc"
+#define	TC_DESCRIPTION_PMAZ_AB	"53c94 SCSI Controller"
+
+#define	TC_DEVICE_KWS_TD	NULL
+#define	TC_DESCRIPTION_KWS_TD	"Kubota Denali"
+
+#define	TC_DEVICE_PMABV_AA	"vba"
+#define	TC_DESCRIPTION_PMABV_AA	"VME Adapter"
+
 #define	TC_DEVICE_PMAG_DV	"xcfb"
 #define	TC_DESCRIPTION_PMAG_DV	"Maxine Color Frame Buffer"
 
-#define	TC_DEVICE_PMAG_JA	"???"
+#define	TC_DEVICE_PMAG_JA	NULL
 #define	TC_DESCRIPTION_PMAG_JA	"24-plane True Color Frame Buffer (TX)"
-
-#define	TC_DEVICE_PMAGB_BA	"sfb"
-#define	TC_DESCRIPTION_PMAGB_BA	"Smart Frame Buffer"
 
 #define	TC_DEVICE_PMAGD	"sfbp"
 #define	TC_DESCRIPTION_PMAGD	"Smart Frame Buffer Plus, unknown bpp"
 
-#define	TC_DEVICE_PMAGD_AA	"sfbp"
-#define	TC_DESCRIPTION_PMAGD_AA	"Smart Frame Buffer Plus, 8bpp"
+#define	TC_DEVICE_PMAP_AA	NULL
+#define	TC_DESCRIPTION_PMAP_AA	"Prestoserve"
 
-#define	TC_DEVICE_PMAGD_BA	"sfbp"
-#define	TC_DESCRIPTION_PMAGD_BA	"Smart Frame Buffer Plus, 32bpp"
+#define	TC_DEVICE_PMAT_AA	"tra"
+#define	TC_DESCRIPTION_PMAT_AA	"DEC TurboChannel Token Ring Controller"
 
 #define	TC_DEVICE_PMAZ_AA	"asc"
-#define	TC_DESCRIPTION_PMAZ_AA	"53c94 SCSI"
+#define	TC_DESCRIPTION_PMAZ_AA	"53c94 SCSI Controller"
 
 #define	TC_DEVICE_PMAZ_DS	"tcds"
-#define	TC_DESCRIPTION_PMAZ_DS	"53c94 TCDS SCSI (baseboard)"
+#define	TC_DESCRIPTION_PMAZ_DS	"53c94 TCDS SCSI Controller (baseboard)"
 
 #define	TC_DEVICE_PMAZ_FS	"tcds"
-#define	TC_DESCRIPTION_PMAZ_FS	"53c94 TCDS Fast SCSI (baseboard)"
+#define	TC_DESCRIPTION_PMAZ_FS	"53c94 TCDS Fast SCSI Controller (baseboard)"
 
 #define	TC_DEVICE_PMAZB_AA	"tcds"
-#define	TC_DESCRIPTION_PMAZB_AA	"53c94 TCDS SCSI option card"
+#define	TC_DESCRIPTION_PMAZB_AA	"53c94 TCDS SCSI Controller option card"
 
 #define	TC_DEVICE_PMAZB_AB	"tcds"
-#define	TC_DESCRIPTION_PMAZB_AB	"53c94 TCDS SCSI option card"
+#define	TC_DESCRIPTION_PMAZB_AB	"53c94 TCDS SCSI Controller option card"
 
 #define	TC_DEVICE_PMAZC_AA	"tcds"
-#define	TC_DESCRIPTION_PMAZC_AA	"53c94 TCDS Fast SCSI option card"
+#define	TC_DESCRIPTION_PMAZC_AA	"53c94 TCDS Fast SCSI Controller option card"
 
-#define	TC_DEVICE_PMTNV_AA	"???"
+#define	TC_DEVICE_PMTNV_AA	NULL
 #define	TC_DESCRIPTION_PMTNV_AA	"Non-volatile RAM option card"
 
 #define	TC_DEVICE_T1D4PKT	"ds"
@@ -134,15 +170,3 @@
 
 #define	TC_DEVICE_T3PKT	"tt"
 #define	TC_DESCRIPTION_T3PKT	"DECWRL Turbochannel T3"
-
-#define	TC_DEVICE_PMAT_AA	"tra"
-#define	TC_DESCRIPTION_PMAT_AA	"DEC TurboChannel Token Ring Controller"
-
-#define	TC_DEVICE_PMABV_AA	"vba"
-#define	TC_DESCRIPTION_PMABV_AA	"VME Adapter"
-
-#define	TC_DEVICE_PMAP_AA	"???"
-#define	TC_DESCRIPTION_PMAP_AA	"Prestoserve"
-
-#define	TC_DEVICE_KWS_TD	"???"
-#define	TC_DESCRIPTION_KWS_TD	"Kubota Denali"
