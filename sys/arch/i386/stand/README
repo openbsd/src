@@ -1,5 +1,6 @@
-$OpenBSD: README,v 1.5 1997/04/21 19:40:44 mickey Exp $
+$OpenBSD: README,v 1.6 1997/04/21 19:42:03 mickey Exp $
 
+# hmm, no copyright
 
 Ok, just a couple quick pointers to people hacking on this stuff.  These
 are things that I have found out, and hopefully will make things easier
