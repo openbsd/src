@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.73 2004/09/30 19:19:26 robert Exp $
+dnl	$OpenBSD: hardware,v 1.74 2004/10/02 04:40:31 brad Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -86,6 +86,25 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
 		PCI Intel 21145-based adapters (dc)
 		PCI Intel i8255x-based (except the i82556) adapters (fxp)
 		PCI 3Com 3c9xx EtherLink XL adapters (xl)
+		Intel i82540, i82541, i82542, i82543, i82544, i82545, i82546
+		and i82547 based adapters, including:
+		    Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
+		      (PWLA8490)
+		    Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
+		      (PWLA8490SX)
+		    Intel PRO/1000T Server Adapter (PWLA8490T)
+		    Intel PRO/1000XT Server Adapter (PWLA8490XT)
+		    Intel PRO/1000XS Server Adapter (SX Fiber) (PWLA8490XF)
+		    Intel PRO/1000T Desktop Adapter (PWLA8390T)
+		    Intel PRO/1000XTL Lo Profile PCI Server (PWLA8490XTL)
+		    Intel PRO/1000MT Desktop Adapter (PWLA8390MT)
+		    Intel PRO/1000MT Server Adapter (PWLA8490MT)
+		    Intel PRO/1000MT Dual Port Server Adapter (PWLA8492MT)
+		    Intel PRO/1000MF Server Adapter (SX Fiber) (PWLA8490MF)
+		    Intel PRO/1000MF Dual Port Server Adapter (SX Fiber)
+		      (PWLA8492MF)
+		    Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
+		    Intel PRO/1000MT Quad PCI-X Adapter (PWLA8494MT)
 		PCI RealTek 8129, RealTek 8139 Ethernet adapters, including:
 		    Accton MPX 5030/5038
                     Allied Telesyn AT2550
