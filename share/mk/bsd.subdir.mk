@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.subdir.mk,v 1.7 1996/04/22 01:28:37 deraadt Exp $
+#	$OpenBSD: bsd.subdir.mk,v 1.8 1997/06/02 23:38:07 mickey Exp $
 #	$NetBSD: bsd.subdir.mk,v 1.11 1996/04/04 02:05:06 jtc Exp $
 #	@(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
 
@@ -25,7 +25,7 @@ _SUBDIRUSE: .USE
 		fi; \
 		echo "===> $${_nextdir_}"; \
 		cd ${.CURDIR}/$${_newdir_}; \
-		${MAKE} $${_makefile_spec_} _THISDIR_="$${_nextdir_}" \
+		${MAKE} -${MAKEFLAGS} $${_makefile_spec_} _THISDIR_="$${_nextdir_}" \
 		    ${.TARGET:S/realinstall/install/:S/.depend/depend/}); \
 	done
 
@@ -41,7 +41,7 @@ ${SUBDIR}::
 	fi; \
 	echo "===> $${_newdir_}"; \
 	cd ${.CURDIR}/$${_newdir_}; \
-	${MAKE} $${_makefile_spec_} _THISDIR_="$${_newdir_}" all
+	${MAKE} -${MAKEFLAGS} $${_makefile_spec_} _THISDIR_="$${_newdir_}" all
 .endif
 
 .if !target(install)
