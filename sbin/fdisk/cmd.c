@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.17 1998/08/07 21:49:18 millert Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.18 1998/08/08 05:27:59 downsj Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -35,6 +35,7 @@
 #include <memory.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include "disk.h"
