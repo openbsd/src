@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.7 2002/01/01 22:11:18 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.8 2002/03/07 02:03:58 jason Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -284,7 +284,6 @@ qeattach(parent, self, aux)
 			self->dv_xname, error);
 		return;
 	}
-	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Map DMA buffer in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
@@ -305,6 +304,7 @@ qeattach(parent, self, aux)
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
+	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Initialize media properties */
 	ifmedia_init(&sc->sc_ifmedia, 0, qe_ifmedia_upd, qe_ifmedia_sts);
@@ -485,9 +485,11 @@ qestart(ifp)
 	bix = sc->sc_rb.rb_tdhead;
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		/*
@@ -646,7 +648,7 @@ qeintr(arg)
 	if (qestat & QE_CR_STAT_RXIRQ)
 		r |= qe_rint(sc);
 
-	return (r);
+	return (1);
 }
 
 /*
@@ -679,12 +681,16 @@ qe_tint(sc)
 		--sc->sc_rb.rb_td_nbusy;
 	}
 
-	sc->sc_rb.rb_tdtail = bix;
-
-	qestart(ifp);
-
 	if (sc->sc_rb.rb_td_nbusy == 0)
 		ifp->if_timer = 0;
+
+	if (sc->sc_rb.rb_tdtail != bix) {
+		sc->sc_rb.rb_tdtail = bix;
+		if (ifp->if_flags & IFF_OACTIVE) {
+			ifp->if_flags &= ~IFF_OACTIVE;
+			qestart(ifp);
+		}
+	}
 
 	return (1);
 }
