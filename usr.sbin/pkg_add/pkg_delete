@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.67 2004/10/31 11:33:50 espie Exp $
+# $OpenBSD: pkg_delete,v 1.68 2004/11/07 11:39:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -202,6 +202,9 @@ OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 my $logname = OpenBSD::Logger::logname();
 if (defined $logname) {
 	print "Problems logged as $logname\n";
+}
+if ($state->{beverbose}) {
+	OpenBSD::Vstat::tally();
 }
 $state->delayed_output();
 if ($dielater) {
