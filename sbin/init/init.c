@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.5 1996/07/12 06:45:29 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.6 1996/07/12 10:16:15 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.5 1996/07/12 06:45:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.6 1996/07/12 10:16:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,7 @@ typedef struct init_session {
 	int	se_flags;		/* status of session */
 #define	SE_SHUTDOWN	0x1		/* session won't be restarted */
 #define	SE_PRESENT	0x2		/* session is in /etc/ttys */
+#define	SE_DEVEXISTS	0x4		/* open does not result in ENODEV */
 	char	*se_device;		/* filename of port */
 	char	*se_getty;		/* what to run on that port */
 	char	**se_getty_argv;	/* pre-parsed argument array */
@@ -1071,6 +1072,9 @@ start_window_system(sp)
 
 /*
  * Start a login session running.
+ * For first open, man-handle tty directly to determine if it
+ * really exists. It is not efficient to spawn gettys on devices
+ * that do not exist. 
  */
 pid_t
 start_getty(sp)
@@ -1079,6 +1083,15 @@ start_getty(sp)
 	pid_t pid;
 	sigset_t mask;
 	time_t current_time = time((time_t *) 0);
+	int p[2], new = 1;
+
+	if (sp->se_flags & SE_DEVEXISTS)
+		new = 0;
+
+	if (new) {
+		if (pipe(p) == -1)
+			return -1;
+	}
 
 	/*
 	 * fork(), not vfork() -- we can't afford to block.
@@ -1088,8 +1101,39 @@ start_getty(sp)
 		return -1;
 	}
 
-	if (pid)
+	if (pid) {
+		if (new) {
+			char c;
+
+			close(p[1]);
+			if (read(p[0], &c, 1) != 1) {
+				close(p[0]);
+				return -1;
+			}
+			close(p[0]);
+			if (c == '1')
+				sp->se_flags |= SE_DEVEXISTS;
+			else
+				sp->se_flags |= SE_SHUTDOWN;
+		}
 		return pid;
+	}
+	if (new) {
+		int fd;
+
+		close(p[0]);
+		fd = open(sp->se_device, O_RDONLY | O_NONBLOCK, 0666);
+		if (fd == -1 && (errno == ENXIO || errno == ENOENT ||
+		    errno == EISDIR)) {
+			(void)write(p[1], "0", 1);
+			close(p[1]);
+			_exit(1);
+		}
+		(void)write(p[1], "1", 1);
+		close(p[1]);
+		close(fd);
+		sleep(1);
+	}
 
 	if (current_time > sp->se_started &&
 	    current_time - sp->se_started < GETTY_SPACING) {
