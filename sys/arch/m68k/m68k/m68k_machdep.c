@@ -1,4 +1,4 @@
-/*	$OpenBSD: m68k_machdep.c,v 1.3 2001/11/25 17:15:19 miod Exp $	*/
+/*	$OpenBSD: m68k_machdep.c,v 1.4 2001/11/25 21:31:06 miod Exp $	*/
 /*	$NetBSD: m68k_machdep.c,v 1.3 1997/06/12 09:57:04 veego Exp $	*/
 
 /*-
@@ -42,6 +42,7 @@
 #include <sys/syscall.h>
 #include <sys/ktrace.h>
 
+#include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
 
