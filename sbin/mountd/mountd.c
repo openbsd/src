@@ -653,6 +653,7 @@ get_exportlist()
 		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
+			bzero((char *)&targs, sizeof(targs));
 			targs.ua.fspec = NULL;
 			targs.ua.export.ex_flags = MNT_DELEXPORT;
 			if (mount(fsp->f_fstypename, fsp->f_mntonname,
