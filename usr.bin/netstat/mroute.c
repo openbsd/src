@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.9 1995/10/03 21:42:42 thorpej Exp $	*/
+/*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -167,31 +167,33 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 	banner_printed = 0;
 	nmfc = 0;
 
-	for (i = 0; i <= mfchash; ++i) {
-		kread((u_long)&mfchashtbl[i], (char *)&mfcp, sizeof(mfcp));
+	if (mfchashtbl != 0)
+		for (i = 0; i <= mfchash; ++i) {
+			kread((u_long)&mfchashtbl[i], (char *)&mfcp, sizeof(mfcp));
 
-		for (; mfcp != 0; mfcp = mfc.mfc_hash.le_next) {
-			if (!banner_printed) {
-				printf("\nMulticast Forwarding Cache\n %s%s",
-				    "Hash  Origin           Mcastgroup       ",
-				    "Traffic  In-Vif  Out-Vifs/Forw-ttl\n");
-				banner_printed = 1;
+			for (; mfcp != 0; mfcp = mfc.mfc_hash.le_next) {
+				if (!banner_printed) {
+					printf("\nMulticast Forwarding Cache\n %s%s",
+					    "Hash  Origin           Mcastgroup       ",
+					    "Traffic  In-Vif  Out-Vifs/Forw-ttl\n");
+					banner_printed = 1;
+				}
+
+				kread((u_long)mfcp, (char *)&mfc, sizeof(mfc));
+				printf("  %3u  %-15.15s",
+				    i, routename(mfc.mfc_origin.s_addr));
+				printf("  %-15.15s  %7s     %3u ",
+				    routename(mfc.mfc_mcastgrp.s_addr),
+				    pktscale(mfc.mfc_pkt_cnt), mfc.mfc_parent);
+				for (vifi = 0; vifi <= numvifs; ++vifi)
+					if (mfc.mfc_ttls[vifi])
+						printf(" %u/%u", vifi,
+						    mfc.mfc_ttls[vifi]);
+
+				printf("\n");
+				nmfc++;
 			}
-
-			kread((u_long)mfcp, (char *)&mfc, sizeof(mfc));
-			printf("  %3u  %-15.15s",
-			    i, routename(mfc.mfc_origin.s_addr));
-			printf("  %-15.15s  %7s     %3u ",
-			    routename(mfc.mfc_mcastgrp.s_addr),
-			    pktscale(mfc.mfc_pkt_cnt), mfc.mfc_parent);
-			for (vifi = 0; vifi <= numvifs; ++vifi)
-				if (mfc.mfc_ttls[vifi])
-					printf(" %u/%u", vifi, mfc.mfc_ttls[vifi]);
-
-			printf("\n");
-			nmfc++;
 		}
-	}
 	if (!banner_printed)
 		printf("\nMulticast Forwarding Cache is empty\n");
 	else
