@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.9 2002/04/24 21:53:12 espie Exp $	*/
+/*	$OpenBSD: limits.h,v 1.10 2002/07/30 01:22:00 millert Exp $	*/
 /*	$NetBSD: limits.h,v 1.9 2000/03/07 19:33:01 kleink Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #define MB_LEN_MAX      1               /* no multibyte characters */
 
 #if !defined(_ANSI_SOURCE)
+#define	SIZE_MAX	UINT_MAX	/* max value for a size_t */
 #define SSIZE_MAX       INT_MAX         /* max value for a ssize_t */
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
