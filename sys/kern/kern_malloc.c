@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.7 1997/03/01 21:31:11 kstailey Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.8 1997/12/12 17:13:56 gene Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ malloc(size, type, flags)
 		if (va == NULL) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
-			 * wait, if there is no map space avaiable, because
+			 * wait, if there is no map space available, because
 			 * it can't fix that problem.  Neither can we,
 			 * right now.  (We should release pages which
 			 * are completely free and which are in buckets
