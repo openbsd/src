@@ -95,7 +95,7 @@ register char *an = objects[obj->otyp].oc_name;
 register char *dn = objects[obj->otyp].oc_descr;
 register char *un = objects[obj->otyp].oc_uname;
 register int pl = (obj->quan != 1);
-	if(!obj->dknown && !Blind) obj->dknown = 1; /* %% doesnt belong here */
+	if(!obj->dknown && !Blind) obj->dknown = 1; /* %% doesn't belong here */
 	switch(obj->olet) {
 	case AMULET_SYM:
 		Strcpy(buf, (obj->spe < 0 && obj->known)

@@ -634,7 +634,7 @@ register char *lets;
 }
 
 dotypeinv ()				/* free after Robert Viduya */
-/* Changed to one type only, so he doesnt have to type cr */
+/* Changed to one type only, so he doesn't have to type cr */
 {
     char c, ilet;
     char stuff[BUFSZ];
