@@ -63,13 +63,7 @@ Boston, MA 02111-1307, USA.  */
    when compiling PIC. */
 #undef ASM_FILE_START
 #define ASM_FILE_START(FILE) \
-do { fputs ("\t.SPACE $PRIVATE$\n\
-\t.SUBSPA $DATA$,QUAD=1,ALIGN=8,ACCESS=0x1f,SORT=24\n\
-\t.SUBSPA $BSS$,QUAD=1,ALIGN=8,ACCESS=0x1f,ZERO,SORT=80\n\
-\t.SPACE $TEXT$\n\
-\t.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=0x2c\n\
-\t.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=0x2c,CODE_ONLY\n\
-\t.IMPORT $global$,DATA\n", FILE);\
+do { \
      if (flag_pic || !TARGET_FAST_INDIRECT_CALLS)\
        fputs ("\t.IMPORT $$dyncall, MILLICODE\n", FILE);\
      if (profile_flag)\
@@ -77,6 +71,23 @@ do { fputs ("\t.SPACE $PRIVATE$\n\
      if (write_symbols != NO_DEBUG) \
        output_file_directive ((FILE), main_input_filename); \
    } while (0)
+
+#undef ASM_OUTPUT_FUNCTION_PREFIX
+
+#undef STRING_ASM_OP
+#define STRING_ASM_OP   ".stringz"
+
+#undef DBX_OUTPUT_MAIN_SOURCE_FILE_END
+#undef ASM_OUTPUT_SECTION_NAME
+
+#undef TEXT_SECTION_ASM_OP
+#define TEXT_SECTION_ASM_OP "\t.text"
+#undef READONLY_DATA_ASM_OP
+#define READONLY_DATA_ASM_OP "\t.text"
+#undef DATA_SECTION_ASM_OP
+#define DATA_SECTION_ASM_OP "\t.data"
+#undef BSS_SECTION_ASM_OP
+#define BSS_SECTION_ASM_OP "\t.section\t.bss"
 
 /* Remove hpux specific pa defines. */
 #undef LDD_SUFFIX

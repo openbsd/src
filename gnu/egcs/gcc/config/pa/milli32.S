@@ -1,5 +1,5 @@
 ;  Low level integer divide, multiply, remainder, etc routines for the HPPA.
-;  Copyright (C) 1995 Free Software Foundation, Inc.
+;  Copyright 1995, 2000, 2001 Free Software Foundation, Inc.
 
 ;  This file is part of GNU CC.
 
@@ -8,13 +8,13 @@
 ;  the Free Software Foundation; either version 2, or (at your option)
 ;  any later version.
 
-; In addition to the permissions in the GNU General Public License, the
-; Free Software Foundation gives you unlimited permission to link the
-; compiled version of this file with other programs, and to distribute
-; those programs without any restriction coming from the use of this
-; file.  (The General Public License restrictions do apply in other
-; respects; for example, they cover modification of the file, and
-; distribution when not linked into another program.)
+;  In addition to the permissions in the GNU General Public License, the
+;  Free Software Foundation gives you unlimited permission to link the
+;  compiled version of this file with other programs, and to distribute
+;  those programs without any restriction coming from the use of this
+;  file.  (The General Public License restrictions do apply in other
+;  respects; for example, they cover modification of the file, and
+;  distribution when not linked into another program.)
 
 ;  GNU CC is distributed in the hope that it will be useful,
 ;  but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -26,22 +26,52 @@
 ;  the Free Software Foundation, 59 Temple Place - Suite 330,
 ;  Boston, MA 02111-1307, USA.
 
+#ifdef __STDC__
+#define CAT(a,b)	a##b
+#else
+#define CAT(a,b)	a/**/b
+#endif
+
+#ifdef ELF
+
+#define SPACE \
+! .text! .align 4
+#define GSYM(sym) \
+! .export sym,millicode!sym:
+#define LSYM(sym) \
+!CAT(.L,sym:)
+#define LREF(sym) CAT(.L,sym)
+
+#else
+
+#define SPACE \
+! .space $TEXT$! .subspa $MILLICODE$,quad=0,align=8,access=0x2c,sort=8! .align 4
+#define GSYM(sym) \
+! .export sym,millicode!sym
+#define LSYM(sym) \
+!CAT(L$,sym)
+#define LREF(sym) CAT(L$,sym)
+#endif
+
 #ifdef L_dyncall
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.export	$$dyncall
-$$dyncall
+SPACE
+GSYM($$dyncall)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
-	bb,>=,n	%r22,30,L$1		; branch if not plabel address
+	bb,>=,n	%r22,30,LREF(1)		; branch if not plabel address
 	depi	0,31,2,%r22		; clear the two least significant bits
-	ldw	4(%sr0,%r22),%r19	; load new LTP value
-	ldw	0(%sr0,%r22),%r22	; load address of target
-L$1	ldsid	(%sr0,%r22),%r1		; get the "space ident" selected by r22
+	ldw	4(%r22),%r19		; load new LTP value
+	ldw	0(%r22),%r22		; load address of target
+LSYM(1)
+#ifdef LINUX
+	bv	%r0(%r22)		; branch to the real target
+#else
+	ldsid	(%sr0,%r22),%r1		; get the "space ident" selected by r22
 	mtsp	%r1,%sr0		; move that space identifier into sr0
 	be	0(%sr0,%r22)		; branch to the real target
-	stw	%r2,-24(%sr0,%r30)	; save return address into frame marker
+#endif
+	stw	%r2,-24(%r30)		; save return address into frame marker
 	.exit
 	.procend
 #endif
@@ -53,148 +83,180 @@ L$1	ldsid	(%sr0,%r22),%r1		; get the "space ident" selected by r22
 #define res	%r29
 #define ret	%r31
 #define tmp	%r1
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$mulU
-	.export	$$mulI
-$$mulU
-$$mulI
+
+SPACE
+GSYM($$mulU)
+GSYM($$mulI)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
 	addi,tr		0,%r0,res	; clear out res, skip next insn
-L$loop	zdep		op1,26,27,op1	; shift up op1 by 5
-L$lo	zdep		op0,30,5,tmp	; extract next 5 bits and shift up
+LSYM(loop)
+	zdep		op1,26,27,op1	; shift up op1 by 5
+LSYM(lo)
+	zdep		op0,30,5,tmp	; extract next 5 bits and shift up
 	blr		tmp,%r0
 	extru		op0,26,27,op0	; shift down op0 by 5
-L$0	comib,<>	0,op0,L$lo
+LSYM(0)
+	comib,<>	0,op0,LREF(lo)
 	zdep		op1,26,27,op1	; shift up op1 by 5
 	bv		%r0(ret)
 	nop
-L$1	b		L$loop
+LSYM(1)
+	b		LREF(loop)
 	addl		op1,res,res
 	nop
 	nop
-L$2	b		L$loop
+LSYM(2)
+	b		LREF(loop)
 	sh1addl		op1,res,res
 	nop
 	nop
-L$3	sh1addl		op1,op1,tmp	; 3x
-	b		L$loop
+LSYM(3)
+	sh1addl		op1,op1,tmp	; 3x
+	b		LREF(loop)
 	addl		tmp,res,res
 	nop
-L$4	b		L$loop
+LSYM(4)
+	b		LREF(loop)
 	sh2addl		op1,res,res
 	nop
 	nop
-L$5	sh2addl		op1,op1,tmp	; 5x
-	b		L$loop
+LSYM(5)
+	sh2addl		op1,op1,tmp	; 5x
+	b		LREF(loop)
 	addl		tmp,res,res
 	nop
-L$6	sh1addl		op1,op1,tmp	; 3x
-	b		L$loop
+LSYM(6)
+	sh1addl		op1,op1,tmp	; 3x
+	b		LREF(loop)
 	sh1addl		tmp,res,res
 	nop
-L$7	zdep		op1,28,29,tmp	; 8x
+LSYM(7)
+	zdep		op1,28,29,tmp	; 8x
 	sub		tmp,op1,tmp	; 7x
-	b		L$loop
+	b		LREF(loop)
 	addl		tmp,res,res
-L$8	b		L$loop
+LSYM(8)
+	b		LREF(loop)
 	sh3addl		op1,res,res
 	nop
 	nop
-L$9	sh3addl		op1,op1,tmp	; 9x
-	b		L$loop
+LSYM(9)
+	sh3addl		op1,op1,tmp	; 9x
+	b		LREF(loop)
 	addl		tmp,res,res
 	nop
-L$10	sh2addl		op1,op1,tmp	; 5x
-	b		L$loop
+LSYM(10)
+	sh2addl		op1,op1,tmp	; 5x
+	b		LREF(loop)
 	sh1addl		tmp,res,res
 	nop
-L$11	sh2addl		op1,op1,tmp	; 5x
+LSYM(11)
+	sh2addl		op1,op1,tmp	; 5x
 	sh1addl		tmp,op1,tmp	; 11x
-	b		L$loop
+	b		LREF(loop)
 	addl		tmp,res,res
-L$12	sh1addl		op1,op1,tmp	; 3x
-	b		L$loop
+LSYM(12)
+	sh1addl		op1,op1,tmp	; 3x
+	b		LREF(loop)
 	sh2addl		tmp,res,res
 	nop
-L$13	sh1addl		op1,op1,tmp	; 3x
+LSYM(13)
+	sh1addl		op1,op1,tmp	; 3x
 	sh2addl		tmp,op1,tmp	; 13x
-	b		L$loop
+	b		LREF(loop)
 	addl		tmp,res,res
-L$14	zdep		op1,28,29,tmp	; 8x
+LSYM(14)
+	zdep		op1,28,29,tmp	; 8x
 	sub		tmp,op1,tmp	; 7x
-	b		L$loop
+	b		LREF(loop)
 	sh1addl		tmp,res,res
-L$15	zdep		op1,27,28,tmp	; 16x
+LSYM(15)
+	zdep		op1,27,28,tmp	; 16x
 	sub		tmp,op1,tmp	; 15x
-	b		L$loop
+	b		LREF(loop)
 	addl		tmp,res,res
-L$16	zdep		op1,27,28,tmp	; 16x
-	b		L$loop
+LSYM(16)
+	zdep		op1,27,28,tmp	; 16x
+	b		LREF(loop)
 	addl		tmp,res,res
 	nop
-L$17	zdep		op1,27,28,tmp	; 16x
+LSYM(17)
+	zdep		op1,27,28,tmp	; 16x
 	addl		tmp,op1,tmp	; 17x
-	b		L$loop
+	b		LREF(loop)
 	addl		tmp,res,res
-L$18	sh3addl		op1,op1,tmp	; 9x
-	b		L$loop
+LSYM(18)
+	sh3addl		op1,op1,tmp	; 9x
+	b		LREF(loop)
 	sh1addl		tmp,res,res
 	nop
-L$19	sh3addl		op1,op1,tmp	; 9x
+LSYM(19)
+	sh3addl		op1,op1,tmp	; 9x
 	sh1addl		tmp,op1,tmp	; 19x
-	b		L$loop
+	b		LREF(loop)
 	addl		tmp,res,res
-L$20	sh2addl		op1,op1,tmp	; 5x
-	b		L$loop
+LSYM(20)
+	sh2addl		op1,op1,tmp	; 5x
+	b		LREF(loop)
 	sh2addl		tmp,res,res
 	nop
-L$21	sh2addl		op1,op1,tmp	; 5x
+LSYM(21)
+	sh2addl		op1,op1,tmp	; 5x
 	sh2addl		tmp,op1,tmp	; 21x
-	b		L$loop
+	b		LREF(loop)
 	addl		tmp,res,res
-L$22	sh2addl		op1,op1,tmp	; 5x
+LSYM(22)
+	sh2addl		op1,op1,tmp	; 5x
 	sh1addl		tmp,op1,tmp	; 11x
-	b		L$loop
+	b		LREF(loop)
 	sh1addl		tmp,res,res
-L$23	sh1addl		op1,op1,tmp	; 3x
+LSYM(23)
+	sh1addl		op1,op1,tmp	; 3x
 	sh3addl		tmp,res,res	; += 8x3
-	b		L$loop
+	b		LREF(loop)
 	sub		res,op1,res	; -= x
-L$24	sh1addl		op1,op1,tmp	; 3x
-	b		L$loop
+LSYM(24)
+	sh1addl		op1,op1,tmp	; 3x
+	b		LREF(loop)
 	sh3addl		tmp,res,res	; += 8x3
 	nop
-L$25	sh2addl		op1,op1,tmp	; 5x
+LSYM(25)
+	sh2addl		op1,op1,tmp	; 5x
 	sh2addl		tmp,tmp,tmp	; 25x
-	b		L$loop
+	b		LREF(loop)
 	addl		tmp,res,res
-L$26	sh1addl		op1,op1,tmp	; 3x
+LSYM(26)
+	sh1addl		op1,op1,tmp	; 3x
 	sh2addl		tmp,op1,tmp	; 13x
-	b		L$loop
+	b		LREF(loop)
 	sh1addl		tmp,res,res	; += 2x13
-L$27	sh1addl		op1,op1,tmp	; 3x
+LSYM(27)
+	sh1addl		op1,op1,tmp	; 3x
 	sh3addl		tmp,tmp,tmp	; 27x
-	b		L$loop
+	b		LREF(loop)
 	addl		tmp,res,res
-L$28	zdep		op1,28,29,tmp	; 8x
+LSYM(28)
+	zdep		op1,28,29,tmp	; 8x
 	sub		tmp,op1,tmp	; 7x
-	b		L$loop
+	b		LREF(loop)
 	sh2addl		tmp,res,res	; += 4x7
-L$29	sh1addl		op1,op1,tmp	; 3x
+LSYM(29)
+	sh1addl		op1,op1,tmp	; 3x
 	sub		res,tmp,res	; -= 3x
-	b		L$foo
+	b		LREF(foo)
 	zdep		op1,26,27,tmp	; 32x
-L$30	zdep		op1,27,28,tmp	; 16x
+LSYM(30)
+	zdep		op1,27,28,tmp	; 16x
 	sub		tmp,op1,tmp	; 15x
-	b		L$loop
+	b		LREF(loop)
 	sh1addl		tmp,res,res	; += 2x15
-L$31	zdep		op1,26,27,tmp	; 32x
+LSYM(31)
+	zdep		op1,26,27,tmp	; 32x
 	sub		tmp,op1,tmp	; 31x
-L$foo	b		L$loop
+LSYM(foo)
+	b		LREF(loop)
 	addl		tmp,res,res
 	.exit
 	.procend
@@ -207,15 +269,13 @@ L$foo	b		L$loop
 #define tmp %r1
 #define quotient %r29
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$divU
-$$divU
+
+SPACE
+GSYM($$divU)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
-	comb,<		divisor,0,L$largedivisor
+	comb,<		divisor,0,LREF(largedivisor)
 	 sub		%r0,divisor,%r1		; clear cy as side-effect
 	ds		%r0,%r1,%r0
 	addc		dividend,dividend,dividend
@@ -284,7 +344,7 @@ $$divU
 	ds		%r1,divisor,%r1
 	bv		%r0(ret)
 	addc		quotient,quotient,quotient
-L$largedivisor
+LSYM(largedivisor)
 	comclr,<<	dividend,divisor,quotient
 	ldi		1,quotient
 	bv,n		%r0(ret)
@@ -299,15 +359,13 @@ L$largedivisor
 #define quotient %r29
 #define tmp %r1
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$remU
-$$remU
+
+SPACE
+GSYM($$remU)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
-	comb,<		divisor,0,L$largedivisor
+	comb,<		divisor,0,LREF(largedivisor)
 	 sub		%r0,divisor,%r1		; clear cy as side-effect
 	ds		%r0,%r1,%r0
 	addc		dividend,dividend,dividend
@@ -378,7 +436,7 @@ $$remU
 	addl		%r1,divisor,%r1
 	bv		%r0(ret)
 	copy		%r1,quotient
-L$largedivisor
+LSYM(largedivisor)
 	sub,>>=		dividend,divisor,quotient
 	copy		dividend,quotient
 	bv,n		%r0(ret)
@@ -393,11 +451,9 @@ L$largedivisor
 #define quotient %r29
 #define tmp %r1
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$divI
-$$divI
+
+SPACE
+GSYM($$divI)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -407,7 +463,7 @@ $$divI
 	comclr,>=	dividend,%r0,%r0
 	sub		%r0,dividend,dividend
 
-	comb,<		divisor,0,L$largedivisor
+	comb,<		divisor,0,LREF(largedivisor)
 	 sub		%r0,divisor,%r1		; clear cy as side-effect
 	ds		%r0,%r1,%r0
 	addc		dividend,dividend,dividend
@@ -481,7 +537,7 @@ $$divI
 	sub		%r0,dividend,dividend
 	bv		%r0(ret)
 	copy		dividend,quotient
-L$largedivisor
+LSYM(largedivisor)
 	comclr,<<	dividend,divisor,quotient
 	ldi		1,quotient
 	bv,n		%r0(ret)
@@ -496,11 +552,9 @@ L$largedivisor
 #define quotient %r29
 #define tmp %r1
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$remI
-$$remI
+
+SPACE
+GSYM($$remI)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -510,7 +564,7 @@ $$remI
 	comclr,>=	dividend,%r0,%r0
 	sub		%r0,dividend,dividend
 
-	comb,<		divisor,0,L$largedivisor
+	comb,<		divisor,0,LREF(largedivisor)
 	 sub		%r0,divisor,%r1		; clear cy as side-effect
 	ds		%r0,%r1,%r0
 	addc		dividend,dividend,dividend
@@ -584,7 +638,7 @@ $$remI
 	sub		%r0,%r1,%r1
 	bv		%r0(ret)
 	copy		%r1,quotient
-L$largedivisor
+LSYM(largedivisor)
 	sub,>>=		dividend,divisor,quotient
 	copy		dividend,quotient
 	bv,n		%r0(ret)
@@ -600,11 +654,9 @@ L$largedivisor
 #define tmp %r1
 #define result %r29
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$divU_3
-$$divU_3
+
+SPACE
+GSYM($$divU_3)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -644,11 +696,9 @@ $$divU_3
 #define tmp %r1
 #define result %r29
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$divU_5
-$$divU_5
+
+SPACE
+GSYM($$divU_5)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -688,11 +738,9 @@ $$divU_5
 #define tmp %r1
 #define result %r29
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$divU_6
-$$divU_6
+
+SPACE
+GSYM($$divU_6)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -732,11 +780,9 @@ $$divU_6
 #define tmp %r1
 #define result %r29
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$divU_9
-$$divU_9
+
+SPACE
+GSYM($$divU_9)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -776,11 +822,9 @@ $$divU_9
 #define tmp %r1
 #define result %r29
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$divU_10
-$$divU_10
+
+SPACE
+GSYM($$divU_10)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -820,11 +864,9 @@ $$divU_10
 #define tmp %r1
 #define result %r29
 #define ret %r31
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align 4
-	.export	$$divU_12
-$$divU_12
+
+SPACE
+GSYM($$divU_12)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -858,11 +900,8 @@ $$divU_12
 
 
 #ifdef L_divU_3
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divU_3
-$$divU_3
+SPACE
+GSYM($$divU_3)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -874,11 +913,8 @@ $$divU_3
 #endif
 
 #ifdef L_divU_5
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divU_5
-$$divU_5
+SPACE
+GSYM($$divU_5)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -890,11 +926,8 @@ $$divU_5
 #endif
 
 #ifdef L_divU_6
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divU_6
-$$divU_6
+SPACE
+GSYM($$divU_6)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -906,11 +939,8 @@ $$divU_6
 #endif
 
 #ifdef L_divU_7
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divU_7
-$$divU_7
+SPACE
+GSYM($$divU_7)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -922,11 +952,8 @@ $$divU_7
 #endif
 
 #ifdef L_divU_9
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divU_9
-$$divU_9
+SPACE
+GSYM($$divU_9)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -938,11 +965,8 @@ $$divU_9
 #endif
 
 #ifdef L_divU_10
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divU_10
-$$divU_10
+SPACE
+GSYM($$divU_10)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -954,11 +978,8 @@ $$divU_10
 #endif
 
 #ifdef L_divU_12
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divU_12
-$$divU_12
+SPACE
+GSYM($$divU_12)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -970,11 +991,8 @@ $$divU_12
 #endif
 
 #ifdef L_divU_14
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divU_14
-$$divU_14
+SPACE
+GSYM($$divU_14)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -986,11 +1004,8 @@ $$divU_14
 #endif
 
 #ifdef L_divU_15
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divU_15
-$$divU_15
+SPACE
+GSYM($$divU_15)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -1002,11 +1017,8 @@ $$divU_15
 #endif
 
 #ifdef L_divI_3
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divI_3
-$$divI_3
+SPACE
+GSYM($$divI_3)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -1018,11 +1030,8 @@ $$divI_3
 #endif
 
 #ifdef L_divI_5
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divI_5
-$$divI_5
+SPACE
+GSYM($$divI_5)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -1034,11 +1043,8 @@ $$divI_5
 #endif
 
 #ifdef L_divI_6
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divI_6
-$$divI_6
+SPACE
+GSYM($$divI_6)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -1050,11 +1056,8 @@ $$divI_6
 #endif
 
 #ifdef L_divI_7
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divI_7
-$$divI_7
+SPACE
+GSYM($$divI_7)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -1066,11 +1069,8 @@ $$divI_7
 #endif
 
 #ifdef L_divI_9
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divI_9
-$$divI_9
+SPACE
+GSYM($$divI_9)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -1082,11 +1082,8 @@ $$divI_9
 #endif
 
 #ifdef L_divI_10
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divI_10
-$$divI_10
+SPACE
+GSYM($$divI_10)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -1098,11 +1095,8 @@ $$divI_10
 #endif
 
 #ifdef L_divI_12
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divI_12
-$$divI_12
+SPACE
+GSYM($$divI_12)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -1114,11 +1108,8 @@ $$divI_12
 #endif
 
 #ifdef L_divI_14
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divI_14
-$$divI_14
+SPACE
+GSYM($$divI_14)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
@@ -1130,11 +1121,8 @@ $$divI_14
 #endif
 
 #ifdef L_divI_15
-	.space	$TEXT$
-	.subspa	$MILLICODE$,quad=0,align=8,access=0x2c,sort=8
-	.align	4
-	.export	$$divI_15
-$$divI_15
+SPACE
+GSYM($$divI_15)
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry

@@ -1,24 +1,30 @@
 LIBGCC1=libgcc1-asm.a
 CROSS_LIBGCC1=libgcc1-asm.a
+
+#Plug millicode routines into libgcc.a  We want these on both native and
+#cross compiles.
+
+LIB1ASMFUNCS =  _divI _divU _remI _remU _multiply \
+	_divI_15 _divI_14 _divI_12 _divI_10 _divI_9 \
+	_divI_7 _divI_6 _divI_5 _divI_3 \
+	_divU_15 _divU_14 _divU_12 _divU_10 _divU_9 \
+	_divU_7 _divU_6 _divU_5 _divU_3 _dyncall
+
+LIB1ASMSRC=pa/milli32.S
+
+# Don't build a shared libgcc_s.so.  Our libgcc contains millicode, and
+# the ABI (linker and dynamic linker really) does not allow millicode
+# to be exported from shared libraries.  Consequently, to successfully
+# link against libgcc_s.so it is necessary to link against _both_
+# libgcc_s.so and libgcc.a.  This is a pain.  It's easier just to disable
+# the shared libgcc.
+SHLIB_LINK =
+
+# Compile crtbeginS.o and crtendS.o as PIC.
+CRTSTUFF_T_CFLAGS_S = -fPIC
+
+# Compile libgcc2.a as PIC.
+# This is also used when compiling libgcc1 if libgcc1 is the asm variety.
+TARGET_LIBGCC2_CFLAGS = -fPIC -DELF=1
+
 ADA_CFLAGS=-mdisable-indexing
-LIB1ASMSRC=pa/lib1funcs.asm
-LIB1ASMFUNCS=_divI _divU _remI _remU _multiply _dyncall
-LIB2FUNCS_EXTRA=lib2funcs.asm ee.asm ee_fp.asm
-
-lib1funcs.asm: $(srcdir)/config/pa/lib1funcs.asm
-	rm -f lib1funcs.asm
-	cp $(srcdir)/config/pa/lib1funcs.asm .
-
-lib2funcs.asm: $(srcdir)/config/pa/lib2funcs.asm
-	rm -f lib2funcs.asm
-	cp $(srcdir)/config/pa/lib2funcs.asm .
-
-ee.asm: $(srcdir)/config/pa/ee.asm
-	rm -f ee.asm
-	cp $(srcdir)/config/pa/ee.asm .
-
-ee_fp.asm: $(srcdir)/config/pa/ee_fp.asm
-	rm -f ee_fp.asm
-	cp $(srcdir)/config/pa/ee_fp.asm .
-
-TARGET_LIBGCC2_CFLAGS = -fPIC
