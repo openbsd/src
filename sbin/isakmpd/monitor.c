@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.32 2004/11/08 12:34:00 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.33 2004/11/08 12:40:19 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -221,19 +221,19 @@ monitor_open(const char *path, int flags, mode_t mode)
 {
 	int	fd, mode32 = (int32_t) mode;
 	int32_t	err;
-	char	realpath[MAXPATHLEN];
+	char	pathreal[MAXPATHLEN];
 
 	if (path[0] == '/')
-		strlcpy(realpath, path, sizeof realpath);
+		strlcpy(pathreal, path, sizeof pathreal);
 	else
-		snprintf(realpath, sizeof realpath, "%s/%s", m_state.root,
+		snprintf(pathreal, sizeof pathreal, "%s/%s", m_state.root,
 		    path);
 
 	/* Write data to priv process.  */
 	if (m_write_int32(m_state.s, MONITOR_GET_FD))
 		goto errout;
 
-	if (m_write_raw(m_state.s, realpath, strlen(realpath) + 1))
+	if (m_write_raw(m_state.s, pathreal, strlen(pathreal) + 1))
 		goto errout;
 
 	if (m_write_int32(m_state.s, flags))
