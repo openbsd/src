@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.24 2003/06/02 23:27:55 millert Exp $ */
+/*	$OpenBSD: intr.c,v 1.25 2003/06/23 19:19:33 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -355,6 +355,7 @@ intr_fasttrap(level, vec)
 	instrp = (char *)instr;
 	for (i = 0; i < sizeof(int) * 3; i++, instrp++, tvp++)
 		pmap_writetext(tvp, *instrp);
+	fastvec |= 1 << level;
 	splx(s);
 }
 
