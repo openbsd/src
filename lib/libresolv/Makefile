@@ -1,11 +1,12 @@
 #	from: @(#)Makefile	5.1 (Berkeley) 6/5/90
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:43:09 deraadt Exp $
+#	$Id: Makefile,v 1.2 1996/01/04 11:58:46 deraadt Exp $
+
+# libresolv no longer needs a special version of the resolver routines.
+# The resolver is always in libc.
+# However, an empty library must exist in case something tries to use it.
 
 LIB=resolv
-CFLAGS+=-DDEBUG -DLIBC_SCCS
 
-.PATH:	${.CURDIR}/../libc/net
-
-SRCS=gethostnamadr.c res_mkquery.c res_query.c res_send.c
+SRCS=nothing.c
 
 .include <bsd.lib.mk>
