@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.6 2000/11/07 02:45:42 kevlo Exp $	*/
+/*	$OpenBSD: head.c,v 1.7 2001/07/04 06:31:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -41,13 +41,14 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)head.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: head.c,v 1.6 2000/11/07 02:45:42 kevlo Exp $";
+static char rcsid[] = "$OpenBSD: head.c,v 1.7 2001/07/04 06:31:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <limits.h>
+#include <err.h>
 #include <errno.h>
 #include <unistd.h>
 
@@ -68,7 +69,6 @@ main(argc, argv)
 	int	ch, firsttime;
 	long	linecnt = 10;
 	char	*inval = NULL, *p = NULL;
-	size_t	len;
 
 	/* handle obsolete -number syntax */
 	if (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
