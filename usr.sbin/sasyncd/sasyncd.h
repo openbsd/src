@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.2 2005/04/03 17:19:26 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -50,6 +50,8 @@ struct cfgstate {
 	char		*cafile;
 	char		*certfile;
 	char		*privkeyfile;
+
+	char		*sharedkey;
 
 	int		 pfkey_socket;
 
