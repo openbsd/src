@@ -1,4 +1,4 @@
-/*	$OpenBSD: twereg.h,v 1.4 2001/01/07 20:27:46 mickey Exp $	*/
+/*	$OpenBSD: twereg.h,v 1.5 2001/03/30 21:50:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -141,6 +141,7 @@
 #define	TWE_AEN_RBFAIL	0x0004	/* rebuild failed */
 #define	TWE_AEN_RBDONE	0x0005
 /*	TWE_AEN_	0x0009	 * dunno what this is (yet) */
+#define	TWE_AEN_ISTART	0x000c	/* init started */
 #define	TWE_AEN_QFULL	0x00ff
 #define	TWE_AEN_TUN	0x0015	/* table undefined */
 
