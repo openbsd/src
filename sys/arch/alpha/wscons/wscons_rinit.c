@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_rinit.c,v 1.4 1997/01/24 19:58:32 niklas Exp $ */
+/*	$OpenBSD: wscons_rinit.c,v 1.5 1997/04/08 00:47:21 michaels Exp $ */
 /*	$NetBSD: wscons_rinit.c,v 1.3 1996/11/13 21:13:42 cgd Exp $ */
 
 /*
@@ -106,7 +106,7 @@ rcons_init(rc, mrow, mcol)
 	struct raster *rp = rc->rc_sp;
 	int i;
 
-	rcons_initfont(rc, &gallant19);
+	rcons_initfont(rc, &CONSOLE_FONT);
 
 	i = rp->height / rc->rc_font->height;
 	rc->rc_maxrow = min(i, mrow);
