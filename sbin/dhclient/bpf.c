@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.8 2004/02/24 13:36:13 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.9 2004/02/24 17:26:43 henning Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -53,20 +53,6 @@
 #define BPF_FORMAT "/dev/bpf%d"
 
 /*
- * Reinitializes the specified interface after an address change.   This
- * is not required for packet-filter APIs.
- */
-void
-if_reinitialize_send(struct interface_info *info)
-{
-}
-
-void
-if_reinitialize_receive(struct interface_info *info)
-{
-}
-
-/*
  * Called by get_interface_list for each interface that's discovered.
  * Opens a packet filter for each interface and adds it to the select
  * mask.
@@ -84,14 +70,8 @@ if_register_bpf(struct interface_info *info)
 		if (sock < 0) {
 			if (errno == EBUSY)
 				continue;
-			else {
-				if (!b)
-					error("No bpf devices.%s%s%s",
-					    "   Please read the README",
-					    " section for your operating",
-					    " system.");
+			else
 				error("Can't find free bpf: %m");
-			}
 		} else
 			break;
 	}
@@ -148,20 +128,6 @@ struct bpf_insn dhcp_bpf_filter[] = {
 };
 
 int dhcp_bpf_filter_len = sizeof(dhcp_bpf_filter) / sizeof(struct bpf_insn);
-
-struct bpf_insn dhcp_bpf_tr_filter[] = {
-        /* accept all token ring packets due to variable length header */
-        /* if we want to get clever, insert the program here */
-
-	/* If we passed all the tests, ask for the whole packet. */
-	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
-
-	/* Otherwise, drop it. */
-	BPF_STMT(BPF_RET+BPF_K, 0),
-};
-
-int dhcp_bpf_tr_filter_len =
-    sizeof(dhcp_bpf_tr_filter) / sizeof(struct bpf_insn);
 
 void
 if_register_receive(struct interface_info *info)
@@ -354,16 +320,4 @@ receive_packet(struct interface_info *interface, unsigned char *buf,
 		return (hdr.bh_caplen);
 	} while (!length);
 	return (0);
-}
-
-int
-can_unicast_without_arp(void)
-{
-	return (1);
-}
-
-int
-can_receive_unicast_unconfigured(struct interface_info *ip)
-{
-	return (1);
 }

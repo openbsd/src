@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.19 2004/02/24 15:35:56 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.20 2004/02/24 17:26:43 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -1409,11 +1409,7 @@ make_discover(struct interface_info *ip, struct client_lease *lease)
 	ip->client->packet.hops = 0;
 	ip->client->packet.xid = arc4random();
 	ip->client->packet.secs = 0; /* filled in by send_discover. */
-
-	if (can_receive_unicast_unconfigured(ip))
-		ip->client->packet.flags = 0;
-	else
-		ip->client->packet.flags = htons(BOOTP_BROADCAST);
+	ip->client->packet.flags = 0;
 
 	memset(&(ip->client->packet.ciaddr),
 	    0, sizeof(ip->client->packet.ciaddr));
@@ -1523,10 +1519,7 @@ make_request(struct interface_info *ip, struct client_lease * lease)
 	} else {
 		memset(&ip->client->packet.ciaddr, 0,
 		    sizeof(ip->client->packet.ciaddr));
-		if (can_receive_unicast_unconfigured(ip))
-			ip->client->packet.flags = 0;
-		else
-			ip->client->packet.flags = htons(BOOTP_BROADCAST);
+		ip->client->packet.flags = 0;
 	}
 
 	memset(&ip->client->packet.yiaddr, 0,

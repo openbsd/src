@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.14 2004/02/24 15:35:56 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.15 2004/02/24 17:26:43 henning Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -183,16 +183,6 @@ discover_interfaces(void)
 void
 reinitialize_interfaces(void)
 {
-	struct interface_info *ip;
-
-	for (ip = interfaces; ip; ip = ip->next) {
-		if_reinitialize_receive(ip);
-		if_reinitialize_send(ip);
-	}
-
-	if (fallback_interface)
-		if_reinitialize_send(fallback_interface);
-
 	interfaces_invalidated = 1;
 }
 

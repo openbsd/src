@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.17 2004/02/24 17:02:40 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.18 2004/02/24 17:26:43 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -310,18 +310,13 @@ void free_string_list(struct string_list *, char *);
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
-void if_reinitialize_send(struct interface_info *);
 void if_register_send(struct interface_info *);
+void if_register_receive(struct interface_info *);
 ssize_t send_packet(struct interface_info *,
     struct packet *, struct dhcp_packet *, size_t, struct in_addr,
     struct sockaddr_in *, struct hardware *);
-void if_reinitialize_receive(struct interface_info *);
-void if_register_receive(struct interface_info *);
 ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
     struct sockaddr_in *, struct hardware *);
-int can_unicast_without_arp(void);
-int can_receive_unicast_unconfigured(struct interface_info *);
-void maybe_setup_fallback(void);
 
 /* dispatch.c */
 extern struct interface_info *interfaces,
