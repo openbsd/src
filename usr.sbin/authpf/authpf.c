@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.27 2002/11/22 18:06:48 beck Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.28 2002/11/23 05:27:19 mcbride Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -78,6 +78,7 @@ char pidfile[MAXPATHLEN];	/* we save pid in this file. */
 
 struct timeval Tstart, Tend;	/* start and end times of session */
 
+int	pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
 int	pfctl_add_nat(struct pfctl *, struct pf_nat *);
 int	pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
@@ -706,14 +707,14 @@ authpf_kill_states()
 
 	/* Kill all states from ipsrc */
 	psk.psk_src.addr.addr.v4 = target;
-	memset(&psk.psk_src.mask, 0xff, sizeof(psk.psk_src.mask));
+	memset(&psk.psk_src.addr.mask, 0xff, sizeof(psk.psk_src.addr.mask));
 	if (ioctl(dev, DIOCKILLSTATES, &psk))
 		syslog(LOG_ERR, "DIOCKILLSTATES failed (%m)");
 
 	/* Kill all states to ipsrc */
 	memset(&psk.psk_src, 0, sizeof(psk.psk_src));
 	psk.psk_dst.addr.addr.v4 = target;
-	memset(&psk.psk_dst.mask, 0xff, sizeof(psk.psk_dst.mask));
+	memset(&psk.psk_dst.addr.mask, 0xff, sizeof(psk.psk_dst.addr.mask));
 	if (ioctl(dev, DIOCKILLSTATES, &psk))
 		syslog(LOG_ERR, "DIOCKILLSTATES failed (%m)");
 }
@@ -745,6 +746,25 @@ do_death(int active)
 	exit(ret);
 }
 
+int
+pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
+{
+	struct pf_pooladdr *pa;
+
+	if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
+		err(1, "DIOCBEGINADDRS");
+
+	pf->paddr.af = af;
+	TAILQ_FOREACH(pa, &p->list, entries) {
+		memcpy(&pf->paddr.addr, pa, sizeof(struct pf_pooladdr));
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			if (ioctl(pf->dev, DIOCADDADDR, &pf->paddr))
+				err(1, "DIOCADDADDR");
+		}
+	}
+	return (0);
+}
+
 /*
  * callback for rule add, used by parser in parse_rules
  */
@@ -761,6 +781,8 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 		pcr.action = Rule_Action;
 		memcpy(&pcr.newrule, r, sizeof(pcr.newrule));
 	}
+	if (pfctl_add_pool(pf, &r->rt_pool, r->af))
+		return (1);
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(pf->dev, DIOCCHANGERULE, &pcr))
 			syslog(LOG_INFO, "DIOCCHANGERULE %m");
@@ -785,6 +807,8 @@ pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 		pcr.action = Nat_Action;
 		memcpy(&pcr.newnat, n, sizeof(pcr.newnat));
 	}
+	if (pfctl_add_pool(pf, &n->rpool, n->af))
+		return (1);
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(pf->dev, DIOCCHANGENAT, &pcr))
 			syslog(LOG_INFO, "DIOCCHANGENAT %m");
@@ -808,6 +832,8 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 		pcr.action = Rdr_Action;
 		memcpy(&pcr.newrdr, r, sizeof(pcr.newrdr));
 	}
+	if (pfctl_add_pool(pf, &r->rpool, r->af))
+		return (1);
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(pf->dev, DIOCCHANGERDR, &pcr))
 			syslog(LOG_INFO, "DIOCCHANGERDR %m");
