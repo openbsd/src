@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.16 1996/06/10 07:35:35 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.17 1996/06/16 13:39:32 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -136,6 +136,7 @@ struct cfdriver pc_cd = {
 
 static unsigned int addr_6845 = MONO_BASE;
 
+void pcinit __P((void));
 char *sget __P((void));
 void sput __P((u_char *, int));
 void pc_xmode_on __P((void));
@@ -479,6 +480,9 @@ pcattach(parent, self, aux)
 {
 	struct pc_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
+
+	if (crtat == 0)
+		pcinit();
 
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update((void *)1);
@@ -858,6 +862,52 @@ pcparam(tp, t)
 	return 0;
 }
 
+void
+pcinit()
+{
+	u_short volatile *cp;
+	u_short was;
+	unsigned cursorat;
+
+	cp = ISA_HOLE_VADDR(CGA_BUF);
+	was = *cp;
+	*cp = (u_short) 0xA55A;
+	if (*cp != 0xA55A) {
+		cp = ISA_HOLE_VADDR(MONO_BUF);
+		addr_6845 = MONO_BASE;
+		vs.color = 0;
+	} else {
+		*cp = was;
+		addr_6845 = CGA_BASE;
+		vs.color = 1;
+	}
+
+	/* Extract cursor location */
+	outb(addr_6845, 14);
+	cursorat = inb(addr_6845+1) << 8;
+	outb(addr_6845, 15);
+	cursorat |= inb(addr_6845+1);
+
+#ifdef FAT_CURSOR
+	cursor_shape = 0x0012;
+#endif
+
+	Crtat = (u_short *)cp;
+	crtat = (u_short *)(cp + cursorat);
+
+	vs.ncol = COL;
+	vs.nrow = ROW;
+	vs.nchr = COL * ROW;
+	vs.at = FG_LIGHTGREY | BG_BLACK;
+
+	if (vs.color == 0)
+		vs.so_at = FG_BLACK | BG_LIGHTGREY;
+	else
+		vs.so_at = FG_YELLOW | BG_BLACK;
+
+	fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
+}
+
 #define	wrtchar(c, at) do {\
 	char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; vs.col++; \
 } while (0)
@@ -946,49 +996,8 @@ sput(cp, n)
 	if (pc_xmode > 0)
 		return;
 
-	if (crtat == 0) {
-		u_short volatile *cp;
-		u_short was;
-		unsigned cursorat;
-
-		cp = ISA_HOLE_VADDR(CGA_BUF);
-		was = *cp;
-		*cp = (u_short) 0xA55A;
-		if (*cp != 0xA55A) {
-			cp = ISA_HOLE_VADDR(MONO_BUF);
-			addr_6845 = MONO_BASE;
-			vs.color = 0;
-		} else {
-			*cp = was;
-			addr_6845 = CGA_BASE;
-			vs.color = 1;
-		}
-
-		/* Extract cursor location */
-		outb(addr_6845, 14);
-		cursorat = inb(addr_6845+1) << 8;
-		outb(addr_6845, 15);
-		cursorat |= inb(addr_6845+1);
-
-#ifdef FAT_CURSOR
-		cursor_shape = 0x0012;
-#endif
-
-		Crtat = (u_short *)cp;
-		crtat = (u_short *)(cp + cursorat);
-
-		vs.ncol = COL;
-		vs.nrow = ROW;
-		vs.nchr = COL * ROW;
-		vs.at = FG_LIGHTGREY | BG_BLACK;
-
-		if (vs.color == 0)
-			vs.so_at = FG_BLACK | BG_LIGHTGREY;
-		else
-			vs.so_at = FG_YELLOW | BG_BLACK;
-
-		fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
-	}
+	if (crtat == 0)
+		pcinit();
 
 	while (n--) {
 		if (!(c = *cp++))
