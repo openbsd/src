@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.86 2004/08/10 15:59:10 ho Exp $	 */
+/* $OpenBSD: sa.c,v 1.87 2005/01/30 12:36:13 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1069,8 +1069,9 @@ sa_teardown_all(void)
 				 */
 				LOG_DBG((LOG_SA, 70,
 				    "sa_teardown_all: tearing down SA %s",
-				    sa->name));
-				connection_teardown(sa->name);
+				    sa->name ? sa->name : "<unnamed>"));
+				if (sa->name)
+					connection_teardown(sa->name);
 				sa_delete(sa, 1);
 			}
 		}
