@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.26 2000/01/29 16:07:08 itojun Exp $	*/
+/*	$OpenBSD: commands.c,v 1.27 2000/02/05 18:17:56 itojun Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2388,9 +2388,14 @@ tn(argc, argv)
     for (res = res0; res; res = res->ai_next) {
 	if (1 /* retry */) {
 	    char hbuf[MAXHOSTNAMELEN];
+#ifdef NI_WITHSCOPEID
+	    const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	    const int niflags = NI_NUMERICHOST;
+#endif
 
 	    getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
-		NULL, 0, NI_NUMERICHOST);
+		NULL, 0, niflags);
 	    printf("Trying %s...\r\n", hbuf);
 	}
 	net = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
