@@ -190,10 +190,13 @@ icmp_input(m, hlen)
 	 * that not corrupted and of at least minimum length.
 	 */
 #ifdef ICMPPRINTFS
-	if (icmpprintfs)
-		printf("icmp_input from %x to %x, len %d\n",
-			ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr),
-			icmplen);
+	if (icmpprintfs) {
+		char buf[4*sizeof "123"];
+
+		strcpy(buf, inet_ntoa(ip->ip_dst));
+		printf("icmp_input from %s to %s, len %d\n",
+			inet_ntoa(ip->ip_src), buf, icmplen);
+	}
 #endif
 	if (icmplen < ICMP_MINLEN) {
 		icmpstat.icps_tooshort++;
@@ -367,9 +370,13 @@ reflect:
 		icmpgw.sin_addr = ip->ip_src;
 		icmpdst.sin_addr = icp->icmp_gwaddr;
 #ifdef	ICMPPRINTFS
-		if (icmpprintfs)
-			printf("redirect dst %x to %x\n", icp->icmp_ip.ip_dst,
-				icp->icmp_gwaddr);
+		if (icmpprintfs) {
+			char buf[4 * sizeof "123"];
+			strcpy(buf, inet_ntoa(icp->icmp_ip.ip_dst));
+
+			printf("redirect dst %s to %s\n",
+			    buf, inet_ntoa(icp->icmp_gwaddr));
+		}
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
@@ -545,8 +552,13 @@ icmp_send(m, opts)
 	m->m_data -= hlen;
 	m->m_len += hlen;
 #ifdef ICMPPRINTFS
-	if (icmpprintfs)
-		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
+	if (icmpprintfs) {
+		char buf[4 * sizeof "123"];
+
+		strcpy(buf, inet_ntoa(ip->ip_dst));
+		printf("icmp_send dst %s src %s\n",
+		    buf, inet_ntoa(ip->ip_src));
+	}
 #endif
 	(void) ip_output(m, opts, NULL, 0, NULL);
 }

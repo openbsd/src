@@ -262,6 +262,7 @@ int	   in_canforward __P((struct in_addr));
 int	   in_cksum __P((struct mbuf *, int));
 int	   in_localaddr __P((struct in_addr));
 void	   in_socktrim __P((struct sockaddr_in *));
+char	  *inet_ntoa __P((struct in_addr));
 
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
 #define	sintosa(sin)	((struct sockaddr *)(sin))

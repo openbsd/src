@@ -83,6 +83,18 @@ int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
 
+char *
+inet_ntoa(ina)
+	struct in_addr ina;
+{
+	static char buf[4*sizeof "123"];
+	unsigned char *ucp = (unsigned char *)&ina;
+
+	sprintf(buf, "%d.%d.%d.%d", ucp[0] & 0xff, ucp[1] & 0xff,
+	    ucp[2] & 0xff, ucp[3] & 0xff);
+	return (buf);
+}
+
 /*
  * We need to save the IP options in case a protocol wants to respond
  * to an incoming packet over the same route if the packet got here
@@ -357,10 +369,10 @@ found:
 		ip->ip_len -= hlen;
 		((struct ipasfrag *)ip)->ipf_mff &= ~1;
 		if (ip->ip_off & IP_MF) {
-		        /*
-		         * Make sure that fragments have a data length
+			/*
+			 * Make sure that fragments have a data length
 			 * that's a non-zero multiple of 8 bytes.
-		         */
+			 */
 			if (ip->ip_len == 0 || (ip->ip_len & 0x7) != 0) {
 				ipstat.ips_badfrags++;
 				goto bad;
@@ -706,10 +718,12 @@ ip_dooptions(m)
 			}
 
 			if (!ip_dosourceroute) {
+				char buf[4*sizeof "123"];
+
+				strcpy(buf, inet_ntoa(ip->ip_dst));
 				log(LOG_WARNING,
-				    "attempted source route from %x to %x\n",
-				    ntohl(ip->ip_src.s_addr),
-				    ntohl(ip->ip_dst.s_addr));
+				    "attempted source route from %s to %s\n",
+				    inet_ntoa(ip->ip_src), buf);
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_SRCFAIL;
 				goto bad;
@@ -1018,8 +1032,8 @@ ip_forward(m, srcrt)
 	dest = 0;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf("forward: src %x dst %x ttl %x\n", ip->ip_src,
-			ip->ip_dst, ip->ip_ttl);
+		printf("forward: src %lx dst %x ttl %x\n", ip->ip_src.s_addr,
+			ip->ip_dst.s_addr, ip->ip_ttl);
 #endif
 	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
