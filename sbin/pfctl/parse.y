@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.122 2002/07/17 08:32:20 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.123 2002/07/19 11:12:42 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2711,21 +2711,25 @@ ifa_pick_ip(struct node_host *nh, u_int8_t af)
 {
 	struct node_host *h, *n = NULL;
 
-	if (af == 0 && nh->next) {
-		yyerror("address family not given and interface has multiple "
-		    "IPs");
+	if (af == 0 && nh && nh->next) {
+		yyerror("address family not given and translation address "
+		    "expands to multiple IPs");
 		return(NULL);
 	}
 	for(h = nh; h; h = h->next) {
 		if (h->af == af || h->af == 0 || af == 0) {
 			if (n != NULL) {
-				yyerror("interface has multiple IPs of "
-				    "this address family");
+				yyerror("translation address expands to "
+				    "multiple IPs of this address family");
 				return(NULL);
 			}
 			n = h;
 		}
 	}
+
+	if (n == NULL)
+		yyerror("no translation address with matching address family "
+		    "found.");
 	return n;
 }
 
