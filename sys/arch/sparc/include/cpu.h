@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.23 2004/09/29 07:35:13 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.24 2005/03/23 17:14:45 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -255,9 +255,6 @@ struct trapvec {
 	int	tv_instr[4];		/* the four instructions */
 };
 extern struct trapvec *trapbase;	/* the 256 vectors */
-
-extern void wzero(void *, u_int);
-extern void wcopy(const void *, void *, u_int);
 
 #endif /* _KERNEL */
 #endif /* _SPARC_CPU_H_ */

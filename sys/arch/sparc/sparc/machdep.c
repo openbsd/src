@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.103 2005/03/23 17:12:26 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.104 2005/03/23 17:14:46 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -1091,74 +1091,4 @@ caddr_t addr;
 
 	splx(s);
 	return (res);
-}
-
-void
-wzero(vb, l)
-	void *vb;
-	u_int l;
-{
-	u_char *b = vb;
-	u_char *be = b + l;
-	u_short *sp;
-
-	if (l == 0)
-		return;
-
-	/* front, */
-	if ((u_long)b & 1)
-		*b++ = 0;
-
-	/* back, */
-	if (b != be && ((u_long)be & 1) != 0) {
-		be--;
-		*be = 0;
-	}
-
-	/* and middle. */
-	sp = (u_short *)b;
-	while (sp != (u_short *)be)
-		*sp++ = 0;
-}
-
-void
-wcopy(vb1, vb2, l)
-	const void *vb1;
-	void *vb2;
-	u_int l;
-{
-	const u_char *b1e, *b1 = vb1;
-	u_char *b2 = vb2;
-	u_short *sp;
-	int bstore = 0;
-
-	if (l == 0)
-		return;
-
-	/* front, */
-	if ((u_long)b1 & 1) {
-		*b2++ = *b1++;
-		l--;
-	}
-
-	/* middle, */
-	sp = (u_short *)b1;
-	b1e = b1 + l;
-	if (l & 1)
-		b1e--;
-	bstore = (u_long)b2 & 1;
-
-	while (sp < (u_short *)b1e) {
-		if (bstore) {
-			b2[1] = *sp & 0xff;
-			b2[0] = *sp >> 8;
-		} else
-			*((short *)b2) = *sp;
-		sp++;
-		b2 += 2;
-	}
-
-	/* and back. */
-	if (l & 1)
-		*b2 = *b1e;
 }

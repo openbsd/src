@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.29 2005/01/15 05:24:10 brad Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.30 2005/03/23 17:14:43 miod Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -331,6 +331,9 @@ static __inline caddr_t Align(caddr_t);
 static void chan_attn_timeout(void *);
 static void run_tdr(struct ie_softc *, struct ie_tdr_cmd *);
 static void iestop(struct ie_softc *);
+
+void wzero(void *, u_int);
+void wcopy(const void *, void *, u_int);
 
 #ifdef IEDEBUG
 void print_rbd(volatile struct ie_recv_buf_desc *);
@@ -2091,3 +2094,73 @@ print_rbd(rbd)
 	    rbd->mbz);
 }
 #endif
+
+void
+wzero(vb, l)
+	void *vb;
+	u_int l;
+{
+	u_char *b = vb;
+	u_char *be = b + l;
+	u_short *sp;
+
+	if (l == 0)
+		return;
+
+	/* front, */
+	if ((u_long)b & 1)
+		*b++ = 0;
+
+	/* back, */
+	if (b != be && ((u_long)be & 1) != 0) {
+		be--;
+		*be = 0;
+	}
+
+	/* and middle. */
+	sp = (u_short *)b;
+	while (sp != (u_short *)be)
+		*sp++ = 0;
+}
+
+void
+wcopy(vb1, vb2, l)
+	const void *vb1;
+	void *vb2;
+	u_int l;
+{
+	const u_char *b1e, *b1 = vb1;
+	u_char *b2 = vb2;
+	u_short *sp;
+	int bstore = 0;
+
+	if (l == 0)
+		return;
+
+	/* front, */
+	if ((u_long)b1 & 1) {
+		*b2++ = *b1++;
+		l--;
+	}
+
+	/* middle, */
+	sp = (u_short *)b1;
+	b1e = b1 + l;
+	if (l & 1)
+		b1e--;
+	bstore = (u_long)b2 & 1;
+
+	while (sp < (u_short *)b1e) {
+		if (bstore) {
+			b2[1] = *sp & 0xff;
+			b2[0] = *sp >> 8;
+		} else
+			*((short *)b2) = *sp;
+		sp++;
+		b2 += 2;
+	}
+
+	/* and back. */
+	if (l & 1)
+		*b2 = *b1e;
+}
