@@ -1,4 +1,4 @@
-#	$OpenBSD: stderr-data.sh,v 1.1 2002/03/23 16:38:09 markus Exp $
+#	$OpenBSD: stderr-data.sh,v 1.2 2002/03/27 22:39:52 markus Exp $
 #	Placed in the Public Domain.
 
 tid="stderr data transfer"
@@ -22,7 +22,7 @@ for p in 1 2; do
 
 	${SSH} $n -$p -F $OBJ/ssh_proxy otherhost \
 		exec sh -c \'"echo a; exec > /dev/null; sleep 3; cat ${DATA} 1>&2 $s"\' \
-		>- 2> ${COPY}
+		> /dev/null 2> ${COPY}
 	r=$?
 	if [ $r -ne 0 ]; then
 		fail "ssh failed with exit code $r"
