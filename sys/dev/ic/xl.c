@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.40 2002/07/09 05:49:53 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.41 2002/08/22 19:08:50 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -634,10 +634,7 @@ void xl_setmulti(sc)
 {
 	struct ifnet		*ifp;
 	struct arpcom *ac = &sc->sc_arpcom;
-	struct ether_multi *enm;
-	struct ether_multistep step;
 	u_int8_t		rxfilt;
-	int			mcnt = 0;
 
 	ifp = &sc->sc_arpcom.ac_if;
 
@@ -650,13 +647,7 @@ void xl_setmulti(sc)
 		return;
 	}
 
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		mcnt++;
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	if (mcnt)
+	if (ac->ac_multicnt > 0)
 		rxfilt |= XL_RXFILTER_ALLMULTI;
 	else
 		rxfilt &= ~XL_RXFILTER_ALLMULTI;
