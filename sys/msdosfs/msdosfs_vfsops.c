@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.20 2000/03/15 03:18:02 aaron Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.21 2001/02/07 17:51:48 mickey Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -664,12 +664,14 @@ msdosfs_root(mp, vpp)
 	struct denode *ndep;
 	int error;
 
+	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep)) != 0)
+		return (error);
+
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_root(); mp %08x, pmp %08x, ndep %08x, vp %08x\n",
 	    mp, pmp, ndep, DETOV(ndep));
 #endif
-	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep)) != 0)
-		return (error);
+
 	*vpp = DETOV(ndep);
 	return (0);
 }
