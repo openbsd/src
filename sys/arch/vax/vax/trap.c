@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.14 1995/11/12 14:33:13 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.15 1996/01/28 12:24:33 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -137,13 +137,11 @@ fram:
 	default:
 faulter:
 #ifdef DDB
-		if (kdb_trap(frame))
-			return;
+		kdb_trap(frame);
 #endif
 		printf("Trap: type %x, code %x, pc %x, psl %x\n",
 		    frame->trap, frame->code, frame->pc, frame->psl);
 		showregs(frame);
-asm("halt");
 		panic("trap: adr %x",frame->code);
 	case T_KSPNOTVAL:
 		goto faulter;
@@ -307,9 +305,14 @@ if(faultdebug)printf("trap ptelen type %x, code %x, pc %x, psl %x\n",
 		mtpr(AST_NO,PR_ASTLVL);
 		trapsig=0;
 		break;
+
+	case T_KDBTRAP:
+		kdb_trap(frame);
+		return;
 	}
 bad:
-	if(trapsig) trapsignal(curproc, sig, frame->code);
+	if (trapsig)
+		trapsignal(curproc, sig, frame->code);
 uret:
 	userret(curproc, frame->pc, frame->psl);
 };
@@ -347,7 +350,7 @@ setregs(p, pack, stack, retval)
 
 	exptr = p->p_addr->u_pcb.framep;
 	exptr->pc = pack->ep_entry + 2;
-	mtpr(stack, PR_USP);
+	exptr->sp = stack;
 	retval[0] = retval[1] = 0;
 }
 
@@ -360,8 +363,8 @@ syscall(frame)
 	struct trapframe *exptr;
 	struct proc *p=curproc;
 
-if(startsysc)printf("trap syscall %s pc %x, psl %x, ap %x, pid %d, frame %x\n",
-               syscallnames[frame->code], frame->pc, frame->psl,frame->ap,
+if(startsysc)printf("trap syscall %s pc %x, psl %x, sp %x, pid %d, frame %x\n",
+               syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
 		curproc->p_pid,frame);
 
 	p->p_addr->u_pcb.framep = frame;
@@ -390,8 +393,8 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, ap %x, pid %d, frame %x\n",
 	exptr=curproc->p_addr->u_pcb.framep;
 
 if(startsysc)
-	printf("retur %s pc %x, psl %x, ap %x, pid %d, v{rde %d r0 %d, r1 %d, frame %x\n",
-               syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->ap,
+	printf("retur %s pc %x, psl %x, sp %x, pid %d, v{rde %d r0 %d, r1 %d, frame %x\n",
+               syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
                 curproc->p_pid,err,rval[0],rval[1],exptr);
 
 	switch(err){
