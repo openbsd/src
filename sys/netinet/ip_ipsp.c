@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.73 2000/01/11 03:10:04 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.74 2000/01/13 00:34:31 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1019,11 +1019,16 @@ tdb_expiration(struct tdb *tdb, int flags)
 struct flow *
 find_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
 	  union sockaddr_union *dst, union sockaddr_union *dstmask,
-	  u_int8_t proto, struct tdb *tdb)
+	  u_int8_t proto, struct tdb *tdb, int ingress)
 {
     struct flow *flow;
 
-    for (flow = tdb->tdb_flow; flow; flow = flow->flow_next)
+    if (ingress)
+      flow = tdb->tdb_access;
+    else
+      flow = tdb->tdb_flow;
+
+    for (; flow; flow = flow->flow_next)
       if (!bcmp(&src->sa, &flow->flow_src.sa, SA_LEN(&src->sa)) &&
 	  !bcmp(&dst->sa, &flow->flow_dst.sa, SA_LEN(&dst->sa)) &&
 	  !bcmp(&srcmask->sa, &flow->flow_srcmask.sa, SA_LEN(&srcmask->sa)) &&
@@ -1051,15 +1056,15 @@ find_global_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
       return (struct flow *) NULL;
 
     if (tdb_bypass != NULL)
-      if ((flow = find_flow(src, srcmask, dst, dstmask, proto, tdb_bypass))
-	  != (struct flow *) NULL)
+      if ((flow = find_flow(src, srcmask, dst, dstmask, proto,
+			    tdb_bypass, FLOW_EGRESS)) != (struct flow *) NULL)
 	return flow;
 
     for (i = 0; i <= tdb_hashmask; i++)
     {
 	for (tdb = tdbh[i]; tdb != NULL; tdb = tdb->tdb_hnext)
-	  if ((flow = find_flow(src, srcmask, dst, dstmask, proto, tdb)) !=
-	      (struct flow *) NULL)
+	  if ((flow = find_flow(src, srcmask, dst, dstmask, proto,
+				tdb, FLOW_EGRESS)) != (struct flow *) NULL)
 	    return flow;
     }
     return (struct flow *) NULL;
@@ -1131,17 +1136,24 @@ puttdb(struct tdb *tdbp)
  */
 
 void
-put_flow(struct flow *flow, struct tdb *tdb)
+put_flow(struct flow *flow, struct tdb *tdb, int ingress)
 {
-    flow->flow_next = tdb->tdb_flow;
-    flow->flow_prev = (struct flow *) NULL;
-
-    tdb->tdb_flow = flow;
-
-    flow->flow_sa = tdb;
+    if (ingress)
+    {
+	flow->flow_next = tdb->tdb_access;
+	tdb->tdb_access = flow;
+    }
+    else
+    {
+	flow->flow_next = tdb->tdb_flow;
+	tdb->tdb_flow = flow;
+    }
 
     if (flow->flow_next)
       flow->flow_next->flow_prev = flow;
+
+    flow->flow_sa = tdb;
+    flow->flow_prev = (struct flow *) NULL;
 }
 
 /*
@@ -1149,25 +1161,26 @@ put_flow(struct flow *flow, struct tdb *tdb)
  */
 
 void
-delete_flow(struct flow *flow, struct tdb *tdb)
+delete_flow(struct flow *flow, struct tdb *tdb, int ingress)
 {
     if (tdb)
     {
-	if (tdb->tdb_flow == flow)
-	{
-	    tdb->tdb_flow = flow->flow_next;
-	    if (tdb->tdb_flow)
-	      tdb->tdb_flow->flow_prev = (struct flow *) NULL;
-	}
+	if (ingress && (tdb->tdb_access == flow))
+	    tdb->tdb_access = flow->flow_next;
 	else
-	{
-	    flow->flow_prev->flow_next = flow->flow_next;
-	    if (flow->flow_next)
-	      flow->flow_next->flow_prev = flow->flow_prev;
-	}
+	  if (!ingress && (tdb->tdb_flow == flow))
+	    tdb->tdb_flow = flow->flow_next;
+
+	if (flow->flow_prev)
+	  flow->flow_prev->flow_next = flow->flow_next;
+
+	if (flow->flow_next)
+	  flow->flow_next->flow_prev = flow->flow_prev;
     }
 
-    ipsec_in_use--;
+    if (!ingress)
+      ipsec_in_use--;
+
     FREE(flow, M_TDB);
 }
 
@@ -1229,7 +1242,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
       (*(tdbp->tdb_xform->xf_zeroize))(tdbp);
 
     while (tdbp->tdb_access)
-      delete_flow(tdbp->tdb_access, tdbp);
+      delete_flow(tdbp->tdb_access, tdbp, FLOW_INGRESS);
 
     while (tdbp->tdb_flow)
     {
@@ -1296,7 +1309,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 #ifdef DIAGNOSTIC
 		panic("tdb_delete(): SA %s/%08x/%d has flow of unknown type %d", ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi), tdbp->tdb_sproto, tdbp->tdb_flow->flow_src.sa.sa_family);
 #endif /* DIAGNOSTIC */		
-		delete_flow(tdbp->tdb_flow, tdbp);
+		delete_flow(tdbp->tdb_flow, tdbp, FLOW_EGRESS);
 		continue;
 	}
 
@@ -1309,7 +1322,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
                   (struct sockaddr *) &encapnetmask,
                   0, (struct rtentry **) 0);
 
-        delete_flow(tdbp->tdb_flow, tdbp);
+        delete_flow(tdbp->tdb_flow, tdbp, FLOW_EGRESS);
     }
 
     /* Cleanup SA-Bindings */

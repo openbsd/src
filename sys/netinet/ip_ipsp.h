@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.55 2000/01/10 06:59:23 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.56 2000/01/13 00:34:31 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -60,6 +60,9 @@ union sockaddr_union
     struct sockaddr_in  sin;
     struct sockaddr_in6 sin6;
 };
+
+#define FLOW_EGRESS             0
+#define FLOW_INGRESS            1
 
 /* HMAC key sizes */
 #define MD5HMAC96_KEYSIZE       16
@@ -530,11 +533,11 @@ extern void handle_expirations(void *);
 
 /* Flow management routines */
 extern struct flow *get_flow(void);
-extern void put_flow(struct flow *, struct tdb *);
-extern void delete_flow(struct flow *, struct tdb *);
+extern void put_flow(struct flow *, struct tdb *, int);
+extern void delete_flow(struct flow *, struct tdb *, int);
 extern struct flow *find_flow(union sockaddr_union *, union sockaddr_union *,
 			      union sockaddr_union *, union sockaddr_union *,
-			      u_int8_t, struct tdb *);
+			      u_int8_t, struct tdb *, int);
 extern struct flow *find_global_flow(union sockaddr_union *,
 				     union sockaddr_union *,
 				     union sockaddr_union *,
