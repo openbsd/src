@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.8 1996/05/10 12:38:25 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.10 1996/06/20 11:33:22 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
@@ -367,6 +367,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "United Microelectronics",
 	    "UM8886F PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
+	    0,
+	    "Cyclades",
+	    "Cyclom-Y below 1M",
+	},
+	{
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_2,
+	    0,
+	    "Cyclades",
+	    "Cyclom-Y above 1M",
 	},
 	{
 	    PCI_VENDOR_OLDCOMPAQ, 0,

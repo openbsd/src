@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.8 1996/05/10 12:38:25 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.10 1996/06/20 11:33:22 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
@@ -215,7 +215,7 @@
 #define	PCI_VENDOR_STB	0x10b4		/* STB Systems */
 #define	PCI_VENDOR_PLX	0x10b5		/* PLX Technology */
 #define	PCI_VENDOR_MADGE	0x10b6		/* Madge Networks */
-#define	PCI_VENDOR_3COM	0x10B7		/* 3Com */
+#define	PCI_VENDOR_3COM	0x10b7		/* 3Com */
 #define	PCI_VENDOR_SMC	0x10b8		/* Standard Microsystems */
 #define	PCI_VENDOR_ALI	0x10b9		/* Acer Labs */
 #define	PCI_VENDOR_MITSUBISHIELEC	0x10ba		/* Mitsubishi Electronics */
@@ -252,7 +252,7 @@
 #define	PCI_VENDOR_MACRONIX	0x10d9		/* Macronix */
 #define	PCI_VENDOR_THOMASCONRAD	0x10da		/* Thomas-Conrad */
 #define	PCI_VENDOR_ROHM	0x10db		/* Rohm Research */
-#define	PCI_VENDOR_CERN	0x10DC		/* CERN/ECP/EDU */
+#define	PCI_VENDOR_CERN	0x10dc		/* CERN/ECP/EDU */
 #define	PCI_VENDOR_ES	0x10dd		/* Evans & Sutherland */
 #define	PCI_VENDOR_NVIDIA	0x10de		/* Nvidia Corporation */
 #define	PCI_VENDOR_EMULEX	0x10df		/* Emulex */
@@ -515,3 +515,7 @@
 #define	PCI_PRODUCT_UMC_UM8673F	0x0101		/* UM8673F */
 #define	PCI_PRODUCT_UMC_UM8881F	0x8881		/* UM8881F PCI-Host bridge */
 #define	PCI_PRODUCT_UMC_UM8886F	0x8886		/* UM8886F PCI-ISA bridge */
+
+/* Cyclades products */
+#define	PCI_PRODUCT_CYCLADES_CYCLOMY_1	0x0100		/* Cyclom-Y below 1M */
+#define	PCI_PRODUCT_CYCLADES_CYCLOMY_2	0x0101		/* Cyclom-Y above 1M */
