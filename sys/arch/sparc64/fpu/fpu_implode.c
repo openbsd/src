@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.1 2001/09/08 22:33:51 jason Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.2 2001/09/09 00:35:48 jason Exp $	*/
 /*	$NetBSD: fpu_implode.c,v 1.7 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -254,8 +254,8 @@ fpu_ftox(fe, fp, res)
 	switch (fp->fp_class) {
 
 	case FPC_ZERO:
-		res[1] = 0;
-		return (0);
+		i = 0;
+		goto out;
 
 	case FPC_NUM:
 		/*
@@ -276,14 +276,19 @@ fpu_ftox(fe, fp, res)
 		i = ((u_int64_t)fp->fp_mant[2]<<32)|fp->fp_mant[3];
 		if (i >= ((u_int64_t)0x8000000000000000LL + sign))
 			break;
-		return (sign ? -i : i);
+		if (sign)
+			i = -i;
+		goto out;
 
 	default:		/* Inf, qNaN, sNaN */
 		break;
 	}
 	/* overflow: replace any inexact exception with invalid */
 	fe->fe_cx = (fe->fe_cx & ~FSR_NX) | FSR_NV;
-	return (0x7fffffffffffffffLL + sign);
+	i = 0x7fffffffffffffffLL + sign;
+out:
+	res[1] = i & 0xffffffff;
+	return (i >> 32);
 }
 #endif /* SUN4U */
 
