@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.55 2004/02/19 09:46:19 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.56 2004/02/19 09:54:52 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -95,6 +95,7 @@ volatile sig_atomic_t sigusr2ed = 0;
 /*
  * If we receive a TERM signal, perform a "clean shutdown" of the daemon.
  * This includes to send DELETE notifications for all our active SAs.
+ * Also on recv of an INT signal (Ctrl-C out of an '-d' session, typically).
  */
 volatile sig_atomic_t sigtermed = 0;
 void daemon_shutdown_now (int);
@@ -326,7 +327,7 @@ daemon_shutdown (void)
     }
 }
 
-/* Called on SIGTERM, or by ui_shutdown_daemon().  */
+/* Called on SIGTERM, SIGINT or by ui_shutdown_daemon().  */
 void
 daemon_shutdown_now (int sig)
 {
@@ -369,10 +370,15 @@ main (int argc, char *argv[])
   /* Log cmd line parsing and initialization errors to stderr.  */
   log_to (stderr);
   parse_args (argc, argv);
-  log_init ();
+  log_init (debug);
 
-  /* Do a clean daemon shutdown on TERM reception. (Needed by monitor).  */
+  /*
+   * Do a clean daemon shutdown on TERM/INT. These signals must be
+   * initialized before monitor_init(). INT is only used with '-d'.
+   */
   signal (SIGTERM, daemon_shutdown_now);
+  if (debug == 1) /* i.e '-dd' will skip this.  */
+    signal (SIGINT, daemon_shutdown_now);
 
 #if defined (USE_PRIVSEP)
   if (monitor_init ())
@@ -393,12 +399,8 @@ main (int argc, char *argv[])
   init ();
 
   if (!debug)
-    {
-      if (daemon (0, 0))
-	log_fatal ("main: daemon (0, 0) failed");
-      /* Switch to syslog.  */
-      log_to (0);
-    }
+    if (daemon (0, 0))
+      log_fatal ("main: daemon (0, 0) failed");
 
   write_pid_file ();
 
@@ -452,8 +454,8 @@ main (int argc, char *argv[])
 	}
 
       /*
-       * and if someone set 'sigtermed' (SIGTERM or via the UI), this
-       * indicated we should start a shutdown of the daemon.
+       * and if someone set 'sigtermed' (SIGTERM, SIGINT or via the UI),
+       * this indicates we should start a controlled shutdown of the daemon.
        *
        * Note: Since _one_ message is sent per iteration of this enclosing
        * while-loop, and we want to send a number of DELETE notifications,

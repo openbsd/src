@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.38 2004/01/16 10:51:57 hshoexer Exp $	*/
+/*	$OpenBSD: log.c,v 1.39 2004/02/19 09:54:52 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -100,9 +100,12 @@ static u_int16_t in_cksum (const u_int16_t *, int);
 #endif /* USE_DEBUG */
 
 void
-log_init (void)
+log_init (int debug)
 {
-  log_output = stderr;
+  if (debug)
+    log_output = stderr;
+  else
+    log_to (0); /* syslog */
 }
 
 void
@@ -209,7 +212,7 @@ log_debug (int cls, int level, const char *fmt, ...)
   if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
     return;
   va_start (ap, fmt);
-  _log_print (0, LOG_DEBUG, fmt, ap, cls, level);
+  _log_print (0, LOG_INFO, fmt, ap, cls, level);
   va_end (ap);
 }
 
