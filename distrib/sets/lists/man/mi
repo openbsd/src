@@ -135,6 +135,7 @@
 ./usr/share/info/kth-krb.info
 ./usr/share/info/mmalloc.info
 ./usr/share/info/readline.info
+./usr/share/info/rluserman.info
 ./usr/share/info/stabs.info
 ./usr/share/info/stabs.info-1
 ./usr/share/info/stabs.info-2
@@ -490,6 +491,7 @@
 ./usr/share/man/cat1/perlxstut.0
 ./usr/share/man/cat1/pfbtops.0
 ./usr/share/man/cat1/pic.0
+./usr/share/man/cat1/pkg.0
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0
 ./usr/share/man/cat1/pkg_info.0
@@ -1330,6 +1332,7 @@
 ./usr/share/man/cat4/xe.0
 ./usr/share/man/cat4/xl.0
 ./usr/share/man/cat4/xmphy.0
+./usr/share/man/cat4/yds.0
 ./usr/share/man/cat4/ym.0
 ./usr/share/man/cat4/zero.0
 ./usr/share/man/cat5
@@ -2050,5 +2053,3 @@
 ./var/www/htdocs/manual/new_features_2_0.html
 ./var/www/htdocs/manual/win_compiling.html
 ./var/www/htdocs/manual/win_service.html
-./usr/share/info/rluserman.info
-./usr/share/man/cat4/yds.0

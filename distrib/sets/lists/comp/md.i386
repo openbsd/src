@@ -116,6 +116,7 @@
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libperl_pic.a
 ./usr/lib/libreadline.a
+./usr/lib/libreadline_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libssl_pic.a
 ./usr/lib/libstdc++_pic.a
@@ -144,4 +145,3 @@
 ./usr/share/man/cat3/kvm_dump_inval.0
 ./usr/share/man/cat3/kvm_dump_mkheader.0
 ./usr/share/man/cat3/kvm_dump_wrtheader.0
-./usr/lib/libreadline_pic.a

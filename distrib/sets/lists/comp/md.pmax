@@ -128,6 +128,7 @@
 ./usr/lib/libmmalloc.a
 ./usr/lib/libopcodes.a
 ./usr/lib/libreadline.a
+./usr/lib/libreadline_pic.a
 ./usr/libdata/ldscripts/elf32lmip.x
 ./usr/libdata/ldscripts/elf32lmip.xbn
 ./usr/libdata/ldscripts/elf32lmip.xn
@@ -143,4 +144,3 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
-./usr/lib/libreadline_pic.a
