@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.30 2000/04/13 00:28:44 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.31 2000/04/13 20:55:16 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -87,10 +87,7 @@ int	hifn_dramsize __P((struct hifn_softc *));
 int	hifn_checkramaddr __P((struct hifn_softc *, int));
 void	hifn_sessions __P((struct hifn_softc *));
 int	hifn_intr __P((void *));
-u_int	hifn_write_command __P((const struct hifn_command_buf_data *,
-    u_int8_t *));
-int	hifn_build_command __P((const struct hifn_command * cmd,
-    struct hifn_command_buf_data *));
+u_int	hifn_write_command __P((struct hifn_command *, u_int8_t *));
 int	hifn_mbuf __P((struct mbuf *, int *, long *, int *, int, int *));
 u_int32_t hifn_next_signature __P((u_int a, u_int cnt));
 int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
@@ -698,251 +695,84 @@ hifn_init_dma(sc)
  * command buffer size.
  */
 u_int
-hifn_write_command(const struct hifn_command_buf_data *cmd_data,
-    u_int8_t *command_buf)
+hifn_write_command(cmd, buf)
+	struct hifn_command *cmd;
+	u_int8_t *buf;
 {
-	u_int8_t *command_buf_pos = command_buf;
-	const hifn_base_command_t *base_cmd = &cmd_data->base_cmd;
-	const hifn_mac_command_t *mac_cmd = &cmd_data->mac_cmd;
-	const hifn_crypt_command_t *crypt_cmd = &cmd_data->crypt_cmd;
-	int     using_mac = base_cmd->masks & HIFN_BASE_CMD_MAC;
-	int     using_crypt = base_cmd->masks & HIFN_BASE_CMD_CRYPT;
+	u_int8_t *buf_pos;
+	hifn_base_command_t *base_cmd;
+	hifn_mac_command_t *mac_cmd;
+	hifn_crypt_command_t *cry_cmd;
+	int flags, using_mac, using_crypt, len;
 
-	/* write base command structure */
-	*((hifn_base_command_t *) command_buf_pos) = *base_cmd;
-	command_buf_pos += sizeof(hifn_base_command_t);
+	flags = cmd->flags;
+	using_mac = HIFN_USING_MAC(flags);
+	using_crypt = HIFN_USING_CRYPT(flags);
+	buf_pos = buf;
 
-	/* Write MAC command structure */
-	if (using_mac) {
-		*((hifn_mac_command_t *) command_buf_pos) = *mac_cmd;
-		command_buf_pos += sizeof(hifn_mac_command_t);
-	}
-
-	/* Write encryption command structure */
-	if (using_crypt) {
-		*((hifn_crypt_command_t *) command_buf_pos) = *crypt_cmd;
-		command_buf_pos += sizeof(hifn_crypt_command_t);
-	}
-
-	/* write MAC key */
-	if (mac_cmd->masks & HIFN_MAC_CMD_NEW_KEY) {
-		bcopy(cmd_data->mac, command_buf_pos, HIFN_MAC_KEY_LENGTH);
-		command_buf_pos += HIFN_MAC_KEY_LENGTH;
-	}
-
-	/* Write crypto key */
-	if (crypt_cmd->masks & HIFN_CRYPT_CMD_NEW_KEY) {
-		u_int32_t alg = crypt_cmd->masks & HIFN_CRYPT_CMD_ALG_MASK;
-		u_int32_t key_len = (alg == HIFN_CRYPT_CMD_ALG_DES) ?
-		HIFN_DES_KEY_LENGTH : HIFN_3DES_KEY_LENGTH;
-		bcopy(cmd_data->ck, command_buf_pos, key_len);
-		command_buf_pos += key_len;
-	}
-
-	/* Write crypto iv */
-	if (crypt_cmd->masks & HIFN_CRYPT_CMD_NEW_IV) {
-		bcopy(cmd_data->iv, command_buf_pos, HIFN_IV_LENGTH);
-		command_buf_pos += HIFN_IV_LENGTH;
-	}
-
-	/* Write 8 zero bytes we're not sending crypt or MAC structures */
-	if (!(base_cmd->masks & HIFN_BASE_CMD_MAC) &&
-	    !(base_cmd->masks & HIFN_BASE_CMD_CRYPT)) {
-		*((u_int32_t *) command_buf_pos) = 0;
-		command_buf_pos += 4;
-		*((u_int32_t *) command_buf_pos) = 0;
-		command_buf_pos += 4;
-	}
-
-	if ((command_buf_pos - command_buf) > HIFN_MAX_COMMAND)
-		printf("hifn: Internal Error -- Command buffer overflow.\n");
-	return command_buf_pos - command_buf;
-}
-
-/*
- * Check command input and build up structure to write
- * the command buffer later.  Returns 0 on success and
- * -1 if given bad command input was given.
- */
-int 
-hifn_build_command(const struct hifn_command *cmd,
-    struct hifn_command_buf_data * cmd_buf_data)
-{
-#define HIFN_COMMAND_CHECKING
-
-	u_int32_t flags = cmd->flags;
-	hifn_base_command_t *base_cmd = &cmd_buf_data->base_cmd;
-	hifn_mac_command_t *mac_cmd = &cmd_buf_data->mac_cmd;
-	hifn_crypt_command_t *crypt_cmd = &cmd_buf_data->crypt_cmd;
-	u_int   mac_length;
-#if defined(HIFN_COMMAND_CHECKING) && 0
-	int     dest_diff;
-#endif
-
-	bzero(cmd_buf_data, sizeof(struct hifn_command_buf_data));
-
-#ifdef HIFN_COMMAND_CHECKING
-	if (!(!!(flags & HIFN_DECODE) ^ !!(flags & HIFN_ENCODE))) {
-		printf("hifn: encode/decode setting error\n");
-		return -1;
-	}
-	if ((flags & HIFN_CRYPT_DES) && (flags & HIFN_CRYPT_3DES)) {
-		printf("hifn: Too many crypto algorithms set in command\n");
-		return -1;
-	}
-	if ((flags & HIFN_MAC_SHA1) && (flags & HIFN_MAC_MD5)) {
-		printf("hifn: Too many MAC algorithms set in command\n");
-		return -1;
-	}
-#endif
-
-
-	/*
-	 * Compute the mac value length -- leave at zero if not MAC'ing
-	 */
-	mac_length = 0;
-	if (HIFN_USING_MAC(flags)) {
-		mac_length = (flags & HIFN_MAC_TRUNC) ? HIFN_MAC_TRUNC_LENGTH :
-		    ((flags & HIFN_MAC_MD5) ? HIFN_MD5_LENGTH : HIFN_SHA1_LENGTH);
-	}
-#ifdef HIFN_COMMAND_CHECKING
-	/*
-	 * Check for valid src/dest buf sizes
-	 */
-
-	/*
-	 * XXX XXX  We need to include header counts into all these
-	 *           checks!!!!
-	 * XXX These tests are totally wrong.
-	 */
-#if 0
-	if (cmd->src_npa <= mac_length) {
-		printf("hifn: command source buffer has no data: %d <= %d\n",
-		    cmd->src_npa, mac_length);
-		return -1;
-	}
-	dest_diff = (flags & HIFN_ENCODE) ? mac_length : -mac_length;
-	if (cmd->dst_npa < cmd->dst_npa + dest_diff) {
-		printf("hifn:  command dest length %u too short -- needed %u\n",
-		    cmd->dst_npa, cmd->dst_npa + dest_diff);
-		return -1;
-	}
-#endif
-#endif
-
-	/*
-	 * Set MAC bit
-	 */
-	if (HIFN_USING_MAC(flags))
+	base_cmd = (hifn_base_command_t *)buf_pos;
+	base_cmd->masks = 0;
+	if (using_mac)
 		base_cmd->masks |= HIFN_BASE_CMD_MAC;
-
-	/* Set Encrypt bit */
-	if (HIFN_USING_CRYPT(flags))
+	if (using_crypt)
 		base_cmd->masks |= HIFN_BASE_CMD_CRYPT;
-
-	/*
-	 * Set Decode bit
-	 */
 	if (flags & HIFN_DECODE)
 		base_cmd->masks |= HIFN_BASE_CMD_DECODE;
-
-	/*
-	 * Set total source and dest counts.  These values are the same as the
-	 * values set in the length field of the source and dest descriptor rings.
-	 */
 	base_cmd->total_source_count = cmd->src_l;
 	base_cmd->total_dest_count = cmd->dst_l;
-
-	/*
-	 * XXX -- We need session number range checking...
-	 */
 	base_cmd->session_num = cmd->session_num;
+	buf_pos += sizeof(hifn_base_command_t);
 
-	/**
-	 **  Building up mac command
-	 **
-	 **/
-	if (HIFN_USING_MAC(flags)) {
-
-		/*
-		 * Set the MAC algorithm and trunc setting
-		 */
+	if (using_mac) {
+		mac_cmd = (hifn_mac_command_t *)buf_pos;
+		mac_cmd->masks = HIFN_MAC_CMD_MODE_HMAC | HIFN_MAC_CMD_RESULT |
+		    HIFN_MAC_CMD_POS_IPSEC;
 		mac_cmd->masks |= (flags & HIFN_MAC_MD5) ?
 		    HIFN_MAC_CMD_ALG_MD5 : HIFN_MAC_CMD_ALG_SHA1;
 		if (flags & HIFN_MAC_TRUNC)
 			mac_cmd->masks |= HIFN_MAC_CMD_TRUNC;
-
-		/*
-		 * We always use HMAC mode, assume MAC values are appended to the
-		 * source buffer on decodes and we append them to the dest buffer
-		 * on encodes, and order auth/encryption engines as needed by
-		 * IPSEC
-		 */
-		mac_cmd->masks |= HIFN_MAC_CMD_MODE_HMAC | HIFN_MAC_CMD_RESULT |
-		    HIFN_MAC_CMD_POS_IPSEC;
-
-		/*
-		 * Setup to send new MAC key if needed.
-		 */
-		if (flags & HIFN_MAC_NEW_KEY) {
+		if (flags & HIFN_MAC_NEW_KEY)
 			mac_cmd->masks |= HIFN_MAC_CMD_NEW_KEY;
-			cmd_buf_data->mac = cmd->mac;
-		}
-		/*
-		 * Set the mac header skip and source count.
-		 */
 		mac_cmd->header_skip = cmd->mac_header_skip;
 		mac_cmd->source_count = cmd->mac_process_len;
+		buf_pos += sizeof(hifn_mac_command_t);
 	}
 
-	if (HIFN_USING_CRYPT(flags)) {
-		/*
-		 * Set the encryption algorithm bits.
-		 */
-		crypt_cmd->masks |= (flags & HIFN_CRYPT_DES) ?
+	if (using_crypt) {
+		cry_cmd = (hifn_crypt_command_t *)buf_pos;
+		cry_cmd->masks = HIFN_CRYPT_CMD_MODE_CBC | HIFN_CRYPT_CMD_NEW_IV;
+		cry_cmd->masks |= (flags & HIFN_CRYPT_DES) ?
 		    HIFN_CRYPT_CMD_ALG_DES : HIFN_CRYPT_CMD_ALG_3DES;
-
-		/* We always use CBC mode and send a new IV (as needed by
-		 * IPSec). */
-		crypt_cmd->masks |= HIFN_CRYPT_CMD_MODE_CBC | HIFN_CRYPT_CMD_NEW_IV;
-
-		/*
-		 * Setup to send new encrypt key if needed.
-		 */
-		if (flags & HIFN_CRYPT_NEW_KEY) {
-			crypt_cmd->masks |= HIFN_CRYPT_CMD_NEW_KEY;
-			cmd_buf_data->ck = cmd->ck;
-		}
-		/*
-		 * Set the encrypt header skip and source count.
-		 */
-		crypt_cmd->header_skip = cmd->crypt_header_skip;
-		crypt_cmd->source_count = cmd->crypt_process_len;
-
-#ifdef HIFN_COMMAND_CHECKING
-		if (crypt_cmd->source_count % 8 != 0) {
-			printf("hifn:  Error -- encryption source %u not a multiple of 8!\n",
-			    crypt_cmd->source_count);
-			return -1;
-		}
-#endif
+		if (flags & HIFN_CRYPT_NEW_KEY)
+			cry_cmd->masks |= HIFN_CRYPT_CMD_NEW_KEY;
+		cry_cmd->header_skip = cmd->crypt_header_skip;
+		cry_cmd->source_count = cmd->crypt_process_len;
+		buf_pos += sizeof(hifn_crypt_command_t);
 	}
-	cmd_buf_data->iv = cmd->iv;
 
-#if 0
-	printf("hifn: command parameters"
-	    " -- session num %u"
-	    " -- base t.s.c: %u"
-	    " -- base t.d.c: %u"
-	    " -- mac h.s. %u  s.c. %u"
-	    " -- crypt h.s. %u  s.c. %u\n",
-	    base_cmd->session_num,
-	    base_cmd->total_source_count, base_cmd->total_dest_count,
-	    mac_cmd->header_skip, mac_cmd->source_count,
-	    crypt_cmd->header_skip, crypt_cmd->source_count);
-#endif
+	if (flags & HIFN_MAC_NEW_KEY) {
+		bcopy(cmd->mac, buf_pos, HIFN_MAC_KEY_LENGTH);
+		buf_pos += HIFN_MAC_KEY_LENGTH;
+	}
 
-	return 0;		/* success */
+	if (flags & HIFN_CRYPT_NEW_KEY) {
+		len = (flags & HIFN_CRYPT_DES) ?
+		    HIFN_DES_KEY_LENGTH : HIFN_3DES_KEY_LENGTH;
+		bcopy(cmd->ck, buf_pos, len);
+		buf_pos += len;
+	}
+
+	if (using_crypt && cry_cmd->masks & HIFN_CRYPT_CMD_NEW_IV) {
+		bcopy(cmd->iv, buf_pos, HIFN_IV_LENGTH);
+		buf_pos += HIFN_IV_LENGTH;
+	}
+
+	if ((base_cmd->masks & (HIFN_BASE_CMD_MAC | HIFN_BASE_CMD_CRYPT)) == 0) {
+		bzero(buf_pos, 8);
+		buf_pos += 8;
+	}
+
+	return (buf_pos - buf);
 }
 
 int
@@ -1020,7 +850,6 @@ hifn_crypto(sc, cmd)
 {
 	u_int32_t cmdlen;
 	struct	hifn_dma *dma = sc->sc_dma;
-	struct	hifn_command_buf_data cmd_buf_data;
 	int	cmdi, srci, dsti, resi, nicealign = 0;
 	int     s, i;
 
@@ -1077,9 +906,6 @@ hifn_crypto(sc, cmd)
 	if (cmd->dst_l == 0)
 		return (-1);
 
-	if (hifn_build_command(cmd, &cmd_buf_data) != 0)
-		return HIFN_CRYPTO_BAD_INPUT;
-
 #ifdef HIFN_DEBUG
 	printf("%s: Entering cmd: stat %8x ien %8x u %d/%d/%d/%d n %d/%d\n",
 	    sc->sc_dv.dv_xname,
@@ -1116,7 +942,7 @@ hifn_crypto(sc, cmd)
 	}
 	resi = dma->resi++;
 
-	cmdlen = hifn_write_command(&cmd_buf_data, dma->command_bufs[cmdi]);
+	cmdlen = hifn_write_command(cmd, dma->command_bufs[cmdi]);
 #ifdef HIFN_DEBUG
 	printf("write_command %d (nice %d)\n", cmdlen, nicealign);
 #endif
@@ -1504,7 +1330,6 @@ hifn_process(crp)
 		cmd->crypt_header_skip = enccrd->crd_skip;
 		cmd->crypt_process_len = enccrd->crd_len;
 		cmd->ck = enccrd->crd_key;
-		cmd->ck_len = enccrd->crd_klen >> 3;
 	}
 
 	if (maccrd) {
