@@ -1,18 +1,20 @@
-#	$OpenBSD: MINIROOT,v 1.2 1997/03/31 00:23:51 downsj Exp $
+#	$OpenBSD: MINIROOT,v 1.3 2000/01/06 03:50:16 smurph Exp $
 
 machine		mvme68k m68k
 
 include "../../../conf/GENERIC"
 
-#option		M68060		# support for 060
+option		M68060		# support for 060
 option		M68040		# support for 040
 option		FPSP		# MC68040 floating point support
+option		M060SP		# ...and MC68060 support package
 option		M68030		# support for 030
+option		FPU_EMULATE	# FPU emulation
 
 option		MVME147		# (requires M68030)
 option		MVME162		# (requires M68040, FPSP)
 option		MVME167		# includes 166 (requires M68040, FPSP)
-#option		MVME177		# (requires M68060, ...)
+option		MVME177		# (requires M68060, 060SP, FPSP)
 
 #option		COMPAT_SUNOS
 #option		COMPAT_HPUX
