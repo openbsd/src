@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.24 2004/07/14 20:16:31 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.25 2004/07/18 12:59:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,10 +34,10 @@
 volatile sig_atomic_t	 ntp_quit = 0;
 struct imsgbuf		 ibuf_main;
 struct l_fixedpt	 ref_ts;
+struct ntpd_conf	*conf;
 
 void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
-void	ntp_adjtime(struct ntpd_conf *);
 
 void
 ntp_sighdlr(int sig)
@@ -51,7 +51,7 @@ ntp_sighdlr(int sig)
 }
 
 pid_t
-ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
+ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 {
 	int			 nfds, i, j, idx_peers, timeout;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
@@ -63,7 +63,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 	struct listen_addr	*la;
 	struct ntp_peer		*p;
 	struct ntp_peer		**idx2peer = NULL;
-	time_t			 nextaction, next_adjtime;
+	time_t			 nextaction;
 	void			*newp;
 
 	switch (pid = fork()) {
@@ -88,6 +88,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 
 	setproctitle("ntp engine");
 
+	conf = nconf;
 	setup_listeners(se, conf, &listener_cnt);
 
 	if (setgroups(1, &pw->pw_gid) ||
@@ -117,8 +118,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 	peer_cnt = 0;
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		peer_cnt++;
-
-	next_adjtime = time(NULL) + INTERVAL_ADJTIME;
 
 	while (ntp_quit == 0) {
 		if (peer_cnt > idx2peer_elms ||
@@ -152,7 +151,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
 		bzero(idx2peer, sizeof(void *) * idx2peer_elms);
-		nextaction = next_adjtime;
+		nextaction = time(NULL) + 3600;
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main.fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 
@@ -191,11 +190,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *conf)
 				idx2peer[i - idx_peers] = p;
 				i++;
 			}
-		}
-
-		if (next_adjtime <= time(NULL)) {
-			next_adjtime = time(NULL) + INTERVAL_ADJTIME;
-			ntp_adjtime(conf);
 		}
 
 		if (ibuf_main.w.queued > 0)
@@ -277,23 +271,18 @@ ntp_dispatch_imsg(void)
 }
 
 void
-ntp_adjtime(struct ntpd_conf *conf)
+ntp_adjtime(void)
 {
 	struct ntp_peer	*p;
 	double		 offset_median = 0;
 	int		 offset_cnt = 0;
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-		if (!p->update.good)
-			continue;
-
-		if (p->update.rcvd + REPLY_MAXAGE < time(NULL)) {
-			p->update.good = 0;
-			continue;
-		}
-
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
 			continue;
+
+		if (!p->update.good)
+			return;
 
 		offset_median += p->update.offset;
 		offset_cnt++;
@@ -307,4 +296,7 @@ ntp_adjtime(struct ntpd_conf *conf)
 		conf->status.reftime = gettime();
 		conf->status.leap = LI_NOWARNING;		/* XXX */
 	}
+
+	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
+		p->update.good = 0;
 }

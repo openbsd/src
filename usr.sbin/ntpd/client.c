@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.25 2004/07/14 20:16:31 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.26 2004/07/18 12:59:41 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -182,19 +182,19 @@ client_dispatch(struct ntp_peer *p)
 	else if (p->trustlevel < TRUSTLEVEL_AGRESSIVE)
 		interval = INTERVAL_QUERY_AGRESSIVE;
 	else {
-		if (p->update.offset < 0)
-			abs_offset = p->update.offset * -1;
+		if (p->reply[p->shift].offset < 0)
+			abs_offset = -p->reply[p->shift].offset;
 		else
-			abs_offset = p->update.offset;
+			abs_offset = p->reply[p->shift].offset;
 
-		if (!p->update.good)
-			interval = INTERVAL_QUERY_NORMAL;
-		else if (abs_offset > QSCALE_OFF_MAX)
+		if (abs_offset > QSCALE_OFF_MAX)
 			interval = INTERVAL_QUERY_NORMAL;
 		else if (abs_offset < QSCALE_OFF_MIN)
-			interval = INTERVAL_QUERY_NORMAL * (1 / QSCALE_OFF_MIN);
+			interval = INTERVAL_QUERY_NORMAL *
+			    (QSCALE_OFF_MAX / QSCALE_OFF_MIN);
 		else
-			interval = INTERVAL_QUERY_NORMAL * (1 / abs_offset);
+			interval = INTERVAL_QUERY_NORMAL *
+			    (QSCALE_OFF_MAX / abs_offset);
 	}
 
 	p->next = time(NULL) + interval;
@@ -240,22 +240,18 @@ client_update(struct ntp_peer *p)
 			best = i;
 		}
 
-	for (; i < OFFSET_ARRAY_SIZE; i++) {
-		if (p->reply[i].good &&
-		    p->reply[i].rcvd + REPLY_MAXAGE < time(NULL))
-			p->reply[i].good = 0;
-
+	for (; i < OFFSET_ARRAY_SIZE; i++)
 		if (p->reply[i].good) {
 			good++;
 			if (p->reply[i].delay < p->reply[best].delay)
 				best = i;
 		}
-	}
 
 	if (good < 8)
 		return (-1);
 
 	memcpy(&p->update, &p->reply[best], sizeof(p->update));
+	ntp_adjtime();
 
 	for (i = 0; i < OFFSET_ARRAY_SIZE; i++)
 		if (p->reply[i].rcvd <= p->reply[best].rcvd)
