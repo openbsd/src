@@ -2,6 +2,7 @@
 
 /*
  * Copyright (c) 1995 Zubin Dittia.
+ * Copyright (c) 1995 Theo de Raadt.
  * Copyright (c) 1995 Matthew Green.
  * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1992, 1993
