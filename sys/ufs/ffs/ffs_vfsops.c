@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.30 2001/02/21 23:24:31 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.31 2001/03/13 18:17:25 gluk Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -924,11 +924,13 @@ loop:
 	 * Force stale file system control information to be flushed.
 	 */
 	if ((ump->um_mountp->mnt_flag & MNT_SOFTDEP) && waitfor == MNT_WAIT) {
-		if ((error == softdep_flushworklist(ump->um_mountp, &count, p))
-		    != 0)
+		if ((error = softdep_flushworklist(ump->um_mountp, &count, p)))
 			allerror = error;
-		if (count)
+		/* Flushed work items may create new vnodes to clean */
+		if (count) {
+			simple_lock(&mntvnode_slock);
 			goto loop;
+		}
 	}
         if (waitfor != MNT_LAZY) {
                 if (ump->um_mountp->mnt_flag & MNT_SOFTDEP)
