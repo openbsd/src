@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.10 2002/04/15 05:55:48 pvalchev Exp $
+.\" $OpenBSD: authpf.8,v 1.11 2002/05/21 07:13:37 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -97,9 +97,9 @@ is run.
 .Pp
 Filter and nat rules will be searched for first in
 .Pa /etc/authpf/users/$USER/
-and then in 
+and then in
 .Pa /etc/authpf/ .
-Per-user rules from the   
+Per-user rules from the
 .Pa /etc/authpf/users/$USER/
 directory are intended to be used when non-default rules
 are needed on an individual user basis. It is important to ensure
