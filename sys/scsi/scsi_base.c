@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.40 2003/02/20 04:02:06 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.41 2003/05/03 02:20:32 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -54,7 +54,8 @@
 static __inline struct scsi_xfer *scsi_make_xs(struct scsi_link *,
     struct scsi_generic *, int cmdlen, u_char *data_addr,
     int datalen, int retries, int timeout, struct buf *, int flags);
-static __inline void asc2ascii(u_char asc, u_char ascq, char *result);
+static __inline void asc2ascii(u_char asc, u_char ascq, char *result,
+    size_t len);
 int	sc_err1(struct scsi_xfer *, int);
 int	scsi_interpret_sense(struct scsi_xfer *);
 char   *scsi_decode_sense(void *, int);
@@ -1012,9 +1013,10 @@ static const struct {
 };
 
 static __inline void
-asc2ascii(asc, ascq, result)
+asc2ascii(asc, ascq, result, len)
 	u_char asc, ascq;
 	char *result;
+	size_t len;
 {
 	register int i = 0;
 
@@ -1025,26 +1027,27 @@ asc2ascii(asc, ascq, result)
 	}
 	if (adesc[i].description == NULL) {
 		if (asc == 0x40 && ascq != 0) {
-			(void) sprintf(result,
+			(void) snprintf(result, len,
 			    "Diagnostic Failure on Component 0x%02x",
 			    ascq & 0xff);
 		} else {
-			(void) sprintf(result, "ASC 0x%02x ASCQ 0x%02x",
+			(void) snprintf(result, len, "ASC 0x%02x ASCQ 0x%02x",
 			    asc & 0xff, ascq & 0xff);
 		}
 	} else {
-		(void) strcpy(result, adesc[i].description);
+		(void) strlcpy(result, adesc[i].description, len);
 	}
 }
 
 #else
 
 static __inline void
-asc2ascii(asc, ascq, result)
+asc2ascii(asc, ascq, result, len)
 	u_char asc, ascq;
 	char *result;
+	size_t len;
 {
-	(void) sprintf(result, "ASC 0x%02x ASCQ 0x%02x", asc & 0xff,
+	(void) snprintf(result, len, "ASC 0x%02x ASCQ 0x%02x", asc & 0xff,
 	    ascq & 0xff);
 }
 #endif /* SCSITERSE */
@@ -1175,6 +1178,7 @@ scsi_decode_sense(sinfo, flag)
 {
 	u_char *snsbuf, skey;
 	static char rqsbuf[132];
+	size_t len;
 
 	skey = 0;
 
@@ -1183,14 +1187,17 @@ scsi_decode_sense(sinfo, flag)
 		skey = snsbuf[2] & 0xf;
 	}
 	if (flag == 0) {		/* Sense Key Only */
-		(void) strcpy(rqsbuf, sense_keys[skey]);
+		(void) strlcpy(rqsbuf, sense_keys[skey], sizeof rqsbuf);
 		return (rqsbuf);
 	} else if (flag == 1) {		/* ASC/ASCQ Only */
-		asc2ascii(snsbuf[12], snsbuf[13], rqsbuf);
+		asc2ascii(snsbuf[12], snsbuf[13], rqsbuf, sizeof rqsbuf);
 		return (rqsbuf);
 	} else  if (flag == 2) {	/* Sense Key && ASC/ASCQ */
-		asc2ascii(snsbuf[12], snsbuf[13],
-		    rqsbuf + sprintf(rqsbuf, "%s, ", sense_keys[skey]));
+		len = snprintf(rqsbuf, sizeof rqsbuf, "%s, ",
+		    sense_keys[skey]);
+		if (len < sizeof rqsbuf)
+			asc2ascii(snsbuf[12], snsbuf[13], rqsbuf + len,
+			    sizeof rqsbuf - len); 	
 		return (rqsbuf);
 	} else if (flag == 3  && snsbuf[7] >= 9 && (snsbuf[15] & 0x80)) {
 		/*
@@ -1199,13 +1206,13 @@ scsi_decode_sense(sinfo, flag)
 		switch (skey) {
 		case 0x5:	/* Illegal Request */
 			if (snsbuf[15] & 0x8) {
-				(void) sprintf(rqsbuf,
+				(void) snprintf(rqsbuf, sizeof rqsbuf,
 				    "Error in %s, Offset %d, bit %d",
 				    (snsbuf[15] & 0x40)? "CDB" : "Parameters",
 				    (snsbuf[16] & 0xff) << 8 |
 				    (snsbuf[17] & 0xff), snsbuf[15] & 0xf);
 			} else {
-				(void) sprintf(rqsbuf,
+				(void) snprintf(rqsbuf, sizeof rqsbuf,
 				    "Error in %s, Offset %d",
 				    (snsbuf[15] & 0x40)? "CDB" : "Parameters",
 				    (snsbuf[16] & 0xff) << 8 |
@@ -1215,11 +1222,13 @@ scsi_decode_sense(sinfo, flag)
 		case 0x1:
 		case 0x3:
 		case 0x4:
-			(void) sprintf(rqsbuf, "Actual Retry Count: %d",
+			(void) snprintf(rqsbuf, sizeof rqsbuf,
+			    "Actual Retry Count: %d",
 			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
 			return (rqsbuf);
 		case 0x2:
-			(void) sprintf(rqsbuf, "Progress Indicator: %d",
+			(void) snprintf(rqsbuf, sizeof rqsbuf,
+			    "Progress Indicator: %d",
 			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
 			return (rqsbuf);
 		default:
