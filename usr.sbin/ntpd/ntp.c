@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.45 2004/12/22 05:34:52 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.46 2004/12/23 16:10:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -143,7 +143,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	b = 1000000000 / tp.tv_nsec;	/* convert to Hz */
 	for (a = 0; b > 1; a--, b >>= 1);
 	conf->status.precision = a;
-	
 
 	log_info("ntp engine ready");
 

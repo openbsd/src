@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.46 2004/11/11 13:06:44 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.47 2004/12/23 16:09:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -308,7 +308,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	attr_len = mrt_attr_length(p->aspath, 0);
 	p_len = PREFIX_SIZE(p->prefix->prefixlen);
 	pt_getaddr(p->prefix, &addr);
-	
+
 	af = peer->remote_addr.af == 0 ? addr.af : peer->remote_addr.af;
 	switch (af) {
 	case AF_INET:
