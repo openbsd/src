@@ -14,7 +14,8 @@ struct external_filehdr {
 };
 
 /* Magic numbers are defined in coff/ecoff.h.  */
-#define ALPHA_ECOFF_BADMAG(x) ((x).f_magic!=ALPHA_MAGIC)
+#define ALPHA_ECOFF_BADMAG(x) \
+  ((x).f_magic != ALPHA_MAGIC && (x).f_magic != ALPHA_MAGIC_BSD)
 
 /* The object type is encoded in the f_flags.  */
 #define F_ALPHA_OBJECT_TYPE_MASK	0x3000

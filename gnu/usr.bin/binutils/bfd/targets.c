@@ -501,6 +501,7 @@ extern const bfd_target bfd_elf32_sparc_vec;
 extern const bfd_target bfd_elf64_big_generic_vec;
 extern const bfd_target bfd_elf64_little_generic_vec;
 extern const bfd_target bfd_elf64_sparc_vec;
+extern const bfd_target bsd_ecoffalpha_little_vec;
 extern const bfd_target demo_64_vec;
 extern const bfd_target ecoff_big_vec;
 extern const bfd_target ecoff_little_vec;
@@ -648,6 +649,9 @@ const bfd_target * const bfd_target_vector[] = {
 #endif
 #if 0
 	&bfd_elf64_sparc_vec,
+#endif
+#if 0
+	&bsd_ecoffalpha_little_vec,
 #endif
 	/* We don't include cisco_core_vec.  Although it has a magic number,
 	   the magic number isn't at the beginning of the file, and thus

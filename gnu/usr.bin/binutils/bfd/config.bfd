@@ -47,6 +47,14 @@ case "${targ}" in
     targ_defvec=ecoffalpha_little_vec
     targ_selvecs=nlm32_alpha_vec
     ;;
+  alpha-*-netbsd*)
+    targ_defvec=bsd_ecoffalpha_little_vec
+    targ_selvecs=ecoffalpha_little_vec
+    ;;
+  alpha-*-openbsd*)
+    targ_defvec=bsd_ecoffalpha_little_vec
+    targ_selvecs=ecoffalpha_little_vec
+    ;;
   alpha-*-linuxecoff*)
     targ_defvec=ecoffalpha_little_vec
     targ_selvecs=bfd_elf64_alpha_vec

@@ -24,6 +24,7 @@
 
 /* Alpha magic numbers used in filehdr.  */
 #define ALPHA_MAGIC 0x183
+#define ALPHA_MAGIC_BSD 0x185
 
 /* Magic numbers used in a.out header.  */
 #define ECOFF_AOUT_OMAGIC 0407	/* not demand paged (ld -N).  */
