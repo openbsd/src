@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dc.4,v 1.23 2002/02/17 05:16:36 nate Exp $
+.\"	$OpenBSD: dc.4,v 1.24 2002/04/18 19:15:09 jason Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -43,8 +43,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for several PCI and CardBus Fast Ethernet adapters
-and embedded controllers based on the following chipsets:
+driver provides support for several PCI, MiniPCI, and CardBus Fast Ethernet
+adapters and embedded controllers based on the following chipsets:
 .Pp
 .Bl -bullet -compact -offset indent
 .It
@@ -145,6 +145,8 @@ IBM EtherJet 10/100 CardBus (Intel 21143)
 Accton EN1217 (98715) and EN2242 (ADMtek Centaur)
 .It
 Mototech ME316 (ADMtek Centaur)
+.It
+Conexant LANfinity RS7112 MiniPCI
 .El
 .Pp
 The
