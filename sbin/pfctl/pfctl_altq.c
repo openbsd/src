@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.33 2003/01/20 19:05:46 camield Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.34 2003/01/20 19:07:50 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -399,7 +399,7 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 	struct cbq_opts	*opts;
 	double		 maxidle_s, maxidle, minidle;
 	double		 offtime, nsPerByte, ifnsPerByte, ptime, cptime;
-	double		 z, g, f, gton, gtom, maxrate;
+	double		 z, g, f, gton, gtom;
 	u_int		 minburst, maxburst;
 
 	opts = &pa->pq_u.cbq_opts;
@@ -414,7 +414,6 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 
 	nsPerByte = ifnsPerByte / f;
 	ptime = (double)opts->pktsize * ifnsPerByte;
-	maxrate = f * ((double)pa->ifbandwidth / 8.0);
 	cptime = ptime * (1.0 - f) / f;
 
 	if (nsPerByte * (double)opts->maxpktsize > (double)INT_MAX) {
