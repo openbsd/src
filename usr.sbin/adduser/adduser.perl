@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.2 1996/12/08 13:57:07 downsj Exp $
+#	$OpenBSD: adduser.perl,v 1.3 1997/02/20 01:24:17 downsj Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -120,11 +120,11 @@ sub shells_read {
 
 # Allow /nonexistent and /bin/date as a valid shell for system utils
     push(@list, "/nonexistent");
-    push(@shellpref, "no");
+    &shell_pref_add("no");
     $shell{"no"} = "/nonexistent";
 
     push(@list, "/bin/date");
-    push(@shellpref, "date");
+    &shell_pref_add("date");
     $shell{"date"} = "/bin/date";
 
     return $err;
@@ -145,7 +145,7 @@ sub shells_add {
 		    # found shell
 		    if (&confirm_yn("Found shell: $dir/$sh. Add to $etc_shells?", "yes")) {
 			push(@list, "$dir/$sh");
-			push(@shellpref, "$sh");
+			&shell_pref_add("$sh");
 			$shell{&basename("$dir/$sh")} = "$dir/$sh";
 			$changes++;
 		    }
@@ -154,6 +154,17 @@ sub shells_add {
 	}
     }
     &append_file($etc_shells, @list) if $#list >= 0;
+}
+
+# add shell to preference list without duplication
+sub shell_pref_add {
+    local($new_shell) = @_;
+    local($shell);
+
+    foreach $shell (@shellpref) {
+	return if ($shell eq $new_shell);
+    }
+    push(@shellpref, $new_shell);
 }
 
 # choose your favourite shell and return the shell
