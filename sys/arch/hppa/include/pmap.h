@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.12 1999/12/12 03:16:26 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.13 2001/01/12 23:37:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -140,10 +140,6 @@ struct pv_page {
 	struct pv_entry pvp_pv[NPVPPG];
 };
 
-struct pmap_physseg {
-	struct pv_entry *pvent;
-};
-
 #define HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_KERNEL	0
 #define	HPPA_PID_KERNEL	2
@@ -160,6 +156,18 @@ extern int dcache_line_mask;
 extern void gateway_page __P((void));
 
 #define	PMAP_STEAL_MEMORY	/* we have some memory to steal */
+
+/*
+ * according to the parisc manual aliased va's should be
+ * different by high 12 bits only.
+ */
+#define	PMAP_PREFER(o,h)	do {					\
+	vaddr_t pmap_prefer_hint;					\
+	pmap_prefer_hint = (*(h) & HPPA_PGAMASK) | ((o) & HPPA_PGAOFF);	\
+	if (pmap_prefer_hint < *(h))					\
+		pmap_prefer_hint += HPPA_PGALIAS;			\
+	*(h) = pmap_prefer_hint;					\
+} while(0)
 
 #define pmap_kernel_va(VA)	\
 	(((VA) >= VM_MIN_KERNEL_ADDRESS) && ((VA) <= VM_MAX_KERNEL_ADDRESS))
@@ -191,7 +199,6 @@ pmap_prot(struct pmap *pmap, int prot)
 }
 
 void pmap_bootstrap __P((vaddr_t *, vaddr_t *));
-void pmap_changebit __P((vm_page_t, u_int, u_int));
 #endif /* _KERNEL */
 
 #endif /* _MACHINE_PMAP_H_ */
