@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_main_mode.c,v 1.8 1999/04/02 01:09:39 niklas Exp $	*/
-/*	$EOM: ike_main_mode.c,v 1.74 1999/04/02 00:57:44 niklas Exp $	*/
+/*	$OpenBSD: ike_main_mode.c,v 1.9 1999/04/05 21:01:02 niklas Exp $	*/
+/*	$EOM: ike_main_mode.c,v 1.75 1999/04/05 08:01:22 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -100,7 +100,7 @@ int (*ike_main_mode_responder[]) (struct message *) = {
   responder_send_ID_AUTH
 };
 
-/* Offer a set of transforms to the responder.  */
+/* Offer a set of transforms to the responder in the MSG message.  */
 static int
 initiator_send_SA (struct message *msg)
 {
@@ -123,10 +123,19 @@ initiator_send_SA (struct message *msg)
 
   transform = calloc (conf->cnt, sizeof *transform);
   if (!transform)
-    goto bail_out;
+    {
+      log_error ("initiator_send_SA: calloc (1, %d) failed",
+		 sizeof *transform);
+      goto bail_out;
+    }
+
   transform_len = calloc (conf->cnt, sizeof *transform_len);
   if (!transform_len)
-    goto bail_out;
+    {
+      log_error ("initiator_send_SA: calloc (1, %d) failed",
+		 sizeof *transform_len);
+      goto bail_out;
+    }
 
   for (xf = TAILQ_FIRST (&conf->fields), i = 0; i < conf->cnt;
        i++, xf = TAILQ_NEXT (xf, link))
@@ -135,7 +144,13 @@ initiator_send_SA (struct message *msg)
       transform[i]
 	= malloc (ISAKMP_TRANSFORM_SA_ATTRS_OFF + 16 * ISAKMP_ATTR_VALUE_OFF);
       if (!transform[i])
-	goto bail_out;
+	{
+	  log_error ("initiator_send_SA: malloc (%d) failed",
+		     ISAKMP_TRANSFORM_SA_ATTRS_OFF
+		     + 16 * ISAKMP_ATTR_VALUE_OFF);
+	  goto bail_out;
+	}
+
       SET_ISAKMP_TRANSFORM_NO (transform[i], i);
       SET_ISAKMP_TRANSFORM_ID (transform[i], IPSEC_TRANSFORM_KEY_IKE);
       SET_ISAKMP_TRANSFORM_RESERVED (transform[i], 0);
@@ -211,6 +226,7 @@ initiator_send_SA (struct message *msg)
 		attr
 		  = attribute_set_basic (attr, IKE_ATTR_LIFE_DURATION, value);
 	    }
+	  conf_free_list (life_conf);
 	}
 
       attribute_set_constant (xf->field, "PRF", ike_prf_cst, IKE_ATTR_PRF,
@@ -235,7 +251,11 @@ initiator_send_SA (struct message *msg)
   proposal_len = ISAKMP_PROP_SPI_OFF;
   proposal = malloc (proposal_len);
   if (!proposal)
-    goto bail_out;
+    {
+      log_error ("initiator_send_SA: malloc (%d) failed", proposal_len);
+      goto bail_out;
+    }
+
   SET_ISAKMP_PROP_NO (proposal, 1);
   SET_ISAKMP_PROP_PROTO (proposal, ISAKMP_PROTO_ISAKMP);
   SET_ISAKMP_PROP_SPI_SZ (proposal, 0);
@@ -244,7 +264,11 @@ initiator_send_SA (struct message *msg)
   /* XXX I would like to see this factored out.  */
   proto = calloc (1, sizeof *proto);
   if (!proto)
-    goto bail_out;
+    {
+      log_error ("initiator_send_SA: calloc (1, %d) failed", sizeof *proto);
+      goto bail_out;
+    }
+
   proto->no = 1;
   proto->proto = ISAKMP_PROTO_ISAKMP;
   proto->sa = TAILQ_FIRST (&exchange->sa_list);
@@ -254,7 +278,11 @@ initiator_send_SA (struct message *msg)
   sa_len = ISAKMP_SA_SIT_OFF + IPSEC_SIT_SIT_LEN;
   sa_buf = malloc (sa_len);
   if (!sa_buf)
-    goto bail_out;
+    {
+      log_error ("initiator_send_SA: malloc (%d) failed", sa_len);
+      goto bail_out;
+    }
+
   SET_ISAKMP_SA_DOI (sa_buf, IPSEC_DOI_IPSEC);
   SET_IPSEC_SIT_SIT (sa_buf + ISAKMP_SA_SIT_OFF, IPSEC_SIT_IDENTITY_ONLY);
 
@@ -305,6 +333,9 @@ initiator_send_SA (struct message *msg)
       transforms_len += transform_len[i];
     }
 
+  conf_free_list (conf);
+  free (transform);
+  free (transform_len);
   return 0;
 
  bail_out:
@@ -321,8 +352,7 @@ initiator_send_SA (struct message *msg)
     }
   if (transform_len)
     free (transform_len);
-  if (conf)
-    conf_free_list (conf);
+  conf_free_list (conf);
   return -1;
 }
 
@@ -697,24 +727,25 @@ post_exchange_KE_NONCE (struct message *msg)
 	}
       prf_free (prf);
 
-      /* Set up our keystate using the derived encryption key */
+      /* Setup our keystate using the derived encryption key.  */
       exchange->keystate
 	= crypto_init (exchange->crypto, key, exchange->key_length, &err);
 
       free (key);
     }
   else
-    /* Set up our keystate using the raw skeyid_e */
+    /* Setup our keystate using the raw skeyid_e.  */
     exchange->keystate = crypto_init (exchange->crypto, ie->skeyid_e,
 				      exchange->key_length, &err);
-  /* Special handling for DES weak keys */
+
+  /* Special handling for DES weak keys.  */
   if (!exchange->keystate && err == EWEAKKEY
       && (exchange->key_length << 1) <= ie->skeyid_len)
     {
       log_print ("post_exchange_KE_NONCE: weak key, trying subseq. skeyid_e");
-      exchange->keystate = crypto_init (exchange->crypto,
-					ie->skeyid_e + exchange->key_length,
-					exchange->key_length, &err);
+      exchange->keystate
+	= crypto_init (exchange->crypto, ie->skeyid_e + exchange->key_length,
+		       exchange->key_length, &err);
     }
 
   if (!exchange->keystate)
@@ -763,9 +794,10 @@ send_ID_AUTH (struct message *msg)
   buf = malloc (sz);
   if (!buf)
     {
-      /* XXX Log?  */
+      log_error ("send_ID_AUTH: malloc (%d) failed", sz);
       return -1;
     }
+
   msg->transport->vtbl->get_src (msg->transport, &src, &src_len);
   /* XXX Assumes IPv4.  */
   SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV4_ADDR);
@@ -776,7 +808,6 @@ send_ID_AUTH (struct message *msg)
 	  &((struct sockaddr_in *)src)->sin_addr.s_addr, sizeof (in_addr_t));
   if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, buf, sz, 1))
     {
-      /* XXX Log?  */
       free (buf);
       return -1;
     }
@@ -784,7 +815,7 @@ send_ID_AUTH (struct message *msg)
   *id = malloc (*id_len);
   if (!*id)
     {
-      /* XXX Log?  */
+      log_error ("send_ID_AUTH: malloc (%d) failed", *id_len);
       return -1;
     }
   memcpy (*id, buf + ISAKMP_GEN_SZ, *id_len);
@@ -908,7 +939,7 @@ ike_main_mode_validate_prop (struct exchange *exchange, struct sa *sa)
   struct conf_list_node *xf, *tag;
   struct proto *proto;
   struct validation_state vs;
-  struct attr_node *node;
+  struct attr_node *node, *next_node;
 
   /* Get the list of transforms.  */
   conf = conf_get_list (exchange->policy, "Transforms");
@@ -932,32 +963,52 @@ ike_main_mode_validate_prop (struct exchange *exchange, struct sa *sa)
 
 	  /* Sweep over unseen tags in this section.  */
 	  tags = conf_get_tag_list (xf->field);
-	  for (tag = TAILQ_FIRST (&tags->fields); tag;
-	       tag = TAILQ_NEXT (tag, link))
-	    for (node = LIST_FIRST (&vs.attrs); node;
-		 node = LIST_NEXT (node, link))
-	      LIST_REMOVE (node, link);
+	  if (tags)
+	    {
+	      for (tag = TAILQ_FIRST (&tags->fields); tag;
+		   tag = TAILQ_NEXT (tag, link))
+		/*
+		 * XXX Should we care about attributes we have, they do not 
+		 * provide?
+		 */
+		for (node = LIST_FIRST (&vs.attrs); node;
+		     node = next_node)
+		  {
+		    next_node = LIST_NEXT (node, link);
+		    if (node->type
+			== constant_value (ike_attr_cst, tag->field))
+		      {
+			LIST_REMOVE (node, link);
+			free (node);
+		      }
+		  }
+	      conf_free_list (tags);
+	    }
 
 	  /* Are there leftover tags in this section?  */
 	  node = LIST_FIRST (&vs.attrs);
 	  if (node)
-	    {
-	      /* We have attributes in our policy we have not seen.  */
-	      while (node)
-		{
-		  LIST_REMOVE (node, link);
-		  node = LIST_FIRST (&vs.attrs);
-		}
-	      goto try_next;
-	    }
+	    goto try_next;
 	}
 
       /* All protocols were OK, we succeeded.  */
       log_debug (LOG_MISC, 20, "ike_main_mode_validate_prop: success");
       conf_free_list (conf);
+      if (vs.life)
+	free (vs.life);
       return 1;
 
     try_next:
+      /* Are there leftover tags in this section?  */
+      node = LIST_FIRST (&vs.attrs);
+      while (node)
+	{
+	  LIST_REMOVE (node, link);
+	  free (node);
+	  node = LIST_FIRST (&vs.attrs);
+	}
+      if (vs.life)
+	free (vs.life);
     }
 
   log_debug (LOG_MISC, 20, "ike_main_mode_validate_prop: failure");
@@ -975,9 +1026,8 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 			void *vvs)
 {
   struct validation_state *vs = vvs;
-  struct conf_list_node *xf = vs->xf;
   struct conf_list *life_conf;
-  struct conf_list_node *life;
+  struct conf_list_node *xf = vs->xf, *life;
   char *tag = constant_lookup (ike_attr_cst, type);
   char *str;
   struct constant_map *map;
@@ -1036,7 +1086,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
       life_conf = conf_get_list (xf->field, "Life");
       if (!life_conf)
 	/* Life attributes given, but not in our policy.  */
-	goto bail_out;
+	return 1;
 
       /*
        * Each lifetime type must match, otherwise we turn the proposal down.
@@ -1063,7 +1113,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	       */
 	      if (constant_value (ike_duration_cst, str) == decode_16 (value))
 		{
-		  vs->life = life->field;
+		  vs->life = strdup (life->field);
 		  rv = 0;
 		  goto bail_out;
 		}
@@ -1082,13 +1132,13 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	      goto bail_out;
 	    }
 	  rv = !conf_match_num (vs->life, "LIFE_DURATION", decode_16 (value));
+	  free (vs->life);
 	  vs->life = 0;
 	  break;
 	}
 
     bail_out:
-      if (life_conf)
-	conf_free_list (life_conf);
+      conf_free_list (life_conf);
       return rv;
 
     case IKE_ATTR_KEY_LENGTH:
