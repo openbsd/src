@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.7 1996/05/26 00:27:40 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.8 1996/06/21 15:34:53 chuck Exp $
 #	$NetBSD: files.pci,v 1.16 1996/05/16 03:44:16 mycroft Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -45,3 +45,9 @@ file	dev/pci/if_ep_pci.c		ep_pci
 # device declaration in sys/conf/files
 attach	le at pci with le_pci
 file	dev/pci/if_le_pci.c		le_pci
+
+# ENI ATM driver
+device	en: atm, ifnet
+attach	en at pci with en_pci
+file    dev/pci/if_en_pci.c		en
+file    dev/ic/midway.c			en
