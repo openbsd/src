@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.14 1998/12/31 23:49:45 millert Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.15 2000/06/18 23:21:47 assar Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -12,9 +12,9 @@
 # to the tree we're actually belonging to we check BSDSRCDIR.  On multi-tree
 # machines /sys isn't always a link to the correct tree.
 .if defined(BSDSRCDIR)
-CFLAGS+=	${COPTS} -D_KERNEL -I${BSDSRCDIR}/sys -I${BSDSRCDIR}/sys/arch
+CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I${BSDSRCDIR}/sys -I${BSDSRCDIR}/sys/arch
 .else
-CFLAGS+=	${COPTS} -D_KERNEL -I/sys -I/sys/arch
+CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I/sys -I/sys/arch
 .endif
 
 LDFLAGS+= -r
