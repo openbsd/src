@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.32 1999/08/25 00:54:19 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.33 1999/09/30 06:29:57 downsj Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -291,6 +291,7 @@ memprobe()
 #else
 	printf(" mem[");
 #endif
+
 	if(!(pm = bios_E820(bios_memmap))) {
 		im = bios_int12(bios_memmap);
 #if 0
@@ -322,7 +323,7 @@ memprobe()
 	/* XXX - Compatibility, remove later (smpprobe() relies on it) */
 	extmem = cnvmem = 0;
 	for(im = bios_memmap; im->type != BIOS_MAP_END; im++) {
-		/* Count only "good" memory chunks 4K and up in size */
+		/* Count only "good" memory chunks 12K and up in size */
 		if ((im->type == BIOS_MAP_FREE) && (im->size >= 12*1024)) {
 			if (im->size > 1024 * 1024)
 				printf("%uM ", (u_int)im->size / (1024 * 1024));
@@ -341,8 +342,8 @@ memprobe()
 			 */
 			if(im->addr < IOM_BEGIN)
 				cnvmem = max(cnvmem, im->addr + im->size);
-			if(im->addr == IOM_END)
-				extmem = im->size;
+			if(im->addr >= IOM_END)
+				extmem += im->size;
 		}
 	}
 	cnvmem /= 1024;
