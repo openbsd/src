@@ -1,4 +1,4 @@
-#	$OpenBSD: std.hppa,v 1.1 1999/04/20 20:32:20 mickey Exp $
+#	$OpenBSD: std.hppa,v 1.2 1999/08/14 03:59:25 mickey Exp $
 #
 # Standard devices present on every hppa workstation
 #
@@ -11,7 +11,7 @@ mainbus0 at root		# root "bus"
 
 mem*	at mainbus0		# /dev/*mem and memory controller
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
-cpu*	at mainbus0 #irq 31	# HP PA-RISC cpu
+cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
 #fpu*	at mainbus0		# HP PA-RISC fpu
 #power*	at mainbus0		# power/fail manager
 
