@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.15 2001/06/27 03:05:21 smart Exp $
+.\"     $OpenBSD: nc.1,v 1.16 2001/08/02 20:54:56 ericj Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -163,7 +163,7 @@ was able to connect to.
 .It Li "nc -v -u -z -w 3 hostname 20-30"
 Send UDP packets to ports 20-30 of example.host, and report which ones
 did not respond with an ICMP packet after three seconds.
-.It Li "nc -l -p 3000"
+.It Li "nc -l 3000"
 Listen on TCP port 3000, and once there is a connection, send stdin to
 the remote host, and send data from the remote host to stdout.
 .It Li "echo foobar | nc hostname 1000"
