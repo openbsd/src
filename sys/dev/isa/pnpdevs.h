@@ -2,11 +2,12 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.106 2002/01/02 19:41:11 mickey Exp 
+ *	#	OpenBSD: pnpdevs,v 1.108 2002/09/03 16:30:55 mickey Exp 
  */
 
 const struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ {"PNP00A0"}, {"aha"} },
+	{ {"ADP1502"}, {"aic"} },
 	{ {"ADP1520"}, {"aic"} },
 	{ {"ADP2015"}, {"aic"} },
 	{ {"PNP0500"}, {"com"} },
@@ -98,6 +99,7 @@ const struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ {"CDC0000"}, {"wss"} },
 	{ {"@@@1001"}, {"ym"} },
 	{ {"YMH0021"}, {"ym"} },
+	{ {"MFRAD10"}, {"rt"} },
 	{ {"AZT0500"}, {"wdc"} },
 	{ {"CSC0004"}, {"wdc"} },
 	{ {"CTL2011"}, {"wdc"} },
