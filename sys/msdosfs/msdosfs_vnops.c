@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.38 2003/04/18 22:12:25 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.39 2003/04/26 10:23:07 tedu Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -877,7 +877,7 @@ msdosfs_rename(v)
 	u_char to_count;
 	int doingdirectory = 0, newparent = 0;
 	int error;
-	u_long cn;
+	u_long cn, pcl;
 	daddr_t bn;
 	struct msdosfsmount *pmp;
 	struct direntry *dotdotp;
@@ -1135,8 +1135,16 @@ abortit:
 			brelse(bp);
 			goto bad;
 		}
-		dotdotp = (struct direntry *)bp->b_data + 1;
-		putushort(dotdotp->deStartCluster, dp->de_StartCluster);
+		dotdotp = (struct direntry *)bp->b_data;
+		putushort(dotdotp[0].deStartCluster, dp->de_StartCluster);
+		pcl = dp->de_StartCluster;
+		if (FAT32(pmp) && pcl == pmp->pm_rootdirblk)
+			pcl = 0;
+		putushort(dotdotp[1].deStartCluster, pcl);
+		if (FAT32(pmp)) {
+			putushort(dotdotp[0].deHighClust, cn >> 16);
+			putushort(dotdotp[1].deHighClust, pcl >> 16);
+		}
 		if ((error = bwrite(bp)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
 			goto bad;
