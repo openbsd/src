@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.3 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: md5.pm,v 1.4 2004/11/12 19:42:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -29,6 +29,6 @@ sub fromfile
 
 	$md5->addfile($file);
 	close($file) or die "problem closing $fname: $!";
-	return $md5->hexdigest();
+	return $md5->digest();
 }
 1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.63 2004/11/11 11:23:04 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.64 2004/11/12 19:42:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -252,7 +252,7 @@ sub write
 	print $fh "\@comment no checksum\n" if defined $self->{nochecksum};
 	$self->SUPER::write($fh);
 	if (defined $self->{md5}) {
-		print $fh "\@md5 ", $self->{md5}, "\n";
+		print $fh "\@md5 ", unpack('H*', $self->{md5}), "\n";
 	}
 	if (defined $self->{size}) {
 		print $fh "\@size ", $self->{size}, "\n";
@@ -489,7 +489,7 @@ sub add
 	if ($args[0] =~ m/^\$OpenBSD(.*)\$\s*$/) {
 		return OpenBSD::PackingElement::CVSTag->add($plist, @args);
 	} elsif ($args[0] =~ m/^MD5:\s*/) {
-		$plist->{state}->{lastfile}->add_md5($');
+		$plist->{state}->{lastfile}->add_md5(pack('H*', $'));
 		return undef;
 	} elsif ($args[0] =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/) {
 		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, $2, $3);
@@ -517,7 +517,7 @@ sub add
 {
 	my ($class, $plist, @args) = @_;
 
-	$plist->{state}->{lastfile}->add_md5($');
+	$plist->{state}->{lastfile}->add_md5(pack('H*', $'));
 	return undef;
 }
 
