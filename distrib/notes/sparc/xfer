@@ -8,17 +8,15 @@ Installation is supported from several media types, including:
 	HTTP
 
 Not all methods are supported on all Sparc Systems and some of them
-work only with the single-floppy installation or the miniroot
-installation.
-
+work only with the floppy or the miniroot installation.
 
 If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you
 may be able boot from it.  Not all sparc systems support booting from
-CD-ROM and the current boot images is only known to work on Sun4c
-architecture workstations such as the IPC, SS1 or SS2.  If you can boot
-from the CD-ROM, you are home free and can proceed to the installation
-steps.  If not, you will need to do some setup work to prepare a bootable
-image, either a floppy, hard drive, or compatible net boot server.
+CD-ROM and the current boot images is only known to work on sun4c and
+some sun4m architecture workstations.  If you can boot from the CD-ROM,
+you are home free and can proceed to the installation steps.  If not,
+you will need to do some setup work to prepare a bootable image, either
+a floppy, hard drive, or compatible net boot server.
 
 In addition to the bootable image, you also need to consider how to
 access the binary distribution sets to actually install the system.  If
@@ -61,7 +59,7 @@ Creating a bootable floppy disk using DOS/Windows:
 	errors. 
 
 	Note that if you are using NT to write the images to disk, you
-	will need to use ntrw.exe instead.  It is also availible in the
+	will need to use ntrw.exe instead.  It is also available in the
 	"tools" directory.  Grab it and run in with the correct 
 	arguments like this "ntrw <image> <drive>:"
 
@@ -273,7 +271,7 @@ NFS, you must do the following:
 	(Both of these actions will probably require superuser
 	privileges on the server.)
 
-	You need to know the the numeric IP address of the NFS server,
+	You need to know the numeric IP address of the NFS server,
 	and, if the server is not on a network directly connected to
 	the machine on which you're installing or upgrading OpenBSD,
 	you need to know the numeric IP address of the router closest
@@ -302,4 +300,3 @@ following:
 
 	Once you have done this, you can proceed to the next step in
 	the upgrade process, actually upgrading your system.
-

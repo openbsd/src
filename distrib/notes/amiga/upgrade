@@ -1,8 +1,3 @@
-The upgrade to OpenBSD OSREV is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the OSREV sources, and
-it would be very difficult to even compile a set of instructions that
-allowed them to do so.
-
 To do the upgrade, and if you are using the miniroot installation, you
 must have the OpenBSD kernel on AmigaDOS and you must transfer the root
 filesystem miniroot{:--:}OSrev.fs onto the swap partition of the OpenBSD hard disk.

@@ -4,6 +4,8 @@ OpenBSDfloppy
 
 OpenBSDfloppyB
 
+OpenBSDfloppyC
+
 OpenBSDcdrom
 
 OpenBSDdistsets
@@ -45,4 +47,3 @@ OpenBSDxfont(5.9M,7.1M)
 OpenBSDxserv(14.8M,35.2M)
 
 OpenBSDxlink
-

@@ -1,10 +1,9 @@
-Installing OpenBSD is a relatively complex process, but if you have
-this document in hand it shouldn't be too much trouble.
+OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD miniroot that can
 be booted off your local disk's swap partition.   The normal way is to
-use the OpenBSD installation floppy.
+use the OpenBSD installation floppy, or an installation tape.
 
 If your Sparc is hooked up in a network and you can find a server to
 arrange for a diskless setup, which is a convenient way to install on a
@@ -13,24 +12,8 @@ This is difficult to get set up correctly the first time, but easy to
 use afterwards.  (see ``Installing using a diskless setup'' below).
 
 It is also possible to install OpenBSD "manually" from a running SunOS
-system, using SunOS tools and gnu tar and gunzip (see ``Installing from SunOS''
-below).
-
-
-This section of the install document is really broken into several parts:
-
-	- booting from the installation media
-	- the floppy or miniroot install script
-	- after completing an installation
-	- installing from Sun OS
-	- net boot or diskless setup information
-
-The first section gets you up to the point where you've booted the kernel
-from whatever media, to where you have to respond to prompts from the
-install script(s).  The next two sections describe the path through the
-install scripts, and the remainder are notes which might be useful, but
-outside the bounds of simple "how to" instructions.
-
+system, using SunOS tools and gnu tar and gunzip (see ``Installing from
+SunOS'' below).
 
 
 Booting from the Installation Media:
@@ -41,8 +24,8 @@ does not necessarily wipe out all the partitions on the hard disk, errors
 during the install process can have unforeseen consequences and you will
 probably render the system unbootable if you start, but do not complete
 the installation.  Having the installation media for the prior installation,
-be it a SunOS or OpenBSD CD-ROM or OpenBSD install diskettes is good insurance 
-if you want to be able to "go back" for some reason.
+be it a SunOS or OpenBSD CD-ROM or OpenBSD install diskettes is good
+insurance if you want to be able to "go back" for some reason.
 
 After taking care of all that, bring your system down gracefully using
 the shutdown(8) and/or halt(8) commands.  This will get you to the monitor
@@ -84,10 +67,6 @@ Booting from Floppy Disk installation media:
         ok boot floppy bsd      # for version 2 OpenBOOT ROMs
 
 This will cause the kernel contained in the floppy to be booted.
-After the kernel loads, it will eject the bootable floppy and prompt
-for a filesystem floppy - for the two floppy installation insert
-the appropriate filesystem floppy, for the ramdisk installation,
-just hit return, the filesystem image is internal to the kernel.
 
 After the initial device probe messages you'll asked to start the
 install or upgrade procedure. Proceed to the section ``Running the
@@ -108,8 +87,8 @@ activity, but no messages or complaints about magic numbers,
 checksums or formats.
 
 Not all sparc systems support bootable CDROMS and the current
-boot image is only known to work on sun4c architectures.  If it
-does not work, you'll have to create a boot floppy or bootable
+boot image is only known to work on sun4c and sun4m architectures.
+If it does not work, you'll have to create a boot floppy or bootable
 hard disk using the instructions under preparing boot media.
 
 After the initial device probe messages you'll asked to start the
@@ -117,7 +96,7 @@ install or upgrade procedure. Proceed to the section ``Running the
 installation scripts'' below.
 
 
-Booting from SCSI disk (miniroot or floppy image)
+Booting from SCSI disk (miniroot or floppy image):
 
 Boot the miniroot by typing the appropriate command at the PROM:
 
@@ -146,7 +125,7 @@ install or upgrade procedure. Proceed to the section ``Running the
 installation scripts'' below.
 
 
-Booting from SCSI tape
+Booting from SCSI tape:
 
 Boot the miniroot by typing the appropriate command at the PROM:
 
@@ -174,7 +153,7 @@ install or upgrade procedure. Proceed to the section ``Running the
 installation scripts'' below.
 
 
-Installing using a diskless setup.
+Installing using a diskless setup:
 
 First, you must setup a diskless client configuration on a server. If
 you are using a OpenBSD system as the boot-server, have a look at the
@@ -200,13 +179,7 @@ scripts'' below.
 
 Installing using the Floppy, CD-ROM, tape, miniroot or netboot procedure:
 
-The following is a walk-through of the steps you will take while
-getting OpenBSD installed on your hard disk.  If any question has a
-default answer, it will be displayed in brackets ("[]") after the
-question.  If you wish to stop the installation, you may hit Control-C
-at any time, but if you do, you may have to begin the installation
-process again from scratch.  Using Control-Z to suspend the process
-may be a better option. 
+OpenBSDInstallPart2
 
 	Boot your machine from the installation media as described above.
 
@@ -217,14 +190,7 @@ may be a better option.
 	is bad, your diskless setup isn't correct, or you may have
 	a hardware or configuration problem.
 
-	You will then be presented with the OpenBSD kernel boot
-	messages.  You will want to read them to determine your
-	disk's name and geometry.  Its name will be something like
-	"sd0" or "wd0" and the geometry will be printed on a line that
-	begins with its name.  As mentioned above, you will need your
-	disk's geometry when creating OpenBSD partitions.  You will
-	also need to know the device name to tell the install tools
-	what disk to install on.
+OpenBSDBootMsgs
 
 	While booting, you will probably see several warnings.  You
 	may be warned that the kernel can't figure out what device
@@ -241,10 +207,7 @@ may be a better option.
 	installing from a keyboard/monitor console, the default of
 	"sun" if correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100).  Next you
-	will be prompted for a choice of which text editor to use at
-	several places in the install script.  You will probably want
-	to use "vi" if your terminal supports this.
+	(If your terminal type is xterm, just use vt100).
 
 	After entering the terminal type you will be greeted by a
 	welcome message and asked if you really want to continue.
@@ -390,10 +353,6 @@ In order to use 'tip' on OpenBSD/sparc, you'll need to edit /etc/ttys
 and add "local" to the end of the tty configuration line, and run 
 'ttyflags -a' to put your changes into effect.
 
-On installing X11 for OpenBSD/sparc, you may wish to add a line similar to
-'ldconfig /usr/X11R6/lib' to the end of your /etc/rc.local file.  This will
-add the X libraries to your dynamic linking search path at boot time.
-
 If you are unfamiliar with UN*X-like system administration, 
 it's recommended that you buy a book that discusses it.
 
@@ -404,7 +363,8 @@ Installing from SunOS.
 You need a SunOS machine to install OpenBSD.  You also need at
 least the following pieces:
 
-    the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgz)
+    the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgz and
+       etc{:--:}OSrev.tgz)
     gunzip (GNU gzip) SunOS binary
     gtar (GNU tar) SunOS binary
     a "/boot" file from a SunOS machine that matches your machine type
@@ -419,21 +379,22 @@ OpenBSD/sparc uses SunOS disk labels.)  Give yourself adequate
 partition sizes.  Here is an example layout:
 
     partition    size   offset	  will be..
-    sd2a        28140        0	  /
-    sd2b        16170    28140	  swap
-    sd2c       204540        0	  `whole disk'
-    sd2g       160230    44310	  /usr
-
-BTW, These are not recommended sizes.  They simply match the first
-(tiny) disk that OpenBSD/sparc ran on.
+    sd0a        80000        0	  /
+    sd0b       256000    80000	  swap
+    sd0c      4165271        0	  `whole disk'
+    sd0d       100000   436000    /var
+    sd0f       100000   336000    /tmp
+    sd0g      3229271   936000    /usr
+    sd0h       400000   536000    /var/tmp
 
 Use SunOS to newfs the partitions which will have filesystems on them.
 (OpenBSD's filesystem format is identical to SunOS).
 
-    sunos# newfs /dev/rsd2a
+    sunos# newfs /dev/rsd0a
     [... lots of output]
-    sunos# newfs /dev/rsd2g
-    [... lots of output]
+ 
+Repeat for any other partition (in this example, /dev/rsd0d, /dev/rsd0f,
+/dev/rsd0g, /dev/rsd0h).
 
 NOTE: If you are able to, there is a performance benefit from
 newfs'ing using OpenBSD.  If you newfs using the OpenBSD newfs command,
@@ -447,8 +408,11 @@ Mount those partitions in a tree formation, under /mnt; ie:
     sunos# df
     Filesystem            kbytes    used   avail capacity  Mounted on
     [...]
-    /dev/sd2a              11501       0   11501     0%    /mnt
-    /dev/sd2g             179529       0  179529     0%    /mnt/usr
+    /dev/sd0a              38427       0   38427     0%    /mnt
+    /dev/sd0d              48249       0   48249     0%    /mnt/var
+    /dev/sd0f              48249       0   48249     0%    /mnt/tmp
+    /dev/sd0g            1564024       0 1564024     0%    /mnt/usr
+    /dev/sd0h             193536       0  193536     0%    /mnt/var/tmp
 
 Place a standard SunOS "boot" program in /mnt (your new root
 partition), and use the SunOS command "installboot" to make it work.
@@ -472,10 +436,11 @@ And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.
     sunos# cp bsd.scsi3 /mnt/bsd
 
 The GNU gunzip and gtar programs are not distributed as part of SunOS,
-but may be present in your local/bin.  If not, you will need to obtain
-them from a GNU archive and install before proceeding.  The OpenBSD
-tar files are in the "new format" that includes directory information,
-and the standard SunOS tar will not extract from them successfully.
+but may be present in your /usr/local/bin.  If not, you will need to
+obtain them from a GNU archive and install before proceeding.  The
+OpenBSD tar files are in the "new format" that includes directory
+information, and the standard SunOS tar will not extract from them
+successfully.
 
 After the files have been extracted, setup /mnt/etc/fstab to match
 your actual disk layout.  (Minus the "/mnt" component of each path, of

@@ -1,11 +1,9 @@
-
 Sun3 machines usually need little or no preparation before installing
 OpenBSD, other than the usual, well advised precaution of BACKING UP
 ALL DATA on any attached storage devices.
 
 You will need to know the SCSI target ID of the drive on which you
-will install OpenBSD.  Note that SunOS/sun3 uses confusing names for
-the SCSI devices: target 1 is sd2, target 2 is sd4, etc.
+will install OpenBSD.
 
 It might be a good time to run the diagnostics on your Sun3.  First,
 attach a terminal to the "ttya" serial port, then set the "Diag/Norm"
@@ -13,9 +11,10 @@ switch to the Diagnostic position, and power-on the machine.  The
 Diag. switch setting forces console interaction to occur on ttya.
 
 The console location (ttya, ttyb, or keyboard/display) is controlled
-by address 0x1F in the EEPROM, which you can examine and change in
-the PROM monitor by entering "q1f" followed by a numeric value (or
-just a '.' if you don't want to change it).  Console values are:
+by address 0x1f in the EEPROM, which you can examine and change in
+the PROM monitor by entering "q 1f", then a numeric value (or just a
+'.' if you don't want to change it, and "q" again to return to the prom).
+Console values are:
 	00: default graphics display
 	10: tty a (9600-N-8-1)
 	11: tty b (1200-N-8-1)
@@ -23,9 +22,6 @@ just a '.' if you don't want to change it).  Console values are:
 
 OpenBSD will use the EEPROM setting to determine which device to
 use as the console, so you should make sure it is correct.
-Before you start you might need to consider your disk configuration
-to sort out a quirk in SCSI-ID to SD-UNIT mapping that exists on
-Sun Sparcstations.
 
 Please note that while OpenBSD and SunOS have a reasonable degree of
 compatibility between disk labels and filesystems there are some problems
@@ -44,24 +40,20 @@ both OpenBSD and SunOS environments on the same system.
     about missing . and .. entries.  Do *not* try to "correct" these
     problems, as attempting to do so will completely trash the filesystem.
 
-    You should avoid using the new OpenBSD "-s enable" option to the 
-    "tunefs" command, which enable the soft update feature.  
+    You should avoid using softupdates (option softdep in /etc/fstab)
+    on your shared filesystems.
     Although untested, it is likely that SunOS would be confused by a 
     filesystem with soft update flags enabled.
 
 The OpenBSD "Sun Compatible" disklabel have been extended to support 16
-partitions, which may be compatible with Solaris, but the old SunOS
-format(8) utility only sees the first 8 partititions and may "lose"
-information about the extended partitions.
+partitions, however the old SunOS format(8) utility only sees the first
+8 partitions and may "lose" information about the extended partitions.
 
 Use SunOS format(8) only with *extreme* caution on drives that contain
 OpenBSD partitions.
-
 
 OpenBSD and Sun BSD bootblocks are similar in concept, though implemented
 differently.  The OpenBSD bootblocks are architecture independent and also
 understand the extended disklabels with 16 partitions.  You can use SunOS
 bootblocks, but remember that OpenBSD bootblocks must be installed with
 OpenBSD installboot and SunOS bootblocks with SunOS installboot.
-
-

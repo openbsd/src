@@ -82,5 +82,6 @@ Supported devices {:-include-:}:
 		The CrossLink.
 	Amiga floppy drives.
 	Amiga mouse.
+	Amiga joystick.
 
 If its not on this list, there is no support for it in this release.

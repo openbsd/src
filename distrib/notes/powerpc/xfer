@@ -14,7 +14,7 @@ the system can be installed from any of the above.
 
 While an installation floppy is included in the snapshot it is unlikely
 that it will be very useful due to lack of floppy drive on the imac
-and the reported inabilty to boot from USB floppies on the supported
+and the reported inability to boot from USB floppies on the supported
 version of the hardware.
 
 Obviously, the steps necessary to prepare the distribution sets for

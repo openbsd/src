@@ -46,9 +46,8 @@ Some systems will boot and are usable from an external terminal
 	possibly others
 
 What isn't supported, but often asked about:
-	PowerPC-based Macs.  Work will begin on this, sometime soon.
-		It will be separate from this port, though.  The PowerPC
-		is a much different processor.
+	PowerPC-based Macs.  They are supported by the OpenBSD/powerpc
+		port.
 	Machines based on Apple's IOP technology including the Mac IIfx.
 	Machines based on the 68LC040 processor.  Unfortunately, the chip
 		itself contains a major bug which is presently being worked

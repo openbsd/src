@@ -29,17 +29,13 @@ OpenBSDInstallPart2
 	the dblNTSC mode, you may also {:-include-:} the "-A" option to
 	enable the dblNTSC display mode.
 
-	You should see the screen clear and some information about
-	your system as the kernel configures the hardware.  Note which
-	hard disk device(s) are configured (sd0, sd1, etc).  You will
-	be asked for disknames later during the install.  If you cannot
-	read the messages as they scroll by, do not worry -- you can get
-	at this information later inside the install program.  If you
-	are doing the miniroot install you will be prompted for a root
-	device.  At this time type 'sd0*', where '0' is the device which
-	holds the miniroot-containing swap partition you created during
-	the hard disk preparation.  If the system should hang after
-	entering the root device, try again with
+OpenBSDBootMsgs
+
+	If you are doing the miniroot install you will be prompted for a
+	root device.  At this time type 'sd0*', where '0' is the device
+	which holds the miniroot-containing swap partition you created
+	during the hard disk preparation.  If the system should hang
+	after entering the root device, try again with
 
 		loadbsd -I ff -b bsd
 
@@ -51,10 +47,9 @@ OpenBSDInstallPart2
 		loadbsd -I ff bsd.rd
 
 	While booting, you will probably see several warnings.  You
-	should be warned that no swap space is present, and that
-	init(8) cannot find /etc/rc.  Do not be alarmed, these are
-	completely normal.  When you reach the prompt asking you for a
-	shell name, just hit return.
+	should be warned that no swap space is present.  Do not be
+	alarmed, these are completely normal.  When you reach the prompt
+	asking you for a shell name, just hit return.
 
 	You will be asked which terminal type to use, you should just
 	hit return to select the default (vt220).
@@ -88,7 +83,7 @@ OpenBSDInstallPart2
 		newfs: ioctl (WDINFO): Invalid argument
 		newfs: /dev/rsd0a: can't rewrite disk label
 
-	If there are any others, restart from the the beginning of
+	If there are any others, restart from the beginning of
 	the installation process.  This error is ok as the Amiga
 	does not write disklabels currently.  You should expect
 	this error whenever using newfs.

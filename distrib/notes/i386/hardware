@@ -1,8 +1,15 @@
-OpenBSD/MACHINE OSREV runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
-with 386-family processors, with or without math coprocessors.  It
-does NOT support MCA systems, such as some IBM PS/2 systems.  The
-minimal configuration to install the system is 6M or 8M of RAM and
-perhaps 50M of disk space.  A custom kernel might be able to run
+OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
+clones, with a wide variety of processors and I/O bus architectures.  It
+can be expected to install and run with minimal difficulties on most
+current products.  The cases where problems may be encountered are
+typically older proprietary PC's, Laptops or specialized server boxes
+that rely on a custom BIOS to paper over implementation differences.
+
+OpenBSD does not currently support multiple processors (SMP), but will
+run using one processor on a multi-processor system board.
+
+The minimal configuration to install the system is 6M or 8M of RAM and
+perhaps 60M of disk space.  A custom kernel might be able to run
 with only 4MB, though we do not know of anyone running with a system
 quite this minimal today.  To install the entire system requires
 much more disk space, and to run X or compile the system, more RAM
@@ -10,56 +17,139 @@ is recommended.  (8M of RAM will actually allow you to run X and/or
 compile but it won't be speedy.  Note that until you have around 16M
 of RAM, getting more RAM is more important than getting a faster CPU.)
  
-Supported devices {:-include-:}:
-	Floppy controllers.
-	MFM, ESDI, IDE, and RLL hard disk controllers.
-	SCSI host adapters:
-		Adaptec AHA-154xA, -B, -C, and -CF 
+Supported hardware {:-include-:}:
+	Processors
+		All CPU chips compatible with the Intel 80386 (i386)
+		architecture:
+			386/486 (SX/DX/DX2/DX4)
+			Intel Pentium/Pentium-MMX
+			Intel Pentium Pro/II/III/Celeron/Xeon
+			Intel Pentium IV
+			AMD 6x86
+			AMD K5/K6/K6-2/K6-3
+			AMD Athlon/Duron
+			Cyrix MediaGX/M1/M2
+			VIA Cyrix III
+			Rise mP6
+			IDT WinChip
+			NexGen 586
+			Transmeta TMS3200, TMS5400, TMS5600
+		Everything that is a clone of the 386 or up should work
+		fine. The only CPU that is known to work poorly (due to
+		flawed motherboards designs) is the Cyrix 386DLC.
+	Buses
+		All standard ISA, EISA, VLB, and PCI bus based machines,
+		including:
+			Intel 450GX/KX based machines
+			Intel 450NX based machines
+			ServerWorks chipset-based machines
+			(We just had to mention those last three, since
+			 they are the hardest to support))
+		Both 16-bit PCMCIA Cards and newer 32-bit CardBus
+		support
+		Universal Serial Bus (USB)
+		The MCA bus found in various IBM PS/2 machines is not
+		supported.
+	Bus Interfaces
+		Standard PCI-PCI bridges, including PCI expansion
+		backplanes
+		YENTA-compatible PCI-CardBus bridges
+	Entropy Sources
+		Interrupt latency collection from many devices
+		INtel 82802 random number generator found on i810, i815,
+		i820, i840, i850 and i860 based systems.
+	Disk Controllers
+		Floppy controllers.
+		ISA MFM, ESDI, IDE, and RLL hard disk controllers.
+	PCI IDE Controllers
+		Acer Labs M5229
+		Advanced Micro Devices 756, 766
+		CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, and PCI0649
+		Contaq Microsytems/Cypress CY82C693
+		HighPoint HPT366, HPT370
+		Intel PIIX, PIIX3, and PIIX4
+		Intel 82801 (ICH/ICH0/ICH2)
+		OPTi 82C568, 82D568, and 82C621
+		Promise PDC20246, PDC20262, PDC20265/7
+		Silicon Integrated Systems 5513 (5597/5598)
+		VIA Technologies VT82C586[A], VT82C596, VT82C686
+		(Other PCI IDE-compliant controllers should work, but
+		 those not listed above may not be capable of DMA modes)
+	SCSI Host Adapters
+		Adaptec AHA-1540, AHA-154xA, AHA-154xB, AHA-1542C,
+			AHA-1542CF, AHA-1542CP, AHA-1640
 		Adaptec AHA-174x
-		Adaptec AIC-6260 and AIC-6360 based boards, including
+		Adaptec AIC-6260 and AIC-6360 based boards, including:
 			the Adaptec AHA-152x and the SoundBlaster SCSI
 			host adapter.  (Note that you cannot boot from
 			these boards if they do not have a boot ROM;
 			only the AHA-152x and motherboards using this chip
 			are likely to be bootable, consequently.)
-		Adaptec AHA-294x[W] cards and some onboard PCI designs using
-			the AIC7870 chip.  The 2940AU is known not to perform
-			very well with this driver.
-		Adaptec AHA-394x[W] cards; two AIC7870 chips with an on-board
-			PCI to PCI bridge.
-		Adaptec AIC-7770-based SCSI host adapters (including the
-			Adaptec AHA-274x, AHA-284x families).
-		Adaptec Ultra160 controller family, including 7892, 7899,
-			29160, 39160, and other variants
-		AdvanSys PCI SCSI host adapters (including ABP-940, ASB-3940
-			and ASB-3950 families)
-		WD-7000 SCSI host adapters.
-		Buslogic 54x (Adaptec AHA-154x clones; driver on kcadp floppy)
+		Adaptec AIC-7770-based boards, including the Adaptec
+			AHA-274x and AHA-284x families)
+		Adaptec AHA-[23]94x[W] cards and some on-board PCI designs
+			using the AIC7870 and AIC7880 chips.
+		Adaptec AHA-[23]94xU[2W] cards and some on-board PCI designs
+			using the AIC789[01], AIC7895, AIC789[67] chips
+		Adaptec AIC-780[29] chips and products like the
+			AHA-29160 based upon it which do 160MB/sec SCSI.
+		AdvanSys 'U', 'UW', 'U2W' and 'U160' PCI SCSI
+			controllers including the ABP940U[AW],
+			ASB3940U[AW]-00, ASB3940U2W-00 and ASB3950U160
+		AMD Am53c974 PCscsi-PCI SCSI controllers, including:
+			Tekram DC-390
+		Buslogic BT-54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
-		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
-		Ultrastor 14f, 34f, and (possibly) 24f
-		Seagate/Future Domain ISA SCSI adapter cards, including
+		Initio INIC-940 and INIC-950 based PCI SCSI host
+			adapters, including the Initio INI-9090U and
+			Initio INI-9100U/UW, and the Iwill 2935UW
+		QLogic PCI SCSI controllers
+		Seagate/Future Domain ISA SCSI adapter cards, including:
 			ST01/02
 			Future Domain TMC-885
 			Future Domain TMC-950
-		Initio INIC-940 and INIC-950 based PCI SCSI cards, including
-			Initio INI-9090U
-			Initio INI-9100U/UW
-			Iwill 2935UW
-		AMD Am53c974 PCscsi-PCI SCSI controllers
-	RAID controllers:
+		Symbios Logic (NCR) 53C8xx, 53C1010, and 53C1510D-based
+			PCI SCSI host adapters (including generic/no
+			name cards, old ASUS cards, the DTC-3130 series,
+			Diamond Fireport series, etc.)
+		Tekram DC-300B and DC-320E (Adaptec AHA-154x clones)
+		Ultrastor 14f, 24f, and 34f
+		WD-7000 SCSI host adapters
+	RAID and Cache Controllers
 		3ware Escalade 3W-5x00, 3W-6x00
+		Adaptec FSA-based RAID controllers, including:
+			Adaptec AAC-2622, AAC-364, AAC-3642
+			Dell PERC 2/Si, PERC 2/QC, PERC 3/Si, PERC 3/Di,
+				PERC 3/QC
+			HP NetRAID-4M
 		American Megatrends Inc. MegaRAID controllers
-		Compaq Smart ARRAY PCI/EISA adapters
-		DPT SmartCache III/IV PCI/EISA adapters 
-		ICP-Vortex GDT 6XXXRP series
-		Adaptec FSA-based
+		Compaq Smart ARRAY PCI/EISA adapters, including:
+			Compaq Integrated Array
+			Compaq IAES
+			Compaq IDA, IDA-2
+			Compaq RAID LC2
+			Compaq Smart Array 221, 3100ES, 3200, 4200,
+				4250ES, 431
+			Compaq SMART, SMART-2/E, SMART-2/P, SMART-2DH,
+				SMART-2SL
+		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters 
+		ICP-Vortex GDT 6XXXR[DNPS] series
+	CD-ROM and DVD-ROM Drives
+		Mitsumi CD-ROM drives [*] [+]
+			[Note: The Mitsumi driver device probe is known 
+			to cause trouble with several devices!]
+		Most SCSI CD-ROM, CD-R, CD-RW, and DVD drives
+		Most ATAPI CD-ROM, CD-R, CD-RW, and DVD drives
+	Tape Drives
+		Most SCSI tape drives
+		Most SCSI tape changers
+		QIC-02 and QIC-36 format (Archive- and Wangtek-
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters OpenBSD/i386 can work with
 		are supported by X.  See the XFree86 FAQ for more
 		information.)
-	Serial ports:
+	Serial Ports
 		8250/16450-based ports
 		16550-based ports
 		ST16660-base ports
@@ -68,15 +158,72 @@ Supported devices {:-include-:}:
 		BOCA 8-port serial cards [*] 
 		Cyclades Cyclom-{4, 8, 16}Y serial boards [*]
 		IBM PC-RT 4-port serial boards [*]
-	Parallel ports.
-	Ethernet adapters:
-		Alteon Tigon I/II PCI Gigabit Ethernet boards [*] [+]:
-			3Com 3c985 and 3c905B
-			Alteon ACEnic V (fiber and copper)
-			Netgear GA620 and GA620T
-			SGI Tigon
-			Farallon PN9000
-		AMD LANCE and PCnet-based ISA Ethernet adapters [*], including:
+	Parallel Ports
+		Any standard parallel port
+	Communication Controllers
+		Universal Serial Bus host controllers, including:
+			USB Universal Host Controller
+			USB Open Host Controller
+		PCI `universal' communication cards, providing serial
+		and parallel ports, including:
+			Dolphin Peripherals 4014 (dual parallel) and
+				4035 (dual serial)
+			SIIG Cyber 2P1S (dual parallel, single serial)
+				and 2S1P (dual serial, single parallel)
+			SIIG Cyber 4S (quad serial)
+			SIIG Cyber I/O (single parallel, single serial)
+			SIIG Cyber Parallel, Parallel Dual, Serial,
+				Serial Dual
+			VScom PCI-800 (8 port serial, probably OEM)
+			AT&T/Lucent Venus Modem (found on IBM 33L4618
+				card, Actiontec 56K, and others)
+			US Robotics 3CP5609 PCI (modem)
+			Lava Computers 2SP-PCI (parallel port)
+			Lava Computers 2SP-PCI and Quattro-PCI (dual
+				serial)
+			NEC PK-UG-X008 (serial)
+			NEC PK-UG-X001 K56flex PCI (modem)
+			Koutech IOFLEX-2S (dual serial)
+	Ethernet Adapters
+		3Com 3c501
+		3Com 3c503
+		3Com 3c505 [*]
+		3Com 3c507
+		3Com 3c509, 3c579, and 3c59x
+		3Com 3c515 [*] [+]
+		3Com 3c9xx Etherlink XL adapters, including
+			3Com 3c900/3c900B PCI adapters
+			3Com 3c905/3c905B/3c905C PCI adapters
+			3Com 3c980/3c980C server adapters
+			3Com 3cSOHO apapter
+			3Com 3c900B-FL and 3c900B-FL/FX fiber optic
+				adapters
+			3Com 3c555/3c556/3c556B MiniPCI adapters
+			Dell on-board 3c920
+			Dell Precision on-board 3c905B
+			Dell OptiPlex GX1 on-board 3c918
+			Dell Latitude laptop docking station embedded
+				3c905
+		Adaptec "Starfire" AIC-6915 based PCI adapters,
+			including
+			Adaptec Single32 ANA-69011
+			Adaptec Single64 ANA-62011 and ANA-62020
+			Adaptec Duo64 ANA-62022
+			Adaptec Quartet64 ANA-62044
+		ADMtek AL981 ("Comet") and AN983 ("Centaur-P") based PCI
+		adapters, including:
+			Accton EN2242 MiniPCI
+			Linksys LNE100TX v4.x
+			Mototech ME316
+		ADMtek AN986-based USB adapters, including:
+			Billionton Systems USB100
+			Corega FEther USB-TX
+			D-Link DSB-650TX
+			LinkSys USB100TX
+			Melco Inc. LU-ATX
+			SMC 2202USB
+			Kingston KNU101TX
+		AMD LANCE and PCnet-based ISA Ethernet adapters, including:
 			Novell NE1500T
 			Novell NE2100
 			Kingston 21xx
@@ -84,30 +231,85 @@ Supported devices {:-include-:}:
 			BOCALANcard/PCI
 		        AT&T StarLAN 10, EN100, and StarLAN Fiber
 		ASIX 88140A/88141 PCI Ethernet adapters, including:
-			CNet Pro110
+			CNet Pro110B
 			Alfa Inc. GFC2204
-		3COM 3c501
-		3COM 3c503
-		3COM 3c505 [*]
-		3COM 3c507
-		3COM 3c509, 3c579, 3c589, 3c59x
-		3COM 3c515 [*] [+]
-		3COM 3c900, 3c900b, 3c905, and 3c905b, 3c905c
+		CATC USB-EL1210A-based USB adapters, including:
+			CATC Netmate and Netmate II
+			Belkin F5U011/F5U111
+		Davicom DM9100, DM9102, and DM9102A based PCI adapters,
+		including:
+			Jaton XpressNet
 		Digital DC21x4x-based PCI Ethernet adapters, including:
-			SMC EtherPower 10, 10/100 (PCI only!)
-			Znyx ZX34X
-			Cogent EM100
-			Digital DE450
-			Digital DE500
-		BICC Isolan [* and not recently tested]
+			Older SMC PCI EtherPower 10, 10/100 (models
+				8432, 9332, and 9334)
+			Older LinkSys 10, 10/100 (newer models are
+				supported by other drivers)
+			Znyx ZX3xx
+			Cogent EM100FX and EM440TX
+			Digital PCI DE435, EISA DE425, DE450, DE500
+			Asante
 		Intel EtherExpress 16
+		Intel EtherExpross PRO/10 ISA
+		Intel i8255x-based (except the i82556) PCI adapters,
+		including:
+			Intel EtherExpress PRO/10+
+			Intel EtherExpress PRO/100, PRO/100B, and PRO/100+
+			Intel EtherExpress PRO/100+ "Management Adapter"
+			Intel EtherExpress PRO/100 Dual Port
+		Kawasaki LSI KL5KUSB101B-based USB adapters, including:
+			3Com 3c19250
+			3Com 3c460 HomeConnect
+			ADS Technologies USB-10T
+			Aox USB101
+			ATen UC10T
+			Corega USB-T
+			D-Link DSB-650
+			Entegra NET-USB-E45
+			Kawasaki USB101
+			LinkSys USB10T
+			Netger EA101
+			Peracom USB
+			SMC 2102/2104USB
+			I/O Data USB-ET/T
+		Lite-On PNIC/PNIC-II-based adapters, including:
+			Kingston KNE110TX
+			LinkSys LNE100TX
+			Matrox Networks FastNIC 10/100
+			Netgear FA310TX
+		Macronix 98713/713A/715/715A/725/727/732-based adapters,
+		including:
+			Accton EN1217
+			Addtron AEF-320TX/AEF-330TX
+			CNet PRO120A/PRO120B
+			Complex RL-100TX
+			NDC Communications SOHOware SFA110A
+			SVEC PN102-TX Fast Ethernet card
+		National Semiconductor DP83815-based PCI adapters,
+		including:
+			Netgear FA311/FA312
+		Novell NE1000, NE2000
+		RealTek 8129, RealTek 8139 Ethernet adapters, including:
+			Accton MPX 5030/5038
+			Allied Telesyn AT2550
+			D-Link DFE530+TX, DFE538TX
+			Encore ENL832-TX 10/100 M PCI
+			Genius GF100TXR
+			KTX-9130TX 10/100 Fast Ethernet
+			Longshine LCS-8038TX-R
+			NDC NE100TX-E
+			Netronix EA-1210 Net Ether 10/100
+			Nortel BayStack 21
+			OvisLink LEF-8129TX, LEF-8139TX
+			SMC EZ Card 10/100 PCI 1211-TX
+		SiS 900 and SiS 7016-based PCI adapters, including:
+			Mototech ME313
+			NetSurf NS-KFE30D
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)  [X SEE BELOW]
+		SMC EtherEZ PNP
 		SMC EtherPower II (EPIC 10/100)
-		Novell NE1000, NE2000
-		Digital DEFPA PCI FDDI adapters
-		Intel EtherExpress 100 Fast Ethernet adapters
-		Intel Pro/1000 Gigabit Ethernet adapters
+		Sundance ST201-based PCI adapters, including:
+			D-Link DFE-550TX
 		Texas Instruments ThunderLAN PCI Ethernet adapters, including:
 			Compaq Netelligent PCI Adapters
 			Compaq NetFlex 3/P
@@ -116,77 +318,158 @@ Supported devices {:-include-:}:
 			Olicom OC2135, OC2183, OC2325, OC2326
 			Racore 8165 and 8148
 			TI ThunderLAN adapters
-		RealTek 8129, RealTek 8139 Ethernet adapters, including:
-			Accton MPX 5030/5038
-			Allied Telesyn AT2550
-			Encore ENL832-TX 10/100 M PCI
-			Genius GF100TXR
-			KTX-9130TX 10/100 Fast Ethernet
-			Longshine LCS-8038TX-R
-			NDC NE100TX-E
-			Netronix EA-1210 Net Ether 10/100
-			OvisLink LEF-8129TX, LEF-8139TX
-			SMC EZ Card 10/100 PCI 1211-TX
-		Macronix 98713/98715/98725 Ethernet adapters, including:
-			NDC Communications SOHOware SFA110
-			SVEC PN102-TX fast ethernet card
-		Lite-On PNIC/PNIC-II Ethernet adapters, including:
-			Bay Networks Netgear FA310TX rev D1
-			LinkSys LNE100TX
-			Matrox Networks FastNIC 10/100
+		VIA Rhine/RhineII Ethernet adapters, including:
+			Addtron AEF-360TX
+			Hawking PN102TX
+			D-Link DFE530TX
 		Winbond W89C840F Ethernet adapters, including:
 			Trendware TE100-PCIE
 			Compex RL100-ATX 10/100baseTX
 		Xircom 16-bit PCMCIA adapters, including:
 			Xircom CE3
 			Xircom Realport
-		Lucent technologies WaveLAN IEEE 802.11 [*] [+]
+	Wireless Ethernet Adapters
+		Aironet 802.11DS PCMCIA and PCI
+		RayLink Aviator 2.4/Pro 802.11FH PCMCIA
+		WaveLAN IEEE 802.11DS
+		Addtron AWP-100 802.11DS PCMCIA
+	Gigabit Ethernet Adapters
+		Alteon Tigon I/II PCI Gigabit Ethernet boards
+			3Com 3c985 and 3c985B
+			Alteon ACEnic V (fiber and copper)
+			Digital EtherWORKS 1000SX
+			Farallon PN9000SX
+			Netgear GA620 and GA620T
+			SGI Tigon
+		Intel i82452-based adapters, including:
+			Intel Pro/1000 Gigabit Server adapter
 		SysKonnect SK-9841/9842/9843/9844 Gigabit Ethernet
-			adapters [*] [+]
-	Tape drives:
-		Most SCSI tape drives
-		QIC-02 and QIC-36 format (Archive- and Wangtek-
-			compatible) tape drives [*] [+]
-	CD-ROM drives:
-		Mitsumi CD-ROM drives [*] [+]
-			[Note: The Mitsumi driver device probe is known 
-			to cause trouble with several devices!]
-		Most SCSI CD-ROM drives
-		Most ATAPI CD-ROM drives
-			[Note: With single ATAPI device IDE busses, the
-			ATAPI device should be set to SLAVE.]
-	Mice:
+			adapters
+	ATM Adapters
+		Efficient Networks EN-155 and Adaptec ANA-590X ATM
+		interfaces
+	FDDI Adapters
+		Digital DEFEA EISA and PCI FDDI adapters
+	Wan Adapters
+		Lan Media Corporation SSI (T1)/HSSI/DS1/DS3 WAN
+		interfaces
+	Cryptography Accelerators
+		Broadcom Bluesteelnet uBsec 5501, 5601, 5805
+		Hi/Fn 7751-based boards, including:
+			GTGI PowerCrypt Encryption Accelerator
+			NetSec 7751
+			HiFn reference board
+			Invertex AEON
+	PC Cards (PCMCIA and Carbus)
+		ATA cards, including:
+			ATA/IDE card drives
+			ATA/IDE CD-ROM adapters
+			CF/ATA flash cards and disk drives
+		Ethernet adapters, including:
+			3Com EtherLink and EtherLink XL-based LAN PC
+			cards, including:
+				3Com 3c556, 3c562
+				3Com 3c574TX, 3c[CX]FE574BT
+				3Com 3c589, 3c589[BCDE]
+				3Com 3c575TX, 3c[CX]FE575[BC]T CardBus
+				3Com 3c[CX]FEM656, 3c[CX]656[BC] CardBus
+			Intel/DEC 21443 "Tulip" clones, including:
+				ADMtex AN985 Centaur-C CardBus
+				IBM EtherJet 10/100 CardBus
+				SMC EZ CardBus 10/100
+				Xircom X3201 CardBus adapters, including
+				RealPort models
+			Intel i8255x-based, including:
+				Intel PRO/100 CardBus II
+			NE2000-based, including:
+				Accton EN2216
+				AmbiCom AMB8002T
+				D-Link DE-650, DE-660
+				Genius ME 3000II SE
+				Hawking PN650TX
+				IC-Card
+				Kingston KNE-PC2
+				Linksys PCMPC100, EC2T Combo
+				NDC Instant-Link
+				Netgear FA410TX
+				Network Everywhere NP10T
+				New Media LiveWire 10/100
+			SMC 91Cxx-based, including:
+				Megahertz XJEM1144, CC10BT
+				SMC EtherEZ 8020BT
+			Xircom, including:
+				Xircom CreditCard CE2
+		PCMCIA controllers, including:
+			Intel i82365 and compatibles
+		SCSI host adapters, including:
+			Adaptec SlimSCSI APA-14[56]0
+		Serial ports, including:
+			Most modems, digital cellular modems, and serial
+			cards should work
+		Wireless Ethernet adapters:
+			See above
+	Universal Serial Bus (USB) Devices
+		USB Audio
+		USB Diamond Multimedia Rio MP3 players
+		USB Ethernet adapters, see above
+		USB Generic Human Interface Devices (catch-all)
+		USB Handspring Visor
+		USB Hubs
+		USB Keyboards
+		USB Mass Storage devices, i.e., USB floppy drives and
+			USB memory stick controllers
+		USB Mice
+		USB Modems
+		USB Printers
+		USB Scanners
+		USB-USB cables
+		USB Y@p phone
+	Pointing Devices
 		"Logitech"-style bus mice [*] [+]
 		"Microsoft"-style bus mice [*] [+]
 		"PS/2"-style mice [*] [+]
 		Serial mice (uses serial port driver)
-	Sound Cards:
-		SoundBlaster [*] [+]
+			compatible) tape drives [*] [+]
+	Sound Devices
+		C-Media CMI8[37]38 [*] [+]
+		Cirrus Logic CrystalClear CS4280, CS4281 [*] [+]
+		Ensoniq AudioPCI [*] [+]
+		ESS Tech ES188[78], ES888 [*] [+]
+		ESS Solo-1 PCI AudioDrive [*] [+]
+		ESS Maestro 1, 2 and 2E and clones, NOT Maestro 3 [*] [+]
+		Forte Media FM801 audio [*] [+]
 		Gravis Ultrasound and Ultrasound Max [*] [+]
-			[The following drivers are not extensively tested]
+		Intel i810/i820 and 440MX AC'97 [*] [+]
+		NeoMagic 256AV/ZX [*] [+]
+		SoundBlaster ISA cards and 100% compatibles [*] [+]
+		SoundBlaster PCI128 [*] [+]
+		VIA VT82C686A SouthBridge integrated AC'97 audio [*] [+]
+		Yamaha OPL3-SA3 [*] [+]
+		Yamaha DS-XG [*] [+]
+		[The following drivers are not extensively tested:]
 		Personal Sound System [*] [+]
-		Windows Sound System [*] [+]
 		ProAudio Spectrum [*] [+]
-		ESS PnP audio cards [*] [+]
-		ESS Solo-1 PCI-based audio cards [*] [+]
-		AC'97 sound a part of Intel 810/815/440MX chipsets [*] [+]
-	Cryptography Accelerators
-		Hi/Fn 7751 based boards, including:
-			GTGI PowerCrypt Encryption Accelerator
-	Miscellaneous:
-		OPTi(82C929) chipset for multi-interface CD-ROM, and
-			sound ISA cards.
-		PCI-PCI bridges and cards which {:-include-:} them, such as
-			the AHA-394x SCSI host adapter and some
-			DC21x4x-based multi-Ethernet cards.
+		S3 SonicVibes [*] [+]
+		Windows Sound System [*] [+]
+	Miscellaneous Devices
+		APM power management,
 		Brooktree 8[47][89] based frame grabber and TV tuner cards, 
-			such as: [*] [+]
+		including: [*] [+]
 			Hauppage Wincast TV
 			STB TV PCI Television Tuner
 			Miro PC TV
 			Intel Smart Video Recorder III
-		APM v1.1 power management,
-		PCI BIOS v2.x interrupt and address configuration.
+			IMS TV Turbo
+			AVer Media TV/FM
+	Many kinds of ISA Plug-and-Play cards
+		Nearly all SB-style audio cards
+		Nearly all joystick ports
+		Nearly all Yamaha-style audio cards
+		Nearly all NE2000-style Ethernet cards
+		Nearly all SMC-style Ethernet cards
+		Most serial port or modem cards
+		3c509 cards in PnP mode
+		NE2100 Etherent cards
 
 Drivers for hardware marked with "[*]" are NOT included on the
 distribution floppies.  Except as noted above, all other drivers are
@@ -202,24 +485,42 @@ although it is not in the kernel on the installation floppy.
 
 Hardware the we do NOT currently support, but get many questions
 about:
-	NCR 5380-based SCSI host adapters.
-	QIC-40 and QIC-80 tape drives.  (Those are the tape drives
-		that connect to the floppy disk controller.)
-	Multiprocessor systems.  (Though they should run fine using
-		one processor only.)
+	The "Micro Channel" MCA bus used in many IBM PS/2 models
+	NCR 5380-based and 53400-based SCSI host adapters
+	QIC-40 and QIC-80 tape drives (these are the tape drives
+		that connect to the floppy disk controller)
+	Multiprocessor motherboards (though they will run fine using
+		one processor only)
+	Sony and Panasonic proprietary CD-ROM interfaces
+	Parallel-port ZIP drives (SCSI and ATAPI ZIP drives work fine)
+	Intel i82556 (EtherExpress PRO/100A) and i82596 (EtherExpress
+		PRO/10 PCI) Ethernet adapters
+	Hewlett-Packard PC-LAN+ (HP27xxx) Ethernet adapters
+	SoundBlaster Live! (EMU10k1) sound devices
+	Aureal Vortex sound cards
+	Winmodems
+	Infrared devices, such as commonly found on laptops
+	Firewire
+	3c990 Hardware Crypto Accelerators (3Com will not make specs
+		public)
+	Mylex and Intel RAID controllers
+	PCMCIA:
+		Memory cards
+		Most multifunction cards
 
 We are planning future support for many of these devices.
 
-To be detected by the distributed kernels, the devices must
-be configured as follows:
+To be detected by the distributed kernels, some devices must
+be configured with specific settings.  Here's their list:
 
 Device		Name	Port	IRQ	DRQ	Misc
 ------		----	----	---	---	----
 Serial ports	pccom0	0x3f8	4		[8250/16450/16550/clones]
 		pccom1	0x2f8	3		[8250/16450/16550/clones]
 		pccom2	0x3e8	5		[8250/16450/16550/clones]
-		pccom3	0x2e8	3		[PCMCIA modem cards]
 		ast0	0x1a0	5		[AST 4-port serial card]
+		cy0		12		iomem 0xd4000 [Cyclom
+						serial card]
 
 Parallel ports	lpt0	0x378	7		[interrupt-driven or polling]
 		lpt1	0x278			[polling only]
@@ -236,12 +537,6 @@ AHA-154x, AHA-174x (in compatibility mode), or BT-54x SCSI host adapters
 		aha0	0x330	any	any
 		aha1	0x334	any	any
 
-AHA-174x SCSI host adapters (in enhanced mode)
-		ahb0	any	any	any
-
-AHA-284x,274x,2940, aic7770 SCSI host adapters
-		ahc0	any	any
-
 BT445, BT74x, or BT9xx SCSI host adapters
 		bt0	0x330	any	any
 		bt1	0x334	any	any
@@ -251,13 +546,10 @@ Ultrastor 14f, 24f (if it works), or 34f SCSI host adapters
 		uha1	0x334	any	any
 
 AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
-		aic0	0x340	11	6
+		aic0	0x340	11	any
 
 Seagate ST0[12], Future Domain TMC-8xx based SCSI controllers 
 		sea0		5		iomem 0xc8000
-
-Symbios Logic/NCR 53C8xx based PCI SCSI host adapters
-		ncr0	any	any	any
 
 WD7000 and TMC-7000 SCSI host adapters
 		wds0	0x350	15	6
@@ -274,28 +566,14 @@ SCSI tapes	st0	first SCSI tape (by SCSI id)
 SCSI CD-ROMs	cd0	first SCSI CD-ROM (by SCSI id)
 		cd1	second SCSI CD-ROM (by SCSI id)
 
-DPT SmartCache III/IV PCI/EISA adapters 
-		dpt0	any	any	any
-
-ICP-Vortex GDT 6XXXRP series
-		gdt0	any	any	any
-
-3ware Escalade 3W-5x00, 3W-6x00
-		twe0	any	any	any
-
-Adaptec FSA-based
-		aac0	any	any	any
-
-Compaq Smart ARRAY PCI/EISA adapters
-		cac0	any	any	any
-
 SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
-		we0	0x280	9
-		we1	0x300	10
+		we0	0x280	9		iomem 0xd0000
+		we1	0x300	10		iomem 0xcc000
 
 Novell NE1000, or NE2000 Ethernet boards
 		ne0	0x240	9		iomem 0xd8000
 		ne1	0x300	10
+		ne2	0x280	9
 
 3COM 3c501 Ethernet boards
 		el0	0x300	9
@@ -306,49 +584,24 @@ Novell NE1000, or NE2000 Ethernet boards
 3COM 3c505/Etherlink+ Ethernet boards
 		eg0	0x310	5
 
-3COM 3c509, 3c579, 3c595 Ethernet boards
-		ep0	any	any
-
-3COM 3c515
-		ef0	any	any
-
-3COM 3c900, 3c900b, 3c905, 3c905b Ethernet boards
-		xl0	any	any	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
-
 AT&T StarLAN 10, EN100, or StarLAN Fiber, or 3COM 3c507 Ethernet boards
 		ie0	0x360	7		iomem 0xd0000
 
 EtherExpress boards
 		ie1	0x300	10
 
-PCNet-PCI based Ethernet boards; see above for partial list
-		le0	any	any	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
+IsoLan, NE2100, and DEPCA
+		le0	0x360	15	6
 
-DC21x4x based Ethernet boards; see above for partial list
-		de0	any	any 	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
+Intel EtherExpress PRO/10
+		ex0	0x320	5
 
-Intel EtherExpress 100 Ethernet boards
-		fxp0	any	any 	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
+PCI ethernet boards need to have an interrupt, either assigned in your
+PCI BIOS, or autoconfigured.
 
-SMC EtherPower II (EPIC) 10/100 Ethernet boards
-		tx0	any	any 	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
+Hardware not listed in the above table doesn't need any specific
+configuration.
 
-DEC Tulip clones (Macronix, Lite-On, Davicom)
-		dc0	any	any	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
-
-Alteon Tigon I/II PCI Gigabit Ethernet boards
-		ti0	any	any	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
-
-SysKonnect 984x Gigabit Ethernet boards
-		sk0	any	any	[you must assign an interrupt in your
-					 PCI BIOS, or let it do so for you]
 
 SPECIAL CARE FOR SMC ULTRA ELITE
 --------------------------------
@@ -437,4 +690,3 @@ Try to gather dmesg output from the failing configuration, for
 example by using serial console (see boot(8)) and send it to
 mickey@openbsd.org along with descriptions of your hardware setup.
 Dig in the code and fix problems.
-

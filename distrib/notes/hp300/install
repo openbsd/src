@@ -1,47 +1,19 @@
-Installing OpenBSD is a relatively complex process, but if you have
-this document in hand and are careful to read and remember the
-information which is presented to you by the install program, it
-shouldn't be too much trouble.
-
-Before you begin, you should know the geometry of your hard disk, i.e.
-the sector size (note that sector sizes other than 512 bytes are not
-currently supported), the number of sectors per track, the number of
-tracks per cylinder (also known as the number of heads), and the
-number of cylinders on the disk.  The OpenBSD kernel will try to
-discover these parameters on its own, and if it can it will print them
-at boot time.  If possible, you should use the parameters it prints.
-(You might not be able to if your disk is so old that the
-kernel can't figure out its geometry.)
+OpenBSDInstallPrelude
 
 You should now be ready to install OpenBSD.
 
-The following is a walk-through of the steps you will take while
-getting OpenBSD installed on your hard disk.  If any question has a
-default answer, it will be displayed in brackets ("[]") after the
-question.  If you wish to stop the installation, you may hit Control-C
-at any time, but if you do, you'll have to begin the installation
-process again from scratch.
+OpenBSDInstallPart2
 
 	Boot your machine from the network.  When presented with
 	the boot prompt, enter the path of your kernel (`bsd.rd'
 	is a likely choice if you are booting over the network).
 
-	You will then be presented with the OpenBSD kernel boot
-	messages.  You will want to read them, to determine your
-	disk's name and geometry.  Its name will be something like
-	"sd0" or "hd0" and any geometry or size information will be
-	printed on a line that begins with its name.  As mentioned above,
-	you will need your disk's geometry when creating OpenBSD's
-	partitions.  You will also need to know the name, to tell the
-	install tools what disk to install on.  If you cannot read the
-	messages as they scroll by, do not worry -- you can get at this
-	information later inside the install program.
+OpenBSDBootMsgs
 
 	While booting, you will probably see several warnings.  You
-	should be warned that no swap space is present, and that
-	init(8) cannot find /etc/rc.  Do not be alarmed, these are
-	completely normal.  When you reach the prompt asking you for a
-	shell name, just hit return.
+	should be warned that no swap space is present.  Do not be
+	alarmed, these are completely normal.  When you reach the prompt
+	asking you for a shell name, just hit return.
 
 	You will next be asked for your terminal type.  There are only
 	a few specific terminal types supported.  If you are using a

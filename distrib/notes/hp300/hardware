@@ -1,7 +1,8 @@
-OpenBSD/MACHINE OSREV will run on most HP 9000/300- and 400-series machines.
+OpenBSD/MACHINE OSREV will run on most HP 9000/300- and 400-series
+machines.
 The lowest amount of RAM that has ever been tested is 7.5M, though it
-may run with less.  Certainly, if you wish to run X, more RAM is
-recommended.
+may run with less. A GENERIC kernel won't run in 4M, while a custom
+kernel can fit.  However, if you wish to run X, more RAM is recommended.
 
 The following HP hardware is supported:
 

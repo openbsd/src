@@ -13,7 +13,7 @@ OpenBSDrd
 		bsd.scsi3	A kernel with SCSI target 3 re-mapped as 0
 				and 0 mapped as 3.
 
-		installboot	The OpenBSD/sparc boot loader installation`
+		installboot	The OpenBSD/sparc boot loader installation
 				program
 		bootxx		The OpenBSD/sparc boot block
 		boot		The OpenBSD/sparc secondary boot loader

@@ -1,11 +1,13 @@
 TopPart
 
-		cd{:--:}OSrev.fs The standard MACHINE boot and installation
-				CD image; see below.
-
 OpenBSDdistsets
 
 OpenBSDbsd
+
+OpenBSDrd
+
+		cd{:--:}OSrev.fs The standard MACHINE boot and installation
+				CD image; see below.
 
 There are several ways to boot a supported PowerPC Macintosh system into
 the OpenBSD installer.  Unfortunately they all currently require some
@@ -117,4 +119,3 @@ OpenBSDxshare(1.7M,8.1M)
 OpenBSDxfont(11.6M,7.3M)
 
 OpenBSDxserv(4.4M,5.4M)
-

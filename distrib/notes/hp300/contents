@@ -12,11 +12,8 @@ OpenBSDrd
 		SYS_UBOOT	Unified boot file, used for booting from
 				the network.
 
-		HP-IB.geometry	A file containing geometry for some HP-IB
-				disk drives.
-
-		uboot.raw	Raw boot file, used internally for booting
-				from the CDROM.
+		SYS_CDBOOT	Raw boot file, used for booting from
+				CDROM.
 
 DistributionDescription
 

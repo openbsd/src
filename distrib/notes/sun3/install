@@ -1,5 +1,4 @@
-Installing OpenBSD is a relatively complex process, but if you have
-this document in hand it shouldn't be too much trouble.
+OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD miniroot that can
@@ -14,24 +13,6 @@ use afterwards.  (see ``Installing using a diskless setup'' below).
 It is also possible to install OpenBSD "manually" from a running SunOS
 system, using SunOS tools and gnu tar and gunzip (see ``Installing from
 SunOS'' below).
-
-
-This section of the install document is really broken into several parts:
-
-	- booting from the installation media
-	- the miniroot install script
-	- after completing an installation
-	- installing from Sun OS
-	- net boot or diskless setup information
-
-The first section explains how to run tho install scripts. The second
-section gets you up to the point where you've booted the kernel from
-whatever media or setup described in the previous section, to where you
-have to respond to prompts from the install script.  The next section
-describes the path through the install script, and the remainder are
-notes which might be useful, but outside the bounds of simple "how to"
-instructions.
-
 
 
 Booting from the Installation Media:
@@ -67,7 +48,7 @@ install or upgrade procedure. Proceed to the section ``Running the
 installation scripts'' below.
 
 
-Installing using a diskless setup
+Installing using a diskless setup:
 
 First, you must setup a diskless client configuration on a server. If
 you are using a OpenBSD system as the boot-server, have a look at the
@@ -92,68 +73,56 @@ scripts'' below.
 In order to have a sun3 machine boot diskless by default, you need to
 do some nvram wizardry:
 
-	> q
-	18
+	> q 18
 	12
+then, if your machine is a model 3/50 or 3/60, continue with:
 	6c
 	65
 	00
 	00
 	00
+or, for other sun3 machines:
+	69
+	65
+	00
+	00
+	00
+and return to the prom prompt with:
 	q
 	>
 
-The miniroot install script:
+The above set of commands has changed the boot path strategy to the
+network interface, thus a diskless boot.
+To change the strategy in diagnostic mode (when the "Diag/Norm" switch
+is set to "Diag"), enter the same set of data after a "q 22" command
+instead of "q 18".
+Remember that the prom having a limited number of write cycles, you
+shouldn't abuse this feature.
 
-The following is a walk-through of the steps you will take while
-getting OpenBSD installed on your hard disk.  If any question has a
-default answer, it will be displayed in brackets ("[]") after the
-question.  If you wish to stop the installation, you may hit Control-C
-at any time, but if you do, you may have to begin the installation
-process again from scratch.  Using Control-Z to suspend the process
-may be a better option. 
+
+OpenBSDInstallPart2
 
 	Boot your machine from the installation media as described above.
 
-	It will take a while to load the kernel especially from a floppy
-	or slow network connection, most likely more than a minute.  If
+	It will take a while to load the kernel especially from a
+	slow network connection, most likely more than a minute.  If
 	some action doesn't eventually happen, or the spinning cursor has
 	stopped and nothing further has happened, either your boot medias
 	is probably bad, your diskless setup isn't correct or you may have
 	a hardware or configuration problem.
 
-	You will then be presented with the OpenBSD kernel boot
-	messages.  You will want to read them to determine your
-	disk's name and geometry.  Its name will be something like
-	"sd0" or "wd0" and the geometry will be printed on a line that
-	begins with its name.  As mentioned above, you will need your
-	disk's geometry when creating OpenBSD partitions.  You will
-	also need to know the device name to tell the install tools
-	what disk to install on.
+OpenBSDBootMsgs
 
 	While booting, you will probably see several warnings.  You
 	may be warned that the kernel can't figure out what device
 	it booted from and that no swap space is present.  Do not be
-	alarmed, these are completely normal.  The first warning
-	occurs because while OpenBSD/sun3 can boot from the floppy
-	drive, the kernel itself lacks a floppy driver for some
-        architectures.
-
-	When the loading process is complete, the boot floppy will be
-	ejected and you will be prompted to insert a filesystem floppy,
-	just hit return since the filesystem is contained in the kernel
-	image just loaded.  Next there will be a prompt asking you for
-	a shell name, just hit return to start executing the installation
-	setup script.
+	alarmed, these are completely normal.
 
 	You will next be asked for your terminal type.  If you are
 	installing from a keyboard/monitor console, the default of
 	"sun" if correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt100).  Next you
-	will be prompted for a choice of which text editor to use at
-	several places in the install script.  You will probably want
-	to use "vi" if your terminal supports this.
+	(If your terminal type is xterm, just use vt100).
 
 	After entering the terminal type you will be greeted by a
 	welcome message and asked if you really want to continue.
@@ -252,31 +221,15 @@ OpenBSDCommonFS
 		
 OpenBSDCommonURL
 
-After completing an installation:
-
-Now try a reboot.  (If needed, swap your scsi id's first).  Initially
-I'd suggest you "boot sd()bsd -bs", then try multiuser after that.
-if you boot single-user the OpenBSD incantation to make the root
-filesystem writable is
-
-    OpenBSD# mount -u /dev/sd0a /
-
 OpenBSDCongratulations
 
 If you will be running your OpenBSD system from a serial console, you may
 need to edit /etc/ttys and change the terminal type, and getty method from
-"sun" and "console" to "vt100" and "std.9600" or something similar.  Also
-when running from a serial console, you may wish to adjust the eeprom
-settings for input-device, output-device, screen-#columns, and screen-#rows
-as appropriate.  
+"sun" and "console" to "vt100" and "std.9600" or something similar.
 
 In order to use 'tip' on OpenBSD/sun3, you'll need to edit /etc/ttys
 and add "local" to the end of the tty configuration line, and run 
 'ttyflags -a' to put your changes into effect.
-
-On installing X11 for OpenBSD/sun3, you may wish to add a line similar to
-'ldconfig /usr/X11R6/lib' to the end of your /etc/rc.local file.  This will
-add the X libraries to your dynamic linking search path at boot time.
 
 If you are unfamiliar with UN*X-like system administration, 
 it's recommended that you buy a book that discusses it.
@@ -288,10 +241,11 @@ Installing from SunOS.
 You need a SunOS machine to install OpenBSD.  You also need at
 least the following pieces:
 
-    the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgz)
+    the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgz and
+        etc{:--:}OSrev.tgz)
     gunzip (GNU gzip) SunOS binary
     gtar (GNU tar) SunOS binary
-    a "/boot" file from a SunOS machine
+    a "/boot" file from a SunOS sun3 machine (not sun3x!)
     a kernel, most likely "/bsd"
 
 All these pieces, except "/boot" and the GNU utilities are supplied in
@@ -302,22 +256,22 @@ OpenBSD/sun3 uses SunOS disk labels.)  Give yourself adequate
 partition sizes.  Here is an example layout:
 
     partition    size   offset	  will be..
-    sd0a        48825        0	  /
-    sd0b        69825    48825	  swap
-    sd0c       639450        0	  `whole disk'
-    sd0d        65625   118650    /var
-    sd0g       455175   184275	  /usr
-
-FYI, this particular disk setup is used on a model 3/60 connected
-to a shoebox with a Micropolis 1558 ESDI drive.
+    sd0a        80000        0	  /
+    sd0b       256000    80000	  swap
+    sd0c      4165271        0	  `whole disk'
+    sd0d       100000   436000    /var
+    sd0f       100000   336000    /tmp
+    sd0g      3229271   936000    /usr
+    sd0h       400000   536000    /var/tmp
 
 Use SunOS to newfs the partitions which will have filesystems on them.
 (OpenBSD's filesystem format is identical to SunOS).
 
     sunos# newfs /dev/rsd0a
     [... lots of output]
-    sunos# newfs /dev/rsd0g
-    [... lots of output]
+ 
+Repeat for any other partition (in this example, /dev/rsd0d, /dev/rsd0f,
+/dev/rsd0g, /dev/rsd0h).
 
 NOTE: If you are able to, there is a performance benefit from
 newfs'ing using OpenBSD.  If you newfs using the OpenBSD newfs command,
@@ -331,16 +285,19 @@ Mount those partitions in a tree formation, under /mnt; ie:
     sunos# df
     Filesystem            kbytes    used   avail capacity  Mounted on
     [...]
-    /dev/sd0a              11501       0   11501     0%    /mnt
-    /dev/sd0g             179529       0  179529     0%    /mnt/usr
+    /dev/sd0a              38427       0   38427     0%    /mnt
+    /dev/sd0d              48249       0   48249     0%    /mnt/var
+    /dev/sd0f              48249       0   48249     0%    /mnt/tmp
+    /dev/sd0g            1564024       0 1564024     0%    /mnt/usr
+    /dev/sd0h             193536       0  193536     0%    /mnt/var/tmp
 
 Place a standard SunOS "boot" program in /mnt (your new root
 partition), and use the SunOS command "installboot" to make it work.
 The installboot man page says to do something like this:
 
-    sunos# cp /usr/mdec/sdboot /mnt/boot
+    sunos# cp /usr/mdec/ufsboot /mnt/boot
     sunos# sync; sync
-    sunos# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootsd /dev/rsd0a
+    sunos# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootxx /dev/rsd0a
 
 You can now extract the provided "*.tgz files onto your disk.
 
@@ -356,10 +313,11 @@ And finally copy the OpenBSD kernel onto your disk.
     sunos# cp bsd /mnt/bsd
 
 The GNU gunzip and gtar programs are not distributed as part of SunOS,
-but may be present in your /usr/local/bin.  If not, you will need to obtain
-them from a GNU archive and install before proceeding.  The OpenBSD
-tar files are in the "new format" that includes directory information,
-and the standard SunOS tar will not extract from them successfully.
+but may be present in your /usr/local/bin.  If not, you will need to
+obtain them from a GNU archive and install before proceeding.  The
+OpenBSD tar files are in the "new format" that includes directory
+information, and the standard SunOS tar will not extract from them
+successfully.
 
 After the files have been extracted, setup /mnt/etc/fstab to match
 your actual disk layout.  (Minus the "/mnt" component of each path, of
@@ -451,4 +409,3 @@ A few configuration files need to be edited:
 Now you must populate the the `/dev' directory for your client. For
 this, you can simply change your working directory to `<root>/dev'
 and run the MAKEDEV script: `sh MAKEDEV all'.
-

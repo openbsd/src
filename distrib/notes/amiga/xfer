@@ -1,7 +1,7 @@
 Installation is supported from several media types, including:
 
 	AmigaDOS Fast file system partitions
-	Berkeley FFS partitions
+	FFS partitions
 	Tape
 	Remote NFS partition
 	FTP
@@ -76,7 +76,7 @@ To prepare for installing via NFS:
 	/etc/exports file of the NFS server and resetting
 	mountd, acts which will require superuser privileges.
 	Note the numeric IP address of the NFS server and of
-	the router closest to the the new OpenBSD machine,
+	the router closest to the new OpenBSD machine,
 	if the NFS server is not on a network which is
 	directly attached to the OpenBSD machine.
 

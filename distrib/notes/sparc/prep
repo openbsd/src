@@ -80,14 +80,14 @@ both OpenBSD and SunOS environments on the same system.
     about missing . and .. entries.  Do *not* try to "correct" these
     problems, as attempting to do so will completely trash the filesystem.
 
-    You should avoid using the new OpenBSD "-s enable" option to the 
-    "tunefs" command, which enable the soft update feature.  
+    You should avoid using soft updates (option softdep in /etc/fstab)
+    on your shared filesystems.
     Although untested, it is likely that SunOS would be confused by a 
     filesystem with soft update flags enabled.
 
 The OpenBSD "Sun Compatible" disklabel have been extended to support 16
 partitions, which may be compatible with Solaris, but the old SunOS
-format(8) utility only sees the first 8 partititions and may "lose"
+format(8) utility only sees the first 8 partitions and may "lose"
 information about the extended partitions.
 
 Use SunOS format(8) only with *extreme* caution on drives that contain

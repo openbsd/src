@@ -31,10 +31,9 @@ operating system's partition, before beginning the upgrade process.
 	with the boot prompt (the "boot>" prompt), hit return.
 
 	While booting, you will probably see several warnings.  You should
-	be warned that no swap space is present, and that init(8) cannot
-	find /etc/rc.  Do not be alarmed, these are completely normal.
-	When you reach the prompt asking you for a shell name, just hit
-	return.
+	be warned that no swap space is present.  Do not be alarmed,
+	these are completely normal.  When you reach the prompt asking
+	you for a shell name, just hit return.
 	
 	You will be presented with a welcome message and a prompt.  If you
 	are upgrading from a pre-OpenBSD 1.0 release, you should upgrade

@@ -55,7 +55,7 @@ OpenBSD.  It is included in the i386 tools area of this distribution as
 a convenience.  It is strongly advised that you read its documentation
 and understand the consequences of your actions before using it.  In some
 cases, defragmenting your disk and running fips may be much faster than
-reinstalling your DOS partitition from the backup.
+reinstalling your DOS partition from the backup.
 
 Your hard disk is now prepared to have OpenBSD installed on it, and
 you should proceed with the installation instructions.
