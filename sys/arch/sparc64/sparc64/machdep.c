@@ -152,7 +152,7 @@ struct vm_map *mb_map = NULL;
 extern vaddr_t avail_end;
 
 int	physmem;
-int	_randseed;
+u_long	_randseed;
 extern	caddr_t msgbufaddr;
 
 /*
@@ -250,7 +250,7 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	printf("total memory = %d\n", physmem);
+	printf("total memory = %d\n", physmem * PAGE_SIZE);
 
 	/*
 	 * Find out how much space we need, allocate it,
