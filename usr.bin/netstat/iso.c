@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.c,v 1.14 2004/03/13 22:02:13 deraadt Exp $	*/
+/*	$OpenBSD: iso.c,v 1.15 2004/05/07 15:51:11 millert Exp $	*/
 /*	$NetBSD: iso.c,v 1.12 1995/10/03 21:42:38 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: iso.c,v 1.14 2004/03/13 22:02:13 deraadt Exp $";
+static char *rcsid = "$OpenBSD: iso.c,v 1.15 2004/05/07 15:51:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -417,7 +417,7 @@ isonetprint(struct iso_addr *iso, char *sufx, u_short sufxlen, int islocal)
 	if (!nflag) {
 		if ((cp -line)>10) {
 			cp = line+10;
-			bzero(cp, sizeof(line)-10);
+			bzero(cp, strlen(cp));
 		}
 	}
 

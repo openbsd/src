@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93
- *	$Id: mk-amd-map.c,v 1.7 2003/06/02 23:36:52 millert Exp $
+ *	$Id: mk-amd-map.c,v 1.8 2004/05/07 15:51:12 millert Exp $
  */
 
 /*
@@ -48,7 +48,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: mk-amd-map.c,v 1.7 2003/06/02 23:36:52 millert Exp $";
+static char rcsid[] = "$Id: mk-amd-map.c,v 1.8 2004/05/07 15:51:12 millert Exp $";
 static char sccsid[] = "@(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93";
 #endif /* not lint */
 
@@ -267,23 +267,24 @@ main(int argc, char *argv[])
 	}
 
 	if (!printit) {
-		len = strlen(map);
 #ifdef USING_DB
-		mappag = (char *) malloc(len + 5);
+		len = strlen(map) + 4;
+		mappag = (char *) malloc(len);
 		if (!mappag) {
 			perror("mk-amd-map: malloc");
 			exit(1);
 		}
 		mktemp(maptmp);
-		snprintf(maptpag, sizeof(maptpag), "%s%s", maptmp, DBM_SUFFIX);
+		snprintf(maptpag, sizeof(maptpag), "%s.db", maptmp);
 		if (remove_file(maptpag) < 0) {
 			fprintf(stderr, "Can't remove existing temporary file");
 			perror(maptpag);
 			exit(1);
 		}
 #else
-		mappag = (char *) malloc(len + 5);
-		mapdir = (char *) malloc(len + 5);
+		len = strlen(map) + 5;
+		mappag = (char *) malloc(len);
+		mapdir = (char *) malloc(len);
 		if (!mappag || !mapdir) {
 			perror("mk-amd-map: malloc");
 			exit(1);
@@ -325,7 +326,7 @@ main(int argc, char *argv[])
 				rc = 1;
 			} else {
 #ifdef USING_DB
-				snprintf(mappag, sizeof(mappag), "%s%s", map, DBM_SUFFIX);
+				snprintf(mappag, len, "%s.db", map);
 				if (rename(maptpag, mappag) < 0) {
 					fprintf(stderr, "Couldn't rename %s to ", maptpag);
 					perror(mappag);
@@ -334,8 +335,8 @@ main(int argc, char *argv[])
 					rc = 1;
 				}
 #else
-				snprintf(mappag, sizeof(mappag), "%s.pag", map);
-				snprintf(mapdir, sizeof(mapdir), "%s.dir", map);
+				snprintf(mappag, len, "%s.pag", map);
+				snprintf(mapdir, len, "%s.dir", map);
 				if (rename(maptpag, mappag) < 0) {
 					fprintf(stderr, "Couldn't rename %s to ", maptpag);
 					perror(mappag);
