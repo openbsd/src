@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.477 2005/01/07 18:58:39 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.478 2005/01/20 18:07:33 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2409,7 +2409,7 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 			}
 			break;
 		case PF_RDR: {
-			if (pf_map_addr(r->af, r, saddr, naddr, NULL, sn))
+			if (pf_map_addr(pd->af, r, saddr, naddr, NULL, sn))
 				return (NULL);
 
 			if (r->rpool.proxy_port[1]) {
