@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.12 1997/10/24 06:49:20 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.13 1997/10/24 22:15:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -79,12 +79,11 @@ struct cfdriver bios_cd = {
 	NULL, "bios", DV_DULL
 };
 
-extern bus_addr_t bootargv;
-extern int bootargc;
 extern u_int bootapiver; /* locore.s */
 extern dev_t bootdev;
 
 bios_diskinfo_t *bios_diskinfo;
+u_int32_t	bios_cksumlen;
 
 bios_diskinfo_t *bios_getdiskinfo __P((dev_t));
 
@@ -94,29 +93,18 @@ biosprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct bios_attach_args *bia = aux;
-	bus_space_handle_t hsp;
-	int error;
 
 #ifdef BIOS_DEBUG
 	printf("%s%d: boot API ver %x, %x; args %p[%d]\n",
 	       bia->bios_dev, bios_cd.cd_ndevs,
-	       bootapiver, BOOT_APIVER, bootargv, bootargc);
+	       bootapiver, BOOT_APIVER, bootargp, bootargc);
 #endif
 	/* there could be only one */
 	if (bios_cd.cd_ndevs || strcmp(bia->bios_dev, bios_cd.cd_name))
 		return 0;
 
-	if (bootapiver < BOOT_APIVER || bootargv == NULL)
+	if (bootapiver < BOOT_APIVER || bootargp == NULL )
 		return 0;
-
-	if ((error = bus_space_map(bia->bios_memt,
-				   bootargv, bootargc, 1, &hsp)) != 0) {
-#ifdef DEBUG
-		printf("bios0: bus_space_map() == %d\n", error);
-#endif
-		return 0;
-	}
-	bus_space_unmap(bia->bios_memt, hsp, bootargc);
 
 	return 1;
 }
@@ -133,15 +121,7 @@ biosattach(parent, self, aux)
 #endif
 	u_int8_t *va = ISA_HOLE_VADDR(0xffff0);
 	char *str;
-	bus_space_handle_t hsp;
 	bootarg_t *p, *q;
-
-	if (bus_space_map(bia->bios_memt, bootargv, bootargc, 1, &hsp) != 0) {
-#ifdef DEBUG
-		panic("getbootargs: can't map low memory");
-#endif
-		return;
-	}
 
 	switch (va[14]) {
 	default:
@@ -158,8 +138,8 @@ biosattach(parent, self, aux)
 	       str, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
 
 	printf("%s:", sc->sc_dev.dv_xname);
-	p = (bootarg_t *)hsp;
-	for(q = p; q->ba_type != BOOTARG_END; q = q->ba_next) {
+
+	for(q = p = bootargp; q->ba_type != BOOTARG_END; q = q->ba_next) {
 		q->ba_next = (bootarg_t *)((caddr_t)q + q->ba_size);
 		switch (q->ba_type) {
 		case BOOTARG_MEMMAP:
@@ -172,6 +152,10 @@ biosattach(parent, self, aux)
 		case BOOTARG_APMINFO:
 			printf(" apminfo");
 			apm = (bios_apminfo_t *)q->ba_arg;
+			break;
+		case BOOTARG_CKSUMLEN:
+			printf(" cksumlen");
+			bios_cksumlen = (u_int32_t)q->ba_arg;
 			break;
 		default:
 		}
@@ -350,6 +334,8 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return sysctl_rdint(oldp, oldlenp, newp, cnvmem);
 	case BIOS_EXTMEM:
 		return sysctl_rdint(oldp, oldlenp, newp, extmem);
+	case BIOS_CKSUMLEN:
+		return sysctl_rdint(oldp, oldlenp, newp, bios_cksumlen);
 	default:
 		return EOPNOTSUPP;
 	}

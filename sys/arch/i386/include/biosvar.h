@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.22 1997/10/24 06:49:19 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.23 1997/10/24 22:15:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -65,7 +65,8 @@
 #define	BIOS_DISKINFO		2	/* struct: BIOS boot device info */
 #define	BIOS_CNVMEM		3	/* int: amount of conventional memory */
 #define	BIOS_EXTMEM		4	/* int: amount of extended memory */
-#define	BIOS_MAXID		5	/* number of valid machdep ids */
+#define BIOS_CKSUMLEN		5	/* int: disk cksum block count */
+#define	BIOS_MAXID		6	/* number of valid machdep ids */
 
 #define	CTL_BIOS_NAMES { \
 	{ 0, 0 }, \
@@ -73,6 +74,7 @@
 	{ "diskinfo", CTLTYPE_STRUCT }, \
 	{ "cnvmem", CTLTYPE_INT }, \
 	{ "extmem", CTLTYPE_INT }, \
+	{ "cksumlen", CTLTYPE_INT }, \
 }
 
 #define	BOOTARG_MEMMAP 0
@@ -104,7 +106,12 @@ typedef struct _bios_diskinfo {
 
 	/* Checksum section */
 	u_int32_t checksum;	/* Checksum for drive */
-	u_int checklen;		/* Number of sectors done */
+
+	/* Misc. flags */
+	u_int32_t flags;
+#define BDI_INVALID	0x00000001	/* I/O error during checksumming */
+#define BDI_GOODLABEL	0x00000002	/* Had SCSI or ST506/ESDI disklabel */
+#define BDI_BADLABEL	0x00000004	/* Had another disklabel */
 
 } bios_diskinfo_t;
 
@@ -119,6 +126,8 @@ typedef struct _bios_apminfo {
 	u_int	apm_data_len;
 	u_int	apm_entry;
 } bios_apminfo_t;
+
+#define BOOTARG_CKSUMLEN 3		/* u_int32_t */
 
 #if defined(_KERNEL) || defined (_STANDALONE)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 1997/09/24 22:28:15 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.21 1997/10/24 22:15:07 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -92,6 +92,7 @@
 #include <machine/cpu.h>
 
 #include <dev/isa/isareg.h>
+#include <stand/boot/bootarg.h>
 #include <i386/isa/isa_machdep.h>
 
 #include "isa.h"
@@ -203,7 +204,7 @@ void pmap_pvdump __P((vm_offset_t pa));
  */
 pt_entry_t	*CMAP1, *CMAP2, *XXX_mmap;
 caddr_t		CADDR1, CADDR2, vmmap;
-pt_entry_t	*msgbufmap;
+pt_entry_t	*msgbufmap, *bootargmap;
 #endif	/* BSDVM_COMPAT */
 
 /*
@@ -227,8 +228,9 @@ pmap_bootstrap(virtual_start)
 	pt_entry_t *pte;
 #endif
 
-	/* XXX: allow for msgbuf */
-	avail_end -= i386_round_page(sizeof(struct msgbuf));
+	/* XXX: allow for msgbuf and bootargv */
+	avail_end -= i386_round_page(sizeof(struct msgbuf)) +
+	    2 * i386_round_page(bootargc);
 
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -276,6 +278,7 @@ pmap_bootstrap(virtual_start)
 	SYSMAP(caddr_t		,CMAP2		,CADDR2	   ,1		)
 	SYSMAP(caddr_t		,XXX_mmap	,vmmap	   ,1		)
 	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,1		)
+	SYSMAP(bootarg_t *	,bootargmap	,bootargp  ,2		)
 	virtual_avail = va;
 #endif
 

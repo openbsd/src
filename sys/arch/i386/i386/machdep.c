@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 1997/10/22 23:37:12 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 1997/10/24 22:15:06 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -74,6 +74,7 @@
 #endif
 
 #include <dev/cons.h>
+#include <stand/boot/bootarg.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -151,6 +152,7 @@ int	cpu_class;
 struct	msgbuf *msgbufp;
 int	msgbufmapped;
 
+bootarg_t *bootargp;
 vm_map_t buffer_map;
 
 extern	vm_offset_t avail_start, avail_end;
@@ -197,7 +199,7 @@ cpu_startup()
 	caddr_t v;
 	int sz;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
+	vm_offset_t minaddr, maxaddr, va, pa;
 	vm_size_t size;
 	struct pcb *pcb;
 	int x;
@@ -205,12 +207,33 @@ cpu_startup()
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
+	pa = avail_end;
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
+	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++, pa += NBPG)
 		pmap_enter(pmap_kernel(),
 		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG),
-		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+		    pa, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
+
+	/*
+	 * The boot arguments can be anywhere in the low memory area, but
+	 * we want it more nicely aligned to not have troubles in the pmap.
+	 * So we have allocated an area right after msgbuf which we map now.
+	 * We also temporarily map the old area while copying the arguments.
+	 */
+	if (bootargv != NULL) {
+		va = (vm_offset_t)bootargp;
+		for (i = 0; i < btoc(bootargc); i++, va += NBPG, pa += NBPG)
+			pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, TRUE);
+
+		minaddr = i386_trunc_page(bootargv);
+		maxaddr = i386_round_page(bootargv + bootargc) + 1;
+		for (i = 0; i < maxaddr - minaddr; i += NBPG)
+			pmap_enter(pmap_kernel(), va + i * NBPG, 
+			    minaddr + i, VM_PROT_READ, TRUE);
+		bcopy((void*)(va + (bootargv - minaddr)), bootargp, bootargc);
+	} else
+		bootargp = NULL;
 
 	printf(version);
 	startrtclock();
@@ -1239,12 +1262,11 @@ init386(first_avail)
 	 * extent map.  This is done before the addresses are
 	 * page rounded just to make sure we get them all.
 	 */
-#if 0
 	if (extent_alloc_region(iomem_ex, 0, IOM_BEGIN, EX_NOWAIT)) {
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE BASE RAM FROM IOMEM EXTENT MAP!\n");
 	}
-#endif
+
 	avail_end = biosextmem ? IOM_END + biosextmem * 1024
 	    : biosbasemem * 1024;	/* just temporary use */
 
@@ -1273,6 +1295,7 @@ init386(first_avail)
 	 * These guys should be page-aligned.
 	 */
 	hole_start = biosbasemem * 1024;
+
 	/* we load right after the I/O hole; adjust hole_end to compensate */
 	hole_end = round_page(first_avail);
 	avail_next = avail_start;
