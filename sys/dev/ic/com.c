@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.73 2001/09/30 15:07:52 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.74 2001/09/30 15:20:59 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ static u_char tiocm_xxx2mcr __P((int));
 
 void	compwroff __P((struct com_softc *));
 void	com_raisedtr __P((void *));
+void	com_enable_debugport	__P((struct com_softc *));
 
 struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
@@ -128,7 +129,6 @@ int	commajor;
 static int com_kgdb_addr;
 static bus_space_tag_t com_kgdb_iot;
 static bus_space_handle_t com_kgdb_ioh;
-static int com_kgdb_attached;
 
 int    com_kgdb_getc __P((void *));
 void   com_kgdb_putc __P((void *, int));
@@ -337,8 +337,6 @@ com_attach_subr(sc)
 	    !ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
 		SET(sc->sc_hwflags, COM_HW_KGDB);
-		com_enable_debugport(sc);
-		com_kgdb_attached = 1;
 	}
 #endif /* KGDB */
 
@@ -373,9 +371,10 @@ com_attach_subr(sc)
 	if (!sc->enable)
 		sc->enabled = 1;
 
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE|COM_HW_KGDB))
+		com_enable_debugport(sc);
 }
 
-#ifdef KGDB
 void
 com_enable_debugport(sc)
 	struct com_softc *sc;
@@ -391,7 +390,6 @@ com_enable_debugport(sc)
 
 	splx(s);
 }
-#endif /* KGDB */
 
 int
 com_detach(self, flags)

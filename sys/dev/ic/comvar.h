@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.28 2001/09/30 01:19:58 art Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.29 2001/09/30 15:20:59 art Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -161,10 +161,6 @@ void	comcnputc	__P((dev_t, int));
 void	comcnpollc	__P((dev_t, int));
 int	com_common_getc	__P((bus_space_tag_t, bus_space_handle_t));
 void	com_common_putc	__P((bus_space_tag_t, bus_space_handle_t, int));
-
-#if defined(DDB) || defined(KGDB)
-void	com_enable_debugport	__P((struct com_softc *));
-#endif
 
 #ifdef KGDB
 int	com_kgdb_attach	__P((bus_space_tag_t, int, int, int, tcflag_t));
