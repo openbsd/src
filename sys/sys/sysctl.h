@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.30 2000/06/18 17:59:55 niklas Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.31 2000/07/01 02:55:57 pjanzen Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ struct ctlname {
 #define	KERN_SECURELVL	 	 9	/* int: system security level */
 #define	KERN_HOSTNAME		10	/* string: hostname */
 #define	KERN_HOSTID		11	/* int: host identifier */
-#define	KERN_CLOCKRATE		12	/* struct: struct clockrate */
+#define	KERN_CLOCKRATE		12	/* struct: struct clockinfo */
 #define	KERN_VNODE		13	/* struct: vnode structures */
 #define	KERN_PROC		14	/* struct: process entries */
 #define	KERN_FILE		15	/* struct: file entries */
