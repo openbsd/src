@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_engine.c,v 1.6 2001/09/20 17:02:31 mpech Exp $	*/
-/*	$NetBSD: rf_engine.c,v 1.9 2000/01/08 22:57:31 oster Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.7 2001/12/29 21:51:18 tdeval Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.10 2000/08/20 16:51:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -67,7 +67,14 @@
 #include "rf_shutdown.h"
 #include "rf_raid.h"
 
-static void DAGExecutionThread(RF_ThreadArg_t arg);
+#ifdef RAID_AUTOCONFIG
+#define	RF_ENGINE_PID	10
+extern int	  numraid;
+extern pid_t	  lastpid;
+static void	**rf_startuphook_cookie;
+void DAGExecutionThread_pre(RF_ThreadArg_t arg);
+#endif	/* RAID_AUTOCONFIG */
+void DAGExecutionThread(RF_ThreadArg_t arg);
 
 #define DO_INIT(_l_,_r_) { \
   int _rc; \
@@ -86,14 +93,28 @@ static void DAGExecutionThread(RF_ThreadArg_t arg);
 /*
  * XXX Is this spl-ing really necessary?
  */
-#define DO_LOCK(_r_)      { ks = splbio(); RF_LOCK_MUTEX((_r_)->node_queue_mutex); }
-#define DO_UNLOCK(_r_)    { RF_UNLOCK_MUTEX((_r_)->node_queue_mutex); splx(ks); }
-#define DO_WAIT(_r_)   tsleep(&(_r_)->node_queue, PRIBIO, "raidframe nq",0)
-#define DO_SIGNAL(_r_)    wakeup(&(_r_)->node_queue)
+#define DO_LOCK(_r_) \
+do { \
+	ks = splbio(); \
+	RF_LOCK_MUTEX((_r_)->node_queue_mutex); \
+} while (0)
 
-static void rf_ShutdownEngine(void *);
+#define DO_UNLOCK(_r_) \
+do { \
+	RF_UNLOCK_MUTEX((_r_)->node_queue_mutex); \
+	splx(ks); \
+} while (0)
 
-static void 
+#define DO_WAIT(_r_) \
+	RF_WAIT_COND((_r_)->node_queue, (_r_)->node_queue_mutex)
+
+/* XXX RF_SIGNAL_COND? */
+#define DO_SIGNAL(_r_) \
+	RF_BROADCAST_COND((_r_)->node_queue)
+
+void rf_ShutdownEngine(void *);
+
+void 
 rf_ShutdownEngine(arg)
 	void   *arg;
 {
@@ -111,6 +132,7 @@ rf_ConfigureEngine(
     RF_Config_t * cfgPtr)
 {
 	int     rc;
+	char	raidname[16];
 
 	DO_INIT(listp, raidPtr);
 
@@ -127,20 +149,36 @@ rf_ConfigureEngine(
 	if (rf_engineDebug) {
 		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
 	}
-	if (RF_CREATE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr,"raid")) {
-		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
-		return (ENOMEM);
+#ifdef RAID_AUTOCONFIG
+	if (initproc == NULL) {
+		if (rf_startuphook_cookie == NULL) {
+			rf_startuphook_cookie =
+			    malloc(numraid * sizeof(void*),
+				   M_RAIDFRAME, M_NOWAIT);
+			if (rf_startuphook_cookie == NULL)
+				return (ENOMEM);
+			bzero(rf_startuphook_cookie, numraid * sizeof(void*));
+		}
+		rf_startuphook_cookie[raidPtr->raidid] =
+			startuphook_establish(DAGExecutionThread_pre, raidPtr);
+	} else {
+#endif	/* RAID_AUTOCONFIG */
+		snprintf(&raidname[0], 16, "raid%d", raidPtr->raidid);
+		if (RF_CREATE_THREAD(raidPtr->engine_thread,
+		    DAGExecutionThread, raidPtr, &raidname[0])) {
+			RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
+			return (ENOMEM);
+		}
+		if (rf_engineDebug) {
+			printf("raid%d: Created engine thread\n", raidPtr->raidid);
+		}
+		RF_THREADGROUP_STARTED(&raidPtr->engine_tg);
+#ifdef RAID_AUTOCONFIG
 	}
-	if (rf_engineDebug) {
-		printf("raid%d: Created engine thread\n", raidPtr->raidid);
-	}
-	RF_THREADGROUP_STARTED(&raidPtr->engine_tg);
+#endif
 	/* XXX something is missing here... */
 #ifdef debug
 	printf("Skipping the WAIT_START!!\n");
-#endif
-#if 0
-	RF_THREADGROUP_WAIT_START(&raidPtr->engine_tg);
 #endif
 	/* engine thread is now running and waiting for work */
 	if (rf_engineDebug) {
@@ -267,7 +305,7 @@ FireNode(RF_DagNode_t * node)
 			       node->dagHdr->raidPtr->raidid,
 			       (unsigned long) node, node->name);
 		}
-		if (node->flags & RF_DAGNODE_FLAG_YIELD)
+		if (node->flags & RF_DAGNODE_FLAG_YIELD) {
 #if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(_KERNEL)
 			/* thread_block(); */
 			/* printf("Need to block the thread here...\n"); */
@@ -276,6 +314,7 @@ FireNode(RF_DagNode_t * node)
 #else
 			thread_block();
 #endif
+                }
 		(*(node->undoFunc)) (node);
 		break;
 	default:
@@ -704,7 +743,49 @@ rf_DispatchDAG(
  * characteristics from the aio_completion_thread.
  */
 
-static void 
+#ifdef RAID_AUTOCONFIG
+void 
+DAGExecutionThread_pre(RF_ThreadArg_t arg)
+{
+	RF_Raid_t *raidPtr;
+	char raidname[16];
+	int len;
+	pid_t oldpid = lastpid;
+
+	raidPtr = (RF_Raid_t *) arg;
+
+	if (rf_startuphook_cookie && rf_startuphook_cookie[raidPtr->raidid])
+		startuphook_disestablish(rf_startuphook_cookie[raidPtr->raidid]);
+
+	if (rf_engineDebug) {
+		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
+	}
+	lastpid = -2;
+
+	len = sprintf(&raidname[0], "raid%d", raidPtr->raidid);
+#ifdef DIAGNOSTIC
+	if (len >= sizeof(raidname))
+		panic("raidname expansion too long.");
+#endif /* DIAGNOSTIC */
+
+	if (RF_CREATE_THREAD(raidPtr->engine_thread, DAGExecutionThread,
+	    raidPtr, &raidname[0])) {
+		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
+		return;
+	}
+	LIST_REMOVE(raidPtr->engine_thread, p_hash);
+	raidPtr->engine_thread->p_pid = RF_ENGINE_PID + raidPtr->raidid;
+	LIST_INSERT_HEAD(PIDHASH(RF_ENGINE_PID + raidPtr->raidid),
+	    raidPtr->engine_thread, p_hash);
+	lastpid = oldpid;
+	if (rf_engineDebug) {
+		printf("raid%d: Created engine thread\n", raidPtr->raidid);
+	}
+	RF_THREADGROUP_STARTED(&raidPtr->engine_tg);
+}
+#endif	/* RAID_AUTOCONFIG */
+
+void 
 DAGExecutionThread(RF_ThreadArg_t arg)
 {
 	RF_DagNode_t *nd, *local_nq, *term_nq, *fire_nq;
@@ -713,6 +794,10 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 	int     s;
 
 	raidPtr = (RF_Raid_t *) arg;
+
+	while (!(&raidPtr->engine_tg)->created)
+		(void) tsleep((void*)&(&raidPtr->engine_tg)->created, PWAIT,
+				"raidinit", 0);
 
 	if (rf_engineDebug) {
 		printf("raid%d: Engine thread is running\n", raidPtr->raidid);

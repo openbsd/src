@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_states.c,v 1.6 2000/01/11 18:02:23 peter Exp $	*/
-/*	$NetBSD: rf_states.c,v 1.13 2000/01/09 00:00:18 oster Exp $	*/
+/*	$OpenBSD: rf_states.c,v 1.7 2001/12/29 21:51:18 tdeval Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.15 2000/10/20 02:24:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -204,6 +204,12 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 		wakeup(desc->bp);
 
 	/* 
+	 * That's all the IO for this one... unbusy the 'disk'.
+	 */
+
+	rf_disk_unbusy(desc);
+
+	/* 
 	 * Wakeup any requests waiting to go.
 	 */
 
@@ -216,6 +222,7 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 
 	/* printf("Calling biodone on 0x%x\n",desc->bp); */
 	biodone(desc->bp);	/* access came through ioctl */
+
 	if (callbackFunc)
 		callbackFunc(callbackArg);
 	rf_FreeRaidAccDesc(desc);
@@ -445,7 +452,7 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t * desc)
 		/* failed to create a dag */
 		/* this happens when there are too many faults or incomplete
 		 * dag libraries */
-		printf("[Failed to create a DAG\n]");
+		printf("[Failed to create a DAG]\n");
 		RF_PANIC();
 	} else {
 		/* bind dags to desc */
