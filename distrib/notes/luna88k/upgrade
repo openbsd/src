@@ -1,0 +1,3 @@
+dnl	$OpenBSD: upgrade,v 1.1 2004/05/16 21:52:22 miod Exp $
+Since OpenBSD/OSREV is the first MACHINE release, there is no upgrade
+functionality.

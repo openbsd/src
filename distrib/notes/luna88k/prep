@@ -1,0 +1,27 @@
+dnl	$OpenBSD: prep,v 1.1 2004/05/16 21:52:22 miod Exp $
+
+Luna-88K do not require any specific preparation prior to the OpenBSD
+installation. However, you might want to get familiar with the PROM
+interface, in order to be able to boot the installation media and, later,
+specify the correct boot parameters.
+
+The first set of DIP switches in the front panel (DIP SW1) is used to
+select the machine behaviour upon powerup, as well as the preferred
+console device.
+
+If the leftmost switch in SW1, #1, is up (off), the system will auto-boot
+from the boot device saved in nvram. If it is down (on), the boot process
+will stop at the PROM prompt.
+
+The second switch in SW1, #2, selects the console device. When down (on),
+it selects the serial console port as the console; otherwise, the graphics
+display and keyboard are used as the console.
+
+While the Luna-88K2 uses ``standard'' serial ports, the earlier Luna-88K
+have a specific connector. Wiring information for this connector can be
+found at the following URL:
+  http://www.kk.iij4u.or.jp/~taokamur/luna68k/serial.jpg
+dnl
+dnl Need to provide a short monitor description. Start from
+dnl http://www.nk-home.net/~aoyama/luna/monitor.txt
+dnl and also document nvram?

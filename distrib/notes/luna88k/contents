@@ -1,0 +1,34 @@
+dnl	$OpenBSD: contents,v 1.1 2004/05/16 21:52:22 miod Exp $
+TopPart
+
+OpenBSDdistsets
+
+OpenBSDbsd
+
+OpenBSDrd
+
+These files can be used to make a bootable tape suitable for installation.
+They can also be used to configure an NFS server to support installation
+over the network. See the section "Getting the OpenBSD system onto Useful
+Media" for more information.
+
+DistributionDescription(six)
+
+OpenBSDbase(71.9,179.7)
+
+OpenBSDcomp(13.0,40.1)
+
+OpenBSDetc(1.6,6.3)
+
+OpenBSDgame(6.7,14.8)
+
+OpenBSDman(6.4,22.8)
+
+OpenBSDmisc(2.2,7.2)
+dnl Not there yet...
+dnl
+dnl OpenBSDxbase
+dnl
+dnl OpenBSDxshare
+dnl
+dnl OpenBSDxfont

@@ -1,0 +1,3 @@
+dnl	$OpenBSD: whatis,v 1.1 2004/05/16 21:52:22 miod Exp $
+OpenBSD/MACHINE is a port of OpenBSD to the OMRON Luna-88K family of
+workstations.

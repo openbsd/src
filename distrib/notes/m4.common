@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.58 2004/05/03 15:18:18 drahn Exp $
+dnl	$OpenBSD: m4.common,v 1.59 2004/05/16 21:52:20 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -23,6 +23,7 @@ MACHINE,amiga,m68k,
 MACHINE,cats,arm,
 MACHINE,hp300,m68k,
 MACHINE,mac68k,m68k,
+MACHINE,luna88k,m88k,
 MACHINE,macppc,powerpc,
 MACHINE,mvme68k,m68k,
 MACHINE,mvme88k,m88k,
