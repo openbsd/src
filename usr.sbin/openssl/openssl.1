@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.43 2004/05/27 09:08:41 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.44 2004/07/02 14:56:39 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -6769,12 +6769,12 @@ v3 structures may cause parsing errors.
 .Op Cm rsa2048
 .Op Cm rsa4096
 .Op Cm sha1
-.Op Fl elapsed
-.Op Fl evp Ar e
 .Op Fl decrypt
+.Op Fl elapsed
 .Op Fl mr
-.Op Fl multi Ar number
 .Op Fl engine Ar id
+.Op Fl evp Ar e
+.Op Fl multi Ar number
 .Ek
 .Pp
 The
@@ -6785,20 +6785,9 @@ command is used to test the performance of cryptographic algorithms.
 If any options are given,
 .Nm speed
 tests those algorithms, otherwise all of the above are tested.
-.It Fl elapsed
-Measure time in real time instead of CPU user time.
-.It Fl evp Ar e
-Use EVP
-.Ar e .
 .It Fl decrypt
 Time decryption instead of encryption
 .Pq only EVP .
-.It Fl mr
-Produce machine readable output.
-.It Fl multi Ar number
-Run
-.Ar number
-benchmarks in parallel.
 .It Fl engine Ar id
 Specifying an engine (by it's unique
 .Ar id
@@ -6808,6 +6797,17 @@ to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default
 for all available algorithms.
+.It Fl elapsed
+Measure time in real time instead of CPU user time.
+.It Fl evp Ar e
+Use EVP
+.Ar e .
+.It Fl mr
+Produce machine readable output.
+.It Fl multi Ar number
+Run
+.Ar number
+benchmarks in parallel.
 .El
 .\"
 .\" SPKAC
