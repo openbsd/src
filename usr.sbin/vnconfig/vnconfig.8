@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.20 2004/06/20 19:16:37 pedro Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.21 2004/09/10 15:37:53 pedro Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -91,7 +91,8 @@ will access the contents of
 This is the default operation.
 .It Fl k
 Associate an encryption key with the device.
-All data will be encrypted before it is written to the disk.
+All data will be encrypted using the Blowfish cipher before it is
+written to the disk.
 Encryption only works with
 .Pa svnd .
 .It Fl l
