@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC.PROF,v 1.2 1997/01/24 19:56:56 niklas Exp $
+#	$OpenBSD: GENERIC.PROF,v 1.3 1997/06/02 13:17:30 deraadt Exp $
 #	$NetBSD: GENERIC.PROF,v 1.10 1996/12/03 17:25:31 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -60,7 +60,6 @@ options		LKM
 options		EISAVERBOSE		# recognize "unknown" EISA devices
 options		PCIVERBOSE		# recognize "unknown" PCI devices
 options		TCVERBOSE		# recognize "unknown" TC devices
-options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		bsd	swap generic
 #config		bsd	root on sd0 swap on sd0

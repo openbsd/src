@@ -1,4 +1,4 @@
-#	$OpenBSD: ALATAR,v 1.1 1997/04/20 07:28:59 tholo Exp $
+#	$OpenBSD: ALATAR,v 1.2 1997/06/02 13:17:28 deraadt Exp $
 #
 # AXPpci 33 kernel.  Enough to get booted, etc., but not much more.
 
@@ -53,7 +53,6 @@ options		LKM
 
 # Misc. options
 options		PCIVERBOSE		# recognize "unknown" PCI devices
-options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		bsd	root on sd0 swap on sd0
 

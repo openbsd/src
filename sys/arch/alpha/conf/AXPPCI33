@@ -1,4 +1,4 @@
-#	$OpenBSD: AXPPCI33,v 1.1 1997/05/07 16:20:24 millert Exp $
+#	$OpenBSD: AXPPCI33,v 1.2 1997/06/02 13:17:29 deraadt Exp $
 #
 # Generic Alpha AXPPCI33 (NoName) kernel.
 # Enough to get booted, etc., but not much more.
@@ -61,7 +61,6 @@ option		LKM
 #option		EISAVERBOSE		# recognize "unknown" EISA devices
 option		PCIVERBOSE		# recognize "unknown" PCI devices
 #option		TCVERBOSE		# recognize "unknown" TC devices
-option		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		bsd	swap generic
 #config		bsd	root on sd0 swap on sd0

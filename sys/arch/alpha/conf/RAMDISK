@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.5 1997/05/14 07:21:53 millert Exp $
+#	$OpenBSD: RAMDISK,v 1.6 1997/06/02 13:17:30 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -62,7 +62,6 @@ option		COMPAT_43
 option		EISAVERBOSE		# recognize "unknown" EISA devices
 option		PCIVERBOSE		# recognize "unknown" PCI devices
 option		TCVERBOSE		# recognize "unknown" TC devices
-option		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		bsd	swap generic
 #config		bsd	root on sd0 swap on sd0
