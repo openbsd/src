@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_select.c,v 1.8 2003/10/19 22:49:11 marc Exp $	*/
+/*	$OpenBSD: uthread_select.c,v 1.9 2003/11/03 20:27:48 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -44,6 +44,11 @@
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
+
+/*
+ * Minimum number of poll_data entries to allocate
+ */
+#define POLLDATA_MIN	128
 
 int 
 select(int numfds, fd_set * readfds, fd_set * writefds,
@@ -102,7 +107,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 	if ((curthread->poll_data.fds == NULL) ||
 	    (curthread->poll_data.nfds < fd_count)) {
 		data.fds = (struct pollfd *) realloc(curthread->poll_data.fds,
-		    sizeof(struct pollfd) * MAX(128, fd_count));
+		    sizeof(struct pollfd) * MAX(POLLDATA_MIN, fd_count));
 		if (data.fds == NULL) {
 			errno = ENOMEM;
 			ret = -1;
@@ -114,7 +119,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 			 * currently being polled.
 			 */
 			curthread->poll_data.fds = data.fds;
-			curthread->poll_data.nfds = MAX(128, fd_count);
+			curthread->poll_data.nfds = MAX(POLLDATA_MIN, fd_count);
 		}
 	}
 	if (ret == 0) {
