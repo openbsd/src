@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 1996/08/20 05:14:07 tholo Exp $
 #	$NetBSD: Makefile,v 1.17 1995/04/23 07:58:35 cgd Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 
@@ -25,8 +26,6 @@ SRCS+=		app.c as.c atof-generic.c bignum-copy.c \
 CFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
 		-DOLD_GAS -DSIGTY=void -Derror=as_fatal \
 		-DNETBSD_AOUT
-#LDADD+=		-lgnumalloc
-DPADD+=		/usr/lib/libgnumalloc.a
 
 CONF_HEADERS=	targ-cpu.h obj-format.h host.h targ-env.h
 

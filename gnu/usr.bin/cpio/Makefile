@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 1996/08/20 05:14:05 tholo Exp $
 #	$NetBSD: Makefile,v 1.3 1995/04/23 07:58:27 cgd Exp $
 
 PROG= cpio
@@ -7,8 +8,5 @@ SRCS =	copyin.c copyout.c copypass.c defer.c dstring.c fnmatch.c global.c \
 	main.c tar.c util.c error.c filemode.c getopt.c getopt1.c version.c \
 	rtapelib.c dirname.c idcache.c makepath.c xmalloc.c stripslash.c \
 	userspec.c xstrdup.c
-
-LDADD+=	-lgnumalloc
-DPADD+=	/usr/lib/libgnumalloc.a
 
 .include <bsd.prog.mk>

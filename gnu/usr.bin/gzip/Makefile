@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.3 1996/08/20 05:14:09 tholo Exp $
 #	$NetBSD: Makefile,v 1.17 1995/10/24 22:18:34 jtc Exp $
 
 PROG=	gzip
@@ -12,8 +13,6 @@ CFLAGS+=-DASMV
 .endif
 
 LDSTATIC= -static
-LDADD+=	-lgnumalloc
-DPADD+=	/usr/lib/libgnumalloc.a
 
 MLINKS+= gzip.1 gunzip.1 gzip.1 gzcat.1 gzip.1 zcat.1
 MLINKS+= zdiff.1 zcmp.1
