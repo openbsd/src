@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.37 2003/10/12 02:35:53 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.38 2003/10/12 02:53:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -891,6 +891,9 @@ vr_list_tx_init(sc)
 	ld = sc->vr_ldata;
 	for (i = 0; i < VR_TX_LIST_CNT; i++) {
 		cd->vr_tx_chain[i].vr_ptr = &ld->vr_tx_list[i];
+		cd->vr_tx_chain[i].vr_paddr =
+		    sc->sc_listmap->dm_segs[0].ds_addr +
+		    offsetof(struct vr_list_data, vr_tx_list[i]);
 		if (i == (VR_TX_LIST_CNT - 1))
 			cd->vr_tx_chain[i].vr_nextdesc = 
 				&cd->vr_tx_chain[0];
@@ -926,7 +929,9 @@ vr_list_rx_init(sc)
 	for (i = 0; i < VR_RX_LIST_CNT; i++) {
 		d = (struct vr_desc *)&ld->vr_rx_list[i];
 		cd->vr_rx_chain[i].vr_ptr = d;
-
+		cd->vr_rx_chain[i].vr_paddr =
+		    sc->sc_listmap->dm_segs[0].ds_addr +
+		    offsetof(struct vr_list_data, vr_rx_list[i]);
 		cd->vr_rx_chain[i].vr_buf =
 		    (u_int8_t *)malloc(MCLBYTES, M_DEVBUF, M_NOWAIT);
 		if (cd->vr_rx_chain[i].vr_buf == NULL)
@@ -1095,7 +1100,7 @@ vr_rxeoc(sc)
 
 	vr_rxeof(sc);
 
-	CSR_WRITE_4(sc, VR_RXADDR, vtophys(sc->vr_cdata.vr_rx_head->vr_ptr));
+	CSR_WRITE_4(sc, VR_RXADDR, sc->vr_cdata.vr_rx_head->vr_paddr);
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_GO);
 
@@ -1147,7 +1152,7 @@ vr_txeof(sc)
 				break;
 			}
 			VR_TXOWN(cur_tx) = VR_TXSTAT_OWN;
-			CSR_WRITE_4(sc, VR_TXADDR, vtophys(cur_tx->vr_ptr));
+			CSR_WRITE_4(sc, VR_TXADDR, cur_tx->vr_paddr);
 			break;
 		}
 
@@ -1370,7 +1375,7 @@ vr_encap(sc, c, m_head)
 
 	c->vr_mbuf = m_head;
 	c->vr_ptr->vr_ctl |= VR_TXCTL_LASTFRAG|VR_TXCTL_FINT;
-	c->vr_ptr->vr_next = vtophys(c->vr_nextdesc->vr_ptr);
+	c->vr_ptr->vr_next = htole32(c->vr_nextdesc->vr_paddr);
 
 	return(0);
 }
@@ -1536,7 +1541,7 @@ vr_init(xsc)
 	/*
 	 * Load the address of the RX list.
 	 */
-	CSR_WRITE_4(sc, VR_RXADDR, vtophys(sc->vr_cdata.vr_rx_head->vr_ptr));
+	CSR_WRITE_4(sc, VR_RXADDR, sc->vr_cdata.vr_rx_head->vr_paddr);
 
 	/* Enable receiver and transmitter. */
 	CSR_WRITE_2(sc, VR_COMMAND, VR_CMD_TX_NOPOLL|VR_CMD_START|
