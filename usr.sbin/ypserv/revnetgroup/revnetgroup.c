@@ -1,4 +1,4 @@
-/* $OpenBSD: revnetgroup.c,v 1.3 2002/07/19 02:38:40 deraadt Exp $ */
+/* $OpenBSD: revnetgroup.c,v 1.4 2002/07/19 20:59:40 deraadt Exp $ */
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -47,7 +47,7 @@
 #include "hash.h"
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.3 2002/07/19 02:38:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: revnetgroup.c,v 1.4 2002/07/19 20:59:40 deraadt Exp $";
 #endif
 
 /* Default location of netgroup file. */
@@ -63,9 +63,9 @@ struct group_entry *gtable[TABLESIZE];
 struct member_entry *mtable[TABLESIZE];
 
 void
-usage(char *prog)
+usage(void)
 {
-	fprintf (stderr,"usage: %s -u|-h [-f netgroup file]\n",prog);
+	fprintf (stderr,"usage: revnetgroup -u|-h [-f netgroup file]\n");
 	exit(1);
 }
 
@@ -83,21 +83,21 @@ main(int argc, char *argv[])
 	int hosts = -1, i;
 
 	if (argc < 2)
-		usage(argv[0]);
+		usage();
 
 	while ((ch = getopt(argc, argv, "uhf:")) != -1) {
 		switch (ch) {
 		case 'u':
 			if (hosts != -1) {
 				warnx("please use only one of -u or -h");
-				usage(argv[0]);
+				usage();
 			}
 			hosts = 0;
 			break;
 		case 'h':
 			if (hosts != -1) {
 				warnx("please use only one of -u or -h");
-				usage(argv[0]);
+				usage();
 			}
 			hosts = 1;
 			break;
@@ -105,13 +105,13 @@ main(int argc, char *argv[])
 			netgroup = optarg;
 			break;
 		default:
-			usage(argv[0]);
+			usage();
 			break;
 		}
 	}
 
 	if (hosts == -1)
-		usage(argv[0]);
+		usage();
 
 	if (strcmp(netgroup, "-")) {
 		if ((fp = fopen(netgroup, "r")) == NULL) {

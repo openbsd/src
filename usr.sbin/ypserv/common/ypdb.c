@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypdb.c,v 1.8 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: ypdb.c,v 1.9 2002/07/19 20:59:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -61,6 +61,7 @@ ypdb_open(const char *file, int flags, int mode)
 	char path[MAXPATHLEN];
 	DBM *db;
 
+	memset(&info, 0, sizeof info);
 	info.flags = 0;
 	info.cachesize = 0;
 	info.maxkeypage = 0;
@@ -85,6 +86,7 @@ ypdb_open_suf(const char *file, int flags, int mode)
 	BTREEINFO info;
 	DBM *db;
 
+	memset(&info, 0, sizeof info);
 	info.flags = 0;
 	info.cachesize = 0;
 	info.maxkeypage = 0;

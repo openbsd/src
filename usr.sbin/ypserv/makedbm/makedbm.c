@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.18 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.19 2002/07/19 20:59:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.18 2002/07/19 02:38:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.19 2002/07/19 20:59:40 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -294,6 +294,16 @@ create_database(char *infile, char *database, char *yp_input_file,
 
 }
 
+void
+usage(void)
+{
+	fprintf(stderr,"usage: makedbm [-u | -U] file\n"
+	    "       makedbm [-bls] [-i YP_INPUT_FILE] [-o YP_OUTPUT_FILE]\n"
+	    "               [-d YP_DOMAIN_NAME] [-m YP_MASTER_NAME] "
+	    "infile outfile\n");
+	exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -301,7 +311,6 @@ main(int argc, char *argv[])
 	char	*yp_input_file, *yp_output_file;
 	char	*yp_master_name,*yp_domain_name;
 	char	*infile,*outfile;
-	int	usage = 0;
 	int	ch;
 
 	extern int optind;
@@ -350,36 +359,24 @@ main(int argc, char *argv[])
 			uflag++;
 			break;
 		default:
-			usage++;
+			usage();
 			break;
 		}
 
-	if ((uflag != 0) && (aflag != 0)) {
-		usage++;
+	if ((uflag != 0) && (aflag != 0))
+		usage();
+
+	if (uflag != 0) {
+		if (argc == (optind + 1))
+			infile = argv[optind];
+		else
+			usage();
 	} else {
-
-		if (uflag != 0) {
-			if (argc == (optind + 1)) {
-				infile = argv[optind];
-			} else {
-				usage++;
-			}
-		} else {
-			if (argc == (optind + 2)) {
-				infile = argv[optind];
-				outfile = argv[optind+1];
-			} else {
-				usage++;
-			}
-		}
-	}
-
-	if (usage) {
-		fprintf(stderr,"%s%s%s",
-		    "usage:\tmakedbm [-u|-U] file\n\tmakedbm [-bls]",
-		    " [-i YP_INPUT_FILE] [-o YP_OUTPUT_FILE]\n\t\t",
-		    "[-d YP_DOMAIN_NAME] [-m YP_MASTER_NAME] infile outfile\n");
-		exit(1);
+		if (argc == (optind + 2)) {
+			infile = argv[optind];
+			outfile = argv[optind+1];
+		} else
+			usage();
 	}
 
 	if (uflag != 0) {

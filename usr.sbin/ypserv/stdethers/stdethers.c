@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdethers.c,v 1.5 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: stdethers.c,v 1.6 2002/07/19 20:59:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: stdethers.c,v 1.5 2002/07/19 02:38:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stdethers.c,v 1.6 2002/07/19 20:59:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -43,8 +43,6 @@ static char rcsid[] = "$OpenBSD: stdethers.c,v 1.5 2002/07/19 02:38:40 deraadt E
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
-char *ProgramName = "stdethers";
 
 extern int   ether_line(char *, struct ether_addr *, char *);
 extern char *ether_ntoa(struct ether_addr *);
@@ -78,6 +76,7 @@ read_line(FILE *fp, char *buf, int size)
 	do {
 		while (fgets(buf, size, fp)) {
 			int len = strlen(buf);
+
 			done += len;
 			if (len > 1 && buf[len-2] == '\\' &&
 			    buf[len-1] == '\n') {
@@ -99,7 +98,14 @@ read_line(FILE *fp, char *buf, int size)
 				return done;
 		}
 	} while (size > 0 && !feof(fp));
-	return done;
+	return (done);
+}
+
+void
+usage(void)
+{
+	fprintf(stderr, "usage: stdethers [file]\n");
+	exit(1);
 }
 
 int
@@ -107,7 +113,6 @@ main(int argc, char *argv[])
 {
 	FILE	*data_file;
 	char	 data_line[1024];
-	int	 usage = 0;
 	int	 line_no = 0;
 	int	 len;
 	char	*p, *k, *v;
@@ -115,18 +120,13 @@ main(int argc, char *argv[])
 	char	 hostname[256];
 
 	if (argc > 2)
-		usage++;
-
-	if (usage) {
-		fprintf(stderr, "usage: %s [file]\n", ProgramName);
-		exit(1);
-	}
+		usage();
 
 	if (argc == 2) {
 		data_file = fopen(argv[1], "r");
 		if (data_file == NULL) {
-			fprintf(stderr, "%s: can't open %s\n",
-			    ProgramName, argv[1]);
+			fprintf(stderr, "stdethers: can't open %s\n",
+			    argv[1]);
 			exit(1);
 		}
 	} else
@@ -173,8 +173,8 @@ main(int argc, char *argv[])
 			fprintf(stdout, "%s\t%s\n", NTOA(&eth_addr),
 			    hostname);
 		} else {
-			fprintf(stderr, "%s: ignoring line %d: \"%s\"\n",
-			    ProgramName, line_no, data_line);
+			fprintf(stderr, "stdethers: ignoring line %d: \"%s\"\n",
+			    line_no, data_line);
 		}
 	}
 	return(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.28 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.29 2002/07/19 20:59:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.28 2002/07/19 02:38:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.29 2002/07/19 20:59:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -59,13 +59,7 @@ static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.28 2002/07/19 02:38:40 deraad
 #include "ypdb.h"
 #include "ypdef.h"
 
-extern char *__progname;		/* from crt0.o */
 DBM	*db;
-
-extern bool_t xdr_ypresp_all_seq();
-
-extern int (*ypresp_allfn)();
-extern void *ypresp_data;
 
 static int
 ypxfr_foreach(u_long status, char *keystr, int keylen, char *valstr, int vallen,
@@ -106,8 +100,8 @@ get_local_ordernum(char *domain, char *map, u_int32_t *lordernum)
 	snprintf(map_path, sizeof map_path, "%s/%s", YP_DB_PATH, domain);
 	if (!((stat(map_path, &finfo) == 0) &&
 	    ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
-		fprintf(stderr, "%s: domain %s not found locally\n",
-		    __progname, domain);
+		fprintf(stderr, "ypxfr: domain %s not found locally\n",
+		    domain);
 		status = YPPUSH_NODOM;
 		goto bail;
 	}
@@ -130,7 +124,7 @@ get_local_ordernum(char *domain, char *map, u_int32_t *lordernum)
 	k.dptr = (char *)&order_key;
 	k.dsize = YP_LAST_LEN;
 
-	v = ypdb_fetch(db,k);
+	v = ypdb_fetch(db, k);
 	ypdb_close(db);
 
 	if (v.dptr == NULL) {
@@ -173,11 +167,10 @@ get_map(CLIENT *client, char *domain, char *map,
 	int	status;
 
 	status = yp_all_host(client, domain, map, incallback);
-	if ((status == 0) || (status == YPERR_NOMORE)) {
+	if (status == 0 || status == YPERR_NOMORE)
 		status = YPPUSH_SUCC;
-	} else {
+	else
 		status = YPPUSH_YPERR;
-	}
 	return (status);
 }
 
@@ -225,10 +218,9 @@ add_order(DBM *db, u_int32_t ordernum)
 int
 add_master(CLIENT *client, char *domain, char *map, DBM *db)
 {
-	char	keystr[] = YP_MASTER_KEY;
-	char	*master;
-	int	status;
+	char	keystr[] = YP_MASTER_KEY, *master;
 	datum	key, val;
+	int	status;
 
 	master = NULL;
 
@@ -255,10 +247,8 @@ add_master(CLIENT *client, char *domain, char *map, DBM *db)
 int
 add_interdomain(CLIENT *client, char *domain, char *map, DBM *db)
 {
-	char	keystr[] = YP_INTERDOMAIN_KEY;
-	char	*value;
-	int	vallen;
-	int	status;
+	char	keystr[] = YP_INTERDOMAIN_KEY, *value;
+	int	vallen, status;
 	datum	k, v;
 
 	/* Get INTERDOMAIN */
@@ -280,7 +270,6 @@ add_interdomain(CLIENT *client, char *domain, char *map, DBM *db)
 				status = YPPUSH_DBM;
 		}
 	}
-
 	return 1;
 }
 
@@ -304,16 +293,13 @@ add_secure(CLIENT *client, char *domain, char *map, DBM *db)
 
 		if (v.dptr != NULL) {
 			status = ypdb_store(db, k, v, YPDB_INSERT);
-			if (status >= 0) {
+			if (status >= 0)
 				status = YPPUSH_SUCC;
-			} else {
+			else
 				status = YPPUSH_DBM;
-			}
 		}
 	}
-
 	return status;
-
 }
 
 int
@@ -338,8 +324,8 @@ send_clear(CLIENT *client)
 int
 send_reply(CLIENT *client, u_long status, u_long tid)
 {
-	struct	timeval tv;
 	struct	ypresp_xfr resp;
+	struct	timeval tv;
 	int	r;
 
 	tv.tv_sec = 10;
@@ -356,22 +342,26 @@ send_reply(CLIENT *client, u_long status, u_long tid)
 
 }
 
+void
+usage(void)
+{
+	fprintf(stderr, "usage: ypxfr [-cf] [-d domain] [-h host] [-s domain] "
+	    "[-C tid prog ipadd port] mapname\n");
+	exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
-	int	 usage = 0, cflag = 0, fflag = 0, Cflag = 0;
+	int	 cflag = 0, fflag = 0, Cflag = 0;
 	char	 *domain, *host = NULL, *srcdomain = NULL;
 	char	 *tid = NULL, *prog = NULL, *ipadd = NULL;
 	char	 *port = NULL, *map = NULL;
 	int	 status, xfr_status, ch, srvport;
 	u_int32_t ordernum, new_ordernum;
 	struct	 ypall_callback callback;
-	CLIENT   *client;
+	CLIENT   *client = NULL;
 	extern	 char *optarg;
-
-	status = YPPUSH_SUCC;
-	client = NULL;
-	db = NULL;
 
 	yp_get_default_domain(&domain);
 
@@ -397,11 +387,8 @@ main(int argc, char *argv[])
 			srcdomain = optarg;
 			break;
 		case 'C':
-			if (optind + 3 >= argc) {
-				usage++;
-				optind = argc;
-				break;
-			}
+			if (optind + 3 >= argc)
+				usage();
 			Cflag++;
 			tid = optarg;
 			prog = argv[optind++];
@@ -409,23 +396,16 @@ main(int argc, char *argv[])
 			port = argv[optind++];
 			break;
 		default:
-			usage++;
+			usage();
 			break;
 		}
 
-	if (optind + 1 != argc) {
-		usage++;
-	} else {
-		map = argv[optind];
-	}
+	status = YPPUSH_SUCC;
 
-	if (usage) {
-		status = YPPUSH_BADARGS;
-		fprintf(stderr, "usage: %s "
-		    "[-cf] [-d domain] [-h host] [-s domain] "
-		    "[-C tid prog ipadd port] mapname\n",
-		    __progname);
-	}
+	if (optind + 1 != argc)
+		usage();
+
+	map = argv[optind];
 
 	if (status > 0) {
 		ypopenlog();
@@ -556,7 +536,5 @@ main(int argc, char *argv[])
 		status = send_reply(client, xfr_status, atoi(tid));
 		clnt_destroy(client);
 	}
-
 	return (0);
-
 }

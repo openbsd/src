@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.10 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.11 2002/07/19 20:59:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.10 2002/07/19 02:38:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkalias.c,v 1.11 2002/07/19 20:59:40 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -48,8 +48,6 @@ static char rcsid[] = "$OpenBSD: mkalias.c,v 1.10 2002/07/19 02:38:40 deraadt Ex
 #include <resolv.h>
 #include "ypdb.h"
 #include "ypdef.h"
-
-extern char *__progname;		/* from crt0.o */
 
 void
 split_address(char *address, int len, char *user, char *host)
@@ -133,31 +131,29 @@ capitalize(char *name, int len)
 	}
 }
 
+void
+usage(void)
+{
+	fprintf(stderr,
+	    "usage: mkalias [-v] [-e|-E [-d] [-u]] [-n] input [output]\n");
+	exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
-	int	usage = 0;
-	int	eflag = 0;
-	int	dflag = 0;
-	int	nflag = 0;
-	int	sflag = 0;
-	int	uflag = 0;
-	int	vflag = 0;
-	int	Eflag = 0;
-	int	ch, fd;
-	char	*input = NULL;
-	char	*output = NULL;
+	int	eflag = 0, dflag = 0, nflag = 0, sflag = 0;
+	int	uflag = 0, vflag = 0, Eflag = 0;
+	int	status, ch, fd;
+	char	*input = NULL, *output = NULL;
 	DBM	*db;
 	datum	key, val;
-	char	*slash;
 	DBM	*new_db = NULL;
 	static	char mapname[] = "ypdbXXXXXXXXXX";
-	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN],
-		db_tempname[MAXPATHLEN];
-	int	status;
+	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN];
+	char	db_tempname[MAXPATHLEN];
 	char	user[4096], host[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
-	char	datestr[11];
-	char	myname[MAXHOSTNAMELEN];
+	char	myname[MAXHOSTNAMELEN], datestr[11], *slash;
 
 	while ((ch = getopt(argc, argv, "Edensuv")) != -1)
 		switch (ch) {
@@ -184,39 +180,31 @@ main(int argc, char *argv[])
 			vflag++;	/* Verbose */
 			break;
 		default:
-			usage++;
+			usage();
 			break;
 		}
 
-	if (optind == argc) {
-		usage++;
-	} else {
-		input = argv[optind++];
-		if (optind < argc)
-			output = argv[optind++];
-		if (optind < argc)
-			usage++;
-	}
+	if (optind == argc)
+		usage();
 
-	if (usage) {
-		fprintf(stderr,
-		    "usage: %s [-v] [-e|-E [-d] [-u]] [-n] input [output]\n",
-		    __progname);
-		exit(1);
-	}
+	input = argv[optind++];
+	if (optind < argc)
+		output = argv[optind++];
+	if (optind < argc)
+		usage();
 
 	db = ypdb_open(input, O_RDONLY, 0444);
 	if (db == NULL) {
 		fprintf(stderr,
-		    "%s: Unable to open input database %s\n",
-		    __progname, input);
+		    "mkalias: Unable to open input database %s\n",
+		    input);
 		exit(1);
 	}
 
 	if (output != NULL) {
 		if (strlen(output) + strlen(YPDB_SUFFIX) > MAXPATHLEN) {
-			fprintf(stderr,"%s: %s: file name too long\n",
-			    __progname, output);
+			fprintf(stderr,"mkalias: %s: file name too long\n",
+			    output);
 		}
 		snprintf(db_outfile, sizeof(db_outfile),
 		    "%s%s", output, YPDB_SUFFIX);
@@ -231,8 +219,8 @@ main(int argc, char *argv[])
 
 		if (strlen(output) + strlen(mapname) +
 		    strlen(YPDB_SUFFIX) > MAXPATHLEN) {
-			fprintf(stderr,"%s: %s: directory name too long\n",
-				__progname, output);
+			fprintf(stderr,"mkalias: %s: directory name too long\n",
+			    output);
 			exit(1);
 		}
 
@@ -252,8 +240,8 @@ fail:
 			if (fd != -1)
 				unlink(db_tempname);
 			fprintf(stderr,
-			    "%s: Unable to open output database %s\n",
-			    __progname, db_outfile);
+			    "mkalias: Unable to open output database %s\n",
+			    db_outfile);
 			exit(1);
 		}
 	}
@@ -291,8 +279,8 @@ fail:
 		if (new_db != NULL) {
 			status = ypdb_store(new_db, val, key, YPDB_INSERT);
 			if (status != 0) {
-				printf("%s: problem storing %*.*s %*.*s\n",
-				    __progname, val.dsize, val.dsize, val.dptr,
+				printf("mkalias: problem storing %*.*s %*.*s\n",
+				    val.dsize, val.dsize, val.dptr,
 				    key.dsize, key.dsize, key.dptr);
 			}
 		}
@@ -313,8 +301,7 @@ fail:
 		val.dsize = strlen(datestr);
 		status = ypdb_store(new_db, key, val, YPDB_INSERT);
 		if (status != 0) {
-			printf("%s: problem storing %*.*s %*.*s\n",
-			    __progname,
+			printf("mkalias: problem storing %*.*s %*.*s\n",
 			    key.dsize, key.dsize, key.dptr,
 			    val.dsize, val.dsize, val.dptr);
 		}
@@ -328,8 +315,7 @@ fail:
 		val.dsize = strlen(myname);
 		status = ypdb_store(new_db, key, val, YPDB_INSERT);
 		if (status != 0) {
-			printf("%s: problem storing %*.*s %*.*s\n",
-			    __progname,
+			printf("mkalias: problem storing %*.*s %*.*s\n",
 			    key.dsize, key.dsize, key.dptr,
 			    val.dsize, val.dsize, val.dptr);
 		}

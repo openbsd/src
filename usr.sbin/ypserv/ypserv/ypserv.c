@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.23 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.24 2002/07/19 20:59:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.23 2002/07/19 02:38:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.24 2002/07/19 20:59:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -71,7 +71,6 @@ static int _rpcfdtype;		/* Whether Stream or Datagram ? */
 static int _rpcsvcdirty;	/* Still serving ? */
 
 int	usedns = FALSE;
-char   *progname = "ypserv";
 char   *aclfile = NULL;
 
 void	sig_child(int);
@@ -390,10 +389,17 @@ my_svc_run()
 	}
 }
 
+void
+usage(void)
+{
+	(void)fprintf(stderr, "usage: ypserv [-a aclfile] [-d] [-x]\n");
+	exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
-	int usage = 0, xflag = 0, allowv1 = 0, ch, sock, proto;
+	int xflag = 0, allowv1 = 0, ch, sock, proto;
 	struct sockaddr_in saddr;
 	int asize = sizeof (saddr);
 	extern char *optarg;
@@ -414,17 +420,12 @@ main(int argc, char *argv[])
 			xflag = TRUE;
 			break;
 		default:
-			usage++;
+			usage();
 			break;
 		}
 
-	if (usage) {
-		(void)fprintf(stderr, "usage: %s [-a aclfile] [-d] [-x]\n",progname);
-		exit(1);
-	}
-
 	if (geteuid() != 0) {
-		(void)fprintf(stderr, "%s: must be root to run.\n",progname);
+		(void)fprintf(stderr, "ypserv: must be root to run.\n");
 		exit(1);
 	}
 
