@@ -245,13 +245,59 @@ struct sadb_protocol {
 
 #define SADB_KEY_FLAGS_MAX 0
 
+#define PFKEYV2_LIFETIME_HARD      0
+#define PFKEYV2_LIFETIME_SOFT      1
+#define PFKEYV2_LIFETIME_CURRENT   2
+
+#define PFKEYV2_IDENTITY_SRC       0
+#define PFKEYV2_IDENTITY_DST       1
+
+#define PFKEYV2_ENCRYPTION_KEY     0
+#define PFKEYV2_AUTHENTICATION_KEY 1
+
+#define PFKEYV2_SOCKETFLAGS_REGISTERED 1
+#define PFKEYV2_SOCKETFLAGS_PROMISC    2
+
+#define PFKEYV2_SENDMESSAGE_UNICAST    1
+#define PFKEYV2_SENDMESSAGE_REGISTERED 2
+#define PFKEYV2_SENDMESSAGE_BROADCAST  3
+
 #ifdef _KERNEL
 struct tdb;
+struct socket;
+struct mbuf;
+
+struct pfkey_version
+{
+    int protocol;
+    int (*create)(struct socket *socket);
+    int (*release)(struct socket *socket);
+    int (*send)(struct socket *socket, void *message, int len);
+};
+
+struct pfkeyv2_socket
+{
+    struct pfkeyv2_socket *next;
+    struct socket *socket;
+    int flags;
+    uint32_t pid;
+    uint32_t registration;    /* Increase size if SATYPE_MAX > 31 */
+};
+
+struct dump_state
+{
+    struct sadb_msg *sadb_msg;
+    struct socket *socket;
+};
 
 int pfkeyv2_init(void);
 int pfkeyv2_cleanup(void);
 int pfkeyv2_parsemessage(void *, int, void **);
 int pfkeyv2_expire(struct tdb *, u_int16_t);
 int pfkeyv2_acquire(struct tdb *, int);
+
+int pfkey_register(struct pfkey_version *version);
+int pfkey_unregister(struct pfkey_version *version);
+int pfkey_sendup(struct socket *socket, struct mbuf *packet, int more);
 #endif /* _KERNEL */
 #endif /* _NET_PFKEY_V2_H */

@@ -34,13 +34,6 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #include <net/raw_cb.h>
 #include <netinet/ip_ipsp.h>
 
-struct pfkey_version {
-  int protocol;
-  int (*create)(struct socket *socket);
-  int (*release)(struct socket *socket);
-  int (*send)(struct socket *socket, void *message, int len);
-};
-
 #define PFKEY_PROTOCOL_MAX 3
 static struct pfkey_version *pfkey_versions[PFKEY_PROTOCOL_MAX+1] = { NULL, NULL, NULL, NULL };
 
@@ -56,7 +49,6 @@ static int pfkey_output(struct mbuf *mbuf, struct socket *socket);
 int pfkey_register(struct pfkey_version *version);
 int pfkey_unregister(struct pfkey_version *version);
 int pfkey_sendup(struct socket *socket, struct mbuf *packet, int more);
-int pfkeyv2_init(void);
 void pfkey_init(void);
 static int pfkey_buildprotosw(void);
 
