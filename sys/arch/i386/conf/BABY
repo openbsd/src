@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.33 1998/06/17 11:49:19 mickey Exp $
+#	$OpenBSD: BABY,v 1.34 1998/06/23 05:59:41 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -164,7 +164,7 @@ wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq ?
 wd*	at wdc? drive ?
 
-wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 #ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
 #ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards

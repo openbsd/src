@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.25 1998/02/22 22:04:20 niklas Exp $
+#	$OpenBSD: NETTAN,v 1.26 1998/06/23 05:59:48 deraadt Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -223,7 +223,7 @@ wd*	at wdc? drive ?
 atapibus* at wdc?
 acd*	at atapibus? drive?
 
-wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
 ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards

@@ -1,4 +1,4 @@
-#	$OpenBSD: PETRA,v 1.10 1998/06/17 11:49:22 mickey Exp $
+#	$OpenBSD: PETRA,v 1.11 1998/06/23 05:59:49 deraadt Exp $
 #
 #	PETRA -- everything that's currently supported with certain
 #		 changes for Applitron's fileserver petra, a 128 MB
@@ -154,7 +154,7 @@ wd*	at wdc? drive ?
 atapibus* at wdc?
 acd*	at atapibus? drive?
 
-wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
 ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
