@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.6 2002/01/03 20:37:16 miod Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.7 2002/06/08 23:30:22 miod Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -42,8 +42,11 @@ PPC=	$S/arch/mvmeppc
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
 		-Dpowerpc -D__mvmeppc__
-CWARNFLAGS=	-Werror -Wreturn-type
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format -Wno-main
+CMACHFLAGS=	-msoft-float -Wa,-m7400
+COPTS?=		-O2
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-D_LOCORE
 LINKFLAGS=	-N -Ttext 100074 -e start
 STRIPFLAGS=	-g -X -x
