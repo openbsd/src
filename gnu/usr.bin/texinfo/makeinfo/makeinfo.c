@@ -1,5 +1,5 @@
 /* Makeinfo -- convert texinfo format files into info files.
-   $Id: makeinfo.c,v 1.1.1.3 1996/12/15 21:39:24 downsj Exp $
+   $Id: makeinfo.c,v 1.2 1997/04/02 22:55:36 kstailey Exp $
 
    Copyright (C) 1987, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 
@@ -833,9 +833,9 @@ main (argc, argv)
   while ((c = getopt_long
 	  (argc, argv,
 #if defined (HAVE_MACROS)
-	   "D:E:U:I:f:o:p:e:r:s:V",
+	   "D:E:U:I:P:f:o:p:e:r:s:V",
 #else
-	   "D:U:I:f:o:p:e:r:s:V",
+	   "D:U:I:P:f:o:p:e:r:s:V",
 #endif /* !HAVE_MACROS */
 	   long_options, &ind))
 	 != EOF)
@@ -875,6 +875,27 @@ main (argc, argv)
 		      2 + strlen (include_files_path) + strlen (optarg));
 	  strcat (include_files_path, ":");
 	  strcat (include_files_path, optarg);
+	  break;
+
+	  /* Prepend User specified include dir to include path? */
+	case 'P':
+	  if (!include_files_path) {
+	    include_files_path = strdup (optarg);
+	    include_files_path = (char *)
+	      xrealloc (include_files_path,
+			strlen (include_files_path) + 3); /* 3 for ":." & NULL */
+	    strcat (include_files_path, ":.");
+	  } else {
+	    char *tmp = strdup (include_files_path);
+
+	    include_files_path = (char *)
+	      xrealloc (include_files_path,		/* 2 for ":" & NULL */
+			strlen (include_files_path) + strlen (optarg) + 2);
+	    strcpy (include_files_path, optarg);
+	    strcat (include_files_path, ":");
+	    strcat (include_files_path, tmp);
+	    free (tmp);
+	  }
 	  break;
 
 	  /* User specified fill_column? */
