@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.11 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.12 2003/03/27 16:43:28 jason Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -226,12 +226,9 @@ espattach_sbus(parent, self, aux)
 		      sizeof (lsc->sc_dev.dv_xname));
 
 		/* Map dma registers */
-		if (sbus_bus_map(sa->sa_bustag,
-		                   sa->sa_reg[0].sbr_slot,
-			           sa->sa_reg[0].sbr_offset,
-			           sa->sa_reg[0].sbr_size,
-			           BUS_SPACE_MAP_LINEAR,
-			           0, &lsc->sc_regs) != 0) {
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
+		    sa->sa_reg[0].sbr_offset, sa->sa_reg[0].sbr_size,
+		    0, 0, &lsc->sc_regs) != 0) {
 			printf("%s: cannot map dma registers\n", self->dv_xname);
 			return;
 		}
@@ -271,12 +268,9 @@ espattach_sbus(parent, self, aux)
 		/*
 		 * map SCSI core registers
 		 */
-		if (sbus_bus_map(sa->sa_bustag,
-				 sa->sa_reg[1].sbr_slot,
-				 sa->sa_reg[1].sbr_offset,
-				 sa->sa_reg[1].sbr_size,
-				 BUS_SPACE_MAP_LINEAR, 
-				 0, &esc->sc_reg) != 0) {
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[1].sbr_slot,
+		    sa->sa_reg[1].sbr_offset, sa->sa_reg[1].sbr_size,
+		    0, 0, &esc->sc_reg) != 0) {
 			printf("%s: cannot map scsi core registers\n",
 			       self->dv_xname);
 			return;
@@ -334,19 +328,15 @@ espattach_sbus(parent, self, aux)
 	 */
 	if (sa->sa_npromvaddrs) {
 		if (bus_space_map(sa->sa_bustag, sa->sa_promvaddrs[0],
-				 sa->sa_size,
-				 BUS_SPACE_MAP_PROMADDRESS | BUS_SPACE_MAP_LINEAR,
-				 &esc->sc_reg) != 0) {
+		    sa->sa_size, BUS_SPACE_MAP_PROMADDRESS,
+		    &esc->sc_reg) != 0) {
 			printf("%s @ sbus: cannot map registers\n",
 				self->dv_xname);
 			return;
 		}
 	} else {
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset,
-				 sa->sa_size,
-				 BUS_SPACE_MAP_LINEAR,
-				 0, &esc->sc_reg) != 0) {
+		    sa->sa_offset, sa->sa_size, 0, 0, &esc->sc_reg) != 0) {
 			printf("%s @ sbus: cannot map registers\n",
 				self->dv_xname);
 			return;
@@ -402,22 +392,16 @@ espattach_dma(parent, self, aux)
 	 * address space.
 	 */
 	if (sa->sa_npromvaddrs) {
-		if (bus_space_map(sa->sa_bustag,
-				   sa->sa_promvaddrs[0],
-				   sa->sa_size,		/* ??? */
-				   BUS_SPACE_MAP_PROMADDRESS | BUS_SPACE_MAP_LINEAR,
-				   &esc->sc_reg) != 0) {
+		if (bus_space_map(sa->sa_bustag, sa->sa_promvaddrs[0],
+		    sa->sa_size /* ??? */, BUS_SPACE_MAP_PROMADDRESS,
+		    &esc->sc_reg) != 0) {
 			printf("%s @ dma: cannot map registers\n",
 				self->dv_xname);
 			return;
 		}
 	} else {
-		if (sbus_bus_map(sa->sa_bustag,
-				   sa->sa_slot,
-				   sa->sa_offset,
-				   sa->sa_size,
-				   BUS_SPACE_MAP_LINEAR,
-				   0, &esc->sc_reg) != 0) {
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot, sa->sa_offset,
+		    sa->sa_size, BUS_SPACE_MAP_LINEAR, 0, &esc->sc_reg) != 0) {
 			printf("%s @ dma: cannot map registers\n",
 				self->dv_xname);
 			return;
