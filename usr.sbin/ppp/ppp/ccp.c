@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ccp.c,v 1.22 2001/07/07 03:08:49 brian Exp $
+ * $OpenBSD: ccp.c,v 1.23 2001/07/07 13:12:57 brian Exp $
  */
 
 #include <sys/param.h>
@@ -306,7 +306,7 @@ ccp_Required(struct ccp *ccp)
 int
 ccp_MTUOverhead(struct ccp *ccp)
 {
-  if (ccp->fsm.state == ST_OPENED)
+  if (ccp->fsm.state == ST_OPENED && ccp->out.algorithm >= 0)
     return algorithm[ccp->out.algorithm]->o.MTUOverhead;
 
   return 0;
