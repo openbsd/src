@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.1 1999/08/19 08:12:11 millert Exp $
+.\"	$OpenBSD: style.9,v 1.2 1999/08/31 17:08:04 espie Exp $
 .\"
 .Dd August 19, 1999
 .Dt STYLE 9
@@ -32,9 +32,9 @@
 .Nd "Kernel source file style guide"
 .Sh DESCRIPTION
 This file specifies the preferred style for kernel source files in the
-.Tn OpenBSD
+.Ox
 source tree.  It is also a guide for preferred user land code style.
-These guidelines should be followed for for all new code.
+These guidelines should be followed for all new code.
 In general, code can be considered
 .Dq new code
 when it makes up about 50% or more of the file(s) involved.  This is enough
@@ -93,7 +93,7 @@ Then, there's a blank line, and the user include files.
 All functions are prototyped somewhere.
 .Pp
 Function prototypes for private functions (i.e. functions not used
-elsewhere) go at the top of the first source module.  In, user land,
+elsewhere) go at the top of the first source module.  In user land,
 functions local to one source module should be declared
 .Ql static .
 This should not be done in kernel land since it makes it impossible
@@ -124,11 +124,20 @@ static char	*function __P((int, const char *));
 static void	 usage __P((void));
 .Ed
 .Pp
+Use __dead from <sys/cdefs.h> for functions that don't return, e.g.
+.Bd -literal -offset 0i
+__dead void	abort __P((void));
+.Ed
+.Pp
+In header files, put function prototypes within 
+__BEGIN_DECLS/__END_DECLS matching pairs.  This makes the header file
+usable from C++.
+.Pp
 Macros are capitalized, parenthesized, and should avoid side-effects.
 If they are an inline expansion of a function, the function is defined
 all in lowercase, the macro has the same name all in uppercase.  If the
 macro needs more than a single line, use braces.  Right-justify the
-backslashes; it makes it easier to read.
+backslashes, as the resulting definition is easier to read.
 If the macro encapsulates a compound statement, enclose it in a
 .Dq Li do
 loop,
@@ -193,6 +202,8 @@ tag.  Avoid typedefs ending in
 .Dq Li \&_t ,
 except as specified in Standard C or by
 .Tn POSIX .
+Don't use the same name for a struct tag and a typedef, as this makes
+the code unusable from C++.
 .Bd -literal -offset 0i
 /* Make the structure name match the typedef. */
 typedef struct _bar {
@@ -248,7 +259,7 @@ have a NOTREACHED comment.
 
 .Ed
 .Pp
-Space after keywords (if, while, for, return, switch).  No braces are
+Use space after keywords (if, while, for, return, switch).  No braces are
 used for control statements with zero or only a single statement unless that
 statement is more than a single line in which case they are permitted.
 Forever loops are done with for's, not while's.
@@ -304,7 +315,8 @@ a compiler warning.
 		stmt;
 .Ed
 .Pp
-No spaces after function names.  Commas have a space after them.  No spaces
+Do not use spaces after function names.  Commas have a space after them.  
+Do not use spaces
 after
 .Sq \&(
 or
@@ -371,7 +383,8 @@ DO NOT use function calls in initializers!
 Do not declare functions inside other functions; ANSI C says that
 such declarations have file scope regardless of the nesting of the
 declaration.  Hiding file declarations in what appears to be a local
-scope is undesirable and will elicit complaints from a good compiler.
+scope is undesirable and will elicit complaints from a good compiler,
+such as "gcc -Wtraditional".
 .Pp
 Casts and sizeof's are not followed by a space.  Note that
 .Xr indent 1
@@ -510,11 +523,14 @@ approximately KNF compliant in the repository must not diverge from
 compliance.
 .Pp
 Whenever possible, code should be run through a code checker
-(e.g., "gcc -Wall" or lint(1)) and produce minimal warnings.
+(e.g., "gcc -Wall -W -Wtraditional -Wpointer-arith -Wbad-function-cast ...",
+.Xr lint 1
+or lclint from the ports tree) and produce minimal warnings.
 
 .Sh SEE ALSO
 .Xr indent 1 ,
 .Xr err 3 ,
+.Xr queue 3 ,
 .Xr sysexits 3 ,
 .Xr warn 3
 .Sh HISTORY
