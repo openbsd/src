@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.3 1997/01/22 06:43:52 millert Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.4 1997/06/16 02:21:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.3 1997/01/22 06:43:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.4 1997/06/16 02:21:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ static char rcsid[] = "$OpenBSD: fsort.c,v 1.3 1997/01/22 06:43:52 millert Exp $
  * and try again on smaller bins.  Sort the final bin at this level
  * of recursion to keep the head of fstack at 0.
  * After PANIC passes, abort to merge sort.
-*/
+ */
 #include "sort.h"
 #include "fsort.h"
 
@@ -155,7 +155,7 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 						fmerge(0, mstart, mfct, geteasy,
 						  fstack[tfiles.top+ntfiles].fp,
 						  putrec, ftbl);
-						++ntfiles;
+						ntfiles++;
 						mfct = 0;
 						memmove(crec->data, tmpbuf,
 						    bufend - crec->data);
@@ -165,7 +165,7 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 					fstack[tfiles.top + ntfiles].fp= ftmp();
 					onepass(keylist, depth, nelem, sizes,
 					weights, fstack[tfiles.top+ntfiles].fp);
-					++ntfiles;
+					ntfiles++;
 				}
 			}
 		}
@@ -239,7 +239,7 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 }
 
 /*
- This is one pass of radix exchange, dumping the bins to disk.
+ * This is one pass of radix exchange, dumping the bins to disk.
  */
 #define swap(a, b, t) t = a, a = b, b = t
 void
@@ -275,7 +275,7 @@ onepass(a, depth, n, sizes, tr, fp)
 		if (c <= 1)
 			continue;
 	}
-	for(aj = a; aj < an; *aj = r, aj = bin[c+1]) 
+	for (aj = a; aj < an; *aj = r, aj = bin[c+1]) 
 		for(r = *aj; aj < (ak = --top[c = tr[r[depth]]]) ;)			
 			swap(*ak, r, t);
 

@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.1 1997/01/20 19:39:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.2 1997/06/16 02:21:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,11 +97,13 @@ fldreset(fldtab)
 	int i;
 	fldtab[0].tcol.p = clist+ncols-1;
 	for (++fldtab; fldtab->icol.num; ++fldtab) {
-		for (i = 0; fldtab->icol.num != clist[i].num; i++);
+		for (i = 0; fldtab->icol.num != clist[i].num; i++)
+			;
 		fldtab->icol.p = clist + i;
 		if (!fldtab->tcol.num)
 			continue;
-		for (i = 0; fldtab->tcol.num != clist[i].num; i++);
+		for (i = 0; fldtab->tcol.num != clist[i].num; i++)
+			;
 		fldtab->tcol.p = clist + i;
 	}
 }
@@ -117,6 +119,7 @@ setcolumn(pos, cur_fld, gflag)
 {
 	struct column *col;
 	int tmp;
+
 	col = cur_fld->icol.num ? (&(*cur_fld).tcol) : (&(*cur_fld).icol);
 	pos += sscanf(pos, "%d", &(col->num));
 	while (isdigit(*pos))
@@ -202,15 +205,15 @@ optval(desc, tcolflag)
 	switch(desc) {
 		case 'b':
 			if (!tcolflag)
-				return(BI);
+				return (BI);
 			else
-				return(BT);
-		case 'd': return(D);
-		case 'f': return(F);
-		case 'i': return(I);
-		case 'n': return(N);
-		case 'r': return(R);
-		default:  return(0);
+				return (BT);
+		case 'd': return (D);
+		case 'f': return (F);
+		case 'i': return (I);
+		case 'n': return (N);
+		case 'r': return (R);
+		default:  return (0);
 	}
 }
 
@@ -308,7 +311,7 @@ settables(gflags)
 	}
 	Rascii[REC_D] = RFtable[REC_D] = REC_D;
 	if (REC_D >= 'A' && REC_D < 'Z')
-		++Ftable[REC_D + ('a' - 'A')];
+		Ftable[REC_D + ('a' - 'A')]++;
 	if (gflags & R && (!(gflags & F) || !SINGL_FLD))
 		wts = Rascii;
 	else if (!(gflags & F) || !SINGL_FLD)

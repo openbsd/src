@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.3 1997/01/26 00:02:25 deraadt Exp $	*/
+/*	$OpenBSD: sort.c,v 1.4 1997/06/16 02:21:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,11 +46,12 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.3 1997/01/26 00:02:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.4 1997/06/16 02:21:56 millert Exp $";
 #endif
 #endif /* not lint */
 
-/* Sort sorts a file using an optional user-defined key.
+/*
+ * Sort sorts a file using an optional user-defined key.
  * Sort uses radix sort for internal sorting, and allows
  * a choice of merge sort and radix sort for external sorting.
  */
@@ -67,12 +68,14 @@ static char rcsid[] = "$OpenBSD: sort.c,v 1.3 1997/01/26 00:02:25 deraadt Exp $"
 
 int REC_D = '\n';
 u_char d_mask[NBINS];		/* flags for rec_d, field_d, <blank> */
+
 /*
  * weight tables.  Gweights is one of ascii, Rascii..
  * modified to weight rec_d = 0 (or 255)
  */
 extern u_char gweights[NBINS];
 u_char ascii[NBINS], Rascii[NBINS], RFtable[NBINS], Ftable[NBINS];
+
 /*
  * masks of ignored characters.  Alltable is 256 ones
  */
@@ -96,8 +99,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
-	extern char *optarg;
 	int (*get)();
 	int ch, i, stdinflag = 0, tmp = 0;
 	char cflag = 0, mflag = 0, nflag = 0;
@@ -105,6 +106,7 @@ main(argc, argv)
 	struct field fldtab[ND+2], *ftpos;
 	union f_handle filelist;
 	FILE *outfp = NULL;
+
 	memset(fldtab, 0, (ND+2)*sizeof(struct field));
 	memset(d_mask, 0, NBINS);
 	d_mask[REC_D = '\n'] = REC_D_F;
@@ -115,18 +117,18 @@ main(argc, argv)
 	if (!issetugid() && (outfile = getenv("TMPDIR")))
 		tmpdir = outfile;
 	while ((ch = getopt(argc, argv, "bcdfik:mHno:rR:t:T:uy:")) != -1) {
-	switch (ch) {
+		switch (ch) {
 		case 'b': fldtab->flags |= BI | BT;
 			break;
 		case 'd':
-		case 'i':
 		case 'f':
+		case 'i':
 		case 'r': tmp |= optval(ch, 0);
 			if (tmp & R && tmp & F)
 				fldtab->weights = RFtable;
 			else if (tmp & F)
 				fldtab->weights = Ftable;
-			else if(tmp & R)
+			else if (tmp & R)
 				fldtab->weights = Rascii;
 			fldtab->flags |= tmp;
 			break;
@@ -134,6 +136,7 @@ main(argc, argv)
 			outpath = optarg;
 			break;
 		case 'n':
+			/* XXX - this does not deal with -n in with -k */
 			nflag = 1;
 			setfield("1n", ++ftpos, fldtab->flags&(~R));
 			break;
@@ -180,14 +183,18 @@ main(argc, argv)
 		default: usage("");
 		}
 	}
+
 	if (cflag && argc > optind+1)
 		errx(2, "too many input files for -c option");
+
 	if (argc - 2 > optind && !strcmp(argv[argc-2], "-o")) {
 		outpath = argv[argc-1];
 		argc -= 2;
 	}
+
 	if (mflag && argc - optind > (MAXFCT - (16+1))*16)
 		errx(2, "too many input files for -m option");
+
 	for (i = optind; i < argc; i++) {
 		/* allow one occurrence of /dev/stdin */
 		if (!strcmp(argv[i], "-") || !strcmp(argv[i], devstdin)) {
@@ -201,6 +208,7 @@ main(argc, argv)
 		} else if ((ch = access(argv[i], R_OK)))
 			err(2, argv[i]);
 	}
+
 	if (!(fldtab->flags & (I|D) || fldtab[1].icol.num)) {
 		SINGL_FLD = 1;
 		fldtab[0].icol.num = 1;
@@ -217,6 +225,7 @@ main(argc, argv)
 	settables(fldtab[0].flags);
 	num_init();
 	fldtab->weights = gweights;
+
 	if (optind == argc) {
 		static char *names[2];
 
@@ -226,14 +235,17 @@ main(argc, argv)
 		optind--;
 	} else
 		filelist.names = argv+optind;
+
 	if (SINGL_FLD)
 		get = makeline;
 	else
 		get = makekey;
+
 	if (cflag) {
 		order(filelist, get, fldtab);
 		/* NOT REACHED */
 	}
+
 	if (!outpath) {
 		(void)snprintf(toutpath,
 		    sizeof(toutpath), "%sstdout", _PATH_DEV);
@@ -244,15 +256,19 @@ main(argc, argv)
 		int sigtable[] = {SIGHUP, SIGINT, SIGPIPE, SIGXCPU, SIGXFSZ,
 		    SIGVTALRM, SIGPROF, 0};
 		int outfd;
+
 		errno = 0;
+
 		if (access(outpath, W_OK))
 			err(2, outpath);
 		act.sa_handler = onsig;
-		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXX", outpath);
+		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXXXXXXXX",
+		    outpath);
 		if ((outfd = mkstemp(toutpath)) < 0 ||
 		    (outfp = fdopen(outfd, "w")) == 0)
 			err(2, toutpath);
 		outfile = toutpath;
+
 		(void)atexit(cleanup);
 		for (i = 0; sigtable[i]; ++i)	/* always unlink toutpath */
 			sigaction(sigtable[i], &act, 0);
@@ -280,6 +296,7 @@ static void
 onsig(s)
 	int s;
 {
+
 	cleanup();
 	exit(2);			/* return 2 on error/interrupt */
 }
@@ -287,6 +304,7 @@ onsig(s)
 static void
 cleanup()
 {
+
 	if (toutpath[0])
 		(void)unlink(toutpath);
 }
@@ -295,6 +313,7 @@ static void
 usage(msg)
 	char *msg;
 {
+
 	if (msg)
 		(void)fprintf(stderr, "sort: %s\n", msg);
 	(void)fprintf(stderr, "usage: [-T dir] [-o output] [-cmubdfinr] ");

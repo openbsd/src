@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.3 1997/01/22 06:53:15 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.4 1997/06/16 02:21:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.3 1997/01/22 06:53:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.4 1997/06/16 02:21:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,7 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 		l_fstack = fstack + files.top;
 	else
 		l_fstack = fstack;
+
 	while (nfiles) {
 		put = putrec;
 		for (j = 0; j < nfiles; j += 16) {
@@ -121,13 +122,13 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 					    fopen(files.names[j + i], "r")))
 						err(2, files.names[j+i]);
 				merge(MAXFCT-1-16, last, get, tout, put, ftbl);
-			}
-			else {
+			} else {
 				for (i = 0; i< last; i++)
 					rewind(l_fstack[i+j].fp);
 				merge(files.top+j, last, get, tout, put, ftbl);
 			}
-			if (nfiles > 16) l_fstack[j/16].fp = tout;
+			if (nfiles > 16)
+				l_fstack[j/16].fp = tout;
 		}
 		nfiles = (nfiles + 15) / 16;
 		if (nfiles == 1)
@@ -160,8 +161,8 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 		for (c = 1; c == 1;) {
 			if (EOF == (c = get(j+infl0, dummy, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
-				--i;
-				--nfiles;
+				i--;
+				nfiles--;
 				break;
 			}
 			if (i)
@@ -195,7 +196,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 /*
  * if delete: inserts *rec in flist, deletes flist[0], and leaves it in *rec;
  * otherwise just inserts *rec in flist.
-*/
+ */
 static int
 insert(flist, rec, ttop, delete)
 	struct mfile **flist, **rec;
@@ -222,7 +223,7 @@ insert(flist, rec, ttop, delete)
 			if (!bot && cmpv)
 				cmpv = cmp(tmprec->rec, flist[0]->rec);
 			if (!cmpv)
-				return(1);
+				return (1);
 		}
 		tmprec = flist[0];
 		if (bot)
@@ -272,21 +273,22 @@ order(infile, get, ftbl)
 		wts1 = ftbl->flags & R ? Rascii : ascii;
 	else
 		wts1 = 0;
-	if (0 == get(-1, infile, 1, prec, end, ftbl))
-	while (0 == get(-1, infile, 1, crec, end, ftbl)) {
-		if (0 < (c = cmp(prec, crec))) {
-			crec->data[crec->length-1] = 0;
-			errx(1, "found disorder: %s", crec->data+crec->offset);
+	if (get(-1, infile, 1, prec, end, ftbl) == 0)
+		while (0 == get(-1, infile, 1, crec, end, ftbl)) {
+			if (0 < (c = cmp(prec, crec))) {
+				crec->data[crec->length-1] = 0;
+				errx(1, "found disorder: %s",
+				    crec->data+crec->offset);
+			}
+			if (UNIQUE && !c) {
+				crec->data[crec->length-1] = 0;
+				errx(1, "found non-uniqueness: %s",
+				    crec->data+crec->offset);
+			}
+			trec = prec;
+			prec = crec;
+			crec = trec;
 		}
-		if (UNIQUE && !c) {
-			crec->data[crec->length-1] = 0;
-			errx(1, "found non-uniqueness: %s",
-			    crec->data+crec->offset);
-		}
-		trec = prec;
-		prec = crec;
-		crec = trec;
-	}
 	exit(0);
 }
 

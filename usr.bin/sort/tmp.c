@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmp.c,v 1.1 1997/01/20 19:39:57 millert Exp $	*/
+/*	$OpenBSD: tmp.c,v 1.2 1997/06/16 02:21:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)tmp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: tmp.c,v 1.1 1997/01/20 19:39:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: tmp.c,v 1.2 1997/06/16 02:21:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: tmp.c,v 1.1 1997/01/20 19:39:57 millert Exp $";
 #include "sort.h"
 #include "pathnames.h"
 
-#define _NAME_TMP "sort.XXXXXXXX"
+#define _NAME_TMP "sort.XXXXXXXXXX"
 
 FILE *
 ftmp()

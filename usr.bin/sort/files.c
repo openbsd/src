@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.3 1997/01/22 06:53:13 millert Exp $	*/
+/*	$OpenBSD: files.c,v 1.4 1997/06/16 02:21:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)files.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: files.c,v 1.3 1997/01/22 06:53:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: files.c,v 1.4 1997/06/16 02:21:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,9 @@ static char rcsid[] = "$OpenBSD: files.c,v 1.3 1997/01/22 06:53:13 millert Exp $
  */
 int
 getnext(binno, infl0, nfiles, pos, end, dummy)
-	int binno, nfiles;
+	int binno;
 	union f_handle infl0;
+	int nfiles;
 	register struct recheader *pos;
 	register u_char *end;
 	struct field *dummy;
@@ -76,7 +77,7 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 			}
 			flag = -1;
 			nleft = cnt = 0;
-			return(-1);
+			return (-1);
 		}
 		maxb = fstack[infl0.top].maxb;
 		for (; nleft == 0; cnt++) {
@@ -129,8 +130,9 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
  */
 int
 makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
-	int flno, nfiles;
+	int flno;
 	union f_handle filelist;
+	int nfiles;
 	struct recheader *buffer;
 	u_char *bufend;
 	struct field *dummy2;
@@ -149,14 +151,14 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 		overflow = 0;
 	}
 	for (;;) {
-		if (flno >= 0) {
-			if (!(fp = fstack[flno].fp))
+		if (flno >= 0 && (fp = fstack[flno].fp) == NULL)
+			return (EOF);
+		else if (fp == 0) {
+			if (fileno  >= nfiles)
 				return (EOF);
-		} else if (!fp) {
-			if (fileno  >= nfiles) return(EOF);
 			if (!(fp = fopen(filelist.names[fileno], "r")))
 				err(2, filelist.names[fileno]);
-			++fileno;
+			fileno++;
 		}
 		while ((pos < end) && ((c = getc(fp)) != EOF)) {
 			if ((*pos++ = c) == REC_D) {
@@ -177,11 +179,12 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 				*pos++ = REC_D;
 				buffer->offset = 0;
 				buffer->length = pos - (char *) buffer->data;
-				return(0);
+				return (0);
 			}
 			FCLOSE(fp);
 			fp = 0;
-			if(flno >= 0) fstack[flno].fp = 0;
+			if (flno >= 0)
+				fstack[flno].fp = 0;
 		} else {
 			buffer->data[100] = '\000';
 			warnx("line too long: ignoring %s...", buffer->data);
@@ -206,6 +209,7 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 	static DBT dbkey[1], line[1];
 	static int overflow = 0;
 	int c;
+
 	if (overflow) {
 		overflow = 0;
 		enterkey(buffer, line, bufend - (u_char *) buffer, ftbl);
@@ -215,14 +219,14 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 		if (flno >= 0) {
 			get = seq;
 			if (!(dbdesc = fstack[flno].fp))
-				return(EOF);
+				return (EOF);
 		} else if (!dbdesc) {
 			if (fileno  >= nfiles)
 				return (EOF);
 			dbdesc = fopen(filelist.names[fileno], "r");
 			if (!dbdesc)
 				err(2, filelist.names[fileno]);
-			++fileno;
+			fileno++;
 			get = seq;
 		}
 		if (!(c = get(dbdesc, line, dbkey))) {
@@ -239,14 +243,13 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 		if (c == EOF) {
 			FCLOSE(dbdesc);
 			dbdesc = 0;
-			if (flno >= 0) fstack[flno].fp = 0;
+			if (flno >= 0)
+				fstack[flno].fp = 0;
 		} else {
-			
 			((char *) line->data)[60] = '\000';
 			warnx("line too long: ignoring %.100s...",
 			    (char *)line->data);
 		}
-			
 	}
 }
 
@@ -256,11 +259,13 @@ makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 int
 seq(fp, line, key)
 	FILE *fp;
-	DBT *key, *line;
+	DBT *line;
+	DBT *key;
 {
 	static char *buf, flag = 1;
 	register char *end, *pos;
 	register int c;
+
 	if (flag) {
 		flag = 0;
 		buf = (char *) linebuf;
@@ -326,6 +331,7 @@ geteasy(flno, filelist, nfiles, rec, end, dummy2)
 {
 	int i;
 	FILE *fp;
+
 	fp = fstack[flno].fp;
 	if ((u_char *) rec > end - sizeof(TRECHEADER))
 		return (BUFFEND);
