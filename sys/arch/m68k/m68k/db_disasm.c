@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.5 1997/01/13 11:51:12 niklas Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.6 1997/06/09 23:04:26 denny Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.19 1996/10/30 08:22:39 is Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ void opcode_1110 __P((dis_buffer_t *, u_short));
 void opcode_fpu __P((dis_buffer_t *, u_short));
 void opcode_mmu __P((dis_buffer_t *, u_short));
 void opcode_mmu040 __P((dis_buffer_t *, u_short));
+void opcode_move16 __P((dis_buffer_t *, u_short));
 
 /* subs of groups */
 void opcode_movec __P((dis_buffer_t *, u_short));
@@ -1328,6 +1329,9 @@ opcode_coproc(dbuf, opc)
 	case 2:
 		opcode_mmu040(dbuf, opc);
 		return;
+	case 3:
+		opcode_move16(dbuf, opc);
+		return;
 	}
 	switch (BITFIELD(opc,8,6)) {
 	case 0:
@@ -1345,7 +1349,7 @@ opcode_coproc(dbuf, opc)
 	case 5:
 	default:
 	}
-	addstr(dbuf, "UKNOWN COPROC OPCODE");
+	addstr(dbuf, "UNKNOWN COPROC OPCODE");
 	return;
 }
 
@@ -2276,6 +2280,49 @@ opcode_movec(dbuf, opc)
 	}
 }
 
+void
+opcode_move16(dbuf, opc)
+	dis_buffer_t *dbuf;
+	u_short opc;
+{
+	u_short ext;
+
+	addstr(dbuf, "move16\t");
+
+	if (ISBITSET(opc, 5)) {
+		PRINT_AREG(dbuf, BITFIELD(opc,2,0));
+		addstr(dbuf, "@+,");
+		ext = *(dbuf->val + 1);
+		PRINT_AREG(dbuf, BITFIELD(ext,14,12));
+		addstr(dbuf, "@+");
+		dbuf->used++;
+	} else {
+		switch (BITFIELD(opc,4,3)) {
+		case 0:
+			PRINT_AREG(dbuf, BITFIELD(opc,2,0));
+			addstr(dbuf, "@+,");
+			get_immed(dbuf, SIZE_LONG);
+			break;
+		case 1:
+			get_immed(dbuf, SIZE_LONG);
+			addchar(',');
+			PRINT_AREG(dbuf, BITFIELD(opc,2,0));
+			addstr(dbuf, "@+");
+			break;
+		case 2:
+			PRINT_AREG(dbuf, BITFIELD(opc,2,0));
+			addstr(dbuf, "@,");
+			get_immed(dbuf, SIZE_LONG);
+			break;
+		case 3:
+			get_immed(dbuf, SIZE_LONG);
+			addchar(',');
+			PRINT_AREG(dbuf, BITFIELD(opc,2,0));
+			addchar('@');
+			break;
+		}
+	}
+}
 
 /*
  * copy const string 's' into ``dbuf''->casm
