@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.2 1998/10/04 22:28:14 niklas Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.3 1998/10/05 07:24:13 fgsch Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -732,7 +732,4 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword)
 	 */
 	while (((bus_space_read_1(nict, nich, ED_P0_ISR) & ED_ISR_RDC) !=
 	    ED_ISR_RDC) && --maxwait);
-
-	if (maxwait == 0)
-		printf("ne2000_writemem: failed to complete\n");
 }
