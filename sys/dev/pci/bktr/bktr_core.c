@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.6 2003/01/05 01:24:53 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.7 2003/01/05 02:05:58 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -3799,19 +3799,28 @@ static u_int pixfmt_swap_flags( int pixfmt )
 {
 	const struct meteor_pixfmt *pf = &pixfmt_table[ pixfmt ].public;
 	u_int		      swapf = 0;
+	int swap_bytes, swap_shorts;
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+	swap_bytes = pf->swap_bytes;
+	swap_shorts = pf->swap_shorts;
+#else
+	swap_bytes = !pf->swap_bytes;
+	swap_shorts = !pf->swap_shorts;
+#endif
 
 	switch ( pf->Bpp ) {
-	case 2 : swapf = ( pf->swap_bytes ? 0 : BSWAP );
-		 break;
+	case 2:
+		swapf = swap_bytes ? 0 : BSWAP;
+		break;
 
-	case 3 : /* no swaps supported for 3bpp - makes no sense w/ bt848 */
-		 break;
+	case 3: /* no swaps supported for 3bpp - makes no sense w/ bt848 */
+		break;
 
-	case 4 : if ( pf->swap_bytes )
-			swapf = pf->swap_shorts ? 0 : WSWAP;
-		 else
-			swapf = pf->swap_shorts ? BSWAP : (BSWAP | WSWAP);
-		 break;
+	case 4:
+		swapf = swap_bytes ? 0 : BSWAP;
+		swapf |= swap_shorts ? 0 : WSWAP;
+		break;
 	}
 	return swapf;
 }
