@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.11 2001/05/31 16:28:51 smart Exp $	*/
+/*	$OpenBSD: nm.c,v 1.12 2001/08/16 15:45:05 espie Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.11 2001/05/31 16:28:51 smart Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.12 2001/08/16 15:45:05 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -72,6 +72,7 @@ int print_only_external_symbols;
 int print_only_undefined_symbols;
 int print_all_symbols;
 int print_file_each_line;
+int show_extensions = 0;
 int fcount;
 
 int rev;
@@ -100,7 +101,7 @@ main(argc, argv)
 	extern int optind;
 	int ch, errors;
 
-	while ((ch = getopt(argc, argv, "aBCgnopruw")) != -1) {
+	while ((ch = getopt(argc, argv, "aBCegnopruw")) != -1) {
 		switch (ch) {
 		case 'a':
 			print_all_symbols = 1;
@@ -110,6 +111,9 @@ main(argc, argv)
 			break;
 		case 'C':
 			demangle = 1;
+			break;
+		case 'e':
+			show_extensions = 1;
 			break;
 		case 'g':
 			print_only_external_symbols = 1;
@@ -457,7 +461,7 @@ print_symbol(objname, sym)
 	char *objname;
 	register struct nlist *sym;
 {
-	char *typestring(), typeletter();
+	char *typestring(), typeletter(), *otherstring();
 
 	if (print_file_each_line)
 		(void)printf("%s:", objname);
@@ -477,6 +481,9 @@ print_symbol(objname, sym)
 		if (IS_DEBUGGER_SYMBOL(sym->n_type))
 			(void)printf(" - %02x %04x %5s ", sym->n_other,
 			    sym->n_desc&0xffff, typestring(sym->n_type));
+		else if (show_extensions)
+			(void)printf(" %c%2s ", typeletter(sym->n_type),
+			    otherstring(sym->n_other));
 		else
 			(void)printf(" %c ", typeletter(sym->n_type));
 	}
@@ -486,6 +493,33 @@ print_symbol(objname, sym)
 		(void)puts(sym->n_un.n_name + 1);
 	else
 		(void)puts(sym->n_un.n_name);
+}
+
+#define AUX_OBJECT 1
+#define AUX_FUNC 2
+#define BIND_WEAK 2
+
+char *
+otherstring(other)
+	u_char other;
+{
+	static char buf[3];
+	char *result;
+	u_char bindtype;
+	u_char aux;
+
+	result = buf;
+
+	bindtype = other >> 4;
+	aux = other & 0x0f;
+	if (bindtype == BIND_WEAK)
+		*result++ = 'w';
+	if (aux == AUX_OBJECT)
+		*result++ = 'o';
+	else if (aux == AUX_FUNC)
+		*result++ = 'f';
+	*result++ = 0;
+	return buf;
 }
 
 /*
