@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/06/02 05:44:16 tholo Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/12/08 15:36:16 downsj Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	hack
@@ -30,11 +30,11 @@ makedefs: makedefs.c
 	${HOSTCC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c ${LDADD}
 
 beforeinstall: 
-	install -c -o games -g games -m 600 /dev/null \
+	${INSTALL} ${COPY} -o games -g games -m 600 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/perm
-	install -c -o games -g games -m 600 /dev/null \
+	${INSTALL} ${COPY} -o games -g games -m 600 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/record
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/help \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/help \
 	    ${.CURDIR}/hh ${.CURDIR}/data ${DESTDIR}/var/games/hackdir
 	rm -f ${DESTDIR}/var/games/hackdir/bones*
 

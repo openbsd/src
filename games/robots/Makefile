@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.3 1996/12/08 15:36:19 downsj Exp $
 #	$NetBSD: Makefile,v 1.5 1995/04/22 10:08:46 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
@@ -11,7 +12,7 @@ LDADD=	-lcurses -ltermlib
 HIDEGAME=hidegame
 
 beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 	    ${DESTDIR}/var/games/robots_roll
 
 .include <bsd.prog.mk>

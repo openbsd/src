@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.3 1996/12/08 15:36:11 downsj Exp $
 #	$NetBSD: Makefile,v 1.9 1995/03/21 15:03:38 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
@@ -23,7 +24,7 @@ beforeinstall:
         else \
                 true ; \
         fi
-	(cd ${.CURDIR}/games; install -c -o ${BINOWN} -g ${BINGRP} -m 400 \
-	    ${GAMES} ${DESTDIR}/usr/share/games/atc)
+	(cd ${.CURDIR}/games; ${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} \
+	    -m 400 ${GAMES} ${DESTDIR}/usr/share/games/atc)
 
 .include <bsd.prog.mk>
