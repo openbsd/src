@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.32 2004/04/13 00:15:28 tedu Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.33 2004/10/26 17:16:27 pedro Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -563,7 +563,7 @@ cluster_write(bp, ci, filesize)
 		ci->ci_clen = maxclen;
 		if (maxclen == 0) {		/* I/O not contiguous */
 			ci->ci_cstart = lbn + 1;
-		bawrite(bp);
+			bawrite(bp);
 		} else {			/* Wait for rest of cluster */
 			ci->ci_cstart = lbn;
 			bdwrite(bp);
@@ -766,8 +766,8 @@ cluster_collectbufs(vp, ci, last_bp)
 	buflist->bs_nchildren = 0;
 	buflist->bs_children = (struct buf **)(buflist + 1);
 	for (lbn = ci->ci_cstart, i = 0; i < len; lbn++, i++)
-		    (void)bread(vp, lbn, last_bp->b_bcount, NOCRED,
-			&buflist->bs_children[i]);
+		(void)bread(vp, lbn, last_bp->b_bcount, NOCRED,
+		    &buflist->bs_children[i]);
 	buflist->bs_children[i] = last_bp;
 	buflist->bs_nchildren = i + 1;
 	return (buflist);
