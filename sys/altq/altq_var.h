@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_var.h,v 1.10 2002/12/16 09:18:06 kjc Exp $	*/
+/*	$OpenBSD: altq_var.h,v 1.11 2002/12/18 00:15:21 henning Exp $	*/
 /*	$KAME: altq_var.h,v 1.8 2001/02/09 09:44:41 kjc Exp $	*/
 
 /*
@@ -40,6 +40,12 @@
 #endif
 #ifndef ALTQ_CBQ
 #define ALTQ_CBQ		/* CBQ is enabled by default */
+#endif
+#ifndef ALTQ_PRIQ
+#define ALTQ_PRIQ		/* PRIQ is enabled by default */
+#endif
+#ifndef ALTQ_HFSC
+#define ALTQ_HFSC		/* HFSC is enabled by default */
 #endif
 
 /*
