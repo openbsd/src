@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.10 2002/04/09 17:40:40 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.11 2002/04/09 20:07:16 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -50,6 +50,7 @@
 #include <libgen.h>
 #include <login_cap.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -109,6 +110,7 @@ main(int argc, char *argv[])
 	int lockcnt = 0;
 	char *foo, *cp;
 	FILE *fp = NULL;
+	struct passwd *pwp;
 	struct sockaddr *namep;
 	struct sockaddr_in peer;
 	char bannedir[] = PATH_BAN_DIR;
@@ -120,16 +122,16 @@ main(int argc, char *argv[])
 
 	memset(namep, 0, namelen);
 
-	if ((foo = getenv("LOGNAME")) != NULL)
-		strlcpy(luser, foo, sizeof(luser));
-	else if ((foo = getenv("USER")) != NULL)
-		strlcpy(luser, foo, sizeof(luser));
-	else {
-		syslog(LOG_ERR, "No user given!");
+	pwp = getpwuid(getuid());
+	if (pwp == NULL) {
+		syslog (LOG_ERR, "can't find user for uid %d", getuid());
 		exit(1);
 	}
 
+	strlcpy(luser, pwp->pw_name, sizeof(luser));
+	
 	if ((foo = getenv("SSH_CLIENT")) != NULL) {
+		struct in_addr jnk;
 		strlcpy(ipsrc, foo, sizeof(ipsrc));
 		cp = ipsrc;
 		while (*cp != '\0') {
@@ -138,6 +140,12 @@ main(int argc, char *argv[])
 			else
 				cp++;
 		}
+		if (inet_pton(AF_INET, ipsrc, &jnk) != 1) {
+			syslog (LOG_ERR, "Can't get IP from SSH_CLIENT %s",
+			    ipsrc);
+			exit(1);
+		}
+
 	} else {
 		syslog(LOG_ERR, "Can't determine connection source");
 		exit(1);
