@@ -1,8 +1,8 @@
 #
-#	$OpenBSD: aliases,v 1.8 2004/04/17 19:44:28 henning Exp $
+#	$OpenBSD: aliases,v 1.9 2004/04/30 13:03:31 jmc Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
-#  Mail, but WILL be visible over networks or from /bin/mail.
+#  Mail, but WILL be visible over networks or from /usr/bin/mail.
 #
 #	>>>>>>>>>>	The program "newaliases" must be run after
 #	>> NOTE >>	this file is updated for any changes to
