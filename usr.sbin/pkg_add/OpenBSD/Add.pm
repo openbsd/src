@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.15 2004/11/12 21:52:01 espie Exp $
+# $OpenBSD: Add.pm,v 1.16 2004/11/13 10:47:21 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -99,6 +99,43 @@ sub validate_plist($$)
 	}
 	Fatal "fatal issues" if $problems;
 	return $totsize;
+}
+
+sub borked_installation
+{
+	my ($plist, $dir) = @_;
+
+	use OpenBSD::PackingElement;
+
+	my $borked = borked_package();
+	# fix packing list for pkg_delete
+	$plist->{items} = $plist->{done};
+
+	# last file may have not copied correctly
+	my $last = $plist->{items}->[@{$plist->{items}}-1];
+	if ($last->IsFile()) {
+	    require OpenBSD::md5;
+
+	    my $old = $last->{md5};
+	    my $lastname;
+	    if (defined $last->{tempname}) {
+	    	$lastname = $last->{tempname};
+	    } else {
+	    	$lastname = $last->fullname();
+	    }
+	    $last->{md5} = OpenBSD::md5::fromfile($last->fullname());
+	    if ($old ne $last->{md5}) {
+		print "Adjusting md5 for ", $last->fullname(), " from ",
+		    unpack('H*', $old), " to ", unpack('H*', $last->{md5}), "\n";
+	    }
+	}
+	OpenBSD::PackingElement::Cwd->add($plist, '.');
+	my $pkgname = $plist->pkgname();
+	$plist->{name}->{name} = $borked;
+	$plist->{pkgdep} = [];
+	my $dest = installed_info($borked);
+	register_installation($dir, $dest, $plist);
+	Fatal "Installation of $pkgname failed, partial installation recorded as $borked";
 }
 
 # used by newuser/newgroup to deal with options.
