@@ -39,6 +39,7 @@ ftp://ftp.openbsd.cz/pub/OpenBSD
 
 Finland:
 
+ftp://ftp.fi.debian.org/pub/OpenBSD
 ftp://ftp.jyu.fi/pub/OpenBSD
 
 France:
@@ -150,7 +151,8 @@ ftp://archive.progeny.com/OpenBSD
 ftp://carroll.cac.psu.edu/pub/OpenBSD
 ftp://download.sourceforge.net/pub/mirrors/OpenBSD
 ftp://ftp.cse.buffalo.edu/pub/OpenBSD
-ftp://ftp.geto.net/OpenBSD
+dnl ftp://ftp.geto.net/OpenBSD
+ftp://ftp.groupbsd.org/pub/OpenBSD
 ftp://ftp.op.net/pub/OpenBSD
 ftp://ftp.src.uchicago.edu/pub/OpenBSD
 ftp://ftp.tux.org/bsd/openbsd
