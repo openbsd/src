@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.121 2002/07/05 21:03:46 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.122 2002/07/05 21:21:17 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -2067,7 +2067,7 @@ errout:
 	else
 		hifnstats.hst_nomem++;
 	crp->crp_etype = err;
-	crp->crp_callback(crp);
+	crypto_done(crp);
 	return (0);
 }
 

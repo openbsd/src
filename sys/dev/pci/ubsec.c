@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.106 2002/07/05 21:03:46 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.107 2002/07/05 21:21:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1217,7 +1217,7 @@ errout:
 		ubsecstats.hst_nomem++;
 errout2:
 	crp->crp_etype = err;
-	crp->crp_callback(crp);
+	crypto_done(crp);
 	return (0);
 }
 
@@ -1668,7 +1668,7 @@ ubsec_free_q(struct ubsec_softc *sc, struct ubsec_q *q)
 			SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q2, q_next);
 			
 			crp->crp_etype = EFAULT;
-			crp->crp_callback(crp);
+			crypto_done(crp);
 		} else {
 			break;
 		}
@@ -1685,7 +1685,7 @@ ubsec_free_q(struct ubsec_softc *sc, struct ubsec_q *q)
 	SIMPLEQ_INSERT_TAIL(&sc->sc_freequeue, q, q_next);
 	
 	crp->crp_etype = EFAULT;
-	crp->crp_callback(crp);
+	crypto_done(crp);
 	return(0);
 }
 
