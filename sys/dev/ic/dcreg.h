@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.3 2000/04/26 13:58:28 mickey Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.4 2000/06/12 15:17:13 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -73,7 +73,7 @@
 #define DC_TYPE_21143		0x4	/* Intel 21143 */
 #define DC_TYPE_ASIX		0x5	/* ASIX AX88140A/AX88141 */
 #define DC_TYPE_AL981		0x6	/* ADMtek AL981 Comet */
-#define DC_TYPE_AN985		0x7	/* ADMtek AN985 Centaur */
+#define DC_TYPE_AN983		0x7	/* ADMtek AN983 Centaur */
 #define DC_TYPE_DM9102		0x8	/* Davicom DM9102 */
 #define DC_TYPE_PNICII		0x9	/* 82c115 PNIC II */
 #define DC_TYPE_PNIC		0xA	/* 82c168/82c169 PNIC I */
@@ -85,12 +85,12 @@
 
 #define DC_IS_ADMTEK(x)				\
 	(x->dc_type == DC_TYPE_AL981 ||		\
-	 x->dc_type == DC_TYPE_AN985)
+	 x->dc_type == DC_TYPE_AN983)
 
 #define DC_IS_INTEL(x)		(x->dc_type == DC_TYPE_21143)
 #define DC_IS_ASIX(x)		(x->dc_type == DC_TYPE_ASIX)
 #define DC_IS_COMET(x)		(x->dc_type == DC_TYPE_AL981)
-#define DC_IS_CENTAUR(x)	(x->dc_type == DC_TYPE_AN985)
+#define DC_IS_CENTAUR(x)	(x->dc_type == DC_TYPE_AN983)
 #define DC_IS_DAVICOM(x)	(x->dc_type == DC_TYPE_DM9102)
 #define DC_IS_PNICII(x)		(x->dc_type == DC_TYPE_PNICII)
 #define DC_IS_PNIC(x)		(x->dc_type == DC_TYPE_PNIC)
@@ -472,8 +472,8 @@ struct dc_mii_frame {
  */
 
 /*
- * ADMtek specific registers and constants for the AL981 and AN985.
- * The AN985 doesn't use the magic PHY registers.
+ * ADMtek specific registers and constants for the AL981 and AN983.
+ * The AN983 doesn't use the magic PHY registers.
  */
 #define DC_AL_PAR0		0xA4	/* station address */
 #define DC_AL_PAR1		0xA8	/* station address */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.1 2000/04/18 19:35:30 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.2 2000/06/12 15:17:13 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -44,7 +44,7 @@
  * ASIX Electronics AX88140A (www.asix.com.tw)
  * ASIX Electronics AX88141 (www.asix.com.tw)
  * ADMtek AL981 (www.admtek.com.tw)
- * ADMtek AN985 (www.admtek.com.tw)
+ * ADMtek AN983 (www.admtek.com.tw)
  * Davicom DM9100, DM9102 (www.davicom8.com)
  *
  * Datasheets for the 21143 are available at developer.intel.com.
@@ -261,7 +261,7 @@ void dc_eeprom_putbyte(sc, addr)
 	register int		d, i;
 
 	/*
-	 * The AN985 has a 93C66 EEPROM on it instead of
+	 * The AN983 has a 93C66 EEPROM on it instead of
 	 * a 93C46. It uses a different bit sequence for
 	 * specifying the "read" opcode.
 	 */
@@ -586,10 +586,10 @@ int dc_miibus_readreg(self, phy, reg)
 	bzero((char *)&frame, sizeof(frame));
 
 	/*
-	 * Note: both the AL981 and AN985 have internal PHYs,
+	 * Note: both the AL981 and AN983 have internal PHYs,
 	 * however the AL981 provides direct access to the PHY
-	 * registers while the AN985 uses a serial MII interface.
-	 * The AN985's MII interface is also buggy in that you
+	 * registers while the AN983 uses a serial MII interface.
+	 * The AN983's MII interface is also buggy in that you
 	 * can read from any MII address (0 to 31), but only address 1
 	 * behaves normally. To deal with both cases, we pretend
 	 * that the PHY is at MII address 1.
@@ -1238,7 +1238,7 @@ void dc_attach_common(sc)
 		    DC_EE_NODEADDR, 3, 0);
 		break;
 	case DC_TYPE_AL981:
-	case DC_TYPE_AN985:
+	case DC_TYPE_AN983:
 		dc_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
 		    DC_AL_EE_NODEADDR, 3, 0);
 		break;
