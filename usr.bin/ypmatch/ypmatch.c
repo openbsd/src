@@ -1,7 +1,8 @@
-/*	$NetBSD: ypmatch.c,v 1.5 1994/12/24 16:56:47 cgd Exp $	*/
+/*	$OpenBSD: ypmatch.c,v 1.3 1996/05/05 16:19:36 deraadt Exp $ */
+/*	$NetBSD: ypmatch.c,v 1.6 1996/04/30 22:58:31 jtc Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
+ * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypmatch.c,v 1.5 1994/12/24 16:56:47 cgd Exp $";
+static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.3 1996/05/05 16:19:36 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -113,9 +114,11 @@ char **argv;
 		usage();
 
 	inmap = argv[argc-1];
-	for(i=0; (!notrans) && i<sizeof ypaliases/sizeof ypaliases[0]; i++)
-		if( strcmp(inmap, ypaliases[i].alias) == 0)
-			inmap = ypaliases[i].name;
+	if (!notrans) {
+		for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
+			if( strcmp(inmap, ypaliases[i].alias) == 0)
+				inmap = ypaliases[i].name;
+	}
 	for(; optind < argc-1; optind++) {
 		inkey = argv[optind];
 
