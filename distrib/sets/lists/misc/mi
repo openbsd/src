@@ -262,6 +262,8 @@
 ./usr/share/doc/usd/04.csh/tabs
 ./usr/share/doc/usd/05.dc
 ./usr/share/doc/usd/06.bc
+./usr/share/doc/usd/06.bc/Makefile
+./usr/share/doc/usd/06.bc/bc
 ./usr/share/doc/usd/07.mail
 ./usr/share/doc/usd/07.mail/Makefile
 ./usr/share/doc/usd/07.mail/mail0.nr
