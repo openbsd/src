@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.29 1998/03/13 20:50:52 deraadt Exp $
+#	$OpenBSD: install.md,v 1.30 1998/03/27 23:28:14 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -200,10 +200,9 @@ md_welcome_banner() {
 		echo "Welcome to the OpenBSD/i386 ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 		cat << \__welcome_banner_1
 
-This program is designed to help you put OpenBSD on your disk, in a simple
-and rational way.  You'll be asked several questions, and it would probably
-be useful to have your disk's hardware manual, the installation notes, and a
-calculator handy.
+This program is designed to help you put OpenBSD on your disk in a simple and
+rational way.
+
 __welcome_banner_1
 
 	else

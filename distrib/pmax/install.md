@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 1997/09/30 17:52:46 deraadt Exp $
+#	$OpenBSD: install.md,v 1.6 1998/03/27 23:28:15 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -80,10 +80,10 @@ md_makerootwritable() {
 }
 
 md_mountkernfs() {
-        if [ -e ${KERNFSMOUNTED} ]
-        then
-                return
-        fi
+	if [ -e ${KERNFSMOUNTED} ]
+	then
+		return
+	fi
 	if [ ! -d /kern ]; then
 		mkdir /kern
 	fi
@@ -91,14 +91,14 @@ md_mountkernfs() {
 	if [ ! -d /mnt2 ]; then
 		mkdir /mnt2
 	fi
-        if ! mount -t kernfs /kern /kern
-        then
-                cat << \__kernfs_failed_1
+	if ! mount -t kernfs /kern /kern
+	then
+		cat << \__kernfs_failed_1
 FATAL ERROR: Can't mount kernfs filesystem
 __kernfs_failed_1
-                exit
-        fi
-        > ${KERNFSMOUNTED} 
+		exit
+	fi
+	> ${KERNFSMOUNTED} 
 }
 
 md_machine_arch() {
@@ -122,16 +122,16 @@ md_get_ifdevs() {
 
 md_get_partition_range() {
     # return range of valid partition letters
-    echo "[a-h]"
+    echo "[a-p]"
 }
 
 
 md_installboot() {
-        echo -n "Installing boot block..."
-        # $1 is the root disk
-        disklabel -W ${1}
-        disklabel -B ${1}
-        echo "done."
+	echo -n "Installing boot block..."
+	# $1 is the root disk
+	disklabel -W ${1}
+	disklabel -B ${1}
+	echo "done."
 	# we also use this chance to do an ldconfig here
 	echo -n "creating runtime link editor directory cache..."
 	chroot /mnt ldconfig
@@ -188,55 +188,6 @@ md_prep_disklabel()
 	esac
 
 	# display example
-	cat << \__md_prep_disklabel_1
-
-Here is an example of what the partition information will look like once
-you have entered the disklabel editor. Disk partition sizes and offsets
-are in sector (most likely 512 bytes) units.
-
-Make sure these size/offset pairs are on cylinder boundaries (the number
-of sector per cylinder is given in the `sectors/cylinder' entry.
-
-If this disk is previously un-labeled, only the "c" partition will show up
-in the editor and you will have to enter lines similar to those shown in the
-example for the other paritions.  If you are uncertain about the syntax or
-space requirements, this is a good time to review the installation notes.
-
-Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the `8 partitions:' line, even
-in case you have defined less than sixteen partitions.
-
-[** EXAMPLE **]
-# /dev/rrz0c:
-type: SCSI
-disk: SEAGATE ST1480 r
-label: 
-flags:
-bytes/sector: 512
-sectors/track: 63
-tracks/cylinder: 11
-sectors/cylinder: 693
-cylinders: 832527
-total sectors: 832527
-rpm: 3600
-interleave: 1
-trackskew: 0
-cylinderskew: 0
-headswitch: 0           # milliseconds
-track-to-track seek: 0  # milliseconds
-drivedata: 0 
-
-8 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
-  a:    65536        0    4.2BSD     1024  8192    16   # (Cyl.   0 - 94*)
-  b:   131072    65536      swap                        # (Cyl.  94*- 283*)
-  c:   832527        0    unused     1024  8192         # (Cyl.   0 - 1201*)
-  d:   635919   196608    4.2BSD     1024  8192    16   # (Cyl. 283*- 1201*)
-[End of **EXAMPLE**]
-
-__md_prep_disklabel_1
-	echo -n "Press [Enter] to continue "
-	getresp ""
 	disklabel -W ${_disk}
 # TTT   hack to workaround disklabel problems
 	disklabel ${_disk} > /tmp/tempdisklabel
@@ -260,14 +211,11 @@ md_welcome_banner() {
 		echo "Welcome to the OpenBSD/pmax ${VERSION} installation program."
 		cat << \__welcome_banner_1
 
-This program is designed to help you put OpenBSD on your disk,
-in a simple and rational way.  You'll be asked several questions,
-and it would probably be useful to have your disk's hardware
-manual, the installation notes, and a calculator handy.
+This program is designed to help you put OpenBSD on your disk in a simple and
+rational way.
 __welcome_banner_1
 
 	else
-		echo ""
 		echo "Welcome to the OpenBSD/pmax ${VERSION} upgrade program."
 		cat << \__welcome_banner_2
 
@@ -283,26 +231,22 @@ __welcome_banner_2
 
 cat << \__welcome_banner_3
 
-As with anything which modifies your disk's contents, this
-program can cause SIGNIFICANT data loss, and you are advised
-to make sure your data is backed up before beginning the
-installation process.
+As with anything which modifies your disk's contents, this program can
+cause SIGNIFICANT data loss, and you are advised to make sure your
+data is backed up before beginning the installation process.
 
-Default answers are displayed in brackets after the questions.
-You can hit Control-C at any time to quit, but if you do so at a
-prompt, you may have to hit return.  Also, quitting in the middle of
+Default answers are displayed in brackets after the questions.  You
+can hit Control-C at any time to quit, but if you do so at a prompt,
+you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
-
 __welcome_banner_3
 } | more
 }
 
 md_not_going_to_install() {
 	cat << \__not_going_to_install_1
-
 OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
-
 __not_going_to_install_1
 }
 
@@ -314,10 +258,8 @@ md_congrats() {
 		what="upgraded";
 	fi
 	cat << __congratulations_1
-
-CONGRATULATIONS!  You have successfully $what OpenBSD!
-To boot the installed system, enter halt at the command prompt. Once the
-system has halted, reset the machine and boot from the disk.
-
+CONGRATULATIONS!  You have successfully $what OpenBSD!  To boot the
+installed system, enter halt at the command prompt. Once the system
+has halted, reset the machine and boot from the disk.
 __congratulations_1
 }
