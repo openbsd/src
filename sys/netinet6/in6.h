@@ -26,7 +26,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #define IPPROTO_HOPOPTS		0	/* Hop-by-hop option header. */
 #define IPPROTO_IPV4		4	/* IPv4 in IPv6 (?!?) */
-#define IPPROTO_IPV6		41	/* IPv6 in IPv6 */
+/* BAD PLACE #define IPPROTO_IPV6		41	 IPv6 in IPv6 */
 #define IPPROTO_ROUTING		43	/* Routing header. */
 #define IPPROTO_FRAGMENT	44	/* Fragmentation/reassembly header. */
 #define IPPROTO_ESP		50	/* Encapsulating security payload. */

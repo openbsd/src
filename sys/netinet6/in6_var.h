@@ -7,8 +7,8 @@ Laboratory (NRL). The NRL Copyright Notice and License Agreement Version
 1.1 (January 17, 1995) applies to this software.
 You should have received a copy of the license with this software. If you
 didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
-
 */
+
 #ifndef _NETINET6_IN6_VAR_H
 #define _NETINET6_IN6_VAR_H 1
 
@@ -19,9 +19,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 struct inet6_ifreq
 {
-#ifndef IFNAMSIZ
-#define IFNAMSIZ        16
-#endif /* IFNAMSIZ */
         char    ifr_name[IFNAMSIZ];             /* if name, e.g. "en0" */
         union {
                 struct  sockaddr_in6 ifru_addr;
@@ -37,7 +34,7 @@ struct inet6_ifreq
 #define ifr_flags       ifr_ifru.ifru_flags     /* flags */
 #define ifr_metric      ifr_ifru.ifru_metric    /* metric */
 #define ifr_data        ifr_ifru.ifru_data      /* for use by interface */
-      };
+};
 
 /*
  * IPv6 interface "alias" request.  Used to add interface addresses.  This 
@@ -75,7 +72,7 @@ struct in6_ifaddr
 {
   struct ifaddr i6a_ifa; /* protocol-independent info (32 bytes) */
 #define i6a_ifp    i6a_ifa.ifa_ifp
-#ifdef KERNEL
+#ifdef _KERNEL
 #define i6a_flags  i6a_ifa.ifa_flags
 #endif
   
@@ -141,25 +138,26 @@ struct in6_multi
   uint in6m_timer;                     /* IGMP membership report timer. */
 };
 
-#ifdef KERNEL
-/* General case IN6 multicast lookup.  Can be optimized out in certain
-   places (like netinet6/ipv6_input.c ?). */
+#ifdef _KERNEL
+/*
+ * General case IN6 multicast lookup.  Can be optimized out in certain
+ * places (like netinet6/ipv6_input.c ?).
+ */
 
 #define IN6_LOOKUP_MULTI(addr,ifp,in6m) \
-{\
-  register struct in6_ifnet *i6ifp;\
-\
-  for (i6ifp=in6_ifnet; i6ifp != NULL && i6ifp->i6ifp_ifp != ifp;\
-       i6ifp=i6ifp->i6ifp_next)\
-   ;\
-  if (i6ifp == NULL)\
-    in6m=NULL;\
-  else\
-    for ((in6m) = i6ifp->i6ifp_multiaddrs;\
-       (in6m) != NULL && !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr,(addr));\
-       (in6m) = (in6m)->in6m_next) ;\
+	{ \
+	struct in6_ifnet *i6ifp; \
+	for (i6ifp=in6_ifnet; i6ifp != NULL && i6ifp->i6ifp_ifp != ifp; \
+	    i6ifp=i6ifp->i6ifp_next) \
+		; \
+	if (i6ifp == NULL) \
+		in6m=NULL; \
+	else \
+		for ((in6m) = i6ifp->i6ifp_multiaddrs; \
+		    (in6m) != NULL && !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr,(addr)); \
+		(in6m) = (in6m)->in6m_next) \
+			; \
 }
-
 
 #define IN6_MCASTOPTS 0x2
 
@@ -184,6 +182,11 @@ struct in6_ifnet
   /* Addrconf and ND variables will go here. */
 };
 
-#endif /* KERNEL */
+extern struct ifqueue ipv6intrq;
+
+int ipv6_discov_resolve __P((struct ifnet *, struct rtentry *, struct mbuf *,
+	struct sockaddr *, u_char *));
+
+#endif /* _KERNEL */
 
 #endif /* _NETINET6_IN6_VAR_H */
