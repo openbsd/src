@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.13 1996/08/10 21:41:13 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.14 1996/08/13 03:12:41 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -158,6 +158,7 @@ main(framep)
 {
 	register struct proc *p;
 	register struct pdevinit *pdev;
+	struct timeval rtv;
 	register int i;
 	int s;
 	register_t rval[2];
@@ -386,7 +387,8 @@ main(framep)
 	cpu_set_kpc(pfind(3), start_update);
 #endif
 
-	srandom((u_long)(time.tv_sec ^ time.tv_usec));
+	microtime(&rtv);
+	srandom((u_long)(rtv.tv_sec ^ rtv.tv_usec));
 
 	/* The scheduler is an infinite loop. */
 	scheduler();
