@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: maketars,v 1.16 2003/06/02 04:04:32 deraadt Exp $
+#	$OpenBSD: maketars,v 1.17 2004/09/02 19:55:36 millert Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -27,7 +27,7 @@
 
 RELEASE=$1
 
-if [ "X${RELEASE}" == "X" ]; then
+if [ "X${RELEASE}" = "X" ]; then
 	echo "Usage: `basename $0` <OSREVISION>"
 	exit 1
 fi
