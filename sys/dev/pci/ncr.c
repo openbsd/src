@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.21 1996/11/30 21:54:53 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.22 1996/11/30 23:04:38 downsj Exp $	*/
 /*	$NetBSD: ncr.c,v 1.48 1996/10/25 21:33:33 cgd Exp $	*/
 
 /**************************************************************************
@@ -3516,8 +3516,8 @@ static	void ncr_attach (pcici_t config_id, int unit)
 
 	np->maxwide = 0;
 	np->rv_scntl3 = 0x13;	/* default: 40MHz clock */
-	np->ns_sync = 25;
-	np->ns_async = 50;
+	np->ns_sync   = 25;	/* XXX no support for Fast-20, yet */
+	np->ns_async  = 50;
 
 	/*
 	**	Get the frequency of the chip's clock.
@@ -5191,8 +5191,8 @@ void ncr_exception (ncb_p np)
 	**	Never test for an error condition you don't know how to handle.
 	*/
 
-	dstat = INB (nc_dstat);
-	sist  = INW (nc_sist) ;
+	dstat = (istat & DIP) ? INB (nc_dstat) : 0;
+	sist  = (istat & SIP) ? INW (nc_sist)  : 0;
 	np->profile.num_int++;
 
 	if (DEBUG_FLAGS & DEBUG_TINY)
@@ -7077,8 +7077,6 @@ ncrgetfreq (ncb_p np, int gen)
  		}
  	}
  
- 	np->ns_sync   = 25;
- 	np->ns_async  = 50;
  	np->rv_scntl3 = ((scntl3 & 0x7) << 4) -0x20 + (scntl3 & 0x7);
  
  	if (bootverbose) {
