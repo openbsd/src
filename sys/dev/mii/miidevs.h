@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.35 2003/02/13 06:02:09 fgsch Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.36 2003/02/19 10:13:05 miod Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.32 2003/02/13 05:49:58 fgsch Exp 
+ *	OpenBSD: miidevs,v 1.33 2003/02/19 10:12:55 miod Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -171,6 +171,8 @@
 #define	MII_STR_xxICS_1890	"ICS1890 10/100 media interface"
 #define	MII_MODEL_xxICS_1892	0x0003
 #define	MII_STR_xxICS_1892	"ICS1892 10/100 media interface"
+#define	MII_MODEL_xxICS_1893	0x0004
+#define	MII_STR_xxICS_1893	"ICS1893 10/100 media interface"
 
 /* Intel PHYs */
 #define	MII_MODEL_xxINTEL_I82553	0x0000
