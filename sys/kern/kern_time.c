@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.20 2000/07/05 08:10:57 pjanzen Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.21 2000/07/06 15:33:31 ho Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ settime(tv)
 	s = splclock();
 	timersub(tv, &time, &delta);
 	time = *tv;
-	(void) splsoftclock();
+	(void) spllowersoftclock();
 	timeradd(&boottime, &delta, &boottime);
 	timeradd(&runtime, &delta, &runtime);
 #	if defined(NFS) || defined(NFSSERVER)
