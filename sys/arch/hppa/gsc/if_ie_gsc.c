@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.21 2003/08/07 19:47:33 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.22 2003/10/27 17:22:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -31,8 +31,8 @@
  */
 
 /*
- * Referencies:
- * 1. 82596DX and 82596SX High-Perfomance 32-bit Local Area Network Coprocessor
+ * References:
+ * 1. 82596DX and 82596SX High-Performance 32-bit Local Area Network Coprocessor
  *    Intel Corporation, November 1996, Order Number: 290219-006
  *
  * 2. 712 I/O Subsystem ERS Rev 1.0
