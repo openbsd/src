@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.34 2004/01/15 15:47:05 dhartmei Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.35 2004/01/18 12:22:39 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -158,6 +158,7 @@ void	carp_master_down(void *);
 int	carp_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_start(struct ifnet *);
 void	carp_setrun(struct carp_softc *, sa_family_t);
+void	carp_set_state(struct carp_softc *, int);
 int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
 int	carp_del_addr(struct carp_softc *, struct sockaddr_in *);
 #ifdef INET6
@@ -512,7 +513,7 @@ carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		if (timercmp(&sc_tv, &ch_tv, >) ||
 		    timercmp(&sc_tv, &ch_tv, ==)) {
 			timeout_del(&sc->sc_ad_tmo);
-			sc->sc_state = BACKUP;
+			carp_set_state(sc, BACKUP);
 			carp_setrun(sc, 0);
 			carp_setroute(sc, RTM_DELETE);
 		}
@@ -1019,7 +1020,7 @@ carp_master_down(void *v)
 	case MASTER:
 		break;
 	case BACKUP:
-		sc->sc_state = MASTER;
+		carp_set_state(sc, MASTER);
 		carp_send_ad(sc);
 		carp_send_arp(sc);
 #ifdef INET6
@@ -1058,10 +1059,10 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 #ifdef INET6
 			carp_send_na(sc);
 #endif /* INET6 */
-			sc->sc_state = MASTER;
+			carp_set_state(sc, MASTER);
 			carp_setroute(sc, RTM_ADD);
 		} else {
-			sc->sc_state = BACKUP;
+			carp_set_state(sc, BACKUP);
 			carp_setroute(sc, RTM_DELETE);
 #ifdef INET
 			TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist,
@@ -1126,7 +1127,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 
 	if (sin->sin_addr.s_addr == 0) {
 		if (!(sc->sc_ac.ac_if.if_flags & IFF_UP))
-			sc->sc_state = INIT;
+			carp_set_state(sc, INIT);
 		if (sc->sc_naddrs)
 			sc->sc_ac.ac_if.if_flags |= IFF_UP;
 		carp_setrun(sc, 0);
@@ -1224,7 +1225,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 	sc->sc_ac.ac_if.if_flags |= IFF_UP;
 	if (own)
 		sc->sc_advskew = 0;
-	sc->sc_state = INIT;
+	carp_set_state(sc, INIT);
 	carp_setrun(sc, 0);
 
 	return (0);
@@ -1272,7 +1273,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 		if (!(sc->sc_ac.ac_if.if_flags & IFF_UP))
-			sc->sc_state = INIT;
+			carp_set_state(sc, INIT);
 		if (sc->sc_naddrs6)
 			sc->sc_ac.ac_if.if_flags |= IFF_UP;
 		carp_setrun(sc, 0);
@@ -1394,7 +1395,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 	sc->sc_ac.ac_if.if_flags |= IFF_UP;
 	if (own)
 		sc->sc_advskew = 0;
-	sc->sc_state = INIT;
+	carp_set_state(sc, INIT);
 	carp_setrun(sc, 0);
 
 	return (0);
@@ -1530,12 +1531,12 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			timeout_del(&sc->sc_md6_tmo);
 			if (sc->sc_state == MASTER)
 				carp_send_ad(sc);
-			sc->sc_state = INIT;
+			carp_set_state(sc, INIT);
 			carp_setrun(sc, 0);
 		}
 		if (ifr->ifr_flags & IFF_UP && (sc->if_flags & IFF_UP) == 0) {
 			sc->if_flags |= IFF_UP;
-			sc->sc_state = INIT;
+			carp_set_state(sc, INIT);
 			carp_setrun(sc, 0);
 		}
 		break;
@@ -1702,4 +1703,25 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	}
 
 	return (0);
+}
+
+void
+carp_set_state(struct carp_softc *sc, int state) 
+{
+	if (sc->sc_state == state)
+		return;
+
+	sc->sc_state = state;
+	switch(state) {
+	case BACKUP:
+		sc->sc_ac.ac_if.if_link_state = LINK_STATE_DOWN;
+		break;
+	case MASTER:
+		sc->sc_ac.ac_if.if_link_state = LINK_STATE_UP;
+		break;
+	default:
+		sc->sc_ac.ac_if.if_link_state = LINK_STATE_UNKNOWN;
+		break;
+	}
+	rt_ifmsg(&sc->sc_ac.ac_if);
 }
