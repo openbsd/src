@@ -3045,6 +3045,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Riva TNT2",
 	},
 	{
+	    PCI_VENDOR_NVISIA, PCI_PRODUCT_NVISIA_GEFORCE256,
+	    0,
+	    "",
+	    "GeForce256",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256_DDR,
 	    0,
 	    "Nvidia",
