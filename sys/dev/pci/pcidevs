@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.97 1998/10/21 01:54:49 deraadt Exp $
+$OpenBSD: pcidevs,v 1.98 1998/10/31 12:10:34 matthieu Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -498,7 +498,7 @@ vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor PICTUREEL	0x12c5	Picture Elements
-vendor STB2		0x12d2	STB (2nd ID)
+vendor STB2		0x12d2	NVidia/SGS-Thomson
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd ID)
 vendor 3DLABS		0x3d3d	3D Labs
@@ -546,12 +546,15 @@ product	3COM 3C980TX		0x9800	3c980 100Base-TX
 /* 3DFX Interactive */
 product 3DFX VOODOO		0x0001	Voodoo
 product 3DFX VOODOO2		0x0002	Voodoo2
+product 3DFX BANSHEE		0x0003	Banshee
 
 /* 3D Labs products */
-product 3DLABS 300SX		0x0001	300SX (Glint)
+product 3DLABS 300SX		0x0001	GLINT 300SX
 product 3DLABS 500TX		0x0002	GLINT 500TX
-product 3DLABS DELTA		0x0003	GLINT DELTA
+product 3DLABS DELTA		0x0003	GLINT Delta
+product 3DLABS PERMEDIA		0x0004	GLINT Permedia
 product 3DLABS 500MX		0x0006	GLINT 500MX
+product	3DLABS PERMEDIA2	0x0007	GLINT Permedia 2
 
 /* ACC Products */
 product ACC 2188		0x0000	ACCM 2188 VL-PCI Bridge
@@ -634,8 +637,24 @@ product ATI MACH64_CX		0x4358	Mach64 CX
 product ATI MACH64_ET		0x4554	Mach64 ET
 product ATI MACH64_VT		0x4654	Mach64 VT
 product ATI RAGEPRO		0x4742	Rage Pro
-product ATI MACH64_GT		0x4754	Mach64 GT
-product ATI MACH64_GX		0x4758	Mach64 GX
+product ATI MACH64_GD		0x4744  Mach64 GD
+product ATI MACH64_GI		0x4749  Mach64 GI
+product ATI MACH64_GP		0x4750  Mach64 GP
+product ATI MACH64_GQ		0x4751  Mach64 GQ
+product ATI MACH64_GT		0x4754  Mach64 GT
+product ATI MACH64_GU		0x4755  Mach64 GU
+product ATI MACH64_GV		0x4756  Mach64 GV
+product ATI MACH64_GW		0x4757  Mach64 GW
+product ATI MACH64_GX		0x4758  Mach64 GX
+product ATI MACH64_GZ		0x475A  Mach64 GZ
+product ATI MACH64_LB		0x4C42  Mach64 LB
+product ATI MACH64_LD		0x4c44  Mach64 LD
+product ATI MACH64_LG		0x4c47  Mach64 LG
+product ATI MACH64_LI		0x4c49  Mach64 LI
+product ATI MACH64_LP		0x4c50  Mach64 LP
+product ATI MACH64_VT		0x5654	Mach64 VT
+product ATI MACH64_VU		0x5655	Mach64 VU
+product ATI MACH64_VV		0x5656	Mach64 VV
 
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
@@ -676,6 +695,8 @@ product CHIPS 65548		0x00dc	65548
 product CHIPS 65550		0x00e0	65550
 product CHIPS 65554		0x00e4	65554
 product CHIPS 65555		0x00e5	65555
+product	CHIPS 68554		0x00f4	68554
+product CHIPS 69000		0x00c0	69000
 
 /* Cirrus Logic products */
 product CIRRUS CL_GD7548	0x0038	CL-GD7548
@@ -685,6 +706,8 @@ product CIRRUS CL_GD5434_8	0x00a8	CL-GD5434-8
 product CIRRUS CL_GD5436	0x00ac	CL-GD5436
 product CIRRUS CL_GD5446	0x00b8	CL-GD5446
 product CIRRUS CL_GD5480	0x00bc	CL-GD5480
+product CIRRUS CL_GD5462	0x00d0	CL-GD5462
+product CIRRUS CL_GD5464	0x00d4	CL-GD6464
 product CIRRUS CL_PD6729	0x1100	CL-PD6729
 product CIRRUS CL_PD6832	0x1110	CL-PD6832
 product CIRRUS CL_GD7542	0x1200	CL-GD7542
@@ -894,8 +917,11 @@ product MATROX MILLENIUM	0x0519	MGA Millenium 2064W (Storm)
 product MATROX MYSTIQUE_220	0x051A	MGA 1064SG 220MHz
 product MATROX MILLENNIUM_II	0x051B	MGA Millennium II 2164W
 product MATROX MILLENNIUM_IIAGP	0x051F	MGA Millennium II 2164WA-B AGP
+product MATROX MILL_II_G200_PCI 0x0520  MGA Millennium G200 PCI
+product MATROX MILL_II_G200_AGP 0x0521  MGA Millennium G200 AGP
+product MATROX PRODUCTIVA_PCI   0x1000  MGA Productiva G100 PCI
+product MATROX PRODUCTIVA_AGP   0x1001  MGA Productiva G100 AGP
 product MATROX MYSTIQUE		0x102B	MGA 1064SG
-product MATROX PRODUCTIVA	0x1001	MGA Productiva G100 AGP
 
 /* Mylex products */
 product MYLEX 960P		0x0001	DAC960P RAID
@@ -912,7 +938,10 @@ product	NEC XXX			0x0035	XXX USB
 product	NEC POWERVR2		0x0046	PowerVR PCX2
 
 /* NeoMagic */
-product NEOMAGIC NM2160		0x0004	NM2160
+product NEOMAGIC NM2070		0x0001	Magicgraph NM2070
+product NEOMAGIC 128V		0x0002	Magicgraph 128V
+product NEOMAGIC 128ZV		0x0003	Magicgraph 128ZV
+product NEOMAGIC NM2160		0x0004	Magicgraph NM2160
 
 /* NetVin */
 product NETVIN NV5000		0x5000	NetVin 5000
@@ -945,6 +974,12 @@ product NKK NDR4600		0xA001	NDR4600 Host-PCI Bridge
 /* Number Nine products */
 product NUMBER9 I128		0x2309	Imagine-128
 product NUMBER9 I128_2		0x2339	Imagine-128 II
+product NUMBER9 I128_T2R	0x493D	Imagine-128 T2R
+
+/* NVidia products */
+product	NVIDIA	NV1		0x0008	NV1
+product NVIDIA	DAC64		0x0009	DAC64
+product	NVIDIA	Riva TNT	0x0020	Riva TNT
 
 /* Oak Technologies products */
 product OAKTECH OTI1007		0x0107	OTI107
@@ -1072,6 +1107,8 @@ product TI	PCI1131		0xac15	PCI1131
 product TI	PCI1250		0xac16	PCI1250
 product TI	PCI1220		0xac17	PCI1220 PCI-CardBus Bridge
 product TI	PCI2030		0xac20	PCI2030
+product TI	PERMEDIA	0x3d04	3DLabs Permedia
+product TI	PERMEDIA2	0x3d07	3DLabs Permedia 2
 
 /* Toshiba products */
 product TOSHIBA	R4X00		0x102f	R4x00 Host-PCI Bridge
@@ -1084,6 +1121,7 @@ product TOSHIBA	TC35856F	0x0020	TC35856F ATM (Meteor)
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
 product TRIDENT	TGUI_9350	0x9350	TGUI 9350
 product TRIDENT	TGUI_9360	0x9360	TGUI 9360
+product TRIDENT TGUI_9388	0x9388	TGUI 9388
 product TRIDENT CYBER_9397	0x9397	CYBER 9397
 product TRIDENT	TGUI_9420	0x9420	TGUI 9420
 product TRIDENT	TGUI_9440	0x9440	TGUI 9440
@@ -1091,6 +1129,7 @@ product TRIDENT	TGUI_9660	0x9660	TGUI 9660
 product TRIDENT	TGUI_9680	0x9680	TGUI 9680
 product TRIDENT	TGUI_9682	0x9682	TGUI 9682
 product TRIDENT TGUI_9750	0x9750	TGUI 9750 (3D Image)
+product TRIDENT TGUI_9850	0x9850	TGUI 9850
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
@@ -1100,7 +1139,8 @@ product TSENG ET4000_W32P_A	0x3202	ET4000w32p rev A
 product TSENG ET4000_W32P_B	0x3205	ET4000w32p rev B
 product TSENG ET4000_W32P_C	0x3206	ET4000w32p rev C
 product TSENG ET4000_W32P_D	0x3207	ET4000w32p rev D
-product TSENG ET6000		0x3208	ET6000
+product TSENG ET6000		0x3208	ET6000/ET6100
+product TSENG ET6300		0x4702	ET6300
 
 /* UMC products */
 product UMC UM82C881		0x0001	UM82C881 486 Chipset
