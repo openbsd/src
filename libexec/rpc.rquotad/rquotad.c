@@ -1,3 +1,4 @@
+/*	$OpenBSD: rquotad.c,v 1.7 2000/10/19 01:56:05 pjanzen Exp $	*/
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
  * 
@@ -7,6 +8,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <signal.h>
 
@@ -20,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <varargs.h>
+#include <unistd.h>
 
 #include <ufs/ufs/quota.h>
 #include <rpc/rpc.h>
@@ -206,23 +208,32 @@ initfs()
 	char *qfpathname;
 	struct fstab *fs;
 	struct stat st;
-	char *qfextension[] = INITQFNAMES;
 
 	setfsent();
-	while (fs = getfsent()) {
+	while ((fs = getfsent())) {
 		if (strcmp(fs->fs_vfstype, "ufs"))
 			continue;
 		if (!hasquota(fs, &qfpathname))
 			continue;
 
 		fs_current = (struct fs_stat *) malloc(sizeof(struct fs_stat));
+		if (fs_current == NULL) {
+			syslog(LOG_ERR, "can't malloc: %m");
+			exit(1);
+		}
 		fs_current->fs_next = fs_next;	/* next element */
 
-		fs_current->fs_file = malloc(sizeof(char) * (strlen(fs->fs_file) + 1));
-		strcpy(fs_current->fs_file, fs->fs_file);
+		fs_current->fs_file = strdup(fs->fs_file);
+		if (fs_current->fs_file == NULL) {
+			syslog(LOG_ERR, "can't strdup: %m");
+			exit(1);
+		}
 
-		fs_current->qfpathname = malloc(sizeof(char) * (strlen(qfpathname) + 1));
-		strcpy(fs_current->qfpathname, qfpathname);
+		fs_current->qfpathname = strdup(qfpathname);
+		if (fs_current->qfpathname == NULL) {
+			syslog(LOG_ERR, "can't strdup: %m");
+			exit(1);
+		}
 
 		stat(fs_current->fs_file, &st);
 		fs_current->st_dev = st.st_dev;
@@ -246,7 +257,6 @@ getfsquota(id, path, dqblk)
 	struct stat st_path;
 	struct fs_stat *fs;
 	int	qcmd, fd, ret = 0;
-	char	*qfextension[] = INITQFNAMES;
 
 	if (stat(path, &st_path) < 0)
 		return (0);
@@ -254,12 +264,12 @@ getfsquota(id, path, dqblk)
 	qcmd = QCMD(Q_GETQUOTA, USRQUOTA);
 
 	for (fs = fs_begin; fs != NULL; fs = fs->fs_next) {
-		/* where the devise is the same as path */
+		/* where the device is the same as path */
 		if (fs->st_dev != st_path.st_dev)
 			continue;
 
 		/* find the specified filesystem. get and return quota */
-		if (quotactl(fs->fs_file, qcmd, id, dqblk) == 0)
+		if (quotactl(fs->fs_file, qcmd, id, (char *)dqblk) == 0)
 			return (1);
 
 		if ((fd = open(fs->qfpathname, O_RDONLY)) < 0) {
@@ -307,13 +317,16 @@ hasquota(fs, qfnamep)
 	char	*opt, *cp;
 	char	*qfextension[] = INITQFNAMES;
 
+	cp = NULL;
 	if (!initname) {
-		sprintf(usrname, "%s%s", qfextension[USRQUOTA], QUOTAFILENAME);
+		(void)snprintf(usrname, sizeof usrname, "%s%s",
+		    qfextension[USRQUOTA], QUOTAFILENAME);
 		initname = 1;
 	}
-	strcpy(buf, fs->fs_mntops);
+	strncpy(buf, fs->fs_mntops, sizeof buf);
+	buf[sizeof(buf) - 1] = '\0';
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
-		if (cp = strchr(opt, '='))
+		if ((cp = strchr(opt, '=')))
 			*cp++ = '\0';
 		if (strcmp(opt, usrname) == 0)
 			break;
@@ -324,7 +337,8 @@ hasquota(fs, qfnamep)
 		*qfnamep = cp;
 		return (1);
 	}
-	sprintf(buf, "%s/%s.%s", fs->fs_file, QUOTAFILENAME, qfextension[USRQUOTA]);
+	(void)snprintf(buf, sizeof buf, "%s/%s.%s", fs->fs_file,
+	    QUOTAFILENAME, qfextension[USRQUOTA]);
 	*qfnamep = buf;
 	return (1);
 }
