@@ -1,0 +1,103 @@
+.\" $OpenBSD: bsd.regress.mk.5,v 1.1 2002/08/26 22:12:11 avsm Exp $
+.\"
+.\" Copyright (c) 2002 Anil Madhavapeddy
+.\" Copyright (c) 2000 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 24, 2002
+.Dt BSD.REGRESS.MK 5
+.Os
+.Sh NAME
+.Nm bsd.regress.mk
+.Nd regression test master Makefile fragment
+.Sh SYNOPSIS
+.Fd .include <bsd.regress.mk>
+.Sh DESCRIPTION
+.Nm
+holds the standard routines used by the source regression tests.
+Some variables and targets are for its internal use only.
+The rest are documented here.
+.Pp
+Since this file also includes
+.Nm bsd.prog.mk ,
+all of the usual
+.Ox
+Makefile variables may be used to build the regression
+test programs.
+.Sh TARGETS
+.Bl -tag -width regress
+.It Ar depend
+Build any dependencies required to carry out the current set
+of regression tests.
+.It Ar regress
+Executes all of the regression targets defined in the Makefile.
+.It Ar run-regress-*
+Runs an individual regression test.  If the exit status of the
+program indicates an error or timeout, then a failure is logged,
+otherwise the test is marked as a success.
+.Sh VARIABLES
+.Bl -tag -width REGRESSLOG
+.It Ev REGRESSLOG
+Points to the fully-qualified path of a file to which regression
+results are appended.  Defaults to /dev/null.
+.It Ev REGRESSMAXTIME
+Maximum limit of CPU seconds to spend on the regression test.
+Exceeding this time will result in a failure being logged.
+.It Ev REGRESSROOTTARGETS
+Targets for which root access is required to run the test. The
+.Ev SUDO
+variable is invoked for these targets.  See also
+.Ev SUDO .
+.It Ev REGRESSSKIPSLOW
+Skip over all the regression tests which have been marked as
+being 'slow' using the
+.Ev REGRESSSLOWTARGETS
+variable.
+.It Ev REGRESSSLOWTARGETS
+Targets which are defined as 'slow'.  All of these tests
+can be skipped by setting the 
+.Ev REGRESSSKIPSLOW 
+variable.
+.It Ev REGRESSTARGETS
+Targets which are invoked to run the set of regression tests
+for this Makefile.  Defaults to 
+.Ar run-regress-${PROG} .
+.It Ev SUDO
+Location of the sudo command, used to switch to root for certain
+test targets which require it.
+.Sh BUGS AND LIMITATIONS
+The build system is unable to distinguish between timeouts due to 
+.Ev REGRESSMAXTIME
+being exceeded, or a genuine failure occurring.
+.Sh HISTORY
+The regression system originally came from
+.Nx ,
+with many tests added by
+.Ox 
+since.
+The current Makefile framework was written by Artur Grabowski
+and Marc Espie for 
+.Ox 3.1 .
+.Sh SEE ALSO
+.Xr bsd.port.mk 5
