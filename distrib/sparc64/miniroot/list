@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 2001/09/18 14:27:32 jason Exp $
+#	$OpenBSD: list,v 1.2 2001/10/08 22:52:56 miod Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -18,10 +18,10 @@ SYMLINK	../../instbin		usr/bin/less usr/bin/more
 SYMLINK	../../instbin		usr/sbin/installboot
 SYMLINK	../../instbin		usr/sbin/sysctl
 
-SRCDIRS	sys/arch/sparc/stand
+SRCDIRS	sys/arch/sparc64/stand
 
 # crunchgen source directory specials
-#CRUNCHSPECIAL installboot srcdir sys/arch/sparc/stand/installboot
+#CRUNCHSPECIAL installboot srcdir sys/arch/sparc64/stand/installboot
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp

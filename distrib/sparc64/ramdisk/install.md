@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2001/09/21 20:09:14 jason Exp $
+#	$OpenBSD: install.md,v 1.4 2001/10/08 22:52:59 miod Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -187,7 +187,7 @@ __EOT
 
 	else
 		cat << __EOT
-echo Welcome to the OpenBSD/sparc ${VERSION} upgrade program.
+echo Welcome to the OpenBSD/sparc64 ${VERSION} upgrade program.
 
 This program is designed to help you upgrade your OpenBSD system in a
 simple and rational way.
