@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.44 2001/05/17 18:41:46 provos Exp $	*/
+/*	$OpenBSD: in.h,v 1.45 2001/05/27 05:27:01 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -256,6 +256,11 @@ struct ip_opts {
 #define IP_AUTH_LEVEL		20   /* int; authentication used */
 #define IP_ESP_TRANS_LEVEL	21   /* int; transport encryption */
 #define IP_ESP_NETWORK_LEVEL	22   /* int; full-packet encryption */
+#define IP_IPSEC_LOCAL_ID	23   /* buf; IPsec local ID */
+#define IP_IPSEC_REMOTE_ID	24   /* buf; IPsec remote ID */
+#define IP_IPSEC_LOCAL_CRED	25   /* buf; IPsec local credentials */
+#define IP_IPSEC_REMOTE_CRED	26   /* buf; IPsec remote credentials */
+#define IP_IPSEC_AUTH		27   /* buf; IPsec authentication material */
 
 /*
  * Security levels - IPsec, not IPSO
