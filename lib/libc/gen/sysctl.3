@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.14 1999/05/27 20:49:34 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.15 1999/05/29 20:07:14 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,16 +80,20 @@ and that location gives the amount of data copied after a successful call.
 If the amount of data available is greater
 than the size of the buffer supplied,
 the call supplies as much data as fits in the buffer provided
-and returns with the error code ENOMEM.
+and returns with the error code
+.Er ENOMEM .
 If the old value is not desired,
 .Fa oldp
 and
 .Fa oldlenp
-should be set to NULL.
+should be set to
+.Dv NULL .
 .Pp
 The size of the available data can be determined by calling 
 .Nm sysctl
-with a NULL parameter for
+with a
+.Dv NULL
+parameter for
 .Fa oldp .
 The size of the available data will be returned in the location pointed to by
 .Fa oldlenp .
@@ -105,7 +109,9 @@ is set to point to a buffer of length
 from which the requested value is to be taken.
 If a new value is not to be set,
 .Fa newp
-should be set to NULL and
+should be set to
+.Dv NULL
+and
 .Fa newlen
 set to 0.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popen.3,v 1.3 1999/05/16 19:55:00 alex Exp $
+.\"	$OpenBSD: popen.3,v 1.4 1999/05/29 20:07:14 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,8 +60,9 @@ the resulting stream is correspondingly read-only or write-only.
 .Pp
 The
 .Fa command
-argument is a pointer to a null-terminated string
-containing a shell command line.
+argument is a pointer to a
+.Dv NULL Ns -terminated
+string containing a shell command line.
 This command is passed to
 .Pa /bin/sh
 using the
@@ -69,12 +70,13 @@ using the
 flag; interpretation, if any, is performed by the shell.
 The
 .Fa mode
-argument is a pointer to a null-terminated string
-which must be either
-.Ql r
+argument is a pointer to a
+.Dv NULL Ns -terminated
+string which must be either
+.Qq r
 for reading
 or
-.Ql w
+.Qq w
 for writing.
 .Pp
 The return value from
@@ -82,7 +84,7 @@ The return value from
 is a normal standard
 .Tn I/O
 stream in all respects
-save that it must be closed with
+except that it must be closed with
 .Fn pclose
 rather than
 .Fn fclose .
@@ -106,7 +108,7 @@ The
 function waits for the associated process to terminate
 and returns the exit status of the command
 as returned by
-.Fn wait4 .
+.Xr wait4 2 .
 .Sh RETURN VALUE
 The
 .Fn popen
@@ -122,7 +124,7 @@ or if it cannot allocate memory.
 The
 .Fn pclose
 function
-returns \-1 if
+returns -1 if
 .Fa stream
 is not associated with a
 .Dq popened
@@ -168,10 +170,9 @@ The only hint is an exit status of 127.
 .Pp
 The
 .Fn popen
-argument
-always calls
-.Xr sh ,
-never calls
+argument always calls
+.Xr sh ;
+it never calls
 .Xr csh .
 .Sh HISTORY
 A

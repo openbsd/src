@@ -58,9 +58,9 @@ The argument
 .Fa filedes
 is an open file descriptor.
 The file descriptor must have been opened either for write-only
-.Dv ( O_WRONLY )
+.Pq Dv O_WRONLY
 or read/write
-.Dv ( O_RDWR )
+.Pq Dv O_RDWR
 operation.
 .Pp
 The
@@ -69,21 +69,23 @@ argument is a control value which specifies the action to be taken.
 The permissible values for
 .Fa function
 are as follows:
+.Pp
 .Bl -tag -width F_ULOCKXX -compact -offset indent
 .It Sy Function
 .Sy Description
 .It Dv F_ULOCK
-unlock locked sections
+Unlock locked sections.
 .It Dv F_LOCK
-lock a section for exclusive use
+Lock a section for exclusive use.
 .It Dv F_TLOCK
-test and lock a section for exclusive use
+Test and lock a section for exclusive use.
 .It Dv F_TEST
-test a section for locks by other processes
+Test a section for locks by other processes.
 .El
 .Pp
+The
 .Dv F_ULOCK
-removes locks from a section of the file;
+function removes locks from a section of the file;
 .Dv F_LOCK
 and
 .Dv F_TLOCK
@@ -115,6 +117,7 @@ locked sections would occur, the sections are combined into a single
 locked section. If the request would cause the number of locks to
 exceed a system-imposed limit, the request will fail.
 .Pp
+The
 .Dv F_LOCK
 and
 .Dv F_TLOCK
@@ -130,11 +133,11 @@ File locks are released on first close by the locking process of any
 file descriptor for the file.
 .Pp
 .Dv F_ULOCK
-requests release (wholly or in part) one or more locked sections
+requests release (wholly or in part) of one or more locked sections
 controlled by the process. Locked sections will be unlocked starting
 at the current file offset through
 .Fa size
-bytes or to the end of file if size is 0. When all of a locked section
+bytes or to the end of the file if size is 0. When all of a locked section
 is not released (that is, when the beginning or end of the area to be
 unlocked falls within a locked section), the remaining portions of
 that section are still locked by the process. Releasing the center
@@ -147,7 +150,8 @@ An
 .Dv F_ULOCK
 request in which size is non-zero and the offset of the last byte of
 the requested section is the maximum value for an object of type
-off_t, when the process has an existing lock in which size is 0 and
+.Em off_t ,
+when the process has an existing lock in which size is 0 and
 which includes the last byte of the requested section, will be treated
 as a request to unlock from the start of the requested section with a
 size equal to 0. Otherwise an
@@ -172,8 +176,8 @@ Blocking on a section is interrupted by any signal.
 If successful, the
 .Fn lockf
 function returns 0.
-Otherwise, it returns -1, sets
-.Dv errno
+Otherwise, it returns -1, sets the global variable
+.Va errno
 to indicate an error, and existing locks are not changed.
 .Sh ERRORS
 .Fn lockf
