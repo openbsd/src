@@ -1,4 +1,4 @@
-/*      $OpenBSD: mbuf.c,v 1.1 2000/04/19 00:10:35 deraadt Exp $	*/
+/*      $OpenBSD: mbuf.c,v 1.2 2000/04/20 13:05:30 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -37,7 +37,6 @@
 #include <vm/vm.h>
 #include <vm/vm_extern.h>
 #include <vm/pmap.h>
-#include <machine/pmap.h>
 
 #include <crypto/crypto.h>
 
