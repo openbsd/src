@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.y,v 1.7 2000/06/13 19:03:11 angelos Exp $ */
+/* $OpenBSD: keynote.y,v 1.8 2000/10/09 23:41:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -742,33 +742,55 @@ my_lookup(char *s)
     }
 
     /* Temporary list (regexp results) */
-    ret = keynote_env_lookup(s, &keynote_temp_list, 1);
-    if (ret != (char *) NULL)
-      return ret;
-    else
-      if (keynote_errno != 0)
-	return (char *) NULL;
+    if (keynote_temp_list != NULL)
+    {
+	ret = keynote_env_lookup(s, &keynote_temp_list, 1);
+	if (ret != (char *) NULL)
+	  return ret;
+	else
+	  if (keynote_errno != 0)
+	    return (char *) NULL;
+    }
 
     /* Local-Constants */
-    ret = keynote_env_lookup(s, &keynote_init_list, 1);
-    if (ret != (char *) NULL)
-      return ret;
-    else
-      if (keynote_errno != 0)
-	return (char *) NULL;
+    if (keynote_init_list != NULL)
+    {
+	ret = keynote_env_lookup(s, &keynote_init_list, 1);
+	if (ret != (char *) NULL)
+	  return ret;
+	else
+	  if (keynote_errno != 0)
+	    return (char *) NULL;
+    }
 
-    keynote_used_variable = 1;
-
-    /* Action environment */
-    ret = keynote_env_lookup(s, ks->ks_env_table, HASHTABLESIZE);
-    if (ret != (char *) NULL)
-      return ret;
-    else
-      if (keynote_errno != 0)
-	return (char *) NULL;
+    if ((ks != NULL) && (ks->ks_env_table != NULL))
+    {
+	/* Action environment */
+	ret = keynote_env_lookup(s, ks->ks_env_table, HASHTABLESIZE);
+	if (ret != (char *) NULL)
+	{
+	    keynote_used_variable = 1;
+	    return ret;
+	}
+	else
+	  if (keynote_errno != 0)
+	    return (char *) NULL;
+    }
 
     /* Regex table */
-    return keynote_env_lookup(s, &(ks->ks_env_regex), 1);
+    if ((ks != NULL) && (ks->ks_env_regex != NULL))
+    {
+	ret = keynote_env_lookup(s, &(ks->ks_env_regex), 1);
+	if (ret != (char *) NULL)
+	{
+	    keynote_used_variable = 1;
+	    return ret;
+	}
+
+	return (char *) NULL;
+    }
+
+    return (char *) NULL;
 }
 
 /*
