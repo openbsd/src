@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.68 2000/04/08 05:50:51 aaron Exp $
+#	$OpenBSD: files.pci,v 1.69 2000/04/10 13:55:01 millert Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -245,3 +245,8 @@ device	puc { port = -1 }
 attach	puc at pci
 file	dev/pci/puc.c			puc
 file	dev/pci/pucdata.c		puc
+
+# Aironet 4500/4800 802.11 DS WLAN
+# device declaration in sys/conf/files
+attach	an at pci with an_pci
+file	dev/pci/if_an_pci.c		an_pci
