@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.22 2002/09/21 15:29:46 nate Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.23 2002/09/22 17:53:43 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1340,7 +1340,7 @@ nge_rxeof(sc)
 		 * only gigE chip I know of with alignment constraints
 		 * on receive buffers. RX buffers must be 64-bit aligned.
 		 */
-#ifdef __i386__
+#ifndef __STRICT_ALIGNMENT
 		/*
 		 * By popular demand, ignore the alignment problems
 		 * on the Intel x86 platform. The performance hit
@@ -1363,7 +1363,7 @@ nge_rxeof(sc)
 			}
 			m_adj(m0, ETHER_ALIGN);
 			m = m0;
-#ifdef __i386__
+#ifndef __STRICT_ALIGNMENT
 		} else {
 			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = total_len;
