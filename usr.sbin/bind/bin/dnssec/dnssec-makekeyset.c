@@ -285,7 +285,7 @@ main(int argc, char *argv[]) {
 		}
 		if (output == NULL) {
 			size_t len;
-			len = strlen("keyset=") + strlen(namestr) + 1;
+			len = strlen("keyset-") + strlen(namestr) + 1;
 			output = isc_mem_allocate(mctx, len);
 			if (output == NULL)
 				fatal("out of memory");
