@@ -146,8 +146,8 @@ a hostname) as the source address in outgoing probe packets.  On
 hosts with more than one IP address, this option can be used to
 force the source address to be something other than the IP address
 of the interface the probe packet is sent on.  If the IP address
-is not one of this machine's interface addresses, an error is
-returned and nothing is sent.
+is not one of this machine's interface addresses and the user is
+not the superuser, an error is returned and nothing is sent.
 .It Fl t Ar tos
 Set the
 .Em type-of-service

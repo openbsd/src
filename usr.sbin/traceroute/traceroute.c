@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.27 1998/07/11 21:20:12 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.28 1999/02/17 00:20:45 millert Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -493,10 +493,9 @@ main(argc, argv)
 		if (inet_aton(source, &from.sin_addr) == 0)
 			errx(1, "unknown host %s", source);
 		ip->ip_src = from.sin_addr;
-#ifndef IP_HDRINCL
-		if (bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0)
+		if (getuid() &&
+		    bind(sndsock, (struct sockaddr *)&from, sizeof(from)) < 0)
 			err(1, "bind");
-#endif IP_HDRINCL
 	}
 
 	Fprintf(stderr, "traceroute to %s (%s)", hostname,
