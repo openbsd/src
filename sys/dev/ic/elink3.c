@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.49 2001/05/26 06:57:19 angelos Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.50 2001/06/23 21:54:44 fgsch Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -72,10 +72,6 @@
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
-
-#define ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN   1518
-#define ETHER_ADDR_LEN  6
 
 /*
  * Structure to map media-present bits in boards to 

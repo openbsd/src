@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596var.h,v 1.4 2001/03/23 00:16:49 mickey Exp $	*/
+/*	$OpenBSD: i82596var.h,v 1.5 2001/06/23 21:54:45 fgsch Exp $	*/
 /*	$NetBSD: i82586var.h,v 1.10 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -110,9 +110,6 @@
 #define IED_XMIT	0x40
 #define IED_CMDS	0x80
 #define	IED_ALL		0xff
-
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
 
 #define B_PER_F		3		/* recv buffers per frame */
 #define	IE_RBUF_SIZE	256		/* size of each receive buffer;

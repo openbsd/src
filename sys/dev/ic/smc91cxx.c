@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.8 2001/02/20 19:39:36 mickey Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.9 2001/06/23 21:54:46 fgsch Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -132,8 +132,6 @@
 /* XXX Hardware padding doesn't work yet(?) */
 #define	SMC91CXX_SW_PAD
 
-#define ETHER_ADDR_LEN		6
-
 #ifdef SMC_DEBUG
 const char *smc91cxx_idstrs[] = {
 	NULL,				/* 0 */
@@ -180,11 +178,6 @@ int	smc91cxx_ioctl __P((struct ifnet *, u_long, caddr_t));
 
 int	smc91cxx_enable __P((struct smc91cxx_softc *));
 void	smc91cxx_disable __P((struct smc91cxx_softc *));
-
-/* XXX Should be in a common header file. */
-#define	ETHER_MAX_LEN	1518
-#define	ETHER_MIN_LEN	64
-#define	ETHER_CRC_LEN	4
 
 static __inline int ether_cmp __P((void *, void *));
 static __inline int

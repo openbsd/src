@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.12 2001/03/29 01:39:32 aaron Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.13 2001/06/23 21:54:43 fgsch Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -70,10 +70,6 @@ static int		dp8390_test_mem __P((struct dp8390_softc *));
 
 int	dp8390_enable __P((struct dp8390_softc *));
 void	dp8390_disable __P((struct dp8390_softc *));
-
-#define	ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 int	dp8390_debug = 0;
 

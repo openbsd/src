@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.18 2001/04/06 08:04:05 fgsch Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.19 2001/06/23 21:54:49 fgsch Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -83,10 +83,6 @@
 #else
 #define dprintf(x)
 #endif
-
-#define ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN	1518
-#define ETHER_ADDR_LEN	6
 
 #define EG_INLEN  	10
 #define EG_BUFLEN	0x0670

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.13 2001/02/20 19:39:45 mickey Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.14 2001/06/23 21:54:56 fgsch Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -110,14 +110,6 @@
 
 #ifndef offsetof
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif
-
-#ifndef	ETHER_CRC_LEN
-#define	ETHER_CRC_LEN	4
-#endif
-
-#ifndef	ETHER_MAX_LEN
-#define	ETHER_MAX_LEN	1518
 #endif
 
 #define RAY_USE_AMEM 0

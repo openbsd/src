@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.18 2001/02/20 19:39:46 mickey Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.19 2001/06/23 21:54:57 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -83,9 +83,6 @@
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #endif
-
-#define ETHER_MIN_LEN 64
-#define ETHER_CRC_LEN 4
 
 /*
  * Maximum number of bytes to read per interrupt.  Linux recommends

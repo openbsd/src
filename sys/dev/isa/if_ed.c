@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.42 2001/02/20 19:39:39 mickey Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.43 2001/06/23 21:54:47 fgsch Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -162,10 +162,6 @@ struct cfattach ed_isa_ca = {
 struct cfdriver ed_cd = {
 	NULL, "ed", DV_IFNET
 };
-
-#define	ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 #define	NIC_PUT(t, bah, nic, reg, val)	\
 	bus_space_write_1((t), (bah), ((nic) + (reg)), (val))

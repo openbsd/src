@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.20 2001/02/20 19:39:41 mickey Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.21 2001/06/23 21:54:52 fgsch Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -163,10 +163,6 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #define	IED_ENQ		0x20
 #define	IED_XMIT	0x40
 #define	IED_ALL		0x7f
-
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 /*
 sizeof(iscp) == 1+1+2+4 == 8

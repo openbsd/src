@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.13 2001/02/20 19:39:40 mickey Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.14 2001/06/23 21:54:50 fgsch Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -236,8 +236,6 @@ struct cfdriver fe_cd = {
 /* Ethernet constants.  To be defined in if_ehter.h?  FIXME. */
 #define ETHER_MIN_LEN	60	/* with header, without CRC. */
 #define ETHER_MAX_LEN	1514	/* with header, without CRC. */
-#define ETHER_ADDR_LEN	6	/* number of bytes in an address. */
-#define ETHER_HDR_SIZE	14	/* src addr, dst addr, and data type. */
 
 /*
  * Fe driver specific constants which relate to 86960/86965.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.10 2001/02/20 19:39:41 mickey Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.11 2001/06/23 21:54:48 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -89,10 +89,6 @@ struct ef_softc {
 	int			sc_tx_succ_ok;
 	int			sc_busmaster;
 };
-
-#define	ETHER_MIN_LEN		64
-#define	ETHER_MAX_LEN		1518
-#define	ETHER_ADDR_LEN		6
 
 #define	EF_W0_EEPROM_COMMAND	0x200a
 #define    EF_EEPROM_BUSY	(1 << 9)
