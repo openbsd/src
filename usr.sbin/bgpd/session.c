@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.206 2004/11/18 17:07:38 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.207 2004/11/18 17:17:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2497,40 +2497,42 @@ session_down(struct peer *peer)
 }
 
 void
-session_up(struct peer *peer)
+session_up(struct peer *p)
 {
 	struct session_up	sup;
 
-	sup.remote_bgpid = peer->remote_bgpid;
+	sup.remote_bgpid = p->remote_bgpid;
 
-	switch (peer->sa_local.ss_family) {
+	switch (p->sa_local.ss_family) {
 	case AF_INET:
 		sup.local_addr.af = AF_INET;
 		memcpy(&sup.local_addr.v4,
-		    &((struct sockaddr_in *)&peer->sa_local)->sin_addr,
+		    &((struct sockaddr_in *)&p->sa_local)->sin_addr,
 		    sizeof(sup.local_addr.v4));
 		sup.remote_addr.af = AF_INET;
 		memcpy(&sup.remote_addr.v4,
-		    &((struct sockaddr_in *)&peer->sa_remote)->sin_addr,
+		    &((struct sockaddr_in *)&p->sa_remote)->sin_addr,
 		    sizeof(sup.remote_addr.v4));
 		break;
 	case AF_INET6:
 		sup.local_addr.af = AF_INET6;
 		memcpy(&sup.local_addr.v6,
-		    &((struct sockaddr_in6 *)&peer->sa_local)->sin6_addr,
+		    &((struct sockaddr_in6 *)&p->sa_local)->sin6_addr,
 		    sizeof(sup.local_addr.v6));
 		sup.remote_addr.af = AF_INET6;
 		memcpy(&sup.remote_addr.v6,
-		    &((struct sockaddr_in6 *)&peer->sa_remote)->sin6_addr,
+		    &((struct sockaddr_in6 *)&p->sa_remote)->sin6_addr,
 		    sizeof(sup.remote_addr.v6));
 		break;
 	default:
 		fatalx("session_up: unsupported address family");
 	}
 
-	memcpy(&sup.conf, &peer->conf, sizeof(sup.conf));
-	peer->stats.last_updown = time(NULL);
-	if (imsg_compose(ibuf_rde, IMSG_SESSION_UP, peer->conf.id, 0, -1,
+	memcpy(&sup.conf, &p->conf, sizeof(sup.conf));
+	memcpy(&sup.capa_announced, &p->capa.ann, sizeof(sup.capa_announced));
+	memcpy(&sup.capa_received, &p->capa.peer, sizeof(sup.capa_received));
+	p->stats.last_updown = time(NULL);
+	if (imsg_compose(ibuf_rde, IMSG_SESSION_UP, p->conf.id, 0, -1,
 	    &sup, sizeof(sup)) == -1)
 		fatalx("imsg_compose error");
 }

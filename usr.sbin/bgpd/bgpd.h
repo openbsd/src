@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.148 2004/11/18 17:07:38 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.149 2004/11/18 17:17:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -404,6 +404,8 @@ struct session_up {
 	struct bgpd_addr	local_addr;
 	struct bgpd_addr	remote_addr;
 	struct peer_config	conf;
+	struct capabilities	capa_announced;
+	struct capabilities	capa_received;
 };
 
 struct pftable_msg {
