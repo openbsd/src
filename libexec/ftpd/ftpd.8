@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.40 2001/05/29 21:35:16 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.41 2001/06/28 22:42:57 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -481,16 +481,17 @@ See
 .Xr login.conf 5 .
 .It Pa ftp-chroot
 A boolean value.
-If set, users in this class will be automatically chrooted to login
-directory for the user.
+If set, users in this class will be automatically chrooted to
+the user's login directory.
 .It Pa ftp-dir
 A path to a directory.
-This value overrides the login directory for the users of this class.
+This value overrides the login directory for users in this class.
 A leading tilde
 .Pq Ql ~
 in
 .Pa ftp-dir
-will be expanded based on the contents of the password database.
+will be expanded to the user's home directory based on the
+contents of the password database.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/ftpd.pid -compact
