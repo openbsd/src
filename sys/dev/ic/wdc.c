@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.72 2003/10/26 14:39:59 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.73 2003/10/27 20:58:17 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -822,9 +822,10 @@ wdcattach(chp)
 		if (i == 1 && ((chp->ch_drive[0].drive_flags & DRIVE) == 0))
 			chp->ch_flags |= WDCF_ONESLAVE;
 		/*
-		 * Issue an IDENTIFY command in order to distinct ATA from OLD.
-		 * This also kill ATAPI ghost.
+		 * Wait a bit, some devices are weird just after a reset.
+		 * Then issue a IDENTIFY command, to try to detect slave ghost.
 		 */
+		delay(5000);
 		if (ata_get_params(&chp->ch_drive[i], at_poll, &drvp->id) ==
 		    CMD_OK) {
 			/* If IDENTIFY succeeded, this is not an OLD ctrl */
@@ -1260,6 +1261,21 @@ wdc_probe_caps(drvp, params)
 	struct wdc_softc *wdc = chp->wdc;
 	int i, valid_mode_found;
 	int cf_flags = drvp->cf_flags;
+
+	if ((wdc->cap & WDC_CAPABILITY_SATA) != 0 &&
+	    (params->atap_sata_caps != 0x0000 &&
+	    params->atap_sata_caps != 0xffff)) {
+		WDCDEBUG_PRINT(("%s: atap_sata_caps=0x%x\n", __func__,
+		    params->atap_sata_caps), DEBUG_PROBE);
+
+		/* Skip ATA modes detection for native SATA drives */
+		drvp->PIO_mode = drvp->PIO_cap = 4;
+		drvp->DMA_mode = drvp->DMA_cap = 2;
+		drvp->UDMA_mode = drvp->UDMA_cap = 5;
+		drvp->drive_flags |= DRIVE_SATA | DRIVE_MODE | DRIVE_UDMA;
+		drvp->ata_vers = 4;
+		return;
+	}
 
 	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
