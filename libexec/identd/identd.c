@@ -6,12 +6,14 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -264,7 +266,7 @@ main(argc, argv)
 			addr.sin_port = sp->s_port;
 		}
 
-		if (bind(0, (struct sockaddr *) & addr, sizeof(addr)) < 0)
+		if (bind(0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
 			ERROR("main: bind");
 
 		if (listen(0, 3) < 0)
@@ -364,7 +366,7 @@ main(argc, argv)
 	 * Get foreign internet address
 	 */
 	len = sizeof(sin);
-	if (getpeername(0, (struct sockaddr *) & sin, &len) == -1) {
+	if (getpeername(0, (struct sockaddr *) &sin, &len) == -1) {
 		/*
 		 * A user has tried to start us from the command line or
 		 * the network link died, in which case this message won't
@@ -391,7 +393,7 @@ main(argc, argv)
 	 * Get local internet address
 	 */
 	len = sizeof(sin);
-	if (getsockname(0, (struct sockaddr *) & sin, &len) == -1) {
+	if (getsockname(0, (struct sockaddr *) &sin, &len) == -1) {
 		/*
 		 * We can just die here, because if this fails then the
 		 * network has died and we haven't got anyone to return
@@ -404,6 +406,6 @@ main(argc, argv)
 	/*
 	 * Get the local/foreign port pair from the luser
 	 */
-	parse(stdin, &laddr, &faddr);
+	parse(STDIN_FILENO, &laddr, &faddr);
 	exit(0);
 }

@@ -88,7 +88,7 @@ getbuf(addr, buf, len, what)
 {
 	if (kvm_read(kd, addr, buf, len) < 0) {
 		if (syslog_flag)
-			syslog(LOG_ERR, "getbuf: kvm_read(%08x, %d) - %s : %m",
+			syslog(LOG_ERR, "getbuf: kvm_read(%08lx, %d) - %s : %m",
 			    addr, len, what);
 
 		return 0;
@@ -138,10 +138,6 @@ k_getuid(faddr, fport, laddr, lport, uid)
 	int    *uid;
 {
 	struct socket *sockp, sock;
-	int     i, mib[2];
-	struct ucred ucb;
-	size_t  siz;
-	int     rv;
 
 	if (!getbuf(nl[N_TCBTABLE].n_value, &tcbtable, sizeof(tcbtable), "tcbtable"))
 		return -1;

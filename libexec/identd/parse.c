@@ -12,12 +12,14 @@
 #include <netinet/in.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
 #include <pwd.h>
 #include <nlist.h>
 #include <kvm.h>
+#include <unistd.h>
 
 #include "identd.h"
 #include "error.h"
@@ -43,14 +45,14 @@ check_noident(homedir)
 }
 
 int 
-parse(fp, laddr, faddr)
-	FILE   *fp;
+parse(fd, laddr, faddr)
+	int fd;
 	struct in_addr *laddr, *faddr;
 {
-	char	lhostaddr[16], fhostaddr[16], password[33];
+	char	buf[BUFSIZ], *p;
 	struct	in_addr laddr2, faddr2;
 	struct	passwd *pw;
-	int	try, rcode;
+	int	try, n;
 	uid_t	uid;
 
 	if (debug_flag && syslog_flag)
@@ -61,19 +63,42 @@ parse(fp, laddr, faddr)
 	faddr2 = *faddr;
 	laddr2 = *laddr;
 	lport = fport = 0;
-	lhostaddr[0] = fhostaddr[0] = password[0] = '\0';
 
 	/* Read query from client */
-	rcode = fscanf(fp, " %d , %d", &lport, &fport);
+	if ((n = read(fd, buf, sizeof(buf) - 1)) <= 0) {
+		if (syslog_flag)
+			syslog(LOG_NOTICE, "read from %s: %m", gethost(faddr));
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
+		if (write(fd, buf, n) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			return 1;
+		}
+		return 0;
+	}
+	buf[n] = '\0';
 
-	if (rcode < 2 || lport < 1 || lport > 65535 ||
-	    fport < 1 || fport > 65535) {
-		if (syslog_flag && rcode > 0)
+	/* Pull out local and remote ports */
+	p = buf;
+	while (*p != '\0' && isspace(*p))
+		p++;
+	if ((p = strtok(p, " \t,"))) {
+		lport = atoi(p);
+		if ((p = strtok(NULL, " \t,")))
+			fport = atoi(p);
+	}
+
+	if (lport < 1 || lport > 65535 || fport < 1 || fport > 65535) {
+		if (syslog_flag)
 			syslog(LOG_NOTICE,
 			    "scanf: invalid-port(s): %d , %d from %s",
 			    lport, fport, gethost(faddr));
-		printf("%d , %d : ERROR : %s\r\n", lport, fport,
-		    unknown_flag ? "UNKNOWN-ERROR" : "INVALID-PORT");
+		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
+		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "INVALID-PORT");
+		if (write(fd, buf, n) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			return 1;
+		}
 		return 0;
 	}
 	if (syslog_flag && verbose_flag)
@@ -100,8 +125,12 @@ parse(fp, laddr, faddr)
 		if (syslog_flag)
 			syslog(LOG_DEBUG, "Returned: %d , %d : NO-USER",	
 			    lport, fport);
-		printf("%d , %d : ERROR : %s\r\n", lport, fport,
-		    unknown_flag ? "UNKNOWN-ERROR" : "NO-USER");
+		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
+		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER");
+		if (write(fd, buf, n) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			return 1;
+		}
 		return 0;
 	}
 	if (try > 0 && syslog_flag)
@@ -116,9 +145,14 @@ parse(fp, laddr, faddr)
 			syslog(LOG_WARNING,
 			    "getpwuid() could not map uid (%d) to name",
 			    uid);
-		printf("%d , %d : USERID : OTHER%s%s :%d\r\n",
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
 		    lport, fport, charset_name ? " , " : "",
 		    charset_name ? charset_name : "", uid);
+		if (write(fd, buf, n) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			return 1;
+		}
 		return 0;
 	}
 
@@ -131,19 +165,33 @@ parse(fp, laddr, faddr)
 			syslog(LOG_NOTICE,
 			    "user %s requested HIDDEN-USER for host %s: %d, %d",
 			    pw->pw_name, gethost(faddr), lport, fport);
-		printf("%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport);
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport);
+		if (write(fd, buf, n) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			return 1;
+		}
 		return 0;
 	}
 
 	if (number_flag) {
-		printf("%d , %d : USERID : OTHER%s%s :%d\r\n",
+		n = snprintf(buf, sizeof(buf),
+		    "%d , %d : USERID : OTHER%s%s :%d\r\n",
 		    lport, fport, charset_name ? " , " : "",
 		    charset_name ? charset_name : "", uid);
+		if (write(fd, buf, n) != n && syslog_flag) {
+			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			return 1;
+		}
 		return 0;
 	}
-	printf("%d , %d : USERID : %s%s%s :%s\r\n",
+	n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
 	    lport, fport, other_flag ? "OTHER" : "UNIX",
 	    charset_name ? " , " : "",
 	    charset_name ? charset_name : "", pw->pw_name);
+	if (write(fd, buf, n) != n && syslog_flag) {
+		syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+		return 1;
+	}
 	return 0;
 }
