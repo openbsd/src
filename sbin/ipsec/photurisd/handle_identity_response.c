@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_response.c,v 1.3 1997/07/23 12:28:49 provos Exp $";
+static char rcsid[] = "$Id: handle_identity_response.c,v 1.4 1997/09/02 17:26:37 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$Id: handle_identity_response.c,v 1.3 1997/07/23 12:28:49
 #include "schedule.h"
 #include "encrypt.h"
 #include "identity.h"
+#include "attributes.h"
 #include "secrets.h"
 #include "scheme.h"
 #include "errlog.h"
@@ -216,6 +217,9 @@ handle_identity_response(u_char *packet, int size, char *address,
 	     st->packetlen = 0;
 	}
 		  
+	/* At this point we do not need the exchange values any longer */
+	free(st->texchange); st->texchange = NULL;
+	free(st->exchangevalue); st->exchangevalue = NULL;
 
 	if (st->oSPI[0] || st->oSPI[1] || st->oSPI[2] || st->oSPI[3]) {
 	     /* Insert Owner SPI */
@@ -239,6 +243,8 @@ handle_identity_response(u_char *packet, int size, char *address,
 	     bcopy(st->oSPIattrib, spi->attributes, spi->attribsize);
 	     spi->lifetime = time(NULL) + st->olifetime;
 
+	     /* Cludge for getting the right verification field */
+	     state_save_verification(st, st->oSPIidentver, st->oSPIidentversize);
 	     /* Make session keys for Owner */
 	     make_session_keys(st, spi);
 
@@ -269,6 +275,8 @@ handle_identity_response(u_char *packet, int size, char *address,
 	     bcopy(st->uSPIattrib, spi->attributes, spi->attribsize);
 	     spi->lifetime = time(NULL) + st->ulifetime;
 
+	     /* Cludge for getting the right verification field */
+	     state_save_verification(st, st->uSPIidentver, st->uSPIidentversize);
 	     /* Session keys for User */
 	     make_session_keys(st, spi);
 

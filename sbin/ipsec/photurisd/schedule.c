@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: schedule.c,v 1.3 1997/07/23 12:28:54 provos Exp $";
+static char rcsid[] = "$Id: schedule.c,v 1.4 1997/09/02 17:26:46 provos Exp $";
 #endif
 
 #define _SCHEDULE_C_
@@ -58,6 +58,7 @@ static char rcsid[] = "$Id: schedule.c,v 1.3 1997/07/23 12:28:54 provos Exp $";
 #include "errlog.h"
 #include "cookie.h"
 #include "modulus.h"
+#include "api.h"
 #ifdef IPSEC
 #include "kernel.h"
 #endif
@@ -228,23 +229,42 @@ schedule_process(int sock)
 		    break;
 	       } else if (st->retries >= max_retries) {
 		    remove = 1;
-		    if (st->phase == COOKIE_REQUEST)
+		    if (st->phase == COOKIE_REQUEST && st->resource == 0) {
 			 log_error(0, "no anwser for cookie request to %s:%d",
 				   st->address, st->port);
-		    else
+			 break;
+		    } else if(st->phase == COOKIE_REQUEST) {
+			 /* Try again with updated counters */
+			 struct stateob *newst;
+			 if ((newst = state_new()) == NULL) {
+			      log_error(1, "state_new() in schedule_process()");
+			      break;
+			 }
+			 state_copy_flags(st, newst);
+#ifdef DEBUG
+			 printf("Starting a new exchange to %s:%d with updated rcookie and"
+				"counter.\n", newst->address, newst->port);
+#endif /* DEBUG */
+			 start_exchange(sock, newst, st->address, st->port);
+			 break;
+		    } else {
 			 log_error(0, "exchange terminated, phase %d to %s:%d",
 				   st->phase, st->address, st->port);
-		    break;
+			 break;
+		    }
 	       }
 
-	       st->retries++;
-
+	       
 	       if (st->packet == NULL || st->packetlen == 0) {
 		    log_error(0, "no packet in schedule_process()");
 		    remove = 1;
+		    break;
 	       }
+
 	       /* Only send the packet when no error occured */
 	       if (!remove) {
+		    st->retries++;
+
 		    sin.sin_port = htons(st->port); 
 		    sin.sin_family = AF_INET; 
 		    sin.sin_addr.s_addr = inet_addr(st->address);

@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_request.c,v 1.3 1997/07/24 23:47:13 provos Exp $";
+static char rcsid[] = "$Id: handle_value_request.c,v 1.4 1997/09/02 17:26:40 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -218,6 +218,8 @@ handle_value_request(u_char *packet, int size,
 	     }
 	     bcopy(VALUE_REQUEST_VALUE(header), st->texchange, st->texchangesize);
 
+
+	     /* Fill in the state object with generic data */
              strncpy(st->address, address, 15);  
              st->port = port;  
 	     st->counter = header->counter;
@@ -258,6 +260,12 @@ handle_value_request(u_char *packet, int size,
 	     printf("Shared secret is: 0x%s\n", buffer);   
 	}
 #endif   
+
+	if (st->oSPIprivacyctx == NULL) {
+	     /* Initialize Privacy Keys from Exchange Values */
+	     init_privacy_key(st, 0);   /* User -> Owner direction */
+	     init_privacy_key(st, 1);   /* Owner -> User direction */
+	}
 
 	st->retries = 0;
 	st->phase = VALUE_RESPONSE;

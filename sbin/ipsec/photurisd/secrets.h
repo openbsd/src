@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: secrets.h,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $ */
+/* $Id: secrets.h,v 1.2 1997/09/02 17:26:48 provos Exp $ */
 /*
  * secrets.h:
  * prototypes for compute_secrets.c
@@ -53,6 +53,8 @@ EXTERN int compute_session_key(struct stateob *st, u_int8_t *key,
 			       u_int8_t *attribute, int owner, 
 			       u_int16_t *order);
 EXTERN int get_session_key_length(u_int8_t *attribute);
+
+EXTERN int init_privacy_key(struct stateob *st, int owner);
 EXTERN int compute_privacy_key(struct stateob *st, u_int8_t *key, 
 			       u_int8_t *packet, u_int16_t bits, 
 			       u_int16_t order, int owner);

@@ -37,6 +37,30 @@
 #define _IDENTITY_H_
 #include "state.h"
 
+struct identity {
+     struct identity *next;
+     struct identity *root;
+     int type;
+     char *tag;
+     char *pairid;
+     void *object;
+};
+
+enum hashes {
+     HASH_MD5 = 0,
+     HASH_SHA1 };
+
+struct idxform {
+     enum hashes type;        /* Type of the transform */
+     u_int8_t hashsize;       /* Size of the hash */
+     void *ctx;               /* Pointer to a context */
+     int ctxsize;
+     void *ctx2;              /* Pointer to a 2nd context for speedup */
+     void (*Init)(void *);
+     void (*Update)(void *, unsigned char *, unsigned int);
+     void (*Final)(unsigned char *, void *);
+};
+
 #undef EXTERN
 #ifdef _IDENTITY_C_
 #define EXTERN
@@ -49,39 +73,23 @@ char *secret_file = NULL;
 extern char *secret_file;
 #endif
 
-#define ID_LOCAL       1
-#define ID_LOCALPAIR   2
-#define ID_REMOTE      4
-#define ID_LOOKUP      8
+#define ID_LOCAL         1
+#define ID_LOCALPAIR     2
+#define ID_REMOTE        4
+#define ID_LOOKUP        8
 
 #define IDENT_LOCAL      "identity local"
 #define IDENT_LOCALPAIR  "identity pair local"
 #define IDENT_REMOTE     "identity remote"
 #define IDENT_LOOKUP     "identity lookup"
 
-#define MAX_IDENT 120
+#define MAX_IDENT        120
 #define MAX_IDENT_SECRET 120
 
-struct identity {
-     struct identity *next;
-     struct identity *root;
-     int type;
-     char *tag;
-     char *pairid;
-     void *object;
-};
+#define MD5_SIZE         16
+#define SHA1_SIZE        20
 
-#define MD5_SIZE  16
-#define SHA1_SIZE 20
-
-struct idxform {
-     u_int8_t type;           /* Type of the transform */
-     u_int8_t hashsize;       /* Size of the hash */
-     void *ctx;               /* Pointer to a context */
-     void (*Init)(void *);
-     void (*Update)(void *, unsigned char *, unsigned int);
-     void (*Final)(unsigned char *, void *);
-};
+#define HASH_MAX         20      /* Keep this uptodate with hashsizes */
 
 int init_identities(char *name, struct identity *ob);
 int identity_insert(struct identity **idob, struct identity *ob);
@@ -100,6 +108,9 @@ int create_identity_verification(struct stateob *st, u_int8_t *buffer,
 				 u_int8_t *packet, u_int16_t size);
 int  verify_identity_verification(struct stateob *st, u_int8_t *buffer,
 				  u_int8_t *packet, u_int16_t size);
+
+struct idxform *get_hash(enum hashes hashtype);
+int create_verification_key(struct stateob *, u_int8_t *, u_int16_t *, int);
 
 int idsign(struct stateob *, struct idxform *, u_int8_t *, 
 	   u_int8_t *, u_int16_t);

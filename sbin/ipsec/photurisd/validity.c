@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: validity.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: validity.c,v 1.2 1997/09/02 17:26:50 provos Exp $";
 #endif
 
 #define _VALIDITY_C_
@@ -54,16 +54,13 @@ static char rcsid[] = "$Id: validity.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp 
 #include "state.h"
 #include "attributes.h"
 #include "validity.h"
+#include "identity.h"
 #include "buffer.h"
 
-int MD5valsign(struct stateob *st, u_int8_t *signature,
-	       u_int8_t *packet, u_int16_t psize);
-int MD5valverify(struct stateob *st, u_int8_t *signature,
-		 u_int8_t *packet, u_int16_t psize);
-int SHA1valsign(struct stateob *st, u_int8_t *signature,
-		u_int8_t *packet, u_int16_t psize);
-int SHA1valverify(struct stateob *st, u_int8_t *signature,
-		  u_int8_t *packet, u_int16_t psize);
+int valsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,
+	    u_int8_t *packet, u_int16_t psize);
+int valverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,
+	      u_int8_t *packet, u_int16_t psize);
 
 u_int16_t
 get_validity_verification_size(struct stateob *st)
@@ -91,7 +88,7 @@ int
 create_validity_verification(struct stateob *st, u_int8_t *buffer, 
 			     u_int8_t *packet, u_int16_t size)
 {
-     int hash_size;
+     struct idxform *hash;
 
      switch(ntohs(*((u_int16_t *)st->scheme))) { 
      case DH_G_2_MD5: 
@@ -100,12 +97,12 @@ create_validity_verification(struct stateob *st, u_int8_t *buffer,
      case DH_G_2_DES_MD5: 
      case DH_G_3_DES_MD5: 
      case DH_G_5_DES_MD5: 
-	  hash_size = MD5valsign(st, buffer+2, packet, size);
+	  hash = get_hash(HASH_MD5);
 	  break;
      case DH_G_2_3DES_SHA1: 
      case DH_G_3_3DES_SHA1: 
      case DH_G_5_3DES_SHA1: 
-          hash_size = SHA1valsign(st, buffer+2, packet, size);
+          hash = get_hash(HASH_SHA1);
 	  break;
      default: 
           log_error(0, "validity.c: Unknown exchange scheme: %d\n",  
@@ -113,19 +110,23 @@ create_validity_verification(struct stateob *st, u_int8_t *buffer,
           return 0; 
      }
 
-     if(hash_size) { 
+     if(valsign(st, hash, buffer+2, packet, size)) { 
           /* Create varpre number from digest */ 
-          buffer[0] = (hash_size >> 5) & 0xFF; 
-          buffer[1] = (hash_size << 3) & 0xFF; 
+          buffer[0] = (hash->hashsize >> 5) & 0xFF; 
+          buffer[1] = (hash->hashsize << 3) & 0xFF; 
      } 
 
-     return size+2;
+     state_save_verification(st, buffer, hash->hashsize+2);
+
+     return hash->hashsize+2;
 }
 
 int 
 verify_validity_verification(struct stateob *st, u_int8_t *buffer,  
                     u_int8_t *packet, u_int16_t size) 
 { 
+     struct idxform *hash;
+
      switch(ntohs(*((u_int16_t *)st->scheme))) {  
      case DH_G_2_MD5:  
      case DH_G_3_MD5:  
@@ -135,150 +136,96 @@ verify_validity_verification(struct stateob *st, u_int8_t *buffer,
      case DH_G_5_DES_MD5:  
 	  if (varpre2octets(buffer) != 18)
 	       return 0;
-          return MD5valverify(st, buffer+2, packet, size); 
+	  hash = get_hash(HASH_MD5);
+	  break;
      case DH_G_2_3DES_SHA1:  
      case DH_G_3_3DES_SHA1:  
      case DH_G_5_3DES_SHA1:  
 	  if (varpre2octets(buffer) != 22)
 	       return 0;
-          return SHA1valverify(st, buffer+2, packet, size); 
+	  hash = get_hash(HASH_SHA1);
+	  break;
      default:  
 	  log_error(0, "validity.c: Unknown exchange scheme: %d\n",   
                     *((u_int16_t *)st->scheme));  
           return 0;  
      }  
+
+     state_save_verification(st, buffer, hash->hashsize+2);
+
+     return valverify(st, hash, buffer+2, packet, size);
 } 
 
 
 int
-MD5valsign(struct stateob *st, u_int8_t *signature,  
-                    u_int8_t *packet, u_int16_t psize) 
+valsign(struct stateob *st, struct idxform *hash, u_int8_t *signature,  
+	u_int8_t *packet, u_int16_t psize) 
 {
-     MD5_CTX ctx; 
- 
-     MD5Init(&ctx); 
- 
-     MD5Update(&ctx, st->shared, st->sharedsize);
+     u_int8_t key[HASH_MAX];
+     u_int16_t keylen = HASH_MAX;
 
-     MD5Update(&ctx, st->icookie, COOKIE_SIZE);
-     MD5Update(&ctx, st->rcookie, COOKIE_SIZE);
+     create_verification_key(st, key, &keylen, 1); /* Owner direction */
+ 
+     hash->Init(hash->ctx); 
+ 
+     hash->Update(hash->ctx, key, keylen);
 
-     MD5Update(&ctx, st->oSPIidentver, st->oSPIidentversize);
-     MD5Update(&ctx, st->uSPIidentver, st->uSPIidentversize);
+     hash->Update(hash->ctx, st->icookie, COOKIE_SIZE);
+     hash->Update(hash->ctx, st->rcookie, COOKIE_SIZE);
 
      packet += 2*COOKIE_SIZE; psize -= 2*COOKIE_SIZE;
-     MD5Update(&ctx, packet, 4 + SPI_SIZE);
+     hash->Update(hash->ctx, packet, 4 + SPI_SIZE);
 
-     packet += 4 + SPI_SIZE + 18; psize -= 4 + SPI_SIZE + 18;
-     MD5Update(&ctx, packet, psize);
+     hash->Update(hash->ctx, st->oSPIidentver, st->oSPIidentversize);
+     hash->Update(hash->ctx, st->uSPIidentver, st->uSPIidentversize);
+
+     packet += 4 + SPI_SIZE + hash->hashsize + 2; 
+     psize -=  4 + SPI_SIZE + hash->hashsize + 2;
+     hash->Update(hash->ctx, packet, psize);
 
      /* Data fill */
-     MD5Final(NULL, &ctx); 
+     hash->Final(NULL, hash->ctx); 
 
-     MD5Update(&ctx, st->shared, st->sharedsize);
-     MD5Final(signature, &ctx); 
+     hash->Update(hash->ctx, key, keylen);
+     hash->Final(signature, hash->ctx); 
 
-     return MD5_SIZE;
+     return hash->hashsize;
 }
 
 /* We assume that the verification field is zeroed */
 
 int
-MD5valverify(struct stateob *st, u_int8_t *signature,   
+valverify(struct stateob *st, struct idxform *hash, u_int8_t *signature,   
 	  u_int8_t *packet, u_int16_t psize)
 {
-     MD5_CTX ctx; 
-     u_int8_t digest[MD5_SIZE];
+     u_int8_t digest[HASH_MAX];
+     u_int8_t key[HASH_MAX];
+     u_int16_t keylen = HASH_MAX;
+
+     create_verification_key(st, key, &keylen, 0); /* User direction */
  
-
-     MD5Init(&ctx); 
+     hash->Init(hash->ctx); 
  
-     MD5Update(&ctx, st->shared, st->sharedsize);
+     hash->Update(hash->ctx, key, keylen);
 
-     MD5Update(&ctx, st->icookie, COOKIE_SIZE);
-     MD5Update(&ctx, st->rcookie, COOKIE_SIZE);
-
-     
-     MD5Update(&ctx, st->uSPIidentver, st->uSPIidentversize);
-     MD5Update(&ctx, st->oSPIidentver, st->oSPIidentversize);
+     hash->Update(hash->ctx, st->icookie, COOKIE_SIZE);
+     hash->Update(hash->ctx, st->rcookie, COOKIE_SIZE);
 
      packet += 2*COOKIE_SIZE; psize -= 2*COOKIE_SIZE;
-     MD5Update(&ctx, packet, 4 + SPI_SIZE);
+     hash->Update(hash->ctx, packet, 4 + SPI_SIZE);
 
-     packet += 4 + SPI_SIZE + 18; psize -= 4 + SPI_SIZE + 18;
-     MD5Update(&ctx, packet, psize);
+     hash->Update(hash->ctx, st->uSPIidentver, st->uSPIidentversize);
+     hash->Update(hash->ctx, st->oSPIidentver, st->oSPIidentversize);
 
-     /* Data fill */
-     MD5Final(NULL, &ctx); 
-
-     MD5Update(&ctx, st->shared, st->sharedsize);
-     MD5Final(digest, &ctx); 
-
-     return !bcmp(digest,signature,MD5_SIZE);
-}
-
-int
-SHA1valsign(struct stateob *st, u_int8_t *signature,  
-                    u_int8_t *packet, u_int16_t psize) 
-{
-     SHA1_CTX ctx; 
- 
-     SHA1Init(&ctx); 
- 
-     SHA1Update(&ctx, st->shared, st->sharedsize);
-
-     SHA1Update(&ctx, st->icookie, COOKIE_SIZE);
-     SHA1Update(&ctx, st->rcookie, COOKIE_SIZE);
-
-     SHA1Update(&ctx, st->oSPIidentver, st->oSPIidentversize);
-     SHA1Update(&ctx, st->uSPIidentver, st->uSPIidentversize);
-
-     packet += 2*COOKIE_SIZE; psize -= 2*COOKIE_SIZE;
-     SHA1Update(&ctx, packet, 4 + SPI_SIZE);
-
-     packet += 4 + SPI_SIZE + 22; psize -= 4 + SPI_SIZE + 22;
-     SHA1Update(&ctx, packet, psize);
+     packet += 4 + SPI_SIZE + hash->hashsize + 2; 
+     psize -=  4 + SPI_SIZE + hash->hashsize + 2;
+     hash->Update(hash->ctx, packet, psize);
 
      /* Data fill */
-     SHA1Final(NULL, &ctx); 
+     hash->Final(NULL, hash->ctx); 
 
-     SHA1Update(&ctx, st->shared, st->sharedsize);
-     SHA1Final(signature, &ctx); 
+     hash->Update(hash->ctx, key, keylen);
+     hash->Final(digest, hash->ctx); 
 
-     return SHA1_SIZE;
-}
-
-/* We assume that the verification field is zeroed */
-
-int
-SHA1valverify(struct stateob *st, u_int8_t *signature,   
-	  u_int8_t *packet, u_int16_t psize)
-{
-     SHA1_CTX ctx; 
-     u_int8_t digest[SHA1_SIZE];
- 
-
-     SHA1Init(&ctx); 
- 
-     SHA1Update(&ctx, st->shared, st->sharedsize);
-
-     SHA1Update(&ctx, st->icookie, COOKIE_SIZE);
-     SHA1Update(&ctx, st->rcookie, COOKIE_SIZE);
-
-     SHA1Update(&ctx, st->uSPIidentver, st->uSPIidentversize);
-     SHA1Update(&ctx, st->oSPIidentver, st->oSPIidentversize);
-
-     packet += 2*COOKIE_SIZE; psize -= 2*COOKIE_SIZE;
-     SHA1Update(&ctx, packet, 4 + SPI_SIZE);
-
-     packet += 4 + SPI_SIZE + 22; psize -= 4 + SPI_SIZE + 22;
-     SHA1Update(&ctx, packet, psize);
-
-     /* Data fill */
-     SHA1Final(NULL, &ctx); 
-
-     SHA1Update(&ctx, st->shared, st->sharedsize);
-     SHA1Final(digest, &ctx); 
-
-     return !bcmp(digest,signature,SHA1_SIZE);
+     return !bcmp(digest,signature,hash->hashsize);
 }

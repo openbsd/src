@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: state.h,v 1.3 1997/07/24 23:47:20 provos Exp $ */
+/* $Id: state.h,v 1.4 1997/09/02 17:26:49 provos Exp $ */
 /*
  * state.h: 
  * state object
@@ -72,7 +72,11 @@ struct stateob {
 
   u_int8_t icookie[COOKIE_SIZE];   /* Initator cookie */
   u_int8_t rcookie[COOKIE_SIZE];   /* Responder cookie */
-  u_int8_t counter;                /* */
+  u_int8_t counter;                /* Connection counter */
+  u_int8_t resource;               /* Received a resource limit */
+
+  u_int8_t *verification;          /* Verification field of last touched message */
+  u_int16_t versize;
 
   u_int8_t *scheme;                 /* Selected exchange scheme, holds gen. */
   u_int16_t schemesize;             /* Size including value ... */
@@ -92,6 +96,7 @@ struct stateob {
   u_int16_t oSPIidentversize;
   u_int8_t *oSPIidentchoice;        /* Owner SPI Identity Choice */
   u_int16_t oSPIidentchoicesize;
+  void *oSPIprivacyctx;
   time_t olifetime;                 /* Owner SPI lifetime */
 
   u_int8_t uSPI[SPI_SIZE];          /* User SPI */
@@ -106,6 +111,7 @@ struct stateob {
   u_int16_t uSPIidentversize;
   u_int8_t *uSPIidentchoice;        /* User SPI Identity Choice */
   u_int16_t uSPIidentchoicesize;
+  void *uSPIprivacyctx;
   time_t ulifetime;                 /* User SPI lifetime */
 
   mpz_t modulus;                    /* Modulus for look up in cache */
@@ -134,6 +140,8 @@ struct stateob *state_root(void);
 struct stateob *state_find(char *);
 struct stateob *state_find_next(struct stateob *, char *);
 struct stateob *state_find_cookies(char *, u_int8_t *, u_int8_t *);
+int state_save_verification(struct stateob *st, u_int8_t *buf, u_int16_t len);
+void state_copy_flags(struct stateob *src, struct stateob *dst);
 void state_cleanup(void);
 void state_expire(void);
 

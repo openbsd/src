@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_resource_limit.c,v 1.1.1.1 1997/07/18 22:48:50 provos Exp $";
+static char rcsid[] = "$Id: handle_resource_limit.c,v 1.2 1997/09/02 17:26:38 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -63,8 +63,7 @@ handle_resource_limit(u_char *packet, int size, char *address)
 	header = (struct error_message *) packet;
 	counter = packet[ERROR_MESSAGE_PACKET_SIZE];
 
-	if ((st = state_find_cookies(NULL, header->icookie, 
-				     header->rcookie)) == NULL) {
+	if ((st = state_find_cookies(NULL, header->icookie, NULL)) == NULL) {
 	     log_error(0, "No state for RESOURCE_LIMIT message from %s", 
 		       address);
 	     return -1;
@@ -72,6 +71,18 @@ handle_resource_limit(u_char *packet, int size, char *address)
 	
 	switch(st->phase) {
 	case COOKIE_REQUEST:
+	     /* 
+	      * The other party has still an exchange which has been
+	      * purged on our side.
+	      */
+	     if (counter != 0) {
+		  bcopy(header->rcookie, st->rcookie, COOKIE_SIZE);
+		  st->counter = counter;
+	     }
+
+	     /* We crank the timeout, so we can start a new exchange */
+	     st->lifetime += exchange_timeout;
+	     st->resource = 1;
 	case VALUE_REQUEST:
 	     offset = schedule_offset(TIMEOUT, st->icookie);
 	     if (offset == -1)

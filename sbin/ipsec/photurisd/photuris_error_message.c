@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: photuris_error_message.c,v 1.1.1.1 1997/07/18 22:48:49 provos Exp $";
+static char rcsid[] = "$Id: photuris_error_message.c,v 1.2 1997/09/02 17:26:45 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -76,8 +76,10 @@ photuris_error_message(struct stateob *st, u_char *buffer, int *size,
 	     if (i != COOKIE_SIZE || counter != 0)
 		  return 0;
 
-	     if (st != NULL)
+	     if (st != NULL) {
 		  bcopy(st->rcookie, header->rcookie, COOKIE_SIZE);
+		  buffer[ERROR_MESSAGE_PACKET_SIZE] = st->counter;
+	     }
 	}
 
 	return 0;

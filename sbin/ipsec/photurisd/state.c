@@ -88,6 +88,51 @@ state_unlink(struct stateob *ob)
      return 0;
 }
 
+int 
+state_save_verification(struct stateob *st, u_int8_t *buf, u_int16_t len)
+{
+     if (st->verification == NULL || len > st->versize) {
+	  if (st->verification != NULL)
+	       free(st->verification);
+
+	  if ((st->verification = calloc(len, sizeof(u_int8_t))) == NULL) {
+	       log_error(1, "calloc() in state_save_verification()");
+	       return -1;
+	  }
+     }
+
+     bcopy(buf, st->verification, len);
+     st->versize = len;
+     return 0;
+}
+
+
+/*
+ * Copies configuration flags from one state to the other
+ */
+
+void
+state_copy_flags(struct stateob *src, struct stateob *dst)
+{
+     dst->initiator = src->initiator;
+     
+     if (src->user != NULL)
+	  dst->user = strdup(src->user);
+
+     dst->flags = src->flags;
+     dst->isrc = src->isrc;
+     dst->ismask = src->ismask;
+     dst->idst = src->idst;
+     dst->idmask = src->idmask;
+
+     strncpy(dst->address, src->address, sizeof(src->address)-1);
+     dst->address[sizeof(dst->address)-1] = 0;
+
+     dst->lifetime = src->lifetime;
+     dst->exchange_lifetime = src->exchange_lifetime;
+     dst->spi_lifetime = src->spi_lifetime;
+}
+
 struct stateob *
 state_new(void)
 {
@@ -116,6 +161,8 @@ state_value_reset(struct stateob *ob)
      if (ob->exchangevalue != NULL)
 	  free(ob->exchangevalue);
 
+     if (ob->verification != NULL)
+	  free(ob->verification);
      if (ob->roschemes != NULL)
 	  free(ob->roschemes);
      if (ob->scheme != NULL)
@@ -138,6 +185,8 @@ state_value_reset(struct stateob *ob)
 	  free(ob->oSPIidentver);
      if (ob->oSPIidentchoice != NULL)
 	  free(ob->oSPIidentchoice);
+     if (ob->oSPIprivacyctx != NULL)
+	  free(ob->oSPIprivacyctx);
 
      if (ob->uSPIident != NULL)
 	  free(ob->uSPIident);
@@ -151,6 +200,8 @@ state_value_reset(struct stateob *ob)
 	  free(ob->uSPIidentver);
      if (ob->uSPIidentchoice != NULL)
 	  free(ob->uSPIidentchoice);
+     if (ob->uSPIprivacyctx != NULL)
+	  free(ob->uSPIprivacyctx);
 
      if (ob->packet != NULL)
 	  free(ob->packet);
