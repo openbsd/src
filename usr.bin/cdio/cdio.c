@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.31 2003/10/31 08:47:31 otto Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.32 2004/01/14 07:32:58 miod Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -214,7 +214,7 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int cmd;
+	int ch, cmd;
 	char *arg;
 
 	cdname = getenv("DISC");
@@ -225,27 +225,24 @@ main(int argc, char **argv)
 	if (!cddb_host)
 		cddb_host = "freedb.freedb.org";
 
-	for (;;) {
-		switch (getopt(argc, argv, "svd:f:")) {
-		case -1:
-			break;
+	while ((ch = getopt(argc, argv, "svd:f:")) != -1)
+		switch (ch) {
 		case 's':
 			verbose = 0;
-			continue;
+			break;
 		case 'v':
 			verbose = 2;
-			continue;
+			break;
 		case 'f':
 			cdname = optarg;
-			continue;
+			break;
 	    	case 'd':
 			cddb_host = optarg;
-			continue;
+			break;
 		default:
 			usage();
 		}
-		break;
-	}
+	
 	argc -= optind;
 	argv += optind;
 
