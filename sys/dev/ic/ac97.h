@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.6 2001/05/16 05:05:19 mickey Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.7 2001/05/16 23:20:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -94,6 +94,18 @@ int ac97_attach __P((struct ac97_host_if *));
 #define	AC97_REG_3D_CONTROL		0x22
 #define	AC97_REG_MODEM_SAMPLE_RATE	0x24
 #define	AC97_REG_POWER			0x26
+#define	AC97_POWER_ADC			0x0001
+#define	AC97_POWER_DAC			0x0002
+#define	AC97_POWER_ANL			0x0004
+#define	AC97_POWER_REF			0x0008
+#define	AC97_POWER_IN			0x0100
+#define	AC97_POWER_OUT			0x0200
+#define	AC97_POWER_MIXER		0x0400
+#define	AC97_POWER_MIXER_VREF		0x0800
+#define	AC97_POWER_ACLINK		0x1000
+#define	AC97_POWER_CLK			0x2000
+#define	AC97_POWER_AUX			0x4000
+#define	AC97_POWER_EAMP			0x8000
 	/* Extended Audio Register Set */
 #define	AC97_REG_EXT_AUDIO_ID		0x28
 #define	AC97_REG_EXT_AUDIO_CTRL		0x2a
