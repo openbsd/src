@@ -1,5 +1,5 @@
-/*	$OpenBSD: kern_malloc.c,v 1.4 1996/04/21 22:27:03 deraadt Exp $	*/
-/*	$NetBSD: kern_malloc.c,v 1.15 1996/03/16 23:17:06 christos Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.5 1996/06/10 07:27:12 deraadt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.15.4.1 1996/06/06 19:14:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -316,7 +316,8 @@ free(addr, type)
 	 * it looks free before laboriously searching the freelist.
 	 */
 	if (freep->spare0 == WEIRD_ADDR) {
-		for (cp = kbp->kb_next; cp; cp = *(caddr_t *)cp) {
+		for (cp = kbp->kb_next; cp;
+		    cp = ((struct freelist *)cp)->next) {
 			if (addr != cp)
 				continue;
 			printf("multiply freed item %p\n", addr);
