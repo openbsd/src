@@ -28,11 +28,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: bumpversion,v 1.1.1.1 1995/10/18 08:41:17 deraadt Exp $
+#	$Id: bumpversion,v 1.2 1998/04/25 00:27:09 deraadt Exp $
 #
-
-PATH=/bin:/usr/bin
-export PATH
 
 while :
 	do case "$1" in
