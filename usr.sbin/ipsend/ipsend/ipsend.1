@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipsend.1,v 1.4 2000/08/23 03:13:34 ericj Exp $
+.\"     $OpenBSD: ipsend.1,v 1.5 2000/08/23 03:17:32 ericj Exp $
 .Dd August 22, 2000
 .Dt IPSEND 1
 \!\" Originally by Darren Reed <darrenr@cyber.com.au>
@@ -25,10 +25,9 @@
 .Nm
 can be compiled in two ways.  The first is used to send one-off
 packets to a destination host, using command line options to specify various
-attributes present in the headers.  The 
-destination 
-must be given as the last command line option, except for when TCP flags
-are specified as a combination of A, S, F, U, P and R, last.
+attributes present in the headers.  The destination must be given at the
+last command line option, except for when TCP flags are specified as
+a combination of A, S, F, U, P and R, last.
 .Pp
 The other way it may be compiled, with DOSOCKET defined, is to allow an
 attempt at making a TCP connection using a with ipsend resending the SYN
@@ -38,9 +37,9 @@ packet as per the command line options.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
-enable debugging mode.
+Enable debugging mode.
 .It Fl f Ar offset
-allows the IP offset field in the IP header to be set to an arbitrary 
+Allows the IP offset field in the IP header to be set to an arbitrary 
 value, which can be specified in decimal or hexadecimal.
 .It Fl g Ar gateway
 Specify the hostname of the gateway through which to route packets.  This
@@ -55,7 +54,7 @@ MTU's without setting them so.
 .It Fl o Ar option
 Specify options to be included at the end of the IP header.  An EOL option
 is automatically appended and need not be given.  If an option would also
-have data associated with it (source as an IP# for a lsrr option), then
+have data associated with it (source as an IP number for a lsrr option), then
 this will not be initialised.
 .It Fl s Ar source
 Set the source address in the packet to that provided - maybe either a
@@ -76,7 +75,7 @@ Set the protocol to TCP.
 .It Fl U
 Set the protocol to UDP.
 .It Fl v
-enable verbose mode.
+Enable verbose mode.
 .El
 .Sh SEE ALSO
 .Xr ipsend 1
