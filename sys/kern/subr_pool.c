@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.1 1999/02/26 03:13:30 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.2 1999/11/11 16:42:10 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.17 1998/12/27 21:13:43 thorpej Exp $	*/
 
 /*-
@@ -49,9 +49,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#if defined(UVM)
 #include <uvm/uvm.h>
-#endif  
 
 /*
  * Pool resource management utility.
@@ -875,11 +873,7 @@ pool_page_alloc(sz, flags, mtype)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-#if defined(UVM)
 	return ((void *)uvm_km_alloc_poolpage(waitok));
-#else
-	return ((void *)kmem_alloc_poolpage(waitok));
-#endif
 }
 
 static void
@@ -889,11 +883,7 @@ pool_page_free(v, sz, mtype)
 	int mtype;
 {
 
-#if defined(UVM)
 	uvm_km_free_poolpage((vaddr_t)v);
-#else
-	kmem_free_poolpage((vaddr_t)v);
-#endif  
 }
 
 /*
@@ -906,7 +896,6 @@ pool_page_alloc_nointr(sz, flags, mtype)
 	int flags;
 	int mtype;
 {
-#if defined(UVM)
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
 	/*
@@ -914,12 +903,6 @@ pool_page_alloc_nointr(sz, flags, mtype)
 	 */
 	return ((void *)uvm_km_alloc_poolpage1(kernel_map, uvm.kernel_object,
 	    waitok));
-#else
-	/*
-	 * Can't do anything so cool with Mach VM.
-	 */
-	return (pool_page_alloc(sz, flags, mtype));
-#endif
 }
 
 void
@@ -929,11 +912,7 @@ pool_page_free_nointr(v, sz, mtype)
 	int mtype;
 {
 
-#if defined(UVM)
 	uvm_km_free_poolpage1(kernel_map, (vaddr_t)v);
-#else
-	pool_page_free(v, sz, mtype);
-#endif  
 }
 
 
