@@ -1,4 +1,4 @@
-/*	$OpenBSD: fillcap.c,v 1.2 1996/08/27 03:32:32 tholo Exp $	*/
+/*	$OpenBSD: fillcap.c,v 1.3 1996/12/16 16:53:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fillcap.c,v 1.2 1996/08/27 03:32:32 tholo Exp $";
+static char rcsid[] = "$OpenBSD: fillcap.c,v 1.3 1996/12/16 16:53:41 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -84,18 +84,17 @@ _ti_fillcap(term)
 	}
 	else if (carriage_return != NULL && carriage_return_delay <= 0) {
 	    if (linefeed_if_not_lf != NULL) {
-		strncpy(buf, carriage_return, sizeof(buf) >> 1);
-		buf[sizeof(buf) >> 1] = '\0';
-		strncat(buf, linefeed_if_not_lf, sizeof(buf) - 1);
+		strncpy(buf, carriage_return, (sizeof(buf) >> 1) -1);
+		buf[(sizeof(buf) >> 1) -1] = '\0';
+		strncat(buf, linefeed_if_not_lf, sizeof(buf) - strlen(buf));
 	    }
 	    else if (new_line_delay > 0)
 		sprintf(buf, "%s\n$<%d>", carriage_return, new_line_delay);
 	    else {
 		strncpy(buf, carriage_return, sizeof(buf) >> 1);
-		buf[sizeof(buf) >> 1] = '\0';
-		strncat(buf, "\n", sizeof(buf) - 1);
+		buf[(sizeof(buf) >> 1) - 1] = '\0';
+		strncat(buf, "\n", sizeof(buf) - strlen(buf));
 	    }
-	    buf[sizeof(buf) - 1] = '\0';
 	    newline = strdup(buf);
 	}
     if (return_does_clr_eol || no_correctly_working_cr) {
