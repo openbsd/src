@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.24 2000/04/21 15:38:17 aaron Exp $
+.\"	$OpenBSD: ed.1,v 1.25 2000/04/23 21:42:40 aaron Exp $
 .\"
 .Dd May 2, 1993
 .Dt ED 1
@@ -55,20 +55,17 @@ When an input command, such as
 .Em a
 (append),
 .Em i
-(insert) or
+(insert),
+or
 .Em c
-(change), is given,
+(change) is given,
 .Nm
 enters input mode.
 This is the primary means of adding text to a file.
 In this mode, no commands are available;
-instead, the standard input is written
-directly to the editor buffer.
-Lines consist of text up to and including a
-.Em newline
-character.
-Input mode is terminated by
-entering a single period
+instead, the standard input is written directory to the editor buffer.
+Lines consist of text up to and including a newline character.
+Input mode is terminated by entering a single period
 .Pq Ql \&.
 on a line.
 .Pp
@@ -100,15 +97,15 @@ command.
 If fewer addresses are given than the command accepts, then
 default addresses are supplied.
 .Pp
-.Ss OPTIONS
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl s
-Suppresses diagnostics.
+Suppress diagnostics.
 This should be used if
 .Nm
 standard input is from a script.
 .It Fl x
-Prompts for an encryption key to be used in subsequent reads and writes
+Prompt for an encryption key to be used in subsequent reads and writes
 (see the
 .Em x
 command).
@@ -153,11 +150,10 @@ A line address is
 constructed from one of the bases in the list below, optionally followed
 by a numeric offset.
 The offset may include any combination of digits, operators (i.e.,
-.Em +
-,
-.Em -
+.Em + ,
+.Em - ,
 and
-.Em ^ )
+.Em ^ ) ,
 and whitespace.
 Addresses are read from left to right, and their values are computed
 relative to the current address.
@@ -166,7 +162,8 @@ One exception to the rule that addresses represent line numbers is the
 address
 .Em 0
 (zero).
-This means "before the first line,"
+This means
+.Dq before the first line ,
 and is legal wherever it makes sense.
 .Pp
 An address range is two addresses separated either by a comma or
@@ -178,7 +175,7 @@ the second address is set to the given address.
 If an
 .Em n Ns No -tuple
 of addresses is given where
-.Em n > 2,
+.Em n > 2 ,
 then the corresponding range is determined by the last two addresses in
 the
 .Em n Ns No -tuple.
@@ -198,13 +195,11 @@ The current line (address) in the buffer.
 The last line in the buffer.
 .It Em n
 The
-.Em n
-th,
-line in the buffer
-where
+.Em n Ns No th
+line in the buffer where
 .Em n
 is a number in the range
-.Em [0,$].
+.Em [0,$] .
 .It Em - No or Em ^
 The previous line.
 This is equivalent to
@@ -231,12 +226,12 @@ is a non-negative number.
 .It Em \&, No or Em %
 The first through last lines in the buffer.
 This is equivalent to the address range
-.Em 1,$.
+.Em 1,$ .
 .It Em \&;
 The
 current through last lines in the buffer.
 This is equivalent to the address range
-.Em .,$.
+.Em .,$ .
 .It Em / Ns No re Ns Em /
 The
 next line containing the regular expression
@@ -318,13 +313,13 @@ Matches any single character.
 Matches any single character in
 .Em char-class .
 To include a
-.Em ]
+.Ql \&]
 in
 .Em char-class Ns No ,
 it must be the first character.
 A range of characters may be specified by separating the end characters
 of the range with a
-.Em -
+.Ql - ;
 e.g.,
 .Em a-z
 specifies the lower case characters.
@@ -337,7 +332,7 @@ to specify sets of characters:
 .Em \ \ [:blank:]\ \ [:graph:]\ \ [:punct:]\ \ [:xdigit:]
 .Pp
 If
-.Em -
+.Ql -
 appears as the first or last character of
 .Em char-class Ns No ,
 then it matches itself.
@@ -348,7 +343,7 @@ match themselves.
 Patterns in
 .Em char-class
 of the form
-.Em [.col-elm.] No or, Em [=col-elm=]
+.Em [.col-elm.] No or Em [=col-elm=]
 where
 .Em col-elm
 is a
@@ -380,11 +375,11 @@ Otherwise, it matches itself.
 .It Em \e<
 Anchors the single character regular expression or subexpression
 immediately following it to the beginning of a word.
-(This may not be available)
+(This may not be available.)
 .It Em \e>
 Anchors the single character regular expression or subexpression
 immediately following it to the end of a word.
-(This may not be available)
+(This may not be available.)
 .It Em \e( Ns No re Ns Em \e)
 Defines a subexpression
 .Em re .
@@ -703,7 +698,7 @@ affected is printed as though the print suffix
 were specified.
 .Pp
 An unescaped
-.Em \e
+.Ql \e
 in
 .Em replacement
 is replaced by the currently matched text.
@@ -717,15 +712,14 @@ backreference expression of the matched text.
 If
 .Em replacement
 consists of a single
-.Em % Ns No ,
+.Ql % ,
 then
 .Em replacement
 from the last substitution is used.
 Newlines may be embedded in
 .Em replacement
-if they are escaped with a
-.Em \e
-(backslash).
+if they are escaped with a backslash
+.Pq Ql \e .
 .It Em (.,.) Ns Em s
 Repeats the last substitution.
 This form of the
@@ -873,7 +867,7 @@ buffer file
 .It Pa ed.hup
 file to which
 .Nm
-attempts to write the buffer if the terminal hangs uo
+attempts to write the buffer if the terminal hangs up
 .El
 .Sh SEE ALSO
 .Xr bdes 1 ,
