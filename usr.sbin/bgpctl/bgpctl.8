@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.24 2004/10/27 03:35:10 jaredy Exp $
+.\" $OpenBSD: bgpctl.8,v 1.25 2004/12/31 10:47:37 jaredy Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -51,12 +51,18 @@ routing table.
 .It Cm fib decouple
 Remove the learned routes from the Forward Information Base a.k.a. the kernel
 routing table.
-.It Cm neighbor Ar address Cm up
+.It Cm neighbor Ar peer Cm up
 Take the BGP session to the specified neighbor up.
-.It Cm neighbor Ar address Cm down
+.Ar peer
+may be the neighbor's address or description.
+.It Cm neighbor Ar peer Cm down
 Take the BGP session to the specified neighbor down.
-.It Cm neighbor Ar address Cm clear
+.Ar peer
+may be the neighbor's address or description.
+.It Cm neighbor Ar peer Cm clear
 Stop and restart the BGP session to the specified neighbor.
+.Ar peer
+may be the neighbor's address or description.
 .It Cm network add Ar prefix
 Add the specified prefix to the list of announced networks.
 .It Cm network delete Ar prefix
@@ -89,9 +95,10 @@ Show only routes required to reach a BGP nexthop.
 .El
 .It Cm show interfaces
 Show the interface states.
-.It Cm show neighbor Ar address modifier
+.It Cm show neighbor Ar peer modifier
 Show detailed information about the neighbor identified by
-.Ar address ,
+.Ar peer ,
+which may be the neighbor's address or description,
 according to the given
 .Ar modifier :
 .Pp
