@@ -1,4 +1,4 @@
-/*	$OpenBSD: backupfile.c,v 1.2 1996/06/10 11:21:25 niklas Exp $	*/
+/*	$OpenBSD: backupfile.c,v 1.3 1997/01/17 07:18:02 millert Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -14,7 +14,7 @@
    Some algorithms adapted from GNU Emacs. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: backupfile.c,v 1.2 1996/06/10 11:21:25 niklas Exp $";
+static char rcsid[] = "$OpenBSD: backupfile.c,v 1.3 1997/01/17 07:18:02 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -215,7 +215,7 @@ basename (name)
 {
   char *base;
 
-  base = rindex (name, '/');
+  base = strrchr (name, '/');
   return base ? base + 1 : name;
 }
 
@@ -232,7 +232,7 @@ dirname (path)
   char *slash;
   int length;    /* Length of result, not including NUL. */
 
-  slash = rindex (path, '/');
+  slash = strrchr (path, '/');
   if (slash == 0)
 	{
 	  /* File is in the current directory.  */

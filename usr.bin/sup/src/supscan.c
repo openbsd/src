@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.3 1996/07/31 11:11:35 niklas Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.4 1997/01/17 07:18:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -41,6 +41,9 @@
  **********************************************************************
  * HISTORY
  * $Log: supscan.c,v $
+ * Revision 1.4  1997/01/17 07:18:11  millert
+ * more r?index -> strr?chr
+ *
  * Revision 1.3  1996/07/31 11:11:35  niklas
  * Better use time_t instead of long when dealing with times
  *
@@ -276,9 +279,9 @@ char **argv;
 		if ((f = fopen (buf,"r")) == NULL)
 			quit (1,"supscan: Unable to open %s\n",buf);
 		while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-			q = index (p,'\n');
+			q = strchr (p,'\n');
 			if (q)  *q = 0;
-			if (index ("#;:",*p))  continue;
+			if (strchr ("#;:",*p))  continue;
 			collname = nxtarg (&p," \t=");
 			p = skipover (p," \t=");
 			if (!localhost (p))  continue;
@@ -295,9 +298,9 @@ char **argv;
 		if ((f = fopen (filename,"r")) == NULL)
 			quit (1,"supscan: Unable to open %s\n",filename);
 		while (p = fgets (buf,STRINGLENGTH,f)) {
-			q = index (p,'\n');
+			q = strchr (p,'\n');
 			if (q)  *q = 0;
-			if (index ("#;:",*p))  continue;
+			if (strchr ("#;:",*p))  continue;
 			q = nxtarg (&p," \t=");
 			p = skipover (p," \t=");
 			*c = getcoll(filename,salloc (q),salloc (p));
@@ -323,9 +326,9 @@ register char *filename,*collname,*basedir;
 	if (basedir == NULL) {
 		if (f = fopen (filename,"r")) {
 			while (p = fgets (buf,STRINGLENGTH,f)) {
-				q = index (p,'\n');
+				q = strchr (p,'\n');
 				if (q)  *q = 0;
-				if (index ("#;:",*p))  continue;
+				if (strchr ("#;:",*p))  continue;
 				q = nxtarg (&p," \t=");
 				if (strcmp (q,collname) == 0) {
 					p = skipover (p," \t=");
@@ -349,9 +352,9 @@ register char *filename,*collname,*basedir;
 	(void) sprintf (buf,FILEPREFIX,collname);
 	if (f = fopen (buf,"r")) {
 		while (p = fgets (buf,STRINGLENGTH,f)) {
-			q = index (p,'\n');
+			q = strchr (p,'\n');
 			if (q) *q = 0;
-			if (index ("#;:",*p))  continue;
+			if (strchr ("#;:",*p))  continue;
 			prefix = salloc (p);
 			if (chdir(prefix) < 0) {
 				fprintf (stderr,"supscan: can't chdir to %s from base directory %s for %s\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.c,v 1.4 1996/07/31 11:11:24 niklas Exp $	*/
+/*	$OpenBSD: scan.c,v 1.5 1997/01/17 07:18:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -30,6 +30,9 @@
  **********************************************************************
  * HISTORY
  * $Log: scan.c,v $
+ * Revision 1.5  1997/01/17 07:18:04  millert
+ * more r?index -> strr?chr
+ *
  * Revision 1.4  1996/07/31 11:11:24  niklas
  * Better use time_t instead of long when dealing with times
  *
@@ -322,9 +325,9 @@ char *release;
 				rewound = TRUE;
 				continue;
 			}
-			q = index (p,'\n');
+			q = strchr (p,'\n');
 			if (q)  *q = 0;
-			if (index ("#;:",*p))  continue;
+			if (strchr ("#;:",*p))  continue;
 			q = nxtarg (&p," \t");
 			if (strcmp (q,release) != 0)
 				continue;
@@ -367,9 +370,9 @@ makescanlists ()
 	f = fopen (buf,"r");
 	if (f != NULL) {
 		while (p = fgets (buf,sizeof(buf),f)) {
-			q = index (p,'\n');
+			q = strchr (p,'\n');
 			if (q)  *q = 0;
-			if (index ("#;:",*p))  continue;
+			if (strchr ("#;:",*p))  continue;
 			q = nxtarg (&p," \t");
 			(void) parserelease (&tl,q,p);
 			if ((prefix = tl->TLprefix) == NULL)
@@ -494,8 +497,8 @@ char *fname;
 	if (f == NULL)  goaway ("Can't read list file %s",fname);
 	cdprefix (prefix);
 	while (p = fgets (buf,sizeof(buf),f)) {
-		if (q = index (p,'\n'))  *q = '\0';
-		if (index ("#;:",*p))  continue;
+		if (q = strchr (p,'\n'))  *q = '\0';
+		if (strchr ("#;:",*p))  continue;
 		q = nxtarg (&p," \t");
 		if (*q == '\0') continue;
 		for (ltn = 0; ltname[ltn] && strcmp(q,ltname[ltn]) != 0; ltn++);
@@ -854,7 +857,7 @@ char *scanfile;
 		(void) fclose (f);
 		return (FALSE);
 	}
-	if (q = index (p,'\n'))  *q = '\0';
+	if (q = strchr (p,'\n'))  *q = '\0';
 	if (*p++ != 'V') {
 		(void) fclose (f);
 		return (FALSE);
@@ -871,7 +874,7 @@ char *scanfile;
 	}
 	notwanted = FALSE;
 	while (p = fgets (buf,sizeof(buf),f)) {
-		q = index (p,'\n');
+		q = strchr (p,'\n');
 		if (q)  *q = 0;
 		ts.Tflags = 0;
 		if (*p == 'X') {
@@ -890,17 +893,17 @@ char *scanfile;
 			p++;
 			ts.Tflags |= FNOACCT;
 		}
-		if ((q = index (p,' ')) == NULL)
+		if ((q = strchr (p,' ')) == NULL)
 			goaway ("scanfile format inconsistant");
 		*q++ = '\0';
 		ts.Tmode = atoo (p);
 		p = q;
-		if ((q = index (p,' ')) == NULL)
+		if ((q = strchr (p,' ')) == NULL)
 			goaway ("scanfile format inconsistant");
 		*q++ = '\0';
 		ts.Tctime = atoi (p);
 		p = q;
-		if ((q = index (p,' ')) == NULL)
+		if ((q = strchr (p,' ')) == NULL)
 			goaway ("scanfile format inconsistant");
 		*q++ = 0;
 		ts.Tmtime = atoi (p);

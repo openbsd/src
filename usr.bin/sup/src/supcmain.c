@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.3 1996/07/31 11:11:27 niklas Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.4 1997/01/17 07:18:06 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -176,6 +176,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmain.c,v $
+ * Revision 1.4  1997/01/17 07:18:06  millert
+ * more r?index -> strr?chr
+ *
  * Revision 1.3  1996/07/31 11:11:27  niklas
  * Better use time_t instead of long when dealing with times
  *
@@ -662,9 +665,9 @@ char **argv;
 	lastC = NULL;
 	bogus = FALSE;
 	while (p = fgets (buf,STRINGLENGTH,f)) {
-		q = index (p,'\n');
+		q = strchr (p,'\n');
 		if (q)  *q = '\0';
-		if (index ("#;:",*p))  continue;
+		if (strchr ("#;:",*p))  continue;
 		arg = nxtarg (&p," \t");
 		if (*arg == '\0') {
 			logerr ("Missing collection name in supfile");

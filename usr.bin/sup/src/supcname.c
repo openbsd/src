@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcname.c,v 1.2 1996/06/26 05:39:53 deraadt Exp $	*/
+/*	$OpenBSD: supcname.c,v 1.3 1997/01/17 07:18:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -29,6 +29,9 @@
  **********************************************************************
  * HISTORY
  * $Log: supcname.c,v $
+ * Revision 1.3  1997/01/17 07:18:08  millert
+ * more r?index -> strr?chr
+ *
  * Revision 1.2  1996/06/26 05:39:53  deraadt
  * rcsid
  *
@@ -91,8 +94,8 @@ void getnams ()
 	f = fopen (buf,"r");
 	if (f == NULL)  logquit (1,"Can't open %s",buf);
 	while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-		if (q = index (p,'\n'))  *q = '\0';
-		if (index ("#;:",*p))  continue;
+		if (q = strchr (p,'\n'))  *q = '\0';
+		if (strchr ("#;:",*p))  continue;
 		q = nxtarg (&p,"= \t");
 		p = skipover (p," \t");
 		if (*p == '=')  p++;

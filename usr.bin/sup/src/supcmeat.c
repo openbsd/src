@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.3 1996/07/31 11:11:28 niklas Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.4 1997/01/17 07:18:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -34,6 +34,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmeat.c,v $
+ * Revision 1.4  1997/01/17 07:18:07  millert
+ * more r?index -> strr?chr
+ *
  * Revision 1.3  1996/07/31 11:11:28  niklas
  * Better use time_t instead of long when dealing with times
  *
@@ -505,8 +508,8 @@ int listfiles ()
 	f = fopen (buf,"r");
 	if (f) {
 		while (p = fgets (buf,STRINGLENGTH,f)) {
-			if (q = index (p,'\n'))  *q = '\0';
-			if (index ("#;:",*p))  continue;
+			if (q = strchr (p,'\n'))  *q = '\0';
+			if (strchr ("#;:",*p))  continue;
 			(void) Tinsert (&lastT,p,FALSE);
 		}
 		(void) fclose (f);
@@ -516,8 +519,8 @@ int listfiles ()
 	f = fopen (buf,"r");
 	if (f) {
 		while (p = fgets (buf,STRINGLENGTH,f)) {
-			if (q = index (p,'\n'))  *q = '\0';
-			if (index ("#;:",*p))  continue;
+			if (q = strchr (p,'\n'))  *q = '\0';
+			if (strchr ("#;:",*p))  continue;
 			(void) Tinsert (&refuseT,p,FALSE);
 		}
 		(void) fclose (f);
