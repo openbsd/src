@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2002/01/23 15:19:10 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2002/02/22 19:25:17 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -617,6 +617,7 @@ badtrap:
 			ADVANCE;
 			break;
 		}
+		/* XXX sv.sival_ptr should be the fault address! */
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);	/* XXX code?? */
 		break;
 
@@ -785,7 +786,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	u_quad_t sticks;
 	union sigval sv;
 
-	sv.sival_ptr = (void *)pc;
+	sv.sival_ptr = (void *)addr;
 
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)	/* safety check */
@@ -1051,7 +1052,6 @@ text_access_fault(tf, type, pc, sfsr)
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
-		sv.sival_ptr = (void *)va;
 		trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
@@ -1161,7 +1161,6 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
-		sv.sival_ptr = (void *)va;
 		trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
 	}
 out:
