@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_openbsd.h,v 1.8 2000/03/05 22:20:09 mjacob Exp $ */
+/*	$OpenBSD: isp_openbsd.h,v 1.9 2000/07/06 05:31:48 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -63,7 +63,7 @@
 #include <vm/pmap.h>
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	9
+#define	ISP_PLATFORM_VERSION_MINOR	10
 
 #define	ISP_SCSI_XFER_T		struct scsi_xfer
 struct isposinfo {
@@ -78,14 +78,28 @@ struct isposinfo {
 #define	seed		un._seed
 #define	discovered	un._discovered
 	struct scsi_xfer	*wqf, *wqt;
+	struct timeout rqt;
 };
 
+#define	MBOX_WAIT_COMPLETE(isp)		\
+	{ \
+		int j; \
+		for (j = 0; j < 60 * 2000; j++) { \
+			if (isp_intr(isp) == 0) { \
+				SYS_DELAY(500); \
+			} \
+			if (isp->isp_mboxbsy == 0) \
+				break; \
+		} \
+		if (isp->isp_mboxbsy != 0) \
+			printf("%s: mailbox timeout\n", isp->isp_name); \
+	}
+
+#define	MBOX_NOTIFY_COMPLETE(isp)	isp->isp_mboxbsy = 0
+
 #define	MAXISPREQUEST		256
-#ifdef	ISP2100_FABRIC
+#define	ISP2100_FABRIC		1
 #define	ISP2100_SCRLEN		0x400
-#else
-#define	ISP2100_SCRLEN		0x100
-#endif
 
 #include <dev/ic/ispreg.h>
 #include <dev/ic/ispvar.h>
@@ -160,13 +174,30 @@ struct isposinfo {
 #define	XS_SNS_IS_VALID(xs)	(xs)->error = XS_SENSE
 #define	XS_IS_SNS_VALID(xs)	((xs)->error == XS_SENSE)
 
-#define	XS_INITERR(xs)		(xs)->error = 0
+#define	XS_PSTS_INWDOG		0x10000
+#define	XS_PSTS_GRACE		0x20000
+#define	XS_PSTS_ALL		SCSI_PRIVATE
+
+#define	XS_CMD_S_WDOG(xs)	(xs)->flags |= XS_PSTS_INWDOG
+#define	XS_CMD_C_WDOG(xs)	(xs)->flags &= ~XS_PSTS_INWDOG
+#define	XS_CMD_WDOG_P(xs)	(((xs)->flags & XS_PSTS_INWDOG) != 0)
+
+#define	XS_CMD_S_GRACE(xs)	(xs)->flags |= XS_PSTS_GRACE
+#define	XS_CMD_C_GRACE(xs)	(xs)->flags &= ~XS_PSTS_GRACE
+#define	XS_CMD_GRACE_P(xs)	(((xs)->flags & XS_PSTS_GRACE) != 0)
+
+#define	XS_CMD_S_DONE(xs)	(xs)->flags |= ITSDONE
+#define	XS_CMD_C_DONE(xs)	(xs)->flags &= ~ITSDONE
+#define	XS_CMD_DONE_P(xs)	(((xs)->flags & ITSDONE) != 0)
+
+#define	XS_CMD_S_CLEAR(xs)	(xs)->flags &= ~XS_PSTS_ALL
+
+#define	XS_INITERR(xs)		(xs)->error = 0, XS_CMD_S_CLEAR(xs)
 #define	XS_SETERR(xs, v)	(xs)->error = v
 #define	XS_ERR(xs)		(xs)->error
 #define	XS_NOERR(xs)		(xs)->error == XS_NOERROR
 
-#define	XS_CMD_DONE(xs)		(xs)->flags |= ITSDONE, scsi_done(xs)
-#define	XS_IS_CMD_DONE(xs)	(((xs)->flags & ITSDONE) != 0)
+#define	XS_CMD_DONE		isp_done
 
 /*
  * We use whether or not we're a polled command to decide about tagging.
@@ -198,6 +229,7 @@ struct isposinfo {
 
 extern void isp_attach __P((struct ispsoftc *));
 extern void isp_uninit __P((struct ispsoftc *));
+extern void isp_done __P((ISP_SCSI_XFER_T *));
 
 
 #define ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
@@ -217,6 +249,27 @@ extern void isp_uninit __P((struct ispsoftc *));
 #endif
 #define	ISP_SWIZZLE_SNS_REQ(a, b)
 #define	ISP_UNSWIZZLE_SNS_RSP(a, b, c)
+
+#define	STRNCAT			strncat
+static inline char *strncat(char *, const char *, size_t);
+static inline char *
+strncat(char *d, const char *s, size_t c)
+{
+        char *t = d;
+
+        if (c) {
+                while (*d)
+                        d++;
+                while ((*d++ = *s++)) {
+                        if (--c == 0) {
+                                *d = '\0';
+                                break;
+                        }
+                }
+        }
+        return (t);
+}
+
 
 #define	INLINE	inline
 #include <dev/ic/isp_inline.h>
