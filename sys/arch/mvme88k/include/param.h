@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.18 2001/05/13 02:37:29 millert Exp $ */
+/*	$OpenBSD: param.h,v 1.19 2001/07/06 02:07:42 provos Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.18 2001/05/13 02:37:29 millert Exp $
+ *	$Id: param.h,v 1.19 2001/07/06 02:07:42 provos Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -120,7 +120,7 @@
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#define MSIZE		128		/* size of an mbuf */
+#define MSIZE		256		/* size of an mbuf */
 #define MCLSHIFT	11		/* convert bytes to m_buf clusters */
 #define MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 #define MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */

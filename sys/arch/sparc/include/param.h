@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.18 2001/05/10 09:23:11 art Exp $	*/
+/*	$OpenBSD: param.h,v 1.19 2001/07/06 02:07:43 provos Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -111,7 +111,7 @@ extern int nbpg, pgofset, pgshift;
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#define	MSIZE		128		/* size of an mbuf */
+#define	MSIZE		256		/* size of an mbuf */
 #define	MCLBYTES	2048		/* enough for whole Ethernet packet */
 #define	MCLSHIFT	11		/* log2(MCLBYTES) */
 #define	MCLOFSET	(MCLBYTES - 1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.19 2001/06/24 17:05:39 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.20 2001/07/06 02:07:44 provos Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #ifndef	MSIZE
-#define	MSIZE		128		/* size of an mbuf */
+#define	MSIZE		256		/* size of an mbuf */
 #endif	/* MSIZE */
 
 #ifndef	MCLSHIFT
