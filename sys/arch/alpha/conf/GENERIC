@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.92 2001/11/30 00:52:55 nate Exp $
+#	$OpenBSD: GENERIC,v 1.93 2001/11/30 01:41:53 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -157,13 +157,14 @@ fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI cards
 wx*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 bge*	at pci? dev ? function ?	# Broadcom BCM570x (aka Tigon3)
 stge*	at pci? dev ? function ?	# Sundance TC9021 GigE
+rl*	at pci? dev ? function ?	# RealTek 81[23]9 ethernet
+vr*	at pci? dev ? function ?	# VIA Rhine ethernet
 
 #UNTESTED:  the vollowing section of drivers is untested on alpha.
 en*	at pci? dev ? function ?	# ENI PCI ATM (untested)
 tl*	at pci? dev ? function ?	# Compaq Thunderlan ethernet
 le*	at pci? dev ? function ?	# PCI LANCE Ethernet (untested)
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/T3/HSSI
-rl*	at pci? dev ? function ?	# RealTek 81[23]9 ethernet
 wb*	at pci? dev ? function ?	# Winbond W89C840F ethernet
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 ethernet
 sis*	at pci? dev ? function ?	# SiS 900/7016 ethernet
@@ -176,7 +177,6 @@ an*	at pci? dev ? function ?	# Cisco/Aironet 802.11DS
 
 #BROKEN:  The following two drivers have 64-bit issues
 #tx*	at pci? dev ? function ?	# SMC 83C170 EPIC ethernet
-#vr*	at pci? dev ? function ?	# VIA Rhine ethernet
 
 vga*	at pci? dev ? function ?	# PCI VGA graphics
 tga*	at pci? dev ? function ?	# DEC ZLXp-E[123] graphics
