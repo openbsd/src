@@ -1277,6 +1277,7 @@ adb_reinit(void)
 
 	/* send an ADB reset first */
 	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
+	delay(1000);
 
 	/*
 	 * Probe for ADB devices. Probe devices 1-15 quickly to determine
@@ -1604,7 +1605,6 @@ adb_cmd_extra(u_char *in)
 	}
 }
 
-
 /*
  * adb_op_sync
  *
@@ -1619,14 +1619,37 @@ adb_cmd_extra(u_char *in)
 int
 adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 {
+	int tmout;
 	int result;
 	volatile int flag = 0;
 
 	result = adb_op(buffer, (void *)adb_op_comprout,
 	    (void *)&flag, command);	/* send command */
-	if (result == 0)		/* send ok? */
-		while (0 == flag)
-			/* wait for compl. routine */;
+	if (result == 0) {		/* send ok? */
+		/*
+		 * Total time to wait is calculated as follows:
+		 *  - Tlt (stop to start time): 260 usec
+		 *  - start bit: 100 usec
+		 *  - up to 8 data bytes: 64 * 100 usec = 6400 usec
+		 *  - stop bit (with SRQ): 140 usec
+		 * Total: 6900 usec
+		 *
+		 * This is the total time allowed by the specification.  Any
+		 * device that doesn't conform to this will fail to operate
+		 * properly on some Apple systems.  In spite of this we
+		 * double the time to wait; some Cuda-based apparently
+		 * queues some commands and allows the main CPU to continue
+		 * processing (radical concept, eh?).  To be safe, allow
+		 * time for two complete ADB transactions to occur.
+		 */
+		for (tmout = 13800; !flag && tmout >= 10; tmout -= 10)
+			delay(10);
+		if (!flag && tmout > 0)
+			delay(tmout);
+
+		if (!flag)
+			result = -2;
+	}
 
 	return result;
 }
@@ -2149,7 +2172,6 @@ adb_cuda_autopoll()
 void
 adb_restart()
 {
-	volatile int flag = 0;
 	int result;
 	u_char output[16];
 
