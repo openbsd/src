@@ -1,8 +1,8 @@
-/*	$NetBSD: ncr.c,v 1.18 1995/10/02 16:48:36 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.18.2.1 1995/10/23 15:53:32 pk Exp $	*/
 
 /**************************************************************************
 **
-**  $Id: ncr.c,v 1.1.1.1 1995/10/18 08:52:40 deraadt Exp $
+**  $Id: ncr.c,v 1.2 1995/10/26 01:35:41 deraadt Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
@@ -1246,7 +1246,7 @@ void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.1.1.1 1995/10/18 08:52:40 deraadt Exp $\n";
+	"\n$Id: ncr.c,v 1.2 1995/10/26 01:35:41 deraadt Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -1284,7 +1284,7 @@ int ncr_cache; /* to be aligned _NOT_ static */
 #ifdef __NetBSD__
 
 struct	cfdriver ncrcd = {
-	NULL, "ncr", ncr_probe, ncr_attach, DV_DISK, sizeof(struct ncb)
+	NULL, "ncr", ncr_probe, ncr_attach, DV_DULL, sizeof(struct ncb)
 };
 
 #else /* !__NetBSD__ */
