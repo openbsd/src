@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.10 1999/06/05 19:04:32 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.15 1999/06/05 18:59:08 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.11 1999/07/07 22:15:42 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.16 1999/06/15 11:21:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -154,6 +154,9 @@ x509_cert_obtain (struct exchange *exchange, void *data, u_int8_t **cert,
   char *certfile;
   int fd, res = 0;
   struct stat st;
+  u_int8_t *id_cert, *asn, *id;
+  size_t id_len;
+  u_int32_t id_cert_len;
 
   if (aca)
     log_debug (LOG_CRYPTO, 60, "x509_cert_obtain: (%s) %s, (%s) %s",
@@ -202,35 +205,29 @@ x509_cert_obtain (struct exchange *exchange, void *data, u_int8_t **cert,
       goto done;
     }
 
-  {
-    /* 
-     * XXX We assume IPv4 here and a certificate with an extension
-     * type of subjectAltName at the end.  This can go once the saved
-     * certificate is only used with one host with a fixed IP address.
-     */
-    u_int8_t *id_cert, *asn, *id;
-    size_t id_len;
-    u_int32_t id_cert_len;
+  /* 
+   * XXX We assume IPv4 here and a certificate with an extension
+   * type of subjectAltName at the end.  This can go once the saved
+   * certificate is only used with one host with a fixed IP address.
+   */
+  id = exchange->initiator ? exchange->id_i : exchange->id_r;
+  id_len = exchange->initiator ? exchange->id_i_len : exchange->id_r_len;
 
-    id = exchange->initiator ? exchange->id_i : exchange->id_r;
-    id_len = exchange->initiator ? exchange->id_i_len : exchange->id_r_len;
+  /* XXX We need our ID to set that in the cert.  */
+  if (id) 
+    {
+      id += ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
+      id_len -= ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
 
-    /* XXX We need our ID to set that in the cert.  */
-    if (id) 
-      {
-	/* XXX How to get to the address?  */
-	id += 4; id_len -= 4;
-	
-	/* Get offset into data structure where the IP is saved.  */
-	asn = *cert;
-	id_cert_len = asn_get_data_len (0, &asn, &id_cert);
-	asn = id_cert;
-	id_cert_len = asn_get_data_len (0, &asn, &id_cert);
-	id_cert += id_cert_len - 4;
-	memcpy (id_cert, id, 4); 
-      }
-  }
- 
+      /* Get offset into data structure where the IP is saved.  */
+      asn = *cert;
+      id_cert_len = asn_get_data_len (0, &asn, &id_cert);
+      asn = id_cert;
+      id_cert_len = asn_get_data_len (0, &asn, &id_cert);
+      id_cert += id_cert_len - 4;
+      memcpy (id_cert, id, 4); 
+    }
+
   res = 1;
 
  done:
@@ -293,14 +290,15 @@ x509_cert_get_subject (u_int8_t *asn, u_int32_t asnlen,
       goto fail;
     }
 
-  /* XXX 4 bytes for IPV4 address.  */
-  *subject = malloc (4);
+  /* XXX IPV4 address.  */
+  *subject = malloc (sizeof (in_addr_t));
   if (!*subject)
     {
-      log_error ("x509_cert_get_subject: malloc (4) failed");
+      log_error ("x509_cert_get_subject: malloc (%d) failed",
+		 sizeof (in_addr_t));
       goto fail;
     }
-  *subjectlen = 4;
+  *subjectlen = sizeof (in_addr_t);
   memcpy (*subject, cert.extension.val + 4, *subjectlen);
 
   x509_free_certificate (&cert);
@@ -312,7 +310,7 @@ x509_cert_get_subject (u_int8_t *asn, u_int32_t asnlen,
 }
 
 /*
- * Initalizes the struct x509_attribval from a AtributeValueAssertion.
+ * Initalizes the struct x509_attribval from a AttributeValueAssertion.
  * XXX Error checking.
  */
 void

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.3 1999/05/02 19:16:41 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.4 1999/05/02 12:50:27 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.4 1999/07/07 22:15:42 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.5 1999/06/15 11:21:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -755,18 +755,27 @@ ike_phase_1_send_ID (struct message *msg)
   struct exchange *exchange = msg->exchange;
   u_int8_t *buf;
   char header[80];
-  size_t sz;
+  ssize_t sz;
   struct sockaddr *src;
   int src_len;
   int initiator = exchange->initiator;
   u_int8_t **id;
   size_t *id_len;
+  char *my_id = 0;
+  u_int8_t id_type;
 
   /* Choose the right fields to fill-in.  */
   id = initiator ? &exchange->id_i : &exchange->id_r;
   id_len = initiator ? &exchange->id_i_len : &exchange->id_r_len;
 
-  sz = ISAKMP_ID_DATA_OFF + 4;
+  if (exchange->name)
+    my_id = conf_get_str (exchange->name, "ID");
+
+  sz = my_id ? ipsec_id_size (my_id, &id_type) : sizeof (in_addr_t);
+  if (sz == -1)
+    return -1;
+
+  sz += ISAKMP_ID_DATA_OFF;
   buf = malloc (sz);
   if (!buf)
     {
@@ -774,14 +783,39 @@ ike_phase_1_send_ID (struct message *msg)
       return -1;
     }
 
-  msg->transport->vtbl->get_src (msg->transport, &src, &src_len);
-  /* XXX Assumes IPv4.  */
-  SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV4_ADDR);
   SET_IPSEC_ID_PROTO (buf + ISAKMP_ID_DOI_DATA_OFF, 0);
   SET_IPSEC_ID_PORT (buf + ISAKMP_ID_DOI_DATA_OFF, 0);
-  /* Already in network byteorder.  */
-  memcpy (buf + ISAKMP_ID_DATA_OFF,
-	  &((struct sockaddr_in *)src)->sin_addr.s_addr, sizeof (in_addr_t));
+  if (my_id)
+    {
+      SET_ISAKMP_ID_TYPE (buf, id_type);
+      switch (id_type)
+	{
+#ifdef notyet
+	case IPSEC_ID_IPV4_ADDR:
+	  /* XXX not implemented yet.  */
+	  break;
+#endif
+	case IPSEC_ID_FQDN:
+	case IPSEC_ID_USER_FQDN:
+	  memcpy (buf + ISAKMP_ID_DATA_OFF, conf_get_str (my_id, "Name"), sz);
+	  break;
+	default:
+	  log_print ("ike_phase_1_send_ID: unsupported ID type %d", id_type);
+	  free (buf);
+	  return -1;
+	}
+    }
+  else
+    {
+      msg->transport->vtbl->get_src (msg->transport, &src, &src_len);
+      /* XXX Assumes IPv4.  */
+      SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV4_ADDR);
+      /* Already in network byteorder.  */
+      memcpy (buf + ISAKMP_ID_DATA_OFF,
+	      &((struct sockaddr_in *)src)->sin_addr.s_addr,
+	      sizeof (in_addr_t));
+    }
+
   if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, buf, sz, 1))
     {
       free (buf);
