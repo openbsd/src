@@ -1,42 +1,48 @@
-#	$OpenBSD: Makefile,v 1.5 2001/03/24 18:40:21 tholo Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/08/11 22:58:06 art Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
-OBJS=		crt0.o gcrt0.o scrt0.o
-SRCS=		crt0.c
+OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o crtbeginS.o crtendS.o
+
+.PATH:		${.CURDIR}/../common_elf
+CFLAGS+=	-I${.CURDIR}/../common_elf
+
+PICFLAG?=-fPIC
 
 all: ${OBJS}
 
-crt0.o: ${SRCS}
-	@echo "${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}"
-	@${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+crt0.o: crt0.c
+	${COMPILE.c} -DCRT0 ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-gcrt0.o: ${SRCS}
-	@echo "${COMPILE.c} -DMCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}"
-	@${COMPILE.c} -DMCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+gcrt0.o: crt0.c
+	${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-scrt0.o: ${SRCS}
-	@echo "${COMPILE.c} -DSCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}"
-	@${COMPILE.c} -DSCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+crtbegin.o: crtbegin.c
+	${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
+crtbeginS.o: crtbeginS.c
+	${COMPILE.c} ${PICFLAG} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
+crtend.o: crtend.c
+	${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@rm -f ${.TARGET}.o
+
+crtendS.o: crtendS.c
+	${COMPILE.c} ${PICFLAG} ${.ALLSRC} -o ${.TARGET}.o
+	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 realinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
-
-.if make(depend)
-CPPFLAGS+= -DDYNAMIC
-.endif
-
-afterdepend: .depend
-	@(TMP=/tmp/_depend$$$$; \
-		sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o s\1.o:/' \
-		< .depend > $$TMP; \
-	mv $$TMP .depend)
 
 .include <bsd.prog.mk>
