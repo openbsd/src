@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.8 1999/03/04 03:34:35 pjanzen Exp $	*/
+/*	$OpenBSD: day.c,v 1.9 1999/04/25 01:16:04 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.8 1999/03/04 03:34:35 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.9 1999/04/25 01:16:04 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -498,7 +498,7 @@ isnow(endp)
 				if (flags & F_SPECIAL) {
 					tmtmp.tm_mon = 0;	/* Gee, mktime() is nice */
 					tmtmp.tm_mday = spev[v1].getev(tmtmp.tm_year +
-					    vwd + TM_YEAR_BASE);
+					    TM_YEAR_BASE) + vwd;
 				} else if (vwd) {
 					v1 = vwd;
 					variable_weekday(&v1, tmtmp.tm_mon + 1,
