@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.49 2002/01/23 00:39:48 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.50 2002/01/28 03:16:27 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ struct pool vndbuf_pool;
 
 #define	getvndxfer(vnx)	do {						\
 	int s = splbio();						\
-	vnx = pool_get(&vndxfer_pool, PR_MALLOCOK|PR_WAITOK);		\
+	vnx = pool_get(&vndxfer_pool, PR_WAITOK);			\
 	splx(s);							\
 } while (0)
 
@@ -205,7 +205,7 @@ struct pool vndbuf_pool;
 
 #define	getvndbuf(vbp)	do {						\
 	int s = splbio();						\
-	vbp = pool_get(&vndbuf_pool, PR_MALLOCOK|PR_WAITOK);		\
+	vbp = pool_get(&vndbuf_pool, PR_WAITOK);			\
 	splx(s);							\
 } while (0)
 
