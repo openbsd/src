@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.c,v 1.9 2001/01/21 15:11:18 itojun Exp $	*/
-/*	$KAME: config.c,v 1.27 2001/01/19 03:07:18 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.10 2001/01/23 15:36:40 itojun Exp $	*/
+/*	$KAME: config.c,v 1.29 2001/01/23 14:13:08 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -292,6 +292,8 @@ getconfig(intface)
 				       __FUNCTION__);
 				exit(1);
 			}
+			memset(pfx, 0, sizeof(*pfx));
+
 			/* link into chain */
 			insque(pfx, &tmp->prefix);
 
@@ -323,8 +325,7 @@ getconfig(intface)
 			pfx->onlinkflg = val & ND_OPT_PI_FLAG_ONLINK;
 			pfx->autoconfflg = val & ND_OPT_PI_FLAG_AUTO;
 #ifdef MIP6
-			if (mobileip6)
-				pfx->routeraddr = val & ND_OPT_PI_FLAG_RTADDR;
+			pfx->routeraddr = val & ND_OPT_PI_FLAG_RTADDR;
 #endif
 
 			makeentry(entbuf, i, "vltime", added);
