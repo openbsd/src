@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vfsops.c,v 1.10 1999/01/11 05:12:39 millert Exp $	*/
+/*	$OpenBSD: lfs_vfsops.c,v 1.11 1999/05/31 17:34:55 millert Exp $	*/
 /*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
@@ -202,6 +202,7 @@ lfs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	bcopy(&args, &mp->mnt_stat.mount_info.ufs_args, sizeof(args));
 	return (0);
 }
 
@@ -431,6 +432,8 @@ lfs_statfs(mp, sbp, p)
 	if (sbp != &mp->mnt_stat) {
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		bcopy(&mp->mnt_stat.mount_info.ufs_args,
+		    &sbp->mount_info.ufs_args, sizeof(struct ufs_args));
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);

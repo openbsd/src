@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_syscallargs.h,v 1.9 1999/02/10 08:07:30 deraadt Exp $	*/
+/*	$OpenBSD: freebsd_syscallargs.h,v 1.10 1999/05/31 17:34:45 millert Exp $	*/
 
 /*
  * System call argument lists.
@@ -48,6 +48,12 @@ struct freebsd_sys_chown_args {
 	syscallarg(char *) path;
 	syscallarg(int) uid;
 	syscallarg(int) gid;
+};
+
+struct freebsd_sys_getfsstat_args {
+	syscallarg(struct freebsd_statfs *) buf;
+	syscallarg(long) bufsize;
+	syscallarg(int) flags;
 };
 
 struct freebsd_sys_mount_args {
@@ -156,7 +162,12 @@ struct freebsd_sys_rmdir_args {
 
 struct freebsd_sys_statfs_args {
 	syscallarg(char *) path;
-	syscallarg(struct statfs *) buf;
+	syscallarg(struct freebsd_statfs *) buf;
+};
+
+struct freebsd_sys_fstatfs_args {
+	syscallarg(int) fd;
+	syscallarg(struct freebsd_statfs *) buf;
 };
 
 struct freebsd_sys_getfh_args {
@@ -226,7 +237,7 @@ int	freebsd_sys_mknod	__P((struct proc *, void *, register_t *));
 int	freebsd_sys_chmod	__P((struct proc *, void *, register_t *));
 int	freebsd_sys_chown	__P((struct proc *, void *, register_t *));
 int	sys_obreak	__P((struct proc *, void *, register_t *));
-int	sys_getfsstat	__P((struct proc *, void *, register_t *));
+int	freebsd_sys_getfsstat	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_lseek	__P((struct proc *, void *, register_t *));
 int	sys_getpid	__P((struct proc *, void *, register_t *));
 int	freebsd_sys_mount	__P((struct proc *, void *, register_t *));
@@ -362,7 +373,7 @@ int	sys_nfssvc	__P((struct proc *, void *, register_t *));
 #endif
 int	compat_43_sys_getdirentries	__P((struct proc *, void *, register_t *));
 int	freebsd_sys_statfs	__P((struct proc *, void *, register_t *));
-int	sys_fstatfs	__P((struct proc *, void *, register_t *));
+int	freebsd_sys_fstatfs	__P((struct proc *, void *, register_t *));
 #ifdef NFSCLIENT
 int	freebsd_sys_getfh	__P((struct proc *, void *, register_t *));
 #else

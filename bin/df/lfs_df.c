@@ -75,7 +75,6 @@ lfs_df(rfd, file, sfsp)
 	if (sblock.lfs_magic != LFS_MAGIC) {
 		return (-1);
 	}
-	sfsp->f_type = 0;	/* Unused field, set to 0 */
 	sfsp->f_flags = 0;	/* The fs is not mapped, so no flags */
 	sfsp->f_bsize = sblock.lfs_bsize;
 	sfsp->f_iosize = sblock.lfs_bsize;

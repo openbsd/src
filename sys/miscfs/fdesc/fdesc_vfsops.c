@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vfsops.c,v 1.6 1998/02/08 22:41:37 tholo Exp $	*/
+/*	$OpenBSD: fdesc_vfsops.c,v 1.7 1999/05/31 17:34:49 millert Exp $	*/
 /*	$NetBSD: fdesc_vfsops.c,v 1.21 1996/02/09 22:40:07 christos Exp $	*/
 
 /*
@@ -213,11 +213,6 @@ fdesc_statfs(mp, sbp, p)
 	if (fdp->fd_nfiles < lim)
 		freefd += (lim - fdp->fd_nfiles);
 
-#ifdef COMPAT_09
-	sbp->f_type = 6;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
@@ -226,7 +221,6 @@ fdesc_statfs(mp, sbp, p)
 	sbp->f_files = lim + 1;		/* Allow for "." */
 	sbp->f_ffree = freefd;		/* See comments above */
 	if (sbp != &mp->mnt_stat) {
-		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.15 1998/09/06 20:31:31 millert Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.16 1999/05/31 17:34:46 millert Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -206,6 +206,7 @@ cd9660_mount(mp, path, data, ndp, p)
 	(void)copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	bcopy(&args, &mp->mnt_stat.mount_info.iso_args, sizeof(args));
 	(void)cd9660_statfs(mp, &mp->mnt_stat, p);
 	return (0);
 }
@@ -564,11 +565,6 @@ cd9660_statfs(mp, sbp, p)
 	
 	isomp = VFSTOISOFS(mp);
 
-#ifdef COMPAT_09
-	sbp->f_type = 5;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = isomp->logical_block_size;
 	sbp->f_iosize = sbp->f_bsize;	/* XXX */
 	sbp->f_blocks = isomp->volume_space_size;
@@ -580,6 +576,8 @@ cd9660_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname,
 		    MNAMELEN);
+		bcopy(&mp->mnt_stat.mount_info.iso_args,
+		    &sbp->mount_info.iso_args, sizeof(struct iso_args));
 	}
 	/* Use the first spare for flags: */
 	sbp->f_spare[0] = isomp->im_flags;

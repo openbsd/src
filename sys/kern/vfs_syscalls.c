@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.56 1999/02/26 04:51:17 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.57 1999/05/31 17:34:48 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -70,6 +70,7 @@ int	usermount = 0;		/* sysctl: by default, users may not mount */
 static int change_dir __P((struct nameidata *, struct proc *));
 
 void checkdirs __P((struct vnode *));
+void statfs_to_ostatfs __P((struct proc *, struct mount *, struct statfs *, struct ostatfs *));
 
 /*
  * Redirection info so we don't have to include the union fs routines in 
@@ -248,7 +249,6 @@ sys_mount(p, v, retval)
 	vfs_busy(mp, LK_NOWAIT, 0, p);
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_vfc = vfsp;
-	mp->mnt_stat.f_type = vfsp->vfc_typenum;
 	mp->mnt_flag |= (vfsp->vfc_flags & MNT_VISFLAGMASK);
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
 	mp->mnt_vnodecovered = vp;
@@ -643,15 +643,15 @@ sys_getfsstat(p, v, retval)
 {
 	register struct sys_getfsstat_args /* {
 		syscallarg(struct statfs *) buf;
-		syscallarg(long) bufsize;
+		syscallarg(size_t) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	register struct mount *mp, *nmp;
 	register struct statfs *sp;
-	caddr_t sfsp;
-	long count, maxcount, error;
 	struct statfs sb;
-	int  flags = SCARG(uap, flags);
+	caddr_t sfsp;
+	size_t count, maxcount;
+	int error, flags = SCARG(uap, flags);
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct statfs);
 	sfsp = (caddr_t)SCARG(uap, buf);
@@ -2358,5 +2358,176 @@ getvnode(fdp, fd, fpp)
 	if (fp->f_type != DTYPE_VNODE)
 		return (EINVAL);
 	*fpp = fp;
+	return (0);
+}
+
+/*
+ * At some point (before 2.6 is released), these will move to
+ * sys/compat/vfs_syscalls_25.c
+ */
+
+/*
+ * Convert struct statfs -> struct ostatfs
+ */
+void
+statfs_to_ostatfs(p, mp, sp, osp)
+	struct proc *p;
+	struct mount *mp;
+	struct statfs *sp;
+	struct ostatfs *osp;
+{
+#if defined(COMPAT_09) || defined(COMPAT_43)
+	osp->f_type = mp->mnt_vfc->vfc_typenum;
+#else
+	osp->f_type = 0;
+#endif
+	osp->f_flags = mp->mnt_flag & 0xffff;
+	osp->f_bsize = sp->f_bsize;
+	osp->f_iosize = sp->f_iosize;
+	osp->f_blocks = sp->f_blocks;
+	osp->f_bfree = sp->f_bfree;
+	osp->f_bavail = sp->f_bavail;
+	osp->f_files = sp->f_files;
+	osp->f_ffree = sp->f_ffree;
+	/* Don't let non-root see filesystem id (for NFS security) */
+	if (suser(p->p_ucred, &p->p_acflag))
+		osp->f_fsid.val[0] = osp->f_fsid.val[1] = 0;
+	else
+		bcopy(&sp->f_fsid, &osp->f_fsid, sizeof(osp->f_fsid));
+	osp->f_owner = sp->f_owner;
+	osp->f_syncwrites = sp->f_syncwrites;
+	osp->f_asyncwrites = sp->f_asyncwrites;
+	bcopy(sp->f_fstypename, osp->f_fstypename, MFSNAMELEN);
+	bcopy(sp->f_mntonname, osp->f_mntonname, MNAMELEN);
+	bcopy(sp->f_mntfromname, osp->f_mntfromname, MNAMELEN);
+}
+
+/*
+ * Get filesystem statistics.
+ */
+/* ARGSUSED */
+int
+sys_ostatfs(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_ostatfs_args /* {
+		syscallarg(char *) path;
+		syscallarg(struct ostatfs *) buf;
+	} */ *uap = v;
+	register struct mount *mp;
+	register struct statfs *sp;
+	struct ostatfs osb;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	mp = nd.ni_vp->v_mount;
+	sp = &mp->mnt_stat;
+	vrele(nd.ni_vp);
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+		return (error);
+
+	statfs_to_ostatfs(p, mp, sp, &osb);
+	return (copyout((caddr_t)&osb, (caddr_t)SCARG(uap, buf), sizeof(osb)));
+}
+
+/*
+ * Get filesystem statistics.
+ */
+/* ARGSUSED */
+int
+sys_ofstatfs(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_ofstatfs_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct ostatfs *) buf;
+	} */ *uap = v;
+	struct file *fp;
+	struct mount *mp;
+	register struct statfs *sp;
+	struct ostatfs osb;
+	int error;
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	mp = ((struct vnode *)fp->f_data)->v_mount;
+	sp = &mp->mnt_stat;
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+		return (error);
+
+	statfs_to_ostatfs(p, mp, sp, &osb);
+	return (copyout((caddr_t)&osb, (caddr_t)SCARG(uap, buf), sizeof(osb)));
+}
+
+/*
+ * Get statistics on all filesystems.
+ */
+int
+sys_ogetfsstat(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_ogetfsstat_args /* {
+		syscallarg(struct ostatfs *) buf;
+		syscallarg(long) bufsize;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	register struct mount *mp, *nmp;
+	register struct statfs *sp;
+	struct ostatfs osb;
+	caddr_t sfsp;
+	long count, maxcount;
+	int error, flags = SCARG(uap, flags);
+
+	maxcount = SCARG(uap, bufsize) / sizeof(struct ostatfs);
+	sfsp = (caddr_t)SCARG(uap, buf);
+	count = 0;
+	simple_lock(&mountlist_slock);
+	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
+			nmp = mp->mnt_list.cqe_next;
+			continue;
+		}
+		if (sfsp && count < maxcount) {
+			sp = &mp->mnt_stat;
+
+			/* Refresh stats unless MNT_NOWAIT is specified */
+			if (flags != MNT_NOWAIT &&
+			    flags != MNT_LAZY &&
+			    (flags == MNT_WAIT ||
+			     flags == 0) &&
+			    (error = VFS_STATFS(mp, sp, p))) {
+				simple_lock(&mountlist_slock);
+				nmp = mp->mnt_list.cqe_next;
+				vfs_unbusy(mp, p);
+ 				continue;
+			}
+
+			statfs_to_ostatfs(p, mp, sp, &osb);
+			error = copyout((caddr_t)&osb, sfsp, sizeof(osb));
+			if (error) {
+				vfs_unbusy(mp, p);
+				return (error);
+			}
+			sfsp += sizeof(osb);
+		}
+		count++;
+		simple_lock(&mountlist_slock);
+		nmp = mp->mnt_list.cqe_next;
+		vfs_unbusy(mp, p);
+	}
+	simple_unlock(&mountlist_slock);
+	if (sfsp && count > maxcount)
+		*retval = maxcount;
+	else
+		*retval = count;
 	return (0);
 }

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.3 1997/11/13 18:35:21 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.4 1999/05/31 17:34:44 millert Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -63,8 +63,8 @@
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
 16	NOARGS		{ int sys_chown(char *path, int uid, int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
-18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
-			    int flags); }
+18	NOARGS		{ int sys_ogetfsstat(struct ostatfs *buf, \
+			    long bufsize, int flags); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
 20	NOARGS		{ pid_t sys_getpid(void); }
@@ -276,8 +276,8 @@
 #endif
 156	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
-157	NOARGS		{ int sys_statfs(char *path, struct statfs *buf); }
-158	NOARGS		{ int sys_fstatfs(int fd, struct statfs *buf); }
+157	NOARGS		{ int sys_ostatfs(char *path, struct ostatfs *buf); }
+158	NOARGS		{ int sys_ofstatfs(int fd, struct ostatfs *buf); }
 159	UNIMPL
 160	UNIMPL
 #ifdef NFSCLIENT

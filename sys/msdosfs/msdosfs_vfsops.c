@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.17 1999/05/01 23:47:21 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.18 1999/05/31 17:34:51 millert Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -242,6 +242,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	bcopy(&args, &mp->mnt_stat.mount_info.msdosfs_args, sizeof(args));
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp, pmp, pmp->pm_inusemap);
 #endif
@@ -678,11 +679,6 @@ msdosfs_statfs(mp, sbp, p)
 	struct msdosfsmount *pmp;
 
 	pmp = VFSTOMSDOSFS(mp);
-#ifdef COMPAT_09
-	sbp->f_type = 4;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = pmp->pm_bpcluster;
 	sbp->f_iosize = pmp->pm_bpcluster;
 	sbp->f_blocks = pmp->pm_nmbrofclusters;
@@ -693,6 +689,8 @@ msdosfs_statfs(mp, sbp, p)
 	if (sbp != &mp->mnt_stat) {
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		bcopy(&mp->mnt_stat.mount_info.msdosfs_args,
+		    &sbp->mount_info.msdosfs_args, sizeof(struct msdosfs_args));
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);

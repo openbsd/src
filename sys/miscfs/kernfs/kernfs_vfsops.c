@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.11 1999/02/26 03:44:16 art Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.12 1999/05/31 17:34:49 millert Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -250,9 +250,6 @@ kernfs_statfs(mp, sbp, p)
 	printf("kernfs_statfs(mp = %p)\n", mp);
 #endif
 
-#ifdef COMPAT_09
-	sbp->f_type = 7;
-#endif
 	sbp->f_flags = 0;
 #if defined(UVM)
 	sbp->f_bsize = uvmexp.pagesize;
@@ -268,7 +265,6 @@ kernfs_statfs(mp, sbp, p)
 	sbp->f_files = desiredvnodes;
 	sbp->f_ffree = desiredvnodes - numvnodes;
 	if (sbp != &mp->mnt_stat) {
-		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);

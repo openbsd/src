@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.37 1999/05/22 21:25:51 weingart Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.38 1999/05/31 17:34:47 millert Exp $	*/
 
 /*
  * System call names.
@@ -26,7 +26,7 @@ char *syscallnames[] = {
 	"chmod",			/* 15 = chmod */
 	"chown",			/* 16 = chown */
 	"break",			/* 17 = break */
-	"getfsstat",			/* 18 = getfsstat */
+	"ogetfsstat",			/* 18 = ogetfsstat */
 	"compat_43_olseek",	/* 19 = compat_43 olseek */
 	"getpid",			/* 20 = getpid */
 	"mount",			/* 21 = mount */
@@ -177,8 +177,8 @@ char *syscallnames[] = {
 	"#155 (unimplemented)",		/* 155 = unimplemented */
 #endif
 	"compat_43_ogetdirentries",	/* 156 = compat_43 ogetdirentries */
-	"statfs",			/* 157 = statfs */
-	"fstatfs",			/* 158 = fstatfs */
+	"ostatfs",			/* 157 = ostatfs */
+	"ofstatfs",			/* 158 = ofstatfs */
 	"#159 (unimplemented)",		/* 159 = unimplemented */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
 #if defined(NFSCLIENT) || defined(NFSSERVER)
@@ -354,4 +354,7 @@ char *syscallnames[] = {
 #else
 	"#259 (unimplemented)",		/* 259 = unimplemented */
 #endif
+	"getfsstat",			/* 260 = getfsstat */
+	"statfs",			/* 261 = statfs */
+	"fstatfs",			/* 262 = fstatfs */
 };

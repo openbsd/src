@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.22 1998/12/05 18:57:07 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.23 1999/05/31 17:34:54 millert Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -331,6 +331,7 @@ ffs_mount(mp, path, data, ndp, p)
          *
          * This code is common to root and non-root mounts
          */
+	bcopy(&args, &mp->mnt_stat.mount_info.ufs_args, sizeof(args));
         (void)VFS_STATFS(mp, &mp->mnt_stat, p);
 
 success:
@@ -822,11 +823,6 @@ ffs_statfs(mp, sbp, p)
 	fs = ump->um_fs;
 	if (fs->fs_magic != FS_MAGIC)
 		panic("ffs_statfs");
-#ifdef COMPAT_09
-	sbp->f_type = 1;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = fs->fs_fsize;
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
@@ -836,9 +832,10 @@ ffs_statfs(mp, sbp, p)
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree;
 	if (sbp != &mp->mnt_stat) {
-		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		bcopy(&mp->mnt_stat.mount_info.ufs_args,
+		    &sbp->mount_info.ufs_args, sizeof(struct ufs_args));
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);

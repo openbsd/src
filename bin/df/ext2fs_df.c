@@ -78,7 +78,6 @@ e2fs_df(rfd, file, sfsp)
 			(sblock.e2fs_rev != E2FS_REV)) {
 		return (-1);
 	}
-	sfsp->f_type = 0;	/* Unused field, set to 0 */
 	sfsp->f_flags = 0;	/* The fs is not mapped, so no flags */
 	sfsp->f_bsize = 1024 << sblock.e2fs_log_bsize;
 	sfsp->f_iosize = 1024 << sblock.e2fs_log_bsize;

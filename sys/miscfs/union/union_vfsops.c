@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.8 1998/02/08 22:41:42 tholo Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.9 1999/05/31 17:34:50 millert Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -431,7 +431,6 @@ union_statfs(mp, sbp, p)
 
 	/* now copy across the "interesting" information and fake the rest */
 #if 0
-	sbp->f_type = mstat.f_type;
 	sbp->f_flags = mstat.f_flags;
 	sbp->f_bsize = mstat.f_bsize;
 	sbp->f_iosize = mstat.f_iosize;
@@ -447,7 +446,6 @@ union_statfs(mp, sbp, p)
 	if (error)
 		return (error);
 
-	sbp->f_type = 0;
 	sbp->f_flags = mstat.f_flags;
 	sbp->f_bsize = mstat.f_bsize;
 	sbp->f_iosize = mstat.f_iosize;
@@ -470,7 +468,6 @@ union_statfs(mp, sbp, p)
 	sbp->f_ffree += mstat.f_ffree;
 
 	if (sbp != &mp->mnt_stat) {
-		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);

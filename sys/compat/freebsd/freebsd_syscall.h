@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_syscall.h,v 1.8 1999/02/10 08:07:30 deraadt Exp $	*/
+/*	$OpenBSD: freebsd_syscall.h,v 1.9 1999/05/31 17:34:45 millert Exp $	*/
 
 /*
  * System call numbers.
@@ -59,7 +59,7 @@
 /* syscall: "break" ret: "int" args: "char *" */
 #define	FREEBSD_SYS_break	17
 
-/* syscall: "getfsstat" ret: "int" args: "struct statfs *" "long" "int" */
+/* syscall: "getfsstat" ret: "int" args: "struct freebsd_statfs *" "long" "int" */
 #define	FREEBSD_SYS_getfsstat	18
 
 /* syscall: "olseek" ret: "long" args: "int" "long" "int" */
@@ -445,10 +445,10 @@
 /* syscall: "ogetdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	FREEBSD_SYS_ogetdirentries	156
 
-/* syscall: "statfs" ret: "int" args: "char *" "struct statfs *" */
+/* syscall: "statfs" ret: "int" args: "char *" "struct freebsd_statfs *" */
 #define	FREEBSD_SYS_statfs	157
 
-/* syscall: "fstatfs" ret: "int" args: "int" "struct statfs *" */
+/* syscall: "fstatfs" ret: "int" args: "int" "struct freebsd_statfs *" */
 #define	FREEBSD_SYS_fstatfs	158
 
 /* syscall: "getfh" ret: "int" args: "char *" "fhandle_t *" */

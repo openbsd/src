@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.9 1998/08/06 23:38:39 csapuntz Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.10 1999/05/31 17:34:49 millert Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.11 1996/05/10 22:50:56 jtk Exp $	*/
 
 /*
@@ -309,7 +309,6 @@ nullfs_statfs(mp, sbp, p)
 		return (error);
 
 	/* now copy across the "interesting" information and fake the rest */
-	sbp->f_type = mstat.f_type;
 	sbp->f_flags = mstat.f_flags;
 	sbp->f_bsize = mstat.f_bsize;
 	sbp->f_iosize = mstat.f_iosize;

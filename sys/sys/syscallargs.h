@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.37 1999/05/22 21:25:51 weingart Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.38 1999/05/31 17:34:53 millert Exp $	*/
 
 /*
  * System call argument lists.
@@ -85,7 +85,7 @@ struct sys_obreak_args {
 	syscallarg(char *) nsize;
 };
 
-struct sys_getfsstat_args {
+struct sys_ogetfsstat_args {
 	syscallarg(struct statfs *) buf;
 	syscallarg(long) bufsize;
 	syscallarg(int) flags;
@@ -685,14 +685,14 @@ struct compat_43_sys_getdirentries_args {
 	syscallarg(long *) basep;
 };
 
-struct sys_statfs_args {
+struct sys_ostatfs_args {
 	syscallarg(const char *) path;
-	syscallarg(struct statfs *) buf;
+	syscallarg(struct ostatfs *) buf;
 };
 
-struct sys_fstatfs_args {
+struct sys_ofstatfs_args {
 	syscallarg(int) fd;
-	syscallarg(struct statfs *) buf;
+	syscallarg(struct ostatfs *) buf;
 };
 
 struct sys_getfh_args {
@@ -1044,6 +1044,22 @@ struct sys_msgctl_args {
 	syscallarg(struct msqid_ds *) buf;
 };
 
+struct sys_getfsstat_args {
+	syscallarg(struct statfs *) buf;
+	syscallarg(size_t) bufsize;
+	syscallarg(int) flags;
+};
+
+struct sys_statfs_args {
+	syscallarg(const char *) path;
+	syscallarg(struct statfs *) buf;
+};
+
+struct sys_fstatfs_args {
+	syscallarg(int) fd;
+	syscallarg(struct statfs *) buf;
+};
+
 /*
  * System call prototypes.
  */
@@ -1064,7 +1080,7 @@ int	sys_mknod	__P((struct proc *, void *, register_t *));
 int	sys_chmod	__P((struct proc *, void *, register_t *));
 int	sys_chown	__P((struct proc *, void *, register_t *));
 int	sys_obreak	__P((struct proc *, void *, register_t *));
-int	sys_getfsstat	__P((struct proc *, void *, register_t *));
+int	sys_ogetfsstat	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_lseek	__P((struct proc *, void *, register_t *));
 int	sys_getpid	__P((struct proc *, void *, register_t *));
 int	sys_mount	__P((struct proc *, void *, register_t *));
@@ -1199,8 +1215,8 @@ int	sys_nfssvc	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	compat_43_sys_getdirentries	__P((struct proc *, void *, register_t *));
-int	sys_statfs	__P((struct proc *, void *, register_t *));
-int	sys_fstatfs	__P((struct proc *, void *, register_t *));
+int	sys_ostatfs	__P((struct proc *, void *, register_t *));
+int	sys_ofstatfs	__P((struct proc *, void *, register_t *));
 #if defined(NFSCLIENT) || defined(NFSSERVER)
 int	sys_getfh	__P((struct proc *, void *, register_t *));
 #else
@@ -1313,3 +1329,6 @@ int	sys_shmctl	__P((struct proc *, void *, register_t *));
 int	sys_msgctl	__P((struct proc *, void *, register_t *));
 #else
 #endif
+int	sys_getfsstat	__P((struct proc *, void *, register_t *));
+int	sys_statfs	__P((struct proc *, void *, register_t *));
+int	sys_fstatfs	__P((struct proc *, void *, register_t *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.7 1999/03/09 00:17:05 art Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.8 1999/05/31 17:34:55 millert Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -230,6 +230,7 @@ mfs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	bcopy(&args, &mp->mnt_stat.mount_info.mfs_args, sizeof(args));
 	return (0);
 }
 
@@ -298,11 +299,9 @@ mfs_statfs(mp, sbp, p)
 	int error;
 
 	error = ffs_statfs(mp, sbp, p);
-#ifdef COMPAT_09
-	sbp->f_type = mp->mnt_vfc->vfc_typenum;
-#else
-	sbp->f_type = 0;
-#endif
 	strncpy(&sbp->f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
+	if (sbp != &mp->mnt_stat)
+		bcopy(&mp->mnt_stat.mount_info.mfs_args,
+		    &sbp->mount_info.mfs_args, sizeof(struct mfs_args));
 	return (error);
 }

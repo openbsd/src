@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.36 1999/05/22 21:25:51 weingart Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.37 1999/05/31 17:34:52 millert Exp $	*/
 
 /*
  * System call numbers.
@@ -58,8 +58,8 @@
 /* syscall: "break" ret: "int" args: "char *" */
 #define	SYS_break	17
 
-/* syscall: "getfsstat" ret: "int" args: "struct statfs *" "long" "int" */
-#define	SYS_getfsstat	18
+/* syscall: "ogetfsstat" ret: "int" args: "struct statfs *" "long" "int" */
+#define	SYS_ogetfsstat	18
 
 				/* 19 is compat_43 olseek */
 
@@ -410,11 +410,11 @@
 
 				/* 156 is compat_43 ogetdirentries */
 
-/* syscall: "statfs" ret: "int" args: "const char *" "struct statfs *" */
-#define	SYS_statfs	157
+/* syscall: "ostatfs" ret: "int" args: "const char *" "struct ostatfs *" */
+#define	SYS_ostatfs	157
 
-/* syscall: "fstatfs" ret: "int" args: "int" "struct statfs *" */
-#define	SYS_fstatfs	158
+/* syscall: "ofstatfs" ret: "int" args: "int" "struct ostatfs *" */
+#define	SYS_ofstatfs	158
 
 /* syscall: "getfh" ret: "int" args: "const char *" "fhandle_t *" */
 #define	SYS_getfh	161
@@ -602,4 +602,13 @@
 /* syscall: "msgctl" ret: "int" args: "int" "int" "struct msqid_ds *" */
 #define	SYS_msgctl	259
 
-#define	SYS_MAXSYSCALL	260
+/* syscall: "getfsstat" ret: "int" args: "struct statfs *" "size_t" "int" */
+#define	SYS_getfsstat	260
+
+/* syscall: "statfs" ret: "int" args: "const char *" "struct statfs *" */
+#define	SYS_statfs	261
+
+/* syscall: "fstatfs" ret: "int" args: "int" "struct statfs *" */
+#define	SYS_fstatfs	262
+
+#define	SYS_MAXSYSCALL	263

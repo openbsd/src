@@ -77,7 +77,6 @@ ffs_df(rfd, file, sfsp)
 	if (sblock.fs_magic != FS_MAGIC) {
 		return (-1);
 	}
-	sfsp->f_type = 0;
 	sfsp->f_flags = 0;
 	sfsp->f_bsize = sblock.fs_fsize;
 	sfsp->f_iosize = sblock.fs_bsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.38 1999/05/06 15:59:40 mickey Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.39 1999/05/31 17:34:48 millert Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -222,7 +222,6 @@ vfs_rootmountalloc(fstypename, devname, mpp)
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_vnodecovered = NULLVP;
 	vfsp->vfc_refcount++;
-	mp->mnt_stat.f_type = vfsp->vfc_typenum;
 	mp->mnt_flag |= vfsp->vfc_flags & MNT_VISFLAGMASK;
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
 	mp->mnt_stat.f_mntonname[0] = '/';

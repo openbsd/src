@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.20 1999/02/10 08:01:52 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.21 1999/05/31 17:34:46 millert Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -287,7 +287,29 @@ bsd_to_linux_statfs(bsp, lsp)
 	struct linux_statfs *lsp;
 {
 
-	lsp->l_ftype = bsp->f_type;
+	/*
+	 * Convert BSD filesystem names to Linux filesystem type numbers
+	 * where possible.  Linux statfs uses a value of -1 to indicate
+	 * an unsupported field.
+	 */
+	if (!strcmp(bsp->f_fstypename, MOUNT_FFS) ||
+	    !strcmp(bsp->f_fstypename, MOUNT_MFS))
+		lsp->l_ftype = 0x11954;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_NFS))
+		lsp->l_ftype = 0x6969;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_MSDOS))
+		lsp->l_ftype = 0x4d44;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_PROCFS))
+		lsp->l_ftype = 0x9fa0;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_EXT2FS))
+		lsp->l_ftype = 0xef53;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_CD9660))
+		lsp->l_ftype = 0x9660;
+	else if (!strcmp(bsp->f_fstypename, MOUNT_NCPFS))
+		lsp->l_ftype = 0x6969;
+	else
+		lsp->l_ftype = -1;
+
 	lsp->l_fbsize = bsp->f_bsize;
 	lsp->l_fblocks = bsp->f_blocks;
 	lsp->l_fbfree = bsp->f_bfree;

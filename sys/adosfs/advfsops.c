@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.14 1998/08/21 23:03:15 csapuntz Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.15 1999/05/31 17:34:44 millert Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -149,6 +149,7 @@ adosfs_mount(mp, path, data, ndp, p)
 	(void)copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	bcopy(&args, &mp->mnt_stat.mount_info.adosfs_args, sizeof(args));
 	return (0);
 }
 
@@ -325,7 +326,6 @@ adosfs_statfs(mp, sbp, p)
 	struct adosfsmount *amp;
 
 	amp = VFSTOADOSFS(mp);
-	sbp->f_type = 0;
 	sbp->f_bsize = amp->bsize;
 	sbp->f_iosize = amp->dbsize;
 	sbp->f_blocks = amp->numblks;
@@ -334,9 +334,10 @@ adosfs_statfs(mp, sbp, p)
 	sbp->f_files = 0;		/* who knows */
 	sbp->f_ffree = 0;		/* " " */
 	if (sbp != &mp->mnt_stat) {
-		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		bcopy(&mp->mnt_stat.mount_info.adosfs_args,
+		    &sbp->mount_info.adosfs_args, sizeof(struct adosfs_args));
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);

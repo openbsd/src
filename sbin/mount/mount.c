@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.19 1998/02/01 18:49:08 mickey Exp $	*/
+/*	$OpenBSD: mount.c,v 1.20 1999/05/31 17:34:42 millert Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,17 +44,26 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.19 1998/02/01 18:49:08 mickey Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.20 1999/05/31 17:34:42 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/socket.h>
 #include <sys/wait.h>
+
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#define _KERNEL
+#include <nfs/nfs.h>
+#undef _KERNEL
+#include <nfs/nqnfs.h>
 
 #include <err.h>
 #include <errno.h>
 #include <fstab.h>
+#include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -434,13 +443,15 @@ prmount(sf)
 {
 	int flags;
 	struct opt *o;
-	int f;
+	int f = 0;
 
 	(void)printf("%s on %s type %.*s", sf->f_mntfromname, sf->f_mntonname,
 	    MFSNAMELEN, sf->f_fstypename);
 
 	flags = sf->f_flags & MNT_VISFLAGMASK;
-	for (f = 0, o = optnames; flags && o->o_opt; o++)
+	if (verbose && !(flags & MNT_RDONLY))
+		(void)printf("%s%s", !f++ ? " (" : ", ", "rw");
+	for (o = optnames; flags && o->o_opt; o++)
 		if (flags & o->o_opt) {
 			if (!o->o_silent)
 				(void)printf("%s%s", !f++ ? " (" : ", ",
@@ -450,6 +461,105 @@ prmount(sf)
 	if (flags)
 		(void)printf("%sunknown flag%s %#x", !f++ ? " (" : ", ", 
 		    flags & (flags - 1) ? "s" : "", flags);
+
+	/*
+	 * Filesystem-specific options
+	 * We only print the "interesting" values unless in verboser
+	 * mode in order to keep the signal/noise ratio high.
+	 */
+	if (strcmp(sf->f_fstypename, MOUNT_NFS) == 0) {
+		struct protoent *pr;
+		struct nfs_args *nfs_args = &sf->mount_info.nfs_args;
+
+		(void)printf("%s%s", !f++ ? " (" : ", ",
+		    (nfs_args->flags & NFSMNT_NQNFS) ? "nqnfs" :
+		    (nfs_args->flags & NFSMNT_NFSV3) ? "v3" : "v2");
+		if (nfs_args->proto && (pr = getprotobynumber(nfs_args->proto)))
+			(void)printf("%s%s", !f++ ? " (" : ", ", pr->p_name);
+		else
+			(void)printf("%s%s", !f++ ? " (" : ", ",
+			    (nfs_args->sotype == SOCK_DGRAM) ? "udp" : "tcp");
+		if (nfs_args->flags & NFSMNT_SOFT)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "soft");
+		else if (verbose)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "hard");
+		if (nfs_args->flags & NFSMNT_INT)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "intr");
+		if (nfs_args->flags & NFSMNT_NOCONN)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "noconn");
+		if (verbose || nfs_args->wsize != NFS_WSIZE)
+			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+			    "wsize", nfs_args->wsize);
+		if (verbose || nfs_args->rsize != NFS_RSIZE)
+			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+			    "rsize", nfs_args->rsize);
+		if (verbose || nfs_args->readdirsize != NFS_READDIRSIZE)
+			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+			    "rdirsize", nfs_args->readdirsize);
+		if (verbose || nfs_args->timeo != 10) /* XXX */
+			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+			    "timeo", nfs_args->timeo);
+		if (verbose || nfs_args->retrans != NFS_RETRANS)
+			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+			    "retrans", nfs_args->retrans);
+		if (verbose || nfs_args->maxgrouplist != NFS_MAXGRPS)
+			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+			    "maxgrouplist", nfs_args->maxgrouplist);
+		if (verbose || nfs_args->readahead != NFS_DEFRAHEAD)
+			(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+			    "readahead", nfs_args->readahead);
+		if (nfs_args->flags & NFSMNT_NQNFS) {
+			if (verbose || nfs_args->leaseterm != NQ_DEFLEASE)
+				(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+				    "leaseterm", nfs_args->leaseterm);
+			if (verbose || nfs_args->deadthresh != NQ_DEADTHRESH)
+				(void)printf("%s%s=%d", !f++ ? " (" : ", ",
+				    "deadthresh", nfs_args->deadthresh);
+		}
+	} else if (strcmp(sf->f_fstypename, MOUNT_MFS) == 0) {
+		int headerlen;
+		long blocksize;
+		char *header;
+
+		header = getbsize(&headerlen, &blocksize);
+		(void)printf("%s%s=%lu %s", !f++ ? " (" : ", ",
+		    "size", sf->mount_info.mfs_args.size / blocksize, header);
+	} else if (strcmp(sf->f_fstypename, MOUNT_ADOSFS) == 0) {
+		struct adosfs_args *adosfs_args = &sf->mount_info.adosfs_args;
+
+		if (verbose || adosfs_args->uid || adosfs_args->gid)
+			(void)printf("%s%s=%u, %s=%u", !f++ ? " (" : ", ",
+			    "uid", adosfs_args->uid, "gid", adosfs_args->gid);
+		if (verbose || adosfs_args->mask != 0755)
+			(void)printf("%s%s=0%o", !f++ ? " (" : ", ",
+			    "mask", adosfs_args->mask);
+	} else if (strcmp(sf->f_fstypename, MOUNT_MSDOS) == 0) {
+		struct msdosfs_args *msdosfs_args = &sf->mount_info.msdosfs_args;
+
+		if (verbose || msdosfs_args->uid || msdosfs_args->gid)
+			(void)printf("%s%s=%u, %s=%u", !f++ ? " (" : ", ",
+			    "uid", msdosfs_args->uid, "gid", msdosfs_args->gid);
+		if (verbose || msdosfs_args->mask != 0755)
+			(void)printf("%s%s=0%o", !f++ ? " (" : ", ",
+			    "mask", msdosfs_args->mask);
+		if (msdosfs_args->flags & MSDOSFSMNT_SHORTNAME)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "short");
+		if (msdosfs_args->flags & MSDOSFSMNT_LONGNAME)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "long");
+		if (msdosfs_args->flags & MSDOSFSMNT_NOWIN95)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "nowin95");
+		if (msdosfs_args->flags & MSDOSFSMNT_GEMDOSFS)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "gem");
+	} else if (strcmp(sf->f_fstypename, MOUNT_CD9660) == 0) {
+		struct iso_args *iso_args = &sf->mount_info.iso_args;
+
+		if (iso_args->flags & ISOFSMNT_NORRIP)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "norrip");
+		if (iso_args->flags & ISOFSMNT_GENS)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "gens");
+		if (iso_args->flags & ISOFSMNT_EXTATT)
+			(void)printf("%s%s", !f++ ? " (" : ", ", "extatt");
+	}
 	(void)printf(f ? ")\n" : "\n");
 }
 
@@ -554,7 +664,7 @@ mangle(options, argcp, argv)
 
 	argc = *argcp;
 	for (s = options; (p = strsep(&s, ",")) != NULL;)
-		if (*p != '\0')
+		if (*p != '\0') {
 			if (*p == '-') {
 				argv[argc++] = p;
 				p = strchr(p, '=');
@@ -566,6 +676,7 @@ mangle(options, argcp, argv)
 				argv[argc++] = "-o";
 				argv[argc++] = p;
 			}
+		}
 
 	*argcp = argc;
 }

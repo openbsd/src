@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.25 1998/08/19 22:26:56 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.26 1999/05/31 17:34:52 millert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -144,11 +144,6 @@ nfs_statfs(mp, sbp, p)
 		goto nfsmout;
 	}
 	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
-#ifdef COMPAT_09
-	sbp->f_type = 2;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_flags = nmp->nm_flag;
 	sbp->f_iosize = min(nmp->nm_rsize, nmp->nm_wsize);
 	if (v3) {
@@ -174,6 +169,8 @@ nfs_statfs(mp, sbp, p)
 	if (sbp != &mp->mnt_stat) {
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		bcopy(&mp->mnt_stat.mount_info.nfs_args,
+		    &sbp->mount_info.nfs_args, sizeof(struct nfs_args));
 	}
 	strncpy(&sbp->f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	nfsm_reqdone;
@@ -695,14 +692,10 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	nmp->nm_acdirmin = NFS_MINATTRTIMO;
 	nmp->nm_acdirmax = NFS_MAXATTRTIMO;
 	bcopy((caddr_t)argp->fh, (caddr_t)nmp->nm_fh, argp->fhsize);
-#ifdef COMPAT_09
-	mp->mnt_stat.f_type = 2;
-#else
-	mp->mnt_stat.f_type = 0;
-#endif
 	strncpy(&mp->mnt_stat.f_fstypename[0], mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	bcopy(hst, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
+	bcopy(argp, &mp->mnt_stat.mount_info.nfs_args, sizeof(*argp));
 	nmp->nm_nam = nam;
 	nfs_decode_args(nmp, argp);
 
@@ -715,7 +708,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	 * the first request, in case the server is not responding.
 	 */
 	if (nmp->nm_sotype == SOCK_DGRAM &&
-		(error = nfs_connect(nmp, (struct nfsreq *)0)))
+	    (error = nfs_connect(nmp, (struct nfsreq *)0)))
 		goto bad;
 
 	/*

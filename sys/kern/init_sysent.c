@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.37 1999/05/22 21:25:51 weingart Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.38 1999/05/31 17:34:47 millert Exp $	*/
 
 /*
  * System call switch table.
@@ -77,8 +77,8 @@ struct sysent sysent[] = {
 	    sys_chown },			/* 16 = chown */
 	{ 1, s(struct sys_obreak_args),
 	    sys_obreak },			/* 17 = break */
-	{ 3, s(struct sys_getfsstat_args),
-	    sys_getfsstat },			/* 18 = getfsstat */
+	{ 3, s(struct sys_ogetfsstat_args),
+	    sys_ogetfsstat },			/* 18 = ogetfsstat */
 	{ 3, s(struct compat_43_sys_lseek_args),
 	    compat_43(sys_lseek) },		/* 19 = compat_43 olseek */
 	{ 0, 0,
@@ -370,10 +370,10 @@ struct sysent sysent[] = {
 #endif
 	{ 4, s(struct compat_43_sys_getdirentries_args),
 	    compat_43(sys_getdirentries) },	/* 156 = compat_43 ogetdirentries */
-	{ 2, s(struct sys_statfs_args),
-	    sys_statfs },			/* 157 = statfs */
-	{ 2, s(struct sys_fstatfs_args),
-	    sys_fstatfs },			/* 158 = fstatfs */
+	{ 2, s(struct sys_ostatfs_args),
+	    sys_ostatfs },			/* 157 = ostatfs */
+	{ 2, s(struct sys_ofstatfs_args),
+	    sys_ofstatfs },			/* 158 = ofstatfs */
 	{ 0, 0,
 	    sys_nosys },			/* 159 = unimplemented */
 	{ 0, 0,
@@ -685,5 +685,11 @@ struct sysent sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 259 = unimplemented */
 #endif
+	{ 3, s(struct sys_getfsstat_args),
+	    sys_getfsstat },			/* 260 = getfsstat */
+	{ 2, s(struct sys_statfs_args),
+	    sys_statfs },			/* 261 = statfs */
+	{ 2, s(struct sys_fstatfs_args),
+	    sys_fstatfs },			/* 262 = fstatfs */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.9 1998/02/08 22:41:48 tholo Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.10 1999/05/31 17:34:53 millert Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -307,6 +307,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	(void) copyinstr(path, fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt) - 1, &size);
+	bcopy(&args, &mp->mnt_stat.mount_info.ufs_args, sizeof(args));
 	bzero(fs->e2fs_fsmnt + size, sizeof(fs->e2fs_fsmnt) - size);
 	bcopy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 
@@ -704,11 +705,6 @@ ext2fs_statfs(mp, sbp, p)
 	fs = ump->um_e2fs;
 	if (fs->e2fs.e2fs_magic != E2FS_MAGIC)
 		panic("ext2fs_statfs");
-#ifdef COMPAT_09
-	sbp->f_type = 1;
-#else
-	sbp->f_type = 0;
-#endif
 
 	/*
 	 * Compute the overhead (FS structures)
@@ -730,9 +726,10 @@ ext2fs_statfs(mp, sbp, p)
 	sbp->f_files =  fs->e2fs.e2fs_icount;
 	sbp->f_ffree = fs->e2fs.e2fs_ficount;
 	if (sbp != &mp->mnt_stat) {
-		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		bcopy(&mp->mnt_stat.mount_info.ufs_args,
+		    &sbp->mount_info.ufs_args, sizeof(struct ufs_args));
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);

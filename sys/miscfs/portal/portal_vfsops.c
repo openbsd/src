@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.6 1998/02/08 22:41:39 tholo Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.7 1999/05/31 17:34:50 millert Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -226,11 +226,6 @@ portal_statfs(mp, sbp, p)
 	struct proc *p;
 {
 
-#ifdef COMPAT_09
-	sbp->f_type = 12;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
@@ -239,7 +234,6 @@ portal_statfs(mp, sbp, p)
 	sbp->f_files = 1;		/* Allow for "." */
 	sbp->f_ffree = 0;		/* See comments above */
 	if (sbp != &mp->mnt_stat) {
-		sbp->f_type = mp->mnt_vfc->vfc_typenum;
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);

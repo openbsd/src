@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.28 1999/05/06 15:59:48 mickey Exp $	*/
+/*	$OpenBSD: mount.h,v 1.29 1999/05/31 17:34:52 millert Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -60,13 +60,220 @@ struct fid {
 };
 
 /*
+ * Export arguments for local filesystem mount calls.
+ */
+struct export_args {
+	int	ex_flags;		/* export related flags */
+	uid_t	ex_root;		/* mapping for root uid */
+	struct	ucred ex_anon;		/* mapping for anonymous user */
+	struct	sockaddr *ex_addr;	/* net address to which exported */
+	int	ex_addrlen;		/* and the net address length */
+	struct	sockaddr *ex_mask;	/* mask of valid bits in saddr */
+	int	ex_masklen;		/* and the smask length */
+};
+
+/*
+ * Arguments to mount UFS-based filesystems
+ */
+struct ufs_args {
+	char	*fspec;			/* block special device to mount */
+	struct	export_args export;	/* network export information */
+};
+
+/*
+ * Arguments to mount MFS
+ */
+struct mfs_args {
+	char	*fspec;			/* name to export for statfs */
+	struct	export_args export;	/* if exported MFSes are supported */
+	caddr_t	base;			/* base of file system in memory */
+	u_long	size;			/* size of file system */
+};
+
+/*
+ * Arguments to mount ISO 9660 filesystems.
+ */
+struct iso_args {
+	char	*fspec;			/* block special device to mount */
+	struct	export_args export;	/* network export info */
+	int	flags;			/* mounting flags, see below */
+};
+#define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
+#define	ISOFSMNT_GENS	0x00000002	/* enable generation numbers */
+#define	ISOFSMNT_EXTATT	0x00000004	/* enable extended attributes */
+
+/*
+ * Arguments to mount NFS
+ */
+#define NFS_ARGSVERSION	4		/* change when nfs_args changes */
+struct nfs_args {
+	int		version;	/* args structure version number */
+	struct sockaddr	*addr;		/* file server address */
+	int		addrlen;	/* length of address */
+	int		sotype;		/* Socket type */
+	int		proto;		/* and Protocol */
+	u_char		*fh;		/* File handle to be mounted */
+	int		fhsize;		/* Size, in bytes, of fh */
+	int		flags;		/* flags */
+	int		wsize;		/* write size in bytes */
+	int		rsize;		/* read size in bytes */
+	int		readdirsize;	/* readdir size in bytes */
+	int		timeo;		/* initial timeout in .1 secs */
+	int		retrans;	/* times to retry send */
+	int		maxgrouplist;	/* Max. size of group list */
+	int		readahead;	/* # of blocks to readahead */
+	int		leaseterm;	/* Term (sec) of lease */
+	int		deadthresh;	/* Retrans threshold */
+	char		*hostname;	/* server's name */
+	int		acregmin;	/* Attr cache file recently modified */
+	int		acregmax;	/* ac file not recently modified */
+	int		acdirmin;	/* ac for dir recently modified */
+	int		acdirmax;	/* ac for dir not recently modified */
+};
+/* NFS args version 3 (for backwards compatibility) */
+struct nfs_args3 {
+	int		version;	/* args structure version number */
+	struct sockaddr	*addr;		/* file server address */
+	int		addrlen;	/* length of address */
+	int		sotype;		/* Socket type */
+	int		proto;		/* and Protocol */
+	u_char		*fh;		/* File handle to be mounted */
+	int		fhsize;		/* Size, in bytes, of fh */
+	int		flags;		/* flags */
+	int		wsize;		/* write size in bytes */
+	int		rsize;		/* read size in bytes */
+	int		readdirsize;	/* readdir size in bytes */
+	int		timeo;		/* initial timeout in .1 secs */
+	int		retrans;	/* times to retry send */
+	int		maxgrouplist;	/* Max. size of group list */
+	int		readahead;	/* # of blocks to readahead */
+	int		leaseterm;	/* Term (sec) of lease */
+	int		deadthresh;	/* Retrans threshold */
+	char		*hostname;	/* server's name */
+};
+
+/*
+ * NFS mount option flags
+ */
+#ifndef _KERNEL
+#define	NFSMNT_RESVPORT		0x00000000  /* always use reserved ports */
+#endif /* ! _KERNEL */
+#define	NFSMNT_SOFT		0x00000001  /* soft mount (hard is default) */
+#define	NFSMNT_WSIZE		0x00000002  /* set write size */
+#define	NFSMNT_RSIZE		0x00000004  /* set read size */
+#define	NFSMNT_TIMEO		0x00000008  /* set initial timeout */
+#define	NFSMNT_RETRANS		0x00000010  /* set number of request retries */
+#define	NFSMNT_MAXGRPS		0x00000020  /* set maximum grouplist size */
+#define	NFSMNT_INT		0x00000040  /* allow interrupts on hard mount */
+#define	NFSMNT_NOCONN		0x00000080  /* Don't Connect the socket */
+#define	NFSMNT_NQNFS		0x00000100  /* Use Nqnfs protocol */
+#define	NFSMNT_NFSV3		0x00000200  /* Use NFS Version 3 protocol */
+#define	NFSMNT_KERB		0x00000400  /* Use Kerberos authentication */
+#define	NFSMNT_DUMBTIMR		0x00000800  /* Don't estimate rtt dynamically */
+#define	NFSMNT_LEASETERM	0x00001000  /* set lease term (nqnfs) */
+#define	NFSMNT_READAHEAD	0x00002000  /* set read ahead */
+#define	NFSMNT_DEADTHRESH	0x00004000  /* set dead server retry thresh */
+#ifdef _KERNEL /* Coming soon to a system call near you! */
+#define	NFSMNT_NOAC		0x00008000  /* disable attribute cache */
+#endif /* _KERNEL */
+#define	NFSMNT_RDIRPLUS		0x00010000  /* Use Readdirplus for V3 */
+#define	NFSMNT_READDIRSIZE	0x00020000  /* Set readdir size */
+
+/* Flags valid only in mount syscall arguments */
+#define NFSMNT_ACREGMIN		0x00040000  /* acregmin field valid */
+#define NFSMNT_ACREGMAX 	0x00080000  /* acregmax field valid */
+#define NFSMNT_ACDIRMIN		0x00100000  /* acdirmin field valid */
+#define NFSMNT_ACDIRMAX		0x00200000  /* acdirmax field valid */
+
+/* Flags valid only in kernel */
+#define	NFSMNT_INTERNAL		0xfffc0000  /* Bits set internally */
+#define NFSMNT_HASWRITEVERF	0x00040000  /* Has write verifier for V3 */
+#define NFSMNT_GOTPATHCONF	0x00080000  /* Got the V3 pathconf info */
+#define NFSMNT_GOTFSINFO	0x00100000  /* Got the V3 fsinfo */
+#define	NFSMNT_MNTD		0x00200000  /* Mnt server for mnt point */
+#define	NFSMNT_DISMINPROG	0x00400000  /* Dismount in progress */
+#define	NFSMNT_DISMNT		0x00800000  /* Dismounted */
+#define	NFSMNT_SNDLOCK		0x01000000  /* Send socket lock */
+#define	NFSMNT_WANTSND		0x02000000  /* Want above */
+#define	NFSMNT_RCVLOCK		0x04000000  /* Rcv socket lock */
+#define	NFSMNT_WANTRCV		0x08000000  /* Want above */
+#define	NFSMNT_WAITAUTH		0x10000000  /* Wait for authentication */
+#define	NFSMNT_HASAUTH		0x20000000  /* Has authenticator */
+#define	NFSMNT_WANTAUTH		0x40000000  /* Wants an authenticator */
+#define	NFSMNT_AUTHERR		0x80000000  /* Authentication error */
+
+/*
+ *  Arguments to mount MSDOS filesystems.
+ */
+struct msdosfs_args {
+	char	*fspec;		/* blocks special holding the fs to mount */
+	struct	export_args export;	/* network export information */
+	uid_t	uid;		/* uid that owns msdosfs files */
+	gid_t	gid;		/* gid that owns msdosfs files */
+	mode_t  mask;		/* mask to be applied for msdosfs perms */
+	int	flags;		/* see below */
+};
+
+/*
+ * Msdosfs mount options:
+ */
+#define	MSDOSFSMNT_SHORTNAME	1	/* Force old DOS short names only */
+#define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
+#define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
+#define	MSDOSFSMNT_GEMDOSFS	8	/* This is a gemdos-flavour */
+
+/*
+ * Arguments to mount amigados filesystems.
+ */
+struct adosfs_args {
+	char	*fspec;		/* blocks special holding the fs to mount */
+	struct	export_args export;	/* network export information */
+	uid_t	uid;		/* uid that owns adosfs files */
+	gid_t	gid;		/* gid that owns adosfs files */
+	mode_t	mask;		/* mask to be applied for adosfs perms */
+};
+
+/*
  * file system statistics
  */
 
 #define	MFSNAMELEN	16	/* length of fs type name, including nul */
 #define	MNAMELEN	90	/* length of buffer for returned name */
 
+/* per-filesystem mount options */
+union mount_info {
+	struct ufs_args ufs_args;
+	struct mfs_args mfs_args;
+	struct nfs_args nfs_args;
+	struct iso_args iso_args;
+	struct msdosfs_args msdosfs_args;
+	struct adosfs_args adosfs_args;
+	char __align[160];	/* 64-bit alignment and room to grow */
+};
+
+/* new statfs structure with mount options */
 struct statfs {
+	u_int32_t  f_flags;		/* copy of mount flags */
+	u_int32_t  f_bsize;		/* fundamental file system block size */
+	u_int32_t  f_iosize;		/* optimal transfer block size */
+	u_int32_t  f_blocks;		/* total data blocks in file system */
+	u_int32_t  f_bfree;		/* free blocks in fs */
+	u_int32_t  f_bavail;		/* free blocks avail to non-superuser */
+	u_int32_t  f_files;		/* total file nodes in file system */
+	u_int32_t  f_ffree;		/* free file nodes in fs */
+	fsid_t	   f_fsid;		/* file system id */
+	uid_t	   f_owner;		/* user that mounted the file system */
+	u_int32_t  f_syncwrites;	/* count of sync writes since mount */
+	u_int32_t  f_asyncwrites;	/* count of async writes since mount */
+	u_int32_t  f_spare[4];		/* spare for later */
+	char	   f_fstypename[MFSNAMELEN]; /* fs type name */
+	char	   f_mntonname[MNAMELEN];    /* directory on which mounted */
+	char	   f_mntfromname[MNAMELEN];  /* mounted file system */
+	union mount_info mount_info;	    /* per-filesystem mount options */
+};
+
+/* old (pre-2.6) statfs structure */
+struct ostatfs {
 	short	f_type;			/* type of file system (unused; zero) */
 	short	f_flags;		/* copy of mount flags */
 	long	f_bsize;		/* fundamental file system block size */
@@ -78,8 +285,8 @@ struct statfs {
 	long	f_ffree;		/* free file nodes in fs */
 	fsid_t	f_fsid;			/* file system id */
 	uid_t	f_owner;		/* user that mounted the file system */
-	long    f_syncwrites;           /* count of sync writes since mount */
-	long    f_asyncwrites;          /* count of async writes since mount */
+	long	f_syncwrites;		/* count of sync writes since mount */
+	long	f_asyncwrites;		/* count of async writes since mount */
 	long	f_spare[2];		/* spare for later */
 	char	f_fstypename[MFSNAMELEN]; /* fs type name */
 	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
@@ -310,180 +517,6 @@ struct netexport {
 };
 #endif /* _KERNEL */
 
-/*
- * Export arguments for local filesystem mount calls.
- */
-struct export_args {
-	int	ex_flags;		/* export related flags */
-	uid_t	ex_root;		/* mapping for root uid */
-	struct	ucred ex_anon;		/* mapping for anonymous user */
-	struct	sockaddr *ex_addr;	/* net address to which exported */
-	int	ex_addrlen;		/* and the net address length */
-	struct	sockaddr *ex_mask;	/* mask of valid bits in saddr */
-	int	ex_masklen;		/* and the smask length */
-};
-
-/*
- * Arguments to mount UFS-based filesystems
- */
-struct ufs_args {
-	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export information */
-};
-
-/*
- * Arguments to mount MFS
- */
-struct mfs_args {
-	char	*fspec;			/* name to export for statfs */
-	struct	export_args export;	/* if exported MFSes are supported */
-	caddr_t	base;			/* base of file system in memory */
-	u_long	size;			/* size of file system */
-};
-
-/*
- * Arguments to mount ISO 9660 filesystems.
- */
-struct iso_args {
-	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export info */
-	int	flags;			/* mounting flags, see below */
-};
-#define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
-#define	ISOFSMNT_GENS	0x00000002	/* enable generation numbers */
-#define	ISOFSMNT_EXTATT	0x00000004	/* enable extended attributes */
-
-/*
- * Arguments to mount NFS
- */
-#define NFS_ARGSVERSION	4		/* change when nfs_args changes */
-struct nfs_args {
-	int		version;	/* args structure version number */
-	struct sockaddr	*addr;		/* file server address */
-	int		addrlen;	/* length of address */
-	int		sotype;		/* Socket type */
-	int		proto;		/* and Protocol */
-	u_char		*fh;		/* File handle to be mounted */
-	int		fhsize;		/* Size, in bytes, of fh */
-	int		flags;		/* flags */
-	int		wsize;		/* write size in bytes */
-	int		rsize;		/* read size in bytes */
-	int		readdirsize;	/* readdir size in bytes */
-	int		timeo;		/* initial timeout in .1 secs */
-	int		retrans;	/* times to retry send */
-	int		maxgrouplist;	/* Max. size of group list */
-	int		readahead;	/* # of blocks to readahead */
-	int		leaseterm;	/* Term (sec) of lease */
-	int		deadthresh;	/* Retrans threshold */
-	char		*hostname;	/* server's name */
-	int		acregmin;	/* Attr cache file recently modified */
-	int		acregmax;	/* ac file not recently modified */
-	int		acdirmin;	/* ac for dir recently modified */
-	int		acdirmax;	/* ac for dir not recently modified */
-};
-/* NFS args version 3 (for backwards compatibility) */
-struct nfs_args3 {
-	int		version;	/* args structure version number */
-	struct sockaddr	*addr;		/* file server address */
-	int		addrlen;	/* length of address */
-	int		sotype;		/* Socket type */
-	int		proto;		/* and Protocol */
-	u_char		*fh;		/* File handle to be mounted */
-	int		fhsize;		/* Size, in bytes, of fh */
-	int		flags;		/* flags */
-	int		wsize;		/* write size in bytes */
-	int		rsize;		/* read size in bytes */
-	int		readdirsize;	/* readdir size in bytes */
-	int		timeo;		/* initial timeout in .1 secs */
-	int		retrans;	/* times to retry send */
-	int		maxgrouplist;	/* Max. size of group list */
-	int		readahead;	/* # of blocks to readahead */
-	int		leaseterm;	/* Term (sec) of lease */
-	int		deadthresh;	/* Retrans threshold */
-	char		*hostname;	/* server's name */
-};
-
-/*
- * NFS mount option flags
- */
-#ifndef _KERNEL
-#define	NFSMNT_RESVPORT		0x00000000  /* always use reserved ports */
-#endif /* ! _KERNEL */
-#define	NFSMNT_SOFT		0x00000001  /* soft mount (hard is default) */
-#define	NFSMNT_WSIZE		0x00000002  /* set write size */
-#define	NFSMNT_RSIZE		0x00000004  /* set read size */
-#define	NFSMNT_TIMEO		0x00000008  /* set initial timeout */
-#define	NFSMNT_RETRANS		0x00000010  /* set number of request retries */
-#define	NFSMNT_MAXGRPS		0x00000020  /* set maximum grouplist size */
-#define	NFSMNT_INT		0x00000040  /* allow interrupts on hard mount */
-#define	NFSMNT_NOCONN		0x00000080  /* Don't Connect the socket */
-#define	NFSMNT_NQNFS		0x00000100  /* Use Nqnfs protocol */
-#define	NFSMNT_NFSV3		0x00000200  /* Use NFS Version 3 protocol */
-#define	NFSMNT_KERB		0x00000400  /* Use Kerberos authentication */
-#define	NFSMNT_DUMBTIMR		0x00000800  /* Don't estimate rtt dynamically */
-#define	NFSMNT_LEASETERM	0x00001000  /* set lease term (nqnfs) */
-#define	NFSMNT_READAHEAD	0x00002000  /* set read ahead */
-#define	NFSMNT_DEADTHRESH	0x00004000  /* set dead server retry thresh */
-#ifdef _KERNEL /* Coming soon to a system call near you! */
-#define	NFSMNT_NOAC		0x00008000  /* disable attribute cache */
-#endif /* _KERNEL */
-#define	NFSMNT_RDIRPLUS		0x00010000  /* Use Readdirplus for V3 */
-#define	NFSMNT_READDIRSIZE	0x00020000  /* Set readdir size */
-
-/* Flags valid only in mount syscall arguments */
-#define NFSMNT_ACREGMIN		0x00040000  /* acregmin field valid */
-#define NFSMNT_ACREGMAX 	0x00080000  /* acregmax field valid */
-#define NFSMNT_ACDIRMIN		0x00100000  /* acdirmin field valid */
-#define NFSMNT_ACDIRMAX		0x00200000  /* acdirmax field valid */
-
-/* Flags valid only in kernel */
-#define	NFSMNT_INTERNAL		0xfffc0000  /* Bits set internally */
-#define NFSMNT_HASWRITEVERF	0x00040000  /* Has write verifier for V3 */
-#define NFSMNT_GOTPATHCONF	0x00080000  /* Got the V3 pathconf info */
-#define NFSMNT_GOTFSINFO	0x00100000  /* Got the V3 fsinfo */
-#define	NFSMNT_MNTD		0x00200000  /* Mnt server for mnt point */
-#define	NFSMNT_DISMINPROG	0x00400000  /* Dismount in progress */
-#define	NFSMNT_DISMNT		0x00800000  /* Dismounted */
-#define	NFSMNT_SNDLOCK		0x01000000  /* Send socket lock */
-#define	NFSMNT_WANTSND		0x02000000  /* Want above */
-#define	NFSMNT_RCVLOCK		0x04000000  /* Rcv socket lock */
-#define	NFSMNT_WANTRCV		0x08000000  /* Want above */
-#define	NFSMNT_WAITAUTH		0x10000000  /* Wait for authentication */
-#define	NFSMNT_HASAUTH		0x20000000  /* Has authenticator */
-#define	NFSMNT_WANTAUTH		0x40000000  /* Wants an authenticator */
-#define	NFSMNT_AUTHERR		0x80000000  /* Authentication error */
-
-/*
- *  Arguments to mount MSDOS filesystems.
- */
-struct msdosfs_args {
-	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export;	/* network export information */
-	uid_t	uid;		/* uid that owns msdosfs files */
-	gid_t	gid;		/* gid that owns msdosfs files */
-	mode_t  mask;		/* mask to be applied for msdosfs perms */
-	int	flags;		/* see below */
-};
-
-/*
- * Msdosfs mount options:
- */
-#define	MSDOSFSMNT_SHORTNAME	1	/* Force old DOS short names only */
-#define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
-#define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
-#define	MSDOSFSMNT_GEMDOSFS	8	/* This is a gemdos-flavour */
-
-/*
- * Arguments to mount amigados filesystems.
- */
-struct adosfs_args {
-	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export;	/* network export information */
-	uid_t	uid;		/* uid that owns msdosfs files */
-	gid_t	gid;		/* gid that owns msdosfs files */
-	mode_t	mask;		/* mask to be applied for msdosfs perms */
-};
-
 #ifdef _KERNEL
 /*
  * exported vnode operations
@@ -523,7 +556,7 @@ int	vfs_unregister __P((struct vfsconf *));
 __BEGIN_DECLS
 int	fstatfs __P((int, struct statfs *));
 int	getfh __P((const char *, fhandle_t *));
-int	getfsstat __P((struct statfs *, long, int));
+int	getfsstat __P((struct statfs *, size_t, int));
 int	getmntinfo __P((struct statfs **, int));
 int	mount __P((const char *, const char *, int, void *));
 int	statfs __P((const char *, struct statfs *));

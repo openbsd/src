@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_sysent.c,v 1.9 1999/02/10 08:07:30 deraadt Exp $	*/
+/*	$OpenBSD: freebsd_sysent.c,v 1.10 1999/05/31 17:34:45 millert Exp $	*/
 
 /*
  * System call switch table.
@@ -54,8 +54,8 @@ struct sysent freebsd_sysent[] = {
 	    freebsd_sys_chown },		/* 16 = chown */
 	{ 1, s(struct sys_obreak_args),
 	    sys_obreak },			/* 17 = break */
-	{ 3, s(struct sys_getfsstat_args),
-	    sys_getfsstat },			/* 18 = getfsstat */
+	{ 3, s(struct freebsd_sys_getfsstat_args),
+	    freebsd_sys_getfsstat },		/* 18 = getfsstat */
 	{ 3, s(struct compat_43_sys_lseek_args),
 	    compat_43_sys_lseek },		/* 19 = olseek */
 	{ 0, 0,
@@ -349,8 +349,8 @@ struct sysent freebsd_sysent[] = {
 	    compat_43_sys_getdirentries },	/* 156 = ogetdirentries */
 	{ 2, s(struct freebsd_sys_statfs_args),
 	    freebsd_sys_statfs },		/* 157 = statfs */
-	{ 2, s(struct sys_fstatfs_args),
-	    sys_fstatfs },			/* 158 = fstatfs */
+	{ 2, s(struct freebsd_sys_fstatfs_args),
+	    freebsd_sys_fstatfs },		/* 158 = fstatfs */
 	{ 0, 0,
 	    sys_nosys },			/* 159 = unimplemented */
 	{ 0, 0,
