@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.16 1999/02/26 03:44:16 art Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.17 1999/11/10 23:17:39 csapuntz Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ int	kernfs_getattr	__P((void *));
 int	kernfs_setattr	__P((void *));
 int	kernfs_read	__P((void *));
 int	kernfs_write	__P((void *));
-#define	kernfs_ioctl	eopnotsupp
+#define	kernfs_ioctl	(int (*) __P((void *)))enoioctl
 #define	kernfs_select	eopnotsupp
 #define	kernfs_mmap	eopnotsupp
 #define	kernfs_fsync	nullop

@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.7 1998/08/06 19:34:44 csapuntz Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.8 1999/11/10 23:17:39 csapuntz Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ int	portal_getattr	__P((void *));
 int	portal_setattr	__P((void *));
 #define	portal_read	eopnotsupp
 #define	portal_write	eopnotsupp
-#define	portal_ioctl	eopnotsupp
+#define	portal_ioctl    (int (*) __P((void *)))enoioctl
 #define	portal_select	eopnotsupp
 #define	portal_mmap	eopnotsupp
 #define	portal_fsync	nullop
