@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.4 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.5 2002/12/07 20:41:21 millert Exp $	*/
 /*	$NetBSD: terminal.c,v 1.5 1996/02/28 21:04:17 thorpej Exp $	*/
 
 /*
@@ -138,8 +138,11 @@ ttyflush(drop)
 	}
 	ring_consumed(&ttyoring, n);
     }
-    if (n < 0)
+    if (n < 0) {
+	if (errno == EPIPE)
+		kill(0, SIGQUIT);
 	return -1;
+    }
     if (n == n0) {
 	if (n0)
 	    return -1;
