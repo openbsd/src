@@ -1,0 +1,61 @@
+'\" t
+.TH menu_post 3X ""
+.SH NAME
+\fBmenu_post\fR - write or erase menus from associated subwindows
+.SH SYNOPSIS
+\fB#include <menu.h>\fR
+.br
+int post_menu(MENU *menu);
+.br
+int unpost_menu(MENU *menu);
+.br
+.SH DESCRIPTION
+The function \fBpost_menu\fR displays a menu to its associated subwindow.  To
+trigger physical display of the subwindow, use \fBrefresh\fR or some equivalent
+\fBcurses\fR routine (the implicit \fBdoupdate\fR triggered by an \fBcurses\fR
+input request will do).
+
+The function \fBunpost_menu\fR erases menu from its associated subwindow.
+.SH RETURN VALUE
+These routines return one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+\fBE_POSTED\fR
+The menu has already been posted.
+.TP 5
+\fBE_BAD_STATE\fR
+Routine was called from an initialization or termination function.
+.TP 5
+\fBE_NO_ROOM\fR
+Menu is too large for its window.
+.TP 5
+\fBE_NOT_POSTED\fR
+The menu has not been posted.
+.TP 5
+\fBE_NOT_CONNECTED\fR
+No items are connected to the menu.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBmenu\fR(3X).
+.SH NOTES
+The header file \fB<menu.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V menu library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

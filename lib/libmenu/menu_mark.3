@@ -1,0 +1,55 @@
+'\" t
+.TH menu_mark 3X ""
+.SH NAME
+\fBmenu_mark\fR - get and set the menu mark string
+.SH SYNOPSIS
+\fB#include <menu.h>\fR
+.br
+int set_menu_mark(MENU *menu, char *mark);
+.br
+char *menu_mark(MENU *menu);
+.br
+.SH DESCRIPTION
+In order to make menu selections visible on older terminals without
+highlighting or color capability, the menu library marks selected items
+in a menu with a prefix string. 
+
+The function \fBset_menu_mark\fR sets the mark string for the given menu.
+Calling \fBset_menu_mark\fR with a null menu item will abolish the mark string.
+Note that changing the length of the mark string for a menu while the
+menu is posted is likely to produce unhelpful behavior.
+
+The default string is "-" (a dash). Calling \fBset_menu_mark\fR wiith
+a \fBNULL\fR menu argument will change this default.
+
+The function \fBmenu_mark\fR returns the menu's mark string (or \fBNULL\fR if
+there is none).
+.SH RETURN VALUE
+The function \fBmenu_mark\fR returns \fBNULL\fR on error.  The function
+\fBset_menu_mark\fR maty return the following error codes:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBmenu\fR(3X).
+.SH NOTES
+The header file \fB<menu.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V menu library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

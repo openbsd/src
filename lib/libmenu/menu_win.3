@@ -1,0 +1,66 @@
+'\" t
+.TH menu_win 3X ""
+.SH NAME
+\fBmenu_win\fR - make and break menu window and subwindow associations
+.SH SYNOPSIS
+\fB#include <menu.h>\fR
+.br
+int set_menu_window(MENU *menu, WINDOW *win);
+.br
+WINDOW *menu_window(MENU *menu);
+.br
+int set_menu_sub(MENU *menu, WINDOW *sub);
+.br
+WINDOW *menu_sub(MENU *menu);
+.br
+int scale_window(MENU *menu, int *rows, int *columns);
+.br
+.SH DESCRIPTION
+Every menu has an associated pair of \fBcurses\fR windows.  The menu window
+displays any title and border associated with the window; the menu subwindow
+displays the items of the menu that are currently available for selection.
+
+The first four functions get and set those windows.  It is not necessary to set
+either window; by default, the driver code uses \fBstdscr\fR for both.
+
+In the \fBset_\fR functions, window argument of \fBNULL\fR is treated as tbough
+it were \fBstsdcr\fR.  A menu argument of \fBNULL\fR is treated as a request
+to change the system default menu window or subwindow.
+
+The function \fBscale_window\fR returns the minimum size required for the
+subwindow of \fImenu\fR. 
+.SH RETURN VALUE
+Routines that return pointers return \fBNULL\fR on error.  Routines that return
+an integer return one of the following error codes:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+\fBE_POSTED\fR
+The menu has already been posted.
+.TP 5
+\fBE_NOT_CONNECTED\fR
+No items are connected to the menu.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBmenu\fR(3X).
+.SH NOTES
+The header file \fB<menu.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V menu library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

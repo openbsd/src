@@ -1,0 +1,72 @@
+'\" t
+.TH menu_hook 3X ""
+.SH NAME
+\fBmenu_hook\fR - set hooks for automatic invocation by applications
+.SH SYNOPSIS
+\fB#include <menu.h>\fR
+.br
+int set_item_init(MENU *menu, void (*func)(MENU *));
+.br
+void (*)(MENU *) item_init(MWNU *menu);
+.br
+int set_item_term(MENU *menu, void (*func)(MENU *));
+.br
+void (*)(MENU *) item_term(MWNU *menu);
+.br
+int set_menu_init(MENU *menu, void (*func)(MENU *));
+.br
+void (*)(MENU *) menu_init(MWNU *menu);
+.br
+int set_menu_term(MENU *menu, void (*func)(MENU *));
+.br
+void (*)(MENU *) menu_term(MWNU *menu);
+.br
+.SH DESCRIPTION
+These functions make it possible to set hook functions to be called at various
+points in the automatic processing of input event codes by \fBmenu_driver\fR.  
+
+The function \fBset_item_init\fR sets a hook to be called at menu-post time and
+each time the selected item changes (after the change).  \fBitem_init\fR
+returns the current item init hook, if any (\fBNULL\fR if there is no such
+hook).
+
+The function \fBset_item_term\fR sets a hook to be called at menu-unpost time
+and each time the selected item changes (before the change).  \fBitem_term\fR
+returns the current item term hook, if any (\fBNULL\fR if there is no such
+hook).
+
+The function \fBset_menu_init\fR sets a hook to be called at menu-post time and
+just after the top row on the menu changes once it is posted.  \fBmenu_init\fR
+returns the current menu init hook, if any (\fBNULL\fR if there is no such
+hook).
+
+The function \fBset_menu_term\fR sets a hook to be called at menu-unpost time
+and just before the top row on the menu changes once it is posted.
+\fBmenu_term\fR returns the current menu term hook, if any (\fBNULL\fR if there
+is no such hook).
+.SH RETURN VALUE
+Routines that return pointers return \fBNULL\fR on error.  Other routines
+return one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBmenu\fR(3X).
+.SH NOTES
+The header file \fB<menu.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V menu library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

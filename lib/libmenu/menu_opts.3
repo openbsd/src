@@ -1,0 +1,75 @@
+'\" t
+.TH menu_opts 3X ""
+.SH NAME
+\fBmenu_opts\fR - set and get menu options
+.SH SYNOPSIS
+\fB#include <menu.h>\fR
+.br
+int set_menu_opts(MENU *menu, OPTIONS opts);
+.br
+int menu_opts_on(MENU *menu, OPTIONS opts);
+.br
+int menu_opts_off(MENU *menu, OPTIONS opts);
+.br
+OPTIONS menu_opts(MENU *menu);
+.br
+.SH DESCRIPTION
+The function \fBset_menu_opts\fR sets all the given menu's option bits (menu
+option bits may be logically-ored together).
+
+The function \fBmenu_opts_on\fR turns on the given option bits, and leaves
+others alone.
+
+The function \fBmenu_opts_off\fR turns off the given option bits, and leaves
+others alone.
+
+The function \fBmenu_opts\fR returns the menu's current option bits.  
+
+The following options are defined (all are on by default):
+.TP 5
+O_ONEVALUE
+Only one item can be selected for this menu.
+.TP 5
+O_SHOWDESC
+Display the item descriptions when the menu is posted.
+.TP 5
+O_ROWMAJOR
+Display the menu in row-major order.
+.TP 5
+O_IGNORECASE
+Ignore the case when pattern-matching.
+.TP 5
+O_SHOWMATCH
+Move the cursor to within the item name while pattern-matching.
+.TP 5
+O_NONCYCLIC 
+Don't wrap around next-item and previous-item,
+requests to the other end of the menu.
+.SH RETURN VALUE
+Except for \fBmenu_opts\fR, each routine returns one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_POSTED\fR
+The menu is already posted.
+.SH SEE ALSO
+\fBcurses\fR(3X), \fBmenu\fR(3X).
+.SH NOTES
+The header file \fB<menu.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V menu library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:
