@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.1 1999/07/18 21:25:17 csapuntz Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.2 1999/07/22 02:51:15 csapuntz Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -68,6 +68,10 @@ struct ata_drive_datas {
      * This is reset to 0 after a channel reset.
      */
     u_int8_t state;
+
+#define ACAP_LEN            0x01  /* 16 byte commands */
+    /* 0x20-0x40 reserved for ATAPI_CFG_DRQ_MASK */
+    u_int8_t atapi_cap;
 
     /* Number of DMA errors. Reset to 0 after every successful transfers. */
     u_int8_t n_dmaerrs;
