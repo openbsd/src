@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.37 2004/10/14 15:36:03 brad Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.38 2004/10/29 01:10:43 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -540,6 +540,7 @@ struct dc_mii_frame {
  * ADMtek specific registers and constants for the AL981 and AN983.
  * The AN983 doesn't use the magic PHY registers.
  */
+#define DC_AL_CR		0x88	/* Command register */
 #define DC_AL_PAR0		0xA4	/* station address */
 #define DC_AL_PAR1		0xA8	/* station address */
 #define DC_AL_MAR0		0xAC	/* multicast hash filter */
@@ -554,6 +555,7 @@ struct dc_mii_frame {
 
 #define DC_ADMTEK_PHYADDR	0x1
 #define DC_AL_EE_NODEADDR	8
+#define DC_AL_CR_ATUR		0x00000001	/* Enable automatic TX underrun recovery */
 /* End of ADMtek specific registers */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.72 2004/10/14 15:34:28 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.73 2004/10/29 01:10:43 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1232,7 +1232,8 @@ dc_setcfg(sc, media)
 		for (i = 0; i < DC_TIMEOUT; i++) {
 			isr = CSR_READ_4(sc, DC_ISR);
 			if (isr & DC_ISR_TX_IDLE &&
-			    (isr & DC_ISR_RX_STATE) == DC_RXSTATE_STOPPED)
+			    ((isr & DC_ISR_RX_STATE) == DC_RXSTATE_STOPPED ||
+			    (isr & DC_ISR_RX_STATE) == DC_RXSTATE_WAIT))
 				break;
 			DELAY(10);
 		}
@@ -1764,6 +1765,13 @@ hasmac:
 		CSR_WRITE_4(sc, DC_SIAGP, DC_SIAGP_INT1_EN |
 		    DC_SIAGP_MD_GP2_OUTPUT | DC_SIAGP_MD_GP0_OUTPUT);
 		DELAY(10);
+	}
+
+	if (DC_IS_ADMTEK(sc)) {
+		/*
+		 * Set automatic TX underrun recovery for the ADMtek chips
+		 */
+		DC_SETBIT(sc, DC_AL_CR, DC_AL_CR_ATUR);
 	}
 
 	/*
