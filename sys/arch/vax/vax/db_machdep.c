@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.6 1997/05/29 00:05:16 niklas Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.7 1997/10/06 15:12:58 niklas Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.8 1996/10/13 03:35:39 christos Exp $	*/
 
 /* 
@@ -150,13 +150,14 @@ kdbprinttrap(type, code)
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	size_t		size;
+	char	       *data;
 {
-	register char	*src;
+	char   *src;
+	size_t	i;
 
 	src = (char *)addr;
-	while (--size >= 0)
+	for (i = 0; i < size; i++)
 		*data++ = *src++;
 }
 
@@ -166,13 +167,14 @@ db_read_bytes(addr, size, data)
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
+	size_t		size;
+	char	       *data;
 {
-	register char	*dst;
+	char   *dst;
+	size_t	i;
 
 	dst = (char *)addr;
-	for (;size;size--)
+	for (i = 0; i < size; i++)
 		*dst++ = *data++;
 }
 
@@ -244,5 +246,3 @@ kdbrint(tkn)
 	ddbescape = 0;
 	return 0;
 }
-
-
