@@ -1,5 +1,5 @@
-/*	$OpenBSD: copy.s,v 1.5 1997/02/10 11:11:50 downsj Exp $	*/
-/*	$NetBSD: copy.s,v 1.25 1997/02/02 06:50:06 thorpej Exp $	*/
+/*	$OpenBSD: copy.s,v 1.6 1997/03/26 08:23:54 downsj Exp $	*/
+/*	$NetBSD: copy.s,v 1.26 1997/03/17 19:46:36 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -37,6 +37,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ */
+
+/*
+ * This file contains the functions for user-space access:
+ * copyin/copyout, fuword/suword, etc.
  */
 
 #include <sys/errno.h>
@@ -454,136 +459,4 @@ Lserr:
 	moveq	#-1,d0			| error indicator
 Lsdone:
 	clrl	a1@(PCB_ONFAULT) 	| clear fault handler
-	rts
-
-/*
- * {ov}bcopy(from, to, len)
- * memcpy(to, from, len)
- *
- * Works for counts up to 128K.
- */
-ALTENTRY(memmove, _memcpy)
-ENTRY(memcpy)
-	movl	sp@(12),d0		| get count
-	jeq	Lbccpyexit		| if zero, return
-	movl	sp@(8), a0		| src address
-	movl	sp@(4), a1		| dest address
-	jra	Lbcdocopy		| jump into bcopy
-ALTENTRY(ovbcopy, _bcopy)
-ENTRY(bcopy)
-	movl	sp@(12),d0		| get count
-	jeq	Lbccpyexit		| if zero, return
-	movl	sp@(4),a0		| src address
-	movl	sp@(8),a1		| dest address
-Lbcdocopy:
-	cmpl	a1,a0			| src before dest?
-	jlt	Lbccpyback		| yes, copy backwards (avoids overlap)
-	movl	a0,d1
-	btst	#0,d1			| src address odd?
-	jeq	Lbccfeven		| no, go check dest
-	movb	a0@+,a1@+		| yes, copy a byte
-	subql	#1,d0			| update count
-	jeq	Lbccpyexit		| exit if done
-Lbccfeven:
-	movl	a1,d1
-	btst	#0,d1			| dest address odd?
-	jne	Lbccfbyte		| yes, must copy by bytes
-	movl	d0,d1			| no, get count
-	lsrl	#2,d1			| convert to longwords
-	jeq	Lbccfbyte		| no longwords, copy bytes
-	subql	#1,d1			| set up for dbf
-Lbccflloop:
-	movl	a0@+,a1@+		| copy longwords
-	dbf	d1,Lbccflloop		| til done
-	andl	#3,d0			| get remaining count
-	jeq	Lbccpyexit		| done if none
-Lbccfbyte:
-	subql	#1,d0			| set up for dbf
-Lbccfbloop:
-	movb	a0@+,a1@+		| copy bytes
-	dbf	d0,Lbccfbloop		| til done
-Lbccpyexit:
-	rts
-Lbccpyback:
-	addl	d0,a0			| add count to src
-	addl	d0,a1			| add count to dest
-	movl	a0,d1
-	btst	#0,d1			| src address odd?
-	jeq	Lbccbeven		| no, go check dest
-	movb	a0@-,a1@-		| yes, copy a byte
-	subql	#1,d0			| update count
-	jeq	Lbccpyexit		| exit if done
-Lbccbeven:
-	movl	a1,d1
-	btst	#0,d1			| dest address odd?
-	jne	Lbccbbyte		| yes, must copy by bytes
-	movl	d0,d1			| no, get count
-	lsrl	#2,d1			| convert to longwords
-	jeq	Lbccbbyte		| no longwords, copy bytes
-	subql	#1,d1			| set up for dbf
-Lbccblloop:
-	movl	a0@-,a1@-		| copy longwords
-	dbf	d1,Lbccblloop		| til done
-	andl	#3,d0			| get remaining count
-	jeq	Lbccpyexit		| done if none
-Lbccbbyte:
-	subql	#1,d0			| set up for dbf
-Lbccbbloop:
-	movb	a0@-,a1@-		| copy bytes
-	dbf	d0,Lbccbbloop		| til done
-	rts
-
-/*
- * copypage(fromaddr, toaddr)
- *
- * Optimized version of bcopy for a single page-aligned NBPG byte copy.
- */
-ENTRY(copypage)
-	movl	sp@(4),a0		| source address
-	movl	sp@(8),a1		| destiniation address
-	movl	#NBPG/32-1,d0		| number of 32 byte chunks - 1
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-	cmpl	#CPU_68030,_cputype	| 68030 or less?
-	jle	Lmlloop			| yes, use movl
-#endif /* M68020 || M68030 */
-Lm16loop:
-	.long	0xf6209000		| move16 a0@+,a1@+
-	.long	0xf6209000		| move16 a0@+,a1@+
-	dbf	d0,Lm16loop
-	rts
-#endif /* M68040 || M68060 */
-#if defined(M68020) || defined(M68030)
-Lmlloop:
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	movl	a0@+,a1@+
-	dbf	d0,Lmlloop
-#endif /* M68020 || M68030 */
-	rts
-
-/*
- * zeropage(addr)
- *
- * Optimized version of bzero for a single page-aligned NBPG byte zero.
- */
-ENTRY(zeropage)
-	movl	sp@(4),a0		| dest address
-	movl	#NBPG/32-1,d0		| number of 32 byte chunks - 1
-	movq	#0,d1
-Lzloop:
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	movl	d1,a0@+
-	dbf	d0,Lzloop
 	rts
