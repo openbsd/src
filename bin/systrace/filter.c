@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.7 2002/06/05 18:14:00 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.8 2002/06/06 01:05:57 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -296,7 +296,7 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 	struct filter *filter;
 	struct policy *policy;
 	short action;
-	int first = 0;
+	int first = 1;
 
 	*pfuture = ICPOLICY_ASK;
 	*pflags = 0;
@@ -307,6 +307,44 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 
 	if (!allow)
 		printf("%s\n", output);
+	else {
+		/* Automatically allow */
+		if (tls != NULL) {
+			struct intercept_translate *tl;
+			char compose[MAXPATHLEN], *l;
+			char *lst = NULL;
+			int set = 0;
+			
+			/* Explicitly match every component */
+			line[0] = '\0';
+			TAILQ_FOREACH(tl, tls, next) {
+				if (!tl->trans_valid)
+					break;
+				l = intercept_translate_print(tl);
+				if (l == NULL)
+					continue;
+					
+				snprintf(compose, sizeof(compose),
+				    "%s%s eq \"%s\"",
+				    tl->name, 
+				    lst && !strcmp(tl->name, lst) ? "[1]" : "",
+				    l);
+
+				lst = tl->name;
+
+				if (set)
+					strlcat(line, " and ",
+					    sizeof(line));
+				else
+					set = 1;
+				strlcat(line, compose, sizeof(line));
+			}
+			if (!set)
+				strlcpy(line, "true", sizeof(line));
+			strlcat(line, " then permit", sizeof(line));
+		} else
+			strlcpy(line, "permit", sizeof(line));
+	}
 
 	while (1) {
 		filter = NULL;
@@ -317,47 +355,19 @@ filter_ask(struct intercept_tlq *tls, struct filterq *fls,
 				printf("Answer: ");
 			else {
 				/* Do not prompt the first time */
-				if (first) {
+				if (!first) {
 					printf("WRONG\n");
 				}
-				first = 1;
 			}
 
 			fgets(line, sizeof(line), stdin);
-		} else {
-			/* Automatically allow */
-			if (tls != NULL) {
-				struct intercept_translate *tl;
-				char compose[MAXPATHLEN], *l;
-				int set = 0;
-
-				/* Explicitly match every component */
-				line[0] = '\0';
-				TAILQ_FOREACH(tl, tls, next) {
-					if (!tl->trans_valid)
-						break;
-					l = intercept_translate_print(tl);
-					if (l == NULL)
-						continue;
-
-					snprintf(compose, sizeof(compose),
-					    "%s eq \"%s\"", tl->name, l);
-					if (set)
-						strlcat(line, " and ",
-						    sizeof(line));
-					else
-						set = 1;
-					strlcat(line, compose, sizeof(line));
-				}
-				if (!set)
-					strlcpy(line, "true", sizeof(line));
-				strlcat(line, " then permit", sizeof(line));
-			} else
-				strlcpy(line, "permit", sizeof(line));
+			p = line;
+			strsep(&p, "\n");
+		} else if (!first) {
+			/* Error with filter */
+			errx(1, "Filter generation error: %s", line);
 		}
-
-		p = line;
-		strsep(&p, "\n");
+		first = 0;
 
 		/* Simple keywords */
 		if (!strcasecmp(line, "detach")) {
