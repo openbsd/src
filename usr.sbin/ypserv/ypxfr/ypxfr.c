@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.17 1997/04/12 16:37:37 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.18 1997/05/01 17:49:45 niklas Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.17 1997/04/12 16:37:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.18 1997/05/01 17:49:45 niklas Exp $";
 #endif
 
 #include <sys/types.h>
@@ -92,10 +92,10 @@ char *keystr,*valstr;
 }
 
 int
-get_local_ordernum(domain,map,lordernum)
+get_local_ordernum(domain, map, lordernum)
 char *domain;
 char *map;
-u_long *lordernum;
+int *lordernum;
 {
 	char map_path[MAXPATHLEN];
 	char order_key[] = YP_LAST_KEY;
@@ -109,7 +109,7 @@ u_long *lordernum;
 	
 	status = YPPUSH_SUCC;
 	
-	snprintf(map_path, sizeof map_path, "%s/%s",YP_DB_PATH,domain);
+	snprintf(map_path, sizeof map_path, "%s/%s", YP_DB_PATH, domain);
 	if (!((stat(map_path, &finfo) == 0) &&
 	      ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
 		fprintf(stderr, "%s: domain %s not found locally\n",
@@ -118,18 +118,16 @@ u_long *lordernum;
 	}
 
 	if(status > 0) {
-		
 		snprintf(map_path, sizeof map_path, "%s/%s/%s%s",
-		    YP_DB_PATH,domain,map,YPDB_SUFFIX);
+		    YP_DB_PATH, domain, map, YPDB_SUFFIX);
 		if(!(stat(map_path, &finfo) == 0)) {
 			status = YPPUSH_NOMAP;
 		}
 	}
 	
 	if(status > 0) {
-		
 		snprintf(map_path, sizeof map_path, "%s/%s/%s",
-		    YP_DB_PATH,domain,map);
+		    YP_DB_PATH, domain, map);
 		db = ypdb_open(map_path, O_RDONLY, 0444);
 		if(db == NULL) {
 			status = YPPUSH_DBM;
@@ -138,8 +136,7 @@ u_long *lordernum;
 	}
 		
 	if(status > 0) {
-		
-		k.dptr = (char *) &order_key;
+		k.dptr = (char *)&order_key;
 		k.dsize = YP_LAST_LEN;
 
 		v = ypdb_fetch(db,k);
@@ -150,7 +147,7 @@ u_long *lordernum;
 		} else {
 	        	strncpy(order, v.dptr, sizeof order-1);
 			order[sizeof order-1] = '\0';
-			*lordernum = (u_long) atol((char *) &order);
+			*lordernum = atoi((char *)&order);
 		}
 	}
 
@@ -164,16 +161,16 @@ u_long *lordernum;
 }
 
 int
-get_remote_ordernum(client,domain,map,lordernum,rordernum)
+get_remote_ordernum(client, domain, map, lordernum, rordernum)
 CLIENT *client;
 char *domain;
 char *map;
-u_long lordernum;
-u_long *rordernum;
+int lordernum;
+int *rordernum;
 {
 	int status;
 
-	status = yp_order_host(client, domain, map,(int *)rordernum);
+	status = yp_order_host(client, domain, map, rordernum);
 
 	if (status == 0) {
 		if(*rordernum <= lordernum) {
@@ -215,8 +212,8 @@ char *temp_map;
 	char	db_name[MAXPATHLEN];
 
 	snprintf(db_name, sizeof db_name, "%s/%s/%s%s",
-	    YP_DB_PATH,domain,map,YPDB_SUFFIX);
-	rename(temp_map,db_name);
+	    YP_DB_PATH, domain, map, YPDB_SUFFIX);
+	rename(temp_map, db_name);
 
 	return YPPUSH_SUCC;
 }
@@ -224,9 +221,9 @@ char *temp_map;
 int
 add_order(db, ordernum)
 DBM *db;
-u_long ordernum;
+int ordernum;
 {
-	char	datestr[10];
+	char	datestr[11];
 	datum	key,val;
 	char	keystr[] = YP_LAST_KEY;
 	int	status;
@@ -433,7 +430,7 @@ char *argv[];
 	char	 *ipadd = NULL;
 	char	 *port = NULL;
 	char	 *map = NULL;
-	u_long	 ordernum,new_ordernum;
+	int	 ordernum, new_ordernum;
 	struct	 ypall_callback callback;
 	CLIENT   *client;
 	int	 status,xfr_status;
@@ -514,7 +511,7 @@ char *argv[];
 		if(fflag != 0) {
 			ordernum = 0;
 		} else {
-			status = get_local_ordernum(domain,map,&ordernum);
+			status = get_local_ordernum(domain, map, &ordernum);
 		}
 	}
 
@@ -553,8 +550,8 @@ char *argv[];
 
 		client = yp_bind_host(host,YPPROG,YPVERS,0,1);
 
-		status = get_remote_ordernum(client,domain,map,
-					     ordernum,&new_ordernum);
+		status = get_remote_ordernum(client, domain, map,
+					     ordernum, &new_ordernum);
 		
 	}
 
@@ -564,8 +561,7 @@ char *argv[];
 
 		/* Create temporary db */
 		snprintf(tmpmapname, sizeof tmpmapname,
-		    "%s/%s/ypdbXXXXXXXXXX%s",
-		    YP_DB_PATH, domain, YPDB_SUFFIX);
+		    "%s/%s/ypdbXXXXXXXXXX", YP_DB_PATH, domain);
 		fd = mkstemp(tmpmapname);
 		if (fd == -1)
 			status = YPPUSH_DBM;
