@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia_cis.c,v 1.9 2002/11/19 18:36:18 jason Exp $	*/
+/*	$OpenBSD: pcmcia_cis.c,v 1.10 2003/05/06 11:22:30 henning Exp $	*/
 /*	$NetBSD: pcmcia_cis.c,v 1.9 1998/08/22 23:41:48 msaitoh Exp $	*/
 
 /*
@@ -155,8 +155,11 @@ pcmcia_scan_cis(dev, fct, arg)
 	while (1) {
 		while (1) {
 			/* get the tuple code */
-
-			tuple.code = pcmcia_cis_read_1(&tuple, tuple.ptr);
+			if (tuple.ptr * tuple.mult < PCMCIA_CIS_SIZE)
+				tuple.code = pcmcia_cis_read_1(&tuple,
+				    tuple.ptr);
+			else
+				tuple.code = PCMCIA_CISTPL_END;
 
 			/* two special-case tuples */
 
