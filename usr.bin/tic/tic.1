@@ -1,4 +1,4 @@
-.\" $OpenBSD: tic.1,v 1.4 1999/03/02 06:23:55 millert Exp $
+.\" $OpenBSD: tic.1,v 1.5 1999/03/03 00:42:16 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -47,7 +47,6 @@ c\
 f\
 r\
 s\
-x\
 \fR]
 [\fB-e\fR \fInames\fR]
 [\fB-o\fR \fIdir\fR]
@@ -167,9 +166,6 @@ rather than their decimal equivalents.
 Summarize the compile by showing the directory into which entries
 are written, and the number of entries which are compiled.
 .TP
-\fB-x\fR
-Treat unknown capabilities as user-defined.
-.TP
 \fIfile\fR
 contains one or more \fBterminfo\fR terminal descriptions in source
 format [see \fBterminfo\fR(\*n)].  Each description in the file
@@ -258,9 +254,8 @@ The
 \fB-f\fR,
 \fB-g\fR,
 \fB-T\fR,
-\fB-r\fR,
-\fB-s\fR and
-\fB-x\fR
+\fB-r\fR and
+\fB-s\fR
 options
 are not supported under SVr4.
 The SVr4 -c mode does not report bad use links.
