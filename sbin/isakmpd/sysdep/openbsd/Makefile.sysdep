@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.sysdep,v 1.1 1999/03/02 15:06:13 niklas Exp $
-#	$EOM: Makefile.sysdep,v 1.1 1999/03/02 14:27:10 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.2 1999/03/31 00:50:05 niklas Exp $
+#	$EOM: Makefile.sysdep,v 1.2 1999/03/30 21:47:23 niklas Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -34,5 +34,5 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
-LDADD=		-lgmp -ldes
-DPADD=		${LIBGMP} ${LIBDES}
+LDADD+=		-lgmp -ldes
+DPADD+=		${LIBGMP} ${LIBDES}
