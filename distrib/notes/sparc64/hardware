@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.41 2002/11/25 20:45:06 naddy Exp $
+dnl	$OpenBSD: hardware,v 1.42 2002/12/04 17:39:12 nate Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -66,6 +66,7 @@ Supported devices {:-include-:}:
 		PCI Fast Ethernet (hme)
 		PCI Quad Fast Ethernet (hme)
 		PCI GEM Ethernet (gem)
+		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards(ti)
 		PCI Davicom DM9102 Ethernet (dc)
 		PCI Intel 21145-based adapters (dc)
 		PCI Intel i8255x-based (except the i82556) adapters (fxp)

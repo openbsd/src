@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.15 2002/11/25 14:52:31 drahn Exp $
+dnl	$OpenBSD: hardware,v 1.16 2002/12/04 17:39:12 nate Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -59,6 +59,13 @@ Supported devices {:-include-:}:
 			Intel EtherExpress PRO/100+ "Management Adapter"
 			Intel EtherExpress PRO/100 Dual Port
 			Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
+		Alteon Tigon I/II PCI Gigabit Ethernet boards(ti), including:
+		    3Com 3c985 and 3c985B
+		    Alteon ACEnic V (fiber and copper)
+		    Digital EtherWORKS 1000SX
+		    Farallon PN9000SX
+		    Netgear GA620 and GA620T
+		    SGI Tigon
 		Intel i82450, i82542, i82543, i82544, i82545, and i82456
 		based adapters (em), including:
 			Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
