@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.3 2000/07/20 16:22:26 ho Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.4 2000/09/17 17:08:16 aaron Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -65,6 +65,8 @@ struct fxp_softc {
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
 	int eeprom_size;		/* size of serial EEPROM */
 	int not_82557;			/* yes if we are 82558/82559 */
+	void *sc_sdhook;		/* shutdownhook */
+	void *sc_powerhook;		/* powerhook */
 };
 
 /* Macros to ease CSR access. */
@@ -83,3 +85,4 @@ struct fxp_softc {
 
 extern int fxp_intr __P((void *));
 extern int fxp_attach_common __P((struct fxp_softc *, u_int8_t *, const char *));
+extern int fxp_detach __P((struct fxp_softc *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.8 2000/08/02 18:50:17 aaron Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.9 2000/09/17 17:08:16 aaron Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -412,12 +412,12 @@ fxp_attach_common(sc, enaddr, intrstr)
 	 * doing do could allow DMA to corrupt kernel memory during the
 	 * reboot before the driver initializes.
 	 */
-	shutdownhook_establish(fxp_shutdown, sc);
+	sc->sc_sdhook = shutdownhook_establish(fxp_shutdown, sc);
 
 	/*
 	 * Add suspend hook, for similiar reasons..
 	 */
-	powerhook_establish(fxp_power, sc);
+	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
 
 	/*
 	 * Initialize timeout for statistics update.
@@ -439,6 +439,31 @@ fxp_attach_common(sc, enaddr, intrstr)
 		m_freem(sc->rfa_headm);
 
 	return (ENOMEM);
+}
+
+int
+fxp_detach(sc)
+	struct fxp_softc *sc;
+{
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+
+	/* Unhook our tick handler. */
+	timeout_del(&sc->stats_update_to);
+
+	/* Detach any PHYs we might have. */
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete any remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	shutdownhook_disestablish(sc->sc_sdhook);
+	powerhook_disestablish(sc->sc_powerhook);
+
+	return (0);
 }
 
 /*
