@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.25 2000/01/12 04:44:14 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.26 2000/01/12 05:55:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -1770,6 +1770,7 @@ ENTRY(spstrcpy)
 	mtsp	arg0, sr1
 	mtsp	arg2, sr2
 	add	ret1, arg1, ret1
+	copy	arg1, arg0
 
 $spstrcpy_loop
 	ldbs,ma	1(sr1, arg1), t1
@@ -1781,11 +1782,11 @@ $spstrcpy_exit
 	/* reset fault handler */
 	stw	r0, pcb_onfault+u_pcb(r31)
 	copy	r0, ret0
-	ldw	HPPA_FRAME_ARG(4)(sp), t1
-	mtsp	ret0, sr2
-	sub	ret1, t1, ret1
+	mtsp	ret0, sr2	/* XXX need this? */
+	sub	arg1, arg0, arg1
+	ldw	HPPA_FRAME_ARG(5)(sp), arg0
 	bv	0(rp)
-	stw	ret1, HPPA_FRAME_ARG(5)(sp)
+	stw	arg1, 0(arg0)
 EXIT(spstrcpy)
 
 
