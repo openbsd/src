@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.22 2004/01/14 02:52:04 millert Exp $	*/
+/*	$OpenBSD: nm.c,v 1.23 2004/01/14 04:23:26 millert Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.22 2004/01/14 02:52:04 millert Exp $";
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.23 2004/01/14 04:23:26 millert Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -53,6 +53,7 @@ static const char rcsid[] = "$OpenBSD: nm.c,v 1.22 2004/01/14 02:52:04 millert E
 #include <ranlib.h>
 #include <unistd.h>
 #include <err.h>
+#include <errno.h>
 #include <ctype.h>
 #include <link.h>
 #ifdef __ELF__
@@ -88,6 +89,7 @@ int print_all_symbols;
 int print_file_each_line;
 int show_extensions;
 int issize;
+int usemmap = 1;
 
 /* size vars */
 unsigned long total_text, total_data, total_bss, total_total;
@@ -345,9 +347,11 @@ mmbr_name(struct ar_hdr *arh, char **name, int baselen, int *namelen, FILE *fp)
 }
 
 #define	MMAP(ptr, len, prot, flags, fd, off)	do {		\
-	didmmap = (ptr = mmap(NULL, len, prot, flags, fd, off)) != MAP_FAILED; \
-	if (!didmmap) {							\
-		if ((ptr = malloc(len)) == NULL) {			\
+	if ((ptr = mmap(NULL, len, prot, flags, fd, off)) == MAP_FAILED) { \
+		usemmap = 0;						\
+		if (errno != EINVAL)					\
+			warn("mmap");					\
+		else if ((ptr = malloc(len)) == NULL) {			\
 			ptr = MAP_FAILED;				\
 			warn("malloc");					\
 		} else if (pread(fd, ptr, len, off) != len) {		\
@@ -359,7 +363,7 @@ mmbr_name(struct ar_hdr *arh, char **name, int baselen, int *namelen, FILE *fp)
 } while (0)
 
 #define MUNMAP(addr, len)	do {					\
-	if (didmmap)							\
+	if (usemmap)							\
 		munmap(addr, len);					\
 	else								\
 		free(addr);						\
@@ -376,7 +380,7 @@ show_symtab(off_t off, u_long len, const char *name, FILE *fp)
 	int *symtab, *ps;
 	char *strtab, *p;
 	int num, rval = 0;
-	int namelen, didmmap;
+	int namelen;
 
 	MMAP(symtab, len, PROT_READ, MAP_PRIVATE|MAP_FILE, fileno(fp), off);
 	if (symtab == MAP_FAILED)
@@ -431,12 +435,12 @@ show_symdef(off_t off, u_long len, const char *name, FILE *fp)
 	void *symdef;
 	char *strtab, *p;
 	u_long size;
-	int namelen, didmmap, rval = 0;
+	int namelen, rval = 0;
 
 	MMAP(symdef, len, PROT_READ, MAP_PRIVATE|MAP_FILE, fileno(fp), off);
 	if (symdef == MAP_FAILED)
 		return (1);
-	if (didmmap)
+	if (usemmap)
 		(void)madvise(symdef, len, MADV_SEQUENTIAL);
 
 	namelen = sizeof(ar_head.ar_name);
@@ -633,7 +637,7 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 	struct nlist *np;
 	Elf_Shdr *shdr;
 	off_t staboff;
-	int i, aout, didmmap;
+	int i, aout;
 
 	aout = 0;
 	if (IS_ELF(head->elf) &&
@@ -782,13 +786,8 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 	 * it seems that string table is sequential
 	 * relative to the symbol table order
 	 */
-	if (sfunc == NULL && madvise(stab, stabsize, MADV_SEQUENTIAL)) {
-		warn("%s: madvise", name);
-		free(snames);
-		free(names);
-		MUNMAP(stab, stabsize);
-		return (1);
-	}
+	if (sfunc == NULL && usemmap)
+		(void)madvise(stab, stabsize, MADV_SEQUENTIAL);
 
 	/*
 	 * fix up the symbol table and filter out unwanted entries
@@ -851,7 +850,7 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr
 	struct nlist *np;
 	Elf_Sym sbuf;
 	char *shstr;
-	int i, didmmap = 0;
+	int i;
 
 	shstrsize = shdr[eh->e_shstrndx].sh_size;
 	if ((shstr = malloc(shstrsize)) == NULL) {
