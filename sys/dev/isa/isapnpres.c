@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpres.c,v 1.2 1997/12/25 09:22:42 downsj Exp $	*/
+/*	$OpenBSD: isapnpres.c,v 1.3 1997/12/25 10:32:16 downsj Exp $	*/
 /*	$NetBSD: isapnpres.c,v 1.7.4.1 1997/11/20 07:46:13 mellon Exp $	*/
 
 /*
@@ -508,9 +508,12 @@ parse:
 				goto bad;
 		}
 
-		if (isapnp_process_tag(tag, len, buf, &card, &dev, &conf) == -1)
+		if (isapnp_process_tag(tag, len, buf, &card, &dev, &conf) == -1) {
 			printf("%s: No current device for tag, card %d\n",
 			    sc->sc_dev.dv_xname, c + 1);
+			if (++warned == 10)
+				goto bad;
+		}
 	}
 	while (tag != ISAPNP_TAG_END);
 	return isapnp_flatten(card);
