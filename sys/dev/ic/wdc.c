@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.71 2003/10/26 14:29:47 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.72 2003/10/26 14:39:59 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1066,16 +1066,18 @@ __wdcwait_reset(chp, drv_mask)
 	int drv_mask;
 {
 	int timeout;
-	u_int8_t st0, st1;
+	u_int8_t st0, er0, st1, er1;
 
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST; timeout++) {
 		wdc_set_drive(chp, 0);
 		delay(10);
 		st0 = CHP_READ_REG(chp, wdr_status);
+		er0 = CHP_READ_REG(chp, wdr_error);
 		wdc_set_drive(chp, 1);
 		delay(10);
 		st1 = CHP_READ_REG(chp, wdr_status);
+		er1 = CHP_READ_REG(chp, wdr_error);
 
 		if ((drv_mask & 0x01) == 0) {
 			/* no master */
@@ -1103,10 +1105,10 @@ __wdcwait_reset(chp, drv_mask)
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 end:
-	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, st1=0x%x, "
-			"reset time=%d msec\n",
+	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, er0=0x%x, "
+	    "st1=0x%x, er1=0x%x, reset time=%d msec\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
-	    st0, st1, timeout*WDCDELAY/1000), DEBUG_PROBE);
+	    st0, er0, st1, er1, timeout * WDCDELAY / 1000), DEBUG_PROBE);
 
 	return drv_mask;
 }
