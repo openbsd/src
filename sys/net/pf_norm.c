@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.34 2002/06/11 18:03:24 frantzen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.35 2002/06/28 00:08:23 deraadt Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -160,10 +160,11 @@ pf_normalize_init(void)
 	TAILQ_INIT(&pf_cachequeue);
 }
 
-static __inline int	
+static __inline int
 pf_frag_compare(struct pf_fragment *a, struct pf_fragment *b)
 {
 	int diff;
+
 	if ((diff = a->fr_id - b->fr_id))
 		return (diff);
 	else if ((diff = a->fr_p - b->fr_p))
@@ -809,7 +810,6 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	int mff = (h->ip_off & IP_MF), hlen = h->ip_hl << 2;
 	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
 	u_int16_t max;
-
 	int ip_len;
 	int ip_off;
 
@@ -948,7 +948,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		}
 		if (frag && (frag->fr_flags & PFFRAG_DROP))
 			goto drop;
- 		goto fragment_pass;
+		goto fragment_pass;
 	}
 
  no_fragment:
@@ -968,7 +968,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	return (PF_PASS);
 
  fragment_pass:
- 	if (dir != PF_OUT)
+	if (dir != PF_OUT)
 		return (PF_PASS);
 
 	/* Enforce a minimum ttl, may cause endless packet loops */
