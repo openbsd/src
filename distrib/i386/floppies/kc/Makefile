@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1996/09/14 03:43:02 deraadt Exp $
+#	$Id: Makefile,v 1.9 1996/09/25 17:03:58 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -64,7 +64,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f *.core bsd ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
 install:
 	cp ${IMAGE} ${DESTDIR}/snapshot
