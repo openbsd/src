@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.32 2004/08/10 12:41:15 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.33 2004/08/12 16:33:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,8 @@ struct imsgbuf {
 
 enum imsg_type {
 	IMSG_NONE,
-	IMSG_ADJTIME
+	IMSG_ADJTIME,
+	IMSG_HOST_DNS
 };
 
 struct imsg_hdr {
@@ -201,6 +202,7 @@ void	 imsg_free(struct imsg *);
 /* ntp.c */
 pid_t	 ntp_main(int[2], struct ntpd_conf *);
 void	 ntp_adjtime(void);
+void	 ntp_host_dns(char *, u_int32_t);
 
 /* parse.y */
 int	 parse_config(char *, struct ntpd_conf *);
@@ -222,6 +224,7 @@ int	server_dispatch(int, struct ntpd_conf *);
 
 /* client.c */
 int	client_peer_init(struct ntp_peer *);
+int	client_addr_init(struct ntp_peer *);
 int	client_nextaddr(struct ntp_peer *);
 int	client_query(struct ntp_peer *);
 int	client_dispatch(struct ntp_peer *);

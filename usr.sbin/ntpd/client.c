@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.29 2004/07/28 16:38:43 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.30 2004/08/12 16:33:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,12 +31,23 @@ int	client_update(struct ntp_peer *);
 int
 client_peer_init(struct ntp_peer *p)
 {
+	if ((p->query = calloc(1, sizeof(struct ntp_query))) == NULL)
+		fatal("client_query calloc");
+	p->query->fd = -1;
+	p->query->msg.status = MODE_CLIENT | (NTP_VERSION << 3);
+	p->state = STATE_NONE;
+	p->shift = 0;
+	p->trustlevel = TRUSTLEVEL_PATHETIC;
+
+	return (client_addr_init(p));
+}
+
+int
+client_addr_init(struct ntp_peer *p)
+{
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_in6	*sa_in6;
 	struct ntp_addr		*h;
-
-	if ((p->query = calloc(1, sizeof(struct ntp_query))) == NULL)
-		fatal("client_query calloc");
 
 	for (h = p->addr; h != NULL; h = h->next) {
 		switch (h->ss.ss_family) {
@@ -51,7 +62,7 @@ client_peer_init(struct ntp_peer *p)
 				sa_in6->sin6_port = htons(123);
 			break;
 		default:
-			fatal("king bula sez: wrong AF in client_peer_init");
+			fatal("king bula sez: wrong AF in client_addr_init");
 			/* not reached */
 		}
 	}
@@ -60,11 +71,7 @@ client_peer_init(struct ntp_peer *p)
 	    (p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM, 0)) == -1)
 		fatal("client_query socket");
 
-	p->query->msg.status = MODE_CLIENT | (NTP_VERSION << 3);
-	p->state = STATE_NONE;
 	p->next = time(NULL);
-	p->shift = 0;
-	p->trustlevel = TRUSTLEVEL_PATHETIC;
 
 	return (0);
 }
@@ -75,12 +82,8 @@ client_nextaddr(struct ntp_peer *p)
 	close(p->query->fd);
 
 	if (p->addr_head.a == NULL) {
-		if (host_dns(p->addr_head.name, &p->addr_head.a) > 0) {
-			p->addr = p->addr_head.a;
-			p->shift = 0;
-			p->trustlevel = TRUSTLEVEL_PATHETIC;
-		} else
-			return (-1);
+		ntp_host_dns(p->addr_head.name, p->id);
+		return (-1);
 	}
 
 	if ((p->addr = p->addr->next) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.13 2004/07/13 11:16:22 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.14 2004/08/12 16:33:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,8 +213,11 @@ int
 dispatch_imsg(void)
 {
 	struct imsg		 imsg;
-	int			 n;
+	int			 n, cnt;
 	double			 d;
+	char			*name;
+	struct ntp_addr		*h, *hn;
+	struct buf		*buf;
 
 	if ((n = imsg_read(&ibuf)) == -1)
 		return (-1);
@@ -237,6 +240,23 @@ dispatch_imsg(void)
 				fatal("invalid IMSG_ADJTIME received");
 			memcpy(&d, imsg.data, sizeof(d));
 			ntpd_adjtime(d);
+			break;
+		case IMSG_HOST_DNS:
+			name = imsg.data;
+			if (imsg.hdr.len != strlen(name) + 1 + IMSG_HEADER_SIZE)
+				fatal("invalid IMSG_HOST_DNS received");
+			if ((cnt = host_dns(name, &hn)) > 0) {
+				buf = imsg_create(&ibuf, IMSG_HOST_DNS,
+				    imsg.hdr.peerid,
+				    cnt * sizeof(struct sockaddr_storage));
+				if (buf == NULL)
+					break;
+				for (h = hn; h != NULL; h = h->next) {
+					imsg_add(buf, &h->ss, sizeof(h->ss));
+				}
+				imsg_close(&ibuf, buf);
+			}
+			break;
 		default:
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.25 2004/07/18 12:59:41 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.26 2004/08/12 16:33:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -245,6 +245,10 @@ ntp_dispatch_imsg(void)
 {
 	struct imsg		 imsg;
 	int			 n;
+	struct ntp_peer		*peer, *npeer;
+	u_int16_t		 dlen;
+	u_char			*p;
+	struct ntp_addr		*h;
 
 	if ((n = imsg_read(&ibuf_main)) == -1)
 		return (-1);
@@ -262,6 +266,47 @@ ntp_dispatch_imsg(void)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_HOST_DNS:
+			TAILQ_FOREACH(peer, &conf->ntp_peers, entry)
+				if (peer->id == imsg.hdr.peerid)
+					break;
+			if (peer == NULL)
+				fatal("IMSG_HOST_DNS with invalid peerID");
+			if (peer->addr != NULL) {
+				log_warnx("IMSG_HOST_DNS but addr != NULL!");
+				break;
+			}
+			dlen = imsg.hdr.len - IMSG_HEADER_SIZE;
+			p = (u_char *)imsg.data;
+			while (dlen >= sizeof(struct sockaddr_storage)) {
+				if ((h = calloc(1, sizeof(struct ntp_addr))) ==
+				    NULL)
+					fatal(NULL);
+				memcpy(&h->ss, p, sizeof(h->ss));
+				p += sizeof(h->ss);
+				dlen -= sizeof(h->ss);
+				if (peer->addr_head.pool) {
+					npeer = new_peer();
+					h->next = NULL;
+					npeer->addr = h;
+					npeer->addr_head.a = h;
+					client_peer_init(npeer);
+					TAILQ_INSERT_TAIL(&conf->ntp_peers,
+					    npeer, entry);
+				} else {
+					h->next = peer->addr;
+					peer->addr = h;
+					peer->addr_head.a = peer->addr;
+				}
+			}
+			if (dlen != 0)
+				fatal("IMSG_HOST_DNS: dlen != 0");
+			if (peer->addr_head.pool) {
+				TAILQ_REMOVE(&conf->ntp_peers, peer, entry);
+				free(peer);
+			} else
+				client_addr_init(peer);
+			break;
 		default:
 			break;
 		}
@@ -299,4 +344,13 @@ ntp_adjtime(void)
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		p->update.good = 0;
+}
+
+void
+ntp_host_dns(char *name, u_int32_t peerid)
+{
+	u_int16_t	dlen;
+
+	dlen = strlen(name) + 1;
+	imsg_compose(&ibuf_main, IMSG_HOST_DNS, peerid, name, dlen);
 }
