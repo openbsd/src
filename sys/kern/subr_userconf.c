@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.28 2002/03/14 03:16:09 millert Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.29 2002/05/02 12:59:58 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -1055,7 +1055,7 @@ userconf_add(dev, len, unit, state)
 {
 	int i = 0, found = 0;
 	struct cfdata new;
-	int  val, max_unit, orig;
+	int  val, max_unit, star_unit, orig;
 
 	bzero(&new, sizeof(struct cfdata));
 
@@ -1141,9 +1141,31 @@ userconf_add(dev, len, unit, state)
 			i++;
 		}
 
-		/* For all * entries set unit number to max+1 */
-
+		/*
+		 * For all * entries set unit number to max+1, and update
+		 * cf_starunit1 if necessary.
+		 */
 		max_unit++;
+		star_unit = -1;
+
+		i = 0;
+		while (cfdata[i].cf_attach != 0) {
+			if (strlen(cfdata[i].cf_driver->cd_name) == len &&
+			    strncasecmp(dev, cfdata[i].cf_driver->cd_name,
+			    len) == 0) {
+				switch (cfdata[i].cf_fstate) {
+				case FSTATE_NOTFOUND:
+				case FSTATE_DNOTFOUND:
+					if (cfdata[i].cf_unit > star_unit)
+						star_unit = cfdata[i].cf_unit;
+					break;
+				default:
+					break;
+				}
+			}
+			i++;
+		}
+		star_unit++;
 
 		i = 0;
 		while (cfdata[i].cf_attach != 0) {
@@ -1154,6 +1176,9 @@ userconf_add(dev, len, unit, state)
 				case FSTATE_STAR:
 				case FSTATE_DSTAR:
 					cfdata[i].cf_unit = max_unit;
+					if (cfdata[i].cf_starunit1 < star_unit)
+						cfdata[i].cf_starunit1 =
+						    star_unit;
 					break;
 				default:
 					break;
@@ -1164,7 +1189,7 @@ userconf_add(dev, len, unit, state)
 		userconf_pdev(val);
 	}
 
-	/* cf_attach, cf_driver, cf_unit, cf_state, cf_loc, cf_flags,
+	/* cf_attach, cf_driver, cf_unit, cf_fstate, cf_loc, cf_flags,
 	   cf_parents, cf_locnames, cf_locnames and cf_ivstubs */
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.9 2002/03/23 13:30:24 espie Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.10 2002/05/02 12:59:54 miod Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.9 2002/03/23 13:30:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: ukcutil.c,v 1.10 2002/05/02 12:59:54 miod Exp $";
 #endif
 
 #include <sys/types.h>
@@ -1058,7 +1058,7 @@ add(dev, len, unit, state)
 	short *pv;
 	struct cfdata new, *cd, *cdp;
 	struct cfdriver *cdrv;
-	int  val, max_unit;
+	int  val, max_unit, star_unit;
 
 	ukc_mod_kernel = 1;
 
@@ -1158,8 +1158,34 @@ add(dev, len, unit, state)
 			cd++;
 		}
 
-		/* For all * entries set unit number to max+1 */
+		/*
+		 * For all * entries set unit number to max+1, and update
+		 * cf_starunit1 if necessary.
+		 */
 		max_unit++;
+		star_unit = -1;
+		cd = get_cfdata(0);
+		while (cd->cf_attach != 0) {
+			cdrv = (struct cfdriver *)
+			    adjust((caddr_t)cd->cf_driver);
+
+			if (strlen((char *)adjust(cdrv->cd_name)) == len &&
+			    strncasecmp(dev, (char *)adjust(cdrv->cd_name),
+			    len) == 0) {
+				switch (cd->cf_fstate) {
+				case FSTATE_NOTFOUND:
+				case FSTATE_DNOTFOUND:
+					if (cd->cf_unit > star_unit)
+						star_unit = cd->cf_unit;
+					break;
+				default:
+					break;
+				}
+			}
+			cd++;
+		}
+		star_unit++;
+
 		cd = get_cfdata(0);
 		while (cd->cf_attach != 0) {
 			cdrv = (struct cfdriver *)
@@ -1172,6 +1198,8 @@ add(dev, len, unit, state)
 				case FSTATE_STAR:
 				case FSTATE_DSTAR:
 					cd->cf_unit = max_unit;
+					if (cd->cf_starunit1 < star_unit)
+						cd->cf_starunit1 = star_unit;
 					break;
 				default:
 					break;
@@ -1183,7 +1211,7 @@ add(dev, len, unit, state)
 		pdev(val);
 	}
 
-	/* cf_attach, cf_driver, cf_unit, cf_state, cf_loc, cf_flags,
+	/* cf_attach, cf_driver, cf_unit, cf_fstate, cf_loc, cf_flags,
 	   cf_parents, cf_locnames, cf_locnames and cf_ivstubs */
 }
 
