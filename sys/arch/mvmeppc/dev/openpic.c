@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.16 2004/05/15 22:08:04 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.17 2004/07/14 11:37:07 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -78,8 +78,6 @@ struct intrhand *intrhand[ICU_LEN];
 int hwirq[ICU_LEN], virq[ICU_LEN];
 unsigned int imen = 0xffffffff;
 int virq_max;
-
-struct evcnt evirq[ICU_LEN];
 
 int fakeintr(void *);
 const char *intr_typename(int type);
@@ -326,11 +324,11 @@ i8259_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, what)
 	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
 	ih->ih_what = what;
+	evcount_attach(&ih->ih_count, what, (void *)&ih->ih_irq, &evcount_intr);
 	*p = ih;
 
 	return (ih);
@@ -409,11 +407,11 @@ openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, what)
 	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;
 	ih->ih_what = what;
+	evcount_attach(&ih->ih_count, what, (void *)&ih->ih_irq, &evcount_intr);
 	*p = ih;
 
 	return (ih);
@@ -444,6 +442,8 @@ openpic_intr_disestablish(lcp, arg)
 		*p = q->ih_next;
 	else
 		panic("intr_disestablish: handler not registered");
+
+	evcount_detach(&ih->ih_count);
 	free((void *)ih, M_DEVBUF);
 
 	intr_calculatemasks();
@@ -619,17 +619,17 @@ openpic_do_pending_int()
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen &= ~hwpend;
 	openpic_enable_irq_mask(~imen);
+
 	hwpend &= HWIRQ_MASK;
 	while (hwpend) {
 		irq = 31 - cntlzw(hwpend);
 		hwpend &= ~(1L << irq);
 		ih = intrhand[irq];
 		while (ih) {
-			(*ih->ih_fun)(ih->ih_arg);
+			if ((*ih->ih_fun)(ih->ih_arg))
+				ih->ih_count.ec_count++;
 			ih = ih->ih_next;
 		}
-
-		evirq[hwirq[irq]].ev_count++;
 	}
 
 	do {
@@ -973,7 +973,8 @@ ext_intr_openpic()
 
 			ih = intrhand[irq];
 			while (ih) {
-				(*ih->ih_fun)(ih->ih_arg);
+				if ((*ih->ih_fun)(ih->ih_arg))
+					ih->ih_count.ec_count++;
 				ih = ih->ih_next;
 			}
 
@@ -981,9 +982,7 @@ ext_intr_openpic()
 			__asm__ volatile("":::"memory");
 			cpl = ocpl;
 			__asm__ volatile("":::"memory");
-#if 0
-			evirq[realirq].ev_count++;
-#endif
+
 			if (realirq >= PIC_OFFSET) {
 				openpic_eoi(0);
 				openpic_enable_irq(realirq, intrtype[irq]);
