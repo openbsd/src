@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.13 1998/04/26 21:40:50 deraadt Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.14 2000/04/05 21:54:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -65,9 +65,7 @@ static __inline size_t
 db_random(mod)
 	register size_t	mod;
 {
-	size_t	ret;
-	get_random_bytes(&ret, sizeof(ret));
-	return ret % mod;
+	return arc4random() % mod;
 }
 
 static __inline char *
