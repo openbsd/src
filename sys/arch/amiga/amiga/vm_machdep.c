@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 1997/09/09 11:27:26 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 1998/03/01 15:00:14 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -241,8 +241,8 @@ cpu_coredump(p, vp, cred, chdr)
 	int error;
 	struct md_core md_core;
 	struct coreseg cseg;
-	register struct user *up = p->p_addr;
-	register i;
+	struct user *up = p->p_addr;
+	int i;
 
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
