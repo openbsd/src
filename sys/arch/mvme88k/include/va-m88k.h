@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.5 2001/08/26 14:31:07 miod Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.6 2002/03/23 23:27:13 miod Exp $	*/
 
 /* This file has local changes by MOTOROLA
 Thu Sep  9 09:06:29 CDT 1993 Dale Rahn (drahn@pacific)
@@ -13,43 +13,37 @@ Thu Sep  9 09:06:29 CDT 1993 Dale Rahn (drahn@pacific)
 #ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST
 
-typedef struct
-{
-  int  __va_arg;		/* argument number */
-  int *__va_stk;		/* start of args passed on stack */
-  int *__va_reg;		/* start of args passed in regs */
-} __gnuc_va_list;
+typedef struct {
+	int  __va_arg;		/* argument number */
+	int *__va_stk;		/* start of args passed on stack */
+	int *__va_reg;		/* start of args passed in regs */
+} __va_list;
+
+typedef __va_list __gnuc_va_list;
+
 #endif /* not __GNUC_VA_LIST */
 
 /* If this is for internal libc use, don't define anything but
    __gnuc_va_list.  */
 #if defined (_STDARG_H) || defined (_VARARGS_H)
 
+#define __va_start_common(AP,FAKE) \
+    (AP) = *(__gnuc_va_list *)__builtin_saveregs();
+
 #ifdef _STDARG_H /* stdarg.h support */
 
-#define va_start(AP,LASTARG) ((AP) = *(__gnuc_va_list *)__builtin_saveregs())
+/* Calling __builtin_next_arg gives the proper error message if LASTARG is
+   not indeed the last argument.  */
+#define va_start(AP,LASTARG) \
+  (__builtin_next_arg (LASTARG), __va_start_common(AP, 0))
 
 #else /* varargs.h support */
 
-#define va_start(AP) ((AP) = *(__gnuc_va_list *)__builtin_saveregs())
+#define va_start(AP) __va_start_common (AP, 1)
 #define va_alist __va_1st_arg
-#define va_dcl register int va_alist;
+#define va_dcl register int va_alist; ...
 
 #endif /* _STDARG_H */
-
-/* Avoid trouble between this file and _int_varargs.h under DG/UX.  This file
-   can be included by <stdio.h> and others and provides definitions of
-   __va_size and __va_reg_p and  a va_list typedef.  Avoid defining va_list
-   again with _VA_LIST.  */
-#ifdef __INT_VARARGS_H
-#undef __va_size
-#undef __va_reg_p
-#define __gnuc_va_list va_list
-#define _VA_LIST
-#else
-/* Similarly, if this gets included first, do nothing in _int_varargs.h.  */
-#define __INT_VARARGS_H
-#endif
 
 #define __va_reg_p(TYPE) \
   (__builtin_classify_type(*(TYPE *)0) < 12 \

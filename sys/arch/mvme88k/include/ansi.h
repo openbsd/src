@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.12 2002/03/14 03:15:57 millert Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.13 2002/03/23 23:27:13 miod Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,13 +54,9 @@
 #define	_BSD_CLOCKID_T_	int
 #define	_BSD_TIMER_T_	int
 
-#if 0
-#define	_BSD_VA_LIST_	char *			/* va_list */
-#endif
+#include <machine/va-m88k.h>
 
-#include "va-m88k.h"
-
-#define _BSD_VA_LIST_	__gnuc_va_list
+#define _BSD_VA_LIST_	__va_list
 
 /*
  * Runes (wchar_t) is declared to be an ``int'' instead of the more natural
