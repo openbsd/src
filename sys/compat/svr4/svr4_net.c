@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_net.c,v 1.3 1996/02/26 23:31:59 niklas Exp $	 */
-/*	$NetBSD: svr4_net.c,v 1.6 1996/02/04 02:01:07 christos Exp $	 */
+/*	$OpenBSD: svr4_net.c,v 1.4 1996/04/17 05:24:19 mickey Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.8 1996/03/30 22:41:02 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -49,6 +49,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 
 #include <compat/svr4/svr4_types.h>
@@ -71,10 +72,10 @@ enum {
 
 int svr4_netattach __P((int));
 
-static int svr4_netclose __P((struct file *fp, struct proc *p));
+static int svr4_soo_close __P((struct file *fp, struct proc *p));
 
 static struct fileops svr4_netops = {
-	soo_read, soo_write, soo_ioctl, soo_select, svr4_netclose
+	soo_read, soo_write, soo_ioctl, soo_select, svr4_soo_close
 };
 
 
@@ -164,7 +165,7 @@ svr4_netopen(dev, flag, mode, p)
 }
 
 static int
-svr4_netclose(fp, p)
+svr4_soo_close(fp, p)
 	struct file *fp;
 	struct proc *p;
 {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_ioctl.c,v 1.3 1996/02/26 23:31:57 niklas Exp $	 */
-/*	$NetBSD: svr4_ioctl.c,v 1.14 1996/02/10 00:48:08 christos Exp $	 */
+/*	$OpenBSD: svr4_ioctl.c,v 1.4 1996/04/17 05:24:17 mickey Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.15 1996/03/30 22:37:57 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -131,7 +131,7 @@ svr4_sys_ioctl(p, v, retval)
 		return svr4_sockioctl(fp, cmd, SCARG(uap, data), p, retval);
 
 	default:
-		DPRINTF(("Unimplemented ioctl %x\n", cmd));
+		DPRINTF(("Unimplemented ioctl %lx\n", cmd));
 		return 0;	/* XXX: really ENOSYS */
 	}
 }

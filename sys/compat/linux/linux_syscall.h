@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_syscall.h,v 1.3 1996/04/17 05:24:05 mickey Exp $	*/
 /*
  * System call numbers.
  *

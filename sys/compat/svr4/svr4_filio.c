@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.3 1995/10/07 06:27:40 mycroft Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.4 1996/03/30 22:37:52 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -104,7 +104,7 @@ svr4_filioctl(fp, cmd, data, p, retval)
 		return copyout(&num, data, sizeof(num));
 
 	default:
-		DPRINTF(("Unknown svr4 filio %x\n", cmd));
+		DPRINTF(("Unknown svr4 filio %lx\n", cmd));
 		return 0;	/* ENOSYS really */
 	}
 }

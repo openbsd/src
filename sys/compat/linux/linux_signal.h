@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_signal.h,v 1.2 1996/04/17 05:24:00 mickey Exp $	*/
 /* 	$NetBSD: linux_signal.h,v 1.4 1995/08/27 20:51:51 fvdl Exp $	*/
 
 /*

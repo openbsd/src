@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_socketcall.h,v 1.2 1996/04/17 05:24:03 mickey Exp $	*/
 /*	$NetBSD: linux_socketcall.h,v 1.1 1995/02/28 23:26:05 fvdl Exp $	*/
 
 /*

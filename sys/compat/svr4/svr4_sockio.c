@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_sockio.c,v 1.2 1996/02/26 23:32:00 niklas Exp $	 */
-/*	$NetBSD: svr4_sockio.c,v 1.6 1996/02/09 23:12:20 christos Exp $	 */
+/*	$OpenBSD: svr4_sockio.c,v 1.3 1996/04/17 05:24:21 mickey Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.7 1996/03/30 22:38:14 christos Exp $	 */
 
 /*
  * Copyright (c) 1995 Christos Zoulas
@@ -135,7 +135,7 @@ svr4_sockioctl(fp, cmd, data, p, retval)
 
 
 	default:
-		DPRINTF(("Unknown svr4 sockio %x\n", cmd));
+		DPRINTF(("Unknown svr4 sockio %lx\n", cmd));
 		return 0;	/* ENOSYS really */
 	}
 }

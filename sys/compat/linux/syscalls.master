@@ -1,8 +1,9 @@
+	$OpenBSD: syscalls.master,v 1.4 1996/04/17 05:24:13 mickey Exp $
 	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
-; NetBSD COMPAT_LINUX system call name/number "master" file.
+; OpenBSD COMPAT_LINUX system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
 ;
 ; Fields: number type [type-dependent ...]

@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_misc.c,v 1.3 1996/02/26 23:31:57 niklas Exp $	 */
-/*	$NetBSD: svr4_misc.c,v 1.35 1996/02/10 17:12:31 christos Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.4 1996/04/17 05:24:18 mickey Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.36 1996/03/30 22:38:02 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -584,7 +584,7 @@ svr4_sys_break(p, v, retval)
 	new = round_page(SCARG(uap, nsize));
 	diff = new - old;
 
-	DPRINTF(("break(1): old %x new %x diff %x\n", old, new, diff));
+	DPRINTF(("break(1): old %lx new %lx diff %x\n", old, new, diff));
 
 	if (diff > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return ENOMEM;
@@ -594,7 +594,7 @@ svr4_sys_break(p, v, retval)
 		 vm->vm_dsize, ctob(vm->vm_dsize)));
 
 	diff = new - old;
-	DPRINTF(("break(3): old %x new %x diff %x\n", old, new, diff));
+	DPRINTF(("break(3): old %lx new %lx diff %x\n", old, new, diff));
 
 	if (diff > 0) {
 		rv = vm_allocate(&vm->vm_map, &old, diff, FALSE);
@@ -935,7 +935,7 @@ svr4_setinfo(p, st, s)
 			i.si_code = SVR4_CLD_KILLED;
 	}
 
-	DPRINTF(("siginfo [pid %d signo %d code %d errno %d status %d]\n",
+	DPRINTF(("siginfo [pid %ld signo %d code %d errno %d status %d]\n",
 		 i.si_pid, i.si_signo, i.si_code, i.si_errno, i.si_status));
 
 	return copyout(&i, s, sizeof(i));

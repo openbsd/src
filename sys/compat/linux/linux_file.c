@@ -1,4 +1,5 @@
-/*	$NetBSD: linux_file.c,v 1.13 1995/10/08 22:53:43 fvdl Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.2 1996/04/17 05:23:49 mickey Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.14 1996/04/05 00:01:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -54,6 +55,15 @@
 #include <compat/linux/linux_fcntl.h>
 #include <compat/linux/linux_util.h>
 
+#include <machine/linux_machdep.h>
+
+static int linux_to_bsd_ioflags __P((int));
+static int bsd_to_linux_ioflags __P((int));
+static void bsd_to_linux_flock __P((struct flock *, struct linux_flock *));
+static void linux_to_bsd_flock __P((struct linux_flock *, struct flock *));
+static void bsd_to_linux_stat __P((struct stat *, struct linux_stat *));
+static int linux_stat1 __P((struct proc *, void *, register_t *, int));
+
 /*
  * Some file-related calls are handled here. The usual flag conversion
  * an structure conversion is done, and alternate emul path searching.
@@ -64,7 +74,8 @@
  * of the flags used in open(2) and fcntl(2).
  */
 static int
-linux_to_bsd_ioflags(int lflags)
+linux_to_bsd_ioflags(lflags)
+	int lflags;
 {
 	int res = 0;
 
@@ -84,7 +95,8 @@ linux_to_bsd_ioflags(int lflags)
 }
 
 static int
-bsd_to_linux_ioflags(int bflags)
+bsd_to_linux_ioflags(bflags)
+	int bflags;
 {
 	int res = 0;
 
@@ -483,9 +495,9 @@ linux_sys_fstat(p, v, retval)
 }
 
 static int
-linux_stat1(p, uap, retval, dolstat)
+linux_stat1(p, v, retval, dolstat)
 	struct proc *p;
-	struct linux_sys_stat_args *uap;
+	void *v;
 	register_t *retval;
 	int dolstat;
 {
@@ -494,6 +506,7 @@ linux_stat1(p, uap, retval, dolstat)
 	struct stat *st, tmpst;
 	caddr_t sg;
 	int error;
+	struct linux_sys_stat_args *uap = v;
 
 	sg = stackgap_init(p->p_emul);
 

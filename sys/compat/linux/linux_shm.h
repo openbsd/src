@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_shm.h,v 1.2 1996/04/17 05:23:58 mickey Exp $	*/
 /*	$NetBSD: linux_shm.h,v 1.1 1995/02/28 23:25:57 fvdl Exp $	*/
 
 /*

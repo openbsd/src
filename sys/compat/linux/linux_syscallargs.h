@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_syscallargs.h,v 1.4 1996/04/17 05:24:06 mickey Exp $	*/
 /*
  * System call argument lists.
  *

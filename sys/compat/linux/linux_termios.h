@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_termios.h,v 1.2 1996/04/17 05:24:09 mickey Exp $	*/
 #define LINUX_TCGETS		_LINUX_IO('T', 1)
 #define LINUX_TCSETS		_LINUX_IO('T', 2)
 #define LINUX_TCSETSW		_LINUX_IO('T', 3)

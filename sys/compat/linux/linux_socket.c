@@ -1,4 +1,5 @@
-/*	$NetBSD: linux_socket.c,v 1.13 1996/03/08 04:56:05 mycroft Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.3 1996/04/17 05:24:01 mickey Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -70,6 +71,36 @@
  * calls to copy them in themselves. To make it look better, they
  * are copied to structures.
  */
+
+int linux_to_bsd_domain __P((int));
+int linux_socket __P((struct proc *, struct linux_socket_args *, register_t *));
+int linux_bind __P((struct proc *, struct linux_bind_args *, register_t *));
+int linux_connect __P((struct proc *, struct linux_connect_args *,
+    register_t *));
+int linux_listen __P((struct proc *, struct linux_listen_args *, register_t *));
+int linux_accept __P((struct proc *, struct linux_accept_args *, register_t *));
+int linux_getsockname __P((struct proc *, struct linux_getsockname_args *,
+    register_t *));
+int linux_getpeername __P((struct proc *, struct linux_getpeername_args *,
+    register_t *));
+int linux_socketpair __P((struct proc *, struct linux_socketpair_args *,
+    register_t *));
+int linux_send __P((struct proc *, struct linux_send_args *, register_t *));
+int linux_recv __P((struct proc *, struct linux_recv_args *, register_t *));
+int linux_sendto __P((struct proc *, struct linux_sendto_args *, register_t *));
+int linux_recvfrom __P((struct proc *, struct linux_recvfrom_args *,
+    register_t *));
+int linux_shutdown __P((struct proc *, struct linux_shutdown_args *,
+    register_t *));
+int linux_to_bsd_sopt_level __P((int));
+int linux_to_bsd_so_sockopt __P((int));
+int linux_to_bsd_ip_sockopt __P((int));
+int linux_to_bsd_tcp_sockopt __P((int));
+int linux_to_bsd_udp_sockopt __P((int));
+int linux_setsockopt __P((struct proc *, struct linux_setsockopt_args *,
+    register_t *));
+int linux_getsockopt __P((struct proc *, struct linux_getsockopt_args *,
+    register_t *));
 
 /*
  * Convert between Linux and BSD socket domain values

@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_msg.h,v 1.2 1996/04/17 05:23:56 mickey Exp $	*/
 /*	$NetBSD: linux_msg.h,v 1.2 1995/08/15 21:14:34 fvdl Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_mmap.h,v 1.2 1996/04/17 05:23:56 mickey Exp $	*/
 /*	$NetBSD: linux_mmap.h,v 1.1 1995/02/28 23:25:52 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Frank van der Linden

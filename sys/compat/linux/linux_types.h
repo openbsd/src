@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_types.h,v 1.2 1996/04/17 05:24:10 mickey Exp $	*/
 /*	$NetBSD: linux_types.h,v 1.4 1995/08/21 03:42:11 mycroft Exp $	*/
 
 /*

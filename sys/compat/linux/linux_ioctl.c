@@ -1,4 +1,5 @@
-/*	$NetBSD: linux_ioctl.c,v 1.13 1996/03/08 04:56:03 mycroft Exp $	*/
+/*	$OpenBSD: linux_ioctl.c,v 1.5 1996/04/17 05:23:50 mickey Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.14 1996/04/05 00:01:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -44,9 +45,9 @@
 #include <sys/syscallargs.h>
 
 #include <compat/linux/linux_types.h>
-#include <compat/linux/linux_ioctl.h>
 #include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
+#include <compat/linux/linux_ioctl.h>
 
 /*
  * Most ioctl command are just converted to their NetBSD values,

@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_ipccall.h,v 1.2 1996/04/17 05:23:54 mickey Exp $	*/
 /*	$NetBSD: linux_ipccall.h,v 1.2 1995/08/15 21:14:33 fvdl Exp $	*/
 
 /*

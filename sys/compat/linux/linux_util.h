@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_util.h,v 1.2 1996/04/17 05:24:11 mickey Exp $	*/
 /*	$NetBSD: linux_util.h,v 1.5 1995/06/24 20:20:42 christos Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_sockio.h,v 1.4 1996/04/17 05:24:04 mickey Exp $	*/
 /*	$NetBSD: linux_sockio.h,v 1.5 1996/03/08 04:56:07 mycroft Exp $	*/
 
 /*

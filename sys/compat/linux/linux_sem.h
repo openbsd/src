@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_sem.h,v 1.2 1996/04/17 05:23:57 mickey Exp $	*/
 /*	$NetBSD: linux_sem.h,v 1.1 1995/08/15 21:14:35 fvdl Exp $	*/
 
 /*

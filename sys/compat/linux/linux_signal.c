@@ -1,4 +1,5 @@
-/*	$NetBSD: linux_signal.c,v 1.9 1995/10/07 06:27:12 mycroft Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.2 1996/04/17 05:23:59 mickey Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -131,6 +132,13 @@ int linux_to_bsd_sig[] = {
 	0,
 };
 
+
+/* linux_signal.c */
+void linux_to_bsd_sigset __P((const linux_sigset_t *, sigset_t *));
+void bsd_to_linux_sigset __P((const sigset_t *, linux_sigset_t *));
+void linux_to_bsd_sigaction __P((struct linux_sigaction *, struct sigaction *));
+void bsd_to_linux_sigaction __P((struct sigaction *, struct linux_sigaction *));
+
 /*
  * Ok, we know that Linux and BSD signals both are just an unsigned int.
  * Don't bother to use the sigismember() stuff for now.
@@ -180,7 +188,7 @@ linux_to_bsd_sigaction(lsa, bsa)
 {
 
 	bsa->sa_handler = lsa->sa_handler;
-	linux_to_bsd_sigset(&bsa->sa_mask, &lsa->sa_mask);
+	linux_to_bsd_sigset(&lsa->sa_mask, &bsa->sa_mask);
 	bsa->sa_flags = 0;
 	if ((lsa->sa_flags & LINUX_SA_ONSTACK) != 0)
 		bsa->sa_flags |= SA_ONSTACK;
@@ -201,7 +209,7 @@ bsd_to_linux_sigaction(bsa, lsa)
 {
 
 	lsa->sa_handler = bsa->sa_handler;
-	bsd_to_linux_sigset(&lsa->sa_mask, &bsa->sa_mask);
+	bsd_to_linux_sigset(&bsa->sa_mask, &lsa->sa_mask);
 	lsa->sa_flags = 0;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
 		lsa->sa_flags |= LINUX_SA_NOCLDSTOP;
@@ -420,7 +428,7 @@ linux_sys_sigsetmask(p, v, retval)
 	bsd_to_linux_sigset(&p->p_sigmask, (linux_sigset_t *)retval);
 
 	mask = SCARG(uap, mask);
-	bsd_to_linux_sigset(&mask, &bsdsig);
+	bsd_to_linux_sigset(&bsdsig, &mask);
 
 	splhigh();
 	p->p_sigmask = bsdsig & ~sigcantmask;
@@ -459,8 +467,9 @@ linux_sys_sigsuspend(p, v, retval)
 		syscallarg(int) mask;
 	} */ *uap = v;
 	struct sys_sigsuspend_args sa;
+	linux_sigset_t mask = SCARG(uap, mask);
 
-	linux_to_bsd_sigset(&SCARG(uap, mask), &SCARG(&sa, mask));
+	linux_to_bsd_sigset(&mask, &SCARG(&sa, mask));
 	return sys_sigsuspend(p, &sa, retval);
 }
 

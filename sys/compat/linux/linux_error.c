@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_error.c,v 1.2 1996/04/17 05:23:45 mickey Exp $	*/
 /*	$NetBSD: linux_error.c,v 1.2 1995/04/22 19:48:32 christos Exp $	*/
 
 /*

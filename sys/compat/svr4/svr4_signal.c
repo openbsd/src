@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_signal.c,v 1.3 1996/02/26 23:31:59 niklas Exp $	 */
-/*	$NetBSD: svr4_signal.c,v 1.21 1996/02/09 23:12:18 christos Exp $	 */
+/*	$OpenBSD: svr4_signal.c,v 1.4 1996/04/17 05:24:20 mickey Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.23 1996/03/30 22:38:07 christos Exp $	 */
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -57,13 +57,13 @@
 #define	svr4_sigismember(s, n)	((s)->bits[svr4_sigword(n)] & svr4_sigmask(n))
 #define	svr4_sigaddset(s, n)	((s)->bits[svr4_sigword(n)] |= svr4_sigmask(n))
 
-static __inline int svr4_sigfillset __P((svr4_sigset_t *));
+static __inline void svr4_sigfillset __P((svr4_sigset_t *));
 void svr4_to_bsd_sigaction __P((const struct svr4_sigaction *,
 				struct sigaction *));
 void bsd_to_svr4_sigaction __P((const struct sigaction *,
 				struct svr4_sigaction *));
 
-static __inline int
+static __inline void
 svr4_sigfillset(s)
 	svr4_sigset_t *s;
 {
@@ -631,19 +631,19 @@ svr4_sys_context(p, v, retval)
 
 	switch (SCARG(uap, func)) {
 	case 0:
-		DPRINTF(("getcontext(%x)\n", SCARG(uap, uc)));
+		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
 		svr4_getcontext(p, &uc, p->p_sigmask,
 		    p->p_sigacts->ps_sigstk.ss_flags & SS_ONSTACK);
 		return copyout(&uc, SCARG(uap, uc), sizeof(uc));
 
 	case 1: 
-		DPRINTF(("setcontext(%x)\n", SCARG(uap, uc)));
+		DPRINTF(("setcontext(%p)\n", SCARG(uap, uc)));
 		if ((error = copyin(SCARG(uap, uc), &uc, sizeof(uc))) != 0)
 			return error;
 		return svr4_setcontext(p, &uc);
 
 	default:
-		DPRINTF(("context(%d, %x)\n", SCARG(uap, func),
+		DPRINTF(("context(%d, %p)\n", SCARG(uap, func),
 		    SCARG(uap, uc)));
 		return ENOSYS;
 	}

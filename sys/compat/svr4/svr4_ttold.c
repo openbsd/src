@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.7 1995/10/14 20:25:01 christos Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.8 1996/03/30 22:38:27 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -282,7 +282,7 @@ svr4_ttoldioctl(fp, cmd, data, p, retval)
 		}
 
 	default:
-		DPRINTF(("Unknown svr4 ttold %x\n", cmd));
+		DPRINTF(("Unknown svr4 ttold %lx\n", cmd));
 		return 0;	/* ENOSYS really */
 	}
 }

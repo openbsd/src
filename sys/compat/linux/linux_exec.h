@@ -1,3 +1,4 @@
+/*	$OpenBSD: linux_exec.h,v 1.2 1996/04/17 05:23:47 mickey Exp $	*/
 /*	$NetBSD: linux_exec.h,v 1.5 1995/10/07 06:27:01 mycroft Exp $	*/
 
 /*

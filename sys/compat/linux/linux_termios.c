@@ -1,4 +1,5 @@
-/*	$NetBSD: linux_termios.c,v 1.1 1996/03/08 04:56:08 mycroft Exp $	*/
+/*	$OpenBSD: linux_termios.c,v 1.2 1996/04/17 05:24:08 mickey Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -61,6 +62,16 @@ static int linux_spmasks[] = {
 	LINUX_B57600, LINUX_B115200, LINUX_B230400
 };
 
+
+static void linux_termio_to_bsd_termios __P((struct linux_termio *,
+					     struct termios *));
+static void bsd_termios_to_linux_termio __P((struct termios *,
+					     struct linux_termio *));
+static void linux_termios_to_bsd_termios __P((struct linux_termios *,
+					      struct termios *));
+static void bsd_termios_to_linux_termios __P((struct termios *,
+					      struct linux_termios *));
+
 /*
  * Deal with termio ioctl cruft. This doesn't look very good..
  * XXX too much code duplication, obviously..
@@ -71,7 +82,7 @@ static int linux_spmasks[] = {
  * values.
  */
 
-static int
+static void
 linux_termio_to_bsd_termios(lt, bts)
 	register struct linux_termio *lt;
 	register struct termios *bts;
@@ -154,7 +165,7 @@ linux_termio_to_bsd_termios(lt, bts)
 	bts->c_cc[VMIN] = lt->c_cc[LINUX_VMIN];
 }
 
-static int
+static void
 bsd_termios_to_linux_termio(bts, lt)
 	register struct termios *bts;
 	register struct linux_termio *lt;
@@ -240,7 +251,7 @@ bsd_termios_to_linux_termio(bts, lt)
 	lt->c_line = 0;
 }
 
-static int
+static void
 linux_termios_to_bsd_termios(lts, bts)
 	register struct linux_termios *lts;
 	register struct termios *bts;
@@ -328,7 +339,7 @@ linux_termios_to_bsd_termios(lts, bts)
 	bts->c_cc[VREPRINT] = lts->c_cc[LINUX_VREPRINT];
 }
 
-static int
+static void
 bsd_termios_to_linux_termios(bts, lts)
 	register struct termios *bts;
 	register struct linux_termios *lts;
