@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.21 1999/10/05 22:08:07 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.22 1999/11/10 14:00:54 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.21 1999/10/05 22:08:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.22 1999/11/10 14:00:54 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2109,7 +2109,7 @@ ParseSkipLine(skip)
 
     buf = Buf_Init(MAKE_BSIZE);
 
-    do {
+    for (;;) {
         Buf_Discard(buf, lineLength);
         lastc = '\0';
 
@@ -2129,16 +2129,22 @@ ParseSkipLine(skip)
             lastc = c;
         }
 
+        Buf_AddByte(buf, (Byte)'\0');
+        line = (char *)Buf_GetAll(buf, &lineLength);
+        lineno++;
+	    /* allow for non-newline terminated lines while skipping */
+	if (line[0] == '.')
+	    break;
+
         if (c == EOF) {
             Parse_Error(PARSE_FATAL, "Unclosed conditional/for loop");
             Buf_Destroy(buf, TRUE);
             return((char *)NULL);
         }
+	if (skip == 0)
+	    break;
 
-        lineno++;
-        Buf_AddByte(buf, (Byte)'\0');
-        line = (char *)Buf_GetAll(buf, &lineLength);
-    } while (skip == 1 && line[0] != '.');
+    }
 
     Buf_Destroy(buf, FALSE);
     return line;
