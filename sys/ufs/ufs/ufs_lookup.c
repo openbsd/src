@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.14 2001/02/27 09:47:55 art Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.15 2001/02/27 09:52:56 art Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ ufs_lookup(v)
 	 */
 	bmask = VFSTOUFS(vdp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
-	    dp->i_diroff > dp->i_ffs_size) {
+	    dp->i_diroff >= dp->i_ffs_size) {
 		entryoffsetinblock = 0;
 		dp->i_offset = 0;
 		numdirpasses = 1;
@@ -472,9 +472,9 @@ found:
 	 * Check that directory length properly reflects presence
 	 * of this entry.
 	 */
-	if (entryoffsetinblock + DIRSIZ(FSFMT(vdp), ep) > dp->i_ffs_size) {
+	if (dp->i_offset + DIRSIZ(FSFMT(vdp), ep) > dp->i_ffs_size) {
 		ufs_dirbad(dp, dp->i_offset, "i_ffs_size too small");
-		dp->i_ffs_size = entryoffsetinblock + DIRSIZ(FSFMT(vdp), ep);
+		dp->i_ffs_size = dp->i_offset + DIRSIZ(FSFMT(vdp), ep);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	brelse(bp);
