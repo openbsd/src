@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.19 1997/07/25 04:29:00 mickey Exp $	*/
+/*	$OpenBSD: route.c,v 1.20 1997/07/28 18:56:03 kstailey Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.19 1997/07/25 04:29:00 mickey Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.20 1997/07/28 18:56:03 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -223,7 +223,7 @@ pr_rthdr()
 
 	if (Aflag)
 		printf("%-*.*s ", PLEN, PLEN, "Address");
-	printf("%-*.*s %-*.*s %-6.6s  %6.6s%16.16s %6.6s  %s\n",
+	printf("%-*.*s %-*.*s %-6.6s  %6.6s  %6.6s %6.6s  %s\n",
 		WID_DST, WID_DST, "Destination",
 		WID_GW, WID_GW, "Gateway",
 		"Flags", "Refs", "Use", "Mtu", "Interface");
