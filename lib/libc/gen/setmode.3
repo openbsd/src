@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setmode.3,v 1.9 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: setmode.3,v 1.10 2004/07/02 13:58:06 otto Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,10 @@ The
 function may fail and set
 .Va errno
 for any of the errors specified for the library routine
-.Xr malloc 3 .
+.Xr malloc 3
+or to
+.Er ERANGE 
+if an invalid octal value was specified.
 .Sh SEE ALSO
 .Xr chmod 1 ,
 .Xr stat 2 ,

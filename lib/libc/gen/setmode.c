@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.14 2004/07/01 07:28:01 otto Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.15 2004/07/02 13:58:06 otto Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.14 2004/07/01 07:28:01 otto Exp $";
+static char rcsid[] = "$OpenBSD: setmode.c,v 1.15 2004/07/02 13:58:06 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,8 +84,8 @@ static void	 dumpmode(BITCMD *);
 mode_t
 getmode(const void *bbox, mode_t omode)
 {
-	register const BITCMD *set;
-	register mode_t clrval, newmode, value;
+	const BITCMD *set;
+	mode_t clrval, newmode, value;
 
 	set = (const BITCMD *)bbox;
 	newmode = omode;
@@ -151,13 +151,11 @@ common:			if (set->cmd2 & CMD2_CLR) {
 
 #define	ADDCMD(a, b, c, d)						\
 	if (set >= endset) {						\
-		register BITCMD *newset;				\
+		BITCMD *newset;						\
 		setlen += SET_LEN_INCR;					\
 		newset = realloc(saveset, sizeof(BITCMD) * setlen);	\
-		if (!newset) {						\
-			if (saveset)					\
-				free(saveset);				\
-			saveset = NULL;					\
+		if (newset == NULL) {					\
+			free(saveset);					\
 			return (NULL);					\
 		}							\
 		set = newset + (set - saveset);				\
@@ -171,13 +169,13 @@ common:			if (set->cmd2 & CMD2_CLR) {
 void *
 setmode(const char *p)
 {
-	register int perm, who;
-	register char op;
+	int perm, who;
+	char op, *ep;
 	BITCMD *set, *saveset, *endset;
 	sigset_t sigset, sigoset;
 	mode_t mask;
 	int equalopdone, permXbits, setlen;
-	long perml;
+	u_long perml;
 
 	if (!*p)
 		return (NULL);
@@ -206,17 +204,14 @@ setmode(const char *p)
 	 * or illegal bits.
 	 */
 	if (isdigit(*p)) {
-		perml = strtol(p, NULL, 8);
-		if (perml < 0 || (perml & ~(STANDARD_BITS|S_ISTXT))) {
+		perml = strtoul(p, &ep, 8);
+		/* The test on perml will also catch overflow. */
+		if (*ep != '\0' || (perml & ~(STANDARD_BITS|S_ISTXT))) {
+			errno = ERANGE;
 			free(saveset);
 			return (NULL);
 		}
 		perm = (mode_t)perml;
-		while (*++p)
-			if (*p < '0' || *p > '7') {
-				free(saveset);
-				return (NULL);
-			}
 		ADDCMD('=', (STANDARD_BITS|S_ISTXT), perm, mask);
 		set->cmd = 0;
 		return (saveset);
@@ -413,8 +408,8 @@ dumpmode(BITCMD *set)
 static void
 compress_mode(BITCMD *set)
 {
-	register BITCMD *nset;
-	register int setbits, clrbits, Xbits, op;
+	BITCMD *nset;
+	int setbits, clrbits, Xbits, op;
 
 	for (nset = set;;) {
 		/* Copy over any 'u', 'g' and 'o' commands. */
