@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.49 2001/12/31 16:48:36 mickey Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.50 2002/01/06 21:56:12 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -731,6 +731,7 @@ main(int argc, char *argv[])
 			break;
 		case 'x':
 			debugopt = optarg;
+			mode = O_RDWR;
 			break;
 		case 'h':
 		default:
