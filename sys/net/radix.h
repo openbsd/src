@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.h,v 1.2 1996/03/03 21:07:15 niklas Exp $	*/
+/*	$OpenBSD: radix.h,v 1.3 1996/09/05 08:42:34 mickey Exp $	*/
 /*	$NetBSD: radix.h,v 1.8 1996/02/13 22:00:37 christos Exp $	*/
 
 /*
@@ -145,7 +145,9 @@ struct radix_node_head {
 #define Bzero(p, n) bzero((caddr_t)(p), (unsigned)(n));
 #define R_Malloc(p, t, n) (p = (t) malloc((unsigned long)(n), M_RTABLE, M_DONTWAIT))
 #define Free(p) free((caddr_t)p, M_RTABLE);
+#endif /* !_KERNEL */
 
+#if defined(_KERNEL) || defined(_ROUTED)
 void	 rn_init __P((void));
 int	 rn_inithead __P((void **, int));
 int	 rn_refines __P((void *, void *));
@@ -163,6 +165,6 @@ struct radix_node
 	 *rn_newpair __P((void *, int, struct radix_node[2])),
 	 *rn_search __P((void *, struct radix_node *)),
 	 *rn_search_m __P((void *, struct radix_node *, void *));
-#endif /* !_KERNEL */
+#endif /* define(_KERNEL) || defined(_ROUTED) */
 
 #endif /* !_NET_RADIX_H_ */

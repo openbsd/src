@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.3 1996/04/21 22:28:43 deraadt Exp $	*/
+/*	$OpenBSD: radix.c,v 1.4 1996/09/05 08:42:32 mickey Exp $	*/
 /*	$NetBSD: radix.c,v 1.11 1996/03/16 23:55:36 christos Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ rn_search(v_arg, head)
 			x = x->rn_l;
 	}
 	return (x);
-};
+}
 
 struct radix_node *
 rn_search_m(v_arg, head, m_arg)
@@ -134,7 +134,7 @@ rn_search_m(v_arg, head, m_arg)
 			x = x->rn_l;
 	}
 	return x;
-};
+}
 
 int
 rn_refines(m_arg, n_arg)
@@ -303,7 +303,7 @@ on1:
 		}
 	} while (t != top);
 	return 0;
-};
+}
 		
 #ifdef RN_DEBUG
 int	rn_nodenum;
