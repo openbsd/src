@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.17 1995/10/02 09:41:06 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.18 1996/02/10 23:12:46 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -170,7 +170,10 @@ pmap_bootstrap(nextpa, firstpa)
 	if (nextpa > high[0]) {
 		printf("Failure in BSD boot.  nextpa=0x%x, high[0]=0x%x.\n",
 			nextpa, high[0]);
-		panic("You're hosed!\n");
+		printf("You're hosed!  Try booting with 32-bit addressing ");
+		printf("enabled in the memory control panel.\n");
+		printf("Older machines may need Mode32 to get that option.\n");
+		panic("Cannot work with the current memory mappings.\n");
 	}
 
 	/*
