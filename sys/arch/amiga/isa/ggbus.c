@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.12 1998/03/01 12:53:43 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.13 1999/01/19 10:04:54 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -75,6 +75,7 @@ void	ggbus_attach_hook __P((struct device *, struct device *,
 void	*ggbus_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *, char *));
 void	ggbus_intr_disestablish __P((void *, void *));
+int	ggbus_intr_check __P((void *, int, int));
 
 struct cfattach ggbus_ca = {
 	sizeof(struct ggbus_softc), ggbusmatch, ggbusattach
@@ -135,6 +136,7 @@ ggbusattach(parent, self, aux)
 	sc->sc_ic.ic_attach_hook = ggbus_attach_hook;
 	sc->sc_ic.ic_intr_establish = ggbus_intr_establish;
 	sc->sc_ic.ic_intr_disestablish = ggbus_intr_disestablish;
+	sc->sc_ic.ic_intr_check = ggbus_intr_check;
 
 	iba.iba_busname = "isa";
 	iba.iba_iot = &sc->sc_iot;
@@ -246,20 +248,27 @@ ggbus_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("ggbus_intr_establish: can't malloc handler info");
+	if (ih == NULL) {
+		printf("ggbus_intr_establish: can't malloc handler info");
+		return (NULL);
+	}
 
-	if (irq > ICU_LEN || type == IST_NONE)
-		panic("ggbus_intr_establish: bogus irq or type");
+	if (irq > ICU_LEN || type == IST_NONE) {
+		printf("ggbus_intr_establish: bogus irq or type");
+		return (NULL);
+	}
 
 	switch (sc->sc_intrsharetype[irq]) {
+	case IST_NONE:
+		sc->sc_intrsharetype[irq] = type;
+		break;
 	case IST_EDGE:
 	case IST_LEVEL:
 		if (type == sc->sc_intrsharetype[irq])
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE)
-			panic("ggbus_intr_establish: can't share %s with %s",
+			printf("ggbus_intr_establish: can't share %s with %s",
 			    isa_intr_typename(sc->sc_intrsharetype[irq]),
 			    isa_intr_typename(type));
 		break;
@@ -323,4 +332,15 @@ ggbus_intr_disestablish(ic, arg)
 
 	if (sc->sc_intrsharetype[irq] == NULL)
 		sc->sc_intrsharetype[irq] = IST_NONE;
+}
+
+int
+ggbus_intr_check(ic, irq, type)
+	void *ic;
+	int irq;
+	int type;
+{
+	struct ggbus_softc *sc = (struct ggbus_softc *)ic;
+
+	return (__isa_intr_check(irq, type, sc->sc_intrsharetype));
 }

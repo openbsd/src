@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.3 1998/06/29 05:47:37 downsj Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.4 1999/01/19 10:04:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Niklas Hallqvist
@@ -47,7 +47,10 @@ struct amiga_isa_chipset {
 	void	*(*ic_intr_establish) __P((void *, int, int, int,
 		    int (*)(void *), void *, char *));
 	void	(*ic_intr_disestablish) __P((void *, void *));
+	int	(*ic_intr_check) __P((void *, int, int));
 };
+
+int	__isa_intr_check __P((int, int, int *));
 
 /*
  * Functions provided to machine-independent ISA code.
@@ -58,7 +61,7 @@ struct amiga_isa_chipset {
     (*(c)->ic_intr_establish)((c)->ic_data, (i), (t), (l), (f), (a), (w))
 #define	isa_intr_disestablish(c, h)					\
     (*(c)->ic_intr_disestablish)((c)->ic_data, (h))
-
-#define __NO_ISA_INTR_CHECK	/* FIXME */
+#define	isa_intr_check(c, i, t)						\
+    (*(c)->ic_intr_check)((c)->ic_data, (i), (t))
 
 #endif

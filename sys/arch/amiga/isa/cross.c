@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.12 1998/03/01 12:53:44 niklas Exp $	*/
+/*	$OpenBSD: cross.c,v 1.13 1999/01/19 10:04:54 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -76,6 +76,7 @@ void	cross_attach_hook __P((struct device *, struct device *,
 void	*cross_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *, char *));
 void	cross_intr_disestablish __P((void *, void *));
+int	cross_intr_check __P((void *, int, int));
 
 int	cross_pager_get_pages __P((vm_pager_t, vm_page_t *, int, boolean_t));
 
@@ -146,6 +147,7 @@ crossattach(parent, self, aux)
 	sc->sc_ic.ic_attach_hook = cross_attach_hook;
 	sc->sc_ic.ic_intr_establish = cross_intr_establish;
 	sc->sc_ic.ic_intr_disestablish = cross_intr_disestablish;
+	sc->sc_ic.ic_intr_check = cross_intr_check;
 
 	sc->sc_pager.pg_ops = &crosspagerops;
 	sc->sc_pager.pg_type = PG_DFLT;
@@ -326,20 +328,27 @@ cross_intr_establish(ic, irq, type, level, ih_fun, ih_arg, ih_what)
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("cross_intr_establish: can't malloc handler info");
+	if (ih == NULL) {
+		printf("cross_intr_establish: can't malloc handler info");
+		return (NULL);
+	}
 
-	if (irq > ICU_LEN || type == IST_NONE)
-		panic("cross_intr_establish: bogus irq or type");
+	if (irq > ICU_LEN || type == IST_NONE) {
+		printf("cross_intr_establish: bogus irq or type");
+		return (NULL);
+	}
 
 	switch (sc->sc_intrsharetype[irq]) {
+	case IST_NONE:
+		sc->sc_intrsharetype[irq] = type;
+		break;
 	case IST_EDGE:
 	case IST_LEVEL:
 		if (type == sc->sc_intrsharetype[irq])
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE)
-			panic("cross_intr_establish: can't share %s with %s",
+			printf("cross_intr_establish: can't share %s with %s",
 			    isa_intr_typename(sc->sc_intrsharetype[irq]),
 			    isa_intr_typename(type));
 		break;
@@ -436,7 +445,8 @@ cross_pager_get_pages(pager, mlist, npages, sync)
 		vm_page_free(*mlist);
 
 		/* generate A13-A19 for correct page */
-		*CROSS_HANDLE_TO_XLP_LATCH((bus_space_handle_t)sc->sc_zargs.va) =
+		*CROSS_HANDLE_TO_XLP_LATCH(
+		    (bus_space_handle_t)sc->sc_zargs.va) =
 		    object->paging_offset >> 13 | CROSS_SBHE;
 
 		vm_page_rename(&sc->sc_page[i], object, offset);
@@ -447,4 +457,15 @@ cross_pager_get_pages(pager, mlist, npages, sync)
 		mlist++;
 	}
 	return (VM_PAGER_OK);
+}
+
+int
+cross_intr_check(ic, irq, type)
+	void *ic;
+	int irq;
+	int type;
+{
+	struct cross_softc *sc = (struct cross_softc *)ic;
+
+	return (__isa_intr_check(irq, type, sc->sc_intrsharetype));
 }
