@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_si.c,v 1.2 1995/11/17 23:27:52 gwr Exp $	*/
+/*	$NetBSD: ncr_si.c,v 1.3 1996/01/01 22:51:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -93,13 +93,8 @@
 
 #define DEBUG XXX
 
-#if 0	/* XXX - not yet... */
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
-#else
-#include "ncr5380reg.h"
-#include "ncr5380var.h"
-#endif
 
 #include "ncr_sireg.h"
 #include "am9516.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.1 1995/07/08 21:30:43 pk Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.2 1996/01/01 22:24:35 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -48,27 +48,50 @@
  */
 
 /*
- * Register map
+ * Register map:  Note not declared here anymore!
+ * All the 5380 registers are accessed through individual
+ * pointers initialized by MD code.  This allows the 5380
+ * MI functions to be shared between MD drivers that have
+ * different padding between the registers (i.e. amiga).
  */
-typedef struct {
-	volatile unsigned char	sci_data;	/* r:  Current data */
-#define			sci_odata sci_data	/* w:  Out data */
-	volatile unsigned char	sci_icmd;	/* rw: Initiator command */
-	volatile unsigned char	sci_mode;	/* rw: Mode */
-	volatile unsigned char	sci_tcmd;	/* rw: Target command */
-	volatile unsigned char	sci_bus_csr;	/* r:  Bus Status */
-#define			sci_sel_enb sci_bus_csr	/* w:  Select enable */
-	volatile unsigned char	sci_csr;	/* r:  Status */
-#define			sci_dma_send sci_csr	/* w:  Start dma send data */
-	volatile unsigned char	sci_idata;	/* r:  Input data */
-#define			sci_trecv sci_idata	/* w:  Start dma receive, target */
-	volatile unsigned char	sci_iack;	/* r:  Interrupt Acknowledge  */
-#define			sci_irecv sci_iack	/* w:  Start dma receive, initiator */
-} sci_regmap_t;
+#if 0	/* example only */
+struct ncr5380regs {
+	volatile u_char sci_r0;
+	volatile u_char sci_r1;
+	volatile u_char sci_r2;
+	volatile u_char sci_r3;
+	volatile u_char sci_r4;
+	volatile u_char sci_r5;
+	volatile u_char sci_r6;
+	volatile u_char sci_r7;
+};
+#endif
+
+/*
+ * Machine-independent code uses these names:
+ */
+#define	sci_data	sci_r0	/* r:  Current data */
+#define	sci_odata	sci_r0	/* w:  Out data */
+
+#define	sci_icmd	sci_r1	/* rw: Initiator command */
+#define	sci_mode	sci_r2	/* rw: Mode */
+#define	sci_tcmd	sci_r3	/* rw: Target command */
+
+#define	sci_bus_csr	sci_r4	/* r:  Bus Status */
+#define sci_sel_enb sci_r4	/* w:  Select enable */
+
+#define	sci_csr 	 sci_r5	/* r:  Status */
+#define sci_dma_send sci_r5	/* w:  Start dma send data */
+
+#define	sci_idata	sci_r6	/* r:  Input data */
+#define	sci_trecv	sci_r6	/* w:  Start dma receive, target */
+
+#define	sci_iack	sci_r7	/* r:  Interrupt Acknowledge  */
+#define sci_irecv	sci_r7	/* w:  Start dma receive, initiator */
 
 
 /*
- * Initiator command register
+ * R1: Initiator command register
  */
 #define SCI_ICMD_DATA		0x01		/* rw: Assert data bus   */
 #define SCI_ICMD_ATN		0x02		/* rw: Assert ATN signal */
@@ -80,10 +103,12 @@ typedef struct {
 #define SCI_ICMD_AIP		0x40		/* r:  Arbitration in progress */
 #define SCI_ICMD_TEST	SCI_ICMD_AIP		/* w:  Test mode */
 #define SCI_ICMD_RST		0x80		/* rw: Assert RST signal */
+/* Bits to keep when doing read/modify/write (leave out RST) */
+#define SCI_ICMD_RMASK		0x1F
 
 
 /*
- * Mode register
+ * R2: Mode register
  */
 #define SCI_MODE_ARB		0x01		/* rw: Start arbitration */
 #define SCI_MODE_DMA		0x02		/* rw: Enable DMA xfers */
@@ -92,11 +117,11 @@ typedef struct {
 #define SCI_MODE_PERR_IE	0x10		/* rw: Interrupt on parity errors */
 #define SCI_MODE_PAR_CHK	0x20		/* rw: Check parity */
 #define SCI_MODE_TARGET		0x40		/* rw: Target mode (Initiator if 0) */
-#define SCI_MODE_BLOCKDMA	0x80		/* rw: Block-mode DMA handshake (MBZ) */
+#define SCI_MODE_BLOCKDMA	0x80		/* rw: Block-mode DMA handshake */
 
 
 /*
- * Target command register
+ * R3: Target command register
  */
 #define SCI_TCMD_IO		0x01		/* rw: Assert I/O signal */
 #define SCI_TCMD_CD		0x02		/* rw: Assert C/D signal */
@@ -106,10 +131,10 @@ typedef struct {
 #define	SCI_TCMD_LAST_SENT	0x80		/* ro: Last byte was xferred
 						 *     (not on 5380/1) */
 
-#define	SCI_PHASE(x)		((x)&0x7)
+#define	SCI_TCMD_PHASE(x)		((x) & 0x7)
 
 /*
- * Current (SCSI) Bus status
+ * R4: Current (SCSI) Bus status (.sci_bus_csr)
  */
 #define SCI_BUS_DBP		0x01		/* r:  Data Bus parity */
 #define SCI_BUS_SEL		0x02		/* r:  SEL signal */
@@ -120,10 +145,10 @@ typedef struct {
 #define SCI_BUS_BSY		0x40		/* r:  BSY signal */
 #define SCI_BUS_RST		0x80		/* r:  RST signal */
 
-#define	SCI_CUR_PHASE(x)	SCI_PHASE((x)>>2)
+#define	SCI_BUS_PHASE(x)	(((x) >> 2) & 7)
 
 /*
- * Bus and Status register
+ * R5: Bus and Status register (.sci_csr)
  */
 #define SCI_CSR_ACK		0x01		/* r:  ACK signal */
 #define SCI_CSR_ATN		0x02		/* r:  ATN signal */

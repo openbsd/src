@@ -1,4 +1,4 @@
-/*	$NetBSD: sireg.h,v 1.2 1995/09/03 22:21:29 pk Exp $	*/
+/*	$NetBSD: sireg.h,v 1.3 1996/01/01 22:40:58 thorpej Exp $	*/
 
 /*
  * Register map for the Sun3 SCSI Interface (si)
@@ -8,81 +8,93 @@
  * one for the OBIO interface (3/50,3/60) and one for the
  * VME interface (3/160,3/260,etc.), where some registers
  * are implemented only on one or the other, some on both.
+ *
+ * Modified for Sun 4 systems by Jason R. Thorpe <thorpej@NetBSD.ORG>.
  */
 
 /*
- * Some of these registers apply to only one interface and some
- * apply to both. The registers which apply to the Sun3/50 onboard 
- * version only are udc_rdata and udc_raddr. The registers which
- * apply to the Sun3 vme version only are dma_addr, dma_count, bpr,
- * iv_am, and bcrh. Thus, the sbc registers, fifo_data, bcr, and csr 
- * apply to both interfaces.
- * One other feature of the vme interface: a write to the dma count 
- * register also causes a write to the fifo byte count register and
- * vis versa.
+ * Note that the obio version on the 4/1xx (the so-called "SCSI Weird", or
+ * "sw" controller) is laid out a bit differently, and hence the evilness
+ * with unions.  Also, the "sw" doesn't appear to have a FIFO.
  */
 
+/*
+ * Am5380 Register map (no padding)
+ */
+struct ncr5380regs {
+	volatile u_char sci_r0;
+	volatile u_char sci_r1;
+	volatile u_char sci_r2;
+	volatile u_char sci_r3;
+	volatile u_char sci_r4;
+	volatile u_char sci_r5;
+	volatile u_char sci_r6;
+	volatile u_char sci_r7;
+};
+
 struct si_regs {
-	sci_regmap_t sci;	/* See ncr5380.h */
+	struct ncr5380regs sci;
+
 	/* DMA controller registers */
 	union {
-		u_short		_Dma_addrh;	/* dma address (VME only) */
-		u_short		_Dma_addrl;	/* (high word, low word)  */
+		struct {
+			u_short	_Dma_addrh;	/* dma address (VME only) */
+			u_short	_Dma_addrl;	/* (high word, low word)  */
+		} _si_u1_s;
 		u_int		_Dma_addr;	/* dma address (OBIO) */
 	} _si_u1;
-#define dma_addrh	_si_u1._Dma_addrh
-#define dma_addrl	_si_u1._Dma_addrl
+#define dma_addrh	_si_u1._si_u1_s._Dma_addrh
+#define dma_addrl	_si_u1._si_u1_s._Dma_addrl
 #define dma_addr	_si_u1._Dma_addr
 
 	union {
-		u_short		_Dma_counth;	/* dma count   (VME only) */
-		u_short		_Dma_countl;	/* (high word, low word)  */
+		struct {
+			u_short	_Dma_counth;	/* dma count   (VME only) */
+			u_short	_Dma_countl;	/* (high word, low word)  */
+		} _si_u2_s;
 		u_int		_Dma_count;	/* dma count (OBIO) */
 	} _si_u2;
-#define dma_counth	_si_u2._Dma_counth
-#define dma_countl	_si_u2._Dma_countl
+#define dma_counth	_si_u2._si_u2_s._Dma_counth
+#define dma_countl	_si_u2._si_u2_s._Dma_countl
 #define dma_count	_si_u2._Dma_count
 
-	union {
-		u_short		_Udc_data;	/* Am9516 data reg (OBIO si) */
-		u_short		_Udc_addr;	/* Am9516 addr reg (OBIO si) */
-		u_int		_Sw_bcr;	/* non-existent sw bcr */
-	} _si_u3;
-#define udc_data	_si_u3._Udc_data
-#define udc_addr	_si_u3._Udc_addr
-#define sw_bcr		_si_u3._Sw_bcr
+	u_int		si_pad0;		/* no-existent register */
 
 	union {
-		u_short		_Fifo_data;	/* fifo data register */
-		u_short		_Fifo_count;	/* fifo count register */
+		struct {
+			u_short	_Fifo_data;	/* fifo data register */
+			u_short	_Fifo_count;	/* fifo count register */
+		} _si_u4_s;
 		u_int		_Sw_csr;	/* sw control/status */
 	} _si_u4;
-#define fifo_data	_si_u4._Fifo_data
-#define fifo_count	_si_u4._Fifo_count
+#define fifo_data	_si_u4._si_u4_s._Fifo_data
+#define fifo_count	_si_u4._si_u4_s._Fifo_count
 #define sw_csr		_si_u4._Sw_csr
 
 	union {
-		u_short		_Si_csr;	/* si control/status */
-		u_short		_Bprh;		/* VME byte pack high */
-		u_int		_Bpr;		/* sw byte pack */
+		struct {
+			u_short	_Si_csr;	/* si control/status */
+			u_short	_Bprh;		/* VME byte pack high */
+		} _si_u5_s;
+		u_int	_Bpr;			/* sw byte pack */
 	} _si_u5;
-#define si_csr		_si_u5._Si_csr
-#define bprh		_si_u5._Bprh
-#define bpr		_si_u5._Bpr
+#define si_csr		_si_u5._si_u5_s._Si_csr
+#define si_bprh		_si_u5._si_u5_s._Bprh
+#define sw_bpr		_si_u5._Bpr
 
 	/* The rest of these are on the VME interface only: */
-	u_short			bprl;		/* VME byte pack low */
-	u_short			iv_am;		/* bits 0-7: intr vector */
-						/* bits 8-13: addr modifier */
+	u_short			si_bprl;	/* VME byte pack low */
+	u_short			si_iv_am;	/* bits 0-7: intr vector */
+				/* bits 8-13: addr modifier (VME only) */
 						/* bits 14-15: unused */
-	u_short			bcrh;		/* high portion of bcr */
+	u_short			fifo_cnt_hi;	/* high part of fifo_count (VME only) */
+
+	/* Whole thing repeats after 32 bytes. */
+	u_short			_space[3];
 };
 
-/* possible values for the address modifier, sun3 vme version only */
+/* possible values for the address modifier, vme version only */
 #define VME_SUPV_DATA_24	0x3d00
-
-/* XXX - must massage dvma addresses for Sun3/50 hardware (?) */
-#define DVMA_OFFSET		(int)(DVMA - (char *)KERNELBASE)
 
 /*
  * Status Register.
@@ -108,27 +120,8 @@ struct si_regs {
 #define SI_CSR_LOB_ONE		0x0040	/* (r,v) one leftover byte */
 #define SI_CSR_BPCON		0x0020	/* (rw,v) byte packing control */
 					/* dma is in 0=longwords, 1=words */
-#define SI_CSR_DMA_EN		0x0010	/* (rw,v) dma enable */
+#define SI_CSR_DMA_EN		0x0010	/* (rw,v) dma/interrupt enable */
 #define SI_CSR_SEND		0x0008	/* (rw,b) dma dir, 1=to device */
 #define SI_CSR_INTR_EN		0x0004	/* (rw,b) interrupts enable */
 #define SI_CSR_FIFO_RES		0x0002	/* (rw,b) inits fifo, 0=reset */
 #define SI_CSR_SCSI_RES		0x0001	/* (rw,b) reset sbc and udc, 0=reset */
-
-#define SCSI_PHASE_DATA_OUT	0x0
-#define SCSI_PHASE_DATA_IN	0x1
-#define SCSI_PHASE_CMD		0x2
-#define SCSI_PHASE_STATUS	0x3
-#define SCSI_PHASE_UNSPEC1	0x4
-#define SCSI_PHASE_UNSPEC2	0x5
-#define SCSI_PHASE_MESSAGE_OUT	0x6
-#define SCSI_PHASE_MESSAGE_IN	0x7
-
-/*#define SCSI_PHASE(x)	((x)&0x7)*/
-
-/* These should be fixed up. */
-
-#define SCSI_RET_SUCCESS	0
-#define SCSI_RET_RETRY		1
-#define SCSI_RET_DEVICE_DOWN	2
-#define SCSI_RET_COMMAND_FAIL	3
-#define SCSI_RET_NEED_RESET 	4

@@ -118,9 +118,9 @@ xyc0	at vmes0 addr 0xffffee40 level 3 vect 0x48
 xyc1	at vmes0 addr 0xffffee48 level 3 vect 0x49
 xy*	at xyc? drive ?
 
-si0	at vmes0 addr 0xff200000 level 2 vect 0x40
-si1	at vmes0 addr 0xff204000 level 2 vect 0x41
-sw0	at obio0 addr 0x0a000000 level 2
+si0	at vmes0 addr 0xff200000 level 3 vect 0x40
+si1	at vmes0 addr 0xff204000 level 3 vect 0x41
+sw0	at obio0 addr 0x0a000000 level 3
 
 #bwtwo0	at sbus? slot ? offset ?
 #bwtwo*	at sbus? slot ? offset ?

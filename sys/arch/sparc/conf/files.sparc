@@ -98,9 +98,9 @@ device	xy at xyc: disk
 file	arch/sparc/dev/xy.c		xy needs-flag
 major	{ xy = 3 }
 
-device	si at vmes: scsi
-device	sw at obio: scsi
-file	arch/sparc/dev/si.c		si sw needs-flag
+device	si at vmes: scsi, ncr5380sbc
+device	sw at obio: scsi, ncr5380sbc
+file	arch/sparc/dev/si.c		si sw
 
 pseudo-device	kbd
 

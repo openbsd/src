@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.15 1995/10/30 21:15:40 gwr Exp $
+#	$NetBSD: files.sun3,v 1.16 1996/01/01 22:48:55 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -94,9 +94,6 @@ file arch/sun3/dev/if_le_subr.c		le
 
 device si at obio, vmes: scsi
 file	arch/sun3/dev/si.c		si
-
-define ncr5380sbc
-file	arch/sun3/dev/ncr5380sbc.c 	ncr5380sbc
 
 device ncr_si at obio, vmes: scsi, ncr5380sbc
 file	arch/sun3/dev/ncr_si.c  	ncr_si

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.70 1995/11/25 00:37:39 cgd Exp $
+#	$NetBSD: files,v 1.71 1996/01/01 22:27:08 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -15,12 +15,15 @@ define	audio
 define	mulaw
 
 # net device attributes - we have generic code for arc(net), ether(net),
-# and fddi.  "pdq" is a DEC FDDI chipset, which is interfaced to several
-# busses and needs to be defined here (EISA, PCI, TC).
+# and fddi.
 define	arc
 define	ether
 define	fddi
-define	pdq
+
+# "Chipset" attributes.  These are the machine-independent portions
+# of device drivers.
+define	pdq		# DEC FDDI chipset
+define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
@@ -60,6 +63,7 @@ file ddb/db_watch.c			ddb
 file ddb/db_write_cmd.c			ddb
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
+file dev/ic/ncr5380sbc.c		ncr5380sbc
 file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
 file dev/mulaw.c			mulaw
