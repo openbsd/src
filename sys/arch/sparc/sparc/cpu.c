@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.13 1998/03/09 09:15:32 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.14 1998/04/17 18:18:04 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -75,8 +75,9 @@
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[100];
+char	cpu_model[130];
 char	cpu_hotfix[40];
+extern char mainbus_model[];		/* from autoconf.c */
 
 /* The CPU configuration driver. */
 void cpu_attach __P((struct device *, struct device *, void *));
@@ -168,6 +169,7 @@ cpu_attach(parent, self, aux)
 	register char *fpuname;
 	struct confargs *ca = aux;
 	char fpbuf[40];
+	char model[100];
 
 	sc->node = node = ca->ca_ra.ra_node;
 
@@ -205,9 +207,11 @@ cpu_attach(parent, self, aux)
 	}
 	/* XXX - multi-processor: take care of `cpu_model' and `foundfpu' */
 
-	sprintf(cpu_model, "%s @ %s MHz, %s FPU", sc->cpu_name,
+	sprintf(model, "%s @ %s MHz, %s FPU", sc->cpu_name,
 	    clockfreq(sc->hz), fpuname);
-	printf(": %s", cpu_model);
+	printf(": %s", model);
+	sprintf(cpu_model, "%s, %s", mainbus_model, model);
+
 	if (cpu_hotfix[0])
 		printf("; %s", cpu_hotfix);
 	printf("\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 1998/03/25 07:54:57 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.28 1998/04/17 18:18:02 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -124,6 +124,7 @@ static	void bootpath_build __P((void));
 static	void bootpath_fake __P((struct bootpath *, char *));
 static	void bootpath_print __P((struct bootpath *));
 int	search_prom __P((int, char *));
+char	mainbus_model[30];
 
 /*
  * The mountroot_hook is provided as a mechanism for devices to perform
@@ -1128,9 +1129,10 @@ mainbus_attach(parent, dev, aux)
 #endif
 
 	if (CPU_ISSUN4)
-		printf(": SUN-4/%d series\n", cpuinfo.classlvl);
+		sprintf(mainbus_model, "SUN-4/%d series", cpuinfo.classlvl);
 	else
-		printf(": %s\n", getpropstring(ca->ca_ra.ra_node, "name"));
+		strcat(mainbus_model, getpropstring(ca->ca_ra.ra_node, "name"));
+	printf(": %s\n", mainbus_model);
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be

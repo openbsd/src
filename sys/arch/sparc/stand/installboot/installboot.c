@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.1 1997/09/17 10:46:21 downsj Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.2 1998/04/17 18:18:06 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.1 1997/06/01 03:39:45 mrg Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ int32_t	*block_size_p;		/* filesystem block size */
 int32_t	max_block_count;
 
 char	*karch;
-char	cpumodel[100];
+char	cpumodel[130];
 
 int	isofsblk = 0;
 int	isofseblk = 0;
@@ -156,7 +156,7 @@ main(argc, argv)
 	}
 
 	if (strcmp(karch, "sun4") == 0) {
-		hflag = 1;
+		hflag = 0;
 	} else if (strcmp(karch, "sun4c") == 0) {
 		hflag = 1;
 	} else if (strcmp(karch, "sun4m") == 0) {
