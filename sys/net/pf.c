@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.68 2001/06/27 01:57:17 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.69 2001/06/27 02:10:17 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -450,8 +450,8 @@ purge_expired_states(void)
 	struct pf_tree_key key;
 	struct pf_state *cur, *next;
 
-	cur = TAILQ_FIRST(&pf_states);
-	while (cur != NULL) {
+	for (cur = TAILQ_FIRST(&pf_states); cur != NULL; cur = next) {
+		next = TAILQ_NEXT(cur, entries);
 		if (cur->expire <= pftv.tv_sec) {
 			key.proto = cur->proto;
 			key.addr[0] = cur->lan.addr;
@@ -474,14 +474,12 @@ purge_expired_states(void)
 			tree_remove(&tree_ext_gwy, &key);
 			if (find_state(tree_ext_gwy, &key) != NULL)
 				printf("pf: ERROR! remove failed\n");
-			next = TAILQ_NEXT(cur, entries);
 			TAILQ_REMOVE(&pf_states, cur, entries);
 			pool_put(&pf_state_pl, cur);
 			cur = next;
 			pf_status.state_removals++;
 			pf_status.states--;
-		} else
-			cur = TAILQ_NEXT(cur, entries);
+		}
 	}
 }
 
@@ -803,11 +801,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		pn->nr = 0;
 		s = splsoftnet();
-		nat = TAILQ_FIRST(pf_nats_active);
-		while (nat != NULL) {
+		TAILQ_FOREACH(nat, pf_nats_active, entries)
 			pn->nr++;
-			nat = TAILQ_NEXT(nat, entries);
-		}
 		pn->ticket = ticket_nats_active;
 		splx(s);
 		break;
@@ -907,11 +902,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		pr->nr = 0;
 		s = splsoftnet();
-		rdr = TAILQ_FIRST(pf_rdrs_active);
-		while (rdr != NULL) {
+		TAILQ_FOREACH(rdr, pf_rdrs_active, entries)
 			pr->nr++;
-			rdr = TAILQ_NEXT(rdr, entries);
-		}
 		pr->ticket = ticket_rdrs_active;
 		splx(s);
 		break;
@@ -944,12 +936,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCCLRSTATES: {
-		struct pf_state *state = TAILQ_FIRST(&pf_states);
+		struct pf_state *state;
 		s = splsoftnet();
-		while (state != NULL) {
+		TAILQ_FOREACH(state, &pf_states, entries)
 			state->expire = 0;
-			state = TAILQ_NEXT(state, entries);
-		}
 		purge_expired_states();
 		splx(s);
 		break;
@@ -1415,8 +1405,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		}
 	}
 
-	r = TAILQ_FIRST(pf_rules_active);
-	while (r != NULL) {
+	TAILQ_FOREACH(r, pf_rules_active, entries) {
 		if ((r->direction == direction) &&
 		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
 		    (!r->proto || (r->proto == IPPROTO_UDP)) &&
@@ -1432,7 +1421,6 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			if (r->quick)
 				break;
 		}
-		r = TAILQ_NEXT(r, entries);
 	}
 
 	if (rm != NULL) {
@@ -1529,8 +1517,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		}
 	}
 
-	r = TAILQ_FIRST(pf_rules_active);
-	while (r != NULL) {
+	TAILQ_FOREACH(r, pf_rules_active, entries) {
 		if ((r->direction == direction) &&
 		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
 		    (!r->proto || (r->proto == IPPROTO_ICMP)) &&
@@ -1544,7 +1531,6 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			if (r->quick)
 				break;
 		}
-		r = TAILQ_NEXT(r, entries);
 	}
 
 	if (rm != NULL) {
