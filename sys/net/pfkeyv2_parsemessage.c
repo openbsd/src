@@ -43,7 +43,8 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #define BITMAP_IDENTITY_DST            (1 << SADB_EXT_IDENTITY_DST)
 #define BITMAP_SENSITIVITY             (1 << SADB_EXT_SENSITIVITY)
 #define BITMAP_PROPOSAL                (1 << SADB_EXT_PROPOSAL)
-#define BITMAP_SUPPORTED               (1 << SADB_EXT_SUPPORTED)
+#define BITMAP_SUPPORTED_AUTH          (1 << SADB_EXT_SUPPORTED_AUTH)
+#define BITMAP_SUPPORTED_ENCRYPT       (1 << SADB_EXT_SUPPORTED_ENCRYPT)
 #define BITMAP_SPIRANGE                (1 << SADB_EXT_SPIRANGE)
 #define BITMAP_LIFETIME (BITMAP_LIFETIME_CURRENT | BITMAP_LIFETIME_HARD | BITMAP_LIFETIME_SOFT)
 #define BITMAP_ADDRESS (BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_ADDRESS_PROXY)
@@ -149,7 +150,7 @@ uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
   /* ACQUIRE */
   BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL,
   /* REGISTER */
-  BITMAP_SUPPORTED,
+  BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT,
   /* EXPIRE */
   BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS,
   /* FLUSH */
@@ -185,7 +186,7 @@ uint32_t sadb_exts_required_out[SADB_MAX+1] =
   /* ACQUIRE */
   0,
   /* REGISTER */
-  BITMAP_SUPPORTED,
+  BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT,
   /* EXPIRE */
   BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
   /* FLUSH */
@@ -491,7 +492,8 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	  }
 	}
         break;
-      case SADB_EXT_SUPPORTED:
+      case SADB_EXT_SUPPORTED_AUTH:
+      case SADB_EXT_SUPPORTED_ENCRYPT:
 	{
 	  struct sadb_supported *sadb_supported = (struct sadb_supported *)p;
 	  int j;
@@ -502,24 +504,15 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	  if (sadb_supported->sadb_supported_reserved)
 	    return EINVAL;
 
-	  if (i != ((sadb_supported->sadb_supported_nauth +
-		     sadb_supported->sadb_supported_nencrypt) *
-		    sizeof(struct sadb_alg)) + sizeof(struct sadb_supported))
-	    return EINVAL;
-
 	  {
 	    struct sadb_alg *sadb_alg = (struct sadb_alg *)(p + sizeof(struct sadb_supported));
-	    for (j = 0; j < sadb_supported->sadb_supported_nauth; j++) {
-	      if (sadb_alg->sadb_alg_type > SADB_AALG_MAX)
-		return EINVAL;
+	    int max_alg;
 
-	      if (sadb_alg->sadb_alg_reserved)
-		return EINVAL;
+	    max_alg = sadb_ext->sadb_ext_type == SADB_EXT_SUPPORTED_AUTH ?
+		    SADB_AALG_MAX : SADB_EALG_MAX;
 
-	      sadb_alg++;
-	    }
-	    for (j = 0; j < sadb_supported->sadb_supported_nencrypt; j++) {
-	      if (sadb_alg->sadb_alg_type > SADB_EALG_MAX)
+	    for (j = 0; j < sadb_supported->sadb_supported_len - 1; j++) {
+	      if (sadb_alg->sadb_alg_id > max_alg)
 		return EINVAL;
 
 	      if (sadb_alg->sadb_alg_reserved)

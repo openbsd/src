@@ -130,13 +130,11 @@ struct sadb_comb {
 struct sadb_supported {
   uint16_t sadb_supported_len;
   uint16_t sadb_supported_exttype;
-  uint8_t sadb_supported_nauth;
-  uint8_t sadb_supported_nencrypt;
-  uint16_t sadb_supported_reserved;
+  uint32_t sadb_supported_reserved;
 };
 
 struct sadb_alg {
-  uint8_t sadb_alg_type;
+  uint8_t sadb_alg_id;
   uint8_t sadb_alg_ivlen;
   uint16_t sadb_alg_minbits;
   uint16_t sadb_alg_maxbits;
@@ -183,18 +181,19 @@ struct sadb_policy {
 #define SADB_EXT_IDENTITY_DST         11
 #define SADB_EXT_SENSITIVITY          12
 #define SADB_EXT_PROPOSAL             13
-#define SADB_EXT_SUPPORTED            14
-#define SADB_EXT_SPIRANGE             15
-#define SADB_X_EXT_SRC_MASK           16
-#define SADB_X_EXT_DST_MASK           17
-#define SADB_X_EXT_PROTOCOL           18
-#define SADB_X_EXT_FLOW_TYPE          19
-#define SADB_X_EXT_SRC_FLOW           20
-#define SADB_X_EXT_DST_FLOW           21
-#define SADB_X_EXT_SA2                22
-#define SADB_X_EXT_DST2               23
-#define SADB_X_EXT_POLICY             24
-#define SADB_EXT_MAX                  24
+#define SADB_EXT_SUPPORTED_AUTH	      14
+#define SADB_EXT_SUPPORTED_ENCRYPT    15
+#define SADB_EXT_SPIRANGE             16
+#define SADB_X_EXT_SRC_MASK           17
+#define SADB_X_EXT_DST_MASK           18
+#define SADB_X_EXT_PROTOCOL           19
+#define SADB_X_EXT_FLOW_TYPE          20
+#define SADB_X_EXT_SRC_FLOW           21
+#define SADB_X_EXT_DST_FLOW           22
+#define SADB_X_EXT_SA2                23
+#define SADB_X_EXT_DST2               24
+#define SADB_X_EXT_POLICY             25
+#define SADB_EXT_MAX                  25
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0

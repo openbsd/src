@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.51 2000/11/17 05:08:14 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.52 2000/12/14 18:07:29 provos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -1515,7 +1515,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    pfkeyv2_socket->flags |= PFKEYV2_SOCKETFLAGS_REGISTERED;
 	    nregistered++;
 
-	    i = sizeof(struct sadb_supported) + sizeof(ealgs) + sizeof(aalgs);
+	    i = sizeof(struct sadb_supported) + sizeof(ealgs);
 
 	    if (!(freeme = malloc(i, M_PFKEY, M_DONTWAIT)))
 	    {
@@ -1523,6 +1523,27 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		goto ret;
 	    }
       
+	    bzero(freeme, i);
+
+	    ssup = (struct sadb_supported *) freeme;
+	    ssup->sadb_supported_len = i / sizeof(uint64_t);
+
+	    {
+		void *p = freeme + sizeof(struct sadb_supported);
+
+		bcopy(&ealgs[0], p, sizeof(ealgs));
+	    }
+
+	    headers[SADB_EXT_SUPPORTED_ENCRYPT] = freeme;
+
+	    i = sizeof(struct sadb_supported) + sizeof(aalgs);
+
+	    if (!(freeme = malloc(i, M_PFKEY, M_DONTWAIT)))
+	    {
+		rval = ENOMEM;
+		goto ret;
+	    }
+
 	    /* Keep track what this socket has registered for */
 	    pfkeyv2_socket->registration |= (1 << ((struct sadb_msg *)message)->sadb_msg_satype);
       
@@ -1530,21 +1551,16 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    ssup = (struct sadb_supported *) freeme;
 	    ssup->sadb_supported_len = i / sizeof(uint64_t);
-	    ssup->sadb_supported_nauth = sizeof(aalgs) /
-					 sizeof(struct sadb_alg);
-	    ssup->sadb_supported_nencrypt = sizeof(ealgs) /
-					    sizeof(struct sadb_alg);
 
 	    {
 		void *p = freeme + sizeof(struct sadb_supported);
 
 		bcopy(&aalgs[0], p, sizeof(aalgs));
-		p += sizeof(aalgs);
-		bcopy(&ealgs[0], p, sizeof(ealgs));
 	    }
 
-	     headers[SADB_EXT_SUPPORTED] = freeme;
-	     break;
+	    headers[SADB_EXT_SUPPORTED_AUTH] = freeme;
+
+	    break;
 
 	case SADB_ACQUIRE:
 	case SADB_EXPIRE:
