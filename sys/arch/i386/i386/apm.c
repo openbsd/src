@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.4 1997/01/02 12:24:35 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.5 1997/07/08 02:52:25 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -225,7 +225,7 @@ struct apmregs *regs;
 		}
 	else if (apm_minver >= 1) {
 		if (BATT_FLAGS(regs) & APM_BATT_FLAG_NOBATTERY)
-			printf(" no battery");
+			printf(" no battery\n");
 		else {
 			if (BATT_FLAGS(regs) & APM_BATT_FLAG_HIGH)
 				printf(" high");
@@ -235,13 +235,13 @@ struct apmregs *regs;
 				printf(" critical");
 			if (BATT_FLAGS(regs) & APM_BATT_FLAG_CHARGING)
 				printf(" charging");
+			printf("\n");
+			if (BATT_REM_VALID(regs))
+				printf("%s: estimated %d:%02d minutes\n",
+				       sc->sc_dev.dv_xname,
+				       BATT_REMAINING(regs) / 60,
+				       BATT_REMAINING(regs)%60);
 		}
-		printf("\n");
-		if (BATT_REM_VALID(regs))
-			printf("%s: estimated %d:%02d minutes\n",
-			       sc->sc_dev.dv_xname,
-			       BATT_REMAINING(regs) / 60,
-			       BATT_REMAINING(regs)%60);
 	}
 	return;
 }
@@ -487,7 +487,7 @@ void
 apm_cpu_busy()
 {
 	struct apmregs regs;
-	if (!apminited)
+	if (!apminited || !apmidleon)
 	    return;
 	if ((apminfo.apm_detail & APM_IDLE_SLOWS) &&
 	    apmcall(APM_CPU_BUSY, &regs) != 0)
