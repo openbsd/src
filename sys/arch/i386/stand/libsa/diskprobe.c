@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.16 1999/05/20 12:56:40 aaron Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.17 1999/10/03 20:37:25 ho Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -107,6 +107,7 @@ hardprobe()
 	/* Hard disks */
 	for(i = 0x80; i < 0x88; i++) {
 		dip = alloc(sizeof(struct diskinfo));
+		bzero(dip, sizeof(*dip));
 
 		if(bios_getdiskinfo(i, &dip->bios_info)) {
 #ifdef BIOS_DEBUG
