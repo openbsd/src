@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.165 1999/07/24 19:45:18 jason Exp 
+ *	OpenBSD: pcidevs,v 1.166 1999/07/24 23:44:05 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1186,6 +1186,9 @@
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
 #define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (EPIC/100) */
+
+/* Sony products */
+#define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire */
 
 /* STB products */
 #define	PCI_PRODUCT_STB2_RIVA128	0x0018		/* Velocity128 */
