@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nlist.c,v 1.4 1996/07/31 16:51:51 deraadt Exp $";
+static char *rcsid = "$Id: nlist.c,v 1.5 1996/07/31 17:21:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -229,7 +229,7 @@ badread(nr, p)
 	badfmt(p);
 }
 
-#endif
+#endif /* DO_AOUT */
 
 #ifdef DO_ELF
 int
