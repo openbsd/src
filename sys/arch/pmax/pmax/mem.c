@@ -1,3 +1,4 @@
+/*	$OpenBSD: mem.c,v 1.9 2000/07/04 05:46:23 maja Exp $	*/
 /*	$NetBSD: mem.c,v 1.7 1995/09/29 21:53:29 jonathan Exp $	*/
 
 /*
@@ -129,8 +130,9 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (v < MIPS_KSEG0_START)
 				return (EFAULT);
-			if (v + c > MIPS_PHYS_TO_KSEG0(avail_end +
-							sizeof (struct msgbuf)) &&
+			if (v + c > MIPS_PHYS_TO_KSEG0(avail_end) &&
+			   !((caddr_t)v >= (caddr_t)msgbufp &&
+			     (caddr_t)v <  (caddr_t)msgbufp+MSGBUFSIZE) &&
 			    (v < MIPS_KSEG2_START ||
 			    !kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
