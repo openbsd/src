@@ -61,7 +61,9 @@ _dl_lookup_symbol (const char *undef_name, const Elf32_Sym **ref,
     {
       Elf32_Addr a;
       const Elf32_Sym *s;
-    } weak_value = { 0, NULL };
+    } weak_value; /* = { 0, NULL }; breaks GCC 2.8 due to implicit memset */
+
+  _dl_memset (&weak_value, 0, sizeof (weak_value));
 
   /* Search the relevant loaded objects for a definition.  */
   for (map = symbol_scope; map; map = map->next)
