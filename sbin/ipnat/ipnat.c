@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipnat.c,v 1.19 1998/01/26 04:13:49 dgregor Exp $    */
+/*    $OpenBSD: ipnat.c,v 1.20 1998/02/24 04:03:38 dgregor Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -55,7 +55,7 @@
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.19 1998/01/26 04:13:49 dgregor Exp $";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.20 1998/02/24 04:03:38 dgregor Exp $";
 #endif
 
 
@@ -66,14 +66,14 @@ static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.19 1998/01/26 04:13:49 dgregor
 extern	char	*optarg;
 
 ipnat_t	*parse __P((char *));
-u_long	hostnum __P((char *, int *));
-u_long	hostmask __P((char *));
+u_int	hostnum __P((char *, int *));
+u_int	hostmask __P((char *));
 u_short	portnum __P((char *, char *));
 void	dostats __P((int, int)), flushtable __P((int, int));
 void	printnat __P((ipnat_t *, int, void *));
 void	parsefile __P((int, char *, int));
 void	usage __P((char *));
-int	countbits __P((u_long));
+int	countbits __P((u_int));
 char	*getnattype __P((ipnat_t *));
 int	main __P((int, char*[]));
 
@@ -154,9 +154,9 @@ char *argv[];
  * of bits.
  */
 int	countbits(ip)
-u_long	ip;
+u_int	ip;
 {
-	u_long	ipn;
+	u_int	ipn;
 	int	cnt = 0, i, j;
 
 	ip = ipn = ntohl(ip);
@@ -234,7 +234,7 @@ void *ptr;
 		else
 			printf("%s", inet_ntoa(np->in_in[1]));
 		printf(" -> %s/", inet_ntoa(np->in_out[0]));
-		bits = countbits(ntohl(np->in_out[1].s_addr));
+		bits = countbits(np->in_out[1].s_addr);
 		if (bits != -1)
 			printf("%d ", bits);
 		else
@@ -409,18 +409,18 @@ char	*name, *proto;
 }
 
 
-u_long	hostmask(msk)
+u_int	hostmask(msk)
 char	*msk;
 {
 	int	bits = -1;
-	u_long	mask;
+	u_int	mask;
 
 	if (!isdigit(*msk))
-		return (u_long)-1;
+		return (u_int)-1;
 	if (strchr(msk, '.'))
 		return inet_addr(msk);
 	if (strchr(msk, 'x'))
-		return (u_long)strtol(msk, NULL, 0);
+		return (u_int)strtol(msk, NULL, 0);
 	/*
 	 * set x most significant bits
 	 */
@@ -432,12 +432,73 @@ char	*msk;
 	return mask;
 }
 
+/* 
+ * get_if_addr(): given a string containing an interface name (e.g. "ppp0")
+ *		  return the IP address it represents as an unsigned int
+ */
+u_int	if_addr(name)
+char	*name;
+{
+	struct ifconf ifc;
+	struct ifreq ifreq, *ifr;
+	char *inbuf = NULL;
+	int s, i, len = 8192;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		warn("socket");
+		return INADDR_NONE;
+	}
+	
+	while (1) {
+		ifc.ifc_len = len;
+		ifc.ifc_buf = inbuf = realloc(inbuf, len);
+		if (inbuf == NULL)
+			err(1, "malloc");
+		if (ioctl(s, SIOCGIFCONF, &ifc) < 0) {
+			warn("SIOCGIFCONF");
+			goto if_addr_lose;
+		}
+		if (ifc.ifc_len + sizeof(ifreq) < len)
+			break;
+		len *= 2;
+	}
+	ifr = ifc.ifc_req;
+	ifreq.ifr_name[0] = '\0';
+	for (i = 0; i < ifc.ifc_len; ) {
+		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
+		i += sizeof(ifr->ifr_name) +
+			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
+				? ifr->ifr_addr.sa_len
+				: sizeof(struct sockaddr));
+		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
+			     sizeof(ifr->ifr_name)))
+			continue;
+		ifreq = *ifr;
+		if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0) {
+			warn("SIOCGIFADDR");
+			goto if_addr_lose;
+		}
+		if (ifr->ifr_addr.sa_family != AF_INET)
+			continue;
+		if (!strcmp(name, ifr->ifr_name)) {
+			struct sockaddr_in *sin;
+			close(s);
+			free(inbuf);
+			sin = (struct sockaddr_in *)&ifr->ifr_addr;
+			return (sin->sin_addr.s_addr);
+		}
+	}
+if_addr_lose:
+	close(s);
+	free(inbuf);
+	return INADDR_NONE;
+}
 
 /*
- * returns an ip address as a long var as a result of either a DNS lookup or
+ * returns an ip address as an int var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-u_long	hostnum(host, resolved)
+u_int	hostnum(host, resolved)
 char	*host;
 int	*resolved;
 {
@@ -452,6 +513,9 @@ int	*resolved;
 
 	if (!(hp = gethostbyname(host))) {
 		if (!(np = getnetbyname(host))) {
+			u_int addr;
+			if ((addr = if_addr(host)) != INADDR_NONE)
+				return addr;
 			*resolved = -1;
 			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
