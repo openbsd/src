@@ -2505,7 +2505,7 @@ sparc-*-openbsd*)
 	;;
 sparc64-*-openbsd*)
 	tm_file="sparc/openbsd64.h exec-stack.h"
-	xm_file=sparc/xm-sp64.h
+	xm_file=sparc/xm-openbsd64.h
 	gas=yes gnu_ld=yes
 	;;
 sparc-*-bsd*)
