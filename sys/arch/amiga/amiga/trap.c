@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.9 1997/01/18 12:42:02 niklas Exp $	*/
-/*	$NetBSD: trap.c,v 1.52 1996/11/13 06:22:20 thorpej Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 1997/01/19 13:53:12 niklas Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 1997/01/16 15:30:57 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -183,7 +183,7 @@ void trapmmufault __P((int, u_int, u_int, struct frame *, struct proc *,
 void trap __P((int, u_int, u_int, struct frame));
 #ifdef DDB
 #include <m68k/db_machdep.h>
-int kdb_trap __P((int, struct mc68020_saved_state *));
+int kdb_trap __P((int, db_regs_t *));
 #endif
 void syscall __P((register_t, struct frame));
 void child_return __P((struct proc *, struct frame));

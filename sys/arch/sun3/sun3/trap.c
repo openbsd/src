@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.8 1997/01/16 04:04:34 kstailey Exp $	*/
-/*	$NetBSD: trap.c,v 1.62 1996/12/17 21:35:31 gwr Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 1997/01/19 13:53:13 niklas Exp $	*/
+/*	$NetBSD: trap.c,v 1.63 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -244,8 +244,7 @@ trap(type, code, v, frame)
 			goto kgdb_cont;
 #endif
 #ifdef	DDB
-		/* XXX - Yuck!  Make DDB use "struct trapframe" instead! */
-		(void) kdb_trap(type, (struct mc68020_saved_state *) &frame);
+		(void) kdb_trap(type, (db_regs_t *) &frame);
 #endif
 #ifdef KGDB
 	kgdb_cont:

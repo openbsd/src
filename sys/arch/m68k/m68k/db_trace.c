@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_trace.c,v 1.6 1997/01/13 11:51:13 niklas Exp $	*/
-/*	$NetBSD: db_trace.c,v 1.16 1996/04/29 20:50:29 leo Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 1997/01/19 13:53:11 niklas Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.17 1997/01/15 23:11:48 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -112,7 +112,7 @@ struct stackpos {
 static void findentry __P((struct stackpos *));
 static void findregs __P((struct stackpos *, db_addr_t));
 static int  nextframe __P((struct stackpos *, int));
-static void stacktop __P((struct mc68020_saved_state *, struct stackpos *));
+static void stacktop __P((db_regs_t *, struct stackpos *));
 
 
 #define FR_SAVFP	0
@@ -122,7 +122,7 @@ static void stacktop __P((struct mc68020_saved_state *, struct stackpos *));
 
 static void
 stacktop(regs, sp)
-	register struct mc68020_saved_state *regs;
+	register db_regs_t *regs;
 	register struct stackpos *sp;
 {
 	sp->k_regloc[0]  = (int) &regs->d0;
@@ -505,10 +505,10 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		 * Only have user register state.
 		 */
 		register pcb_t	t_pcb;
-		register struct mc68020_saved_state *user_regs;
+		register db_regs_t *user_regs;
 		
 		t_pcb = (pcb_t) get(&th->pcb, 0);
-		user_regs = (struct mc68020_saved_state *)
+		user_regs = (db_regs_t *)
 		get(&t_pcb->user_regs, 0);
 		
 		stacktop(user_regs, &pos);

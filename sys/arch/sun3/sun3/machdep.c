@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 1997/01/16 08:08:40 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 1997/01/19 13:53:14 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -1094,8 +1094,7 @@ straytrap(frame)
 	printf("unexpected trap; vector offset 0x%x from 0x%x\n",
 		frame.tf_vector, frame.tf_pc);
 #ifdef	DDB
-	/* XXX - Yuck!  Make DDB use "struct trapframe" instead! */
-	kdb_trap(-1, (struct mc68020_saved_state *) &frame);
+	kdb_trap(-1, (db_regs_t *) &frame);
 #endif
 }
 
