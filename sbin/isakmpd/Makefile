@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.26 2000/04/07 22:06:28 niklas Exp $
-#	$EOM: Makefile,v 1.68 2000/04/07 20:02:41 niklas Exp $
+#	$OpenBSD: Makefile,v 1.27 2000/05/02 14:36:37 niklas Exp $
+#	$EOM: Makefile,v 1.71 2000/05/02 10:31:01 niklas Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -126,6 +126,10 @@ SUBDIR=		apps
 .if ${FEATURES} != ""
 FEATURES_UC!=	echo ${FEATURES} | tr '[:lower:]' '[:upper:]'
 CFLAGS+=	${FEATURES_UC:S/^/-DUSE_/}
+.endif
+
+.if make(install)
+SUBDIR+=	samples
 .endif
 
 .if !make(install) && !defined(NO_REGRESS)
