@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 1997/11/04 13:22:25 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 1998/03/26 02:26:22 millert Exp $
 
 MAN=		binutils/ar.1 binutils/nm.1 \
 		binutils/objcopy.1 binutils/objdump.1 binutils/ranlib.1 \
@@ -44,7 +44,8 @@ maninstall:
 
 install: maninstall
 	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
-		bindir=${DESTDIR}/usr/bin INSTALL_MAN= install
+		bindir=${DESTDIR}/usr/bin INSTALL_MAN= SUBDIRS="${SUBDIRS}" \
+		install
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
