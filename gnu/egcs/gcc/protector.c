@@ -912,6 +912,9 @@ arrange_var_order (block)
     
   while (block)
     {
+      /* arrange the location of character arrays in depth first.  */
+      arrange_var_order (BLOCK_SUBBLOCKS (block));
+
       types = BLOCK_VARS (block);
 
       while (types)
@@ -968,8 +971,6 @@ arrange_var_order (block)
 
 	  types = TREE_CHAIN(types);
 	}
-
-      arrange_var_order (BLOCK_SUBBLOCKS (block));
 
       block = BLOCK_CHAIN (block);
     }
