@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.51 2003/08/20 23:33:36 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.52 2003/09/26 00:10:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -773,6 +773,8 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0, int flags)
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+		/* XXX as we later can only flush by pa -- flush now */
+		fdcache(HPPA_SID_KERNEL, (vaddr_t)m->m_data, m->m_len);
 		error = _bus_dmamap_load_buffer(NULL, map, m->m_data, m->m_len,
 		    NULL, flags, &lastaddr, &seg, first);
 		first = 0;
@@ -780,6 +782,7 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0, int flags)
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_va = 0;	/* means sync by pa */
 	}
 
 	return (error);
@@ -870,14 +873,35 @@ mbus_dmamap_load_raw(void *v, bus_dmamap_t map, bus_dma_segment_t *segs,
 }
 
 void
-mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
+mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t off, bus_size_t len,
     int ops)
 {
-	/*
-	 * cannot use purge since the data for dma is not
-	 * guarantied to be aligned in any way
-	 */
-	fdcache(HPPA_SID_KERNEL, map->_dm_va + offset, len);
+	if ((off + len) > map->_dm_size)
+		len = map->_dm_size - off;
+
+	if (map->_dm_va) {
+		/*
+		 * cannot use purge since the data for dma is not
+		 * guarantied to be aligned in any way
+		 */
+		fdcache(HPPA_SID_KERNEL, map->_dm_va + off, len);
+	} else {
+		/* this is an mbuf chain thus flush by segs */
+		bus_dma_segment_t *ps = map->dm_segs,
+		    *es = &map->dm_segs[map->dm_nsegs];
+
+		for (; len && ps < es; ps++)
+			if (off > ps->ds_len)
+				off -= ps->ds_len;
+			else {
+				bus_size_t l = ps->ds_len - off;
+				if (l > len)
+					l = len;
+				fdcache(HPPA_SID_KERNEL, ps->ds_addr + off, l);
+				len -= l;
+				off = 0;
+			}
+	}
 
 	/* for either operation sync the shit away */
 	__asm __volatile ("sync\n\tsyncdma\n\tsync\n\t"
