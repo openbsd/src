@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.12 1999/06/06 15:38:51 deraadt Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.13 1999/06/30 20:47:14 deraadt Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -443,7 +443,7 @@ svr4_sys_systeminfo(p, v, retval)
 	int error;
 	long len;
 	extern char ostype[], hostname[], osrelease[],
-		    version[], machine[], domainname[], cpu_model[];
+		    version[], machine[], domainname[];
 
 	u_int rlen = SCARG(uap, len);
 
@@ -485,7 +485,7 @@ svr4_sys_systeminfo(p, v, retval)
 		break;
 
 	case SVR4_SI_PLATFORM:
-		str = cpu_model;
+		str = machine;
 		break;
 
 	case SVR4_SI_KERB_REALM:
@@ -515,6 +515,9 @@ svr4_sys_systeminfo(p, v, retval)
 	len = strlen(str) + 1;
 	if (len > rlen)
 		len = rlen;
+
+	/* on success, sysinfo() returns byte count including \0 */
+	*retval = len;
 
 	return copyout(str, SCARG(uap, buf), len);
 }
