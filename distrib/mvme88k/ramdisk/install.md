@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.3 1999/08/15 10:05:07 millert Exp $
+#       $OpenBSD: install.md,v 1.4 1999/09/03 18:55:32 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -72,6 +72,10 @@ md_get_ifdevs() {
 md_get_partition_range() {
 	# return range of valid partition letters
 	echo "[a-p]"
+}
+
+md_questions() {
+	:
 }
 
 md_installboot() {

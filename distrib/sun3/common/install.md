@@ -104,6 +104,10 @@ md_get_partition_range() {
 	echo '[a-h]'
 }
 
+md_questions() {
+	:
+}
+
 md_installboot() {
 	# install the boot block on disk $1
 	echo "Installing boot block..."

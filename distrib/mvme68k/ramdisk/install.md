@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.7 1999/08/15 10:05:06 millert Exp $
+#       $OpenBSD: install.md,v 1.8 1999/09/03 18:55:30 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -77,13 +77,17 @@ md_get_partition_range() {
 	echo "[a-p]"
 }
 
+md_questions() {
+	:
+}
+
 md_installboot() {
 	echo "Nothing to do."
 }
+
 md_labeldisk() {
 	echo "huh"
 }
-
 
 md_checkfordisklabel() {
 	# $1 is the disk to check

@@ -104,6 +104,10 @@ md_get_partition_range() {
 	echo '[a-p]'
 }
 
+md_questions() {
+	:
+}
+
 md_installboot() {
 	if [ -x /mnt/usr/mdec/installboot ]; then
 		echo -n "Should a boot block be installed? [y] "

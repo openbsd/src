@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 1999/08/15 10:05:05 millert Exp $
+#	$OpenBSD: install.md,v 1.3 1999/09/03 18:55:27 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -74,26 +74,33 @@ md_get_partition_range() {
     echo [a-p]
 }
 
-md_installboot() {
-	echo Installing boot block...
-	cp /usr/mdec/boot /mnt/boot
-	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
-
+md_questions() {
 	echo
 	echo -n "Do you expect to run the X Window System on this machine? [y or n] "
 	getresp n
 	case "$resp" in
 		y*|Y*)
-			echo "Enabling machdep.allowaperture. Read xf86(4) for more information."
-			echo '1,$s/^#machdep\.allowaperture=1/machdep\.allowaperture=1	/
-w
-q' | ed /mnt/etc/sysctl.conf 2> /dev/null
-
+			xfree86=y
 			;;
 		*)
 			;;
 	esac
 	echo
+}
+
+md_installboot() {
+	echo Installing boot block...
+	cp /usr/mdec/boot /mnt/boot
+	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
+
+	if [ "$xfree86" = y ]; then
+		echo
+		echo "Enabling machdep.allowaperture. Read xf86(4) for more information."
+		echo '1,$s/^#machdep\.allowaperture=1/machdep\.allowaperture=1	/
+w
+q' | ed /mnt/etc/sysctl.conf 2> /dev/null
+		echo
+	fi
 }
 
 md_native_fstype() {

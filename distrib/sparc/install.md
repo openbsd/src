@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.28 1999/08/15 10:05:05 millert Exp $
+#	$OpenBSD: install.md,v 1.29 1999/09/03 18:55:36 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -123,6 +123,10 @@ md_get_cddevs() {
 md_get_partition_range() {
     # return range of valid partition letters
     echo [a-p]
+}
+
+md_questions() {
+	:
 }
 
 md_installboot() {
