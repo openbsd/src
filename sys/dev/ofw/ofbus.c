@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofbus.c,v 1.10 2001/08/21 07:13:46 matthieu Exp $	*/
+/*	$OpenBSD: ofbus.c,v 1.11 2001/08/24 14:36:31 drahn Exp $	*/
 /*	$NetBSD: ofbus.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
@@ -115,8 +116,10 @@ ofrattach(parent, dev, aux)
 	struct ofprobe *ofp = aux;
 	struct ofprobe probe;
 	int node;
+#ifdef HAVE_SYSTYPE
 	char ofname[64];
 	int l;
+#endif
 	
         if (!(node = OF_peer(0)))
                 panic("No PROM root");
@@ -126,6 +129,7 @@ ofrattach(parent, dev, aux)
 	ofbprint(ofp, 0);
 	printf("\n");
 
+#ifdef HAVE_SYSTYPE
 	if ((l = OF_getprop(ofp->phandle, "model", ofname, sizeof ofname - 1)) < 0)
 	{
 		/* no system name? */
@@ -135,6 +139,7 @@ ofrattach(parent, dev, aux)
 		ofname[l] = 0;
 		systype(ofname);
 	}
+#endif
 	ofw_intr_establish();
 		
 
