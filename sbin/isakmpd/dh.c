@@ -1,5 +1,5 @@
-/*	$OpenBSD: dh.c,v 1.3 1998/11/17 11:10:09 niklas Exp $	*/
-/*	$EOM: dh.c,v 1.2 1998/07/18 22:08:59 provos Exp $	*/
+/*	$OpenBSD: dh.c,v 1.4 1999/02/26 03:36:07 niklas Exp $	*/
+/*	$EOM: dh.c,v 1.3 1999/02/25 11:38:51 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -35,6 +35,8 @@
  */
 
 #include <sys/param.h>
+
+#include "sysdep.h"
 
 #include "math_group.h"
 #include "dh.h"
