@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcd.6,v 1.11 2001/08/18 03:27:17 pjanzen Exp $
+.\"	$OpenBSD: bcd.6,v 1.12 2002/12/16 18:06:06 mickey Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@
 .Nm bcd
 .Op Ar string ...
 .Nm ppt
+.Op Fl d Op Fl b
 .Op Ar string ...
 .Nm morse
 .Op Fl s | Fl d
@@ -52,14 +53,34 @@
 .Sh DESCRIPTION
 The
 .Nm bcd ,
-.Nm ppt
+.Nm ppt ,
 and
 .Nm morse
 commands read the given input and reformat it in the form of
 punched cards, paper tape, or morse code, respectively.
 Acceptable input are command line arguments or the standard input.
 .Pp
-Available options:
+Available options for
+.Nm ppt :
+.Bl -tag -width flag
+.It Fl d
+The
+.Fl d
+option for
+.Nm ppt
+decodes paper tape on the standard input back to ASCII.
+Unprintable characters are visually encoded with
+.Xr vis 3
+unless the
+.Fl b
+flag (binary) is also specified.
+A lowercase
+.Sq x
+is printed for undecipherable input lines.
+.El
+.Pp
+Available options for
+.Nm morse :
 .Bl -tag -width flag
 .It Fl s
 The

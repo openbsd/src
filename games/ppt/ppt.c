@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppt.c,v 1.7 2002/05/31 03:40:01 pjanzen Exp $	*/
+/*	$OpenBSD: ppt.c,v 1.8 2002/12/16 18:06:06 mickey Exp $	*/
 /*	$NetBSD: ppt.c,v 1.4 1995/03/23 08:35:40 cgd Exp $	*/
 
 /*
@@ -35,50 +35,112 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
+static const char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: ppt.c,v 1.7 2002/05/31 03:40:01 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: ppt.c,v 1.8 2002/12/16 18:06:06 mickey Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
-static void	putppt(int);
+
+#define	EDGE	"___________"
+
+void	usage(void);
+void	putppt(int);
+int	getppt(const char *buf);
+
+void
+usage(void)
+{
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [-d [-b] | string ...]\n", __progname);
+	exit(1);
+}
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	int c;
-	char *p;
+	char *p, buf[132];
+	int c, start, seenl, dflag, bflag;
 
-	(void) puts("___________");
-	if (argc > 1)
-		while ((p = *++argv)) {
-			for (; *p; ++p)
-				putppt((int)*p);
-			if ((*(argv + 1)))
-				putppt((int)' ');
+	dflag = bflag = 0;
+	while ((c = getopt(argc, argv, "bdh")) != -1)
+		switch(c) {
+		case 'd':
+			dflag = 1;
+			break;
+		case 'b':
+			bflag = 1;
+			break;
+		case '?': case 'h':
+		default:
+			usage();
 		}
-	else while ((c = getchar()) != EOF)
-		putppt(c);
-	(void) puts("___________");
+	if (bflag && !dflag)
+		usage();
+	argc -= optind;
+	argv += optind;
+
+	if (dflag) {
+		if (argc > 0)
+			usage();
+
+		seenl = start = 0;
+		while (fgets(buf, sizeof(buf), stdin) != NULL) {
+			c = getppt(buf);
+			if (c == -2)
+				continue;
+			if (c == -1) {
+				if (start)
+					/* lost sync */
+					putchar('x');
+				continue;
+			}
+			start = 1;
+			if (bflag)
+				putchar(c);
+			else {
+				char vbuf[5];
+				vis(vbuf, c, VIS_NOSLASH, 0);
+				fputs(vbuf, stdout);
+			}
+			seenl = (c == '\n');
+		}
+		if (!feof(stdin))
+			err(1, "fgets");
+		if (!seenl && !bflag)
+			putchar('\n');
+	} else {
+		(void) puts(EDGE);
+		if (argc > 0)
+			while ((p = *argv++)) {
+				for (; *p; ++p)
+					putppt((int)*p);
+				if (*argv)
+					putppt((int)' ');
+			}
+		else while ((c = getchar()) != EOF)
+			putppt(c);
+		(void) puts(EDGE);
+	}
 	exit(0);
 }
 
-static void
-putppt(c)
-	int c;
+void
+putppt(int c)
 {
 	int i;
 
@@ -93,4 +155,37 @@ putppt(c)
 	}
 	(void) putchar('|');
 	(void) putchar('\n');
+}
+
+int
+getppt(const char *buf)
+{
+	int c;
+
+	/* Demand left-aligned paper tape, but allow comments to the right */
+	if (strncmp(buf, EDGE, strlen(EDGE)) == 0)
+	    return (-2);
+	if (strlen(buf) < 12 || buf[0] != '|' || buf[10] != '|' ||
+	    buf[6] != '.' || strspn(buf, "| o.") < 11)
+		return (-1);
+
+	c = 0;
+	if (buf[1] != ' ')
+		c |= 0200;
+	if (buf[2] != ' ')
+		c |= 0100;
+	if (buf[3] != ' ')
+		c |= 0040;
+	if (buf[4] != ' ')
+		c |= 0020;
+	if (buf[5] != ' ')
+		c |= 0010;
+	if (buf[7] != ' ')
+		c |= 0004;
+	if (buf[8] != ' ')
+		c |= 0002;
+	if (buf[9] != ' ')
+		c |= 0001;
+
+	return (c);
 }
