@@ -1,10 +1,21 @@
-#	$OpenBSD: reexec.sh,v 1.1 2004/06/24 19:32:00 djm Exp $
+#	$OpenBSD: reexec.sh,v 1.2 2004/06/25 01:25:11 djm Exp $
 #	Placed in the Public Domain.
 
 tid="reexec tests"
 
 DATA=/bin/ls
 COPY=${OBJ}/copy
+
+# Start a sshd and then delete it
+start_sshd_copy_zap ()
+{
+	cp ${SSHD} $OBJ/sshd.copy
+	SSHD_ORIG=$SSHD
+	SSHD=`which $OBJ/sshd.copy`
+	start_sshd
+	rm -f $SSHD
+	SSHD=$SSHD_ORIG
+}
 
 verbose "test config passing"
 cp $OBJ/sshd_config $OBJ/sshd_config.orig
