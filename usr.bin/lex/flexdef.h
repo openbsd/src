@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.6 2003/06/04 17:34:44 millert Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.7 2004/02/03 21:20:17 espie Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -33,7 +33,7 @@
  * PURPOSE.
  */
 
-/* @(#) $Header: /home/cvs/src/usr.bin/lex/flexdef.h,v 1.6 2003/06/04 17:34:44 millert Exp $ (LBL) */
+/* @(#) $Header: /home/cvs/src/usr.bin/lex/flexdef.h,v 1.7 2004/02/03 21:20:17 espie Exp $ (LBL) */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -64,13 +64,14 @@
 #include <sys/types.h>
 #endif
 
+#ifdef STDC_HEADERS
+#include <stdlib.h>
+#else
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
-
-#ifdef STDC_HEADERS
-#include <stdlib.h>
 #endif
+
 
 /* As an aid for the internationalization patch to flex, which
  * is maintained outside this distribution for copyright reasons.

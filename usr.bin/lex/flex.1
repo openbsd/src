@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.17 2003/12/09 12:44:17 jmc Exp $
+.\"	$OpenBSD: flex.1,v 1.18 2004/02/03 21:20:17 espie Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -3498,7 +3498,7 @@ Also provided are member functions equivalent to
 .Fn yy_switch_to_buffer ,
 .Fn yy_create_buffer
 (though the first argument is an
-.Fa istream*
+.Fa std::istream*
 object pointer and not a
 .Fa FILE* ) ,
 .Fn yy_flush_buffer ,
@@ -3506,7 +3506,7 @@ object pointer and not a
 and
 .Fn yyrestart
 (again, the first argument is an
-.Fa istream*
+.Fa std::istream*
 object pointer).
 .Pp
 The second class defined in
@@ -3517,7 +3517,7 @@ which is derived from
 .Fa FlexLexer .
 It defines the following additional member functions:
 .Bl -tag -width Ds
-.It "yyFlexLexer(istream* arg_yyin = 0, ostream* arg_yyout = 0)"
+.It "yyFlexLexer(std::istream* arg_yyin = 0, std::ostream* arg_yyout = 0)"
 Constructs a
 .Fa yyFlexLexer
 object using the given streams for input and output.
@@ -3557,7 +3557,7 @@ generates
 that calls
 .Dq yyFlexLexer::LexerError()
 if called).
-.It "virtual void switch_streams(istream* new_in = 0, ostream* new_out = 0)"
+.It "virtual void switch_streams(std::istream* new_in = 0, std::ostream* new_out = 0)"
 Reassigns
 .Fa yyin
 to
@@ -3571,7 +3571,7 @@ to
 deleting the previous input buffer if
 .Fa yyin
 is reassigned.
-.It int yylex(istream* new_in, ostream* new_out = 0)
+.It int yylex(std::istream* new_in, std::ostream* new_out = 0)
 First switches the input streams via
 .Dq switch_streams(new_in, new_out)
 and then returns the value of
