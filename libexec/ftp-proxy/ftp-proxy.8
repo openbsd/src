@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.20 2002/06/17 00:21:28 pvalchev Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.21 2002/07/24 03:22:42 deraadt Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -50,7 +50,10 @@ The proxy uses
 .Xr pf 4
 and expects to have the ftp control connection as described in
 .Xr services 5
-redirected to it via a pf rdr command.
+redirected to it via a
+.Xr pf 4
+.Em rdr
+command.
 An example of how to do that is further down in this document.
 .Pp
 The options are as follows:
@@ -61,14 +64,16 @@ The proxy will allow connections to log in to other sites as the user
 "ftp" or "anonymous" only.
 Any attempt to log in as another user will be blocked by the proxy.
 .It Fl g Ar groupname
-Specify the named group to drop group privileges to, after doing pf lookups
-which require root.
+Specify the named group to drop group privileges to, after doing
+.Xr pf 4
+lookups which require root.
 By default
 .Nm ftp-proxy
 uses the default group of the user it drops privilege to.
 .It Fl u Ar username
-Specify the named user to drop privilege to, after doing pf lookups
-which require root privilege.
+Specify the named user to drop privilege to, after doing
+.Xr pf 4
+lookups which require root privilege.
 By default
 .Nm ftp-proxy
 drops privilege to the user
@@ -97,8 +102,9 @@ The proxy only ignores passive mode data connections when using this flag,
 it will still proxy PORT and EPRT mode data connections.
 Without this flag,
 .Nm ftp-proxy
-does not require any ip forwarding or NAT beyond the rdr necessary to
-capture the ftp control connection.
+does not require any ip forwarding or NAT beyond the
+.Em rdr
+necessary to capture the ftp control connection.
 .It Fl V
 Be verbose.
 With this option the proxy logs the control commands
@@ -135,8 +141,8 @@ defined in <netinet/in.h>
 as 65535.
 .It Fl t Ar timeout
 Specifies a timeout, in seconds.
-The proxy will exit and close open connections if it sees no data the
-duration of the timeout.
+The proxy will exit and close open connections if it sees no data
+for the duration of the timeout.
 The default is 0, which means the proxy will not time out.
 .It Fl D Ar debuglevel
 Specify a debug level, where the proxy emits verbose debug output
@@ -150,7 +156,8 @@ Meaningful values of debuglevel are 0-3, where 0 is no debug output and
 .Nm ftp-proxy
 is run from
 .Xr inetd 8
-and requires that ftp connections are redirected to it using an rdr
+and requires that ftp connections are redirected to it using a
+.Em rdr
 rule.
 A typical way to do this would be to use a rule such as
 .Pp
@@ -197,6 +204,7 @@ pass  in on xl1 proto tcp from any to xl1 user proxy keep state
 .Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
+.Xr pf 4 ,
 .Xr hosts.allow 5 ,
 .Xr hosts.deny 5 ,
 .Xr pf.conf 5 ,
