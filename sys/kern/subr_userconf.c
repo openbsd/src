@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.15 1998/03/03 05:43:03 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.16 1999/04/28 18:01:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -98,6 +98,7 @@ char *userconf_cmds[] = {
 	"lines",	"L",
 	"quit",		"q",
 	"show",		"s",
+	"verbose",	"v",
 	"?",		"h",
 	"",		 "",
 };
@@ -537,7 +538,7 @@ userconf_help()
 	printf("command   args                description\n");
 	while (*userconf_cmds[j] != '\0') {
 		printf(userconf_cmds[j]);
-		k=strlen(userconf_cmds[j]);
+		k = strlen(userconf_cmds[j]);
 		while (k < 10) {
 			printf(" ");
 			k++;
@@ -576,6 +577,9 @@ userconf_help()
 		case 's':
 			printf("[attr [val]]        %s",
 			   "show attributes (or devices with an attribute)");
+			break;
+		case 'v':
+			printf("                    toggle verbose booting");
 			break;
 		default:
 			printf("                    don't know");
@@ -1100,6 +1104,11 @@ userconf_parse(cmd)
 				userconf_show();
 			else
 				userconf_show_attr(c);
+			break;
+		case 'v':
+			autoconf_verbose = !autoconf_verbose;
+			printf("autoconf verbose %sabled\n",
+			    autoconf_verbose ? "en" : "dis");
 			break;
 		default:
 			printf("Unknown command\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.13 1998/05/11 09:59:37 niklas Exp $	*/
+/*	$OpenBSD: device.h,v 1.14 1999/04/28 18:01:22 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -167,6 +167,8 @@ TAILQ_HEAD(cftable_head, cftable);
 
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
+
+extern int autoconf_verbose;
 
 void config_init __P((void));
 void config_edit __P((void));
