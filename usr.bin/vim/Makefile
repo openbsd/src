@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/09/22 01:17:57 downsj Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/10/15 08:35:25 downsj Exp $
 
 .PATH:	${.CURDIR}/doc
 
@@ -29,11 +29,11 @@ DOCS=	vim_40.txt vim_ami.txt vim_arch.txt vim_diff.txt vim_digr.txt \
 # I haven't tried this, but it's a start...
 # Use the following to build Motif vim:
 #SRCS+=	gui.c gui_motif.c gui_x11.c pty_openbsd.c
-#LDADD+=	-L/some/where/motif/lib -L/some/where/X11/lib -lXm -lXt -lutil
+#LDADD+=	-L/some/where/motif/lib -L/some/where/X11/lib -lXm -lXt -lX11 -lutil
 #CFLAGS+=	-I/some/where/motif/include -I/some/where/X11/include -DHAVE_X11 -DUSE_GUI_MOTIF
 # Use the following to build Athena vim:
 #SRCS+=	gui.c gui_athena.c gui_x11.c pty_openbsd.c gui_at_sb.c
-#LDADD+=	-L/some/where/X11/lib -lXaw -lXt -lXmu -lutil
+#LDADD+=	-L/some/where/X11/lib -lXaw -lXt -lXmu -lX11 -lutil
 #CFLAGS+=	-I/some/where/X11/include -DHAVE_X11 -DUSE_GUI_ATHENA
 
 CLEANFILES+=	mkcmdtab cmdtab.h
