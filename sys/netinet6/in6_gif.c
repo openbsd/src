@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.3 1999/12/15 07:08:00 itojun Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.4 2000/01/12 06:35:04 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -47,20 +47,29 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/ip_ipsp.h>
+
 #ifdef INET
 #include <netinet/ip.h>
 #endif
+
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_gif.h>
+
 #ifdef INET6
 #include <netinet6/ip6.h>
 #endif
+
 #include <netinet/ip_ecn.h>
 
 #include <net/if_gif.h>
 
 #include <net/net_osdep.h>
+
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
+#endif
 
 int
 in6_gif_output(ifp, family, m, rt)
@@ -70,12 +79,14 @@ in6_gif_output(ifp, family, m, rt)
 	struct rtentry *rt;
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-	struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
+        struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
 	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
-	struct ip6_hdr *ip6;
-	int proto;
-	u_int8_t itos, otos;
+	struct tdb tdb;
+	struct xformsw xfs;
+	int error;
+	int hlen, poff;
+	struct mbuf *mp;
 
 	if (sin6_src == NULL || sin6_dst == NULL ||
 	    sin6_src->sin6_family != AF_INET6 ||
@@ -84,35 +95,43 @@ in6_gif_output(ifp, family, m, rt)
 		return EAFNOSUPPORT;
 	}
 
+	/* multi-destination mode is not supported */
+	if (ifp->if_flags & IFF_LINK0) {
+		m_freem(m);
+		return ENETUNREACH;
+	}
+
+	/* setup dummy tdb.  it highly depends on ipe4_output() code. */
+	bzero(&tdb, sizeof(tdb));
+	bzero(&xfs, sizeof(xfs));
+	tdb.tdb_src.sin6.sin6_family = AF_INET6;
+	tdb.tdb_src.sin6.sin6_len = sizeof(struct sockaddr_in6);
+	tdb.tdb_src.sin6.sin6_addr = sin6_src->sin6_addr;
+	tdb.tdb_dst.sin6.sin6_family = AF_INET6;
+	tdb.tdb_dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
+	tdb.tdb_dst.sin6.sin6_addr = sin6_dst->sin6_addr;
+	tdb.tdb_xform = &xfs;
+	xfs.xf_type = -1;	/* not XF_IP4 */
+
 	switch (family) {
 #ifdef INET
 	case AF_INET:
 	    {
-		struct ip *ip;
-
-		proto = IPPROTO_IPV4;
-		if (m->m_len < sizeof(*ip)) {
-			m = m_pullup(m, sizeof(*ip));
+		if (m->m_len < sizeof(struct ip)) {
+			m = m_pullup(m, sizeof(struct ip));
 			if (!m)
 				return ENOBUFS;
 		}
-		ip = mtod(m, struct ip *);
-		itos = ip->ip_tos;
+		hlen = (mtod(m, struct ip *)->ip_hl) << 2;
+		poff = offsetof(struct ip, ip_p);
 		break;
 	    }
 #endif
 #ifdef INET6
 	case AF_INET6:
 	    {
-		struct ip6_hdr *ip6;
-		proto = IPPROTO_IPV6;
-		if (m->m_len < sizeof(*ip6)) {
-			m = m_pullup(m, sizeof(*ip6));
-			if (!m)
-				return ENOBUFS;
-		}
-		ip6 = mtod(m, struct ip6_hdr *);
-		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
+		hlen = sizeof(struct ip6_hdr);
+		poff = offsetof(struct ip6_hdr, ip6_nxt);
 		break;
 	    }
 #endif
@@ -125,52 +144,17 @@ in6_gif_output(ifp, family, m, rt)
 		return EAFNOSUPPORT;
 	}
 	
-	/* prepend new IP header */
-	M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
-	if (m && m->m_len < sizeof(struct ip6_hdr))
-		m = m_pullup(m, sizeof(struct ip6_hdr));
-	if (m == NULL) {
-		printf("ENOBUFS in in6_gif_output %d\n", __LINE__);
-		return ENOBUFS;
-	}
+	/* encapsulate into IPv6 packet */
+	mp = NULL;
+	error = ipe4_output(m, &tdb, &mp, hlen, poff);
+	if (error)
+	        return error;
+	else if (mp == NULL)
+	        return EFAULT;
 
-	ip6 = mtod(m, struct ip6_hdr *);
-	ip6->ip6_flow	= 0;
-	ip6->ip6_vfc	&= ~IPV6_VERSION_MASK;
-	ip6->ip6_vfc	|= IPV6_VERSION;
-	ip6->ip6_plen	= htons((u_short)m->m_pkthdr.len);
-	ip6->ip6_nxt	= proto;
-	ip6->ip6_hlim	= ip6_gif_hlim;
-	ip6->ip6_src	= sin6_src->sin6_addr;
-	if (ifp->if_flags & IFF_LINK0) {
-		/* multi-destination mode */
-		if (!IN6_IS_ADDR_UNSPECIFIED(&sin6_dst->sin6_addr))
-			ip6->ip6_dst = sin6_dst->sin6_addr;
-		else if (rt) {
-			if (family != AF_INET6) {
-				m_freem(m);
-				return EINVAL;	/*XXX*/
-			}
-			ip6->ip6_dst = ((struct sockaddr_in6 *)(rt->rt_gateway))->sin6_addr;
-		} else {
-			m_freem(m);
-			return ENETUNREACH;
-		}
-	} else {
-		/* bidirectional configured tunnel mode */
-		if (!IN6_IS_ADDR_UNSPECIFIED(&sin6_dst->sin6_addr))
-			ip6->ip6_dst = sin6_dst->sin6_addr;
-		else  {
-			m_freem(m);
-			return ENETUNREACH;
-		}
-	}
-	if (ifp->if_flags & IFF_LINK1) {
-		otos = 0;
-		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
-		ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
-	}
+	m = mp;
 
+	/* See if out cached route remains the same */
 	if (dst->sin6_family != sin6_dst->sin6_family ||
 	     !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr)) {
 		/* cache route doesn't match */
@@ -182,9 +166,6 @@ in6_gif_output(ifp, family, m, rt)
 			RTFREE(sc->gif_ro6.ro_rt);
 			sc->gif_ro6.ro_rt = NULL;
 		}
-#if 0
-		sc->gif_if.if_mtu = GIF_MTU;
-#endif
 	}
 
 	if (sc->gif_ro6.ro_rt == NULL) {
@@ -193,10 +174,6 @@ in6_gif_output(ifp, family, m, rt)
 			m_freem(m);
 			return ENETUNREACH;
 		}
-#if 0
-		ifp->if_mtu = sc->gif_ro6.ro_rt->rt_ifp->if_mtu
-			- sizeof(struct ip6_hdr);
-#endif
 	}
 	
 	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL));
@@ -211,8 +188,10 @@ int in6_gif_input(mp, offp, proto)
 	struct ifnet *gifp = NULL;
 	struct ip6_hdr *ip6;
 	int i;
-	int af = 0;
-	u_int32_t otos;
+
+	/* XXX What if we run transport-mode IPsec to protect gif tunnel ? */
+	if (m->m_flags & (M_AUTH | M_CONF))
+	        goto inject;
 
 	ip6 = mtod(m, struct ip6_hdr *);
 
@@ -224,71 +203,31 @@ int in6_gif_input(mp, offp, proto)
 		    sc->gif_pdst->sa_family != AF_INET6) {
 			continue;
 		}
+
 		if ((sc->gif_if.if_flags & IFF_UP) == 0)
 			continue;
+
 		if ((sc->gif_if.if_flags & IFF_LINK0) &&
-		    IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_psrc), &ip6->ip6_dst) &&
+		    IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_psrc),
+				       &ip6->ip6_dst) &&
 		    IN6_IS_ADDR_UNSPECIFIED(&satoin6(sc->gif_pdst))) {
 			gifp = &sc->gif_if;
 			continue;
 		}
-		if (IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_psrc), &ip6->ip6_dst) &&
-		    IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_pdst), &ip6->ip6_src)) {
+
+		if (IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_psrc),
+				       &ip6->ip6_dst) &&
+		    IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_pdst),
+				       &ip6->ip6_src)) {
 			gifp = &sc->gif_if;
 			break;
 		}
 	}
 
-	if (gifp == NULL) {
-		m_freem(m);
-		ip6stat.ip6s_nogif++;
-		return IPPROTO_DONE;
-	}
-	
-	otos = ip6->ip6_flow;
-	m_adj(m, *offp);
+	if (gifp && (m->m_flags & (M_AUTH | M_CONF)) == 0)
+	        m->m_pkthdr.rcvif = gifp;
 
-	switch (proto) {
-#ifdef INET
-	case IPPROTO_IPV4:
-	    {
-		struct ip *ip;
-		u_int8_t otos8;
-		af = AF_INET;
-		otos8 = (ntohl(otos) >> 20) & 0xff;
-		if (m->m_len < sizeof(*ip)) {
-			m = m_pullup(m, sizeof(*ip));
-			if (!m)
-				return IPPROTO_DONE;
-		}
-		ip = mtod(m, struct ip *);
-		if (gifp->if_flags & IFF_LINK1)
-			ip_ecn_egress(ECN_ALLOWED, &otos8, &ip->ip_tos);
-		break;
-	    }
-#endif /* INET */
-#ifdef INET6
-	case IPPROTO_IPV6:
-	    {
-		struct ip6_hdr *ip6;
-		af = AF_INET6;
-		if (m->m_len < sizeof(*ip6)) {
-			m = m_pullup(m, sizeof(*ip6));
-			if (!m)
-				return IPPROTO_DONE;
-		}
-		ip6 = mtod(m, struct ip6_hdr *);
-		if (gifp->if_flags & IFF_LINK1)
-			ip6_ecn_egress(ECN_ALLOWED, &otos, &ip6->ip6_flow);
-		break;
-	    }
-#endif
-	default:
-		ip6stat.ip6s_nogif++;
-		m_freem(m);
-		return IPPROTO_DONE;
-	}
-		
-	gif_input(m, af, gifp);
+inject:
+	ip4_input(m, *offp);
 	return IPPROTO_DONE;
 }
