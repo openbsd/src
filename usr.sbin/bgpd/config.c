@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.41 2005/03/15 14:40:08 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.42 2005/03/23 22:26:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,9 +39,7 @@ int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
     struct peer *peer_l, struct listen_addrs *listen_addrs)
 {
-	struct peer				*p;
 	struct listen_addr			*la;
-	int					 errs = 0;
 
 	/* preserve cmd line opts */
 	conf->opts = xconf->opts;
@@ -60,22 +58,6 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
 		conf->clusterid = conf->bgpid;
 
-	for (p = peer_l; p != NULL; p = p->next) {
-		p->conf.ebgp = (p->conf.remote_as != conf->as);
-		if (p->conf.announce_type == ANNOUNCE_UNDEF)
-			p->conf.announce_type = p->conf.ebgp == 0 ?
-			    ANNOUNCE_ALL : ANNOUNCE_SELF;
-		if (p->conf.enforce_as == ENFORCE_AS_UNDEF)
-			p->conf.enforce_as = p->conf.ebgp == 0 ?
-			    ENFORCE_AS_OFF : ENFORCE_AS_ON;
-		if (p->conf.reflector_client && p->conf.ebgp) {
-			log_peer_warnx(&p->conf, "configuration error: "
-			    "EBGP neighbors are not allowed in route "
-			    "reflector clusters");
-			return (1);
-		}
-	}
-
 	if (xconf->listen_addrs != NULL) {
 		while ((la = TAILQ_FIRST(xconf->listen_addrs)) != NULL) {
 			TAILQ_REMOVE(xconf->listen_addrs, la, entry);
@@ -88,7 +70,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 
 	xconf->listen_addrs = listen_addrs;
 
-	return (errs);
+	return (0);
 }
 
 u_int32_t
