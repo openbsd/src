@@ -1,7 +1,7 @@
-/*	$OpenBSD: mbr.S,v 1.1 1997/03/31 03:12:19 weingart Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.2 1997/08/01 18:39:45 weingart Exp $	*/
 
 /*
- * Copyright (c) 1997 Michael Shalayeff
+ * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
  */
 
 /* Copyright (c) 1996 VaX#n8 (vax@linkdead.paranoia.com)
@@ -13,22 +13,7 @@
  * this copyright notice in the file.
  */
 
-/*	$OpenBSD: mbr.S,v 1.1 1997/03/31 03:12:19 weingart Exp $	*/
-
-/*
- * Copyright (c) 1996 Michael Shalayeff
- */
-
-/* Copyright (c) 1996 VaX#n8 (vax@linkdead.paranoia.com)
- * last edited 9 July 1996
- * many thanks to Erich Boleyn (erich@uruk.org) for putting up with
- * all my questions, and for his work on GRUB
- * You may use this code or fragments thereof in a manner consistent
- * with the other copyrights as long as you retain my pseudonym and
- * this copyright notice in the file.
- */
-
-	.file	"start.S"
+	.file	"mbr.S"
 
 #include <machine/asm.h>
 #include <machine/specialreg.h>
@@ -42,14 +27,12 @@
 #define NUMPART		4	/* number of partitions in partition table */
 #define PARTSZ		16	/* each partition table entry is 16 bytes */
 #define BSDPART		0xA6	/* OpenBSD partition */
-#define OLDBSDPART	0xA5	/* {386,Net,Free}BSD partition */
 #define BOOTABLE	0x80	/* bootable partition */
 
 #ifdef DEBUG
 #define CHAR_S		'S'	/* started */
-#define CHAR_L		'L'	/* looking up bootable partition */
-#define CHAR_P		'P'	/* partition table corrupted */
-#define CHAR_O		'O'	/* force OpenBSD load */
+#define CHAR_R		'R' /* relocated */
+#define CHAR_L		'L'	/* looking for bootable partition */
 #define CHAR_B		'B'	/* loading boot */
 #define CHAR_G		'G'	/* jumping to boot */
 
@@ -65,131 +48,203 @@
 
 	.globl	start
 start:
+	/* Adjust %cs to be right */
+	data32
+	ljmp 	$BOOTBIOS, $1f
+1:
+	/* Set up stack */
 	movl	%cs, %ax
-	# set up stack(%ss:%esp)
-	cli			/* disable interrupts w/o stack */
+	cli
 	movl	%ax, %ss
 	data32
 	movl	$0xfffc, %esp
-	sti			/* we have stack, do ints */
-	/* setup %ds */
-	movl	%ax, %ds
+	sti
 
-	/* relocate the code to leave the space for boot stage */
+	/* Set up data segment */
+	movl	%ax, %ds
+	DBGMSG(CHAR_S)
+
+	/* Relocate 512 bytes so we can load PBS here  */
 	data32
 	movl	$BOOTRELOC, %eax
 	movl	%ax, %es
+	data32
 	xorl	%si, %si
+	data32
 	xorl	%di, %di
-	xorl	%cx, %cx
-	incb	%ch	/* movl $0x100, %ecx */
+	data32
+	movl	$0x200, %ecx
 	cld
 	rep
-	movsw
+	movsb
 
-	# jump to the relocated code
+	/* Jump to relocated self */
 	data32
-	ljmp $BOOTRELOC, $1f
-1:
-	DBGMSG(CHAR_S)
+	ljmp $BOOTRELOC, $reloc
+reloc:
+	DBGMSG(CHAR_R)
 
-	/* setup %es, %ds */
+	/* Set up %es and %ds */
 	pushl	%ds
 	popl	%es	/* next boot is at the same place as we were loaded */
 	pushl	%cs
 	popl	%ds	/* and %ds is at the %cs */
 
 #ifdef SERIAL
-	# Initialize the serial port to 9600 baud, 8N1.
+	/* Initialize the serial port to 9600 baud, 8N1. */
+	 * Do we need to do this?  Most things at this level
+	 * do not know or care (on a PC) where the output is
+	 * happening to go.  I think if we are headless,
+	 * /boot should figure (as it does now) that out.
+	 *
+	 * If there is a problem with this stage of the boot
+	 * process, connect up a monitor and kbd, and see what
+	 * is going on.  Left here for the time being.
+	 *
+	 * --Toby.
+	 */
 	xorl	%ax, %ax
-       	movb	$0xe3, %ax
+	movb	$0xe3, %ax
 	data32
 	movl	$SERIAL, %dx
 	int	$0x14
 #endif
 
-	/* bootstrap passes us drive number in %dl */
+	/* bootstrap passes us drive number in %dl
+	 *
+	 * XXX - This is not always true.  We currently
+	 * check if %dl points to a HD, and if not we
+	 * complain, and set it to point to the first
+	 * HDD.  Note, this is not 100% correct, since
+	 * there is a possibility that you boot of of
+	 * HD #2, and still get (%dl & 0x80) == 0x00,
+	 * these type of systems will loose.  I don't
+	 * know of any like this, but I've come to the
+	 * conclusion, that if it can exists, it will,
+	 * someplace in the PC world.  If anyone knows
+	 * how to fix this, speak up!
+	 *
+	 * Toby - Thu Jul 31 21:01:00 CDT 1997
+	 */
 	testb	$0x80, %dl
 	jnz	1f
 
-	/* mbr on floppy ??? */
+	/* MBR on floppy or old BIOS
+	 * Note: MBR (this code) should never
+	 * be on a floppy.  It does not belong
+	 * there, so %dl should never be 0x00.
+	 *
+	 * Here we simply complain (should we?),
+	 * and then hardcode the boot drive to
+	 * 0x80.
+	 */
 	data32
 	movl	$fdmbr, %esi
 	data32
 	call	message
 
+	/* If we are passed bogus data, set it to HD #1.
+	 * We should load the value from a hard coded
+	 * location in this sector.  Maybe I'll write
+	 * that next, since my machines seem to be one
+	 * of the weird ones...
+	 */
+	movb	$0x80, %dl
+
+	/* Do we need to check our signature?  The BIOS will
+	 * check it for us, I doubt there is a need for us to
+	 * do the same thing over again.  If we fail here,
+	 * something terrible is wrong.  However, I doubt we
+	 * can recover anyways.  The message might be nice
+	 * for the (l)user though.
+	 */
 1:	xorl	%bx, %bx
 	# cmpw	$SIGNATURE, (%bx)
 	.byte	0x81, 0xbf
 	.word	signature
 	.word	SIGNATURE
-	je	1f
-	DBGMSG(CHAR_P)
+	je		sigok
+	data32
+	movl	$esig, %esi
+	data32
+	call	message
 
-	/* find the first active partition */
-1:	DBGMSG(CHAR_L)
+	/* find the first active partition
+	 * Note: this should be the only active
+	 * partition.  We currently don't check
+	 * for that, but we really should.  If
+	 * and when I feel up to it, I'll add
+	 * that code.
+	 */
+sigok:
 	data32
 	movl	$pt, %esi
 	data32
 	movl	$NUMPART, %cx
 1:
+	DBGMSG(CHAR_L)
 	# movb	(%si), %al
 	.byte	0x8a, 0x44, 0x00
 	cmpb	$BOOTABLE, %al
-	je	2f
+	je		found
 	data32
 	addl	$PARTSZ, %esi
 	loop	1b
-	jmp	1f	/* no bootable -- find $BSDPART */
 
-2:	# test if bootable is ours
-	# movb	4(%si), %al	# partition type
-	.byte   0x8a, 0x44, 0x04
-	cmpb	$BSDPART, %al
-	je	found
-
-	/* else: ask! */
+	/* No bootable partition */
+no_part:
 	data32
-	movl	$prompt, %esi
+	movl	$noboot, %esi
 	data32
 	call	message
-
-	# BIOS call: read char from kbd
-	#	return: %ah == scancode, %al == ascii
-	xorl	%ax, %ax
-	int	$0x16
-
-	/* load active, if not */
-	cmpb	'n', %al
-	je	found
-	cmpb	'N', %al
-	je	found
-
-1:
-	/* else: find OpenBSD partition */
-	DBGMSG(CHAR_O)
-	data32
-	movl	$pt, %esi
-	data32
-	movl	$NUMPART, %ecx
-1:
-	# movb	(%si), %al
-	.byte	0x8a, 0x44, 0x00
-	cmpb	$BSDPART, %al
-	je	found
-	data32
-	addl	$PARTSZ, %esi
-	loop	1b
-	data32
-	movl	$enoboot, %esi
 err_stop:
-	data32
-	call	message
 	cli
 	hlt
+	/* Just to make sure */
+	jmp		err_stop
 
+	/* Found bootable partition */
 found:
 	DBGMSG(CHAR_B)
+	pushl	%eax
+	pushl	%edx
+	pushl	%esi
+	pushl	%ecx
+
+	/* Print out drive and partition */
+	data32
+	movl	$drive, %esi
+	data32
+	call	message
+
+	movl	%dx, %ax
+	andl	$0x0F, %ax
+	orl		$0x30, %ax
+	data32
+	call	chr
+
+	data32
+	movl	$partn, %esi
+	data32
+	call	message
+
+	popl	%eax
+	andl	$0x0F, %ax
+	orl		$0x30, %ax
+	data32
+	call	chr
+
+	data32
+	movl	$newln, %esi
+	data32
+	call	message
+
+	/* Restore %esi and %edx */
+	popl	%esi
+	popl	%edx
+	popl	%eax
+
+	/* Load values from active partition table entry */
 	# movb	1(%si), %dh	# head
 	.byte   0x8a, 0x74, 0x01
 	# movw	2(%si), %cx	# sect, cyl
@@ -213,10 +268,15 @@ found:
 	movl	$0x200 | 1, %eax	/* number of blocks */
 	xorl	%bx, %bx		/* put it at %es:0 */
 	int	$0x13
+	jnc		1f
 	data32
 	movl    $eread, %si
-	jc	err_stop
+	data32
+	call	message
+	jmp		err_stop
 
+
+1:
 	DBGMSG(CHAR_G)
 
 	# jump to the new code (%ds:%si is at he right point)
@@ -259,7 +319,7 @@ chr:
 	int	$0x14
 	popl	%edx
 #endif
-	popl	%ax
+	popl	%eax
 	data32
 	ret
 
@@ -280,17 +340,25 @@ message:
 	popl	%ax
 	ret
 
-/* error messages */
+/* Info messages */
+drive:	.asciz		"Using Drive: "
+partn:	.asciz		" Partition: "
+newln:	.asciz		"\r\n"
 
-fdmbr:	.asciz		"MBR on fd?\r\n"
+/* Error messages */
+fdmbr:	.asciz		"MBR on floppy or old BIOS\r\n"
 eread:	.asciz		"Read error\r\n"
-enoboot: .asciz		"No partition to boot\r\n"
-prompt:	.asciz		"OpenBSD? "
+noboot: .asciz		"No active partition\r\n"
+esig:	.asciz		"Invalid Signature\r\n"
 
 endofcode:
 	nop
 
-/* throw in a partition table */
+/* (MBR) NT registry offset */
+	. = 0x1b8
+	.space  4, 0
+
+/* partition table */
 /* flag, head, sec, cyl, type, ehead, esect, ecyl, start, len */
 	. = 0x1be	# starting address of partition table
 pt:
@@ -301,9 +369,10 @@ pt:
 	.byte	0x0,0,0,0,0,0,0,0
 	.long	0,0
 	.byte	BOOTABLE,0,1,0,BSDPART,255,255,255
-	.long	0,50000
+	.long	0,0x7FFFFFFF
 /* the last 2 bytes in the sector 0 contain the signature */
 	. = 0x1fe
 signature:
 	.short	SIGNATURE
 	. = 0x200
+
