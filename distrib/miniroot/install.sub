@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.77 1998/06/05 01:24:15 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.78 1998/06/25 16:35:26 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -69,7 +69,7 @@
 #	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=
+VERSION=23
 VERSION_MAJOR=$(( $VERSION / 10 ))
 VERSION_MINOR=$(( $VERSION % 10 ))
 export VERSION VERSION_MAJOR VERSION_MINOR
@@ -1581,7 +1581,7 @@ while [ "X${resp}" = X"" ]; do
 	getresp ""
 	case "$resp" in
 		[1-9]*)
-			_nskip=`expr $resp - 1`
+			_nskip=$(( $resp - 1 ))
 			;;
 
 		*)
