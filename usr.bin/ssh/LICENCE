@@ -76,14 +76,6 @@ OpenSSH contains no GPL code.
     POSSIBILITY OF SUCH DAMAGES.
 
 2)
-    The 32-bit CRC implementation in crc32.c is due to Gary S. Brown.
-    Comments in the file indicate it may be used for any purpose without
-    restrictions:
-
-     * COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
-     * code or tables extracted from it, as desired without restriction.
-
-3)
     The 32-bit CRC compensation attack detector in deattack.c was
     contributed by CORE SDI S.A. under a BSD-style license.
 
@@ -104,7 +96,7 @@ OpenSSH contains no GPL code.
      * Ariel Futoransky <futo@core-sdi.com>
      * <http://www.core-sdi.com>
 
-4)
+3)
     ssh-keygen was contributed by David Mazieres under a BSD-style
     license.
 
@@ -114,7 +106,7 @@ OpenSSH contains no GPL code.
      * permitted provided that due credit is given to the author and the
      * OpenBSD project by leaving this copyright notice intact.
 
-5)
+4)
     The Rijndael implementation by Vincent Rijmen, Antoon Bosselaers
     and Paulo Barreto is in the public domain and distributed
     with the following license:
@@ -141,7 +133,7 @@ OpenSSH contains no GPL code.
      * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
      * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-6)
+5)
     One component of the ssh source code is under a 4-clause BSD license,
     held by the University of California, since we pulled these parts from
     original Berkeley code.  The Regents of the University of California
@@ -179,7 +171,7 @@ OpenSSH contains no GPL code.
      * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
      * SUCH DAMAGE.
 
-7)
+6)
     Remaining components of the software are provided under a standard
     2-term BSD licence with the following names as copyright holders:
 
