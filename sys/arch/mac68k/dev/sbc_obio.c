@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc_obio.c,v 1.7 2001/07/04 08:52:46 niklas Exp $	*/
+/*	$OpenBSD: sbc_obio.c,v 1.8 2001/10/01 22:43:33 miod Exp $	*/
 /*	$NetBSD: sbc_obio.c,v 1.1 1997/03/01 20:18:59 scottr Exp $	*/
 
 /*
@@ -212,22 +212,17 @@ sbc_obio_attach(parent, self, args)
 		ncr_sc->sc_dma_eop   = sbc_dma_eop;
 		ncr_sc->sc_dma_stop  = sbc_dma_stop;
 		via2_register_irq(VIA2_SCSIDRQ, sbc_drq_intr, ncr_sc);
-		via2_register_irq(VIA2_SCSIIRQ, sbc_irq_intr, ncr_sc);
-	} else
-		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
+	}
 
-	if (sc->sc_options & SBC_INTR)
-		sc->sc_clrintr = sbc_obio_clrintr;
-	else
-		sc->sc_clrintr = NULL;
+	via2_register_irq(VIA2_SCSIIRQ, sbc_irq_intr, ncr_sc);
+	sc->sc_clrintr = sbc_obio_clrintr;
 
 	if (sc->sc_options)
 		printf(": options=0x%x", sc->sc_options);
 	printf("\n");
 
-	/* Now enable SCSI interrupts through VIA2, if appropriate */
-	if (sc->sc_options & SBC_INTR)
-		sbc_intr_enable(ncr_sc);
+	/* Enable SCSI interrupts through VIA2 */
+	sbc_intr_enable(ncr_sc);
 
 #ifdef SBC_DEBUG
 	if (sbc_debug)
@@ -251,13 +246,18 @@ void
 sbc_intr_enable(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	int s;
+	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
+	int s, flags;
+
+	flags = V2IF_SCSIIRQ;
+	if (sc->sc_options & SBC_INTR)
+		flags |= V2IF_SCSIDRQ;
 
 	s = splhigh();
 	if (VIA2 == VIA2OFF)
-		via2_reg(vIER) = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+		via2_reg(vIER) = 0x80 | flags;
 	else
-		via2_reg(rIER) = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+		via2_reg(rIER) = 0x80 | flags;
 	splx(s);
 }
 
@@ -265,13 +265,18 @@ void
 sbc_intr_disable(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	int s;
+	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
+	int s, flags;
+
+	flags = V2IF_SCSIIRQ;
+	if (sc->sc_options & SBC_INTR)
+		flags |= V2IF_SCSIDRQ;
 
 	s = splhigh();
 	if (VIA2 == VIA2OFF)
-		via2_reg(vIER) = (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+		via2_reg(vIER) = flags;
 	else
-		via2_reg(rIER) = (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+		via2_reg(rIER) = flags;
 	splx(s);
 }
 
@@ -279,8 +284,15 @@ void
 sbc_obio_clrintr(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
+	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
+	int flags;
+
+	flags = V2IF_SCSIIRQ;
+	if (sc->sc_options & SBC_INTR)
+		flags |= V2IF_SCSIDRQ;
+
 	if (VIA2 == VIA2OFF)
-		via2_reg(vIFR) = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+		via2_reg(vIFR) = 0x80 | flags;
 	else
-		via2_reg(rIFR) = 0x80 | (V2IF_SCSIIRQ | V2IF_SCSIDRQ);
+		via2_reg(rIFR) = 0x80 | flags;
 }
