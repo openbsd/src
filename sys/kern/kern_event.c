@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.21 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.22 2004/01/12 04:47:01 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -923,4 +923,15 @@ knote_dequeue(struct knote *kn)
 	kn->kn_status &= ~KN_QUEUED;
 	kq->kq_count--;
 	splx(s);
+}
+
+void
+klist_invalidate(struct klist *list)
+{
+	struct knote *kn;
+
+	SLIST_FOREACH(kn, list, kn_selnext) {
+		kn->kn_status |= KN_DETACHED;
+		kn->kn_flags |= EV_EOF | EV_ONESHOT;
+	}
 }
