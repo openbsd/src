@@ -1,4 +1,4 @@
-/*	$OpenBSD: destruct.c,v 1.3 1999/03/12 03:02:40 pjanzen Exp $	*/
+/*	$OpenBSD: destruct.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: destruct.c,v 1.3 1995/04/22 10:58:44 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)destruct.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: destruct.c,v 1.3 1999/03/12 03:02:40 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: destruct.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,9 +71,9 @@ void
 destruct(v)
 	int v;
 {
-	char		checkpass[15];
-	register int	i, j;
-	double		zap;
+	char	checkpass[15];
+	int	i, j;
+	double	zap;
 
 	if (damaged(COMPUTER))
 	{

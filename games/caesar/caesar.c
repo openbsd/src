@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.10 2002/05/31 03:40:00 pjanzen Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.11 2002/05/31 04:21:30 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: caesar.c,v 1.10 2002/05/31 03:40:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: caesar.c,v 1.11 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ void
 printit(rot)
 	int rot;
 {
-	register int ch;
+	int ch;
 
 	if ((rot < 0) || ( rot >= 26))
 		errx(1, "bad rotation value");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.11 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.12 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -89,8 +89,8 @@ void	usage(void);
 static void
 setup_board()
 {
-	register int i;
-	register cell *p;
+	int i;
+	cell *p;
 
 	p = board;
 	for (i = B_SIZE; i; i--)
@@ -103,8 +103,8 @@ setup_board()
 static void
 elide()
 {
-	register int i, j, base;
-	register cell *p;
+	int i, j, base;
+	cell *p;
 
 	for (i = A_FIRST; i < A_LAST; i++) {
 		base = i * B_COLS + 1;
@@ -144,9 +144,9 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int pos, c;
-	register char *keys;
-	register int level = 2;
+	int pos, c;
+	char *keys;
+	int level = 2;
 	char key_write[6][10];
 	int ch, i, j;
 

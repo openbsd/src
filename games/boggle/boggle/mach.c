@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.4 2002/02/16 21:27:09 millert Exp $	*/
+/*	$OpenBSD: mach.c,v 1.5 2002/05/31 04:21:29 pjanzen Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mach.c,v 1.4 2002/02/16 21:27:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: mach.c,v 1.5 2002/05/31 04:21:29 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -173,8 +173,8 @@ char *
 getline(q)
 	char *q;
 {
-	register int ch, done;
-	register char *p;
+	int ch, done;
+	char *p;
 	int row, col;
 
 	p = q;
@@ -662,8 +662,7 @@ static void
 tty_showboard(b)
 	char *b;
 {
-	register int i;
-	int line;
+	int i, line;
 
 	clear();
 	move(BOARD_LINE, BOARD_COL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2000/01/21 04:11:13 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 2000/01/21 04:11:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,14 +62,14 @@ main(ac, av)
 	int	ac;
 	char	**av;
 {
-	register bool	show_only;
+	bool		show_only;
 	extern char	*Scorefile;
 	int		score_wfd;     /* high score writable file descriptor */
 	int		score_err = 0; /* hold errno from score file open */
 	int		ch;
 	extern int	optind;
 #ifdef FANCY
-	register char	*sp;
+	char		*sp;
 #endif
 
 	if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
@@ -190,7 +190,7 @@ quit(dummy)
 bool
 another()
 {
-	register int	y;
+	int	y;
 
 #ifdef	FANCY
 	if ((Stand_still || Pattern_roll) && !Newscore)

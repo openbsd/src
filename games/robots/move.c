@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.5 2000/07/23 22:23:42 pjanzen Exp $	*/
+/*	$OpenBSD: move.c,v 1.6 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: move.c,v 1.4 1995/04/22 10:08:58 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.5 2000/07/23 22:23:42 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.6 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,7 @@ ret:
 bool
 must_telep()
 {
-	register int	x, y;
+	int		x, y;
 	static COORD	newpos;
 
 #ifdef	FANCY
@@ -303,9 +303,9 @@ do_move(dy, dx)
  */
 bool
 eaten(pos)
-	register COORD	*pos;
+	COORD	*pos;
 {
-	register int	x, y;
+	int	x, y;
 
 	for (y = pos->y - 1; y <= pos->y + 1; y++) {
 		if (y <= 0 || y >= Y_FIELDSIZE)

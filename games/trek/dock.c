@@ -1,4 +1,4 @@
-/*	$OpenBSD: dock.c,v 1.2 1998/08/19 07:41:26 pjanzen Exp $	*/
+/*	$OpenBSD: dock.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: dock.c,v 1.3 1995/04/22 10:58:45 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dock.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dock.c,v 1.2 1998/08/19 07:41:26 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dock.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,9 @@ void
 dock(v)
 	int v;
 {
-	register int		i, j;
-	int			ok;
-	register struct event	*e;
+	int		i, j;
+	int		ok;
+	struct event	*e;
 
 	if (Ship.cond == DOCKED)
 	{
@@ -138,8 +138,8 @@ void
 undock(v)
 	int v;
 {
-	register struct event	*e;
-	register int		i;
+	struct event	*e;
+	int		i;
 
 	if (Ship.cond != DOCKED)
 	{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdisp.c,v 1.6 2001/02/17 23:03:57 pjanzen Exp $	*/
+/*	$OpenBSD: bdisp.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$OpenBSD: bdisp.c,v 1.6 2001/02/17 23:03:57 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bdisp.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ cursfini()
 void
 bdisp_init()
 {
-	register int i, j;
+	int i, j;
 
 	/* top border */
 	for (i = 1; i < BSZ1; i++) {
@@ -161,8 +161,8 @@ bdwho(update)
 void
 bdisp()
 {
-	register int i, j, c;
-	register struct spotstr *sp;
+	int i, j, c;
+	struct spotstr *sp;
 
 	for (j = BSZ1; --j > 0; ) {
 		for (i = 1; i < BSZ1; i++) {
@@ -190,8 +190,8 @@ bdisp()
 bdump(fp)
 	FILE *fp;
 {
-	register int i, j, c;
-	register struct spotstr *sp;
+	int i, j, c;
+	struct spotstr *sp;
 
 	/* top border */
 	fprintf(fp, "   A B C D E F G H J K L M N O P Q R S T\n");
@@ -264,8 +264,8 @@ getline(buf, size)
 	char *buf;
 	int size;
 {
-	register char *cp, *end;
-	register int c = EOF;
+	char *cp, *end;
+	int c = EOF;
 	extern int interactive;
 
 	cp = buf;

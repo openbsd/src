@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $	*/
+/*	$OpenBSD: setup.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,12 +85,12 @@ void
 setup()
 {
 	const struct cvntab	*r;
-	register int		i, j;
+	int			i, j;
 	double			f;
 	int			d;
 	int			klump;
 	int			ix, iy;
-	register struct quad	*q;
+	struct quad		*q;
 	struct event		*e;
 
 	while (1)

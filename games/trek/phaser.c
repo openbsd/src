@@ -1,4 +1,4 @@
-/*	$OpenBSD: phaser.c,v 1.5 2000/07/24 00:56:05 pjanzen Exp $	*/
+/*	$OpenBSD: phaser.c,v 1.6 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: phaser.c,v 1.5 2000/07/24 00:56:05 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: phaser.c,v 1.6 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,18 +97,17 @@ void
 phaser(v)
 	int v;
 {
-	register int		i;
-	int			j;
-	register struct kling	*k;
-	double			dx, dy;
-	double			anglefactor, distfactor;
-	register struct banks	*b;
-	int			manual, flag, extra;
-	int			hit;
-	double			tot;
-	int			n;
-	int			hitreqd[NBANKS];
-	struct banks		bank[NBANKS];
+	int		i, j;
+	struct kling	*k;
+	double		dx, dy;
+	double		anglefactor, distfactor;
+	struct banks	*b;
+	int		manual, flag, extra;
+	int		hit;
+	double		tot;
+	int		n;
+	int		hitreqd[NBANKS];
+	struct banks	bank[NBANKS];
 	const struct cvntab	*ptr;
 
 	if (Ship.cond == DOCKED)

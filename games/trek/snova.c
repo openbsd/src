@@ -1,4 +1,4 @@
-/*	$OpenBSD: snova.c,v 1.2 1998/08/19 07:42:07 pjanzen Exp $	*/
+/*	$OpenBSD: snova.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: snova.c,v 1.3 1995/04/22 10:59:29 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)snova.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: snova.c,v 1.2 1998/08/19 07:42:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: snova.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,12 +71,11 @@ void
 snova(x, y)
 	int	x, y;
 {
-	int			qx, qy;
-	register int		ix, iy = 0;
-	int			f;
-	int			dx, dy;
-	int			n;
-	register struct quad	*q;
+	int		qx, qy;
+	int		ix, iy = 0;
+	int		f, n;
+	int		dx, dy;
+	struct quad	*q;
 
 	f = 0;
 	ix = x;

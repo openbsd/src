@@ -1,4 +1,4 @@
-/*	$OpenBSD: capture.c,v 1.2 1998/08/19 07:41:13 pjanzen Exp $	*/
+/*	$OpenBSD: capture.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: capture.c,v 1.3 1995/04/22 10:58:32 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)capture.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: capture.c,v 1.2 1998/08/19 07:41:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: capture.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,9 @@ void
 capture(v)
 	int v;
 {
-	register int		i;
-	register struct kling	*k;
-	double			x;
+	int		i;
+	struct kling	*k;
+	double		x;
 
 	/* check for not cloaked */
 	if (Ship.cloaked)
@@ -130,7 +130,7 @@ capture(v)
 struct kling *
 selectklingon()
 {
-	register int		i;
+	int		i;
 
 	if (Etc.nkling < 2)
 		i = 0;

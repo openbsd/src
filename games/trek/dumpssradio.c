@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpssradio.c,v 1.2 1998/08/19 07:41:31 pjanzen Exp $	*/
+/*	$OpenBSD: dumpssradio.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: dumpssradio.c,v 1.3 1995/04/22 10:58:49 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpssradio.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dumpssradio.c,v 1.2 1998/08/19 07:41:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dumpssradio.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,8 @@ static char rcsid[] = "$OpenBSD: dumpssradio.c,v 1.2 1998/08/19 07:41:31 pjanzen
 int
 dumpssradio()
 {
-	register struct event	*e;
-	register int		j;
-	register int		chkrest;
+	struct event	*e;
+	int		j, chkrest;
 
 	chkrest = 0;
 	for (j = 0; j < MAXEVENTS; j++)

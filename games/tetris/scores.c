@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.6 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: scores.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -157,8 +157,8 @@ void
 savescore(level)
 	int level;
 {
-	register struct highscore *sp;
-	register int i;
+	struct highscore *sp;
+	int i;
 	int change;
 	FILE *sf;
 	const char *me;
@@ -251,8 +251,8 @@ static int
 cmpscores(x, y)
 	const void *x, *y;
 {
-	register const struct highscore *a, *b;
-	register long l;
+	const struct highscore *a, *b;
+	long l;
 
 	a = x;
 	b = y;
@@ -279,17 +279,17 @@ cmpscores(x, y)
  */
 static int
 checkscores(hs, num)
-	register struct highscore *hs;
+	struct highscore *hs;
 	int num;
 {
-	register struct highscore *sp;
-	register int i, j, k, numnames;
+	struct highscore *sp;
+	int i, j, k, numnames;
 	int levelfound[NLEVELS];
 	struct peruser {
 		char *name;
 		int times;
 	} count[NUMSPOTS];
-	register struct peruser *pu;
+	struct peruser *pu;
 
 	/*
 	 * Sort so that highest totals come first.
@@ -355,8 +355,8 @@ void
 showscores(level)
 	int level;
 {
-	register struct highscore *sp;
-	register int i, n, c;
+	struct highscore *sp;
+	int i, n, c;
 	const char *me;
 	int levelfound[NLEVELS];
 

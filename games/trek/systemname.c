@@ -1,4 +1,4 @@
-/*	$OpenBSD: systemname.c,v 1.3 1999/07/31 18:49:00 pjanzen Exp $	*/
+/*	$OpenBSD: systemname.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: systemname.c,v 1.3 1995/04/22 10:59:32 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)systemname.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: systemname.c,v 1.3 1999/07/31 18:49:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: systemname.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ systemname(q1)
      const struct quad	*q1;
 {
 	const struct quad	*q;
-	register int		i;
+	int			i;
 
 	q = q1;
 

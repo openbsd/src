@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.13 2002/02/17 19:42:20 millert Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.14 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.13 2002/02/17 19:42:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.14 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -186,8 +186,8 @@ char	*regcmp(), *regex();
 
 int
 main(ac, av)
-int	ac;
-char	*av[];
+	int	ac;
+	char	*av[];
 {
 #ifdef	OK_TO_WRITE_DISK
 	int	fd;
@@ -241,9 +241,9 @@ char	*av[];
 
 void
 display(fp)
-FILEDESC	*fp;
+	FILEDESC	*fp;
 {
-	register char	*p, ch;
+	char	*p, ch;
 	char	line[BUFSIZ];
 
 	open_fp(fp);
@@ -268,7 +268,7 @@ FILEDESC	*fp;
 int
 fortlen()
 {
-	register int	nchar;
+	int	nchar;
 	char		line[BUFSIZ];
 
 	if (!(Fortfile->tbl.str_flags & (STR_RANDOM | STR_ORDERED)))
@@ -290,12 +290,12 @@ fortlen()
  */
 void
 getargs(argc, argv)
-register int	argc;
-register char	**argv;
+	int	argc;
+	char	**argv;
 {
-	register int	ignore_case;
+	int	ignore_case;
 # ifndef NO_REGEX
-	register char	*pat = NULL;
+	char	*pat = NULL;
 # endif	/* NO_REGEX */
 	extern char *optarg;
 	extern int optind;
@@ -391,11 +391,11 @@ register char	**argv;
  */
 int
 form_file_list(files, file_cnt)
-register char	**files;
-register int	file_cnt;
+	char	**files;
+	int	file_cnt;
 {
-	register int	i, percent;
-	register char	*sp;
+	int	i, percent;
+	char	*sp;
 
 	if (file_cnt == 0)
 		if (Find_files)
@@ -451,17 +451,17 @@ register int	file_cnt;
  */
 int
 add_file(percent, file, dir, head, tail, parent)
-int		percent;
-register char	*file;
-char		*dir;
-FILEDESC	**head, **tail;
-FILEDESC	*parent;
+	int		percent;
+	char	*file;
+	char		*dir;
+	FILEDESC	**head, **tail;
+	FILEDESC	*parent;
 {
-	register FILEDESC	*fp;
-	register int		fd;
-	register char		*path, *offensive;
-	register bool		was_malloc;
-	register bool		isdir;
+	FILEDESC	*fp;
+	int		fd;
+	char		*path, *offensive;
+	bool		was_malloc;
+	bool		isdir;
 
 	if (dir == NULL) {
 		path = file;
@@ -580,7 +580,7 @@ over:
 FILEDESC *
 new_fp()
 {
-	register FILEDESC	*fp;
+	FILEDESC	*fp;
 
 	fp = (FILEDESC *) do_malloc(sizeof *fp);
 	fp->datfd = -1;
@@ -604,7 +604,7 @@ new_fp()
  */
 char *
 off_name(file)
-char	*file;
+	char	*file;
 {
 	char	*new;
 
@@ -618,7 +618,7 @@ char	*file;
  */
 int
 is_off_name(file)
-char	*file;
+	char	*file;
 {
 	int	len;
 
@@ -633,12 +633,12 @@ char	*file;
  */
 void
 all_forts(fp, offensive)
-register FILEDESC	*fp;
-char			*offensive;
+	FILEDESC	*fp;
+	char			*offensive;
 {
-	register char		*sp;
-	register FILEDESC	*scene, *obscene;
-	register int		fd;
+	char		*sp;
+	FILEDESC	*scene, *obscene;
+	int		fd;
 	auto char		*datfile, *posfile;
 
 	if (fp->child != NULL)	/* this is a directory, not a file */
@@ -683,10 +683,10 @@ char			*offensive;
  */
 int
 add_dir(fp)
-register FILEDESC	*fp;
+	FILEDESC	*fp;
 {
-	register DIR		*dir;
-	register struct dirent  *dirent;
+	DIR		*dir;
+	struct dirent  *dirent;
 	auto FILEDESC		*tailp;
 	auto char		*name;
 
@@ -722,7 +722,7 @@ register FILEDESC	*fp;
  */
 int
 is_dir(file)
-char	*file;
+	char	*file;
 {
 	auto struct stat	sbuf;
 
@@ -741,12 +741,12 @@ char	*file;
 /* ARGSUSED */
 int
 is_fortfile(file, datp, posp, check_for_offend)
-char	*file, **datp, **posp;
-int	check_for_offend;
+	char	*file, **datp, **posp;
+	int	check_for_offend;
 {
-	register int	i;
-	register char	*sp;
-	register char	*datfile;
+	int	i;
+	char	*sp;
+	char	*datfile;
 	static char	*suflist[] = {	/* list of "illegal" suffixes" */
 				"dat", "pos", "c", "h", "p", "i", "f",
 				"pas", "ftn", "ins.c", "ins,pas",
@@ -810,8 +810,8 @@ int	check_for_offend;
  */
 char *
 copy(str, len)
-char		*str;
-unsigned int	len;
+	char		*str;
+	unsigned int	len;
 {
 	char	*new, *sp;
 
@@ -829,7 +829,7 @@ unsigned int	len;
  */
 void *
 do_malloc(size)
-unsigned int	size;
+	unsigned int	size;
 {
 	void	*new;
 
@@ -846,7 +846,7 @@ unsigned int	size;
  */
 void
 do_free(ptr)
-void	*ptr;
+	void	*ptr;
 {
 	if (ptr != NULL)
 		free(ptr);
@@ -859,8 +859,8 @@ void	*ptr;
 void
 init_prob()
 {
-	register FILEDESC	*fp, *last;
-	register int		percent, num_noprob, frac;
+	FILEDESC	*fp, *last;
+	int		percent, num_noprob, frac;
 
 	/*
 	 * Distribute the residual probability (if any) across all
@@ -931,8 +931,8 @@ init_prob()
 void
 get_fort()
 {
-	register FILEDESC	*fp;
-	register int		choice;
+	FILEDESC	*fp;
+	int		choice;
 
 	if (File_list->next == NULL || File_list->percent == NO_PROB)
 		fp = File_list;
@@ -994,10 +994,10 @@ get_fort()
  */
 FILEDESC *
 pick_child(parent)
-FILEDESC	*parent;
+	FILEDESC	*parent;
 {
-	register FILEDESC	*fp;
-	register int		choice;
+	FILEDESC	*fp;
+	int		choice;
 
 	if (Equal_probs) {
 		choice = arc4random() % parent->num_children;
@@ -1031,7 +1031,7 @@ FILEDESC	*parent;
  */
 void
 sum_noprobs(fp)
-register FILEDESC	*fp;
+	FILEDESC	*fp;
 {
 	static bool	did_noprobs = FALSE;
 
@@ -1048,7 +1048,7 @@ register FILEDESC	*fp;
 
 int
 max(i, j)
-register int	i, j;
+	int	i, j;
 {
 	return (i >= j ? i : j);
 }
@@ -1059,7 +1059,7 @@ register int	i, j;
  */
 void
 open_fp(fp)
-FILEDESC	*fp;
+	FILEDESC	*fp;
 {
 	if (fp->inf == NULL && (fp->inf = fdopen(fp->fd, "r")) == NULL) {
 		perror(fp->path);
@@ -1073,7 +1073,7 @@ FILEDESC	*fp;
  */
 void
 open_dat(fp)
-FILEDESC	*fp;
+	FILEDESC	*fp;
 {
 	if (fp->datfd < 0 && (fp->datfd = open(fp->datfile, 0)) < 0) {
 		perror(fp->datfile);
@@ -1088,7 +1088,7 @@ FILEDESC	*fp;
  */
 void
 get_pos(fp)
-FILEDESC	*fp;
+	FILEDESC	*fp;
 {
 #ifdef	OK_TO_WRITE_DISK
 	int	fd;
@@ -1121,10 +1121,10 @@ FILEDESC	*fp;
  */
 void
 get_tbl(fp)
-FILEDESC	*fp;
+	FILEDESC	*fp;
 {
 	auto int		fd;
-	register FILEDESC	*child;
+	FILEDESC	*child;
 
 	if (fp->read_tbl)
 		return;
@@ -1193,7 +1193,7 @@ FILEDESC	*fp;
  */
 void
 zero_tbl(tp)
-register STRFILE	*tp;
+	STRFILE	*tp;
 {
 	tp->str_numstr = 0;
 	tp->str_longlen = 0;
@@ -1206,7 +1206,7 @@ register STRFILE	*tp;
  */
 void
 sum_tbl(t1, t2)
-register STRFILE	*t1, *t2;
+	STRFILE	*t1, *t2;
 {
 	t1->str_numstr += t2->str_numstr;
 	if (t1->str_longlen < t2->str_longlen)
@@ -1233,8 +1233,8 @@ print_file_list()
  */
 void
 print_list(list, lev)
-register FILEDESC	*list;
-int			lev;
+	FILEDESC	*list;
+	int		lev;
 {
 	while (list != NULL) {
 		fprintf(stderr, "%*s", lev * 4, "");
@@ -1259,11 +1259,11 @@ int			lev;
  */
 char *
 conv_pat(orig)
-register char	*orig;
+	char	*orig;
 {
-	register char		*sp;
-	register unsigned int	cnt;
-	register char		*new;
+	char		*sp;
+	unsigned int	cnt;
+	char		*new;
 
 	cnt = 1;	/* allow for '\0' */
 	for (sp = orig; *sp != '\0'; sp++)
@@ -1320,10 +1320,10 @@ find_matches()
  */
 int
 maxlen_in_list(list)
-FILEDESC	*list;
+	FILEDESC	*list;
 {
-	register FILEDESC	*fp;
-	register int		len, maxlen;
+	FILEDESC	*fp;
+	int		len, maxlen;
 
 	maxlen = 0;
 	for (fp = list; fp != NULL; fp = fp->next) {
@@ -1346,10 +1346,10 @@ FILEDESC	*list;
  */
 void
 matches_in_list(list)
-FILEDESC	*list;
+	FILEDESC	*list;
 {
-	register char		*sp;
-	register FILEDESC	*fp;
+	char		*sp;
+	FILEDESC	*fp;
 	int			in_file;
 
 	for (fp = list; fp != NULL; fp = fp->next) {

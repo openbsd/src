@@ -1,4 +1,4 @@
-/*	$OpenBSD: make_level.c,v 1.3 1998/08/22 08:55:55 pjanzen Exp $	*/
+/*	$OpenBSD: make_level.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: make_level.c,v 1.3 1995/04/22 10:08:56 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)make_level.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: make_level.c,v 1.3 1998/08/22 08:55:55 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: make_level.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,9 +51,9 @@ static char rcsid[] = "$OpenBSD: make_level.c,v 1.3 1998/08/22 08:55:55 pjanzen 
 void
 make_level()
 {
-	register int	i;
-	register COORD	*cp;
-	register int	x;
+	int	i;
+	COORD	*cp;
+	int	x;
 
 	reset_count();
 	for (i = 1; i < Y_FIELDSIZE; i++)

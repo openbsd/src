@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdict.c,v 1.3 1998/09/24 06:45:06 pjanzen Exp $	*/
+/*	$OpenBSD: mkdict.c,v 1.4 2002/05/31 04:21:29 pjanzen Exp $	*/
 /*	$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mkdict.c,v 1.3 1998/09/24 06:45:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: mkdict.c,v 1.4 2002/05/31 04:21:29 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,8 +72,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *p, *q;
-	register int ch, common, n, nwords;
+	char *p, *q;
+	int ch, common, n, nwords;
 	int current, len, prev, qcount;
 	char buf[2][MAXWORDLEN + 1];
 

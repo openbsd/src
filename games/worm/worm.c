@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.16 2002/05/31 03:40:01 pjanzen Exp $	*/
+/*	$OpenBSD: worm.c,v 1.17 2002/05/31 04:21:30 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.16 2002/05/31 03:40:01 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.17 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -186,8 +186,8 @@ main(argc, argv)
 void
 life()
 {
-	register struct body *bp, *np;
-	register int i,j = 1;
+	struct body *bp, *np;
+	int i,j = 1;
 
 	head = newlink();
 	head->x = start_len % (COLS-5) + 2;
@@ -267,7 +267,7 @@ void
 process(ch)
 	int ch;
 {
-	register int x,y;
+	int x,y;
 	struct body *nh;
 
 	x = head->x;

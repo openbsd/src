@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.10 2002/05/31 03:40:00 pjanzen Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.11 2002/05/31 04:21:20 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.10 2002/05/31 03:40:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.11 2002/05/31 04:21:20 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,7 +193,7 @@ showstats()
 int
 problem()
 {
-	register char *p;
+	char *p;
 	time_t start, finish;
 	int left, op, right, result;
 	char line[80];
@@ -328,7 +328,7 @@ getrandom(maxval, op, operand)
 	int maxval, op, operand;
 {
 	int value;
-	register struct penalty **pp, *p;
+	struct penalty **pp, *p;
 
 	op = opnum(op);
 	value = random() % (maxval + penalty[op][operand]);

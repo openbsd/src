@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.6 1999/12/18 11:18:13 pjanzen Exp $	*/
+/*	$OpenBSD: score.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: score.c,v 1.6 1999/12/18 11:18:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,10 +64,10 @@ void
 score(score_wfd)
      int score_wfd;
 {
-	register int	inf = score_wfd;
-	register SCORE	*scp;
+	int	inf = score_wfd;
+	SCORE	*scp;
 	uid_t	uid;
-	register bool	done_show = FALSE;
+	bool	done_show = FALSE;
 	static int	numscores, max_uid;
 
 	Newscore = FALSE;
@@ -169,8 +169,8 @@ cmp_sc(s1, s2)
 void
 show_score()
 {
-	register SCORE	*scp;
-	register int	inf;
+	SCORE	*scp;
+	int	inf;
 	static int	max_score;
 
 	if ((inf = open(Scorefile, O_RDONLY)) < 0) {

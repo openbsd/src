@@ -1,4 +1,4 @@
-/*	$OpenBSD: klmove.c,v 1.2 1998/08/19 07:41:45 pjanzen Exp $	*/
+/*	$OpenBSD: klmove.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: klmove.c,v 1.3 1995/04/22 10:59:07 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klmove.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: klmove.c,v 1.2 1998/08/19 07:41:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: klmove.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,16 +72,16 @@ void
 klmove(fl)
 int	fl;
 {
-	int			n;
-	register struct kling	*k;
-	double			dx, dy;
-	int			nextx, nexty;
-	register int		lookx, looky;
-	int			motion;
-	int			fudgex, fudgey;
-	int			qx, qy;
-	double			bigger;
-	int			i;
+	int		n;
+	struct kling	*k;
+	double		dx, dy;
+	int		nextx, nexty;
+	int		lookx, looky;
+	int		motion;
+	int		fudgex, fudgey;
+	int		qx, qy;
+	double		bigger;
+	int		i;
 
 #	ifdef xTRACE
 	if (Trace)

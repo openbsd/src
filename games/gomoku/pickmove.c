@@ -1,4 +1,4 @@
-/*	$OpenBSD: pickmove.c,v 1.6 2002/04/20 00:58:32 espie Exp $	*/
+/*	$OpenBSD: pickmove.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$OpenBSD: pickmove.c,v 1.6 2002/04/20 00:58:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: pickmove.c,v 1.7 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,8 @@ int
 pickmove(us)
 	int us;
 {
-	register struct spotstr *sp, *sp1, *sp2;
-	register union comboval *Ocp, *Tcp;
+	struct spotstr *sp, *sp1, *sp2;
+	union comboval *Ocp, *Tcp;
 	int m;
 
 	/* first move is easy */
@@ -231,11 +231,11 @@ void
 scanframes(color)
 	int color;
 {
-	register struct combostr *cbp, *ecbp;
-	register struct spotstr *sp;
-	register union comboval *cp;
-	register struct elist *ep, *nep;
-	register int i, r, d, n;
+	struct combostr *cbp, *ecbp;
+	struct spotstr *sp;
+	union comboval *cp;
+	struct elist *ep, *nep;
+	int i, r, d, n;
 	union comboval cb;
 
 	curcolor = color;
@@ -419,9 +419,9 @@ makecombo2(ocbp, osp, off, s)
 	int off;
 	int s;
 {
-	register struct spotstr *fsp;
-	register struct combostr *ncbp;
-	register int f, r, d, c;
+	struct spotstr *fsp;
+	struct combostr *ncbp;
+	int f, r, d, c;
 	int baseB, fcnt, emask, bmask, n;
 	union comboval ocb, fcb;
 	struct combostr **scbpp, *fcbp;
@@ -550,10 +550,10 @@ void
 addframes(level)
 	int level;
 {
-	register struct combostr *cbp, *ecbp;
-	register struct spotstr *sp, *fsp;
-	register struct elist *ep, *nep;
-	register int i, r, d;
+	struct combostr *cbp, *ecbp;
+	struct spotstr *sp, *fsp;
+	struct elist *ep, *nep;
+	int i, r, d;
 	struct combostr **cbpp, *pcbp;
 	union comboval fcb, cb;
 
@@ -654,10 +654,10 @@ makecombo(ocbp, osp, off, s)
 	int off;
 	int s;
 {
-	register struct combostr *cbp, *ncbp;
-	register struct spotstr *sp;
-	register struct elist *ep;
-	register int n, c;
+	struct combostr *cbp, *ncbp;
+	struct spotstr *sp;
+	struct elist *ep;
+	int n, c;
 	struct elist *nep;
 	struct combostr **scbpp;
 	int baseB, fcnt, emask, verts;
@@ -961,9 +961,9 @@ updatecombo(cbp, color)
 	struct combostr *cbp;
 	int color;
 {
-	register struct spotstr *sp;
-	register struct combostr *tcbp;
-	register int i, d;
+	struct spotstr *sp;
+	struct combostr *tcbp;
+	int i, d;
 	int nframes, s, flg = 0;
 	union comboval cb;
 
@@ -1466,7 +1466,7 @@ clearcombo(cbp, open)
 	struct combostr *cbp;
 	int open;
 {
-	register struct spotstr *sp;
+	struct spotstr *sp;
 	struct combostr *tcbp;
 	int d, n, mask;
 

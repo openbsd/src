@@ -1,4 +1,4 @@
-/*	$OpenBSD: schedule.c,v 1.2 1998/08/19 07:42:01 pjanzen Exp $	*/
+/*	$OpenBSD: schedule.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: schedule.c,v 1.3 1995/04/22 10:59:23 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: schedule.c,v 1.2 1998/08/19 07:42:01 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: schedule.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,9 @@ schedule(type, offset, x, y, z)
 	char	x, y;
 	char	z;
 {
-	register struct event	*e;
-	register int		i;
-	double			date;
+	struct event	*e;
+	int		i;
+	double		date;
 
 	date = Now.date + offset;
 	for (i = 0; i < MAXEVENTS; i++)
@@ -104,8 +104,8 @@ reschedule(e1, offset)
 	struct event	*e1;
 	double		offset;
 {
-	double			date;
-	register struct event	*e;
+	double		date;
+	struct event	*e;
 
 	e = e1;
 
@@ -130,7 +130,7 @@ void
 unschedule(e1)
 	struct event	*e1;
 {
-	register struct event	*e;
+	struct event	*e;
 
 	e = e1;
 
@@ -159,7 +159,7 @@ xsched(ev1, factor, x, y, z)
 	int	factor;
 	int	x, y, z;
 {
-	register int	ev;
+	int	ev;
 
 	ev = ev1;
 	return (schedule(ev, -Param.eventdly[ev] * Param.time * log(franf()) / factor, x, y, z));
@@ -179,8 +179,8 @@ xresched(e1, ev1, factor)
 	int		ev1;
 	int		factor;
 {
-	register int		ev;
-	register struct event	*e;
+	int		ev;
+	struct event	*e;
 
 	ev = ev1;
 	e = e1;

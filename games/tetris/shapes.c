@@ -1,4 +1,4 @@
-/*	$OpenBSD: shapes.c,v 1.3 1998/09/24 06:45:07 pjanzen Exp $	*/
+/*	$OpenBSD: shapes.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: shapes.c,v 1.2 1995/04/22 07:42:44 cgd Exp $	*/
 
 /*-
@@ -86,9 +86,9 @@ struct shape shapes[] = {
 int
 fits_in(shape, pos)
 	struct shape *shape;
-	register int pos;
+	int pos;
 {
-	register int *o = shape->off;
+	int *o = shape->off;
 
 	if (board[pos] || board[pos + *o++] || board[pos + *o++] ||
 	    board[pos + *o])
@@ -103,9 +103,9 @@ fits_in(shape, pos)
 void
 place(shape, pos, onoff)
 	struct shape *shape;
-	register int pos, onoff;
+	int pos, onoff;
 {
-	register int *o = shape->off;
+	int *o = shape->off;
 
 	board[pos] = onoff;
 	board[pos + *o++] = onoff;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpgame.c,v 1.5 2002/02/16 21:27:12 millert Exp $	*/
+/*	$OpenBSD: dumpgame.c,v 1.6 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: dumpgame.c,v 1.4 1995/04/24 12:25:54 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dumpgame.c,v 1.5 2002/02/16 21:27:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: dumpgame.c,v 1.6 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,10 +88,10 @@ void
 dumpgame(v)
 	int v;
 {
-	int			version;
-	register int		fd;
-	register struct dump	*d;
-	register int		i;
+	int		version;
+	int		fd;
+	struct dump	*d;
+	int		i;
 
 	if ((fd = creat("trek.dump", 0644)) < 0)
 	{
@@ -127,8 +127,7 @@ dumpgame(v)
 int
 restartgame()
 {
-	register int	fd;
-	int		version;
+	int	fd, version;
 
 	if ((fd = open("trek.dump", O_RDONLY)) < 0 ||
 	    read(fd, &version, sizeof version) != sizeof version ||
@@ -158,10 +157,9 @@ static int
 readdump(fd1)
 	int	fd1;
 {
-	register int		fd;
-	register struct dump	*d;
-	register int		i;
-	long			junk;
+	int		fd, i;
+	struct dump	*d;
+	long		junk;
 
 	fd = fd1;
 

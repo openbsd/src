@@ -1,4 +1,4 @@
-/*	$OpenBSD: warp.c,v 1.3 2001/09/19 10:51:55 pjanzen Exp $	*/
+/*	$OpenBSD: warp.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: warp.c,v 1.3 1995/04/22 10:59:40 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)warp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: warp.c,v 1.3 2001/09/19 10:51:55 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: warp.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,15 +82,9 @@ warp(fl, c, d)
 	int	fl, c;
 	double	d;
 {
-	char		*p;
-	int		course;
-	double		power;
-	double		dist;
-	double		time;
-	double		speed;
-	double		frac;
-	register int	percent;
-	register int	i;
+	char	*p;
+	double	power, dist, time, speed, frac;
+	int	course, percent, i;
 
 	if (Ship.cond == DOCKED)
 	{

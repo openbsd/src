@@ -1,4 +1,4 @@
-/*	$OpenBSD: computer.c,v 1.5 2002/02/16 21:27:12 millert Exp $	*/
+/*	$OpenBSD: computer.c,v 1.6 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: computer.c,v 1.5 2002/02/16 21:27:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: computer.c,v 1.6 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,15 +115,15 @@ computer(v)
 	int v;
 {
 	int			ix, iy;
-	register int		i, j;
+	int			i, j;
 	int			tqx, tqy;
-	const struct cvntab		*r;
+	const struct cvntab	*r;
 	int			cost;
 	int			course;
 	double			dist, time;
 	double			warpfact;
 	struct quad		*q;
-	register struct event	*e;
+	struct event		*e;
 
 	if (check_out(COMPUTER))
 		return;
@@ -328,10 +328,10 @@ kalc(tqx, tqy, tsx, tsy, dist)
 	int	tsy;
 	double	*dist;
 {
-	double			dx, dy;
-	double			quadsize;
-	double			angle;
-	register int		course;
+	double		dx, dy;
+	double		quadsize;
+	double		angle;
+	int		course;
 
 	/* normalize to quadrant distances */
 	quadsize = NSECTS;

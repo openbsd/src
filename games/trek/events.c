@@ -1,4 +1,4 @@
-/*	$OpenBSD: events.c,v 1.3 2001/08/23 14:17:08 aaron Exp $	*/
+/*	$OpenBSD: events.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: events.c,v 1.3 1995/04/22 10:58:50 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)events.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: events.c,v 1.3 2001/08/23 14:17:08 aaron Exp $";
+static char rcsid[] = "$OpenBSD: events.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,19 +60,18 @@ int
 events(warp)
 	int	warp;		/* set if called in a time warp */
 {
-	register int		i;
-	char			*p;
-	int			j;
-	struct kling		*k;
-	double			rtime;
-	double			xdate;
-	double			idate;
-	struct event		*ev = NULL;
-	int			ix, iy;
-	register struct quad	*q;
-	register struct event	*e;
-	int			evnum;
-	int			restcancel;
+	int		i, j;
+	char		*p;
+	struct kling	*k;
+	double		rtime;
+	double		xdate;
+	double		idate;
+	struct event	*ev = NULL;
+	int		ix, iy;
+	struct quad	*q;
+	struct event	*e;
+	int		evnum;
+	int		restcancel;
 
 	/* if nothing happened, just allow for any Klingons killed */
 	if (Move.time <= 0.0)

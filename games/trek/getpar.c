@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.8 2002/02/25 00:18:48 pvalchev Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.9 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getpar.c,v 1.8 2002/02/25 00:18:48 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: getpar.c,v 1.9 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,7 @@ int
 getintpar(s)
 	const char	*s;
 {
-	register int	i;
-	int		n;
+	int	i, n;
 
 	while (1)
 	{
@@ -82,8 +81,8 @@ double
 getfltpar(s)
 	const char	*s;
 {
-	register int		i;
-	double			d;
+	int		i;
+	double		d;
 
 	while (1)
 	{
@@ -211,9 +210,8 @@ getstrpar(s, r, l, t)
 	int		l;
 	const char	*t;
 {
-	register int	i;
-	char		format[20];
-	register int	f;
+	int	i, f;
+	char	format[20];
 
 	if (t == 0)
 		t = " \t\n;";

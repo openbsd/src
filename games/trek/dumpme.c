@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpme.c,v 1.2 1998/08/19 07:41:30 pjanzen Exp $	*/
+/*	$OpenBSD: dumpme.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: dumpme.c,v 1.3 1995/04/22 10:58:48 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpme.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dumpme.c,v 1.2 1998/08/19 07:41:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dumpme.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,10 +61,9 @@ void
 dumpme(flag)
 	int	flag;
 {
-	register int		f;
-	double			x;
-	register struct event	*e;
-	register int		i;
+	int		f, i;
+	double		x;
+	struct event	*e;
 
 	f = flag;
 	Ship.quadx = ranf(NQUADS);

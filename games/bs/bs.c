@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.13 2002/05/31 03:40:00 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.14 2002/05/31 04:21:29 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: bs.c,v 1.13 2002/05/31 03:40:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bs.c,v 1.14 2002/05/31 04:21:29 pjanzen Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* ( random() ) */
@@ -334,8 +334,8 @@ static int rnd(int n)
 static void randomplace(int b, ship_t *ss)
 /* generate a valid random ship placement into px,py */
 {
-    register int bwidth = BWIDTH - ss->length;
-    register int bdepth = BDEPTH - ss->length;
+    int bwidth = BWIDTH - ss->length;
+    int bdepth = BDEPTH - ss->length;
 
     do {
 	ss->y = rnd(bdepth);
@@ -1276,7 +1276,7 @@ void usage()
 
 static void do_options(int c, char *op[])
 {
-    register int i;
+    int i;
 
     if (c > 1)
     {
@@ -1327,8 +1327,8 @@ static void do_options(int c, char *op[])
 
 static int scount(int who)
 {
-    register int i, shots;
-    register ship_t *sp;
+    int i, shots;
+    ship_t *sp;
 
     if (who)
 	sp = cpuship;	/* count cpu shots */
@@ -1365,7 +1365,7 @@ int main(int argc, char *argv[])
 		}
 		else  /* salvo */
 		{
-		    register int i;
+		    int i;
 
 		    i = scount(turn);
 		    while (i--)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abandon.c,v 1.3 1999/03/12 03:02:38 pjanzen Exp $	*/
+/*	$OpenBSD: abandon.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: abandon.c,v 1.3 1995/04/22 10:58:24 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)abandon.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: abandon.c,v 1.3 1999/03/12 03:02:38 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: abandon.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,10 +72,10 @@ void
 abandon(v)
 	int v;
 {
-	register struct quad	*q;
-	register int		i;
-	int			j;
-	register struct event	*e;
+	struct quad	*q;
+	int		i;
+	int		j;
+	struct event	*e;
 
 	if (Ship.ship == QUEENE)
 	{

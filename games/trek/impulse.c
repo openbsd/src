@@ -1,4 +1,4 @@
-/*	$OpenBSD: impulse.c,v 1.2 1998/08/19 07:41:40 pjanzen Exp $	*/
+/*	$OpenBSD: impulse.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: impulse.c,v 1.3 1995/04/22 10:59:03 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)impulse.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: impulse.c,v 1.2 1998/08/19 07:41:40 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: impulse.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,10 +54,8 @@ void
 impulse(v)
 	int v;
 {
-	int			course;
-	register int		power;
-	double			dist, time;
-	register int		percent;
+	int	course, power, percent;
+	double	dist, time;
 
 	if (Ship.cond == DOCKED)
 	{

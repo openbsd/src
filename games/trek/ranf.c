@@ -1,4 +1,4 @@
-/*	$OpenBSD: ranf.c,v 1.2 1998/08/19 07:41:58 pjanzen Exp $	*/
+/*	$OpenBSD: ranf.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: ranf.c,v 1.3 1995/04/22 10:59:21 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ranf.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: ranf.c,v 1.2 1998/08/19 07:41:58 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ranf.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ int
 ranf(max)
 	int	max;
 {
-	register int	t;
+	int	t;
 
 	if (max <= 0)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.2 1998/09/24 06:45:06 pjanzen Exp $	*/
+/*	$OpenBSD: word.c,v 1.3 2002/05/31 04:21:29 pjanzen Exp $	*/
 /*	$NetBSD: word.c,v 1.2 1995/03/21 12:14:45 cgd Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)word.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: word.c,v 1.2 1998/09/24 06:45:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: word.c,v 1.3 2002/05/31 04:21:29 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,8 +70,8 @@ nextword(fp)
 	FILE *fp;
 {
 	extern int wordlen;
-	register int ch, pcount;
-	register char *p;
+	int ch, pcount;
+	char *p;
 	static char buf[MAXWORDLEN + 1];
 
 	if (fp == NULL) {
@@ -190,7 +190,7 @@ int
 loadindex(indexfile)
 	char *indexfile;
 {
-	register int i, j;
+	int i, j;
 	char buf[BUFSIZ];
 	FILE *fp;
 	extern struct dictindex dictindex[];

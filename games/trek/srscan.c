@@ -1,4 +1,4 @@
-/*	$OpenBSD: srscan.c,v 1.4 1999/07/31 18:49:00 pjanzen Exp $	*/
+/*	$OpenBSD: srscan.c,v 1.5 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: srscan.c,v 1.3 1995/04/22 10:59:31 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)srscan.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: srscan.c,v 1.4 1999/07/31 18:49:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: srscan.c,v 1.5 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,8 @@ void
 srscan(f)
 	int	f;
 {
-	register int	i, j;
-	register int	statinfo;
+	int		i, j;
+	int		statinfo;
 	const char	*s;
 	int		percent;
 	struct quad	*q = NULL;

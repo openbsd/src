@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $	*/
+/*	$OpenBSD: kill.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: kill.c,v 1.3 1995/04/22 10:59:06 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kill.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: kill.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: kill.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ void
 killk(ix, iy)
 	int	ix, iy;
 {
-	register int		i;
+	int		i;
 
 	printf("   *** Klingon at %d,%d destroyed ***\n", ix, iy);
 
@@ -106,8 +106,8 @@ void
 killb(qx, qy)
 	int	qx, qy;
 {
-	register struct quad	*q;
-	register struct xy	*b;
+	struct quad	*q;
+	struct xy	*b;
 
 	q = &Quad[qx][qy];
 
@@ -157,9 +157,9 @@ kills(x, y, f)
 	int	x, y;	/* quad coords if f == 0, else sector coords */
 	int	f;	/* f != 0 -- this quad;  f < 0 -- Enterprise's fault */
 {
-	register struct quad	*q;
-	register struct event	*e;
-	const char		*name;
+	struct quad	*q;
+	struct event	*e;
+	const char	*name;
 
 	if (f)
 	{
@@ -201,9 +201,9 @@ killd(x, y, f)
 	int	x, y;		/* quadrant coordinates */
 	int	f;		/* set if user is to be informed */
 {
-	register struct event	*e;
-	register int		i;
-	register struct quad	*q;
+	struct event	*e;
+	int		i;
+	struct quad	*q;
 
 	q = &Quad[x][y];
 	for (i = 0; i < MAXEVENTS; i++)

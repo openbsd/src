@@ -1,4 +1,4 @@
-/*	$OpenBSD: stoc.c,v 1.3 1998/03/26 21:16:52 pjanzen Exp $	*/
+/*	$OpenBSD: stoc.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-static char rcsid[] = "$OpenBSD: stoc.c,v 1.3 1998/03/26 21:16:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: stoc.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ stoc(s)
 	int s;
 {
 	static char buf[32];
-	register int i;
+	int i;
 
 	for (i = 0; mv[i].m_code >= 0; i++)
 		if (s == mv[i].m_code)
@@ -84,7 +84,7 @@ int
 ctos(mp)
 	char *mp;
 {
-	register int i;
+	int i;
 
 	for (i = 0; mv[i].m_code >= 0; i++)
 		if (strcmp(mp, mv[i].m_text) == 0)
@@ -104,7 +104,7 @@ int
 lton(c)
 	int c;
 {
-	register int i;
+	int i;
 
 	if (islower(c))
 		c = toupper(c);

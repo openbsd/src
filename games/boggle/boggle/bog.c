@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.9 2002/05/31 03:40:00 pjanzen Exp $	*/
+/*	$OpenBSD: bog.c,v 1.10 2002/05/31 04:21:29 pjanzen Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: bog.c,v 1.9 2002/05/31 03:40:00 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bog.c,v 1.10 2002/05/31 04:21:29 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -265,8 +265,8 @@ char *
 batchword(fp)
 	FILE *fp;
 {
-	register int *p, *q;
-	register char *w;
+	int *p, *q;
+	char *w;
 
 	q = &wordpath[MAXWORDLEN + 1];
 	p = wordpath;
@@ -293,7 +293,6 @@ batchword(fp)
 void
 playgame()
 {
-	/* Can't use register variables if setjmp() is used! */
 	int i, *p, *q;
 	time_t t;
 	char buf[MAXWORDLEN + 1];
@@ -417,8 +416,8 @@ checkword(word, prev, path)
 	char *word;
 	int prev, *path;
 {
-	register char *p, *q;
-	register int i, *lm;
+	char *p, *q;
+	int i, *lm;
 
 	if (debug) {
 		(void) printf("checkword(%s, %d, [", word, prev);
@@ -499,8 +498,8 @@ int
 validword(word)
 	char *word;
 {
-	register int j;
-	register char *q, *w;
+	int j;
+	char *q, *w;
 
 	j = word[0] - 'a';
 	if (dictseek(dictfp, dictindex[j].start, SEEK_SET) < 0) {
@@ -533,8 +532,8 @@ validword(word)
 void
 checkdict()
 {
-	register char *p, **pw, *w;
-	register int i;
+	char *p, **pw, *w;
+	int i;
 	int prevch, previndex, *pi, *qi, st;
 
 	mwordsp = mwords;
@@ -612,7 +611,7 @@ void
 newgame(b)
 	char *b;
 {
-	register int i, p, q;
+	int i, p, q;
 	char *tmp;
 	int *lm[26];
 	static char *cubes[16] = {
@@ -658,7 +657,7 @@ newgame(b)
 	}
 
 	for (i = 0; i < 16; i++) {
-		register int j;
+		int j;
 
 		j = (int) (board[i] - 'a');
 		*lm[j] = i;

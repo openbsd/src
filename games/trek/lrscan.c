@@ -1,4 +1,4 @@
-/*	$OpenBSD: lrscan.c,v 1.2 1998/08/19 07:41:47 pjanzen Exp $	*/
+/*	$OpenBSD: lrscan.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: lrscan.c,v 1.3 1995/04/22 10:59:09 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lrscan.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: lrscan.c,v 1.2 1998/08/19 07:41:47 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: lrscan.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,8 @@ void
 lrscan(v)
 	int v;
 {
-	register int			i, j;
-	register struct quad		*q;
+	int			i, j;
+	struct quad		*q;
 
 	if (check_out(LRSCAN))
 		return;

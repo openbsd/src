@@ -1,4 +1,4 @@
-/*	$OpenBSD: query.c,v 1.2 1998/07/09 04:34:21 pjanzen Exp $	*/
+/*	$OpenBSD: query.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: query.c,v 1.3 1995/04/22 10:09:05 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: query.c,v 1.2 1998/07/09 04:34:21 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: query.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,8 @@ int
 query(prompt)
 	char	*prompt;
 {
-	register int	c, retval;
-	register int	y, x;
+	int	c, retval;
+	int	y, x;
 
 	getyx(stdscr, y, x);
 	move(Y_PROMPT, X_PROMPT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.5 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: setup.c,v 1.6 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
@@ -63,8 +63,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char	**filename;	/* for pointing to file names */
-	register int	fd;		/* file descriptor */
+	char	**filename;	/* for pointing to file names */
+	int	fd;		/* file descriptor */
 	FILE	*fp;			/* for opening files */
 	struct stat	fbuf;		/* for getting files statistics */
 	int ch;

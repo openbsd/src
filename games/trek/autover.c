@@ -1,4 +1,4 @@
-/*	$OpenBSD: autover.c,v 1.2 1998/08/19 07:41:12 pjanzen Exp $	*/
+/*	$OpenBSD: autover.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: autover.c,v 1.3 1995/04/22 10:58:28 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)autover.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: autover.c,v 1.2 1998/08/19 07:41:12 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: autover.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,8 @@ static char rcsid[] = "$OpenBSD: autover.c,v 1.2 1998/08/19 07:41:12 pjanzen Exp
 void
 autover()
 {
-	double			dist;
-	register int		course;
+	double	dist;
+	int	course;
 
 	printf("\07RED ALERT:  The %s is in a supernova quadrant\n", Ship.shipname);
 	printf("***  Emergency override attempts to hurl %s to safety\n", Ship.shipname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: initquad.c,v 1.2 1998/08/19 07:41:41 pjanzen Exp $	*/
+/*	$OpenBSD: initquad.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: initquad.c,v 1.3 1995/04/22 10:59:04 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initquad.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: initquad.c,v 1.2 1998/08/19 07:41:41 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: initquad.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,11 +66,11 @@ void
 initquad(f)
 	int	f;
 {
-	register int		i, j;
-	int			rx, ry;
-	int			nbases, nstars;
-	register struct quad	*q;
-	int			nholes;
+	int		i, j;
+	int		rx, ry;
+	int		nbases, nstars;
+	struct quad	*q;
+	int		nholes;
 
 	q = &Quad[Ship.quadx][Ship.quady];
 
@@ -149,7 +149,7 @@ void
 sector(x, y)
 	int	*x, *y;
 {
-	register int		i, j;
+	int		i, j;
 
 	do
 	{

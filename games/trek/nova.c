@@ -1,4 +1,4 @@
-/*	$OpenBSD: nova.c,v 1.2 1998/08/19 07:41:51 pjanzen Exp $	*/
+/*	$OpenBSD: nova.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: nova.c,v 1.3 1995/04/22 10:59:14 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nova.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: nova.c,v 1.2 1998/08/19 07:41:51 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: nova.c,v 1.3 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,8 @@ void
 nova(x, y)
 	int	x, y;
 {
-	register int		i, j;
-	register int		se;
+	int		i, j;
+	int		se;
 
 	if (Sect[x][y] != STAR || Quad[Ship.quadx][Ship.quady].stars < 0)
 		return;

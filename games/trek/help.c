@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $	*/
+/*	$OpenBSD: help.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: help.c,v 1.3 1995/04/22 10:59:01 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: help.c,v 1.3 1999/07/31 18:48:59 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: help.c,v 1.4 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,10 +74,9 @@ void
 help(v)
 	int v;
 {
-	register int		i;
-	double			dist, x;
-	register int		dx = 0, dy = 0;
-	int			j, l = 0;
+	double		dist, x;
+	int		dx = 0, dy = 0;
+	int		i, j, l = 0;
 
 	/* check to see if calling for help is reasonable ... */
 	if (Ship.cond == DOCKED)

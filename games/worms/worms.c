@@ -1,4 +1,4 @@
-/*	$OpenBSD: worms.c,v 1.12 2002/05/31 03:40:01 pjanzen Exp $	*/
+/*	$OpenBSD: worms.c,v 1.13 2002/05/31 04:21:30 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worms.c,v 1.12 2002/05/31 03:40:01 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worms.c,v 1.13 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -309,7 +309,7 @@ main(argc, argv)
 			if (++h == length)
 				h = 0;
 			if (w->xpos[w->head = h] >= 0) {
-				register int x1, y1;
+				int x1, y1;
 
 				x1 = w->xpos[h];
 				y1 = w->ypos[h];

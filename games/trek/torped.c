@@ -1,4 +1,4 @@
-/*	$OpenBSD: torped.c,v 1.4 2002/02/16 21:27:12 millert Exp $	*/
+/*	$OpenBSD: torped.c,v 1.5 2002/05/31 04:21:30 pjanzen Exp $	*/
 /*	$NetBSD: torped.c,v 1.3 1995/04/22 10:59:34 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)torped.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: torped.c,v 1.4 2002/02/16 21:27:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: torped.c,v 1.5 2002/05/31 04:21:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,15 +72,14 @@ void
 torped(v)
 	int v;
 {
-	register int	ix, iy;
-	double		x, y, dx, dy;
-	double		angle;
-	int		course, course2;
-	register int	k;
-	double		bigger;
-	double		sectsize;
-	int		burst;
-	int		n;
+	int	ix, iy;
+	double	x, y, dx, dy;
+	double	angle;
+	int	course, course2;
+	int	k;
+	double	bigger;
+	double	sectsize;
+	int	burst, n;
 
 	if (Ship.cloaked)
 	{
@@ -236,8 +235,8 @@ static int
 randcourse(n)
 	int	n;
 {
-	double			r;
-	register int		d;
+	double	r;
+	int	d;
 
 	d = ((franf() + franf()) - 1.0) * 20;
 	if (abs(d) > 12)
