@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.538 2002/08/20 14:20:27 nate Exp 
+ *		OpenBSD: pcidevs,v 1.540 2002/08/31 06:51:36 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -665,6 +665,7 @@
 #define	PCI_PRODUCT_AIRONET_PCI352	0x0350		/* Cisco/Aironet PCI35x WLAN */
 #define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless */
 #define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* PC4800 Wireless */
+#define	PCI_PRODUCT_AIRONET_PCA504	0x4800		/* PCA504 Wireless */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI */
@@ -2156,6 +2157,8 @@
 #define	PCI_PRODUCT_TI_PCI1410	0xac50		/* PCI1410 PCI-CardBus */
 #define	PCI_PRODUCT_TI_PCI1420	0xac51		/* PCI1420 PCI-CardBus */
 #define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 PCI-CardBus */
+#define	PCI_PRODUCT_TI_PCI1421	0xac53		/* PCI1421 PCI-CardBus */
+#define	PCI_PRODUCT_TI_PCI2040	0xac60		/* PCI2040 PCI-DSP */
 
 /* Topic */
 #define	PCI_PRODUCT_TOPIC_5634PCV	0x0000		/* 5634PCV SurfRider */

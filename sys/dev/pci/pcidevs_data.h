@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.538 2002/08/20 14:20:27 nate Exp 
+ *		OpenBSD: pcidevs,v 1.540 2002/08/31 06:51:36 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -261,6 +261,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4800,
 	    "PC4800 Wireless",
+	},
+	{
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PCA504,
+	    "PCA504 Wireless",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -4925,6 +4929,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451,
 	    "PCI1451 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1421,
+	    "PCI1421 PCI-CardBus",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2040,
+	    "PCI2040 PCI-DSP",
 	},
 	{
 	    PCI_VENDOR_TOPIC, PCI_PRODUCT_TOPIC_5634PCV,
