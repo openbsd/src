@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore_old.c,v 1.14 1999/02/23 07:40:29 deraadt Exp $	*/
+/*	$OpenBSD: savecore_old.c,v 1.15 1999/07/01 15:41:59 deraadt Exp $	*/
 /*	$NetBSD: savecore_old.c,v 1.1.1.1 1996/03/16 10:25:11 leo Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.14 1999/02/23 07:40:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore_old.c,v 1.15 1999/07/01 15:41:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -416,7 +416,6 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 		(void)fprintf(fp, "%d\n", bounds + 1);
 		(void)fclose(fp);
 	}
-	(void)fclose(fp);
 
 	/* Create the core file. */
 	(void)snprintf(path, sizeof(path), "%s%s.%d.core%s",
