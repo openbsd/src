@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.138 2004/12/25 23:02:25 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.139 2005/03/03 19:30:36 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3564,10 +3564,10 @@ pmap_release(pm)
 
 	if (CPU_ISSUN4OR4C) {
 #if defined(SUN4_MMU3L)
-		if (!TAILQ_EMPTY(&pm->pm_reglist));
+		if (!TAILQ_EMPTY(&pm->pm_reglist))
 			panic("pmap_release: region list not empty");
 #endif
-		if (!TAILQ_EMPTY(&pm->pm_seglist));
+		if (!TAILQ_EMPTY(&pm->pm_seglist))
 			panic("pmap_release: segment list not empty");
 
 		if ((c = pm->pm_ctx) != NULL) {
