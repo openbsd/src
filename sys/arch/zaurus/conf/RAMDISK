@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.21 2005/03/18 07:48:43 dlg Exp $
+#	$OpenBSD: RAMDISK,v 1.22 2005/03/31 12:35:45 dlg Exp $
 #
 # GENERIC machine description file
 #
@@ -69,19 +69,21 @@ pxagpio0	at pxaip?	# GPIO
 scoop0		at pxaip?
 scoop1		at pxaip?
 saost0		at pxaip? addr 0x40a00000 size 0x20
-pxaudc0		at pxaip?
-ohci0		at pxaip?
-usb*		at ohci?
 
 # keyboard
 zkbd0		at pxaip?
 wskbd*		at zkbd? mux 1
 
-# USB bus support
-usb*		at ohci?	flags 0x1
-uhub*		at usb?
-uhub*		at uhub?
+# USB controllers
+pxaudc0		at pxaip?		# USB Device Controller
+ohci0		at pxaip?		# Open Host Controller
 
+# USB bus support
+usb*		at ohci?
+uhub*		at usb?			# USB Root Hub
+uhub*		at uhub?		# USB Hubs
+
+# USB devices
 uhidev*		at uhub?
 uhid*		at uhidev?		# USB Generic HID devices
 ukbd*		at uhidev?		# USB HID Keyboard devices
@@ -90,6 +92,7 @@ wskbd*		at ukbd? mux 1
 #wsmouse*	at ums? mux 0
 #ulpt*		at uhub?		# USB Printer
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
+#atu*		at uhub?		# Atmel AT76C50x based 802.11b
 axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*		at uhub?		# CATC USB-EL1201A based Ethernet
 kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
@@ -117,7 +120,7 @@ cd*		at scsibus?
 # integrated 16550 UARTs
 options COM_PXA2X0
 com0	at pxaip?  addr 0x40100000 intr 22	# Full Function UART
-com1	at pxaip?  addr 0x40200000 intr 21	# BlueTootth UART
+com1	at pxaip?  addr 0x40200000 intr 21	# BlueTooth UART
 #com2	at pxaip?  addr 0x40700000 intr 20	# Standard UART (for IrDA)
 options FFUARTCONSOLE
 #options BTUARTCONSOLE
