@@ -61,7 +61,7 @@
 ./usr/lib/libossaudio.so.0.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.2
-./usr/lib/libpcap.so.1.1
+./usr/lib/libpcap.so.1.2
 ./usr/lib/libperl.so.6.1
 ./usr/lib/libreadline.so.0.0
 ./usr/lib/libsectok.so.3.1
