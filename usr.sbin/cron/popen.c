@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.9 2001/06/02 21:56:17 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.10 2001/06/03 01:30:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.9 2001/06/02 21:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.10 2001/06/03 01:30:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,21 +127,6 @@ cron_popen(program, type, e)
 		goto pfree;
 		/* NOTREACHED */
 	case 0:				/* child */
-		closelog();
-		if (*type == 'r') {
-			if (pdes[1] != STDOUT_FILENO) {
-				dup2(pdes[1], STDOUT_FILENO);
-				(void)close(pdes[1]);
-			}
-			dup2(STDOUT_FILENO, STDERR_FILENO); /* stderr too! */
-			(void)close(pdes[0]);
-		} else {
-			if (pdes[0] != STDIN_FILENO) {
-				dup2(pdes[0], STDIN_FILENO);
-				(void)close(pdes[0]);
-			}
-			(void)close(pdes[1]);
-		}
 		if (e) {
 #if defined(LOGIN_CAP)
 			struct passwd *pwd;
@@ -166,13 +151,29 @@ cron_popen(program, type, e)
 			chdir(env_get("HOME", e->envp));
 #endif /* LOGIN_CAP */
 		}
+		closelog();
+		if (*type == 'r') {
+			if (pdes[1] != STDOUT_FILENO) {
+				dup2(pdes[1], STDOUT_FILENO);
+				dup2(pdes[1], STDERR_FILENO); /* stderr too! */
+				(void)close(pdes[1]);
+			}
+			(void)close(pdes[0]);
+		} else {
+			if (pdes[0] != STDIN_FILENO) {
+				dup2(pdes[0], STDIN_FILENO);
+				(void)close(pdes[0]);
+			}
+			(void)close(pdes[1]);
+		}
 #if WANT_GLOBBING
-		execv(gargv[0], gargv);
+		execvp(gargv[0], gargv);
 #else
 		execvp(argv[0], argv);
 #endif
 		_exit(1);
 	}
+
 	/* parent; assume fdopen can't fail...  */
 	if (*type == 'r') {
 		iop = fdopen(pdes[0], type);
