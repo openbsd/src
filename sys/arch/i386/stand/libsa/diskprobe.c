@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.23 2003/10/23 18:33:45 fgsch Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.24 2003/12/16 22:53:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -28,7 +28,7 @@
  */
 
 /* We want the disk type names from disklabel.h */
-#define DKTYPENAMES
+#undef DKTYPENAMES
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -222,8 +222,6 @@ dump_diskinfo(void)
 {
 	struct diskinfo *dip;
 
-	(void)fstypenames, (void)fstypesnames;
-
 	printf("Disk\tBIOS#\tType\tCyls\tHeads\tSecs\tFlags\tChecksum\n");
 	for(dip = TAILQ_FIRST(&disklist); dip; dip = TAILQ_NEXT(dip, list)){
 		bios_diskinfo_t *bdi = &dip->bios_info;
@@ -231,8 +229,7 @@ dump_diskinfo(void)
 
 		printf("%cd%d\t0x%x\t%s\t%d\t%d\t%d\t0x%x\t0x%x\n",
 		    (d & 0x80)?'h':'f', d & 0x7F, d,
-			(bdi->flags & BDI_BADLABEL)?"*none*":
-				dktypenames[B_TYPE(dip->disklabel.d_type)],
+			(bdi->flags & BDI_BADLABEL)?"*none*":"label",
 		    bdi->bios_cylinders, bdi->bios_heads, bdi->bios_sectors,
 		    bdi->flags, bdi->checksum);
 	}
