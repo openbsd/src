@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.8 1997/07/17 23:15:49 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.9 1997/07/21 15:32:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -41,10 +41,10 @@ void *alloca __P((size_t));
 void machdep __P((void));
 u_int apm_init __P((void));
 
-extern u_long	codeseg;
 extern int	boothowto;
 		/* XXX filled in assumption that last file opened is kernel */
 extern int	bootdev;
 extern u_int	cnvmem, extmem;
 extern struct apm_connect_info apminfo;
-extern const char bdevs[19][4];
+extern const char bdevs[][4];
+extern const int nbdevs;
