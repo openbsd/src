@@ -368,6 +368,8 @@ __hostalias(name)
 
 	if (_res.options & RES_NOALIASES)
 		return (NULL);
+	if (getuid() != setuid())
+		return (NULL);
 	file = getenv("HOSTALIASES");
 	if (file == NULL || (fp = fopen(file, "r")) == NULL)
 		return (NULL);

@@ -121,6 +121,7 @@ res_init()
 	int nsort = 0;
 	int dots;
 	u_long mask;
+	int notsuid = (getuid() == geteuid());
 
 	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
 	_res.nsaddr.sin_family = AF_INET;
@@ -136,7 +137,7 @@ res_init()
 	strncpy(_res.lookups, "f", sizeof _res.lookups);
 
 	/* Allow user to override the local domain definition */
-	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
+	if (notsuid && (cp = getenv("LOCALDOMAIN")) != NULL) {
 		(void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
 		if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
 			*cp = '\0';
@@ -340,7 +341,7 @@ res_init()
 #endif
 	}
 
-	if ((cp = getenv("RES_OPTIONS")) != NULL)
+	if (notsuid && (cp = getenv("RES_OPTIONS")) != NULL)
 		res_setoptions(cp, "env");
 	_res.options |= RES_INIT;
 	return (0);
