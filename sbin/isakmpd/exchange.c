@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.37 2000/12/12 01:45:17 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.38 2001/01/22 08:37:05 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1196,7 +1196,7 @@ exchange_free_aux (void *v_exch)
   if (exchange->finalize)
     exchange->finalize (exchange, exchange->finalize_arg, 1);
 
-  /* Remove any SAs that has not been dissociated from us.  */
+  /* Remove any SAs that has not been disassociated from us.  */
   for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = next_sa)
     {
       next_sa = TAILQ_NEXT (sa, next);
@@ -1336,8 +1336,8 @@ exchange_finalize (struct message *msg)
 	    msg->isakmp_sa->recv_cert = malloc (exchange->recv_certlen);
 	    if (!msg->isakmp_sa->recv_cert)
 	      {
-		log_error ("exchange_finalize: strdup (\"%s\") failed",
-			   exchange->recv_cert);
+		log_error ("exchange_finalize: malloc (%d) failed",
+			   exchange->recv_certlen);
 		/* XXX How to cleanup?  */
 		return;
 	      }
