@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.776 2004/10/07 00:52:56 jsg Exp $
+$OpenBSD: pcidevs,v 1.777 2004/10/07 20:53:29 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -178,6 +178,7 @@ vendor	3DFX		0x121a	3DFX Interactive
 vendor	ATML		0x121b	Advanced Telecommunications Modules
 vendor	CCUBE		0x123f	C-Cube
 vendor	AVM		0x1244	AVM
+vendor	COREGA		0x1259	Corega
 vendor	ASIX		0x125b	ASIX
 vendor	ESSTECH		0x125d	ESS
 vendor	INTERSIL	0x1260	Intersil
@@ -207,6 +208,7 @@ vendor	MOXA		0x1393	Moxa
 vendor	LEVEL1		0x1394	Level 1
 vendor	HIFN		0x13a3	Hifn
 vendor	TRIWARE		0x13c1	3ware
+vendor	ABOCOM		0x13d1	Abocom
 vendor	SUNDANCE	0x13f0	Sundance
 vendor	CMI		0x13f6	C-Media Electronics
 vendor	LAVA		0x1407	Lava
@@ -220,6 +222,7 @@ vendor	OXFORD		0x14d2	Oxford
 vendor	AVLAB		0x14db	Avlab
 vendor	INVERTEX	0x14e1	Invertex
 vendor	BROADCOM	0x14e4	Broadcom
+vendor	PLANEX		0x14ea	Planex
 vendor	CONEXANT	0x14f1	Conexant
 vendor	DELTA		0x1500	Delta
 vendor	MYSON		0x1516	Myson Century
@@ -234,6 +237,7 @@ vendor	VMWARE		0x15ad	VMware
 vendor	NDC		0x15e8	National Datacomm Corp
 vendor	EUMITCOM	0x1638	Eumitcom
 vendor	NETSEC		0x1660	NetSec
+vendor	ATHEROS		0x168c	Atheros
 vendor	GLOBALSUN	0x16ab	Global Sun
 vendor	SAFENET		0x16ae	SafeNet
 vendor	USR2		0x16ec	US Robotics
@@ -292,9 +296,17 @@ product 3COM 3C595TX		0x5950	3c595 100Base-TX
 product 3COM 3C595T4		0x5951	3c595 100Base-T4
 product 3COM 3C595MII		0x5952	3c595 10Mbps-MII
 product 3COM 3C555		0x5055	3c555 100Base-TX
+product 3COM 3C575		0x5057	3c575
+product 3COM 3CCFE575BT		0x5157	3CCFE575BT
+product 3COM 3CCFE575CT		0x5257	3CCFE575CT
 product 3COM 3CRSHPW796		0x6000	3CRSHPW796 802.11b
 product 3COM 3C556		0x6055	3c556 100Base-TX
 product 3COM 3C556B		0x6056	3c556B 100Base-TX
+product 3COM 3CCFEM656		0x6560	3CCFEM656
+product 3COM 3CCFEM656B		0x6562	3CCFEM656B
+product 3COM MODEM56		0x6563	56k Modem
+product 3COM 3CCFEM656C		0x6564	3CCFEM656C
+product 3COM GLOBALMODEM56	0x6565	56k Global Modem
 product 3COM 3CSOHO100TX	0x7646	3cSOHO-TX
 product 3COM 3CRWE777A		0x7770	3crwe777a AirConnect
 product 3COM 3C900TPO		0x9000	3c900 10Base-T
@@ -346,6 +358,11 @@ product 3DLABS OXYGEN_GVX1	0x000a	Oxygen GVX1
 /* 3Ware products */
 product TRIWARE ESCALADE	0x1000	Escalade IDE RAID
 product TRIWARE ESCALADE_ASIC	0x1001	Escalade IDE RAID
+
+/* Abocom products */
+product ABOCOM FE2500		0xab02	FE2500
+product ABOCOM PCM200		0xab03	PCM200
+product ABOCOM TE100		0xab06	TE100
 
 /* Aironet Products */
 product AIRONET PC4800_1	0x0001	PC4800 Wireless
@@ -423,6 +440,7 @@ product ADP AIC7850		0x5078	AIC-7850
 product ADP AIC7855		0x5578	AIC-7855
 product ADP AIC5900		0x5900	AIC-5900 ATM
 product ADP AIC5905		0x5905	AIC-5905 ATM
+product ADP 1480		0x6075	APA-1480
 product ADP AIC7860		0x6078	AIC-7860
 product ADP 2940AU		0x6178	AHA-2940AU
 product ADP AIC7870		0x7078	AIC-7870
@@ -708,6 +726,9 @@ product ATI RS200_PCI		0xcab2	RS200 PCI
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
 product AMCIRCUITS LANAI	0x8043	Myrinet LANai
 
+/* Atheros products */
+product ATHEROS AR5201		0x0007	AR5201 Wireless
+
 /* Atronics products */
 product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
 
@@ -909,6 +930,10 @@ product CONEXANT HSF_56K_HSFI	0x2f00	HSF 56k HSFi
 product CONTAQ 82C599		0x0600	82C599 VLB
 product CONTAQ 82C693		0xc693	CY82C693U ISA
 
+/* Corega products */
+product COREGA CB_TXD		0xa117	FEther CB-TXD 10/100
+product COREGA 2CB_TXD		0xa11e	FEther II CB-TXD 10/100
+
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	C-Bus II-PCI
 
@@ -1001,6 +1026,7 @@ product DIAMOND VIPER		0x9001	Viper/PCI
 /* D-Link products */
 product DLINK 550TX		0x1002	550TX
 product DLINK 530TXPLUS		0x1300	530TX+
+product DLINK DFE690TXD		0x1340	DFE-690TXD
 product DLINK DGE550T		0x4000	DGE-550T
 product DLINK DGE530T		0x4c00	DGE-530T
 
@@ -1184,6 +1210,7 @@ product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82542		0x1000	PRO/1000 (82542)
 product INTEL 82543GC_SC	0x1001	PRO/1000F (82543GC)
+product INTEL MODEM56		0x1002	Modem
 product INTEL 82543GC		0x1004	PRO/1000T (82543GC)
 product INTEL 82544EI		0x1008	PRO/1000XT (82544EI)
 product INTEL 82544EI_SC	0x1009	PRO/1000XF (82544EI)
@@ -1505,12 +1532,13 @@ product LEADTEK WINFAST		0x6606	Leadtek WinFast TV 2000
 product LEVEL1 LXT1001		0x0001	LXT1001
 
 /* Linksys products */
-product	LINKSYS	EG1032		0x1032	EG1032
-product	LINKSYS	EG1064		0x1064	EG1064
+product LINKSYS EG1032		0x1032	EG1032
+product LINKSYS EG1064		0x1064	EG1064
+product LINKSYS PCM200		0xab09	PCM200
 
 /* Lite-On Communications */
-product LITEON	PNIC		0x0002	PNIC
-product LITEON	PNICII		0xc115	PNIC-II
+product LITEON PNIC		0x0002	PNIC
+product LITEON PNICII		0xc115	PNIC-II
 
 /* Lucent products */
 product LUCENT LTMODEM		0x0440	K56flex DSVD LTMODEM
@@ -1775,6 +1803,10 @@ product SYMBIOS MEGARAID	0x1960	MegaRAID
 /* Packet Engines products */
 product SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC
 
+/* Planex products */
+product PLANEX FNW_3603_TX	0xab06	FNW-3603-TX 10/100
+product PLANEX FNW_3800_TX	0xab07	FNW-3800-TX 10/100
+
 /* NexGen products */
 product NEXGEN NX82C501		0x4e78	NX82C501 PCI
 
@@ -1916,7 +1948,7 @@ product OPTI 82C621		0xc621	82C621 IDE
 product OPTI 82C700		0xc700	82C700
 product OPTI 82C701		0xc701	82C701
 product OPTI 82C822		0xc822	82C822
-product OPTI RM861HA		0xc861	RM861HA
+product OPTI 82C861		0xc861	82C861
 
 /* Oxford/ VScom */
 product OXFORD VSCOM_PCI010L	0x8001	VScom 010L
@@ -2039,6 +2071,7 @@ product RALINK RT2460A		0x0101	RT2460A
 /* Realtek (Creative Labs?) products */
 product REALTEK RT8029		0x8029	8029
 product REALTEK RT8129		0x8129	8129
+product REALTEK RT8138		0x8138	8138
 product REALTEK RT8139		0x8139	8139
 product REALTEK RT8169		0x8169	8169
 
@@ -2622,6 +2655,8 @@ product WINBOND2 W89C940	0x1980	Linksys EtherPCI
 product XIRCOM X3201_3		0x0002	X3201-3
 product XIRCOM X3201_3_21143	0x0003	X3201-3 (21143)
 product XIRCOM MPCI_MODEM	0x000c	Modem
+product XIRCOM MODEM56		0x0103	56k Modem
+product XIRCOM CBEM56G		0x0105	CBEM56G Modem
 
 /* Yamaha products */
 product YAMAHA YMF724		0x0004	724
