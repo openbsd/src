@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.11 2003/05/06 22:40:57 mickey Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.12 2003/05/06 22:55:38 mickey Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -1141,6 +1141,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 	OSIOP_TRACE('i', dstat, istat, (istat & OSIOP_ISTAT_DIP) ?
 	    intcode & 0xff : sstat0);
 
+	ds = NULL;
 	if (acb != NULL) { /* XXX */
 		ds = acb->ds;
 		bus_dmamap_sync(sc->sc_dmat, dsdma,
@@ -1157,6 +1158,9 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 	if (dstat & OSIOP_DSTAT_SIR && intcode == A_ok) {
 		/* Normal completion status, or check condition */
 		struct osiop_tinfo *ti;
+		if (acb == NULL)
+			printf("%s: COMPLETE with no active command?\n",
+			    sc->sc_dev.dv_xname);
 #ifdef OSIOP_DEBUG
 		if (osiop_read_4(sc, OSIOP_DSA) !=
 		    dsdma->dm_segs[0].ds_addr + acb->dsoffset) {
@@ -1202,6 +1206,9 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 		return (1);
 	}
 	if (dstat & OSIOP_DSTAT_SIR && intcode == A_int_syncmsg) {
+		if (acb == NULL)
+			printf("%s: Sync message with no active command?\n",
+			    sc->sc_dev.dv_xname);
 		target = acb->xs->sc_link->target;
 		if (ds->msgbuf[1] == MSG_EXTENDED &&
 		    ds->msgbuf[2] == MSG_EXT_SDTR_LEN &&
@@ -1241,10 +1248,10 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 		/* Phase mismatch */
 #ifdef OSIOP_DEBUG
 		osiopphmm++;
+#endif
 		if (acb == NULL)
 			printf("%s: Phase mismatch with no active command?\n",
 			    sc->sc_dev.dv_xname);
-#endif
 		if (acb->datalen > 0) {
 			int adjust = (dfifo - (dbc & 0x7f)) & 0x7f;
 			if (sstat1 & OSIOP_SSTAT1_ORF)
@@ -1313,10 +1320,10 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 	}
 	if (sstat0 & OSIOP_SSTAT0_STO) {
 		/* Select timed out */
-#ifdef OSIOP_DEBUG
 		if (acb == NULL)
 			printf("%s: Select timeout with no active command?\n",
 			    sc->sc_dev.dv_xname);
+#ifdef OSIOP_DEBUG
 		if (osiop_read_1(sc, OSIOP_SBCL) & OSIOP_BSY) {
 			printf("ACK! osiop was busy at timeout: "
 			    "script %p dsa %lx\n", sc->sc_script,
