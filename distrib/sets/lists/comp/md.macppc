@@ -12,6 +12,7 @@
 ./usr/include/link.h
 ./usr/include/macppc/adbsys.h
 ./usr/include/macppc/ansi.h
+./usr/include/macppc/apmvar.h
 ./usr/include/macppc/asm.h
 ./usr/include/macppc/autoconf.h
 ./usr/include/macppc/bat.h

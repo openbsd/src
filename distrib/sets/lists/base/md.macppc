@@ -1198,6 +1198,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/adbsys.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/ansi.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/apmvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/autoconf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/bat.ph
@@ -1901,7 +1902,11 @@
 ./usr/libexec/ld.so
 ./usr/local/libdata/perl5/site_perl/powerpc-openbsd
 ./usr/mdec/boot.mac
+./usr/mdec/bsd.tbxi
 ./usr/mdec/mbr
 ./usr/mdec/msdos1mb.gz
 ./usr/mdec/ofwboot
+./usr/sbin/apm
+./usr/sbin/apmd
 ./usr/sbin/wsconscfg
+./usr/sbin/zzz
