@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.296 2003/01/25 00:51:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.297 2003/01/25 15:37:00 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -211,6 +211,7 @@ struct queue_opts {
 } queue_opts;
 
 int	yyerror(char *, ...);
+int	disallow_table(struct node_host *, char *);
 int	rule_consistent(struct pf_rule *);
 int	nat_consistent(struct pf_rule *);
 int	rdr_consistent(struct pf_rule *);
@@ -2220,6 +2221,10 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 					    "address'");
 					YYERROR;
 				}
+				if (disallow_table($7->host, "invalid use of "
+				    "table <%s> as the redirection address "
+				    "a nat rule"))
+					YYERROR;
 				if (!nat.af && ! $7->host->ifindex)
 					nat.af = $7->host->af;
 
@@ -2307,6 +2312,9 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				binat.proto = $5->proto;
 				free($5);
 			}
+			if ($7 != NULL && disallow_table($7, "invalid use of "
+			    "table <%s> as the source address of a binat rule"))
+				YYERROR;
 			if ($7 != NULL && $9 != NULL && $7->af != $9->af) {
 				yyerror("binat ip versions must match");
 				YYERROR;
@@ -2470,6 +2478,10 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport
 					    "address'");
 					YYERROR;
 				}
+				if (disallow_table($11->host, "invalid use of "
+				    "table <%s> as the redirection address "
+				    "of a rdr rule"))
+					YYERROR;
 				if (!rdr.af && !$11->host->ifindex)
 					rdr.af = $11->host->af;
 
@@ -2563,6 +2575,9 @@ route_host	: STRING			{
 				    $$->ifname);
 				YYERROR;
 			}
+			if (disallow_table($3, "invalid use of table <%s> in "
+			    "a route expression"))
+				YYERROR;
 		}
 		;
 
@@ -2670,6 +2685,17 @@ yyerror(char *fmt, ...)
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	va_end(ap);
+	return (0);
+}
+
+int
+disallow_table(struct node_host *h, char *fmt)
+{
+	for (; h != NULL; h = h->next)
+		if (h->addr.type == PF_ADDR_TABLE) {
+			yyerror(fmt, h->addr.v.tblname);
+			return (1);
+		}
 	return (0);
 }
 
