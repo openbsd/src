@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.19 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.20 2005/04/05 00:13:49 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.3 (Berkeley) 1/29/94";
 #else
-static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.19 2003/08/25 23:28:15 tedu Exp $";
+static char rcsid[] = "$OpenBSD: quotacheck.c,v 1.20 2005/04/05 00:13:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,10 +132,9 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	struct group *gr;
 	struct quotaname *auxdata;
-	int i, argnum, maxrun, errs;
+	int i, argnum, maxrun, errs, ch;
 	long done = 0;
 	char *name;
-	int ch;
 
 	errs = maxrun = 0;
 	while ((ch = getopt(argc, argv, "adguvl:")) != -1) {
@@ -194,14 +193,14 @@ main(int argc, char *argv[])
 		    (name = blockcheck(fs->fs_spec))) {
 			done |= 1 << argnum;
 			errs += chkquota(fs->fs_vfstype, name,
-					 fs->fs_file, auxdata, NULL);
+			    fs->fs_file, auxdata, NULL);
 		}
 	}
 	endfsent();
 	for (i = 0; i < argc; i++)
 		if ((done & (1 << i)) == 0)
 			fprintf(stderr, "%s not found in %s\n",
-				argv[i], FSTAB);
+			    argv[i], FSTAB);
 	exit(errs);
 }
 
@@ -209,8 +208,8 @@ void
 usage(void)
 {
 	(void)fprintf(stderr, "usage:\t%s\n\t%s\n",
-		"quotacheck -a [-dguv] [-l <maxparallel>]",
-		"quotacheck [-dguv] filesys ...");
+	    "quotacheck -a [-dguv] [-l <maxparallel>]",
+	    "quotacheck [-dguv] filesys ...");
 	exit(1);
 }
 
@@ -241,10 +240,8 @@ needchk(struct fstab *fs)
 	}
 	if (qnp->flags)
 		return (qnp);
-	else {
-		free(qnp);
-		return (NULL);
-	}
+	free(qnp);
+	return (NULL);
 }
 
 /*
@@ -284,21 +281,21 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 					continue;
 				if (qnp->flags & HASGRP) {
 					fup = addid((u_long)dp->di_gid,
-						    GRPQUOTA, NULL);
+					    GRPQUOTA, NULL);
 					fup->fu_curinodes++;
 					if (mode == IFREG || mode == IFDIR ||
 					    mode == IFLNK)
 						fup->fu_curblocks +=
-							dp->di_blocks;
+						    dp->di_blocks;
 				}
 				if (qnp->flags & HASUSR) {
 					fup = addid((u_long)dp->di_uid,
-						    USRQUOTA, NULL);
+					    USRQUOTA, NULL);
 					fup->fu_curinodes++;
 					if (mode == IFREG || mode == IFDIR ||
 					    mode == IFLNK)
 						fup->fu_curblocks +=
-							dp->di_blocks;
+						    dp->di_blocks;
 				}
 			}
 		}
@@ -313,7 +310,7 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 			if (qnp->flags & HASGRP)
 				(void)printf("%s", qfextension[GRPQUOTA]);
 			(void)printf(" quotas for %s (%s), %swait\n",
-				     fsname, mntpt, pidp? "no" : "");
+			    fsname, mntpt, pidp? "no" : "");
 		}
 		if (qnp->flags & HASUSR)
 			errs += update(mntpt, qnp->usrqfname, USRQUOTA);
@@ -403,10 +400,10 @@ update(const char *fsname, const char *quotafile, int type)
 			printf("%-8s fixed:", fup->fu_name);
 			if (dqbuf.dqb_curinodes != fup->fu_curinodes)
 				(void)printf("\tinodes %d -> %ld",
-					dqbuf.dqb_curinodes, fup->fu_curinodes);
+				    dqbuf.dqb_curinodes, fup->fu_curinodes);
 			if (dqbuf.dqb_curblocks != fup->fu_curblocks)
 				(void)printf("\tblocks %d -> %ld",
-					dqbuf.dqb_curblocks, fup->fu_curblocks);
+				    dqbuf.dqb_curblocks, fup->fu_curblocks);
 			(void)printf("\n");
 		}
 		/*
@@ -473,8 +470,7 @@ getquotagid(void)
 int
 hasquota(struct fstab *fs, int type, char **qfnamep)
 {
-	char *opt;
-	char *cp;
+	char *opt, *cp;
 	static char initname, usrname[100], grpname[100];
 	static char buf[BUFSIZ];
 
