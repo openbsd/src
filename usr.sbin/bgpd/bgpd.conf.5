@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.11 2004/01/06 03:43:50 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.12 2004/01/06 20:41:55 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
@@ -191,6 +191,12 @@ If this is not the case the
 statement defines the maximum hops the neighbor is away.
 .It Ar passive
 Do not attempt to actively open a TCP connection to the neighbor system.
+.It Ar holdtime
+Set the holdtime in seconds.
+Inherit from the global configuration if not given.
+.It Ar holdtime min
+Set the minimal acceptable holdtime.
+Inherit from the global configuration if not given.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact

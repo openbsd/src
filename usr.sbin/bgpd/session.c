@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.68 2004/01/06 19:19:21 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.69 2004/01/06 20:41:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -353,6 +353,10 @@ init_peers(void)
 			change_state(p, STATE_IDLE, EVNT_NONE);
 			p->IdleHoldTimer = time(NULL);	/* start ASAP */
 		}
+		if (!p->conf.holdtime)
+			p->conf.holdtime = conf->holdtime;
+		if (!p->conf.min_holdtime)
+			p->conf.min_holdtime = conf->min_holdtime;
 	}
 }
 
@@ -837,7 +841,7 @@ session_open(struct peer *peer)
 	msg.header.type = OPEN;
 	msg.version = 4;
 	msg.myas = htons(conf->as);
-	msg.holdtime = htons(conf->holdtime);
+	msg.holdtime = htons(peer->conf.holdtime);
 	msg.bgpid = conf->bgpid;	/* is already in network byte order */
 	msg.optparamlen = 0;
 
@@ -1212,17 +1216,17 @@ parse_open(struct peer *peer)
 	p += sizeof(oholdtime);
 
 	holdtime = ntohs(oholdtime);
-	if (holdtime && holdtime < conf->min_holdtime) {
+	if (holdtime && holdtime < peer->conf.min_holdtime) {
 		log_peer_errx(peer, "peer requests unacceptable holdtime %u",
 		    holdtime);
 		session_notification(peer, ERR_OPEN, ERR_OPEN_HOLDTIME,
 		    NULL, 0);
 		return (-1);
 	}
-	if (holdtime < conf->holdtime)
+	if (holdtime < peer->conf.holdtime)
 		peer->holdtime = holdtime;
 	else
-		peer->holdtime = conf->holdtime;
+		peer->holdtime = peer->conf.holdtime;
 
 	memcpy(&bgpid, p, sizeof(bgpid));
 	p += sizeof(bgpid);
@@ -1377,6 +1381,11 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			p->conf.reconf_action = reconf;
 			if (pconf->reconf_action > reconf)
 				p->conf.reconf_action = pconf->reconf_action;
+
+			if (!p->conf.holdtime)
+				p->conf.holdtime = nconf->holdtime;
+			if (!p->conf.min_holdtime)
+				p->conf.min_holdtime = nconf->min_holdtime;
 
 			if (p->state >= STATE_OPENSENT) {
 				if (p->holdtime == conf->holdtime &&

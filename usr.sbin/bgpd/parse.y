@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.32 2004/01/06 20:41:55 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -297,6 +297,22 @@ peeropts	: REMOTEAS number	{
 		}
 		| PASSIVE		{
 			curpeer->conf.passive = 1;
+		}
+		| HOLDTIME number	{
+			if ($2 < MIN_HOLDTIME) {
+				yyerror("holdtime must be at least %u",
+				    MIN_HOLDTIME);
+				YYERROR;
+			}
+			curpeer->conf.holdtime = $2;
+		}
+		| HOLDTIME YMIN number	{
+			if ($3 < MIN_HOLDTIME) {
+				yyerror("holdtime min must be at least %u",
+				    MIN_HOLDTIME);
+				YYERROR;
+			}
+			curpeer->conf.min_holdtime = $3;
 		}
 		;
 

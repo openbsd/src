@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.55 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.56 2004/01/06 20:41:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,6 +112,8 @@ struct peer_config {
 	u_int8_t		 ebgp;		/* 1 = ebgp, 0 = ibgp */
 	u_int8_t		 distance;	/* 1 = direct, >1 = multihop */
 	u_int8_t		 passive;
+	u_int16_t		 holdtime;
+	u_int16_t		 min_holdtime;
 	enum reconf_action	 reconf_action;
 };
 
