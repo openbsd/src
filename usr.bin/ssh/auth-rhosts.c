@@ -14,13 +14,14 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rhosts.c,v 1.17 2000/12/19 23:17:55 markus Exp $");
+RCSID("$OpenBSD: auth-rhosts.c,v 1.18 2001/01/19 15:55:10 markus Exp $");
 
 #include "packet.h"
 #include "ssh.h"
 #include "xmalloc.h"
 #include "uidswap.h"
 #include "servconf.h"
+#include "pathnames.h"
 
 /*
  * This function processes an rhosts-style file (.rhosts, .shosts, or
@@ -177,8 +178,8 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 
 	/* Deny if The user has no .shosts or .rhosts file and there are no system-wide files. */
 	if (!rhosts_files[rhosts_file_index] &&
-	    stat("/etc/hosts.equiv", &st) < 0 &&
-	    stat(SSH_HOSTS_EQUIV, &st) < 0)
+	    stat(_PATH_RHOSTS_EQUIV, &st) < 0 &&
+	    stat(_PATH_SSH_HOSTS_EQUIV, &st) < 0)
 		return 0;
 
 	hostname = get_canonical_hostname();
@@ -192,10 +193,10 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 					  hostname, ipaddr);
 			return 1;
 		}
-		if (check_rhosts_file(SSH_HOSTS_EQUIV, hostname, ipaddr, client_user,
+		if (check_rhosts_file(_PATH_SSH_HOSTS_EQUIV, hostname, ipaddr, client_user,
 				      pw->pw_name)) {
 			packet_send_debug("Accepted for %.100s [%.100s] by %.100s.",
-				      hostname, ipaddr, SSH_HOSTS_EQUIV);
+				      hostname, ipaddr, _PATH_SSH_HOSTS_EQUIV);
 			return 1;
 		}
 	}

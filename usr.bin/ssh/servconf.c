@@ -10,12 +10,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.59 2001/01/19 12:45:26 markus Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.60 2001/01/19 15:55:11 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
 #include "xmalloc.h"
 #include "compat.h"
+#include "pathnames.h"
 
 /* add listen address */
 void add_listen_addr(ServerOptions *options, char *addr);
@@ -87,16 +88,16 @@ fill_default_server_options(ServerOptions *options)
 	if (options->num_host_key_files == 0) {
 		/* fill default hostkeys for protocols */
 		if (options->protocol & SSH_PROTO_1)
-			options->host_key_files[options->num_host_key_files++] = HOST_KEY_FILE;
+			options->host_key_files[options->num_host_key_files++] = _PATH_HOST_KEY_FILE;
 		if (options->protocol & SSH_PROTO_2)
-			options->host_key_files[options->num_host_key_files++] = HOST_DSA_KEY_FILE;
+			options->host_key_files[options->num_host_key_files++] = _PATH_HOST_DSA_KEY_FILE;
 	}
 	if (options->num_ports == 0)
 		options->ports[options->num_ports++] = SSH_DEFAULT_PORT;
 	if (options->listen_addrs == NULL)
 		add_listen_addr(options, NULL);
 	if (options->pid_file == NULL)
-		options->pid_file = SSH_DAEMON_PID_FILE;
+		options->pid_file = _PATH_SSH_DAEMON_PID_FILE;
 	if (options->server_key_bits == -1)
 		options->server_key_bits = 768;
 	if (options->login_grace_time == -1)

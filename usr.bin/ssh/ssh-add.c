@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.24 2001/01/13 18:14:13 markus Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.25 2001/01/19 15:55:11 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -47,6 +47,7 @@ RCSID("$OpenBSD: ssh-add.c,v 1.24 2001/01/13 18:14:13 markus Exp $");
 #include "key.h"
 #include "authfd.h"
 #include "authfile.h"
+#include "pathnames.h"
 
 void
 delete_file(AuthenticationConnection *ac, const char *filename)
@@ -158,7 +159,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 		if (getenv(SSH_ASKPASS_ENV))
 			askpass = getenv(SSH_ASKPASS_ENV);
 		else
-			askpass = SSH_ASKPASS_DEFAULT;
+			askpass = _PATH_SSH_ASKPASS_DEFAULT;
 	}
 
 	/* At first, try empty passphrase */
@@ -280,7 +281,7 @@ main(int argc, char **argv)
 			ssh_close_authentication_connection(ac);
 			exit(1);
 		}
-		snprintf(buf, sizeof buf, "%s/%s", pw->pw_dir, SSH_CLIENT_IDENTITY);
+		snprintf(buf, sizeof buf, "%s/%s", pw->pw_dir, _PATH_SSH_CLIENT_IDENTITY);
 		if (deleting)
 			delete_file(ac, buf);
 		else

@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.16 2001/01/18 17:00:00 markus Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.17 2001/01/19 15:55:12 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -23,6 +23,7 @@ RCSID("$OpenBSD: sshconnect1.c,v 1.16 2001/01/18 17:00:00 markus Exp $");
 #include "xmalloc.h"
 #include "rsa.h"
 #include "ssh.h"
+#include "ssh1.h"
 #include "buffer.h"
 #include "packet.h"
 #include "mpaux.h"

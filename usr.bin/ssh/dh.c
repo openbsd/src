@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: dh.c,v 1.4 2001/01/15 21:43:51 markus Exp $");
+RCSID("$OpenBSD: dh.c,v 1.5 2001/01/19 15:55:11 markus Exp $");
 
 #include "xmalloc.h"
 
@@ -35,6 +35,7 @@ RCSID("$OpenBSD: dh.c,v 1.4 2001/01/15 21:43:51 markus Exp $");
 #include "buffer.h"
 #include "kex.h"
 #include "dh.h"
+#include "pathnames.h"
 
 int
 parse_prime(int linenum, char *line, struct dhgroup *dhg)
@@ -100,9 +101,9 @@ choose_dh(int minbits)
 	int linenum;
 	struct dhgroup dhg;
 
-	f = fopen(DH_PRIMES, "r");
+	f = fopen(_PATH_DH_PRIMES, "r");
 	if (!f) {
-		log("WARNING: %s does not exist, using old prime", DH_PRIMES);
+		log("WARNING: %s does not exist, using old prime", _PATH_DH_PRIMES);
 		return (dh_new_group1());
 	}
 
@@ -126,13 +127,13 @@ choose_dh(int minbits)
 	fclose (f);
 
 	if (bestcount == 0) {
-		log("WARNING: no primes in %s, using old prime", DH_PRIMES);
+		log("WARNING: no primes in %s, using old prime", _PATH_DH_PRIMES);
 		return (dh_new_group1());
 	}
 
-	f = fopen(DH_PRIMES, "r");
+	f = fopen(_PATH_DH_PRIMES, "r");
 	if (!f) {
-		fatal("WARNING: %s dissappeared, giving up", DH_PRIMES);
+		fatal("WARNING: %s dissappeared, giving up", _PATH_DH_PRIMES);
 	}
 
 	linenum = 0;

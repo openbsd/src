@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.28 2001/01/18 17:00:00 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.29 2001/01/19 15:55:10 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -46,6 +46,7 @@ RCSID("$OpenBSD: auth2.c,v 1.28 2001/01/18 17:00:00 markus Exp $");
 #include "auth.h"
 #include "key.h"
 #include "kex.h"
+#include "pathnames.h"
 
 #include "uidswap.h"
 #include "auth-options.h"
@@ -529,7 +530,7 @@ user_key_allowed(struct passwd *pw, Key *key)
 
 	/* The authorized keys. */
 	snprintf(file, sizeof file, "%.500s/%.100s", pw->pw_dir,
-	    SSH_USER_PERMITTED_KEYS2);
+	    _PATH_SSH_USER_PERMITTED_KEYS2);
 
 	/* Fail quietly if file does not exist */
 	if (stat(file, &st) < 0) {
@@ -557,10 +558,10 @@ user_key_allowed(struct passwd *pw, Key *key)
 			    key_type(key), pw->pw_name, file);
 			fail = 1;
 		} else {
-			/* Check path to SSH_USER_PERMITTED_KEYS */
+			/* Check path to _PATH_SSH_USER_PERMITTED_KEYS */
 			int i;
 			static const char *check[] = {
-				"", SSH_USER_DIR, NULL
+				"", _PATH_SSH_USER_DIR, NULL
 			};
 			for (i = 0; check[i]; i++) {
 				snprintf(line, sizeof line, "%.500s/%.100s",

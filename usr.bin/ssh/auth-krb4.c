@@ -26,9 +26,10 @@
 #include "packet.h"
 #include "xmalloc.h"
 #include "ssh.h"
+#include "ssh1.h"
 #include "servconf.h"
 
-RCSID("$OpenBSD: auth-krb4.c,v 1.20 2000/12/19 23:17:54 markus Exp $");
+RCSID("$OpenBSD: auth-krb4.c,v 1.21 2001/01/19 15:55:10 markus Exp $");
 
 #ifdef KRB4
 char *ticket = NULL;

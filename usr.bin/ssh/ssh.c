@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.82 2001/01/15 21:40:10 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.83 2001/01/19 15:55:11 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -53,12 +53,14 @@ RCSID("$OpenBSD: ssh.c,v 1.82 2001/01/15 21:40:10 markus Exp $");
 #include "readconf.h"
 #include "uidswap.h"
 
+#include "ssh1.h"
 #include "ssh2.h"
 #include "compat.h"
 #include "channels.h"
 #include "key.h"
 #include "authfd.h"
 #include "authfile.h"
+#include "pathnames.h"
 #include "clientloop.h"
 
 extern char *__progname;
@@ -531,11 +533,11 @@ main(int ac, char **av)
 	log_init(av[0], options.log_level, SYSLOG_FACILITY_USER, 0);
 
 	/* Read per-user configuration file. */
-	snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir, SSH_USER_CONFFILE);
+	snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir, _PATH_SSH_USER_CONFFILE);
 	read_config_file(buf, host, &options);
 
 	/* Read systemwide configuration file. */
-	read_config_file(HOST_CONFIG_FILE, host, &options);
+	read_config_file(_PATH_HOST_CONFIG_FILE, host, &options);
 
 	/* Fill configuration defaults. */
 	fill_default_options(&options);
@@ -595,7 +597,7 @@ main(int ac, char **av)
 		host_private_key = RSA_new();
 		k.type = KEY_RSA1;
 		k.rsa = host_private_key;
-		if (load_private_key(HOST_KEY_FILE, "", &k, NULL))
+		if (load_private_key(_PATH_HOST_KEY_FILE, "", &k, NULL))
 			host_private_key_loaded = 1;
 	}
 	/*
@@ -619,7 +621,7 @@ main(int ac, char **av)
 	 * Now that we are back to our own permissions, create ~/.ssh
 	 * directory if it doesn\'t already exist.
 	 */
-	snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir, SSH_USER_DIR);
+	snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir, _PATH_SSH_USER_DIR);
 	if (stat(buf, &st) < 0)
 		if (mkdir(buf, 0700) < 0)
 			error("Could not create directory '%.200s'.", buf);

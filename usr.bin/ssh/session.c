@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.49 2001/01/18 17:00:00 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.50 2001/01/19 15:55:11 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -48,9 +48,11 @@ RCSID("$OpenBSD: session.c,v 1.49 2001/01/18 17:00:00 markus Exp $");
 #include "nchan.h"
 
 #include "bufaux.h"
+#include "ssh1.h"
 #include "ssh2.h"
 #include "auth.h"
 #include "auth-options.h"
+#include "pathnames.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>
@@ -1011,28 +1013,28 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	 * in this order).
 	 */
 	if (!options.use_login) {
-		if (stat(SSH_USER_RC, &st) >= 0) {
+		if (stat(_PATH_SSH_USER_RC, &st) >= 0) {
 			if (debug_flag)
-				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL, SSH_USER_RC);
+				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL, _PATH_SSH_USER_RC);
 
-			f = popen(_PATH_BSHELL " " SSH_USER_RC, "w");
+			f = popen(_PATH_BSHELL " " _PATH_SSH_USER_RC, "w");
 			if (f) {
 				if (auth_proto != NULL && auth_data != NULL)
 					fprintf(f, "%s %s\n", auth_proto, auth_data);
 				pclose(f);
 			} else
-				fprintf(stderr, "Could not run %s\n", SSH_USER_RC);
-		} else if (stat(SSH_SYSTEM_RC, &st) >= 0) {
+				fprintf(stderr, "Could not run %s\n", _PATH_SSH_USER_RC);
+		} else if (stat(_PATH_SSH_SYSTEM_RC, &st) >= 0) {
 			if (debug_flag)
-				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL, SSH_SYSTEM_RC);
+				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL, _PATH_SSH_SYSTEM_RC);
 
-			f = popen(_PATH_BSHELL " " SSH_SYSTEM_RC, "w");
+			f = popen(_PATH_BSHELL " " _PATH_SSH_SYSTEM_RC, "w");
 			if (f) {
 				if (auth_proto != NULL && auth_data != NULL)
 					fprintf(f, "%s %s\n", auth_proto, auth_data);
 				pclose(f);
 			} else
-				fprintf(stderr, "Could not run %s\n", SSH_SYSTEM_RC);
+				fprintf(stderr, "Could not run %s\n", _PATH_SSH_SYSTEM_RC);
 		} else if (options.xauth_location != NULL) {
 			/* Add authority data to .Xauthority if appropriate. */
 			if (auth_proto != NULL && auth_data != NULL) {

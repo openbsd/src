@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.39 2001/01/13 18:03:07 markus Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.40 2001/01/19 15:55:11 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -28,6 +28,7 @@ RCSID("$OpenBSD: ssh-keygen.c,v 1.39 2001/01/13 18:03:07 markus Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
+#include "pathnames.h"
 
 /* Number of bits in the RSA/DSA key.  This value can be changed on the command line. */
 int bits = 1024;
@@ -83,13 +84,13 @@ ask_filename(struct passwd *pw, const char *prompt)
 
 	switch (key_type_from_name(key_type_name)) {
 	case KEY_RSA1:
-		name = SSH_CLIENT_IDENTITY;
+		name = _PATH_SSH_CLIENT_IDENTITY;
 		break;
 	case KEY_DSA:
-		name = SSH_CLIENT_ID_DSA;
+		name = _PATH_SSH_CLIENT_ID_DSA;
 		break;
 	case KEY_RSA:
-		name = SSH_CLIENT_ID_RSA;
+		name = _PATH_SSH_CLIENT_ID_RSA;
 		break;
 	default:
 		fprintf(stderr, "bad key type");
@@ -750,7 +751,7 @@ main(int ac, char **av)
 		ask_filename(pw, "Enter file in which to save the key");
 
 	/* Create ~/.ssh directory if it doesn\'t already exist. */
-	snprintf(dotsshdir, sizeof dotsshdir, "%s/%s", pw->pw_dir, SSH_USER_DIR);
+	snprintf(dotsshdir, sizeof dotsshdir, "%s/%s", pw->pw_dir, _PATH_SSH_USER_DIR);
 	if (strstr(identity_file, dotsshdir) != NULL &&
 	    stat(dotsshdir, &st) < 0) {
 		if (mkdir(dotsshdir, 0700) < 0)

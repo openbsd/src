@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: ssh.h,v 1.59 2001/01/19 12:45:27 markus Exp $"); */
+/* RCSID("$OpenBSD: ssh.h,v 1.60 2001/01/19 15:55:11 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -55,96 +55,6 @@
  */
 #define SSH_SERVICE_NAME	"ssh"
 
-#define ETCDIR			"/etc"
-#define PIDDIR			"/var/run"
-
-/*
- * System-wide file containing host keys of known hosts.  This file should be
- * world-readable.
- */
-#define SSH_SYSTEM_HOSTFILE	ETCDIR "/ssh_known_hosts"
-#define SSH_SYSTEM_HOSTFILE2	ETCDIR "/ssh_known_hosts2"
-
-/*
- * Of these, ssh_host_key must be readable only by root, whereas ssh_config
- * should be world-readable.
- */
-#define HOST_KEY_FILE		ETCDIR "/ssh_host_key"
-#define SERVER_CONFIG_FILE	ETCDIR "/sshd_config"
-#define HOST_CONFIG_FILE	ETCDIR "/ssh_config"
-#define HOST_DSA_KEY_FILE	ETCDIR "/ssh_host_dsa_key"
-#define DH_PRIMES		ETCDIR "/primes"
-
-#define SSH_PROGRAM		"/usr/bin/ssh"
-
-/*
- * The process id of the daemon listening for connections is saved here to
- * make it easier to kill the correct daemon when necessary.
- */
-#define SSH_DAEMON_PID_FILE	PIDDIR "/sshd.pid"
-
-/*
- * The directory in user\'s home directory in which the files reside. The
- * directory should be world-readable (though not all files are).
- */
-#define SSH_USER_DIR		".ssh"
-
-/*
- * Per-user file containing host keys of known hosts.  This file need not be
- * readable by anyone except the user him/herself, though this does not
- * contain anything particularly secret.
- */
-#define SSH_USER_HOSTFILE	"~/.ssh/known_hosts"
-#define SSH_USER_HOSTFILE2	"~/.ssh/known_hosts2"
-
-/*
- * Name of the default file containing client-side authentication key. This
- * file should only be readable by the user him/herself.
- */
-#define SSH_CLIENT_IDENTITY	".ssh/identity"
-#define SSH_CLIENT_ID_DSA	".ssh/id_dsa"
-#define SSH_CLIENT_ID_RSA	".ssh/id_rsa"
-
-/*
- * Configuration file in user\'s home directory.  This file need not be
- * readable by anyone but the user him/herself, but does not contain anything
- * particularly secret.  If the user\'s home directory resides on an NFS
- * volume where root is mapped to nobody, this may need to be world-readable.
- */
-#define SSH_USER_CONFFILE	".ssh/config"
-
-/*
- * File containing a list of those rsa keys that permit logging in as this
- * user.  This file need not be readable by anyone but the user him/herself,
- * but does not contain anything particularly secret.  If the user\'s home
- * directory resides on an NFS volume where root is mapped to nobody, this
- * may need to be world-readable.  (This file is read by the daemon which is
- * running as root.)
- */
-#define SSH_USER_PERMITTED_KEYS	".ssh/authorized_keys"
-#define SSH_USER_PERMITTED_KEYS2	".ssh/authorized_keys2"
-
-/*
- * Per-user and system-wide ssh "rc" files.  These files are executed with
- * /bin/sh before starting the shell or command if they exist.  They will be
- * passed "proto cookie" as arguments if X11 forwarding with spoofing is in
- * use.  xauth will be run if neither of these exists.
- */
-#define SSH_USER_RC		".ssh/rc"
-#define SSH_SYSTEM_RC		ETCDIR "/sshrc"
-
-/*
- * Ssh-only version of /etc/hosts.equiv.  Additionally, the daemon may use
- * ~/.rhosts and /etc/hosts.equiv if rhosts authentication is enabled.
- */
-#define SSH_HOSTS_EQUIV		ETCDIR "/shosts.equiv"
-
-/*
- * Name of the environment variable containing the pathname of the
- * authentication socket.
- */
-#define SSH_AUTHSOCKET_ENV_NAME	"SSH_AUTH_SOCK"
-
 /*
  * Name of the environment variable containing the pathname of the
  * authentication socket.
@@ -152,10 +62,14 @@
 #define SSH_AGENTPID_ENV_NAME	"SSH_AGENT_PID"
 
 /*
- * Default path to ssh-askpass used by ssh-add,
- * environment variable for overwriting the default location
+ * Name of the environment variable containing the pathname of the
+ * authentication socket.
  */
-#define SSH_ASKPASS_DEFAULT	"/usr/X11R6/bin/ssh-askpass"
+#define SSH_AUTHSOCKET_ENV_NAME "SSH_AUTH_SOCK"
+
+/*
+ * Environment variable for overwriting the default location of askpass
+ */
 #define SSH_ASKPASS_ENV		"SSH_ASKPASS"
 
 /*
@@ -173,77 +87,6 @@
 /* Name of Kerberos service for SSH to use. */
 #define KRB4_SERVICE_NAME		"rcmd"
 
-/*
- * Authentication methods.  New types can be added, but old types should not
- * be removed for compatibility.  The maximum allowed value is 31.
- */
-#define SSH_AUTH_RHOSTS		1
-#define SSH_AUTH_RSA		2
-#define SSH_AUTH_PASSWORD	3
-#define SSH_AUTH_RHOSTS_RSA	4
-#define SSH_AUTH_TIS		5
-#define SSH_AUTH_KERBEROS	6
-#define SSH_PASS_KERBEROS_TGT	7
-				/* 8 to 15 are reserved */
-#define SSH_PASS_AFS_TOKEN	21
-
-/* Protocol flags.  These are bit masks. */
-#define SSH_PROTOFLAG_SCREEN_NUMBER	1	/* X11 forwarding includes screen */
-#define SSH_PROTOFLAG_HOST_IN_FWD_OPEN	2	/* forwarding opens contain host */
-
-/*
- * Definition of message types.  New values can be added, but old values
- * should not be removed or without careful consideration of the consequences
- * for compatibility.  The maximum value is 254; value 255 is reserved for
- * future extension.
- */
-/* Message name */			/* msg code */	/* arguments */
-#define SSH_MSG_NONE				0	/* no message */
-#define SSH_MSG_DISCONNECT			1	/* cause (string) */
-#define SSH_SMSG_PUBLIC_KEY			2	/* ck,msk,srvk,hostk */
-#define SSH_CMSG_SESSION_KEY			3	/* key (BIGNUM) */
-#define SSH_CMSG_USER				4	/* user (string) */
-#define SSH_CMSG_AUTH_RHOSTS			5	/* user (string) */
-#define SSH_CMSG_AUTH_RSA			6	/* modulus (BIGNUM) */
-#define SSH_SMSG_AUTH_RSA_CHALLENGE		7	/* int (BIGNUM) */
-#define SSH_CMSG_AUTH_RSA_RESPONSE		8	/* int (BIGNUM) */
-#define SSH_CMSG_AUTH_PASSWORD			9	/* pass (string) */
-#define SSH_CMSG_REQUEST_PTY		        10	/* TERM, tty modes */
-#define SSH_CMSG_WINDOW_SIZE		        11	/* row,col,xpix,ypix */
-#define SSH_CMSG_EXEC_SHELL			12	/* */
-#define SSH_CMSG_EXEC_CMD			13	/* cmd (string) */
-#define SSH_SMSG_SUCCESS			14	/* */
-#define SSH_SMSG_FAILURE			15	/* */
-#define SSH_CMSG_STDIN_DATA			16	/* data (string) */
-#define SSH_SMSG_STDOUT_DATA			17	/* data (string) */
-#define SSH_SMSG_STDERR_DATA			18	/* data (string) */
-#define SSH_CMSG_EOF				19	/* */
-#define SSH_SMSG_EXITSTATUS			20	/* status (int) */
-#define SSH_MSG_CHANNEL_OPEN_CONFIRMATION	21	/* channel (int) */
-#define SSH_MSG_CHANNEL_OPEN_FAILURE		22	/* channel (int) */
-#define SSH_MSG_CHANNEL_DATA			23	/* ch,data (int,str) */
-#define SSH_MSG_CHANNEL_CLOSE			24	/* channel (int) */
-#define SSH_MSG_CHANNEL_CLOSE_CONFIRMATION	25	/* channel (int) */
-/*      SSH_CMSG_X11_REQUEST_FORWARDING         26         OBSOLETE */
-#define SSH_SMSG_X11_OPEN			27	/* channel (int) */
-#define SSH_CMSG_PORT_FORWARD_REQUEST		28	/* p,host,hp (i,s,i) */
-#define SSH_MSG_PORT_OPEN			29	/* ch,h,p (i,s,i) */
-#define SSH_CMSG_AGENT_REQUEST_FORWARDING	30	/* */
-#define SSH_SMSG_AGENT_OPEN			31	/* port (int) */
-#define SSH_MSG_IGNORE				32	/* string */
-#define SSH_CMSG_EXIT_CONFIRMATION		33	/* */
-#define SSH_CMSG_X11_REQUEST_FORWARDING		34	/* proto,data (s,s) */
-#define SSH_CMSG_AUTH_RHOSTS_RSA		35	/* user,mod (s,mpi) */
-#define SSH_MSG_DEBUG				36	/* string */
-#define SSH_CMSG_REQUEST_COMPRESSION		37	/* level 1-9 (int) */
-#define SSH_CMSG_MAX_PACKET_SIZE		38	/* size 4k-1024k (int) */
-#define SSH_CMSG_AUTH_TIS			39	/* we use this for s/key */
-#define SSH_SMSG_AUTH_TIS_CHALLENGE		40	/* challenge (string) */
-#define SSH_CMSG_AUTH_TIS_RESPONSE		41	/* response (string) */
-#define SSH_CMSG_AUTH_KERBEROS			42	/* (KTEXT) */
-#define SSH_SMSG_AUTH_KERBEROS_RESPONSE		43	/* (KTEXT) */
-#define SSH_CMSG_HAVE_KERBEROS_TGT		44	/* credentials (s) */
-#define SSH_CMSG_HAVE_AFS_TOKEN			65	/* token (s) */
 
 /*------------ definitions for login.c -------------*/
 
