@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.18 2003/11/07 11:10:47 jmc Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.19 2004/07/08 22:18:44 deraadt Exp $ */
 /*	$NetBSD: ulpt.c,v 1.57 2003/01/05 10:19:42 scw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -74,8 +74,8 @@
 #define	ULPT_BSIZE	16384
 
 #ifdef ULPT_DEBUG
-#define DPRINTF(x)	if (ulptdebug) logprintf x
-#define DPRINTFN(n,x)	if (ulptdebug>(n)) logprintf x
+#define DPRINTF(x)	do { if (ulptdebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (ulptdebug>(n)) logprintf x; } while (0)
 int	ulptdebug = 0;
 #else
 #define DPRINTF(x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.20 2003/10/03 16:44:51 miod Exp $ */
+/*	$OpenBSD: ucom.c,v 1.21 2004/07/08 22:18:44 deraadt Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #if NUCOM > 0
 
 #ifdef UCOM_DEBUG
-#define DPRINTFN(n, x)	if (ucomdebug > (n)) logprintf x
+#define DPRINTFN(n, x)	do { if (ucomdebug > (n)) logprintf x; } while (0)
 int ucomdebug = 0;
 #else
 #define DPRINTFN(n, x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.32 2003/12/15 23:36:14 cedric Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.33 2004/07/08 22:18:44 deraadt Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -149,8 +149,8 @@
 #include <dev/usb/if_auereg.h>
 
 #ifdef AUE_DEBUG
-#define DPRINTF(x)	if (auedebug) logprintf x
-#define DPRINTFN(n,x)	if (auedebug >= (n)) logprintf x
+#define DPRINTF(x)	do { if (auedebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (auedebug >= (n)) logprintf x; } while (0)
 int	auedebug = 0;
 #else
 #define DPRINTF(x)

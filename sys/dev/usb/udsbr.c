@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.6 2003/05/07 04:33:33 deraadt Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.7 2004/07/08 22:18:44 deraadt Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -60,8 +60,8 @@
 #include <dev/usb/usbdevs.h>
 
 #ifdef UDSBR_DEBUG
-#define DPRINTF(x)	if (udsbrdebug) logprintf x
-#define DPRINTFN(n,x)	if (udsbrdebug>(n)) logprintf x
+#define DPRINTF(x)	do { if (udsbrdebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (udsbrdebug>(n)) logprintf x; } while (0)
 int	udsbrdebug = 0;
 #else
 #define DPRINTF(x)

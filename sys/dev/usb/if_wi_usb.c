@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.10 2004/03/16 05:51:55 tedu Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.11 2004/07/08 22:18:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -110,8 +110,8 @@ void wi_dump_data(void *buffer, int len);
 void wi_usb_thread(void *arg);
 
 #ifdef WI_USB_DEBUG
-#define DPRINTF(x)      if (wi_usbdebug) logprintf x
-#define DPRINTFN(n,x)   if (wi_usbdebug >= (n)) logprintf x
+#define DPRINTF(x)      do { if (wi_usbdebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)   do { if (wi_usbdebug >= (n)) logprintf x; } while (0)
 int     wi_usbdebug = 1;
 #else
 #define DPRINTF(x)

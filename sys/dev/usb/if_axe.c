@@ -142,8 +142,8 @@
 #include <dev/usb/if_axereg.h>
 
 #ifdef AXE_DEBUG
-#define DPRINTF(x)	if (axedebug) logprintf x
-#define DPRINTFN(n,x)	if (axedebug >= (n)) logprintf x
+#define DPRINTF(x)	do { if (axedebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (axedebug >= (n)) logprintf x; } while (0)
 int	axedebug = 0;
 #else
 #define DPRINTF(x)

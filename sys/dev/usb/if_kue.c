@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.25 2004/06/02 06:30:28 mcbride Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.26 2004/07/08 22:18:44 deraadt Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -140,8 +140,8 @@
 #endif
 
 #ifdef KUE_DEBUG
-#define DPRINTF(x)	if (kuedebug) logprintf x
-#define DPRINTFN(n,x)	if (kuedebug >= (n)) logprintf x
+#define DPRINTF(x)	do { if (kuedebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (kuedebug >= (n)) logprintf x; } while (0)
 int	kuedebug = 0;
 #else
 #define DPRINTF(x)

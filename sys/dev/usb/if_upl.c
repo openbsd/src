@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.15 2003/12/15 23:36:14 cedric Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.16 2004/07/08 22:18:44 deraadt Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -188,8 +188,8 @@ struct upl_softc {
 };
 
 #ifdef UPL_DEBUG
-#define DPRINTF(x)	if (upldebug) logprintf x
-#define DPRINTFN(n,x)	if (upldebug >= (n)) logprintf x
+#define DPRINTF(x)	do { if (upldebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (upldebug >= (n)) logprintf x; } while (0)
 int	upldebug = 0;
 #else
 #define DPRINTF(x)

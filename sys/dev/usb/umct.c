@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.10 2004/04/20 16:28:36 pvalchev Exp $	*/
+/*	$OpenBSD: umct.c,v 1.11 2004/07/08 22:18:44 deraadt Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include <dev/usb/umct.h>
 
 #ifdef UMCT_DEBUG
-#define DPRINTFN(n, x)  if (umctdebug > (n)) logprintf x
+#define DPRINTFN(n, x)  do { if (umctdebug > (n)) logprintf x; } while (0)
 int	umctdebug = 0;
 #else
 #define DPRINTFN(n, x)

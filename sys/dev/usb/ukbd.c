@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.19 2003/07/05 16:56:45 nate Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.20 2004/07/08 22:18:44 deraadt Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -81,8 +81,8 @@
 #endif
 
 #ifdef UKBD_DEBUG
-#define DPRINTF(x)	if (ukbddebug) logprintf x
-#define DPRINTFN(n,x)	if (ukbddebug>(n)) logprintf x
+#define DPRINTF(x)	do { if (ukbddebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (ukbddebug>(n)) logprintf x; } while (0)
 int	ukbddebug = 0;
 #else
 #define DPRINTF(x)

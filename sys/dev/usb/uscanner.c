@@ -1,4 +1,4 @@
-/*	$OpenBSD: uscanner.c,v 1.16 2003/06/27 16:57:14 nate Exp $ */
+/*	$OpenBSD: uscanner.c,v 1.17 2004/07/08 22:18:45 deraadt Exp $ */
 /*	$NetBSD: uscanner.c,v 1.40 2003/01/27 00:32:44 wiz Exp $	*/
 
 /*
@@ -72,8 +72,8 @@
 #include <dev/usb/usbdevs.h>
 
 #ifdef USCANNER_DEBUG
-#define DPRINTF(x)	if (uscannerdebug) logprintf x
-#define DPRINTFN(n,x)	if (uscannerdebug>(n)) logprintf x
+#define DPRINTF(x)	do { if (uscannerdebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (uscannerdebug>(n)) logprintf x; } while (0)
 int	uscannerdebug = 0;
 #else
 #define DPRINTF(x)

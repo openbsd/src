@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.23 2004/07/07 01:26:40 deraadt Exp $ */
+/*	$OpenBSD: uhub.c,v 1.24 2004/07/08 22:18:44 deraadt Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -66,8 +66,8 @@
 #define UHUB_INTR_INTERVAL 255	/* ms */
 
 #ifdef UHUB_DEBUG
-#define DPRINTF(x)	if (uhubdebug) logprintf x
-#define DPRINTFN(n,x)	if (uhubdebug>(n)) logprintf x
+#define DPRINTF(x)	do { if (uhubdebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (uhubdebug>(n)) logprintf x; } while (0)
 int	uhubdebug = 0;
 #else
 #define DPRINTF(x)

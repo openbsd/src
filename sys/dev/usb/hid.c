@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.14 2002/07/25 04:07:32 nate Exp $ */
+/*	$OpenBSD: hid.c,v 1.15 2004/07/08 22:18:44 deraadt Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -52,8 +52,8 @@
 #include <dev/usb/hid.h>
 
 #ifdef UHIDEV_DEBUG
-#define DPRINTF(x)	if (uhidevdebug) logprintf x
-#define DPRINTFN(n,x)	if (uhidevdebug>(n)) logprintf x
+#define DPRINTF(x)	do { if (uhidevdebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (uhidevdebug>(n)) logprintf x; } while (0)
 extern int uhidevdebug;
 #else
 #define DPRINTF(x)

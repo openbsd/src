@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.13 2003/05/19 00:37:19 nate Exp $ */
+/*	$OpenBSD: ums.c,v 1.14 2004/07/08 22:18:44 deraadt Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -69,8 +69,8 @@
 #include <dev/wscons/wsmousevar.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (umsdebug) logprintf x
-#define DPRINTFN(n,x)	if (umsdebug>(n)) logprintf x
+#define DPRINTF(x)	do { if (umsdebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (umsdebug>(n)) logprintf x; } while (0)
 int	umsdebug = 0;
 #else
 #define DPRINTF(x)
