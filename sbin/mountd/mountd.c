@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.29 1999/04/21 02:13:57 alex Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.30 2000/05/01 20:20:12 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -2061,6 +2061,11 @@ check_dirpath(dirp)
 	char *cp;
 	int ret = 1;
 	struct stat sb;
+
+	/* Remove trailing '/' */
+	cp = dirp + strlen(dirp) - 1;
+	while (cp > dirp && *cp == '/')
+		*cp-- = '\0';
 
 	cp = dirp + 1;
 	while (*cp && ret) {
