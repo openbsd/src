@@ -1,166 +1,138 @@
-#	$OpenBSD: LUCIFIER,v 1.21 1999/10/03 21:08:15 niklas Exp $
+#	$OpenBSD: LUCIFIER,v 1.22 1999/12/04 05:08:22 mickey Exp $
 #
 
-#source	/sys
-#build	/usr/obj/sys/arch/i386/compile/LUCIFIER
+machine	i386
+maxusers 32
+#makeoption DEBUG="-g"
 
-machine		i386		# architecture, used by config; REQUIRED
+#option	I386_CPU,I486_CPU
+option	I486_CPU,I586_CPU,I686_CPU
+option	UVM,DEVPAGER,SWAPPAGER
 
-#option		I386_CPU	# CPU classes; at least one is REQUIRED
-option		I486_CPU
-#option		I586_CPU
-#option		I686_CPU
-#option		GPL_MATH_EMULATE	# floating point emulation
+option	TIMEZONE=300,DST=1,NTP
+option	XSERVER,APERTURE
+option	VM86,USER_LDT,LKM,KTRACE
+option	BUFCACHEPERCENT=20
+option	COMPAT_SVR4,COMPAT_IBCS2,COMPAT_LINUX,COMPAT_FREEBSD,COMPAT_BSDOS
+option	COMPAT_11
+option	COMPAT_43
+#option	TCP_COMPAT_42
 
-option		VM86		# Virtual 8086 emulation
-option		USER_LDT	# user-settable LDT; used by WINE
-option		XSERVER		# diddle with console driver
-option		APERTURE	# enable aperture
+option	DDB
+option	DIAGNOSTIC,DEBUG
+option	BOOT_CONFIG
 
-#option		DUMMY_NOPS	# speed hack; recommended
+option	SYSVMSG,SYSVSEM,SYSVSHM
+#option	SHMMAXPGS=2048
 
-option		COMPAT_SVR4	# binary compatibility with SVR4
-option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
-option		COMPAT_LINUX	# binary compatibility with Linux
-option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
-option		COMPAT_BSDOS	# binary compatibility with BSD/OS
+option	FFS,FFS_SOFTUPDATES #,QUOTA
+option	MFS
+#option	LFS
 
-#option		INSECURE	# default to secure
+option	NFSSERVER,NFSCLIENT
+option	XFS
 
-option		TIMEZONE=300	# time zone to adjust RTC time by
-option		DST=1		# daylight savings time used by RTC
-option		NTP
+option	CD9660,MSDOSFS,EXT2FS
+option	FDESC,FIFO
+option	KERNFS,PROCFS
+option	NULLFS,UNION,UMAPFS
+option	PORTAL
 
-option		SWAPPAGER	# paging; REQUIRED
-option		DEVPAGER	# mmap() of devices
+option	GATEWAY#,MROUTING
+option	INET,IPSEC		# IP + ICMP + TCP + UDP + IPsec
+option	TCP_SACK,TCP_FACK	# TCP selective ack, fast ack
+#option	NS,NSIP			# XNS, tunneling over IP
+option	IPX,IPXIP		# IPX, tunneling over IP
+#option	ISO,TPIP,EON		# OSI, tunneling over IP
+#option	CCITT,LLC,HDLC		# X.25
+option	IPFILTER,IPFILTER_LOG	# IP packet filter for security, /dev/ipl
+option	PPP_BSDCOMP,PPP_DEFLATE
 
-option		DDB		# in-kernel debugger
-#makeoption	DEBUG="-g"	# compile full symbol table
-option		DEBUG		# more dubugging code
-option		DIAGNOSTIC	# internal consistency checks
-option		KTRACE		# system call tracing, a la ktrace(1)
-
-option		SYSVMSG		# System V-like message queues
-option		SYSVSEM		# System V-like semaphores
-option		SYSVSHM		# System V-like memory sharing
-#option		SHMMAXPGS=2048	# 2048 pages is the default
-
-option		COMPAT_11	# NetBSD 1.1,
-option		COMPAT_43	# and 4.3BSD
-#option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-
-option		LKM		# loadable kernel modules
-
-option		FFS		# UFS
-option		FFS_SOFTUPDATES	# enable ffs softupdates
-option		QUOTA		# UFS quotas
-#option		LFS		# log-structured file system
-option		EXT2FS		# Second Extended Filesystem
-option		MFS		# memory file system
-option		XFS
-
-option		NFSCLIENT	# Network File System client
-option		NFSSERVER	# Network File System server
-
-option		CD9660		# ISO 9660 + Rock Ridge file system
-option		MSDOSFS		# MS-DOS file system
-option		FDESC		# /dev/fd
-option		FIFO		# FIFOs; RECOMMENDED
-option		KERNFS		# /kern
-option		NULLFS		# loopback file system
-option		PORTAL		# dynamically created filesystem objects
-option		PROCFS		# /proc
-option		UMAPFS		# NULLFS + uid and gid remapping
-option		UNION		# union file system
-
-option		GATEWAY		# packet forwarding
-option		INET		# IP + ICMP + TCP + UDP
-option		TCP_SACK,TCP_FACK
-option		IPSEC		# IPsec
-#option		NS		# XNS
-#option		NSIP		# XNS tunneling over IP
-option		IPX		# IPX+SPX
-option		IPXIP		# IPX tunneling over IP
-#option		ISO,TPIP	# OSI
-#option		EON		# OSI tunneling over IP
-#option		CCITT,LLC,HDLC	# X.25
-option		IPFILTER	# IP packet filter for security
-option		IPFILTER_LOG	# use /dev/ipl to log IPF
-option		PPP_BSDCOMP	# PPP BSD compression
-option		PPP_DEFLATE
-
-option		BOOT_CONFIG	# add support for boot -c
-option		BUFCACHEPERCENT=25
-option		NBUF=4096
-
-maxusers	32		# estimated number of users
-
-config		bsd	swap generic
+config	bsd	swap generic
 
 mainbus0 at root
 
 bios0	at mainbus0
 apm0	at bios0
 
-isa0	at mainbus0
+#option	EISAVERBOSE
 #eisa0	at mainbus0
-option	EISAVERBOSE
-pci0	at mainbus0 bus ?
 option	PCIVERBOSE
+pci0	at mainbus0 bus ?
 
-pchb*	at pci? dev ? function ?	# PCI Host bridges
-ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-pci*	at ppb? bus ?
+pchb*	at pci? dev ? function ?
 pci*	at pchb? bus ?
+ppb*	at pci? dev ? function ?
+pci*	at ppb? bus ?
 
-# ISA PCMCIA controllers
-pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
-pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+pcib*	at pci? dev ? function ?
 
-# PCMCIA bus support
-pcmcia*	at pcic? controller ? socket ?
-option	PCMCIADEBUG
-option	PCMCIAVERBOSE
+ohci*	at pci? dev ? function ?
+usb*	at ohci?
+uhub*	at usb?
 
-npx0	at isa? port 0xf0 irq 13	# math coprocessor
+uhub*	at uhub? port ? configuration ? interface ?
+uhid*	at uhub? port ? configuration ? interface ?
+ugen*	at uhub? port ? configuration ? interface ?
+
+isa0	at pcib?
+npx0	at isa? port 0xf0 irq 13
 isadma0	at isa?
 isapnp0	at isa?
 
-#vga0	at pci? dev ? function ?
-#pc0	at isa? port 0x60 irq 1		# generic PC console device
-vt0	at isa? port 0x60 irq 1
+option	PCMCIAVERBOSE
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+pcmcia*	at pcic? controller ? socket ?
+
+option	PCVT_NSCREENS=10
+option	PCVT_EMU_MOUSE
+vt0	at isa? port 0x60 irq 1		# musdie
+#vga*	at pci? dev ? function ?
+#pckbc0	at isa? port 0x60
+#pckbd0	at pckbc0
+#psm0	at pckbc0
+
+#wsdisplay0	at vga0 console 0
+#wskbd0		at pckbd0 console 0
+#wsmouse0	at psm0 console 0
 
 pcppi0	at isa?
 sysbeep0 at pcppi?
 midi*	at pcppi?
 
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-#com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
-com*	at pcmcia? function ?		# PCMCIA modem cards
+com0	at isa? port 0x3f8 irq 4
+com1	at isa? port 0x2f8 irq 3
+com*	at pcmcia? function ?
 
-lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+lpt0	at isa? port 0x378 irq 7
 lpt1	at isa? port 0x278
-lpt2	at isa? port 0x3bc iosiz 4
+lpt2	at isa? port 0x3bc
 
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
-
-#aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
-#aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
-#scsibus* at aha?
-ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+ahc*	at pci? dev ? function ?
 scsibus* at ahc?
-#aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
-#scsibus* at aic?
 
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-ch*	at scsibus? target ? lun ?	# SCSI autochangers
-ss*	at scsibus? target ? lun ?	# SCSI scanners
-uk*	at scsibus? target ? lun ?	# unknown SCSI
+bktr0	at pci? dev ? function ?
 
-fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+pciide0	at pci? dev ? function ?
+wdc0	at isa? port 0x1f0 irq 14
+wdc1	at isapnp?
+wdc2	at pcmcia?
+
+wd*	at pciide? channel ? drive ?
+wd*	at wdc? channel ? drive ?
+atapiscsi* at pciide? channel ?
+atapiscsi* at wdc? channel ?
+scsibus* at atapiscsi?
+
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+cd*	at scsibus? target ? lun ?
+ch*	at scsibus? target ? lun ?
+ss*	at scsibus? target ? lun ?
+uk*	at scsibus? target ? lun ?
+
+fdc0	at isa? port 0x3f0 irq 6 drq 2
 fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?
 
@@ -168,47 +140,35 @@ fd*	at fdc? drive ?
 #scd0	at isa? port 0x300 irq 10	# Sony CD-ROM drives
 #pcd0	at isa? port 0x300 irq 10	# Panasonic CD-ROM drives
 
-#wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq 15
-#wd*	at wdc? drive ?
-
-#atapibus* at wdc?
-#acd*	at atapibus? drive?
-
-#wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
-
+option	I82596_DEBUG
+#ie1	at isa? port 0x300
+#ie0	at pci? dev ? function ?
 xl0	at pci? dev ? function ?
+rl0	at pci? dev ? function ?
 ne*	at pcmcia? function ?
-option	GWETHER
 
-sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
-#wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-
-midi*	at sb?
-#opl*	at sb?
-opl*	at isa? port 0x388
-midi*	at opl?
-audio*	at sb?
+nsphy*	at mii? phy ?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
-joy0	at isa? port 0x201
+#joy0	at isa? port 0x201
 
-pseudo-device	loop	2	# network loopback
-#pseudo-device	null	1	# network blackhole
-pseudo-device	bpfilter 16	# packet filter
-pseudo-device	sl	2	# CSLIP
-pseudo-device	ppp	2	# PPP
-pseudo-device	tun	4	# network tunneling over tty
-pseudo-device	enc	1	# encryption device
-pseudo-device	strip	1	# Starmode Radio IP interface
+pseudo-device	bpfilter 32
+pseudo-device	loop	4
+#pseudo-device	null	1
+pseudo-device	bridge	2
+pseudo-device	sl	2
+pseudo-device	ppp	2
+pseudo-device	tun	4
+#pseudo-device	strip	1
+pseudo-device	enc
 
-pseudo-device	pty	64	# pseudo-terminals
-pseudo-device	tb	1	# tablet line discipline
+pseudo-device	pty	64
 
-pseudo-device	vnd	4	# paging to files
-pseudo-device	ccd	2	# concatenated disk devices
-pseudo-device	raid	10	# RAID volumes
+pseudo-device	vnd	4
+pseudo-device	ccd	4
+pseudo-device	raid	5
 
-pseudo-device	ksyms	1	# kernel symbol table
+pseudo-device	ksyms
+pseudo-device	tb
 pseudo-device	sequencer
-#pseudo-device	pctr
+pseudo-device	pctr
