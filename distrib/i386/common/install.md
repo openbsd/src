@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.14 2002/11/07 01:28:52 krw Exp $
+#	$OpenBSD: install.md,v 1.15 2002/12/08 20:53:14 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@ md_set_term() {
 	while : ; do
 		ask "Select your keyboard type: (P)C-AT/XT, (U)SB or 'done'" P
 		case $resp in
-		P*|p*)  _tables="be de dk es fr it jp lt no pt ru sf sg sv ua uk us"
+		P*|p*)  _tables="be br de dk es fr it jp lt no pt ru sf sg sv ua uk us"
 			;;
-		U*|u*)	_tables="de dk es fr it jp no sf sg sv uk us"
+		U*|u*)	_tables="br de dk es fr it jp no sf sg sv uk us"
 			;;
 		done)	;;
 		*)	echo "'$resp' is not a valid keyboard type."
