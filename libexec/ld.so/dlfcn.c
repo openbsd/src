@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.12 2002/02/21 23:17:53 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.13 2002/03/07 00:54:09 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -60,7 +60,7 @@ dlopen(const char *libname, int how)
 	if (libname == NULL) {
 		return NULL;
 	}
-	DL_DEB(("loading: %s\n", libname));
+	DL_DEB(("dlopen: loading: %s\n", libname));
 
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO);
 	if (object == 0) {
@@ -104,14 +104,12 @@ dlopen(const char *libname, int how)
 	_dl_rtld(object);
 	_dl_call_init(object);
 
-#ifdef __mips__
 	if(_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_ADD;
 		(*((void (*)())_dl_debug_map->r_brk))();
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)())_dl_debug_map->r_brk))();
 	}
-#endif /* __mips__ */
 
 	return((void *)object);
 }
@@ -179,14 +177,12 @@ dlclose(void *handle)
 
 	retval = _dl_real_close(handle);
 
-#ifdef __mips__
 	if (_dl_debug_map->r_brk) {
 		_dl_debug_map->r_state = RT_DELETE;
 		(*((void (*)())_dl_debug_map->r_brk))();
 		_dl_debug_map->r_state = RT_CONSISTENT;
 		(*((void (*)())_dl_debug_map->r_brk))();
 	}
-#endif /* __mips__ */
 
 	return (retval);
 }
