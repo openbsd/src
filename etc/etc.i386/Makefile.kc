@@ -1,4 +1,4 @@
-#	$Id: Makefile.kc,v 1.1.1.1 1995/10/18 08:38:00 deraadt Exp $
+#	$Id: Makefile.kc,v 1.2 1996/06/11 09:04:53 deraadt Exp $
 
 .ifndef MOUNT_POINT
 MOUNT_POINT=	/mnt
@@ -7,6 +7,9 @@ MOUNT_POINT=	/mnt
 VND_DEV=	/dev/vnd0a
 VND_RDEV=	/dev/rvnd0a
 .endif
+
+PID!=		echo $$$$
+REALIMAGE!=	echo /tmp/image.${PID}
 
 ROOTDIRLIST=	/ /bin /dev /instbin /mnt /sbin /usr
 BINDIRLIST=	/usr/bin
@@ -17,10 +20,10 @@ all:
 	@echo both IMAGE and KERNEL must be defined
 	@false
 .else
-	dd if=/dev/zero of=${IMAGE} bs=100k count=12
-	vnconfig -c ${VND_DEV} ${IMAGE}
-	disklabel -r -w ${VND_DEV} floppy5 \
-		${DESTDIR}/usr/mdec/fdboot ${DESTDIR}/usr/mdec/bootfd
+	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
+	vnconfig -c ${VND_DEV} ${REALIMAGE}
+	disklabel -w -B -b ${DESTDIR}/usr/mdec/fdboot -s ${DESTDIR}/usr/mdec/bootfd \
+		${VND} floppy5
 	newfs -m 0 -o space -i 6144 -c 80 ${VND_DEV} floppy5
 	mount ${VND_DEV} ${MOUNT_POINT}
 	for d in ${ROOTDIRLIST} ; do \
@@ -43,10 +46,12 @@ all:
 		cp ${.CURDIR}/etc.i386/files.kc/$$from ${MOUNT_POINT}/$$to; \
 	    done
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_DEV} ${IMAGE}
+	vnconfig -u ${VND_DEV}
+	cat /*bin/* > /dev/null
+	cp ${REALIMAGE} ${IMAGE}
 .endif
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV} ${IMAGE}
-	-/bin/rm -f ${IMAGE}
+	-vnconfig -u ${VND_DEV}
+	-/bin/rm -f ${REALIMAGE} ${IMAGE}
