@@ -1030,7 +1030,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 /* #undef HESIOD */
 
 /* Define if you have the krb4 package. */
-#define KRB4 1
+/* #undef KRB4 */
 
 /* Enable Kerberos 5 support in applications. */
 #define KRB5 1

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.24 2003/05/14 01:44:56 hin Exp $
+# $OpenBSD: Makefile,v 1.25 2003/05/14 04:58:36 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -256,9 +256,9 @@ SRCS+=	afskrb5.c \
 	afssys_openbsd.c \
 	common.c
 
-.if (${KERBEROS:L} == "yes")
-SRCS+=	afskrb.c
-.endif
+#.if (${KERBEROS:L} == "yes")
+#SRCS+=	afskrb.c
+#.endif
 
 MAN+=	kafs.3
 MLINKS+=kafs.3 k_hasafs.3 \
