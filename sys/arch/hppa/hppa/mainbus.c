@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.35 2002/10/07 18:35:56 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.36 2002/10/13 15:53:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -720,6 +720,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 		  bus_size_t boundary, bus_dma_segment_t *segs, int nsegs,
 		  int *rsegs, int flags)
 {
+	extern paddr_t avail_end;
 	struct pglist pglist;
 	struct vm_page *pg;
 	vaddr_t va;
@@ -727,15 +728,15 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	size = round_page(size);
 
 	TAILQ_INIT(&pglist);
-	if (uvm_pglistalloc(size, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS,
-	    alignment, 0, &pglist, 1, FALSE))
-		return ENOMEM;
+	if (uvm_pglistalloc(size, 0, avail_end, alignment, boundary,
+	    &pglist, nsegs, flags & BUS_DMA_NOWAIT))
+		return (ENOMEM);
 
 	if (uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_NONE,
 	      UVM_ADV_RANDOM, 0))) {
 		uvm_pglistfree(&pglist);
-		return ENOMEM;
+		return (ENOMEM);
 	}
 
 	segs[0].ds_addr = va;

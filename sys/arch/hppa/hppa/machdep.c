@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.84 2002/10/07 15:32:37 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.85 2002/10/13 15:53:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -162,6 +162,7 @@ int (*cpu_dbtlb_ins)(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
 
 dev_t	bootdev;
 int	totalphysmem, resvmem, physmem, esym;
+paddr_t	avail_end;
 
 /*
  * Things for MI glue to stick on.
@@ -408,8 +409,9 @@ hppa_init(start)
 	ptlball();
 	fcacheall();
 
-	totalphysmem = PAGE0->imm_max_mem / NBPG;
-	resvmem = ((vaddr_t)&kernel_text) / NBPG;
+	totalphysmem = btoc(PAGE0->imm_max_mem);
+	resvmem = btoc(((vaddr_t)&kernel_text));
+	avail_end = ctob(totalphysmem);
 
 #if defined(HP7100LC_CPU) || defined(HP7300LC_CPU)
 	if (pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
