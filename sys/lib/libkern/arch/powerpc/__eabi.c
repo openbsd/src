@@ -1,3 +1,4 @@
+/*	$OpenBSD: __eabi.c,v 1.2 1996/12/28 06:17:49 rahnds Exp $	*/
 /*	$NetBSD: __main.c,v 1.3 1994/10/26 06:42:13 cgd Exp $	*/
 
 /*

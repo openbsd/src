@@ -1,3 +1,4 @@
+/*	$OpenBSD: suswintr.c,v 1.2 1996/12/28 06:22:21 rahnds Exp $	*/
 /*	$NetBSD: suswintr.c,v 1.1 1996/09/30 16:34:54 ws Exp $	*/
 
 /*-

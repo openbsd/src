@@ -1,3 +1,4 @@
+/*	$OpenBSD: conf.c,v 1.2 1996/12/28 06:21:41 rahnds Exp $	*/
 /*	$NetBSD: conf.c,v 1.2 1996/10/16 17:26:19 ws Exp $	*/
 
 /*
