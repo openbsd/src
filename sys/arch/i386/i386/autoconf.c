@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.47 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.48 2003/09/07 04:02:03 krw Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -355,7 +355,9 @@ rootconf()
 		char name[128];
 retry:
 		printf("root device? ");
+		cnpollc(TRUE);
 		getsn(name, sizeof name);
+		cnpollc(FALSE);
 		if (*name == '\0')
 			goto noask;
 		for (gc = genericconf; gc->gc_driver; gc++)
