@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.7 1997/07/17 09:14:13 deraadt Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.8 1997/07/23 22:12:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: displayq.c,v 1.7 1997/07/17 09:14:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: displayq.c,v 1.8 1997/07/23 22:12:10 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -232,12 +232,12 @@ displayq(format)
 		putchar('\n');
 	(void) snprintf(line, sizeof line, "%c%s", format + '\3', RP);
 	cp = line;
-	for (i = 0; i < requests && cp-line+10 < sizeof line; i++) {
+	for (i = 0; i < requests && cp-line+10 < sizeof(line) - 1; i++) {
 		cp += strlen(cp);
 		(void) sprintf(cp, " %d", requ[i]);
 	}
 	for (i = 0; i < users && cp-line+1+strlen(user[i]) <
-	    sizeof line; i++) {
+	    sizeof(line) - 1; i++) {
 		cp += strlen(cp);
 		*cp++ = ' ';
 		(void) strcpy(cp, user[i]);

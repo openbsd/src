@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.7 1997/07/18 20:57:27 millert Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.8 1997/07/23 22:12:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: rmjob.c,v 1.7 1997/07/18 20:57:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: rmjob.c,v 1.8 1997/07/23 22:12:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -340,7 +340,7 @@ rmremote()
 		*cp++ = ' ';
 		strcpy(cp, user[i]);
 	}
-	for (i = 0; i < requests && cp-buf+10 < sizeof buf; i++) {
+	for (i = 0; i < requests && cp-buf+10 < sizeof(buf) - 1; i++) {
 		cp += strlen(cp);
 		(void) sprintf(cp, " %d", requ[i]);
 	}
