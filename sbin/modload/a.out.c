@@ -1,4 +1,4 @@
-/*	$OpenBSD: a.out.c,v 1.1 2002/01/08 21:28:38 ericj Exp $	*/
+/*	$OpenBSD: a.out.c,v 1.2 2002/01/09 00:02:52 ericj Exp $	*/
 /*	$NetBSD: a.out.c,v 1.1 1999/06/13 12:54:40 mrg Exp $	*/
 
 /*
@@ -61,6 +61,11 @@
 
 #define	LINKCMD "ld -A %s -e _%s -o %s -T %p %s"
 
+static struct exec sinfo_buf;	/* buffer for loading */
+extern int devfd, modfd;
+extern struct lmc_resrv resrv;
+extern int symtab;
+
 void
 a_out_linkcmd(char *buf,
 	      size_t len,
@@ -101,8 +106,6 @@ a_out_read_header(int fd, struct exec *info_buf)
 	return 0;
 }
 
-extern int symtab;
-
 int
 a_out_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 	int fd;
@@ -140,29 +143,28 @@ a_out_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 void *
 a_out_mod_load(int fd)
 {
-	struct exec info_buf;
 	size_t b;
 	ssize_t n;
-	char buf[10 * BUFSIZ];
+	char buf[MODIOBUF];
 
 	/*
 	 * Get the load module post load size... do this by reading the
 	 * header and doing page counts.
 	 */
-	if (a_out_read_header(fd, &info_buf) < 0)
+	if (a_out_read_header(fd, &sinfo_buf) < 0)
 		return NULL;
 	
 	/*
 	 * Seek to the text offset to start loading...
 	 */
-	if (lseek(fd, N_TXTOFF(info_buf), 0) == -1)
+	if (lseek(fd, N_TXTOFF(sinfo_buf), 0) == -1)
 		err(12, "lseek");
 
 	/*
 	 * Transfer the relinked module to kernel memory in chunks of
 	 * MODIOBUF size at a time.
 	 */
-	b = info_buf.a_text + info_buf.a_data;
+	b = sinfo_buf.a_text + sinfo_buf.a_data;
 	while (b) {
 		n = read(fd, buf, MIN(b, sizeof(buf)));
 		if (n < 0)
@@ -173,81 +175,41 @@ a_out_mod_load(int fd)
 		loadbuf(buf, n);
 		b -= n;
 	}
-	return (void*)info_buf.a_entry;
+	return (void*)sinfo_buf.a_entry;
 }
-
-extern int devfd, modfd;
-extern struct lmc_resrv resrv;
 
 void
 a_out_mod_symload(strtablen)
 	int strtablen;
 {
-	struct exec info_buf;
 	struct lmc_loadbuf ldbuf;
-	struct nlist *nlp;
-	char buf[10 * BUFSIZ];
-	char *symbuf;
+	char buf[MODIOBUF];
 	int bytesleft, sz;
-	int numsyms;	/* XXX unused? */
-
-	if (a_out_read_header(modfd, &info_buf) < 0)
-		return;
 
 	/*
 	 * Seek to the symbol table to start loading it...
 	 */
-	if (lseek(modfd, N_SYMOFF(info_buf), SEEK_SET) == -1)
+	if (lseek(modfd, N_SYMOFF(sinfo_buf), SEEK_SET) == -1)
 		err(12, "lseek");
 
 	/*
-	 * Transfer the symbol table entries.  First, read them all in,
-	 * then adjust their string table pointers, then
-	 * copy in bulk.  Then copy the string table itself.
-	 */
-
-	symbuf = malloc(info_buf.a_syms);
-	if (symbuf == 0)
-		err(13, "malloc");
-
-	if (read(modfd, symbuf, info_buf.a_syms) != info_buf.a_syms)
-		err(14, "read");
-	numsyms = info_buf.a_syms / sizeof(struct nlist);
-
-	for (nlp = (struct nlist *)symbuf; 
-	    (char *)nlp < symbuf + info_buf.a_syms; nlp++) {
-		register int strx;
-
-		strx = nlp->n_un.n_strx;
-		if (strx != 0) {
-			/*
-			 * If a valid name, set the name ptr to point at the
-			 * loaded address for the string in the string table.
-			 */
-			if (strx > strtablen)
-				nlp->n_un.n_name = 0;
-			else
-				nlp->n_un.n_name = (char *)(strx +
-				    resrv.sym_addr + info_buf.a_syms);
-		}
-	}
-	/*
 	 * we've fixed the symbol table entries, now load them
 	 */
-	for (bytesleft = info_buf.a_syms; bytesleft > 0; bytesleft -= sz) {
+	for (bytesleft = sinfo_buf.a_syms; bytesleft > 0; bytesleft -= sz) {
 		sz = MIN(bytesleft, MODIOBUF);
+		if (read(modfd, buf, sz) != sz)
+			err(14, "read");
 		ldbuf.cnt = sz;
-		ldbuf.data = symbuf;
+		ldbuf.data = buf;
 		if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
 			err(11, "error transferring sym buffer");
-		symbuf += sz;
 	}
 
-	free(symbuf - info_buf.a_syms);
 	/* and now read the string table and load it. */
 	for (bytesleft = strtablen; bytesleft > 0; bytesleft -= sz) {
 		sz = MIN(bytesleft, MODIOBUF);
-		read(modfd, buf, sz);
+		if (read(modfd, buf, sz) != sz)
+			err(14, "read");
 		ldbuf.cnt = sz;
 		ldbuf.data = buf;
 		if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)

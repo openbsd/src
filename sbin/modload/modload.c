@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.31 2002/01/08 22:07:26 ericj Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.32 2002/01/09 00:02:52 ericj Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -112,12 +112,11 @@ prelink(const char *kernel,
 static void
 usage(void)
 {
+	extern char *__progname;
 
-	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "modload [-d] [-v] [-n] [-s] [-S] "
-	    "[-A <kernel>] [-e <entry>]\n");
-	fprintf(stderr,
-	    "        [-p <postinstall>] [-o <output file>] <input file>\n");
+	fprintf(stderr, "usage: %s [-dnsvS] [-A system] [-e entry]\n",
+		__progname);
+	fprintf(stderr, "\t[-p postinstall] [-o outputfile] <input file>\n");
 	exit(1);
 }
 
