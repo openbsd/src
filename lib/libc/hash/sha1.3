@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.22 2003/05/06 19:13:10 jmc Exp $
+.\"	$OpenBSD: sha1.3,v 1.23 2003/05/30 19:55:03 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -180,23 +180,6 @@ char *buf = "abc";
 
 printf("0x%s\en", SHA1Data(buf, strlen(buf), output));
 .Ed
-.Sh CAVEATS
-This implementation of SHA-1 has not been validated by NIST
-and as such is not in official compliance with the standard.
-.Pp
-If a message digest is to be copied to a multi-byte type (ie:
-an array of five 32-bit integers) it will be necessary to
-perform byte swapping on little endian machines such as the i386, alpha,
-and vax.
-.Sh AUTHORS
-This implementation of SHA-1 was written by Steve Reid.
-.Pp
-The
-.Fn SHA1End ,
-.Fn SHA1File ,
-and
-.Fn SHA1Data
-helper functions are derived from code written by Poul-Henning Kamp.
 .Sh SEE ALSO
 .Xr sha1 1 ,
 .Xr md4 3 ,
@@ -215,3 +198,20 @@ helper functions are derived from code written by Poul-Henning Kamp.
 .Sh HISTORY
 The SHA-1 functions appeared in
 .Ox 2.0 .
+.Sh AUTHORS
+This implementation of SHA-1 was written by Steve Reid.
+.Pp
+The
+.Fn SHA1End ,
+.Fn SHA1File ,
+and
+.Fn SHA1Data
+helper functions are derived from code written by Poul-Henning Kamp.
+.Sh CAVEATS
+This implementation of SHA-1 has not been validated by NIST
+and as such is not in official compliance with the standard.
+.Pp
+If a message digest is to be copied to a multi-byte type (ie:
+an array of five 32-bit integers) it will be necessary to
+perform byte swapping on little endian machines such as the i386, alpha,
+and vax.

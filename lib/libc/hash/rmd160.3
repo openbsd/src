@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.16 2001/10/01 22:12:14 markus Exp $
+.\"	$OpenBSD: rmd160.3,v 1.17 2003/05/30 19:55:03 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -183,20 +183,6 @@ char *buf = "abc";
 
 printf("0x%s\en", RMD160Data(buf, strlen(buf), output));
 .Ed
-.Sh CAVEATS
-If a message digest is to be copied to a multi-byte type (ie:
-an array of five 32-bit integers) it will be necessary to
-perform byte swapping on little endian machines such as the i386, alpha,
-and vax.
-.Sh AUTHORS
-This implementation of RMD-160 was written by Markus Friedl.
-.Pp
-The
-.Fn RMD160End ,
-.Fn RMD160File ,
-and
-.Fn RMD160Data
-helper functions are derived from code written by Poul-Henning Kamp.
 .Sh SEE ALSO
 .Xr rmd160 1 ,
 .Xr md4 3 ,
@@ -221,3 +207,17 @@ helper functions are derived from code written by Poul-Henning Kamp.
 .Sh HISTORY
 The RMD-160 functions appeared in
 .Ox 2.1 .
+.Sh AUTHORS
+This implementation of RMD-160 was written by Markus Friedl.
+.Pp
+The
+.Fn RMD160End ,
+.Fn RMD160File ,
+and
+.Fn RMD160Data
+helper functions are derived from code written by Poul-Henning Kamp.
+.Sh CAVEATS
+If a message digest is to be copied to a multi-byte type (ie:
+an array of five 32-bit integers) it will be necessary to
+perform byte swapping on little endian machines such as the i386, alpha,
+and vax.

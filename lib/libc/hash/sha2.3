@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.1 2003/05/08 23:34:55 millert Exp $
+.\"	$OpenBSD: sha2.3,v 1.2 2003/05/30 19:55:03 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -82,7 +82,7 @@ The SHA2 functions implement the NIST Secure Hash Standard,
 FIPS PUB 180-2.
 The SHA2 functions are used to generate a condensed representation of a
 message called a message digest, suitable for use as a digital signature.
-There are three families of functions, with names corresponding to 
+There are three families of functions, with names corresponding to
 the number of bits in the resulting message digest.
 The SHA-256 functions are limited to processing a message of less
 than 2^64 bits as input.
@@ -195,23 +195,6 @@ char *buf = "abc";
 
 printf("0x%s\en", SHA256_Data(buf, strlen(buf), output));
 .Ed
-.Sh CAVEATS
-This implementation of the Secure Hash Standard has not been validated by
-NIST and as such is not in official compliance with the standard.
-.Pp
-If a message digest is to be copied to a multi-byte type (ie:
-an array of five 32-bit integers) it will be necessary to
-perform byte swapping on little endian machines such as the i386, alpha,
-and vax.
-.Sh AUTHORS
-This implementation of the SHA fucntions was written by Aaron D. Gifford.
-.Pp
-The
-.Fn SHA256_End ,
-.Fn SHA256_File ,
-and
-.Fn SHA256_Data
-helper functions are derived from code written by Poul-Henning Kamp.
 .Sh SEE ALSO
 .Xr md4 3 ,
 .Xr md5 3 ,
@@ -224,3 +207,20 @@ helper functions are derived from code written by Poul-Henning Kamp.
 .Sh HISTORY
 The SHA2 functions appeared in
 .Ox 3.4 .
+.Sh AUTHORS
+This implementation of the SHA fucntions was written by Aaron D. Gifford.
+.Pp
+The
+.Fn SHA256_End ,
+.Fn SHA256_File ,
+and
+.Fn SHA256_Data
+helper functions are derived from code written by Poul-Henning Kamp.
+.Sh CAVEATS
+This implementation of the Secure Hash Standard has not been validated by
+NIST and as such is not in official compliance with the standard.
+.Pp
+If a message digest is to be copied to a multi-byte type (ie:
+an array of five 32-bit integers) it will be necessary to
+perform byte swapping on little endian machines such as the i386, alpha,
+and vax.
