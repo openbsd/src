@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispcvt.c,v 1.7 1999/05/24 15:37:44 aaron Exp $	*/
+/*	$OpenBSD: ispcvt.c,v 1.8 1999/11/26 02:11:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis
@@ -216,9 +216,6 @@ char *argv[];
 		fprintf(stderr,"PCVT_CTRL_ALT_DEL    = %s",
 			(pcvtinfo.compile_opts & CONF_CTRL_ALT_DEL) ? "ON" : "OFF");
 		next();
-		fprintf(stderr,"PCVT_EMU_MOUSE       = %s",
-			(pcvtinfo.compile_opts & CONF_EMU_MOUSE) ? "ON" : "OFF");
-		next();
 		fprintf(stderr,"PCVT_INHIBIT_NUMLOCK = %s",
 			(pcvtinfo.compile_opts & CONF_INHIBIT_NUMLOCK) ? "ON" : "OFF");
 		next();
@@ -257,9 +254,6 @@ char *argv[];
 		next();
 		fprintf(stderr,"PCVT_SETCOLOR        = %s",
 			(pcvtinfo.compile_opts & CONF_SETCOLOR) ? "ON" : "OFF");
-		next();
-		fprintf(stderr,"PCVT_SHOWKEYS        = %s",
-			(pcvtinfo.compile_opts & CONF_SHOWKEYS) ? "ON" : "OFF");
 		next();
 		fprintf(stderr,"PCVT_SIGWINCH        = %s",
 			(pcvtinfo.compile_opts & CONF_SIGWINCH) ? "ON" : "OFF");
