@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.2 2004/05/07 15:31:13 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.3 2004/06/03 05:17:36 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1254,7 +1254,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		ktrsyscall(p, code, callp->sy_argsize, args);
 #endif
 	rval[0] = 0;
-	rval[1] = 0;
+	rval[1] = tf->tf_r[3];
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		error = systrace_redirect(code, p, args, rval);
@@ -1423,7 +1423,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		ktrsyscall(p, code, callp->sy_argsize, args);
 #endif
 	rval[0] = 0;
-	rval[1] = 0;
+	rval[1] = tf->tf_r[3];
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		error = systrace_redirect(code, p, args, rval);
