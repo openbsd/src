@@ -48,7 +48,7 @@ struct relocation_info_m68k {
 
 #define ELF_TARG_CLASS          ELFCLASS32
 #define ELF_TARG_DATA           ELFDATA2MSB
-#define ELF_TARG_MACH           EM_M68K
+#define ELF_TARG_MACH           EM_68K
 
 #define DO_AOUT                 /* support a.out */
 #define DO_ELF                  /* support ELF */
