@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.89 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: x509.c,v 1.90 2004/06/02 16:19:16 hshoexer Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -605,11 +605,10 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 	struct dirent  *file;
 #if defined (USE_PRIVSEP)
 	struct monitor_dirents *dir;
-	FILE           *certfp;
 #else
 	DIR            *dir;
-	BIO            *certh;
 #endif
+	FILE           *certfp;
 	X509           *cert;
 	char            fullname[PATH_MAX];
 	int             off, size;
@@ -650,7 +649,6 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 		    "x509_read_from_dir: reading certificate %s",
 		    file->d_name));
 
-#if defined (USE_PRIVSEP)
 		certfp = monitor_fopen(fullname, "r");
 		if (!certfp) {
 			log_error("x509_read_from_dir: monitor_fopen "
@@ -664,27 +662,7 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 		cert = PEM_read_X509(certfp, NULL, NULL);
 #endif
 		fclose(certfp);
-#else
-		certh = BIO_new(BIO_s_file());
-		if (!certh) {
-			log_error("x509_read_from_dir: BIO_new (BIO_s_file "
-			    "()) failed");
-			continue;
-		}
-		if (BIO_read_filename(certh, fullname) == -1) {
-			BIO_free(certh);
-			log_error("x509_read_from_dir: "
-			    "BIO_read_filename (certh, \"%s\") failed",
-			    fullname);
-			continue;
-		}
-#if SSLEAY_VERSION_NUMBER >= 0x00904100L
-		cert = PEM_read_bio_X509(certh, NULL, NULL, NULL);
-#else
-		cert = PEM_read_bio_X509(certh, NULL, NULL);
-#endif
-		BIO_free(certh);
-#endif				/* USE_PRIVSEP */
+
 		if (cert == NULL) {
 			log_print("x509_read_from_dir: PEM_read_bio_X509 "
 			    "failed for %s", file->d_name);
@@ -721,11 +699,10 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 	struct dirent  *file;
 #if defined (USE_PRIVSEP)
 	struct monitor_dirents *dir;
-	FILE           *crlfp;
 #else
 	DIR            *dir;
-	BIO            *crlh;
 #endif
+	FILE           *crlfp;
 	X509_CRL       *crl;
 	char            fullname[PATH_MAX];
 	int             off, size;
@@ -764,7 +741,6 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		LOG_DBG((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading "
 		    "CRL %s", file->d_name));
 
-#if defined (USE_PRIVSEP)
 		crlfp = monitor_fopen(fullname, "r");
 		if (!crlfp) {
 			log_error("x509_read_crls_from_dir: monitor_fopen "
@@ -772,25 +748,9 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 			continue;
 		}
 		crl = PEM_read_X509_CRL(crlfp, NULL, NULL, NULL);
-		fclose(crlfp);
-#else
-		crlh = BIO_new(BIO_s_file());
-		if (!crlh) {
-			log_error("x509_read_crls_from_dir: "
-			    "BIO_new (BIO_s_file ()) failed");
-			continue;
-		}
-		if (BIO_read_filename(crlh, fullname) == -1) {
-			BIO_free(crlh);
-			log_error("x509_read_crls_from_dir: "
-			    "BIO_read_filename (crlh, \"%s\") failed",
-			    fullname);
-			continue;
-		}
-		crl = PEM_read_bio_X509_CRL(crlh, NULL, NULL, NULL);
 
-		BIO_free(crlh);
-#endif				/* USE_PRIVSEP */
+		fclose(crlfp);
+
 		if (crl == NULL) {
 			log_print("x509_read_crls_from_dir: "
 			    "PEM_read_bio_X509_CRL failed for %s",

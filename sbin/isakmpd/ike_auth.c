@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.88 2004/05/26 22:17:58 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.89 2004/06/02 16:19:16 hshoexer Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -143,11 +143,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 #if defined (USE_X509) || defined (USE_KEYNOTE)
 	char	*keyfile;
 #if defined (USE_X509)
-#if defined (USE_PRIVSEP)
 	FILE	*keyfp;
-#else
-	BIO	*keyh;
-#endif
 	RSA	*rsakey;
 	size_t	fsize;
 #endif
@@ -281,7 +277,6 @@ ignorekeynote:
 		if (check_file_secrecy(keyfile, &fsize))
 			return 0;
 
-#if defined (USE_PRIVSEP)
 		keyfp = monitor_fopen(keyfile, "r");
 		if (!keyfp) {
 			log_print("ike_auth_get_key: failed opening \"%s\"",
@@ -294,26 +289,6 @@ ignorekeynote:
 		rsakey = PEM_read_RSAPrivateKey(keyfp, NULL, NULL);
 #endif
 		fclose(keyfp);
-#else
-		keyh = BIO_new(BIO_s_file());
-		if (keyh == NULL) {
-			log_print("ike_auth_get_key: BIO_new (BIO_s_file ())"
-			    "failed");
-			return 0;
-		}
-		if (BIO_read_filename(keyh, keyfile) == -1) {
-			log_print("ike_auth_get_key: BIO_read_filename (keyh,"
-			    "\"%s\") failed", keyfile);
-			BIO_free(keyh);
-			return 0;
-		}
-#if SSLEAY_VERSION_NUMBER >= 0x00904100L
-		rsakey = PEM_read_bio_RSAPrivateKey(keyh, NULL, NULL, NULL);
-#else
-		rsakey = PEM_read_bio_RSAPrivateKey(keyh, NULL, NULL);
-#endif
-		BIO_free(keyh);
-#endif				/* USE_PRIVSEP */
 
 		if (!rsakey) {
 			log_print("ike_auth_get_key: PEM_read_bio_RSAPrivateKey failed");
@@ -1118,11 +1093,7 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 	char            filename[FILENAME_MAX];
 	char           *fstr;
 	struct stat     st;
-#if defined (USE_PRIVSEP)
 	FILE           *keyfp;
-#else
-	BIO            *bio;
-#endif
 
 	if (type != IKE_AUTH_RSA_SIG) {	/* XXX More types? */
 		LOG_DBG((LOG_NEGOTIATION, 20, "get_raw_key_from_file: "
@@ -1150,7 +1121,6 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 
 	/* If the file does not exist, fail silently.  */
 	if (monitor_stat(filename, &st) == 0) {
-#if defined (USE_PRIVSEP)
 		keyfp = monitor_fopen(filename, "r");
 		if (!keyfp) {
 			log_error("get_raw_key_from_file: monitor_fopen "
@@ -1159,23 +1129,6 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 		}
 		*rsa = PEM_read_RSA_PUBKEY(keyfp, NULL, NULL, NULL);
 		fclose(keyfp);
-#else
-		bio = BIO_new(BIO_s_file());
-		if (!bio) {
-			log_error("get_raw_key_from_file: could not initialize BIO");
-			return -1;
-		}
-		if (BIO_read_filename(bio, filename) <= 0) {
-			LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: "
-			    "BIO_read_filename(bio, \"%s\") failed", filename));
-			BIO_free(bio);
-			return -1;
-		}
-		LOG_DBG((LOG_NEGOTIATION, 80,
-		    "get_raw_key_from_file: reading file %s", filename));
-		*rsa = PEM_read_bio_RSA_PUBKEY(bio, NULL, NULL, NULL);
-		BIO_free(bio);
-#endif				/* USE_PRIVSEP */
 	} else
 		LOG_DBG((LOG_NEGOTIATION, 50,
 		    "get_raw_key_from_file: file %s not found", filename));
