@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.21 1999/11/04 05:13:14 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.22 2000/01/10 22:18:29 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -762,6 +762,15 @@ bridgeintr(void)
 				}
 			}
 
+			if ((ifl->bif_flags & IFBIF_BLOCKNONIP) &&
+			    (eh->ether_type != htons(ETHERTYPE_IP)) &&
+			    (eh->ether_type != htons(ETHERTYPE_IPV6)) &&
+			    (eh->ether_type != htons(ETHERTYPE_ARP)) &&
+			    (eh->ether_type != htons(ETHERTYPE_REVARP))) {
+				m_freem(m);
+				continue;
+			}
+
 #if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
 			if (bridge_filter(sc, src_if, eh, &m) ==
 			    BRIDGE_FILTER_DROP) {
@@ -926,6 +935,13 @@ bridge_broadcast(sc, ifp, eh, m)
 
 		if ((p->bif_flags & IFBIF_DISCOVER) == 0 &&
 		    (m->m_flags & (M_BCAST | M_MCAST)) == 0)
+			continue;
+
+		if ((p->bif_flags & IFBIF_BLOCKNONIP) &&
+		    (eh->ether_type != htons(ETHERTYPE_IP)) &&
+		    (eh->ether_type != htons(ETHERTYPE_IPV6)) &&
+		    (eh->ether_type != htons(ETHERTYPE_ARP)) &&
+		    (eh->ether_type != htons(ETHERTYPE_REVARP)))
 			continue;
 
 		if ((p->ifp->if_flags & IFF_RUNNING) == 0)

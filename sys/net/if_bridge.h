@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.10 1999/09/03 12:47:12 jason Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.11 2000/01/10 22:18:29 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -42,6 +42,7 @@ struct ifbreq {
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
 #define	IFBIF_LEARNING	0x1	/* ifs can learn */
 #define	IFBIF_DISCOVER	0x2	/* ifs sends packets w/unknown dest */
+#define IFBIF_BLOCKNONIP 0x04	/* ifs does not allow non-IP/ARP traffic in/out */
 /* SIOCBRDGFLUSH */
 #define	IFBF_FLUSHDYN	0x0	/* flush dynamic addresses only */
 #define	IFBF_FLUSHALL	0x1	/* flush all addresses from cache */
