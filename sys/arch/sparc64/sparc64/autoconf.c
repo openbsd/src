@@ -1,3 +1,4 @@
+/*	$OpenBSD: autoconf.c,v 1.3 2001/08/20 19:40:43 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -113,6 +114,11 @@ int	st_crazymap __P((int));
 void	sync_crash __P((void));
 int	mainbus_match __P((struct device *, void *, void *));
 static	void mainbus_attach __P((struct device *, struct device *, void *));
+static	int getstr __P((char *, int));
+void	setroot __P((void));
+void	swapconf __P((void));
+static	struct device *getdisk __P((char *, int, int, dev_t *));
+static int findblkmajor __P((struct device *));
 
 struct	bootpath bootpath[8];
 int	nbootpath;
@@ -134,6 +140,18 @@ struct intrmap intrmap[] = {
 	{ "SUNW,CS4231",	PIL_AUD },
 	{ NULL,		0 }
 };
+
+/*
+ * The mountroot_hook is provided as a mechanism for devices to perform
+ * a special function if they're the root device, such as the floppy
+ * drive ejecting the current disk and prompting for a filesystem floppy.
+ */
+struct mountroot_hook {
+	LIST_ENTRY(mountroot_hook) mr_link;
+	struct	device *mr_device;
+	void	(*mr_func) __P((struct device *));
+};
+LIST_HEAD(, mountroot_hook) mrh_list;
 
 #ifdef DEBUG
 #define ACDB_BOOTDEV	0x1
@@ -479,6 +497,14 @@ cpu_configure()
 	/* build the bootpath */
 	bootpath_build();
 
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
+
 #if notyet
         /* FIXME FIXME FIXME  This is probably *WRONG!!!**/
         OF_set_callback(sync_crash);
@@ -505,23 +531,362 @@ cpu_configure()
 #endif
 
 	(void)spl0();
+
+	setroot();
+	swapconf();
+	cold = 0;
 }
 
-#if XXX
 void
-cpu_rootconf()
+swapconf()
 {
-	struct bootpath *bp;
+	register struct swdevt *swp;
+	register int nblks;
+
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
+		if (bdevsw[major(swp->sw_dev)].d_psize) {
+			nblks =
+			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
+			if (nblks != -1 &&
+			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
+				swp->sw_nblks = nblks;
+			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
+		}
+	dumpconf();
+}
+
+void
+setroot()
+{
+	register struct swdevt *swp;
+	register struct device *dv;
+	register int len, majdev, unit, part;
+	dev_t nrootdev, nswapdev = NODEV;
+	char buf[128];
+	dev_t temp;
+	struct mountroot_hook *mrhp;
 	struct device *bootdv;
-	int bootpartition;
+	struct bootpath *bp;
+#if defined(NFSCLIENT)
+	extern char *nfsbootdevname;
+#endif
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
-	bootdv = bp == NULL ? NULL : bp->dev;
-	bootpartition = bootdv == NULL ? 0 : bp->val[2];
+	bootdv = (bp == NULL) ? NULL : bp->dev;
 
-	setroot(bootdv, bootpartition);
-}
+	/*
+	 * If `swap generic' and we couldn't determine boot device,
+	 * ask the user.
+	 */
+	if (mountroot == NULL && bootdv == NULL)
+		boothowto |= RB_ASKNAME;
+
+	if (boothowto & RB_ASKNAME) {
+		for (;;) {
+			printf("root device ");
+			if (bootdv != NULL)
+				printf("(default %s%c)",
+					bootdv->dv_xname,
+					bootdv->dv_class == DV_DISK
+						? bp->val[2]+'a' : ' ');
+			printf(": ");
+			len = getstr(buf, sizeof(buf));
+			if (len == 0 && bootdv != NULL) {
+				strcpy(buf, bootdv->dv_xname);
+				len = strlen(buf);
+			}
+			if (len > 0 && buf[len - 1] == '*') {
+				buf[--len] = '\0';
+				dv = getdisk(buf, len, 1, &nrootdev);
+				if (dv != NULL) {
+					bootdv = dv;
+					nswapdev = nrootdev;
+					goto gotswap;
+				}
+			}
+			dv = getdisk(buf, len, bp?bp->val[2]:0, &nrootdev);
+			if (dv != NULL) {
+				bootdv = dv;
+				break;
+			}
+		}
+
+		/*
+		 * because swap must be on same device as root, for
+		 * network devices this is easy.
+		 */
+		if (bootdv->dv_class == DV_IFNET) {
+			goto gotswap;
+		}
+		for (;;) {
+			printf("swap device ");
+			if (bootdv != NULL)
+				printf("(default %s%c)",
+					bootdv->dv_xname,
+					bootdv->dv_class == DV_DISK?'b':' ');
+			printf(": ");
+			len = getstr(buf, sizeof(buf));
+			if (len == 0 && bootdv != NULL) {
+				switch (bootdv->dv_class) {
+				case DV_IFNET:
+					nswapdev = NODEV;
+					break;
+				case DV_DISK:
+					nswapdev = MAKEDISKDEV(major(nrootdev),
+					    DISKUNIT(nrootdev), 1);
+					break;
+				case DV_TAPE:
+				case DV_TTY:
+				case DV_DULL:
+				case DV_CPU:
+					break;
+				}
+				break;
+			}
+			dv = getdisk(buf, len, 1, &nswapdev);
+			if (dv) {
+				if (dv->dv_class == DV_IFNET)
+					nswapdev = NODEV;
+				break;
+			}
+		}
+gotswap:
+		rootdev = nrootdev;
+		dumpdev = nswapdev;
+		swdevt[0].sw_dev = nswapdev;
+		/* swdevt[1].sw_dev = NODEV; */
+
+	} else if (mountroot == NULL) {
+
+		/*
+		 * `swap generic': Use the device the ROM told us to use.
+		 */
+		majdev = findblkmajor(bootdv);
+		if (majdev >= 0) {
+			/*
+			 * Root and swap are on a disk.
+			 * val[2] of the boot device is the partition number.
+			 * Assume swap is on partition b.
+			 */
+			part = bp->val[2];
+			unit = bootdv->dv_unit;
+			rootdev = MAKEDISKDEV(majdev, unit, part);
+			nswapdev = dumpdev = MAKEDISKDEV(major(rootdev),
+			    DISKUNIT(rootdev), 1);
+		} else {
+			/*
+			 * Root and swap are on a net.
+			 */
+			nswapdev = dumpdev = NODEV;
+		}
+		swdevt[0].sw_dev = nswapdev;
+		/* swdevt[1].sw_dev = NODEV; */
+
+	} else {
+
+		/*
+		 * `root DEV swap DEV': honour rootdev/swdevt.
+		 * rootdev/swdevt/mountroot already properly set.
+		 */
+		majdev = major(rootdev);
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
+		goto gotroot;
+	}
+
+	switch (bootdv->dv_class) {
+#if defined(NFSCLIENT)
+	case DV_IFNET:
+		mountroot = nfs_mountroot;
+		nfsbootdevname = bootdv->dv_xname;
+		return;
 #endif
+	case DV_DISK:
+		mountroot = dk_mountroot;
+		majdev = major(rootdev);
+		unit = DISKUNIT(rootdev);
+		part = DISKPART(rootdev);
+		printf("root on %s%c\n", bootdv->dv_xname,
+		    part + 'a');
+		break;
+	default:
+		printf("can't figure root, hope your kernel is right\n");
+		return;
+	}
+
+	/*
+	 * Make the swap partition on the root drive the primary swap.
+	 */
+	temp = NODEV;
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+		if (majdev == major(swp->sw_dev) &&
+		    unit == DISKUNIT(swp->sw_dev)) {
+			temp = swdevt[0].sw_dev;
+			swdevt[0].sw_dev = swp->sw_dev;
+			swp->sw_dev = temp;
+			break;
+		}
+	}
+	if (swp->sw_dev != NODEV) {
+		/*
+		 * If dumpdev was the same as the old primary swap device,
+		 * move it to the new primary swap device.
+		 */
+		if (temp == dumpdev)
+			dumpdev = swdevt[0].sw_dev;
+	}
+
+gotroot:
+	/*
+	 * Find mountroot hook and execute.
+	 */
+	for (mrhp = mrh_list.lh_first; mrhp != NULL;
+	     mrhp = mrhp->mr_link.le_next)
+		if (mrhp->mr_device == bootdv) {
+			if (findblkmajor(mrhp->mr_device) == major(rootdev)) 
+				(*mrhp->mr_func)(bootdv);
+			else
+				(*mrhp->mr_func)(NULL);
+			break;
+		}
+
+}
+
+struct nam2blk {
+	char *name;
+	int maj;
+} nam2blk[] = {
+	{ "sd",         7 },
+	{ "rd",         5 },
+	{ "cd",         18 },
+};
+
+static int
+findblkmajor(dv)
+	struct device *dv;
+{
+	char *name = dv->dv_xname;
+	register int i;
+
+	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
+		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name)) == 0
+)      
+			return (nam2blk[i].maj);
+	return (-1);
+}
+
+static struct device *
+getdisk(str, len, defpart, devp)
+	char *str;
+	int len, defpart;
+	dev_t *devp;
+{
+	register struct device *dv;
+
+	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
+		printf("use one of:");
+		for (dv = alldevs.tqh_first; dv != NULL;
+		    dv = dv->dv_list.tqe_next) {        
+			if (dv->dv_class == DV_DISK)
+				printf(" %s[a-h]", dv->dv_xname);
+#ifdef NFSCLIENT
+			if (dv->dv_class == DV_IFNET)
+				printf(" %s", dv->dv_xname);
+#endif
+		}
+		printf("\n");
+	}
+	return (dv);
+}
+
+struct device *
+parsedisk(str, len, defpart, devp)
+	char *str;
+	int len, defpart;
+	dev_t *devp;
+{
+	register struct device *dv;
+	register char *cp, c;
+	int majdev, unit, part;
+
+	if (len == 0)
+		return (NULL);
+	cp = str + len - 1;
+	c = *cp;
+	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
+		part = c - 'a';
+		*cp = '\0';
+	} else
+		part = defpart;
+
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (dv->dv_class == DV_DISK &&
+		    strcmp(str, dv->dv_xname) == 0) {
+			majdev = findblkmajor(dv);
+			unit = dv->dv_unit;
+			if (majdev < 0)
+				panic("parsedisk");
+			*devp = MAKEDISKDEV(majdev, unit, part);
+			break;
+		}
+#ifdef NFSCLIENT
+		if (dv->dv_class == DV_IFNET &&
+		    strcmp(str, dv->dv_xname) == 0) {
+			*devp = NODEV;
+			break;
+		}
+#endif
+	}
+
+	*cp = c;
+	return (dv);
+}
+
+static int
+getstr(cp, size)
+	register char *cp;
+	register int size;
+{
+	register char *lp;
+	register int c;
+	register int len;
+
+	lp = cp;
+	len = 0;
+	for (;;) {
+		c = cngetc();
+		switch (c) {
+		case '\n':
+		case '\r':
+			printf("\n");
+			*lp++ = '\0';
+			return (len);
+		case '\b':
+		case '\177':
+		case '#':
+			if (len) {
+				--len;
+				--lp;
+				printf("\b \b");
+			}
+			continue;
+		case '@':
+		case 'u'&037:
+			len = 0;
+			lp = cp;
+			printf("\n");
+			continue;
+		default:
+			if (len + 1 >= size || c < ' ') {
+				printf("\007");
+				continue;
+			}
+			printf("%c", c);
+			++len;
+			*lp++ = c;
+		}
+	}
+}
 
 /*
  * Console `sync' command.  SunOS just does a `panic: zero' so I guess
@@ -775,6 +1140,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no address\n");
 		}
 #endif
+		ma.ma_bp = bootpath;
 		(void) config_found(dev, (void *)&ma, mbprint);
 		free(ma.ma_reg, M_DEVBUF);
 		if (ma.ma_ninterrupts)
@@ -995,318 +1361,3 @@ getdevunit(name, unit)
 	}
 	return dev;
 }
-
-
-/*
- * Device registration used to determine the boot device.
- * 
- * Copied from the sparc port.
- */
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
-
-#define BUSCLASS_NONE		0
-#define BUSCLASS_MAINBUS	1
-#define BUSCLASS_IOMMU		2
-#define BUSCLASS_OBIO		3
-#define BUSCLASS_SBUS		4
-#define BUSCLASS_VME		5
-#define BUSCLASS_PCI		6
-#define BUSCLASS_XDC		7
-#define BUSCLASS_XYC		8
-#define BUSCLASS_FDC		9
-
-#if XXX
-static int bus_class __P((struct device *));
-static char *bus_compatible __P((char *, struct device *));
-static int instance_match __P((struct device *, void *, struct bootpath *));
-static void nail_bootdev __P((struct device *, struct bootpath *));
-
-static struct {
-	char	*name;
-	int	class;
-} bus_class_tab[] = {
-	{ "mainbus",	BUSCLASS_MAINBUS },
-	{ "upa",	BUSCLASS_MAINBUS },
-	{ "psycho",	BUSCLASS_MAINBUS },
-	{ "obio",	BUSCLASS_OBIO },
-	{ "iommu",	BUSCLASS_IOMMU },
-	{ "sbus",	BUSCLASS_SBUS },
-	{ "xbox",	BUSCLASS_SBUS },
-	{ "esp",	BUSCLASS_SBUS },
-	{ "dma",	BUSCLASS_SBUS },
-	{ "espdma",	BUSCLASS_SBUS },
-	{ "ledma",	BUSCLASS_SBUS },
-	{ "simba",	BUSCLASS_PCI },
-	{ "ppb",	BUSCLASS_PCI },
-	{ "pciide",	BUSCLASS_PCI },
-	{ "siop",	BUSCLASS_PCI },
-	{ "pci",	BUSCLASS_PCI },
-	{ "fdc",	BUSCLASS_FDC },
-};
-
-/*
- * A list of PROM device names that differ from our NetBSD
- * device names.
- */
-static struct {
-	char	*bpname;
-	int	class;
-	char	*cfname;
-} dev_compat_tab[] = {
-	{ "espdma",	BUSCLASS_NONE,		"dma" },
-	{ "QLGC,isp",	BUSCLASS_NONE,		"isp" },
-	{ "PTI,isp",	BUSCLASS_NONE,		"isp" },
-	{ "ptisp",	BUSCLASS_NONE,		"isp" },
-	{ "SUNW,fdtwo",	BUSCLASS_NONE,		"fdc" },
-	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
-	{ "pci",	BUSCLASS_PCI,		"ppb" },
-	{ "ide",	BUSCLASS_PCI,		"pciide" },
-	{ "disk",	BUSCLASS_NONE,		"wd" },  /* XXX */
-	{ "network",	BUSCLASS_NONE,		"hme" }, /* XXX */
-	{ "SUNW,fas",	BUSCLASS_NONE,		"esp" },
-	{ "SUNW,hme",	BUSCLASS_NONE,		"hme" },
-	{ "glm",	BUSCLASS_PCI,		"siop" },
-	{ "SUNW,glm",	BUSCLASS_PCI,		"siop" },
-};
-
-static char *
-bus_compatible(bpname, dev)
-	char *bpname;
-	struct device *dev;
-{
-	int i, class = bus_class(dev);
-
-	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
-		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0 &&
-		    (dev_compat_tab[i].class == BUSCLASS_NONE ||
-		     dev_compat_tab[i].class == class))
-			return (dev_compat_tab[i].cfname);
-	}
-
-	return (bpname);
-}
-
-static int
-bus_class(dev)
-	struct device *dev;
-{
-	char *name;
-	int i, class;
-
-	class = BUSCLASS_NONE;
-	if (dev == NULL)
-		return (class);
-
-	name = dev->dv_cfdata->cf_driver->cd_name;
-	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
-		if (strcmp(name, bus_class_tab[i].name) == 0) {
-			class = bus_class_tab[i].class;
-			break;
-		}
-	}
-
-	return (class);
-}
-
-int
-instance_match(dev, aux, bp)
-	struct device *dev;
-	void *aux;
-	struct bootpath *bp;
-{
-	struct mainbus_attach_args *ma;
-	struct sbus_attach_args *sa;
-	struct pci_attach_args *pa;
-
-	/*
-	 * Several devices are represented on bootpaths in one of
-	 * two formats, e.g.:
-	 *	(1) ../sbus@.../esp@<offset>,<slot>/sd@..  (PROM v3 style)
-	 *	(2) /sbus0/esp0/sd@..                      (PROM v2 style)
-	 *
-	 * hence we fall back on a `unit number' check if the bus-specific
-	 * instance parameter check does not produce a match.
-	 *
-	 * For PCI devices, we get:
-	 *	../pci@../xxx@<dev>,<fn>/...
-	 */
-
-	/*
-	 * Rank parent bus so we know which locators to check.
-	 */
-	switch (bus_class(dev->dv_parent)) {
-	case BUSCLASS_MAINBUS:
-		ma = aux;
-		DPRINTF(ACDB_BOOTDEV,
-		    ("instance_match: mainbus device, want %#x have %#x\n",
-		    ma->ma_upaid, bp->val[0]));
-		if (bp->val[0] == ma->ma_upaid)
-			return (1);
-		break;
-	case BUSCLASS_SBUS:
-		sa = aux;
-		DPRINTF(ACDB_BOOTDEV, ("instance_match: sbus device, "
-		    "want slot %#x offset %#x have slot %#x offset %#x\n",
-		     bp->val[0], bp->val[1], sa->sa_slot, sa->sa_offset));
-		if (bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
-			return (1);
-		break;
-	case BUSCLASS_PCI:
-		pa = aux;
-		DPRINTF(ACDB_BOOTDEV, ("instance_match: pci device, "
-		    "want dev %#x fn %#x have dev %#x fn %#x\n",
-		     bp->val[0], bp->val[1], pa->pa_device, pa->pa_function));
-		if (bp->val[0] == pa->pa_device &&
-		    bp->val[1] == pa->pa_function)
-			return (1);
-		break;
-	default:
-		break;
-	}
-
-	if (bp->val[0] == -1 && bp->val[1] == dev->dv_unit)
-		return (1);
-
-	return (0);
-}
-#endif
-
-struct device *booted_device;
-
-#if XXX
-void
-nail_bootdev(dev, bp)
-	struct device *dev;
-	struct bootpath *bp;
-{
-
-	if (bp->dev != NULL)
-		panic("device_register: already got a boot device: %s",
-			bp->dev->dv_xname);
-
-	/*
-	 * Mark this bootpath component by linking it to the matched
-	 * device. We pick up the device pointer in cpu_rootconf().
-	 */
-	booted_device = bp->dev = dev;
-
-	/*
-	 * Then clear the current bootpath component, so we don't spuriously
-	 * match similar instances on other busses, e.g. a disk on
-	 * another SCSI bus with the same target.
-	 */
-	bootpath_store(1, NULL);
-}
-
-void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
-{
-	struct bootpath *bp = bootpath_store(0, NULL);
-	char *dvname, *bpname;
-
-	/*
-	 * If device name does not match current bootpath component
-	 * then there's nothing interesting to consider.
-	 */
-	if (bp == NULL)
-		return;
-
-	/*
-	 * Translate PROM name in case our drivers are named differently
-	 */
-	bpname = bus_compatible(bp->name, dev);
-	dvname = dev->dv_cfdata->cf_driver->cd_name;
-
-	DPRINTF(ACDB_BOOTDEV,
-	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
-	    dev->dv_xname, dvname, dev->dv_xname, bpname, bp->name));
-
-	/* First, match by name */
-	if (strcmp(dvname, bpname) != 0)
-		return;
-
-	if (bus_class(dev) != BUSCLASS_NONE) {
-		/*
-		 * A bus or controller device of sorts. Check instance
-		 * parameters and advance boot path on match.
-		 */
-		if (instance_match(dev, aux, bp) != 0) {
-			bp->dev = dev;
-			bootpath_store(1, bp + 1);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found bus controller %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	} else if (strcmp(dvname, "le") == 0 ||
-		   strcmp(dvname, "hme") == 0) {
-		/*
-		 * ethernet devices.
-		 */
-		if (instance_match(dev, aux, bp) != 0) {
-			nail_bootdev(dev, bp);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found ethernet controller %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
-		/*
-		 * A SCSI disk or cd; retrieve target/lun information
-		 * from parent and match with current bootpath component.
-		 * Note that we also have look back past the `scsibus'
-		 * device to determine whether this target is on the
-		 * correct controller in our boot path.
-		 */
-		struct scsipibus_attach_args *sa = aux;
-		struct scsipi_periph *periph = sa->sa_periph;
-		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)dev->dv_parent;
-		u_int target = bp->val[0];
-		u_int lun = bp->val[1];
-
-		/* Check the controller that this scsibus is on */
-		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
-			return;
-
-		/*
-		 * Bounds check: we know the target and lun widths.
-		 */
-		if (target >= periph->periph_channel->chan_ntargets ||
-		    lun >= periph->periph_channel->chan_nluns) {
-			printf("SCSI disk bootpath component not accepted: "
-			       "target %u; lun %u\n", target, lun);
-			return;
-		}
-
-		if (periph->periph_target == target &&
-		    periph->periph_lun == lun) {
-			nail_bootdev(dev, bp);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found [cs]d disk %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	} else if (strcmp("wd", dvname) == 0) {
-		/* IDE disks. */
-		struct ata_atapi_attach *aa = aux;
-
-		if (aa->aa_channel == bp->val[0]) {
-			nail_bootdev(dev, bp);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found wd disk %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	} else {
-		/*
-		 * Generic match procedure.
-		 */
-		if (instance_match(dev, aux, bp) != 0) {
-			nail_bootdev(dev, bp);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found generic device %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	}
-}
-#endif

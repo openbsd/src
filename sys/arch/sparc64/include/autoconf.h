@@ -121,6 +121,7 @@ struct mainbus_attach_args {
 	int		ma_naddress;
 	int		ma_ninterrupts;
 	int		ma_pri;		/* priority (IPL) */
+	struct bootpath	*ma_bp;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.3 2001/08/19 05:32:03 art Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.4 2001/08/20 19:40:43 jason Exp $	*/
 /*	$NetBSD: sbus.c,v 1.43 2001/07/20 00:07:13 eeh Exp $ */
 
 /*-
@@ -281,7 +281,7 @@ sbus_attach(parent, self, aux)
 	char *name;
 	int node = ma->ma_node;
 
-	int node0, error;
+	int error;
 	bus_space_tag_t sbt;
 	struct sbus_attach_args sa;
 
@@ -366,8 +366,7 @@ sbus_attach(parent, self, aux)
 	 * `specials' is an array of device names that are treated
 	 * specially:
 	 */
-	node0 = firstchild(node);
-	for (node = node0; node; node = nextsibling(node)) {
+	for (node = firstchild(node); node; node = nextsibling(node)) {
 		char *name = getpropstring(node, "name");
 
 		if (sbus_setup_attach_args(sc, sbt, sc->sc_dmatag,
@@ -375,6 +374,12 @@ sbus_attach(parent, self, aux)
 			printf("sbus_attach: %s: incomplete\n", name);
 			continue;
 		}
+
+		if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, "sbus") == 0)
+			sa.sa_bp = ma->ma_bp + 1;
+		else
+			sa.sa_bp = NULL;
+
 		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
 		sbus_destroy_attach_args(&sa);
 	}
