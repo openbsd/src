@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.10 1997/11/22 20:07:56 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.11 1997/11/24 16:19:42 kstailey Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.10 1997/11/22 20:07:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.11 1997/11/24 16:19:42 kstailey Exp $";
 #endif /* not lint */
 
 /*
@@ -499,8 +499,9 @@ showkre()
 	PUTRATE(Cnt.v_reactivated, VMSTATROW + 13, VMSTATCOL, 9);
 	PUTRATE(Cnt.v_scan, VMSTATROW + 14, VMSTATCOL, 9);
 	PUTRATE(Cnt.v_rev, VMSTATROW + 15, VMSTATCOL, 9);
-	if (LINES - 1 > VMSTATROW + 16)
+	if (LINES - 1 > VMSTATROW + 16) {
 		PUTRATE(Cnt.v_intrans, VMSTATROW + 16, VMSTATCOL, 9);
+	}
 	PUTRATE(Cnt.v_pageins, PAGEROW + 2, PAGECOL + 5, 5);
 	PUTRATE(Cnt.v_pageouts, PAGEROW + 2, PAGECOL + 10, 5);
 	PUTRATE(Cnt.v_swpin, PAGEROW + 2, PAGECOL + 15, 5);	/* - */
