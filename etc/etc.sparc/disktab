@@ -1,2 +1,7 @@
-# $Id: disktab,v 1.1.1.1 1995/10/18 08:38:02 deraadt Exp $
+# $Id: disktab,v 1.2 1995/10/27 23:04:42 deraadt Exp $
 # Sparc has no need for disktab (yet)
+floppy|floppy3|3in|3.5in High Density Floppy:\
+        :ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+        :pa#2880:oa#0:ba#4096:fa#512:\
+        :pb#2880:ob#0:\
+        :pc#2880:oc#0:
