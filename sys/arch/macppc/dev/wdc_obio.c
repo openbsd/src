@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.12 2003/06/11 20:33:08 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.13 2003/06/11 22:16:34 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -268,48 +268,25 @@ static const struct ide_timings udma_timing[] = {
 
 /* these number _guessed_ from linux driver. */
 static u_int32_t kauai_pio_timing[] = {
-	#if 1
 	/*600*/	0x08000a92,	/* Mode 0 */
 	/*360*/	0x08000492,	/* Mode 1 */
 	/*240*/	0x0800038b,	/* Mode 2 */
 	/*180*/	0x05000249,	/* Mode 3 */
 	/*120*/	0x04000148	/* Mode 4 */
-	#else
-	/*120*/	0x06000246,	/* Mode 0 */
-	/*180*/	0x06000246,	/* Mode 1 */
-	/*240*/	0x06000246,	/* Mode 2 */
-	/*360*/	0x06000246,	/* Mode 3 */
-	/*600*/	0x06000246	/* Mode 4 */
-	#endif
 		
 };
 static u_int32_t kauai_dma_timing[] = {
-	#if 1
 	/*480*/	0x00618000,	/* Mode 0 */
 	/*360*/	0x00492000,	/* Mode 1 */
 	/*240*/	0x00149000	/* Mode 2 */ /* fw value */
-	#else
-	/*120*/	0x00149000,	/* Mode 0 */
-	/*150*/	0x00149000,	/* Mode 1 */
-	/*240*/	0x00149000	/* Mode 2 */
-	#endif
 };
 static u_int32_t kauai_udma_timing[] = {
-	#if 1
 	/*120*/	0x000070c0,	/* Mode 0 */
 	/* 90*/	0x00005d80,	/* Mode 1 */
 	/* 60*/	0x00004a60,	/* Mode 2 */
 	/* 45*/	0x00003a50,	/* Mode 3 */
 	/* 30*/	0x00002a30,	/* Mode 4 */
 	/* 20*/	0x00002921	/* Mode 5 */
-	#else
-	/*120*/	0x00002921,	/* Mode 0 */
-	/* 90*/	0x00002921,	/* Mode 1 */
-	/* 60*/	0x00002921,	/* Mode 2 */
-	/* 45*/	0x00002921,	/* Mode 3 */
-	/* 30*/	0x00002921,	/* Mode 4 */
-	/* 20*/	0x00002921	/* Mode 5 */
-	#endif
 };
 
 #define	TIME_TO_TICK(time)	howmany((time), 30)
