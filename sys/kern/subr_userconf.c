@@ -1,7 +1,7 @@
-/*	$OpenBSD: subr_userconf.c,v 1.22 2000/08/08 21:42:40 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.23 2001/02/04 21:42:10 maja Exp $	*/
 
 /*
- * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
+ * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,9 @@ extern int cfroots_size;
 extern int pv_size;
 extern short pv[];
 extern struct timezone tz;
+extern char *pdevnames[];
+extern int pdevnames_size;
+extern struct pdevinit pdevinit[];
 
 int userconf_base = 16;				/* Base for "large" numbers */
 int userconf_maxdev = -1;			/* # of used device slots   */
@@ -253,6 +256,19 @@ userconf_pdev(devno)
 	int   *l;
 	int   ln;
 	char c;
+
+	if ((devno > userconf_maxdev) && (devno <= userconf_totdev)) {
+		printf("%3d free slot (for add)\n", devno);
+		return;
+	}
+
+	if ((devno > userconf_totdev) &&
+	    (devno <= (userconf_totdev+pdevnames_size))) {
+		printf("%3d %s count %d (pseudo device)\n", devno,
+		       pdevnames[devno-userconf_totdev-1],
+		       pdevinit[devno-userconf_totdev-1].pdev_count);
+		return;
+	}
 
 	if (devno >  userconf_maxdev) {
 		printf("Unknown devno (max is %d)\n", userconf_maxdev);
@@ -514,13 +530,48 @@ userconf_change(devno)
 			printf(" changed\n");
 			userconf_pdev(devno);
 
-			/* XXX add eoc */
-			userconf_hist_eoc();
 			
 		}
-	} else {
-		printf("Unknown devno (max is %d)\n", userconf_maxdev);
+		return;
 	}
+
+	if ((devno > userconf_maxdev) && (devno <= userconf_totdev)) {
+		printf("%3d can't change free slot\n", devno);
+		return;
+	}
+
+	if ((devno > userconf_totdev) &&
+	    (devno <= (userconf_totdev+pdevnames_size))) {
+			
+		userconf_pdev(devno);
+			
+		while (c != 'y' && c != 'Y' && c != 'n' && c != 'N') {
+			printf("change (y/n) ?");
+			c = cngetc();
+			printf("\n");
+		}
+
+		if (c == 'y' || c == 'Y') {
+
+			/* XXX add cmd 'c' <devno> */
+			userconf_hist_cmd('c');
+			userconf_hist_int(devno);
+
+			userconf_modify("count",
+					&pdevinit[devno-userconf_totdev-1].pdev_count);
+			userconf_hist_int(pdevinit[devno-userconf_totdev-1].pdev_count);
+			
+			printf("%3d %s changed\n", devno,
+				pdevnames[devno-userconf_totdev-1]);
+			userconf_pdev(devno);
+
+			/* XXX add eoc */
+			userconf_hist_eoc();
+		}
+		return;
+	}
+
+	printf("Unknown devno (max is %d)\n", userconf_totdev+pdevnames_size);
 }
 
 void
@@ -557,9 +608,23 @@ userconf_disable(devno)
 			userconf_hist_eoc();
 		}
 		printf(" disabled\n");
-	} else {
-		printf("Unknown devno (max is %d)\n", userconf_maxdev);
+
+		return;
 	}
+
+	if ((devno > userconf_maxdev) && (devno <= userconf_totdev)) {
+		printf("%3d can't disable free slot\n", devno);
+		return;
+	}
+
+	if ((devno > userconf_totdev) &&
+	    (devno <= (userconf_totdev+pdevnames_size))) {
+		printf("%3d %s can't disable pseudo device\n", devno, 
+			pdevnames[devno-userconf_totdev-1]);
+		return;
+	}
+
+	printf("Unknown devno (max is %d)\n", userconf_totdev+pdevnames_size);
 }
 
 void
@@ -596,9 +661,23 @@ userconf_enable(devno)
 			userconf_hist_eoc();
 		}
 		printf(" enabled\n");
-	} else {
-		printf("Unknown devno (max is %d)\n", userconf_maxdev);
+
+		return;
 	}
+
+	if ((devno > userconf_maxdev) && (devno <= userconf_totdev)) {
+		printf("%3d can't enable free slot\n", devno);
+		return;
+	}
+
+	if ((devno > userconf_totdev) &&
+	    (devno <= (userconf_totdev+pdevnames_size))) {
+		printf("%3d %s can't enable pseudo device\n", devno, 
+			pdevnames[devno-userconf_totdev-1]);
+		return;
+	}
+
+	printf("Unknown devno (max is %d)\n", userconf_totdev+pdevnames_size);
 }
 
 void
@@ -671,7 +750,7 @@ userconf_list()
 
 	userconf_cnt = 0;
 
-	while (cfdata[i].cf_attach != 0) {
+	while (i <= (userconf_totdev+pdevnames_size)) {
 		if (userconf_more())
 			break;
 		userconf_pdev(i++);
@@ -852,6 +931,29 @@ userconf_common_dev(dev, len, unit, state, routine)
 			}
 		}
 		i++;
+	}
+
+	for (i = 0; i < pdevnames_size; i++) {
+		if ((strncasecmp(dev, pdevnames[i], len) == 0) &&
+		    (state == FSTATE_FOUND)) {
+			switch(routine) {
+			case UC_CHANGE:
+				userconf_change(userconf_totdev+1+i);
+				break;
+			case UC_ENABLE:
+				userconf_enable(userconf_totdev+1+i);
+				break;
+			case UC_DISABLE:
+				userconf_disable(userconf_totdev+1+i);
+				break;
+			case UC_FIND:
+				userconf_pdev(userconf_totdev+1+i);
+				break;
+			default:
+				printf("Unknown pseudo routine /%c/\n",routine);
+				break;
+			}
+		}
 	}
 
 	switch (routine) {
