@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.57 2001/01/01 16:06:12 aaron Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.58 2001/02/05 21:28:06 mickey Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -357,7 +357,8 @@ main(framep)
 	/* Attach pseudo-devices. */
 	randomattach();
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
-		(*pdev->pdev_attach)(pdev->pdev_count);
+		if (pdev->pdev_count > 0)
+			(*pdev->pdev_attach)(pdev->pdev_count);
 
 #ifdef CRYPTO
 	swcr_init();
