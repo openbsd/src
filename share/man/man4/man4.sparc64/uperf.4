@@ -1,4 +1,4 @@
-.\"     $OpenBSD: uperf.4,v 1.7 2002/11/08 08:08:47 mpech Exp $
+.\"     $OpenBSD: uperf.4,v 1.8 2003/03/12 07:30:27 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -74,7 +74,7 @@ The
 .Fa cnt_src0
 and
 .Fa cnt_src1
-fields specify the source for the counter
+fields specify the source for the counter.
 Not all counters support monitoring all sources and specifying an invalid
 source for a counter to monitor will result in an error.
 The sources are specified below:
@@ -98,8 +98,8 @@ The sources are specified below:
 .It Em UPERFSRC_RDP0 Ta "read requests, processor 0"
 .It Em UPERFSRC_P0CRMR Ta "coherent read misses, processor 0"
 .It Em UPERFSRC_P0PIO Ta "PIO accesses, processor 0"
-.It Em UPERFSRC_MEMRC Ta "memory reqeusts completed"
-.It Em UPERFSRC_P1RR Ta "read reqeusts, processor 1"
+.It Em UPERFSRC_MEMRC Ta "memory requests completed"
+.It Em UPERFSRC_P1RR Ta "read requests, processor 1"
 .It Em UPERFSRC_CRMP1 Ta "coherent read misses, processor 1"
 .It Em UPERFSRC_PIOP1 Ta "PIO accesses, processor 1"
 .It Em UPERFSRC_CWXI Ta "coherent write transactions issued"
