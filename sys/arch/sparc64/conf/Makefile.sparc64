@@ -158,7 +158,4 @@ install-kernel-${MACHINE_NAME}:
 	mv /nbsd /bsd
 .endif
 
-sha1.o: $S/crypto/sha1.c
-	${NORMAL_C} -O0
-
 %RULES
