@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509test.c,v 1.11 2000/12/19 18:54:59 mickey Exp $	*/
-/*	$EOM: x509test.c,v 1.8 1999/09/30 13:40:39 niklas Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.12 2001/01/26 11:08:25 niklas Exp $	*/
+/*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -58,6 +58,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
+#  include <gmp.h>
+#endif
 
 #include "conf.h"
 #include "libcrypto.h"

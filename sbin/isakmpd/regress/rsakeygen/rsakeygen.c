@@ -1,5 +1,5 @@
-/*	$OpenBSD: rsakeygen.c,v 1.10 2000/12/19 18:54:59 mickey Exp $	*/
-/*	$EOM: rsakeygen.c,v 1.9 1999/08/12 22:34:30 niklas Exp $	*/
+/*	$OpenBSD: rsakeygen.c,v 1.11 2001/01/26 11:08:24 niklas Exp $	*/
+/*	$EOM: rsakeygen.c,v 1.10 2000/12/21 15:18:53 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -40,6 +40,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
+#  include <gmp.h>
+#endif
 
 #include "libcrypto.h"
 #include "log.h"

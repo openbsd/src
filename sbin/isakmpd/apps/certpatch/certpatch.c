@@ -1,5 +1,5 @@
-/*	$OpenBSD: certpatch.c,v 1.11 2000/12/19 18:54:59 mickey Exp $	*/
-/*	$EOM: certpatch.c,v 1.10 2000/10/24 13:34:24 niklas Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.12 2001/01/26 11:08:22 niklas Exp $	*/
+/*	$EOM: certpatch.c,v 1.11 2000/12/21 14:50:09 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -57,6 +57,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
+#  include <gmp.h>
+#endif
 
 #include "sysdep.h"
 
