@@ -4288,8 +4288,7 @@ help(topic, e)
 	{
 		/* no help */
 		errno = 0;
-		message("502 5.3.0 Sendmail %s -- HELP not implemented",
-			Version);
+		message("502 5.3.0 HELP not implemented");
 		return;
 	}
 
