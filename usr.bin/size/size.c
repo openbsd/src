@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.10 1998/05/11 20:20:55 niklas Exp $	*/
+/*	$OpenBSD: size.c,v 1.11 1999/05/10 16:14:07 espie Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.10 1998/05/11 20:20:55 niklas Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.11 1999/05/10 16:14:07 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: size.c,v 1.10 1998/05/11 20:20:55 niklas Exp $"
 #include <string.h>
 #include <ctype.h>
 #include <err.h>
+#include "byte.c"
 
 #ifdef MID_MACHINE_OVERRIDE
 #undef MID_MACHINE
@@ -245,14 +246,9 @@ show_archive(count, fname, fp)
 			return(1);
 		}
 
-		if (N_BADMAG(exec_head)) {
+		if (BAD_OBJECT(exec_head)) {
 			if (!ignore_bad_archive_entries) {
 				warnx("%s: bad format", name);
-				rval = 1;
-			}
-		} else if (N_GETMID(exec_head) != MID_MACHINE) {
-			if (!ignore_bad_archive_entries) {
-				warnx("%s: wrong architecture", name);
 				rval = 1;
 			}
 		} else {
@@ -292,15 +288,12 @@ show_objfile(count, name, fp)
 		return(1);
 	}
 
-	if (N_BADMAG(head)) {
+	if (BAD_OBJECT(head)) {
 		warnx("%s: bad format", name);
 		return(1);
 	}
 
-	if (N_GETMID(head) && N_GETMID(head) != MID_MACHINE) {
-		warnx("%s: wrong architecture", name);
-		return(1);
-	}
+	fix_header_order(&head);
 
 	if (first) {
 		first = 0;

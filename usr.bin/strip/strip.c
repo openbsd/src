@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.10 1998/05/11 07:41:25 niklas Exp $	*/
+/*	$OpenBSD: strip.c,v 1.11 1999/05/10 16:14:07 espie Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.10 1998/05/11 07:41:25 niklas Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.11 1999/05/10 16:14:07 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,8 @@ static char rcsid[] = "$OpenBSD: strip.c,v 1.10 1998/05/11 07:41:25 niklas Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
+#include <ranlib.h>
+#include "byte.c"
 
 #ifdef MID_MACHINE_OVERRIDE
 #undef MID_MACHINE
@@ -120,17 +122,17 @@ main(argc, argv)
 			(void)close(fd);
 			ERROR(errno);
 		}
-#if (MID_MACHINE == MID_M68K)
-		if (N_BADMAG(*ep) || ((N_GETMID(*ep) != MID_MACHINE) &&
-		    (N_GETMID(*ep) != MID_M68K4K))) {
-#else
-		if (N_BADMAG(*ep) || N_GETMID(*ep) != MID_MACHINE) {
-#endif
+		if (BAD_OBJECT(*ep)) {
 			munmap((caddr_t)ep, sb.st_size);
 			(void)close(fd);
 			ERROR(EFTYPE);
 		}
+		/* since we're dealing with an mmap there, we have to convert once
+		   for dealing with data in memory, and a second time for out
+		 */
+		fix_header_order(ep);
 		errors |= sfcn(fn, fd, ep, &sb);
+		fix_header_order(ep);
 		munmap((caddr_t)ep, sb.st_size);
 		if (close(fd)) {
 			ERROR(errno);
@@ -216,6 +218,8 @@ s_stab(fn, fd, ep, sp)
 	register int cnt, len, nsymcnt;
 	register char *nstr, *nstrbase, *p, *strbase;
 	register NLIST *sym, *nsym;
+	u_long allocsize;
+	int mid;
 	NLIST *symbase;
 
 	/* Quit if no symbols. */
@@ -226,6 +230,8 @@ s_stab(fn, fd, ep, sp)
 		warnx("%s: bad symbol table", fn);
 		return 1;
 	}
+
+	mid = N_GETMID(*ep);
 
 	/*
 	 * Initialize old and new symbol pointers.  They both point to the
@@ -240,7 +246,8 @@ s_stab(fn, fd, ep, sp)
 	 * of the string table.
 	 */
 	strbase = (char *)ep + N_STROFF(*ep);
-	if ((nstrbase = malloc((u_int)*(u_long *)strbase)) == NULL) {
+	allocsize = fix_long_order(*(u_long *)strbase, mid);
+	if ((nstrbase = malloc((u_int) allocsize)) == NULL) {
 		warnx("%s", strerror(ENOMEM));
 		return 1;
 	}
@@ -251,7 +258,8 @@ s_stab(fn, fd, ep, sp)
 	 * copy it and save its string in the new string table.  Keep
 	 * track of the number of symbols.
 	 */
-	for (cnt = ep->a_syms / sizeof(NLIST); cnt--; ++sym)
+	for (cnt = ep->a_syms / sizeof(NLIST); cnt--; ++sym) {
+		fix_nlist_order(sym, mid);
 		if (!(sym->n_type & N_STAB) && sym->strx) {
 			*nsym = *sym;
 			nsym->strx = nstr - nstrbase;
@@ -267,14 +275,16 @@ s_stab(fn, fd, ep, sp)
 			len = strlen(p) + 1;
 			bcopy(p, nstr, len);
 			nstr += len;
-			++nsym;
+			fix_nlist_order(nsym++, mid);
 		}
+	}
 
 	/* Fill in new symbol table size. */
 	ep->a_syms = (nsym - symbase) * sizeof(NLIST);
 
 	/* Fill in the new size of the string table. */
-	*(u_long *)nstrbase = len = nstr - nstrbase;
+	len = nstr - nstrbase;
+	*(u_long *)nstrbase = fix_long_order(len, mid);
 
 	/*
 	 * Copy the new string table into place.  Nsym should be pointing

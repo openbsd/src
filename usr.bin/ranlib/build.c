@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.5 1997/11/07 03:42:47 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.6 1999/05/10 16:14:07 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: build.c,v 1.5 1997/11/07 03:42:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: build.c,v 1.6 1999/05/10 16:14:07 espie Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,8 @@ static char rcsid[] = "$OpenBSD: build.c,v 1.5 1997/11/07 03:42:47 deraadt Exp $
 #include <stdio.h>
 #include <string.h>
 #include <archive.h>
+#include "byte.c"
+
 
 extern CHDR chdr;			/* converted header */
 extern char *archive;			/* archive name */
@@ -71,15 +73,19 @@ static FILE	*fp;
 static long	symcnt;			/* symbol count */
 static long	tsymlen;		/* total string length */
 
-static void	rexec(), symobj();
+static int rexec();
+static void symobj();
 extern void	*emalloc();
 
 build()
 {
 	CF cf;
 	int afd, tfd;
+	int check_mid;
+	int current_mid;
 	off_t size;
 
+	check_mid = 0;
 	afd = open_archive(O_RDWR);
 	fp = fdopen(afd, "r+");
 	tfd = tmp();
@@ -90,17 +96,24 @@ build()
 	symcnt = tsymlen = 0;
 	pnext = &rhead;
 	while(get_arobj(afd)) {
+		int new_mid;
+
 		if (!strcmp(chdr.name, RANLIBMAG)) {
 			skip_arobj(afd);
 			continue;
 		}
-		rexec(afd, tfd);
+		new_mid = rexec(afd, tfd);
+		if (check_mid && new_mid != current_mid)
+			errx(1, "Mixed object format archive: %d / %d", 
+				new_mid, current_mid);
+		current_mid = new_mid;
+		check_mid = 1;
 		put_arobj(&cf, (struct stat *)NULL);
 	}
 	*pnext = NULL;
 
-	/* Create the symbol table. */
-	symobj();
+	/* Create the symbol table.  Endianess the same as last mid seen */
+	symobj(current_mid);
 
 	/* Copy the saved objects into the archive. */
 	size = lseek(tfd, (off_t)0, SEEK_CUR);
@@ -119,9 +132,9 @@ build()
 /*
  * rexec
  *	Read the exec structure; ignore any files that don't look
- *	exactly right.
+ *	exactly right. Return MID.
  */
-static void
+static int
 rexec(rfd, wfd)
 	register int rfd;
 	int wfd;
@@ -145,8 +158,9 @@ rexec(rfd, wfd)
 		goto badread;
 
 	/* Check magic number and symbol count. */
-	if (N_BADMAG(ebuf) || ebuf.a_syms == 0)
+	if (BAD_OBJECT(ebuf) || ebuf.a_syms == 0)
 		goto bad1;
+	fix_header_order(&ebuf);
 
 	/* Seek to string table. */
 	if (lseek(rfd, N_STROFF(ebuf) + r_off, SEEK_SET) == (off_t)-1)
@@ -157,6 +171,7 @@ rexec(rfd, wfd)
 	if (nr != sizeof(strsize))
 		goto badread;
 
+	strsize = fix_long_order(strsize, N_GETMID(ebuf));
 	/* Read in the string table. */
 	strsize -= sizeof(strsize);
 	strtab = (char *)emalloc(strsize);
@@ -179,6 +194,7 @@ badread:	if (nr < 0)
 				badfmt();
 			error(archive);
 		}
+	fix_nlist_order(&nl, N_GETMID(ebuf));
 
 		/* Ignore if no name or local. */
 		if (!nl.n_un.n_strx || !(nl.n_type & N_EXT))
@@ -211,15 +227,17 @@ badread:	if (nr < 0)
 
 bad2:	free(strtab);
 bad1:	(void)lseek(rfd, (off_t)r_off, SEEK_SET);
+	return N_GETMID(ebuf);
 }
 
 /*
  * symobj --
  *	Write the symbol table into the archive, computing offsets as
- *	writing.
+ *	writing.  Use the right format depending on mid.
  */
 static void
-symobj()
+symobj(mid)
+	int mid;
 {
 	register RLIB *rp, *rnext;
 	struct ranlib rn;
@@ -260,7 +278,7 @@ symobj()
 		error(tname);
 
 	/* First long is the size of the ranlib structure section. */
-	size = symcnt * sizeof(struct ranlib);
+	size = fix_long_order(symcnt * sizeof(struct ranlib), mid);
 	if (!fwrite((char *)&size, sizeof(size), 1, fp))
 		error(tname);
 
@@ -276,12 +294,15 @@ symobj()
 		rn.ran_un.ran_strx = stroff;
 		stroff += rp->symlen;
 		rn.ran_off = size + rp->pos;
+		fix_ranlib_order(&rn, mid);
 		if (!fwrite((char *)&rn, sizeof(struct ranlib), 1, fp))
 			error(archive);
 	}
 
 	/* Second long is the size of the string table. */
-	if (!fwrite((char *)&tsymlen, sizeof(tsymlen), 1, fp))
+
+	size = fix_long_order(tsymlen, mid);
+	if (!fwrite((char *)&size, sizeof(size), 1, fp))
 		error(tname);
 
 	/* Write out the string table. */

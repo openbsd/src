@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.7 1998/05/11 20:34:58 niklas Exp $	*/
+/*	$OpenBSD: nm.c,v 1.8 1999/05/10 16:14:07 espie Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.7 1998/05/11 20:34:58 niklas Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.8 1999/05/10 16:14:07 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,11 +62,9 @@ static char rcsid[] = "$OpenBSD: nm.c,v 1.7 1998/05/11 20:34:58 niklas Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+/* XXX get shared code to handle byte-order swaps */
+#include "byte.c"
 
-#ifdef MID_MACHINE_OVERRIDE
-#undef MID_MACHINE
-#define MID_MACHINE MID_MACHINE_OVERRIDE
-#endif
 
 int ignore_bad_archive_entries = 1;
 int print_only_external_symbols;
@@ -78,6 +76,7 @@ int fcount;
 int rev;
 int fname(), rname(), value();
 int (*sfunc)() = fname;
+
 
 /* some macros for symbol type (nlist.n_type) handling */
 #define	IS_DEBUGGER_SYMBOL(x)	((x) & N_STAB)
@@ -178,13 +177,8 @@ process_file(fname)
 	}
 	rewind(fp);
 
+	if (BAD_OBJECT(exec_head)) {
 	/* this could be an archive */
-#if (MID_MACHINE == MID_M68K)
-	if (N_BADMAG(exec_head) || ((N_GETMID(exec_head) != MID_MACHINE) &&
-	    (N_GETMID(exec_head) != MID_M68K4K))) {
-#else
-	if (N_BADMAG(exec_head) || N_GETMID(exec_head) != MID_MACHINE) {
-#endif
 		if (fread(magic, sizeof(magic), (size_t)1, fp) != 1 ||
 		    strncmp(magic, ARMAG, SARMAG)) {
 			warnx("%s: not object file or archive", fname);
@@ -281,7 +275,7 @@ show_archive(fname, fp)
 			return(1);
 		}
 
-		if (N_BADMAG(exec_head)) {
+		if (BAD_OBJECT(exec_head)) {
 			if (!ignore_bad_archive_entries) {
 				 warnx("%s: bad format", name);
 				rval = 1;
@@ -340,11 +334,15 @@ show_objfile(objname, fp)
 		return(1);
 	}
 
-	/* stop if this is no valid object file */
-	if (N_BADMAG(head)) {
+	/* stop if this is no valid object file, or a format we don't dare
+	 * playing with
+	 */
+	if (BAD_OBJECT(head)) {
 		warnx("%s: bad format", objname);
 		return(1);
 	}
+
+	fix_header_order(&head);
 
 	/* stop if the object file contains no symbol table */
 	if (!head.a_syms) {
@@ -365,6 +363,7 @@ show_objfile(objname, fp)
 		(void)free((char *)names);
 		return(1);
 	}
+	fix_nlists_order(names, nrawnames, N_GETMID(head));
 
 	/*
 	 * Following the symbol table comes the string table.  The first
@@ -376,6 +375,7 @@ show_objfile(objname, fp)
 		(void)free((char *)names);
 		return(1);
 	}
+	stabsize = fix_long_order(stabsize, N_GETMID(head));
 	stab = emalloc((size_t)stabsize);
 
 	/*
