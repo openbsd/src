@@ -1,5 +1,5 @@
-/* $OpenBSD: user.c,v 1.46 2003/06/10 19:45:56 millert Exp $ */
-/* $NetBSD: user.c,v 1.56 2002/08/06 11:56:26 agc Exp $ */
+/* $OpenBSD: user.c,v 1.47 2003/06/10 19:51:22 millert Exp $ */
+/* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -1530,6 +1530,9 @@ useradd(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("useradd");
+			/* NOTREACHED */
 		}
 	}
 	if (bigD) {
@@ -1654,6 +1657,9 @@ usermod(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("usermod");
+			/* NOTREACHED */
 		}
 	}
 	if ((u.u_flags & F_MKDIR) && !(u.u_flags & F_HOMEDIR) &&
@@ -1714,6 +1720,9 @@ userdel(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("userdel");
+			/* NOTREACHED */
 		}
 	}
 #ifdef EXTENSIONS
@@ -1784,6 +1793,9 @@ groupadd(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("groupadd");
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -1886,6 +1898,12 @@ groupmod(int argc, char **argv)
 			verbose = 1;
 			break;
 #endif
+		default:
+			usermgmt_usage("groupdel");
+			/* NOTREACHED */
+		default:
+			usermgmt_usage("groupmod");
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -2012,6 +2030,12 @@ groupinfo(int argc, char **argv)
 		case 'v':
 			verbose = 1;
 			break;
+		default:
+			usermgmt_usage("userinfo");
+			/* NOTREACHED */
+		default:
+			usermgmt_usage("groupinfo");
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
