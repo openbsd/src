@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.39 1999/10/18 01:54:18 provos Exp $");
+RCSID("$Id: sshd.c,v 1.40 1999/10/18 06:16:50 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -687,9 +687,8 @@ main(int ac, char **av)
 
   if (remote_major == 1 && remote_minor == 3) {
     enable_compat13();
-    if (strcmp(remote_version, SSH_VERSION) != 0) {
-        debug("Agent forwarding disabled, remote version '%s' is not compatible.",
-    	  SSH_VERSION);
+    if (strcmp(remote_version, "OpenSSH-1.1") != 0) {
+        debug("Agent forwarding disabled, remote version is not compatible.");
         no_agent_forwarding_flag = 1;
     }
   }
