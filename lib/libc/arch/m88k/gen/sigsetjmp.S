@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.data
-	.string "$OpenBSD: sigsetjmp.S,v 1.7 2003/08/06 17:28:02 miod Exp $"
+	.string "$OpenBSD: sigsetjmp.S,v 1.8 2003/12/24 19:14:01 miod Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -92,11 +92,11 @@ ENTRY(sigsetjmp)
 	or	r13,r3,0	/* store savemask in r13 */
 	
 	cmp	r11,r13,r0	/* see if sigmask == 0 */
-	bb1.n	eq,r1,1f	/* skip sig stuff */
+	bb1.n	eq,r11,1f	/* skip sig stuff */
 	 st	r0,r14,4	/* but save 0 set in offset 4 of env first */
 	
-	bsr.n	_C_LABEL(sigblock) /* r2 = sigblock(savemask) */
-	 or	r2,r0,r13
+	bsr.n	_C_LABEL(sigblock) /* r2 = sigblock(0) */
+	 or	r2,r0,r0
 	st	r2,r14,4	/* save signal set in offset 4 of env */
 
 1:	or	r1,r15,0
@@ -133,7 +133,7 @@ ENTRY(siglongjmp)
 	ld	r28,r2,64
 	ld	r29,r2,68
 	
-	ld	r4,r2,4		/* get the sinal set from env */
+	ld	r4,r2,4		/* get the signal set from env */
 	cmp	r4,r4,r0	/* if r2 == 0 then skip signal stuff */
 	bb1	eq,r4,1f
 
