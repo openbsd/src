@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.6 1998/12/21 01:02:27 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.61 1998/12/17 07:57:04 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.7 1999/02/26 03:50:09 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.66 1999/02/25 11:39:20 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,8 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "cookie.h"
 #include "doi.h"
@@ -103,34 +105,55 @@ sa_resize ()
   /* XXX Rehash existing entries.  */
 }
 
-/* Lookup an ISAKMP SA out of just the initiator cookie.  */
+/* Lookup an SA with the help from a user-supplied checking function.  */
 struct sa *
-sa_lookup_from_icookie (u_int8_t *cookie)
+sa_find (int (*check) (struct sa *, void *), void *arg)
 {
   int i;
   struct sa *sa;
 
   for (i = 0; i < bucket_mask; i++)
     for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
-      if (memcmp (sa->cookies, cookie, ISAKMP_HDR_ICOOKIE_LEN) == 0
-	  && sa->phase == 1)
+      if (check (sa, arg))
 	return sa;
   return 0;
+}
+
+static int
+sa_check_icookie (struct sa *sa, void *icookie)
+{
+  return sa->phase == 1
+    && memcmp (sa->cookies, icookie, ISAKMP_HDR_ICOOKIE_LEN) == 0;
+}
+
+/* Lookup an ISAKMP SA out of just the initiator cookie.  */
+struct sa *
+sa_lookup_from_icookie (u_int8_t *cookie)
+{
+  return sa_find (sa_check_icookie, cookie);
+}
+
+struct name_phase_arg {
+  char *name;
+  u_int8_t phase;
+};
+
+static int
+sa_check_name_phase (struct sa *sa, void *v_arg)
+{
+  struct name_phase_arg *arg = v_arg;
+
+  return sa->name && strcasecmp (sa->name, arg->name) == 0 &&
+    sa->phase == arg->phase;
 }
 
 /* Lookup an SA by name, case-independent, and phase.  */
 struct sa *
 sa_lookup_by_name (char *name, int phase)
 {
-  int i;
-  struct sa *sa;
+  struct name_phase_arg arg = { name, phase };
 
-  for (i = 0; i < bucket_mask; i++)
-    for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
-      if (sa->name && strcasecmp (sa->name, name) == 0
-	  && sa->phase == phase)
-	return sa;
-  return 0;
+  return sa_find (sa_check_name_phase, &arg);
 }
 
 int
@@ -324,6 +347,8 @@ sa_free (struct sa *sa)
 {
   if (sa->death)
     timer_remove_event (sa->death);
+  if (sa->soft_death)
+    timer_remove_event (sa->soft_death);
   sa_free_aux (sa);
 }
 
@@ -368,8 +393,9 @@ sa_isakmp_upgrade (struct message *msg)
 }
 
 /*
- * Register the chosen transform into the SA.  As a side effect set PROTOP
- * to point at the corresponding proto structure.
+ * Register the chosen transform XF into SA.  As a side effect set PROTOP
+ * to point at the corresponding proto structure.  INITIATOR is true if we
+ * are the initiator.
  */
 int
 sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
@@ -415,6 +441,11 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
   proto->id = GET_ISAKMP_TRANSFORM_ID (xf->p);
   if (!initiator)
     TAILQ_INSERT_TAIL (&sa->protos, proto, link);
+
+  /* Let the DOI get at proto for initializing its own data. */
+  if (sa->doi->proto_init)
+    sa->doi->proto_init (proto, 0);
+
   return 0;
 
  cleanup:
@@ -461,21 +492,24 @@ sa_delete (struct sa *sa, int notify)
   sa_free (sa);
 }
 
-static void
-sa_finalize_rekey_p1 (void *arg)
-{
-  struct sa *sa = arg;
-
-  sa_delete (sa, 1);
-}
-
 /*
- * Establish a new ISAKMP SA.
- * XXX Whatif the peer initiated another SA negotiation?
+ * This function will get called when we are closing in on the death time of SA
  */
 void
-sa_rekey_p1 (struct sa *sa)
+sa_soft_expire (struct sa *sa)
 {
-  exchange_establish_p1 (sa->transport, 0, 0, sa->name, sa_finalize_rekey_p1,
-			 sa);
+  sa->soft_death = 0;
+
+  /*
+   * XXX Start to watch the use of this SA, so a renegotiation can
+   * happen as soon as it is shown to be alive.
+   */
+}
+
+/* SA has passed its best before date.  */
+void
+sa_hard_expire (struct sa *sa)
+{
+  sa->death = 0;
+  sa_delete (sa, 1);
 }
