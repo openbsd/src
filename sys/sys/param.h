@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.54 2004/02/27 18:06:55 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.55 2004/05/31 18:35:35 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@
  * infinite loops reasonably quickly.
  */
 #define	MAXPATHLEN	PATH_MAX
-#define MAXSYMLINKS	32
+#define MAXSYMLINKS	SYMLOOP_MAX
 
 /* Macros to set/clear/test flags. */
 #ifdef _KERNEL
