@@ -1,5 +1,5 @@
-/*	$OpenBSD: nd6.c,v 1.29 2001/02/23 08:01:14 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.131 2001/02/21 16:28:18 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.30 2001/03/08 09:03:06 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.136 2001/03/06 12:26:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -516,7 +516,7 @@ nd6_timer(ignored_arg)
 		ln = next;
 	}
 	
-	/* expire */
+	/* expire default router list */
 	dr = TAILQ_FIRST(&nd_defrouter);
 	while (dr) {
 		if (dr->expire && dr->expire < time_second) {
@@ -874,7 +874,7 @@ nd6_free(rt)
 	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
 		  rt_mask(rt), 0, (struct rtentry **)0);
 
-	return next;
+	return(next);
 }
 
 /*
@@ -964,8 +964,8 @@ nd6_resolve(ifp, rt, m, dst, desten)
 		case IFT_ARCNET:
 			*desten = 0;
 			return(1);
-			break;
 		default:
+			m_freem(m);
 			return(0);
 		}
 	}
@@ -1020,6 +1020,7 @@ nd6_resolve(ifp, rt, m, dst, desten)
 				ln, 0);
 		}
 	}
+	/* do not free mbuf here, it is queued into llinfo_nd6 */
 	return(0);
 }
 #endif /* OLDIP6OUTPUT */
@@ -1065,7 +1066,7 @@ nd6_rtrequest(req, rt, info)
 				ln->ln_expire = time_second;
 #if 1
 			if (ln && ln->ln_expire == 0) {
-				/* cludge for desktops */
+				/* kludge for desktops */
 #if 0
 				printf("nd6_request: time.tv_sec is zero; "
 				       "treat it as 1\n");
@@ -1113,7 +1114,8 @@ nd6_rtrequest(req, rt, info)
 			if (gate->sa_family != AF_LINK ||
 			    gate->sa_len < sizeof(null_sdl)) {
 				log(LOG_DEBUG,
-				    "nd6_rtrequest: bad gateway value\n");
+				    "nd6_rtrequest: bad gateway value: %s\n",
+				    if_name(ifp));
 				break;
 			}
 			SDL(gate)->sdl_type = ifp->if_type;
@@ -1573,8 +1575,12 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 
 		rt = nd6_lookup(from, 1, ifp);
 		is_newentry = 1;
-	} else
+	} else {
+		/* do nothing if static ndp is set */
+		if (rt->rt_flags & RTF_STATIC)
+			return NULL;
 		is_newentry = 0;
+	}
 
 	if (!rt)
 		return NULL;
@@ -1940,7 +1946,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
   sendpkt:
 
 #ifdef FAKE_LOOPBACK_IF
-	if (ifp->if_flags & IFF_LOOPBACK) {
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
 		return((*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
 					 rt));
 	}
@@ -1976,22 +1982,26 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 			*desten = 0;
 			return(1);
 		default:
+			m_freem(m);
 			return(0);
 		}
 	}
 
 	if (rt == NULL) {
 		/* this could happen, if we could not allocate memory */
+		m_freem(m);
 		return(0);
 	}
 	if (rt->rt_gateway->sa_family != AF_LINK) {
 		printf("nd6_storelladdr: something odd happens\n");
+		m_freem(m);
 		return(0);
 	}
 	sdl = SDL(rt->rt_gateway);
 	if (sdl->sdl_alen == 0) {
 		/* this should be impossible, but we bark here for debugging */
 		printf("nd6_storelladdr: sdl_alen == 0\n");
+		m_freem(m);
 		return(0);
 	}
 
