@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.91 2003/05/06 20:52:14 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.92 2003/05/13 02:30:01 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -415,8 +415,6 @@ getnewvnode(tag, mp, vops, vpp)
 		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
 		    vp = TAILQ_NEXT(vp, v_freelist)) {
 			if (simple_lock_try(&vp->v_interlock)) {
-				if ((vp->v_flag & VLAYER) == 0)
-					break;
 				if (VOP_ISLOCKED(vp) == 0)
 					break;
 				else
