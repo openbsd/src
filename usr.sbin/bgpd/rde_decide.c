@@ -1,7 +1,7 @@
-/*	$OpenBSD: rde_decide.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.2 2003/12/23 15:59:02 claudio Exp $ */
 
 /*
- * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
+ * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -200,6 +200,7 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 	if (pte->active != xp) {
 		/* need to generate an update */
 		if (pte->active != NULL) {
+			ENSURE(pte->active->aspath != NULL);
 			ENSURE(pte->active->aspath->active_cnt > 0);
 			pte->active->aspath->active_cnt--;
 		}
@@ -208,6 +209,7 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 		 * XXX send update with remove for pte->active and add for xp
 		 * but remember that xp may be ineligible or NULL.
 		 */
+		rde_send_kroute(xp, pte->active);
 
 		if (xp != NULL || xp->aspath->state == NEXTHOP_UNREACH)
 			pte->active = NULL;

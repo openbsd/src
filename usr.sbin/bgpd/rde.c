@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.18 2003/12/21 23:28:39 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.19 2003/12/23 15:59:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -506,6 +506,36 @@ rde_update_err(u_int32_t peerid, enum suberr_update errorcode)
 	    &errcode, sizeof(errcode));
 }
 
+/*
+ * kroute specific functions
+ */
+void
+rde_send_kroute(struct prefix *new, struct prefix *old)
+{
+	struct kroute	 kr;
+	struct prefix	*p;
+	enum imsg_type	 type;
+
+	if (old == NULL && new == NULL)
+		return;
+
+	if (old == NULL) {
+		type = IMSG_KROUTE_ADD;
+		p = new;
+	} else if (new == NULL || new->aspath->state == NEXTHOP_UNREACH) {
+		type = IMSG_KROUTE_DELETE;
+		p = old;
+	} else {
+		type = IMSG_KROUTE_CHANGE;
+		p = new;
+	}
+	
+	kr.prefix = p->prefix->prefix.s_addr;
+	kr.prefixlen = p->prefix->prefixlen;
+	kr.nexthop = p->aspath->flags.nexthop.s_addr;
+
+	imsg_compose(&ibuf_main, type, 0, &kr, sizeof(kr));
+}
 
 /*
  * peer functions

@@ -1,7 +1,7 @@
-/*	$OpenBSD: rde.h,v 1.5 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: rde.h,v 1.6 2003/12/23 15:59:02 claudio Exp $ */
 
 /*
- * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com> and
+ * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org> and
  *                    Andre Oppermann <oppermann@pipeline.ch>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -191,6 +191,9 @@ struct prefix {
 };
 
 /* prototypes */
+/* rde.c */
+void		 rde_send_kroute(struct prefix *, struct prefix *);
+
 /* rde_rib.c */
 int		 attr_equal(struct attr_flags *, struct attr_flags *);
 void		 attr_copy(struct attr_flags *, struct attr_flags *);
@@ -234,10 +237,10 @@ void		 nexthop_remove(struct rde_aspath *);
 void		 nexthop_invalidate(struct in_addr, int);
 void		 nexthop_validate(struct in_addr, int);
 
-/* rde_de.c */
+/* rde_decide.c */
 void		 prefix_evaluate(struct prefix *, struct pt_entry *);
 
-/* rde_pt.c */
+/* rde_prefix.c */
 void		 pt_init(void);
 int		 pt_empty(struct pt_entry *);
 struct pt_entry	*pt_get(struct in_addr, int);
