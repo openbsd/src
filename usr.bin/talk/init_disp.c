@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.6 1998/08/31 08:00:46 deraadt Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.7 1998/12/20 23:54:08 millert Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-static char rcsid[] = "$OpenBSD: init_disp.c,v 1.6 1998/08/31 08:00:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init_disp.c,v 1.7 1998/12/20 23:54:08 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -113,11 +113,11 @@ set_edit_chars()
 	struct termios tty;
 	
 	tcgetattr(0, &tty);
-	buf[0] = my_win.cerase = tty.c_cc[VERASE] == (u_char)_POSIX_VDISABLE
+	buf[0] = my_win.cerase = (tty.c_cc[VERASE] == (u_char)_POSIX_VDISABLE)
 	    ? CERASE : tty.c_cc[VERASE];
-	buf[1] = my_win.kill = tty.c_cc[VKILL] == (u_char)_POSIX_VDISABLE
+	buf[1] = my_win.kill = (tty.c_cc[VKILL] == (u_char)_POSIX_VDISABLE)
 	    ? CKILL : tty.c_cc[VKILL];
-	buf[2] = my_win.werase = tty.c_cc[VWERASE] == (u_char)_POSIX_VDISABLE
+	buf[2] = my_win.werase = (tty.c_cc[VWERASE] == (u_char)_POSIX_VDISABLE)
 	    ? CWERASE : tty.c_cc[VWERASE];
 	cc = write(sockt, buf, sizeof(buf));
 	if (cc != sizeof(buf) )
