@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.2 1997/03/03 05:10:56 flipk Exp $
+#	$Id: Makefile,v 1.3 2000/01/28 05:29:59 fgsch Exp $
 #
 
 SRCS=kernfsmod.c
@@ -58,18 +58,21 @@ load:
 unload:
 	modunload -n $(KMOD)
 
-kernfs_vfsops.o: /sys/miscfs/kernfs/kernfs_vfsops.c vnode_if.h
+kernfs_vfsops.o: /sys/miscfs/kernfs/kernfs_vfsops.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-kernfs_vnops.o: /sys/miscfs/kernfs/kernfs_vnops.c vnode_if.h
+kernfs_vnops.o: /sys/miscfs/kernfs/kernfs_vnops.c
 	$(CC) $(CFLAGS) -c -o $@ $<
-
-vnode_if.h: /sys/kern/vnode_if.sh /sys/kern/vnode_if.src
-	sh /sys/kern/vnode_if.sh /sys/kern/vnode_if.src
 
 $(MODOBJ): $(OBJS) $(KOBJS)
 	$(LD) -r -o $(MODOBJ) $(OBJS) $(KOBJS)
 
+.include <bsd.own.mk>
+
+.if (${UVM} == "yes")
+CFLAGS+=-DUVM
+.endif
+
 #
-# EOF -- This file has not been truncated
+# EOF -- This file has not been truncated.
 #

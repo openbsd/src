@@ -33,11 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfsmod.c,v 1.1.1.1 1995/10/18 08:44:22 deraadt Exp $
+ *	$Id: kernfsmod.c,v 1.2 2000/01/28 05:29:59 fgsch Exp $
  */
-#define printf I_HATE_ANSI
-#include <stdio.h>
-#undef printf
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
@@ -54,6 +51,10 @@
 extern struct vfsops kernfs_vfsops;
 extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 
+struct vfsconf kernfs_vfsconf = {
+	&kernfs_vfsops, MOUNT_KERNFS, 11, 0, 0, NULL, NULL
+};
+
 /*
  * XXX THE FOLLOWING COMMENT IS PROBABLY BOGUS...	- cgd, 12/24/94
  * Currently, the mount system call is broken in the way it operates
@@ -68,7 +69,7 @@ extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
  * change the file system operation: for instance, in ISOFS, this
  * could be used to enable/disable Rockridge extensions.
  */
-MOD_VFS("kernfs", -1, &kernfs_vfsops)
+MOD_VFS("kernfs", -1, &kernfs_vfsconf)
 
 /*
  * External entry point; should generally match name of .o file.  The
@@ -89,6 +90,7 @@ MOD_VFS("kernfs", -1, &kernfs_vfsops)
  * The entry point should return 0 unless it is refusing load (in which
  * case it should return an errno from errno.h).
  */
+int
 kernfsmod(lkmtp, cmd, ver)
 	struct lkm_table *lkmtp;	
 	int cmd;
