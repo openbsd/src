@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.16 2001/04/10 06:59:12 niklas Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.24 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.17 2001/07/18 10:47:05 art Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.25 1999/09/12 01:17:38 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -438,19 +438,11 @@ uvm_pageboot_alloc(size)
 		if (!uvm_page_physget(&paddr))
 			panic("uvm_pageboot_alloc: out of memory");
 
-		/* XXX: should be wired, but some pmaps don't like that ... */
-#if defined(PMAP_NEW)
 		/*
 		 * Note this memory is no longer managed, so using
 		 * pmap_kenter is safe.
 		 */
 		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE);
-#else
-		pmap_enter(pmap_kernel(), vaddr, paddr,
-		    VM_PROT_READ|VM_PROT_WRITE, FALSE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-#endif
-
 	}
 	return(addr);
 #endif	/* PMAP_STEAL_MEMORY */

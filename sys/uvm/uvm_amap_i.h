@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap_i.h,v 1.8 2001/05/10 14:51:21 art Exp $	*/
-/*	$NetBSD: uvm_amap_i.h,v 1.13 1999/07/07 05:31:40 thorpej Exp $	*/
+/*	$OpenBSD: uvm_amap_i.h,v 1.9 2001/07/18 10:47:05 art Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.14 1999/09/12 01:17:34 chs Exp $	*/
 
 /*
  *
@@ -137,8 +137,7 @@ amap_add(aref, offset, anon, replace)
 			panic("amap_add: replacing null anon");
 		if (amap->am_anon[slot]->u.an_page != NULL && 
 		    (amap->am_flags & AMAP_SHARED) != 0) {
-			pmap_page_protect(
-			    PMAP_PGARG(amap->am_anon[slot]->u.an_page),
+			pmap_page_protect(amap->am_anon[slot]->u.an_page,
 			    VM_PROT_NONE);
 			/*
 			 * XXX: suppose page is supposed to be wired somewhere?

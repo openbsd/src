@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault.c,v 1.14 2001/06/23 19:24:33 smart Exp $	*/
-/*	$NetBSD: uvm_fault.c,v 1.44 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.15 2001/07/18 10:47:05 art Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.45 1999/09/12 01:17:35 chs Exp $	*/
 
 /*
  *
@@ -208,7 +208,7 @@ uvmfault_anonflush(anons, n)
 		if (pg && (pg->flags & PG_BUSY) == 0 && pg->loan_count == 0) {
 			uvm_lock_pageq();
 			if (pg->wire_count == 0) {
-				pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+				pmap_page_protect(pg, VM_PROT_NONE);
 				uvm_pagedeactivate(pg);
 			}
 			uvm_unlock_pageq();
@@ -448,8 +448,7 @@ int uvmfault_anonget(ufi, amap, anon)
 			 * anon and try again.
 			 */
 			if (pg->flags & PG_RELEASED) {
-				pmap_page_protect(PMAP_PGARG(pg),
-				    VM_PROT_NONE); /* to be safe */
+				pmap_page_protect(pg, VM_PROT_NONE);
 				simple_unlock(&anon->an_lock);
 				uvm_anfree(anon);	/* frees page for us */
 				if (locked)
@@ -489,7 +488,7 @@ int uvmfault_anonget(ufi, amap, anon)
 			 * must be OK, clear modify (already PG_CLEAN)
 			 * and activate
 			 */
-			pmap_clear_modify(PMAP_PGARG(pg));
+			pmap_clear_modify(pg);
 			uvm_lock_pageq();
 			uvm_pageactivate(pg);
 			uvm_unlock_pageq();
@@ -858,7 +857,6 @@ ReFault:
 	/*
 	 * note that if we are really short of RAM we could sleep in the above
 	 * call to pmap_enter with everything locked.   bad?
-	 * XXXCDC: this is fixed in PMAP_NEW (no sleep alloc's in pmap)
 	 */
 	
 	/*
@@ -1112,8 +1110,8 @@ ReFault:
 				uvm_pagecopy(anon->u.an_page, pg);
 
 				/* force reload */
-				pmap_page_protect(PMAP_PGARG(anon->u.an_page),
-				    VM_PROT_NONE); 
+				pmap_page_protect(anon->u.an_page,
+						  VM_PROT_NONE);
 				uvm_lock_pageq();	  /* KILL loan */
 				if (uobj)
 					/* if we were loaning */
@@ -1501,8 +1499,7 @@ Case2:
 				 */
 				uvm_pagecopy(uobjpage, pg);	/* old -> new */
 				pg->flags &= ~(PG_FAKE|PG_CLEAN);
-				pmap_page_protect(PMAP_PGARG(uobjpage),
-				    VM_PROT_NONE); 
+				pmap_page_protect(uobjpage, VM_PROT_NONE);
 				if (uobjpage->flags & PG_WANTED)
 					wakeup(uobjpage);
 				/* uobj still locked */
@@ -1609,8 +1606,7 @@ Case2:
 			 * procs see it
 			 */
 			if ((amap_flags(amap) & AMAP_SHARED) != 0) {
-				pmap_page_protect(PMAP_PGARG(uobjpage),
-				    VM_PROT_NONE);
+				pmap_page_protect(uobjpage, VM_PROT_NONE);
 			}
 			
 			/*

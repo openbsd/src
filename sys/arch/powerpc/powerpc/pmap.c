@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2001/07/09 02:14:05 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2001/07/18 10:47:05 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -825,14 +825,8 @@ pmap_next_page(paddr)
 /*
  * Create and return a physical map.
  */
-#if defined(PMAP_NEW)
 struct pmap *
 pmap_create()
-#else 
-struct pmap *
-pmap_create(size)
-	vsize_t size;
-#endif
 {
 	struct pmap *pm;
 	
@@ -1442,9 +1436,9 @@ pmap_protect(pm, sva, eva, prot)
 	pmap_remove(pm, sva, eva);
 }
 
-void
+boolean_t
 ptemodify(pa, mask, val)
-	vm_offset_t pa;
+	paddr_t pa;
 	u_int mask;
 	u_int val;
 {
@@ -1453,10 +1447,13 @@ ptemodify(pa, mask, val)
 	struct pte_ovfl *po;
 	int i, s;
 	char * pattr;
+	boolean_t ret;
+
+	ret = ptebits(pa, mask);
 	
 	pv = pmap_find_pv(pa);
 	if (pv == NULL) 
-		return;
+		return (ret);
 	pattr = pmap_find_attr(pa);
 
 	/*
@@ -1466,7 +1463,7 @@ ptemodify(pa, mask, val)
 	*pattr |= val >> ATTRSHFT;
 	
 	if (pv->pv_idx < 0)
-		return;
+		return (ret);
 
 	s = splimp();
 	for (; pv; pv = pv->pv_next) {
@@ -1501,6 +1498,8 @@ ptemodify(pa, mask, val)
 			}
 	}
 	splx(s);
+
+	return (ret);
 }
 
 int
@@ -1569,21 +1568,12 @@ ptebits(pa, bit)
  * There are only two cases: either the protection is going to 0,
  * or it is going to read-only.
  */
-#if defined(PMAP_NEW)
 void
 pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t prot;
-#else
-void
-pmap_page_protect(pa, prot)
-	vm_offset_t pa;
-	vm_prot_t prot;
-#endif
 {
-#if defined(PMAP_NEW)
 	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
-#endif
 	vm_offset_t va;
 	int s;
 	struct pmap *pm;

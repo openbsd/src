@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.10 2001/06/23 19:24:33 smart Exp $	*/
-/*	$NetBSD: uvm_aobj.c,v 1.25 1999/08/21 02:19:05 thorpej Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.11 2001/07/18 10:47:05 art Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.26 1999/09/12 01:17:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -681,7 +681,7 @@ uao_detach(uobj)
 		}
 
 		/* zap the mappings, free the swap slot, free the page */
-		pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+		pmap_page_protect(pg, VM_PROT_NONE);
 		uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
 		uvm_lock_pageq();
 		uvm_pagefree(pg);
@@ -859,8 +859,7 @@ uao_flush(uobj, start, stop, flags)
 				continue;
 
 			/* zap all mappings for the page. */
-			pmap_page_protect(PMAP_PGARG(pp),
-			    VM_PROT_NONE);
+			pmap_page_protect(pp, VM_PROT_NONE);
 
 			/* ...and deactivate the page. */
 			uvm_pagedeactivate(pp);
@@ -889,8 +888,7 @@ uao_flush(uobj, start, stop, flags)
 			}
 
 			/* zap all mappings for the page. */
-			pmap_page_protect(PMAP_PGARG(pp),
-			    VM_PROT_NONE);
+			pmap_page_protect(pp, VM_PROT_NONE);
 
 			uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
 			uvm_pagefree(pp);
@@ -1193,7 +1191,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
  		 */
 
 		ptmp->flags &= ~PG_FAKE;		/* data is valid ... */
-		pmap_clear_modify(PMAP_PGARG(ptmp));	/* ... and clean */
+		pmap_clear_modify(ptmp);		/* ... and clean */
 		pps[lcv] = ptmp;
 
 	}	/* lcv loop */
@@ -1237,7 +1235,7 @@ static boolean_t uao_releasepg(pg, nextpgp)
 	/*
  	 * dispose of the page [caller handles PG_WANTED] and swap slot.
  	 */
-	pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+	pmap_page_protect(pg, VM_PROT_NONE);
 	uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
 	uvm_lock_pageq();
 	if (nextpgp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.1 2001/06/26 21:57:47 smurph Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.2 2001/07/18 10:47:05 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -77,10 +77,10 @@ typedef	struct pmap *pmap_t;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
-#define pmap_clear_modify(pa)		(ptemodify((pa), PTE_CHG, 0))
-#define pmap_clear_reference(pa)	(ptemodify((pa), PTE_REF, 0))
-#define pmap_is_modified(pa)		(ptebits((pa), PTE_CHG))
-#define pmap_is_referenced(pa)		(ptebits((pa), PTE_REF))
+#define pmap_clear_modify(pa)		(ptemodify(VM_PAGE_TO_PHYS(pa), PTE_CHG, 0))
+#define pmap_clear_reference(pa)	(ptemodify(VM_PAGE_TO_PHYS(pa), PTE_REF, 0))
+#define pmap_is_modified(pg)		(ptebits(VM_PAGE_TO_PHYS(pg), PTE_CHG))
+#define pmap_is_referenced(pg)		(ptebits(VM_PAGE_TO_PHYS(pg), PTE_REF))
 #define pmap_change_wiring(pm, va, wired)
 
 #define pmap_unwire(pm, va)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 2001/07/06 02:07:41 provos Exp $	*/
+/*	$OpenBSD: param.h,v 1.18 2001/07/18 10:47:04 art Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -94,8 +94,6 @@
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	2*NBPG		/* default message buffer size */
 #endif
-
-#define PMAP_NEW
 
 /*
  * Constants related to network buffer management.

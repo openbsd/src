@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.14 2001/06/27 06:19:45 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.15 2001/07/18 10:47:04 art Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -125,8 +125,6 @@
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST16	1
-
-#define	PMAP_NEW
 
 #ifdef _KERNEL
 struct pmap_physseg {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_amap.c,v 1.8 2001/03/15 11:48:17 art Exp $	*/
-/*	$NetBSD: uvm_amap.c,v 1.21 1999/07/06 02:15:53 cgd Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.9 2001/07/18 10:47:05 art Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.22 1999/09/12 01:17:33 chs Exp $	*/
 
 /*
  *
@@ -478,9 +478,8 @@ amap_share_protect(entry, prot)
 			if (amap->am_anon[lcv] == NULL)
 				continue;
 			if (amap->am_anon[lcv]->u.an_page != NULL)
-				pmap_page_protect(
-				    PMAP_PGARG(amap->am_anon[lcv]->u.an_page),
-				prot);
+				pmap_page_protect(amap->am_anon[lcv]->u.an_page,
+						  prot);
 		}
 		return;
 	}
@@ -491,8 +490,7 @@ amap_share_protect(entry, prot)
 		if (slot < entry->aref.ar_pageoff || slot >= stop)
 			continue;
 		if (amap->am_anon[slot]->u.an_page != NULL)
-			pmap_page_protect(
-			    PMAP_PGARG(amap->am_anon[slot]->u.an_page), prot);
+			pmap_page_protect(amap->am_anon[slot]->u.an_page, prot);
 	}
 	return;
 }

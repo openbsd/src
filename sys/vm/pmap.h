@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.18 2001/06/27 06:19:58 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.19 2001/07/18 10:47:05 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 1996/03/31 22:15:32 pk Exp $	*/
 
 /* 
@@ -88,34 +88,12 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #include <machine/pmap.h>
 
 /*
- * PMAP_PGARG hack
- *
- * operations that take place on managed pages used to take PAs.
- * this caused us to translate the PA back to a page (or pv_head).
- * PMAP_NEW avoids this by passing the vm_page in (pv_head should be
- * pointed to by vm_page (or be a part of it)).
- *
- * applies to: pmap_page_protect, pmap_is_referenced, pmap_is_modified,
- * pmap_clear_reference, pmap_clear_modify.
- *
- * the latter two functions are boolean_t in PMAP_NEW.  they return
- * TRUE if something was cleared.
- */
-#if defined(PMAP_NEW)
-#define PMAP_PGARG(PG) (PG)
-#else
-#define PMAP_PGARG(PG) (VM_PAGE_TO_PHYS(PG))
-#endif
-
-#ifdef PMAP_NEW
-/*
  * Flags passed to pmap_enter().  Note the bottom 3 bits are VM_PROT_*
  * bits, used to indicate the access type that was made (to seed modified
  * and referenced information).
  */
 #define	PMAP_WIRED	0x00000010	/* wired mapping */
 #define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
-#endif
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
@@ -123,28 +101,19 @@ __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
 void		 pmap_unwire __P((pmap_t, vaddr_t));
 
-#if defined(PMAP_NEW)
 #if !defined(pmap_clear_modify)
 boolean_t	 pmap_clear_modify __P((struct vm_page *));
 #endif
 #if !defined(pmap_clear_reference)
 boolean_t	 pmap_clear_reference __P((struct vm_page *));
 #endif
-#else	/* PMAP_NEW */
-void		 pmap_clear_modify __P((paddr_t pa));
-void		 pmap_clear_reference __P((paddr_t pa));
-#endif	/* PMAP_NEW */
 
 void		 pmap_collect __P((pmap_t));
 void		 pmap_copy __P((pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t));
 void		 pmap_copy_page __P((paddr_t, paddr_t));
-#if defined(PMAP_NEW)
 struct pmap 	 *pmap_create __P((void));
-#else
-pmap_t		 pmap_create __P((vsize_t));
-#endif
 void		 pmap_destroy __P((pmap_t));
-#if defined(PMAP_NEW) && defined(__i386__)
+#if defined(__i386__)
 #ifdef notyet
 int		 pmap_enter __P((pmap_t, vaddr_t, paddr_t, vm_prot_t, int));
 #else
@@ -158,13 +127,12 @@ void		 pmap_enter __P((pmap_t,
 #endif
 
 boolean_t	 pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
-#if defined(PMAP_NEW) && defined(PMAP_GROWKERNEL)
+#if defined(PMAP_GROWKERNEL)
 vaddr_t		 pmap_growkernel __P((vaddr_t));
 #endif
 
 void		 pmap_init __P((void));
 
-#if defined(PMAP_NEW)
 void		 pmap_kenter_pa __P((vaddr_t, paddr_t, vm_prot_t));
 void		 pmap_kenter_pgs __P((vaddr_t, struct vm_page **, int));
 void		 pmap_kremove __P((vaddr_t, vsize_t));
@@ -174,16 +142,7 @@ boolean_t	 pmap_is_modified __P((struct vm_page *));
 #if !defined(pmap_is_referenced)
 boolean_t	 pmap_is_referenced __P((struct vm_page *));
 #endif
-#else	/* PMAP_NEW */
-boolean_t	 pmap_is_modified __P((paddr_t pa));
-boolean_t	 pmap_is_referenced __P((paddr_t pa));
-#endif	/* PMAP_NEW */
-
-#if defined(PMAP_NEW)
 void		 pmap_page_protect __P((struct vm_page *, vm_prot_t));
-#else
-void		 pmap_page_protect __P((paddr_t, vm_prot_t));
-#endif
 
 #if !defined(pmap_phys_address)
 paddr_t		 pmap_phys_address __P((int));

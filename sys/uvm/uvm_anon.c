@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_anon.c,v 1.7 2001/06/23 19:24:33 smart Exp $	*/
-/*	$NetBSD: uvm_anon.c,v 1.3 1999/08/14 06:25:48 ross Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.8 2001/07/18 10:47:05 art Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.4 1999/09/12 01:17:34 chs Exp $	*/
 
 /*
  *
@@ -212,7 +212,7 @@ uvm_anfree(anon)
 				return;
 			} 
 
-			pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+			pmap_page_protect(pg, VM_PROT_NONE);
 			uvm_lock_pageq();	/* lock out pagedaemon */
 			uvm_pagefree(pg);	/* bye bye */
 			uvm_unlock_pageq();	/* free the daemon */

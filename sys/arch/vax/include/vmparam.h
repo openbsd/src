@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.13 2001/06/27 06:19:57 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.14 2001/07/18 10:47:05 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -148,5 +148,4 @@ struct pmap_physseg {
 
 #define VM_MBUF_SIZE          (NMBCLUSTERS*MCLBYTES)
 
-#define PMAP_NEW
 #endif

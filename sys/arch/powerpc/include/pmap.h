@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.13 2001/07/10 01:34:32 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.14 2001/07/18 10:47:05 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -37,10 +37,6 @@
 
 #include <machine/pte.h>
 
-/*
- * FUCK 
-#define PMAP_NEW
- */
 /*
  * Segment registers
  */
@@ -84,22 +80,11 @@ extern struct pmap kernel_pmap_;
 int ptebits(paddr_t pa, int bit);
 
 
-#ifdef PMAP_NEW
-#define pmap_clear_modify(page)	 (ptemodify((page)->phys_addr, PTE_CHG, 0))
-#define	pmap_clear_reference(page) (ptemodify((page)->phys_addr, PTE_REF, 0))
-#define	pmap_is_modified(page)	 (ptebits((page)->phys_addr, PTE_CHG))
-#define	pmap_is_referenced(page) (ptebits((page)->phys_addr, PTE_REF))
+#define pmap_clear_modify(page)	 (ptemodify(VM_PAGE_TO_PHYS(page), PTE_CHG, 0))
+#define	pmap_clear_reference(page) (ptemodify(VM_PAGE_TO_PHYS(page), PTE_REF, 0))
+#define	pmap_is_modified(page)	 (ptebits(VM_PAGE_TO_PHYS(page), PTE_CHG))
+#define	pmap_is_referenced(page) (ptebits(VM_PAGE_TO_PHYS(page), PTE_REF))
 #define	pmap_unwire(pm, va)
-#else
-#define pmap_clear_modify(pa)	 (ptemodify((pa), PTE_CHG, 0))
-#define	pmap_clear_reference(pa) (ptemodify((pa), PTE_REF, 0))
-#define	pmap_is_modified(pa)	 (ptebits((pa), PTE_CHG))
-#define	pmap_is_referenced(pa) (ptebits((pa), PTE_REF))
-#define	pmap_unwire(pm, va)
-/* XXX */
-void pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot);
-#endif
-
 #define	pmap_phys_address(x)		(x)
 
 #define pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count) 

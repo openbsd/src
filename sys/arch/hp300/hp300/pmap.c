@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2001/06/27 04:05:45 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2001/07/18 10:47:04 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.80 1999/09/16 14:52:06 chs Exp $	*/
 
 /*-
@@ -707,7 +707,6 @@ pmap_map(va, spa, epa, prot)
  *
  *	Note: no locking is necessary in this function.
  */
-#ifdef PMAP_NEW
 pmap_t
 pmap_create()
 {
@@ -721,29 +720,6 @@ pmap_create()
 	pmap_pinit(pmap);
 	return (pmap);
 }
-#else
-pmap_t
-pmap_create(size)
-	vsize_t	size;
-{
-	pmap_t pmap;
-
-	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
-	    ("pmap_create(%lx)\n", size));
-
-	/*
-	 * Software use map does not need a pmap
-	 */
-	if (size)
-		return (NULL);
-
-	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
-
-	bzero(pmap, sizeof(*pmap));
-	pmap_pinit(pmap);
-	return (pmap);
-}
-#endif
 
 /*
  * pmap_pinit:
@@ -995,18 +971,11 @@ pmap_remove(pmap, sva, eva)
  *	the permissions specified.
  */
 void
-#ifdef PMAP_NEW
 pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t	prot;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#else
-pmap_page_protect(pa, prot)
-	paddr_t		pa;
-	vm_prot_t	prot;
-{
-#endif
 	struct pv_entry *pv;
 	int s;
 
@@ -1450,7 +1419,6 @@ validate:
 #endif
 }
 
-#ifdef PMAP_NEW
 void
 pmap_kenter_pa(va, pa, prot)
 	vaddr_t va;
@@ -1483,7 +1451,6 @@ pmap_kremove(va, len)
 		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
 	}
 }
-#endif
 
 /*
  * pmap_unwire:			[ INTERFACE]
@@ -1886,7 +1853,6 @@ pmap_copy_page(src, dst)
  *
  *	Clear the modify bits on the specified physical page.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
@@ -1900,24 +1866,12 @@ pmap_clear_modify(pg)
 	pmap_changebit(pa, 0, ~PG_M);
 	return rv;
 }
-#else
-void
-pmap_clear_modify(pa)
-	paddr_t	pa;
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%lx)\n", pa));
-
-	pmap_changebit(pa, 0, ~PG_M);
-}
-#endif
 
 /*
  * pmap_clear_reference:	[ INTERFACE ]
  *
  *	Clear the reference bit on the specified physical page.
  */
-#ifdef PMAP_NEW
 boolean_t
 pmap_clear_reference(pg)
 	struct vm_page *pg;
@@ -1931,17 +1885,6 @@ pmap_clear_reference(pg)
 	pmap_changebit(pa, 0, ~PG_U);
 	return rv;
 }
-#else
-void
-pmap_clear_reference(pa)
-	paddr_t	pa;
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%lx)\n", pa));
-
-	pmap_changebit(pa, 0, ~PG_U);
-}
-#endif
 
 /*
  * pmap_is_referenced:		[ INTERFACE ]
@@ -1950,16 +1893,10 @@ pmap_clear_reference(pa)
  *	by any physical maps.
  */
 boolean_t
-#ifdef PMAP_NEW
 pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#else
-pmap_is_referenced(pa)
-	paddr_t	pa;
-{
-#endif
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		boolean_t rv = pmap_testbit(pa, PG_U);
@@ -1977,16 +1914,10 @@ pmap_is_referenced(pa)
  *	by any physical maps.
  */
 boolean_t
-#ifdef PMAP_NEW
 pmap_is_modified(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-#else
-pmap_is_modified(pa)
-	paddr_t	pa;
-{
-#endif
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		boolean_t rv = pmap_testbit(pa, PG_M);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 2001/07/05 07:20:45 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.35 2001/07/18 10:47:04 art Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -1452,20 +1452,14 @@ pmap_zero_page(vm_offset_t phys)
  *
  *  This routines allocates a pmap structure.
  */
-pmap_t
-pmap_create(vm_size_t size)
+struct pmap *
+pmap_create(void)
 {
-	pmap_t      p;
-
-	/*
-	 * A software use-only map doesn't even need a map.
-	 */
-	if (size != 0)
-		return (PMAP_NULL);
+	struct pmap *p;
 
 	CHECK_PMAP_CONSISTENCY("pmap_create");
 
-	p = (pmap_t)malloc(sizeof(*p), M_VMPMAP, M_WAITOK);
+	p = (struct pmap *)malloc(sizeof(*p), M_VMPMAP, M_WAITOK);
 
 	bzero(p, sizeof(*p));
 	pmap_pinit(p);
@@ -3302,7 +3296,7 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
  *		Clear the modify bits on the specified physical page.
  *
  *	Parameters:
- *		phys	physical address of page
+ *		pg	vm_page
  *
  *	Extern/Global:
  *		pv_head_table, pv_lists
@@ -3317,14 +3311,14 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
  *		pmap_pte
  *		panic
  *
- *	For managed pages, the modify_list entry corresponding to the
+ *	The modify_list entry corresponding to the
  * page's frame index will be zeroed. The PV list will be traversed.
  * For each pmap/va the hardware 'modified' bit in the page descripter table
  * entry inspected - and turned off if  necessary. If any of the
  * inspected bits were found on, an TLB flush will be performed.
  */
 void
-pmap_clear_modify(vm_offset_t phys)
+pmap_clear_modify(struct vm_page *pg)
 {
 	pv_entry_t    pvl;
 	pv_entry_t    pvep;
@@ -3335,14 +3329,16 @@ pmap_clear_modify(vm_offset_t phys)
 	unsigned      users;
 	pte_template_t   opte;
 	int        kflush;
+	paddr_t		phys = VM_PAGE_TO_PHYS(pg);
+	boolean_t	ret;
 
+	ret = pmap_is_modified(pg);
+
+#ifdef DIAGNOSTIC
 	if (!PMAP_MANAGED(phys)) {
-#ifdef DEBUG
-		if (pmap_con_dbg & CD_CMOD)
-			printf("(pmap_clear_modify :%x) phys addr 0x%x not managed \n", curproc, phys);
-#endif
-		return;
+		panic("pmap_clear_modify: not managed?");
 	}
+#endif
 
 	SPLVM(spl);
 
@@ -3361,7 +3357,7 @@ clear_modify_Retry:
 #endif
 		UNLOCK_PVH(phys);
 		SPLX(spl);
-		return;
+		return (ret);
 	}
 
 	/* for each listed pmap, turn off the page modified bit */
@@ -3401,6 +3397,8 @@ clear_modify_Retry:
 	}
 	UNLOCK_PVH(phys);
 	SPLX(spl);
+
+	return (ret);
 } /* pmap_clear_modify() */
 
 /*
@@ -3412,7 +3410,7 @@ clear_modify_Retry:
  *		stored data into the page.
  *
  *	Parameters:
- *		phys		physical address og a page
+ *		pg		vm_page
  *
  *	Extern/Global:
  *		pv_head_array, pv lists
@@ -3425,9 +3423,6 @@ clear_modify_Retry:
  *		PA_TO_PVH
  *		pmap_pte
  *
- *	If the physical address specified is not a managed page, this
- * routine simply returns TRUE (looks like it is returning FALSE XXX).
- *
  *	If the entry in the modify list, corresponding to the given page,
  * is TRUE, this routine return TRUE. (This means at least one mapping
  * has been invalidated where the MMU had set the modified bit in the
@@ -3439,21 +3434,20 @@ clear_modify_Retry:
  * immediately (doesn't need to walk remainder of list).
  */
 boolean_t
-pmap_is_modified(vm_offset_t phys)
+pmap_is_modified(struct vm_page *pg)
 {
 	pv_entry_t  pvl;
 	pv_entry_t  pvep;
 	pt_entry_t  *ptep;
 	int      spl;
 	boolean_t   modified_flag;
+	paddr_t phys = VM_PAGE_TO_PHYS(pg);
 
+#ifdef DIAGNOSTIC
 	if (!PMAP_MANAGED(phys)) {
-#ifdef DEBUG
-		if (pmap_con_dbg & CD_IMOD)
-			printf("(pmap_is_modified :%x) phys addr 0x%x not managed\n", curproc, phys);
-#endif
-		return (FALSE);
+		panic("pmap_is_modified: not managed?");
 	}
+#endif
 
 	SPLVM(spl);
 
@@ -3526,7 +3520,7 @@ is_mod_Retry:
  *		Clear the reference bits on the specified physical page.
  *
  *	Parameters:
- *		phys		physical address of page
+ *		pg		vm_page
  *
  *	Calls:
  *		PMAP_MANAGED
@@ -3540,32 +3534,33 @@ is_mod_Retry:
  *	Extern/Global:
  *		pv_head_array, pv lists
  *
- *	For managed pages, the coressponding PV list will be traversed.
  * For each pmap/va the hardware 'used' bit in the page table entry
  * inspected - and turned off if necessary. If any of the inspected bits
  * were found on, a TLB flush will be performed.
  */
-void
-pmap_clear_reference(vm_offset_t phys)
+boolean_t
+pmap_clear_reference(struct vm_page *pg)
 {
-	pv_entry_t    pvl;
-	pv_entry_t    pvep;
-	pt_entry_t    *pte;
-	pmap_t     pmap;
-	int        spl, spl_sav;
-	vm_offset_t      va;
-	unsigned      users;
-	pte_template_t   opte;
-	int        kflush;
+	pv_entry_t	pvl;
+	pv_entry_t	pvep;
+	pt_entry_t	*pte;
+	pmap_t		pmap;
+	int		spl, spl_sav;
+	vm_offset_t	va;
+	unsigned	users;
+	pte_template_t	opte;
+	int		kflush;
+	paddr_t		phys;
+	boolean_t	ret;
 
+	phys = VM_PAGE_TO_PHYS(pg);
+
+#ifdef DIAGNOSTIC
 	if (!PMAP_MANAGED(phys)) {
-#ifdef DEBUG
-		if (pmap_con_dbg & CD_CREF) {
-			printf("(pmap_clear_reference :%x) phys addr 0x%x not managed\n", curproc,phys);
-		}
-#endif
-		return;
+		panic("pmap_clear_reference: not managed?");
 	}
+#endif
+	ret = pmap_is_referenced(pg);
 
 	SPLVM(spl);
 
@@ -3582,7 +3577,7 @@ pmap_clear_reference(vm_offset_t phys)
 #endif
 		UNLOCK_PVH(phys);
 		SPLX(spl);
-		return;
+		return (ret);
 	}
 
 	/* for each listed pmap, turn off the page refrenced bit */
@@ -3622,6 +3617,8 @@ pmap_clear_reference(vm_offset_t phys)
 	}
 	UNLOCK_PVH(phys);
 	SPLX(spl);
+
+	return (ret);
 } /* pmap_clear_reference() */
 
 /*
@@ -3632,7 +3629,7 @@ pmap_clear_reference(vm_offset_t phys)
  *	any physical maps. That is, whether the hardware has touched the page.
  *
  * Parameters:
- *	phys		physical address of a page
+ *	pg		vm_page
  *
  * Extern/Global:
  *	pv_head_array, pv lists
@@ -3645,25 +3642,25 @@ pmap_clear_reference(vm_offset_t phys)
  *	simple_lock
  *	pmap_pte
  *
- *	If the physical address specified is not a managed page, this
- * routine simply returns TRUE.
- *
- *	Otherwise, this routine walks the PV list corresponding to the
+ *	This routine walks the PV list corresponding to the
  * given page. For each pmap/va/ pair, the page descripter table entry is
  * examined. If a used bit is found on, the function returns TRUE
  * immediately (doesn't need to walk remainder of list).
  */
 
 boolean_t
-pmap_is_referenced(vm_offset_t phys)
+pmap_is_referenced(struct vm_page *pg)
 {
 	pv_entry_t pvl;
 	pv_entry_t pvep;
 	pt_entry_t *ptep;
 	int     spl;
+	paddr_t phys = VM_PAGE_TO_PHYS(pg);
 
+#ifdef DIAGNOSTIC
 	if (!PMAP_MANAGED(phys))
-		return (FALSE);
+		panic("pmap_is_referenced: not managed?");
+#endif
 
 	SPLVM(spl);
 
@@ -3713,8 +3710,10 @@ is_ref_Retry:
  *	Lower the permission for all mappings to a given page.
  */
 void
-pmap_page_protect(vm_offset_t phys, vm_prot_t prot)
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
+	paddr_t phys = VM_PAGE_TO_PHYS(pg);
+
 	switch (prot) {
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
@@ -4426,3 +4425,29 @@ pmap_range_remove(pmap_range_t *ranges, vm_offset_t start, vm_offset_t end)
 		range->start = end;
 }
 #endif /* FUTURE_MAYBE */
+
+void
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+{
+	pmap_enter(pmap_kernel(), va, pa, prot, 1, VM_PROT_READ|VM_PROT_WRITE);
+}
+
+void
+pmap_kenter_pgs(vaddr_t va, struct vm_page **pgs, int npgs)
+{
+	int i;
+
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
+		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
+			VM_PROT_READ|VM_PROT_WRITE, 1,
+			VM_PROT_READ|VM_PROT_WRITE);
+	}
+}
+
+void
+pmap_kremove(vaddr_t va, vsize_t len)
+{
+	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
+		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	}
+}

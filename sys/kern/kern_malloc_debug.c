@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.7 2001/07/17 15:49:22 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.8 2001/07/18 10:47:05 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -149,12 +149,7 @@ debug_malloc(size, type, flags, addr)
 	splx(s);
 
 
-#ifdef PMAP_NEW
 	pmap_kenter_pa(md->md_va, md->md_pa, VM_PROT_ALL);
-#else
-	pmap_enter(pmap_kernel(), md->md_va, md->md_pa, VM_PROT_ALL, TRUE,
-		   VM_PROT_READ|VM_PROT_WRITE);
-#endif
 
 	md->md_size = size;
 	md->md_type = type;
@@ -213,11 +208,7 @@ debug_free(addr, type)
 	/*
 	 * unmap the page.
 	 */
-#ifdef PMAP_NEW
 	pmap_kremove(md->md_va, PAGE_SIZE);
-#else
-	pmap_remove(pmap_kernel(), md->md_va, md->md_va + PAGE_SIZE);
-#endif
 	splx(s);
 
 	return 1;

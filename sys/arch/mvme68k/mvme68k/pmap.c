@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2001/06/27 06:19:49 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.25 2001/07/18 10:47:04 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -676,29 +676,17 @@ pmap_map(va, spa, epa, prot)
  *	the map will be used in software only, and
  *	is bounded by that size.
  */
-pmap_t
-pmap_create(size)
-	vm_size_t	size;
+struct pmap *
+pmap_create(void)
 {
-	register pmap_t pmap;
+	struct pmap *pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
 		printf("pmap_create(%x)\n", size);
 #endif
 
-	/*
-	 * Software use map does not need a pmap
-	 */
-	if (size)
-		return (NULL);
-
-	/* XXX: is it ok to wait here? */
-	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
-#ifdef notifwewait
-	if (pmap == NULL)
-		panic("pmap_create: cannot allocate a pmap");
-#endif
+	pmap = (struct pmap *) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
 	bzero(pmap, sizeof(*pmap));
 	pmap_pinit(pmap);
 	return (pmap);
@@ -901,11 +889,10 @@ pmap_remove(pmap, sva, eva)
  *	Lower the permission for all mappings to a given page.
  */
 void
-pmap_page_protect(pa, prot)
-	vm_offset_t	pa;
-	vm_prot_t	prot;
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	register struct pv_entry *pv;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	struct pv_entry *pv;
 	int s;
 
 #ifdef DEBUG
@@ -1584,14 +1571,20 @@ pmap_copy_page(src, dst)
  */
 
 void
-pmap_clear_modify(pa)
-	vm_offset_t	pa;
+pmap_clear_modify(struct vm_page *pg)
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t ret;
+
+	ret = pmap_is_modified(pg);
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_modify(%x)\n", pa);
 #endif
 	pmap_changebit(pa, PG_M, FALSE);
+
+	return (ret);
 }
 
 /*
@@ -1600,14 +1593,21 @@ pmap_clear_modify(pa)
  *	Clear the reference bit on the specified physical page.
  */
 
-void pmap_clear_reference(pa)
-	vm_offset_t	pa;
+boolean_t
+pmap_clear_reference(struct vm_page *pg)
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t ret;
+
+	ret = pmap_is_referenced(pg);
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_clear_reference(%x)\n", pa);
 #endif
 	pmap_changebit(pa, PG_U, FALSE);
+
+	return (ret);
 }
 
 /*
@@ -1618,9 +1618,10 @@ void pmap_clear_reference(pa)
  */
 
 boolean_t
-pmap_is_referenced(pa)
-	vm_offset_t	pa;
+pmap_is_referenced(struct vm_page *pg)
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		boolean_t rv = pmap_testbit(pa, PG_U);
@@ -1639,9 +1640,9 @@ pmap_is_referenced(pa)
  */
 
 boolean_t
-pmap_is_modified(pa)
-	vm_offset_t	pa;
+pmap_is_modified(struct vm_page *pg)
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		boolean_t rv = pmap_testbit(pa, PG_M);
@@ -2410,3 +2411,29 @@ pmap_check_wiring(str, va)
 		       str, va, entry->wired_count, count);
 }
 #endif
+
+void
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+{
+	pmap_enter(pmap_kernel(), va, pa, prot, 1, VM_PROT_READ|VM_PROT_WRITE);
+}
+
+void
+pmap_kenter_pgs(vaddr_t va, struct vm_page **pgs, int npgs)
+{
+	int i;
+
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
+		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
+			VM_PROT_READ|VM_PROT_WRITE, 1,
+			VM_PROT_READ|VM_PROT_WRITE);
+	}
+}
+
+void
+pmap_kremove(vaddr_t va, vsize_t len)
+{
+	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
+		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	}
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.19 2001/07/17 10:55:02 mts Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.20 2001/07/18 10:47:05 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.68 1999/08/21 02:19:05 thorpej Exp $	*/
 
 /* 
@@ -1021,12 +1021,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 			 * to vm_map_min(kernel_map).
 			 */
 			if (UVM_OBJ_IS_INTRSAFE_OBJECT(entry->object.uvm_obj)) {
-#if defined(PMAP_NEW)
 				pmap_kremove(entry->start, len);
-#else
-				pmap_remove(pmap_kernel(), entry->start,
-				    entry->start + len);
-#endif
 				uvm_km_pgremove_intrsafe(entry->object.uvm_obj,
 				    entry->start - vm_map_min(kernel_map),
 				    entry->end - vm_map_min(kernel_map));
@@ -2571,8 +2566,7 @@ uvm_map_clean(map, start, end, flags)
 #endif
 
 				/* zap all mappings for the page. */
-				pmap_page_protect(PMAP_PGARG(pg),
-				    VM_PROT_NONE);
+				pmap_page_protect(pg, VM_PROT_NONE);
 
 				/* ...and deactivate the page. */
 				uvm_pagedeactivate(pg);
@@ -2730,11 +2724,7 @@ uvmspace_init(vm, pmap, min, max, pageable)
 	if (pmap)
 		pmap_reference(pmap);
 	else
-#if defined(PMAP_NEW)
 		pmap = pmap_create();
-#else
-		pmap = pmap_create(0);
-#endif
 	vm->vm_map.pmap = pmap;
 
 	vm->vm_refcnt = 1;
