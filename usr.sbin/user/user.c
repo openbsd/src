@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.58 2004/05/10 09:44:45 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.59 2004/05/10 18:41:11 otto Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -456,7 +456,11 @@ modify_gid(char *group, char *newent)
 		}
 	}
 	(void) fclose(from);
-	(void) fclose(to);
+	if (fclose(to) == EOF) {
+		(void) unlink(f);
+		warn("can't modify gid: short write to `%s'", f);
+		return 0;
+	}
 	if (rename(f, _PATH_GROUP) < 0) {
 		(void) unlink(f);
 		warn("can't modify gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
@@ -562,7 +566,11 @@ append_group(char *user, int ngroups, const char **groups)
 		}
 	}
 	(void) fclose(from);
-	(void) fclose(to);
+	if (fclose(to) == EOF) {
+		(void) unlink(f);
+		warn("can't append group: short write to `%s'", f);
+		return 0;
+	}
 	if (rename(f, _PATH_GROUP) < 0) {
 		(void) unlink(f);
 		warn("can't append group: can't rename `%s' to `%s'", f, _PATH_GROUP);
@@ -713,7 +721,10 @@ setdefaults(user_t *up)
 		}
 	}
 #endif
-	(void) fclose(fp);
+	if (fclose(fp) == EOF) {
+		warn("can't write to `%s'", CONFFILE);
+		ret = 0;
+	}
 	if (ret) {
 		ret = ((rename(template, CONFFILE) == 0) && (chmod(CONFFILE, 0644) == 0));
 	}
@@ -1204,7 +1215,12 @@ rm_user_from_groups(char *login_name)
 	}
 	(void) fchmod(fileno(to), st.st_mode & 07777);
 	(void) fclose(from);
-	(void) fclose(to);
+	if (fclose(to) == EOF) {
+		(void) unlink(f);
+		warn("can't remove gid for `%s': short write to `%s'",
+		    login_name, f);
+		return 0;
+	}
 	if (rename(f, _PATH_GROUP) < 0) {
 		(void) unlink(f);
 		warn("can't remove gid for `%s': can't rename `%s' to `%s'",
