@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.26 2003/02/21 00:47:56 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.27 2003/02/22 23:51:39 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -86,7 +86,6 @@ iommu_strbuf_flush(struct iommu_state *is, vaddr_t va)
 
 int iommu_strbuf_flush_done(struct iommu_state *);
 int64_t iommu_tsb_entry(struct iommu_state *, vaddr_t);
-int iommu_tv_comp(struct timeval *, struct timeval *);
 
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
@@ -392,21 +391,6 @@ iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 	}
 }
 
-int
-iommu_tv_comp(struct timeval *t1, struct timeval *t2)
-{
-	if (t1->tv_sec < t2->tv_sec)
-		return (-1);
-	if (t1->tv_sec > t2->tv_sec)
-		return (1);
-	/* t1->tv_sec == t2->tv_sec */
-	if (t1->tv_usec < t2->tv_usec)
-		return (-1);
-	if (t1->tv_usec > t2->tv_usec)
-		return (1);
-	return (0);
-}
-
 int 
 iommu_strbuf_flush_done(struct iommu_state *is)
 {
@@ -491,8 +475,7 @@ iommu_strbuf_flush_done(struct iommu_state *is)
 			break;
 
 		microtime(&cur);
-		/* Use existing time compare macros? */
-		if(iommu_tv_comp(&cur, &flushtimeout) <= 0)
+		if (timercmp(&cur, &flushtimeout, >))
 			break;
 	}
 
