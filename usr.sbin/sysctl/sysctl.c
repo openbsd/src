@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.34 1998/03/15 17:48:48 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.35 1998/03/19 07:36:11 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.34 1998/03/15 17:48:48 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.35 1998/03/19 07:36:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,11 +241,10 @@ parse(string, flags)
 	char *string;
 	int flags;
 {
-	int indx, type, state, len;
-	size_t size;
+	int indx, type, state, intval;
+	size_t size, len,  newsize = 0;
 	int special = 0;
 	void *newval = 0;
-	int intval, newsize = 0;
 	quad_t quadval;
 	struct list *lp;
 	struct vfsconf vfc;
