@@ -41,6 +41,7 @@ Boston, MA 02111-1307, USA.  */
 #include "typeclass.h"
 #include "defaults.h"
 #include "toplev.h"
+#include "protector.h"
 
 #define CEIL(x,y) (((x) + (y) - 1) / (y))
 
@@ -7077,7 +7078,7 @@ expand_expr (exp, target, tmode, modifier)
 	 associate it to put the constant outside.  */
       if (GET_CODE (op1) == PLUS
 	  && CONSTANT_P (XEXP (op1, 1))
-	  && !(flag_propolice_protection && XEXP (op1, 0) == virtual_stack_vars_rtx))
+	  && !(flag_propolice_protection && (contains_fp (op0) || contains_fp (op1))))
 	{
 	  rtx constant_term = const0_rtx;
 
