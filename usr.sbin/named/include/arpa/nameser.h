@@ -1,3 +1,5 @@
+/*	$OpenBSD: nameser.h,v 1.2 1997/03/12 11:21:16 downsj Exp $	*/
+
 /*
  * ++Copyright++ 1983, 1989, 1993
  * -
@@ -77,7 +79,7 @@
 
 /*
  *      @(#)nameser.h	8.1 (Berkeley) 6/2/93
- *	$Id: nameser.h,v 1.1 1997/03/12 10:42:00 downsj Exp $
+ *	$From: nameser.h,v 8.11 1996/10/08 04:51:02 vixie Exp $
  */
 
 #ifndef _NAMESER_H_

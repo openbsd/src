@@ -1,3 +1,5 @@
+/*	$OpenBSD: inet.h,v 1.2 1997/03/12 11:21:16 downsj Exp $	*/
+
 /*
  * ++Copyright++ 1983, 1993
  * -
@@ -55,7 +57,7 @@
 
 /*
  *	@(#)inet.h	8.1 (Berkeley) 6/2/93
- *	$Id: inet.h,v 1.1 1997/03/12 10:41:59 downsj Exp $
+ *	$From: inet.h,v 8.6 1996/08/08 06:54:29 vixie Exp $
  */
 
 #ifndef _INET_H_
