@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.108 2004/01/09 00:31:01 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.109 2004/01/15 23:36:08 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -62,6 +62,11 @@
 #include <machine/cmmu.h>
 #include <machine/cpu_number.h>
 #include <machine/pmap_table.h>
+
+/*
+ * Define this to allow write-back caching. Use at your own risk.
+ */
+#undef	PMAP_USE_WRITEBACK
 
 /*
  * VM externals
@@ -1075,7 +1080,12 @@ pmap_zero_page(struct vm_page *pg)
 	SPLVM(spl);
 
 	*pte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | CACHE_WT | PG_V | pa;
+	    CACHE_GLOBAL | PG_V | pa;
+
+	/*
+	 * We don't need the flush_atc_entry() dance, as these pages are
+	 * bound to only one cpu.
+	 */
 	cmmu_flush_tlb(cpu, TRUE, va, PAGE_SIZE);
 
 	/*
@@ -1084,7 +1094,9 @@ pmap_zero_page(struct vm_page *pg)
 	 * So be sure to have the pa flushed after the filling.
 	 */
 	bzero((void *)va, PAGE_SIZE);
+#ifdef	PMAP_USE_WRITEBACK
 	cmmu_flush_data_cache(cpu, pa, PAGE_SIZE);
+#endif
 
 	SPLX(spl);
 }
@@ -1136,7 +1148,11 @@ pmap_create(void)
 	if (pmap_extract(kernel_pmap, (vaddr_t)segdt,
 	    (paddr_t *)&stpa) == FALSE)
 		panic("pmap_create: pmap_extract failed!");
-	pmap->pm_apr = (atop(stpa) << PG_SHIFT) | CACHE_GLOBAL | APR_V;
+	pmap->pm_apr = (atop(stpa) << PG_SHIFT) |
+	    CACHE_GLOBAL | CACHE_WT | APR_V;
+#ifdef	PMAP_USE_WRITEBACK
+	pmap->pm_apr &= ~CACHE_WT;	/* enable writeback */
+#endif
 
 #ifdef DEBUG
 	if (!PAGE_ALIGNED(stpa))
@@ -1149,9 +1165,11 @@ pmap_create(void)
 	}
 #endif
 
+#ifdef	PMAP_USE_WRITEBACK
 	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
 	    (vaddr_t)segdt, (vaddr_t)segdt + s, CACHE_GLOBAL | CACHE_WT);
+#endif
 
 	/*
 	 * Initialize SDT_ENTRIES.
@@ -1777,9 +1795,11 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 	if (pmap_extract(kernel_pmap, pdt_vaddr, &pdt_paddr) == FALSE)
 		panic("pmap_expand: pmap_extract failed");
 
+#ifdef	PMAP_USE_WRITEBACK
 	/* memory for page tables should not be writeback or local */
 	pmap_cache_ctrl(kernel_pmap,
 	    pdt_vaddr, pdt_vaddr + PAGE_SIZE, CACHE_GLOBAL | CACHE_WT);
+#endif
 
 	PMAP_LOCK(pmap, spl);
 
@@ -2388,9 +2408,14 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	SPLVM(spl);
 
 	*dstpte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | CACHE_WT | PG_V | dst;
+	    CACHE_GLOBAL | PG_V | dst;
 	*srcpte = m88k_protection(kernel_pmap, VM_PROT_READ) |
-	    CACHE_GLOBAL | CACHE_WT | PG_V | src;
+	    CACHE_GLOBAL | PG_V | src;
+
+	/*
+	 * We don't need the flush_atc_entry() dance, as these pages are
+	 * bound to only one cpu.
+	 */
 	cmmu_flush_tlb(cpu, TRUE, dstva, 2 * PAGE_SIZE);
 
 	/*
@@ -2399,9 +2424,13 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	 * So be sure to have the source pa flushed before the copy is
 	 * attempted, and the destination pa flushed afterwards.
 	 */
+#ifdef	PMAP_USE_WRITEBACK
 	cmmu_flush_data_cache(cpu, src, PAGE_SIZE);
+#endif
 	bcopy((const void *)srcva, (void *)dstva, PAGE_SIZE);
+#ifdef	PMAP_USE_WRITEBACK
 	cmmu_flush_data_cache(cpu, dst, PAGE_SIZE);
+#endif
 
 	SPLX(spl);
 }
