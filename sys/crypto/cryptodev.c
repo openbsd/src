@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.5 2001/05/14 15:19:37 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.6 2001/05/14 15:37:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -87,6 +87,7 @@ int	cryptof_write(struct file *, off_t *, struct uio *, struct ucred *);
 int	cryptof_ioctl(struct file *, u_long, caddr_t, struct proc *p);
 int	cryptof_select(struct file *, int, struct proc *);
 int	cryptof_kqfilter(struct file *, struct knote *);
+int	cryptof_stat(struct file *, struct stat *, struct proc *);
 int	cryptof_close(struct file *, struct proc *);
 
 static struct fileops cryptofops = {
@@ -95,7 +96,7 @@ static struct fileops cryptofops = {
     cryptof_ioctl,
     cryptof_select,
     cryptof_kqfilter,
-    NULL,
+    cryptof_stat,
     cryptof_close
 };
 
@@ -406,6 +407,16 @@ cryptof_kqfilter(fp, kn)
 	struct knote *kn;
 {
 	return (0);
+}
+
+/* ARGSUSED */
+int
+cryptof_stat(fp, sb, p)
+	struct file *fp;
+	struct stat *sb;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
 }
 
 /* ARGSUSED */
