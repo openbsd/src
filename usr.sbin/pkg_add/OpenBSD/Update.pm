@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.42 2004/12/18 13:39:17 espie Exp $
+# $OpenBSD: Update.pm,v 1.43 2004/12/19 20:03:09 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -69,12 +69,12 @@ sub extract
 	while (!-d $d && -e _) {
 		$d = dirname($d);
 	}
-	if (!-e _) {
-		File::Path::mkpath($d);
-	}
 	if ($state->{not}) {
 		print "extracting tempfile under $d\n";
 	} else {
+		if (!-e _) {
+			File::Path::mkpath($d);
+		}
 		my ($fh, $tempname) = tempfile('pkg.XXXXXXXXXX', 
 		    DIR => $d);
 
