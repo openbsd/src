@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.6 2003/12/21 22:16:53 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.7 2003/12/21 23:48:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -42,7 +42,6 @@ buf_open(ssize_t len)
 		free(buf);
 		return (NULL);
 	}
-
 	buf->size = len;
 
 	return (buf);
@@ -75,13 +74,9 @@ buf_reserve(struct buf *buf, ssize_t len)
 int
 buf_close(struct msgbuf *msgbuf, struct buf *buf)
 {
-	/*
-	 * we first try to write out directly
-	 * if that fails we add the buffer to the queue
-	 */
-
 	int	n;
 
+	/*  first try to write out directly */
 	if (msgbuf->queued == 0) {
 		if ((n = buf_write(msgbuf->sock, buf)) == -1)
 			return (-1);
@@ -176,7 +171,6 @@ msgbuf_write(struct msgbuf *msgbuf)
 void
 buf_enqueue(struct msgbuf *msgbuf, struct buf *buf)
 {
-	/* might want a tailq per peer w/ pointers to the bufs */
 	TAILQ_INSERT_TAIL(&msgbuf->bufs, buf, entries);
 	msgbuf->queued++;
 }
