@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.62 2004/07/31 11:31:30 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.63 2005/03/24 12:52:01 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -223,8 +223,9 @@ scsi_size(sc_link, flags)
 	struct scsi_link *sc_link;
 	int flags;
 {
-	struct scsi_read_cap_data rdcap;
 	struct scsi_read_capacity scsi_cmd;
+	struct scsi_read_cap_data rdcap;
+	u_long max_addr;
 
 	/*
 	 * make up a scsi command and ask the scsi driver to do
@@ -242,10 +243,22 @@ scsi_size(sc_link, flags)
 			  2, 20000, NULL, flags | SCSI_DATA_IN) != 0) {
 		sc_print_addr(sc_link);
 		printf("could not get size\n");
-		return 0;
+		return (0);
 	}
 
-	return _4btol(rdcap.addr) + 1;
+	max_addr = _4btol(rdcap.addr);
+	if (max_addr == 0xffffffffUL) {
+		/*
+		 * The device is reporting it has more than 2^32-1 sectors. The
+		 * 16-byte READ CAPACITY command must be issued to get full
+		 * capacity.
+		 */
+		sc_print_addr(sc_link);
+		printf("only the first 4,294,967,295 sectors will be used.\n");
+		return (0xffffffffUL);
+	}
+	
+	return (max_addr + 1);
 }
 
 /*
