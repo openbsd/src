@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 1998/10/30 22:16:42 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 1998/11/11 05:18:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -1517,7 +1517,7 @@ pmap_is_referenced(pa)
 		printf("pmap_is_referenced(%x)\n", pa);
 #endif
 
-	s = splvm();
+	s = splhigh();
 	for (pv = pmap_find_pv(pa); pv && !(pv->pv_tlbprot & TLB_REF);)
 		pv = pv->pv_next;
 	splx(s);
