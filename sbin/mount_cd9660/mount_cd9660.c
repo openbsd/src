@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.5 1997/04/19 20:07:24 flipk Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.6 1997/04/19 20:10:13 deraadt Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.5 1997/04/19 20:07:24 flipk Exp $";
+static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.6 1997/04/19 20:10:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,9 @@ main(argc, argv)
 	args.fspec = dev;
 	args.export.ex_root = DEFAULT_ROOTUID;
 
+#if 1
+	mntflags |= MNT_RDONLY;
+#endif
 	if (mntflags & MNT_RDONLY)
 		args.export.ex_flags = MNT_EXRDONLY;
 	else
