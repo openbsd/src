@@ -636,5 +636,7 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 249 = unimplemented */
 	{ 3, s(struct sys_minherit_args),
 	    sys_minherit },			/* 250 = minherit */
+	{ 1, s(struct sys_rfork_args),
+	    sys_rfork },			/* 251 = rfork */
 };
 

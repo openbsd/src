@@ -219,3 +219,19 @@
  */
 #define	FSHIFT	11		/* bits to right of fixed binary point */
 #define FSCALE	(1<<FSHIFT)
+
+/*
+ * rfork() options.
+ *
+ * XXX currently, operations without RFPROC set are not supported.
+ */
+#define RFNAMEG		(1<<0)	/* UNIMPL new plan9 `name space' */
+#define RFENVG		(1<<1)	/* UNIMPL copy plan9 `env space' */
+#define RFFDG		(1<<2)	/* copy fd table */
+#define RFNOTEG		(1<<3)	/* UNIMPL create new plan9 `note group' */
+#define RFPROC		(1<<4)	/* change child (else changes curproc) */
+#define RFMEM		(1<<5)	/* share `address space' */
+#define RFNOWAIT	(1<<6)	/* UNIMPL parent need not wait() on child */ 
+#define RFCNAMEG	(1<<10) /* UNIMPL zero plan9 `name space' */
+#define RFCENVG		(1<<11) /* UNIMPL zero plan9 `env space' */
+#define RFCFDG		(1<<12)	/* zero fd table */

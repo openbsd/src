@@ -326,4 +326,5 @@ char *syscallnames[] = {
 	"#248 (unimplemented)",		/* 248 = unimplemented */
 	"#249 (unimplemented)",		/* 249 = unimplemented */
 	"minherit",			/* 250 = minherit */
+	"rfork",			/* 251 = rfork */
 };

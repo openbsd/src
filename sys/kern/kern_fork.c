@@ -53,7 +53,16 @@
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 
+#include <vm/vm.h>
+
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+
 int	nprocs = 1;		/* process 0 */
+
+#define	ISFORK	0
+#define	ISVFORK	1
+#define	ISRFORK	2
 
 int
 sys_fork(p, v, retval)
@@ -62,7 +71,7 @@ sys_fork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, 0, retval));
+	return (fork1(p, ISFORK, 0, retval));
 }
 
 int
@@ -72,13 +81,27 @@ sys_vfork(p, v, retval)
 	register_t *retval;
 {
 
-	return (fork1(p, 1, retval));
+	return (fork1(p, ISVFORK, 0, retval));
 }
 
 int
-fork1(p1, isvfork, retval)
+sys_rfork(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_rfork_args /* {
+		syscallarg(int) flags;
+	} */ *uap = v;
+
+	return (fork1(p, ISRFORK, SCARG(uap, flags), retval));
+}
+
+int
+fork1(p1, forktype, rforkflags, retval)
 	register struct proc *p1;
-	int isvfork;
+	int forktype;
+	int rforkflags;
 	register_t *retval;
 {
 	register struct proc *p2;
@@ -87,6 +110,21 @@ fork1(p1, isvfork, retval)
 	struct proc **hash;
 	int count;
 	static int nextpid, pidchecked = 0;
+	int dupfd = 1, cleanfd = 0;
+
+	if (forktype == ISRFORK) {
+		dupfd = 0;
+		if ((rforkflags & RFPROC) == 0)
+			return (EINVAL);
+		if ((rforkflags & (RFFDG|RFCFDG)) == (RFFDG|RFCFDG))
+			return (EINVAL);
+		if (rforkflags & RFFDG)
+			dupfd = 1;
+		if (rforkflags & RFNOWAIT)
+			return (EINVAL);	/* XXX unimplimented */
+		if (rforkflags & RFCFDG)
+			cleanfd = 1;
+	}
 
 	/*
 	 * Although process entries are dynamically created, we still keep
@@ -198,7 +236,13 @@ again:
 	if (p2->p_textvp)
 		VREF(p2->p_textvp);
 
-	p2->p_fd = fdcopy(p1);
+	if (cleanfd)
+		p2->p_fd = fdinit(p1);
+	else if (dupfd)
+		p2->p_fd = fdcopy(p1);
+	else
+		p2->p_fd = fdshare(p1);
+
 	/*
 	 * If p_limit is still copy-on-write, bump refcnt,
 	 * otherwise get a copy that won't be modified.
@@ -214,11 +258,15 @@ again:
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
 		p2->p_flag |= P_CONTROLT;
-	if (isvfork)
+	if (forktype == ISVFORK)
 		p2->p_flag |= P_PPWAIT;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	p2->p_pptr = p1;
-	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
+	if (rforkflags & RFNOWAIT) {
+		/* XXX should we do anything? */
+	} else {
+		LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
+	}
 	LIST_INIT(&p2->p_children);
 
 #ifdef KTRACE
@@ -238,6 +286,13 @@ again:
 	 * from being swapped.
 	 */
 	p1->p_holdcnt++;
+
+	if (forktype == ISRFORK && (rforkflags & RFMEM)) {
+		/* share as much address space as possible */
+		(void) vm_map_inherit(&p1->p_vmspace->vm_map,
+		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - MAXSSIZ,
+		    VM_INHERIT_SHARE);
+	}
 
 #ifdef __FORK_BRAINDAMAGE
 	/*
@@ -281,7 +336,7 @@ again:
 	 * child to exec or exit, set P_PPWAIT on child, and sleep on our
 	 * proc (in case of exit).
 	 */
-	if (isvfork)
+	if (forktype == ISVFORK)
 		while (p2->p_flag & P_PPWAIT)
 			tsleep(p1, PWAIT, "ppwait", 0);
 

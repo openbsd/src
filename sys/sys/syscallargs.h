@@ -946,6 +946,10 @@ struct sys_minherit_args {
 	syscallarg(int) inherit;
 };
 
+struct sys_rfork_args {
+	syscallarg(int) flags;
+};
+
 /*
  * System call prototypes.
  */
@@ -1186,3 +1190,4 @@ int	sys_shmget	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	sys_minherit	__P((struct proc *, void *, register_t *));
+int	sys_rfork	__P((struct proc *, void *, register_t *));
