@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.4 1996/10/18 23:37:38 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.5 1996/10/19 00:06:10 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -86,34 +86,9 @@ echo	""
 echo	"To do the installation, you'll need to provide some information about"
 echo	"your disk."
 
-echo	"OpenBSD can be installed on ST506, ESDI, IDE, or SCSI disks."
-echo -n	"What kind of disk will you be installing on? [SCSI] "
-getresp "SCSI"
-case "$resp" in
-esdi|ESDI|st506|ST506)
-	drivetype=wd
-	echo -n "Does it support _automatic_ sector remapping? [y] "
-	getresp "y"
-	case "$resp" in
-	n*|N*)
-		sect_fwd="sf:"
-		;;
-	*)
-		sect_fwd=""
-		;;
-	esac
-;;
-ide|IDE)
-	drivetype=wd
-	sect_fwd=""
-	type=ST506
-	;;
-scsi|SCSI)
 	drivetype=sd
 	sect_fwd=""
 	type=SCSI
-	;;
-esac
 
 # find out what units are possible for that disk, and query the user.
 driveunits=`ls /dev/${drivetype}?a | sed -e 's,/dev/\(...\)a,\1,g'`
@@ -217,23 +192,8 @@ while [ "X${sizemult}" = "X" ]; do
 	esac
 done
 
-if [ $sizeunit = "sectors" ]; then
-	echo "For best disk performance or workable CHS-translating IDE systems,"
-	echo "partitions should begin and end on cylinder boundaries.  Wherever"
-	echo "possible, use multiples of the cylinder size ($cylindersize sectors)."
-fi
+	part_offset=0
 
-echo -n ""
-echo -n "Size of OpenBSD portion of disk (in $sizeunit) ? [$maxdisk] "
-getresp "$maxdisk"
-partition=$resp
-partition_sects=`expr $resp \* $sizemult`
-part_offset=0
-if [ $partition_sects -lt $disksize ]; then
-	echo -n "Offset of OpenBSD portion of disk (in $sizeunit)? "
-	getresp
-	part_offset=$resp
-fi
 badspacesec=0
 if [ "$sect_fwd" = "sf:" ]; then
 	badspacecyl=`expr $sects_per_track + 126`
@@ -474,6 +434,7 @@ fi
 echo	"Initializing root filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${drivename}a $name
 $DONTDOIT mount -v /dev/${drivename}a /mnt
+$DONTDOIT /usr/mdec/binstall -v ffs /mnt
 if [ "$ename" != "" ]; then
 	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
