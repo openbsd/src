@@ -144,7 +144,9 @@ void		 pmap_protect __P((pmap_t,
 		    vaddr_t, vaddr_t, vm_prot_t));
 void		 pmap_reference __P((pmap_t));
 void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
+#if !defined(pmap_update)
 void		 pmap_update __P((void));
+#endif
 void		 pmap_zero_page __P((paddr_t));
 
 void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
