@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.5 2004/10/28 23:37:11 pvalchev Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.6 2004/10/29 01:52:35 pvalchev Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -111,7 +111,7 @@ rgephyattach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d PHY\n", MII_STR_xxREALTEK_RTL8169S,
+	printf(": %s, rev. %d\n", MII_STR_xxREALTEK_RTL8169S,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
