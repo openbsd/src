@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.1 2005/01/10 00:25:03 deraadt Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.2 2005/01/11 11:47:11 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -67,6 +67,7 @@ unixopen(struct open_file *f, ...)
 	char **file, *p = NULL;
 	va_list ap;
 	int fd;
+	int c;
 
 	va_start(ap, f);
 	file = va_arg(ap, char **);
@@ -76,25 +77,25 @@ unixopen(struct open_file *f, ...)
 	printf("unixopen: %s\n", *file);
 #endif
 
-	if (strncmp("/dev/", *file, 5) == 0) {
-		/* p = strchr(p + 5, '/') */
-		for (p = *file + 5; *p != '\0' && *p != '/'; p++)
-			;
-		if (*(p-1) == ':')
-			*(p-1) = '\0';
-		if (*p == '/')
-			*p = '\0';
-	}
+	/* p = strchr(p, ':') */
+	for (p = *file; *p != '\0' && *p != ':'; p++)
+		;
 
+	c = *p;
+	*p = '\0';
 #if 0
 	f->f_devdata = (void *)(fd = uopen(*file, O_RDWR, 0));
 #else
 	f->f_devdata = (void *)(fd = uopen(*file, O_RDONLY, 0));
 #endif
+	*p = c;
 
-	*file = p;
-	if (p != NULL)
-		*p = '/';
+	if (*p == '\0')
+		*file = p;
+	else if (*(p+1) == '\0')
+		*file = (char *)"/";
+	else
+		*file = p+1;
 
 	return fd < 0 ? -1 : 0;
 }
