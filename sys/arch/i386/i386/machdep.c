@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.74 1998/01/12 20:54:02 weingart Exp $	*/
-/*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.75 1998/01/17 09:57:05 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1828,8 +1828,7 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
     bpap, bshp)
 	bus_space_tag_t t;
 	bus_addr_t rstart, rend;
-	bus_size_t size, alignment;
-	bus_addr_t boundary;
+	bus_size_t size, alignment, boundary;
 	int cacheable;
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
