@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.150 2004/01/29 13:30:18 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.151 2004/01/29 17:02:56 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -941,7 +941,7 @@ after_listen:
 	 * Reset idle time and keep-alive timer.
 	 */
 	tp->t_rcvtime = tcp_now;
-	if (tp->t_state != TCPS_SYN_RECEIVED)
+	if (TCPS_HAVEESTABLISHED(tp->t_state))
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
 #ifdef TCP_SACK
@@ -1215,6 +1215,7 @@ after_listen:
 			tcpstat.tcps_connects++;
 			soisconnected(so);
 			tp->t_state = TCPS_ESTABLISHED;
+			TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 			/* Do window scaling on this connection? */
 			if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 				(TF_RCVD_SCALE|TF_REQ_SCALE)) {
@@ -1468,6 +1469,7 @@ trimthenstep6:
 		tcpstat.tcps_connects++;
 		soisconnected(so);
 		tp->t_state = TCPS_ESTABLISHED;
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 		/* Do window scaling? */
 		if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 			(TF_RCVD_SCALE|TF_REQ_SCALE)) {
