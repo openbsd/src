@@ -89,7 +89,7 @@ following:
 	following:
 
 		cd .../2.1		# the top of the tree
-		cd i386/
+		cd alpha/
 		tar cf <tape_device> base21 etc21
 
 	(Note that you still need to fill in "<tape_device>" in the
