@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.21 1998/06/03 09:50:21 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.22 1998/06/11 14:17:22 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -659,7 +659,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	    }
 
 	    do {
-		mi = mi->m_next;
+		mi = (mo = mi)->m_next;
 		if (mi == NULL)
 		    panic("esp_new_input(): bad chain (i)\n");
 	    } while (mi->m_len == 0);
@@ -673,6 +673,11 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 		    espstat.esps_hdrops++;
 		    return NULL;
 		}
+		/* 
+		 * m_pullup was not called at the beginning of the chain
+		 * but might return a new mbuf, link it into the chain.
+		 */
+		mo->m_next = mi;
 	    }
 		    
 	    ilen = mi->m_len;
@@ -875,7 +880,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     struct ip *ip, ipo;
     int i, ilen, ohlen, nh, rlen, plen, padding, rest;
     struct esp_new espo;
-    struct mbuf *mi;
+    struct mbuf *mi, *mo;
     u_char *pad, *idat, *odat, *ivp;
     u_char iv[ESP_MAX_IVS], blk[ESP_MAX_BLKS], auth[AH_ALEN_MAX], opts[40];
     union {
@@ -1014,7 +1019,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    }
 
 	    do {
-		mi = mi->m_next;
+		mi = (mo = mi)->m_next;
 		if (mi == NULL)
 		    panic("esp_new_output(): bad chain (i)\n");
 	    } while (mi->m_len == 0);
@@ -1027,6 +1032,11 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 			       tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 		    return ENOBUFS;
 		}
+		/* 
+		 * m_pullup was not called at the beginning of the chain
+		 * but might return a new mbuf, link it into the chain.
+		 */
+		mo->m_next = mi;
 	    }
 		    
 	    ilen = mi->m_len;

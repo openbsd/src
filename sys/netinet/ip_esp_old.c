@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.18 1998/06/03 09:50:22 provos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.19 1998/06/11 14:17:23 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -296,7 +296,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     u_char *idat, *odat, *ivp, *ivn, *lblk;
     struct esp_old *esp;
     int ohlen, plen, ilen, i, blks, rest;
-    struct mbuf *mi;
+    struct mbuf *mi, *mo;
 
     xd = (struct esp_old_xdata *) tdb->tdb_xdata;
 
@@ -402,7 +402,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	    }
 
 	    do {
-		mi = mi->m_next;
+		mi = (mo = mi)->m_next;
 		if (mi == NULL)
 		    panic("esp_old_output(): bad chain (i)\n");
 	    } while (mi->m_len == 0);
@@ -416,6 +416,11 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 		    espstat.esps_hdrops++;
 		    return NULL;
 		}
+		/* 
+		 * m_pullup was not called at the beginning of the chain
+		 * but might return a new mbuf, link it into the chain.
+		 */
+		mo->m_next = mi;
 	    }
 		    
 	    ilen = mi->m_len;
@@ -570,7 +575,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     struct ip *ip, ipo;
     int i, ilen, ohlen, nh, rlen, plen, padding, rest;
     u_int32_t spi;
-    struct mbuf *mi;
+    struct mbuf *mi, *mo;
     u_char *pad, *idat, *odat, *ivp;
     u_char iv[ESP_3DES_IVS], blk[ESP_3DES_IVS], opts[40];
     int iphlen, blks;
@@ -675,7 +680,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    }
 
 	    do {
-		mi = mi->m_next;
+		mi = (mo = mi)->m_next;
 		if (mi == NULL)
 		    panic("esp_old_output(): bad chain (i)\n");
 	    } while (mi->m_len == 0);
@@ -688,6 +693,11 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 			     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 		    return ENOBUFS;
 		}
+		/* 
+		 * m_pullup was not called at the beginning of the chain
+		 * but might return a new mbuf, link it into the chain.
+		 */
+		mo->m_next = mi;
 	    }
 		    
 	    ilen = mi->m_len;
