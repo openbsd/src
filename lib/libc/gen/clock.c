@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: clock.c,v 1.3 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: clock.c,v 1.4 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -43,7 +43,7 @@ static char rcsid[] = "$OpenBSD: clock.c,v 1.3 2003/06/02 20:18:34 millert Exp $
 			 r.tv_usec / (1000000 / CLOCKS_PER_SEC))
 
 clock_t
-clock()
+clock(void)
 {
 	struct rusage ru;
 

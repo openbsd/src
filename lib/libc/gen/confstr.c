@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: confstr.c,v 1.5 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: confstr.c,v 1.6 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -41,10 +41,7 @@ static char rcsid[] = "$OpenBSD: confstr.c,v 1.5 2003/06/02 20:18:34 millert Exp
 #include <unistd.h>
 
 size_t
-confstr(name, buf, len)
-	int name;
-	char *buf;
-	size_t len;
+confstr(int name, char *buf, size_t len)
 {
 	size_t tlen;
 	int mib[2], sverrno;

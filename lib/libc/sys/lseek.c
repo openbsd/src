@@ -28,7 +28,7 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: lseek.c,v 1.9 2003/06/02 20:18:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: lseek.c,v 1.10 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,10 +40,7 @@ static char rcsid[] = "$OpenBSD: lseek.c,v 1.9 2003/06/02 20:18:39 millert Exp $
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 off_t
-lseek(fd, offset, whence)
-	int	fd;
-	off_t	offset;
-	int	whence;
+lseek(int fd, off_t offset, int whence)
 {
 	extern off_t __syscall();
 	off_t retval;

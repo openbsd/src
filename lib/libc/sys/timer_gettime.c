@@ -1,5 +1,5 @@
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: timer_gettime.c,v 1.4 1998/02/07 20:50:55 tholo Exp $";
+static char rcsid[] = "$OpenBSD: timer_gettime.c,v 1.5 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <signal.h>
@@ -10,9 +10,7 @@ struct itimerspec;
 
 /* ARGSUSED */
 int
-timer_gettime(timerid, value)
-	timer_t timerid;
-	struct itimerspec *value;
+timer_gettime(timer_t timerid, struct itimerspec *value)
 {
 	errno = ENOSYS;
 	return -1;

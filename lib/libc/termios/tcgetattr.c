@@ -28,16 +28,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tcgetattr.c,v 1.3 2003/06/02 20:18:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: tcgetattr.c,v 1.4 2003/06/11 21:03:09 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/ioctl.h>
 #include <termios.h>
 
 int
-tcgetattr(fd, t)
-	int fd;
-	struct termios *t;
+tcgetattr(int fd, struct termios *t)
 {
 	return (ioctl(fd, TIOCGETA, t));
 }

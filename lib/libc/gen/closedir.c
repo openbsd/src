@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: closedir.c,v 1.4 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: closedir.c,v 1.5 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,8 +41,7 @@ static char rcsid[] = "$OpenBSD: closedir.c,v 1.4 2003/06/02 20:18:34 millert Ex
  * close a directory.
  */
 int
-closedir(dirp)
-	register DIR *dirp;
+closedir(DIR *dirp)
 {
 	int fd;
 	int ret;

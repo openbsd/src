@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getwd.c,v 1.6 2003/06/02 20:18:33 millert Exp $";
+static char *rcsid = "$OpenBSD: getwd.c,v 1.7 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -38,8 +38,7 @@ static char *rcsid = "$OpenBSD: getwd.c,v 1.6 2003/06/02 20:18:33 millert Exp $"
 #include <string.h>
 
 char *
-getwd(buf)
-	char *buf;
+getwd(char *buf)
 {
 	char *p;
 

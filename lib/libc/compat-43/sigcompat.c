@@ -28,16 +28,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: sigcompat.c,v 1.3 2003/06/02 20:18:33 millert Exp $";
+static char *rcsid = "$OpenBSD: sigcompat.c,v 1.4 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <signal.h>
 
 int
-sigvec(signo, sv, osv)
-	int signo;
-	struct sigvec *sv, *osv;
+sigvec(int signo, struct sigvec *sv, struct sigvec *osv)
 {
 	int ret;
 	struct sigvec nsv;
@@ -54,8 +52,7 @@ sigvec(signo, sv, osv)
 }
 
 int
-sigsetmask(mask)
-	int mask;
+sigsetmask(int mask)
 {
 	int omask, n;
 
@@ -66,8 +63,7 @@ sigsetmask(mask)
 }
 
 int
-sigblock(mask)
-	int mask;
+sigblock(int mask)
 {
 	int omask, n;
 
@@ -78,8 +74,7 @@ sigblock(mask)
 }
 
 int
-sigpause(mask)
-	int mask;
+sigpause(int mask)
 {
 	return (sigsuspend((sigset_t *)&mask));
 }

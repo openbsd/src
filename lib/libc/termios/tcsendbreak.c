@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: tcsendbreak.c,v 1.4 2003/06/02 20:18:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: tcsendbreak.c,v 1.5 2003/06/11 21:03:09 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,8 +44,7 @@ static char rcsid[] = "$OpenBSD: tcsendbreak.c,v 1.4 2003/06/02 20:18:39 millert
 
 /* ARGSUSED */
 int
-tcsendbreak(fd, len)
-	int fd, len;
+tcsendbreak(int fd, int len)
 {
 	struct timeval sleepytime;
 

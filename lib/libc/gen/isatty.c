@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: isatty.c,v 1.4 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: isatty.c,v 1.5 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <termios.h>
@@ -36,8 +36,7 @@ static char rcsid[] = "$OpenBSD: isatty.c,v 1.4 2003/06/02 20:18:34 millert Exp 
 #include "thread_private.h"
 
 int
-isatty(fd)
-	int fd;
+isatty(int fd)
 {
 	int retval;
 	struct termios t;

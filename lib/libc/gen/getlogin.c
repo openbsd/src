@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getlogin.c,v 1.8 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: getlogin.c,v 1.9 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -48,7 +48,7 @@ int	_getlogin(char *, size_t);
 int	_setlogin(const char *);
 
 char *
-getlogin()
+getlogin(void)
 {
 	_THREAD_PRIVATE_KEY(getlogin);
 	char * name = (char *)_THREAD_PRIVATE(getlogin, logname, NULL);
@@ -63,9 +63,7 @@ getlogin()
 }
 
 int
-getlogin_r(name, namelen)
-	char *name;
-	size_t namelen;
+getlogin_r(char *name, size_t namelen)
 {
 	int logname_size;
 
@@ -92,8 +90,7 @@ getlogin_r(name, namelen)
 }
 
 int
-setlogin(name)
-	const char *name;
+setlogin(const char *name)
 {
 	int ret;
 

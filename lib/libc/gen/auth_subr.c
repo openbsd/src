@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.22 2003/01/04 22:36:09 deraadt Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.23 2003/06/11 21:03:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -138,7 +138,7 @@ struct passwd *auth_getpwd(auth_session_t *as)	{ return (as->pwd); }
  * (which can be changed later).
  */
 auth_session_t *
-auth_open()
+auth_open(void)
 {
 	auth_session_t *as;
 

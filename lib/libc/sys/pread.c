@@ -1,4 +1,4 @@
-/*	$OpenBSD: pread.c,v 1.5 2003/06/02 20:18:39 millert Exp $	*/
+/*	$OpenBSD: pread.c,v 1.6 2003/06/11 21:03:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -30,7 +30,7 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pread.c,v 1.5 2003/06/02 20:18:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: pread.c,v 1.6 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -42,11 +42,7 @@ static char rcsid[] = "$OpenBSD: pread.c,v 1.5 2003/06/02 20:18:39 millert Exp $
  * is not supplied by GCC 1.X but is supplied by GCC 2.X.
  */
 ssize_t
-pread(fd, buf, nbyte, offset)
-	int fd;
-	void *buf;
-	size_t nbyte;
-	off_t offset;
+pread(int fd, void *buf, size_t nbyte, off_t offset)
 {
 	extern off_t __syscall();
 	quad_t q;

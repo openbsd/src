@@ -28,15 +28,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: cfsetispeed.c,v 1.3 2003/06/02 20:18:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: cfsetispeed.c,v 1.4 2003/06/11 21:03:09 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <termios.h>
 
 int
-cfsetispeed(t, speed)
-	struct termios *t;
-	speed_t speed;
+cfsetispeed(struct termios *t, speed_t speed)
 {
 	t->c_ispeed = speed;
 	return (0);

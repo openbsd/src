@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.8 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.9 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -47,8 +47,7 @@ static char rcsid[] = "$OpenBSD: disklabel.c,v 1.8 2003/06/02 20:18:34 millert E
 static int	gettype(char *, char **);
 
 struct disklabel *
-getdiskbyname(name)
-	const char *name;
+getdiskbyname(const char *name)
 {
 	static struct	disklabel disk;
 	register struct	disklabel *dp = &disk;
@@ -155,9 +154,7 @@ getdiskbyname(name)
 }
 
 static int
-gettype(t, names)
-	char *t;
-	char **names;
+gettype(char *t, char **names)
 {
 	register char **nm;
 

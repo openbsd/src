@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ctermid.c,v 1.4 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: ctermid.c,v 1.5 2003/06/11 21:03:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -36,8 +36,7 @@ static char rcsid[] = "$OpenBSD: ctermid.c,v 1.4 2003/06/02 20:18:34 millert Exp
 #include <string.h>
 
 char *
-ctermid(s)
-	char *s;
+ctermid(char *s)
 {
 	static char def[] = _PATH_TTY;
 
@@ -49,8 +48,7 @@ ctermid(s)
 }
 
 char *
-ctermid_r(s)
-	char *s;
+ctermid_r(char *s)
 {
 	if (s)
 		return ctermid(s);

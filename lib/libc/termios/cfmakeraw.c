@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: cfmakeraw.c,v 1.4 2003/06/02 20:18:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: cfmakeraw.c,v 1.5 2003/06/11 21:03:09 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <termios.h>
@@ -38,8 +38,7 @@ static char rcsid[] = "$OpenBSD: cfmakeraw.c,v 1.4 2003/06/02 20:18:39 millert E
  * mode with no characters interpreted, 8-bit data path.
  */
 void
-cfmakeraw(t)
-	struct termios *t;
+cfmakeraw(struct termios *t)
 {
 	t->c_iflag &= ~(IMAXBEL|IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
 	t->c_oflag &= ~OPOST;
