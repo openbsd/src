@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2000/10/27 00:16:20 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 2000/11/07 11:25:24 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -825,18 +825,16 @@ boot(howto)
 		if (howto & RB_POWERDOWN) {
 #if NPOWER > 0 || NTCTRL >0
 			printf("attempting to power down...\n");
-#endif
 #if NPOWER > 0
 			powerdown();
 #endif
 #if NTCTRL > 0
 			tadpole_powerdown();
 #endif
-#if NPOWER > 0 || NTCTRL >0
 			printf("WARNING: powerdown failed!\n");
-#endif
+#endif /* NPOWER || MTCTRL */
 		}
-#endif
+#endif /* SUN4M */
 		printf("halted\n\n");
 		romhalt();
 	}
