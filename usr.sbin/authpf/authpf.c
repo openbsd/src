@@ -52,7 +52,6 @@
 #include <stddef.h>
 #include <string.h>
 #include <strings.h>
-#include <sysexits.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <resolv.h>
