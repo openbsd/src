@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.63 2003/09/28 21:01:43 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.64 2003/10/16 10:07:59 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -99,8 +99,8 @@
 
 struct pool wdc_xfer_pool;
 
-static void  __wdcerror(struct channel_softc*, char *);
-static int   __wdcwait_reset(struct channel_softc *, int);
+void  __wdcerror(struct channel_softc *, char *);
+int   __wdcwait_reset(struct channel_softc *, int);
 void  __wdccommand_done(struct channel_softc *, struct wdc_xfer *);
 void  __wdccommand_start(struct channel_softc *, struct wdc_xfer *);
 int   __wdccommand_intr(struct channel_softc *, struct wdc_xfer *, int);
@@ -1038,7 +1038,7 @@ wdcreset(chp, verb)
 	return  (drv_mask1 != drv_mask2) ? 1 : 0;
 }
 
-static int
+int
 __wdcwait_reset(chp, drv_mask)
 	struct channel_softc *chp;
 	int drv_mask;
@@ -1982,7 +1982,7 @@ wdc_kill_pending(chp)
 	}
 }
 
-static void
+void
 __wdcerror(chp, msg)
 	struct channel_softc *chp;
 	char *msg;
