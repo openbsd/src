@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.57 2001/04/06 16:27:46 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.58 2001/05/08 20:41:00 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -421,7 +421,7 @@ hifn_enable_crypto(sc, pciid)
 
 	if (offtbl == NULL) {
 #ifdef HIFN_DEBUG
-		printf("%s: Unknown card!\n", sc->sc_dv.dv_xname);
+		printf(": Unknown card!\n");
 #endif
 		return (1);
 	}
@@ -443,8 +443,7 @@ hifn_enable_crypto(sc, pciid)
 	 */
 	if (encl == HIFN_PUSTAT_ENA_1 || encl == HIFN_PUSTAT_ENA_2) {
 #ifdef HIFN_DEBUG
-		printf("%s: Strong Crypto already enabled!\n",
-		    sc->sc_dv.dv_xname);
+		printf(": Strong Crypto already enabled!\n");
 #endif
 		WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
 		WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
@@ -453,7 +452,7 @@ hifn_enable_crypto(sc, pciid)
 
 	if (encl != 0 && encl != HIFN_PUSTAT_ENA_0) {
 #ifdef HIFN_DEBUG
-		printf("%s: Unknown encryption level\n", sc->sc_dv.dv_xname);
+		printf(": Unknown encryption level\n");
 #endif
 		return 1;
 	}
@@ -478,9 +477,9 @@ hifn_enable_crypto(sc, pciid)
 
 #ifdef HIFN_DEBUG
 	if (encl != HIFN_PUSTAT_ENA_1 && encl != HIFN_PUSTAT_ENA_2)
-		printf("Encryption engine is permanently locked until next system reset.");
+		printf(": engine is permanently locked until next system reset");
 	else
-		printf("Encryption engine enabled successfully!");
+		printf(": engine enabled successfully!");
 #endif
 
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg);
