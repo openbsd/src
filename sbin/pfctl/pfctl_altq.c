@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.22 2002/12/17 00:00:08 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.23 2002/12/17 01:15:59 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -357,7 +357,7 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 		 * (bandwidth < 6Kbps when max_pkt_size=1500)
 		 */
 		if (pa->bandwidth != 0 && (pf->opts & PF_OPT_QUIET) == 0)
-			fprintf(stderr, "cbq: class %s is too slow!\n",
+			fprintf(stderr, "cbq: queue %s is too slow!\n",
 			    pa->qname);
 		nsPerByte = (double)(INT_MAX / opts->maxpktsize);
 	}
@@ -431,11 +431,11 @@ check_commit_cbq(int dev, int opts, struct pf_altq *pa)
 			default_class++;
 	}
 	if (root_class != 1) {
-		warnx("should have one root class on %s", pa->ifname);
+		warnx("should have one root queue on %s", pa->ifname);
 		error++;
 	}
 	if (default_class != 1) {
-		warnx("should have one default class on %s", pa->ifname);
+		warnx("should have one default queue on %s", pa->ifname);
 		error++;
 	}
 	return (error);
