@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.6 1994/11/23 07:42:02 jtc Exp $	*/
+/*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: forward.c,v 1.6 1994/11/23 07:42:02 jtc Exp $";
+static char rcsid[] = "$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -90,7 +90,6 @@ forward(fp, style, off, sbp)
 {
 	register int ch;
 	struct timeval second;
-	fd_set zero;
 
 	switch(style) {
 	case FBYTES:
@@ -163,16 +162,6 @@ forward(fp, style, off, sbp)
 		break;
 	}
 
-	/*
-	 * We pause for one second after displaying any data that has
-	 * accumulated since we read the file.
-	 */
-	if (fflag) {
-		FD_ZERO(&zero);
-		second.tv_sec = 1;
-		second.tv_usec = 0;
-	}
-
 	for (;;) {
 		while ((ch = getc(fp)) != EOF)
 			if (putchar(ch) == EOF)
@@ -184,8 +173,14 @@ forward(fp, style, off, sbp)
 		(void)fflush(stdout);
 		if (!fflag)
 			break;
-		/* Sleep(3) is eight system calls.  Do it fast. */
-		if (select(0, &zero, &zero, &zero, &second) == -1)
+		/*
+		 * We pause for one second after displaying any data that has
+		 * accumulated since we read the file.  Since sleep(3) takes
+		 * eight system calls, use select() instead.
+		 */
+		second.tv_sec = 1;
+		second.tv_usec = 0;
+		if (select(0, NULL, NULL, NULL, &second) == -1)
 			err(1, "select: %s", strerror(errno));
 		clearerr(fp);
 	}
