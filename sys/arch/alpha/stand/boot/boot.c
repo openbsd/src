@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.16 2004/07/05 19:59:20 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.17 2004/12/01 20:55:09 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -110,12 +110,10 @@ main()
 	bootinfo_v1.cnputc = NULL;
 	bootinfo_v1.cnpollc = NULL;
 
-	(void)printf("Entering %s at 0x%lx...\n", name, entry);
 	(*(void (*)(u_int64_t, u_int64_t, u_int64_t, void *, u_int64_t,
 	    u_int64_t))entry)(ffp_save, ptbr_save, BOOTINFO_MAGIC,
 	    &bootinfo_v1, 1, 0);
 
 fail:
-	(void)printf("Boot failed!  Halting...\n");
 	halt();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.15 2004/07/05 19:59:17 deraadt Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.16 2004/12/01 20:55:07 deraadt Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -64,6 +64,8 @@ int loadfile(char *, u_int64_t *);
 paddr_t ffp_save, ptbr_save;
 vaddr_t ssym, esym;
 
+#define WARN(...)
+
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
@@ -88,13 +90,13 @@ loadfile(fname, entryp)
 	/* Open the file. */
 	rval = 1;
 	if ((fd = open(fname, 0)) < 0) {
-		(void)printf("open %s: %s\n", fname, strerror(errno));
+		WARN(("open %s: errno %d\n", fname, errno));
 		goto err;
 	}
 
 	/* Read the exec header. */
 	if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
-		(void)printf("read header: %s\n", strerror(errno));
+		WARN(("read header: %s\n", strerror(errno)));
 		goto err;
 	}
 
@@ -133,12 +135,12 @@ coff_exec(fd, coff, entryp)
 	/* Read in text. */
 	(void)printf("%lu", coff->a.tsize);
 	if (lseek(fd, ECOFF_TXTOFF(coff), SEEK_SET) == -1) {
-		(void)printf("seek to text: %s\n", strerror(errno));
+		WARN(("seek to text: %s\n", strerror(errno)));
 		return (1);
 	}
 	if (read(fd, (void *)coff->a.text_start, coff->a.tsize) !=
 	    coff->a.tsize) {
-		(void)printf("read text: %s\n", strerror(errno));
+		WARN(("read text: %s\n", strerror(errno)));
 		return (1);
 	}
 
@@ -147,7 +149,7 @@ coff_exec(fd, coff, entryp)
 		(void)printf("+%lu", coff->a.dsize);
 		if (read(fd, (void *)coff->a.data_start, coff->a.dsize) !=
 		    coff->a.dsize) {
-			(void)printf("read data: %s\n", strerror(errno));
+			WARN(("read data: %s\n", strerror(errno)));
 			return (1);
 		}
 	}
@@ -168,13 +170,13 @@ coff_exec(fd, coff, entryp)
 	/* Get symbols if there for DDB's sake.  */
 	if (coff->f.f_symptr && coff->f.f_nsyms) {
 		if (lseek(fd, coff->f.f_symptr, SEEK_SET) == -1) {
-			printf("seek to symbol table header: %s\n",
-			    strerror(errno));
+			WARN(("seek to symbol table header: %s\n",
+			    strerror(errno)));
 			return (1);
 		}
 		if (read(fd, &symhdr, coff->f.f_nsyms) != coff->f.f_nsyms) {
-			printf("read symbol table header: %s\n",
-			    strerror(errno));
+			WARN(("read symbol table header: %s\n",
+			    strerror(errno)));
 			return (1);
 		}
 		*(long *)ffp_save = symsize =
@@ -184,13 +186,13 @@ coff_exec(fd, coff, entryp)
 		symtab = (struct nlist *)ffp_save;
 		bzero(symtab, symsize);
 		if (lseek(fd, symhdr.cbExtOffset, SEEK_SET) == -1) {
-			printf("lseek to symbol table: %s\n", strerror(errno));
+			WARN(("lseek to symbol table: %s\n", strerror(errno)));
 			return (1);
 		}
 		nesyms = symhdr.esymMax;
 		while (nesyms--) {
 			if (read(fd, &sym, sizeof(sym)) != sizeof(sym)) {
-				printf("read symbols: %s\n", strerror(errno));
+				WARN(("read symbols: %s\n", strerror(errno)));
 				return (1);
 			}
 			symtab->n_un.n_strx = sym.es_strindex + sizeof(int);
@@ -204,12 +206,12 @@ coff_exec(fd, coff, entryp)
 		*(int *)ffp_save = symhdr.estrMax + sizeof(int);
 		ffp_save += sizeof(int);
 		if (lseek(fd, symhdr.cbSsExtOffset, SEEK_SET) == -1) {
-			printf("seek to string table: %s\n", strerror(errno));
+			WARN(("seek to string table: %s\n", strerror(errno)));
 			return (1);
 		}
 		if (read(fd, (char *)ffp_save, symhdr.estrMax) !=
 		    symhdr.estrMax) {
-			printf("read string table: %s\n", strerror(errno));
+			WARN(("read string table: %s\n", strerror(errno)));
 			return (1);
 		}
 		ffp_save += symhdr.estrMax;
@@ -245,7 +247,7 @@ elf_exec(fd, elf, entryp)
 		Elf64_Phdr phdr;
 		(void)lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET);
 		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
-			(void)printf("read phdr: %s\n", strerror(errno));
+			WARN(("read phdr: %s\n", strerror(errno)));
 			return (1);
 		}
 		if (phdr.p_type != PT_LOAD ||
@@ -257,7 +259,7 @@ elf_exec(fd, elf, entryp)
 		(void)lseek(fd, phdr.p_offset, SEEK_SET);
 		if (read(fd, (void *)phdr.p_vaddr, phdr.p_filesz) !=
 		    phdr.p_filesz) {
-			(void)printf("read text: %s\n", strerror(errno));
+			WARN(("read text: %s\n", strerror(errno)));
 			return (1);
 		}
 		if (first || ffp_save < phdr.p_vaddr + phdr.p_memsz)
@@ -281,7 +283,7 @@ elf_exec(fd, elf, entryp)
 	ffp_save += sizeof(Elf64_Ehdr);
 
 	if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
-		printf("seek to section headers: %s\n", strerror(errno));
+		WARN(("seek to section headers: %s\n", strerror(errno)));
 		return (1);
 	}
 
@@ -290,7 +292,7 @@ elf_exec(fd, elf, entryp)
 	ffp_save += roundup(sz, sizeof(long));
 
 	if (read(fd, shp, sz) != sz) {
-		printf("read section headers: %d\n", strerror(errno));
+		WARN(("read section headers: %d\n", strerror(errno)));
 		return (1);
 	}
 
@@ -314,12 +316,12 @@ elf_exec(fd, elf, entryp)
 			printf("%s%ld", first ? " [" : "+",
 			       (u_long)shp[i].sh_size);
 			if (lseek(fd, shp[i].sh_offset, SEEK_SET) == -1) {
-				printf("lseek symbols: %s\n", strerror(errno));
+				WARN(("lseek symbols: %s\n", strerror(errno)));
 				return (1);
 			}
 			if (read(fd, (void *)ffp_save, shp[i].sh_size) !=
 			    shp[i].sh_size) {
-				printf("read symbols: %s\n", strerror(errno));
+				WARN(("read symbols: %s\n", strerror(errno)));
 				return (1);
 			}
 			ffp_save += roundup(shp[i].sh_size, sizeof(long));
