@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.28 1999/06/01 08:23:51 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.29 1999/06/29 23:51:59 provos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -325,6 +325,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_RND:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &rndstats,
 		    sizeof(rndstats)));
+	case KERN_ARND:
+		return (sysctl_rdint(oldp, oldlenp, newp, arc4random()));
 	case KERN_NOSUIDCOREDUMP:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &nosuidcoredump));
 	case KERN_FSYNC:
