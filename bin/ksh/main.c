@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -759,7 +759,7 @@ cleanup_parents_env()
 
 	/* Don't clean up temporary files - parent will probably need them.
 	 * Also, can't easily reclaim memory since variables, etc. could be
-	 * anywyere.
+	 * anywhere.
 	 */
 
 	/* close all file descriptors hiding in savefd */

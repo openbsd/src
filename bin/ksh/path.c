@@ -1,11 +1,11 @@
-/*	$OpenBSD: path.c,v 1.7 2000/03/01 23:10:58 todd Exp $	*/
+/*	$OpenBSD: path.c,v 1.8 2003/02/28 09:45:09 jmc Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
 
 /*
  *	Contains a routine to search a : separated list of
- *	paths (a la CDPATH) and make appropiate file names.
+ *	paths (a la CDPATH) and make appropriate file names.
  *	Also contains a routine to simplify .'s and ..'s out of
  *	a path name.
  *

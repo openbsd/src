@@ -1,4 +1,4 @@
-$OpenBSD: ChangeLog.0,v 1.3 1998/10/29 04:09:19 millert Exp $
+$OpenBSD: ChangeLog.0,v 1.4 2003/02/28 09:45:09 jmc Exp $
 
 Thu Jun 15 11:02:06 NDT 1995 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -265,7 +265,7 @@ Mon May  1 09:41:56 NDT 1995 Michael Rendell (michael@panda.cs.mun.ca)
 Sat Apr 29 21:10:54 NDT 1995 Michael Rendell (michael@garfield.cs.mun.ca)
 
 	* vi.c(glob_word): don't append * if there are unescaped globing
-	  characters in the last component of the filename; some redundent
+	  characters in the last component of the filename; some redundant
 	  code eliminated.
 	  (based on fix from Michael Jetzer).
 
@@ -642,7 +642,7 @@ Mon Dec 12 20:55:53 NST 1994 John Rochester (jr@panda.cs.mun.ca)
 
 Fri Dec  9 15:21:36 NST 1994 Michael Rendell (michael@panda.cs.mun.ca)
 
-	* trap.c(inittraps): OS2: don't trap SIGTERM (temproary fix).
+	* trap.c(inittraps): OS2: don't trap SIGTERM (temporary fix).
 
 	* exec.c(search_access1): OS2: fixed to check for valid suffix
 	  and change mode from X_OK to R_OK if appropriate.
@@ -745,7 +745,7 @@ Tue Nov 29 12:32:26 NST 1994 Michael Rendell (michael@panda.cs.mun.ca)
 	* ksh_dir.h(NLENGTH): new macro.
 	* eval.c(globit): use NLENGTH macro.
 
-	* alloc.c(aresize): removed redundent np and optr variables.
+	* alloc.c(aresize): removed redundant np and optr variables.
 
 Mon Nov 28 14:55:49 NST 1994 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -841,7 +841,7 @@ Tue Nov 22 10:26:13 NST 1994 Michael Rendell (michael@panda.cs.mun.ca)
 
 Mon Nov 21 10:45:34 NST 1994 Michael Rendell (michael@panda.cs.mun.ca)
 
-	* exec.c(do_selectargs): removed use of pmenu variable (redundent)
+	* exec.c(do_selectargs): removed use of pmenu variable (redundant)
 	  use isspace() instead of IFS chars; include <ctype.h>.
 
 	* aclocal.m4(KSH_TERM_CHECK): do not allow HAVE_TERMIOS_H check to
@@ -1565,7 +1565,7 @@ Fri Sep 16 11:32:01 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 	* eval.c(expand): set subst_exstat to return value of waitlast().
 	* c_sh.c(c_set): if !FPOSIX, return subst_exstat instead of 0.
 
-	* exec.c(execute): removed redundent "exstat = rv;" near if FERREXIT.
+	* exec.c(execute): removed redundant "exstat = rv;" near if FERREXIT.
 	* exec.c(comexec): case CFUNC: for normal function completion, set
 	  i to 0 and rv to return value of execute() (was i=LRETURN,exstat=..).
 
@@ -3189,7 +3189,7 @@ Wed Jun  1 09:17:50 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 	* aclocal.m4, configure.in, sh.h, tree.c, io.c, shf.c: added
 	  new config test KSH_PROTOTYPES to check for function prototypes
 	  (MIPS RICS/os 5.0 C compiler isn't STDC and it can't mix <stddef.h>
-	  with <varargs.h>).  Removed stdarg.h test (now redundent).  Changed
+	  with <varargs.h>).  Removed stdarg.h test (now redundant).  Changed
 	  all varargs functions to use HAVE_PROTOTYPES instead of
 	  HAVE_STDARG_H && STDC.
 
@@ -3570,7 +3570,7 @@ Fri May 5 12:16:46 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 		(involves #defining free)
 	  - main.c(main): smart initialization of PWD (ensures it is always
 	    valid).
-	  - lex.h, table.h, tree.h: removed redundent function declarations
+	  - lex.h, table.h, tree.h: removed redundant function declarations
 	    (were also in proto.h)
 	  - sh.h: increased LINE from 256 to 1024
 	  - main.c(include), sh.h(E_INC), c_sh.c(c_return): added hack so a
@@ -3586,4 +3586,4 @@ Fri May 5 12:16:46 NDT 1994 Michael Rendell (michael@panda.cs.mun.ca)
 	  - exec.c(iosetup): don't save fd if already saved (and don't
 	    generate an error)
 	  - exec.c(findcom): in if (..ALLOC && eaccess), test for
-	    ALLOC redundent - always call afree()
+	    ALLOC redundant - always call afree()

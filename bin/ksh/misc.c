@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.12 2001/02/19 09:49:53 camield Exp $	*/
+/*	$OpenBSD: misc.c,v 1.13 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -542,7 +542,7 @@ gmatch(s, p, isfile)
  * if it contains no pattern characters or if there is a syntax error.
  * Syntax errors are:
  *	- [ with no closing ]
- *	- imballenced $(...) expression
+ *	- imbalanced $(...) expression
  *	- [...] and *(...) not nested (eg, [a$(b|]c), *(a[b|c]d))
  */
 /*XXX
@@ -1026,11 +1026,11 @@ ksh_getopt(argv, go, options)
 		}
 		go->p = 0;
 	} else if (*o == ',') {
-		/* argument is attatched to option character, even if null */
+		/* argument is attached to option character, even if null */
 		go->optarg = argv[go->optind - 1] + go->p;
 		go->p = 0;
 	} else if (*o == '#') {
-		/* argument is optional and may be attatched or unattatched
+		/* argument is optional and may be attached or unattached
 		 * but must start with a digit.  optarg is set to 0 if the
 		 * argument is missing.
 		 */

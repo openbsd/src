@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 2001/12/18 01:47:06 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  * signal handling
@@ -48,7 +48,7 @@ inittraps()
 	sigtraps[SIGHUP].flags |= TF_FATAL;
 	sigtraps[SIGCHLD].flags |= TF_SHELL_USES;
 
-	/* these are always caught so we can clean up any temproary files. */
+	/* these are always caught so we can clean up any temporary files. */
 	setsig(&sigtraps[SIGINT], trapsig, SS_RESTORE_ORIG);
 	setsig(&sigtraps[SIGQUIT], trapsig, SS_RESTORE_ORIG);
 	setsig(&sigtraps[SIGTERM], trapsig, SS_RESTORE_ORIG);

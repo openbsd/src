@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.16 2002/11/27 20:53:25 pvalchev Exp $	*/
+/*	$OpenBSD: history.c,v 1.17 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  * command history
@@ -67,7 +67,7 @@ static char   **hist_get_newest ARGS((int allow_cur));
 static char   **hist_get_oldest ARGS(());
 static void	histbackup ARGS((void));
 
-static char   **current;	/* current postition in history[] */
+static char   **current;	/* current position in history[] */
 static int	curpos;		/* current index in history[] */
 static char    *hname;		/* current name of history file */
 static int	hstarted;	/* set after hist_init() called */
@@ -493,7 +493,7 @@ histnum(n)
 }
 
 /*
- * This will become unecessary if hist_get is modified to allow
+ * This will become unnecessary if hist_get is modified to allow
  * searching from positions other than the end, and in either
  * direction.
  */

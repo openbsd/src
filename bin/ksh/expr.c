@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.7 1999/06/15 01:18:34 millert Exp $	*/
+/*	$OpenBSD: expr.c,v 1.8 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -63,7 +63,7 @@ enum prec {
 struct opinfo {
 	char		name[4];
 	int		len;	/* name length */
-	enum prec	prec;	/* precidence: lower is higher */
+	enum prec	prec;	/* precedence: lower is higher */
 };
 
 /* Tokens in this table must be ordered so the longest are first

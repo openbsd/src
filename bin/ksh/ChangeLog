@@ -369,7 +369,7 @@ Wed Oct 22 11:49:02 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
 Fri Aug 15 22:06:53 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* eval.c(varsub,expand), lex.c(yylex): allow :%, :#, :%% and :##
-	  to be compatable with ksh88.
+	  to be compatible with ksh88.
 
 Sat Aug  2 12:13:30 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -406,7 +406,7 @@ Fri May 16 11:40:22 NDT 1997 Michael Rendell (michael@panda.cs.mun.ca)
 Thu Mar 13 10:42:31 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* mail.c(mbset): save a copy of the path so it can't get trashed
-	  (eg, by exporting a varibale).
+	  (eg, by exporting a variable).
 
 Wed Feb 26 11:24:06 NST 1997 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -527,7 +527,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.12 1999/07/14 13:37:23 millert Exp $
+$OpenBSD: ChangeLog,v 1.13 2003/02/28 09:45:09 jmc Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -795,7 +795,7 @@ Mon Aug 12 11:21:39 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
 Mon Aug 12 11:03:22 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
-	* exec.c(findfunc): removed redundent DEFINED check after tsearch().
+	* exec.c(findfunc): removed redundant DEFINED check after tsearch().
 
 Fri Aug  9 22:16:21 NDT 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
@@ -1231,7 +1231,7 @@ Fri Feb  2 10:40:32 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 Thu Feb  1 15:27:06 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* c_test.h(Test_env): added end union.
-	* c_test.c(c_test): keep track of end postition using end.wp;
+	* c_test.c(c_test): keep track of end position using end.wp;
 	  don't write on wp.
 
 	* emacs.c(x_mapin): changed to dup string, then munge; return duped;
@@ -1353,7 +1353,7 @@ Wed Jan 10 10:21:06 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
 Tue Jan  9 11:23:36 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 
-	* emacs.c(iscfs): make ', " seperators.
+	* emacs.c(iscfs): make ', " separators.
 	  (fix from Dale DePriest).
 
 	* conf-end.h: deleted stuff to undef HISTORY, VI, EMACS, etc if
@@ -1491,7 +1491,7 @@ Tue Nov 14 10:22:17 NST 1995 Michael Rendell (michael@angel.cs.mun.ca)
 
 	* main.c(shell): do not zero exstat at start of routine.
 
-	* exec.c(execute): removed redundent "exstat = rv" before
+	* exec.c(execute): removed redundant "exstat = rv" before
 	  unwind(LERROR).
 
 Thu Nov  9 15:01:54 NST 1995 Michael Rendell (michael@angel.cs.mun.ca)

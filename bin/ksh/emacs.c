@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.17 2002/10/16 00:13:53 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.18 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1127,7 +1127,7 @@ x_transpose(c)
 
 	/* What transpose is meant to do seems to be up for debate. This
 	 * is a general summary of the options; the text is abcd with the
-	 * upper case character or underscore indicating the cursor positiion:
+	 * upper case character or underscore indicating the cursor position:
 	 *     Who			Before	After  Before	After
 	 *     at&t ksh in emacs mode:	abCd	abdC   abcd_	(bell)
 	 *     at&t ksh in gmacs mode:	abCd	baCd   abcd_	abdc_
@@ -2102,7 +2102,7 @@ x_fold_capitialize(c)
 }
 
 /* NAME:
- *      x_fold_case - convert word to UPPER/lower/Capitial case
+ *      x_fold_case - convert word to UPPER/lower/Capital case
  *
  * DESCRIPTION:
  *      This function is used to implement M-U,M-u,M-L,M-l,M-C and M-c

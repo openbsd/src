@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.13 2002/02/14 13:41:44 deraadt Exp $
+$OpenBSD: BUG-REPORTS,v 1.14 2003/02/28 09:45:09 jmc Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -1349,7 +1349,7 @@ x pdksh 5.2.13.5, (reported by Charles M. Hannum <root@ihack.net>): An exit
   trap set in a subshell is not executed (unless explicit exit used).
   [fixed in 5.2.14: exec.c(execute): changed exit(rv) to unwind(LEXIT).]
 
-x pdksh 5.2.12, - : MAILCHECK isn't preserved from the envirnment on startup.
+x pdksh 5.2.12, - : MAILCHECK isn't preserved from the environment on startup.
   [fixed in 5.2.14: changed main's initcoms[].]
 
 x pdksh 5.2.13, (reported by Marc Olzheim): time at the end of a pipeline

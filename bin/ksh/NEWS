@@ -57,7 +57,7 @@ Version 5.2.13
     * editing: completion after "cmd " now completes files (was command).
 
 
-$OpenBSD: NEWS,v 1.11 1999/07/14 13:37:23 millert Exp $
+$OpenBSD: NEWS,v 1.12 2003/02/28 09:45:09 jmc Exp $
 
 Version 5.2.12
 
@@ -653,7 +653,7 @@ Version 4.9+mun.2 (versus 4.9)
 
 * has array support (needs work but is pretty functional).
 
-* ulimit command now more functional on more machines. Compatable with at&t ksh.
+* ulimit command now more functional on more machines. Compatible with at&t ksh.
 
 * command line and set option parsing cleaned up, POSIXized.
 

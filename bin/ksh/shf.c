@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.7 2000/11/21 23:12:04 millert Exp $	*/
+/*	$OpenBSD: shf.c,v 1.8 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -839,7 +839,7 @@ shf_smprintf(fmt, va_alist)
  *  this out...
  *
  *	For shorts, we want sign extend for %d but not for %[oxu] - on 16 bit
- *  machines it don't matter.  Assmumes C compiler has converted shorts to
+ *  machines it don't matter.  Assumes C compiler has converted shorts to
  *  ints before pushing them.
  */
 #define POP_INT(f, s, a) (((f) & FL_LONG) ?				\
@@ -922,7 +922,7 @@ shf_vfprintf(shf, fmt, args)
 		 *	This will accept flags/fields in any order - not
 		 *  just the order specified in printf(3), but this is
 		 *  the way _doprnt() seems to work (on bsd and sysV).
-		 *  The only resriction is that the format character must
+		 *  The only restriction is that the format character must
 		 *  come last :-).
 		 */
 		flags = field = precision = 0;
@@ -1083,7 +1083,7 @@ shf_vfprintf(shf, fmt, args)
 			char *p;
 
 			/*
-			 *	This could proabably be done better,
+			 *	This could probably be done better,
 			 *  but it seems to work.  Note that gcvt()
 			 *  is not used, as you cannot tell it to
 			 *  not strip the zeros.
@@ -1103,7 +1103,7 @@ shf_vfprintf(shf, fmt, args)
 			 *  This is the same as
 			 *	expo = ceil(log10(fpnum))
 			 *  but doesn't need -lm.  This is an
-			 *  aproximation as expo is rounded up.
+			 *  approximation as expo is rounded up.
 			 */
 			(void) frexp(fpnum, &expo);
 			expo = my_ceil(expo / LOG2_10);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.26 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: exec.c,v 1.27 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  * execute command tree
@@ -832,7 +832,7 @@ scriptexec(tp, ap)
 		} else {
 		        /* Use ksh documented shell default if present
 			 * else use OS2_SHELL which is assumed to need
-			 * the /c option and '\' as dir separater.
+			 * the /c option and '\' as dir separator.
 			 */
 		         char *p = shell;
 

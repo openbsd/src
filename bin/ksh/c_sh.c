@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.15 2003/01/04 22:36:07 deraadt Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.16 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -305,7 +305,7 @@ c_read(wp)
 	 * make sure the other side of the pipe is closed first.  This allows
 	 * the detection of eof.
 	 *
-	 * This is not compatiable with at&t ksh... the fd is kept so another
+	 * This is not compatible with at&t ksh... the fd is kept so another
 	 * coproc can be started with same output, however, this means eof
 	 * can't be detected...  This is why it is closed here.
 	 * If this call is removed, remove the eof check below, too.

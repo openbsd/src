@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.11 2000/11/21 23:12:04 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.12 2003/02/28 09:45:09 jmc Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -437,7 +437,7 @@ getint(vp, nump)
 		return vp->type;
 	}
 	s = vp->val.s + vp->type;
-	if (s == NULL)	/* redundent given initial test */
+	if (s == NULL)	/* redundant given initial test */
 		s = null;
 	base = 10;
 	num = 0;
@@ -625,7 +625,7 @@ typeset(var, set, clr, field, base)
 	if (*val == '=')
 		tvar = str_nsave(var, val++ - var, ATEMP);
 	else {
-		/* Importing from original envirnment: must have an = */
+		/* Importing from original environment: must have an = */
 		if (set & IMPORT)
 			return NULL;
 		tvar = (char *) var;
@@ -696,7 +696,7 @@ typeset(var, set, clr, field, base)
 			if (fake_assign) {
 				if (!setstr(t, s, KSH_RETURN_ERROR)) {
 					/* Somewhat arbitrary action here:
-					 * zap contents of varibale, but keep
+					 * zap contents of variable, but keep
 					 * the flag settings.
 					 */
 					ok = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.15 2002/06/09 05:47:27 todd Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.16 2003/02/28 09:45:09 jmc Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -361,7 +361,7 @@ c_print(wp)
 				case '0':
 					/* Look for an octal number: can have
 					 * three digits (not counting the
-					 * leading 0).  Truely burnt.
+					 * leading 0).  Truly burnt.
 					 */
 					c = 0;
 					for (i = 0; i < 3; i++) {
@@ -653,7 +653,7 @@ c_typeset(wp)
 			break;
 		  case 'p': /* posix export/readonly -p flag.
 			     * typset -p is the same as typeset (in pdksh);
-			     * here for compatability with ksh93.
+			     * here for compatibility with ksh93.
 			     */
 			pflag = 1;
 			break;
