@@ -14,7 +14,7 @@ Adds an identity to the authentication server, or removes an identity.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-add.c,v 1.8 1999/11/02 19:42:36 markus Exp $");
+RCSID("$Id: ssh-add.c,v 1.9 1999/11/14 17:53:48 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -57,8 +57,8 @@ add_file(AuthenticationConnection *ac, const char *filename)
 {
   RSA *key;
   RSA *public_key;
-  char *saved_comment, *comment, *pass;
-  int first;
+  char *saved_comment, *comment;
+  int success;
   
   key = RSA_new();
   public_key = RSA_new();
@@ -68,40 +68,30 @@ add_file(AuthenticationConnection *ac, const char *filename)
       return;
     }
   RSA_free(public_key);
-  
-  pass = xstrdup("");
-  first = 1;
-  while (!load_private_key(filename, pass, key, &comment))
-    {
-      /* Free the old passphrase. */
+
+  /* At first, try empty passphrase */
+  success = load_private_key(filename, "", key, &comment);
+  if (!success) {
+    printf("Need passphrase for %s (%s).\n", filename, saved_comment);
+    if (!isatty(STDIN_FILENO)){
+      xfree(saved_comment);
+      return;
+    }
+    for (;;) {
+      char *pass = read_passphrase("Enter passphrase: ", 1);
+      if (strcmp(pass, "") == 0){
+        xfree(pass);
+        xfree(saved_comment);
+        return;
+      }
+      success = load_private_key(filename, pass, key, &comment);
       memset(pass, 0, strlen(pass));
       xfree(pass);
-
-      /* Ask for a passphrase. */
-      if (getenv("DISPLAY") && !isatty(fileno(stdin)))
-	{
-	      xfree(saved_comment);
-	      return;
-	}
-      else
-	{
-	  if (first)
-	    printf("Need passphrase for %s (%s).\n", filename, saved_comment);
-	  else
-	    printf("Bad passphrase.\n");
-	  pass = read_passphrase("Enter passphrase: ", 1);
-	  if (strcmp(pass, "") == 0)
-	    {
-	      xfree(saved_comment);
-	      xfree(pass);
-	      return;
-	    }
-	}
-      first = 0;
-    }
-  memset(pass, 0, strlen(pass));
-  xfree(pass);
-
+      if (success)
+	break;
+      printf("Bad passphrase.\n");
+    } 
+  }
   xfree(saved_comment);
 
   if (ssh_add_identity(ac, key, comment))
