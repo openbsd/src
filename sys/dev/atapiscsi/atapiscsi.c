@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.51 2001/07/31 07:07:00 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.52 2001/08/18 20:37:21 deraadt Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -95,7 +95,7 @@ enum atapi_drive_states {
 int wdcdebug_atapi_mask = 0;
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_atapi_mask & (level)) \
-		lprintf args
+		printf args
 #else
 #define WDCDEBUG_PRINT(args, level)
 #endif
