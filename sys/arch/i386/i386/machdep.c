@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.256 2003/12/19 22:42:13 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.257 2003/12/20 18:23:18 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1659,7 +1659,9 @@ intel686_cpu_setup(cpu_device, model, step)
 		else
 			 printf("%s: Enhanced SpeedStep disabled by BIOS\n",
 			     cpu_device);
-	}
+	} else if ((cpu_feature & (CPUID_ACPI | CPUID_TM)) ==
+	    (CPUID_ACPI | CPUID_TM))
+		p4tcc_init(model, step);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.53 2003/12/19 22:42:13 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.54 2003/12/20 18:23:18 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -195,6 +195,12 @@ int     est_setperf(void *, size_t *, void *, size_t);
 #if !defined(SMALL_KERNEL) && defined(I586_CPU)
 int	longrun_cpuspeed(void *, size_t *, void *, size_t);
 int	longrun_setperf(void *, size_t *, void *, size_t);
+#endif
+
+/* p4tcc.c */
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+void	p4tcc_init(int, int);
+int     p4tcc_setperf(void *, size_t *, void *, size_t);
 #endif
 
 /* npx.c */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.110 2003/12/18 23:46:19 tedu Exp $
+#	$OpenBSD: files.i386,v 1.111 2003/12/20 18:23:17 tedu Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -31,6 +31,7 @@ file	arch/i386/i386/i686_mem.c	mtrr
 file	arch/i386/i386/k6_mem.c		mtrr
 file	arch/i386/i386/microtime.s
 file	arch/i386/i386/ns_cksum.c	ns
+file	arch/i386/i386/p4tcc.c		!small_kernel & i686_cpu
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
