@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.11 2003/06/26 16:03:43 mickey Exp $	*/
+/*	$OpenBSD: tr.c,v 1.12 2004/05/09 03:20:20 deraadt Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tr.c	8.2 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: tr.c,v 1.11 2003/06/26 16:03:43 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tr.c,v 1.12 2004/05/09 03:20:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 
 		setup(string1, argv[0], &s1, cflag);
 		setup(string2, argv[1], &s2, 0);
-		
+
 		for (lastch = OOBCH; (ch = getchar()) != EOF;)
 			if (!string1[ch] && (!string2[ch] || lastch != ch)) {
 				lastch = ch;
@@ -251,9 +251,9 @@ setup(int *string, char *arg, STR *str, int cflag)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage:\ttr [-cs] string1 string2\n"
-			      "\ttr [-c] -d string1\n"
-			      "\ttr [-c] -s string1\n"
-			      "\ttr [-c] -ds string1 string2\n");
+	fprintf(stderr, "usage:\ttr [-cs] string1 string2\n"
+	    "\ttr [-c] -d string1\n"
+	    "\ttr [-c] -s string1\n"
+	    "\ttr [-c] -ds string1 string2\n");
 	exit(1);
 }
