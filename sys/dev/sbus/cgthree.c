@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.19 2002/07/25 19:04:46 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.20 2002/07/30 18:05:58 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -130,6 +130,7 @@ struct cgthree_softc {
 	int sc_width, sc_height, sc_depth, sc_linebytes;
 	union bt_cmap sc_cmap;
 	struct rasops_info sc_rasops;
+	u_int sc_mode;
 };
 
 struct wsscreen_descr cgthree_stdscreen = {
@@ -309,7 +310,7 @@ cgthreeattach(parent, self, aux)
 		int *ccolp, *crowp;
 
 		cgthree_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-		cgthree_setcolor(sc, 255, 255, 255, 255);
+		cgthree_setcolor(sc, 255, 0, 0, 0);
 		cgthree_setcolor(sc, WSCOL_RED, 255, 0, 0);
 		cgthree_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
 		cgthree_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
@@ -359,6 +360,9 @@ cgthree_ioctl(v, cmd, data, flags, p)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		break;
+	case WSDISPLAYIO_SMODE:
+		sc->sc_mode = *(u_int *)data;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -454,13 +458,28 @@ cgthree_mmap(v, offset, prot)
 {
 	struct cgthree_softc *sc = v;
 
-	if (offset & PGOFSET)
+	if (offset & PGOFSET || offset < 0)
 		return (-1);
 
-	if (offset >= 0 && offset < (sc->sc_linebytes * sc->sc_height))
+	switch (sc->sc_mode) {
+	case WSDISPLAYIO_MODE_MAPPED:
+		if (offset >= NOOVERLAY)
+			offset -= NOOVERLAY;
+		else if (offset >= START)
+			offset -= START;
+		else
+			offset = 0;
+		if (offset >= sc->sc_linebytes * sc->sc_height)
+			return (-1);
 		return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
 		    CGTHREE_VID_OFFSET + offset, prot, BUS_SPACE_MAP_LINEAR));
-
+	case WSDISPLAYIO_MODE_DUMBFB:
+		if (offset < (sc->sc_linebytes * sc->sc_height))
+			return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
+			    CGTHREE_VID_OFFSET + offset, prot,
+			    BUS_SPACE_MAP_LINEAR));
+		break;
+	}
 	return (-1);
 }
 
