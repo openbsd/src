@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.41 2003/04/30 12:30:27 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.42 2003/05/24 18:12:12 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -295,10 +295,12 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 				if (buffer.addrs[i].pfra_fback == PFR_FB_MATCH)
 					print_addrx(buffer.addrs+i, NULL,
 					    opts & PF_OPT_USEDNS);
-		if (opts & PF_OPT_VERBOSE2)
+		if (opts & PF_OPT_VERBOSE2) {
 			for (i = 0; i < size; i++)
 				print_addrx(buffer2.addrs+i, buffer.addrs+i,
 				    opts & PF_OPT_USEDNS);
+			free(buffer2.addrs);
+		}
 		if (nmatch < size)
 			return (2);
 	} else if (!strcmp(command, "zero")) {
@@ -309,6 +311,9 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		xprintf(opts, "%d table/stats cleared", nzero);
 	} else
 		assert(0);
+	if (buffer.caddr)
+		free(buffer.caddr);
+	size = msize = 0;
 	return (0);
 }
 
