@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 1999/09/10 19:55:15 mickey Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 1999/11/02 05:50:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -2317,10 +2317,16 @@ db_disasm(loc, flag)
 	register const struct inst *i;
 	register const struct majoropcode *m;
 	register u_int ext;
-	int instruct = *(int *)loc;
+	int instruct;
 	OFS ofs = 0;
 
 	iExInit();
+
+	if (USERMODE(loc))
+		copyin((caddr_t)(loc &~ HPPA_PC_PRIV_MASK),
+		    &instruct, sizeof(instruct));
+	else
+		instruct = *(int *)loc;
 
 	m = &majopcs[Opcode(instruct)];
 	ext = OpExt(instruct, m);
