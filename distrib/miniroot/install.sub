@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.280 2002/12/01 23:19:33 krw Exp $
+#	$OpenBSD: install.sub,v 1.281 2002/12/03 00:58:35 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -539,6 +539,56 @@ inet_info () {
 		/inet/s/inet// p'
 }
 
+# Construct etc/dhclient.conf and issue DHCP request. Return FALSE if
+# no IP address or 0.0.0.0 assigned to $1.
+#
+# $1 == interface
+# $2 == hostname (optional). 
+dhcp_request () {
+	local _ifs=$1 _hostname=$2
+
+	echo "initial-interval 1;" > /etc/dhclient.conf
+
+	if [[ -n $_hostname ]]; then
+		echo "send host-name \"$_hostname\";" >> /etc/dhclient.conf
+		echo "Issuing hostname-associated DHCP request for $_ifs."
+	else
+		echo "Issuing free-roaming DHCP request for $_ifs."
+	fi
+ 
+	cat >> /etc/dhclient.conf << __EOT
+request subnet-mask,
+	broadcast-address,
+	routers,
+	domain-name,
+	domain-name-servers,
+	host-name;
+__EOT
+ 
+	cat >> /etc/resolv.conf.tail << __EOT
+lookup file bind
+__EOT
+ 
+	kill_dhclient
+	dhclient -1 $_ifs
+ 
+	set -- $(inet_info $_ifs)
+ 
+	if [[ $1 == UP && $2 == "0.0.0.0" ]]; then
+		ifconfig $_ifs delete down
+		rm /etc/dhclient.conf /etc/resolv.conf.tail
+		return 1
+ 	fi
+ 
+	# Move configuration files to where they will be copied to the
+	# installed system. Overwrites configuration information from last
+	# successful dhcp attempt.
+	mv /etc/dhclient.conf /tmp/dhclient.conf
+	mv /etc/resolv.conf.tail /tmp/resolv.conf.tail
+
+	return 0
+}
+
 configure_ifs() {
 	local _up _if_name=$1 _if_ip _if_mask
 	local _if_symname _if_extra
@@ -593,50 +643,16 @@ __EOT
 		esac
 	fi
 
-	# Configure the interface. If it
-	# succeeds, add it to the permanent
+	# Apply any specified media options immediately.
+	ifconfig ${_if_name} down ${_if_extra} || return 1
+
+	# Configure the interface. If it succeeds, add it to the permanent
 	# network configuration info.
 	if [ "$_if_ip" = "dhcp" ]; then
-		ifconfig ${_if_name} down ${_if_extra}
-		cat > /etc/dhclient.conf << __EOT
-initial-interval 1;
-send host-name "$HOSTNAME";
-request subnet-mask, broadcast-address, routers,
-	domain-name, domain-name-servers, host-name;
-__EOT
-		kill_dhclient
-		dhclient -1 ${_if_name}
-
-		set -- $(inet_info $_ifs)
-		if [ $1 = "UP" -a $2 = "0.0.0.0" ]; then
-			echo "hostname-associated DHCP attempt for $_if_name failed..."
-			ifconfig $_if_name delete down
-
-			cat > /etc/dhclient.conf << __EOT
-initial-interval 1;
-request subnet-mask, broadcast-address, routers,
-	domain-name, domain-name-servers, host-name;
-__EOT
-			kill_dhclient
-			dhclient -1 ${_if_name}
-
-			set -- $(inet_info $_ifs)
-			if [ $1 = "UP" -a $2 = "0.0.0.0" ]; then
-				echo "free-roaming DHCP attempt for $_if_name failed."
-				ifconfig $_if_name delete down
-				return 1
-			else
-				echo "DHCP attempt for $_if_name successful."
-				addifconfig ${_if_name} ${_if_symname} ${_if_ip}
-				return 0
-			fi
-		else
-			echo "DHCP configuration of $_if_name successful."
-			addifconfig ${_if_name} ${_if_symname} ${_if_ip}
-			return 0
-		fi
+		dhcp_request $_if_name $_if_symname || dhcp_request $_if_name || return 1
+		addifconfig ${_if_name} ${_if_symname} ${_if_ip}
+		return 0
 	else
-		ifconfig ${_if_name} down
 		if ifconfig ${_if_name} inet \
 			${_if_ip} \
 			netmask ${_if_mask} ${_if_extra} up

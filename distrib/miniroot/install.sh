@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.124 2002/11/28 04:50:45 krw Exp $
+#	$OpenBSD: install.sh,v 1.125 2002/12/03 00:58:35 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -359,22 +359,20 @@ install_sets
 set_machdep_apertureallowed
 
 # Copy configuration files to /mnt/etc.
-cfgfiles="fstab hostname.* mygate resolv.conf kbdtype sysctl.conf"
+cfgfiles="fstab hostname.* dhclient.conf resolv.conf resolv.conf.tail kbdtype sysctl.conf"
 
 echo -n "Saving configuration files..."
-if [ -f /etc/dhclient.conf ]; then
-	cat /etc/dhclient.conf >> /mnt/etc/dhclient.conf
-	echo "lookup file bind" > /mnt/etc/resolv.conf.tail
-	cp /var/db/dhclient.leases /mnt/var/db/.
-	# Don't install mygate for dhcp installations.
-	# Note that mygate should not be the first or last file
-	# in cfgfiles or this won't work.
-	cfgfiles=`echo $cfgfiles | sed -e 's/ mygate / /'`
+cd /tmp
+
+if [ -f dhclient.conf ]; then
+	# Save any leases obtained during install.
+	mv /var/db/dhclient.leases /mnt/var/db/.
+else
+	# Install mygate for non-dhcp installations.
+	mv mygate /mnt/etc/.
 fi
 
 hostname > /mnt/etc/myname
-
-cd /tmp
 
 # Try to retain useful leading comments in /etc/hosts file.
 grep "^#" /mnt/etc/hosts > hosts.comment
@@ -382,7 +380,7 @@ cat hosts.comment hosts > /mnt/etc/hosts
 
 for file in $cfgfiles; do
 	if [ -f $file ]; then
-		cp $file /mnt/etc/$file
+		cp $file /mnt/etc/.
 		rm -f $file
 	fi
 done
