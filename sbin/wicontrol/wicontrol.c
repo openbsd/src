@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.5 2000/02/24 17:09:55 ho Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.6 2000/02/26 23:36:28 ho Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.5 2000/02/24 17:09:55 ho Exp $";
+	"@(#) $Id: wicontrol.c,v 1.6 2000/02/26 23:36:28 ho Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -74,13 +74,13 @@ static void wi_setval		__P((char *, struct wi_req *));
 static void wi_printstr		__P((struct wi_req *));
 static void wi_setstr		__P((char *, int, char *));
 static void wi_setbytes		__P((char *, int, char *, int));
-static void wi_setword		__P((char *, int, int));
+static void wi_setword		__P((char *, int, char *));
 static void wi_sethex		__P((char *, int, char *));
 static void wi_printwords	__P((struct wi_req *));
 static void wi_printbool	__P((struct wi_req *));
 static void wi_printhex		__P((struct wi_req *));
 static void wi_dumpinfo		__P((char *));
-static void wi_setkeys		__P((char *, char *, int));
+static void wi_setkeys		__P((char *, int, char *));
 static void wi_printkeys	__P((struct wi_req *));
 static void usage		__P((char *));
 
@@ -167,9 +167,6 @@ void wi_setstr(iface, code, str)
 {
 	struct wi_req		wreq;
 
-	if (iface == NULL)
-		errx(1, "must specify interface name");
-
 	if (str == NULL)
 		errx(1, "must specify string");
 
@@ -196,9 +193,6 @@ void wi_setbytes(iface, code, bytes, len)
 {
 	struct wi_req		wreq;
 
-	if (iface == NULL)
-		errx(1, "must specify interface name");
-
 	bzero((char *)&wreq, sizeof(wreq));
 
 	wreq.wi_type = code;
@@ -213,18 +207,16 @@ void wi_setbytes(iface, code, bytes, len)
 void wi_setword(iface, code, word)
 	char			*iface;
 	int			code;
-	int			word;
+	char                    *word;
 {
 	struct wi_req		wreq;
-
-	if (iface == NULL)
-		errx(1, "must specify interface name");
+	int                     value = strtol(word, NULL, 10);
 
 	bzero((char *)&wreq, sizeof(wreq));
 
 	wreq.wi_type = code;
 	wreq.wi_len = 2;
-	wreq.wi_val[0] = word;
+	wreq.wi_val[0] = value;
 
 	wi_setval(iface, &wreq);
 
@@ -290,17 +282,14 @@ static void wi_str2key(s, k)
         return;
 }
 
-static void wi_setkeys(iface, key, idx)
+static void wi_setkeys(iface, idx, key)
         char                    *iface;
-        char                    *key;
         int                     idx;
+        char                    *key;
 {
         struct wi_req           wreq;
         struct wi_ltv_keys      *keys;
         struct wi_key           *k;
-
-	if (iface == NULL)
-		errx(1, "must specify interface name");
 
         bzero((char *)&wreq, sizeof(wreq));
         wreq.wi_len = WI_MAX_DATALEN;
@@ -548,9 +537,6 @@ static void wi_dumpstats(iface)
 	struct wi_req		wreq;
 	struct wi_counters	*c;
 
-	if (iface == NULL)
-		errx(1, "must specify interface name");
-
 	bzero((char *)&wreq, sizeof(wreq));
 	wreq.wi_len = WI_MAX_DATALEN;
 	wreq.wi_type = WI_RID_IFACE_STATS;
@@ -616,16 +602,38 @@ static void usage(p)
 	exit(1);
 }
 
+struct wi_func {
+        int   key;
+        void (*function) (char *, int, char *);
+        int   wi_code;
+        char  *optarg;
+};
+
+static struct wi_func wi_opt[] = {
+        { 'c', wi_setword, WI_RID_CREATE_IBSS, NULL },
+        { 'd', wi_setword, WI_RID_MAX_DATALEN, NULL },
+        { 'f', wi_setword, WI_RID_OWN_CHNL, NULL },
+        { 'p', wi_setword, WI_RID_PORTTYPE, NULL },
+        { 'r', wi_setword, WI_RID_RTS_THRESH, NULL },
+        { 't', wi_setword, WI_RID_TX_RATE, NULL },
+        { 'n', wi_setstr, WI_RID_DESIRED_SSID, NULL },
+        { 's', wi_setstr, WI_RID_NODENAME, NULL },
+        { 'm', wi_sethex, WI_RID_MAC_NODE, NULL },
+        { 'q', wi_setstr, WI_RID_OWN_SSID, NULL },
+        { 'T', wi_setword, WI_RID_TX_CRYPT_KEY, NULL },
+        { 'S', wi_setword, WI_RID_MAX_SLEEP, NULL },
+        { 'P', wi_setword, WI_RID_PM_ENABLED, NULL },
+        { 'e', wi_setword, WI_RID_ENCRYPTION, NULL },
+        { 'k', wi_setkeys, 0, NULL },
+        { 0, NULL, 0, NULL }
+};
+
 int main(argc, argv)
 	int			argc;
 	char			*argv[];
 {
-	int			ch;
 	char			*iface = NULL;
-	char			*p = argv[0];
-	char                    *key = NULL;
-	int                     modifier = 0;
-	int                     ok_to_exit = 0;
+	int                     ch, p, dumpstats = 0;
 
 	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
@@ -635,94 +643,51 @@ int main(argc, argv)
 
 	while((ch = getopt(argc, argv,
 	    "hoc:d:f:p:r:q:t:n:s:i:m:P:S:T:e:k:v:")) != -1) {
+	        for (p = 0; ch && wi_opt[p].key; p++)
+		        if (ch == wi_opt[p].key) {
+			        wi_opt[p].optarg = optarg;
+				if (ch == 'T')	/* key 1-4/0-3 kludge */
+				        (*optarg)--;
+				ch = 0;
+			}
 		switch(ch) {
+		case 0:
+		        break;
 		case 'o':
-			wi_dumpstats(iface);
-			exit(0);
+			dumpstats ++;
 			break;
 		case 'i':
-			if (iface == NULL)
-				iface = optarg;
-			break;
-		case 'c':
-			wi_setword(iface, WI_RID_CREATE_IBSS, atoi(optarg));
-			ok_to_exit ++;
-			break;
-		case 'd':
-			wi_setword(iface, WI_RID_MAX_DATALEN, atoi(optarg));
-			ok_to_exit ++;
-			break;
-		case 'f':
-			wi_setword(iface, WI_RID_OWN_CHNL, atoi(optarg));
-			ok_to_exit ++;
-			break;
-		case 'p':
-			wi_setword(iface, WI_RID_PORTTYPE, atoi(optarg));
-			ok_to_exit ++;
-			break;
-		case 'r':
-			wi_setword(iface, WI_RID_RTS_THRESH, atoi(optarg));
-			ok_to_exit ++;
-			break;
-		case 't':
-			wi_setword(iface, WI_RID_TX_RATE, atoi(optarg));
-			ok_to_exit ++;
-			break;
-		case 'n':
-			wi_setstr(iface, WI_RID_DESIRED_SSID, optarg);
-			ok_to_exit ++;
-			break;
-		case 's':
-			wi_setstr(iface, WI_RID_NODENAME, optarg);
-			ok_to_exit ++;
-			break;
-		case 'm':
-			wi_sethex(iface, WI_RID_MAC_NODE, optarg);
-			ok_to_exit ++;
-			break;
-		case 'q':
-			wi_setstr(iface, WI_RID_OWN_SSID, optarg);
-			ok_to_exit ++;
-			break;
-		case 'S':
-			wi_setword(iface, WI_RID_MAX_SLEEP, atoi(optarg));
-			ok_to_exit ++;
-			break;
-		case 'P':
-			wi_setword(iface, WI_RID_PM_ENABLED, atoi(optarg));
-			ok_to_exit ++;
-			break;
-		case 'T':
-			wi_setword(iface, WI_RID_TX_CRYPT_KEY,
-				   atoi(optarg) - 1);
-			ok_to_exit ++;
-			break;
-		case 'k':
-		        key = optarg;
-			break;
-		case 'e':
-		        wi_setword(iface, WI_RID_ENCRYPTION, atoi(optarg));
-			ok_to_exit ++;
+		        if (iface == NULL)
+			        iface = optarg;
 			break;
 		case 'v':
-		        modifier = atoi(optarg);
-			modifier--;
-			break;
+ 		        for (p = 0; wi_opt[p].key; p++)
+			        if (wi_opt[p].key == 'k') {
+				        wi_opt[p].wi_code = strtol(optarg, 
+								   NULL, 10);
+					wi_opt[p].wi_code--; /* 1-4/0-3 */
+					break;
+				}
+		       	break;
 		case 'h':
 		default:
-			usage(p);
+		        usage(argv[0]);
 			break;
 		}
 	}
 
-	if (ok_to_exit)
-	        exit(0);
-
 	if (iface == NULL)
-		usage(p);
+		usage(argv[0]);
 
-	if (key != NULL)
-	        wi_setkeys(iface, key, modifier);
+	if (dumpstats) {
+	        wi_dumpstats(iface);
+		exit(0);
+	}
+
+	for (p = 0; wi_opt[p].key; p++)
+	        if (wi_opt[p].optarg != NULL)
+		        wi_opt[p].function(iface, wi_opt[p].wi_code, 
+					   wi_opt[p].optarg);
 
 	wi_dumpinfo(iface);
 
