@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.53 2002/03/17 21:48:06 angelos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.54 2002/03/17 21:50:59 angelos Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -62,9 +62,6 @@
 #include "key.h"
 #include "ipsec.h"
 #include "ipsec_num.h"
-
-/* Outfile for detailed SA information. */
-#define SA_FILE "/var/run/isakmpd_sa"
 
 /* Initial number of bits from the cookies used as hash.  */
 #define INITIAL_BUCKET_BITS 6

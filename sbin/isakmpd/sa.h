@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.26 2002/03/17 21:48:06 angelos Exp $	*/
+/*	$OpenBSD: sa.h,v 1.27 2002/03/17 21:50:59 angelos Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -204,6 +204,9 @@ struct sa {
 
 /* This SA should always be actively renegotiated (with us as initiator).  */
 #define SA_FLAG_ACTIVE_ONLY	0x20
+
+/* Outfile for detailed SA information. */
+#define SA_FILE "/var/run/isakmpd_sa"
 
 extern void proto_free (struct proto *proto);
 extern int sa_add_transform (struct sa *, struct payload *, int,
