@@ -282,7 +282,7 @@ state_expire(void)
 
      tm = time(NULL);
      while (tmp != NULL) {
-	  if (tmp->retries < max_retries &&
+	  if ((tmp->retries < max_retries || tmp->resource) &&
 	      (tmp->lifetime == -1 || tmp->lifetime > tm)) {
 	       tmp = tmp->next;
 	       continue;

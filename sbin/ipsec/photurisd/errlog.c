@@ -31,31 +31,11 @@
  */
 
 /*
- * $Header: /home/cvs/src/sbin/ipsec/photurisd/Attic/errlog.c,v 1.4 1997/08/24 18:30:33 millert Exp $
- *
- * $Author: millert $
- *
- * $Log: errlog.c,v $
- * Revision 1.4  1997/08/24 18:30:33  millert
- * #include <string.h> for strlen().
- *
- * Revision 1.3  1997/07/25 19:13:20  mickey
- * #if __STDC__ --> #ifdef __STDC__
- *
- * Revision 1.2  1997/07/23 12:28:47  provos
- * tunnel,lifetimes,hostname via startkey/startup
- * errors to stderr before daemon, to syslog afterwards
- *
- * Revision 1.1.1.1  1997/07/18 22:48:49  provos
- * initial import of the photuris keymanagement daemon
- *
- * Revision 1.1  1997/05/22 17:34:16  provos
- * Initial revision
- *
+ * $OpenBSD: errlog.c,v 1.5 1997/09/03 08:44:41 provos Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: errlog.c,v 1.4 1997/08/24 18:30:33 millert Exp $";
+static char rcsid[] = "$Id: errlog.c,v 1.5 1997/09/03 08:44:41 provos Exp $";
 #endif
 
 #define _ERRLOG_C_
