@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.3 2005/03/07 19:41:07 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.4 2005/03/08 00:20:39 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -227,7 +227,8 @@ cvs_admin(int argc, char **argv)
 				return (EX_PROTOCOL);
 		}
 
-		if ((comment != NULL) && (cvs_sendarg(root, comment, 0) < 0))
+		if ((comment != NULL) && ((cvs_sendarg(root, "-c", 0) < 0) ||
+		    (cvs_sendarg(root, comment, 0) < 0)))
 			return (EX_PROTOCOL);
 
 		if (runflags & FLAG_DELUSER)  {
