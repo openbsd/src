@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.9 1995/10/16 05:28:16 mycroft Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.3 1996/02/20 13:35:39 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,6 +33,16 @@
 
 #include <machine/stdarg.h>
 
+#include <dev/cons.h>
+
+#include <machine/db_machdep.h>
+
+#include <ddb/db_command.h>
+#include <ddb/db_output.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
 /*
  *	Character output - tracks position in line.
  *	To do this correctly, we should know how wide
@@ -64,7 +74,9 @@ int	db_tab_stop_width = 8;		/* how wide are tab stops? */
 int	db_max_line = DB_MAX_LINE;	/* output max lines */
 int	db_max_width = DB_MAX_WIDTH;	/* output line width */
 
-extern void	db_check_interrupt();
+static void db_more __P((void));
+static char *db_ksprintn __P((u_long, int, int *));
+static void db_printf_guts __P((const char *, va_list));
 
 /*
  * Force pending whitespace.
@@ -124,6 +136,7 @@ db_more()
 /*
  * Output character.  Buffer whitespace.
  */
+void
 db_putchar(c)
 	int	c;		/* character to output */
 {
@@ -187,11 +200,14 @@ extern int	db_radix;
 
 /*VARARGS1*/
 void
-#ifdef __STDC__
-db_printf(char *fmt, ...)
+#if __STDC__
+db_printf(const char *fmt, ...)
 #else
 db_printf(fmt, va_alist)
-	char *fmt;
+/*###207 [cc] warning: type of `va_alist' defaults to `int'%%%*/
+	const char *fmt;
+/*###208 [cc] parse error before `va_dcl'%%%*/
+	va_dcl
 #endif
 {
 	va_list	listp;
@@ -204,11 +220,12 @@ db_printf(fmt, va_alist)
 
 /*VARARGS1*/
 void
-#ifdef __STDC__
-kdbprintf(char *fmt, ...)
+#if __STDC__
+kdbprintf(const char *fmt, ...)
 #else
 kdbprintf(fmt, va_alist)
 	char *fmt;
+	va_dcl
 #endif
 {
 	va_list	listp;
@@ -249,6 +266,7 @@ db_ksprintn(ul, base, lenp)
 	return (p);
 }
 
+static void
 db_printf_guts(fmt, ap)
 	register const char *fmt;
 	va_list ap;
@@ -299,13 +317,14 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		case 'b':
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
-			for (p = db_ksprintn(ul, *p++, NULL); ch = *p--;)
+			for (p = db_ksprintn(ul, *p++, NULL);
+			     (ch = *p--) !='\0';)
 				db_putchar(ch);
 
 			if (!ul)
 				break;
 
-			for (tmp = 0; n = *p++;) {
+			for (tmp = 0; (n = *p++) != '\0';) {
 				if (ul & (1 << (n - 1))) {
 					db_putchar(tmp ? ',' : '<');
 					for (; (n = *p) > ' '; ++p)
@@ -333,7 +352,7 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 			if (!ladjust && width > 0)
 				while (width--)
 					db_putchar (padc);
-			while (ch = *p++)
+			while ((ch = *p++) != '\0')
 				db_putchar(ch);
 			if (ladjust && width > 0)
 				while (width--)
@@ -409,7 +428,7 @@ number:			p = (char *)db_ksprintn(ul, base, &tmp);
 				while (width--)
 					db_putchar(padc);
 
-			while (ch = *p--)
+			while ((ch = *p--) != '\0')
 				db_putchar(ch);
 			break;
 		default:

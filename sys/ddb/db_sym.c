@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.11 1995/11/24 22:13:08 cgd Exp $	*/
+/*	$OpenBSD: db_sym.c,v 1.4 1996/02/20 13:35:42 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,14 +32,9 @@
 #include <machine/db_machdep.h>
 
 #include <ddb/db_sym.h>
-
-/*
- * We import from the symbol-table dependent routines:
- */
-extern db_sym_t	X_db_lookup();
-extern db_sym_t	X_db_search_symbol();
-extern boolean_t X_db_line_at_pc();
-extern void	X_db_symbol_values();
+#include <ddb/db_output.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_command.h>
 
 /*
  * Multiple symbol tables
@@ -56,7 +51,7 @@ db_symtab_t	db_symtabs[MAXNOSYMTABS] = {{0,},};
 
 db_symtab_t	*db_last_symtab;
 
-db_sym_t	db_lookup();	/* forward */
+static char *db_qualify __P((db_sym_t, char *));
 
 /*
  * Add symbol table, with given name, to list of symbol tables.
@@ -75,7 +70,7 @@ db_add_symbol_table(start, end, name, ref)
 			break;
 	}
 	if (slot >= MAXNOSYMTABS) {
-		printf ("No slots left for %s symbol table", name);
+		db_printf("No slots left for %s symbol table", name);
 		return(-1);
 	}
 
@@ -102,7 +97,7 @@ db_del_symbol_table(name)
 			break;
 	}
 	if (slot >= MAXNOSYMTABS) {
-		printf ("Unable to find symbol table slot for %s.", name);
+		db_printf("Unable to find symbol table slot for %s.", name);
 		return;
 	}
 
@@ -113,7 +108,7 @@ db_del_symbol_table(name)
 }
 
 /*
- *  db_qualify("vm_map", "bsd") returns "bsd:vm_map".
+ *  db_qualify("vm_map", "netbsd") returns "netbsd:vm_map".
  *
  *  Note: return value points to static data whose content is
  *  overwritten by each call... but in practice this seems okay.
@@ -129,11 +124,11 @@ db_qualify(sym, symtabname)
 
 	db_symbol_values(sym, &symname, 0);
 	s = tmp;
-	while (*s++ = *symtabname++) {
-	}
+	while ((*s++ = *symtabname++) != '\0')
+		;
 	s[-1] = ':';
-	while (*s++ = *symname++) {
-	}
+	while ((*s++ = *symname++) != '\0')
+		;
 	return tmp;
 }
 
@@ -142,7 +137,7 @@ boolean_t
 db_eqname(src, dst, c)
 	char *src;
 	char *dst;
-	char c;
+	int c;
 {
 	if (!strcmp(src, dst))
 	    return (TRUE);
@@ -324,10 +319,9 @@ db_symbol_values(sym, namep, valuep)
  * The variable db_lastsym is used instead of "end" in case we
  * add support for symbols in loadable driver modules.
  */
-
 extern char end[];
-unsigned long	db_lastsym = (long)end;
-db_expr_t	db_maxoff = 0x10000000;
+unsigned int	db_lastsym = (unsigned long)end;
+db_expr_t db_maxoff = 0x10000000;
 
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.h,v 1.6 1994/10/09 08:30:06 mycroft Exp $	*/
+/*	$OpenBSD: db_lex.h,v 1.2 1996/02/20 13:35:39 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -36,9 +36,10 @@ int db_read_line __P((void));
 void db_flush_line __P((void));
 int db_read_char __P((void));
 void db_unread_char __P((int));
-int db_read_token __P((void));
 void db_unread_token __P((int));
+int db_read_token __P((void));
 void db_flush_lex __P((void));
+int db_lex __P((void));
 
 int	db_tok_number;
 #define	TOK_STRING_SIZE		120 

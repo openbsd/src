@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.8 1994/12/02 06:07:37 gwr Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.2 1996/02/20 13:35:44 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,7 +40,11 @@
 #include <ddb/db_run.h>
 #include <ddb/db_command.h>
 #include <ddb/db_break.h>
+#include <ddb/db_output.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
 
+void
 db_trap(type, code)
 	int	type, code;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.h,v 1.8 1994/10/09 08:41:20 mycroft Exp $	*/
+/*	$OpenBSD: db_watch.h,v 1.2 1996/02/20 13:35:47 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,12 +42,16 @@ typedef struct db_watchpoint {
 	struct db_watchpoint *link;	/* link in in-use or free chain */
 } *db_watchpoint_t;
 
-boolean_t db_find_watchpoint __P((vm_map_t, db_addr_t, db_regs_t *));
-void db_set_watchpoints __P((void));
-void db_clear_watchpoints __P((void));
-
+db_watchpoint_t db_watchpoint_alloc __P((void));
+void db_watchpoint_free __P((db_watchpoint_t));
 void db_set_watchpoint __P((vm_map_t, db_addr_t, vm_size_t));
 void db_delete_watchpoint __P((vm_map_t, db_addr_t));
 void db_list_watchpoints __P((void));
+void db_deletewatch_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_watchpoint_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_listwatch_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_set_watchpoints __P((void));
+void db_clear_watchpoints __P((void));
+boolean_t db_find_watchpoint __P((vm_map_t, db_addr_t, db_regs_t *));
 
 #endif	_DDB_DB_WATCH_

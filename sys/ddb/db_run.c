@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.7 1994/10/09 08:30:08 mycroft Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.2 1996/02/20 13:35:41 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -41,6 +41,10 @@
 #include <ddb/db_lex.h>
 #include <ddb/db_break.h>
 #include <ddb/db_access.h>
+#include <ddb/db_watch.h>
+#include <ddb/db_output.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
 
 int	db_run_mode;
 #define	STEP_NONE	0
@@ -255,7 +259,6 @@ db_set_single_step(regs)
 	 */
 	inst = db_get_value(pc, sizeof(int), FALSE);
 	if (inst_branch(inst) || inst_call(inst)) {
-	    extern unsigned getreg_val();
 
 	    brpc = branch_taken(inst, pc, getreg_val, regs);
 	    if (brpc != pc) {	/* self-branches are hopeless */

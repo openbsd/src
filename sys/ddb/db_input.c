@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.6 1994/10/26 17:57:50 mycroft Exp $	*/
+/*	$OpenBSD: db_input.c,v 1.2 1996/02/20 13:35:37 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,7 +32,14 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
+#include <machine/db_machdep.h>
+
 #include <ddb/db_output.h>
+#include <ddb/db_command.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
+#include <dev/cons.h>
 
 /*
  * Character input and editing.
@@ -52,6 +59,8 @@ char *	db_le;		/* one past last character */
 #define	isspace(c)	((c) == ' ' || (c) == '\t')
 #define	BLANK		' '
 #define	BACKUP		'\b'
+
+static int cnmaygetc __P((void));
 
 void
 db_putstring(s, count)
@@ -240,6 +249,7 @@ db_check_interrupt()
 	}
 }
 
+static int
 cnmaygetc ()
 {
 	return (-1);

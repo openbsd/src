@@ -1,4 +1,4 @@
-/*	$NetBSD: db_expr.c,v 1.4 1994/06/29 06:31:06 cgd Exp $	*/
+/*	$OpenBSD: db_expr.c,v 1.2 1996/02/20 13:35:35 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,6 +37,9 @@
 #include <ddb/db_lex.h>
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_variables.h>
 
 boolean_t
 db_term(valuep)

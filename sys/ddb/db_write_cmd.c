@@ -1,4 +1,4 @@
-/*	$NetBSD: db_write_cmd.c,v 1.5 1994/10/09 08:56:30 mycroft Exp $	*/
+/*	$OpenBSD: db_write_cmd.c,v 1.2 1996/02/20 13:35:48 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,6 +38,8 @@
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_output.h>
 
 /*
  * Write to file.
@@ -72,6 +74,7 @@ db_write_cmd(address, have_addr, count, modif)
 		size = 4;
 		break;
 	    default:
+		size = -1;
 		db_error("Unknown size\n");
 		/*NOTREACHED*/
 	}

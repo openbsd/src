@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.7 1994/10/09 08:56:28 mycroft Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.2 1996/02/20 13:35:45 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,6 +33,9 @@
 
 #include <ddb/db_lex.h>
 #include <ddb/db_variables.h>
+#include <ddb/db_command.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
 
 extern unsigned int	db_maxoff;
 
@@ -74,6 +77,7 @@ db_find_variable(varp)
 	}
 	db_error("Unknown variable\n");
 	/*NOTREACHED*/
+	return 0;
 }
 
 int
@@ -105,11 +109,12 @@ db_set_variable(value)
 }
 
 
+void
 db_read_variable(vp, valuep)
 	struct db_variable *vp;
 	db_expr_t	*valuep;
 {
-	int	(*func)() = vp->fcn;
+	int	(*func) __P((struct db_variable *, db_expr_t *, int)) = vp->fcn;
 
 	if (func == FCN_NULL)
 	    *valuep = *(vp->valuep);
@@ -117,11 +122,12 @@ db_read_variable(vp, valuep)
 	    (*func)(vp, valuep, DB_VAR_GET);
 }
 
+void
 db_write_variable(vp, valuep)
 	struct db_variable *vp;
 	db_expr_t	*valuep;
 {
-	int	(*func)() = vp->fcn;
+	int	(*func) __P((struct db_variable *, db_expr_t *, int)) = vp->fcn;
 
 	if (func == FCN_NULL)
 	    *(vp->valuep) = *valuep;
@@ -129,11 +135,15 @@ db_write_variable(vp, valuep)
 	    (*func)(vp, valuep, DB_VAR_SET);
 }
 
+/*ARGSUSED*/
 void
-db_set_cmd()
+db_set_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
 {
 	db_expr_t	value;
-	int	(*func)();
 	struct db_variable *vp;
 	int	t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.h,v 1.4 1994/06/29 06:31:24 cgd Exp $	*/
+/*	$OpenBSD: db_variables.h,v 1.2 1996/02/20 13:35:46 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -39,15 +39,22 @@ struct db_variable {
 	char	*name;		/* Name of variable */
 	int	*valuep;	/* value of variable */
 				/* function to call when reading/writing */
-	int	(*fcn)(/* db_variable *vp, db_expr_t *valuep, int op */);
+	int	(*fcn) __P((struct db_variable *, db_expr_t *, int));
 #define DB_VAR_GET	0
 #define DB_VAR_SET	1
 };
-#define	FCN_NULL	((int (*)())0)
+#define	FCN_NULL ((int (*) __P((struct db_variable *, db_expr_t *, int)))0)
 
 extern struct db_variable	db_vars[];	/* debugger variables */
 extern struct db_variable	*db_evars;
 extern struct db_variable	db_regs[];	/* machine registers */
 extern struct db_variable	*db_eregs;
+
+int db_find_variable __P((struct db_variable **));
+int db_get_variable __P((db_expr_t *));
+int db_set_variable __P((db_expr_t));
+void db_read_variable __P((struct db_variable *, db_expr_t *));
+void db_write_variable __P((struct db_variable *, db_expr_t *));
+void db_set_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 #endif	/* _DB_VARIABLES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.6 1994/10/09 08:19:41 mycroft Exp $	*/
+/*	$OpenBSD: db_sym.h,v 1.2 1996/02/20 13:35:43 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -75,8 +75,15 @@ int db_add_symbol_table __P((char *, char *, char *, char *));
 void db_del_symbol_table __P((char *));
 					/* remove a symbol table from list */
 
+boolean_t db_eqname __P((char *, char *, int));
+					/* strcmp, modulo leading char */
+
 int db_value_of_name __P((char *, db_expr_t *));
 					/* find symbol value given name */
+
+db_sym_t db_lookup __P((char *));
+
+boolean_t db_symbol_is_ambiguous __P((db_sym_t));
 
 db_sym_t db_search_symbol __P((db_addr_t, db_strategy_t, db_expr_t *));
 					/* find symbol given value */
@@ -92,8 +99,9 @@ void db_symbol_values __P((db_sym_t, char **, db_expr_t *));
 	db_symbol_values(db_search_symbol(val,DB_STGY_XTRN,offp),namep,0)
 					/* ditto, but no locals */
 
-int db_eqname __P((char *, char *, char));
-					/* strcmp, modulo leading char */
-
 void db_printsym __P((db_expr_t, db_strategy_t));
 					/* print closest symbol to a value */
+
+boolean_t db_line_at_pc __P((db_sym_t, char **, int *, db_expr_t));
+
+int db_sym_numargs __P((db_sym_t, int *, char **));

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.5 1994/10/09 08:19:32 mycroft Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.2 1996/02/20 13:35:32 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,10 +38,10 @@
 #include <machine/db_machdep.h>		/* type definitions */
 
 #include <ddb/db_lex.h>
-#include <ddb/db_break.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_break.h>
+#include <ddb/db_output.h>
 
 #define	NBREAKPOINTS	100
 struct db_breakpoint	db_break_table[NBREAKPOINTS];
@@ -286,8 +286,13 @@ db_breakpoint_cmd(addr, have_addr, count, modif)
 }
 
 /* list breakpoints */
+/*ARGSUSED*/
 void
-db_listbreak_cmd()
+db_listbreak_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
 {
 	db_list_breakpoints();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.15 1995/10/26 14:52:33 gwr Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.3 1996/02/20 13:35:33 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,22 +31,29 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>
 
 #include <vm/vm.h>
-
 #include <machine/db_machdep.h>		/* type definitions */
 
 #include <ddb/db_lex.h>
 #include <ddb/db_output.h>
 #include <ddb/db_command.h>
+#include <ddb/db_break.h>
+#include <ddb/db_watch.h>
+#include <ddb/db_run.h>
+#include <ddb/db_variables.h>
+#include <ddb/db_interface.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
 
-#include <setjmp.h>
+#include <vm/vm.h>
 
 /*
  * Exported global variables
  */
 boolean_t	db_cmd_loop_done;
-jmp_buf		*db_recover;
+label_t		*db_recover;
 
 /*
  * if 'ed' style: 'dot' is set at start of last item printed,
@@ -148,7 +155,7 @@ db_command(last_cmdp, cmd_table)
 	int		t;
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
-	boolean_t	have_addr;
+	boolean_t	have_addr = FALSE;
 	int		result;
 
 	t = db_read_token();
@@ -161,8 +168,7 @@ db_command(last_cmdp, cmd_table)
 	    modif[0] = '\0';
 	}
 	else if (t == tEXCL) {
-	    void db_fncall();
-	    db_fncall();
+	    db_fncall(0, 0, 0, NULL);
 	    return;
 	}
 	else if (t != tIDENT) {
@@ -287,13 +293,12 @@ db_map_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-        extern void	_vm_map_print();
         boolean_t full = FALSE;
         
         if (modif[0] == 'f')
                 full = TRUE;
 
-        _vm_map_print((vm_map_t)addr, full, db_printf);
+        _vm_map_print((vm_map_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -304,82 +309,76 @@ db_object_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-        extern void	_vm_object_print();
         boolean_t full = FALSE;
         
         if (modif[0] == 'f')
                 full = TRUE;
 
-        _vm_object_print((vm_object_t)addr, full, db_printf);
+        _vm_object_print((vm_object_t) addr, full, db_printf);
 }
 
 /*
  * 'show' commands
  */
-extern void	db_show_all_procs();
-extern void	db_show_callout();
-extern void	db_listbreak_cmd();
-extern void	db_listwatch_cmd();
-extern void	db_show_regs();
-void		db_show_help();
 
 struct db_command db_show_all_cmds[] = {
-	{ "procs",	db_show_all_procs,0,	0 },
-	{ "callout",	db_show_callout,0,	0 },
-	{ (char *)0 }
+	{ "procs",	db_show_all_procs,	0, NULL },
+	{ "callout",	db_show_callout,	0, NULL },
+	{ NULL, 	NULL, 			0, NULL }
 };
 
 struct db_command db_show_cmds[] = {
-	{ "all",	0,			0,	db_show_all_cmds },
-	{ "registers",	db_show_regs,		0,	0 },
-	{ "breaks",	db_listbreak_cmd, 	0,	0 },
-	{ "watches",	db_listwatch_cmd, 	0,	0 },
-	{ "map",	db_map_print_cmd,	0,	0 },
-	{ "object",	db_object_print_cmd,	0,	0 },
-	{ (char *)0, }
+	{ "all",	NULL,			0,	db_show_all_cmds },
+	{ "registers",	db_show_regs,		0,	NULL },
+	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
+	{ "watches",	db_listwatch_cmd, 	0,	NULL },
+	{ "map",	db_map_print_cmd,	0,	NULL },
+	{ "object",	db_object_print_cmd,	0,	NULL },
+	{ NULL,		NULL,			0,	NULL, }
 };
 
-extern void	db_print_cmd(), db_examine_cmd(), db_set_cmd();
-extern void	db_search_cmd();
-extern void	db_write_cmd();
-extern void	db_delete_cmd(), db_breakpoint_cmd();
-extern void	db_deletewatch_cmd(), db_watchpoint_cmd();
-extern void	db_single_step_cmd(), db_trace_until_call_cmd(),
-		db_trace_until_matching_cmd(), db_continue_cmd();
-extern void	db_stack_trace_cmd();
-void		db_help_cmd();
-void		db_fncall();
+void	db_boot_sync_cmd();
+void	db_boot_crash_cmd();
+void	db_boot_dump_cmd();
+
+struct db_command db_boot_cmds[] = {
+	{ "sync",	db_boot_sync_cmd,	0,	0 },
+	{ "crash",	db_boot_crash_cmd,	0,	0 },
+	{ "dump",	db_boot_dump_cmd,	0,	0 },
+	{ (char *)0, }
+};
 
 struct db_command db_command_table[] = {
 #ifdef DB_MACHINE_COMMANDS
   /* this must be the first entry, if it exists */
-	{ "machine",    0,                      0,     		0},
+	{ "machine",    NULL,                   0,     		NULL},
 #endif
-	{ "print",	db_print_cmd,		0,		0 },
-	{ "examine",	db_examine_cmd,		CS_SET_DOT, 	0 },
-	{ "x",		db_examine_cmd,		CS_SET_DOT, 	0 },
-	{ "search",	db_search_cmd,		CS_OWN|CS_SET_DOT, 0 },
-	{ "set",	db_set_cmd,		CS_OWN,		0 },
-	{ "write",	db_write_cmd,		CS_MORE|CS_SET_DOT, 0 },
-	{ "w",		db_write_cmd,		CS_MORE|CS_SET_DOT, 0 },
-	{ "delete",	db_delete_cmd,		0,		0 },
-	{ "d",		db_delete_cmd,		0,		0 },
-	{ "break",	db_breakpoint_cmd,	0,		0 },
-	{ "dwatch",	db_deletewatch_cmd,	0,		0 },
-	{ "watch",	db_watchpoint_cmd,	CS_MORE,	0 },
-	{ "step",	db_single_step_cmd,	0,		0 },
-	{ "s",		db_single_step_cmd,	0,		0 },
-	{ "continue",	db_continue_cmd,	0,		0 },
-	{ "c",		db_continue_cmd,	0,		0 },
-	{ "until",	db_trace_until_call_cmd,0,		0 },
-	{ "next",	db_trace_until_matching_cmd,0,		0 },
-	{ "match",	db_trace_until_matching_cmd,0,		0 },
-	{ "trace",	db_stack_trace_cmd,	0,		0 },
-	{ "call",	db_fncall,		CS_OWN,		0 },
-	{ "ps",		db_show_all_procs,	0,		0 },
-	{ "callout",	db_show_callout,	0,		0 },
-	{ "show",	0,			0,		db_show_cmds },
-	{ (char *)0, }
+	{ "print",	db_print_cmd,		0,		NULL },
+	{ "examine",	db_examine_cmd,		CS_SET_DOT, 	NULL },
+	{ "x",		db_examine_cmd,		CS_SET_DOT, 	NULL },
+	{ "search",	db_search_cmd,		CS_OWN|CS_SET_DOT, NULL },
+	{ "set",	db_set_cmd,		CS_OWN,		NULL },
+	{ "write",	db_write_cmd,		CS_MORE|CS_SET_DOT, NULL },
+	{ "w",		db_write_cmd,		CS_MORE|CS_SET_DOT, NULL },
+	{ "delete",	db_delete_cmd,		0,		NULL },
+	{ "d",		db_delete_cmd,		0,		NULL },
+	{ "break",	db_breakpoint_cmd,	0,		NULL },
+	{ "dwatch",	db_deletewatch_cmd,	0,		NULL },
+	{ "watch",	db_watchpoint_cmd,	CS_MORE,	NULL },
+	{ "step",	db_single_step_cmd,	0,		NULL },
+	{ "s",		db_single_step_cmd,	0,		NULL },
+	{ "continue",	db_continue_cmd,	0,		NULL },
+	{ "c",		db_continue_cmd,	0,		NULL },
+	{ "until",	db_trace_until_call_cmd,0,		NULL },
+	{ "next",	db_trace_until_matching_cmd,0,		NULL },
+	{ "match",	db_trace_until_matching_cmd,0,		NULL },
+	{ "trace",	db_stack_trace_cmd,	0,		NULL },
+	{ "call",	db_fncall,		CS_OWN,		NULL },
+	{ "ps",		db_show_all_procs,	0,		NULL },
+	{ "callout",	db_show_callout,	0,		NULL },
+	{ "show",	NULL,			0,		db_show_cmds },
+	{ "boot",	NULL,			0,		db_boot_cmds },
+	{ NULL, 	NULL,			0,		NULL }
 };
 
 #ifdef DB_MACHINE_COMMANDS
@@ -412,8 +411,8 @@ db_help_cmd()
 void
 db_command_loop()
 {
-	jmp_buf		db_jmpbuf;
-	jmp_buf		*savejmp = db_recover;
+	label_t		db_jmpbuf;
+	label_t		*savejmp;
 	extern int	db_output_line;
 
 	/*
@@ -423,7 +422,10 @@ db_command_loop()
 	db_next = db_dot;
 
 	db_cmd_loop_done = 0;
-	(void) setjmp(*(db_recover = &db_jmpbuf));
+
+	savejmp = db_recover;
+	db_recover = &db_jmpbuf;
+	(void) setjmp(&db_jmpbuf);
 
 	while (!db_cmd_loop_done) {
 		if (db_print_position() != 0)
@@ -446,7 +448,7 @@ db_error(s)
 	if (s)
 	    db_printf(s);
 	db_flush_lex();
-	longjmp(*db_recover, 1);
+	longjmp(db_recover, 1);
 }
 
 
@@ -454,15 +456,20 @@ db_error(s)
  * Call random function:
  * !expr(arg,arg,arg)
  */
+/*ARGSUSED*/
 void
-db_fncall()
+db_fncall(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
 {
 	db_expr_t	fn_addr;
 #define	MAXARGS		11
 	db_expr_t	args[MAXARGS];
 	int		nargs = 0;
 	db_expr_t	retval;
-	db_expr_t	(*func)();
+	db_expr_t	(*func) __P((db_expr_t, ...));
 	int		t;
 
 	if (!db_expression(&fn_addr)) {
@@ -470,7 +477,7 @@ db_fncall()
 	    db_flush_lex();
 	    return;
 	}
-	func = (db_expr_t (*) ()) fn_addr;
+	func = (db_expr_t (*) __P((db_expr_t, ...))) fn_addr;
 
 	t = db_read_token();
 	if (t == tLPAREN) {
@@ -506,4 +513,22 @@ db_fncall()
 	retval = (*func)(args[0], args[1], args[2], args[3], args[4],
 			 args[5], args[6], args[7], args[8], args[9] );
 	db_printf("%#n\n", retval);
+}
+
+void
+db_boot_sync_cmd()
+{
+	boot(RB_AUTOBOOT);
+}
+
+void
+db_boot_crash_cmd()
+{
+	boot(RB_NOSYNC | RB_DUMP);
+}
+
+void
+db_boot_dump_cmd()
+{
+	boot(RB_DUMP);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.7 1994/10/09 08:56:25 mycroft Exp $	*/
+/*	$OpenBSD: db_lex.c,v 1.2 1996/02/20 13:35:38 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -34,7 +34,13 @@
  */
 #include <sys/param.h>
 
+#include <machine/db_machdep.h>
+
 #include <ddb/db_lex.h>
+#include <ddb/db_output.h>
+#include <ddb/db_command.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
 
 char	db_line[120];
 char *	db_lp, *db_endlp;
@@ -131,7 +137,7 @@ db_lex()
 
 	if (c >= '0' && c <= '9') {
 	    /* number */
-	    int	r, digit;
+	    int	r, digit = 0;
 
 	    if (c > '0')
 		r = db_radix;

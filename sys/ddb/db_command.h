@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.7 1994/10/09 08:30:00 mycroft Exp $	*/
+/*	$OpenBSD: db_command.h,v 1.2 1996/02/20 13:35:34 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,10 +32,18 @@
 /*
  * Command loop declarations.
  */
-void db_command_loop __P((void));
 void db_skip_to_eol __P((void));
-
-void db_error __P((char *));	/* report error */
+struct db_command;
+int db_cmd_search __P((char *, struct db_command *, struct db_command **));
+void db_cmd_list __P((struct db_command *));
+void db_command __P((struct db_command **, struct db_command *));
+void db_map_print_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_object_print_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_machine_commands_install __P((struct db_command *));
+void db_help_cmd __P((void));
+void db_command_loop __P((void));
+void db_error __P((char *));
+void db_fncall __P((db_expr_t, int, db_expr_t, char *));
 
 db_addr_t	db_dot;		/* current location */
 db_addr_t	db_last_addr;	/* last explicit address typed */
@@ -49,7 +57,8 @@ db_addr_t	db_next;	/* next address to be examined
  */
 struct db_command {
 	char		*name;		/* command name */
-	void		(*fcn)();	/* function to call */
+	/* function to call */
+	void		(*fcn) __P((db_expr_t, int, db_expr_t, char *));
 	int		flag;		/* extra info: */
 #define	CS_OWN		0x1		/* non-standard syntax */
 #define	CS_MORE		0x2		/* standard syntax, but may have other

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.7 1994/10/09 08:30:15 mycroft Exp $	*/
+/*	$OpenBSD: db_watch.c,v 1.2 1996/02/20 13:35:46 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,7 +38,11 @@
 #include <ddb/db_watch.h>
 #include <ddb/db_lex.h>
 #include <ddb/db_access.h>
+#include <ddb/db_run.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
+#include <ddb/db_command.h>
+#include <ddb/db_extern.h>
 
 /*
  * Watchpoints.
@@ -198,8 +202,13 @@ db_watchpoint_cmd(addr, have_addr, count, modif)
 }
 
 /* list watchpoints */
+/*ARGSUSED*/
 void
-db_listwatch_cmd()
+db_listwatch_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
 {
 	db_list_watchpoints();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.9 1994/11/17 04:51:50 gwr Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.2 1996/02/20 13:35:35 mickey Exp $	*/
 
 /*
  * Mach Operating System
@@ -38,11 +38,11 @@
 #include <ddb/db_output.h>
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_access.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_interface.h>
 
 char	db_examine_format[TOK_STRING_SIZE] = "x";
-
-extern	db_addr_t db_disasm(/* db_addr_t, boolean_t */);
-			/* instruction disassembler */
 
 /*
  * Examine (print) data.  Syntax is:
@@ -69,9 +69,10 @@ db_examine_cmd(addr, have_addr, count, modif)
 	db_examine((db_addr_t) addr, db_examine_format, count);
 }
 
+void
 db_examine(addr, fmt, count)
 	register
-		db_addr_t	addr;
+	    db_addr_t	addr;
 	char *		fmt;	/* format string */
 	int		count;	/* repeat count */
 {
@@ -225,6 +226,7 @@ db_print_cmd(addr, have_addr, count, modif)
 	db_printf("\n");
 }
 
+void
 db_print_loc_and_inst(loc)
 	db_addr_t	loc;
 {
@@ -233,11 +235,12 @@ db_print_loc_and_inst(loc)
 	(void) db_disasm(loc, FALSE);
 }
 
+void
 db_strcpy(dst, src)
 	register char *dst;
 	register char *src;
 {
-	while (*dst++ = *src++)
+	while ((*dst++ = *src++) != '\0')
 		;
 }
 
@@ -245,8 +248,13 @@ db_strcpy(dst, src)
  * Search for a value in memory.
  * Syntax: search [/bhl] addr value [mask] [,count]
  */
+/*ARGSUSED*/
 void
-db_search_cmd()
+db_search_cmd(daddr, have_addr, dcount, modif)
+	db_expr_t	daddr;
+	int		have_addr;
+	db_expr_t	dcount;
+	char *		modif;
 {
 	int		t;
 	db_addr_t	addr;
@@ -278,11 +286,12 @@ db_search_cmd()
 		size = 4;
 	}
 
-	if (!db_expression(&addr)) {
+	if (!db_expression(&value)) {
 		db_printf("Address missing\n");
 		db_flush_lex();
 		return;
 	}
+	addr = (db_addr_t) value;
 
 	if (!db_expression(&value)) {
 		db_printf("Value missing\n");
@@ -291,7 +300,7 @@ db_search_cmd()
 	}
 
 	if (!db_expression(&mask))
-		mask = 0xffffffff;
+		mask = (int) ~0;
 
 	t = db_read_token();
 	if (t == tCOMMA) {
@@ -309,6 +318,7 @@ db_search_cmd()
 	db_search(addr, size, value, mask, count);
 }
 
+void
 db_search(addr, size, value, mask, count)
 	register
 	db_addr_t	addr;

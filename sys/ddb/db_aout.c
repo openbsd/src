@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.12 1994/10/09 08:19:31 mycroft Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.3 1996/02/20 13:35:31 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -34,6 +34,8 @@
 #include <machine/db_machdep.h>		/* data types */
 
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
+#include <ddb/db_extern.h>
 
 #ifndef	DB_NO_AOUT
 
@@ -62,18 +64,19 @@ int db_symtab[SYMTAB_SPACE/sizeof(int)] = { 0, 1 };
 /*
  * Find the symbol table and strings; tell ddb about them.
  */
+void
 X_db_sym_init(symtab, esymtab, name)
-	int *	symtab;		/* pointer to start of symbol table */
-	char *	esymtab;	/* pointer to end of string table,
+	int *symtab;		/* pointer to start of symbol table */
+	char *esymtab;		/* pointer to end of string table,
 				   for checking - rounded up to integer
 				   boundary */
-	char *	name;
+	char *name;
 {
 	register struct nlist	*sym_start, *sym_end;
 	register struct nlist	*sp;
-	register char *	strtab;
-	register int	strlen;
-	char *		estrtab;
+	register char *strtab;
+	register int slen;
+	char *estrtab;
 
 #ifdef SYMTAB_SPACE
 	if (*symtab < sizeof(int)) {
@@ -90,17 +93,17 @@ X_db_sym_init(symtab, esymtab, name)
 	sym_end   = (struct nlist *)((char *)sym_start + *symtab);
 
 	strtab = (char *)sym_end;
-	strlen = *(int *)strtab;
+	slen = *(int *)strtab;
 
 #ifdef	SYMTAB_SPACE
 	printf("DDB: found symbols [%d + %d bytes]\n",
-		   *symtab, strlen);
-	if ((*symtab + strlen) > db_symtabsize) {
+		   *symtab, slen);
+	if ((*symtab + slen) > db_symtabsize) {
 		printf("DDB: symbols larger than SYMTAB_SPACE?\n");
 		return;
 	}
 #else
-	estrtab = strtab + strlen;
+	estrtab = strtab + slen;
 
 #define	round_to_size(x) \
 	(((vm_offset_t)(x) + sizeof(vm_size_t) - 1) & ~(sizeof(vm_size_t) - 1))
@@ -117,7 +120,7 @@ X_db_sym_init(symtab, esymtab, name)
 	    register int strx;
 	    strx = sp->n_un.n_strx;
 	    if (strx != 0) {
-		if (strx > strlen) {
+		if (strx > slen) {
 		    db_printf("Bad string table index (%#x)\n", strx);
 		    sp->n_un.n_name = 0;
 		    continue;
@@ -183,10 +186,10 @@ X_db_search_symbol(symtab, off, strategy, diffp)
 		    diff = off - sp->n_value;
 		    symp = sp;
 		    if (diff == 0 &&
-				(strategy == DB_STGY_PROC &&
-					sp->n_type == (N_TEXT|N_EXT)   ||
-				strategy == DB_STGY_ANY &&
-					(sp->n_type & N_EXT)))
+				((strategy == DB_STGY_PROC &&
+					sp->n_type == (N_TEXT|N_EXT)) ||
+				 (strategy == DB_STGY_ANY &&
+					(sp->n_type & N_EXT))))
 			break;
 		}
 		else if (off - sp->n_value == diff) {
@@ -235,7 +238,6 @@ X_db_line_at_pc(symtab, cursym, filename, linenum, off)
 	db_expr_t	off;
 {
 	register struct nlist	*sp, *ep;
-	register struct nlist	*sym = (struct nlist *)cursym;
 	unsigned long		sodiff = -1UL, lndiff = -1UL, ln = 0;
 	char			*fname = NULL;
 
@@ -333,6 +335,7 @@ X_db_sym_numargs(symtab, cursym, nargp, argnamep)
 /*
  * Initialization routine for a.out files.
  */
+void
 ddb_init()
 {
 #ifndef SYMTAB_SPACE
@@ -340,10 +343,10 @@ ddb_init()
 	extern int	end;
 
 	if (esym > (char *)&end) {
-	    X_db_sym_init((int *)&end, esym, "bsd");
+	    X_db_sym_init((int *)&end, esym, "netbsd");
 	}
 #else
-	X_db_sym_init (db_symtab, 0, "bsd");
+	X_db_sym_init (db_symtab, 0, "netbsd");
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.4 1994/06/29 06:31:15 cgd Exp $	*/
+/*	$OpenBSD: db_print.c,v 1.2 1996/02/20 13:35:40 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,13 +40,19 @@
 #include <ddb/db_lex.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
+#include <ddb/db_extern.h>
 
 extern unsigned int	db_maxoff;
 
+/*ARGSUSED*/
 void
-db_show_regs()
+db_show_regs(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
 {
-	int	(*func)();
 	register struct db_variable *regp;
 	db_expr_t	value, offset;
 	char *		name;
