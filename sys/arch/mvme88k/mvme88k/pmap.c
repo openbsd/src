@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.106 2004/01/07 23:43:54 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.107 2004/01/08 20:31:44 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -179,7 +179,7 @@ kpdt_entry_t	kpdt_free;
  * Two pages of scratch space per cpu.
  * Used in pmap_copy_page() and pmap_zero_page().
  */
-vaddr_t phys_map_vaddr1, phys_map_vaddr2, phys_map_vaddr_end;
+vaddr_t phys_map_vaddr, phys_map_vaddr_end;
 
 #define PV_ENTRY_NULL	((pv_entry_t) 0)
 
@@ -671,8 +671,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
  *	PAGE_SIZE	VM (software) page size
  *	kernelstart	start symbol of kernel text
  *	etext		end of kernel text
- *	phys_map_vaddr1 VA of page mapped arbitrarily for debug/IO
- *	phys_map_vaddr2 VA of page mapped arbitrarily for debug/IO
+ *	phys_map_vaddr	VA of page mapped arbitrarily for debug/IO
  *
  * Calls:
  *	simple_lock_init
@@ -917,20 +916,13 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	*virt_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
-	 * Map a few more pages for phys routines and debugger.
+	 * Map two pages per cpu for copying/zeroing.
 	 */
 
-	phys_map_vaddr1 = round_page(*virt_start);
-	phys_map_vaddr2 = phys_map_vaddr1 + (max_cpus << PAGE_SHIFT);
-	phys_map_vaddr_end = phys_map_vaddr2 + 2 * (max_cpus << PAGE_SHIFT);
-
-	/*
-	 * To make 1:1 mapping of virt:phys, throw away a few phys pages.
-	 * XXX what is this? nivas
-	 */
-
-	*phys_start += 2 * PAGE_SIZE * max_cpus;
-	*virt_start += 2 * PAGE_SIZE * max_cpus;
+	phys_map_vaddr = *virt_start;
+	phys_map_vaddr_end = *virt_start + 2 * (max_cpus << PAGE_SHIFT);
+	*phys_start += 2 * (max_cpus << PAGE_SHIFT);
+	*virt_start += 2 * (max_cpus << PAGE_SHIFT);
 
 	/*
 	 * Map all IO space 1-to-1. Ideally, I would like to not do this
@@ -1011,24 +1003,10 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 		show_apr(kernel_pmap->pm_apr);
 	}
 #endif
-	/* Invalidate entire kernel TLB. */
-
+	/* Invalidate entire kernel TLB and get ready for address translation */
 	for (i = 0; i < MAX_CPUS; i++)
 		if (cpu_sets[i]) {
-			/* Invalidate entire kernel TLB. */
 			cmmu_flush_tlb(i, 1, 0, -1);
-			/* still physical */
-			/*
-			 * Set valid bit to DT_INVALID so that the very first
-			 * pmap_enter() on these won't barf in
-			 * pmap_remove_range().
-			 */
-			pte = pmap_pte(kernel_pmap,
-			    phys_map_vaddr1 + (i << PAGE_SHIFT));
-			invalidate_pte(pte);
-			pte = pmap_pte(kernel_pmap,
-			    phys_map_vaddr2 + (i << PAGE_SHIFT));
-			invalidate_pte(pte);
 			/* Load supervisor pointer to segment table. */
 			cmmu_set_sapr(i, kernel_pmap->pm_apr);
 #ifdef DEBUG
@@ -1082,7 +1060,7 @@ pmap_init(void)
  *	pg		page to zero
  *
  * Extern/Global:
- *	phys_map_vaddr1
+ *	phys_map_vaddr
  *
  * Calls:
  *	m88k_protection
@@ -1106,7 +1084,7 @@ pmap_zero_page(struct vm_page *pg)
 	CHECK_PAGE_ALIGN(pa, "pmap_zero_page");
 
 	cpu = cpu_number();
-	srcva = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
+	srcva = (vaddr_t)(phys_map_vaddr + 2 * (cpu << PAGE_SHIFT));
 	srcpte = pmap_pte(kernel_pmap, srcva);
 
 	SPLVM(spl);
@@ -1939,6 +1917,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		else
 			printf("(pmap_enter: %x) pmap %x va %x pa %x\n", curproc, pmap, va, pa);
 	}
+
+	/* copying/zeroing pages are magic */
+	if (pmap == kernel_pmap &&
+	    va >= phys_map_vaddr && va < phys_map_vaddr_end) {
+		return 0;
+	}
 #endif
 
 	template = m88k_protection(pmap, prot);
@@ -1980,32 +1964,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pvl = NULL;
 	} else { /* if (pa == old_pa) */
 		/* Remove old mapping from the PV list if necessary. */
-		if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end)
-			flush_atc_entry(users, va, TRUE);
-		else
-			pmap_remove_pte(pmap, va, pte);
+		pmap_remove_pte(pmap, va, pte);
 
 		pg = PHYS_TO_VM_PAGE(pa);
-#ifdef DEBUG
-		if (pmap_con_dbg & CD_ENT) {
-			if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end) {
-				printf("vaddr1 0x%x vaddr2 0x%x va 0x%x pa 0x%x managed %x\n",
-				    phys_map_vaddr1, phys_map_vaddr2, va, old_pa,
-				    pg != NULL ? 1 : 0);
-				printf("pte %x pfn %x valid %x\n",
-				    pte, PG_PFNUM(*pte), PDT_VALID(pte));
-			}
-		}
-#endif
-
 		if (pg != NULL) {
-#ifdef DEBUG
-			if (pmap_con_dbg & CD_ENT) {
-				if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end) {
-					printf("va 0x%x and managed pa 0x%x\n", va, pa);
-				}
-			}
-#endif
 			/*
 			 *	Enter the mapping in the PV list for this
 			 *	physical page.
@@ -2402,8 +2364,7 @@ pmap_deactivate(struct proc *p)
  *	dst	PA of destination page
  *
  * Extern/Global:
- *	phys_map_vaddr1
- *	phys_map_vaddr2
+ *	phys_map_vaddr
  *
  * Calls:
  *	m88k_protection
@@ -2431,27 +2392,18 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	template = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
 	    CACHE_GLOBAL | PG_V;
 
-	/*
-	 * Map source physical address.
-	 */
-	srcva = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
-	dstva = (vaddr_t)(phys_map_vaddr2 + (cpu << PAGE_SHIFT));
-
-	srcpte = pmap_pte(kernel_pmap, srcva);
+	dstva = (vaddr_t)(phys_map_vaddr + 2 * (cpu << PAGE_SHIFT));
+	srcva = (vaddr_t)(phys_map_vaddr + PAGE_SIZE + 2 * (cpu << PAGE_SHIFT));
 	dstpte = pmap_pte(kernel_pmap, dstva);
+	srcpte = pmap_pte(kernel_pmap, srcva);
 
 	SPLVM(spl);
-	cmmu_flush_tlb(cpu, TRUE, srcva, PAGE_SIZE);
+	cmmu_flush_tlb(cpu, TRUE, dstva, 2 * PAGE_SIZE);
 	*srcpte = template | src;
-
-	/*
-	 * Map destination physical address.
-	 */
-	cmmu_flush_tlb(cpu, TRUE, dstva, PAGE_SIZE);
 	*dstpte = template | dst;
 	SPLX(spl);
 
-	bcopy((void *)srcva, (void *)dstva, PAGE_SIZE);
+	bcopy((const void *)srcva, (void *)dstva, PAGE_SIZE);
 	/* flush source, dest out of cache? */
 	cmmu_flush_data_cache(cpu, src, PAGE_SIZE);
 	cmmu_flush_data_cache(cpu, dst, PAGE_SIZE);
@@ -2601,8 +2553,8 @@ testbit_Retry:
 		   no use looking further... */
 #ifdef DEBUG
 		if (pmap_con_dbg & CD_TBIT)
-			printf("(pmap_testbit: %x) already cached a modify flag for this page\n",
-			    curproc);
+			printf("(pmap_testbit: %x) already cached a %x flag for this page\n",
+			    curproc, bit);
 #endif
 		SPLX(spl);
 		return (TRUE);
