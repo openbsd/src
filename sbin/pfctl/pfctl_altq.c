@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.63 2003/04/13 22:03:18 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.64 2003/04/13 23:22:05 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -869,7 +869,7 @@ print_hfsc_opts(const struct pf_altq *a)
 				    opts->ulsc_d,
 				    rate2str((double)opts->ulsc_m2));
 				else
-					printf(" upperlimit(%s)",
+					printf(" upperlimit %s",
 					    rate2str((double)opts->ulsc_m2));
 		}
 		printf(" ) ");
