@@ -34,8 +34,8 @@ ${IMAGE}:	do_prep do_mount do_files do_umount_copy do_unconfig
 rdsetroot:	${TOP}/common/rdsetroot.c
 	${HOSTCC} -o rdsetroot ${TOP}/common/rdsetroot.c
 
-setroot: bsd
-	rdsetroot bsd < miniroot-12.fs
+setroot: ${IMAGE} bsd 
+	rdsetroot bsd < ${IMAGE}
 
 bsd:	${KERNEL}
 	cp ${KERNEL} bsd
