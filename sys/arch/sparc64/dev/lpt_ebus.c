@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_ebus.c,v 1.4 2002/04/16 19:49:06 jason Exp $	*/
+/*	$OpenBSD: lpt_ebus.c,v 1.5 2002/05/27 20:07:06 deraadt Exp $	*/
 /*	$NetBSD: lpt_ebus.c,v 1.8 2002/03/01 11:51:00 martin Exp $	*/
 
 /*
@@ -51,8 +51,8 @@ struct lpt_ebus_softc {
 	bus_space_handle_t sc_ctrl;
 };
 
-int	lpt_ebus_match __P((struct device *, void *, void *));
-void	lpt_ebus_attach __P((struct device *, struct device *, void *));
+int	lpt_ebus_match(struct device *, void *, void *);
+void	lpt_ebus_attach(struct device *, struct device *, void *);
 
 struct cfattach lpt_ebus_ca = {
 	sizeof(struct lpt_ebus_softc), lpt_ebus_match, lpt_ebus_attach
