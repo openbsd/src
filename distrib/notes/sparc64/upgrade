@@ -1,3 +1,4 @@
+dnl	$OpenBSD: upgrade,v 1.8 2002/02/07 08:57:28 miod Exp $
 Since OpenBSD OSREV is the first release for MACHINE systems, upgrades
 are not expected.
 If you have been using an old OpenBSD/MACHINE snapshot, you can follow the

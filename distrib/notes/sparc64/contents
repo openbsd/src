@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.17 2002/02/06 00:46:05 miod Exp $
+dnl	$OpenBSD: contents,v 1.18 2002/02/07 08:57:28 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -66,8 +66,6 @@ OpenBSDxbase(7.6,22.7)
 
 OpenBSDxfont(31.4,34.1)
 
-OpenBSDxserv(4.0,10.5,{:-
-		 There is no X server for real hardware available yet, only
-		 the nested and virtual framebuffer servers.-:})
+OpenBSDxserv(6.7,18.3)
 
 OpenBSDxshare(1.7,8.1)

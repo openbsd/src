@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.15 2002/02/06 00:46:05 miod Exp $
+dnl	$OpenBSD: hardware,v 1.16 2002/02/07 08:57:28 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -27,8 +27,6 @@ does not work on it (yet).
 The minimal configuration requires 32M of RAM and ~160M of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended.
-
-At the moment, the X window system is not available.
 
 Supported devices {:-include-:}:
 	SCSI Host Adapters: 

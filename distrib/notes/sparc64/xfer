@@ -1,3 +1,4 @@
+dnl	$OpenBSD: xfer,v 1.13 2002/02/07 08:57:28 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
