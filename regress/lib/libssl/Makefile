@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2002/09/26 11:39:50 markus Exp $
+#	$OpenBSD: Makefile,v 1.11 2003/05/24 08:37:14 markus Exp $
 
 CLEANFILES+= testdsa.key testdsa.pem rsakey.pem rsacert.pem dsa512.pem
 
@@ -31,6 +31,9 @@ RSATEST=	rsa_test
 ENGINETEST=	enginetest
 EVPTEST=	evp_test
 
+SSLDIR=	${.CURDIR}/../../../lib/libssl/src/crypto
+
+CFLAGS= -O -I${SSLDIR} -I${SSLDIR}/..
 
 CLEANFILES+=	$(BNTEST).c $(ECTEST).c $(HMACTEST).c \
 	$(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
@@ -83,7 +86,7 @@ ssl-enc-${ENC}.b64: ${CLEAR1} ${CLEAR2}.${ENC}.b64
 	cmp ${CLEAR1} ${CLEAR2}.${ENC}.b64
 
 REGRESS_TARGETS+=ssl-enc-${ENC} ssl-enc-${ENC}.b64
-CLEANFILES+=${CIPHER}.${ENC} ${CIPHER}.${ENC}.b64 ${CLEAR2}.${ENC} ${CLEAR2}.${ENC}.b64 e_os.h .rnd
+CLEANFILES+=${CIPHER}.${ENC} ${CIPHER}.${ENC}.b64 ${CLEAR2}.${ENC} ${CLEAR2}.${ENC}.b64 .rnd
 .endfor
 
 ssl-enc:
@@ -93,9 +96,6 @@ ssl-dsa:
 ssl-rsa:
 	sh ${.CURDIR}/testrsa.sh ${.OBJDIR} ${.CURDIR}
 
-e_os.h: ${.CURDIR}/../../../lib/libssl/src/e_os.h
-	cp ${.CURDIR}/../../../lib/libssl/src/e_os.h ${.OBJDIR}
-
 ossltests: ${OTESTS} ${BNTEST} ${EVPTEST}
 	@echo running ${BNTEST}, check ${.OBJDIR}/${BNTEST}.out if this fails.
 	${.OBJDIR}/${BNTEST} > ${.OBJDIR}/${BNTEST}.out 2>&1
@@ -104,128 +104,128 @@ ossltests: ${OTESTS} ${BNTEST} ${EVPTEST}
 	${.OBJDIR}/${OT} 
 .endfor
 	@echo running ${EVPTEST}
-	${.OBJDIR}/${EVPTEST} ${.CURDIR}/../../../lib/libssl/src/crypto/evp/evptests.txt
+	${.OBJDIR}/${EVPTEST} ${SSLDIR}/evp/evptests.txt
 
-$(BNTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/bn/bntest.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/bn/bntest.c ${.OBJDIR}
+$(BNTEST).c: ${SSLDIR}/bn/bntest.c
+	cp ${SSLDIR}/bn/bntest.c ${.OBJDIR}
 
-$(BNTEST): ${BNTEST}.c e_os.h
-	cc -O -o $(BNTEST) ${BNTEST}.c -lcrypto
+$(BNTEST): ${BNTEST}.c
+	cc ${CFLAGS} -o $(BNTEST) ${BNTEST}.c -lcrypto
 
-$(EXPTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/bn/exptest.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/bn/exptest.c ${.OBJDIR}
+$(EXPTEST).c: ${SSLDIR}/bn/exptest.c
+	cp ${SSLDIR}/bn/exptest.c ${.OBJDIR}
 
-$(EXPTEST): ${EXPTEST}.c e_os.h
-	cc -O -o $(EXPTEST) ${EXPTEST}.c -lcrypto
+$(EXPTEST): ${EXPTEST}.c
+	cc ${CFLAGS} -o $(EXPTEST) ${EXPTEST}.c -lcrypto
 
-$(ECTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/ec/ectest.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/ec/ectest.c ${.OBJDIR}
+$(ECTEST).c: ${SSLDIR}/ec/ectest.c
+	cp ${SSLDIR}/ec/ectest.c ${.OBJDIR}
 
-$(ECTEST): ${ECTEST}.c e_os.h
-	cc -O -o $(ECTEST) ${ECTEST}.c -lcrypto
+$(ECTEST): ${ECTEST}.c
+	cc ${CFLAGS} -o $(ECTEST) ${ECTEST}.c -lcrypto
 
-$(EVPTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/evp/${EVPTEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/evp/${EVPTEST}.c ${.OBJDIR}
-$(EVPTEST): ${EVPTEST}.c e_os.h
-	cc -O -o $(EVPTEST) ${EVPTEST}.c -lcrypto
+$(EVPTEST).c: ${SSLDIR}/evp/${EVPTEST}.c
+	cp ${SSLDIR}/evp/${EVPTEST}.c ${.OBJDIR}
+$(EVPTEST): ${EVPTEST}.c
+	cc ${CFLAGS} -o $(EVPTEST) ${EVPTEST}.c -lcrypto
 
-$(SHATEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/sha/${SHATEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/sha/${SHATEST}.c ${.OBJDIR}
-$(SHATEST): ${SHATEST}.c e_os.h
-	cc -O -o $(SHATEST) ${SHATEST}.c -lcrypto
+$(SHATEST).c: ${SSLDIR}/sha/${SHATEST}.c
+	cp ${SSLDIR}/sha/${SHATEST}.c ${.OBJDIR}
+$(SHATEST): ${SHATEST}.c
+	cc ${CFLAGS} -o $(SHATEST) ${SHATEST}.c -lcrypto
 
-$(SHA1TEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/sha/${SHA1TEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/sha/${SHA1TEST}.c ${.OBJDIR}
-$(SHA1TEST): ${SHA1TEST}.c e_os.h
-	cc -O -o $(SHA1TEST) ${SHA1TEST}.c -lcrypto
+$(SHA1TEST).c: ${SSLDIR}/sha/${SHA1TEST}.c
+	cp ${SSLDIR}/sha/${SHA1TEST}.c ${.OBJDIR}
+$(SHA1TEST): ${SHA1TEST}.c
+	cc ${CFLAGS} -o $(SHA1TEST) ${SHA1TEST}.c -lcrypto
 
-$(RANDTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/rand/${RANDTEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/rand/${RANDTEST}.c ${.OBJDIR}
-$(RANDTEST): ${RANDTEST}.c e_os.h
-	cc -O -o $(RANDTEST) ${RANDTEST}.c -lcrypto
+$(RANDTEST).c: ${SSLDIR}/rand/${RANDTEST}.c
+	cp ${SSLDIR}/rand/${RANDTEST}.c ${.OBJDIR}
+$(RANDTEST): ${RANDTEST}.c
+	cc ${CFLAGS} -o $(RANDTEST) ${RANDTEST}.c -lcrypto
 
-$(RMDTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/ripemd/${RMDTEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/ripemd/${RMDTEST}.c ${.OBJDIR}
-$(RMDTEST): ${RMDTEST}.c e_os.h
-	cc -O -o $(RMDTEST) ${RMDTEST}.c -lcrypto
+$(RMDTEST).c: ${SSLDIR}/ripemd/${RMDTEST}.c
+	cp ${SSLDIR}/ripemd/${RMDTEST}.c ${.OBJDIR}
+$(RMDTEST): ${RMDTEST}.c
+	cc ${CFLAGS} -o $(RMDTEST) ${RMDTEST}.c -lcrypto
 
-$(DHTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/dh/${DHTEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/dh/${DHTEST}.c ${.OBJDIR}
+$(DHTEST).c: ${SSLDIR}/dh/${DHTEST}.c
+	cp ${SSLDIR}/dh/${DHTEST}.c ${.OBJDIR}
 
-$(DHTEST): ${DHTEST}.c e_os.h
-	cc -O -o $(DHTEST) ${DHTEST}.c -lcrypto
+$(DHTEST): ${DHTEST}.c
+	cc ${CFLAGS} -o $(DHTEST) ${DHTEST}.c -lcrypto
 
-$(ENGINETEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/engine/${ENGINETEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/engine/${ENGINETEST}.c ${.OBJDIR}
+$(ENGINETEST).c: ${SSLDIR}/engine/${ENGINETEST}.c
+	cp ${SSLDIR}/engine/${ENGINETEST}.c ${.OBJDIR}
 
-$(ENGINETEST): ${ENGINETEST}.c e_os.h
-	cc -O -o $(ENGINETEST) ${ENGINETEST}.c -lcrypto
+$(ENGINETEST): ${ENGINETEST}.c
+	cc ${CFLAGS} -o $(ENGINETEST) ${ENGINETEST}.c -lcrypto
 
-$(CASTTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/cast/${CASTTEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/cast/${CASTTEST}.c ${.OBJDIR}
+$(CASTTEST).c: ${SSLDIR}/cast/${CASTTEST}.c
+	cp ${SSLDIR}/cast/${CASTTEST}.c ${.OBJDIR}
 
-$(CASTTEST): ${CASTTEST}.c e_os.h
-	cc -O -o $(CASTTEST) ${CASTTEST}.c -lcrypto
+$(CASTTEST): ${CASTTEST}.c
+	cc ${CFLAGS} -o $(CASTTEST) ${CASTTEST}.c -lcrypto
 
-$(RSATEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/rsa/${RSATEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/rsa/${RSATEST}.c ${.OBJDIR}
+$(RSATEST).c: ${SSLDIR}/rsa/${RSATEST}.c
+	cp ${SSLDIR}/rsa/${RSATEST}.c ${.OBJDIR}
 
-$(RSATEST): ${RSATEST}.c e_os.h
-	cc -O -o $(RSATEST) ${RSATEST}.c -lcrypto
+$(RSATEST): ${RSATEST}.c
+	cc ${CFLAGS} -o $(RSATEST) ${RSATEST}.c -lcrypto
 
-$(DSATEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/dsa/${DSATEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/dsa/${DSATEST}.c ${.OBJDIR}
+$(DSATEST).c: ${SSLDIR}/dsa/${DSATEST}.c
+	cp ${SSLDIR}/dsa/${DSATEST}.c ${.OBJDIR}
 
-$(DSATEST): ${DSATEST}.c e_os.h
-	cc -O -o $(DSATEST) ${DSATEST}.c -lcrypto
+$(DSATEST): ${DSATEST}.c
+	cc ${CFLAGS} -o $(DSATEST) ${DSATEST}.c -lcrypto
 
 
-$(HMACTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/hmac/${HMACTEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/hmac/${HMACTEST}.c ${.OBJDIR}
+$(HMACTEST).c: ${SSLDIR}/hmac/${HMACTEST}.c
+	cp ${SSLDIR}/hmac/${HMACTEST}.c ${.OBJDIR}
 
-$(HMACTEST): ${HMACTEST}.c e_os.h
-	cc -O -o $(HMACTEST) ${HMACTEST}.c -lcrypto
+$(HMACTEST): ${HMACTEST}.c
+	cc ${CFLAGS} -o $(HMACTEST) ${HMACTEST}.c -lcrypto
 
-$(DESTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/des/${DESTEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/des/${DESTEST}.c ${.OBJDIR}
+$(DESTEST).c: ${SSLDIR}/des/${DESTEST}.c
+	cp ${SSLDIR}/des/${DESTEST}.c ${.OBJDIR}
 
-$(DESTEST): ${DESTEST}.c e_os.h
-	cc -O -o $(DESTEST) ${DESTEST}.c -lcrypto
+$(DESTEST): ${DESTEST}.c
+	cc ${CFLAGS} -o $(DESTEST) ${DESTEST}.c -lcrypto
 
-$(BFTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/bf/${BFTEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/bf/${BFTEST}.c ${.OBJDIR}
+$(BFTEST).c: ${SSLDIR}/bf/${BFTEST}.c
+	cp ${SSLDIR}/bf/${BFTEST}.c ${.OBJDIR}
 
-$(BFTEST): ${BFTEST}.c e_os.h
-	cc -O -o $(BFTEST) ${BFTEST}.c -lcrypto
+$(BFTEST): ${BFTEST}.c
+	cc ${CFLAGS} -o $(BFTEST) ${BFTEST}.c -lcrypto
 
-$(RC2TEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/rc2/${RC2TEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/rc2/${RC2TEST}.c ${.OBJDIR}
+$(RC2TEST).c: ${SSLDIR}/rc2/${RC2TEST}.c
+	cp ${SSLDIR}/rc2/${RC2TEST}.c ${.OBJDIR}
 
-$(RC2TEST): ${RC2TEST}.c e_os.h
-	cc -O -o $(RC2TEST) ${RC2TEST}.c -lcrypto
+$(RC2TEST): ${RC2TEST}.c
+	cc ${CFLAGS} -o $(RC2TEST) ${RC2TEST}.c -lcrypto
 
-$(RC4TEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/rc4/${RC4TEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/rc4/${RC4TEST}.c ${.OBJDIR}
+$(RC4TEST).c: ${SSLDIR}/rc4/${RC4TEST}.c
+	cp ${SSLDIR}/rc4/${RC4TEST}.c ${.OBJDIR}
 
-$(RC4TEST): ${RC4TEST}.c e_os.h
-	cc -O -o $(RC4TEST) ${RC4TEST}.c -lcrypto
+$(RC4TEST): ${RC4TEST}.c
+	cc ${CFLAGS} -o $(RC4TEST) ${RC4TEST}.c -lcrypto
 
-$(MD2TEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/md2/${MD2TEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/md2/${MD2TEST}.c ${.OBJDIR}
+$(MD2TEST).c: ${SSLDIR}/md2/${MD2TEST}.c
+	cp ${SSLDIR}/md2/${MD2TEST}.c ${.OBJDIR}
 
-$(MD2TEST): ${MD2TEST}.c e_os.h
-	cc -O -o $(MD2TEST) ${MD2TEST}.c -lcrypto
+$(MD2TEST): ${MD2TEST}.c
+	cc ${CFLAGS} -o $(MD2TEST) ${MD2TEST}.c -lcrypto
 
-$(MD4TEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/md4/${MD4TEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/md4/${MD4TEST}.c ${.OBJDIR}
+$(MD4TEST).c: ${SSLDIR}/md4/${MD4TEST}.c
+	cp ${SSLDIR}/md4/${MD4TEST}.c ${.OBJDIR}
 
-$(MD4TEST): ${MD4TEST}.c e_os.h
-	cc -O -o $(MD4TEST) ${MD4TEST}.c -lcrypto
+$(MD4TEST): ${MD4TEST}.c
+	cc ${CFLAGS} -o $(MD4TEST) ${MD4TEST}.c -lcrypto
 
-$(MD5TEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/md5/${MD5TEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/md5/${MD5TEST}.c ${.OBJDIR}
+$(MD5TEST).c: ${SSLDIR}/md5/${MD5TEST}.c
+	cp ${SSLDIR}/md5/${MD5TEST}.c ${.OBJDIR}
 
-$(MD5TEST): ${MD5TEST}.c e_os.h
-	cc -O -o $(MD5TEST) ${MD5TEST}.c -lcrypto
+$(MD5TEST): ${MD5TEST}.c
+	cc ${CFLAGS} -o $(MD5TEST) ${MD5TEST}.c -lcrypto
 
 .include <bsd.regress.mk>
