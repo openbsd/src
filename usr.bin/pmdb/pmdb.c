@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.14 2003/03/29 00:03:00 mickey Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.15 2003/04/05 18:16:21 pvalchev Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -135,6 +135,8 @@ main(int argc, char **argv)
 		asprintf(&prompt_add, "(%d)", level);
 	asprintf(&pmenv, "%d", level);
 	setenv("IN_PMDB", pmenv, 1);
+	if (pmenv)
+		free(pmenv);
 
 	ps.ps_pid = pid;
 	ps.ps_state = NONE;
