@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2004/07/20 16:47:55 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.14 2004/07/21 09:40:55 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -172,9 +172,9 @@ conf_main	: LISTEN ON address	{
 				if (p->addr_head.name == NULL)
 					fatal(NULL);
 				TAILQ_INSERT_TAIL(&conf->ntp_peers, p, entry);
-				free($2->name);
-				free($2);
 			}
+			free($2->name);
+			free($2);
 		}
 		| SERVER address	{
 			struct ntp_peer		*p;
