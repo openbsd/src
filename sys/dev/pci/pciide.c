@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.142 2003/10/16 11:30:00 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.143 2003/10/16 14:52:58 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1756,12 +1756,14 @@ piix_chip_map(sc, pa)
 		break;
 	}
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_SATA ||
-	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA)
+	    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801ER_SATA) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_SATA;
 		sc->sc_wdcdev.set_modes = sata_setup_channel;
-	else if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE)
+	} else if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE) {
 		sc->sc_wdcdev.set_modes = piix_setup_channel;
-	else
+	} else {
 		sc->sc_wdcdev.set_modes = piix3_4_setup_channel;
+	}
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
@@ -2576,7 +2578,7 @@ apollo_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	    WDC_CAPABILITY_MODE | WDC_CAPABILITY_SATA;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
@@ -3274,7 +3276,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	    WDC_CAPABILITY_MODE | WDC_CAPABILITY_SATA;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
@@ -4739,6 +4741,8 @@ pdc202xx_chip_map(sc, pa)
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20246 ||
 	    PDC_IS_262(sc))
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_ATAPI_DMA;
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20376)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_SATA;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
@@ -6023,7 +6027,7 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 */
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	    WDC_CAPABILITY_MODE | WDC_CAPABILITY_SATA;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
