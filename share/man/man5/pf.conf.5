@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.324 2005/02/25 13:59:14 joel Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.325 2005/02/27 15:08:39 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1576,7 +1576,7 @@ or
 rules in addition to filter rules.
 Tags take the same macros as labels (see above).
 .It Ar tagged <string>
-Used with filter rules to specify that packets must already
+Used with filter or translation rules to specify that packets must already
 be tagged with the given tag in order to match the rule.
 Inverse tag matching can also be done
 by specifying the
@@ -2643,18 +2643,18 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
                  "probability" number"%"
 
 nat-rule       = [ "no" ] "nat" [ "pass" ] [ "on" ifspec ] [ af ]
-                 [ protospec ] hosts [ "tag" string ]
+                 [ protospec ] hosts [ "tag" string ] [ "tagged" string ]
                  [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] [ pooltype ] [ "static-port" ] ]
 
 binat-rule     = [ "no" ] "binat" [ "pass" ] [ "on" interface-name ]
                  [ af ] [ "proto" ( proto-name | proto-number ) ]
                  "from" address [ "/" mask-bits ] "to" ipspec
-                 [ "tag" string ]
+                 [ "tag" string ] [ "tagged" string ]
                  [ "->" address [ "/" mask-bits ] ]
 
 rdr-rule       = [ "no" ] "rdr" [ "pass" ] [ "on" ifspec ] [ af ]
-                 [ protospec ] hosts [ "tag" string ]
+                 [ protospec ] hosts [ "tag" string ] [ "tagged" string ]
                  [ "->" ( redirhost | "{" redirhost-list "}" )
                  [ portspec ] [ pooltype ] ]
 

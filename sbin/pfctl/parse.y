@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.478 2005/02/26 15:14:58 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.479 2005/02/27 15:08:39 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -369,6 +369,10 @@ typedef struct {
 			u_int8_t	 log;
 			u_int8_t	 quick;
 		}			 logquick;
+		struct {
+			int		 neg;
+			char		*name;
+		}			 tagged;
 		struct pf_poolhashkey	*hashkey;
 		struct node_queue	*queue;
 		struct node_queue_opt	 queue_options;
@@ -451,6 +455,7 @@ typedef struct {
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
 %type	<v.table_opts>		table_opts table_opt table_opts_l
 %type	<v.pool_opts>		pool_opts pool_opt pool_opts_l
+%type	<v.tagged>		tagged
 %%
 
 ruleset		: /* empty */
@@ -3213,7 +3218,7 @@ nataction	: no NAT natpass {
 		}
 		;
 
-natrule		: nataction interface af proto fromto tag redirpool pool_opts
+natrule		: nataction interface af proto fromto tag tagged redirpool pool_opts
 		{
 			struct pf_rule	r;
 
@@ -3243,46 +3248,55 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 					YYERROR;
 				}
 
+			if ($7.name)
+				if (strlcpy(r.match_tagname, $7.name,
+				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
+			r.match_tag_not = $7.neg;
+
 			if (r.action == PF_NONAT || r.action == PF_NORDR) {
-				if ($7 != NULL) {
+				if ($8 != NULL) {
 					yyerror("translation rule with 'no' "
 					    "does not need '->'");
 					YYERROR;
 				}
 			} else {
-				if ($7 == NULL || $7->host == NULL) {
+				if ($8 == NULL || $8->host == NULL) {
 					yyerror("translation rule requires '-> "
 					    "address'");
 					YYERROR;
 				}
-				if (!r.af && ! $7->host->ifindex)
-					r.af = $7->host->af;
+				if (!r.af && ! $8->host->ifindex)
+					r.af = $8->host->af;
 
-				remove_invalid_hosts(&$7->host, &r.af);
-				if (invalid_redirect($7->host, r.af))
+				remove_invalid_hosts(&$8->host, &r.af);
+				if (invalid_redirect($8->host, r.af))
 					YYERROR;
-				if (check_netmask($7->host, r.af))
+				if (check_netmask($8->host, r.af))
 					YYERROR;
 
-				r.rpool.proxy_port[0] = ntohs($7->rport.a);
+				r.rpool.proxy_port[0] = ntohs($8->rport.a);
 
 				switch (r.action) {
 				case PF_RDR:
-					if (!$7->rport.b && $7->rport.t &&
+					if (!$8->rport.b && $8->rport.t &&
 					    $5.dst.port != NULL) {
 						r.rpool.proxy_port[1] =
-						    ntohs($7->rport.a) +
+						    ntohs($8->rport.a) +
 						    (ntohs(
 						    $5.dst.port->port[1]) -
 						    ntohs(
 						    $5.dst.port->port[0]));
 					} else
 						r.rpool.proxy_port[1] =
-						    ntohs($7->rport.b);
+						    ntohs($8->rport.b);
 					break;
 				case PF_NAT:
 					r.rpool.proxy_port[1] =
-					    ntohs($7->rport.b);
+					    ntohs($8->rport.b);
 					if (!r.rpool.proxy_port[0] &&
 					    !r.rpool.proxy_port[1]) {
 						r.rpool.proxy_port[0] =
@@ -3297,25 +3311,25 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 					break;
 				}
 
-				r.rpool.opts = $8.type;
+				r.rpool.opts = $9.type;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) ==
-				    PF_POOL_NONE && ($7->host->next != NULL ||
-				    $7->host->addr.type == PF_ADDR_TABLE ||
-				    DYNIF_MULTIADDR($7->host->addr)))
+				    PF_POOL_NONE && ($8->host->next != NULL ||
+				    $8->host->addr.type == PF_ADDR_TABLE ||
+				    DYNIF_MULTIADDR($8->host->addr)))
 					r.rpool.opts = PF_POOL_ROUNDROBIN;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
-				    disallow_table($7->host, "tables are only "
+				    disallow_table($8->host, "tables are only "
 				    "supported in round-robin redirection "
 				    "pools"))
 					YYERROR;
 				if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 				    PF_POOL_ROUNDROBIN &&
-				    disallow_alias($7->host, "interface (%s) "
+				    disallow_alias($8->host, "interface (%s) "
 				    "is only supported in round-robin "
 				    "redirection pools"))
 					YYERROR;
-				if ($7->host->next != NULL) {
+				if ($8->host->next != NULL) {
 					if ((r.rpool.opts & PF_POOL_TYPEMASK) !=
 					    PF_POOL_ROUNDROBIN) {
 						yyerror("only round-robin "
@@ -3326,14 +3340,14 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 				}
 			}
 
-			if ($8.key != NULL)
-				memcpy(&r.rpool.key, $8.key,
+			if ($9.key != NULL)
+				memcpy(&r.rpool.key, $9.key,
 				    sizeof(struct pf_poolhashkey));
 
-			 if ($8.opts)
-				r.rpool.opts |= $8.opts;
+			 if ($9.opts)
+				r.rpool.opts |= $9.opts;
 
-			if ($8.staticport) {
+			if ($9.staticport) {
 				if (r.action != PF_NAT) {
 					yyerror("the 'static-port' option is "
 					    "only valid with nat rules");
@@ -3352,14 +3366,14 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 				r.rpool.proxy_port[1] = 0;
 			}
 
-			expand_rule(&r, $2, $7 == NULL ? NULL : $7->host, $4,
+			expand_rule(&r, $2, $8 == NULL ? NULL : $8->host, $4,
 			    $5.src_os, $5.src.host, $5.src.port, $5.dst.host,
 			    $5.dst.port, 0, 0, 0, "");
-			free($7);
+			free($8);
 		}
 		;
 
-binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
+binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag tagged
 		    redirection
 		{
 			struct pf_rule		binat;
@@ -3380,8 +3394,9 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 				binat.af = $8->af;
 			if (!binat.af && $10 != NULL && $10->af)
 				binat.af = $10->af;
-			if (!binat.af && $12 != NULL && $12->host)
-				binat.af = $12->host->af;
+
+			if (!binat.af && $13 != NULL && $13->host)
+				binat.af = $13->host->af;
 			if (!binat.af) {
 				yyerror("address family (inet/inet6) "
 				    "undefined");
@@ -3394,6 +3409,7 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 				binat.ifnot = $4->not;
 				free($4);
 			}
+
 			if ($11 != NULL)
 				if (strlcpy(binat.tagname, $11,
 				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
@@ -3401,6 +3417,14 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
+			if ($12.name)
+				if (strlcpy(binat.match_tagname, $12.name,
+				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
+					yyerror("tag too long, max %u chars",
+					    PF_TAG_NAME_SIZE - 1);
+					YYERROR;
+				}
+			binat.match_tag_not = $12.neg;
 
 			if ($6 != NULL) {
 				binat.proto = $6->proto;
@@ -3414,12 +3438,12 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 			    "interface (%s) as the source address of a binat "
 			    "rule"))
 				YYERROR;
-			if ($12 != NULL && $12->host != NULL && disallow_table(
-			    $12->host, "invalid use of table <%s> as the "
+			if ($13 != NULL && $13->host != NULL && disallow_table(
+			    $13->host, "invalid use of table <%s> as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
-			if ($12 != NULL && $12->host != NULL && disallow_alias(
-			    $12->host, "invalid use of interface (%s) as the "
+			if ($13 != NULL && $13->host != NULL && disallow_alias(
+			    $13->host, "invalid use of interface (%s) as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
 
@@ -3458,33 +3482,33 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 			}
 
 			if (binat.action == PF_NOBINAT) {
-				if ($12 != NULL) {
+				if ($13 != NULL) {
 					yyerror("'no binat' rule does not need"
 					    " '->'");
 					YYERROR;
 				}
 			} else {
-				if ($12 == NULL || $12->host == NULL) {
+				if ($13 == NULL || $13->host == NULL) {
 					yyerror("'binat' rule requires"
 					    " '-> address'");
 					YYERROR;
 				}
 
-				remove_invalid_hosts(&$12->host, &binat.af);
-				if (invalid_redirect($12->host, binat.af))
+				remove_invalid_hosts(&$13->host, &binat.af);
+				if (invalid_redirect($13->host, binat.af))
 					YYERROR;
-				if ($12->host->next != NULL) {
+				if ($13->host->next != NULL) {
 					yyerror("binat rule must redirect to "
 					    "a single address");
 					YYERROR;
 				}
-				if (check_netmask($12->host, binat.af))
+				if (check_netmask($13->host, binat.af))
 					YYERROR;
 
 				if (!PF_AZERO(&binat.src.addr.v.a.mask,
 				    binat.af) &&
 				    !PF_AEQ(&binat.src.addr.v.a.mask,
-				    &$12->host->addr.v.a.mask, binat.af)) {
+				    &$13->host->addr.v.a.mask, binat.af)) {
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
@@ -3494,12 +3518,12 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 				pa = calloc(1, sizeof(struct pf_pooladdr));
 				if (pa == NULL)
 					err(1, "binat: calloc");
-				pa->addr = $12->host->addr;
+				pa->addr = $13->host->addr;
 				pa->ifname[0] = 0;
 				TAILQ_INSERT_TAIL(&binat.rpool.list,
 				    pa, entries);
 
-				free($12);
+				free($13);
 			}
 
 			pfctl_add_rule(pf, &binat, "");
@@ -3508,6 +3532,10 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 
 tag		: /* empty */		{ $$ = NULL; }
 		| TAG STRING		{ $$ = $2; }
+		;
+
+tagged		: /* empty */		{ $$.neg = 0; $$.name = NULL; }
+		| not TAGGED string	{ $$.neg = $1; $$.name = $3; }
 		;
 
 route_host	: STRING			{

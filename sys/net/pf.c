@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.479 2005/01/30 00:02:30 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.480 2005/02/27 15:08:39 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -184,7 +184,7 @@ int			 pf_test_state_other(struct pf_state **, int,
 			    struct pfi_kif *, struct pf_pdesc *);
 struct pf_tag		*pf_get_tag(struct mbuf *);
 int			 pf_match_tag(struct mbuf *, struct pf_rule *,
-			     struct pf_rule *, struct pf_tag **, int *);
+			     struct pf_tag **, int *);
 void			 pf_hash(struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);
 int			 pf_map_addr(u_int8_t, struct pf_rule *,
@@ -1747,8 +1747,7 @@ pf_get_tag(struct mbuf *m)
 }
 
 int
-pf_match_tag(struct mbuf *m, struct pf_rule *r, struct pf_rule *nat_rule,
-    struct pf_tag **pftag, int *tag)
+pf_match_tag(struct mbuf *m, struct pf_rule *r, struct pf_tag **pftag, int *tag)
 {
 	if (*tag == -1) {	/* find mbuf tag */
 		*pftag = pf_get_tag(m);
@@ -1756,8 +1755,6 @@ pf_match_tag(struct mbuf *m, struct pf_rule *r, struct pf_rule *nat_rule,
 			*tag = (*pftag)->tag;
 		else
 			*tag = 0;
-		if (nat_rule != NULL && nat_rule->tag)
-			*tag = nat_rule->tag;
 	}
 
 	return ((!r->match_tag_not && r->match_tag == *tag) ||
@@ -2232,6 +2229,8 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 {
 	struct pf_rule		*r, *rm = NULL;
 	struct pf_ruleset	*ruleset = NULL;
+	struct pf_tag		*pftag = NULL;
+	int			 tag = -1;
 	int			 asd = 0;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[rs_num].active.ptr);
@@ -2274,17 +2273,25 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 		    !pf_match_port(dst->port_op, dst->port[0],
 		    dst->port[1], dport))
 			r = r->skip[PF_SKIP_DST_PORT].ptr;
+		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
+			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY && (pd->proto !=
 		    IPPROTO_TCP || !pf_osfp_match(pf_osfp_fingerprint(pd, m,
 		    off, pd->hdr.tcp), r->os_fingerprint)))
 			r = TAILQ_NEXT(r, entries);
-		else if (r->anchor == NULL)
+		else {
+			if (r->tag)
+				tag = r->tag;
+			if (r->anchor == NULL) {
 				rm = r;
-		else
-			pf_step_into_anchor(&asd, &ruleset, rs_num, &r, NULL);
+			} else
+				pf_step_into_anchor(&asd, &ruleset, rs_num, &r, NULL);
+		}
 		if (r == NULL)
 			pf_step_out_of_anchor(&asd, &ruleset, rs_num, &r, NULL);
 	}
+	if (pf_tag_packet(m, pftag, tag))
+		return (NULL);
 	if (rm != NULL && (rm->action == PF_NONAT ||
 	    rm->action == PF_NORDR || rm->action == PF_NOBINAT))
 		return (NULL);
@@ -2759,7 +2766,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, nr, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY && !pf_osfp_match(
 		    pf_osfp_fingerprint(pd, m, off, th), r->os_fingerprint))
@@ -3128,7 +3135,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, nr, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY)
 			r = TAILQ_NEXT(r, entries);
@@ -3440,7 +3447,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, nr, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY)
 			r = TAILQ_NEXT(r, entries);
@@ -3684,7 +3691,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r, nr, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->os_fingerprint != PF_OSFP_ANY)
 			r = TAILQ_NEXT(r, entries);
@@ -3892,8 +3899,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->prob && r->prob <= arc4random())
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag &&
-		    !pf_match_tag(m, r, NULL, &pftag, &tag))
+		else if (r->match_tag && !pf_match_tag(m, r, &pftag, &tag))
 			r = TAILQ_NEXT(r, entries);
 		else {
 			if (r->anchor == NULL) {
