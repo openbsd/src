@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.52 2002/09/17 13:01:20 mpech Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.53 2002/10/17 22:08:37 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -189,7 +189,7 @@ static void		uvm_map_unreference_amap(vm_map_entry_t, int);
 
 int			uvm_map_spacefits(vm_map_t, vaddr_t *, vsize_t, vm_map_entry_t, voff_t, vsize_t);
 
-int _uvm_tree_sanity(vm_map_t map, char *name);
+int _uvm_tree_sanity(vm_map_t map, const char *name);
 static vsize_t		uvm_rb_subtree_space(vm_map_entry_t);
 
 static __inline int
@@ -290,10 +290,14 @@ uvm_rb_remove(vm_map_t map, vm_map_entry_t entry)
 		uvm_rb_fixup(map, parent);
 }
 
+#ifdef DEBUG
+#define uvm_tree_sanity(x,y) _uvm_tree_sanity(x,y)
+#else
 #define uvm_tree_sanity(x,y)
+#endif
 
 int
-_uvm_tree_sanity(vm_map_t map, char *name)
+_uvm_tree_sanity(vm_map_t map, const char *name)
 {
 	vm_map_entry_t tmp, trtmp;
 	int n = 0, i = 1;
@@ -597,7 +601,7 @@ void uvm_map_clip_start(map, entry, start)
 
 /*
  * uvm_map_clip_end: ensure that the entry ends at or before
- *	the ending address, if it does't we split the reference
+ *	the ending address, if it doesn't we split the reference
  * 
  * => caller should use UVM_MAP_CLIP_END macro rather than calling
  *    this directly
