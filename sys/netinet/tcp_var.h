@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.61 2004/03/02 12:51:12 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.62 2004/04/20 20:05:29 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -397,6 +397,7 @@ struct	tcpstat {
 	u_int32_t tcps_rcvwinprobe;	/* rcvd window probe packets */
 	u_int32_t tcps_rcvdupack;	/* rcvd duplicate acks */
 	u_int32_t tcps_rcvacktoomuch;	/* rcvd acks for unsent data */
+	u_int32_t tcps_rcvacktooold;	/* rcvd acks for old data */
 	u_int32_t tcps_rcvackpack;	/* rcvd ack packets */
 	u_int64_t tcps_rcvackbyte;	/* bytes acked by rcvd acks */
 	u_int32_t tcps_rcvwinupd;	/* rcvd window update packets */

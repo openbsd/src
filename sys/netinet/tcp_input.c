@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.163 2004/04/15 12:05:34 grange Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.164 2004/04/20 20:05:29 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1535,7 +1535,7 @@ trimthenstep6:
 				if (th->th_seq != tp->rcv_nxt &&
 				   SEQ_LT(th->th_ack,
 				   tp->snd_una - tp->max_sndwnd)) {
-					/* XXX stat */
+					tcpstat.tcps_rcvacktooold++;
 					goto drop;
 				}
 				break;
