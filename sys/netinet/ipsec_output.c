@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.22 2002/06/09 16:26:11 itojun Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.23 2002/06/19 22:03:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -339,29 +339,25 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 #ifdef INET
 	case AF_INET:
 		/* Fix the header length, for AH processing. */
-		if (tdb->tdb_dst.sa.sa_family == AF_INET) {
-			ip = mtod(m, struct ip *);
-			ip->ip_len = htons(m->m_pkthdr.len);
-		}
+		ip = mtod(m, struct ip *);
+		ip->ip_len = htons(m->m_pkthdr.len);
 		break;
 #endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
 		/* Fix the header length, for AH processing. */
-		if (tdb->tdb_dst.sa.sa_family == AF_INET6) {
-			if (m->m_pkthdr.len < sizeof(*ip6)) {
-				m_freem(m);
-				return ENXIO;
-			}
-			if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
-				/* No jumbogram support. */
-				m_freem(m);
-				return ENXIO;	/*?*/
-			}
-			ip6 = mtod(m, struct ip6_hdr *);
-			ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
+		if (m->m_pkthdr.len < sizeof(*ip6)) {
+			m_freem(m);
+			return ENXIO;
 		}
+		if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
+			/* No jumbogram support. */
+			m_freem(m);
+			return ENXIO;
+		}
+		ip6 = mtod(m, struct ip6_hdr *);
+		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
 		break;
 #endif /* INET6 */
 
