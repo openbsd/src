@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.12 1997/09/28 23:09:56 deraadt Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.13 1999/03/13 21:15:16 deraadt Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -799,6 +799,7 @@ revarpwhoami(in, ifp)
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+
 static void
 db_print_sa(sa)
 	struct sockaddr *sa;
@@ -816,11 +817,14 @@ db_print_sa(sa)
 	db_printf("[");
 	while (len > 0) {
 		db_printf("%d", *p);
-		p++; len--;
-		if (len) db_printf(",");
+		p++;
+		len--;
+		if (len)
+			db_printf(",");
 	}
 	db_printf("]\n");
 }
+
 static void
 db_print_ifa(ifa)
 	struct ifaddr *ifa;
@@ -833,11 +837,10 @@ db_print_ifa(ifa)
 	db_print_sa(ifa->ifa_dstaddr);
 	db_printf("  ifa_mask=");
 	db_print_sa(ifa->ifa_netmask);
-	db_printf("  flags=0x%x,refcnt=%d,metric=%d\n",
-			  ifa->ifa_flags,
-			  ifa->ifa_refcnt,
-			  ifa->ifa_metric);
+	db_printf("  flags=0x%x, refcnt=%d, metric=%d\n",
+	    ifa->ifa_flags, ifa->ifa_refcnt, ifa->ifa_metric);
 }
+
 static void
 db_print_llinfo(li)
 	caddr_t li;
@@ -848,8 +851,9 @@ db_print_llinfo(li)
 		return;
 	la = (struct llinfo_arp *)li;
 	db_printf("  la_rt=%p la_hold=%p, la_asked=0x%lx\n",
-			  la->la_rt, la->la_hold, la->la_asked);
+	    la->la_rt, la->la_hold, la->la_asked);
 }
+
 /*
  * Function to pass to rn_walktree().
  * Return non-zero error to abort walk.
@@ -864,8 +868,7 @@ db_show_radix_node(rn, w)
 	db_printf("rtentry=%p", rt);
 
 	db_printf(" flags=0x%x refcnt=%d use=%ld expire=%ld\n",
-			  rt->rt_flags, rt->rt_refcnt,
-			  rt->rt_use, rt->rt_expire);
+	    rt->rt_flags, rt->rt_refcnt, rt->rt_use, rt->rt_expire);
 
 	db_printf(" key="); db_print_sa(rt_key(rt));
 	db_printf(" mask="); db_print_sa(rt_mask(rt));
@@ -882,12 +885,11 @@ db_show_radix_node(rn, w)
 
 	db_printf(" genmask="); db_print_sa(rt->rt_genmask);
 
-	db_printf(" gwroute=%p llinfo=%p\n",
-			  rt->rt_gwroute, rt->rt_llinfo);
+	db_printf(" gwroute=%p llinfo=%p\n", rt->rt_gwroute, rt->rt_llinfo);
 	db_print_llinfo(rt->rt_llinfo);
-
 	return (0);
 }
+
 /*
  * Function to print all the route trees.
  * Use this from ddb:  "call db_show_arptab"
