@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.2 2000/04/24 22:31:29 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.3 2000/04/24 22:37:15 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -31,15 +31,8 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-
-#ifndef lint
-__COPYRIGHT(
-	"@(#) Copyright (c) 1999 \
-	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $");
-#endif
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -202,24 +195,6 @@ asystem(char *fmt, ...)
 	}
 	return ret;
 }
-
-#define NetBSD_1_4_K	104110000
-
-#if defined(__NetBSD_Version__) && (__NetBSD_Version__ < NetBSD_1_4_K)
-/* bounds checking strncpy */
-static int
-strlcpy(char *to, char *from, size_t tosize)
-{
-	size_t	n;
-	int	fromsize;
-
-	fromsize = strlen(from);
-	n = MIN(tosize - 1, fromsize);
-	(void) memcpy(to, from, n);
-	to[n] = '\0';
-	return fromsize;
-}
-#endif
 
 #ifdef EXTENSIONS
 /* return 1 if all of `s' is numeric */
