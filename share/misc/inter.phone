@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.18 2001/07/15 19:42:17 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.19 2001/07/16 06:06:27 mpech Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -1289,7 +1289,7 @@
 371:31:Tukums:Latvia
 371:32:Talsi:Latvia
 371:33:Kuldiga:Latvia
-371:34:Aizpute(Liepaja):Latvia
+371:34:Liepaja:Latvia
 371:36:Ventspils:Latvia
 371:37:Dobele:Latvia
 371:38:Saldus:Latvia
