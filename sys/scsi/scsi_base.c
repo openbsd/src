@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.51 2004/02/07 22:39:15 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.52 2004/02/17 23:50:46 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ scsi_get_xs(sc_link, flags)
 	xs = pool_get(&scsi_xfer_pool,
 	    ((flags & SCSI_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
 	if (xs != NULL) {
+		bzero(xs, sizeof *xs);
 		sc_link->openings--;
 		xs->flags = flags;
 	} else {
@@ -197,7 +198,6 @@ scsi_make_xs(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	xs->retries = retries;
 	xs->timeout = timeout;
 	xs->bp = bp;
-	xs->req_sense_length = 0;	/* XXX - not used by scsi internals */
 
 	/*
 	 * Set the LUN in the CDB.  This may only be needed if we have an
