@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.8 2002/12/08 07:23:09 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.9 2002/12/08 17:07:46 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.8 2002/12/08 07:23:09 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.9 2002/12/08 17:07:46 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -320,10 +320,8 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 	 * XXX Some GNU programs (like cvs) set optind to 0 instead of
 	 * XXX using optreset.  Work around this braindamage.
 	 */
-	if (optind == 0) {
-		optind = 1;
-		optreset = 1;
-	}
+	if (optind == 0)
+		optind = optreset = 1;
 
 	if (optreset)
 		nonopt_start = nonopt_end = -1;
@@ -428,6 +426,12 @@ start:
 
 	if ((optchar = (int)*place++) == (int)':' ||
 	    (oli = strchr(options, optchar)) == NULL) {
+		/*
+		 * If the user didn't specify '-' as an option,
+		 * assume it means -1 as POSIX specifies.
+		 */
+		if (optchar == (int)'-')
+			return (-1);
 		/* option letter unknown or ':' */
 		if (!*place)
 			++optind;
