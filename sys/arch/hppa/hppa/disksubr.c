@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.9 2002/03/14 03:15:53 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 2002/12/29 19:10:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -621,6 +621,11 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 		fsoff = 0;
 	} else {
 		register struct lifdir *p;
+		dev_t dev;
+
+		dev = bp->b_dev;
+		bp = geteblk(LIF_DIRSIZE);
+		bp->b_dev = dev;
 
 		/* read LIF directory */
 		bp->b_blkno = btodb(LIF_DIRSTART);
@@ -632,10 +637,16 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 		if (biowait(bp)) {
 			if (partoffp)
 				*partoffp = -1;
-			return "LIF directory I/O error";
+
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+			return ("LIF directory I/O error");
 		}
 
 		bcopy(bp->b_data, osdep->u._hppa.lifdir, LIF_DIRSIZE);
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+
 		/* scan for LIF_DIR_FS dir entry */
 		for (fsoff = -1,  p = &osdep->u._hppa.lifdir[0];
 		     fsoff < 0 && p < &osdep->u._hppa.lifdir[LIF_NUMDIR]; p++)
@@ -647,7 +658,8 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 			fsoff = btodb(LIF_FILESTART);
 	}
 
-	*partoffp = fsoff;
+	if (partoffp)
+		*partoffp = fsoff;
 
 	return readbsdlabel(bp, strat, 0,  fsoff + HPPA_LABELSECTOR,
 	    HPPA_LABELOFFSET, BIG_ENDIAN, lp, spoofonly);
