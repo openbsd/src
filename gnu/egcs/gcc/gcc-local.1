@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.5 2003/02/27 16:22:31 millert Exp $
+.\" $OpenBSD: gcc-local.1,v 1.6 2003/02/27 21:02:49 espie Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\"
@@ -100,6 +100,18 @@ still uses
 .Xr setjmp 3 /
 .Xr longjmp 3 -
 style exceptions, and so needs extra fixes beyond the pure 2.95.3 release.
+.It
+On some
+platforms (mostly a.out),
+.Nm gcc
+uses a linker wrapper to write stubs that call global constructors and
+destructors.
+On
+.Ox
+Those calls can be traced using
+.Fl Wl,-trace-ctors-dtors ,
+using
+.Xr syslog_r 3 .
 .It
 On i386, the optimizer features an extra peephole which reduces the function
 prologues enough to allow for the ramdisk to fit on one floppy.

@@ -195,6 +195,7 @@ int debug;				/* true if -debug */
 
 static int shared_obj;		        /* true if -shared */
 
+static int trace_ctors_dtors;
 static char *c_file;			/* <xxx>.c for constructor/destructor list.  */
 static char *o_file;			/* <xxx>.o for constructor/destructor list.  */
 #ifdef COLLECT_EXPORT_LIST
@@ -1038,9 +1039,12 @@ main (argc, argv)
   {
     int i;
     
-    for (i = 1; argv[i] != NULL; i ++)
+    for (i = 1; argv[i] != NULL; i ++) {
       if (! strcmp (argv[i], "-debug"))
 	debug = 1;
+      if (! strcmp (argv[i], "-trace-ctors-dtors"))
+      	trace_ctors_dtors = 1;
+    }
     vflag = debug;
   }
 
@@ -1367,6 +1371,14 @@ main (argc, argv)
 		     else with strip if there is no second ld run.  */
 		  strip_flag = 1;
 		  ld1--;
+		}
+	      break;
+	    case 't':
+	      if (!strcmp(arg, "-trace-ctors-dtors"))
+	        {
+		  /* Already parsed.  */
+		  ld1--;
+		  ld2--;
 		}
 	      break;
 
@@ -2081,6 +2093,8 @@ write_c_file_stat (stream, name)
       fprintf (stream, "\t}\n");
     }
 
+  if (trace_ctors_dtors)
+ 	fprintf (stream, "#include <syslog.h>\n");
   fprintf (stream, "void %s() {\n", initname);
   if (constructors.number > 0 || frames)
     {
@@ -2089,10 +2103,26 @@ write_c_file_stat (stream, name)
       if (frames)
 	fprintf (stream, "\treg_frame,\n");
       fprintf (stream, "\t};\n");
+      if (trace_ctors_dtors) {
+        struct id *list;
+        fprintf(stream, "\tstatic const char *names[] = {\n");
+	for (list = constructors.first; list; list = list->next)
+		fprintf (stream, "\t\t\"%s\",\n", list->name);
+	fprintf(stream, "\t};\n");
+	fprintf(stream, "\tconst char **n;\n");
+	fprintf(stream, "\tstruct syslog_data data = SYSLOG_DATA_INIT;\n");
+      }
       fprintf (stream, "\tentry_pt **p;\n");
       fprintf (stream, "\tif (count++ != 0) return;\n");
       fprintf (stream, "\tp = ctors + %d;\n", constructors.number + frames);
-      fprintf (stream, "\twhile (p > ctors) (*--p)();\n");
+      if (trace_ctors_dtors) {
+      	fprintf(stream, "\tn = names + %d;\n", constructors.number + frames);
+	fprintf(stream, "\twhile (p > ctors) {\n");
+	fprintf(stream, "\t  syslog_r(LOG_DEBUG, &data, \"%%s\", *(--n));\n");
+	fprintf(stream, "\t  (*--p)();\n");
+	fprintf(stream, "\t}\n");
+      } else
+	fprintf (stream, "\twhile (p > ctors) (*--p)();\n");
     }
   else
     fprintf (stream, "\t++count;\n");
@@ -2106,10 +2136,27 @@ write_c_file_stat (stream, name)
       if (frames)
 	fprintf (stream, "\tdereg_frame,\n");
       fprintf (stream, "\t};\n");
+      if (trace_ctors_dtors) {
+        struct id *list;
+        fprintf(stream, "\tstatic const char *names[] = {\n");
+	for (list = destructors.first; list; list = list->next)
+		fprintf (stream, "\t\t\"%s\",\n", list->name);
+	fprintf(stream, "\t};\n");
+	fprintf(stream, "\tconst char **n;\n");
+	fprintf(stream, "\tstruct syslog_data data = SYSLOG_DATA_INIT;\n");
+      }
       fprintf (stream, "\tentry_pt **p;\n");
       fprintf (stream, "\tif (--count != 0) return;\n");
       fprintf (stream, "\tp = dtors;\n");
-      fprintf (stream, "\twhile (p < dtors + %d) (*p++)();\n",
+      if (trace_ctors_dtors) {
+      	fprintf(stream, "\tn = names;\n");
+	fprintf(stream, "\twhile (p < dtors + %d) {\n", 
+		destructors.number + frames);
+	fprintf(stream, "\t  syslog_r(LOG_DEBUG, &data, \"%%s\", *(n++));\n");
+	fprintf(stream, "\t  (*p++)();\n");
+	fprintf(stream, "\t}\n");
+      } else
+        fprintf (stream, "\twhile (p < dtors + %d) (*p++)();\n",
 	       destructors.number + frames);
     }
   fprintf (stream, "}\n");
