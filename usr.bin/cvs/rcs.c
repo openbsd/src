@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.28 2005/03/03 21:02:23 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.29 2005/03/04 18:21:00 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -230,6 +230,7 @@ rcs_open(const char *path, int flags, ...)
 	rfp->rf_mode = fmode;
 
 	TAILQ_INIT(&(rfp->rf_delta));
+	TAILQ_INIT(&(rfp->rf_access));
 	TAILQ_INIT(&(rfp->rf_symbols));
 	TAILQ_INIT(&(rfp->rf_locks));
 
@@ -314,14 +315,14 @@ rcs_write(RCSFILE *rfp)
 	FILE *fp;
 	char buf[1024], numbuf[64], *cp;
 	size_t rlen, len;
+	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_delta *rdp;
 
 	if (rfp->rf_flags & RCS_SYNCED)
 		return (0);
 
-	fp = fopen(rfp->rf_path, "w");
-	if (fp == NULL) {
+	if ((fp = fopen(rfp->rf_path, "w")) == NULL) {
 		cvs_log(LP_ERRNO, "failed to open RCS output file `%s'",
 		    rfp->rf_path);
 		return (-1);
@@ -333,7 +334,11 @@ rcs_write(RCSFILE *rfp)
 		numbuf[0] = '\0';
 
 	fprintf(fp, "head\t%s;\n", numbuf);
-	fprintf(fp, "access;\n");
+	fputs("access", fp);
+	TAILQ_FOREACH(ap, &(rfp->rf_access), ra_list) {
+		fprintf(fp, "\n\t%s", ap->ra_name);
+	}
+	fputs(";\n", fp);
 
 	fprintf(fp, "symbols\n");
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
@@ -395,6 +400,80 @@ rcs_write(RCSFILE *rfp)
 
 	rfp->rf_flags |= RCS_SYNCED;
 
+	return (0);
+}
+
+
+/*
+ * rcs_access_add()
+ *
+ * Add the login name <login> to the access list for the RCS file <file>.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcs_access_add(RCSFILE *file, const char *login)
+{
+	struct rcs_access *ap;
+
+	/* first look for duplication */
+	TAILQ_FOREACH(ap, &(file->rf_access), ra_list) {
+		if (strcmp(ap->ra_name, login) == 0) {
+			cvs_log(LP_ERR, "attempt to add duplicate access `%s'",
+			    login);
+			return (-1);
+		}
+	}
+
+	ap = (struct rcs_access *)malloc(sizeof(*ap));
+	if (ap == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate RCS access entry");
+		return (-1);
+	}
+
+	ap->ra_name = strdup(login);
+	if (ap->ra_name == NULL) {
+		cvs_log(LP_ERRNO, "failed to duplicate user name");
+		free(ap);
+		return (-1);
+	}
+
+	TAILQ_INSERT_TAIL(&(file->rf_access), ap, ra_list);
+
+	/* not synced anymore */
+	file->rf_flags &= ~RCS_SYNCED;
+	return (0);
+
+
+}
+
+
+/*
+ * rcs_access_remove()
+ *
+ * Remove an entry with login name <login> from the access list of the RCS
+ * file <file>.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+rcs_access_remove(RCSFILE *file, const char *login)
+{
+	struct rcs_access *ap;
+
+	TAILQ_FOREACH(ap, &(file->rf_access), ra_list)
+		if (strcmp(ap->ra_name, login) == 0)
+			break;
+
+	if (ap == NULL) {
+		cvs_log(LP_ERR, "%s: no access for `%s'", file->rf_path, login);
+		return (-1);
+	}
+
+	TAILQ_REMOVE(&(file->rf_access), ap, ra_list);
+	free(ap->ra_name);
+	free(ap);
+
+	/* not synced anymore */
+	file->rf_flags &= ~RCS_SYNCED;
 	return (0);
 }
 
@@ -1130,13 +1209,16 @@ rcs_parse_admin(RCSFILE *rfp)
 			}
 			break;
 		case RCS_TOK_ACCESS:
-			rcs_parse_access(rfp);
+			if (rcs_parse_access(rfp) < 0)
+				return (-1);
 			break;
 		case RCS_TOK_SYMBOLS:
-			rcs_parse_symbols(rfp);
+			if (rcs_parse_symbols(rfp) < 0)
+				return (-1);
 			break;
 		case RCS_TOK_LOCKS:
-			rcs_parse_locks(rfp);
+			if (rcs_parse_locks(rfp) < 0)
+				return (-1);
 			break;
 		default:
 			cvs_log(LP_ERR,
@@ -1428,6 +1510,9 @@ rcs_parse_access(RCSFILE *rfp)
 			    RCS_TOKSTR(rfp));
 			return (-1);
 		}
+
+		if (rcs_access_add(rfp, RCS_TOKSTR(rfp)) < 0)
+			return (-1);
 	}
 
 	return (0);

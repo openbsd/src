@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.10 2005/03/02 04:19:34 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.11 2005/03/04 18:21:00 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -83,6 +83,12 @@ typedef struct rcs_num {
 } RCSNUM;
 
 
+struct rcs_access {
+	char    *ra_name;
+	uid_t    ra_uid;
+	TAILQ_ENTRY(rcs_access) ra_list;
+};
+
 struct rcs_sym {
 	char    *rs_name;
 	RCSNUM  *rs_num;
@@ -136,27 +142,31 @@ typedef struct rcs_file {
 	char   *rf_desc;
 
 	u_int   rf_ndelta;
-	struct rcs_dlist                rf_delta;
-	TAILQ_HEAD(rcs_slist, rcs_sym)  rf_symbols;
-	TAILQ_HEAD(rcs_llist, rcs_lock) rf_locks;
+	struct rcs_dlist                  rf_delta;
+	TAILQ_HEAD(rcs_alist, rcs_access) rf_access;
+	TAILQ_HEAD(rcs_slist, rcs_sym)    rf_symbols;
+	TAILQ_HEAD(rcs_llist, rcs_lock)   rf_locks;
 
 
 	void   *rf_pdata;
 } RCSFILE;
 
 
-RCSFILE*    rcs_open         (const char *, int, ...);
-void        rcs_close        (RCSFILE *);
-int         rcs_sym_add      (RCSFILE *, const char *, RCSNUM *);
-int         rcs_sym_remove   (RCSFILE *, const char *);
-RCSNUM*     rcs_sym_getrev   (RCSFILE *, const char *);
-BUF*        rcs_getrev       (RCSFILE *, RCSNUM *);
-BUF*        rcs_gethead      (RCSFILE *);
-RCSNUM*     rcs_getrevbydate (RCSFILE *, struct tm *);
-const char* rcs_desc_get     (RCSFILE *);
-int         rcs_desc_set     (RCSFILE *, const char *);
-int         rcs_kwexp_set    (RCSFILE *, int);
-int         rcs_kwexp_get    (RCSFILE *);
+RCSFILE*    rcs_open          (const char *, int, ...);
+void        rcs_close         (RCSFILE *);
+int         rcs_access_add    (RCSFILE *, const char *);
+int         rcs_access_remove (RCSFILE *, const char *);
+int         rcs_access_check  (RCSFILE *, const char *);
+int         rcs_sym_add       (RCSFILE *, const char *, RCSNUM *);
+int         rcs_sym_remove    (RCSFILE *, const char *);
+RCSNUM*     rcs_sym_getrev    (RCSFILE *, const char *);
+BUF*        rcs_getrev        (RCSFILE *, RCSNUM *);
+BUF*        rcs_gethead       (RCSFILE *);
+RCSNUM*     rcs_getrevbydate  (RCSFILE *, struct tm *);
+const char* rcs_desc_get      (RCSFILE *);
+int         rcs_desc_set      (RCSFILE *, const char *);
+int         rcs_kwexp_set     (RCSFILE *, int);
+int         rcs_kwexp_get     (RCSFILE *);
 
 int       rcs_kflag_get    (const char *);
 void      rcs_kflag_usage  (void);
