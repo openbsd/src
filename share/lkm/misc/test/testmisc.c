@@ -1,4 +1,4 @@
-/*	$OpenBSD: testmisc.c,v 1.2 2000/03/02 14:46:36 todd Exp $	*/
+/*	$OpenBSD: testmisc.c,v 1.3 2001/11/20 13:59:50 kevlo Exp $	*/
 /*
  * testmisc.c
  *
@@ -40,23 +40,22 @@
  */
 #include <stdio.h>
 
-main()
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	char	buf[ 80];
-	int	err = 0;
+	char buf[80];
+	int err = 0;
 
-	printf( "Table offset as reported by modstat: ");
-	if( gets( buf) == NULL) {
-		printf( "[ABORT]\n");
-		exit( 1);
+	printf("Table offset as reported by modstat: ");
+	if (fgets(buf, sizeof(buf), stdin) == NULL) {
+		printf("[ABORT]\n");
+		exit(1);
 	}
 
-	if( err = syscall( atoi( buf) /* no arguments*/))
-		perror( "syscall");
+	if (err = syscall(atoi(buf) /* no arguments*/))
+		perror("syscall");
 
-	exit( err);
+	exit(err);
 }
-
-/*
- * EOF -- This file has not been truncated
- */
