@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.158 2004/01/31 20:01:42 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.159 2004/02/02 00:21:56 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -6109,9 +6109,15 @@ ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
-	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	pcireg_t interface;
 	bus_size_t cmdsize, ctlsize;
 	pcireg_t cfg, modectl;
+
+	/*
+	 * Fake interface since IT8212F is claimed to be a ``RAID'' device.
+	 */
+	interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
+	    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 
 	cfg = pci_conf_read(sc->sc_pc, sc->sc_tag, IT_CFG);
 	modectl = pci_conf_read(sc->sc_pc, sc->sc_tag, IT_MODE);
