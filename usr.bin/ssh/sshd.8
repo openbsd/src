@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.5 1999/10/02 13:10:26 deraadt Exp $
+.\" $Id: sshd.8,v 1.6 1999/10/03 18:46:12 aaron Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -182,8 +182,8 @@ are allowed to connect.
 Note that
 .Nm
 can also be configured to use tcp_wrappers using the
-.Fl -with-libwrap
-compile-time configuration option.
+.Fl LIBWARP
+compile-time option.
 .It Cm DenyHosts
 This keyword can be followed by any number of host name patterns,
 separated by spaces.  If specified, login is disallowed from the hosts
@@ -334,6 +334,12 @@ Specifies whether X11 forwarding is permitted.  The default is
 .Dq yes .
 Note that disabling X11 forwarding does not improve security in any
 way, as users can always install their own forwarders.
+.It Cm X11DisplayOffset
+Specifies the first display number available for
+.Nm sshd Ns 's
+X11 forwarding.  This prevents
+.Nm
+from interfering with real X11 servers.
 .El
 .Sh LOGIN PROCESS
 When a user successfully logs in,
@@ -360,10 +366,6 @@ if it exists, prints contents and quits
 Changes to run with normal user privileges.
 .It
 Sets up basic environment.
-.It
-Reads
-.Pa /etc/environment
-if it exists.
 .It
 Reads
 .Pa $HOME/.ssh/environment
@@ -466,11 +468,7 @@ and
 files contain host public keys for all known hosts.  The global file should
 be prepared by the admistrator (optional), and the per-user file is
 maintained automatically: whenever the user connects an unknown host
-its key is added to the per-user file.  The recommended way to create
-.Pa /etc/ssh_known_hosts
-is to use the
-.Xr make-ssh-known-hosts 1
-command.
+its key is added to the per-user file.  
 .Pp
 Each line in these files contains the following fields: hostnames,
 bits, exponent, modulus, comment.  The fields are separated by spaces.
@@ -504,8 +502,7 @@ accepted if valid information can be found from either file.
 .Pp
 Note that the lines in these files are typically hundreds of characters
 long, and you definitely don't want to type in the host keys by hand.
-Rather, generate them by a script (see 
-.Xr make-ssh-known-hosts 1 )
+Rather, generate them by a script
 or by taking 
 .Pa /etc/ssh_host_key.pub
 and adding the host names at the front.
@@ -545,32 +542,31 @@ This file must be readable by root (which may on some machines imply
 it being world-readable if the user's home directory resides on an NFS
 volume).  It is recommended that it not be accessible by others.  The
 format of this file is described above.
-.It Pa "/etc/ssh_known_hosts" and "$HOME/.ssh/known_hosts"
-These files are consulted when using rhosts with RSA host
+.It Pa /etc/ssh_known_hosts
+This file is consulted when using rhosts with RSA host
 authentication to check the public key of the host.  The key must be
-listed in one of these files to be accepted.  (The client uses the
-same files to verify that the remote host is the one we intended to
-connect.)  These files should be writable only by root/the owner.
+listed in this file to be accepted.
+.It Pa $HOME/.ssh/known_hosts
+The client uses this file
+and
+.Pa /etc/ssh_known_hosts
+to verify that the remote host is the one we intended to
+connect. These files should be writable only by root/the owner.
 .Pa /etc/ssh_known_hosts
 should be world-readable, and
 .Pa $HOME/.ssh/known_hosts
 can but need not be world-readable.
-.Pa /etc/nologin
+.It Pa /etc/nologin
 If this file exists, 
 .Nm
 refuses to let anyone except root log in.  The contents of the file
 are displayed to anyone trying to log in, and non-root connections are
 refused.  The file should be world-readable.
-.Pa $HOME/.rhosts
+.It Pa $HOME/.rhosts
 This file contains host-username pairs, separated by a space, one per
 line.  The given user on the corresponding host is permitted to log in
 without password.  The same file is used by rlogind and rshd.
-Ssh differs from rlogind
-and rshd in that it requires RSA host authentication in addition to
-validating the host name retrieved from domain name servers (unless
-compiled with the
-.Fl -with-rhosts
-configuration option).  The file must
+The file must
 be writable only by the user; it is recommended that it not be
 accessible by others.
 .Pp
@@ -603,7 +599,7 @@ same.  Additionally, successful RSA host authentication is normally
 required.  This file must be writable only by root; it is recommended
 that it be world-readable.
 .Pp
-.Sy Warning: It is almost never a good idea to use user names in 
+.Sy "Warning: It is almost never a good idea to use user names in"
 .Pa hosts.equiv .
 Beware that it really means that the named user(s) can log in as
 .Em anybody ,
@@ -618,18 +614,12 @@ This is processed exactly as
 .Pa /etc/hosts.equiv .
 However, this file may be useful in environments that want to run both
 rsh/rlogin and ssh.
-.It Pa /etc/environment
+.It Pa $HOME/.ssh/environment
 This file is read into the environment at login (if it exists).  It
 can only contain empty lines, comment lines (that start with
 .Ql # ) ,
-and assignment lines of the form name=value.  This file is processed in
-all environments (normal rsh/rlogin only process it on AIX and
-potentially some other systems).  The file should be writable only by
-root, and should be world-readable.
-.It Pa $HOME/.ssh/environment
-This file is read into the environment after /etc/environment.  It has
-the same format.  The file should be writable only by the user; it
-need not be readable by anyone else.
+and assignment lines of the form name=value.  The file should be writable
+only by the user; it need not be readable by anyone else.
 .It Pa $HOME/.ssh/rc
 If this file exists, it is run with /bin/sh after reading the
 environment files but before starting the user's shell or command.  If
