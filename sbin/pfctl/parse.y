@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.475 2005/01/27 15:30:35 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.476 2005/01/28 17:29:31 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -862,6 +862,8 @@ scrub_opt	: NODF	{
 		}
 		| REASSEMBLE STRING {
 			if (strcasecmp($2, "tcp") != 0) {
+				yyerror("scrub reassemble supports only tcp, "
+				    "not '%s'", $2);
 				free($2);
 				YYERROR;
 			}
@@ -1067,6 +1069,7 @@ table_opt	: STRING		{
 			else if (!strcmp($1, "persist"))
 				table_opts.flags |= PFR_TFLAG_PERSIST;
 			else {
+				yyerror("invalid table option '%s'", $1);
 				free($1);
 				YYERROR;
 			}
@@ -3619,6 +3622,8 @@ yesno		: NO			{ $$ = 0; }
 			if (!strcmp($1, "yes"))
 				$$ = 1;
 			else {
+				yyerror("invalid value '%s', expected 'yes' "
+				    "or 'no'", $1);
 				free($1);
 				YYERROR;
 			}
