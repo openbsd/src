@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.9 1999/05/23 14:11:32 aaron Exp $
+.\"	$OpenBSD: config.8,v 1.10 1999/07/22 19:24:52 deraadt Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -173,6 +173,97 @@ if there are configuration errors,
 but this code is not well-tested,
 and some problems (such as running out of disk space)
 are unrecoverable.
+.Sh EXAMPLE
+A custom kernel is built in the following way.
+.Pp
+To compile your own kernel from a non-writeable media (such as a CDROM)
+mounted on
+.Pa /usr/src ,
+do the following:
+.Sm off
+.Bd -literal -offset indent
+.Li #\  Xo
+.Ic cd\ /
+.Ar somedir
+.Xc
+.Li #\  Xo
+.Ic cp\ /usr/src/sys/arch/
+.Ar somearch
+.Ic /conf/
+.Ar SOMEFILE
+.Ic \ .
+.Xc
+.Li #\  Xo
+.Ic vi\ \&
+.Ar SOMEFILE
+.No \ \ \ (to\ make\ any\ changes)
+.Xc
+.Li #\  Xo
+.Ic config\ -s\ /usr/src/sys\ -b\ .\ \&
+.Ar SOMEFILE
+.Xc
+.Li #\  Xo
+.Ic make
+.Xc
+.Ed
+.Sm on
+.Pp
+To compile a kernel inside a writable source tree, do the following:
+.Sm off
+.Bd -literal -offset indent
+.Li #\  Xo
+.Ic cd\ /usr/src/sys/arch/
+.Ar somearch
+.Ic /conf
+.Xc
+.Li #\  Xo
+.Ic vi\ \&
+.Ar SOMEFILE
+.No \ \ \ (to\ make\ any\ changes)
+.Xc
+.Li #\  Xo
+.Ic config\ \&
+.Ar SOMEFILE
+.Xc
+.Li #\  Xo
+.Ic cd\ ../compile/
+.Ar SOMEFILE
+.Xc
+.Li #\  Xo
+.Ic make
+.Xc
+.Ed
+.Sm on
+.Pp
+where
+.Ar somedir
+is a writable directory,
+.Ar somearch
+is the architecture (e.g.
+.Ic i386 ) ,
+and
+.Ar SOMEFILE
+should be a name indicative of a particular configuration (often
+that of the hostname).
+.Nm config
+will warn you if a
+.Ar "make clean"
+is required; 
+you can also do a
+.Ic make depend
+so that you will have dependencies there the next time you do a compile.
+.Pp
+After either of these two methods, you can place the new kernel (called
+.Pa bsd )
+in
+.Pa /
+(i.e.
+.Pa /bsd )
+and the system will boot it next time.
+Most people save their backup kernels as
+.Pa /bsd.1 ,
+.Pa /bsd.2 ,
+etc.
 .Sh SEE ALSO
 .Xr options 4
 .Pp
@@ -181,7 +272,7 @@ The SYNOPSIS portion of each device in section 4.
 .%T "Building 4.4 BSD Systems with Config"
 .\" .%T "Device Support in 4.4BSD"
 .Re
-.sp
+.Pp
 .Sh HISTORY
 The
 .Nm config
