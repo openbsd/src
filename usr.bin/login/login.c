@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.9 1996/10/31 03:22:10 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.10 1996/11/05 18:23:49 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.9 1996/10/31 03:22:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.10 1996/11/05 18:23:49 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -429,9 +429,6 @@ main(argc, argv)
 	if (krbtkfile_env)
 		(void)setenv("KRB5CCNAME", krbtkfile_env, 1);
 #endif
-
-	if (tty[sizeof("tty")-1] == 'd')
-		syslog(LOG_INFO, "DIALUP %s, %s", tty, pwd->pw_name);
 
 	/* If fflag is on, assume caller/authenticator has logged root login. */
 	if (rootlogin && fflag == 0)
