@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.c,v 1.1.1.1 1995/10/18 08:47:19 deraadt Exp $
+ *	$Id: fsinfo.c,v 1.2 1996/10/26 20:10:20 millert Exp $
  */
 
 #ifndef lint
@@ -190,9 +190,9 @@ static char *find_username()
 			u = pw->pw_name;
 	}
 	if (!u)
-		u = getenv("USER");
-	if (!u)
 		u = getenv("LOGNAME");
+	if (!u)
+		u = getenv("USER");
 	if (!u)
 		u = "root";
 
