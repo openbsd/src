@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getservent.3,v 1.12 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: getservent.3,v 1.13 2003/12/30 10:35:36 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,9 +42,9 @@
 .Ft struct servent *
 .Fn getservent "void"
 .Ft struct servent *
-.Fn getservbyname "char *name" "char *proto"
+.Fn getservbyname "const char *name" "const char *proto"
 .Ft struct servent *
-.Fn getservbyport "int port" "char *proto"
+.Fn getservbyport "int port" "const char *proto"
 .Ft void
 .Fn setservent "int stayopen"
 .Ft void
