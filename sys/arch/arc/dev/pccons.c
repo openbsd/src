@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.3 1996/09/01 16:50:08 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.4 1996/09/01 19:41:16 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -1331,6 +1331,8 @@ sput(cp, n)
 	async_update();
 }
 
+/* the unshifted code for KB_SHIFT keys is used by X to distinguish between
+   left and right shift when reading the keyboard map */
 static pccons_keymap_t	scan_codes[KB_NUM_KEYS] = {
 /*  type       unshift   shift     control   altgr     shift_altgr scancode */
     KB_NONE,   "",       "",       "",       "",       "",  /* 0 unused */
@@ -1375,7 +1377,7 @@ static pccons_keymap_t	scan_codes[KB_NUM_KEYS] = {
     KB_ASCII,  ";",      ":",      ";",      "",       "",  /* 39 ; */
     KB_ASCII,  "'",      "\"",     "'",      "",       "",  /* 40 ' */
     KB_ASCII,  "`",      "~",      "`",      "",       "",  /* 41 ` */
-    KB_SHIFT,  "",       "",       "",       "",       "",  /* 42 shift */
+    KB_SHIFT,  "\001",   "",       "",       "",       "",  /* 42 shift */
     KB_ASCII,  "\\",     "|",      "\034",   "",       "",  /* 43 \ */
     KB_ASCII,  "z",      "Z",      "\032",   "",       "",  /* 44 z */
     KB_ASCII,  "x",      "X",      "\030",   "",       "",  /* 45 x */
@@ -1387,7 +1389,7 @@ static pccons_keymap_t	scan_codes[KB_NUM_KEYS] = {
     KB_ASCII,  ",",      "<",      "<",      "",       "",  /* 51 , */
     KB_ASCII,  ".",      ">",      ">",      "",       "",  /* 52 . */
     KB_ASCII,  "/",      "?",      "\037",   "",       "",  /* 53 / */
-    KB_SHIFT,  "",       "",       "",       "",       "",  /* 54 shift */
+    KB_SHIFT,  "\002",   "",       "",       "",       "",  /* 54 shift */
     KB_KP,     "*",      "*",      "*",      "",       "",  /* 55 kp * */
     KB_ALT,    "",       "",       "",       "",       "",  /* 56 alt */
     KB_ASCII,  " ",      " ",      "\000",   "",       "",  /* 57 space */
