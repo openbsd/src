@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.11 2001/06/12 19:11:59 mickey Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.12 2001/06/13 07:43:35 deraadt Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -149,11 +149,12 @@ ohci_pci_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
 
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf(": init failed, error=%d\n", r);
+		printf("%s: init failed, error=%d\n",
+		    sc->sc.sc_bus.bdev.dv_xname, r);
 		return;
 	}
 
