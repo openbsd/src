@@ -335,6 +335,7 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd
 ./usr/mdec/boot.mac
 ./usr/mdec/boot.ppc
+./usr/mdec/ofwboot
 ./usr/powerpc-unknown-openbsd2.1
 ./usr/powerpc-unknown-openbsd2.1/bin
 ./usr/powerpc-unknown-openbsd2.1/lib
