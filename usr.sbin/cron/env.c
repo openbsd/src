@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.9 2001/02/18 20:17:20 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.10 2002/07/08 18:11:02 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,16 +21,13 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: env.c,v 1.9 2001/02/18 20:17:20 millert Exp $";
+static char const rcsid[] = "$OpenBSD: env.c,v 1.10 2002/07/08 18:11:02 millert Exp $";
 #endif
-
 
 #include "cron.h"
 
-
 char **
-env_init()
-{
+env_init(void) {
 	char	**p = (char **) malloc(sizeof(char **));
 
 	if (p != NULL)
@@ -38,28 +35,22 @@ env_init()
 	return (p);
 }
 
-
 void
-env_free(envp)
-	char	**envp;
-{
+env_free(char **envp) {
 	char	**p;
 
-	for (p = envp;  *p;  p++)
+	for (p = envp;  *p != NULL;  p++)
 		free(*p);
 	free(envp);
 }
 
-
 char **
-env_copy(envp)
-	char	**envp;
-{
-	int	count, i, save_errno;
-	char	**p;
+env_copy(char **envp) {
+	int count, i, save_errno;
+	char **p;
 
 	for (count = 0;  envp[count] != NULL;  count++)
-		;
+		NULL;
 	p = (char **) malloc((count+1) * sizeof(char *));  /* 1 for the NULL */
 	if (p != NULL) {
 		for (i = 0;  i < count;  i++)
@@ -76,14 +67,10 @@ env_copy(envp)
 	return (p);
 }
 
-
 char **
-env_set(envp, envstr)
-	char	**envp;
-	char	*envstr;
-{
-	int	count, found;
-	char	**p, *cp;
+env_set(char **envp, char *envstr) {
+	int count, found;
+	char **p, *cp;
 
 	/*
 	 * count the number of elements, including the null pointer;
@@ -126,20 +113,16 @@ env_set(envp, envstr)
 	return (p);
 }
 
-
 /* return	ERR = end of file
  *		FALSE = not an env setting (file was repositioned)
  *		TRUE = was an env setting
  */
 int
-load_env(envstr, f)
-	char	*envstr;
-	FILE	*f;
-{
-	long	filepos;
-	int	fileline;
-	char	name[MAX_ENVSTR], val[MAX_ENVSTR];
-	int	fields;
+load_env(char *envstr, FILE *f) {
+	long filepos;
+	int fileline;
+	char name[MAX_ENVSTR], val[MAX_ENVSTR];
+	int fields;
 
 	filepos = ftell(f);
 	fileline = LineNumber;
@@ -187,14 +170,10 @@ load_env(envstr, f)
 	return (TRUE);
 }
 
-
 char *
-env_get(name, envp)
-	char	*name;
-	char	**envp;
-{
-	int	len = strlen(name);
-	char	*p, *q;
+env_get(char *name, char **envp) {
+	int len = strlen(name);
+	char *p, *q;
 
 	while ((p = *envp++) != NULL) {
 		if (!(q = strchr(p, '=')))

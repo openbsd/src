@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.14 2002/06/23 03:07:19 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.15 2002/07/08 18:11:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -34,11 +34,15 @@
  *
  */
 
+/* this came out of the ftpd sources; it's been modified to avoid the
+ * globbing stuff since we don't need it.  also execvp instead of execv.
+ */
+
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
+static const sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.14 2002/06/23 03:07:19 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: popen.c,v 1.15 2002/07/08 18:11:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,7 +50,6 @@ static char rcsid[] = "$OpenBSD: popen.c,v 1.14 2002/06/23 03:07:19 deraadt Exp 
 
 #define MAX_ARGV	100
 #define MAX_GARGV	1000
-#define WANT_GLOBBING 0
 
 /*
  * Special version of popen which avoids call to shell.  This ensures noone
@@ -57,28 +60,20 @@ static PID_T *pids;
 static int fds;
 
 FILE *
-cron_popen(program, type, e)
-	char *program;
-	char *type;
-	entry *e;
-{
+cron_popen(char *program, char *type, entry *e) {
 	char *cp;
 	FILE *iop;
 	int argc, pdes[2];
 	PID_T pid;
 	char *argv[MAX_ARGV];
-#if WANT_GLOBBING
-	char **pop, *gargv[MAX_GARGV];
-	int gargc;
-#endif
 
-	if ((*type != 'r' && *type != 'w') || type[1])
+	if ((*type != 'r' && *type != 'w') || type[1] != '\0')
 		return (NULL);
 
 	if (!pids) {
 		if ((fds = sysconf(_SC_OPEN_MAX)) <= 0)
 			return (NULL);
-		if (!(pids = (PID_T *)malloc((size_t)(fds * sizeof(int)))))
+		if (!(pids = (PID_T *)malloc((size_t)(fds * sizeof(PID_T)))))
 			return (NULL);
 		bzero(pids, fds * sizeof(PID_T));
 	}
@@ -86,45 +81,16 @@ cron_popen(program, type, e)
 		return (NULL);
 
 	/* break up string into pieces */
-	for (argc = 0, cp = program;argc < MAX_ARGV-1; cp = NULL)
+	for (argc = 0, cp = program; argc < MAX_ARGV - 1; cp = NULL)
 		if (!(argv[argc++] = strtok(cp, " \t\n")))
 			break;
 	argv[MAX_ARGV-1] = NULL;
 
-#if WANT_GLOBBING
-	/* glob each piece */
-	gargv[0] = argv[0];
-	for (gargc = argc = 1; argv[argc]; argc++) {
-		glob_t gl;
-
-		bzero(&gl, sizeof(gl));
-		if (glob(argv[argc],
-		    GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE|GLOB_LIMIT,
-		    NULL, &gl)) {
-			if (gargc < MAX_GARGV-1) {
-				gargv[gargc++] = strdup(argv[argc]);
-				if (gargv[gargc -1] == NULL)
-					fatal ("Out of memory");
-			}
-
-		} else
-			for (pop = gl.gl_pathv; *pop && gargc < MAX_GARGV-1; pop++) {
-				gargv[gargc++] = strdup(*pop);
-				if (gargv[gargc - 1] == NULL)
-					fatal ("Out of memory");
-			}
-		globfree(&gl);
-	}
-	gargv[gargc] = NULL;
-#endif
-
-	iop = NULL;
-
-	switch(pid = fork()) {
+	switch (pid = fork()) {
 	case -1:			/* error */
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
-		goto pfree;
+		return (NULL);
 		/* NOTREACHED */
 	case 0:				/* child */
 		if (e) {
@@ -166,11 +132,7 @@ cron_popen(program, type, e)
 			}
 			(void)close(pdes[1]);
 		}
-#if WANT_GLOBBING
-		execvp(gargv[0], gargv);
-#else
 		execvp(argv[0], argv);
-#endif
 		_exit(1);
 	}
 
@@ -184,18 +146,11 @@ cron_popen(program, type, e)
 	}
 	pids[fileno(iop)] = pid;
 
-pfree:
-#if WANT_GLOBBING
-for (argc = 1; gargv[argc] != NULL; argc++)
-		free(gargv[argc]);
-#endif
 	return (iop);
 }
 
 int
-cron_pclose(iop)
-	FILE *iop;
-{
+cron_pclose(FILE *iop) {
 	int fdes;
 	PID_T pid;
 	WAIT_T status;

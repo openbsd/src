@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.30 2002/05/09 22:14:37 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.31 2002/07/08 18:11:02 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: crontab.c,v 1.30 2002/05/09 22:14:37 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.31 2002/07/08 18:11:02 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -76,7 +76,7 @@ usage(const char *msg) {
 
 int
 main(int argc, char *argv[]) {
-	int	exitstatus;
+	int exitstatus;
 
 	Pid = getpid();
 	ProgramName = argv[0];
@@ -229,7 +229,6 @@ parse_args(int argc, char *argv[]) {
 		      User, Filename, Options[(int)Option]))
 }
 
-
 static void
 list_cmd(void) {
 	char n[MAX_FNAME];
@@ -344,10 +343,8 @@ edit_cmd(void) {
 
 	/* ignore the top few comments since we probably put them there.
 	 */
-	for (x = 0; x < NHEADER_LINES; x++) {
-		ch = get_char(f);
-		if (EOF == ch)
-			break;
+	x = 0;
+	while (EOF != (ch = get_char(f))) {
 		if ('#' != ch) {
 			putc(ch, NewCrontab);
 			break;
@@ -355,7 +352,7 @@ edit_cmd(void) {
 		while (EOF != (ch = get_char(f)))
 			if (ch == '\n')
 				break;
-		if (EOF == ch)
+		if (++x >= NHEADER_LINES)
 			break;
 	}
 
@@ -470,10 +467,12 @@ edit_cmd(void) {
 			fflush(stdout);
 			q[0] = '\0';
 			(void) fgets(q, sizeof q, stdin);
-			switch (islower(q[0]) ? q[0] : tolower(q[0])) {
+			switch (q[0]) {
 			case 'y':
+			case 'Y':
 				goto again;
 			case 'n':
+			case 'N':
 				goto abandon;
 			default:
 				fprintf(stderr, "Enter Y or N\n");
@@ -495,7 +494,6 @@ edit_cmd(void) {
  done:
 	log_it(RealUser, Pid, "END EDIT", User);
 }
-
 
 /* returns	0	on success
  *		-1	on syntax error

@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.9 2002/06/14 21:35:01 todd Exp $	*/
+/*	$OpenBSD: entry.c,v 1.10 2002/07/08 18:11:02 millert Exp $	*/
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: entry.c,v 1.9 2002/06/14 21:35:01 todd Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.10 2002/07/08 18:11:02 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -31,9 +31,7 @@ static char rcsid[] = "$OpenBSD: entry.c,v 1.9 2002/06/14 21:35:01 todd Exp $";
  * vix 30dec86 [written]
  */
 
-
 #include "cron.h"
-
 
 typedef	enum ecode {
 	e_none, e_minute, e_hour, e_dom, e_month, e_dow,
@@ -54,31 +52,23 @@ static const char *ecodes[] =
 		"bad option"
 	};
 
-static char	get_list(bitstr_t *, int, int, const char *[], int, FILE *),
-		get_range(bitstr_t *, int, int, const char *[], int, FILE *),
-		get_number(int *, int, const char *[], int, FILE *);
+static char	get_list(bitstr_t *, int, int, const char *[], char, FILE *),
+		get_range(bitstr_t *, int, int, const char *[], char, FILE *),
+		get_number(int *, int, const char *[], char, FILE *);
 static int	set_element(bitstr_t *, int, int, int);
 
 void
-free_entry(e)
-	entry	*e;
-{
+free_entry(entry *e) {
 	free(e->cmd);
 	env_free(e->envp);
 	free(e);
 }
 
-
 /* return NULL if eof or syntax error occurs;
  * otherwise return a pointer to a new entry.
  */
 entry *
-load_entry(file, error_func, pw, envp)
-	FILE		*file;
-	void		(*error_func)();
-	struct passwd	*pw;
-	char		**envp;
-{
+load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 	/* this function reads one crontab entry -- the next -- from a file.
 	 * it skips any leading blank lines, ignores comments, and returns
 	 * EOF if for any reason the entry can't be read and parsed.
@@ -93,11 +83,11 @@ load_entry(file, error_func, pw, envp)
 	 */
 
 	ecode_e	ecode = e_none;
-	entry	*e;
-	int	ch;
-	char	cmd[MAX_COMMAND];
-	char	envstr[MAX_ENVSTR];
-	char	**tenvp;
+	entry *e;
+	int ch;
+	char cmd[MAX_COMMAND];
+	char envstr[MAX_ENVSTR];
+	char **tenvp;
 
 	Debug(DPARS, ("load_entry()...about to eat comments\n"))
 
@@ -105,7 +95,7 @@ load_entry(file, error_func, pw, envp)
 
 	ch = get_char(file);
 	if (ch == EOF)
-		return NULL;
+		return (NULL);
 
 	/* ch is now the first useful character of a useful line.
 	 * it may be an @special or it may be the first character
@@ -136,18 +126,21 @@ load_entry(file, error_func, pw, envp)
 			bit_set(e->dom, 0);
 			bit_set(e->month, 0);
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
+			e->flags |= DOW_STAR;
 		} else if (!strcmp("monthly", cmd)) {
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_set(e->dom, 0);
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
+			e->flags |= DOW_STAR;
 		} else if (!strcmp("weekly", cmd)) {
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_set(e->dow, 0);
+			e->flags |= DOW_STAR;
 		} else if (!strcmp("daily", cmd) || !strcmp("midnight", cmd)) {
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
@@ -378,7 +371,7 @@ load_entry(file, error_func, pw, envp)
 
 	/* success, fini, return pointer to the entry we just created...
 	 */
-	return e;
+	return (e);
 
  eof:
 	if (e->envp)
@@ -390,17 +383,12 @@ load_entry(file, error_func, pw, envp)
 		(*error_func)(ecodes[(int)ecode]);
 	while (ch != EOF && ch != '\n')
 		ch = get_char(file);
-	return NULL;
+	return (NULL);
 }
 
-
 static char
-get_list(bits, low, high, names, ch, file)
-	bitstr_t	*bits;		/* one bit per flag, default=FALSE */
-	int		low, high;	/* bounds, impl. offset for bitstr */
-	const char	*names[];	/* NULL or *[] of names for these elements */
-	int		ch;		/* current character being processed */
-	FILE		*file;		/* file being read */
+get_list(bitstr_t *bits, int low, int high, const char *names[],
+	 char ch, FILE *file)
 {
 	int done;
 
@@ -437,22 +425,18 @@ get_list(bits, low, high, names, ch, file)
 
 	Debug(DPARS|DEXT, ("get_list()...exiting w/ %02x\n", ch))
 
-	return ch;
+	return (ch);
 }
 
 
 static char
-get_range(bits, low, high, names, ch, file)
-	bitstr_t	*bits;		/* one bit per flag, default=FALSE */
-	int		low, high;	/* bounds, impl. offset for bitstr */
-	const char	*names[];	/* NULL or names of elements */
-	int		ch;		/* current character being processed */
-	FILE		*file;		/* file being read */
+get_range(bitstr_t *bits, int low, int high, const char *names[],
+	  char ch, FILE *file)
 {
 	/* range = number | number "-" number [ "/" number ]
 	 */
 
-	int	i, num1, num2, num3;
+	int i, num1, num2, num3;
 
 	Debug(DPARS|DEXT, ("get_range()...entering, exit won't show\n"))
 
@@ -463,29 +447,29 @@ get_range(bits, low, high, names, ch, file)
 		num2 = high;
 		ch = get_char(file);
 		if (ch == EOF)
-			return EOF;
+			return (EOF);
 	} else {
 		if (EOF == (ch = get_number(&num1, low, names, ch, file)))
-			return EOF;
+			return (EOF);
 
 		if (ch != '-') {
 			/* not a range, it's a single number.
 			 */
 			if (EOF == set_element(bits, low, high, num1))
-				return EOF;
-			return ch;
+				return (EOF);
+			return (ch);
 		} else {
 			/* eat the dash
 			 */
 			ch = get_char(file);
 			if (ch == EOF)
-				return EOF;
+				return (EOF);
 
 			/* get the number following the dash
 			 */
 			ch = get_number(&num2, low, names, ch, file);
 			if (ch == EOF)
-				return EOF;
+				return (EOF);
 		}
 	}
 
@@ -496,7 +480,7 @@ get_range(bits, low, high, names, ch, file)
 		 */
 		ch = get_char(file);
 		if (ch == EOF)
-			return EOF;
+			return (EOF);
 
 		/* get the step size -- note: we don't pass the
 		 * names here, because the number is not an
@@ -505,7 +489,7 @@ get_range(bits, low, high, names, ch, file)
 		 */
 		ch = get_number(&num3, 0, PPC_NULL, ch, file);
 		if (ch == EOF)
-			return EOF;
+			return (EOF);
 	} else {
 		/* no step.  default==1.
 		 */
@@ -519,22 +503,15 @@ get_range(bits, low, high, names, ch, file)
 	 */
 	for (i = num1;  i <= num2;  i += num3)
 		if (EOF == set_element(bits, low, high, i))
-			return EOF;
+			return (EOF);
 
-	return ch;
+	return (ch);
 }
 
-
 static char
-get_number(numptr, low, names, ch, file)
-	int		*numptr;	/* where does the result go? */
-	int		low;		/* offset applied to enum result */
-	const char	*names[];	/* symbolic names, if any, for enums */
-	int		ch;		/* current character */
-	FILE		*file;		/* source */
-{
-	char	temp[MAX_TEMPSTR], *pc;
-	int	len, i, all_digits;
+get_number(int *numptr, int low, const char *names[], char ch, FILE *file) {
+	char temp[MAX_TEMPSTR], *pc;
+	int len, i, all_digits;
 
 	/* collect alphanumerics into our fixed-size temp array
 	 */
@@ -543,7 +520,7 @@ get_number(numptr, low, names, ch, file)
 	all_digits = TRUE;
 	while (isalnum(ch)) {
 		if (++len >= MAX_TEMPSTR)
-			return EOF;
+			return (EOF);
 
 		*pc++ = ch;
 
@@ -562,7 +539,7 @@ get_number(numptr, low, names, ch, file)
 				("get_num, compare(%s,%s)\n", names[i], temp))
 			if (!strcasecmp(names[i], temp)) {
 				*numptr = i+low;
-				return ch;
+				return (ch);
 			}
 		}
 	}
@@ -573,25 +550,19 @@ get_number(numptr, low, names, ch, file)
 	 */
 	if (all_digits) {
 		*numptr = atoi(temp);
-		return ch;
+		return (ch);
 	}
 
-	return EOF;
+	return (EOF);
 }
 
-
 static int
-set_element(bits, low, high, number)
-	bitstr_t	*bits; 		/* one bit per flag, default=FALSE */
-	int		low;
-	int		high;
-	int		number;
-{
+set_element(bitstr_t *bits, int low, int high, int number) {
 	Debug(DPARS|DEXT, ("set_element(?,%d,%d,%d)\n", low, high, number))
 
 	if (number < low || number > high)
-		return EOF;
+		return (EOF);
 
 	bit_set(bits, (number-low));
-	return OK;
+	return (OK);
 }

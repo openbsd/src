@@ -1,4 +1,4 @@
-/*	$OpenBSD: funcs.h,v 1.6 2002/05/09 22:15:18 millert Exp $	*/
+/*	$OpenBSD: funcs.h,v 1.7 2002/07/08 18:11:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -41,16 +41,16 @@ void		set_cron_uid(void),
 		log_close(void);
 
 int		job_runqueue(void),
-		set_debug_flags(char *),
+		set_debug_flags(const char *),
 		get_char(FILE *),
 		get_string(char *, int, FILE *, char *),
 		swap_gids(void),
 		swap_gids_back(void),
 		load_env(char *, FILE *),
 		cron_pclose(FILE *),
-		glue_strings(char *, int, char *, char *, int),
-		strcmp_until(const char *, const char *, int),
-		allowed(char *),
+		glue_strings(char *, size_t, const char *, const char *, char),
+		strcmp_until(const char *, const char *, char),
+		allowed(const char *),
 		strdtb(char *),
 		open_socket(void);
 
@@ -65,8 +65,7 @@ char		*env_get(char *, char **),
 user		*load_user(int, struct passwd *, const char *),
 		*find_user(cron_db *, const char *);
 
-entry		*load_entry(FILE *, void (*)(),
-				 struct passwd *, char **);
+entry		*load_entry(FILE *, void (*)(), struct passwd *, char **);
 
 FILE		*cron_popen(char *, char *, entry *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.6 2002/05/09 21:22:01 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.7 2002/07/08 18:11:02 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: database.c,v 1.6 2002/05/09 21:22:01 millert Exp $";
+static char const rcsid[] = "$OpenBSD: database.c,v 1.7 2002/07/08 18:11:02 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the log]

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.10 2001/05/29 21:41:33 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.11 2002/07/08 18:11:02 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -40,10 +40,11 @@
 			 * (hint: MAILTO= was added for this reason).
 			 */
 
-#define MAILFMT "%s -FCronDaemon -odi -oem -t"		/*-*/
+#define MAILFMT "%s -FCronDaemon -odi -oem -oi -t"	/*-*/
 			/* -Fx	 = set full-name of sender
 			 * -odi	 = Option Deliverymode Interactive
 			 * -oem	 = Option Errors Mailedtosender
+			 * -oi   = Ignore "." alone on a line
 			 * -t    = Get recipient from headers
 			 */
 #define MAILARG _PATH_SENDMAIL				/*-*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.24 2002/05/28 01:20:19 deraadt Exp $	*/
+/*	$OpenBSD: cron.c,v 1.25 2002/07/08 18:11:02 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.24 2002/05/28 01:20:19 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.25 2002/07/08 18:11:02 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
