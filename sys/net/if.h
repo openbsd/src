@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.35 2002/04/24 00:51:51 dhartmei Exp $	*/
+/*	$OpenBSD: if.h,v 1.36 2002/05/27 02:59:40 itojun Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -173,6 +173,8 @@ struct ifnet {				/* and the entries */
 	void	(*if_watchdog)(struct ifnet *);
 	struct	ifaltq if_snd;		/* output queue (includes altq) */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
+
+	void	*if_afdata[AF_MAX];
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type

@@ -1,4 +1,4 @@
-/*	$OpenBSD: domain.h,v 1.4 2002/03/15 01:20:04 millert Exp $	*/
+/*	$OpenBSD: domain.h,v 1.5 2002/05/27 02:59:41 itojun Exp $	*/
 /*	$NetBSD: domain.h,v 1.10 1996/02/09 18:25:07 christos Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
  * Forward structure declarations for function prototypes [sic].
  */
 struct	mbuf;
+struct	ifnet;
 
 struct	domain {
 	int	dom_family;		/* AF_xxx */
@@ -59,6 +60,9 @@ struct	domain {
 	int	(*dom_rtattach)(void **, int);
 	int	dom_rtoffset;		/* an arg to rtattach, in bits */
 	int	dom_maxrtkey;		/* for routing layer */
+	void	*(*dom_ifattach) __P((struct ifnet *));
+	void	(*dom_ifdetach) __P((struct ifnet *, void *));
+					/* af-dependent data on ifnet */
 };
 
 #ifdef _KERNEL
