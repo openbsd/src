@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.c,v 1.6 1997/12/19 04:50:38 brian Exp $
+ * $Id: ipcp.c,v 1.7 1997/12/24 09:29:10 brian Exp $
  *
  *	TODO:
  *		o More RFC1772 backwoard compatibility
@@ -121,7 +121,7 @@ static const char *cftypes128[] = {
   "SECNBNS",	/* 132: Secondary NBNS Server Address */
 };
 
-#define NCFTYPES128 (sizeof(cftypes)/sizeof(char *))
+#define NCFTYPES128 (sizeof(cftypes128)/sizeof(char *))
 
 struct pppThroughput throughput;
 
