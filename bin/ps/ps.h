@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.h,v 1.2 1996/06/23 14:20:52 deraadt Exp $	*/
+/*	$OpenBSD: ps.h,v 1.3 1997/08/08 19:30:10 millert Exp $	*/
 /*	$NetBSD: ps.h,v 1.11 1995/09/29 21:57:03 cgd Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@ typedef struct var {
 				/* output routine */
 	void	(*oproc) __P((struct kinfo *, struct varent *));
 	short	width;		/* printing width */
+	char	parsed;		/* have we been parsed yet? (avoid dupes) */
 	/*
 	 * The following (optional) elements are hooks for passing information
 	 * to the generic output routines: pvar, evar, uvar (those which print
