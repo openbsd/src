@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.14 1997/03/26 17:23:50 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.15 1997/03/27 04:39:35 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -217,7 +217,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_OSRELEASE:
 		return (sysctl_rdstring(oldp, oldlenp, newp, osrelease));
 	case KERN_OSREV:
-		return (sysctl_rdint(oldp, oldlenp, newp, BSD));
+		return (sysctl_rdint(oldp, oldlenp, newp, OpenBSD));
 	case KERN_OSVERSION:
 		return (sysctl_rdstring(oldp, oldlenp, newp, osversion));
 	case KERN_VERSION:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.7 1997/02/20 01:08:12 deraadt Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.8 1997/03/27 04:39:39 millert Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 
 static int	byteorder = BYTE_ORDER;
 static int	posix = _POSIX_VERSION;
-static int	osrev = BSD;
+static int	osrev = OpenBSD;
 static int	ncpu = 1;	/* XXX */
 extern char machine[], cpu_model[];
 extern char ostype[], osrelease[];
