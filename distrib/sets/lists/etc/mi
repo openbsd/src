@@ -2,6 +2,7 @@
 ./.profile
 ./dev/MAKEDEV.local
 ./etc/aliases
+./etc/aliases.db
 ./etc/amd
 ./etc/amd/master.sample
 ./etc/bootptab
@@ -64,6 +65,7 @@
 ./etc/pwd.db
 ./etc/rbootd.conf
 ./etc/rc
+./etc/rc.conf
 ./etc/rc.local
 ./etc/rc.securelevel
 ./etc/remote
