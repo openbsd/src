@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.63 2001/03/03 01:09:28 itojun Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.64 2001/03/18 07:09:49 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@
 #define PI_MAGIC 0xdeadbeef  /* XXX the horror! */
 
 #ifndef IPMTUDISC
-#define IPMTUDISC	0
+#define IPMTUDISC	1
 #endif
 #ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
