@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.24 2003/04/04 08:56:01 avsm Exp $	*/
+/*	$OpenBSD: perform.c,v 1.25 2003/04/05 18:04:00 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.24 2003/04/04 08:56:01 avsm Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.25 2003/04/05 18:04:00 avsm Exp $";
 #endif
 
 /*
@@ -301,7 +301,7 @@ pkg_do(char *pkg)
 		if (!isURL(pkg) && !getenv("PKG_ADD_BASE")) {
 		    /* install depending pkg from local disk */
 		    
-		    snprintf(path, FILENAME_MAX, "%s/%s", Home, ensure_tgz(p->name));
+		    snprintf(path, sizeof(path), "%s/%s", Home, ensure_tgz(p->name));
 		    if (fexists(path))
 			cp = path;
 		    else

@@ -1,7 +1,7 @@
-/*	$OpenBSD: extract.c,v 1.13 2003/04/03 19:42:53 avsm Exp $	*/
+/*	$OpenBSD: extract.c,v 1.14 2003/04/05 18:04:00 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: extract.c,v 1.13 2003/04/03 19:42:53 avsm Exp $";
+static const char *rcsid = "$OpenBSD: extract.c,v 1.14 2003/04/05 18:04:00 avsm Exp $";
 #endif
 
 /*
@@ -60,7 +60,7 @@ rollback(char *name, char *home, plist_t *start, plist_t *stop)
     dir = home;
     for (q = start; q != stop; q = q->next) {
 	if (q->type == PLIST_FILE) {
-	    snprintf(try, FILENAME_MAX, "%s/%s", dir, q->name);
+	    snprintf(try, sizeof(try), "%s/%s", dir, q->name);
 	    if (make_preserve_name(bup, FILENAME_MAX, name, try) && fexists(bup)) {
 		(void)chflags(try, 0);
 		(void)unlink(try);
@@ -151,7 +151,7 @@ extract_plist(char *home, package_t *pkg)
 		}
 		
 		/* first try to rename it into place */
-		snprintf(try, FILENAME_MAX, "%s/%s", Directory, p->name);
+		snprintf(try, sizeof(try), "%s/%s", Directory, p->name);
 		if (fexists(try)) {
 		    if (preserve(try) == -1) {
 		    	pwarnx("unable to back up %s, aborting pkg_add", try);
