@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.99 2000/04/07 09:17:39 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.100 2000/04/12 06:37:02 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1248,11 +1248,12 @@ do_ssh2_kex()
 	packet_read_expect(&payload_len, SSH2_MSG_NEWKEYS);
 	debug("GOT SSH2_MSG_NEWKEYS.");
 
+#ifdef DEBUG_KEXDH
 	/* send 1st encrypted/maced/compressed message */
 	packet_start(SSH2_MSG_IGNORE);
 	packet_put_cstring("markus");
 	packet_send();
 	packet_write_wait();
-
+#endif
 	debug("done: KEX2.");
 }

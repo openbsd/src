@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: kex.c,v 1.1 2000/04/03 20:06:15 markus Exp $");
+RCSID("$Id: kex.c,v 1.2 2000/04/12 06:37:02 markus Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -342,7 +342,7 @@ kex_choose_conf(char *cprop[PROPOSAL_MAX], char *sprop[PROPOSAL_MAX], int server
 		choose_enc (&k->enc [mode], cprop[nenc],  sprop[nenc]);
 		choose_mac (&k->mac [mode], cprop[nmac],  sprop[nmac]);
 		choose_comp(&k->comp[mode], cprop[ncomp], sprop[ncomp]);
-		log("kex: %s %s %s %s",
+		debug("kex: %s %s %s %s",
 		    ctos ? "client->server" : "server->client",
 		    k->enc[mode].name,
 		    k->mac[mode].name,

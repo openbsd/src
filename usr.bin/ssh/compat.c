@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: compat.c,v 1.8 2000/04/07 09:17:39 markus Exp $");
+RCSID("$Id: compat.c,v 1.9 2000/04/12 06:37:02 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -65,7 +65,7 @@ compat_datafellows(const char *version)
 		len = strlen(check[i]);
 		if (strlen(version) >= len &&
 		   (strncmp(version, check[i], len) == 0)) {
-			log("datafellows: %.200s", version);
+			verbose("datafellows: %.200s", version);
 			datafellows = 1;
 			return;
 		}

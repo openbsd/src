@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: dsa.c,v 1.1 2000/04/03 20:06:14 markus Exp $");
+RCSID("$Id: dsa.c,v 1.2 2000/04/12 06:37:02 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -68,7 +68,7 @@ dsa_serverkey_from_blob(
 	buffer_append(&b, serverhostkey, serverhostkeylen);
 	ktype = buffer_get_string(&b, NULL);
 	if (strcmp(KEX_DSS, ktype) != 0) {
-		log("dsa_serverkey_from_blob: cannot handle type  %s", ktype);
+		error("dsa_serverkey_from_blob: cannot handle type  %s", ktype);
 		key_free(key);
 		return NULL;
 	}
@@ -78,10 +78,10 @@ dsa_serverkey_from_blob(
 	buffer_get_bignum2(&b, dsa->pub_key);
 	rlen = buffer_len(&b);
 	if(rlen != 0)
-		log("dsa_serverkey_from_blob: remaining bytes in serverhostkey %d", rlen);
+		error("dsa_serverkey_from_blob: remaining bytes in serverhostkey %d", rlen);
 	buffer_free(&b);
 
-	log("keytype %s", ktype);
+	debug("keytype %s", ktype);
 #ifdef DEBUG_DSS
 	DSA_print_fp(stderr, dsa, 8);
 #endif
@@ -160,7 +160,7 @@ dsa_sign(
 	Buffer b;
 
 	if (key == NULL || key->type != KEY_DSA || key->dsa == NULL) {
-		log("dsa_sign: no DSA key");
+		error("dsa_sign: no DSA key");
 		return -1;
 	}
 	digest = xmalloc(evp_md->md_size);
@@ -173,11 +173,11 @@ dsa_sign(
         rlen = BN_num_bytes(sig->r);
         slen = BN_num_bytes(sig->s);
         if (rlen > INTBLOB_LEN || slen > INTBLOB_LEN) {
-		log("bad sig size %d %d", rlen, slen);
+		error("bad sig size %d %d", rlen, slen);
 		DSA_SIG_free(sig);
 		return -1;
 	}
-	log("sig size %d %d", rlen, slen);
+	debug("sig size %d %d", rlen, slen);
 
 	memset(sigblob, 0, SIGBLOB_LEN);
 	BN_bn2bin(sig->r, sigblob+ SIGBLOB_LEN - INTBLOB_LEN - rlen);
@@ -185,7 +185,7 @@ dsa_sign(
 	DSA_SIG_free(sig);
 
 	if (datafellows) {
-		log("datafellows");
+		debug("datafellows");
 		ret = xmalloc(SIGBLOB_LEN);
 		memcpy(ret, sigblob, SIGBLOB_LEN);
 		if (lenp != NULL)
@@ -227,7 +227,7 @@ dsa_verify(
 	int ret;
 
 	if (key == NULL || key->type != KEY_DSA || key->dsa == NULL) {
-		log("dsa_verify: no DSA key");
+		error("dsa_verify: no DSA key");
 		return -1;
 	}
 
@@ -236,7 +236,7 @@ dsa_verify(
 		datafellows = 0;
 	}
 
-	log("len %d datafellows %d", signaturelen, datafellows);
+	debug("len %d datafellows %d", signaturelen, datafellows);
 
 	/* fetch signature */
 	if (datafellows) {
@@ -250,7 +250,7 @@ dsa_verify(
 		sigblob = (unsigned char *)buffer_get_string(&b, &len);
 		rlen = buffer_len(&b);
 		if(rlen != 0)
-			log("remaining bytes in signature %d", rlen);
+			error("remaining bytes in signature %d", rlen);
 		buffer_free(&b);
 	}
 
@@ -293,6 +293,6 @@ dsa_verify(
 		txt = "error";
 		break;
 	}
-	log("dsa_verify: signature %s", txt);
+	debug("dsa_verify: signature %s", txt);
 	return ret;
 }
