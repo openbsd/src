@@ -115,6 +115,10 @@ static char *Pserver_Repos = NULL;
    CVSROOT/config.  */
 int system_auth = 1;
 
+/* Should we disable Update-prog/Checkin-prog? Can be changed by
+   CVSROOT/config.  */
+int disable_x_prog = 0;
+
 # endif /* AUTH_SERVER_SUPPORT */
 
 
@@ -4629,6 +4633,17 @@ serve_checkin_prog (arg)
     char *arg;
 {
     FILE *f;
+
+    /* Before we do anything we first check if this command is not 
+       disabled. */
+    if (disable_x_prog)
+    {
+	if (alloc_pending (80))
+	    sprintf (pending_error_text, "\
+E Checkin-prog disabled by configuration");
+	return;
+    }
+
     f = CVS_FOPEN (CVSADM_CIPROG, "w+");
     if (f == NULL)
     {
@@ -4663,6 +4678,16 @@ serve_update_prog (arg)
 {
     FILE *f;
 
+    /* Before we do anything we first check if this command is not 
+       disabled. */
+    if (disable_x_prog)
+    {
+	if (alloc_pending (80))
+	    sprintf (pending_error_text, "\
+E Update-prog disabled by configuration");
+	return;
+    }
+    
     /* Before we do anything we need to make sure we are not in readonly
        mode.  */
     if (!check_command_legal_p ("commit"))

@@ -359,6 +359,29 @@ parse_config (cvsroot)
 	    }
 #endif /* BSD */
 	}
+	else if (strcmp (line, "DisableXProg") == 0)
+	{
+	    if (strcmp (p, "no") == 0)
+#ifdef AUTH_SERVER_SUPPORT
+		disable_x_prog = 0;
+#else
+		/* Still parse the syntax but ignore the
+		   option.  That way the same config file can
+		   be used for local and server.  */
+		;
+#endif
+	    else if (strcmp (p, "yes") == 0)
+#ifdef AUTH_SERVER_SUPPORT
+		disable_x_prog = 1;
+#else
+		;
+#endif
+	    else
+	    {
+		error (0, 0, "unrecognized value '%s' for DisableXProg", p);
+		goto error_return;
+	    }
+	}
 	else if (strcmp (line, "PreservePermissions") == 0)
 	{
 	    if (strcmp (p, "no") == 0)
