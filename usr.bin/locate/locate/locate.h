@@ -1,4 +1,4 @@
-/*	$OpenBSD: locate.h,v 1.6 1996/10/10 09:55:08 michaels Exp $	*/
+/*	$OpenBSD: locate.h,v 1.7 1996/10/20 00:52:57 michaels Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,6 +41,7 @@
 #define	OFFSET		14		/* abs value of max likely diff */
 #define	PARITY		0200		/* parity bit */
 #define	SWITCH		30		/* switch code */
+#define UMLAUT          31              /* an 8 bit char followed */
 
 /* 	0-28	likeliest differential counts + offset to make nonnegative */
 #define LDC_MIN         0

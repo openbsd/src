@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.2 1996/10/10 09:55:06 michaels Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.3 1996/10/20 00:52:54 michaels Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: fastfind.c,v 1.2 1996/10/10 09:55:06 michaels Exp $
+ * $Id: fastfind.c,v 1.3 1996/10/20 00:52:54 michaels Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
@@ -47,10 +47,10 @@ statistic (fp, path_fcodes)
 	FILE *fp;               /* open database */
 	char *path_fcodes;  	/* for error message */
 {
-	register int lines, chars, size, big;
+	register int lines, chars, size, big, zwerg;
 	register u_char *p, *s;
 	register int c;
-	int count;
+	int count, umlaut;
 	u_char bigram1[NBG], bigram2[NBG], path[MAXPATHLEN];
 
 	for (c = 0, p = bigram1, s = bigram2; c < NBG; c++) {
@@ -58,20 +58,27 @@ statistic (fp, path_fcodes)
 		s[c] = check_bigram_char(getc(fp));
 	}
 
-	lines = chars = big = 0;
+	lines = chars = big = zwerg = umlaut = 0;
 	size = NBG + NBG;
 
 	for (c = getc(fp), count = 0; c != EOF; size++) {
 		if (c == SWITCH) {
 			count += getwf(fp) - OFFSET;
 			size += sizeof(int);
+			zwerg++;
 		} else
 			count += c - OFFSET;
 		
 		for (p = path + count; (c = getc(fp)) > SWITCH; size++)
-			if (c < PARITY)
+			if (c < PARITY) {
+				if (c == UMLAUT) {
+					c = getc(fp);
+					size++;
+					umlaut++;
+				}
 				p++;
-			else {
+			} else {
+				/* bigram char */
 				big++;
 				p += 2;
 			}
@@ -83,13 +90,16 @@ statistic (fp, path_fcodes)
 
 	(void)printf("\nDatabase: %s\n", path_fcodes);
 	(void)printf("Compression: Front: %2.2f%%, ",
-		     (float)(100 * (size + big)) / chars);
+		     (float)(100 * (size + big - (2 * NBG))) / chars);
 	(void)printf("Bigram: %2.2f%%, ", (float)(100 * (size - big)) / size);
-	(void)printf("Total: %2.2f%%\n", (float)(100 * size) / chars);
+	(void)printf("Total: %2.2f%%\n", 
+		     (float)(100 * (size - (2 * NBG))) / chars);
 	(void)printf("Filenames: %d, ", lines);
-	(void)printf("Chars: %d\n", chars);
-	(void)printf("Database size: %d, ", size);
-	(void)printf("Bigram chars: %d\n", big);
+	(void)printf("Characters: %d, ", chars);
+	(void)printf("Database size: %d\n", size);
+	(void)printf("Bigram characters: %d, ", big);
+	(void)printf("Integers: %d, ", zwerg);
+	(void)printf("8-Bit characters: %d\n", umlaut);
 
 }
 #endif /* _LOCATE_STATISTIC_ */
@@ -103,7 +113,7 @@ void
 fastfind_mmap_icase
 #else
 fastfind_mmap
-#endif
+#endif /* FF_ICASE */
 (pathpart, paddr, len, database)
 	char *pathpart; 	/* search string */
 	caddr_t paddr;  	/* mmap pointer */
@@ -116,7 +126,7 @@ fastfind_mmap
 
 #ifdef FF_ICASE
 fastfind_icase
-#else /* !FF_ICASE */
+#else
 fastfind
 #endif /* FF_ICASE */
 
@@ -137,10 +147,10 @@ fastfind
 
 #ifdef FF_ICASE
 	/* use a lookup table for case insensitive search */
-	u_char table[UCHAR_MAX];
+	u_char table[UCHAR_MAX + 1];
 
 	tolower_word(pathpart);
-#endif
+#endif /* FF_ICASE*/
 
 	/* init bigram table */
 #ifdef FF_MMAP
@@ -158,16 +168,18 @@ fastfind
 		p[c] = check_bigram_char(getc(fp));
 		s[c] = check_bigram_char(getc(fp));
 	}
-#endif
+#endif /* FF_MMAP */
 
 	/* find optimal (last) char for searching */
 	for (p = pathpart; *p != '\0'; p++)
 		if (index(LOCATE_REG, *p) != NULL)
 			break;
+
 	if (*p == '\0')
 		globflag = 0;
 	else
 		globflag = 1;
+
 	p = pathpart;
 	patend = patprep(p);
 	cc = *patend;
@@ -176,7 +188,7 @@ fastfind
 	/* set patend char to true */
 	table[TOLOWER(*patend)] = 1;
 	table[toupper(*patend)] = 1;
-#endif
+#endif /* FF_ICASE */
 
 
 	/* main loop */
@@ -184,10 +196,12 @@ fastfind
 	foundchar = 0;
 
 #ifdef FF_MMAP
-	for (c = (u_char)*paddr++; len-- > 0; ) {
+	c = (u_char)*paddr++; len--;
+	for (; len > 0; ) {
 #else
-	for (c = getc(fp); c != EOF; ) {
-#endif
+	c = getc(fp);
+	for (; c != EOF; ) {
+#endif /* FF_MMAP */
 
 		/* go forward or backward */
 		if (c == SWITCH) { /* big step, an integer */
@@ -196,7 +210,7 @@ fastfind
 			len -= INTSIZE; paddr += INTSIZE;
 #else
 			count +=  getwf(fp) - OFFSET;
-#endif
+#endif /* FF_MMAP */
 		} else {	   /* slow step, =< 14 chars */
 			count += c - OFFSET;
 		}
@@ -204,18 +218,40 @@ fastfind
 		/* overlay old path */
 		p = path + count;
 		foundchar = p - 1;
-#ifdef FF_MMAP
-		for (; (c = (u_char)*paddr++) > SWITCH; len--)
-#else
-		for (; (c = getc(fp)) > SWITCH; )
-#endif
 
+		for (;;) {
+#ifdef FF_MMAP
+			c = (u_char)*paddr++; 
+		        len--;
+#else
+			c = getc(fp);
+#endif /* FF_MMAP */
+			/*
+			 * == UMLAUT: 8 bit char followed
+			 * <= SWITCH: offset
+			 * >= PARITY: bigram
+			 * rest:      single ascii char
+			 *
+			 * offset < SWITCH < UMLAUT < ascii < PARITY < bigram
+			 */
 			if (c < PARITY) {
+				if (c <= UMLAUT) {
+					if (c == UMLAUT) {
+#ifdef FF_MMAP
+						c = (u_char)*paddr++;
+						len--;
+#else
+						c = getc(fp);
+#endif /* FF_MMAP */
+						
+					} else
+						break; /* SWITCH */
+				}
 #ifdef FF_ICASE
 				if (table[c])
 #else
 				if (c == cc)
-#endif
+#endif /* FF_ICASE */
 					foundchar = p;
 				*p++ = c;
 			}
@@ -230,13 +266,13 @@ fastfind
 
 					if (table[bigram1[c]] ||
 					    table[bigram2[c]])
-#endif
+#endif /* FF_ICASE */
 						foundchar = p + 1;
 
 				*p++ = bigram1[c];
 				*p++ = bigram2[c];
 			}
-
+		}
 		
 		if (found) {                     /* previous line matched */
 			cutoff = path;
@@ -253,14 +289,14 @@ fastfind
 			if (*s == cc
 #ifdef FF_ICASE
 			    || TOLOWER(*s) == cc
-#endif
+#endif /* FF_ICASE */
 			    ) {	/* fast first char check */
 				for (p = patend - 1, q = s - 1; *p != '\0';
 				     p--, q--)
 					if (*q != *p
 #ifdef FF_ICASE
 					    && TOLOWER(*q) != *p
-#endif
+#endif /* FF_ICASE */
 					    )
 						break;
 				if (*p == '\0') {   /* fast match success */

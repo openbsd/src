@@ -1,6 +1,7 @@
-/*	$OpenBSD: locate.bigram.c,v 1.5 1996/09/15 16:50:35 michaels Exp $	*/
-
 /*
+ *	$OpenBSD: locate.bigram.c,v 1.6 1996/10/20 00:52:51 michaels Exp $
+ *
+ * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -35,21 +36,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * 	$Id: locate.bigram.c,v 1.5 1996/09/15 16:50:35 michaels Exp $
+ * 	$Id: locate.bigram.c,v 1.6 1996/10/20 00:52:51 michaels Exp $
  */
 
 #ifndef lint
+#if 0
 static char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
+#else
+static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.6 1996/10/20 00:52:51 michaels Exp $";
+#endif
 #endif /* not lint */
 
 #ifndef lint
-#if 0
 static char sccsid[] = "@(#)locate.bigram.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.5 1996/09/15 16:50:35 michaels Exp $";
-#endif
 #endif /* not lint */
 
 /*
@@ -66,7 +67,7 @@ static char rcsid[] = "$OpenBSD: locate.bigram.c,v 1.5 1996/09/15 16:50:35 micha
 
 u_char buf1[MAXPATHLEN] = " ";
 u_char buf2[MAXPATHLEN];
-u_int bigram[UCHAR_MAX][UCHAR_MAX];
+u_int bigram[UCHAR_MAX + 1][UCHAR_MAX + 1];
 
 int
 main(void)
@@ -77,25 +78,20 @@ main(void)
 
      	while (fgets(path, sizeof(buf2), stdin) != NULL) {
 
-	    	/* skip empty lines */
-		if (*path == '\n')
-			continue;
+		/* 
+		 * We don't need remove newline character '\n'.
+		 * '\n' is less than ASCII_MIN and will be later
+		 * ignored at output.
+		 */
 
-		/* Squelch characters that would botch the decoding. */
-		for (cp = path; *cp != '\0'; cp++) {
-			/* chop newline */
-			if (*cp == '\n')
-				*cp = '\0';
-			/* range */
-			else if (*cp < ASCII_MIN || *cp > ASCII_MAX)
-				*cp = '?';
-		}
 
 		/* skip longest common prefix */
-		for (cp = path; *cp == *oldpath && *cp != '\0'; cp++, oldpath++);
+		for (cp = path; *cp == *oldpath; cp++, oldpath++)
+			if (*cp == '\0')
+				break;
 
-		while (*cp != '\0' && *(cp+1) != '\0') {
-			bigram[*cp][*(cp+1)]++;
+		while (*cp != '\0' && *(cp + 1) != '\0') {
+			bigram[(u_char)*cp][(u_char)*(cp + 1)]++;
 			cp += 2;
 		}
 
@@ -109,11 +105,11 @@ main(void)
 		}
    	}
 
-	/* output, (paranoid) boundary check */
+	/* output, boundary check */
 	for (i = ASCII_MIN; i <= ASCII_MAX; i++)
 		for (j = ASCII_MIN; j <= ASCII_MAX; j++)
 			if (bigram[i][j] != 0)
-				printf("%4u %c%c\n", bigram[i][j], i, j);
+				(void)printf("%4u %c%c\n", bigram[i][j], i, j);
 
 	exit(0);
 }

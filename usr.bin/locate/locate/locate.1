@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.4 1996/09/15 16:50:38 michaels Exp $
+.\"	$OpenBSD: locate.1,v 1.5 1996/10/20 00:52:56 michaels Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.4 1996/09/15 16:50:38 michaels Exp $
+.\"	$Id: locate.1,v 1.5 1996/10/20 00:52:56 michaels Exp $
 .\"
 .Dd June 6, 1993
 .Dt LOCATE 1
@@ -67,6 +67,12 @@ including slashes (``/'').
 .Pp
 As a special case, a pattern containing no globbing characters (``foo'')
 is matched as though it were ``*foo*''.
+
+Historically, locate store only characters between 32 and 127.  The
+current implementation store any character except newline ('\\n') and
+NUL ('\\0'). The 8-bit character support don't wast extra space for
+plain ASCII file names. Characters less than 32 or greather than 127
+are stored in 2 bytes.
 
 The following options are available:
 .Bl -tag -width 10n indent
