@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.2 2005/03/09 14:14:01 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.3 2005/03/23 10:46:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -89,8 +89,7 @@ imsg_read(struct imsgbuf *ibuf)
 int
 imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 {
-	ssize_t			 datalen = 0;
-	size_t			 av, left;
+	size_t			 av, left, datalen;
 
 	av = ibuf->r.wpos;
 
