@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.8 1998/06/11 00:01:18 provos Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.9 1998/07/14 00:14:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -106,7 +106,8 @@ bpf_error(fmt, va_alist)
 	va_start(ap);
 #endif
 	if (bpf_pcap != NULL)
-		(void)vsprintf(pcap_geterr(bpf_pcap), fmt, ap);
+		(void)vsnprintf(pcap_geterr(bpf_pcap), PCAP_ERRBUF_SIZE,
+		    fmt, ap);
 	va_end(ap);
 	longjmp(top_ctx, 1);
 	/* NOTREACHED */

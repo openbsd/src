@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.4 1996/07/12 13:19:12 mickey Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.5 1998/07/14 00:14:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -174,7 +174,7 @@ pcap_strerror(int errnum)
 
 	if ((unsigned int)errnum < sys_nerr)
 		return ((char *)sys_errlist[errnum]);
-	(void)sprintf(ebuf, "Unknown error: %d", errnum);
+	(void)snprintf(ebuf, sizeof ebuf, "Unknown error: %d", errnum);
 	return(ebuf);
 #endif
 }

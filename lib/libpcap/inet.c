@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.7 1997/07/25 20:30:19 mickey Exp $	*/
+/*	$OpenBSD: inet.c,v 1.8 1998/07/14 00:14:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -95,7 +95,8 @@ pcap_lookupdev(errbuf)
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) {
-		(void)sprintf(errbuf, "socket: %s", pcap_strerror(errno));
+		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "socket: %s",
+		    pcap_strerror(errno));
 		return (NULL);
 	}
 	while (1) {
@@ -140,8 +141,8 @@ pcap_lookupdev(errbuf)
 		 */
 		strncpy(ifr.ifr_name, ifrp->ifr_name, sizeof(ifr.ifr_name));
 		if (ioctl(fd, SIOCGIFFLAGS, (char *)&ifr) < 0) {
-			(void)sprintf(errbuf, "SIOCGIFFLAGS: %s",
-			    pcap_strerror(errno));
+			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+			    "SIOCGIFFLAGS: %s", pcap_strerror(errno));
 			(void)close(fd);
 			free(ibuf);
 			return (NULL);
@@ -183,7 +184,8 @@ pcap_lookupnet(device, netp, maskp, errbuf)
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) {
-		(void)sprintf(errbuf, "socket: %s", pcap_strerror(errno));
+		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "socket: %s",
+		    pcap_strerror(errno));
 		return (-1);
 	}
 	memset(&ifr, 0, sizeof(ifr));
@@ -193,7 +195,7 @@ pcap_lookupnet(device, netp, maskp, errbuf)
 #endif
 	(void)strncpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, SIOCGIFADDR, (char *)&ifr) < 0) {
-		(void)sprintf(errbuf, "SIOCGIFADDR: %s: %s",
+		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "SIOCGIFADDR: %s: %s",
 		    device, pcap_strerror(errno));
 		(void)close(fd);
 		return (-1);
@@ -201,7 +203,7 @@ pcap_lookupnet(device, netp, maskp, errbuf)
 	sin = (struct sockaddr_in *)&ifr.ifr_addr;
 	*netp = sin->sin_addr.s_addr;
 	if (ioctl(fd, SIOCGIFNETMASK, (char *)&ifr) < 0) {
-		(void)sprintf(errbuf, "SIOCGIFNETMASK: %s: %s",
+		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "SIOCGIFNETMASK: %s: %s",
 		    device, pcap_strerror(errno));
 		(void)close(fd);
 		return (-1);
@@ -216,8 +218,8 @@ pcap_lookupnet(device, netp, maskp, errbuf)
 		else if (IN_CLASSC(*netp))
 			*maskp = IN_CLASSC_NET;
 		else {
-			(void)sprintf(errbuf, "inet class for 0x%x unknown",
-			    *netp);
+			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+			    "inet class for 0x%x unknown", *netp);
 			return (-1);
 		}
 	}
