@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.12 2003/12/20 22:40:27 miod Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.13 2004/01/28 23:50:19 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -59,7 +59,7 @@ int    mpcpcibrmatch(struct device *, void *, void *);
 void   mpcpcibrattach(struct device *, struct device *, void *);
 
 void   mpc_attach_hook(struct device *, struct device *,
-									 struct pcibus_attach_args *);
+    struct pcibus_attach_args *);
 int    mpc_bus_maxdevs(void *, int);
 pcitag_t mpc_make_tag(void *, int, int, int);
 void   mpc_decompose_tag(void *, pcitag_t, int *, int *, int *);
@@ -139,7 +139,6 @@ mpcpcibrmatch(parent, match, aux)
 	return 1;
 }
 
-int pci_map_a = 0;
 void
 mpcpcibrattach(parent, self, aux)
 	struct device *parent, *self;
@@ -251,48 +250,20 @@ mpcpcibrprint(aux, pnp)
  *  Get PCI physical address from given virtual address.
  *  XXX Note that cross page boundaries are *not* guaranteed to work!
  */
-#if 0
-vm_offset_t
-vtophys(p)
-vaddr_t p;
+paddr_t
+vtophys(paddr_t pa)
 {
-	vm_offset_t pa;
-	vm_offset_t va;
+	vaddr_t va = (vaddr_t) pa;
 
-	va = (vm_offset_t)p;
-	if ((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
-		pa = va;
-	} else {
-		pmap_extract(vm_map_pmap(phys_map), va, (paddr_t *)&pa);
-	}
-	return (pa | ((pci_map_a == 1) ? RAVEN_PCI_CPUMEM : 0 ));
-}
-
-#else 
-vm_offset_t
-vtophys(p)
-vaddr_t p;
-{
-	vm_offset_t pa;
-	vm_offset_t va;
-	extern int segment8_mapped;
-	extern int segmentC_mapped;
-
-	va = (vm_offset_t)p;
-	/* This crap gets maped by bats 1:1 */
-	if (segment8_mapped && (va >= 0x80000000 && va < 0x90000000)) {
-		pa = va;
-	} else if (segmentC_mapped && (va >= 0xC0000000 && va < 0xD0000000)) {
-		pa = va;
-	} else if (va >= 0xF0000000) {
-		pa = va;
-	} else if ((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
-			pa = va;
-	} else if (pmap_extract(pmap_kernel(), va, &pa))
+	if (va < VM_MIN_KERNEL_ADDRESS)
 		return pa;
-	return va;
+	else {
+		if (pmap_extract(pmap_kernel(), va, &pa))
+			return pa;
+	}
+
+	return NULL;
 }
-#endif 
 
 void
 mpc_attach_hook(parent, self, pba)
@@ -353,11 +324,6 @@ mpc_gen_config_reg(cpv, tag, offset)
 	struct pcibr_config *cp = cpv;
 	unsigned int bus, dev, fcn;
 	u_int32_t reg;
-	/*
-	static int spin = 0;
-	while (spin > 85);
-	spin++;
-	*/
 
 	mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
 
@@ -532,8 +498,8 @@ mpc_intr_line(lcv, ih)
 	return (ih);
 }
 
-typedef void     *(intr_establish_t)(void *, pci_intr_handle_t,
-														int, int, int (*func)(void *), void *, char *);
+typedef void     *(intr_establish_t)(void *, pci_intr_handle_t, int, int,
+    int (*func)(void *), void *, char *);
 typedef void     (intr_disestablish_t)(void *, void *);
 extern intr_establish_t *intr_establish_func;
 extern intr_disestablish_t *intr_disestablish_func;

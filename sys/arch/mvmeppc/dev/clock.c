@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 2004/01/26 22:55:52 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 2004/01/28 23:50:16 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -63,6 +63,12 @@ static volatile u_long lasttb;
 #define LEAPYEAR(y)     (((y) & 3) == 0)
 #define YEAR0		1900
 
+tps_t *tps;
+clock_read_t *clock_read;
+clock_write_t *clock_write;
+time_read_t  *time_read;
+time_write_t *time_write;
+
 static u_int32_t chiptotime(int, int, int, int, int, int);
 
 /* event tracking variables, when the next event of each time should occur */
@@ -113,12 +119,12 @@ inittodr(time_t base)
 		badbase = 1;
 	}
 
-	if (fw->clock_read != NULL ) {
-		(fw->clock_read)( &sec, &min, &hour, &day, &mon, &year);
+	if (clock_read != NULL ) {
+		(*clock_read)( &sec, &min, &hour, &day, &mon, &year);
 		time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
-	} else if (fw->time_read != NULL) {
-		u_long cursec;
-		(fw->time_read)(&cursec);
+	} else if (time_read != NULL) {
+		u_int32_t cursec;
+		(*time_read)(&cursec);
 		time.tv_sec = cursec;
 	} else {
 		/* force failure */
@@ -246,16 +252,16 @@ void
 resettodr()
 {
 	struct timeval curtime = time;
-	if (fw->clock_write != NULL) {
+	if (clock_write != NULL) {
 		struct chiptime c;
 		timetochip(&c);
-		(fw->clock_write)(c.sec, c.min, c.hour, c.day, c.mon, c.year);
-	} else if (fw->time_write != NULL) {
+		(*clock_write)(c.sec, c.min, c.hour, c.day, c.mon, c.year);
+	} else if (time_write != NULL) {
 		curtime.tv_sec -= tz.tz_minuteswest * 60;
 		if (tz.tz_dsttime) {
 			curtime.tv_sec += 3600;
 		}
-		(fw->time_write)(curtime.tv_sec);
+		(*time_write)(curtime.tv_sec);
 	}
 }
 
@@ -398,7 +404,7 @@ calc_delayconst(void)
 {
 	int s;
 
-	ticks_per_sec = ppc_tps();
+	ticks_per_sec = (*tps)();
 	s = ppc_intr_disable();
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;

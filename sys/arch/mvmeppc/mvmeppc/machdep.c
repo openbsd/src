@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2004/01/26 22:58:15 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 2004/01/28 23:50:19 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ struct bat battable[16];
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
 
-int ppc_malloc_ok = 0;
+int ppc_malloc_ok;
 
 #ifndef SYS_TYPE
 /* XXX Hardwire it for now */
@@ -161,10 +161,6 @@ caddr_t allocsys(caddr_t);
 static long devio_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
 struct extent *devio_ex;
 static int devio_malloc_safe = 0;
-
-/* HACK - XXX */
-int segment8_mapped = 1;
-int segmentC_mapped = 0;
 
 void
 initppc(startkernel, endkernel, args)
@@ -217,8 +213,6 @@ initppc(startkernel, endkernel, args)
 	 */
 	battable[0].batl = BATL(0x00000000, BAT_M);
 	battable[0].batu = BATU(0x00000000);
-	battable[8].batl = BATL(0x80000000, BAT_I);
-	battable[8].batu = BATU(0x80000000);
 	
 	/*
 	 * Now setup fixed bat registers
@@ -233,10 +227,6 @@ initppc(startkernel, endkernel, args)
 	/* DBAT0 used similar */
 	ppc_mtdbat0l(battable[0].batl);
 	ppc_mtdbat0u(battable[0].batu);
-
-	/* DBAT2 used for ISA space */
-	ppc_mtdbat2l(battable[8].batl);
-	ppc_mtdbat2u(battable[8].batu);
 
 	/*
 	 * Set up trap vectors
@@ -513,6 +503,7 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 	ppc_malloc_ok = 1;
+	devio_malloc_safe = 1;
 	
 	printf("avail mem = %ld (%ldK)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free) / 1024);
@@ -524,8 +515,11 @@ cpu_startup()
 	 */
 	bufinit();
 
+	/*
+	 * Set up early mappings
+	 */
+	nvram_map();
 	prep_bus_space_init();	
-	devio_malloc_safe = 1;
 }
 	
 
@@ -801,21 +795,20 @@ boot(howto)
 	if (howto & RB_HALT) {
 		doshutdownhooks();
 		printf("halted\n\n");
-		ppc_exit();
+		(fw->exit)();
 	}
 	if (!cold && (howto & RB_DUMP))
 		dumpsys();
 	doshutdownhooks();
 	printf("rebooting\n\n");
 
-	ppc_boot(str);
-	while(1) /* forever */;
+	(fw->boot)(str);
+	for (;;) ;	/* spinning */
 }
 
 /*
  *  Get Ethernet address for the onboard ethernet chip.
  */
-void mvmeprom_brdid(struct mvmeprom_brdid *);
 void
 myetheraddr(cp)
 	u_char *cp;
@@ -1047,21 +1040,26 @@ mapiodev(pa, len)
 	spa = trunc_page(pa);
 	off = pa - spa;
 	size = round_page(off+len);
-	if ((pa >= 0x80000000) && ((pa+len) < 0x90000000)) {
-		if (segment8_mapped) {
-			return (void *)pa;
+
+	if (ppc_malloc_ok == 0) {
+		/* need to steal vm space before kernel vm is initialized */
+		va = VM_MIN_KERNEL_ADDRESS + ppc_kvm_stolen;
+		ppc_kvm_stolen += size;
+		if (ppc_kvm_stolen > SEGMENT_LENGTH) {
+			panic("ppc_kvm_stolen: out of space");
 		}
+	} else {
+		va = uvm_km_valloc_wait(phys_map, size);
 	}
-	va = vaddr = uvm_km_valloc_wait(phys_map, size);
 
 	if (va == 0) 
 		return NULL;
 
-	for (; size > 0; size -= NBPG) {
+	for (vaddr = va; size > 0; size -= PAGE_SIZE) {
 		pmap_kenter_cache(vaddr, spa,
 			VM_PROT_READ | VM_PROT_WRITE, PMAP_CACHE_DEFAULT);
-		spa += NBPG;
-		vaddr += NBPG;
+		spa += PAGE_SIZE;
+		vaddr += PAGE_SIZE;
 	}
 	return (void *) (va+off);
 }
@@ -1080,8 +1078,8 @@ unmapiodev(kva, p_size)
 	uvm_km_free_wakeup(phys_map, vaddr, size);
 
 	for (; size > 0; size -= NBPG) {
-		pmap_remove(pmap_kernel(), vaddr,  vaddr+NBPG-1);
-		vaddr += NBPG;
+		pmap_remove(pmap_kernel(), vaddr,  vaddr+PAGE_SIZE-1);
+		vaddr += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 }

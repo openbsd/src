@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 2004/01/25 21:41:28 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 2004/01/28 23:50:18 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -37,5 +37,6 @@
 #include <powerpc/cpu.h>
 
 void install_extint(void (*)(void));
+void nvram_map(void);
 
 #endif	/* _MACHINE_CPU_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.12 2004/01/26 20:38:53 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.13 2004/01/28 23:50:19 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -32,15 +32,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
-#include <sys/buf.h>
 #include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/disk.h>
-#include <sys/disklabel.h>
-#include <sys/fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/malloc.h>
-#include <sys/stat.h>
+#include <sys/extent.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -60,10 +53,8 @@ unsigned char PPC1_nvram_rd(unsigned long offset);
 void PPC1_nvram_wr(unsigned long offset, unsigned char val);
 unsigned long PPC1_tps(void);
 
-int PPC1_clock_read(int *sec, int *min, int *hour, int *day,
-								 int *mon, int *yr);
-int PPC1_clock_write(int sec, int min, int hour, int day,
-								  int mon, int yr);
+int PPC1_clock_read(int *sec, int *min, int *hour, int *day, int *mon, int *yr);
+int PPC1_clock_write(int sec, int min, int hour, int day, int mon, int yr);
 
 vm_offset_t size_memory(void);
 
@@ -72,15 +63,8 @@ struct firmware ppc1_firmware = {
 	PPC1_exit,
 	PPC1_boot,
 	PPC1_vmon,
-	PPC1_nvram_rd,
-	PPC1_nvram_wr,
-	PPC1_tps,
-	PPC1_clock_read,
-	PPC1_clock_write,
-	NULL,
-	NULL,
 #ifdef FW_HAS_PUTC
-	mvmeprom_outchar;
+	mvmeprom_outchar,
 #endif
 };
 
@@ -193,15 +177,22 @@ PPC1_mem_regions(memp, availp)
 void
 PPC1_vmon()
 {
+	/*
+	 * Now is a good time to setup the clock callbacks, though this
+	 * could have been done earlier...
+	 */
+	clock_read = PPC1_clock_read;
+	clock_write = PPC1_clock_write;
+	tps = PPC1_tps;
 }
 
 void
 PPC1_exit()
 {
 	mvmeprom_return();
-	panic("PPC1_exit returned!");		/* just in case */
 	for (;;) ;
 }
+
 void
 PPC1_boot(bootspec)
 	char *bootspec;
@@ -225,13 +216,37 @@ PPC1_boot(bootspec)
 	for (;;) ;
 }
 
+/*
+ * Clock and NVRAM functions
+ *
+ * This needs to become a real device, but it needs to be mapped early
+ * because we need to setup the clocks before autoconf.
+ */
+
+vaddr_t	nvram_va;
+
+void
+nvram_map()
+{
+	int error;
+	extern struct extent *devio_ex;
+	extern int ppc_malloc_ok;
+
+	if ((error = extent_alloc_region(devio_ex, NVRAM_PA, NVRAM_SIZE,
+	    EX_NOWAIT | (ppc_malloc_ok ? EX_MALLOCOK : 0))) != 0)
+		panic("nvram_map: can't map NVRAM, extent error %d", error);
+
+	if ((nvram_va = (vaddr_t)mapiodev(NVRAM_PA, NVRAM_SIZE)) == NULL)
+		panic("nvram_map: map failed");
+}
+
 unsigned char
 PPC1_nvram_rd(addr)
 	unsigned long addr;
 {
-	outb(NVRAM_S0, addr);
-	outb(NVRAM_S1, addr>>8);
-	return inb(NVRAM_DATA);
+	outb(nvram_va + NVRAM_S0, addr);
+	outb(nvram_va + NVRAM_S1, addr>>8);
+	return inb(nvram_va + NVRAM_DATA);
 }
 
 void
@@ -239,9 +254,9 @@ PPC1_nvram_wr(addr, val)
 	unsigned long addr; 
 	unsigned char val;
 {
-	outb(NVRAM_S0, addr);
-	outb(NVRAM_S1, addr>>8);
-	outb(NVRAM_DATA, val);
+	outb(nvram_va + NVRAM_S0, addr);
+	outb(nvram_va + NVRAM_S1, addr>>8);
+	outb(nvram_va + NVRAM_DATA, val);
 }
 
 /* Function to get ticks per second. */
@@ -264,7 +279,7 @@ PPC1_tps()
 			break;
 	}
 
-	start_val = ppc_get_spr(SPR_DEC);
+	start_val = ppc_mfdec();
 
 	/* wait until it changes. */
 	sec = PPC1_nvram_rd(RTC_SECONDS);
@@ -272,7 +287,7 @@ PPC1_tps()
 		if (PPC1_nvram_rd(RTC_SECONDS) != sec)
 			break;
 	}
-	ticks = start_val - ppc_get_spr(SPR_DEC);
+	ticks = start_val - ppc_mfdec();
 	return (ticks);
 }
 
