@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.46 2004/05/25 17:36:49 canacar Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.47 2004/05/28 08:16:23 grange Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -72,11 +72,10 @@ int bpf_maxbufsize = BPF_MAXBUFSIZE;
 
 /*
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
- *  bpf_dtab holds the descriptors, indexed by minor device #
+ *  bpf_d_list is the list of descriptors
  */
 struct bpf_if	*bpf_iflist;
-struct bpf_d	*bpf_dtab;
-int nbpfilter;
+LIST_HEAD(, bpf_d) bpf_d_list;
 
 int	bpf_allocbufs(struct bpf_d *);
 void	bpf_freed(struct bpf_d *);
@@ -96,6 +95,10 @@ void	bpf_reset_d(struct bpf_d *);
 
 void	filt_bpfrdetach(struct knote *);
 int	filt_bpfread(struct knote *, long);
+
+struct bpf_d *bpfilter_lookup(int);
+struct bpf_d *bpfilter_create(int);
+void bpfilter_destroy(struct bpf_d *);
 
 int
 bpf_movein(uio, linktype, mp, sockp, filter)
@@ -306,19 +309,7 @@ void
 bpfilterattach(n)
 	int n;
 {
-	int i;
-
-	bpf_dtab = malloc(n * sizeof(*bpf_dtab), M_DEVBUF, M_NOWAIT);
-	if (!bpf_dtab)
-		return;
-	nbpfilter = n;
-	bzero(bpf_dtab, n * sizeof(*bpf_dtab));
-	/*
-	 * Mark all the descriptors free if this hasn't been done.
-	 */
-	if (!D_ISFREE(&bpf_dtab[0]))
-		for (i = 0; i < nbpfilter; ++i)
-			D_MARKFREE(&bpf_dtab[i]);
+	LIST_INIT(&bpf_d_list);
 }
 
 /*
@@ -335,18 +326,17 @@ bpfopen(dev, flag, mode, p)
 {
 	struct bpf_d *d;
 
-	if (minor(dev) >= nbpfilter)
+	/* create on demand */
+	if ((d = bpfilter_create(minor(dev))) == NULL)
 		return (ENXIO);
 	/*
 	 * Each minor can be opened by only one process.  If the requested
 	 * minor is in use, return EBUSY.
 	 */
-	d = &bpf_dtab[minor(dev)];
 	if (!D_ISFREE(d))
 		return (EBUSY);
 
 	/* Mark "free" and do most initialization. */
-	bzero((char *)d, sizeof(*d));
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_sig = SIGIO;
 
@@ -367,9 +357,10 @@ bpfclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d;
 	int s;
 
+	d = bpfilter_lookup(minor(dev));
 	s = splimp();
 	if (d->bd_bif)
 		bpf_detachd(d);
@@ -400,10 +391,11 @@ bpfread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d;
 	int error;
 	int s;
 
+	d = bpfilter_lookup(minor(dev));
 	if (d->bd_bif == 0)
 		return (ENXIO);
 
@@ -538,12 +530,13 @@ bpfwrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d;
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int error, s;
 	struct sockaddr_storage dst;
 
+	d = bpfilter_lookup(minor(dev));
 	if (d->bd_bif == 0)
 		return (ENXIO);
 
@@ -620,9 +613,10 @@ bpfioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d;
 	int s, error = 0;
 
+	d = bpfilter_lookup(minor(dev));
 	if (d->bd_locked && suser(p, 0) != 0) {
 		/* list of allowed ioctls when locked and not root */
 		switch (cmd) {
@@ -1039,7 +1033,7 @@ bpfpoll(dev, events, p)
 	/*
 	 * An imitation of the FIONREAD ioctl code.
 	 */
-	d = &bpf_dtab[minor(dev)];
+	d = bpfilter_lookup(minor(dev));
 	s = splimp();
 	if (d->bd_hlen == 0 && (!d->bd_immediate || d->bd_slen == 0)) {
 		revents = 0;		/* no data waiting */
@@ -1060,10 +1054,11 @@ struct filterops bpfread_filtops =
 int
 bpfkqfilter(dev_t dev,struct knote *kn)
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d;
 	struct klist *klist;
 	int s;
 
+	d = bpfilter_lookup(minor(dev));
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		klist = &d->bd_sel.si_note;
@@ -1087,9 +1082,10 @@ void
 filt_bpfrdetach(struct knote *kn)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d;
 	int s = splimp();
 
+	d = bpfilter_lookup(minor(dev));
 	SLIST_REMOVE(&d->bd_sel.si_note, kn, knote, kn_selnext);
 	splx(s);
 }
@@ -1098,11 +1094,12 @@ int
 filt_bpfread(struct knote *kn, long hint)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d;
 	int res, s;
 
 	kn->kn_data = 0;
 
+	d = bpfilter_lookup(minor(dev));
 	s = splimp();
 	res = d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0);
 	splx(s);
@@ -1327,7 +1324,7 @@ bpf_freed(d)
 	if (d->bd_wfilter)
 		free((caddr_t)d->bd_wfilter, M_DEVBUF);
 
-	D_MARKFREE(d);
+	bpfilter_destroy(d);
 }
 
 /*
@@ -1373,7 +1370,7 @@ bpfdetach(ifp)
 {
 	struct bpf_if *bp, *nbp, **pbp = &bpf_iflist;
 	struct bpf_d *bd;
-	int maj, mn;
+	int maj;
 
 	for (bp = bpf_iflist; bp; bp = nbp) {
 		nbp= bp->bif_next;
@@ -1385,16 +1382,20 @@ bpfdetach(ifp)
 				if (cdevsw[maj].d_open == bpfopen)
 					break;
 
-			for (bd = bp->bif_dlist; bd; bd = bp->bif_dlist)
+			for (bd = bp->bif_dlist; bd; bd = bp->bif_dlist) {
+				struct bpf_d *d;
+
 				/*
 				 * Locate the minor number and nuke the vnode
 				 * for any open instance.
 				 */
-				for (mn = 0; mn < nbpfilter; mn++)
-					if (&bpf_dtab[mn] == bd) {
-						vdevgone(maj, mn, mn, VCHR);
+				LIST_FOREACH(d, &bpf_d_list, bd_list)
+					if (d == bd) {
+						vdevgone(maj, d->bd_unit,
+						    d->bd_unit, VCHR);
 						break;
 					}
+			}
 
 			free(bp, M_DEVBUF);
 		} else
@@ -1436,4 +1437,38 @@ bpf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (EOPNOTSUPP);
 	}
 	return (0);
+}
+
+struct bpf_d *
+bpfilter_lookup(int unit)
+{
+	struct bpf_d *bd;
+
+	LIST_FOREACH(bd, &bpf_d_list, bd_list)
+		if (bd->bd_unit == unit)
+			return (bd);
+	return (NULL);
+}
+
+struct bpf_d *
+bpfilter_create(int unit)
+{
+	struct bpf_d *bd;
+
+	if ((bd = bpfilter_lookup(unit)) != NULL)
+		return (bd);
+	if ((bd = malloc(sizeof(*bd), M_DEVBUF, M_NOWAIT)) != NULL) {
+		bzero(bd, sizeof(*bd));
+		bd->bd_unit = unit;
+		D_MARKFREE(bd);
+		LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
+	}
+	return (bd);
+}
+
+void
+bpfilter_destroy(struct bpf_d *bd)
+{
+	LIST_REMOVE(bd, bd_list);
+	free(bd, M_DEVBUF);
 }

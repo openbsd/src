@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.106 2004/05/27 20:48:46 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.107 2004/05/28 08:16:23 grange Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -81,7 +81,6 @@ option		PPP_DEFLATE
 pseudo-device	pf		# packet filter
 pseudo-device	pflog		# pf log if
 pseudo-device	pfsync		# pf sync if
-pseudo-device	bpfilter 8	# packet filter
 pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	enc	1	# option IPSEC needs the encapsulation interface
 #pseudo-device	strip	1	# Starmode Radio IP interface
@@ -94,6 +93,7 @@ pseudo-device	ksyms	1	# kernel symbols device
 pseudo-device	systrace 1	# system call tracing device
 
 # clonable devices
+pseudo-device	bpfilter 	# packet filter
 pseudo-device	bridge		# network bridging support
 pseudo-device	carp		# CARP protocol support
 pseudo-device	gif		# IPv[46] over IPv[46] tunnel (RFC1933)
