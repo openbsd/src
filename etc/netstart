@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.83 2002/02/21 02:32:01 miod Exp $
+#	$OpenBSD: netstart,v 1.84 2002/02/23 01:55:24 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -18,13 +18,14 @@ isalphanumeric() {
 
 # Start the $1 interface
 ifstart() {
+	if=$1
 	# Interface names must be alphanumeric only.  We check to avoid
 	# configuring backup or temp files, and to catch the "*" case.
-	if ! isalphanumeric "$1"; then
+	if ! isalphanumeric "$if"; then
 		return
 	fi
 
-	ifconfig $1 > /dev/null 2>&1
+	ifconfig $if > /dev/null 2>&1
 	if [ "$?" != "0" ]; then
 		return
 	fi
@@ -55,24 +56,24 @@ ifstart() {
 			cmd="${af#*!} ${name} ${mask} ${bcaddr} ${ext1} ${ext2}"
 			;;
 		"bridge")
-			cmd="echo /etc/hostname.$1: bridges now supported via bridgename.* files"
+			cmd="echo /etc/hostname.$if: bridges now supported via bridgename.* files"
 			;;
 		"dhcp")
 			[ "$name" = "NONE" ] && name=
 			[ "$mask" = "NONE" ] && mask=
 			[ "$bcaddr" = "NONE" ] && bcaddr=
-			ifconfig $1 $name $mask $bcaddr $ext1 $ext2 down
-			cmd="dhclient $1"
+			ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
+			cmd="dhclient $if"
 			;;
 		"rtsol")
-			ifconfig $1 $name $mask $bcaddr $ext1 $ext2 up
-			rtsolif="$rtsolif $1"
+			ifconfig $if $name $mask $bcaddr $ext1 $ext2 up
+			rtsolif="$rtsolif $if"
 			cmd=
 			;;
 		"up")
-			# The only one of these guaranteed to be set is $1.
+			# The only one of these guaranteed to be set is $if.
 			# The remaining ones exist so that media controls work.
-			cmd="ifconfig $1 $name $mask $bcaddr $ext1 $ext2 up"
+			cmd="ifconfig $if $name $mask $bcaddr $ext1 $ext2 up"
 			;;
 		*)
 			read dt dtaddr
@@ -87,7 +88,7 @@ ifstart() {
 			else
 				alias=
 			fi
-			cmd="ifconfig $1 $af $alias $name "
+			cmd="ifconfig $if $af $alias $name "
 			case "$dt" in
 			dest)
 				cmd="$cmd $dtaddr"
@@ -97,7 +98,7 @@ ifstart() {
 				;;
 			esac
 			if [ ! -n "$name" ]; then
-				echo "/etc/hostname.$1: invalid network configuration file"
+				echo "/etc/hostname.$if: invalid network configuration file"
 				return
 			fi
 			case $af in
@@ -119,7 +120,7 @@ ifstart() {
 			;;
 		esac
 		eval "$cmd"
-	done < /etc/hostname.$1
+	done < /etc/hostname.$if
 }
 
 # Start the $1 bridge
