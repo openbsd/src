@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.12 2000/05/03 18:03:07 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.13 2000/05/22 16:51:44 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -949,13 +949,20 @@ do_child(const char *command, struct passwd * pw, const char *term,
 		else {
 			/* Add authority data to .Xauthority if appropriate. */
 			if (auth_proto != NULL && auth_data != NULL) {
-				if (debug_flag)
+				char *screen = strchr(display, ':');
+				if (debug_flag) {
 					fprintf(stderr, "Running %.100s add %.100s %.100s %.100s\n",
-						XAUTH_PATH, display, auth_proto, auth_data);
-
+					    XAUTH_PATH, display, auth_proto, auth_data);
+					if (screen != NULL)
+						fprintf(stderr, "Adding %.*s/unix%s %s %s\n",
+						    screen-display, display, screen, auth_proto, auth_data);
+				}
 				f = popen(XAUTH_PATH " -q -", "w");
 				if (f) {
 					fprintf(f, "add %s %s %s\n", display, auth_proto, auth_data);
+					if (screen != NULL) 
+						fprintf(f, "add %.*s/unix%s %s %s\n",
+						     screen-display, display, screen, auth_proto, auth_data);
 					pclose(f);
 				} else
 					fprintf(stderr, "Could not run %s -q -\n", XAUTH_PATH);
