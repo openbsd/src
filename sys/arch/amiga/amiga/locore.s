@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.34 2001/12/06 21:13:28 millert Exp $	*/
+/*	$OpenBSD: locore.s,v 1.35 2001/12/20 19:02:24 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
@@ -1288,7 +1288,7 @@ Lsw2:
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
-	movl	_caddr2_pte,a1@(PCB_CMAP2)	| save temporary map PTE
+	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
 #ifdef FPU_EMULATE
 	tstl	_fputype		| do we have any FPU?
 	jeq	Lswnofpsave		| no, dont save
@@ -1342,7 +1342,7 @@ Lswnofpsave:
 
 	lea	tmpstk,sp		| now goto a tmp stack for NMI
 
-	movl	a1@(PCB_CMAP2),_caddr2_pte	| reload tmp map
+	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
@@ -1396,7 +1396,7 @@ ENTRY(savectx)
 	movl	usp,a0			| grab USP
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
-	movl	_caddr2_pte,a1@(PCB_CMAP2)	| save temporary map PTE
+	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
 #ifdef FPU_EMULATE
 	tstl	_fputype
 	jeq	Lsavedone
@@ -1431,12 +1431,95 @@ Lsavedone:
 	rts
 
 /*
+ * Copy 1 relocation unit (NBPG bytes)
+ * from user virtual address to physical address
+ */
+ENTRY(copyseg)
+	movl	_curpcb,a1			| current pcb
+	movl	#Lcpydone,a1@(PCB_ONFAULT)	| where to return to on a fault
+	movl	sp@(8),d0			| destination page number
+	moveq	#PGSHIFT,d1
+	lsll	d1,d0				| convert to address
+	orl	#PG_CI+PG_RW+PG_V,d0		| make sure valid and writable
+	movl	_CMAP2,a0
+	movl	_CADDR2,sp@-			| destination kernel VA
+	movl	d0,a0@				| load in page table
+	jbsr	_TBIS				| invalidate any old mapping
+	addql	#4,sp
+	movl	_CADDR2,a1			| destination addr
+	movl	sp@(4),a0			| source addr
+	movl	#NBPG/4-1,d0			| count
+Lcpyloop:
+	movsl	a0@+,d1				| read longword
+	movl	d1,a1@+				| write longword
+	dbf	d0,Lcpyloop			| continue until done
+Lcpydone:
+	movl	_curpcb,a1			| current pcb
+	clrl	a1@(PCB_ONFAULT) 		| clear error catch
+	rts
+
+/*
+ * Copy 1 relocation unit (NBPG bytes)
+ * from physical address to physical address
+ */
+ENTRY(physcopyseg)
+	movl	sp@(4),d0			| source page number
+	moveq	#PGSHIFT,d1
+	lsll	d1,d0				| convert to address
+	orl	#PG_CI+PG_RW+PG_V,d0		| make sure valid and writable
+	movl	_CMAP1,a0
+	movl	d0,a0@				| load in page table
+	movl	_CADDR1,sp@-			| destination kernel VA
+	jbsr	_TBIS				| invalidate any old mapping
+	addql	#4,sp
+
+	movl	sp@(8),d0			| destination page number
+	moveq	#PGSHIFT,d1
+	lsll	d1,d0				| convert to address
+	orl	#PG_CI+PG_RW+PG_V,d0		| make sure valid and writable
+	movl	_CMAP2,a0
+	movl	d0,a0@				| load in page table
+	movl	_CADDR2,sp@-			| destination kernel VA
+	jbsr	_TBIS				| invalidate any old mapping
+	addql	#4,sp
+
+	movl	_CADDR1,a0			| source addr
+	movl	_CADDR2,a1			| destination addr
+	movl	#NBPG/4-1,d0			| count
+Lpcpy:
+	movl	a0@+,a1@+			| copy longword
+	dbf	d0,Lpcpy			| continue until done
+	rts
+
+/*
+ * zero out physical memory
+ * specified in relocation units (NBPG bytes)
+ */
+ENTRY(clearseg)
+	movl	sp@(4),d0			| destination page number
+	moveq	#PGSHIFT,d1
+	lsll	d1,d0				| convert to address
+	orl	#PG_CI+PG_RW+PG_V,d0		| make sure valid and writable
+	movl	_CMAP1,a0
+	movl	_CADDR1,sp@-			| destination kernel VA
+	movl	d0,a0@				| load in page map
+	jbsr	_TBIS				| invalidate any old mapping
+	addql	#4,sp
+	movl	_CADDR1,a1			| destination addr
+	movl	#NBPG/4-1,d0			| count
+/* simple clear loop is fastest on 68020 */
+Lclrloop:
+	clrl	a1@+				| clear a longword
+	dbf	d0,Lclrloop			| continue til done
+	rts
+
+/*
  * Invalidate entire TLB.
  */
 ENTRY(TBIA)
 __TBIA:
 	cmpl	#MMU_68040,_mmutype
-	jle	Ltbia040
+	jeq	Ltbia040
 	pflusha				| flush entire TLB
 	tstl	_mmutype
 	jpl	Lmc68851a		| 68851 implies no d-cache

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.23 2001/12/06 22:33:57 miod Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.24 2001/12/20 19:02:23 miod Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -173,6 +173,8 @@ alloc_z2mem(amount)
  * Very crude 68040 support by Michael L. Hitch.
  *
  */
+
+int kernel_copyback = 1;
 
 void
 start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
@@ -567,12 +569,15 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 * recommended by Motorola; for the 68060 mandatory)
 	 */
 	if (RELOC(mmutype, int) <= MMU_68040) {
+
+		if (RELOC(kernel_copyback, int))
+			pg_proto |= PG_CCB;
+
 		/*
 		 * ASSUME: segment table and statically allocated page tables
 		 * of the kernel are contiguously allocated, start at
 		 * Sysseg and end at the current value of vstart.
 		 */
-		pg_proto |= PG_CCB;
 		for (; i<RELOC(Sysseg, u_int); i+= NBPG, pg_proto += NBPG)
 			*pg++ = pg_proto;
 
@@ -581,7 +586,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 			*pg++ = pg_proto;
 
 		pg_proto = (pg_proto & ~PG_CI);
-		pg_proto |= PG_CCB;
+		if (RELOC(kernel_copyback, int))
+			pg_proto |= PG_CCB;
 	}
 #endif
 	/*

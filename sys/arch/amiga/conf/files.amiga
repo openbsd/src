@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.46 2001/11/30 23:19:27 miod Exp $
+#	$OpenBSD: files.amiga,v 1.47 2001/12/20 19:02:26 miod Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -359,8 +359,7 @@ file	arch/amiga/amiga/disksubr.c
 file	arch/amiga/amiga/dkbad.c
 file	arch/amiga/amiga/machdep.c
 file	arch/amiga/amiga/mem.c
-file	arch/m68k/m68k/pmap_motorola.c
-file	arch/amiga/amiga/pmap_bootstrap.c
+file	arch/amiga/amiga/pmap.c
 file	arch/amiga/amiga/sys_machdep.c
 file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/vm_machdep.c

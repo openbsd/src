@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.15 2001/12/07 21:49:15 art Exp $ */
+/*	$OpenBSD: param.h,v 1.16 2001/12/20 19:02:29 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,12 @@
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
+#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
+
+#define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#define	NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
+#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
+
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 #define	KERNTEXTOFF	0x00010000	/* start of kernel text */
 
@@ -86,4 +92,17 @@
 #define DELAY(n)	delay(n)
 #endif
 
+#ifdef COMPAT_HPUX
+/*
+ * Constants/macros for HPUX multiple mapping of user address space.
+ * Pages in the first 256Mb are mapped in at every 256Mb segment.
+ */
+#define HPMMMASK	0xF0000000
+#define ISHPMMADDR(v) \
+	((curproc->p_md.md_flags & MDP_HPUXMMAP) && \
+	 ((unsigned)(v) & HPMMMASK) && \
+	 ((unsigned)(v) & HPMMMASK) != HPMMMASK)
+#define HPMMBASEADDR(v) \
+	((unsigned)(v) & ~HPMMMASK)
+#endif
 #endif	/* _MACHINE_PARAM_H_ */

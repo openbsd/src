@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.20 2001/11/30 20:58:18 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.21 2001/12/20 19:02:29 miod Exp $
 
 # config file for mvme68k
 
@@ -115,7 +115,7 @@ file arch/mvme68k/mvme68k/disksubr.c
 file arch/mvme68k/mvme68k/dkbad.c
 file arch/mvme68k/mvme68k/machdep.c
 file arch/mvme68k/mvme68k/mem.c
-file arch/m68k/m68k/pmap_motorola.c
+file arch/mvme68k/mvme68k/pmap.c
 file arch/mvme68k/mvme68k/pmap_bootstrap.c
 file arch/mvme68k/mvme68k/sys_machdep.c
 file arch/mvme68k/mvme68k/trap.c

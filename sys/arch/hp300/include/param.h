@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.18 2001/12/05 01:57:14 provos Exp $	*/
+/*	$OpenBSD: param.h,v 1.19 2001/12/20 19:02:27 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.35 1997/07/10 08:22:38 veego Exp $	*/
 
 /*
@@ -65,6 +65,12 @@
 
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
+#define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
+#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
+
+#define	UPAGES		2		/* pages of u-area */
+
 #include <m68k/param.h>
 
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
@@ -84,5 +90,19 @@
 
 void	_delay __P((u_int));
 #endif /* _KERNEL && !_LOCORE */
+
+#ifdef COMPAT_HPUX
+/*
+ * Constants/macros for HPUX multiple mapping of user address space.
+ * Pages in the first 256Mb are mapped in at every 256Mb segment.
+ */
+#define HPMMMASK	0xF0000000
+#define ISHPMMADDR(v) \
+	((curproc->p_md.md_flags & MDP_HPUXMMAP) && \
+	 ((unsigned)(v) & HPMMMASK) && \
+	 ((unsigned)(v) & HPMMMASK) != HPMMMASK)
+#define HPMMBASEADDR(v) \
+	((unsigned)(v) & ~HPMMMASK)
+#endif
 
 #endif	/* !_MACHINE_PARAM_H_ */

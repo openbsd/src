@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.17 2001/11/30 20:58:14 miod Exp $
+#	$OpenBSD: files.hp300,v 1.18 2001/12/20 19:02:27 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -187,7 +187,7 @@ file	arch/hp300/hp300/machdep.c
 file	arch/hp300/hp300/intr.c
 file	arch/hp300/hp300/leds.c			useleds
 file	arch/hp300/hp300/mem.c
-file	arch/m68k/m68k/pmap_motorola.c
+file	arch/hp300/hp300/pmap.c
 file	arch/hp300/hp300/pmap_bootstrap.c
 file	arch/hp300/hp300/sys_machdep.c
 file	arch/hp300/hp300/trap.c
