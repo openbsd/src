@@ -37,12 +37,20 @@
 
 #define	__LDPGSZ	4096
 
+/*
+ *  Define what exec "formats" we should handle.
+ */
+#define NATIVE_EXEC_ELF
+#define	EXEC_SCRIPT
+
 #define ELF_TARG_CLASS		ELFCLASS32
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_MIPS
 
+/*
+ *  This is what we want nlist(3) to handle.
+ */
 #define DO_AOUT			/* support a.out */
 #define DO_ELF			/* support ELF */
 #define DO_ECOFF		/* support ECOFF */
 
-#include <machine/reloc.h>
