@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_scanner.h,v 1.5 1997/03/08 05:39:00 kstailey Exp $	*/
+/*	$OpenBSD: scsi_scanner.h,v 1.6 1997/03/10 01:06:11 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -39,12 +39,24 @@
 
 /* SCSI scanner commands */
 #define GET_IMAGE_STATUS	0x0f
-#define READ_BIG		0x28
 #define WRITE_BIG		0x2a
 #define OBJECT_POSITION		0x31
 #define GET_BUFFER_STATUS	0x34
 
 /* generic scanner command formats */
+
+struct scsi_r_scanner {
+#define	READ_BIG		0x28
+	u_int8_t opcode;
+	u_int8_t lun:3;
+	u_int8_t res1;
+	u_int8_t code;
+	u_int8_t res2;
+	u_int8_t qualifier;
+	u_int8_t len[3];
+	u_int8_t control;
+};
+
 
 struct scsi_rw_scanner {
 #define	READ			0x08
