@@ -404,7 +404,7 @@ struct agetargs args[] = {
       "principal to obtain token for",
       "user name", aarg_optional},
     { "password", 0, aarg_string, &arg_password,
-      "password to use (NOT RECOMENDED TO USE)",
+      "password to use (NOT RECOMMENDED TO USE)",
       "AFS password", aarg_optional},
     { "servers", 0, aarg_strings, &arg_servers,
       "list of servers to contact",
