@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.7 2001/06/26 10:18:21 mickey Exp $	*/
+/*	$OpenBSD: iop.c,v 1.8 2001/06/26 10:47:36 mickey Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -943,7 +943,7 @@ iop_ofifo_init(struct iop_softc *sc)
 	bus_dma_segment_t seg;
 	struct i2o_exec_outbound_init *mf;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
-	u_int32_t *sw;
+	u_int32_t *sw = (u_int32_t *)sc->sc_scr;
 	int i, rseg, rv;
 
 	mf = (struct i2o_exec_outbound_init *)mb;
@@ -966,7 +966,7 @@ iop_ofifo_init(struct iop_softc *sc)
 	 * that if you don't want to get the list of MFAs, an IGNORE SGL is
 	 * necessary; this isn't the case (and is in fact a bad thing).
 	 */
-	if ((rv = iop_post(sc, mb, sizeof(*mf))))
+	if ((rv = iop_post(sc, mb, sizeof(*mf) + 2 * sizeof(*mb))))
 		return (rv);
 
 	/* XXX */
