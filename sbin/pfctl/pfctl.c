@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.146 2003/02/05 10:13:44 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.147 2003/02/05 11:18:45 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1454,7 +1454,7 @@ main(int argc, char *argv[])
 	if (state_killers)
 		pfctl_kill_states(dev, opts);
 
-	if (tableopt != NULL || tblcmdopt != NULL) {
+	if (tblcmdopt != NULL) {
 		error = pfctl_command_tables(argc, argv, tableopt,
 		    tblcmdopt, rulesopt, opts);
 		rulesopt = NULL;
