@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.44 1999/08/20 17:00:33 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.45 1999/09/27 22:09:25 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -157,7 +157,7 @@ all)
 	;;
 
 raminst)
-	sh $this std
+	sh $this std random
 	sh $this sd0 sd1 sd2 wd0 st0
 	sh $this cd0
 	sh $this rd0 bpf0
