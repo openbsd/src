@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile,v 1.9 2002/06/07 03:45:32 beck Exp $
+# $OpenBSD: Makefile,v 1.10 2002/06/07 06:26:17 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -929,7 +929,7 @@ prereq:	${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/crypto/objects/
 
 install: maninstall
 	@cd ${.OBJDIR}/crypto && ${MAKE} install
-	@cd ${.OBJDIR}/ssl && ${MAKE} installq
+	@cd ${.OBJDIR}/ssl && ${MAKE} install
 
 ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h
 	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_mac.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
