@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.17 1997/12/02 17:11:13 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.18 1997/12/11 04:25:46 csapuntz Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -919,8 +919,11 @@ abortit:
 		(void) relookup(fdvp, &fvp, fcnp);
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
+
 	if ((error = vn_lock(fvp, LK_EXCLUSIVE, p)) != 0)
 		goto abortit;
+
+	/* fvp, tdvp, tvp now locked */
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((ip->i_ffs_flags & (IMMUTABLE | APPEND)) ||
@@ -954,6 +957,7 @@ abortit:
 		oldparent = dp->i_number;
 		doingdirectory++;
 	}
+	/* Why? */
 	vrele(fdvp);
 
 	/*
@@ -994,6 +998,8 @@ abortit:
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
 	VOP_UNLOCK(fvp, 0, p);
+
+	/* tdvp and tvp locked */
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
 	if (doingdirectory && newparent) {
@@ -1001,6 +1007,8 @@ abortit:
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
+
+		/* Only tdvp is locked */
 		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0)
 			goto out;
 		if ((tcnp->cn_flags & SAVESTART) == 0)
@@ -1042,7 +1050,7 @@ abortit:
 				goto bad;
 		}
 		ufs_makedirentry(ip, tcnp, &newdir);
-		if ((error = ufs_direnter(tdvp, fvp, &newdir, tcnp, NULL)) != 0) {
+		if ((error = ufs_direnter(tdvp, NULL, &newdir, tcnp, NULL)) != 0) {
 			if (doingdirectory && newparent) {
 				dp->i_effnlink--;
 				dp->i_ffs_nlink--;
