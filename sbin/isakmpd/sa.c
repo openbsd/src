@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.3 1998/11/17 11:10:19 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.55 1998/11/14 23:42:26 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.4 1998/11/17 22:36:20 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.56 1998/11/17 21:58:07 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -424,7 +424,7 @@ sa_isakmp_lookup_by_peer (struct sockaddr *addr, size_t addr_len)
        * XXX We check the transport because it can be NULL until we fix
        * the initiator case to set the transport always.
        */
-      if (sa->phase == 1 && sa->transport)
+      if (sa->phase == 1 && (sa->flags & SA_READY) && sa->transport)
 	{
 	  sa->transport->vtbl->get_dst (sa->transport, &taddr, &taddr_len);
 	  if (taddr_len == addr_len && memcmp (taddr, addr, addr_len) == 0)
