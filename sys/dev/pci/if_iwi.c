@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.26 2005/02/19 13:38:01 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.27 2005/02/21 13:33:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1249,35 +1249,9 @@ iwi_watchdog(struct ifnet *ifp)
 }
 
 int
-iwi_get_table0(struct iwi_softc *sc, u_int32_t *tbl)
-{
-	u_int32_t size, buf[128];
-
-	if (!(sc->flags & IWI_FLAG_FW_INITED)) {
-		bzero(buf, sizeof buf);
-		return copyout(buf, tbl, sizeof buf);
-	}
-
-	size = min(CSR_READ_4(sc, IWI_CSR_TABLE0_SIZE), 128 - 1);
-	CSR_READ_REGION_4(sc, IWI_CSR_TABLE0_BASE, &buf[1], size);
-
-	return copyout(buf, tbl, sizeof buf);
-}
-
-int
-iwi_get_radio(struct iwi_softc *sc, int *ret)
-{
-	int val;
-
-	val = (CSR_READ_4(sc, IWI_CSR_IO) & IWI_IO_RADIO_ENABLED) ? 1 : 0;
-	return copyout(&val, ret, sizeof val);
-}
-
-int
 iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwi_softc *sc = ifp->if_softc;
-	struct ifreq *ifr;
 	struct ifaddr *ifa;
 	int s, error = 0;
 
@@ -1310,14 +1284,15 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 
-	case SIOCGTABLE0:
-		ifr = (struct ifreq *)data;
-		error = iwi_get_table0(sc, (u_int32_t *)ifr->ifr_data);
-		break;
-
-	case SIOCGRADIO:
-		ifr = (struct ifreq *)data;
-		error = iwi_get_radio(sc, (int *)ifr->ifr_data);
+	case SIOCG80211TXPOWER:
+		/*
+		 * If the hardware radio transmitter switch is off, report a
+		 * tx power of IEEE80211_TXPOWER_MIN to indicate that radio
+		 * transmitter is killed.
+		 */
+		((struct ieee80211_txpower *)data)->i_val =
+		    (CSR_READ_4(sc, IWI_CSR_IO) & IWI_IO_RADIO_ENABLED) ?
+		    sc->sc_ic.ic_txpower : IEEE80211_TXPOWER_MIN;
 		break;
 
 	case SIOCG80211AUTH:

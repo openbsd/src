@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.41 2005/02/19 13:08:55 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.42 2005/02/21 13:33:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1413,38 +1413,9 @@ ipw_watchdog(struct ifnet *ifp)
 }
 
 int
-ipw_get_table1(struct ipw_softc *sc, u_int32_t *tbl)
-{
-	u_int32_t i, size, buf[256];
-
-	if (!(sc->flags & IPW_FLAG_FW_INITED)) {
-		bzero(buf, sizeof buf);
-		return copyout(buf, tbl, sizeof buf);
-	}
-
-	CSR_WRITE_4(sc, IPW_CSR_AUTOINC_ADDR, sc->table1_base);
-
-	size = min(CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA), 256);
-	for (i = 1; i < size; i++)
-		buf[i] = MEM_READ_4(sc, CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA));
-
-	return copyout(buf, tbl, sizeof buf);
-}
-
-int
-ipw_get_radio(struct ipw_softc *sc, int *ret)
-{
-	int val;
-
-	val = (CSR_READ_4(sc, IPW_CSR_IO) & IPW_IO_RADIO_DISABLED) ? 0 : 1;
-	return copyout(&val, ret, sizeof val);
-}
-
-int
 ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ipw_softc *sc = ifp->if_softc;
-	struct ifreq *ifr;
 	struct ifaddr *ifa;
 	int s, error = 0;
 
@@ -1476,14 +1447,15 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 
-	case SIOCGTABLE1:
-		ifr = (struct ifreq *)data;
-		error = ipw_get_table1(sc, (u_int32_t *)ifr->ifr_data);
-		break;
-
-	case SIOCGRADIO:
-		ifr = (struct ifreq *)data;
-		error = ipw_get_radio(sc, (int *)ifr->ifr_data);
+	case SIOCG80211TXPOWER:
+		/*
+		 * If the hardware radio transmitter switch is off, report a
+		 * tx power of IEEE80211_TXPOWER_MIN to indicate that radio
+		 * transmitter is killed.
+		 */
+		((struct ieee80211_txpower *)data)->i_val =
+		    (CSR_READ_4(sc, IPW_CSR_IO) & IPW_IO_RADIO_DISABLED) ?
+		    IEEE80211_TXPOWER_MIN : sc->sc_ic.ic_txpower;
 		break;
 
 	case SIOCG80211AUTH:

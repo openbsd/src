@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwvar.h,v 1.8 2005/01/13 20:52:13 damien Exp $	*/
+/*	$OpenBSD: if_ipwvar.h,v 1.9 2005/02/21 13:33:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -161,6 +161,3 @@ struct ipw_softc {
 	int				sc_txtap_len;
 #endif
 };
-
-#define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
-#define SIOCGTABLE1	_IOWR('i', 140, struct ifreq)
