@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 1999/12/17 06:18:38 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.8 2000/01/17 06:43:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -73,7 +73,7 @@ extern struct pdc_btlb pdc_btlb;
 
 int
 mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
-	       bus_space_handle_t *bshp)
+    bus_space_handle_t *bshp)
 {
 	extern u_int virtual_avail;
 	register u_int64_t spa, epa;
@@ -81,7 +81,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 
 #ifdef BTLBDEBUG
 	printf("bus_mem_add_mapping(%x,%x,%scaceable,%p)\n",
-	      bpa, size, cacheable?"":"non", bshp);
+	    bpa, size, cacheable?"":"non", bshp);
 #endif
 	if (bpa > 0 && bpa < virtual_avail)
 		*bshp = bpa;
@@ -138,7 +138,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 #ifdef BTLBDEBUG
 		else {
 			printf("+++ already mapped flex=%x, mask=%x",
-			       flex, bmm[flex / 8]);
+			    flex, bmm[flex / 8]);
 		}
 #endif
 		*bshp = bpa;
@@ -172,13 +172,13 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 			panic("mbus_add_mapping: not implemented");
 #endif
 	}
- 
+
 	return 0;
 }
 
 int
 mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
-       int cacheable, bus_space_handle_t *bshp)
+    int cacheable, bus_space_handle_t *bshp)
 {
 	register int error;
 
@@ -216,7 +216,7 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 
 	if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
 		printf("bus_space_unmap: ps 0x%lx, size 0x%lx\n",
-		       bpa, size);
+		    bpa, size);
 		printf("bus_space_unmap: can't free region\n");
 	}
 }
@@ -258,7 +258,7 @@ mbus_free(void *v, bus_space_handle_t h, bus_size_t size)
 
 int
 mbus_subregion(void *v, bus_space_handle_t bsh, bus_size_t offset,
-	       bus_size_t size, bus_space_handle_t *nbshp)
+    bus_size_t size, bus_space_handle_t *nbshp)
 {
 	panic("mbus_subregion: unimplemented");
 }
@@ -415,18 +415,18 @@ mbus_sm_8(void *v, bus_space_handle_t h, bus_size_t o, u_int64_t vv, bus_size_t 
 }
 
 void mbus_rrm_2 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, u_int16_t*a, bus_size_t c));
+		     bus_size_t o, u_int16_t*a, bus_size_t c));
 void mbus_rrm_4 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, u_int32_t*a, bus_size_t c));
+		     bus_size_t o, u_int32_t*a, bus_size_t c));
 void mbus_rrm_8 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, u_int64_t*a, bus_size_t c));
+		     bus_size_t o, u_int64_t*a, bus_size_t c));
 
 void mbus_wrm_2 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, const u_int16_t *a, bus_size_t c));
+		     bus_size_t o, const u_int16_t *a, bus_size_t c));
 void mbus_wrm_4 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, const u_int32_t *a, bus_size_t c));
+		     bus_size_t o, const u_int32_t *a, bus_size_t c));
 void mbus_wrm_8 __P((void *v, bus_space_handle_t h,
-		      bus_size_t o, const u_int64_t *a, bus_size_t c));
+		     bus_size_t o, const u_int64_t *a, bus_size_t c));
 
 void
 mbus_rr_1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t *a, bus_size_t c)
@@ -545,7 +545,7 @@ mbus_cp_1(void *v, bus_space_handle_t h1, bus_size_t o1,
 	h1 += o1;
 	h2 += o2;
 	while (c--)
-		*((volatile u_int8_t *)h1)++ = 
+		*((volatile u_int8_t *)h1)++ =
 			*((volatile u_int8_t *)h2)++;
 }
 
@@ -556,7 +556,7 @@ mbus_cp_2(void *v, bus_space_handle_t h1, bus_size_t o1,
 	h1 += o1;
 	h2 += o2;
 	while (c--)
-		*((volatile u_int16_t *)h1)++ = 
+		*((volatile u_int16_t *)h1)++ =
 			*((volatile u_int16_t *)h2)++;
 }
 
@@ -567,7 +567,7 @@ mbus_cp_4(void *v, bus_space_handle_t h1, bus_size_t o1,
 	h1 += o1;
 	h2 += o2;
 	while (c--)
-		*((volatile u_int32_t *)h1)++ = 
+		*((volatile u_int32_t *)h1)++ =
 			*((volatile u_int32_t *)h2)++;
 }
 
@@ -578,7 +578,7 @@ mbus_cp_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 	h1 += o1;
 	h2 += o2;
 	while (c--)
-		*((volatile u_int64_t *)h1)++ = 
+		*((volatile u_int64_t *)h1)++ =
 			*((volatile u_int64_t *)h2)++;
 }
 
@@ -662,7 +662,7 @@ mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio, int flags)
 
 int
 mbus_dmamap_load_raw(void *v, bus_dmamap_t map, bus_dma_segment_t *segs,
-		     int nsegs, bus_size_t size, int flags)
+    int nsegs, bus_size_t size, int flags)
 {
 	panic("_dmamap_load_raw: not implemented");
 }
@@ -765,7 +765,7 @@ const struct hppa_bus_dma_tag hppa_dmatag = {
 };
 
 int
-mbmatch(parent, cfdata, aux)   
+mbmatch(parent, cfdata, aux)
 	struct device *parent;
 	void *cfdata;
 	void *aux;
@@ -797,7 +797,7 @@ mbattach(parent, self, aux)
 	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa, IOMOD_HPASIZE, 0, &ioh))
 		panic("mbattach: cannot map mainbus IO space");
 
-	/* 
+	/*
 	 * Local-Broadcast the HPA to all modules on the bus
 	 */
 	((struct iomod *)(pdc_hpa.hpa & FLEX_MASK))[FPA_IOMOD].io_flex =
@@ -845,7 +845,7 @@ mbprint(aux, pnp)
 
 	if (pnp)
 		printf("\"%s\" at %s (type %x, sv %x)", ca->ca_name, pnp,
-		       ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
+		    ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
 		printf(" hpa %x", ca->ca_hpa);
 		if (!pnp && ca->ca_irq >= 0)
