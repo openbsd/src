@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.4 1998/12/23 17:48:46 mickey Exp $
+#	$OpenBSD: Makefile.hppa,v 1.5 1999/02/25 16:42:43 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -50,9 +50,9 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dhppa
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 		-Wno-format -Wno-main
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float -mdisable-fpregs \
-		-mfast-indirect-calls -mpa-risc-1-0 -mportable-runtime
+		-mpa-risc-1-0 -mfast-indirect-calls -mportable-runtime
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-T ${HPPA}/conf/ld.script
+LINKFLAGS=	-T ${HPPA}/conf/ld.script -Ttext 12000
 STRIPFLAGS=	-g -X -x
 
 HOSTED_CC=	${HOSTCC}
