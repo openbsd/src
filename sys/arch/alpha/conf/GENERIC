@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.84 2001/06/27 17:56:24 ho Exp $
+#	$OpenBSD: GENERIC,v 1.85 2001/07/19 14:34:28 art Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -7,8 +7,6 @@ machine	alpha
 
 include "../../../conf/GENERIC"
 maxusers	32
-
-option		PMAP_NEW	# required
 
 # CPU Support
 option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*

@@ -1,9 +1,8 @@
-#	$OpenBSD: RAMDISK,v 1.45 2001/06/27 05:46:08 art Exp $
+#	$OpenBSD: RAMDISK,v 1.46 2001/07/19 14:34:28 art Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
 
-option		PMAP_NEW	# required
 option		SMALL_KERNEL
 
 # CPU Support; at least one is REQUIRED
