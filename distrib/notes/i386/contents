@@ -23,11 +23,13 @@ As well you may be interested in
 		installation section, below.
 
 
-In summary, there is one i386 floppy image called "floppy.fs".  This
-is a bootable install floppy which can be used both to install and to
-upgrade OpenBSD to the current version.  It is also useful for maintenance
-and disaster recovery.  In addition, the "tools/" directory contains some
-utilities that might be useful for the installation.
+In summary, there is one i386 floppy image called "floppy.fs" (which
+you can copy to a floppy using rawrite.exe or `dd'; as described later
+in this document).  This is a bootable install floppy which can be
+used both to install and to upgrade OpenBSD to the current version.
+It is also useful for maintenance and disaster recovery.  In addition,
+the "tools/" directory contains some utilities that might be useful
+for the installation.
 
 Bootable installation/upgrade floppy:
 
