@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.26 2001/03/01 20:54:33 provos Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.27 2001/05/14 10:35:42 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -103,7 +103,6 @@ static int amountpipekva;
 
 void	pipeclose __P((struct pipe *));
 void	pipeinit __P((struct pipe *));
-int	pipe_stat __P((struct pipe *, struct stat *));
 static __inline int pipelock __P((struct pipe *, int));
 static __inline void pipeunlock __P((struct pipe *));
 static __inline void pipeselwakeup __P((struct pipe *));
