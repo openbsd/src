@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.69 2003/09/01 17:56:47 grange Exp $
+$OpenBSD: usbdevs,v 1.70 2003/09/02 07:00:49 grange Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1068,6 +1068,7 @@ product MUSTEK 1200CUPLUS	0x0008	1200 CU Plus scanner
 product MUSTEK BEARPAW1200F	0x0010	BearPaw 1200F scanner
 product MUSTEK 600USB		0x0873	600 scanner
 product MUSTEK MDC800		0xa800	MDC-800 digital camera
+product MUSTEK DV2000		0xc441	DV2000 digital camera
 
 /* M-Systems products */
 product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
