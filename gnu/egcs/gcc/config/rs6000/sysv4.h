@@ -1404,7 +1404,6 @@ do {									\
 
 #ifndef CPP_OS_OPENBSD_SPEC
 #define CPP_OS_OPENBSD_SPEC "-D__unix__ -D__OpenBSD__ \
-%{!ansi: -Dunix } \
 -Asystem(unix) -Asystem(OpenBSD) " OBSD_CPP_SPEC
 #endif
 
