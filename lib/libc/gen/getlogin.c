@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getlogin.c,v 1.5 2000/01/06 08:24:16 d Exp $";
+static char rcsid[] = "$OpenBSD: getlogin.c,v 1.6 2002/01/23 21:02:41 fgsch Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -86,8 +86,10 @@ getlogin_r(name, namelen)
 		logname[MAXLOGNAME] = '\0';	/* paranoia */
 	}
 	logname_size = strlen(logname) + 1;
-	if (namelen < logname_size)
+	if (namelen < logname_size) {
+		_THREAD_PRIVATE_MUTEX_UNLOCK(logname);
 		return ERANGE;
+	}
 	memcpy(name, logname, logname_size);
 	_THREAD_PRIVATE_MUTEX_UNLOCK(logname);
 	return 0;
