@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.1 2003/01/26 07:21:40 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.2 2003/01/26 21:14:57 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -122,6 +122,24 @@ struct harmony_empty {
 	u_int8_t	capture[CAPTURE_EMPTYS][HARMONY_BUFSIZE];
 };
 
+struct harmony_dma {
+	struct harmony_dma *d_next;
+	bus_dmamap_t d_map;
+	bus_dma_segment_t d_seg;
+	caddr_t d_kva;
+	size_t d_size;
+};
+
+struct harmony_channel {
+	struct harmony_dma *c_current;
+	bus_size_t c_segsz;
+	bus_size_t c_cnt;
+	bus_size_t c_blksz;
+	bus_addr_t c_lastaddr;
+	void (*c_intr)(void *);
+	void *c_intrarg;
+};
+
 struct harmony_softc {
 	struct device sc_dv;
 	bus_dma_tag_t sc_dmat;
@@ -139,6 +157,9 @@ struct harmony_softc {
 	bus_dma_segment_t sc_empty_seg;
 	int sc_empty_rseg;
 	struct harmony_empty *sc_empty_kva;
+	struct harmony_dma *sc_dmas;
+	int sc_playing, sc_capturing, sc_intr_enable;
+	struct harmony_channel sc_playback;
 };
 
 int     harmony_open(void *, int);
@@ -154,15 +175,14 @@ int     harmony_getdev(void *, struct audio_device *);
 int     harmony_set_port(void *, mixer_ctrl_t *);
 int     harmony_get_port(void *, mixer_ctrl_t *);
 int     harmony_query_devinfo(void *addr, mixer_devinfo_t *);
-void *  harmony_alloc(void *, int, size_t, int, int);
-void    harmony_free(void *, void *, int);
+void *  harmony_allocm(void *, int, size_t, int, int);
+void    harmony_freem(void *, void *, int);
 size_t  harmony_round_buffersize(void *, int, size_t);
 int     harmony_get_props(void *);
 int     harmony_trigger_output(void *, void *, void *, int,
     void (*intr)(void *), void *arg, struct audio_params *);
 int     harmony_trigger_input(void *, void *, void *, int,
     void (*intr)(void *), void *arg, struct audio_params *);
-u_int32_t harmony_speed_bits(struct harmony_softc *, u_long *);
 
 struct audio_hw_if harmony_sa_hw_if = {
 	harmony_open,
@@ -184,8 +204,8 @@ struct audio_hw_if harmony_sa_hw_if = {
 	harmony_set_port,
 	harmony_get_port,
 	harmony_query_devinfo,
-	NULL,
-	NULL,
+	harmony_allocm,
+	harmony_freem,
 	harmony_round_buffersize,
 	NULL,
 	harmony_get_props,
@@ -206,6 +226,7 @@ void harmony_intr_enable(struct harmony_softc *);
 void harmony_intr_disable(struct harmony_softc *);
 void harmony_wait(struct harmony_softc *);
 void harmony_set_gainctl(struct harmony_softc *, u_int32_t);
+u_int32_t harmony_speed_bits(struct harmony_softc *, u_long *);
 
 int
 harmony_match(parent, match, aux)
@@ -319,25 +340,57 @@ harmony_intr(vsc)
 {
 	struct harmony_softc *sc = vsc;
 	u_int32_t dstatus;
+	int r = 0;
+
+	if (sc->sc_intr_enable == 0)
+		return (0);
 
 	harmony_intr_disable(sc);
 	harmony_wait(sc);
 
 	dstatus = bus_space_read_4(sc->sc_bt, sc->sc_bh, HARMONY_DSTATUS) &
 	    (DSTATUS_PLAYNXT | DSTATUS_CAPTNXT);
-	if (dstatus == 0)
-		return (0);
-
-	printf("%s: intr %x\n", sc->sc_dv.dv_xname, dstatus);
 
 	if (dstatus & DSTATUS_PLAYNXT) {
-		bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_PLAYNXT,
-		    sc->sc_playback_paddrs[sc->sc_playback_empty]);
-		if (++sc->sc_playback_empty == PLAYBACK_EMPTYS)
-			sc->sc_playback_empty = 0;
+		r = 1;
+		if (sc->sc_playing == 0) {
+			bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_PLAYNXT,
+			    sc->sc_playback_paddrs[sc->sc_playback_empty]);
+			if (++sc->sc_playback_empty == PLAYBACK_EMPTYS)
+				sc->sc_playback_empty = 0;
+		} else {
+			struct harmony_channel *c = &sc->sc_playback;
+			struct harmony_dma *d;
+			bus_addr_t nextaddr;
+			bus_size_t togo;
+
+			d = c->c_current;
+			togo = c->c_segsz - c->c_cnt;
+			if (togo == 0) {
+				nextaddr = d->d_map->dm_segs[0].ds_addr;
+				c->c_cnt = togo = c->c_blksz;
+			} else {
+				nextaddr = c->c_lastaddr;
+				if (togo > c->c_blksz)
+					togo = c->c_blksz;
+				c->c_cnt += togo;
+			}
+
+			bus_dmamap_sync(sc->sc_dmat, d->d_map,
+			    nextaddr - d->d_map->dm_segs[0].ds_addr,
+			    c->c_blksz, BUS_DMASYNC_PREWRITE);
+
+			bus_space_write_4(sc->sc_bt, sc->sc_bh,
+			    HARMONY_PLAYNXT, nextaddr);
+			c->c_lastaddr = nextaddr + togo;
+
+			if (c->c_intr != NULL)
+				(*c->c_intr)(c->c_intrarg);
+		}
 	}
 
 	if (dstatus & DSTATUS_CAPTNXT) {
+		r = 1;
 		bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_CAPTNXT,
 		    sc->sc_capture_paddrs[sc->sc_capture_empty]);
 		if (++sc->sc_capture_empty == CAPTURE_EMPTYS)
@@ -346,13 +399,14 @@ harmony_intr(vsc)
 
 	harmony_intr_enable(sc);
 
-	return (1);
+	return (r);
 }
 
 void
 harmony_intr_enable(struct harmony_softc *sc)
 {
 	harmony_wait(sc);
+	sc->sc_intr_enable = 1;
 	bus_space_write_4(sc->sc_bt, sc->sc_bh,
 	    HARMONY_DSTATUS, DSTATUS_INTRENA);
 }
@@ -362,6 +416,7 @@ harmony_intr_disable(struct harmony_softc *sc)
 {
 	harmony_wait(sc);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_DSTATUS, 0);
+	sc->sc_intr_enable = 0;
 }
 
 void
@@ -521,7 +576,7 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 int
 harmony_round_blocksize(void *vsc, int blk)
 {
-	return (blk & (-4));
+	return (HARMONY_BUFSIZE);
 }
 
 int
@@ -570,6 +625,7 @@ harmony_halt_output(void *vsc)
 	struct harmony_softc *sc = vsc;
 
 	harmony_intr_disable(sc);
+	sc->sc_playing = 0;
 	return (0);
 }
 
@@ -579,6 +635,7 @@ harmony_halt_input(void *vsc)
 	struct harmony_softc *sc = vsc;
 
 	harmony_intr_disable(sc);
+	sc->sc_capturing = 0;
 	return (0);
 }
 
@@ -778,10 +835,73 @@ harmony_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 	return (err);
 }
 
+void *
+harmony_allocm(void *vsc, int dir, size_t size, int pool, int flags)
+{
+	struct harmony_softc *sc = vsc;
+	struct harmony_dma *d;
+	int rseg;
+
+	d = (struct harmony_dma *)malloc(sizeof(struct harmony_dma), pool, flags);
+	if (d == NULL)
+		goto fail;
+
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0, BUS_DMA_NOWAIT,
+	    &d->d_map) != 0)
+		goto fail1;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &d->d_seg, 1,
+	    &rseg, BUS_DMA_NOWAIT) != 0)
+		goto fail2;
+
+	if (bus_dmamem_map(sc->sc_dmat, &d->d_seg, 1, size, &d->d_kva,
+	    BUS_DMA_NOWAIT) != 0)
+		goto fail3;
+
+	if (bus_dmamap_load(sc->sc_dmat, d->d_map, d->d_kva, size, NULL,
+	    BUS_DMA_NOWAIT) != 0)
+		goto fail4;
+
+	d->d_next = sc->sc_dmas;
+	sc->sc_dmas = d;
+	d->d_size = size;
+	return (d->d_kva);
+
+fail4:
+	bus_dmamem_unmap(sc->sc_dmat, d->d_kva, size);
+fail3:
+	bus_dmamem_free(sc->sc_dmat, &d->d_seg, 1);
+fail2:
+	bus_dmamap_destroy(sc->sc_dmat, d->d_map);
+fail1:
+	free(d, pool);
+fail:
+	return (NULL);
+}
+
+void
+harmony_freem(void *vsc, void *ptr, int pool)
+{
+	struct harmony_softc *sc = vsc;
+	struct harmony_dma *d, **dd;
+
+	for (dd = &sc->sc_dmas; (d = *dd) != NULL; dd = &(*dd)->d_next) {
+		if (d->d_kva != ptr)
+			continue;
+		bus_dmamap_unload(sc->sc_dmat, d->d_map);
+		bus_dmamem_unmap(sc->sc_dmat, d->d_kva, d->d_size);
+		bus_dmamem_free(sc->sc_dmat, &d->d_seg, 1);
+		bus_dmamap_destroy(sc->sc_dmat, d->d_map);
+		free(d, pool);
+		return;
+	}
+	printf("%s: free rogue pointer\n", sc->sc_dv.dv_xname);
+}
+
 size_t
 harmony_round_buffersize(void *vsc, int direction, size_t size)
 {
-	return (size);
+	return (size & (size_t)(-HARMONY_BUFSIZE));
 }
 
 int
@@ -795,11 +915,35 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct harmony_softc *sc = vsc;
+	struct harmony_channel *c = &sc->sc_playback;
+	struct harmony_dma *d;
+	bus_size_t n;
 
+	for (d = sc->sc_dmas; d->d_kva != start; d = d->d_next)
+		/*EMPTY*/;
+	if (d == NULL) {
+		printf("%s: trigger_output: bad addr: %p\n",
+		    sc->sc_dv.dv_xname, start);
+		return (EINVAL);
+	}
+
+	n = (caddr_t)end - (caddr_t)start;
+
+	c->c_blksz = blksize;
+	c->c_current = d;
+	c->c_segsz = n;
+
+	if (n > c->c_blksz)
+		n = c->c_blksz;
+	c->c_cnt = n;
+
+	bus_dmamap_sync(sc->sc_dmat, d->d_map, 0, c->c_blksz,
+	    BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_PLAYNXT,
-	    sc->sc_playback_paddrs[sc->sc_playback_empty]);
-	if (++sc->sc_playback_empty == PLAYBACK_EMPTYS)
-		sc->sc_playback_empty = 0;
+	    d->d_map->dm_segs[0].ds_addr);
+	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr + n;
+
+	sc->sc_playing = 1;
 	harmony_intr_enable(sc);
 	return (0);
 }
@@ -814,6 +958,7 @@ harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
 	    sc->sc_capture_paddrs[sc->sc_capture_empty]);
 	if (++sc->sc_capture_empty == CAPTURE_EMPTYS)
 		sc->sc_capture_empty = 0;
+	sc->sc_capturing = 1;
 	harmony_intr_enable(sc);
 	return (0);
 }
