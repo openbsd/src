@@ -1,4 +1,4 @@
-/*	$OpenBSD: filesys.c,v 1.5 1998/06/26 21:20:48 millert Exp $	*/
+/*	$OpenBSD: filesys.c,v 1.6 1999/11/26 21:32:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: filesys.c,v 6.24 1996/01/30 01:57:07 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: filesys.c,v 1.5 1998/06/26 21:20:48 millert Exp $";
+"$OpenBSD: filesys.c,v 1.6 1999/11/26 21:32:38 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)filesys.c";
@@ -231,7 +231,8 @@ struct mntinfo *makemntinfo(mi)
 	struct mntinfo *mi;
 {
 	FILE *mfp;
-	static struct mntinfo *mntinfo, *newmi, *m;
+	static struct mntinfo *mntinfo;
+	struct mntinfo *newmi, *m;
 	struct stat mntstat;
 	mntent_t *mnt;
 	int timeo = 310;
@@ -283,7 +284,7 @@ struct mntinfo *makemntinfo(mi)
 		 * Add entry to list
 		 */
 		if (mntinfo) {
-			for (m = mntinfo; m && m->mi_nxt; m = m->mi_nxt);
+			for (m = mntinfo; m->mi_nxt; m = m->mi_nxt);
 			m->mi_nxt = newmi;
 		} else
 			mntinfo = newmi;
