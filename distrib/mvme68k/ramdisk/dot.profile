@@ -44,6 +44,8 @@ echo ''
 . /.commonutils
 . /.instutils
 
+mount -u /dev/rd0a /
+
 # run the installation script.
 umask 022
 install
