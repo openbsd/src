@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.6.4.2 1996/05/28 22:46:56 jtc Exp $	*/
+/*	$NetBSD: catopen.c,v 1.6.4.3 1996/06/21 06:30:31 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,72 +52,87 @@
 #define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
 #define NLS_DEFAULT_LANG "C"
 
+static nl_catd load_msgcat();
+
 nl_catd
 _catopen(name, oflag)
 	const char *name;
 	int oflag;
 {
-	const char *path;
-	struct stat st;
+	char tmppath[PATH_MAX];
+	char *nlspath;
+	char *lang;
+	char *s, *t;
+	const char *u;
 	nl_catd catd;
-	int fd;
-	void *data;
-
-	struct _nls_cat_hdr *cat_hdr;
-
+		
 	if (name == NULL || *name == '\0')
 		return (nl_catd) -1;
 
 	/* absolute or relative path? */
-	if (strchr (name, '/')) {
-		if (stat (name, &st)) {
-			return (nl_catd) -1;
-		}
-		path = name;
-	} else {
-		char tmppath[PATH_MAX];
-		char *nlspath;
-		char *lang;
-		char *s, *t;
-		
-		if ((nlspath = getenv ("NLSPATH")) == NULL) {
-			nlspath = NLS_DEFAULT_PATH;
-		}
-		if ((lang = getenv ("LANG")) == NULL) {
-			lang = NLS_DEFAULT_LANG;
-		}
+	if (strchr (name, '/'))
+		return load_msgcat(name);
 
-		for (s = nlspath, t = tmppath; *s; ) {
-			if (*s == '%') {
-				if (*(s + 1) == 'L') {
-					strcpy(t, lang);
-					t += strlen(lang);
-					s += 2;
-				} else if (*(s + 1) == 'N') {
-					strcpy(t, name);
-					t += strlen(name);
-					s += 2;
-				} else {
-					*t++ = *s++;
-				}
-			} else if (*s == ':') {
-				*t = '\0';
-
-				if (stat (tmppath, &st) == 0) {
-					path = tmppath;
-					goto load_msgcat;
-				}
-
-				t = tmppath;
-			} else {
-				*t++ = *s++;
-			}
-		}
-
-		return (nl_catd) -1;
+	if ((nlspath = getenv ("NLSPATH")) == NULL) {
+		nlspath = NLS_DEFAULT_PATH;
+	}
+	if ((lang = getenv ("LANG")) == NULL) {
+		lang = NLS_DEFAULT_LANG;
 	}
 
-load_msgcat:
+	s = nlspath;
+	t = tmppath;	
+	do {
+		while (*s && *s != ':') {
+			if (*s == '%') {
+				switch (*(++s)) {
+				case 'L':	/* locale */
+					u = lang;
+					while (*u && t < tmppath + PATH_MAX)
+						*t++ = *u++;
+					break;
+				case 'N':	/* name */
+					u = name;
+					while (*u && t < tmppath + PATH_MAX)
+						*t++ = *u++;
+					break;
+				case 'l':	/* lang */
+				case 't':	/* territory */
+				case 'c':	/* codeset */
+					break;
+				default:
+					if (t < tmppath + PATH_MAX)
+						*t++ = *s;
+				}
+			} else {
+				if (t < tmppath + PATH_MAX)
+					*t++ = *s;
+			}
+			s++;
+		}
+
+		*t = '\0';
+		catd = load_msgcat(tmppath);
+		if (catd != (nl_catd) -1)
+			return catd;
+
+		if (*s)
+			s++;
+		t = tmppath;
+	} while (*s);
+
+	return (nl_catd) -1;
+}
+
+static nl_catd
+load_msgcat(path)
+	const char *path;
+{
+	struct stat st;
+	nl_catd catd;
+	void *data;
+	int fd;
+
 	if ((fd = open (path, O_RDONLY)) == -1)
 		return (nl_catd) -1;
 
