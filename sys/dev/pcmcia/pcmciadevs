@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.87 2002/04/06 00:58:05 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.88 2002/04/17 04:33:02 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -313,7 +313,7 @@ product SMC EZCARD		0x8022 SMC EZCard
 
 /* Symbol */
 product SYMBOL  SPECTRUM24	0x0801 Spectrum24 WLAN IEEE 802.11 FHSS
-product SYMBOL2 LA4100		0x0001 Spectrum24 LA4100 Series WLAN
+product SYMBOL	LA4100		0x0001 Spectrum24 LA4100 Series WLAN
 
 /* Telecom Device */
 product TELECOMDEVICE TCD_HPC100	0x0202 Telecom Device TCD-HPC100
