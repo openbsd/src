@@ -1,8 +1,10 @@
-#	$Id: Makefile.bsd-wrapper,v 1.5 1996/02/04 10:52:33 etheisen Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.6 1996/02/05 01:39:13 etheisen Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1
 MLINKS=		gcc.1 cc.1
 GNUCFLAGS=	CFLAGS="${CFLAGS}"
+CLEANFILES=	.gdbinit cp/.gdbinit *.info* bi-parser.c bi-parser.h \
+		c-parse.c c-parse.h cexp.c cp/parse.c cp/parse.h objc-parse.c
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS} BISON=yacc LDFLAGS=${LDSTATIC}
@@ -19,12 +21,14 @@ config.status:
 		--prefix=/usr --gxx-include=/usr/include/g++
 
 install:	maninstall
-	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
+	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
+		infodir=${DESTDIR}/usr/share/info \
 		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
 		bindir=${DESTDIR}/usr/bin install
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
 
 clean cleandir:
+	rm -f ${CLEANFILES}
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 
 depend:
