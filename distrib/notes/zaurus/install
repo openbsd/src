@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.10 2005/03/19 01:23:35 uwe Exp $
+dnl	$OpenBSD: install,v 1.11 2005/03/19 01:31:17 uwe Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -45,7 +45,7 @@ filesystems as ext2 on OpenBSD.)
 Another way to install the package is from a shell.  You will
 need the following file from the distribution on the Zaurus:
 
-	openbsd{:--:}OSrev{:--:}_arm.ipk to
+	openbsd{:--:}OSrev{:--:}_arm.ipk
 
 Perform the following operation as root to install the package:
 
