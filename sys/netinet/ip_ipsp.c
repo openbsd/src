@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.71 2000/01/11 01:03:22 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.72 2000/01/11 01:39:10 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -348,13 +348,13 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 	switch (dst->sen_type)
 	{
 #ifdef INET
-	    case SENT_IPSP:
+	    case SENT_IP4:
 		DPRINTF(("ipsec: send SA request (%d), remote IPv4 address: %s, SA type: %d\n", i + 1, inet_ntoa4(dst->sen_ip_dst), sa_require));
 		break;
 #endif /* INET */
 
 #ifdef INET6
-	    case SENT_IPSP6:
+	    case SENT_IP6:
 		DPRINTF(("ipsec: send SA request (%d), remote IPv6 address: %s, SA type: %d\n", i + 1, inet6_ntoa4(dst->sen_ip6_dst), sa_require));
 		break;
 #endif /* INET6 */
