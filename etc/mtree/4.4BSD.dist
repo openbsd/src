@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.40 1997/10/09 14:16:33 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.41 1997/10/20 21:45:24 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1548,15 +1548,15 @@ rwho
 spool
 
 # ./var/spool/ftp
-ftp
+ftp		mode=0555
 
 # ./var/spool/ftp/bin
-bin
+bin		mode=0511
 # ./var/spool/ftp/bin
 ..
 
 # ./var/spool/ftp/etc
-etc
+etc		mode=0511
 # ./var/spool/ftp/etc
 ..
 
@@ -1566,7 +1566,7 @@ hidden           mode=0111
 ..
 
 # ./var/spool/ftp/pub			XXX
-#pub               mode=0777
+#pub		mode=0555
 # ./var/spool/ftp/pub			XXX
 #..
 
