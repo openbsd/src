@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.19 1997/10/20 20:20:45 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.20 1997/10/21 23:47:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -34,12 +34,12 @@
 
 #include <sys/param.h>
 #include <machine/biosvar.h>
+#include <stand/boot/bootarg.h>
 #include "libsa.h"
 
 static int addrprobe __P((u_int));
 u_int cnvmem, extmem;		/* XXX - compatibility */
 bios_memmap_t *memory_map;
-u_int memap_size = 0;
 
 /* BIOS int 15, AX=E820
  *
@@ -49,25 +49,29 @@ static __inline bios_memmap_t *
 bios_E820(mp)
 	register bios_memmap_t *mp;
 {
-	int rc = 0, off = 0, sig;
+	int rc, off = 0, sig, gotcha = 0;
 
 	do {
-		BIOS_regs.biosr_es = ((unsigned)(mp) >> 4);
+		BIOS_regs.biosr_es = ((u_int)(mp) >> 4);
 		__asm __volatile(DOINT(0x15) "; setc %b1"
 				: "=a" (sig), "=d" (rc), "=b" (off)
 				: "0" (0xE820), "1" (0x534d4150), "b" (off),
-				  "c" (sizeof(*mp)), "D" (((unsigned)mp) & 0xF)
+				  "c" (sizeof(*mp)), "D" (((u_int)mp) & 0xF)
 				: "cc", "memory");
 			off = BIOS_regs.biosr_bx;
 
 			if (rc & 0xff || sig != 0x534d4150)
-				return (NULL);
+				break;
+			gotcha++;
 			mp->size >>= 10; /* / 1024 */
 			mp++;
 	} while (off);
 
+	if (!gotcha)
+		return (NULL);
+#ifdef DEBUG
 	printf("0x15[E820]");
-
+#endif
 	return (mp);
 }
 
@@ -89,9 +93,9 @@ bios_E801(mp)
 	/* Make a memory map from info */
 	if(rc & 0xff)
 		return (NULL);
-
+#ifdef DEBUG
 	printf("0x15[E801]");
-
+#endif
 	/* Fill out BIOS map */
 	mp->addr = (1024 * 1024);	/* 1MB */
 	mp->size = (m1 & 0xffff);
@@ -122,9 +126,9 @@ bios_8800(mp)
 
 	if(rc & 0xff)
 		return (NULL);
-
+#ifdef DEBUG
 	printf("0x15[8800]");
-
+#endif
 	/* Fill out a BIOS_MAP */
 	mp->addr = 1024 * 1024;		/* 1MB */
 	mp->size = mem & 0xffff;
@@ -142,9 +146,9 @@ bios_int12(mp)
 	register bios_memmap_t *mp;
 {
 	int mem;
-
+#ifdef DEBUG
 	printf(", 0x12\n");
-
+#endif
 	__asm __volatile(DOINT(0x12) : "=a" (mem) :: "%ecx", "%edx", "cc");
 
 	/* Fill out a bios_memmap_t */
@@ -226,8 +230,9 @@ badprobe(mp)
 	register bios_memmap_t *mp;
 {
 	int ram;
-
+#ifdef DEBUG
 	printf("Scan");
+#endif
 	/* probe extended memory
 	 *
 	 * There is no need to do this in assembly language.  This is
@@ -250,29 +255,34 @@ memprobe()
 	static bios_memmap_t bm[32];	/* This is easier */
 	bios_memmap_t *pm = bm, *im;
 	int total = 0;
-
+#ifdef DEBUG
 	printf("Probing memory: ");
-
+#endif
 	if(!(pm = bios_E820(bm))) {
-		pm = bios_E801(pm);
-		if(!pm)
-			pm = bios_8800(pm);
-		if(!pm)
-			pm = badprobe(pm);
-		pm = bios_int12(pm);
+		im = bios_int12(bm);
+		pm = bios_E801(im);
+		if (!pm)
+			pm = bios_8800(im);
+		if (!pm)
+			pm = badprobe(im);
+		if (!pm) {
+			printf ("No Extended memory detected.");
+			pm = im;
+		}
 	}
-
+#ifdef DEBUG
+	printf("\n");
+#endif
 	pm->type = BIOS_MAP_END;
 	/* Register in global var */
-	memory_map = bm;
-	memap_size = pm - bm + 1;
-	printf("\nmem0:");
+	addbootarg(BOOTARG_MEMMAP, (pm - bm + 1) * sizeof(*bm), bm);
+	printf("mem0:");
 
 	/* Get total free memory */
 	for(im = bm; im->type != BIOS_MAP_END; im++) {
 		if (im->type == BIOS_MAP_FREE) {
 			total += im->size;
-			printf(" %luK", (long)im->size);
+			printf(" %luK", (u_long)im->size);
 		}
 	}
 	printf("\n");
