@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trap.c,v 1.4 1996/04/21 22:19:16 deraadt Exp $	*/
+/*	$OpenBSD: db_trap.c,v 1.5 1997/07/19 22:31:21 niklas Exp $	*/
 /*	$NetBSD: db_trap.c,v 1.9 1996/02/05 01:57:18 christos Exp $	*/
 
 /* 
@@ -36,6 +36,8 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
+#include <vm/vm.h>
+
 #include <machine/db_machdep.h>
 
 #include <ddb/db_run.h>
@@ -56,20 +58,21 @@ db_trap(type, code)
 	watchpt = IS_WATCHPOINT_TRAP(type, code);
 
 	if (db_stop_at_pc(DDB_REGS, &bkpt)) {
-	    if (db_inst_count) {
-		db_printf("After %d instructions (%d loads, %d stores),\n",
-			  db_inst_count, db_load_count, db_store_count);
-	    }
-	    if (bkpt)
-		db_printf("Breakpoint at\t");
-	    else if (watchpt)
-		db_printf("Watchpoint at\t");
-	    else
-		db_printf("Stopped at\t");
-	    db_dot = PC_REGS(DDB_REGS);
-	    db_print_loc_and_inst(db_dot);
+		if (db_inst_count) {
+			db_printf("After %d instructions ", db_inst_count);
+			db_printf("(%d loads, %d stores),\n", db_load_count,
+			    db_store_count);
+		}
+		if (bkpt)
+			db_printf("Breakpoint at\t");
+		else if (watchpt)
+			db_printf("Watchpoint at\t");
+		else
+			db_printf("Stopped at\t");
+		db_dot = PC_REGS(DDB_REGS);
+		db_print_loc_and_inst(db_dot);
 
-	    db_command_loop();
+		db_command_loop();
 	}
 
 	db_restart_at_pc(DDB_REGS, watchpt);

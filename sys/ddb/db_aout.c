@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.20 1997/07/08 20:20:31 niklas Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.21 1997/07/19 22:31:15 niklas Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -34,6 +34,8 @@
 #include <sys/exec.h>
 #include <sys/conf.h>
 #include <sys/lkm.h>
+
+#include <vm/vm.h>
 
 #include <machine/db_machdep.h>		/* data types */
 

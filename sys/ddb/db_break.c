@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.4 1996/04/21 22:18:55 deraadt Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.5 1997/07/19 22:31:16 niklas Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /* 
@@ -35,6 +35,8 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
+
+#include <vm/vm.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
 
@@ -206,7 +208,7 @@ db_breakpoint_t
 db_set_temp_breakpoint(addr)
 	db_addr_t	addr;
 {
-	register db_breakpoint_t	bkpt;
+	db_breakpoint_t	bkpt;
 
 	bkpt = db_breakpoint_alloc();
 	if (bkpt == 0) {

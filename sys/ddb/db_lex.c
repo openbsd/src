@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_lex.c,v 1.5 1997/05/29 03:00:20 mickey Exp $	*/
+/*	$OpenBSD: db_lex.c,v 1.6 1997/07/19 22:31:18 niklas Exp $	*/
 /*	$NetBSD: db_lex.c,v 1.8 1996/02/05 01:57:05 christos Exp $	*/
 
 /* 
@@ -35,6 +35,8 @@
  */
 #include <sys/param.h>
 #include <sys/proc.h>
+
+#include <vm/vm.h>
 
 #include <machine/db_machdep.h>
 
