@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.424 2001/08/03 21:26:44 chris Exp $
+	$OpenBSD: pcidevs,v 1.425 2001/08/05 10:05:36 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1581,6 +1581,7 @@ product OPTI 82C822		0xc822	82C822
 product OPTI RM861HA		0xc861	RM861HA
 
 /* Oxford/ VScom */
+product OXFORD VSCOM_PCI200L	0x8020	VScom PCI 200-L
 product OXFORD VSCOM_PCI800H_0	0xa003	VScom PCI 800-H
 product OXFORD VSCOM_PCI800H_1	0xa004	VScom PCI 800-H
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.12 2001/04/29 17:30:54 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.13 2001/08/05 10:05:36 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -556,6 +556,15 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	{   /* "VScom PCI-200L with 2 x 16550 UARTS" */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200L,	0, 0	},
+	    {	0xffff, 0xffff,					    	0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	    },
 	},
 
