@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_ad_tkt.c,v 1.4 1997/12/12 05:30:20 art Exp $	*/
+/*	$OpenBSD: get_ad_tkt.c,v 1.5 1998/03/25 21:50:10 art Exp $	*/
 /* $KTH: get_ad_tkt.c,v 1.16 1997/05/30 17:43:34 bg Exp $ */
 
 /*
@@ -118,14 +118,15 @@ get_ad_tkt(char *service, char *sinstance, char *realm, int lifetime)
 	 */
 	if ((strncmp(realm, lrealm, REALM_SZ)) == 0)
 	    return(AD_NOTGT);
-	else{
+	else {
 	    if ((kerror = 
 		 get_ad_tkt(KRB_TICKET_GRANTING_TICKET,
-			    realm, lrealm, lifetime)) != KSUCCESS)
+			    realm, lrealm, lifetime)) != KSUCCESS) {
 		if (kerror == KDC_PR_UNKNOWN)
 		  return(AD_INTR_RLM_NOTGT);
 		else
 		  return(kerror);
+	    }
 	    if ((kerror = krb_get_cred(KRB_TICKET_GRANTING_TICKET,
 				       realm, lrealm, &cr)) != KSUCCESS)
 		return(kerror);

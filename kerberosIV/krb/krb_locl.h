@@ -1,4 +1,4 @@
-/*	$OpenBSD: krb_locl.h,v 1.4 1998/02/18 11:54:02 art Exp $	*/
+/*	$OpenBSD: krb_locl.h,v 1.5 1998/03/25 21:50:14 art Exp $	*/
 /* $KTH: krb_locl.h,v 1.44 1997/10/28 15:37:40 bg Exp $ */
 
 /*
@@ -133,6 +133,11 @@ fixup_quad_cksum __P((
 #endif
 
 char *strtok_r(char *s1, const char *s2, char **lasts);
+
+int k_concat(char *, size_t, ...);
+int k_vconcat(char *, size_t, va_list);
+size_t k_vmconcat(char **, size_t, va_list);
+size_t k_mconcat(char **, size_t, ...);
 
 /* Temporary fixes for krb_{rd,mk}_safe */
 #define DES_QUAD_GUESS 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_host.c,v 1.5 1997/12/12 05:30:21 art Exp $	*/
+/*	$OpenBSD: get_host.c,v 1.6 1998/03/25 21:50:11 art Exp $	*/
 /* $KTH: get_host.c,v 1.31 1997/09/26 17:42:37 joda Exp $ */
 
 /*
@@ -182,7 +182,7 @@ add_host(char *realm, char *address, int admin, int validate)
     p = (struct host_list*)malloc(sizeof(struct host_list));
     if (p == NULL) {
 	free(host->realm);
-	host->realm==NULL;
+	host->realm = NULL;
 	free(host->host);
 	host->host = NULL;
 	free(host);
@@ -322,11 +322,12 @@ krb_get_host(int nth, char *realm, int admin)
     
     for(p = hosts; p; p = p->next){
 	if(strcmp(orealm, p->this->realm) == 0 &&
-	   (!admin || p->this->admin))
+	   (!admin || p->this->admin)) {
 	    if(nth == 1)
 		return p->this;
 	    else
 		nth--;
+	}
     }
     return NULL;
 }
