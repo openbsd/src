@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.25 2002/10/02 06:49:47 pvalchev Exp $
+dnl	$OpenBSD: packages,v 1.26 2002/10/02 07:17:08 pvalchev Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -232,7 +232,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	expect-5.32.1-no_tk.tgz              expect-5.32.1.tgz
 	explorer-0.72.tgz                    ezm3-1.0.tgz
 	faces-1.6.1.tgz                      falconseye-1.9.3.tgz
-	fastjar-0.93.tgz                     fetchmail-6.0.0.tgz
+	fastjar-0.93.tgz                     fetchmail-6.1.0.tgz
 	ffcall-1.8.tgz                       fftw-2.1.3.tgz
 	figlet-2.2.1.tgz                     fileutils-4.1.tgz
 	findutils-4.1.tgz                    fire-1.0.tgz
@@ -299,8 +299,8 @@ Installing applications from the ftp.openbsd.org package collection:
 	gracula-3.0.tgz                      graphviz-1.7.6.tgz
 	grepmail-4.70.tgz                    grip-3.0.0.tgz
 	grpn-1.1.1.tgz                       gsl-0.6.tgz
-	gsm-1.0.10.tgz                       gtar-1.13.25-static.tgz
-	gtar-1.13.25.tgz                     gthumb-0.13p1.tgz
+	gsm-1.0.10.tgz                       gtar-1.13.25p1-static.tgz
+	gtar-1.13.25p1.tgz                   gthumb-0.13p1.tgz
 	gtimer-1.1.5.tgz                     gtk+-1.2.10p1.tgz
 	gtk+2-2.0.6.tgz                      gtk+2-docs-2.0.6.tgz
 	gtk-engines-0.12.tgz                 gtk-engines2-1.9.0.tgz
@@ -364,12 +364,12 @@ Installing applications from the ftp.openbsd.org package collection:
 	ja-onew-wnn4-canna-2.2.10.tgz        ja-w3m-0.3.1-image.tgz
 	ja-w3m-0.3.1.tgz                     jadetex-3.11.tgz
 	jakarta-ant-1.3.tgz                  jakarta-servletapi-3.2.4.tgz
-	jakarta-tomcat-3.2.4.tgz             jakarta-tomcat-4.0.2.tgz
+	jakarta-tomcat-3.2.4.tgz             jakarta-tomcat-4.0.5.tgz
 	jbigkit-1.2.tgz                      jday-1.2.tgz
 	jed-0.99.14-no_x11.tgz               jed-0.99.14.tgz
 	jesred-1.2.1.tgz                     jftpgw-0.12.0.tgz
 	jikes-1.15.tgz                       jlint-2.3.tgz
-	joe-2.9.8pre1.tgz                    john-1.6p1-k6.tgz
+	joe-2.9.8pre1p1.tgz                  john-1.6p1-k6.tgz
 	john-1.6p1.tgz                       jove-4.16.tgz
 	jpeg-6b.tgz                          jpilot-0.99.2.tgz
 	junit-3.7.tgz                        junkbuster-2.0.2p1.tgz
@@ -402,7 +402,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	kde-i18n-zh_TW-3.0.3.tgz             kde-i18n-zu-3.0.3.tgz
 	kdeaddons-3.0.3.tgz                  kdeartwork-3.0.3.tgz
 	kdebase-3.0.3.tgz                    kdeedu-3.0.3.tgz
-	kdegames-3.0.3.tgz                   kdegraphics-3.0.3.tgz
+	kdegames-3.0.3.tgz                   kdegraphics-3.0.3p1.tgz
 	kdelibs-3.0.3a.tgz                   kdelibs-doc-3.0.3a.tgz
 	kdemultimedia-3.0.3.tgz              kdenetwork-3.0.3.tgz
 	kdetoys-3.0.3.tgz                    kdeutils-3.0.3.tgz
@@ -477,7 +477,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	lxnb-0.4.tgz                         lyx-1.1.6fix4.tgz
 	lzo-1.07.tgz                         lzop-1.00.tgz
 	m4-1.4.tgz                           mad-0.14.2b.tgz
-	magicpoint-1.09a.tgz                 mailcrypt-3.5.7-emacs-gnupg.tgz
+	magicpoint-1.09ap1.tgz               mailcrypt-3.5.7-emacs-gnupg.tgz
 	maildrop-1.4.0.tgz                   mailman-2.0.12-postfix.tgz
 	mailman-2.0.12.tgz                   mailutil-uw-2002.328rc6.tgz
 	makeself-1.5.5.tgz                   malsync-2.0.6.tgz
@@ -488,7 +488,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	mgdiff-1.0.tgz                       mhash-0.8.13.tgz
 	mhonarc-2.5.12.tgz                   mico-2.3.6.tgz
 	micq-0.4.7.tgz                       mindterm-2.1.tgz
-	minicom-2.00.0.tgz                   mirror-2.9.tgz
+	minicom-2.00.0p1.tgz                 mirror-2.9.tgz
 	mixer.app-1.8.0.tgz                  mm-1.2.1.tgz
 	mmv-1.01b.tgz                        mod_auth_mysql-3.2.tgz
 	mod_auth_radius-1.5.2.tgz            mod_dav-1.0.3.tgz
@@ -502,8 +502,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	mpeg_play-2.4.tgz                    mpegaudio-3.9.tgz
 	mpg123-0.59r-esd.tgz                 mpg123-0.59r.tgz
 	mpg321-0.2.10.tgz                    mplayer-fontmaker-0.90pre6.tgz
-	mplayer-luxi-sans-0.90pre6.tgz
-	mplayer-luxi-sans-bold-0.90pre6.tgz
+	mplayer-luxi-sans-0.90pre6.tgz       mplayer-luxi-sans-bold-0.90pre6.tgz
 	mplayer-luxi-sans-italic-0.90pre6.tgz
 	mplex-1.1.tgz                        mrtd-2.2.2a.tgz
 	mrtg-2.9.12a.tgz                     mshell-1.0.tgz
@@ -521,7 +520,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	nbtscan-1.0.2.tgz                    ncftp-3.1.4.tgz
 	ndiff-0.04.tgz                       nedit-5.3rc1.tgz
 	nemesis-1.32.tgz                     neon-0.23.3.tgz
-	nessus-1.2.3-no_x11.tgz              nessus-1.2.3.tgz
+	nessus-1.2.5-no_x11.tgz              nessus-1.2.5.tgz
 	netatalk-1.5.3.1.tgz                 netatalk-990130.tgz
 	netcdf-3.5b3.tgz                     nethack-3.4.0-no_x11.tgz
 	nethack-3.4.0-qt.tgz                 nethack-3.4.0.tgz
@@ -530,7 +529,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	netris-0.5.tgz                       newsfetch-1.21.tgz
 	newvox-1.0.tgz                       nfsshell-1.0.tgz
 	ngrep-1.40.tgz                       nmap-3.00-no_x11.tgz
-	nmap-3.00.tgz                        nmh-1.0.4.tgz
+	nmap-3.00.tgz                        nmh-1.0.4p1.tgz
 	no-ip-1.6.tgz                        normalize-0.7.4.tgz
 	ns-2.1b6.tgz                         nscache-0.6.tgz
 	nsd-1.0.1.tgz                        nslint-2.0.2-static.tgz
@@ -573,8 +572,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	p5-Crypt-CBC-2.08.tgz                p5-Crypt-DES-2.03.tgz
 	p5-Crypt-RC4-2.02.tgz                p5-Crypt-SSLeay-0.45.tgz
 	p5-Crypt-Twofish-2.12.tgz            p5-Curses-1.06.tgz
-	p5-Curses-Widgets-1.992.tgz
-	p5-DBD-Msql-Mysql-1.22.19-dbimon.tgz
+	p5-Curses-Widgets-1.992.tgz          p5-DBD-Msql-Mysql-1.22.19-dbimon.tgz
 	p5-DBD-Msql-Mysql-1.22.19.tgz        p5-DBD-Pg-1.01.tgz
 	p5-DBD-mysqlPP-0.03.tgz              p5-DBI-1.30.tgz
 	p5-DBIx-XHTML_Table-1.12.tgz         p5-Data-Flow-0.05.tgz
@@ -888,14 +886,14 @@ Installing applications from the ftp.openbsd.org package collection:
 	wmmenu-1.2.tgz                       wmminichess-0.8.tgz
 	wmmixer-1.0b1.tgz                    wmmon-1.0b2.tgz
 	wmmoonclock-1.27.tgz                 wmmp3-0.12.tgz
-	wmmultipop3-0.8.tgz                  wmnet-1.06.tgz
+	wmmultipop3-0.8.tgz                  wmnet-1.06p1.tgz
 	wmnetscapekiller-0.3.tgz             wmphoto-0.3a.tgz
 	wmpinboard-1.0.tgz                   wmpop3-0.5.6a.tgz
 	wmspaceweather-1.04.tgz              wmsun-1.03.tgz
 	wmtheme-1.3.2.tgz                    wmthemeinstall-0.62.tgz
 	wmtictactoe-1.1.1.tgz                wmtime-1.0b2.tgz
-	wmtimer-2.4.tgz                      wmtune-1.1c-zoltrix.tgz
-	wmtune-1.1c.tgz                      wmtz-0.7.tgz
+	wmtimer-2.4.tgz                      wmtune-1.1cp1-zoltrix.tgz
+	wmtune-1.1cp1.tgz                    wmtz-0.7.tgz
 	wmwave-0.4.tgz                       wmweather-1.31.tgz
 	wmx-6.tgz                            workman-1.3a.tgz
 	wsoundprefs-1.1.1.tgz                wsoundserver-0.4.0-esd.tgz
@@ -913,7 +911,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	xbreaky-0.0.4p1.tgz                  xbubble-0.2.tgz
 	xcb-2.3i.tgz                         xcd-1.6.tgz
 	xcdplayer-2.2.tgz                    xcdroast-0.98a9.tgz
-	xcept-2.1.2.tgz                      xchat-1.8.9.tgz
+	xcept-2.1.2p1.tgz                    xchat-1.8.9.tgz
 	xco-1.3.tgz                          xcoloredit-1.2.tgz
 	xcolors-1.3.tgz                      xcopilot-0.6.6.tgz
 	xcubes-5.5.2.tgz                     xcyrillic-2.0.tgz
@@ -993,7 +991,7 @@ Installing applications from the ftp.openbsd.org package collection:
 	zh-lunar-2.1.tgz                     zh-ttfm-0.9.3.tgz
 	zh-xcin-2.3.04.tgz                   zip-2.3.tgz
 	zoo-2.10.1.tgz                       zoom-0.9.99beta3.tgz
-	zope-2.5.1.tgz                       zope-cmf-1.2.tgz
+	zope-2.5.1p1.tgz                     zope-cmf-1.2.tgz
 	zsh-4.0.6-static.tgz                 zsh-4.0.6.tgz
 	zsh-4.1.0dev5-static.tgz             zsh-4.1.0dev5.tgz
 	zsh-zftp-4.0.6.tgz                   zsh-zftp-4.1.0dev5.tgz
