@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.48 2001/06/27 06:34:50 kjc Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.49 2001/08/10 15:58:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -784,7 +784,6 @@ txp_tx_reclaim(sc, r)
 			bus_dmamap_sync(sc->sc_dmat, sd->sd_map,
 			    BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
-			bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
 			m = sd->sd_mbuf;
 			if (m != NULL) {
 				m_freem(m);
@@ -838,7 +837,7 @@ txp_alloc_rings(sc)
 	struct txp_boot_record *boot;
 	struct txp_swdesc *sd;
 	u_int32_t r;
-	int i;
+	int i, j;
 
 	/* boot record */
 	if (txp_dma_malloc(sc, sizeof(struct txp_boot_record), &sc->sc_boot_dma,
@@ -875,6 +874,18 @@ txp_alloc_rings(sc)
 	sc->sc_txhir.r_desc = (struct txp_tx_desc *)sc->sc_txhiring_dma.dma_vaddr;
 	sc->sc_txhir.r_cons = sc->sc_txhir.r_prod = sc->sc_txhir.r_cnt = 0;
 	sc->sc_txhir.r_off = &sc->sc_hostvar->hv_tx_hi_desc_read_idx;
+	for (i = 0; i < TX_ENTRIES; i++) {
+		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_SEGLEN,
+		    TX_ENTRIES - 4, TXP_MAX_PKTLEN, 0,
+		    BUS_DMA_NOWAIT, &sc->sc_txd[i].sd_map) != 0) {
+			for (j = 0; j < i; j++) {
+				bus_dmamap_destroy(sc->sc_dmat,
+				    sc->sc_txd[j].sd_map);
+				sc->sc_txd[j].sd_map = NULL;
+			}
+			goto bail_txhiring;
+		}
+	}
 
 	/* low priority tx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
@@ -1291,21 +1302,16 @@ txp_start(ifp)
 		sd = sc->sc_txd + prod;
 		sd->sd_mbuf = m;
 
-		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_SEGLEN,
-		    TX_ENTRIES - 4, TXP_MAX_PKTLEN, 0,
-		    BUS_DMA_NOWAIT, &sd->sd_map))
-			goto oactive1;
-
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
 		    BUS_DMA_NOWAIT)) {
 			MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 			if (mnew == NULL)
-				goto oactive2;
+				goto oactive1;
 			if (m->m_pkthdr.len > MHLEN) {
 				MCLGET(mnew, M_DONTWAIT);
 				if ((mnew->m_flags & M_EXT) == 0) {
 					m_freem(mnew);
-					goto oactive2;
+					goto oactive1;
 				}
 			}
 			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
@@ -1314,7 +1320,7 @@ txp_start(ifp)
 			m = mnew;
 			if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
 			    BUS_DMA_NOWAIT))
-				goto oactive2;
+				goto oactive1;
 		}
 
 		if ((TX_ENTRIES - cnt) < 4)
@@ -1396,8 +1402,6 @@ txp_start(ifp)
 
 oactive:
 	bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
-oactive2:
-	bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
 oactive1:
 	ifp->if_flags |= IFF_OACTIVE;
 	r->r_prod = firstprod;
