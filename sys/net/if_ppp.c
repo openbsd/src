@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.9 1996/12/19 13:45:16 mickey Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.10 1997/01/02 11:10:18 mickey Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.31 1996/05/07 02:40:36 thorpej Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ extern struct compressor ppp_bsd_compress;
 extern struct compressor ppp_deflate;
 
 struct compressor *ppp_compressors[8] = {
-#if DO_BSD_COMPRESS && defined(PPP_BSD_COMP)
+#if DO_BSD_COMPRESS && defined(PPP_BSDCOMP)
     &ppp_bsd_compress,
 #endif
 #if DO_DEFLATE && defined(PPP_DEFLATE)
