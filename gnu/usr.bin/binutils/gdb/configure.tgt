@@ -140,6 +140,7 @@ mips*-*-linux*)		gdb_target=linux
 			;;
 mips*-*-netbsd* | mips*-*-knetbsd*-gnu)
 			gdb_target=nbsd ;;
+mips64*-*-openbsd*)	gdb_target=obsd64 ;;
 mips*-*-vxworks*)       gdb_target=vxmips ;;
 mips*-*-*)		gdb_target=embed ;;
 
