@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.4 1997/02/23 02:29:02 niklas Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.5 1997/02/26 02:08:44 angelos Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -59,6 +59,8 @@
 #define CMD_RESET       12
 #define CMD_SET         13
 #define CMD_STATUS      14
+#define CMD_NEXT	15
+#define CMD_PREV	16
 
 struct cmdtab {
 	int command;
@@ -72,11 +74,13 @@ struct cmdtab {
 { CMD_HELP,     "?",            1, 0 },
 { CMD_HELP,     "help",         1, "" },
 { CMD_INFO,     "info",         1, "" },
+{ CMD_NEXT,	"next",		1, "" },
 { CMD_PAUSE,    "pause",        2, "" },
 { CMD_PLAY,     "play",         1, "min1:sec1[.fram1] [min2:sec2[.fram2]]" },
 { CMD_PLAY,     "play",         1, "track1[.index1] [track2[.index2]]" },
 { CMD_PLAY,     "play",         1, "tr1 m1:s1[.f1] [[tr2] [m2:s2[.f2]]]" },
 { CMD_PLAY,     "play",         1, "[#block [len]]" },
+{ CMD_PREV,	"previous",	2, "" },
 { CMD_QUIT,     "quit",         1, "" },
 { CMD_RESET,    "reset",        4, "" },
 { CMD_RESUME,   "resume",       1, "" },
@@ -106,6 +110,8 @@ int             open_cd __P((void));
 int             play __P((char *arg));
 int             info __P((char *arg));
 int             pstatus __P((char *arg));
+int		play_next __P((char *arg));
+int		play_prev __P((char *arg));
 char            *input __P((int *));
 void            prtrack __P((struct cd_toc_entry *e, int lastflag));
 void            lba2msf __P((unsigned long lba,
@@ -386,6 +392,18 @@ int run (cmd, arg)
 		}
 
 		return setvol (l, r);
+
+        case CMD_NEXT:
+                if (fd < 0 && ! open_cd ())
+                        return (0);
+
+                return play_next (arg);
+
+        case CMD_PREV:
+                if (fd < 0 && ! open_cd ())
+                        return (0);
+
+                return play_prev (arg);
 
 	default:
 	case CMD_HELP:
@@ -680,6 +698,66 @@ Try_Absolute_Timed_Addresses:
 
 Clean_up:
 	printf ("%s: Invalid command arguments\n", __progname);
+	return (0);
+}
+
+int play_prev (arg)
+        char *arg;
+{
+        int trk, min, sec, frm, rc;
+        struct ioc_toc_header h;
+
+        if (status (&trk, &min, &sec, &frm) >= 0)
+        {
+                trk--;
+
+                rc = ioctl (fd, CDIOREADTOCHEADER, &h);
+                if (rc < 0)
+                {
+                        perror ("getting toc header");
+                        return (rc);
+                }
+
+                if (trk < h.starting_track)
+                  return play_track (h.starting_track, 1, 
+				     h.starting_track + 1, 1);
+
+                return play_track (trk, 1, trk + 1, 1);
+        }
+
+        return (0);
+}
+
+int play_next (arg)
+	char *arg;
+{
+	int trk, min, sec, frm, rc;
+	struct ioc_toc_header h;
+
+	if (status (&trk, &min, &sec, &frm) >= 0)
+	{
+		trk++;
+		rc = ioctl (fd, CDIOREADTOCHEADER, &h);
+		if (rc < 0)
+		{
+			perror ("getting toc header");
+			return (rc);
+		}
+
+		if (trk > h.ending_track)
+		{
+			printf("%s: end of CD\n", __progname);
+
+			rc = ioctl (fd, CDIOCSTOP);
+
+			(void) ioctl (fd, CDIOCALLOW);
+
+			return (rc);
+		}
+
+		return play_track (trk, 1, trk + 1, 1);
+	}
+
 	return (0);
 }
 
