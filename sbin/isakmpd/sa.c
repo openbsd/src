@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.34 2001/01/14 23:40:01 angelos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.35 2001/01/22 08:14:24 angelos Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -39,6 +39,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(USE_KEYNOTE) || defined(USE_POLICY)
+#include <regex.h>
+#include <keynote.h>
+#endif /* USE_KEYNOTE || USE_POLICY */
+
 #include "sysdep.h"
 
 #include "cookie.h"
@@ -52,6 +57,7 @@
 #include "transport.h"
 #include "util.h"
 #include "cert.h"
+#include "policy.h"
 
 /* Initial number of bits from the cookies used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -503,7 +509,6 @@ sa_free_aux (struct sa *sa)
   LOG_DBG ((LOG_SA, 70, "sa_free_aux: SA %p removed from SA list", sa));
   sa_release (sa);
 }
-
 /* Raise the reference count of SA.  */
 void
 sa_reference (struct sa *sa)
@@ -550,9 +555,9 @@ sa_release (struct sa *sa)
     }
   if (sa->recv_key)
     free (sa->recv_key);
-#if defined(POLICY) || defined(KEYNOTE)
+#if defined(USE_POLICY) || defined(USE_KEYNOTE)
   if (sa->policy_id != -1)
-    LK (kn_close, (sa->policy-id));
+    LK (kn_close, (sa->policy_id));
 #endif
   if (sa->name)
     free (sa->name);
