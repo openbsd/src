@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.1 2001/02/03 22:47:00 art Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.2 2001/02/03 22:51:31 art Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -29,12 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-#ifndef ECOFF_COMPAT
-
-/*
- * XXX EVENTUALLY SHOULD BE MERGED BACK WITH c++rt0.c
  */
 
 /*
@@ -109,4 +103,3 @@ __fini()
 	__dtors();
 }
 
-#endif /* !ECOFF_COMPAT */
