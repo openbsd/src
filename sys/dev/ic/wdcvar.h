@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.5 1999/11/17 01:22:56 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.6 1999/12/11 10:15:03 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -188,6 +188,8 @@ struct wdc_xfer {
 #define C_POLL		0x0020 /* cmd is polled */
 #define C_DMA		0x0040 /* cmd uses DMA */
 #define C_SENSE		0x0080 /* cmd is a internal command */
+#define C_MEDIA_ACCESS  0x0100 /* is a media access command */
+#define C_POLL_MACHINE  0x0200 /* machine has a poll hander */
 
 	/* Informations about our location */
 	struct channel_softc *chp;
@@ -202,6 +204,19 @@ struct wdc_xfer {
 	LIST_ENTRY(wdc_xfer) free_list;
 	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
 	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
+	int (*c_done)  __P((struct channel_softc *, struct wdc_xfer *, int));
+
+	/* Used by ATAPISCSI */
+	int timeout;
+	u_int64_t endtime;
+	int delay;
+	unsigned int expect_irq:1;
+	unsigned int claim_irq:1;
+
+	int (*next) __P((struct channel_softc *, struct wdc_xfer *, int));
+	
+	/* Used for tape devices */
+	int  transfer_len;
 };
 
 /*
