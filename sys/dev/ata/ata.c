@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.21 2003/10/16 11:58:15 grange Exp $      */
+/*      $OpenBSD: ata.c,v 1.22 2003/11/17 21:50:14 grange Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -81,12 +81,12 @@ ata_get_params(drvp, flags, prms)
 	if (drvp->drive_flags & DRIVE_ATA) {
 		wdc_c.r_command = WDCC_IDENTIFY;
 		wdc_c.r_st_bmask = WDCS_DRDY;
-		wdc_c.r_st_pmask = WDCS_DRQ;
+		wdc_c.r_st_pmask = 0;
 		wdc_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_flags & DRIVE_ATAPI) {
 		wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
 		wdc_c.r_st_bmask = 0;
-		wdc_c.r_st_pmask = WDCS_DRQ;
+		wdc_c.r_st_pmask = 0;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
 		return CMD_ERR;
@@ -168,7 +168,7 @@ ata_set_mode(drvp, mode, flags)
 	wdc_c.r_st_pmask = 0;
 	wdc_c.r_precomp = WDSF_SET_MODE;
 	wdc_c.r_count = mode;
-	wdc_c.flags = AT_READ | flags;
+	wdc_c.flags = flags;
 	wdc_c.timeout = 1000; /* 1s */
 	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
 		return CMD_AGAIN;

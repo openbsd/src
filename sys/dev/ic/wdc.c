@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.77 2003/11/13 23:29:14 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.78 2003/11/17 21:50:13 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1813,17 +1813,19 @@ __wdccommand_intr(chp, xfer, irq)
 		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
 			return 0; /* IRQ was not for us */
 		wdc_c->flags |= AT_TIMEOU;
-		__wdccommand_done(chp, xfer);
-		WDCDEBUG_PRINT(("__wdccommand_intr returned\n"), DEBUG_INTR);
-		return 1;
+		goto out;
 	}
 	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
 		chp->wdc->irqack(chp);
-
-	if ((wdc_c->flags & AT_READ) && (chp->ch_status & WDCS_DRQ)) {
+	if (wdc_c->flags & AT_READ) {
+		if ((chp->ch_status & WDCS_DRQ) == 0) {
+			wdc_c->flags |= AT_TIMEOU;
+			goto out;
+		}
 		wdc_input_bytes(drvp, data, bcount);
 		/* Should we wait for device to indicate idle? */
 	}
+out:
 	__wdccommand_done(chp, xfer);
 	WDCDEBUG_PRINT(("__wdccommand_intr returned\n"), DEBUG_INTR);
 	return 1;
