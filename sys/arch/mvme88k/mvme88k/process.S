@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.17 2003/08/10 21:34:20 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.18 2003/08/11 01:09:35 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -119,15 +119,24 @@ ENTRY(cpu_switch)
 	or.u	r10, r0, hi16(_curpcb)
 	ld	r10,r10, lo16(_curpcb)
 	st	r1, r10, PCB_PC		/*  save r1 in pcb */
-	st.d	r14,r10, PCB_R14
-	st.d	r16,r10, PCB_R16
-	st.d	r18,r10, PCB_R18
-	st.d	r20,r10, PCB_R20
-	st.d	r22,r10, PCB_R22
-	st.d	r24,r10, PCB_R24
-	st.d	r26,r10, PCB_R26
-	st.d	r28,r10, PCB_R28
-	st.d	r30,r10, PCB_R30	/* save frame pointer & stack pointer */
+	st	r14,r10, PCB_R14
+	st	r15,r10, PCB_R15
+	st	r16,r10, PCB_R16
+	st	r17,r10, PCB_R17
+	st	r18,r10, PCB_R18
+	st	r19,r10, PCB_R19
+	st	r20,r10, PCB_R20
+	st	r21,r10, PCB_R21
+	st	r22,r10, PCB_R22
+	st	r23,r10, PCB_R23
+	st	r24,r10, PCB_R24
+	st	r25,r10, PCB_R25
+	st	r26,r10, PCB_R26
+	st	r27,r10, PCB_R27
+	st	r28,r10, PCB_R28
+	st	r29,r10, PCB_R29
+	st	r30,r10, PCB_R30	/* save frame pointer & stack pointer */
+	st	r31,r10, PCB_SP
 
 	or	r14,r10, 0		/* save r10 in r14 */
 
@@ -276,15 +285,24 @@ Lswnochg:
 
 	/* restore from the current context */
 	ld	r1,r10,  PCB_PC
-	ld.d	r14,r10, PCB_R14
-	ld.d	r16,r10, PCB_R16
-	ld.d	r18,r10, PCB_R18
-	ld.d	r20,r10, PCB_R20
-	ld.d	r22,r10, PCB_R22
-	ld.d	r24,r10, PCB_R24
-	ld.d	r26,r10, PCB_R26
-	ld.d	r28,r10, PCB_R28
-	ld.d	r30,r10, PCB_R30	/* restore frame pointer & stack */
+	ld	r14,r10, PCB_R14
+	ld	r15,r10, PCB_R15
+	ld	r16,r10, PCB_R16
+	ld	r17,r10, PCB_R17
+	ld	r18,r10, PCB_R18
+	ld	r19,r10, PCB_R19
+	ld	r20,r10, PCB_R20
+	ld	r21,r10, PCB_R21
+	ld	r22,r10, PCB_R22
+	ld	r23,r10, PCB_R23
+	ld	r24,r10, PCB_R24
+	ld	r25,r10, PCB_R25
+	ld	r26,r10, PCB_R26
+	ld	r27,r10, PCB_R27
+	ld	r28,r10, PCB_R28
+	ld	r29,r10, PCB_R29
+	ld	r30,r10, PCB_R30	/* restore frame pointer & stack */
+	ld	r31,r10, PCB_SP
 
 /* XXX should we postpone restoring stack till after ipl is restored? The
 stack access could fault */
@@ -312,15 +330,24 @@ ENTRY(savectx)
 	ld	r10,r31,32		/* recover r2 into r10 */
 	addu	r31,r31,48		/* put stack pointer back */
 	st	r1, r10, PCB_PC		/* save return address */
-	st.d	r14,r10, PCB_R14
-	st.d	r16,r10, PCB_R16
-	st.d	r18,r10, PCB_R18
-	st.d	r20,r10, PCB_R20
-	st.d	r22,r10, PCB_R22
-	st.d	r24,r10, PCB_R24
-	st.d	r26,r10, PCB_R26
-	st.d	r28,r10, PCB_R28
-	st.d	r30,r10, PCB_R30	/* save frame pointer and sp */
+	st	r14,r10, PCB_R14
+	st	r15,r10, PCB_R15
+	st	r16,r10, PCB_R16
+	st	r17,r10, PCB_R17
+	st	r18,r10, PCB_R18
+	st	r19,r10, PCB_R19
+	st	r20,r10, PCB_R20
+	st	r21,r10, PCB_R21
+	st	r22,r10, PCB_R22
+	st	r23,r10, PCB_R23
+	st	r24,r10, PCB_R24
+	st	r25,r10, PCB_R25
+	st	r26,r10, PCB_R26
+	st	r27,r10, PCB_R27
+	st	r28,r10, PCB_R28
+	st	r29,r10, PCB_R29
+	st	r30,r10, PCB_R30	/* save frame pointer & stack pointer */
+	st	r31,r10, PCB_SP
 	st	r2, r10, PCB_IPL	/* save interrupt mask */
 	jmp.n	r1
 	or	r2,r0,r0
