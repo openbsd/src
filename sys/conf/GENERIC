@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.104 2004/04/10 08:33:54 mcbride Exp $
+#	$OpenBSD: GENERIC,v 1.105 2004/05/03 17:41:22 millert Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -25,6 +25,7 @@ option		UVM_SWAP_ENCRYPT# support encryption of pages going to swap
 
 #option		COMPAT_23	# Kernel compatibility with OpenBSD 2.3,
 #option		COMPAT_25	# 2.5,
+option		COMPAT_35	# 3.5,
 option		COMPAT_43	# and 4.3BSD
 #option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
