@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.5 1999/01/03 10:05:47 deraadt Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.6 1999/02/15 06:59:58 fgsch Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -95,7 +95,7 @@ int	npcic_isa_intr_list =
 struct pcic_ranges pcic_isa_addr[] = {
 	{ 0x340, 0x040 },
 	{ 0x300, 0x030 },
-	{ 0x390, 0x010 },
+	{ 0x390, 0x020 },
 	{ 0x400, 0xbff },
 	{ 0, 0 },		/* terminator */
 };
