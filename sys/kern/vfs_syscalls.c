@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.101 2003/05/01 21:13:05 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.102 2003/05/05 00:21:52 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -437,18 +437,22 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 {
 	struct vnode *coveredvp;
 	int error;
+	int hadsyncer = 0;
 
  	mp->mnt_flag &=~ MNT_ASYNC;
  	cache_purgevfs(mp);	/* remove cache entries for this file sys */
- 	if (mp->mnt_syncer != NULL)
+ 	if (mp->mnt_syncer != NULL) {
+		hadsyncer = 1;
  		vgone(mp->mnt_syncer);
+		mp->mnt_syncer = NULL;
+	}
 	if (((mp->mnt_flag & MNT_RDONLY) ||
 	    (error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0) ||
  	    (flags & MNT_FORCE))
  		error = VFS_UNMOUNT(mp, flags, p);
 	simple_lock(&mountlist_slock);
  	if (error) {
- 		if ((mp->mnt_flag & MNT_RDONLY) == 0 && mp->mnt_syncer == NULL)
+ 		if ((mp->mnt_flag & MNT_RDONLY) == 0 && hadsyncer)
  			(void) vfs_allocate_syncvnode(mp);
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK,
 		    &mountlist_slock, p);
