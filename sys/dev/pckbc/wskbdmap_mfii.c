@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.21 2003/01/04 13:40:08 maja Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.22 2003/09/25 23:38:23 mickey Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -793,6 +793,46 @@ static const keysym_t pckbd_keydesc_pl[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t pckbd_keydesc_hu[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(2),   KS_1,		KS_apostrophe,	KS_asciitilde,
+    KC(3),   KS_2,		KS_quotedbl,
+    KC(4),   KS_3,		KS_plus,	KS_asciicircum,
+    KC(5),   KS_4,		KS_exclam,
+    KC(6),   KS_5,		KS_percent,
+    KC(7),   KS_6,		KS_slash,
+    KC(8),   KS_7,		KS_equal,KS_grave,
+    KC(9),   KS_8,		KS_parenleft,
+    KC(10),  KS_9,		KS_parenright,	KS_acute,
+    KC(11),  KS_odiaeresis,	KS_Odiaeresis,
+    KC(12),  KS_udiaeresis,	KS_Udiaeresis,
+    KC(13),  KS_oacute,		KS_Oacute,
+    KC(16),  KS_q,		KS_Q,		KS_backslash,
+    KC(17),  KS_w,		KS_W,KS_bar,
+    KC(21),  KS_z,		KS_Z,
+    KC(23),  KS_i,		KS_I,		KS_iacute,
+    KC(26),  KS_odoubleacute,	KS_Odoubleacute,	KS_division,
+    KC(27),  KS_uacute,		KS_Uacute,	KS_multiply,
+    KC(33),  KS_f,		KS_F,		KS_bracketleft,
+    KC(34),  KS_g,		KS_G,		KS_bracketright,
+    KC(36),  KS_j,		KS_J,		KS_iacute,
+    KC(39),  KS_eacute,		KS_Eacute,	KS_dollar,
+    KC(40),  KS_aacute,		KS_Aacute,	KS_ssharp,
+    KC(41),  KS_0,		KS_section,
+    KC(43),  KS_udoubleacute,	KS_Udoubleacute,	KS_currency,
+    KC(44),  KS_y,		KS_Y,		KS_greater,
+    KC(45),  KS_x,		KS_X,		KS_numbersign,
+    KC(46),  KS_c,		KS_C,		KS_ampersand,
+    KC(47),  KS_v,		KS_V,		KS_at,
+    KC(48),  KS_b,		KS_B,		KS_braceleft,
+    KC(49),  KS_n,		KS_N,		KS_braceright,
+    KC(51),  KS_comma,		KS_question,	KS_semicolon,
+    KC(52),  KS_period,		KS_colon,
+    KC(53),  KS_minus,		KS_underscore,	KS_asterisk,
+    KC(86),  KS_iacute,		KS_Iacute,	KS_less,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -836,6 +876,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_TR,			KB_US,	pckbd_keydesc_tr),
 	KBD_MAP(KB_TR | KB_NODEAD,	KB_TR,	pckbd_keydesc_tr_nodead),
 	KBD_MAP(KB_PL,			KB_US,	pckbd_keydesc_pl),
+	KBD_MAP(KB_HU,			KB_US,	pckbd_keydesc_hu),
 	{0, 0, 0, 0}
 };
 
