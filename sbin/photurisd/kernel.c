@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.13 2000/12/13 08:36:27 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.14 2000/12/14 18:32:25 provos Exp $";
 #endif
 
 #include <time.h>
@@ -49,18 +49,11 @@ static char rcsid[] = "$Id: kernel.c,v 1.13 2000/12/13 08:36:27 provos Exp $";
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/mbuf.h>
-#include <sys/sysctl.h>
 #include <sys/uio.h>
 
 #include <net/if.h>
 #include <net/route.h>
-#include <net/if_dl.h>
 #include <netinet/in.h>
-#include <netns/ns.h>
-#include <netiso/iso.h>
-#include <netccitt/x25.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -71,7 +64,7 @@ static char rcsid[] = "$Id: kernel.c,v 1.13 2000/12/13 08:36:27 provos Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
-#define INET                     /* Needed for setting ipsec routes */
+
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
@@ -121,13 +114,33 @@ kernel_get_transform(int id)
 void
 kernel_transform_seen(int id, int type)
 {
-     int i;
+	int i;
 
-     for (i=sizeof(xf)/sizeof(transform)-1; i >= 0; i--) 
-	  if (xf[i].kernel_id == id && (xf[i].flags & type)) {
-	       xf[i].flags |= XF_SUP;
-	       return;
-	  }
+	for (i=sizeof(xf)/sizeof(transform)-1; i >= 0; i--) 
+		if (xf[i].kernel_id == id && (xf[i].flags & type)) {
+			LOG_DBG((LOG_KERNEL, 50, __FUNCTION__
+				 ": %s algorithm %d",
+				 type == XF_ENC ? "enc" : "auth", id));
+			xf[i].flags |= XF_SUP;
+			return;
+		}
+}
+
+/*
+ * Parse the supported transforms returned in the SADB_REGISTER response
+ */
+
+void
+kernel_transform_parse(struct sadb_supported *ssup)
+{
+	struct sadb_alg *salg = (struct sadb_alg *)(ssup + 1);
+	int i, type;
+
+	type = ssup->sadb_supported_exttype == SADB_EXT_SUPPORTED_AUTH ?
+		XF_AUTH : XF_ENC;
+
+	for (i = 0; i < ssup->sadb_supported_len - 1; i++, salg++)
+		kernel_transform_seen(salg->sadb_alg_id, type);
 }
 
 /*
@@ -324,11 +337,15 @@ kernel_register(int sd)
      struct sadb_msg smsg, *sres;
      struct sadb_supported *ssup;
      struct sadb_alg *salg;
-     int len;
+     struct sadb_ext *ext;
+     void *end;
+     int encfound, authfound, len;
      struct iovec iov[1];
      int cnt = 0;
 
      LOG_DBG((LOG_KERNEL, 20, __FUNCTION__": fd %d", sd));
+
+     encfound = authfound = 0;
 
      bzero(&smsg, sizeof(smsg));
 
@@ -340,7 +357,7 @@ kernel_register(int sd)
      iov[cnt].iov_base = &smsg;
      iov[cnt++].iov_len = sizeof(smsg);
 
-     /* Register for AH */
+     /* Register for ESP */
      smsg.sadb_msg_satype = SADB_SATYPE_ESP;
      if (!kernel_xf_set(regsd, buffer, BUFFER_SIZE, iov, cnt,
 			smsg.sadb_msg_len*8)) {
@@ -348,7 +365,23 @@ kernel_register(int sd)
 	  return (-1);
      }
 
-     /* Register for ESP */
+     sres = (struct sadb_msg *)buffer;
+     ext = (struct sadb_ext *)(sres + 1);
+     end = (u_char *)sres + sres->sadb_msg_len * 8;
+     ssup = (struct sadb_supported *)
+	     pfkey_find_extension(ext, end, SADB_EXT_SUPPORTED_AUTH);
+     if (ssup) {
+	     kernel_transform_parse(ssup);
+	     authfound = 1;
+     }
+     ssup = (struct sadb_supported *)
+	     pfkey_find_extension(ext, end, SADB_EXT_SUPPORTED_ENCRYPT);
+     if (ssup) {
+	     kernel_transform_parse(ssup);
+	     encfound = 1;
+     }
+
+     /* Register for AH */
      smsg.sadb_msg_satype = SADB_SATYPE_AH;
      smsg.sadb_msg_seq = pfkey_seq++;
      if (!kernel_xf_set(regsd, buffer, BUFFER_SIZE, iov, cnt,
@@ -357,34 +390,29 @@ kernel_register(int sd)
 	  return (-1);
      }
 
-     /* 
-      * XXX - this might need changing in the case that the response
-      * to register only includes the transforms matching the satype
-      * in the message.
-      */
-     sres = (struct sadb_msg *)buffer;
-     ssup = (struct sadb_supported *)(sres + 1);
-     if (ssup->sadb_supported_exttype != SADB_EXT_SUPPORTED) {
-	  log_print(__FUNCTION__
-		    ": SADB_REGISTER did not return a SADB_EXT_SUPPORTED "
-		    "struct: %d in kernel_register()",
-		    ssup->sadb_supported_exttype);
-	  return (-1);
+     ext = (struct sadb_ext *)(sres + 1);
+     end = (u_char *)sres + sres->sadb_msg_len * 8;
+
+     ssup = (struct sadb_supported *)
+	     pfkey_find_extension(ext, end, SADB_EXT_SUPPORTED_AUTH);
+     if (ssup) {
+	     kernel_transform_parse(ssup);
+	     authfound = 1;
+     }
+     ssup = (struct sadb_supported *)
+	     pfkey_find_extension(ext, end, SADB_EXT_SUPPORTED_ENCRYPT);
+     if (ssup) {
+	     kernel_transform_parse(ssup);
+	     encfound = 1;
      }
 
-     len = ssup->sadb_supported_len * 8 - sizeof(*ssup);
-     if (len != (ssup->sadb_supported_nauth + ssup->sadb_supported_nencrypt) *
-	 sizeof(struct sadb_alg)) {
-	  log_print(__FUNCTION__
-		    ": SADB_SUPPORTED length mismatch in kernel_register()");
-	  return (-1);
+     if (!authfound || !encfound) {
+	     log_print(__FUNCTION__
+		       ": SADB_REGISTER without supported algs %s %s",
+		       encfound == 0 ? "encryption" : "",
+		       authfound == 0 ? "authentication" : "");
+	     return (-1);
      }
-
-     salg = (struct sadb_alg *)(ssup + 1);
-     for (cnt = 0; cnt < ssup->sadb_supported_nauth; cnt++, salg++)
-	  kernel_transform_seen(salg->sadb_alg_type, XF_AUTH);
-     for (cnt = 0; cnt < ssup->sadb_supported_nencrypt; cnt++, salg++)
-	  kernel_transform_seen(salg->sadb_alg_type, XF_ENC);
 	  
      return (0);
 }
@@ -521,18 +549,51 @@ kernel_reserve_single_spi(char *srcaddress, char *dstaddress, u_int32_t spi,
 }
 
 int
+kernel_add_lifetime(struct sadb_msg *sa, struct iovec *iov, int seconds)
+{
+	static struct sadb_lifetime slh, sls;
+	int cnt = 0;
+
+	bzero(&slh, sizeof(slh));
+	bzero(&sls, sizeof(sls));
+
+	slh.sadb_lifetime_len = sizeof(slh) / 8;
+	slh.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
+	slh.sadb_lifetime_allocations = 0;
+	slh.sadb_lifetime_bytes = 1000000000;   /* lots of bytes */
+	slh.sadb_lifetime_addtime = seconds + 60;
+	slh.sadb_lifetime_usetime = seconds; /* first use */
+	sa->sadb_msg_len += slh.sadb_lifetime_len;
+
+	iov[cnt].iov_base = &slh;
+	iov[cnt++].iov_len = sizeof(slh);
+
+	sls.sadb_lifetime_len = sizeof(sls) / 8;
+	sls.sadb_lifetime_exttype = SADB_EXT_LIFETIME_SOFT;
+	sls.sadb_lifetime_allocations = 0;
+	sls.sadb_lifetime_bytes = 900000000;   /* lots of bytes */
+	sls.sadb_lifetime_addtime = (seconds + 60) * 9 / 10;
+	sls.sadb_lifetime_usetime = seconds * 9 / 10; /* first use */
+	sa->sadb_msg_len += slh.sadb_lifetime_len;
+
+	iov[cnt].iov_base = &sls;
+	iov[cnt++].iov_len = sizeof(sls);
+
+	return (cnt);
+}
+
+int
 kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
 {
      struct sadb_msg sa;
      struct sadb_address sad1;
      struct sadb_address sad2;
      struct sadb_sa sr;
-     struct sadb_lifetime sl;
      struct sadb_key sk;
      struct sockaddr_in src;
      struct sockaddr_in dst;
      struct iovec iov[20];
-     int len, cnt = 0;
+     int cnt = 0;
      transform *xf = kernel_get_transform(ob->id);
      time_t now = time(NULL);
 
@@ -546,7 +607,6 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      bzero(&sad2, sizeof(sad2));
      bzero(&sr, sizeof(sr));
      bzero(&sk, sizeof(sk));
-     bzero(&sl, sizeof(sl));
      bzero(&src, sizeof(src));
      bzero(&dst, sizeof(dst));
 
@@ -558,7 +618,7 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      sa.sadb_msg_seq = pfkey_seq++;
      sa.sadb_msg_pid = pfkey_pid;
      iov[cnt].iov_base = &sa;
-     len = iov[cnt++].iov_len = sizeof(sa);
+     iov[cnt++].iov_len = sizeof(sa);
 
      /* Source Address */
      sad1.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
@@ -570,9 +630,9 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      sa.sadb_msg_len += sad1.sadb_address_len;
 
      iov[cnt].iov_base = &sad1;
-     len += iov[cnt++].iov_len = sizeof(sad1);
+     iov[cnt++].iov_len = sizeof(sad1);
      iov[cnt].iov_base = &src;
-     len += iov[cnt++].iov_len = sizeof(struct sockaddr);
+     iov[cnt++].iov_len = sizeof(struct sockaddr);
 
      /* Destination Address */
      sad2.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
@@ -584,9 +644,9 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      sa.sadb_msg_len += sad2.sadb_address_len;
 
      iov[cnt].iov_base = &sad2;
-     len += iov[cnt++].iov_len = sizeof(sad2);
+     iov[cnt++].iov_len = sizeof(sad2);
      iov[cnt].iov_base = &dst;
-     len += iov[cnt++].iov_len = sizeof(struct sockaddr);
+     iov[cnt++].iov_len = sizeof(struct sockaddr);
 
      sr.sadb_sa_len = sizeof(sr) / 8;
      sr.sadb_sa_exttype = SADB_EXT_SA;
@@ -600,18 +660,9 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      sa.sadb_msg_len += sr.sadb_sa_len;
 
      iov[cnt].iov_base = &sr;
-     len += iov[cnt++].iov_len = sizeof(sr);
+     iov[cnt++].iov_len = sizeof(sr);
 
-     sl.sadb_lifetime_len = sizeof(sl) / 8;
-     sl.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
-     sl.sadb_lifetime_allocations = 10;   /* 10 flows */
-     sl.sadb_lifetime_bytes = 1000000000;   /* lots of bytes */
-     sl.sadb_lifetime_addtime = SPI->lifetime + 60 - now;
-     sl.sadb_lifetime_usetime = SPI->lifetime - now; /* first use */
-     sa.sadb_msg_len += sl.sadb_lifetime_len;
-
-     iov[cnt].iov_base = &sl;
-     len += iov[cnt++].iov_len = sizeof(sl);
+     cnt += kernel_add_lifetime(&sa, &iov[cnt], SPI->lifetime - now);
 
      sk.sadb_key_len = (sizeof(sk) + ob->klen + 7) / 8;
      sk.sadb_key_exttype = SADB_EXT_KEY_AUTH;
@@ -619,17 +670,17 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      sa.sadb_msg_len += sk.sadb_key_len;
 
      iov[cnt].iov_base = &sk;
-     len += iov[cnt++].iov_len = sizeof(sk);
+     iov[cnt++].iov_len = sizeof(sk);
      iov[cnt].iov_base = secrets;
-     len += iov[cnt++].iov_len = ((ob->klen + 7) / 8) * 8;
+     iov[cnt++].iov_len = ((ob->klen + 7) / 8) * 8;
 
      LOG_DBG((LOG_KERNEL, 35, __FUNCTION__": %08x", ntohl(sr.sadb_sa_spi)));
 
-     if (!KERNEL_XF_SET(len)) {
+     if (!KERNEL_XF_SET(sa.sadb_msg_len * 8)) {
 	  log_error(__FUNCTION__": kernel_xf_set()");
 	  return (-1);
      }
-     return ob->klen;
+     return (ob->klen);
 }
 
 int
@@ -639,7 +690,6 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      struct sadb_address sad1;
      struct sadb_address sad2;
      struct sadb_sa sr;
-     struct sadb_lifetime sl;
      struct sadb_key sk1;
      struct sadb_key sk2;
      struct sockaddr_in src;
@@ -687,7 +737,6 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      bzero(&sr, sizeof(sr));
      bzero(&sk1, sizeof(sk1));
      bzero(&sk2, sizeof(sk2));
-     bzero(&sl, sizeof(sl));
      bzero(&src, sizeof(src));
      bzero(&dst, sizeof(dst));
 
@@ -746,16 +795,7 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      iov[cnt].iov_base = &dst;
      iov[cnt++].iov_len = sizeof(struct sockaddr);
 
-     sl.sadb_lifetime_len = sizeof(sl) / 8;
-     sl.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
-     sl.sadb_lifetime_allocations = 10;   /* 10 flows */
-     sl.sadb_lifetime_bytes = 1000000000;   /* lots of bytes */
-     sl.sadb_lifetime_addtime = SPI->lifetime + 60 - now;
-     sl.sadb_lifetime_usetime = SPI->lifetime - now; /* first use */
-     sa.sadb_msg_len += sl.sadb_lifetime_len;
-
-     iov[cnt].iov_base = &sl;
-     iov[cnt++].iov_len = sizeof(sl);
+     cnt += kernel_add_lifetime(&sa, &iov[cnt], SPI->lifetime - now);
 
      sk1.sadb_key_len = (sizeof(sk1) + attenc->klen + 7) / 8;
      sk1.sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
@@ -1033,9 +1073,9 @@ kernel_handle_notify(int sd)
 
      switch (sres->sadb_msg_type) {
      case SADB_EXPIRE:
-	  LOG_DBG((LOG_KERNEL, 40, __FUNCTION__
-		   ": PFKEYV2 SA Expiration - not yet supported."));
-	  return;
+	  LOG_DBG((LOG_KERNEL, 60, __FUNCTION__": Got SA Expiration"));
+	  kernel_handle_expire(sres);
+	  break;
      case SADB_ACQUIRE:
 	  LOG_DBG((LOG_KERNEL, 60, __FUNCTION__
 		   ": Got Notify SA Request (SADB_ACQUIRE): %d",
@@ -1093,6 +1133,90 @@ pfkey_askpolicy(int seq)
 	return ((struct sadb_msg *)buffer);
 }
 
+int
+kernel_handle_expire(struct sadb_msg *sadb)
+{
+	struct sadb_sa *sa;
+	struct sadb_address *dst;
+	char dstbuf[NI_MAXHOST];
+	struct sockaddr *dstaddr;
+	struct sadb_lifetime *life;
+	struct sadb_ext *ext = (struct sadb_ext *)(sadb + 1);
+	struct spiob *spi;
+	void *end;
+
+	end = (struct sadb_ext *)((u_char *)sadb + sadb->sadb_msg_len * 8);
+
+	sa = (struct sadb_sa *)pfkey_find_extension(ext, end, SADB_EXT_SA);
+	if (sa == NULL) {
+		log_print(__FUNCTION__": no SA extension found");
+		return (-1);
+	}
+
+	dst = (struct sadb_address *)
+		pfkey_find_extension(ext, end, SADB_EXT_ADDRESS_DST);
+	if (dst == NULL) {
+		log_print(__FUNCTION__
+			  ": no destination address extension found");
+		return (-1);
+	}
+	dstaddr = (struct sockaddr *)(dst + 1);
+
+	life = (struct sadb_lifetime *)
+		pfkey_find_extension(ext, end, SADB_EXT_LIFETIME_HARD);
+	if (life == NULL)
+		life = (struct sadb_lifetime *)
+			pfkey_find_extension(ext, end, SADB_EXT_LIFETIME_SOFT);
+	if (life == NULL) {
+		log_print(__FUNCTION__
+			  ": no lifetime extension found");
+		return (-1);
+	}
+
+	switch (dstaddr->sa_family) {
+	case AF_INET:
+		if (inet_ntop (AF_INET, &((struct sockaddr_in *)dstaddr)->sin_addr,
+			       dstbuf, sizeof(dstbuf)) == NULL) {
+			log_error (__FUNCTION__": inet_ntop failed");
+			return (-1);
+		}
+		break;
+	default:
+		log_error(__FUNCTION__
+			  ": unsupported address family %d", 
+			  dstaddr->sa_family);
+		return (-1);
+	}
+
+	LOG_DBG((LOG_KERNEL, 30, __FUNCTION__": %s dst %s SPI %x sproto %d",
+	    life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT ? "SOFT"
+	    : "HARD", dstbuf,
+	    ntohl (sa->sadb_sa_spi), sadb->sadb_msg_satype));
+
+	switch(life->sadb_lifetime_exttype) {
+	case SADB_EXT_LIFETIME_HARD:
+		spi = spi_find(dstbuf, (u_char *)&sa->sadb_sa_spi);
+		if (spi == NULL) {
+			LOG_DBG((LOG_KERNEL, 35, __FUNCTION__
+				 ": can't find %s SPI %x",
+				 dstbuf, ntohl(sa->sadb_sa_spi)));
+			return (-1);
+		}
+		LOG_DBG((LOG_KERNEL, 35, __FUNCTION__": removing %s SPI %x",
+				 dstbuf, ntohl(sa->sadb_sa_spi)));
+		spi_unlink(spi);
+		break;
+	case SADB_EXT_LIFETIME_SOFT:
+		break;
+	default:
+		log_print(__FUNCTION__": unknown extension type %d",
+			  life->sadb_lifetime_exttype);
+		return (-1);
+	}
+
+	return (0);
+}
+
 /*
  * Tries to establish a new SA according to the information in a 
  * REQUEST_SA notify message received from the kernel.
@@ -1115,10 +1239,10 @@ kernel_request_sa(struct sadb_msg *sadb)
 
 	end = (struct sadb_ext *)((u_char *)sadb + sadb->sadb_msg_len * 8);
 
-	dst = (struct sadb_address *)pfkey_find_extension(ext, end,
-							  SADB_EXT_ADDRESS_DST);
-	src = (struct sadb_address *)pfkey_find_extension(ext, end,
-							  SADB_EXT_ADDRESS_SRC);
+	dst = (struct sadb_address *)
+		pfkey_find_extension(ext, end, SADB_EXT_ADDRESS_DST);
+	src = (struct sadb_address *)
+		pfkey_find_extension(ext, end, SADB_EXT_ADDRESS_SRC);
 
 	if (dst) {
 		dstaddr = (struct sockaddr *)(dst + 1);

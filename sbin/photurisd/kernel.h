@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.7 2000/12/12 01:53:42 provos Exp $ */
+/* $Id: kernel.h,v 1.8 2000/12/14 18:32:25 provos Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -94,6 +94,7 @@ int kernel_delete_spi(char *address, u_int32_t spi, int proto);
 
 struct sadb_msg;
 int kernel_request_sa(struct sadb_msg *);
+int kernel_handle_expire(struct sadb_msg *);
 #else
 #define EXTERN extern
 #endif
