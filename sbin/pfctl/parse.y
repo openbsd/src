@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.103 2002/06/18 21:05:17 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.104 2002/06/20 08:47:58 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1408,6 +1408,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				    sizeof(rdr.ifname));
 				rdr.ifnot = $3->not;
 			}
+			rdr.af = $4;
 			if ($5 != NULL) {
 				rdr.proto = $5->proto;
 				free($5);
