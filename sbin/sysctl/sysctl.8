@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.49 2000/05/25 01:26:11 itojun Exp $
+.\"	$OpenBSD: sysctl.8,v 1.50 2000/05/25 04:37:21 itojun Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -181,15 +181,18 @@ privilege can change the value.
 .It net.inet.tcp.keepintvl	integer	yes
 .It net.inet.tcp.slowhz	integer	no
 .It net.inet.tcp.baddynamic	array	yes
+.It net.inet.tcp.recvspace	integer	yes
+.It net.inet.tcp.sendspace	integer	yes
 .It net.inet.tcp.sack	integer	yes
 .It net.inet.tcp.mssdflt	integer	yes
 .It net.inet.udp.checksum	integer	yes
 .It net.inet.udp.baddynamic	array	yes
+.It net.inet.udp.recvspace	integer	yes
+.It net.inet.udp.sendspace	integer	yes
 .It net.inet.esp.enable	integer	yes
 .It net.inet.ah.enable	integer	yes
 .It net.inet.gre.allow	integer	yes
 .It net.inet.mobileip.allow	integer	yes
-.It net.inet6.ipip.allow	integer	yes
 .It net.inet6.ip6.forwarding	integer	yes
 .It net.inet6.ip6.redirect	integer	yes
 .It net.inet6.ip6.hlim	integer	yes
@@ -212,7 +215,6 @@ privilege can change the value.
 .It net.inet6.icmp6.nd6_umaxtries	integer	yes
 .It net.inet6.icmp6.nd6_mmaxtries	integer	yes
 .It net.inet6.icmp6.nd6_useloopback	integer	yes
-.It net.inet6.icmp6.nd6_proxyall	integer	yes
 .It net.inet6.icmp6.nodeinfo	integer	yes
 .It net.ipx.ipx.checksum	integer	yes
 .It net.ipx.ipx.forwarding	integer	yes
@@ -265,6 +267,11 @@ privilege can change the value.
 .It ddb.tab_stop_width	integer	yes
 .It ddb.panic	integer	yes
 .It ddb.console	integer	yes
+.It vfs.mounts.*	struct	no
+.It vfs.ffs.doasyncfree	integer	yes
+.It vfs.ffs.doclusterread	integer	yes
+.It vfs.ffs.doclusterwrite	integer	yes
+.It vfs.ffs.doreallocblks	integer	yes
 .It vfs.nfs.iothreads	integer	yes
 .El
 .Pp
