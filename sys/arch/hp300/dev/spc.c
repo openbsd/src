@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.4 2004/08/21 18:00:26 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.5 2004/08/21 18:01:55 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -202,6 +202,7 @@ spc_dio_dmago(void *arg)
 	} else
 		dmaflags |= DMAGO_WORD;
 
+	sc->sc_flags |= SPC_DOINGDMA;
 	dmago(chan, sc->sc_dp, sc->sc_dleft, dmaflags);
 
 	hpspc_write(HPSCSI_CSR, cmd);
@@ -216,8 +217,6 @@ spc_dio_dmago(void *arg)
 	spc_write(TCL, len);
 	spc_write(PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
 	spc_write(SCMD, cmd);
-
-	sc->sc_flags |= SPC_DOINGDMA;
 }
 
 void
@@ -240,9 +239,10 @@ spc_dio_dmadone(struct spc_softc *sc)
 		}
 	}
 
+	sc->sc_flags &= ~SPC_DOINGDMA;
 	if ((dsc->sc_dflags & SCSI_HAVEDMA) != 0) {
-		dmafree(&dsc->sc_dq);
 		dsc->sc_dflags &= ~SCSI_HAVEDMA;
+		dmafree(&dsc->sc_dq);
 	}
 
 	cmd = hpspc_read(HPSCSI_CSR);
@@ -255,8 +255,6 @@ spc_dio_dmadone(struct spc_softc *sc)
 	trans = sc->sc_dleft - resid;
 	sc->sc_dp += trans;
 	sc->sc_dleft -= trans;
-
-	sc->sc_flags &= ~SPC_DOINGDMA;
 }
 
 void
