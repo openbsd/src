@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.h,v 1.11 2003/09/24 11:12:31 markus Exp $	*/
+/*	$OpenBSD: crypto.h,v 1.12 2003/12/22 18:13:58 markus Exp $	*/
 /*	$EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	*/
 
 /*
@@ -93,7 +93,11 @@
  */
 #define BLOCKSIZE	8
 
+#ifdef USE_AES
 #define MAXBLK		AES_BLOCK_SIZE
+#else
+#define MAXBLK		BLOCKSIZE
+#endif
 
 struct keystate {
   struct crypto_xf *xf;			/* Back pointer */
