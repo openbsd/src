@@ -188,7 +188,7 @@ podulebusmatch(parent, match, aux)
 int
 podulebusprint(aux, podulebus)
 	void *aux;
-	char *podulebus;
+	const char *podulebus;
 {
 	struct podule_attach_args *pa = aux;
 

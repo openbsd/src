@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.7 1996/11/12 20:30:39 niklas Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.8 1996/11/23 21:46:42 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1996, Shawn Hsiao <shawn@alpha.secc.fju.edu.tw>
@@ -74,7 +74,7 @@
 
 int isapnpmatch __P((struct device *, void *, void *));
 void isapnpattach __P((struct device *, struct device *, void *));
-int isapnpprint __P((void *aux, char *pnp));
+int isapnpprint __P((void *aux, const char *pnp));
 int isapnpsubmatch __P((struct device *parent, void *match, void *aux));
 
 struct isapnp_softc {
@@ -226,7 +226,7 @@ postisapnpattach(parent, self, aux)
 int
 isapnpprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	register struct isa_attach_args *ia = aux;
 	unsigned char info[4];

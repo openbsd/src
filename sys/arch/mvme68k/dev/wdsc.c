@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.3 1996/05/29 17:54:13 chuck Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.4 1996/11/23 21:46:02 kstailey Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -48,7 +48,7 @@
 #include <machine/autoconf.h>
 #include <mvme68k/dev/pccreg.h>
 
-int     wdscprint       __P((void *auxp, char *));
+int     wdscprint       __P((void *auxp, const char *));
 void    wdscattach      __P((struct device *, struct device *, void *));
 int     wdscmatch       __P((struct device *, struct cfdata *, void *));
 
@@ -190,7 +190,7 @@ wdscattach(pdp, dp, auxp)
 int
 wdscprint(auxp, pnp)
     void *auxp;
-    char *pnp;
+    const char *pnp;
 {
     if (pnp == NULL)
         return(UNCONF);

@@ -283,11 +283,11 @@ espmatch(parent, vcf, aux)
 #endif
 }
 
-int scsiprint __P((void *, char *));
+int scsiprint __P((void *, const char *));
 int
 scsiprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	return (UNCONF);
 }

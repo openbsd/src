@@ -1,4 +1,4 @@
-/*	$OpenBSD: empsc.c,v 1.3 1996/05/29 10:14:51 niklas Exp $ */
+/*	$OpenBSD: empsc.c,v 1.4 1996/11/23 21:45:07 kstailey Exp $ */
 /*	$NetBSD: empsc.c,v 1.7 1996/05/10 13:02:33 is Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int empscprint __P((void *auxp, char *));
+int empscprint __P((void *auxp, const char *));
 void empscattach __P((struct device *, struct device *, void *));
 int empscmatch __P((struct device *, void *, void *));
 int empsc_intr __P((void *));
@@ -159,7 +159,7 @@ empscattach(pdp, dp, auxp)
 int
 empscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

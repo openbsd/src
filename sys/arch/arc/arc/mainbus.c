@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.3 1996/09/19 00:30:36 imp Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.4 1996/11/23 21:45:28 kstailey Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ struct mainbus_softc {
 /* Definition of the mainbus driver. */
 static int	mbmatch __P((struct device *, void *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbprint __P((void *, char *));
+static int	mbprint __P((void *, const char *));
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mbmatch, mbattach
@@ -132,7 +132,7 @@ mbattach(parent, self, aux)
 static int
 mbprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 
 	if (pnp)

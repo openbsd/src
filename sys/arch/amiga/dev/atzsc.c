@@ -1,4 +1,4 @@
-/*	$OpenBSD: atzsc.c,v 1.3 1996/05/02 06:43:34 niklas Exp $	*/
+/*	$OpenBSD: atzsc.c,v 1.4 1996/11/23 21:45:06 kstailey Exp $	*/
 /*	$NetBSD: atzsc.c,v 1.16 1996/04/21 21:10:51 veego Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #include <amiga/dev/atzscreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int atzscprint __P((void *auxp, char *));
+int atzscprint __P((void *auxp, const char *));
 void atzscattach __P((struct device *, struct device *, void *));
 int atzscmatch __P((struct device *, void *, void *));
 
@@ -188,7 +188,7 @@ atzscattach(pdp, dp, auxp)
 int
 atzscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.9 1996/05/07 10:08:23 niklas Exp $	*/
+/*	$OpenBSD: fd.c,v 1.10 1996/11/23 21:45:08 kstailey Exp $	*/
 /*	$NetBSD: fd.c,v 1.32 1996/05/04 04:54:00 mhitch Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ struct fdcargs {
 
 int	fdcmatch __P((struct device *, void *, void *));
 void	fdcattach __P((struct device *, struct device *, void *));
-int	fdcprint __P((void *, char *));
+int	fdcprint __P((void *, const char *));
 int	fdmatch __P((struct device *, void *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
@@ -360,7 +360,7 @@ fdcattach(pdp, dp, auxp)
 int
 fdcprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	struct fdcargs *fcp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.6 1996/08/19 00:04:13 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.7 1996/11/23 21:45:03 kstailey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.38.4.1 1996/05/26 16:23:26 is Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 void setroot __P((void));
 void swapconf __P((void));
 void mbattach __P((struct device *, struct device *, void *));
-int mbprint __P((void *, char *));
+int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, void *, void *));
 
 int cold;	/* 1 if still booting */
@@ -120,7 +120,7 @@ configure()
 int
 simple_devprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	return(QUIET);
 }
@@ -271,7 +271,7 @@ mbattach(pdp, dp, auxp)
 int
 mbprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("%s at %s", (char *)auxp, pnp);

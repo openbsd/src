@@ -461,7 +461,7 @@ extern u_long asc_iomem;
  */
 int	ascmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	ascattach __P((struct device *parent, struct device *self, void *aux));
-int	ascprint(void*, char*);
+int	ascprint(void*, const char*);
 
 struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
@@ -692,7 +692,7 @@ ascattach(parent, self, aux)
 int
 ascprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	return -1;
 }

@@ -198,6 +198,9 @@ memerr_interrupt(arg)
 	 */
 	if (sc->sc_type == ME_PAR) {
 		if (csr & ME_PAR_EMASK) {
+			/* true for Sun3/60, probably some others too */
+			printf("probably should replace SIMM %d\n",
+			       pa / 1048576 + 1);
 			/* Parity errors are fatal. */
 			goto die;
 		}

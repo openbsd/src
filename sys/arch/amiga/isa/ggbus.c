@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.6 1996/11/12 20:29:49 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.7 1996/11/23 21:45:26 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -58,7 +58,7 @@ int ggstrayints = 0;
 
 void	ggbusattach __P((struct device *, struct device *, void *));
 int	ggbusmatch __P((struct device *, void *, void *));
-int	ggbusprint __P((void *, char *));
+int	ggbusprint __P((void *, const char *));
 
 int	ggbus_io_map __P((bus_chipset_tag_t, bus_io_addr_t, bus_io_size_t,
 	    bus_io_handle_t *));
@@ -231,7 +231,7 @@ ggbusattach(parent, self, aux)
 int
 ggbusprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(QUIET);

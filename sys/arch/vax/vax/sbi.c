@@ -43,7 +43,7 @@
 
 struct nexus *nexus;
 
-static	int sbi_print __P((void *, char *));
+static	int sbi_print __P((void *, const char *));
 	int sbi_match __P((struct device *, void *, void *));
 	void sbi_attach __P((struct device *, struct device *, void*));
 
@@ -57,7 +57,7 @@ struct bp_conf {
 int
 sbi_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	int unsupp = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.12 1996/11/12 20:30:07 niklas Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.13 1996/11/23 21:46:30 kstailey Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ int ahb_scsi_cmd __P((struct scsi_xfer *));
 void ahb_timeout __P((void *));
 void ahb_print_ecb __P((struct ahb_ecb *));
 void ahb_print_active_ecb __P((struct ahb_softc *));
-int ahbprint __P((void *, char *));
+int ahbprint __P((void *, const char *));
 
 #define	MAX_SLOTS	15
 int     ahb_debug = 0;
@@ -457,7 +457,7 @@ ahbmatch(parent, match, aux)
 int
 ahbprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	return UNCONF;
 }

@@ -75,7 +75,7 @@ mainbusmatch(parent, match, aux)
 int
 mainbusprint(aux, mainbus)
 	void *aux;
-	char *mainbus;
+	const char *mainbus;
 {
 	struct mainbus_attach_args *mb = aux;
 

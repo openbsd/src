@@ -100,7 +100,7 @@ static int et_getDACType __P((struct grf_softc *gp));
 
 int	grfetmatch __P((struct device *, void *, void *));
 void	grfetattach __P((struct device *, struct device *, void *));
-int	grfetprint __P((void *, char *));
+int	grfetprint __P((void *, const char *));
 void	et_memset __P((unsigned char *d, unsigned char c, int l));
 
 /*
@@ -365,8 +365,8 @@ grfetattach(pdp, dp, auxp)
 
 int
 grfetprint(auxp, pnp)
-	void   *auxp;
-	char   *pnp;
+	void *auxp;
+	const char   *pnp;
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);

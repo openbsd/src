@@ -1,4 +1,4 @@
-/*	$OpenBSD: otgsc.c,v 1.3 1996/05/02 06:44:23 niklas Exp $	*/
+/*	$OpenBSD: otgsc.c,v 1.4 1996/11/23 21:45:22 kstailey Exp $	*/
 /*	$NetBSD: otgsc.c,v 1.11 1996/04/21 21:12:16 veego Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include <amiga/dev/scivar.h>
 #include <amiga/dev/zbusvar.h>
 
-int otgscprint __P((void *auxp, char *));
+int otgscprint __P((void *auxp, const char *));
 void otgscattach __P((struct device *, struct device *, void *));
 int otgscmatch __P((struct device *, void *, void *));
 
@@ -169,7 +169,7 @@ otgscattach(pdp, dp, auxp)
 int
 otgscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

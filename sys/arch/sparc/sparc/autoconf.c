@@ -108,7 +108,7 @@ static	char *str2hex __P((char *, int *));
 static	int getstr __P((char *, int));
 static	int findblkmajor __P((struct device *));
 static	struct device *getdisk __P((char *, int, int, dev_t *));
-static	int mbprint __P((void *, char *));
+static	int mbprint __P((void *, const char *));
 static	void crazymap __P((char *, int *));
 int	st_crazymap __P((int));
 void	swapconf __P((void));
@@ -956,7 +956,7 @@ clockfreq(freq)
 static int
 mbprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	register struct confargs *ca = aux;
 

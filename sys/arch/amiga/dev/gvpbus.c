@@ -1,4 +1,4 @@
-/*	$OpenBSD: gvpbus.c,v 1.3 1996/05/02 06:44:00 niklas Exp $	*/
+/*	$OpenBSD: gvpbus.c,v 1.4 1996/11/23 21:45:18 kstailey Exp $	*/
 /*	$NetBSD: gvpbus.c,v 1.11 1996/04/21 21:11:36 veego Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 
 void gvpbusattach __P((struct device *, struct device *, void *));
 int gvpbusmatch __P((struct device *, void *, void *));
-int gvpbusprint __P((void *auxp, char *));
+int gvpbusprint __P((void *auxp, const char *)); 
 
 extern int sbic_no_dma;		/* Kludge for A1291 - mlh */
 
@@ -155,7 +155,7 @@ gvpbusattach(pdp, dp, auxp)
 int
 gvpbusprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	struct gvpbus_args *gap;
 

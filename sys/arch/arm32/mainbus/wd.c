@@ -235,7 +235,7 @@ struct wdc_attach_args {
 int
 wdprint(aux, wdc)
 	void *aux;
-	char *wdc;
+	const char *wdc;
 {
 	struct wdc_attach_args *wa = aux;
 

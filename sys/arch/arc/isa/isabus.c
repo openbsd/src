@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.5 1996/09/20 17:12:08 pefo Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.6 1996/11/23 21:45:33 kstailey Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ struct isabr_softc {
 /* Definition of the driver for autoconfig. */
 int	isabrmatch(struct device *, void *, void *);
 void	isabrattach(struct device *, struct device *, void *);
-int	isabrprint(void *, char *);
+int	isabrprint(void *, const char *);
 
 struct cfattach isabr_ca = {
 	sizeof(struct isabr_softc), isabrmatch, isabrattach
@@ -204,7 +204,7 @@ isabrattach(parent, self, aux)
 int
 isabrprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct confargs *ca = aux;
 

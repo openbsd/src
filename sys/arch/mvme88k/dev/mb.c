@@ -7,7 +7,7 @@
 #include <machine/cpu.h>
 
 void mbattach __P((struct device *, struct device *, void *));
-int mbprint __P((void *, char *));
+int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
 int submatch( struct device *parent, struct cfdata *self, void *aux);
 
@@ -54,7 +54,7 @@ mbattach(pdp, dp, auxp)
 
 mbprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("%s at %s", (char *)auxp, pnp);

@@ -69,7 +69,7 @@ struct asic_softc {
 /* Definition of the driver for autoconfig. */
 int	asicmatch __P((struct device *, void *, void *));
 void	asicattach __P((struct device *, struct device *, void *));
-int     asicprint(void *, char *);
+int     asicprint(void *, const char *);
 
 /* Device locators. */
 #define	ioasiccf_offset	cf_loc[0]		/* offset */
@@ -248,7 +248,7 @@ asicattach(parent, self, aux)
 int
 asicprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct ioasicdev_attach_args *d = aux;
 

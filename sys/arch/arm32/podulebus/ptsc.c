@@ -59,7 +59,7 @@
 #include <arm32/podulebus/ptscreg.h>
 #include <arm32/podulebus/ptscvar.h>
 
-int  ptscprint  __P((void *auxp, char *));
+int  ptscprint  __P((void *auxp, const char *));
 void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, void *, void *));
 int ptsc_scsicmd __P((struct scsi_xfer *));
@@ -209,7 +209,7 @@ ptscattach(pdp, dp, auxp)
 int
 ptscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

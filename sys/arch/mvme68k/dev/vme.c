@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.4 1996/06/11 10:15:26 deraadt Exp $ */
+/*	$OpenBSD: vme.c,v 1.5 1996/11/23 21:46:02 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -254,7 +254,7 @@ vmerw(sc, uio, flags, bus)
 int
 vmeprint(args, bus)
 	void *args;
-	char *bus;
+	const char *bus;
 {
 	struct confargs *ca = args;
 

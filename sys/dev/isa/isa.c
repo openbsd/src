@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.18 1996/10/31 01:05:08 niklas Exp $	*/
+/*	$OpenBSD: isa.c,v 1.19 1996/11/23 21:46:41 kstailey Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ isaattach(parent, self, aux)
 int
 isaprint(aux, isa)
 	void *aux;
-	char *isa;
+	const char *isa;
 {
 	struct isa_attach_args *ia = aux;
 

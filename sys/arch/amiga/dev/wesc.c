@@ -1,4 +1,4 @@
-/*	$OpenBSD: wesc.c,v 1.4 1996/05/02 06:44:38 niklas Exp $	*/
+/*	$OpenBSD: wesc.c,v 1.5 1996/11/23 21:45:23 kstailey Exp $	*/
 /*	$NetBSD: wesc.c,v 1.13 1996/04/21 21:12:42 veego Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int wescprint __P((void *auxp, char *));
+int wescprint __P((void *auxp, const char *));
 void wescattach __P((struct device *, struct device *, void *));
 int wescmatch __P((struct device *, void *, void *));
 int wesc_dmaintr __P((void *));
@@ -149,7 +149,7 @@ wescattach(pdp, dp, auxp)
 int
 wescprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

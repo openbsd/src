@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.29 1996/11/11 20:47:24 kstailey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.30 1996/11/23 21:45:48 kstailey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -138,7 +138,6 @@ cdev_decl(acd);
 #include "lpt.h"
 cdev_decl(lpt);
 #include "ch.h"
-cdev_decl(ch);
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 #include "pcmcia.h"

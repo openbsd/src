@@ -1,4 +1,4 @@
-/*	$OpenBSD: flsc.c,v 1.5 1996/10/04 23:34:50 niklas Exp $	*/
+/*	$OpenBSD: flsc.c,v 1.6 1996/11/23 21:45:09 kstailey Exp $	*/
 /*	$NetBSD: flsc.c,v 1.5.4.3 1996/08/05 20:40:35 jtc Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 #include <amiga/dev/flscreg.h>
 #include <amiga/dev/flscvar.h>
 
-int  flscprint  __P((void *auxp, char *));
+int  flscprint  __P((void *auxp, const char *));
 void flscattach __P((struct device *, struct device *, void *));
 int  flscmatch  __P((struct device *, void *, void *));
 
@@ -198,7 +198,7 @@ flscattach(pdp, dp, auxp)
 int
 flscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

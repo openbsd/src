@@ -1,4 +1,4 @@
-/*	$OpenBSD: cia.c,v 1.4 1996/10/30 22:39:53 niklas Exp $	*/
+/*	$OpenBSD: cia.c,v 1.5 1996/11/23 21:44:54 kstailey Exp $	*/
 /*	$NetBSD: cia.c,v 1.11 1996/10/13 03:00:03 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ struct cfdriver cia_cd = {
 	NULL, "cia", DV_DULL,
 };
 
-int	ciaprint __P((void *, /* const */ char *pnp));
+int	ciaprint __P((void *, const char *pnp));
 
 /* There can be only one. */
 int ciafound;
@@ -148,7 +148,7 @@ ciaattach(parent, self, aux)
 int
 ciaprint(aux, pnp)
 	void *aux;
-	/* const */ char *pnp;
+	const char *pnp;
 {
 	register struct pcibus_attach_args *pba = aux;
 

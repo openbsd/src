@@ -52,6 +52,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #include "ccd.h"
 #include "cd.h"
 #include "kbd.h"
+#include "ms.h"
 #include "pty.h"
 #include "rd.h"
 #include "sd.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.9 1996/11/12 20:30:46 niklas Exp $	*/
+/*	$OpenBSD: wds.c,v 1.10 1996/11/23 21:46:49 kstailey Exp $	*/
 /*	$NetBSD: wds.c,v 1.7 1996/05/12 23:54:09 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -185,7 +185,7 @@ struct scsi_device wds_dev = {
 
 int	wdsprobe __P((struct device *, void *, void *));
 void	wdsattach __P((struct device *, struct device *, void *));
-int	wdsprint __P((void *, char *));
+int	wdsprint __P((void *, const char *));
 
 struct cfattach wds_ca = {
 	sizeof(struct wds_softc), wdsprobe, wdsattach
@@ -262,7 +262,7 @@ wdsprobe(parent, match, aux)
 int
 wdsprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 
 	if (name != NULL)

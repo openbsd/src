@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.20 1996/11/12 20:30:43 niklas Exp $	*/
+/*	$OpenBSD: wd.c,v 1.21 1996/11/23 21:46:48 kstailey Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -82,7 +82,7 @@ struct wd_softc {
 
 int	wdprobe		__P((struct device *, void *, void *));
 void	wdattach	__P((struct device *, struct device *, void *));
-int	wdprint		__P((void *, char *));
+int	wdprint		__P((void *, const char *));
 
 struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach

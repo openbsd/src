@@ -1,4 +1,4 @@
-/*	$Id: pcmcia.c,v 1.6 1996/10/16 12:36:54 deraadt Exp $	*/
+/*	$Id: pcmcia.c,v 1.7 1996/11/23 21:47:07 kstailey Exp $	*/
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -101,7 +101,7 @@ int  pcmcia_mapcard_and_configure __P((struct pcmcia_link *, int,
 int pcmcia_unconfigure __P((struct pcmcia_link *));
 int pcmcia_unmapcard __P((struct pcmcia_link *));
 
-int pcmcia_print __P((void *, char *));
+int pcmcia_print __P((void *, const char *));
 int pcmcia_submatch __P((struct device *, void *, void *));
 void pcmcia_probe_link __P((struct pcmcia_link *));
 
@@ -1317,7 +1317,7 @@ pcmciadumpcf(cf)
 int
 pcmcia_print(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 #if 0
 	struct pcmcia_attach_args *paa = aux;

@@ -107,7 +107,7 @@ static	struct disk ramd_disks[RAMD_NDEV];	/* XXX Ick. */
  * Autoconfig stuff....
  */
 static int	ramdmatch __P((struct device *, struct cfdata *, void *));
-static int	ramdprint __P((void *, char *));
+static int	ramdprint __P((void *, const char *));
 static void	ramdattach __P((struct device *, struct device *, void *));
 
 struct cfdriver ramdcd = {
@@ -162,7 +162,7 @@ void		*auxp;
 static int
 ramdprint(auxp, pnp)
 void	*auxp;
-char	*pnp;
+const char *pnp;
 {
 	return(UNCONF);
 }

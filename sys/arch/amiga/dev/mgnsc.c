@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgnsc.c,v 1.8 1996/10/04 15:10:40 niklas Exp $	*/
+/*	$OpenBSD: mgnsc.c,v 1.9 1996/11/23 21:45:21 kstailey Exp $	*/
 /*	$NetBSD: mgnsc.c,v 1.18 1996/04/21 21:12:11 veego Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
 
-int mgnscprint __P((void *auxp, char *));
+int mgnscprint __P((void *auxp, const char *));
 void mgnscattach __P((struct device *, struct device *, void *));
 int mgnscmatch __P((struct device *, void *, void *));
 int mgnsc_dmaintr __P((void *));
@@ -155,7 +155,7 @@ mgnscattach(pdp, dp, auxp)
 int
 mgnscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

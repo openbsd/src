@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzsc.c,v 1.3 1996/05/02 06:43:34 niklas Exp $	*/
+/*	$OpenBSD: bzsc.c,v 1.4 1996/11/23 21:45:06 kstailey Exp $	*/
 
 /*	$NetBSD: bzsc.c,v 1.7 1996/04/21 21:10:52 veego Exp $	*/
 
@@ -59,7 +59,7 @@
 #include <amiga/dev/bzscreg.h>
 #include <amiga/dev/bzscvar.h>
 
-int  bzscprint  __P((void *auxp, char *));
+int  bzscprint  __P((void *auxp, const char *)); 
 void bzscattach __P((struct device *, struct device *, void *));
 int  bzscmatch  __P((struct device *, void *, void *));
 
@@ -190,7 +190,7 @@ bzscattach(pdp, dp, auxp)
 int
 bzscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

@@ -90,7 +90,7 @@ struct oak_softc {
 
 int  oakprobe 	__P(( struct device *, void *, void * ));
 void oakattach 	__P(( struct device *, struct device *, void * ));
-int  oakprint   __P(( void *, char * ));
+int  oakprint   __P(( void *, const char * ));
 void oakminphys __P(( struct buf * ));
 
 #ifdef USE_OWN_PIO_ROUTINES
@@ -194,7 +194,7 @@ oakattach(parent, self, aux)
 int
 oakprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)
 		printf("%s: scsibus ", name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gtsc.c,v 1.3 1996/05/02 06:44:00 niklas Exp $	*/
+/*	$OpenBSD: gtsc.c,v 1.4 1996/11/23 21:45:17 kstailey Exp $	*/
 /*	$NetBSD: gtsc.c,v 1.15 1996/04/21 21:11:34 veego Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 void gtscattach __P((struct device *, struct device *, void *));
 int gtscmatch __P((struct device *, void *, void *));
-int gtscprint __P((void *auxp, char *));
+int gtscprint __P((void *auxp, const char *));
 
 void gtsc_enintr __P((struct sbic_softc *));
 void gtsc_dmastop __P((struct sbic_softc *));
@@ -213,7 +213,7 @@ gtscattach(pdp, dp, auxp)
 int
 gtscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

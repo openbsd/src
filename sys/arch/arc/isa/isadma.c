@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.1.1.1 1996/06/24 09:07:18 pefo Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.2 1996/11/23 21:45:34 kstailey Exp $	*/
 /*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
 
 #include <sys/param.h>
@@ -46,7 +46,7 @@ static u_int8_t dmamode[4] = {
 
 int isadmamatch __P((struct device *, void *, void *));
 void isadmaattach __P((struct device *, struct device *, void *));
-int isadmaprint __P((void *, char *));
+int isadmaprint __P((void *, const char *));
 
 struct isadma_softc {
 	struct device sc_dev;

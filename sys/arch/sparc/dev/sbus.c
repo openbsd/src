@@ -57,7 +57,7 @@
 #include <sparc/dev/sbusreg.h>
 #include <sparc/dev/sbusvar.h>
 
-int sbus_print __P((void *, char *));
+int sbus_print __P((void *, const char *));
 void sbusreset __P((int));
 
 /* autoconfiguration driver */
@@ -81,7 +81,7 @@ struct cfdriver sbus_cd = {
 int
 sbus_print(args, sbus)
 	void *args;
-	char *sbus;
+	const char *sbus;
 {
 	register struct confargs *ca = args;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: desktechbus.c,v 1.2 1996/09/14 15:58:24 pefo Exp $ */
+/*	$OpenBSD: desktechbus.c,v 1.3 1996/11/23 21:45:32 kstailey Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -51,7 +51,7 @@ struct dti_softc {
 /* Definition of the driver for autoconfig. */
 int	dtimatch(struct device *, void *, void *);
 void	dtiattach(struct device *, struct device *, void *);
-int	dtiprint(void *, char *);
+int	dtiprint(void *, const char *);
 
 struct cfattach dti_ca = {
 	sizeof(struct dti_softc), dtimatch, dtiattach
@@ -204,7 +204,7 @@ dtiattach(parent, self, aux)
 int
 dtiprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	struct confargs *ca = aux;
 

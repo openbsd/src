@@ -210,7 +210,7 @@ extern __inline__ u_char read_dmastat(void)
  * Autoconfig stuff....
  */
 static int	fdcmatch __P((struct device *, struct cfdata *, void *));
-static int	fdcprint __P((void *, char *));
+static int	fdcprint __P((void *, const char *));
 static void	fdcattach __P((struct device *, struct device *, void *));
 
 struct cfdriver fdccd = {
@@ -281,7 +281,7 @@ void		*auxp;
 static int
 fdcprint(auxp, pnp)
 void	*auxp;
-char	*pnp;
+const char *pnp;
 {
 	return(UNCONF);
 }

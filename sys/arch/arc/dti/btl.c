@@ -175,7 +175,7 @@ struct scsi_device bt_dev = {
 
 int	btprobe __P((struct device *, void *, void *));
 void	btattach __P((struct device *, struct device *, void *));
-int	btprint __P((void *, char *));
+int	btprint __P((void *, const char *));
 
 struct cfattach btl_ca = {
 	sizeof(struct bt_softc), btprobe, btattach
@@ -352,7 +352,7 @@ btprobe(parent, match, aux)
 int
 btprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 
 	if (name != NULL)

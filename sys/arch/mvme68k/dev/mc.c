@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc.c,v 1.4 1996/06/11 10:15:11 deraadt Exp $ */
+/*	$OpenBSD: mc.c,v 1.5 1996/11/23 21:45:59 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -93,7 +93,7 @@ mcmatch(parent, vcf, args)
 int
 mc_print(args, bus)
 	void *args;
-	char *bus;
+	const char *bus;
 {
 	struct confargs *ca = args;
 

@@ -51,7 +51,7 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/amiga/drcustom.h>
 
-int drscprint __P((void *auxp, char *));
+int drscprint __P((void *auxp, const char *));
 void drscattach __P((struct device *, struct device *, void *));
 int drscmatch __P((struct device *, void *, void *));
 int drsc_dmaintr __P((struct siop_softc *));
@@ -157,7 +157,7 @@ drscattach(pdp, dp, auxp)
 int
 drscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

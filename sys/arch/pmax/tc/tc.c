@@ -68,7 +68,7 @@ extern struct tc_attach_args *  cpu_tcdesc __P ((int cputype));
 /* Definition of the driver for autoconfig. */
 int	tcmatch(struct device *, void *, void *);
 void	tcattach(struct device *, struct device *, void *);
-int	tcprint(void *, char *);
+int	tcprint(void *, const char *);
 
 void	tc_ds_intr_establish __P((struct device *, void *, tc_intrlevel_t,
 				intr_handler_t handler, intr_arg_t arg));

@@ -112,7 +112,7 @@ struct siisoftc {
  */
 int	siimatch  __P((struct device * parent, void *cfdata, void *aux));
 void	siiattach __P((struct device *parent, struct device *self, void *aux));
-int	siiprint(void*, char*);
+int	siiprint(void*, const char*);
 
 int sii_doprobe __P((void *addr, int unit, int flags, int pri,
 		     struct device *self));

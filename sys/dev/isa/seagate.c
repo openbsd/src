@@ -304,7 +304,7 @@ struct scsi_device sea_dev = {
 
 int	seaprobe __P((struct device *, void *, void *));
 void	seaattach __P((struct device *, struct device *, void *));
-int	seaprint __P((void *, char *));
+int	seaprint __P((void *, const char *));
 
 struct cfattach sea_ca = {
 	sizeof(struct sea_softc), seaprobe, seaattach
@@ -411,7 +411,7 @@ seaprobe(parent, match, aux)
 int
 seaprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)       
 		printf("%s: scsibus ", name);

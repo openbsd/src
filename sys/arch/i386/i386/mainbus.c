@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.6 1996/11/12 20:29:57 niklas Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.7 1996/11/23 21:45:49 kstailey Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.8 1996/04/11 22:13:37 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
 };
 
-int	mainbus_print __P((void *, char *));
+int	mainbus_print __P((void *, const char *));
 
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
@@ -137,7 +137,7 @@ mainbus_attach(parent, self, aux)
 int
 mainbus_print(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 	union mainbus_attach_args *mba = aux;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahsc.c,v 1.3 1996/05/02 06:43:33 niklas Exp $	*/
+/*	$OpenBSD: ahsc.c,v 1.4 1996/11/23 21:45:05 kstailey Exp $	*/
 /*	$NetBSD: ahsc.c,v 1.12 1996/04/21 21:10:49 veego Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #include <amiga/dev/ahscreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int ahscprint __P((void *auxp, char *));
+int ahscprint __P((void *auxp, const char *));
 void ahscattach __P((struct device *, struct device *, void *));
 int ahscmatch __P((struct device *, void *, void *));
 
@@ -164,7 +164,7 @@ ahscattach(pdp, dp, auxp)
 int
 ahscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

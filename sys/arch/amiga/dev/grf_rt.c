@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rt.c,v 1.7 1996/08/23 18:52:50 niklas Exp $	*/
+/*	$OpenBSD: grf_rt.c,v 1.8 1996/11/23 21:45:16 kstailey Exp $	*/
 /*	$NetBSD: grf_rt.c,v 1.27.4.1 1996/05/26 17:26:43 is Exp $	*/
 
 /*
@@ -765,7 +765,7 @@ rt_load_mon(gp, md)
 }
 
 void grfrtattach __P((struct device *, struct device *, void *));
-int grfrtprint __P((void *, char *));
+int grfrtprint __P((void *, const char *));
 int grfrtmatch __P((struct device *, void *, void *));
  
 int rt_mode __P((struct grf_softc *, u_long, void *, u_long, int));
@@ -892,7 +892,7 @@ grfrtattach(pdp, dp, auxp)
 int
 grfrtprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,

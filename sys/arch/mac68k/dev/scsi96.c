@@ -78,7 +78,7 @@ static int ncr53c96_scsi_cmd(struct scsi_xfer * xs);
 static int ncr53c96_reset_target(int adapter, int target);
 static int ncr53c96_poll(int adapter, int timeout);
 static int ncr53c96_send_cmd(struct scsi_xfer * xs);
-static int scsiprint __P((void *, char *));
+static int scsiprint __P((void *, const char *));
 static void resetchip __P((void));
 
 struct scsi_adapter ncr53c96_switch = {
@@ -128,8 +128,8 @@ ncr96probe(parent, match, aux)
 
 static int
 scsiprint(auxp, name)
-	void	*auxp;
-	char	*name;
+	void		*auxp;
+	const char	*name;
 {
 	if (name == NULL)
 		return (UNCONF);

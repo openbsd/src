@@ -99,13 +99,13 @@ int grfbanked_set __P((dev_t, int));
 static void grf_viewsync __P((struct grf_softc *));
 static int  grf_mode __P((struct grf_softc *, int, void *, int, int));
 
-int grfbusprint __P((void *auxp, char *));
+int grfbusprint __P((void *auxp, const char *));
 int grfbusmatch __P((struct device *, struct cfdata *, void *));
 void grfbusattach __P((struct device *, struct device *, void *));
 
 void grfattach __P((struct device *, struct device *, void *));
 int grfmatch __P((struct device *, struct cfdata *, void *));
-int grfprint __P((void *, char *));
+int grfprint __P((void *, const char *));
 /*
  * pointers to grf drivers device structs 
  */
@@ -186,8 +186,8 @@ void		*auxp;
 
 int
 grfbusprint(auxp, name)
-void  *auxp;
-char  *name;
+     void        *auxp;
+     const char  *name;
 {
 	if(name == NULL)
 		return(UNCONF);
@@ -287,8 +287,8 @@ void		*auxp;
 
 int
 grfprint(auxp, pnp)
-void *auxp;
-char *pnp;
+     void       *auxp;
+     const char *pnp;
 {
 	if(pnp)
 		printf("ite at %s", pnp);

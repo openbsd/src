@@ -141,7 +141,7 @@ bus_scan(parent, child, aux)
 int
 bus_print(args, name)
 	void *args;
-	char *name;
+	const char *name;
 {
 /*	struct confargs *ca = args; */
 

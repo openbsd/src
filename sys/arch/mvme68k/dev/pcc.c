@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcc.c,v 1.4 1996/06/11 10:15:18 deraadt Exp $ */
+/*	$OpenBSD: pcc.c,v 1.5 1996/11/23 21:45:59 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -92,7 +92,7 @@ pccmatch(parent, vcf, args)
 int
 pcc_print(args, bus)
 	void *args;
-	char *bus;
+	const char *bus;
 {
 	struct confargs *ca = args;
 

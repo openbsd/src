@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.5 1996/10/30 22:39:46 niklas Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.6 1996/11/23 21:44:53 kstailey Exp $	*/
 /*	$NetBSD: apecs.c,v 1.12 1996/10/13 03:00:00 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ struct cfdriver apecs_cd = {
 	NULL, "apecs", DV_DULL,
 };
 
-int	apecsprint __P((void *, /* const */ char *pnp));
+int	apecsprint __P((void *, const char *pnp));
 
 /* There can be only one. */
 int apecsfound;
@@ -166,7 +166,7 @@ apecsattach(parent, self, aux)
 int
 apecsprint(aux, pnp)
 	void *aux;
-	/* const */ char *pnp;
+	const char *pnp;
 {
         register struct pcibus_attach_args *pba = aux;
 

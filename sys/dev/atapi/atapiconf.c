@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.11 1996/09/12 02:36:10 downsj Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.12 1996/11/23 21:46:29 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -68,7 +68,7 @@ void at_print_addr __P((struct at_dev_link *, u_int8_t));
 int atapibusmatch __P((struct device *, void *, void *));
 void atapibusattach __P((struct device *, struct device *, void *));
 void atapi_fixquirk __P((struct at_dev_link *));
-int atapiprint __P((void *, char *));
+int atapiprint __P((void *, const char *));
 
 struct cfattach atapibus_ca = {
 	sizeof(struct atapibus_softc), atapibusmatch, atapibusattach
@@ -169,7 +169,7 @@ atapi_fixquirk(ad_link)
 int
 atapiprint(aux, bus)
 	void *aux;
-	char *bus;
+	const char *bus;
 {
 	struct at_dev_link *ad_link = aux;
 	struct atapi_identify *id = &ad_link->id;

@@ -73,7 +73,7 @@ volatile int rbr,rcvec;
 int	uba_match __P((struct device *, void *, void *));
 void	uba_attach __P((struct device *, struct device *, void *));
 void	ubascan __P((struct device *, void *));
-int	ubaprint __P((void *, char *));
+int	ubaprint __P((void *, const char *));
 void	uba_dw780int __P((int));
 void	ubaerror __P((int, struct uba_softc *, int *, int *,
 	    struct uba_regs *));
@@ -1267,7 +1267,7 @@ ubasetvec(dev, vec, func)
 int
 ubaprint(aux, uba)
 	void *aux;
-	char *uba;
+	const char *uba;
 {
 	struct uba_attach_args *ua = aux;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.15 1996/10/20 01:07:04 millert Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.16 1996/11/23 21:47:12 kstailey Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ struct cfdriver scsibus_cd = {
 	NULL, "scsibus", DV_DULL
 };
 
-int scsibusprint __P((void *, char *));
+int scsibusprint __P((void *, const char *));
 
 int
 scsibusmatch(parent, match, aux)
@@ -403,8 +403,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
  */
 int
 scsibusprint(aux, pnp)
-	void *aux;
-	char *pnp;
+	void       *aux;
+	const char *pnp;
 {
 	struct scsibus_attach_args *sa = aux;
 	struct scsi_inquiry_data *inqbuf;

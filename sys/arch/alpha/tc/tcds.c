@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcds.c,v 1.5 1996/10/30 22:41:27 niklas Exp $	*/
+/*	$OpenBSD: tcds.c,v 1.6 1996/11/23 21:45:02 kstailey Exp $	*/
 /*	$NetBSD: tcds.c,v 1.15 1996/10/13 03:00:41 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ struct tcds_softc {
 /* Definition of the driver for autoconfig. */
 int	tcdsmatch __P((struct device *, void *, void *));
 void	tcdsattach __P((struct device *, struct device *, void *));
-int     tcdsprint __P((void *, /* const */ char *));
+int     tcdsprint __P((void *, const char *));
 
 struct cfattach tcds_ca = {
 	sizeof(struct tcds_softc), tcdsmatch, tcdsattach,
@@ -204,7 +204,7 @@ tcdsattach(parent, self, aux)
 int
 tcdsprint(aux, pnp)
 	void *aux;
-	/* const */ char *pnp;
+	const char *pnp;
 {
 	struct tc_attach_args *ta = aux;
 

@@ -66,7 +66,7 @@ static void	obioattach __P((struct device *, struct device *, void *));
 static void	vmesattach __P((struct device *, struct device *, void *));
 static void	vmelattach __P((struct device *, struct device *, void *));
 
-int		busprint __P((void *, char *));
+int		busprint __P((void *, const char *));
 static int	busattach __P((struct device *, void *, void *, int));
 void *		bus_map __P((struct rom_reg *, int, int));
 int		obio_scan __P((struct device *, void *, void *));
@@ -122,7 +122,7 @@ busmatch(parent, vcf, aux)
 int
 busprint(args, obio)
 	void *args;
-	char *obio;
+	const char *obio;
 {
 	register struct confargs *ca = args;
 

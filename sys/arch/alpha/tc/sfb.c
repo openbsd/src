@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfb.c,v 1.4 1996/11/12 20:29:43 niklas Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.5 1996/11/23 21:45:01 kstailey Exp $	*/
 /*	$NetBSD: sfb.c,v 1.5 1996/10/13 03:00:35 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 
 int	sfbmatch __P((struct device *, void *, void *));
 void	sfbattach __P((struct device *, struct device *, void *));
-int	sfbprint __P((void *, /* const */ char *));
+int	sfbprint __P((void *, const char *));
 
 struct cfattach sfb_ca = {
 	sizeof(struct sfb_softc), sfbmatch, sfbattach,
@@ -251,7 +251,7 @@ sfbattach(parent, self, aux)
 int
 sfbprint(aux, pnp)
 	void *aux;
-	/* const */ char *pnp;
+	const char *pnp;
 {
 
 	if (pnp)

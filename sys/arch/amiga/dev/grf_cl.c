@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cl.c,v 1.6 1996/08/23 18:52:36 niklas Exp $	*/
+/*	$OpenBSD: grf_cl.c,v 1.7 1996/11/23 21:45:11 kstailey Exp $	*/
 /*      $NetBSD: grf_cl.c,v 1.11.4.1 1996/05/27 10:50:40 is Exp $        */
 
 /*
@@ -106,7 +106,7 @@ static void RegOnpass __P((volatile caddr_t));
 static void RegOffpass __P((volatile caddr_t));
 
 void grfclattach __P((struct device *, struct device *, void *));
-int grfclprint __P((void *, char *));
+int grfclprint __P((void *, const char *));
 int grfclmatch __P((struct device *, void *, void *));
 void cl_memset __P((unsigned char *, unsigned char, int));
 
@@ -358,8 +358,8 @@ grfclattach(pdp, dp, auxp)
 
 int
 grfclprint(auxp, pnp)
-	void   *auxp;
-	char   *pnp;
+	void *auxp;
+	const char   *pnp;
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbus.c,v 1.6 1996/05/29 10:15:45 niklas Exp $	*/
+/*	$OpenBSD: zbus.c,v 1.7 1996/11/23 21:45:24 kstailey Exp $	*/
 /*	$NetBSD: zbus.c,v 1.19 1996/05/19 21:06:09 veego Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
 
 void zbusattach __P((struct device *, struct device *, void *));
-int zbusprint __P((void *, char *));
+int zbusprint __P((void *, const char *));
 int zbusmatch __P((struct device *, void *, void *));
 caddr_t zbusmap __P((caddr_t, u_int));
 static char *aconflookup __P((int, int));
@@ -290,7 +290,7 @@ zbusattach(pdp, dp, auxp)
 int
 zbusprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	struct zbus_args *zap;
 	int rv;

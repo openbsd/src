@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.18 1996/11/12 20:30:57 niklas Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.19 1996/11/23 21:47:04 kstailey Exp $	*/
 /*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
 
 /**************************************************************************
@@ -3356,12 +3356,12 @@ static	char* ncr_probe (pcici_t tag, pcidi_t type)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 
-int ncr_print __P((void *, char *));
+int ncr_print __P((void *, const char *));
 
 int
 ncr_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 
 	if (name != NULL)

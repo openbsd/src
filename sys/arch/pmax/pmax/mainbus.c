@@ -54,7 +54,7 @@ struct mainbus_softc {
 /* Definition of the mainbus driver. */
 static int	mbmatch __P((struct device *, void *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
-static int	mbprint __P((void *, char *));
+static int	mbprint __P((void *, const char *));
 
 struct cfattach mainbus_ca = {
 	sizeof (struct mainbus_softc), mbmatch, mbattach
@@ -238,7 +238,7 @@ dev slot > number of slots for %s",
 static int
 mbprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	const char *pnp;
 {
 
 	if (pnp)

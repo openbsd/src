@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopdma.c,v 1.4 1996/05/29 17:54:12 chuck Exp $ */
+/*	$OpenBSD: siopdma.c,v 1.5 1996/11/23 21:46:01 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -60,7 +60,7 @@
 int	afscmatch	__P((struct device *, void *, void *));
 void	afscattach	__P((struct device *, struct device *, void *));
 
-int	afscprint	__P((void *auxp, char *));
+int	afscprint	__P((void *auxp, const char *));
 int	siopintr	__P((struct siop_softc *));
 int	afsc_dmaintr	__P((struct siop_softc *));
 
@@ -188,7 +188,7 @@ afscattach(parent, self, auxp)
 int
 afscprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return (UNCONF);

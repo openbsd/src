@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.2 1996/05/02 06:43:15 niklas Exp $	*/
+/*	$OpenBSD: device.h,v 1.3 1996/11/23 21:45:04 kstailey Exp $	*/
 /*	$NetBSD: device.h,v 1.5 1996/04/21 21:06:57 veego Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 void config_console __P((void));
 int amiga_config_found __P((struct cfdata *, struct device *,
     void *, cfprint_t ));
-int simple_devprint __P((void *, char *));
+int simple_devprint __P((void *, const char *));
 int matchname __P((char *, char *));
 /*
  * false when initing for the console.

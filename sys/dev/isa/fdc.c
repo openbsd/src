@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.6 1996/11/12 20:30:32 niklas Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.7 1996/11/23 21:46:40 kstailey Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ struct cfdriver fdc_cd = {
 	NULL, "fdc", DV_DULL
 };
 
-int fddprint __P((void *, char *));
+int fddprint __P((void *, const char *));
 int fdcintr __P((void *));
 
 int
@@ -242,7 +242,7 @@ fdcattach(parent, self, aux)
 int
 fddprint(aux, fdc)
 	void *aux;
-	char *fdc;
+	const char *fdc;
 {
 	register struct fdc_attach_args *fa = aux;
 

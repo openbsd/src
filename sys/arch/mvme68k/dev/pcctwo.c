@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.4 1996/06/11 10:15:21 deraadt Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.5 1996/11/23 21:46:00 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -95,7 +95,7 @@ pcctwomatch(parent, vcf, args)
 int
 pcctwo_print(args, bus)
 	void *args;
-	char *bus;
+	const char *bus;
 {
 	struct confargs *ca = args;
 

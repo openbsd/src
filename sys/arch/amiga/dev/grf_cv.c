@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cv.c,v 1.11 1996/10/04 15:12:36 niklas Exp $	*/
+/*	$OpenBSD: grf_cv.c,v 1.12 1996/11/23 21:45:13 kstailey Exp $	*/
 /*	$NetBSD: grf_cv.c,v 1.14 1996/05/19 21:05:27 veego Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 
 int	grfcvmatch  __P((struct device *, void *, void *));
 void	grfcvattach __P((struct device *, struct device *, void *));
-int	grfcvprint  __P((void *, char *));
+int	grfcvprint  __P((void *, const char *));
 
 static int cv_has_4mb __P((volatile caddr_t));
 static unsigned short cv_compute_clock __P((unsigned long));
@@ -413,7 +413,7 @@ grfcvattach(pdp, dp, auxp)
 int
 grfcvprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("ite at %s: ", pnp);

@@ -41,7 +41,7 @@
  */
 int atari_config_found __P((struct cfdata *, struct device *,
     void *, cfprint_t ));
-int simple_devprint __P((void *, char *));
+int simple_devprint __P((void *, const char *));
 int matchname __P((char *, char *));
 /*
  * false when initing for the console.

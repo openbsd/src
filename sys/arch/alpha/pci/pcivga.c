@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivga.c,v 1.7 1996/10/30 22:40:10 niklas Exp $	*/
+/*	$OpenBSD: pcivga.c,v 1.8 1996/11/23 21:44:55 kstailey Exp $	*/
 /*	$NetBSD: pcivga.c,v 1.11 1996/10/13 03:00:13 christos Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 int	pcivgamatch __P((struct device *, void *, void *));
 void	pcivgaattach __P((struct device *, struct device *, void *));
-int	pcivgaprint __P((void *, /* const */ char *));
+int	pcivgaprint __P((void *, const char *));
 
 struct cfattach pcivga_ca = {
 	sizeof(struct pcivga_softc), pcivgamatch, pcivgaattach,
@@ -221,7 +221,7 @@ pcivgaattach(parent, self, aux)
 int
 pcivgaprint(aux, pnp)
 	void *aux;
-	/* const */ char *pnp;
+	const char *pnp;
 {
 
 	if (pnp)

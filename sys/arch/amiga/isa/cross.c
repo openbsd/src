@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.6 1996/11/12 20:29:47 niklas Exp $	*/
+/*	$OpenBSD: cross.c,v 1.7 1996/11/23 21:45:26 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -57,7 +57,7 @@ int crossdebug = 0;
 
 void	crossattach __P((struct device *, struct device *, void *));
 int	crossmatch __P((struct device *, void *, void *));
-int	crossprint __P((void *, char *));
+int	crossprint __P((void *, const char *));
 
 int	cross_io_map __P((bus_chipset_tag_t, bus_io_addr_t, bus_io_size_t,
 	    bus_io_handle_t *));
@@ -200,7 +200,7 @@ crossattach(parent, self, aux)
 int
 crossprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(QUIET);

@@ -1,4 +1,4 @@
-/*	$Id: pcmcia_pcic.c,v 1.8 1996/10/23 16:41:58 deraadt Exp $	*/
+/*	$Id: pcmcia_pcic.c,v 1.9 1996/11/23 21:46:44 kstailey Exp $	*/
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
  *  All rights reserved.
@@ -133,11 +133,11 @@ static struct pcmcia_funcs pcic_funcs = {
 
 int pcic_probe __P((struct device *, void *, void *));
 void pcic_attach __P((struct device  *, struct device *, void *));
-int pcic_print __P((void *, char *));
+int pcic_print __P((void *, const char *));
 
 int pcicmaster_probe __P((struct device *, void *, void *));
 void pcicmaster_attach __P((struct device  *, struct device *, void *));
-int pcicmaster_print __P((void *, char *));
+int pcicmaster_print __P((void *, const char *));
 
 extern struct pcmciabus_link pcmcia_isa_link;
 
@@ -345,7 +345,7 @@ pcic_intr __P((void *));
 int
 pcic_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)       
 		printf("%s: pcmciabus ", name);
@@ -1053,7 +1053,7 @@ pcicmaster_attach(parent, self, aux)
 int
 pcicmaster_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)       
 		printf("%s: master controller ", name);

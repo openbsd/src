@@ -54,7 +54,7 @@
 #include <sparc/dev/espreg.h>
 #include <sparc/dev/espvar.h>
 
-int dmaprint		__P((void *, char *));
+int dmaprint		__P((void *, const char *));
 void dmaattach		__P((struct device *, struct device *, void *));
 int dmamatch		__P((struct device *, void *, void *));
 void dma_reset		__P((struct dma_softc *));
@@ -85,7 +85,7 @@ struct cfdriver ledma_cd = {
 int
 dmaprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	register struct confargs *ca = aux;
 

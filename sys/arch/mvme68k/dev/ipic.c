@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.4 1996/06/11 10:12:58 deraadt Exp $ */
+/*	$OpenBSD: ipic.c,v 1.5 1996/11/23 21:45:58 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -77,7 +77,7 @@ ipicmatch(parent, cf, args)
 int
 ipicprint(args, bus)
 	void *args;
-	char *bus;
+	const char *bus;
 {
 	struct confargs *ca = args;
 

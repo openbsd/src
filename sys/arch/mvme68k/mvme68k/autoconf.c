@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 1996/11/06 01:45:34 deraadt Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.10 1996/11/23 21:46:04 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -133,7 +133,7 @@ mainbus_match(parent, cf, args)
 int
 mainbus_print(args, bus)
 	void *args;
-	char *bus;
+	const char *bus;
 {
 	struct confargs *ca = args;
 

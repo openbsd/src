@@ -1,4 +1,4 @@
-/*	$OpenBSD: idesc.c,v 1.6 1996/08/23 18:53:01 niklas Exp $	*/
+/*	$OpenBSD: idesc.c,v 1.7 1996/11/23 21:45:19 kstailey Exp $	*/
 /*	$NetBSD: idesc.c,v 1.21.4.2 1996/05/30 03:20:14 mhitch Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ struct idec_softc
 
 int ide_scsicmd __P((struct scsi_xfer *));
 
-int idescprint __P((void *auxp, char *));
+int idescprint __P((void *auxp, const char *));
 void idescattach __P((struct device *, struct device *, void *));
 int idescmatch __P((struct device *, void *, void *));
 
@@ -430,7 +430,7 @@ idescattach(pdp, dp, auxp)
 int
 idescprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp == NULL)
 		return(UNCONF);

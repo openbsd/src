@@ -64,8 +64,6 @@
 #define	KDMAJOR 1
 #define PUT_WSIZE	64
 
-cdev_decl(kd);	/* open, close, read, write, ioctl, stop, ... */
-
 struct kd_softc {
 	struct	device kd_dev;		/* required first: base device */
 	struct  tty *kd_tty;

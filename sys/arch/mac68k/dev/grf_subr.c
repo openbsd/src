@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_subr.c,v 1.2 1996/08/10 21:37:44 briggs Exp $	*/
+/*	$OpenBSD: grf_subr.c,v 1.3 1996/11/23 21:45:51 kstailey Exp $	*/
 /*	$NetBSD: grf_subr.c,v 1.2 1996/08/04 06:03:56 scottr Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ grf_establish(sc, sp, g_mode, g_phys)
 int
 grfbusprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct grfbus_attach_args *ga = aux;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.6 1996/10/30 22:41:04 niklas Exp $	*/
+/*	$OpenBSD: esp.c,v 1.7 1996/11/23 21:44:59 kstailey Exp $	*/
 /*	$NetBSD: esp.c,v 1.22 1996/10/15 21:30:19 mycroft Exp $	*/
 
 #ifdef __sparc__
@@ -109,7 +109,7 @@
 int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
-/*static*/ int	espprint	__P((void *, char *));
+/*static*/ int	espprint	__P((void *, const char *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
@@ -164,7 +164,7 @@ struct scsi_device esp_dev = {
 int
 espprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	if (name != NULL)
 		printf("scsibus at %s", name);

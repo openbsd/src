@@ -262,7 +262,7 @@ iicmatch(parent, match, aux)
 int
 iicprint(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	struct iicbus_attach_args *ib = aux;
 

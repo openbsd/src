@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.5 1996/05/29 10:14:54 niklas Exp $	*/
+/*	$OpenBSD: grf.c,v 1.6 1996/11/23 21:45:10 kstailey Exp $	*/
 /*	$NetBSD: grf.c,v 1.27 1996/05/19 20:06:20 is Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ int grfbanked_set __P((dev_t, int));
 
 void grfattach __P((struct device *, struct device *, void *));
 int grfmatch __P((struct device *, void *, void *));
-int grfprint __P((void *, char *));
+int grfprint __P((void *, const char *));
 /*
  * pointers to grf drivers device structs 
  */
@@ -174,7 +174,7 @@ grfattach(pdp, dp, auxp)
 int
 grfprint(auxp, pnp)
 	void *auxp;
-	char *pnp;
+	const char *pnp;
 {
 	if (pnp)
 		printf("ite at %s", pnp);

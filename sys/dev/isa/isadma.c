@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.8 1996/10/16 12:32:36 deraadt Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.9 1996/11/23 21:46:41 kstailey Exp $	*/
 /*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
 
 #include <sys/param.h>
@@ -45,7 +45,7 @@ static u_int8_t dmamode[4] = {
 
 int isadmamatch __P((struct device *, void *, void *));
 void isadmaattach __P((struct device *, struct device *, void *));
-int isadmaprint __P((void *, char *));
+int isadmaprint __P((void *, const char *));
 
 struct cfattach isadma_ca = {
 	sizeof(struct device), isadmamatch, isadmaattach

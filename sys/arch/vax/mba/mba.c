@@ -72,7 +72,7 @@ struct	mbaunit mbaunit[] = {
 int	mbamatch __P((struct device *, void *, void *));
 void	mbaattach __P((struct device *, struct device *, void *));
 void	mbaintr __P((int));
-int	mbaprint __P((void *, char *));
+int	mbaprint __P((void *, const char *));
 void	mbaqueue __P((struct mba_device *));
 void	mbastart __P((struct mba_softc *));
 void	mbamapregs __P((struct mba_softc *));
@@ -238,8 +238,8 @@ mbaintr(mba)
 
 int
 mbaprint(aux, mbaname)
-	void	*aux;
-	char	*mbaname;
+	void		*aux;
+	const char	*mbaname;
 {
 	struct  mba_attach_args *ma = aux;
 

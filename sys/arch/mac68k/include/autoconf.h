@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.2 1996/05/26 18:35:45 briggs Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.3 1996/11/23 21:45:56 kstailey Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.2 1996/05/18 18:52:48 briggs Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ struct confargs {
 /* autoconf.c */
 void	setconf __P((void));
 int	bus_scan __P((struct device *, void *, void *));
-int	bus_print __P((void *, char *));
+int	bus_print __P((void *, const char *));
 int	bus_peek __P((int, vm_offset_t, int));
 char	*bus_mapin __P((int, int, int));
 void	configure __P((void));

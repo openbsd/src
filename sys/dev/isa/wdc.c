@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.14 1996/11/12 20:30:45 niklas Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.15 1996/11/23 21:46:49 kstailey Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -85,7 +85,7 @@
 LIST_HEAD(xfer_free_list, wdc_xfer) xfer_free_list;
 
 int	wdcprobe	__P((struct device *, void *, void *));
-int	wdcprint	__P((void *, char *));
+int	wdcprint	__P((void *, const char *));
 void	wdcattach	__P((struct device *, struct device *, void *));
 int	wdcintr		__P((void *));
 
@@ -198,7 +198,7 @@ wdcprobe(parent, match, aux)
 int
 wdcprint(aux, wdc)
 	void *aux;
-	char *wdc;
+	const char *wdc;
 {
 	struct wd_link *d_link = aux;
 
