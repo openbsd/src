@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.7 1995/06/27 00:16:17 jtc Exp $	*/
+/*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: lock.c,v 1.7 1995/06/27 00:16:17 jtc Exp $";
+static char rcsid[] = "$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -66,8 +66,10 @@ static char rcsid[] = "$NetBSD: lock.c,v 1.7 1995/06/27 00:16:17 jtc Exp $";
 #include <err.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <unistd.h>
 
 #define	TIMEOUT	15
 
@@ -84,7 +86,6 @@ main(argc, argv)
 	char **argv;
 {
 	extern char *optarg;
-	extern int errno, optind;
 	struct passwd *pw;
 	struct timeval timval;
 	struct itimerval ntimer, otimer;
@@ -93,7 +94,7 @@ main(argc, argv)
 	int ch, sectimeout, usemine;
 	char *ap, *mypw, *ttynam, *tzn;
 	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ];
-	char *crypt(), *ttyname();
+	char *crypt();
 
 	sectimeout = TIMEOUT;
 	mypw = NULL;
