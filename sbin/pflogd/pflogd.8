@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.14 2002/03/23 01:38:17 frantzen Exp $
+.\"	$OpenBSD: pflogd.8,v 1.15 2002/04/23 23:09:51 frantzen Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -149,7 +149,7 @@ The direction was outbound.
 Display the logs in real time of inbound packets that were blocked on
 the wi0 interface:
 .Bd -literal -offset indent
-# tcpdump -n -e -ttt -i pflog0 inbound and block and on wi0
+# tcpdump -n -e -ttt -i pflog0 inbound and action block and on wi0
 .Ed
 .Sh FILES
 .Bl -tag -width /var/run/pflogd.pid -compact
