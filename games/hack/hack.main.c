@@ -123,6 +123,7 @@ char *argv[];
 	 */
 	gettty();
 	setbuf(stdout,obuf);
+	umask(007);
 	setrandom();
 	startup();
 	cls();
