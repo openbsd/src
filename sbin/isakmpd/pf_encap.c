@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.6 1999/02/27 09:59:36 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.45 1999/02/26 14:41:31 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.7 1999/03/02 15:48:23 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.46 1999/03/02 15:43:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -680,9 +680,6 @@ pf_encap_enable_sa (struct sa *sa, int initiator)
   struct sockaddr *dst;
   int dstlen;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
-
-  /* XXX Hardwire for the time being.  */
-  sa->flags |= SA_FLAG_STAYALIVE;
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
 

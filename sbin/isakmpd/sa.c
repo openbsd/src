@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.7 1999/02/26 03:50:09 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.66 1999/02/25 11:39:20 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.8 1999/03/02 15:48:23 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.67 1999/03/02 15:42:57 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -512,4 +512,26 @@ sa_hard_expire (struct sa *sa)
 {
   sa->death = 0;
   sa_delete (sa, 1);
+}
+
+/*
+ * Get a SA attribute's flag value out of textual description.
+ * XXX Kind of overkill for just one attribute, maybe simplify?
+ */
+int
+sa_flag (char *attr)
+{
+  static struct sa_flag_map {
+    char *name;
+    int flag;
+  } sa_flag_map[] = {
+    { "stayalive", SA_FLAG_STAYALIVE }
+  };
+  int i;
+
+  for (i = 0; i < sizeof sa_flag_map / sizeof sa_flag_map[0]; i++)
+    if (strcasecmp (attr, sa_flag_map[i].name) == 0)
+      return sa_flag_map[i].flag;
+  log_print (LOG_MISC, 10, "sa_flag: attribute \"%s\" unknown", attr);
+  return 0;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.8 1999/02/26 03:37:56 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.64 1999/02/25 11:38:53 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.9 1999/03/02 15:48:23 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.65 1999/03/02 15:42:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -1005,6 +1005,8 @@ exchange_finalize (struct message *msg)
   struct exchange *exchange = msg->exchange;
   struct sa *sa;
   struct proto *proto;
+  struct conf_list *attrs;
+  struct conf_list_node *attr;
   int i;
 
   exchange_dump ("exchange_finalize", exchange);
@@ -1027,7 +1029,15 @@ exchange_finalize (struct message *msg)
 					 ISAKMP_NOTIFY_STATUS_CONNECTED, proto,
 					 i);
 	}
+
+      /* Setup the SA flags.  */
       sa->flags |= SA_FLAG_READY;
+      attrs = conf_get_list (sa->name, "Attributes");
+      if (attrs)
+	for (attr = TAILQ_FIRST (&attrs->fields); attr;
+	     attr = TAILQ_NEXT (attr, link))
+	  sa->flags |= sa_flag (attr->field);
+
       sa->exch_type = exchange->type;
     }
 
