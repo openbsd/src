@@ -1163,6 +1163,11 @@
 ./usr/share/man/cat4/wdc.0
 ./usr/share/man/cat4/we.0
 ./usr/share/man/cat4/wi.0
+./usr/share/man/cat4/wscons.0
+./usr/share/man/cat4/wsdisplay.0
+./usr/share/man/cat4/wskbd.0
+./usr/share/man/cat4/wsmouse.0
+./usr/share/man/cat4/wsmux.0
 ./usr/share/man/cat4/wx.0
 ./usr/share/man/cat4/xe.0
 ./usr/share/man/cat4/xl.0
