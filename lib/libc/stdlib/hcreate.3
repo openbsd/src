@@ -1,5 +1,5 @@
-.\"	$OpenBSD: hcreate.3,v 1.4 2003/05/30 13:11:14 jmc Exp $
-.\" 	$NetBSD: hcreate.3,v 1.2.4.1 2001/03/13 21:19:18 he Exp $
+.\" 	$OpenBSD: hcreate.3,v 1.1 2004/06/24 04:43:33 millert Exp $
+.\" 	$NetBSD: hcreate.3,v 1.6 2003/04/16 13:34:46 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Nm hsearch
 .Nd manage hash search table
 .Sh SYNOPSIS
-.Fd #include <search.h>
+.In search.h
 .Ft int
 .Fn hcreate "size_t nel"
 .Ft void
@@ -66,8 +66,7 @@ The
 .Fa nel
 argument specifies an estimate of the maximum number of entries to be held
 by the table.
-Unless further memory allocation fails, supplying an
-insufficient
+Unless further memory allocation fails, supplying an insufficient
 .Fa nel
 value will not result in functional harm, although a performance degradation
 may occur.
@@ -87,7 +86,8 @@ the data can no longer be accessed.
 The
 .Fn hsearch
 function is used to search to the hash table.
-It returns a pointer into the hash table indicating the address of an item.
+It returns a pointer into the
+hash table indicating the address of an item.
 The
 .Fa item
 argument is of type

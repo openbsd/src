@@ -1,12 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2001/04/16 00:08:46 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2004/06/24 04:43:33 millert Exp $
 
 .PATH: ${LIBCSRCDIR}/db/man
 
-MAN+=	btree.3 dbm.3 dbopen.3 hash.3 hcreate.3 mpool.3 ndbm.3 recno.3
+MAN+=	btree.3 dbm.3 dbopen.3 hash.3 mpool.3 ndbm.3 recno.3
 MLINKS+= dbopen.3 db.3
 MLINKS+= dbm.3 dbminit.3 dbm.3 dbmclose.3 dbm.3 fetch.3 dbm.3 store.3
 MLINKS+= dbm.3 delete.3 dbm.3 firstkey.3 dbm.3 nextkey.3
-MLINKS+= hcreate.3 hdestroy.3 hcreate.3 hsearch.3
 MLINKS+= mpool.3 mpool_open.3 mpool.3 mpool_filter.3 mpool.3 mpool_new.3
 MLINKS+= mpool.3 mpool_delete.3 mpool.3 mpool_get.3 mpool.3 mpool_put.3
 MLINKS+= mpool.3 mpool_sync.3 mpool.3 mpool_close.3
