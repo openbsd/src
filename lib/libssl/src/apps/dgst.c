@@ -207,7 +207,6 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"-prverify file  verify a signature using private key in file\n");
 		BIO_printf(bio_err,"-keyform arg    key file format (PEM or ENGINE)\n");
 		BIO_printf(bio_err,"-signature file signature to verify\n");
-		BIO_printf(bio_err,"-binary         output in binary form\n");
 		BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
 
 		BIO_printf(bio_err,"-%3s to use the %s message digest algorithm (default)\n",
