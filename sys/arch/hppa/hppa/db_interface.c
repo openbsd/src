@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.13 2000/05/30 22:09:45 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.14 2001/01/12 23:08:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -116,8 +116,10 @@ struct db_variable db_regs[] = {
 
 	{ "pidr1", (long *)&ddb_regs.tf_pidr1, FCN_NULL },
 	{ "pidr2", (long *)&ddb_regs.tf_pidr2, FCN_NULL },
+#ifdef pbably_not_worth_it
 	{ "pidr3", (long *)&ddb_regs.tf_pidr3, FCN_NULL },
 	{ "pidr4", (long *)&ddb_regs.tf_pidr4, FCN_NULL },
+#endif
 
 	{ "hptm",  (long *)&ddb_regs.tf_hptm,  FCN_NULL },
 	{ "vtop",  (long *)&ddb_regs.tf_vtop,  FCN_NULL },
@@ -242,7 +244,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	register_t fp, pc, rp, nargs, *argp;
 	db_sym_t sym;
 	db_expr_t off;
-	char *name;
+	const char *name;
 	char **argnp, *argnames[HPPA_FRAME_NARGS];
 
 	if (USERMODE(pc))
