@@ -4,6 +4,10 @@
 /*=============================================================================
  Copyright (c) 1997-1999  Yamaha Corporation. All Rights Reserved.
 
+ In private mail to deraadt@openbsd.org:
+ "Free distribution, No restriction for their distribution, We do not make
+ any support." -- suzuki-y@post.yamaha.co.jp
+
   Title:
       hwmcode.c
   Desc:
