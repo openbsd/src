@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2002/04/30 01:05:22 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2002/04/30 03:23:57 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -7,7 +7,7 @@ IMAGE=		mr.fs
 CBIN?=		instbin
 CRUNCHCONF?=	${CBIN}.conf
 CRUNCHCONFS?=	${.CURDIR}/../common/crunch.conf
-LISTS?=		${.CURDIR}/../common/list ${.CURDIR}
+LISTS?=		${.CURDIR}/../common/list
 UTILS?=		${.CURDIR}/../../miniroot
 
 MOUNT_POINT=	/mnt
@@ -107,14 +107,15 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
-${CRUNCHCONF}: ${CRUNCHCONFS}
-	cat ${CRUNCHCONFS} > ${CRUNCHCONF}
+${CRUNCHCONF}: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
+	rm ${MOUNT_POINT}/${CBIN}
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}*.cache \
