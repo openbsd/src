@@ -1,4 +1,4 @@
-/* $OpenBSD: common.h,v 1.14 2003/07/21 14:00:41 deraadt Exp $ */
+/* $OpenBSD: common.h,v 1.15 2003/07/21 14:30:31 deraadt Exp $ */
 
 #define DEBUGGING
 
@@ -24,15 +24,8 @@
 
 /* constants */
 
-/* AIX predefines these.  */
-#ifdef TRUE
-#undef TRUE
-#endif
-#ifdef FALSE
-#undef FALSE
-#endif
-#define TRUE (1)
-#define FALSE (0)
+#define TRUE	1
+#define FALSE	0
 
 #define MAXHUNKSIZE 100000	/* is this enough lines? */
 #define INITHUNKMAX 125		/* initial dynamic allocation size */
@@ -68,7 +61,6 @@
 
 typedef char    bool;
 typedef long    LINENUM;	/* must be signed */
-typedef unsigned MEM;		/* what to feed malloc */
 
 /* globals */
 
@@ -135,10 +127,3 @@ EXT char        else_defined[] INIT("#else\n");	/* #else */
 EXT char        end_defined[128];	/* #endif xyzzy */
 
 EXT char       *revision INIT(Nullch);	/* prerequisite revision, if any */
-
-#if !defined(S_ISDIR) && defined(S_IFDIR)
-#define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
-#endif
-#if !defined(S_ISREG) && defined(S_IFREG)
-#define	S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-#endif

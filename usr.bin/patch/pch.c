@@ -1,7 +1,7 @@
-/* $OpenBSD: pch.c,v 1.18 2003/07/21 14:27:35 deraadt Exp $	 */
+/* $OpenBSD: pch.c,v 1.19 2003/07/21 14:30:31 deraadt Exp $	 */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: pch.c,v 1.18 2003/07/21 14:27:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pch.c,v 1.19 2003/07/21 14:30:31 deraadt Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -82,12 +82,12 @@ set_hunkmax(void)
 {
 #ifndef lint
 	if (p_line == Null(char **))
-		p_line = (char **) malloc((MEM) hunkmax * sizeof(char *));
+		p_line = (char **) malloc((size_t) hunkmax * sizeof(char *));
 	if (p_len == Null(short *))
-		p_len = (short *) malloc((MEM) hunkmax * sizeof(short));
+		p_len = (short *) malloc((size_t) hunkmax * sizeof(short));
 #endif
 	if (p_char == Nullch)
-		p_char = (char *) malloc((MEM) hunkmax * sizeof(char));
+		p_char = (char *) malloc((size_t) hunkmax * sizeof(char));
 }
 
 /*
@@ -105,9 +105,9 @@ grow_hunkmax(void)
 	 */
 	assert(p_line != Null(char **) &&p_len != Null(short *) &&p_char != Nullch);
 #ifndef lint
-	p_line = (char **) realloc((char *) p_line, (MEM) hunkmax * sizeof(char *));
-	p_len = (short *) realloc((char *) p_len, (MEM) hunkmax * sizeof(short));
-	p_char = (char *) realloc((char *) p_char, (MEM) hunkmax * sizeof(char));
+	p_line = (char **) realloc((char *) p_line, hunkmax * sizeof(char *));
+	p_len = (short *) realloc((char *) p_len, hunkmax * sizeof(short));
+	p_char = (char *) realloc((char *) p_char, hunkmax * sizeof(char));
 #endif
 	if (p_line != Null(char **) &&p_len != Null(short *) &&p_char != Nullch)
 		return;

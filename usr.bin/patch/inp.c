@@ -1,7 +1,7 @@
-/* $OpenBSD: inp.c,v 1.12 2003/07/21 14:00:41 deraadt Exp $	 */
+/* $OpenBSD: inp.c,v 1.13 2003/07/21 14:30:31 deraadt Exp $	 */
 
 #ifndef lint
-static char     rcsid[] = "$OpenBSD: inp.c,v 1.12 2003/07/21 14:00:41 deraadt Exp $";
+static char     rcsid[] = "$OpenBSD: inp.c,v 1.13 2003/07/21 14:30:31 deraadt Exp $";
 #endif				/* not lint */
 
 #include "EXTERN.h"
@@ -170,13 +170,7 @@ plan_a(char *filename)
 		out_of_mem = FALSE;
 		return FALSE;	/* force plan b because plan a bombed */
 	}
-#ifdef lint
-	i_womp = Nullch;
-#else
-	i_womp = malloc((MEM) (i_size + 2));	/* lint says this may alloc
-						 * less than */
-	/* i_size, but that's okay, I think. */
-#endif
+	i_womp = malloc(i_size + 2);
 	if (i_womp == Nullch)
 		return FALSE;
 	if ((ifd = open(filename, O_RDONLY)) < 0)
@@ -203,7 +197,7 @@ plan_a(char *filename)
 #ifdef lint
 	i_ptr = Null(char **);
 #else
-	i_ptr = (char **) malloc((MEM) ((iline + 2) * sizeof(char *)));
+	i_ptr = (char **) malloc((iline + 2) * sizeof(char *));
 #endif
 	if (i_ptr == Null(char **)) {	/* shucks, it was a near thing */
 		free((char *) i_womp);
@@ -293,10 +287,10 @@ plan_b(char *filename)
 	fseek(ifp, 0L, 0);	/* rewind file */
 	lines_per_buf = BUFFERSIZE / maxlen;
 	tireclen = maxlen;
-	tibuf[0] = malloc((MEM) (BUFFERSIZE + 1));
+	tibuf[0] = malloc(BUFFERSIZE + 1);
 	if (tibuf[0] == Nullch)
 		fatal("out of memory\n");
-	tibuf[1] = malloc((MEM) (BUFFERSIZE + 1));
+	tibuf[1] = malloc(BUFFERSIZE + 1);
 	if (tibuf[1] == Nullch)
 		fatal("out of memory\n");
 	for (i = 1;; i++) {

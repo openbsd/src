@@ -1,7 +1,7 @@
-/* $OpenBSD: util.c,v 1.13 2003/07/21 14:00:41 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.14 2003/07/21 14:30:31 deraadt Exp $	 */
 
 #ifndef lint
-static char     rcsid[] = "$OpenBSD: util.c,v 1.13 2003/07/21 14:00:41 deraadt Exp $";
+static char     rcsid[] = "$OpenBSD: util.c,v 1.14 2003/07/21 14:30:31 deraadt Exp $";
 #endif				/* not lint */
 
 #include "EXTERN.h"
@@ -166,7 +166,7 @@ savestr(char *s)
 	t = s;
 	while (*t++)
 		;
-	rv = malloc((MEM) (t - s));
+	rv = malloc((size_t) (t - s));
 	if (rv == Nullch) {
 		if (using_plan_a)
 			out_of_mem = TRUE;
