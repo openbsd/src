@@ -1,4 +1,4 @@
-/*	$OpenBSD: tgoto.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: tgoto.c,v 1.2 1996/06/16 08:56:56 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tgoto.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tgoto.c,v 1.2 1996/06/16 08:56:56 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -43,5 +43,5 @@ tgoto(CM, col, line)
      const char *CM;
      int col, line;
 {
-    return tparm(CM, col, line);
+    return tparm(CM, line, col);
 }
