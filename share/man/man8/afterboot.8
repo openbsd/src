@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.77 2003/02/15 09:44:42 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.78 2003/03/15 23:10:32 avsm Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -733,13 +733,13 @@ as needed.
 Install your own packages.
 The
 .Ox
-ports collection includes a large set of Third-Party software.
+ports collection includes a large set of third-party software.
 A lot of it is available as binary packages that you can download from
 .Pa ftp://ftp.openbsd.org
 or a mirror, and install using
 .Xr pkg_add 1 .
 See
-.Pa http://www.openbsd.org/ports.html
+.Xr ports 7
 and
 .Xr packages 7
 for more details.
@@ -750,7 +750,7 @@ You will need to install any shared libraries, etc.
 .Ic man -k compat
 to find out how to install and use compatibility mode.)
 .Pp
-There is also other Third-Party Software that is available
+There is also other third-party software that is available
 in source form only, either because it has not been ported to
 .Ox
 yet, or because licensing restrictions make binary redistribution
@@ -870,6 +870,7 @@ boot time in the kernel image.
 .Xr resolv.conf 5 ,
 .Xr hostname 7 ,
 .Xr packages 7 ,
+.Xr ports 7 ,
 .Xr adduser 8 ,
 .Xr amd 8 ,
 .Xr bootpd 8 ,
