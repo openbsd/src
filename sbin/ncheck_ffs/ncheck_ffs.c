@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.1 1996/06/25 04:43:45 tholo Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.2 1996/06/30 04:43:34 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.1 1996/06/25 04:43:45 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.2 1996/06/30 04:43:34 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -403,7 +403,7 @@ searchdir(ino, blkno, size, filesize, path)
 void
 usage()
 {
-	fprintf(stderr, "Usage: ncheck [-i numbers] [-as] filesystem\n");
+	fprintf(stderr, "Usage: ncheck_ffs [-i numbers] [-ams] filesystem\n");
 	exit(3);
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncheck_ffs.8,v 1.1 1996/06/25 04:43:44 tholo Exp $
+.\"	$OpenBSD: ncheck_ffs.8,v 1.2 1996/06/30 04:43:33 tholo Exp $
 .\"
 .\" Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Sh SYNOPSIS
 .Nm ncheck_ffs
 .Op Fl i Ar numbers
-.Op Fl asv
+.Op Fl ams
 .Ar filesystem
 .Sh DESCRIPTION
 .Nm ncheck_ffs
@@ -54,11 +54,11 @@ are as follows:
 Report only those files whose inode numbers follows.
 .It Fl a
 Print the file names `.' and `..', which are ordinarily skipped.
+.It Fl m
+Give more verbose information on inodes
 .It Fl s
 Report only special files and files with set-user-ID or set-group-ID
 set.  This is meant to find hidden violations of security policies.
-.It Fl v
-Give more verbose information on inodes
 .Sh SEE ALSO
 .Xr sort 1 ,
 .Xr fsck 8
