@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.305 2004/11/16 18:09:14 mpf Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.306 2004/12/04 08:02:13 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1911,7 +1911,18 @@ Prevent state changes for states created by this rule from appearing on the
 interface.
 .It Ar <timeout> <seconds>
 Changes the timeout values used for states created by this rule.
+For a list of all valid timeout names, see
+.Sx OPTIONS
+above.
 .El
+.Pp
+Multiple options can be specified, separated by commas:
+.Bd -literal
+pass in proto tcp from any to any \e
+      port www flags S/SA keep state \e
+      (max 100, source-track rule, max-src-nodes 75, \e
+      max-src-states 3, tcp.established 60, tcp.closing 5)
+.Ed
 .Pp
 When the
 .Ar source-track
@@ -1919,13 +1930,58 @@ keyword is specified, the number of states per source IP is tracked.
 The following limits can be set:
 .Pp
 .Bl -tag -width xxxx -compact
-.It Ar max-src-nodes
+.It Ar max-src-nodes <number>
 Limits the maximum number of source addresses which can simultaneously
 have state table entries.
-.It Ar max-src-states
+.It Ar max-src-states <number>
 Limits the maximum number of simultaneous state entries that a single
 source address can create with this rule.
 .El
+.Pp
+For stateful TCP connections, limits on established connections (connections
+which have completed the TCP 3-way handshake) can also be enforced
+per source IP.
+.Pp
+.Bl -tag -width xxxx -compact
+.It Ar max-src-conn <number>
+Limits the maximum number of simultaneous TCP connections which have
+completed the 3-way handshake that a single host can make.
+.It Ar max-src-conn-rate <number> / <seconds>
+Limit the number of new connections over a time interval.
+The connection rate is an approximation calculated as a moving average.
+.El
+.Pp
+Because the 3-way handshake ensures that the source address is not being
+spoofed, more aggressive action can be taken based on these limits.
+With the
+.Ar overflow <table>
+state option, source IP addresses which hit either of the limits on
+established connections will be added to the named table.
+This table can be used in the ruleset to block further activity from
+the offending host, redirect it to a tarpit process, or restrict that
+host's bandwidth.
+.Pp
+The optional
+.Ar flush
+keyword kills all existing states originating from hosts exceeding these
+limits.
+For example, the following rules will protect the webserver against
+hosts making more than 100 connections in 10 seconds.
+Any host which connects faster than this rate will have it's address added
+to the <bad_hosts> table and have all states originating from it flushed.
+Any new packets arriving from this host will be dropped unconditionally
+by the block rule.
+.Bd -literal -offset indent
+block quick from <bad_hosts>
+pass in on $ext_if to $webserver port www flags S/SA keep state \e
+	(max-src-conn-rate 100/10, overflow <bad_hosts> flush)
+.Ed
+.Sh OPERATING SYSTEM FINGERPRINTING
+Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP
+connection's initial SYN packet and guess at the host's operating system.
+Unfortunately these nuances are easily spoofed by an attacker so the
+fingerprint is not useful in making security decisions.
+But the fingerprint is typically accurate enough to make policy decisions
 .Pp
 For a list of all valid timeout names, see
 .Sx OPTIONS
@@ -2665,6 +2721,9 @@ state-opts     = state-opt [ [ "," ] state-opts ]
 state-opt      = ( "max" number | "no-sync" | timeout |
                  "source-track" [ ( "rule" | "global" ) ] |
 		 "max-src-nodes" number | "max-src-states" number |
+		 "max-src-conn" number |
+		 "max-src-conn-rate" number "/" number |
+		 "overflow" "<" string ">" [ "flush" ] |
                  "if-bound" | "group-bound" | "floating" )
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
