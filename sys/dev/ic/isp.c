@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.26 2002/05/17 01:31:13 mjacob Exp $ */
+/* 	$OpenBSD: isp.c,v 1.27 2002/08/17 17:48:45 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -161,7 +161,7 @@ isp_reset(struct ispsoftc *isp)
 {
 	mbreg_t mbs;
 	u_int16_t code_org;
-	int loops, i, touched, dodnld = 1;
+	int loops, i, dodnld = 1;
 	char *btype = "????";
 
 	isp->isp_state = ISP_NILSTATE;
@@ -184,7 +184,7 @@ isp_reset(struct ispsoftc *isp)
 	 * case, we don't really use this yet, but we may in
 	 * the future.
 	 */
-	if ((touched = isp->isp_touched) == 0) {
+	if (isp->isp_touched == 0) {
 		/*
 		 * First see whether or not we're sitting in the ISP PROM.
 		 * If we've just been reset, we'll have the string "ISP   "
@@ -728,11 +728,17 @@ again:
 	if (IS_FC(isp)) {
 		/*
 		 * We do not believe firmware attributes for 2100 code less
-		 * than 1.17.0.
+		 * than 1.17.0, unless it's the firmware we specifically
+		 * are loading.
+		 *
+		 * Note that all 22XX and 23XX f/w is greater than 1.X.0.
 		 */
-		if (IS_2100(isp) && 
-		   (ISP_FW_REVX(isp->isp_fwrev) < ISP_FW_REV(1, 17, 0))) {
+		if (!(ISP_FW_NEWER_THAN(isp, 1, 17, 0))) {
+#ifdef	USE_SMALLER_2100_FIRMWARE
+			FCPARAM(isp)->isp_fwattr = ISP_FW_ATTR_SCCLUN;
+#else
 			FCPARAM(isp)->isp_fwattr = 0;
+#endif
 		} else {
 			FCPARAM(isp)->isp_fwattr = mbs.param[6];
 			isp_prt(isp, ISP_LOGDEBUG0,
@@ -791,19 +797,21 @@ again:
 	 * because we may be called again after firmware has been loaded once
 	 * and released.
 	 */
-	if (touched == 0) {
-		if (IS_SCSI(isp)) {
-			if (dodnld) {
+	if (IS_SCSI(isp)) {
+		if (dodnld) {
+			if (IS_ULTRA2(isp) || IS_ULTRA3(isp)) {
 				isp->isp_maxluns = 32;
 			} else {
 				isp->isp_maxluns = 8;
 			}
 		} else {
-			if (FCPARAM(isp)->isp_fwattr & ISP_FW_ATTR_SCCLUN) {
-				isp->isp_maxluns = 16384;
-			} else {
-				isp->isp_maxluns = 16;
-			}
+			isp->isp_maxluns = 8;
+		}
+	} else {
+		if (FCPARAM(isp)->isp_fwattr & ISP_FW_ATTR_SCCLUN) {
+			isp->isp_maxluns = 16384;
+		} else {
+			isp->isp_maxluns = 16;
 		}
 	}
 }
@@ -1170,7 +1178,7 @@ isp_fibre_init(struct ispsoftc *isp)
 	 * because otherwise port database entries don't get updated after
 	 * a LIP- this is a known f/w bug for 2100 f/w less than 1.17.0.
 	 */
-	if (ISP_FW_REVX(isp->isp_fwrev) < ISP_FW_REV(1, 17, 0)) {
+	if (!ISP_FW_NEWER_THAN(isp, 1, 17, 0)) {
 		fcp->isp_fwoptions |= ICBOPT_FULL_LOGIN;
 	}
 
@@ -1242,9 +1250,17 @@ isp_fibre_init(struct ispsoftc *isp)
 			break;
 		}
 		if (IS_23XX(isp)) {
-			if (IS_2300(isp) && isp->isp_revision < 2) {
-				icbp->icb_fwoptions &= ~ICBOPT_FAST_POST;
-			}
+			/*
+			 * QLogic recommends that FAST Posting be turned
+			 * off for 23XX cards and instead allow the HBA
+			 * to write response queue entries and interrupt
+			 * after a delay (ZIO).
+			 *
+			 * If we set ZIO, it will disable fast posting,
+			 * so we don't need to clear it in fwoptions.
+			 */
+			icbp->icb_xfwoptions |= ICBXOPT_ZIO;
+
 			if (isp->isp_confopts & ISP_CFG_ONEGB) {
 				icbp->icb_zfwoptions |= ICBZOPT_RATE_ONEGB;
 			} else if (isp->isp_confopts & ISP_CFG_TWOGB) {
@@ -1263,21 +1279,24 @@ isp_fibre_init(struct ispsoftc *isp)
 	 * More specifically, on a 2204 I had problems with RIO
 	 * on a Linux system where I was dropping commands right
 	 * and left. It's not clear to me what the actual problem
-	 * was, but it seems safer to only support this on the
-	 * 23XX cards.
+	 * was.
 	 *
-	 * I have it disabled if we support a target mode role for
-	 * reasons I can't now remember.
+	 * 23XX Cards do not support RIO. Instead they support ZIO.
 	 */
-	if ((isp->isp_role & ISP_ROLE_TARGET) == 0 && IS_23XX(isp)) {
+#if	0
+	if (!IS_23XX(isp) && ISP_FW_NEWER_THAN(isp, 1, 17, 0)) {
 		icbp->icb_xfwoptions |= ICBXOPT_RIO_16BIT;
 		icbp->icb_racctimer = 4;
 		icbp->icb_idelaytimer = 8;
 	}
 #endif
+#endif
 
-	if ((IS_2200(isp) && ISP_FW_REVX(isp->isp_fwrev) >=
-	    ISP_FW_REV(2, 1, 26)) || IS_23XX(isp)) {
+	/*
+	 * For 22XX > 2.1.26 && 23XX, set someoptions.
+	 * XXX: Probably okay for newer 2100 f/w too.
+	 */
+	if (ISP_FW_NEWER_THAN(isp, 2, 26, 0)) {
 		/*
 		 * Turn on LIP F8 async event (1)
 		 * Turn on generate AE 8013 on all LIP Resets (2)
@@ -1324,8 +1343,9 @@ isp_fibre_init(struct ispsoftc *isp)
 	icbp->icb_respaddr[RQRSP_ADDR1631] = DMA_WD1(isp->isp_result_dma);
 	icbp->icb_respaddr[RQRSP_ADDR3247] = DMA_WD2(isp->isp_result_dma);
 	icbp->icb_respaddr[RQRSP_ADDR4863] = DMA_WD3(isp->isp_result_dma);
-	isp_prt(isp, ISP_LOGDEBUG1,
-	    "isp_fibre_init: fwoptions 0x%x", fcp->isp_fwoptions);
+	isp_prt(isp, ISP_LOGDEBUG0,
+	    "isp_fibre_init: fwopt 0x%x xfwopt 0x%x zfwopt 0x%x",
+	    icbp->icb_fwoptions, icbp->icb_xfwoptions, icbp->icb_zfwoptions);
 
 	FC_SCRATCH_ACQUIRE(isp);
 	isp_put_icb(isp, icbp, (isp_icb_t *)fcp->isp_scratch);
@@ -1583,11 +1603,20 @@ isp_fclink_test(struct ispsoftc *isp, int usdelay)
 	 */
 	fcp->isp_onfabric = 0;
 
-	if (IS_2100(isp))
+	if (IS_2100(isp)) {
+		/*
+		 * Don't bother with fabric if we are using really old
+		 * 2100 firmware. It's just not worth it.
+		 */
+		if (ISP_FW_NEWER_THAN(isp, 1, 15, 37)) {
+			check_for_fabric = 1;
+		} else {
+			check_for_fabric = 0;
+		}
+	} else if (fcp->isp_topo == TOPO_FL_PORT ||
+	    fcp->isp_topo == TOPO_F_PORT) {
 		check_for_fabric = 1;
-	else if (fcp->isp_topo == TOPO_FL_PORT || fcp->isp_topo == TOPO_F_PORT)
-		check_for_fabric = 1;
-	else
+	} else
 		check_for_fabric = 0;
 
 	if (check_for_fabric && isp_getpdb(isp, FL_PORT_ID, &pdb) == 0) {
@@ -2412,7 +2441,13 @@ isp_scan_fabric(struct ispsoftc *isp, int ftype)
 		rs0 = (sns_ga_nxt_rsp_t *) ((u_int8_t *)fcp->isp_scratch+0x100);
 		isp_get_ga_nxt_response(isp, rs0, rs1);
 		if (rs1->snscb_cthdr.ct_response != FS_ACC) {
-			isp_prt(isp, ISP_LOGWARN, swrej, "GA_NXT",
+			int level;
+			if (rs1->snscb_cthdr.ct_reason == 9 &&
+			    rs1->snscb_cthdr.ct_explanation == 7)
+				level = ISP_LOGDEBUG0;
+			else
+				level = ISP_LOGWARN;
+			isp_prt(isp, level, swrej, "GA_NXT",
 			    rs1->snscb_cthdr.ct_reason,
 			    rs1->snscb_cthdr.ct_explanation, portid);
 			FC_SCRATCH_RELEASE(isp);
@@ -2424,6 +2459,10 @@ isp_scan_fabric(struct ispsoftc *isp, int ftype)
 		    (((u_int32_t) rs1->snscb_port_id[1]) << 8) |
 		    (((u_int32_t) rs1->snscb_port_id[2]));
 
+		/*
+		 * XXX: We should check to make sure that this entry
+		 * XXX: supports the type(s) we are interested in.
+		 */
 		/*
 		 * Okay, we now have information about a fabric object.
 		 * If it is the type we're interested in, tell the outer layers
@@ -2557,7 +2596,13 @@ isp_scan_fabric(struct ispsoftc *isp, int ftype)
 	rs0 = (sns_gid_ft_rsp_t *) ((u_int8_t *)fcp->isp_scratch+IGPOFF);
 	isp_get_gid_ft_response(isp, rs0, rs1, NGENT);
 	if (rs1->snscb_cthdr.ct_response != FS_ACC) {
-		isp_prt(isp, ISP_LOGWARN, swrej, "GID_FT",
+		int level;
+		if (rs1->snscb_cthdr.ct_reason == 9 &&
+		    rs1->snscb_cthdr.ct_explanation == 7)
+			level = ISP_LOGDEBUG0;
+		else
+			level = ISP_LOGWARN;
+		isp_prt(isp, level, swrej, "GID_FT",
 		    rs1->snscb_cthdr.ct_reason,
 		    rs1->snscb_cthdr.ct_explanation, 0);
 		FC_SCRATCH_RELEASE(isp);
@@ -3024,7 +3069,7 @@ isp_start(XS_T *xs)
 				return (CMD_RQLATER);
 			}
 			if (fcp->isp_fwstate != FW_READY ||
-			    fcp->isp_loopstate < LOOP_PDB_RCVD) {
+			    fcp->isp_loopstate < LOOP_FSCAN_DONE) {
 				return (CMD_RQLATER);
 			}
 		}
@@ -3200,7 +3245,7 @@ isp_start(XS_T *xs)
 	XS_SETERR(xs, HBA_NOERROR);
 	isp_prt(isp, ISP_LOGDEBUG2,
 	    "START cmd for %d.%d.%d cmd 0x%x datalen %ld",
-	    XS_CHANNEL(xs), target, XS_LUN(xs), XS_CDBP(xs)[0],
+	    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs), XS_CDBP(xs)[0],
 	    (long) XS_XFRLEN(xs));
 	ISP_ADD_REQUEST(isp, nxti);
 	isp->isp_nactive++;
@@ -3440,7 +3485,8 @@ again:
 		} else if (isp_parse_async(isp, mbox) < 0) {
 			return;
 		}
-		if (IS_FC(isp) || isp->isp_state != ISP_RUNSTATE) {
+		if ((IS_FC(isp) && mbox != ASYNC_RIO_RESP) ||
+		    isp->isp_state != ISP_RUNSTATE) {
 			ISP_WRITE(isp, HCCR, HCCR_CMD_CLEAR_RISC_INT);
 			ISP_WRITE(isp, BIU_SEMA, 0);
 			return;
@@ -3666,11 +3712,15 @@ again:
 			 * Only whine if this isn't the expected fallout of
 			 * aborting the command.
 			 */
-			if (sp->req_header.rqs_entry_type != RQSTYPE_RESPONSE ||
-			    ts != RQCS_ABORTED) {
+			if (sp->req_header.rqs_entry_type != RQSTYPE_RESPONSE) {
 				isp_prt(isp, ISP_LOGERR,
-				    "cannot find handle 0x%x in xflist",
-				    sp->req_handle);
+				    "cannot find handle 0x%x (type 0x%x)",
+				    sp->req_handle,
+				    sp->req_header.rqs_entry_type);
+			} else if (ts != RQCS_ABORTED) {
+				isp_prt(isp, ISP_LOGERR,
+				    "cannot find handle 0x%x (status 0x%x)",
+				    sp->req_handle, ts);
 			}
 			WRITE_RESPONSE_QUEUE_OUT_POINTER(isp, optr);
 			continue;
@@ -3860,8 +3910,20 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		isp_async(isp, ISPASYNC_BUS_RESET, &bus);
 		break;
 	case ASYNC_SYSTEM_ERROR:
+#ifdef	ISP_FW_CRASH_DUMP
+		/*
+		 * If we have crash dumps enabled, it's up to the handler
+		 * for isp_async to reinit stuff and restart the firmware
+		 * after performing the crash dump. The reason we do things
+		 * this way is that we may need to activate a kernel thread
+		 * to do all the crash dump goop.
+		 */
 		isp_async(isp, ISPASYNC_FW_CRASH, NULL);
-		/* no point continuing after this */
+#else
+		isp_async(isp, ISPASYNC_FW_CRASH, NULL);
+		isp_reinit(isp);
+		isp_async(isp, ISPASYNC_FW_RESTARTED, NULL);
+#endif
 		rval = -1;
 		break;
 
@@ -3980,7 +4042,7 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 		break;
 
 	case ASYNC_RIO_RESP:
-		break;
+		return (rval);
 
 	case ASYNC_CTIO_DONE:
 	{
@@ -4121,11 +4183,9 @@ isp_parse_async(struct ispsoftc *isp, u_int16_t mbox)
 			break;
 		case ISP_CONN_FATAL:
 			isp_prt(isp, ISP_LOGERR, "FATAL CONNECTION ERROR");
+			isp_async(isp, ISPASYNC_FW_CRASH, NULL);
 			isp_reinit(isp);
-#ifdef	ISP_TARGET_MODE
-			(void) isp_target_async(isp, bus, ASYNC_SYSTEM_ERROR);
-#endif
-			/* no point continuing after this */
+			isp_async(isp, ISPASYNC_FW_RESTARTED, NULL);
 			return (-1);
 		case ISP_CONN_LOOPBACK:
 			isp_prt(isp, ISP_LOGWARN,
@@ -4323,6 +4383,16 @@ isp_parse_status(struct ispsoftc *isp, ispstatusreq_t *sp, XS_T *xs)
 	case RQCS_TIMEOUT:
 		isp_prt(isp, ISP_LOGWARN, "command timed out for %d.%d.%d",
 		    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
+		/*
+	 	 * Check to see if we logged out the device.
+		 */
+		if (IS_FC(isp)) {
+			if ((sp->req_completion_status & RQSTF_LOGOUT) &&
+			    FCPARAM(isp)->portdb[XS_TGT(xs)].valid &&
+			    FCPARAM(isp)->portdb[XS_TGT(xs)].fabric_dev) {
+				FCPARAM(isp)->portdb[XS_TGT(xs)].relogin = 1;
+			}
+		}
 		if (XS_NOERR(xs)) {
 			XS_SETERR(xs, HBA_CMDTIMEOUT);
 		}
@@ -5468,6 +5538,13 @@ isp_update_bus(struct ispsoftc *isp, int bus)
 	}
 }
 
+#ifndef	DEFAULT_FRAMESIZE
+#define	DEFAULT_FRAMESIZE(isp)		ICB_DFLT_FRMLEN
+#endif
+#ifndef	DEFAULT_EXEC_THROTTLE
+#define	DEFAULT_EXEC_THROTTLE(isp)	ISP_EXEC_THROTTLE
+#endif
+
 static void
 isp_setdfltparm(struct ispsoftc *isp, int channel)
 {
@@ -5484,9 +5561,9 @@ isp_setdfltparm(struct ispsoftc *isp, int channel)
 			return;
 		}
 		fcp->isp_gotdparms = 1;
-		fcp->isp_maxfrmlen = ICB_DFLT_FRMLEN;
+		fcp->isp_maxfrmlen = DEFAULT_FRAMESIZE(isp);
 		fcp->isp_maxalloc = ICB_DFLT_ALLOC;
-		fcp->isp_execthrottle = ISP_EXEC_THROTTLE;
+		fcp->isp_execthrottle = DEFAULT_EXEC_THROTTLE(isp);
 		fcp->isp_retry_delay = ICB_DFLT_RDELAY;
 		fcp->isp_retry_count = ICB_DFLT_RCOUNT;
 		/* Platform specific.... */
@@ -5703,19 +5780,16 @@ isp_reinit(struct ispsoftc *isp)
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
 		isp_prt(isp, ISP_LOGERR, "isp_reinit cannot reset card");
-		goto skip;
+	} else if (isp->isp_role != ISP_ROLE_NONE) {
+		isp_init(isp);
+		if (isp->isp_state == ISP_INITSTATE) {
+			isp->isp_state = ISP_RUNSTATE;
+		}
+		if (isp->isp_state != ISP_RUNSTATE) {
+			isp_prt(isp, ISP_LOGERR,
+			    "isp_reinit cannot restart card");
+		}
 	}
-	isp_init(isp);
-	if (isp->isp_role == ISP_ROLE_NONE) {
-		goto skip;
-	}
-	if (isp->isp_state == ISP_INITSTATE) {
-		isp->isp_state = ISP_RUNSTATE;
-	}
-	if (isp->isp_state != ISP_RUNSTATE) {
-		isp_prt(isp, ISP_LOGERR, "isp_reinit cannot restart card");
-	}
-skip:
 	isp->isp_nactive = 0;
 
 	for (handle = 1; (int) handle <= isp->isp_maxcmds; handle++) {
@@ -5887,8 +5961,9 @@ isp_parse_nvram_1020(struct ispsoftc *isp, u_int8_t *nvram_data)
 		ISP_NVRAM_FIFO_THRESHOLD(nvram_data) |
 		(ISP_NVRAM_FIFO_THRESHOLD_128(nvram_data) << 2);
 
-	sdp->isp_initiator_id =
-		ISP_NVRAM_INITIATOR_ID(nvram_data);
+	if ((isp->isp_confopts & ISP_CFG_OWNLOOPID) == 0)
+		sdp->isp_initiator_id =
+			ISP_NVRAM_INITIATOR_ID(nvram_data);
 
 	sdp->isp_bus_reset_delay =
 		ISP_NVRAM_BUS_RESET_DELAY(nvram_data);
@@ -6013,8 +6088,9 @@ isp_parse_nvram_1080(struct ispsoftc *isp, int bus, u_int8_t *nvram_data)
 	sdp->isp_fifo_threshold =
 	    ISP1080_NVRAM_FIFO_THRESHOLD(nvram_data);
 
-	sdp->isp_initiator_id =
-	    ISP1080_NVRAM_INITIATOR_ID(nvram_data, bus);
+	if ((isp->isp_confopts & ISP_CFG_OWNLOOPID) == 0)
+		sdp->isp_initiator_id =
+		    ISP1080_NVRAM_INITIATOR_ID(nvram_data, bus);
 
 	sdp->isp_bus_reset_delay =
 	    ISP1080_NVRAM_BUS_RESET_DELAY(nvram_data, bus);
@@ -6104,8 +6180,9 @@ isp_parse_nvram_12160(struct ispsoftc *isp, int bus, u_int8_t *nvram_data)
 	sdp->isp_fifo_threshold =
 	    ISP12160_NVRAM_FIFO_THRESHOLD(nvram_data);
 
-	sdp->isp_initiator_id =
-	    ISP12160_NVRAM_INITIATOR_ID(nvram_data, bus);
+	if ((isp->isp_confopts & ISP_CFG_OWNLOOPID) == 0)
+		sdp->isp_initiator_id =
+		    ISP12160_NVRAM_INITIATOR_ID(nvram_data, bus);
 
 	sdp->isp_bus_reset_delay =
 	    ISP12160_NVRAM_BUS_RESET_DELAY(nvram_data, bus);
@@ -6250,23 +6327,29 @@ isp_parse_nvram_2100(struct ispsoftc *isp, u_int8_t *nvram_data)
 		}
 	}
 
+	isp_prt(isp, ISP_LOGDEBUG0,
+	    "NVRAM: maxfrmlen %d execthrottle %d fwoptions 0x%x loopid %x",
+	    ISP2100_NVRAM_MAXFRAMELENGTH(nvram_data),
+	    ISP2100_NVRAM_EXECUTION_THROTTLE(nvram_data),
+	    ISP2100_NVRAM_OPTIONS(nvram_data),
+	    ISP2100_NVRAM_HARDLOOPID(nvram_data));
+
 	fcp->isp_maxalloc =
 		ISP2100_NVRAM_MAXIOCBALLOCATION(nvram_data);
-	fcp->isp_maxfrmlen =
-		ISP2100_NVRAM_MAXFRAMELENGTH(nvram_data);
+	if ((isp->isp_confopts & ISP_CFG_OWNFSZ) == 0)
+		fcp->isp_maxfrmlen =
+			ISP2100_NVRAM_MAXFRAMELENGTH(nvram_data);
 	fcp->isp_retry_delay =
 		ISP2100_NVRAM_RETRY_DELAY(nvram_data);
 	fcp->isp_retry_count =
 		ISP2100_NVRAM_RETRY_COUNT(nvram_data);
-	fcp->isp_loopid =
-		ISP2100_NVRAM_HARDLOOPID(nvram_data);
-	fcp->isp_execthrottle =
-		ISP2100_NVRAM_EXECUTION_THROTTLE(nvram_data);
+	if ((isp->isp_confopts & ISP_CFG_OWNLOOPID) == 0)
+		fcp->isp_loopid =
+			ISP2100_NVRAM_HARDLOOPID(nvram_data);
+	if ((isp->isp_confopts & ISP_CFG_OWNEXCTHROTTLE) == 0)
+		fcp->isp_execthrottle =
+			ISP2100_NVRAM_EXECUTION_THROTTLE(nvram_data);
 	fcp->isp_fwoptions = ISP2100_NVRAM_OPTIONS(nvram_data);
-	isp_prt(isp, ISP_LOGDEBUG0,
-	    "NVRAM: maxfrmlen %d execthrottle %d fwoptions 0x%x loopid %x",
-	    fcp->isp_maxfrmlen, fcp->isp_execthrottle, fcp->isp_fwoptions,
-	    fcp->isp_loopid);
 }
 
 #ifdef	ISP_FW_CRASH_DUMP
@@ -6414,6 +6497,7 @@ isp2200_fw_dump(struct ispsoftc *isp)
 	*ptr++ = isp->isp_mboxtmp[2];
 	isp_prt(isp, ISP_LOGALL, "isp_fw_dump: SRAM dumped succesfully");
 	FCPARAM(isp)->isp_dump_data[0] = isp->isp_type; /* now used */
+	(void) isp_async(isp, ISPASYNC_FW_DUMPED, 0);
 }
 
 static void
@@ -6576,6 +6660,7 @@ isp2300_fw_dump(struct ispsoftc *isp)
 	*ptr++ = mbs.param[2];
 	isp_prt(isp, ISP_LOGALL, "isp_fw_dump: SRAM dumped succesfully");
 	FCPARAM(isp)->isp_dump_data[0] = isp->isp_type; /* now used */
+	(void) isp_async(isp, ISPASYNC_FW_DUMPED, 0);
 }
 
 void
