@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.300 2004/05/27 23:19:10 deraadt Exp $
+#	$OpenBSD: files,v 1.301 2004/05/27 23:20:27 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -410,9 +410,6 @@ file	net/if_pfsync.c		pfsync	needs-flag
 
 pseudo-device bio
 file	dev/bio.c	bio needs-flag
-
-pseudo-device hotplug
-file	dev/hotplug.c		hotplug	needs-flag
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
