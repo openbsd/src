@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.1 2004/01/18 01:26:20 deraadt Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.2 2004/04/04 15:12:02 jmc Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -80,7 +80,6 @@ the server.
 .Pp
 The following statements can be used to adjust the timing behaviour of
 the DHCP client if required, however:
-.Pp
 .Bl -tag -width Ds
 .It Ic timeout Ar time ;
 The
@@ -170,7 +169,6 @@ The data that can be specifically requested is what are called
 .Em DHCP Options .
 DHCP Options are defined in
 .Xr dhcp-options 5 .
-.Pp
 .Bl -tag -width Ds
 .It Xo
 .Ic request Op Ar option
@@ -202,7 +200,7 @@ These are full option declarations as described in
 .Xr dhcp-options 5 .
 Options that are always sent in the DHCP protocol should not be specified
 here, except that the client can specify a
-.Ar requested-lease-time
+.Ar dhcp-lease-time
 option other than the default requested lease time, which is two hours.
 The other obvious use for this statement is to send information to the server
 that will allow it to differentiate between this client and other
@@ -215,7 +213,6 @@ information that it needs, and for which a useful default value exists.
 It may also receive information which is useful, but which needs to be
 supplemented with local information.
 To handle these needs, several option modifiers are available.
-.Pp
 .Bl -tag -width Ds
 .It Xo
 .Ic default No { Op Ar option declaration
@@ -266,7 +263,6 @@ This restriction is not enforced \- if you ignore it,
 the behaviour will be unpredictable.
 .El
 .Sh LEASE DECLARATIONS
-.Pp
 The lease declaration:
 .Pp
 .Xo
@@ -301,7 +297,6 @@ A lease statement consists of the lease keyword, followed by a left
 curly brace, followed by one or more lease declaration statements,
 followed by a right curly brace.
 The following lease declarations are possible:
-.Pp
 .Bl -tag -width Ds
 .It Ic bootp ;
 The
@@ -420,7 +415,6 @@ The hour is a number between 0 and 23,
 the minute a number between 0 and 69,
 and the second also a number between 0 and 69.
 .Sh ALIAS DECLARATIONS
-.Pp
 .Ic alias No { Ar declarations ... No }
 .Pp
 Some DHCP clients running TCP/IP roaming protocols may require that in
@@ -442,7 +436,6 @@ A typical alias declaration includes an interface declaration, a fixed-address
 declaration for the IP alias address, and a subnet-mask option declaration.
 A medium statement should never be included in an alias declaration.
 .Sh OTHER DECLARATIONS
-.Pp
 .Bl -tag -width Ds
 .It Ic reject Ar ip-address ;
 The
