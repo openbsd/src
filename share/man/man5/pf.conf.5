@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.280 2003/11/14 16:44:21 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.281 2003/11/18 22:43:45 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2379,7 +2379,7 @@ queueopts      = [ "bandwidth" bandwidth-spec ] |
 schedulers     = ( cbq-def | priq-def | hfsc-def )
 bandwidth-spec = "number" ( "b" | "Kb" | "Mb" | "Gb" | "%" )
 
-action         = "pass" | "block" [ "return" ] | "scrub"
+action         = "pass" | "block" [ return ] | "scrub"
 return         = "drop" | "return" | "return-rst" [ "( ttl" number ")" ] |
                  "return-icmp" [ "(" icmpcode ["," icmp6code ] ")" ] |
                  "return-icmp6" [ "(" icmp6code ")" ]
