@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.241 2002/08/08 14:31:51 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.242 2002/08/12 16:41:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -105,8 +105,6 @@ u_int32_t		 ticket_binats_active;
 u_int32_t		 ticket_binats_inactive;
 u_int32_t		 ticket_rdrs_active;
 u_int32_t		 ticket_rdrs_inactive;
-struct pf_port_list	 pf_tcp_ports;
-struct pf_port_list	 pf_udp_ports;
 
 /* Timeouts */
 int			 pftm_tcp_first_packet = 120;	/* First TCP packet */
@@ -214,12 +212,9 @@ int			 pf_test_state_other(struct pf_state **, int,
 void			*pf_pull_hdr(struct mbuf *, int, void *, int,
 			    u_short *, u_short *, int);
 void			 pf_calc_skip_steps(struct pf_rulequeue *);
-
-int			 pf_get_sport(u_int8_t, u_int16_t, u_int16_t,
-			    u_int16_t *);
-void			 pf_put_sport(u_int8_t, u_int16_t);
-int			 pf_add_sport(struct pf_port_list *, u_int16_t);
-int			 pf_chk_sport(struct pf_port_list *, u_int16_t);
+int			 pf_get_sport(u_int8_t, u_int8_t,
+			    struct pf_addr *, struct pf_addr *,
+			    u_int16_t, u_int16_t *, u_int16_t, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			    int, int, void *, struct pf_pdesc *);
 void			 pf_route(struct mbuf **, struct pf_rule *, int);
@@ -650,10 +645,6 @@ pf_purge_expired_states(void)
 			KASSERT(peer->state == cur->state);
 			RB_REMOVE(pf_state_tree, &tree_lan_ext, peer);
 
-			/* release NAT resources */
-			if (STATE_TRANSLATE(cur->state))
-				pf_put_sport(cur->state->proto,
-					htons(cur->state->gwy.port));
 			if (cur->state->rule.ptr != NULL)
 				cur->state->rule.ptr->states--;
 			pool_put(&pf_state_pl, cur->state);
@@ -833,6 +824,9 @@ pf_print_state(struct pf_state *s)
 		break;
 	case IPPROTO_ICMP:
 		printf("ICMP ");
+		break;
+	case IPPROTO_ICMPV6:
+		printf("ICMPV6 ");
 		break;
 	default:
 		printf("%u ", s->proto);
@@ -1354,62 +1348,17 @@ pf_match_gid(u_int8_t op, gid_t a1, gid_t a2, gid_t g)
 }
 
 int
-pf_chk_sport(struct pf_port_list *plist, u_int16_t port)
+pf_get_sport(u_int8_t af, u_int8_t proto,
+    struct pf_addr *daddr, struct pf_addr *raddr,
+    u_int16_t dport, u_int16_t *port, u_int16_t low, u_int16_t high)
 {
-	struct pf_port_node	*pnode;
+	struct pf_tree_node key;
 
-	LIST_FOREACH(pnode, plist, next) {
-		if (pnode->port == port)
-			return (1);
-	}
-
-	return (0);
-}
-
-int
-pf_add_sport(struct pf_port_list *plist, u_int16_t port)
-{
-	struct pf_port_node *pnode;
-
-	pnode = pool_get(&pf_sport_pl, PR_NOWAIT);
-	if (pnode == NULL)
-		return (ENOMEM);
-
-	pnode->port = port;
-	LIST_INSERT_HEAD(plist, pnode, next);
-
-	return (0);
-}
-
-void
-pf_put_sport(u_int8_t proto, u_int16_t port)
-{
-	struct pf_port_list	*plist;
-	struct pf_port_node	*pnode;
-
-	if (proto == IPPROTO_TCP)
-		plist = &pf_tcp_ports;
-	else if (proto == IPPROTO_UDP)
-		plist = &pf_udp_ports;
-	else
-		return;
-
-	LIST_FOREACH(pnode, plist, next) {
-		if (pnode->port == port) {
-			LIST_REMOVE(pnode, next);
-			pool_put(&pf_sport_pl, pnode);
-			break;
-		}
-	}
-}
-
-int
-pf_get_sport(u_int8_t proto, u_int16_t low, u_int16_t high, u_int16_t *port)
-{
-	struct pf_port_list	*plist;
 	int			step;
 	u_int16_t		cut;
 
+	if (!(proto == IPPROTO_TCP || proto == IPPROTO_UDP))
+		return (EINVAL);
 	if (low == 0 && high == 0) {
 		NTOHS(*port);
 		return (0);
@@ -1419,18 +1368,19 @@ pf_get_sport(u_int8_t proto, u_int16_t low, u_int16_t high, u_int16_t *port)
 		return (0);
 	}
 
-	if (proto == IPPROTO_TCP)
-		plist = &pf_tcp_ports;
-	else if (proto == IPPROTO_UDP)
-		plist = &pf_udp_ports;
-	else
-		return (EINVAL);
+	key.af = af;
+	key.proto = proto;
+	PF_ACPY(&key.addr[0], daddr, key.af);
+	PF_ACPY(&key.addr[1], raddr, key.af);
+	key.port[0] = dport;
 
 	/* port search; start random, step; similar 2 portloop in in_pcbbind */
 	if (low == high) {
-		*port = low;
-		if (!pf_chk_sport(plist, *port))
-			goto found;
+		key.port[1] = htons(low);
+		if (pf_find_state(&tree_ext_gwy, &key) == NULL) {
+			*port = low;
+			return (0);
+		}
 		return (1);
 	} else if (low < high) {
 		step = 1;
@@ -1443,22 +1393,21 @@ pf_get_sport(u_int8_t proto, u_int16_t low, u_int16_t high, u_int16_t *port)
 	*port = cut - step;
 	do {
 		*port += step;
-		if (!pf_chk_sport(plist, *port))
-			goto found;
+		key.port[1] = htons(*port);
+		if (pf_find_state(&tree_ext_gwy, &key) == NULL)
+			return (0);
 	} while (*port != low && *port != high);
 
 	step = -step;
 	*port = cut;
 	do {
 		*port += step;
-		if (!pf_chk_sport(plist, *port))
-			goto found;
+		key.port[1] = htons(*port);
+		if (pf_find_state(&tree_ext_gwy, &key) == NULL)
+			return (0);
 	} while (*port != low && *port != high);
 
 	return (1);					/* none available */
-
-found:
-	return (pf_add_sport(plist, *port));
 }
 
 struct pf_nat *
@@ -1671,8 +1620,9 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if ((nat = pf_get_nat(ifp, IPPROTO_TCP,
 		    saddr, th->th_sport, daddr, th->th_dport, af)) != NULL) {
 			bport = nport = th->th_sport;
-			error = pf_get_sport(IPPROTO_TCP, nat->proxy_port[0],
-			    nat->proxy_port[1], &nport);
+			error = pf_get_sport(af, IPPROTO_TCP, daddr,
+			    &nat->raddr.addr, th->th_dport, &nport,
+			    nat->proxy_port[0], nat->proxy_port[1]);
 			if (error) {
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: NAT proxy port allocation "
@@ -1801,11 +1751,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 				    (*rm)->return_icmp & 255, af);
 		}
 
-		if ((*rm)->action == PF_DROP) {
-			if (nport && nat != NULL)
-				pf_put_sport(IPPROTO_TCP, nport);
+		if ((*rm)->action == PF_DROP) 
 			return (PF_DROP);
-		}
 	}
 
 	if (((*rm != NULL) && (*rm)->keep_state) || nat != NULL ||
@@ -1819,8 +1766,6 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    (*rm)->states < (*rm)->max_states)
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
-			if (nport && nat != NULL)
-				pf_put_sport(IPPROTO_TCP, nport);
 			REASON_SET(&reason, PFRES_MEMORY);
 			return (PF_DROP);
 		}
@@ -1862,7 +1807,7 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 		s->src.seqlo = ntohl(th->th_seq);
 		s->src.seqhi = s->src.seqlo + len + 1;
-		if (th->th_flags & TH_SYN && !(th->th_flags & TH_ACK) &&
+		if ((th->th_flags & (TH_SYN|TH_ACK)) == TH_SYN &&
 		    *rm != NULL && (*rm)->keep_state == PF_STATE_MODULATE) {
 			/* Generate sequence number modulator */
 			while ((s->src.seqdiff = arc4random()) == 0)
@@ -1888,8 +1833,6 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
-			if (nport && nat != NULL)
-				pf_put_sport(IPPROTO_TCP, nport);
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
@@ -1936,8 +1879,9 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if ((nat = pf_get_nat(ifp, IPPROTO_UDP,
 		    saddr, uh->uh_sport, daddr, uh->uh_dport, af)) != NULL) {
 			bport = nport = uh->uh_sport;
-			error = pf_get_sport(IPPROTO_UDP, nat->proxy_port[0],
-			    nat->proxy_port[1], &nport);
+			error = pf_get_sport(af, IPPROTO_UDP, daddr,
+			    &nat->raddr.addr, uh->uh_dport, &nport,
+			    nat->proxy_port[0], nat->proxy_port[1]);
 			if (error) {
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: NAT proxy port allocation "
@@ -2061,11 +2005,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			    (*rm)->return_icmp & 255, af);
 		}
 
-		if ((*rm)->action == PF_DROP) {
-			if (nport && nat != NULL)
-				pf_put_sport(IPPROTO_UDP, nport);
+		if ((*rm)->action == PF_DROP) 
 			return (PF_DROP);
-		}
 	}
 
 	if ((*rm != NULL && (*rm)->keep_state) || nat != NULL ||
@@ -2076,11 +2017,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		if (*rm == NULL || !(*rm)->max_states ||
 		    (*rm)->states < (*rm)->max_states)
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
-		if (s == NULL) {
-			if (nport && nat != NULL)
-				pf_put_sport(IPPROTO_UDP, nport);
+		if (s == NULL)
 			return (PF_DROP);
-		}
 		if (*rm != NULL)
 			(*rm)->states++;
 
@@ -2130,8 +2068,6 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
-			if (nport && nat != NULL)
-				pf_put_sport(IPPROTO_UDP, nport);
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.7 2002/07/05 14:05:44 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.8 2002/08/12 16:41:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -87,8 +87,6 @@ pfattach(int num)
 	    &pool_allocator_nointr);
 	pool_init(&pf_state_pl, sizeof(struct pf_state), 0, 0, 0, "pfstatepl",
 	    NULL);
-	pool_init(&pf_sport_pl, sizeof(struct pf_port_node), 0, 0, 0, "pfsport",
-	    NULL);
 	pool_init(&pf_addr_pl, sizeof(struct pf_addr_dyn), 0, 0, 0, "pfaddr",
 	    NULL);
 
@@ -108,9 +106,6 @@ pfattach(int num)
 	pf_binats_inactive = &pf_binats[1];
 	pf_rdrs_active = &pf_rdrs[0];
 	pf_rdrs_inactive = &pf_rdrs[1];
-
-	LIST_INIT(&pf_tcp_ports);
-	LIST_INIT(&pf_udp_ports);
 
 	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
 	timeout_add(&pf_expire_to, pftm_interval * hz);

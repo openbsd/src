@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.88 2002/07/15 18:07:17 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.89 2002/08/12 16:41:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -380,12 +380,6 @@ struct pf_rdr {
 	u_int8_t		 no;
 };
 
-struct pf_port_node {
-	LIST_ENTRY(pf_port_node)	next;
-	u_int16_t			port;
-};
-LIST_HEAD(pf_port_list, pf_port_node);
-
 TAILQ_HEAD(pf_rulequeue, pf_rule);
 
 struct pf_pdesc {
@@ -679,14 +673,12 @@ extern struct pf_binatqueue	*pf_binats_active;
 extern struct pf_binatqueue	*pf_binats_inactive;
 extern struct pf_rdrqueue	*pf_rdrs_active;
 extern struct pf_rdrqueue	*pf_rdrs_inactive;
-extern struct pf_port_list	 pf_tcp_ports;
-extern struct pf_port_list	 pf_udp_ports;
 extern void			 pf_dynaddr_remove(struct pf_addr_wrap *);
 extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
 				    u_int8_t);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
-extern struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl, pf_sport_pl;
+extern struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl;
 extern struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl,
 				    pf_addr_pl;
 extern void			 pf_purge_timeout(void *);
