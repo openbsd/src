@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.24 1997/04/02 08:24:48 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.25 1997/05/06 18:41:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.24 1997/04/02 08:24:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.25 1997/05/06 18:41:11 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -485,7 +485,7 @@ main(argc, argv)
 	}
 
 	fcntl(rpcsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
-	fcntl(pingsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
+	fcntl(pingsock, F_SETFL, fcntl(pingsock, F_GETFL, 0) | FNDELAY);
 	setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
 	rmtca.prog = YPPROG;
 	rmtca.vers = YPVERS;
