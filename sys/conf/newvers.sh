@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.11 1999/01/06 19:29:51 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.12 1999/01/07 20:30:01 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -46,7 +46,7 @@ v=`cat version` u=${USER-root} d=`pwd` h=`hostname` t=`date`
 id=`basename ${d}`
 
 ost="OpenBSD"
-osr="2.4-current"
+osr="2.4"
 
 echo "char ostype[] = \"${ost}\";" > vers.c
 echo "char osrelease[] = \"${osr}\";" >> vers.c
@@ -54,7 +54,7 @@ echo "char osversion[] = \"${id}#${v}\";" >> vers.c
 echo "char sccs[8] = { ' ', ' ', ' ', ' ', '@', '(', '#', ')' };" >> vers.c
 echo \
   "char version[] = \
-    \"${ost} ${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
+    \"${ost} ${osr}-current (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
   >> vers.c
 
 echo `expr ${v} + 1` > version
