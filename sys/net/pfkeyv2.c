@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.98 2004/12/11 15:59:00 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.99 2004/12/11 16:02:21 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -511,10 +511,8 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 	    sa->tdb_exp_timeout || sa->tdb_exp_first_use)
 		i += sizeof(struct sadb_lifetime);
 
-#if defined (SADB_X_EXT_LIFETIME_LASTUSE)
 	if (sa->tdb_last_used)
 		i += sizeof(struct sadb_lifetime);
-#endif
 
 	if (sa->tdb_src.sa.sa_family)
 		i += sizeof(struct sadb_address) + PADUP(SA_LEN(&sa->tdb_src.sa));
@@ -588,12 +586,10 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer, int *lenp)
 		export_lifetime(&p, sa, PFKEYV2_LIFETIME_HARD);
 	}
 
-#if defined (SADB_X_EXT_LIFETIME_LASTUSE)
 	if (sa->tdb_last_used) {
 		headers[SADB_X_EXT_LIFETIME_LASTUSE] = p;
 		export_lifetime(&p, sa, PFKEYV2_LIFETIME_LASTUSE);
 	}
-#endif
 
 	/* Export TDB source address */
 	headers[SADB_EXT_ADDRESS_SRC] = p;
