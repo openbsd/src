@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.11 2004/03/10 04:32:45 deraadt Exp $	*/
+/*	$OpenBSD: table.c,v 1.12 2004/11/09 14:50:53 otto Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)table.c	5.7 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: table.c,v 1.11 2004/03/10 04:32:45 deraadt Exp $";
+static char rcsid[] = "$Id: table.c,v 1.12 2004/11/09 14:50:53 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -86,14 +86,15 @@ init_table(void)
 CTL_MSG *
 find_match(CTL_MSG *request)
 {
-	TABLE_ENTRY *ptr;
+	TABLE_ENTRY *ptr, *next;
 	time_t current_time;
 
 	gettimeofday(&tp, &txp);
 	current_time = tp.tv_sec;
 	if (debug)
 		print_request("find_match", request);
-	for (ptr = table.tqh_first; ptr != NULL; ptr = ptr->list.tqe_next) {
+	for (ptr = table.tqh_first; ptr != NULL; ptr = next) {
+		next = ptr->list.tqe_next;
 		if ((current_time - ptr->time) > MAX_LIFE) {
 			/* the entry is too old */
 			if (debug)
@@ -104,9 +105,9 @@ find_match(CTL_MSG *request)
 		}
 		if (debug)
 			print_request("", &ptr->request);
-		if (strcmp(request->l_name, ptr->request.r_name) == 0 &&
-		    strcmp(request->r_name, ptr->request.l_name) == 0 &&
-		    ptr->request.type == LEAVE_INVITE)
+		if (ptr->request.type == LEAVE_INVITE &&
+		    strcmp(request->l_name, ptr->request.r_name) == 0 &&
+		    strcmp(request->r_name, ptr->request.l_name) == 0)
 			return (&ptr->request);
 	}
 	if (debug)
@@ -122,7 +123,7 @@ find_match(CTL_MSG *request)
 CTL_MSG *
 find_request(CTL_MSG *request)
 {
-	TABLE_ENTRY *ptr;
+	TABLE_ENTRY *ptr, *next;
 	time_t current_time;
 
 	gettimeofday(&tp, &txp);
@@ -133,7 +134,8 @@ find_request(CTL_MSG *request)
 	 */
 	if (debug)
 		print_request("find_request", request);
-	for (ptr = table.tqh_first; ptr != NULL; ptr = ptr->list.tqe_next) {
+	for (ptr = table.tqh_first; ptr != NULL; ptr = next) {
+		next = ptr->list.tqe_next;
 		if ((current_time - ptr->time) > MAX_LIFE) {
 			/* the entry is too old */
 			if (debug)
@@ -144,10 +146,10 @@ find_request(CTL_MSG *request)
 		}
 		if (debug)
 			print_request("", &ptr->request);
-		if (strcmp(request->r_name, ptr->request.r_name) == 0 &&
-		    strcmp(request->l_name, ptr->request.l_name) == 0 &&
+		if (request->pid == ptr->request.pid &&
 		    request->type == ptr->request.type &&
-		    request->pid == ptr->request.pid) {
+		    strcmp(request->r_name, ptr->request.r_name) == 0 &&
+		    strcmp(request->l_name, ptr->request.l_name) == 0) {
 			/* update the time if we 'touch' it */
 			ptr->time = current_time;
 			return (&ptr->request);
