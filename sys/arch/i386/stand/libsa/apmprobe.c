@@ -1,7 +1,7 @@
-/*	$OpenBSD: apmprobe.c,v 1.7 1999/08/25 00:54:19 mickey Exp $	*/
+/*	$OpenBSD: apmprobe.c,v 1.8 2000/01/29 21:49:36 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997-1999 Michael Shalayeff
+ * Copyright (c) 1997-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -125,19 +125,26 @@ apm_connect(ai)
 		return f >> 8;
 
 	ai->apm_entry      = BIOS_regs.biosr_bx;
-	ai->apm_code_len   = BIOS_regs.biosr_si;
-	ai->apm_code16_len = BIOS_regs.biosr_si;
-	ai->apm_data_len   = BIOS_regs.biosr_di;
+#if 0
+	ai->apm_code_len   = BIOS_regs.biosr_si & 0xffff;
+	ai->apm_code16_len = BIOS_regs.biosr_si & 0xffff;
+	ai->apm_data_len   = BIOS_regs.biosr_di & 0xffff;
+#else
+	ai->apm_code_len   = 0xffff - (ai->apm_code32_base & 0xffff);
+	ai->apm_code16_len = 0xffff - (ai->apm_code16_base & 0xffff);
+	ai->apm_data_len   = 0xffff - (ai->apm_data_base & 0xffff);
+#endif
+	if (ai->apm_data_base < BOOTARG_OFF)
+		ai->apm_data_len =
+		    NBPG - (ai->apm_data_base & PGOFSET) - 1;
+
 #ifdef DEBUG
 	if (debug)
-		printf ("cs=%x:%x, ds=%x:%x\n",
+		printf ("cs=%x:%x/%x:%x, ds=%x:%x\n",
 			ai->apm_code32_base, ai->apm_code_len,
+			ai->apm_code16_base, ai->apm_code16_len,
 			ai->apm_data_base,   ai->apm_data_len);
 #endif
-	ai->apm_code_len   &= 0xffff;
-	ai->apm_code16_len &= 0xffff;
-	ai->apm_data_len   &= 0xffff;
-
 	/* inform apm bios about our driver version */
 	__asm __volatile (DOINT(0x15) "\n\t"
 			  "setc %b1\n\t"
@@ -147,23 +154,6 @@ apm_connect(ai)
 			    "0" (APM_DEV_APM_BIOS),
 			    "c" (APM_VERSION)
 			  : "cc");
-
-	ai->apm_code_len   = 0x10000 - (ai->apm_code32_base & 0xffff);
-	ai->apm_code16_len = 0x10000 - (ai->apm_code16_base & 0xffff);
-
-	/*
-	 * this is a hack to make all those weird boxes keeping
-	 * apm data in low mem work.
-	 */
-	if (!ai->apm_data_len ||
-	    ai->apm_data_base + ai->apm_data_len > IOM_END ||
-	    (ai->apm_data_base < IOM_BEGIN &&
-	     ai->apm_data_base + ai->apm_data_len > IOM_BEGIN))
-		ai->apm_data_len =
-		    0x10000 - (ai->apm_data_base & 0xffff);
-	if (ai->apm_data_base < BOOTARG_OFF)
-		ai->apm_data_len =
-		    NBPG - (ai->apm_data_base & PGOFSET);
 
 	return 0;
 }
