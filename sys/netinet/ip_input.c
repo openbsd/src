@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.28 1998/02/01 21:46:02 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.29 1998/02/03 21:11:08 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -744,6 +744,17 @@ ip_dooptions(m)
 		 */
 		case IPOPT_LSRR:
 		case IPOPT_SSRR:
+			if (!ip_dosourceroute) {
+				char buf[4*sizeof "123"];
+
+				strcpy(buf, inet_ntoa(ip->ip_dst));
+				log(LOG_WARNING,
+				    "attempted source route from %s to %s\n",
+				    inet_ntoa(ip->ip_src), buf);
+				type = ICMP_UNREACH;
+				code = ICMP_UNREACH_SRCFAIL;
+				goto bad;
+			}
 			if ((off = cp[IPOPT_OFFSET]) < IPOPT_MINOFF) {
 				code = &cp[IPOPT_OFFSET] - (u_char *)ip;
 				goto bad;
@@ -769,18 +780,6 @@ ip_dooptions(m)
 				 */
 				save_rte(cp, ip->ip_src);
 				break;
-			}
-
-			if (!ip_dosourceroute) {
-				char buf[4*sizeof "123"];
-
-				strcpy(buf, inet_ntoa(ip->ip_dst));
-				log(LOG_WARNING,
-				    "attempted source route from %s to %s\n",
-				    inet_ntoa(ip->ip_src), buf);
-				type = ICMP_UNREACH;
-				code = ICMP_UNREACH_SRCFAIL;
-				goto bad;
 			}
 
 			/*
@@ -889,7 +888,7 @@ ip_dooptions(m)
 			ipt->ipt_ptr += sizeof(n_time);
 		}
 	}
-	if (forward) {
+	if (forward && ipforwarding) {
 		ip_forward(m, 1);
 		return (1);
 	}
