@@ -1,4 +1,4 @@
-.\"	$OpenBSD: which.1,v 1.2 1996/06/26 05:42:58 deraadt Exp $
+.\"	$OpenBSD: which.1,v 1.3 1997/01/07 15:57:48 niklas Exp $
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -53,6 +53,18 @@ and searched for along the user's path.
 Both aliases and path are taken from the user's
 .Pa \&.cshrc
 file.
+.Pp
+The
+.Nm which
+utility exits with one of the following values:
+.Bl -tag -width 4n
+.It 0
+All names got successfully resolved.
+.It 1
+Some names got resolved but not all.
+.It 2
+No names got resolved.
+.El
 .Sh FILES
 .Bl -tag -width ~/\&.cshrc
 .It Pa ~/\&.cshrc
