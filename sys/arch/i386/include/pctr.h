@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.9 1998/05/25 08:02:24 downsj Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.10 2001/01/26 23:32:14 mickey Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -72,15 +72,6 @@ struct pctrst {
 })
 
 #ifdef _KERNEL
-
-#define MSR_TSC 0x10          /* MSR for TSC */
-#define P5MSR_CTRSEL 0x11     /* MSR for selecting both counters on P5 */
-#define P5MSR_CTR0 0x12       /* Value of Ctr0 on P5 */
-#define P5MSR_CTR1 0x13       /* Value of Ctr1 on P5 */
-#define P6MSR_CTRSEL0 0x186   /* MSR for programming CTR0 on P6 */
-#define P6MSR_CTRSEL1 0x187   /* MSR for programming CTR0 on P6 */
-#define P6MSR_CTR0 0xc1       /* Ctr0 on P6 */
-#define P6MSR_CTR1 0xc2       /* Ctr1 on P6 */
 
 #define rdmsr(msr)						\
 ({								\
