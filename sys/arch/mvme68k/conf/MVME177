@@ -1,8 +1,9 @@
-#	$OpenBSD: MVME177,v 1.5 2001/06/12 22:51:43 miod Exp $
+#	$OpenBSD: MVME177,v 1.6 2001/06/26 21:35:25 miod Exp $
 
 machine		mvme68k m68k
 
 include "../../../conf/GENERIC"
+option		UVM
 
 #option		M68030		# support for 030
 #option		M68040		# support for 040

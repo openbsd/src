@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.4 2001/06/25 00:43:13 mickey Exp $ */
+/*	$OpenBSD: vs.c,v 1.5 2001/06/26 21:35:38 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -48,23 +48,22 @@
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <vm/vm_param.h>
+
 #include <machine/autoconf.h>
 #include <machine/param.h>
 
-#define PAGESIZE 4096  /* should get this out of a header? XXX - smurph */
-#ifdef __m88k_
+#ifdef mvme88k
 #include <mvme88k/dev/vsreg.h>
 #include <mvme88k/dev/vsvar.h>
-#include "machine/mmu.h"
-#define ROUND_PAGE m88k_round_page
-#define TRUNC_PAGE m88k_trunc_page
+#include <machine/mmu.h>
 #else
 #include <mvme68k/dev/vsreg.h>
 #include <mvme68k/dev/vsvar.h>
-#define ROUND_PAGE m68k_round_page
-#define TRUNC_PAGE m68k_trunc_page
 #endif
 
 int  vs_checkintr        __P((struct vs_softc *, struct scsi_xfer *, int *));
@@ -330,7 +329,7 @@ struct scsi_xfer *xs;
     * a read, prior to starting the IO.
     */
    if (xs->flags & SCSI_DATA_IN) {  /* read */
-#if defined(MVME187) || defined(MVME188) || defined(MVME197)
+#if defined(mvme88k)
       dma_cachectl((vm_offset_t)xs->data, xs->datalen,
                    DMA_CACHE_SYNC_INVAL);
 #endif      
@@ -916,19 +915,19 @@ M328_IOPB  *iopb;              /* the iopb */
     * Check if we need scatter/gather
     */
 
-   if (len > PAGESIZE) {
-      for (level = 0, point_virt = ROUND_PAGE(starting_point_virt+1);
+   if (len > PAGE_SIZE) {
+      for (level = 0, point_virt = round_page(starting_point_virt+1);
           /* if we do already scatter/gather we have to stay in the loop and jump */
           point_virt < virt + (vm_offset_t)len || sg ;
-          point_virt += PAGESIZE) {                      /* out later */
+          point_virt += PAGE_SIZE) {                      /* out later */
 
          point2_phys = kvtop(point_virt);
 
-         if ((point2_phys - TRUNC_PAGE(point1_phys) - PAGESIZE) ||                  /* physical memory is not contiguous */
+         if ((point2_phys - trunc_page(point1_phys) - PAGE_SIZE) ||                  /* physical memory is not contiguous */
              (point_virt - starting_point_virt >= MAX_SG_BLOCK_SIZE && sg)) {   /* we only can access (1<<16)-1 bytes in scatter/gather_mode */
             if (point_virt - starting_point_virt >= MAX_SG_BLOCK_SIZE) {           /* We were walking too far for one scatter/gather block ... */
-               assert( MAX_SG_BLOCK_SIZE > PAGESIZE );
-               point_virt = TRUNC_PAGE(starting_point_virt+MAX_SG_BLOCK_SIZE-1);    /* So go back to the beginning of the last matching page */
+               assert( MAX_SG_BLOCK_SIZE > PAGE_SIZE );
+               point_virt = trunc_page(starting_point_virt+MAX_SG_BLOCK_SIZE-1);    /* So go back to the beginning of the last matching page */
                /* and gererate the physadress of this location for the next time. */
                point2_phys = kvtop(point_virt);
             }

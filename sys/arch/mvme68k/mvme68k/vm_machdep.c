@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.24 2001/06/10 14:54:46 miod Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.25 2001/06/26 21:35:43 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,9 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -80,8 +83,17 @@ cpu_fork(p1, p2, stack, stacksize)
 	extern struct pcb *curpcb;
 	extern void proc_trampoline(), child_return();
 
-	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
-	savectx(curpcb);
+	p2->p_md.md_flags = p1->p_md.md_flags;
+
+	/* Copy pcb from proc p1 to p2. */
+	if (p1 == curproc) {
+		/* Sync the PCB before we copy it. */
+		savectx(curpcb);
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 	*pcb = p1->p_addr->u_pcb;
 
 	/*
@@ -92,15 +104,14 @@ cpu_fork(p1, p2, stack, stacksize)
 	p2->p_md.md_regs = (int *)tf;
 	*tf = *(struct trapframe *)p1->p_md.md_regs;
 	
-   /*
+	/*
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
 		tf->tf_regs[15] = (u_int)stack + stacksize;
 	
-   sf = (struct switchframe *)tf - 1;
+	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
-
 	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
 	pcb->pcb_regs[7] = (int)p2;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
@@ -130,7 +141,11 @@ cpu_exit(p)
 {
 
 	(void) splimp();
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -198,8 +213,9 @@ pagemove(from, to, size)
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
  */ 
+void
 physaccess(vaddr, paddr, size, prot)
-	void *vaddr, *paddr;
+	caddr_t vaddr, paddr;
 	register int size, prot;
 {
 	register pt_entry_t *pte;
@@ -214,6 +230,7 @@ physaccess(vaddr, paddr, size, prot)
 	TBIAS();
 }
 
+void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
 	register int size;
@@ -247,6 +264,7 @@ setredzone(pte, vaddr)
 /*
  * Convert kernel VA to physical address
  */
+int
 kvtop(addr)
 	caddr_t addr;
 {
@@ -286,7 +304,11 @@ vmapbuf(bp, siz)
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
 	npf = btoc(round_page(bp->b_bcount + off));
+#if defined(UVM)
+	kva = uvm_km_valloc_wait(phys_map, ctob(npf));
+#else
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
+#endif
 	bp->b_data = (caddr_t)(kva + off);
 	while (npf--) {
 		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
@@ -316,7 +338,11 @@ vunmapbuf(bp, siz)
 	addr = bp->b_data;
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, kva, ctob(npf));
+#else
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.2 2000/06/10 19:53:23 deraadt Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.3 2001/06/26 21:35:39 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -46,17 +46,16 @@
 #include <scsi/scsiconf.h>
 #include <machine/autoconf.h>
 
-#ifdef __m88k__
-#include <machine/board.h>
+#ifdef mvme88k
 #include <mvme88k/dev/vsreg.h>
 #include <mvme88k/dev/vsvar.h>
 #include <mvme88k/dev/vme.h>
-#include "machine/mmu.h"
+#include <machine/mmu.h>
 #else
 #include <mvme68k/dev/vsreg.h>
 #include <mvme68k/dev/vsvar.h>
 #include <mvme68k/dev/vme.h>
-#endif /* defined(MVME187) || defined(MVME188) || defined(MVME197) */
+#endif
 
 int	vsmatch         __P((struct device *, void *, void *));
 void	vsattach        __P((struct device *, struct device *, void *));
@@ -112,9 +111,9 @@ vsattach(parent, self, auxp)
 	sc->sc_vsreg = rp = ca->ca_vaddr;
 
 	sc->sc_ipl = ca->ca_ipl;
-   sc->sc_nvec = ca->ca_vec + 0;
-   sc->sc_evec = ca->ca_vec + 1;
-   sc->sc_link.adapter_softc = sc;
+	sc->sc_nvec = ca->ca_vec + 0;
+	sc->sc_evec = ca->ca_vec + 1;
+	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &vs_scsiswitch;
 	sc->sc_link.device = &vs_scsidev;
@@ -124,7 +123,7 @@ vsattach(parent, self, auxp)
 	sc->sc_ih_n.ih_arg = sc;
 	sc->sc_ih_n.ih_ipl = ca->ca_ipl;
    
-   sc->sc_ih_e.ih_fn = vs_eintr;
+	sc->sc_ih_e.ih_fn = vs_eintr;
 	sc->sc_ih_e.ih_arg = sc;
 	sc->sc_ih_e.ih_ipl = ca->ca_ipl;
    
@@ -132,8 +131,8 @@ vsattach(parent, self, auxp)
 
 	vmeintr_establish(sc->sc_nvec, &sc->sc_ih_n);
 	vmeintr_establish(sc->sc_evec, &sc->sc_ih_e);
-   evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_n);
-   evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_e);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_n);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_e);
 
 	/*
 	 * attach all scsi units on us, watching for boot device
@@ -165,9 +164,9 @@ vs_nintr(sc)
 	struct vs_softc *sc;
 {
 #ifdef SDEBUG
-   printf("Normal Interrupt!!!\n");
+	printf("Normal Interrupt!!!\n");
 #endif 
-   vs_intr(sc);
+	vs_intr(sc);
 	sc->sc_intrcnt_n.ev_count++;
 	return (1);
 }
@@ -178,7 +177,7 @@ vs_eintr(sc)
 	struct vs_softc *sc;
 {
 #ifdef SDEBUG
-   printf("Error Interrupt!!!\n");
+	printf("Error Interrupt!!!\n");
 #endif
 	vs_intr(sc);
 	sc->sc_intrcnt_e.ev_count++;

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2001/04/05 20:39:38 deraadt Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2001/06/26 21:35:41 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -83,6 +83,10 @@ include <machine/prom.h>
 include <machine/pte.h>
 include <vm/vm.h>
 
+ifdef UVM
+include <uvm/uvm_extern.h>
+endif
+
 define	__XXX_BUG_FODDER	0
 
 # CPU options
@@ -127,8 +131,11 @@ define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # interrupt/fault metering
-define	V_SWTCH			offsetof(struct vmmeter, v_swtch)
+ifdef UVM	
+define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+else
 define	V_INTR			offsetof(struct vmmeter, v_intr)
+endif
 
 # trap types (should just include trap.h?)
 define	T_BUSERR		T_BUSERR
@@ -202,6 +209,7 @@ define	SIZEOF_TRAPFRAME	sizeof(struct trapframe)
 define	FR_SP			offsetof(struct frame, f_regs[15])
 define	FR_HW			offsetof(struct frame, f_sr)
 define	FR_ADJ			offsetof(struct frame, f_stackadj)
+define	FR_SIZE			sizeof(struct trapframe)
 
 # system calls
 define	SYS_exit		SYS_exit

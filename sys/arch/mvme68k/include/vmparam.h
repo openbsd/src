@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 2001/05/05 20:56:44 art Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.6 2001/06/26 21:35:40 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -173,11 +173,14 @@
 #if defined(MACHINE_NEW_NONCONTIG)
 /*
  * Constants which control the way the VM system deals with memory segments.
- * The hp300 only has one physical memory segment.
+ * The mvme68k only has one physical memory segment.
  */
 #define	VM_PHYSSEG_MAX		1
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD
+
+#define	VM_NFREELIST		1
+#define	VM_FREELIST_DEFAULT	0
 
 /*
  * pmap-specific data stored in the vm_physmem[] array.

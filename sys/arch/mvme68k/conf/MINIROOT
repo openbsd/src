@@ -1,8 +1,9 @@
-#	$OpenBSD: MINIROOT,v 1.8 2001/06/12 22:51:42 miod Exp $
+#	$OpenBSD: MINIROOT,v 1.9 2001/06/26 21:35:24 miod Exp $
 
 machine		mvme68k m68k
 
 include "../../../conf/GENERIC"
+option		UVM
 
 option		M68060		# support for 060
 option		M68040		# support for 040
