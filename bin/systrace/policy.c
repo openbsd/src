@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.20 2002/09/23 04:41:02 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.21 2002/10/09 03:52:10 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -52,8 +52,8 @@ static int policycompare(struct policy *, struct policy *);
 static int polnrcompare(struct policy *, struct policy *);
 static char *systrace_policyfilename(char *, const char *);
 static char *systrace_policyline(char *line);
-static int systrace_policyprocess(struct policy *, char *);
-static int systrace_predicatematch(char *);
+static int systrace_policyprocess(struct policy *,
+    char *);
 static int systrace_writepolicy(struct policy *);
 
 int systrace_templatedir(void);
@@ -408,6 +408,7 @@ systrace_readtemplate(char *filename, struct policy *policy,
 	if ((fp = fopen(filename, "r")) == NULL)
 		return (NULL);
 
+	/* Set up pid with current information */
 	while (fgets(line, sizeof(line), fp)) {
 		linenumber++;
 
@@ -474,59 +475,6 @@ systrace_readtemplate(char *filename, struct policy *policy,
 	goto out;
 }
 
-int
-systrace_predicatematch(char *p)
-{
-	extern char *username;
-	int i, res, neg;
-
-	res = 0;
-	neg = 0;
-
-	if (!strncasecmp(p, "user", 4)) {
-		/* Match against user name */
-		p += 4;
-		p += strspn(p, " \t");
-		if (!strncmp(p, "=", 1)) {
-			p += 1;
-			neg = 0;
-		} else if (!strncmp(p, "!=", 2)) {
-			p += 2;
-			neg = 1;
-		} else
-			return (-1);
-		p += strspn(p, " \t");
-
-		res = (!strcmp(p, username));
-	} else if (!strncasecmp(p, "group", 5)) {
-		/* Match against group list */
-		p += 5;
-		p += strspn(p, " \t");
-		if (!strncmp(p, "=", 1)) {
-			p += 1;
-			neg = 0;
-		} else if (!strncmp(p, "!=", 2)) {
-			p += 2;
-			neg = 1;
-		} else
-			return (-1);
-		p += strspn(p, " \t");
-
-		for (i = 0; i < ngroups; i++) {
-			if (!strcmp(p, groupnames[i])) {
-				res = 1;
-				break;
-			}
-		}
-	} else
-		return (-1);
-
-	if (neg)
-		res = !res;
-
-	return (res);
-}
-
 /* Removes trailing whitespace and comments from the input line */
 
 static char *
@@ -570,9 +518,13 @@ systrace_policyline(char *line)
 static int
 systrace_policyprocess(struct policy *policy, char *p)
 {
+	char line[_POSIX2_LINE_MAX];
 	char *name, *emulation, *rule;
 	struct filter *filter, *parsed;
 	short action, future;
+	int  resolved = 0, res;
+
+	/* Delay predicate evaluation if we are root */
 
 	emulation = strsep(&p, "-");
 	if (p == NULL || *p == '\0')
@@ -588,25 +540,22 @@ systrace_policyprocess(struct policy *policy, char *p)
 	rule = p;
 
 	if ((p = strrchr(p, ',')) != NULL && !strncasecmp(p, ", if", 4)) {
-		int match;
-
 		*p = '\0';
+		res = filter_parse_simple(rule, &action, &future);
+		*p = ',';
+		if (res == 0) {
+			/* Need to make a real policy out of it */
+			snprintf(line, sizeof(line), "true then %s", rule);
+			rule = line;
+		}
+	} else if (filter_parse_simple(rule, &action, &future) == 0)
+		resolved = 1;
 
-		/* Process predicates */
-		p += 4;
-		p += strspn(p, " \t");
-
-		match = systrace_predicatematch(p);
-		if (match == -1)
-			return (-1);
-		/* If the predicate does not match skip rule */
-		if (!match)
-			return (0);
-	}
-
-	if (filter_parse_simple(rule, &action, &future) == -1) {
+	/* If the simple parser did not match, try real parser */
+	if (!resolved) {
 		if (parse_filter(rule, &parsed) == -1)
 			return (-1);
+
 		filter_free(parsed);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.l,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
+/*	$OpenBSD: lex.l,v 1.10 2002/10/09 03:52:10 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -86,6 +86,12 @@ true		{ return TRUE; }
 "->"		{ return THEN; }
 \(		{ return LBRACE; }
 \)		{ return RBRACE; }
+if		{ return IF; }
+user		{ return USER; }
+group		{ return GROUP; }
+","		{ return COMMA; }
+"="		{ return EQUAL; }
+"!="		{ return NEQUAL; }
 [\$A-Za-z][\.\(\)\/A-Za-z_\-0-9]* { yylval.string = strdup(yytext); return STRING; }
 [0-9]+		{ yylval.number = atoi(yytext); return NUMBER; }
 \"[^\"]+\" { char line[1024];

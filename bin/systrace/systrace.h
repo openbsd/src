@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.15 2002/09/23 04:41:02 itojun Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.16 2002/10/09 03:52:10 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -43,10 +43,13 @@ struct logic {
 	struct logic *right;
 	char *type;
 	int typeoff;
+	int flags;
 	void *filterdata;
 	size_t filterlen;
 	int (*filter_match)(struct intercept_translate *, struct logic *);
 };
+
+#define LOGIC_NEEDEXPAND	0x01
 
 struct filter {
 	TAILQ_ENTRY(filter) next;
@@ -60,6 +63,15 @@ struct filter {
 	int match_error;
 	int match_flags;
 	int match_count;	/* Number of times this filter matched */
+
+	struct predicate {
+#define PREDIC_UID	0x01
+#define PREDIC_GID	0x02
+#define PREDIC_NEGATIVE	0x10
+		int p_flags;
+		uid_t p_uid;
+		gid_t p_gid;
+	} match_predicate;
 };
 
 TAILQ_HEAD(filterq, filter);
@@ -112,6 +124,7 @@ TAILQ_HEAD(tmplqueue, template);
 #define PROCESS_DETACH		0x02	/* Process gets detached */
 #define SYSCALL_LOG		0x04	/* Log this system call */
 
+void systrace_parameters(void);
 int systrace_initpolicy(char *, char *);
 void systrace_setupdir(char *);
 struct template *systrace_readtemplate(char *, struct policy *,
@@ -166,16 +179,20 @@ struct systrace_revalias {
 struct systrace_revalias *systrace_reverse(const char *, const char *);
 struct systrace_revalias *systrace_find_reverse(const char *, const char *);
 
-short filter_evaluate(struct intercept_tlq *, struct filterq *, int *);
+short filter_evaluate(struct intercept_tlq *, struct filterq *,
+    struct intercept_pid *);
 short filter_ask(int, struct intercept_tlq *, struct filterq *, int,
-    const char *, const char *, char *, short *, int *);
+    const char *, const char *, char *, short *, struct intercept_pid *);
 void filter_free(struct filter *);
 void filter_modifypolicy(int, int, const char *, const char *, short);
 
+int filter_predicate(struct intercept_pid *, struct predicate *);
 int filter_parse_simple(char *, short *, short *);
 int filter_parse(char *, struct filter **);
 int filter_prepolicy(int, struct policy *);
-char *filter_expand(char *data);
+char *filter_expand(char *);
+char *filter_dynamicexpand(struct intercept_pid *, char *);
+int filter_needexpand(char *);
 
 int parse_filter(char *, struct filter **);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
+/*	$OpenBSD: parse.y,v 1.10 2002/10/09 03:52:10 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -40,6 +40,9 @@
 #include <err.h>
 #include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "intercept.h"
 #include "systrace.h"
@@ -62,7 +65,7 @@ extern int myoff;
 %}
 
 %token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY
-%token	EQ NEQ TRUE SUB NSUB INPATH LOG
+%token	EQ NEQ TRUE SUB NSUB INPATH LOG COMMA IF USER GROUP EQUAL NEQUAL
 %token	<string> STRING
 %token	<string> CMDSTRING
 %token	<number> NUMBER
@@ -72,15 +75,17 @@ extern int myoff;
 %type	<number> typeoff
 %type	<number> logcode
 %type	<string> errorcode
+%type	<predicate> predicate
 %union {
 	int number;
 	char *string;
 	short action;
 	struct logic *logic;
+	struct predicate predicate;
 }
 %%
 
-fullexpression	: expression THEN action errorcode logcode
+fullexpression	: expression THEN action errorcode logcode predicate
 	{
 		int flags = 0, errorcode = SYSTRACE_EPERM;
 
@@ -119,6 +124,7 @@ fullexpression	: expression THEN action errorcode logcode
 		myfilter->match_action = $3;
 		myfilter->match_error = errorcode;
 		myfilter->match_flags = flags;
+		myfilter->match_predicate = $6;
 	}
 ;
 
@@ -141,6 +147,59 @@ logcode	: /* Empty */
 	$$ = 1;
 }
 ;
+
+predicate : /* Empty */
+{
+	memset(&$$, 0, sizeof($$));
+}
+		| COMMA IF USER EQUAL STRING
+{
+	struct passwd *pw;
+
+	memset(&$$, 0, sizeof($$));
+	if ((pw = getpwnam($5)) == NULL) {
+		yyerror("Unknown user %s", $5);
+		break;
+	}
+	$$.p_uid = pw->pw_uid;
+	$$.p_flags = PREDIC_UID;
+}
+		| COMMA IF USER NEQUAL STRING
+{
+	struct passwd *pw;
+
+	memset(&$$, 0, sizeof($$));
+	if ((pw = getpwnam($5)) == NULL) {
+		yyerror("Unknown user %s", $5);
+		break;
+	}
+	$$.p_uid = pw->pw_uid;
+	$$.p_flags = PREDIC_UID | PREDIC_NEGATIVE;
+}
+		| COMMA IF GROUP EQUAL STRING
+{
+	struct group *gr;
+
+	memset(&$$, 0, sizeof($$));
+	if ((gr = getgrnam($5)) == NULL) {
+		yyerror("Unknown group %s", $5);
+		break;
+	}
+	$$.p_gid = gr->gr_gid;
+	$$.p_flags = PREDIC_GID;
+}
+		| COMMA IF GROUP NEQUAL STRING
+{
+	struct group *gr;
+
+	memset(&$$, 0, sizeof($$));
+	if ((gr = getgrnam($5)) == NULL) {
+		yyerror("Unknown group %s", $5);
+		break;
+	}
+	$$.p_gid = gr->gr_gid;
+	$$.p_flags = PREDIC_GID | PREDIC_NEGATIVE;
+}
 
 expression	: symbol
 {
@@ -302,6 +361,8 @@ struct logic *
 parse_newsymbol(char *type, int typeoff, char *data)
 {
 	struct logic *node;
+	int iamroot = getuid() == 0;
+
 	node = calloc(1, sizeof(struct logic));
 
 	if (node == NULL) {
@@ -312,8 +373,15 @@ parse_newsymbol(char *type, int typeoff, char *data)
 	node->type = type;
 	node->typeoff = typeoff;
 	if (data) {
-		node->filterdata = strdup(filter_expand(data));
-		free(data);
+		/* For the root user, variable expansion may change */
+		if (iamroot) {
+			node->filterdata = data;
+			if (filter_needexpand(data))
+				node->flags |= LOGIC_NEEDEXPAND;
+		} else {
+			node->filterdata = strdup(filter_expand(data));
+			free(data);
+		}
 		if (node->filterdata == NULL) {
 			yyerror("strdup");
 			return (NULL);
