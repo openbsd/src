@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.3 1996/09/02 12:19:31 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.4 1996/09/02 12:21:57 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.3 1996/09/02 12:19:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.4 1996/09/02 12:21:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -282,6 +282,7 @@ timewarn(timeleft)
 	static char hostname[MAXHOSTNAMELEN + 1];
 	FILE *pf;
 	char wcmd[MAXPATHLEN + 4];
+	extern char **environ;
 
 	if (!first++)
 		(void)gethostname(hostname, sizeof(hostname));
