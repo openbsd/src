@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.53 2004/01/22 18:50:39 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.54 2004/02/29 13:59:15 markus Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.53 2004/01/22 18:50:39 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.54 2004/02/29 13:59:15 markus Exp $";
 #endif
 
 #include <sys/param.h>
@@ -146,6 +146,7 @@ main(int argc, char *argv[])
 	char *nargv[512];	/* some estimate based on ARG_MAX */
 	int bits, exists, oreg, ch, error, i, rc, oflag;
 
+	exists = 0;
 	bits = oflag = 0;
 	nosave = -1;
 	p = __progname;
@@ -404,7 +405,8 @@ main(int argc, char *argv[])
 			}
 		}
 
-		exists = !stat(outfile, &osb);
+		if (!testmode)
+			exists = !stat(outfile, &osb);
 		if (!force && exists && S_ISREG(osb.st_mode) &&
 		    !permission(outfile)) {
 			rc = rc ? rc : WARNING;
