@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.19 2004/05/20 18:32:38 tedu Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.20 2004/07/10 15:18:45 pedro Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ union_mount(mp, path, data, ndp, p)
 	/*
 	 * Find upper node.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.target, p);
+	NDINIT(ndp, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, args.target, p);
 
 	if ((error = namei(ndp)) != 0)
 		goto bad;
@@ -122,7 +122,7 @@ union_mount(mp, path, data, ndp, p)
 
 	if (upperrootvp->v_type != VDIR) {
 		error = EINVAL;
-		goto bad;
+		goto bad_unlock;
 	}
 	
 	um = malloc(sizeof(struct union_mount), M_MISCFSMNT, M_WAITOK);
@@ -157,7 +157,7 @@ union_mount(mp, path, data, ndp, p)
 
 	default:
 		error = EINVAL;
-		goto bad;
+		goto bad_unlock;
 	}
 
 	/*
@@ -165,10 +165,13 @@ union_mount(mp, path, data, ndp, p)
 	 * supports whiteout operations
 	 */
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-		error = VOP_WHITEOUT(um->um_uppervp, (struct componentname *) 0, LOOKUP);
+		error = VOP_WHITEOUT(um->um_uppervp,
+		    (struct componentname *) 0, LOOKUP);
 		if (error)
-			goto bad;
+			goto bad_unlock;
 	}
+
+	VOP_UNLOCK(ndp->ni_vp, 0, p);
 
 	um->um_cred = p->p_ucred;
 	crhold(um->um_cred);
@@ -237,6 +240,8 @@ union_mount(mp, path, data, ndp, p)
 #endif
 	return (0);
 
+bad_unlock:
+	VOP_UNLOCK(ndp->ni_vp, 0, p);
 bad:
 	if (um)
 		free(um, M_MISCFSMNT);
