@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.10 2001/09/05 13:51:50 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.11 2001/09/05 14:26:45 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -367,11 +367,14 @@ xfs*)M xfs$U c 51 $U 600;;
 		n=$(($n+1))
 	done;;
 audio*)
-	[ "$U" = "0" ] && u= || u=$U
-	M sound$u	c 69 $U
-	M mixer$u	c 69 $(($U+16))
-	M audio$u	c 69 $(($U+128))
-	M audioctl$u	c 69 $(($U+192));;
+	M sound$U	c 69 $U
+	M mixer$U	c 69 $(($U+16))
+	M audio$U	c 69 $(($U+128))
+	M audioctl$U	c 69 $(($U+192))
+	[ -e audio ] || ln -s audio$U audio
+	[ -e mixer ] || ln -s mixer$U mixer
+	[ -e sound ] || ln -s sound$U sound
+	[ -e audioctl ] || ln -s audioctl$U audioctl;;
 pf*)
 	M pf c 73 0 600;;
 altq)
