@@ -1,4 +1,4 @@
-/*	$OpenBSD: elan520.c,v 1.2 2003/08/07 16:59:37 mickey Exp $	*/
+/*	$OpenBSD: elan520.c,v 1.3 2003/09/01 18:17:10 markus Exp $	*/
 /*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
 
 /*-
@@ -41,9 +41,6 @@
  * Device driver for the AMD Elan SC520 System Controller.  This attaches
  * where the "pchb" driver might normally attach, and provides support for
  * extra features on the SC520, such as the watchdog timer and GPIO.
- *
- * Information about the GP bus echo bug work-around is from code posted
- * to the "soekris-tech" mailing list by Jasper Wallace.
  */
 
 #include <sys/cdefs.h>
@@ -62,7 +59,6 @@ struct elansc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
-	int			sc_echobug;
 };
 
 int	elansc_match(struct device *, void *, void *);
@@ -131,23 +127,6 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	    ressta, RSTBITS);
 
 	/*
-	 * SC520 rev A1 has a bug that affects the watchdog timer.  If
-	 * the GP bus echo mode is enabled, writing to the watchdog control
-	 * register is blocked.
-	 *
-	 * The BIOS in some systems (e.g. the Soekris net4501) enables
-	 * GP bus echo for various reasons, so we need to switch it off
-	 * when we talk to the watchdog timer.
-	 *
-	 * XXX The step 1.1 (B1?) in my Soekris net4501 also has this
-	 * XXX problem, so we'll just enable it for all Elan SC520s
-	 * XXX for now.  --thorpej@netbsd.org
-	 */
-	if (1 || rev == ((PRODID_ELAN_SC520 << REVID_PRODID_SHIFT) |
-	   (0 << REVID_MAJSTEP_SHIFT) | (1)))
-		sc->sc_echobug = 1;
-
-	/*
 	 * Determine cause of the last reset, and issue a warning if it
 	 * was due to watchdog expiry.
 	 */
@@ -173,13 +152,10 @@ elansc_wdogctl(struct elansc_softc *sc, int do_reset, uint16_t val)
 
 	s = splhigh();
 
-	/* Switch off GP bus echo mode if we need to. */
-	if (sc->sc_echobug) {
-		echo_mode = bus_space_read_1(sc->sc_memt, sc->sc_memh,
-		    MMCR_GPECHO);
-		bus_space_write_1(sc->sc_memt, sc->sc_memh,
-		    MMCR_GPECHO, echo_mode & ~GPECHO_GP_ECHO_ENB);
-	}
+	/* Switch off GP bus echo mode. */
+	echo_mode = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_GPECHO);
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_GPECHO,
+	    echo_mode & ~GPECHO_GP_ECHO_ENB);
 
 	if (do_reset) {
 		/* Reset the watchdog. */
@@ -200,9 +176,7 @@ elansc_wdogctl(struct elansc_softc *sc, int do_reset, uint16_t val)
 	}
 
 	/* Switch GP bus echo mode back. */
-	if (sc->sc_echobug)
-		bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_GPECHO,
-		    echo_mode);
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_GPECHO, echo_mode);
 
 	splx(s);
 }
