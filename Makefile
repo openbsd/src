@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.64 2001/01/27 01:59:43 niklas Exp $
+#	$OpenBSD: Makefile,v 1.65 2001/03/28 22:52:22 todd Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -176,7 +176,7 @@ cross-binutils-new:	cross-dirs
 	    --prefix ${CROSSDIR}/usr \
 	    --disable-nls --disable-gdbtk --disable-commonbfdlib \
 	    --target `cat ${CROSSDIR}/TARGET_CANON` && \
-	    ${MAKE} CFLAGS=${CFLAGS} && ${MAKE} install && \
+	    ${MAKE} CFLAGS=${CFLAGS} && ${MAKE} install ) && \
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 755 \
 	    ${.CURDIR}/usr.bin/lorder/lorder.sh \
 	    ${CROSSDIR}/usr/bin/lorder
