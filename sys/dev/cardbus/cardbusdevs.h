@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.17 2004/07/06 09:23:31 brad Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.18 2004/09/17 23:39:06 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.16 2004/07/06 09:22:31 brad Exp 
+ *	OpenBSD: cardbusdevs,v 1.17 2004/09/17 23:37:26 brad Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -60,6 +60,7 @@
 #define	CARDBUS_VENDOR_ABOCOM	0x13d1		/* Abocom */
 #define	CARDBUS_VENDOR_PLANEX	0x14ea		/* Planex */
 #define	CARDBUS_VENDOR_NETGEAR	0x168c		/* Netgear */
+#define	CARDBUS_VENDOR_LINKSYS	0x1737		/* Linksys */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
 #define	CARDBUS_VENDOR_ADP	0x9004		/* Adaptec */
 #define	CARDBUS_VENDOR_ADP2	0x9005		/* Adaptec(2) */
@@ -113,6 +114,9 @@
 /* XXX product name? */
 #define	CARDBUS_PRODUCT_INTEL_MODEM56	0x1002		/* Modem */
 #define	CARDBUS_PRODUCT_INTEL_DFE660	0x7192		/* DFE-660 */
+
+/* Linksys products */
+#define	CARDBUS_PRODUCT_LINKSYS_PCM200	0xab09		/* PCM200 */
 
 /* Netgear products */
 #define	CARDBUS_PRODUCT_NETGEAR_HA501	0x0007		/* HA501 */
