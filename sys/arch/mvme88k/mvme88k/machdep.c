@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.38 2001/06/12 23:09:45 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.39 2001/06/13 21:24:52 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1498,7 +1498,7 @@ intr_findvec(start, end)
 		panic("intr_findvec(): bad parameters");
 #endif
 
-	for (vec = end; vec > start; --vec){
+	for (vec = start; vec < end; vec++){
 		if (intr_handlers[vec] == NULL)
 			return (vec);
 	}
