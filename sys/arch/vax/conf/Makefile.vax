@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.17 2002/02/23 18:34:50 deraadt Exp $
+#	$OpenBSD: Makefile.vax,v 1.18 2002/06/22 14:05:51 millert Exp $
 #	$NetBSD: Makefile.vax,v 1.49 1999/07/26 05:20:49 cgd Exp $
 
 # Makefile for OpenBSD/vax
@@ -78,7 +78,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-D_VAX_INLINE_
 CWARNFLAGS?=	-Werror -Wall -Wno-main -Wno-format -Wno-uninitialized
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80000000 -e start
 STRIPFLAGS=	-d

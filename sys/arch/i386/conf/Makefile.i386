@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.28 2001/12/24 23:12:14 miod Exp $
+#	$OpenBSD: Makefile.i386,v 1.29 2002/06/22 14:05:51 millert Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -50,7 +50,7 @@ CMACHFLAGS=
 .endif
 
 COPTS?=	-O2
-CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
+CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext E0100000 -e start
 STRIPFLAGS=	-d

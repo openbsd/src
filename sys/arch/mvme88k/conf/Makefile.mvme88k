@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.19 2002/02/19 01:53:30 deraadt Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.20 2002/06/22 14:05:51 millert Exp $
 #
 # Makefile for OpenBSD
 #
@@ -43,7 +43,7 @@ CWARNFLAGS=	-Wall -Werror -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main -Wstrict-prototypes
 CMACHFLAGS=
 COPTS?=		-O
-CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS}
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-Ttext 0x10000 -e start
 STRIPFLAGS=	-d

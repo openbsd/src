@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sun3,v 1.30 2001/12/25 21:43:47 miod Exp $
+#	$OpenBSD: Makefile.sun3,v 1.31 2002/06/22 14:05:51 millert Exp $
 #	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -46,7 +46,7 @@ CWARNFLAGS= 	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 CMACHFLAGS=	-m68020 -msoft-float
 COPTS?=	-O2
-CFLAGS= 	${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
+CFLAGS= 	${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 STRIPFLAGS=	-d

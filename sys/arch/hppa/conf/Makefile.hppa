@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.12 2002/03/15 21:22:50 mickey Exp $
+#	$OpenBSD: Makefile.hppa,v 1.13 2002/06/22 14:05:51 millert Exp $
 
 # Makefile for OpenBSD
 #
@@ -44,7 +44,7 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 		-Wno-format -Wno-main
 CMACHFLAGS=	-mfast-indirect-calls -mportable-runtime -mno-space-regs
 COPTS?=		-Os
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-T ${HPPA}/conf/ld.script -Ttext 12000 -Map bsd.map
 STRIPFLAGS=	-g -X -x

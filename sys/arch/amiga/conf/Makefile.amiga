@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.30 2001/12/24 23:12:14 miod Exp $
+#	$OpenBSD: Makefile.amiga,v 1.31 2002/06/22 14:05:51 millert Exp $
 #	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
 
 # Makefile for OpenBSD
@@ -53,7 +53,7 @@ CMACHFLAGS=	-m68060 -Wa,-m68030
 CMACHFLAGS+=	-msoft-float
 
 COPTS?=	-O2
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS}
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d

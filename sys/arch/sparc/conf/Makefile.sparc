@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.21 2001/12/25 21:43:47 miod Exp $
+#	$OpenBSD: Makefile.sparc,v 1.22 2002/06/22 14:05:51 millert Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -50,7 +50,7 @@ CMACHFLAGS=	-mcpu=supersparc
 CMACHFLAGS=
 .endif
 
-CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 # add `-mno-fpu' to work around gcc (last noticed in v2.7.2) bug
 CFLAGS+=	-mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE

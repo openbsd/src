@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.23 2001/12/24 23:12:12 miod Exp $
+#	$OpenBSD: Makefile.alpha,v 1.24 2002/06/22 14:05:51 millert Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -40,7 +40,7 @@ CDIAGFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 
 CMACHFLAGS=	-mno-fp-regs
 COPTS?= 	-O2
-CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
+CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-traditional -D_LOCORE
 LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4
 STRIPFLAGS=	-g -X -x
