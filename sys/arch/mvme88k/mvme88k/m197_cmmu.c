@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_cmmu.c,v 1.6 2001/08/24 19:26:15 miod Exp $	*/
+/*	$OpenBSD: m197_cmmu.c,v 1.7 2001/08/24 22:49:18 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -764,8 +764,8 @@ m197_table_search(pmap_t map, vm_offset_t virt, int write, int kernel, int data)
 		if (SDT_WP(sdt))
 			return (7); /* Write Violation */
 
-		else
-			pte = (pt_entry_t *)(((sdt + SDT_ENTRIES)->table_addr)<<PDT_SHIFT) + PDTIDX(virt);
+	pte = (pt_entry_t *)(((sdt + SDT_ENTRIES)->table_addr)<<PDT_SHIFT) + PDTIDX(virt);
+
 	/*
 	 * Check whether page frame exist or not.
 	 */
@@ -779,7 +779,7 @@ m197_table_search(pmap_t map, vm_offset_t virt, int write, int kernel, int data)
 	if (write)
 		if (PDT_WP(sdt))
 			return (7); /* Write Violation */
-		/* If we get here, load the PATC. */
+	/* If we get here, load the PATC. */
 	if (entry_num > 32)
 		entry_num = 0;
 	lpa = (unsigned)virt & 0xFFFFF000;
