@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.21 2003/10/15 23:00:57 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.22 2003/10/24 20:02:45 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -278,10 +278,13 @@ vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		switch (dp->param) {
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
-			dp->min = MIN_BRIGHTNESS;
-			dp->max = MAX_BRIGHTNESS;
-			dp->curval = cons_brightness;
-			return 0;
+			if (cons_backlight_available != 0) {
+				dp->min = MIN_BRIGHTNESS;
+				dp->max = MAX_BRIGHTNESS;
+				dp->curval = cons_brightness;
+				return 0;
+			}
+			return -1;
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
 			if (cons_backlight_available != 0) {
 				dp->min = 0;
