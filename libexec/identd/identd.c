@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <poll.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -108,15 +109,15 @@ gethost6(addr)
 	return(hbuf[bb]);
 }
 
+sig_atomic_t alarm_fired;
+
 /*
  * Exit cleanly after our time's up.
  */
 static void
 alarm_handler()
 {
-	if (syslog_flag)
-		syslog(LOG_DEBUG, "SIGALRM triggered, exiting");
-	exit(0);
+	alarm_fired = 1;
 }
 
 /*
@@ -134,7 +135,6 @@ main(argc, argv)
 	struct sockaddr_in6 * sin6;
 	struct in_addr laddr, faddr;
 	struct in6_addr laddr6, faddr6;
-	struct timeval tv;
 	struct passwd *pwd;
 	struct group *grp;
 	int     background_flag = 0;
@@ -313,7 +313,7 @@ main(argc, argv)
 	 */
 	if (background_flag) {
 		int     nfds, fd;
-		fd_set  read_set;
+		struct	pollfd pfd[1];
 
 		/*
 		 * Loop and dispatch client handling processes
@@ -326,20 +326,23 @@ main(argc, argv)
 				signal(SIGALRM, alarm_handler);
 				alarm(timeout);
 			}
+			
 			/*
 			 * Wait for a connection request to occur.
 			 * Ignore EINTR (Interrupted System Call).
 			 */
 			do {
-				FD_ZERO(&read_set);
-				FD_SET(0, &read_set);
+				if (alarm_fired) {
+					if (syslog_flag)
+						syslog(LOG_DEBUG,
+						    "SIGALRM triggered, exiting");
+					exit(0);
+				}
 
-				if (timeout) {
-					tv.tv_sec = timeout;
-					tv.tv_usec = 0;
-					nfds = select(1, &read_set, NULL, NULL, &tv);
-				} else
-					nfds = select(1, &read_set, NULL, NULL, NULL);
+				pfd[0].fd = 0;
+				pfd[0].events = POLLIN;
+
+				nfds = poll(pfd, 1, timeout * 1000);
 			} while (nfds < 0 && errno == EINTR);
 
 			/*
