@@ -6,6 +6,8 @@ OpenBSD/arc 2.1 runs on the following classes of machines:
 OpenBSD/pmax 2.1 does *not* (yet) run on these machines:
 	- Mips Magnum
 	- Olivetti systems.
+	- SNI RMxxx machines.
+	- NEC Risc.
 
 The minimal configuration requires 8M of RAM and ~60M of disk space.
 To install the entire system requires ~150M of disk space, and to run
@@ -15,13 +17,15 @@ Supported devices include:
 	graphics:
 		built-in S3 VGA graphics adatper on PICA.
 		Standard VGA graphics adapter on rPC44 and Tyne.
+		Note that X11R6 currently supports only S3 boards.
 
 	keyboard:
-		Standard PC compatible keyboard with driver softloaded keymaps.
+		Standard PC compatible keyboard with optionally
+		driver softloaded keymaps.
 
 	mouse:
 		PS2 mouse on PICA
-		Serial mouse (with X server) on rPC44 and Tyne.
+		Serial mouse on /dev/tty00 on rPC44 and Tyne.
 
 	serial ports: 
 		on-board tty00 and tty01 (PICA. can not yet be used as console)
@@ -37,12 +41,15 @@ Supported devices include:
 		floppy is supported on PICA only.
 
 	ethernet: 
-		on-board SONIC controller (PICA)
+		on-board SONIC ethernet controller (PICA only)
 		3Com Etherlink boards (All ISA capable systems)
+		NE2000 compatible ISA boards.
 
 	SCSI: 
 		on-board NCR53C96 SCSI controller (PICA)
 		VLB "Buslogic BT-440C/445C" SCSI controller.
 
-
+	IDE:
+		IDE disks via wd driver on ISA bus. Bootable only
+		on Deskstation systems.
 

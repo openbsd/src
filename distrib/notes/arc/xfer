@@ -47,25 +47,10 @@ To prepare for installing via FTP:
 
 To prepare for installing via a CD-ROM:
 
-	To install OpenBSD from a CD-ROM, you need to somehow
-	get the OpenBSD filesets you wish to install on
-	your system on to the appropriate kind of tape,
-	in tar format.
-
-	If you're making the tape on a UN*X system, the easiest
-	way to do so is:
-
-		tar cvf <tape_device> <files>
-
-	where "<tape_device>" is the name of the tape device
-	that describes the tape drive you're using (possibly
-	something like /dev/nrst0, but we make no guarantees 8-).
-	Under SunOS 5.x, this would be something like /dev/rmt/0mbn.
-	Again, your mileage may vary.  If you can't figure it out,
-	ask your system administrator.  "<files>" are the names
-	of the "set_name.nnn" files which you want to be placed
-	on the tape.
+	To install OpenBSD from a CD-ROM, you simply need to
+	install the CD rom in the cdrom reader and follow the
+	instructions.
 
 	Once you have done this, you can proceed to the next
-	step in the installation process, preparing your 
+	step in the installation process, preparing your
 	system for OpenBSD installation.

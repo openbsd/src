@@ -5,18 +5,26 @@ out as follows:
 .../2.1/arc/
 		INSTALL.arc	Installation notes; this file.
 
-		bins/		arc binary distribution sets;
+		bsd.rd		ARC RAMDISK kernel. This is the
+				kernel that should be booted when
+				installing OpenBSD.
+
+		*.gz		ARC binary distribution sets;
 				see below.
 
-		miniroot/	arc boot and installation
-				floppies; see below.
+		bsd		ARC GENERIC kernel in ELF format.
+				This is the kernel installed by the
+				install script.
 
-There is a arc miniroot image to be found in the "arc/minroot"
-subdirectory of the OpenBSD 2.1 distribution.  Also there is a
-miniroot tar file there.
+		bsd.ecoff	ARC GENERIC kernel in ECOFF format.
+				This kernel may be used to boot a
+				system from a MSDOS disk.
+
+The ARC ramdisk image is a bootable kernel+rootimage. This kernel is used
+when a system is installed for the first time. The file is in ECOFF format.
 
 The OpenBSD/arc binary distribution sets contain the binaries which
-comprise the OpenBSD 2.1 release for arc systems. There are seven binary
+comprise the OpenBSD 2.1 release for ARC systems. There are seven binary
 distribution sets.  The binary distribution sets can be found in
 subdirectories of the "arc/bins" subdirectory of the OpenBSD 2.1
 distribution tree, and are as follows:
@@ -27,7 +35,7 @@ distribution tree, and are as follows:
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
-		[ 15.0M gzipped, 50.8M uncompressed ]
+		[ 15.0M gzipped, 50.9M uncompressed ]
 
 	comp21	The OpenBSD/arc Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
@@ -38,7 +46,7 @@ distribution tree, and are as follows:
 		set).  This set also includes the manual pages for all
 		of the utilities it contains, as well as the system
 		call and library manual pages.
-		[ 16.2M gzipped, 61.1M uncompressed ]
+		[ 15.9M gzipped, 60.2M uncompressed ]
 
 	etc21	This distribution set contains the system
 		configuration files that reside in /etc and in several
@@ -47,7 +55,7 @@ distribution tree, and are as follows:
 		used if you are upgrading.  (If you are upgrading,
 		it's recommended that you get a copy of this set and
 		CAREFULLY upgrade your configuration files by hand.)
-		[ 93K gzipped, 450K uncompressed ]
+		[ 92K gzipped, 450K uncompressed ]
 
 	game21	This set includes the games and their manual pages.
 		[ 2.9M gzipped, 7.5M uncompressed ]
@@ -69,7 +77,7 @@ distribution tree, and are as follows:
 		manual pages.
 		[ 1.0M gzipped, 4.2M uncompressed ]
 
-The arc binary distribution sets are distributed in the same form as
+The ARC binary distribution sets are distributed in the same form as
 the source distribution sets; catted together, the members of a set
 form a gzipped tar file.  Each arc binary distribution set also has
 its own "CKSUMS" file, just as the source distribution sets do.
