@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.48 2001/02/02 06:01:18 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.49 2001/02/04 18:10:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1192,7 +1192,7 @@ bridge_input(ifp, eh, m)
 		if (bcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) == 0) {
 			if (ifl->bif_flags & IFBIF_LEARNING)
 				bridge_rtupdate(sc,
-				    (struct ether_addr *)&eh->ether_dhost,
+				    (struct ether_addr *)&eh->ether_shost,
 				    ifp, 0, IFBAF_DYNAMIC);
 			m->m_pkthdr.rcvif = ifl->ifp;
 			if (ifp->if_type == IFT_GIF) {
