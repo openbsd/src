@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.57 2001/08/15 09:16:30 ho Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.58 2001/10/04 23:31:27 ho Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -327,32 +327,40 @@ Currently there are no specific ISAKMP SA flags defined.
 .It Em <Phase1-ID>
 .Bl -tag -width 12n
 .It Em ID-type
-The ID type as given by the RFCs.
+The ID type as given by the RFC specifications.
 For Phase 1 this is currently
 .Li IPV4_ADDR ,
 .Li IPV4_ADDR_SUBNET ,
+.Li IPV6_ADDR ,
+.Li IPV6_ADDR_SUBNET ,
 .Li FQDN ,
-.Li USER_FQDN ,
+.Li USER_FQDN
 or
 .Li KEY_ID .
 .It Em Address
 If the ID-type is
-.Li IPV4_ADDR ,
+.Li IPV4_ADDR
+or
+.Li IPV6_ADDR ,
 this tag should exist and be an IP-address.
 .It Em Network
 If the ID-type is
 .Li IPV4_ADDR_SUBNET
+or
+.Li IPV6_ADDR_SUBNET
 this tag should exist and
 be a network address.
 .It Em Netmask
 If the ID-type is
 .Li IPV4_ADDR_SUBNET
+or
+.Li IPV6_ADDR_SUBNET
 this tag should exist and
 be a network subnet mask.
 .It Em Name
 If the ID-type is
 .Li FQDN ,
-.Li USER_FQDN ,
+.Li USER_FQDN
 or
 .Li KEY_ID ,
 this tag should exist and contain a domain name, user@domain, or
@@ -547,37 +555,49 @@ List of lifetimes, each element is a <Lifetime> section name.
 .It Em ID-type
 The ID type as given by the RFCs.
 For IPsec this is currently
-.Li IPV4_ADDR
+.Li IPV4_ADDR ,
+.Li IPV6_ADDR ,
+.Li IPV4_ADDR_SUBNET
 or
-.Li IPV4_ADDR_SUBNET .
+.Li IPV6_ADDR_SUBNET .
 .It Em Address
 If the ID-type is
-.Li IPV4_ADDR ,
+.Li IPV4_ADDR
+or
+.Li IPV6_ADDR
 this tag should exist and be an IP-address.
 .It Em Network
 If the ID-type is
 .Li IPV4_ADDR_SUBNET
+or
+.Li IPV6_ADDR_SUBNET
 this tag should exist and
 be a network address.
 .It Em Netmask
 If the ID-type is
 .Li IPV4_ADDR_SUBNET
+or
+.Li IPV6_ADDR_SUBNET
 this tag should exist and
 be a network subnet mask.
 .It Em Protocol
 If the ID-type is
-.Li IPV4_ADDR
-or
+.Li IPV4_ADDR ,
 .Li IPV4_ADDR_SUBNET ,
+.Li IPV6_ADDR
+or
+.Li IPV6_ADDR_SUBNET
 this tag indicates what transport protocol should be transmitted over
 the SA.
 If left unspecified, all transport protocols between the two address
 (ranges) will be sent (or permitted) over that SA.
 .It Em Port
 If the ID-type is
-.Li IPV4_ADDR
-or
+.Li IPV4_ADDR ,
 .Li IPV4_ADDR_SUBNET ,
+.Li IPV6_ADDR
+or
+.Li IPV6_ADDR_SUBNET
 this tag indicates what source or destination port is allowed to be
 transported over the SA (depending on whether this is a local or
 remote ID).
@@ -977,3 +997,11 @@ configuration files.
 .Xr keynote 4 ,
 .Xr isakmpd.policy 5 ,
 .Xr isakmpd 8
+.Sh BUGS
+The RFCs does not permit differing DH groups in the same proposal for
+aggressive and quick mode exchanges.  As the predefined suites currently
+uses DH group 1 for MD5 suites and DH group 2 for SHA suites, combining
+a MD5 and a SHA suite in a proposal will cause the exchange to fail.
+.Pp
+The current recommended workaround is to either use MD5- or SHA-only
+suites, or to specify the suites manually.
