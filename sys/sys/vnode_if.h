@@ -3,9 +3,9 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.19 2002/02/22 20:37:45 drahn Exp 
+ *	OpenBSD: vnode_if.src,v 1.20 2003/05/01 21:13:05 tedu Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.10 2002/03/14 23:47:05 millert Exp 
+ *	OpenBSD: vnode_if.sh,v 1.11 2003/05/01 21:13:05 tedu Exp 
  */
 
 /*
