@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.7 1996/12/21 05:21:13 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.8 1997/01/04 08:50:22 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -95,6 +95,9 @@ int vnddebug = 0x00;
 #define b_cylin	b_resid
 
 #define	vndunit(x)	DISKUNIT(x)
+#define	MAKEVNDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
+
+#define	VNDLABELDEV(dev) (MAKEVNDDEV(major(dev), vndunit(dev), RAW_PART))
 
 struct vndbuf {
 	struct buf	vb_buf;
@@ -141,7 +144,7 @@ int	vndsetcred __P((struct vnd_softc *, struct ucred *));
 void	vndthrottle __P((struct vnd_softc *, struct vnode *));
 void	vndiodone __P((struct buf *));
 void	vndshutdown __P((void));
-void	vndgetdisklabel __P((struct vnd_softc *));
+void	vndgetdisklabel __P((dev_t, struct vnd_softc *));
 
 static	int vndlock __P((struct vnd_softc *));
 static	void vndunlock __P((struct vnd_softc *));
@@ -189,7 +192,7 @@ vndopen(dev, flags, mode, p)
 
 	if ((sc->sc_flags & VNF_INITED) && (sc->sc_flags & VNF_HAVELABEL) == 0) {
 		sc->sc_flags |= VNF_HAVELABEL;
-		vndgetdisklabel(sc);
+		vndgetdisklabel(dev, sc);
 	}
 
 	part = DISKPART(dev);
@@ -228,7 +231,8 @@ bad:
  * Load the label information on the named device
  */
 void
-vndgetdisklabel(sc)
+vndgetdisklabel(dev, sc)
+	dev_t dev;
 	struct vnd_softc *sc;
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
@@ -268,8 +272,8 @@ vndgetdisklabel(sc)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKEDISKDEV(0, sc->sc_dev.dv_unit, RAW_PART),
-				  vndstrategy, lp, sc->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(VNDLABELDEV(dev), vndstrategy, lp,
+	    sc->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
 		return;

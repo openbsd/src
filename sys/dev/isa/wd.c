@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.23 1996/11/29 22:55:08 niklas Exp $	*/
+/*	$OpenBSD: wd.c,v 1.24 1997/01/04 08:50:24 deraadt Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -92,7 +92,7 @@ struct cfdriver wd_cd = {
 	NULL, "wd", DV_DISK
 };
 
-void	wdgetdisklabel	__P((struct wd_softc *));
+void	wdgetdisklabel	__P((dev_t, struct wd_softc *));
 int	wd_get_parms	__P((struct wd_softc *));
 void	wdstrategy	__P((struct buf *));
 
@@ -433,7 +433,7 @@ wdopen(dev, flag, fmt, p)
 			}
 
 			/* Load the partition info if not already loaded. */
-			wdgetdisklabel(wd);
+			wdgetdisklabel(dev, wd);
 		}
 	}
 
@@ -508,7 +508,8 @@ wdclose(dev, flag, fmt, p)
  * Fabricate a default disk label, and try to read the correct one.
  */
 void
-wdgetdisklabel(wd)
+wdgetdisklabel(dev, wd)
+	dev_t dev;
 	struct wd_softc *wd;
 {
 	struct disklabel *lp = wd->sc_dk.dk_label;
@@ -550,8 +551,8 @@ wdgetdisklabel(wd)
 
 	if (d_link->sc_state > RECAL)
 		d_link->sc_state = RECAL;
-	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-	    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(WDLABELDEV(dev), wdstrategy, lp,
+	    wd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -561,8 +562,8 @@ wdgetdisklabel(wd)
 		 */
 		if (d_link->sc_state > GEOMETRY)
 			d_link->sc_state = GEOMETRY;
-		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-		    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
+		errstring = readdisklabel(WDLABELDEV(dev), wdstrategy, lp,
+		    wd->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {
 		printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);

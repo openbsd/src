@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.18 1996/12/05 13:15:28 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.19 1997/01/04 08:50:25 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
@@ -91,6 +91,8 @@
 #define	MCDPART(dev)	DISKPART(dev)
 #define	MCDUNIT(dev)	DISKUNIT(dev)
 #define	MAKEMCDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
+
+#define	MCDLABELDEV(dev) (MAKEMCDDEV(major(dev), MCDUNIT(dev), RAW_PART))
 
 /* toc */
 #define MCD_MAXTOCS	104	/* from the Linux driver */
@@ -191,7 +193,7 @@ struct cfdriver mcd_cd = {
 	NULL, "mcd", DV_DISK
 };
 
-void	mcdgetdisklabel __P((struct mcd_softc *));
+void	mcdgetdisklabel __P((dev_t, struct mcd_softc *));
 int	mcd_get_parms __P((struct mcd_softc *));
 void	mcdstrategy __P((struct buf *));
 void	mcdstart __P((struct mcd_softc *));
@@ -341,7 +343,7 @@ mcdopen(dev, flag, fmt, p)
 				goto bad2;
 
 			/* Fabricate a disk label. */
-			mcdgetdisklabel(sc);
+			mcdgetdisklabel(dev, sc);
 		}
 	}
 
@@ -676,7 +678,8 @@ mcdioctl(dev, cmd, addr, flag, p)
  * whether the scsi cd driver is linked in.
  */
 void
-mcdgetdisklabel(sc)
+mcdgetdisklabel(dev, sc)
+	dev_t dev;
 	struct mcd_softc *sc;
 {
 	struct disklabel *lp = sc->sc_dk.dk_label;
@@ -716,8 +719,8 @@ mcdgetdisklabel(sc)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKEMCDDEV(0, sc->sc_dev.dv_unit, RAW_PART),
-	    mcdstrategy, lp, sc->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(MCDLABELDEV(dev), mcdstrategy, lp,
+	    sc->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.19 1996/12/24 01:33:33 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.20 1997/01/04 08:50:20 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.92 1996/05/05 19:52:50 christos Exp $	*/
 
 /*
@@ -78,6 +78,8 @@
 #define	CDPART(z)			DISKPART(z)
 #define	MAKECDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
+#define	CDLABELDEV(dev)	(MAKECDDEV(major(dev), CDUNIT(dev), RAW_PART))
+
 struct cd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
@@ -108,7 +110,7 @@ int	cdlock __P((struct cd_softc *));
 void	cdunlock __P((struct cd_softc *));
 void	cdstart __P((void *));
 void	cdminphys __P((struct buf *));
-void	cdgetdisklabel __P((struct cd_softc *));
+void	cdgetdisklabel __P((dev_t, struct cd_softc *));
 int	cddone __P((struct scsi_xfer *, int));
 u_long	cd_size __P((struct cd_softc *, int));
 int	cd_get_mode __P((struct cd_softc *, struct cd_mode_data *, int));
@@ -340,7 +342,7 @@ cdopen(dev, flag, fmt, p)
 			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
 
 			/* Fabricate a disk label. */
-			cdgetdisklabel(cd);
+			cdgetdisklabel(dev, cd);
 			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated "));
 		}
 	}
@@ -1043,7 +1045,8 @@ cdioctl(dev, cmd, addr, flag, p)
  * data tracks from the TOC and put it in the disklabel
  */
 void
-cdgetdisklabel(cd)
+cdgetdisklabel(dev, cd)
+	dev_t dev;
 	struct cd_softc *cd;
 {
 	struct disklabel *lp = cd->sc_dk.dk_label;
@@ -1085,8 +1088,8 @@ cdgetdisklabel(cd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKECDDEV(0, cd->sc_dev.dv_unit, RAW_PART),
-	    cdstrategy, lp, cd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(CDLABELDEV(dev), cdstrategy, lp,
+	    cd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);
 		return;

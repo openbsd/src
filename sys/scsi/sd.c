@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.21 1996/12/11 19:08:18 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.22 1997/01/04 08:50:21 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.100.4.1 1996/06/04 23:14:08 thorpej Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ void	sdattach __P((struct device *, struct device *, void *));
 int	sdlock __P((struct sd_softc *));
 void	sdunlock __P((struct sd_softc *));
 void	sdminphys __P((struct buf *));
-void	sdgetdisklabel __P((struct sd_softc *));
+void	sdgetdisklabel __P((dev_t, struct sd_softc *));
 void	sdstart __P((void *));
 int	sddone __P((struct scsi_xfer *, int));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
@@ -321,7 +321,7 @@ sdopen(dev, flag, fmt, p)
 			SC_DEBUG(sc_link, SDEV_DB3, ("Params loaded "));
 
 			/* Load the partition info if not already loaded. */
-			sdgetdisklabel(sd);
+			sdgetdisklabel(dev, sd);
 			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel loaded "));
 		}
 	}
@@ -772,7 +772,8 @@ sdioctl(dev, cmd, addr, flag, p)
  * Load the label information on the named device
  */
 void
-sdgetdisklabel(sd)
+sdgetdisklabel(dev, sd)
+	dev_t dev;
 	struct sd_softc *sd;
 {
 	struct disklabel *lp = sd->sc_dk.dk_label;
@@ -812,8 +813,8 @@ sdgetdisklabel(sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit, RAW_PART),
-				  sdstrategy, lp, sd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(SDLABELDEV(dev), sdstrategy, lp,
+	    sd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
