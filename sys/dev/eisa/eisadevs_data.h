@@ -2,9 +2,8 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.6 1997/07/25 02:29:51 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.7 1997/07/25 17:40:06 deraadt Exp 
  */
-$NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
