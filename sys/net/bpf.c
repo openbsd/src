@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.36 2003/06/18 22:47:54 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.37 2003/07/29 23:02:52 itojun Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -489,7 +489,7 @@ bpfwrite(dev, uio, ioflag)
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int error, s;
-	struct sockaddr dst;
+	struct sockaddr_storage dst;
 
 	if (d->bd_bif == 0)
 		return (ENXIO);
@@ -499,7 +499,8 @@ bpfwrite(dev, uio, ioflag)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, &m, &dst);
+	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, &m,
+	    (struct sockaddr *)&dst);
 	if (error)
 		return (error);
 
@@ -509,10 +510,11 @@ bpfwrite(dev, uio, ioflag)
 	}
 
 	if (d->bd_hdrcmplt)
-		dst.sa_family = pseudo_AF_HDRCMPLT;
+		dst.ss_family = pseudo_AF_HDRCMPLT;
 
 	s = splsoftnet();
-	error = (*ifp->if_output)(ifp, m, &dst, (struct rtentry *)0);
+	error = (*ifp->if_output)(ifp, m, (struct sockaddr *)&dst,
+	    (struct rtentry *)0);
 	splx(s);
 	/*
 	 * The driver frees the mbuf.
