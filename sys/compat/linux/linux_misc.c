@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.54 2003/08/15 20:32:16 tedu Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.55 2003/12/02 03:46:45 nordin Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*-
@@ -887,7 +887,7 @@ linux_sys_alarm(p, v, retval)
 	}
 
 	if (timerisset(&it.it_value)) {
-		timo = hzto(&it.it_value);
+		timo = tvtohz(&it.it_value);
 		if (timo <= 0)
 			timo = 1;
 		timeradd(&it.it_value, &time, &it.it_value);
