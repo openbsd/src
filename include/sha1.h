@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.21 2004/05/03 18:05:08 millert Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.22 2004/05/05 17:09:45 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -24,7 +24,7 @@ typedef struct {
 __BEGIN_DECLS
 void SHA1Init(SHA1_CTX *);
 void SHA1Pad(SHA1_CTX *);
-void SHA1Transform(u_int32_t [5], u_int8_t [SHA1_BLOCK_LENGTH])
+void SHA1Transform(u_int32_t [5], const u_int8_t [SHA1_BLOCK_LENGTH])
 	__attribute__((__bounded__(__minbytes__,1,5)))
 	__attribute__((__bounded__(__minbytes__,2,SHA1_BLOCK_LENGTH)));
 void SHA1Update(SHA1_CTX *, const u_int8_t *, size_t)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.17 2004/05/03 18:05:08 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.18 2004/05/05 17:09:46 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -15,10 +15,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sha1.c,v 1.17 2004/05/03 18:05:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sha1.c,v 1.18 2004/05/05 17:09:46 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
-
-#define SHA1HANDSOFF		/* Copies data before messing with it. */
 
 #include <sys/param.h>
 #include <string.h>
@@ -52,22 +50,17 @@ static char rcsid[] = "$OpenBSD: sha1.c,v 1.17 2004/05/03 18:05:08 millert Exp $
  * Hash a single 512-bit block. This is the core of the algorithm.
  */
 void
-SHA1Transform(u_int32_t state[5], u_int8_t buffer[SHA1_BLOCK_LENGTH])
+SHA1Transform(u_int32_t state[5], const u_int8_t buffer[SHA1_BLOCK_LENGTH])
 {
 	u_int32_t a, b, c, d, e;
+	u_int8_t workspace[SHA1_BLOCK_LENGTH];
 	typedef union {
 		u_int8_t c[64];
 		u_int32_t l[16];
 	} CHAR64LONG16;
-	CHAR64LONG16 *block;
+	CHAR64LONG16 *block = (CHAR64LONG16 *)workspace;
 
-#ifdef SHA1HANDSOFF
-	u_int8_t workspace[SHA1_BLOCK_LENGTH];
-	block = (CHAR64LONG16 *)workspace;
 	(void)memcpy(block, buffer, SHA1_BLOCK_LENGTH);
-#else
-	block = (CHAR64LONG16 *)buffer;
-#endif
 
 	/* Copy context->state[] to working vars */
 	a = state[0];
