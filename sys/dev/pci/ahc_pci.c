@@ -1,5 +1,3 @@
-/*	$NetBSD: ahc_pci.c,v 1.2 1996/05/20 00:56:39 thorpej Exp $	*/
-
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7880, aic7870, aic7860 and aic7850 SCSI controllers
@@ -30,6 +28,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	$Id: ahc_pci.c,v 1.2 1996/06/27 21:15:55 shawn Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -44,9 +44,7 @@
 #if defined(__NetBSD__)
 #include <sys/device.h>
 #include <machine/bus.h>
-#ifdef __alpha__
 #include <machine/intr.h>
-#endif
 #endif /* defined(__NetBSD__) */
 
 #include <scsi/scsi_all.h>
@@ -176,6 +174,8 @@ struct seeprom_config {
 };
 
 static void load_seeprom __P((struct ahc_data *ahc));
+static int acquire_seeprom __P((struct seeprom_descriptor *sd));
+static void release_seeprom __P((struct seeprom_descriptor *sd));
 
 static u_char aic3940_count;
 
@@ -421,41 +421,6 @@ ahc_pci_attach(parent, self, aux)
 		}
 	}
 
-	/*
-	 * Ensure that we are using good values for the PCI burst size
-	 * and latency timer.
-	 */
-	{
-#if defined(__FreeBSD__)
-		u_long csize_lattime = pci_conf_read(config_id, CSIZE_LATTIME);
-#elif defined(__NetBSD__)
-		u_long csize_lattime =
-			pci_conf_read(pa->pa_pc, pa->pa_tag, CSIZE_LATTIME);
-#endif
-
-		if((csize_lattime & CACHESIZE) == 0) {
-			/* default to 8DWDs. What's the PCI define for this? */
-			csize_lattime |= 8;
-		}
-		if((csize_lattime & LATTIME) == 0) {
-			/* Default to 64 PCLKS (is this a good value?) */
-			/* This may also be availble in the SEEPROM?? */
-			csize_lattime |= (64 << 8);
-		}
-		if(bootverbose)
-			printf("ahc%d: BurstLen = %ldDWDs, "
-			       "Latency Timer = %ldPCLKS\n",
-				unit,
-				csize_lattime & CACHESIZE,
-				(csize_lattime >> 8) & 0xff);
-#if defined(__FreeBSD__)
-		pci_conf_write(config_id, CSIZE_LATTIME, csize_lattime);
-#elif defined(__NetBSD__)
-		pci_conf_write(pa->pa_pc, pa->pa_tag, CSIZE_LATTIME,
-			       csize_lattime);
-#endif
-	}
-
 #if defined(__FreeBSD__)
 	if(!(ahc = ahc_alloc(unit, io_port, ahc_t, ahc_f)))
 		return;  /* XXX PCI code should take return status */
@@ -572,10 +537,20 @@ ahc_pci_attach(parent, self, aux)
 			/* See if someone else set us up already */
 			u_long i;
 		        for(i = TARG_SCRATCH; i < 0x60; i++) {
-                        	if(AHC_INB(ahc, i) != 0xff)
+                        	if(AHC_INB(ahc, i) != 0x00)
 					break;
 			}
-			if(i != 0x60) {
+			if(i == TARG_SCRATCH) {
+				/*
+				 * Try looking for all ones.  You can get
+				 * either.
+				 */
+		        	for (i = TARG_SCRATCH; i < 0x60; i++) {
+                        		if(AHC_INB(ahc, i) != 0xff)
+						break;
+				}
+			}
+			if((i != 0x60) && (our_id != 0)) {
 				printf("%s: Using left over BIOS settings\n",
 					ahc_name(ahc));
 				ahc->flags &= ~AHC_USEDEFAULTS;
@@ -608,7 +583,6 @@ ahc_pci_attach(parent, self, aux)
 	splx(opri);
 
 	ahc_attach(ahc);
-	return;
 }
 
 /*
@@ -677,7 +651,7 @@ load_seeprom(ahc)
 		int i;
 		int max_targ = sc.max_targets & CFMAXTARG;
 
-	        for(i = 0; i <= max_targ; i++){
+	        for(i = 0; i < max_targ; i++){
 	                u_char target_settings;
 			target_settings = (sc.device_flags[i] & CFXFER) << 4;
 			if (sc.device_flags[i] & CFSYNCH)
@@ -710,6 +684,39 @@ load_seeprom(ahc)
 		/* In case we are a wide card */
 		AHC_OUTB(ahc, SCSICONF + 1, host_id);
 	}
+}
+
+static int
+acquire_seeprom(sd)
+	struct seeprom_descriptor *sd;
+{
+	int wait;
+
+	/*
+	 * Request access of the memory port.  When access is
+	 * granted, SEERDY will go high.  We use a 1 second
+	 * timeout which should be near 1 second more than
+	 * is needed.  Reason: after the chip reset, there
+	 * should be no contention.
+	 */
+	SEEPROM_OUTB(sd, sd->sd_MS);
+	wait = 1000;  /* 1 second timeout in msec */
+	while (--wait && ((SEEPROM_INB(sd) & sd->sd_RDY) == 0)) {
+		DELAY (1000);  /* delay 1 msec */
+        }
+	if ((SEEPROM_INB(sd) & sd->sd_RDY) == 0) {
+		SEEPROM_OUTB(sd, 0); 
+		return (0);
+	}         
+	return(1);
+}
+
+static void
+release_seeprom(sd)
+	struct seeprom_descriptor *sd;
+{
+	/* Release access to the memory port and the serial EEPROM. */
+	SEEPROM_OUTB(sd, 0);
 }
 
 #endif /* NPCI > 0 */

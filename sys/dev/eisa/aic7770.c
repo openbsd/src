@@ -2,7 +2,7 @@
  * Product specific probe and attach routines for:
  * 	27/284X and aic7770 motherboard SCSI controllers
  *
- * Copyright (c) 1995, 1996 Justin T. Gibbs.
+ * Copyright (c) 1994, 1995, 1996 Justin T. Gibbs.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aic7770.c,v 1.1 1996/05/05 12:42:22 deraadt Exp $
+ *	$Id: aic7770.c,v 1.2 1996/06/27 21:15:45 shawn Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -46,14 +46,8 @@
 
 #if defined(__NetBSD__)
 #include <sys/device.h>
-#if NetBSD1_1 < 3 /* NetBSD-1.1 */
-#include <machine/pio.h>
-#else
 #include <machine/bus.h>
-#ifdef __alpha__
 #include <machine/intr.h>
-#endif
-#endif
 #endif /* defined(__NetBSD__) */
 
 #include <scsi/scsi_all.h>
@@ -74,31 +68,12 @@
 
 #elif defined(__NetBSD__)
 
-#if NetBSD1_1 < 3 /* NetBSD-1.1 */
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-
-/* Standard EISA Host ID regs  (Offset from slot base) */
-#define HID0		0x80	/* 0,1: msb of ID2, 2-7: ID1      */
-#define HID1		0x81	/* 0-4: ID3, 5-7: LSB ID2         */
-#define HID2		0x82	/* product                        */
-#define HID3		0x83	/* firmware revision              */
-
-#define CHAR1(B1,B2) (((B1>>2) & 0x1F) | '@')
-#define CHAR2(B1,B2) (((B1<<3) & 0x18) | ((B2>>5) & 0x7)|'@')
-#define CHAR3(B1,B2) ((B2 & 0x1F) | '@')
-
-#define	EISA_MAX_SLOTS	16	/* XXX should be defined in a common header */
-static	ahc_slot = 0;		/* slot last board was found in */
-#else
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
-#endif
 
+#include <dev/ic/aic7xxxreg.h>
 #include <dev/ic/aic7xxxvar.h>
-#include <dev/microcode/aic7xxx/aic7xxx_reg.h>
 
 #endif /* defined(__NetBSD__) */
 
@@ -214,137 +189,26 @@ aic7770probe(void)
 
 #define bootverbose	1
 
-int	ahe_irq __P((bus_chipset_tag_t, bus_io_handle_t));
-int	ahematch __P((struct device *, void *, void *));
-void	aheattach __P((struct device *, struct device *, void *));
+int	ahc_eisa_match __P((struct device *, void *, void *));
+void	ahc_eisa_attach __P((struct device *, struct device *, void *));
 
-#if NetBSD1_1 < 3 /* NetBSD-1.1 */
 
-int	aheprobe1 __P((struct ahc_data *, struct isa_attach_args *, int));
-int	aheprobe __P((struct device *, void *, void *));
-
-struct cfdriver ahecd = {
-        NULL, "ahe", aheprobe, aheattach, DV_DULL, 
-        sizeof(struct ahc_data)
-}; 
-
-int
-aheprobe1(ahc, ia, iobase)
-	struct ahc_data *ahc;
-	struct isa_attach_args *ia;
-	int iobase;
-{
-	int i, irq;
-	u_char intdef, sig_id[4];
-
-	static struct {
-		ahc_type type;
-		u_int8_t id;
-	} valid_ids[] = {
-	/* Entries of other tested adaptors should be added here */
-		{ AHC_AIC7770,	0x70 }, /*aic7770 on Motherboard*/
-		{ AHC_274,	0x71 }, /*274x*/
-		{ AHC_284,	0x56 }, /*284x, BIOS enabled*/
-		{ AHC_284,	0x57 }  /*284x, BIOS disabled*/
-	};
-
-	for (i = 0; i < sizeof(sig_id); i++) {
-		/*
-		 * An outb is required to prime these
-		 * registers on VL cards
-		 */
-		outb(iobase + HID0, HID0 + i);
-		sig_id[i] = inb(iobase + HID0 + i);
-	}
-	if (sig_id[0] == 0xff)
-		return (0);
-	/* Check manufacturer's ID. */
-	if (CHAR1(sig_id[0], sig_id[1]) != 'A' ||
-	    CHAR2(sig_id[0], sig_id[1]) != 'D' ||
-	    CHAR3(sig_id[0], sig_id[1]) != 'P' ||
-	    sig_id[2] != 0x77)
-		return (0);
-	for (i = 0; i < sizeof(valid_ids)/sizeof(valid_ids[0]); i++) {
-		if (sig_id[3] != valid_ids[i].id)
-			continue;
-
-		ahc_reset("ahe", 0, iobase);
-		intdef = inb(INTDEF + iobase);
-		switch (irq = (intdef & 0xf)) {
-		case 9: 
-		case 10:
-		case 11:
-		case 12:
-		case 14:
-		case 15:
-			break;
-		default:
-			printf("%s: illegal irq setting %d\n",
-			       ahc->sc_dev.dv_xname, intdef);
-			return (0);
-		}
-
-		if (ia->ia_irq == IRQUNK) {
-			ia->ia_irq = irq;
-		} else if (ia->ia_irq != irq) {
-			printf("%s: irq mismatch; kernel configured %d"
-			       "!= board configured %d\n",
-			       ahc->sc_dev.dv_xname, ia->ia_irq, irq);
-			return (0);
-		}
-
-		ahc->type = valid_ids[i].type;
-
-		ia->ia_msize = 0;
-		ia->ia_iobase =	iobase;
-		ia->ia_iosize = AHC_EISA_IOSIZE;
-		return (1);
-	}
-	return (0);
-}
-
-int
-aheprobe(parent, match, aux)
-        struct device *parent;
-        void *match, *aux; 
-{       
-	struct isa_attach_args *ia = aux;
-	struct ahc_data *ahc = match;
-
-	if (ia->ia_iobase != IOBASEUNK)
-		return aheprobe1(ahc, ia, ia->ia_iobase);
-
-	ahc_slot++;
-	for (; ahc_slot < EISA_MAX_SLOTS; ahc_slot++) {
-		if (aheprobe1(ahc, ia,
-			      0x1000 * ahc_slot + AHC_EISA_SLOT_OFFSET))
-			return 1;
-	}
-	return (0);
-}
-
-#else
-
-struct cfattach ahe_ca = {
-	sizeof(struct ahc_data), ahematch, aheattach
-};
-
-struct cfdriver ahe_cd = {
-	NULL, "ahe", DV_DULL
+struct cfattach ahc_eisa_ca = {
+	sizeof(struct ahc_data), ahc_eisa_match, ahc_eisa_attach
 };
 
 /*
  * Return irq setting of the board, otherwise -1.
  */
 int
-ahe_irq(bc, ioh)
+ahc_eisa_irq(bc, ioh)
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 {
 	int irq;
 	u_char intdef;
 
-	ahc_reset("ahe", bc, ioh);
+	ahc_reset("ahc_eisa", bc, ioh);
 	intdef = bus_io_read_1(bc, ioh, INTDEF);
 	switch (irq = (intdef & 0xf)) {
 	case 9:
@@ -355,7 +219,7 @@ ahe_irq(bc, ioh)
 	case 15:
 		break;
 	default:
-		printf("ahe_irq: illegal irq setting %d\n", intdef);
+		printf("ahc_eisa_irq: illegal irq setting %d\n", intdef);
 		return -1;
 	}
 
@@ -369,11 +233,12 @@ ahe_irq(bc, ioh)
  * the actual probe routine to check it out.
  */
 int
-ahematch(parent, match, aux)
+ahc_eisa_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
 	struct eisa_attach_args *ea = aux;
+	bus_chipset_tag_t bc = ea->ea_bc;
 	bus_io_handle_t ioh;
 	int irq;
 
@@ -384,29 +249,16 @@ ahematch(parent, match, aux)
 	    strcmp(ea->ea_idstring, "ADP7757"))	  /* XXX - not EISA, but VL */
 		return (0);
 
-#ifdef notyet
-	if (bus_io_map(ea->ea_bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE,
-		       &ioh))
+	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
+	    AHC_EISA_IOSIZE, &ioh))
 		return (0);
-	/* This won't compile as-is, anyway. */
-	bus_io_write_1(ea->ea_bc, ioh, EISA_CONTROL, EISA_ENABLE | EISA_RESET);
-	delay(10);
-	bus_io_write_1(ea->ea_bc, ioh, EISA_CONTROL, EISA_ENABLE);
-	/* Wait for reset? */
-	delay(1000);
-	bus_io_unmap(ea->ea_bc, ioh, EISA_SLOT_SIZE);
-#endif
 
-	if (bus_io_map(ea->ea_bc, 
-		       EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
-		       AHC_EISA_IOSIZE, &ioh))
-		return (0);
-	irq = ahe_irq(ea->ea_bc, ioh);
-	bus_io_unmap(ea->ea_bc, ioh, EISA_SLOT_SIZE);
+	irq = ahc_eisa_irq(bc, ioh);
+
+	bus_io_unmap(bc, ioh, AHC_EISA_IOSIZE);
+
 	return (irq >= 0);
 }
-
-#endif
 
 #endif /* defined(__NetBSD__) */
 
@@ -416,7 +268,7 @@ aic7770_attach(e_dev)
 	struct eisa_device *e_dev;
 #elif defined(__NetBSD__)
 void
-aheattach(parent, self, aux)
+ahc_eisa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 #endif
@@ -461,8 +313,8 @@ aheattach(parent, self, aux)
 	}
 
 	/*
-	 * The IRQMS bit enables level sensitive interrupts only allow
-	 * IRQ sharing if its set.
+	 * The IRQMS bit enables level sensitive interrupts. Only allow
+	 * IRQ sharing if it's set.
 	 */
 	if(eisa_reg_intr(e_dev, irq, ahc_intr, (void *)ahc, &bio_imask,
 			 /*shared ==*/ahc->pause & IRQMS)) {
@@ -474,40 +326,19 @@ aheattach(parent, self, aux)
 #elif defined(__NetBSD__)
 
 	struct ahc_data *ahc = (void *)self;
-	const char *model;
-#if NetBSD1_1 < 3 /* NetBSD-1.1 */
-	struct isa_attach_args *ia = aux;
-
-	switch (ahc->type) {
-	case AHC_AIC7770:
-		model = "AIC-7770 SCSI (on motherboard)";
-		break;
-	case AHC_274:
-		model = "AHA-274x SCSI";
-		break;
-	case AHC_284:
-		model = "AHA-284x SCSI";
-		break;
-	default:
-		panic("aheattach: Unknown device type 0x%x\n", ahc->type);
-	}
-	printf(": %s\n", model);
-
-	ahc_construct(ahc, ahc->sc_dev.dv_unit, 0,
-		      ia->ia_iobase, ahc->type, AHC_FNONE);
-#else
 	struct eisa_attach_args *ea = aux;
-	bus_io_handle_t ioh;			/* XXX - ioh */
-	eisa_intr_handle_t ih;
-	const char *intrstr;
+	bus_chipset_tag_t bc = ea->ea_bc;
+	bus_io_handle_t ioh;
 	int irq;
+	eisa_chipset_tag_t ec = ea->ea_ec;
+	eisa_intr_handle_t ih;
+	const char *model, *intrstr;
 
-	if (bus_io_map(ea->ea_bc, 
-		       EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
+	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
 		       AHC_EISA_IOSIZE, &ioh))
-		panic("aheattach: could not map I/O addresses");
-	if ((irq = ahe_irq(ea->ea_bc, ioh)) < 0)
-		panic("aheattach: ahe_irq failed!");
+		panic("ahc_eisa_attach: could not map I/O addresses");
+	if ((irq = ahc_eisa_irq(bc, ioh)) < 0)
+		panic("ahc_eisa_attach: ahc_eisa_irq failed!");
 
 	if (strcmp(ea->ea_idstring, "ADP7770") == 0) {
 		model = EISA_PRODUCT_ADP7770;
@@ -522,19 +353,17 @@ aheattach(parent, self, aux)
 		model = EISA_PRODUCT_ADP7757;
 		type = AHC_284;
 	} else {
-		panic("aheattach: Unknown device type %s\n",
+		panic("ahc_eisa_attach: Unknown device type %s\n",
 		      ea->ea_idstring);
 	}
 	printf(": %s\n", model);
 
-	ahc_construct(ahc,
-		      ahc->sc_dev.dv_unit, ea->ea_bc, ioh, type, AHC_FNONE);
-	if (eisa_intr_map(ea->ea_ec, irq, &ih)) {
+	ahc_construct(ahc, bc, ioh, type, AHC_FNONE);
+	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
 		       ahc->sc_dev.dv_xname, irq);
 		return;
 	}
-#endif
 #endif /* defined(__NetBSD__) */
 
 	/*
@@ -542,14 +371,8 @@ aheattach(parent, self, aux)
 	 * usefull for debugging irq problems
 	 */
 	if(bootverbose) {
-		printf(
-#if defined(__FreeBSD__)
-		       "ahc%d: Using %s Interrupts\n",
-		       unit,
-#elif defined(__NetBSD__)
-		       "%s: Using %s Interrupts\n",
-		       ahc->sc_dev.dv_xname,
-#endif
+		printf("%s: Using %s Interrupts\n",
+		       ahc_name(ahc),
 		       ahc->pause & IRQMS ?
 				"Level Sensitive" : "Edge Triggered");
 	}
@@ -562,18 +385,14 @@ aheattach(parent, self, aux)
 	 */
 	switch( ahc->type ) {
 	    case AHC_AIC7770:
-	    {
-		/* XXX
-		 * It would be really nice to know if the BIOS
-		 * was installed for the motherboard controllers,
-		 * but I don't know how to yet.  Assume its enabled
-		 * for now.
-		 */
-		break;
-	    }
 	    case AHC_274:
 	    {
-		if((AHC_INB(ahc, HA_274_BIOSCTRL) & BIOSMODE) == BIOSDISABLED)
+		u_char biosctrl = AHC_INB(ahc, HA_274_BIOSCTRL);
+
+		/* Get the primary channel information */
+		ahc->flags |= (biosctrl & CHANNEL_B_PRIMARY);
+
+		if((biosctrl & BIOSMODE) == BIOSDISABLED)
 			ahc->flags |= AHC_USEDEFAULTS;
 		break;
 	    }
@@ -597,7 +416,7 @@ aheattach(parent, self, aux)
 	/*      
 	 * See if we have a Rev E or higher aic7770. Anything below a
 	 * Rev E will have a R/O autoflush disable configuration bit.
-	 * Its still not clear exactly what is differenent about the Rev E.
+	 * It's still not clear exactly what is differenent about the Rev E.
 	 * We think it allows 8 bit entries in the QOUTFIFO to support
 	 * "paging" SCBs so you can have more than 4 commands active at
 	 * once.
@@ -626,19 +445,11 @@ aheattach(parent, self, aux)
 		else
 			id_string = "aic7770 <= Rev C, ";
 
-#if defined(__FreeBSD__)
-		printf("ahc%d: %s", unit, id_string);
-#elif defined(__NetBSD__)
-		printf("%s: %s", ahc->sc_dev.dv_xname, id_string);
-#endif
+		printf("%s: %s", ahc_name(ahc), id_string);
 	}
 
 	/* Setup the FIFO threshold and the bus off time */
-	if(ahc->flags & AHC_USEDEFAULTS) {
-		AHC_OUTB(ahc, BUSSPD, DFTHRSH_100);
-		AHC_OUTB(ahc, BUSTIME, BOFF_60BCLKS);
-	}
-	else {
+	{
 		u_char hostconf = AHC_INB(ahc, HOSTCONF);
 		AHC_OUTB(ahc, BUSSPD, hostconf & DFTHRSH);
 		AHC_OUTB(ahc, BUSTIME, (hostconf << 2) & BOFF);
@@ -651,7 +462,7 @@ aheattach(parent, self, aux)
 #if defined(__FreeBSD__)
 		ahc_free(ahc);
 		/*
-		 * The board's IRQ line is not yet enabled so its safe
+		 * The board's IRQ line is not yet enabled so it's safe
 		 * to release the irq.
 		 */
 		eisa_release_intr(e_dev, irq, ahc_intr);
@@ -679,25 +490,17 @@ aheattach(parent, self, aux)
 
 	e_dev->kdc->kdc_state = DC_BUSY; /* host adapters always busy */
 #elif defined(__NetBSD__)
-#if NetBSD1_1 < 3 /* NetBSD-1.1 */
-	ahc->sc_ih = isa_intr_establish(ia->ia_irq,
-		ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, ISA_IPL_BIO,
-		ahc_intr, ahc);
-#else
-	intrstr = eisa_intr_string(ea->ea_ec, ih);
+	intrstr = eisa_intr_string(ec, ih);
 	/*
 	 * The IRQMS bit enables level sensitive interrupts only allow
 	 * IRQ sharing if its set.
 	 */
+	ahc->sc_ih = eisa_intr_establish(ec, ih,
+	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr, ahc
 #ifdef __OpenBSD__
-	ahc->sc_ih = eisa_intr_establish(ea->ea_ec, ih,
-		ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO,
-		ahc_intr, ahc, ahc->sc_dev.dv_xname);
-#else
-	ahc->sc_ih = eisa_intr_establish(ea->ea_ec, ih,
-		ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO,
-		ahc_intr, ahc);
+	    , ahc->sc_dev.dv_xname
 #endif
+	    );
 	if (ahc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		       ahc->sc_dev.dv_xname);
@@ -710,7 +513,6 @@ aheattach(parent, self, aux)
 	if (intrstr != NULL)
 		printf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
 		       intrstr);
-#endif
 #endif /* defined(__NetBSD__) */
 
 	/* Attach sub-devices - always succeeds */

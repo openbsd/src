@@ -1,5 +1,3 @@
-/*	$NetBSD: aic7xxx.seq,v 1.3 1996/05/20 00:48:45 thorpej Exp $	*/
-
 /*+M***********************************************************************
  *Adaptec 274x/284x/294x device driver for Linux and FreeBSD.
  *
@@ -41,7 +39,7 @@
  *
  *-M************************************************************************/
 
-VERSION AIC7XXX_SEQ_VER "$NetBSD: aic7xxx.seq,v 1.3 1996/05/20 00:48:45 thorpej Exp $"
+VERSION AIC7XXX_SEQ_VER "$Id: aic7xxx.seq,v 1.4 1996/06/27 21:15:52 shawn Exp $"
 
 #if defined(__NetBSD__)
 #include "../../../../dev/ic/aic7xxxreg.h"
@@ -85,6 +83,11 @@ reset:
 start:
 	and	FLAGS,0x0f		/* clear target specific flags */
 	mvi	SCSISEQ,ENRSELI		/* Always allow reselection */
+	clr	SCSIRATE		/*
+					 * We don't know the target we will
+					 * connect to, so default to narrow
+					 * transfers to avoid parity problems.
+					 */
 poll_for_work:
 	/*
 	 * Are we a twin channel device?
@@ -259,13 +262,29 @@ select2:
 	call	ndx_dtr
 	mov	SCSIRATE,SINDIR
 
+/*
+ * Initialize Ultra mode setting.
+ */
+	mov	FUNCTION1,SCSIID
+	mov	A,FUNCTION1
+	and	SINDEX,0xdf,SXFRCTL0		/* default to Ultra disabled */
+	test	SCSIID, 0x80	 jnz ultra_b	/* Target ID > 7 */
+	test	SBLKCTL, SELBUSB jnz ultra_b	/* Second channel device */
+	test	ULTRA_ENB,A	 jz  set_sxfrctl0
+	or	SINDEX, ULTRAEN  jmp set_sxfrctl0
+ultra_b:
+	test	ULTRA_ENB_B,A	 jz  set_sxfrctl0
+	or	SINDEX, ULTRAEN
+
+set_sxfrctl0:
+	mov	SXFRCTL0,SINDEX
+
 	mvi	SCSISEQ,ENAUTOATNP		/*
 						 * ATN on parity errors
 						 * for "in" phases
 						 */
 	mvi	CLRSINT1,CLRBUSFREE
 	mvi	CLRSINT0,0x60			/* CLRSELDI|CLRSELDO */
-
 /*
  * Main loop for information transfer phases.  If BSY is false, then
  * we have a bus free condition, expected or not.  Otherwise, wait
@@ -289,6 +308,7 @@ ITloop:
 	cmp	A,P_MESGIN	je p_mesgin
 
 	mvi	INTSTAT,BAD_PHASE	/* unknown phase - signal driver */
+	jmp	ITloop			/* Try reading the bus again. */
 
 p_dataout:
 	mvi	DMAPARAMS,0x7d			/*
@@ -320,11 +340,28 @@ data_phase_init:
 	or	FLAGS, DPHASE		/* We have seen a data phase */
 
 data_phase_loop:
+/* Guard against overruns */
+	test	SG_COUNT, 0xff jnz data_phase_inbounds
+/*
+ * Turn on 'Bit Bucket' mode, set the transfer count to
+ * 16meg and let the target run until it changes phase.
+ * When the transfer completes, notify the host that we
+ * had an overrun.
+ */
+	or	SXFRCTL1,BITBUCKET
+	mvi	STCNT0,0xff
+	mvi	STCNT1,0xff
+	mvi	STCNT2,0xff
+
+data_phase_inbounds:
 /* If we are the last SG block, don't set wideodd. */
 	cmp	SG_COUNT,0x01 jne data_phase_wideodd
 	and	DMAPARAMS, 0xbf		/* Turn off WIDEODD */
 data_phase_wideodd:
 	mov	DMAPARAMS  call dma
+
+/* Go tell the host about any overruns */
+	test	SXFRCTL1,BITBUCKET jnz data_phase_overrun
 
 /* Exit if we had an underrun */
 	test	SSTAT0,SDONE	jz data_phase_finish /* underrun STCNT != 0 */
@@ -427,6 +464,14 @@ data_phase_finish:
 	mov	SCB_RESID_SGCNT, SG_COUNT
 	jmp	ITloop
 
+data_phase_overrun:
+/*
+ * Turn off BITBUCKET mode and notify the host
+ */
+	and	SXFRCTL1,0x7f		/* ~BITBUCKET */
+	mvi	INTSTAT,DATA_OVERRUN
+	jmp	ITloop
+
 /*
  * Command phase.  Set up the DMA registers and let 'er rip.
  */
@@ -486,6 +531,7 @@ p_mesgout_start:
 p_mesgout_loop:
 	test	SSTAT1,PHASEMIS	jnz p_mesgout_phasemis
 	test	SSTAT0,SPIORDY	jz p_mesgout_loop
+	test	SSTAT1,PHASEMIS	jnz p_mesgout_phasemis
 	cmp	DINDEX,1	jne p_mesgout_outb	/* last byte? */
 	mvi	CLRSINT1,CLRATNO			/* drop ATN */
 p_mesgout_outb:
@@ -855,6 +901,7 @@ inb_next_wait:
 	test	SSTAT0,SPIORDY	jz inb_next_wait /* wait for next byte */
 inb_first:
 	mov	DINDEX,SINDEX
+	test	SSTAT1,PHASEMIS	jnz mesgin_phasemis
 	mov	DINDIR,SCSIBUSL	ret		/*read byte directly from bus*/
 inb_last:
 	mov	NONE,SCSIDATL ret		/*dummy read from latch to ACK*/

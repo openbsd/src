@@ -1,5 +1,3 @@
-/*	$NetBSD: smc93cx6.c,v 1.1 1996/05/16 03:59:10 mycroft Exp $	*/
-
 /*
  * Interface for the 93C46/26/06 serial eeprom parts.
  *
@@ -19,6 +17,8 @@
  *    Daniel M. Eischen.
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
+ *
+ *      $Id: smc93cx6.c,v 1.2 1996/06/27 21:15:50 shawn Exp $
  */
 
 /*
@@ -71,16 +71,6 @@ static struct seeprom_cmd {
   	unsigned char len;
  	unsigned char bits[3];
 } seeprom_read = {3, {1, 1, 0}};
-
-#if defined(__FreeBSD__)
-#define	SEEPROM_INB(sd)		inb(sd->sd_iobase)
-#define	SEEPROM_OUTB(sd, value)	outb(sd->sd_iobase, value)
-#elif defined(__NetBSD__)
-#define	SEEPROM_INB(sd) \
-	bus_io_read_1(sd->sd_bc, sd->sd_ioh, sd->sd_offset)
-#define	SEEPROM_OUTB(sd, value) \
-	bus_io_write_1(sd->sd_bc, sd->sd_ioh, sd->sd_offset, value)
-#endif
 
 /*
  * Wait for the SEERDY to go high; about 800 ns.
@@ -186,37 +176,4 @@ read_seeprom(sd, buf, start_addr, count)
 	printf ("\n");
 #endif
 	return (1);
-}
-
-int
-acquire_seeprom(sd)
-	struct seeprom_descriptor *sd;
-{
-	int wait;
-
-	/*
-	 * Request access of the memory port.  When access is
-	 * granted, SEERDY will go high.  We use a 1 second
-	 * timeout which should be near 1 second more than
-	 * is needed.  Reason: after the chip reset, there
-	 * should be no contention.
-	 */
-	SEEPROM_OUTB(sd, sd->sd_MS);
-	wait = 1000;  /* 1 second timeout in msec */
-	while (--wait && ((SEEPROM_INB(sd) & sd->sd_RDY) == 0)) {
-		DELAY (1000);  /* delay 1 msec */
-        }
-	if ((SEEPROM_INB(sd) & sd->sd_RDY) == 0) {
-		SEEPROM_OUTB(sd, 0); 
-		return (0);
-	}         
-	return(1);
-}
-
-void
-release_seeprom(sd)
-	struct seeprom_descriptor *sd;
-{
-	/* Release access to the memory port and the serial EEPROM. */
-	SEEPROM_OUTB(sd, 0);
 }

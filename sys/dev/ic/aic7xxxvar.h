@@ -1,5 +1,3 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.7 1996/05/20 00:58:11 thorpej Exp $	*/
-
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
  * SCSI controllers.  This is used to implement product specific
@@ -31,6 +29,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	$Id: aic7xxxvar.h,v 1.6 1996/06/27 21:15:49 shawn Exp $
  */
 
 #ifndef _AIC7XXX_H_
@@ -38,6 +38,21 @@
 
 #if defined(__FreeBSD__)
 #include "ahc.h"                /* for NAHC from config */
+#endif
+
+#if defined(__NetBSD__)
+/*
+ * convert FreeBSD's <sys/queue.h> symbols to NetBSD's
+ */
+#define	STAILQ_ENTRY		SIMPLEQ_ENTRY
+#define	STAILQ_HEAD		SIMPLEQ_HEAD
+#define	STAILQ_INIT		SIMPLEQ_INIT
+#define	STAILQ_INSERT_HEAD	SIMPLEQ_INSERT_HEAD
+#define	STAILQ_INSERT_TAIL	SIMPLEQ_INSERT_TAIL
+#define	STAILQ_REMOVE_HEAD(head, field)	\
+	SIMPLEQ_REMOVE_HEAD(head, (head)->sqh_first, field)
+#define	stqh_first		sqh_first
+#define	stqe_next		sqe_next
 #endif
 
 #if defined(__FreeBSD__)
@@ -177,7 +192,7 @@ struct scb {
 					 */
 /*27*/	u_char prev;
 /*-----------------end of hardware supported fields----------------*/
-	SIMPLEQ_ENTRY(scb)	links;	/* for chaining */
+	STAILQ_ENTRY(scb)	links;	/* for chaining */
 	struct scsi_xfer *xs;	/* the scsi_xfer for this cmd */
 	scb_flag flags;
 	u_char	position;	/* Position in card's scbarray */
@@ -204,19 +219,19 @@ struct ahc_data {
 					  * Paged out, non-tagged scbs
 					  * indexed by target.
 					  */
-	SIMPLEQ_HEAD(, scb) free_scbs;	/*
+	STAILQ_HEAD(, scb) free_scbs;	/*
 					 * SCBs assigned to free slots
 					 * on the card. (no paging required)
 					 */
-	SIMPLEQ_HEAD(, scb) page_scbs;	/*
+	STAILQ_HEAD(, scb) page_scbs;	/*
 					 * SCBs that will require paging
 					 * before use (no assigned slot)
 					 */
-	SIMPLEQ_HEAD(, scb) waiting_scbs;/*
+	STAILQ_HEAD(, scb) waiting_scbs;/*
 					 * SCBs waiting to be paged in
 					 * and started.
 					 */
-	SIMPLEQ_HEAD(, scb)assigned_scbs;/*
+	STAILQ_HEAD(, scb)assigned_scbs;/*
 					 * SCBs that were waiting but have
 					 * now been assigned a slot by
 					 * ahc_free_scb.
