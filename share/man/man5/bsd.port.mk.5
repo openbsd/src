@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.57 2001/11/17 10:44:28 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.58 2001/12/09 05:35:23 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -396,6 +396,9 @@ If
 .Sq simple ,
 there is a configure script, but it does not fit the normal gnu configure
 conventions.
+.It Ev MODGNU_CONFIG_GUESS_DIRS
+If a port uses config.guess outside WRKSRC, the directories
+containing the other copies must be set here.
 .It Ev COPTS
 Supplementary options appended to ${CFLAGS} for building.
 Since most ports ignore the COPTS convention, they are actually told to use
