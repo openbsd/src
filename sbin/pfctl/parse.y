@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.261 2002/12/17 20:06:05 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.262 2002/12/18 08:01:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -520,7 +520,6 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 				YYERROR;
 
 			PREPARE_ANCHOR_RULE(r, $2);
-
 			r.direction = $3;
 			r.af = $5;
 
@@ -534,12 +533,11 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 		| NATANCHOR string interface af proto fromto {
 			struct pf_rule r;
 
-			r.action = PF_NAT;
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
 
 			PREPARE_ANCHOR_RULE(r, $2);
-
+			r.action = PF_NAT;
 			r.af = $4;
 
 			decide_address_family($6.src.host, &r.af);
@@ -551,13 +549,11 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 		| RDRANCHOR string interface af proto fromto {
 			struct pf_rule r;
 
-			r.action = PF_RDR;
-			if (check_rulestate(PFCTL_STATE_NAT))
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
 
 			PREPARE_ANCHOR_RULE(r, $2);
-
+			r.action = PF_RDR;
 			r.af = $4;
 
 			decide_address_family($6.src.host, &r.af);
@@ -568,12 +564,11 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 		| BINATANCHOR string interface af proto fromto {
 			struct pf_rule r;
 
-			r.action = PF_NAT;
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
 
 			PREPARE_ANCHOR_RULE(r, $2);
-
+			r.action = PF_NAT;
 			r.af = $4;
 
 			decide_address_family($6.src.host, &r.af);
