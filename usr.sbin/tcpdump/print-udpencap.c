@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udpencap.c,v 1.2 2004/06/22 03:19:53 ho Exp $	*/
+/*	$OpenBSD: print-udpencap.c,v 1.3 2004/06/23 05:21:18 markus Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udpencap.c,v 1.2 2004/06/22 03:19:53 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udpencap.c,v 1.3 2004/06/23 05:21:18 markus Exp $ (XXX)";
 #endif
 
 #include <sys/types.h>
@@ -41,7 +41,9 @@ udpencap_print(const u_char *bp, u_int len, const u_char *bp2)
 
 	/* Recognize NAT-T Keepalive msgs. (draft-ietf-ipsec-udp-encaps-nn) */
 	if (len == 1 && *bp == 0xFF) {
-		fputs(" NAT-T Keepalive", stdout);
+		if (vflag)
+			fputs(" ", stdout);
+		fputs("NAT-T Keepalive", stdout);
 		return;
 	}
 
@@ -50,11 +52,13 @@ udpencap_print(const u_char *bp, u_int len, const u_char *bp2)
 		return;
 	}
 	if (vflag)
-		(void)printf(" ");
-	(void)printf("udpencap:");
+		fputs(" ", stdout);
+	fputs("udpencap:", stdout);
 	spi = (u_int32_t *)(bp);
 	if (*spi == 0)
 		ike_print(bp + sizeof(u_int32_t), len - sizeof(u_int32_t));
-	else
+	else {
+		fputs(" ", stdout);
 		esp_print(bp, len, bp2);
+	}
 }
