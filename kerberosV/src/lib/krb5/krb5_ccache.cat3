@@ -1,0 +1,176 @@
+
+KRB5_CCACHE(3)             UNIX Programmer's Manual             KRB5_CCACHE(3)
+
+NNAAMMEE
+     kkrrbb55__ccccaacchhee, kkrrbb55__cccc__ccuurrssoorr, kkrrbb55__cccc__ooppss, kkrrbb55__ffcccc__ooppss, kkrrbb55__mmcccc__ooppss,
+     kkrrbb55__cccc__cclloossee, kkrrbb55__cccc__ccooppyy__ccaacchhee, kkrrbb55__cccc__ddeeffaauulltt, kkrrbb55__cccc__ddeeffaauulltt__nnaammee,
+     kkrrbb55__cccc__ddeessttrrooyy, kkrrbb55__cccc__eenndd__sseeqq__ggeett, kkrrbb55__cccc__ggeenn__nneeww, kkrrbb55__cccc__ggeett__nnaammee,
+     kkrrbb55__cccc__ggeett__pprriinncciippaall, kkrrbb55__cccc__ggeett__ttyyppee, kkrrbb55__cccc__ggeett__ooppss,
+     kkrrbb55__cccc__ggeett__vveerrssiioonn, kkrrbb55__cccc__iinniittiiaalliizzee, kkrrbb55__cccc__rreeggiisstteerr,
+     kkrrbb55__cccc__rreessoollvvee, kkrrbb55__cccc__rreettrriieevvee__ccrreedd, kkrrbb55__cccc__rreemmoovvee__ccrreedd,
+     kkrrbb55__cccc__sseett__ddeeffaauulltt__nnaammee, kkrrbb55__cccc__ssttoorree__ccrreedd, kkrrbb55__cccc__sseett__ffllaaggss,
+     kkrrbb55__cccc__nneexxtt__ccrreedd - mange credential cache.
+
+LLIIBBRRAARRYY
+     Kerberos 5 Library (libkrb5, -lkrb5)
+
+SSYYNNOOPPSSIISS
+     struct krb5_ccache;
+
+     struct krb5_cc_cursor;
+
+     struct krb5_cc_ops;
+
+     struct krb5_cc_ops *krb5_fcc_ops;
+
+     struct krb5_cc_ops *krb5_mcc_ops;
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__cclloossee(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__ccooppyy__ccaacchhee(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _c_o_n_s_t _k_r_b_5___c_c_a_c_h_e _f_r_o_m,
+             _k_r_b_5___c_c_a_c_h_e _t_o)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__ddeeffaauulltt(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _*_i_d)
+
+     _c_o_n_s_t _c_h_a_r _*
+     kkrrbb55__cccc__ddeeffaauulltt__nnaammee(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__ddeessttrrooyy(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__eenndd__sseeqq__ggeett(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _c_o_n_s_t _k_r_b_5___c_c_a_c_h_e _i_d,
+             _k_r_b_5___c_c___c_u_r_s_o_r _*_c_u_r_s_o_r)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__ggeenn__nneeww(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _c_o_n_s_t _k_r_b_5___c_c___o_p_s _*_o_p_s,
+             _k_r_b_5___c_c_a_c_h_e _*_i_d)
+
+     _c_o_n_s_t _c_h_a_r _*
+     kkrrbb55__cccc__ggeett__nnaammee(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__ggeett__pprriinncciippaall(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d,
+             _k_r_b_5___p_r_i_n_c_i_p_a_l _*_p_r_i_n_c_i_p_a_l)
+
+     _c_o_n_s_t _c_h_a_r _*
+     kkrrbb55__cccc__ggeett__ttyyppee(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d)
+
+     _c_o_n_s_t _k_r_b_5___c_c___o_p_s _*
+     kkrrbb55__cccc__ggeett__ooppss(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d)
+
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__ggeett__vveerrssiioonn(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _c_o_n_s_t _k_r_b_5___c_c_a_c_h_e _i_d)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__iinniittiiaalliizzee(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d,
+             _k_r_b_5___p_r_i_n_c_i_p_a_l _p_r_i_m_a_r_y___p_r_i_n_c_i_p_a_l)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__rreeggiisstteerr(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _c_o_n_s_t _k_r_b_5___c_c___o_p_s _*_o_p_s,
+             _k_r_b_5___b_o_o_l_e_a_n _o_v_e_r_r_i_d_e)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__rreessoollvvee(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _c_o_n_s_t _c_h_a_r _*_n_a_m_e, _k_r_b_5___c_c_a_c_h_e _*_i_d)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__rreettrriieevvee__ccrreedd(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d,
+             _k_r_b_5___f_l_a_g_s _w_h_i_c_h_f_i_e_l_d_s, _c_o_n_s_t _k_r_b_5___c_r_e_d_s _*_m_c_r_e_d_s,
+             _k_r_b_5___c_r_e_d_s _*_c_r_e_d_s)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__rreemmoovvee__ccrreedd(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d,
+             _k_r_b_5___f_l_a_g_s _w_h_i_c_h, _k_r_b_5___c_r_e_d_s _*_c_r_e_d)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__sseett__ddeeffaauulltt__nnaammee(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _c_o_n_s_t _c_h_a_r _*_n_a_m_e)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__ssttoorree__ccrreedd(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c_a_c_h_e _i_d,
+             _k_r_b_5___c_r_e_d_s _*_c_r_e_d_s)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__sseett__ffllaaggss(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _k_r_b_5___c_c___s_e_t___f_l_a_g_s _i_d,
+             _k_r_b_5___f_l_a_g_s _f_l_a_g_s)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__cccc__nneexxtt__ccrreedd(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t, _c_o_n_s_t _k_r_b_5___c_c_a_c_h_e _i_d,
+             _k_r_b_5___c_c___c_u_r_s_o_r _*_c_u_r_s_o_r, _k_r_b_5___c_r_e_d_s _*_c_r_e_d_s)
+
+DDEESSCCRRIIPPTTIIOONN
+     The krb5_ccache structure holds a Kerberos credential cache.
+
+     The krb5_cc_cursor structure holds current position in a credential cache
+     when iterating over the cache.
+
+     The krb5_cc_ops structure holds a set of operations that can me preformed
+     on a credential cache.
+
+     There is no component inside krb5_ccache, krb5_cc_cursor nor krb5_fcc_ops
+     that is directly referable.
+
+     The krb5_creds holds a Kerberos credential, see manpage for
+     krb5_creds(3).
+
+     kkrrbb55__cccc__ddeeffaauulltt__nnaammee() and kkrrbb55__cccc__sseett__ddeeffaauulltt__nnaammee() gets and sets the
+     default name for the _c_o_n_t_e_x_t.
+
+     kkrrbb55__cccc__ddeeffaauulltt() opens the default ccache in _i_d. Return 0 or an error
+     code.
+
+     kkrrbb55__cccc__ggeenn__nneeww() generates a new ccache of type _o_p_s in _i_d. Return 0 or
+     an error code.
+
+     kkrrbb55__cccc__rreessoollvvee() finds and allocates a ccache in _i_d from the specifica-
+     tion in _r_e_s_i_d_u_a_l. If the ccache name doesn't contain any colon (:), in-
+     terpret it as a file name.  Return 0 or an error code.
+
+
+     kkrrbb55__cccc__iinniittiiaalliizzee() creates a new ccache in _i_d for _p_r_i_m_a_r_y___p_r_i_n_c_i_p_a_l.
+     Return 0 or an error code.
+
+     kkrrbb55__cccc__cclloossee() stops using the ccache _i_d and frees the related re-
+     sources.  Return 0 or an error code.  kkrrbb55__cccc__ddeessttrrooyy() removes the
+     ccache and closes (by calling kkrrbb55__cccc__cclloossee()) _i_d. Return 0 or an error
+     code.
+
+     kkrrbb55__cccc__ccooppyy__ccaacchhee() copys the contents of _f_r_o_m to _t_o.
+
+     kkrrbb55__cccc__ggeett__nnaammee() returns the name of the ccache _i_d.
+
+     kkrrbb55__cccc__ggeett__pprriinncciippaall() returns the principal of _i_d in _p_r_i_n_c_i_p_a_l. Return
+     0 or an error code.
+
+     kkrrbb55__cccc__ggeett__ttyyppee() returns the type of the ccache _i_d.
+
+     kkrrbb55__cccc__ggeett__ooppss() returns the ops of the ccache _i_d.
+
+     kkrrbb55__cccc__ggeett__vveerrssiioonn() returns the version of _i_d.
+
+     kkrrbb55__cccc__rreeggiisstteerr() Adds a new ccache type with operations _o_p_s, overwrit-
+     ing any existing one if _o_v_e_r_r_i_d_e. Return an error code or 0.
+
+     kkrrbb55__cccc__rreemmoovvee__ccrreedd() removes the credential identified by (_c_r_e_d, _w_h_i_c_h)
+     from _i_d.
+
+     kkrrbb55__cccc__ssttoorree__ccrreedd() stores _c_r_e_d_s in the ccache _i_d. Return 0 or an error
+     code.
+
+     kkrrbb55__cccc__sseett__ffllaaggss() sets the flags of _i_d to _f_l_a_g_s.
+
+     kkrrbb55__cccc__rreettrriieevvee__ccrreedd(), retrieves the credential identified by _m_c_r_e_d_s
+     (and _w_h_i_c_h_f_i_e_l_d_s) from _i_d in _c_r_e_d_s. Return 0 or an error code.
+
+     kkrrbb55__cccc__nneexxtt__ccrreedd() retrieves the next cred pointed to by (_i_d, _c_u_r_s_o_r) in
+     _c_r_e_d_s, and advance _c_u_r_s_o_r. Return 0 or an error code.
+
+     kkrrbb55__cccc__eenndd__sseeqq__ggeett() Destroys the cursor _c_u_r_s_o_r.
+
+SSEEEE AALLSSOO
+     krb5(3),  krb5.conf(5),  kerberos(8)
+
+ HEIMDAL                        March 16, 2003                               3

@@ -1,6 +1,6 @@
 -*- indented-text -*-
 
-$KTH: TODO,v 1.66 2001/08/09 08:43:42 assar Exp $
+$KTH: TODO,v 1.67 2003/03/20 20:00:53 lha Exp $
 
 * configure
 
@@ -47,12 +47,6 @@ write a man-page
 make everything work with openssl and make prototypes compatible
 
 ** lib/gssapi
-
-process_context_token, add_cred, inquire_cred_by_mech,
-inquire_names_for_mech, and
-inquire_mechs_for_name not implemented.
-
-set minor_status in all functions
 
 anonymous credentials not implemented
 

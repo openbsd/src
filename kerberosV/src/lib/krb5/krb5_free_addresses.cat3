@@ -1,0 +1,21 @@
+
+KRB5_FREE_ADDRESSES(3)     UNIX Programmer's Manual     KRB5_FREE_ADDRESSES(3)
+
+NNAAMMEE
+     kkrrbb55__ffrreeee__aaddddrreesssseess - free list of addresses
+
+LLIIBBRRAARRYY
+     Kerberos 5 Library (libkrb5, -lkrb5)
+
+SSYYNNOOPPSSIISS
+     _v_o_i_d
+     kkrrbb55__ffrreeee__aaddddrreesssseess(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___a_d_d_r_e_s_s_e_s _*_a_d_d_r_e_s_s_e_s)
+
+DDEESSCCRRIIPPTTIIOONN
+     The kkrrbb55__ffrreeee__aaddddrreesssseess() will free a list of addresses that has been
+     created with kkrrbb55__ggeett__aallll__cclliieenntt__aaddddrrss() or with some other function.
+
+SSEEEE AALLSSOO
+     krb5_get_all_client_addrs(3)
+
+ HEIMDAL                       November 20, 2001                             1

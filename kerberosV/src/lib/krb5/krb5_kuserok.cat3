@@ -1,0 +1,36 @@
+
+KRB5_KUSEROK(3)            UNIX Programmer's Manual            KRB5_KUSEROK(3)
+
+NNAAMMEE
+     kkrrbb55__kkuusseerrookk - verifies if a principal can log in as a
+
+LLIIBBRRAARRYY
+     Kerberos 5 Library (libkrb5, -lkrb5)
+
+SSYYNNOOPPSSIISS
+     _k_r_b_5___b_o_o_l_e_a_n
+     kkrrbb55__kkuusseerrookk(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___p_r_i_n_c_i_p_a_l _p_r_i_n_c_i_p_a_l,
+             _c_o_n_s_t _c_h_a_r _*_n_a_m_e)
+
+DDEESSCCRRIIPPTTIIOONN
+     This function takes a local user _n_a_m_e and verifies if _p_r_i_n_c_i_p_a_l is al-
+     lowed to log in as that user.
+
+     First kkrrbb55__kkuusseerrookk check if there is a local account name _u_s_e_r_n_a_m_e_. If
+     there isn't, kkrrbb55__kkuusseerrookk returns FALSE.
+
+     Then kkrrbb55__kkuusseerrookk checks if principal is the same as user@realm in any of
+     the default realms. If that is the case, kkrrbb55__kkuusseerrookk returns TRUE.
+
+     After that it reads the file _._k_5_l_o_g_i_n (if it exists) in the users home
+     directory and checks if _p_r_i_n_c_i_p_a_l is in the file.  If it does exists,
+     TRUE is returned.  If neither of the above turns out to be true, is re-
+     turned.
+
+     The _._k_5_l_o_g_i_n should contain one principal per line.
+
+SSEEEE AALLSSOO
+     krb5_get_default_realms(3),  krb5_verify_user(3),
+     krb5_verify_user_lrealm(3),  krb5_verify_user_opt(3,) krb5.conf(5)
+
+ HEIMDAL                         Oct 17, 2002                                1

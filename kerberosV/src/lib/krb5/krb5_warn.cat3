@@ -1,0 +1,66 @@
+
+KRB5_WARN(3)               UNIX Programmer's Manual               KRB5_WARN(3)
+
+NNAAMMEE
+     kkrrbb55__wwaarrnn, kkrrbb55__wwaarrnnxx, kkrrbb55__vvwwaarrnn, kkrrbb55__vvwwaarrnnxx, kkrrbb55__eerrrr, kkrrbb55__eerrrrxx,
+     kkrrbb55__vveerrrr, kkrrbb55__vveerrrrxx, kkrrbb55__sseett__wwaarrnn__ddeesstt - Heimdal warning and error
+     functions
+
+LLIIBBRRAARRYY
+     Kerberos 5 Library (libkrb5, -lkrb5)
+
+SSYYNNOOPPSSIISS
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__eerrrr(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _i_n_t _e_v_a_l, _k_r_b_5___e_r_r_o_r___c_o_d_e _c_o_d_e,
+             _c_o_n_s_t _c_h_a_r _*_f_o_r_m_a_t, _._._.)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__eerrrrxx(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _i_n_t _e_v_a_l, _c_o_n_s_t _c_h_a_r _*_f_o_r_m_a_t, _._._.)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__vveerrrr(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _i_n_t _e_v_a_l, _k_r_b_5___e_r_r_o_r___c_o_d_e _c_o_d_e,
+             _c_o_n_s_t _c_h_a_r _*_f_o_r_m_a_t, _v_a___l_i_s_t _a_p)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__vveerrrrxx(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _i_n_t _e_v_a_l, _c_o_n_s_t _c_h_a_r _*_f_o_r_m_a_t,
+             _v_a___l_i_s_t _a_p)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__vvwwaarrnn(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___e_r_r_o_r___c_o_d_e _c_o_d_e,
+             _c_o_n_s_t _c_h_a_r _*_f_o_r_m_a_t, _v_a___l_i_s_t _a_p)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__vvwwaarrnnxx(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _c_o_n_s_t _c_h_a_r _*_f_o_r_m_a_t, _v_a___l_i_s_t _a_p)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__wwaarrnn(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___e_r_r_o_r___c_o_d_e _c_o_d_e, _c_o_n_s_t _c_h_a_r _*_f_o_r_m_a_t,
+             _._._.)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__wwaarrnnxx(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _c_o_n_s_t _c_h_a_r _*_f_o_r_m_a_t, _._._.)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__sseett__wwaarrnn__ddeesstt(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___l_o_g___f_a_c_i_l_i_t_y _*_f_a_c_i_l_i_t_y)
+
+     _c_h_a_r _*
+     kkrrbb55__ggeett__eerrrr__tteexxtt(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___e_r_r_o_r___c_o_d_e _c_o_d_e)
+
+DDEESSCCRRIIPPTTIIOONN
+     These functions prints a warning message to some destination.  _f_o_r_m_a_t is
+     a printf style format specifying the message to print. The forms not end-
+     ing in an ``x'' prints the error string associated with _c_o_d_e along with
+     the message.  The ``err'' functions exits with exit status _e_v_a_l after
+     printing the message.
+
+     The kkrrbb55__sseett__wwaarrnn__ffuunncc() function sets the destination for warning mes-
+     sages to the specified _f_a_c_i_l_i_t_y. Messages logged with the ``warn'' func-
+     tions have a log level of 1, while the ``err'' functions logs with level
+     0.
+
+     kkrrbb55__ggeett__eerrrr__tteexxtt() fetches the human readable strings describing the er-
+     ror-code.
+
+SSEEEE AALLSSOO
+     krb5_openlog(3)
+
+ HEIMDAL                        August 8, 1997                               1

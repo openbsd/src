@@ -1,0 +1,212 @@
+
+KRB5_KEYTAB(3)             UNIX Programmer's Manual             KRB5_KEYTAB(3)
+
+NNAAMMEE
+     kkrrbb55__kktt__ooppss, kkrrbb55__kkeeyyttaabb__eennttrryy, kkrrbb55__kktt__ccuurrssoorr, kkrrbb55__kktt__aadddd__eennttrryy,
+     kkrrbb55__kktt__cclloossee, kkrrbb55__kktt__ccoommppaarree, kkrrbb55__kktt__ccooppyy__eennttrryy__ccoonntteennttss,
+     kkrrbb55__kktt__ddeeffaauulltt, kkrrbb55__kktt__ddeeffaauulltt__nnaammee, kkrrbb55__kktt__eenndd__sseeqq__ggeett,
+     kkrrbb55__kktt__ffrreeee__eennttrryy, kkrrbb55__kktt__ggeett__eennttrryy, kkrrbb55__kktt__ggeett__nnaammee,
+     kkrrbb55__kktt__ggeett__ttyyppee, kkrrbb55__kktt__nneexxtt__eennttrryy, kkrrbb55__kktt__rreeaadd__sseerrvviiccee__kkeeyy,
+     kkrrbb55__kktt__rreeggiisstteerr, kkrrbb55__kktt__rreemmoovvee__eennttrryy, kkrrbb55__kktt__rreessoollvvee,
+     kkrrbb55__kktt__ssttaarrtt__sseeqq__ggeett - manage keytab (key storage) files
+
+LLIIBBRRAARRYY
+     Kerberos 5 Library (libkrb5, -lkrb5)
+
+SSYYNNOOPPSSIISS
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__aadddd__eennttrryy(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _i_d,
+             _k_r_b_5___k_e_y_t_a_b___e_n_t_r_y _*_e_n_t_r_y)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__cclloossee(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _i_d)
+
+     _k_r_b_5___b_o_o_l_e_a_n
+     kkrrbb55__kktt__ccoommppaarree(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b___e_n_t_r_y _*_e_n_t_r_y,
+             _k_r_b_5___c_o_n_s_t___p_r_i_n_c_i_p_a_l _p_r_i_n_c_i_p_a_l, _k_r_b_5___k_v_n_o _v_n_o,
+             _k_r_b_5___e_n_c_t_y_p_e _e_n_c_t_y_p_e)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__ccooppyy__eennttrryy__ccoonntteennttss(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t,
+             _c_o_n_s_t _k_r_b_5___k_e_y_t_a_b___e_n_t_r_y _*_i_n, _k_r_b_5___k_e_y_t_a_b___e_n_t_r_y _*_o_u_t)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__ddeeffaauulltt(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _*_i_d)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__ddeeffaauulltt__nnaammee(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _c_h_a_r _*_n_a_m_e, _s_i_z_e___t _n_a_m_e_s_i_z_e)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__eenndd__sseeqq__ggeett(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _i_d,
+             _k_r_b_5___k_t___c_u_r_s_o_r _*_c_u_r_s_o_r)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__ffrreeee__eennttrryy(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b___e_n_t_r_y _*_e_n_t_r_y)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__ggeett__eennttrryy(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _i_d,
+             _k_r_b_5___c_o_n_s_t___p_r_i_n_c_i_p_a_l _p_r_i_n_c_i_p_a_l, _k_r_b_5___k_v_n_o _k_v_n_o,
+             _k_r_b_5___e_n_c_t_y_p_e _e_n_c_t_y_p_e, _k_r_b_5___k_e_y_t_a_b___e_n_t_r_y _*_e_n_t_r_y)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__ggeett__nnaammee(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _k_e_y_t_a_b, _c_h_a_r _*_n_a_m_e,
+             _s_i_z_e___t _n_a_m_e_s_i_z_e)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__ggeett__ttyyppee(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _k_e_y_t_a_b, _c_h_a_r _*_p_r_e_f_i_x,
+             _s_i_z_e___t _p_r_e_f_i_x_s_i_z_e)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__nneexxtt__eennttrryy(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _i_d,
+             _k_r_b_5___k_e_y_t_a_b___e_n_t_r_y _*_e_n_t_r_y, _k_r_b_5___k_t___c_u_r_s_o_r _*_c_u_r_s_o_r)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__rreeaadd__sseerrvviiccee__kkeeyy(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___p_o_i_n_t_e_r _k_e_y_p_r_o_c_a_r_g,
+             _k_r_b_5___p_r_i_n_c_i_p_a_l _p_r_i_n_c_i_p_a_l, _k_r_b_5___k_v_n_o _v_n_o, _k_r_b_5___e_n_c_t_y_p_e _e_n_c_t_y_p_e,
+             _k_r_b_5___k_e_y_b_l_o_c_k _*_*_k_e_y)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__rreeggiisstteerr(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _c_o_n_s_t _k_r_b_5___k_t___o_p_s _*_o_p_s)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__rreemmoovvee__eennttrryy(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _i_d,
+             _k_r_b_5___k_e_y_t_a_b___e_n_t_r_y _*_e_n_t_r_y)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__rreessoollvvee(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _c_o_n_s_t _c_h_a_r _*_n_a_m_e, _k_r_b_5___k_e_y_t_a_b _*_i_d)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__kktt__ssttaarrtt__sseeqq__ggeett(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___k_e_y_t_a_b _i_d,
+             _k_r_b_5___k_t___c_u_r_s_o_r _*_c_u_r_s_o_r)
+
+DDEESSCCRRIIPPTTIIOONN
+     A keytab name is on the form type:residual. The residual part is specific
+     to each keytab-type.
+
+     When a keytab-name is resolved, the type is matched with an internal list
+     of keytab types. If there is no matching keytab type, the default keytab
+     is used. The current default type is ffiillee. The default value can be
+     changed in the configuration file _/_e_t_c_/_k_r_b_5_._c_o_n_f by setting the variable
+     [defaults]default_keytab_name.
+
+     The keytab types that are implemented in Heimdal are:
+
+     ffiillee    store the keytab in a file, the type's name is KEYFILE. The
+             residual part is a filename.
+
+     kkeeyyffiillee
+             store the keytab in a AFS keyfile (usually _/_u_s_r_/_a_f_s_/_e_t_c_/_K_e_y_F_i_l_e),
+             the type's name is AFSKEYFILE. The residual part is a filename.
+
+     kkrrbb44    the keytab is a Kerberos 4 _s_r_v_t_a_b that is on-the-fly converted to
+             a keytab. The type's name is krb4. The residual part is a file-
+             name.
+
+     mmeemmoorryy  The keytab is stored in a memory segment. This allows sensitive
+             and/or temporary data not to be stored on disk. The type's name
+             is MEMORY. There are no residual part, the only pointer back to
+             the keytab is the _i_d returned by kkrrbb55__kktt__rreessoollvvee().
+
+     kkrrbb55__kkeeyyttaabb__eennttrryy holds all data for an entry in a keytab file, like
+     principal name, key-type, key, key-version number, etc.  kkrrbb55__kktt__ccuurrssoorr
+     holds the current position that is used when iterating through a keytab
+     entry with kkrrbb55__kktt__ssttaarrtt__sseeqq__ggeett(), kkrrbb55__kktt__nneexxtt__eennttrryy(), and
+     kkrrbb55__kktt__eenndd__sseeqq__ggeett().
+
+     kkrrbb55__kktt__ooppss contains the different operations that can be done to a
+     keytab. This structure is normally only used when doing a new keytab-type
+     implementation.
+
+     kkrrbb55__kktt__rreessoollvvee() is the equivalent of an open(2) on keytab. Resolve the
+     keytab name in _n_a_m_e into a keytab in _i_d. Returns 0 or an error. The oppo-
+     site of kkrrbb55__kktt__rreessoollvvee() is kkrrbb55__kktt__cclloossee().  kkrrbb55__kktt__cclloossee() frees all
+     resources allocated to the keytab.
+
+     kkrrbb55__kktt__ddeeffaauulltt() sets the argument _i_d to the default keytab.  Returns 0
+     or an error.
+
+     kkrrbb55__kktt__ddeeffaauulltt__nnaammee() copy the name of the default keytab into _n_a_m_e. Re-
+     turn 0 or KRB5_CONFIG_NOTENUFSPACE if _n_a_m_e_s_i_z_e is too short.
+
+
+     kkrrbb55__kktt__aadddd__eennttrryy() Add a new _e_n_t_r_y to the keytab _i_d. KRB5_KT_NOWRITE is
+     returned if the keytab is a readonly keytab.
+
+     kkrrbb55__kktt__ccoommppaarree() compares the passed in _e_n_t_r_y against _p_r_i_n_c_i_p_a_l, _v_n_o,
+     and _e_n_c_t_y_p_e. Any of _p_r_i_n_c_i_p_a_l, _v_n_o or _e_n_c_t_y_p_e might be 0 which acts as a
+     wildcard. Return TRUE if they compare the same, FALSE otherwise.
+
+     kkrrbb55__kktt__ccooppyy__eennttrryy__ccoonntteennttss() copies the contents of _i_n into _o_u_t. Returns
+     0 or an error.
+
+     kkrrbb55__kktt__ggeett__nnaammee() retrieves the name of the keytab _k_e_y_t_a_b into _n_a_m_e,
+     _n_a_m_e_s_i_z_e. Returns 0 or an error.
+
+     kkrrbb55__kktt__ggeett__ttyyppee() retrieves the type of the keytab _k_e_y_t_a_b and store the
+     prefix/name for type of the keytab into _p_r_e_f_i_x, _p_r_e_f_i_x_s_i_z_e. The prefix
+     will have the maximum length of KRB5_KT_PREFIX_MAX_LEN (including termi-
+     nating NUL). Returns 0 or an error.
+
+     kkrrbb55__kktt__ffrreeee__eennttrryy() frees the contents of _e_n_t_r_y.
+
+     kkrrbb55__kktt__ssttaarrtt__sseeqq__ggeett() sets _c_u_r_s_o_r to point at the beginning of _i_d. Re-
+     turns 0 or an error.
+
+     kkrrbb55__kktt__nneexxtt__eennttrryy() gets the next entry from _i_d pointed to by _c_u_r_s_o_r and
+     advance the _c_u_r_s_o_r. Returns 0 or an error.
+
+     kkrrbb55__kktt__eenndd__sseeqq__ggeett() releases all resources associated with _c_u_r_s_o_r.
+
+     kkrrbb55__kktt__ggeett__eennttrryy() retrieves the keytab entry for _p_r_i_n_c_i_p_a_l, _k_v_n_o_,
+     _e_n_c_t_y_p_e into _e_n_t_r_y from the keytab _i_d. Returns 0 or an error.
+
+     kkrrbb55__kktt__rreeaadd__sseerrvviiccee__kkeeyy() reads the key identified by (_p_r_i_n_c_i_p_a_l, _v_n_o,
+     _e_n_c_t_y_p_e) from the keytab in _k_e_y_p_r_o_c_a_r_g (the default if == NULL) into
+     _*_k_e_y. Returns 0 or an error.
+
+     kkrrbb55__kktt__rreemmoovvee__eennttrryy() removes the entry _e_n_t_r_y from the keytab _i_d. Re-
+     turns 0 or an error.
+
+     kkrrbb55__kktt__rreeggiisstteerr() registers a new keytab type _o_p_s. Returns 0 or an er-
+     ror.
+
+EEXXAAMMPPLLEE
+     This is a minimalistic version of kkttuuttiill.
+
+     int
+     main (int argc, char **argv)
+     {
+         krb5_context context;
+         krb5_keytab keytab;
+         krb5_kt_cursor cursor;
+         krb5_keytab_entry entry;
+         krb5_error_code ret;
+         char *principal;
+
+         if (krb5_init_context (&context) != 0)
+             errx(1, "krb5_context");
+
+         ret = krb5_kt_default (context, &keytab);
+         if (ret)
+             krb5_err(context, 1, ret, "krb5_kt_default");
+
+         ret = krb5_kt_start_seq_get(context, keytab, &cursor);
+         if (ret)
+             krb5_err(context, 1, ret, "krb5_kt_start_seq_get");
+         while((ret = krb5_kt_next_entry(context, keytab, &entry, &cursor)) == 0){
+             krb5_unparse_name_short(context, entry.principal, &principal);
+             printf("principal: %s\n", principal);
+             free(principal);
+             krb5_kt_free_entry(context, &entry);
+         }
+         ret = krb5_kt_end_seq_get(context, keytab, &cursor);
+         if (ret)
+             krb5_err(context, 1, ret, "krb5_kt_end_seq_get");
+         krb5_free_context(context);
+         return 0;
+     }
+
+SSEEEE AALLSSOO
+     krb5.conf(5),  kerberos(8)
+
+ HEIMDAL                       February 5, 2001                              4

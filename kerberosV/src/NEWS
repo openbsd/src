@@ -1,3 +1,94 @@
+Changes in release 0.6.3
+
+ * fix vulnerabilities in ftpd
+
+ * support for linux AFS /proc "syscalls"
+
+ * support for RFC3244 (Windows 2000 Kerberos Change/Set Password) in
+   kpasswdd
+
+ * fix possible KDC denial of service
+
+ * bug fixes
+
+Changes in release 0.6.2
+
+ * Fix possible buffer overrun in v4 kadmin (which now defaults to off)
+
+Changes in release 0.6.1
+
+ * Fixed ARCFOUR suppport
+
+ * Cross realm vulnerability
+
+ * kdc: fix denial of service attack
+
+ * kdc: stop clients from renewing tickets into the future
+
+ * bug fixes
+	
+Changes in release 0.6
+
+* The DES3 GSS-API mechanism has been changed to inter-operate with
+  other GSSAPI implementations. See man page for gssapi(3) how to turn
+  on generation of correct MIC messages. Next major release of heimdal 
+  will generate correct MIC by default.
+
+* More complete GSS-API support
+
+* Better AFS support: kdc (524) supports 2b; 524 in kdc and AFS
+  support in applications no longer requires Kerberos 4 libs
+
+* Kerberos 4 support in kdc defaults to turned off (includes ka and 524)
+
+* other bug fixes
+
+Changes in release 0.5.2
+
+ * kdc: add option for disabling v4 cross-realm (defaults to off)
+
+ * bug fixes
+
+Changes in release 0.5.1
+
+ * kadmind: fix remote exploit
+
+ * kadmind: add option to disable kerberos 4
+
+ * kdc: make sure kaserver token life is positive
+
+ * telnet: use the session key if there is no subkey
+
+ * fix EPSV parsing in ftp
+
+ * other bug fixes
+
+Changes in release 0.5
+
+ * add --detach option to kdc
+
+ * allow setting forward and forwardable option in telnet from
+   .telnetrc, with override from command line
+
+ * accept addresses with or without ports in krb5_rd_cred
+
+ * make it work with modern openssl
+
+ * use our own string2key function even with openssl (that handles weak
+   keys incorrectly)
+
+ * more system-specific requirements in login
+
+ * do not use getlogin() to determine root in su
+
+ * telnet: abort if telnetd does not support encryption
+
+ * update autoconf to 2.53
+
+ * update config.guess, config.sub
+
+ * other bug fixes
+
 Changes in release 0.4e
 
  * improve libcrypto and database autoconf tests

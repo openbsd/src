@@ -1,0 +1,25 @@
+
+KRB5_TIMEOFDAY(3)          UNIX Programmer's Manual          KRB5_TIMEOFDAY(3)
+
+NNAAMMEE
+     kkrrbb55__ttiimmeeooffddaayy, kkrrbb55__uuss__ttiimmeeooffddaayy - whatever these functions do
+
+LLIIBBRRAARRYY
+     Kerberos 5 Library (libkrb5, -lkrb5)
+
+SSYYNNOOPPSSIISS
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__ttiimmeeooffddaayy(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___t_i_m_e_s_t_a_m_p _*_t_i_m_e_r_e_t)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__uuss__ttiimmeeooffddaayy(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _i_n_t_3_2___t _*_s_e_c, _i_n_t_3_2___t _*_u_s_e_c)
+
+DDEESSCCRRIIPPTTIIOONN
+     kkrrbb55__ttiimmeeooffddaayy() returns the current time, but adjusted with the time
+     difference between the local host and the KDC.  kkrrbb55__uuss__ttiimmeeooffddaayy() also
+     returns microseconds.
+
+SSEEEE AALLSSOO
+     gettimeofday(2)
+
+                                 July 1, 2001                                1

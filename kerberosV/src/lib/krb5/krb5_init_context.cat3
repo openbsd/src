@@ -1,0 +1,34 @@
+
+KRB5_CONTEXT(3)            UNIX Programmer's Manual            KRB5_CONTEXT(3)
+
+NNAAMMEE
+     kkrrbb55__iinniitt__ccoonntteexxtt, kkrrbb55__ffrreeee__ccoonntteexxtt - create and delete krb5_context
+     structures
+
+LLIIBBRRAARRYY
+     Kerberos 5 Library (libkrb5, -lkrb5)
+
+SSYYNNOOPPSSIISS
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__iinniitt__ccoonntteexxtt(_k_r_b_5___c_o_n_t_e_x_t _*_c_o_n_t_e_x_t)
+
+     _v_o_i_d
+     kkrrbb55__ffrreeee__ccoonntteexxtt(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t)
+
+DDEESSCCRRIIPPTTIIOONN
+     The kkrrbb55__iinniitt__ccoonntteexxtt() function initializes the _c_o_n_t_e_x_t structure and
+     reads the configuration file _/_e_t_c_/_k_r_b_5_._c_o_n_f.
+
+     The structure should be freed by calling kkrrbb55__ffrreeee__ccoonntteexxtt() when it is
+     no longer being used.
+
+RREETTUURRNN VVAALLUUEESS
+     kkrrbb55__iinniitt__ccoonntteexxtt() returns 0 to indicate success.  Otherwise an errno
+     code is returned.  Failure means either that something bad happened dur-
+     ing initialization (typically [ENOMEM]) or that Kerberos should not be
+     used [ENXIO].
+
+SSEEEE AALLSSOO
+     errno(2),  krb5_context(3),  kerberos(8)
+
+ HEIMDAL                       January 21, 2001                              1

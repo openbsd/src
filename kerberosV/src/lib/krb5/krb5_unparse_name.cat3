@@ -1,0 +1,24 @@
+
+KRB5_UNPARSE_NAME(3)       UNIX Programmer's Manual       KRB5_UNPARSE_NAME(3)
+
+NNAAMMEE
+     kkrrbb55__uunnppaarrssee__nnaammee - principal to string conversion
+
+LLIIBBRRAARRYY
+     Kerberos 5 Library (libkrb5, -lkrb5)
+
+SSYYNNOOPPSSIISS
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__uunnppaarrssee__nnaammee(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___p_r_i_n_c_i_p_a_l _p_r_i_n_c_i_p_a_l,
+             _c_h_a_r _*_*_n_a_m_e)
+
+DDEESSCCRRIIPPTTIIOONN
+     This function takes a _p_r_i_n_c_i_p_a_l, and will convert in to a printable rep-
+     resentation with the same syntax as described in krb5_parse_name(3).
+     _*_n_a_m_e will point to allocated data and should be freed by the caller.
+
+SSEEEE AALLSSOO
+     krb5_425_conv_principal(3),  krb5_build_principal(3),
+     krb5_free_principal(3),  krb5_parse_name(3),  krb5_sname_to_principal(3)
+
+ HEIMDAL                        August 8, 1997                               1

@@ -1,0 +1,71 @@
+
+KRB5_DATA(3)               UNIX Programmer's Manual               KRB5_DATA(3)
+
+NNAAMMEE
+     kkrrbb55__ddaattaa kkrrbb55__ddaattaa__zzeerroo kkrrbb55__ddaattaa__ffrreeee kkrrbb55__ffrreeee__ddaattaa__ccoonntteennttss
+     kkrrbb55__ffrreeee__ddaattaa kkrrbb55__ddaattaa__aalllloocc kkrrbb55__ddaattaa__rreeaalllloocc kkrrbb55__ddaattaa__ccooppyy
+     kkrrbb55__ccooppyy__ddaattaa - operates on the Kerberos datatype krb5_data.
+
+LLIIBBRRAARRYY
+     Kerberos 5 Library (libkrb5, -lkrb5)
+
+SSYYNNOOPPSSIISS
+     struct krb5_data; _v_o_i_d
+     kkrrbb55__ddaattaa__zzeerroo(_k_r_b_5___d_a_t_a _*_p)
+
+     _v_o_i_d
+     kkrrbb55__ddaattaa__ffrreeee(_k_r_b_5___d_a_t_a _*_p)
+
+     _v_o_i_d
+     kkrrbb55__ffrreeee__ddaattaa__ccoonntteennttss(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___d_a_t_a _*_p)
+
+     _v_o_i_d
+     kkrrbb55__ffrreeee__ddaattaa(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___d_a_t_a _*_p)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__ddaattaa__aalllloocc(_k_r_b_5___d_a_t_a _*_p, _i_n_t _l_e_n)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__ddaattaa__rreeaalllloocc(_k_r_b_5___d_a_t_a _*_p, _i_n_t _l_e_n)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__ddaattaa__ccooppyy(_k_r_b_5___d_a_t_a _*_p, _c_o_n_s_t _v_o_i_d _*_d_a_t_a, _s_i_z_e___t _l_e_n)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__ccooppyy__ddaattaa(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _c_o_n_s_t _k_r_b_5___d_a_t_a _*_i_n_d_a_t_a,
+             _k_r_b_5___d_a_t_a _*_*_o_u_t_d_a_t_a)
+
+DDEESSCCRRIIPPTTIIOONN
+     The krb5_data structure holds a data element.  The structure contains two
+     public accessible elements _l_e_n_g_t_h (the length of data) and _d_a_t_a (the data
+     itself).  The structure must always be initiated and freed by the func-
+     tions documented in this manual.
+
+     kkrrbb55__ddaattaa__zzeerroo() resets the content of _p.
+
+     kkrrbb55__ddaattaa__ffrreeee() free the data in _p.
+
+     kkrrbb55__ffrreeee__ddaattaa__ccoonntteennttss() works the same way as _k_r_b_5___d_a_t_a___f_r_e_e. The
+     diffrence is that krb5_free_data_contents is more portable (exists in MIT
+     api).
+
+     kkrrbb55__ffrreeee__ddaattaa() frees the data in _p and _p itself .
+
+     kkrrbb55__ddaattaa__aalllloocc() allocates _l_e_n bytes in _p Returns 0 or an error.
+
+     kkrrbb55__ddaattaa__rreeaalllloocc() reallocates the length of _p to the length in _l_e_n. Re-
+     turns 0 or an error.
+
+     kkrrbb55__ddaattaa__ccooppyy() copies the _d_a_t_a that have the length _l_e_n into _p. _p is
+     not freed so the calling function should make sure the _p doesn't contain
+     anything needs to be freed.  Returns 0 or an error.
+
+     kkrrbb55__ccooppyy__ddaattaa() copies the krb5_data in _i_n_d_a_t_a to _o_u_t_d_a_t_a. _o_u_t_d_a_t_a is
+     not freed so the calling function should make sure the _o_u_t_d_a_t_a doesn't
+     contain anything needs to be freed.  _o_u_t_d_a_t_a should be freed using
+     kkrrbb55__ffrreeee__ddaattaa().  Returns 0 or an error.
+
+SSEEEE AALLSSOO
+     krb5(3),  krb5_storage(3),  kerberos(8)
+
+ HEIMDAL                        March 20, 2003                               2
