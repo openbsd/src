@@ -1,3 +1,4 @@
+.\" $OpenBSD: kgmon.8,v 1.2 1996/05/01 22:15:21 niklas Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -30,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)kgmon.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: kgmon.8,v 1.1.1.1 1995/10/18 08:47:38 deraadt Exp $
+.\"	$Id: kgmon.8,v 1.2 1996/05/01 22:15:21 niklas Exp $
 .\"
 .Dd June 6, 1993
 .Dt KGMON 8
@@ -83,7 +84,7 @@ Extract values associated with the name list from the specified core
 instead of the default ``/dev/kmem''.
 .It Fl N
 Extract the name list from the specified system instead of the
-default ``/netbsd''.
+default ``/bsd''.
 .El
 .Pp
 If neither 
@@ -99,7 +100,7 @@ the operating system profile buffers will be dumped,
 and profiling will be immediately resumed.
 .Sh FILES
 .Bl -tag -width /dev/kmemx -compact
-.It Pa /netbsd
+.It Pa /bsd
 the default system
 .It Pa /dev/kmem
 the default memory

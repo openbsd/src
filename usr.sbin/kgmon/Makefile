@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1996/05/01 22:15:18 niklas Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:47:38 deraadt Exp $
 
 PROG=	kgmon
 MAN=	kgmon.8
