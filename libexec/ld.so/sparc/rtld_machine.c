@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.9 2002/11/14 15:15:54 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.10 2002/11/23 19:14:25 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -38,6 +38,9 @@
 #include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/mman.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
 
 #include <nlist.h>
 #include <link.h>
@@ -395,4 +398,81 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		return;
 	}
 
+}
+
+
+void __mul(void);
+void _mulreplace_end(void);
+void _mulreplace(void);
+void __umul(void);
+void _umulreplace_end(void);
+void _umulreplace(void);
+
+void __div(void);
+void _divreplace_end(void);
+void _divreplace(void);
+void __udiv(void);
+void _udivreplace_end(void);
+void _udivreplace(void);
+
+void __rem(void);
+void _remreplace_end(void);
+void _remreplace(void);
+void __urem(void);
+void _uremreplace_end(void);
+void _uremreplace(void);
+
+void
+_dl_mul_fixup()
+{
+	int mib[2], v8mul;
+	size_t len;
+
+
+        mib[0] = CTL_MACHDEP;
+	mib[1] = CPU_V8MUL;
+	len = sizeof(v8mul);
+	_dl_sysctl(mib, 2, &v8mul, &len, NULL, 0);
+
+
+	if (!v8mul)
+		return;
+
+	_dl_mprotect(&__mul, _mulreplace_end-_mulreplace,
+	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	_dl_bcopy(_mulreplace, __mul, _mulreplace_end-_mulreplace);
+	_dl_mprotect(&__mul, _mulreplace_end-_mulreplace,
+	    PROT_READ|PROT_EXEC);
+
+	_dl_mprotect(&__umul, _umulreplace_end-_umulreplace,
+	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	_dl_bcopy(_umulreplace, __umul, _umulreplace_end-_umulreplace);
+	_dl_mprotect(&__umul, _umulreplace_end-_umulreplace,
+	    PROT_READ|PROT_EXEC);
+
+
+	_dl_mprotect(&__div, _divreplace_end-_divreplace,
+	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	_dl_bcopy(_divreplace, __div, _divreplace_end-_divreplace);
+	_dl_mprotect(&__div, _divreplace_end-_divreplace,
+	    PROT_READ|PROT_EXEC);
+
+	_dl_mprotect(&__udiv, _udivreplace_end-_udivreplace,
+	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	_dl_bcopy(_udivreplace, __udiv, _udivreplace_end-_udivreplace);
+	_dl_mprotect(&__udiv, _udivreplace_end-_udivreplace,
+	    PROT_READ|PROT_EXEC);
+
+
+	_dl_mprotect(&__rem, _remreplace_end-_remreplace,
+	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	_dl_bcopy(_remreplace, __rem, _remreplace_end-_remreplace);
+	_dl_mprotect(&__rem, _remreplace_end-_remreplace,
+	    PROT_READ|PROT_EXEC);
+
+	_dl_mprotect(&__urem, _uremreplace_end-_uremreplace,
+	    PROT_READ|PROT_WRITE|PROT_EXEC);
+	_dl_bcopy(_uremreplace, __urem, _uremreplace_end-_uremreplace);
+	_dl_mprotect(&__urem, _uremreplace_end-_uremreplace,
+	    PROT_READ|PROT_EXEC);
 }

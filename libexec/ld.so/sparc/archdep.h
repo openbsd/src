@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.4 2002/10/25 10:39:52 pefo Exp $ */
+/*	$OpenBSD: archdep.h,v 1.5 2002/11/23 19:14:25 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -77,6 +77,12 @@ RELOC_RELA(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	}
 }
 
-#define RELOC_GOT(obj, offs)
+/*
+ * this is not necessary for sparc, but can be used as a hook
+ * to insert the mul,umul,... optimization for newer sparcs.
+ */
+#define RELOC_GOT(obj, offs) _dl_mul_fixup()
+void _dl_mul_fixup(void);
+
 
 #endif /* _SPARC_ARCHDEP_H_ */

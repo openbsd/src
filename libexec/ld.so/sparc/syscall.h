@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.1 2002/07/27 13:19:26 art Exp $ */
+/*	$OpenBSD: syscall.h,v 1.2 2002/11/23 19:14:25 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -57,6 +57,8 @@ int	_dl_write(int, const char*, int);
 int	_dl_fstat(int, struct stat *);
 int	_dl_fcntl(int, int, ...);
 int	_dl_getdirentries(int, char*, int, long *);
+
+int	_dl_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)

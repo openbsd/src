@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.7 2002/11/22 23:58:09 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.8 2002/11/23 19:14:25 drahn Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -280,3 +280,79 @@ _dl_getdirentries:
 	retl
 	 sub %g0, %o0, %o0                      ! error: result = -errno
 
+
+	.section ".text"
+	.align 4
+	.globl _dl_sysctl
+	.type _dl_sysctl,@function
+_dl_sysctl:
+	mov  SYS___sysctl | SYSCALL_G2RFLAG, %g1	! call sys_fstat
+	add %o7, 8, %g2					! just return on success
+	t ST_SYSCALL					! off to wonderland
+	retl
+	 sub %g0, %o0, %o0                      ! error: result = -errno
+
+/*
+ * V8 sparc .{,u}{mul,div,rem} replacements.
+ * We try to mimic them 100%.  Full 64 bit sources or outputs, and
+ * these routines are required to update the condition codes.
+ */
+.globl _C_LABEL(_mulreplace), _C_LABEL(_mulreplace_end)
+_C_LABEL(_mulreplace):
+	smulcc	%o0, %o1, %o0
+	retl
+	 rd	%y, %o1
+_C_LABEL(_mulreplace_end):
+
+.globl _C_LABEL(_umulreplace), _C_LABEL(_umulreplace_end)
+_C_LABEL(_umulreplace):
+	umulcc	%o0, %o1, %o0
+	retl
+	 rd	%y, %o1
+_C_LABEL(_umulreplace_end):
+
+.globl _C_LABEL(_divreplace), _C_LABEL(_divreplace_end)
+_C_LABEL(_divreplace):
+	sra	%o0, 31, %g1
+	wr	%g1, 0, %y
+	nop
+	nop
+	nop
+	retl
+	 sdivcc	%o0, %o1, %o0
+_C_LABEL(_divreplace_end):
+
+.globl _C_LABEL(_udivreplace), _C_LABEL(_udivreplace_end)
+_C_LABEL(_udivreplace):
+	wr	%g0, 0, %y
+	nop
+	nop
+	nop
+	retl
+	 udivcc	%o0, %o1, %o0
+_C_LABEL(_udivreplace_end):
+
+.globl _C_LABEL(_remreplace), _C_LABEL(_remreplace_end)
+_C_LABEL(_remreplace):
+	sra	%o0, 31, %g1
+	wr	%g1, 0, %y
+	nop
+	nop
+	nop
+	sdiv	%o0, %o1, %o2
+	smul	%o1, %o2, %o2
+	retl
+	 subcc	%o0, %o2, %o0
+_C_LABEL(_remreplace_end):
+
+.globl _C_LABEL(_uremreplace), _C_LABEL(_uremreplace_end)
+_C_LABEL(_uremreplace):
+	wr	%g0, 0, %y
+	nop
+	nop
+	nop
+	udiv	%o0, %o1, %o2
+	umul	%o1, %o2, %o2
+	retl
+	 subcc	%o0, %o2, %o0
+_C_LABEL(_uremreplace_end):
