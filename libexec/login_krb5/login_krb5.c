@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.1 2001/06/25 00:07:08 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.2 2001/06/25 01:04:41 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -49,6 +49,16 @@
 #define MODE_LOGIN 0
 #define MODE_CHALLENGE 1
 #define MODE_RESPONSE 2
+
+krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ...) 
+{
+    va_list ap;
+    char buf[256];
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    syslog(level, "%s: %s", buf, krb5_get_err_text(context, code));
+}
 
 int
 main(int argc, char **argv)
@@ -108,16 +118,22 @@ main(int argc, char **argv)
 
 
 	ret = krb5_init_context(&context);
-	if(ret != 0)
-		krb5_err(context, 1, ret, "krb5_init_context");
+	if(ret != 0) {
+		krb5_syslog(context, LOG_ERR, ret, "krb5_init_context");
+		exit(1);
+	}
 
 	ret = krb5_cc_gen_new(context, &krb5_mcc_ops, &ccache);
-	if(ret != 0)
-		errx(1, "krb5_cc_gen_new: %d", ret);
+	if(ret != 0) {
+		krb5_syslog(context, LOG_ERR, ret, "krb5_cc_gen_new");
+		exit(1);
+	}
 
 	ret = krb5_parse_name(context, username, &princ);
-	if(ret != 0)
-		errx(1, "krb5_parse_name: %d", ret);
+	if(ret != 0) {
+		krb5_syslog(context, LOG_ERR, ret, "krb5_parse_name");
+		exit(1);
+	}
 
 	instance = strchr(username, '/');
 	if(instance != NULL) {
@@ -155,19 +171,24 @@ main(int argc, char **argv)
 		}
 
 		pwd = getpwnam(username);
-		if(pwd == NULL)
-			errx(1, "%s: no such user", username);
-
+		if(pwd == NULL) {
+			krb5_syslog(context, LOG_ERR, ret,
+				    "%s: no such user", username);
+		}
 		snprintf(cc_file, sizeof(cc_file), "FILE:/tmp/krb5cc_%d",
 			 pwd->pw_uid);
 
 		ret = krb5_cc_resolve(context, cc_file, &ccache_store);
-		if(ret != 0)
-			krb5_err(context, 1, ret, "krb5_cc_gen_new");
+		if(ret != 0) {
+			krb5_syslog(context, LOG_ERR, ret, "krb5_cc_gen_new");
+			exit(1);
+		}
 
 		ret = krb5_cc_copy_cache(context, ccache, ccache_store);
-		if(ret != 0)
-			krb5_err(context, 1, ret, "krb5_cc_copy_cache");
+		if(ret != 0) {
+			krb5_syslog(context, LOG_ERR, ret,
+				    "krb5_cc_copy_cache");
+		}
 
 #ifdef KRB4
 		get_krb4_ticket =
@@ -183,23 +204,31 @@ main(int argc, char **argv)
 			krb5_cc_cursor cursor;
 
 			ret = krb5_cc_start_seq_get(context, ccache, &cursor);
-			if(ret != 0)
-				krb5_err(context, 1, ret, "start seq");
+			if(ret != 0) {
+				krb5_syslog(context, LOG_ERR, ret,
+					    "start seq");
+				exit(1);
+			}
 
 			ret = krb5_cc_next_cred(context, ccache, &cursor,
 						&cred);
-			if(ret != 0)
-				krb5_err(context, 1, ret, "next cred");
+			if(ret != 0) {
+				krb5_syslog(context, LOG_ERR, ret,
+					    "next cred");
+				exit(1);
+			}
 
 			ret = krb5_cc_end_seq_get(context, ccache, &cursor);
-			if(ret != 0)
-				krb5_err(context, 1, ret, "end seq");
+			if(ret != 0) {
+				krb5_syslog(context, LOG_ERR, ret, "end seq");
+				exit(1);
+			}
 			
 			ret = krb524_convert_creds_kdc(context, ccache, &cred,
 						       &c);
-			if(ret != 0)
-				krb5_warn(context, ret, "convert");
-			else {
+			if(ret != 0) {
+				krb5_syslog(context, LOG_ERR, ret, "convert");
+			} else {
 				snprintf(krb4_ticket_file,
 					 sizeof(krb4_ticket_file),
 					 "%s%d", TKT_ROOT, pwd->pw_uid);
@@ -207,7 +236,6 @@ main(int argc, char **argv)
 				tf_setup(&c, c.pname, c.pinst);
 				chown(krb4_ticket_file,
 				      pwd->pw_uid, pwd->pw_gid);
-
 			}
 		}
 #endif
@@ -239,7 +267,7 @@ main(int argc, char **argv)
 		fprintf(back, BI_REJECT " 2\n");
 		break;
 	default:
-		krb5_err(context, 1, ret, "verify");
+		krb5_syslog(context, LOG_ERR, ret, "verify");
 		break;
 	}
 
