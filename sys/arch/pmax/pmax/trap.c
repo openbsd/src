@@ -412,6 +412,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	vm_prot_t ftype;
 	extern unsigned onfault_table[];
 	int typ = 0;
+	union sigval sv;
 
 #ifdef DEBUG
 	trp->status = statusReg;
@@ -955,7 +956,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 	p->p_md.md_regs [PC] = pc;
 	p->p_md.md_regs [CAUSE] = causeReg;
 	p->p_md.md_regs [BADVADDR] = vadr;
-	trapsignal(p, i, ucode, typ, (caddr_t)vadr);
+	sv.sival_int = vadr;
+	trapsignal(p, i, ucode, typ, sv);
 out:
 	/*
 	 * Note: we should only get here if returning to user mode.
