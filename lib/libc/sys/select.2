@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.19 2001/03/03 21:32:35 deraadt Exp $
+.\"	$OpenBSD: select.2,v 1.20 2001/09/04 08:04:08 deraadt Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -173,10 +173,13 @@ Although the provision of
 was intended to allow user programs to be written independent
 of the kernel limit on the number of open files, the dimension
 of a sufficiently large bit field for select remains a problem.
-The default size
+The default bit size of
+.Ft fd_set
+is based on the symbol
 .Dv FD_SETSIZE
-(currently 256) is somewhat smaller than
-the current kernel limit to the number of open files.
+(currently 256),
+but that is somewhat smaller than the current kernel limit
+to the number of open files.
 However, in order to accommodate programs which might potentially
 use a larger number of open files with select, it is possible
 to increase this size within a program by providing
