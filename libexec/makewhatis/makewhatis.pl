@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.15 2001/02/25 09:04:25 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.16 2001/03/14 10:56:24 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -96,7 +96,11 @@ sub verify_subject
 	my $section = $2;
 	my @mans = split(/\s*,\s*|\s+/, $man);
 	my $base = $filename;
-	$base =~ s,/[^/]*$,,;
+	if ($base =~ m|/|) {
+	    $base =~ s,/[^/]*$,,;
+	} else {
+		$base = '.';
+	}
 	for my $i (@mans) {
 	    next if found("$base/$i.*");
 	    # try harder
