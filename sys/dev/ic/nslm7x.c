@@ -1,4 +1,4 @@
-/*	$OpenBSD: nslm7x.c,v 1.5 2004/01/13 22:07:09 deraadt Exp $	*/
+/*	$OpenBSD: nslm7x.c,v 1.6 2004/02/10 19:58:16 grange Exp $	*/
 /*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
 
 /*-
@@ -659,7 +659,9 @@ generic_fanrpm(struct lm_softc *sc, struct sensor *sensors)
 			divisor = ((*sc->lm_readreg)(sc,
 			    LMD_VIDFAN) >> 4) & 0x3;
 
-		if (sdata == 0xff || sdata == 0x00) {
+		if (sdata == 0xff) {
+			sensors[i].flags |= SENSOR_FINVALID;
+		} else if (sdata == 0x00) {
 			sensors[i].value = 0;
 		} else {
 			sensors[i].value = 1350000 / (sdata << divisor);
@@ -729,9 +731,7 @@ wb_stemp(struct lm_softc *sc, struct sensor *sensors, int n)
 	sensors[0].value = sdata * 1000000 + 273150000;
 	/* from bank1 */
 	if ((*sc->lm_banksel)(sc, 1)) {
-#if 0
-		sensors[1].validflags &= ~ENVSYS_FCURVALID;
-#endif
+		sensors[1].flags |= SENSOR_FINVALID;
 	} else {
 		sdata = (*sc->lm_readreg)(sc, WB_BANK1_T2H) << 1;
 		sdata |=  ((*sc->lm_readreg)(sc, WB_BANK1_T2L) & 0x80) >> 7;
@@ -742,9 +742,7 @@ wb_stemp(struct lm_softc *sc, struct sensor *sensors, int n)
 		return;
 	/* from bank2 */
 	if ((*sc->lm_banksel)(sc, 2)) {
-#if 0
-		sensors[2].validflags &= ~ENVSYS_FCURVALID;
-#endif
+		sensors[2].flags |= SENSOR_FINVALID;
 	} else {
 		sdata = (*sc->lm_readreg)(sc, WB_BANK2_T3H) << 1;
 		sdata |=  ((*sc->lm_readreg)(sc, WB_BANK2_T3L) & 0x80) >> 7;
@@ -772,7 +770,9 @@ wb781_fanrpm(struct lm_softc *sc, struct sensor *sensors)
 			divisor = ((*sc->lm_readreg)(sc, WB_PIN) >> 6) & 0x3;
 
 		DPRINTF(("sdata[%d] 0x%x div 0x%x\n", i, sdata, divisor));
-		if (sdata == 0xff || sdata == 0x00) {
+		if (sdata == 0xff) {
+			sensors[i].flags |= SENSOR_FINVALID;
+		} else if (sdata == 0x00) {
 			sensors[i].value = 0;
 		} else {
 			sensors[i].value = 1350000 / (sdata << divisor);
@@ -801,7 +801,9 @@ wb_fanrpm(struct lm_softc *sc, struct sensor *sensors, int n)
 		    WB_BANK0_FANBAT) >> (i + 3)) & 0x4;
 
 		DPRINTF(("sdata[%d] 0x%x div 0x%x\n", i, sdata, divisor));
-		if (sdata == 0xff || sdata == 0x00) {
+		if (sdata == 0xff) {
+			sensors[i].flags |= SENSOR_FINVALID;
+		} else if (sdata == 0x00) {
 			sensors[i].value = 0;
 		} else {
 			sensors[i].value = 1350000 / (sdata << divisor);
