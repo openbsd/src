@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.11 1996/07/29 09:13:31 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.12 1996/07/29 09:14:55 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.11 1996/07/29 09:13:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.12 1996/07/29 09:14:55 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -511,6 +511,17 @@ main(argc, argv, envp)
 			close(ctrl);
 	    }
 	}
+}
+
+int
+dg_badinput(sin)
+	struct sockaddr_in *sin;
+{
+	if (ntohs(sin->sin_port) < IPPORT_RESERVED)
+		return (1);
+	if (sin->sin_addr.s_addr == htonl(INADDR_BROADCAST))
+		return (1);
+	return (0);
 }
 
 void
@@ -1265,6 +1276,8 @@ echo_dg(s, sep)			/* Echo service -- echo data back */
 	size = sizeof(sa);
 	if ((i = recvfrom(s, buffer, sizeof(buffer), 0, &sa, &size)) < 0)
 		return;
+	if (dg_badinput((struct sockaddr_in *)&sa))
+		return;
 	(void) sendto(s, buffer, i, 0, &sa, sizeof(sa));
 }
 
@@ -1364,6 +1377,8 @@ chargen_dg(s, sep)		/* Character generator */
 	size = sizeof(sa);
 	if (recvfrom(s, text, sizeof(text), 0, &sa, &size) < 0)
 		return;
+	if (dg_badinput((struct sockaddr_in *)&sa))
+		return;
 
 	if ((len = endring - rs) >= LINESIZ)
 		bcopy(rs, text, LINESIZ);
@@ -1423,6 +1438,8 @@ machtime_dg(s, sep)
 	size = sizeof(sa);
 	if (recvfrom(s, (char *)&result, sizeof(result), 0, &sa, &size) < 0)
 		return;
+	if (dg_badinput((struct sockaddr_in *)&sa))
+		return;
 	result = machtime();
 	(void) sendto(s, (char *) &result, sizeof(result), 0, &sa, sizeof(sa));
 }
@@ -1457,6 +1474,8 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
 
 	size = sizeof(sa);
 	if (recvfrom(s, buffer, sizeof(buffer), 0, &sa, &size) < 0)
+		return;
+	if (dg_badinput((struct sockaddr_in *)&sa))
 		return;
 	(void) sprintf(buffer, "%.24s\r\n", ctime(&clock));
 	(void) sendto(s, buffer, strlen(buffer), 0, &sa, sizeof(sa));
