@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.270 2001/07/02 07:03:15 nate Exp $
+#	$OpenBSD: GENERIC,v 1.271 2001/07/13 17:29:41 niklas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -287,6 +287,8 @@ ep*	at isa? port ? irq ?			# 3C509 ethernet
 ef*	at isapnp?				# 3C515 PnP ethernet
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 #ie1	at isa? port 0x300 irq 10		# EtherExpress
+lc0	at isa? port 0x200 irq ?		# DEC EtherWorks
+lc1	at isa? port 0x280 irq ?		# DEC EtherWorks
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
 ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
 #tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
