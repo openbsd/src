@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.6 2001/05/03 02:20:33 aaron Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.7 2001/07/25 04:54:37 mickey Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.66 2001/04/06 22:54:15 augustss Exp $        */
 
 /*
@@ -397,8 +397,10 @@ USB_ATTACH(ukbd)
 	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
 
-#if defined(__OpenBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
+#if defined(__OpenBSD__)
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	timeout_set(&sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+#endif
 	timeout_set(&sc->sc_delay, ukbd_delayed_decode, sc);
 #endif
 
