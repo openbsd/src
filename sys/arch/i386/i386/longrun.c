@@ -1,4 +1,4 @@
-/* $OpenBSD: longrun.c,v 1.6 2003/12/18 23:46:19 tedu Exp $ */
+/* $OpenBSD: longrun.c,v 1.7 2004/01/06 21:09:20 tedu Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * Copyright (c) 2001 Tamotsu Hattori
@@ -30,7 +30,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/timeout.h>
+#include <sys/sensors.h>
+
+
 #include <machine/cpufunc.h>
 
 union msrinfo {
@@ -48,6 +53,20 @@ union msrinfo {
 #define LONGRUN_MODE_RESERVED(x) ((x) & 0xffffff80)
 #define LONGRUN_MODE_WRITE(x, y) (LONGRUN_MODE_RESERVED(x) | LONGRUN_MODE_MASK(y))
 
+void	longrun_update(void *);
+
+struct timeout longrun_timo;
+
+void
+longrun_init(void)
+{
+	cpu_cpuspeed = longrun_cpuspeed;
+	cpu_setperf = longrun_setperf;
+
+	timeout_set(&longrun_timo, longrun_update, NULL);
+	timeout_add(&longrun_timo, hz);
+}
+
 /*
  * These are the instantaneous values used by the CPU.
  * regs[0] = Frequency is self-evident.
@@ -55,10 +74,10 @@ union msrinfo {
  * regs[2] = Percent is amount of performance window being used, not
  * percentage of top megahertz.  (0 values are typical.)
  */
-int
-longrun_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+void
+longrun_update(void *arg)
 {
-	uint32_t eflags, freq, regs[4];
+	uint32_t eflags, regs[4];
 
 	eflags = read_eflags();
 	disable_intr();
@@ -66,9 +85,16 @@ longrun_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	enable_intr();
 	write_eflags(eflags);
 
-	freq = regs[0];
+	pentium_mhz = regs[0];
 
-	return (sysctl_rdint(oldp, oldlenp, newp, freq));
+	timeout_add(&longrun_timo, hz);
+}
+
+int
+longrun_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	longrun_update(NULL);	/* force update */
+	return (sysctl_rdint(oldp, oldlenp, newp, pentium_mhz));
 }
 
 /*

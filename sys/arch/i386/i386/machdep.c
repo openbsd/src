@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.259 2004/01/03 15:17:48 markus Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.260 2004/01/06 21:09:20 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -276,9 +276,6 @@ int	bus_mem_add_mapping(bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
     bus_size_t, struct proc *, int, paddr_t *, int *, int);
-
-extern int (*cpu_cpuspeed)(void *, size_t *, void *, size_t);
-extern int (*cpu_setperf)(void *, size_t *, void *, size_t);
 
 #ifdef KGDB
 #ifndef KGDB_DEVNAME
@@ -1701,8 +1698,7 @@ tm86_cpu_setup(cpu_device, model, step)
 	int model, step;
 {
 #if !defined(SMALL_KERNEL) && defined (I586_CPU)
-	cpu_cpuspeed = longrun_cpuspeed;
-	cpu_setperf = longrun_setperf;
+	longrun_init();
 #endif
 }
 

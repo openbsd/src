@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.3 2003/12/19 22:42:13 tedu Exp $ */
+/*	$OpenBSD: est.c,v 1.4 2004/01/06 21:09:20 tedu Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -191,9 +191,6 @@ static const struct est_cpu est_cpus[] = {
 
 static const struct fqlist *est_fqlist;
 
-extern int (*cpu_cpuspeed)(void *, size_t *, void *, size_t);
-extern int (*cpu_setperf)(void *, size_t *, void *, size_t);
-
 void
 est_init(const char *cpu_device)
 {
@@ -287,6 +284,7 @@ est_setperf(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	msr = (rdmsr(MSR_PERF_CTL) & ~0xffffULL) |
 	    MSRVALUE(est_fqlist->table[i].mhz, est_fqlist->table[i].mv);
 	wrmsr(MSR_PERF_CTL, msr);
+	pentium_mhz = est_fqlist->table[i].mhz;
 	
 	return (0);
 }
