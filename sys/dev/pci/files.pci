@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.70 2000/04/13 00:10:52 csapuntz Exp $
+#	$OpenBSD: files.pci,v 1.71 2000/04/18 18:44:31 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -130,11 +130,6 @@ file	dev/pci/if_lmc_common.c		lmc
 file	dev/pci/if_lmc_media.c		lmc
 file	dev/pci/if_lmc_obsd.c		lmc
 
-# Intel EtherExpress PRO 10/100B
-device	fxp: ether, ifnet, mii, ifmedia
-attach	fxp at pci 
-file	dev/pci/if_fxp.c		fxp
-
 # RealTek 8129/8139
 device	rl: ether, ifnet, mii, ifmedia
 attach	rl at pci
@@ -168,6 +163,10 @@ file	dev/pci/brooktree848.c		bktr	needs-count
 # 3C90x
 attach	xl at pci with xl_pci
 file	dev/pci/if_xl_pci.c		xl_pci
+
+# Intel EtherExpress PRO 10/100B
+attach	fxp at pci with fxp_pci
+file	dev/pci/if_fxp_pci.c		fxp_pci
 
 # SMC EPIC, 83c170
 device	tx: ether, ifnet, ifmedia

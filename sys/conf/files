@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.157 2000/04/08 05:50:50 aaron Exp $
+#	$OpenBSD: files,v 1.158 2000/04/18 18:44:22 jason Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -116,8 +116,13 @@ file	dev/ic/rlnsubr.c	rln
 device	le: ether, ifnet, ifmedia
 file	dev/ic/am7990.c		le
 
+# 3Com 3c9xx
 device	xl: ether, ifnet, ifmedia, mii
 file	dev/ic/xl.c		xl
+
+# Intel EtherExpress PRO 10/100B
+device	fxp: ether, ifnet, ifmedia, mii
+file	dev/ic/fxp.c		fxp
 
 # SMC 91Cxx Ethernet Controller
 device	sm: ether, ifnet, ifmedia

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp.c,v 1.26 2000/04/18 03:40:55 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.1 2000/04/18 18:44:26 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -88,8 +88,8 @@
 
 #include <dev/mii/miivar.h>
 
-#include <dev/pci/if_fxpreg.h>
-#include <dev/pci/if_fxpvar.h>
+#include <dev/ic/fxpreg.h>
+#include <dev/ic/fxpvar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -173,7 +173,6 @@ struct fxp_supported_media {
 int fxp_mediachange		__P((struct ifnet *));
 void fxp_mediastatus		__P((struct ifnet *, struct ifmediareq *));
 static inline void fxp_scb_wait	__P((struct fxp_softc *));
-int fxp_intr			__P((void *));
 void fxp_start			__P((struct ifnet *));
 int fxp_ioctl			__P((struct ifnet *, u_long, caddr_t));
 void fxp_init			__P((void *));
@@ -186,8 +185,6 @@ void fxp_autosize_eeprom	__P((struct fxp_softc *));
 void fxp_statchg		__P((struct device *));
 void fxp_read_eeprom		__P((struct fxp_softc *, u_int16_t *,
 				    int, int));
-int fxp_attach_common	__P((struct fxp_softc *, u_int8_t *));
-
 void fxp_stats_update		__P((void *));
 void fxp_mc_setup		__P((struct fxp_softc *));
 
@@ -250,7 +247,6 @@ fxp_scb_wait(sc)
  * Operating system-specific autoconfiguration glue
  *************************************************************/
 
-int fxp_match __P((struct device *, void *, void *));
 void fxp_attach __P((struct device *, struct device *, void *));
 
 void	fxp_shutdown __P((void *));
@@ -260,155 +256,9 @@ void	fxp_power __P((int, void *));
 int	fxp_ether_ioctl __P((struct ifnet *, u_long, caddr_t));
 #define	ether_ioctl	fxp_ether_ioctl
 
-struct cfattach fxp_ca = {
-	sizeof(struct fxp_softc), fxp_match, fxp_attach
-};
-
 struct cfdriver fxp_cd = {
 	NULL, "fxp", DV_IFNET
 };
-
-/*
- * Check if a device is an 82557.
- */
-int
-fxp_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	struct pci_attach_args *pa = aux;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_82557:
-	case PCI_PRODUCT_INTEL_82559:
-		return (1);
-	}
-
-	return (0);
-}
-
-void
-fxp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct fxp_softc *sc = (struct fxp_softc *)self;
-	struct pci_attach_args *pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
-	u_int8_t enaddr[6];
-	struct ifnet *ifp;
-	bus_space_tag_t iot = pa->pa_iot;
-	bus_addr_t iobase;
-	bus_size_t iosize;
-
-	if (pci_io_find(pc, pa->pa_tag, FXP_PCI_IOBA, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-		return;
-	}
-
-	if (bus_space_map(iot, iobase, iosize, 0, &sc->sc_sh)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-	sc->sc_st = iot;
-
-	/*
-	 * Allocate our interrupt.
-	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
-		printf(": couldn't map interrupt\n");
-		return;
-	}
-
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, fxp_intr, sc,
-	    self->dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-
-	/* Do generic parts of attach. */
-	if (fxp_attach_common(sc, enaddr)) {
-		/* Failed! */
-		return;
-	}
-
-
-	ifp = &sc->arpcom.ac_if;
-	bcopy(enaddr, sc->arpcom.ac_enaddr, sizeof(enaddr));
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = fxp_ioctl;
-	ifp->if_start = fxp_start;
-	ifp->if_watchdog = fxp_watchdog;
-
-	printf(": %s, address %s\n", intrstr,
-	    ether_sprintf(sc->arpcom.ac_enaddr));
-
-	/*
-	 * Initialize our media structures and probe the MII.
-	 */
-	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = fxp_mdi_read;
-	sc->sc_mii.mii_writereg = fxp_mdi_write;
-	sc->sc_mii.mii_statchg = fxp_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mediachange,
-	    fxp_mediastatus);
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
-	/* If no phy found, just use auto mode */
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL,
-		    0, NULL);
-		printf("%s: no phy found, using manual mode\n",
-		    sc->sc_dev.dv_xname);
-	}
-
-	if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0))
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-	else if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0))
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-	else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
-
-	/*
-	 * Attach the interface.
-	 */
-	if_attach(ifp);
-	/*
-	 * Let the system queue as many packets as we have available
-	 * TX descriptors.
-	 */
-	ifp->if_snd.ifq_maxlen = FXP_NTXCB - 1;
-	ether_ifattach(ifp);
-#if NBPFILTER > 0
-	bpfattach(&sc->arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
-
-	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing do could allow DMA to corrupt kernel memory during the
-	 * reboot before the driver initializes.
-	 */
-	shutdownhook_establish(fxp_shutdown, sc);
-
-	/*
-	 * Add suspend hook, for similiar reasons..
-	 */
-	powerhook_establish(fxp_power, sc);
-}
 
 /*
  * Device shutdown routine. Called at system shutdown after sync. The
@@ -505,10 +355,12 @@ fxp_ether_ioctl(ifp, cmd, data)
  * Do generic parts of attach.
  */
 int
-fxp_attach_common(sc, enaddr)
+fxp_attach_common(sc, enaddr, intrstr)
 	struct fxp_softc *sc;
 	u_int8_t *enaddr;
+	const char *intrstr;
 {
+	struct ifnet *ifp;
 	u_int16_t data;
 	int i;
 
@@ -558,6 +410,71 @@ fxp_attach_common(sc, enaddr)
 	 * Read MAC address.
 	 */
 	fxp_read_eeprom(sc, (u_int16_t *)enaddr, 0, 3);
+
+	ifp = &sc->arpcom.ac_if;
+	bcopy(enaddr, sc->arpcom.ac_enaddr, sizeof(enaddr));
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = fxp_ioctl;
+	ifp->if_start = fxp_start;
+	ifp->if_watchdog = fxp_watchdog;
+
+	printf(": %s, address %s\n", intrstr,
+	    ether_sprintf(sc->arpcom.ac_enaddr));
+
+	/*
+	 * Initialize our media structures and probe the MII.
+	 */
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = fxp_mdi_read;
+	sc->sc_mii.mii_writereg = fxp_mdi_write;
+	sc->sc_mii.mii_statchg = fxp_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mediachange,
+	    fxp_mediastatus);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
+	/* If no phy found, just use auto mode */
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL,
+		    0, NULL);
+		printf("%s: no phy found, using manual mode\n",
+		    sc->sc_dev.dv_xname);
+	}
+
+	if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0))
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
+	else if (ifmedia_match(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0))
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
+
+	/*
+	 * Attach the interface.
+	 */
+	if_attach(ifp);
+	/*
+	 * Let the system queue as many packets as we have available
+	 * TX descriptors.
+	 */
+	ifp->if_snd.ifq_maxlen = FXP_NTXCB - 1;
+	ether_ifattach(ifp);
+#if NBPFILTER > 0
+	bpfattach(&sc->arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
+	    sizeof(struct ether_header));
+#endif
+
+	/*
+	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
+	 * doing do could allow DMA to corrupt kernel memory during the
+	 * reboot before the driver initializes.
+	 */
+	shutdownhook_establish(fxp_shutdown, sc);
+
+	/*
+	 * Add suspend hook, for similiar reasons..
+	 */
+	powerhook_establish(fxp_power, sc);
+
 	return (0);
 
  fail:
