@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.3 1996/05/29 18:38:40 niklas Exp $	*/
+/*	$OpenBSD: types.h,v 1.4 1996/08/04 01:22:45 niklas Exp $	*/
 /*	$NetBSD: types.h,v 1.9 1995/07/06 03:39:38 cgd Exp $	*/
 
 /*-
@@ -64,9 +64,7 @@ typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
-/* LONGLONG */
 typedef	long long		  int64_t;
-/* LONGLONG */
 typedef	unsigned long long	u_int64_t;
 
 typedef int32_t			register_t;
