@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.26 2001/07/20 19:15:39 mickey Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.27 2001/07/20 19:48:26 mickey Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -141,12 +141,16 @@ realinstall:
 
 install: maninstall _SUBDIRUSE
 .if defined(LINKS) && !empty(LINKS)
-.  for lnk file in ${LINKS}
-	@l=${DESTDIR}${BINDIR}${lnk}; \
-	 t=${DESTDIR}${BINDIR}${file}; \
-	 echo $$t -\> $$l; \
-	 rm -f $$t; ln $$l $$t
-.  endfor
+	@set ${LINKS}; \
+	while test $$# -ge 2; do \
+		l=${DESTDIR}$$1; \
+		shift; \
+		t=${DESTDIR}$$1; \
+		shift; \
+		echo $$t -\> $$l; \
+		rm -f $$t; \
+		ln $$l $$t; \
+	done; true
 .endif
 
 maninstall: afterinstall
