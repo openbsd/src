@@ -1,4 +1,4 @@
-.\"	$OpenBSD: 2.t,v 1.4 2003/06/02 23:30:10 millert Exp $
+.\"	$OpenBSD: 2.t,v 1.5 2003/08/12 20:44:57 millert Exp $
 .\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -683,7 +683,7 @@ for (;;) {
 	FD_SET(s1, &read_template);
 	FD_SET(s2, &read_template);
 
-	nb = select(FD_SETSIZE, &read_template, (fd_set *) 0, (fd_set *) 0, &wait);
+	nb = select(MAX(s1, s2) + 1, &read_template, NULL, NULL, &wait);
 	if (nb <= 0) {
 		\fIAn error occurred during the \fPselect\fI, or
 		the \fPselect\fI timed out.\fP
