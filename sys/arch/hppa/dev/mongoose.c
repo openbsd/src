@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.1 1999/04/20 20:21:51 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.2 1999/08/16 02:53:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -49,15 +49,25 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
+/* EISA Bus Adapter registers definitions */
+#define	MONGOOSE_MONGOOSE	0x10000
+struct mongoose_regs {
+	u_int8_t	version;
+	u_int8_t	lock;
+	u_int8_t	liowait;
+	u_int8_t	clock;
+	u_int8_t	reserved[0xf000 - 4];
+	u_int8_t	intack;
+};
+
+#define	MONGOOSE_IOMAP	0x100000
+
 struct mongoose_softc {
 	struct  device sc_dev;
 	void *sc_ih;
 
-	int sc_mod;
-	bus_addr_t sc_hpa;		/* HPA */
-	bus_space_tag_t sc_iot;		/* IO tag */
-	bus_space_handle_t sc_ioha;	/* EISA Adapter IO handle */
-	bus_space_handle_t sc_iohi;	/* Intr ACK register */
+	struct mongoose_regs *sc_regs;
+	u_int8_t *sc_intack;
 
 	struct hppa_eisa_chipset sc_ec;
 	struct hppa_isa_chipset sc_ic;
@@ -69,16 +79,6 @@ union mongoose_attach_args {
 	struct isabus_attach_args mongoose_isa;
 };
 
-/* EISA Bus Adapter registers definitions */
-#define	MONGOOSE_MONGOOSE	0x10000
-#define	MONGOOSE_VERSION	0
-#define	MONGOOSE_LOCK	1
-#define	MONGOOSE_LIOWAIT	2
-#define	MONGOOSE_SPEED	3
-#define	MONGOOSE_INTACK	0x1f000
-#define	MONGOOSE_INTACK_LEN	1
-#define	MONGOOSE_IOMAP	0x100000
-
 int	mgmatch __P((struct device *, void *, void *));
 void	mgattach __P((struct device *, struct device *, void *));
 
@@ -87,7 +87,7 @@ struct cfattach mongoose_ca = {
 };
 
 struct cfdriver mongoose_cd = {
-	NULL, "mg", DV_DULL
+	NULL, "mongoose", DV_DULL
 };
 
 int mgprint __P((void *aux, const char *pnp));
@@ -138,34 +138,20 @@ mgattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	register struct mongoose_softc *sc = (struct mongoose_softc *)self;
 	union mongoose_attach_args ea;
-	u_int ver;
 
-	sc->sc_mod = ca->ca_mod;
-	sc->sc_iot = ca->ca_iot;
-	sc->sc_hpa = ca->ca_hpa;
-	if (bus_space_map(sc->sc_iot, sc->sc_hpa + MONGOOSE_MONGOOSE,
-			  IOMOD_HPASIZE, 0, &sc->sc_ioha))
-		panic("mgattach: unable to map adapter bus space");
-
-	if (bus_space_map(sc->sc_iot, sc->sc_hpa + MONGOOSE_INTACK,
-			  MONGOOSE_INTACK_LEN, 0, &sc->sc_iohi))
-		panic("mgattach: unable to map intack bus space");
+	sc->sc_regs = (struct mongoose_regs *)(ca->ca_hpa + MONGOOSE_MONGOOSE);
 
 	/* XXX should we reset the chip here? */
 
 	/* attach interrupt */
 	sc->sc_ih = cpu_intr_establish(IPL_HIGH, ca->ca_irq,
-				       mongoose_intr, sc, "eisa");
+				       mongoose_intr, sc, &sc->sc_dev);
 
 	/* XXX determine HP eisa board id (how?) */
-	ver = bus_space_read_1(sc->sc_iot, sc->sc_ioha, MONGOOSE_VERSION);
-	printf (": rev %d, %d MHz\n", ver & 0xff,
-		(bus_space_read_1(sc->sc_iot, sc->sc_ioha, MONGOOSE_SPEED)? 33:25));
-
-	/* disable isa wait states */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioha, MONGOOSE_LIOWAIT, 1);
-	/* bus unlock */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioha, MONGOOSE_LOCK, 1);
+	printf (": rev %d, %d MHz\n", sc->sc_regs->version,
+		(sc->sc_regs->clock? 33 : 25));
+	sc->sc_regs->liowait = 1;	/* disable isa wait states */
+	sc->sc_regs->lock    = 1;	/* bus unlock */
 
 	/* attach EISA */
 	sc->sc_ec.ec_v = sc;
@@ -175,8 +161,9 @@ mgattach(parent, self, aux)
 	sc->sc_ec.ec_intr_string = mongoose_intr_string;
 	sc->sc_ec.ec_intr_map = mongoose_intr_map;
 	ea.mongoose_eisa.eba_busname = "eisa";
-	ea.mongoose_eisa.eba_iot = HPPA_BUS_TAG_SET_BASE(sc->sc_iot,sc->sc_hpa);
-	ea.mongoose_eisa.eba_memt = ca->ca_iot;
+	ea.mongoose_eisa.eba_iot = ea.mongoose_eisa.eba_memt =
+		HPPA_BUS_TAG_SET_BASE(ca->ca_iot,ca->ca_hpa); 
+	ea.mongoose_eisa.eba_dmat = NULL;
 	ea.mongoose_eisa.eba_ec = &sc->sc_ec;
 	config_found(self, &ea.mongoose_eisa, mgprint);
 
@@ -187,8 +174,11 @@ mgattach(parent, self, aux)
 	sc->sc_ic.ic_intr_disestablish = mongoose_intr_disestablish;
 	sc->sc_ic.ic_intr_check = mongoose_intr_check;
 	ea.mongoose_isa.iba_busname = "isa";
-	ea.mongoose_isa.iba_iot = HPPA_BUS_TAG_SET_BASE(sc->sc_iot, sc->sc_hpa);
-	ea.mongoose_isa.iba_memt = ca->ca_iot;
+	ea.mongoose_isa.iba_iot = ea.mongoose_isa.iba_memt =
+		HPPA_BUS_TAG_SET_BASE(ca->ca_iot, ca->ca_hpa); 
+#if NISADMA > 0
+	ea.mongoose_isa.iba_dmat = NULL;
+#endif
 	ea.mongoose_isa.iba_ic = &sc->sc_ic;
 	config_found(self, &ea.mongoose_isa, mgprint);
 }
@@ -212,25 +202,6 @@ mongoose_eisa_attach_hook(parent, self, mg)
 	struct device *self;
 	struct eisabus_attach_args *mg;
 {
-#ifdef MONGOOSE_DEBUG
-	register struct mongoose_softc *sc = (struct mongoose_softc *)self;
-	struct pdc_memmap pdc_memmap;
-	struct device_path dp;
-	register int i;
-
-	for (i = 0; i < 16; i++) {
-		dp.dp_bc[0] = dp.dp_bc[1] = dp.dp_bc[2] = dp.dp_bc[3] = -1;
-		dp.dp_bc[4] = sc->sc_mod;
-		dp.dp_bc[5] = 0;
-		dp.dp_mod = i;
-
-		if (pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
-			     PDC_MEMMAP_HPA, &pdc_memmap, &dp) < 0)
-			continue;
-
-		printf ("eisa%d: hpa %x\n", i, pdc_memmap.hpa);
-	}
-#endif
 }
 
 int
