@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.65 2002/03/25 20:46:49 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.66 2002/03/26 05:24:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -419,10 +419,13 @@ hppa_init(start)
 		for (p = cpu_types;
 		     p->arch && p->features != cpu_features; p++);
 
-		if (!p->arch)
+		if (!p->arch) {
 			printf("WARNING: UNKNOWN CPU TYPE; GOOD LUCK (%x)\n",
 			    cpu_features);
-		else {
+			p = cpu_types;
+		}
+
+		{
 			/*
 			 * Ptrs to various tlb handlers, to be filled
 			 * based on cpu features.
