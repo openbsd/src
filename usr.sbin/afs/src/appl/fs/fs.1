@@ -1,4 +1,4 @@
-.\"     $OpenBSD: fs.1,v 1.5 2002/06/07 15:33:43 hin Exp $
+.\"     $OpenBSD: fs.1,v 1.6 2002/06/09 04:03:21 hin Exp $
 .\"	$KTH: fs.1,v 1.2.2.1 2001/03/04 04:35:56 lha Exp $
 .Dd March 29, 2000
 .Dt FS 1
@@ -217,7 +217,7 @@ Tweek arla-debugging flags.
 .Op Fl noauth
 .Op Fl nopoll
 .Bd -filled -offset indent -compact
-Check if the server in a cell are up.
+Check if the servers in a cell are available.
 If
 .Fl nopoll
 is specified, the servers are not contactad; only internal information is
@@ -226,44 +226,50 @@ printed.
 .Pp
 .Ic fs checkvolumes
 .Bd -filled -offset indent -compact
-check that all volume mapping are correct and flush all mountpoints
+Check that all volume mapping are correct and flush all mountpoints
 from the cache to force them to be reread.
 .Ed
 .Pp
 .Ic fs cleanacl
 .Bd -filled -offset indent -compact
-Not implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic fs copyacl
 .Bd -filled -offset indent -compact
-Not implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic fs diskfree
 .Ar path
 .Bd -filled -offset indent -compact
-show free partition space
+Show free space on the volume where the file or directory
+.Ar path
+is stored.
 .Ed
 .Pp
 .Ic fs examine
 .Op Ar path
 .Bd -filled -offset indent -compact
-Print detailed information about the volume mounted on the specified path
+Print detailed information about the volume mounted on the specified
+.Ar path
 or the current directory.
 .Ed
 .Pp
 .Ic fs flush
-.Ar path
+.Ar file
 .Bd -filled -offset indent -compact
-Flush the file specified, causing it to be stored on the fileserver.
+Flush
+.Ar file
+from the cache, causing it to be stored on the fileserver.
 .Ed
 .Pp
 .Ic fs flushvolume
-.Ar path
+.Ar file
 .Bd -filled -offset indent -compact
-Flush all the files in the volume where the file specified is stored,
-causing them to be stored on the fileserver.
+Flush all the files in the volume where the
+.Ar file
+is stored, causing them to be stored on the fileserver.
 Meta information about the volume is also flushed.
 .Ed
 .Pp
@@ -285,7 +291,8 @@ Display wether traffic between the client and server is encrypted.
 .Ic fs getcellstatus
 .Ar cellname
 .Bd -filled -offset indent -compact
-Indicate if setuid files are enabled for the specified cell.
+Indicate if the setuid bit on executable files are honored for
+the specified cell.
 .Ed
 .Pp
 .Ic fs getfid
@@ -296,7 +303,7 @@ Print fid information for a file.
 .Pp
 .Ic fs getserverprefs
 .Bd -filled -offset indent -compact
-Not implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic fs getpriority
@@ -306,7 +313,7 @@ Display priority of a file or directory.
 .Pp
 .Ic fs gp
 .Bd -filled -offset indent -compact
-shorthand for the
+Shorthand for the
 .Cm getpriority
 command
 .Ed
@@ -358,12 +365,15 @@ These are the cells listed in the file
 .Ic fs listquota
 .Op Ar path
 .Bd -filled -offset indent -compact
-Show the quota for the volume of the file or directory specified.
+Show the quota for the volume of the 
+.Ar path
+specified.
 .Ed
 .Pp
 .Ic fs lq
+.Op Ar path
 .Bd -filled -offset indent -compact
-shorthand for the
+Shorthand for the
 .Cm listquota
 command
 .Ed
@@ -378,14 +388,14 @@ command.
 .Ed
 .Pp
 .Ic fs lsmount
-.Bd -filled -offset indent -compact
 .Ar path
+.Bd -filled -offset indent -compact
 Show a mount point.
 .Ed
 .Pp
 .Ic fs messages
 .Bd -filled -offset indent -compact
-Not implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic fs mkmount
@@ -402,15 +412,17 @@ If
 .Fl rw
 is given, a mountpoint to the readwrite volume is created.
 .Pp
-Note that the there must not exist a directory named as
+Note that the there must not exist a directory named like
 the mount point created.
 .Ed
 .Pp
 .Ic fs connect
 .Op Ar mode
 .Bd -filled -offset indent -compact
-Set or get connected mode, if a mode is specified, the cache manager will be
-set to that mode. If not, the current mode will be printed.
+Set or get connected mode. If 
+.Ar mode
+is specified, the cache manager will be set to that mode.
+If not, the current mode will be printed.
 .Pp
 Valid modes are:
 .Bl -tag -width -Fl -compact
@@ -430,7 +442,7 @@ Disconnected mode is to be considered very experimental at this stage.
 .Pp
 .Ic fs monitor
 .Bd -filled -offset indent -compact
-Not implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic fs newcell
@@ -463,13 +475,15 @@ Leave interactive mode.
 .Ic fs rmmount
 .Ar mountpoint
 .Bd -filled -offset indent -compact
-Delete a mount point.
+Delete
+.Ar mountpoint Ns .
 .Ed
 .Pp
 .Ic fs removepriority
-.Ar file
+.Ar path
 .Bd -filled -offset indent -compact
-Remove priority from file/directory.
+Remove priority from file or directory
+.Ar path Ns .
 .Ed
 .Pp
 .Ic fs rmp
@@ -532,7 +546,7 @@ The group and world permission bits are ignored, but they are stored.
 .Pp
 .Ic fs sa
 .Bd -filled -offset indent -compact
-shorthand for the
+Shorthand for the
 .Cm setacl
 command
 .Ed
@@ -546,7 +560,7 @@ Set the size of the disk cache.
 .Pp
 .Ic fs setcell
 .Bd -filled -offset indent -compact
-Not implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic fs setpriority
@@ -564,14 +578,14 @@ command.
 .Ed
 .Pp
 .Ic fs setmaxpriority
-.Ar macprio
+.Ar priority
 .Bd -filled -offset indent -compact
 Set upper limit of priority.
 .Ed
 .Pp
 .Ic fs smq
 .Bd -filled -offset indent -compact
-shorthand for the
+Shorthand for the
 .Cm setmaxpriority
 comand
 .Ed
@@ -595,19 +609,23 @@ command.
 .Pp
 .Ic fs setserverprefs
 .Bd -filled -offset indent -compact
-Not implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic fs setcrypt
-.Ar flag
+.Ar yes | no
 .Bd -filled -offset indent -compact
-If 'no' is specified, encryption of the traffic to/from fileservers is
-disabled, and if 'yes' is specified, it is enabled.
+If
+.Ar no
+is specified, encryption of the traffic to/from fileservers is
+disabled, and if
+.Ar yes
+is specified, it is enabled.
 .Ed
 .Pp
 .Ic fs setvol
 .Bd -filled -offset indent -compact
-Not implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic fs suidcells
@@ -659,6 +677,7 @@ Tweek xfs-debugging flags
 Make xfs print debug info.
 .Ed
 .Sh SEE ALSO
+.Xr bos 1 ,
 .Xr pts 1 ,
 .Xr vos 1 ,
 .Xr afsd 8
