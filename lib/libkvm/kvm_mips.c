@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips.c,v 1.2 1996/05/05 14:57:26 deraadt Exp $ */
+/*	$OpenBSD: kvm_mips.c,v 1.3 1996/06/07 06:50:42 deraadt Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_mips.c,v 1.2 1996/05/05 14:57:26 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_mips.c,v 1.3 1996/06/07 06:50:42 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,7 +67,7 @@ static char *rcsid = "$OpenBSD: kvm_mips.c,v 1.2 1996/05/05 14:57:26 deraadt Exp
 
 #include "kvm_private.h"
 
-#include <machine/machConst.h>
+#include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
@@ -148,7 +148,7 @@ _kvm_kvatop(kd, va, pa)
 	    va >= VM_MIN_KERNEL_ADDRESS + vm->Sysmapsize * NBPG)
 		goto invalid;
 	if (va < VM_MIN_KERNEL_ADDRESS) {
-		*pa = MACH_CACHED_TO_PHYS(va);
+		*pa = CACHED_TO_PHYS(va);
 		return (NBPG - offset);
 	}
 	addr = (u_long)(vm->Sysmap + ((va - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT));
