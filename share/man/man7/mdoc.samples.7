@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.35 2002/05/29 09:42:35 mpech Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.36 2002/07/03 23:30:20 miod Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -61,9 +61,8 @@ and
 formatting
 package for
 .Xr troff 1 .
-Its predecessor, the
-.Xr \-man 7
-package,
+Its predecessor, the \-man package (see
+.Xr man 7 )
 addressed page layout leaving the
 manipulation of fonts and other
 typesetting details to the individual author.
@@ -1629,14 +1628,14 @@ These macros expect the first argument to be the
 opening and closing strings respectively.
 .It Li \&.Ql
 The quoted literal macro behaves differently for
-.Xr troff
+.Xr troff 1
 than
-.Xr nroff .
+.Xr nroff 1 .
 If formatted with
-.Xr nroff ,
+.Xr nroff 1 ,
 a quoted literal is always quoted.
 If formatted with
-.Xr troff ,
+.Xr troff 1 ,
 an item is only quoted if the width
 of the item is less than three constant width characters.
 This is to make short strings more visible where the font change
@@ -1804,7 +1803,7 @@ returns to its caller.
 (And not very predictably at the moment either.)
 The purpose is to allow trade names
 to be pretty printed in
-.Xr troff Ns / Ns Xr ditroff
+.Xr troff 1 Ns / Ns ditroff
 output.
 .Ss Trade Names (or Acronyms and Type Names)
 The trade name macro is generally a small caps macro for
@@ -2393,7 +2392,7 @@ flag is read and displayed.
 Literal mode is
 asserted and tabs are set at 8 constant width character
 intervals, however any
-.Xr troff/ Ns Nm \-mdoc
+.Xr troff 1 Ns / Ns Nm \-mdoc
 commands in file will be processed.
 .It Fl offset Ar string
 If
@@ -2935,7 +2934,7 @@ with
 .Fl T Ns Ar ascii
 does eject the imaginary remainder of the page at end of file.
 The inhibiting of the page breaks makes
-.Xr nroff Ns 'd
+.Xr nroff 1 Ns 'd
 files unsuitable for hardcopy.
 There is a register named
 .Ql \&cR
