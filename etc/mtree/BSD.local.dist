@@ -1,4 +1,4 @@
-#     $OpenBSD: BSD.local.dist,v 1.8 2001/04/05 12:44:10 espie Exp $
+#     $OpenBSD: BSD.local.dist,v 1.9 2002/01/18 16:46:52 brad Exp $
 #     $FreeBSD: BSD.local.dist,v 1.32 1997/09/12 05:44:11 asami Exp $
 #
 
@@ -140,6 +140,8 @@
             ..
 	    es_ES.ISO_8859-1
             ..
+	    et_EE.ISO-8859-1
+	    ..
 	    fi_FI.ISO_8859-1
             ..
 	    fr_BE.ISO_8859-1
@@ -176,11 +178,11 @@
             ..
 	    pt_PT.ISO_8859-1
             ..
-	    ru_SU.CP866
+	    ru_RU.CP866
             ..
-	    ru_SU.ISO_8859-5
+	    ru_RU.ISO_8859-5
 	    ..
-	    ru_SU.KOI8-R
+	    ru_RU.KOI8-R
             ..
 	    sv_SE.ISO_8859-1
             ..
