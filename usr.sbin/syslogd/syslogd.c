@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.74 2004/01/19 16:06:05 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.75 2004/04/13 12:07:06 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.74 2004/01/19 16:06:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.75 2004/04/13 12:07:06 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -1660,11 +1660,10 @@ ctlconn_read_handler(void)
 		} else {
 			ringbuf_to_string(ctl_reply, MAX_MEMBUF,
 			    f->f_un.f_mb.f_rb);
+			if (ctl_cmd.cmd == CMD_READ_CLEAR)
+				ringbuf_clear(f->f_un.f_mb.f_rb);
 		}
 		ctl_reply_size = strlen(ctl_reply);
-
-		if (ctl_cmd.cmd == CMD_READ_CLEAR)
-			ringbuf_clear(f->f_un.f_mb.f_rb);
 		break;
 	case CMD_CLEAR:
 		f = find_membuf_log(ctl_cmd.logname);
