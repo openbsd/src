@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.10 1998/03/30 06:59:28 deraadt Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.11 1998/05/29 16:37:51 millert Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.10 1998/03/30 06:59:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.11 1998/05/29 16:37:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(argc, argv)
 	enum { NEWSH, LOADENTRY, EDITENTRY } op;
 	struct passwd *pw, lpw;
 	int ch, pfd, tfd, dfd;
-	char *arg, tempname[] = "/etc/pw.XXXXXX";
+	char *arg, tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXX");
 
 #ifdef	YP
 	use_yp = _yp_check(NULL);
