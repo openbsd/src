@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.47 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.48 2005/03/31 17:18:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -332,6 +332,7 @@ extern struct cvs_cmd_info cvs_status;
 extern struct cvs_cmd_info cvs_tag;
 extern struct cvs_cmd_info cvs_update;
 extern struct cvs_cmd_info cvs_version;
+extern struct cvs_cmd_info cmd_server;
 
 int  cvs_startcmd (struct cvs_cmd *, int, char **);
 int  cvs_server   (int, char **);

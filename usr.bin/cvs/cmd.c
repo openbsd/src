@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.4 2005/03/31 15:47:17 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.5 2005/03/31 17:18:24 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -50,6 +50,14 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	int ret;
 	struct cvsroot *root;
 	struct cvs_cmd_info *c = cmd->cmd_info;
+
+	/* if the command requested is the server one, just call the
+	 * cvs_server() function to handle it, and return after it.
+	 */
+	if (cmd->cmd_op == CVS_OP_SERVER) {
+		ret = cvs_server(argc, argv);
+		return (ret);
+	}
 
 	if (c->cmd_options != NULL) {
 		if ((ret = c->cmd_options(cmd->cmd_opts, argc, argv, &i)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.45 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.46 2005/03/31 17:18:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -238,7 +238,7 @@ struct cvs_cmd cvs_cdt[] = {
 		NULL
 	},
 	{
-		CVS_OP_SERVER, "server",   {}, NULL,
+		CVS_OP_SERVER, "server",   {}, &cmd_server,
 		"",
 		"",
 		"Server mode",

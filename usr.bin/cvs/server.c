@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.7 2005/03/28 23:08:24 jfb Exp $	*/
+/*	$OpenBSD: server.c,v 1.8 2005/03/31 17:18:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -44,6 +44,9 @@ char   **cvs_args;
 u_int   cvs_nbarg = 0;
 u_int   cvs_utf8ok = 0;
 u_int   cvs_case   = 0;
+
+struct cvs_cmd_info cmd_server = {
+	NULL, NULL, NULL, NULL, NULL, 0, 0, 0 };
 
 /*
  * cvs_server()
