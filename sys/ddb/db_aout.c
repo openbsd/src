@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.24 1999/09/11 00:44:59 mickey Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.25 2001/02/06 07:03:56 niklas Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -86,6 +86,11 @@ X_db_sym_init(symtab, esymtab, name)
 {
 	struct nlist	*sym_start, *sym_end;
 	char		*estrtab;
+
+#ifdef __alpha__
+	printf ("DDB: no symbols\n");
+	return;
+#endif
 
 #ifdef SYMTAB_SPACE
 	if (*symtab < sizeof(int)) {
