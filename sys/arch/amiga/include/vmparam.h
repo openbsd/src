@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.12 2001/06/27 06:19:44 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.13 2001/08/12 20:06:03 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1997/07/12 16:18:36 perry Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 #include <machine/pte.h>
 
 /*
- * Machine dependent constants for HP300
+ * Machine dependent constants for amiga
  */
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
@@ -64,7 +64,7 @@
 #define	USRTEXT		(vm_offset_t)0x2000
 #define	USRSTACK	(vm_offset_t)0x0E000000
 #define	LOWPAGES	btoc(USRTEXT)
-#define KUSER_AREA	(-UPAGES*NBPG)
+
 /*
  * Virtual memory related constants, all in bytes
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2001/06/27 06:19:44 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2001/08/12 20:06:08 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1998/08/20 08:33:48 kleink Exp $	*/
 
 /*
@@ -64,8 +64,6 @@
  */
 #define	USRTEXT		8192
 #define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
-#define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
-#define P1PAGES		0x100000
 #define	LOWPAGES	0
 #define HIGHPAGES	(0x100000/NBPG)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.15 2001/07/18 10:47:04 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.16 2001/08/12 20:06:11 miod Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -38,8 +38,6 @@
  */
 #define	USRTEXT		0x00002000		/* Start of user .text */
 #define	USRSTACK	0x68FF3000		/* Start of user stack */
-#define	BTOPUSRSTACK	btop(USRSTACK)		/* btop(USRSTACK) */
-#define	P1PAGES		2
 #define	LOWPAGES	0
 #define	HIGHPAGES	UPAGES
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
