@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.59 2004/01/23 23:08:47 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.60 2004/02/09 00:32:20 espie Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -47,7 +47,7 @@
 .Op Fl j Ar max_jobs
 .Op Fl m Ar directory
 .Op Fl V Ar variable
-.Op Ar variable Ns = Ns Ar value
+.Op Ar NAME Ns = Ns Ar value
 .Bk -words
 .Op Ar target ...
 .Ek
@@ -121,9 +121,9 @@ before each command line in the makefile.
 .It Fl t
 Rather than re-building a target as specified in the makefile, create it
 or update its modification time to make it appear up-to-date.
-.It Ar variable Ns = Ns Ar value
+.It Ar NAME Ns = Ns Ar value
 Set the value of the variable
-.Ar variable
+.Ar NAME
 to
 .Ar value .
 .El
@@ -364,6 +364,9 @@ Variables in
 .Nm
 are much like variables in the shell, and, by tradition,
 consist of all upper-case letters.
+They are also called
+.Sq macros
+in various texts.
 For portability, only periods, underscores, digits and letters should be
 used for variable names.
 The five operators that can be used to assign values to variables are as
