@@ -12,7 +12,7 @@
 # The : is required for some old versions of csh.
 # On Ultrix, /bin/sh is too buggy, change the first line to: #!/bin/sh5
 #
-# $OpenBSD: gzexe,v 1.3 1997/08/11 17:52:02 millert Exp $
+# $OpenBSD: gzexe,v 1.4 2001/09/27 20:10:29 millert Exp $
 
 x=`basename $0`
 if test $# = 0; then
@@ -34,7 +34,11 @@ if test "x$1" = "x-d"; then
 fi
 
 zfoo1=`/usr/bin/mktemp zfoo1XXXXXXXXXX` || exit 1
-zfoo2=`/usr/bin/mktemp zfoo2XXXXXXXXXX` || exit 1
+zfoo2=`/usr/bin/mktemp zfoo2XXXXXXXXXX`
+if [ $? -ne 0 ]; then
+  rm -f $zfoo1
+  exit 1
+fi
 echo hi > $zfoo1
 echo hi > $zfoo2
 if test -z "`(${CPMOD-cpmod} $zfoo1 $zfoo2) 2>&1`"; then
