@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.2 2000/01/08 23:23:37 d Exp $ */
+/*	$OpenBSD: ukc.h,v 1.3 2001/01/24 20:12:27 art Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -66,6 +66,7 @@ struct nlist nl[] = {
 	{ "_userconf_histlen" },
 	{ "_userconf_history" },
 	{ "_tz" },
+	{ NULL },
 };
 struct nlist knl[] = {
 	{ "_locnames" },
@@ -83,6 +84,7 @@ struct nlist knl[] = {
 	{ "_userconf_histlen" },
 	{ "_userconf_history" },
 	{ "_tz" },
+	{ NULL },
 };
 int	maxdev = 0;
 int	totdev = 0;
