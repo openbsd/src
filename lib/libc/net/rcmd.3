@@ -134,6 +134,9 @@ by
 and several other functions.  Privileged Internet ports are those
 in the range 0 to 1023.  Only the super-user
 is allowed to bind an address of this sort to a socket.
+.Fn rresvport
+needs to be seeded with a port number; if that port
+is not available it will find another.
 .Pp
 The
 .Fn iruserok

@@ -228,21 +228,19 @@ rresvport(alport)
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s < 0)
 		return (-1);
-	for (;;) {
-		sin.sin_port = htons((u_short)*alport);
-		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
-			return (s);
-		if (errno != EADDRINUSE) {
-			(void)close(s);
-			return (-1);
-		}
-		(*alport)--;
-		if (*alport == IPPORT_RESERVED/2) {
-			(void)close(s);
-			errno = EAGAIN;		/* close */
-			return (-1);
-		}
+	sin.sin_port = htons((u_short)*alport);
+	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
+		return (s);
+	if (errno != EADDRINUSE) {
+		(void)close(s);
+		return (-1);
 	}
+	if (bindresvport(s, &sin) == -1) {
+		(void)close(s);
+		return (-1);
+	}
+	*alport = (int)ntohs(sin.sin_port);
+	return (s);
 }
 
 int	__check_rhosts_file = 1;
