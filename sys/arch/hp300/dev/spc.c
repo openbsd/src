@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.10 2004/12/22 21:07:29 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.11 2004/12/22 21:11:12 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -55,7 +55,7 @@
 int  spc_dio_match(struct device *, void *, void *);
 void spc_dio_attach(struct device *, struct device *, void *);
 int  spc_dio_dmastart(struct spc_softc *, void *, size_t, int);
-void spc_dio_dmadone(struct spc_softc *);
+int  spc_dio_dmadone(struct spc_softc *);
 void spc_dio_dmago(void *);
 void spc_dio_dmastop(void *);
 int  spc_dio_intr(void *);
@@ -218,8 +218,9 @@ spc_dio_dmago(void *arg)
 	    (sc->sc_dleft & 3) == 0) {
 		cmd |= CSR_DMA32;
 		dmaflags |= DMAGO_LWORD;
-	} else
+	} else {
 		dmaflags |= DMAGO_WORD;
+	}
 
 	sc->sc_flags |= SPC_DOINGDMA;
 	dmago(chan, sc->sc_dp, sc->sc_dleft, dmaflags);
@@ -253,7 +254,7 @@ spc_dio_dmago(void *arg)
 	spc_write(SCMD, cmd);
 }
 
-void
+int
 spc_dio_dmadone(struct spc_softc *sc)
 {
 	struct spc_dio_softc *dsc = (struct spc_dio_softc *)sc;
@@ -262,7 +263,7 @@ spc_dio_dmadone(struct spc_softc *sc)
 
 	/* Check if the DMA operation is finished. */
 	if ((spc_read(SSTS) & SSTS_BUSY) != 0)
-		return;
+		return (0);
 
 	sc->sc_flags &= ~SPC_DOINGDMA;
 	if ((dsc->sc_dflags & SCSI_HAVEDMA) != 0) {
@@ -280,6 +281,8 @@ spc_dio_dmadone(struct spc_softc *sc)
 	trans = sc->sc_dleft - resid;
 	sc->sc_dp += trans;
 	sc->sc_dleft -= trans;
+
+	return (1);
 }
 
 void

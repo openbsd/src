@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352var.h,v 1.4 2004/12/22 21:07:29 miod Exp $	*/
+/*	$OpenBSD: mb89352var.h,v 1.5 2004/12/22 21:11:12 miod Exp $	*/
 /*	$NetBSD: mb89352var.h,v 1.6 2003/08/02 12:48:09 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
@@ -176,7 +176,7 @@ struct spc_softc {
 
 	/* DMA function set from MD code */
 	int (*sc_dma_start)(struct spc_softc *, void *, size_t, int);
-	void (*sc_dma_done)(struct spc_softc *);
+	int (*sc_dma_done)(struct spc_softc *);
 
 	/* Reset hook */
 	void (*sc_reset)(struct spc_softc *);

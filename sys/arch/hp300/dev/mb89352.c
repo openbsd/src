@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.10 2004/12/22 21:08:23 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.11 2004/12/22 21:11:12 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -213,10 +213,7 @@ spc_attach(struct spc_softc *sc)
 	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &spc_switch;
 	sc->sc_link.device = &spc_dev;
-	if (sc->sc_dma_start != NULL)
-		sc->sc_link.openings = 1;
-	else
-		sc->sc_link.openings = 2;
+	sc->sc_link.openings = 2;
 
 	/*
 	 * ask the adapter what subunits are present
@@ -297,12 +294,10 @@ spc_init(struct spc_softc *sc)
 		sc->sc_state = SPC_CLEANING;
 		if ((acb = sc->sc_nexus) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			timeout_del(&acb->xs->stimeout);
 			spc_done(sc, acb);
 		}
 		while ((acb = TAILQ_FIRST(&sc->nexus_list)) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			timeout_del(&acb->xs->stimeout);
 			spc_done(sc, acb);
 		}
 	}
@@ -712,6 +707,8 @@ spc_done(struct spc_softc *sc, struct spc_acb *acb)
 	struct spc_tinfo *ti = &sc->sc_tinfo[sc_link->target];
 
 	SPC_TRACE(("spc_done  "));
+
+	timeout_del(&acb->xs->stimeout);
 
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the
@@ -1508,10 +1505,7 @@ start:
 	/*
 	 * Check for the end of a DMA operation before doing anything else...
 	 */
-	if (sc->sc_dma_done != NULL &&
-	    sc->sc_state == SPC_CONNECTED &&
-	    (sc->sc_flags & SPC_DOINGDMA) != 0 &&
-	    (sc->sc_phase == PH_DATAOUT || sc->sc_phase == PH_DATAIN)) {
+	if ((sc->sc_flags & SPC_DOINGDMA) != 0) {
 		(*sc->sc_dma_done)(sc);
 	}
 
@@ -1750,10 +1744,7 @@ start:
 	/*
 	 * Do not change phase (yet) if we have a pending DMA operation.
 	 */
-	if (sc->sc_dma_done != NULL &&
-	    sc->sc_state == SPC_CONNECTED &&
-	    (sc->sc_flags & SPC_DOINGDMA) != 0 &&
-	    (sc->sc_phase == PH_DATAOUT || sc->sc_phase == PH_DATAIN)) {
+	if ((sc->sc_flags & SPC_DOINGDMA) != 0) {
 		goto out;
 	}
 
@@ -1923,10 +1914,24 @@ spc_timeout(void *arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	printf("timed out");
 
 	s = splbio();
 
+	/*
+	 * We might have missed a DMA completion.
+	 * If so, fake an interrupt (even if the INTS register is zero - what
+	 * we want here is to change phase).
+	 */
+	if ((sc->sc_flags & SPC_DOINGDMA) != 0) {
+		if ((*sc->sc_dma_done)(sc)) {
+			printf("missed DMA completion\n");
+			spc_process_intr(sc, spc_read(INTS));
+			splx(s);
+			return;
+		}
+	}
+
+	printf("timed out");
 	if (acb->flags & ACB_ABORT) {
 		/* abort timed out */
 		printf(" AGAIN\n");
