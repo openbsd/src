@@ -14,3 +14,5 @@
 @13 block in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
 @14 block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
 @15 block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
+@16 pass in inet proto icmp all icmp-type unreach code needfrag 
+@17 pass in inet6 proto ipv6-icmp all ipv6-icmp-type timex code reassemb 
