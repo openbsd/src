@@ -13,7 +13,7 @@ divert(-1)
 #
 divert(0)
 
-VERSIONID(`$Sendmail: proto.m4,v 8.649.2.13 2002/12/04 00:12:18 ca Exp $')
+VERSIONID(`$Sendmail: proto.m4,v 8.649.2.14 2002/12/30 15:46:02 ca Exp $')
 
 # level CF_LEVEL config file format
 V`'CF_LEVEL/ifdef(`VENDOR_NAME', `VENDOR_NAME', `Berkeley')
