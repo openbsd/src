@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 1995/09/26 20:16:23 phil Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 1995/12/28 19:16:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,7 +62,6 @@
  * the machine.
  */
 
-int dkn;		/* number of iostat dk numbers assigned so far */
 extern int cold;	/* cold start flag initialized in locore.s */
 
 /*
