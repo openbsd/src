@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.28 2001/07/16 21:09:37 markus Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.29 2001/07/17 17:39:09 marc Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -420,6 +420,12 @@ main(int argc, char *argv[])
 			usage();
 			/* NOTREACHED */
 		}
+	}
+
+	if (argc != optind) {
+		warnx("unknown command line argument: %s ...", argv[optind]);
+		usage();
+		/* NOTREACHED */
 	}
 
 	if ((opts & PF_OPT_NOACTION) == 0) {
