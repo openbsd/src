@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.2 1998/10/14 07:34:43 fgsch Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.3 1999/05/28 12:41:55 niklas Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ aic_pcmcia_attach(parent, self, aux)
 			continue;
 
 		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, 0, &psc->sc_pcioh) == 0)
+		    cfe->iospace[0].length, AIC_NPORTS, &psc->sc_pcioh) == 0)
 			break;
 	}
 
