@@ -1,4 +1,4 @@
-/*	$OpenBSD: unimpl_emul.s,v 1.5 2001/04/17 03:17:48 bjc Exp $	*/
+/*	$OpenBSD: unimpl_emul.s,v 1.6 2001/07/16 22:03:52 hugh Exp $	*/
 /*	$NetBSD: unimpl_emul.s,v 1.2 2000/08/14 11:16:52 ragge Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ getaddr_byte:
 	.word	2f-0b		# 9 autoincr deferred (missing)
 	.word	7f-0b		# 10 byte disp 
 	.word	2f-0b		# 11 byte disp deferred (missing)
-	.word	2f-0b		# 12 word disp (missing)
+	.word	8f-0b		# 12 word disp
 	.word	2f-0b		# 13 word disp deferred (missing)
 	.word	1f-0b		# 14 long disp
 	.word	2f-0b		# 15 long disp deferred (missing)
@@ -381,17 +381,32 @@ getaddr_byte:
 	brw		4f
 
 7:	
-	extzv	$0, $4, (r3), r2	# get register 
+	extzv	$0, $4, (r3), r2	# get register
 	incl	r3
-	movl	r3, S_PC
-	ashl	$2,r2,r2
-	addl2	fp,r2
-	movl	(r2),r5
-	movzbl	(r3),r4
-	movl	S_PC, r3
+	movl	(fp)[r2],r0	# Register contents
+	pushl	r4
+	cvtbl	(r3),r4
+	addl2	r4,r0		# add displacement
+	movl	(sp)+,r4
+	cmpl	r2,$15		# pc?
+	bneq	0f		# no, skip
+	addl2	$2,r0		# compensate for displacement size
+0:	incl	r3		# increase pc
+	brw	4f
+
+8:
+	extzv	$0, $4, (r3), r2	# get register
 	incl	r3
-	addl3	r4, r5, r0
-	brw		4f
+	movl	(fp)[r2],r0	# Register contents
+	pushl	r4
+	cvtwl	(r3),r4
+	addl2	r4,r0		# add displacement
+	movl	(sp)+,r4
+	cmpl	r2,$15		# pc?
+	bneq	0f		# no, skip
+	addl2	$3,r0		# compensate for displacement size
+0:	addl2	$2,r3		# increase pc
+	brw	4f
 
 6:	extzv	$0,$4,(r3),r2	# Get reg number
 	incl	r3
