@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.seq,v 1.5 2004/12/11 00:08:43 krw Exp $	*/
+/*	$OpenBSD: aic79xx.seq,v 1.6 2005/03/23 23:47:22 deraadt Exp $	*/
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
  *
@@ -41,7 +41,7 @@
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.seq,v 1.17 2004/08/04 17:55:34 gibbs Exp $
  */
 
-VERSION = "$Id: aic79xx.seq,v 1.5 2004/12/11 00:08:43 krw Exp $"
+VERSION = "$Id: aic79xx.seq,v 1.6 2005/03/23 23:47:22 deraadt Exp $"
 PATCH_ARG_LIST = "struct ahd_softc *ahd"
 PREFIX = "ahd_"
 
@@ -125,7 +125,7 @@ idle_loop_check_nonpackreq:
 	if ((ahd->bugs & AHD_FAINT_LED_BUG) != 0) {
 		/*
 		 * On Rev A. hardware, the busy LED is only
-		 * turned on automaically during selections
+		 * turned on automatically during selections
 		 * and re-selections.  Make the LED status
 		 * more useful by forcing it to be on so
 		 * long as one of our data FIFOs is active.
@@ -619,7 +619,7 @@ select_in:
 	if ((ahd->bugs & AHD_FAINT_LED_BUG) != 0) {
 		/*
 		 * On Rev A. hardware, the busy LED is only
-		 * turned on automaically during selections
+		 * turned on automatically during selections
 		 * and re-selections.  Make the LED status
 		 * more useful by forcing it to be on from
 		 * the point of selection until our idle
@@ -672,7 +672,7 @@ BEGIN_CRITICAL;
 	if ((ahd->bugs & AHD_FAINT_LED_BUG) != 0) {
 		/*
 		 * On Rev A. hardware, the busy LED is only
-		 * turned on automaically during selections
+		 * turned on automatically during selections
 		 * and re-selections.  Make the LED status
 		 * more useful by forcing it to be on from
 		 * the point of re-selection until our idle
@@ -1913,7 +1913,7 @@ main_isr:
  * This happens between packets in a stream for a single L_Q.  Since we
  * are not performing a pointer save, we can safely clear the channel
  * so it can be used for other transactions.  On RTI capable controllers,
- * where snapshots can, and are, disabled, the code to handle this type
+ * where snapshots can be, and are, disabled, the code to handle this type
  * of snapshot is not active.
  *
  * The second case is a save pointers on an active FIFO which occurs
@@ -2172,7 +2172,7 @@ pkt_status_check_nonpackreq:
 	/*
 	 * The unexpected nonpkt phase handler assumes that any
 	 * data channel use will have a FIFO reference count.  It
-	 * turns out that the status handler doesn't need a refernce
+	 * turns out that the status handler doesn't need a reference
 	 * count since the status received flag, and thus completion
 	 * processing, cannot be set until the handler is finished.
 	 * We increment the count here to make the nonpkt handler
