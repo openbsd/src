@@ -4,9 +4,9 @@
 # generated from:
 #
 #	OpenBSD: etc.i386/MAKEDEV.md,v 1.28 2004/10/03 21:28:34 jcs Exp 
-#	OpenBSD: MAKEDEV.common,v 1.13 2005/01/10 07:53:57 dlg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.15 2005/01/28 18:56:27 danh Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -418,9 +418,9 @@ uhid*)
 
 ugen*)
 	n=$(($U*16))
-	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	for j in 0{0,1,2,3,4,5,6,7,8,9} 1{0,1,2,3,4,5}
 	do
-		M ugen$U.$j c 63 $(($n+$j)) 660
+		M ugen$U.$j c 63 $(($n+10#$j)) 660
 	done
 	;;
 
@@ -466,7 +466,7 @@ tty[C-F]*)
 	ttyF*) n=F m=768;;
 	esac
 	case $U in
-	[0-9a-f]) M tty$n$U c 12 $(( 16#$U + $m )) 600;;
+	[0-9a-f]) M tty$n$U c 12 $((16#$U+$m)) 600;;
 	cfg) M tty${n}cfg c 12 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac

@@ -4,9 +4,9 @@
 # generated from:
 #
 #	OpenBSD: etc.hppa/MAKEDEV.md,v 1.22 2004/09/15 01:02:31 mickey Exp 
-#	OpenBSD: MAKEDEV.common,v 1.13 2005/01/10 07:53:57 dlg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.15 2005/01/28 18:56:27 danh Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -327,7 +327,7 @@ tty[C-F]*)
 	ttyF*) n=F m=768;;
 	esac
 	case $U in
-	[0-9a-f]) M tty$n$U c 27 $(( 16#$U + $m )) 600;;
+	[0-9a-f]) M tty$n$U c 27 $((16#$U+$m)) 600;;
 	cfg) M tty${n}cfg c 27 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
