@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.8 1999/05/02 03:41:45 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.9 1999/05/22 00:16:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -122,7 +122,7 @@ static __inline void
 ficache(pa_space_t sp, vaddr_t va, vsize_t size)
 {
 	extern int icache_stride;
-	register vaddr_t eva = va + size;
+	register vaddr_t eva = (va + size + icache_stride-1) & ~(icache_stride-1);
 
 	mtsp(sp, 1);
 	while (va < eva)
@@ -134,7 +134,7 @@ static __inline void
 fdcache(pa_space_t sp, vaddr_t va, vsize_t size)
 {
 	extern int dcache_stride;
-	register vaddr_t eva = va + size;
+	register vaddr_t eva = (va + size + dcache_stride-1) & ~(dcache_stride-1);
 
 	mtsp(sp, 1);
 	while (va < eva)
