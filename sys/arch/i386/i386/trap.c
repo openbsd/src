@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 1997/04/04 16:14:09 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 1997/04/05 21:24:48 flipk Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -425,12 +425,6 @@ trap(frame)
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-			va = trunc_page(vtopte(va));
-			/* for page table, increment wiring as long as
-			   not a page table fault as well */
-			if (!v && map != kernel_map)
-				vm_map_pageable(map, va, round_page(va+1),
-				    FALSE);
 			if (type == T_PAGEFLT)
 				return;
 			goto out;
