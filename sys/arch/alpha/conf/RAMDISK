@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.61 2004/09/16 09:14:02 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.62 2004/11/05 16:29:18 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -98,7 +98,7 @@ isp*	at pci?				# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #qsphy*	at mii?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii?				# Seeq 8x220 PHYs
 #mtdphy* at mii?			# Myson MTD972 PHYs
-#ukphy*	at mii?				# "unknown" PHYs
+ukphy*	at mii?				# "unknown" PHYs
 
 # ISA/EISA bus support
 isa*	at pceb?
