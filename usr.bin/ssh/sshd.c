@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.44 1999/11/02 19:42:37 markus Exp $");
+RCSID("$Id: sshd.c,v 1.45 1999/11/03 23:31:03 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1048,15 +1048,15 @@ do_authentication(char *user, int privileged_port)
 	    packet_send_debug(skeyinfo);
           }
 #endif
+          if (++authentication_failures >= MAX_AUTH_FAILURES) {
+	    packet_disconnect("Too many authentication failures for %.100s from %.200s", 
+            		       user, get_canonical_hostname());
+          }
 	  /* Send failure.  This should be indistinguishable from a failed
 	     authentication. */
 	  packet_start(SSH_SMSG_FAILURE);
 	  packet_send();
 	  packet_write_wait();
-          if (++authentication_failures >= MAX_AUTH_FAILURES) {
-	    packet_disconnect("Too many authentication failures for %.100s from %.200s", 
-            		       user, get_canonical_hostname());
-          }
 	}
       /*NOTREACHED*/
       abort();
@@ -1351,15 +1351,15 @@ do_authentication(char *user, int privileged_port)
       if (authenticated)
 	break;
 
+      if (++authentication_failures >= MAX_AUTH_FAILURES) {
+	packet_disconnect("Too many authentication failures for %.100s from %.200s", 
+          pw->pw_name, get_canonical_hostname());
+      }
       /* Send a message indicating that the authentication attempt failed. */
       packet_start(SSH_SMSG_FAILURE);
       packet_send();
       packet_write_wait();
 
-      if (++authentication_failures >= MAX_AUTH_FAILURES) {
-	packet_disconnect("Too many authentication failures for %.100s from %.200s", 
-          pw->pw_name, get_canonical_hostname());
-      }
     }
 
   /* Check if the user is logging in as root and root logins are disallowed. */
