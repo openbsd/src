@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: assert.c,v 1.4 2002/04/19 15:48:35 deraadt Exp $";
+static char *rcsid = "$OpenBSD: assert.c,v 1.5 2002/06/10 14:59:01 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,16 @@ __assert(file, line, failedexpr)
 	(void)fprintf(stderr,
 	    "assertion \"%s\" failed: file \"%s\", line %d\n",
 	    failedexpr, file, line);
+	abort();
+	/* NOTREACHED */
+}
+
+void
+__assert2(const char *file, int line, const char *func, const char *failedexpr)
+{
+	(void)fprintf(stderr,
+	    "assertion \"%s\" failed: file \"%s\", line %d, function \"%s\"\n",
+	    failedexpr, file, line, func);
 	abort();
 	/* NOTREACHED */
 }
