@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.6 1999/07/31 18:13:30 pjanzen Exp $	*/
+/*	$OpenBSD: bog.c,v 1.7 2001/06/03 23:10:50 pjanzen Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: bog.c,v 1.6 1999/07/31 18:13:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bog.c,v 1.7 2001/06/03 23:10:50 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,7 @@ int batch;
 int debug;
 int minlength;
 int reuse;
+int selfuse;
 int tlimit;
 
 int
@@ -129,7 +130,7 @@ main(argc, argv)
 	char *argv[];
 {
 	time_t seed;
-	int ch, done, i, selfuse, sflag;
+	int ch, done, i, sflag;
 	char *bspec, *p;
 
 	/* revoke */
@@ -340,7 +341,7 @@ playgame()
 			showstr(buf, 1);
 			continue;
 		}
-		if (strlen(buf) < minlength) {
+		if (strlen(buf) < (size_t)minlength) {
 			badword();
 			continue;
 		}
@@ -480,7 +481,7 @@ checkword(word, prev, path)
 			 * If necessary, check if the square has already
 			 * been used.
 			 */
-			if (!reuse && (usedbits & used))
+			if (!reuse && !selfuse && (usedbits & used))
 					continue;
 			*path = lm[i];
 			usedbits |= used;
