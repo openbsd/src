@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.15 2003/07/02 21:30:12 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.16 2003/07/08 21:46:19 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -71,17 +71,17 @@ syncicache(void *from, int len)
 	l = len;
 	
 	do {
-		__asm__ __volatile__ ("dcbst 0,%0" :: "r"(p));
+		__asm __volatile ("dcbst 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile__ ("sync");
+	__asm __volatile ("sync");
 	p = from;
 	l = len;
 	do {
-		__asm__ __volatile__ ("icbi 0,%0" :: "r"(p));
+		__asm __volatile ("icbi 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile__ ("isync");
+	__asm __volatile ("isync");
 }
 
 static __inline void
@@ -94,10 +94,10 @@ invdcache(void *from, int len)
 	l = len;
 	
 	do {
-		__asm__ __volatile__ ("dcbi 0,%0" :: "r"(p));
+		__asm __volatile ("dcbi 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile__ ("sync");
+	__asm __volatile ("sync");
 }
 
 #define FUNC_SPR(n, name) \
@@ -163,6 +163,17 @@ ppc_mftbl (void)
 	return ret;
 }
 
+static __inline u_int64_t
+ppc_mftb(void)
+{
+	u_long scratch;
+	u_int64_t tb;
+
+	__asm __volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
+	     : "=r"(tb), "=r"(scratch));
+	return tb;
+}
+
 static __inline u_int32_t
 ppc_mfmsr (void)
 {
@@ -180,7 +191,7 @@ ppc_mtmsr (u_int32_t val)
 static __inline void
 ppc_mtsrin(u_int32_t val, u_int32_t sn_shifted)
 {
-	asm volatile ("mtsrin %0,%1" :: "r"(val), "r"(sn_shifted) );
+	__asm __volatile ("mtsrin %0,%1" :: "r"(val), "r"(sn_shifted) );
 
 }
 

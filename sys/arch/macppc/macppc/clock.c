@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.6 2003/07/02 21:30:13 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.7 2003/07/08 21:46:19 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <dev/ofw/openfirm.h>
 
 void resettodr(void);
-static inline u_quad_t mftb(void);
 
 /* XXX, called from asm code */
 void decr_intr(struct clockframe *frame);
@@ -51,10 +50,10 @@ void decr_intr(struct clockframe *frame);
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
-static u_long ticks_per_sec = 3125000;
-static u_long ns_per_tick = 320;
-static long ticks_per_intr;
-static volatile u_long lasttb;
+static u_int32_t ticks_per_sec = 3125000;
+static u_int32_t ns_per_tick = 320;
+static int32_t ticks_per_intr;
+static volatile u_int64_t lasttb;
 
 /*
  * BCD to decimal and decimal to BCD.
@@ -69,8 +68,8 @@ static volatile u_long lasttb;
 
 typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
     int *mon, int *yr);
-typedef int (time_read_t)(u_long *sec);
-typedef int (time_write_t)(u_long sec);
+typedef int (time_read_t)(u_int32_t *sec);
+typedef int (time_write_t)(u_int32_t sec);
 
 int power4e_getclock(int *, int *, int *, int *, int *, int *);
 
@@ -78,7 +77,7 @@ clock_read_t *clock_read = NULL;
 time_read_t  *time_read  = NULL;
 time_write_t *time_write  = NULL;
 
-static u_long chiptotime(int sec, int min, int hour, int day, int mon,
+static u_int32_t chiptotime(int sec, int min, int hour, int day, int mon,
     int year);
 
 /*
@@ -114,7 +113,7 @@ inittodr(base)
 		(*clock_read)( &sec, &min, &hour, &day, &mon, &year);
 		time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
 	} else if (time_read != NULL) {
-		u_long cursec;
+		u_int32_t cursec;
 		(*time_read)(&cursec);
 		time.tv_sec = cursec;
 	} else {
@@ -162,7 +161,7 @@ inittodr(base)
 const short dayyr[12] =
     { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
-static u_long
+static u_int32_t
 chiptotime(sec, min, hour, day, mon, year)
         int sec, min, hour, day, mon, year;
 {
@@ -211,8 +210,8 @@ decr_intr(frame)
 	struct clockframe *frame;
 {
 	int msr;
-	u_long tb;
-	long tick;
+	u_int64_t tb;
+	int32_t tick;
 	int nticks;
 	int pri;
 
@@ -228,7 +227,8 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
+	tb = ppc_mftb();
+	tick = ppc_mfdec();  
 	for (nticks = 0; tick < 0; nticks++)
 		tick += ticks_per_intr;
 
@@ -270,7 +270,7 @@ cpu_initclocks()
 {
 	int s;
 	s = ppc_intr_disable();
-	lasttb = ppc_mftbl();
+	lasttb = ppc_mftb();
 	ppc_mtdec(ticks_per_intr);
 	ppc_intr_enable(s);
 }
@@ -311,17 +311,6 @@ calc_delayconst()
 		panic("no cpu node");
 }
 
-static inline u_quad_t
-mftb()
-{
-	u_long scratch;
-	u_quad_t tb;
-	
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
-	     : "=r"(tb), "=r"(scratch));
-	return tb;
-}
-
 /*
  * Fill in *tvp with current time with microsecond resolution.
  */
@@ -329,12 +318,12 @@ void
 microtime(tvp)
 	struct timeval *tvp;
 {
-	u_long tb;
-	u_long ticks;
+	u_int32_t tb;
+	u_int32_t ticks;
 	int s;
 	
 	s = ppc_intr_disable();
-	tb = ppc_mftbl();
+	tb = ppc_mftb();
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
 	ppc_intr_enable(s);
@@ -353,10 +342,10 @@ void
 delay(n)
 	unsigned n;
 {
-	u_quad_t tb;
-	u_long tbh, tbl, scratch;
+	u_int64_t tb;
+	u_int32_t tbh, tbl, scratch;
 	
-	tb = mftb();
+	tb = ppc_mftb();
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
@@ -364,7 +353,7 @@ delay(n)
 	     " mftb %0; cmplw %0,%2; blt 1b; 2:"
 	     :: "r"(scratch), "r"(tbh), "r"(tbl));
 
-	tb = mftb();
+	tb = ppc_mftb();
 }
 
 /*
