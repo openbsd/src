@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xf86.4,v 1.4 1998/06/29 06:57:02 angelos Exp $
+.\"	$OpenBSD: xf86.4,v 1.5 1998/10/03 08:01:56 matthieu Exp $
 .\"
 .\" Copyright (c) 1998 Matthieu Herrb
 .\" All rights reserved.
@@ -37,21 +37,11 @@ XFree86 aperture driver
 .Sh DESCRIPTION
 The 
 .Pa /dev/xf86
-driver provides access to the memory of a VGA board for
+driver provides access to the memory and I/O ports of a VGA board for
 use by the XFree86 X servers 
-when running with a kernel security level > 0 (ie. when using 
-.Pa /dev/mem
-is prohibited).
+when running with a kernel security level > 0.
 .Pp
-Some X servers (
-.Xr XF86_P9000 1 ,
-.Xr XF86_Mach64 1 ,
-.Xr XF86_AGX 1 ,
-the Matrox driver in 
-.Xr XF86_SVGA 1
-)
-require the use of this driver, while the other can make use of it if
-it's available, but will work without it.
+The X servers require the use of this driver.
 .Sh ACCESS CONTROL
 Access to the 
 .Pa /dev/xf86 
@@ -64,15 +54,18 @@ set in
 .Sh SEE ALSO
 .Xr XF86_Accel 1 ,
 .Xr XF86_SVGA 1 ,
-.\" XXX .Xr sysctl.conf 5 ,
+.Xr options 4 ,
 .Xr config 8 ,
-.Xr options 4,
+.Xr sysctl.conf 5 ,
 .Xr sysctl 8 .
 .Sh HISTORY
 .Pa /dev/xf86 
 was introduced as a loadable kernel module for NetBSD 0.9C
 with XFree86 3.1. It was integrated as an in-kernel device on
 .Ox 2.3 .
+It is required in order to allow access to I/O ports for all X servers
+since 
+.Ox 2.4 .
 .Sh AUTHOR
 The aperture driver was written by Matthieu Herrb.
 .Sh BUGS
