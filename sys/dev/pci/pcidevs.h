@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.66 1998/07/13 02:20:26 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.67 1998/07/15 22:08:26 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -560,6 +560,7 @@
 #define	PCI_PRODUCT_ALI_M1449	0x1449		/* M1449 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M1451	0x1451		/* M1451 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1461	0x1461		/* M1461 Host-PCI Bridge */
+#define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1543 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 #define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE Controller */
@@ -818,6 +819,8 @@
 #define	PCI_PRODUCT_INTEL_82371AB_PMC	0x7113		/* 82371AB Power Management Controller (PIIX4) */
 #define	PCI_PRODUCT_INTEL_82443LX	0x7180		/* 82443LX PCI AGP Controller (PAC) */
 #define	PCI_PRODUCT_INTEL_82443LX_AGP	0x7181		/* 82443LX AGP Device (PAC) */
+#define	PCI_PRODUCT_INTEL_82443BX	0x7190		/* 82443BX PCI AGP Controller (PAC) */
+#define	PCI_PRODUCT_INTEL_82443BX_AGP	0x7191		/* 82443BX AGP Device (PAC) */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 450 PCIset (Orion) Host-PCI bridge */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 450 PCIset (Orion) Memory Controller */
 
