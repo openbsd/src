@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_blf.h,v 1.1 1997/11/04 09:11:04 provos Exp $ */
+/* $OpenBSD: ip_blf.h,v 1.2 1999/02/23 05:15:09 angelos Exp $ */
 /*
  * Blowfish - a fast block cipher designed by Bruce Schneier
  *
@@ -70,6 +70,9 @@ void blf_enc __P((blf_ctx *, u_int32_t *, u_int16_t));
 void blf_dec __P((blf_ctx *, u_int32_t *, u_int16_t));
 
 /* Converts u_int8_t to u_int32_t */
-u_int32_t Blowfish_stream2word __P((const u_int8_t *, u_int16_t , u_int16_t *));
+u_int32_t Blowfish_stream2word __P((const u_int8_t *, u_int16_t ,
+				    u_int16_t *));
 
+void blf_ecb_encrypt __P((blf_ctx *, u_int8_t *, u_int32_t));
+void blf_ecb_decrypt __P((blf_ctx *, u_int8_t *, u_int32_t));
 #endif
