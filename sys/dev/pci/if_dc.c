@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc.c,v 1.6 2000/01/06 03:06:51 jason Exp $	*/
+/*	$OpenBSD: if_dc.c,v 1.7 2000/01/09 01:20:34 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dc.c,v 1.3 1999/12/13 21:45:11 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dc.c,v 1.4 2000/01/03 15:28:46 wpaul Exp $
  */
 
 /*
@@ -182,6 +182,7 @@ struct dc_type *dc_devtype	__P((void *));
 int dc_newbuf		__P((struct dc_softc *, int, struct mbuf *));
 int dc_encap		__P((struct dc_softc *, struct mbuf *, u_int32_t *));
 void dc_pnic_rx_bug_war	__P((struct dc_softc *, int));
+int dc_rx_resync	__P((struct dc_softc *));
 void dc_rxeof		__P((struct dc_softc *));
 void dc_txeof		__P((struct dc_softc *));
 void dc_tick		__P((void *));
@@ -1300,6 +1301,8 @@ void dc_attach(parent, self, aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
+	sc->dc_csid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
 #ifdef DC_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
 		printf(": failed to enable I/O ports\n");
@@ -1833,6 +1836,42 @@ void dc_pnic_rx_bug_war(sc, idx)
 }
 
 /*
+ * This routine searches the RX ring for dirty descriptors in the
+ * event that the rxeof routine falls out of sync with the chip's
+ * current descriptor pointer. This may happen sometimes as a result
+ * of a "no RX buffer available" condition that happens when the chip
+ * consumes all of the RX buffers before the driver has a chance to
+ * process the RX ring. This routine may need to be called more than
+ * once to bring the driver back in sync with the chip, however we
+ * should still be getting RX DONE interrupts to drive the search
+ * for new packets in the RX ring, so we should catch up eventually.
+ */
+int dc_rx_resync(sc)
+	struct dc_softc		*sc;
+{
+	int			i, pos;
+	struct dc_desc		*cur_rx;
+
+	pos = sc->dc_cdata.dc_rx_prod;
+
+	for (i = 0; i < DC_RX_LIST_CNT; i++) {
+		cur_rx = &sc->dc_ldata->dc_rx_list[pos];
+		if (!(cur_rx->dc_status & DC_RXSTAT_OWN))
+			break;
+		DC_INC(pos, DC_RX_LIST_CNT);
+	}
+
+	/* If the ring really is empty, then just return. */
+	if (i == DC_RX_LIST_CNT)
+		return(0);
+
+	/* We've fallen behing the chip: catch it. */
+	sc->dc_cdata.dc_rx_prod = pos;
+
+	return(EAGAIN);
+}
+
+/*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
@@ -2112,8 +2151,15 @@ int dc_intr(arg)
 			break;
 		}
 
-		if (status & DC_ISR_RX_OK)
+		if (status & DC_ISR_RX_OK) {
+			int		curpkts;
+			curpkts = ifp->if_ipackets;
 			dc_rxeof(sc);
+			if (curpkts == ifp->if_ipackets) {
+				while(dc_rx_resync(sc))
+					dc_rxeof(sc);
+			}
+		}
 
 		if (status & (DC_ISR_TX_OK|DC_ISR_TX_NOBUF))
 			dc_txeof(sc);
@@ -2149,8 +2195,15 @@ int dc_intr(arg)
 		}
 
 		if ((status & DC_ISR_RX_WATDOGTIMEO)
-		    || (status & DC_ISR_RX_NOBUF))
+		    || (status & DC_ISR_RX_NOBUF)) {
+			int		curpkts;
+			curpkts = ifp->if_ipackets;
 			dc_rxeof(sc);
+			if (curpkts == ifp->if_ipackets) {
+				while(dc_rx_resync(sc))
+					dc_rxeof(sc);
+			}
+		}
 
 		if (status & DC_ISR_BUS_ERR) {
 			dc_reset(sc);

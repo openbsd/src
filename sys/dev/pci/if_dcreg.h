@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dcreg.h,v 1.3 1999/12/14 16:13:05 jason Exp $ */
+/*	$OpenBSD: if_dcreg.h,v 1.4 2000/01/09 01:20:35 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -657,6 +657,7 @@ struct dc_softc {
 	struct dc_list_data	*dc_ldata;
 	caddr_t			dc_ldata_ptr;
 	struct dc_chain_data	dc_cdata;
+	u_int32_t		dc_csid;
 };
 
 #define DC_TX_POLL		0x00000001
