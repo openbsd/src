@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ze.c,v 1.2 2001/04/01 17:19:48 hugh Exp $	*/
+/*	$OpenBSD: if_ze.c,v 1.3 2002/03/31 01:10:36 hugh Exp $	*/
 /*	$NetBSD: if_ze.c,v 1.5 1999/08/23 19:09:27 ragge Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
@@ -127,7 +127,10 @@ ze_init(desc, machdep_hint)
 	} else {
 		nisa_rom = (u_long *)0x20084000;
 		for (i=0; i<ETHER_ADDR_LEN; i++)
-			ze_myaddr[i] = (nisa_rom[i] & 0x0000ff00) >> 8;
+			if (vax_boardtype == VAX_BTYP_660)
+				ze_myaddr[i] = (nisa_rom[i] & 0xff000000) >> 24;
+			else
+				ze_myaddr[i] = (nisa_rom[i] & 0x0000ff00) >> 8;
 	}
 	bcopy(ze_myaddr,desc->myea,ETHER_ADDR_LEN);
 
