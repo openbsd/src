@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.306 2005/01/17 22:48:39 dtucker Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.307 2005/01/21 08:32:02 otto Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -644,6 +644,7 @@ privsep_postauth(Authctxt *authctxt)
 	else if (pmonitor->m_pid != 0) {
 		debug2("User child is on pid %ld", (long)pmonitor->m_pid);
 		close(pmonitor->m_recvfd);
+		buffer_clear(&loginmsg);
 		monitor_child_postauth(pmonitor);
 
 		/* NEVERREACHED */
@@ -1600,12 +1601,12 @@ main(int ac, char **av)
 	/* XXX global for cleanup, access from other modules */
 	the_authctxt = authctxt;
 
+	/* prepare buffer to collect messages to display to user after login */
+	buffer_init(&loginmsg);
+
 	if (use_privsep)
 		if (privsep_preauth(authctxt) == 1)
 			goto authenticated;
-
-	/* prepare buffer to collect messages to display to user after login */
-	buffer_init(&loginmsg);
 
 	/* perform the key exchange */
 	/* authenticate user and start session */
