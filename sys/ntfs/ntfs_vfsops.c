@@ -1,4 +1,4 @@
-/*	$Id: ntfs_vfsops.c,v 1.1 2003/05/20 03:03:27 tedu Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.2 2003/05/20 03:23:12 mickey Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-

@@ -1,4 +1,4 @@
-/*	$Id: ntfs.h,v 1.1 2003/05/20 03:03:27 tedu Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.2 2003/05/20 03:23:11 mickey Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
