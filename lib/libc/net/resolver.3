@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.9 1999/05/23 14:11:02 aaron Exp $
+.\"	$OpenBSD: resolver.3,v 1.10 1999/05/25 01:50:58 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,6 +48,7 @@
 .Fd #include <netinet/in.h>
 .Fd #include <arpa/nameser.h>
 .Fd #include <resolv.h>
+.Ft int
 .Fo res_query
 .Fa "char *dname"
 .Fa "int class"
@@ -55,6 +56,7 @@
 .Fa "u_char *answer"
 .Fa "int anslen"
 .Fc
+.Ft int
 .Fo res_search
 .Fa "char *dname"
 .Fa "int class"
@@ -62,6 +64,7 @@
 .Fa "u_char *answer"
 .Fa "int anslen"
 .Fc
+.Ft int
 .Fo res_mkquery
 .Fa "int op"
 .Fa "char *dname"
@@ -73,13 +76,15 @@
 .Fa "char *buf"
 .Fa "int buflen"
 .Fc
+.Ft int
 .Fo res_send
 .Fa "char *msg"
 .Fa "int msglen"
 .Fa "char *answer"
 .Fa "int anslen"
 .Fc
-.Fn res_init 
+.Ft int
+.Fn res_init "void"
 .Fo dn_comp
 .Fa "char *exp_dn"
 .Fa "char *comp_dn"
@@ -87,6 +92,7 @@
 .Fa "char **dnptrs"
 .Fa "char **lastdnptr"
 .Fc
+.Ft int
 .Fo dn_expand
 .Fa "u_char *msg"
 .Fa "u_char *eomorig"
