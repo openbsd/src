@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.66 2002/02/17 22:59:52 maja Exp $ */
+/* $OpenBSD: machdep.c,v 1.67 2002/02/17 23:38:16 jason Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -861,7 +861,7 @@ consinit()
 #include <dev/ic/pckbcvar.h>
 
 /*
- * This is called by the pbkbc driver if no pckbd is configured.
+ * This is called by the pckbc driver if no pckbd is configured.
  * On the i386, it is used to glue in the old, deprecated console
  * code.  On the Alpha, it does nothing.
  */
