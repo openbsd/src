@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.6 2000/01/02 06:18:41 assar Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.7 2000/01/16 14:28:22 espie Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -246,12 +246,11 @@ int	do_dot_a;
 		DIR		*dd = opendir(search_dirs[i]);
 		struct dirent	*dp;
 		int		found_dot_a = 0;
-		int		might_take_it;
+		int		found_match = 0;
 
 		if (dd == NULL)
 			continue;
 
-		might_take_it = 0;
 		while ((dp = readdir(dd)) != NULL) {
 			int	n;
 
@@ -281,19 +280,13 @@ int	do_dot_a;
 				found_dot_a = 0;
 			}
 
-			if (major == -1 && minor == -1) {
-				might_take_it = 1;
-			} else if (major != -1 && minor == -1) {
-				if (tmp[0] == major)
-					might_take_it = 1;
-			} else if (major != -1 && minor != -1) {
-				if (tmp[0] == major)
-					if (n == 1 || tmp[1] >= minor)
-						might_take_it = 1;
-			}
-
-			if (!might_take_it)
-				continue;
+			/* skip inappropriate versions. */
+			if (major != -1) {
+				if (tmp[0] != major)
+					continue;
+				if (n != 1 && minor != -1 && tmp[1] < minor)
+					continue;
+			} 
 
 			if (cmpndewey(tmp, n, dewey, ndewey) <= 0)
 				continue;
@@ -303,6 +296,7 @@ int	do_dot_a;
 				free(path);
 			path = concat(search_dirs[i], "/", dp->d_name);
 			found_dot_a = 0;
+			found_match = 1;
 			bcopy(tmp, dewey, sizeof(dewey));
 			ndewey = n;
 			*majorp = dewey[0];
@@ -310,7 +304,7 @@ int	do_dot_a;
 		}
 		closedir(dd);
 
-		if (found_dot_a || might_take_it)
+		if (found_dot_a || found_match)
 			/*
 			 * There's a lib in this dir; take it.
 			 */
