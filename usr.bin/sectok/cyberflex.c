@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.9 2001/07/17 21:04:14 rees Exp $ */
+/* $Id: cyberflex.c,v 1.10 2001/07/19 21:24:27 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -79,7 +79,7 @@ get_AUT0(int ac, char *av[], char *prompt, unsigned char *digest)
     optind = optreset = 1;
     opterr = 0;
 
-    while ((i = getopt(ac, av, "dx:")) != -1) {
+    while ((i = getopt(ac, av, "dk:x:")) != -1) {
 	switch (i) {
 	case 'd':
 	    memmove(digest, DFLTAUT0, sizeof DFLTAUT0);
@@ -108,7 +108,7 @@ get_AUT0(int ac, char *av[], char *prompt, unsigned char *digest)
 
 int jlogin(int ac, char *av[])
 {
-    int i, vflag = 0, sw;
+    int i, keyno = 0, vflag = 0, sw;
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
@@ -121,8 +121,11 @@ int jlogin(int ac, char *av[])
 
     optind = optreset = 1;
 
-    while ((i = getopt(ac, av, "dvx:")) != -1) {
+    while ((i = getopt(ac, av, "dk:vx:")) != -1) {
 	switch (i) {
+	case 'k':
+	    keyno = atoi(optarg);
+	    break;
 	case 'v':
 	    vflag = 1;
 	    break;
@@ -139,7 +142,7 @@ int jlogin(int ac, char *av[])
 	printf("\n");
     }
 
-    sectok_apdu(fd, cla, 0x2a, 0, 0, 8, AUT0, 0, NULL, &sw);
+    sectok_apdu(fd, cla, 0x2a, 0, keyno, 8, AUT0, 0, NULL, &sw);
 
     if (!sectok_swOK(sw)) {
 	printf("AUT0 failed: %s\n", sectok_get_sw(sw));
@@ -229,14 +232,26 @@ int jdata(int ac, char *av[])
 	printf("serno ");
 	for (i = 0; i < 6; i++)
 	    printf("%02x ", buf[i]);
-	printf("batch %02x sver %d.%02d ", buf[6], buf[7], buf[8]);
-	if (buf[9] == 0x0c)
-	    printf("augmented ");
-	else if (buf[9] == 0x0b)
-	    ;
-	else
-	    printf("unknown ");
-	printf("crypto %9.9s class %02x\n", &buf[10], buf[19]);
+	if (buf[20] == 0x13) {
+	    /* these cards have a different format */
+	    printf("scrambled sver %d.%02d ", buf[19], buf[20]);
+	    if (buf[21] == 0x0c)
+		printf("augmented ");
+	    else if (buf[21] == 0x0b)
+		;
+	    else
+		printf("unknown ");
+	    printf("crypto %5.5s class %02x\n", &buf[14], cyberflex_inq_class(fd));
+	} else {
+	    printf("batch %02x sver %d.%02d ", buf[6], buf[7], buf[8]);
+	    if (buf[9] == 0x0c)
+		printf("augmented ");
+	    else if (buf[9] == 0x0b)
+		;
+	    else
+		printf("unknown ");
+	    printf("crypto %9.9s class %02x\n", &buf[10], buf[19]);
+	}
     } else {
 	/* error */
 	sectok_print_sw(sw);
@@ -490,32 +505,31 @@ unsigned char progID[2], contID[2], aid[MAX_BUF_SIZE];
 int cont_size, inst_size;
 int aid_len;
 
-int analyze_load_options(int ac, char *av[])
+void load_default_options()
 {
-    int i, rv;
-
-    progID[0] = 0x77;
-    progID[1] = 0x77;
-    contID[0] = 0x77;
-    contID[1] = 0x78;
+    memmove(progID, "ww", 2);
+    memmove(contID, "wx", 2);
     cont_size = 1152;
     inst_size = 1024;
+    memset(aid, 'w', sizeof aid);
     aid_len = 5;
+}
 
-    for (i = 0 ; i < 16 ; i ++)
-	aid[i] = 0x77;
+int jload(int ac, char *av[])
+{
+    char progname[5], contname[5];
+    unsigned char app_data[MAX_APP_SIZE],
+    data[MAX_BUF_SIZE];
+    int i, j, vflag = 0, fd_app, size, sw;
+    des_cblock tmp;
+    des_key_schedule schedule;
 
-    /* applet file name */
-    app_name = av[ac - 1];
+    load_default_options();
 
     optind = optreset = 1;
 
-    /* switch on options */
-    while (1) {
-	rv = getopt (ac, av, "p:c:s:i:a:");
-	if (rv == -1) break;
-	/*printf ("rv=%c, optarg=%s\n", rv, optarg);*/
-	switch (rv) {
+    while ((i = getopt(ac, av, "p:c:s:i:a:v")) != -1) {
+	switch (i) {
 	case 'p':
 	    parse_input(optarg, progID, 2);
 	    break;
@@ -530,7 +544,9 @@ int analyze_load_options(int ac, char *av[])
 	    break;
 	case 'a':
 	    aid_len = parse_input(optarg, aid, sizeof aid);
-	    /*printf ("aid_len = %d\n", aid_len);*/
+	    break;
+	case 'v':
+	    vflag = 1;
 	    break;
 	default:
 	    printf ("unknown option.  command aborted.\n");
@@ -538,20 +554,11 @@ int analyze_load_options(int ac, char *av[])
 	}
     }
 
-    return 0;
-}
-
-int jload(int ac, char *av[])
-{
-    char progname[5], contname[5];
-    unsigned char app_data[MAX_APP_SIZE],
-    data[MAX_BUF_SIZE];
-    int i, j, fd_app, size, sw;
-    des_cblock tmp;
-    des_key_schedule schedule;
-
-    if (analyze_load_options(ac, av) < 0)
+    if (ac - optind < 1) {
+	printf("missing file name\n");
 	return -1;
+    }
+    app_name = av[optind++];
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
@@ -561,15 +568,17 @@ int jload(int ac, char *av[])
     sectok_fmt_fid(progname, progID[0], progID[1]);
     sectok_fmt_fid(contname, contID[0], contID[1]);
 
-    printf ("applet file             \"%s\"\n", app_name);
-    printf ("program ID              %s\n", progname);
-    printf ("container ID            %s\n", contname);
-    printf ("instance container size %d\n", cont_size);
-    printf ("instance data size      %d\n", inst_size);
-    printf ("AID                     ");
-    for (i = 0 ; i < aid_len ; i ++ )
-	printf ("%02x", (unsigned char)aid[i]);
-    printf ("\n");
+    if (vflag) {
+	printf ("applet file             \"%s\"\n", app_name);
+	printf ("program ID              %s\n", progname);
+	printf ("container ID            %s\n", contname);
+	printf ("instance container size %d\n", cont_size);
+	printf ("instance data size      %d\n", inst_size);
+	printf ("AID                     ");
+	for (i = 0 ; i < aid_len ; i ++ )
+	    printf ("%02x", aid[i]);
+	printf ("\n");
+    }
 
     /* open the input file */
     fd_app = open (app_name, O_RDONLY, NULL);
@@ -589,20 +598,15 @@ int jload(int ac, char *av[])
 	return -1;
     }
 
-    /*printf ("file size %d\n", size);*/
-
     /* size must be able to be divided by BLOCK_SIZE */
     if (size % BLOCK_SIZE != 0) {
-	fprintf (stderr, "file (%s) size cannot be divided by BLOCK_SIZE.\n",
-		 app_name);
+	fprintf (stderr, "file \"%s\" size %d not divisible by %d\n", app_name, size, BLOCK_SIZE);
 	return -1;
     }
 
     /* compute the signature of the applet */
     /* initialize the result buffer */
-    for (j = 0; j < BLOCK_SIZE; j++ ) {
-	tmp[j] = 0;
-    }
+    memset(tmp, 0, BLOCK_SIZE);
 
     /* chain.  DES encrypt one block, XOR the cyphertext with the next block,
        ... continues until the end of the buffer */
@@ -610,18 +614,18 @@ int jload(int ac, char *av[])
     des_set_key (&app_key, schedule);
 
     for (i = 0; i < size/BLOCK_SIZE; i++) {
-	for (j = 0; j < BLOCK_SIZE; j++ ){
+	for (j = 0; j < BLOCK_SIZE; j++)
 	    tmp[j] = tmp[j] ^ app_data[i*BLOCK_SIZE + j];
-	}
 	des_ecb_encrypt (&tmp, &tmp, schedule, DES_ENCRYPT);
     }
 
-    /* print out the signature */
-    printf ("signature ");
-    for (j = 0; j < BLOCK_SIZE; j++ ) {
-	printf ("%02x", tmp[j]);
+    if (vflag) {
+	/* print out the signature */
+	printf ("signature ");
+	for (j = 0; j < BLOCK_SIZE; j++ )
+	    printf ("%02x", tmp[j]);
+	printf ("\n");
     }
-    printf ("\n");
 
     /* select the default loader */
     sectok_apdu(fd, cla, 0xa4, 0x04, 0, 0, NULL, 0, NULL, &sw);
@@ -696,8 +700,8 @@ int jload(int ac, char *av[])
     data[8] = inst_size % 256;	/* instance size 0x0400 (1024) byte, lower */
     data[9] = 0x00;		/* AID length 0x0005, upper */
     data[10] = aid_len;		/* AID length 0x0005, lower */
-    for (i = 0; i < aid_len; i++) data[i + 11] = (unsigned int)aid[i];
-    /* AID (7777777777) */
+    for (i = 0; i < aid_len; i++)
+	data[i + 11] = aid[i];
 
     sectok_apdu(fd, cla, 0x0c, 0x13, 0, 11 + aid_len, data, 0, NULL, &sw);
     if (!sectok_swOK(sw)) {
@@ -713,10 +717,28 @@ int jload(int ac, char *av[])
 int junload(int ac, char *av[])
 {
     char progname[5], contname[5];
-    int sw;
+    int i, vflag = 0, sw;
 
-    if (analyze_load_options(ac, av) < 0)
-	return -1;
+    load_default_options();
+
+    optind = optreset = 1;
+
+    while ((i = getopt(ac, av, "p:c:v")) != -1) {
+	switch (i) {
+	case 'p':
+	    parse_input(optarg, progID, 2);
+	    break;
+	case 'c':
+	    parse_input(optarg, contID, 2);
+	    break;
+	case 'v':
+	    vflag = 1;
+	    break;
+	default:
+	    printf ("unknown option.  command aborted.\n");
+	    return -1;
+	}
+    }
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
@@ -726,8 +748,10 @@ int junload(int ac, char *av[])
     sectok_fmt_fid(progname, progID[0], progID[1]);
     sectok_fmt_fid(contname, contID[0], contID[1]);
 
-    printf ("program ID              %s\n", progname);
-    printf ("container ID            %s\n", contname);
+    if (vflag) {
+	printf ("program ID              %s\n", progname);
+	printf ("container ID            %s\n", contname);
+    }
 
     /* select 3f.00 (root) */
     if (sectok_selectfile(fd, cla, root_fid, &sw) < 0) {
@@ -748,7 +772,7 @@ int junload(int ac, char *av[])
 	/* delete program file */
 	if (cyberflex_delete_file(fd, cla, progID, &sw) < 0)
 	    printf("delete_file %s: %s\n", progname, sectok_get_sw(sw));
-    } else
+    } else if (vflag)
 	printf ("no program file... proceed to delete data container\n");
 
     /* delete data container */
@@ -760,54 +784,65 @@ int junload(int ac, char *av[])
 
 int jselect(int ac, char *av[])
 {
-    int i, sw;
-    unsigned char data[MAX_BUF_SIZE];
+    int i, vflag = 0, sw;
+
+    load_default_options();
 
     optind = optreset = 1;
 
-    if (analyze_load_options(ac, av) < 0)
-	return -1;
+    while ((i = getopt(ac, av, "dp:c:s:i:a:v")) != -1) {
+	switch (i) {
+	case 'd':
+	    aid_len = 0;
+	    break;
+	case 'p':
+	    parse_input(optarg, progID, 2);
+	    break;
+	case 'c':
+	    parse_input(optarg, contID, 2);
+	    break;
+	case 's':
+	    sscanf(optarg, "%d", &cont_size);
+	    break;
+	case 'i':
+	    sscanf(optarg, "%d", &inst_size);
+	    break;
+	case 'a':
+	    aid_len = parse_input(optarg, aid, sizeof aid);
+	    break;
+	case 'v':
+	    vflag = 1;
+	    break;
+	default:
+	    printf ("unknown option.  command aborted.\n");
+	    return -1;
+	}
+    }
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
 
-    printf ("select applet\n");
-    printf ("AID                     ");
-    for (i = 0 ; i < aid_len ; i ++ )
-	printf ("%02x", (unsigned char)aid[i]);
-    printf ("\n");
+    if (vflag && aid_len) {
+	printf ("select applet\n");
+	printf ("AID                     ");
+	for (i = 0 ; i < aid_len ; i ++ )
+	    printf ("%02x", (int) aid[i]);
+	printf ("\n");
+    }
 
-    /* select the cardlet (7777777777) */
-    for (i = 0; i < aid_len; i++) data[i] = (unsigned char)aid[i];
-    /* quick hack in select_applet()
-       even with F0 card, select applet APDU (00 a4 04)
-       only accepts class byte 00 (not f0) */
-
-    sectok_apdu(fd, cla, 0xa4, 0x04, 0, aid_len, data, 0, NULL, &sw);
+    sectok_apdu(fd, cla, 0xa4, 0x04, 0, aid_len, aid, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
+	/* even with F0 card, select applet APDU (00 a4 04)
+	   only accepts class byte 00 (not f0) */
+	sectok_apdu(fd, 0, 0xa4, 0x04, 0, aid_len, aid, 0, NULL, &sw);
+    }
     if (!sectok_swOK(sw)) {
 	/* error */
 	printf ("selecting the cardlet: ");
 	for (i = 0 ; i < aid_len ; i ++ )
-	    printf ("%02x", (unsigned char)aid[i]);
-	printf ("\n");
+	    printf ("%02x", aid[i]);
+	printf("\n");
 	sectok_print_sw(sw);
-	return -1;
-    }
-
-    return 0;
-}
-
-int jdeselect(int ac, char *av[])
-{
-    int sw;
-
-    if (fd < 0 && reset(0, NULL) < 0)
-	return -1;
-
-    sectok_apdu(fd, cla, 0xa4, 0x04, 0, 0, NULL, 0, NULL, &sw);
-    if (!sectok_swOK(sw)) {
-	/* error */
-	printf("selecting default loader: %s\n", sectok_get_sw(sw));
 	return -1;
     }
 

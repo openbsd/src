@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.9 2001/07/17 21:04:14 rees Exp $ */
+/* $Id: cmds.c,v 1.10 2001/07/19 21:24:27 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -64,7 +64,7 @@ struct {
     { "fid", "fid", selfid },
     { "isearch", "", isearch },
     { "class", "[ class ]", class },
-    { "read", "filesize", dread },
+    { "read", "[ -x ] filesize", dread },
     { "write", "input-filename", dwrite },
 
     /* Cyberflex commands */
@@ -75,12 +75,11 @@ struct {
     { "jdefault", "[ -d ]", jdefault },
     { "jatr", "", jatr },
     { "jdata", "", jdata },
-    { "login", "[ -d ] [ -v ] [ -x hex-aut0 ]", jlogin },
+    { "login", "[ -d ] [ -k keyno ] [ -v ] [ -x hex-aut0 ]", jlogin },
     { "jaut", "", jaut },
-    { "jload", "[ -p progID ] [ -c contID ] [ -s cont_size ] [ -i inst_size ] [ -a aid ] filename", jload },
+    { "jload", "[ -p progID ] [ -c contID ] [ -s cont_size ] [ -i inst_size ] [ -a aid ] [ -v ] filename", jload },
     { "junload", "[ -p progID ] [ -c contID ]", junload },
-    { "jselect", "[ -a aid ]", jselect },
-    { "jdeselect", "", jdeselect },
+    { "jselect", "[ -a aid ] [ -d ]", jselect },
     { "setpass", "[ -d ] [ -x hex-aut0 ]", jsetpass },
     { NULL, NULL, NULL }
 };
@@ -283,32 +282,49 @@ int class(int ac, char *av[])
 
 int dread(int ac, char *av[])
 {
-    int n, p3, fsize, r1, r2;
+    int i, n, col = 0, p3, fsize, xflag = 0, sw;
     unsigned char buf[CARDIOSIZE];
 
-    if (ac != 2) {
-	printf("usage: read filesize\n");
+    optind = optreset = 1;
+
+    while ((i = getopt(ac, av, "x")) != -1) {
+	switch (i) {
+	case 'x':
+	    xflag = 1;
+	    break;
+	}
+    }
+
+    if (ac - optind < 1) {
+	printf("usage: read [ -x ] filesize\n");
 	return -1;
     }
 
-    sscanf(av[1], "%d", &fsize);
+    sscanf(av[optind++], "%d", &fsize);
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
 
     for (p3 = 0; fsize && p3 < 100000; p3 += n) {
 	n = (fsize < CARDIOSIZE) ? fsize : CARDIOSIZE;
-	if (scread(fd, cla, 0xb0, p3 >> 8, p3 & 0xff, n, buf, &r1, &r2) < 0) {
-	    printf("scread failed\n");
+	n = sectok_apdu(fd, cla, 0xb0, p3 >> 8, p3 & 0xff, 0, NULL, n, buf, &sw);
+	if (!sectok_swOK(sw)) {
+	    printf("read binary: %s\n", sectok_get_sw(sw));
 	    break;
 	}
-	if (r1 != 0x90 && r1 != 0x61) {
-	    print_r1r2(r1, r2);
-	    break;
-	}
-	fwrite(buf, 1, n, stdout);
+	if (xflag) {
+	    for (i = 0; i < n; i++) {
+		printf("%02x ", buf[i]);
+		if (col++ % 16 == 15)
+		    printf("\n");
+	    }
+	} else
+	    fwrite(buf, 1, n, stdout);
 	fsize -= n;
     }
+
+    if (xflag && col % 16 != 0)
+	printf("\n");
 
     return 0;
 }
