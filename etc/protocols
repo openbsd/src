@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.13 2001/11/19 03:03:33 deraadt Exp $
+#	$OpenBSD: protocols,v 1.14 2002/05/30 06:44:07 deraadt Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.isi.edu/in-notes/iana/assignments/protocol-numbers
@@ -56,7 +56,7 @@ rsvp	46	RSVP		# Reservation Protocol
 gre	47	GRE		# General Routing Encapsulation
 mhrp	48	MHRP		# Mobile Host Routing Protocol
 bna	49	BNA		# BNA
-esp 	50	IPSEC-ESP	# Encap Security Payload
+esp	50	IPSEC-ESP	# Encap Security Payload
 ah	51	IPSEC-AH	# Authentication Header
 i-nlsp	52	I-NLSP		# Integrated Net Layer Security TUBA
 swipe	53	SWIPE		# IP with Encryption

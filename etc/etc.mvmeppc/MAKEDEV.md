@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV.md,v 1.5 2002/05/21 01:41:04 deraadt Exp $
+#	$OpenBSD: MAKEDEV.md,v 1.6 2002/05/30 06:46:13 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -83,7 +83,7 @@ sd*|wd*|ccd*|ofdisk*|raid*)
 	sd*) name=sd;		blk=2;	chr=8;;
 	wd*) name=wd;		blk=0;	chr=11;;
 	ofdisk*) name=ofdisk;	blk=4;	chr=13;;
-	ccd*) name=ccd; 	blk=16;	chr=18;;
+	ccd*) name=ccd;		blk=16;	chr=18;;
 	raid*) name=raid;	blk=19;	chr=54;;
 	esac
 	rm -f $name$unit? r$name$unit?

@@ -1,12 +1,12 @@
 #
-#	$OpenBSD: ttys,v 1.6 2000/01/24 05:03:50 smurph Exp $
+#	$OpenBSD: ttys,v 1.7 2002/05/30 06:46:13 deraadt Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
 console	"/usr/libexec/getty Pc"		unknown	on   secure
-ttya	"/usr/libexec/getty Pc"		unknown	off  secure 	# 147/162 console
+ttya	"/usr/libexec/getty Pc"		unknown	off  secure	# 147/162 console
 ttyb	"/usr/libexec/getty Pc"		unknown	off
 ttyc	"/usr/libexec/getty Pc"		unknown	off
 ttyd	"/usr/libexec/getty Pc"		unknown	off

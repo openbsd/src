@@ -1,5 +1,5 @@
 :
-#	$OpenBSD: ksh.kshrc,v 1.8 2001/11/19 03:03:33 deraadt Exp $
+#	$OpenBSD: ksh.kshrc,v 1.9 2002/05/30 06:44:07 deraadt Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -147,7 +147,7 @@ case "$-" in
 	OS=${OS:-`uname -s`}
 	case $OS in
 	HP-UX)
-        	alias ls='ls -CF'
+		alias ls='ls -CF'
                 ;;
 	*BSD)
 		alias df='df -k'

@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.41 2002/05/03 15:08:00 brad Exp $
+#	$OpenBSD: services,v 1.42 2002/05/30 06:44:07 deraadt Exp $
 #
 # Network services, Internet style
 #
@@ -87,8 +87,8 @@ netbios-dgm	138/tcp				# NETBIOS Datagram Service
 netbios-dgm	138/udp
 netbios-ssn	139/tcp				# NETBIOS session service
 netbios-ssn	139/udp
-imap		143/tcp		imap2 		# Internet Message Access Proto
-imap		143/udp		imap2 		# Internet Message Access Proto
+imap		143/tcp		imap2		# Internet Message Access Proto
+imap		143/udp		imap2		# Internet Message Access Proto
 bftp		152/tcp				# Background File Transfer Proto
 snmp		161/udp				# Simple Net Mgmt Proto
 snmp-trap	162/udp		snmptrap	# Traps for SNMP
@@ -134,7 +134,7 @@ photuris	468/tcp				# Photuris Key Management
 photuris	468/udp
 isakmp		500/udp				# ISAKMP key management
 kshell		544/tcp		krcmd		# Kerberos remote shell
-ekshell		545/tcp		      		# Kerberos encrypted shell
+ekshell		545/tcp				# Kerberos encrypted shell
 submission	587/tcp		msa		# mail message submission
 submission	587/udp		msa		# mail message submission
 #
@@ -229,15 +229,15 @@ kauth		2120/tcp			# Remote kauth
 # AFS Services
 #
 afs3-fileserver		7000/udp	# AFS fileserver
-afs3-callback       	7001/udp	# AFS callback server
-afs3-prserver       	7002/udp	# AFS protection server
+afs3-callback		7001/udp	# AFS callback server
+afs3-prserver		7002/udp	# AFS protection server
 afs3-vlserver		7003/udp	# AFS volumelocation server
-afs3-kaserver       	7004/udp	# AFS kerberos authentication server
-afs3-volser         	7005/udp	# AFS volume server
-afs3-errors         	7006/udp	# AFS error server ?
-afs3-bos            	7007/udp	# AFS basic over-see server ?
-afs3-update         	7008/udp	# AFS server to server update
-afs3-rmtsys         	7009/udp	# AFS remote cache manager service
+afs3-kaserver		7004/udp	# AFS kerberos authentication server
+afs3-volser		7005/udp	# AFS volume server
+afs3-errors		7006/udp	# AFS error server ?
+afs3-bos		7007/udp	# AFS basic over-see server ?
+afs3-update		7008/udp	# AFS server to server update
+afs3-rmtsys		7009/udp	# AFS remote cache manager service
 #
 # Unofficial services
 #
