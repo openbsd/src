@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.11 2003/12/22 11:54:48 miod Exp $ */
+/*	$OpenBSD: vme.h,v 1.12 2003/12/25 21:01:39 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -373,5 +373,9 @@ int vmerw(struct vmesoftc *sc, struct uio *uio, int flags, int bus);
 int vmeintr_establish(int vec, struct intrhand *ih);
 int vme_findvec(void);
 int vmescan(struct device *, void *, void *, int);
+
+/* D16 access functions */
+void d16_bcopy(const void *, void *, size_t);
+void d16_bzero(void *, size_t);
 
 #endif /* __MVEME88K_DEV_VME_H__ */

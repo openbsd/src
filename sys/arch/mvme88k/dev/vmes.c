@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.13 2003/12/19 22:30:18 miod Exp $ */
+/*	$OpenBSD: vmes.c,v 1.14 2003/12/25 21:01:39 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -171,4 +171,37 @@ vmesmmap(dev, off, prot)
 	if (pa == NULL)
 		return (-1);
 	return (atop(pa));
+}
+
+/*
+ * Specific D16 access functions
+ *
+ * D16 cards will trigger bus errors on attempting to read or write more
+ * than 16 bits on the bus. Given how the m88k processor works, this means
+ * basically that all long (D32) accesses must be carefully taken care of.
+ *
+ * Since the kernels bcopy() and bzero() routines will use 32 bit accesses
+ * for performance, here are specific D16-compatible routines. They expect
+ * pointers to be 16-bit aligned.
+ */
+
+void
+d16_bcopy(const void *src, void *dst, size_t len)
+{
+	const u_int16_t *s = (const u_int16_t *)src;
+	u_int16_t *d = (u_int16_t *)dst;
+
+	len >>= 1;
+	while (len-- != 0)
+		*d++ = *s++;
+}
+
+void
+d16_bzero(void *dst, size_t len)
+{
+	u_int16_t *d = (u_int16_t *)dst;
+
+	len >>= 1;
+	while (len-- != 0)
+		*d++ = 0;
 }

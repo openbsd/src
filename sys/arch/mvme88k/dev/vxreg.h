@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxreg.h,v 1.4 2003/11/09 00:31:59 miod Exp $ */
+/*	$OpenBSD: vxreg.h,v 1.5 2003/12/25 21:01:39 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. All rights reserved.
@@ -37,7 +37,7 @@ struct vxreg {
 /*0x2*/volatile u_short ipc_addrl;	 /* IPC addr reg, least significant */
 /*0x4*/volatile u_char  ipc_amr;	  /* IPC address modifier reg */
 /*0x5*/volatile u_char  unused1;
-/*0x6*/volatile u_short ipc_cr;	 /* IPC control ceg */
+/*0x6*/volatile u_short ipc_cr;	 /* IPC control reg */
 /*0x8*/volatile u_short ipc_sr;	 /* IPC status reg */
 /*0xA*/volatile u_char  ipc_mdbp;	/* IPC model data byte pointer */
 /*0xB*/volatile u_char  reserved3;
@@ -259,15 +259,19 @@ struct packet {      /* 68 bytes */
 	volatile short   command;
 	volatile char    filler1[1];
 	volatile char    command_dependent;
-	volatile char    filler2[2];
+	volatile char    filler2[1];
+	volatile char	 interrupt_level;	/* init only */
 	volatile u_char  device_number;
 	volatile char    filler3[1];
 	volatile short   ioctl_cmd_h;
 	volatile short   ioctl_cmd_l;
+#define	init_info_ptr_h	ioctl_cmd_h
+#define	init_info_ptr_l	ioctl_cmd_l
 	volatile short   ioctl_arg_h;
 	volatile short   ioctl_arg_l;
 	volatile short   ioctl_mode_h;
 	volatile short   ioctl_mode_l;
+#define	interrupt_vec	ioctl_mode_l
 	volatile char    filler4[6];
 	volatile short   error_h;
 	volatile short   error_l;
@@ -279,40 +283,9 @@ struct packet {      /* 68 bytes */
 		struct  vx_sgttyb  sgt;
 		struct  dl_info dl;
 		long    param;
-	} parameter_block;
+	} pb;
 	short   reserved;    /* for alignment */
 } packet;
-
-struct ioctl_a_packet {      /* 68 bytes */
-	volatile u_long  link;       /* was eyecatcher */
-	volatile u_char  command_pipe_number;
-	volatile u_char  status_pipe_number;
-	volatile char    filler0[4];
-	volatile short   command;
-	volatile char    filler1[1];
-	volatile char    command_dependent;
-	volatile char    filler2[2];
-	volatile u_char  device_number;
-	volatile char    filler3[1];
-	volatile short   ioctl_cmd_h;
-	volatile short   ioctl_cmd_l;
-	volatile short   ioctl_arg_h;
-	volatile short   ioctl_arg_l;
-	volatile short   ioctl_mode_h;
-	volatile short   ioctl_mode_l;
-	volatile char    filler4[6];
-	volatile short   error_h;
-	volatile short   error_l;
-	volatile short   event_code;
-	volatile char    filler5[6];
-	volatile unsigned short c_iflag;
-	volatile unsigned short c_oflag;
-	volatile unsigned short c_cflag;
-	volatile unsigned short c_lflag;
-	volatile char           c_line;
-	volatile unsigned char  c_cc[VNCC];
-	short   reserved;    /* for alignment */
-};
 
 struct envelope {	      /* 12 bytes */
 	volatile u_long          link;
@@ -397,17 +370,7 @@ struct init_packet {
 	volatile short             error_l;
 };
 
-struct event_packet {
-	volatile char              eye_catcher[4];
-	volatile unsigned char     command_pipe_number;
-	volatile unsigned char     status_pipe_number;
-	volatile char              filler_0[4];
-	volatile short             command;
-	volatile char              filler_1[4];
-	volatile char              device_number;
-	volatile char              filler_2[19];
-	volatile short             error_h;
-	volatile short             error_l;
+/* IPC event codes */
 #define  E_INTR      0x0001
 #define  E_QUIT      0x0002
 #define  E_HUP       0x0004
@@ -422,62 +385,6 @@ struct event_packet {
 #define  E_PR_SELECT 0x0800
 #define  E_SWITCH    0x4000
 #define  E_BREAK     0x8000
-	volatile unsigned short    event_code;		/* returned from IPC */
-};
-
-struct open_packet {
-	volatile char              eye_catcher[4];
-	volatile unsigned char     command_pipe_number;
-	volatile unsigned char     status_pipe_number;
-	volatile char              filler_0[4];
-	volatile short             command;
-	volatile char              filler_1[4];
-	volatile char              device_number;
-   volatile char              filler_2[19];
-	volatile short             error_h;
-	volatile short             error_l;
-	volatile unsigned short    event_code;		/* returned from IPC */
-};
-
-struct close_packet {
-	volatile char              eye_catcher[4];
-	volatile unsigned char     command_pipe_number;
-	volatile unsigned char     status_pipe_number;
-	volatile char              filler_0[4];
-	volatile short             command;
-	volatile char              filler_1[4];
-	volatile char              device_number;
-   volatile char              filler_2[19];
-	volatile short             error_h;
-	volatile short             error_l;
-	volatile unsigned short    event_code;		/* returned from IPC */
-};
-
-struct read_wakeup_packet {
-	volatile char              eye_catcher[4];
-	volatile unsigned char     command_pipe_number;
-	volatile unsigned char     status_pipe_number;
-	volatile char              filler_0[4];
-	volatile short             command;
-	volatile char              filler_1[4];
-	volatile char              device_number;
-   volatile char              filler_2[19];
-	volatile short             error_h;
-	volatile short             error_l;
-};
-
-struct write_wakeup_packet {
-	volatile char              eye_catcher[4];
-	volatile unsigned char     command_pipe_number;
-	volatile unsigned char     status_pipe_number;
-	volatile char              filler_0[4];
-	volatile short             command;
-	volatile char              filler_1[4];
-	volatile char              device_number;
-   volatile char              filler_2[19];
-	volatile short             error_h;
-	volatile short             error_l;
-};
 
 /*
  * All structures must reside in dual port user memory.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.22 2003/11/07 10:16:45 jmc Exp $ */
+/*	$OpenBSD: vs.c,v 1.23 2003/12/25 21:01:39 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -75,63 +75,12 @@ int  vs_poll(struct vs_softc *, struct scsi_xfer *);
 void vs_scsidone(struct vs_softc *, struct scsi_xfer *, int);
 M328_CQE  * vs_getcqe(struct vs_softc *);
 M328_IOPB * vs_getiopb(struct vs_softc *);
-void vs_copy(void *, void *, unsigned short);
-void vs_zero(void *, u_long);
 int do_vspoll(struct vs_softc *, int);
 void thaw_queue(struct vs_softc *, u_int8_t);
 void vs_link_sg_element(sg_list_element_t *, vaddr_t, int);
 void vs_link_sg_list(sg_list_element_t *, vaddr_t, int);
 
 static __inline__ void vs_clear_return_info(struct vs_softc *);
-
-/*
- * 16 bit 's' memory functions.  MVME328 is a D16 board.
- * We must program with that in mind or else...
- * bcopy/bzero (the 'b' meaning byte) is implemented in
- * 32 bit operations for speed, so thay are not really
- * 'byte' operations at all!!  MVME1x7 can be set up to
- * handle D32 -> D16 read/writes via VMEChip2 Address
- * modifiers, however MVME188 can not.  These next two
- * function insure 16 bit copy/zero operations.  The
- * structures are all implemented with 16 bit or less
- * types.   smurph
- */
-
-void
-vs_copy(src, dst, cnt)
-	void *src;
-	void *dst;
-	unsigned short cnt;
-{
-	unsigned short *volatile x, *volatile y;
-	unsigned short volatile z;
-
-	z = cnt >> 1;
-	x = (unsigned short *)src;
-	y = (unsigned short *)dst;
-
-	while (z--) {
-		*y++ = *x++;
-	}
-}
-
-void
-vs_zero(src, cnt)
-	void *src;
-	u_long cnt;
-{
-	unsigned short *source;
-	unsigned short zero = 0;
-	unsigned short z;
-
-	source = (unsigned short *) src;
-	z = cnt >> 1;
-
-	while (z--) {
-		*source++ = zero;
-	}
-	return;
-}
 
 /*
  * default minphys routine for MVME328 based controllers
@@ -312,9 +261,9 @@ vs_scsicmd(xs)
 	}
 
 	iopb_len = sizeof(M328_short_IOPB) + xs->cmdlen;
-	vs_zero(iopb, sizeof(M328_IOPB));
+	d16_bzero(iopb, sizeof(M328_IOPB));
 
-	vs_copy(xs->cmd, &iopb->iopb_SCSI[0], xs->cmdlen);
+	d16_bcopy(xs->cmd, &iopb->iopb_SCSI[0], xs->cmdlen);
 	iopb->iopb_CMD = IOPB_SCSI;
 	iopb->iopb_UNIT = slp->lun << 3;
 	iopb->iopb_UNIT |= slp->target;
@@ -412,10 +361,10 @@ vs_chksense(xs)
 	CRB_CLR_DONE(CRSW);
 	xs->status = 0;
 
-	vs_zero(miopb, sizeof(M328_IOPB));
+	d16_bzero(miopb, sizeof(M328_IOPB));
 	/* This is a command, so point to it */
 	ss = (void *)&miopb->iopb_SCSI[0];
-	vs_zero(ss, sizeof(*ss));
+	d16_bzero(ss, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
 	ss->byte2 = slp->lun << 5;
 	ss->length = sizeof(struct scsi_sense_data);
@@ -429,7 +378,7 @@ vs_chksense(xs)
 	LV(miopb->iopb_BUFF, kvtop((vaddr_t)&xs->sense));
 	LV(miopb->iopb_LENGTH, sizeof(struct scsi_sense_data));
 
-	vs_zero(mc, sizeof(M328_CQE));
+	d16_bzero(mc, sizeof(M328_CQE));
 	mc->cqe_IOPB_ADDR = OFF(miopb);
 	mc->cqe_IOPB_LENGTH = sizeof(M328_short_IOPB) +
 			      sizeof(struct scsi_sense);
@@ -463,7 +412,7 @@ vs_getcqe(sc)
 		return NULL; /* Hopefully, this will never happen */
 	mcsb->mcsb_QHDP++;
 	if (mcsb->mcsb_QHDP == NUM_CQE)	mcsb->mcsb_QHDP = 0;
-	vs_zero(cqep, sizeof(M328_CQE));
+	d16_bzero(cqep, sizeof(M328_CQE));
 	return cqep;
 }
 
@@ -481,7 +430,7 @@ vs_getiopb(sc)
 		slot = mcsb->mcsb_QHDP - 1;
 	}
 	iopb = (M328_IOPB *)&sc->sc_vsreg->sh_IOPB[slot];
-	vs_zero(iopb, sizeof(M328_IOPB));
+	d16_bzero(iopb, sizeof(M328_IOPB));
 	return iopb;
 }
 
@@ -500,7 +449,7 @@ vs_initialize(sc)
 	int failed = 0;
 
 	CRB_CLR_DONE(CRSW);
-	vs_zero(cib, sizeof(M328_CIB));
+	d16_bzero(cib, sizeof(M328_CIB));
 	mcsb->mcsb_QHDP = 0;
 	sc->sc_qhp = 0;
 	cib->cib_NCQE = 10;
@@ -527,7 +476,7 @@ vs_initialize(sc)
 	cib->cib_SRATE1 = 0x0;
 
 	iopb = (M328_IOPB *)&sc->sc_vsreg->sh_MCE_IOPB;
-	vs_zero(iopb, sizeof(M328_IOPB));
+	d16_bzero(iopb, sizeof(M328_IOPB));
 	iopb->iopb_CMD = CNTR_INIT;
 	iopb->iopb_OPTION = 0;
 	iopb->iopb_NVCT = (u_char)sc->sc_nvec;
@@ -537,7 +486,7 @@ vs_initialize(sc)
 	LV(iopb->iopb_BUFF, OFF(cib));
 	LV(iopb->iopb_LENGTH, sizeof(M328_CIB));
 
-	vs_zero(mc, sizeof(M328_CQE));
+	d16_bzero(mc, sizeof(M328_CQE));
 	mc->cqe_IOPB_ADDR = OFF(iopb);
 	mc->cqe_IOPB_LENGTH = sizeof(M328_IOPB);
 	mc->cqe_WORK_QUEUE = 0;
@@ -548,7 +497,7 @@ vs_initialize(sc)
 
 	/* initialize work queues */
 	for (i=1; i<8; i++) {
-		vs_zero(wiopb, sizeof(M328_IOPB));
+		d16_bzero(wiopb, sizeof(M328_IOPB));
 		wiopb->wqcf_CMD = CNTR_INIT_WORKQ;
 		wiopb->wqcf_OPTION = 0;
 		wiopb->wqcf_NVCT = (u_char)sc->sc_nvec;
@@ -559,7 +508,7 @@ vs_initialize(sc)
 		wiopb->wqcf_SLOTS = JAGUAR_MAX_Q_SIZ;
 		LV(wiopb->wqcf_CMDTO, 4); /* 1 second */
 
-		vs_zero(mc, sizeof(M328_CQE));
+		d16_bzero(mc, sizeof(M328_CQE));
 		mc->cqe_IOPB_ADDR = OFF(wiopb);
 		mc->cqe_IOPB_LENGTH = sizeof(M328_IOPB);
 		mc->cqe_WORK_QUEUE = 0;
@@ -606,7 +555,7 @@ vs_resync(sc)
 	M328_DRCF *devreset = (M328_DRCF *)&sc->sc_vsreg->sh_MCE_IOPB;
 	u_short i;
 	for (i=0; i<7; i++) {
-		vs_zero(devreset, sizeof(M328_DRCF));
+		d16_bzero(devreset, sizeof(M328_DRCF));
 		devreset->drcf_CMD = CNTR_DEV_REINIT;
 		devreset->drcf_OPTION = 0x00;	    /* no interrupts yet... */
 		devreset->drcf_NVCT = sc->sc_nvec;
@@ -614,7 +563,7 @@ vs_resync(sc)
 		devreset->drcf_ILVL = 0;
 		devreset->drcf_UNIT = i;
 
-		vs_zero(mc, sizeof(M328_CQE));
+		d16_bzero(mc, sizeof(M328_CQE));
 		mc->cqe_IOPB_ADDR = OFF(devreset);
 		mc->cqe_IOPB_LENGTH = sizeof(M328_DRCF);
 		mc->cqe_WORK_QUEUE = 0;
@@ -645,7 +594,7 @@ vs_reset(sc)
 	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
 	M328_SRCF *reset = (M328_SRCF *)&sc->sc_vsreg->sh_MCE_IOPB;
 
-	vs_zero(reset, sizeof(M328_SRCF));
+	d16_bzero(reset, sizeof(M328_SRCF));
 	reset->srcf_CMD = IOPB_RESET;
 	reset->srcf_OPTION = 0x00;	 /* no interrupts yet... */
 	reset->srcf_NVCT = sc->sc_nvec;
@@ -654,7 +603,7 @@ vs_reset(sc)
 	reset->srcf_BUSID = 0;
 	s = splbio();
 
-	vs_zero(mc, sizeof(M328_CQE));
+	d16_bzero(mc, sizeof(M328_CQE));
 	mc->cqe_IOPB_ADDR = OFF(reset);
 	mc->cqe_IOPB_LENGTH = sizeof(M328_SRCF);
 	mc->cqe_WORK_QUEUE = 0;
@@ -914,8 +863,8 @@ vs_clear_return_info(sc)
 {
         M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
 	M328_CEVSB *crb = (M328_CEVSB *)&sc->sc_vsreg->sh_CRB;
-	vs_zero(riopb, sizeof(M328_IOPB));
-	vs_zero(crb, sizeof(M328_CEVSB));
+	d16_bzero(riopb, sizeof(M328_IOPB));
+	d16_bzero(crb, sizeof(M328_CEVSB));
 }
 
 /*
