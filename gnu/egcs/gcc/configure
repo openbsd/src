@@ -5574,7 +5574,7 @@ for machine in $build $host $target; do
        use_collect2=yes
 		;;
 	vax-*-openbsd*)
-		tmake_file="${tmake_file} vax/t-openbsd"
+		tmake_file="t-libc-ok t-openbsd vax/t-openbsd"
 		float_format=vax
 		use_collect2=yes
 		;;
