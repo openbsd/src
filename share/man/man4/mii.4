@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.5 1999/12/07 22:58:30 jason Exp $
+.\"	$OpenBSD: mii.4,v 1.6 1999/12/15 16:35:21 jason Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,11 +46,16 @@
 .Cd "exphy* at mii? phy ?"
 .Cd "icsphy* at mii? phy ?"
 .Cd "inphy* at mii? phy ?"
+.Cd "iophy* at mii? phy ?"
 .Cd "lxtphy* at mii? phy ?"
+.Cd "mtdphy* at mii? phy ?"
 .Cd "nsphy* at mii? phy ?"
 .Cd "qsphy* at mii? phy ?"
 .Cd "sqphy* at mii? phy ?"
 .Cd "tlphy* at mii? phy ?"
+.Cd "tqphy* at mii? phy ?"
+.Cd "txphy* at mii? phy ?"
+.Cd "ukphy* at mii? phy ?"
 .Sh DESCRIPTION
 Media Independent Interface is an IEEE standard serial bus for
 connecting MACs (network controllers) to PHYs (physical media
@@ -72,12 +77,11 @@ interface with an attached PHY is detected by the kernel:
 .Bd -literal -offset indent
 hme0 at sbus0 slot 1 offset 0x8c00000 pri 7: address 08:00:20:22:86:b8 rev 34
 nsphy0 at hme0 phy 1: DP83840 10/100 media interface, rev. 1
-nsphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto
 .Ed
 .Pp
-All PHY drivers display the media types supported by the PHY when it
-is detected by the kernel.  These media types are valid media keywords
-for use with the
+.Xr ifconfig 8
+can be used to display the media types supported by the PHY.
+These media types are valid media keywords for use with the
 .Xr ifconfig 8
 program.
 .Sh SEE ALSO
@@ -87,11 +91,13 @@ program.
 .Xr inphy 4 ,
 .Xr iophy 4 ,
 .Xr lxtphy 4 ,
+.Xr mtdphy 4 ,
 .Xr netintro 4 ,
 .Xr nsphy 4 ,
 .Xr qsphy 4 ,
 .Xr sqphy 4 ,
 .Xr tlphy 4 ,
 .Xr tqphy 4 ,
+.Xr txphy 4 ,
 .Xr ukphy 4 ,
 .Xr ifconfig 8
