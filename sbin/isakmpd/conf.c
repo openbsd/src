@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.21 2000/10/13 13:22:01 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.40 2000/10/13 13:04:16 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.22 2000/10/16 23:28:56 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.44 2000/10/14 08:45:18 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "sysdep.h"
 
@@ -308,7 +309,7 @@ conf_parse (int trans, char *buf, size_t sz)
  *  For main mode:
  *     {DES,BLF,3DES,CAST}-{MD5,SHA}[-{DSS,RSA_SIG}]
  *  For quick mode:
- *     QM-{ESP,AH}[-TRP]-{DES,3DES,CAST,BLF,AES}[-{MD5,SHA}][-PFS]-SUITE
+ *     QM-{ESP,AH}[-TRP]-{DES,3DES,CAST,BLF,AES}[-{MD5,SHA,RIPEMD}][-PFS]-SUITE
  * DH groups; currently always MODP_768 for MD5, and MODP_1024 for SHA.
  *
  * XXX We may want to support USE_BLOWFISH, USE_TRIPLEDES, etc...
@@ -349,13 +350,13 @@ conf_load_defaults (int tr)
 			"CAST_CBC", NULL };
   char *dh_group[]  = { "MODP_768", "MODP_1024", "MODP_1536", NULL };
   char *qm_enc[]    = { "DES", "3DES", "CAST", "BLOWFISH", "AES", NULL };
-  char *qm_hash[]   = { "HMAC_MD5", "HMAC_SHA", "NONE", NULL };
+  char *qm_hash[]   = { "HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD", "NONE", NULL };
 
   /* Abbreviations to make section names a bit shorter.  */
   char *mm_auth_p[] = { "", "-DSS", "-RSA_SIG", NULL };
   char *mm_enc_p[]  = { "DES", "BLF", "3DES", "CAST", NULL };
   char *qm_enc_p[]  = { "-DES", "-3DES", "-CAST", "-BLF", "-AES", NULL };
-  char *qm_hash_p[] = { "-MD5", "-SHA", "", NULL };
+  char *qm_hash_p[] = { "-MD5", "-SHA", "-RIPEMD", "", NULL };
 
   /* Helper #defines, incl abbreviations.  */
 #define PROTO(x)  ((x) ? "AH" : "ESP")
@@ -390,8 +391,10 @@ conf_load_defaults (int tr)
 	  sprintf (sect, "%s-%s%s", mm_enc_p[enc], mm_hash[hash],
 		   mm_auth_p[auth]);
 
+#if 0
 	  if (!conf_find_trans_xf (1, sect))
 	    continue;
+#endif
 
 	  LOG_DBG ((LOG_MISC, 40, "conf_load_defaults : main mode %s", sect));
 
@@ -427,8 +430,10 @@ conf_load_defaults (int tr)
 		strcpy (sect, tmp);
 		strcat (sect, "-SUITE");
 
+#if 0
 		if (!conf_find_trans_xf (2, sect))
 		  continue;
+#endif
 
 		LOG_DBG ((LOG_MISC, 40, "conf_load_defaults : quick mode %s",
 			  sect));
@@ -503,36 +508,43 @@ conf_reinit (void)
   int fd, i, trans;
   off_t sz;
   char *new_conf_addr = 0;
+  struct stat sb;
 
-  if (check_file_secrecy (conf_path, &sz))
-    return;
-
-  fd = open (conf_path, O_RDONLY);
-  if (fd == -1)
+  if ((lstat (conf_path, &sb) == 0) || (errno != ENOENT))
     {
-      log_error ("conf_reinit: open (\"%s\", O_RDONLY) failed", conf_path);
-      return;
-    }
+      if (check_file_secrecy (conf_path, &sz))
+	return;
 
-  new_conf_addr = malloc (sz);
-  if (!new_conf_addr)
-    {
-      log_error ("conf_reinit: malloc (%d) failed", sz);
-      goto fail;
-    }
-  /* XXX I assume short reads won't happen here.  */
-  if (read (fd, new_conf_addr, sz) != sz)
-    {
-      log_error ("conf_reinit: read (%d, %p, %d) failed", fd, new_conf_addr,
-		 sz);
-      goto fail;
-    }
-  close (fd);
+      fd = open (conf_path, O_RDONLY);
+      if (fd == -1)
+        {
+	  log_error ("conf_reinit: open (\"%s\", O_RDONLY) failed", conf_path);
+	  return;
+	}
 
-  trans = conf_begin ();
+      new_conf_addr = malloc (sz);
+      if (!new_conf_addr)
+        {
+	  log_error ("conf_reinit: malloc (%d) failed", sz);
+	  goto fail;
+	}
 
-  /* XXX Should we not care about errors and rollback?  */
-  conf_parse (trans, new_conf_addr, sz);
+      /* XXX I assume short reads won't happen here.  */
+      if (read (fd, new_conf_addr, sz) != sz)
+        {
+	    log_error ("conf_reinit: read (%d, %p, %d) failed",
+		       fd, new_conf_addr, sz);
+	    goto fail;
+	}
+      close (fd);
+
+      trans = conf_begin ();
+
+      /* XXX Should we not care about errors and rollback?  */
+      conf_parse (trans, new_conf_addr, sz);
+    }
+  else
+    trans = conf_begin ();
 
   /* Load default configuration values.  */
   conf_load_defaults (trans);
