@@ -1,5 +1,34 @@
-/*	$OpenBSD: pdc.c,v 1.2 1998/07/08 21:34:37 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.3 1998/09/29 07:27:02 mickey Exp $	*/
 
+/*
+ * Copyright (c) 1998 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -39,29 +68,26 @@
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
 
-#include "dev_hppa.h"
-
 #include <machine/pdc.h>
-#include <machine/iodc.h>
 #include <machine/iomod.h>
 #include <machine/nvm.h>
+#include <machine/param.h>
+#include <machine/cpufunc.h>
 
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#include "dev_hppa.h"
 
 /*
  * Interface routines to initialize and access the PDC.
  */
 
 pdcio_t pdc;
-int	pdcbuf[64] __attribute ((aligned(8)));		/* PDC return buffer */
+int	pdcbuf[64]		/* PDC return buffer */
+		__attribute ((aligned(8)));
 struct	stable_storage sstor;	/* contents of Stable Storage */
 int	sstorsiz;		/* size of Stable Storage */
-unsigned int rstaddr;
 struct bootdata bd;
 int bdsize = sizeof(struct bootdata);
-unsigned int chasdata;
-
-extern unsigned int howto, bootdev;
+u_int chasdata;
 
 /*
  * Initialize PDC and related variables.
@@ -78,7 +104,7 @@ pdc_init()
 
 	err = (*pdc)(PDC_STABLE, PDC_STABLE_SIZE, pdcbuf, 0, 0);
 	if (err >= 0) {
-		sstorsiz = MIN(pdcbuf[0],sizeof(sstor));
+		sstorsiz = min(pdcbuf[0],sizeof(sstor));
 		err = (*pdc)(PDC_STABLE, PDC_STABLE_READ, 0, &sstor, sstorsiz);
 	}
 
@@ -86,8 +112,10 @@ pdc_init()
 	 * Now that we (may) have an output device, if we encountered
 	 * an error reading Stable Storage (above), let them know.
 	 */
-	if (err)
+#ifdef DEBUG
+	if (debug && err)
 		printf("Stable storage PDC_STABLE Read Ret'd %d\n", err);
+#endif
 
 	/*
 	 * Clear the FAULT light (so we know when we get a real one)
@@ -97,112 +125,337 @@ pdc_init()
 }
 
 /*
- * Read in `bootdev' and `howto' from Non-Volatile Memory.
- */
-void
-getbinfo()
-{
-	int err;
-
-	/*
-	 * Try to read bootdata from NVM through PDC.
-	 * If successful, set `howto' and `bootdev'.
-	 */
-	if ((err = (*pdc)(PDC_NVM, PDC_NVM_READ, NVM_BOOTDATA, &bd, bdsize)) < 0) {
-		/*
-		 * First, determine if this machine has Non-Volatile Memory.
-		 * If not, just return (until we come up with a new plan)!
-		 */
-		if (err == -1)		/* Nonexistent procedure */
-			return;
-		printf("NVM bootdata Read ret'd %d\n", err);
-	} else {
-		if (bd.cksum == NVM_BOOTCKSUM(bd)) {
-			/*
-			 * The user may override the PDC auto-boot, setting
-			 * an interactive boot.  We give them this right by
-			 * or'ing the bootaddr flags into `howto'.
-			 */
-			howto |= bd.flags;
-			bootdev = bd.device;
-		} else {
-			printf("NVM bootdata Bad Checksum (%x)\n", bd.cksum);
-		}
-	}
-
-	/*
-	 * Reset the bootdata to defaults (if necessary).
-	 */
-	if (bd.flags != RB_AUTOBOOT || bd.device != 0) {
-		bd.flags = RB_AUTOBOOT;
-		bd.device = 0;
-		bd.cksum = NVM_BOOTCKSUM(bd);
-		if ((err = (*pdc)(PDC_NVM, PDC_NVM_WRITE, NVM_BOOTDATA,
-				  &bd, bdsize)) < 0)
-			printf("NVM bootdata Write ret'd %d\n", err);
-	}
-}
-
-/*
  * Generic READ/WRITE through IODC.  Takes pointer to PDC device
  * information, returns (positive) number of bytes actually read or
  * the (negative) error condition, or zero if at "EOF".
  */
 int
-iodc_rw(maddr, daddr, count, func, pzdev)
-	char * maddr; /* io->i_ma = labelbuf */
-	unsigned int daddr;
-	unsigned int count;   /* io->i_cc = DEV_BSIZE */
-	int func;      
-	struct pz_device *pzdev;
+iodcstrategy(devdata, rw, blk, size, buf, rsize)
+	void *devdata;
+	int rw;
+	daddr_t blk;
+	size_t size;
+	void *buf;
+	size_t *rsize;
 {
-	register int	offset;
-	register int	xfer_cnt = 0;
-	register int	ret;
+	struct hppa_dev *dp = devdata;
+	struct pz_device *pzdev = dp->pz_dev;
+	register int	offset, xfer, ret;
+	register char	*bbuf = (void*)		/* align */
+		((((int)dp->buf) + MINIOSIZ - 1) & ~(MINIOSIZ - 1));
 
-	if (pzdev == 0)		/* default: use BOOT device */ 
-		pzdev = &PAGE0->mem_boot;
-	
-	if (pzdev->pz_iodc_io == 0)
-		return(-1);
+#ifdef PDCDEBUG
+	if (debug)
+		printf("iodcstrategy(%p, %s, %u, %u, %p, %p)\n", devdata,
+		       rw==F_READ?"READ":"WRITE", blk, size, buf, rsize);
 
-	/*
-	 * IODC arguments are constrained in a number of ways.  If the
-	 * request doesn't fit one or more of these constraints, we have
-	 * to do the transfer to a buffer and copy it.
-	 */
-	if ((((int)maddr)&(MINIOSIZ-1))||(count&IOPGOFSET)||(daddr&IOPGOFSET))
-	    for (; count > 0; count -= ret, maddr += ret, daddr += ret) {
-		offset = daddr & IOPGOFSET;
-		if ((ret = (*pzdev->pz_iodc_io)(pzdev->pz_hpa,
-					(func == F_READ)? IODC_IO_BOOTIN:
-							  IODC_IO_BOOTOUT,
-					pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
-					daddr - offset, btbuf, BTIOSIZ,
-					BTIOSIZ)) < 0)
-			return (ret);
-		if ((ret = pdcbuf[0]) == 0)
-			break;
-		if ((ret -= offset) > count)
-			ret = count;
-		bcopy(btbuf + offset, maddr, ret);
-		xfer_cnt += ret;
-	    }
-	else 
-		for (; count > 0; count -= ret, maddr += ret, daddr += ret) {
-			if ((offset = count) > MAXIOSIZ)
-				offset = MAXIOSIZ;
-			if ((ret = (*pzdev->pz_iodc_io)(pzdev->pz_hpa,
-					(func == F_READ)? IODC_IO_BOOTIN:
-							  IODC_IO_BOOTOUT,
-					pzdev->pz_spa, pzdev->pz_layers,
-					pdcbuf, daddr, maddr, offset,
-					count)) < 0)
-				return (ret);
-			if ((ret = pdcbuf[0]) == 0)
-				break;
-			xfer_cnt += ret;
+	if (debug > 1)
+		PZDEV_PRINT(pzdev);
+#endif
+
+	blk <<= DEV_BSHIFT;
+	if ((pzdev->pz_class & PCL_CLASS_MASK) == PCL_SEQU) {
+		/* rewind and re-read to seek */
+		if (blk < dp->last_blk) {
+#ifdef PDCDEBUG
+			if (debug)
+				printf("iodc: rewind ");
+#endif
+			twiddle();
+			if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
+				IODC_IO_READ, pzdev->pz_spa, pzdev->pz_layers,
+				pdcbuf, 0, bbuf, 0, 0)) < 0) {
+#ifdef DEBUG
+				if (debug)
+					printf("IODC_IO: %d\n", ret);
+#endif
+				return (EIO);
+			} else {
+				dp->last_blk = 0;
+				dp->last_read = 0;
+			}
 		}
 
-	return (xfer_cnt);
+#ifdef PDCDEBUG
+		if (debug)
+			printf("seek %d ", dp->last_blk);
+#endif
+		for (; (dp->last_blk + dp->last_read) <= blk;
+		     dp->last_read = ret) {
+			twiddle();
+			dp->last_blk += dp->last_read;
+			if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
+				IODC_IO_READ,
+				pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
+				dp->last_blk, bbuf, BTIOSIZ, BTIOSIZ)) < 0) {
+#ifdef DEBUG
+				if (debug)
+					printf("IODC_IO: %d\n", ret);
+#endif
+				return (EIO);
+			}
+			if ((ret = pdcbuf[0]) == 0)
+				break;
+#ifdef PDCDEBUG
+			if (debug)
+				printf("-");
+#endif
+		}
+#ifdef PDCDEBUG
+		if (debug)
+			printf("> %d[%d]\n", dp->last_blk, dp->last_read);
+#endif
+	}
+
+	xfer = 0;
+	/* see if we can scratch anything from buffer */
+	if (dp->last_blk <= blk && (dp->last_blk + dp->last_read) > blk) {
+		twiddle();
+		offset = blk - dp->last_blk;
+		xfer = min(dp->last_read - offset, size);
+		size -= xfer;
+		blk += xfer;
+#ifdef DEBUG
+		if (debug)
+			printf("off=%d,xfer=%d,size=%d,blk=%d\n",
+			       offset, xfer, size, blk);
+#endif
+		bcopy(bbuf + offset, buf, xfer);
+		buf += xfer;
+	}
+
+	/*
+	 * double buffer it all the time, to cache
+	 */
+	for (; size; size -= ret, buf += ret, blk += ret, xfer += ret) {
+		twiddle();
+		offset = blk & IOPGOFSET;
+		if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
+				(rw == F_READ? IODC_IO_READ: IODC_IO_WRITE),
+				pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
+				blk - offset, bbuf, BTIOSIZ, BTIOSIZ)) < 0) {
+#ifdef DEBUG
+			if (debug)
+				printf("IODC_IO: %d\n", ret);
+#endif
+			return (EIO);
+		}
+		if ((ret = pdcbuf[0]) <= 0)
+			break;
+		dp->last_blk = blk - offset;
+		dp->last_read = ret;
+		if ((ret -= offset) > size)
+			ret = size;
+		bcopy(bbuf + offset, buf, ret);
+#ifdef PDCDEBUG
+		if (debug)
+			printf("read %d(%d,%d)@%x ", ret,
+			       dp->last_blk, dp->last_read, (u_int)buf);
+#endif
+	    }
+
+#ifdef PDCDEBUG
+	if (debug)
+		printf("\n");
+#endif
+
+	if (rsize)
+		*rsize = xfer;
+	return (0);
 }
+
+/*
+ * Find a device with specified unit number
+ * (any if unit == -1), and of specified class (PCL_*).
+ */
+struct pz_device *
+pdc_findev(unit, class)
+	int unit, class;
+{
+	static struct pz_device pz;
+	iodcio_t iodc;
+	struct pdc_memmap memmap;
+	struct iodc_data mptr;
+	int layers[6];
+	register struct iomod *io;
+	register int i, err, stp;
+
+#ifdef	PDCDEBUG
+	if (debug)
+		printf("pdc_finddev(%d, %x)\n", unit, class);
+#endif
+	iodc = (iodcio_t)(PAGE0->mem_free + IODC_MAXSIZE);
+	err = 0;
+	io = NULL;
+
+	/* quick hack for boot device */
+	if (PAGE0->mem_boot.pz_class == class &&
+	    (unit == -1 || PAGE0->mem_boot.pz_layers[0] == unit)) {
+
+		io = PAGE0->mem_boot.pz_hpa;
+		bcopy (&PAGE0->mem_boot.pz_dp, &pz.pz_dp, sizeof(pz.pz_dp));
+		bcopy (pz.pz_layers, layers, sizeof(layers));
+		if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, pdcbuf, io,
+				  IODC_INIT, iodc, IODC_MAXSIZE)) < 0) {
+#ifdef DEBUG
+			if (debug)
+				printf("IODC_READ: %d\n", err);
+#endif
+			return NULL;
+		}
+	} else {
+
+		for (i = 0; i < 0xf; i++) {
+			pz.pz_bc[0] = pz.pz_bc[1] =
+			pz.pz_bc[2] = pz.pz_bc[3] = -1;
+			pz.pz_bc[4] = 2;
+			pz.pz_bc[5] = 0;	/* core bus */
+			pz.pz_mod = i;
+			if ((pdc)(PDC_MEMMAP, PDC_MEMMAP_HPA, &memmap,
+				  &pz.pz_dp) < 0)
+				continue;
+#ifdef PDCDEBUG
+			if (debug)
+				printf("memap: %d.%d.%d, hpa=%x, mpgs=%x\n",
+				       pz.pz_bc[4], pz.pz_bc[5], pz.pz_mod,
+				       memmap.hpa, memmap.morepages);
+#endif
+			io = (struct iomod *) memmap.hpa;
+
+			if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, &pdcbuf, io,
+				   IODC_DATA, &mptr, sizeof(mptr))) < 0) {
+#ifdef DEBUG
+				if (debug)
+					printf("IODC_DATA: %d\n", err);
+#endif
+				continue;
+			}
+
+			if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, pdcbuf, io,
+					  IODC_INIT, iodc, IODC_MAXSIZE)) < 0) {
+#ifdef DEBUG
+				if (debug)
+					printf("IODC_READ: %d\n", err);
+#endif
+				continue;
+			}
+
+			stp = IODC_INIT_FIRST;
+			do {
+				if ((err = (iodc)(io, stp, io->io_spa, layers,
+						  pdcbuf, 0, 0, 0, 0)) < 0) {
+#ifdef DEBUG
+					if (debug && err != PDC_ERR_EOD)
+						printf("IODC_INIT_%s: %d\n",
+						       stp==IODC_INIT_FIRST?
+						       "FIRST":"NEXT", err);
+#endif
+					break;
+				}
+#ifdef PDCDEBUG
+				if (debug)
+					printf("[%x,%x,%x,%x,%x,%x], "
+					       "[%x,%x,%x,%x,%x,%x]\n",
+					       pdcbuf[0], pdcbuf[1], pdcbuf[2],
+					       pdcbuf[3], pdcbuf[4], pdcbuf[5],
+					       layers[0], layers[1], layers[2],
+					       layers[3], layers[4], layers[5]);
+#endif
+				stp = IODC_INIT_NEXT;
+
+			} while (pdcbuf[1] != class &&
+				 unit != -1 && unit != layers[0]);
+
+			if (err >= 0)
+				break;
+		}
+	}
+
+	if (err >= 0) {
+		/* init device */
+		if ((err = (iodc)(io, IODC_INIT_DEV, io->io_spa,
+				  layers, pdcbuf, 0, 0, 0, 0)) < 0) {
+#ifdef DEBUG
+			if (debug)
+				printf("INIT_DEV: %d\n", err);
+#endif
+			return NULL;
+		}
+		/* read i/o entry code */
+		if ((err = (pdc)(PDC_IODC, PDC_IODC_READ, pdcbuf, io,
+			  	IODC_IO, iodc, IODC_MAXSIZE)) < 0) {
+#ifdef DEBUG
+			if (debug)
+				printf("IODC_READ: %d\n", err);
+#endif
+			return NULL;
+		}
+
+		pz.pz_flags = 0;
+		bcopy(layers, pz.pz_layers, sizeof(layers));
+		pz.pz_hpa = io;
+		pz.pz_spa = io->io_spa;
+		pz.pz_iodc_io = iodc;
+		pz.pz_class = class;
+		return &pz;
+	}
+
+	return NULL;
+}
+
+static __inline void
+fall(c_base, c_count, c_loop, c_stride, data)
+	int c_base, c_count, c_loop, c_stride, data; 
+{
+        register int loop;                  /* Internal vars */
+
+        for (; c_count--; c_base += c_stride)
+                for (loop = c_loop; loop--; )
+			if (data)
+				fdce(0, c_base);
+			else
+				fice(0, c_base);
+        
+}
+
+/*
+ * fcacheall - Flush all caches.
+ *
+ * This routine is just a wrapper around the real cache flush routine.
+ */
+struct pdc_cache pdc_cacheinfo __attribute__ ((aligned(8)));
+
+void 
+fcacheall()
+{
+	register int err;
+
+        if ((err = (*pdc)(PDC_CACHE, PDC_CACHE_DFLT, &pdc_cacheinfo)) < 0) {
+#ifdef DEBUG
+		if (debug)
+			printf("fcacheall: PDC_CACHE failed (%d).\n", err);
+#endif
+		return;
+        }
+#if PDCDEBUG
+	if (debug)
+		printf("pdc_cache:\nic={%u,%x,%x,%u,%u,%u}\n"
+		       "dc={%u,%x,%x,%u,%u,%u}\n",
+		       pdc_cacheinfo.ic_size, *(u_int*)&pdc_cacheinfo.ic_conf, 
+		       pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_stride, 
+		       pdc_cacheinfo.ic_count, pdc_cacheinfo.ic_loop,
+		       pdc_cacheinfo.dc_size, *(u_int*)&pdc_cacheinfo.ic_conf, 
+		       pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_stride, 
+		       pdc_cacheinfo.dc_count, pdc_cacheinfo.dc_loop);
+#endif
+        /*
+         * Flush the instruction, then data cache.
+         */
+        fall (pdc_cacheinfo.ic_base, pdc_cacheinfo.ic_count,
+	      pdc_cacheinfo.ic_loop, pdc_cacheinfo.ic_stride, 0);
+	sync_caches();
+        fall (pdc_cacheinfo.dc_base, pdc_cacheinfo.dc_count,
+	      pdc_cacheinfo.dc_loop, pdc_cacheinfo.dc_stride, 1);
+	sync_caches();
+}
+
