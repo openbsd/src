@@ -1,4 +1,4 @@
-/*	$OpenBSD: impys.S,v 1.8 2002/09/20 19:26:59 mickey Exp $	*/
+/*	$OpenBSD: impys.S,v 1.9 2003/01/23 20:25:21 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -15,6 +15,8 @@
 /* @(#)impys.s: Revision: 1.11.88.1 Date: 93/12/07 15:06:28 */
 
 #include <machine/asm.h>
+#define _LOCORE
+#include <machine/frame.h>
 
 ;****************************************************************************
 ;
