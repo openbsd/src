@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.33 2004/07/13 21:06:58 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.34 2004/10/26 17:20:36 espie Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -53,9 +53,15 @@ MLINKS+=getifaddrs.3 freeifaddrs.3
 MLINKS+=getnetent.3 endnetent.3 getnetent.3 getnetbyaddr.3 \
 	getnetent.3 getnetbyname.3 getnetent.3 setnetent.3
 MLINKS+=getprotoent.3 endprotoent.3 getprotoent.3 getprotobyname.3 \
-	getprotoent.3 getprotobynumber.3 getprotoent.3 setprotoent.3
+	getprotoent.3 getprotobynumber.3 getprotoent.3 setprotoent.3 \
+	getprotoent.3 getprotoent_r.3 getprotoent.3 getprotobyname_r.3 \
+	getprotoent.3 getprotobynumber_r.3 getprotoent.3 setprotoent_r.3 \
+	getprotoent.3 endprotoent_r.3
 MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
-	getservent.3 getservbyport.3 getservent.3 setservent.3
+	getservent.3 getservbyport.3 getservent.3 setservent.3 \
+	getservent.3 getservent_r.3 getservent.3 getservbyname_r.3 \
+	getservent.3 getservbyport_r.3 setservent.3 setservent_r.3 \
+	setservent.3 endservent_r.3
 MLINKS+= if_indextoname.3 if_nametoindex.3 if_indextoname.3 if_nameindex.3 \
 	if_indextoname.3 if_freenameindex.3
 MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
