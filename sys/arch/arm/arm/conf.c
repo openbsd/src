@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2004/12/30 23:41:58 drahn Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2005/01/03 21:25:44 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),				/* 37: removed cpu device */
 	cdev_notdef(),				/* 38: removed cpu device */
 	cdev_lkm_dummy(),			/* 39: reserved */
-	cdev_lkm_dummy(),			/* 40: reserved */
+	cdev_random_init(1,random),		/* 40: random generator */
 	cdev_lkm_dummy(),			/* 41: reserved */
 	cdev_lkm_dummy(),			/* 42: reserved */
 	cdev_lkm_dummy(),			/* 43: reserved */
