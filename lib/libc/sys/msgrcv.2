@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgrcv.2,v 1.6 1999/05/27 14:05:09 aaron Exp $
+.\"	$OpenBSD: msgrcv.2,v 1.7 1999/05/27 16:54:23 aaron Exp $
 .\"	$NetBSD: msgrcv.2,v 1.2 1997/03/27 08:20:37 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -141,6 +141,7 @@ is set to the current time.
 .It
 .Va msg_qnum
 is decremented by 1.
+.El
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn msgrcv
@@ -185,6 +186,7 @@ and
 .Dv IPC_NOWAIT
 is set in
 .Fa msgflg .
+.El
 .Sh SEE ALSO
 .Xr msgctl 2 ,
 .Xr msgget 2 ,
