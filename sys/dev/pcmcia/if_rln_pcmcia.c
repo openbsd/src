@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.7 1999/08/23 23:24:47 d Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.8 2000/02/03 18:42:42 angelos Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -264,18 +264,25 @@ rln_pcmcia_activate(dev, act)
 	enum devact act;
 {
 	struct rln_pcmcia_softc *sc = (struct rln_pcmcia_softc *)dev;
+        struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
 
 	s = splnet();
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
+		printf("%s:", sc->sc_dev.dv_xname);
 		sc->sc_rln.sc_ih =
 		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, rlnintr_pcmcia,
 		        sc);
+		printf("\n");
+		rlninit(sc);
 		break;
 
 	case DVACT_DEACTIVATE:
+		ifp->if_timer = 0;
+		if (ifp->if_flags & IFF_RUNNING)
+			rlnstop(sc);
 		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_rln.sc_ih);
 		break;
