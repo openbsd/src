@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.376 2003/07/09 22:03:15 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.377 2003/07/12 09:36:23 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4494,8 +4494,6 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 
 	/* Copied from ip_output. */
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
-		ip->ip_len = htons((u_int16_t)ip->ip_len);
-		ip->ip_off = htons((u_int16_t)ip->ip_off);
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
 		    ifp->if_bridge == NULL) {
 			m0->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
