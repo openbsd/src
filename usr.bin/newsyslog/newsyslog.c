@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.74 2003/07/01 23:43:12 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.75 2003/07/25 10:28:53 mpech Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -71,7 +71,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.74 2003/07/01 23:43:12 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.75 2003/07/25 10:28:53 mpech Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -490,7 +490,7 @@ parse_file(int *nentries)
 		err(1, "can't open %s", conf);
 
 	*nentries = 0;
-	for (lineno = 0; fgets(line, sizeof(line), f); lineno++) {
+	for (lineno = 1; fgets(line, sizeof(line), f); lineno++) {
 		tmp = sob(line);
 		if (*tmp == '\0' || *tmp == '#')
 			continue;
