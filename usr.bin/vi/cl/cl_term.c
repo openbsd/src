@@ -19,9 +19,9 @@ static const char sccsid[] = "@(#)cl_term.c	10.22 (Berkeley) 9/15/96";
 #include <sys/stat.h>
 
 #include <bitstring.h>
-#include <curses.h>
 #include <errno.h>
 #include <limits.h>
+#include <curses.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>

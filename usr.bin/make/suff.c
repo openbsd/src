@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.12 1999/03/06 20:19:20 millert Exp $	*/
+/*	$OpenBSD: suff.c,v 1.13 1999/03/06 20:27:40 millert Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.12 1999/03/06 20:19:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.13 1999/03/06 20:27:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -686,7 +686,6 @@ Suff_EndTransform(gnp, dummy)
 	Lst_IsEmpty(gn->children))
     {
 	Suff	*s, *t;
-	Lst	p;
 
 	(void)SuffParseTransform(gn->name, &s, &t);
 
@@ -694,11 +693,6 @@ Suff_EndTransform(gnp, dummy)
 	    printf("deleting transformation from `%s' to `%s'\n",
 		    s->name, t->name);
 	}
-
-	/*
-	 * Store s->parents because s could be deleted in SuffRemove
-	 */
-	p = s->parents;
 
 	/*
 	 * Remove the source from the target's children list. We check for a
@@ -713,7 +707,8 @@ Suff_EndTransform(gnp, dummy)
 	/*
 	 * Remove the target from the source's parents list
 	 */
-	SuffRemove(p, t);
+	if (s != NULL)
+	    SuffRemove(s->parents, t);
     } else if ((gn->type & OP_TRANSFORM) && DEBUG(SUFF)) {
 	printf("transformation %s complete\n", gn->name);
     }

@@ -1,52 +1,31 @@
-#	@(#)README	8.149 (Berkeley) 7/14/97
+#	@(#)README	8.147 (Berkeley) 10/19/96
 
-This is version 1.79 (7/14/97) of nex/nvi, a reimplementation of the ex/vi
-text editors originally distributed as part of the Fourth Berkeley
-Software Distribution (4BSD), by the University of California, Berkeley.
+This is the README for nex/nvi, a freely redistributable implementation
+of the ex/vi text editors originally distributed as part of the Fourth
+Berkeley Software Distribution (4BSD), by the University of California,
+Berkeley.
 
-The directory layout is as follows:
+The source code for nex/nvi can be retrieved by using anonymous ftp to
+ftp.cs.berkeley.edu.  The file ucb/4bsd/nvi.tar.gz is the gzip'd archive,
+of version 1.71 of nex/nvi.  This version is believed to be stable and
+problem free.  The file ucb/4bsd/nvi-###.ALPHA.tar.gz is a gzip'd archive
+of the current alpha-test release of nex/nvi.  This version reflects the
+current development tree, and will be more likely to have problems.
 
-    FAQ ........... Frequently asked questions.
-    LICENSE ....... Copyright, use and redistribution information.
-    README ........ This file.
-    catalog ....... Message catalogs; see catalog/README.
-    changelog ..... Log of changes from version to version.
-    cl ............ Vi interface to the curses(3) library.
-    clib .......... C library replacement source code.
-    common ........ Code shared by ex and vi.
-    curses ........ A stripped-down, replacement curses(3) library.
-    db ............ A stripped-down, replacement db(3) library.
-    dist .......... Various files used to build the vi distribution.
-    docs .......... Ex/vi documentation, both current and historic.
-    docs/README ... Documentation overview.
-    docs/edit ..... Edit: A tutorial.
-    docs/exref .... Ex Reference Manual -- Version 3.7.
-    docs/vi.man ... UNIX manual page for nex/nvi.
-    docs/vi.ref ... Nex/nvi reference manual.
-    docs/vitut .... An Introduction to Display Editing with Vi.
-    ex ............ Ex source code.
-    include ....... Replacement include files.
-    ip ............ Library interface to vi: vi side.
-    ipc ........... Library interface to vi: application side.
-    motif ......... Vi motif application.
-    motif_l ....... Motif library interface to vi.
-    perl_api ...... Perl scripting language support.
-    perl_scripts .. Perl scripts.
-    regex ......... POSIX 1003.2 regular expression library.
-    tcl_api ....... Tcl scripting language support.
-    tcl_scripts ... Tcl scripts.
-    vi ............ Vi source code.
+See the file:
+	build/README	for information on building nvi.
+	LAYOUT		for a description of where everything is.
+	LICENSE		for the copyright and redistribution terms.
 
-Bug fixes and updated versions of this software will periodically be made
-available.  For more information see:
+If you have any questions about nex/nvi, problems with it, or concerns
+about the conditions for redistribution, please contact me:
 
-	http://www.bostic.com/vi
+	Keith Bostic		+1-508-287-4781
+	394 E. Riding Dr.	bostic@bostic.com
+	Carlisle, MA 01741
+	USA
 
-To ask questions about vi, report vi problems, request notification of
-future releases and/or bug fixes, or to contact the authors for any reason,
-please send email to:
-
-	bostic@bostic.com
+Keith Bostic
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 o This software is several years old and is the product of many folks' work.  

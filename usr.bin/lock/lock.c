@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.11 1999/03/06 20:19:19 millert Exp $	*/
+/*	$OpenBSD: lock.c,v 1.12 1999/03/06 20:27:40 millert Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.11 1999/03/06 20:19:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.12 1999/03/06 20:27:40 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -71,7 +71,6 @@ static char rcsid[] = "$OpenBSD: lock.c,v 1.11 1999/03/06 20:19:19 millert Exp $
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#include <login_cap.h>
 
 #ifdef SKEY
 #include <skey.h>
@@ -104,7 +103,6 @@ main(argc, argv)
 	int ch, sectimeout, usemine;
 	char *ap, *mypw, *ttynam, *tzn;
 	char hostname[MAXHOSTNAMELEN], s[BUFSIZ], s1[BUFSIZ];
-	login_cap_t *lc = NULL;
 
 	sectimeout = TIMEOUT;
 	mypw = NULL;
@@ -215,18 +213,8 @@ main(argc, argv)
 					break;
 			}
 #endif
-#if 0
 			if (!strcmp(mypw, crypt(s, mypw)))
 				break;
-#else
-			lc = login_getpwclass(pw);
-			if (lc->lc_style == NULL)
-				lc->lc_style = login_getstyle(lc, NULL, "login");
-			if ((ch = auth_response(pw->pw_name, lc->lc_class,
-			    lc->lc_style, "response", NULL, "", s)) > 0)
-				break;
-			warnx("auth_response returned %d", ch);
-#endif
 		}
 		else if (!strcmp(s, s1))
 			break;

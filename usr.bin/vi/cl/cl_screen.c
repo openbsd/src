@@ -17,8 +17,8 @@ static const char sccsid[] = "@(#)cl_screen.c	10.49 (Berkeley) 9/24/96";
 #include <sys/queue.h>
 
 #include <bitstring.h>
-#include <curses.h>
 #include <errno.h>
+#include <curses.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -195,8 +195,7 @@ cl_vi_init(sp)
 	/* Curses vi always reads from (and writes to) a terminal. */
 	if (!F_ISSET(clp, CL_STDIN_TTY) || !isatty(STDOUT_FILENO)) {
 		msgq(sp, M_ERR,
-		    "016|vi's standard input and output must both refer to a
-		     terminal");
+		    "016|Vi's standard input and output must be a terminal");
 		return (1);
 	}
 

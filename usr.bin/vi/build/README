@@ -1,4 +1,4 @@
-#	@(#)README	8.26 (Berkeley) 10/19/96
+#	@(#)README	8.24 (Berkeley) 6/20/96
 
 Nvi uses the GNU autoconf program for configuration and compilation.  You
 should enter:
@@ -271,41 +271,47 @@ INSTALLING NVI
 Nvi installs the following files into the following locations, with
 the following default values:
 
-Variables:		Default value:
-prefix			/usr/local
-exec_prefix		$(prefix)
-bindir			$(prefix)/bin
-datadir			$(prefix)/share
-mandir			$(prefix)/man
-
-File(s):		Default location
+File(s):		Location
+			Default Location
 ----------------------------------------
-vi			$(bindir)/vi
-vi.1			$(mandir)/man1/vi.1
-vi.0			$(mandir)/cat1/vi.0
-Perl scripts		$(datadir)/vi/perl/
-Tcl scripts		$(datadir)/vi/tcl/
-Message Catalogs	$(datadir)/vi/catalog/
+vi			$(exec_prefix)/$(bindir)/vi
+			/usr/local/bin/vi
+
+vi.0			$(prefix)/$(mandir)/cat1/vi.0
+			/usr/local/man/cat1/vi.0
+
+Message Catalogs	$(prefix)/$(datadir)/vi/catalog/
+			/usr/local/share/vi/catalog/
+
+Perl5 scripts		$(prefix)/$(datadir)/vi/perl/
+			/usr/local/share/vi/perl/
+
+Tcl scripts		$(prefix)/$(datadir)/vi/tcl/
+			/usr/local/share/vi/tcl/
 
 Notes:
 	There are two hard links to the vi program, named ex and view.
-	Similarly, there are two hard links to the unformatted vi manual
-	page, named ex.1 and view.1, and two hard links to the formatted
-	manual page, named ex.0 and view.0.  These links are created when
-	the program and man pages are installed.
+	Similarly, there are two hard links to the vi manual page, named
+	ex.0 and view.0.  These links are created when the program and
+	man pages are installed.
 
 	If you want to install vi, ex, view and the man pages as nvi, nex,
 	nview, use the configure option --program-prefix=n.  Other, more
 	complex transformations are possible -- use configure --help to
 	see more options.
 
+	The default value for both "exec_prefix" and "prefix" is the
+	directory /usr/local.  The default values for "bindir", "datadir"
+	and "mandir" are bin, share and man, respectively.
+
 	To move the entire installation tree somewhere besides /usr/local,
 	change the value of both "exec_prefix" and "prefix".  To move the
-	binaries to a different place, change the value of "bindir".
-	Similarly, to put the datafiles (the message catalogs, Perl and
-	Tcl scripts) or the man pages in a different place, change the
-	value of "datadir" or "mandir".  These values can be changed as
-	part of configuration:
+	binaries to a different place in the "exec_prefix" directory tree,
+	change the value of "bindir".  Similarly, to put the datafiles
+	(the message catalogs, Perl5 and Tcl scripts) or the man pages in
+	a different place in the "prefix" directory tree, change the value
+	of "datadir" or "mandir".  These values can be changed as part of
+	configuration:
 
 		configure --exec_prefix=/usr/contrib --prefix=/usr/share
 
@@ -316,6 +322,9 @@ Notes:
 	The datafile directory (e.g., /usr/local/share/vi by default) is
 	completely removed and then recreated as part of the installation
 	process.
+
+	The mandir directory must have another directory named "cat1"
+	beneath it for the man pages to successfully install.
 
 =-=-=-=-=-=-=
 NVI AND THE CURSES LIBRARY
