@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_cmmu.c,v 1.10 2001/09/28 20:46:42 miod Exp $	*/
+/*	$OpenBSD: m197_cmmu.c,v 1.11 2001/11/27 05:37:02 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -66,6 +66,7 @@
 #include <machine/cpu_number.h>
 #include <machine/locore.h>
 #include <machine/m88110.h>
+#include <machine/m88110_mmu.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>

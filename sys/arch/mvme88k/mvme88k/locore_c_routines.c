@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.13 2001/08/26 14:31:12 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.14 2001/11/27 05:37:02 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -33,6 +33,7 @@
 
 #include <machine/asm.h>		/* END_OF_VECTOR_LIST, etc.	*/
 #include <machine/asm_macro.h>		/* enable/disable interrupts	*/
+#include <machine/mmu.h>
 #include <machine/board.h>		/* m188 bit defines	*/
 #include <machine/cmmu.h>
 #include <machine/cpu_number.h>		/* cpu_number()		*/

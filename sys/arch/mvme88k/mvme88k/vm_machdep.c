@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.38 2001/11/07 22:40:59 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.39 2001/11/27 05:37:02 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -58,6 +58,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/mmu.h>
+#include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
