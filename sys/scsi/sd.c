@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.34 1999/07/22 23:06:51 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.35 1999/07/23 06:17:09 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
@@ -609,7 +609,8 @@ sdstart(v)
 		 *  Fill out the scsi command.  If the transfer will
 		 *  fit in a "small" cdb, use it.
 		 */
-		if (((blkno & 0x1fffff) == blkno) &&
+		if (!(sc_link->flags & SDEV_ATAPI) &&
+		    ((blkno & 0x1fffff) == blkno) &&
 		    ((nblks & 0xff) == nblks)) {
 			/*
 			 * We can fit in a small cdb.
