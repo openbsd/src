@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.14 2002/08/05 14:15:41 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.15 2002/08/07 23:50:40 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -120,6 +120,7 @@
 04/09	J. Presper Eckert born, 1919
 04/10	Commodore Matthew Calbraith Perry born, 1794
 04/10	William Booth born, 1829, founder of the Salvation Army
+04/11	Edsger Wybe Dijkstra was born at Rotterdam, 1930
 04/13	Thomas Jefferson born, 1743
 04/14	Christian Huygen born, 1629, physicist & astronomer;
 		discovered Saturn's rings
@@ -188,6 +189,7 @@
 07/30	Henry Ford born, 1863
 08/01	Herman Melville born, 1819
 08/03	Lenny Bruce dies of a morphine overdose, 1966
+08/06	Edsger Wybe Dijkstra died after a long struggle with cancer, 2002
 08/08	Dustin Hoffman born in Los Angeles, 1937
 08/13	Annie Oakley born, 1860
 08/13	Fidel Castro born, 1926/w7
