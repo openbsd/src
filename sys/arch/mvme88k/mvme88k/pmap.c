@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 2001/11/20 19:54:28 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.45 2001/11/27 05:39:02 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -46,13 +46,13 @@
 /* don't want to make them general yet. */
 #define OMRON_PMAP
 
-/*#define DEBUG 1*/
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/simplelock.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 
@@ -123,6 +123,8 @@ extern vm_offset_t      virtual_avail, virtual_end;
 
 int pmap_con_dbg = CD_NONE;
 #endif /* DEBUG */
+
+struct pool pmappool, pvpool;
 
 caddr_t  vmmap;
 pt_entry_t  *vmpte, *msgbufmap;
@@ -1391,6 +1393,12 @@ pmap_init(void)
 		lock += npages;
 		attr += npages;
 	}
+
+	pool_init(&pmappool, sizeof(struct pmap), 0, 0, 0, "pmappl", 0,
+	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	pool_init(&pvpool, sizeof(pv_entry_t), 0, 0, 0, "pvpl", 0,
+	    NULL, NULL, M_VMPVENT);
+
 	pmap_initialized = TRUE;
 } /* pmap_init() */
 
@@ -1465,8 +1473,7 @@ pmap_create(void)
 
 	CHECK_PMAP_CONSISTENCY("pmap_create");
 
-	p = (struct pmap *)malloc(sizeof(*p), M_VMPMAP, M_WAITOK);
-
+	p = (struct pmap *)pool_get(&pmappool, PR_WAITOK);
 	bzero(p, sizeof(*p));
 	pmap_pinit(p);
 	return (p);
@@ -1699,7 +1706,7 @@ pmap_destroy(pmap_t p)
 
 	if (c == 0) {
 		pmap_release(p);
-		free((caddr_t)p, M_VMPMAP);
+		pool_put(&pmappool, p);
 	}
 
 } /* pmap_destroy() */
@@ -1871,7 +1878,7 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
 				cur = pvl->next;
 				if (cur != PV_ENTRY_NULL) {
 					*pvl = *cur;
-					free((caddr_t)cur, M_VMPVENT);
+					pool_put(&pvpool, cur);
 				} else {
 					pvl->pmap =  PMAP_NULL;
 				}
@@ -1890,7 +1897,7 @@ pmap_remove_range(pmap_t pmap, vm_offset_t s, vm_offset_t e)
 				}
 
 				prev->next = cur->next;
-				free((caddr_t)cur, M_VMPVENT);
+				pool_put(&pvpool, cur);
 			}
 
 			CHECK_PV_LIST(pa, pvl, "pmap_remove_range after");
@@ -2089,7 +2096,7 @@ remove_all_Retry:
 
 		if ((cur = pvl->next) != PV_ENTRY_NULL) {
 			*pvl  = *cur;
-			free((caddr_t)cur, M_VMPVENT);
+			pool_put(&pvpool, cur);
 		} else
 			pvl->pmap = PMAP_NULL;
 
@@ -2723,9 +2730,7 @@ Retry:
 				if (pv_e == PV_ENTRY_NULL) {
 					UNLOCK_PVH(pa);
 					PMAP_UNLOCK(pmap, spl);
-					pv_e = (pv_entry_t) malloc(sizeof *pv_e,
-								   M_VMPVENT,
-								   M_NOWAIT);
+					pv_e = pool_get(&pvpool, PR_NOWAIT);
 					goto Retry;
 				}
 				pv_e->va = va;
@@ -2762,7 +2767,7 @@ Retry:
 	PMAP_UNLOCK(pmap, spl);
 
 	if (pv_e != PV_ENTRY_NULL)
-		free((caddr_t) pv_e, M_VMPVENT);
+		pool_put(&pvpool, pv_e);
 
 	return (KERN_SUCCESS);
 } /* pmap_enter */
