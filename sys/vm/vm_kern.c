@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.17 1995/04/10 16:53:55 mycroft Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.17.6.1 1996/06/13 17:21:28 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -297,9 +297,14 @@ kmem_malloc(map, size, canwait)
 	vm_map_lock(map);
 	if (vm_map_findspace(map, 0, size, &addr)) {
 		vm_map_unlock(map);
-		if (canwait)		/* XXX  should wait */
-			panic("kmem_malloc: %s too small",
-			    map == kmem_map ? "kmem_map" : "mb_map");
+		/*
+		 * Should wait, but that makes no sense since we will
+		 * likely never wake up unless action to free resources
+		 * is taken by the calling subsystem.
+		 *
+		 * We return NULL, and if the caller was able to wait
+		 * then they should take corrective action and retry.
+		 */
 		return (0);
 	}
 	offset = addr - vm_map_min(kmem_map);

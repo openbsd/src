@@ -1,5 +1,5 @@
-/*	$OpenBSD: kern_malloc.c,v 1.5 1996/06/10 07:27:12 deraadt Exp $	*/
-/*	$NetBSD: kern_malloc.c,v 1.15.4.1 1996/06/06 19:14:30 cgd Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.6 1996/06/20 10:53:06 deraadt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -143,6 +143,16 @@ malloc(size, type, flags)
 		va = (caddr_t) kmem_malloc(kmem_map, (vm_size_t)ctob(npg),
 					   !(flags & M_NOWAIT));
 		if (va == NULL) {
+			/*
+			 * Kmem_malloc() can return NULL, even if it can
+			 * wait, if there is no map space avaiable, because
+			 * it can't fix that problem.  Neither can we,
+			 * right now.  (We should release pages which
+			 * are completely free and which are in buckets
+			 * with too many free elements.)
+			 */
+			if ((flags & M_NOWAIT) == 0)
+				panic("malloc: out of space in kmem_map");
 			splx(s);
 			return ((void *) NULL);
 		}
