@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.28 2001/02/06 00:22:24 mickey Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.29 2001/05/15 15:12:54 gluk Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -538,7 +538,8 @@ in_arpinput(m)
 				rt->rt_expire = 1; /* no longer static */
 			}
 		    }
-		} else if (rt->rt_ifp != &ac->ac_if) {
+		} else if (rt->rt_ifp != &ac->ac_if && !(ac->ac_if.if_bridge &&
+		    (rt->rt_ifp->if_bridge == ac->ac_if.if_bridge))) {
 		    log(LOG_WARNING,
 			"arp: attempt to add entry for %s "
 			"on %s by %s on %s\n",
