@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.43 2000/09/29 04:03:13 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.44 2000/09/29 19:00:31 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -184,36 +184,36 @@ tool:
 .Pp
 On the security gateway of subnet A:
 .Bd -literal
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_EXTERNAL_IP 255.255.255.255
          -require -out -src A_EXTERNAL_IP
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK
          -require -out -src A_EXTERNAL_IP
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK
          -require -out -src A_EXTERNAL_IP
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_EXTERNAL_IP 255.255.255.255
          -require -out -src A_EXTERNAL_IP
 
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_BA -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_EXTERNAL_IP 255.255.255.255 
          -require -in -src A_EXTERNAL_IP
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK
          -require -in -src A_EXTERNAL_IP
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK
          -require -in -src A_EXTERNAL_IP
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_EXTERNAL_IP 255.255.255.255
          -require -in -src A_EXTERNAL_IP
@@ -221,36 +221,36 @@ ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
 .Pp
 and on the security gateway of subnet B:
 .Bd -literal
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_EXTERNAL_IP 255.255.255.255
          -out -require -src B_EXTERNAL_IP
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK
          -out -require -src B_EXTERNAL_IP
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK
          -out -require -src B_EXTERNAL_IP
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_EXTERNAL_IP 255.255.255.255
          -out -require -src B_EXTERNAL_IP
 
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_AB -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_EXTERNAL_IP 255.255.255.255
          -in -require -src B_EXTERNAL_IP
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_AB -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK
          -in -require -src B_EXTERNAL_IP
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_AB -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK
          -in -require -src B_EXTERNAL_IP
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_AB -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_EXTERNAL_IP 255.255.255.255
          -in -require -src B_EXTERNAL_IP
@@ -361,71 +361,71 @@ outbound flows, the latter four are the ingress filters for the
 incoming security association):
 .Pp
 .Bd -literal
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -proto esp \e\ 
     -addr 192.168.1.254 255.255.255.255 \e\ 
           192.168.2.1 255.255.255.255 -out -require -src 192.168.1.254
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -proto esp \e\ 
     -addr 10.0.50.0 255.255.255.0 10.0.99.0 255.255.255.0 \e\
     -require -out -src 192.168.1.254
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -proto esp \e\ 
     -addr 192.168.1.254 255.255.255.255 \e\ 
           10.0.99.0 255.255.255.0 -require -out -src 192.168.1.254
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -proto esp \e\ 
     -addr 10.0.50.0 255.255.255.0 192.168.2.1 255.255.255.255 \e\
     -require -out -src 192.168.1.254
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1000 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -proto esp \e\ 
     -addr 192.168.2.1 255.255.255.255 \e\ 
           192.168.1.254 255.255.255.255 -require -in -src 192.168.1.254
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1000 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -proto esp \e\ 
     -addr 10.0.99.0 255.255.255.0 10.0.50.0 255.255.255.0 \e\
     -require -in -src 192.168.1.254
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1000 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -proto esp \e\ 
      -addr 192.168.2.1 255.255.255.255 \e\ 
            10.0.50.0 255.255.255.0 -require -in -src 192.168.1.254
 
-# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1000 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.2.1 -proto esp \e\ 
      -addr 10.0.99.0 255.255.255.0 \e\ 
 	   192.168.1.254 255.255.255.255 -require -in -src 192.168.1.254
 .Ed
 .It
 Create the ipsec flows on machine B:
 .Bd -literal
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -proto esp \e\ 
     -addr 192.168.2.1 255.255.255.255 \e\ 
           192.168.1.254 255.255.255.255 \e\
     -require -out -src 192.168.2.1
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -proto esp \e\ 
     -addr 10.0.99.0 255.255.255.0 10.0.50.0 255.255.255.0 \e\
     -require -out -src 192.168.2.1
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -proto esp \e\ 
      -addr 192.168.2.1 255.255.255.255 \e\ 
            10.0.50.0 255.255.255.0 -require -out -src 192.168.2.1
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -proto esp \e\ 
      -addr 10.0.99.0 255.255.255.0 192.168.1.254 255.255.255.255 \e\
      -require -out -src 192.168.2.1
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1001 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -proto esp \e\ 
     -addr 192.168.1.254 255.255.255.255 \e\ 
           192.168.2.1 255.255.255.255 -require -in -src 192.168.2.1
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1001 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -proto esp \e\ 
     -addr 10.0.50.0 255.255.255.0 10.0.99.0 255.255.255.0 \e\
     -require -in -src 192.168.2.1
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1001 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -proto esp \e\ 
     -addr 192.168.1.254 255.255.255.255 \e\ 
           10.0.99.0 255.255.255.0 -require -in -src 192.168.2.1
 
-# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1001 -proto esp \e\ 
+# /sbin/ipsecadm flow -dst 192.168.1.254 -proto esp \e\ 
     -addr 10.0.50.0 255.255.255.0 192.168.2.1 255.255.255.255 \e\
     -require -in -src 192.168.2.1
 .Ed
