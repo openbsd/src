@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.141 2004/08/10 14:06:53 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.142 2004/08/12 10:24:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -915,7 +915,7 @@ rde_attr_parse(u_char *p, u_int16_t len, struct rde_aspath *a, int ebgp,
 		if (IN_MULTICAST(tmp32) || IN_BADCLASS(tmp32))
 			return (-1);
 
-		a->nexthop = nexthop_get(&nexthop, NULL);
+		a->nexthop = nexthop_get(&nexthop);
 		break;
 	case ATTR_MED:
 		if (attr_len != 4)
@@ -1191,7 +1191,7 @@ int
 rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
     struct rde_aspath *asp)
 {
-	struct bgpd_addr	nexthop, llnh, *lp;
+	struct bgpd_addr	nexthop;
 	u_int8_t		totlen, nhlen;
 
 	if (len == 0)
@@ -1205,27 +1205,23 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int16_t afi,
 		return (-1);
 
 	bzero(&nexthop, sizeof(nexthop));
-	bzero(&llnh, sizeof(llnh));
 	switch (afi) {
 	case AFI_IPv6:
+		/* 
+		 * RFC2545 describes that there may be a link-local
+		 * address carried in nexthop. Yikes!
+		 * This is not only silly, it is wrong and we just ignore
+		 * this link-local nexthop. The bgpd session doesn't run
+		 * over the link-local address so why should all other
+		 * traffic.
+		 */
 		if (nhlen != 16 && nhlen != 32) {
 			log_warnx("bad multiprotocol nexthop, bad size");
 			return (-1);
 		}
 		nexthop.af = AF_INET6;
 		memcpy(&nexthop.v6.s6_addr, data, 16);
-		lp = NULL;
-		if (nhlen == 32) {
-			/* 
-			 * rfc 2545 describes that there may be a link local
-			 * address carried in nexthop. Yikes.
-			 */
-			llnh.af = AF_INET6;
-			memcpy(&llnh.v6.s6_addr, data, 16);
-			/* XXX we need to set the scope_id */
-			lp = &llnh;
-		}
-		asp->nexthop = nexthop_get(&nexthop, lp);
+		asp->nexthop = nexthop_get(&nexthop);
 
 		totlen += nhlen;
 		data += nhlen;
@@ -1629,9 +1625,8 @@ rde_send_pftable_commit(void)
  * nexthop specific functions
  */
 void
-rde_send_nexthop(struct bgpd_addr *next, struct bgpd_addr *ll, int valid)
+rde_send_nexthop(struct bgpd_addr *next, int valid)
 {
-	struct buf		*wbuf;
 	size_t			 size;
 	int			 type;
 
@@ -1640,20 +1635,11 @@ rde_send_nexthop(struct bgpd_addr *next, struct bgpd_addr *ll, int valid)
 	else
 		type = IMSG_NEXTHOP_REMOVE;
 
-	if (ll == NULL)
-		size = sizeof(struct bgpd_addr);
-	else
-		size = 2 * sizeof(struct bgpd_addr);
+	size = sizeof(struct bgpd_addr);
 
-	if ((wbuf = imsg_create(&ibuf_main, type, 0, size)) == NULL)
-		fatal("imsg_create error");
-	if (imsg_add(wbuf, next, sizeof(struct bgpd_addr)) == -1)
-		fatal("imsg_add error");
-	if (ll != NULL)
-		if (imsg_add(wbuf, ll, sizeof(struct bgpd_addr)) == -1)
-			fatal("imsg_add error");
-	if (imsg_close(&ibuf_main, wbuf) == -1)
-		fatal("imsg_close error");
+	if (imsg_compose(&ibuf_main, type, 0, next,
+	    sizeof(struct bgpd_addr)) == -1)
+		fatal("imsg_compose error");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.53 2004/08/10 13:02:08 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.54 2004/08/12 10:24:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -237,7 +237,7 @@ struct prefix {
 /* prototypes */
 /* rde.c */
 void		 rde_send_kroute(struct prefix *, struct prefix *);
-void		 rde_send_nexthop(struct bgpd_addr *, struct bgpd_addr *, int);
+void		 rde_send_nexthop(struct bgpd_addr *, int);
 void		 rde_send_pftable(const char *, struct bgpd_addr *,
 		     u_int8_t, int);
 void		 rde_send_pftable_commit(void);
@@ -313,7 +313,7 @@ void		 nexthop_modify(struct rde_aspath *, struct bgpd_addr *, int,
 void		 nexthop_link(struct rde_aspath *);
 void		 nexthop_unlink(struct rde_aspath *);
 void		 nexthop_update(struct kroute_nexthop *);
-struct nexthop	*nexthop_get(struct bgpd_addr *, struct bgpd_addr *);
+struct nexthop	*nexthop_get(struct bgpd_addr *);
 int		 nexthop_compare(struct nexthop *, struct nexthop *);
 
 /* rde_decide.c */

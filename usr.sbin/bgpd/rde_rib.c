@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.56 2004/08/10 13:02:08 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.57 2004/08/12 10:24:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -745,7 +745,7 @@ nexthop_modify(struct rde_aspath *asp, struct bgpd_addr *nexthop, int flags,
 	    af != nexthop->af)
 		return;
 
-	nh = nexthop_get(nexthop, NULL);
+	nh = nexthop_get(nexthop);
 	nexthop_unlink(asp);
 	asp->nexthop = nh;
 	nexthop_link(asp);
@@ -776,18 +776,14 @@ nexthop_unlink(struct rde_aspath *asp)
 
 	if (LIST_EMPTY(&nh->path_h)) {
 		LIST_REMOVE(nh, nexthop_l);
-		if (nh->flags & NEXTHOP_LINKLOCAL)
-			rde_send_nexthop(&nh->exit_nexthop,
-			    &nh->true_nexthop, 0);
-		else
-			rde_send_nexthop(&nh->exit_nexthop, NULL, 0);
+		rde_send_nexthop(&nh->exit_nexthop, 0);
 
 		free(nh);
 	}
 }
 
 struct nexthop *
-nexthop_get(struct bgpd_addr *nexthop, struct bgpd_addr *ll)
+nexthop_get(struct bgpd_addr *nexthop)
 {
 	struct nexthop	*nh;
 
@@ -800,30 +796,10 @@ nexthop_get(struct bgpd_addr *nexthop, struct bgpd_addr *ll)
 		LIST_INIT(&nh->path_h);
 		nh->state = NEXTHOP_LOOKUP;
 		nh->exit_nexthop = *nexthop;
-		if (ll) {
-			/*
-			 * The link local address should be used as nexthop
-			 * if available but acctualy it does not care.
-			 * There is only one link local address per nexthop
-			 * if any. Therefor the key is still the nexthop.
-			 */
-			/*
-			 * XXX unsure if this is the correct way. BTW.
-			 * For link local address the scope is needed.
-			 * I think we should use some nice hack with the kroute
-			 * code and the nexthop updates to fix that.
-			 */
-			memcpy(&nh->true_nexthop, ll, sizeof(struct bgpd_addr));
-			nh->flags |= NEXTHOP_LINKLOCAL;
-		}
 		LIST_INSERT_HEAD(nexthop_hash(nexthop), nh,
 		    nexthop_l);
 
-		if (nh->flags & NEXTHOP_LINKLOCAL)
-			rde_send_nexthop(&nh->exit_nexthop,
-			    &nh->true_nexthop, 1);
-		else
-			rde_send_nexthop(&nh->exit_nexthop, NULL, 1);
+		rde_send_nexthop(&nh->exit_nexthop, 1);
 	}
 
 	return (nh);
