@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.32 2003/06/30 02:52:09 avsm Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.33 2003/07/09 02:09:08 krw Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -133,6 +133,10 @@ void sis_read_cmos(struct sis_softc *, struct pci_attach_args *, caddr_t, int, i
 void sis_read_mac(struct sis_softc *, struct pci_attach_args *);
 void sis_read_eeprom(struct sis_softc *, caddr_t, int, int, int);
 
+void sis_mii_sync(struct sis_softc *);
+void sis_mii_send(struct sis_softc *, u_int32_t, int);
+int sis_mii_readreg(struct sis_softc *, struct sis_mii_frame *);
+int sis_mii_writereg(struct sis_softc *, struct sis_mii_frame *);
 int sis_miibus_readreg(struct device *, int, int);
 void sis_miibus_writereg(struct device *, int, int, int);
 void sis_miibus_statchg(struct device *);
@@ -358,12 +362,197 @@ void sis_read_mac(sc, pa)
 	SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ENABLE);
 }
 
+/*
+ * Sync the PHYs by setting data bit and strobing the clock 32 times.
+ */
+void sis_mii_sync(sc)
+	struct sis_softc	*sc;
+{
+	register int		i;
+ 
+ 	SIO_SET(SIS_MII_DIR|SIS_MII_DATA);
+ 
+ 	for (i = 0; i < 32; i++) {
+ 		SIO_SET(SIS_MII_CLK);
+ 		DELAY(1);
+ 		SIO_CLR(SIS_MII_CLK);
+ 		DELAY(1);
+ 	}
+ 
+ 	return;
+}
+ 
+/*
+ * Clock a series of bits through the MII.
+ */
+void sis_mii_send(sc, bits, cnt)
+	struct sis_softc	*sc;
+	u_int32_t		bits;
+	int			cnt;
+{
+	int			i;
+ 
+	SIO_CLR(SIS_MII_CLK);
+ 
+	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
+		if (bits & i) {
+			SIO_SET(SIS_MII_DATA);
+		} else {
+			SIO_CLR(SIS_MII_DATA);
+		}
+		DELAY(1);
+		SIO_CLR(SIS_MII_CLK);
+		DELAY(1);
+		SIO_SET(SIS_MII_CLK);
+	}
+}
+ 
+/*
+ * Read an PHY register through the MII.
+ */
+int sis_mii_readreg(sc, frame)
+	struct sis_softc	*sc;
+	struct sis_mii_frame	*frame;
+ 	
+{
+	int			i, ack, s;
+ 
+	s = splimp();
+ 
+	/*
+	 * Set up frame for RX.
+	 */
+	frame->mii_stdelim = SIS_MII_STARTDELIM;
+	frame->mii_opcode = SIS_MII_READOP;
+	frame->mii_turnaround = 0;
+	frame->mii_data = 0;
+ 	
+	/*
+ 	 * Turn on data xmit.
+	 */
+	SIO_SET(SIS_MII_DIR);
+
+	sis_mii_sync(sc);
+ 
+	/*
+	 * Send command/address info.
+	 */
+	sis_mii_send(sc, frame->mii_stdelim, 2);
+	sis_mii_send(sc, frame->mii_opcode, 2);
+	sis_mii_send(sc, frame->mii_phyaddr, 5);
+	sis_mii_send(sc, frame->mii_regaddr, 5);
+ 
+	/* Idle bit */
+	SIO_CLR((SIS_MII_CLK|SIS_MII_DATA));
+	DELAY(1);
+	SIO_SET(SIS_MII_CLK);
+	DELAY(1);
+ 
+	/* Turn off xmit. */
+	SIO_CLR(SIS_MII_DIR);
+ 
+	/* Check for ack */
+	SIO_CLR(SIS_MII_CLK);
+	DELAY(1);
+	ack = CSR_READ_4(sc, SIS_EECTL) & SIS_MII_DATA;
+	SIO_SET(SIS_MII_CLK);
+	DELAY(1);
+ 
+	/*
+	 * Now try reading data bits. If the ack failed, we still
+	 * need to clock through 16 cycles to keep the PHY(s) in sync.
+	 */
+	if (ack) {
+		for(i = 0; i < 16; i++) {
+			SIO_CLR(SIS_MII_CLK);
+			DELAY(1);
+			SIO_SET(SIS_MII_CLK);
+			DELAY(1);
+		}
+		goto fail;
+	}
+ 
+	for (i = 0x8000; i; i >>= 1) {
+		SIO_CLR(SIS_MII_CLK);
+		DELAY(1);
+		if (!ack) {
+			if (CSR_READ_4(sc, SIS_EECTL) & SIS_MII_DATA)
+				frame->mii_data |= i;
+			DELAY(1);
+		}
+		SIO_SET(SIS_MII_CLK);
+		DELAY(1);
+	}
+
+fail:
+
+	SIO_CLR(SIS_MII_CLK);
+	DELAY(1);
+	SIO_SET(SIS_MII_CLK);
+	DELAY(1);
+
+	splx(s);
+
+	if (ack)
+		return(1);
+	return(0);
+}
+ 
+/*
+ * Write to a PHY register through the MII.
+ */
+int sis_mii_writereg(sc, frame)
+	struct sis_softc	*sc;
+	struct sis_mii_frame	*frame;
+	
+{
+	int			s;
+ 
+	 s = splimp();
+ 	/*
+ 	 * Set up frame for TX.
+ 	 */
+ 
+ 	frame->mii_stdelim = SIS_MII_STARTDELIM;
+ 	frame->mii_opcode = SIS_MII_WRITEOP;
+ 	frame->mii_turnaround = SIS_MII_TURNAROUND;
+ 	
+ 	/*
+  	 * Turn on data output.
+ 	 */
+ 	SIO_SET(SIS_MII_DIR);
+ 
+ 	sis_mii_sync(sc);
+ 
+ 	sis_mii_send(sc, frame->mii_stdelim, 2);
+ 	sis_mii_send(sc, frame->mii_opcode, 2);
+ 	sis_mii_send(sc, frame->mii_phyaddr, 5);
+ 	sis_mii_send(sc, frame->mii_regaddr, 5);
+ 	sis_mii_send(sc, frame->mii_turnaround, 2);
+ 	sis_mii_send(sc, frame->mii_data, 16);
+ 
+ 	/* Idle bit. */
+ 	SIO_SET(SIS_MII_CLK);
+ 	DELAY(1);
+ 	SIO_CLR(SIS_MII_CLK);
+ 	DELAY(1);
+ 
+ 	/*
+ 	 * Turn off xmit.
+ 	 */
+ 	SIO_CLR(SIS_MII_DIR);
+ 
+ 	splx(s);
+ 
+ 	return(0);
+}
+
 int sis_miibus_readreg(self, phy, reg)
 	struct device		*self;
 	int			phy, reg;
 {
 	struct sis_softc	*sc = (struct sis_softc *)self;
-	int			i, val = 0;
+	struct sis_mii_frame    frame;
 
 	if (sc->sis_type == SIS_TYPE_83815) {
 		if (phy != 0)
@@ -380,41 +569,60 @@ int sis_miibus_readreg(self, phy, reg)
 		 */
 		if (!CSR_READ_4(sc, NS_BMSR))
 			DELAY(1000);
-		val = CSR_READ_4(sc, NS_BMCR + (reg * 4));
-		return(val);
+		return CSR_READ_4(sc, NS_BMCR + (reg * 4));
 	}
 
+	/*
+	 * Chipsets < SIS_635 seem not to be able to read/write
+	 * through mdio. Use the enhanced PHY access register
+	 * again for them.
+	 */
 	if (sc->sis_type == SIS_TYPE_900 &&
-	    sc->sis_rev < SIS_REV_635 && phy != 0)
-		return(0);
+	    sc->sis_rev < SIS_REV_635) {
+		int i, val = 0;
 
-	CSR_WRITE_4(sc, SIS_PHYCTL, (phy << 11) | (reg << 6) | SIS_PHYOP_READ);
-	SIS_SETBIT(sc, SIS_PHYCTL, SIS_PHYCTL_ACCESS);
+		if (phy != 0)
+			return(0);
 
-	for (i = 0; i < SIS_TIMEOUT; i++) {
-		if (!(CSR_READ_4(sc, SIS_PHYCTL) & SIS_PHYCTL_ACCESS))
-			break;
+		CSR_WRITE_4(sc, SIS_PHYCTL,
+		    (phy << 11) | (reg << 6) | SIS_PHYOP_READ);
+		SIS_SETBIT(sc, SIS_PHYCTL, SIS_PHYCTL_ACCESS);
+
+		for (i = 0; i < SIS_TIMEOUT; i++) {
+			if (!(CSR_READ_4(sc, SIS_PHYCTL) & SIS_PHYCTL_ACCESS))
+				break;
+		}
+
+		if (i == SIS_TIMEOUT) {
+			printf("%s: PHY failed to come ready\n",
+			    sc->sc_dev.dv_xname);
+			return(0);
+		}
+
+		val = (CSR_READ_4(sc, SIS_PHYCTL) >> 16) & 0xFFFF;
+
+		if (val == 0xFFFF)
+			return(0);
+
+		return(val);
+	} else {
+		bzero((char *)&frame, sizeof(frame));
+
+		frame.mii_phyaddr = phy;
+		frame.mii_regaddr = reg;
+		sis_mii_readreg(sc, &frame);
+
+		return(frame.mii_data);
 	}
-
-	if (i == SIS_TIMEOUT) {
-		printf("%s: PHY failed to come ready\n", sc->sc_dev.dv_xname);
-		return(0);
-	}
-
-	val = (CSR_READ_4(sc, SIS_PHYCTL) >> 16) & 0xFFFF;
-
-	if (val == 0xFFFF)
-		return(0);
-
-	return(val);
 }
+
 
 void sis_miibus_writereg(self, phy, reg, data)
 	struct device		*self;
 	int			phy, reg, data;
 {
 	struct sis_softc	*sc = (struct sis_softc *)self;
-	int			i;
+	struct sis_mii_frame	frame;
 
 	if (sc->sis_type == SIS_TYPE_83815) {
 		if (phy != 0)
@@ -423,25 +631,43 @@ void sis_miibus_writereg(self, phy, reg, data)
 		return;
 	}
 
-	if (sc->sis_type == SIS_TYPE_900 && phy != 0)
-		return;
+	/*
+	 * Chipsets < SIS_635 seem not to be able to read/write
+	 * through mdio. Use the enhanced PHY access register
+	 * again for them.
+	 */
+	if (sc->sis_type == SIS_TYPE_900 &&
+	    sc->sis_rev < SIS_REV_635) {
+		int i;
 
-	CSR_WRITE_4(sc, SIS_PHYCTL, (data << 16) | (phy << 11) |
-	    (reg << 6) | SIS_PHYOP_WRITE);
-	SIS_SETBIT(sc, SIS_PHYCTL, SIS_PHYCTL_ACCESS);
+		if (phy != 0)
+			return;
 
-	for (i = 0; i < SIS_TIMEOUT; i++) {
-		if (!(CSR_READ_4(sc, SIS_PHYCTL) & SIS_PHYCTL_ACCESS))
-			break;
+		CSR_WRITE_4(sc, SIS_PHYCTL, (data << 16) | (phy << 11) |
+		    (reg << 6) | SIS_PHYOP_WRITE);
+		SIS_SETBIT(sc, SIS_PHYCTL, SIS_PHYCTL_ACCESS);
+
+		for (i = 0; i < SIS_TIMEOUT; i++) {
+			if (!(CSR_READ_4(sc, SIS_PHYCTL) & SIS_PHYCTL_ACCESS))
+				break;
+		}
+
+		if (i == SIS_TIMEOUT)
+			printf("%s: PHY failed to come ready\n",
+			    sc->sc_dev.dv_xname);
+	} else {
+		bzero((char *)&frame, sizeof(frame));
+
+		frame.mii_phyaddr = phy;
+		frame.mii_regaddr = reg;
+		frame.mii_data = data;
+		sis_mii_writereg(sc, &frame);
 	}
-
-	if (i == SIS_TIMEOUT)
-		printf("%s: PHY failed to come ready\n", sc->sc_dev.dv_xname);
-
 	return;
 }
 
-void sis_miibus_statchg(self)
+void
+sis_miibus_statchg(self)
 	struct device		*self;
 {
 	struct sis_softc	*sc = (struct sis_softc *)self;
@@ -676,7 +902,7 @@ void sis_attach(parent, self, aux)
 
 			/* Reset the power state. */
 			printf("%s: chip is in D%d power mode -- setting to D0\n",
-				sc->sc_dev.dv_xname, command & SIS_PSTATE_MASK);
+			    sc->sc_dev.dv_xname, command & SIS_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
 			pci_conf_write(pc, pa->pa_tag, SIS_PCI_PWRMGMTCTRL, command);
 
@@ -1012,14 +1238,14 @@ int sis_newbuf(sc, c, m)
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
 			printf("%s: no memory for rx list -- packet dropped!\n",
-				sc->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 			return(ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			printf("%s: no memory for rx list -- packet dropped!\n",
-				sc->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return(ENOBUFS);
 		}
@@ -1481,7 +1707,7 @@ void sis_init(xsc)
 	/* Init circular RX list. */
 	if (sis_list_rx_init(sc) == ENOBUFS) {
 		printf("%s: initialization failed: no memory for rx buffers\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		sis_stop(sc);
 		splx(s);
 		return;

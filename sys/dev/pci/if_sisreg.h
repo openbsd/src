@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.12 2003/06/30 02:52:09 avsm Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.13 2003/07/09 02:09:08 krw Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -119,6 +119,10 @@
 #define SIS_EECTL_DOUT		0x00000002
 #define SIS_EECTL_CLK		0x00000004
 #define SIS_EECTL_CSEL		0x00000008
+
+#define	SIS_MII_CLK		0x00000040
+#define	SIS_MII_DIR		0x00000020
+#define	SIS_MII_DATA		0x00000010
 
 #define SIS_EECMD_WRITE		0x140
 #define SIS_EECMD_READ		0x180
@@ -379,6 +383,23 @@ struct sis_type {
 	u_int16_t		sis_did;
 	char			*sis_name;
 };
+
+struct sis_mii_frame {
+	u_int8_t		mii_stdelim;
+	u_int8_t		mii_opcode;
+	u_int8_t		mii_phyaddr;
+	u_int8_t		mii_regaddr;
+	u_int8_t		mii_turnaround;
+	u_int16_t		mii_data;
+};
+
+/*
+ * MII constants
+ */
+#define	SIS_MII_STARTDELIM	0x01
+#define	SIS_MII_READOP		0x02
+#define	SIS_MII_WRITEOP		0x01
+#define	SIS_MII_TURNAROUND	0x02
 
 #define SIS_TYPE_900	1
 #define SIS_TYPE_7016	2

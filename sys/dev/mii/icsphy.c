@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.10 2003/02/19 10:12:55 miod Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.11 2003/07/09 02:09:08 krw Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -136,16 +136,22 @@ icsphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	char *model = "?";
 
-        if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxICS &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxICS_1890)
-	       	printf(": %s, rev. %d\n", MII_STR_xxICS_1890,
-	          MII_REV(ma->mii_id2));
+        if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxICS)
+		switch (MII_MODEL(ma->mii_id2)) {
+		case MII_MODEL_xxICS_1890:
+			model = MII_STR_xxICS_1890;
+			break;
+		case MII_MODEL_xxICS_1892:
+			model = MII_STR_xxICS_1892;
+			break;
+		case MII_MODEL_xxICS_1893:
+			model = MII_STR_xxICS_1893;
+			break;
+		}
 
-        if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxICS &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxICS_1892)
-	       	printf(": %s, rev. %d\n", MII_STR_xxICS_1892,
-	          MII_REV(ma->mii_id2));
+	printf(": %s, rev. %d\n", model, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
