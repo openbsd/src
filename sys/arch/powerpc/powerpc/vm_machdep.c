@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2001/06/27 04:37:22 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2001/06/29 06:07:09 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof cseg);
 	chdr->c_cpusize = sizeof md_core;
 
-	process_read_regs(p, &md_core);
+	process_read_regs(p, &(md_core.regs));
 	
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ZERO, CORE_CPU);
 	cseg.c_addr = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.h,v 1.2 2001/03/29 18:41:49 drahn Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.3 2001/06/29 06:07:08 drahn Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-
@@ -168,5 +168,13 @@ typedef struct adb_listencmd_s{
 #define ADBIOCLISTENCMD		_IOW('A', 133, adb_listencmd_t)
 
 void	adb_init __P((void));
+
+#ifdef _KERNEL
+int	adb_poweroff __P((void));
+void	adb_restart __P((void));
+int	CountADBs __P((void));
+void	ADBReInit __P((void));
+int	adb_read_date_time __P((unsigned long *));
+#endif
 
 #endif /* _ADBSYS_MACHINE_ */

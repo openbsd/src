@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.2 1998/08/07 02:22:06 rahnds Exp $	*/
+/*	$OpenBSD: reg.h,v 1.3 2001/06/29 06:07:09 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -59,4 +59,5 @@ struct reg {
 	u_int32_t xer;
 	u_int32_t mq;
 };
+int process_read_regs __P((struct proc *p, struct reg *regs));
 #endif /* !_POWERPC_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.9 2001/06/24 23:26:29 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.10 2001/06/29 06:07:09 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -37,6 +37,10 @@
 
 #include <machine/pte.h>
 
+/*
+ * FUCK 
+#define PMAP_NEW
+ */
 /*
  * Segment registers
  */
@@ -80,11 +84,19 @@ extern struct pmap kernel_pmap_;
 int ptebits(paddr_t pa, int bit);
 
 
-#define pmap_clear_modify(pa)		(ptemodify((pa), PTE_CHG, 0))
-#define	pmap_clear_reference(pa)	(ptemodify((pa), PTE_REF, 0))
-#define	pmap_is_modified(pa)		(ptebits((pa), PTE_CHG))
-#define	pmap_is_referenced(pa)		(ptebits((pa), PTE_REF))
+#ifdef PMAP_NEW
+#define pmap_clear_modify(page)	 (ptemodify((page)->phys_addr, PTE_CHG, 0))
+#define	pmap_clear_reference(page) (ptemodify((page)->phys_addr, PTE_REF, 0))
+#define	pmap_is_modified(page)	 (ptebits((page)->phys_addr, PTE_CHG))
+#define	pmap_is_referenced(page) (ptebits((page)->phys_addr, PTE_REF))
 #define	pmap_unwire(pm, va)
+#else
+#define pmap_clear_modify(pa)	 (ptemodify((pa), PTE_CHG, 0))
+#define	pmap_clear_reference(pa) (ptemodify((pa), PTE_REF, 0))
+#define	pmap_is_modified(pa)	 (ptebits((pa), PTE_CHG))
+#define	pmap_is_referenced(pa) (ptebits((pa), PTE_REF))
+#define	pmap_unwire(pm, va)
+#endif
 
 #define	pmap_phys_address(x)		(x)
 
@@ -100,9 +112,10 @@ int ptebits(paddr_t pa, int bit);
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
 
-void pmap_deactivate(struct proc *p);
-void pmap_activate(struct proc *p);
-void pmap_real_memory(vm_offset_t *start, vm_size_t *size);
+void pmap_deactivate __P((struct proc *p));
+void pmap_activate __P((struct proc *p));
+void pmap_real_memory __P((vm_offset_t *start, vm_size_t *size));
+void switchexit __P((struct proc *));
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.4 1998/08/25 07:44:21 pefo Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.5 2001/06/29 06:07:09 drahn Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -67,5 +67,6 @@ struct md_coredump {
 extern struct pcb *curpcb;
 extern struct pmap *curpm;
 extern struct proc *fpuproc;
+int  setfault __P((faultbuf env));
 #endif
 #endif	/* _MACHINE_PCB_H_ */
