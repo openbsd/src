@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.14 2003/06/21 21:01:15 dhartmei Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.15 2005/03/11 15:54:11 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.14 2003/06/21 21:01:15 dhartmei Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.15 2005/03/11 15:54:11 dhartmei Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -66,8 +66,6 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	const struct ip6_hdr *ip6;
 #endif
 	const struct pfloghdr *hdr;
-	u_int32_t res;
-	char reason[128], *why;
 	u_int8_t af;
 
 	ts_print(&h->ts);
@@ -101,17 +99,23 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 
 	hdr = (struct pfloghdr *)p;
 	if (eflag) {
-		res = hdr->reason;
-		why = (res < PFRES_MAX) ? pf_reasons[res] : "unkn";
-
-		snprintf(reason, sizeof(reason), "%d(%s)", res, why);
-
-		if (ntohl(hdr->subrulenr) == (u_int32_t) -1)
-			printf("rule %u/%s: ",
-			   ntohl(hdr->rulenr), reason);
+		printf("rule ");
+		if (ntohl(hdr->rulenr) == (u_int32_t) -1)
+			printf("def");
+		else {
+			printf("%u", ntohl(hdr->rulenr));
+			if (hdr->ruleset[0]) {
+				printf(".%s", hdr->ruleset);
+				if (ntohl(hdr->subrulenr) == (u_int32_t) -1)
+					printf(".def");
+				else
+					printf(".%u", ntohl(hdr->subrulenr));
+			}
+		}
+		if (hdr->reason < PFRES_MAX)
+			printf("/(%s) ", pf_reasons[hdr->reason]);
 		else
-			printf("rule %u.%s.%u/%s: ", ntohl(hdr->rulenr),
-			    hdr->ruleset, ntohl(hdr->subrulenr), reason);
+			printf("/(unkn %u) ", (unsigned)hdr->reason);
 
 		switch (hdr->action) {
 		case PF_SCRUB:
