@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.4 2003/05/22 19:30:44 mickey Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.5 2003/05/25 16:32:59 mickey Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -227,15 +227,19 @@ probe_readtmo(bus_space_tag_t iot, bus_space_handle_t ioh, int *reply)
 
 	if (bus_space_read_1(iot, ioh, KBSTATP) & (KBS_PERR | KBS_TERR)) {
 		if (!(bus_space_read_1(iot, ioh, KBSTATP) & KBS_DIB)) {
-			bus_space_write_1(iot, ioh, KBRESETP, 0);
-			bus_space_write_1(iot, ioh, KBCMDP, KBCP_ENABLE);
+			bus_space_write_1(iot, ioh, KBRESETP, 0xff);
+			bus_space_write_1(iot, ioh, KBRESETP, 0x00);
+			bus_space_write_1(iot, ioh, KBCMDP,
+			    bus_space_read_1(iot, ioh, KBCMDP) | KBCP_ENABLE);
 			return (PROBE_TIMEOUT);
 		}
 
 		*reply = bus_space_read_1(iot, ioh, KBDATAP);
 		if (!(bus_space_read_1(iot, ioh, KBSTATP) & KBS_DIB)) {
-			bus_space_write_1(iot, ioh, KBRESETP, 0);
-			bus_space_write_1(iot, ioh, KBCMDP, KBCP_ENABLE);
+			bus_space_write_1(iot, ioh, KBRESETP, 0xff);
+			bus_space_write_1(iot, ioh, KBRESETP, 0x00);
+			bus_space_write_1(iot, ioh, KBCMDP,
+			    bus_space_read_1(iot, ioh, KBCMDP) | KBCP_ENABLE);
 			if (probe_sendtmo(iot, ioh, KBR_RESEND))
 				return (PROBE_TIMEOUT);
 			else
