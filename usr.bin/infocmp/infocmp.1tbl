@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: infocmp.1tbl,v 1.7 2000/03/13 23:53:41 millert Exp $
+.\" $OpenBSD: infocmp.1tbl,v 1.8 2000/03/26 16:45:04 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: infocmp.1m,v 1.23 2000/03/12 02:52:56 tom Exp $
+.\" $From: infocmp.1m,v 1.24 2000/03/19 03:03:31 tom Exp $
 .TH infocmp 1 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -223,15 +223,19 @@ by also specifying \fB-r\fR.
 \fB-G\fR
 Display constant literals in decimal form
 rather than their character equivalents.
+.TP
+\fB-a\fR
+tells \fBinfocmp\fP to retain commented-out capabilities rather than discarding
+them.  Capabilities are commented by prefixing them with a period.
 .TP 5
 \fB-q\fR
 Make the comparison listing shorter by omitting subheadings, and using
-"-" for absent capabilities, "@" for cancelled rather than "NULL".
+"-" for absent capabilities, "@" for canceled rather than "NULL".
 .TP 5
 \fB-R\fR\fIsubset\fR
 Restrict output to a given subset.  This option is for use with archaic
-versions of terminfo like those on SVr1, Ultrix, or HP/UX that don't support
-the full set of SVR4/XSI Curses terminfo; and outright broken ports like AIX
+versions of terminfo like those on SVr1, Ultrix, or HP/UX that do not support
+the full set of SVR4/XSI Curses terminfo; and variants such as AIX
 that have their own extensions incompatible with SVr4/XSI.  Available terminfo
 subsets are "SVr1", "Ultrix", "HP", and "AIX"; see \fBterminfo\fR(\*n) for
 details.  You can also choose the subset "BSD" which selects only capabilities
@@ -345,6 +349,7 @@ The
 \fB-G\fR,
 \fB-R\fR,
 \fB-T\fR,
+\fB-a\fR,
 \fB-e\fR,
 \fB-f\fR,
 \fB-g\fR,

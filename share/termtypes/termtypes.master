@@ -1,13 +1,13 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.19 2000/03/23 14:29:35 millert Exp $
+# $OpenBSD: termtypes.master,v 1.20 2000/03/26 16:45:00 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
 #	bug-ncurses@gnu.org
 #
 #	Version 10.2.1
-#	Date: 2000/03/19 23:06:50
+#	Date: 2000/03/26 00:53:29
 #	terminfo syntax
 #
 #	Eric S. Raymond		(current maintainer)
@@ -393,6 +393,7 @@ klone+color|color control for ansi.sys and ISO6429-compatible displays,
 # This is better than klone+color, it doesn't assume white-on-black as the
 # default color pair,  but many `ANSI' terminals don't grok the <op> cap.
 ecma+color|color control for ECMA-48-compatible terminals, 
+	AX, 
 	colors#8, ncv#3, pairs#64, 
 	op=\E[39;49m, setab=\E[4%p1%dm, setaf=\E[3%p1%dm, 
 
@@ -2274,11 +2275,8 @@ z340-nam|zstem vt340 terminal emulator 132col 42line (no automatic margins),
 # CRT is shareware.  It implements some xterm features, including mouse.
 crt|crt-vt220|CRT 2.3 emulating VT220, 
 	bce, msgr, 
-	colors#8, pairs#64, 
-	hts=\EH, op=\E[39;49m, setab=\E[4%p1%dm, 
-	setaf=\E[3%p1%dm, setb=\E[4%p1%dm, setf=\E[3%p1%dm, 
-	u6=\E[%i%d;%dR, u7=\E[6n, u8=\E[?1;2c, u9=\E[c, 
-	use=vt220, 
+	ncv@, 
+	hts=\EH, u6=\E[%i%d;%dR, u7=\E[6n, u8=\E[?1;2c, u9=\E[c, use=vt220, use=ecma+color, 
 
 # This entry is for Tera Term Pro version 2.3, for MS-Windows 95/NT written by
 # T. Teranishi dated Mar 10, 1998.  It is a free software terminal emulator
@@ -2442,7 +2440,7 @@ xterm-r6|xterm-old|xterm X11R6 version,
 # The name has been changed and some aliases have been removed.
 xterm-xf86-v32|xterm terminal emulator (XFree86 3.2 Window System), 
 	OTbs, am, bce, km, mir, msgr, xenl, 
-	colors#8, cols#80, it#8, lines#24, pairs#64, 
+	cols#80, it#8, lines#24, ncv@, 
 	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
 	bel=^G, bold=\E[1m, cbt=\E[Z, civis=\E[?25l, 
 	clear=\E[H\E[2J, cnorm=\E[?25h, cr=^M, 
@@ -2464,11 +2462,10 @@ xterm-xf86-v32|xterm terminal emulator (XFree86 3.2 Window System),
 	kf4=\E[14~, kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, 
 	kf9=\E[20~, kfnd=\E[1~, khome=\EOH, kich1=\E[2~, 
 	kmous=\E[M, knp=\E[6~, kpp=\E[5~, kslt=\E[4~, meml=\El, 
-	memu=\Em, op=\E[39;49m, rc=\E8, rev=\E[7m, ri=\EM, rmacs=^O, 
-	rmam=\E[?7l, rmcup=\E[2J\E[?47l\E8, rmir=\E[4l, 
-	rmkx=\E[?1l\E>, rmso=\E[27m, rmul=\E[24m, rs1=^O, 
+	memu=\Em, rc=\E8, rev=\E[7m, ri=\EM, rmacs=^O, rmam=\E[?7l, 
+	rmcup=\E[2J\E[?47l\E8, rmir=\E[4l, rmkx=\E[?1l\E>, 
+	rmso=\E[27m, rmul=\E[24m, rs1=^O, 
 	rs2=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>, sc=\E7, 
-	setab=\E[4%p1%dm, setaf=\E[3%p1%dm, 
 	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m, 
 	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m, 
 	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;, 
@@ -2476,6 +2473,7 @@ xterm-xf86-v32|xterm terminal emulator (XFree86 3.2 Window System),
 	smir=\E[4h, smkx=\E[?1h\E=, smso=\E[7m, smul=\E[4m, 
 	tbc=\E[3g, u6=\E[%i%d;%dR, u7=\E[6n, u8=\E[?1;2c, u9=\E[c, 
 	vpa=\E[%i%p1%dd, 
+	use=ecma+color, 
 
 # This is the stock xterm entry supplied with XFree86 3.3, which uses VT100
 # codes for F1-F4 except while in VT220 mode.
@@ -2660,9 +2658,9 @@ xterm-bold|xterm terminal emulator (X11R6 Window System) standout w/bold,
 kterm|kterm kanji terminal emulator (X window system), 
 	eslok, hs, 
 	acsc@, csr=\E[%i%p1%d;%p2%dr, dsl=\E[?H, enacs@, fsl=\E[?F, 
-	kmous=\E[M, op=\E[39;49m, rc=\E8, rmacs@, sc=\E7, smacs@, 
-	tsl=\E[?E\E[?%i%dT, 
-	use=xterm-r6, use=klone+color, 
+	kmous=\E[M, rc=\E8, rmacs@, sc=\E7, smacs@, 
+	tsl=\E[?E\E[?%i%dT, use=xterm-r6, 
+	use=ecma+color, 
 # See the note on ICH/ICH1 VERSUS RMIR/SMIR near the end of file
 xterm-nic|xterm with ich/ich1 suppressed for non-curses programs, 
 	ich@, ich1@, 
@@ -2680,7 +2678,7 @@ xterm1|xterm terminal emulator ignoring the alternate screen buffer,
 # and 27, but they are not present in the terminfo or termcap.
 color_xterm|cx|cx100|color_xterm color terminal emulator for X, 
 	OTbs, am, km, mir, msgr, xenl, 
-	colors#8, cols#80, it#8, lines#65, pairs#64, 
+	cols#80, it#8, lines#65, ncv@, 
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
 	bel=^G, bold=\E[1m, clear=\E[H\E[2J, cr=^M, 
 	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=^H, 
@@ -2695,15 +2693,16 @@ color_xterm|cx|cx100|color_xterm color terminal emulator for X,
 	kf10=\E[21~, kf11=\E[23~, kf12=\E[24~, kf2=\E[12~, 
 	kf3=\E[13~, kf4=\E[14~, kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, 
 	kf8=\E[19~, kf9=\E[20~, khome=\E[7~, kich1=\E[2~, 
-	kmous=\E[M, knp=\E[6~, kpp=\E[5~, op=\E[39;49m, rc=\E8, 
-	rev=\E[7m, ri=\EM, rmacs=^O, rmam=\E[?7l, 
-	rmcup=\E>\E[?41;1r, rmir=\E[4l, rmso=\E[27m, rmul=\E[24m, 
+	kmous=\E[M, knp=\E[6~, kpp=\E[5~, rc=\E8, rev=\E[7m, ri=\EM, 
+	rmacs=^O, rmam=\E[?7l, rmcup=\E>\E[?41;1r, rmir=\E[4l, 
+	rmso=\E[27m, rmul=\E[24m, 
 	rs1=\E(B\017\E[r\E[m\E[2J\E[H\E[?7h\E[?1;3;4;6l\E[4l\E<, 
-	sc=\E7, setab=\E[4%p1%dm, setaf=\E[3%p1%dm, 
+	sc=\E7, 
 	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;, 
 	sgr0=\E[m, smacs=^N, smam=\E[?7h, 
 	smcup=\E[?1;41s\E[?1;41h\E=, smir=\E[4h, smso=\E[7m, 
 	smul=\E[4m, 
+	use=ecma+color, 
 
 # The 'nxterm' distributed with Redhat Linux 5.2 is a slight rehack of
 # xterm-sb_right-ansi-3d, which implements ANSI colors, but does not support
@@ -2779,9 +2778,8 @@ rxvt-basic|rxvt terminal base (X Window System),
 	smcup=\E7\E[?47h, smir=\E[4h, smkx=\E=, smso=\E[7m, 
 	smul=\E[4m, tbc=\E[3g, 
 rxvt|rxvt terminal emulator (X Window System), 
-	colors#8, pairs#64, 
-	op=\E[39;49m, setab=\E[%p1%{40}%+%dm, 
-	setaf=\E[%p1%{30}%+%dm, sgr0=\E[m\017, use=rxvt-basic, 
+	ncv@, 
+	sgr0=\E[m\017, use=rxvt-basic, use=ecma+color, 
 
 # These (xtermc and xtermm) are distributed with Solaris.  They refer to a
 # variant of xterm which is apparently no longer supported, but are interesting
@@ -2987,7 +2985,7 @@ eterm|gnu emacs term.el terminal emulation,
 #      AX   (bool)  Does  understand ANSI set default fg/bg color
 #                   (\E[39m / \E[49m).
 screen|VT 100/ANSI X3.64 virtual terminal, 
-	OTbs, OTpt, am, km, mir, msgr, xenl, AX, G0, 
+	OTbs, OTpt, am, km, mir, msgr, xenl, G0, 
 	colors#8, cols#80, it#8, lines#24, pairs#64, 
 	acsc=++\,\,--..00``aaffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
 	bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z, civis=\E[?25l, 
@@ -3454,7 +3452,7 @@ nwp517-w|nwp-517-w|nwp-517 vt200 132 cols 50 rows,
 # Corrected Sun Aug 9 1998 by Alexander V. Lukyanov <lav@video.yars.free.net>
 dtterm|CDE desktop terminal, 
 	am, mir, msgr, xenl, xon, 
-	colors#8, cols#80, it#8, lines#24, lm#0, pairs#64, 
+	cols#80, it#8, lines#24, lm#0, ncv@, 
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
 	bel=^G, blink=\E[5m, bold=\E[1m, civis=\E[?25l, 
 	clear=\E[H\E[J, cnorm=\E[?25h, cr=^M, 
@@ -3473,13 +3471,13 @@ dtterm|CDE desktop terminal,
 	kf2=\E[12~, kf20=\E[34~, kf3=\E[13~, kf4=\E[14~, 
 	kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, kf8=\E[19~, kf9=\E[20~, 
 	kfnd=\E[1~, khlp=\E[28~, kich1=\E[2~, knp=\E[6~, kpp=\E[5~, 
-	kslt=\E[4~, nel=\EE, op=\E[39;49m, rc=\E8, rev=\E[7m, ri=\EM, 
-	rmacs=^O, rmam=\E[?7l, rmir=\E[4l, rmso=\E[22;27m, 
-	rmul=\E[24m, sc=\E7, setab=\E[%p1%{40}%+%dm, 
-	setaf=\E[%p1%{30}%+%dm, 
+	kslt=\E[4~, nel=\EE, rc=\E8, rev=\E[7m, ri=\EM, rmacs=^O, 
+	rmam=\E[?7l, rmir=\E[4l, rmso=\E[22;27m, rmul=\E[24m, 
+	sc=\E7, 
 	sgr=\E[0%?%p1%t;2;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p5%t;2%;%?%p6%t;1%;%?%p7%t;8%;m%?%p9%t\016%e\017%;, 
 	sgr0=\E[m\017, smacs=^N, smam=\E[?7h, smir=\E[4h, 
 	smso=\E[2;7m, smul=\E[4m, tbc=\E[3g, 
+	use=ecma+color, 
 
 #### Non-Unix Consoles
 #
@@ -18360,6 +18358,10 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #	* add several terminal types from esr's "11.0.1" (ansi-*).
 #	* update OTxx capabilities for changes on 2000/3/4.
 #	* revert part of vt220 change (request by Todd C Miller for OpenBSD)
+#
+# 2000/3/26
+#	* move screen's AX extension to ecma+color, modify several entries to
+#	  use that, adjusting ncv as needed -TD
 #
 # The following sets edit modes for GNU EMACS.
 # Local Variables:

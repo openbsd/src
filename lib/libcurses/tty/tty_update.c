@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_update.c,v 1.7 2000/03/10 01:35:05 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.8 2000/03/26 16:45:04 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -72,7 +72,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.131 2000/02/26 23:22:11 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.134 2000/03/26 02:17:10 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -360,10 +360,12 @@ can_clear_with(chtype ch)
     if (!back_color_erase && SP->_coloron) {
 	if (ch & A_COLOR)
 	    return FALSE;
+#ifdef NCURSES_EXT_FUNCS
 	if (!SP->_default_color)
 	    return FALSE;
 	if (SP->_default_fg != C_MASK || SP->_default_bg != C_MASK)
 	    return FALSE;
+#endif
     }
     return ((ch & ~(NONBLANK_ATTR | A_COLOR)) == BLANK);
 }
@@ -1237,7 +1239,7 @@ ClearScreen(chtype blank)
 #ifdef NCURSES_EXT_FUNCS
     if (SP->_coloron
 	&& !SP->_default_color) {
-	_nc_do_color(0, FALSE, _nc_outch);
+	_nc_do_color(COLOR_PAIR(SP->_current_attr), 0, FALSE, _nc_outch);
 	if (!back_color_erase) {
 	    fast_clear = FALSE;
 	}
@@ -1722,7 +1724,7 @@ _nc_screen_wrap(void)
     if (SP->_coloron
 	&& !SP->_default_color) {
 	SP->_default_color = TRUE;
-	_nc_do_color(0, FALSE, _nc_outch);
+	_nc_do_color(-1, 0, FALSE, _nc_outch);
 	SP->_default_color = FALSE;
     }
 #endif

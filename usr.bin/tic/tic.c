@@ -42,7 +42,7 @@
 #include <dump_entry.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: tic.c,v 1.64 2000/03/11 21:45:07 tom Exp $")
+MODULE_ID("$From: tic.c,v 1.67 2000/03/19 02:08:10 tom Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -91,6 +91,9 @@ usage(void)
 	"  -N         disable smart defaults for source translation",
 	"  -R         restrict translation to given terminfo/termcap version",
 	"  -T         remove size-restrictions on compiled description",
+#if NCURSES_XNAMES
+	"  -a         retain commented-out capabilities (sets -x also)",
+#endif
 	"  -c         check only, validate input without compiling or translating",
 	"  -f         format complex strings for readability",
 	"  -G         format %{number} to %'char'",
@@ -445,7 +448,7 @@ main(int argc, char *argv[])
      * be optional.
      */
     while ((this_opt = getopt(argc, argv,
-		"0123456789CILNR:TVce:fGgo:rsvwx")) != -1) {
+		"0123456789CILNR:TVace:fGgo:rsvwx")) != -1) {
 	if (isdigit(this_opt)) {
 	    switch (last_opt) {
 	    case 'v':
@@ -521,6 +524,9 @@ main(int argc, char *argv[])
 	    width = 0;
 	    break;
 #if NCURSES_XNAMES
+	case 'a':
+	    _nc_disable_period = TRUE;
+	    /* FALLTHRU */
 	case 'x':
 	    use_extended_names(TRUE);
 	    break;
@@ -652,9 +658,10 @@ main(int argc, char *argv[])
     if (!check_only) {
 	if (!infodump && !capdump) {
 	    _nc_set_writedir(outdir);
-	    for_entry_list(qp)
+	    for_entry_list(qp) {
 		if (matches(namelst, qp->tterm.term_names))
-		write_it(qp);
+		    write_it(qp);
+	    }
 	} else {
 	    /* this is in case infotocap() generates warnings */
 	    _nc_curr_col = _nc_curr_line = -1;
@@ -757,7 +764,7 @@ similar_sgr(char *a, char *b)
 }
 
 static void
-check_sgr(TERMTYPE * tp, char *zero, int num, char *cap, char *name)
+check_sgr(TERMTYPE * tp, char *zero, int num, char *cap, const char *name)
 {
     char *test = tparm(set_attributes,
 	num == 1,

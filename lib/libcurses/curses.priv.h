@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.25 2000/03/10 01:35:01 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.26 2000/03/26 16:45:03 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.153 2000/02/19 23:31:39 tom Exp $
+ * $From: curses.priv.h,v 1.157 2000/03/26 01:01:14 tom Exp $
  *
  *	curses.priv.h
  *
@@ -340,7 +340,8 @@ struct screen {
 	unsigned short  *_color_pairs;  /* screen's color pair list          */
 	int             _pair_count;    /* count of color pairs              */
 #ifdef NCURSES_EXT_FUNCS
-	int             _default_color; /* use default colors                */
+	bool            _default_color; /* use default colors                */
+	bool            _has_sgr_39_49; /* has ECMA default color support    */
 	int             _default_fg;    /* assumed default foreground        */
 	int             _default_bg;    /* assumed default background        */
 #endif
@@ -621,7 +622,7 @@ extern const char *_nc_visbuf2(int, const char *);
 				vidattr(AttrOf(c))
 #endif
 
-#ifdef NCURSES_EXPANDED
+#if defined(NCURSES_EXPANDED) && defined(NCURSES_EXT_FUNCS)
 
 #undef  toggle_attr_on
 #define toggle_attr_on(S,at) _nc_toggle_attr_on(&(S), at)
@@ -699,7 +700,7 @@ extern int _nc_has_mouse(void);
 extern char * _nc_printf_string(const char *fmt, va_list ap);
 
 /* tries.c */
-extern void _nc_add_to_try(struct tries **tree, char *str, unsigned short code);
+extern void _nc_add_to_try(struct tries **tree, const char *str, unsigned short code);
 extern char *_nc_expand_try(struct tries *tree, unsigned short code, int *count, size_t len);
 extern int _nc_remove_key(struct tries **tree, unsigned short code);
 extern int _nc_remove_string(struct tries **tree, char *string);
@@ -719,7 +720,7 @@ extern int _nc_outch(int);
 extern int _nc_setupscreen(short, short const, FILE *);
 extern int _nc_timed_wait(int, int, int *);
 extern int _nc_waddch_nosync(WINDOW *, const chtype);
-extern void _nc_do_color(int, bool, int (*)(int));
+extern void _nc_do_color(int, int, bool, int (*)(int));
 extern void _nc_freeall(void);
 extern void _nc_freewin(WINDOW *win);
 extern void _nc_hash_map(void);

@@ -47,9 +47,10 @@
 #include <curses.priv.h>
 
 #include <ctype.h>
+#include <term_entry.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_scan.c,v 1.38 2000/02/13 01:01:26 tom Exp $")
+MODULE_ID("$From: comp_scan.c,v 1.41 2000/03/25 17:25:33 tom Exp $")
 
 /*
  * Maximum length of string capability we'll accept before raising an error.
@@ -171,7 +172,11 @@ _nc_get_token(void)
 	if (separator == ':' && ch == ':')
 	    ch = next_char();
 
-	if (ch == '.') {
+	if (ch == '.'
+#ifdef NCURSES_EXT_FUNCS
+	 && !_nc_disable_period
+#endif
+	) {
 	    dot_flag = TRUE;
 	    DEBUG(8, ("dot-flag set"));
 
@@ -185,7 +190,11 @@ _nc_get_token(void)
 	}
 
 	/* have to make some punctuation chars legal for terminfo */
-	if (!isalnum(ch) && !strchr(terminfo_punct, (char) ch)) {
+	if (!isalnum(ch)
+#ifdef NCURSES_EXT_FUNCS
+	 && !(ch == '.' && _nc_disable_period)
+#endif
+	 && !strchr(terminfo_punct, (char) ch)) {
 	    _nc_warning("Illegal character (expected alphanumeric or %s) - %s",
 		terminfo_punct, _tracechar((chtype) ch));
 	    _nc_panic_mode(separator);
@@ -346,7 +355,7 @@ _nc_get_token(void)
 		break;
 
 	    case '=':
-		ch = _nc_trans_string(ptr);
+		ch = _nc_trans_string(ptr, buffer + sizeof(buffer));
 		if (ch != separator)
 		    _nc_warning("Missing separator");
 		_nc_curr_token.tk_name = buffer;
@@ -440,15 +449,18 @@ _nc_get_token(void)
  */
 
 char
-_nc_trans_string(char *ptr)
+_nc_trans_string(char *ptr, char *last)
 {
     int count = 0;
     int number;
     int i, c;
     chtype ch, last_ch = '\0';
     bool ignored = FALSE;
+    bool long_warning = FALSE;
 
     while ((ch = c = next_char()) != (chtype) separator && c != EOF) {
+	if (ptr == (last - 1))
+	    break;
 	if ((_nc_syntax == SYN_TERMCAP) && c == '\n')
 	    break;
 	if (ch == '^' && last_ch != '%') {
@@ -571,8 +583,10 @@ _nc_trans_string(char *ptr)
 	}
 	ignored = FALSE;
 
-	if (count > MAXCAPLEN)
+	if (count > MAXCAPLEN && !long_warning) {
 	    _nc_warning("Very long string found.  Missing separator?");
+	    long_warning = TRUE;
+	}
     }				/* end while */
 
     *ptr = '\0';

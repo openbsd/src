@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mouse.c,v 1.8 2000/03/10 01:35:02 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.9 2000/03/26 16:45:03 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -86,7 +86,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.50 2000/02/13 00:59:39 tom Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.51 2000/03/18 22:11:42 tom Exp $")
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -228,7 +228,7 @@ static int initialized;
 static void
 initialize_mousetype(void)
 {
-    static char *xterm_kmous = "\033[M";
+    static const char *xterm_kmous = "\033[M";
 
     /* Try gpm first, because gpm may be configured to run in xterm */
 #if USE_GPM_SUPPORT

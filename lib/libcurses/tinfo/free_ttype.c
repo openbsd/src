@@ -1,4 +1,4 @@
-/*	$OpenBSD: free_ttype.c,v 1.2 1999/05/08 20:29:01 millert Exp $	*/
+/*	$OpenBSD: free_ttype.c,v 1.3 2000/03/26 16:45:04 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1999 Free Software Foundation, Inc.                        *
@@ -46,7 +46,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: free_ttype.c,v 1.2 1999/03/01 00:30:35 tom Exp $")
+MODULE_ID("$From: free_ttype.c,v 1.3 2000/03/19 02:03:07 tom Exp $")
 
 void _nc_free_termtype(TERMTYPE *ptr)
 {
@@ -64,6 +64,7 @@ void _nc_free_termtype(TERMTYPE *ptr)
 
 #if NCURSES_XNAMES
 bool _nc_user_definable = TRUE;
+bool _nc_disable_period = FALSE;	/* used by tic -a option */
 
 int use_extended_names(bool flag)
 {

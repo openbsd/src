@@ -1,4 +1,4 @@
-/*	$OpenBSD: captoinfo.c,v 1.6 2000/03/13 23:53:40 millert Exp $	*/
+/*	$OpenBSD: captoinfo.c,v 1.7 2000/03/26 16:45:03 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -94,7 +94,7 @@
 #include <ctype.h>
 #include <tic.h>
 
-MODULE_ID("$From: captoinfo.c,v 1.35 2000/03/11 12:27:55 tom Exp $")
+MODULE_ID("$From: captoinfo.c,v 1.36 2000/03/19 23:04:26 tom Exp $")
 
 #define MAX_PUSHED	16	/* max # args we can push onto the stack */
 
@@ -736,10 +736,9 @@ _nc_infotocap(
 		bufptr = save_char(bufptr, '%');
 		while (isdigit(*str))
 		    bufptr = save_char(bufptr, *str++);
-		if (strchr("doxX", *str)) {
+		if (strchr("doxX.", *str)) {
 		    if (*str != 'd')	/* termcap doesn't have octal, hex */
 			return 0;
-  		    str++;
 		}
 		break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.h,v 1.8 2000/01/16 01:35:17 millert Exp $	*/
+/*	$OpenBSD: tic.h,v 1.9 2000/03/26 16:45:03 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -273,7 +273,7 @@ extern bool _nc_suppress_warnings;
 extern char *_nc_tic_expand(const char *, bool, int);
 
 /* comp_scan.c: decode string from readable form */
-extern char _nc_trans_string(char *);
+extern char _nc_trans_string(char *, char *);
 
 /* captoinfo.c: capability conversion */
 extern char *_nc_captoinfo(const char *, const char *, int const);

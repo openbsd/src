@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.9 2000/03/13 23:53:41 millert Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.10 2000/03/26 16:45:04 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -43,7 +43,7 @@
 #include <term_entry.h>
 #include <dump_entry.h>
 
-MODULE_ID("$From: infocmp.c,v 1.52 2000/03/12 02:34:09 tom Exp $")
+MODULE_ID("$From: infocmp.c,v 1.54 2000/03/19 02:56:14 tom Exp $")
 
 #define L_CURL "{"
 #define R_CURL "}"
@@ -68,9 +68,9 @@ static int termcount;		/* count of terminal entries */
 
 static bool limited = TRUE;	/* "-r" option is not set */
 static bool quiet = FALSE;
-static char *bool_sep = ":";
-static char *s_absent = "NULL";
-static char *s_cancel = "NULL";
+static const char *bool_sep = ":";
+static const char *s_absent = "NULL";
+static const char *s_cancel = "NULL";
 static const char *tversion;	/* terminfo version selected */
 static int itrace;		/* trace flag for debugging */
 static int mwidth = 60;
@@ -285,7 +285,7 @@ print_uses(ENTRY * ep, FILE * fp)
 	}
 }
 
-static char *
+static const char *
 dump_boolean(int val)
 /* display the value of a boolean capability */
 {
@@ -903,6 +903,9 @@ usage(void)
 	,"  -R subset (see manpage)"
 	,"  -T    eliminate size limits (test)"
 	,"  -V    print version"
+#if NCURSES_XNAMES
+	,"  -a    with -F, list commented-out caps"
+#endif
 	,"  -c    list common capabilities"
 	,"  -d    list different capabilities"
 	,"  -e    format output for C initializer"
@@ -1118,8 +1121,14 @@ main(int argc, char *argv[])
     /* where is the terminfo database location going to default to? */
     restdir = firstdir = 0;
 
-    while ((c = getopt(argc, argv, "deEcCfFGgIinlLpqrR:s:uv:Vw:A:B:1T")) != EOF)
+    while ((c = getopt(argc, argv, "adeEcCfFGgIinlLpqrR:s:uv:Vw:A:B:1T")) != EOF)
 	switch (c) {
+#if NCURSES_XNAMES
+	case 'a':
+	    _nc_disable_period = TRUE;
+	    use_extended_names(TRUE);
+	    break;
+#endif
 	case 'd':
 	    compare = C_DIFFERENCE;
 	    break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_set_term.c,v 1.7 2000/03/10 01:35:02 millert Exp $	*/
+/*	$OpenBSD: lib_set_term.c,v 1.8 2000/03/26 16:45:03 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -45,7 +45,7 @@
 #include <term.h>		/* cur_term */
 #include <tic.h>
 
-MODULE_ID("$From: lib_set_term.c,v 1.50 2000/02/13 00:59:39 tom Exp $")
+MODULE_ID("$From: lib_set_term.c,v 1.51 2000/03/26 01:03:36 tom Exp $")
 
 SCREEN *
 set_term(SCREEN * screenp)
@@ -190,6 +190,8 @@ _nc_setupscreen(short slines, short const scolumns, FILE * output)
     SP->_no_padding = getenv("NCURSES_NO_PADDING") != 0;
 #endif
 #ifdef NCURSES_EXT_FUNCS
+    SP->_default_color = FALSE;
+    SP->_has_sgr_39_49 = FALSE;
     SP->_default_fg = COLOR_WHITE;
     SP->_default_bg = COLOR_BLACK;
 #endif

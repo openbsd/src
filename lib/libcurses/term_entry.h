@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_entry.h,v 1.9 2000/03/13 23:53:39 millert Exp $	*/
+/*	$OpenBSD: term_entry.h,v 1.10 2000/03/26 16:45:03 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: term_entry.h,v 1.28 2000/03/12 00:44:04 tom Exp $ */
+/* $From: term_entry.h,v 1.29 2000/03/19 02:04:15 tom Exp $ */
 
 /*
  *	term_entry.h -- interface to entry-manipulation code
@@ -137,6 +137,7 @@ extern void _nc_init_acs(void);	/* corresponds to traditional 'init_acs()' */
 /* parse_entry.c: entry-parsing code */
 #if NCURSES_XNAMES
 extern bool _nc_user_definable;
+extern bool _nc_disable_period;
 #endif
 extern int _nc_parse_entry(ENTRY *, int, bool);
 extern int _nc_capcmp(const char *, const char *);

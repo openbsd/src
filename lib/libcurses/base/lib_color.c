@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_color.c,v 1.6 2000/03/10 01:35:02 millert Exp $	*/
+/*	$OpenBSD: lib_color.c,v 1.7 2000/03/26 16:45:03 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -43,7 +43,7 @@
 #include <term.h>
 #include <tic.h>
 
-MODULE_ID("$From: lib_color.c,v 1.45 2000/02/27 00:20:31 tom Exp $")
+MODULE_ID("$From: lib_color.c,v 1.49 2000/03/26 03:12:12 tom Exp $")
 
 /*
  * These should be screen structure members.  They need to be globals for
@@ -88,16 +88,20 @@ static const color_t hls_palette[] =
 /* *INDENT-ON* */
 
 #ifdef NCURSES_EXT_FUNCS
+/*
+ * These are called from _nc_do_color(), which in turn is called from
+ * vidattr - so we have to assume that SP may be null.
+ */
 static int
 default_fg(void)
 {
-    return (SP->_default_fg != C_MASK) ? SP->_default_fg : COLOR_WHITE;
+    return (SP != 0) ? SP->_default_fg : COLOR_WHITE;
 }
 
 static int
 default_bg(void)
 {
-    return (SP->_default_bg != C_MASK) ? SP->_default_bg : COLOR_BLACK;
+    return SP != 0 ? SP->_default_bg : COLOR_BLACK;
 }
 #else
 #define default_fg() COLOR_WHITE
@@ -261,7 +265,7 @@ init_pair(short pair, short f, short b)
 
     T((T_CALLED("init_pair(%d,%d,%d)"), pair, f, b));
 
-    if ((pair < 1) || (pair >= COLOR_PAIRS))
+    if ((pair < 0) || (pair >= COLOR_PAIRS))
 	returnCode(ERR);
 #ifdef NCURSES_EXT_FUNCS
     if (SP->_default_color) {
@@ -275,9 +279,12 @@ init_pair(short pair, short f, short b)
 	    returnCode(ERR);
     } else
 #endif
+    {
 	if ((f < 0) || (f >= COLORS)
-	|| (b < 0) || (b >= COLORS))
-	returnCode(ERR);
+	    || (b < 0) || (b >= COLORS)
+	    || (pair < 1))
+	    returnCode(ERR);
+    }
 
     /*
      * When a pair's content is changed, replace its colors (if pair was
@@ -307,6 +314,8 @@ init_pair(short pair, short f, short b)
 	}
     }
     SP->_color_pairs[pair] = result;
+    if ((int)(SP->_current_attr & A_COLOR) == COLOR_PAIR(pair))
+	SP->_current_attr |= A_COLOR;	/* force attribute update */
 
     if (initialize_pair) {
 	const color_t *tp = hue_lightness_saturation ? hls_palette : cga_palette;
@@ -410,48 +419,51 @@ pair_content(short pair, short *f, short *b)
 }
 
 void
-_nc_do_color(int pair, bool reverse, int (*outc) (int))
+_nc_do_color(int old_pair, int pair, bool reverse, int (*outc) (int))
 {
-    short fg, bg;
+    short fg = C_MASK, bg = C_MASK;
+    short old_fg, old_bg;
 
-    if (pair == 0) {
-	if (
-#ifdef NCURSES_EXT_FUNCS
-	    !SP->_default_color ||
-#endif
-	    !set_original_colors()) {
-	    fg = default_fg();
-	    bg = default_bg();
-	} else {
-	    fg = C_MASK;
-	    bg = C_MASK;
-	}
-    } else {
+    if (pair != 0) {
 	if (set_color_pair) {
 	    TPUTS_TRACE("set_color_pair");
 	    tputs(tparm(set_color_pair, pair), 1, outc);
 	    return;
-	} else {
+	} else if (SP != 0) {
 	    pair_content(pair, &fg, &bg);
-#ifdef NCURSES_EXT_FUNCS
-	    if (SP->_default_color) {
-		if (fg == C_MASK)
-		    fg = SP->_default_fg;
-		if (bg == C_MASK)
-		    bg = SP->_default_bg;
-	    }
-#endif
 	}
     }
 
-    if (fg == C_MASK || bg == C_MASK) {
-	if (set_original_colors() != TRUE) {
-	    if (fg == C_MASK)
-		fg = default_fg();
-	    if (bg == C_MASK)
-		bg = default_bg();
+    if (old_pair >= 0 && SP != 0) {
+	pair_content(old_pair, &old_fg, &old_bg);
+	if ((fg == C_MASK && old_fg != C_MASK)
+	    || (bg == C_MASK && old_bg != C_MASK)) {
+#ifdef NCURSES_EXT_FUNCS
+	    /*
+	     * A minor optimization - but extension.  If "AX" is specified in
+	     * the terminal description, treat it as screen's indicator of ECMA
+	     * SGR 39 and SGR 49, and assume the two sequences are independent.
+	     */
+	    if (SP->_has_sgr_39_49 && old_bg == C_MASK && old_fg != C_MASK) {
+		tputs("\033[39m", 1, outc);
+	    } else if (SP->_has_sgr_39_49 && old_fg == C_MASK && old_bg != C_MASK) {
+		tputs("\033[49m", 1, outc);
+	    } else
+#endif
+		set_original_colors();
 	}
+    } else {
+	set_original_colors();
+	if (old_pair < 0)
+	    return;
     }
+
+#ifdef NCURSES_EXT_FUNCS
+    if (fg == C_MASK)
+	fg = default_fg();
+    if (bg == C_MASK)
+	bg = default_bg();
+#endif
 
     if (reverse) {
 	short xx = fg;

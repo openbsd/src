@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_parse.c,v 1.5 2000/03/13 23:53:40 millert Exp $	*/
+/*	$OpenBSD: comp_parse.c,v 1.6 2000/03/26 16:45:03 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -54,7 +54,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: comp_parse.c,v 1.38 2000/03/12 00:14:46 tom Exp $")
+MODULE_ID("$From: comp_parse.c,v 1.39 2000/03/25 17:07:30 tom Exp $")
 
 static void sanity_check(TERMTYPE *);
 void (*_nc_check_termtype) (TERMTYPE *) = sanity_check;
@@ -176,9 +176,11 @@ _nc_read_entry_source(FILE * fp, char *buf,
     if (silent)
 	_nc_suppress_warnings = TRUE;	/* shut the lexer up, too */
 
-    memset(&thisentry, 0, sizeof(thisentry));
-    for (_nc_reset_input(fp, buf); _nc_parse_entry(&thisentry, literal,
-	    silent) != ERR;) {
+    _nc_reset_input(fp, buf);
+    for (;;) {
+	memset(&thisentry, 0, sizeof(thisentry));
+	if (_nc_parse_entry(&thisentry, literal, silent) == ERR)
+	    break;
 	if (!isalnum(thisentry.tterm.term_names[0]))
 	    _nc_err_abort("terminal names must start with letter or digit");
 

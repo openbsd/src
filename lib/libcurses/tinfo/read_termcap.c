@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.6 2000/03/13 23:53:40 millert Exp $	 */
+/*	$OpenBSD: read_termcap.c,v 1.7 2000/03/26 16:45:04 millert Exp $	 */
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -57,7 +57,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_termcap.c,v 1.45 2000/02/13 01:01:26 tom Exp $")
+MODULE_ID("$From: read_termcap.c,v 1.46 2000/03/18 21:53:26 tom Exp $")
 
 #ifndef PURE_TERMINFO
 
