@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.131 2002/11/11 05:04:46 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.132 2002/12/14 21:40:52 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -4191,11 +4191,9 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 	struct segmap *sp;
 
 #ifdef DEBUG
-	if (!pmap_pa_exists(pa))
-		panic("pmap_page_protect: no such address: 0x%lx", pa);
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
-		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
+		printf("pmap_page_protect(0x%lx, 0x%x)\n", pg, prot);
 #endif
 	pv = &pg->mdpage.pv_head;
 	/*
@@ -4591,7 +4589,7 @@ pmap_page_protect4m(struct vm_page *pg, vm_prot_t prot)
 #ifdef DEBUG
 	if ((pmapdebug & PDB_CHANGEPROT) ||
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
-		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
+		printf("pmap_page_protect(0x%lx, 0x%x)\n", pg, prot);
 #endif
 	pv = &pg->mdpage.pv_head;
 	/*
