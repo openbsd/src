@@ -13,7 +13,7 @@ DIR_KERN=$S/lib/libkern
 SRC_net= nfs.c rpc.c net.c ether.c arp.c in_cksum.c \
 	 bootparam.c rarp.c
 
-SRC_sa = alloc.c bcopy.c close.c getfile.c memcpy.c open.c \
+SRC_sa = alloc.c bcopy.c close.c getfile.c memcmp.c memcpy.c memset.c open.c \
 	 printf.c read.c strerror.c ufs.c 
 
 SRC_kern= ashrdi3.c bcmp.c bzero.c strcmp.c strlen.c
