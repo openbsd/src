@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.6 2003/03/02 22:30:37 deraadt Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.7 2003/03/02 22:38:56 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -60,15 +60,15 @@ table is used in conjuction with a
 .Xr pf 4
 redirection rule can be used to selectively redirect mail connections
 to the
-.Xr spamd 8 .
-daemon .
+.Xr spamd 8
+daemon.
 Sources and actions are as follows:
 .Bl -tag -width XXXXXXXXXX
 .It Fl s
 The SPEWS level 1 database is fetched via
 .Xr ftp 1
 and used in a blacklist named
-.Li spews-1
+.Li spews-1 Ns .
 .It Fl 1
 Synonym for
 .Fl s .
@@ -76,20 +76,20 @@ Synonym for
 The SPEWS level 2 database is fetched via
 .Xr ftp 1
 and used in a blacklist named
-.Li spews-2
+.Li spews-2 Ns .
 .It Fl c
 The chinese netblock datbase is fetched via
 .Xr ftp 1
 and used in a blacklist named
-.Li china
+.Li china Ns .
 .It Fl k
-The korean netblock database is fetched via
+The Korean netblock database is fetched via
 .Xr ftp 1
 and used in a blacklist named
-.Li korea
+.Li korea Ns .
 .It Fl f Ar file
 The local file specified is used in a black-list named
-.Li local
+.Li local Ns .
 .It Fl w Ar file
 The local file specified is added to the white-list.
 .El
@@ -104,7 +104,7 @@ Then, the blacklist address, are sent to a running
 along with the message spamd will give on mail rejection when
 a matching client connects.
 The input file is expected to consist of one network block or address
- per line (optionally followed by a space and text that is ignored).
+per line (optionally followed by a space and text that is ignored).
 Comment lines beginning with
 .Li #
 are ignored.
@@ -121,7 +121,7 @@ the following example:
 .Ic 192.168.23.1
 .Ed
 .Sh BLACKLIST FILES
-additional files given as parameters to
+Additional files given as parameters to
 .Nm
 will be read to configure blacklists. The blacklist file format is
 as follows.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.14 2003/03/02 20:54:39 deraadt Exp $
+.\"	$OpenBSD: spamd.8,v 1.15 2003/03/02 22:38:56 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -39,7 +39,7 @@
 .Nm
 is a fake
 .Xr sendmail 8 Ns -like
-daemon which absorbs false mail.
+daemon which rejects false mail.
 If the
 .Xr pf 4
 packet filter is configured to redirect port 25 (SMTP) to this daemon,
