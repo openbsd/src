@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 1999/12/11 10:33:28 itojun Exp $	*/
+/*	$OpenBSD: config.c,v 1.3 2000/02/02 04:10:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -66,7 +66,6 @@
 #include "config.h"
 
 static void makeentry __P((char *, int, char *, int));
-static void make_packet __P((struct rainfo *));
 static void get_prefix __P((struct rainfo *));
 
 extern struct rainfo *ralist;
@@ -547,7 +546,7 @@ make_prefix(struct rainfo *rai, int ifindex, struct in6_addr *addr, int plen)
 	add_prefix(rai, &ipr);
 }
 
-static void
+void
 make_packet(struct rainfo *rainfo)
 {
 	size_t packlen, lladdroptlen = 0;

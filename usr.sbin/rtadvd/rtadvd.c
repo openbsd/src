@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.2 1999/12/11 10:33:29 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.3 2000/02/02 04:10:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -68,7 +68,7 @@ struct iovec sndiov[2];
 struct sockaddr_in6 from;
 struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
 int sock, rtsock;
-int accept_rr = 1;
+int accept_rr = 0;
 int dflag = 0, sflag = 0;
 
 u_char *conffile = NULL;
@@ -109,6 +109,7 @@ u_int32_t ndopt_flags[] = {
 };
 
 int main __P((int, char *[]));
+static void die __P((int));
 static void sock_open __P((void));
 static void rtsock_open __P((void));
 static void rtadvd_input __P((void));
@@ -141,7 +142,7 @@ main(argc, argv)
 	openlog(*argv, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 
 	/* get command line options and arguments */
-	while ((ch = getopt(argc, argv, "c:dDfs")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dDfRs")) != -1) {
 		switch(ch) {
 		 case 'c':
 			 conffile = optarg;
@@ -155,15 +156,19 @@ main(argc, argv)
 		 case 'f':
 			 fflag = 1;
 			 break;
+		 case 'R':
+			 accept_rr = 1;
+			 break;
 		 case 's':
 			 sflag = 1;
+			 break;
 		}
 	}
 	argc -= optind;
 	argv += optind;
 	if (argc == 0) {
 		fprintf(stderr,
-			"usage: rtadvd [-c conffile] [-d|D] [-f] [-s]"
+			"usage: rtadvd [-dDfsR] [-c conffile] "
 			"interfaces...\n");
 		exit(1);
 	}
@@ -205,6 +210,8 @@ main(argc, argv)
 			maxfd = rtsock;
 	}
 
+	signal(SIGTERM, die);
+
 	while (1) {
 		struct fd_set select_fd = fdset; /* reinitialize */
 
@@ -231,6 +238,32 @@ main(argc, argv)
 			rtadvd_input();
 	}
 	exit(0);		/* NOTREACHED */
+}
+
+static void
+die(sig)
+	int sig;
+{
+	struct rainfo *ra;
+	int i;
+	const int retrans = MAX_FINAL_RTR_ADVERTISEMENTS;
+
+	if (dflag > 1) {
+		syslog(LOG_DEBUG, "<%s> cease to be an advertising router\n",
+		    __FUNCTION__);
+	}
+
+	for (ra = ralist; ra; ra = ra->next) {
+		ra->lifetime = 0;
+		make_packet(ra);
+	}
+	for (i = 0; i < retrans; i++) {
+		for (ra = ralist; ra; ra = ra->next)
+			ra_output(ra);
+		sleep(MIN_DELAY_BETWEEN_RAS);
+	}
+	exit(0);
+	/*NOTREACHED*/
 }
 
 static void
@@ -1054,21 +1087,39 @@ sock_open()
 
 	/* specify to tell receiving interface */
 	on = 1;
+#ifdef IPV6_RECVPKTINFO
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
+		       sizeof(on)) < 0) {
+		syslog(LOG_ERR, "<%s> IPV6_RECVPKTINFO: %s",
+		       __FUNCTION__, strerror(errno));
+		exit(1);
+	}
+#else  /* old adv. API */
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_PKTINFO: %s",
 		       __FUNCTION__, strerror(errno));
 		exit(1);
 	}
+#endif 
 
 	on = 1;
 	/* specify to tell value of hoplimit field of received IP6 hdr */
+#ifdef IPV6_RECVHOPLIMIT
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
+		       sizeof(on)) < 0) {
+		syslog(LOG_ERR, "<%s> IPV6_RECVHOPLIMIT: %s",
+		       __FUNCTION__, strerror(errno));
+		exit(1);
+	}
+#else  /* old adv. API */
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_HOPLIMIT: %s",
 		       __FUNCTION__, strerror(errno));
 		exit(1);
 	}
+#endif 
 
 	ICMP6_FILTER_SETBLOCKALL(&filt);
 	ICMP6_FILTER_SETPASS(ND_ROUTER_SOLICIT, &filt);
