@@ -22,6 +22,9 @@ allocated, the remaining memory is zeroed.
 #include "libiberty.h"
 
 #include <sys/types.h> /* For size_t. */
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 
 PTR
 xmemdup (input, copy_size, alloc_size)

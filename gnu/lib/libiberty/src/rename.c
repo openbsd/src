@@ -12,7 +12,13 @@ exists, it is removed.
 
 */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 int
 rename (zfrom, zto)
