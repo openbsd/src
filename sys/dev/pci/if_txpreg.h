@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.3 2001/04/08 18:26:38 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.4 2001/04/08 19:16:50 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -334,6 +334,36 @@ struct txp_resp_desc {
 	u_int32_t		resp_par3;
 };
 
+/*
+ * boot record (pointers to rings)
+ */
+struct txp_boot_record {
+	volatile u_int32_t	br_hostring_lo;		/* host ring pointer */
+	volatile u_int32_t	br_hostring_hi;
+	volatile u_int32_t	br_txlopri_lo;		/* tx low pri ring */
+	volatile u_int32_t	br_txlopri_hi;
+	volatile u_int32_t	br_txlopri_siz;
+	volatile u_int32_t	br_txhipri_lo;		/* tx high pri ring */
+	volatile u_int32_t	br_txhipri_hi;
+	volatile u_int32_t	br_txhipri_siz;
+	volatile u_int32_t	br_rxlopri_lo;		/* rx low pri ring */
+	volatile u_int32_t	br_rxlopri_hi;
+	volatile u_int32_t	br_rxlopri_siz;
+	volatile u_int32_t	br_rxbuf_lo;		/* rx buffer ring */
+	volatile u_int32_t	br_rxbuf_hi;
+	volatile u_int32_t	br_rxbuf_siz;
+	volatile u_int32_t	br_ctrl_lo;		/* command ring */
+	volatile u_int32_t	br_ctrl_hi;
+	volatile u_int32_t	br_ctrl_siz;
+	volatile u_int32_t	br_resp_lo;		/* response ring */
+	volatile u_int32_t	br_resp_hi;
+	volatile u_int32_t	br_resp_siz;
+	volatile u_int32_t	br_zero_lo;		/* zero word */
+	volatile u_int32_t	br_zero_hi;
+	volatile u_int32_t	br_rxhipri_lo;		/* rx high pri ring */
+	volatile u_int32_t	br_rxhipri_hi;
+	volatile u_int32_t	br_rxhipri_siz;
+};
 
 /*
  * TYPHOON status register state (in TXP_A2H_0)
