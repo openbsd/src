@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.5 1998/10/04 23:26:38 niklas Exp $
+#	$OpenBSD: RAMDISK,v 1.6 1999/09/09 21:27:36 espie Exp $
 
 #
 # A ramdisk kernel
@@ -225,9 +225,6 @@ isa*	at cross?
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq ?
 wd*	at wdc? drive ?
-
-atapibus* at wdc?
-acd*	at atapibus? drive ?
 
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#

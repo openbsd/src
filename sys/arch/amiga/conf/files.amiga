@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.31 1999/01/20 17:57:07 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.32 1999/09/09 21:27:36 espie Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -308,7 +308,8 @@ file	arch/amiga/dev/drbbc.c		drbbc
 #
 # Machine-independent ATAPI drivers
 #
-include "../../../dev/atapi/files.atapi"
+include "../../../dev/atapiscsi/files.atapiscsi"
+include "../../../dev/ata/files.ata"
 
 #
 # ISA devices
@@ -369,7 +370,6 @@ major	{st = 5}
 major	{vnd = 6}
 major	{cd = 7}
 major	{ccd = 8}
-major	{acd = 15}
 major	{rd = 16}
 
 # Compatibility modules

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 1999/01/20 17:57:07 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.27 1999/09/09 21:27:36 espie Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -254,9 +254,6 @@ scsibus* at aic?
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq ?
 wd*	at wdc? drive ?
-
-atapibus* at wdc?
-acd*	at atapibus? drive ?
 
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
