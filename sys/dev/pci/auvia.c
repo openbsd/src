@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.28 2004/09/14 23:45:11 pvalchev Exp $ */
+/*	$OpenBSD: auvia.c,v 1.29 2004/12/07 03:17:42 jsg Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -43,8 +43,6 @@
  * Documentation links:
  *
  * ftp://ftp.alsa-project.org/pub/manuals/via/686a.pdf
- * ftp://ftp.alsa-project.org/pub/manuals/general/ac97r21.pdf
- * ftp://ftp.alsa-project.org/pub/manuals/ad/AD1881_0.pdf (example AC'97 codec)
  */
 
 #include <sys/param.h>
