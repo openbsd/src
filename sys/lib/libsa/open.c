@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.9 1995/09/19 09:16:52 thorpej Exp $	*/
+/*	$NetBSD: open.c,v 1.10 1996/01/13 22:25:41 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -66,9 +66,7 @@
 
 #include "stand.h"
 
-#ifndef atari
 struct open_file files[SOPEN_MAX];
-#endif
 
 /*
  *	File primitives proper
