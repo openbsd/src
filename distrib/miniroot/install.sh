@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.113 2002/08/27 02:18:34 krw Exp $
+#	$OpenBSD: install.sh,v 1.114 2002/09/17 12:28:54 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -83,24 +83,11 @@ MODE=install
 # include common subroutines and initialization code
 . install.sub
 
-# If /etc/fstab already exists we skip disk initialization
+# If /etc/fstab already exists, skip disk initialization.
 if [ ! -f /etc/fstab ]; then
 	# Install the shadowed disktab file; lets us write to it for temporary
 	# purposes without mounting the miniroot read-write.
 	[ -f /etc/disktab.shadow ] && cp /etc/disktab.shadow /tmp/disktab.shadow
-
-	cat << __EOT
-
-
-You must now initialize the disks you want to use for OpenBSD. During this
-initialization process it is strongly recommended that you create disk
-parititions for the following filesystems:
-
-	/, /tmp, /var, /usr, /home
-
-Some of the security features of OpenBSD rely on these filesystems being
-mounted on separate partitions.
-__EOT
 
 	# Prevent the user from choosing anything but the default as the
 	# root device. Any attempt to mount '/' anywhere else will
@@ -114,8 +101,12 @@ __EOT
 		_DKDEVS=`rmel "$DISK" $_DKDEVS`
 		[ "$_DKDEVS" ] || break
 
-		ask_fordev "Which disk do you wish to initialize?" "$_DKDEVS"
-		[ "$resp" = "done" ] && break
+		if isin $ROOTDISK $_DKDEVS; then
+			resp=$ROOTDISK
+		else
+			ask_fordev "Which disk do you wish to initialize?" "$_DKDEVS"
+			[ "$resp" = "done" ] && break
+		fi
 
 		DISK=$resp
 
@@ -130,10 +121,8 @@ __EOT
 		# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
 		cat << __EOT
 
-You will now have the opportunity to enter filesystem information for ${DISK}.
-You will be prompted for the mount point (full path, including the prepending
-'/' character) for each BSD partition on ${DISK}. Enter "none" to skip a
-partition or "done" when you are finished.
+You will now enter the mount point (full path with the leading '/' character)
+for each OpenBSD partition in the disklabel for ${DISK}.
 
 __EOT
 
@@ -240,14 +229,11 @@ __EOT
 
 	cat << __EOT
 
-
 You have configured the following partitions and mount points:
 
 $(<$FILESYSTEMS)
 
-The next step will destroy all existing data on these partitions by
-creating a new filesystem on each of them.
-
+The next step creates a filesystem on each partition, ERASING existing data.
 __EOT
 
 	ask "Are you really sure that you're ready to proceed?" n
@@ -271,62 +257,43 @@ __EOT
 		: $(( _i += 1 ))
 	done < $FILESYSTEMS
 
-	# Sort entries from $FILESYSTEMS by mount point to try and
-	# enforce a rational mount order in the /etc/fstab that will
-	# be created.
-	rm -f $FILESYSTEMS
+	# Write fstab entries to /tmp/fstab in mount point alphabetic
+	# order to enforce a rational mount order.
+	rm -f /tmp/fstab
 	for _mp in `bsort ${_mount_points[*]}`; do
 		_i=0
 		for _pp in ${_partitions[*]}; do
 			if [ "$_mp" = "${_mount_points[$_i]}" ]; then
-				echo "$_pp $_mp" >> $FILESYSTEMS
+				echo -n "/dev/$_pp $_mp ffs rw"
+				case $_mp in
+				"/")	echo " 1 1" ;;
+				"/tmp"|"/var"|"/var/tmp"|"/usr/obj"|"/home") echo ",nosuid,nodev 1 2" ;;
+				"/usr") echo ",nodev 1 2" ;;
+				*)	echo " 1 2" ;;
+				esac
 			fi
 			: $(( _i += 1 ))
 		done
-	done
-
-fi
-
-# Get network configuration information, and store it for placement in the
-# root filesystem later.
-cat << __EOT
-
-You will now be given the opportunity to configure the network. This will be
-useful if you need to transfer the installation sets via FTP, HTTP, or NFS.
-Even if you choose not to transfer installation sets that way, this information
-will be preserved and copied into the new root filesystem.
-
-__EOT
-ask "Configure the network?" y
-case $resp in
-y*|Y*)	donetconfig
-	;;
-esac
-
-if [ ! -f /etc/fstab ]; then
-	# Now that the network has been configured, it is safe to configure the
-	# fstab.
-	(
-		while read _dev _mp; do
-			case $_mp in
-			"/")	echo /dev/$_dev $_mp ffs rw 1 1;;
-			"/tmp"|"/var/tmp") echo /dev/$_dev $_mp ffs rw,nosuid,nodev 1 2;;
-			*)	echo /dev/$_dev $_mp ffs rw 1 2;;
-			esac
-		done
-	) < $FILESYSTEMS > /tmp/fstab
+	done >> /tmp/fstab
 
 	munge_fstab
 fi
 
 mount_fs "-o async"
 
-echo '\nPlease enter the initial password that the root account will have.'
+# Get network configuration information, and store it for placement in the
+# root filesystem later.
+ask "\nConfigure the network?" y
+case $resp in
+y*|Y*)	donetconfig
+	;;
+esac
+
 _oifs=$IFS
 IFS=
 resp=
 while [ -z "$resp" ]; do
-	askpass "Password (will not echo):"
+	askpass "Password for root account (will not echo):"
 	_password=$resp
 
 	askpass "Password (again):"
@@ -346,9 +313,8 @@ set_machdep_apertureallowed
 # Copy configuration files to /mnt/etc.
 cfgfiles="fstab hostname.* hosts myname mygate resolv.conf kbdtype sysctl.conf"
 
-echo
+echo -n "Saving configuration files..."
 if [ -f /etc/dhclient.conf ]; then
-	echo -n "Saving dhclient configuration..."
 	cat /etc/dhclient.conf >> /mnt/etc/dhclient.conf
 	echo "lookup file bind" > /mnt/etc/resolv.conf.tail
 	cp /var/db/dhclient.leases /mnt/var/db/.
@@ -356,14 +322,11 @@ if [ -f /etc/dhclient.conf ]; then
 	# Note that mygate should not be the first or last file
 	# in cfgfiles or this won't work.
 	cfgfiles=`echo $cfgfiles | sed -e 's/ mygate / /'`
-	echo "done."
 fi
 
 cd /tmp
-echo -n "Copying... "
 for file in $cfgfiles; do
 	if [ -f $file ]; then
-		echo -n "$file "
 		cp $file /mnt/etc/$file
 		rm -f $file
 	fi

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.9 2002/08/27 02:18:34 krw Exp $
+#	$OpenBSD: install.md,v 1.10 2002/09/17 12:28:54 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ md_installboot() {
 	echo Installing boot block...
 	cp /usr/mdec/boot /mnt/boot
 	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
+	echo "...done."
 }
 
 md_checkfordisklabel() {
@@ -136,28 +137,25 @@ quit
 __EOT
 
 	else
-
-		echo
 		cat << __EOT
-A single OpenBSD partition with id 'A6' ('OpenBSD') should exist in the MBR.
-All of your OpenBSD partitions will be contained _within_ this partition,
-including your swap space.  In the normal case it should be the only partition
-marked as active.  (Unless you are using a multiple-OS booter, but you can
-adjust that later.)  Furthermore, the MBR partitions must NOT overlap each
-other.  [If this is a new install, you are most likely going to want to type
-the following fdisk commands: reinit, update, write, quit. Use the 'manual'
-command to read a full description.]  The current partition information is:
 
+Your will now create a single MBR partition to contain your OpenBSD data. This
+partition must have an id of 'A6'; must *NOT* overlap other partitions; and
+must be marked as the only active partition.
+
+The 'manual' command describes all the fdisk commands in detail.
+
+$(fdisk ${_disk})
 __EOT
-		fdisk ${_disk}
-		echo
 		fdisk -e ${_disk}
 	fi
 
-	echo Here is the partition information you chose:
-	echo
-	fdisk ${_disk}
-	echo
+	cat << __EOT
+Here is the partition information you chose:
+
+$(fdisk ${_disk})
+
+__EOT
 }
 
 md_prep_disklabel()
@@ -172,12 +170,12 @@ md_prep_disklabel()
 
 	cat << __EOT
 
-Inside the BIOS 'A6' ('OpenBSD') partition you just created, there resides an
-OpenBSD partition table which defines how this BIOS partition is to be split
-up. This table declares the offsets and sizes of your / partition, your swap
-space, and any other partitions you might create.  (NOTE: The OpenBSD disk
-label offsets are absolute, ie. relative to the start of the disk... NOT
-relative to the start of the BIOS 'A6' partition).
+You will now create an OpenBSD disklabel inside the MBR 'A6' ('OpenBSD')
+partition. The disklabel defines how OpenBSD splits up the MBR partition
+into OpenBSD partitions in which filesystems and swap space are created. 
+
+The offsets used in the disklabel are ABSOLUTE, i.e. relative to the
+start of the disk, NOT the start of the MBR 'A6' partition.
 
 __EOT
 
@@ -192,15 +190,6 @@ __EOT
 		;;
 	esac
 
-	# display example
-	cat << __EOT
-If this disk is shared with other operating systems, those operating systems
-should have a BIOS partition entry that spans the space they occupy completely.
-For safety, also make sure all OpenBSD file systems are within the offset and
-size specified in the 'A6' BIOS partition table.  (By default, the disklabel
-editor will try to enforce this).
-
-__EOT
 	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
 }
 

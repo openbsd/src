@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.41 2002/08/27 02:18:34 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.42 2002/09/17 12:28:54 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -56,8 +56,7 @@ MODE=upgrade
 # work!
 THESETS=`echo $THESETS | sed -e 's/ etc / /'`
 
-# Assume $ROOTDEV is the root filesystem. Confirm
-# this with the user. Check and mount the root filesystem.
+# Have the user confirm that $ROOTDEV is the root filesystem.
 resp=
 while [ -z "$resp" ]; do
 	ask "Root filesystem?" "$ROOTDEV"
@@ -94,14 +93,7 @@ done
 
 # Start up the network in same/similar configuration as the installed system
 # uses.
-cat << __EOT
-
-The upgrade program would now like to enable the network. It will use the
-configuration already stored on the root filesystem. This is required
-if you wish to use the network installation capabilities of this program.
-
-__EOT
-ask "Enable network?" y
+ask "Enable network using configuration stored on root filesystem?" y
 case $resp in
 y*|Y*)
 	if ! enable_network; then
@@ -109,15 +101,7 @@ y*|Y*)
 		exit
 	fi
 
-	cat << __EOT
-
-You will now be given the opportunity to escape to the command shell to
-do any additional network configuration you may need. This may include
-adding additional routes, if needed. In addition, you might take this
-opportunity to redo the default route in the event that it failed above.
-
-__EOT
-	ask "Escape to shell?" n
+	ask "Do you want to do more, manual, network configuration?" n
 	case $resp in
 	y*|Y*)	echo "Type 'exit' to return to upgrade."
 		sh
@@ -127,22 +111,17 @@ __EOT
 esac
 
 cat << __EOT
+
 The fstab is configured as follows:
 
 $(</tmp/fstab)
 
-You may wish to edit the fstab before the filesystems are mounted. e.g. to
-change the order in which the filesystems are mounted.
+You can edit the fstab now, before it is used, but the edited fstab will
+only be used during the upgrade. It will not be copied back to disk.
 
-NOTE:	1) the edited fstab will be used only during the upgrade. It will not
-           be copied back into the root filesystem.
-
-	2) A filesystem will not be mounted if
-		a) the 'noauto' option is present,
-		b) /sbin/mount_<fstype> is not found,
-		c) the fstype is nfs.
-
-	3) Non-ffs filesystems will be mounted read-only.
+Filesystems in the fstab will be mounted only if the 'noauto' option is
+absent, /sbin/mount_<fstype> is found, and the fstype is not nfs. Only
+filesystems with a fstype of ffs will be mounted read-write.
 
 __EOT
 ask "Edit the fstab with ${EDITOR}?" n
@@ -150,8 +129,6 @@ case $resp in
 y*|Y*)	${EDITOR} /tmp/fstab
 	;;
 esac
-
-echo
 
 # Create /etc/fstab.
 munge_fstab

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.254 2002/09/10 21:36:56 deraadt Exp $
+	$OpenBSD: install.sub,v 1.255 2002/09/17 12:28:54 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -93,38 +93,73 @@ set_term() {
 	md_set_term
 }
 
-welcome_banner() {
+welcome() {
+	local _query
+
 	cat << __EOT
 
+Welcome to the OpenBSD/${ARCH} ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} program.
 
-As with anything that modifies your disk's contents, this program can
-cause SIGNIFICANT data loss, and you are advised to make sure your
-data is backed up before beginning the installation process.
+This program will help you ${MODE} OpenBSD in a simple and rational way. At
+any prompt except password prompts you can run a shell command by typing '!foo',
+or escape to a shell by typing '!'. Default answers are shown in []'s and are
+selected by pressing RETURN. At any time you can exit this program by
+pressing Control-C and then RETURN, but quitting during an ${MODE} can leave
+your system in an inconsistent state.
 
-Default answers are displayed in brackets after the questions. You can
-hit Control-C at any time to quit, but if you do so at a prompt, you
-may have to hit return. Also, quitting in the middle of an ${MODE} may
-leave your system in an inconsistent state.
-
-If you hit Control-C and restart the ${MODE}, the ${MODE} program will
-remember many of your old answers.
 __EOT
-	if [ "$MODE" = "upgrade" ]; then
+
+	# Configure the terminal.
+	set_term
+
+	cat << __EOT
+
+IS YOUR DATA BACKED UP? As with anything that modifies disk contents, this 
+program can cause SIGNIFICANT data loss.
+__EOT
+
+	case $MODE in
+	upgrade)
 		cat << __EOT
 
-As a reminder, installing the 'etc' binary set is NOT recommended.
-Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the 'etc' set into those files which
-already exist on your system.
+NOTE: once your system has been upgraded, you must manually merge any changes
+to files in the 'etc' set into the files already on your system.
 __EOT
-	else
+		_query="Proceed with upgrade?"
+		;;
+
+	install)
 		cat << __EOT
 
-You'll be asked several questions, and it would probably be useful to
-have your disk's hardware manual, the installation notes, and a
-calculator handy.
+It is often helpful to have the installation notes handy. For complex disk
+configurations, relevant disk hardware manuals and a calculator are useful.
 __EOT
-	fi
+
+		if [ -f /etc/fstab ]; then
+			cat << __EOT
+
+You seem to be trying to restart an interrupted installation! You can skip
+the disk preparation steps and continue, or you can reboot and start over.
+__EOT
+			_query="Skip disk initialization?"
+		else
+			_query="Proceed with install?"
+		fi
+		;;
+	esac
+
+	ask "\n$_query" n
+	case $resp in
+	y*|Y*)	echo "Cool!  Let's get to it..."
+		;;
+	*)	cat << __EOT
+
+Enter 'halt' at the prompt to gracefully exit OpenBSD. You can then
+power cycle the machine and boot your original OS.
+__EOT
+		exit
+		;;
+	esac
 }
 
 get_dkdevs() {
@@ -343,8 +378,7 @@ get_setsdir() {
 		ask "Enter the pathname where the sets are stored (or '?')" "$_dir"
 		case $resp in
 		"?")	cat << __EOT
-The following filesystems are mounted at or below ${_mp} and are therefore
-possible sources for ${MODE} sets:
+Sets could be stored on:
 
 ${_mounted}
 
@@ -360,7 +394,7 @@ __EOT
 			;;
 		esac
 
-		ask "\nRe-enter pathname?" y
+		ask "Re-enter pathname?" y
 		case $resp in
 		y*|Y*)	;;
 		*)	break
@@ -391,12 +425,15 @@ get_rootdisk() {
 	_defdsk=`echo $DKDEVS | cutlast`
 	[ "$_defdsk" = "$DKDEVS" ] || _defdsk=
 
+if [ "$MODE" = "install" -a ! -f /etc/fstab ]; then
 	cat << __EOT
 
-The installation program needs to know which disk to consider the root disk.
-Note the unit number may be different than the unit number you used in the
-boot program (especially on a machine with multiple disk controllers).
+You will now initialize the disk(s) that OpenBSD will use. To enable all
+available security features you should configure the disk(s) to allow the
+creation of separate filesystems for /, /tmp, /var, /usr, and /home.
 __EOT
+fi
+
 	ask_fordev "Which disk is the root disk?" "$DKDEVS" "$_defdsk"
 	[ "$resp" = "done" ] && exit
 
@@ -460,8 +497,7 @@ configure_all_interfaces() {
 	while : ; do
 		cat << __EOT
 
-You may configure the following network interfaces (the interfaces
-marked with [X] have been successfully configured):
+Available network interfaces ([X] == already configured) are:
 
 __EOT
 		do_selection_list "$IFDEVS" "$_ifsdone" "Configure which interface?"
@@ -485,7 +521,7 @@ __EOT
 configure_ifs() {
 	local _up _if_name=$1 _if_ip _if_mask
 	local _if_symname _if_extra _hostname
-	local _dhcp_prompt
+	local _dhcp_prompt _mediaopts
 
 	set -- `ifconfig $_if_name | sed -n '
 		1s/.*<UP,.*$/UP/p
@@ -527,25 +563,23 @@ configure_ifs() {
 		_if_mask=$resp
 	fi
 
-	if [ "`ifconfig -m ${_if_name} | sed -n '/media/p'`" ]; then
+        _mediaopts=`ifconfig -m $_if_name | sed -n '/media:/D;/media/p'`
+	if [ "$_mediaopts" ]; then
 		cat << __EOT
-Your use of the network interface may require non-default
-media directives. The default media is:
+The default media for $_if_name is
+$(ifconfig -m $_if_name | sed -n '/supported/D;/media:/p')
 __EOT
-		ifconfig -m ${_if_name} | sed -n '
-			/supported/D
-			/media:/p'
-		echo "This is a list of supported media:"
-		ifconfig -m ${_if_name} | sed -n '
-			/media:/D
-			s/^	//
-			/media/p'
-		cat << __EOT
-If the default is not satisfactory, and you wish to use another
-media, copy that line from above (e.g. "media 100baseTX")
+		ask "Do you want to change the default media?" "n"
+		case $resp in
+		y*|Y*)	cat << __EOT
+Supported media options for $_if_name are:
+$_mediaopts
 __EOT
-		ask "Media directives?"
-		_if_extra=$resp
+			ask "Enter media options for $_if_name:"
+			_if_extra=$resp
+			;;
+		*)	;;
+		esac
 	fi
 
 	# Configure the interface. If it
@@ -845,11 +879,10 @@ get_sets () {
 
 	if [ -z "$SETS" ]; then
 		cat << __EOT
-The directory
+No OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets were found in
 
     '${_src}'
 
-contains no OpenBSD ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} sets.
 __EOT
 		ask "Search for other *.tar.gz and *.tgz files?" y
 		case $resp in
@@ -885,13 +918,6 @@ get_get_files () {
 
 	[ "$SETS" ] || return
 
-	cat << __EOT
-
-You will now be asked which sets to ${MODE}. Some of these sets are required
-for your ${MODE} and some are optional. You will want at least the
-base and bsd sets. Consult the installation notes if you are not sure
-which sets are required!
-__EOT
 	# Set the default list of files
 	for _f in $SETS ; do
 		# $SETS contains only .tgz and .tar.gz file names and 'bsd'.
@@ -972,12 +998,6 @@ install_url() {
 
 	donetconfig
 
-	cat << __EOT
-
-This is an automated ${_url_type}-based installation process. You will be asked
-questions and then the files will be retrieved iteratively via ${_url_type}.
-
-__EOT
 	# Proxy the connections?
 	: ${_proxy_host:=none}
 
@@ -989,30 +1009,11 @@ __EOT
 		export ftp_proxy=${_proxy_host}
 		export http_proxy=${_proxy_host}
 	fi
-	if [ "$_url_type" = "ftp" -a -z "$ftp_proxy" ]; then
-		# Use active mode ftp? (irrelevant if using a proxy)
-		case $_ftp_active in
-		-A)	resp=y ;;
-		*)	resp=n ;;
-		esac
-
-		cat << __EOT
-By default, ftp will attempt a passive connection and fall back to a normal
-(active) connection if that does not work. However, there are some very
-old ftp servers that claim to support passive mode, but really do not.
-In this case, you should explicitly request an active session.
-__EOT
-		ask "Do you want to use active ftp?" "$resp"
-		case $resp in
-		y*|Y*)	_ftp_active=-A ;;
-		*)	unset _ftp_active ;;
-		esac
-	fi
 
 	# Provide a list of possible servers
 	: ${_ftp_getlist:=y}
 
-	ask "Do you want a list of potential ${_url_type} servers?" "$_ftp_getlist"
+	ask "Do you want to see a list of potential ${_url_type} servers?" "$_ftp_getlist"
 	case $resp in
 	n*|N*)	_ftp_getlist=n
 		;;
@@ -1067,6 +1068,22 @@ __EOT
 
 	eval _${_url_type}_server_ip=$resp
 
+	# Some older servers lie about their support for passive mode ftp, so
+	# ask the user if it worth trying passive mode to the chosen server.
+	# Irrelevant if using a proxy.
+	if [ "$_url_type" = "ftp" -a -z "$ftp_proxy" ]; then
+		case $_ftp_active in
+		-A)	resp=n ;;
+		*)	resp=y ;;
+		esac
+
+		ask "Does the server support passive mode ftp?" "$resp"
+		case $resp in
+		n*|N*)	_ftp_active=-A ;;
+		*)	unset _ftp_active ;;
+		esac
+	fi
+
 	# Get server directory
 	if [ "$_url_type" = "ftp" -a -z "$_ftp_server_dir" ] ; then
 		# Default ftp dir
@@ -1120,12 +1137,6 @@ __EOT
 	# User may have selected no files
 	[ "$GET_FILES" ] || return
 
-	cat << __EOT
-
-Fetching files via ${_url_type} may take a long time, especially over a slow
-network connection.
-__EOT
-
 	install_get_files "$_url_base"
 }
 
@@ -1155,13 +1166,7 @@ install_cdrom() {
 		return
 	fi
 
-	cat << __EOT
-
-Please make sure the CD is in the CD-ROM drive and select
-the device containing the CD with the installation sets.
-__EOT
-
-	ask_fordev "Which CD-ROM contains the installation media?" "$CDDEVS" "`echo $CDDEVS | cutword 1`"
+	ask_fordev "Which CD-ROM contains the ${MODE} media?" "$CDDEVS" "`echo $CDDEVS | cutword 1`"
 	[ "$resp" = "done" ] && return
 
 	_drive=$resp
@@ -1207,7 +1212,7 @@ __EOT
 		# Ask for filesystem type
 		cat << __EOT
 
-There are two CD-ROM filesystem types currently supported by this program:
+Two CD-ROM filesystem types are currently supported by this program:
 cd9660		ISO-9660
 ffs		Berkeley Fast Filesystem
 
@@ -1247,13 +1252,7 @@ mount_a_disk() {
 	local _drive _def_partition _partition_range _partition
 	local _fstype _fsopts
 
-	cat << __EOT
-
-Please select the disk device containing the partition with the
-installation sets.
-__EOT
-
-	ask_fordev "Which is the disk with the installation sets?" "$DKDEVS"
+	ask_fordev "Which disk contains the ${MODE} sets?" "$DKDEVS"
 	[ "$resp" = "done" ] && return 1
 
 	_drive=$resp
@@ -1464,16 +1463,6 @@ set_timezone() {
 
 	[ ! -d $_zoneroot ] && return
 
-	cat << __EOT
-
-Select a time zone for your location. Timezones are represented on the system
-by a directory structure rooted in "/usr/share/timezone". Most timezones can
-be selected by entering a token like "CET" or "GMT-6". Other zones are
-grouped by continent or country, with detailed zone information separated by
-a slash ("/"), e.g. "US/Pacific" or "Canada/Mountain".
-
-__EOT
-
 	if [ -L /mnt/etc/localtime ]; then
 		TZ=`ls -l /mnt/etc/localtime 2>/dev/null | cutlast`
 		TZ=${TZ#${_zoneroot#/mnt}}
@@ -1548,8 +1537,8 @@ __EOT
 
 	cat << __EOT
 
-You will now be given the chance to install the missing set(s). You can
-enter '!' at the prompt to escape to a shell and fix things by hand if you wish.
+You can now try to install the missing set(s), or you can enter '!' at the
+prompt to escape to a shell and fix things by hand.
 
 __EOT
 
@@ -1562,21 +1551,19 @@ __EOT
 install_sets() {
  	cat << __EOT
 
-You will now be asked for the location of the ${MODE} sets you want to
-use, and then which sets to actually use. These steps will repeat
-until you are satisfied that all the sets you want have been
-loaded. Thus you will be able to load sets from multiple locations,
-and you can recover from some errors.
+You will now specify the location and names of the ${MODE} sets you want
+to load. You will be able to repeat this step until all of your sets
+have been successfully loaded.
 
+If you are not sure what sets to ${MODE}, refer to the installation notes
+for details on the contents of each.
 __EOT
 
 	while : ; do
 		cat << __EOT
-Sets can be located on a
 
-	(m)ounted filesystem
-	(c)drom, (d)isk or (t)ape device
-	(f)tp, (n)fs or (h)ttp server
+Sets can be located on a (m)ounted filesystem; a (c)drom, (d)isk or (t)ape
+device; or a (f)tp, (n)fs or (h)ttp server.
 
 __EOT
 		ask "Where are the ${MODE} sets you want to use? (m, c, f, etc.)"
@@ -1816,9 +1803,8 @@ donetconfig() {
 
 	cat << __EOT
 
-If any interfaces will be configured using a DHCP server
-it is recommended that you do not enter a DNS domain name,
-a default route, or any name servers.
+If any interface will be configured by DHCP, you should not enter
+information that will be supplied via DHCP, e.g. the DNS domain name.
 
 __EOT
 
@@ -1896,29 +1882,16 @@ __EOT
 	fi
 
 	if [ ! -f /tmp/resolv.conf.shadow ]; then
-		echo "\nThe host table is as follows:\n"
+		echo "\nThe host table contains:\n"
 		cat /tmp/hosts
-	cat << __EOT
-
-You may want to edit the host table in the event that you are doing an
-NFS installation or an FTP installation without a name server and want
-to refer to the server by name rather than by its numeric ip address.
-__EOT
-		ask "Would you like to edit the host table with ${EDITOR}?" n
+		ask "\nWould you like to edit the host table with ${EDITOR}?" n
 		case $resp in
 		y*|Y*)	${EDITOR} /tmp/hosts
 			;;
 		esac
 	fi
 
-	cat << __EOT
-
-You will now be given the opportunity to escape to the command shell to do
-any additional network configuration you may need. This may include adding
-additional routes, if needed. In addition, you might take this opportunity
-to redo the default route in the event that it failed above.
-__EOT
-	ask "Escape to shell?" n
+	ask "Do you want to do more, manual, network configuration?" n
 	case $resp in
 	y*|Y*)	echo "Type 'exit' to return to install."
 		sh
@@ -1935,12 +1908,11 @@ populateusrlocal() {
 set_machdep_apertureallowed() {
 	[ "$MDXAPERTURE" ] || return
 
-	ask "\nDo you expect to run the X Window System?" y
+	ask "Do you expect to run the X Window System?" y
 	case $resp in
 	y*|Y*)
 		sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
 			/mnt/etc/sysctl.conf > /tmp/sysctl.conf
-		echo "machdep.allowaperture enabled in /etc/sysctl.conf. Read xf86(4) for details."
 		;;
 	esac
 }
@@ -1958,14 +1930,11 @@ finish_up() {
 
 	populateusrlocal
 
-	# XXXXX - what is this for?
 	[ -x /mnt/${MODE}.site ] && /mnt/usr/sbin/chroot /mnt /${MODE}.site
 
-	# Unmount filesystems, etc. Disable trap that would do same on exit.
-	# Do this manually rather than through the trap so congrats is
-	# the last message printed.
+	# Disable trap(s) that do cleanup on exit. With success comes a 
+	# reboot which washes away all sins.
 	trap - HUP INT QUIT TERM EXIT
-	cleanup_on_exit
 
 	# Pat on the back.
 	cat << __EOT
@@ -2019,55 +1988,12 @@ if [ -z "$EDITOR" ] ; then
 	export EDITOR
 fi
 
-# Cleanup when the script exits.
+# Cleanup if the script exit prematurely.
 trap 'cleanup_on_exit' EXIT
 trap 'exit 2' HUP INT QUIT TERM
 
-
 # Introduce ourselves.
-cat << __EOT
-
-Welcome to the OpenBSD/${ARCH} ${VERSION_MAJOR}.${VERSION_MINOR} ${MODE} program.
-
-This program will help you ${MODE} OpenBSD in a simple and rational way.
-
-At any prompt except password prompts you can run a shell command by
-typing '!foo', or escape to a shell by typing '!'.
-
-__EOT
-
-# Deal with terminal issues now, so 'less' can print meaningfull prompt if
-# messages are >1 page long.
-set_term
-
-# Good {morning,afternoon,evening,night}.
-welcome_banner | less -XE
-
-if [ -f /etc/fstab -a "$MODE" = "install" ]; then
-	cat << __EOT
-
-You seem to be trying to restart an interrupted installation!
-You can skip the disk preparation steps and continue,
-or you can reboot and start over.
-
-__EOT
-	echo -n "Skip disk initialization and p"
-else
-	echo -n "\nP"
-fi
-	
-ask "roceed with ${MODE}?" n
-case $resp in
-y*|Y*)	echo "\nCool!  Let's get to it...\n"
-	;;
-*)	cat << __EOT
-
-Enter 'halt' at the prompt to gracefully exit OpenBSD. You can then
-power cycle the machine and boot your original OS.
-__EOT
-	exit
-	;;
-esac
+welcome
 
 # Get ROOTDISK and default ROOTDEV 
 get_rootdisk
