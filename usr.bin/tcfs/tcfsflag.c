@@ -32,14 +32,16 @@ tcfs_flags tcfs_setflags(int,tcfs_flags);
 int
 flags_main(int argc, char *argv[])
 {
-	int fd;
+	int fd, flag;
 	tcfs_flags i;
+	char cmd;
 
 	seteuid(getuid());
 	setuid(getuid());
 
 	if (argc < 3) {
-		fprintf (stderr, "tcfsflags {r,x,g} file\n\n");
+		fprintf (stderr, "tcfsflags [op]{r,x,g} file\n"
+			 "\t op can either be + or -.\n\n");
 		exit(1);
 	}
 
@@ -56,17 +58,32 @@ flags_main(int argc, char *argv[])
 		exit(1);
 	}
 
-	switch(*argv[1]) {
+	if (argv[1][0] == '-' || argv[1][0] == '+') {
+		cmd = argv[1][1];
+		flag = argv[1][0] == '+' ? 1 : 0;
+	} else {
+		flag = -1;
+		cmd = argv[1][0];
+	}
+
+	switch(cmd) {
 	case 'r':
-		printf("%s x:%d g:%d\n",argv[2],
-		       FI_CFLAG(&i),FI_GSHAR(&i));
+		printf("%s x:%d g:%d\n", argv[2],
+		       FI_CFLAG(&i), FI_GSHAR(&i));
 		exit(0);
 	case 'x':
-		FI_SET_CF(&i,~(FI_CFLAG(&i)));
+		if (flag == -1)
+			flag = ~(FI_CFLAG(&i));;
+		FI_SET_CF(&i, flag);
 		break;
 	case 'g':
-		FI_SET_GS(&i,~(FI_GSHAR(&i)));
+		if (flag == -1)
+			flag = ~(FI_GSHAR(&i));
+		FI_SET_GS(&i, flag);
 		break;
+	default:
+		fprintf(stderr, "%s: unknown option: %c\n", argv[0], cmd);
+		exit(1);
 	}					
 
 	i = tcfs_setflags(fd, i);
