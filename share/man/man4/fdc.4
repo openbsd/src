@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdc.4,v 1.11 2005/03/09 18:58:50 miod Exp $
+.\"	$OpenBSD: fdc.4,v 1.12 2005/03/10 09:13:54 jmc Exp $
 .\"	$NetBSD: fdc.4,v 1.6 1996/03/22 01:55:14 andrew Exp $
 .\"
 .\" Copyright (c) 1996 Andrew C. Wheadon
@@ -49,7 +49,7 @@ The
 .Nm
 driver supports the standard AT floppy disk controllers.
 These include standard IDE, MFM, RLL,
-EIDE, ESDI and SCSI controllers with floppy attachment,
+EIDE, ESDI, and SCSI controllers with floppy attachment,
 commonly encountered on many isa bus machines,
 as well as the on-board floppy controller found on most
 sparc and UltraSPARC workstations.
@@ -116,7 +116,7 @@ bus.
 The
 .Nm
 driver can interfere with other
-.Xr isa 4 
+.Xr isa 4
 controllers, namely some WD/SMC
 network controllers fail to work when the probing mechanism
 in the
