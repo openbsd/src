@@ -30,33 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Craig Metz and
- *      by other contributors.
- * 4. Neither the name of the author nor the names of contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 /* gai_strerror() v1.38 */
@@ -64,12 +37,6 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <errno.h>
-
-#define THREAD_SAFE 0
-
-#if !THREAD_SAFE
-static char buffer[256];
-#endif /* !THREAD_SAFE */
 
 char *gai_strerror(int errnum)
 {
@@ -97,20 +64,8 @@ char *gai_strerror(int errnum)
     case EAI_MEMORY:
       return "memory allocation failure";
     case EAI_SYSTEM:
-#if THREAD_SAFE
       return "system error";
-#else /* THREAD_SAFE */
-      snprintf(buffer, sizeof(buffer)-1, "system error: %s(%d)", strerror(errno), errno);
-      buffer[sizeof(buffer)-1] = 0;
-      return buffer;
-#endif /* THREAD_SAFE */
     default:
-#if THREAD_SAFE
       return "unknown/invalid error";
-#else /* THREAD_SAFE */
-      snprintf(buffer, sizeof(buffer)-1, "unknown/invalid error %d", errnum);
-      buffer[sizeof(buffer)-1] = 0;
-      return buffer;
-#endif /* THREAD_SAFE */
   };
 };
