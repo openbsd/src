@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.19 2004/06/19 20:00:19 cedric Exp $
+.\"	$OpenBSD: route.4,v 1.20 2004/08/10 15:07:11 jaredy Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -41,7 +41,7 @@
 .Fd #include <net/if.h>
 .Fd #include <net/route.h>
 .Ft int
-.Fn socket PF_ROUTE SOCK_RAW "int family"
+.Fn socket PF_ROUTE SOCK_RAW family
 .Sh DESCRIPTION
 .Ox
 provides some packet routing facilities.
@@ -58,13 +58,13 @@ used in earlier releases.
 Routing table changes may only be carried out by the super user.
 .Pp
 The operating system may spontaneously emit routing messages in response
-to external events, such as receipt of a re-direct, or failure to
+to external events, such as receipt of a redirect, or failure to
 locate a suitable route for a request.
 The message types are described in greater detail below.
 .Pp
 Routing database entries come in two flavors: for a specific
 host, or for all hosts on a generic subnetwork (as specified
-by a bit mask and value under the mask.
+by a bit mask and value under the mask).
 The effect of wildcard or default route may be achieved by using
 a mask of all zeros, and there may be hierarchical routes.
 .Pp
@@ -87,43 +87,59 @@ the most specific route matching the destination.
 (If there are two different mask and value-under-the-mask pairs
 that match, the more specific is the one with more bits in the mask.
 A route to a host is regarded as being supplied with a mask of
-as many ones as there are bits in the destination).
+as many ones as there are bits in the destination.)
 If no entry is found, the destination is declared to be unreachable,
 and a routing\-miss message is generated if there are any
 listeners on the routing control socket described below.
 .Pp
 A wildcard routing entry is specified with a zero
-destination address value, and a mask of all zeroes.
+destination address value and a mask of all zeroes.
 Wildcard routes will be used
 when the system fails to find other routes matching the
 destination.
 The combination of wildcard routes and routing redirects can provide
 an economical mechanism for routing traffic.
+Routes created by redirects from wildcard routes and other routes
+will be marked
+.Em cloned ,
+until their
+.Dq parent
+from which they were created has disappeared.
 .Pp
+Route labels can be attached to routes and may contain arbitrary
+information about the route.
+Labels are sent over the routing socket (see below) as
+.Vt sockaddr_rtlabel
+structures.
+.Ss The Routing Socket
 One opens the channel for passing routing control messages
-by using the socket call shown in
+by using the
+.Xr socket 2
+call shown in the
 .Sx SYNOPSIS
-above:
+above.
 .Pp
 The
 .Fa family
 parameter may be
-.Dv AF_UNSPEC
+.Dv AF_UNSPEC ,
 which will provide
 routing information for all address families, or can be restricted
 to a specific address family by specifying which one is desired.
 There can be more than one routing socket open per system.
 .Pp
 Messages are formed by a header followed by a small
-number of sockaddrs (now variable length particularly
-in the
-.Tn ISO
-case), interpreted by position, and delimited
-by the new length entry in the sockaddr.
+number of
+.Vt sockaddr
+structures (which are variable length),
+interpreted by position, and delimited
+by the length entry in the
+.Vt sockaddr .
 An example of a message with four addresses might be an
-.Tn ISO
-redirect:
-Destination, Netmask, Gateway, and Author of the redirect.
+IPv4 route addition: the destination, netmask, gateway, and label,
+since both netmasks and labels are sent over the routing socket as
+.Vt sockaddr
+structures.
 The interpretation of which addresses are present is given by a
 bit mask within the header, and the sequence is least significant
 to most significant bit within the vector.
@@ -137,22 +153,22 @@ However, message replies may be lost when kernel buffers are exhausted.
 .Pp
 The kernel may reject certain messages, and will indicate this
 by filling in the
-.Ar rtm_errno
+.Va rtm_errno
 field.
 The routing code returns
-.Dv EEXIST
+.Er EEXIST
 if
 requested to duplicate an existing entry,
-.Dv ESRCH
+.Er ESRCH
 if
 requested to delete a non-existent entry,
 or
-.Dv ENOBUFS
+.Er ENOBUFS
 if insufficient resources were available
 to install a new route.
 In the current implementation, all routing processes run locally,
 and the values for
-.Ar rtm_errno
+.Va rtm_errno
 are available through the normal
 .Va errno
 mechanism, even if the routing reply message is lost.
@@ -178,7 +194,7 @@ be reclaimed until all references to it are released.
 User processes can obtain information about the routing
 entry to a specific destination by using a
 .Dv RTM_GET
-message, or via the
+message or via the
 .Dv PF_ROUTE
 .Xr sysctl 3 .
 .Pp
@@ -217,8 +233,7 @@ struct rt_msghdr {
 	u_long	rtm_inits;	/* which metrics we are initializing */
 	struct	rt_metrics rtm_rmx; /* metrics themselves */
 };
-.Ed
-.Bd -literal
+
 struct if_msghdr {
 	u_short	ifm_msglen;	/* to skip over non-understood messages */
 	u_char	ifm_version;	/* future binary compatibility */
@@ -228,8 +243,7 @@ struct if_msghdr {
 	u_short	ifm_index;	/* index for associated ifp */
 	struct	if_data ifm_data;/* statistics and other data about if */
 };
-.Ed
-.Bd -literal
+
 struct ifa_msghdr {
 	u_short	ifam_msglen;	/* to skip over non-understood messages */
 	u_char	ifam_version;	/* future binary compatibility */
@@ -239,8 +253,7 @@ struct ifa_msghdr {
 	u_short	ifam_index;	/* index for associated ifp */
 	int	ifam_metric;	/* value of ifa_metric */
 };
-.Ed
-.Bd -literal
+
 struct if_announcemsghdr {
 	u_short	ifan_msglen;	/* to skip over non-understood messages */
 	u_char	ifan_version;	/* future binary compatibility */
@@ -253,22 +266,22 @@ struct if_announcemsghdr {
 .Pp
 The
 .Dv RTM_IFINFO
-message uses a
-.Ar if_msghdr
+message uses an
+.Vt if_msghdr
 header, the
 .Dv RTM_NEWADDR
 and
 .Dv RTM_DELADDR
-messages use a
-.Ar ifa_msghdr
+messages use an
+.Vt ifa_msghdr
 header,
 the
 .Dv RTM_IFANNOUNCE
-message uses a
-.Ar if_announcemsghdr
+message uses an
+.Vt if_announcemsghdr
 header,
 and all other messages use the
-.Ar rt_msghdr
+.Vt rt_msghdr
 header.
 .Pp
 The metrics structure is:
@@ -286,8 +299,12 @@ struct rt_metrics {
 	u_long	rmx_pksent;	/* packets sent using this route */
 };
 .Ed
-Only rmx_mtu, rmx_expire, rmx_pksent, and rmx_locks are used by the kernel
-routing table.
+.Pp
+Only
+.Va rmx_mtu , rmx_expire , rmx_pksent ,
+and
+.Va rmx_locks
+are used by the kernel routing table.
 All other values will be ignored when inserting them into the kernel and are
 set to zero in routing messages sent by the kernel.
 They are left for compatibility reasons with other systems.
@@ -307,15 +324,17 @@ Flags include the values:
 #define	RTF_LLINFO    0x400     /* generated by ARP or ESIS */
 #define	RTF_STATIC    0x800     /* manually added */
 #define	RTF_BLACKHOLE 0x1000    /* just discard pkts (during updates) */
-#define	RTF_PROTO3    0x2000    /* protocol specific routing flag */
 #define	RTF_PROTO2    0x4000    /* protocol specific routing flag */
 #define	RTF_PROTO1    0x8000    /* protocol specific routing flag */
 #define	RTF_CLONED    0x10000   /* this is a cloned route */
-#define RTF_SOURCE    0x20000   /* this route has a source selector */
 #define RTF_MPATH     0x40000   /* multipath route or operation */
 .Ed
 .Pp
-Specifiers for metric values in rmx_locks and rtm_inits are:
+Specifiers for metric values in
+.Va rmx_locks
+and
+.Va rtm_inits
+are:
 .Bd -literal
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -326,7 +345,12 @@ Specifiers for metric values in rmx_locks and rtm_inits are:
 #define RTV_RTT		0x40	/* init or lock _rtt */
 #define RTV_RTTVAR	0x80	/* init or lock _rttvar */
 .Ed
-Only RTV_MTU and RTV_EXPIRE should be used all other flags are ignored.
+.Pp
+Only
+.Dv RTV_MTU
+and
+.Dv RTV_EXPIRE
+should be used; all other flags are ignored.
 .Pp
 Specifiers for which addresses are present in the messages are:
 .Bd -literal
@@ -338,9 +362,17 @@ Specifiers for which addresses are present in the messages are:
 #define RTA_IFA		0x20	/* interface addr sockaddr present */
 #define RTA_AUTHOR	0x40	/* sockaddr for author of redirect */
 #define RTA_BRD		0x80	/* for NEWADDR, bcast or p-p dest addr */
-#define RTA_SRC		0x100	/* source sockaddr present */
-#define RTA_SRCMASK	0x200	/* source netmask present */
+#define RTA_LABEL	0x400	/* route label present */
 .Ed
 .Sh SEE ALSO
+.Xr netstat 1 ,
 .Xr socket 2 ,
-.Xr sysctl 3
+.Xr sysctl 3 ,
+.Xr mygate 5 ,
+.Xr route 8 ,
+.Xr routed 8
+.Sh HISTORY
+A
+.Dv PF_ROUTE
+protocol family first appeared in
+.Bx 4.3 Reno .
