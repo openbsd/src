@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.26 1998/07/07 07:12:40 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.27 1999/02/26 04:57:15 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -59,6 +59,10 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <dev/rndvar.h>
@@ -118,7 +122,11 @@ sys___sysctl(p, v, retval)
 		fn = hw_sysctl;
 		break;
 	case CTL_VM:
+#if defined(UVM)
+		fn = uvm_sysctl;
+#else
 		fn = vm_sysctl;
+#endif
 		break;
 	case CTL_NET:
 		fn = net_sysctl;
@@ -150,7 +158,11 @@ sys___sysctl(p, v, retval)
 	    (error = copyin(SCARG(uap, oldlenp), &oldlen, sizeof(oldlen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
+#if defined(UVM)
+		if (!uvm_useracc(SCARG(uap, old), oldlen, B_WRITE))
+#else
 		if (!useracc(SCARG(uap, old), oldlen, B_WRITE))
+#endif
 			return (EFAULT);
 		while (memlock.sl_lock) {
 			memlock.sl_want = 1;
@@ -159,14 +171,22 @@ sys___sysctl(p, v, retval)
 		}
 		memlock.sl_lock = 1;
 		if (dolock)
+#if defined(UVM)
+			uvm_vslock(p, SCARG(uap, old), oldlen);
+#else
 			vslock(SCARG(uap, old), oldlen);
+#endif
 		savelen = oldlen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
 	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		if (dolock)
+#if defined(UVM)
+			uvm_vsunlock(p, SCARG(uap, old), savelen);
+#else
 			vsunlock(SCARG(uap, old), savelen);
+#endif
 		memlock.sl_lock = 0;
 		if (memlock.sl_want) {
 			memlock.sl_want = 0;
@@ -364,8 +384,13 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case HW_PHYSMEM:
 		return (sysctl_rdint(oldp, oldlenp, newp, ctob(physmem)));
 	case HW_USERMEM:
+#if defined(UVM)
+		return (sysctl_rdint(oldp, oldlenp, newp,
+		    ctob(physmem - uvmexp.wired)));
+#else
 		return (sysctl_rdint(oldp, oldlenp, newp,
 		    ctob(physmem - cnt.v_wire_count)));
+#endif
 	case HW_PAGESIZE:
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	default:
