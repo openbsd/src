@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.154 1999/06/28 18:30:04 jason Exp 
+ *	OpenBSD: pcidevs,v 1.155 1999/06/28 19:28:36 ho Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1319,14 +1319,20 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER,
 	    0,
-	    "Diamond Computer Systems",
+	    "Diamond Multimedia",
 	    "Viper/PCI",
 	},
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_MONSTER,
 	    0,
-	    "Diamond Computer Systems",
+	    "Diamond Multimedia",
 	    "Monster",
+	},
+	{
+	    PCI_VENDOR_DIAMOND2, PCI_PRODUCT_DIAMOND2_MX300,
+	    0,
+	    "Diamond Multimedia (2nd ID)",
+	    "Monster Sound MX300",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
@@ -4193,7 +4199,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DIAMOND, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Diamond Computer Systems",
+	    "Diamond Multimedia",
 	    NULL,
 	},
 	{
@@ -6114,6 +6120,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_STB2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "NVidia/SGS-Thomson",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_DIAMOND2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Diamond Multimedia (2nd ID)",
 	    NULL,
 	},
 	{

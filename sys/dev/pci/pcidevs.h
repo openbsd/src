@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.154 1999/06/28 18:30:04 jason Exp 
+ *	OpenBSD: pcidevs,v 1.155 1999/06/28 19:28:36 ho Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -187,7 +187,7 @@
 #define	PCI_VENDOR_SYSTEMSOFT	0x108f		/* Systemsoft */
 #define	PCI_VENDOR_ENCORE	0x1090		/* Encore Computer */
 #define	PCI_VENDOR_INTERGRAPH	0x1091		/* Intergraph */
-#define	PCI_VENDOR_DIAMOND	0x1092		/* Diamond Computer Systems */
+#define	PCI_VENDOR_DIAMOND	0x1092		/* Diamond Multimedia */
 #define	PCI_VENDOR_NATIONALINST	0x1093		/* National Instruments */
 #define	PCI_VENDOR_FICOMP	0x1094		/* First Int'l Computers */
 #define	PCI_VENDOR_CMDTECH	0x1095		/* CMD Technology */
@@ -508,6 +508,7 @@
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* NVidia/SGS-Thomson */
+#define	PCI_VENDOR_DIAMOND2	0x12eb		/* Diamond Multimedia (2nd ID) */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
@@ -845,6 +846,8 @@
 /* Diamond products */
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */
 #define	PCI_PRODUCT_DIAMOND_MONSTER	0x0001		/* Monster */
+
+#define	PCI_PRODUCT_DIAMOND2_MX300	0x0002		/* Monster Sound MX300 */
 
 /* Distributed Processing Technology products */
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/Raid */
