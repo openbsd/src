@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.8 2000/10/03 14:31:57 ho Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.9 2001/06/10 22:17:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.8 2000/10/03 14:31:57 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.9 2001/06/10 22:17:08 mickey Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -333,15 +333,19 @@ icmp_print(register const u_char *bp, register const u_char *bp2)
 		break;
 
 	case ICMP_PARAMPROB:
-		if (dp->icmp_code)
-			(void)snprintf(buf, sizeof buf,
-				"parameter problem - code %d",
-				dp->icmp_code);
-		else {
+		switch (dp->icmp_code) {
+		case ICMP_PARAMPROB_OPTABSENT:
+			str = "requested option absent";
+			break;
+		case ICMP_PARAMPROB_LENGTH:
+			snprintf(buf, sizeof buf, "bad length %d", dp->icmp_pptr);
+			break;
+		default:
 			TCHECK(dp->icmp_pptr);
 			(void)snprintf(buf, sizeof buf,
 				"parameter problem - octet %d",
 				dp->icmp_pptr);
+			break;
 		}
 		break;
 
