@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethnamaddr.c,v 1.5 2002/06/26 06:08:17 itojun Exp $	*/
+/*	$OpenBSD: gethnamaddr.c,v 1.6 2002/06/27 00:26:55 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: gethnamaddr.c,v 8.23 1998/04/07 04:59:46 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: gethnamaddr.c,v 1.5 2002/06/26 06:08:17 itojun Exp $";
+static char rcsid[] = "$OpenBSD: gethnamaddr.c,v 1.6 2002/06/27 00:26:55 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -881,10 +881,10 @@ map_v4v6_address(src, dst)
 }
 
 static void
-map_v4v6_hostent(hp, bpp, lenp)
+map_v4v6_hostent(hp, bpp, ep)
 	struct hostent *hp;
 	char **bpp;
-	int *lenp;
+	char *ep;
 {
 	char **ap;
 
@@ -895,17 +895,15 @@ map_v4v6_hostent(hp, bpp, lenp)
 	for (ap = hp->h_addr_list; *ap; ap++) {
 		int i = sizeof(align) - ((u_long)*bpp % sizeof(align));
 
-		if (*lenp < (i + IN6ADDRSZ)) {
+		if (ep - *bpp < (i + IN6ADDRSZ)) {
 			/* Out of memory.  Truncate address list here.  XXX */
 			*ap = NULL;
 			return;
 		}
 		*bpp += i;
-		*lenp -= i;
 		map_v4v6_address(*ap, *bpp);
 		*ap = *bpp;
 		*bpp += IN6ADDRSZ;
-		*lenp -= IN6ADDRSZ;
 	}
 }
 
