@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.30 2004/06/27 14:16:22 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.31 2004/12/22 20:36:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -26,7 +26,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define DDB_DEBUG
+#undef DDB_DEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	}
 
 #ifdef DDB_DEBUG
-	/* (*pr) (">> %p, 0x%x, 0x%x\t", fp, pc, rp); */
+	*pr) (">> %p, 0x%x, 0x%x\t", fp, pc, rp);
 #endif
 	while (fp && count--) {
 
@@ -323,7 +323,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		} else
 			fp = (register_t *)fp[0];
 #ifdef DDB_DEBUG
-		/* (*pr) (">> %x, %x, %x\t", fp, pc, rp); */
+		(*pr) (">> %x, %x, %x\t", fp, pc, rp);
 #endif
 	}
 
