@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.153 2002/12/16 20:35:24 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.154 2002/12/18 07:45:37 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1287,17 +1287,17 @@ attachment points
 using the following kinds
 of rules:
 .Bl -tag -width xxxx
-.It Em anchor-nat name
+.It Em nat-anchor name
 Evaluates the
 .Pa nat
 rules of all named rulesets in the specified
 .Pa anchor .
-.It Em anchor-rdr name
+.It Em rdr-anchor name
 Evaluates the
 .Pa rdr
 rules of all named rulesets in the specified
 .Pa anchor .
-.It Em anchor-binat name
+.It Em binat-anchor name
 Evaluates the
 .Pa binat
 rules of all named rulesets in the specified
