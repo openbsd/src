@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.12 1999/08/17 09:13:13 millert Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.13 2001/01/11 22:36:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,8 +78,11 @@ int	nutmp, uf;
 void jkfprintf __P((FILE *, char[], off_t));
 void mailfor __P((char *));
 void notify __P((struct utmp *, off_t));
-void onalrm __P((int));
+void readutmp __P((int));
+void doreadutmp __P((void));
 void reapchildren __P((int));
+
+volatile int wantreadutmp;
 
 int
 main(argc, argv)
@@ -112,8 +115,8 @@ main(argc, argv)
 	}
 	(void)time(&lastmsgtime);
 	(void)gethostname(hostname, sizeof(hostname));
-	onalrm(0);
-	(void)signal(SIGALRM, onalrm);
+	doreadutmp();
+	(void)signal(SIGALRM, readutmp);
 	(void)signal(SIGTTOU, SIG_IGN);
 	(void)signal(SIGCHLD, reapchildren);
 	for (;;) {
@@ -121,7 +124,10 @@ main(argc, argv)
 		if (cc <= 0) {
 			if (errno != EINTR)
 				sleep(1);
-			errno = 0;
+			if (wantreadutmp) {
+				doreadutmp();
+				wantreadutmp = 0;
+			}
 			continue;
 		}
 		if (!nutmp)		/* no one has logged in yet */
@@ -143,13 +149,20 @@ reapchildren(signo)
 {
 	int save_errno = errno;
 
-	while (wait3(NULL, WNOHANG, NULL) > 0);
+	while (wait3(NULL, WNOHANG, NULL) > 0)
+		;
 	errno = save_errno;
 }
 
 void
-onalrm(signo)
+readutmp(signo)
 	int signo;
+{
+	wantreadutmp = 1;
+}
+
+void
+doreadutmp(void)
 {
 	static u_int utmpsize;		/* last malloced size for utmp */
 	static u_int utmpmtime;		/* last modification time for utmp */
