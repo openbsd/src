@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.20 1997/06/23 17:35:49 kstailey Exp $
+#	$OpenBSD: GENERIC,v 1.21 1997/06/23 19:04:27 kstailey Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -61,7 +61,7 @@ option		IPSEC		# IPsec
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
 option		IPFILTER	# IP packet filter for security
-#option		IPFILTER_LOG	# use /dev/ipl	XXX - still in ip_fil_compat.h
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
 option		PPP_BSDCOMP	# PPP BSD compression
 option		PPP_DEFLATE
 
