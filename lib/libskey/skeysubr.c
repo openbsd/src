@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.26 2003/04/03 17:48:50 millert Exp $
+ * $OpenBSD: skeysubr.c,v 1.27 2003/06/26 23:19:53 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -276,7 +276,7 @@ rip(char *buf)
 char *
 readpass(char *buf, int n)
 {
-	void (*old_handler)();
+	void (*old_handler)(int);
 
 	/* Turn off echoing */
 	skey_echo(0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: header.h,v 1.7 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: header.h,v 1.8 2003/06/26 23:19:53 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -29,7 +29,7 @@ extern void print_key(FILE *, char *, char *, int, int);
 extern void print_space(FILE *, int);
 extern int read_environment(char *);
 extern void parse_key(char *);
-extern int kvparse(), kvlex();
+extern int kvparse(void), kvlex(void);
 extern void kverror(char *);
 
 /* Variables */
