@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.5 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.6 2001/09/16 18:31:22 art Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -32,7 +32,7 @@
 
 /*
  * This driver would not have rewritten for OpenBSD if it was not for the
- * hardware dontion from Nocom.  I want to thank them for their support.
+ * hardware donation from Nocom.  I want to thank them for their support.
  * Of course, credit should go to Mike Smith for the original work he did
  * in the FreeBSD driver where I found lots of inspiration.
  * - Niklas Hallqvist
