@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2001/06/27 06:21:55 angelos Exp $ */
+/*	$OpenBSD: conf.c,v 1.3 2001/06/27 06:56:29 kjc Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -149,6 +149,8 @@ cdev_decl(lkm);
 #include "ksyms.h"
 cdev_decl(ksyms);
 
+#include <altq/altqconf.h>
+
 struct cdevsw cdevsw[] = {
         cdev_cn_init(1,cn),             /* 0: virtual console */
         cdev_ctty_init(1,ctty),         /* 1: controlling terminal */
@@ -232,6 +234,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 68: i4b phone device */
 	cdev_notdef(),			/* 69: i4b phone device */
 	cdev_notdef(),			/* 70: i4b phone device */
+	cdev_altq_init(NALTQ,altq),	/* 71: ALTQ control interface */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 

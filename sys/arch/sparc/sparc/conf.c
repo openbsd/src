@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2001/06/25 03:20:15 kjell Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2001/06/27 06:56:29 kjc Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -130,6 +130,8 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 #include "pf.h"
 cdev_decl(pf);
+
+#include <altq/altqconf.h>
 
 struct cdevsw	cdevsw[] =
 {
@@ -266,6 +268,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 122: Kernel symbols device */
 	cdev_disk_init(NRAID,raid),     /* 123: RAIDframe disk driver */
 	cdev_ses_init(NSES,ses),	/* 124: SCSI SES or SAF-TE device */
+	cdev_altq_init(NALTQ,altq),	/* 125: ALTQ control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
