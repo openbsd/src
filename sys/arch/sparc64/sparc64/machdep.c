@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 2003/06/06 11:17:48 henric Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1421,30 +1421,6 @@ _bus_dmamap_unload(t, t0, map)
 	bus_dma_tag_t t, t0;
 	bus_dmamap_t map;
 {
-	int i;
-	struct vm_page *m;
-	struct pglist *mlist;
-	paddr_t pa;
-
-	for (i = 0; i < map->dm_nsegs; i++) {
-		if ((mlist = map->dm_segs[i]._ds_mlist) == NULL) {
-			/* 
-			 * We were asked to load random VAs and lost the 
-			 * PA info so just blow the entire cache away.
-			 */
-			blast_vcache();
-			break;
-		}
-		for (m = TAILQ_FIRST(mlist); m != NULL;
-		     m = TAILQ_NEXT(m,pageq)) {
-			pa = VM_PAGE_TO_PHYS(m);
-			/* 
-			 * We should be flushing a subrange, but we
-			 * don't know where the segments starts.
-			 */
-			dcache_flush_page(pa);
-		}
-	}
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
@@ -1463,49 +1439,8 @@ _bus_dmamap_sync(t, t0, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
-	int i;
-	struct vm_page *m;
-	struct pglist *mlist;
-
-	/*
-	 * We sync out our caches, but the bus must do the same.
-	 *
-	 * Actually a #Sync is expensive.  We should optimize.
-	 */
-	if ((ops & BUS_DMASYNC_PREREAD) || (ops & BUS_DMASYNC_PREWRITE)) {
-		/* 
-		 * Don't really need to do anything, but flush any pending
-		 * writes anyway. 
-		 */
-		membar(Sync);
-	}
-	if (ops & BUS_DMASYNC_POSTREAD) {
-		/* Invalidate the vcache */
-		for (i=0; i<map->dm_nsegs; i++) {
-			if ((mlist = map->dm_segs[i]._ds_mlist) == NULL)
-				/* Should not really happen. */
-				continue;
-			for (m = TAILQ_FIRST(mlist);
-			     m != NULL; m = TAILQ_NEXT(m,pageq)) {
-				paddr_t start;
-				psize_t size = NBPG;
-
-				if (offset < NBPG) {
-					start = VM_PAGE_TO_PHYS(m) + offset;
-					size = NBPG;
-					if (size > len)
-						size = len;
-					cache_flush_phys(start, size, 0);
-					len -= size;
-					continue;
-				}
-				offset -= size;
-			}
-		}
-	}
-	if (ops & BUS_DMASYNC_POSTWRITE) {
-		/* Nothing to do.  Handled by the bus controller. */
-	}
+	if (ops & (BUS_DMASYNC_PREWRITE | BUS_DMASYNC_POSTREAD))
+		membar(MemIssue);
 }
 
 extern paddr_t   vm_first_phys, vm_num_phys;
