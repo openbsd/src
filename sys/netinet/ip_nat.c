@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_nat.c,v 1.16 1998/09/15 09:51:18 pattonme Exp $       */
+/*       $OpenBSD: ip_nat.c,v 1.17 1998/10/11 05:37:28 deraadt Exp $       */
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
  *
@@ -10,7 +10,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.16 1998/09/15 09:51:18 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.17 1998/10/11 05:37:28 deraadt Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -350,6 +350,9 @@ int mode;
 		IWCOPY((caddr_t)&iplused[IPL_LOGNAT], (caddr_t)data,
 		       sizeof(iplused[IPL_LOGNAT]));
 #endif
+		break;
+	default :
+		error = EINVAL;
 		break;
 	}
 	RWLOCK_EXIT(&ipf_nat);
