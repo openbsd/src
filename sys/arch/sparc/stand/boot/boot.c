@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.1 1997/09/17 10:46:15 downsj Exp $	*/
+/*	$OpenBSD: boot.c,v 1.2 1999/06/21 23:35:41 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -43,8 +43,8 @@
 
 #include <sparc/stand/common/promdev.h>
 
-static void copyunix __P((int, char *));
-static void promsyms __P((int, struct exec *));
+void copyunix __P((int, char *));
+void promsyms __P((int, struct exec *));
 int debug;
 int netif_debug;
 
@@ -130,7 +130,7 @@ loadfile(io, addr)
 		goto shread;
 	addr += x.a_data;
 	printf("+%d", x.a_bss);
-	for (i = 0; i < x.a_bss; i++)
+	for (i = x.a_bss; i ; --i)
 		*addr++ = 0;
 	if (x.a_syms != 0) {
 		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
@@ -182,7 +182,7 @@ struct syms {
 	u_int32_t	index;
 };
 
-static void
+void
 sort(syms, n)
 	struct syms *syms;
 	int n;
