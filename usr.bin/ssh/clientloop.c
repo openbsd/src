@@ -59,7 +59,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.34 2000/09/07 20:40:30 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.35 2000/09/14 20:25:14 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1148,7 +1148,7 @@ client_input_channel_req(int id, void *arg)
 
 	c = channel_lookup(id);
 	if (c == NULL)
-		fatal("session_input_channel_req: channel %d: bad channel", id);
+		fatal("client_input_channel_req: channel %d: bad channel", id);
 
 	if (session_ident == -1) {
 		error("client_input_channel_req: no channel %d", id);
