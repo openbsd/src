@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.20 1997/09/16 03:03:02 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.21 1998/01/26 04:19:48 dgregor Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -114,9 +114,11 @@ bpf*)
 	;;
 
 ipl)
-	rm -f ipl
+	rm -f ipl ipnat ipstate 
 	mknod ipl c 91 0
-	chown root.wheel ipl
+	mknod ipnat c 91 1
+	mknod ipstate c 91 2
+	chown root.wheel ipl ipnat ipstate 
 	;;
 
 #tun*)

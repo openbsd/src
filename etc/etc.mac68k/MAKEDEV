@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.22 1997/12/16 21:17:44 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.23 1998/01/26 04:19:42 dgregor Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -366,9 +366,11 @@ bpf*)
 	;;
 
 ipl)
-	rm -f ipl
+	rm -f ipl ipnat ipstate 
 	mknod ipl c 35 0
-	chown root.wheel ipl
+	mknod ipnat c 35 1
+	mknod ipstate c 35 2
+	chown root.wheel ipl ipnat ipstate 
 	;;
 
 tun*)

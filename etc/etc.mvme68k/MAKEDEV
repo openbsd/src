@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.20 1997/09/16 06:01:01 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.21 1998/01/26 04:19:43 dgregor Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.20 1997/09/16 06:01:01 deraadt Exp $
+#	$Id: MAKEDEV,v 1.21 1998/01/26 04:19:43 dgregor Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -385,8 +385,11 @@ bpf*)
 	;;
 
 ipl)
+	rm -f ipl ipnat ipstate 
 	mknod ipl c 39 0
-	chown root.wheel ipl
+	mknod ipnat c 39 1
+	mknod ipstate c 39 2
+	chown root.wheel ipl ipnat ipstate 
 	;;
 
 tun*)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.18 1997/09/16 03:03:03 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.19 1998/01/26 04:19:50 dgregor Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -130,6 +130,8 @@ bpf*)
 
 ipl)
 	mk ipl c 75 0 600
+	mk ipnat c 75 1 600
+	mk ipstate c 75 2 600
 	;;
 
 tun*)
