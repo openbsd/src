@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.11 1998/07/02 15:58:52 csapuntz Exp $	*/
+/*	$OpenBSD: mv.c,v 1.12 1998/07/02 18:46:34 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.11 1998/07/02 15:58:52 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.12 1998/07/02 18:46:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,21 +132,21 @@ main(argc, argv)
 	for (rval = 0; --argc; ++argv) {
 		char *current_arg = *argv;
 
-		/* Get the name of the file to create from
-		   the argument. This is a bit tricky because
-		   in the case of b/ we actually want b and empty
-		   string */
+		/*
+		 * Get the name of the file to create from
+		 * the argument. This is a bit tricky because
+		 * in the case of b/ we actually want b and empty
+		 * string
+		 */
 		if ((p = strrchr(current_arg, '/')) == NULL)
 			p = current_arg;
 		else {
 			/* Special case foo/ */
 			if (!*(p+1)) {
-				while ((p >= current_arg) &&
-				       *p == '/')
+				while (p >= current_arg && *p == '/')
 					p--;
 
-				while ((p >= current_arg) &&
-				       *p != '/')
+				while (p >= current_arg && *p != '/')
 					p--;
 			}
 
