@@ -319,6 +319,14 @@ Supported hardware:
                SGI Tigon   
           Intel i82452-based adapters (wx), including: [C]
                Intel Pro/1000 Gigabit Server Adapter
+          Broadcom BCM570x (Tigon3) based PCI adapters, including:
+               3Com 3c996-T (10/100/1000baseTX) 
+               Dell PowerEdge 2550 integrated BCM5700 NIC
+               SysKonnect SK-9D21 (10/100/1000baseTX) 
+               SysKonnect SK-9D41 (1000baseSX) 
+          Sundance/Tamarack TC9021 based PCI adapters, including: 
+               D-Link DGE-550T (10/100/1000baseTX) 
+               Antares Microsystems Gigabit Ethernet board 
           SysKonnect SK-984x (9841/9842/9843/9844) based adapters (sk) [C]
     ATM Adapters
           Efficient Networks EN-155 and Adaptec ANA-590x ATM interfaces

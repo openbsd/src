@@ -371,6 +371,14 @@ Supported hardware {:-include-:}:
 		Level1 LXT1001 based adapters (untested), including:
 			SMC TigerCard 1000
 			D-Link DGE-500SX
+		Broadcom BCM570x (Tigon3) based PCI adapters, including:
+			3Com 3c996-T (10/100/1000baseTX) 
+			Dell PowerEdge 2550 integrated BCM5700 NIC
+			SysKonnect SK-9D21 (10/100/1000baseTX) 
+			SysKonnect SK-9D41 (1000baseSX) 
+		Sundance/Tamarack TC9021 based PCI adapters, including: 
+			D-Link DGE-550T (10/100/1000baseTX) 
+			Antares Microsystems Gigabit Ethernet board 
 		SysKonnect SK-9841/9842/9843/9844 Gigabit Ethernet
 			adapters
 	ATM Adapters
