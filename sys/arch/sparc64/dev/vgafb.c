@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.23 2002/07/25 19:19:55 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.24 2002/07/30 17:55:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -450,17 +450,13 @@ vgafb_mmap(v, off, prot)
 			return (bus_space_mmap(sc->sc_mem_t,
 			    sc->sc_mmio_addr, off - sc->sc_mmio_addr,
 			    prot, BUS_SPACE_MAP_LINEAR));
-
-		return (-1);
+		break;
 
 	case WSDISPLAYIO_MODE_DUMBFB:
 		if (off >= 0 && off < sc->sc_mem_size)
 			return (bus_space_mmap(sc->sc_mem_t, sc->sc_mem_addr,
 			    off, prot, BUS_SPACE_MAP_LINEAR));
-		return (-1);
-
-	default:
-		return (-1);
+		break;
 	}
 
 	return (-1);
