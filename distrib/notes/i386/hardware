@@ -19,7 +19,7 @@ of RAM, getting more RAM is more important than getting a faster CPU.)
  
 Supported hardware {:-include-:}:
 	Processors
-		All CPU chips compatible with the Intel 80386 (i386)
+		All CPU chips compatible with the Intel 80386 (MACHINE)
 		architecture:
 			386/486 (SX/DX/DX2/DX4)
 			Intel Pentium/Pentium-MMX
@@ -56,12 +56,13 @@ Supported hardware {:-include-:}:
 		YENTA-compatible PCI-CardBus bridges
 	Entropy Sources
 		Interrupt latency collection from many devices
-		INtel 82802 random number generator found on i810, i815,
+		Intel 82802 random number generator found on i810, i815,
 		i820, i840, i850 and i860 based systems.
 	Disk Controllers
 		Floppy controllers.
 		ISA MFM, ESDI, IDE, and RLL hard disk controllers.
 	PCI IDE Controllers
+		Acard ATP850, ATP860
 		Acer Labs M5229
 		Advanced Micro Devices 756, 766
 		CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, and PCI0649
@@ -123,7 +124,8 @@ Supported hardware {:-include-:}:
 			Dell PERC 2/Si, PERC 2/QC, PERC 3/Si, PERC 3/Di,
 				PERC 3/QC
 			HP NetRAID-4M
-		American Megatrends Inc. MegaRAID controllers
+		American Megatrends Inc. MegaRAID controllers in "Mass
+		Storage" mode
 		Compaq Smart ARRAY PCI/EISA adapters, including:
 			Compaq Integrated Array
 			Compaq IAES
@@ -136,7 +138,11 @@ Supported hardware {:-include-:}:
 		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters 
 		ICP-Vortex GDT 6XXXR[DNPS] series
 		I2O (intelligent I/O) RAID controllers, including:
-			Adaptec 2100S, 3200S 
+			Adaptec SCSI RAID (ASR-2100S, ASR-3200S, etc)
+			American Megatrends Inc. MegaRAID controllers
+			(in I2O mode)
+			and probably other vendors' controllers supporting
+			I2O, including Intel and Mylex (untested)
 	CD-ROM and DVD-ROM Drives
 		Mitsumi CD-ROM drives [*] [+]
 			[Note: The Mitsumi driver device probe is known 
@@ -148,7 +154,7 @@ Supported hardware {:-include-:}:
 		Most SCSI tape changers
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
-		all of the display adapters OpenBSD/i386 can work with
+		all of the display adapters OpenBSD/MACHINE can work with
 		are supported by X.  See the XFree86 FAQ for more
 		information.)
 	Serial Ports
@@ -334,9 +340,6 @@ Supported hardware {:-include-:}:
 		Winbond W89C840F Ethernet adapters, including:
 			Trendware TE100-PCIE
 			Compex RL100-ATX 10/100baseTX
-		Xircom 16-bit PCMCIA adapters, including:
-			Xircom CE3
-			Xircom Realport
 	Wireless Ethernet Adapters
 		Aironet 802.11DS PCMCIA and PCI
 		RayLink Aviator 2.4/Pro 802.11FH PCMCIA
@@ -352,6 +355,18 @@ Supported hardware {:-include-:}:
 			SGI Tigon
 		Intel i82452-based adapters, including:
 			Intel Pro/1000 Gigabit Server adapter
+		National Semiconductor DP83280 and DP83281 based PCI
+		adapters, including:
+			Addtron AEG320T
+			Asante FriendlyNet GigaNIX 1000TA and 1000TPC
+			D-Link DGE-500T
+			LinkSys EG1032 and EG1064
+			Netgear GA622T
+			SMC EZ Card 1000
+			Surecom Technology EP-320G-TX
+		Level1 LXT1001 based adapters (untested), including:
+			SMC TigerCard 1000
+			D-Link DGE-500SX
 		SysKonnect SK-9841/9842/9843/9844 Gigabit Ethernet
 			adapters
 	ATM Adapters
@@ -366,7 +381,7 @@ Supported hardware {:-include-:}:
 		Broadcom Bluesteelnet uBsec 5501, 5601, 5805, 5820
 		Hifn 7751-based boards, including:
 			GTGI PowerCrypt Encryption Accelerator
-			NETSEC 7751
+			NetSec 7751
 			Hifn reference board
 			Invertex AEON
 	PC Cards (PCMCIA and Carbus)
@@ -381,13 +396,13 @@ Supported hardware {:-include-:}:
 				3Com 3c574TX, 3c[CX]FE574BT
 				3Com 3c589, 3c589[BCDE]
 				3Com 3c575TX, 3c[CX]FE575[BC]T CardBus
-				3Com 3c[CX]FEM656, 3c[CX]656[BC] CardBus
+				3Com 3c[CX]FEM656, 3c[CX]FEM656[BC] CardBus
 			Intel/DEC 21443 "Tulip" clones, including:
 				ADMtex AN985 Centaur-C CardBus
 				IBM EtherJet 10/100 CardBus
 				SMC EZ CardBus 10/100
 				Xircom X3201 CardBus adapters, including
-				RealPort models
+					RealPort models
 			Intel i8255x-based, including:
 				Intel PRO/100 CardBus II
 			NE2000-based, including:
@@ -478,7 +493,7 @@ Supported hardware {:-include-:}:
 		Nearly all SMC-style Ethernet cards
 		Most serial port or modem cards
 		3c509 cards in PnP mode
-		NE2100 Etherent cards
+		NE2100 Ethernet cards
 
 Drivers for hardware marked with "[*]" are NOT included on the
 distribution floppies.  Except as noted above, all other drivers are
@@ -610,90 +625,92 @@ Hardware not listed in the above table doesn't need any specific
 configuration.
 
 
-SPECIAL CARE FOR SMC ULTRA ELITE
---------------------------------
+Special care for SMC Elite Ultra:
+
+	The Elite Ultra is very sensitive to how its I/O port is treated.
+	Mistreating it can cause a number of effects -- everything from
+	the card not responding when the kernel probes, or the soft
+	configuration being corrupted or wiped completely.
+
+	By default, the kernel ships with device we1 configured for the
+	'default' Elite Ultra locations, comprising of port 0x300, irq 10,
+	and memory location 0xcc000.  This matches a hard coded jumper on
+	the board as well a common soft config setting.
+
+	Unfortunately, the kernel's autoconfiguration process (specifically,
+	some of the devices it probes for) cause conflicts with the SMC
+	Elite Ultra, and very often cause it to lose its configuration and
+	fail its own probe.  If this happens, you must boot the computer
+	into DOS, and run the EzSetup program from SMC (if you do not have
+	a copy on the floppy accompanying your board, you can download it
+	from ftp://ftp.darmstadt.gmd.de/pub/pc/hardware/nic/smc/gez122.exe -
+	it is not available from SMC anymore).  This program will allow you
+	to reconfigure and recover a card that has lost its configuration
+	with a minimum of hassle.
+
+	In order to avoid blowing away the card, one *must* use the
+	run-time kernel configuration system when booting the Install
+	kernel.  This is done by giving the -c flag to the initial boot
+	request.  Following the loading of the kernel, the user is
+	presented with a
+
+	UKC>
+
+	prompt.  At this prompt, a variety of commands may be issued, but
+	the relevant one to getting the SMC Elite Ultra running is
+	'disable'.  The wt0, el0, and ie1 devices all need to be disabled.
+	This is done by typing 'disable' followed by the name of the
+	device, i.e., 'disable wt0', and pressing return.
+
+	If, for some reason, your Elite Ultra is not configured at the
+	'default' location the kernel is expecting it, you may also use
+	the 'change' command in the UKC system to modify where the kernel
+	will look for it.  Typing 'change we1' will allow you to modify
+	those settings.  Note that running the card at an i/o port of
+	anything other then 0x300 at this point is not recommended, and is
+	beyond the scope of this document-- by doing so you risk other
+	device probes wreaking the havoc we are trying to avoid.
+
+	When all three extra devices are disabled and any changes made,
+	the 'quit' command will exit the UKC.  The kernel should then
+	boot, and find your Elite Ultra on device we1.
 
 
-Note for SMC Elite Ultra ethernet card users:  The Elite Ultra is very
-sensitive to how its I/O port is treated.  Mistreating it can cause
-a number of effects -- everything from the card not responding when the
-kernel probes, or the soft configuration being corrupted or wiped completely.
-
-By default, the kernel ships with device we1 configured for the 'default'
-Elite Ultra locations, comprising of port 0x300, irq 10, and memory location
-0xcc000.  This matches a hard coded jumper on the board as well a common
-soft config setting.
-
-Unfortunately, the kernel's autoconfiguration process (specifically, some
-of the devices it probes for) cause conflicts with the SMC Elite Ultra, and
-very often cause it to lose its configuration and fail its own probe.
-If this happens, you must boot the computer into DOS, and run the EzSetup
-program from SMC (if you do not have a copy on the floppy
-accompanying your board, the complete URL to download the program is 
-ftp://ftp.smc.com/pub/nics/ethernet/elite_ultra/gez122.exe).  This program
-will allow you to reconfigure and recover a card that has lost its
-configuration with a minimum of hassle.
-
-In order to avoid blowing away the card, one *must* use the run-time kernel
-configuration system when booting the Install kernel.  This is done by
-giving the -c flag to the initial boot request.  Following the loading of
-the kernel, the user is presented with a
-
-UKC>
-
-prompt.  At this prompt, a variety of commands may be issued, but the
-relevant one to getting the SMC Elite Ultra running is 'disable'.  The
-wt0, el0, and ie1 devices all need to be disabled.  This is done by typing
-'disable' followed by the name of the device, i.e., 'disable wt0', and
-pressing return.
-
-If, for some reason, your Elite Ultra is not configured at the 'default'
-location the kernel is expecting it, you may also use the 'change' command
-in the UKC system to modify where the kernel will look for it.  Typing
-'change we1' will allow you to modify those settings.  Note that running the
-card at an i/o port of anything other then 0x300 at this point is not
-recommended, and is beyond the scope of this document-- by doing so you
-risk other device probes wreaking the havoc we are trying to avoid.
-
-When all three extra devices are disabled and any changes made, the
-'quit' command will exit the UKC.  The kernel should then boot, and find
-your Elite Ultra on device we1.
-
-SPECIAL CARE FOR PCI BIOS
+Special care for PCI BIOS:
  
-As all BIOS implementations and subsystems this one has bugs too.
-Sometimes specifications are unclear about interfaces and/or
-data validation.
-These all cause our driver for PCI BIOS to misbehave in more or
-less fatal ways, such as panics on pcibios0 configuration or
-pci device attachments, or unconfigured pci devices due to
-irq and/or I/O address misconfiguration.
+	As all BIOS implementations and subsystems this one has bugs too.
+	Sometimes specifications are unclear about interfaces and/or data
+	validation.
+	These all cause our driver for PCI BIOS to misbehave in more or
+	less fatal ways, such as panics on pcibios0 configuration or pci
+	device attachments, or unconfigured pci devices due to irq and/or
+	I/O address misconfiguration.
 
-Fast workaround
+	Fast workaround
 
-Boot by giving the -c flag to the initial boot request.
-Following the loading of the kernel, the user is presented with a
+	Boot by giving the -c flag to the initial boot request.
+	Following the loading of the kernel, the user is presented with a
 
-UKC>
+	UKC>
 
-Then type the following commands:
+	Then type the following commands:
 
-UKC> change bios0
-165 bios0 at mainbus0 bus -1 flags 0x0
-change [n] y
-bus [-1] ? <enter>
-flags [0] ? 3
-165 bios0 changed
-165 bios0 at mainbus0 bus -1 flags 0x3
-UKC> quit
+	UKC> change bios0
+	165 bios0 at mainbus0 bus -1 flags 0x0
+	change [n] y
+	bus [-1] ? <enter>
+	flags [0] ? 3
+	165 bios0 changed
+	165 bios0 at mainbus0 bus -1 flags 0x3
+	UKC> quit
 
-This will disable the pcibios0 attachment.
-Sometimes, especially when hangs occur on particular pci device
-attachments, moving pci cards into a different slot helps.
+	This will disable the pcibios0 attachment.
+	Sometimes, especially when hangs occur on particular pci device
+	attachments, moving pci cards into a different slot helps.
 
-Fixing for good
+	Fixing for good
 
-Try to gather dmesg output from the failing configuration, for
-example by using serial console (see boot(8)) and send it to
-mickey@openbsd.org along with descriptions of your hardware setup.
-Dig in the code and fix problems.
+	Try to gather dmesg output from the failing configuration, for
+	example by using serial console (see boot(8)) and send it to
+	mickey@openbsd.org along with descriptions of your hardware setup.
+	Alternatively, dig in the code and fix problems.
