@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.16 2001/09/18 20:27:48 jason Exp $
+$OpenBSD: eisadevs,v 1.17 2003/01/15 18:39:58 mickey Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -51,6 +51,7 @@ vendor MDG		Madge Networks
 vendor SMC		Standard Microsystems Corp.
 vendor TCM		3Com
 vendor USC		UltraStor
+vendor WDC		Western Digital
 
 /*
  * List of known products, grouped by vendor.
@@ -60,6 +61,8 @@ vendor USC		UltraStor
 product ADP 0000	AHA-1740 SCSI
 product ADP 0001	AHA-1740A SCSI
 product ADP 0002	AHA-1742A SCSI
+product ADP 0100	AHA-1540/1542 ISA SCSI
+product ADP 0200	AHA-1520/1522 ISA SCSI
 product ADP 0400	AHA-1744 SCSI
 product ADP 7770	AIC-7770 SCSI (on motherboard)
 product ADP 7771	AHA-274x SCSI
@@ -67,7 +70,17 @@ product ADP 7756	AHA-284x SCSI (BIOS enabled)
 product ADP 7757	AHA-284x SCSI (BIOS disabled)
 
 /* AMI products */
+product AMI 15C1	SCSI Host Adapter
+product AMI 15D1	SCSI Host Adapter - Rev 2
+product AMI 15E1	Single Ended EISA SCSI
+product AMI 16B1	ENTERPRISE EISA system board
+product AMI 2509	ENTERPRISE EISA system board
+product AMI 25B1	ENTERPRISE EISA system board
+product AMI 28A1	EZ-FLEX EISA System Board
+product AMI 44C1	SCSI Host Adapter - Series 44
+product AMI 44D2	Fast Single Ended EISA SCSI
 product AMI 4801	Series 48 SCSI
+product AMI 68B1	Enterprise III 486 EISA System Board
 
 /* BusLogic products */
 product BUS 4201	Bt74xB SCSI
@@ -79,38 +92,143 @@ product BUS 6301	Bt763E 82596-based Ethernet
 product CPQ 6101	NetFlex-2 ENET-TR
 
 /* Digital Equipment products */
-product DEC 4250	DE425 Ethernet
+product DEC 1011	EVC-1 Video
+product DEC 1021	ESC-1 SCSI
+product DEC 1031	DECpc MTE Series System Board
+product DEC 2030	DE203 Ethernet
+product DEC 2040	DE204 Ethernet
+product DEC 2050	DE205 Ethernet
+product DEC 2400	DECpc AXP/150 System Board
+product DEC 2500	DEC EISA NVRAM for Alpha AXP
+product DEC 2A01	AlphaServer 2100 Family System Board
+product DEC 2E00	KFESA DSSI Host Adapter
+product DEC 2F00	DNSES WANcontroller
 product DEC 3001	DEFEA FDDI Controller
 product DEC 3002	DEFEA FDDI Controller
 product DEC 3003	DEFEA FDDI Controller
 product DEC 3004	DEFEA FDDI Controller
+product DEC 4220	DE422-SA Ethernet
+product DEC 4250	DE425-AA Ethernet
+product DEC 5000	AlphaServer 1000 System Board
+product DEC 5100	AlphaStation 600 System Board
+product DEC 5301	800 AlphaServer System Board
+product DEC 6000	AlphaServer 8200 System Board
+product DEC 6400	AlphaServer 4100 System Board
+product DEC 8101	VGA 1024 Graphics
+product DEC 8102	8514/A-Compatible Graphics
+product DEC 8103	VGA 1024 NI Graphics
+product DEC 8300	DEPCA LC Ethernet
+product DEC 8301	DEPCA TURBO Ethernet
 
 /* DeskStation Technology, Inc. products */
 product DTI 0000	Evolution RISC PC
+product DTI 2000	ESP2000A/ESP2000 System Processor Board
+product DTI 2002	ESP2002 Integrated System Processor
 
 /* FORE Systems products */
 product FSI 2001	ESA-200 ATM
 product FSI 2002	ESA-200A ATM
 product FSI 2003	ESA-200E ATM
 
+/* IBM products */
+product IBM 0001	Auto 16/4 Token Ring
+product IBM 1000	16/4 Busmaster TR
+product IBM 1060	100/10 ISA Ethernet
+product IBM 1061	100/10 ISA Ethernet
+
 /* Interphase products */
+product INP 0010	Barracuda E/4810
 product INP 25D0	Seahawk 4811 FDDI Controller
+product INP 5000	4800 EISA-PCI Bridge
 
 /* Intel products */
+product INT 0000	Mercury/Neptune PCI-EISA Main Board
+product INT 0081	HP Limited PANTHER System Board
+product INT 0701	TokenExpress(tm) ISA 16/4
+product INT 0703	TokenExpress(tm) ISA/16s
+product INT 0902	TokenExpress(tm) EISA 16/4
+product INT 0B01	TokenExpress(tm) ISA/8
+product INT 1000	EtherExpress 16 Family Ethernet
 product INT 1010	EtherExpress 32 Flash Ethernet
+product INT 1030	EtherExpress(TM) PRO/10 Ethernet
+product INT 1031	EtherExpress(TM) PRO/10+ Ethernet
+product INT 1060	EtherExpress(tm) PRO/100 Ethernet
+product INT 1201	TokenExpress(tm) EISA/32
+product INT 3061	LP486E System Board
+product INT 3079	X-Series Desktop System Board
+product INT 3089	X-Series Deskside System Board
+product INT 30A1	L486 Series System Board
+product INT 30A9	L486 Series System Board
+product INT 30D1	X-Series System Board
+product INT 30F1	X-Series Premium System Board
+product INT 3132	ECC Memory Module (BXECCMEM0)
+product INT 31A0	System Board
 
 /* ETI products */
 product ETI 1001	NE3300 Ethernet Rev. C & D
 
 /* Madge products */
 product MDG 0002	Smart 16/4 EISA Ringnode
+product MDG 0010	Smart 16/4 AT Ringnode
+product MDG 0020	Smart 16/4 ISA Client Ringnode
+product MDG 2000	Blue+ 16/4 ISA Token Ring
+product MDG 2010	Blue+ 16/4 ISA PnP Token Ring
+
+/* Mylex Products */
+product MLX 0010	LNE390A EISA 32-bit Ethernet
+product MLX 0011	LNE390B EISA 32-bit Ethernet
+product MLX 0020	DCE376 EISA 32-Bit SCSI
+product MLX 0021	DCE376 EISA 32-Bit SCSI
+product MLX 0022	DCE376 EISA 32-Bit SCSI
+product MLX 0030	LNI390A ISA 16-Bit Ethernet
+product MLX 0040	GXE020B or GXE020C EISA 32-Bit Graphics
+product MLX 0050	GLE(911) EISA Graphics
+product MLX 0070	DAC960 EISA Disk Array
+product MLX 0071	DAC960 EISA Disk Array (3-channel)
+product MLX 0072	DAC960 EISA Disk Array (3-channel)
+product MLX 0073	DAC960 EISA Disk Array (2-channel)
+product MLX 0074	DAC960 EISA Disk Array (1-channel)
+product MLX 0075	DAC960-A EISA Disk Array (3-channel)
+product MLX 0076	DAC960-A EISA Disk Array (2-channel)
+product MLX 0077	DAC960-A EISA Disk Array (1-channel)
+product MLX 0101	LME596 EISA 32-bit 4 Channel Ethernet
+product MLX FD01	MDE486 EISA 32-Bit 486 System Board
+product MLX FE01	MBE486 EISA 32-Bit 486 System Board
+product MLX FF01	MAE486 EISA 32-Bit 486 System Board
+product MLX FF02	MDE486 or MNE486 EISA 32-Bit 486 System Board
 
 /* HP products */
+product HWP 0000	Monochrome Plus Video Board (35732A)
+product HWP 0010	Multimode Video Adapter (45981A)
+product HWP 0020	Multimode Color Adapter Board (45984A)
+product HWP 0030	Enhanced Graphics Adapter Board (45983A)
+product HWP 0070	Intelligent Graphics Controller 20 (A1083A)
 product HWP 0C70	HP-IB Host Adapter
 product HWP 0C80	SCSI Host Adapter (Cirrus-II) -- 25525A
+product HWP 1400	Dual Serial Interface Board (24541B)
+product HWP 1410	Internal 2400 Baud Modem (24551A)
+product HWP 1420	Internal 1200 Baud Modem (24550A)
+product HWP 1440	Terminal Multiplexor Board (D2040A)
+product HWP 1450	HP-IB Interface board (82335A)
+product HWP 1460	ScanJet Plus Interface (88290A)
+product HWP 1461	ScanJet Plus Interface (88290A)
+product HWP 1801	StarLAN 10 PC Link II (27240A)
+product HWP 1810	ThinLAN Interface Board (27210B)
+product HWP 1811	ThinLAN PC Adapter Card (27250A)
+product HWP 1820	EtherTwist Adapter Card/8 (27245-60002)
+product HWP 1832	EtherTwist PC LAN Adapter/16 TP Plus (27247B)
+product HWP 1840	EtherTwist EISA LAN Adapter/32
 product HWP 1850	LAN AdapterCard -- 25567A
+product HWP 18A0	EtherTwist PC LAN Adapter/16 TL Plus (27252A)
+product HWP 18C0	EtherTwist PC LAN Adapter NC/16 TP (J2405A)
+product HWP 18E0	100Mbps EISA ATM Card
+product HWP 1940	10/100VG Selectable EISA LAN Adapter (J2577A)
 product HWP 1980	ATM Adapter -- J2802A
+product HWP 1990	Hewlett-Packard EISA 100VG AnyLAN adapter card
+product HWP 1C00	Serial/Parallel Interface Board (24540B)
+product HWP 2002	ScanJet II Interface (C1752A)
 product HWP 2051	EISA Test Adapter Card
+product HWP 2080	ScanJet II Interface (C2502A)
 product HWP C000	Series 700 EISA System Board
 product HWP C010	Series 700 EISA System Board
 product HWP C051	Series 700 EISA System Board
@@ -119,6 +237,9 @@ product HWP C0D1	EISA System Board
 product HWP C0E1	EISA System Board
 
 /* 3Com products */
+product TCM 3190	3C319 TokenLink Velocity
+product TCM 5030	EtherLink II Family
+product TCM 5070	3C507 Etherlink 16 or TP v2.0
 product TCM 5090	3C509-TP Ethernet
 product TCM 5091	3C509 Ethernet
 product TCM 5092	3C579-TP Ethernet
@@ -130,10 +251,37 @@ product TCM 5920 	3C592 Etherlink III
 product TCM 5970 	3C597 Fast Etherlink TX
 product TCM 5971	3C597 Fast Etherlink T4
 product TCM 5972	3C597 Fast Etherlink MII
+product TCM 7700	3C770 FDDI
 
 /* Standard Microsystems (SMC) */
-product SMC 8010	Ethercard Elite32C Ultra
 product SMC 0110	Elite32 Ethernet
+product SMC 03E0	EtherCard PLUS
+product SMC 13E0	EtherCard PLUS Elite16
+product SMC 8003	EtherCard PLUS Elite
+product SMC 8010	Ethercard Elite32C Ultra
+product SMC 8013	EtherCard PLUS Elite16
+product SMC 8216	EtherCard Elite16 ULTRA
+product SMC A010	Ether 10/100
 
 /* UltraStor products */
+product USC 0120	12f ISA ESDI
+product USC 0125	12c ESDI
+product USC 0140	14f ISA SCSI
+product USC 0220	U22c
+product USC 0225	22f ESDI
 product USC 0240	24f SCSI
+product USC 0340	34f VESA VL-BUS
+
+/* Western Digital products */
+product WDC 0101	WD1009V-MM1 Winchester Controller
+product WDC 0102	WD1009V-SE1 Winchester Controller
+product WDC 0300	StarCard PLUS 8003S
+product WDC 0301	StarLink PLUS 8003SH
+product WDC 03E0	EtherCard PLUS 8003E
+product WDC 03E1	EtherCard PLUS w/Boot 8003EBT
+product WDC 03E2	EtherCard + 8003EB 61-600245-02
+product WDC 03E3	EtherCard PLUS TP 8003WT
+product WDC 03E4	EtherCard + 8003EB 61-600090-00
+product WDC 0510	TokenCard 8005TR/8005TRWS
+product WDC 1009	WD1009V-MM1/MM2 Winchester Controller
+product WDC 13E0	EtherCard PLUS 16 8013EBT
