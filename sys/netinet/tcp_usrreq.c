@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.43 2000/06/18 15:13:33 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.44 2000/07/05 22:51:10 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ tcp_usrreq(so, req, m, nam, control)
 			error = in_pcbbind(inp, nam);
 		if (error)
 			break;
-#ifdef INET6
+#if 0 /*INET6*/
 		/*
 		 * If we bind to an address, set up the tp->pf accordingly!
 		 */
@@ -305,7 +305,7 @@ tcp_usrreq(so, req, m, nam, control)
 		if (error)
 			break;
 
-#ifdef INET6
+#if 0 /*INET6*/
 		/*
 		 * With a connection, I now know the version of IP
 		 * is in use and hence can set tp->pf with authority. 
@@ -326,7 +326,7 @@ tcp_usrreq(so, req, m, nam, control)
 			break;
 		}
 
-#ifdef INET6
+#if 0 /*INET6*/
 		if ((inp->inp_flags & INP_IPV6) && (tp->pf == PF_INET)) {
 			inp->inp_ip.ip_ttl = ip_defttl;
 			inp->inp_ip.ip_tos = 0;
@@ -716,6 +716,15 @@ tcp_attach(so)
 		return (ENOBUFS);
 	}
 	tp->t_state = TCPS_CLOSED;
+#ifdef INET6
+	/* we disallow IPv4 mapped address completely. */
+	if (inp->inp_flags & INP_IPV6)
+		tp->pf = PF_INET6;
+	else
+		tp->pf = PF_INET;
+#else
+	tp->pf = PF_INET;
+#endif
 	return (0);
 }
 

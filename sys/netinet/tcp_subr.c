@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.27 2000/06/26 22:45:09 art Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.28 2000/07/05 22:51:10 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -446,15 +446,11 @@ tcp_newtcpcb(inp)
 	tp->snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT;
 	tp->snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT;
 #ifdef INET6
-	/*
-	 * If we want to use tp->pf for a quick-n-easy way to determine
-	 * the outbound dgram type, we cannot make this decision
-	 * until a connection is established!  Bzero() sets pf to zero, and
-	 * that's the way we want it, unless, of course, it's an AF_INET
-	 * socket...
-	 */
+	/* we disallow IPv4 mapped address completely. */
 	if ((inp->inp_flags & INP_IPV6) == 0)
-		tp->pf = PF_INET;  /* If AF_INET socket, we can't do v6 from it. */
+		tp->pf = PF_INET;
+	else
+		tp->pf = PF_INET6;
 #else
 	tp->pf = PF_INET;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.61 2000/05/15 03:38:40 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.62 2000/07/05 22:51:09 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -987,96 +987,59 @@ findpcb:
 			goto drop;
 #ifdef INET6
 		if (is_ipv6) {
-		  /*
-		   * This is probably the place to set the tp->pf value.
-		   * (Don't forget to do it in the v4 code as well!)
-		   *
-		   * Also, remember to blank out things like flowlabel, or
-		   * set flowlabel for accepted sockets in v6.
-		   *
-		   * FURTHERMORE, this is PROBABLY the place where the whole
-		   * business of key munging is set up for passive
-		   * connections.
-		   */
-		  am->m_len = sizeof(struct sockaddr_in6);
-		  sin6 = mtod(am, struct sockaddr_in6 *);
-		  sin6->sin6_family = AF_INET6;
-		  sin6->sin6_len = sizeof(struct sockaddr_in6);
-		  sin6->sin6_addr = ipv6->ip6_src;
-		  sin6->sin6_port = th->th_sport;
-		  sin6->sin6_flowinfo = htonl(0x0fffffff) &
-		    inp->inp_ipv6.ip6_flow;
-		  laddr6 = inp->inp_laddr6;
-		  if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
-		    inp->inp_laddr6 = ipv6->ip6_dst;
-		  /* This is a good optimization. */
-		  if (in6_pcbconnect(inp, am)) {
-		    inp->inp_laddr6 = laddr6;
-		    (void) m_free(am);
-		    goto drop;
-		  } /* endif in6_pcbconnect() */
-		  tp->pf = PF_INET6;
-		} else {
-		  /*
-		   * Letting v4 incoming datagrams to reach valid 
-		   * PF_INET6 sockets causes some overhead here.
-		   */
-		  if (inp->inp_flags & INP_IPV6) {
-		    if (!(inp->inp_flags & (INP_IPV6_UNDEC|INP_IPV6_MAPPED))) {
-		      (void) m_free(am);
-		      goto drop;
-		    }
-
-		    am->m_len = sizeof(struct sockaddr_in6);
-		    
-		    sin6 = mtod(am, struct sockaddr_in6 *);
-		    sin6->sin6_family = AF_INET6;
-		    sin6->sin6_len = sizeof(*sin6);
-		    CREATE_IPV6_MAPPED(sin6->sin6_addr, ti->ti_src.s_addr);
-		    sin6->sin6_port = th->th_sport;
-		    sin6->sin6_flowinfo = 0;
-
-		    laddr6 = inp->inp_laddr6;
-		    if (inp->inp_laddr.s_addr == INADDR_ANY)
-		      CREATE_IPV6_MAPPED(inp->inp_laddr6, ti->ti_dst.s_addr);
-		    
-		    /*
-		     * The pcb initially has the v6 default hoplimit
-		     * set. We're sending v4 packets so we need to set
-		     * the v4 ttl and tos.
-		     */
-		    inp->inp_ip.ip_ttl = ip_defttl;
-		    inp->inp_ip.ip_tos = 0;
-		    
-		    if (in6_pcbconnect(inp, am)) {
-		      inp->inp_laddr6 = laddr6;
-		      (void) m_freem(am);
-		      goto drop;
-		    }
-		    tp->pf = PF_INET;
-		  } else { 
-#endif /* INET6 */
-		am->m_len = sizeof (struct sockaddr_in);
-		sin = mtod(am, struct sockaddr_in *);
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = ti->ti_src;
-		sin->sin_port = ti->ti_sport;
-		bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
-		laddr = inp->inp_laddr;
-		if (inp->inp_laddr.s_addr == INADDR_ANY)
-			inp->inp_laddr = ti->ti_dst;
-		if (in_pcbconnect(inp, am)) {
-			inp->inp_laddr = laddr;
+			/*
+			 * This is probably the place to set the tp->pf value.
+			 * (Don't forget to do it in the v4 code as well!)
+			 *
+			 * Also, remember to blank out things like flowlabel, or
+			 * set flowlabel for accepted sockets in v6.
+			 *
+			 * FURTHERMORE, this is PROBABLY the place where the
+			 * whole business of key munging is set up for passive
+			 * connections.
+			 */
+			am->m_len = sizeof(struct sockaddr_in6);
+			sin6 = mtod(am, struct sockaddr_in6 *);
+			sin6->sin6_family = AF_INET6;
+			sin6->sin6_len = sizeof(struct sockaddr_in6);
+			sin6->sin6_addr = ipv6->ip6_src;
+			sin6->sin6_port = th->th_sport;
+			sin6->sin6_flowinfo = htonl(0x0fffffff) &
+				inp->inp_ipv6.ip6_flow;
+			laddr6 = inp->inp_laddr6;
+			if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
+				inp->inp_laddr6 = ipv6->ip6_dst;
+			/* This is a good optimization. */
+			if (in6_pcbconnect(inp, am)) {
+				inp->inp_laddr6 = laddr6;
+				(void) m_free(am);
+				goto drop;
+			}
+		} else
+#endif
+		{
+			/* drop IPv4 packet to AF_INET6 socket */
+			if (inp->inp_flags & INP_IPV6) {
+				(void) m_free(am);
+				goto drop;
+			}
+			am->m_len = sizeof (struct sockaddr_in);
+			sin = mtod(am, struct sockaddr_in *);
+			sin->sin_family = AF_INET;
+			sin->sin_len = sizeof(*sin);
+			sin->sin_addr = ti->ti_src;
+			sin->sin_port = ti->ti_sport;
+			bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
+			laddr = inp->inp_laddr;
+			if (inp->inp_laddr.s_addr == INADDR_ANY)
+				inp->inp_laddr = ti->ti_dst;
+			if (in_pcbconnect(inp, am)) {
+				inp->inp_laddr = laddr;
+				(void) m_free(am);
+				goto drop;
+			}
 			(void) m_free(am);
-			goto drop;
 		}
-		(void) m_free(am);
-		tp->pf = PF_INET;
-#ifdef INET6
-		  }  /* if (inp->inp_flags & INP_IPV6) */
-		} /* if (is_ipv6) */
-#endif /* INET6 */
 		tp->t_template = tcp_template(tp);
 		if (tp->t_template == 0) {
 			tp = tcp_drop(tp, ENOBUFS);
@@ -1995,12 +1958,18 @@ dodata:							/* XXX */
 		}
 	}
 	if (so->so_options & SO_DEBUG) {
+		switch (tp->pf == PF_INET6) {
 #ifdef INET6
-		if (tp->pf == PF_INET6)
-			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti6, 0, tlen);
-		else
+		case PF_INET6:
+			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti6,
+			    0, tlen);
+			break;
 #endif /* INET6 */
-			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti, 0, tlen);
+		case PF_INET:
+			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti,
+			    0, tlen);
+			break;
+		}
 	}
 
 	/*
@@ -2062,12 +2031,18 @@ drop:
 	 * Drop space held by incoming segment and return.
 	 */
 	if (tp && (tp->t_inpcb->inp_socket->so_options & SO_DEBUG)) {
+		switch (tp->pf) {
 #ifdef INET6
-	  if (tp->pf == PF_INET6)
-	    tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti6, 0, tlen);
-	  else
+		case PF_INET6:
+			tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti6,
+			    0, tlen);
+			break;
 #endif /* INET6 */
-	    tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti, 0, tlen);
+		case PF_INET:
+			tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti,
+			    0, tlen);
+			break;
+		}
 	}
 
 	m_freem(m);
