@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.6 1999/02/02 01:36:00 imp Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.7 2002/10/11 19:08:41 marc Exp $	*/
 /*
  * Atomic lock for mips
  */
@@ -51,16 +51,5 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 	 */
 
 	return (_thread_slow_atomic_lock(lock));
-#endif
-}
-
-int
-_atomic_is_locked(volatile _spinlock_lock_t *lock)
-{
-	
-#if __mips >= 2
-	return (*lock != _SPINLOCK_UNLOCKED);
-#else
-	return (_thread_slow_atomic_is_locked(lock));
 #endif
 }

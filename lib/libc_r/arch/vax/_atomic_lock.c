@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1 2001/01/27 21:23:56 hugh Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 2002/10/11 19:08:41 marc Exp $	*/
 
 /*
  * Atomic lock for vax
@@ -10,11 +10,4 @@ int
 _atomic_lock(volatile _spinlock_lock_t *lock)
 {
 	return (_thread_slow_atomic_lock(lock));
-}
-
-int
-_atomic_is_locked(volatile _spinlock_lock_t *lock)
-{
-
-	return (*lock != _SPINLOCK_UNLOCKED);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.3 2002/07/10 20:30:13 jsyn Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.4 2002/10/11 19:08:41 marc Exp $	*/
 /*
  * Atomic lock for powerpc
  */
@@ -33,11 +33,4 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 	 *   appropriate bus cycle accesses to notify other
 	 *   processors.
 	 */
-}
-
-int
-_atomic_is_locked(volatile _spinlock_lock_t *lock)
-{
-
-	return (*lock != _SPINLOCK_UNLOCKED);
 }
