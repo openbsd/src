@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.352 2004/01/07 22:00:37 markus Exp $
+#	$OpenBSD: GENERIC,v 1.353 2004/02/13 23:24:30 andreas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -389,6 +389,7 @@ bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
 hme*	at pci? dev ? function ?		# Sun Happy Meal
+bce*	at pci? dev ? function ?		# Broadcom BCM4401
 
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS

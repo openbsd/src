@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.51 2004/01/25 14:54:59 jmc Exp $
+.\"	$OpenBSD: doc-syms,v 1.52 2004/02/13 23:24:30 andreas Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -147,6 +147,7 @@
 .	if "\\$1"1.5"  \&NetBSD 1.5\\*(aa\\$2
 .	if "\\$1"1.5.1"  \&NetBSD 1.5.1\\*(aa\\$2
 .	if "\\$1"1.6"  \&NetBSD 1.6\\*(aa\\$2
+.	if "\\$1"1.6.2"  \&NetBSD 1.6.2\\*(aa\\$2
 .\}
 .if \\n(.$==1 \{\
 .	if "\\$1"0.8"  \&NetBSD 0.8\\*(aa
@@ -167,6 +168,7 @@
 .	if "\\$1"1.5"  \&NetBSD 1.5\\*(aa
 .	if "\\$1"1.5.1"  \&NetBSD 1.5.1\\*(aa
 .	if "\\$1"1.6"  \&NetBSD 1.6\\*(aa
+.	if "\\$1"1.6.2"  \&NetBSD 1.6.2\\*(aa
 .	if "\\$1"."    \&NetBSD\\$1\\*(aa
 .	if "\\$1","    \&NetBSD\\$1\\*(aa
 .\}
