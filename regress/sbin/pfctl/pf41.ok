@@ -34,12 +34,12 @@ nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.3.4.5 port < 1000
 nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.3.4.5 port > 1100 
 nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.4.5.6 port < 1000 
 nat-anchor foo inet proto tcp from 10.2.3.4 port < 2100 to 10.4.5.6 port > 1100 
-rdr-anchor bar from any to any 
-rdr-anchor bar from any to any 
-rdr-anchor bar from any to any 
+rdr-anchor bar all 
+rdr-anchor bar all 
+rdr-anchor bar all 
 rdr-anchor bar inet proto tcp from 10.0.0.0/8 to ! 1.2.3.4 
-rdr-anchor bar inet proto udp from any to 10.1.2.0/24 port 25 
-rdr-anchor bar inet proto tcp from any to 10.1.2.0/24 port 25 
+rdr-anchor bar inet proto udp from any to 10.1.2.0/24 port = 25 
+rdr-anchor bar inet proto tcp from any to 10.1.2.0/24 port = smtp 
 binat-anchor baz from any to any 
 binat-anchor baz from any to any 
 binat-anchor baz from any to any 
