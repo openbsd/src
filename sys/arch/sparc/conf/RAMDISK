@@ -5,7 +5,7 @@ machine		sparc
 maxusers	32
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=2048
+option		MINIROOTSIZE=4096
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC

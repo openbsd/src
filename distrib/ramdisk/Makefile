@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 1997/05/14 20:44:34 deraadt Exp $
-#	$OpenBSD: Makefile,v 1.1 1997/05/14 20:44:34 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/05/14 21:52:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/05/14 21:52:59 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -48,7 +48,7 @@ bsd:
 bsd.rd: bsd ${IMAGE} ${.OBJDIR}/rdsetroot
 	cp bsd bsd.rd
 	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
-	${STRIP} bsd.rd
+#	${STRIP} bsd.rd
 
 ${.OBJDIR}/rdsetroot: ${.CURDIR}/../common/rdsetroot.c
 	${HOSTCC} ${HOSTCCFLAGS} -o rdsetroot ${.CURDIR}/../common/rdsetroot.c
@@ -68,7 +68,6 @@ ${IMAGE}: ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
-	cat /*bin/* > /dev/null
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 
