@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.91 2001/12/05 02:09:21 provos Exp $
+.\"	$OpenBSD: options.4,v 1.92 2001/12/07 02:35:06 kjc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -823,18 +823,18 @@ For simple rate-limiting, use
 .Xr tbrconfig 8
 to set up the interface transmission rate.
 To use queueing disciplines, their options should also be defined.
+.Em ALTQ_CBQ
+and
+.Em ALTQ_RED
+are enabled by default with option
+.Em ALTQ
+in
+.Ox .
 Queueing disciplines are managed by
 .Xr altqd 8 .
 See
 .Xr altq 9
 for details on ALTQ.
-.It Cd option ALTQ_CBQ
-Enables ALTQ's CBQ (Class-based Queueing) module.
-CBQ achieves both partitioning and sharing of link bandwidth by hierarchically
-structured classes.
-Each class has its own queue and is assigned its share of bandwidth.
-A child class can borrow bandwidth from its parent class as long as excess
-bandwidth is available.
 .It Cd option ALTQ_HFSC
 Enables ALTQ's HFSC (Hierarchical Fair Service Curve) module.
 HFSC supports both link-sharing and guaranteed real-time services.
@@ -853,13 +853,6 @@ A hash function is used to map a flow to one of a set of queues.
 .It Cd option ALTQ_FIFOQ
 Enables ALTQ's FIFO queue module.
 FIFOQ is a simple drop-tail FIFO queue.
-.It Cd option ALTQ_RED
-Enables ALTQ's RED (Random Early Detection) module.
-RED is an implicit congestion notification mechanism that exercises
-packet dropping or packet marking stochastically according to the
-average queue length.
-RED can be viewed as an active buffer management mechanism and can be
-integrated into other queueing disciplines.
 .It Cd option ALTQ_RIO
 Enables ALTQ's RIO (RED with In/Oout) module.
 The original RIO has 2 sets of RED parameters; one for in-profile
