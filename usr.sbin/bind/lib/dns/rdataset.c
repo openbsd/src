@@ -363,7 +363,11 @@ towiresorted(dns_rdataset_t *rdataset, dns_name_t *owner_name,
 			/*
 			 * "Cyclic" order.
 			 */
-			unsigned int j = (((unsigned int)rand()) >> 3) % count;
+			isc_uint32_t val;
+			unsigned int j;
+
+			isc_random_get(&val);
+			j = val % count;
 			for (i = 0; i < count; i++) {
 				sorted[j].key = 0; /* Unused */
 				sorted[j].rdata = &shuffled[i];
