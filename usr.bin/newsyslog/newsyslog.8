@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.30 2003/01/06 08:47:23 deraadt Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.31 2003/01/25 05:09:36 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -48,7 +48,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd November 11, 1999
+.Dd January 24, 2003
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -95,9 +95,12 @@ flags to aid in debugging problems with
 .It Fl m
 Monitoring mode; only entries marked with an
 .Sq M
-in flags are processed,
-and notifications sent if any have changed.
-Without this option, monitored entries are not processed.
+in flags are processed.
+For each log file being monitored, any log output since the last time 
+.Nm
+was run with the
+.Fl m
+flag is mailed to the user listed in the monitor notification section.
 .It Fl n
 Do not trim the logs, but instead print out what would be done if this option
 were not specified.
@@ -242,9 +245,9 @@ log file.
 The
 .Sq F
 flag specifies that symbolic links should be followed.
-.It monitor notification (optional)
-Specify the account that should receive notification messages if this is
-a monitored log file.
+.It monitor notification (only used with the `M' flag)
+Specify the username (or email address) that should receive notification
+messages if this is a monitored log file.
 Notification messages are sent as email; the operator
 deserves what they get if they mark the
 .Xr sendmail 8
