@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.18 1999/11/17 03:23:52 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.19 1999/12/14 22:34:45 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -118,6 +118,7 @@
 #include <vm/pmap.h>            /* for vtophys */
 #include <vm/vm_kern.h>
 #include <vm/vm_extern.h>
+#include <machine/bus.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -1240,8 +1241,12 @@ rl_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	bus_addr_t iobase;
 	bus_size_t iosize;
+	bus_dma_segment_t seg;
+	bus_dmamap_t dmamap;
+	int rseg;
 	u_int32_t command;
 	u_int16_t rl_did;
+	caddr_t kva;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -1319,14 +1324,36 @@ rl_attach(parent, self, aux)
 		return;
 	}
 
-#ifndef UVM
-	sc->rl_cdata.rl_rx_buf = (caddr_t) vm_page_alloc_contig(
-	    RL_RXBUFLEN + 32, 0x100000, 0xffffffff, PAGE_SIZE);
-#else
-	sc->rl_cdata.rl_rx_buf = (caddr_t) uvm_pagealloc_contig(
-	    RL_RXBUFLEN + 32, 0x100000, 0xffffffff, PAGE_SIZE);
-#endif
-	bzero(sc->rl_cdata.rl_rx_buf, RL_RXBUFLEN + 16);
+	sc->sc_dmat = pa->pa_dmat;
+	if (bus_dmamem_alloc(sc->sc_dmat, RL_RXBUFLEN + 32, PAGE_SIZE, 0,
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf("\n%s: can't alloc rx buffers\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, RL_RXBUFLEN + 32, &kva,
+	    BUS_DMA_NOWAIT)) {
+		printf("%s: can't map dma buffers (%d bytes)\n",
+		    sc->sc_dev.dv_xname, RL_RXBUFLEN + 32);
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, RL_RXBUFLEN + 32, 1,
+	    RL_RXBUFLEN + 32, 0, BUS_DMA_NOWAIT, &dmamap)) {
+		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
+		bus_dmamem_unmap(sc->sc_dmat, kva, RL_RXBUFLEN + 32);
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, RL_RXBUFLEN + 32,
+	    NULL, BUS_DMA_NOWAIT)) {
+		printf("%s: can't load dma map\n", sc->sc_dev.dv_xname);
+		bus_dmamap_destroy(sc->sc_dmat, dmamap);
+		bus_dmamem_unmap(sc->sc_dmat, kva, RL_RXBUFLEN + 32);
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return;
+	}
+	sc->rl_cdata.rl_rx_buf = kva;
+	bzero(sc->rl_cdata.rl_rx_buf, RL_RXBUFLEN + 32);
 
 	/* Leave a few bytes before the start of the RX ring buffer. */
 	sc->rl_cdata.rl_rx_buf_ptr = sc->rl_cdata.rl_rx_buf;
