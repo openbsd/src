@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.8 2004/02/07 16:50:04 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.9 2004/03/15 15:53:19 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -309,6 +309,9 @@ get_val(char *buf, int upper, enum sensor_type type)
 			errx(1, "unknown unit %s for voltage sensor", p);
 		rval = val * 1000 * 1000;
 		break;
+	default:
+		errx(1, "unsupported sensor type");
+		/* not reached */
 	}
 	free(buf);
 	return (rval);
