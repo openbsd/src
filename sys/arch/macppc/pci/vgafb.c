@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.8 2002/04/05 02:36:06 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.9 2002/04/20 16:42:42 matthieu Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -71,7 +71,8 @@ void	vgafb_copyrows(void *, int, int, int);
 void	vgafb_eraserows(void *, int, int);
 void	vgafb_alloc_attr(void *c, int fg, int bg, int flags, long *);
 
-void vgafb_setcolor(unsigned int index, u_int8_t r, u_int8_t g, u_int8_t b);
+void vgafb_setcolor(struct vgafb_config *vc, unsigned int index, 
+		    u_int8_t r, u_int8_t g, u_int8_t b);
 
 struct vgafb_devconfig {
 	struct rcons dc_ri;
@@ -306,6 +307,21 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	vc->vc_at = 0x00 | 0xf;			/* black bg|white fg */
 	vc->vc_so_at = 0x00 | 0xf | 0x80;	/* black bg|white fg|blink */
 #endif
+	{ 
+	  int i;
+	  for (i = 0; i < 256; i++) {
+	     vgafb_setcolor(vc, i, 255,255,255);
+	  }
+	}
+	vgafb_setcolor(vc, WSCOL_BLACK, 0, 0, 0);
+	vgafb_setcolor(vc, 255, 255, 255, 255);
+	vgafb_setcolor(vc, WSCOL_RED, 255, 0, 0);
+	vgafb_setcolor(vc, WSCOL_GREEN, 0, 255, 0);
+	vgafb_setcolor(vc, WSCOL_BROWN, 154, 85, 46);
+	vgafb_setcolor(vc, WSCOL_BLUE, 0, 0, 255);
+	vgafb_setcolor(vc, WSCOL_MAGENTA, 255, 0, 255);
+	vgafb_setcolor(vc, WSCOL_CYAN, 0, 255, 255);
+	vgafb_setcolor(vc, WSCOL_WHITE, 255, 255, 255);
 }
 
 void
@@ -486,21 +502,7 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 		}
 	}
 	#endif
-	{ 
-	  int i;
-	  for (i = 0; i < 256; i++) {
-	     vgafb_setcolor(i, 255,255,255);
-	  }
-	}
-	vgafb_setcolor(WSCOL_BLACK, 0, 0, 0);
-	vgafb_setcolor(255, 255, 255, 255);
-	vgafb_setcolor(WSCOL_RED, 255, 0, 0);
-	vgafb_setcolor(WSCOL_GREEN, 0, 255, 0);
-	vgafb_setcolor(WSCOL_BROWN, 154, 85, 46);
-	vgafb_setcolor(WSCOL_BLUE, 0, 0, 255);
-	vgafb_setcolor(WSCOL_MAGENTA, 255, 255, 0);
-	vgafb_setcolor(WSCOL_CYAN, 0, 255, 255);
-	vgafb_setcolor(WSCOL_WHITE, 255, 255, 255);
+
 	wsdisplay_cnattach(&vgafb_stdscreen, ri, 0, 0, defattr);
 }
 
@@ -508,13 +510,17 @@ struct {
 	u_int8_t r;
 	u_int8_t g;
 	u_int8_t b;
-	u_int8_t pad;
 } vgafb_color[256];
 void
-vgafb_setcolor(index, r, g, b) 
+vgafb_setcolor(vc, index, r, g, b) 
+	struct vgafb_config *vc;
 	unsigned int index;
 	u_int8_t r, g, b;
 {
+	vc->vc_cmap_red[index] = r;
+	vc->vc_cmap_green[index] = g;
+	vc->vc_cmap_blue[index] = b;
+
 	vgafb_color[0].r = r;
 	vgafb_color[0].g = g;
 	vgafb_color[0].b = b;
