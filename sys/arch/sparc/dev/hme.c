@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.43 2004/08/08 19:01:20 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.44 2004/09/28 00:21:23 brad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -67,10 +67,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
-
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
 #endif
 
 #include <machine/autoconf.h>
@@ -249,7 +245,7 @@ hmeattach(parent, self, aux)
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, HME_TX_RING_SIZE);
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -565,7 +561,7 @@ hmeinit(sc)
 			   sc->sc_arpcom.ac_enaddr[3];
 	cr->mac_addr2 = (sc->sc_arpcom.ac_enaddr[4] << 8) |
 			   sc->sc_arpcom.ac_enaddr[5];
-	cr->tx_pkt_max = cr->rx_pkt_max = HME_MTU;
+	cr->tx_pkt_max = cr->rx_pkt_max = ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN;
 
 	cr->jsize = HME_DEFAULT_JSIZE;
 	cr->ipkt_gap1 = HME_DEFAULT_IPKT_GAP1;
@@ -962,7 +958,7 @@ hme_mcreset(sc)
 			for (j = 0; j < 8; j++) {
 				if ((crc & 1) ^ (octet & 1)) {
 					crc >>= 1;
-					crc ^= MC_POLY_LE;
+					crc ^= ETHER_CRC_POLY_LE;
 				}
 				else
 					crc >>= 1;

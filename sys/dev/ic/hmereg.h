@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.6 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.7 2004/09/28 00:21:23 brad Exp $	*/
 /*	$NetBSD: hmereg.h,v 1.8 2001/04/30 12:22:42 bouyer Exp $	*/
 
 /*-
@@ -305,10 +305,3 @@ struct hme_xd {
 	(((sz) << 0) & HME_XD_TXLENMSK)
 #define HME_XD_DECODE_TSIZE(flags)	\
 	(((flags) & HME_XD_TXLENMSK) >> 0)
-
-#ifndef EVL_ENCAPLEN		/* defined if NVLAN > 0 */
-#define	EVL_ENCAPLEN	0
-#endif
-
-#define	HME_MTU		\
-    (ETHERMTU + EVL_ENCAPLEN + sizeof(u_int32_t) + sizeof(struct ether_header))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.32 2004/08/08 19:01:20 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.33 2004/09/28 00:21:23 brad Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -77,10 +77,6 @@
 #include <dev/mii/miivar.h>
 
 #include <machine/bus.h>
-
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
-#endif
 
 #include <dev/ic/hmereg.h>
 #include <dev/ic/hmevar.h>
@@ -241,7 +237,7 @@ hme_config(sc)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
 	IFQ_SET_READY(&ifp->if_snd);
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* Initialize ifmedia structures and MII info */
 	mii->mii_ifp = ifp;
@@ -517,7 +513,7 @@ hme_init(sc)
 	bus_space_write_4(t, mac, HME_MACI_FCCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_EXCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_LTCNT, 0);
-	bus_space_write_4(t, mac, HME_MACI_TXSIZE, HME_MTU);
+	bus_space_write_4(t, mac, HME_MACI_TXSIZE, ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* Load station MAC address */
 	ea = sc->sc_enaddr;
@@ -544,7 +540,7 @@ hme_init(sc)
 	bus_space_write_4(t, etx, HME_ETXI_RSIZE, HME_TX_RING_SIZE);
 
 	bus_space_write_4(t, erx, HME_ERXI_RING, sc->sc_rb.rb_rxddma);
-	bus_space_write_4(t, mac, HME_MACI_RXSIZE, HME_MTU);
+	bus_space_write_4(t, mac, HME_MACI_RXSIZE, ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, seb, HME_SEBI_IMASK,
