@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.26 2002/02/16 21:27:07 millert Exp $	*/
+/*	$OpenBSD: ps.c,v 1.27 2002/04/06 23:55:40 millert Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.26 2002/02/16 21:27:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.27 2002/04/06 23:55:40 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -301,7 +301,7 @@ main(argc, argv)
 
 	/*
 	 * scan requested variables, noting what structures are needed,
-	 * and adjusting header widths as appropiate.
+	 * and adjusting header widths as appropriate.
 	 */
 	scanvars();
 	/*
@@ -522,7 +522,7 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-            "usage: %s [-][aChjlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty] [-U user]\n",
+            "usage: %s [-][acCehjklmrSTuvwx] [-O|o fmt] [-p pid] [-t tty] [-U user]\n",
 	     __progname);	
 	(void)fprintf(stderr,
 	    "%-*s[-M core] [-N system] [-W swap]\n", strlen(__progname) + 8, "");
