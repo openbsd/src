@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.3 1998/02/10 02:19:46 deraadt Exp $	*/
+/*	$OpenBSD: string.h,v 1.4 1998/11/04 19:35:48 millert Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -86,6 +86,8 @@ void	*memccpy __P((void *, const void *, int, size_t));
 char	*rindex __P((const char *, int));
 int	 strcasecmp __P((const char *, const char *));
 char	*strdup __P((const char *));
+size_t	 strlcat __P((char *, const char *, size_t));
+size_t	 strlcpy __P((char *, const char *, size_t));
 void	 strmode __P((int, char *));
 int	 strncasecmp __P((const char *, const char *, size_t));
 char	*strsep __P((char **, const char *));
