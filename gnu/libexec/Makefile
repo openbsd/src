@@ -1,5 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 1995/04/23 07:52:55 cgd Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/09/23 19:05:53 pefo Exp $
 
 SUBDIR=	uucp
+
+.if (${MACHINE_ARCH} == "mips")
+SUBDIR+= ld.so
+.endif
 
 .include <bsd.subdir.mk>
