@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.9 2001/04/02 17:11:25 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.10 2001/04/08 03:16:10 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -242,6 +242,7 @@ struct scsi_inquiry_data {
 #define SID_IUS		0x01
 #define SID_QAS		0x02
 #define SID_CLOCKING	0x0c /* 0 == ST only, 1 == DT only, 3 == both */
+	u_int8_t reserved;
 };
 
 struct scsi_sense_data_unextended {
