@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.27 2005/03/11 20:25:52 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.28 2005/03/11 20:28:51 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -108,6 +108,8 @@ int		ral_tx_bcn(struct ral_softc *, struct mbuf *,
 #endif
 int		ral_tx_mgt(struct ral_softc *, struct mbuf *,
 		    struct ieee80211_node *);
+struct mbuf	*ral_get_rts(struct ral_softc *, struct ieee80211_frame *,
+		    uint16_t);
 int		ral_tx_data(struct ral_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 void		ral_start(struct ifnet *);
@@ -1703,6 +1705,37 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	RAL_WRITE(sc, RAL_TXCSR0, RAL_TXCSR0_KICK_PRIO);
 
 	return 0;
+}
+
+/*
+ * Build a RTS control frame.
+ */
+struct mbuf *
+ral_get_rts(struct ral_softc *sc, struct ieee80211_frame *wh, uint16_t dur)
+{
+	struct ieee80211_frame_rts *rts;
+	struct mbuf *m;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL) {
+		sc->sc_ic.ic_stats.is_tx_nombuf++;
+		printf("%s: could not allocate RTS frame\n",
+		    sc->sc_dev.dv_xname);
+		return NULL;
+	}
+
+	rts = mtod(m, struct ieee80211_frame_rts *);
+
+	rts->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_CTL |
+	    IEEE80211_FC0_SUBTYPE_RTS;
+	rts->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(uint16_t *)rts->i_dur = htole16(dur);
+	IEEE80211_ADDR_COPY(rts->i_ra, wh->i_addr1);
+	IEEE80211_ADDR_COPY(rts->i_ta, wh->i_addr2);
+
+	m->m_pkthdr.len = m->m_len = sizeof (struct ieee80211_frame_rts);
+
+	return m;
 }
 
 int
