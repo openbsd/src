@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.26 2003/01/13 20:12:18 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.27 2003/01/14 03:20:16 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -322,7 +322,7 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 	unsigned vec;
 
 	for (num = 0; (vec = vector_init_list[num]) != END_OF_VECTOR_LIST; num++) {
-		if (vec != PREDEFINED_BY_ROM)
+		if (vec != UNKNOWN_HANDLER)
 			SET_VECTOR(num, to, vec);
 		__asm__ (NOP_STRING);
 		__asm__ (NOP_STRING);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.25 2001/12/22 19:27:48 smurph Exp $	*/
+/*	$OpenBSD: locore.S,v 1.26 2003/01/14 03:20:16 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -405,22 +405,6 @@ GLOBAL(spin_cpu)
 /*****************************************************************************/
 
 	data
-#ifdef M88100
-	.align 4096		  /* VBR points to page aligned list */
-	global _vector_list, _vector_list_end
-_vector_list:     		  /* references memory BELOW this line */
-#include "machine/exception_vectors.h"
-_vector_list_end:
-	word END_OF_VECTOR_LIST
-#endif /* M88100 */
-#ifdef M88110
-	.align 4096		  /* VBR points to page aligned list */
-	global _m88110_vector_list, _m88110_vector_list_end
-_m88110_vector_list:   		  /* references memory BELOW this line */ 
-#include "machine/exception_vectors2.h"
-_m88110_vector_list_end:
-	word END_OF_VECTOR_LIST
-#endif /* M88110 */	
 	.align 4096		  /* SDT (segment descriptor table */
 	global _kernel_sdt
 _kernel_sdt:	

@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.28 2003/01/13 20:12:18 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.29 2003/01/14 03:20:16 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -568,14 +568,14 @@ GLOBAL(overflow_handler)
 
 /* Floating-point precise handler */
 #define FPp_SSBR_STUFF bsr clear_FPp_ssbr_bit
-ASGLOBAL(fp_precise_handler)
+GLOBAL(fp_precise_handler)
 	PREP("FPU precise", 114, DEBUG_FPp_BIT, FPp_SSBR_STUFF, No_Precheck)
 	CALL(_m88100_Xfp_precise, r0, r30) /* call fp_precise(??, exception_frame)*/
 	DONE(DEBUG_FPp_BIT)
 
 /* Floating-point imprecise handler */
 #define FPi_SSBR_STUFF  bsr clear_FPi_ssbr_bit
-ASGLOBAL(fp_imprecise_handler)
+GLOBAL(fp_imprecise_handler)
 	PREP("FPU imprecise", 115, DEBUG_FPi_BIT, FPi_SSBR_STUFF, No_Precheck)
 	CALL(_Xfp_imprecise, r0, r30) /*call fp_imprecise(??,exception_frame)*/
 	DONE(DEBUG_FPi_BIT)
@@ -615,12 +615,12 @@ GLOBAL(userbpt)
 	DONE(DEBUG_SIGTRAP_BIT)
 
 #if DDB
-ASGLOBAL(break)
+GLOBAL(break)
 	PREP("break", 130, DEBUG_BREAK_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_KDB_BREAK, r30)
 	DONE(DEBUG_BREAK_BIT)
 
-ASGLOBAL(trace)
+GLOBAL(trace)
 	PREP("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_KDB_TRACE, r30)
 	DONE(DEBUG_TRACE_BIT)
@@ -631,12 +631,12 @@ GLOBAL(entry)
 	DONE(DEBUG_KDB_BIT)
 
 #else /* else not DDB */
-ASGLOBAL(break)
+GLOBAL(break)
 	PREP("break", 130, DEBUG_BREAK_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
 	DONE(DEBUG_BREAK_BIT)
 
-ASGLOBAL(trace)
+GLOBAL(trace)
 	PREP("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
 	CALL(_C_LABEL(m88100_trap), T_UNKNOWNFLT, r30)
 	DONE(DEBUG_TRACE_BIT)

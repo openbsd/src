@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.22 2003/01/07 22:04:51 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.23 2003/01/14 03:20:14 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -311,11 +311,12 @@
 
 #define	DEBUG_UNKNOWN_BIT		31
 
-/*
- * These things for locore_c_routines.c and locore.S
- */
-#define	PREDEFINED_BY_ROM	0xffffffff
+/* exception vector marker */
+#define	UNKNOWN_HANDLER		0xffffffff
 #define	END_OF_VECTOR_LIST	0xfffffffe
+
+#define	VECTOR(x) \
+	word	_C_LABEL(x)
 
 #endif	/* _KERNEL */
 
