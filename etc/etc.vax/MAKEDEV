@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.47 2002/06/09 05:58:39 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.48 2002/06/24 10:43:31 hugh Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -372,6 +372,14 @@ ch*|uk*)
 	mknod $name$unit        c $chr $unit
 	chgrp operator $name$unit
 	chmod 640 $name$unit
+	;;
+
+xfs*)
+	unit=${i#xfs}
+	rm -f xfs$unit
+	mknod xfs$unit c 74 $unit 
+	chmod 600 xfs$unit 
+	chown root.wheel xfs$unit
 	;;
 
 rd*)
