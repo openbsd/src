@@ -1,4 +1,4 @@
-/*	$OpenBSD: error_message.c,v 1.1 1996/11/11 04:55:03 downsj Exp $	*/
+/*	$OpenBSD: error_message.c,v 1.2 1996/11/11 09:49:47 downsj Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -23,7 +23,7 @@
 #include "error_table.h"
 
 static const char rcsid[] =
-    "$Id: error_message.c,v 1.1 1996/11/11 04:55:03 downsj Exp $";
+    "$Id: error_message.c,v 1.2 1996/11/11 09:49:47 downsj Exp $";
 static const char copyright[] =
     "Copyright 1986, 1987, 1988 by the Student Information Processing Board\nand the department of Information Systems\nof the Massachusetts Institute of Technology";
 
@@ -44,10 +44,18 @@ error_message (code)
     offset = code & ((1<<ERRCODE_RANGE)-1);
     table_num = code - offset;
     if (!table_num) {
+#ifdef HAS_SYS_ERRLIST
 	if (offset < sys_nerr)
 	    return(sys_errlist[offset]);
 	else
 	    goto oops;
+#else
+	cp = strerror(offset);
+	if (cp)
+	    return(cp);
+	else
+	    goto oops;
+#endif
     }
     for (et = _et_list; et; et = et->next) {
 	if (et->table->base == table_num) {
