@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.23 1997/10/24 02:44:07 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.24 1997/10/24 02:49:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.23 1997/10/24 02:44:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.24 1997/10/24 02:49:55 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -419,8 +419,8 @@ editor_add(lp, freep, p)
 #if NUMBOOT == 1
 	/* Don't clobber boot blocks */
 	if (pp->p_offset == 0) {
-		pp->p_offset = pp->d_secpercyl;
-		pp->p_size -= pp->d_secpercyl;
+		pp->p_offset = lp->d_secpercyl;
+		pp->p_size -= lp->d_secpercyl;
 	}
 #endif
 	old_offset = pp->p_offset;
