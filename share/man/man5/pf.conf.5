@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.63 2002/07/01 23:10:33 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.64 2002/07/04 10:51:18 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 20, 2002
+.Dd July 2, 2002
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -54,6 +54,12 @@ Rules must be in order: scrub, nat, filter.
 .Sh GRAMMAR
 Syntax for filter rules in BNF:
 .Bd -literal
+option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
+                       [ "optimization" [ "default" | "normal" | 
+				"high-latency" | "satellite" | 
+				"aggressive" | "conservative" ] ]
+                       [ "limit" ( limit | "{" limit-list "}" ) ] |
+		       [ "loginterface" interface-name ] ) .
 rule           = action ( "in" | "out" )
                  [ "log" | "log-all" ] [ "quick" ]
                  [ "on" ( interface-name | "{" interface-list "}" ) ]
@@ -114,7 +120,18 @@ icmp-type-code = ( icmp-type-name | icmp-type-number )
 icmp-list      = icmp-type-code [ "," icmp-list ] . 
 
 state-opts     = state-opt [ "," state-opts ] .
-state-opt      = ( "max" number ) | ( timeout number ) .
+state-opt      = ( "max" seconds ) | ( timeout seconds ) .
+
+timeout-list   = timeout [ "," timeout-list ] .
+timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
+                 "tcp.closing" | "tcp.finwait" | "tcp.closed" |
+                 "udp.first" | "udp.single" | "udp.multiple" |
+                 "icmp.first" | "icmp.error" |
+                 "other.first" | "other.multiple" ) seconds .
+seconds        = number .
+
+limit-list     = limit [ "," limit-list ] . 
+limit          = ( "states" | "frags" ) number .
 .Ed
 .Pp
 Syntax for translation rules in BNF:
@@ -171,6 +188,10 @@ To load only the NAT rules from a file, one would use the command
 .Pp
 .Cm # pfctl -N -f file
 .Pp
+To load only the options from a file, one would use the command
+.Pp
+.Cm # pfctl -O -f file
+.Pp
 The active filter rule set can be displayed using
 .Pp
 .Cm # pfctl -s r
@@ -178,6 +199,16 @@ The active filter rule set can be displayed using
 The active translation rule set can be displayed using
 .Pp
 .Cm # pfctl -s n
+.Pp
+The active options can be displayed using pfctl as well:
+.Pp
+.Cm # pfctl -s t
+.Pp
+shows the current timeouts.
+.Pp
+.Cm # pfctl -s m
+.Pp
+shows the current limits.
 .Pp
 For each packet processed by the packet filter, the filter rules are
 evaluated in sequential order, from first to last.
@@ -217,6 +248,136 @@ external interface.
 Redirections can't reflect packets back through the interface they arrive
 on, they can only be redirected to hosts connected to different interfaces
 or to the firewall itself.
+.Sh OPTIONS
+.Ss timeout
+.Bl -tag -width interval -compact
+.It Em interval
+Interval between purging expired states and fragments.
+.It Em frag
+Seconds before an unassembled fragment is expired.
+.El
+.Pp
+When a packet matches a stateful connection, the seconds to live of the
+connection will be updated to that of the proto.modifier which corresponds
+to the connection state.
+Each packet which matches this state will reset the TTL.
+Tuning these values may improve the performance of the
+firewall at the risk of dropping valid idled connections.
+.Pp
+.Bl -tag -width "tcp.established " -compact
+.It Em tcp.first
+The state after the first packet.
+.It Em tcp.opening
+The state before the destination host ever sends a packet.
+.It Em tcp.established
+The fully established state.
+.It Em tcp.closing
+The state after the first FIN has been sent.
+.It Em tcp.finwait
+The state after both FINs have been exchanged and the connection is closed.
+Some hosts (notably web servers on Solaris) send TCP packets even after closing
+the connection.
+Increasing tcp.finwait (and possibly tcp.closing) can prevent blocking of
+such packets.
+.It Em tcp.closed
+The state after one endpoint sends a RST.
+.El
+.Pp
+ICMP and UDP are handled in a similar fashion to TCP but with a much more
+limited set of states:
+.Pp
+.Bl -tag -width "udp.multiple " -compact
+.It Em udp.first
+The state after the first packet.
+.It Em udp.single
+The state if the source host sends more than one packet but the destination
+host has never sent one back.
+.It Em udp.multiple
+The state if both hosts have sent packets.
+.It Em icmp.first
+The state after the first packet.
+.It Em icmp.error
+The state after an icmp error came back in response to an icmp packet.
+.El
+.Pp
+Other protocols are handled similarly to UDP:
+.Pp
+.Bl -tag -width "other.multiple " -compact
+.It Em other.first
+.It Em other.single
+.It Em other.multiple
+.El
+.Pp
+Example:
+.Bd -literal
+    set timeout tcp.established 3600
+    set timeout { tcp.opening 30, tcp.closing 900 }
+.Ed
+.Ss loginterface
+Enable collection of packet and byte count statistics for the given interface.
+These statistics can be viewed using
+.Bd -literal
+    # pfctl -s info
+.Ed
+.Pp
+In this example pf is told to collect statistics on the interface named dc0:
+.Bd -literal
+    set loginterface dc0
+.Ed
+.Pp
+.Ss limit
+Sets hard limits on the memory pools used by the packet filter.
+See
+.Xr pool 9
+for an explanation of memory pools.
+.Pp
+For example,
+.Bd -literal
+    set limit states 20000
+.Ed
+.Pp
+sets the maximum number of entries in the memory pool used by state table
+entries (generated by 'keep state' rules) to 20000.
+.Bd -literal
+    set limit frags 20000
+.Ed
+.Pp
+set the maximum number of entries in the memory pool used for fragment
+reassemble (generated by 'scrub' rules) to 20000.
+.Pp
+These can be combined:
+.Bd -literal
+    set limit { states 20000, frags 20000 }
+.Ed
+.Ss optimization
+Optimize the engine to one of the following network topographies or
+environments:
+.Bl -tag -width "O high-latency " -compact
+.It Em default
+A normal network environment.
+Suitable for almost all networks.
+.It Em normal
+Alias for
+.Em default
+.It Em high-latency
+A high-latency environment (such as a satellite connection)
+.It Em satellite
+Alias for
+.Em high-latency
+.It Em aggressive
+Aggressively expire connections when they are likely no longer valid.
+This can greatly reduce the memory usage of the firewall at the cost of
+dropping idle connections early.
+.It Em conservative
+Extremely conservative settings.
+Pains will be taken to avoid dropping legitimate connections at the
+expense of greater memory utilization (possibly much greater on a busy
+network) and slightly increased processor utilization.
+.El
+Example:
+.Bd -literal
+    set optimization aggressive
+.Ed
 .Sh ACTIONS
 .Bl -tag -width Fl
 .It Em block
