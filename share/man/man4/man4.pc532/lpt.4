@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpt.4,v 1.6 2000/03/02 14:46:48 todd Exp $
+.\"	$OpenBSD: lpt.4,v 1.7 2001/06/23 07:04:15 pjanzen Exp $
 .\"	$NetBSD: lpt.4,v 1.2 1995/11/28 08:03:29 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Matthias Pfaller.
@@ -41,7 +41,7 @@
 .Cd "lpt1 at membus? addr ? irq ?"
 .Sh DESCRIPTION
 This driver provides access to centronics ports. Bit 6 in the minor number
-selects wether to omit pulling /PRIME low on opens or not. If the minor has
+selects whether to omit pulling /PRIME low on opens or not. If the minor has
 bit 5 set, AUTOLINEFEED will be asserted when transferring data to the printer.
 Addr and Irq default to 0xffc80030,7 for lpt0 and to 0xffc80034,6 for lpt1.
 .Sh FILES

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sti.4,v 1.1 2001/05/12 00:04:30 mickey Exp $
+.\"	$OpenBSD: sti.4,v 1.2 2001/06/23 07:03:59 pjanzen Exp $
 .\"
 .\" Copyright (c) 2001 Michael Shalayeff
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-was created by HP to provide a unifor frame-buffer access operations
+was created by HP to provide uniform frame-buffer access operations
 for their 9000/300 and 9000/700 series of workstations.
 Implementation consists of a set of functions burnt in to the PROM
 on the card and providing the following set of functions (see below
@@ -56,7 +56,7 @@ Initialize graphics.
 .It
 State management.
 .It
-Print a charecter onto the screen using currently selected font.
+Print a character onto the screen using currently selected font.
 .It
 Copy a region of the frame-buffer to another location.
 .It
@@ -86,9 +86,9 @@ and
 mode.
 In
 .Dq byte
-mode each 4-byte word contains only the low ordered big endian
-byte of data, i.e. to compose one word of data 4 words should be read
-and low ordered bytes of those should be shifted correspondently.
+mode each 4-byte word contains only the low-ordered big-endian
+byte of data; i.e., to compose one word of data 4 words should be read
+and low-ordered bytes of those should be shifted correspondingly.
 In
 .Dq word
 mode each word contains all 4 bytes of valid data.
@@ -200,7 +200,7 @@ function added.
 .It
 Addition changes for
 .Nm Visualize FX
-due to rearchitecture for perfomance.
+due to rearchitecture for performance.
 .It
 .Nm process_mgr
 function added.
@@ -212,7 +212,7 @@ EPROM map mode, implemented on
 .Nm Visualize EG .
 .It 8.0b
 Support for HP-UX non-implicit locking DMA, implemented on
-.Nm Visuzlize FXE .
+.Nm Visualize FXE .
 .It 8.0c
 .Nm sti_util
 function added (flashing under HP-UX and other sideband traffic).

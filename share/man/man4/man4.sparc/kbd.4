@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kbd.4,v 1.5 1999/07/09 13:35:42 aaron Exp $
+.\"	$OpenBSD: kbd.4,v 1.6 2001/06/23 07:04:20 pjanzen Exp $
 .\"	$NetBSD: kbd.4,v 1.3 1997/11/25 22:15:56 pk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,7 +69,8 @@ device.
 The device special file
 .Pa /dev/kbd
 is used to get direct access to the keyboard input stream. The following
-ioctl's are supported (mostly just enough to keep the X11 server going):
+.Xr ioctl 2 Ns s
+are supported (mostly just enough to keep the X11 server going):
 .Bl -tag -width KIOCSDIRECT
 .It KIOCTRANS
 Set translation mode. The argument is of type

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pckbd.4,v 1.7 2001/06/13 20:40:35 mickey Exp $
+.\" $OpenBSD: pckbd.4,v 1.8 2001/06/23 07:03:58 pjanzen Exp $
 .\" $NetBSD: pckbd.4,v 1.3 1999/12/21 11:31:07 drochner Exp $
 .\"
 .Dd March 20, 1999
@@ -133,7 +133,7 @@ driver allows to use the standard ISA speaker for this purpose.
 To set a german keyboard layout without
 .Dq dead accents
 and sending an ESC character before the key symbol if the ALT
-key is pressed simultanously, use
+key is pressed simultaneously, use
 .Ic wsconsctl -w encoding=de.nodead.metaesc .
 To set it at kernel build time, add
 .Em option PCKBD_LAYOUT="(KB_DE|KB_NODEAD|KB_METAESC)"

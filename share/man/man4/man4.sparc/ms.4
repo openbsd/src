@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ms.4,v 1.5 2001/02/26 21:15:49 aaron Exp $
+.\"	$OpenBSD: ms.4,v 1.6 2001/06/23 07:04:20 pjanzen Exp $
 .\"	$NetBSD: ms.4,v 1.2 1997/10/08 22:00:12 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,8 @@ are X and Y delta values, none of which are in the range
 The device special file
 .Pa /dev/mouse
 is used to get direct access to the mouse input stream. The following
-ioctl's are supported (mostly just enough to keep the X11 server going):
+.Xr ioctl 2 Ns s
+are supported (mostly just enough to keep the X11 server going):
 .Bl -tag -width VUIDSFORMAT
 .It VUIDSFORMAT
 Set translation mode. The argument is of type

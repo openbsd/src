@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.9 2001/06/22 12:15:44 mpech Exp $
+.\"	$OpenBSD: bpf.4,v 1.10 2001/06/23 07:03:52 pjanzen Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -125,9 +125,9 @@ Sets the buffer length for reads on
 files.
 The buffer must be set before the file is attached to an interface with
 .Dv BIOCSETIF .
-If the requested buffer size cannot be accomodated, the closest allowable
+If the requested buffer size cannot be accommodated, the closest allowable
 size will be set and returned in the argument.
-A read call will reseult in
+A read call will result in
 .Er EIO
 if it is passed a buffer that is not this size.
 .It Dv BIOCGDLT Pf ( Li u_int Ns No )
@@ -238,7 +238,7 @@ for an explanation of the filter language.
 .It Dv BIOCVERSION Pf ( Li "struct bpf_version" Ns No )
 Returns the major and minor version numbers of the filter language currently
 recognized by the kernel.
-Before installating a filter, applications must check that the current version
+Before installing a filter, applications must check that the current version
 is compatible with the running kernel.
 Version numbers are compatible if the major numbers match and the application
 minor is less than or equal to the kernel minor.
@@ -260,7 +260,7 @@ from
 An incompatible filter may result in undefined behavior (most likely, an
 error returned by
 .Xr ioctl 2
-or haphazard packet mactching).
+or haphazard packet matching).
 .It Xo Dv BIOCSRSIG , Dv BIOCGRSIG (
 .Li u_int Ns No )
 .Xc
@@ -362,7 +362,7 @@ improves performance on many other architectures.
 The packet filter ensures that the
 .Fa bpf_hdr
 and the network layer header will be word aligned.
-Suitable precuations must be taken when accessing the link layer protocol
+Suitable precautions must be taken when accessing the link layer protocol
 fields on alignment restricted machines.
 (This isn't a problem on an Ethernet, since the type field is a
 .Li short
@@ -538,7 +538,7 @@ A <- M[k]
 .El
 .It Dv BPF_LDX
 These instructions load a value into the index register.
-Note that the addressign modes are more restricted than those of the
+Note that the addressing modes are more restricted than those of the
 accumulator loads, but they include
 .Dv BPF_MSH ,
 a hack for efficiently loading the IP header length.
@@ -886,7 +886,7 @@ struct bpf_insn insns[] = {
 BPF devices
 .El
 .Sh AUTHORS
-Steve McCanne of Lawrence Berkeley Laboratary implemented BPF in Summer 1990.
+Steve McCanne of Lawrence Berkeley Laboratory implemented BPF in Summer 1990.
 Much of the design is due to Van Jacobson.
 .Sh HISTORY
 The Enet packet filter was created in 1980 by Mike Accetta and Rick Rashid
@@ -903,7 +903,7 @@ ioctl).
 A file that does not request promiscuous mode may receive promiscuously
 received packets as a side effect of another file requesting this mode on
 the same hardware interface.
-This could be fixed in the kernel with additional processing overead.
+This could be fixed in the kernel with additional processing overhead.
 However, we favor the model where all files must assume that the interface
 is promiscuous, and if so desired, must utilize a filter to reject foreign
 packets.

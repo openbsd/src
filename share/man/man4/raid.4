@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.13 2001/06/22 12:15:46 mpech Exp $
+.\"	$OpenBSD: raid.4,v 1.14 2001/06/23 07:03:58 pjanzen Exp $
 .\"     $NetBSD: raid.4,v 1.8 1999/12/15 22:07:33 abs Exp $
 .\"
 .\"
@@ -192,7 +192,7 @@ sd6     at scsibus0 target 6 lun ?      # SCSI disk drives
 See
 .Xr sd 4
 for more information.  The rationale for fixing the device addresses
-is as follows: Consider a system with three SCSI drives at SCSI ID's
+is as follows: Consider a system with three SCSI drives at SCSI IDs
 4, 5, and 6, and which map to components /dev/sd0e, /dev/sd1e, and
 /dev/sd2e of a RAID 5 set.  If the drive with SCSI ID 5 fails, and the
 system reboots, the old /dev/sd2e will show up as /dev/sd1e.  The RAID
