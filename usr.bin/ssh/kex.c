@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: kex.c,v 1.5 2000/04/14 10:30:31 markus Exp $");
+RCSID("$Id: kex.c,v 1.6 2000/05/08 17:42:25 markus Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -314,7 +314,7 @@ choose_mac(Mac *mac, char *client, char *server)
 	}
 	mac->name = name;
 	mac->mac_len = mac->md->md_size;
-	mac->key_len = datafellows ? 16 : mac->mac_len;
+	mac->key_len = (datafellows & SSH_BUG_HMAC) ? 16 : mac->mac_len;
 	mac->key = NULL;
 	mac->enabled = 0;
 }
