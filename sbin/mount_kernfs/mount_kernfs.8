@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_kernfs.8,v 1.21 2004/11/24 01:54:28 ian Exp $
+.\"	$OpenBSD: mount_kernfs.8,v 1.22 2004/11/24 16:56:38 ian Exp $
 .\"	$NetBSD: mount_kernfs.8,v 1.6 1995/03/18 14:57:24 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -183,6 +183,5 @@ utility first appeared in
 .Sh CAVEATS
 This filesystem may not be NFS-exported.
 .Pp
-Due to non-atomic operations and the potential for race conditions, 
+Due to non-atomic operations and the potential for race conditions,
 programs should not depend on information obtained from this filesystem.
-program
