@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.49 2002/05/30 09:37:38 hugh Exp $ */
+/* $OpenBSD: netcat.c,v 1.50 2002/07/01 15:40:40 vincent Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 		if (nflag)
 			hints.ai_flags |= AI_NUMERICHOST;
 	}
-		
+
 
 	if (xflag) {
 		if (uflag)
@@ -309,7 +309,6 @@ main(int argc, char *argv[])
 
 		/* Cycle through portlist, connecting to each port */
 		for (i = 0; portlist[i] != NULL; i++) {
-			
 			if (s)
 				close(s);
 
@@ -326,7 +325,7 @@ main(int argc, char *argv[])
 			if (vflag || zflag) {
 				/* For UDP, make sure we are connected */
 				if (uflag) {
-					if ((udptest(s)) == -1) {
+					if (udptest(s) == -1) {
 						ret = 1;
 						continue;
 					}
@@ -340,7 +339,7 @@ main(int argc, char *argv[])
 					    ntohs(atoi(portlist[i])),
 					    uflag ? "udp" : "tcp");
 				}
-				
+
 				printf("Connection to %s %s port [%s/%s] succeeded!\n",
 				    host, portlist[i], uflag ? "udp" : "tcp",
 				    sv ? sv->s_name : "*");
@@ -367,20 +366,18 @@ unix_connect(char *path)
 	int s;
 
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
-			return (-1);
+		return (-1);
 	(void)fcntl(s, F_SETFD, 1);
 
 	memset(&sun, 0, sizeof(struct sockaddr_un));
-	sun.sun_len = sizeof(path);
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
-
-	if (connect(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
-			close(s);
-			return (-1);
+	if (connect(s, (struct sockaddr *)&sun, SUN_LEN(&sun)) < 0) {
+		close(s);
+		return (-1);
 	}
 	return (s);
-		
+
 }
 
 /*
@@ -397,10 +394,9 @@ unix_listen(char *path)
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 		return (-1);
 
-	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
-
-	if (bind(s, (struct sockaddr *)&sun, sizeof(sun)) < 0) {
+	sun.sun_family = AF_UNIX;
+	if (bind(s, (struct sockaddr *)&sun, SUN_LEN(&sun)) < 0) {
 		close(s);
 		return (-1);
 	}
@@ -452,7 +448,7 @@ remote_connect(char *host, char *port, struct addrinfo hints)
 				errx(1, "%s", gai_strerror(error));
 
 			if (bind(s, (struct sockaddr *)ares->ai_addr,
-			     ares->ai_addrlen) < 0) {
+			    ares->ai_addrlen) < 0) {
 				errx(1, "bind failed: %s", strerror(errno));
 				freeaddrinfo(ares);
 				continue;
@@ -573,14 +569,16 @@ readwrite(int nfd)
 		}
 
 		if (pfd[1].revents & POLLIN) {
-			if ((n = read(wfd, buf, sizeof(buf))) < 0) {
+			if ((n = read(wfd, buf, sizeof(buf))) < 0)
 				return;
-			} else
+			else {
 				if((ret = atomicio(write, nfd, buf, n)) != n)
 					return;
+			}
 		}
 	}
 }
+
 /* Deal with RFC854 WILL/WONT DO/DONT negotiation */
 void
 atelnet(int nfd, unsigned char *buf, unsigned int size)
@@ -598,12 +596,10 @@ atelnet(int nfd, unsigned char *buf, unsigned int size)
 
 		obuf[0] = IAC;
 		p++;
-		if ((*p == WILL) || (*p == WONT)) {
+		if ((*p == WILL) || (*p == WONT))
 			obuf[1] = DONT;
-		}
-		if ((*p == DO) || (*p == DONT)) {
+		if ((*p == DO) || (*p == DONT))
 			obuf[1] = WONT;
-		}
 		if (obuf) {
 			p++;
 			obuf[2] = *p;
