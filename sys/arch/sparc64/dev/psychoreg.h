@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychoreg.h,v 1.3 2001/09/01 23:56:43 jason Exp $	*/
+/*	$OpenBSD: psychoreg.h,v 1.4 2001/09/04 15:02:09 jason Exp $	*/
 /*	$NetBSD: psychoreg.h,v 1.7 2001/07/20 00:07:13 eeh Exp $ */
 
 /*
@@ -274,6 +274,22 @@ struct psychoreg {
 #define	PCICTL_RTRYWAIT 0x0000000000000080	/* PCI error interrupt enable */
 #define	PCICTL_4ENABLE	0x000000000000000f	/* enable 4 PCI slots */
 #define	PCICTL_6ENABLE	0x000000000000003f	/* enable 6 PCI slots */
+
+/* PCI [a|b] afsr */
+#define	PSY_PCIAFSR_PMA		0x8000000000000000	/* primary master abort */
+#define	PSY_PCIAFSR_PTA		0x4000000000000000	/* primary target abort */
+#define	PSY_PCIAFSR_PTRY	0x2000000000000000	/* primary excessive retry */
+#define	PSY_PCIAFSR_PPERR	0x1000000000000000	/* primary parity error */
+#define	PSY_PCIAFSR_SMA		0x0800000000000000	/* secondary master abort */
+#define	PSY_PCIAFSR_STA		0x0400000000000000	/* secondary target abort */
+#define	PSY_PCIAFSR_STRY	0x0200000000000000	/* secondary excessive retry */
+#define	PSY_PCIAFSR_SPERR	0x0100000000000000	/* secondary parity error */
+#define	PSY_PCIAFSR_RESV1	0x00ff000000000000	/* reserved */
+#define	PSY_PCIAFSR_BMSK	0x0000ffff00000000	/* byte mask of transfer */
+#define	PSY_PCIAFSR_BLK		0x0000000080000000	/* block operation */
+#define	PSY_PCIAFSR_RESV2	0x0000000040000000	/* reserved */
+#define	PSY_PCIAFSR_MID		0x000000003e000000	/* mid causing error */
+#define	PSY_PCIAFSR_RESV3	0x0000000001ffffff	/* reserved */
 
 /*
  * these are the PROM structures we grovel
