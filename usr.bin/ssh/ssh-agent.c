@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh-agent.c,v 1.79 2002/01/18 18:14:17 stevesk Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.80 2002/02/04 00:53:39 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
 
 #include "includes.h"
 #include <sys/queue.h>
-RCSID("$OpenBSD: ssh-agent.c,v 1.79 2002/01/18 18:14:17 stevesk Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.80 2002/02/04 00:53:39 stevesk Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -47,13 +47,9 @@ RCSID("$OpenBSD: ssh-agent.c,v 1.79 2002/01/18 18:14:17 stevesk Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 #include "xmalloc.h"
-#include "packet.h"
 #include "getput.h"
-#include "mpaux.h"
 #include "key.h"
 #include "authfd.h"
-#include "cipher.h"
-#include "kex.h"
 #include "compat.h"
 #include "log.h"
 
