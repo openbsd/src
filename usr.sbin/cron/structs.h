@@ -1,4 +1,4 @@
-/*	$OpenBSD: structs.h,v 1.1 2001/02/18 19:48:36 millert Exp $	*/
+/*	$OpenBSD: structs.h,v 1.2 2001/02/19 14:33:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
@@ -16,8 +16,6 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-
-typedef int time_min;			/* time in minutes */
 
 typedef	struct _entry {
 	struct _entry	*next;

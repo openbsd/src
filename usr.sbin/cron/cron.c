@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.10 2001/02/18 19:48:31 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.11 2001/02/19 14:33:32 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.10 2001/02/18 19:48:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.11 2001/02/19 14:33:32 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -30,15 +30,16 @@ static char rcsid[] = "$OpenBSD: cron.c,v 1.10 2001/02/18 19:48:31 millert Exp $
 
 static	void	usage(void),
 		run_reboot_jobs(cron_db *),
-		find_jobs __P((time_min, cron_db *, int, int)),
-		set_time __P((void)),
-		cron_sleep __P((time_min)),
+		find_jobs __P((int, cron_db *, int, int)),
+		set_time __P((int)),
+		cron_sleep __P((int)),
 		sigchld_handler(int),
 		sighup_handler(int),
 		sigchld_reaper(void),
 		parse_args(int c, char *v[]);
 
 static	int	got_sighup, got_sigchld;
+static	int	timeRunning, virtualTime, clockTime;
 
 static void
 usage(void) {
@@ -115,13 +116,13 @@ main(int argc, char *argv[]) {
 	database.tail = NULL;
 	database.mtime = (time_t) 0;
 	load_database(&database);
-	set_time();
+	set_time(1);
 	run_reboot_jobs(&database);
 	timeRunning = virtualTime = clockTime;
 
 	/*
 	 * Too many clocks, not enough time (Al. Einstein)
-	 * These clocks are in minutes since the epoch (time()/60).
+	 * These clocks are in minutes since the epoch, adjusted for timezone.
 	 * virtualTime: is the time it *would* be if we woke up
 	 * promptly and nobody ever changed the clock. It is
 	 * monotonically increasing... unless a timejump happens.
@@ -130,7 +131,7 @@ main(int argc, char *argv[]) {
 	 * clockTime: is the time when set_time was last called.
 	 */
 	while (TRUE) {
-		time_min timeDiff;
+		int timeDiff;
 		int wakeupKind;
 
 		if (got_sighup) {
@@ -146,7 +147,7 @@ main(int argc, char *argv[]) {
 		/* ... wait for the time (in minutes) to change ... */
 		do {
 			cron_sleep(timeRunning + 1);
-			set_time();
+			set_time(0);
 		} while (clockTime == timeRunning);
 		timeRunning = clockTime;
 
@@ -179,14 +180,14 @@ main(int argc, char *argv[]) {
 				 * minute until caught up.
 				 */
 				Debug(DSCH, ("[%d], normal case %d minutes to go\n",
-				    getpid(), timeRunning - virtualTime))
+				    getpid(), timeDiff))
 				do {
 					if (job_runqueue())
 						sleep(10);
 					virtualTime++;
 					find_jobs(virtualTime, &database,
 					    TRUE, TRUE);
-				} while (virtualTime< timeRunning);
+				} while (virtualTime < timeRunning);
 				break;
 
 			case 2:
@@ -202,7 +203,7 @@ main(int argc, char *argv[]) {
 				 * housekeeping.
 				 */
 				Debug(DSCH, ("[%d], DST begins %d minutes to go\n",
-				    getpid(), timeRunning - virtualTime))
+				    getpid(), timeDiff))
 				/* run wildcard jobs for current minute */
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 	
@@ -213,7 +214,7 @@ main(int argc, char *argv[]) {
 					virtualTime++;
 					find_jobs(virtualTime, &database,
 					    FALSE, TRUE);
-					set_time();
+					set_time(0);
 				} while (virtualTime< timeRunning &&
 				    clockTime == timeRunning);
 				break;
@@ -221,14 +222,14 @@ main(int argc, char *argv[]) {
 			case 0:
 				/*
 				 * case 3: timeDiff is a small or medium-sized
-				 * negative num, eg. because of DST ending just
-				 * run the wildcard jobs. The fixed-time jobs
-				 * probably have already run, and should not be
-				 * repeated.  Virtual time does not change until
-				 * we are caught up.
+				 * negative num, eg. because of DST ending.
+				 * Just run the wildcard jobs. The fixed-time
+				 * jobs probably have already run, and should
+				 * not be repeated.  Virtual time does not
+				 * change until we are caught up.
 				 */
 				Debug(DSCH, ("[%d], DST ends %d minutes to go\n",
-				    getpid(), virtualTime - timeRunning))
+				    getpid(), timeDiff))
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 				break;
 			default:
@@ -262,9 +263,9 @@ run_reboot_jobs(cron_db *db) {
 }
 
 static void
-find_jobs(time_min vtime, cron_db *db, int doWild, int doNonWild) {
+find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 	time_t virtualSecond  = vtime * SECONDS_PER_MINUTE;
-	struct tm *tm = localtime(&virtualSecond);
+	struct tm *tm = gmtime(&virtualSecond);
 	int minute, hour, dom, month, dow;
 	user *u;
 	entry *e;
@@ -311,20 +312,35 @@ find_jobs(time_min vtime, cron_db *db, int doWild, int doNonWild) {
  * Note that clockTime is a unix wallclock time converted to minutes.
  */
 static void
-set_time(void) {
+set_time(int initialize) {
+	struct tm *tm;
+	static long gmtoff;
+	static int isdst;
 
-	StartTime = time((time_t *)0);
-	clockTime = StartTime / (unsigned long)SECONDS_PER_MINUTE;
+	StartTime = time(NULL);
+
+	/* We adjust the time to GMT so we can catch DST changes. */
+	tm = localtime(&StartTime);
+	if (initialize || tm->tm_isdst != isdst) {
+		isdst = tm->tm_isdst;
+		gmtoff = get_gmtoff(&StartTime);
+	}
+	clockTime = (StartTime + gmtoff) / (time_t)SECONDS_PER_MINUTE;
 }
 
 /*
  * Try to just hit the next minute.
  */
 static void
-cron_sleep(time_min target) {
+cron_sleep(int target) {
+	time_t t;
+	struct tm *tm;
 	int seconds_to_wait;
 
-	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - time(NULL)) + 1;
+	t = time(NULL);
+	tm = localtime(&t);
+	t += tm->tm_gmtoff;
+	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - t) + 1;
 	Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%d\n",
 	    (long)getpid(), (long)target*SECONDS_PER_MINUTE, seconds_to_wait))
 
