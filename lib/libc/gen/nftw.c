@@ -1,4 +1,4 @@
-/*	$OpenBSD: nftw.c,v 1.3 2004/07/06 15:51:17 millert Exp $	*/
+/*	$OpenBSD: nftw.c,v 1.4 2004/07/07 16:05:23 millert Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: nftw.c,v 1.3 2004/07/06 15:51:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: nftw.c,v 1.4 2004/07/07 16:05:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -104,7 +104,9 @@ nftw(const char *path, int (*fn)(const char *, const struct stat *, int,
 	}
 done:
 	sverrno = errno;
-	(void) fts_close(ftsp);
-	errno = sverrno;
+	if (fts_close(ftsp) != 0 && error == 0)
+		error = -1;
+	else
+		errno = sverrno;
 	return (error);
 }
