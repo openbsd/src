@@ -1,0 +1,31 @@
+$OpenBSD: README,v 1.1 2000/02/25 16:35:23 hin Exp $
+
+This version is based on krb4-1.0, which is available from
+ftp://ftp.pdc.kth.se/pub/krb4/src/
+
+A webpage is available at http://www.pdc.kth.se/kth-krb/.
+
+To upgrade to a newer version:
+
+1. unpack the distribution and rename it to src
+2. mkdir /tmp/krb ; cd /tmp/krb ; /usr/src/kerberosIV/src/configure
+3. cd include ; make
+4. cp config.h protos.h roken-common.h ktypes.h version.h \
+	/usr/src/kerberosIV/src/include
+5. cd ../lib/roken ; make roken.h ; make print_version.h
+6. cp roken.h print_version.h /usr/src/kerberosIV/lib/roken
+
+7. merge in OpenBSD specific changes:
+	src/lib/krb/krb.h		Path to krb.equiv 
+					Remove dependecy on ktypes.h
+	src/lib/krb/defaults.c		Path to srvtab
+	src/lib/kdb/krb_db.h 		Path to kerberos database changed to 
+					/etc/kerberosIV/principal
+	src/lib/kdb/kdc.h		Path to master key
+	src/slave/kprop.h		Path to srvtab
+	src/kadmin/kadm_server.h	Path to admin acl files
+	src/lib/kadm/kadm.b		<krb_db.h> -> <kerberosIV/krb_db.h>
+
+8. Update the kafs.h include file with a newer from Arla, this is
+   needed for the afs client. *yuk*
+9. Update any other utilities that may need to be changed.
