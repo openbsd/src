@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.467 2004/12/07 10:33:41 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.468 2004/12/08 01:27:23 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1708,14 +1708,14 @@ pfrule		: action dir logquick interface route af proto fromto
 					YYERROR;
 				}
 				if (srctrack == PF_SRCTRACK_GLOBAL &&
-				    r.max_src_nodes) {
+				    r.max_src_conn) {
 					yyerror("'max-src-conn' is "
 					    "incompatible with "
 					    "'source-track global'");
 					YYERROR;
 				}
 				if (srctrack == PF_SRCTRACK_GLOBAL &&
-				    r.max_src_nodes) {
+				    r.max_src_conn_rate.seconds) {
 					yyerror("'max-src-conn-rate' is "
 					    "incompatible with "
 					    "'source-track global'");
@@ -3681,6 +3681,12 @@ filter_consistent(struct pf_rule *r)
 	}
 	if (!r->af && (r->type || r->code)) {
 		yyerror("must indicate address family with icmp-type/code");
+		problems++;
+	}
+	if (r->overload_tblname[0] &&
+	    r->max_src_conn == 0 && r->max_src_conn_rate.seconds == 0) {
+		yyerror("'overload' requires 'max-src-conn' "
+		    "or 'max-src-conn-rate'");
 		problems++;
 	}
 	if ((r->proto == IPPROTO_ICMP && r->af == AF_INET6) ||
