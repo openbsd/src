@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.7 1997/08/26 17:19:06 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.8 1997/09/23 21:40:59 angelos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -73,11 +73,13 @@ typedef struct {
 }       transform;
 
 int xf_esp_new __P((struct in_addr, struct in_addr, u_int32_t, int, int, 
-		    u_char *, u_char *));
+		    u_char *, u_char *, struct in_addr, struct in_addr));
 int xf_esp_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
-		    u_char *)); 
-int xf_ah_new __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *));
-int xf_ah_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *));
+		    u_char *, struct in_addr, struct in_addr)); 
+int xf_ah_new __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
+		   struct in_addr, struct in_addr));
+int xf_ah_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
+		   struct in_addr, struct in_addr));
 
 int xf_delspi __P((struct in_addr, u_int32_t, int, int));
 int xf_grp __P((struct in_addr, u_int32_t, int, struct in_addr, u_int32_t, int));
@@ -126,6 +128,7 @@ usage()
 	      "\t\t-enc <alg>\t encryption algorithm\n"
 	      "\t\t-auth <alg>\t authentication algorithm\n"
 	      "\t\t-src <ip>\t source address to be used\n"
+              "\t\t-tunnel <ip> <ip> tunneling addresses\n"
 	      "\t\t-dst <ip>\t destination address to be used\n"
 	      "\t\t-spi <val>\t SPI to be used\n"
 	      "\t\t-key <val>\t key material to be used\n"
@@ -147,10 +150,10 @@ main(argc, argv)
 	int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
 	int chain = 0; 
 	u_int32_t spi = 0, spi2 = 0;
-	struct in_addr src, dst, dst2;
+	struct in_addr src, dst, dst2, osrc, odst;
 	u_char *ivp = NULL, *keyp = NULL;
 
-	src.s_addr = dst.s_addr = dst2.s_addr = 0;
+	osrc.s_addr = odst.s_addr = src.s_addr = dst.s_addr = dst2.s_addr = 0;
 
 	if (argc < 2) {
 		usage();
@@ -232,6 +235,11 @@ main(argc, argv)
 	     } else if (!strcmp(argv[i]+1, "src") && i+1 < argc) {
 		  src.s_addr = inet_addr(argv[i+1]);
 		  i++;
+	     } else if (!strcmp(argv[i]+1, "tunnel") && i+2 < argc) {
+		  osrc.s_addr = inet_addr(argv[i+1]);
+		  i++;
+		  odst.s_addr = inet_addr(argv[i+1]);
+		  i++;
 	     } else if (!strcmp(argv[i]+1, "dst") && i+1 < argc) {
 		  dst.s_addr = inet_addr(argv[i+1]);
 		  i++;
@@ -298,16 +306,16 @@ main(argc, argv)
 	if (isencauth(mode)) {
 	     switch(mode) {
 	     case ESP_NEW:
-		  xf_esp_new(src, dst, spi, enc, auth, ivp, keyp);
+		  xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, osrc, odst);
 		  break;
 	     case ESP_OLD:
-		  xf_esp_old(src, dst, spi, enc, ivp, keyp);
+		  xf_esp_old(src, dst, spi, enc, ivp, keyp, osrc, odst);
 		  break;
 	     case AH_NEW:
-		  xf_ah_new(src, dst, spi, auth, keyp);
+		  xf_ah_new(src, dst, spi, auth, keyp, osrc, odst);
 		  break;
 	     case AH_OLD:
-		  xf_ah_old(src, dst, spi, auth, keyp);
+		  xf_ah_old(src, dst, spi, auth, keyp, osrc, odst);
 		  break;
 	     }
 	} else {

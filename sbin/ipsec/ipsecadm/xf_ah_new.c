@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_ah_new.c,v 1.1 1997/08/26 12:04:36 provos Exp $ */
+/* $OpenBSD: xf_ah_new.c,v 1.2 1997/09/23 21:41:00 angelos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -58,11 +58,12 @@ int xf_set __P(( struct encap_msghdr *));
 int x2i __P((char *));
 
 int
-xf_ah_new(src, dst, spi, auth, keyp)
+xf_ah_new(src, dst, spi, auth, keyp, osrc, odst)
 struct in_addr src, dst;
 u_int32_t spi;
 int auth;
 u_char *keyp;
+struct in_addr osrc, odst;
 {
 	int klen, i;
 
@@ -79,13 +80,15 @@ u_char *keyp;
 	em->em_spi = spi;
 	em->em_src = src;
 	em->em_dst = dst;
+	em->em_osrc = osrc;
+	em->em_odst = odst;
 	em->em_alg = XF_NEW_AH;
 	em->em_sproto = IPPROTO_AH;
 
 	xd = (struct ah_new_xencap *)(em->em_dat);
 
 	xd->amx_hash_algorithm = auth;
-	xd->amx_wnd = 32;
+	xd->amx_wnd = -1;	/* Manual setup -- no sequence number */
 	xd->amx_keylen = klen;
 
 	bzero(xd->amx_key, klen);

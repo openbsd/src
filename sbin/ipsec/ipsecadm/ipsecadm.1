@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.1 1997/08/26 17:19:06 provos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.2 1997/09/23 21:40:59 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -60,6 +60,7 @@ modifiers are:
 .Fl dst ,
 .Fl src ,
 .Fl spi ,
+.Fl tunnel ,
 .Fl enc ,
 .Fl auth ,
 .Fl iv 
@@ -71,6 +72,7 @@ encryption algorithmns can be applied. Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
 .Fl spi ,
+.Fl tunnel ,
 .Fl enc ,
 .Fl iv 
 and
@@ -82,6 +84,7 @@ are:
 .Fl dst ,
 .Fl src ,
 .Fl spi ,
+.Fl tunnel ,
 .Fl auth ,
 and
 .Fl key .
@@ -91,6 +94,7 @@ hashes will be used for authentication. Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
 .Fl spi ,
+.Fl tunnel ,
 .Fl auth ,
 and
 .Fl key .
@@ -121,6 +125,8 @@ The source IP address for the SPI.
 The destination IP address for the SPI.
 .It spi
 The unique Security Parameter Index (SPI).
+.It tunnel
+The source and destination IP addresses for the external IP header.
 .It enc
 The encryption algorithm to be used with the SPI. Possible values
 are:

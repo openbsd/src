@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_esp_old.c,v 1.1 1997/08/26 12:04:44 provos Exp $ */
+/* $OpenBSD: xf_esp_old.c,v 1.2 1997/09/23 21:41:01 angelos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -58,11 +58,12 @@ int xf_set __P(( struct encap_msghdr *));
 int x2i __P((char *));
 
 int
-xf_esp_old(src, dst, spi, enc, ivp, keyp)
+xf_esp_old(src, dst, spi, enc, ivp, keyp, osrc, odst)
 struct in_addr src, dst;
 u_int32_t spi;
 int enc;
 u_char *ivp, *keyp;
+struct in_addr osrc, odst;
 {
 	int i, ivlen, klen;
 
@@ -80,6 +81,8 @@ u_char *ivp, *keyp;
 	em->em_spi = spi;
 	em->em_src = src;
 	em->em_dst = dst;
+	em->em_osrc = osrc;
+	em->em_odst = odst;
 	em->em_alg = XF_OLD_ESP;
 	em->em_sproto = IPPROTO_ESP;
 
