@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.4 2002/03/14 03:15:53 millert Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.1 2002/12/20 01:56:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -30,34 +30,46 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ISA_MACHDEP_H_
-#define _ISA_MACHDEP_H_
+#ifndef _EISA_MACHDEP_H_
+#define _EISA_MACHDEP_H_
+
 /*
- * Types provided to machine-independent ISA code.
+ * Types provided to machine-independent EISA code.
  */
-typedef struct hppa_isa_chipset *isa_chipset_tag_t;
+typedef struct hppa_eisa_chipset *eisa_chipset_tag_t;
+typedef int eisa_intr_handle_t;
 
-struct hppa_isa_chipset {
-	void	*ic_v;
+struct hppa_eisa_chipset {
+	void	*ec_v;
 
-	void	(*ic_attach_hook)(struct device *, struct device *,
-		    struct isabus_attach_args *);
-	void	*(*ic_intr_establish)(void *, int, int, int,
-		    int (*)(void *), void *, char *);
-	void	(*ic_intr_disestablish)(void *, void *);
-	int	(*ic_intr_check)(void *, int, int);
+	void	(*ec_attach_hook)(struct device *, struct device *,
+				  struct eisabus_attach_args *);
+	int	(*ec_intr_map)(void *, u_int, int *);
+	const char *(*ec_intr_string)(void *, int);
+	void	*(*ec_intr_establish)(void *, int, int, int,
+				      int (*)(void *), void *, char *);
+	void	(*ec_intr_disestablish)(void *, void *);
 };
 
-/*
- * Functions provided to machine-independent ISA code.
- */
-#define	isa_attach_hook(p, s, a)					\
-    (*(a)->iba_ic->ic_attach_hook)((p), (s), (a))
-#define	isa_intr_establish(c, i, t, l, f, a, nm)			\
-    (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a), (nm))
-#define	isa_intr_disestablish(c, h)					\
-    (*(c)->ic_intr_disestablish)((c)->ic_v, (h))
-#define isa_intr_check(c, i, t)						\
-    (*(c)->ic_intr_check)((c)->ic_v, (i), (t))
+#if 0
+#define	EISA_SLOTOFF_PRIMING	EISA_SLOTOFF_VID
+#define	EISA_PRIMING_VID(i)	({ (void)(i), 0xff; })
+#define	EISA_PRIMING_PID(i)	({ (void)(i), 0x00; })
+#endif
 
-#endif /* _ISA_MACHDEP_H_ */
+/*
+ * Functions provided to machine-independent EISA code.
+ */
+#define	eisa_attach_hook(p, s, a)					\
+    (*(a)->eba_ec->ec_attach_hook)((p), (s), (a))
+#define	eisa_maxslots(c)	8
+#define	eisa_intr_map(c, i, hp)						\
+    (*(c)->ec_intr_map)((c)->ec_v, (i), (hp))
+#define	eisa_intr_string(c, h)						\
+    (*(c)->ec_intr_string)((c)->ec_v, (h))
+#define	eisa_intr_establish(c, h, t, l, f, a, nm)			\
+    (*(c)->ec_intr_establish)((c)->ec_v, (h), (t), (l), (f), (a), (nm))
+#define	eisa_intr_disestablish(c, h)					\
+    (*(c)->ec_intr_disestablish)((c)->ec_v, (h))
+
+#endif /* _EISA_MACHDEP_H_ */
