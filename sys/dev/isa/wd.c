@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.28 1997/08/08 22:00:10 niklas Exp $	*/
+/*	$OpenBSD: wd.c,v 1.29 1997/09/13 14:18:44 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -614,9 +614,7 @@ wdioctl(dev, xfer, addr, flag, p)
 {
 	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(dev)];
 	struct wd_link *d_link = wd->d_link;
-#ifdef DKBAD
 	int error;
-#endif
 
 	WDDEBUG_PRINT(("wdioctl\n"));
 
