@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.68 2002/07/20 19:24:57 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.69 2002/07/25 01:21:51 nordin Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -298,7 +298,7 @@ sys_execve(p, v, retval)
 	/* allocate an argument buffer */
 	argp = (char *) uvm_km_valloc_wait(exec_map, NCARGS);
 #ifdef DIAGNOSTIC
-	if (argp == (vaddr_t) 0)
+	if (argp == NULL)
 		panic("execve: argp == NULL");
 #endif
 	dp = argp;
