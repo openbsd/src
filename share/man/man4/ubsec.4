@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.8 2001/05/14 14:31:29 jason Exp $
+.\"	$OpenBSD: ubsec.4,v 1.9 2001/06/23 00:40:29 jason Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -40,8 +40,13 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports cards containing the Bluesteel 5501 or 5601 or
-Broadcom 5805 or 5820.
+driver supports cards containing any of the following chips:
+.Bl -tag -width namenamenamena -offset indent -compact
+.It Bluesteel 5501
+.It Bluesteel 5601
+.It Broadcom 5805
+.It Broadcom 5820
+.El
 .Pp
 The
 .Nm
