@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.150 2003/12/09 07:22:10 beck Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.151 2003/12/09 22:55:47 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.150 2003/12/09 07:22:10 beck Exp $";
+    "$OpenBSD: ftpd.c,v 1.151 2003/12/09 22:55:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1468,7 +1468,7 @@ dataconn(char *name, off_t size, char *mode)
 			return (NULL);
 		}
 		if (data_dest.su_family != his_addr.su_family ||
-	    	ntohs(*p) < IPPORT_RESERVED || ntohs(*p) == 2049) { /* XXX */
+		    ntohs(*p) < IPPORT_RESERVED || ntohs(*p) == 2049) { /* XXX */
 			perror_reply(425, "Can't build data connection");
 			(void) fclose(file);
 			return NULL;
