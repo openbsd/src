@@ -1,4 +1,4 @@
-/*	$OpenBSD: locking.c,v 1.1 1998/08/15 21:04:33 millert Exp $	*/
+/*	$OpenBSD: locking.c,v 1.2 1998/08/15 23:11:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: locking.c,v 1.1 1998/08/15 21:04:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: locking.c,v 1.2 1998/08/15 23:11:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -146,14 +146,12 @@ baditem(path)
 	char *path;
 {
 	char npath[MAXPATHLEN];
-	int fd;
 
 	if (unlink(path) == 0)
 		return;
 	snprintf(npath, sizeof npath, "%s/mailXXXXXXXXXX", _PATH_MAILDIR);
-	if ((fd = mkstemp(npath)) == -1)
+	if (mktemp(npath) == NULL)
 		return;
-	(void)close(fd);
 	if (rename(path, npath) == -1)
 		unlink(npath);
 	else
