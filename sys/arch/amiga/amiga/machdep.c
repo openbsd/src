@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.10 1996/05/08 01:30:40 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.11 1996/05/09 21:13:37 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.65 1996/05/01 09:56:22 veego Exp $	*/
 
 /*
@@ -959,56 +959,6 @@ sys_sigreturn(p, v, retval)
 static int waittime = -1;
 
 void
-bootsync(void)
-{
-	if (waittime < 0) {
-		register struct buf *bp;
-		int iter, nbusy;
-
-		waittime = 0;
-		(void) spl0();
-		printf("syncing disks... ");
-		/*
-		 * Release vnodes held by texts before sync.
-		 */
-		if (panicstr == 0)
-			vnode_pager_umount(NULL);
-		sys_sync(&proc0, (void *)NULL, (int *)NULL);
-		/*
-		 * unmount filesystems
-		 */
-		if (panicstr == 0) {
-			extern struct proc proc0;
-			if (curproc == NULL)
-				curproc = &proc0;
-
-			vfs_unmountall();
-		}
-
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-					nbusy++;
-			if (nbusy == 0)
-				break;
-			printf("%d ", nbusy);
-			delay(40000 * iter);
-		}
-		if (nbusy)
-			printf("giving up\n");
-		else
-			printf("done\n");
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
-	}
-}
-
-
-void
 boot(howto)
 	register int howto;
 {
@@ -1017,8 +967,15 @@ boot(howto)
 		savectx(&curproc->p_addr->u_pcb);
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0)
-		bootsync();
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		waittime = 0;
+		vfs_shutdown();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
+		resettodr();
+	}
 
 	/* Disable interrupts. */
 	spl7();
