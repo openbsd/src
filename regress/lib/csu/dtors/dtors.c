@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtors.c,v 1.1 2002/01/31 16:35:46 art Exp $	*/
+/*	$OpenBSD: dtors.c,v 1.2 2002/01/31 16:47:02 art Exp $	*/
 /*
  * Written by Artur Grabowski <art@openbsd.org> Public Domain.
  */
@@ -23,7 +23,7 @@ zap(void)
 }
 
 /*
- * XXX - horrible abuse of exit(), minherit and vfork().
+ * XXX - horrible abuse of exit(), minherit and fork().
  */
 int
 main()
