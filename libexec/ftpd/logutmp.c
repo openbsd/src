@@ -1,4 +1,4 @@
-/*	$OpenBSD: logutmp.c,v 1.6 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: logutmp.c,v 1.7 2003/07/07 03:18:11 deraadt Exp $	*/
 /*
  * Portions Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,6 +30,11 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -38,8 +43,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ttyent.h>
-
-typedef struct utmp UTMP;
+#include "extern.h"
 
 static int fd = -1;
 static int topslot = -1;
@@ -50,9 +54,9 @@ static int topslot = -1;
  */
 
 void
-login(UTMP *ut)
+ftpd_login(struct utmp *ut)
 {
-	UTMP ubuf;
+	struct utmp ubuf;
 
 	/*
 	 * First, loop through /etc/ttys, if needed, to initialize the
@@ -70,28 +74,31 @@ login(UTMP *ut)
 	/*
 	 * Now find a slot that's not in use...
 	 */
-	(void)lseek(fd, (off_t)(topslot * sizeof(UTMP)), SEEK_SET);
+	(void)lseek(fd, (off_t)(topslot * sizeof(struct utmp)), SEEK_SET);
 
 	while (1) {
-		if (read(fd, &ubuf, sizeof(UTMP)) == sizeof(UTMP)) {
+		if (read(fd, &ubuf, sizeof(struct utmp)) ==
+		    sizeof(struct utmp)) {
 			if (!ubuf.ut_name[0]) {
-				(void)lseek(fd, -(off_t)sizeof(UTMP), SEEK_CUR);
+				(void)lseek(fd, -(off_t)sizeof(struct utmp),
+				    SEEK_CUR);
 				break;
 			}
 			topslot++;
 		} else {
-			(void)lseek(fd, (off_t)(topslot * sizeof(UTMP)), SEEK_SET);
+			(void)lseek(fd, (off_t)(topslot *
+			    sizeof(struct utmp)), SEEK_SET);
 			break;
 		}
 	}
 
-	(void)write(fd, ut, sizeof(UTMP));
+	(void)write(fd, ut, sizeof(struct utmp));
 }
 
 int
-logout(char *line)
+ftpd_logout(char *line)
 {
-	UTMP ut;
+	struct utmp ut;
 	int rval;
 
 	rval = 0;
@@ -100,15 +107,15 @@ logout(char *line)
 
 	(void)lseek(fd, 0, SEEK_SET);
 
-	while (read(fd, &ut, sizeof(UTMP)) == sizeof(UTMP)) {
+	while (read(fd, &ut, sizeof(struct utmp)) == sizeof(struct utmp)) {
 		if (!ut.ut_name[0] ||
 		    strncmp(ut.ut_line, line, UT_LINESIZE))
 			continue;
 		bzero(ut.ut_name, UT_NAMESIZE);
 		bzero(ut.ut_host, UT_HOSTSIZE);
 		(void)time(&ut.ut_time);
-		(void)lseek(fd, -(off_t)sizeof(UTMP), SEEK_CUR);
-		(void)write(fd, &ut, sizeof(UTMP));
+		(void)lseek(fd, -(off_t)sizeof(struct utmp), SEEK_CUR);
+		(void)write(fd, &ut, sizeof(struct utmp));
 		rval = 1;
 	}
 	return(rval);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.143 2003/06/11 14:24:46 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.144 2003/07/07 03:18:11 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.143 2003/06/11 14:24:46 deraadt Exp $";
+    "$OpenBSD: ftpd.c,v 1.144 2003/07/07 03:18:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -845,7 +845,7 @@ end_login(void)
 	if (logged_in) {
 		ftpdlogwtmp(ttyline, "", "");
 		if (doutmp)
-			logout(utmp.ut_line);
+			ftpd_logout(utmp.ut_line);
 	}
 	reply(530, "Please reconnect to work as another user");
 	exit(0);
@@ -945,7 +945,7 @@ pass(char *passwd)
 		(void)strncpy(utmp.ut_name, pw->pw_name, sizeof(utmp.ut_name));
 		(void)strncpy(utmp.ut_host, remotehost, sizeof(utmp.ut_host));
 		(void)strncpy(utmp.ut_line, ttyline, sizeof(utmp.ut_line));
-		login(&utmp);
+		ftpd_login(&utmp);
 	}
 
 	/* open stats file before chroot */
@@ -2091,7 +2091,7 @@ dologout(int status)
 		sigprocmask(SIG_BLOCK, &allsigs, NULL);
 		ftpdlogwtmp(ttyline, "", "");
 		if (doutmp)
-			logout(utmp.ut_line);
+			ftpd_logout(utmp.ut_line);
 	}
 	/* beware of flushing buffers after a SIGPIPE */
 	_exit(status);

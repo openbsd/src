@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 2003/06/02 19:38:24 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 2003/07/07 03:18:11 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/04/11 02:44:49 cgd Exp $	*/
 
 /*
@@ -99,6 +99,10 @@ void	upper(char *);
 void	user(char *);
 void	yyerror(char *);
 void	toolong(int);
+
+struct utmp;
+void	ftpd_login(struct utmp *ut);
+int	ftpd_logout(char *);
 
 int	yyparse(void);
 
