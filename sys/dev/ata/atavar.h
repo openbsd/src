@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.7 2001/05/01 00:07:25 csapuntz Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.8 2001/06/25 19:31:48 csapuntz Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -34,15 +34,14 @@
  *
  */
 
-/* Hight-level functions and structures used by both ATA and ATAPI devices */
-
-struct ataparams;
+/* High-level functions and structures used by both ATA and ATAPI devices */
+#include <dev/ata/atareg.h>
 
 /* Datas common to drives and controller drivers */
 struct ata_drive_datas {
-    u_int8_t drive; /* drive number */
-    int8_t ata_vers; /* ATA version supported */
-    u_int16_t drive_flags; /* bitmask for drives present/absent and cap */
+	u_int8_t drive; /* drive number */
+	int8_t ata_vers; /* ATA version supported */
+	u_int16_t drive_flags; /* bitmask for drives present/absent and cap */
 #define DRIVE_ATA	0x0001
 #define DRIVE_ATAPI	0x0002
 #define DRIVE_OLD	0x0004 
@@ -56,40 +55,42 @@ struct ata_drive_datas {
 #define DRIVE_DSCBA	0x0200 /* DSC in buffer availability mode */
 #define DRIVE_DSCWAIT	0x0400 /* In wait for DSC to be asserted */
 #define DRIVE_DEVICE_RESET 0x0800 /* Drive supports DEVICE RESET command */
-    /*
-     * Current setting of drive's PIO, DMA and UDMA modes.
-     * Is initialised by the disks drivers at attach time, and may be
-     * changed later by the controller's code if needed
-     */
-    u_int8_t PIO_mode; /* Current setting of drive's PIO mode */
-    u_int8_t DMA_mode; /* Current setting of drive's DMA mode */
-    u_int8_t UDMA_mode; /* Current setting of drive's UDMA mode */
-    /* Supported modes for this drive */
-    u_int8_t PIO_cap; /* supported drive's PIO mode */
-    u_int8_t DMA_cap; /* supported drive's DMA mode */
-    u_int8_t UDMA_cap; /* supported drive's UDMA mode */
-    /*
-     * Drive state. This is drive-type (ATA or ATAPI) dependant
-     * This is reset to 0 after a channel reset.
-     */
-    u_int8_t state;
+	/*
+	 * Current setting of drive's PIO, DMA and UDMA modes.
+	 * Is initialised by the disks drivers at attach time, and may be
+	 * changed later by the controller's code if needed
+	 */
+	u_int8_t PIO_mode; /* Current setting of drive's PIO mode */
+	u_int8_t DMA_mode; /* Current setting of drive's DMA mode */
+	u_int8_t UDMA_mode; /* Current setting of drive's UDMA mode */
+	/* Supported modes for this drive */
+	u_int8_t PIO_cap; /* supported drive's PIO mode */
+	u_int8_t DMA_cap; /* supported drive's DMA mode */
+	u_int8_t UDMA_cap; /* supported drive's UDMA mode */
+	/*
+	 * Drive state. This is drive-type (ATA or ATAPI) dependant
+	 * This is reset to 0 after a channel reset.
+	 */
+	u_int8_t state;
 
 #define ACAP_LEN            0x01  /* 16 byte commands */
 #define ACAP_DSC            0x02  /* use DSC signalling */
-    /* 0x20-0x40 reserved for ATAPI_CFG_DRQ_MASK */
-    u_int8_t atapi_cap;
+	/* 0x20-0x40 reserved for ATAPI_CFG_DRQ_MASK */
+	u_int8_t atapi_cap;
 
-    /* Keeps track of the number of resets that have occured in a row
-       without a succesful command completion. */
-    u_int8_t n_resets;
-    u_int8_t n_dmaerrs;
-    u_int32_t n_xfers;
+	/* Keeps track of the number of resets that have occured in a row
+	   without a succesful command completion. */
+	u_int8_t n_resets;
+	u_int8_t n_dmaerrs;
+	u_int32_t n_xfers;
 #define NERRS_MAX 4
 #define NXFER 1000
 
-    char drive_name[31];
-    int  cf_flags;
-    void *chnl_softc; /* channel softc */
+	char drive_name[31];
+	int  cf_flags;
+	void *chnl_softc; /* channel softc */
+    
+	struct ataparams id;
 };
 
 /* ATA/ATAPI common attachement datas */
@@ -173,7 +174,6 @@ int wdc_ata_addref __P((struct ata_drive_datas *));
 void wdc_ata_delref __P((struct ata_drive_datas *));
 void wdc_ata_kill_pending __P((struct ata_drive_datas *));
 
-struct ataparams;
 int ata_get_params __P((struct ata_drive_datas*, u_int8_t,
 	 struct ataparams *));
 int ata_set_mode __P((struct ata_drive_datas*, u_int8_t, u_int8_t));

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.35 2001/06/24 20:59:40 fgsch Exp $     */
+/*      $OpenBSD: wdc.c,v 1.36 2001/06/25 19:31:49 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -611,7 +611,6 @@ wdcattach(chp)
 	int error;
 #endif
 	struct ata_atapi_attach aa_link;
-	struct ataparams params;
 	static int inited = 0;
 #ifdef WDCDEBUG
 	int    savedmask = wdcdebug_mask;
@@ -665,15 +664,17 @@ wdcattach(chp)
 	timeout_set(&chp->ch_timo, wdctimeout, chp);
 	
 	for (i = 0; i < 2; i++) {
-		chp->ch_drive[i].chnl_softc = chp;
-		chp->ch_drive[i].drive = i;
+		struct ata_drive_datas *drvp = &chp->ch_drive[i];
+
+		drvp->chnl_softc = chp;
+		drvp->drive = i;
 		/* If controller can't do 16bit flag the drives as 32bit */
 		if ((chp->wdc->cap &
 		    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 		    WDC_CAPABILITY_DATA32)
-			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
+			drvp->drive_flags |= DRIVE_CAP32;
 
-		if ((chp->ch_drive[i].drive_flags & DRIVE) == 0)
+		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
 
 		if (i == 1 && ((chp->ch_drive[0].drive_flags & DRIVE) == 0))
@@ -682,20 +683,20 @@ wdcattach(chp)
 		 * Issue an IDENTIFY command in order to distinct ATA from OLD.
 		 * This also kill ATAPI ghost.
 		 */
-		if (ata_get_params(&chp->ch_drive[i], at_poll, &params) ==
+		if (ata_get_params(&chp->ch_drive[i], at_poll, &drvp->id) ==
 		    CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
-			chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
+			drvp->drive_flags &= ~DRIVE_OLD;
 		} else {
-			chp->ch_drive[i].drive_flags &=
+			drvp->drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
 			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed\n",
 			    chp->wdc->sc_dev.dv_xname,
 			    chp->channel, i), DEBUG_PROBE);
 
-			if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) && 
+			if ((drvp->drive_flags & DRIVE_OLD) && 
 			    !wdc_preata_drive(chp, i))
-				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
+				drvp->drive_flags &= ~DRIVE_OLD;
 		}
 	}
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
@@ -710,37 +711,15 @@ wdcattach(chp)
 	    (chp->ch_drive[1].drive_flags & DRIVE) == 0)
 		goto exit;
 
-	/*
-	 * Attach an ATAPI bus, if needed.
-	 */
-	if ((chp->ch_drive[0].drive_flags & DRIVE_ATAPI) ||
-	    (chp->ch_drive[1].drive_flags & DRIVE_ATAPI)) {
-#if NATAPISCSI > 0
-		wdc_atapibus_attach(chp);
-#else
-		/*
-		 * Fills in a fake aa_link and call config_found, so that
-		 * the config machinery will print
-		 * "atapibus at xxx not configured"
-		 */
-		bzero(&aa_link, sizeof(struct ata_atapi_attach));
-		aa_link.aa_type = T_ATAPI;
-		aa_link.aa_channel = chp->channel;
-		aa_link.aa_openings = 1;
-		aa_link.aa_drv_data = 0;
-		aa_link.aa_bus_private = NULL;
-		(void)config_found(&chp->wdc->sc_dev, (void *)&aa_link,
-		    atapi_print);
-#endif
-	}
-
 	for (i = 0; i < 2; i++) {
-		if ((chp->ch_drive[i].drive_flags &
-		    (DRIVE_ATA | DRIVE_OLD)) == 0) {
+		if ((chp->ch_drive[i].drive_flags & DRIVE) == 0) {
 			continue;
 		}
 		bzero(&aa_link, sizeof(struct ata_atapi_attach));
-		aa_link.aa_type = T_ATA;
+		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
+			aa_link.aa_type = T_ATAPI;
+		else
+			aa_link.aa_type = T_ATA;
 		aa_link.aa_channel = chp->channel;
 		aa_link.aa_openings = 1;
 		aa_link.aa_drv_data = &chp->ch_drive[i];
@@ -754,8 +733,6 @@ wdcattach(chp)
 	for (i = 0; i < 2; i++) {
 		if (chp->ch_drive[i].drive_name[0] == 0)
 			chp->ch_drive[i].drive_flags = 0;
-		else
-			chp->ch_drive[i].state = 0;
 	}
 
 #ifndef __OpenBSD__

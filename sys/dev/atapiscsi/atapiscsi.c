@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.42 2001/05/27 18:45:29 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.43 2001/06/25 19:31:51 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -146,9 +146,6 @@ struct atapiscsi_xfer;
 
 int	atapiscsi_match __P((struct device *, void *, void *));
 void	atapiscsi_attach __P((struct device *, struct device *, void *));
-
-int	wdc_atapi_get_params __P((struct channel_softc *, u_int8_t, 
-				     struct ataparams *)); 
 int     atapi_to_scsi_sense __P((struct scsi_xfer *, u_int8_t));
 
 struct atapiscsi_softc {
@@ -158,6 +155,7 @@ struct atapiscsi_softc {
 	enum atapi_state { as_none, as_cmdout, as_data, as_completed };
 	enum atapi_state protocol_phase;
 
+	int drive;
 	int retries;
 	int diagnostics_printed;
 #define ATAPI_DIAG_UNEXP_CMD  0x01
@@ -227,10 +225,9 @@ atapiscsi_attach(parent, self, aux)
 {
 	struct atapiscsi_softc *as = (struct atapiscsi_softc *)self;
 	struct ata_atapi_attach *aa_link = aux;
-	struct channel_softc *chp = aa_link->aa_bus_private;
-	struct ataparams ids;
-	struct ataparams *id = &ids;
-	int drive;
+	struct ata_drive_datas *drvp = aa_link->aa_drv_data;
+	struct channel_softc *chp = drvp->chnl_softc;
+	struct ataparams *id = &drvp->id;
 
 	printf("\n");
 
@@ -240,6 +237,7 @@ atapiscsi_attach(parent, self, aux)
 #endif
 
 	as->chp = chp;
+	as->drive = drvp->drive;
 	as->sc_adapterlink.adapter_softc = as;
 	as->sc_adapterlink.adapter_target = 7;
 	as->sc_adapterlink.adapter_buswidth = 2;
@@ -249,43 +247,33 @@ atapiscsi_attach(parent, self, aux)
 	as->sc_adapterlink.flags = SDEV_ATAPI;
 	as->sc_adapterlink.quirks = SDEV_NOLUNS;
 
-	for (drive = 0; drive < 2 ; drive++ ) {
-		struct ata_drive_datas *drvp = &chp->ch_drive[drive];
-			
-		if ((drvp->drive_flags & DRIVE_ATAPI) &&
-		    (wdc_atapi_get_params(chp, drive, id) == COMPLETE)) {
-			/* Temporarily, the device will be called
-			   atapiscsi. */
-			strncpy(drvp->drive_name, as->sc_dev.dv_xname,
-			    sizeof(drvp->drive_name) - 1);
-			drvp->cf_flags = as->sc_dev.dv_cfdata->cf_flags;
+	strncpy(drvp->drive_name, as->sc_dev.dv_xname,
+	    sizeof(drvp->drive_name) - 1);
+	drvp->cf_flags = as->sc_dev.dv_cfdata->cf_flags;
 
-			wdc_probe_caps(drvp, id); 
-
-			WDCDEBUG_PRINT(
-			    ("general config %04x capabilities %04x ",
-			    id->atap_config, id->atap_capabilities1),
-			    DEBUG_PROBE);
-
-			drvp->drive_flags |= DRIVE_DEVICE_RESET;
-
-			/* Tape drives do funny DSC stuff */
-			if (ATAPI_CFG_TYPE(id->atap_config) == 
-			    ATAPI_CFG_TYPE_SEQUENTIAL)
-				drvp->atapi_cap |= ACAP_DSC;
-
-			if ((id->atap_config & ATAPI_CFG_CMD_MASK) ==
-			    ATAPI_CFG_CMD_16)
-				drvp->atapi_cap |= ACAP_LEN;
-
-			drvp->atapi_cap |=
-			    (id->atap_config & ATAPI_CFG_DRQ_MASK);
-
-			WDCDEBUG_PRINT(("driver caps %04x\n", drvp->atapi_cap),
-			    DEBUG_PROBE);
-		} else
-			drvp->drive_flags &= ~DRIVE_ATAPI;
-	}
+	wdc_probe_caps(drvp, id); 
+	
+	WDCDEBUG_PRINT(
+		("general config %04x capabilities %04x ",
+		    id->atap_config, id->atap_capabilities1),
+		    DEBUG_PROBE);
+	
+	drvp->drive_flags |= DRIVE_DEVICE_RESET;
+	
+	/* Tape drives do funny DSC stuff */
+	if (ATAPI_CFG_TYPE(id->atap_config) == 
+	    ATAPI_CFG_TYPE_SEQUENTIAL)
+		drvp->atapi_cap |= ACAP_DSC;
+	
+	if ((id->atap_config & ATAPI_CFG_CMD_MASK) ==
+	    ATAPI_CFG_CMD_16)
+		drvp->atapi_cap |= ACAP_LEN;
+	
+	drvp->atapi_cap |=
+	    (id->atap_config & ATAPI_CFG_DRQ_MASK);
+	
+	WDCDEBUG_PRINT(("driver caps %04x\n", drvp->atapi_cap),
+	    DEBUG_PROBE);
 
 	
 	as->sc_adapterlink.scsibus = (u_int8_t)-1;
@@ -295,142 +283,54 @@ atapiscsi_attach(parent, self, aux)
 
 	if (as->sc_adapterlink.scsibus != (u_int8_t)-1) {
 		int bus = as->sc_adapterlink.scsibus;
+		extern struct cfdriver scsibus_cd;
 
-		for (drive = 0; drive < 2; drive++) {
-			extern struct cfdriver scsibus_cd;
-
-			struct scsibus_softc *scsi = scsibus_cd.cd_devs[bus];
-			struct scsi_link *link = scsi->sc_link[drive][0];
-			struct ata_drive_datas *drvp = &chp->ch_drive[drive];
-
-			if (!link) continue;
-
+		struct scsibus_softc *scsi = scsibus_cd.cd_devs[bus];
+		struct scsi_link *link = scsi->sc_link[drvp->drive][0];
+		struct ata_drive_datas *drvp = &chp->ch_drive[drvp->drive];
+		
+		if (!link) {
 			strncpy(drvp->drive_name, 
-				((struct device *)(link->device_softc))->dv_xname, 
-				sizeof(drvp->drive_name) - 1);
+			    ((struct device *)(link->device_softc))->dv_xname, 
+			    sizeof(drvp->drive_name) - 1);
 			
 			wdc_print_caps(drvp);
 		}
 	}
-
+	
 #ifdef WDCDEBUG
 	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
 		wdcdebug_atapi_mask &= ~DEBUG_PROBE;
 #endif
 }
 
-void
-wdc_atapibus_attach(chp)
-	struct channel_softc *chp;
-{
-	struct wdc_softc *wdc = chp->wdc;
-	int channel = chp->channel;
-	struct ata_atapi_attach aa_link;
-
-	/*
-	 * Fill in the adapter.
-	 */
-	bzero(&aa_link, sizeof(struct ata_atapi_attach));
-	aa_link.aa_type = T_ATAPI;
-	aa_link.aa_channel = channel;
-	aa_link.aa_openings = 1;
-	aa_link.aa_drv_data = NULL; 
-	aa_link.aa_bus_private = chp;
-
-	(void)config_found(&wdc->sc_dev, (void *)&aa_link, atapi_print);
-}
-
-int
-wdc_atapi_get_params(chp, drive, id)
-	struct channel_softc *chp;
-	u_int8_t drive;
-	struct ataparams *id;
-{
-	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
-	struct wdc_command wdc_c;
-	int retries = 3;
-
-	/* if no ATAPI device detected at wdc attach time, skip */
-	/*
-	 * XXX this will break scsireprobe if this is of any interest for
-	 * ATAPI devices one day.
-	 */
-	if ((drvp->drive_flags & DRIVE_ATAPI) == 0) {
-		WDCDEBUG_PRINT(("wdc_atapi_get_params: drive %d not present\n",
-		    drive), DEBUG_PROBE);
-		return (-1);
-	}
-	bzero(&wdc_c, sizeof(struct wdc_command));
-	wdc_c.r_command = ATAPI_SOFT_RESET;
-	wdc_c.r_st_bmask = 0;
-	wdc_c.r_st_pmask = 0;
-	wdc_c.flags = at_poll;
-	wdc_c.timeout = ATAPI_RESET_WAIT;
-	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
-		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
-		    " drive %s:%d:%d: driver failed\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, drive);
-		panic("wdc_atapi_get_params");
-	}
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
-		    "failed for drive %s:%d:%d: error 0x%x\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, drive, 
-		    wdc_c.r_error), DEBUG_PROBE);
-		return (-1);
-	}
-	drvp->state = 0;
-
-	CHP_READ_REG(chp, wdr_status);
-	
-	/* Some ATAPI devices need a bit more time after software reset. */
-	delay(5000);
-
- retry:
-	if (ata_get_params(drvp, at_poll, id) != 0) {
-		WDCDEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
-		    "failed for drive %s:%d:%d\n",
-		    chp->wdc->sc_dev.dv_xname, chp->channel, drive), 
-		    DEBUG_PROBE);
-
-		if (retries--) {
-			delay(100000);
-			goto retry;
-		}
-
-		return (-1);
-	}
-
-	return (COMPLETE);
-}
 
 int
 wdc_atapi_send_cmd(sc_xfer)
 	struct scsi_xfer *sc_xfer;
 {
 	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
-	int drive = sc_xfer->sc_link->target;
-	struct channel_softc *chp = as->chp;
-	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
+ 	struct channel_softc *chp = as->chp;
+	struct ata_drive_datas *drvp = &chp->ch_drive[as->drive];
 	struct wdc_xfer *xfer;
-	int flags = sc_xfer->flags;
 	int s, ret;
 
 	WDCDEBUG_PRINT(("wdc_atapi_send_cmd %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drive), DEBUG_XFERS);
 
-	if (drive > 1 || !(drvp->drive_flags & DRIVE_ATAPI)) {
+	if (sc_xfer->sc_link->target != 0) {
 		sc_xfer->error = XS_DRIVER_STUFFUP;
 		return (COMPLETE);
 	}
 
-	xfer = wdc_get_xfer(flags & SCSI_NOSLEEP ? WDC_NOSLEEP : WDC_CANSLEEP);
+	xfer = wdc_get_xfer(sc_xfer->flags & SCSI_NOSLEEP 
+	    ? WDC_NOSLEEP : WDC_CANSLEEP);
 	if (xfer == NULL) {
 		return (TRY_AGAIN_LATER);
 	}
 	if (sc_xfer->flags & SCSI_POLL)
 		xfer->c_flags |= C_POLL;
-	xfer->drive = drive;
+	xfer->drive = as->drive;
 	xfer->c_flags |= C_ATAPI;
 	xfer->cmd = sc_xfer;
 	xfer->databuf = sc_xfer->data;
@@ -522,11 +422,10 @@ wdc_atapi_ioctl (sc_link, cmd, addr, flag)
 	int      flag;
 {
 	struct atapiscsi_softc *as = sc_link->adapter_softc;
-	int drive = sc_link->target;
 	struct channel_softc *chp = as->chp;
-	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
+	struct ata_drive_datas *drvp = &chp->ch_drive[as->drive];
 
-	if (drive > 1)
+	if (sc_link->target != 0)
 		return ENOTTY;
 
 	return (wdc_ioctl(drvp, cmd, addr, flag));
