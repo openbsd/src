@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.4 2005/03/03 01:52:41 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.5 2005/03/03 09:49:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -30,8 +30,8 @@
 /*
  * Driver for the Vigra VS series of SBus framebuffers.
  *
- * The VS10, VS11 and VS12 models are supported. VS10-EK should also work
- * (but it might be driven by the regular cgthree driver?)
+ * The VS10, VS11 and VS12 models are supported. VS10-EK is handled by the
+ * regular cgthree driver.
  *
  * The monochrome VS14, 16 grays VS15, and color VS18 are not supported.
  */

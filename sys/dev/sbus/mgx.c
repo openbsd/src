@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.2 2004/11/29 22:07:40 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.3 2005/03/03 09:49:06 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 /*
- * Driver for the Southlan Media Systems (now Quantum 3D) MGX and MGXPlus
+ * Driver for the Southland Media Systems (now Quantum 3D) MGX and MGXPlus
  * frame buffers.
  *
  * Pretty crude, due to the lack of documentation. Works as a dumb frame

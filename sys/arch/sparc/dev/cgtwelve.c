@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.10 2004/11/29 22:07:36 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.11 2005/03/03 09:49:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -33,7 +33,7 @@
 
 /*
  * The cgtwelve framebuffer is a 3-slot SBUS card, that will fit only in
- * SPARCstation 1, 1+, 2 and 5, or in an xbox SBUS extension (untested).
+ * SPARCstation 1, 1+, 2 and 5, or in an xbox SBUS extension.
  *
  * It is a 24-bit 3D accelerated framebuffer made by Matrox, featuring 4MB
  * (regular model) or 8MB (high-res model) of video memory, a complex
