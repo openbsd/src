@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.29 2003/06/02 20:18:36 millert Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.30 2004/06/07 21:11:23 marc Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.29 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.30 2004/06/07 21:11:23 marc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,9 +118,7 @@ static u_int32_t net_mask(struct in_addr);
 /*
  * Resolver state default settings.
  */
-volatile struct _thread_private_key_struct __THREAD_KEY_NAME(_res) = {
-	PTHREAD_ONCE_INIT, 0
-};
+void *__THREAD_NAME(_res);
 
 struct __res_state _res
 # if defined(__BIND_RES_TEXT)
@@ -128,9 +126,7 @@ struct __res_state _res
 # endif
 	;
 #ifdef INET6
-volatile struct _thread_private_key_struct __THREAD_KEY_NAME(_res_ext) = {
-	PTHREAD_ONCE_INIT, 0
-};
+void *__THREAD_NAME(_res_ext);
 
 struct __res_state_ext _res_ext;
 #endif /* INET6 */

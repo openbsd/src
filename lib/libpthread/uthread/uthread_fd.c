@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.21 2003/02/14 03:58:42 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.22 2004/06/07 21:11:23 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -275,8 +275,7 @@ _thread_fd_table_remove(int fd)
  * Unlock the fd table entry for a given thread, fd, and lock type.
  */
 void
-_thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type,
-			 const char *fname, int lineno)
+_thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type)
 {
 	struct fd_table_entry *entry;
 	int	ret;
@@ -300,10 +299,7 @@ _thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type,
 		 * other threads for clashing with the current
 		 * thread's accesses:
 		 */
-		if (fname)
-			_spinlock_debug(&entry->lock, (char *)fname, lineno);
-		else
-			_SPINLOCK(&entry->lock);
+		_SPINLOCK(&entry->lock);
 
 		/* Check if the running thread owns the read lock: */
 		if (entry->r_owner == thread &&
@@ -393,14 +389,13 @@ _thread_fd_unlock_thread(struct pthread	*thread, int fd, int lock_type,
 }
 
 /*
- * Unlock an fd table entry for the given fd and lock type.  Save
- * fname and lineno (debug variables).
+ * Unlock an fd table entry for the given fd and lock type.
  */
 void
-_thread_fd_unlock(int fd, int lock_type, const char *fname, int lineno)
+_thread_fd_unlock(int fd, int lock_type)
 {
 	struct pthread	*curthread = _get_curthread();
-	_thread_fd_unlock_thread(curthread, fd, lock_type, fname, lineno);
+	_thread_fd_unlock_thread(curthread, fd, lock_type);
 }
 
 /*
@@ -429,20 +424,16 @@ _thread_fd_unlock_owned(pthread_t pthread)
 			}
 			_SPINUNLOCK(&entry->lock);
 			if (do_unlock)
-				_thread_fd_unlock_thread(pthread, fd, FD_RDWR,
-							 __FILE__, __LINE__);
+				_thread_fd_unlock_thread(pthread, fd, FD_RDWR);
 		}
 	}
 }
 
 /*
- * Lock an fd table entry for the given fd and lock type.  Save
- * fname and lineno (debug variables).  The debug variables may be
- * null when called by the non-debug version of the function.
+ * Lock an fd table entry for the given fd and lock type.
  */
 int
-_thread_fd_lock(int fd, int lock_type, struct timespec * timeout,
-		const char *fname, int lineno)
+_thread_fd_lock(int fd, int lock_type, struct timespec * timeout)
 {
 	struct pthread	*curthread = _get_curthread();
 	struct fd_table_entry *entry;
@@ -461,11 +452,7 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout,
 		 * other threads for clashing with the current
 		 * thread's accesses:
 		 */
-		if (fname)
-			_spinlock_debug(&entry->lock, (char *)fname, lineno);
-		else
-			_SPINLOCK(&entry->lock);
-
+		_SPINLOCK(&entry->lock);
 		/* Handle read locks */
 		if (lock_type == FD_READ || lock_type == FD_RDWR) {
 			/*
@@ -493,9 +480,6 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout,
 					 * running thread: 
 					 */
 					curthread->data.fd.fd = fd;
-					curthread->data.fd.branch = lineno;
-					curthread->data.fd.fname =
-						(char *)fname;
 
 					/* Set the timeout: */
 					_thread_kern_set_timeout(timeout);
@@ -536,8 +520,6 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout,
 					 * this file descriptor: 
 					 */
 					entry->r_lockcount = 0;
-					entry->r_fname = fname;
-					entry->r_lineno = lineno;
 				}
 			}
 
@@ -573,9 +555,6 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout,
 					 * running thread: 
 					 */
 					curthread->data.fd.fd = fd;
-					curthread->data.fd.branch = lineno;
-					curthread->data.fd.fname =
-						(char *)fname;
 
 					/* Set the timeout: */
 					_thread_kern_set_timeout(timeout);
@@ -615,8 +594,6 @@ _thread_fd_lock(int fd, int lock_type, struct timespec * timeout,
 					 * for this file descriptor: 
 					 */
 					entry->w_lockcount = 0;
-					entry->w_fname = fname;
-					entry->w_lineno = lineno;
 				}
 			}
 

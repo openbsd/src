@@ -1,7 +1,6 @@
-/*	$OpenBSD: unithread_malloc_lock.c,v 1.4 2002/11/05 22:19:55 marc Exp $	*/
+/*	$OpenBSD: unithread_malloc_lock.c,v 1.5 2004/06/07 21:11:23 marc Exp $	*/
 
-#include <sys/cdefs.h>
-#include <pthread.h>
+#include <sys/time.h>
 #include "thread_private.h"
 
 WEAK_PROTOTYPE(_thread_malloc_lock);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_file.c,v 1.10 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: uthread_file.c,v 1.11 2004/06/07 21:11:23 marc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -173,7 +173,7 @@ do_lock(int idx, FILE *fp)
 }
 
 void
-_flockfile_debug(FILE * fp, char *fname, int lineno)
+flockfile(FILE * fp)
 {
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;
@@ -230,16 +230,9 @@ _flockfile_debug(FILE * fp, char *fname, int lineno)
 			_SPINUNLOCK(&hash_lock);
 
 			/* Wait on the FILE lock: */
-			_thread_kern_sched_state(PS_FILE_WAIT, fname, lineno);
+			_thread_kern_sched_state(PS_FILE_WAIT, "", 0);
 		}
 	}
-	return;
-}
-
-void
-flockfile(FILE * fp)
-{
-	_flockfile_debug(fp, (char *) "?", 1);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.27 2003/07/21 23:17:53 marc Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.28 2004/06/07 21:11:23 marc Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ static int ip6_sa2str(const struct sockaddr_in6 *, char *, size_t, int);
 /*
  * this mutex is also used by get_port in getaddrinfo.c
  */
-pthread_mutex_t __THREAD_MUTEX_NAME(serv_mutex) = PTHREAD_MUTEX_INITIALIZER;
+void *__THREAD_NAME(serv_mutex);
 
 int
 getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)

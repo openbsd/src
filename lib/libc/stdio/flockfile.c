@@ -1,5 +1,6 @@
-/*	$OpenBSD: flockfile.c,v 1.5 2001/09/04 22:17:45 fgsch Exp $	*/
+/*	$OpenBSD: flockfile.c,v 1.6 2004/06/07 21:11:23 marc Exp $	*/
 
+#include <sys/time.h>
 #include <stdio.h>
 #include "thread_private.h"
 
@@ -12,17 +13,14 @@
 #undef flockfile
 #undef ftrylockfile
 #undef funlockfile
-#undef _flockfile_debug
 
 WEAK_PROTOTYPE(flockfile);
 WEAK_PROTOTYPE(ftrylockfile);
 WEAK_PROTOTYPE(funlockfile);
-WEAK_PROTOTYPE(_flockfile_debug);
 
 WEAK_ALIAS(flockfile);
 WEAK_ALIAS(ftrylockfile);
 WEAK_ALIAS(funlockfile);
-WEAK_ALIAS(_flockfile_debug);
 
 void
 WEAK_NAME(flockfile)(fp)
@@ -44,12 +42,3 @@ WEAK_NAME(funlockfile)(fp)
 	FILE * fp;
 {
 }
-
-void
-WEAK_NAME(_flockfile_debug)(fp, fname, lineno)
-	FILE * fp;
-	char * fname;
-	int lineno;
-{
-}
-

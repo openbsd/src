@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.29 2003/08/01 17:38:33 avsm Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.30 2004/06/07 21:11:23 marc Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -277,7 +277,6 @@ int	 fileno(FILE *);
 void	 flockfile(FILE *);
 int	 ftrylockfile(FILE *);
 void	 funlockfile(FILE *);
-void	 _flockfile_debug(FILE *, char *, int);
 int	 getc_unlocked(FILE *);
 int	 putc_unlocked(int, FILE *);
 int	 getchar_unlocked(void);
@@ -288,12 +287,8 @@ __END_DECLS
 #  define flockfile(fp)			/* nothing */
 #  define ftrylockfile(fp)		(0)
 #  define funlockfile(fp)		/* nothing */
-#  define _flockfile_debug(fp,f,l)	/* nothing */
 #endif
 
-#if 0 /* defined(DEBUG_FLOCKFILE) && defined(_POSIX_THREADS) */
-#  define flockfile(fp)		_flockfile_debug(fp, __FILE__, __LINE__)
-#endif
 
 #endif /* not ANSI */
 

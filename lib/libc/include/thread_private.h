@@ -1,13 +1,19 @@
-/* $OpenBSD: thread_private.h,v 1.15 2003/01/28 04:58:00 marc Exp $ */
+/* $OpenBSD: thread_private.h,v 1.16 2004/06/07 21:11:23 marc Exp $ */
+
+/* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
 #ifndef _THREAD_PRIVATE_H_
 #define _THREAD_PRIVATE_H_
 
-#include <pthread.h>
+/*
+ * This file defines the thread library interface to libc.  Thread
+ * libraries must implement the functions described here for proper
+ * inter-operation with libc.   libc contains weak versions of the
+ * described functions for operation in a non-threaded environment.
+ */
 
 /*
- * This variable is initially 0 when there is exactly one thread.
- * It should never decrease.
+ * This variable is 0 until a second thread is created.
  */
 extern int __isthreaded;
 
@@ -19,116 +25,102 @@ extern int __isthreaded;
  *     WEAK_ALIAS(n) to generate the weak symbol n pointing to _weak_n,
  *     WEAK_PROTOTYPE(n) to generate a prototype for _weak_n (based on n).
  */
-#define WEAK_NAME(name)			__CONCAT(_weak_,name)
-#define WEAK_ALIAS(name)		__weak_alias(name, WEAK_NAME(name))
+#define WEAK_NAME(name)		__CONCAT(_weak_,name)
+#define WEAK_ALIAS(name)	__weak_alias(name, WEAK_NAME(name))
 #ifdef __GNUC__
-#define WEAK_PROTOTYPE(name)		__typeof__(name) WEAK_NAME(name)
+#define WEAK_PROTOTYPE(name)	__typeof__(name) WEAK_NAME(name)
 #else
-#define WEAK_PROTOTYPE(name)		/* typeof() only in gcc */
+#define WEAK_PROTOTYPE(name)	/* typeof() only in gcc */
 #endif
 
 /*
- * These macros help in making persistent storage thread-specific.
- * Libc makes extensive use of private static data structures
- * that hold state across function invocation, and these macros
- * are no-ops when running single-threaded.
+ * helper macro to make unique names in the thread namespace
+ */
+#define __THREAD_NAME(name)	__CONCAT(_thread_tagname_,name)
+
+/*
+ * helper functions that exist as (weak) null functions in libc and
+ * (strong) functions in the thread library.   These functions:
  *
- * Linking against the user-thread library causes these macros to
- * allocate storage on a per-thread basis.
+ * _thread_tag_lock:
+ *	lock the mutex associated with the given tag.   If the given
+ *	tag is NULL a tag is first allocated.
+ *
+ * _thread_tag_unlock:
+ *	unlock the mutex associated with the given tag.   If the given
+ *	tag is NULL a tag is first allocated.
+ *
+ * _thread_tag_storage:
+ *	return a pointer to per thread instance of data associated
+ *	with the given tag.  If the given tag is NULL a tag is first
+ *	allocated.
  */
-	
-#define __THREAD_MUTEX_NAME(name)	__CONCAT(_libc_storage_mutex_,name)
-#define __THREAD_KEY_NAME(name)		__CONCAT(_libc_storage_key_,name)
+void	_thread_tag_lock(void **);
+void	_thread_tag_unlock(void **);
+void   *_thread_tag_storage(void **, void *, size_t, void *);
 
-struct _thread_private_key_struct {
-	pthread_once_t		once;
-	void			(*cleanfn)(void *);
-	pthread_key_t		key;
-};
-
-void	_libc_private_storage_lock(pthread_mutex_t *);
-void	_libc_private_storage_unlock(pthread_mutex_t *);
-void *	_libc_private_storage(volatile struct _thread_private_key_struct *,
-			      void *, size_t, void *);
-
-/* Declare a module mutex. */
-#define _THREAD_PRIVATE_MUTEX(name)					\
-	static pthread_mutex_t __THREAD_MUTEX_NAME(name) = 		\
-		PTHREAD_MUTEX_INITIALIZER			
-		
-/* Lock a module mutex against use by any other threads. */
-#define _THREAD_PRIVATE_MUTEX_LOCK(name) 				\
-	_libc_private_storage_lock(&__THREAD_MUTEX_NAME(name))
-		
-/* Unlock a module mutex. */
-#define _THREAD_PRIVATE_MUTEX_UNLOCK(name) 				\
-	_libc_private_storage_unlock(&__THREAD_MUTEX_NAME(name))
-
-/* Declare a thread-private storage key. */
+/*
+ * Macros used in libc to access thread mutex, keys, and per thread storage.
+ * _THREAD_PRIVATE_KEY and _THREAD_PRIVATE_MUTEX are different macros for
+ * historical reasons.   They do the same thing, define a static variable
+ * keyed by 'name' that identifies a mutex and a key to identify per thread
+ * data.
+ */
 #define _THREAD_PRIVATE_KEY(name)					\
-	static volatile struct _thread_private_key_struct		\
-	__THREAD_KEY_NAME(name) = {					\
-		PTHREAD_ONCE_INIT, 					\
-		0							\
-	}
-
+	static void *__THREAD_NAME(name)
+#define _THREAD_PRIVATE_MUTEX(name)					\
+	static void *__THREAD_NAME(name)
+#define _THREAD_PRIVATE_MUTEX_LOCK(name)				\
+	_thread_tag_lock(&(__THREAD_NAME(name)))
+#define _THREAD_PRIVATE_MUTEX_UNLOCK(name)				\
+	_thread_tag_unlock(&(__THREAD_NAME(name)))
+#define _THREAD_PRIVATE(keyname, storage, error)			\
+	_thread_tag_storage(&(__THREAD_NAME(keyname)), &(storage),	\
+			    sizeof (storage), error)
 /*
- * In threaded mode, return a pointer to thread-private memory of
- * the same size as, and (initially) with the same contents as 'storage'. If
- * an error occurs, the 'error' parameter is returned.
- * In single-threaded mode, no storage is allocated. Instead, a pointer
- * to storage is always returned.
- * The 'cleanfn' function of the key structure is called to free the storage.
- * If 'cleanfn' is NULL, then free() is used. This hook can be useful for
- * getting rid of memory leaks.
+ * Resolver code is special cased in that it uses global keys.
  */
-#define _THREAD_PRIVATE(keyname, storage, error) 			\
-	_libc_private_storage(&__THREAD_KEY_NAME(keyname),		\
-			      &(storage), sizeof (storage), error)
-
-/*
- * Keys used to access the per thread instances of resolver global data.
- * These are not static as they are referenced in several places.
- */
-extern volatile struct _thread_private_key_struct __THREAD_KEY_NAME(_res);
-#ifdef INET6
-extern volatile struct _thread_private_key_struct __THREAD_KEY_NAME(_res_ext);
-#endif
+extern void *__THREAD_NAME(_res);
+extern void *__THREAD_NAME(_res_ext);
+extern void *__THREAD_NAME(serv_mutex);
 
 /*
  * File descriptor locking definitions.
  */
-#define FD_READ		    0x1
-#define FD_WRITE	    0x2
-#define FD_RDWR		    (FD_READ | FD_WRITE)
+#define FD_READ		0x1
+#define FD_WRITE	0x2
+#define FD_RDWR		(FD_READ | FD_WRITE)
 
-#define _FD_LOCK(_fd,_type,_ts)						\
-		_thread_fd_lock(_fd, _type, _ts, __FILE__, __LINE__)
-#define _FD_UNLOCK(_fd,_type)						\
-		_thread_fd_unlock(_fd, _type, __FILE__, __LINE__)
-
-int	_thread_fd_lock(int, int, struct timespec *, const char *, int);
-void	_thread_fd_unlock(int, int, const char *, int);
+int	_thread_fd_lock(int, int, struct timespec *);
+void	_thread_fd_unlock(int, int);
 
 /*
- * malloc lock/unlock definitions
+ * Macros are used in libc code for historical (debug) reasons.
+ * Define them here.
  */
-# define _MALLOC_LOCK()		do {					\
+#define _FD_LOCK(_fd,_type,_ts)	_thread_fd_lock(_fd, _type, _ts)
+#define _FD_UNLOCK(_fd,_type)	_thread_fd_unlock(_fd, _type)
+
+
+/*
+ * malloc lock/unlock prototypes and definitions
+ */
+void	_thread_malloc_init(void);
+void	_thread_malloc_lock(void);
+void	_thread_malloc_unlock(void);
+
+#define _MALLOC_LOCK()		do {					\
 					if (__isthreaded)		\
 						_thread_malloc_lock();	\
 				} while (0)
-# define _MALLOC_UNLOCK()	do {					\
+#define _MALLOC_UNLOCK()	do {					\
 					if (__isthreaded)		\
 						_thread_malloc_unlock();\
 				} while (0)
-# define _MALLOC_LOCK_INIT()do {					\
+#define _MALLOC_LOCK_INIT()	do {					\
 					if (__isthreaded)		\
 						_thread_malloc_init();\
 				} while (0)
 
-
-void	_thread_malloc_init(void);
-void	_thread_malloc_lock(void);
-void	_thread_malloc_unlock(void);
 
 #endif /* _THREAD_PRIVATE_H_ */

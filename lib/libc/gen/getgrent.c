@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.20 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.21 2004/06/07 21:11:23 marc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -59,7 +59,6 @@ static struct group_storage {
 
 /* File pointers are locked with the 'gr' mutex */
 _THREAD_PRIVATE_KEY(gr);
-_THREAD_PRIVATE_MUTEX(gr);
 static FILE *_gr_fp;
 static struct group _gr_group;
 static int _gr_stayopen;

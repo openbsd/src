@@ -28,11 +28,13 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ftruncate.c,v 1.11 2003/06/11 21:03:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftruncate.c,v 1.12 2004/06/07 21:11:23 marc Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include "thread_private.h"
 
 #ifdef lint
