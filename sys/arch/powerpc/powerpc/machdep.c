@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.77 2001/08/21 03:07:02 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.78 2001/08/23 00:09:15 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -231,37 +231,6 @@ where = 3;
 	battable[0].batl = BATL(0x00000000, BAT_M);
 	battable[0].batu = BATU(0x00000000);
 
-	/* map all of possible physical memory, ick */
-	if (ctob(physmem) > 0x10000000) {
-		battable[0x1].batl = BATL(0x10000000, BAT_M);
-		battable[0x1].batu = BATU(0x10000000);
-	}
-	if (ctob(physmem) > 0x20000000) {
-		battable[0x2].batl = BATL(0x20000000, BAT_M);
-		battable[0x2].batu = BATU(0x20000000);
-	}
-	if (ctob(physmem) > 0x30000000) {
-		battable[0x3].batl = BATL(0x30000000, BAT_M);
-		battable[0x3].batu = BATU(0x30000000);
-	}
-	if (ctob(physmem) > 0x40000000) {
-		battable[0x4].batl = BATL(0x40000000, BAT_M);
-		battable[0x4].batu = BATU(0x40000000);
-	}
-	if (ctob(physmem) > 0x50000000) {
-		battable[0x5].batl = BATL(0x50000000, BAT_M);
-		battable[0x5].batu = BATU(0x50000000);
-	}
-	if (ctob(physmem) > 0x60000000) {
-		battable[0x6].batl = BATL(0x60000000, BAT_M);
-		battable[0x6].batu = BATU(0x60000000);
-	}
-	if (ctob(physmem) > 0x70000000) {
-		battable[0x7].batl = BATL(0x70000000, BAT_M);
-		battable[0x7].batu = BATU(0x70000000);
-	}
-
-
 	battable[0x8].batl = BATL(0x80000000, BAT_I);
 	battable[0x8].batu = BATU(0x80000000);
 	battable[0x9].batl = BATL(0x90000000, BAT_I);
@@ -348,6 +317,36 @@ where = 3;
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
+
+	/* now that we know physmem size, map physical memory with BATs */
+	if (physmem > btoc(0x10000000)) {
+		battable[0x1].batl = BATL(0x10000000, BAT_M);
+		battable[0x1].batu = BATU(0x10000000);
+	}
+	if (physmem > btoc(0x20000000)) {
+		battable[0x2].batl = BATL(0x20000000, BAT_M);
+		battable[0x2].batu = BATU(0x20000000);
+	}
+	if (physmem > btoc(0x30000000)) {
+		battable[0x3].batl = BATL(0x30000000, BAT_M);
+		battable[0x3].batu = BATU(0x30000000);
+	}
+	if (physmem > btoc(0x40000000)) {
+		battable[0x4].batl = BATL(0x40000000, BAT_M);
+		battable[0x4].batu = BATU(0x40000000);
+	}
+	if (physmem > btoc(0x50000000)) {
+		battable[0x5].batl = BATL(0x50000000, BAT_M);
+		battable[0x5].batu = BATU(0x50000000);
+	}
+	if (physmem > btoc(0x60000000)) {
+		battable[0x6].batl = BATL(0x60000000, BAT_M);
+		battable[0x6].batu = BATU(0x60000000);
+	}
+	if (physmem > btoc(0x70000000)) {
+		battable[0x7].batl = BATL(0x70000000, BAT_M);
+		battable[0x7].batu = BATU(0x70000000);
+	}
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
