@@ -1,0 +1,141 @@
+<html lang="en">
+<head>
+<title>Installing GCC: Final installation</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name=description content="Installing GCC: Final installation">
+<meta name=generator content="makeinfo 4.2">
+<link href="http://www.gnu.org/software/texinfo/" rel=generator-home>
+<!--
+Copyright &copy; 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+<br><p>
+<p>Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, the Front-Cover texts being (a) (see below), and
+with the Back-Cover Texts being (b) (see below).  A copy of the
+license is included in the section entitled "<a href="./gfdl.html">GNU Free Documentation License</a>".
+
+<p>(a) The FSF's Front-Cover Text is:
+
+<p>A GNU Manual
+
+<p>(b) The FSF's Back-Cover Text is:
+
+<p>You have freedom to copy and modify this GNU Manual, like GNU
+     software.  Copies published by the Free Software Foundation raise
+     funds for GNU development.-->
+</head>
+<body>
+<h1>Installing GCC: Final installation</h1>
+Now that GCC has been built (and optionally tested), you can install it with
+<br><pre>cd <var>objdir</var>; make install
+</pre>
+
+<p>We strongly recommend to install into a target directory where there is
+no previous version of GCC present.
+
+<p>That step completes the installation of GCC; user level binaries can
+be found in <code><var>prefix</var>/bin</code> where <var>prefix</var> is the value you
+specified with the <code>--prefix</code> to configure (or <code>/usr/local</code>
+by default).  (If you specified <code>--bindir</code>, that directory will
+be used instead; otherwise, if you specified <code>--exec-prefix</code>,
+<code><var>exec-prefix</var>/bin</code> will be used.)  Headers for the C++ and
+Java libraries are installed in <code><var>prefix</var>/include</code>; libraries
+in <code><var>libdir</var></code> (normally <code><var>prefix</var>/lib</code>); internal
+parts of the compiler in <code><var>libdir</var>/gcc-lib</code>; documentation in
+info format in <code><var>infodir</var></code> (normally <code><var>prefix</var>/info</code>).
+
+<p>When installing cross-compilers, GCC's executables
+are not only installed into <code><var>bindir</var></code>, that
+is, <code><var>exec-prefix</var>/bin</code>, but additionally into
+<code><var>exec-prefix</var>/<var>target-alias</var>/bin</code>, if that directory
+exists.  Typically, such <dfn>tooldirs</dfn> hold target-specific
+binutils, including assembler and linker.
+
+<p>Installation into a temporary staging area or into a <code>chroot</code>
+jail can be achieved with the command
+
+<br><pre>make DESTDIR=<var>path-to-rootdir</var> install
+</pre>
+
+<p>where <var>path-to-rootdir</var> is the absolute path of
+a directory relative to which all installation paths will be
+interpreted.  Note that the directory specified by <code>DESTDIR</code>
+need not exist yet; it will be created if necessary.
+
+<p>There is a subtle point with tooldirs and <code>DESTDIR</code>:
+If you relocate a cross-compiler installation with
+e.g. <code>DESTDIR=<var>rootdir</var></code>, then the directory
+<code><var>rootdir</var>/<var>exec-prefix</var>/<var>target-alias</var>/bin</code> will
+be filled with duplicated GCC executables only if it already exists,
+it will not be created otherwise.  This is regarded as a feature,
+not as a bug, because it gives slightly more control to the packagers
+using the <code>DESTDIR</code> feature.
+
+<p>If you built a released version of GCC using <code>make bootstrap</code> then please
+quickly review the build status page for your release, available from
+<a href="http://gcc.gnu.org/buildstat.html">http://gcc.gnu.org/buildstat.html</a>. 
+If your system is not listed for the version of GCC that you built,
+send a note to
+<a href="mailto:gcc@gcc.gnu.org">gcc@gcc.gnu.org</a> indicating
+that you successfully built and installed GCC. 
+Include the following information:
+
+<ul>
+<li>Output from running <code><var>srcdir</var>/config.guess</code>.  Do not send us
+that file itself, just the one-line output from running it.
+
+<li>The output of <code>gcc -v</code> for your newly installed gcc. 
+This tells us which version of GCC you built and the options you passed to
+configure.
+
+<li>Whether you enabled all languages or a subset of them.  If you used a
+full distribution then this information is part of the configure
+options in the output of <code>gcc -v</code>, but if you downloaded the
+"core" compiler plus additional front ends then it isn't apparent
+which ones you built unless you tell us about it.
+
+<li>If the build was for GNU/Linux, also include:
+<ul>
+<li>The distribution name and version (e.g., Red Hat 7.1 or Debian 2.2.3);
+this information should be available from <code>/etc/issue</code>.
+
+<li>The version of the Linux kernel, available from <code>uname --version</code>
+or <code>uname -a</code>.
+
+<li>The version of glibc you used; for RPM-based systems like Red Hat,
+Mandrake, and SuSE type <code>rpm -q glibc</code> to get the glibc version,
+and on systems like Debian and Progeny use <code>dpkg -l libc6</code>. 
+</ul>
+For other systems, you can include similar information if you think it is
+relevant.
+
+<li>Any other information that you think would be useful to people building
+GCC on the same configuration.  The new entry in the build status list
+will include a link to the archived copy of your message. 
+</ul>
+
+<p>We'd also like to know if the
+<a href="specific.html">host/target specific installation notes</a>
+didn't include your host/target information or if that information is
+incomplete or out of date.  Send a note to
+<a href="mailto:gcc@gcc.gnu.org">gcc@gcc.gnu.org</a> telling us how the information should be changed.
+
+<p>If you find a bug, please report it following our
+<a href="../bugs.html">bug reporting guidelines</a>.
+
+<p>If you want to print the GCC manuals, do <code>cd <var>objdir</var>; make
+dvi</code>.  You will need to have <code>texi2dvi</code> (version at least 4.2)
+and TeX installed.  This creates a number of <code>.dvi</code> files in
+subdirectories of <code><var>objdir</var></code>; these may be converted for
+printing with programs such as <code>dvips</code>.  You can also
+<a href="http://www.gnu.org/order/order.html">buy printed manuals from the Free Software Foundation</a>, though such manuals may not be for the most
+recent version of GCC.
+
+<hr />
+<p>
+<a href="./index.html">Return to the GCC Installation page</a>
+
+</body></html>
+

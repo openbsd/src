@@ -1,0 +1,2 @@
+# In GNU, "/usr" is a four-letter word.
+SYSTEM_HEADER_DIR = /include
