@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.15 2001/07/04 17:20:24 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.16 2001/07/07 00:10:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,8 +34,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.15 2001/07/04 17:20:24 millert Exp $";
+/*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.16 2001/07/07 00:10:49 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ local_passwd(uname, authenticated)
 	login_cap_t *lc;
 	sigset_t fullset;
 	time_t period;
-	int pfd, tfd;
+	int pfd, tfd = -1;
 	char *s = NULL;
 
 	if (!(pw = getpwnam(uname))) {

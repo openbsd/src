@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.17 2001/06/18 21:09:24 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.18 2001/07/07 00:10:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-/*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.17 2001/06/18 21:09:24 millert Exp $";
+/*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.18 2001/07/07 00:10:49 millert Exp $";
 #endif /* not lint */
 
 #ifdef	YP
