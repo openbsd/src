@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.3 1996/06/08 16:21:16 briggs Exp $	*/
+/*	$OpenBSD: mem.c,v 1.4 1997/02/10 12:01:47 downsj Exp $	*/
 /*	$NetBSD: mem.c,v 1.11 1996/05/05 06:18:41 briggs Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 
 #include <vm/vm.h>
 
-caddr_t zeropage;
+static caddr_t devzeropage;
 
 #define mmread	mmrw
 #define mmwrite	mmrw
@@ -155,13 +155,13 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+			if (devzeropage == NULL) {
+				devzeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				bzero(devzeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, c, uio);
+			error = uiomove(devzeropage, c, uio);
 			continue;
 
 		default:
