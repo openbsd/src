@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.2 1997/01/15 23:41:41 millert Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.3 1997/06/24 02:03:00 dgregor Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ void arg_put(void *hook, int letter, void *arg, int count, char *name)
 	{
 		case 'i':
 		case 'b':
-		printf("%d ", (int)arg);
+		printf("%ld ", (long)arg);
 		break;
 
 		case 'c':
@@ -608,8 +608,8 @@ static char *mode_lookup(int page)
  */
 struct editinfo
 {
-	int can_edit;
-	int default_value;
+	long can_edit;
+	long default_value;
 } editinfo[64];	/* XXX Bogus fixed size */
 
 static int editind;
@@ -676,7 +676,7 @@ edit_check(void *hook, int letter, void *arg, int count, char *name)
 		fprintf(stderr, "edit table overflow\n");
 		exit(ENOMEM);
 	}
-	editinfo[editind].can_edit = ((int)arg != 0);
+	editinfo[editind].can_edit = ((long)arg != 0);
 	editind++;
 }
 
@@ -688,7 +688,7 @@ edit_defaults(void *hook, int letter, void *arg, int count, char *name)
 		exit(-1);
 	}
 
-	editinfo[editind].default_value = ((int)arg);
+	editinfo[editind].default_value = ((long)arg);
 	editind++;
 }
 
@@ -701,7 +701,7 @@ edit_report(void *hook, int letter, void *arg, int count, char *name)
 			exit(-1);
 		}
 
-		fprintf(edit_file, "%s:  %d\n", name, (int)arg);
+		fprintf(edit_file, "%s:  %ld\n", name, (long)arg);
 	}
 
 	editind++;
