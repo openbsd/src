@@ -1,10 +1,10 @@
-/* $OpenBSD: conf.h,v 1.1 2001/10/26 01:28:06 nate Exp $ */
+/* $OpenBSD: conf.h,v 1.2 2003/04/16 17:35:33 nate Exp $ */
 /*
  * Copyright (c) 2001 Nathan L. Binkert
  * All rights reserved.
  *
  * Permission to redistribute, use, copy, and modify this software
- * without fee is hereby granted, provided that the following
+ * is hereby granted without fee, provided that the following
  * conditions are met:
  *
  * 1. This entire notice is included in all source code copies of any
