@@ -171,18 +171,18 @@ and before the next item after that. If the next item is a file
 mark, but it was never read, then the next process to read will
 immediately hit the file mark and receive an end-of-file notification.
 .It Fixed block-size
-Data written by the user is passed to the tape as a succession of
+data written by the user is passed to the tape as a succession of
 fixed size blocks.  It may be contiguous in memory, but it is
 considered to be a series of independent blocks. One may never
 write an amount of data that is not an exact multiple of the
 blocksize.  One may read and write the same data as a different
-set of records, In other words, blocks that were written together
+set of records. In other words, blocks that were written together
 may be read separately, and vice-versa.
 .Pp
 If one requests more blocks than remain in the file, the drive will
 encounter the file mark.  Because there is some data to return
 (unless there were no records before the file mark), the read will
-succeed, returning that data, The next read will return immediately
+succeed, returning that data. The next read will return immediately
 with an EOF.  (As above, if the file mark is never read, it remains
 for the next process to read if in no-rewind mode.)
 .El

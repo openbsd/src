@@ -111,7 +111,7 @@ type a key (usually
 .Ql \&^Z )
 which generates the terminal stop signal
 .Pq Dv SIGTSTP
-and has the affect of stopping the entire job.
+and has the effect of stopping the entire job.
 The shell will notice that the job stopped, and will resume running after
 placing itself in the foreground.
 The shell also has commands for placing stopped jobs in the background,
@@ -172,7 +172,8 @@ blocking the
 process is orphaned, the
 .Xr read 2
 returns -1 with
-.Va errno set to
+.Va errno
+set to
 .Er Dv EIO
 and no
 signal is sent.  The default action of the
@@ -203,7 +204,8 @@ or blocking
 the
 .Xr write
 returns -1 with
-errno set to
+.Va errno
+set to
 .Er Dv EIO
 and no signal is sent.
 .Pp
@@ -275,7 +277,8 @@ request, and the read completes successfully, having read as
 much data as possible, the number of bytes read is returned.
 .It
 If there is no data available, the read returns -1, with
-errno set to
+.Va errno
+set to
 .Er EAGAIN .
 .El
 .Pp
@@ -365,7 +368,7 @@ granularity that is used to time out bursty and short term data
 transmissions.  If
 .Dv VMIN
 is greater than
-.Dv \&{ Dv MAX_INPUT Ns \&} ,
+.Pf \&{ Dv MAX_INPUT Ns \&} ,
 the response to the
 request is undefined.  The four possible values for
 .Dv VMIN
@@ -498,7 +501,7 @@ flag is set.  Erases the last character in the
 current line; see
 .Sx "Canonical Mode Input Processing" .
 It does not erase beyond
-the start of a line, as delimited by an
+the start of a line, as delimited by a
 .Dv NL ,
 .Dv EOF ,
 or

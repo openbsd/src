@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.17 1998/07/24 00:43:52 espie Exp $
+.\"	$OpenBSD: options.4,v 1.18 1998/09/06 22:23:19 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -136,7 +136,7 @@ On the i386, this includes NetBSD 0.8's ZMAGIC format, 386BSD and BSDI's
 QMAGIC, NMAGIC, and OMAGIC a.out formats.  On the hp300 and other m68k
 architectures this permits certain old
 .Bx 4.3
-binaries to work, though it's use is discouraged now.
+binaries to work, though its use is discouraged now.
 .It Cd option COMPAT_43
 Use of this option is discouraged. It enables compatibility with
 .Bx 4.3 .
@@ -202,7 +202,7 @@ Adds code to the kernel that does internal consistency checks.  This
 code will cause the kernel to panic if corruption of internal data
 structures is detected.
 .It Cd option KTRACE
-Add hooks for the system call tracing facility, which allows users to
+Adds hooks for the system call tracing facility, which allows users to
 watch the system call invocation behavior of processes.  See
 .Xr ktrace 1
 for details.
@@ -234,7 +234,7 @@ notable performance improvements when it is used as the file store
 for
 .Pa /tmp
 or similar mount points.  Unfortunately, it is known to contain some bugs
-render it unstable, and it is not yet recommended for production.  See
+rendering it unstable, and it is not yet recommended for production.  See
 .Xr mount_mfs 8
 for details.
 .It Cd option NFS
@@ -325,7 +325,6 @@ for details.
 Includes a loopback file system in which user and group ids may be
 remapped -- this can be useful when mounting alien file systems with
 different uids and gids than the local system (eg, remote NFS).  See
-See
 .Xr mount_umap 8
 for details.
 .It Cd option UNION
@@ -384,7 +383,7 @@ routines, (a.k.a. the
 cache, though called by many other names in the kernel source).  By default,
 this cache has NPROC (set as 20 + 16 * MAXUSERS) * (80 + NPROC / 8) entries.
 A reasonable way to derive a value of NVNODE, should a large number of
-namei cache misses is noticed with a tool such as
+namei cache misses be noticed with a tool such as
 .Xr systat 1 ,
 is to examine the system's current computed value with
 .Xr sysctl 1 ,
@@ -425,7 +424,7 @@ always runs in secure level 0 mode, even when running multiuser.  See
 the manual page for
 .Xr init 8
 for details on the implications of this.  The kernel secure level may
-manipulated by the superuser by altering the
+be manipulated by the superuser by altering the
 .Em kern.securelevel
 sysctl variable. (It should be noted that the secure level may only be
 lowered by a call from process id 1, i.e.
@@ -485,7 +484,7 @@ and much of the networking code.
 Enables 
 .Em IPFORWARDING
 and (on most ports) increases the size of 
-.Em NMBCLUSTERS
+.Em NMBCLUSTERS.
 In general,
 .Em GATEWAY
 is used to indicate that a system should act as a router, and
@@ -584,7 +583,7 @@ values.  This option clamps the initial sequence number to start in
 the range 2^31 rather than the full unsigned range of 2^32.  Also, under
 .Bx 4.2 ,
 keepalive packets must contain at least one byte or else
-the remote end would not respond.
+the remote end will not respond.
 .It Cd option PFIL_HOOKS
 This option turns on the packet filter interface hooks.  See
 .Xr pfil 9
@@ -699,7 +698,7 @@ for exact default information.  Increase this value if
 .Dq mb_map full
 messages appear.
 .It Cd option NKMEMCLUSTERS=value
-Size of kernel malloc arena in CLBYTES-sized logical pages.  This area
+Size of kernel malloc area in CLBYTES-sized logical pages.  This area
 is covered by the kernel submap 
 .Em kmem_map .
 See
@@ -710,13 +709,14 @@ panics happen.
 .\" , which mean the system has run out of malloc-able kernel memory.
 .It Cd option NBUF=value
 .It Cd option BUFPAGES=value
-These option set the number of pages available for the buffer cache.
+These options set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
 .It Cd NTP
 Modify the scheduler code to add hooks necessary for running an NTP
 daemon.
-.Xr xntpd 8 is available as part of the port collection.
+.Xr xntpd 8
+is available as part of the port collection.
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES

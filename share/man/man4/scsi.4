@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.1 1996/08/04 20:28:20 tholo Exp $
+.\"	$OpenBSD: scsi.4,v 1.2 1998/09/06 22:23:19 aaron Exp $
 .\"
 .Dd August 4, 1996
 .Dt SD 4
@@ -31,7 +31,7 @@ still be performed against the device.
 The option SCSIDEBUG enables the debug ioctl.
 .Pp
 All devices and the SCSI busses support boot time allocation so that
-an upper number of devices and controllers does not need to be configured;
+an upper number of devices and controllers do not need to be configured;
 .Em "device sd* at scsibus? target ? lun ?"
 will suffice for any number of disk drivers.
 .Pp
@@ -97,17 +97,17 @@ any, they will be attached to the appropriate drivers. The search can be
 narrowed to a specific bus, target or lun. The new device may or may not
 be related to the device on which the ioctl was performed.
 .It Dv SCIOCIDENTIFY
-Ask the driver what it's bus, target and lun are.
+Ask the driver what its bus, target and lun are.
 .It Dv SCIOCDECONFIG
 Ask the device to disappear. This may not happen if the device is in use.
 .El
 .Sh NOTES
-the generic scsi part of the system is still being mapped out.
+The generic scsi part of the system is still being mapped out.
 Watch this space for changes.
 .Pp
- A device by the name of su (scsi_user)
-(e.g  su0-0-0) will map bus, target and lun to  minor numbers. It has not
-yet decided yet whether this device will be able to open a device that is
+A device by the name of su (scsi_user)
+(e.g. su0-0-0) will map bus, target and lun to minor numbers. It has not
+yet been decided whether this device will be able to open a device that is
 already controlled by an explicit driver.
 .Sh ADAPTERS
 The system allows common device drivers to work through many different
@@ -127,7 +127,7 @@ some adapters, but is not yet complete for this version of the scsi system.
 When the kernel is compiled with option SCSIDEBUG, the SCIOCDEBUG ioctl 
 can be used to enable various amounts of tracing information on any 
 specific device. Devices not being traced will not produce trace information.
-The four bits that make up the debug level, each control certain types
+The four bits that make up the debug level each control certain types
 of debugging information. 
 .Bl -tag -width "Bit 0"
 .It Dv Bit 0

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.8 1998/09/01 16:38:22 deraadt Exp $
+.\"	$OpenBSD: pctr.4,v 1.9 1998/09/06 22:23:20 aaron Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -96,7 +96,7 @@ Pentium Pro counters, as well as on some 486s and non-intel CPUs.  It
 is set to zero at boot time, and then increments with each cycle.
 Because the counter is 64-bits wide, it does not overflow.
 .Pp
-The time stamp counter can be be read directly from user-mode using
+The time stamp counter can be read directly from user-mode using
 the
 .Fn rdtsc
 macro, which returns a 64-bit value of type

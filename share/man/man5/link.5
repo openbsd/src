@@ -52,7 +52,7 @@ to other objects that are required to complete the link-editing process and
 indirection tables to facilitate
 .Em Position Independent Code
 (PIC for short) to improve sharing of code pages among different processes.
-The collection of data structures described here will be refered to as the
+The collection of data structures described here will be referred to as the
 .Em Run-time Relocation Section (RRS)
 and is embedded in the standard text and data segments of the dynamically
 linked program or shared object image as the existing
@@ -67,7 +67,7 @@ can be built by
 The compiler also includes size information of any initialized data items
 through the .size assembler directive. PIC code differs from conventional code
 in that it accesses data variables through an indirection table, the
-Global Offset Table, by convention accessable by the reserved name
+Global Offset Table, by convention accessible by the reserved name
 .Em _GLOBAL_OFFSET_TABLE_ .
 The exact mechanism used for this is machine dependent, usually a machine
 register is reserved for the purpose. The rational behind this construct
@@ -89,7 +89,7 @@ Another reserved symbol,
 is used to indicate the presence of the run-time linker structures. Whenever
 _DYNAMIC is relocated to 0, there is no need to invoke the run-time
 link-editor. If this symbol is non-zero, it points at a data structure from
-which the location of the necessary relocation- and symbol information can
+which the location of the necessary relocation and symbol information can
 be derived. This is most notably used by the start-up module,
 .Em crt0 .
 The _DYNAMIC structure is conventionally located at the start of the data
@@ -98,7 +98,7 @@ segment of the image to which it pertains.
 .Sh DATA STRUCTURES
 The data structures supporting dynamic linking and run-time relocation
 reside both in the text and data segments of the image they apply to.
-The text segments contain read-only data such as symbols descriptions and
+The text segments contain read-only data such as symbol descriptions and
 names, while the data segments contain the tables that need to be modified by
 during the relocation process.
 .Pp
@@ -199,7 +199,7 @@ The location of the symbol table.
 Currently unused.
 .It Fa sdt_buckets
 The number of buckets in
-.Fa sdt_hash
+.Fa sdt_hash .
 .It Fa sdt_strings
 The location of the symbol string table that goes with
 .Fa sdt_nzlist .
@@ -255,12 +255,12 @@ should point at a full path name for the desired shared object.
 .It Fa sod_major
 Specifies the major version number of the shared object to load.
 .It Fa sod_minor
-Specifies the prefered minor version number of the shared object to load.
+Specifies the preferred minor version number of the shared object to load.
 .El
 .Pp
 The run-time link-editor maintains a list of structures called
 .Em link maps
-to keep track of all shared objects loaded into a process' address space.
+to keep track of all shared objects loaded into a process's address space.
 These structures are only used at run-time and do not occur within
 the text or data segment of an executable or shared library.
 .Bd -literal -offset indent
@@ -288,7 +288,7 @@ The
 .Fa sod
 structure that was responsible for loading this shared object.
 .It Fa som_sodbase
-Tossed in later versions the run-time linker.
+Tossed in later versions of the run-time linker.
 .It Fa som_write
 Set if (some portion of) this object's text segment is currently writable.
 .It Fa som_dynamic
@@ -333,7 +333,7 @@ The size of the data represented by this symbol.
 .El
 .Pp
 A hash table is included within the text segment of shared object to
-to facilitate quick lookup of symbols during run-time link-editing.
+facilitate quick lookup of symbols during run-time link-editing.
 The
 .Fa sdt_hash
 field of the
@@ -423,7 +423,7 @@ run under control of a debugger.
 .It Fa dd_sym_loaded
 Set by the run-time linker whenever it adds symbols by loading shared objects.
 .It Fa dd_bpt_addr
-The address were a breakpoint will be set by the run-time linker to
+The address where a breakpoint will be set by the run-time linker to
 divert control to the debugger. This address is determined by the start-up
 module,
 .Em crt0.o,
