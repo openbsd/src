@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.11 2000/05/31 18:38:30 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.12 2000/11/19 13:30:17 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -123,7 +123,25 @@ sub add_unformated_subject
     my $toadd = shift;
     my $section = shift;
     my $filename = shift;
+    my $toexpand = shift;
+
+    my $exp = sub {
+    	if (defined $toexpand->{$_[0]}) {
+		return $toexpand->{$_[0]};
+	} else {
+		print STDERR "$filename: can't expand $_[0]\n";
+		return "";
+	}
+    };
+
     local $_ = join(' ', @$toadd);
+	# do interpolations
+    s/\\\*\((..)/&$exp($1)/ge;
+    s/\\\*\[(.*?)\]/&$exp($1)/ge;
+
+	# horizontal space adjustments
+    while (s/\\s-?\d+//g)
+    	{}
 	# unbreakable spaces
     s/\\\s+/ /g;
 	# em dashes
@@ -139,9 +157,11 @@ sub add_unformated_subject
     s/\\-/-/g;
 	# sequence of spaces
     s/\s+$//;
+    s/^\s+//;
     s/\s+/ /g;
 	# escaped characters
     s/\\\&(.)/$1/g;
+    s/\\\|/|/g;
 	# gremlins...
     s/\\c//g;
     push(@$subjects, $_);
@@ -159,6 +179,7 @@ sub handle_unformated
     my $f = shift;
     my $filename = shift;
     my @lines = ();
+    my %toexpand = ();
     my $so_found = 0;
     local $_;
 	# retrieve basename of file
@@ -166,10 +187,14 @@ sub handle_unformated
 	# scan until macro
     while (<$f>) {
 	next unless m/^\./;
-	if (m/^\.de/) {
+	if (m/^\.\s*de/) {
 	    while (<$f>) {
-		last if m/^\.\./;
+		last if m/^\.\s*\./;
 	    }
+	    next;
+	}
+	if (m/^\.\s*ds\s+(\S+)\s+/) {
+	    chomp($toexpand{$1} = $');
 	    next;
 	}
 	    # Some cross-refs just link to another manpage
@@ -179,6 +204,16 @@ sub handle_unformated
 	    # ($name2, $section2) = m/^\.(?:TH|th)\s+(\S+)\s+(\S+)/;
 	    	# scan until first section
 	    while (<$f>) {
+		if (m/^\.\s*de/) {
+		    while (<$f>) {
+			last if m/^\.\s*\./;
+		    }
+		    next;
+		}
+		if (m/^\.\s*ds\s+(\S+)\s+/) {
+		    chomp($toexpand{$1} = $');
+		    next;
+		}
 		next unless m/^\./;
 		if (m/^\.SH/ || m/^\.sh/) {
 		    my @subject = ();
@@ -186,17 +221,24 @@ sub handle_unformated
 			last if m/^\.SH/ || m/^\.sh/ || m/^\.SS/ ||
 			    m/^\.ss/ || m/^\.nf/;
 			    # several subjects in one manpage
-			if (m/^\.PP/ || m/^\.br/ || m/^\.PD/ || /^\.sp/) {
+			if (m/^\.PP/ || m/^\.Pp/ || m/^\.br/ || 
+			    m/^\.PD/ || /^\.sp/) {
 			    add_unformated_subject(\@lines, \@subject,
-				$section, $filename) if @subject != 0;
+				$section, $filename, \%toexpand) 
+				    if @subject != 0;
 			    @subject = ();
 			    next;
 			}
-			next if m/^\'/ || m/^\.tr\s+/ || m/^\.\\\"/ || m/^\.sv/;
-			if (m/^\.de/) {
+			next if m/^\'/ || m/^\.tr\s+/ || m/^\.\\\"/ ||
+			    m/^\.sv/ || m/^\.Vb\s+/ || m/\.HP\s+/;
+			if (m/^\.\s*de/) {
 			    while (<$f>) {
-				last if m/^\.\./;
+				last if m/^\.\s*\./;
 			    }
+			    next;
+			}
+			if (m/^\.\s*ds\s+(\S+)\s+/) {
+			    chomp($toexpand{$1} = $');
 			    next;
 			}
 			chomp;
@@ -204,7 +246,7 @@ sub handle_unformated
 			push(@subject, $_) unless m/^\s*$/;
 		    }
 		    add_unformated_subject(\@lines, \@subject, $section,
-			$filename) if @subject != 0;
+			$filename, \%toexpand) if @subject != 0;
 		    return \@lines;
 		}
 	    }
