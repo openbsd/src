@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.60 2003/06/24 20:45:54 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.61 2003/06/27 09:50:07 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -376,11 +376,11 @@ print_message(char *filename)
 /*
  * allowed_luser checks to see if user "luser" is allowed to
  * use this gateway by virtue of being listed in an allowed
- * users file, namely /etc/authpf.allow .
+ * users file, namely /etc/authpf/authpf.allow .
  *
- * If /etc/authpf.allow does not exist, then we assume that
+ * If /etc/authpf/authpf.allow does not exist, then we assume that
  * all users who are allowed in by sshd(8) are permitted to
- * use this gateway. If /etc/authpf.allow does exist, then a
+ * use this gateway. If /etc/authpf/authpf.allow does exist, then a
  * user must be listed if the connection is to continue, else
  * the session terminates in the same manner as being banned.
  */
@@ -411,7 +411,7 @@ allowed_luser(char *luser)
 		return (0);
 	} else {
 		/*
-		 * /etc/authpf.allow exists, thus we do a linear
+		 * /etc/authpf/authpf.allow exists, thus we do a linear
 		 * search to see if they are allowed.
 		 * also, if username "*" exists, then this is a
 		 * "public" gateway, such as it is, so let
