@@ -364,6 +364,7 @@ rconspoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
+
 	return (ttselect(dev, events, p));
 }
 
@@ -374,7 +375,8 @@ rconsmmap (dev, off, prot)
 	 int off;
 	 int prot;
 {
-	return 0;
+
+	return -1;
 }
 
 void
