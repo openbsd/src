@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.conf.5,v 1.10 2003/06/10 09:12:11 jmc Exp $
+.\"	$OpenBSD: man.conf.5,v 1.11 2004/02/23 14:14:14 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,22 +48,28 @@ search for manual pages or their database files as specified by the
 file.
 Manual pages are normally expected to be preformatted (see
 .Xr nroff 1 )
-and named with a trailing ``.0''.
+and named with a trailing
+.Sq .0 .
 .Pp
 The
 .Nm man.conf
 file contains two types of lines.
 .Pp
-The first type of line is a ``section'' line, which contains a
-section name followed by one or more directory paths.
+The first type of line is a
+.Dq section
+line, which contains a section name followed by one or more directory paths.
 The directory paths may contain the normal shell globbing characters,
-including curly braces (``{}''); to escape a shell globbing character,
-precede it with a backslash (``\e'').
+including curly braces
+.Pq Sq {} ;
+to escape a shell globbing character, precede it with a backslash
+.Pq Sq \e .
 Lines in this format specify that manual pages for the section
 may be found in the following directories.
 .Pp
-Directories named with a trailing slash character (``/'') are expected
-to contain subdirectories of manual pages, (see the keyword ``_subdir''
+Directories named with a trailing slash character
+.Pq Sq /
+are expected to contain subdirectories of manual pages, (see the keyword
+.Dq _subdir
 below) instead of manual pages.
 These subdirectories are searched instead of the directory.
 .Pp
@@ -77,30 +83,44 @@ file.
 .Pp
 Section names are unrestricted except for the reserved words specified
 below; in general, you should avoid anything with a leading underscore
-(``_'') to avoid future incompatibilities.
+.Pq Sq _
+to avoid future incompatibilities.
 .Pp
-The section named ``_default'' is the list of directories that will
+The section named
+.Dq _default
+is the list of directories that will
 be searched if no section is specified by the user.
 .Pp
-The second type of line is preceded with a ``keyword''.
+The second type of line is preceded with a
+.Dq keyword .
 The possible keywords and their meanings are as follows:
 .Bl -tag -width "_version"
 .It _build
-Man file names, regardless of their format, are expected to end in
-a ``.*'' pattern, i.e., a ``.'' followed by some suffix.
+Man file names, regardless of their format, are expected to end in a
+.Sq .*
+pattern, i.e. a
+.Sq .\&
+followed by some suffix.
 The first field of a _build line lists a suffix which indicates
 files which need to be reformatted or manipulated in some way before
 being displayed to the user.
 The suffix may contain the normal shell globbing characters (NOT
-including curly braces (``{}'')).
+including curly braces
+.Pq Sq {} ) .
 The rest of the line must be a shell command line, the standard
 output of which is the manual page in a format which may be directly
 displayed to the user.
-Any occurrences of the string ``%s'' in the shell command line will
+Any occurrences of the string
+.Sq %s
+in the shell command line will
 be replaced by the name of the file which is being reformatted.
 .It _subdir
-The list (in search order) of subdirectories which will be searched in
-any directory named with a trailing slash (``/'') character.
+The list
+.Pq in search order
+of subdirectories which will be searched in
+any directory named with a trailing slash
+.Pq Sq /
+character.
 This list is also used when a path is specified to the
 .Xr man 1
 utility by the user, using the
@@ -111,18 +131,23 @@ and
 .Fl m
 options.
 .It _suffix
-Man file names, regardless of their format, are expected to end in
-a ``.*'' pattern, i.e. a ``.'' followed by some suffix.
+Man file names, regardless of their format, are expected to end in a
+.Sq .*
+pattern, i.e. a
+.Sq .\&
+followed by some suffix.
 Each field of a _suffix line is a suffix which indicates
 files which do not need to be reformatted or manipulated
 in any way, but which may be directly displayed to the user.
 Each suffix may contain the normal shell globbing characters (NOT
-including curly braces (``{}'')).
+including curly braces
+.Pq Sq {} ) .
 .It _version
 The version of the configuration file.
 .It _whatdb
-The full pathname (not just a directory path) for a database to be used
-by the
+The full pathname
+.Pq not just a directory path
+for a database to be used by the
 .Xr apropos 1
 and
 .Xr whatis 1
@@ -133,8 +158,9 @@ Multiple specifications for all types of lines are cumulative and the
 entries are used in the order listed in the file; multiple entries may
 be listed per line, as well.
 .Pp
-Empty lines or lines whose first non-whitespace character is a hash
-mark (``#'') are ignored.
+Empty lines or lines whose first non-whitespace character is a hash mark
+.Pq Sq #
+are ignored.
 .Sh FILES
 .Bl -tag -width /etc/man.conf -compact
 .It Pa /etc/man.conf
@@ -157,28 +183,34 @@ sect3		/usr/share/man/{old/,}cat3
 By default, the command
 .Dq Li man mktemp
 will search for
-``mktemp.<any_digit>'' and ``mktemp.tbl''
-in the directories
-.Dq Pa /usr/share/man/cat1 ,
-.Dq Pa /usr/share/man/cat2 ,
+.Dq mktemp.\*(Ltany_digit\*(Gt
 and
-.Dq Pa /usr/share/man/cat3 .
-If on a machine of type ``vax'', the subdirectory ``vax'' in each
-directory would be searched as well, before the directory was
+.Dq mktemp.tbl
+in the directories
+.Pa /usr/share/man/cat1 ,
+.Pa /usr/share/man/cat2 ,
+and
+.Pa /usr/share/man/cat3 .
+If on a machine of type
+.Dq vax ,
+the subdirectory
+.Dq vax
+in each directory would be searched as well, before the directory was
 searched.
 .Pp
-If ``mktemp.tbl'' was found first, the command
-.Dq Li tbl <manual page> \&| nroff -man
+If
+.Dq mktemp.tbl
+was found first, the command
+.Dq Li tbl mktemp.tbl \&| nroff -man
 would be run to build a man page for display to the user.
 .Pp
 The command
 .Dq Li man sect3 mktemp
 would search the directories
-.Dq Pa /usr/share/man/old/cat3
+.Pa /usr/share/man/old/cat3
 and
-.Dq Pa /usr/share/man/cat3 ,
-in that order, for
-the
+.Pa /usr/share/man/cat3 ,
+in that order, for the
 .Xr mktemp 1
 manual page.
 If a subdirectory with the same name as the current machine type

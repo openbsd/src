@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.20 2003/12/16 18:58:46 millert Exp $
+.\"	$OpenBSD: man.1,v 1.21 2004/02/23 14:14:14 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,14 +41,14 @@
 .Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
-.Op Fl s Ar section
 .Op Fl S Ar subsection
+.Op Fl s Ar section
 .Op Ar section
 .Ar name Op Ar ...
 .Nm man
-.Fl k Ar keyword
+.Fl f Ar command
 .Nm man
-.Fl f Ar filename
+.Fl k Ar keyword
 .Sh DESCRIPTION
 The
 .Nm
@@ -60,23 +60,53 @@ manual pages entitled
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl k
+.It Fl a
+Display all of the manual pages for a specified
+.Ar section
+and
+.Ar name
+combination.
+(Normally, only the first manual page found is displayed.)
+.It Fl C Ar file
+Use the specified
+.Ar file
+instead of the default configuration file.
+This permits users to configure their own manual environment.
+See
+.Xr man.conf 5
+for a description of the contents of this file.
+.It Fl c
+Copy the manual page to the standard output instead of using
+.Xr more 1
+to paginate it.
+This is done by default if the standard output is not a terminal device.
+.It Fl f Ar command
+Locate man pages matching the
+.Ar command
+in much the same way
+.Xr whatis 1
+works.
+.It Fl h
+Display only the
+.Dq SYNOPSIS
+lines of the requested manual pages.
+.It Fl k Ar keyword
 Locate man pages matching
 .Ar keyword
 in much the same way as
 .Xr apropos 1
 works (in fact, it runs
-.Xr apropos 1
-for you).
+.Xr apropos 1 ) .
 This can be used to find which man page applies to a particular subsystem
-you are interested in, for instance
+you are interested in.
+For instance:
 .Pp
-.Nm man Fl k Em mount
+.Dl $ man -k mount
 .Pp
-will list all man pages which contain your
+will list all man pages which contain
 .Ar keyword
 in the
-.Em NAME
+.Dq NAME
 line of the man page;
 in this case a list much like this:
 .Bd -literal
@@ -99,30 +129,6 @@ newfs, mount_mfs (8) \- construct a new file system
 umount (8) \- unmount file systems
 \&...
 .Ed
-.It Fl a
-Display all of the manual pages for a specified
-.Ar section
-and
-.Ar name
-combination.
-(Normally, only the first manual page found is displayed.)
-.It Fl C Ar file
-Use the specified
-.Ar file
-instead of the default configuration file.
-This permits users to configure their own manual environment.
-See
-.Xr man.conf 5
-for a description of the contents of this file.
-.It Fl c
-Copy the manual page to the standard output instead of using
-.Xr more 1
-to paginate it.
-This is done by default if the standard output is not a terminal device.
-.It Fl h
-Display only the
-.Dq Tn SYNOPSIS
-lines of the requested manual pages.
 .It Fl M Ar path
 Override the list of standard directories which
 .Nm
@@ -135,7 +141,7 @@ separated list of directories.
 This search path may also be set using the environment variable
 .Ev MANPATH .
 The subdirectories to be searched, and their search order,
-is specified by the
+are specified by the
 .Dq _subdir
 line in the
 .Nm
@@ -156,15 +162,11 @@ option or the
 .Ev MANPATH
 environment variable.
 The subdirectories to be searched, and their search order,
-is specified by the
+are specified by the
 .Dq _subdir
 line in the
 .Nm
 configuration file.
-.It Fl s Ar section
-Another way of specifying the section, for compatibility with
-.Nm
-on other operating systems.
 .It Fl S Ar subsection
 Specifies the machine-dependent subsection.
 This overrides the
@@ -173,6 +175,10 @@ environment variable.
 See the
 .Sx ENVIRONMENT
 section below.
+.It Fl s Ar section
+Another way of specifying the section, for compatibility with
+.Nm
+on other operating systems.
 .It Fl w
 List the pathnames of the manual pages which
 .Nm
@@ -181,12 +187,6 @@ would display for the specified
 and
 .Ar name
 combination.
-.It Fl f
-Locate man pages matching the
-.Ar command
-in much the same way
-.Xr whatis 1
-works.
 .El
 .Pp
 The optional
@@ -228,7 +228,7 @@ configuration file (see
 specifies the possible
 .Ar section
 values, and their search order.
-If only a single argument is specified or if the first argument is
+If only a single argument is specified, or if the first argument is
 not a valid section,
 .Nm
 assumes that the argument is the name of a manual page to be displayed.
@@ -260,8 +260,8 @@ variable.
 The format of the path is a colon
 .Pq Ql \&:
 separated list of directories.
-The subdirectories to be searched as well as their search order
-is specified by the
+The subdirectories to be searched, as well as their search order,
+are specified by the
 .Dq _subdir
 line in the
 .Nm
