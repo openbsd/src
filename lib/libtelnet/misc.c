@@ -34,7 +34,7 @@
 #ifndef lint
 /* from: static char sccsid[] = "@(#)misc.c    8.1 (Berkeley) 6/4/93"; */
 /* from: static char rcsid[] = "$NetBSD: misc.c,v 1.5 1996/02/24 01:15:25 jtk Exp $"; */
-static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2001/05/25 10:23:07 hin Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2001/06/29 21:21:46 millert Exp $";
 #endif /* not lint */
 
 /* $KTH: misc.c,v 1.15 2000/01/25 23:24:58 assar Exp $ */
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2001/05/25 10:23:07 hin Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "misc.h"
 #include "auth.h"
 #include "encrypt.h"
@@ -92,4 +93,14 @@ printd(const unsigned char *data, int cnt)
 	printf(" %02x", *data);
 	++data;
     }
+}
+
+/* This is stolen from libroken; it's the only thing actually needed from
+ * libroken.
+ */
+void
+esetenv(const char *var, const char *val, int rewrite)
+{
+    if (setenv ((char *)var, (char *)val, rewrite))
+        errx (1, "failed setting environment variable %s", var);
 }

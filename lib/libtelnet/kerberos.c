@@ -1,4 +1,4 @@
-/*     $OpenBSD: kerberos.c,v 1.7 2001/06/28 14:22:16 hin Exp $    */
+/*     $OpenBSD: kerberos.c,v 1.8 2001/06/29 21:21:46 millert Exp $    */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -115,16 +115,6 @@ static int auth_done; /* XXX */
 
 static int pack_cred(CREDENTIALS *cred, unsigned char *buf);
 static int unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred);
-
-/* This is stolen from libroken; it's the only thing actually needed from
- * libroken.
- */
-void
-esetenv(const char *var, const char *val, int rewrite)
-{
-    if (setenv ((char *)var, (char *)val, rewrite))
-        errx (1, "failed setting environment variable %s", var);
-}
 
 static int
 check_krb4_tickets() {
