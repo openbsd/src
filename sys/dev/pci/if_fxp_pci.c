@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.9 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.10 2001/09/04 23:46:23 provos Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -105,6 +105,10 @@ fxp_pci_match(parent, match, aux)
 	case PCI_PRODUCT_INTEL_82559:
 	case PCI_PRODUCT_INTEL_82559ER:
 	case PCI_PRODUCT_INTEL_82562:
+	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
+	case PCI_PRODUCT_INTEL_PRO_100_VE_1:
+	case PCI_PRODUCT_INTEL_PRO_100_VM_0:
+	case PCI_PRODUCT_INTEL_PRO_100_VM_1:
 		return (1);
 	}
 
@@ -174,6 +178,13 @@ fxp_pci_attach(parent, self, aux)
 		 * 8 = 82559
 		 */
 		sc->not_82557 = (rev >= 4) ? 1 : 0;
+		break;
+	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
+	case PCI_PRODUCT_INTEL_PRO_100_VE_1:
+	case PCI_PRODUCT_INTEL_PRO_100_VM_0:
+	case PCI_PRODUCT_INTEL_PRO_100_VM_1:
+		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+		sc->not_82557 = 0;
 		break;
 	default:
 		sc->not_82557 = 0;
