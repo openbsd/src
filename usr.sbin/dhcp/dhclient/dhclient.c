@@ -56,10 +56,24 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.8 2000/06/25 08:39:59 dugsong Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.9 2000/07/21 00:33:53 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
+
+
+#define PERIOD 0x2e
+#define	hyphenchar(c) ((c) == 0x2d)
+#define bslashchar(c) ((c) == 0x5c)
+#define periodchar(c) ((c) == PERIOD)
+#define asterchar(c) ((c) == 0x2a)
+#define alphachar(c) (((c) >= 0x41 && (c) <= 0x5a) \
+		   || ((c) >= 0x61 && (c) <= 0x7a))
+#define digitchar(c) ((c) >= 0x30 && (c) <= 0x39)
+
+#define borderchar(c) (alphachar(c) || digitchar(c))
+#define middlechar(c) (borderchar(c) || hyphenchar(c))
+#define	domainchar(c) ((c) > 0x20 && (c) < 0x7f)
 
 TIME cur_time;
 TIME default_lease_time = 43200; /* 12 hours... */
@@ -95,6 +109,10 @@ int onetry;
 
 static void usage PROTO ((void));
 
+static int check_option (struct client_lease *l, int option);
+
+static int ipv4addrs(char * buf);
+
 int main (argc, argv, envp)
 	int argc;
 	char **argv, **envp;
@@ -103,16 +121,7 @@ int main (argc, argv, envp)
 	struct servent *ent;
 	struct interface_info *ip;
 
-#ifdef SYSLOG_4_2
-	openlog ("dhclient", LOG_NDELAY);
-	log_priority = LOG_DAEMON;
-#else
 	openlog ("dhclient", LOG_NDELAY, LOG_DAEMON);
-#endif
-
-#if !(defined (DEBUG) || defined (SYSLOG_4_2) || defined (__CYGWIN32__))
-	setlogmask (LOG_UPTO (LOG_INFO));
-#endif	
 
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-p")) {
@@ -149,9 +158,6 @@ int main (argc, argv, envp)
 			local_port = htons (68);
 		else
 			local_port = ent -> s_port;
-#ifndef __CYGWIN32__
-		endservent ();
-#endif
 	}
 	remote_port = htons (ntohs (local_port) - 1);	/* XXX */
   
@@ -793,6 +799,12 @@ struct client_lease *packet_to_lease (packet)
 				lease -> options [i].data
 					[lease -> options [i].len] = 0;
 			}
+			if (!check_option(lease,i)) {
+			        /* ignore a bogus lease offer */
+				warn ("Invalid lease option - ignoring offer");
+				free_client_lease (lease);
+				return (NULL);
+			}
 		}
 	}
 
@@ -804,42 +816,35 @@ struct client_lease *packet_to_lease (packet)
 	if ((!packet -> options [DHO_DHCP_OPTION_OVERLOAD].len ||
 	     !(packet -> options [DHO_DHCP_OPTION_OVERLOAD].data [0] & 2)) &&
 	    packet -> raw -> sname [0]) {
-		int len;
 		/* Don't count on the NUL terminator. */
-		for (len = 0; len < 64; len++)
-			if (!packet -> raw -> sname [len])
-				break;
-		lease -> server_name = malloc (len + 1);
-		if (!lease -> server_name) {
-			warn ("dhcpoffer: no memory for filename.\n");
+		lease->server_name = malloc(DHCP_SNAME_LEN + 1);
+		if (!lease -> server_name ) {
+			warn ("dhcpoffer: no memory for filename.");
 			free_client_lease (lease);
 			return (struct client_lease *)0;
-		} else {
-			memcpy (lease -> server_name,
-				packet -> raw -> sname, len);
-			lease -> server_name [len] = 0;
 		}
+		memcpy(lease->server_name, packet->raw->sname, DHCP_SNAME_LEN);
+		lease->server_name[DHCP_SNAME_LEN]='\0';
+		if (! res_hnok (lease->server_name) ) {
+			warn ("Bogus server name %s",  lease->server_name );
+			free_client_lease (lease);
+			return (struct client_lease *)0;
+		}		
 	}
 
 	/* Ditto for the filename. */
 	if ((!packet -> options [DHO_DHCP_OPTION_OVERLOAD].len ||
 	     !(packet -> options [DHO_DHCP_OPTION_OVERLOAD].data [0] & 1)) &&
 	    packet -> raw -> file [0]) {
-		int len;
-		/* Don't count on the NUL terminator. */
-		for (len = 0; len < 64; len++)
-			if (!packet -> raw -> file [len])
-				break;
-		lease -> filename = malloc (len + 1);
+	        /* Don't count on the NUL terminator. */
+		lease->filename = malloc(DHCP_FILE_LEN + 1);
 		if (!lease -> filename) {
-			warn ("dhcpoffer: no memory for filename.\n");
+			warn ("dhcpoffer: no memory for filename.");
 			free_client_lease (lease);
 			return (struct client_lease *)0;
-		} else {
-			memcpy (lease -> filename,
-				packet -> raw -> file, len);
-			lease -> filename [len] = 0;
 		}
+		memcpy(lease->filename, packet->raw->file, DHCP_FILE_LEN);
+		lease->filename[DHCP_FILE_LEN]='\0';
 	}
 	return lease;
 }	
@@ -984,9 +989,8 @@ void send_discover (ipp)
 			      ip -> client -> packet_length,
 			      inaddr_any, &sockaddr_broadcast,
 			      (struct hardware *)0);
-	if (result < 0)
-		warn ("send_packet: %m");
-
+	if (result < 0) 
+		warn ("send_discover/send_packet: %m");
 	add_timeout (cur_time + ip -> client -> interval, send_discover, ip);
 }
 
@@ -1232,8 +1236,8 @@ void send_request (ipp)
 				      from, &destination,
 				      (struct hardware *)0);
 
-	if (result < 0)
-		warn ("send_packet: %m");
+	if (result < 0) 
+		warn ("send_request/send_packet: %m");
 
 	add_timeout (cur_time + ip -> client -> interval,
 		     send_request, ip);
@@ -1256,8 +1260,8 @@ void send_decline (ipp)
 			      ip -> client -> packet_length,
 			      inaddr_any, &sockaddr_broadcast,
 			      (struct hardware *)0);
-	if (result < 0)
-		warn ("send_packet: %m");
+	if (result < 0) 
+		warn ("send_decline/send_packet: %m");
 }
 
 void send_release (ipp)
@@ -1277,8 +1281,8 @@ void send_release (ipp)
 			      ip -> client -> packet_length,
 			      inaddr_any, &sockaddr_broadcast,
 			      (struct hardware *)0);
-	if (result < 0)
-		warn ("send_packet: %m");
+	if (result < 0) 
+		warn ("send_release/send_packet: %m");
 }
 
 void make_discover (ip, lease)
@@ -2087,4 +2091,144 @@ void write_client_pid_file ()
 		fprintf (pf, "%ld\n", (long)getpid ());
 		fclose (pf);
 	}
+}
+
+int check_option (struct client_lease *l, int option) {
+  char *opbuf;
+
+  /* we use this, since this is what gets passed to dhclient-script */
+
+  opbuf = pretty_print_option (option, l->options[option].data,
+			       l->options[option].len, 0, 0);
+  switch(option) {
+  case DHO_SUBNET_MASK :
+  case DHO_TIME_SERVERS :
+  case DHO_NAME_SERVERS :
+  case DHO_ROUTERS :
+  case DHO_DOMAIN_NAME_SERVERS :
+  case DHO_LOG_SERVERS :
+  case DHO_COOKIE_SERVERS :
+  case DHO_LPR_SERVERS :
+  case DHO_IMPRESS_SERVERS :
+  case DHO_RESOURCE_LOCATION_SERVERS :
+  case DHO_SWAP_SERVER :
+  case DHO_BROADCAST_ADDRESS :
+  case DHO_NIS_SERVERS :
+  case DHO_NTP_SERVERS :
+  case DHO_NETBIOS_NAME_SERVERS :
+  case DHO_NETBIOS_DD_SERVER :
+  case DHO_FONT_SERVERS : 
+    	/* These should be a list of one or more IP addresses, separated 
+	 * by spaces. If they aren't, this lease is not valid.
+	 */
+    	if (!ipv4addrs(opbuf)) {
+		warn("Invalid IP address in option: %s", opbuf);
+		return(0);
+	}
+	return(1)  ;
+  case DHO_HOST_NAME :
+  case DHO_DOMAIN_NAME :
+  case DHO_NIS_DOMAIN :
+  case DHO_DHCP_SERVER_IDENTIFIER :
+    	/* This has to be a valid internet domain name */
+	if (!res_hnok(opbuf)) {
+		warn("Bogus name option: %s", opbuf);
+		return(0);
+	}
+    	return(1);
+  case DHO_PAD :
+  case DHO_TIME_OFFSET :
+  case DHO_BOOT_SIZE :
+  case DHO_MERIT_DUMP :
+  case DHO_ROOT_PATH :
+  case DHO_EXTENSIONS_PATH :
+  case DHO_IP_FORWARDING :
+  case DHO_NON_LOCAL_SOURCE_ROUTING :
+  case DHO_POLICY_FILTER :
+  case DHO_MAX_DGRAM_REASSEMBLY :
+  case DHO_DEFAULT_IP_TTL :
+  case DHO_PATH_MTU_AGING_TIMEOUT :
+  case DHO_PATH_MTU_PLATEAU_TABLE :
+  case DHO_INTERFACE_MTU :
+  case DHO_ALL_SUBNETS_LOCAL :
+  case DHO_PERFORM_MASK_DISCOVERY :
+  case DHO_MASK_SUPPLIER :
+  case DHO_ROUTER_DISCOVERY :
+  case DHO_ROUTER_SOLICITATION_ADDRESS :
+  case DHO_STATIC_ROUTES :
+  case DHO_TRAILER_ENCAPSULATION :
+  case DHO_ARP_CACHE_TIMEOUT :
+  case DHO_IEEE802_3_ENCAPSULATION :
+  case DHO_DEFAULT_TCP_TTL :
+  case DHO_TCP_KEEPALIVE_INTERVAL :
+  case DHO_TCP_KEEPALIVE_GARBAGE :
+  case DHO_VENDOR_ENCAPSULATED_OPTIONS :
+  case DHO_NETBIOS_NODE_TYPE :
+  case DHO_NETBIOS_SCOPE :
+  case DHO_X_DISPLAY_MANAGER :
+  case DHO_DHCP_REQUESTED_ADDRESS :
+  case DHO_DHCP_LEASE_TIME :
+  case DHO_DHCP_OPTION_OVERLOAD :
+  case DHO_DHCP_MESSAGE_TYPE :
+  case DHO_DHCP_PARAMETER_REQUEST_LIST :
+  case DHO_DHCP_MESSAGE :
+  case DHO_DHCP_MAX_MESSAGE_SIZE :
+  case DHO_DHCP_RENEWAL_TIME :
+  case DHO_DHCP_REBINDING_TIME :
+  case DHO_DHCP_CLASS_IDENTIFIER :
+  case DHO_DHCP_CLIENT_IDENTIFIER :
+  case DHO_DHCP_USER_CLASS_ID :
+  case DHO_END :
+	/* do nothing */
+	return(1);
+  default:
+	warn("unknown dhcp option value 0x%x", option);
+	return(0);
+  }
+}
+
+int
+res_hnok(dn)
+	const char *dn;
+{
+	int pch = PERIOD, ch = *dn++;
+
+	while (ch != '\0') {
+		int nch = *dn++;
+
+		if (periodchar(ch)) {
+			;
+		} else if (periodchar(pch)) {
+			if (!borderchar(ch))
+				return (0);
+		} else if (periodchar(nch) || nch == '\0') {
+			if (!borderchar(ch))
+				return (0);
+		} else {
+			if (!middlechar(ch))
+				return (0);
+		}
+		pch = ch, ch = nch;
+	}
+	return (1);
+}
+
+/* Does buf consist only of dotted decimal ipv4 addrs? 
+ * return how many if so, 
+ * otherwise, return 0
+ */
+int ipv4addrs(char * buf) {
+  struct in_addr jnk;
+  int count = 0;
+
+  while (inet_aton(buf, &jnk) == 1){
+    count++;
+    while (periodchar(*buf) || digitchar(*buf)) 
+      buf++;
+    if (*buf == '\0')	
+      return(count);
+    while (*buf ==  ' ')
+      buf++;
+  }
+  return(0);
 }

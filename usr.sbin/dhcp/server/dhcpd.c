@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1 1998/08/18 03:43:34 deraadt Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.2 2000/07/21 00:33:55 beck Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
 #endif
 
 static char copyright[] =
@@ -318,18 +318,33 @@ void lease_pinged (from, packet, length)
 		return;
 	}
 
-	if (!lp -> state) {
+	if (!lp -> state && ! lp -> releasing) {
 		warn ("ICMP Echo Reply for %s arrived late or is spurious.\n",
 		      piaddr (from));
 		return;
 	}
 
 	/* At this point it looks like we pinged a lease and got a
-	   response, which shouldn't have happened. */
-	free_lease_state (lp -> state, "lease_pinged");
-	lp -> state = (struct lease_state *)0;
+	 * response, which shouldn't have happened. 
+	 * if it did it's either one of two two cases:
+	 * 1 - we pinged this lease before offering it and
+	 *     something answered, so we abandon it.
+	 * 2 - we pinged this lease before releaseing it 
+	 *     and something answered, so we don't release it.
+	 */
+	if (lp -> releasing) {
+	  	warn ("IP address %s answers a ping after sending a release",
+		      piaddr (lp -> ip_addr));
+		warn ("Possible release spoof - Not releasing address %s",
+		      piaddr (lp -> ip_addr));
+		lp -> releasing = 0;
+	}
+	else {
+		free_lease_state (lp -> state, "lease_pinged");
+		lp -> state = (struct lease_state *)0;
 
-	abandon_lease (lp, "pinged before offer");
+		abandon_lease (lp, "pinged before offer");
+	}
 	cancel_timeout (lease_ping_timeout, lp);
 	--outstanding_pings;
 }
@@ -338,7 +353,13 @@ void lease_ping_timeout (vlp)
 	void *vlp;
 {
 	struct lease *lp = vlp;
-
+	
 	--outstanding_pings;
-	dhcp_reply (lp);
+	if (lp->releasing) {
+		lp->releasing = 0;
+		release_lease(lp);
+	}
+	else {
+		dhcp_reply (lp);
+	}
 }

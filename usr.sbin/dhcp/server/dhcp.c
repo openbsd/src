@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.1 1998/08/18 03:43:34 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.2 2000/07/21 00:33:54 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -342,19 +342,50 @@ void dhcprelease (packet)
 	}
 
 
-	note ("DHCPRELEASE of %s from %s via %s (%sfound)",
-	      inet_ntoa (packet -> raw -> ciaddr),
-	      print_hw_addr (packet -> raw -> htype,
-			     packet -> raw -> hlen,
-			     packet -> raw -> chaddr),
-	      packet -> raw -> giaddr.s_addr
-	      ? inet_ntoa (packet -> raw -> giaddr)
-	      : packet -> interface -> name,
-	      lease ? "" : "not ");
-
 	/* If we found a lease, release it. */
 	if (lease) {
-		release_lease (lease);
+	  	/* first, we ping this lease to see if it's still 
+		 * there. if it is, we don't release it.
+		 * this avoids the problem of spoofed releases
+		 * being used to liberate addresses from the
+		 * server.
+		 */
+	  if (! lease->releasing) {
+	  	note ("DHCPRELEASE of %s from %s via %s (found)",
+		  inet_ntoa (packet -> raw -> ciaddr),
+		  print_hw_addr (packet -> raw -> htype,
+				 packet -> raw -> hlen,
+				 packet -> raw -> chaddr),
+		  packet -> raw -> giaddr.s_addr
+		  ? inet_ntoa (packet -> raw -> giaddr)
+		  : packet -> interface -> name,
+		  lease ? "" : "not ");
+	    
+	        lease->releasing = 1;
+		add_timeout (cur_time + 1, lease_ping_timeout, lease);
+		icmp_echorequest (&(lease -> ip_addr));
+		++outstanding_pings;
+	  }
+	  else {
+	          note ("DHCPRELEASE of %s from %s via %s ignored (release already pending)",
+		  inet_ntoa (packet -> raw -> ciaddr),
+		  print_hw_addr (packet -> raw -> htype,
+				 packet -> raw -> hlen,
+				 packet -> raw -> chaddr),
+		  packet -> raw -> giaddr.s_addr
+		  ? inet_ntoa (packet -> raw -> giaddr)
+		  : packet -> interface -> name);
+	  }
+	}
+	else {
+	  	note ("DHCPRELEASE of %s from %s via %s for nonexistent lease",
+		  inet_ntoa (packet -> raw -> ciaddr),
+		  print_hw_addr (packet -> raw -> htype,
+				 packet -> raw -> hlen,
+				 packet -> raw -> chaddr),
+		  packet -> raw -> giaddr.s_addr
+		  ? inet_ntoa (packet -> raw -> giaddr)
+		  : packet -> interface -> name);
 	}
 }
 

@@ -144,6 +144,7 @@ struct lease {
 #	define ABANDONED_LEASE		16
 
 	struct lease_state *state;
+        u_int8_t releasing;
 };
 
 struct lease_state {
@@ -363,6 +364,9 @@ struct interface_info {
 
 	/* Only used by DHCP client code. */
 	struct client_state *client;
+        int noifmedia;
+        int errors;
+        int dead;
 };
 
 struct hardware_link {

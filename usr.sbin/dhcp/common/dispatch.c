@@ -42,11 +42,12 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.2 2000/02/09 11:55:47 niklas Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.3 2000/07/21 00:33:53 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include <sys/ioctl.h>
+#include <net/if_media.h>
 
 /* Most boxes has less than 16 interfaces, so this might be a good guess.  */
 #define INITIAL_IFREQ_COUNT 16
@@ -162,7 +163,7 @@ void discover_interfaces (state)
 
 		/* See if this is the sort of interface we want to
 		   deal with. */
-		strcpy (ifr.ifr_name, ifp -> ifr_name);
+		strlcpy (ifr.ifr_name, ifp -> ifr_name, sizeof(ifr.ifr_name));
 		if (ioctl (sock, SIOCGIFFLAGS, &ifr) < 0)
 			error ("Can't get interface flags for %s: %m",
 			       ifr.ifr_name);
@@ -191,9 +192,11 @@ void discover_interfaces (state)
 			if (!tmp)
 				error ("Insufficient memory to %s %s",
 				       "record interface", ifp -> ifr_name);
-			strcpy (tmp -> name, ifp -> ifr_name);
+			strlcpy (tmp -> name, ifp -> ifr_name, 
+				 sizeof(tmp->name));
 			tmp -> next = interfaces;
 			tmp -> flags = ir;
+			tmp -> noifmedia = tmp -> dead = tmp->errors = 0;
 			interfaces = tmp;
 		}
 
@@ -402,7 +405,7 @@ void discover_interfaces (state)
 	close (sock);
 
 #ifdef USE_FALLBACK
-	strcpy (fallback_interface.name, "fallback");	
+	strlcpy (fallback_interface.name, "fallback", sizeof(fallback_interface.name));	
 	fallback_interface.shared_network = &fallback_network;
 	fallback_network.name = "fallback-net";
 	if_register_fallback (&fallback_interface);
@@ -427,102 +430,6 @@ void reinitialize_interfaces ()
 	interfaces_invalidated = 1;
 }
 
-#ifdef USE_POLL
-/* Wait for packets to come in using poll().  Anyway, when a packet
-   comes in, call receive_packet to receive the packet and possibly
-   strip hardware addressing information from it, and then call
-   do_packet to try to do something with it. 
-
-   As you can see by comparing this with the code that uses select(),
-   below, this is gratuitously complex.  Quelle surprise, eh?  This is
-   SysV we're talking about, after all, and even in the 90's, it
-   wouldn't do for SysV to make networking *easy*, would it?  Rant,
-   rant... */
-
-void dispatch ()
-{
-	struct protocol *l;
-	int nfds = 0;
-	struct pollfd *fds;
-	int count;
-	int i;
-	int to_msec;
-
-	nfds = 0;
-	for (l = protocols; l; l = l -> next) {
-		++nfds;
-	}
-	fds = (struct pollfd *)malloc ((nfds) * sizeof (struct pollfd));
-	if (!fds)
-		error ("Can't allocate poll structures.");
-
-	do {
-		/* Call any expired timeouts, and then if there's
-		   still a timeout registered, time out the select
-		   call then. */
-	      another:
-		if (timeouts) {
-			struct timeout *t;
-			if (timeouts -> when <= cur_time) {
-				t = timeouts;
-				timeouts = timeouts -> next;
-				(*(t -> func)) (t -> what);
-				t -> next = free_timeouts;
-				free_timeouts = t;
-				goto another;
-			}
-			/* Figure timeout in milliseconds, and check for
-			   potential overflow.   We assume that integers
-			   are 32 bits, which is harmless if they're 64
-			   bits - we'll just get extra timeouts in that
-			   case.    Lease times would have to be quite
-			   long in order for a 32-bit integer to overflow,
-			   anyway. */
-			to_msec = timeouts -> when - cur_time;
-			if (to_msec > 2147483)
-				to_msec = 2147483;
-			to_msec *= 1000;
-		} else
-			to_msec = -1;
-
-		/* Set up the descriptors to be polled. */
-		i = 0;
-		for (l = protocols; l; l = l -> next) {
-			fds [i].fd = l -> fd;
-			fds [i].events = POLLIN;
-			fds [i].revents = 0;
-			++i;
-		}
-
-		/* Wait for a packet or a timeout... XXX */
-		count = poll (fds, nfds, to_msec);
-
-		/* Get the current time... */
-		GET_TIME (&cur_time);
-
-		/* Not likely to be transitory... */
-		if (count < 0) {
-			if (errno == EAGAIN || errno == EINTR)
-				continue;
-			else
-				error ("poll: %m");
-		}
-
-		i = 0;
-		for (l = protocols; l; l = l -> next) {
-			if ((fds [i].revents & POLLIN)) {
-				fds [i].revents = 0;
-				if (l -> handler)
-					(*(l -> handler)) (l);
-				if (interfaces_invalidated)
-					break;
-			}
-			++i;
-		}
-		interfaces_invalidated = 0;
-	} while (1);
-}
-#else
 /* Wait for packets to come in using select().   When one does, call
    receive_packet to receive the packet and possibly strip hardware
    addressing information from it, and then call do_packet to try to
@@ -563,12 +470,20 @@ void dispatch ()
 		/* Set up the read mask. */
 		FD_ZERO (&r);
 
+		max = -1; 
+
 		for (l = protocols; l; l = l -> next) {
-			FD_SET (l -> fd, &r);
-			if (l -> fd > max)
-				max = l -> fd;
+		         struct interface_info *ip = l -> local;
+		         if (ip && !ip->dead) {
+			 	FD_SET (l -> fd, &r);
+				if (l -> fd > max)
+					max = l -> fd;
+			 }
 		}
 
+		if (max == -1) 
+		  error("No interfaces to select on - exiting.");
+		
 		/* Wait for a packet or a timeout... XXX */
 		count = select (max + 1, &r, &w, &x, tvp);
 
@@ -576,13 +491,15 @@ void dispatch ()
 		GET_TIME (&cur_time);
 
 		/* Not likely to be transitory... */
-		if (count < 0)
+		if (count == -1)
 			error ("select: %m");
 
 		for (l = protocols; l; l = l -> next) {
+		        struct interface_info *ip;
 			if (!FD_ISSET (l -> fd, &r))
 				continue;
-			if (l -> handler)
+			ip = l->local;
+			if (ip && !ip-> dead && l -> handler)
 				(*(l -> handler)) (l);
 			if (interfaces_invalidated)
 				break;
@@ -590,7 +507,7 @@ void dispatch ()
 		interfaces_invalidated = 0;
 	} while (1);
 }
-#endif /* USE_POLL */
+
 
 static void got_one (l)
 	struct protocol *l;
@@ -598,15 +515,27 @@ static void got_one (l)
 	struct sockaddr_in from;
 	struct hardware hfrom;
 	struct iaddr ifrom;
-	int result;
+	static int death = 0;
+	size_t result;
 	static unsigned char packbuf [4095]; /* Packet input buffer.
 						Must be as large as largest
 						possible MTU. */
 	struct interface_info *ip = l -> local;
 
+
 	if ((result = receive_packet (ip, packbuf, sizeof packbuf,
-				      &from, &hfrom)) < 0) {
-		warn ("receive_packet failed on %s: %m", ip -> name);
+				      &from, &hfrom)) == -1) {
+		warn ("receive_packet failed on %s: %s", ip -> name, 
+		      strerror(errno));
+		ip->errors++;
+		if ((! interface_status(ip)) 
+		    || (ip->noifmedia && ip->errors > 20)) {
+			/* our interface has gone away. */
+			warn("Interface %s appears to no longer be valid",
+			     ip->name); 
+			ip->dead = 1;
+			interfaces_invalidated = 1;
+		}
 		return;
 	}
 	if (result == 0)
@@ -770,4 +699,71 @@ void remove_protocol (proto)
 			free (p);
 		}
 	}
+}
+
+int
+interface_status(struct interface_info *ifinfo)
+{
+        char * ifname = ifinfo->name;
+	int ifsock = ifinfo->rfdesc;
+	struct ifreq ifr;
+	struct ifmediareq ifmr;
+
+
+	
+	/* get interface flags */
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	if (ioctl(ifsock, SIOCGIFFLAGS, &ifr) < 0) {
+		syslog(LOG_ERR, "ioctl(SIOCGIFFLAGS) on %s: %m",
+		       ifname);
+		goto inactive;
+	}
+	/*
+	 * if one of UP and RUNNING flags is dropped,
+	 * the interface is not active.
+	 */
+	if ((ifr.ifr_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
+		goto inactive;
+	}
+
+	/* Next, check carrier on the interface, if possible */
+	if (ifinfo->noifmedia) 
+		goto active;
+	memset(&ifmr, 0, sizeof(ifmr));
+	strlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
+
+	if (ioctl(ifsock, SIOCGIFMEDIA, (caddr_t)&ifmr) < 0) {
+		if (errno != EINVAL) {
+			syslog(LOG_DEBUG, "ioctl(SIOCGIFMEDIA) on %s: %m",
+			       ifname);
+			ifinfo->noifmedia = 1;
+			goto active;
+		}
+		/*
+		 * EINVAL (or ENOTTY) simply means that the interface 
+		 * does not support the SIOCGIFMEDIA ioctl. We regard it alive.
+		 */
+		ifinfo->noifmedia = 1;
+		goto active;
+	}
+
+	if (ifmr.ifm_status & IFM_AVALID) {
+		switch(ifmr.ifm_active & IFM_NMASK) {
+		 case IFM_ETHER:
+			 if (ifmr.ifm_status & IFM_ACTIVE)
+				 goto active;
+			 else
+				 goto inactive;
+			 break;
+		 default:
+			 goto inactive;
+		}
+	}
+
+  inactive:
+	return(0);
+
+  active:
+	return(1);
 }

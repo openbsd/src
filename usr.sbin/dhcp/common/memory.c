@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: memory.c,v 1.2 2000/06/23 01:44:15 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: memory.c,v 1.3 2000/07/21 00:33:53 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -628,6 +628,8 @@ void release_lease (lease)
 	lt = *lease;
 	lt.ends = cur_time;
 	supersede_lease (lease, &lt, 1);
+	note ("Released lease for IP address %s",
+	      piaddr (lease -> ip_addr));
 }
 
 /* Abandon the specified lease for the specified time. sets it's 
