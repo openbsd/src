@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.20 2004/03/02 21:55:07 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.21 2004/03/05 20:39:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -130,6 +130,7 @@ struct wi_80211_hdr {
 #define WI_STYPE_CTL_ACK	0x00D0
 #define WI_STYPE_CTL_CFEND	0x00E0
 #define WI_STYPE_CTL_CFENDACK	0x00F0
+#define WI_STYPE_CTL_CFENDCFACK	WI_STYPE_CTL_CFENDACK
 
 #define WI_STYPE_DATA		0x0000
 #define WI_STYPE_DATA_CFACK	0x0010
@@ -633,18 +634,6 @@ struct wi_mgmt_deauth_hdr {
 /*
  * management definitions
  */
-#define WI_STYPE_MGMT_ASREQ	0x0000
-#define WI_STYPE_MGMT_ASRESP	0x0010
-#define WI_STYPE_MGMT_REASREQ	0x0020
-#define WI_STYPE_MGMT_REASRESP	0x0030
-#define WI_STYPE_MGMT_PROBEREQ	0x0040
-#define WI_STYPE_MGMT_PROBERESP	0x0050
-#define WI_STYPE_MGMT_BEACON	0x0080
-#define WI_STYPE_MGMT_ATIM	0x0090
-#define WI_STYPE_MGMT_DISAS	0x00A0
-#define WI_STYPE_MGMT_AUTH	0x00B0
-#define WI_STYPE_MGMT_DEAUTH	0x00C0
-
 #define WI_CAPINFO_ESS		0x01
 #define WI_CAPINFO_IBSS		0x02
 #define WI_CAPINFO_CFPOLL	0x04
@@ -671,18 +660,6 @@ struct wi_mgmt_deauth_hdr {
 #define WI_VAR_CHAL		16
 
 #define WI_VAR_SRATES_MASK	0x7F
-
-
-/*
- * control definitions
- */
-#define WI_STYPE_CTL_PSPOLL	0x00A0
-#define WI_STYPE_CTL_RTS	0x00B0
-#define WI_STYPE_CTL_CTS	0x00C0
-#define WI_STYPE_CTL_ACK	0x00D0
-#define WI_STYPE_CTL_CFEND	0x00E0
-#define WI_STYPE_CTL_CFENDCFACK	0x00F0
-
 
 /*
  * ap scanning structures
