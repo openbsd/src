@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.62 2002/04/25 08:55:16 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.63 2002/04/26 04:40:42 fgsch Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.62 2002/04/25 08:55:16 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.63 2002/04/26 04:40:42 fgsch Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,7 @@ static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.62 2002/04/25 08:55:16 ito
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq;
+struct	in_aliasreq	in_addreq;
 #ifdef INET6
 struct	in6_ifreq	ifr6;
 struct	in6_ifreq	in6_ridreq;
@@ -357,7 +358,7 @@ const struct afswtch {
 } afs[] = {
 #define C(x) ((caddr_t) &x)
 	{ "inet", AF_INET, in_status, in_getaddr, in_getprefix,
-	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
+	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(in_addreq) },
 #ifdef INET6
 	{ "inet6", AF_INET6, in6_status, in6_getaddr, in6_getprefix,
 	     SIOCDIFADDR_IN6, SIOCAIFADDR_IN6, C(in6_ridreq), C(in6_addreq) },
@@ -2178,8 +2179,8 @@ struct	in_addr inet_makeaddr();
 
 #define SIN(x) ((struct sockaddr_in *) &(x))
 struct sockaddr_in *sintab[] = {
-SIN(ridreq.ifr_addr), SIN(addreq.ifra_addr),
-SIN(addreq.ifra_mask), SIN(addreq.ifra_broadaddr)};
+SIN(ridreq.ifr_addr), SIN(in_addreq.ifra_addr),
+SIN(in_addreq.ifra_mask), SIN(in_addreq.ifra_broadaddr)};
 
 void
 in_getaddr(s, which)
