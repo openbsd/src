@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.13 2003/11/09 16:13:37 espie Exp $
+# $OpenBSD: pkg_add,v 1.14 2003/11/10 13:25:50 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -94,6 +94,8 @@ sub install
 
 package main;
 
+my $errors = 0;
+
 our ($opt_v, $opt_n, $opt_I);
 getopts('vnI');
 
@@ -119,6 +121,7 @@ sub can_install($)
 	while (my ($name, $l) = each %$conflict_list) {
 		if ($l->conflicts_with($pkgname)) {
 			print "package $pkgname conflicts with installed package $name\n";
+			$errors++;
 			return undef;
 		}
 	}
@@ -142,6 +145,7 @@ sub pre_add($)
 	my $handle = OpenBSD::PackageLocator->find($pkg);
 	if (!$handle) {
 		print "Can't find $pkg\n";
+		$errors++;
 		return undef;
 	}
 	my $dir = $handle->info();
@@ -149,12 +153,14 @@ sub pre_add($)
 	    OpenBSD::PackingList->fromfile($dir.CONTENTS);
 	unless (defined $plist) {
 		print "Can't find CONTENTS from $pkg\n";
+		$errors++;
 		return undef;
 	}
 	my $pkgname = OpenBSD::PackageName->new($plist->pkgname());
 	if (defined $pkgname1) {
 		if ($pkgname->{pkgname} ne $pkgname1->{pkgname}) {
 			print "Package name is not consistent ???\n";
+			$errors++;
 			return undef;
 		}
 	} else {
@@ -166,6 +172,7 @@ sub pre_add($)
 	$handle->{conflicts} = $l;
 	if ($l->conflicts_with(installed_packages())) {
 		print "package $pkg has conflicts\n";
+		$errors++;
 		return undef;
 	}
 	return $handle;
@@ -374,17 +381,13 @@ sub really_add($)
 my @todo = (@ARGV);
 my $cache={};
 
-my $errors = 0;
 MAINLOOP:
 while (my $pkg = shift @todo) {
 	if (!defined $cache->{$pkg}) {
 		$cache->{$pkg} = pre_add($pkg);
 	}
 	my $handle = $cache->{$pkg};
-	if (!defined $handle) {
-		$errors++;
-		next;
-	}
+	next unless defined $handle;
 
 	my $plist = $handle->{plist};
 
