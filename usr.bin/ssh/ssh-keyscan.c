@@ -8,10 +8,9 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.1 2000/12/04 19:24:02 markus Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.2 2000/12/06 19:57:48 markus Exp $");
 
 #include <sys/queue.h>
-#include <err.h>
 #include <errno.h>
 
 #include <ssl/bn.h>
@@ -524,7 +523,7 @@ nexthost(int argc, char **argv)
 					fname = argv[argno++];
 				if (!strcmp(fname, "-"))
 					fname = NULL;
-				lb = Linebuf_alloc(fname, warn);
+				lb = Linebuf_alloc(fname, error);
 			} else
 				error("ignoring invalid/misplaced option `%s'", argv[argno++]);
 		} else {
