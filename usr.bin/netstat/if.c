@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.29 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.30 2002/05/27 01:50:36 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.29 2002/02/16 21:27:50 millert Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.30 2002/05/27 01:50:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,9 +194,9 @@ intpr(interval, ifnetaddr)
 				 * keeps nets unshifted.
 				 */
 				in = inet_makeaddr(ifaddr.in.ia_subnet,
-					INADDR_ANY);
+				    INADDR_ANY);
 				cp = netname(in.s_addr,
-			    	    ifaddr.in.ia_subnetmask);
+				    ifaddr.in.ia_subnetmask);
 #else
 				cp = netname(ifaddr.in.ia_subnet,
 				    ifaddr.in.ia_subnetmask);
@@ -233,8 +233,8 @@ intpr(interval, ifnetaddr)
 #ifdef KAME_SCOPEID
 				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
 					sin6->sin6_scope_id =
-						ntohs(*(u_int16_t *)
-						  &sin6->sin6_addr.s6_addr[2]);
+					    ntohs(*(u_int16_t *)
+					      &sin6->sin6_addr.s6_addr[2]);
 					/* too little width */
 					if (!vflag)
 						sin6->sin6_scope_id = 0;
@@ -243,7 +243,7 @@ intpr(interval, ifnetaddr)
 				}
 #endif
 				cp = netname6(&ifaddr.in6.ia_addr,
-					&ifaddr.in6.ia_prefixmask.sin6_addr);
+				    &ifaddr.in6.ia_prefixmask.sin6_addr);
 				if (vflag)
 					n = strlen(cp) < 11 ? 11 : strlen(cp);
 				else
@@ -265,7 +265,7 @@ intpr(interval, ifnetaddr)
 						kread(multiaddr, (char *)&inm,
 						    sizeof inm);
 						inet_ntop(AF_INET6, &inm.in6m_addr,
-							hbuf, sizeof(hbuf));
+						    hbuf, sizeof(hbuf));
 						if (vflag)
 							n = strlen(hbuf) < 17 ? 17 : strlen(hbuf);
 						else

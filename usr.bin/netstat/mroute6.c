@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.3 2002/01/17 21:34:58 mickey Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.4 2002/05/27 01:50:36 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -172,7 +172,7 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 	banner_printed = 0;
 	for (i = 0; i < MF6CTBLSIZ; ++i) {
 		mfcp = mf6ctable[i];
-		while(mfcp) {
+		while (mfcp) {
 			kread((u_long)mfcp, (char *)&mfc, sizeof(mfc));
 			if (!banner_printed) {
 				printf ("\nIPv6 Multicast Forwarding Cache\n");
@@ -223,21 +223,21 @@ mrt6_stats(mrpaddr, mstaddr)
 	u_int mrtproto;
 	struct mrt6stat mrtstat;
 
-	if(mrpaddr == 0) {
+	if (mrpaddr == 0) {
 		printf("mrt6_stats: symbol not in namelist\n");
 		return;
 	}
 
 	kread(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
-	 case 0:
+	case 0:
 		 printf("no IPv6 multicast routing compiled into this system\n");
 		 return;
 
-	 case IPPROTO_PIM:
+	case IPPROTO_PIM:
 		 break;
 
-	 default:
+	default:
 		 printf("IPv6 multicast routing protocol %u, unknown\n",
 			mrtproto);
 		 return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.45 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.46 2002/05/27 01:50:36 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.45 2002/02/16 21:27:50 millert Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.46 2002/05/27 01:50:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -254,9 +254,9 @@ pr_rthdr(af)
 	if (Aflag)
 		printf("%-*.*s ", PLEN, PLEN, "Address");
 	printf("%-*.*s %-*.*s %-6.6s  %6.6s  %6.6s %6.6s  %s\n",
-		WID_DST(af), WID_DST(af), "Destination",
-		WID_GW(af), WID_GW(af), "Gateway",
-		"Flags", "Refs", "Use", "Mtu", "Interface");
+	    WID_DST(af), WID_DST(af), "Destination",
+	    WID_GW(af), WID_GW(af), "Gateway",
+	    "Flags", "Refs", "Use", "Mtu", "Interface");
 }
 
 /*
@@ -343,7 +343,7 @@ p_rtnode()
 		kget(rm, rmask);
 		snprintf(nbuf, sizeof nbuf, " %d refs, ", rmask.rm_refs);
 		printf(" mk = %16p {(%d),%s",
-			rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
+		    rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
 		p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask), 0, 0, -1);
 		putchar('}');
 		if ((rm = rmask.rm_mklist))
@@ -441,9 +441,9 @@ p_sockaddr(sa, mask, flags, width)
 		struct sockaddr_in *msin = (struct sockaddr_in *)mask;
 
 		cp = (sin->sin_addr.s_addr == 0) ? "default" :
-		      ((flags & RTF_HOST) || mask == NULL ?
-			routename(sin->sin_addr.s_addr) :
-			netname(sin->sin_addr.s_addr, msin->sin_addr.s_addr));
+		    ((flags & RTF_HOST) || mask == NULL ?
+		    routename(sin->sin_addr.s_addr) :
+		    netname(sin->sin_addr.s_addr, msin->sin_addr.s_addr));
 
 		break;
 	    }
@@ -461,17 +461,17 @@ p_sockaddr(sa, mask, flags, width)
 		 */
 		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(in6)) {
-		    /* XXX: override is ok? */
-		    sa6->sin6_scope_id = (u_int32_t)ntohs(*(u_short *)&in6->s6_addr[2]);
-		    *(u_short *)&in6->s6_addr[2] = 0;
+			/* XXX: override is ok? */
+			sa6->sin6_scope_id = (u_int32_t)ntohs(*(u_short *)
+			    &in6->s6_addr[2]);
+			*(u_short *)&in6->s6_addr[2] = 0;
 		}
 #endif
-
 		if (flags & RTF_HOST)
 			cp = routename6(sa6);
 		else if (mask) {
 			cp = netname6(sa6,
-				&((struct sockaddr_in6 *)mask)->sin6_addr);
+			    &((struct sockaddr_in6 *)mask)->sin6_addr);
 		} else
 			cp = netname6(sa6, NULL);
 		break;
@@ -508,7 +508,7 @@ p_sockaddr(sa, mask, flags, width)
 				    "%s%x", cplim, *lla);
 				cplim = ":";
 				if (n == -1)	/* What else to do ? */
-				  continue;
+					continue;
 				if (n >= workbuf + sizeof (workbuf) - cp)
 					n = workbuf + sizeof (workbuf) - cp - 1;
 				cp += n;
@@ -593,7 +593,7 @@ p_rtentry(rt)
 	struct sockaddr_storage sock1, sock2;
 	struct sockaddr *sa = (struct sockaddr *)&sock1;
 	struct sockaddr *mask = (struct sockaddr *)&sock2;
-	
+
 	bcopy(kgetsa(rt_key(rt)), sa, sizeof(struct sockaddr));
 	if (sa->sa_len > sizeof(struct sockaddr))
 		bcopy(kgetsa(rt_key(rt)), sa, sa->sa_len);
@@ -609,7 +609,7 @@ p_rtentry(rt)
 			bcopy(kgetsa(rt_mask(rt)), mask, sa->sa_len);
 	} else
 		mask = 0;
-	
+
 	p_sockaddr(sa, mask, rt->rt_flags, WID_DST(sa->sa_family));
 	p_sockaddr(kgetsa(rt->rt_gateway), 0, RTF_HOST, WID_GW(sa->sa_family));
 	p_flags(rt->rt_flags, "%-6.6s ");
@@ -630,22 +630,22 @@ p_rtentry(rt)
 	putchar('\n');
 	if (vflag) {
 		printf("\texpire   %10lu%c  recvpipe %10ld%c  "
-		       "sendpipe %10ld%c\n",
-			rt->rt_rmx.rmx_expire,
-			(rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ',
-			rt->rt_rmx.rmx_recvpipe,
-			(rt->rt_rmx.rmx_locks & RTV_RPIPE) ? 'L' : ' ',
-			rt->rt_rmx.rmx_sendpipe,
-			(rt->rt_rmx.rmx_locks & RTV_SPIPE) ? 'L' : ' ');
+		    "sendpipe %10ld%c\n",
+		    rt->rt_rmx.rmx_expire,
+		    (rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ',
+		    rt->rt_rmx.rmx_recvpipe,
+		    (rt->rt_rmx.rmx_locks & RTV_RPIPE) ? 'L' : ' ',
+		    rt->rt_rmx.rmx_sendpipe,
+		    (rt->rt_rmx.rmx_locks & RTV_SPIPE) ? 'L' : ' ');
 		printf("\tssthresh %10lu%c  rtt      %10ld%c  "
-		       "rttvar   %10ld%c\n",
-			rt->rt_rmx.rmx_ssthresh,
-			(rt->rt_rmx.rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
-			rt->rt_rmx.rmx_rtt,
-			(rt->rt_rmx.rmx_locks & RTV_RTT) ? 'L' : ' ',
-			rt->rt_rmx.rmx_rttvar,
-			(rt->rt_rmx.rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
-	}	
+		    "rttvar   %10ld%c\n",
+		    rt->rt_rmx.rmx_ssthresh,
+		    (rt->rt_rmx.rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
+		    rt->rt_rmx.rmx_rtt,
+		    (rt->rt_rmx.rmx_locks & RTV_RTT) ? 'L' : ' ',
+		    rt->rt_rmx.rmx_rttvar,
+		    (rt->rt_rmx.rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
+	}
 }
 
 char *
@@ -662,14 +662,14 @@ routename(in)
 		first = 0;
 		if (gethostname(domain, sizeof domain) == 0 &&
 		    (cp = strchr(domain, '.')))
-			(void) strcpy(domain, cp + 1);
+			(void) strlcpy(domain, cp + 1, sizeof domain);
 		else
-			domain[0] = 0;
+			domain[0] = '\0';
 	}
 	cp = 0;
 	if (!nflag) {
 		hp = gethostbyaddr((char *)&in, sizeof (struct in_addr),
-			AF_INET);
+		    AF_INET);
 		if (hp) {
 			if ((cp = strchr(hp->h_name, '.')) &&
 			    !strcmp(cp + 1, domain))
@@ -678,8 +678,7 @@ routename(in)
 		}
 	}
 	if (cp) {
-		strncpy(line, cp, sizeof(line) - 1);
-		line[sizeof(line) - 1] = '\0';
+		strlcpy(line, cp, sizeof(line));
 	} else {
 #define C(x)	((x) & 0xff)
 		in = ntohl(in);
@@ -710,8 +709,7 @@ netname(in, mask)
 	}
 	mbits = mask ? 33 - ffs(mask) : 0;
 	if (cp) {
-		strncpy(line, cp, sizeof(line) - 1);
-		line[sizeof(line) - 1] = '\0';
+		strlcpy(line, cp, sizeof(line));
 	} else if (mbits < 9)
 		snprintf(line, sizeof line, "%u/%d", C(in >> 24), mbits);
 	else if (mbits < 17)
@@ -722,7 +720,7 @@ netname(in, mask)
 		    C(in >> 24), C(in >> 16), C(in >> 8), mbits);
 	else
 		snprintf(line, sizeof line, "%u.%u.%u.%u/%d", C(in >> 24),
-			C(in >> 16), C(in >> 8), C(in), mbits);
+		    C(in >> 16), C(in >> 8), C(in), mbits);
 	return (line);
 }
 
@@ -747,7 +745,7 @@ netname6(sa6, mask)
 	int error;
 
 	sin6 = *sa6;
-	
+
 	masklen = 0;
 	lim = (u_char *)(mask + 1);
 	i = 0;
@@ -836,8 +834,8 @@ routename6(sa6)
 	const int niflag = NI_NUMERICHOST;
 #endif
 	if (getnameinfo((struct sockaddr *)sa6, sa6->sin6_len,
-			line, sizeof(line), NULL, 0, niflag) != 0)
-		strcpy(line, "");
+	    line, sizeof(line), NULL, 0, niflag) != 0)
+		strlcpy(line, "", sizeof line);
 	return line;
 }
 #endif /*INET6*/
@@ -858,15 +856,15 @@ rt_stats(off)
 	kread(off, (char *)&rtstat, sizeof (rtstat));
 	printf("routing:\n");
 	printf("\t%u bad routing redirect%s\n",
-		rtstat.rts_badredirect, plural(rtstat.rts_badredirect));
+	    rtstat.rts_badredirect, plural(rtstat.rts_badredirect));
 	printf("\t%u dynamically created route%s\n",
-		rtstat.rts_dynamic, plural(rtstat.rts_dynamic));
+	    rtstat.rts_dynamic, plural(rtstat.rts_dynamic));
 	printf("\t%u new gateway%s due to redirects\n",
-		rtstat.rts_newgateway, plural(rtstat.rts_newgateway));
+	    rtstat.rts_newgateway, plural(rtstat.rts_newgateway));
 	printf("\t%u destination%s found unreachable\n",
-		rtstat.rts_unreach, plural(rtstat.rts_unreach));
+	    rtstat.rts_unreach, plural(rtstat.rts_unreach));
 	printf("\t%u use%s of a wildcard route\n",
-		rtstat.rts_wildcard, plural(rtstat.rts_wildcard));
+	    rtstat.rts_wildcard, plural(rtstat.rts_wildcard));
 }
 
 short ns_nullh[] = {0,0,0};
@@ -905,7 +903,7 @@ ns_print(sa)
 	} else {
 		q = work.x_host.c_host;
 		snprintf(chost, sizeof chost, "%02x%02x%02x%02x%02x%02xH",
-			q[0], q[1], q[2], q[3], q[4], q[5]);
+		    q[0], q[1], q[2], q[3], q[4], q[5]);
 		for (p = chost; *p == '0' && p < chost + 12; p++)
 			continue;
 		host = p;
@@ -935,7 +933,8 @@ ns_phost(sa)
 	work.sns_addr.x_net = ns_zeronet;
 
 	p = ns_print((struct sockaddr *)&work);
-	if (strncmp("0H.", p, 3) == 0) p += 3;
+	if (strncmp("0H.", p, 3) == 0)
+		p += 3;
 	return(p);
 }
 
@@ -1002,7 +1001,8 @@ ipx_phost(sa)
 	work.sipx_addr.ipx_net = ipx_zeronet;
 
 	p = ipx_print((struct sockaddr *)&work);
-	if (strncmp("0H.", p, 3) == 0) p += 3;
+	if (strncmp("0H.", p, 3) == 0)
+		p += 3;
 	return(p);
 }
 
@@ -1022,97 +1022,84 @@ encap_print(rt)
 	bcopy(kgetsa(rt_mask(rt)), &sen2, sizeof(sen2));
 	bcopy(kgetsa(rt->rt_gateway), &sen3, sizeof(sen3));
 
-	if (sen1.sen_type == SENT_IP4)
-	{
-	    printf("%-18s %-5u ", netname(sen1.sen_ip_src.s_addr,
-					  sen2.sen_ip_src.s_addr),
-		   ntohs(sen1.sen_sport));
-
-	    printf("%-18s %-5u %-5u ", netname(sen1.sen_ip_dst.s_addr,
-					       sen2.sen_ip_dst.s_addr),
-		   ntohs(sen1.sen_dport), sen1.sen_proto);
+	if (sen1.sen_type == SENT_IP4) {
+		printf("%-18s %-5u ", netname(sen1.sen_ip_src.s_addr,
+		    sen2.sen_ip_src.s_addr), ntohs(sen1.sen_sport));
+		printf("%-18s %-5u %-5u ", netname(sen1.sen_ip_dst.s_addr,
+		    sen2.sen_ip_dst.s_addr),
+		    ntohs(sen1.sen_dport), sen1.sen_proto);
 	}
 
 #ifdef INET6
-	if (sen1.sen_type == SENT_IP6)
-	{
-	    bzero(&s61, sizeof(s61));
-	    bzero(&s62, sizeof(s62));
-	    s61.sin6_family = s62.sin6_family = AF_INET6;
-	    s61.sin6_len = s62.sin6_len = sizeof(s61);
-	    bcopy(&sen1.sen_ip6_src, &s61.sin6_addr, sizeof(struct in6_addr));
-	    bcopy(&sen2.sen_ip6_src, &s62.sin6_addr, sizeof(struct in6_addr));
+	if (sen1.sen_type == SENT_IP6) {
+		bzero(&s61, sizeof(s61));
+		bzero(&s62, sizeof(s62));
+		s61.sin6_family = s62.sin6_family = AF_INET6;
+		s61.sin6_len = s62.sin6_len = sizeof(s61);
+		bcopy(&sen1.sen_ip6_src, &s61.sin6_addr, sizeof(struct in6_addr));
+		bcopy(&sen2.sen_ip6_src, &s62.sin6_addr, sizeof(struct in6_addr));
 
-	    printf("%-42s %-5u ", netname6(&s61, &s62.sin6_addr),
-		   ntohs(sen1.sen_ip6_sport));
+		printf("%-42s %-5u ", netname6(&s61, &s62.sin6_addr),
+		    ntohs(sen1.sen_ip6_sport));
 
-	    bzero(&s61, sizeof(s61));
-	    bzero(&s62, sizeof(s62));
-	    s61.sin6_family = s62.sin6_family = AF_INET6;
-	    s61.sin6_len = s62.sin6_len = sizeof(s61);
-	    bcopy(&sen1.sen_ip6_dst, &s61.sin6_addr, sizeof(struct in6_addr));
-	    bcopy(&sen2.sen_ip6_dst, &s62.sin6_addr, sizeof(struct in6_addr));
+		bzero(&s61, sizeof(s61));
+		bzero(&s62, sizeof(s62));
+		s61.sin6_family = s62.sin6_family = AF_INET6;
+		s61.sin6_len = s62.sin6_len = sizeof(s61);
+		bcopy(&sen1.sen_ip6_dst, &s61.sin6_addr, sizeof(struct in6_addr));
+		bcopy(&sen2.sen_ip6_dst, &s62.sin6_addr, sizeof(struct in6_addr));
 
-	    printf("%-42s %-5u %-5u ", netname6(&s61, &s62.sin6_addr),
-		   ntohs(sen1.sen_ip6_dport), sen1.sen_ip6_proto);
+		printf("%-42s %-5u %-5u ", netname6(&s61, &s62.sin6_addr),
+		    ntohs(sen1.sen_ip6_dport), sen1.sen_ip6_proto);
 	}
 #endif /* INET6 */
 
-	if (sen3.sen_type == SENT_IPSP)
-	{
-	    char hostn[NI_MAXHOST];
+	if (sen3.sen_type == SENT_IPSP) {
+		char hostn[NI_MAXHOST];
 
-	    kget(sen3.sen_ipsp, ipo);
+		kget(sen3.sen_ipsp, ipo);
 
-	    getnameinfo(&ipo.ipo_dst.sa, ipo.ipo_dst.sa.sa_len,
-			hostn, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-	    printf("%s", hostn);
+		getnameinfo(&ipo.ipo_dst.sa, ipo.ipo_dst.sa.sa_len,
+		    hostn, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+		printf("%s", hostn);
+		printf("/%-u", ipo.ipo_sproto);
 
-	    printf("/%-u", ipo.ipo_sproto);
-
-	    switch (ipo.ipo_type)
-	    {
+		switch (ipo.ipo_type) {
 		case IPSP_IPSEC_REQUIRE:
-		    printf("/require");
-		    break;
-
+			printf("/require");
+			break;
 		case IPSP_IPSEC_ACQUIRE:
-		    printf("/acquire");
-		    break;
-
+			printf("/acquire");
+			break;
 		case IPSP_IPSEC_USE:
-		    printf("/use");
-		    break;
-
+			printf("/use");
+			break;
 		case IPSP_IPSEC_DONTACQ:
-		    printf("/dontacq");
-		    break;
-
+			printf("/dontacq");
+			break;
 		case IPSP_PERMIT:
-		    printf("/permit");
-		    break;
-
+			printf("/permit");
+			break;
 		case IPSP_DENY:
-		    printf("/deny");
-		    break;
-
+			printf("/deny");
+			break;
 		default:
-		    printf("/<unknown type!>");
-	    }
+			printf("/<unknown type!>");
+			break;
+		}
 
-	    if ((ipo.ipo_addr.sen_type == SENT_IP4 &&
-		 ipo.ipo_addr.sen_direction == IPSP_DIRECTION_IN) ||
-		(ipo.ipo_addr.sen_type == SENT_IP6 &&
-		 ipo.ipo_addr.sen_ip6_direction == IPSP_DIRECTION_IN))
-	      printf("/in\n");
-	    else
-	      if ((ipo.ipo_addr.sen_type == SENT_IP4 &&
-		   ipo.ipo_addr.sen_direction == IPSP_DIRECTION_OUT) ||
-		  (ipo.ipo_addr.sen_type == SENT_IP6 &&
-		   ipo.ipo_addr.sen_ip6_direction == IPSP_DIRECTION_OUT))
-		printf("/out\n");
-	      else
-		printf("/<unknown>\n");
+		if ((ipo.ipo_addr.sen_type == SENT_IP4 &&
+		    ipo.ipo_addr.sen_direction == IPSP_DIRECTION_IN) ||
+		    (ipo.ipo_addr.sen_type == SENT_IP6 &&
+		    ipo.ipo_addr.sen_ip6_direction == IPSP_DIRECTION_IN))
+			printf("/in\n");
+		else if ((ipo.ipo_addr.sen_type == SENT_IP4 &&
+		    ipo.ipo_addr.sen_direction == IPSP_DIRECTION_OUT) ||
+		    (ipo.ipo_addr.sen_type == SENT_IP6 &&
+		    ipo.ipo_addr.sen_ip6_direction == IPSP_DIRECTION_OUT))
+			printf("/out\n");
+		else
+			printf("/<unknown>\n");
 	}
 }
 
@@ -1121,9 +1108,16 @@ upHex(p0)
 	char *p0;
 {
 	char *p = p0;
-	for (; *p; p++) switch (*p) {
 
-	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-		*p += ('A' - 'a');
+	for (; *p; p++)
+		switch (*p) {
+		case 'a':
+		case 'b':
+		case 'c':
+		case 'd':
+		case 'e':
+		case 'f':
+			*p += ('A' - 'a');
+			break;
 	}
 }

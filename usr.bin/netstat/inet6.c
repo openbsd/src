@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.19 2002/02/19 18:38:02 mpech Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.20 2002/05/27 01:50:36 deraadt Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.19 2002/02/19 18:38:02 mpech Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.20 2002/05/27 01:50:36 deraadt Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -361,9 +361,9 @@ ip6_stats(off, name)
 	printf("%s:\n", name);
 
 #define	p(f, m) if (ip6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ip6stat.f, plural(ip6stat.f))
+	printf(m, (unsigned long long)ip6stat.f, plural(ip6stat.f))
 #define	p1(f, m) if (ip6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ip6stat.f)
+	printf(m, (unsigned long long)ip6stat.f)
 
 	p(ip6s_total, "\t%llu total packet%s received\n");
 	p1(ip6s_toosmall, "\t%llu with size smaller than minimum\n");
@@ -418,8 +418,8 @@ ip6_stats(off, name)
 				first = 0;
 			}
 			printf("\t\t\t%s = %llu\n",
-			       if_indextoname(i, ifbuf),
-			       (unsigned long long)ip6stat.ip6s_m2m[i]);
+			    if_indextoname(i, ifbuf),
+			    (unsigned long long)ip6stat.ip6s_m2m[i]);
 		}
 	}
 	p(ip6s_mext1, "\t\t%llu one ext mbuf%s\n");
@@ -447,12 +447,12 @@ ip6_stats(off, name)
 			break;\
 		default:\
 			printf("\t\t%llu addresses scope=%x\n",\
-			       (unsigned long long)ip6stat.s, i);\
+			    (unsigned long long)ip6stat.s, i);\
 		}\
 	} while(0);
 
 	p(ip6s_sources_none,
-	  "\t%llu failure%s of source address selection\n");
+	    "\t%llu failure%s of source address selection\n");
 	for (first = 1, i = 0; i < 16; i++) {
 		if (ip6stat.ip6s_sources_sameif[i]) {
 			if (first) {
@@ -514,18 +514,19 @@ ip6_ifstats(ifname)
 {
 	struct in6_ifreq ifr;
 	int s;
+
 #define	p(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ifr.ifr_ifru.ifru_stat.f, \
-	plural(ifr.ifr_ifru.ifru_stat.f))
+	printf(m, (unsigned long long)ifr.ifr_ifru.ifru_stat.f, \
+	    plural(ifr.ifr_ifru.ifru_stat.f))
 #define	p_5(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ip6stat.f)
+	printf(m, (unsigned long long)ip6stat.f)
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		perror("Warning: socket(AF_INET6)");
 		return;
 	}
 
-	strcpy(ifr.ifr_name, ifname);
+	strlcpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
 	printf("ip6 on %s:\n", ifr.ifr_name);
 
 	if (ioctl(s, SIOCGIFSTAT_IN6, (char *)&ifr) < 0) {
@@ -542,10 +543,10 @@ ip6_ifstats(ifname)
 	p(ifs6_in_protounknown, "\t%llu datagram%s with unknown proto received\n");
 	p(ifs6_in_discard, "\t%llu input datagram%s discarded\n");
 	p(ifs6_in_deliver,
-	  "\t%llu datagram%s delivered to an upper layer protocol\n");
+	    "\t%llu datagram%s delivered to an upper layer protocol\n");
 	p(ifs6_out_forward, "\t%llu datagram%s forwarded to this interface\n");
 	p(ifs6_out_request,
-	  "\t%llu datagram%s sent from an upper layer protocol\n");
+	    "\t%llu datagram%s sent from an upper layer protocol\n");
 	p(ifs6_out_discard, "\t%llu total discarded output datagram%s\n");
 	p(ifs6_out_fragok, "\t%llu output datagram%s fragmented\n");
 	p(ifs6_out_fragfail, "\t%llu output datagram%s failed on fragment\n");
@@ -839,9 +840,9 @@ icmp6_stats(off, name)
 	printf("%s:\n", name);
 
 #define	p(f, m) if (icmp6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)icmp6stat.f, plural(icmp6stat.f))
+	printf(m, (unsigned long long)icmp6stat.f, plural(icmp6stat.f))
 #define p_5(f, m) if (icmp6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)icmp6stat.f)
+	printf(m, (unsigned long long)icmp6stat.f)
 
 	p(icp6s_error, "\t%llu call%s to icmp6_error\n");
 	p(icp6s_canterror,
@@ -907,16 +908,17 @@ icmp6_ifstats(ifname)
 {
 	struct in6_ifreq ifr;
 	int s;
+
 #define	p(f, m) if (ifr.ifr_ifru.ifru_icmp6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ifr.ifr_ifru.ifru_icmp6stat.f, \
-	plural(ifr.ifr_ifru.ifru_icmp6stat.f))
+	printf(m, (unsigned long long)ifr.ifr_ifru.ifru_icmp6stat.f, \
+	    plural(ifr.ifr_ifru.ifru_icmp6stat.f))
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		perror("Warning: socket(AF_INET6)");
 		return;
 	}
 
-	strcpy(ifr.ifr_name, ifname);
+	strlcpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
 	printf("icmp6 on %s:\n", ifr.ifr_name);
 
 	if (ioctl(s, SIOCGIFSTAT_ICMP6, (char *)&ifr) < 0) {
@@ -981,7 +983,8 @@ pim6_stats(off, name)
 	printf("%s:\n", name);
 
 #define	p(f, m) if (pim6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)pim6stat.f, plural(pim6stat.f))
+	printf(m, (unsigned long long)pim6stat.f, plural(pim6stat.f))
+
 	p(pim6s_rcv_total, "\t%llu message%s received\n");
 	p(pim6s_rcv_tooshort, "\t%llu message%s received with too few bytes\n");
 	p(pim6s_rcv_badsum, "\t%llu message%s received with bad checksum\n");
@@ -1019,7 +1022,7 @@ do {\
 	width = Aflag ? 12 : 16;
 	if (vflag && width < strlen(inet6name(in6)))
 		width = strlen(inet6name(in6));
-	sprintf(line, "%.*s.", width, inet6name(in6));
+	snprintf(line, sizeof line, "%.*s.", width, inet6name(in6));
 	cp = index(line, '\0');
 	if (!nflag && port)
 		GETSERVBYPORT6(port, proto, sp);
@@ -1060,9 +1063,9 @@ inet6name(in6p)
 		first = 0;
 		if (gethostname(domain, sizeof(domain)) == 0 &&
 		    (cp = index(domain, '.')))
-			(void) strcpy(domain, cp + 1);
+			(void) strlcpy(domain, cp + 1, sizeof domain);
 		else
-			domain[0] = 0;
+			domain[0] = '\0';
 	}
 	cp = 0;
 	if (!nflag && !IN6_IS_ADDR_UNSPECIFIED(in6p)) {
@@ -1086,14 +1089,14 @@ inet6name(in6p)
 #ifdef KAME_SCOPEID
 		if (IN6_IS_ADDR_LINKLOCAL(in6p)) {
 			sin6.sin6_scope_id =
-				ntohs(*(u_int16_t *)&in6p->s6_addr[2]);
+			    ntohs(*(u_int16_t *)&in6p->s6_addr[2]);
 			sin6.sin6_addr.s6_addr[2] = 0;
 			sin6.sin6_addr.s6_addr[3] = 0;
 		}
 #endif
 		if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-				hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
-			strcpy(hbuf, "?");
+		    hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
+			strlcpy(hbuf, "?", sizeof hbuf);
 		strlcpy(line, hbuf, sizeof(line));
 	}
 	return (line);

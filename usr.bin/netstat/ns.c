@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns.c,v 1.7 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: ns.c,v 1.8 2002/05/27 01:50:36 deraadt Exp $	*/
 /*	$NetBSD: ns.c,v 1.8 1995/10/03 21:42:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ns.c,v 1.7 2002/02/16 21:27:50 millert Exp $";
+static char *rcsid = "$OpenBSD: ns.c,v 1.8 2002/05/27 01:50:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,8 +124,8 @@ nsprotopr(off, name)
 			if (isspp) {
 				kread(ppcb, (char *)&sppcb, sizeof (sppcb));
 			} else continue;
-		} else
-			if (isspp) continue;
+		} else if (isspp)
+			continue;
 		if (first) {
 			printf("Active NS connections");
 			if (aflag)
@@ -241,7 +241,7 @@ spp_stats(off, name)
 	ANY(sppstat.spps_rcvwinupd, "rcvd window update packet", "");
 }
 #undef ANY
-#define ANY(x,y,z)  ((x) ? printf("\t%d %s%s%s\n",x,y,plural(x),z) : 0)
+#define ANY(x,y,z)	((x) ? printf("\t%d %s%s%s\n",x,y,plural(x),z) : 0)
 
 /*
  * Dump IDP statistics structure.
@@ -305,7 +305,7 @@ nserr_stats(off, name)
 		" received incomplete");
 	ANY(ns_errstat.ns_es_badcode, "error packet",
 		" received of unknown type");
-	for(j = 0; j < NS_ERR_MAX; j ++) {
+	for (j = 0; j < NS_ERR_MAX; j ++) {
 		z = ns_errstat.ns_es_outhist[j];
 		if (z && histoprint) {
 			printf("Output Error Histogram:\n");
@@ -315,7 +315,7 @@ nserr_stats(off, name)
 
 	}
 	histoprint = 1;
-	for(j = 0; j < NS_ERR_MAX; j ++) {
+	for (j = 0; j < NS_ERR_MAX; j ++) {
 		z = ns_errstat.ns_es_inhist[j];
 		if (z && histoprint) {
 			printf("Input Error Histogram:\n");
@@ -333,13 +333,13 @@ ns_erputil(z, c)
 	char codebuf[30];
 	char *name, *where;
 
-	for(j = 0;; j ++) {
+	for (j = 0;; j ++) {
 		if ((name = ns_errnames[j].name) == 0)
 			break;
 		if (ns_errnames[j].code == c)
 			break;
 	}
-	if (name == 0)  {
+	if (name == 0) {
 		if (c > 01000)
 			where = "in transit";
 		else
@@ -348,7 +348,7 @@ ns_erputil(z, c)
 		    "Unknown XNS error code 0%o", c);
 		name = codebuf;
 	} else
-		where =  ns_errnames[j].where;
+		where = ns_errnames[j].where;
 	ANY(z, name, where);
 }
 
