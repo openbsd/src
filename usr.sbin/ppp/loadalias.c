@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: loadalias.c,v 1.5 1998/04/25 05:06:21 todd Exp $
+ *	$Id: loadalias.c,v 1.6 1998/04/25 09:23:22 brian Exp $
  */
 
 #include <sys/param.h>
@@ -87,12 +87,13 @@ loadAliasHandlers(struct aliasHandlers * h)
 
   path = _PATH_ALIAS_PREFIX;
   env = getenv("_PATH_ALIAS_PREFIX");
-  if (env)
+  if (env) {
     if (ID0realuid() == 0)
       path = env;
     else
       LogPrintf(LogALERT, "Ignoring environment _PATH_ALIAS_PREFIX"
                 " value (%s)\n", env);
+  }
 
   dl = dlopen(path, RTLD_NOW);
   if (dl == (void *) 0) {
