@@ -2,7 +2,7 @@
 
 machine		sparc
 options		SUN4M
-options		MMU_3L
+#options		MMU_3L
 #options	DDB,DEBUG,DIAGNOSTIC
 
 # obsolete timezone spec
