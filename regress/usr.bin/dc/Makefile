@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.3 2003/10/22 12:17:56 otto Exp $
+# $OpenBSD: Makefile,v 1.4 2003/11/04 08:11:41 otto Exp $
 
 DC=dc
 
-REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11
+REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11 t12
 
 # .in: input file
 # .out: desired result
@@ -16,6 +16,8 @@ REGRESS_TARGETS=t1 t2 t4 t5 t6 t7 t8 t9 t10 t11
 # t8: bc output, array operations
 # t9: output for different bases and wrapping of long lines
 # t10: test J and M operators
+# t11: test extended comparison operators
+# t12: test r operator, prints two "stack empty" warnings
 
 all: clean ${REGRESS_TARGET}
 
