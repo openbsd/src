@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.3 1997/11/11 04:47:27 flipk Exp $
+.\"	$OpenBSD: dbopen.3,v 1.4 1999/01/11 11:14:47 deraadt Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -44,6 +44,7 @@
 .Nd database access methods
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
+.Fd #include <fcntl.h>
 .Fd #include <limits.h>
 .Fd #include <db.h>
 .Fo "DB * dbopen"
