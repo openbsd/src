@@ -1,7 +1,7 @@
 /*
  * Русские праздники и памятные даты
  *
- * $OpenBSD: calendar.common,v 1.6 2002/08/26 15:44:53 mickey Exp $
+ * $OpenBSD: calendar.common,v 1.7 2002/08/26 15:48:21 mickey Exp $
  */
 
 #ifndef _ru_RU_KOI8_R_common_
@@ -147,4 +147,3 @@ BODUN=Бодун на утро от:
 12/Sun+3	День энергетика
 
 #endif /* !_ru_RU_KOI8_R_common_ */
-

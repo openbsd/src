@@ -1,7 +1,7 @@
 /*
  * Православные праздники
  *
- * $OpenBSD: calendar.orthodox,v 1.4 2002/08/04 05:53:00 mickey Exp $
+ * $OpenBSD: calendar.orthodox,v 1.5 2002/08/26 15:48:21 mickey Exp $
  */
 
 #ifndef _ru_RU_KOI8_R_orthodox_
@@ -53,4 +53,3 @@ Paskha+63	Рождество честного славного Пророка,
 08/28	Успение Пресвятой Богородицы
 
 #endif /* !_ru_RU_KOI8_R_orthodox_ */
-
