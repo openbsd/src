@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.13 2001/01/29 01:58:10 niklas Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.14 2001/05/03 20:40:22 art Exp $	*/
 
 /*
  * POSIX terminal I/O.
@@ -213,13 +213,12 @@ panic(s)
 	exit(1);
 }
 
-#ifndef NO_DPROMPT
 /*
- * A program to return TRUE if we wait for 2 seconds without anything
- * happening, else return FALSE.  Cribbed from mod.sources xmodem.
+ * This function returns FALSE if any characters have showed up on the
+ * tty before 'msec' miliseconds.
  */
 int
-ttwait()
+ttwait(int msec)
 {
 	fd_set		readfds;
 	struct timeval	tmout;
@@ -227,11 +226,10 @@ ttwait()
 	FD_ZERO(&readfds);   
 	FD_SET(0, &readfds);
 
-	tmout.tv_sec = 2;
-	tmout.tv_usec = 0;
+	tmout.tv_sec = msec/1000;
+	tmout.tv_usec = msec - tmout.tv_sec * 1000;
 
 	if ((select(1, &readfds, NULL, NULL, &tmout)) == 0)
 		return (TRUE);
 	return (FALSE);
 }
-#endif /* NO_DPROMPT */

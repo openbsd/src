@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.8 2001/05/03 12:57:22 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.9 2001/05/03 20:40:22 art Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -300,7 +300,7 @@ int	 ttcooked		__P((void));
 int	 ttputc			__P((int));
 VOID	 ttflush		__P((void));
 int	 ttgetc			__P((void));
-int	 ttwait			__P((void));
+int	 ttwait			__P((int));
 VOID	 setttysize		__P((void));
 int	 typeahead		__P((void));
 
