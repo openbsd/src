@@ -1,10 +1,6 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 2001/09/05 22:27:41 art Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2001/09/11 17:35:46 jason Exp $
 
-SUBDIR+= libiberty libio libf2c libobjc
-
-.if (${MACHINE_ARCH} != "sparc64")
-SUBDIR+= libstdc++
-.endif
+SUBDIR+= libiberty libio libstdc++ libf2c libobjc
 
 # just so that the main directory will have a subdir, which simplifies
 # libf2c/libobjc build 
