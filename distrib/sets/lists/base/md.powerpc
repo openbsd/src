@@ -1694,10 +1694,6 @@
 ./usr/mdec/mbr
 ./usr/mdec/msdos1mb.gz
 ./usr/mdec/ofwboot
-./usr/powerpc-unknown-openbsd2.8
-./usr/powerpc-unknown-openbsd2.8/bin
-./usr/powerpc-unknown-openbsd2.8/lib
-./usr/powerpc-unknown-openbsd2.8/lib/ldscripts
 ./usr/sbin/wsconscfg
 ./usr/share/info/as.info
 ./usr/share/info/as.info-1
