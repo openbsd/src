@@ -94,7 +94,7 @@ login_fbtab(tty, uid, gid)
 			*cp = 0;	/* strip comment */
 		if ((cp = devname = strtok(buf, WSPACE)) == 0)
 			continue;	/* empty or comment */
-		if (strncmp(devname, "/dev/", sizeof("/dev/")) != 0 ||
+		if (strncmp(devname, "/dev/", sizeof("/dev/")-1) != 0 ||
 		    (cp = strtok((char *) 0, WSPACE)) == 0 ||
 		    *cp != '0' ||
 		    sscanf(cp, "%o", &prot) == 0 ||
