@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.10 2000/05/01 21:49:40 deraadt Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.11 2000/05/29 01:07:49 angelos Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ main(argc, argv)
 						    msqptr->msg_lrpid);
 
 					if (option & TIME)
-						printf("%s %s %s",
+						printf(" %s %s %s",
 						    stime_buf,
 						    rtime_buf,
 						    ctime_buf);
@@ -401,7 +401,7 @@ main(argc, argv)
 						    shmptr->shm_lpid);
 
 					if (option & TIME)
-						printf("%s %s %s",
+						printf(" %s %s %s",
 						    atime_buf,
 						    dtime_buf,
 						    ctime_buf);
@@ -494,7 +494,7 @@ main(argc, argv)
 						    semaptr->sem_nsems);
 
 					if (option & TIME)
-						printf("%s %s",
+						printf(" %s %s",
 						    otime_buf,
 						    ctime_buf);
 
