@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.210 2002/06/18 12:50:55 nate Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.211 2002/07/19 17:30:50 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -315,6 +315,7 @@ int allowaperture = 0;
 void	winchip_cpu_setup(const char *, int, int);
 void	cyrix3_cpu_setup(const char *, int, int);
 void	cyrix6x86_cpu_setup(const char *, int, int);
+void	natsem6x86_cpu_setup(const char *, int, int);
 void	intel586_cpu_setup(const char *, int, int);
 void	intel686_cpu_setup(const char *, int, int);
 char *	intel686_cpu_name(int);
@@ -955,7 +956,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0,
 				"M1 class"	/* Default */
 			},
-			cyrix6x86_cpu_setup
+			natsem6x86_cpu_setup
 		} }
 	}
 };
@@ -1059,8 +1060,21 @@ cyrix6x86_cpu_setup(cpu_device, model, step)
 		break;	/* fallthrough? */
 	case 4:
 		clock_broken_latch = 1;
+		cpu_feature &= ~CPUID_TSC;
 		break;
 	}
+#endif
+}
+
+void
+natsem6x86_cpu_setup(cpu_device, model, step)
+	const char *cpu_device;
+	int model, step;
+{
+#if defined(I586_CPU) || defined(I686_CPU)
+	extern int clock_broken_latch;
+
+	clock_broken_latch = 1;
 #endif
 }
 
