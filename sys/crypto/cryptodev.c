@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.8 2001/05/16 12:54:34 ho Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.9 2001/06/11 22:44:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -56,7 +56,7 @@ struct csession {
 	u_int32_t	cipher;
 	caddr_t		key;
 	int		keylen;
-	u_char		tmp_iv[16];		/* XXX MAX_IV_SIZE */
+	u_char		tmp_iv[EALG_MAX_BLOCK_LEN];
 
 	u_int32_t	mac;
 	caddr_t		mackey;
@@ -103,7 +103,8 @@ static struct fileops cryptofops = {
 struct	csession *csefind(struct fcrypt *, u_int);
 int	csedelete(struct fcrypt *, struct csession *);
 struct	csession *cseadd(struct fcrypt *, struct csession *);
-struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, caddr_t);
+struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, caddr_t, u_int32_t,
+	    u_int32_t);
 void	csefree(struct csession *);
 
 int	crypto_op(struct csession *, struct crypt_op *, struct proc *);
@@ -231,7 +232,8 @@ bail:
 			return (error);
 		}
 
-		cse = csecreate(fcr, sid, crie.cri_key, cria.cri_key);
+		cse = csecreate(fcr, sid, crie.cri_key, cria.cri_key,
+		    sop->cipher, sop->mac);
 		sop->ses = cse->ses;
 		break;
 	case CIOCFSESSION:
@@ -244,6 +246,7 @@ bail:
 		csefree(cse);
 		break;
 	case CIOCCRYPT:
+		cop = (struct crypt_op *)data;
 		cse = csefind(fcr, cop->ses);
 		if (cse == NULL)
 			return (EINVAL);
@@ -282,8 +285,10 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		cse->uio.uio_resid += cse->uio.uio_iov[0].iov_len;
 
 	crp = crypto_getreq((cse->cipher > 0) + (cse->mac > 0));
-	if (crp == NULL)
+	if (crp == NULL) {
+		error = ENOMEM;
 		goto bail;
+	}
 
 	if (cse->mac) {
 		crda = crp->crp_desc;
@@ -312,6 +317,10 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	}
 
 	if (crde) {
+		if (cop->op == COP_ENCRYPT)
+			crde->crd_flags |= CRD_F_ENCRYPT;
+		else
+			crde->crd_flags &= ~CRD_F_ENCRYPT;
 		crde->crd_skip = 0;
 		crde->crd_len = cop->len;
 		crde->crd_inject = 0;	/* ??? */
@@ -335,6 +344,8 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		}
 		if ((error = copyin(cop->iv, cse->tmp_iv, 8)))	/* XXX sop->iv_size? */
 			goto bail;
+		bcopy(cse->tmp_iv, crde->crd_iv, 8);
+		crde->crd_flags |= CRD_F_IV_EXPLICIT;
 	}
 
 	if (cop->mac) {
@@ -354,8 +365,10 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 		goto bail;
 	}
 
-	if (cse->error)
+	if (cse->error) {
+		error = cse->error;
 		goto bail;
+	}
 
 	if ((error = copyout(cse->uio.uio_iov[0].iov_base, cop->dst, cop->len)))
 		goto bail;
@@ -495,6 +508,7 @@ cryptoioctl(dev, cmd, data, flag, p)
 		MALLOC(fcr, struct fcrypt *,
 		    sizeof(struct fcrypt), M_XDATA, M_WAITOK);
 		TAILQ_INIT(&fcr->csessions);
+		fcr->sesn = 0;
 
 		error = falloc(p, &f, &fd);
 
@@ -558,7 +572,8 @@ cseadd(struct fcrypt *fcr, struct csession *cse)
 }
 
 struct csession *
-csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, caddr_t mackey)
+csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, caddr_t mackey,
+    u_int32_t cipher, u_int32_t mac)
 {
 	struct csession *cse;
 
@@ -567,6 +582,8 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, caddr_t mackey)
 	cse->key = key;
 	cse->mackey = mackey;
 	cse->sid = sid;
+	cse->cipher = cipher;
+	cse->mac = mac;
 	cseadd(fcr, cse);
 	return (cse);
 }
