@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.4 1998/09/03 06:24:19 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.5 1998/09/04 12:58:12 maja Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -165,7 +165,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static char rcsid[] =
-	"$Id: if_xl.c,v 1.4 1998/09/03 06:24:19 jason Exp $";
+	"$Id: if_xl.c,v 1.5 1998/09/04 12:58:12 maja Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -1288,6 +1288,9 @@ static void xl_mediacheck(sc)
 		sc->xl_media = XL_MEDIAOPT_BT4;
 		printf("xl%d: guessing 100BaseT4/MII\n", sc->xl_unit);
 		break;
+#if defined(__OpenBSD__)
+	case PCI_PRODUCT_3COM_3C980TX:		/* 3c980-TX */
+#endif 
 	case TC_DEVICEID_CYCLONE_10_100BT:	/* 3c905B-TX */
 		sc->xl_media = XL_MEDIAOPT_BTX;
 		printf("xl%d: guessing 10/100 internal\n", sc->xl_unit);
@@ -2800,6 +2803,7 @@ xl_probe(parent, match, aux)
 	case PCI_PRODUCT_3COM_3C905T4:
 	case PCI_PRODUCT_3COM_3C905BTX:
 	case PCI_PRODUCT_3COM_3C905BT4:
+	case PCI_PRODUCT_3COM_3C980TX:
 		return (1);
 	}
 					
