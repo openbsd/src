@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.4 1996/07/13 11:01:21 mickey Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.5 1996/11/12 08:31:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -185,6 +185,10 @@ ether_encap_print(u_short ethertype, const u_char *p, int length, int caplen)
 
 	case ETHERTYPE_AARP:
 		aarp_print(p, length);
+		return (1);
+
+	case ETHERTYPE_8022:
+		netbios_print(p, length);
 		return (1);
 
 	case ETHERTYPE_LAT:
