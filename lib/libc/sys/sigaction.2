@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.28 2001/08/06 10:42:26 mpech Exp $
+.\"	$OpenBSD: sigaction.2,v 1.29 2001/11/07 18:46:58 deraadt Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -436,6 +436,10 @@ signal-catching functions:
 .\" .Fn sem_post ,
 .\" .Fn timer_settime .
 .Ed
+.Pp
+Please see
+.Xr signal 3
+for a more detailed list.
 .Pp
 All functions not in the above list are considered to be unsafe
 with respect to signals.
