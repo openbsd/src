@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.23 2004/04/07 15:47:52 mickey Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.24 2004/05/07 01:42:48 tedu Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -923,7 +923,7 @@ void rl_start(ifp)
 		 * Transmit the frame.
 		 */
 		CSR_WRITE_4(sc, RL_CUR_TXADDR(sc),
-		    vtophys(mtod(RL_CUR_TXMBUF(sc), caddr_t)));
+		    vtophys(mtod(RL_CUR_TXMBUF(sc), vaddr_t)));
 		CSR_WRITE_4(sc, RL_CUR_TXSTAT(sc),
 		    RL_TXTHRESH(sc->rl_txthresh) |
 		    RL_CUR_TXMBUF(sc)->m_pkthdr.len);
@@ -968,7 +968,7 @@ void rl_init(xsc)
 	}
 
 	/* Init the RX buffer pointer register. */
-	CSR_WRITE_4(sc, RL_RXADDR, vtophys(sc->rl_cdata.rl_rx_buf));
+	CSR_WRITE_4(sc, RL_RXADDR, vtophys((vaddr_t)sc->rl_cdata.rl_rx_buf));
 
 	/* Init TX descriptors. */
 	rl_list_tx_init(sc);
