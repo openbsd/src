@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.20 2003/03/16 12:38:31 miod Exp $
+#	$OpenBSD: files.hp300,v 1.21 2004/07/10 03:40:32 deraadt Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -203,5 +203,5 @@ major	{vnd = 6}
 #
 # HP-UX binary compatibility
 #
-include "compat/hpux/files.hpux"
+include "compat/hpux/m68k/files.hpux"
 file	arch/hp300/hp300/hpux_machdep.c		compat_hpux

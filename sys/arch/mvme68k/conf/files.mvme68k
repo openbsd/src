@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.23 2002/04/21 23:43:18 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.24 2004/07/10 03:40:33 deraadt Exp $
 
 # config file for mvme68k
 
@@ -130,7 +130,7 @@ file arch/m68k/m68k/db_memrw.c			ddb
 # Compatibility modules
 
 # HP-UX binary compatibility
-include	"compat/hpux/files.hpux"
+include	"compat/hpux/m68k/files.hpux"
 file	arch/mvme68k/mvme68k/hpux_machdep.c	compat_hpux
 
 device wl: tty
