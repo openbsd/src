@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.18 1996/11/23 19:10:26 niklas Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.19 1996/11/24 00:41:30 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -396,7 +396,7 @@ map_pages(pages)
     malloc_brk = tail;
 
     if ((last_index+1) >= malloc_ninfo && !extend_pgdir(last_index))
-	return 0;;
+	return 0;
 
     return result;
 }
@@ -410,7 +410,7 @@ set_bit(pi, bit)
     struct pginfo *pi;
     int bit;
 {
-    pi->bits[bit/MALLOC_BITS] |= 1<<(bit%MALLOC_BITS);
+    pi->bits[bit/MALLOC_BITS] |= 1UL<<(bit%MALLOC_BITS);
 }
 #endif /* set_bit */
 
@@ -423,7 +423,7 @@ clr_bit(pi, bit)
     struct pginfo *pi;
     int bit;
 {
-    pi->bits[bit/MALLOC_BITS] &= ~(1<<(bit%MALLOC_BITS));
+    pi->bits[bit/MALLOC_BITS] &= ~(1UL<<(bit%MALLOC_BITS));
 }
 #endif /* clr_bit */
 
@@ -436,7 +436,7 @@ tst_bit(pi, bit)
     struct pginfo *pi;
     int bit;
 {
-    return pi->bits[bit/MALLOC_BITS] & (1<<(bit%MALLOC_BITS));
+    return pi->bits[bit/MALLOC_BITS] & (1UL<<(bit%MALLOC_BITS));
 }
 #endif /* tst_bit */
 
@@ -446,7 +446,7 @@ tst_bit(pi, bit)
 #ifndef fls
 static __inline int
 fls(size)
-    int size;
+    size_t size;
 {
     int i = 1;
     while (size >>= 1)
@@ -455,7 +455,7 @@ fls(size)
 }
 #endif /* fls */
 
-#if LONG_BITS == WORD_BITS
+#if LONG_BIT == WORD_BIT
 #define ffs_ul ffs
 #else
 static __inline int
@@ -474,6 +474,7 @@ ffs_ul(u_long ul)
     }
     if (k)
 	k += i * sizeof (u_int) * 8;
+    return k;
 }
 #endif
 
@@ -485,7 +486,8 @@ extend_pgdir(index)
     u_long index;
 {
     struct  pginfo **new, **old;
-    int i, oldlen;
+    int i;
+    size_t oldlen;
 
     /* Make it this many pages */
     i = index * sizeof *page_dir;
@@ -788,7 +790,7 @@ malloc_make_chunks(bits)
 	(((malloc_pagesize >> bits)+MALLOC_BITS-1) / MALLOC_BITS);
 
     /* Don't waste more than two chunks on this */
-    if ((1<<(bits)) <= l+l) {
+    if ((1UL<<(bits)) <= l+l) {
 	bp = (struct  pginfo *)pp;
     } else {
 	bp = (struct  pginfo *)imalloc(l);
@@ -796,7 +798,7 @@ malloc_make_chunks(bits)
 	    return 0;
     }
 
-    bp->size = (1<<bits);
+    bp->size = (1UL<<bits);
     bp->shift = bits;
     bp->total = bp->free = malloc_pagesize >> bits;
     bp->page = pp;
