@@ -1,6 +1,6 @@
 stdin:2: syntax error
-stdin:4: Rules must be in order: options, scrub, queue, NAT, filter
-stdin:5: Rules must be in order: options, scrub, queue, NAT, filter
+stdin:4: Rules must be in order: options, normalization, queueing, translation, filtering
+stdin:5: Rules must be in order: options, normalization, queueing, translation, filtering
 pfctl: Syntax error in file: pf rules not loaded
 set optimization aggressive
 set timeout tcp.closing 6
