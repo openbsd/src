@@ -1,4 +1,4 @@
-.\"	$OpenBSD: worms.6,v 1.11 2004/01/08 20:38:29 millert Exp $
+.\"	$OpenBSD: worms.6,v 1.12 2004/01/12 20:50:29 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,14 +48,8 @@ version of the DEC-2136 program
 .Dq worms .
 .Pp
 The options are as follows:
-.Bl -tag -width indent
-.It Fl f
-Makes a
-.Dq field
-for the worm(s) to eat.
-.It Fl t
-Makes each worm leave a trail behind it.
-.It Fl d
+.Bl -tag -width "-l length"
+.It Fl d Ar delay
 Specifies a delay, in milliseconds, between each update.
 This is useful for fast terminals.
 Reasonable values are around 20-200.
@@ -63,10 +57,16 @@ The default is based on the terminal speed.
 If the terminal is 9600 baud or slower no delay is used.
 Otherwise, the delay is computed via the following formula:
 .Dl delay = speed / 9600 - 1.
-.It Fl l
+.It Fl f
+Makes a
+.Dq field
+for the worm(s) to eat.
+.It Fl l Ar length
 Specifies a length for each worm; the default is 16.
-.It Fl n
+.It Fl n Ar number
 Specifies the number of worms; the default is 3.
+.It Fl t
+Makes each worm leave a trail behind it.
 .El
 .Sh BUGS
 The lower-right-hand character position will not be updated properly
