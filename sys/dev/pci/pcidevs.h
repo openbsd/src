@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.619 2003/05/08 23:50:30 tdeval Exp 
+ *		OpenBSD: pcidevs,v 1.620 2003/05/12 08:57:21 tdeval Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -884,6 +884,7 @@
 #define	PCI_PRODUCT_APPLE_UNINORTH6	0x0036		/* UniNorth Host-PCI Bridge */
 #define	PCI_PRODUCT_APPLE_INTREPID_ATA	0x003b		/* Intrepid ATA */
 #define	PCI_PRODUCT_APPLE_INTREPID	0x003e		/* Intrepid */
+#define	PCI_PRODUCT_APPLE_INTREPID_OHCI	0x003f		/* Intrepid USB */
 
 /* ARC Logic products */
 #define	PCI_PRODUCT_ARC_USB	0x0003		/* USB */
