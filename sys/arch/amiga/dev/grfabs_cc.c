@@ -1,5 +1,5 @@
-/*	$OpenBSD: grfabs_cc.c,v 1.5 1997/01/16 09:24:25 niklas Exp $	*/
-/*	$NetBSD: grfabs_cc.c,v 1.15 1996/10/13 03:07:09 christos Exp $	*/
+/*	$OpenBSD: grfabs_cc.c,v 1.6 1997/09/10 20:56:42 niklas Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.16 1997/06/10 18:30:28 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -301,7 +301,7 @@ alloc_bitmap(width, height, depth, flags)
 	 * n pages by less than another page, the user gets to write all over
 	 * the entire page.  Since you did not allocate up to a page boundry
 	 * (or more) the user writes into someone elses memory. -ch */
-	total_size = amiga_round_page(plane_size * depth) +	/* for length */
+	total_size = m68k_round_page(plane_size * depth) +	/* for length */
 	    (temp_size) + (array_size) + sizeof(bmap_t) +
 	    NBPG;		/* for alignment */
 	bm = alloc_chipmem(total_size);
@@ -313,10 +313,10 @@ alloc_bitmap(width, height, depth, flags)
 		bm->rows = height;
 		bm->depth = depth;
 		bm->flags = flags;
-		bm->plane = (u_char **) & bm[1];
-		bm->blit_temp = ((u_char *) bm->plane) + array_size;
-		bm->plane[0] = (u_char *) amiga_round_page((u_long)
-						(bm->blit_temp + temp_size));
+		bm->plane = (u_char **)&bm[1];
+		bm->blit_temp = ((u_char *)bm->plane) + array_size;
+		bm->plane[0] = (u_char *)m68k_round_page(
+		    (u_long)(bm->blit_temp + temp_size));
 		if (flags & BMF_INTERLEAVED) {
 			bm->row_mod = bm->bytes_per_row * (depth - 1);
 			for (i = 1; i < depth; i++) {
