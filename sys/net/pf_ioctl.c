@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.109 2004/03/09 21:44:41 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.110 2004/03/15 10:59:07 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1352,8 +1352,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		s = splsoftnet();
 		kif = pfi_lookup_create(ps->state.u.ifname);
 		if (kif == NULL) {
+			pool_put(&pf_state_pl, state);
 			error = ENOENT;
 			splx(s);
+			break;
 		}
 		bcopy(&ps->state, state, sizeof(struct pf_state));
 		bzero(&state->u, sizeof(state->u));
