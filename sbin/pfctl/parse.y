@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.209 2002/11/23 23:00:32 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.210 2002/11/24 13:12:36 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -404,7 +404,7 @@ option		: SET OPTIMIZATION STRING		{
 
 string		: string STRING				{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1) {
-				yyerror("malloc failed");
+				yyerror("asprintf failed");
 				YYERROR;
 			}
 			free($1);
@@ -2766,18 +2766,6 @@ expand_nat(struct pf_nat *n,
 			TAILQ_INSERT_TAIL(&n->rpool.list, pa, entries);
 		}
 
-		TAILQ_INIT(&n->rpool.list);
-		for (h = rpool_hosts; h; h = h->next) {
-			pa = calloc(1, sizeof(struct pf_pooladdr));
-			if (pa == NULL) {
-				yyerror("calloc");
-				error++;
-			}
-			pa->addr = h->addr;
-			pa->ifname[0] = 0;
-			TAILQ_INSERT_TAIL(&n->rpool.list, pa, entries);
-		}
-
 		if (nat_consistent(n) < 0 || error)
 			yyerror("skipping nat rule due to errors");
 		else {
@@ -3383,7 +3371,7 @@ ifa_load(void)
 			    ifa->ifa_addr)->sin6_scope_id;
 		}
 		if ((n->ifname = strdup(ifa->ifa_name)) == NULL) {
-			yyerror("malloc failed");
+			yyerror("strdup failed");
 			exit(1);
 		}
 		n->next = NULL;
@@ -3539,12 +3527,12 @@ host(char *s, int mask)
 
 	if (mask == -1) {
 		if (asprintf(&buf, "%s", s) == -1)
-			err(1, "host: malloc");
+			err(1, "host: asprintf");
 		v4mask = 32;
 		v6mask = 128;
 	} else if (mask <= 128) {
 		if (asprintf(&buf, "%s/%d", s, mask) == -1)
-			err(1, "host: malloc");
+			err(1, "host: asprintf");
 		v4mask = v6mask = mask;
 	} else {
 		yyerror("illegal mask");
