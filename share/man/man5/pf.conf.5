@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.276 2003/11/06 14:38:03 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.277 2003/11/07 20:29:54 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1092,15 +1092,17 @@ are specified, the rule will match packets in both directions.
 .It Ar log
 In addition to the action specified, a log message is generated.
 All packets for that connection are logged, unless the
-.Ar keep state
-or
+.Ar keep state ,
 .Ar modulate state
+or
+.Ar synproxy state
 options are specified, in which case only the
 packet that establishes the state is logged.
 (See
-.Ar keep state
-and
+.Ar keep state ,
 .Ar modulate state
+and
+.Ar synproxy state
 below).
 The logged packets are sent to the
 .Xr pflog 4
@@ -1114,9 +1116,10 @@ in
 binary format.
 .It Ar log-all
 Used with
-.Ar keep state
-or
+.Ar keep state ,
 .Ar modulate state
+or
+.Ar synproxy state
 rules to force logging of all packets for a connection.
 As with
 .Ar log ,
@@ -1421,7 +1424,10 @@ A packet is only ever assigned one tag at a time.
 rules that use the
 .Ar tag
 keyword must also use
-.Ar keep state .
+.Ar keep state ,
+.Ar modulate state
+or
+.Ar synproxy state .
 Packet tagging can be done during
 .Ar nat ,
 .Ar rdr ,
