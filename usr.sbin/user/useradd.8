@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.18 2003/09/04 08:32:15 jmc Exp $
+.\" $OpenBSD: useradd.8,v 1.19 2003/12/22 12:06:16 jmc Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -181,7 +181,9 @@ GECOS field) which will be added for the user, and typically will include
 the user's full name, and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
 is the home directory which will be created and populated for the user,
-should the -m option be specified.
+should the
+.Fl m
+option be specified.
 .It Fl e Ar expiry-time
 sets the time at which the current password will expire for new
 users.
