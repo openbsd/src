@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.70 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: locore.s,v 1.71 2003/06/06 11:11:53 andreas Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -138,7 +138,8 @@
 	.data
 
 	.globl	_C_LABEL(cpu), _C_LABEL(cpu_id), _C_LABEL(cpu_vendor)
-	.globl	_C_LABEL(cpuid_level), _C_LABEL(cpu_feature)
+	.globl	_C_LABEL(cpuid_level)
+	.globl	_C_LABEL(cpu_feature), _C_LABEL(cpu_ecxfeature)
 	.globl	_C_LABEL(cpu_cache_eax), _C_LABEL(cpu_cache_ebx)
 	.globl	_C_LABEL(cpu_cache_ecx), _C_LABEL(cpu_cache_edx)
 	.globl	_C_LABEL(cold), _C_LABEL(esym)
@@ -150,6 +151,7 @@
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, 486, 586 or 686
 _C_LABEL(cpu_id):	.long	0	# saved from 'cpuid' instruction
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid' instruction
+_C_LABEL(cpu_ecxfeature):.long	0	# extended feature flags from 'cpuid'
 _C_LABEL(cpuid_level):	.long	-1	# max. lvl accepted by 'cpuid' insn
 _C_LABEL(cpu_cache_eax):.long	0
 _C_LABEL(cpu_cache_ebx):.long	0
@@ -373,6 +375,7 @@ try586:	/* Use the `cpuid' instruction. */
 	cpuid
 	movl	%eax,RELOC(_C_LABEL(cpu_id))	# store cpu_id and features
 	movl	%edx,RELOC(_C_LABEL(cpu_feature))
+	movl	%ecx,RELOC(_C_LABEL(cpu_ecxfeature))
 
 	movl	$RELOC(_C_LABEL(cpuid_level)),%eax
 	cmp	$2,%eax

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.235 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.236 2003/06/06 11:11:53 andreas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -687,7 +687,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Celeron (Mendocino)",
 				"Pentium III (Katmai)",
 				"Pentium III (Coppermine)",
-				0, "Pentium III Xeon (Cascades)",
+				"Pentium M",
+				"Pentium III Xeon (Cascades)",
 				"Pentium III (Tualatin)", 0, 0,
 				0, 0,
 				"Pentium Pro, II or III"	/* Default */
@@ -973,10 +974,23 @@ const struct cpu_cpuid_feature i386_cpuid_features[] = {
 	{ CPUID_PAT,	"PAT" },
 	{ CPUID_PSE36,	"PSE36" },
 	{ CPUID_SER,	"SER" },
+	{ CPUID_CFLUSH,	"CFLUSH" },
+	{ CPUID_ACPI,	"ACPI" },
 	{ CPUID_MMX,	"MMX" },
 	{ CPUID_FXSR,	"FXSR" },
 	{ CPUID_SIMD,	"SIMD" },
+	{ CPUID_SIMD2,	"SIMD2" },
+	{ CPUID_SS,	"SS" },
+	{ CPUID_HTT,	"HTT" },
+	{ CPUID_TM,	"TM" },
+	{ CPUID_SBF,	"SBF" },
 	{ CPUID_3DNOW,	"3DNOW" },
+};
+
+const struct cpu_cpuid_feature i386_cpuid_ecxfeatures[] = {
+	{ CPUIDECX_EST,		"EST" },
+	{ CPUIDECX_TM2,		"TM2" },
+	{ CPUIDECX_CNXTID,	"CNXT-ID" },
 };
 
 void
@@ -1327,6 +1341,7 @@ identifycpu()
 	extern char cpu_vendor[];
 	extern int cpu_id;
 	extern int cpu_feature;
+	extern int cpu_ecxfeature;
 #ifdef CPUDEBUG
 	extern int cpu_cache_eax, cpu_cache_ebx, cpu_cache_ecx, cpu_cache_edx;
 #else
@@ -1487,6 +1502,16 @@ identifycpu()
 			if (cpu_feature & i386_cpuid_features[i].feature_bit) {
 				printf("%s%s", (numbits == 0 ? "" : ","),
 				    i386_cpuid_features[i].feature_name);
+				numbits++;
+			}
+		}
+		max = sizeof(i386_cpuid_ecxfeatures)
+			/ sizeof(i386_cpuid_ecxfeatures[0]);
+		for (i = 0; i < max; i++) {
+			if (cpu_ecxfeature &
+			    i386_cpuid_ecxfeatures[i].feature_bit) {
+				printf("%s%s", (numbits == 0 ? "" : ","),
+				    i386_cpuid_ecxfeatures[i].feature_name);
 				numbits++;
 			}
 		}

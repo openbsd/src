@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.13 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.14 2003/06/06 11:11:54 andreas Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -116,18 +116,23 @@
 #define CPUID_EMMX	0x01000000	/* has extended MMX (Cyrix; obsolete) */
 #define CPUID_SIMD	0x02000000	/* has SIMD instructions (Intel) */
 #define CPUID_SIMD2	0x04000000	/* has SIMD instructions (Intel) #2 */
-#define	CPUID_SS	0x08000000	/* self-snoop */
-#define	CPUID_TM	0x20000000	/* thermal monitor (TCC) */
-#define CPUID_3DNOW	0x80000000	/* has 3DNow! instructions (AMD) */
-/* bits 26->31 also reserved. */
+#define CPUID_SS	0x08000000	/* self-snoop */
+#define CPUID_HTT	0x10000000	/* hyper-threading tech */
+#define CPUID_TM	0x20000000	/* thermal monitor (TCC) */
+#define CPUID_B30	0x40000000	/* reserved */
+#define CPUID_SBF	0x80000000	/* signal break on FERR */
 
-#define CPUID_FLAGS1	"\20\1FPU\2VME\3DE\4PSE\5TSC\6MSR\7PAE" \
-			    "\10MCE\11CX8\12APIC\13SYS1\14SYS2\15MTRR"
-#define CPUID_MASK1	0x00001fff
-#define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23SER\24CFLUSH" \
-			    "\25B20\26DS\27ACPI\30MMX\31FXSR\32SIMD\33SIMD2" \
-			    "\34SS\35B28\36TM\37B30\40B31"
-#define CPUID_MASK2	0xffffe000
+/*
+ * Note: The 3DNOW flag does not really belong in this feature set since it is
+ * returned by the cpuid instruction when called with 0x80000001 in eax rather
+ * than 0x00000001, but cyrix3_cpu_setup() moves it to a reserved bit of the
+ * feature set for simplicity
+ */
+#define CPUID_3DNOW	0x40000000	/* has 3DNow! instructions (AMD) */
+
+#define CPUIDECX_EST	0x00000080	/* enhanced SpeedStep */
+#define CPUIDECX_TM2	0x00000100	/* thermal monitor 2 */
+#define CPUIDECX_CNXTID	0x00000400	/* Context ID */
 
 /*
  * Model-specific registers for the i386 family
