@@ -1,4 +1,4 @@
-/*	$Id: crypt.c,v 1.2 1995/12/18 17:59:55 deraadt Exp $ */
+/*	$Id: crypt.c,v 1.3 1996/03/25 22:31:45 tholo Exp $ */
 
 /*
  * FreeSec: libcrypt
@@ -53,6 +53,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <pwd.h>
+#include <string.h>
 
 #ifdef DEBUG
 # include <stdio.h>
@@ -182,7 +183,7 @@ static u_char	ascii64[] =
 /*	  0000000000111111111122222222223333333333444444444455555555556666 */
 /*	  0123456789012345678901234567890123456789012345678901234567890123 */
 
-static inline int
+static __inline int
 ascii_to_bin(ch)
 	char ch;
 {
@@ -358,7 +359,7 @@ des_setkey(key)
 	const char *key;
 {
 	u_int32_t k0, k1, rawkey0, rawkey1;
-	int	shifts, i, b, round;
+	int	shifts, round;
 
 	if (!des_initialised)
 		des_init();
@@ -405,7 +406,6 @@ des_setkey(key)
 	shifts = 0;
 	for (round = 0; round < 16; round++) {
 		u_int32_t	t0, t1;
-		int	bit;
 
 		shifts += key_shifts[round];
 
@@ -443,9 +443,9 @@ do_des(l_in, r_in, l_out, r_out, count)
 	/*
 	 *	l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
 	 */
-	u_int32_t	mask, rawl, rawr, l, r, *kl, *kr, *kl1, *kr1;
+	u_int32_t	l, r, *kl, *kr, *kl1, *kr1;
 	u_int32_t	f, r48l, r48r;
-	int	i, j, b, round;
+	int		round;
 
 	if (count == 0) {
 		return(1);
@@ -592,8 +592,8 @@ des_cipher(in, out, salt, count)
 
 char *
 crypt(key, setting)
-	char *key;
-	char *setting;
+	const char *key;
+	const char *setting;
 {
 	int		i;
 	u_int32_t		count, salt, l, r0, r1, keybuf[2];
@@ -644,7 +644,7 @@ crypt(key, setting)
 			if (des_setkey((u_char *) keybuf))
 				return(NULL);
 		}
-		strncpy(output, setting, 9);
+		strncpy((char *)output, setting, 9);
 
 		/*
 		 * Double check that we weren't given a short setting.
@@ -654,7 +654,7 @@ crypt(key, setting)
 		 * NUL in it.
 		 */
 		output[9] = '\0';
-		p = output + strlen(output);
+		p = output + strlen((const char *)output);
 	} else {
 		/*
 		 * "old"-style:
@@ -704,5 +704,5 @@ crypt(key, setting)
 	*p++ = ascii64[l & 0x3f];
 	*p = 0;
 
-	return(output);
+	return((char *)output);
 }

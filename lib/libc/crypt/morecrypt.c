@@ -1,4 +1,4 @@
-/*	$Id: morecrypt.c,v 1.3 1995/12/18 17:59:56 deraadt Exp $ */
+/*	$Id: morecrypt.c,v 1.4 1996/03/25 22:31:46 tholo Exp $ */
 
 /*
  * FreeSec: libcrypt
@@ -178,12 +178,7 @@ static u_int32_t key_perm_maskl[8][128], key_perm_maskr[8][128];
 static u_int32_t comp_maskl[8][128], comp_maskr[8][128];
 static u_int32_t old_rawkey0, old_rawkey1;
 
-static u_char	ascii64[] =
-	 "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-/*	  0000000000111111111122222222223333333333444444444455555555556666 */
-/*	  0123456789012345678901234567890123456789012345678901234567890123 */
-
-static inline int
+static __inline int
 ascii_to_bin(ch)
 	char ch;
 {
@@ -362,9 +357,9 @@ do_des(l_in, r_in, l_out, r_out, count)
 	/*
 	 *	l_in, r_in, l_out, and r_out are in pseudo-"big-endian" format.
 	 */
-	u_int32_t	mask, rawl, rawr, l, r, *kl, *kr, *kl1, *kr1;
+	u_int32_t	l, r, *kl, *kr, *kl1, *kr1;
 	u_int32_t	f, r48l, r48r;
-	int	i, j, b, round;
+	int		round;
 
 	if (count == 0) {
 		return(1);
@@ -476,7 +471,7 @@ int
 des_cipher(in, out, salt, count)
 	const char *in;
 	char *out;
-	int32_t salt;
+	long salt;
 	int count;
 {
 	u_int32_t l_out, r_out, rawl, rawr;
@@ -486,7 +481,7 @@ des_cipher(in, out, salt, count)
 	if (!des_initialised)
 		des_init();
 
-	setup_salt(salt);
+	setup_salt((int32_t)salt);
 
 #if 0
 	rawl = ntohl(*((u_int32_t *) in)++);
@@ -514,7 +509,7 @@ des_setkey(key)
 	const char *key;
 {
 	u_int32_t k0, k1, rawkey0, rawkey1;
-	int	shifts, i, b, round;
+	int	shifts, round;
 
 	if (!des_initialised)
 		des_init();
@@ -561,7 +556,6 @@ des_setkey(key)
 	shifts = 0;
 	for (round = 0; round < 16; round++) {
 		u_int32_t	t0, t1;
-		int	bit;
 
 		shifts += key_shifts[round];
 
@@ -593,7 +587,7 @@ des_setkey(key)
 
 int
 setkey(key)
-	char *key;
+	const char *key;
 {
 	int	i, j;
 	u_int32_t packed_keys[2];
@@ -622,8 +616,8 @@ encrypt(block, flag)
 	if (!des_initialised)
 		des_init();
 
-	setup_salt(0L);
-	p = block;
+	setup_salt((int32_t)0);
+	p = (u_char *)block;
 	for (i = 0; i < 2; i++) {
 		io[i] = 0L;
 		for (j = 0; j < 32; j++)
