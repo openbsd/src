@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.280 2002/12/19 12:46:06 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.281 2002/12/22 02:37:58 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -592,9 +592,12 @@ pf_print_host(struct pf_addr *addr, u_int16_t p, sa_family_t af)
 #ifdef INET
 	case AF_INET: {
 		u_int32_t a = ntohl(addr->addr32[0]);
-		p = ntohs(p);
-		printf("%u.%u.%u.%u:%u", (a>>24)&255, (a>>16)&255,
-		    (a>>8)&255, a&255, p);
+		printf("%u.%u.%u.%u", (a>>24)&255, (a>>16)&255,
+		    (a>>8)&255, a&255);
+		if (p) {
+			p = ntohs(p);
+			printf(":%u", p);
+		}
 		break;
 	}
 #endif /* INET */
@@ -636,8 +639,10 @@ pf_print_host(struct pf_addr *addr, u_int16_t p, sa_family_t af)
 					printf(":");
 			}
 		}
-		p = ntohs(p);
-		printf("[%u]", p);
+		if (p) {
+			p = ntohs(p);
+			printf("[%u]", p);
+		}
 		break;
 	}
 #endif /* INET6 */
@@ -1681,18 +1686,20 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			}
 			break;
 		case PF_RDR: {
-			u_int32_t	tmp_nport;
-
 			if (pf_map_addr(r->af, &r->rpool,
 			    &r->src.addr.addr, naddr, NULL))
 				return (NULL);
 
-			tmp_nport = ntohs(r->rpool.proxy_port[0])
-			    + (ntohs(dport) - ntohs(r->dst.port[0]));
-			/* wrap around if necessary */
-			if (tmp_nport > 65535)
-				tmp_nport -= 65535;
-			*nport = htons((u_int16_t)tmp_nport);
+			if (r->dst.port_op == PF_OP_RRG) {
+				u_int32_t	tmp_nport;
+				tmp_nport = ntohs(r->rpool.proxy_port[0])
+				    + (ntohs(dport) - ntohs(r->dst.port[0]));
+				/* wrap around if necessary */
+				if (tmp_nport > 65535)
+					tmp_nport -= 65535;
+				*nport = htons((u_int16_t)tmp_nport);
+			} else if (r->rpool.proxy_port[0])
+				*nport = r->rpool.proxy_port[0];
 			break;
 		}
 		default:
