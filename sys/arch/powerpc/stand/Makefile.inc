@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1997/02/18 22:36:40 rahnds Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2001/06/23 01:53:01 drahn Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1996/09/30 16:34:59 ws Exp $
 
 .if !defined(__stand_makefile_inc)
@@ -13,17 +13,14 @@ S=$(.CURDIR)/../../../$(R)
 	@([ -h machine ] || ln -s $(S)/arch/$(MACHINE)/include machine)
 .endif
 
-# for now
-RELOC?=		4000
-LOADADDR?=	100000
 #
 EXTRACFLAGS=	-msoft-float
 REAL_VIRT?=	-v
 ENTRY?=	_start
 
-INCLUDES+=	-I. -I$(.CURDIR)/.. -I$(S)/arch -I$(S) -I$(S)/lib/libsa
-DEFS+=		-DSTANDALONE -DRELOC=0x$(RELOC) -DLOADADDR=0x$(LOADADDR) \
-		-DFIREPOWERBUGS
+INCLUDES+=	-I. -I$(.OBJDIR) -I$(.CURDIR)/.. -I$(S)/arch -I$(S)
+INCLUDES+=	-I$(S)/lib/libsa
+DEFS+=		-DSTANDALONE -DFIREPOWERBUGS
 CFLAGS+=	$(INCLUDES) $(DEFS) $(EXTRACFLAGS)
 LDFLAGS?=	-X -N -Ttext $(RELOC) -e $(ENTRY)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.7 1999/11/09 06:30:15 rahnds Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.8 2001/06/23 01:53:00 drahn Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,37 @@ static void setup __P((void));
 #ifdef XCOFF_GLUE
 asm (".text; .globl _entry; _entry: .long _start,0,0");
 #endif
+asm("
+	.text
+	.globl	bat_init
+bat_init:
+
+	mfmsr   8
+        li      0,0
+        mtmsr   0
+        isync
+
+        mtibatu 0,0
+        mtibatu 1,0
+        mtibatu 2,0
+        mtibatu 3,0
+        mtdbatu 0,0
+        mtdbatu 1,0
+        mtdbatu 2,0
+        mtdbatu 3,0
+
+        li      9,0x12          /* BATL(0, BAT_M, BAT_PP_RW) */
+        mtibatl 0,9
+        mtdbatl 0,9
+        li      9,0x1ffe        /* BATU(0, BAT_BL_256M, BAT_Vs) */
+        mtibatu 0,9
+        mtdbatu 0,9
+        isync
+
+        mtmsr   8
+	isync
+	blr
+");
 
 __dead void
 _start(vpd, res, openfirm, arg, argl)
@@ -60,6 +91,7 @@ _start(vpd, res, openfirm, arg, argl)
 #ifdef	FIRMWORKSBUGS
 	syncicache((void *)RELOC, etext - (char *)RELOC);
 #endif
+	bat_init();
 	openfirmware = openfirm;	/* Save entry to Open Firmware */
 #if 0
 	patch_dec_intr();
