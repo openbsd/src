@@ -1,4 +1,4 @@
-/*	$OpenBSD: named-xfer.c,v 1.7 1998/08/16 21:20:03 millert Exp $	*/
+/*	$OpenBSD: named-xfer.c,v 1.8 2001/10/24 13:06:36 mpech Exp $	*/
 
 /*
  * The original version of xfer by Kevin Dunlap.
@@ -97,7 +97,7 @@ char copyright[] =
 static char sccsid[] = "@(#)named-xfer.c	4.18 (Berkeley) 3/7/91";
 static char rcsid[] = "$From: named-xfer.c,v 8.24 1998/04/07 04:59:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.7 1998/08/16 21:20:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.8 2001/10/24 13:06:36 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -221,9 +221,9 @@ main(argc, argv)
 	openlog(ProgName, LOG_PID);
 #endif
 #ifdef STUBS
-	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:qS")) != EOF)
+	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:qS")) != -1)
 #else
-	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:q")) != EOF)
+	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:q")) != -1)
 #endif
 	    switch (c) {
 #ifdef GEN_AXFR

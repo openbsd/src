@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.4 2001/05/11 13:31:42 art Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.5 2001/10/24 13:06:35 mpech Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -93,7 +93,7 @@ char	*argv[];
 	int		i, c;
 	int		rval = 0;
 
-	while ((c = getopt(argc, argv, "RUmrsv")) != EOF) {
+	while ((c = getopt(argc, argv, "RUmrsv")) != -1) {
 		switch (c) {
 		case 'R':
 			rescan = 1;

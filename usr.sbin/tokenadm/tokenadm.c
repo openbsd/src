@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenadm.c,v 1.2 2001/05/30 20:43:02 markus Exp $	*/
+/*	$OpenBSD: tokenadm.c,v 1.3 2001/10/24 13:06:36 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -102,7 +102,7 @@ main(int argc, char **argv)
 	if (setrlimit(RLIMIT_CORE, &cds) < 0)
 		syslog(LOG_ERR, "couldn't set core dump size to 0: %m");
 
-    	while ((c = getopt(argc, argv, "BDERT1bdem:ru")) != EOF)
+    	while ((c = getopt(argc, argv, "BDERT1bdem:ru")) != -1)
 		switch (c) {
 		case 'B':
 			if (what != LIST)

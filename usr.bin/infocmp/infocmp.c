@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.13 2001/02/28 22:58:52 millert Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.14 2001/10/24 13:06:36 mpech Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -1135,7 +1135,7 @@ main(int argc, char *argv[])
     /* where is the terminfo database location going to default to? */
     restdir = firstdir = 0;
 
-    while ((c = getopt(argc, argv, "adeEcCfFGgIinlLpqrR:s:uv:Vw:A:B:1T")) != EOF)
+    while ((c = getopt(argc, argv, "adeEcCfFGgIinlLpqrR:s:uv:Vw:A:B:1T")) != -1)
 	switch (c) {
 #if NCURSES_XNAMES
 	case 'a':

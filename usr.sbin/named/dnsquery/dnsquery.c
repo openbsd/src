@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnsquery.c,v 1.5 2000/02/01 03:24:02 deraadt Exp $	*/
+/*	$OpenBSD: dnsquery.c,v 1.6 2001/10/24 13:06:36 mpech Exp $	*/
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -43,7 +43,7 @@ char *argv[];
 	}
 
 	/* handle args */
-	while ((c = getopt(argc, argv, "c:dh:n:p:r:st:u:v")) != EOF) {
+	while ((c = getopt(argc, argv, "c:dh:n:p:r:st:u:v")) != -1) {
 		switch (c) {
 
 		case 'r' :	_res.retry = atoi(optarg);

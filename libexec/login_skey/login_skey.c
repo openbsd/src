@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.3 2001/06/25 22:10:29 millert Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.4 2001/10/24 13:06:35 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -80,7 +80,7 @@ main(argc, argv)
 
 	openlog(NULL, LOG_ODELAY, LOG_AUTH);
 
-    	while ((c = getopt(argc, argv, "ds:v:")) != EOF)
+    	while ((c = getopt(argc, argv, "ds:v:")) != -1)
 		switch(c) {
 		case 'd':	/* to remain undocumented */
 			back = stdout;

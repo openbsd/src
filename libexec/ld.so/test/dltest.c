@@ -1,4 +1,4 @@
-/*	$OpenBSD: dltest.c,v 1.4 2001/09/25 21:51:16 drahn Exp $	*/
+/*	$OpenBSD: dltest.c,v 1.5 2001/10/24 13:06:35 mpech Exp $	*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +35,7 @@ main(int argc, char **argv)
 	int ch;
 	int mode;
 
-	while((ch = getopt(argc, argv, "a:b:f:l:")) != EOF) {
+	while((ch = getopt(argc, argv, "a:b:f:l:")) != -1) {
 		switch(ch) {
 		case 'a':
 			param = optarg;

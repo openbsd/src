@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.1 2000/12/12 02:30:44 millert Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.2 2001/10/24 13:06:35 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -105,7 +105,7 @@ main(argc, argv)
 
 	openlog("login", LOG_ODELAY, LOG_AUTH);
 
-    	while ((c = getopt(argc, argv, "s:v:")) != EOF)
+    	while ((c = getopt(argc, argv, "s:v:")) != -1)
 		switch(c) {
 		case 'v':
 			break;
