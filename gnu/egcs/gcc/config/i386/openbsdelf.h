@@ -188,7 +188,7 @@ Boston, MA 02111-1307, USA.  */
    The icky part is not here, but in machine/profile.h.  */
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)  \
-  fputs (flag_pic ? "\tcall mcount@PLT\n": "\tcall mcount\n", FILE);
+  fputs (flag_pic ? "\tcall __mcount@PLT\n": "\tcall __mcount\n", FILE);
 
 /* Assembler format: exception region output.  */
 
