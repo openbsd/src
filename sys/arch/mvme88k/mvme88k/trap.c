@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.60 2003/12/23 00:40:02 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.61 2003/12/23 23:36:44 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -376,28 +376,8 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 		printf ("PBUS Fault %d (%s) va = 0x%x\n", pbus_type,
 			pbus_exception_type[pbus_type], va);
 #endif
-		/*
-		 * if still the fault is not resolved ...
-		 */
-		if (p->p_addr->u_pcb.pcb_onfault == 0)
-			panictrap(frame->vector, frame);
-
-		frame->snip =
-		    ((unsigned)p->p_addr->u_pcb.pcb_onfault    ) | FIP_V;
-		frame->sfip =
-		    ((unsigned)p->p_addr->u_pcb.pcb_onfault + 4) | FIP_V;
-		frame->sxip = 0;
-		/* We sort of resolved the fault ourselves because
-		 * we know where it came from [copyxxx()]
-		 * But we must still think about the other possible
-		 * transactions in dmt1 & dmt2.  Mark dmt0 so that
-		 * data_access_emulation skips it. XXX smurph
-		 */
-		frame->dmt0 |= DMT_SKIP;
-		data_access_emulation((unsigned *)frame);
-		frame->dpfsr = 0;
-		frame->dmt0 = 0;
-		return;
+		panictrap(frame->vector, frame);
+		/* NOTREACHED */
 	case T_INSTFLT+T_USER:
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
@@ -450,6 +430,22 @@ user_fault:
 				result = EFAULT;
 		}
 
+		/*
+		 * This could be a fault caused in copyin*()
+		 * while accessing user space.
+		 */
+		if (result != 0 && p->p_addr->u_pcb.pcb_onfault != NULL) {
+			frame->snip = p->p_addr->u_pcb.pcb_onfault | NIP_V;
+			frame->sfip = (p->p_addr->u_pcb.pcb_onfault + 4) | FIP_V;
+			frame->sxip = 0;
+			/*
+			 * Continue as if the fault had been resolved, but
+			 * do not try to complete the faulting access.
+			 */
+			frame->dmt0 |= DMT_SKIP;
+			result = 0;
+		}
+
 		if (result == 0) {
 			if (type == T_DATAFLT+T_USER) {
 				/*
@@ -473,7 +469,7 @@ user_fault:
 		} else {
 			sig = result == EACCES ? SIGBUS : SIGSEGV;
 			fault_type = result == EACCES ?
-				BUS_ADRERR : SEGV_MAPERR;
+			    BUS_ADRERR : SEGV_MAPERR;
 		}
 		break;
 	case T_MISALGNFLT+T_USER:
@@ -858,15 +854,8 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 #endif
 			}
 		}
-
-		/*
-		 * if still the fault is not resolved ...
-		 */
-		if (!p->p_addr->u_pcb.pcb_onfault)
-			panictrap(frame->vector, frame);
-
-		frame->exip = ((unsigned)p->p_addr->u_pcb.pcb_onfault);
-		return;
+		panictrap(frame->vector, frame);
+		/* NOTREACHED */
 	case T_INSTFLT+T_USER:
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
@@ -981,6 +970,19 @@ m88110_user_fault:
 					vm->vm_ssize = nss;
 			} else if (result == EACCES)
 				result = EFAULT;
+		}
+
+		/*
+		 * This could be a fault caused in copyin*()
+		 * while accessing user space.
+		 */
+		if (result != 0 && p->p_addr->u_pcb.pcb_onfault != NULL) {
+			frame->exip = p->p_addr->u_pcb.pcb_onfault;
+			frame->dsr = frame->isr = 0;
+			/*
+			 * Continue as if the fault had been resolved.
+			 */
+			result = 0;
 		}
 
 		if (result != 0) {
