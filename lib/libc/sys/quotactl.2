@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotactl.2,v 1.7 2000/04/15 11:46:04 aaron Exp $
+.\"	$OpenBSD: quotactl.2,v 1.8 2000/04/24 05:19:01 deraadt Exp $
 .\"	$NetBSD: quotactl.2,v 1.8 1995/02/27 12:35:43 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -45,6 +45,7 @@
 .Nd manipulate filesystem quotas
 .Sh SYNOPSIS
 .Fd #include <ufs/ufs/quota.h>	/* for ufs quotas */
+.Fd #include <unistd.h>
 .Ft int
 .Fn quotactl "const char *path" "int cmd" "int id" "char *addr"
 .Sh DESCRIPTION
