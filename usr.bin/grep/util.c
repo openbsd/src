@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.19 2003/12/06 20:14:40 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.20 2004/01/18 19:01:55 espie Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -117,6 +117,7 @@ procfile(char *fn)
 
 	ln.file = fn;
 	ln.line_no = 0;
+	ln.len = 0;
 	linesqueued = 0;
 	ln.off = -1;
 
