@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.14 2002/11/09 02:55:45 fgsch Exp $
+.\" $OpenBSD: useradd.8,v 1.15 2003/05/14 06:42:09 jsyn Exp $
 .\" $NetBSD: useradd.8,v 1.10 2001/02/21 12:16:07 agc Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -244,6 +244,8 @@ field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
 .D1 Ic password Ar encrypted-password
+.Pp
+If this option is not specified, the account will be disabled by default.
 .It Fl s Ar shell
 specifies the login shell for the new user.
 This value can be preset for all users
