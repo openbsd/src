@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.7 1996/07/12 21:34:47 deraadt Exp $
+#	$OpenBSD: daily,v 1.8 1996/07/18 09:57:35 downsj Exp $
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -122,8 +122,9 @@ echo ""
 ruptime
 
 echo ""
-echo "Checking filesystems:"
-fsck -n | grep -v '^\*\* Phase'
+echo "NOT checking filesystems."
+#echo "Checking filesystems:"
+#fsck -n | grep -v '^\*\* Phase'
 
 echo ""
 if [ -f /etc/Distfile ]; then
