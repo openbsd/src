@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.20 2004/06/04 18:04:21 otto Exp $
+.\" $OpenBSD: useradd.8,v 1.21 2004/06/14 17:11:46 millert Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -270,6 +270,19 @@ utility exits 0 on success, and \*(Gt0 if an error occurs.
 .Xr user 8 ,
 .Xr userdel 8 ,
 .Xr usermod 8
+.Sh STANDARDS
+Other implementations of the
+.Nm useradd
+utility use the
+.Ar inactive-time
+parameter to refer to the maximum number of days allowed between logins (this
+us used to lock "stale" accounts that have not been used for a period of time).
+However, on
+.Ox
+systems this parameter refers instead to the password change time.
+This is due to differences in the
+.Xr passwd 5
+database compared to other operating systems.
 .Sh HISTORY
 The
 .Nm

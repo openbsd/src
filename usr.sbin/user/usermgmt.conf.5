@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermgmt.conf.5,v 1.4 2004/06/06 21:16:48 jmc Exp $
+.\" $OpenBSD: usermgmt.conf.5,v 1.5 2004/06/14 17:11:46 millert Exp $
 .\" $NetBSD: usermgmt.conf.5,v 1.3 2002/10/02 13:49:11 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -124,6 +124,19 @@ with which to populate the new user's home directory.
 .It Pa /etc/skel/*
 .It Pa /etc/login.conf
 .El
+.Sh STANDARDS
+Other implementations of the
+.Xr user 8
+utilities use the
+.Ar inactive-time
+parameter to refer to the maximum number of days allowed between logins (this
+us used to lock "stale" accounts that have not been used for a period of time).
+However, on
+.Ox
+systems this parameter refers instead to the password change time.
+This is due to differences in the
+.Xr passwd 5
+database compared to other operating systems.
 .Sh SEE ALSO
 .Xr login.conf 5 ,
 .Xr passwd 5 ,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.17 2004/06/04 18:04:21 otto Exp $
+.\" $OpenBSD: usermod.8,v 1.18 2004/06/14 17:11:46 millert Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -222,6 +222,19 @@ utility exits 0 on success, and \*(Gt0 if an error occurs.
 .Xr passwd 5 ,
 .Xr usermgmt.conf 5 ,
 .Xr pwd_mkdb 8
+.Sh STANDARDS
+Other implementations of the
+.Nm usermod
+utility use the
+.Ar inactive-time
+parameter to refer to the maximum number of days allowed between logins (this
+us used to lock "stale" accounts that have not been used for a period of time).
+However, on
+.Ox
+systems this parameter refers instead to the password change time.
+This is due to differences in the
+.Xr passwd 5
+database compared to other operating systems.
 .Sh HISTORY
 The
 .Nm
