@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.8 1996/10/26 22:49:12 downsj Exp $	*/
+/*	$OpenBSD: write.c,v 1.9 1998/07/06 18:35:20 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.8 1996/10/26 22:49:12 downsj Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.9 1998/07/06 18:35:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -236,7 +236,7 @@ term_chk(tty, msgsokP, atimeP, showerror)
 			warn("%s", path);
 		return(1);
 	}
-	*msgsokP = (s.st_mode & (S_IWRITE >> 3)) != 0;	/* group write bit */
+	*msgsokP = (s.st_mode & S_IWGRP) != 0;	/* group write bit */
 	*atimeP = s.st_atime;
 	return(0);
 }
