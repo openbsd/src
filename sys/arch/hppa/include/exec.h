@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.1 1998/06/23 19:45:21 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.2 1998/12/05 17:35:38 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -32,6 +32,13 @@
 #define ELF_TARG_DATA           ELFDATA2LSB
 #define ELF_TARG_MACH           EM_PARISC   
 
-#define _NLIST_DO_AOUT
-#define _NLIST_DO_ECOFF
+/* #define _NLIST_DO_AOUT */
+/* #define _NLIST_DO_ECOFF */
+#define _NLIST_DO_ELF
+#define _NLIST_DO_SOM
+
+/* #define	_KERN_DO_AOUT */
+/* #define	_KERN_DO_ECOFF */
+#define	_KERN_DO_ELF
+#define	_KERN_DO_SOM
 
