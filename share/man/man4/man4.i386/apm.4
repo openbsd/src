@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.7 1999/10/05 20:53:11 aaron Exp $
+.\"	$OpenBSD: apm.4,v 1.8 2000/06/07 22:41:58 mickey Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -17,15 +17,28 @@
 .Nd
 advanced power management device interface
 .Sh SYNOPSIS
-.Cd apm0 at bios0
+.Cd apm0 at bios0 flags 0x0000
 .Sh DESCRIPTION
 The
 .Nm
 driver provides an interface to the Advanced Power Management
 .Pq Tn APM
 .Tn BIOS
-functions.  The driver supports both the v1.0 and v1.1 interface
+functions.  The driver supports versions 1.0, 1.1, and 1.2 interface
 specifications.
+.Pp
+The low two bytes of the flags specify the version of the specification
+driver should conform to in binary decimal notation.
+The value of 0x0101 would specify version 1.1 of the interface
+specification to be used.
+.Pp
+The value of 0x10000 specifies whether to leave interrupts enabled
+when calling
+.Tn APM BIOS
+routines. This is needed for some
+.Tn IBM
+laptops, the symptoms are
+hangs and freezes on suspend, stand by, and hibernation activities.
 .Pp
 Configuration options:
 .Pp
