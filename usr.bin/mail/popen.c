@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.21 1998/09/10 16:06:40 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.22 1998/09/10 16:18:37 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.21 1998/09/10 16:06:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.22 1998/09/10 16:18:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -430,7 +430,7 @@ free_child(pid)
 }
 
 /*
- * Lock(1)/unlock(0) mail spool using mail.local's -H flag.
+ * Lock(1)/unlock(0) mail spool using lockspool(1).
  * Returns 1 for success, 0 for failure, -1 for bad usage.
  */
 static int

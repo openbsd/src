@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.10 1998/06/12 17:51:52 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.11 1998/09/10 16:18:37 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: quit.c,v 1.10 1998/06/12 17:51:52 millert Exp $";
+static char rcsid[] = "$OpenBSD: quit.c,v 1.11 1998/09/10 16:18:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ quit()
 	}
 	if (!spool_lock()) {
 		(void)Fclose(fbuf);
-		return;			/* mail.local printed error for us */
+		return;			/* lockspool printed error for us */
 	}
 	rbuf = NULL;
 	if (fstat(fileno(fbuf), &minfo) >= 0 && minfo.st_size > mailsize) {
