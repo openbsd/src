@@ -1,5 +1,5 @@
-/*	$OpenBSD: scb.h,v 1.5 2000/04/26 03:08:42 bjc Exp $	*/
-/*	$NetBSD: scb.h,v 1.6 2000/01/24 02:40:32 matt Exp $	*/
+/*	$OpenBSD: scb.h,v 1.6 2001/08/25 13:33:36 hugh Exp $	*/
+/*	$NetBSD: scb.h,v 1.11 2000/07/10 09:14:34 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -108,13 +108,34 @@ struct scb {
 #define	SCB_KSTACK	0
 #define	SCB_ISTACK	1
 
-#ifdef _KERNEL
-extern	struct scb *scb;
+#define vecnum(bus, ipl, tr) (256+(ipl-0x14)*64+tr*4+bus*256)
 
-extern	paddr_t scb_init __P((paddr_t));
-extern	int scb_vecref __P((int *, int *));
-extern	void scb_fake __P((int, int));
-extern	void scb_vecalloc __P((int, void(*)(void *), void *, int));
+/*
+ * This struct is used when setting up interrupt vectors dynamically.
+ * It put a opaque 32 bit quanity on the stack and also has a placeholder
+ * for evcnt structure.
+ */
+struct ivec_dsp {
+	char	pushr;		/* pushr */
+	char	pushrarg;	/* $0x3f */
+	char	jsb;
+	char	mode;
+	long	displacement;
+	void	(*hoppaddr)(void *);
+	void	*pushlarg;
+	struct	evcnt *ev;
+};
+
+#ifdef _KERNEL
+extern	const struct ivec_dsp idsptch;
+extern	struct scb *scb;
+extern	struct ivec_dsp *scb_vec;
+extern	struct evcnt devipl_intrcnts[4];	/* IPL 2[0123] */
+
+extern	paddr_t scb_init (paddr_t);
+extern	int scb_vecref (int *, int *);
+extern	void scb_fake (int, int);
+extern	void scb_vecalloc (int, void(*)(void *), void *, int, struct evcnt *);
 #endif /* _KERNEL */
 
 #endif /* _VAX_SCB_H */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: sgec.c,v 1.2 2001/02/20 19:39:35 mickey Exp $	*/
-/*      $NetBSD: sgec.c,v 1.1 1999/08/08 11:41:29 ragge Exp $ */
+/*	$OpenBSD: sgec.c,v 1.3 2001/08/25 13:33:36 hugh Exp $	*/
+/*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -173,6 +173,10 @@ sgec_attach(sc)
 		}
 	}
 
+	/* For vmstat -i
+	 */
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+
 	/*
 	 * Create ring loops of the buffer chains.
 	 * This is only done once.
@@ -306,6 +310,7 @@ zestart(ifp)
 	paddr_t	buffer;
 	struct mbuf *m, *m0;
 	int idx, len, s, i, totlen, error;
+	int old_inq = sc->sc_inq;
 	short orword;
 
 	s = splimp();
@@ -388,7 +393,7 @@ zestart(ifp)
 	if (sc->sc_inq == (TXDESCS - 1))
 		ifp->if_flags |= IFF_OACTIVE;
 
-out:	if (sc->sc_inq)
+out:	if (old_inq < sc->sc_inq)
 		ifp->if_timer = 5; /* If transmit logic dies */
 	splx(s);
 }
@@ -412,6 +417,7 @@ sgec_intr(sc)
 		while ((zc->zc_recv[sc->sc_nextrx].ze_framelen &
 		    ZE_FRAMELEN_OW) == 0) {
 
+			ifp->if_ipackets++;
 			m = sc->sc_rxmbuf[sc->sc_nextrx];
 			len = zc->zc_recv[sc->sc_nextrx].ze_framelen;
 			ze_add_rxbuf(sc, sc->sc_nextrx);
@@ -424,9 +430,9 @@ sgec_intr(sc)
 			if (ifp->if_bpf) {
 				bpf_mtap(ifp->if_bpf, m);
 				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+				    ((eh->ether_dhost[0] & 1) == 0) &&
 				    bcmp(sc->sc_ac.ac_enaddr, eh->ether_dhost,
-				    ETHER_ADDR_LEN) != 0 &&
-				    ((eh->ether_dhost[0] & 1) == 0)) {
+				    ETHER_ADDR_LEN) != 0) {
 					m_freem(m);
 					continue;
 				}
@@ -458,17 +464,20 @@ sgec_intr(sc)
 			if (++sc->sc_lastack == TXDESCS)
 				sc->sc_lastack = 0;
 
-			/* XXX collect statistics */
 			if ((zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_DT) ==
 			    ZE_TDES1_DT_SETUP)
 				continue;
+			/* XXX collect statistics */
+			if (zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_LS)
+				ifp->if_opackets++;
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[idx]);
 			if (sc->sc_txmbuf[idx]) {
 				m_freem(sc->sc_txmbuf[idx]);
 				sc->sc_txmbuf[idx] = 0;
 			}
 		}
-		ifp->if_timer = 0;
+		if (sc->sc_inq == 0)
+			ifp->if_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		zestart(ifp); /* Put in more in queue */
 	}
@@ -480,7 +489,7 @@ sgec_intr(sc)
  */
 int
 zeioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {

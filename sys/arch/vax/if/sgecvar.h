@@ -1,5 +1,5 @@
-/*	$OpenBSD: sgecvar.h,v 1.1 2000/04/27 03:14:44 bjc Exp $	*/
-/*      $NetBSD: sgecvar.h,v 1.1 1999/08/08 11:41:30 ragge Exp $ */
+/*	$OpenBSD: sgecvar.h,v 1.2 2001/08/25 13:33:36 hugh Exp $	*/
+/*      $NetBSD: sgecvar.h,v 1.2 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -44,6 +44,7 @@ struct ze_cdata {
 
 struct	ze_softc {
 	struct device	sc_dev;		/* Configuration common part	*/
+	struct evcnt	sc_intrcnt;	/* Interrupt counters           */
 	struct arpcom	sc_ac;		/* Ethernet common part		*/
 #define sc_if	sc_ac.ac_if		/* network-visible interface	*/
 	bus_space_tag_t sc_iot;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.13 2000/10/24 01:50:19 hugh Exp $   */
+/*	$OpenBSD: intvec.s,v 1.14 2001/08/25 13:33:37 hugh Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -214,8 +214,9 @@ ENTRY(privinflt)	# Privileged/unimplemented instruction
  * put in a need for an extra check when the fault is gotten during
  * PTE reference. Handled in pmap.c.
  */
-		.align	2
-transl_v: .globl transl_v	# Translation violation, 20
+	.align	2
+	.globl	transl_v	# 20: Translation violation
+transl_v:
 	pushr	$0x3f
 	pushl	28(sp)
 	pushl	28(sp)
@@ -228,8 +229,9 @@ transl_v: .globl transl_v	# Translation violation, 20
 1:	popr	$0x3f
 	brb	access_v
 
-		.align	2
-access_v:.globl access_v	# Access cntrl viol fault,	24
+	.align	2
+	.globl	access_v	# 24: Access cntrl viol fault
+access_v:
 	blbs	(sp), ptelen
 	pushl	$T_ACCFLT
 	bbc	$1,4(sp),1f
@@ -273,7 +275,7 @@ ENTRY(cmrerr)
 	rei
 
 ENTRY(sbiflt);
-	movab	sbifltmsg, -(sp)
+	pushab	sbifltmsg
 	calls	$1, _panic
 
 	TRAPCALL(astintr, T_ASTFLT)
@@ -316,6 +318,8 @@ ENTRY(netint)
 		.globl	hardclock
 hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		pushr	$0x3f
+	incl	_clock_intrcnt+EV_COUNT	# count the number of clock interrupts
+#	adwc	$0,_clock_intrcnt+EV_COUNT+4
 #ifdef VAX46
 		cmpl	_vax_boardtype,$VAX_BTYP_46
 		bneq	1f

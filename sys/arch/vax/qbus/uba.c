@@ -1,5 +1,5 @@
-/*	$OpenBSD: uba.c,v 1.1 2000/04/27 03:14:49 bjc Exp $	*/
-/*	$NetBSD: uba.c,v 1.49 2000/01/24 02:40:30 matt Exp $	   */
+/*	$OpenBSD: uba.c,v 1.2 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$NetBSD: uba.c,v 1.52 2000/06/04 02:14:12 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -61,8 +61,8 @@
 
 #include <arch/vax/qbus/ubavar.h>
 
-static	int ubasearch __P((struct device *, struct cfdata *, void *));
-static	int ubaprint __P((void *, const char *));
+static int ubasearch (struct device *, struct cfdata *, void *);
+static int ubaprint (void *, const char *);
 
 struct 	cfdriver uba_cd = {
 	NULL, "uba", DV_DULL
@@ -75,8 +75,7 @@ struct 	cfdriver uba_cd = {
  * Unibus systems, Qbus systems have more map registers than usable.
  */
 void
-uba_enqueue(uu)
-	struct uba_unit *uu;
+uba_enqueue(struct uba_unit *uu)
 {
 	struct uba_softc *uh;
 	int s;
@@ -95,8 +94,7 @@ uba_enqueue(uu)
  * This routine must be called at splimp.
  */
 void
-uba_done(uh)
-	struct uba_softc *uh;
+uba_done(struct uba_softc *uh)
 {
 	struct uba_unit *uu;
  
@@ -110,24 +108,44 @@ uba_done(uh)
 }
 
 /*
+ * Each device that needs some handling if an ubareset occurs must
+ * register for reset first through this routine.
+ */
+void
+uba_reset_establish(void (*reset)(struct device *), struct device *dev)
+{
+	struct uba_softc *uh = (void *)dev->dv_parent;
+	struct uba_reset *ur;
+
+	ur = malloc(sizeof(struct uba_reset), M_DEVBUF, M_NOWAIT);
+	ur->ur_dev = dev;
+	ur->ur_reset = reset;
+
+	SIMPLEQ_INSERT_TAIL(&uh->uh_resetq, ur, ur_resetq);
+}
+
+/*
  * Generate a reset on uba number uban.	 Then
  * call each device that asked to be called during attach,
  * giving it a chance to clean up so as to be able to continue.
  */
 void
-ubareset(uban)
-	int uban;
+ubareset(struct uba_softc *uh)
 {
-	register struct uba_softc *uh = uba_cd.cd_devs[uban];
-	int s, i;
+	struct uba_reset *ur;
+	int s;
 
 	s = splimp();
 	SIMPLEQ_INIT(&uh->uh_resq);
 	printf("%s: reset", uh->uh_dev.dv_xname);
 	(*uh->uh_ubainit)(uh);
 
-	for (i = 0; i < uh->uh_resno; i++)
-		(*uh->uh_reset[i])(uh->uh_resarg[i]);
+	ur = SIMPLEQ_FIRST(&uh->uh_resetq);
+	if (ur) do {
+		printf(" %s", ur->ur_dev->dv_xname);
+		(*ur->ur_reset)(ur->ur_dev);
+	} while ((ur = SIMPLEQ_NEXT(ur, ur_resetq)));
+
 	printf("\n");
 	splx(s);
 }
@@ -137,9 +155,7 @@ ubareset(uban)
  *   Calls the scan routine to search for uba devices.
  */
 void
-uba_attach(sc, iopagephys)
-	struct uba_softc *sc;
-	paddr_t iopagephys;
+uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 {
 
 	/*
@@ -149,6 +165,7 @@ uba_attach(sc, iopagephys)
 	 */
 	sc->uh_lastiv = 0x200;
 	SIMPLEQ_INIT(&sc->uh_resq);
+	SIMPLEQ_INIT(&sc->uh_resetq);
 
 	/*
 	 * Allocate place for unibus I/O space in virtual space.
@@ -168,10 +185,7 @@ uba_attach(sc, iopagephys)
 }
 
 int
-ubasearch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;
@@ -180,7 +194,6 @@ ubasearch(parent, cf, aux)
 	ua.ua_ioh = ubdevreg(cf->cf_loc[0]) + sc->uh_ioh;
 	ua.ua_iot = sc->uh_iot;
 	ua.ua_dmat = sc->uh_dmat;
-	ua.ua_reset = NULL;
 
 	if (badaddr((caddr_t)ua.ua_ioh, 2) ||
 	    (sc->uh_errchk ? (*sc->uh_errchk)(sc):0))
@@ -200,24 +213,6 @@ ubasearch(parent, cf, aux)
 		goto fail;
 	if (vec == 0)
 		goto fail;
-		
-	if (ua.ua_reset) { /* device wants ubareset */
-		if (sc->uh_resno == 0) {
-#define	RESETSIXE	128
-			sc->uh_reset = malloc(sizeof(void *) * RESETSIXE,
-			    M_DEVBUF, M_NOWAIT);
-			sc->uh_resarg = malloc(sizeof(void *) * RESETSIXE,
-			    M_DEVBUF, M_NOWAIT);
-		}
-		if (sc->uh_resno < RESETSIXE) {
-			sc->uh_resarg[sc->uh_resno] = cf->cf_unit;
-			sc->uh_reset[sc->uh_resno++] = ua.ua_reset;
-		} else {
-			printf("%s: Expand reset table, skipping reset %s%d\n",
-			    sc->uh_dev.dv_xname, cf->cf_driver->cd_name,
-			    cf->cf_unit);
-		}
-	}
 
 	ua.ua_br = br;
 	ua.ua_cvec = vec;
@@ -239,9 +234,7 @@ forgetit:
  * Print out some interesting info common to all unibus devices.
  */
 int
-ubaprint(aux, uba)
-	void *aux;
-	const char *uba;
+ubaprint(void *aux, const char *uba)
 {
 	struct uba_attach_args *ua = aux;
 
@@ -254,11 +247,12 @@ ubaprint(aux, uba)
  * Move to machdep eventually
  */
 void
-uba_intr_establish(icookie, vec, ifunc, iarg)
+uba_intr_establish(icookie, vec, ifunc, iarg, ev)
 	void *icookie;
 	int vec;
 	void (*ifunc)(void *iarg);
 	void *iarg;
+	struct evcnt *ev;
 {
-	scb_vecalloc(vec, ifunc, iarg, SCB_ISTACK);
+	scb_vecalloc(vec, ifunc, iarg, SCB_ISTACK, ev);
 }

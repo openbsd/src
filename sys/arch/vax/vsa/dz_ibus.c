@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.6 2001/06/15 22:45:34 miod Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.7 2001/08/25 13:33:37 hugh Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -14,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *     This product includes software developed at Ludd, University of 
+ *     Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -51,6 +51,7 @@
 #include <machine/vsbus.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
+#include <machine/nexus.h>
 
 #include <machine/../vax/gencons.h>
 
@@ -62,8 +63,8 @@
 #include "dzkbd.h"
 #include "dzms.h"
 
-static  int     dz_vsbus_match __P((struct device *, struct cfdata *, void *));
-static  void    dz_vsbus_attach __P((struct device *, struct device *, void *));
+static  int     dz_vsbus_match(struct device *, struct cfdata *, void *);
+static  void    dz_vsbus_attach(struct device *, struct device *, void *);
 
 static	vaddr_t dz_regs; /* Used for console */
 
@@ -175,8 +176,11 @@ dz_vsbus_attach(parent, self, aux)
 	sc->sc_type = DZ_DZV;
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
-	scb_vecalloc(va->va_cvec, dzxint, sc, SCB_ISTACK);
-	scb_vecalloc(va->va_cvec - 4, dzrint, sc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec, dzxint, sc, SCB_ISTACK,
+	    &sc->sc_tintrcnt);
+	scb_vecalloc(va->va_cvec - 4, dzrint, sc, SCB_ISTACK,
+	    &sc->sc_rintrcnt);
+
 	printf("\n%s: 4 lines", self->dv_xname);
 
 	dzattach(sc);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: dzvar.h,v 1.2 2001/05/16 22:15:18 hugh Exp $	*/
-/*	$NetBSD: dzvar.h,v 1.6 2000/01/24 02:40:29 matt Exp $	*/
+/*	$OpenBSD: dzvar.h,v 1.3 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.8 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -51,6 +51,8 @@
 
 struct	dz_softc {
 	struct	device	sc_dev;		/* Autoconf blaha */
+	struct	evcnt	sc_rintrcnt;	/* recevive interrupt counts */
+	struct	evcnt	sc_tintrcnt;	/* transmit interrupt counts */
 	struct	dz_regs	sc_dr;		/* reg pointers */
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -62,7 +64,7 @@ struct	dz_softc {
 		struct dz_softc	*dz_sc;		/* backpointer to softc */
 		int		dz_line;	/* sub-driver unit number */
 		void		*dz_private;	/* sub-driver data pointer */
-		int		(*dz_catch) __P((void *, int)); /* Fast catch recv */
+		int		(*dz_catch)(void *, int); /* Fast catch recv */
 		struct	tty *	dz_tty;		/* what we work on */
 #ifdef notyet
 		caddr_t		dz_mem;		/* pointers to clist output */
@@ -71,6 +73,7 @@ struct	dz_softc {
 	} sc_dz[NDZLINE];
 };
 
-void	dzattach __P((struct dz_softc *));
-void	dzrint __P((void *));
-void	dzxint __P((void *));
+void   dzattach(struct dz_softc *);
+void   dzrint(void *);
+void   dzxint(void *);
+void   dzreset(struct device *);

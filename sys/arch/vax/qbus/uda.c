@@ -1,5 +1,5 @@
-/*	$OpenBSD: uda.c,v 1.1 2000/04/27 03:14:49 bjc Exp $	*/
-/*	$NetBSD: uda.c,v 1.32 2000/01/24 02:40:30 matt Exp $	*/
+/*	$OpenBSD: uda.c,v 1.2 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$NetBSD: uda.c,v 1.36 2000/06/04 06:17:05 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -63,6 +63,7 @@
  */
 struct	uda_softc {
 	struct	device sc_dev;	/* Autoconfig info */
+	struct	evcnt sc_intrcnt; /* Interrupt counting */
 	struct	uba_unit sc_unit; /* Struct common for UBA to communicate */
 	struct	mscp_pack *sc_uuda;	/* Unibus address of uda struct */
 	struct	mscp_pack sc_uda;	/* Struct for uda communication */
@@ -79,10 +80,8 @@ struct	uda_softc {
 
 static	int	udamatch __P((struct device *, struct cfdata *, void *));
 static	void	udaattach __P((struct device *, struct device *, void *));
-static	void	udareset __P((int));
-static	void	mtcreset __P((int));
-static	void	reset __P((struct uda_softc *));
-static	void	intr __P((void *));
+static	void	udareset(struct device *);
+static	void	udaintr __P((void *));
 int	udaready __P((struct uba_unit *));
 void	udactlrdone __P((struct device *));
 int	udaprint __P((void *, const char *));
@@ -177,12 +176,6 @@ again:
 	}
 
 	/* should have interrupted by now */
-	if (strcmp(cf->cf_driver->cd_name, mtc_cd.cd_name)) {
-		ua->ua_reset = udareset;
-	} else {
-		ua->ua_reset = mtcreset;
-	}
-
 	return 1;
 bad:
 	if (++tries < 2)
@@ -206,7 +199,10 @@ udaattach(parent, self, aux)
 
 	uh->uh_lastiv -= 4;	/* remove dynamic interrupt vector */
 
-	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, intr, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+	    udaintr, sc, &sc->sc_intrcnt);
+	uba_reset_establish(udareset, &sc->sc_dev);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_iph = ua->ua_ioh;
@@ -299,7 +295,7 @@ udago(usc, mxi)
 	 */
 	if (sc->sc_inq == 0) {
 		err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam,
-		    bp->b_un.b_addr,
+		    bp->b_data,
 		    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
 		if (err == 0) {
 			mscp_dgo(sc->sc_softc, mxi);
@@ -331,7 +327,7 @@ udaready(uu)
 	struct buf *bp = mxi->mxi_bp;
 	int err;
 
-	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_un.b_addr,
+	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_data,
 	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
 	if (err)
 		return 0;
@@ -396,8 +392,8 @@ udasaerror(usc, doreset)
 	int doreset;
 {
 	struct	uda_softc *sc = (void *)usc;
-	register int code = bus_space_read_2(sc->sc_iot, sc->sc_sah, 0);
-	register struct saerr *e;
+	int code = bus_space_read_2(sc->sc_iot, sc->sc_sah, 0);
+	struct saerr *e;
 
 	if ((code & MP_ERR) == 0)
 		return;
@@ -421,7 +417,7 @@ udasaerror(usc, doreset)
  * interrupts, and process responses.
  */
 static void
-intr(arg)
+udaintr(arg)
 	void *arg;
 {
 	struct uda_softc *sc = arg;
@@ -456,26 +452,10 @@ intr(arg)
  * A Unibus reset has occurred on UBA uban.  Reinitialise the controller(s)
  * on that Unibus, and requeue outstanding I/O.
  */
-void
-udareset(ctlr)
-	int ctlr;
-{
-	reset(uda_cd.cd_devs[ctlr]);
-}
-
-void
-mtcreset(ctlr)
-	int ctlr;
-{
-	reset(mtc_cd.cd_devs[ctlr]);
-}
-
 static void
-reset(sc)
-	struct uda_softc *sc;
+udareset(struct device *dev)
 {
-	printf(" %s", sc->sc_dev.dv_xname);
-
+	struct uda_softc *sc = (void *)dev;
 	/*
 	 * Our BDP (if any) is gone; our command (if any) is
 	 * flushed; the device is no longer mapped; and the

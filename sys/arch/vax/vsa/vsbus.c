@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.c,v 1.6 2001/02/11 06:34:38 hugh Exp $ */
+/*	$OpenBSD: vsbus.c,v 1.7 2001/08/25 13:33:37 hugh Exp $ */
 /*	$NetBSD: vsbus.c,v 1.29 2000/06/29 07:14:37 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -67,13 +67,13 @@
 
 #include <machine/vsbus.h>
 
-int	vsbus_match	__P((struct device *, struct cfdata *, void *));
-void	vsbus_attach	__P((struct device *, struct device *, void *));
-int	vsbus_print	__P((void *, const char *));
-int	vsbus_search	__P((struct device *, void *, void *));
+int	vsbus_match(struct device *, struct cfdata *, void *);
+void	vsbus_attach(struct device *, struct device *, void *);
+int	vsbus_print(void *, const char *);
+int	vsbus_search(struct device *, void *, void *);
 
-void	ka410_attach	__P((struct device *, struct device *, void *));
-void	ka43_attach	__P((struct device *, struct device *, void *));
+void	ka410_attach(struct device *, struct device *, void *);
+void	ka43_attach(struct device *, struct device *, void *);
 
 static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	0,

@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.c,v 1.11 2001/02/11 06:34:37 hugh Exp $	 */
-/*	$NetBSD: clock.c,v 1.28 1999/05/01 16:13:43 ragge Exp $	 */
+/*	$OpenBSD: clock.c,v 1.12 2001/08/25 13:33:37 hugh Exp $	 */
+/*	$NetBSD: clock.c,v 1.35 2000/06/04 06:16:58 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,6 +47,8 @@
 int	yeartonum __P((int));
 int	numtoyear __P((int));
 
+struct evcnt clock_intrcnt;
+
 /*
  * microtime() should return number of usecs in struct timeval.
  * We may get wrap-arounds, but that will be fixed with lasttime
@@ -68,6 +70,17 @@ microtime(tvp)
 		extern struct vs_cpu *ka46_cpu;
 		i = *(volatile int *)(&ka46_cpu->vc_diagtimu);
 		i = (i >> 16) * 1024 + (i & 0x3ff);
+		break;
+		}
+#endif
+#ifdef VAX48
+	case VAX_BTYP_48: {
+		/*
+		 * PR_ICR doesn't exist.  We could use the vc_diagtimu
+		 * counter, saving the value on the timer interrupt and
+		 * subtracting that from the current value.
+		 */
+		i = 0;
 		break;
 		}
 #endif
@@ -162,8 +175,16 @@ delay(i)
 void
 cpu_initclocks()
 {
+	/*
+	 * The current evcnt mechanism sucks, so provide a struct
+	 * device for vmstat's sake, until it can be replaced.
+	 */
+	static struct device clockdev;
+	strcpy(clockdev.dv_xname, "clock");
+
 	mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
+	evcnt_attach(&clockdev, "intr", &clock_intrcnt);
 }
 
 /*

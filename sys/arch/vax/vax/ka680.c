@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka680.c,v 1.5 2001/06/25 00:43:19 mickey Exp $	*/
+/*	$OpenBSD: ka680.c,v 1.6 2001/08/25 13:33:37 hugh Exp $	*/
 /*	$NetBSD: ka680.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -245,8 +245,8 @@ ka680_steal_pages()
 	/*
 	 * Get the soft and hard memory error vectors now.
 	 */
-	scb_vecalloc(0x54, ka680_softmem, 0, 0);
-	scb_vecalloc(0x60, ka680_hardmem, 0, 0);
+	scb_vecalloc(0x54, ka680_softmem, NULL, 0, NULL);
+	scb_vecalloc(0x60, ka680_hardmem, NULL, 0, NULL);
 
 	/* Turn on caches (to speed up execution a bit) */
 	ka680_cache_enable();

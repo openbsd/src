@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 2000/04/27 01:10:11 bjc Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2001/08/25 13:33:37 hugh Exp $
 #	$NetBSD: genassym.cf,v 1.10 1999/11/19 22:09:55 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
@@ -107,6 +107,8 @@ define 	NETISR_BRIDGE	NETISR_BRIDGE
 define	USPACE		USPACE
 
 define	ENAMETOOLONG	ENAMETOOLONG
+
+define	EV_COUNT	offsetof(struct evcnt, ev_count)
 
 define	SYS_sigreturn	SYS_sigreturn	
 define	SYS_exit	SYS_exit

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ioa.h,v 1.6 2001/08/12 12:03:03 heko Exp $	*/
-/*	$NetBSD: ioa.h,v 1.5 1999/04/12 20:57:52 pk Exp $	*/
+/*	$OpenBSD: ioa.h,v 1.7 2001/08/25 13:33:36 hugh Exp $	*/
+/*	$NetBSD: ioa.h,v 1.6 2000/01/24 02:40:32 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.

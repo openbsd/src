@@ -1,5 +1,5 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.3 2001/02/11 06:34:37 hugh Exp $	*/
-/*	$NetBSD: asc_vsbus.c,v 1.20 2000/07/26 21:50:48 matt Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.4 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -284,7 +284,8 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_freq /= 1000000;
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr53c9x_intr,
-	    &asc->sc_ncr53c9x, SCB_ISTACK);
+	    &asc->sc_ncr53c9x, SCB_ISTACK, &asc->sc_intrcnt);
+	evcnt_attach(self, "intr", &asc->sc_intrcnt);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ibus.c,v 1.3 2001/02/11 06:34:37 hugh Exp $	*/
-/*	$NetBSD: ibus.c,v 1.2 1999/08/14 18:42:46 ragge Exp $ */
+/*	$OpenBSD: ibus.c,v 1.4 2001/08/25 13:33:37 hugh Exp $	*/
+/*	$NetBSD: ibus.c,v 1.7 2001/02/04 20:36:32 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -39,9 +39,9 @@
 #include <machine/cpu.h>
 #include <machine/sid.h>
 
-static	int ibus_print __P((void *, const char *));
-static	int ibus_match __P((struct device *, struct cfdata *, void *));
-static	void ibus_attach __P((struct device *, struct device *, void*));
+static	int ibus_print(void *, const char *);
+static	int ibus_match(struct device *, struct cfdata *, void *);
+static	void ibus_attach(struct device *, struct device *, void*);
 
 struct	cfdriver ibus_cd = {
 	NULL, "ibus", DV_DULL
@@ -52,9 +52,7 @@ struct	cfattach ibus_ca = {
 };
 
 int
-ibus_print(aux, name)
-	void *aux;
-	const char *name;
+ibus_print(void *aux, const char *name)
 {
 	struct bp_conf *bp = aux;
 
@@ -66,19 +64,17 @@ ibus_print(aux, name)
 
 
 int
-ibus_match(parent, cf, aux)
-	struct	device	*parent;
-	struct cfdata *cf;
-	void	*aux;
+ibus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (vax_bustype == VAX_IBUS)
 		return 1;
 	return 0;
 }
 
-#define	MVNIADDR 0x20084400
-#define	SGECADDR 0x20008000
-#define SHACADDR 0x20004200
+#define	MVNIADDR	0x20084400
+#define	SGECADDR	0x20008000
+#define	SHACADDR	0x20004200
+#define	SHAC1303ADDR	0x20008200
 
 void
 ibus_attach(parent, self, aux)
@@ -112,7 +108,10 @@ ibus_attach(parent, self, aux)
 	 * The same procedure for SHAC.
 	 */
 	bp.type = "shac";
-	va = vax_map_physmem(SHACADDR, 1);
+	if (vax_boardtype == VAX_BTYP_1303)
+		va = vax_map_physmem(SHAC1303ADDR, 1);
+	else
+		va = vax_map_physmem(SHACADDR, 1);
 	if (badaddr((caddr_t)va + 0x48, 4) == 0)
 		config_found(self, &bp, ibus_print);
 	vax_unmap_physmem(va, 1);

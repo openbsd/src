@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.9 2001/02/15 13:15:03 hugh Exp $ */
+/* $OpenBSD: ncr.c,v 1.10 2001/08/25 13:33:37 hugh Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -91,6 +91,7 @@ struct si_dma_handle {
 
 struct si_softc {
 	struct	ncr5380_softc	ncr_sc;
+	struct	evcnt		ncr_intrcnt;
 	caddr_t ncr_addr;
 	int	ncr_off;
 	int	ncr_dmaaddr;
@@ -108,18 +109,18 @@ struct si_softc {
 
 static int ncr_dmasize;
 
-static	int si_match __P((struct device *, void *, void *));
-static	void si_attach __P((struct device *, struct device *, void *));
-static	void si_minphys __P((struct buf *));
+static	int si_match(struct device *, void *, void *);
+static	void si_attach(struct device *, struct device *, void *);
+static	void si_minphys(struct buf *);
 
-static	void si_dma_alloc __P((struct ncr5380_softc *));
-static	void si_dma_free __P((struct ncr5380_softc *));
-static	void si_dma_setup __P((struct ncr5380_softc *));
-static	void si_dma_start __P((struct ncr5380_softc *));
-static	void si_dma_poll __P((struct ncr5380_softc *));
-static	void si_dma_eop __P((struct ncr5380_softc *));
-static	void si_dma_stop __P((struct ncr5380_softc *));
-static	void si_dma_go __P((void *));
+static	void si_dma_alloc(struct ncr5380_softc *);
+static	void si_dma_free(struct ncr5380_softc *);
+static	void si_dma_setup(struct ncr5380_softc *);
+static	void si_dma_start(struct ncr5380_softc *);
+static	void si_dma_poll(struct ncr5380_softc *);
+static	void si_dma_eop(struct ncr5380_softc *);
+static	void si_dma_stop(struct ncr5380_softc *);
+static	void si_dma_go(void *);
 
 #define NCR5380_READ(sc, reg)	bus_space_read_1(sc->sc_regt,		\
 	0, sc->ncr_sc.reg)
@@ -182,7 +183,9 @@ si_attach(parent, self, aux)
 	int tweak, target;
 
 	/* enable interrupts on vsbus too */
-	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
+	    SCB_ISTACK, &sc->ncr_intrcnt);
+	evcnt_attach(self, "intr", &sc->ncr_intrcnt);
 
 	/*
 	 * DMA area mapin.

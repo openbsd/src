@@ -1,5 +1,5 @@
-/*	$OpenBSD: ubareg.h,v 1.8 2000/04/27 03:14:51 bjc Exp $ */
-/*	$NetBSD: ubareg.h,v 1.10 1998/10/18 18:51:30 ragge Exp $ */
+/*	$OpenBSD: ubareg.h,v 1.9 2001/08/25 13:33:37 hugh Exp $ */
+/*	$NetBSD: ubareg.h,v 1.11 2000/01/24 02:40:36 matt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -67,7 +67,7 @@
 #define DW730	3		/* has adaptor regs, no sr: 750, 730 */
 #endif
 
-#if VAX630 || VAX650
+#if VAX630 || VAX650 || VAX660 || VAX670
 #define QBA	4		/* 22-bit Q-bus, no adaptor regs: uVAX II */
 #endif
 

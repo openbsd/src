@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.14 2001/06/15 22:45:34 miod Exp $     */
+/*	$OpenBSD: subr.s,v 1.15 2001/08/25 13:33:37 hugh Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -118,21 +118,26 @@ _ultrix_esigcode:
 
 		.globl	_idsptch, _eidsptch
 _idsptch:	pushr	$0x3f
-		.word	0x9f16
-		.long	_cmn_idsptch
-		.long	0
-		.long	0
+		.word	0x9f16		# jsb to absolute address
+		.long	_cmn_idsptch	# the absolute address
+		.long	0		# the callback interrupt routine
+		.long	0		# its argument
+		.long	0		# ptr to correspond evcnt struct
 _eidsptch:
 
 _cmn_idsptch:
-        movl    (sp)+,r0
-        pushl   4(r0)
-        calls   $1,*(r0)
-        popr    $0x3f
-        rei
+		movl	(sp)+,r0	# get pointer to idspvec
+		movl	8(r0),r1	# get evcnt pointer
+		beql	1f		# no ptr, skip increment
+		incl	EV_COUNT(r1)	# increment low longword
+#		adwc	$0,EV_COUNT+4(r1) # add any carry to hi longword
+1:		pushl	4(r0)		# push argument
+		calls	$1,*(r0)	# call interrupt routine
+		popr	$0x3f		# pop registers
+		rei			# return from interrut
 
 ENTRY(badaddr,R2|R3)			# Called with addr,b/w/l
-		mfpr	$0x12,r0
+		mfpr	$0x12,r0	# splhigh()
 		mtpr	$0x1f,$0x12
 		movl	4(ap),r2	# First argument, the address
 		movl	8(ap),r1	# Sec arg, b,w,l

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ze.c,v 1.2 2001/05/20 14:19:43 hugh Exp $	*/
+/*	$OpenBSD: if_ze.c,v 1.3 2001/08/25 13:33:36 hugh Exp $	*/
 /*      $NetBSD: if_ze.c,v 1.3 2000/01/24 02:54:03 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -127,7 +127,8 @@ zeattach(parent, self, aux)
 
 	vax_unmap_physmem((vaddr_t)ea, 1);
 
-	scb_vecalloc(SGECVEC, (void (*)(void *)) sgec_intr, sc, SCB_ISTACK);
+	scb_vecalloc(SGECVEC, (void (*)(void *)) sgec_intr, sc,
+	    SCB_ISTACK, &sc->sc_intrcnt);
 
 	sgec_attach(sc);
 }

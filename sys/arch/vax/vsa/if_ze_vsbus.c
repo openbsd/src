@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ze_vsbus.c,v 1.1 2000/04/27 02:34:50 bjc Exp $	*/
-/*      $NetBSD: if_ze_vsbus.c,v 1.2 2000/01/24 02:40:35 matt Exp $ */
+/*	$OpenBSD: if_ze_vsbus.c,v 1.2 2001/08/25 13:33:37 hugh Exp $	*/
+/*      $NetBSD: if_ze_vsbus.c,v 1.5 2000/07/26 21:50:49 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -63,8 +63,8 @@
 #define NISA_ROM        0x27800000
 #define	SGECVEC		0x108
 
-static	int	zematch __P((struct device *, void *, void *));
-static	void	zeattach __P((struct device *, struct device *, void *));
+static	int	zematch(struct device *, void *, void *);
+static	void	zeattach(struct device *, struct device *, void *);
 
 struct	cfattach ze_vsbus_ca = {
 	sizeof(struct ze_softc), zematch, zeattach
@@ -103,6 +103,7 @@ zeattach(parent, self, aux)
 {
 	struct ze_softc *sc = (struct ze_softc *)self;
 	struct vsbus_attach_args *va = aux;
+	extern struct vax_bus_dma_tag vax_bus_dma_tag;
 	int *ea, i;
 
 	/*
@@ -110,10 +111,11 @@ zeattach(parent, self, aux)
 	 */
 	sc->sc_ioh = vax_map_physmem(SGECADDR, 1);
 	sc->sc_iot = 0; /* :-) */
-	sc->sc_dmat = va->va_dmat;
+	sc->sc_dmat = &vax_bus_dma_tag;
 
 	sc->sc_intvec = SGECVEC;
-	scb_vecalloc(va->va_cvec, (void (*)(void *)) sgec_intr, sc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) sgec_intr,
+	    sc, SCB_ISTACK, &sc->sc_intrcnt);
 
 	/*
 	 * Map in, read and release ethernet rom address.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2001/01/28 01:21:32 hugh Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.5 2001/08/25 13:33:36 hugh Exp $ */
 /*	$NetBSD: autoconf.c,v 1.5 1999/08/23 19:09:27 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -37,8 +37,7 @@
 #include "sys/param.h"
 #include "../../include/mtpr.h"
 #include "../../include/sid.h"
-#include "../../include/trap.h"
-#include "../../include/frame.h"
+#include "../../include/scb.h"
 #include "vaxstand.h"
 
 extern  const struct ivec_dsp idsptch;	/* since we are not KERNEL */
@@ -191,10 +190,10 @@ scbinit()
 	int i;
 
 	/*
-	 * Allocate space. We need one page for the SCB, and 128*16 == 2k
+	 * Allocate space. We need one page for the SCB, and 128*20 == 2.5k
 	 * for the vectors. The SCB must be on a page boundary.
 	 */
-	i = alloc(VAX_NBPG * 6) + VAX_PGOFSET;
+	i = (int)alloc(VAX_NBPG + 128*sizeof(scb_vec[0])) + VAX_PGOFSET;
 	i &= ~VAX_PGOFSET;
 
 	mtpr(i, PR_SCBB);
@@ -203,9 +202,11 @@ scbinit()
 
 	for (i = 0; i < 128; i++) {
 		scb[i] = &scb_vec[i];
-		(int)scb[i] |= 1;	/* Only interrupt stack */
-		memcpy(&scb_vec[i], &idsptch, sizeof(struct ivec_dsp));
+		(int)scb[i] |= SCB_ISTACK;	/* Only interrupt stack */
+		scb_vec[i] = idsptch;
 		scb_vec[i].hoppaddr = scb_stray;
+		scb_vec[i].pushlarg = (void *) (i * 4);
+		scb_vec[i].ev = NULL;
 	}
 	scb_vec[0xc0/4].hoppaddr = rtimer;
 
@@ -238,19 +239,23 @@ rtimer()
 }
 
 asm("
+	.align	2
 	.globl  _idsptch, _eidsptch
 _idsptch:
-	pushr   $0x3f
-	pushl   $1
-	.long   0x9f01fb01
-	.long   0x12345678
-#
-#	gas do not accept this :-/ use hexcode instead
-#	nop
-#	calls   $1, *$0x12345678
-	popr    $0x3f
-	rei
+	pushr	$0x3f
+	.word	0x9f16
+	.long	_cmn_idsptch
+	.long	0
+	.long	0
+	.long	0
 _eidsptch:
+
+_cmn_idsptch:
+	movl	(sp)+,r0
+	pushl	4(r0)
+	calls	$1,*(r0)
+	popr	$0x3f
+	rei
 ");
 
 /*
@@ -261,14 +266,10 @@ void
 scb_stray(arg)
 	int arg;
 {
-	static struct callsframe *cf;
-	static int vector, ipl, *a;
+	static int vector, ipl;
 
-	cf = FRAMEOFFSET(arg);
-	a = &cf->ca_arg1;
 	ipl = mfpr(PR_IPL);
-	vector = ((cf->ca_pc - (u_int)scb_vec)/4) & ~3;
-	printf("stray interrupt: pc %x vector 0x%x, ipl %d\n",
-	    cf->ca_pc, vector, ipl);
+	vector = (int) arg;
+	printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
 }
 
