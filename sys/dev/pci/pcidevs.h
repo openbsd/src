@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.622 2003/05/14 02:09:28 jason Exp 
+ *		OpenBSD: pcidevs,v 1.623 2003/05/14 04:29:28 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -501,6 +501,7 @@
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
 #define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro Inc */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive */
+#define	PCI_VENDOR_ATML	0x121b		/* Advanced Telecommunications Modules */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
@@ -599,6 +600,7 @@
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_NETMOS	0x9710		/* NetMos */
 #define	PCI_VENDOR_CHRYSALIS	0xcafe		/* Chrysalis-ITS */
+#define	PCI_VENDOR_ENDACE	0xeace		/* Endace Measurement Systems */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
@@ -794,6 +796,12 @@
 #define	PCI_PRODUCT_ADVSYS_WIDE	0x2300		/* ABP-940UW */
 #define	PCI_PRODUCT_ADVSYS_U2W	0x2500		/* ASP-3940U2W */
 #define	PCI_PRODUCT_ADVSYS_U3W	0x2700		/* ASP-3940U3W */
+
+/* Advanced Telecommunications Modules Ltd. */
+#define	PCI_PRODUCT_ATML_WAIKATO	0x3200		/* Waikato Dag3.2 */
+#define	PCI_PRODUCT_ATML_DAG35	0x3500		/* Endace Dag3.5 */
+#define	PCI_PRODUCT_ATML_DAG422GE	0x422e		/* Endace Dag4.22GE */
+#define	PCI_PRODUCT_ATML_DAG423	0x4230		/* Endace Dag4.23 */
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT22	0x6422		/* AT22 */
@@ -1259,6 +1267,13 @@
 /* Emulex products */
 #define	PCI_PRODUCT_EMULEX_LPPFC	0x10df		/* Light Pulse FibreChannel */
 #define	PCI_PRODUCT_EMULEX_LP8000	0xf800		/* Light Pulse 8000 */
+
+/* Endace Measurement Systems */
+#define	PCI_PRODUCT_ENDACE_DAG35	0x3500		/* Endace Dag3.5 */
+#define	PCI_PRODUCT_ENDACE_DAG36D	0x360d		/* Endace Dag3.6D */
+#define	PCI_PRODUCT_ENDACE_DAG422GE	0x422e		/* Endace Dag4.22GE */
+#define	PCI_PRODUCT_ENDACE_DAG423	0x4230		/* Endace Dag4.23 */
+#define	PCI_PRODUCT_ENDACE_DAG423GE	0x423e		/* Endace Dag4.23GE */
 
 /* ENE Technology Inc products */
 #define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB-1410 PCI-CardBus */

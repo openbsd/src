@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.622 2003/05/14 02:09:28 jason Exp 
+ *		OpenBSD: pcidevs,v 1.623 2003/05/14 04:29:28 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -657,6 +657,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_U3W,
 	    "ASP-3940U3W",
+	},
+	{
+	    PCI_VENDOR_ATML, PCI_PRODUCT_ATML_WAIKATO,
+	    "Waikato Dag3.2",
+	},
+	{
+	    PCI_VENDOR_ATML, PCI_PRODUCT_ATML_DAG35,
+	    "Endace Dag3.5",
+	},
+	{
+	    PCI_VENDOR_ATML, PCI_PRODUCT_ATML_DAG422GE,
+	    "Endace Dag4.22GE",
+	},
+	{
+	    PCI_VENDOR_ATML, PCI_PRODUCT_ATML_DAG423,
+	    "Endace Dag4.23",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT22,
@@ -2125,6 +2141,26 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP8000,
 	    "Light Pulse 8000",
+	},
+	{
+	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG35,
+	    "Endace Dag3.5",
+	},
+	{
+	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG36D,
+	    "Endace Dag3.6D",
+	},
+	{
+	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG422GE,
+	    "Endace Dag4.22GE",
+	},
+	{
+	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG423,
+	    "Endace Dag4.23",
+	},
+	{
+	    PCI_VENDOR_ENDACE, PCI_PRODUCT_ENDACE_DAG423GE,
+	    "Endace Dag4.23GE",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1410,
@@ -8359,6 +8395,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "3DFX Interactive",
 	},
 	{
+	    PCI_VENDOR_ATML,
+	    "Advanced Telecommunications Modules",
+	},
+	{
 	    PCI_VENDOR_ARIEL,
 	    "Ariel",
 	},
@@ -8749,6 +8789,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_CHRYSALIS,
 	    "Chrysalis-ITS",
+	},
+	{
+	    PCI_VENDOR_ENDACE,
+	    "Endace Measurement Systems",
 	},
 	{
 	    PCI_VENDOR_ARC,
