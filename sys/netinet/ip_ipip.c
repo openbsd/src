@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.24 2002/06/09 16:26:10 itojun Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -88,7 +88,7 @@ struct ipipstat ipipstat;
 int
 ip4_input6(struct mbuf **m, int *offp, int proto)
 {
-	/* If we do not accept IPv4 explicitly, drop.  */
+	/* If we do not accept IP-in-IP explicitly, drop.  */
 	if (!ipip_allow && ((*m)->m_flags & (M_AUTH|M_CONF)) == 0) {
 		DPRINTF(("ip4_input6(): dropped due to policy\n"));
 		ipipstat.ipips_pdrops++;
@@ -111,7 +111,7 @@ ip4_input(struct mbuf *m, ...)
 	va_list ap;
 	int iphlen;
 
-	/* If we do not accept IPv4 explicitly, drop.  */
+	/* If we do not accept IP-in-IP explicitly, drop.  */
 	if (!ipip_allow && (m->m_flags & (M_AUTH|M_CONF)) == 0) {
 		DPRINTF(("ip4_input(): dropped due to policy\n"));
 		ipipstat.ipips_pdrops++;
@@ -163,13 +163,13 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		hlen = sizeof(struct ip);
 		break;
 #endif /* INET */
-
 #ifdef INET6
         case 6:
 		hlen = sizeof(struct ip6_hdr);
 		break;
 #endif
         default:
+		ipipstat.ipips_family++;
 		m_freem(m);
 		return /* EAFNOSUPPORT */;
 	}
@@ -195,15 +195,20 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 #endif /* MROUTING */
 
 	/* Keep outer ecn field. */
+	switch (v >> 4) {
 #ifdef INET
-	if ((v >> 4) == 4)
+	case 4:
 		otos = ipo->ip_tos;
+		break;
 #endif /* INET */
-
 #ifdef INET6
-	if ((v >> 4) == 6)
+	case 6:
 		otos = (ntohl(mtod(m, struct ip6_hdr *)->ip6_flow) >> 20) & 0xff;
+		break;
 #endif
+	default:
+		panic("ipip_input: should never reach here");
+	}
 
 	/* Remove outer IP header */
 	m_adj(m, iphlen);
@@ -229,6 +234,10 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		hlen = sizeof(struct ip6_hdr);
 		break;
 #endif
+	default:
+		ipipstat.ipips_family++;
+		m_freem(m);
+		return; /* EAFNOSUPPORT */
 	}
 
 	/*
@@ -248,7 +257,7 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	 * this is as good as any a position.
 	 */
 
-	/* Some sanity checks in the inner IPv4 header */
+	/* Some sanity checks in the inner IP header */
 	switch (v >> 4) {
 #ifdef INET
     	case 4:
@@ -260,7 +269,6 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		}
                 break;
 #endif /* INET */
-
 #ifdef INET6
     	case 6:
                 ip6 = (struct ip6_hdr *) ipo;
@@ -274,6 +282,8 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		ip6->ip6_flow |= htonl((u_int32_t) itos << 20);
                 break;
 #endif
+	default:
+		panic("ipip_input: should never reach here");
 	}
 
 	/* Check for local address spoofing. */
@@ -332,26 +342,29 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	 * untrusted packets.
 	 */
 
+	switch (v >> 4) {
 #ifdef INET
-	if (ipo) {
+	case 4:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
-	}
-#endif /* INET */
-
+		break;
+#endif
 #ifdef INET6
-	if (ip6) {
+	case 6:
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
+		break;
+#endif
+	default:
+		panic("ipip_input: should never reach here");
 	}
-#endif /* INET6 */
 
 #if NBPFILTER > 0
 	if (gifp && gifp->if_bpf) {
 		struct mbuf m0;
 		u_int af;
 
-		if (ipo)
+		if (ifq == &ipintrq)
 			af = AF_INET;
 		else
 			af = AF_INET6;
