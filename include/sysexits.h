@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysexits.h,v 1.3 2000/04/26 15:59:57 millert Exp $	*/
+/*	$OpenBSD: sysexits.h,v 1.4 2001/01/24 22:26:30 aaron Exp $	*/
 /*	$NetBSD: sysexits.h,v 1.4 1994/10/26 00:56:33 cgd Exp $	*/
 
 /*
@@ -118,6 +118,6 @@
 #define EX_NOPERM	77	/* permission denied */
 #define EX_CONFIG	78	/* configuration error */
 
-#define EX__MAX	78	/* maximum listed value */
+#define EX__MAX		78	/* maximum listed value */
 
 #endif /* !_SYSEXITS_H_ */
