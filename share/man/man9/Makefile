@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.18 2000/04/26 19:41:20 mickey Exp $
+#	$OpenBSD: Makefile,v 1.19 2000/04/26 20:44:50 mickey Exp $
 #       $NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	boot.9 copy.9 ctxsw.9 disk.9 doshutdownhooks.9 fetch.9 fork1.9 \
+MAN=	boot.9 copy.9 ctxsw.9 disk.9 disklabel.9 doshutdownhooks.9 \
+	fetch.9 fork1.9 \
 	extent.9 hz.9 hzto.9 intro.9 inittodr.9 log.9 kthread.9 \
 	malloc.9 md5.9 microtime.9 panic.9 pfind.9 printf.9 \
 	psignal.9 ratecheck.9 resettodr.9 \
@@ -17,6 +18,8 @@ MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
 MLINKS+=disk.9 disk_init.9 disk.9 disk_attach.9 disk.9 disk_detatch.9 \
 	disk.9 disk_busy.9 disk.9 disk_unbusy.9 disk.9 disk_find.9 \
 	disk.9 disk_resetstat.9
+MLINKS+=disklabel.9 readdisklabel.9 disklabel.9 writedisklabel.9 \
+	disklabel.9 setdisklabel.9 disklabel.9 bounds_check_with_label.9
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
