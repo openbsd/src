@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.32 2000/03/19 10:33:32 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.33 2000/04/02 01:36:23 brian Exp $
  */
 
 #include <sys/param.h>
@@ -165,7 +165,8 @@ bundle_Notify(struct bundle *bundle, char c)
 {
   if (bundle->notify.fd != -1) {
     if (write(bundle->notify.fd, &c, 1) == 1)
-      log_Printf(LogPHASE, "Parent notified of success.\n");
+      log_Printf(LogPHASE, "Parent notified of %s\n",
+                 c == EX_NORMAL ? "success" : "failure");
     else
       log_Printf(LogPHASE, "Failed to notify parent of success.\n");
     close(bundle->notify.fd);
