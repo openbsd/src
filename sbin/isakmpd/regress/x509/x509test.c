@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509test.c,v 1.9 1999/08/26 22:30:46 niklas Exp $	*/
-/*	$EOM: x509test.c,v 1.7 1999/08/12 22:34:31 niklas Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.10 1999/10/01 14:10:45 niklas Exp $	*/
+/*	$EOM: x509test.c,v 1.8 1999/09/30 13:40:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -132,7 +132,11 @@ main (int argc, char *argv[])
       perror ("read");
       exit (1);
     }
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+  priv_key = LC (PEM_read_bio_RSAPrivateKey, (keyfile, NULL, NULL, NULL));
+#else
   priv_key = LC (PEM_read_bio_RSAPrivateKey, (keyfile, NULL, NULL));
+#endif
   LC (BIO_free, (keyfile));
   if (priv_key == NULL)
     {
@@ -148,7 +152,11 @@ main (int argc, char *argv[])
       perror ("read");
       exit (1);
     }
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+  cert = LC (PEM_read_bio_X509, (certfile, NULL, NULL, NULL));
+#else
   cert = LC (PEM_read_bio_X509, (certfile, NULL, NULL));
+#endif
   LC (BIO_free, (certfile));
   if (cert == NULL) 
     {
