@@ -342,7 +342,7 @@ Principal name: <>
 @pindex kerberos
 @example
 @cartouche
-hemlig# /usr/sbin/kerberos &
+hemlig# /usr/libexec/kerberos &
 Kerberos server starting
 Sleep forever on error
 Log file is /var/log/kerberos.log
@@ -421,7 +421,7 @@ and add them to the admin server ACL.
 @pindex kadmind
 @example
 @cartouche
-hemlig# /usr/sbin/kadmind &
+hemlig# /usr/libexec/kadmind &
 KADM Server KADM0.0A initializing
 Please do not use 'kill -9' to kill this job, use a
 regular kill instead
