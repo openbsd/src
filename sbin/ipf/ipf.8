@@ -1,129 +1,293 @@
-.\"	$OpenBSD: ipf.8,v 1.11 1999/07/06 19:15:01 kjell Exp $
-.Dd February 6, 1999
+.\"	$OpenBSD: ipf.8,v 1.12 1999/07/08 03:10:03 aaron Exp $
+.Dd July 7, 1999
 .Dt IPF 8
 .Os
 .Sh NAME
 .Nm ipf
-.Nd "alters packet filtering lists for IP packet input and output"
+.Nd "manage IP packet filtering and firewalling rules"
 .Sh SYNOPSIS
 .Nm ipf
-.Op Fl AdDEInorsvyzZ
-.Op Fl l Ar block|pass|nomatch
-.Op Fl F Ar i|o|a|s|S
+.Op Fl AdDEInorsUvyzZ
 .Op Fl f Ar filename
 .Sh DESCRIPTION
+The
 .Nm
-opens the filenames listed (treating
-.Sq \-
-as stdin) and parses the
-file for a set of rules which are to be added or removed from the packet
-filter rule set.
+utility allows the insertion and removal of TCP/IP packet filtering and
+firewalling rules.
+.Nm
+can be used for anything from very simple tasks (i.e., preventing a host from
+replying to ping packets), to installing complex rulesets for a firewall to
+to protect an entire network.
 .Pp
-Each rule processed by
+Based on the specified rules,
 .Nm
-is added to the kernel's internal lists if there are no parsing problems.
-Rules are added to the end of the internal lists, matching the order in
-which they appear when given to
-.Nm ipf .
-.Sh OPTIONS
+can explicitly deny/permit any inbound or outbound packet on any interface,
+filter by IP networks or hosts, selectively filter packets by protocol and/or
+protocol options, keep packet state information for TCP, UDP, and ICMP packet
+flows, track fragment state information for IP packets (applying the same rules
+to all fragments), and much more.
+.Pp
+.Nm
+provides special capabilities for the most common Internet protocols. Both
+TCP and UDP packets may be filtered by port number or port range, or ICMP
+packets by type/code. Rules may filter packets on any arbitrary combination of
+TCP flags, IP options, IP security classes, or Type of Service (TOS).
+.Nm
+also supports inverted host/net matching.
+.Pp
+To get started, follow these steps:
+.Bl -enum -offset indent
+.It
+Edit
+.Pa /etc/rc.conf
+and set
+.Cm ipfilter=YES .
+This will cause
+.Nm
+to install the ruleset specified in
+.Pa /etc/ipf.rules
+each time the system is booted.
+.It
+Check that the kernel has been compiled with
+.Cm option IPFILTER
+(see
+.Xr options 4 ) .
+Refer to
+.Xr afterboot 8
+for further instructions on compiling a custom kernel.
+.It
+Edit
+.Pa /etc/sysctl.conf
+and set
+.Cm net.inet.ip.forwarding=1
+if this machine is to act as a firewall. This step is not necessary for hosts
+which are only filtering packets for themselves, but won't hurt either way.
+.El
+.Pp
+Once these steps are complete a rule file may be created. A very
+simple rule file might contain the following:
+.Pp
+.Dl pass in from any to any
+.Dl pass out from any to any
+.Pp
+Here we're passing all packets and not doing any filtering. This is a
+recommended starting point since it allows the current configuration to be
+tested before formulating and installing a more restrictive ruleset. For
+example, the following:
+.Pp
+.Dl "block in on we0 proto tcp from foo/32 to any"
+.Pp
+This would block all incoming TCP packets on interface
+.Dq we0
+from host
+.Dq foo
+to any internal destination. If this file is
+.Pa /etc/ipf.rules
+(the default location), the following command will flush the kernel's current
+ruleset, install the new ruleset, and enable
+.Pq Fl E
+.Nm ipf :
+.Pp
+.Dl "ipf -Fa -f /etc/ipf.rules -E"
+.Pp
+(This is the exact command executed by the
+.Pa /etc/rc
+script at boot-time if
+.Cm ipfilter=YES
+in
+.Pa /etc/rc.conf . )
+.Pp
+Please see
+.Xr ipf 5
+for a complete description of the
+.Nm
+rules file format and the example files in
+.Pa /usr/share/ipf .
+.Pp
+In addition to
+.Dq active
+rulesets (those installed into the kernel which dictate the current filtering
+policies),
+.Nm
+can maintain a separate
+.Dq inactive
+ruleset simultaneously. Inactive rulesets are useful for debugging pending or
+proposed changes to the active ruleset (see
+.Fl I
+option below).
+.Pp
+The following options are available:
 .Bl -tag -width Ds
 .It Fl A
-Set the list to make changes to the active list (default).
-.It Fl d
-Turn debug mode on.  Causes a hexdump of filter rules to be generated as
-it processes each one.
-.It Fl D
-Disable the filter (if enabled).  Not effective for loadable kernel versions.
-.It Fl E
-Enable the filter (if disabled).  Not effective for loadable kernel versions.
-.It Fl F Ar i|o|a
-This option specifies which filter list to flush.  The parameter should
-either be "i" (input), "o" (output) or "a" (remove all filter rules).
-Either a single letter or an entire word starting with the appropriate
-letter maybe used.  This option maybe before, or after, any other with
-the order on the command line being that used to execute options.
-.It Fl F Ar s|S
-To flush entries from the state table, the
-.Fl -F
-option is used in
-conjunction with either "s" (removes state information about any non-fully
-established connections) or "S" (deletes the entire state table).  Only
-one of the two options may be given.  A fully established connection
-will show up in
-.Li ipfstat -s
-output as 4/4, with deviations either way indicating it is not
-fully established any more.
-.It Fl f Ar filename
-This option specifies which files
-.Nm
-should use to get input from for modifying the packet filter rule lists.
+Apply changes to the active ruleset. This is the default.
 .It Fl I
-Set the list to make changes to the inactive list.
-.It Fl l Ar pass|block|nomatch
-Use of the
-.Fl l
-flag toggles default logging of packets.  Valid arguments to this option are
-.Ar pass ,
-.Ar block
-and
-.Ar nomatch .
-When an option is set, any packet which exits filtering and matches the
-set category is logged.  This is most useful for causing all packets
-which don't match any of the loaded rules to be logged.
+Apply changes to the inactive ruleset.
+.It Fl D
+Disable the filter (if enabled).
+.It Fl E
+Enable the filter (if disabled).
+.It Fl F Ar list
+Flush filter lists.
+.Ar list
+is one of
+.Sq i
+(input rules),
+.Sq o
+(output rules),
+or
+.Sq a
+(all filtering rules).
+.It Fl F Ar table
+Flush entries from state tables. If
+.Ar table
+is
+.Sq s ,
+.Nm
+removes any state information about connections that are non-fully established.
+If
+.Sq S ,
+.Nm
+removes the entire state table. Only one of the two options may be specified.
+A fully established connection will appear in
+.Ic ipfstat -s output
+as
+.Dq 4/4 ;
+any deviations indicate a connection that has not completed the three-way
+handshake.
+.It Fl d
+Enable debug mode. Causes a hexdump of filter rules to be generated as it
+processes each one.
+.It Fl f Ar filename
+Read, parse, and process the
+.Nm
+rules contained in
+.Ar filename .
+If
+.Ar filename
+is
+.Ql - ,
+.Nm
+reads from the standard input.
+All valid rules are installed into the kernel's internal rule list using the
+interface described by
+.Xr ipf 4 .
+Blank lines and lines beginning with
+.Ql #
+(comments) are ignored.
 .It Fl n
-This flag (no-change) prevents
+No change. Prevent
 .Nm
-from actually making any ioctl calls or doing anything which would
-alter the currently running kernel.
+from actually changing the state of the in-kernel filtering configuration.
 .It Fl o
-Force rules by default to be added/deleted to/from the output list, rather
-than the (default) input list.
-.It Fl r
-Remove matching filter rules rather than add them to the internal lists
+Force rules to be added/deleted to/from the output list rather than the
+(default) input list.
 .It Fl s
-Swap the active filter list in use to be the "other" one.
+Swap the active and inactive rulesets.
+.It Fl r
+Remove matching filter rules rather than add them to the in-kernel lists.
 .It Fl v
-Turn verbose mode on.  Displays information relating to rule processing.
+Enable verbose mode.
+.Nm
+will echo each of the successfully processed rules to the standard output. The
+original rule and any error messages that result will be echoed to standard
+error.
 .It Fl y
-Manually resync the in-kernel interface list maintained by IP Filter with
-the current interface status list.
+Force
+.Nm
+to synchronize the IP filter's in-kernel network interface list with the
+current system interface list. In particular, if an interface's IP address
+changes (i.e., due to a DHCP operation),
+.Nm
+must be executed with this option.
 .It Fl z
-For each rule in the input file, reset the statistics for it to zero and
-display the statistics prior to them being zeroed.
+For each rule in the input file, display its statistics, then reset them to 0.
 .It Fl Z
-Zero global statistics held in the kernel for filtering only (this doesn't
-affect fragment or state statistics).
+Globally reset all in-kernel filtering statistics to 0 (does not affect
+fragment or state statistics).
 .El
+.Sh EXAMPLES
+To flush all in-kernel filtering lists, install the ruleset contained in
+.Pa /etc/ipf.rules
+into the active list, and enable IP filtering:
+.Pp
+.Dl ipf -A -Fa -f /etc/ipf.rules
+.Pp
+It is advisable to work with an inactive filtering list before commiting new
+rules to the active in-kernel filtering list. To load a ruleset into the
+inactive list:
+.Pp
+.Dl ipf -I -Fa -f /etc/ipf.rules
+.Pp
+The verbose
+.Pq Fl v
+option is useful for verifying that rules are being processed as
+expected and is often used in conjunction with the inactive
+.Pq Fl I
+ruleset:
+.Pp
+.Dl ipf -I -Fa -vf /etc/ipf.rules
+.Pp
+After the inactive ruleset has been tested and seems to be processed correctly,
+use the
+.Fl s
+option to swap it with the active ruleset so that it represents the new
+filtering policy for the system:
+.Pp
+.Dl ipf -s
+.Pp
+Consider a system manager who administers
+.Nm
+remotely and has made changes to the
+.Pa /etc/ipf.rules
+file on the remote system. The following command sequence is noteworthy:
+.Pp
+.Dl ipf -I -Fa -f /etc/ipf.rules
+.Dl ipf -s; sleep 10; ipf -s
+.Pp
+The first command installs the new ruleset into the inactive filtering list.
+The second command first swaps the inactive (new) rules with the active (old)
+rules. After entering the second command, type some characters. If the
+characters are echoed the new ruleset is possibly valid. If not, within 10
+seconds the old ruleset will be re-installed. This trick is useful for
+minimizing service disruptions.
+.Sh NOTES
+Rules are checked in the order they are specified. The last matching rule
+wins, except when the
+.Dq quick
+keyword is present (see
+.Xr ipf 5 ) .
+.Pp
+Note that
+.Fl F Ns No a
+does not affect the state table. To view the current state table, use the
+.Xr ipfstat 8
+program:
+.Pp
+.Dl ipfstat -s
+.Pp
+To remove all active state entries:
+.Pp
+.Dl ipf -FS
 .Sh FILES
-.Bl -tag -width /usr/share/ipf -compact
-.It Pa /usr/share/ipf
-location of sample configuration files
-.It Pa /dev/ipauth
-name of the
-.Nm
-auth socket
-.It Pa /dev/ipl
-name of the
-.Nm
-logging socket
-.It Pa /dev/ipstate
-name of the
-.Nm
-state socket
+.Bl -tag -width /usr/share/ipf/example.* -compact
+.It /usr/share/ipf/example.*
+sample rule files
+.It /dev/ipfauth
+ipf authentication socket
+.It /dev/ipl
+ipf logging socket
+.It /dev/ipstate
+ipf state socket
 .El
 .Sh SEE ALSO
-.Xr ipftest 1 ,
 .Xr ipf 4 ,
 .Xr ipl 4 ,
 .Xr ipnat 4 ,
 .Xr ipf 5 ,
 .Xr ipfstat 8 ,
+.Xr ipftest 8 ,
 .Xr ipmon 8 ,
 .Xr ipnat 8
 .Pp
-http://coombs.anu.edu.au/ipfilter/
-.Sh DIAGNOSTICS
-Needs to be run as root for the packet filtering lists to actually
-be affected inside the kernel.
-.Sh BUGS
-If you find any, please send email to me at darrenr@pobox.com.
+http://coombs.anu.edu.au/ipfilter
+
