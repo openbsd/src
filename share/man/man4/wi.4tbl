@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.9 2002/04/11 20:34:06 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.10 2002/04/16 17:42:42 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -225,7 +225,7 @@ Create an IBBS network with network name
 .Dq my_net .
 .Bd -literal -compact -offset indent
 # ifconfig wi0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-	mediaopt create-ibss
+	mediaopt ibss-master
 .Ed
 .Pp
 Join an IBBS network with network name
