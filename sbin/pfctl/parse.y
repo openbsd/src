@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.129 2002/07/20 23:43:52 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.130 2002/07/21 00:40:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -239,7 +239,7 @@ typedef struct {
 %type	<v.gid>		gids gid_list gid_item
 %type	<v.route>	route
 %type	<v.redirection>	redirection
-%type	<v.string>	label
+%type	<v.string>	label string
 %type	<v.keep_state>	keep
 %type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
 %type	<v.timeout_spec>	timeout_spec timeout_list
@@ -284,7 +284,18 @@ option		: SET OPTIMIZATION STRING		{
 		}
 		;
 
-varset		: STRING PORTUNARY STRING		{
+string		: string STRING				{
+			if (asprintf(&$$, "%s %s", $1, $2) == -1) {
+				yyerror("malloc failed");
+				YYERROR;
+			}
+			free($1);
+			free($2);
+		}
+		| STRING
+		;
+
+varset		: STRING PORTUNARY string		{
 			if (pf->opts & PF_OPT_VERBOSE)
 				printf("%s = %s\n", $1, $3);
 			if (symset($1, $3) == -1) {
