@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.85 2002/01/18 01:36:29 mickey Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.86 2002/01/21 18:50:45 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ sys_mount(p, v, retval)
 	u_long fstypenum = 0;
 #endif
 	char fstypename[MFSNAMELEN];
+	char fspath[MNAMELEN];
 	struct vattr va;
 	struct nameidata nd;
 	struct vfsconf *vfsp;
@@ -114,10 +115,16 @@ sys_mount(p, v, retval)
 		return (error);
 
 	/*
+	 * Mount points must fit in MNAMELEN, not MAXPATHLEN.
+	 */
+	error = copyinstr(SCARG(uap, path), fspath, MNAMELEN, NULL);
+	if (error)
+		return(error);
+
+	/*
 	 * Get vnode to be covered
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, fspath, p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
