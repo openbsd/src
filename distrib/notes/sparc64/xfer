@@ -1,0 +1,302 @@
+Installation is supported from several media types, including:
+
+	FFS partitions
+	Tape
+	Remote NFS partition
+	CD-ROM
+	FTP
+	HTTP
+
+Not all methods are supported on all Sparc Systems and some of them
+work only with the floppy or the miniroot installation.
+
+If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you
+may be able boot from it.  Not all sparc systems support booting from
+CD-ROM and the current boot images is only known to work on sun4c and
+some sun4m architecture workstations.  If you can boot from the CD-ROM,
+you are home free and can proceed to the installation steps.  If not,
+you will need to do some setup work to prepare a bootable image, either
+a floppy, hard drive, or compatible net boot server.
+
+In addition to the bootable image, you also need to consider how to
+access the binary distribution sets to actually install the system.  If
+you have the OpenBSD CD-ROM distribution you can either access the
+CD-ROM directly from the bootable image or remotely mounted on another
+system via NFS.
+
+Although you can access the distribution sets directly from the CD-ROM or
+from one of the FTP mirrors over the internet, you may wish to transfer
+the sets to a local FTP or NFS server, or copy them to a partition on
+the target system's disk or onto a SCSI tape.
+
+The variety of options listed may seem confusing, but situations vary
+widely in terms of what peripherals and what sort of network arrangements
+a user has, the intent is to provide some way that will be practical.
+
+
+Creating a bootable floppy disk using DOS/Windows:
+
+	First you need to get access to the OpenBSD Bootable floppy
+	images.  If you can access the CD-ROM distribution under DOS
+	the bootable disks are in the OSREV/sparc directory, otherwise
+	you you will have to download them from one of the OpenBSD
+	ftp or http mirror sites, using ftp or a web-viewer.  In either
+	case, take care to do "binary" transfers, since these are
+	images files and any DOS cr/lf translations or control/z EOF
+	interpretations will result in corrupted transfers.
+	
+	You will also need to go to the "tools" directory and grab a
+	copy of the rawrite.exe utility and its documentation.  This
+	program is needed to correctly copy the bootable filesystem
+	image to the floppy, since it's an image of a unix partition
+	containing a ffs filesystem, not a MSDOS format diskette.
+
+	Once you have installed rawrite.exe, just run it and specify the
+	name of the bootable image, such as "floppy.fs" and the name of
+	the floppy drive, such as "a:".  Be sure to use good quality HD
+	(1.44MB) floppies, formatted on the system you're using.  The
+	image copy and boot process is not especially tolerant of read
+	errors. 
+
+	Note that if you are using NT to write the images to disk, you
+	will need to use ntrw.exe instead.  It is also available in the
+	"tools" directory.  Grab it and run in with the correct 
+	arguments like this "ntrw <image> <drive>:"
+
+	Note that, when installing, the boot floppy can be write-protected
+	(i.e.  read-only).
+
+
+Creating a bootable floppy disk using SunOS or other Un*x-like system:
+
+	First, you will need obtain a local copy of the bootable filesystem
+	image as described above.  If possible use cksum or md5 to verify
+	the checksums of the images vs. the values in the CKSUM or MD5
+	files on the mirror site.
+
+	Next, use the dd(1) utility to copy the file to the floppy drive.
+	Under SunOS, the command would be:
+
+		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
+
+	If you are using something other than SunOS, you may have to adapt
+	this to conform to local naming conventions for the floppy and
+	options suitable for copying to a "raw" floppy image.  The key
+	issue is that the device name used for the floppy *must* be one
+	that refers to the whole 2880 block image, not a partition or
+	compatibility mode, and the copy command needs to be compatible
+	with the requirement that writes to a raw device must be in
+	multiples of 512-byte blocks.  The variations are endless and
+	beyond the scope of this document.
+
+	If you're doing this on the system you intend to boot the floppy on,
+	copying the floppy back to a file and doing a compare or checksum
+	is a good way to verify that the floppy is readable and free of
+	read/write errors.
+
+
+
+Creating a bootable hard disk using SunOS or other Un*x-like system:
+
+	If you don't have a floppy drive you can copy the single floppy
+	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
+	onto the hard disk you intend to boot on.  Traditionally, the
+	way to do this is to use dd(1) to place the bootable filesystem
+	image in the "swap" partition of the disk (while running in
+	single user mode), and then booting from that partition.
+
+	Using the "b" partition allows you to boot without overwriting
+	any useful parts of the disk, you can also use another partition,
+	but don't used the "a" or "c" partition without understanding
+	the disklabel issues described below under "incompatible systems".
+
+	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
+	which have a compatible view of SunOS disk labels and partitions.
+
+	Use the dd(1) utility to copy the file to the hard drive.
+	Under SunOS, the command would be:
+
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+				- or -
+		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+
+	The blocksize is arbitrary as long as it's a multiple of 512-bytes
+	and within the maximum supported by the driver, i.e. bs=126b may
+	not work for all cases.  Again, device/partition names may vary,
+	depending on the OS involved.
+
+	If you are preparing the hard drive on an incompatible system or
+	don't care about the hard disk contents, you can also install the
+	bootable image starting at the beginning of the disk. This lets
+	you prepare a bootable hard-drive even if don't have a working
+	operating system on your Sparc, but it important to understand
+	that the bootable image installed this way includes a "disk label"
+	which can wipe out any pre-existing disklabels or partitioning for
+	the drive.
+
+	The floppy image is used only for booting, and can be placed in
+	a partition that will be overwritten during the install process,
+	since it actually runs off a ram-disk image in the kernel.  In
+	contrast the miniroot is a normal unix root filesystem and you
+	must place in a partition that will not be overwritten until you've
+	completed the installation process.
+
+	To copy the floppy image to the whole disk, overwriting labels:
+
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
+
+	Two notes - X should be replaced by the unit number of the target
+	disk, which is most likely *not* the disk/partition that's your
+	current root partition.  Again names may vary depending on the
+	OS involved.  Second, after doing this, the disklabel will be one
+	that would be appropriate for a floppy, i.e. one partition of 2880
+	block, and you'll probably want to change that later on.
+
+	If you're starting with a virgin disk and trying to do this under
+	SunOS, use format(8) and newfs(8) to set up the partitions and
+	mark the intended partition as an normal partition type.  If you're
+	using OpenBSD, perhaps on another architecture, OpenBSD will
+	create a "fictitious label" that will let you access the whole
+	disk.
+
+	To copy the floppy image to the hard disk, preserving SunOS,
+	Solaris NetBSD or OpenBSD labels:
+
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
+
+	You need to be sure that your version of dd(1) supports the
+	skip and seek operands, otherwise you can try a technique like:
+
+		dd if=/dev/rsdXc of=/tmp/label bs=1b count=1
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
+		dd if=/tmp/label of=/dev/rsdXc bs=1b count=1
+
+	In either case, you've created a situation where the disklabel
+	and the filesystem information don't agree about the partition
+	size and geometry, however the results will be usable.
+
+
+Creating a network bootable setup using SunOS or other Un*x-like system:
+
+	The details of setting up a network bootable environment vary
+	considerably, depending on the network's host.  Extract the
+	OpenBSD diskless(8) man page from the man{:--:}OSrev.tgz distribution
+	set or see the copy on the OpenBSD web page.  You will also
+	need to reference the relevant man pages or administrators guide
+	for the host system.
+	
+	Basically, you will need to set up reverse-arp (rarpd) and boot
+	parameter (bootpd) information and make the OpenBSD bootblock,
+	kernel/miniroot partition, and a swap file available as required
+	by the netboot setup.
+
+
+
+The steps necessary to prepare the distribution sets for installation
+depend on which method of installation you choose.  Some methods
+require a bit of setup first that is explained below.
+
+The new single floppy installation allows installing OpenBSD directly
+from FTP mirror sites over the internet, however you must consider the
+speed and reliability of your internet connection for this option.  It
+may save much time and frustration to use ftp get/reget to transfer the
+distribution sets to a local server or disk and perform the installation
+from there, rather than directly on the internet.
+
+
+To install or upgrade OpenBSD using a tape, you need to do the following:
+
+	To install OpenBSD from a tape, you need to make a tape that
+	contains the distribution set files, each in "tar" format or
+	in "gzipped tar format".  First you will need to transfer the
+	distribution sets to your local system, using ftp or by mounting
+	the CD-ROM containing the release.  Then you need to make a tape
+	containing the files.
+
+	If you're making the tape on a UN*X-like system, the easiest way
+	to do so is make a shell script along the following lines, call it
+	"/tmp/maketape".
+
+	#! /bin/sh
+	tape=/dev/nrst0
+	mt -f ${tape} rewind
+	if test $# -lt 1
+	then
+		for file in bsd.rd boot
+		do
+			dd if=${file} of=${tape} obs=8k conv=sync
+		done
+	fi
+	for file in base etc comp game man misc xbase xfont xserv xshare
+	do
+		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
+	done
+	tar cf ${tape} bsd
+	mt -f ${tape} offline
+	# end of script
+
+
+	And then:
+
+	cd .../OSREV/sparc
+	sh -x /tmp/maketape
+
+	
+	Note that this script creates a bootable tape. If you only want to
+	fetch the OpenBSD files from tape, but want to boot from another
+	device, you can save time and space creating the tape this way:
+
+	cd .../OSREV/sparc
+	sh -x /tmp/maketape noboot
+
+	
+	If you're using a system other than OpenBSD or SunOS, the tape
+	name and other requirements may change.
+
+
+To install OpenBSD using a remote partition, mounted via
+NFS, you must do the following:
+
+	NOTE:	This method of installation is recommended only for
+		those already familiar with using BSD network
+		configuration and management commands.  If you aren't,
+		this documentation should help, but is not intended to
+		be all-encompassing.
+
+	Place the OpenBSD distribution sets you wish to install into a
+	directory on an NFS server, and make that directory mountable
+	by the machine on which you are installing or upgrading OpenBSD.
+	This will probably require modifying the /etc/exports file on
+	of the NFS server and resetting its mount daemon (mountd).
+	(Both of these actions will probably require superuser
+	privileges on the server.)
+
+	You need to know the numeric IP address of the NFS server,
+	and, if the server is not on a network directly connected to
+	the machine on which you're installing or upgrading OpenBSD,
+	you need to know the numeric IP address of the router closest
+	to the OpenBSD machine.  Finally, you need to know the numeric
+	IP address of the OpenBSD machine itself.
+
+	Once the NFS server is set up properly and you have the
+	information mentioned above, you can proceed to the next step
+	in the installation or upgrade process.  If you're installing
+	OpenBSD from scratch, go to the section on preparing your hard
+	disk, below.  If you're upgrading an existing installation, go
+	directly to the section on upgrading.
+
+If you are upgrading OpenBSD, you also have the option of installing
+OpenBSD by putting the new distribution sets somewhere in your existing
+file system, and using them from there.  To do that, you must do the
+following:
+
+	Place the distribution sets you wish to upgrade somewhere in
+	your current file system tree.  At a bare minimum, you must
+	upgrade the "base" binary distribution, and so must put the
+	"base{:--:}OSrev" set somewhere in your file system.  If you wish,
+	you can do the other sets, as well, but you should NOT upgrade
+	the "etc" distribution; the "etc" distribution contains system
+	configuration files that you should review and update by hand.
+
+	Once you have done this, you can proceed to the next step in
+	the upgrade process, actually upgrading your system.
