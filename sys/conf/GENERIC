@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.103 2004/03/02 01:13:13 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.104 2004/04/10 08:33:54 mcbride Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -79,18 +79,10 @@ option		PPP_DEFLATE
 pseudo-device	pf		# packet filter
 pseudo-device	pflog		# pf log if
 pseudo-device	pfsync		# pf sync if
-pseudo-device	loop	2	# network loopback
 pseudo-device	bpfilter 8	# packet filter
-pseudo-device	sl	2	# CSLIP
-pseudo-device	ppp	2	# PPP
 pseudo-device	sppp	1	# Sync PPP/HDLC
-pseudo-device	tun	2	# network tunneling over tty
 pseudo-device	enc	1	# option IPSEC needs the encapsulation interface
-pseudo-device	bridge	2	# network bridging support
-pseudo-device	vlan 	2	# IEEE 802.1Q VLAN 
-pseudo-device	gre	1	# GRE encapsulation interface
 #pseudo-device	strip	1	# Starmode Radio IP interface
-pseudo-device	carp	2	# CARP protocol support
 
 pseudo-device	pty	16	# initial number of pseudo-terminals
 pseudo-device	tb	1	# tablet line discipline
@@ -99,8 +91,18 @@ pseudo-device	ccd	4	# concatenated disk devices
 pseudo-device	ksyms	1	# kernel symbols device
 pseudo-device	systrace 1	# system call tracing device
 
+# clonable devices
+pseudo-device	bridge		# network bridging support
+pseudo-device	carp		# CARP protocol support
+pseudo-device	gif		# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	gre		# GRE encapsulation interface
+pseudo-device	loop		# network loopback
+pseudo-device	ppp		# PPP
+pseudo-device	sl		# CSLIP
+pseudo-device	tun		# network tunneling over tty
+pseudo-device	vlan 		# IEEE 802.1Q VLAN 
+
 # for IPv6
-pseudo-device	gif	4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith	1	# IPv[46] tcp relay translation i/f
 
 option		BOOT_CONFIG	# add support for boot -c
