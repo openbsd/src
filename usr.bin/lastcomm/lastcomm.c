@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.7.2.1 1995/10/12 06:55:13 jtc Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: lastcomm.c,v 1.7.2.1 1995/10/12 06:55:13 jtc Exp $";
+static char rcsid[] = "$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,10 +53,12 @@ static char rcsid[] = "$NetBSD: lastcomm.c,v 1.7.2.1 1995/10/12 06:55:13 jtc Exp
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <struct.h>
+#include <tzfile.h>
 #include <unistd.h>
 #include <utmp.h>
 #include "pathnames.h"
@@ -79,6 +81,7 @@ main(argc, argv)
 	FILE *fp;
 	off_t size;
 	time_t t;
+	double delta;
 	int ch;
 	char *acctfile;
 
@@ -140,11 +143,16 @@ main(argc, argv)
 			continue;
 
 		t = expand(ab.ac_utime) + expand(ab.ac_stime);
-		(void)printf("%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s\n",
+		(void)printf("%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s",
 		    fldsiz(acct, ac_comm), fldsiz(acct, ac_comm), ab.ac_comm,
 		    flagbits(ab.ac_flag), UT_NAMESIZE, UT_NAMESIZE,
 		    user_from_uid(ab.ac_uid, 0), UT_LINESIZE, UT_LINESIZE,
 		    getdev(ab.ac_tty), t / (double)AHZ, ctime(&ab.ac_btime));
+		delta = expand(ab.ac_etime) / (double)AHZ;
+		printf(" (%1.0lf:%02.0lf:%05.2lf)\n",
+		    delta / SECSPERHOUR,
+		    fmod(delta, SECSPERHOUR) / SECSPERMIN,
+		    fmod(delta, SECSPERMIN));
 	}
 	exit(0);
 }
