@@ -1,6 +1,7 @@
-.\"	$OpenBSD: st.4,v 1.5 2000/03/02 14:46:46 todd Exp $
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$OpenBSD: st.4,v 1.6 2001/05/11 01:24:20 millert Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Systems Programming Group of the University of Utah Computer
@@ -34,9 +35,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)st.4	5.3 (Berkeley) 7/31/91
+.\"     from: @(#)st.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd July 31, 1991
+.Dd November 30, 1993
 .Dt ST 4 hp300
 .Os
 .Sh NAME
@@ -45,7 +46,7 @@
 .Tn CCS SCSI
 tape driver
 .Sh SYNOPSIS
-.Cd "tape st0 at scsi? slave ?"
+.Cd "st* at oscsi? target ? lun ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -154,11 +155,6 @@ nrst56	X	X	X	X
 .Rs
 .%T EXB-8200 8MM Cartridge Tape Subsystem Interface User Manual.
 .Re
-.Sh HISTORY
-The
-.Nm
-driver
-.Ud
 .Sh BUGS
 The
 .Tn HP
@@ -194,10 +190,9 @@ will not work
 .Pf ( Dq Li tar c
 is ok).  One can only start writing at  1) beginning of tape, 2) on the
 end of what was last written, 3) "front" side of a regular (long) filemark.
-Say you have a tape with 3 tar files on it, want to save the first
-file, and want to begin writing over the 2nd file.
-.Pp
-On a normal 1/4" or 1/2" drive you would do:
+For example, you have a tape with 3 tar files. If you want to save the first 
+file, but overwrite the second two files with new data, on a normal
+1/4" or 1/2" drive you would do:
 .Pp
 .Li "mt fsf 1; tar cf /dev/nrst0 ..."
 .Pp

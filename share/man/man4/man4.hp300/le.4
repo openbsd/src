@@ -1,6 +1,7 @@
-.\"	$OpenBSD: le.4,v 1.3 2000/03/02 14:46:46 todd Exp $
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$OpenBSD: le.4,v 1.4 2001/05/11 01:24:20 millert Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Systems Programming Group of the University of Utah Computer
@@ -34,9 +35,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)le.4	5.2 (Berkeley) 3/27/91
+.\"     from: @(#)le.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd March 27, 1991
+.Dd November 30, 1993
 .Dt LE 4 hp300
 .Os
 .Sh NAME
@@ -47,7 +48,7 @@
 .Tn LANCE
 Ethernet interface
 .Sh SYNOPSIS
-.Cd "device le0 at scode?"
+.Cd "le* at dio? scode ?"
 .Sh DESCRIPTION
 The
 .Nm le
@@ -92,7 +93,7 @@ The interface was handed
 a message with addresses formatted in an unsuitable address
 family; the packet was dropped.
 .Pp
-The following message indicate a possible hardware error performing
+The following message indicates a possible hardware error performing
 the indicated operation during autoconfiguration or initialization.
 .Pp
 .It le%d: init timeout, stat = 0x%x.
@@ -103,8 +104,3 @@ The reset procedure continues anyway.
 .Xr arp 4 ,
 .Xr inet 4 ,
 .Xr intro 4
-.Sh HISTORY
-The
-.Nm le
-driver
-.Ud
