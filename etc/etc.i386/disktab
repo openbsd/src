@@ -27,6 +27,12 @@
 # All partition sizes reserve space for bad sector tables.
 # (5 cylinders needed for maintenance + replacement sectors)
 #
+
+rdroot|ramdiskroot|RAM-disk root FS image:\
+	:ty=simulated:se#512:nc#16:nt#2:ns#128:\
+	:ta=4.4BSD:oa#0:pa#4046:fa#512:ba#4096:\
+	:ob#0:pb#0:oc#0:pc#4096:
+	
 qp120at|Quantum Peripherals 120MB IDE:\
 	:dt=ESDI:ty=winchester:se#512:nt#9:ns#32:nc#813:sf: \
 	:pa#13824:oa#0:ta=4.2BSD:ba#4096:fa#512: \
