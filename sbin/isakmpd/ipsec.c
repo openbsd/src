@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.21 1999/07/07 22:13:08 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.113 1999/06/10 13:34:56 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.22 1999/07/13 15:46:43 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.114 1999/07/13 15:43:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -830,7 +830,7 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	  return !ike_auth_get (decode_16 (value));
 	case IKE_ATTR_GROUP_DESCRIPTION:
 	  return decode_16 (value) < IKE_GROUP_DESC_MODP_768
-	    || decode_16 (value) > IKE_GROUP_DESC_EC2N_185;
+	    || decode_16 (value) > IKE_GROUP_DESC_MODP_1536;
 	case IKE_ATTR_GROUP_TYPE:
 	  return 1;
 	case IKE_ATTR_GROUP_PRIME:
@@ -873,7 +873,7 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	  return 0;
 	case IPSEC_ATTR_GROUP_DESCRIPTION:
 	  return decode_16 (value) < IKE_GROUP_DESC_MODP_768
-	    || decode_16 (value) > IKE_GROUP_DESC_EC2N_185;
+	    || decode_16 (value) > IKE_GROUP_DESC_MODP_1536;
 	case IPSEC_ATTR_ENCAPSULATION_MODE:
 	  return decode_16 (value) < IPSEC_ENCAP_TUNNEL
 	    || decode_16 (value) > IPSEC_ENCAP_TRANSPORT;

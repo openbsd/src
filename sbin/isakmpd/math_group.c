@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_group.c,v 1.8 1999/06/02 06:30:13 niklas Exp $	*/
-/*	$EOM: math_group.c,v 1.19 1999/05/28 19:51:45 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.9 1999/07/13 15:46:43 niklas Exp $	*/
+/*	$EOM: math_group.c,v 1.20 1999/07/13 15:43:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -176,6 +176,14 @@ struct group groups[] = {
     (int (*) (struct group *, void *, u_int8_t *, int))ec2n_setraw,
     (int (*) (struct group *, void *))ec2n_setrandom,
     (int (*) (struct group *, void *, void *, void *))ec2n_operation
+  },
+  {
+    MODP, OAKLEY_GRP_5, 0, &oakley_modp[2], 0, 0, 0, 0, 0,
+    (int (*) (struct group *))modp_getlen,
+    (void (*) (struct group *, void *, u_int8_t *))modp_getraw,
+    (int (*) (struct group *, void *, u_int8_t *, int))modp_setraw,
+    (int (*) (struct group *, void *))modp_setrandom,
+    (int (*) (struct group *, void *, void *, void *))modp_operation
   }
 };
 
