@@ -1,4 +1,4 @@
-/*	$OpenBSD: netio.c,v 1.1 2000/04/27 02:26:25 bjc Exp $ */
+/*	$OpenBSD: netio.c,v 1.2 2001/04/10 12:27:54 bjc Exp $ */
 /*	$NetBSD: netio.c,v 1.4 1999/06/30 18:38:03 ragge Exp $	*/
 
 /*-
@@ -111,6 +111,8 @@ int netio_ask = 0;		/* default to bootparam, can override */
 
 static	char input_line[100];
 
+int netmountroot __P((struct open_file *, char *));
+
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
  * This opens the low-level device and sets f->f_devdata.
@@ -139,8 +141,10 @@ int
 netclose(f)
 	struct open_file *f;
 {
-	netif_close(netdev_sock);
+	if(--open_count == 0)
+		netif_close(netdev_sock);
 	f->f_devdata = NULL;
+	return 0;
 }
 
 int
