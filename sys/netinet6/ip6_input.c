@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.58 2004/06/01 03:19:27 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.59 2004/06/21 19:26:02 mcbride Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ ip6_input(m)
          * Packet filter
          */
 	odst = ip6->ip6_dst;
-	if (pf_test6(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
+	if (pf_test6(PF_IN, m->m_pkthdr.rcvif, &m, NULL) != PF_PASS)
 		goto bad;
 	if (m == NULL)
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.197 2004/06/14 20:53:27 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.198 2004/06/21 19:26:01 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1341,13 +1341,11 @@ void				 pf_rm_rule(struct pf_rulequeue *,
 				    struct pf_rule *);
 
 #ifdef INET
-int	pf_test(int, struct ifnet *, struct mbuf **);
-int	pf_test_eh(int, struct ifnet *, struct mbuf **, struct ether_header *);
+int	pf_test(int, struct ifnet *, struct mbuf **, struct ether_header *);
 #endif /* INET */
 
 #ifdef INET6
-int	pf_test6(int, struct ifnet *, struct mbuf **);
-int	pf_test6_eh(int, struct ifnet *, struct mbuf **, struct ether_header *);
+int	pf_test6(int, struct ifnet *, struct mbuf **, struct ether_header *);
 void	pf_poolmask(struct pf_addr *, struct pf_addr*,
 	    struct pf_addr *, struct pf_addr *, u_int8_t);
 void	pf_addr_inc(struct pf_addr *, sa_family_t);

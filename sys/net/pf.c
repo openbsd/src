@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.451 2004/06/10 14:22:54 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.452 2004/06/21 19:26:01 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5035,7 +5035,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		goto bad;
 
 	if (oifp != ifp) {
-		if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
+		if (pf_test(PF_OUT, ifp, &m0, NULL) != PF_PASS)
 			goto bad;
 		else if (m0 == NULL)
 			goto done;
@@ -5228,7 +5228,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		goto bad;
 
 	if (oifp != ifp) {
-		if (pf_test6(PF_OUT, ifp, &m0) != PF_PASS)
+		if (pf_test6(PF_OUT, ifp, &m0, NULL) != PF_PASS)
 			goto bad;
 		else if (m0 == NULL)
 			goto done;
@@ -5372,13 +5372,7 @@ pf_add_mbuf_tag(struct mbuf *m, u_int tag)
 
 #ifdef INET
 int
-pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
-{
-	return pf_test_eh(dir, ifp, m0, NULL);
-}
-
-int
-pf_test_eh(int dir, struct ifnet *ifp, struct mbuf **m0,
+pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
     struct ether_header *eh)
 {
 	struct pfi_kif		*kif;
@@ -5685,13 +5679,7 @@ done:
 
 #ifdef INET6
 int
-pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
-{
-	return pf_test6_eh(dir, ifp, m0, NULL);
-}
-
-int
-pf_test6_eh(int dir, struct ifnet *ifp, struct mbuf **m0,
+pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
     struct ether_header *eh)
 {
 	struct pfi_kif		*kif;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.85 2004/06/12 04:58:48 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.86 2004/06/21 19:26:02 mcbride Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -788,7 +788,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	}
 
 #if NPF > 0
-	if (pf_test6(PF_OUT, ifp, &m) != PF_PASS) {
+	if (pf_test6(PF_OUT, ifp, &m, NULL) != PF_PASS) {
 		error = EHOSTUNREACH;
 		m_freem(m);
 		goto done;

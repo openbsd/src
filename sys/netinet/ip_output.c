@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.164 2004/06/21 18:34:52 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.165 2004/06/21 19:26:01 mcbride Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -592,7 +592,7 @@ sendit:
 		 */
 #if NPF > 0
 
-		if (pf_test(PF_OUT, &encif[0].sc_if, &m) != PF_PASS) {
+		if (pf_test(PF_OUT, &encif[0].sc_if, &m, NULL) != PF_PASS) {
 			error = EHOSTUNREACH;
 			splx(s);
 			m_freem(m);
@@ -694,7 +694,7 @@ sendit:
 	 * Packet filter
 	 */
 #if NPF > 0
-	if (pf_test(PF_OUT, ifp, &m) != PF_PASS) {
+	if (pf_test(PF_OUT, ifp, &m, NULL) != PF_PASS) {
 		error = EHOSTUNREACH;
 		m_freem(m);
 		goto done;
