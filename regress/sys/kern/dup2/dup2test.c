@@ -1,3 +1,7 @@
+/*	$OpenBSD: dup2test.c,v 1.2 2002/02/08 16:56:07 art Exp $	*/
+/*
+ *	Written by Artur Grabowski <art@openbsd.org> 2001 Public Domain.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
