@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.18 1997/04/03 07:54:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.19 1997/04/03 08:33:03 downsj Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -103,7 +103,7 @@ static void map_v4v6_hostent __P((struct hostent *hp, char **bp, int *len));
 static void addrsort __P((char **, int));
 #endif
 
-static int hokchar __P((const char *));
+int _hokchar __P((const char *));
 
 static const char AskedForGot[] =
 			  "gethostby*.getanswer: asked for \"%s\", got \"%s\"";
@@ -129,8 +129,8 @@ static struct hostent *getanswer __P((const querybuf *, int, const char *,
 
 extern int h_errno;
 
-static int
-hokchar(p)
+int
+_hokchar(p)
 	const char *p;
 {
 	char c;
@@ -186,7 +186,7 @@ getanswer(answer, anslen, qname, qtype)
 #ifdef USE_RESOLV_NAME_OK
 		name_ok = res_dnok;
 #else
-		name_ok = hokchar;
+		name_ok = _hokchar;
 #endif
 		break;
 	default:
