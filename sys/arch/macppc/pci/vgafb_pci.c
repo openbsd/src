@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.14 2003/11/12 20:08:31 miod Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.15 2005/03/15 21:10:37 miod Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -111,13 +111,12 @@ vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
 		    PCI_MAPREG_TYPE_IO) {
 			retval = pci_io_find(pc, pa->pa_tag, i,
 				&addr, &size);
+			if (retval != 0) {
+				continue;
+			}
 #ifdef DEBUG_VGAFB
 	printf("vgafb_pci_probe: io %x addr %x size %x\n", i, addr, size);
 #endif
-
-			if (retval) {
-				return 0;
-			}
 			if (*iosize == 0) {
 				*ioaddr = addr;
 				*iosize = size;
@@ -126,13 +125,12 @@ vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
 		} else {
 			retval = pci_mem_find(pc, pa->pa_tag, i,
 				&addr, &size, &tcacheable);
+			if (retval != 0) {
+				continue;
+			}
 #ifdef DEBUG_VGAFB
 	printf("vgafb_pci_probe: mem %x addr %x size %x\n", i, addr, size);
 #endif
-
-			if (retval) {
-				return 0;
-			}
 			if (size == 0 || addr == 0) {
 				/* ignore this entry */
 			} else if (*memsize == 0) {
@@ -214,14 +212,19 @@ vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
 		} else {
 			/* iospace not available, assume 640x480, pray */
 			*ioaddr = 0;
-			*iosize=0;
+			*iosize = 0;
 		}
 	}
 #ifdef DEBUG_VGAFB
 	printf("vgafb_pci_probe: id %x ioaddr %x, iosize %x, memaddr %x,\n memsize %x, mmioaddr %x, mmiosize %x\n",
 		id, *ioaddr, *iosize, *memaddr, *memsize, *mmioaddr, *mmiosize);
 #endif
-	return 1;
+	
+	/* io and mmio spaces are not required to attach */
+	if (/* *iosize == 0 || */ *memsize == 0 /* || *mmiosize == 0 */)
+		return (0);
+
+	return (1);
 }
 
 int
