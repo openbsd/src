@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.8 1996/05/02 06:43:20 niklas Exp $	*/
-/*	$NetBSD: machdep.c,v 1.64 1996/04/28 06:57:15 mhitch Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 1996/05/04 13:38:33 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 1996/05/01 09:56:22 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/cpu.h>
 #include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
