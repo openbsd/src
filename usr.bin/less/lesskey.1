@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lesskey.1,v 1.5 2003/08/18 17:21:45 millert Exp $
+.\"	$OpenBSD: lesskey.1,v 1.6 2003/11/30 14:05:29 jmc Exp $
 .\"
 .\" Copyright (C) 2000  Mark Nudelman
 .\"
@@ -8,19 +8,19 @@
 .\" 1. Redistributions of source code must retain the above copyright
 .\"    notice, this list of conditions and the following disclaimer.
 .\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice in the documentation and/or other materials provided with 
+.\"    notice in the documentation and/or other materials provided with
 .\"    the distribution.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
 .\" EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
-.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
-.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
-.\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+.\" OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+.\" BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+.\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .Dd January 17, 2003
 .Dt LESSKEY 1
@@ -30,36 +30,36 @@
 .Nd specify key bindings for less
 .Sh SYNOPSIS
 .Nm lesskey
-.Op Fl o Ar output
-.Op Fl -
+.Oo Fl o Ar output
+.Pf " | " Fl -output Ns = Ns Ar output Oc
 .Op Ar input
 .Nm lesskey
-.Op Fl -output Ns No = Ns Ar output
-.Op Fl -
-.Op Ar input
-.Nm lesskey
-.Fl V
-.Nm lesskey
-.Fl -version
+.Fl V | -version
 .Sh DESCRIPTION
 .Nm
 is used to specify a set of key bindings to be used by
 .Xr less 1 .
 The input file is a text file which describes the key bindings.
-If the input file is "-", standard input is read.
+If the input file is
+.Sq - ,
+standard input is read.
 If no input file is specified, a standard filename is used
-as the name of the input file, which depends on the system being used:
-On Unix systems, $HOME/.lesskey is used.
+as the name of the input file; by default
+.Pa $HOME/.lesskey .
 .\" on MS-DOS systems, $HOME/_lesskey is used;
 .\" and on OS/2 systems $HOME/lesskey.ini is used,
 .\" or $INIT/lesskey.ini if $HOME is undefined.
-The output file is a binary file which is used by less.
+The output file is a binary file which is used by
+.Xr less 1 .
 If no output file is specified, and the environment variable
 .Ev LESSKEY
-is set, the value of LESSKEY is used as the name of the output file.
-Otherwise, a standard filename is used as the name of the output file,
-which depends on the system being used:
-On Unix and OS-9 systems, $HOME/.less is used.
+is set, the value of
+.Ev LESSKEY
+is used as the name of the output file.
+Otherwise, a standard filename is used as the name of the output file;
+by default
+.Pa $HOME/.less
+is used.
 .\" on MS-DOS systems, $HOME/_less is used;
 .\" and on OS/2 systems, $HOME/less.ini is used,
 .\" or $INIT/less.ini if $HOME is undefined.
@@ -67,15 +67,40 @@ If the output file already exists,
 .Nm
 will overwrite it.
 .Pp
-The -V or --version option causes
+A system-wide lesskey file may also be set up to provide key bindings.
+If a key is defined in both a local lesskey file and in the
+system-wide file, key bindings in the local file take precedence over
+those in the system-wide file.
+If the environment variable
+.Ev LESSKEY_SYSTEM
+is set,
+.Xr less 1
+uses that as the name of the system-wide lesskey file.
+Otherwise,
+.Xr less 1
+looks in a standard place for the system-wide lesskey file:
+On
+.Ox ,
+the system-wide lesskey file is
+.Pa /etc/sysless .
+.Pp
+The
+.Fl V
+or
+.Fl -version
+option causes
 .Nm
 to print its version number and immediately exit.
-If -V or --version is present, other options and arguments are ignored.
+If
+.Fl V
+or
+.Fl -version
+is present, other options and arguments are ignored.
 .Pp
 The input file consists of one or more sections.
 Each section starts with a line that identifies the type of section.
 Possible sections are:
-.Bl -tag -width "#line-edit"
+.Bl -tag -width "#line-edit" -offset indent
 .It #command
 Defines new command keys.
 .It #line-edit
@@ -94,11 +119,13 @@ The command section begins with the line
 If the command section is the first section in the file,
 this line may be omitted.
 The command section consists of lines of the form:
-.Pp
-.Xo
-.Ar \&	string No <whitespace>
-.Ar action No [extra-string] <newline>
-.Xc
+.Bd -filled -offset indent
+.Ar string
+.Aq whitespace
+.Ar action
+.Bq extra-string
+.Aq newline
+.Ed
 .Pp
 Whitespace is any sequence of one or more spaces and/or tabs.
 The
@@ -117,7 +144,8 @@ A backslash followed by one to three octal digits may be used to
 specify a character by its octal value.
 A backslash followed by certain characters specifies input
 characters as follows:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -offset indent -compact
 .It \eb
 BACKSPACE
 .It \ee
@@ -153,17 +181,25 @@ to be taken literally.
 Characters which must be preceded by backslash include
 caret, space, tab and the backslash itself.
 .Pp
-An action may be followed by an "extra" string.
+An action may be followed by an
+.Qq extra
+string.
 When such a command is entered while running less,
 the action is performed, and then the extra
 string is parsed, just as if it were typed in to less.
 This feature can be used in certain cases to extend
 the functionality of a command.
-For example, see the "{" and ":t" commands in the example below.
-The extra string has a special meaning for the "quit" action:
+For example, see the
+.Sq {
+and
+.Sq :t
+commands in the example below.
+The extra string has a special meaning for the
+.Qq quit
+action:
 when less quits,
 first character of the extra string is used as its exit status.
-.Sh EXAMPLE
+.Pp
 The following input file describes the set of
 default command keys used by less:
 .Bd -literal -offset indent
@@ -282,12 +318,19 @@ Commands specified by
 .Nm
 take precedence over the default commands.
 A default command key may be disabled by including it in the
-input file with the action "invalid".
+input file with the action
+.Qq invalid .
 Alternatively, a key may be defined
-to do nothing by using the action "noaction".
-"noaction" is similar to "invalid", but
-less will give an error beep for an "invalid" command,
-but not for a "noaction" command.
+to do nothing by using the action
+.Qq noaction .
+.Qq noaction
+is similar to
+.Qq invalid ,
+but less will give an error beep for an
+.Qq invalid
+command, but not for a
+.Qq noaction
+command.
 In addition, ALL default commands may be disabled by
 adding this control line to the input file:
 .Pp
@@ -299,7 +342,9 @@ The #stop line should be the last line in that section of the file.
 Be aware that #stop can be dangerous.
 Since all default commands are disabled, you must provide sufficient
 commands before the #stop line to enable all necessary actions.
-For example, failure to provide a "quit" command can lead to frustration.
+For example, failure to provide a
+.Qq quit
+command can lead to frustration.
 .Sh LINE EDITING SECTION
 The line-editing section begins with the line:
 .Pp
@@ -310,7 +355,7 @@ in a manner similar to the way key bindings for
 ordinary commands are specified in the #command section.
 The line-editing section consists of a list of keys and actions,
 one per line as in the example below.
-.Sh EXAMPLE
+.Pp
 The following input file describes the set of
 default line-editing keys used by less:
 .Bd -literal -offset indent
@@ -343,32 +388,67 @@ default line-editing keys used by less:
 \eku	up
 \eej	down
 .Ed
-.Sh LESS ENVIRONMENT VARIABLES
+.Sh ENVIRONMENT SECTION
 The environment variable section begins with the line
 .Pp
 .Dl #env
 .Pp
 Following this line is a list of environment variable assignments.
-Each line consists of an environment variable name, an equals sign (=)
+Each line consists of an environment variable name, an equals sign
+.Pq Sq =
 and the value to be assigned to the environment variable.
 Whitespace before and after the equals sign is ignored.
 Variables assigned in this way are visible only to less.
-If a variable is specified in the system environment and also in a
-lesskey file, the value in the lesskey file takes precedence.
+If environment variables are defined in more than one place,
+variables defined in a local lesskey file take precedence over
+variables defined in the system environment, which take precedence
+over variables defined in the system-wide lesskey file.
 Although the lesskey file can be used to override variables set in the
 environment, the main purpose of assigning variables in the lesskey file
 is simply to have all less configuration information stored in one file.
-.Sh EXAMPLE
+.Pp
 The following input file sets the -i option whenever less is run,
-and specifies the character set to be "latin1":
+and specifies the character set to be
+.Qq latin1 :
 .Bd -literal -offset indent
 #env
 LESS = -i
 LESSCHARSET = latin1
 .Ed
+.Sh ENVIRONMENT
+.Bl -tag -width LESSKEY_SYSTEM -compact
+.It Ev LESSKEY
+Name of the default
+.Nm
+file.
+.It Ev LESSKEY_SYSTEM
+Name of the default system-wide
+.Nm
+file.
+.El
+.Sh FILES
+.Bl -tag -width "$HOME/.lesskey" -compact
+.It $HOME/.less
+Default
+.Nm
+file.
+.It $HOME/.lesskey
+Default
+.Nm
+input file.
+.It /etc/sysless
+Default system-wide
+.Nm
+file.
+.El
 .Sh SEE ALSO
 .Xr less 1
-.Sh WARNINGS
+.Sh AUTHORS
+.An Mark Nudelman Aq markn@greenwoodsoftware.com
+.Pp
+Send bug reports or comments to the above address or to
+.Aq bug\-less@gnu.org .
+.Sh CAVEATS
 It is not possible to specify special keys, such as uparrow,
 in a keyboard-independent manner.
 The only way to specify such keys is to specify the escape sequence
@@ -389,24 +469,19 @@ Redistributions of source code must retain the above copyright
 notice, this list of conditions and the following disclaimer.
 .It
 Redistributions in binary form must reproduce the above copyright
-notice in the documentation and/or other materials provided with 
+notice in the documentation and/or other materials provided with
 the distribution.
 .El
 .Pp
 THIS SOFTWARE IS PROVIDED BY THE AUTHOR
 .Dq AS IS
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
-OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
-BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Sh AUTHORS
-.An Mark Nudelman Aq markn@greenwoodsoftware.com
-.Pp
-Send bug reports or comments to the above address or to
-.Aq bug-less@gnu.org .
