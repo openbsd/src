@@ -3519,7 +3519,7 @@ echo "configure:3511: checking for catalogs to be installed" >&5
      fi
 
           if test -n "$LINGUAS"; then
-       for lang in $LINGUAS; do CATALOGS="$CATALOGS $lang$CATOBJEXT"; done
+       for lang in $LINGUAS; do CATALOGS="$CATALOGS $srcdir/po/$lang$CATOBJEXT"; done
      fi
    fi
 
