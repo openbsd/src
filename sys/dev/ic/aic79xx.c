@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.16 2004/11/23 05:15:35 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.17 2004/12/10 03:44:00 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -10825,9 +10825,10 @@ ahd_queue_scb(struct ahd_softc *ahd, struct scb *scb)
 		uint64_t host_dataptr;
 
 		host_dataptr = aic_le64toh(scb->hscb->dataptr);
-		printf("%s: Queueing SCB 0x%x bus addr 0x%x - 0x%x%x/0x%x\n",
+		printf("%s: Queueing SCB %d:0x%x bus addr 0x%x - 0x%x%x/0x%x\n",
 		       ahd_name(ahd),
-		       SCB_GET_TAG(scb), aic_le32toh(scb->hscb->hscb_busaddr),
+		       SCB_GET_TAG(scb), scb->hscb->scsiid,
+		       aic_le32toh(scb->hscb->hscb_busaddr),
 		       (u_int)((host_dataptr >> 32) & 0xFFFFFFFF),
 		       (u_int)(host_dataptr & 0xFFFFFFFF),
 		       aic_le32toh(scb->hscb->datacnt));
