@@ -23,10 +23,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: mppe.h,v 1.1 2000/11/02 00:54:34 brian Exp $
+ * $OpenBSD: mppe.h,v 1.2 2000/11/07 23:32:04 brian Exp $
  */
 
 #define MPPE_KEY_LEN	16
 extern const struct ccp_algorithm MPPEAlgorithm;
 extern int MPPE_MasterKeyValid;
+extern int MPPE_IsServer;
 extern char MPPE_MasterKey[];

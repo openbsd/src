@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ccp.h,v 1.6 2000/11/02 00:54:33 brian Exp $
+ * $OpenBSD: ccp.h,v 1.7 2000/11/07 23:32:04 brian Exp $
  *
  *	TODO:
  */
@@ -82,13 +82,13 @@ struct ccp {
   struct {
     int algorithm;		/* Algorithm in use */
     void *state;		/* Returned by implementations Init() */
-    struct lcp_opt opt;		/* Set by implementations OptInit() */
+    struct lcp_opt opt;		/* Set by implementation's OptInit() */
   } in;
 
   struct {
     int algorithm;		/* Algorithm in use */
     void *state;		/* Returned by implementations Init() */
-    struct ccp_opt *opt;	/* Set by implementations OptInit() */
+    struct ccp_opt *opt;	/* Set by implementation's OptInit() */
   } out;
 
   u_int32_t his_reject;		/* Request codes rejected by peer */
