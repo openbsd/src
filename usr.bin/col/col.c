@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.3 1997/01/15 23:42:20 millert Exp $	*/
+/*	$OpenBSD: col.c,v 1.4 1997/06/17 20:53:58 kstailey Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: col.c,v 1.3 1997/01/15 23:42:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: col.c,v 1.4 1997/06/17 20:53:58 kstailey Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -487,7 +487,7 @@ alloc_line()
 	int i;
 
 	if (!line_freelist) {
-		l = (LINE *)xmalloc((void *)NULL, sizeof(LINE) * NALLOC);
+		l = (LINE *)xmalloc(NULL, sizeof(LINE) * NALLOC);
 		line_freelist = l;
 		for (i = 1; i < NALLOC; i++, l++)
 			l->l_next = l + 1;
@@ -516,7 +516,7 @@ xmalloc(p, size)
 {
 
 	if (!(p = (void *)realloc(p, size)))
-		err(1, NULL);
+		err(1, "realloc failed");
 	return (p);
 }
 
