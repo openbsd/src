@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.1 2004/08/03 21:46:56 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.2 2004/08/19 10:22:01 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -222,9 +222,11 @@ spc_dio_dmadone(struct spc_softc *sc)
 	if ((spc_read(SSTS) & SSTS_BUSY) != 0) {
 		int timeout = 1000; /* XXX how long? */
 		while ((spc_read(SSTS) & SSTS_BUSY) != 0) {
-			if (--timeout < 0)
+			if (--timeout < 0) {
 				printf("%s: DMA complete timeout\n",
 				    sc->sc_dev.dv_xname);
+				timeout = 1000;
+			}
 			DELAY(1);
 		}
 	}
