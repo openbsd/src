@@ -1,4 +1,4 @@
-/*      $OpenBSD: sod.c,v 1.4 2001/05/31 10:16:30 art Exp $       */
+/*      $OpenBSD: sod.c,v 1.5 2001/06/08 06:49:20 art Exp $       */
 /*  
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -43,6 +43,8 @@
 #include <unistd.h>
 #include <syscall.h>
 
+#include "archdep.h"
+
 #define PAGSIZ	__LDPGSZ
 char * _dl_strdup(const char *);
 void _dl_free(void *);
@@ -77,7 +79,7 @@ _dl_build_sod(name, sodp)
 	cp = (char *)sodp->sod_name + 3;
 
 	/* dot guardian */
-	if ((strchr(cp, '.') == NULL) || (*(cp+strlen(cp)-1) == '.'))
+	if ((strchr(cp, '.') == NULL) || (*(cp+_dl_strlen(cp)-1) == '.'))
 		return;
 
 	/* default */
@@ -241,7 +243,7 @@ _dl_findhint(name, major, minor, prefered_path)
 					if (prefered_path == NULL ||
 					    strncmp(prefered_path,
 						hstrtab + bp->hi_pathx,
-						strlen(prefered_path)) == 0) {
+						_dl_strlen(prefered_path)) == 0) {
 						return hstrtab + bp->hi_pathx;
 					}
 			}
