@@ -1,4 +1,4 @@
-$OpenBSD: eisadevs,v 1.13 1999/06/23 04:55:09 mickey Exp $
+$OpenBSD: eisadevs,v 1.14 2000/03/13 20:32:15 maja Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -38,6 +38,7 @@ $OpenBSD: eisadevs,v 1.13 1999/06/23 04:55:09 mickey Exp $
 vendor ADP		Adaptec
 vendor AMI		AMI
 vendor BUS		BusLogic
+vendor CPQ		Compaq
 vendor DEC		Digital Equipment
 vendor DTI		DeskStation Technology, Inc.
 vendor FSI		FORE Systems
@@ -72,6 +73,9 @@ product AMI 4801	Series 48 SCSI
 product BUS 4201	Bt74xB SCSI
 product BUS 4202	Bt74xC SCSI
 product BUS 6301	Bt763E Ethernet
+
+/* Compaq products */
+product CPQ 6101	NetFlex-2 ENET-TR
 
 /* Digital Equipment products */
 product DEC 4250	DE425 Ethernet
@@ -114,13 +118,16 @@ product HWP C0D1	EISA System Board
 product HWP C0E1	EISA System Board
 
 /* 3Com products */
+product TCM 5090	3C509-TP Ethernet
 product TCM 5091	3C509 Ethernet
 product TCM 5092	3C579-TP Ethernet
 product TCM 5093	3C579 Ethernet
-product	TCM 5920 	3C592 Etherlink III
-product	TCM 5970 	3C597 Fast Etherlink TX
-product	TCM 5971 	3C597 Fast Etherlink T4 
-product	TCM 5972 	3C597 Fast Etherlink MII 
+product TCM 5094	3C509-Combo Ethernet
+product TCM 5095	3C509-TPO Ethernet
+product TCM 5920 	3C592 Etherlink III
+product TCM 5970 	3C597 Fast Etherlink TX
+product TCM 5971	3C597 Fast Etherlink T4
+product TCM 5972	3C597 Fast Etherlink MII
 
 /* Standard Microsystems (SMC) */
 product SMC 8010	Ethercard Elite32C Ultra
