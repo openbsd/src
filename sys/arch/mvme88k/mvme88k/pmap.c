@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2001/03/07 23:52:33 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2001/03/08 22:26:00 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -51,22 +51,24 @@
 
 /*#define DEBUG 1*/
 #include <sys/types.h>
-#include <machine/board.h>
 #include <sys/param.h>
-#include <machine/m882xx.h>		/* CMMU stuff */
+#include <sys/simplelock.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/msgbuf.h>
+#include <sys/user.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>			/* vm/vm_kern.h */
 #if defined(UVM)
 #include <uvm/uvm.h>
 #endif
 
-#include <sys/simplelock.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
-#include <sys/msgbuf.h>
-#include <sys/user.h>
+#include <machine/asm_macro.h>
 #include <machine/assert.h>
+#include <machine/board.h>
 #include <machine/cpu_number.h>
+#include <machine/m882xx.h>		/* CMMU stuff */
 #include <machine/pmap_table.h>
 
 #include <mvme88k/dev/pcctworeg.h>
