@@ -1,5 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.2 2001/03/03 08:53:46 maja Exp $	*/
-/*	$NetBSD: akbd.c,v 1.10 2000/09/01 16:00:38 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -70,20 +69,14 @@ static int	setleds __P((struct akbd_softc *, u_char));
 static void	blinkleds __P((struct akbd_softc *));
 #endif
 
-/*
- * Local variables.
- */
-static volatile int kbd_done;  /* Did ADBOp() complete? */
-
-/* Driver definition. */
-struct cfdriver akbd_cd = {
-	NULL, "akbd", DV_DULL
-};
-
 /* Driver definition. */
 struct cfattach akbd_ca = {
 	sizeof(struct akbd_softc), akbdmatch, akbdattach
 };
+struct cfdriver akbd_cd = {
+	NULL, "akbd", DV_DULL
+};
+
 
 extern struct cfdriver akbd_cd;
 
@@ -122,7 +115,7 @@ akbdmatch(parent, cf, aux)
 	void *cf;
 	void   *aux;
 {
-	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
+	struct adb_attach_args *aa_args = aux;
 
 	if (aa_args->origaddr == ADBADDR_KBD)
 		return 1;
@@ -137,8 +130,8 @@ akbdattach(parent, self, aux)
 {
 	ADBSetInfoBlock adbinfo;
 	struct akbd_softc *sc = (struct akbd_softc *)self;
-	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
-	int count, error;
+	struct adb_attach_args *aa_args = aux;
+	int error, kbd_done;
 	short cmd;
 	u_char buffer[9];
 	struct wskbddev_attach_args a;
@@ -160,15 +153,9 @@ akbdattach(parent, self, aux)
 		printf("standard keyboard (ISO layout)\n");
 		break;
 	case ADB_EXTKBD:
-		kbd_done = 0;
-		cmd = (((sc->adbaddr << 4) & 0xf0) | 0x0d ); /* talk R1 */
-		ADBOp((Ptr)buffer, (Ptr)extdms_complete,
-		    (Ptr)&kbd_done, cmd);
-
-		/* Wait until done, but no more than 2 secs */
-		count = 40000;
-		while (!kbd_done && count-- > 0)
-			delay(50);
+		cmd = ADBTALK(sc->adbaddr, 1);
+		kbd_done =
+		    (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0);
 
 		/* Ignore Logitech MouseMan/Trackman pseudo keyboard */
 		if (kbd_done && buffer[1] == 0x9a && buffer[2] == 0x20) {
@@ -234,16 +221,12 @@ akbdattach(parent, self, aux)
 		blinkleds(sc);
 #endif
 		break;
-#ifdef ADB_PBJPKBD 
 	case ADB_PBJPKBD:
 		printf("PowerBook keyboard (Japanese layout)\n");
 		break;
-#endif /* ADB_PBJPKBD  */
-#ifdef  ADB_PBG3JPKBD
 	case ADB_PBG3JPKBD:
 		printf("PowerBook G3 keyboard (Japanese layout)\n");
 		break;
-#endif /* ADB_PBG3JPKBD */
 	default:
 		printf("mapped device (%d)\n", sc->handler_id);
 		break;
@@ -251,7 +234,7 @@ akbdattach(parent, self, aux)
 	error = SetADBInfo(&adbinfo, sc->adbaddr);
 #ifdef ADB_DEBUG
 	if (adb_debug)
-		printf("kbd: returned %d from SetADBInfo\n", error);
+		printf("akbd: returned %d from SetADBInfo\n", error);
 #endif
 
 	a.console = akbd_is_console;
@@ -283,7 +266,7 @@ kbd_adbcomplete(buffer, data_area, adb_command)
 		printf("adb: transaction completion\n");
 #endif
 
-	adbaddr = (adb_command & 0xf0) >> 4;
+	adbaddr = ADB_CMDADDR(adb_command);
 	ksc = (struct akbd_softc *)data_area;
 
 	event.addr = adbaddr;
@@ -294,7 +277,7 @@ kbd_adbcomplete(buffer, data_area, adb_command)
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
-		printf("kbd: from %d at %d (org %d) %d:", event.addr,
+		printf("akbd: from %d at %d (org %d) %d:", event.addr,
 		    event.hand_id, event.def_addr, buffer[0]);
 		for (i = 1; i <= buffer[0]; i++)
 			printf(" %x", buffer[i]);
@@ -351,15 +334,11 @@ getleds(addr)
 
 	leds = 0x00;	/* all off */
 	buffer[0] = 0;
-	kbd_done = 0;
 
 	/* talk R2 */
-	cmd = ((addr & 0xf) << 4) | 0x0c | 0x02;
-	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
-	while (!kbd_done)
-		/* busy-wait until done */ ;
-
-	if (buffer[0] > 0)
+	cmd = ADBTALK(addr, 2);
+	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0 &&
+	    buffer[0] > 0)
 		leds = ~(buffer[2]) & 0x07;
 
 	return (leds);
@@ -385,34 +364,20 @@ setleds(ksc, leds)
 
 	addr = ksc->adbaddr;
 	buffer[0] = 0;
-	kbd_done = 0;
 
-	/* talk R2 */
-	cmd = ((addr & 0xf) << 4) | 0x0c | 0x02;
-	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
-	while (!kbd_done)
-		/* busy-wait until done */ ;
-
-	if (buffer[0] == 0)
+	cmd = ADBTALK(addr, 2);
+	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) || buffer[0] == 0)
 		return (EIO);
 
 	leds = ~leds & 0x07;
 	buffer[2] &= 0xf8;
 	buffer[2] |= leds;
 
-	/* listen R2 */
-	cmd = ((addr & 0xf) << 4) | 0x08 | 0x02;
-	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
-	while (!kbd_done)
-		/* busy-wait until done */ ;
+	cmd = ADBLISTEN(addr, 2);
+	adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
 
-	/* talk R2 */
-	cmd = ((addr & 0xf) << 4) | 0x0c | 0x02;
-	ADBOp((Ptr)buffer, (Ptr)extdms_complete, (Ptr)&kbd_done, cmd);
-	while (!kbd_done)
-		/* busy-wait until done */ ;
-
-	if (buffer[0] == 0)
+	cmd = ADBTALK(addr, 2);
+	if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) || buffer[0] == 0)
 		return (EIO);
 
 	ksc->sc_leds = ~((u_int8_t)buffer[2]) & 0x07;
@@ -510,6 +475,7 @@ kbd_intr(event)
 	type = press ? WSCONS_EVENT_KEY_DOWN : WSCONS_EVENT_KEY_UP;
 
 	switch (key) {
+	case 57:	/* Caps Lock pressed */
 	case 185:	/* Caps Lock released */
 		type = WSCONS_EVENT_KEY_DOWN;
 		wskbd_input(sc->sc_wskbddev, type, val);
