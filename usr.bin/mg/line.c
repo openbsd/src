@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.20 2004/01/27 23:43:37 vincent Exp $	*/
+/*	$OpenBSD: line.c,v 1.21 2004/07/09 13:50:40 vincent Exp $	*/
 
 /*
  *		Text line handling.
@@ -330,31 +330,18 @@ linsert(int n, int c)
 	return TRUE;
 }
 
-/*
- * Insert a newline into the buffer at the current location of dot in the
- * current window.  The funny ass-backwards way is no longer used.
- */
 int
-lnewline(void)
+lnewline_at(LINE *lp1, int doto)
 {
-	LINE	*lp1, *lp2;
-	int	 doto, nlen;
+	LINE	*lp2;
+	int	 nlen;
 	MGWIN	*wp;
-
-	if (curbp->b_flag & BFREADONLY) {
-		ewprintf("Buffer is read only");
-		return FALSE;
-	}
 
 	lchange(WFHARD);
 
 	undo_add_boundary();
-	undo_add_insert(curwp->w_dotp, llength(curwp->w_dotp), 1);
+	undo_add_insert(lp1, llength(lp1), 1);
 	undo_add_boundary();
-
-	/* Get the address and offset of "." */
-	lp1 = curwp->w_dotp;
-	doto = curwp->w_doto;
 
 	/* avoid unnecessary copying */
 	if (doto == 0) {
@@ -396,6 +383,20 @@ lnewline(void)
 		}
 	}
 	return TRUE;
+}
+
+/*
+ * Insert a newline into the buffer at the current location of dot in the
+ * current window.
+ */
+int
+lnewline(void)
+{
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read only");
+		return FALSE;
+	}
+	return lnewline_at(curwp->w_dotp, curwp->w_doto);
 }
 
 /*
@@ -694,8 +695,7 @@ kinsert(int c, int dir)
  * we are trying to get space at the beginning of the kill buffer.
  */
 static int
-kgrow(back)
-	int back;
+kgrow(int back)
 {
 	int	 nstart;
 	char	*nbufp;
@@ -726,8 +726,7 @@ kgrow(back)
  * scan along until it gets a "-1" back.
  */
 int
-kremove(n)
-	int n;
+kremove(int n)
 {
 	if (n < 0 || n + kstart >= kused)
 		return -1;

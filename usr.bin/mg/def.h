@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.54 2004/01/27 23:43:37 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.55 2004/07/09 13:50:39 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -352,6 +352,7 @@ void	 lfree(LINE *);
 void	 lchange(int);
 int	 linsert_str(const char *, int);
 int	 linsert(int, int);
+int	 lnewline_at(LINE *, int);
 int	 lnewline(void);
 int	 ldelete(RSIZE, int);
 int	 ldelnewline(void);
