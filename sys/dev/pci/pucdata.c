@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.22 2002/06/02 10:08:38 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.23 2002/10/13 19:46:17 henning Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -936,6 +936,42 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ * 8 },
 	    },
+	},
+
+	/*
+	 * Boca Research Turbo Serial 654 (4 serial port) card.
+	 * Appears to be the same as Chase Research PLC PCI-FAST4 card,
+	 * same as Perle PCI-FAST4 Multi-Port serial card
+	 */
+	{   /* "Boca Turbo Serial 654 - IOP654" */
+	    {   PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,           0x12e0, 0x0031  },
+	    {   0xffff, 0xffff,                                 0xffff, 0xffff  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+	    }, 
+	},
+
+	/*
+	 * Boca Research Turbo Serial 658 (8 serial port) card.
+	 * Appears to be the same as Chase Research PLC PCI-FAST8 card
+	 * same as Perle PCI-FAST8 Multi-Port serial card
+	 */
+	{   /* "Boca Turbo Serial 658 - IOP658" */
+	    {   PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,           0x12e0, 0x0021  },
+	    {   0xffff, 0xffff,                                 0xffff, 0xffff  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 4 },
+	    }, 
 	},
 
 	{   /* NULL, */
