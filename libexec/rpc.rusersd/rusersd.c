@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusersd.c,v 1.1.1.1 1995/10/18 08:43:21 deraadt Exp $";
+static char rcsid[] = "$Id: rusersd.c,v 1.2 1996/09/22 08:41:33 tholo Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,6 +46,7 @@ cleanup()
 {
 	(void) pmap_unset(RUSERSPROG, RUSERSVERS_3);
 	(void) pmap_unset(RUSERSPROG, RUSERSVERS_IDLE);
+	(void) pmap_unset(RUSERSPROG, RUSERSVERS_ORIG);
 	exit(0);
 }
 
@@ -74,6 +75,7 @@ main(argc, argv)
 
 		(void) pmap_unset(RUSERSPROG, RUSERSVERS_3);
 		(void) pmap_unset(RUSERSPROG, RUSERSVERS_IDLE);
+		(void) pmap_unset(RUSERSPROG, RUSERSVERS_ORIG);
 
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
@@ -93,6 +95,10 @@ main(argc, argv)
 	}
 	if (!svc_register(transp, RUSERSPROG, RUSERSVERS_IDLE, rusers_service, proto)) {
 		syslog(LOG_ERR, "unable to register (RUSERSPROG, RUSERSVERS_IDLE, %s).", proto?"udp":"(inetd)");
+		exit(1);
+	}
+	if (!svc_register(transp, RUSERSPROG, RUSERSVERS_ORIG, rusers_service, proto)) {
+		syslog(LOG_ERR, "unable to register (RUSERSPROG, RUSERSVERS_ORIG, %s).", proto?"udp":"(inetd)");
 		exit(1);
 	}
 
