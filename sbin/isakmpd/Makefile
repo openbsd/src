@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.14 1999/04/20 11:33:15 niklas Exp $
-#	$EOM: Makefile,v 1.49 1999/04/20 09:24:28 niklas Exp $
+#	$OpenBSD: Makefile,v 1.15 1999/04/20 12:22:18 niklas Exp $
+#	$EOM: Makefile,v 1.50 1999/04/20 12:22:46 niklas Exp $
 
 #
 # Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -89,27 +89,27 @@ DEBUG=		-g
 # You can also use Boehm's garbage collector as a means to find leaks.
 # XXX The defines below are GCC-specific.  I think it is OK to require
 # XXX GCC if you are debugging isakmpd in this way.
-LDADD+=		-L/usr/local/lib -lleak
-DPADD+=		/usr/local/lib/libleak.a
-CFLAGS+=	-D'malloc(x)=({ \
-		  void *GC_debug_malloc (size_t, char *, int); \
-		  GC_debug_malloc ((x), __FILE__, __LINE__); \
-		})' \
-		-D'realloc(x,y)=({ \
-		  void *GC_debug_realloc (void *, size_t, char *, int); \
-		  GC_debug_realloc ((x), (y), __FILE__, __LINE__); \
-		})' \
-		-D'free(x)=({ \
-		  void GC_debug_free (void *); \
-		  GC_debug_free (x); \
-		})' \
-		-D'calloc(x,y)=malloc((x) * (y))' \
-		-D'strdup(x)=({ \
-		  char *strcpy (char *, const char *); \
-		  const char *_x_ = (x); \
-		  char *_y_ = malloc (strlen (_x_) + 1); \
-		  strcpy (_y_, _x_); \
-		})'
+#LDADD+=		-L/usr/local/lib -lleak
+#DPADD+=		/usr/local/lib/libleak.a
+#CFLAGS+=	-D'malloc(x)=({ \
+#		  void *GC_debug_malloc (size_t, char *, int); \
+#		  GC_debug_malloc ((x), __FILE__, __LINE__); \
+#		})' \
+#		-D'realloc(x,y)=({ \
+#		  void *GC_debug_realloc (void *, size_t, char *, int); \
+#		  GC_debug_realloc ((x), (y), __FILE__, __LINE__); \
+#		})' \
+#		-D'free(x)=({ \
+#		  void GC_debug_free (void *); \
+#		  GC_debug_free (x); \
+#		})' \
+#		-D'calloc(x,y)=malloc((x) * (y))' \
+#		-D'strdup(x)=({ \
+#		  char *strcpy (char *, const char *); \
+#		  const char *_x_ = (x); \
+#		  char *_y_ = malloc (strlen (_x_) + 1); \
+#		  strcpy (_y_, _x_); \
+#		})'
 
 .if !make(install)
 SUBDIR=		regress
