@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.57 2002/02/17 19:42:27 millert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.58 2002/02/19 01:16:38 mickey Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.57 2002/02/17 19:42:27 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.58 2002/02/19 01:16:38 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1281,7 +1281,7 @@ print_media_word(ifmw, print_type, as_syntax)
 	for (desc = ifm_option_descriptions; desc->ifmt_string != NULL;
 	     desc++) {
 		if (IFM_TYPE_MATCH(desc->ifmt_word, ifmw) &&
-		    (ifmw & desc->ifmt_word) != 0 &&
+		    (IFM_OPTIONS(ifmw) & IFM_OPTIONS(desc->ifmt_word)) != 0 &&
 		    (seen_option & IFM_OPTIONS(desc->ifmt_word)) == 0) {
 			if (seen_option == 0)
 				printf(" %s", as_syntax ? "mediaopt " : "");
