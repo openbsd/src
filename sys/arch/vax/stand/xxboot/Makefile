@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.2 2000/10/04 04:54:38 bjc Exp $	
+#	$OpenBSD: Makefile,v 1.3 2002/03/10 06:52:16 hugh Exp $	
 #	$NetBSD: Makefile,v 1.2 1999/10/23 14:40:39 ragge Exp $
 
 S=${.CURDIR}/../../../../
 
 PROG=	xxboot
 LINKS=	${BINDIR}/xxboot ${BINDIR}/raboot 
-LINKS+=	${BINDIR}/xxboot ${BINDIR}/rdboot
+LINKS+=	${BINDIR}/xxboot ${BINDIR}/hdboot
 LINKS+=	${BINDIR}/xxboot ${BINDIR}/sdboot
 LINKS+=	${BINDIR}/xxboot ${BINDIR}/hpboot
 
