@@ -17,9 +17,6 @@ License along with libiberty; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 #include "ansidecl.h"
 #include "libiberty.h"
 
@@ -64,31 +61,6 @@ xmalloc_set_program_name (s)
 #endif /* HAVE_SBRK */
 }
 
-void
-xmalloc_failed (size)
-     size_t size;
-{
-#ifdef HAVE_SBRK
-  extern char **environ;
-  size_t allocated;
-
-  if (first_break != NULL)
-    allocated = (char *) sbrk (0) - first_break;
-  else
-    allocated = (char *) sbrk (0) - (char *) &environ;
-  fprintf (stderr,
-	   "\n%s%sCannot allocate %lu bytes after allocating %lu bytes\n",
-	   name, *name ? ": " : "",
-	   (unsigned long) size, (unsigned long) allocated);
-#else /* HAVE_SBRK */
-  fprintf (stderr,
-	   "\n%s%sCannot allocate %lu bytes\n",
-	   name, *name ? ": " : "",
-	   (unsigned long) size);
-#endif /* HAVE_SBRK */
-  xexit (1);
-}  
-
 PTR
 xmalloc (size)
     size_t size;
@@ -99,8 +71,27 @@ xmalloc (size)
     size = 1;
   newmem = malloc (size);
   if (!newmem)
-    xmalloc_failed (size);
+    {
+#ifdef HAVE_SBRK
+      extern char **environ;
+      size_t allocated;
 
+      if (first_break != NULL)
+	allocated = (char *) sbrk (0) - first_break;
+      else
+	allocated = (char *) sbrk (0) - (char *) &environ;
+      fprintf (stderr,
+	       "\n%s%sCannot allocate %lu bytes after allocating %lu bytes\n",
+	       name, *name ? ": " : "",
+	       (unsigned long) size, (unsigned long) allocated);
+#else /* HAVE_SBRK */
+      fprintf (stderr,
+              "\n%s%sCannot allocate %lu bytes\n",
+              name, *name ? ": " : "",
+              (unsigned long) size);
+#endif /* HAVE_SBRK */
+      xexit (1);
+    }
   return (newmem);
 }
 
@@ -115,8 +106,27 @@ xcalloc (nelem, elsize)
 
   newmem = calloc (nelem, elsize);
   if (!newmem)
-    xmalloc_failed (nelem * elsize);
+    {
+#ifdef HAVE_SBRK
+      extern char **environ;
+      size_t allocated;
 
+      if (first_break != NULL)
+	allocated = (char *) sbrk (0) - first_break;
+      else
+	allocated = (char *) sbrk (0) - (char *) &environ;
+      fprintf (stderr,
+	       "\n%s%sCannot allocate %lu bytes after allocating %lu bytes\n",
+	       name, *name ? ": " : "",
+	       (unsigned long) (nelem * elsize), (unsigned long) allocated);
+#else /* HAVE_SBRK */
+      fprintf (stderr,
+              "\n%s%sCannot allocate %lu bytes\n",
+              name, *name ? ": " : "",
+              (unsigned long) (nelem * elsize));
+#endif /* HAVE_SBRK */
+      xexit (1);
+    }
   return (newmem);
 }
 
@@ -134,7 +144,26 @@ xrealloc (oldmem, size)
   else
     newmem = realloc (oldmem, size);
   if (!newmem)
-    xmalloc_failed (size);
+    {
+#ifdef HAVE_SBRK
+      extern char **environ;
+      size_t allocated;
 
+      if (first_break != NULL)
+	allocated = (char *) sbrk (0) - first_break;
+      else
+	allocated = (char *) sbrk (0) - (char *) &environ;
+      fprintf (stderr,
+	       "\n%s%sCannot reallocate %lu bytes after allocating %lu bytes\n",
+	       name, *name ? ": " : "",
+	       (unsigned long) size, (unsigned long) allocated);
+#else /* HAVE_SBRK */
+      fprintf (stderr,
+              "\n%s%sCannot reallocate %lu bytes\n",
+              name, *name ? ": " : "",
+              (unsigned long) size);
+#endif /* HAVE_SBRK */
+      xexit (1);
+    }
   return (newmem);
 }

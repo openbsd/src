@@ -12,8 +12,6 @@
 #include <sys/types.h>
 #include <signal.h>
 
-extern void abort PARAMS ((void)) ATTRIBUTE_NORETURN;
-
 #ifdef SIG_SETMASK
 int
 DEFUN(sigsetmask,(set),

@@ -25,7 +25,10 @@ Boston, MA 02111-1307, USA.  */
 #include "ansidecl.h"
 #include "libiberty.h"
 
-#define ISBLANK(ch) ((ch) == ' ' || (ch) == '\t')
+#ifdef isspace
+#undef isspace
+#endif
+#define isspace(ch) ((ch) == ' ' || (ch) == '\t')
 
 /*  Routines imported from standard C runtime libraries. */
 
@@ -224,7 +227,7 @@ char *input;
       do
 	{
 	  /* Pick off argv[argc] */
-	  while (ISBLANK (*input))
+	  while (isspace (*input))
 	    {
 	      input++;
 	    }
@@ -257,7 +260,7 @@ char *input;
 	  arg = copybuf;
 	  while (*input != EOS)
 	    {
-	      if (ISBLANK (*input) && !squote && !dquote && !bsquote)
+	      if (isspace (*input) && !squote && !dquote && !bsquote)
 		{
 		  break;
 		}
@@ -323,7 +326,7 @@ char *input;
 	  argc++;
 	  argv[argc] = NULL;
 
-	  while (ISBLANK (*input))
+	  while (isspace (*input))
 	    {
 	      input++;
 	    }

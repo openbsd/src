@@ -25,17 +25,14 @@
 
 /*  Routines imported from standard C runtime libraries. */
 
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#else
-extern PTR malloc ();
-#endif
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-extern PTR memset ();
-#endif
+#ifdef __STDC__
+#include <stddef.h>
+extern void *malloc (size_t size);				/* 4.10.3.3 */
+extern void *memset (void *s, int c, size_t n);			/* 4.11.6.1 */
+#else	/* !__STDC__ */
+extern char *malloc ();		/* Standard memory allocater */
+extern char *memset ();
+#endif	/* __STDC__ */
 
 #ifndef MAX
 #  define MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -659,7 +656,7 @@ strerror (errnoval)
   else if ((sys_errlist == NULL) || (sys_errlist[errnoval] == NULL))
     {
       /* In range, but no sys_errlist or no entry at this index. */
-      sprintf (buf, "Error %d", errnoval);
+      snprintf (buf, sizeof buf, "Error %d", errnoval);
       msg = buf;
     }
   else
@@ -730,7 +727,7 @@ strerrno (errnoval)
   else if ((error_names == NULL) || (error_names[errnoval] == NULL))
     {
       /* In range, but no error_names or no entry at this index. */
-      sprintf (buf, "Error %d", errnoval);
+      snprintf (buf, sizeof buf, "Error %d", errnoval);
       name = (const char *) buf;
     }
   else

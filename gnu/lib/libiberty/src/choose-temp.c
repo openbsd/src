@@ -79,11 +79,9 @@ extern int mkstemps ();
    If success, DIR is returned.
    Otherwise NULL is returned.  */
 
-static const char *try PARAMS ((const char *, const char *));
-
-static const char *
+static char *
 try (dir, base)
-     const char *dir, *base;
+     char *dir, *base;
 {
   if (base != 0)
     return base;
@@ -93,6 +91,7 @@ try (dir, base)
   return 0;
 }
 
+#if defined(__MSDOS__) && !defined(__GO32__)
 /* Return a prefix for temporary file names or NULL if unable to find one.
    The current directory is chosen if all else fails so the program is
    exited if a temporary directory can't be found (mktemp fails).
@@ -104,7 +103,7 @@ try (dir, base)
 char *
 choose_temp_base ()
 {
-  const char *base = 0;
+  char *base = 0;
   char *temp_filename;
   int len;
   static char tmp[] = { DIR_SEPARATOR, 't', 'm', 'p', 0 };
@@ -142,6 +141,8 @@ choose_temp_base ()
     abort ();
   return temp_filename;
 }
+#endif
+
 /* Return a temporary file name (as a string) or NULL if unable to create
    one.  */
 
@@ -149,7 +150,7 @@ char *
 make_temp_file (suffix)
      const char *suffix;
 {
-  const char *base = 0;
+  char *base = 0;
   char *temp_filename;
   int base_len, suffix_len;
   int fd;

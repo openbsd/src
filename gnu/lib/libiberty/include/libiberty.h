@@ -51,13 +51,22 @@ extern char *concat PARAMS ((const char *, ...));
 
 extern int fdmatch PARAMS ((int fd1, int fd2));
 
+/* Get the working directory.  The result is cached, so don't call
+   chdir() between calls to getpwd().  */
+
+extern char * getpwd PARAMS ((void));
+
 /* Get the amount of time the process has run, in microseconds.  */
 
 extern long get_run_time PARAMS ((void));
 
-/* Choose a temporary directory to use for scratch files.  */
+/* Choose a temporary directory to use for scratch files, DEPRECATED */
 
 extern char *choose_temp_base PARAMS ((void));
+
+/* Return a temporary file name or NULL if unable to create one.  */
+
+extern char *make_temp_file PARAMS ((const char *));
 
 /* Allocate memory filled with spaces.  Allocates using malloc.  */
 
@@ -108,11 +117,7 @@ extern int xatexit PARAMS ((void (*fn) (void)));
 
 /* Exit, calling all the functions registered with xatexit.  */
 
-#ifndef __GNUC__
 extern void xexit PARAMS ((int status));
-#else
-void xexit PARAMS ((int status)) __attribute__ ((noreturn));
-#endif
 
 /* Set the program name used by xmalloc.  */
 
@@ -125,13 +130,14 @@ extern void xmalloc_set_program_name PARAMS ((const char *));
 #ifdef ANSI_PROTOTYPES
 /* Get a definition for size_t.  */
 #include <stddef.h>
+/* Get a definition for va_list.  */
+#include <stdarg.h>
 #endif
 extern PTR xmalloc PARAMS ((size_t));
 
-/* Reallocate memory without fail.  This works like xmalloc.
-
-   FIXME: We do not declare the parameter types for the same reason as
-   xmalloc.  */
+/* Reallocate memory without fail.  This works like xmalloc.  Note,
+   realloc type functions are not suitable for attribute malloc since
+   they may return the same address across multiple calls. */
 
 extern PTR xrealloc PARAMS ((PTR, size_t));
 
@@ -143,6 +149,10 @@ extern PTR xcalloc PARAMS ((size_t, size_t));
 /* Copy a string into a memory buffer without fail.  */
 
 extern char *xstrdup PARAMS ((const char *));
+
+/* Copy an existing memory buffer to a new memory buffer without fail.  */
+
+extern PTR xmemdup PARAMS ((const PTR, size_t, size_t));
 
 /* hex character manipulation routines */
 
@@ -171,6 +181,16 @@ extern int pexecute PARAMS ((const char *, char * const *, const char *,
 /* Wait for pexecute to finish.  */
 
 extern int pwait PARAMS ((int, int *, int));
+
+/* Like sprintf but provides a pointer to malloc'd storage, which must
+   be freed by the caller.  */
+
+extern int asprintf PARAMS ((char **, const char *, ...));
+
+/* Like vsprintf but provides a pointer to malloc'd storage, which
+   must be freed by the caller.  */
+
+extern int vasprintf PARAMS ((char **, const char *, va_list));
 
 #ifdef __cplusplus
 }
