@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 2004/02/23 08:32:36 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 2004/02/23 09:12:59 mickey Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -193,7 +193,6 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(bootapiver), _C_LABEL(bootargc), _C_LABEL(bootargv)
-	.globl	_C_LABEL(boot_consdev)
 	.globl	_C_LABEL(gdtstore)
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
@@ -210,7 +209,6 @@ _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
 _C_LABEL(bootapiver):	.long	0	# /boot API version
 _C_LABEL(bootargc):	.long	0	# /boot argc
 _C_LABEL(bootargv):	.quad	0	# /boot argv
-_C_LABEL(boot_consdev):	.long	0	# console device (temporary)
 _C_LABEL(proc0paddr):	.quad	0
 _C_LABEL(PTDpaddr):	.quad	0	# paddr of PTD, for libkvm
 #ifndef REALBASEMEM
@@ -269,7 +267,6 @@ start:	movw	$0x1234,0x472			# warm boot
 	 * Load parameters from stack
 	 * (howto, bootdev, bootapiver, esym, extmem, cnvmem, ac, av)
 	 *
-	 * XXX boot_consdev temporarily tacked on to the end
 	 */
 	movl	4(%esp),%eax
 	movl	%eax, RELOC(boothowto)
@@ -298,9 +295,6 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	%eax, (%ebx)
 	xorl	%eax, %eax
 	movl	%eax, 4(%ebx)
-
-	movl	36(%esp), %eax
-	movl	%eax, RELOC(boot_consdev)
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO

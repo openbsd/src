@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2004/02/23 01:19:52 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 2004/02/23 09:12:59 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1213,16 +1213,6 @@ init_x86_64(first_avail)
 #if 0
 	uvmexp.ncolors = 2;
 #endif
-
-	/*
-	 * XXX /boot temporarily passes an extra parameter for the
-	 *     console device.
-	 */
-	{
-		extern dev_t boot_consdev;
-
-		cnset(boot_consdev);
-	}
 
 	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
 				 /* and VM system doesn't work with phys 0 */
