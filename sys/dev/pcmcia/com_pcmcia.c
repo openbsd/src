@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.27 2000/12/16 21:47:48 mickey Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.28 2001/03/28 19:59:48 millert Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -332,10 +332,9 @@ found:
 	sc->sc_iobase = -1;
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
-	
-#ifdef notyet
 	sc->sc_frequency = COM_FREQ;
 
+#ifdef notyet
 	com_attach_subr(sc);
 #endif
 	/* establish the interrupt. */
