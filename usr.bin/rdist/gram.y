@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.4 1998/06/26 21:21:11 millert Exp $	*/
+/*	$OpenBSD: gram.y,v 1.5 2002/05/30 07:36:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -41,7 +41,7 @@ static char RCSid[] =
 "$From: gram.y,v 6.29 1994/04/11 23:59:15 mcooper Exp mcooper $";
 #else
 static char RCSid[] = 
-"$OpenBSD: gram.y,v 1.4 1998/06/26 21:21:11 millert Exp $";
+"$OpenBSD: gram.y,v 1.5 2002/05/30 07:36:44 deraadt Exp $";
 #endif
 
 static	char *sccsid = "@(#)gram.y	5.2 (Berkeley) 85/06/21";
@@ -351,7 +351,7 @@ again:
 		switch (yytext[1]) {
 		case 'o':
 			if (parsedistopts(&yytext[2], &opt, TRUE)) {
-				(void) sprintf(ebuf, 
+				(void) snprintf(ebuf, sizeof ebuf,
 					       "Bad distfile options \"%s\".", 
 					       &yytext[2]);
 				yyerror(ebuf);
@@ -376,7 +376,8 @@ again:
 		case 'r':	opt = DO_NODESCEND;		break;
 
 		default:
-			(void) sprintf(ebuf, "Unknown option \"%s\".", yytext);
+			(void) snprintf(ebuf, sizeof ebuf,
+				"Unknown option \"%s\".", yytext);
 			yyerror(ebuf);
 		}
 

@@ -398,7 +398,7 @@ fatal(char *fmt, ...)
 	char buf[200];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof buf, fmt, ap);
 	va_end(ap);
 
 	log(LOG_ERR,0,"%s: %s near line %d", configfilename, buf, lineno);
@@ -411,7 +411,7 @@ warn(char *fmt, ...)
 	char buf[200];
 
 	va_start(ap, fmt);
-	vsprintf(buf, fmt, ap);
+	vsnprintf(buf, sizeof buf, fmt, ap);
 	va_end(ap);
 
 	log(LOG_WARNING,0,"%s: %s near line %d", configfilename, buf, lineno);
