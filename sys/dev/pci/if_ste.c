@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.3 1999/12/08 00:09:59 aaron Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.4 1999/12/08 00:29:26 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_ste.c,v 1.14 1999/12/07 06:08:11 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_ste.c,v 1.14 1999/12/07 20:14:42 wpaul Exp $
  */
 
 #include "bpfilter.h"

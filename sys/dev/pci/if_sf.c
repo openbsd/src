@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.2 1999/12/08 00:25:54 aaron Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.3 1999/12/08 00:29:26 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_sf.c,v 1.16 1999/09/26 18:35:30 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_sf.c,v 1.18 1999/12/05 20:02:44 wpaul Exp $
  */
 
 /*
