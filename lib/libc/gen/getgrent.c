@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.10 1999/09/03 16:23:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.11 2000/01/06 08:19:48 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,8 +50,8 @@ static char rcsid[] = "$OpenBSD: getgrent.c,v 1.10 1999/09/03 16:23:18 millert E
 #endif
 #include "thread_private.h"
 
-_THREAD_PRIVATE_KEY(gr)
-_THREAD_PRIVATE_MUTEX(gr)
+_THREAD_PRIVATE_KEY(gr);
+_THREAD_PRIVATE_MUTEX(gr);
 static FILE *_gr_fp;
 static struct group _gr_group;
 static int _gr_stayopen;
@@ -59,10 +59,13 @@ static int grscan __P((int, gid_t, const char *, struct group *));
 static int start_gr __P((void));
 static void endgrent_basic __P((void));
 
+_THREAD_PRIVATE_KEY(gr_storage);
+static struct group_storage {
 #define	MAXGRP		200
-static char *members[MAXGRP];
+	char *members[MAXGRP];
 #define	MAXLINELENGTH	1024
-static char line[MAXLINELENGTH];
+	char line[MAXLINELENGTH];
+} gr_storage;
 
 #ifdef YP
 enum _ypmode { YPMODE_NONE, YPMODE_FULL, YPMODE_NAME };
@@ -225,6 +228,16 @@ grscan(search, gid, name, p_gr)
 	int r;
 	char *grname = (char *)NULL;
 #endif
+	char **members;
+	char *line;
+	struct group_storage *gs;
+
+	/* Always use thread-specific storage for member data. */
+	gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,gr_storage,NULL);
+	if (gs == NULL)
+		return 0;
+	members = gs->members;
+	line = gs->line;
 
 	for (;;) {
 #ifdef YP
