@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.42 2004/12/08 16:08:10 markus Exp $	 */
+/* $OpenBSD: sa.h,v 1.43 2005/03/04 16:20:07 hshoexer Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -44,7 +44,6 @@
 /* Remove a SA if it has not been fully negotiated in this time.  */
 #define SA_NEGOTIATION_MAX_TIME 120
 
-struct crypto_xf;
 struct doi;
 struct event;
 struct exchange;
@@ -89,7 +88,7 @@ struct proto {
 	void           *data;
 
 	/* Proposal transforms data, for validating the responders selection. */
-	                TAILQ_HEAD(proto_attr_head, proto_attr) xfs;
+	TAILQ_HEAD(proto_attr_head, proto_attr) xfs;
 	size_t          xf_cnt;
 };
 
@@ -149,8 +148,6 @@ struct sa {
 	 * Crypto info needed to encrypt/decrypt packets protected by this
 	 * SA.
 	 */
-	struct crypto_xf *crypto;
-	int             key_length;
 	struct keystate *keystate;
 
 	/* IDs from Phase 1 */
@@ -299,21 +296,14 @@ struct sa_kinfo {
 	u_int64_t	exp_first_use;
 
 	u_int64_t	last_used;
-	u_int64_t	last_marked;
 
 	struct sockaddr_storage	dst;
 	struct sockaddr_storage	src;
 	struct sockaddr_storage	proxy;
 
 	u_int32_t	spi;
-	u_int32_t	rpl;
 	u_int16_t	udpencap_port;
-	u_int16_t	amxkeylen;
-	u_int16_t	emxkeylen;
-	u_int16_t	ivlen;
-	u_int8_t	sproto;
 	u_int8_t	wnd;
-	u_int8_t	satype;
 };
 
 #endif				/* _SA_H_ */
