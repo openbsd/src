@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.30 2003/02/28 15:14:08 mickey Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.31 2003/02/28 15:26:23 mickey Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -617,6 +617,9 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	if (IS_2300(isp)) {	/* per QLogic errata */
 		data &= ~PCI_COMMAND_PARITY_ENABLE;
+	}
+	if (IS_23XX(isp)) {
+		isp->isp_touched = 1;
 	}
 	if (IS_23XX(isp)) {
 		isp->isp_touched = 1;

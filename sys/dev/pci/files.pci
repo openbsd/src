@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.145 2003/02/28 15:14:08 mickey Exp $
+#	$OpenBSD: files.pci,v 1.146 2003/02/28 15:26:23 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -23,10 +23,6 @@ file	dev/pci/tga_conf.c		tga
 file	dev/ic/bt463.c			tga
 file	dev/ic/bt485.c			tga
 file	dev/ic/ibm561.c			tga
-
-# HP graphics (CRX, Visualize)
-attach	sti at pci with sti_pci
-file	dev/pci/sti_pci.c		sti_pci
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:
@@ -91,15 +87,10 @@ file	dev/pci/eso.c			eso
 attach	opl at eso with opl_eso
 file	dev/pci/opl_eso.c		opl_eso
 
-# Intel 810/820/440MX ICH AC'97
+# Intel 810/820/440MX ICH audio with AC'97
 device	auich: audio, auconv, mulaw, ac97
 attach	auich at pci
 file	dev/pci/auich.c			auich
-
-# AUREAL Vortex1
-device	aureal: audio, auconv, mulaw, ac97
-attach	aureal at pci
-file	dev/pci/aureal.c		aureal
 
 # Creative Labs EMU10k1 (SBLive! series and PCI512)
 device	emu: audio, auconv, mulaw, ac97
@@ -149,11 +140,6 @@ file	dev/pci/fmsradio.c		fms & radio
 device	auvia: audio, auconv, mulaw, ac97
 attach	auvia at pci
 file	dev/pci/auvia.c			auvia
-
-# BrookTree 878 Audio device
-device	aubktr: audio, auconv, mulaw
-attach	aubktr at pci
-file	dev/pci/aubktr.c		aubktr
 
 # ICP Vortex GDT PCI RAID controllers
 # device declaration in sys/conf/files
@@ -311,10 +297,6 @@ file	dev/pci/if_ti.c			ti
 # NE2000-compatible PCI Ethernet cards
 attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci
-
-# i82596-based PCI Ethernet cards
-attach	ie at pci with ie_pci
-file	dev/pci/if_ie_pci.c		ie_pci
 
 # Sun GEM ethernet
 attach	gem at pci with gem_pci

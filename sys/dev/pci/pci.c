@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.31 2003/02/28 15:14:08 mickey Exp $	*/
+/*	$OpenBSD: pci.c,v 1.32 2003/02/28 15:26:23 mickey Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -409,10 +409,10 @@ pci_matchbyid(struct pci_attach_args *pa, const struct pci_matchid *ids,
 #include <sys/pciio.h>
 #include <sys/fcntl.h>
 
-#ifdef PCI_DEBUG
-#define DPRINTF(x) printf x
+#ifdef DEBUG
+#define PCIDEBUG(x) printf x
 #else
-#define DPRINTF(x)
+#define PCIDEBUG(x)
 #endif
 
 
@@ -423,7 +423,7 @@ int pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p);
 int
 pciopen(dev_t dev, int oflags, int devtype, struct proc *p) 
 {
-	DPRINTF(("pciopen ndevs: %d\n" , pci_cd.cd_ndevs));
+	PCIDEBUG(("pciopen ndevs: %d\n" , pci_cd.cd_ndevs));
 
 #ifndef APERTURE
 	if ((oflags & FWRITE) && securelevel > 0) {
@@ -440,7 +440,7 @@ pciopen(dev_t dev, int oflags, int devtype, struct proc *p)
 int
 pciclose(dev_t dev, int flag, int devtype, struct proc *p)
 {
-	DPRINTF(("pciclose\n"));
+	PCIDEBUG(("pciclose\n"));
 	return 0;
 }
 
@@ -455,9 +455,9 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	io = (struct pci_io *)data;
 
-	DPRINTF(("pciioctl cmd %s", cmd == PCIOCREAD ? "pciocread" 
+	PCIDEBUG(("pciioctl cmd %s", cmd == PCIOCREAD ? "pciocread" 
 		  : cmd == PCIOCWRITE ? "pciocwrite" : "unknown"));
-	DPRINTF(("  bus %d dev %d func %d reg %x\n", io->pi_sel.pc_bus,
+	PCIDEBUG(("  bus %d dev %d func %d reg %x\n", io->pi_sel.pc_bus,
 		  io->pi_sel.pc_dev, io->pi_sel.pc_func, io->pi_reg));
 
 	if (io->pi_sel.pc_bus >= pci_cd.cd_ndevs) {

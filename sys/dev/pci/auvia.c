@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.22 2003/02/28 15:14:08 mickey Exp $ */
+/*	$OpenBSD: auvia.c,v 1.23 2003/02/28 15:26:23 mickey Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -132,49 +132,41 @@ struct cfattach auvia_ca = {
 #define		AUVIA_PCICONF_ACFM	 0x00000200	/* FM enab */
 #define		AUVIA_PCICONF_ACSB	 0x00000100	/* SB enab */
 
-#define AUVIA_PLAY_BASE		0x00
-#define AUVIA_RECORD_BASE	0x10
+#define AUVIA_PLAY_BASE			0x00
+#define AUVIA_RECORD_BASE		0x10
 
-#define	AUVIA_RP_STAT		0x00
-#define		AUVIA_RPSTAT_INTR	0x03
-#define AUVIA_RP_CONTROL	0x01
-#define		AUVIA_RPCTRL_START	0x80
-#define		AUVIA_RPCTRL_TERMINATE	0x40
-#define		AUVIA_RPCTRL_AUTOSTART	0x20
+#define	AUVIA_RP_STAT			0x00
+#define		AUVIA_RPSTAT_INTR		0x03
+#define AUVIA_RP_CONTROL		0x01
+#define		AUVIA_RPCTRL_START		0x80
+#define		AUVIA_RPCTRL_TERMINATE		0x40
+#define		AUVIA_RPCTRL_AUTOSTART		0x20
 /* The following are 8233 specific */
-#define		AUVIA_RPCTRL_STOP	0x04
-#define		AUVIA_RPCTRL_EOL	0x02
-#define		AUVIA_RPCTRL_FLAG	0x01
-#define AUVIA_RP_MODE		0x02
-#define		AUVIA_RPMODE_INTR_FLAG	0x01
-#define		AUVIA_RPMODE_INTR_EOL	0x02
-#define		AUVIA_RPMODE_STEREO	0x10
-#define		AUVIA_RPMODE_16BIT	0x20
-#define		AUVIA_RPMODE_AUTOSTART	0x80
-#define	AUVIA_RP_DMAOPS_BASE	0x04
-#define		AUVIA_RPDMAOP_PTR	0x00
-#define		AUVIA_RPDMAOP_IDX	0x04
-#define		AUVIA_RPDMAOP_CNT	0x08
-#define		AUVIA_RPDMAOP_CHIDX	0x0f
+#define		AUVIA_RPCTRL_STOP		0x04
+#define		AUVIA_RPCTRL_EOL		0x02
+#define		AUVIA_RPCTRL_FLAG		0x01
+#define AUVIA_RP_MODE			0x02
+#define		AUVIA_RPMODE_INTR_FLAG		0x01
+#define		AUVIA_RPMODE_INTR_EOL		0x02
+#define		AUVIA_RPMODE_STEREO		0x10
+#define		AUVIA_RPMODE_16BIT		0x20
+#define		AUVIA_RPMODE_AUTOSTART		0x80
+#define	AUVIA_RP_DMAOPS_BASE		0x04
 
-#define	VIA8233_RP_DXS_LVOL	0x02
-#define	VIA8233_RP_DXS_RVOL	0x03
-#define	VIA8233_RP_RATEFMT	0x08
+#define	VIA8233_RP_DXS_LVOL		0x02
+#define	VIA8233_RP_DXS_RVOL		0x03
+#define	VIA8233_RP_RATEFMT		0x08
 #define		VIA8233_RATEFMT_48K	0xfffff
 #define		VIA8233_RATEFMT_STEREO	0x00100000
 #define		VIA8233_RATEFMT_16BIT	0x00200000
 
-#define	AUVIA_MPB_BASE		0x40
-#define		AUVIA_MPBMODE_16BIT	0x80
-#define		AUVIA_MPBMODE_CHMASK	0x70
+#define VIA_RP_DMAOPS_COUNT		0x0C
 
-#define	AUVIA_CAPTURE_BASE	0x60
-
-#define	AUVIA_CODEC_CTL		0x80
-#define		AUVIA_CODEC_READ	0x00800000
-#define		AUVIA_CODEC_BUSY	0x01000000
-#define		AUVIA_CODEC_PRIVALID	0x02000000
-#define		AUVIA_CODEC_INDEX(x)	((x)<<16)
+#define	AUVIA_CODEC_CTL			0x80
+#define		AUVIA_CODEC_READ		0x00800000
+#define		AUVIA_CODEC_BUSY		0x01000000
+#define		AUVIA_CODEC_PRIVALID		0x02000000
+#define		AUVIA_CODEC_INDEX(x)		((x)<<16)
 
 #define TIMEOUT	50
 
@@ -238,7 +230,6 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	pcitag_t pt = pa->pa_tag;
 	pci_intr_handle_t ih;
 	bus_size_t iosize;
-	const char *p;
 	pcireg_t pr;
 	int r, i;
 
@@ -274,21 +265,6 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf(": %s\n", intrstr);
-
-	switch (PCI_REVISION(pa->pa_class) & 0xf0) {
-	case 0x10: p = "pre-8233";	break;
-	case 0x20: p = "8233C";		break;
-	case 0x30: p = "8233";		break;
-	case 0x50: p = "8235";		break;
-	case 0x40: p = "8233A";
-		sc->sc_flags |= AUVIA_FLAGS_MPB;
-		break;
-	}
-
-	sprintf(sc->sc_audev.name, "%s AC97", p);
-	sprintf(sc->sc_audev.version, "0x%x",
-	    PCI_REVISION(pa->pa_class) & 0xf);
-	strcpy(sc->sc_audev.config, sc->sc_dev.dv_xname);
 
 	/* disable SBPro compat & others */
 	pr = pci_conf_read(pc, pt, AUVIA_PCICONF_JUNK);
@@ -571,33 +547,10 @@ auvia_set_params(void *addr, int setmode, int usemode,
 			v |= VIA8233_RATEFMT_48K *
 			    (p->sample_rate / 20) / (48000 / 20);
 
-			if (mode == AUMODE_PLAY &&
-			    sc->sc_flags & AUVIA_FLAGS_MPB) {
-				static const u_int32_t nch2sl[] = {
-					0, 1, 0x21, 0,
-					0x4321, 0, 0x436521
-				};
-				int slots;
-
-				bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-				    AUVIA_MPB_BASE + AUVIA_RP_MODE,
-				    (p->precision == 16? AUVIA_MPBMODE_16BIT:0)
-				    | (p->channels << 4));
-
-				if (p->channels <
-				    sizeof(nch2sl) / sizeof(*nch2sl))
-					slots = 0;
-				else
-					slots = nch2sl[p->channels];
-				bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-				    AUVIA_RP_DMAOPS_BASE + AUVIA_RPDMAOP_IDX,
-				    slots | 0xff000000);
-			} else {
-				if (p->channels == 2)
-					v |= VIA8233_RATEFMT_STEREO;
-				if (p->precision == 16)
-					v |= VIA8233_RATEFMT_16BIT;
-			}
+			if (p->channels == 2)
+				v |= VIA8233_RATEFMT_STEREO;
+			if (p->precision == 16)
+				v |= VIA8233_RATEFMT_16BIT;
 
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			    base + VIA8233_RP_RATEFMT, v);
@@ -699,10 +652,18 @@ auvia_halt_input(void *addr)
 
 
 int
-auvia_getdev(void *v, struct audio_device *adp)
+auvia_getdev(void *addr, struct audio_device *retp)
 {
-	struct auvia_softc *sc = v;
-	*adp = sc->sc_audev;
+	struct auvia_softc *sc = addr;
+
+	if (retp) {
+		strncpy(retp->name,
+		    sc->sc_flags & AUVIA_FLAGS_VT8233? "VIA VT8233" :
+		    "VIA VT82C686A", sizeof(retp->name));
+		strncpy(retp->version, sc->sc_revision, sizeof(retp->version));
+		strncpy(retp->config, "auvia", sizeof(retp->config));
+	}
+
 	return 0;
 }
 
@@ -997,7 +958,7 @@ auvia_intr(void *arg)
 {
 	struct auvia_softc *sc = arg;
 	u_int8_t r;
-	int base, i = 0;
+	int i = 0;
 
 	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 	    AUVIA_RECORD_BASE + AUVIA_RP_STAT);
@@ -1011,19 +972,15 @@ auvia_intr(void *arg)
 
 		i++;
 	}
-
-	if (sc->sc_flags & AUVIA_FLAGS_MPB)
-		base = AUVIA_MPB_BASE;
-	else
-		base = AUVIA_PLAY_BASE;
-	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh, base + AUVIA_RP_STAT);
+	r = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+	    AUVIA_PLAY_BASE + AUVIA_RP_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
 		if (sc->sc_play.sc_intr)
 			sc->sc_play.sc_intr(sc->sc_play.sc_arg);
 
 		/* clear interrupts */
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-		    base + AUVIA_RP_STAT, AUVIA_RPSTAT_INTR);
+		    AUVIA_PLAY_BASE + AUVIA_RP_STAT, AUVIA_RPSTAT_INTR);
 
 		i++;
 	}
