@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.779 2004/10/15 08:43:28 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.780 2004/10/20 13:06:43 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -243,6 +243,7 @@
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
+#define	PCI_VENDOR_SAMSUNG	0x167d		/* Samsung */
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
 #define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet */
@@ -274,6 +275,7 @@
 #define	PCI_VENDOR_NETMOS	0x9710		/* NetMos */
 #define	PCI_VENDOR_TIGERJET	0xe159		/* TigerJet Network */
 #define	PCI_VENDOR_ENDACE	0xeace		/* Endace */
+#define	PCI_VENDOR_BELKIN	0xec80		/* Belkin Components */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
@@ -403,6 +405,7 @@
 /* Addtron products */
 #define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* rtl8139 */
 #define	PCI_PRODUCT_ADDTRON_RHINEII	0x1320		/* RhineII */
+#define	PCI_PRODUCT_ADDTRON_AWA100	0x7001		/* AWA-100 */
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI */
@@ -758,6 +761,9 @@
 #define	PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN	0x0e00		/* Fritz v2.0 ISDN */
 #define	PCI_PRODUCT_AVM_B1	0x0700		/* BRI ISDN */
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* PRI T1 ISDN */
+
+/* Belkin Components products */
+#define	PCI_PRODUCT_BELKIN_F5D6000	0xec00		/* F5D6000 */
 
 /* Bit3 products */
 #define	PCI_PRODUCT_BIT3_PCIVME617	0x0001		/* VME 617 */
@@ -1115,6 +1121,7 @@
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
 
 /* Global Sun Technology products */
+#define	PCI_PRODUCT_GLOBALSUN_GL24110P03	0x1100		/* GL24110P03 */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P02	0x1102		/* GL24110P02 */
 
@@ -1487,6 +1494,7 @@
 #define	PCI_PRODUCT_INTERPHASE_5526	0x0004		/* 5526 FibreChannel */
 
 /* Intersil products */
+#define	PCI_PRODUCT_INTERSIL_ISL3872	0x3872		/* PRISM3 */
 #define	PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN	0x3873		/* PRISM2.5 */
 
 /* Invertex */
@@ -1549,6 +1557,9 @@
 /* Lite-On Communications */
 #define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* PNIC */
 #define	PCI_PRODUCT_LITEON_PNICII	0xc115		/* PNIC-II */
+
+/* Longshine products */
+#define	PCI_PRODUCT_GLOBALSUN_8031	0x1103		/* 8031 */
 
 /* Lucent products */
 #define	PCI_PRODUCT_LUCENT_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
@@ -2143,6 +2154,9 @@
 
 /* SafeNet products */
 #define	PCI_PRODUCT_SAFENET_SAFEXCEL	0x1141		/* SafeXcel */
+
+/* Samsung products */
+#define	PCI_PRODUCT_SAMSUNG_SWL2210P	0xa000		/* MagicLAN SWL-2210P */
 
 /* Schneider & Koch (SysKonnect) */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_GE	0x4300		/* 984x GE */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.779 2004/10/15 08:43:28 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.780 2004/10/20 13:06:43 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -441,6 +441,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
 	    "RhineII",
+	},
+	{
+	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_AWA100,
+	    "AWA-100",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
@@ -1635,6 +1639,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRI T1 ISDN",
 	},
 	{
+	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6000,
+	    "F5D6000",
+	},
+	{
 	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
 	    "VME 617",
 	},
@@ -2677,6 +2685,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
 	    "TMC-18C30 (36C70)",
+	},
+	{
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P03,
+	    "GL24110P03",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
@@ -4055,6 +4067,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "5526 FibreChannel",
 	},
 	{
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3872,
+	    "PRISM3",
+	},
+	{
 	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
 	    "PRISM2.5",
 	},
@@ -4205,6 +4221,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNICII,
 	    "PNIC-II",
+	},
+	{
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_8031,
+	    "8031",
 	},
 	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
@@ -6125,6 +6145,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SAFENET, PCI_PRODUCT_SAFENET_SAFEXCEL,
 	    "SafeXcel",
+	},
+	{
+	    PCI_VENDOR_SAMSUNG, PCI_PRODUCT_SAMSUNG_SWL2210P,
+	    "MagicLAN SWL-2210P",
 	},
 	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_GE,
@@ -8699,6 +8723,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "NetSec",
 	},
 	{
+	    PCI_VENDOR_SAMSUNG,
+	    "Samsung",
+	},
+	{
 	    PCI_VENDOR_ATHEROS,
 	    "Atheros",
 	},
@@ -8821,6 +8849,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ENDACE,
 	    "Endace",
+	},
+	{
+	    PCI_VENDOR_BELKIN,
+	    "Belkin Components",
 	},
 	{
 	    PCI_VENDOR_ARC,
