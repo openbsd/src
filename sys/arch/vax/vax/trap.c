@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 2001/11/06 02:49:23 art Exp $     */
+/*	$OpenBSD: trap.c,v 1.18 2001/11/06 23:57:54 miod Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -61,6 +61,8 @@
 volatile int startsysc = 0, faultdebug = 0;
 #endif
 
+static __inline void userret __P((struct proc *, struct trapframe *, u_quad_t));
+
 void	arithflt __P((struct trapframe *));
 void	syscall __P((struct trapframe *));
 
@@ -95,6 +97,45 @@ int no_traps = 18;
 		frame->r1 = -1; /* for fetch/store */		\
 		return;						\
 	}
+
+/*
+ * userret:
+ *
+ *	Common code used by various exception handlers to
+ *	return to usermode.
+ */
+static __inline void
+userret(p, frame, oticks)
+	struct proc *p;
+	struct trapframe *frame;
+	u_quad_t oticks;
+{
+	int sig;
+
+	/* Take pending signals. */
+	while ((sig = CURSIG(p)) !=0)
+		postsig(sig);
+	p->p_priority = p->p_usrpri;
+	if (want_resched) {
+		/*
+		 * We're being preempted.
+		 */
+		preempt(NULL);
+		while ((sig = CURSIG(p)) != 0)
+			postsig(sig);
+	}
+
+	/*
+	 * If profiling, charge system time to the trapped pc.
+	 */
+	if (p->p_flag & P_PROFIL) { 
+		extern int psratio;
+
+		addupc_task(p, frame->pc,
+		    (int)(p->p_sticks - oticks) * psratio);
+	}
+	curpriority = p->p_priority;
+}
 
 void
 arithflt(frame)
@@ -279,22 +320,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	if (umode == 0)
 		return;
 
-	while ((sig = CURSIG(p)) !=0)
-		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We're being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-	if (p->p_flag & P_PROFIL) { 
-		extern int psratio;
-		addupc_task(p, frame->pc, (int)(p->p_sticks-oticks) * psratio);
-	}
-	curpriority = p->p_priority;
+	userret(p, frame, oticks);
 }
 
 void
@@ -323,7 +349,7 @@ syscall(frame)
 {
 	struct sysent *callp;
 	u_quad_t oticks;
-	int nsys, sig;
+	int nsys;
 	int err, rval[2], args[8];
 	struct trapframe *exptr;
 	struct proc *p = curproc;
@@ -422,24 +448,25 @@ bad:
 		exptr->psl |= PSL_C;
 		break;
 	}
-	p = curproc;
-	while ((sig = CURSIG(p)) !=0)
-		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We're being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-	if (p->p_flag & P_PROFIL) { 
-		extern int psratio;
-		addupc_task(p, frame->pc, (int)(p->p_sticks-oticks) * psratio);
-	}
+
+	userret(p, frame, oticks);
+
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, frame->code, err, rval[0]);
+#endif
+}
+
+void
+child_return(arg)
+	void *arg;
+{
+	struct proc *p = arg;
+
+	userret(p, p->p_addr->u_pcb.framep, 0);
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }

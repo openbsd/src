@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.26 2001/11/06 18:41:10 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.27 2001/11/06 23:57:54 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -113,10 +113,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void (*func)(void *);
 	void *arg;
 {
-	struct pte *pt;
-	struct pcb *nyproc;
+	struct pcb *pcb;
 	struct trapframe *tf;
-	struct pmap *pmap, *opmap;
+	struct callsframe *cf;
+	extern int sret; /* Return address in trap routine */
 
 #ifdef DIAGNOSTIC
 	/*
@@ -126,28 +126,46 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		panic("cpu_fork: curproc");
 #endif
 
-	nyproc = &p2->p_addr->u_pcb;
-	tf = p1->p_addr->u_pcb.framep;
-	opmap = p1->p_vmspace->vm_map.pmap;
-	pmap = p2->p_vmspace->vm_map.pmap;
-
-	/* Mark page invalid */
-	pt = kvtopte((u_int)p2->p_addr + REDZONEADDR);
-	pt->pg_v = 0; 
+	/*
+	 * Copy the trap frame.
+	 */
+	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
+	p2->p_addr->u_pcb.framep = tf;
+	bcopy(p1->p_addr->u_pcb.framep, tf, sizeof(*tf));
 
 	/*
 	 * Activate address space for the new process.	The PTEs have
 	 * already been allocated by way of pmap_create().
+	 * This writes the page table registers to the PCB.
 	 */
 	pmap_activate(p2);
 
-	/* Set up internal defs in PCB. */
-	nyproc->iftrap = NULL;
-	nyproc->KSP = (u_int)p2->p_addr + USPACE;
+	/* Mark guard page invalid in kernel stack */
+	kvtopte((u_int)p2->p_addr + REDZONEADDR)->pg_v = 0;
 
-	/* General registers as taken from userspace */
-	/* trapframe should be synced with pcb */
-	bcopy(&tf->r2,&nyproc->R[2],10*sizeof(int));
+	/*
+	 * Set up the calls frame above (below) the trapframe
+	 * and populate it with something good.
+	 * This is so that we can simulate that we were called by a
+	 * CALLS insn in the function given as argument.
+	 */
+	cf = (struct callsframe *)tf - 1;
+	cf->ca_cond = 0;
+	cf->ca_maskpsw = 0x20000000;	/* CALLS stack frame, no registers */
+	cf->ca_pc = (unsigned)&sret;	/* return PC; userspace trampoline */
+	cf->ca_argno = 1;
+	cf->ca_arg1 = (int)arg;
+
+	/*
+	 * Set up internal defs in PCB. This matches the "fake" CALLS frame
+	 * that we constructed earlier.
+	 */
+	pcb = &p2->p_addr->u_pcb;
+	pcb->iftrap = NULL;
+	pcb->KSP = (long)cf;
+	pcb->FP = (long)cf;
+	pcb->AP = (long)&cf->ca_argno;
+	pcb->PC = (int)func + 2;	/* Skip save mask */
 
 	/*
 	 * If specified, give the child a different stack.
@@ -155,52 +173,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (stack != NULL)
 		tf->sp = (u_long)stack + stacksize;
 
-	nyproc->AP = tf->ap;
-	nyproc->FP = tf->fp;
-	nyproc->USP = tf->sp;
-	nyproc->PC = tf->pc;
-	nyproc->PSL = tf->psl & ~PSL_C;
-	nyproc->R[0] = p1->p_pid; /* parent pid. (shouldn't be needed) */
-	nyproc->R[1] = 1;
-
-	return; /* Child is ready. Parent, return! */
-}
-
-/*
- * cpu_set_kpc() sets up pcb for the new kernel process so that it will
- * start at the procedure pointed to by pc next time swtch() is called.
- * When that procedure returns, it will pop off everything from the
- * faked calls frame on the kernel stack, do an REI and go down to
- * user mode.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *nyproc;
-	struct {
-		struct	callsframe cf;
-		struct	trapframe tf;
-	} *kc;
-	extern int sret, boothowto;
-
-	nyproc = &p->p_addr->u_pcb;
-	(unsigned)kc = nyproc->FP = nyproc->KSP =
-	    (unsigned)p->p_addr + USPACE - sizeof(*kc);
-	kc->cf.ca_cond = 0;
-	kc->cf.ca_maskpsw = 0x20000000;
-	kc->cf.ca_pc = (unsigned)&sret;
-	kc->cf.ca_argno = 1;
-	kc->cf.ca_arg1 = (unsigned)arg;
-	kc->tf.r11 = boothowto; /* If we have old init */
-	kc->tf.psl = 0x3c00000;
-
-	nyproc->framep = (void *)&kc->tf;
-	nyproc->AP = (unsigned)&kc->cf.ca_argno;
-	nyproc->FP = nyproc->KSP = (unsigned)kc;
-	nyproc->PC = (unsigned)pc + 2;
+	tf->r0 = p1->p_pid; /* parent pid. (shouldn't be needed) */
+	tf->r1 = 1;
+	tf->psl = PSL_U|PSL_PREVU;
 }
 
 int
