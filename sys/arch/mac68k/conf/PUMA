@@ -1,4 +1,4 @@
-#	$OpenBSD: PUMA,v 1.12 1997/06/05 18:52:42 gene Exp $
+#	$OpenBSD: PUMA,v 1.13 1997/06/23 02:26:36 gene Exp $
 #	$NetBSD: PUMA,v 1.13 1996/08/05 01:52:15 scottr Exp $
 #
 # PUMA
@@ -8,9 +8,6 @@ include	"arch/mac68k/conf/std.mac68k"
 maxusers	16
 
 option         MAXFDESCS=2048
-
-# Standard system option
-option		SWAPPAGER, DEVPAGER	# paging
 
 # Filesystem option
 option		FIFO		# POSIX fifo support (in all filesystems)
@@ -52,6 +49,16 @@ option		COMPAT_12
 
 config		bsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 
+mainbus0 at root
+
+fpu0 at mainbus?
+
+# on-board I/O
+obio0 at mainbus?
+
+adb0  at obio?
+zsc0  at obio?
+zstty*        at zsc? channel ?
 nubus0		at mainbus?
 
 ae*		at nubus?

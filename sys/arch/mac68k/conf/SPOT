@@ -1,4 +1,4 @@
-#	$OpenBSD: SPOT,v 1.11 1997/06/05 18:52:42 gene Exp $
+#	$OpenBSD: SPOT,v 1.12 1997/06/23 02:26:37 gene Exp $
 #	$NetBSD: SPOT,v 1.22 1997/01/20 00:31:42 scottr Exp $
 #
 # SPOT
@@ -7,7 +7,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-makeoption	COPTS="-O2 -m68030"
+makeoptions	COPTS="-O2 -m68030"
 
 # Standard system option
 option		DIAGNOSTIC		# DEBUG for extra kernel debugging
@@ -52,6 +52,16 @@ option		RTC_OFFSET=360	# hardware clock is this many mins. west of GMT
 config		bsd	swap generic
 option		GENERIC
 
+mainbus0 at root
+
+fpu0 at mainbus?
+
+# on-board I/O
+obio0 at mainbus?
+
+adb0  at obio?
+zsc0  at obio?
+zstty*        at zsc? channel ?
 nubus0		at mainbus?
 
 ae*		at nubus?

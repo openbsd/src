@@ -1,4 +1,4 @@
-#	$OpenBSD: TIGER,v 1.8 1997/06/05 18:52:43 gene Exp $
+#	$OpenBSD: TIGER,v 1.9 1997/06/23 02:26:38 gene Exp $
 #	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
 #
 # Allen's Q700
@@ -7,7 +7,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-makeoption	COPTS="-O2 -m68040"
+makeoptions	COPTS="-O2 -m68040"
 
 # Standard system option
 option		DIAGNOSTIC		# DEBUG for extra kernel debugging
@@ -51,6 +51,16 @@ option		ZS_CONSOLE_ABORT
 config		bsd	swap generic
 option		GENERIC
 
+mainbus0 at root
+
+fpu0 at mainbus?
+
+# on-board I/O
+obio0 at mainbus?
+
+adb0  at obio?
+zsc0  at obio?
+zstty*        at zsc? channel ?
 sn*		at obio?	# SONIC ethernet (68040)
 
 # no internal video, but need interrupts, etc.
