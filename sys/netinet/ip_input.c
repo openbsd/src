@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.64 2001/03/18 07:09:49 provos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.65 2001/03/25 05:51:31 csapuntz Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -320,8 +320,10 @@ ipv4_input(struct mbuf *m, ...)
 		struct mbuf *newpacket;
 
 #ifdef IPSEC
-		if (tdbi)
+		if (tdbi) {
 		        free(tdbi, M_TEMP);
+			tdbi = NULL;
+		}
 #endif /* IPSEC */
 
 		if (!(newpacket = m_split(m, extra, M_NOWAIT))) {
@@ -1315,13 +1317,13 @@ ip_weadvertise(addr)
 	sin.sin_other = SIN_PROXY;
 	rt = rtalloc1(sintosa(&sin), 0);
 	if (rt == 0)
-	  return 0;
-	
-	RTFREE(rt);
+		return 0;
 	
 	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 ||
-	    rt->rt_gateway->sa_family != AF_LINK)
-	  return 0;
+	    rt->rt_gateway->sa_family != AF_LINK) {
+		RTFREE(rt);
+		return 0;
+	}
 
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
 		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
@@ -1331,10 +1333,13 @@ ip_weadvertise(addr)
 
 			if (!bcmp(LLADDR((struct sockaddr_dl *)ifa->ifa_addr), 
 			    LLADDR((struct sockaddr_dl *)rt->rt_gateway),
-			    ETHER_ADDR_LEN))
+			    ETHER_ADDR_LEN)) {
+				RTFREE(rt);
 				return 1;
+			}
 		}
 
+	RTFREE(rt);
 	return 0;
 }
 
