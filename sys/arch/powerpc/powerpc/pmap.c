@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.77 2002/10/13 18:26:12 krw Exp $ */
+/*	$OpenBSD: pmap.c,v 1.78 2002/11/06 00:17:27 art Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -522,7 +522,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		pmap_syncicache_user_virt(pm, va);
 
 	/* MP - free pmap lock */
-	return KERN_SUCCESS;
+	return 0;
 }
 
 /* 

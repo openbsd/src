@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.22 2002/10/07 23:31:42 art Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.23 2002/11/06 00:17:28 art Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ vmcmd_map_pagedvn(p, cmd)
 	 * call this routine.
 	 */
 	struct uvm_object *uobj;
-	int retval;
+	int error;
 
 	/*
 	 * map the vnode in using uvm_map.
@@ -203,7 +203,7 @@ vmcmd_map_pagedvn(p, cmd)
 	 * do the map
 	 */
 
-	retval = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
+	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 	    uobj, cmd->ev_offset, 0,
 	    UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY,
 	    UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
@@ -212,15 +212,14 @@ vmcmd_map_pagedvn(p, cmd)
 	 * check for error
 	 */
 
-	if (retval == KERN_SUCCESS)
-		return(0);
+	if (error) {
+		/*
+		 * error: detach from object
+		 */
+		uobj->pgops->pgo_detach(uobj);
+	}
 
-	/*
-	 * error: detach from object
-	 */
-
-	uobj->pgops->pgo_detach(uobj);
-	return(EINVAL);
+	return (error);
 }
 
 /*
