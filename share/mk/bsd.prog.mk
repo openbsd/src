@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.7 1996/12/08 14:42:32 downsj Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.8 1997/01/15 00:36:56 niklas Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -11,6 +11,11 @@
 .SUFFIXES: .out .o .c .cc .C .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
 CFLAGS+=	${COPTS}
+
+.if (${MACHINE_ARCH} == "powerpc")
+CRTBEGIN?=       ${DESTDIR}/usr/lib/crtbegin.o
+CRTEND?=         ${DESTDIR}/usr/lib/crtend.o
+.endif
 
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBC?=		${DESTDIR}/usr/lib/libc.a
@@ -69,12 +74,12 @@ LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if defined(OBJS) && !empty(OBJS)
 .if defined(DESTDIR)
 
-${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
-	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${OBJS} ${LDADD} -lgcc -lc -lgcc
+${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${CRTBEGIN} ${CRTEND} ${DPADD}
+	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${CRTBEGIN} ${OBJS} ${LDADD} -lgcc -lc -lgcc ${CRTEND}
 
 .else
 
-${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${DPADD}
+${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${CRTBEGIN} ${CRTEND} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .endif	# defined(DESTDIR)

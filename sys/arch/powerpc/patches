@@ -131,24 +131,6 @@ diff -r1.9 fdisk.c
 ---
 > 	if (getshort(&mboot.signature) != BOOT_MAGIC) {
 > 		warnx("invalid fdisk partition table found!\n");
-Index: src/share/mk/bsd.prog.mk
-#	Support DESTDIR compilation under elf.
-#	This is needed for alpha, but not currently
-#	needed for mips because they still use stabs.
-===================================================================
-RCS file: /cvs/src/share/mk/bsd.prog.mk,v
-retrieving revision 1.7
-diff -r1.7 bsd.prog.mk
-14a15,19
-> .if (${MACHINE_ARCH} == "powerpc")
-> CRTBEGIN?=       ${DESTDIR}/usr/lib/crtbegin.o
-> CRTEND?=         ${DESTDIR}/usr/lib/crtend.o
-> .endif
-> 
-73c78
-< 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${OBJS} ${LDADD} -lgcc -lc -lgcc
----
-> 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${CRTBEGIN} ${OBJS} ${LDADD} -lgcc -lc -lgcc ${CRTEND}
 Index: src/sys/kern/vfs_cache.c
 # Probably a bug in the port, but this makes the system MANY TIMES
 # more stablility.
