@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.16 2003/11/15 00:21:23 tedu Exp $
+ *	$Id: pppctl.c,v 1.17 2004/05/24 09:30:11 jmc Exp $
  */
 
 #include <sys/types.h>
@@ -56,13 +56,13 @@ static char Buffer[LINELEN], Command[LINELEN];
 static int
 usage()
 {
-    fprintf(stderr, "usage: pppctl [-v] [-t n] [-p passwd] "
+    fprintf(stderr, "usage: pppctl [-v] [-p passwd] [-t n] "
             "Port|LocalSock [command[;command]...]\n");
-    fprintf(stderr, "              -v tells pppctl to output all"
-            " conversation\n");
+    fprintf(stderr, "              -p passwd specifies your password\n");
     fprintf(stderr, "              -t n specifies a timeout of n"
             " seconds when connecting (default 2)\n");
-    fprintf(stderr, "              -p passwd specifies your password\n");
+    fprintf(stderr, "              -v tells pppctl to output all"
+            " conversation\n");
     exit(1);
 }
 

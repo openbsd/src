@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppctl.8,v 1.13 2004/03/16 21:21:16 jmc Exp $
+.\"	$OpenBSD: pppctl.8,v 1.14 2004/05/24 09:30:11 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Brian Somers <brian@Awfulhak.org>
 .\" All rights reserved.
@@ -34,10 +34,10 @@
 .Nm pppctl
 .Bk -words
 .Op Fl v
-.Op Fl t Ar n
 .Op Fl p Ar passwd
+.Op Fl t Ar n
 .Xo
-.Oo Ar host Ns : Oc Ar port No \&|
+.Oo Ar host : Oc Ar port No \&|
 .Ar LocalSocket
 .Xc
 .Op Ar command Op ; Ns Ar command ...
@@ -107,21 +107,7 @@ defining editing behaviour).
 The history size defaults to 20 lines.
 .Pp
 The following command line options are available:
-.Bl -tag -width Ds
-.It Fl v
-Display all data sent to and received from the
-.Xr ppp 8
-daemon.
-Normally,
-.Nm
-displays only non-prompt lines received.
-This option is ignored in interactive mode.
-.It Fl t Ar n
-Use a timeout of
-.Ar n
-instead of the default 2 seconds when connecting.
-This may be required
-if you wish to control a daemon over a slow (or even a dialup) link.
+.Bl -tag -width "-p passwd  "
 .It Fl p Ar passwd
 Specify the password required by the
 .Xr ppp 8
@@ -130,6 +116,20 @@ If this switch is not used,
 .Nm
 will prompt for a password once it has successfully connected to
 .Xr ppp 8 .
+.It Fl t Ar n
+Use a timeout of
+.Ar n
+instead of the default 2 seconds when connecting.
+This may be required
+if you wish to control a daemon over a slow (or even a dialup) link.
+.It Fl v
+Display all data sent to and received from the
+.Xr ppp 8
+daemon.
+Normally,
+.Nm
+displays only non-prompt lines received.
+This option is ignored in interactive mode.
 .El
 .Sh ENVIRONMENT
 The following environment variables are understood by
