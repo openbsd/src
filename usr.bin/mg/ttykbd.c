@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttykbd.c,v 1.7 2001/01/29 01:58:10 niklas Exp $	*/
+/*	$OpenBSD: ttykbd.c,v 1.8 2001/05/23 22:12:10 art Exp $	*/
 
 /*
  * Name:	MG 2a
@@ -36,23 +36,23 @@ ttykeymapinit()
 #ifdef FKEYS
 	/* Bind keypad function keys. */
 	if (key_left)
-		dobindkey(map_table[0].p_map, "backward-char", key_left);
+		dobindkey(fundamental_map, "backward-char", key_left);
 	if (key_right)
-		dobindkey(map_table[0].p_map, "forward-char", key_right);
+		dobindkey(fundamental_map, "forward-char", key_right);
 	if (key_up)
-		dobindkey(map_table[0].p_map, "previous-line", key_up);
+		dobindkey(fundamental_map, "previous-line", key_up);
 	if (key_down)
-		dobindkey(map_table[0].p_map, "next-line", key_down);
+		dobindkey(fundamental_map, "next-line", key_down);
 	if (key_beg)
-		dobindkey(map_table[0].p_map, "beginning-of-line", key_beg);
+		dobindkey(fundamental_map, "beginning-of-line", key_beg);
 	else if (key_home)
-		dobindkey(map_table[0].p_map, "beginning-of-line", key_home);
+		dobindkey(fundamental_map, "beginning-of-line", key_home);
 	if (key_end)
-		dobindkey(map_table[0].p_map, "end-of-line", key_end);
+		dobindkey(fundamental_map, "end-of-line", key_end);
 	if (key_npage)
-		dobindkey(map_table[0].p_map, "scroll-up", key_npage);
+		dobindkey(fundamental_map, "scroll-up", key_npage);
 	if (key_ppage)
-		dobindkey(map_table[0].p_map, "scroll-down", key_ppage);
+		dobindkey(fundamental_map, "scroll-down", key_ppage);
 #endif /* FKEYS */
 
 #ifndef	NO_STARTUP

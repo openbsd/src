@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.10 2001/05/23 20:57:54 art Exp $	*/
+/*	$OpenBSD: extend.c,v 1.11 2001/05/23 22:12:10 art Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -473,7 +473,7 @@ int
 bindtokey(f, n)
 	int f, n;
 {
-	return dobind(map_table[0].p_map, "Global set key: ", FALSE);
+	return dobind(fundamental_map, "Global set key: ", FALSE);
 }
 
 /*
@@ -514,7 +514,7 @@ int
 unbindtokey(f, n)
 	int f, n;
 {
-	return dobind(map_table[0].p_map, "Global unset key: ", TRUE);
+	return dobind(fundamental_map, "Global unset key: ", TRUE);
 }
 
 int
@@ -727,7 +727,7 @@ excline(line)
 #ifdef	FKEYS
 	if (fp == bindtokey || fp == unbindtokey) {
 		bind = BINDARG;
-		curmap = map_table[0].p_map;
+		curmap = fundamental_map;
 	} else if (fp == localbind || fp == localunbind) {
 		bind = BINDARG;
 		curmap = curbp->b_modes[curbp->b_nmodes]->p_map;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.8 2001/05/23 21:47:33 art Exp $	*/
+/*	$OpenBSD: help.c,v 1.9 2001/05/23 22:12:10 art Exp $	*/
 
 /*
  * Help functions for Mg 2 
@@ -115,7 +115,7 @@ wallchart(f, n)
 			return FALSE;
 	}
 	if ((addline(bp, "Global bindings:") == FALSE) ||
-	    (showall(bp, map_table[0].p_map, "") == FALSE))
+	    (showall(bp, fundamental_map, "") == FALSE))
 		return FALSE;
 	return popbuftop(bp);
 }
@@ -190,11 +190,12 @@ apropos_command(f, n)
 	fnames = complete_function_list("", NULL);
 	for (el = fnames; el != NULL; el = el->l_next) {
 		char buf[32];
+
 		if (strstr(el->l_name, string) == NULL)
 			continue;
+
 		buf[0] = '\0';
-		findbind(name_map("fundamental"),
-			name_function(el->l_name), buf);
+		findbind(fundamental_map, name_function(el->l_name), buf);
 
 		if (addlinef(bp, "%-32s%s", el->l_name,  buf) == FALSE) {
 			free_file_list(fnames);
