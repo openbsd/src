@@ -363,6 +363,8 @@
 ./usr/include/dev/ofw/ofw_pci.h
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
+./usr/include/dev/pci/autrireg.h
+./usr/include/dev/pci/autrivar.h
 ./usr/include/dev/pci/auviavar.h
 ./usr/include/dev/pci/bktr
 ./usr/include/dev/pci/bktr/bktr_audio.h
@@ -399,6 +401,7 @@
 ./usr/include/dev/pci/if_sisreg.h
 ./usr/include/dev/pci/if_skreg.h
 ./usr/include/dev/pci/if_stereg.h
+./usr/include/dev/pci/if_stgereg.h
 ./usr/include/dev/pci/if_tireg.h
 ./usr/include/dev/pci/if_tlreg.h
 ./usr/include/dev/pci/if_txpreg.h

@@ -413,6 +413,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/autrireg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/autrivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/bktr
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/bktr/bktr_audio.ph
@@ -449,6 +451,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_sisreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_skreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_stereg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_stgereg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_tireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_tlreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_txpreg.ph

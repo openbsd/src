@@ -570,7 +570,6 @@
 ./usr/share/man/cat1/ssh-keygen.0
 ./usr/share/man/cat1/ssh-keyscan.0
 ./usr/share/man/cat1/ssh.0
-./usr/share/man/cat1/startkey.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/strings.0
 ./usr/share/man/cat1/stty.0
@@ -927,8 +926,10 @@
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/aue.0
 ./usr/share/man/cat4/auich.0
+./usr/share/man/cat4/autri.0
 ./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
+./usr/share/man/cat4/az.0
 ./usr/share/man/cat4/bge.0
 ./usr/share/man/cat4/bmtphy.0
 ./usr/share/man/cat4/bpf.0
@@ -1007,7 +1008,6 @@
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/i386/apm.0
 ./usr/share/man/cat4/i386/autoconf.0
-./usr/share/man/cat4/i386/az.0
 ./usr/share/man/cat4/i386/bios.0
 ./usr/share/man/cat4/i386/bktr.0
 ./usr/share/man/cat4/i386/gus.0
@@ -1029,8 +1029,6 @@
 ./usr/share/man/cat4/i386/pss.0
 ./usr/share/man/cat4/i386/sb.0
 ./usr/share/man/cat4/i386/sea.0
-./usr/share/man/cat4/i386/sf2r.0
-./usr/share/man/cat4/i386/sf4r.0
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/spkr.0
 ./usr/share/man/cat4/i386/uha.0
@@ -1100,6 +1098,7 @@
 ./usr/share/man/cat4/maestro.0
 ./usr/share/man/cat4/midi.0
 ./usr/share/man/cat4/mii.0
+./usr/share/man/cat4/mr.0
 ./usr/share/man/cat4/mtdphy.0
 ./usr/share/man/cat4/mtio.0
 ./usr/share/man/cat4/mvme68k
@@ -1152,11 +1151,15 @@
 ./usr/share/man/cat4/rln.0
 ./usr/share/man/cat4/rlphy.0
 ./usr/share/man/cat4/route.0
+./usr/share/man/cat4/rt.0
+./usr/share/man/cat4/rtii.0
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
 ./usr/share/man/cat4/ses.0
 ./usr/share/man/cat4/sf.0
+./usr/share/man/cat4/sf2r.0
+./usr/share/man/cat4/sf4r.0
 ./usr/share/man/cat4/siop.0
 ./usr/share/man/cat4/sis.0
 ./usr/share/man/cat4/sk.0
@@ -1208,6 +1211,8 @@
 ./usr/share/man/cat4/sparc64/audiocs.0
 ./usr/share/man/cat4/sparc64/autoconf.0
 ./usr/share/man/cat4/sparc64/be.0
+./usr/share/man/cat4/sparc64/cgsix.0
+./usr/share/man/cat4/sparc64/cgthree.0
 ./usr/share/man/cat4/sparc64/esp.0
 ./usr/share/man/cat4/sparc64/gem.0
 ./usr/share/man/cat4/sparc64/hme.0
@@ -1232,6 +1237,7 @@
 ./usr/share/man/cat4/stdin.0
 ./usr/share/man/cat4/stdout.0
 ./usr/share/man/cat4/ste.0
+./usr/share/man/cat4/stge.0
 ./usr/share/man/cat4/sun3
 ./usr/share/man/cat4/sun3/bwtwo.0
 ./usr/share/man/cat4/sun3/cgfour.0
@@ -1877,6 +1883,7 @@
 ./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sparc64/MAKEDEV.0
 ./usr/share/man/cat8/sparc64/boot_sparc64.0
+./usr/share/man/cat8/sparc64/eeprom.0
 ./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/man/cat8/sparc64/makedev.0
 ./usr/share/man/cat8/spppcontrol.0

@@ -141,7 +141,6 @@
 ./sbin/scsi
 ./sbin/shutdown
 ./sbin/slattach
-./sbin/startkey
 ./sbin/swapctl
 ./sbin/swapon
 ./sbin/sysctl
