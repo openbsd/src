@@ -1,5 +1,5 @@
-# $Id: Makefile.inc,v 1.4 1999/01/18 00:00:32 d Exp $
-# $OpenBSD: Makefile.inc,v 1.4 1999/01/18 00:00:32 d Exp $
+# $Id: Makefile.inc,v 1.5 1999/03/24 00:46:23 d Exp $
+# $OpenBSD: Makefile.inc,v 1.5 1999/03/24 00:46:23 d Exp $
 
 # POSIX thread man files
 
@@ -40,16 +40,25 @@ MAN+=	pthread_atfork.3 \
 	pthread_rwlockattr_setpshared.3 \
 	pthread_self.3 \
 	pthread_setspecific.3 \
+	pthread_sigmask.3 \
+	pthread_single_np.3 \
+	pthread_suspend_np.3 \
 	pthread_testcancel.3
 
 MAN+=	pthreads.3 \
 	flockfile.3 \
-	sigwait.3
+	sigwait.3 \
+	getc_unlocked.3 \
+	putc_unlocked.3
 
 MLINKS+=flockfile.3 funlockfile.3 \
 	flockfile.3 ftrylockfile.3 \
 	pthread_rwlock_rdlock.3 pthread_rwlock_tryrdlock.3 \
 	pthread_rwlock_wrlock.3 pthread_rwlock_trywrlock.3 \
 	pthread_cancel.3 pthread_setcancelstate.3 \
-	pthread_cancel.3 pthread_getcancelstate.3 \
+	pthread_cancel.3 pthread_setcanceltype.3 \
+	getc_unlocked.3 getchar_unlocked.3 \
+	putc_unlocked.3 putchar_unlocked.3 \
+	pthread_suspend_np.3 pthread_resume_np.3 \
+	pthread_single_np.3 pthread_multi_np.3
 	
