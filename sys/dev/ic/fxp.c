@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.5 2000/04/27 00:29:51 chris Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.6 2000/06/03 02:55:04 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -252,10 +252,6 @@ void fxp_attach __P((struct device *, struct device *, void *));
 void	fxp_shutdown __P((void *));
 void	fxp_power __P((int, void *));
 
-/* Compensate for lack of a generic ether_ioctl() */
-int	fxp_ether_ioctl __P((struct ifnet *, u_long, caddr_t));
-#define	ether_ioctl	fxp_ether_ioctl
-
 struct cfdriver fxp_cd = {
 	NULL, "fxp", DV_IFNET
 };
@@ -296,55 +292,6 @@ fxp_power(why, arg)
 			fxp_init(sc);
 	}
 	splx(s);
-}
-
-int
-fxp_ether_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
-{
-	struct ifaddr *ifa = (struct ifaddr *) data;
-	struct fxp_softc *sc = ifp->if_softc;
-
-	switch (cmd) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			fxp_init(sc);
-			arp_ifinit(&sc->arpcom, ifa);
-			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			 register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			 if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)
-				    LLADDR(ifp->if_sadl);
-			 else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				    ifp->if_addrlen);
-			 /* Set new address. */
-			 fxp_init(sc);
-			 break;
-		    }
-#endif
-		default:
-			fxp_init(sc);
-			break;
-		}
-		break;
-
-	default:
-		return (EINVAL);
-	}
-
-	return (0);
 }
 
 /*************************************************************
@@ -1407,15 +1354,47 @@ fxp_ioctl(ifp, command, data)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splimp();
 
-	switch (command) {
+	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
+		splx(s);
+		return (error);
+	}
 
+	switch (command) {
 	case SIOCSIFADDR:
-	case SIOCGIFADDR:
-		error = ether_ioctl(ifp, command, data);
+		ifp->if_flags |= IFF_UP;
+
+		switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			fxp_init(sc);
+			arp_ifinit(&sc->arpcom, ifa);
+			break;
+#endif
+#ifdef NS
+		case AF_NS:
+		    {
+			 register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			 if (ns_nullhost(*ina))
+				ina->x_host = *(union ns_host *)
+				    LLADDR(ifp->if_sadl);
+			 else
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				    ifp->if_addrlen);
+			 /* Set new address. */
+			 fxp_init(sc);
+			 break;
+		    }
+#endif
+		default:
+			fxp_init(sc);
+			break;
+		}
 		break;
 
 	case SIOCSIFMTU:
