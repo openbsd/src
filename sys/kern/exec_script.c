@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.13 2001/06/22 14:14:08 deraadt Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.14 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -180,6 +180,7 @@ check_shell:
 		fp->f_ops = &vnops;
 		fp->f_data = (caddr_t) epp->ep_vp;
 		fp->f_flag = FREAD;
+		FILE_SET_MATURE(fp);
 	}
 #endif
 

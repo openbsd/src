@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_ioctl.c,v 1.7 1997/04/12 19:57:59 graichen Exp $ */
+/*	$OpenBSD: ultrix_ioctl.c,v 1.8 2001/10/26 12:03:27 art Exp $ */
 /*	$NetBSD: ultrix_ioctl.c,v 1.3.4.1 1996/06/13 18:22:37 jonathan Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
@@ -449,8 +449,7 @@ ultrix_sys_ioctl(p, v, retval)
 	register int (*ctl)();
 	int error;
 
-	if ( (unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)

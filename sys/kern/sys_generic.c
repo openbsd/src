@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.29 2001/05/16 12:52:58 ho Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.30 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -86,17 +86,11 @@ sys_read(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-#if notyet
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-#endif
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
-#if notyet
-	FILE_USE(fp);
-#endif
 	/* dofileread() will unuse the descriptor for us */
 	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, retval));
@@ -182,17 +176,11 @@ sys_readv(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-#if notyet
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-#endif
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
-#if notyet
-	FILE_USE(fp);
-#endif
 	/* dofilereadv() will unuse the descriptor for us */
 	return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &fp->f_offset, retval));
@@ -309,17 +297,11 @@ sys_write(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-#if notyet
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-#endif
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
-#if notyet
-	FILE_USE(fp);
-#endif
 	/* dofilewrite() will unuse the descriptor for us */
 	return (dofilewrite(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, retval));
@@ -408,17 +390,11 @@ sys_writev(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-#if notyet
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-#endif
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
-#if notyet
-	FILE_USE(fp);
-#endif
 	/* dofilewritev() will unuse the descriptor for us */
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &fp->f_offset, retval));
@@ -544,8 +520,7 @@ sys_ioctl(p, v, retval)
 	char stkbuf[STK_PARAMS];
 
 	fdp = p->p_fd;
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.27 2001/05/16 12:50:20 ho Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.28 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -490,10 +490,11 @@ sunos_sys_mmap(p, v, retval)
 
 	/*
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
+	 * XXXART - this is probably completly unnecessary. mmap deals with
+	 * XXXART - this just fine.
 	 */
 	fdp = p->p_fd;
-	if ((unsigned)SCARG(&ouap, fd) < fdp->fd_nfiles &&		/*XXX*/
-	    (fp = fdp->fd_ofiles[SCARG(&ouap, fd)]) != NULL &&		/*XXX*/
+	if ((fp = fd_getfile(fdp, SCARG(&ouap, fd))) != NULL &&		/*XXX*/
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
 	    iszerodev(vp->v_rdev)) {					/*XXX*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.14 2001/10/26 10:39:31 art Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.15 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -751,8 +751,7 @@ unp_internalize(control, p)
 	ip = (int *)(cm + 1);
 	for (i = 0; i < oldfds; i++) {
 		fd = *ip++;
-		if ((unsigned)fd >= fdp->fd_nfiles ||
-		    fdp->fd_ofiles[fd] == NULL)
+		if (fd_getfile(fdp, fd) == NULL)
 			return (EBADF);
 		if (fdp->fd_ofiles[fd]->f_count == LONG_MAX-2 ||
 		    fdp->fd_ofiles[fd]->f_msgcount == LONG_MAX-2)

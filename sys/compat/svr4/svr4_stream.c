@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stream.c,v 1.13 2001/10/02 17:40:20 csapuntz Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.14 2001/10/26 12:03:27 art Exp $	 */
 /*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
 
 /*
@@ -1421,8 +1421,7 @@ svr4_sys_putmsg(p, v, retval)
 	int error;
 	caddr_t sg;
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 #ifdef DEBUG_SVR4
@@ -1430,8 +1429,7 @@ svr4_sys_putmsg(p, v, retval)
 		 SCARG(uap, dat), SCARG(uap, flags));
 #endif /* DEBUG_SVR4 */
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if (SCARG(uap, ctl) != NULL) {
@@ -1572,8 +1570,7 @@ svr4_sys_getmsg(p, v, retval)
 	int fl;
 	caddr_t sg;
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	bzero(&sc, sizeof(sc));
@@ -1583,8 +1580,7 @@ svr4_sys_getmsg(p, v, retval)
 		 SCARG(uap, dat), 0);
 #endif /* DEBUG_SVR4 */
 			
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if (SCARG(uap, ctl) != NULL) {

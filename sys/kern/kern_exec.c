@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.57 2001/09/19 20:50:58 mickey Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.58 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -506,9 +506,12 @@ sys_execve(p, v, retval)
 		for (i = 0; i < 3; i++) {
 			struct file *fp = NULL;
 
-			if (i < p->p_fd->fd_nfiles)
-				fp = p->p_fd->fd_ofiles[i];
-
+			/*
+			 * NOTE - This will never return NULL because of
+			 * unmature fds. The file descriptor table is not
+			 * shared because we're suid.
+			 */
+			fp = fd_getfile(p->p_fd, i);
 #ifdef PROCFS
 			/*
 			 * Close descriptors that are writing to procfs.
@@ -558,6 +561,7 @@ sys_execve(p, v, retval)
 				fp->f_type = DTYPE_VNODE;
 				fp->f_ops = &vnops;
 				fp->f_data = (caddr_t)vp;
+				FILE_SET_MATURE(fp);
 			}
 		}
 	} else

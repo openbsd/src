@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.80 2001/07/26 20:24:47 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.81 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -937,6 +937,7 @@ sys_open(p, v, retval)
 	}
 	VOP_UNLOCK(vp, 0, p);
 	*retval = indx;
+	FILE_SET_MATURE(fp);
 	return (0);
 }
 
@@ -1098,6 +1099,7 @@ sys_fhopen(p, v, retval)
 	}
 	VOP_UNLOCK(vp, 0, p);
 	*retval = indx;
+	FILE_SET_MATURE(fp);
 	return (0);
 
 bad:
@@ -1506,8 +1508,7 @@ sys_lseek(p, v, retval)
 	struct vnode *vp;
 	int error, special;
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (ESPIPE);
@@ -2599,7 +2600,7 @@ getvnode(fdp, fd, fpp)
 {
 	struct file *fp;
 
-	if ((u_int)fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (EINVAL);
@@ -2629,17 +2630,10 @@ sys_pread(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-#if notyet
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-#endif
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-
-#if notyet
-	FILE_USE(fp);
-#endif
+	if ((fp->f_flag & FREAD) == 0)
+		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
@@ -2682,17 +2676,10 @@ sys_preadv(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-#if notyet
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-#endif
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-
-#if notyet
-	FILE_USE(fp);
-#endif
+	if ((fp->f_flag & FREAD) == 0)
+		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
@@ -2735,17 +2722,10 @@ sys_pwrite(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-#if notyet
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-#endif
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-
-#if notyet
-	FILE_USE(fp);
-#endif
+	if ((fp->f_flag & FWRITE) == 0)
+		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
@@ -2789,17 +2769,11 @@ sys_pwritev(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-#if notyet
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-#endif
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
-#if notyet
-	FILE_USE(fp);
-#endif
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 		error = ESPIPE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_file.c,v 1.10 2001/02/03 02:45:31 mickey Exp $	*/
+/*	$OpenBSD: freebsd_file.c,v 1.11 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -808,8 +808,7 @@ freebsd_sys_fcntl(p, v, retval)
 	case F_SETOWN:
 		/* Our pipes does not understand F_[GS]ETOWN.  */ 
 		fdp = p->p_fd;
-		if ((u_int)fd >= fdp->fd_nfiles ||
-		    (fp = fdp->fd_ofiles[fd]) == NULL)
+		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return (EBADF);
 		if (fp->f_type == DTYPE_PIPE)
 			return ((*fp->f_ops->fo_ioctl)(fp,

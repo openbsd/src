@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.9 2001/07/17 01:51:37 provos Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.10 2001/10/26 12:03:27 art Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -294,7 +294,8 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	if (fdp->fd_knlistsize < 0)
 		fdp->fd_knlistsize = 0;		/* this process has a kq */
 	kq->kq_fdp = fdp;
-	return (error);
+	FILE_SET_MATURE(fp);
+	return (0);
 }
 
 int
@@ -315,8 +316,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	struct timespec ts;
 	int i, n, nerrors, error;
 
-	if (((u_int)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL ||
 	    (fp->f_type != DTYPE_KQUEUE))
 		return (EBADF);
 
@@ -403,8 +403,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 
 	if (fops->f_isfd) {
 		/* validate descriptor */
-		if ((u_int)kev->ident >= fdp->fd_nfiles ||
-		    (fp = fdp->fd_ofiles[kev->ident]) == NULL)
+		if ((fp = fd_getfile(fdp, kev->ident)) == NULL)
 			return (EBADF);
 		fp->f_count++;
 

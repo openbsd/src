@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.39 2001/10/26 10:39:31 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.40 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -183,6 +183,22 @@ fd_unused(fdp, fd)
 		fdp->fd_lastfile = find_last_set(fdp, fd);
 }
 
+struct file *
+fd_getfile(fdp, fd)
+	struct filedesc *fdp;
+	int fd;
+{
+	struct file *fp;
+
+	if ((u_int)fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
+		return (NULL);
+
+	if (!FILE_IS_USABLE(fp))
+		return (NULL);
+
+	return (fp);
+}
+
 /*
  * System calls on descriptors.
  */
@@ -206,7 +222,7 @@ sys_dup(p, v, retval)
 	int error;
 
 restart:
-	if ((u_int)old >= fdp->fd_nfiles || fdp->fd_ofiles[old] == NULL)
+	if (fd_getfile(fdp, old) == NULL)
 		return (EBADF);
 	if ((error = fdalloc(p, 0, &new)) != 0) {
 		if (error == ENOSPC) {
@@ -237,8 +253,9 @@ sys_dup2(p, v, retval)
 	int i, error;
 
 restart:
-	if ((u_int)old >= fdp->fd_nfiles || fdp->fd_ofiles[old] == NULL ||
-	    (u_int)new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
+	if (fd_getfile(fdp, old) == NULL)
+		return (EBADF);
+	if ((u_int)new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 	    (u_int)new >= maxfiles)
 		return (EBADF);
 	if (old == new) {
@@ -283,8 +300,7 @@ sys_fcntl(p, v, retval)
 	int newmin;
 
 restart:
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 	switch (SCARG(uap, cmd)) {
 
@@ -519,7 +535,7 @@ sys_close(p, v, retval)
 	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles)
+	if (fd_getfile(fdp, fd) == NULL)
 		return (EBADF);
 	return (fdrelease(p, fd));
 }
@@ -544,8 +560,7 @@ sys_fstat(p, v, retval)
 	struct stat ub;
 	int error;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	if (error == 0) {
@@ -578,8 +593,7 @@ sys_fpathconf(p, v, retval)
 	struct file *fp;
 	struct vnode *vp;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 	switch (fp->f_type) {
 	case DTYPE_PIPE:
@@ -725,29 +739,6 @@ fdexpand(p)
 }
 
 /*
- * Check to see whether n user file descriptors
- * are available to the process p.
- */
-int
-fdavail(p, n)
-	struct proc *p;
-	register int n;
-{
-	register struct filedesc *fdp = p->p_fd;
-	register struct file **fpp;
-	register int i, lim;
-
-	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-	if ((i = lim - fdp->fd_nfiles) > 0 && (n -= i) <= 0)
-		return (1);
-	fpp = &fdp->fd_ofiles[fdp->fd_freefile];
-	for (i = min(lim, fdp->fd_nfiles) - fdp->fd_freefile; --i >= 0; fpp++)
-		if (*fpp == NULL && --n <= 0)
-			return (1);
-	return (0);
-}
-
-/*
  * Create a new open file structure and allocate
  * a file decriptor for the process that refers to it.
  */
@@ -782,6 +773,7 @@ restart:
 	nfiles++;
 	fp = pool_get(&file_pool, PR_WAITOK);
 	bzero(fp, sizeof(struct file));
+	fp->f_iflags = FIF_LARVAL;
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
 	} else {
@@ -1066,8 +1058,7 @@ sys_flock(p, v, retval)
 	struct vnode *vp;
 	struct flock lf;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (EOPNOTSUPP);
@@ -1141,8 +1132,10 @@ dupfdopen(fdp, indx, dfd, mode, error)
 	 * as the new descriptor.
 	 */
 	fp = fdp->fd_ofiles[indx];
-	if ((u_int)dfd >= fdp->fd_nfiles ||
-	    (wfp = fdp->fd_ofiles[dfd]) == NULL || fp == wfp)
+	if ((wfp = fd_getfile(fdp, dfd)) == NULL)
+		return (EBADF);
+
+	if (fp == wfp)
 		return (EBADF);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_tty.c,v 1.4 1997/04/16 09:18:17 downsj Exp $	*/
+/*	$OpenBSD: hpux_tty.c,v 1.5 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: hpux_tty.c,v 1.14 1997/04/01 19:59:05 scottr Exp $	*/
 
 /*
@@ -518,8 +518,7 @@ getsettty(p, fdes, com, cmarg)
 	struct sgttyb sb;
 	int error;
 
-	if (((unsigned)fdes) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fdes]) == NULL)
+	if ((fp = fd_getfile(fdp, fdes)) == NULL)
 		return (EBADF);
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
 		return (EBADF);

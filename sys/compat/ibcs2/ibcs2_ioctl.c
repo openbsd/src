@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_ioctl.c,v 1.8 1998/02/19 02:08:45 deraadt Exp $	*/
+/*	$OpenBSD: ibcs2_ioctl.c,v 1.9 2001/10/26 12:03:27 art Exp $	*/
 /*	$NetBSD: ibcs2_ioctl.c,v 1.12 1996/08/10 09:08:26 mycroft Exp $	*/
 
 /*
@@ -345,12 +345,8 @@ ibcs2_sys_ioctl(p, v, retval)
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
-	if (SCARG(uap, fd) < 0 || SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL) {
-		DPRINTF(("ibcs2_ioctl(%d): bad fd %d ", p->p_pid,
-			 SCARG(uap, fd)));
-		return EBADF;
-	}
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+		return (EBADF);
 
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0) {
 		DPRINTF(("ibcs2_ioctl(%d): bad fp flag ", p->p_pid));
