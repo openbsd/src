@@ -1,31 +1,49 @@
-#	$OpenBSD: RAMDISK,v 1.7 2001/08/23 22:04:32 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2001/12/13 20:32:56 miod Exp $
 
 machine		mvme88k 
 
-include "../../../conf/GENERIC"
+maxusers	2
+
+option		RAMDISK_HOOKS
+option		MINIROOTSIZE=8192
+
+option		TIMEZONE=0
+option		DST=0
+
+option		SMALL_KERNEL
+option		DIAGNOSTIC
+option		FFS		# UFS
+option		NFSCLIENT	# Network File System client
+option		CD9660		# ISO 9660 + Rock Ridge file system
+option		FDESC		# /dev/fd
+option		FIFO		# FIFOs; RECOMMENDED
+option		INET		# IP + ICMP + TCP + UDP
+option		BOOT_CONFIG	# add support for boot -c
 
 option		MVME187		# support for 187
 option		MVME188		# support for 188
-option		MVME197		# support for 197
+#option		MVME197		# support for 197
 
 option		"NCPUS=1"	# number of CPUs supported (max 4)
 option		BUGMAP		# use the Bug ROM VME mappings
 
-maxusers	8
+# Define this if your processor has the xxx.usr bug (mask C82N)
+# In doubt, leave it enabled.
+option		ERRATA__XXX_USR	
 
-config		bsd		root rd0 swap rd0
+config		bsd		root on rd0a
 
 # ------------------------------ devices --------------------------------
 mainbus0 at root
 
 # ------------------------------ mainbus devices ------------------------
-bugtty0 at mainbus0
-busswitch0 at mainbus0 addr 0xfff00000
-pcctwo0 at mainbus0 addr 0xfff00000
-syscon0 at mainbus0 addr 0xfff00000
+bugtty0	at mainbus0
+bussw0	at mainbus0 addr 0xfff00000
+pcctwo0	at mainbus0 addr 0xfff00000
+syscon0	at mainbus0 addr 0xfff00000
 
-# ----------------------------- busswicth devices -----------------------
-pcctwo0 at busswitch0 offset 0x42000
+# ------------------------------ bussw devices --------------------------
+pcctwo0 at bussw0 offset 0x42000
 
 # ------------------------------ pcctwo devices -------------------------
 clock0	at pcctwo0 ipl 5
@@ -62,7 +80,7 @@ vs3	at vmes0 addr 0xffff5800 ipl 2 vec 0x86 len 0x800
 vs4	at vmes0 addr 0xffff7000 ipl 2 vec 0x88 len 0x800
 vs5	at vmes0 addr 0xffff7800 ipl 2 vec 0x8a len 0x800
 
-# ------------------------------ svme0 devices -------------------------
+# ------------------------------ vs0 devices -------------------------
 scsibus* at vs?
 
 # ------------------------------ ssh0 devices --------------------------
@@ -74,6 +92,8 @@ st*	at scsibus? target ? lun ?
 cd*	at scsibus? target ? lun ?
 
 # ------------------------------ pseudo devices ------------------------
-option MINIROOTSIZE=8192
-option RAMDISK_HOOKS
-pseudo-device	rd 2
+
+pseudo-device	rd	2
+pseudo-device	loop	1	# network loopback
+pseudo-device	bpfilter 1	# packet filter
+pseudo-device	pty	4	# pseudo-terminals

@@ -1,17 +1,17 @@
-#	$OpenBSD: M187,v 1.15 2001/12/13 08:55:51 smurph Exp $
+#	$OpenBSD: M187,v 1.16 2001/12/13 20:32:56 miod Exp $
 
 machine mvme88k
 
 include "../../../conf/GENERIC"
 
-option		M88100		# support for mc88100 1st generation RISC
-option		MVME187		# support for 187 (requires M88100)
-option		"NCPUS=1"	# Number of cpus supported (max 4)
+option		MVME187		# support for 187
 option		BUGMAP		# use Bug Rom VME Mappings
+
 #option		DEBUG		# print debugging statements
 #option		EH_DEBUG	# debugging code for exception handlers
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
+# In doubt, leave it enabled.
 option		ERRATA__XXX_USR	
 
 maxusers 64
