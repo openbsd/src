@@ -57,4 +57,3 @@ PermitEmptyPasswords no
 #Subsystem	sftp	/usr/libexec/sftp-server
 #MaxStartups 10:30:60
 #Banner /etc/issue.net
-DenyGroups nossh
