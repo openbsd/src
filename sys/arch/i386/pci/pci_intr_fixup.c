@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.22 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.23 2002/05/06 18:44:39 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -498,6 +498,9 @@ pci_intr_route_link(pc, ihp)
 	int rv = 1;
 	char *p = NULL;
 
+	if (pcibios_flags & PCIBIOS_INTR_FIXUP)
+		return 1;
+
 	l = ihp->link;
 	if (!l || pciintr_icu_tag == NULL)
 		return (1);
@@ -556,6 +559,9 @@ pci_intr_post_fixup()
 	struct pciintr_link_map *l;
 	int i, pciirq;
 
+	if (pcibios_flags & PCIBIOS_INTR_FIXUP)
+		return 1;
+
 	if (!pciintr_icu_handle)
 		return 0;
 
@@ -597,6 +603,9 @@ pci_intr_header_fixup(pc, tag, ihp)
 	struct pciintr_link_map *l;
 	int irq, link, bus, device, function;
 	char *p = NULL;
+
+	if (pcibios_flags & PCIBIOS_INTR_FIXUP)
+		return 1;
 
 	irq = ihp->line;
 	ihp->link = NULL;
