@@ -3063,6 +3063,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82C558 PCI-ISA",
 	},
 	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C568,
+	    0,
+	    "Opti",
+	    "82C568 IDE",
+	},
+	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82D568,
+	    0,
+	    "Opti",
+	    "82D568 IDE",
+	},
+	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C621,
 	    0,
 	    "Opti",
