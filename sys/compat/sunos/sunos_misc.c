@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.24 2001/01/23 05:48:04 csapuntz Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.25 2001/01/26 05:30:18 marc Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -90,6 +90,8 @@
 #include <compat/sunos/sunos_syscallargs.h>
 #include <compat/sunos/sunos_util.h>
 #include <compat/sunos/sunos_dirent.h>
+
+#include <compat/common/compat_dir.h>
 
 #include <netinet/in.h>
 
