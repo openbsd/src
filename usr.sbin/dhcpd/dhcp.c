@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.16 2004/12/06 17:18:35 claudio Exp $ */
+/*	$OpenBSD: dhcp.c,v 1.17 2005/01/29 16:29:09 millert Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -804,8 +804,10 @@ ack_lease(struct packet *packet, struct lease *lease, unsigned int offer,
 		   it) either. */
 
 		if (!(supersede_lease(lease, &lt, !offer || offer == DHCPACK) ||
-		    (offer && offer != DHCPACK)))
+		    (offer && offer != DHCPACK))) {
+			free_lease_state(state, "ack_lease: !supersede_lease");
 			return;
+		}
 	}
 
 	/* Remember the interface on which the packet arrived. */
