@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.68 2005/04/05 18:06:05 cloder Exp $
+.\" $OpenBSD: isakmpd.8,v 1.69 2005/04/05 21:32:13 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -119,7 +119,7 @@ If given,
 .Nm
 does not set up flows automatically.
 This is useful when flows are configured with
-.Xr ipsecadm 4
+.Xr ipsecadm 8
 or by other programs like
 .Xr bgpd 8 .
 Thus
@@ -269,7 +269,7 @@ the file name as an argument to the
 .Fl R
 flag.
 .It Fl T
-When this option is given, NAT-Traversal will disabled and
+When this option is given, NAT-Traversal will be disabled and
 .Nm
 will not advertise support for NAT-Traversal to its peers.
 .It Fl v
