@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_file.c,v 1.13 2002/02/13 19:08:06 art Exp $	*/
+/*	$OpenBSD: freebsd_file.c,v 1.14 2002/02/13 21:32:03 art Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -819,6 +819,7 @@ freebsd_sys_fcntl(p, v, retval)
 			    cmd == F_GETOWN ? SIOCGPGRP : SIOCSPGRP,
 			    (caddr_t)&SCARG(uap, arg), p);
 			FRELE(fp);
+			return (error);
 		}
 		break;
 	}
