@@ -33,7 +33,7 @@ maninstall:
 .if defined(MANALL)
 	@for page in ${MANALL}; do \
 		dir=${DESTDIR}${MANDIR}`expr $$page : '.*\.cat\([1-9]\)'`; \
-		instpage=$${dir}${MANSUBDIR}/`expr $$page : '\(.*\)\.cat[1-9]'`.0${MCOMPRESSSUFFIX}; \
+		instpage=$${dir}${MANSUBDIR}/`expr \`basename $$page\` : '\(.*\)\.cat[1-9]'`.0${MCOMPRESSSUFFIX}; \
 		if [ X"${MCOMPRESS}" = X ]; then \
 			echo ${MINSTALL} $$page $$instpage; \
 			${MINSTALL} $$page $$instpage; \
