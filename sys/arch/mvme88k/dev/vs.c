@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.50 2004/07/20 20:33:18 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.51 2004/07/20 23:07:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -647,30 +647,69 @@ vs_initialize(struct vs_softc *sc)
 	}
 	CRB_CLR_DONE;
 
-	/* reset SCSI bus */
-	vs_reset(sc);
+	/* reset all SCSI buses */
+	vs_reset(sc, -1);
 	/* sync all devices */
 	vs_resync(sc);
-	printf("SCSI ID %d\n", sc->sc_pid);
+
 	return 0;
 }
 
 void
 vs_resync(struct vs_softc *sc)
 {
-	int i;
+	int bus, target;
 
-	for (i = 0; i < 8; i++) {
-		if (i == sc->sc_pid)
+	for (bus = 0; bus < 2; bus++) {
+		if (sc->sc_id[bus] < 0)
+			break;
+
+		for (target = 0; target < 8; target++) {
+			if (target == sc->sc_id[bus])
+				continue;
+
+			vs_bzero(sh_MCE_IOPB, IOPB_SHORT_SIZE);
+			mce_iopb_write(2, DRCF_CMD, CNTR_DEV_REINIT);
+			mce_iopb_write(2, DRCF_OPTION, 0); /* prefer polling */
+			mce_iopb_write(1, DRCF_NVCT, sc->sc_nvec);
+			mce_iopb_write(1, DRCF_EVCT, sc->sc_evec);
+			mce_iopb_write(2, DRCF_ILVL, 0);
+			mce_iopb_write(2, DRCF_UNIT,
+			    IOPB_UNIT_VALUE(bus, target, 0));
+
+			vs_bzero(sh_MCE, CQE_SIZE);
+			mce_write(2, CQE_IOPB_ADDR, sh_MCE_IOPB);
+			mce_write(1, CQE_IOPB_LENGTH, IOPB_SHORT_SIZE);
+			mce_write(1, CQE_WORK_QUEUE, 0);
+			mce_write(2, CQE_QECR, M_QECR_GO);
+
+			/* poll for the command to complete */
+			do_vspoll(sc, NULL, 0, 0);
+			if (CRSW & M_CRSW_ER)
+				CRB_CLR_ER;
+			CRB_CLR_DONE;
+		}
+	}
+}
+
+void
+vs_reset(struct vs_softc *sc, int bus)
+{
+	int b, s;
+
+	s = splbio();
+
+	for (b = 0; b < 2; b++) {
+		if (bus >= 0 && b != bus)
 			continue;
 
 		vs_bzero(sh_MCE_IOPB, IOPB_SHORT_SIZE);
-		mce_iopb_write(2, DRCF_CMD, CNTR_DEV_REINIT);
-		mce_iopb_write(2, DRCF_OPTION, 0); /* no interrupts yet */
-		mce_iopb_write(1, DRCF_NVCT, sc->sc_nvec);
-		mce_iopb_write(1, DRCF_EVCT, sc->sc_evec);
-		mce_iopb_write(2, DRCF_ILVL, 0);
-		mce_iopb_write(2, DRCF_UNIT, IOPB_UNIT_VALUE(i, 0));
+		mce_iopb_write(2, SRCF_CMD, IOPB_RESET);
+		mce_iopb_write(2, SRCF_OPTION, 0);	/* prefer polling */
+		mce_iopb_write(1, SRCF_NVCT, sc->sc_nvec);
+		mce_iopb_write(1, SRCF_EVCT, sc->sc_evec);
+		mce_iopb_write(2, SRCF_ILVL, 0);
+		mce_iopb_write(2, SRCF_BUSID, b << 15);
 
 		vs_bzero(sh_MCE, CQE_SIZE);
 		mce_write(2, CQE_IOPB_ADDR, sh_MCE_IOPB);
@@ -679,44 +718,16 @@ vs_resync(struct vs_softc *sc)
 		mce_write(2, CQE_QECR, M_QECR_GO);
 
 		/* poll for the command to complete */
-		do_vspoll(sc, 0, 0);
-		if (CRSW & M_CRSW_ER)
-			CRB_CLR_ER;
-		CRB_CLR_DONE;
-	}
-}
-
-void
-vs_reset(struct vs_softc *sc)
-{
-	int s;
-
-	s = splbio();
-
-	vs_bzero(sh_MCE_IOPB, IOPB_SHORT_SIZE);
-	mce_iopb_write(2, SRCF_CMD, IOPB_RESET);
-	mce_iopb_write(2, SRCF_OPTION, 0);	/* not interrupts yet... */
-	mce_iopb_write(1, SRCF_NVCT, sc->sc_nvec);
-	mce_iopb_write(1, SRCF_EVCT, sc->sc_evec);
-	mce_iopb_write(2, SRCF_ILVL, 0);
-	mce_iopb_write(2, SRCF_BUSID, 0);
-
-	vs_bzero(sh_MCE, CQE_SIZE);
-	mce_write(2, CQE_IOPB_ADDR, sh_MCE_IOPB);
-	mce_write(1, CQE_IOPB_LENGTH, IOPB_SHORT_SIZE);
-	mce_write(1, CQE_WORK_QUEUE, 0);
-	mce_write(2, CQE_QECR, M_QECR_GO);
-
-	/* poll for the command to complete */
-	for (;;) {
-		do_vspoll(sc, NULL, 0, 0);
-		/* ack & clear scsi error condition cause by reset */
-		if (CRSW & M_CRSW_ER) {
+		for (;;) {
+			do_vspoll(sc, NULL, 0, 0);
+			/* ack & clear scsi error condition cause by reset */
+			if (CRSW & M_CRSW_ER) {
+				CRB_CLR_DONE;
+				vs_write(2, sh_RET_IOPB + IOPB_STATUS, 0);
+				break;
+			}
 			CRB_CLR_DONE;
-			vs_write(2, sh_RET_IOPB + IOPB_STATUS, 0);
-			break;
 		}
-		CRB_CLR_DONE;
 	}
 
 	thaw_all_queues(sc);
