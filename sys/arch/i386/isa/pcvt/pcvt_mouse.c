@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_mouse.c,v 1.1 2000/09/01 05:46:02 aaron Exp $ */
+/*	$OpenBSD: pcvt_mouse.c,v 1.2 2000/09/04 17:59:50 aaron Exp $ */
 
 /*
  * Copyright (c) 2000 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -36,6 +36,7 @@
  *
  *
  */
+
  
 #include "pcvt_hdr.h"
 
@@ -43,7 +44,6 @@ void mouse_moverel(char dx, char dy);
 
 void inverse_char(unsigned short c);
 void inverse_region(unsigned short start, unsigned short end);
-void order_region(void);
 
 unsigned char skip_spc_right(char);
 unsigned char skip_spc_left(void);
@@ -82,7 +82,7 @@ mouse_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	mouse_info_t mouse_infos = *(mouse_info_t *) data; 	
 	unsigned char c;
 	video_state  *cs;
-
+	
 	if (device == PCVTCTL_MINOR && cmd == PCVT_MOUSECTL) {
 		switch (mouse_infos.operation) {
 		case MOUSE_INIT: 
@@ -142,8 +142,9 @@ mouse_moverel(char dx, char dy)
 	
 	if (scrnsv_active) /* if the screen saver is active */
 		pcvt_scrnsv_reset();		/* unblank NOW !	*/
-
+	
 	/* update position */
+	
 	if (mouse_col + dx >= MAXCOL)
 		mouse_col = MAXCOL;
 	else
@@ -159,7 +160,6 @@ mouse_moverel(char dx, char dy)
 		else
 			mouse_row += dy;
 	vsp->mouse = XY_TO_X(mouse_col, mouse_row);
-
 	/* if we have moved */
 	if (old_mouse != vsp->mouse) {
 		/* hide the previous cursor, if not in a selection */
@@ -189,27 +189,11 @@ inverse_char(unsigned short pos)
 	
 	if ((inverse >> 8) == 0)
 		inverse = (FG_LIGHTGREY << 8);
-
+	
 	inverse = (((inverse >> 8) & 0x88) | ((((inverse >> 8) >> 4) |
 	    ((inverse >> 8) << 4)) & 0x77)) << 8;
-
-	*current_char = inverse | ((*current_char) & 0x00ff);
-}
-
-/*
- * Function to order extremum of the selection region
- */
-
-void
-order_region(void)
-{
-	unsigned short max_pos; 
 	
-	if (vsp->cpy_start > vsp->cpy_end) {
-		max_pos = vsp->cpy_start;
-		vsp->cpy_start = vsp->cpy_end;
-		vsp->cpy_end = max_pos;
-	}
+	*current_char = inverse | ((*current_char) & 0x00ff);
 }
 
 /*
@@ -241,7 +225,7 @@ skip_spc_right(char border)
 {
 	unsigned short *current;	
 	unsigned short *limit;
-	unsigned char mouse_col = (vsp->mouse % vsp->maxcol);
+	unsigned char mouse_col = (vsp->cpy_end % vsp->maxcol);
 	unsigned char res = 0;
 		
 	current = vsp->Crtat + vsp->cpy_end;
@@ -279,7 +263,6 @@ skip_spc_left(void)
 		current--;
 		res++;
 	}
-
 	if (res)
 		res--;
 	return (res);
@@ -304,7 +287,6 @@ skip_char_right(void)
 		current++;
 		res++;
 	}
-
 	if (res)
 		res--;
 	return (res);
@@ -328,7 +310,6 @@ skip_char_left(void)
 		current--;
 		res++;
 	}
-
 	if (res)
 		res--;
 	return (res);
@@ -341,51 +322,34 @@ skip_char_left(void)
 void
 mouse_copy_start(void)
 {
-#if 0
 	unsigned char right;
-	unsigned char left;
-#endif
 
 	/* if no selection, then that's the first one */
+
 	if (!Paste_avail)
 		Paste_avail = 1;
 	
 	/* remove the previous selection */
+	
 	if (IS_SEL_EXISTS(vsp)) {
 		remove_selection();
 	}
-
+	
 	/* initial show of the cursor */
 	if (!IS_MOUSE_VISIBLE(vsp))
 		inverse_char(vsp->mouse);
 		
 	vsp->cpy_start = vsp->mouse;
 	vsp->cpy_end = vsp->mouse;
-
-#if 0
-	/* if there is a blank region, we select all the region */
-	if ((right = skip_spc_right(BORDER)) > 0) {
-		left = skip_spc_left();
-		vsp->cpy_start -= left;
-		vsp->cpy_end += right;
-		if (vsp->cpy_start % vsp->maxcol) {
-			inverse_region(vsp->cpy_start, vsp->cpy_end);
-			inverse_char(vsp->mouse); /* reverse back the cursor */
-		}
-		else {
-			/* we select only one character on a full blank line */
-			vsp->cpy_start = vsp->mouse;
-			vsp->cpy_end = vsp->mouse;
-		}
-	}
-#endif
-
-	/* for correct action in remove_selection() */
-	vsp->cpy_orig = vsp->cpy_start;
-
+	vsp->cpy_orig = vsp->cpy_start; /* for correct action in
+					   remove_selection() */
+	right = skip_spc_right(BORDER); /* useful later, in mouse_copy_extend */
+	if (right) 
+		vsp->mouse_flags |= BLANK_TO_EOL;
+	
 	vsp->mouse_flags |= SEL_IN_PROGRESS;
 	vsp->mouse_flags |= SEL_EXISTS;
-
+	
 	/* mouse cursor hidden in the selection */
 	vsp->mouse_flags &= ~MOUSE_VISIBLE;
 }
@@ -402,16 +366,16 @@ mouse_copy_word()
 	
 	if (IS_SEL_EXISTS(vsp))
 		remove_selection();
-
+	
 	if (IS_SEL_IN_PROGRESS(vsp))
 		vsp->mouse_flags &= ~SEL_IN_PROGRESS;
-
+	
 	if (IS_MOUSE_VISIBLE(vsp))
 		inverse_char(vsp->mouse);
-
+	
 	vsp->cpy_start = vsp->mouse;
 	vsp->cpy_end = vsp->mouse;
-
+	
 	if (IS_ALPHANUM(vsp->mouse)) {
 		right = skip_char_right();
 		left = skip_char_left();
@@ -420,13 +384,13 @@ mouse_copy_word()
 		right = skip_spc_right(NO_BORDER);
 		left = skip_spc_left();
 	}
-
+	
 	vsp->cpy_start -= left;
 	vsp->cpy_end += right;
 	vsp->cpy_orig = vsp->cpy_start;
 	inverse_region(vsp->cpy_start, vsp->cpy_end);
 	vsp->mouse_flags |= SEL_EXISTS;
-
+	
 	/* mouse cursor hidden in the selection */
 	vsp->mouse_flags &= ~MOUSE_VISIBLE;
 }
@@ -442,18 +406,18 @@ mouse_copy_line(void)
 	
 	if (IS_SEL_EXISTS(vsp))
 		remove_selection();
-
+	
 	if (IS_SEL_IN_PROGRESS(vsp))
 		vsp->mouse_flags &= ~(SEL_IN_PROGRESS);
-
+	
 	if (IS_MOUSE_VISIBLE(vsp))
 		inverse_char(vsp->mouse);
-
+	
 	vsp->cpy_start = row * vsp->maxcol;
 	vsp->cpy_end = vsp->cpy_start + MAXCOL;
 	vsp->cpy_orig = vsp->cpy_start;
 	inverse_region(vsp->cpy_start, vsp->cpy_end);
-
+	
 	vsp->mouse_flags |= SEL_EXISTS;
 	vsp->mouse_flags &= ~MOUSE_VISIBLE;
 }
@@ -475,51 +439,87 @@ mouse_copy_end(void)
 void
 mouse_copy_extend()
 {
+	unsigned char right;
+	
 	if (IS_SEL_EXISTS(vsp)) {
-		if (vsp->mouse < vsp->cpy_start) {
-			/* we are over the initial selection position */	
-
+		if (IS_BLANK_TO_EOL(vsp)) {
+			/* 
+			 * First extension of selection. We handle special 
+			 * cases of blank characters to eol 
+			 */ 
+			
+			right = skip_spc_right(BORDER);
+			if (vsp->mouse > vsp->cpy_orig) {
+				/* the selection goes to the lower part of
+				   the screen */
+				
+				/* remove the previous cursor, start of
+				   selection is now next line */
+				inverse_char(vsp->cpy_start);
+				vsp->cpy_start += (right + 1);
+				vsp->cpy_end = vsp->cpy_start;
+				vsp->cpy_orig = vsp->cpy_start;
+				/* simulate the initial mark */
+				inverse_char(vsp->cpy_start);
+			}
+			else {
+				/* the selection goes to the upper part
+				   of the screen */
+				/* remove the previous cursorm, start of
+				   selection is now at the eol */
+				inverse_char(vsp->cpy_start);
+				vsp->cpy_orig += (right + 1);
+				vsp->cpy_start = vsp->cpy_orig - 1;
+				vsp->cpy_end = vsp->cpy_orig - 1;
+				/* simulate the initial mark */
+				inverse_char(vsp->cpy_start);
+			}
+			vsp->mouse_flags &= ~ BLANK_TO_EOL;
+		}	
+		
+		if (vsp->mouse < vsp->cpy_orig 
+		    && vsp->cpy_end >= vsp->cpy_orig) {
+			/* we go to the upper part of the screen */
+			
 			/* reverse the old selection region */
-			if (IS_SEL_EXISTS(vsp)) 
-				remove_selection();
-
-			/* new delimiters for the selection zone */
-			vsp->cpy_start = vsp->mouse;
+			remove_selection();
 			vsp->cpy_end = vsp->cpy_orig - 1; 
-			inverse_char(vsp->cpy_end);
+			vsp->cpy_start = vsp->cpy_orig;
 		}
-		if (vsp->cpy_start < vsp->cpy_orig && vsp->mouse >= vsp->cpy_orig)
-		{
-			/* we go back behind the initial selection
-			   position */
+		if (vsp->cpy_start < vsp->cpy_orig 
+		    && vsp->mouse >= vsp->cpy_orig) {
+			/* we go back to the lower part of the screen */
 
 			/* reverse the old selection region */
-			if (IS_SEL_EXISTS(vsp)) 
-				remove_selection();
+			remove_selection();
 
 			vsp->cpy_start = vsp->cpy_orig;
-			vsp->cpy_end = vsp->cpy_orig;
-			inverse_char(vsp->cpy_start);
+			vsp->cpy_end = vsp->cpy_orig - 1;
 		}
 
-		if (vsp->mouse < vsp->cpy_end) {
-			/* reducing selection */
-			if (vsp->mouse >= vsp->cpy_orig) 
-				inverse_region(vsp->mouse + 1, vsp->cpy_end);
+		
+		if (vsp->mouse >= vsp->cpy_orig) {
+			/* lower part of the screen */
+			if (vsp->mouse > vsp->cpy_end) 
+				/* extending selection */
+				inverse_region(vsp->cpy_end + 1,vsp->mouse);
 			else
-				inverse_region(vsp->mouse, vsp->cpy_end - 1);
+				/* reducing selection */
+				inverse_region(vsp->mouse + 1,vsp->cpy_end);
+			vsp->cpy_end = vsp->mouse;
 		}
 		else {
-			/* extending selection */
-			if (vsp->mouse >= vsp->cpy_orig)  
-				inverse_region(vsp->cpy_end + 1, vsp->mouse);
+			/* upper part of the screen */
+			if (vsp->mouse < vsp->cpy_start) 
+				/* extending selection */
+				inverse_region(vsp->mouse,vsp->cpy_start - 1);
 			else
-				inverse_region(vsp->cpy_end, vsp->mouse - 1);
+				/* reducing selection */
+				inverse_region(vsp->cpy_start,vsp->mouse - 1);
+			vsp->cpy_start = vsp->mouse;
 		}
-		vsp->cpy_end = vsp->mouse;
-		order_region();	
 	}
-	else {
+	else { 
 		/* no selection yet! */
 		sysbeep(PCVT_SYSBEEPF / 1500, hz / 4);
 	}
@@ -534,7 +534,7 @@ remove_selection()
 {
 	if (vsp->cpy_start < vsp->cpy_orig) 
 		/* backward selection */
-		inverse_region(vsp->cpy_end, vsp->cpy_orig - 1);
+		inverse_region(vsp->cpy_start, vsp->cpy_orig - 1);
 	else
 		/* forward selection */
 		inverse_region(vsp->cpy_start, vsp->cpy_end);
@@ -592,11 +592,9 @@ mouse_copy_selection(void)
 	}
 	while (sel_cur <= sel_end && current < buf_end - 1) {
 		Copybuffer[current] = ((*sel_cur) & 0x00ff);
-
 		if (!IS_SPACE(Copybuffer[current])) 
 			blank = current + 1; /* first blank after non-blank */
 		current++;
-
 		if (XABS_TO_XREL(sel_cur) == MAXCOL) {
 			/* we are on the last col of the screen */
 			Copybuffer[blank] = '\r'; /* carriage return */
@@ -608,23 +606,6 @@ mouse_copy_selection(void)
 	}
 	
 	Copybuffer[current] = '\0';
-
-#if 0
-	/* 
-	   examine the last line of selection to see if it finishes with blank.
-	   In that case, we put a carriage return after the last non-blank
-	   character in the buffer 
-	 */
-	sel_cur = sel_end;
-	while (IS_SPACE(*sel_cur & 0x00ff) && XABS_TO_XREL(sel_cur) < MAXCOL) {
-		sel_cur--;
-		current--;
-	}
-	if (sel_cur != sel_end) {
-		Copybuffer[current++] = '\r';
-		Copybuffer[current] = '\0';
-	}	
-#endif
 	Copyowner = current_uid();
 }
 /*

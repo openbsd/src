@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.37 2000/09/01 05:46:01 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.38 2000/09/04 17:59:49 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -711,9 +711,12 @@ typedef struct video_state {
 #define MOUSE_VISIBLE 	(1 << 0)	/* flag, the mouse cursor is visible */
 #define SEL_EXISTS 	(1 << 1)	/* flag, a selection exists */
 #define SEL_IN_PROGRESS (1 << 2)	/* flag, a selection is in progress */
+#define BLANK_TO_EOL	(1 << 3)	/* flag, there are only blanks
+					   characters to eol */
 #define IS_MOUSE_VISIBLE(vsp) ((vsp)->mouse_flags & MOUSE_VISIBLE)
 #define IS_SEL_EXISTS(vsp) ((vsp)->mouse_flags & SEL_EXISTS)
 #define IS_SEL_IN_PROGRESS(vsp) ((vsp)->mouse_flags & SEL_IN_PROGRESS)
+#define IS_BLANK_TO_EOL(vsp) ((vsp)->mouse_flags & BLANK_TO_EOL)
 	unsigned char mouse_flags;	/* flags, status of the mouse */
 } video_state;
 
