@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.29 2002/09/08 01:31:46 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.30 2002/10/23 06:45:13 mark Exp $	*/
 /*	$KAME: traceroute6.c,v 1.61 2002/09/08 01:28:05 itojun Exp $	*/
 
 /*
@@ -311,7 +311,7 @@ int	wait_for_reply(int, struct msghdr *);
 int	setpolicy(int so, char *policy);
 #endif
 #endif
-void	send_probe(int, int);
+void	send_probe(int, u_long);
 struct udphdr *get_udphdr(struct ip6_hdr *, u_char *);
 int	get_hoplim(struct msghdr *);
 double	deltaT(struct timeval *, struct timeval *);
@@ -331,7 +331,7 @@ int rcvhlim;
 struct in6_pktinfo *rcvpktinfo;
 
 struct sockaddr_in6 Src, Dst, Rcv;
-int datalen;			/* How much data */
+u_long datalen;			/* How much data */
 #define	ICMP6ECHOLEN	8
 /* XXX: 2064 = 127(max hops in type 0 rthdr) * sizeof(ip6_hdr) + 16(margin) */
 char rtbuf[2064];
@@ -343,9 +343,9 @@ struct cmsghdr *cmsg;
 char *source = 0;
 char *hostname;
 
-int nprobes = 3;
-int first_hop = 1;
-int max_hops = 30;
+u_long nprobes = 3;
+u_long first_hop = 1;
+u_long max_hops = 30;
 u_int16_t srcport;
 u_int16_t port = 32768+666;	/* start udp dest port # for probe packets */
 u_int16_t ident;
@@ -364,7 +364,8 @@ main(argc, argv)
 	struct hostent *hp;
 	int error;
 	struct addrinfo hints, *res;
-	int ch, i, on, probe, seq, hops, rcvcmsglen;
+	int ch, i, on, seq, rcvcmsglen;
+	u_long probe, hops;
 	static u_char *rcvcmsgbuf;
 	char hbuf[NI_MAXHOST], src0[NI_MAXHOST];
 	char *ep;
@@ -429,7 +430,7 @@ main(argc, argv)
 			}
 			if (first_hop > max_hops) {
 				fprintf(stderr,
-				    "traceroute6: min hoplimit must be <= %d.\n",
+				    "traceroute6: min hoplimit must be <= %lu.\n",
 				    max_hops);
 				exit(1);
 			}
@@ -487,7 +488,7 @@ main(argc, argv)
 			}
 			if (max_hops < first_hop) {
 				fprintf(stderr,
-				    "traceroute6: max hoplimit must be >= %d.\n",
+				    "traceroute6: max hoplimit must be >= %lu.\n",
 				    first_hop);
 				exit(1);
 			}
@@ -840,12 +841,12 @@ main(argc, argv)
 	fprintf(stderr, " to %s (%s)", hostname, hbuf);
 	if (source)
 		fprintf(stderr, " from %s", source);
-	fprintf(stderr, ", %d hops max, %d byte packets\n",
+	fprintf(stderr, ", %lu hops max, %lu byte packets\n",
 	    max_hops, datalen);
 	(void) fflush(stderr);
 
 	if (first_hop > 1)
-		printf("Skipping %d intermediate hops\n", first_hop - 1);
+		printf("Skipping %lu intermediate hops\n", first_hop - 1);
 
 	/*
 	 * Main loop
@@ -855,7 +856,7 @@ main(argc, argv)
 		int got_there = 0;
 		int unreachable = 0;
 
-		printf("%2d ", hops);
+		printf("%2lu ", hops);
 		bzero(&lastaddr, sizeof(lastaddr));
 		for (probe = 0; probe < nprobes; ++probe) {
 			int cc;
@@ -976,7 +977,8 @@ setpolicy(so, policy)
 
 void
 send_probe(seq, hops)
-	int seq, hops;
+	int seq;
+	u_long hops;
 {
 	int i;
 
@@ -1013,7 +1015,7 @@ send_probe(seq, hops)
 	if (i < 0 || i != datalen)  {
 		if (i<0)
 			perror("sendto");
-		printf("traceroute6: wrote %s %d chars, ret=%d\n",
+		printf("traceroute6: wrote %s %lu chars, ret=%d\n",
 		    hostname, datalen, i);
 		(void) fflush(stdout);
 	}
