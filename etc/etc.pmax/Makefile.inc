@@ -1,7 +1,7 @@
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.4 1997/05/10 22:38:20 deraadt Exp $
+#	$Id: Makefile.inc,v 1.5 1997/05/13 14:30:37 graichen Exp $
 
 .ifdef DESTDIR
 
@@ -19,6 +19,20 @@ bsd:
 	    make clean && make depend && make
 	cp ${.CURDIR}/../sys/arch/pmax/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
+
+bsd.nfs:
+	cd ${.CURDIR}/../sys/arch/pmax/conf && config GENERIC_NFS
+	cd ${.CURDIR}/../sys/arch/pmax/compile/GENERIC_NFS && \
+	    make clean && make depend && make
+	cp ${.CURDIR}/../sys/arch/pmax/compile/GENERIC_NFS/bsd \
+	    ${DESTDIR}/snapshot/bsd.nfs
+
+bsd.rz0:
+	cd ${.CURDIR}/../sys/arch/pmax/conf && config GENERIC_rz0
+	cd ${.CURDIR}/../sys/arch/pmax/compile/GENERIC_rz0 && \
+	    make clean && make depend && make
+	cp ${.CURDIR}/../sys/arch/pmax/compile/GENERIC_rz0/bsd \
+	    ${DESTDIR}/snapshot/bsd.rz0
 
 simpleroot:
 	cd ${.CURDIR}/../distrib/simpleroot && make cleandir && \
