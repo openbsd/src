@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: systems.c,v 1.6 1997/12/21 03:41:27 brian Exp $
+ * $Id: systems.c,v 1.7 1997/12/24 09:30:53 brian Exp $
  *
  *  TODO:
  */
@@ -250,7 +250,7 @@ ReadSystem(const char *name, const char *file, int doexec)
   LogPrintf(LogDEBUG, "ReadSystem: Checking %s (%s).\n", name, filename);
 
   linenum = 0;
-  while (fgets(line, sizeof(line), fp)) {
+  while (fgets(line, sizeof line, fp)) {
     linenum++;
     cp = line;
     switch (*cp) {
@@ -283,7 +283,7 @@ ReadSystem(const char *name, const char *file, int doexec)
           break;
         }
       } else if (strcmp(cp, name) == 0) {
-	while (fgets(line, sizeof(line), fp)) {
+	while (fgets(line, sizeof line, fp)) {
 	  cp = line;
           if (issep(*cp)) {
 	    n = strspn(cp, " \t");

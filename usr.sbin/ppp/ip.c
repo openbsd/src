@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ip.c,v 1.1.1.1 1997/11/23 20:27:34 brian Exp $
+ * $Id: ip.c,v 1.2 1997/12/24 09:30:34 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -411,7 +411,7 @@ IpInput(struct mbuf * bp)
       IpcpAddInOctets(nb);
 
       nb = ntohs(((struct ip *) tun.data)->ip_len);
-      nb += sizeof(tun)-sizeof(tun.data);
+      nb += sizeof tun - sizeof tun.data;
       nw = write(tun_out, &tun, nb);
       if (nw != nb)
         if (nw == -1)
@@ -424,8 +424,9 @@ IpInput(struct mbuf * bp)
 	while ((fptr = VarPacketAliasGetFragment(tun.data)) != NULL) {
 	  VarPacketAliasFragmentIn(tun.data, fptr);
 	  nb = ntohs(((struct ip *) fptr)->ip_len);
-          frag = (struct tun_data *)((char *)fptr-sizeof(tun)+sizeof(tun.data));
-          nb += sizeof(tun)-sizeof(tun.data);
+          frag = (struct tun_data *)
+	    ((char *)fptr - sizeof tun + sizeof tun.data);
+          nb += sizeof tun - sizeof tun.data;
 	  nw = write(tun_out, frag, nb);
 	  if (nw != nb)
             if (nw == -1)
@@ -438,13 +439,13 @@ IpInput(struct mbuf * bp)
       }
     } else if (iresult == PKT_ALIAS_UNRESOLVED_FRAGMENT) {
       nb = ntohs(((struct ip *) tun.data)->ip_len);
-      nb += sizeof(tun)-sizeof(tun.data);
+      nb += sizeof tun - sizeof tun.data;
       frag = (struct tun_data *)malloc(nb);
       if (frag == NULL)
 	LogPrintf(LogALERT, "IpInput: Cannot allocate memory for fragment\n");
       else {
         tun_fill_header(*frag, AF_INET);
-	memcpy(frag->data, tun.data, nb-sizeof(tun)+sizeof(tun.data));
+	memcpy(frag->data, tun.data, nb - sizeof tun + sizeof tun.data);
 	VarPacketAliasSaveFragment(frag->data);
       }
     }
@@ -456,7 +457,7 @@ IpInput(struct mbuf * bp)
       return;
     }
     IpcpAddInOctets(nb);
-    nb += sizeof(tun)-sizeof(tun.data);
+    nb += sizeof tun - sizeof tun.data;
     nw = write(tun_out, &tun, nb);
     if (nw != nb)
       if (nw == -1)

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.c,v 1.3 1997/12/15 22:44:52 brian Exp $
+ * $Id: fsm.c,v 1.4 1997/12/24 09:30:31 brian Exp $
  *
  *  TODO:
  *		o Refer loglevel for log output
@@ -345,7 +345,7 @@ FsmRecvConfigReq(struct fsm * fp, struct fsmheader * lhp, struct mbuf * bp)
   int ackaction = 0;
 
   plen = plength(bp);
-  flen = ntohs(lhp->length) - sizeof(*lhp);
+  flen = ntohs(lhp->length) - sizeof *lhp;
   if (plen < flen) {
     LogPrintf(LogERROR, "FsmRecvConfigReq: plen (%d) < flen (%d)\n",
 	      plen, flen);
@@ -464,7 +464,7 @@ FsmRecvConfigNak(struct fsm * fp, struct fsmheader * lhp, struct mbuf * bp)
   int plen, flen;
 
   plen = plength(bp);
-  flen = ntohs(lhp->length) - sizeof(*lhp);
+  flen = ntohs(lhp->length) - sizeof *lhp;
   if (plen < flen) {
     pfree(bp);
     return;
@@ -574,7 +574,7 @@ FsmRecvConfigRej(struct fsm * fp, struct fsmheader * lhp, struct mbuf * bp)
   int plen, flen;
 
   plen = plength(bp);
-  flen = ntohs(lhp->length) - sizeof(*lhp);
+  flen = ntohs(lhp->length) - sizeof *lhp;
   if (plen < flen) {
     pfree(bp);
     return;
