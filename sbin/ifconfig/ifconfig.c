@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.26 1999/12/27 04:19:42 angelos Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.27 2000/01/09 05:56:58 angelos Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.26 1999/12/27 04:19:42 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.27 2000/01/09 05:56:58 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -650,6 +650,9 @@ handlesa(cmd, sa)
 {
 	char *p1, *p2, *p;
 	struct ifsa ifsa;
+	struct addrinfo *res;
+	struct protoent *prnt;
+	int ecode;
 
 	bzero(&ifsa, sizeof(ifsa));
 
@@ -673,47 +676,41 @@ handlesa(cmd, sa)
 	if (*p2 == '\0')
 		errx(1, "invalid security protocol");
 
-#ifdef INET6
-	if (strchr(sa, ':'))
-	{
-		inet_pton(AF_INET6, sa, &ifsa.sa_dst.sin6.sin6_addr);
-		ifsa.sa_dst.sin6.sin6_family = AF_INET6;
-		ifsa.sa_dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
-	}
-	else
-#endif /* INET6 */
-	if (strchr(sa, '.'))
-	{
-	  	inet_pton(AF_INET, sa, &ifsa.sa_dst.sin.sin_addr);
-		ifsa.sa_dst.sin.sin_family = AF_INET;
-		ifsa.sa_dst.sin.sin_len = sizeof(struct sockaddr_in);
-	}
-	else
-	  	errx(1, "unknown address family");
+	if ((ecode = getaddrinfo(sa, NULL, NULL, &res)) != 0)
+		errx(1, "error in parsing address string: %s",
+		     gai_strerror(ecode));
+
+	bcopy(res->ai_addr, &ifsa.sa_dst, res->ai_addr->sa_len);
+
+	freeaddrinfo(res);
 
 	ifsa.sa_spi = htonl(strtoul(p1, &p, 16));
 	if ((p == NULL) || ((*p != '\0') && (*p != '/')))
 		errx(1, "bad SPI");
 
 	ifsa.sa_proto = strtoul(p2, &p, 10);
-	if ((p == NULL) || (*p != '\0'))
-		errx(1, "bad security protocol");
+	if ((p == NULL) || (*p != '\0')) {
+		prnt = getprotobyname(p2);
+		if (prnt == NULL)
+			errx(1, "bad security protocol");
+		ifsa.sa_proto = prnt->p_proto;
+	}
 
-	if (ioctl(s, cmd, (caddr_t)&ifsa) < 0)
-	  switch (cmd)
-	  {
-	      case SIOCSENCDSTSA:
-		  warn("SIOCSENCDSTSA");
-		  break;
+	if (ioctl(s, cmd, (caddr_t)&ifsa) < 0) {
+		switch (cmd) {
+	      	case SIOCSENCDSTSA:
+			warn("SIOCSENCDSTSA");
+		  	break;
 
-	      case SIOCSENCSRCSA:
-		  warn("SIOCSENCSRCSA");
-		  break;
+	      	case SIOCSENCSRCSA:
+		  	warn("SIOCSENCSRCSA");
+		  	break;
 
-	      case SIOCSENCCLEARSA:
-		  warn("SIOCSENCCLEARSA");
-		  break;
-	  }
+	      	case SIOCSENCCLEARSA:
+		  	warn("SIOCSENCCLEARSA");
+		  	break;
+	  	}
+	}
 }
 
 void
