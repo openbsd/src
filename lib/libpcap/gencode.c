@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.21 2004/01/27 06:58:03 tedu Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.22 2004/05/21 05:40:37 brad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -571,6 +571,15 @@ init_linktype(type)
 		off_nl = 4;
 		return;
 
+	case DLT_PPP_ETHER:
+		/*
+		 * This does not include the Ethernet header, and
+		 * only covers session state.
+ 		 */
+		off_linktype = 6;
+		off_nl = 8;
+		return;
+
 	case DLT_PPP_BSDOS:
 		off_linktype = 5;
 		off_nl = 24;
@@ -694,6 +703,7 @@ gen_linktype(proto)
 		return gen_false();
 
 	case DLT_PPP:
+	case DLT_PPP_ETHER:
 		if (proto == ETHERTYPE_IP)
 			proto = PPP_IP;			/* XXX was 0x21 */
 #ifdef INET6
