@@ -26,7 +26,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.2 2000/11/29 18:41:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.3 2001/06/16 22:53:10 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -48,7 +48,7 @@ readpassphrase(prompt, buf, bufsiz, flags)
 	int flags;
 {
 	struct termios term;
-	char ch, *p, *end;
+	char ch, status, *p, *end;
 	int echo, input, output;
 	sigset_t oset, nset;
 
@@ -83,6 +83,18 @@ readpassphrase(prompt, buf, bufsiz, flags)
 
 	/* Turn off echo if possible. */
 	echo = 0;
+	status = _POSIX_VDISABLE;
+	if (tcgetattr(input, &term) == 0) {
+		if (!(flags & RPP_ECHO_ON) && (term.c_lflag & ECHO)) {
+			echo = 1;
+			term.c_lflag &= ~ECHO;
+		}
+		if (term.c_cc[VSTATUS] != _POSIX_VDISABLE) {
+			status = term.c_cc[VSTATUS];
+			term.c_cc[VSTATUS] = _POSIX_VDISABLE;
+		}
+		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
+	}
 	if (!(flags & RPP_ECHO_ON)) {
 		if (tcgetattr(input, &term) == 0 && (term.c_lflag & ECHO)) {
 			echo = 1;
@@ -107,9 +119,13 @@ readpassphrase(prompt, buf, bufsiz, flags)
 		}
 	}
 	*p = '\0';
-	if (echo) {
-		(void)write(output, "\n", 1);
-		term.c_lflag |= ECHO;
+	if (echo || status != _POSIX_VDISABLE) {
+		if (echo) {
+			(void)write(output, "\n", 1);
+			term.c_lflag |= ECHO;
+		}
+		if (status != _POSIX_VDISABLE)
+			term.c_cc[VSTATUS] = status;
 		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
 	}
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
