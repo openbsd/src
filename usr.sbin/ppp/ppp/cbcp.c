@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: cbcp.c,v 1.18 2003/04/28 19:35:56 tdeval Exp $
+ *	$OpenBSD: cbcp.c,v 1.19 2003/04/28 21:31:36 tdeval Exp $
  */
 
 #include <sys/param.h>
@@ -282,10 +282,10 @@ cbcp_SendReq(struct cbcp *cbcp)
       for (next = list;;) {
         if ((tok = strsep(&next, ",")) == NULL)
           break;
-        max = data.addr_start + sizeof data.addr_start - addr->addr - 1;
-        if ((len = strncpy(addr->addr, tok, max)) <= max) {
+        max = data.addr_start + sizeof data.addr_start - addr->addr;
+        if ((len = strlcpy(addr->addr, tok, max)) < max) {
+          bzero(addr->addr + len, max - len);
           addr->type = CBCP_ADDR_PSTN;
-	  addr->addr[max] = '\0';
           addr = (struct cbcp_addr *)((char *)addr + len + 2);
         } else
           log_Printf(LogWARN, "CBCP ADDR \"%s\" skipped - packet too large\n",
@@ -493,10 +493,10 @@ cbcp_SendResponse(struct cbcp *cbcp)
     data.length = (char *)&data.delay - (char *)&data;
   else if (*cbcp->fsm.phone) {
     addr->type = CBCP_ADDR_PSTN;
-    max = data.addr_start + sizeof data.addr_start - addr->addr - 1;
-    if ((len = strncpy(addr->addr, cbcp->fsm.phone, max)) > max)
-      len = max;
-    addr->addr[max] = '\0';
+    max = data.addr_start + sizeof data.addr_start - addr->addr;
+    if ((len = strlcpy(addr->addr, cbcp->fsm.phone, max)) >= max)
+      len = max - 1;
+    bzero(addr->addr + len, max - len);
     data.length = addr->addr + len + 1 - (char *)&data;
   } else
     data.length = data.addr_start - (char *)&data;
@@ -603,9 +603,10 @@ cbcp_SendAck(struct cbcp *cbcp)
     case CBCP_CLIENTNUM:
       addr = (struct cbcp_addr *)data.addr_start;
       addr->type = CBCP_ADDR_PSTN;
-      max = data.addr_start + sizeof data.addr_start - addr->addr - 1;
-      if ((len = strncpy(addr->addr, cbcp->fsm.phone, max)) > max)
-        len = max;
+      max = data.addr_start + sizeof data.addr_start - addr->addr;
+      if ((len = strlcpy(addr->addr, cbcp->fsm.phone, max)) >= max)
+        len = max - 1;
+      bzero(addr->addr + len, max - len);
       data.delay = cbcp->fsm.delay;
       data.length = addr->addr + len + 1 - (char *)&data;
       break;
