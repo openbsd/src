@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.48 2001/06/03 04:41:33 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.49 2001/06/03 18:40:23 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -951,8 +951,8 @@ fill_eproc(p, ep)
 	ep->e_flag = ep->e_sess->s_ttyvp ? EPROC_CTTY : 0;
 	if (SESS_LEADER(p))
 		ep->e_flag |= EPROC_SLEADER;
-	if (p->p_wmesg)
-		strncpy(ep->e_wmesg, p->p_wmesg, WMESGLEN);
+	strncpy(ep->e_wmesg, p->p_wmesg ? p->p_wmesg : "", WMESGLEN);
+	ep->e_wmesg[WMESGLEN] = '\0';
 	ep->e_xsize = ep->e_xrssize = 0;
 	ep->e_xccount = ep->e_xswrss = 0;
 	strncpy(ep->e_login, ep->e_sess->s_login, MAXLOGNAME-1);
