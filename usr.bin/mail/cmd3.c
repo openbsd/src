@@ -1,3 +1,6 @@
+/*	$OpenBSD: cmd3.c,v 1.2 1996/06/11 12:53:34 deraadt Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.5 1996/06/08 19:48:14 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)cmd3.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: cmd3.c,v 1.1.1.1 1995/10/18 08:45:38 deraadt Exp $";
+#else
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.2 1996/06/11 12:53:34 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -44,15 +50,17 @@ static char rcsid[] = "$Id: cmd3.c,v 1.1.1.1 1995/10/18 08:45:38 deraadt Exp $";
  *
  * Still more user commands.
  */
+static int diction __P((const void *, const void *));
 
 /*
  * Process a shell escape by saving signals, ignoring signals,
  * and forking a sh -c
  */
 int
-shell(str)
-	char *str;
+shell(v)
+	void *v;
 {
+	char *str = v;
 	sig_t sigint = signal(SIGINT, SIG_IGN);
 	char *shell;
 	char cmd[BUFSIZ];
@@ -73,8 +81,8 @@ shell(str)
  */
 /*ARGSUSED*/
 int
-dosh(str)
-	char *str;
+dosh(v)
+	void *v;
 {
 	sig_t sigint = signal(SIGINT, SIG_IGN);
 	char *shell;
@@ -147,7 +155,8 @@ overf:
  */
 
 int
-help()
+help(v)
+	void *v;
 {
 	register c;
 	register FILE *f;
@@ -166,9 +175,10 @@ help()
  * Change user's working directory.
  */
 int
-schdir(arglist)
-	char **arglist;
+schdir(v)
+	void *v;
 {
+	char **arglist = v;
 	char *cp;
 
 	if (*arglist == NOSTR)
@@ -184,9 +194,10 @@ schdir(arglist)
 }
 
 int
-respond(msgvec)
-	int *msgvec;
+respond(v)
+	void *v;
 {
+	int *msgvec = v;
 	if (value("Replyall") == NOSTR)
 		return (_respond(msgvec));
 	else
@@ -284,9 +295,10 @@ reedit(subj)
  * back to the system mailbox.
  */
 int
-preserve(msgvec)
-	int *msgvec;
+preserve(v)
+	void *v;
 {
+	int *msgvec = v;
 	register struct message *mp;
 	register int *ip, mesg;
 
@@ -308,9 +320,10 @@ preserve(msgvec)
  * Mark all given messages as unread.
  */
 int
-unread(msgvec)
-	int	msgvec[];
+unread(v)
+	void *v;
 {
+	int	*msgvec = v;
 	register int *ip;
 
 	for (ip = msgvec; *ip != NULL; ip++) {
@@ -325,9 +338,10 @@ unread(msgvec)
  * Print the size of each message.
  */
 int
-messize(msgvec)
-	int *msgvec;
+messize(v)
+	void *v;
 {
+	int *msgvec = v;
 	register struct message *mp;
 	register int *ip, mesg;
 
@@ -344,12 +358,12 @@ messize(msgvec)
  * by returning an error.
  */
 int
-rexit(e)
-	int e;
+rexit(v)
+	void *v;
 {
 	if (sourcing)
 		return(1);
-	exit(e);
+	exit(0);
 	/*NOTREACHED*/
 }
 
@@ -358,9 +372,10 @@ rexit(e)
  * of csh.
  */
 int
-set(arglist)
-	char **arglist;
+set(v)
+	void *v;
 {
+	char **arglist = v;
 	register struct var *vp;
 	register char *cp, *cp2;
 	char varbuf[BUFSIZ], **ap, **p;
@@ -405,9 +420,10 @@ set(arglist)
  * Unset a bunch of variable values.
  */
 int
-unset(arglist)
-	char **arglist;
+unset(v)
+	void *v;
 {
+	char **arglist = v;
 	register struct var *vp, *vp2;
 	int errs, h;
 	char **ap;
@@ -443,9 +459,10 @@ unset(arglist)
  * Put add users to a group.
  */
 int
-group(argv)
-	char **argv;
+group(v)
+	void *v;
 {
+	char **argv = v;
 	register struct grouphead *gh;
 	register struct group *gp;
 	register int h;
@@ -504,7 +521,6 @@ sort(list)
 	char **list;
 {
 	register char **ap;
-	int diction();
 
 	for (ap = list; *ap != NOSTR; ap++)
 		;
@@ -517,7 +533,7 @@ sort(list)
  * Do a dictionary order comparison of the arguments from
  * qsort.
  */
-int
+static int
 diction(a, b)
 	const void *a, *b;
 {
@@ -530,8 +546,8 @@ diction(a, b)
 
 /*ARGSUSED*/
 int
-null(e)
-	int e;
+null(v)
+	void *v;
 {
 	return 0;
 }
@@ -541,9 +557,10 @@ null(e)
  * the current file.
  */
 int
-file(argv)
-	register char **argv;
+file(v)
+	void *v;
 {
+	char **argv = v;
 
 	if (argv[0] == NOSTR) {
 		newfileinfo();
@@ -559,9 +576,10 @@ file(argv)
  * Expand file names like echo
  */
 int
-echo(argv)
-	char **argv;
+echo(v)
+	void *v;
 {
+	char **argv = v;
 	register char **ap;
 	register char *cp;
 
@@ -578,9 +596,10 @@ echo(argv)
 }
 
 int
-Respond(msgvec)
-	int *msgvec;
+Respond(v)
+	void *v;
 {
+	int *msgvec = v;
 	if (value("Replyall") == NOSTR)
 		return (_Respond(msgvec));
 	else
@@ -628,9 +647,10 @@ _Respond(msgvec)
  * .mailrc and do some things if sending, others if receiving.
  */
 int
-ifcmd(argv)
-	char **argv;
+ifcmd(v)
+	void *v;
 {
+	char **argv = v;
 	register char *cp;
 
 	if (cond != CANY) {
@@ -660,7 +680,8 @@ ifcmd(argv)
  * flip over the conditional flag.
  */
 int
-elsecmd()
+elsecmd(v)
+	void *v;
 {
 
 	switch (cond) {
@@ -688,7 +709,8 @@ elsecmd()
  * End of if statement.  Just set cond back to anything.
  */
 int
-endifcmd()
+endifcmd(v)
+	void *v;
 {
 
 	if (cond == CANY) {
@@ -703,9 +725,10 @@ endifcmd()
  * Set the list of alternate names.
  */
 int
-alternates(namelist)
-	char **namelist;
+alternates(v)
+	void *v;
 {
+	char **namelist = v;
 	register int c;
 	register char **ap, **ap2, *cp;
 

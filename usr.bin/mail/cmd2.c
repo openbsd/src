@@ -1,3 +1,6 @@
+/*	$OpenBSD: cmd2.c,v 1.2 1996/06/11 12:53:33 deraadt Exp $	*/
+/*	$NetBSD: cmd2.c,v 1.5 1996/06/08 19:48:13 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)cmd2.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: cmd2.c,v 1.1.1.1 1995/10/18 08:45:38 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: cmd2.c,v 1.2 1996/06/11 12:53:33 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -45,6 +51,7 @@ static char rcsid[] = "$Id: cmd2.c,v 1.1.1.1 1995/10/18 08:45:38 deraadt Exp $";
  *
  * More user commands.
  */
+static int igcomp __P((const void *, const void *));
 
 /*
  * If any arguments were given, go to the next applicable argument
@@ -52,9 +59,10 @@ static char rcsid[] = "$Id: cmd2.c,v 1.1.1.1 1995/10/18 08:45:38 deraadt Exp $";
  * If given as first command with no arguments, print first message.
  */
 int
-next(msgvec)
-	int *msgvec;
+next(v)
+	void *v;
 {
+	int *msgvec = v;
 	register struct message *mp;
 	register int *ip, *ip2;
 	int list[2], mdot;
@@ -131,9 +139,10 @@ hitit:
  * so we can discard when the user quits.
  */
 int
-save(str)
-	char str[];
+save(v)
+	void *v;
 {
+	char *str = v;
 
 	return save1(str, 1, "save", saveignore);
 }
@@ -142,9 +151,10 @@ save(str)
  * Copy a message to a file without affected its saved-ness
  */
 int
-copycmd(str)
-	char str[];
+copycmd(v)
+	void *v;
 {
+	char *str = v;
 
 	return save1(str, 0, "copy", saveignore);
 }
@@ -215,9 +225,10 @@ save1(str, mark, cmd, ignore)
  * file name, minus header and trailing blank line.
  */
 int
-swrite(str)
-	char str[];
+swrite(v)
+	void *v;
 {
+	char *str = v;
 
 	return save1(str, 1, "write", ignoreall);
 }
@@ -270,9 +281,10 @@ snarf(linebuf, flag)
  * Delete messages.
  */
 int
-delete(msgvec)
-	int msgvec[];
+delete(v)
+	void *v;
 {
+	int *msgvec = v;
 	delm(msgvec);
 	return 0;
 }
@@ -281,9 +293,10 @@ delete(msgvec)
  * Delete messages, then type the new dot.
  */
 int
-deltype(msgvec)
-	int msgvec[];
+deltype(v)
+	void *v;
 {
+	int *msgvec = v;
 	int list[2];
 	int lastdot;
 
@@ -346,9 +359,10 @@ delm(msgvec)
  * Undelete the indicated messages.
  */
 int
-undeletecmd(msgvec)
-	int *msgvec;
+undeletecmd(v)
+	void *v;
 {
+	int *msgvec = v;
 	register struct message *mp;
 	register *ip;
 
@@ -365,7 +379,8 @@ undeletecmd(msgvec)
  * Interactively dump core on "core"
  */
 int
-core()
+core(v)
+	void *v;
 {
 	int pid;
 	extern union wait wait_status;
@@ -392,9 +407,10 @@ core()
  * Clobber as many bytes of stack as the user requests.
  */
 int
-clobber(argv)
-	char **argv;
+clobber(v)
+	void *v;
 {
+	char **argv = v;
 	register int times;
 
 	if (argv[0] == 0)
@@ -427,9 +443,10 @@ clob1(n)
  * If no arguments, print the current list of retained fields.
  */
 int
-retfield(list)
-	char *list[];
+retfield(v)
+	void *v;
 {
+	char **list = v;
 
 	return ignore1(list, ignore + 1, "retained");
 }
@@ -439,25 +456,28 @@ retfield(list)
  * If no arguments, print the current list of ignored fields.
  */
 int
-igfield(list)
-	char *list[];
+igfield(v)
+	void *v;
 {
+	char **list = v;
 
 	return ignore1(list, ignore, "ignored");
 }
 
 int
-saveretfield(list)
-	char *list[];
+saveretfield(v)
+	void *v;
 {
+	char **list = v;
 
 	return ignore1(list, saveignore + 1, "retained");
 }
 
 int
-saveigfield(list)
-	char *list[];
+saveigfield(v)
+	void *v;
 {
+	char **list = v;
 
 	return ignore1(list, saveignore, "ignored");
 }
@@ -502,7 +522,6 @@ igshow(tab, which)
 	register int h;
 	struct ignore *igp;
 	char **ap, **ring;
-	int igcomp();
 
 	if (tab->i_count == 0) {
 		printf("No fields currently being %s.\n", which);
@@ -523,7 +542,7 @@ igshow(tab, which)
 /*
  * Compare two names for sorting ignored field list.
  */
-int
+static int
 igcomp(l, r)
 	const void *l, *r;
 {

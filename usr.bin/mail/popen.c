@@ -1,3 +1,6 @@
+/*	$OpenBSD: popen.c,v 1.2 1996/06/11 12:53:47 deraadt Exp $	*/
+/*	$NetBSD: popen.c,v 1.4 1996/06/08 19:48:35 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)popen.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: popen.c,v 1.1.1.1 1995/10/18 08:45:39 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: popen.c,v 1.2 1996/06/11 12:53:47 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -62,6 +68,7 @@ struct child {
 static struct child *child;
 static struct child *findchild __P((int));
 static void delchild __P((struct child *));
+static int file_pid __P((FILE *));
 
 FILE *
 Fopen(file, mode)
@@ -106,6 +113,7 @@ Popen(cmd, mode)
 	int p[2];
 	int myside, hisside, fd0, fd1;
 	int pid;
+	sigset_t nset;
 	FILE *fp;
 
 	if (pipe(p) < 0)
@@ -121,7 +129,8 @@ Popen(cmd, mode)
 		hisside = fd0 = p[READ];
 		fd1 = -1;
 	}
-	if ((pid = start_command(cmd, 0, fd0, fd1, NOSTR, NOSTR, NOSTR)) < 0) {
+	sigemptyset(&nset);
+	if ((pid = start_command(cmd, &nset, fd0, fd1, NOSTR, NOSTR, NOSTR)) < 0) {
 		close(p[READ]);
 		close(p[WRITE]);
 		return NULL;
@@ -137,14 +146,17 @@ Pclose(ptr)
 	FILE *ptr;
 {
 	int i;
-	int omask;
+	sigset_t nset, oset;
 
 	i = file_pid(ptr);
 	unregister_file(ptr);
 	(void) fclose(ptr);
-	omask = sigblock(sigmask(SIGINT)|sigmask(SIGHUP));
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGINT);
+	sigaddset(&nset, SIGHUP);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
 	i = wait_child(i);
-	sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 	return i;
 }
 
@@ -181,7 +193,7 @@ unregister_file(fp)
 {
 	struct fp **pp, *p;
 
-	for (pp = &fp_head; p = *pp; pp = &p->link)
+	for (pp = &fp_head; (p = *pp) != NULL; pp = &p->link)
 		if (p->fp == fp) {
 			*pp = p->link;
 			free((char *) p);
@@ -190,6 +202,7 @@ unregister_file(fp)
 	panic("Invalid file pointer");
 }
 
+static int
 file_pid(fp)
 	FILE *fp;
 {
@@ -213,7 +226,8 @@ file_pid(fp)
 int
 run_command(cmd, mask, infd, outfd, a0, a1, a2)
 	char *cmd;
-	int mask, infd, outfd;
+	sigset_t *mask;
+	int infd, outfd;
 	char *a0, *a1, *a2;
 {
 	int pid;
@@ -227,7 +241,8 @@ run_command(cmd, mask, infd, outfd, a0, a1, a2)
 int
 start_command(cmd, mask, infd, outfd, a0, a1, a2)
 	char *cmd;
-	int mask, infd, outfd;
+	sigset_t *mask;
+	int infd, outfd;
 	char *a0, *a1, *a2;
 {
 	int pid;
@@ -253,10 +268,12 @@ start_command(cmd, mask, infd, outfd, a0, a1, a2)
 }
 
 void
-prepare_child(mask, infd, outfd)
-	int mask, infd, outfd;
+prepare_child(nset, infd, outfd)
+	sigset_t *nset;
+	int infd, outfd;
 {
 	int i;
+	sigset_t fset;
 
 	/*
 	 * All file descriptors other than 0, 1, and 2 are supposed to be
@@ -267,11 +284,12 @@ prepare_child(mask, infd, outfd)
 	if (outfd >= 0)
 		dup2(outfd, 1);
 	for (i = 1; i <= NSIG; i++)
-		if (mask & sigmask(i))
+		if (sigismember(nset, i))
 			(void) signal(i, SIG_IGN);
-	if ((mask & sigmask(SIGINT)) == 0)
+	if (!sigismember(nset, SIGINT))
 		(void) signal(SIGINT, SIG_DFL);
-	(void) sigsetmask(0);
+	sigfillset(&fset);
+	(void) sigprocmask(SIG_UNBLOCK, &fset, NULL);
 }
 
 int
@@ -345,14 +363,17 @@ int
 wait_child(pid)
 	int pid;
 {
-	int mask = sigblock(sigmask(SIGCHLD));
+	sigset_t nset, oset;
 	register struct child *cp = findchild(pid);
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	while (!cp->done)
-		sigpause(mask);
+		sigsuspend(&oset);
 	wait_status = cp->status;
 	delchild(cp);
-	sigsetmask(mask);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 	return wait_status.w_status ? -1 : 0;
 }
 
@@ -363,12 +384,15 @@ void
 free_child(pid)
 	int pid;
 {
-	int mask = sigblock(sigmask(SIGCHLD));
+	sigset_t nset, oset;
 	register struct child *cp = findchild(pid);
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGCHLD);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	if (cp->done)
 		delchild(cp);
 	else
 		cp->free = 1;
-	sigsetmask(mask);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 }

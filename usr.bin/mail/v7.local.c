@@ -1,3 +1,6 @@
+/*	$OpenBSD: v7.local.c,v 1.2 1996/06/11 12:53:53 deraadt Exp $	*/
+/*	$NetBSD: v7.local.c,v 1.7 1996/06/08 19:48:44 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)v7.local.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: v7.local.c,v 1.1.1.1 1995/10/18 08:45:39 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)v7.local.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: v7.local.c,v 1.2 1996/06/11 12:53:53 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -83,8 +89,12 @@ char *
 username()
 {
 	char *np;
+	uid_t uid;
 
 	if ((np = getenv("USER")) != NOSTR)
 		return np;
-	return getname(getuid());
+	if ((np = getname(uid = getuid())) != NOSTR)
+		return np;
+	printf("Cannot associate a name with uid %d\n", uid);
+	return NOSTR;
 }

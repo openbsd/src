@@ -1,3 +1,6 @@
+/*	$OpenBSD: rcv.h,v 1.2 1996/06/11 12:53:48 deraadt Exp $	*/
+/*	$NetBSD: rcv.h,v 1.4 1996/06/08 19:48:38 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)rcv.h	8.1 (Berkeley) 6/6/93
- *	$Id: rcv.h,v 1.1.1.1 1995/10/18 08:45:39 deraadt Exp $
+ *	@(#)rcv.h	8.1 (Berkeley) 6/6/93
+ *	$NetBSD: rcv.h,v 1.4 1996/06/08 19:48:38 christos Exp $
  */
 
 /*

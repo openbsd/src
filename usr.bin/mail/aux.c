@@ -1,3 +1,6 @@
+/*	$OpenBSD: aux.c,v 1.2 1996/06/11 12:53:32 deraadt Exp $	*/
+/*	$NetBSD: aux.c,v 1.4 1996/06/08 19:48:10 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)aux.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: aux.c,v 1.1.1.1 1995/10/18 08:45:37 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: aux.c,v 1.2 1996/06/11 12:53:32 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -44,6 +50,7 @@ static char rcsid[] = "$Id: aux.c,v 1.1.1.1 1995/10/18 08:45:37 deraadt Exp $";
  *
  * Auxiliary functions.
  */
+static char *save2str __P((char *, char *));
 
 /*
  * Return a pointer to a dynamic copy of the argument.
@@ -63,7 +70,7 @@ savestr(str)
 /*
  * Make a copy of new argument incorporating old one.
  */
-char *
+static char *
 save2str(str, old)
 	char *str, *old;
 {
@@ -180,7 +187,7 @@ hfield(field, mp)
 	while (lc > 0) {
 		if ((lc = gethfield(ibuf, linebuf, lc, &colon)) < 0)
 			return oldhfield;
-		if (hfield = ishfield(linebuf, colon, field))
+		if ((hfield = ishfield(linebuf, colon, field)) != NULL)
 			oldhfield = save2str(hfield, oldhfield);
 	}
 	return oldhfield;
@@ -304,9 +311,10 @@ struct sstack {
  * that they are no longer reading from a tty (in all probability).
  */
 int
-source(arglist)
-	char **arglist;
+source(v)
+	void *v;
 {
+	char **arglist = v;
 	FILE *fi;
 	char *cp;
 
@@ -366,7 +374,6 @@ alter(name)
 {
 	struct stat sb;
 	struct timeval tv[2];
-	time_t time();
 
 	if (stat(name, &sb))
 		return;
@@ -465,7 +472,7 @@ skin(name)
 	gotlt = 0;
 	lastsp = 0;
 	bufend = nbuf;
-	for (cp = name, cp2 = bufend; c = *cp++; ) {
+	for (cp = name, cp2 = bufend; (c = *cp++) != '\0'; ) {
 		switch (c) {
 		case '(':
 			cp = skip_comment(cp);
@@ -477,13 +484,13 @@ skin(name)
 			 * Start of a "quoted-string".
 			 * Copy it in its entirety.
 			 */
-			while (c = *cp) {
+			while ((c = *cp) != '\0') {
 				cp++;
 				if (c == '"')
 					break;
 				if (c != '\\')
 					*cp2++ = c;
-				else if (c = *cp) {
+				else if ((c = *cp) != '\0') {
 					*cp2++ = c;
 					cp++;
 				}
@@ -515,7 +522,7 @@ skin(name)
 					if (c == '(')
 						cp = skip_comment(cp);
 					else if (c == '"')
-						while (c = *cp) {
+						while ((c = *cp) != '\0') {
 							cp++;
 							if (c == '"')
 								break;
@@ -663,7 +670,7 @@ copy(s1, s2)
 	register char *s1, *s2;
 {
 
-	while (*s2++ = *s1++)
+	while ((*s2++ = *s1++) != '\0')
 		;
 	return s2 - 1;
 }

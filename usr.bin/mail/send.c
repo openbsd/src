@@ -1,3 +1,6 @@
+/*	$OpenBSD: send.c,v 1.2 1996/06/11 12:53:50 deraadt Exp $	*/
+/*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)send.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: send.c,v 1.1.1.1 1995/10/18 08:45:39 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: send.c,v 1.2 1996/06/11 12:53:50 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -62,11 +68,11 @@ send(mp, obuf, doign, prefix)
 	long count;
 	register FILE *ibuf;
 	char line[LINESIZE];
-	int ishead, infld, ignoring, dostat, firstline;
+	int ishead, infld, ignoring = 0, dostat, firstline;
 	register char *cp, *cp2;
-	register int c;
+	register int c = 0;
 	int length;
-	int prefixlen;
+	int prefixlen = 0;
 
 	/*
 	 * Compute the prefix string, without trailing whitespace
@@ -273,9 +279,10 @@ mail(to, cc, bcc, smopts, subject)
  * the mail routine below.
  */
 int
-sendmail(str)
-	char *str;
+sendmail(v)
+	void *v;
 {
+	char *str = v;
 	struct header head;
 
 	head.h_to = extract(str, GTO);
@@ -373,9 +380,15 @@ mail1(hp, printheaders)
 		goto out;
 	}
 	if (pid == 0) {
-		prepare_child(sigmask(SIGHUP)|sigmask(SIGINT)|sigmask(SIGQUIT)|
-			sigmask(SIGTSTP)|sigmask(SIGTTIN)|sigmask(SIGTTOU),
-			fileno(mtf), -1);
+		sigset_t nset;
+		sigemptyset(&nset);
+		sigaddset(&nset, SIGHUP);
+		sigaddset(&nset, SIGINT);
+		sigaddset(&nset, SIGQUIT);
+		sigaddset(&nset, SIGTSTP);
+		sigaddset(&nset, SIGTTIN);
+		sigaddset(&nset, SIGTTOU);
+		prepare_child(&nset, fileno(mtf), -1);
 		if ((cp = value("sendmail")) != NOSTR)
 			cp = expand(cp);
 		else
@@ -539,8 +552,7 @@ savemail(name, fi)
 	register FILE *fo;
 	char buf[BUFSIZ];
 	register i;
-	time_t now, time();
-	char *ctime();
+	time_t now;
 
 	if ((fo = Fopen(name, "a")) == NULL) {
 		perror(name);

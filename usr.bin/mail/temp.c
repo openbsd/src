@@ -1,3 +1,6 @@
+/*	$OpenBSD: temp.c,v 1.2 1996/06/11 12:53:51 deraadt Exp $	*/
+/*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)temp.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: temp.c,v 1.1.1.1 1995/10/18 08:45:39 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: temp.c,v 1.2 1996/06/11 12:53:51 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -57,7 +63,6 @@ void
 tinit()
 {
 	register char *cp;
-	int len;
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL) {
 		tmpdir = _PATH_TMP;
@@ -81,11 +86,9 @@ tinit()
 		}
 	} else {
 		if ((cp = username()) == NOSTR) {
-			myname = "ubluit";
-			if (rcvmode) {
-				printf("Who are you!?\n");
+			myname = "nobody";
+			if (rcvmode)
 				exit(1);
-			}
 		} else
 			myname = savestr(cp);
 	}

@@ -1,4 +1,5 @@
-/*	$OpenBSD: lex.c,v 1.2 1996/03/27 19:32:33 niklas Exp $	*/
+/*	$OpenBSD: lex.c,v 1.3 1996/06/11 12:53:42 deraadt Exp $	*/
+/*	$NetBSD: lex.c,v 1.7 1996/06/08 19:48:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)lex.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$OpenBSD: lex.c,v 1.2 1996/03/27 19:32:33 niklas Exp $";
+#if 0
+static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: lex.c,v 1.3 1996/06/11 12:53:42 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -171,7 +175,10 @@ commands()
 	int eofloop = 0;
 	register int n;
 	char linebuf[LINESIZE];
-	void intr(), stop(), hangup();
+#if __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &eofloop;
+#endif
 
 	if (!sourcing) {
 		if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -249,7 +256,7 @@ execute(linebuf, contxt)
 {
 	char word[LINESIZE];
 	char *arglist[MAXARGC];
-	const struct cmd *com;
+	const struct cmd *com = NULL;
 	register char *cp, *cp2;
 	register int c;
 	int muvec[2];
@@ -301,7 +308,7 @@ execute(linebuf, contxt)
 	 */
 
 	if ((com->c_argtype & F) == 0)
-		if (cond == CRCV && !rcvmode || cond == CSEND && rcvmode)
+		if ((cond == CRCV && !rcvmode) || (cond == CSEND && rcvmode))
 			return(0);
 
 	/*
@@ -424,6 +431,8 @@ out:
 			unstack();
 		return 0;
 	}
+	if (com == NULL)
+		return(0);
 	if (value("autoprint") != NOSTR && com->c_argtype & P)
 		if ((dot->m_flag & MDELETED) == 0) {
 			muvec[0] = dot - &message[0] + 1;
@@ -526,10 +535,13 @@ stop(s)
 	int s;
 {
 	sig_t old_action = signal(s, SIG_DFL);
+	sigset_t nset;
 
-	sigsetmask(sigblock(0) & ~sigmask(s));
+	sigemptyset(&nset);
+	sigaddset(&nset, s);
+	sigprocmask(SIG_UNBLOCK, &nset, NULL);
 	kill(0, s);
-	sigblock(sigmask(s));
+	sigprocmask(SIG_BLOCK, &nset, NULL);
 	signal(s, old_action);
 	if (reset_on_stop) {
 		reset_on_stop = 0;
@@ -636,8 +648,8 @@ newfileinfo()
 
 /*ARGSUSED*/
 int
-pversion(e)
-	int e;
+pversion(v)
+	void *v;
 {
 	extern char *version;
 

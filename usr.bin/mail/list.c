@@ -1,3 +1,6 @@
+/*	$OpenBSD: list.c,v 1.2 1996/06/11 12:53:43 deraadt Exp $	*/
+/*	$NetBSD: list.c,v 1.4 1996/06/08 19:48:30 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)list.c	8.2 (Berkeley) 4/19/94";
-static char rcsid[] = "$Id: list.c,v 1.1.1.1 1995/10/18 08:45:39 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)list.c	8.2 (Berkeley) 4/19/94";
+#else
+static char rcsid[] = "$OpenBSD: list.c,v 1.2 1996/06/11 12:53:43 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -101,12 +107,12 @@ struct coltab {
 	int	co_mask;		/* m_status bits to mask */
 	int	co_equal;		/* ... must equal this */
 } coltab[] = {
-	'n',		CMNEW,		MNEW,		MNEW,
-	'o',		CMOLD,		MNEW,		0,
-	'u',		CMUNREAD,	MREAD,		0,
-	'd',		CMDELETED,	MDELETED,	MDELETED,
-	'r',		CMREAD,		MREAD,		MREAD,
-	0,		0,		0,		0
+	{ 'n',		CMNEW,		MNEW,		MNEW },
+	{ 'o',		CMOLD,		MNEW,		0 },
+	{ 'u',		CMUNREAD,	MREAD,		0 },
+	{ 'd',		CMDELETED,	MDELETED,	MDELETED },
+	{ 'r',		CMREAD,		MREAD,		MREAD },
+	{ 0,		0,		0,		0 }
 };
 
 static	int	lastcolmod;
@@ -454,8 +460,8 @@ getrawlist(line, argv, argc)
 					if (c == '?')
 						*cp2++ = '\177';
 					/* null doesn't show up anyway */
-					else if (c >= 'A' && c <= '_' ||
-						 c >= 'a' && c <= 'z')
+					else if ((c >= 'A' && c <= '_') ||
+						 (c >= 'a' && c <= 'z'))
 						*cp2++ = c & 037;
 					else {
 						*cp2++ = '^';
@@ -488,15 +494,15 @@ struct lex {
 	char	l_char;
 	char	l_token;
 } singles[] = {
-	'$',	TDOLLAR,
-	'.',	TDOT,
-	'^',	TUP,
-	'*',	TSTAR,
-	'-',	TDASH,
-	'+',	TPLUS,
-	'(',	TOPEN,
-	')',	TCLOSE,
-	0,	0
+	{ '$',	TDOLLAR },
+	{ '.',	TDOT },
+	{ '^',	TUP },
+	{ '*',	TSTAR },
+	{ '-',	TDASH },
+	{ '+',	TPLUS },
+	{ '(',	TOPEN },
+	{ ')',	TCLOSE },
+	{ 0,	0 }
 };
 
 int

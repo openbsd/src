@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.2 1996/03/27 19:32:29 niklas Exp $
-#	from: @(#)Makefile	8.2 (Berkeley) 1/25/94
+#	$OpenBSD: Makefile,v 1.3 1996/06/11 12:53:31 deraadt Exp $
+#	$NetBSD: Makefile,v 1.8 1996/06/08 19:48:09 christos Exp $
 
 PROG=	mail
-SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c edit.c fio.c \
-	getname.c head.c v7.local.c lex.c list.c main.c names.c popen.c \
-	quit.c send.c strings.c temp.c tty.c vars.c
+SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c dotlock.c \
+	edit.c fio.c getname.c head.c v7.local.c lex.c list.c main.c names.c \
+	popen.c quit.c send.c strings.c temp.c tty.c vars.c
 SFILES=	mail.help mail.tildehelp
 EFILES=	mail.rc
 LINKS=	${BINDIR}/mail ${BINDIR}/Mail ${BINDIR}/mail ${BINDIR}/mailx

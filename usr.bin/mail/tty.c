@@ -1,3 +1,6 @@
+/*	$OpenBSD: tty.c,v 1.2 1996/06/11 12:53:52 deraadt Exp $	*/
+/*	$NetBSD: tty.c,v 1.5 1996/06/08 19:48:43 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)tty.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: tty.c,v 1.1.1.1 1995/10/18 08:45:39 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: tty.c,v 1.2 1996/06/11 12:53:52 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -44,6 +50,7 @@ static char rcsid[] = "$Id: tty.c,v 1.1.1.1 1995/10/18 08:45:39 deraadt Exp $";
 
 #include "rcv.h"
 #include "extern.h"
+#include <sys/ioctl.h>
 
 static	cc_t	c_erase;		/* Current erase char */
 static	cc_t	c_kill;			/* Current kill char */
@@ -71,7 +78,10 @@ grabh(hp, gflags)
 	sig_t savettou;
 	sig_t savettin;
 	int errs;
-	void ttyint();
+#ifdef __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &saveint;
+#endif
 
 	savetstp = signal(SIGTSTP, SIG_DFL);
 	savettou = signal(SIGTTOU, SIG_DFL);
@@ -157,8 +167,12 @@ readtty(pr, src)
 {
 	char ch, canonb[BUFSIZ];
 	int c;
-	register char *cp, *cp2;
-	void ttystop();
+	char *cp, *cp2;
+#if __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &c;
+	(void) &cp2;
+#endif
 
 	fputs(pr, stdout);
 	fflush(stdout);
@@ -175,7 +189,7 @@ readtty(pr, src)
 	fflush(stdout);
 #else
 	cp = src == NOSTR ? "" : src;
-	while (c = *cp++) {
+	while ((c = *cp++) != '\0') {
 		if ((c_erase != _POSIX_VDISABLE && c == c_erase) ||
 		    (c_kill != _POSIX_VDISABLE && c == c_kill)) {
 			ch = '\\';
@@ -258,10 +272,13 @@ ttystop(s)
 	int s;
 {
 	sig_t old_action = signal(s, SIG_DFL);
+	sigset_t nset;
 
-	sigsetmask(sigblock(0) & ~sigmask(s));
+	sigemptyset(&nset);
+	sigaddset(&nset, s);
+	sigprocmask(SIG_BLOCK, &nset, NULL);
 	kill(0, s);
-	sigblock(sigmask(s));
+	sigprocmask(SIG_UNBLOCK, &nset, NULL);
 	signal(s, old_action);
 	longjmp(rewrite, 1);
 }

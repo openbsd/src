@@ -1,3 +1,5 @@
+/*	$OpenBSD: def.h,v 1.2 1996/06/11 12:53:36 deraadt Exp $	*/
+/*	$NetBSD: def.h,v 1.8 1996/06/08 19:48:18 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)def.h	8.2 (Berkeley) 3/21/94
- *	$Id: def.h,v 1.1.1.1 1995/10/18 08:45:38 deraadt Exp $
+ *	@(#)def.h	8.2 (Berkeley) 3/21/94
+ *	$NetBSD: def.h,v 1.8 1996/06/08 19:48:18 christos Exp $
  */
 
 /*
@@ -105,7 +107,7 @@ struct message {
  */
 struct cmd {
 	char	*c_name;		/* Name of command */
-	int	(*c_func)();		/* Implementor of the command */
+	int	(*c_func) __P((void *));/* Implementor of the command */
 	short	c_argtype;		/* Type of arglist (see below) */
 	short	c_msgflag;		/* Required flags of messages */
 	short	c_msgmask;		/* Relevant flags of messages */

@@ -1,3 +1,6 @@
+/*	$OpenBSD: fio.c,v 1.2 1996/06/11 12:53:39 deraadt Exp $	*/
+/*	$NetBSD: fio.c,v 1.5 1996/06/08 19:48:22 christos Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "from: @(#)fio.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: fio.c,v 1.1.1.1 1995/10/18 08:45:38 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)fio.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: fio.c,v 1.2 1996/06/11 12:53:39 deraadt Exp $";
+#endif
 #endif /* not lint */
 
 #include "rcv.h"
@@ -122,7 +128,7 @@ setptr(ibuf)
 						;
 					if (cp[-1] != ':')
 						break;
-					while (c = *cp++)
+					while ((c = *cp++) != '\0')
 						if (c == 'R')
 							this.m_flag |= MREAD;
 						else if (c == 'O')
@@ -256,7 +262,7 @@ rm(name)
 }
 
 static int sigdepth;		/* depth of holdsigs() */
-static int omask;
+static sigset_t nset, oset;
 /*
  * Hold signals SIGHUP, SIGINT, and SIGQUIT.
  */
@@ -264,8 +270,13 @@ void
 holdsigs()
 {
 
-	if (sigdepth++ == 0)
-		omask = sigblock(sigmask(SIGHUP)|sigmask(SIGINT)|sigmask(SIGQUIT));
+	if (sigdepth++ == 0) {
+		sigemptyset(&nset);
+		sigaddset(&nset, SIGHUP);
+		sigaddset(&nset, SIGINT);
+		sigaddset(&nset, SIGQUIT);
+		sigprocmask(SIG_BLOCK, &nset, &oset);
+	}
 }
 
 /*
@@ -276,7 +287,7 @@ relsesigs()
 {
 
 	if (--sigdepth == 0)
-		sigsetmask(omask);
+		sigprocmask(SIG_SETMASK, &oset, NULL);
 }
 
 /*

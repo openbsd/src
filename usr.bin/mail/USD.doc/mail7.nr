@@ -1,3 +1,5 @@
+.\"	$OpenBSD: mail7.nr,v 1.2 1996/06/11 12:54:23 deraadt Exp $
+.\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
