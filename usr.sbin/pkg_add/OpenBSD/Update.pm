@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.24 2004/11/11 13:54:48 espie Exp $
+# $OpenBSD: Update.pm,v 1.25 2004/11/11 20:59:05 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -271,7 +271,7 @@ sub split_libs
 	for my $item (@{$plist->{items}}) {
 		if ($item->isa("OpenBSD::PackingElement::Lib") &&
 		    defined $to_split->{$item->fullname()}) {
-		    	OpenBSD::PackingElement::Lib->add($splitted, $item->clone());
+		    	$item->clone()->add_object($splitted);
 		} elsif ($item->isa("OpenBSD::PackingElement::Cwd")) {
 			OpenBSD::PackingElement::Cwd->add($splitted, $item->{name});
 		} else {
