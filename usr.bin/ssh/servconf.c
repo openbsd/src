@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.14 1999/10/12 18:11:54 markus Exp $");
+RCSID("$Id: servconf.c,v 1.15 1999/10/14 19:56:02 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -89,7 +89,7 @@ void fill_default_server_options(ServerOptions *options)
   if (options->key_regeneration_time == -1)
     options->key_regeneration_time = 3600;
   if (options->permit_root_login == -1)
-    options->permit_root_login = 1;
+    options->permit_root_login = 1;		 /* yes */
   if (options->ignore_rhosts == -1)
     options->ignore_rhosts = 0;
   if (options->quiet_mode == -1)
@@ -352,6 +352,31 @@ void read_server_config(ServerOptions *options, const char *filename)
 
 	case sPermitRootLogin:
 	  intptr = &options->permit_root_login;
+	  cp = strtok(NULL, WHITESPACE);
+	  if (!cp)
+	    {
+	      fprintf(stderr, "%s line %d: missing yes/without-password/no argument.\n",
+		      filename, linenum);
+	      exit(1);
+	    }
+	  if (strcmp(cp, "without-password") == 0)
+	    value = 2;
+	  else if (strcmp(cp, "yes") == 0)
+	    value = 1;
+	  else if (strcmp(cp, "no") == 0)
+	    value = 0;
+	  else
+	    {
+	      fprintf(stderr, "%s line %d: Bad yes/without-password/no argument: %s\n", 
+	      	filename, linenum, cp);
+	      exit(1);
+	    }
+	  if (*intptr == -1)
+	    *intptr = value;
+	  break;
+
+	case sIgnoreRhosts:
+	  intptr = &options->ignore_rhosts;
 	parse_flag:
 	  cp = strtok(NULL, WHITESPACE);
 	  if (!cp)
@@ -374,10 +399,6 @@ void read_server_config(ServerOptions *options, const char *filename)
 	  if (*intptr == -1)
 	    *intptr = value;
 	  break;
-
-	case sIgnoreRhosts:
-	  intptr = &options->ignore_rhosts;
-	  goto parse_flag;
 	  
 	case sQuietMode:
 	  intptr = &options->quiet_mode;

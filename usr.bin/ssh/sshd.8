@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.14 1999/10/12 19:36:40 markus Exp $
+.\" $Id: sshd.8,v 1.15 1999/10/14 19:56:02 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -341,8 +341,16 @@ is
 .It Cm PermitRootLogin
 Specifies whether the root can log in using
 .Xr ssh 1 .
+The argument must be
+.Dq yes ,
+.Dq without-password
+or
+.Dq no .
 The default is
 .Dq yes .
+If this options is set to
+.Dq without-password
+only password authentication is disabled for root.
 .Pp
 Root login with RSA authentication when the
 .Ar command

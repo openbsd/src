@@ -15,7 +15,7 @@ the password is valid for the user.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-passwd.c,v 1.6 1999/10/07 21:45:02 markus Exp $");
+RCSID("$Id: auth-passwd.c,v 1.7 1999/10/14 19:56:02 markus Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -33,6 +33,12 @@ int auth_password(struct passwd *pw, const char *password)
 {
   extern ServerOptions options;
   char *encrypted_password;
+
+  if (pw->pw_uid == 0 && options.permit_root_login == 2)
+  {
+      packet_send_debug("Server does not permit root login with password.");
+      return 0;
+  }
 
   if (*password == '\0' && options.permit_empty_passwd == 0)
   {
