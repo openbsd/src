@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_rw.c,v 1.1 2002/05/06 22:23:53 deraadt Exp $	*/
+/*	$OpenBSD: des_rw.c,v 1.2 2002/07/15 22:11:34 deraadt Exp $	*/
 /*	$NetBSD: des_rw.c,v 1.2 1995/03/21 07:58:30 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)des_rw.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: des_rw.c,v 1.1 2002/05/06 22:23:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: des_rw.c,v 1.2 2002/07/15 22:11:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,8 @@ static char rcsid[] = "$OpenBSD: des_rw.c,v 1.1 2002/05/06 22:23:53 deraadt Exp 
 
 void	desrw_set_key(des_cblock *, des_key_schedule *);
 void	desrw_clear_key(void);
-int	des_read(int, char *, int);
-int	des_write(int, char *, int);
+int	des_read(int, void *, int);
+int	des_write(int, void *, int);
 
 static unsigned char	des_inbuf[10240], storage[10240], *store_ptr;
 static des_cblock 	*key;
@@ -97,13 +97,14 @@ desrw_clear_key()
 	
 
 int
-des_read(fd, buf, len)
+des_read(fd, bp, len)
 	int fd;
-	char *buf;
+	void *bp;
 	int len;
 {
 	long net_len, rd_len;
 	int nreturned = 0;
+	char *buf = bp;
 
 	if (nstored >= len) {
 		(void) bcopy(store_ptr, buf, len);
@@ -167,14 +168,15 @@ des_read(fd, buf, len)
 static unsigned char	des_outbuf[10240];	/* > longest write */
 
 int
-des_write(fd, buf, len)
+des_write(fd, bp, len)
 	int fd;
-	char *buf;
+	void *bp;
 	int len;
 {
 	static	int	seeded = 0;
 	static	char	garbage_buf[8];
 	long net_len, garbage;
+	char *buf = bp;
 
 	if(len < 8) {
 		if(!seeded) {
