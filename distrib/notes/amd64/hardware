@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.17 2004/10/02 01:54:56 brad Exp $
+dnl	$OpenBSD: hardware,v 1.18 2004/10/02 04:33:31 brad Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -442,8 +442,8 @@ dnl		    US Robotics 2445 PCMCIA
 		    Farallon PN9000SX
 		    Netgear GA620 and GA620T
 		    SGI Tigon
-		Intel i82540, i82542, i82543, i82544, i82545, and i82546
-	       	based adapters, including:
+		Intel i82540, i82541, i82542, i82543, i82544, i82545, i82546
+		and i82547 based adapters, including:
 		    Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
 		      (PWLA8490)
 		    Intel PRO/1000F Gigabit Server Adapter (SX Fiber)
@@ -460,6 +460,7 @@ dnl		    US Robotics 2445 PCMCIA
 		    Intel PRO/1000MF Dual Port Server Adapter (SX Fiber)
 		      (PWLA8492MF)
 		    Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
+		    Intel PRO/1000MT Quad PCI-X Adapter (PWLA8494MT)
 		National Semiconductor DP83280 and DP83281 based PCI
 		adapters, including:
 		    Addtron AEG320T
