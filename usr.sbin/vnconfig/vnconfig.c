@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.15 2004/06/27 22:14:38 jolan Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.16 2004/09/14 22:35:51 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -168,7 +168,7 @@ config(char *dev, char *file, int action, char *key)
 		goto out;
 	}
 	vndio.vnd_file = file;
-	vndio.vnd_key = key;
+	vndio.vnd_key = (u_char *)key;
 	vndio.vnd_keylen = key == NULL ? 0 : strlen(key);
 
 	/*
