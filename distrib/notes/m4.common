@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.35 2002/06/09 05:53:54 todd Exp $
+dnl	$OpenBSD: m4.common,v 1.36 2002/07/04 18:06:45 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -620,7 +620,13 @@ dnl
 dnl OpenBSDUpgrade({:-<list of available boot methods>-:})dnl
 dnl Parameter is optional.
 define({:-OpenBSDUpgrade-:},
-{:-To upgrade OpenBSD OSREV from a previous version, start with the general
+{:-Warning! Upgrades to OpenBSD OSREV are currently only supported from the
+immediately previous release. The upgrade process will also work with older
+releases, but might not execute some migration tasks that would be necessary
+for a proper upgrade.  The best solution, whenever possible, is to backup
+your data and reinstall from scratch.
+
+To upgrade OpenBSD OSREV from a previous version, start with the general
 instructions in the section "Installing OpenBSD".
 
 Boot from $1.
