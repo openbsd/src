@@ -1,3 +1,5 @@
+/*	$OpenBSD: apmvar.h,v 1.2 2001/10/03 20:06:01 drahn Exp $	*/
+
 /*
  *  Copyright (c) 2001 Alexander Guy
  *  Copyright (c) 1995 John T. Kohl

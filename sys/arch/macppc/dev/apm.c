@@ -1,3 +1,5 @@
+/*	$OpenBSD: apm.c,v 1.2 2001/10/03 20:06:00 drahn Exp $	*/
+
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
