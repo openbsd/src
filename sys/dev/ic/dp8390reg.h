@@ -1,5 +1,5 @@
-/*	$OpenBSD: dp8390reg.h,v 1.4 1997/04/14 07:03:22 millert Exp $	*/
-/*	$NetBSD: dp8390reg.h,v 1.2 1995/04/12 16:12:42 mycroft Exp $	*/
+/*	$OpenBSD: dp8390reg.h,v 1.5 1998/09/22 06:41:13 fgsch Exp $	*/
+/*	$NetBSD: dp8390reg.h,v 1.3 1997/04/29 04:32:08 scottr Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -318,10 +318,8 @@
 #define ED_DCR_FT1	0x40
 
 /*
- * QTS: Quad-word Transfer Select.  QTS establishes 32-bit word transfers
- * for both remote and local DMA transfers.  (XXX - correct name?)
+ * bit 7 (0x80) is unused/reserved
  */
-#define ED_DCR_QTS	0x80
 
 /*
  *		Transmit Configuration Register (TCR) definitions
@@ -521,7 +519,7 @@
 #define ED_RSR_DFR	0x80
 
 /*
- * receive ring discriptor
+ * receive ring descriptor
  *
  * The National Semiconductor DS8390 Network interface controller uses the
  * following receive ring headers.  The way this works is that the memory on
@@ -530,12 +528,28 @@
  * end block #'s in the NIC.  For each packet that is put into the receive
  * ring, one of these headers (4 bytes each) is tacked onto the front.   The
  * first byte is a copy of the receiver status register at the time the packet
- * was received.  The following constants are offsets into the headers.
+ * was received.
  */
-#define ED_RING_RSR		0	/* receiver status */
-#define ED_RING_NEXT_PACKET	1	/* pointer to next packet */
-#define ED_RING_COUNT		2	/* bytes in packet (length + 4) */
-#define ED_RING_HDRSZ		4	/* Header size */
+struct dp8390_ring	{
+	u_int8_t	rsr;		/* receiver status */
+	u_int8_t	next_packet;	/* pointer to next packet */
+	u_int16_t	count;		/* bytes in packet (length + 4) */
+};
+
+/*
+ * XXX For compatibility only!  This needs to die when all drivers have
+ * been converted to be front ends to the MI driver.
+ */
+struct ed_ring	{
+#if BYTE_ORDER == BIG_ENDIAN
+	u_char	next_packet;		/* pointer to next packet */
+	u_char	rsr;			/* receiver status */
+#else
+	u_char	rsr;			/* receiver status */
+	u_char	next_packet;		/* pointer to next packet */
+#endif
+	u_short	count;			/* bytes in packet (length + 4) */
+};
 
 /*
  * Common constants
