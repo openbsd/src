@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.122 2004/11/27 20:05:26 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.123 2005/03/15 05:09:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1118,6 +1118,7 @@ pmap_activate(struct proc *p)
 
 	pcb->pcb_space = pmap->pm_space;
 	pcb->pcb_uva = (vaddr_t)p->p_addr;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb, PAGE_SIZE);
 }
 
 void
