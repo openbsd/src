@@ -33,13 +33,14 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yyerror.c	5.2 (Berkeley) 5/15/90";*/
-static char rcsid[] = "$Id: yyerror.c,v 1.1.1.1 1995/10/18 08:43:14 deraadt Exp $";
+static char rcsid[] = "$Id: yyerror.c,v 1.2 1997/06/21 12:33:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 
+int
 yyerror(msg)
-char *msg;
+	char *msg;
 {
 	(void)fprintf(stderr, "%s\n", msg);
 	return(0);

@@ -33,9 +33,14 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.3 (Berkeley) 1/13/91";*/
-static char rcsid[] = "$Id: main.c,v 1.1.1.1 1995/10/18 08:43:14 deraadt Exp $";
+static char rcsid[] = "$Id: main.c,v 1.2 1997/06/21 12:33:13 deraadt Exp $";
 #endif /* not lint */
 
+#include <stdlib.h>
+
+extern int yyparse();
+
+int
 main()
 {
 	exit(yyparse());
