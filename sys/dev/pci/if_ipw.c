@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.33 2004/12/05 20:00:38 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.34 2004/12/05 20:19:30 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -334,28 +334,32 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, IPW_TBD_SZ, 1, IPW_TBD_SZ, 0,
 	    BUS_DMA_NOWAIT, &sc->tbd_map);
 	if (error != 0) {
-		printf("%s: could not create tx ring DMA map\n");
+		printf("%s: could not create tx ring DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, IPW_TBD_SZ, PAGE_SIZE, 0,
 	    &sc->tbd_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not allocate tx ring DMA memory\n");
+		printf("%s: could not allocate tx ring DMA memory\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->tbd_seg, nsegs, IPW_TBD_SZ,
 	    (caddr_t *)&sc->tbd_list, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map tx ring DMA memory\n");
+		printf("%s: could not map tx ring DMA memory\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->tbd_map, sc->tbd_list,
 	    IPW_TBD_SZ, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not load tx ring DMA map\n");
+		printf("%s: could not load tx ring DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
@@ -365,28 +369,32 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, IPW_RBD_SZ, 1, IPW_RBD_SZ, 0,
 	    BUS_DMA_NOWAIT, &sc->rbd_map);
 	if (error != 0) {
-		printf("%s: could not create rx ring DMA map\n");
+		printf("%s: could not create rx ring DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, IPW_RBD_SZ, PAGE_SIZE, 0,
 	    &sc->rbd_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not allocate rx ring DMA memory\n");
+		printf("%s: could not allocate rx ring DMA memory\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->rbd_seg, nsegs, IPW_RBD_SZ,
 	    (caddr_t *)&sc->rbd_list, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map rx ring DMA memory\n");
+		printf("%s: could not map rx ring DMA memory\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->rbd_map, sc->rbd_list,
 	    IPW_RBD_SZ, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not load tx ring DMA map\n");
+		printf("%s: could not load tx ring DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
@@ -396,28 +404,32 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, IPW_STATUS_SZ, 1, IPW_STATUS_SZ,
 	    0, BUS_DMA_NOWAIT, &sc->status_map);
 	if (error != 0) {
-		printf("%s: could not create status ring DMA map\n");
+		printf("%s: could not create status ring DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, IPW_STATUS_SZ, PAGE_SIZE, 0,
 	    &sc->status_seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not allocate status ring DMA memory\n");
+		printf("%s: could not allocate status ring DMA memory\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->status_seg, nsegs,
 	    IPW_STATUS_SZ, (caddr_t *)&sc->status_list, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map status ring DMA memory\n");
+		printf("%s: could not map status ring DMA memory\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->status_map, sc->status_list,
 	    IPW_STATUS_SZ, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not load status ring DMA map\n");
+		printf("%s: could not load status ring DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
@@ -427,7 +439,8 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, sizeof (struct ipw_cmd), 1,
 	    sizeof (struct ipw_cmd), 0, BUS_DMA_NOWAIT, &sc->cmd_map);
 	if (error != 0) {
-		printf("%s: could not create command DMA map\n");
+		printf("%s: could not create command DMA map\n",
+		    sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
@@ -440,7 +453,8 @@ ipw_dma_alloc(struct ipw_softc *sc)
 		error = bus_dmamap_create(sc->sc_dmat, sizeof (struct ipw_hdr),
 		    1, sizeof (struct ipw_hdr), 0, BUS_DMA_NOWAIT, &shdr->map);
 		if (error != 0) {
-			printf("%s: could not create header DMA map\n");
+			printf("%s: could not create header DMA map\n",
+			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
 		SLIST_INSERT_HEAD(&sc->free_shdr, shdr, next);
@@ -455,7 +469,8 @@ ipw_dma_alloc(struct ipw_softc *sc)
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, IPW_MAX_NSEG,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sbuf->map);
 		if (error != 0) {
-			printf("%s: could not create tx DMA map\n");
+			printf("%s: could not create tx DMA map\n",
+			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
 		SLIST_INSERT_HEAD(&sc->free_sbuf, sbuf, next);
@@ -480,7 +495,8 @@ ipw_dma_alloc(struct ipw_softc *sc)
 
 		MGETHDR(sbuf->m, M_DONTWAIT, MT_DATA);
 		if (sbuf->m == NULL) {
-			printf("%s: could not allocate rx mbuf\n");
+			printf("%s: could not allocate rx mbuf\n",
+			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
@@ -488,7 +504,8 @@ ipw_dma_alloc(struct ipw_softc *sc)
 		MCLGET(sbuf->m, M_DONTWAIT);
 		if (!(sbuf->m->m_flags & M_EXT)) {
 			m_freem(sbuf->m);
-			printf("%s: could not allocate rx mbuf cluster\n");
+			printf("%s: could not allocate rx mbuf cluster\n",
+			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
@@ -496,14 +513,16 @@ ipw_dma_alloc(struct ipw_softc *sc)
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 		    0, BUS_DMA_NOWAIT, &sbuf->map);
 		if (error != 0) {
-			printf("%s: could not create rx DMA map\n");
+			printf("%s: could not create rx DMA map\n",
+			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
 
 		error = bus_dmamap_load(sc->sc_dmat, sbuf->map,
 		    mtod(sbuf->m, void *), MCLBYTES, NULL, BUS_DMA_NOWAIT);
 		if (error != 0) {
-			printf("%s: could not map rx DMA memory\n");
+			printf("%s: could not map rx DMA memory\n",
+			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
 
