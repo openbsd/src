@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2000/01/24 03:46:55 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.9 2000/06/15 02:49:00 rahnds Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -73,11 +73,8 @@ unconfig:
 install:
 	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
 
-${CBIN}.conf: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
-
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
-	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${CBIN}.conf
+	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
