@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.1,v 1.2 1996/06/26 05:31:17 deraadt Exp $
+.\"	$OpenBSD: ar.1,v 1.3 1997/08/19 07:23:13 denny Exp $
 .\"	$NetBSD: ar.1,v 1.7 1995/08/18 15:05:11 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -80,7 +80,7 @@
 .Op Ar file ...
 .Nm ar
 .Fl x
-.Op Fl ouTv
+.Op Fl CouTv
 .Ar archive
 .Op Ar file ...
 .Sh DESCRIPTION
@@ -139,6 +139,8 @@ If the
 option is specified,
 .Nm ar
 creates the archive silently.
+.It Fl C
+Prevent extracted files from replacing like-named files in the file system.
 .It Fl d
 Delete the specified archive files.
 .It Fl i
