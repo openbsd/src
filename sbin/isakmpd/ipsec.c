@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.56 2001/08/23 19:32:46 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.57 2001/08/24 09:29:14 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -2330,7 +2330,7 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
 
     default:
       /* Unknown type.  */
-      LOG_DBG ((LOG_MISC, 10, "id_string: unknown identity type %d\n",
+      LOG_DBG ((LOG_MISC, 10, "ipsec_id_string: unknown identity type %d\n",
 		GET_ISAKMP_ID_TYPE (id)));
       goto fail;
     }
