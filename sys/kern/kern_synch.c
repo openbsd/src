@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.34 2001/05/26 04:08:57 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.35 2001/06/24 20:55:16 mickey Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -353,7 +353,6 @@ tsleep(ident, priority, wmesg, timo)
 	register struct slpque *qp;
 	register int s;
 	int sig, catch = priority & PCATCH;
-	extern int cold;
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
@@ -484,7 +483,6 @@ sleep(ident, priority)
 	register struct proc *p = curproc;
 	register struct slpque *qp;
 	register int s;
-	extern int cold;
 
 #ifdef DIAGNOSTIC
 	if (priority > PZERO) {
