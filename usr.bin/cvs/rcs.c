@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.11 2004/09/25 11:06:50 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.12 2004/09/27 14:36:15 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -1377,7 +1377,13 @@ rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
 void
 rcs_freedelta(struct rcs_delta *rdp)
 {
+	struct rcs_branch *rb;
 	struct rcs_delta *crdp;
+
+	if (rdp->rd_num != NULL)
+		rcsnum_free(rdp->rd_num);
+	if (rdp->rd_next != NULL)
+		rcsnum_free(rdp->rd_next);
 
 	if (rdp->rd_author != NULL)
 		free(rdp->rd_author);
@@ -1387,6 +1393,12 @@ rcs_freedelta(struct rcs_delta *rdp)
 		free(rdp->rd_log);
 	if (rdp->rd_text != NULL)
 		free(rdp->rd_text);
+
+	while ((rb = TAILQ_FIRST(&(rdp->rd_branches))) != NULL) {
+		TAILQ_REMOVE(&(rdp->rd_branches), rb, rb_list);
+		rcsnum_free(rb->rb_num);
+		free(rb);
+	}
 
 	while ((crdp = TAILQ_FIRST(&(rdp->rd_snodes))) != NULL) {
 		TAILQ_REMOVE(&(rdp->rd_snodes), crdp, rd_list);
