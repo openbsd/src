@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.174 1999/08/19 01:47:14 deraadt Exp $
+$OpenBSD: pcidevs,v 1.175 1999/08/27 05:52:02 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1144,6 +1144,9 @@ product S3 PLATO		0x8902	Plato
 product S3 TRIO3D_AGP		0x8904	Trio3D AGP
 product S3 VIRGE_DX_GX		0x8a01	ViRGE DX/GX
 product S3 VIRGE_GX2		0x8a10	ViRGE GX2
+product S3 SAVAGE3D		0x8a20	Savage 3D
+product S3 SAVAGE3D_M		0x8a21	Savage 3DM
+product S3 SAVAGE4		0x8a22	Savage 4
 product S3 VIRGE_MX		0x8c01	ViRGE MX
 product S3 VIRGE_MXP		0x8c03	ViRGE MXP
 product S3 SONICVIBES		0xca00	SonicVibes
