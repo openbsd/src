@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.46 2002/05/12 15:02:52 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.47 2002/06/01 04:08:47 hugh Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -93,7 +93,7 @@ binary-op      = number ( "<>" | "><" ) number .
 op-list        = ( unary-op | binary-op ) [ "," op-list ] .
 
 flags          = "flags" ( flag-set | flag-set "/" flag-set | "/" flag-set ) .
-flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] .
+flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ] [ "W" ].
 
 icmp-type      = "icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
 ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
@@ -317,7 +317,8 @@ connections:
 The rule only applies to TCP packets that have the flags <a> set
 out of set <b>.
 Flags not specified in <b> are ignored.
-Possible flags are F (FIN), S (SYN), R (RST), P (PUSH), A (ACK) and U (URG).
+If <b> is not set, all flags are specified.
+The flags are: (F)IN, (S)YN, (R)ST, (P)USH, (A)CK, (U)RG, (E)CE, and C(W)R.
 .Bl -tag -width Fl
 .It Em flags S/S
 Flag SYN is set.
@@ -327,7 +328,7 @@ Of SYN and ACK, exactly SYN is set.
 SYN, SYN+PSH, SYN+RST match, but SYN+ACK, ACK and ACK+RST don't.
 This is more restrictive than the previous example.
 .It Em flags S
-If the second set is not specified, it defaults to FSRPAU.
+If the second set is not specified, it defaults to FSRPAUEW.
 Hence, only packets with SYN set and all other flags unset match this 
 rule.
 This is more restrictive than the previous example.
