@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gcov.1,v 1.2 2003/09/03 15:00:50 jmc Exp $
+.\"	$OpenBSD: gcov.1,v 1.3 2004/08/25 21:59:59 jmc Exp $
 .\"
 .\"    Published by the Free Software Foundation 59 Temple Place - Suite 330
 .\" Boston, MA 02111-1307 USA
@@ -88,7 +88,7 @@ Code should be compiled without optimization when using
 .Nm
 because the optimization, by combining some lines of code into
 one function,
-may not give as much information as necesary to look
+may not give as much information as necessary to look
 for
 .Sq hot spots
 where the code is using a great deal of computer time.
@@ -292,7 +292,7 @@ but may be less for functions which call
 .Sq exit
 or
 .Sq longjmp ,
-and thus may not return everytime they are called.
+and thus may not return every time they are called.
 .Pp
 The execution counts are cumulative.
 If the example program were executed again without removing the
@@ -458,7 +458,7 @@ followed by the counts
 Each count corresponds to the number of
 times each arc in the program is executed.
 The counts are cumulative;
-each time the program is executed, it attemps to combine the existing
+each time the program is executed, it attempts to combine the existing
 .Pa .da
 files with the new counts for this invocation of the program.
 It ignores the contents of any
