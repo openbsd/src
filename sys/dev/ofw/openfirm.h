@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.3 1999/10/28 04:25:25 rahnds Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.4 2001/06/25 23:04:39 drahn Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -60,12 +60,16 @@ int OF_seek __P((int handle, u_quad_t pos));
 void OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
 void OF_enter __P((void));
 void OF_exit __P((void)) __attribute__((__noreturn__));
+int OF_interpret __P((char *cmd, int nreturns, ...));
+#if 0
 void (*OF_set_callback __P((void (*newfunc)(void *)))) ();
+#endif
 
 /*
  * Some generic routines for OpenFirmware handling.
  */
 int ofnmmatch __P((char *cp1, char *cp2));
+void ofw_intr_establish(void);
 
 /*
  * Generic OpenFirmware probe argument.
