@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.30 2003/05/13 22:45:10 miod Exp $
+#	$OpenBSD: RAMDISKC,v 1.31 2003/05/14 01:34:43 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -235,6 +235,16 @@ rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 dc*	at cardbus? dev ? function ?		# 21143, "tulip" clone ethernet
+#ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
+#skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
+#sk*	at skc?					#  each port of above
+em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
+#txp*	at pci? dev ? function ?		# 3com 3CR990
+#nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
+#bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
+#stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
+#lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
+#hme*	at pci? dev ? function ?		# Sun Happy Meal
 
 # Wireless network cards
 wi*	at pci? dev ? function ?		# WaveLAN IEEE 802.11DS
