@@ -1,4 +1,4 @@
-.\"	$OpenBSD: error.1,v 1.8 1999/12/04 19:04:52 aaron Exp $
+.\"	$OpenBSD: error.1,v 1.9 2000/03/07 21:11:07 aaron Exp $
 .\"	$NetBSD: error.1,v 1.3 1995/09/02 06:15:20 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -67,9 +67,7 @@ Do
 touch any files; all error messages are sent to the
 standard output.
 .It Fl q
-The user is
-.Ar queried
-whether s/he wants to touch the file.
+The user is queried whether or not to touch the file.
 A
 .Sq y
 or
@@ -106,15 +104,13 @@ Thus the suffix list:
 allows
 .Nm
 to touch files ending with
-.Sq \&.c ,
-.Sq \&.y ,
-.Sq \&.foo\&* ,
+.Dq \&.c ,
+.Dq \&.y ,
+.Dq \&.foo\&* ,
 and
-.Sq \&.h .
+.Dq \&.h .
 .It Fl s
-Print out
-.Em statistics
-regarding the error categorization.
+Print out statistics regarding the error categorization.
 Not too useful.
 .It Fl I Ar ignorefile
 Specifies a file containing a list of functions to ignore.
@@ -169,8 +165,8 @@ knows about the error messages produced by:
 .Xr pi 1 ,
 .Xr pc 1 ,
 .Xr f77 1 ,
-and
-.Em DEC Western Research Modula\-2 .
+and DEC Western Research Modula\-2.
+.Pp
 .Nm
 knows a standard format for error messages produced by
 the language processors,

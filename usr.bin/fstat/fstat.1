@@ -1,4 +1,5 @@
-.\"	$OpenBSD: fstat.1,v 1.15 2000/01/19 07:38:25 pjanzen Exp $
+.\"	$OpenBSD: fstat.1,v 1.16 2000/03/07 21:11:09 aaron Exp $
+.\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -45,7 +46,7 @@
 .Op Fl N Ar system
 .Op Fl p Ar pid
 .Op Fl u Ar user
-.Op Ar filename...
+.Op Ar file ...
 .Sh DESCRIPTION
 .Nm fstat
 identifies open files.
@@ -59,14 +60,14 @@ reports on all open files in the system.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl f
-Restrict examination to files open in the same filesystems as
-the named file arguments, or to the filesystem containing the
+Restrict examination to files open in the same file systems as
+the named file arguments, or to the file system containing the
 current directory if there are no additional filename arguments.
-For example, to find all files open in the filesystem where the
+For example, to find all files open in the file system where the
 directory
 .Pa /usr/src
 resides, type
-.Dq Li fstat -f /usr/src .
+.Ic fstat -f /usr/src .
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
 instead of the default
@@ -75,28 +76,30 @@ instead of the default
 Extract the name list from the specified system instead of the default
 .Pa /bsd .
 .It Fl n
-Numerical format.  Print the device number (maj,min) of the filesystem
-the file resides in rather than the mount point name; for special
+Numerical format.
+Print the device number (maj,min) of the file system
+the file resides in rather than the mount point name. For special
 files, print the
 device number that the special device refers to rather than the filename
 in
-.Pa /dev ;
-and print the mode of the file in octal instead of symbolic form.
+.Pa /dev .
+Also, print the mode of the file in octal instead of symbolic form.
 .It Fl p pid
 Report all files open by the specified process.
 .It Fl u user
 Report all files open by the specified user.
 .It Fl v
-Verbose mode.  Print error messages upon failures to locate particular
-system data structures rather than silently ignoring them.  Most of
-these data structures are dynamically created or deleted and it is
+Verbose mode.
+Print error messages upon failures to locate particular
+system data structures rather than silently ignoring them.
+Most of these data structures are dynamically created or deleted and it is
 possible for them to disappear while
 .Nm fstat
-is running.  This
-is normal and  unavoidable since the rest of the system is running while
+is running.
+This is normal and  unavoidable since the rest of the system is running while
 .Nm fstat
 itself is running.
-.It Ar filename ...
+.It Ar file ...
 Restrict reports to the specified files.
 .El
 .Pp
@@ -119,8 +122,9 @@ root	- root inode
 tr	- kernel trace file
 .Ed
 .Pp
-If the file number is followed by an asterisk (``*''), the file is
-not an inode, but rather a socket,
+If the file number is followed by an asterisk
+.Pq Ql * ,
+the file is not an inode, but rather a socket,
 .Tn FIFO ,
 or there is an error.
 In this case the remainder of the line doesn't
@@ -131,7 +135,7 @@ is described later under
 If the
 .Fl n
 flag wasn't specified, this header is present and is the
-pathname that the filesystem the file resides in is mounted on.
+pathname that the file system the file resides in is mounted on.
 .It Li DEV
 If the
 .Fl n
@@ -149,22 +153,26 @@ otherwise, the mode is printed
 as an octal number.
 .It Li SZ\&|DV
 If the file is not a character or block special file, prints the size of
-the file in bytes.  Otherwise, if the
+the file in bytes.
+Otherwise, if the
 .Fl n
 flag is not specified, prints
 the name of the special file as located in
 .Pa /dev .
-If that cannot be
-located, or the
+If that cannot be located, or the
 .Fl n
 flag is specified, prints the major/minor device
 number that the special device refers to.
 .It Li R/W
 This column describes the access mode that the file allows.
-The letter ``r'' indicates open for reading;
-the letter ``w'' indicates open for writing.
+The letter
+.Sq r
+indicates open for reading;
+the letter
+.Sq w
+indicates open for writing.
 This field is useful when trying to find the processes that are
-preventing a filesystem from being downgraded to read-only.
+preventing a file system from being downgraded to read-only.
 .It Li NAME
 If filename arguments are specified and the
 .Fl f
@@ -172,7 +180,8 @@ flag is not, then
 this field is present and is the name associated with the given file.
 Normally the name cannot be determined since there is no mapping
 from an open file back to the directory entry that was used to open
-that file.  Also, since different directory entries may reference
+that file.
+Also, since different directory entries may reference
 the same file (via
 .Xr ln 2 ) ,
 the name printed may not be the actual
@@ -193,13 +202,17 @@ permit further analysis without duplicating
 .Xr netstat 1 .
 .Pp
 For example, the addresses mentioned above are the addresses which the
-.Dq Li netstat -A
+.Ic netstat -A
 command would print for TCP, UDP, and Unix domain.
 Note that since pipes are implemented using sockets, a pipe appears as a
 connected Unix domain stream socket.
 A unidirectional Unix domain socket indicates the direction of flow with
-an arrow (``<-'' or ``->''), and a full duplex socket shows a double arrow
-(``<->'').
+an arrow
+.Pf ( Dq <-
+or
+.Dq -> ) ,
+and a full duplex socket shows a double arrow
+.Pq Dq <-> ) .
 .Pp
 For AF_INET sockets,
 .Nm fstat
@@ -207,12 +220,21 @@ also attempts to print the internet address and port for the
 local end of a connection.
 If the socket is connected, it also prints the remote internet address
 and port.
-A ``*'' is used to indicate an INADDR_ANY binding.  In this case, the
-use of the arrow (``<--'' or ``-->'') indicates the direction the socket
-connection was created.
+A
+.Ql *
+is used to indicate an
+.Dv INADDR_ANY
+binding.
+In this case, the
+use of the arrow
+.Pf ( Dq <--
+or
+.Dq --> )
+indicates the direction the socket connection was created.
 .Sh PIPES
 Every pipe is printed as an address which is the same for both sides of
-the pipe and a state that is built of the letters 'RWE'.
+the pipe and a state that is built of the letters
+.Dq RWE .
 W - The pipe blocks waiting for the reader to read data.
 R - The pipe blocks waiting for the writer to write data.
 E - The pipe is in EOF state.

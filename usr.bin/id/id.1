@@ -1,4 +1,4 @@
-.\"	$OpenBSD: id.1,v 1.8 2000/03/04 22:19:23 aaron Exp $
+.\"	$OpenBSD: id.1,v 1.9 2000/03/07 21:11:10 aaron Exp $
 .\"	$NetBSD: id.1,v 1.5 1995/09/28 08:05:40 perry Exp $
 .\"
 .\" Copyright (c) 1991, 1993, 1994
@@ -94,14 +94,19 @@ If the user name returned by
 is different from the login name referenced by the user ID, the name
 returned by
 .Xr getlogin 2
-is displayed, preceded by the keyword ``login''.
-The user ID as a name is displayed, preceded by the keyword ``uid''.
+is displayed, preceded by the keyword
+.Dq login .
+The user ID as a name is displayed, preceded by the keyword
+.Dq uid .
 If the effective user ID is different from the real user ID, the real user
-ID is displayed as a name, preceded by the keyword ``euid''.
+ID is displayed as a name, preceded by the keyword
+.Dq euid .
 If the effective group ID is different from the real group ID, the real group
-ID is displayed as a name, preceded by the keyword ``rgid''.
+ID is displayed as a name, preceded by the keyword
+.Dq rgid .
 The list of groups to which the user belongs is then displayed as names,
-preceded by the keyword ``groups''.
+preceded by the keyword
+.Dq groups .
 Each display is on a separate line.
 .It Fl r
 Display the real ID for the
@@ -128,13 +133,13 @@ The
 historic
 .Xr groups 1
 command is equivalent to
-.Dq Nm id Fl Gn Op Ar user .
+.Ic id Fl Gn Op Ar user .
 .Pp
 The
 historic
 .Xr whoami 1
 command is equivalent to
-.Dq Nm id Fl un .
+.Ic Nm id Fl un .
 .Pp
 The
 .Nm

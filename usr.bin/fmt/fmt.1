@@ -1,4 +1,4 @@
-.\" $OpenBSD: fmt.1,v 1.8 2000/03/05 00:28:53 aaron Exp $
+.\" $OpenBSD: fmt.1,v 1.9 2000/03/07 21:11:08 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
 .Ar goal
 .Op Ar maximum
 .Oc
-.Op name ...
+.Op Ar name ...
 .Sh DESCRIPTION
 .Nm
 is a simple text formatter which reads the concatenation of input
@@ -66,19 +66,21 @@ The
 length defaults
 to 65 and the
 .Ar maximum
-to 10 more than the goal length.  The spacing at the beginning of the
-input lines is preserved in the output, as are blank lines and
-interword spacing.
+to 10 more than the goal length.
+The spacing at the beginning of the input lines is preserved in the output,
+as are blank lines and interword spacing.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl c
-Center the text, line by line. In this case, most of the other
+Center the text, line by line.
+In this case, most of the other
 options are ignored; no splitting or joining of lines is done.
 .It Fl m
 Try to format mail header lines contained in the input sensibly.
 .It Fl p
-Allow indented paragraphs. Without the
+Allow indented paragraphs.
+Without the
 .Fl p
 flag, any change in the amount of whitespace at the start of a line
 results in a new paragraph being begun.
@@ -89,9 +91,11 @@ sentence, a double space.)
 .It Fl d Ar chars
 Treat the
 .Ar chars
-(and no others) as sentence-ending characters. By default the
+(and no others) as sentence-ending characters.
+By default the
 sentence-ending characters are full stop, question mark and
-exclamation mark. Remember that some characters may need to be
+exclamation mark.
+Remember that some characters may need to be
 escaped to protect them from your shell.
 .It Fl l Ar number
 Replace multiple spaces with tabs at the start of each output
@@ -101,7 +105,8 @@ spaces will be replaced with one tab.
 .It Fl t Ar number
 Assume that the input files' tabs assume
 .Ar number
-spaces per tab stop. The default is 8.
+spaces per tab stop.
+The default is 8.
 .El
 .Pp
 .Nm
@@ -128,8 +133,7 @@ command appeared in
 .Bx 3 .
 .Pp
 The version described herein is a complete rewrite and appeared in
-.Bx Open
-2.4.
+.Ox 2.4 .
 .\" .Sh AUTHOR
 .\" Kurt Shoens
 .\" .br

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.9 1999/07/21 12:43:26 aaron Exp $
+.\"	$OpenBSD: hexdump.1,v 1.10 2000/03/07 21:11:10 aaron Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -77,7 +77,7 @@ Specify a format string to be used for displaying data.
 .It Fl f Ar format_file
 Specify a file that contains one or more newline separated format strings.
 Empty lines and lines whose first non-blank character is a hash mark
-.Pq Dq \&#
+.Pq Ql #
 are ignored.
 .It Fl n Ar length
 Interpret only
@@ -127,7 +127,8 @@ Without the
 option, any number of groups of output lines, which would be
 identical to the immediately preceding group of output lines (except
 for the input offsets), are replaced with a line comprised of a
-single asterisk.
+single asterisk
+.Pq Ql * .
 .It Fl x
 .Em Two-byte hexadecimal display .
 Display the input offset in hexadecimal, followed by eight, space
@@ -158,12 +159,14 @@ If specified it defines the number of bytes to be interpreted by
 each iteration of the format.
 .Pp
 If an iteration count and/or a byte count is specified, a single slash
+.Pq Sq /
 must be placed after the iteration count and/or before the byte count
 to disambiguate them.
 Any whitespace before or after the slash is ignored.
 .Pp
 The format is required and must be surrounded by double quote
-(" ") marks.
+.Pq \&"\& \&"
+marks.
 It is interpreted as an fprintf-style format string (see
 .Xr fprintf 3 ) ,
 with the
@@ -174,13 +177,18 @@ An asterisk (*) may not be used as a field width or precision.
 .It
 A byte count or field precision
 .Em is
-required for each ``s'' conversion
-character (unlike the
+required for each
+.Sq s
+conversion character (unlike the
 .Xr fprintf 3
 default which prints the entire string if the precision is unspecified).
 .It
-The conversion characters ``h'', ``n'', and ``p'' are not
-supported.
+The conversion characters
+.Sq h ,
+.Sq n ,
+and
+.Sq p
+are not supported.
 .It
 The single character escape sequences
 described in the C standard are supported:
@@ -224,8 +232,8 @@ octal, except for those representable by standard escape notation
 which are displayed as two character strings.
 .It Cm _p
 Output characters in the default character set.
-Nonprinting characters are displayed as a single
-.Dq Cm \&. .
+Nonprinting characters are displayed as a single dot
+.Ql \&. .
 .It Cm _u
 Output US ASCII characters, with the exception that control characters are
 displayed using the following, lower-case, names.
@@ -263,7 +271,9 @@ data required by each format unit, which is the iteration count times the
 byte count, or the iteration count times the number of bytes required by
 the format if the byte count is not specified.
 .Pp
-The input is manipulated in ``blocks'', where a block is defined as the
+The input is manipulated in
+.Dq blocks ,
+where a block is defined as the
 largest amount of data specified by any format string.
 Format strings interpreting less than an input block's worth of data,
 whose last format unit both interprets some number of bytes and does
@@ -298,9 +308,9 @@ output by an
 conversion character with the same field width
 and precision as the original conversion character or conversion
 string but with any
-.Dq Li \&+ ,
-.Dq \&\ \& ,
-.Dq Li \&#
+.Ql + ,
+.Ql \&\ \& ,
+.Ql #
 conversion flag characters
 removed, and referencing a NULL string.
 .Pp
@@ -324,6 +334,8 @@ Implement the \-x option:
 "%07.7_Ax\en"
 "%07.7_ax  " 8/2 "%04x " "\en"
 .Ed
+.Sh SEE ALSO
+.Xr od 1
 .Sh STANDARDS
 The
 .Nm

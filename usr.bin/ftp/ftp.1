@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.28 2000/02/29 04:52:37 aaron Exp $
+.\" 	$OpenBSD: ftp.1,v 1.29 2000/03/07 21:11:09 aaron Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -65,19 +65,23 @@ remote network site.
 .Pp
 The latter three usage formats will fetch a file using either the
 HTTP or FTP protocols into the current directory.
-This is ideal for scripts.  Refer to
+This is ideal for scripts.
+Refer to
 .Sx AUTO-FETCHING FILES
 below for more information.
 .Pp
 The options are as follows:
 .Bl -tag -width "port    "
 .It Fl A
-Force active mode ftp.  By default,
+Force active mode ftp.
+By default,
 .Nm
 will try to use passive mode ftp and fall back to active mode
-if passive is not supported by the server.  This option causes
+if passive is not supported by the server.
+This option causes
 .Nm
-to always use an active connection.  It is only useful for connecting
+to always use an active connection.
+It is only useful for connecting
 to very old servers that do not implement passive mode properly.
 .It Fl a
 Causes
@@ -86,7 +90,8 @@ to bypass the normal login procedure and use an anonymous login instead.
 .It Fl d
 Enables debugging.
 .It Fl e
-Disables command line editing.  Useful for Emacs ange-ftp.
+Disables command line editing.
+Useful for Emacs ange-ftp.
 .It Fl g
 Disables file name globbing.
 .It Fl i
@@ -163,7 +168,7 @@ from the user.
 When
 .Nm
 is awaiting commands the prompt
-.Ql ftp>
+.Dq ftp>
 is provided to the user.
 The following commands are recognized
 by
@@ -196,9 +201,9 @@ or
 .Ic nmap
 setting.
 File transfer uses the current settings for
-.Ic type  ,
+.Ic type ,
 .Ic format ,
-.Ic mode  ,
+.Ic mode ,
 and
 .Ic structure .
 .It Ic ascii
@@ -281,7 +286,7 @@ When debugging is on,
 .Nm
 prints each command sent to the remote machine,
 preceded by the string
-.Ql \-\->
+.Ql \-\-> .
 .It Ic dir Op Ar remote-directory Op Ar local-file
 Print a listing of the contents of a
 directory on the remote machine.
@@ -305,7 +310,7 @@ output.
 If no local file is specified, or if
 .Ar local-file
 is
-.Sq Fl ,
+.Dq - ,
 the output is sent to the terminal.
 .It Ic disconnect
 A synonym for
@@ -335,15 +340,15 @@ If the local
 file name is not specified, it is given the same
 name it has on the remote machine, subject to
 alteration by the current
-.Ic case  ,
+.Ic case ,
 .Ic ntrans ,
 and
 .Ic nmap
 settings.
 The current settings for
-.Ic type  ,
+.Ic type ,
 .Ic form ,
-.Ic mode  ,
+.Ic mode ,
 and
 .Ic structure
 are used while transferring the file.
@@ -364,12 +369,12 @@ is also given, that will be used as the port to connect to on the
 gate-ftp server.
 .It Ic glob
 Toggle filename expansion for
-.Ic mdelete  ,
+.Ic mdelete ,
 .Ic mget
 and
 .Ic mput .
 If globbing is turned off with
-.Ic glob  ,
+.Ic glob ,
 the file name arguments
 are taken literally and not expanded.
 Globbing for
@@ -379,7 +384,7 @@ is done as in
 For
 .Ic mdelete
 and
-.Ic mget  ,
+.Ic mget ,
 each remote file name is expanded
 separately on the remote machine and the lists are not merged.
 Expansion of a directory name is likely to be
@@ -398,8 +403,9 @@ transferring a
 .Xr tar 1
 archive of the subtree (in binary mode).
 .It Ic hash Op Ar size
-Toggle hash-sign (``#'') printing for each data block
-transferred.
+Toggle hash mark
+.Pq Ql #
+printing for each data block transferred.
 The size of a data block defaults to 1024 bytes.
 This can be changed by specifying
 .Ar size
@@ -443,12 +449,12 @@ output.
 If no local file is specified, or if
 .Ar local-file
 is
-.Fl  ,
+.Dq - ,
 the output is sent to the terminal.
 .It Ic macdef Ar macro-name
 Define a macro.
 Subsequent lines are stored as the macro
-.Ar macro-name  ;
+.Ar macro-name ;
 a null line (consecutive newline characters
 in a file or
 carriage returns from the terminal) terminates macro input mode.
@@ -457,23 +463,40 @@ defined macros.
 Macros remain defined until a
 .Ic close
 command is executed.
-The macro processor interprets `$' and `\e' as special characters.
-A `$' followed by a number (or numbers) is replaced by the
+The macro processor interprets
+.Ql $
+and
+.Ql \e
+as special characters.
+A
+.Ql $
+followed by a number (or numbers) is replaced by the
 corresponding argument on the macro invocation command line.
-A `$' followed by an `i' tells the macro processor that the
+A
+.Ql $
+followed by an
+.Sq i
+tells the macro processor that the
 executing macro is to be looped.
-On the first pass `$i' is
+On the first pass
+.Ql $i
+is
 replaced by the first argument on the macro invocation command line,
 on the second pass it is replaced by the second argument, and so on.
-A `\e' followed by any character is replaced by that character.
-Use the `\e' to prevent special treatment of the `$'.
+A
+.Ql \e
+followed by any character is replaced by that character.
+Use the
+.Ql \e
+to prevent special treatment of the
+.Ql $ .
 .It Ic mdelete Op Ar remote-files
 Delete the
 .Ar remote-files
 on the remote machine.
 .It Ic mdir Ar remote-files local-file
 Like
-.Ic dir  ,
+.Ic dir ,
 except multiple remote files may be specified.
 If interactive prompting is on,
 .Nm
@@ -492,7 +515,7 @@ See
 .Ic glob
 for details on the filename expansion.
 Resulting file names will then be processed according to
-.Ic case  ,
+.Ic case ,
 .Ic ntrans ,
 and
 .Ic nmap
@@ -506,7 +529,7 @@ new local directories can be created with
 Make a directory on the remote machine.
 .It Ic mls Ar remote-files local-file
 Like
-.Ic ls  ,
+.Ic ls ,
 except multiple remote files may be specified,
 and the
 .Ar local-file
@@ -584,9 +607,18 @@ and
 .Ic case
 settings).
 Variable templating is accomplished by including the
-sequences `$1', `$2', ..., `$9' in
+sequences
+.Ql $1 ,
+.Ql $2 ,
+...,
+.Ql $9
+in
 .Ar inpattern .
-Use `\\' to prevent this special treatment of the `$' character.
+Use
+.Ql \e
+to prevent this special treatment of the
+.Ql $
+character.
 All other characters are treated literally, and are used to determine the
 .Ic nmap
 .Ar inpattern
@@ -598,11 +630,17 @@ $1.$2 and the remote file name "mydata.data", $1 would have the value
 The
 .Ar outpattern
 determines the resulting mapped filename.
-The sequences `$1', `$2', ...., `$9' are replaced by any value resulting
-from the
+The sequences
+.Ql $1 ,
+.Ql $2 ,
+...,
+.Ql $9
+are replaced by any value resulting from the
 .Ar inpattern
 template.
-The sequence `$0' is replaced by the original filename.
+The sequence
+.Ql $0
+is replaced by the original filename.
 Additionally, the sequence
 .Ql Op Ar seq1 , Ar seq2
 is replaced by
@@ -618,14 +656,37 @@ nmap $1.$2.$3 [$1,$2].[$2,file]
 .Ed
 .Pp
 would yield
-the output filename "myfile.data" for input filenames "myfile.data" and
-"myfile.data.old", "myfile.file" for the input filename "myfile", and
-"myfile.myfile" for the input filename ".myfile".
+the output filename
+.Pa myfile.data ,
+for input filenames
+.Pa myfile.data
+and
+.Pa myfile.data.old ,
+.Pa myfile.file
+for the input filename
+.Pa myfile ,
+and
+.Pa myfile.myfile
+for the input filename
+.Pa \&.myfile .
 Spaces may be included in
-.Ar outpattern  ,
-as in the example: `nmap $1 sed "s/  *$//" > $1' .
-Use the `\e' character to prevent special treatment
-of the `$','[','[', and `,' characters.
+.Ar outpattern ,
+as in the example
+.Pp
+.Bd -literal -offset indent -compact
+nmap $1 sed "s/  *$//" > $1 .
+.Ed
+.Pp
+Use the
+.Ql \e
+character to prevent special treatment
+of the
+.Ql $ ,
+.Ql [ ,
+.Ql \&] ,
+and
+.Ql \&,
+characters.
 .It Ic ntrans Op Ar inchars Op Ar outchars
 Set or unset the filename character translation mechanism.
 If no arguments are specified, the filename character
@@ -653,7 +714,7 @@ are replaced with the corresponding character in
 If the character's position in
 .Ar inchars
 is longer than the length of
-.Ar outchars  ,
+.Ar outchars ,
 the character is deleted from the file name.
 .It Ic open Ar host Op Ar port
 Establish a connection to the specified
@@ -685,20 +746,23 @@ if
 .Ev PAGER
 is null or not defined).
 .It Ic passive
-Toggle passive mode.  If passive mode is turned on
-(default is on), the ftp client will
+Toggle passive mode.
+If passive mode is turned on (default is on), the ftp client will
 send a
 .Dv PASV
 command for all data connections instead of the usual
 .Dv PORT
-command.  The
+command.
+The
 .Dv PASV
 command requests that the remote server open a port for the data connection
-and return the address of that port.  The remote server listens on that
-port and the client connects to it.  When using the more traditional
+and return the address of that port.
+The remote server listens on that port and the client connects to it.
+When using the more traditional
 .Dv PORT
 command, the client listens on a port and sends that address to the remote
-server, who connects back to it.  Passive mode is useful when using
+server, who connects back to it.
+Passive mode is useful when using
 .Nm
 through a gateway router or host that controls the directionality of
 traffic.
@@ -712,7 +776,7 @@ Toggle display of transfer progress bar.
 The progress bar will be disabled for a transfer that has
 .Ar local-file
 as
-.Sq Fl
+.Dq -
 or a command that starts with
 .Sq \&| .
 Refer to
@@ -760,12 +824,14 @@ servers for transferring files between the two servers.
 The first
 .Ic proxy
 command should be an
-.Ic open  ,
+.Ic open ,
 to establish the secondary control connection.
-Enter the command "proxy ?" to see other ftp commands executable on the
+Enter the command
+.Ic proxy ?
+to see other ftp commands executable on the
 secondary connection.
 The following commands behave differently when prefaced by
-.Ic proxy  :
+.Ic proxy :
 .Ic open
 will not define new macros during the auto-login process,
 .Ic close
@@ -775,7 +841,7 @@ and
 .Ic mget
 transfer files from the host on the primary control connection
 to the host on the secondary control connection, and
-.Ic put  ,
+.Ic put ,
 .Ic mput ,
 and
 .Ic append
@@ -797,9 +863,9 @@ settings
 in naming the remote file.
 File transfer uses the
 current settings for
-.Ic type  ,
+.Ic type ,
 .Ic format ,
-.Ic mode  ,
+.Ic mode ,
 and
 .Ic structure .
 .It Ic pwd
@@ -820,7 +886,7 @@ Reget acts like get, except that if
 .Ar local-file
 exists and is
 smaller than
-.Ar remote-file  ,
+.Ar remote-file ,
 .Ar local-file
 is presumed to be
 a partially transferred copy of
@@ -878,10 +944,16 @@ local filename for a
 .Ic get
 or
 .Ic mget
-command, a ".1" is appended to the name.
+command, a
+.Dq \&.1
+is appended to the name.
 If the resulting name matches another existing file,
-a ".2" is appended to the original name.
-If this process continues up to ".99", an error
+a
+.Dq \&.2
+is appended to the original name.
+If this process continues up to
+.Dq \&.99 ,
+an error
 message is printed, and the transfer does not take place.
 The generated unique filename will be reported.
 Note that
@@ -1021,7 +1093,9 @@ A synonym for
 .El
 .Pp
 Command arguments which have embedded spaces may be quoted with
-quote `"' marks.
+quote
+.Pq Ql "
+marks.
 .Pp
 Commands which toggle settings can take an explicit
 .Ic on
@@ -1142,10 +1216,10 @@ commands are processed according to the following rules.
 .Bl -enum
 .It
 If the file name
-.Sq Fl
-is specified, the stdin
-(for reading) or stdout
-(for writing) is used.
+.Dq -
+is specified, the standard input (for reading)
+or standard output (for writing)
+is used.
 .It
 If the first character of the file name is
 .Sq \&| ,
@@ -1154,26 +1228,30 @@ remainder of the argument is interpreted as a shell command.
 .Nm
 then forks a shell, using
 .Xr popen 3
-with the argument supplied, and reads (writes) from the stdout
-(stdin).
+with the argument supplied, and reads (writes) from the standard output
+(standard input).
 If the shell command includes spaces, the argument
-must be quoted; e.g.
+must be quoted; e.g.,
 \*(Lq" ls -lt"\*(Rq.
 A particularly
 useful example of this mechanism is: \*(Lqdir \&|more\*(Rq.
 .It
-Failing the above checks, if ``globbing'' is enabled,
+Failing the above checks, if
+.Dq globbing
+is enabled,
 local file names are expanded
 according to the rules used in the
-.Xr csh  1  ;
+.Xr csh 1 ;
 c.f. the
 .Ic glob
 command.
 If the
 .Nm
-command expects a single local file (.e.g.
-.Ic put  ) ,
-only the first filename generated by the "globbing" operation is used.
+command expects a single local file (e.g.,
+.Ic put ) ,
+only the first filename generated by the
+.Dq globbing
+operation is used.
 .It
 For
 .Ic mget
@@ -1181,7 +1259,7 @@ commands and
 .Ic get
 commands with unspecified local file names, the local filename is
 the remote filename, which may be altered by a
-.Ic case  ,
+.Ic case ,
 .Ic ntrans ,
 or
 .Ic nmap
@@ -1224,7 +1302,7 @@ mode transfers.
 .Nm
 supports only the default values for the remaining
 file transfer parameters:
-.Ic mode  ,
+.Ic mode ,
 .Ic form ,
 and
 .Ic struct .
@@ -1296,7 +1374,7 @@ Note that if this token is present in the
 .Pa .netrc
 file for any user other
 than
-.Ar anonymous  ,
+.Ar anonymous ,
 .Nm
 will abort the auto-login process if the
 .Pa .netrc
@@ -1358,7 +1436,8 @@ By default, this is bound to the TAB key.
 utilizes the following environment variables:
 .Bl -tag -width "FTPSERVERPORT"
 .It Ev FTPMODE
-Overrides the default operation mode.  Recognized values are:
+Overrides the default operation mode.
+Recognized values are:
 .Bl -tag -width "passive  "
 .It passive
 passive mode ftp only

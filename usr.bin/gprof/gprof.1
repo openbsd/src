@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gprof.1,v 1.13 2000/03/05 00:28:53 aaron Exp $
+.\"	$OpenBSD: gprof.1,v 1.14 2000/03/07 21:11:09 aaron Exp $
 .\"	$NetBSD: gprof.1,v 1.6 1995/11/21 22:24:55 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -64,7 +64,7 @@ option also links in versions of the library routines
 that are compiled for profiling.
 .Nm
 reads the given object file (the default is
-.Pa a.out)
+.Pa a.out )
 and establishes the relation between its symbol table
 and the call graph profile from
 .Pa gmon.out .
@@ -92,7 +92,7 @@ time and call counts of the cycle.
 .Pp
 Second, a flat profile is given,
 similar to that provided by
-.Xr prof  1  .
+.Xr prof 1 .
 This listing gives the total execution times, the call counts,
 the time in milliseconds the call spent in the routine itself, and
 the time in milliseconds the call spent in the routine itself including
@@ -141,7 +141,7 @@ option.
 Suppresses the printing of the graph profile entry for routine
 .Ar name
 (and its descendants) as
-.Fl e  ,
+.Fl e ,
 above, and also excludes the time spent in
 .Ar name
 (and its descendants) from the total and percentage time computations.
@@ -218,11 +218,11 @@ This is useful with the
 option for discovering which routines were never called.
 .El
 .Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm gprof :
 .Bl -tag -width PROFDIR
 .It Ev PROFDIR
-If the environment variable
-.Ev PROFDIR
-is set, profiling information is placed in that directory in a file named
+Directory to place profiling information in a file named
 .Pa pid.progname .
 If it is set to a null value, no profiling information is output.
 Otherwise, profiling information is placed in the file

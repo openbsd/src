@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gencat.1,v 1.8 1999/06/05 01:21:26 aaron Exp $
+.\"	$OpenBSD: gencat.1,v 1.9 2000/03/07 21:11:09 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Ken Stailey
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: gencat.1,v 1.8 1999/06/05 01:21:26 aaron Exp $
+.\"	$Id: gencat.1,v 1.9 2000/03/07 21:11:09 aaron Exp $
 .\"
 .Dd June 11, 1997
 .Dt GENCAT 1
@@ -35,7 +35,7 @@
 .Sh SYNOPSIS
 .Nm gencat
 .Ar output-file
-.Ar input-file Op Ar input-file...
+.Ar input-file Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -45,7 +45,8 @@ into a formatted message catalog file
 .Ar output-file .
 The file
 .Ar output-file
-will be created if it does not already exist.  If
+will be created if it does not already exist.
+If
 .Ar output-file
 does exist, its messages will be included in the new
 .Ar output-file .
@@ -54,31 +55,39 @@ If set and message numbers collide, the new message text defined in
 will replace the old message text currently contained in
 .Ar output-file .
 .Sh INPUT FILES
-The format of a message text source file is defined below.  Note that
-the fields of a message text source line are separated by a single space
-character: any other space characters are considered to be part of the
-field contents.
+The format of a message text source file is defined below.
+Note that the fields of a message text source line are separated by a
+single space character; any other space characters are considered to be
+part of the field contents.
 .Pp
 .Bl -tag -width
 .It Li $set Ar n comment
 This line specifies the set identifier of the following messages until
 the next
 .Li $set
-or end-of-file appears.  The argument
+or end-of-file appears.
+The argument
 .Ar n
 is the set identifier which is defined as a number in the range
-[1, (NL_SETMAX)].  Set identifiers must occur in ascending order within
-a single source file, but need not be contiguous.  Any string following
-a space following the set identifier is treated as a comment.  If no
+.Bo 1 ,
+.Dv NL_SETMAX Bc .
+Set identifiers must occur in ascending order within
+a single source file, but need not be contiguous.
+Any string following
+a space following the set identifier is treated as a comment.
+If no
 .Li $set
-directive  is specified in a given source file, all messages will
-be located in the default message set NL_SETD.
+directive is specified in a given source file, all messages will
+be located in the default message set
+.Dv NL_SETD .
 .It Li $del Ar n comment
 This line deletes messages from set
 .Ar n
-from a message catalog.  The
+from a message catalog.
+The
 .Ar n
-specifies a set number.  Any string following a space following the set
+specifies a set number.
+Any string following a space following the set
 number is treated as a comment.
 .It Li $ Ar comment
 A line beginning with
@@ -87,7 +96,10 @@ followed by a space is treated as a comment.
 .It Ar m message-text
 A message line consists of a message identifier
 .Ar m
-in the range [1, (NL_MSGMAX)].  The
+in the range
+.Bo 1 ,
+.Dv NL_MSGMAX Bc .
+The
 .Ar message-text
 is stored in the message catalog with the set identifier specified by
 the last
@@ -97,37 +109,43 @@ directive, and the message identifier
 If the
 .Ar message-text
 is empty, and there is a space character following the message identifier,
-an empty string is stored in the message catalog.  If the
+an empty string is stored in the message catalog.
+If the
 .Ar message-text
 is empty, and if there is no space character following the message
 identifier, then the existing message in the current set with the
-specified message identifier is deleted from the catalog.  Message
-identifiers must be in ascending order within a single set, but
-need not be contiguous.  The
+specified message identifier is deleted from the catalog.
+Message identifiers must be in ascending order within a single set, but
+need not be contiguous.
+The
 .Ar message-text
-length must be in the range [0, (NL_TEXTMAX)].
+length must be in the range
+.Bo 0 ,
+.Dv NL_TEXTMAX Bc .
 .It Li $quote Ar c
 This line specifies an optional quote character
 .Ar c
 which can be used to surround
 .Ar message-text
 so that trailing space or empty messages are visible in message
-source files.  By default, or if an empty
+source files.
+By default, or if an empty
 .Li $quote
 directive is specified, no quoting of
 .Ar message-text
 will be recognized.
 .El
 .Pp
-Empty lines in message source files are ignored.  The effect of lines
-beginning with any character other than those described above is
-undefined.
+Empty lines in message source files are ignored.
+The effect of lines beginning with any character other than those
+described above is undefined.
 .Pp
 Text strings can contain the following special characters and escape
-sequences.  In addition, if a quote character is defined, it may be
+sequences.
+In addition, if a quote character is defined, it may be
 escaped as well to embed a literal quote character.
 .Pp
-.Bl -tag -width Ds -offset indent
+.Bl -tag -width Ds -offset indent -compact
 .It Li \en
 line feed
 .It Li \et
@@ -147,7 +165,7 @@ octal number in the range [000, 377]
 .El
 .Pp
 A backslash character immediately before the end of the line in a file
-is used to continue the line onto the next line, e.g.:
+is used to continue the line onto the next line, e.g.,
 .Pp
 .Dl 1 This line is continued \e
 .Dl on this line.
@@ -157,7 +175,7 @@ the backslash is ignored.
 .Pp
 The
 .Nm
-utility exits 0 on success, or >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr catclose 3 ,
 .Xr catgets 3 ,

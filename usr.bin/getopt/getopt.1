@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt.1,v 1.5 2000/03/04 22:19:23 aaron Exp $	-*- nroff -*-
+.\"	$OpenBSD: getopt.1,v 1.6 2000/03/07 21:11:09 aaron Exp $	-*- nroff -*-
 .Dd June 21, 1993
 .Dt GETOPT 1
 .Os
@@ -32,14 +32,14 @@ preceded by a
 .Dq \-
 and in its own shell argument;
 each option argument is also in its own shell argument.
-.Sh EXAMPLE
+.Sh EXAMPLES
 The following code fragment shows how one might process the arguments
 for a command that can take the options
-.Op a
+.Fl a
 and
-.Op b ,
+.Fl b ,
 and the option
-.Op o ,
+.Fl o ,
 which requires an argument.
 .Pp
 .Bd -literal -offset indent
@@ -71,14 +71,14 @@ cmd \-a \-o arg file file
 cmd \-oarg -a file file
 cmd \-a \-oarg \-\- file file
 .Ed
-.Sh SEE ALSO
-.Xr sh 1 ,
-.Xr getopt 3
 .Sh DIAGNOSTICS
 .Nm
 prints an error message on the standard error output when it
 encounters an option letter not included in
 .Op optstring .
+.Sh SEE ALSO
+.Xr sh 1 ,
+.Xr getopt 3
 .Sh HISTORY
 Written by Henry Spencer, working from a Bell Labs manual page.
 Behavior believed identical to the Bell version.
@@ -88,7 +88,7 @@ Whatever
 has.
 .Pp
 Arguments containing whitespace or embedded shell metacharacters
-generally will not survive intact;  this looks easy to fix but isn't.
+generally will not survive intact; this looks easy to fix but isn't.
 .Pp
 The error message for an invalid option is identified as coming
 from
