@@ -65,8 +65,6 @@
  * When the value is a character + RR1 status, the character is in the
  * upper 8 bits of the RR1 status.
  */
-#define ZLRB_RING_SIZE 4096			/* ZS line ring buffer size */
-#define	ZLRB_RING_MASK (ZLRB_RING_SIZE-1)	/* mask for same */
 
 /* 0 is reserved (means "no interrupt") */
 #define	ZRING_RINT	1		/* receive data interrupt */
@@ -133,7 +131,8 @@ struct zs_chanstate {
 	 */
 	u_int	cs_rbget;		/* ring buffer `get' index */
 	volatile u_int cs_rbput;	/* ring buffer `put' index */
-	int	cs_rbuf[ZLRB_RING_SIZE];/* type, value pairs */
+	u_int	cs_ringmask;		/* mask, reflecting size of `rbuf' */
+	int	*cs_rbuf;		/* type, value pairs */
 };
 
 /*

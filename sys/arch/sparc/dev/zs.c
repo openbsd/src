@@ -61,6 +61,7 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/malloc.h>
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -242,6 +243,7 @@ zsattach(parent, dev, aux)
 	register struct romaux *ra = &ca->ca_ra;
 	int pri;
 	static int didintr, prevpri;
+	int ringsize;
 
 	if ((addr = zsaddr[zs]) == NULL)
 		addr = zsaddr[zs] = (volatile struct zsdevice *)findzs(zs);
@@ -288,6 +290,7 @@ zsattach(parent, dev, aux)
 	if (ctp == NULL)
 		zs_checkkgdb(unit, cs, tp);
 #endif
+	ringsize = 4096;
 	if (unit == ZS_KBD) {
 		/*
 		 * Keyboard: tell /dev/kbd driver how to talk to us.
@@ -296,7 +299,11 @@ zsattach(parent, dev, aux)
 		tp->t_cflag = CS8;
 		kbd_serial(tp, zsiopen, zsiclose);
 		cs->cs_conk = 1;		/* do L1-A processing */
+		ringsize = 128;
 	}
+	cs->cs_ringmask = ringsize - 1;
+	cs->cs_rbuf = malloc((u_long)ringsize * sizeof(*cs->cs_rbuf),
+	    M_DEVBUF, M_NOWAIT);
 	unit++;
 	cs++;
 	cs->cs_ttyp = tp = ttymalloc();
@@ -312,6 +319,7 @@ zsattach(parent, dev, aux)
 	if (ctp == NULL)
 		zs_checkkgdb(unit, cs, tp);
 #endif
+	ringsize = 4096;
 	if (unit == ZS_MOUSE) {
 		/*
 		 * Mouse: tell /dev/mouse driver how to talk to us.
@@ -319,7 +327,11 @@ zsattach(parent, dev, aux)
 		tp->t_ispeed = tp->t_ospeed = 1200;
 		tp->t_cflag = CS8;
 		ms_serial(tp, zsiopen, zsiclose);
+		ringsize = 128;
 	}
+	cs->cs_ringmask = ringsize - 1;
+	cs->cs_rbuf = malloc((u_long)ringsize * sizeof(*cs->cs_rbuf),
+	    M_DEVBUF, M_NOWAIT);
 }
 
 /*
@@ -730,28 +742,29 @@ zshard(intrarg)
 	struct zs_softc *sc;
 #define	b (a + 1)
 	register volatile struct zschan *zc;
-	register int rr3, intflags = 0, v, i;
+	register int rr3, intflags = 0, v, i, ringmask;
 
 #define ZSHARD_NEED_SOFTINTR	1
 #define ZSHARD_WAS_SERVICED	2
 #define ZSHARD_CHIP_GOTINTR	4
 
 	for (a = zslist; a != NULL; a = b->cs_next) {
+		ringmask = a->cs_ringmask;
 		rr3 = ZS_READ(a->cs_zc, 3);
 		if (rr3 & (ZSRR3_IP_A_RX|ZSRR3_IP_A_TX|ZSRR3_IP_A_STAT)) {
 			intflags |= (ZSHARD_CHIP_GOTINTR|ZSHARD_WAS_SERVICED);
 			zc = a->cs_zc;
 			i = a->cs_rbput;
 			if (rr3 & ZSRR3_IP_A_RX && (v = zsrint(a, zc)) != 0) {
-				a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				a->cs_rbuf[i++ & ringmask] = v;
 				intflags |= ZSHARD_NEED_SOFTINTR;
 			}
 			if (rr3 & ZSRR3_IP_A_TX && (v = zsxint(a, zc)) != 0) {
-				a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				a->cs_rbuf[i++ & ringmask] = v;
 				intflags |= ZSHARD_NEED_SOFTINTR;
 			}
 			if (rr3 & ZSRR3_IP_A_STAT && (v = zssint(a, zc)) != 0) {
-				a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				a->cs_rbuf[i++ & ringmask] = v;
 				intflags |= ZSHARD_NEED_SOFTINTR;
 			}
 			a->cs_rbput = i;
@@ -761,15 +774,15 @@ zshard(intrarg)
 			zc = b->cs_zc;
 			i = b->cs_rbput;
 			if (rr3 & ZSRR3_IP_B_RX && (v = zsrint(b, zc)) != 0) {
-				b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				b->cs_rbuf[i++ & ringmask] = v;
 				intflags |= ZSHARD_NEED_SOFTINTR;
 			}
 			if (rr3 & ZSRR3_IP_B_TX && (v = zsxint(b, zc)) != 0) {
-				b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				b->cs_rbuf[i++ & ringmask] = v;
 				intflags |= ZSHARD_NEED_SOFTINTR;
 			}
 			if (rr3 & ZSRR3_IP_B_STAT && (v = zssint(b, zc)) != 0) {
-				b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				b->cs_rbuf[i++ & ringmask] = v;
 				intflags |= ZSHARD_NEED_SOFTINTR;
 			}
 			b->cs_rbput = i;
@@ -987,10 +1000,11 @@ zssoft(arg)
 	register volatile struct zschan *zc;
 	register struct linesw *line;
 	register struct tty *tp;
-	register int get, n, c, cc, unit, s;
+	register int get, n, c, cc, unit, s, ringmask, ringsize;
 	int	retval = 0;
 
 	for (cs = zslist; cs != NULL; cs = cs->cs_next) {
+		ringmask = cs->cs_ringmask;
 		get = cs->cs_rbget;
 again:
 		n = cs->cs_rbput;	/* atomic */
@@ -1010,15 +1024,16 @@ again:
 		 * lost out; all we can do at this point is trade one
 		 * kind of loss for another).
 		 */
+		ringsize = ringmask + 1;
 		n -= get;
-		if (n > ZLRB_RING_SIZE) {
+		if (n > ringsize) {
 			zsoverrun(unit, &cs->cs_rotime, "ring");
-			get += n - ZLRB_RING_SIZE;
-			n = ZLRB_RING_SIZE;
+			get += n - ringsize;
+			n = ringsize;
 		}
 		while (--n >= 0) {
 			/* race to keep ahead of incoming interrupts */
-			c = cs->cs_rbuf[get++ & ZLRB_RING_MASK];
+			c = cs->cs_rbuf[get++ & ringmask];
 			switch (ZRING_TYPE(c)) {
 
 			case ZRING_RINT:
