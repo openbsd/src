@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.14 1997/03/25 21:24:12 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.15 1997/03/30 18:16:02 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -300,8 +300,10 @@ main(argc, argv)
 
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		p = *ep->utmp.ut_host ? ep->utmp.ut_host : "-";
-		if ((x = strchr(p, ':')) != NULL)
+		if ((x = strchr(p, ':')) != NULL && x - p <= UT_HOSTSIZE)
 			*x++ = '\0';
+		else
+			x = NULL;
 		if (!nflag && isdigit(*p) &&
 		    (long)(l = inet_addr(p)) != -1 &&
 		    (hp = gethostbyaddr((char *)&l, sizeof(l), AF_INET))) {
