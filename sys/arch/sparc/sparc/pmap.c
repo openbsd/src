@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.21 1998/05/10 18:30:40 deraadt Exp $	*/
-/*	$NetBSD: pmap.c,v 1.115 1998/05/06 14:17:53 pk Exp $ */
+/*	$OpenBSD: pmap.c,v 1.22 1998/05/29 16:21:35 jason Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -352,6 +352,9 @@ int	cpmemarr;		/* pmap_next_page() state */
 /*static*/ vm_offset_t	unavail_end;	/* last stolen free physical page */
 /*static*/ vm_offset_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vm_offset_t	virtual_end;	/* last free virtual page number */
+
+void pmap_pinit __P((pmap_t));
+void pmap_release __P((pmap_t));
 
 int mmu_has_hole;
 
@@ -3112,7 +3115,6 @@ pmap_bootstrap4m(void)
 	kernel_iopte_table = (u_int *)p;
 	kernel_iopte_table_pa = VA2PA((caddr_t)kernel_iopte_table);
 	p += (0 - DVMA4M_BASE) / 1024;
-	bzero(kernel_iopte_table, p - (caddr_t) kernel_iopte_table);
 
 	pagetables_start = p;
 	/*
@@ -6275,13 +6277,12 @@ kvm_uncache(va, npages)
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM &&
 			    managed(pa)) {
 				pv_changepte4m(pvhead(pa), 0, SRMMU_PG_C);
-			} else {
-
-				pte &= ~SRMMU_PG_C;
-				setpte4m((vm_offset_t) va, pte);
-				if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
-					cache_flush_page((int)va);
 			}
+			pte &= ~SRMMU_PG_C;
+			setpte4m((vm_offset_t) va, pte);
+			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
+				cache_flush_page((int)va);
+
 		}
 		setcontext4m(ctx);
 
@@ -6297,13 +6298,11 @@ kvm_uncache(va, npages)
 			if ((pte & PG_TYPE) == PG_OBMEM &&
 			    managed(pa)) {
 				pv_changepte4_4c(pvhead(pa), PG_NC, 0);
-			} else {
-
-				pte |= PG_NC;
-				setpte4(va, pte);
-				if ((pte & PG_TYPE) == PG_OBMEM)
-					cache_flush_page((int)va);
-			}
+			} 
+			pte |= PG_NC;
+			setpte4(va, pte);
+			if ((pte & PG_TYPE) == PG_OBMEM)
+				cache_flush_page((int)va);
 		}
 #endif
 	}
