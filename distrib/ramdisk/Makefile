@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/05/30 17:29:39 grr Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/09/05 21:16:58 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -76,7 +76,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 bsd:
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/conf && config ${KERNEL}
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL} && \
-	    make clean && make depend && make
+	    make clean && make
 	cp ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/bsd bsd
 
 bsd.rd:	bsd ${IMAGE} rdsetroot

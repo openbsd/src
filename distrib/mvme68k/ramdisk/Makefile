@@ -54,7 +54,7 @@ bsd.rd: ${IMAGE} bsd rdsetroot
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/mvme68k/conf && config MINIROOT
 	cd ${.CURDIR}/../../../sys/arch/mvme68k/compile/MINIROOT && \
-	    make clean && make depend && make
+	    make clean && make
 	cp ${.CURDIR}/../../../sys/arch/mvme68k/compile/MINIROOT/bsd bsd
 
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown

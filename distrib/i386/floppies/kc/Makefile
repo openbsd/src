@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1997/05/14 18:38:59 niklas Exp $
+#	$OpenBSD: Makefile,v 1.16 1997/09/05 21:16:50 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,7 +21,7 @@ MTREE=		${.CURDIR}/mtree.conf
 bsd:
 	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config INST
 	cd ${.CURDIR}/../../../../sys/arch/i386/compile/INST && \
-	    make clean && make depend && make
+	    make clean && make
 	cp ${.CURDIR}/../../../../sys/arch/i386/compile/INST/bsd bsd
 	strip bsd
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1997/05/24 14:21:00 pefo Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/09/05 21:16:46 deraadt Exp $
 
 # NOTE! We don't do crunched yet!
 
@@ -48,7 +48,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 bsd:
 	cd ${.TOP}/../../sys/arch/arc/conf && config RAMDISK
 	cd ${.TOP}/../../sys/arch/arc/compile/RAMDISK && \
-	    make clean && make depend && make
+	    make clean && make
 	cp ${.TOP}/../../sys/arch/arc/compile/RAMDISK/bsd bsd
 
 rd_setup: 
