@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 1997/04/01 07:35:08 todd Exp $	*/
+/*	$OpenBSD: log.c,v 1.4 2000/06/29 00:23:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -80,7 +80,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR,buf);
+		syslog (LOG_ERR, "%s", buf);
 		closelog ();
 		exit (retval);
 	}
@@ -110,7 +110,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_ERR,buf);
+		syslog (LOG_ERR, "%s", buf);
 		return;
 	}
 	fprintf (stderr,"SUP: %s\n",buf);
@@ -140,7 +140,7 @@ va_dcl
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if (opened) {
-		syslog (LOG_INFO,buf);
+		syslog (LOG_INFO, "%s", buf);
 		return;
 	}
 	printf ("%s\n",buf);
