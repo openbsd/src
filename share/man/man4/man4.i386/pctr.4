@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.7 1998/08/30 23:11:16 downsj Exp $
+.\"	$OpenBSD: pctr.4,v 1.8 1998/09/01 16:38:22 deraadt Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -64,7 +64,7 @@ ioctls (see bellow).
 .Dv pctr_hwc
 contains the actual value of the two hardware counters.
 .Dv pctr_tsc
-is a free-runing, 64-bit cycle counter.  Finally,
+is a free-running, 64-bit cycle counter.  Finally,
 .Dv pctr_idl
 is a 64-bit count of idle-loop iterations.
 
@@ -140,7 +140,7 @@ to count anything.
 .It Dv P5CTR_C
 When this flag is set, the counter attempts to count the number of
 cycles spent servicing a particular event, rather than simply the
-number of occurences of that event.
+number of occurrences of that event.
 .El
 .Pp
 The bottom 6 bits set the particular event counted.  Here is the event
@@ -219,7 +219,7 @@ Breakpoint 2 match
 .It 0x26
 Breakpoint 3 match
 .It 0x27
-Hardware interupts
+Hardware interrupts
 .It 0x28
 Data read or data write
 .It 0x29

@@ -1,5 +1,5 @@
 '\" t
-.\"	$OpenBSD: ksh.1tbl,v 1.8 1998/07/24 20:50:02 deraadt Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.9 1998/09/01 16:38:15 deraadt Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -1293,7 +1293,7 @@ closes its copy of the pipe).
 This can be avoided by redirecting the output to a numbered
 file descriptor (as this also causes the shell to close its copy).
 Note that this behaviour is slightly different from the original Korn shell
-which closes its copy of the write portion of the co-processs output when the
+which closes its copy of the write portion of the co-process output when the
 most recently started co-process (instead of when all sharing co-processes)
 exits.
 .IP \ \ \(bu

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.8 1998/05/24 23:46:59 provos Exp $
+.\" $OpenBSD: ipsec.4,v 1.9 1998/09/01 16:38:20 deraadt Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -113,7 +113,7 @@ For each of the categories there are five possible levels which
 specify the security policy to use in that catagory:
 .Bl -tag -width IPSEC_LEVEL_REQUIRE
 .It IPSEC_LEVEL_BYPASS
-Bypass the default system security policy, this options can only be used
+Bypass the default system security policy. This option can only be used
 by privileged processes.
 This level is necessary for key management daemons like
 .Xr photurisd 8 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.4,v 1.11 1998/08/29 21:12:26 deraadt Exp $
+.\"	$OpenBSD: ipf.4,v 1.12 1998/09/01 16:38:17 deraadt Exp $
 .TH IPF 4
 .SH NAME
 ipf \- packet filtering kernel interface
@@ -102,7 +102,7 @@ Flags which are recognised in fr_pass:
      FR_LOGFIRST     0x000040   /* log only the first packet to match */
      FR_RETRST       0x000080   /* return a TCP RST packet if blocked */
      FR__RETICMP     0x000100   /* return an ICMP packet if blocked */
-     FR_NOMATCH      0x000200   /* no match occured */
+     FR_NOMATCH      0x000200   /* no match occurred */
      FR_ACCOUNT      0x000400   /* count packet bytes */
      FR_KEEPFRAG     0x000800   /* keep fragment information */
      FR_KEEPSTATE    0x001000   /* keep `connection' state information */
