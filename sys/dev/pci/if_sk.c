@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.2 1999/10/03 13:06:30 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.3 1999/10/04 12:21:39 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -598,7 +598,7 @@ int sk_newbuf(sc_if, c, m)
 		m_new->m_len = m_new->m_pkthdr.len = SK_MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
-	m->m_ext.ext_handle = sc_if;
+	m_new->m_ext.ext_handle = sc_if;
 
 	/*
 	 * Adjust alignment so packet payload begins on a
@@ -759,7 +759,7 @@ sk_jfree(m)
 
 	/* calculate the slot this buffer belongs to */
 
-	i = ((vaddr_t)aptr - (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf) / SK_JLEN;
+	i = ((vaddr_t)buf - (vaddr_t)sc_if->sk_cdata.sk_jumbo_buf) / SK_JLEN;
 
 	if ((i < 0) || (i >= SK_JSLOTS))
 		panic("sk_jfree: asked to free buffer that we don't manage!");
