@@ -682,11 +682,6 @@
 ./usr/share/man/cat2
 ./usr/share/man/cat2/alpha
 ./usr/share/man/cat2/amd64
-./usr/share/man/cat2/amd64/x86_64_get_ioperm.0
-./usr/share/man/cat2/amd64/x86_64_get_ldt.0
-./usr/share/man/cat2/amd64/x86_64_iopl.0
-./usr/share/man/cat2/amd64/x86_64_set_ioperm.0
-./usr/share/man/cat2/amd64/x86_64_set_ldt.0
 ./usr/share/man/cat2/i386
 ./usr/share/man/cat3
 ./usr/share/man/cat3/alpha
