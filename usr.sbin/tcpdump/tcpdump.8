@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.30 2002/03/23 01:35:06 frantzen Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.31 2002/05/30 06:18:00 deraadt Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -655,14 +655,16 @@ source or destination address is
 .Ar host .
 .It Cm ifname Ar interface
 True if the packet was logged as coming from the specified interface (applies
-only to packets logged by the PF firewall).
+only to packets logged by
+.Xr pf 4 ).
 .It Cm on Ar interface
 Synonymous with the
 .Ar ifname
 modifier.
 .It Cm rnr Ar num
 True if the packet was logged as matching the specified PF rule number
-(applies only to packets logged by the PF firewall).
+(applies only to packets logged by
+.Xr pf 4 ).
 .It Cm rulenum Ar num
 Synonomous with the
 .Ar rnr
@@ -677,15 +679,16 @@ codes are:
 .Ar normalize ,
 and
 .Ar memory .
-(applies only to packets logged by the PF firewall).
-.It Cm action
-.Ar act
+(applies only to packets logged by
+.Xr pf 4 ).
+.It Cm action Ar act
 True if PF took the specified action when the packet was logged.  Known actions
 are:
 .Ar pass ,
 and
 .Ar block .
-(applies only to packets logged by the PF firewall).
+(applies only to packets logged by
+.Xr pf 4 ).
 .It Xo Cm ip ,
 .Cm arp ,
 .Cm rarp ,
