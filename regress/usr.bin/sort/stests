@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.1 2001/01/12 21:06:17 millert Exp $
+#	$OpenBSD: stests,v 1.2 2001/02/04 21:29:31 ericj Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -192,7 +192,7 @@ xsort E -k 2,2.0
 
 xsort F -k 2,2 -k 1,1 -k 3
 
-sort -c -k 2 in 2>/dev/null && ${TEST}G failed
+sort -c -k 2 in 2>/dev/null && echo ${TEST}G failed
 
 #---------------------------------------------------------------
 TEST=06; echo $TEST	# -t
@@ -893,3 +893,53 @@ $s awk '
 				 count = 0 }
 			{ count++; last1 = $1; last2 = $2 }
 	' out
+
+#---------------------------------------------------------------
+TEST=39; echo $TEST	# sort already sorted dictionary
+
+dict=/usr/share/dict/words
+
+sort -f $dict > out
+
+cmp -s out $dict || echo $TEST failed - sort -f $dict
+
+#---------------------------------------------------------------
+TEST=40; echo "$TEST (long)"    # long lines test
+
+line1="abcdefghijklmnopqrstabcdefghijklmnopqrstabcdefghijklmnopqrstabcdefghij"
+line2="bcdefghijklmnopqrstabcdefghijklmnopqrstabcdefghijklmnopqrstabcdefghijk"
+
+rm -f in out 
+
+# generate two out-of-order long lines (roughly 70 KB each), and try sort
+# them
+awk '
+BEGIN {
+	line1 = "'"${line1}"'"
+	line2 = "'"${line2}"'"
+	for(i=0; i<10; i++) {
+		line1 = line1 line1
+		line2 = line2 line2
+	}
+	print line2 > "in"
+	print line1 > "in"
+
+	print line1 > "out"
+	print line2 > "out"
+}'
+
+xsort "A"
+
+# generate already sorted file using $dict, only append space and
+# long string to each line to make lines longer than usual
+# use only first 200 lines (sort file approx. 14MB)
+cat $dict | awk '
+BEGIN {
+	line = "'"$line1"'"
+	for(i=0; i<10; i++)
+		line = line line
+	idx = 0
+}
+{ print $1 " " line; if (idx++ > 200) exit 0 }' > in
+ln -sf in out
+xsort "B" -f
