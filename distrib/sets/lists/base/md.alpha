@@ -16,8 +16,8 @@
 ./usr/lib/lib45.so.0.0
 ./usr/lib/libacl.so.5.0
 ./usr/lib/libasn1.so.1.0
-./usr/lib/libc.so.28.1
-./usr/lib/libc_r.so.6.1
+./usr/lib/libc.so.28.2
+./usr/lib/libc_r.so.6.2
 ./usr/lib/libcrypto.so.5.1
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.8.0
@@ -407,6 +407,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/bwx.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/cdefs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/cfbreg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/conf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/cpu.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/cpuconf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/db_machdep.ph
@@ -422,6 +423,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ieeefp.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/intr.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/intrcnt.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/kbio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/kcore.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/limits.ph
