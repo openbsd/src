@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.29 2000/10/11 09:14:11 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.30 2001/02/08 18:46:22 itojun Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -133,8 +133,12 @@ struct inpcb {
 #define SR_WAIT           3             /* Waiting for SA */
 	TAILQ_ENTRY(inpcb) inp_tdb_next;
 	struct tdb     *inp_tdb;	/* If tdb_dst matches our dst, use */
-	int	inp_fflowinfo;          /* Foreign flowlabel & priority */
-	int	inp_csumoffset;
+#define	inp_flowinfo	inp_hu.hu_ipv6.ip6_flow
+
+	int	in6p_cksum;
+#ifndef _KERNEL
+#define inp_csumoffset	in6p_cksum
+#endif
 	struct	icmp6_filter *inp_icmp6filt;
 };
 

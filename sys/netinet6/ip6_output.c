@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.20 2001/02/06 01:26:58 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.21 2001/02/08 18:46:23 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
 
 /*
@@ -1379,7 +1379,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 						break;
 
 					case IPV6_CHECKSUM:
-						inp->inp_csumoffset = optval;
+						inp->in6p_cksum = optval;
 						break;
 
 					case IPV6_FAITH:
@@ -1623,7 +1623,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 					break;
 
 				case IPV6_CHECKSUM:
-					optval = inp->inp_csumoffset;
+					optval = inp->in6p_cksum;
 					break;
 
 				case IPV6_FAITH:

@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.c,v 1.31 2001/02/08 16:07:59 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.194 2001/02/08 15:19:12 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.32 2001/02/08 18:46:22 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.195 2001/02/08 15:35:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,12 +101,40 @@
 
 #include <net/net_osdep.h>
 
+/* inpcb members */
+#define in6pcb		inpcb
+#define in6p_laddr	inp_laddr6
+#define in6p_faddr	inp_faddr6
+#define in6p_icmp6filt	inp_icmp6filt
+#define in6p_route	inp_route
+#define in6p_socket	inp_socket
+#define in6p_flags	inp_flags
+#define in6p_moptions	inp_moptions6
+#define in6p_outputopts	inp_outputopts6
+#define in6p_ip6	inp_ipv6
+#define in6p_flowinfo	inp_flowinfo
+#define in6p_sp		inp_sp
+#define in6p_next	inp_next
+#define in6p_prev	inp_prev
+/* macro names */
+#define sotoin6pcb	sotoinpcb
+/* function names */
+#define in6_pcbdetach	in_pcbdetach
+#define in6_rtchange	in_rtchange
+
+/*
+ * for KAME src sync over BSD*'s. XXX: FreeBSD (>=3) are VERY different from
+ * others...
+ */
+#define in6p_ip6_nxt	inp_ipv6.ip6_nxt
+
 extern struct domain inet6domain;
 extern struct ip6protosw inet6sw[];
 extern u_char ip6_protox[];
 
 struct icmp6stat icmp6stat;
 
+extern struct inpcbtable rawin6pcbtable;
 extern int icmp6errppslim;
 static int icmp6errpps_count = 0;
 static struct timeval icmp6errppslim_last;
@@ -140,6 +168,7 @@ static int icmp6_redirect_hiwat = -1;
 static int icmp6_redirect_lowat = -1;
 
 static void icmp6_errcount __P((struct icmp6errstat *, int, int));
+static int icmp6_rip6_input __P((struct mbuf **, int));
 static int icmp6_ratelimit __P((const struct in6_addr *, const int, const int));
 static const char *icmp6_redirect_diag __P((struct in6_addr *,
 	struct in6_addr *, struct in6_addr *));
@@ -1027,7 +1056,7 @@ icmp6_input(mp, offp, proto)
 		break;
 	}
 
-	rip6_input(&m, offp, IPPROTO_ICMPV6);
+	icmp6_rip6_input(&m, *offp);
 	return IPPROTO_DONE;
 
  freeit:
@@ -1805,6 +1834,98 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 }
 
 /*
+ * XXX almost dup'ed code with rip6_input.
+ */
+static int
+icmp6_rip6_input(mp, off)
+	struct	mbuf **mp;
+	int	off;
+{
+	struct mbuf *m = *mp;
+	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+	struct in6pcb *in6p;
+	struct in6pcb *last = NULL;
+	struct sockaddr_in6 rip6src;
+	struct icmp6_hdr *icmp6;
+	struct mbuf *opts = NULL;
+
+#ifndef PULLDOWN_TEST
+	/* this is assumed to be safe. */
+	icmp6 = (struct icmp6_hdr *)((caddr_t)ip6 + off);
+#else
+	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
+	if (icmp6 == NULL) {
+		/* m is already reclaimed */
+		return IPPROTO_DONE;
+	}
+#endif
+
+	bzero(&rip6src, sizeof(rip6src));
+	rip6src.sin6_len = sizeof(struct sockaddr_in6);
+	rip6src.sin6_family = AF_INET6;
+	/* KAME hack: recover scopeid */
+	(void)in6_recoverscope(&rip6src, &ip6->ip6_src, m->m_pkthdr.rcvif);
+
+	for (in6p = rawin6pcbtable.inpt_queue.cqh_first;
+	     in6p != (struct inpcb *)&rawin6pcbtable.inpt_queue;
+	     in6p = in6p->inp_queue.cqe_next)
+	{
+		if (!(in6p->in6p_flags & INP_IPV6))
+			continue;
+		if (in6p->in6p_ip6_nxt != IPPROTO_ICMPV6)
+			continue;
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
+		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
+			continue;
+		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr) &&
+		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
+			continue;
+		if (in6p->in6p_icmp6filt
+		    && ICMP6_FILTER_WILLBLOCK(icmp6->icmp6_type,
+				 in6p->in6p_icmp6filt))
+			continue;
+		if (last) {
+			struct	mbuf *n;
+			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
+				if (last->in6p_flags & IN6P_CONTROLOPTS)
+					ip6_savecontrol(last, &opts, ip6, n);
+				/* strip intermediate headers */
+				m_adj(n, off);
+				if (sbappendaddr(&last->in6p_socket->so_rcv,
+						 (struct sockaddr *)&rip6src,
+						 n, opts) == 0) {
+					/* should notify about lost packet */
+					m_freem(n);
+					if (opts)
+						m_freem(opts);
+				} else
+					sorwakeup(last->in6p_socket);
+				opts = NULL;
+			}
+		}
+		last = in6p;
+	}
+	if (last) {
+		if (last->in6p_flags & IN6P_CONTROLOPTS)
+			ip6_savecontrol(last, &opts, ip6, m);
+		/* strip intermediate headers */
+		m_adj(m, off);
+		if (sbappendaddr(&last->in6p_socket->so_rcv,
+				 (struct sockaddr *)&rip6src,
+				 m, opts) == 0) {
+			m_freem(m);
+			if (opts)
+				m_freem(opts);
+		} else
+			sorwakeup(last->in6p_socket);
+	} else {
+		m_freem(m);
+		ip6stat.ip6s_delivered--;
+	}
+	return IPPROTO_DONE;
+}
+
+/*
  * Reflect the ip6 packet back to the source.
  * OFF points to the icmp6 header, counted from the top of the mbuf.
  */
@@ -2536,6 +2657,98 @@ fail:
 	if (m0)
 		m_freem(m0);
 }
+
+#ifdef HAVE_NRL_INPCB
+#define sotoin6pcb	sotoinpcb
+#define in6pcb		inpcb
+#define in6p_icmp6filt	inp_icmp6filt
+#endif
+/*
+ * ICMPv6 socket option processing.
+ */
+int
+icmp6_ctloutput(op, so, level, optname, mp)
+	int op;
+	struct socket *so;
+	int level, optname;
+	struct mbuf **mp;
+{
+	int error = 0;
+	int optlen;
+	struct in6pcb *in6p = sotoin6pcb(so);
+	struct mbuf *m = *mp;
+
+	optlen = m ? m->m_len : 0;
+
+	if (level != IPPROTO_ICMPV6) {
+		if (op == PRCO_SETOPT && m)
+			(void)m_free(m);
+		return EINVAL;
+	}
+
+	switch(op) {
+	case PRCO_SETOPT:
+		switch (optname) {
+		case ICMP6_FILTER:
+		    {
+			struct icmp6_filter *p;
+
+			if (optlen != sizeof(*p)) {
+				error = EMSGSIZE;
+				break;
+			}
+			p = mtod(m, struct icmp6_filter *);
+			if (!p || !in6p->in6p_icmp6filt) {
+				error = EINVAL;
+				break;
+			}
+			bcopy(p, in6p->in6p_icmp6filt,
+				sizeof(struct icmp6_filter));
+			error = 0;
+			break;
+		    }
+
+		default:
+			error = ENOPROTOOPT;
+			break;
+		}
+		if (m)
+			(void)m_freem(m);
+		break;
+
+	case PRCO_GETOPT:
+		switch (optname) {
+		case ICMP6_FILTER:
+		    {
+			struct icmp6_filter *p;
+
+			if (!in6p->in6p_icmp6filt) {
+				error = EINVAL;
+				break;
+			}
+			*mp = m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(struct icmp6_filter);
+			p = mtod(m, struct icmp6_filter *);
+			bcopy(in6p->in6p_icmp6filt, p,
+				sizeof(struct icmp6_filter));
+			error = 0;
+			break;
+		    }
+
+		default:
+			error = ENOPROTOOPT;
+			break;
+		}
+		break;
+	}
+
+	return(error);
+}
+#ifdef HAVE_NRL_INPCB
+#undef sotoin6pcb
+#undef in6pcb
+#undef in6p_icmp6filt
+#endif
 
 /*
  * Perform rate limit check.

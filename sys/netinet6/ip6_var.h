@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.11 2000/07/12 16:41:31 itojun Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.12 2001/02/08 18:46:23 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -231,6 +231,8 @@ extern int ip6_auto_flowlabel;
 
 struct in6pcb;
 struct inpcb;
+
+int	icmp6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 
 void	ip6_init __P((void));
 void	ip6intr __P((void));

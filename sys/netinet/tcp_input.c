@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.81 2000/12/13 09:47:08 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.82 2001/02/08 18:46:22 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -781,8 +781,6 @@ findpcb:
 #ifdef INET6
 			case AF_INET6:
 				inp->inp_laddr6 = ipv6->ip6_dst;
-				inp->inp_fflowinfo =
-				    htonl(0x0fffffff) & ipv6->ip6_flow;
 				
 				/*inp->inp_options = ip6_srcroute();*/ /* soon. */
 				/*

@@ -113,7 +113,7 @@
 #define in6p_flags	inp_flags
 #define in6p_moptions	inp_moptions6
 #define in6p_route	inp_route6
-#define in6p_flowinfo	inp_fflowinfo
+#define in6p_flowinfo	inp_flowinfo
 #define udp6stat	udpstat
 #define udp6s_opackets	udps_opackets
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.185 2001/02/06 00:22:14 mickey Exp $
+#	$OpenBSD: files,v 1.186 2001/02/08 18:46:21 itojun Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -757,7 +757,7 @@ file kern/subr_pool.c			uvm
 #file netinet6/ipv6_icmp.c		inet6
 #file netinet6/in6_cksum.c		inet6
 file netinet6/in6_pcb.c			inet6
-file netinet6/raw_ipv6.c		inet6
+#file netinet6/raw_ipv6.c		inet6
 #file netinet6/ipv6_input.c   		inet6
 #file netinet6/ipv6_discovery.c		inet6
 #file netinet6/ipv6_addrconf.c		inet6
@@ -792,7 +792,7 @@ file netinet6/mld6.c			inet6
 file netinet6/nd6.c			inet6
 file netinet6/nd6_nbr.c			inet6
 file netinet6/nd6_rtr.c			inet6
-#file netinet6/raw_ip6.c			inet6
+file netinet6/raw_ip6.c			inet6
 #file netinet6/tcp6_debug.c		inet6 & tcp6
 #file netinet6/tcp6_input.c		inet6 & tcp6
 #file netinet6/tcp6_output.c		inet6 & tcp6

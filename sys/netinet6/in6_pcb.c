@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.22 2001/01/06 16:07:45 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.23 2001/02/08 18:46:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -681,7 +681,6 @@ in6_setpeeraddr(inp, nam)
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_port = inp->inp_fport;
 	sin6->sin6_addr = inp->inp_faddr6;
-	sin6->sin6_flowinfo = inp->inp_fflowinfo;
 
 	return 0;
 }
