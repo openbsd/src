@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.6 2000/01/20 12:31:33 d Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.7 2000/01/21 07:10:39 pjanzen Exp $	*/
 /*
  * Grand digital clock for curses compatible terminals
  * Usage: grdc [-s] [n]   -- run for n seconds (default infinity)
@@ -58,6 +58,7 @@ main(argc, argv)
 	int n = 0;
 	struct timeval nowtv;
 	struct timespec delay;
+	char *hc;
 
 	/* revoke privs */
 	setegid(getgid());
@@ -81,6 +82,9 @@ main(argc, argv)
 		init_pair(3, COLOR_WHITE, COLOR_BLACK);
 		attrset(COLOR_PAIR(2));
 	}
+
+	if ((hc = tigetstr("civis")) != 0 && hc != (char *)-1)
+		putp(hc);
 
 	clear();
 	refresh();
@@ -164,6 +168,8 @@ main(argc, argv)
 
 		if (sigtermed) {
 			standend();
+			if ((hc = tigetstr("cnorm")) > 0 && hc != (char *)-1)
+				putp(hc);
 			clear();
 			refresh();
 			endwin();
@@ -172,6 +178,8 @@ main(argc, argv)
 		}
 	} while(--n);
 	standend();
+	if ((hc = tigetstr("cnorm")) > 0 && hc != (char *)-1)
+		putp(hc);
 	clear();
 	refresh();
 	endwin();
@@ -215,4 +223,3 @@ movto(int line, int col)
 {
 	move(line, col);
 }
-
