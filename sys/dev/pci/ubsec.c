@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.73 2001/11/09 03:11:38 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.74 2001/11/14 00:39:46 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -33,7 +33,6 @@
  */
 
 #undef UBSEC_DEBUG
-
 
 /*
  * uBsec 5[56]01, 580x hardware crypto accelerator
@@ -159,6 +158,11 @@ ubsec_attach(parent, self, aux)
 		return;
 	}
 
+	if (!(cmd & PCI_COMMAND_MASTER_ENABLE)) {
+		printf(": failed to enable bus mastering\n");
+		return;
+	}
+
 	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
 		printf(": can't find mem space\n");
@@ -208,6 +212,24 @@ ubsec_attach(parent, self, aux)
 
 	if (sc->sc_flags & UBS_FLAGS_KEY) {
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;
+
+		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
+		    &sc->sc_rng.rng_q.q_mcr, 0))
+			goto skip_rng;
+
+		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_ctx_rngbypass),
+		    &sc->sc_rng.rng_q.q_ctx, 0)) {
+			ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_mcr);
+			goto skip_rng;
+		}
+
+		if (ubsec_dma_malloc(sc, sizeof(u_int32_t) *
+		    UBSEC_RNG_BUFSIZ, &sc->sc_rng.rng_buf, 0)) {
+			ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_ctx);
+			ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_mcr);
+			goto skip_rng;
+		}
+
 		timeout_set(&sc->sc_rngto, ubsec_rng, sc);
 		if (hz >= 100)
 			sc->sc_rnghz = hz / 100;
@@ -215,6 +237,7 @@ ubsec_attach(parent, self, aux)
 			sc->sc_rnghz = 1;
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 		printf(", rng");
+skip_rng:
 	}
 
 	WRITE_REG(sc, BS_CTRL,
@@ -396,9 +419,6 @@ feed1:
 			break;
 		q = SIMPLEQ_FIRST(&sc->sc_queue);
 		WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(q->q_mcr));
-#ifdef UBSEC_DEBUG
-		printf("feed: q->chip %08x %08x\n", q, (u_int32_t)vtophys(q->q_mcr));
-#endif
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
 		--sc->sc_nqueue;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
@@ -859,12 +879,6 @@ ubsec_process(crp)
 			    offsetof(struct ubsec_dmachunk, d_sbuf[j]);
 		j++;
 	}
-#ifdef UBSEC_DEBUG
-	printf("  buf[%x]: %d@%x -> %x\n", vtophys(q->q_mcr),
-	    q->q_mcr->mcr_ipktbuf.pb_len,
-	    q->q_mcr->mcr_ipktbuf.pb_addr,
-	    q->q_mcr->mcr_ipktbuf.pb_next);
-#endif
 
 	if (enccrd == NULL && maccrd != NULL) {
 		q->q_mcr->mcr_opktbuf.pb_addr = 0;
@@ -1003,13 +1017,6 @@ ubsec_process(crp)
 				    offsetof(struct ubsec_dmachunk, d_dbuf[j]);
 			j++;
 		}
-#ifdef UBSEC_DEBUG
-		printf("  buf[%d, %x]: %d@%x -> %x\n", 0,
-		    vtophys(q->q_mcr),
-		    q->q_mcr->mcr_opktbuf.pb_len,
-		    q->q_mcr->mcr_opktbuf.pb_addr,
-		    q->q_mcr->mcr_opktbuf.pb_next);
-#endif
 	}
 
 	q->q_mcr->mcr_cmdctxp = dmap->d_alloc.dma_paddr +
@@ -1247,23 +1254,6 @@ ubsec_rng(vsc)
 	sc->sc_nqueue2++;
 	if (sc->sc_nqueue2 >= UBS_MAX_NQUEUE)
 		goto out;
-
-	if (rng->rng_q.q_mcr.dma_map == NULL) {
-		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
-		    &rng->rng_q.q_mcr, 0))
-			goto out;
-		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_ctx_rngbypass),
-		    &rng->rng_q.q_ctx, 0)) {
-			ubsec_dma_free(sc, &rng->rng_q.q_mcr);
-			goto out;
-		}
-		if (ubsec_dma_malloc(sc, sizeof(u_int32_t) * UBSEC_RNG_BUFSIZ,
-		    &rng->rng_buf, 0)) {
-			ubsec_dma_free(sc, &rng->rng_q.q_ctx);
-			ubsec_dma_free(sc, &rng->rng_q.q_mcr);
-			goto out;
-		}
-	}
 
 	mcr = (struct ubsec_mcr *)rng->rng_q.q_mcr.dma_vaddr;
 	ctx = (struct ubsec_ctx_rngbypass *)rng->rng_q.q_ctx.dma_vaddr;
