@@ -1,11 +1,10 @@
-#	$OpenBSD: README,v 1.2 2001/01/28 23:41:40 niklas Exp $
+#	$OpenBSD: README,v 1.3 2002/04/02 02:06:25 pjanzen Exp $
 #	$NetBSD: README,v 1.2 1995/03/23 08:28:29 cgd Exp $
 #	@(#)README	8.1 (Berkeley) 5/31/93
 
-The potentially offensive fortunes are not installed by default on BSD
-systems.  If you're absolutely, *positively*, without-a-shadow-of-a-doubt
-sure that your user community wants them installed, whack the Makefile
-in the subdirectory datfiles, and do "make all install".
+The potentially offensive fortunes ARE installed by default.  To avoid
+installing them, whack the Makefile in the subdirectory datfiles, and
+do "make all install".
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 	Some years ago, my neighbor Avery said to me: "There has not been an
