@@ -492,6 +492,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/audiovar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/biovar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/cardbus
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/cardbus/cardbus_exrom.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/cardbus/cardbusdevs.ph

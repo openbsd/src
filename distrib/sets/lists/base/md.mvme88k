@@ -391,6 +391,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/cryptodev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/crypto/rijndael.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/biovar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/dec
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/dec/clockvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/dec/mcclockvar.ph

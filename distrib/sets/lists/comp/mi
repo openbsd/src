@@ -103,6 +103,7 @@
 ./usr/include/dev/auconv.h
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/audiovar.h
+./usr/include/dev/biovar.h
 ./usr/include/dev/cardbus
 ./usr/include/dev/cardbus/cardbus_exrom.h
 ./usr/include/dev/cardbus/cardbusdevs.h
