@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 1997/04/27 20:56:10 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/06/29 23:40:46 millert Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
 
-OSRCS=	chared.c common.c el.c emacs.c hist.c key.c map.c parse.c \
-	prompt.c read.c refresh.c search.c sig.c term.c tty.c vi.c \
-	help.c fcns.c
+OSRCS=	chared.c common.c el.c emacs.c fcns.c hist.c key.c map.c parse.c \
+	prompt.c read.c refresh.c search.c sig.c term.c tty.c vi.c help.c
 
 MAN=	editline.3 editrc.5
 

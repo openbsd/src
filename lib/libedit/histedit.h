@@ -1,5 +1,5 @@
-/*	$OpenBSD: histedit.h,v 1.4 1997/03/14 05:12:50 millert Exp $	*/
-/*	$NetBSD: histedit.h,v 1.4 1997/01/14 04:17:24 lukem Exp $	*/
+/*	$OpenBSD: histedit.h,v 1.5 1997/06/29 23:40:49 millert Exp $	*/
+/*	$NetBSD: histedit.h,v 1.5 1997/04/11 17:52:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -57,9 +57,9 @@ typedef struct editline EditLine;
  * For user-defined function interface
  */
 typedef struct lineinfo {
-    __const char *buffer;
-    __const char *cursor;
-    __const char *lastchar;
+    const char *buffer;
+    const char *cursor;
+    const char *lastchar;
 } LineInfo;
 
 
@@ -88,7 +88,7 @@ void		 el_end		__P((EditLine *));
 /*
  * Get a line, a character or push a string back in the input queue
  */
-__const char    *el_gets	__P((EditLine *, int *));
+const char	*el_gets	__P((EditLine *, int *));
 int		 el_getc	__P((EditLine *, char *));
 void		 el_push	__P((EditLine *, const char *));
 
@@ -135,7 +135,7 @@ void		 el_resize	__P((EditLine *));
 /*
  * User-defined function interface.
  */
-__const LineInfo *el_line	__P((EditLine *));
+const LineInfo   *el_line	__P((EditLine *));
 int   		  el_insertstr	__P((EditLine *, char *));
 void		  el_deletestr	__P((EditLine *, int));
 
@@ -147,7 +147,7 @@ typedef struct history History;
 
 typedef struct HistEvent {
     int 	  num;
-    __const char *str;
+    const char   *str;
 } HistEvent;
 
 /*
@@ -156,7 +156,7 @@ typedef struct HistEvent {
 History *		history_init	__P((void));
 void 			history_end	__P((History *));
 
-__const HistEvent *	history		__P((History *, int, ...));
+const HistEvent *	history		__P((History *, int, ...));
 
 #define H_FUNC		 0	/* , UTSL		*/
 #define H_EVENT		 1	/* , const int);	*/

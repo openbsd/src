@@ -1,5 +1,5 @@
-/*	$OpenBSD: search.c,v 1.3 1997/03/14 05:13:01 millert Exp $	*/
-/*	$NetBSD: refresh.h,v 1.2 1997/01/11 06:48:08 lukem Exp $	*/
+/*	$OpenBSD: search.c,v 1.4 1997/06/29 23:40:51 millert Exp $	*/
+/*	$NetBSD: search.c,v 1.4 1997/01/23 14:02:47 mrg Exp $		*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: search.c,v 1.3 1997/03/14 05:13:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: search.c,v 1.4 1997/06/29 23:40:51 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 

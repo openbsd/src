@@ -1,5 +1,5 @@
-/*	$OpenBSD: history.c,v 1.4 1997/03/14 05:12:51 millert Exp $	*/
-/*	$NetBSD: history.c,v 1.4 1997/01/23 14:02:45 mrg Exp $	*/
+/*	$OpenBSD: history.c,v 1.5 1997/06/29 23:40:49 millert Exp $	*/
+/*	$NetBSD: history.c,v 1.5 1997/04/11 17:52:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: history.c,v 1.4 1997/03/14 05:12:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: history.c,v 1.5 1997/06/29 23:40:49 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: history.c,v 1.4 1997/03/14 05:12:51 millert Exp
 
 #include <string.h>
 #include <stdlib.h>
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -575,7 +575,7 @@ history_next_string(h, str)
  *	User interface to history functions.
  */
 const HistEvent *
-#if __STDC__
+#ifdef __STDC__
 history(History *h, int fun, ...)
 #else
 history(va_alist)
@@ -587,7 +587,7 @@ history(va_alist)
     const char *str;
     static HistEvent sev = { 0, "" };
 
-#if __STDC__
+#ifdef __STDC__
     va_start(va, fun);
 #else
     History *h; 

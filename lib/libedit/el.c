@@ -1,5 +1,5 @@
-/*	$OpenBSD: el.c,v 1.5 1997/03/14 05:12:45 millert Exp $	*/
-/*	$NetBSD: el.c,v 1.3 1997/01/17 01:03:33 lukem Exp $	*/
+/*	$OpenBSD: el.c,v 1.6 1997/06/29 23:40:48 millert Exp $	*/
+/*	$NetBSD: el.c,v 1.6 1997/04/24 18:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-static char rcsid[] = "$OpenBSD: el.c,v 1.5 1997/03/14 05:12:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: el.c,v 1.6 1997/06/29 23:40:48 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -54,12 +54,11 @@ static char rcsid[] = "$OpenBSD: el.c,v 1.5 1997/03/14 05:12:45 millert Exp $";
 #include <sys/param.h>
 #include <string.h>
 #include <stdlib.h>
-#if __STDC__
+#ifdef __STDC__
 # include <stdarg.h>
 #else
 # include <varargs.h>
 #endif
-#include <unistd.h>
 #include "el.h"
 
 /* el_init():
@@ -159,7 +158,7 @@ el_reset(el)
  *	set the editline parameters
  */
 public int
-#if __STDC__
+#ifdef __STDC__
 el_set(EditLine *el, int op, ...)
 #else
 el_set(va_alist)
@@ -168,7 +167,7 @@ el_set(va_alist)
 {
     va_list va;
     int rv;
-#if __STDC__
+#ifdef __STDC__
     va_start(va, op);
 #else
     EditLine *el;
@@ -311,7 +310,9 @@ el_source(el, fname)
 	return -1;
 
     while ((ptr = fgetln(fp, &len)) != NULL) {
-	ptr[len - 1] = '\0';
+	if (ptr[len - 1] == '\n')
+		--len;
+	ptr[len] = '\0';
 	if (parse_line(el, ptr) == -1) {
 	    (void)fclose(fp);
 	    return -1;

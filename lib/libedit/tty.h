@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty.h,v 1.3 1997/03/14 05:13:10 millert Exp $	*/
-/*	$NetBSD: tty.h,v 1.2 1997/01/11 06:48:18 lukem Exp $	*/
+/*	$OpenBSD: tty.h,v 1.4 1997/06/29 23:40:53 millert Exp $	*/
+/*	$NetBSD: tty.h,v 1.4 1997/04/11 21:38:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -148,7 +148,12 @@
 # endif /* IEXTEN != 0 */
 #endif /* convex || __convex__ */
 
-
+/*
+ * So that we don't lose job control.
+ */
+#ifdef __SVR4
+# undef CSWTCH
+#endif
 
 #ifndef _POSIX_VDISABLE
 # define _POSIX_VDISABLE ((unsigned char) -1)
@@ -449,8 +454,8 @@
 
 typedef struct { 
     char *t_name;
-    int  t_setmask;
-    int  t_clrmask;
+    u_int t_setmask;
+    u_int t_clrmask;
 } ttyperm_t[NN_IO][M_NN];
 
 typedef unsigned char ttychar_t[NN_IO][C_NCC];
