@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.31 1999/07/15 14:07:41 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.32 1999/07/15 14:11:05 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -386,7 +386,7 @@ sys_execve(p, v, retval)
 #endif
 	/* Kill shared memory and unmap old program */
 #ifdef SYSVSHM
-	if (vm->vm_shm)
+	if (vm->vm_shm && vm->vm_refcnt == 1)
 		shmexit(vm);
 #endif
 	vm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
