@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.229 2004/12/29 14:21:01 danh Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.230 2004/12/29 15:09:30 danh Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -259,13 +259,15 @@ pfctl_clear_interface_flags(int dev, int opts)
 {
 	struct pfioc_iface	pi;
 
-	bzero(&pi, sizeof(pi));
-	pi.pfiio_flags = PFI_IFLAG_SETABLE_MASK;
+	if ((opts & PF_OPT_NOACTION) == 0) {
+		bzero(&pi, sizeof(pi));
+		pi.pfiio_flags = PFI_IFLAG_SETABLE_MASK;
 
-	if (ioctl(dev, DIOCCLRIFFLAG, &pi))
-		err(1, "DIOCCLRIFFLAG");
-	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "pf: interface flags reset\n");
+		if (ioctl(dev, DIOCCLRIFFLAG, &pi))
+			err(1, "DIOCCLRIFFLAG");
+		if ((opts & PF_OPT_QUIET) == 0)
+			fprintf(stderr, "pf: interface flags reset\n");
+	}
 	return (0);
 }
 
@@ -1712,8 +1714,7 @@ main(int argc, char *argv[])
 		rulesopt = NULL;
 	}
 
-	if ((rulesopt != NULL) && (!*anchorname)
-	    && (opts & PF_OPT_NOACTION) == 0)
+	if ((rulesopt != NULL) && (!*anchorname))
 		if (pfctl_clear_interface_flags(dev, opts | PF_OPT_QUIET))
 			error = 1;
 
