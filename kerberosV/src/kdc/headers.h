@@ -32,7 +32,7 @@
  */
 
 /* 
- * $KTH: headers.h,v 1.13 2001/08/22 20:30:25 assar Exp $ 
+ * $KTH: headers.h,v 1.15 2002/09/10 20:04:46 joda Exp $ 
  */
 
 #ifndef __HEADERS_H__
@@ -41,6 +41,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -85,12 +86,6 @@
 #include <getarg.h>
 #include <base64.h>
 #include <parse_units.h>
-/* openssl/des.h does not have des_random_key, so we don't use it */
-#ifdef HAVE_OPENSSL
-#include <des.h>
-#else
-#include <des.h>
-#endif
 #include <krb5.h>
 #include <krb5_locl.h>
 #include <hdb.h>

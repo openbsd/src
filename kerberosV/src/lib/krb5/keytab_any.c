@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2001-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: keytab_any.c,v 1.4 2001/06/24 02:22:33 assar Exp $");
+RCSID("$KTH: keytab_any.c,v 1.7 2002/10/21 13:36:59 joda Exp $");
 
 struct any_data {
     krb5_keytab kt;
@@ -42,13 +42,15 @@ struct any_data {
 };
 
 static void
-free_list (struct any_data *a)
+free_list (krb5_context context, struct any_data *a)
 {
     struct any_data *next;
 
     for (; a != NULL; a = next) {
 	next = a->next;
 	free (a->name);
+	if(a->kt)
+	    krb5_kt_close(context, a->kt);
 	free (a);
     }
 }
@@ -91,7 +93,7 @@ any_resolve(krb5_context context, const char *name, krb5_keytab id)
     id->data = a0;
     return 0;
  fail:
-    free_list (a0);
+    free_list (context, a0);
     return ret;
 }
 
@@ -112,7 +114,7 @@ any_close (krb5_context context,
 {
     struct any_data *a = id->data;
 
-    free_list (a);
+    free_list (context, a);
     return 0;
 }
 
@@ -160,7 +162,7 @@ any_next_entry (krb5_context context,
 	ret = krb5_kt_next_entry(context, ed->a->kt, entry, &ed->cursor);
 	if (ret == 0)
 	    return 0;
-	else if (ret == KRB5_CC_END) {
+	else if (ret == KRB5_KT_END) {
 	    ret2 = krb5_kt_end_seq_get (context, ed->a->kt, &ed->cursor);
 	    if (ret2)
 		return ret2;
@@ -171,11 +173,11 @@ any_next_entry (krb5_context context,
 	    }
 	    if (ed->a == NULL) {
 		krb5_clear_error_string (context);
-		return KRB5_CC_END;
+		return KRB5_KT_END;
 	    }
 	} else
 	    return ret;
-    } while (ret == KRB5_CC_END);
+    } while (ret == KRB5_KT_END);
     return ret;
 }
 
@@ -195,6 +197,51 @@ any_end_seq_get(krb5_context context,
     return ret;
 }
 
+static krb5_error_code
+any_add_entry(krb5_context context,
+	      krb5_keytab id,
+	      krb5_keytab_entry *entry)
+{
+    struct any_data *a = id->data;
+    krb5_error_code ret;
+    while(a != NULL) {
+	ret = krb5_kt_add_entry(context, a->kt, entry);
+	if(ret != 0 && ret != KRB5_KT_NOWRITE) {
+	    krb5_set_error_string(context, "failed to add entry to %s", 
+				  a->name);
+	    return ret;
+	}
+	a = a->next;
+    }
+    return 0;
+}
+
+static krb5_error_code
+any_remove_entry(krb5_context context,
+		 krb5_keytab id,
+		 krb5_keytab_entry *entry)
+{
+    struct any_data *a = id->data;
+    krb5_error_code ret;
+    int found = 0;
+    while(a != NULL) {
+	ret = krb5_kt_remove_entry(context, a->kt, entry);
+	if(ret == 0)
+	    found++;
+	else {
+	    if(ret != KRB5_KT_NOWRITE && ret != KRB5_KT_NOTFOUND) {
+		krb5_set_error_string(context, "failed to remove entry from %s", 
+				      a->name);
+		return ret;
+	    }
+	}
+	a = a->next;
+    }
+    if(!found)
+	return KRB5_KT_NOTFOUND;
+    return 0;
+}
+
 const krb5_kt_ops krb5_any_ops = {
     "ANY",
     any_resolve,
@@ -204,6 +251,6 @@ const krb5_kt_ops krb5_any_ops = {
     any_start_seq_get,
     any_next_entry,
     any_end_seq_get,
-    NULL, /* add_entry */
-    NULL  /* remote_entry */
+    any_add_entry,
+    any_remove_entry
 };

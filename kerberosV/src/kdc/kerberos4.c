@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$KTH: kerberos4.c,v 1.38 2001/08/21 23:00:16 assar Exp $");
+RCSID("$KTH: kerberos4.c,v 1.45 2003/03/17 05:37:55 assar Exp $");
 
 #ifdef KRB4
 
@@ -78,18 +78,18 @@ valid_princ(krb5_context context, krb5_principal princ)
 
     ret = krb5_unparse_name(context, princ, &s);
     if (ret)
-	return 0;
+	return FALSE;
     ret = db_fetch(princ, &ent);
     if (ret) {
 	kdc_log(7, "Lookup %s failed: %s", s,
 		krb5_get_err_text (context, ret));
 	free(s);
-	return 0;
+	return FALSE;
     }
     kdc_log(7, "Lookup %s succeeded", s);
     free(s);
     free_ent(ent);
-    return 1;
+    return TRUE;
 }
 
 krb5_error_code
@@ -106,67 +106,6 @@ db_fetch4(const char *name, const char *instance, const char *realm,
     ret = db_fetch(p, ent);
     krb5_free_principal(context, p);
     return ret;
-}
-
-krb5_error_code
-get_des_key(hdb_entry *principal, krb5_boolean is_server, 
-	    krb5_boolean prefer_afs_key, Key **ret_key)
-{
-    Key *v5_key = NULL, *v4_key = NULL, *afs_key = NULL, *server_key = NULL;
-    int i;
-    krb5_enctype etypes[] = { ETYPE_DES_CBC_MD5, 
-			      ETYPE_DES_CBC_MD4, 
-			      ETYPE_DES_CBC_CRC };
-
-    for(i = 0;
-	i < sizeof(etypes)/sizeof(etypes[0])
-	    && (v5_key == NULL || v4_key == NULL || 
-		afs_key == NULL || server_key == NULL);
-	++i) {
-	Key *key = NULL;
-	while(hdb_next_enctype2key(context, principal, etypes[i], &key) == 0) {
-	    if(key->salt == NULL) {
-		if(v5_key == NULL)
-		    v5_key = key;
-	    } else if(key->salt->type == hdb_pw_salt && 
-		      key->salt->salt.length == 0) {
-		if(v4_key == NULL)
-		    v4_key = key;
-	    } else if(key->salt->type == hdb_afs3_salt) {
-		if(afs_key == NULL)
-		    afs_key = key;
-	    } else if(server_key == NULL)
-		server_key = key;
-	}
-    }
-
-    if(prefer_afs_key) {
-	if(afs_key)
-	    *ret_key = afs_key;
-	else if(v4_key)
-	    *ret_key = v4_key;
-	else if(v5_key)
-	    *ret_key = v5_key;
-	else if(is_server && server_key)
-	    *ret_key = server_key;
-	else
-	    return KERB_ERR_NULL_KEY;
-    } else {
-	if(v4_key)
-	    *ret_key = v4_key;
-	else if(afs_key)
-	    *ret_key = afs_key;
-	else  if(v5_key)
-	    *ret_key = v5_key;
-	else if(is_server && server_key)
-	    *ret_key = server_key;
-	else
-	    return KERB_ERR_NULL_KEY;
-    }
-
-    if((*ret_key)->key.keyvalue.length == 0)
-	return KERB_ERR_NULL_KEY;
-    return 0;
 }
 
 #define RCHECK(X, L) if(X){make_err_reply(reply, KFAILURE, "Packet too short"); goto L;}
@@ -208,7 +147,7 @@ do_version4(unsigned char *buf,
     sp = krb5_storage_from_mem(buf, len);
     RCHECK(krb5_ret_int8(sp, &pvno), out);
     if(pvno != 4){
-	kdc_log(0, "Protocol version mismatch (%d)", pvno);
+	kdc_log(0, "Protocol version mismatch (krb4) (%d)", pvno);
 	make_err_reply(reply, KDC_PKT_VER, NULL);
 	goto out;
     }
@@ -231,7 +170,7 @@ do_version4(unsigned char *buf,
 	snprintf (server_name, sizeof(server_name),
 		  "%s.%s@%s", sname, sinst, v4_realm);
 	
-	kdc_log(0, "AS-REQ %s from %s for %s",
+	kdc_log(0, "AS-REQ (krb4) %s from %s for %s",
 		client_name, from, server_name);
 
 	ret = db_fetch4(name, inst, realm, &client);
@@ -325,12 +264,12 @@ do_version4(unsigned char *buf,
 			      sname, sinst, skey->key.keyvalue.data);
 	
 	    create_ciph(&cipher, session, sname, sinst, v4_realm,
-			life, server->kvno, &ticket, kdc_time, 
+			life, server->kvno % 256, &ticket, kdc_time, 
 			ckey->key.keyvalue.data);
 	    memset(&session, 0, sizeof(session));
 	    r = create_auth_reply(name, inst, realm, req_time, 0, 
 				  client->pw_end ? *client->pw_end : 0, 
-				  client->kvno, &cipher);
+				  client->kvno % 256, &cipher);
 	    krb5_data_copy(reply, r->dat, r->length);
 	    memset(&cipher, 0, sizeof(cipher));
 	    memset(&ticket, 0, sizeof(ticket));
@@ -354,7 +293,7 @@ do_version4(unsigned char *buf,
 	ret = krb5_425_conv_principal(context, "krbtgt", realm, v4_realm,
 				      &tgt_princ);
 	if(ret){
-	    kdc_log(0, "Converting krbtgt principal: %s", 
+	    kdc_log(0, "Converting krbtgt principal (krb4): %s", 
 		    krb5_get_err_text(context, ret));
 	    make_err_reply(reply, KFAILURE, 
 			   "Failed to convert v4 principal (krbtgt)");
@@ -365,7 +304,7 @@ do_version4(unsigned char *buf,
 	if(ret){
 	    char *s;
 	    s = kdc_log_msg(0, "Ticket-granting ticket not "
-			    "found in database: krbtgt.%s@%s: %s", 
+			    "found in database (krb4): krbtgt.%s@%s: %s", 
 			    realm, v4_realm,
 			    krb5_get_err_text(context, ret));
 	    make_err_reply(reply, KFAILURE, s);
@@ -373,9 +312,9 @@ do_version4(unsigned char *buf,
 	    goto out2;
 	}
 	
-	if(tgt->kvno != kvno){
-	    kdc_log(0, "tgs-req with old kvno %d (current %d) for "
-		    "krbtgt.%s@%s", kvno, tgt->kvno, realm, v4_realm);
+	if(tgt->kvno % 256 != kvno){
+	    kdc_log(0, "tgs-req (krb4) with old kvno %d (current %d) for "
+		    "krbtgt.%s@%s", kvno, tgt->kvno % 256, realm, v4_realm);
 	    make_err_reply(reply, KDC_AUTH_EXP,
 			   "old krbtgt kvno used");
 	    goto out2;
@@ -383,7 +322,7 @@ do_version4(unsigned char *buf,
 
 	ret = get_des_key(tgt, TRUE, FALSE, &tkey);
 	if(ret){
-	    kdc_log(0, "no suitable DES key for krbtgt");
+	    kdc_log(0, "no suitable DES key for krbtgt (krb4)");
 	    /* XXX */
 	    make_err_reply(reply, KDC_NULL_KEY, 
 			   "no suitable DES key for krbtgt");
@@ -393,7 +332,7 @@ do_version4(unsigned char *buf,
 	RCHECK(krb5_ret_int8(sp, &ticket_len), out2);
 	RCHECK(krb5_ret_int8(sp, &req_len), out2);
 	
-	pos = sp->seek(sp, ticket_len + req_len, SEEK_CUR);
+	pos = krb5_storage_seek(sp, ticket_len + req_len, SEEK_CUR);
 	
 	memset(&auth, 0, sizeof(auth));
 	memcpy(&auth.dat, buf, pos);
@@ -420,11 +359,18 @@ do_version4(unsigned char *buf,
 		  "%s.%s@%s",
 		  sname, sinst, v4_realm);
 
-	kdc_log(0, "TGS-REQ %s.%s@%s from %s for %s",
+	kdc_log(0, "TGS-REQ (krb4) %s.%s@%s from %s for %s",
 		ad.pname, ad.pinst, ad.prealm, from, server_name);
 	
 	if(strcmp(ad.prealm, realm)){
-	    kdc_log(0, "Can't hop realms %s -> %s", realm, ad.prealm);
+	    kdc_log(0, "Can't hop realms (krb4) %s -> %s", realm, ad.prealm);
+	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
+			   "Can't hop realms");
+	    goto out2;
+	}
+
+	if (!enable_v4_cross_realm && strcmp(realm, v4_realm) != 0) {
+	    kdc_log(0, "krb4 Cross-realm %s -> %s disabled", realm, v4_realm);
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
 			   "Can't hop realms");
 	    goto out2;
@@ -438,7 +384,7 @@ do_version4(unsigned char *buf,
 	}
 
 	if(strcmp(sname, "changepw") == 0){
-	    kdc_log(0, "Bad request for changepw ticket");
+	    kdc_log(0, "Bad request for changepw ticket (krb4)");
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, 
 			   "Can't authorize password change based on TGT");
 	    goto out2;
@@ -448,7 +394,8 @@ do_version4(unsigned char *buf,
 	ret = db_fetch4(ad.pname, ad.pinst, ad.prealm, &client);
 	if(ret){
 	    char *s;
-	    s = kdc_log_msg(0, "Client not found in database: %s.%s@%s: %s", 
+	    s = kdc_log_msg(0, "Client not found in database: (krb4) "
+			    "%s.%s@%s: %s",
 			    ad.pname, ad.pinst, ad.prealm,
 			    krb5_get_err_text(context, ret));
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, s);
@@ -460,7 +407,7 @@ do_version4(unsigned char *buf,
 	ret = db_fetch4(sname, sinst, v4_realm, &server);
 	if(ret){
 	    char *s;
-	    s = kdc_log_msg(0, "Server not found in database: %s: %s",
+	    s = kdc_log_msg(0, "Server not found in database (krb4): %s: %s",
 			    server_name, krb5_get_err_text(context, ret));
 	    make_err_reply(reply, KERB_ERR_PRINCIPAL_UNKNOWN, s);
 	    free(s);
@@ -478,7 +425,7 @@ do_version4(unsigned char *buf,
 
 	ret = get_des_key(server, TRUE, FALSE, &skey);
 	if(ret){
-	    kdc_log(0, "no suitable DES key for server");
+	    kdc_log(0, "no suitable DES key for server (krb4)");
 	    /* XXX */
 	    make_err_reply(reply, KDC_NULL_KEY, 
 			   "no suitable DES key for server");
@@ -506,7 +453,7 @@ do_version4(unsigned char *buf,
 			      sname, sinst, skey->key.keyvalue.data);
 	    
 	    create_ciph(&cipher, session, sname, sinst, v4_realm,
-			life, server->kvno, &ticket,
+			life, server->kvno % 256, &ticket,
 			kdc_time, &ad.session);
 
 	    memset(&session, 0, sizeof(session));
@@ -529,7 +476,7 @@ do_version4(unsigned char *buf,
     case AUTH_MSG_ERR_REPLY:
 	break;
     default:
-	kdc_log(0, "Unknown message type: %d from %s", 
+	kdc_log(0, "Unknown message type (krb4): %d from %s", 
 		msg_type, from);
 	
 	make_err_reply(reply, KFAILURE, "Unknown message type");
@@ -553,30 +500,11 @@ out:
     return 0;
 }
 
+#else /* KRB4 */
 
-#define ETYPE_DES_PCBC 17 /* XXX */
+#include <krb5-v4compat.h>
 
-krb5_error_code
-encrypt_v4_ticket(void *buf, size_t len, des_cblock *key, EncryptedData *reply)
-{
-    des_key_schedule schedule;
-
-    reply->etype = ETYPE_DES_PCBC;
-    reply->kvno = NULL;
-    reply->cipher.length = len;
-    reply->cipher.data = malloc(len);
-    if(len != 0 && reply->cipher.data == NULL)
-	return ENOMEM;
-    des_set_key(key, schedule);
-    des_pcbc_encrypt(buf,
-		     reply->cipher.data,
-		     len,
-		     schedule,
-		     key,
-		     DES_ENCRYPT);
-    memset(schedule, 0, sizeof(schedule));
-    return 0;
-}
+#endif /* KRB4 */
 
 krb5_error_code
 encode_v4_ticket(void *buf, size_t len, const EncTicketPart *et,
@@ -632,7 +560,7 @@ encode_v4_ticket(void *buf, size_t len, const EncTicketPart *et,
 		    break;
 		}
 	}
-	sp->store(sp, tmp, sizeof(tmp));
+	krb5_storage_write(sp, tmp, sizeof(tmp));
     }
 
     if((et->key.keytype != ETYPE_DES_CBC_MD5 &&
@@ -640,7 +568,7 @@ encode_v4_ticket(void *buf, size_t len, const EncTicketPart *et,
 	et->key.keytype != ETYPE_DES_CBC_CRC) || 
        et->key.keyvalue.length != 8)
 	return -1;
-    sp->store(sp, et->key.keyvalue.data, 8);
+    krb5_storage_write(sp, et->key.keyvalue.data, 8);
     
     {
 	time_t start = et->starttime ? *et->starttime : et->authtime;
@@ -665,4 +593,64 @@ encode_v4_ticket(void *buf, size_t len, const EncTicketPart *et,
     return 0;
 }
 
-#endif /* KRB4 */
+krb5_error_code
+get_des_key(hdb_entry *principal, krb5_boolean is_server, 
+	    krb5_boolean prefer_afs_key, Key **ret_key)
+{
+    Key *v5_key = NULL, *v4_key = NULL, *afs_key = NULL, *server_key = NULL;
+    int i;
+    krb5_enctype etypes[] = { ETYPE_DES_CBC_MD5, 
+			      ETYPE_DES_CBC_MD4, 
+			      ETYPE_DES_CBC_CRC };
+
+    for(i = 0;
+	i < sizeof(etypes)/sizeof(etypes[0])
+	    && (v5_key == NULL || v4_key == NULL || 
+		afs_key == NULL || server_key == NULL);
+	++i) {
+	Key *key = NULL;
+	while(hdb_next_enctype2key(context, principal, etypes[i], &key) == 0) {
+	    if(key->salt == NULL) {
+		if(v5_key == NULL)
+		    v5_key = key;
+	    } else if(key->salt->type == hdb_pw_salt && 
+		      key->salt->salt.length == 0) {
+		if(v4_key == NULL)
+		    v4_key = key;
+	    } else if(key->salt->type == hdb_afs3_salt) {
+		if(afs_key == NULL)
+		    afs_key = key;
+	    } else if(server_key == NULL)
+		server_key = key;
+	}
+    }
+
+    if(prefer_afs_key) {
+	if(afs_key)
+	    *ret_key = afs_key;
+	else if(v4_key)
+	    *ret_key = v4_key;
+	else if(v5_key)
+	    *ret_key = v5_key;
+	else if(is_server && server_key)
+	    *ret_key = server_key;
+	else
+	    return KERB_ERR_NULL_KEY;
+    } else {
+	if(v4_key)
+	    *ret_key = v4_key;
+	else if(afs_key)
+	    *ret_key = afs_key;
+	else  if(v5_key)
+	    *ret_key = v5_key;
+	else if(is_server && server_key)
+	    *ret_key = server_key;
+	else
+	    return KERB_ERR_NULL_KEY;
+    }
+
+    if((*ret_key)->key.keyvalue.length == 0)
+	return KERB_ERR_NULL_KEY;
+    return 0;
+}
+

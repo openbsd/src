@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,11 +32,14 @@
  */
 
 #include "kpasswd_locl.h"
-RCSID("$KTH: kpasswdd.c,v 1.52 2001/07/02 16:27:09 assar Exp $");
+RCSID("$KTH: kpasswdd.c,v 1.54 2002/12/02 14:31:52 joda Exp $");
 
 #include <kadm5/admin.h>
-
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
 #include <hdb.h>
+#include <kadm5/private.h>
 
 static krb5_context context;
 static krb5_log_facility *log_facility;
@@ -445,7 +448,7 @@ doit (krb5_keytab keytab, int port)
     maxfd = -1;
     FD_ZERO(&real_fdset);
     for (i = 0; i < n; ++i) {
-	int sa_size;
+	int sa_size = sizeof(__ss);
 
 	krb5_addr2sockaddr (context, &addrs.val[i], sa, &sa_size, port);
 	

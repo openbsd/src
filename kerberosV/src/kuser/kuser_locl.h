@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: kuser_locl.h,v 1.12 1999/12/02 17:05:01 joda Exp $ */
+/* $KTH: kuser_locl.h,v 1.13 2003/01/21 14:13:51 nectar Exp $ */
 
 #ifndef __KUSER_LOCL_H__
 #define __KUSER_LOCL_H__
@@ -85,6 +85,7 @@
 #include <sys/ioccom.h>
 #endif
 #include <kafs.h>
+#include "crypto-headers.h" /* for des_read_pw_string */
 
 #include <sys/wait.h>
 

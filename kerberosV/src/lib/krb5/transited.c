@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: transited.c,v 1.8 2001/05/14 06:14:52 assar Exp $");
+RCSID("$KTH: transited.c,v 1.10 2003/04/16 16:11:27 lha Exp $");
 
 /* this is an attempt at one of the most horrible `compression'
    schemes that has ever been invented; it's so amazingly brain-dead
@@ -166,22 +166,25 @@ expand_realms(krb5_context context,
     for(r = realms; r; r = r->next){
 	if(r->trailing_dot){
 	    char *tmp;
+	    size_t len = strlen(r->realm) + strlen(prev_realm) + 1;
+
 	    if(prev_realm == NULL)
 		prev_realm = client_realm;
-	    tmp = realloc(r->realm, strlen(r->realm) + strlen(prev_realm) + 1);
+	    tmp = realloc(r->realm, len);
 	    if(tmp == NULL){
 		free_realms(realms);
 		krb5_set_error_string (context, "malloc: out of memory");
 		return ENOMEM;
 	    }
 	    r->realm = tmp;
-	    strlcat(r->realm, prev_realm, 
-		    strlen(r->realm) + strlen(prev_realm) + 1);
+	    strlcat(r->realm, prev_realm, len);
 	}else if(r->leading_slash && !r->leading_space && prev_realm){
 	    /* yet another exception: if you use x500-names, the
                leading realm doesn't have to be "quoted" with a space */
 	    size_t len = strlen(r->realm) + strlen(prev_realm) + 1;
 	    char *tmp;
+	    size_t len = strlen(r->realm) + strlen(prev_realm) + 1;
+
 	    tmp = malloc(len);
 	    if(tmp == NULL){
 		free_realms(realms);
@@ -320,8 +323,9 @@ krb5_domain_x500_decode(krb5_context context,
     if(ret)
 	return ret;
     
-    /* remove empty components */
+    /* remove empty components and count realms */
     q = &r;
+    *num_realms = 0;
     for(p = r; p; ){
 	if(p->realm[0] == '\0'){
 	    free(p->realm);
@@ -331,22 +335,20 @@ krb5_domain_x500_decode(krb5_context context,
 	}else{
 	    q = &p->next;
 	    p = p->next;
+	    (*num_realms)++;
 	}
     }
+    if (*num_realms < 0 || *num_realms + 1 > UINT_MAX/sizeof(**realms))
+	return ERANGE;
+
     {
 	char **R;
-	*realms = NULL;
-	*num_realms = 0;
+	R = malloc((*num_realms + 1) * sizeof(*R));
+	if (R == NULL)
+	    return ENOMEM;
+	*realms = R;
 	while(r){
-	    R = realloc(*realms, (*num_realms + 1) * sizeof(**realms));
-	    if(R == NULL) {
-		free(*realms);
-		krb5_set_error_string (context, "malloc: out of memory");
-		return ENOMEM;
-	    }
-	    R[*num_realms] = r->realm;
-	    (*num_realms)++;
-	    *realms = R;
+	    *R++ = r->realm;
 	    p = r->next;
 	    free(r);
 	    r = p;
@@ -371,10 +373,10 @@ krb5_domain_x500_encode(char **realms, int num_realms, krb5_data *encoding)
     *s = '\0';
     for(i = 0; i < num_realms; i++){
 	if(i && i < num_realms - 1)
-	    strlcat(s, ",", len+1);
+	    strlcat(s, ",", len + 1);
 	if(realms[i][0] == '/')
-	    strlcat(s, " ", len+1);
-	strlcat(s, realms[i], len+1);
+	    strlcat(s, " ", len + 1);
+	strlcat(s, realms[i], len + 1);
     }
     encoding->data = s;
     encoding->length = strlen(s);

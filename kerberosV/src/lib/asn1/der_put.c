@@ -33,13 +33,14 @@
 
 #include "der_locl.h"
 
-RCSID("$KTH: der_put.c,v 1.24 2001/01/29 08:31:27 assar Exp $");
+RCSID("$KTH: der_put.c,v 1.28 2003/04/17 07:12:24 lha Exp $");
 
 /*
  * All encoding functions take a pointer `p' to first position in
  * which to write, from the right, `len' which means the maximum
- * number of characters we are able to write and return an int
- * indicating how many actually got written, or <0 in case of errors.
+ * number of characters we are able to write.  The function returns
+ * the number of characters written in `size' (if non-NULL).
+ * The return value is 0 or an error.
  */
 
 static int
@@ -111,14 +112,12 @@ der_put_int (unsigned char *p, size_t len, int val, size_t *size)
 int
 der_put_length (unsigned char *p, size_t len, size_t val, size_t *size)
 {
+    if (len < 1)
+	return ASN1_OVERFLOW;
     if (val < 128) {
-	if (len < 1)
-	    return ASN1_OVERFLOW;
-	else {
-	    *p = val;
-	    *size = 1;
-	    return 0;
-	}
+	*p = val;
+	*size = 1;
+	return 0;
     } else {
 	size_t l;
 	int e;
@@ -158,6 +157,36 @@ der_put_octet_string (unsigned char *p, size_t len,
     len -= data->length;
     memcpy (p+1, data->data, data->length);
     *size = data->length;
+    return 0;
+}
+
+int
+der_put_oid (unsigned char *p, size_t len,
+	     const oid *data, size_t *size)
+{
+    unsigned char *base = p;
+    int n;
+
+    for (n = data->length - 1; n >= 2; --n) {
+	unsigned u = data->components[n];
+
+	if (len < 1)
+	    return ASN1_OVERFLOW;
+	*p-- = u % 128;
+	u /= 128;
+	--len;
+	while (u > 0) {
+	    if (len < 1)
+		return ASN1_OVERFLOW;
+	    *p-- = 128 + u % 128;
+	    u /= 128;
+	    --len;
+	}
+    }
+    if (len < 1)
+	return ASN1_OVERFLOW;
+    *p-- = 40 * data->components[0] + data->components[1];
+    *size = base - p;
     return 0;
 }
 
@@ -246,6 +275,31 @@ encode_unsigned (unsigned char *p, size_t len, const unsigned *data,
 }
 
 int
+encode_enumerated (unsigned char *p, size_t len, const unsigned *data,
+		   size_t *size)
+{
+    unsigned num = *data;
+    size_t ret = 0;
+    size_t l;
+    int e;
+    
+    e = der_put_int (p, len, num, &l);
+    if(e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_Enumerated, &l);
+    if (e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    *size = ret;
+    return 0;
+}
+
+int
 encode_general_string (unsigned char *p, size_t len, 
 		       const general_string *data, size_t *size)
 {
@@ -294,18 +348,46 @@ encode_octet_string (unsigned char *p, size_t len,
 }
 
 int
+encode_oid(unsigned char *p, size_t len,
+	   const oid *k, size_t *size)
+{
+    size_t ret = 0;
+    size_t l;
+    int e;
+
+    e = der_put_oid (p, len, k, &l);
+    if (e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    e = der_put_length_and_tag (p, len, l, UNIV, PRIM, UT_OID, &l);
+    if (e)
+	return e;
+    p -= l;
+    len -= l;
+    ret += l;
+    *size = ret;
+    return 0;
+}
+
+int
 time2generalizedtime (time_t t, octet_string *s)
 {
      struct tm *tm;
+     size_t len;
 
-     s->data = malloc(16);
+     len = 15;
+
+     s->data = malloc(len + 1);
      if (s->data == NULL)
 	 return ENOMEM;
-     s->length = 15;
+     s->length = len;
      tm = gmtime (&t);
-     snprintf (s->data, 16, "%04d%02d%02d%02d%02d%02dZ", tm->tm_year + 1900,
-	      tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,
-	      tm->tm_sec);
+     snprintf (s->data, len + 1, "%04d%02d%02d%02d%02d%02dZ", 
+	       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, 
+	       tm->tm_hour, tm->tm_min, tm->tm_sec);
+
      return 0;
 }
 

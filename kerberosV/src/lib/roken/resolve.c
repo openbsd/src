@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -45,9 +45,10 @@
 
 #include <assert.h>
 
-RCSID("$KTH: resolve.c,v 1.28 2001/08/07 21:57:01 assar Exp $");
+RCSID("$Id: resolve.c,v 1.6 2003/05/11 03:40:00 hin Exp $");
 
-#if defined(HAVE_RES_SEARCH) && defined(HAVE_DN_EXPAND)
+#undef HAVE_RES_NSEARCH
+#if (defined(HAVE_RES_SEARCH) || defined(HAVE_RES_NSEARCH)) && defined(HAVE_DN_EXPAND)
 
 #define DECL(X) {#X, T_##X}
 
@@ -110,14 +111,238 @@ dns_free_data(struct dns_reply *r)
     free (r);
 }
 
-static struct dns_reply*
-parse_reply(unsigned char *data, int len)
+static int
+parse_record(const unsigned char *data, const unsigned char *end_data, 
+	     const unsigned char **pp, struct resource_record **rr)
 {
-    unsigned char *p;
-    char host[128];
+    int type, class, ttl, size;
     int status;
-    size_t l;
-    
+    char host[MAXDNAME];
+    const unsigned char *p = *pp;
+    status = dn_expand(data, end_data, p, host, sizeof(host));
+    if(status < 0) 
+	return -1;
+    if (p + status + 10 > end_data)
+	return -1;
+    p += status;
+    type = (p[0] << 8) | p[1];
+    p += 2;
+    class = (p[0] << 8) | p[1];
+    p += 2;
+    ttl = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+    p += 4;
+    size = (p[0] << 8) | p[1];
+    p += 2;
+
+    if (p + size > end_data)
+	return -1;
+
+    *rr = calloc(1, sizeof(**rr));
+    if(*rr == NULL) 
+	return -1;
+    (*rr)->domain = strdup(host);
+    if((*rr)->domain == NULL) {
+	free(*rr);
+	return -1;
+    }
+    (*rr)->type = type;
+    (*rr)->class = class;
+    (*rr)->ttl = ttl;
+    (*rr)->size = size;
+    switch(type){
+    case T_NS:
+    case T_CNAME:
+    case T_PTR:
+	status = dn_expand(data, end_data, p, host, sizeof(host));
+	if(status < 0) {
+	    free(*rr);
+	    return -1;
+	}
+	(*rr)->u.txt = strdup(host);
+	if((*rr)->u.txt == NULL) {
+	    free(*rr);
+	    return -1;
+	}
+	break;
+    case T_MX:
+    case T_AFSDB:{
+	size_t hostlen;
+
+	status = dn_expand(data, end_data, p + 2, host, sizeof(host));
+	if(status < 0){
+	    free(*rr);
+	    return -1;
+	}
+	if (status + 2 > size) {
+	    free(*rr);
+	    return -1;
+	}
+
+	hostlen = strlen(host);
+	(*rr)->u.mx = (struct mx_record*)malloc(sizeof(struct mx_record) + 
+						hostlen);
+	if((*rr)->u.mx == NULL) {
+	    free(*rr);
+	    return -1;
+	}
+	(*rr)->u.mx->preference = (p[0] << 8) | p[1];
+	strlcpy((*rr)->u.mx->domain, host, hostlen + 1);
+	break;
+    }
+    case T_SRV:{
+	size_t hostlen;
+	status = dn_expand(data, end_data, p + 6, host, sizeof(host));
+	if(status < 0){
+	    free(*rr);
+	    return -1;
+	}
+	if (status + 6 > size) {
+	    free(*rr);
+	    return -1;
+	}
+
+	hostlen = strlen(host);
+	(*rr)->u.srv = 
+	    (struct srv_record*)malloc(sizeof(struct srv_record) + 
+				       hostlen);
+	if((*rr)->u.srv == NULL) {
+	    free(*rr);
+	    return -1;
+	}
+	(*rr)->u.srv->priority = (p[0] << 8) | p[1];
+	(*rr)->u.srv->weight = (p[2] << 8) | p[3];
+	(*rr)->u.srv->port = (p[4] << 8) | p[5];
+	strlcpy((*rr)->u.srv->target, host, hostlen + 1);
+	break;
+    }
+    case T_TXT:{
+	if(size == 0 || size < *p + 1) {
+	    free(*rr);
+	    return -1;
+	}
+	(*rr)->u.txt = (char*)malloc(*p + 1);
+	if((*rr)->u.txt == NULL) {
+	    free(*rr);
+	    return -1;
+	}
+	strncpy((*rr)->u.txt, (char*)p + 1, *p);
+	(*rr)->u.txt[*p] = '\0';
+	break;
+    }
+    case T_KEY : {
+	size_t key_len;
+
+	if (size < 4) {
+	    free(*rr);
+	    return -1;
+	}
+
+	key_len = size - 4;
+	(*rr)->u.key = malloc (sizeof(*(*rr)->u.key) + key_len - 1);
+	if ((*rr)->u.key == NULL) {
+	    free(*rr);
+	    return -1;
+	}
+
+	(*rr)->u.key->flags     = (p[0] << 8) | p[1];
+	(*rr)->u.key->protocol  = p[2];
+	(*rr)->u.key->algorithm = p[3];
+	(*rr)->u.key->key_len   = key_len;
+	memcpy ((*rr)->u.key->key_data, p + 4, key_len);
+	break;
+    }
+    case T_SIG : {
+	size_t sig_len, hostlen;
+
+	if(size <= 18) {
+	    free(*rr);
+	    return -1;
+	}
+	status = dn_expand (data, end_data, p + 18, host, sizeof(host));
+	if (status < 0) {
+	    free(*rr);
+	    return -1;
+	}
+	if (status + 18 > size) {
+	    free(*rr);
+	    return -1;
+	}
+
+	/* the signer name is placed after the sig_data, to make it
+           easy to free this struture; the size calculation below
+           includes the zero-termination if the structure itself.
+	   don't you just love C?
+	*/
+	sig_len = size - 18 - status;
+	hostlen = strlen(host);
+	(*rr)->u.sig = malloc(sizeof(*(*rr)->u.sig)
+			      + hostlen + sig_len);
+	if ((*rr)->u.sig == NULL) {
+	    free(*rr);
+	    return -1;
+	}
+	(*rr)->u.sig->type           = (p[0] << 8) | p[1];
+	(*rr)->u.sig->algorithm      = p[2];
+	(*rr)->u.sig->labels         = p[3];
+	(*rr)->u.sig->orig_ttl       = (p[4] << 24) | (p[5] << 16)
+	    | (p[6] << 8) | p[7];
+	(*rr)->u.sig->sig_expiration = (p[8] << 24) | (p[9] << 16)
+	    | (p[10] << 8) | p[11];
+	(*rr)->u.sig->sig_inception  = (p[12] << 24) | (p[13] << 16)
+	    | (p[14] << 8) | p[15];
+	(*rr)->u.sig->key_tag        = (p[16] << 8) | p[17];
+	(*rr)->u.sig->sig_len        = sig_len;
+	memcpy ((*rr)->u.sig->sig_data, p + 18 + status, sig_len);
+	(*rr)->u.sig->signer         = &(*rr)->u.sig->sig_data[sig_len];
+	strlcpy((*rr)->u.sig->signer, host, hostlen + 1);
+	break;
+    }
+
+    case T_CERT : {
+	size_t cert_len;
+
+	if (size < 5) {
+	    free(*rr);
+	    return -1;
+	}
+
+	cert_len = size - 5;
+	(*rr)->u.cert = malloc (sizeof(*(*rr)->u.cert) + cert_len - 1);
+	if ((*rr)->u.cert == NULL) {
+	    free(*rr);
+	    return -1;
+	}
+
+	(*rr)->u.cert->type      = (p[0] << 8) | p[1];
+	(*rr)->u.cert->tag       = (p[2] << 8) | p[3];
+	(*rr)->u.cert->algorithm = p[4];
+	(*rr)->u.cert->cert_len  = cert_len;
+	memcpy ((*rr)->u.cert->cert_data, p + 5, cert_len);
+	break;
+    }
+    default:
+	(*rr)->u.data = (unsigned char*)malloc(size);
+	if(size != 0 && (*rr)->u.data == NULL) {
+	    free(*rr);
+	    return -1;
+	}
+	memcpy((*rr)->u.data, p, size);
+    }
+    *pp = p + size;
+    return 0;
+}
+
+#ifndef TEST_RESOLVE
+static
+#endif
+struct dns_reply*
+parse_reply(const unsigned char *data, size_t len)
+{
+    const unsigned char *p;
+    int status;
+    int i;
+    char host[MAXDNAME];
+    const unsigned char *end_data = data + len;
     struct dns_reply *r;
     struct resource_record **rr;
     
@@ -134,7 +359,11 @@ parse_reply(unsigned char *data, int len)
     memcpy(&r->h, p, 12); /* XXX this will probably be mostly garbage */
     p += 12;
 #endif
-    status = dn_expand(data, data + len, p, host, sizeof(host));
+    if(ntohs(r->h.qdcount) != 1) {
+	free(r);
+	return NULL;
+    }
+    status = dn_expand(data, end_data, p, host, sizeof(host));
     if(status < 0){
 	dns_free_data(r);
 	return NULL;
@@ -144,181 +373,36 @@ parse_reply(unsigned char *data, int len)
 	dns_free_data(r);
 	return NULL;
     }
+    if (p + status + 4 > end_data) {
+	dns_free_data(r);
+	return NULL;
+    }
     p += status;
     r->q.type = (p[0] << 8 | p[1]);
     p += 2;
     r->q.class = (p[0] << 8 | p[1]);
     p += 2;
+    
     rr = &r->head;
-    while(p < data + len){
-	int type, class, ttl, size;
-	status = dn_expand(data, data + len, p, host, sizeof(host));
-	if(status < 0){
+    for(i = 0; i < ntohs(r->h.ancount); i++) {
+	if(parse_record(data, end_data, &p, rr) != 0) {
 	    dns_free_data(r);
 	    return NULL;
 	}
-	p += status;
-	type = (p[0] << 8) | p[1];
-	p += 2;
-	class = (p[0] << 8) | p[1];
-	p += 2;
-	ttl = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
-	p += 4;
-	size = (p[0] << 8) | p[1];
-	p += 2;
-	*rr = (struct resource_record*)calloc(1, 
-					      sizeof(struct resource_record));
-	if(*rr == NULL) {
+	rr = &(*rr)->next;
+    }
+    for(i = 0; i < ntohs(r->h.nscount); i++) {
+	if(parse_record(data, end_data, &p, rr) != 0) {
 	    dns_free_data(r);
 	    return NULL;
 	}
-	(*rr)->domain = strdup(host);
-	if((*rr)->domain == NULL) {
+	rr = &(*rr)->next;
+    }
+    for(i = 0; i < ntohs(r->h.arcount); i++) {
+	if(parse_record(data, end_data, &p, rr) != 0) {
 	    dns_free_data(r);
 	    return NULL;
 	}
-	(*rr)->type = type;
-	(*rr)->class = class;
-	(*rr)->ttl = ttl;
-	(*rr)->size = size;
-	switch(type){
-	case T_NS:
-	case T_CNAME:
-	case T_PTR:
-	    status = dn_expand(data, data + len, p, host, sizeof(host));
-	    if(status < 0){
-		dns_free_data(r);
-		return NULL;
-	    }
-	    (*rr)->u.txt = strdup(host);
-	    if((*rr)->u.txt == NULL) {
-		dns_free_data(r);
-		return NULL;
-	    }
-	    break;
-	case T_MX:
-	case T_AFSDB:{
-	    status = dn_expand(data, data + len, p + 2, host, sizeof(host));
-	    if(status < 0){
-		dns_free_data(r);
-		return NULL;
-	    }
-	    l = strlen(host);		/* NUL in struct */
-	    (*rr)->u.mx = (struct mx_record*)malloc(sizeof(struct mx_record) + 
-						    l);
-	    if((*rr)->u.mx == NULL) {
-		dns_free_data(r);
-		return NULL;
-	    }
-	    (*rr)->u.mx->preference = (p[0] << 8) | p[1];
-	    strlcpy((*rr)->u.mx->domain, host, l + 1);
-	    break;
-	}
-	case T_SRV:{
-	    status = dn_expand(data, data + len, p + 6, host, sizeof(host));
-	    if(status < 0){
-		dns_free_data(r);
-		return NULL;
-	    }
-	    l = strlen(host);		/* NUL in struct */
-	    (*rr)->u.srv = 
-		(struct srv_record*)malloc(sizeof(struct srv_record) + l);
-	    if((*rr)->u.srv == NULL) {
-		dns_free_data(r);
-		return NULL;
-	    }
-	    (*rr)->u.srv->priority = (p[0] << 8) | p[1];
-	    (*rr)->u.srv->weight = (p[2] << 8) | p[3];
-	    (*rr)->u.srv->port = (p[4] << 8) | p[5];
-	    strlcpy((*rr)->u.srv->target, host, l + 1);
-	    break;
-	}
-	case T_TXT:{
-	    (*rr)->u.txt = (char*)malloc(size + 1);
-	    if((*rr)->u.txt == NULL) {
-		dns_free_data(r);
-		return NULL;
-	    }
-	    strncpy((*rr)->u.txt, (char*)p + 1, *p);
-	    (*rr)->u.txt[*p] = 0;
-	    break;
-	}
-	case T_KEY : {
-	    size_t key_len;
-
-	    key_len = size - 4;
-	    (*rr)->u.key = malloc (sizeof(*(*rr)->u.key) + key_len - 1);
-	    if ((*rr)->u.key == NULL) {
-		dns_free_data (r);
-		return NULL;
-	    }
-
-	    (*rr)->u.key->flags     = (p[0] << 8) | p[1];
-	    (*rr)->u.key->protocol  = p[2];
-	    (*rr)->u.key->algorithm = p[3];
-	    (*rr)->u.key->key_len   = key_len;
-	    memcpy ((*rr)->u.key->key_data, p + 4, key_len);
-	    break;
-	}
-	case T_SIG : {
-	    size_t sig_len;
-
-	    status = dn_expand (data, data + len, p + 18, host, sizeof(host));
-	    if (status < 0) {
-		dns_free_data (r);
-		return NULL;
-	    }
-	    sig_len = len - 18 - status;
-	    l = strlen(host);		/* NUL in struct */
-	    (*rr)->u.sig = malloc(sizeof(*(*rr)->u.sig)
-				  + l + sig_len);
-	    if ((*rr)->u.sig == NULL) {
-		dns_free_data (r);
-		return NULL;
-	    }
-	    (*rr)->u.sig->type           = (p[0] << 8) | p[1];
-	    (*rr)->u.sig->algorithm      = p[2];
-	    (*rr)->u.sig->labels         = p[3];
-	    (*rr)->u.sig->orig_ttl       = (p[4] << 24) | (p[5] << 16)
-		| (p[6] << 8) | p[7];
-	    (*rr)->u.sig->sig_expiration = (p[8] << 24) | (p[9] << 16)
-		| (p[10] << 8) | p[11];
-	    (*rr)->u.sig->sig_inception  = (p[12] << 24) | (p[13] << 16)
-		| (p[14] << 8) | p[15];
-	    (*rr)->u.sig->key_tag        = (p[16] << 8) | p[17];
-	    (*rr)->u.sig->sig_len        = sig_len;
-	    memcpy ((*rr)->u.sig->sig_data, p + 18 + status, sig_len);
-	    (*rr)->u.sig->signer         = &(*rr)->u.sig->sig_data[sig_len];
-	    strlcpy((*rr)->u.sig->signer, host, l + 1);
-	    break;
-	}
-
-	case T_CERT : {
-	    size_t cert_len;
-
-	    cert_len = size - 5;
-	    (*rr)->u.cert = malloc (sizeof(*(*rr)->u.cert) + cert_len - 1);
-	    if ((*rr)->u.cert == NULL) {
-		dns_free_data (r);
-		return NULL;
-	    }
-
-	    (*rr)->u.cert->type      = (p[0] << 8) | p[1];
-	    (*rr)->u.cert->tag       = (p[2] << 8) | p[3];
-	    (*rr)->u.cert->algorithm = p[4];
-	    (*rr)->u.cert->cert_len  = cert_len;
-	    memcpy ((*rr)->u.cert->cert_data, p + 5, cert_len);
-	    break;
-	}
-	default:
-	    (*rr)->u.data = (unsigned char*)malloc(size);
-	    if(size != 0 && (*rr)->u.data == NULL) {
-		dns_free_data(r);
-		return NULL;
-	    }
-	    memcpy((*rr)->u.data, p, size);
-	}
-	p += size;
 	rr = &(*rr)->next;
     }
     *rr = NULL;
@@ -330,24 +414,46 @@ dns_lookup_int(const char *domain, int rr_class, int rr_type)
 {
     unsigned char reply[1024];
     int len;
-    struct dns_reply *r = NULL;
+#ifdef HAVE_RES_NSEARCH
+    struct __res_state stat;
+    memset(&stat, 0, sizeof(stat));
+    if(res_ninit(&stat))
+	return NULL; /* is this the best we can do? */
+#elif defined(HAVE__RES)
     u_long old_options = 0;
+#endif
     
     if (_resolve_debug) {
+#ifdef HAVE_RES_NSEARCH
+	stat.options |= RES_DEBUG;
+#elif defined(HAVE__RES)
         old_options = _res.options;
 	_res.options |= RES_DEBUG;
+#endif
 	fprintf(stderr, "dns_lookup(%s, %d, %s)\n", domain,
 		rr_class, dns_type_to_string(rr_type));
     }
+#ifdef HAVE_RES_NSEARCH
+    len = res_nsearch(&stat, domain, rr_class, rr_type, reply, sizeof(reply));
+#else
     len = res_search(domain, rr_class, rr_type, reply, sizeof(reply));
+#endif
     if (_resolve_debug) {
+#if defined(HAVE__RES) && !defined(HAVE_RES_NSEARCH)
         _res.options = old_options;
+#endif
 	fprintf(stderr, "dns_lookup(%s, %d, %s) --> %d\n",
 		domain, rr_class, dns_type_to_string(rr_type), len);
     }
-    if (len >= 0)
-	r = parse_reply(reply, len);
-    return r;
+#ifdef HAVE_RES_NSEARCH
+    res_nclose(&stat);
+#endif    
+    if(len < 0) {
+	return NULL;
+    } else {
+	len = min(len, sizeof(reply));
+	return parse_reply(reply, len);
+    }
 }
 
 struct dns_reply *
@@ -388,7 +494,8 @@ dns_srv_order(struct dns_reply *r)
     int num_srv = 0;
 
 #if defined(HAVE_INITSTATE) && defined(HAVE_SETSTATE)
-    char state[256], *oldstate;
+    int state[256 / sizeof(int)];
+    char *oldstate;
 #endif
 
     for(rr = r->head; rr; rr = rr->next) 
@@ -417,7 +524,7 @@ dns_srv_order(struct dns_reply *r)
     qsort(srvs, num_srv, sizeof(*srvs), compare_srv);
 
 #if defined(HAVE_INITSTATE) && defined(HAVE_SETSTATE)
-    oldstate = initstate(time(NULL), state, sizeof(state));
+    oldstate = initstate(time(NULL), (char*)state, sizeof(state));
 #endif
 
     headp = &r->head;
@@ -503,7 +610,7 @@ main(int argc, char **argv)
 	dns_srv_order(r);
 
     for(rr = r->head; rr;rr=rr->next){
-	printf("%s %s %d ", rr->domain, dns_type_to_string(rr->type), rr->ttl);
+	printf("%-30s %-5s %-6d ", rr->domain, dns_type_to_string(rr->type), rr->ttl);
 	switch(rr->type){
 	case T_NS:
 	case T_CNAME:

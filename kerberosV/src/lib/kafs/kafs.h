@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: kafs.h,v 1.34 2001/07/15 07:24:33 assar Exp $ */
+/* $KTH: kafs.h,v 1.39.2.1 2003/04/23 18:03:21 lha Exp $ */
 
 #ifndef __KAFS_H
 #define __KAFS_H
@@ -144,9 +144,16 @@ int k_afs_cell_of_file __P((const char *path, char *cell, int len));
 #define KRB5_H_INCLUDED
 #endif
 
+void kafs_set_verbose __P((void (*kafs_verbose)(void *, const char *), void *));
+int kafs_settoken_rxkad __P((const char *, struct ClearToken *,
+			     void *ticket, size_t ticket_len));
 #ifdef KRB_H_INCLUDED
 int kafs_settoken __P((const char*, uid_t, CREDENTIALS*));
 #endif
+#ifdef KRB5_H_INCLUDED
+int kafs_settoken5 __P((krb5_context, const char*, uid_t, krb5_creds*));
+#endif
+
 
 #ifdef KRB5_H_INCLUDED
 krb5_error_code krb5_afslog_uid __P((krb5_context context,
@@ -191,6 +198,11 @@ krb5_error_code krb5_realm_of_cell __P((const char *cell, char **realm));
 #define _PATH_OPENAFS_DEBIAN_CELLSERVDB 	_PATH_OPENAFS_DEBIAN_VICE "CellServDB"
 #define _PATH_OPENAFS_DEBIAN_THESECELLS		_PATH_OPENAFS_DEBIAN_VICE "TheseCells"
 #endif
+
+#define _PATH_ARLA_DEBIAN_VICE			"/etc/arla/"
+#define _PATH_ARLA_DEBIAN_THISCELL		_PATH_ARLA_DEBIAN_VICE "ThisCell"
+#define _PATH_ARLA_DEBIAN_CELLSERVDB		_PATH_ARLA_DEBIAN_VICE "CellServDB"
+#define _PATH_ARLA_DEBIAN_THESECELLS		_PATH_ARLA_DEBIAN_VICE "TheseCells"
 
 extern int _kafs_debug;
 

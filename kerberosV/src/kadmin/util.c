@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "kadmin_locl.h"
 #include <parse_units.h>
 
-RCSID("$KTH: util.c,v 1.36 2001/08/27 23:07:36 assar Exp $");
+RCSID("$KTH: util.c,v 1.39 2003/04/14 11:55:27 lha Exp $");
 
 /*
  * util.c - functions for parsing, unparsing, and editing different
@@ -556,6 +556,7 @@ get_response(const char *prompt, const char *def, char *buf, size_t len)
     osig = signal(SIGINT, interrupt);
     if(setjmp(jmpbuf)) {
 	signal(SIGINT, osig);
+	printf("\n");
 	return 1;
     }
 
@@ -586,7 +587,7 @@ hex2n (char c)
     static char hexdigits[] = "0123456789abcdef";
     const char *p;
 
-    p = strchr (hexdigits, tolower((int)c));
+    p = strchr (hexdigits, tolower((unsigned char)c));
     if (p == NULL)
 	return -1;
     else

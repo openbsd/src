@@ -32,7 +32,7 @@
  */
 
 /* 
- * $KTH: ktutil_locl.h,v 1.17 2001/08/22 20:30:18 assar Exp $
+ * $KTH: ktutil_locl.h,v 1.18 2002/09/10 20:03:45 joda Exp $
  */
 
 #ifndef __KTUTIL_LOCL_H__
@@ -54,12 +54,7 @@
 #include <parse_time.h>
 #include <roken.h>
 
-#ifdef HAVE_OPENSSL
-#include <des.h>
-#else
-#include <des.h>
-#endif
-
+#include "crypto-headers.h"
 #include <krb5.h>
 #include <kadm5/admin.h>
 #include <kadm5/kadm5_err.h>

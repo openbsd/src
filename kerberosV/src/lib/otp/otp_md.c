@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,20 +33,12 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-RCSID("$KTH: otp_md.c,v 1.15 2001/08/22 20:30:32 assar Exp $");
+RCSID("$KTH: otp_md.c,v 1.18 2003/04/16 16:19:33 lha Exp $");
 #endif
 #include "otp_locl.h"
 
 #include "otp_md.h"
-#ifdef HAVE_OPENSSL
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
-#else
-#include <md4.h>
-#include <md5.h>
-#include <sha.h>
-#endif
+#include "crypto-headers.h"
 
 /*
  * Compress len bytes from md into key
@@ -69,6 +61,24 @@ compressmd (OtpKey key, unsigned char *md, size_t len)
   }
 }
 
+#ifdef HAVE_OLD_HASH_NAMES
+static void
+otp_md4_final (void *res, struct md4 *m)
+{
+    MD4_Final(res, m);
+}
+#undef MD4_Final
+#define MD4_Final otp_md4_final
+
+static void
+otp_md5_final (void *res, struct md5 *m)
+{
+    MD5_Final(res, m);
+}
+#undef MD5_Final
+#define MD5_Final otp_md5_final
+#endif
+
 static int
 otp_md_init (OtpKey key,
 	     const char *pwd,
@@ -87,9 +97,9 @@ otp_md_init (OtpKey key,
   p = malloc (len + 1);
   if (p == NULL)
     return -1;
-  strlcpy (p, seed, len+1);
+  strlcpy (p, seed, len + 1);
   strlwr (p);
-  strlcat (p, pwd, len+1);
+  strlcat (p, pwd, len + 1);
   (*init)(arg);
   (*update)(arg, p, len);
   (*final)(res, arg);

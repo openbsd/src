@@ -1,4 +1,35 @@
-.\" $KTH: kadmin.8,v 1.5 2001/06/08 21:27:57 joda Exp $
+.\" Copyright (c) 2000 - 2003 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden). 
+.\" All rights reserved. 
+.\"
+.\" Redistribution and use in source and binary forms, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met: 
+.\"
+.\" 1. Redistributions of source code must retain the above copyright 
+.\"    notice, this list of conditions and the following disclaimer. 
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright 
+.\"    notice, this list of conditions and the following disclaimer in the 
+.\"    documentation and/or other materials provided with the distribution. 
+.\"
+.\" 3. Neither the name of the Institute nor the names of its contributors 
+.\"    may be used to endorse or promote products derived from this software 
+.\"    without specific prior written permission. 
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+.\" SUCH DAMAGE. 
+.\" 
+.\" $KTH: kadmin.8,v 1.10 2003/03/31 10:42:32 lha Exp $
 .\"
 .Dd September 10, 2000
 .Dt KADMIN 8
@@ -45,62 +76,62 @@
 .Sh DESCRIPTION
 The
 .Nm
-program is used to make modifications to the Kerberos database, either remotely via the 
+program is used to make modifications to the Kerberos database, either remotely via the
 .Xr kadmind 8
-daemon, or locally (with the 
-.Fl l 
+daemon, or locally (with the
+.Fl l
 option).
 .Pp
 Supported options:
 .Bl -tag -width Ds
 .It Xo
-.Fl p Ar string Ns ,
+.Fl p Ar string ,
 .Fl -principal= Ns Ar string
 .Xc
 principal to authenticate as
 .It Xo
-.Fl K Ar string Ns ,
+.Fl K Ar string ,
 .Fl -keytab= Ns Ar string
 .Xc
 keytab for authentication principal
 .It Xo
-.Fl c Ar file Ns ,
+.Fl c Ar file ,
 .Fl -config-file= Ns Ar file
 .Xc
 location of config file
 .It Xo
-.Fl k Ar file Ns ,
+.Fl k Ar file ,
 .Fl -key-file= Ns Ar file
 .Xc
 location of master key file
 .It Xo
-.Fl r Ar realm Ns ,
+.Fl r Ar realm ,
 .Fl -realm= Ns Ar realm
 .Xc
 realm to use
 .It Xo
-.Fl a Ar host Ns ,
+.Fl a Ar host ,
 .Fl -admin-server= Ns Ar host
 .Xc
 server to contact
 .It Xo
-.Fl s Ar port number Ns ,
+.Fl s Ar port number ,
 .Fl -server-port= Ns Ar port number
 .Xc
 port to use
 .It Xo
-.Fl l Ns ,
+.Fl l ,
 .Fl -local
 .Xc
 local admin mode
 .El
 .Pp
-If no 
+If no
 .Ar command
 is given on the command line,
-.Nm 
+.Nm
 will prompt for commands to process. Commands include:
-.\" not using a list here, since groff apparently gets confused 
+.\" not using a list here, since groff apparently gets confused
 .\" with nested Xo/Xc
 .Bd -ragged -offset indent
 .Nm add
@@ -223,7 +254,7 @@ form to the specified file, or standard out
 .Ar realm
 .Pp
 .Bd -ragged -offset indent
-initialises the Kerberos database with entries for a new realm; it's
+initializes the Kerberos database with entries for a new realm. It's
 possible to have more than one realm served by one server
 .Ed
 .Pp
@@ -238,7 +269,7 @@ reads a previously dumped database, and re-creates that database from scratch
 .Ar file
 .Pp
 .Bd -ragged -offset indent
-similar to 
+similar to
 .Nm list
 but just modifies the database with the entries in the dump file
 .Ed

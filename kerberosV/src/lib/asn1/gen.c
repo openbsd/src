@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,15 +33,36 @@
 
 #include "gen_locl.h"
 
-RCSID("$KTH: gen.c,v 1.45 2001/07/15 04:51:36 assar Exp $");
+RCSID("$KTH: gen.c,v 1.50 2003/04/17 07:09:18 lha Exp $");
 
 FILE *headerfile, *codefile, *logfile;
 
 #define STEM "asn1"
 
 static const char *orig_filename;
-static char header[1024];
-static char headerbase[1024] = STEM;
+static char *header;
+static char *headerbase = STEM;
+
+/*
+ * list of all IMPORTs
+ */
+
+struct import {
+    const char *module;
+    struct import *next;
+};
+
+static struct import *imports = NULL;
+
+void
+add_import (const char *module)
+{
+    struct import *tmp = emalloc (sizeof(*tmp));
+
+    tmp->module = module;
+    tmp->next   = imports;
+    imports     = tmp;
+}
 
 const char *
 filename (void)
@@ -54,8 +75,8 @@ init_generate (const char *filename, const char *base)
 {
     orig_filename = filename;
     if(base)
-	strlcpy(headerbase, base, sizeof(headerbase));
-    snprintf(header, sizeof(header), "%s.h", headerbase);
+	asprintf(&headerbase, "%s", base);
+    asprintf(&header, "%s.h", headerbase);
     headerfile = fopen (header, "w");
     if (headerfile == NULL)
 	err (1, "open %s", header);
@@ -81,15 +102,29 @@ init_generate (const char *filename, const char *base)
 	     "  void *data;\n"
 	     "} octet_string;\n\n");
     fprintf (headerfile,
-#if 0
-	     "typedef struct general_string {\n"
-	     "  size_t length;\n"
-	     "  char *data;\n"
-	     "} general_string;\n\n"
-#else
 	     "typedef char *general_string;\n\n"
-#endif
 	     );
+    fprintf (headerfile,
+	     "typedef struct oid {\n"
+	     "  size_t length;\n"
+	     "  unsigned *components;\n"
+	     "} oid;\n\n");
+    fputs("#define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \\\n"
+	  "  do {                                                         \\\n"
+	  "    (BL) = length_##T((S));                                    \\\n"
+	  "    (B) = malloc((BL));                                        \\\n"
+	  "    if((B) == NULL) {                                          \\\n"
+	  "      (R) = ENOMEM;                                            \\\n"
+	  "    } else {                                                   \\\n"
+	  "      (R) = encode_##T(((unsigned char*)(B)) + (BL) - 1, (BL), \\\n"
+	  "                       (S), (L));                              \\\n"
+	  "      if((R) != 0) {                                           \\\n"
+	  "        free((B));                                             \\\n"
+	  "        (B) = NULL;                                            \\\n"
+	  "      }                                                        \\\n"
+	  "    }                                                          \\\n"
+	  "  } while (0)\n\n",
+	  headerfile);
     fprintf (headerfile, "#endif\n\n");
     logfile = fopen(STEM "_files", "w");
     if (logfile == NULL)
@@ -140,12 +175,34 @@ define_asn1 (int level, Type *t)
 	space(level);
 	fprintf (headerfile, "OCTET STRING");
 	break;
+    case TOID :
+	space(level);
+	fprintf(headerfile, "OBJECT IDENTIFIER");
+	break;
     case TBitString: {
 	Member *m;
 	int tag = -1;
 
 	space(level);
 	fprintf (headerfile, "BIT STRING {\n");
+	for (m = t->members; m && m->val != tag; m = m->next) {
+	    if (tag == -1)
+		tag = m->val;
+	    space(level + 1);
+	    fprintf (headerfile, "%s(%d)%s\n", m->name, m->val, 
+		     m->next->val == tag?"":",");
+
+	}
+	space(level);
+	fprintf (headerfile, "}");
+	break;
+    }
+    case TEnumerated : {
+	Member *m;
+	int tag = -1;
+
+	space(level);
+	fprintf (headerfile, "ENUMERATED {\n");
 	for (m = t->members; m && m->val != tag; m = m->next) {
 	    if (tag == -1)
 		tag = m->val;
@@ -249,6 +306,10 @@ define_type (int level, char *name, Type *t, int typedefp)
 	space(level);
 	fprintf (headerfile, "octet_string %s;\n", name);
 	break;
+    case TOID :
+	space(level);
+	fprintf (headerfile, "oid %s;\n", name);
+	break;
     case TBitString: {
 	Member *m;
 	Type i;
@@ -265,6 +326,23 @@ define_type (int level, char *name, Type *t, int typedefp)
 	    free (n);
 	    if (tag == -1)
 		tag = m->val;
+	}
+	space(level);
+	fprintf (headerfile, "} %s;\n\n", name);
+	break;
+    }
+    case TEnumerated: {
+	Member *m;
+	int tag = -1;
+
+	space(level);
+	fprintf (headerfile, "enum %s {\n", typedefp ? name : "");
+	for (m = t->members; m && m->val != tag; m = m->next) {
+	    if (tag == -1)
+		tag = m->val;
+	    space(level + 1);
+	    fprintf (headerfile, "%s = %d%s\n", m->gen_name, m->val,
+                        m->next->val == tag ? "" : ",");
 	}
 	space(level);
 	fprintf (headerfile, "} %s;\n\n", name);
@@ -340,6 +418,7 @@ generate_type_header (const Symbol *s)
 void
 generate_type (const Symbol *s)
 {
+    struct import *i;
     char *filename;
 
     asprintf (&filename, "%s_%s.x", STEM, s->gen_name);
@@ -351,16 +430,24 @@ generate_type (const Symbol *s)
     fprintf (codefile, 
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
-	     "#include \"libasn1.h\"\n\n"
-#if 0
 	     "#include <stdio.h>\n"
 	     "#include <stdlib.h>\n"
 	     "#include <time.h>\n"
-	     "#include <" STEM ".h>\n\n"
+	     "#include <string.h>\n"
+	     "#include <errno.h>\n",
+	     orig_filename);
+
+    for (i = imports; i != NULL; i = i->next)
+	fprintf (codefile,
+		 "#include <%s_asn1.h>\n",
+		 i->module);
+    fprintf (codefile,
+	     "#include <%s.h>\n",
+	     headerbase);
+    fprintf (codefile,
 	     "#include <asn1_err.h>\n"
 	     "#include <der.h>\n"
-#endif
-	     ,orig_filename);
+	     "#include <parse_units.h>\n\n");
     generate_type_header (s);
     generate_type_encode (s);
     generate_type_decode (s);

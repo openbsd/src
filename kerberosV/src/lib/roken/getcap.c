@@ -40,7 +40,7 @@
 #include <config.h>
 #endif
 #include "roken.h"
-RCSID("$KTH: getcap.c,v 1.7 1999/11/17 21:11:58 assar Exp $");
+RCSID("$KTH: getcap.c,v 1.8 2003/04/16 16:23:36 lha Exp $");
 
 #include <sys/types.h>
 #include <ctype.h>

@@ -33,13 +33,13 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: appdefault.c,v 1.6 2001/08/31 09:25:26 joda Exp $");
+RCSID("$KTH: appdefault.c,v 1.7 2001/09/16 04:48:55 assar Exp $");
 
 extern char *__progname;
 
 void
 krb5_appdefault_boolean(krb5_context context, const char *appname, 
-			krb5_realm realm, const char *option,
+			krb5_const_realm realm, const char *option,
 			krb5_boolean def_val, krb5_boolean *ret_val)
 {
     
@@ -81,7 +81,7 @@ krb5_appdefault_boolean(krb5_context context, const char *appname,
 
 void
 krb5_appdefault_string(krb5_context context, const char *appname, 
-		       krb5_realm realm, const char *option,
+		       krb5_const_realm realm, const char *option,
 		       const char *def_val, char **ret_val)
 {
     if(appname == NULL)
@@ -125,7 +125,7 @@ krb5_appdefault_string(krb5_context context, const char *appname,
 
 void
 krb5_appdefault_time(krb5_context context, const char *appname,
-		     krb5_realm realm, const char *option,
+		     krb5_const_realm realm, const char *option,
 		     time_t def_val, time_t *ret_val)
 {
     time_t t;

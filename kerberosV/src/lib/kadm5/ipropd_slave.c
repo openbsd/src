@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "iprop.h"
 #include <util.h>
 
-RCSID("$KTH: ipropd_slave.c,v 1.24 2001/08/31 03:12:17 assar Exp $");
+RCSID("$KTH: ipropd_slave.c,v 1.27 2002/10/21 15:51:44 joda Exp $");
 
 static krb5_log_facility *log_facility;
 
@@ -160,23 +160,23 @@ receive_loop (krb5_context context,
 	op = tmp;
 	krb5_ret_int32 (sp, &len);
 	if (vers <= server_context->log_context.version)
-	    sp->seek(sp, len, SEEK_CUR);
+	    krb5_storage_seek(sp, len, SEEK_CUR);
     } while(vers <= server_context->log_context.version);
 
-    left  = sp->seek (sp, -16, SEEK_CUR);
-    right = sp->seek (sp, 0, SEEK_END);
+    left  = krb5_storage_seek (sp, -16, SEEK_CUR);
+    right = krb5_storage_seek (sp, 0, SEEK_END);
     buf = malloc (right - left);
     if (buf == NULL && (right - left) != 0) {
 	krb5_warnx (context, "malloc: no memory");
 	return;
     }
-    sp->seek (sp, left, SEEK_SET);
-    sp->fetch (sp, buf, right - left);
+    krb5_storage_seek (sp, left, SEEK_SET);
+    krb5_storage_read (sp, buf, right - left);
     write (server_context->log_context.log_fd, buf, right-left);
     fsync (server_context->log_context.log_fd);
     free (buf);
 
-    sp->seek (sp, left, SEEK_SET);
+    krb5_storage_seek (sp, left, SEEK_SET);
 
     for(;;) {
 	int32_t len, timestamp, tmp;
@@ -195,7 +195,7 @@ receive_loop (krb5_context context,
 	    krb5_warn (context, ret, "kadm5_log_replay");
 	else
 	    server_context->log_context.version = vers;
-	sp->seek (sp, 8, SEEK_CUR);
+	krb5_storage_seek (sp, 8, SEEK_CUR);
     }
 }
 
@@ -228,10 +228,26 @@ receive_everything (krb5_context context, int fd,
     krb5_data data;
     int32_t vno;
     int32_t opcode;
+    unsigned long tmp;
 
-    ret = server_context->db->open(context,
-				   server_context->db,
-				   O_RDWR | O_CREAT | O_TRUNC, 0600);
+    char *dbname;
+    HDB *mydb;
+  
+    asprintf(&dbname, "%s-NEW", server_context->db->name);
+    ret = hdb_create(context, &mydb, dbname);
+    if(ret)
+	krb5_err(context,1, ret, "hdb_create");
+    free(dbname);
+ 
+    ret = hdb_set_master_keyfile (context,
+				  mydb, server_context->config.stash_file);
+    if(ret)
+	krb5_err(context,1, ret, "hdb_set_master_keyfile");
+ 
+    /* I really want to use O_EXCL here, but given that I can't easily clean
+       up on error, I won't */
+    ret = mydb->open(context, mydb, O_RDWR | O_CREAT | O_TRUNC, 0600);
+
     if (ret)
 	krb5_err (context, 1, ret, "db->open");
 
@@ -255,9 +271,9 @@ receive_everything (krb5_context context, int fd,
 	    ret = hdb_value2entry (context, &fake_data, &entry);
 	    if (ret)
 		krb5_err (context, 1, ret, "hdb_value2entry");
-	    ret = server_context->db->store(server_context->context,
-					    server_context->db,
-					    0, &entry);
+	    ret = mydb->store(server_context->context,
+			      mydb,
+			      0, &entry);
 	    if (ret)
 		krb5_err (context, 1, ret, "hdb_store");
 
@@ -269,7 +285,8 @@ receive_everything (krb5_context context, int fd,
     if (opcode != NOW_YOU_HAVE)
 	krb5_errx (context, 1, "receive_everything: strange %d", opcode);
 
-    _krb5_get_int ((char *)data.data + 4, (void *)&vno, 4);
+    _krb5_get_int ((char *)data.data + 4, &tmp, 4);
+    vno = tmp;
 
     ret = kadm5_log_reinit (server_context);
     if (ret)
@@ -285,9 +302,15 @@ receive_everything (krb5_context context, int fd,
 
     krb5_data_free (&data);
 
-    ret = server_context->db->close (context, server_context->db);
+    ret = mydb->close (context, mydb);
     if (ret)
 	krb5_err (context, 1, ret, "db->close");
+    ret = mydb->rename (context, mydb, server_context->db->name);
+    if (ret)
+	krb5_err (context, 1, ret, "db->rename");
+    ret = mydb->destroy (context, mydb);
+    if (ret)
+	krb5_err (context, 1, ret, "db->destroy");
 }
 
 static char *realm;

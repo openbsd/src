@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kafs_locl.h"
 
-RCSID("$KTH: common.c,v 1.21 2001/07/12 09:21:05 assar Exp $");
+RCSID("$KTH: common.c,v 1.26.2.1 2003/04/23 18:03:20 lha Exp $");
 
 #define AUTH_SUPERUSER "afs"
 
@@ -45,8 +45,11 @@ RCSID("$KTH: common.c,v 1.21 2001/07/12 09:21:05 assar Exp $");
 
 #define ToAsciiUpper(c) ((c) - 'a' + 'A')
 
-static void
-foldup(char *a, const char *b)
+static void (*kafs_verbose)(void *, const char *);
+static void *kafs_verbose_ctx;
+
+void
+_kafs_foldup(char *a, const char *b)
 {
   for (; *b; a++, b++)
     if (IsAsciiLower(*b))
@@ -56,62 +59,39 @@ foldup(char *a, const char *b)
   *a = '\0';
 }
 
+void
+kafs_set_verbose(void (*f)(void *, const char *), void *ctx)
+{
+    if (f) {
+	kafs_verbose = f;
+	kafs_verbose_ctx = ctx;
+    }
+}
+
 int
-kafs_settoken(const char *cell, uid_t uid, CREDENTIALS *c)
+kafs_settoken_rxkad(const char *cell, struct ClearToken *ct,
+		    void *ticket, size_t ticket_len)
 {
     struct ViceIoctl parms;
-    struct ClearToken ct;
-    int32_t sizeof_x;
     char buf[2048], *t;
-    int ret;
+    int32_t sizeof_x;
     
-    /*
-     * Build a struct ClearToken
-     */
-    ct.AuthHandle = c->kvno;
-    memcpy (ct.HandShakeKey, c->session, sizeof(c->session));
-    ct.ViceId = uid;
-    ct.BeginTimestamp = c->issue_date;
-    ct.EndTimestamp = krb_life_to_time(c->issue_date, c->lifetime);
-    if(ct.EndTimestamp < time(NULL))
-	return 0; /* don't store tokens that has expired (and possibly
-		     overwriting valid tokens)*/
-
-#define ODD(x) ((x) & 1)
-    /* According to Transarc conventions ViceId is valid iff
-     * (EndTimestamp - BeginTimestamp) is odd. By decrementing EndTime
-     * the transformations:
-     *
-     * (issue_date, life) -> (StartTime, EndTime) -> (issue_date, life)
-     * preserves the original values.
-     */
-    if (uid != 0)		/* valid ViceId */
-      {
-	if (!ODD(ct.EndTimestamp - ct.BeginTimestamp))
-	  ct.EndTimestamp--;
-      }
-    else			/* not valid ViceId */
-      {
-	if (ODD(ct.EndTimestamp - ct.BeginTimestamp))
-	  ct.EndTimestamp--;
-      }
-
     t = buf;
     /*
      * length of secret token followed by secret token
      */
-    sizeof_x = c->ticket_st.length;
+    sizeof_x = ticket_len;
     memcpy(t, &sizeof_x, sizeof(sizeof_x));
     t += sizeof(sizeof_x);
-    memcpy(t, c->ticket_st.dat, sizeof_x);
+    memcpy(t, ticket, sizeof_x);
     t += sizeof_x;
     /*
      * length of clear token followed by clear token
      */
-    sizeof_x = sizeof(ct);
+    sizeof_x = sizeof(*ct);
     memcpy(t, &sizeof_x, sizeof(sizeof_x));
     t += sizeof(sizeof_x);
-    memcpy(t, &ct, sizeof_x);
+    memcpy(t, ct, sizeof_x);
     t += sizeof_x;
 
     /*
@@ -134,8 +114,60 @@ kafs_settoken(const char *cell, uid_t uid, CREDENTIALS *c)
     parms.in_size = t - buf;
     parms.out = 0;
     parms.out_size = 0;
-    ret = k_pioctl(0, VIOCSETTOK, &parms, 0);
-    return ret;
+
+    return k_pioctl(0, VIOCSETTOK, &parms, 0);
+}
+
+void
+_kafs_fixup_viceid(struct ClearToken *ct, uid_t uid)
+{
+#define ODD(x) ((x) & 1)
+    /* According to Transarc conventions ViceId is valid iff
+     * (EndTimestamp - BeginTimestamp) is odd. By decrementing EndTime
+     * the transformations:
+     *
+     * (issue_date, life) -> (StartTime, EndTime) -> (issue_date, life)
+     * preserves the original values.
+     */
+    if (uid != 0)		/* valid ViceId */
+    {
+	if (!ODD(ct->EndTimestamp - ct->BeginTimestamp))
+	    ct->EndTimestamp--;
+    }
+    else			/* not valid ViceId */
+    {
+	if (ODD(ct->EndTimestamp - ct->BeginTimestamp))
+	    ct->EndTimestamp--;
+    }
+}
+
+
+int
+_kafs_v4_to_kt(CREDENTIALS *c, uid_t uid, struct kafs_token *kt)
+{
+    kt->ticket = NULL;
+
+    if (c->ticket_st.length > MAX_KTXT_LEN)
+	return EINVAL;
+
+    kt->ticket = malloc(c->ticket_st.length);
+    if (kt->ticket == NULL)
+	return ENOMEM;
+    kt->ticket_len = c->ticket_st.length;
+    memcpy(kt->ticket, c->ticket_st.dat, kt->ticket_len);
+    
+    /*
+     * Build a struct ClearToken
+     */
+    kt->ct.AuthHandle = c->kvno;
+    memcpy (kt->ct.HandShakeKey, c->session, sizeof(c->session));
+    kt->ct.ViceId = uid;
+    kt->ct.BeginTimestamp = c->issue_date;
+    kt->ct.EndTimestamp = krb_life_to_time(c->issue_date, c->lifetime);
+
+    _kafs_fixup_viceid(&kt->ct, uid);
+
+    return 0;
 }
 
 /* Try to get a db-server for an AFS cell from a AFSDB record */
@@ -168,7 +200,7 @@ dns_find_cell(const char *cell, char *dbserver, size_t len)
  * Try to find the cells we should try to klog to in "file".
  */
 static void
-find_cells(char *file, char ***cells, int *index)
+find_cells(const char *file, char ***cells, int *index)
 {
     FILE *f;
     char cell[64];
@@ -246,7 +278,10 @@ _kafs_afslog_all_local_cells(kafs_data *data, uid_t uid, const char *homedir)
 #if 0
     find_cells(_PATH_OPENAFS_DEBIAN_THESECELLS, &cells, &index);
     find_cells(_PATH_OPENAFS_DEBIAN_THISCELL, &cells, &index);
+    find_cells(_PATH_ARLA_DEBIAN_THESECELLS, &cells, &index);
+    find_cells(_PATH_ARLA_DEBIAN_THISCELL, &cells, &index);
 #endif    
+    
     ret = afslog_cells(data, cells, index, uid, homedir);
     while(index > 0)
 	free(cells[--index]);
@@ -264,12 +299,10 @@ file_find_cell(kafs_data *data, const char *cell, char **realm, int exact)
     int ret = -1;
 
 #if 0
-    if ((F = fopen(_PATH_CELLSERVDB, "r"))
-	|| (F = fopen(_PATH_ARLA_CELLSERVDB, "r"))
-	|| (F = fopen(_PATH_OPENAFS_DEBIAN_CELLSERVDB, "r"))) {
 #else
     if ((F = fopen(_PATH_ARLA_CELLSERVDB, "r"))) {
-#endif
+	|| (F = fopen(_PATH_OPENAFS_DEBIAN_CELLSERVDB, "r"))
+	|| (F = fopen(_PATH_ARLA_DEBIAN_CELLSERVDB, "r"))) {
 	while (fgets(buf, sizeof(buf), F)) {
 	    int cmp;
 
@@ -334,12 +367,33 @@ _kafs_realm_of_cell(kafs_data *data, const char *cell, char **realm)
     return file_find_cell(data, cell, realm, 0);
 }
 
+static int
+_kafs_try_get_cred(kafs_data *data, const char *user, const char *cell,
+		   const char *realm, uid_t uid, struct kafs_token *kt)
+{
+    int ret;
+
+    ret = (*data->get_cred)(data, user, cell, realm, uid, kt);
+    if (kafs_verbose) {
+	char *str;
+	asprintf(&str, "%s tried afs%s%s@%s -> %d",
+		 data->name, cell[0] == '\0' ? "" : "/", 
+		 cell, realm, ret);
+	(*kafs_verbose)(kafs_verbose_ctx, str);
+	free(str);
+    }
+
+    return ret;
+}
+
+
 int
 _kafs_get_cred(kafs_data *data,
-	      const char *cell, 
-	      const char *realm_hint,
-	      const char *realm,
-	      CREDENTIALS *c)
+	       const char *cell, 
+	       const char *realm_hint,
+	       const char *realm,
+	       uid_t uid,
+	       struct kafs_token *kt)
 {
     int ret = -1;
     char *vl_realm;
@@ -366,25 +420,27 @@ _kafs_get_cred(kafs_data *data,
     /* comments on the ordering of these tests */
 
     /* If the user passes a realm, she probably knows something we don't
-     * know and we should try afs@realm_hint (otherwise we're talking with a
-     * blondino and she might as well have it.)
+     * know and we should try afs@realm_hint.
      */
   
     if (realm_hint) {
-	ret = (*data->get_cred)(data, AUTH_SUPERUSER, cell, realm_hint, c);
+	ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+				 cell, realm_hint, uid, kt);
 	if (ret == 0) return 0;
-	ret = (*data->get_cred)(data, AUTH_SUPERUSER, "", realm_hint, c);
+	ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+				 "", realm_hint, uid, kt);
 	if (ret == 0) return 0;
     }
 
-    foldup(CELL, cell);
+    _kafs_foldup(CELL, cell);
 
     /*
      * If cell == realm we don't need no cross-cell authentication.
      * Try afs@REALM.
      */
     if (strcmp(CELL, realm) == 0) {
-        ret = (*data->get_cred)(data, AUTH_SUPERUSER, "", realm, c);
+        ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+				 "", realm, uid, kt);
 	if (ret == 0) return 0;
 	/* Try afs.cell@REALM below. */
     }
@@ -394,7 +450,8 @@ _kafs_get_cred(kafs_data *data,
      * REALM we still don't have to resort to cross-cell authentication.
      * Try afs.cell@REALM.
      */
-    ret = (*data->get_cred)(data, AUTH_SUPERUSER, cell, realm, c);
+    ret = _kafs_try_get_cred(data, AUTH_SUPERUSER, 
+			     cell, realm, uid, kt);
     if (ret == 0) return 0;
 
     /*
@@ -403,9 +460,11 @@ _kafs_get_cred(kafs_data *data,
      * Try afs@CELL.
      * Try afs.cell@CELL.
      */
-    ret = (*data->get_cred)(data, AUTH_SUPERUSER, "", CELL, c);
+    ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+			     "", CELL, uid, kt);
     if (ret == 0) return 0;
-    ret = (*data->get_cred)(data, AUTH_SUPERUSER, cell, CELL, c);
+    ret = _kafs_try_get_cred(data, AUTH_SUPERUSER, 
+			     cell, CELL, uid, kt);
     if (ret == 0) return 0;
 
     /*
@@ -417,9 +476,11 @@ _kafs_get_cred(kafs_data *data,
     if (_kafs_realm_of_cell(data, cell, &vl_realm) == 0
 	&& strcmp(vl_realm, realm) != 0
 	&& strcmp(vl_realm, CELL) != 0) {
-	ret = (*data->get_cred)(data, AUTH_SUPERUSER, cell, vl_realm, c);
+	ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+				 cell, vl_realm, uid, kt);
 	if (ret)
-	    ret = (*data->get_cred)(data, AUTH_SUPERUSER, "", vl_realm, c);
+	    ret = _kafs_try_get_cred(data, AUTH_SUPERUSER,
+				     "", vl_realm, uid, kt);
 	free(vl_realm);
 	if (ret == 0) return 0;
     }

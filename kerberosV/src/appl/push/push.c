@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 #include "push_locl.h"
-RCSID("$KTH: push.c,v 1.44 2001/02/20 01:44:47 assar Exp $");
+RCSID("$KTH: push.c,v 1.47 2003/04/04 02:10:17 assar Exp $");
 
 #ifdef KRB4
 static int use_v4 = -1;
@@ -137,6 +137,11 @@ do_connect (const char *hostname, int port, int nodelay)
 typedef enum { INIT = 0, GREET, USER, PASS, STAT, RETR, TOP, 
 	       DELE, XDELE, QUIT} pop_state;
 
+static char *pop_state_string[] = {
+    "INIT", "GREET", "USER", "PASS", "STAT", "RETR", "TOP",
+    "DELE", "XDELE", "QUIT" 
+};
+
 #define PUSH_BUFSIZ 65536
 
 #define STEP 16
@@ -208,7 +213,7 @@ doit(int s,
 {
     int ret;
     char out_buf[PUSH_BUFSIZ];
-    size_t out_len = 0;
+    int out_len = 0;
     char in_buf[PUSH_BUFSIZ + 1];	/* sentinel */
     size_t in_len = 0;
     char *in_ptr = in_buf;
@@ -262,10 +267,12 @@ doit(int s,
     out_len = snprintf (out_buf, sizeof(out_buf),
 			"USER %s\r\nPASS hej\r\nSTAT\r\n",
 			user);
+    if (out_len < 0)
+	errx (1, "snprintf failed");
     if (net_write (s, out_buf, out_len) != out_len)
 	err (1, "write");
     if (verbose > 1)
-	write (STDERR_FILENO, out_buf, out_len);
+	fprintf (stderr, "%s", out_buf);
 
     if (!do_from)
 	write_state_init (&write_state, out_fd);
@@ -278,6 +285,13 @@ doit(int s,
 	if (s >= FD_SETSIZE)
 	    errx (1, "fd too large");
 	FD_SET(s,&readset);
+
+	if (verbose > 1)
+	    fprintf (stderr, "state: %s count: %d asked_for: %d "
+		     "retrieved: %d asked_deleted: %d\n",
+		     pop_state_string[state], 
+		     count, asked_for, retrieved, asked_deleted);
+
 	if (((state == STAT || state == RETR || state == TOP)
 	     && asked_for < count)
 	    || (state == XDELE && !sent_xdele)
@@ -329,7 +343,7 @@ doit(int s,
 			    state = QUIT;
 			    net_write (s, "QUIT\r\n", 6);
 			    if (verbose > 1)
-				net_write (STDERR_FILENO, "QUIT\r\n", 6);
+				fprintf (stderr, "QUIT\r\n");
 			}
 		    }
 		    rem -= p - beg + 2;
@@ -352,7 +366,7 @@ doit(int s,
 				    state = QUIT;
 				    net_write (s, "QUIT\r\n", 6);
 				    if (verbose > 1)
-					net_write (STDERR_FILENO, "QUIT\r\n", 6);
+					fprintf (stderr, "QUIT\r\n");
 				} else {
 				    if (forkp) {
 					pid_t pid;
@@ -399,14 +413,14 @@ doit(int s,
 			state = QUIT;
 			net_write (s, "QUIT\r\n", 6);
 			if (verbose > 1)
-			    net_write (STDERR_FILENO, "QUIT\r\n", 6);
+			    fprintf (stderr, "QUIT\r\n");
 			break;
 		    } else if (state == DELE) {
 			if (++deleted == count) {
 			    state = QUIT;
 			    net_write (s, "QUIT\r\n", 6);
 			    if (verbose > 1)
-				net_write (STDERR_FILENO, "QUIT\r\n", 6);
+				fprintf (stderr, "QUIT\r\n");
 			    break;
 			}
 		    } else if (++state == STAT) {
@@ -426,7 +440,7 @@ doit(int s,
 			    state = QUIT;
 			    net_write (s, "QUIT\r\n", 6);
 			    if (verbose > 1)
-				net_write (STDERR_FILENO, "QUIT\r\n", 6);
+				fprintf (stderr, "QUIT\r\n");
 			    break;
 			}
 		    }
@@ -464,10 +478,12 @@ doit(int s,
 	    else if(state == DELE)
 		out_len = snprintf (out_buf, sizeof(out_buf),
 				    "DELE %u\r\n", ++asked_deleted);
+	    if (out_len < 0)
+		errx (1, "snprintf failed");
 	    if (net_write (s, out_buf, out_len) != out_len)
 		err (1, "write");
 	    if (verbose > 1)
-		write (STDERR_FILENO, out_buf, out_len);
+		fprintf (stderr, "%s", out_buf);
 	}
     }
     if (verbose)

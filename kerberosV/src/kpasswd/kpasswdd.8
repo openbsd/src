@@ -1,4 +1,4 @@
-.\" $KTH: kpasswdd.8,v 1.6 2001/07/12 08:42:27 assar Exp $
+.\" $KTH: kpasswdd.8,v 1.8 2003/02/04 21:48:01 lha Exp $
 .\"
 .Dd April 19, 1999
 .Dt KPASSWDD 8
@@ -58,17 +58,17 @@ is the new password. Note that the password (in
 .Fa password->data )
 is not zero terminated.
 .It Xo
-.Fl k Ar kspec Ns ,
+.Fl k Ar kspec ,
 .Fl -keytab= Ns Ar kspec
 .Xc
 Keytab to get authentication key from.
 .It Xo
-.Fl r Ar realm Ns ,
+.Fl r Ar realm ,
 .Fl -realm= Ns Ar realm
 .Xc
 Default realm.
 .It Xo
-.Fl p Ar string Ns ,
+.Fl p Ar string ,
 .Fl -port= Ns Ar string
 .Xc
 Port to listen on (default service kpasswd - 464).

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $KTH: krb5_locl.h,v 1.67 2001/08/22 20:30:30 assar Exp $ */
+/* $KTH: krb5_locl.h,v 1.71 2002/09/10 20:10:45 joda Exp $ */
 
 #ifndef __KRB5_LOCL_H__
 #define __KRB5_LOCL_H__
@@ -45,6 +45,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -105,23 +106,14 @@ struct sockaddr_dl;
 #ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>
 #endif
+#ifdef HAVE_SYS_FILE_H
+#include <sys/file.h>
+#endif
 #include <roken.h>
 #include <parse_time.h>
 #include <base64.h>
 
-#ifdef HAVE_OPENSSL
-#include <des.h>
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
-#include <openssl/rc4.h>
-#else
-#include <des.h>
-#include <md4.h>
-#include <md5.h>
-#include <sha.h>
-#include <rc4.h>
-#endif
+#include "crypto-headers.h"
 
 #include <krb5_asn1.h>
 #include <der.h>
@@ -135,6 +127,7 @@ struct sockaddr_dl;
 #define ALLOC_SEQ(X, N) do { (X)->len = (N); ALLOC((X)->val, (N)); } while(0)
 
 /* should this be public? */
+
 #define KEYTAB_DEFAULT "ANY:FILE:/etc/kerberosV/krb5.keytab,krb4:/etc/kerberosIV/srvtab"
 #define KEYTAB_DEFAULT_MODIFY "FILE:/etc/kerberosV/krb5.keytab"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: log.c,v 1.26 2001/05/14 06:14:49 assar Exp $");
+RCSID("$KTH: log.c,v 1.31 2002/09/05 14:59:14 joda Exp $");
 
 struct facility {
     int min;
@@ -57,7 +57,7 @@ log_realloc(krb5_log_facility *f)
 }
 
 struct s2i {
-    char *s;
+    const char *s;
     int val;
 };
 
@@ -158,7 +158,7 @@ krb5_addlog_func(krb5_context context,
 
 /* Avoid conflict with syslog_data in syslog.h, rename to syslog_d */
 
-struct syslog_d{
+struct _heimdal_syslog_data{
     int priority;
 };
 
@@ -168,7 +168,7 @@ log_syslog(const char *time,
 	   void *data)
      
 {
-    struct syslog_d *s = data;
+    struct _heimdal_syslog_data *s = data;
     syslog(s->priority, "%s", msg);
 }
 
@@ -184,7 +184,7 @@ open_syslog(krb5_context context,
 	    krb5_log_facility *facility, int min, int max,
 	    const char *sev, const char *fac)
 {
-    struct syslog_d *sd = malloc(sizeof(*sd));
+    struct _heimdal_syslog_data *sd = malloc(sizeof(*sd));
     int i;
 
     if(sd == NULL) {
@@ -205,8 +205,8 @@ open_syslog(krb5_context context,
 }
 
 struct file_data{
-    char *filename;
-    char *mode;
+    const char *filename;
+    const char *mode;
     FILE *fd;
     int keep_open;
 };
@@ -237,7 +237,7 @@ close_file(void *data)
 
 static krb5_error_code
 open_file(krb5_context context, krb5_log_facility *fac, int min, int max,
-	  char *filename, char *mode, FILE *f, int keep_open)
+	  const char *filename, const char *mode, FILE *f, int keep_open)
 {
     struct file_data *fd = malloc(sizeof(*fd));
     if(fd == NULL) {
@@ -316,15 +316,18 @@ krb5_addlog_dest(krb5_context context, krb5_log_facility *f, const char *orig)
 	ret = open_file(context, f, min, max, fn, "a", file, keep_open);
     }else if(strncmp(p, "DEVICE=", 6) == 0){
 	ret = open_file(context, f, min, max, strdup(p + 7), "w", NULL, 0);
-    }else if(strncmp(p, "SYSLOG", 6) == 0){
-	char *severity;
-	char *facility;
-	severity = strchr(p, ':');
-	if(severity == NULL)
-	    severity = "ERR";
-	facility = strchr(severity, ':');
-	if(facility == NULL)
-	    facility = "AUTH";
+    }else if(strncmp(p, "SYSLOG", 6) == 0 && (p[6] == '\0' || p[6] == ':')){
+	char severity[128] = "";
+	char facility[128] = "";
+	p += 6;
+	if(*p != '\0')
+	    p++;
+	if(strsep_copy(&p, ":", severity, sizeof(severity)) != -1)
+	    strsep_copy(&p, ":", facility, sizeof(facility));
+	if(*severity == '\0')
+	    strlcpy(severity, "ERR", sizeof(severity));
+ 	if(*facility == '\0')
+	    strlcpy(facility, "AUTH", sizeof(facility));
 	ret = open_syslog(context, f, min, max, severity, facility);
     }else{
 	krb5_set_error_string (context, "unknown log type: %s", p);
@@ -364,7 +367,7 @@ krb5_closelog(krb5_context context,
 {
     int i;
     for(i = 0; i < fac->len; i++)
-	(*fac->val[i].close)(&fac->val[i].data);
+	(*fac->val[i].close)(fac->val[i].data);
     return 0;
 }
 
@@ -380,24 +383,33 @@ krb5_vlog_msg(krb5_context context,
 	      va_list ap)
      __attribute__((format (printf, 5, 0)))
 {
-    char *msg;
-    const char *actual;
+    
+    char *msg = NULL;
+    const char *actual = NULL;
     char buf[64];
-    time_t t;
+    time_t t = 0;
     int i;
 
-    vasprintf(&msg, fmt, ap);
-    if (msg != NULL)
-	actual = msg;
-    else
-	actual = fmt;
-    t = time(NULL);
-    krb5_format_time(context, t, buf, sizeof(buf), TRUE);
-    for(i = 0; i < fac->len; i++)
+    for(i = 0; fac && i < fac->len; i++)
 	if(fac->val[i].min <= level && 
-	   (fac->val[i].max < 0 || fac->val[i].max >= level))
+	   (fac->val[i].max < 0 || fac->val[i].max >= level)) {
+	    if(t == 0) {
+		t = time(NULL);
+		krb5_format_time(context, t, buf, sizeof(buf), TRUE);
+	    }
+	    if(actual == NULL) {
+		vasprintf(&msg, fmt, ap);
+		if(msg == NULL)
+		    actual = fmt;
+		else
+		    actual = msg;
+	    }
 	    (*fac->val[i].log)(buf, actual, fac->val[i].data);
-    *reply = msg;
+	}
+    if(reply == NULL)
+	free(msg);
+    else
+	*reply = msg;
     return 0;
 }
 
@@ -409,12 +421,7 @@ krb5_vlog(krb5_context context,
 	  va_list ap)
      __attribute__((format (printf, 4, 0)))
 {
-    char *msg;
-    krb5_error_code ret;
-
-    ret = krb5_vlog_msg(context, fac, &msg, level, fmt, ap);
-    free(msg);
-    return ret;
+    return krb5_vlog_msg(context, fac, NULL, level, fmt, ap);
 }
 
 krb5_error_code
