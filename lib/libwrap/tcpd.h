@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.h,v 1.6 1999/06/06 15:34:45 deraadt Exp $	*/
+/*	$OpenBSD: tcpd.h,v 1.7 1999/07/21 18:27:41 form Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -104,6 +104,7 @@ __END_DECLS
 
 __BEGIN_DECLS
 extern int hosts_access __P((struct request_info *));
+extern int hosts_ctl __P((char *, char *, char *, char *));
 extern void shell_cmd __P((char *));
 extern char *percent_m __P((char *, char *));
 extern char *percent_x __P((char *, int, char *, struct request_info *));
