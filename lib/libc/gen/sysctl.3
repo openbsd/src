@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.18 1999/06/04 01:30:11 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.19 1999/06/05 02:36:31 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -170,7 +170,7 @@ Each time it runs,
 gets the list of debugging variables from the kernel and
 displays their current values.
 The system defines twenty 
-.Ns ( Va struct ctldebug )
+.Va struct ctldebug
 variables named 
 .Va debug0
 through
@@ -390,8 +390,11 @@ privilege may change the value.
 The variables are as follows:
 .Bl -tag -width "123456"
 .It Dv GPROF_STATE
-Returns GMON_PROF_ON or GMON_PROF_OFF to show that profiling
-is running or stopped.
+Returns
+.Dv GMON_PROF_ON
+or
+.Dv GMON_PROF_OFF
+to show that profiling is running or stopped.
 .It Dv GPROF_COUNT
 Array of statistical program counter counts.
 .It Dv GPROF_FROMS
@@ -457,7 +460,9 @@ privilege may change the value.
 .Pp
 .Bl -tag -width "123456"
 .It Dv PF_ENCAP
-Get or set various global information about the IP security protocols.
+Get or set various global information about the
+.Tn IP
+security protocols.
 The third level name is the protocol.   
 The fourth level name is the variable name.
 The currently defined protocols and names are:
@@ -513,16 +518,22 @@ The currently defined protocols and names are:
 The variables are as follows:
 .Bl -tag -width "123456"
 .It Li ip.forwarding
-Returns 1 when IP forwarding is enabled for the host,
+Returns 1 when
+.Tn IP
+forwarding is enabled for the host,
 meaning that the host is acting as a router.
 .It Li ip.redirect
 Returns 1 when
 .Tn ICMP
 redirects may be sent by the host.
-This option is ignored unless the host is routing IP packets,
+This option is ignored unless the host is routing
+.Tn IP
+packets,
 and should normally be enabled on all systems.
 .It Li ip.ttl
-The maximum time-to-live (hop count) value for an IP packet sourced by
+The maximum time-to-live (hop count) value for an
+.Tn IP
+packet sourced by
 the system.
 This value applies to normal transport protocols, not to
 .Tn ICMP .
@@ -749,7 +760,9 @@ definitions for third level profiling identifiers
 definitions for second level virtual memory identifiers
 .It Pa <netinet/in.h>
 definitions for third level Internet identifiers and
-fourth level IP identifiers
+fourth level
+.Tn IP
+identifiers
 .It Pa <netinet/icmp_var.h>
 definitions for fourth level
 .Tn ICMP
