@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.13 1998/04/25 00:12:08 deraadt Exp $	*/
+/*	$OpenBSD: auth.c,v 1.14 1998/04/25 00:30:26 millert Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -38,7 +38,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.35 1997/11/27 06:49:15 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.13 1998/04/25 00:12:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.14 1998/04/25 00:30:26 millert Exp $";
 #endif
 #endif
 
@@ -1067,8 +1067,8 @@ set_allowed_addrs(unit, addrs)
 	u_int32_t a;
 	struct hostent *hp;
 
-	if (wo->hisaddr == 0 && *p != '!' && *p != '-' && *p != '*'
-	    && strchr(p, '/') == NULL) {
+	if (wo->hisaddr == 0 && *p != '!' && *p != '-' && !ISWILD(p) &&
+	    strchr(p, '/') == NULL) {
 	    hp = gethostbyname(p);
 	    if (hp != NULL && hp->h_addrtype == AF_INET)
 		a = *(u_int32_t *)hp->h_addr;
