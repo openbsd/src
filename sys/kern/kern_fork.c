@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.9 1997/07/07 17:52:10 kstailey Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.10 1997/08/01 21:59:13 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -130,6 +130,8 @@ fork1(p1, forktype, rforkflags, retval)
 			return (EINVAL);	/* XXX unimplimented */
 		if (rforkflags & RFCFDG)
 			cleanfd = 1;
+		if (dupfd == 0)
+			return (EPERM);
 	}
 
 	/*
