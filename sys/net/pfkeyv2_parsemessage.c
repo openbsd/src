@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.27 2001/07/01 07:32:37 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.28 2001/07/01 08:15:51 angelos Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -482,7 +482,8 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				return EINVAL;
 			}
 			if (sa->sa_len &&
-			    (i != sizeof(struct sadb_address) + sa->sa_len)) {
+			    (i != sizeof(struct sadb_address) +
+			    PADUP(sa->sa_len))) {
 				DPRINTF(("pfkeyv2_parsemessage: bad sockaddr "
 				    "length field in ADDRESS extension "
 				    "header %d\n", sadb_ext->sadb_ext_type));
@@ -492,7 +493,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 			switch(sa->sa_family) {
 			case AF_INET:
 				if (sizeof(struct sadb_address) +
-				    sizeof(struct sockaddr_in) != i) {
+				    PADUP(sizeof(struct sockaddr_in)) != i) {
 					DPRINTF(("pfkeyv2_parsemessage: "
 					    "invalid ADDRESS extension header "
 					    "%d length\n",
@@ -547,7 +548,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 #if INET6
 			case AF_INET6:
 				if (i != sizeof(struct sadb_address) +
-				    sizeof(struct sockaddr_in6) + 4) {
+				    PADUP(sizeof(struct sockaddr_in6))) {
 					DPRINTF(("pfkeyv2_parsemessage: "
 					    "invalid sockaddr_in6 length in "
 					    "ADDRESS extension header %d\n",
@@ -571,6 +572,27 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					    "extension header %d\n",
 					    sadb_ext->sadb_ext_type));
 					return EINVAL;
+				}
+
+				/* Only check the right pieces */
+				switch (sadb_ext->sadb_ext_type)
+				{
+				case SADB_X_EXT_SRC_MASK:
+				case SADB_X_EXT_DST_MASK:
+				case SADB_X_EXT_SRC_FLOW:
+				case SADB_X_EXT_DST_FLOW:
+					break;
+		      
+				default:
+					if (((struct sockaddr_in6 *)sa)->sin6_port) {
+						DPRINTF(("pfkeyv2_parsemessage"
+						    ": port field set in "
+						    "sockaddr_in6 of ADDRESS "
+						    "extension header %d\n",
+						    sadb_ext->sadb_ext_type));
+						return EINVAL;
+					}
+					break;
 				}
 				break;
 #endif /* INET6 */
