@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.12 1998/08/30 17:11:36 art Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.13 1999/02/15 05:05:33 art Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -57,10 +57,6 @@
 
 #ifdef MFS
 #include <ufs/mfs/mfs_extern.h>
-#endif
-
-#ifdef XFS
-#include <xfs/xfs_extern.h>
 #endif
 
 #ifdef NFSCLIENT
