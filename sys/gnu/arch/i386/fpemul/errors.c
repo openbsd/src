@@ -1,4 +1,4 @@
-/*	$OpenBSD: errors.c,v 1.3 2003/07/30 21:30:31 jason Exp $	*/
+/*	$OpenBSD: errors.c,v 1.4 2003/08/08 04:21:44 jason Exp $	*/
 /*
  *  errors.c
  *
@@ -115,8 +115,7 @@ Un_impl(void)
 }
 
 
-
-
+#ifdef DEBUG
 void
 emu_printall()
 {
@@ -228,6 +227,7 @@ emu_printall()
 	REENTRANT_CHECK(ON);
 
 }
+#endif
 
 static struct {
 	int     type;
@@ -363,7 +363,9 @@ exception(int n)
 
 		if (n == EX_INTERNAL) {
 			printf("FP emulator: Internal error type 0x%04x\n", int_type);
+#ifdef DEBUG
 			emu_printall();
+#endif
 		}
 #ifdef PRINT_MESSAGES
 		else
