@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.8 1999/05/01 20:43:46 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.32 1999/05/01 20:21:19 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.9 1999/06/02 06:29:55 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.33 1999/05/19 22:40:13 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -169,9 +169,11 @@ ui_debug (char *cmd)
 void
 ui_report (char *cmd)
 {
+  /* XXX Skip 'cmd' as arg? */
   sa_report ();
   exchange_report ();
   transport_report ();
+  connection_report ();
   timer_report ();
 }
 
