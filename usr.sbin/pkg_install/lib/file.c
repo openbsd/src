@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.11 2000/04/28 22:13:55 espie Exp $	*/
+/*	$OpenBSD: file.c,v 1.12 2000/05/12 06:06:26 deraadt Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.11 2000/04/28 22:13:55 espie Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.12 2000/05/12 06:06:26 deraadt Exp $";
 #endif
 
 /*
@@ -640,6 +640,7 @@ format_cmd(char *buf, size_t size, const char *fmt,
 					return 0;
 				pos = strrchr(name, '/');
 				if (pos != NULL) {
+					pos++;
 					len = strlen(name) - (pos-name);
 					if (len >= size)
 						return 0;
