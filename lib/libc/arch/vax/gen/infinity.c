@@ -1,14 +1,15 @@
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: infinity.c,v 1.2 1996/08/19 08:18:25 tholo Exp $";
+static char rcsid[] = "$OpenBSD: infinity.c,v 1.3 2000/10/10 12:39:29 hugh Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * XXX - THIS IS (probably) COMPLETELY WRONG ON VAX!!!
+ * XXX - This is not correct, but what can we do about it?
  */
 
 /* infinity.c */
 
 #include <math.h>
 
-/* bytes for +Infinity on a 387 */
-char __infinity[] = { 0, 0, 0, 0, 0, 0, 0xf0, 0x7f };
+/* The highest D float on a vax. */
+char __infinity[] = { (char)0xff, (char)0x7f, (char)0xff, (char)0xff, 
+	(char)0xff, (char)0xff, (char)0xff, (char)0xff };
