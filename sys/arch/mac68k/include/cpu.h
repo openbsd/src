@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 1997/03/08 16:17:00 briggs Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.15 1997/03/12 13:29:39 briggs Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -203,6 +203,9 @@ void	proc_trampoline __P((void));
 
 /* trap.c */
 void	child_return __P((struct proc *, struct frame));
+
+/* vm_machdep.c */
+void	physaccess __P((caddr_t, caddr_t, register int, register int));
 
 __END_DECLS
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 1996/10/14 01:28:43 briggs Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 1997/03/12 13:29:38 briggs Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.21 1996/09/16 18:00:31 scottr Exp $	*/
 
 /*
@@ -262,7 +262,6 @@ pagemove(from, to, size)
 	}
 }
 
-void	physaccess __P((caddr_t, caddr_t, register int, register int));
 void	TBIAS __P((void));
 
 /*
