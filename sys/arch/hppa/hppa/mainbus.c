@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.36 2002/10/13 15:53:39 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.37 2002/10/21 15:58:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -707,7 +707,8 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 {
 
 	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE))
-		__asm __volatile ("syncdma");
+		__asm __volatile ("sync\n\tsyncdma\n\tsync\n\t"
+		    "nop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\t");
 
 	if (ops & BUS_DMASYNC_PREREAD)
 		pdcache(HPPA_SID_KERNEL, map->_dm_va + offset, len);
