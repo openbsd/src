@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.18 1999/06/05 17:05:34 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.19 1999/06/05 19:32:57 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -513,7 +513,7 @@ main(int argc, char **argv)
 	    proxy.sin.sin_len = sizeof(struct sockaddr_in);
 	    if (!inet_aton(argv[i + 1], &proxy.sin.sin_addr)) {
 		fprintf(stderr,
-		    "%s: Warning: proxy address %s is not valid\n",
+		    "%s: Warning: proxy address %s is not valid\n", argv[0],
 		    argv[i + 1]);
 		exit(1);
 	    }
