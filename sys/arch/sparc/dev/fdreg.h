@@ -1,4 +1,5 @@
-/*	$NetBSD: fdreg.h,v 1.5 1996/02/01 22:32:27 mycroft Exp $	*/
+/*	$OpenBSD: fdreg.h,v 1.3 1997/06/24 09:50:57 downsj Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.6 1997/05/02 13:03:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -79,11 +80,13 @@ union fdreg {
 #define	FDC_250KBPS	0x02		/*   250KBPS MFM drive transfer rate */
 #define	FDC_125KBPS	0x03		/*   125KBPS  FM drive transfer rate */
 
-/* Digital Output Register bits */
-#define	FDO_FDSEL	0x03		/*  floppy device select */
-#define	FDO_FRST	0x04		/*  floppy controller reset */
+/* Digital Output Register bits (modified on suns) */
+#define	FDO_DS		0x01		/*  floppy device select (neg) */
+#define	FDO_FRST	0x04		/*  floppy controller reset (neg) */
 #define	FDO_FDMAEN	0x08		/*  enable floppy DMA and Interrupt */
-#define	FDO_MOEN(n)	((1 << n) * 0x10)	/* motor enable */
+#define	FDO_MOEN(n)	((1 << n) << 4)	/* motor enable */
+#define FDO_DEN		0x40		/* Density select */
+#define FDO_EJ		0x80		/* Eject disk */
 
 #define	FDI_DCHG	0x80		/*   diskette has been changed */
 
@@ -105,4 +108,4 @@ union fdreg {
 
 #define ST1_OVERRUN		0x10
 
-
+#define NE7_SPECIFY_NODMA	0x01

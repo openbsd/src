@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.14 1996/04/13 17:40:03 abrown Exp $ */
+/*	$NetBSD: auxreg.c,v 1.21 1997/05/24 20:15:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,9 +93,9 @@ blink(zero)
  * The OPENPROM calls this "auxiliary-io".
  */
 static int
-auxregmatch(parent, vcf, aux)
+auxregmatch(parent, cf, aux)
 	struct device *parent;
-	void *aux, *vcf;
+	void *cf, *aux;
 {
 	register struct confargs *ca = aux;
 
@@ -121,7 +121,14 @@ auxregattach(parent, self, aux)
 	struct romaux *ra = &ca->ca_ra;
 
 	(void)mapdev(ra->ra_reg, AUXREG_VA, 0, sizeof(long), ca->ca_bustype);
-	auxio_reg = AUXIO_REG;
+	if (CPU_ISSUN4M) {
+		auxio_reg = AUXIO4M_REG;
+		auxio_regval = *AUXIO4M_REG | AUXIO4M_MB1;
+	} else {
+		auxio_reg = AUXIO4C_REG;
+		auxio_regval = *AUXIO4C_REG | AUXIO4C_FEJ | AUXIO4C_MB1;
+	}
+
 	printf("\n");
 #ifdef BLINK
 	blink((caddr_t)0);
@@ -132,11 +139,18 @@ unsigned int
 auxregbisc(bis, bic)
 	int bis, bic;
 {
-	register int v, s = splhigh();
+	register int s;
 
-	v = *AUXIO_REG;
-	*AUXIO_REG = ((v | bis) & ~bic) | AUXIO_MB1;
+	if (auxio_reg == 0)
+		/*
+		 * Not all machines have an `aux' register; devices that
+		 * depend on it should not get configured if it's absent.
+		 */
+		panic("no aux register");
+
+	s = splhigh();
+	auxio_regval = (auxio_regval | bis) & ~bic;
+	*auxio_reg = auxio_regval;
 	splx(s);
-	return v;
+	return (auxio_regval);
 }
-

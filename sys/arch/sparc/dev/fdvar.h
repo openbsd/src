@@ -1,6 +1,6 @@
-/*	$OpenBSD: fdvar.h,v 1.4 1996/08/11 23:16:36 downsj Exp $	*/
+/*	$OpenBSD: fdvar.h,v 1.5 1997/06/24 09:50:57 downsj Exp $	*/
 /*
- *	$NetBSD: fdvar.h,v 1.4 1996/02/01 22:32:29 mycroft Exp $
+ *	$NetBSD: fdvar.h,v 1.5 1996/12/08 23:40:34 pk Exp $
  *
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -72,6 +72,7 @@ struct fdcio {
 #define ISTATE_SPURIOUS		1	/* Spurious HW interrupt detected */
 #define ISTATE_SENSEI		2	/* Do SENSEI on next HW interrupt */
 #define ISTATE_DMA		3	/* Pseudo-DMA in progress */
+#define ISTATE_DONE		4	/* Interrupt processing complete */
 
 #define SUNOS_FDIOCEJECT	_IO('f', 24)
 

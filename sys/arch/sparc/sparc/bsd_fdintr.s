@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.8 1996/03/31 23:45:00 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -33,13 +33,100 @@
 
 #ifndef FDC_C_HANDLER
 #include "assym.h"
+#include <machine/param.h>
+#include <machine/psl.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/auxreg.h>
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
-/* XXX this goes in a header file -- currently, it's hidden in locore.s */
-#define INTREG_ADDR 0xf8002000
+
+#define FD_SET_SWINTR_4C				\
+	sethi	%hi(INTRREG_VA), %l5;			\
+	ldub	[%l5 + %lo(INTRREG_VA)], %l6;		\
+	or	%l6, IE_L4, %l6;			\
+	stb	%l6, [%l5 + %lo(INTRREG_VA)]
+
+! raise(0,PIL_AUSOFT)	! NOTE: CPU#0 and PIL_AUSOFT=4
+#define FD_SET_SWINTR_4M				\
+	sethi	%hi(1 << (16 + 4)), %l5;		\
+	set	ICR_PI_SET, %l6;			\
+	st	%l5, [%l6]
+
+/* set software interrupt */
+#if (defined(SUN4) || defined(SUN4C)) && !defined(SUN4M)
+#define FD_SET_SWINTR	FD_SET_SWINTR_4C
+#elif !(defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
+#define FD_SET_SWINTR	FD_SET_SWINTR_4M
+#else
+#define FD_SET_SWINTR					\
+	sethi	%hi(_cputyp), %l5;			\
+	ld	[%l5 + %lo(_cputyp)], %l5;		\
+	cmp	%l5, CPU_SUN4M;				\
+	be	8f;					\
+	FD_SET_SWINTR_4C;				\
+	ba,a	9f;					\
+8:							\
+	FD_SET_SWINTR_4M;				\
+9:
+#endif
+
+! flip TC bit in auxreg
+! assumes %l6 remains unchanged between ASSERT and DEASSERT
+#define FD_ASSERT_TC_4C					\
+	sethi	%hi(AUXREG_VA), %l6;			\
+	ldub	[%l6 + %lo(AUXREG_VA) + 3], %l7;	\
+	or	%l7, AUXIO4C_MB1|AUXIO4C_FTC, %l7;	\
+	stb	%l7, [%l6 + %lo(AUXREG_VA) + 3];
+
+#define FD_DEASSERT_TC_4C				\
+	ldub	[%l6 + %lo(AUXREG_VA) + 3], %l7;	\
+	andn	%l7, AUXIO4C_FTC, %l7;			\
+	or	%l7, AUXIO4C_MB1, %l7;			\
+	stb	%l7, [%l6 + %lo(AUXREG_VA) + 3];
+
+! flip TC bit in auxreg
+#define FD_ASSERT_TC_4M					\
+	sethi	%hi(AUXREG_VA), %l6;			\
+	ldub	[%l6 + %lo(AUXREG_VA) + 3], %l7;	\
+	or	%l7, AUXIO4M_MB1|AUXIO4M_FTC, %l7;	\
+	stb	%l7, [%l6 + %lo(AUXREG_VA) + 3];
+
+#define FD_DEASSERT_TC_4M
+
+/*
+ * flip TC bit in auxreg
+ * assumes %l5 remains unchanged between ASSERT and DEASSERT
+ */
+#if (defined(SUN4) || defined(SUN4C)) && !defined(SUN4M)
+#define FD_ASSERT_TC		FD_ASSERT_TC_4C
+#define FD_DEASSERT_TC		FD_DEASSERT_TC_4C
+#elif !(defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
+#define FD_ASSERT_TC		FD_ASSERT_TC_4M
+#define FD_DEASSERT_TC		FD_DEASSERT_TC_4M
+#else
+#define FD_ASSERT_TC					\
+	sethi	%hi(_cputyp), %l5;			\
+	ld	[%l5 + %lo(_cputyp)], %l5;		\
+	cmp	%l5, CPU_SUN4M;				\
+	be	8f;					\
+	 nop;						\
+	FD_ASSERT_TC_4C;				\
+	ba,a	9f;					\
+8:							\
+	FD_ASSERT_TC_4M;				\
+9:
+#define FD_DEASSERT_TC					\
+	cmp	%l5, CPU_SUN4M;				\
+	be	8f;					\
+	 nop;						\
+	FD_DEASSERT_TC_4C;				\
+	ba,a	9f;					\
+8:							\
+	FD_DEASSERT_TC_4M;				\
+9:
+#endif
+
 
 /* Timeout waiting for chip ready */
 #define POLL_TIMO	100000
@@ -140,16 +227,12 @@ nextc:
 	bne,a	nextc				! if (--fdc->sc_tc) goto ...
 	 ldub	[R_msr], %l7			! get MSR value
 
-	! xfer done: update fdc->sc_buf & fdc->sc_tc, mark istate IDLE
+	! xfer done: update fdc->sc_buf & fdc->sc_tc, mark istate DONE
 	st	R_tc, [R_fdc + FDC_TC]
 	st	R_buf, [R_fdc + FDC_DATA]
 
 	! flip TC bit in auxreg
-	sethi	%hi(_auxio_reg), %l6
-	ld	[%l6 + %lo(_auxio_reg)], %l6
-	ldub	[%l6], %l7
-	or	%l7, AUXIO_MB1|AUXIO_FTC, %l7
-	stb	%l7, [%l6]
+	FD_ASSERT_TC
 
 	! we have some time to kill; anticipate on upcoming
 	! result phase.
@@ -157,12 +240,8 @@ nextc:
 	mov	-1, %l7
 	st	%l7, [R_fdc + FDC_NSTAT]	! fdc->sc_nstat = -1;
 
-	ldub	[%l6], %l7
-	andn	%l7, AUXIO_FTC, %l7
-	or	%l7, AUXIO_MB1, %l7
-	stb	%l7, [%l6]
-	b	resultphase1
-	 nop
+	FD_DEASSERT_TC
+	b,a	resultphase1
 
 spurious:
 	mov	ISTATE_SPURIOUS, %l7
@@ -210,17 +289,14 @@ resultphase1:
 	 ldub	[R_msr], %l7
 
 3:
-	! got status, update sc_nstat and mark istate IDLE
+	! got status, update sc_nstat and mark istate DONE
 	st	R_stcnt, [R_fdc + FDC_NSTAT]
-	mov	ISTATE_IDLE, %l7
+	mov	ISTATE_DONE, %l7
 	st	%l7, [R_fdc + FDC_ISTATE]
 
 ssi:
 	! set software interrupt
-	sethi	%hi(INTREG_ADDR), %l7
-	ldsb	[%l7 + %lo(INTREG_ADDR)], %l6
-	or	%l6, IE_L4, %l6
-	stb	%l6, [%l7 + %lo(INTREG_ADDR)]
+	FD_SET_SWINTR
 
 x:
 	/*
