@@ -1,4 +1,5 @@
-/*	$NetBSD: pstat.c,v 1.19.4.3 1996/06/03 19:00:46 cgd Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.6 1996/11/24 23:42:11 millert Exp $	*/
+/*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.19.4.3 1996/06/03 19:00:46 cgd Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.6 1996/11/24 23:42:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -532,14 +533,39 @@ mount_print(mp)
 			flags &= ~MNT_NODEV;
 			comma = ",";
 		}
-		if (flags & MNT_EXPORTED) {
-			(void)printf("%sexport", comma);
-			flags &= ~MNT_EXPORTED;
+		if (flags & MNT_UNION) {
+			(void)printf("%sunion", comma);
+			flags &= ~MNT_UNION;
+			comma = ",";
+		}
+		if (flags & MNT_ASYNC) {
+			(void)printf("%sasync", comma);
+			flags &= ~MNT_ASYNC;
 			comma = ",";
 		}
 		if (flags & MNT_EXRDONLY) {
 			(void)printf("%sexrdonly", comma);
 			flags &= ~MNT_EXRDONLY;
+			comma = ",";
+		}
+		if (flags & MNT_EXPORTED) {
+			(void)printf("%sexport", comma);
+			flags &= ~MNT_EXPORTED;
+			comma = ",";
+		}
+		if (flags & MNT_DEFEXPORTED) {
+			(void)printf("%sdefdexported", comma);
+			flags &= ~MNT_DEFEXPORTED;
+			comma = ",";
+		}
+		if (flags & MNT_EXPORTANON) {
+			(void)printf("%sexportanon", comma);
+			flags &= ~MNT_EXPORTANON;
+			comma = ",";
+		}
+		if (flags & MNT_EXKERB) {
+			(void)printf("%sexkerb", comma);
+			flags &= ~MNT_EXKERB;
 			comma = ",";
 		}
 		if (flags & MNT_LOCAL) {
