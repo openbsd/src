@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.22 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: crypto.c,v 1.23 2005/04/05 18:13:20 cloder Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -366,7 +366,7 @@ crypto_init_iv(struct keystate *ks, u_int8_t *buf, size_t len)
 void
 crypto_encrypt(struct keystate *ks, u_int8_t *buf, u_int16_t len)
 {
-	LOG_DBG_BUF((LOG_CRYPTO, 10, "crypto_encrypt: before encryption", buf,
+	LOG_DBG_BUF((LOG_CRYPTO, 30, "crypto_encrypt: before encryption", buf,
 	    len));
 	ks->xf->encrypt(ks, buf, len);
 	memcpy(ks->liv, buf + len - ks->xf->blocksize, ks->xf->blocksize);
@@ -377,7 +377,7 @@ crypto_encrypt(struct keystate *ks, u_int8_t *buf, u_int16_t len)
 void
 crypto_decrypt(struct keystate *ks, u_int8_t *buf, u_int16_t len)
 {
-	LOG_DBG_BUF((LOG_CRYPTO, 10, "crypto_decrypt: before decryption", buf,
+	LOG_DBG_BUF((LOG_CRYPTO, 30, "crypto_decrypt: before decryption", buf,
 	    len));
 	/*
 	 * XXX There is controversy about the correctness of updating the IV
