@@ -1,156 +1,156 @@
-.\"	$OpenBSD: openprom.4,v 1.1 2001/10/06 16:51:13 miod Exp $
-.\" Copyright (c) 1992, 1993
-.\"	The Regents of the University of California.  All rights reserved.
-.\"
-.\" This software was developed by the Computer Systems Engineering group
-.\" at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
-.\" contributed to Berkeley.
-.\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
-.\"
-.\"     from: @(#)openprom.4	8.1 (Berkeley) 6/5/93
-.\"
-.Dd October 5, 2001
-.Dt OPENPROM 4 sparc64
-.Os
-.Sh NAME
-.Nm openprom
-.Nd OPENPROM interface
-.Sh SYNOPSIS
-.Fd #include <machine/openpromio.h>
-.Sh DESCRIPTION
-The file
-.Nm /dev/openprom
-is an interface to the ULTRAsparc OPENPROM.
-This interface is highly stylized;
-ioctls are used for all operations.
-These ioctls refer to
-.Dq nodes ,
-which are simply
-.Dq magic
-integer values describing data areas.
-Occasionally the number 0 may be used or returned instead,
-as described below.
-.Pp
-The calls that take and/or return a node
-use a pointer to an
-.Li int
-variable for this purpose;
-others use a pointer to an
-.Li struct opiocdesc
-descriptor,
-which contains a node and two counted strings.
-The first string is comprised of the fields
-.Li op_namelen
-(an
-.Li int )
-and
-.Li op_name
-(a
-.Li "char *" ) ,
-giving the name of a field.
-The second string is comprised of the fields
-.Li op_buflen
-and
-.Li op_buf ,
-used analogously.
-These two counted strings work in a
-.Dq value-result
-fashion.
-At entry to the ioctl,
-the counts are expected to reflect the buffer size;
-on return,
-the counts are updated to reflect the buffer contents.
-.Pp
-The following ioctls are supported:
-.Bl -tag -width OPIOCGETOPTNODE
-.It Dv OPIOCGETOPTNODE
-Takes nothing, and fills in the options node number.
-.It OPIOCGETNEXT
-Takes a node number and returns the number of the following node.
-The node following the last node is number 0;
-the node following number 0 is the first node.
-.It Dv OPIOCGETCHILD
-Takes a node number and returns the number of the first
-.Dq child
-of that node.
-This child may have siblings; these can be discovered by using
-.Dv OPIOCGETNEXT .
-.It Dv OPIOCGET
-Fills in the value of the named property for the given node.
-If no such property is associated with that node,
-the value length is set to -1.
-If the named property exists but has no value,
-the value length is set to 0.
-.It Dv OPIOCSET
-Writes the given value under the given name.
-The OPENPROM may refuse this operation;
-in this case
-.Dv EINVAL
-is returned.
-.It Dv OPIOCNEXTPROP
-Finds the property whose name follows the given name
-in OPENPROM internal order.
-The resulting name is returned in the value field.
-If the named property is the last, the
-.Dq next
-name is the empty string.
-As with
-.Dv OPIOCGETNEXT ,
-the next name after the empty string is the first name.
-.El
-.Sh FILES
-.Pa /dev/openprom
-.Sh ERRORS
-The following may result in rejection of an operation:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The given node number
-is not zero
-and does not correspond to any valid node,
-or is zero where zero is not allowed.
-.It Bq Er EBADF
-The requested operation requires permissions not specified at the call to
-.Fn open .
-.It Bq Er ENAMETOOLONG
-The given name or value field
-exceeds the maximum allowed length (8191 bytes).
-.El
-.Sh SEE ALSO
-.Xr ioctl 2
-.Sh BUGS
-Due to limitations within the OPENPROM itself,
-these functions run at elevated priority
-and may adversely affect system performance.
-.Sh HISTORY
-A
-sparc64
-.Nm openprom
-manual page first appeared in
-.Ox 3.0 .
+.\"	$OpenBSD: openprom.4,v 1.2 2001/10/24 21:15:32 miod Exp $g
+.\" Copyright (c) 1992, 1993g
+.\"	The Regents of the University of California.  All rights reserved.g
+.\"g
+.\" This software was developed by the Computer Systems Engineering groupg
+.\" at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 andg
+.\" contributed to Berkeley.g
+.\"g
+.\" Redistribution and use in source and binary forms, with or withoutg
+.\" modification, are permitted provided that the following conditionsg
+.\" are met:g
+.\" 1. Redistributions of source code must retain the above copyrightg
+.\"    notice, this list of conditions and the following disclaimer.g
+.\" 2. Redistributions in binary form must reproduce the above copyrightg
+.\"    notice, this list of conditions and the following disclaimer in theg
+.\"    documentation and/or other materials provided with the distribution.g
+.\" 3. All advertising materials mentioning features or use of this softwareg
+.\"    must display the following acknowledgement:g
+.\"	This product includes software developed by the University ofg
+.\"	California, Berkeley and its contributors.g
+.\" 4. Neither the name of the University nor the names of its contributorsg
+.\"    may be used to endorse or promote products derived from this softwareg
+.\"    without specific prior written permission.g
+.\"g
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' ANDg
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THEg
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSEg
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLEg
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIALg
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODSg
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)g
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICTg
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAYg
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OFg
+.\" SUCH DAMAGE.g
+.\"g
+.\"     from: @(#)openprom.4	8.1 (Berkeley) 6/5/93g
+.\"g
+.Dd October 5, 2001g
+.Dt OPENPROM 4 sparc64g
+.Osg
+.Sh NAMEg
+.Nm openpromg
+.Nd OPENPROM interfaceg
+.Sh SYNOPSISg
+.Fd #include <machine/openpromio.h>g
+.Sh DESCRIPTIONg
+The fileg
+.Nm /dev/openpromg
+is an interface to the ULTRAsparc OPENPROM.g
+This interface is highly stylized;g
+ioctls are used for all operations.g
+These ioctls refer tog
+.Dq nodes ,g
+which are simplyg
+.Dq magicg
+integer values describing data areas.g
+Occasionally the number 0 may be used or returned instead,g
+as described below.g
+.Ppg
+The calls that take and/or return a nodeg
+use a pointer to ang
+.Li intg
+variable for this purpose;g
+others use a pointer to ang
+.Li struct opiocdescg
+descriptor,g
+which contains a node and two counted strings.g
+The first string is comprised of the fieldsg
+.Li op_nameleng
+(ang
+.Li int )g
+andg
+.Li op_nameg
+(ag
+.Li "char *" ) ,g
+giving the name of a field.g
+The second string is comprised of the fieldsg
+.Li op_bufleng
+andg
+.Li op_buf ,g
+used analogously.g
+These two counted strings work in ag
+.Dq value-resultg
+fashion.g
+At entry to the ioctl,g
+the counts are expected to reflect the buffer size;g
+on return,g
+the counts are updated to reflect the buffer contents.g
+.Ppg
+The following ioctls are supported:g
+.Bl -tag -width OPIOCGETOPTNODEg
+.It Dv OPIOCGETOPTNODEg
+Takes nothing, and fills in the options node number.g
+.It OPIOCGETNEXTg
+Takes a node number and returns the number of the following node.g
+The node following the last node is number 0;g
+the node following number 0 is the first node.g
+.It Dv OPIOCGETCHILDg
+Takes a node number and returns the number of the firstg
+.Dq childg
+of that node.g
+This child may have siblings; these can be discovered by usingg
+.Dv OPIOCGETNEXT .g
+.It Dv OPIOCGETg
+Fills in the value of the named property for the given node.g
+If no such property is associated with that node,g
+the value length is set to -1.g
+If the named property exists but has no value,g
+the value length is set to 0.g
+.It Dv OPIOCSETg
+Writes the given value under the given name.g
+The OPENPROM may refuse this operation;g
+in this caseg
+.Dv EINVALg
+is returned.g
+.It Dv OPIOCNEXTPROPg
+Finds the property whose name follows the given nameg
+in OPENPROM internal order.g
+The resulting name is returned in the value field.g
+If the named property is the last, theg
+.Dq nextg
+name is the empty string.g
+As withg
+.Dv OPIOCGETNEXT ,g
+the next name after the empty string is the first name.g
+.Elg
+.Sh FILESg
+.Pa /dev/openpromg
+.Sh ERRORSg
+The following may result in rejection of an operation:g
+.Bl -tag -width Erg
+.It Bq Er EINVALg
+The given node numberg
+is not zerog
+and does not correspond to any valid node,g
+or is zero where zero is not allowed.g
+.It Bq Er EBADFg
+The requested operation requires permissions not specified at the call tog
+.Fn open .g
+.It Bq Er ENAMETOOLONGg
+The given name or value fieldg
+exceeds the maximum allowed length (8191 bytes).g
+.Elg
+.Sh SEE ALSOg
+.Xr ioctl 2g
+.Sh BUGSg
+Due to limitations within the OPENPROM itself,g
+these functions run at elevated priorityg
+and may adversely affect system performance.g
+.Sh HISTORYg
+Ag
+sparc64g
+.Nm openpromg
+manual page first appeared ing
+.Ox 3.0 .g
