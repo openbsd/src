@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.30 2000/02/25 17:23:41 niklas Exp $	*/
-/*	$EOM: message.c,v 1.144 2000/02/20 19:58:40 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.31 2000/06/19 02:25:44 niklas Exp $	*/
+/*	$EOM: message.c,v 1.145 2000/06/13 16:25:10 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -252,7 +252,8 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
 
       /* Look at the next payload's type.  */
       next = GET_ISAKMP_GEN_NEXT_PAYLOAD (buf);
-      if (next >= ISAKMP_PAYLOAD_RESERVED_MIN)
+      if (next >= ISAKMP_PAYLOAD_RESERVED_MIN && 
+	  next <= ISAKMP_PAYLOAD_RESERVED_MAX)
 	{
 	  log_print ("message_parse_payloads: invalid next payload type %d "
 		     "in payload of type %d", next, payload);
@@ -273,6 +274,15 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
        */
       len = GET_ISAKMP_GEN_LENGTH (buf);
 
+      /* Ignore private payloads. */
+      if (next >= ISAKMP_PAYLOAD_PRIVATE_MIN)
+	{
+	  log_debug (LOG_MESSAGE, 30, 
+		     "message_parse_payloads: private next payload type %d "
+		     "in payload of type %d ignored", next, payload);
+	  goto next_payload;
+	}
+
       /*
        * Check if the current payload is one of the accepted ones at this
        * stage.
@@ -289,6 +299,7 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
       if (func (msg, p, payload, buf))
 	return -1;
 
+    next_payload:
       /* Advance to next payload.  */
       buf += len;
       sz += len;
