@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.7 2001/09/21 16:24:03 aaron Exp $
+.\" $OpenBSD: login_cap.3,v 1.8 2002/02/23 00:39:06 millert Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
 .Dd July 16, 1996
@@ -299,3 +299,16 @@ the return value without first checking it against
 .Fa def
 and
 .Fa err .
+.Pp
+The same warnings set forth in
+.Xr setlogin 2
+apply to
+.Fn setusercontext
+when the
+.Dv LOGIN_SETLOGIN
+flag is used.
+Specifically, changing the login name affects all processes in the current
+session, not just the current process.
+See
+.Xr setlogin 2
+for more information.
