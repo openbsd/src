@@ -214,7 +214,7 @@ map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 .Pp
 That will cut the number down from ~16,000,000 addresses short to only 527,566.
 .Pp
-.Ss Bidirectional mapping rules
+.Ss Bi-directional mapping rules
 .Em bimap
 is used to create static, bidirectional NAT mappings.
 Standard
@@ -266,6 +266,20 @@ ifconfig fxp0 alias 209.1.2.3 netmask 255.255.255.255
 ifconfig fxp0 alias 209.1.2.4 netmask 255.255.255.255
 .Ed
 .Pp
+Note that since
+.Xr ipnat 8
+works on the principle of first match (as apposed to
+.Xr ipf 1
+which is last match), it is customary to put all
+.Em rdr
+rules before any and all
+.Em (bi)map
+rules. This is particularly vital if the network ranges in question
+verlap.
+Otherwise the
+.Em rdr
+rules simply
+.Em will not work .
 .Ss Redirection rules
 .Em rdr
 tells the NAT how to redirect incoming packets.
