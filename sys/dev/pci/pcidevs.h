@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.450 2001/10/04 23:33:39 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.451 2001/10/05 17:44:27 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1443,6 +1443,9 @@
 #define	PCI_PRODUCT_MATROX_PRODUCTIVA_PCI	0x1000		/* MGA G100 PCI */
 #define	PCI_PRODUCT_MATROX_PRODUCTIVA_AGP	0x1001		/* MGA G100 AGP */
 #define	PCI_PRODUCT_MATROX_MYSTIQUE	0x102b		/* MGA 1064SG */
+
+/* Mitsubishi Electronics */
+#define	PCI_PRODUCT_MITSUBISHIELEC_0x0304	GUI		/* Accel */
 
 /* Motorola products */
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 Host-PCI */
