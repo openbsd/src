@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2001/12/13 08:55:51 smurph Exp $
+#	$OpenBSD: GENERIC,v 1.24 2001/12/13 19:02:38 miod Exp $
 
 machine		mvme88k 
 
@@ -31,10 +31,10 @@ mainbus0 at root
 bugtty0 at mainbus0
 pcctwo0 at mainbus0 addr 0xfff00000
 syscon0 at mainbus0 addr 0xfff00000
-busswitch0 at mainbus0 addr 0xfff00000
+bussw0	at mainbus0 addr 0xfff00000
 
-# ----------------------------- busswitch devices -----------------------
-pcctwo0 at busswitch0 offset 0x42000
+# ------------------------------ bussw devices --------------------------
+pcctwo0 at bussw0 offset 0x42000
 
 # ------------------------------ pcctwo devices -------------------------
 clock0	at pcctwo0 ipl 5
