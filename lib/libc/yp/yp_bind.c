@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_bind.c,v 1.11 2001/06/27 00:58:57 lebel Exp $";
+static char *rcsid = "$OpenBSD: yp_bind.c,v 1.12 2002/01/02 20:18:32 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -59,14 +59,15 @@ _yp_dobind(dom, ypdb)
 	const char     *dom;
 	struct dom_binding **ypdb;
 {
-	static int      pid = -1;
+	static pid_t	pid = -1;
 	char            path[MAXPATHLEN];
 	struct dom_binding *ysd, *ysd2;
 	struct ypbind_resp ypbr;
 	struct timeval  tv;
 	struct sockaddr_in clnt_sin;
 	struct ypbind_binding *bn;
-	int             clnt_sock, fd, gpid;
+	int             clnt_sock, fd;
+	pid_t		gpid;
 	CLIENT         *client;
 	int             new = 0, r;
 	int             count = 0;

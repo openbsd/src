@@ -1,4 +1,4 @@
-/*	$OpenBSD: shell_cmd.c,v 1.1 1997/02/26 03:06:57 downsj Exp $	*/
+/*	$OpenBSD: shell_cmd.c,v 1.2 2002/01/02 20:18:33 deraadt Exp $	*/
 
  /*
   * shell_cmd() takes a shell command after %<character> substitutions. The
@@ -14,7 +14,7 @@
 #if 0
 static char sccsid[] = "@(#) shell_cmd.c 1.5 94/12/28 17:42:44";
 #else
-static char rcsid[] = "$OpenBSD: shell_cmd.c,v 1.1 1997/02/26 03:06:57 downsj Exp $";
+static char rcsid[] = "$OpenBSD: shell_cmd.c,v 1.2 2002/01/02 20:18:33 deraadt Exp $";
 #endif
 #endif
 
@@ -43,8 +43,8 @@ static void do_child();
 void    shell_cmd(command)
 char   *command;
 {
-    int     child_pid;
-    int     wait_pid;
+    pid_t	child_pid;
+    pid_t	wait_pid;
 
     /*
      * Most of the work is done within the child process, to minimize the
