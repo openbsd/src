@@ -607,6 +607,15 @@ option, which you can specify to the
 of a
 .B cvs
 command!
+.TP
+\fB\-t\fP \fItag\fP
+Expand the RCS tag specified by the
+.I tag
+argument in addition to the default ``Id'' tag.
+.B \-t
+is available with the
+.BR checkout " and " export
+commands.
 .SH "CVS COMMANDS"
 Here (finally) are details on all the
 .B cvs
@@ -1708,14 +1717,20 @@ or
 .B update
 keeps you informed of its progress by printing a line for each file,
 prefaced with one of the characters
-.` "U A R M C ?"
+.` "U P A R M C ?"
 to indicate the status of the file:
 .TP 1i
 \fBU\fP \fIfile\fP
-The file was brought \fIup to date\fP with respect to the repository.
+The file has been brought \fIup to date\fP with respect to the repository.
 This is done for any file that exists in the repository but not in
 your source, and for files that you haven't changed but are not the most
 recent versions available in the repository.
+.TP li
+\fBP\fP \fIfile\fP
+As
+.` "U" ,
+but instead of transferring the entire file a patch containing the required
+changes were sent.
 .TP 1i
 \fBA\fP \fIfile\fP
 The file has been \fIadded\fP to your private copy of the sources, and
@@ -1734,7 +1749,7 @@ on the file.
 This is a reminder to you that the file needs to be committed.
 .TP 1i
 \fBM\fP \fIfile\fP
-The file is \fImodified\fP in your working directory.
+The file has been \fImodified\fP in your working directory.
 .` "M"
 can indicate one of two states for a file you're working on: either
 there were no modifications to the same file in the repository, so
@@ -1744,7 +1759,7 @@ in the repository as well as in your copy, but they were
 directory.
 .TP 1i
 \fBC\fP \fIfile\fP
-A \fIconflict\fP was detected while trying to merge your changes to
+A \fIconflict\fP has been detected while trying to merge your changes to
 \fIfile\fP with changes from the source repository.  \fIfile\fP (the
 copy in your working directory) is now the result of merging
 the two versions; an unmodified copy of your file is also
