@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.8 2003/04/08 21:19:57 vincent Exp $	*/
+/*	$OpenBSD: grep.c,v 1.9 2003/11/09 00:16:36 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -27,12 +27,12 @@
 #include "kbd.h"
 #include "funmap.h"
 
-static int	compile_goto_error(int f, int n);
-static int	next_error(int f, int n);
+static int	compile_goto_error(int, int);
+static int	next_error(int, int);
 static int	grep(int, int);
 static int	compile(int, int);
 static int	gid(int, int);
-static BUFFER	*compile_mode(char *name, char *command);
+static BUFFER	*compile_mode(char *, char *);
 
 
 void grep_init(void);
