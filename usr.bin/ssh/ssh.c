@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.53 2000/05/29 20:20:46 markus Exp $");
+RCSID("$Id: ssh.c,v 1.54 2000/05/30 17:32:06 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -427,7 +427,7 @@ main(int ac, char **av)
 	if (!host)
 		usage();
 
-	OpenSSL_add_all_algorithms();
+	SSLeay_add_all_algorithms();
 
 	/* Initialize the command to execute on remote host. */
 	buffer_init(&command);
