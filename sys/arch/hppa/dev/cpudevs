@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.13 1999/12/03 17:55:07 mickey Exp $
+$OpenBSD: cpudevs,v 1.14 2000/04/28 17:43:22 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -55,7 +55,7 @@ type	fpu	0x82	FPU chips
 type	bus	0x83	Main Busses
 
 
-board	HP840		0x004	840/930 (Indigo)
+board	HP840		0x004	840/930 (Indigo)		/* blah */
 board	HP825		0x008	825/925 (FireFox)
 board	HP835		0x00a	83[45]/935 (TopGun)
 board	HP845		0x00b	845/945 (Technical ShoGun)
@@ -89,18 +89,18 @@ board	HP730_66	0x202	730/66 (King Cobra)
 board	HP735_99	0x203	735/99 (Hardball)
 board	HP755_99	0x204	755/99 (Coral II)
 board	HP755_125	0x205	755/125 (Coral II)
-#board	HP		0x205	(Snake Eagle, opt 91)
-board	HP735_130	0x206	735/130 (Snake Cheetah)
+board	HP755_125E	0x205	755/125 (Snake Eagle, opt 91)
+board	HP735_125	0x206	735/125 (Snake Cheetah)
 
-board	HP817		0x280	817/827/957/957LX (Nova Low)
-board	HP837		0x281	837/847/857/967/967LX (Nova High)
-board	HP807		0x282	807/917/917LX/927/927LX/937/937LX/947/947LX (Nova8)
-board	HP867		0x283	867/877/977 (Nova64)
-board	HP887		0x284	887/897/987 (TNova)
+board	HP817		0x280	817/827/957/957LX/FH20 (Nova Low)
+board	HP837		0x281	837/847/857/967/967LX/FGHI30 (Nova High)
+board	HP807		0x282	807/917/917LX/927/927LX/937/937LX/947/947LX/F10 (Nova8)
+board	HP867		0x283	867/877/977/GHI40 (Nova64)
+board	HP887T		0x284	887/897/987/GHI50 (TNova)
 #board	HP		0x285	(TNova64)
 #board	HP		0x286	(Hydra64 (Nova))
-#board	HP		0x287	(Hydra96 (Nova))
-#board	HP		0x288	(TNova96)
+board	HP887		0x287	887/897/GHI70 (Hydra96 (Nova))
+board	HP887T96	0x288	887/897/GHI60 (TNova96)
 
 board	HP710		0x300	710/50 (Bushmaster)
 board	HP705		0x302	705/35 (Flounder)
@@ -122,7 +122,7 @@ board	HP745i_50	0x401	745i/747i/50 (Pace)
 board	HP742i_50	0x402	742i/50 (Sidewinder)
 board	HP747i_100	0x403	745i/747i/100 (Fast Pace)
 
-board	HPE23		0x480	E23 (Orville)
+board	HPE23		0x480	806/E23 (Orville)
 board	HPE25		0x481	E25 (Wilbur)
 board	HPE35		0x482	816/E35 (Wright Brothers 80)
 board	HPE45		0x483	826/E45 (Wright Brothers 96)
@@ -159,16 +159,16 @@ board	HP849		0x583	849/K410 (KittyHawk DC3-120)
 board	HPT120		0x584	T120 (LighteningHawk)
 board	HP770_J200	0x585   770/J200 (SkyHawk 100)
 board	HP770_J210	0x586   770/J210 (SkyHawk 120)
-#board	HP		0x587	(UltraLight Proc 1-way T'120)
-#board	HP		0x588	(UltraLight Proc 2-way T'120)
-board	HP821		0x589	821/D250/D350 (UltraLight Proc 1-way T'100)
-board	HP831		0x58a	831/D250/D350 (UltraLight Proc 2-way T'100)
+board	HP841		0x587	841/D210/D410 (UltraLight Proc 1-way T'120)
+board	HP851		0x588	851/D210-2/D410-2 (UltraLight Proc 2-way T'120)
+board	HP821		0x589	821/D200/D400 (UltraLight Proc 1-way T'100)
+board	HP831		0x58a	831/D200-2/D400-2 (UltraLight Proc 2-way T'100)
 board	HP819		0x58b	819/K200 (KittyHawk DC2 100)
 board	HP859		0x58c	859/K220 (ThunderHawk DC3- 120 1M)
 board	HP869		0x58d	869/K420 (ThunderHawk DC3 120 1M)
 #board	HP		0x58E   (Raven 120 T')
-board	HP804		0x58f	804/K450 (Mohawk 160 U 1M DC3)
-board	HP889		0x590	889/K460 (Mohawk 180 U 1M DC3)
+board	HP889		0x58f	889/K460 (Mohawk 160 U 1M DC3)
+#board	HP889		0x590	889/K460 (Mohawk 180 U 1M DC3)
 #board	HP		0x591	(Mohawk 200 U 1M DC3)
 #board	HP		0x592	(Raven 100 T')
 #board	HP		0x593	(FireHawk 160 U)
@@ -255,9 +255,9 @@ board	HP725_120L	0x614	725/120L (Spectra-L)
 #board	HP		0x616	/120 (Piranha)
 board	HP743_50	0x617	743/50 (Jason)
 board	HP743_100	0x618	743/100 (Jason)
-board	HP715_801	0x619	715/80 (Mirage)
-#board			0x61a	(SAIC L-80)
-#board			0x61b	(Rocky1 L-80)
+board	HP715_80M	0x619	715/80 (Mirage)
+board	HP811		0x61a	811/DX5 (SAIC L-80)
+board	HP801		0x61b	801/DX0 (Rocky1 L-80)
 board	HP743T		0x61c	743T (Anole T)
 
 #board	HITACHIT80	0x67e	(Hitachi Tiny 80)
@@ -431,3 +431,4 @@ bridge	DINO	0x00a	PCI Bridge
 fabric	DNACA	0x0aa	Halfdome DNA Central Agent
 fabric	TOGO	0x0ab	Halfdome TOGO Fabric Crossbar
 fabric	SAKURA	0x0ac	Halfdome Sakura Fabric Router
+
