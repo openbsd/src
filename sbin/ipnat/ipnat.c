@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipnat.c,v 1.23 1998/09/15 09:57:29 pattonme Exp $    */
+/*    $OpenBSD: ipnat.c,v 1.24 1998/10/06 06:32:54 deraadt Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.23 1998/09/15 09:57:29 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.24 1998/10/06 06:32:54 deraadt Exp $";
 #endif
 
 
@@ -490,14 +490,9 @@ char   *name;
 			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
 				? ifr->ifr_addr.sa_len
 				: sizeof(struct sockaddr));
-		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
-				sizeof(ifr->ifr_name)))
-			continue;
 		ifreq = *ifr;
-		if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0) {
-			warn("SIOCGIFADDR");
-			goto if_addr_lose;
-		}
+		if (ioctl(s, SIOCGIFADDR, (caddr_t)ifr) < 0)
+			continue;
 		if (ifr->ifr_addr.sa_family != AF_INET)
 			continue;
 		if (!strcmp(name, ifr->ifr_name)) {
