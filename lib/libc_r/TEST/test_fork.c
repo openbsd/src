@@ -20,11 +20,13 @@
 void *
 sleeper(void *arg)
 {
+
 	pthread_set_name_np(pthread_self(), "slpr");
-	printf("sleeper\n");
 	sleep(10);
 	PANIC("sleeper timed out");
 }
+
+static pid_t parent_pid;
 
 static void
 sigchld(sig)
@@ -32,11 +34,62 @@ sigchld(sig)
 {
 	int status;
 
+	/* we should have got a SIGCHLD */
 	ASSERT(sig == SIGCHLD);
+	/* We should be the parent */
+	ASSERT(getpid() == parent_pid);
+	/* wait for any child */
 	CHECKe(wait(&status));
+	/* the child should have called exit(0) */
 	ASSERT(WIFEXITED(status));
 	ASSERT(WEXITSTATUS(status) == 0);
+	printf("parent ok\n");
 	SUCCEED;
+}
+
+static int atfork_state = 0;
+
+void
+atfork_child2()
+{
+	ASSERT(atfork_state++ == 3);
+	ASSERT(getpid() != parent_pid);
+}
+
+void
+atfork_parent2()
+{
+	ASSERT(atfork_state++ == 3);
+	ASSERT(getpid() == parent_pid);
+}
+
+void
+atfork_prepare2()
+{
+	ASSERT(atfork_state++ == 0);
+	ASSERT(getpid() == parent_pid);
+}
+
+
+void
+atfork_child1()
+{
+	ASSERT(atfork_state++ == 2);
+	ASSERT(getpid() != parent_pid);
+}
+
+void
+atfork_parent1()
+{
+	ASSERT(atfork_state++ == 2);
+	ASSERT(getpid() == parent_pid);
+}
+
+void
+atfork_prepare1()
+{
+	ASSERT(atfork_state++ == 1);
+	ASSERT(getpid() == parent_pid);
 }
 
 int
@@ -45,6 +98,8 @@ main()
 	int flags;
 	pid_t pid;
 	pthread_t sleeper_thread;
+
+	parent_pid = getpid();
 
 	CHECKe(flags = fcntl(STDOUT_FILENO, F_GETFL));
 	if ((flags & (O_NONBLOCK | O_NDELAY))) {
@@ -57,21 +112,37 @@ main()
 
 	CHECKe(signal(SIGCHLD, sigchld));
 
+	/* Install some atfork handlers */
+
+	CHECKr(pthread_atfork(&atfork_prepare1, &atfork_parent1, 
+		&atfork_child1));
+	CHECKr(pthread_atfork(&atfork_prepare2, &atfork_parent2, 
+		&atfork_child2));
+
 	printf("forking\n");
 
 	CHECKe(pid = fork());
 	switch(pid) {
 	case 0:
-		sleep(1);
-		printf("child process %d\n", getpid());
-		_thread_dump_info();
-		printf("\n");
+		/* child: */
+		/* Our pid should change */
+		ASSERT(getpid() != parent_pid);
+		/* Our sleeper thread should have disappeared */
+		ASSERT(ESRCH == pthread_cancel(sleeper_thread));
+		/* The atfork handler should have run */
+		ASSERT(atfork_state++ == 4);
+		printf("child ok\n");
 		_exit(0);
-		PANIC("_exit");
+		PANIC("child _exit");
 	default:
-		printf("parent process %d [child %d]\n", getpid(), pid);
-		_thread_dump_info();
-		printf("\n");
+		/* parent: */
+		/* Our pid should stay the same */
+		ASSERT(getpid() == parent_pid);
+		/* Our sleeper thread should still be around */
+		CHECKr(pthread_cancel(sleeper_thread));
+		/* The atfork handler should have run */
+		ASSERT(atfork_state++ == 4);
+		/* wait for the SIGCHLD from the child */
 		CHECKe(pause());
 		PANIC("pause");
 	}
