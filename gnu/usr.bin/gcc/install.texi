@@ -64,8 +64,8 @@ to specify a configuration when building a native compiler unless
 wrong.
 
 In those cases, specify the build machine's @dfn{configuration name}
-with the @samp{--build} option; the host and target will default to be
-the same as the build machine.  (If you are building a cross-compiler,
+with the @samp{--host} option; the host and target will default to be
+the same as the host machine.  (If you are building a cross-compiler,
 see @ref{Cross-Compiler}.)
 
 Here is an example:
@@ -494,11 +494,11 @@ This copies the files @file{cc1}, @file{cpp} and @file{libgcc.a} to
 files @file{cc1}, @file{cpp} and @file{libgcc.a} in the directory
 @file{/usr/local/lib/gcc-lib/@var{target}/@var{version}}, which is where
 the compiler driver program looks for them.  Here @var{target} is the
-target machine type specified when you ran @file{configure}, and
-@var{version} is the version number of GNU CC.  This naming scheme
-permits various versions and/or cross-compilers to coexist.
-It also copies the executables for compilers for other languages
-(e.g., @file{cc1plus} for C++) to the same directory.
+canonicalized form of target machine type specified when you ran
+@file{configure}, and @var{version} is the version number of GNU CC.
+This naming scheme permits various versions and/or cross-compilers to
+coexist.  It also copies the executables for compilers for other
+languages (e.g., @file{cc1plus} for C++) to the same directory.
 
 This also copies the driver program @file{xgcc} into
 @file{/usr/local/bin/gcc}, so that it appears in typical execution
@@ -529,7 +529,13 @@ distribute a C runtime library, it also does not include a C++ runtime
 library.  All I/O functionality, special class libraries, etc., are
 provided by the C++ runtime library.
 
-Here's one way to build and install a C++ runtime library for GNU CC:
+The standard C++ runtime library for GNU CC is called @samp{libstdc++}.
+An obsolescent library @samp{libg++} may also be available, but it's
+necessary only for older software that hasn't been converted yet; if
+you don't know whether you need @samp{libg++} then you probably don't
+need it.
+
+Here's one way to build and install @samp{libstdc++} for GNU CC:
 
 @itemize @bullet
 @item
@@ -843,9 +849,10 @@ particular configuration.
 AMD Am29050 used in a system running a variant of BSD Unix.
 
 @item decstation-*
-DECstations can support three different personalities: Ultrix,
-DEC OSF/1, and OSF/rose.  To configure GCC for these platforms
-use the following configurations:
+MIPS-based DECstations can support three different personalities:
+Ultrix, DEC OSF/1, and OSF/rose.  (Alpha-based DECstation products have
+a configuration name beginning with @samp{alpha-dec}.)  To configure GCC
+for these platforms use the following configurations:
 
 @table @samp
 @item decstation-ultrix
@@ -960,17 +967,11 @@ Use this configuration for SCO release 3.2 version 4.
 Use this for the SCO OpenServer Release family including 5.0.0, 5.0.2, 
 5.0.4, Internet FastStart 1.0, and Internet FastStart 1.1.
 
-GNU CC can generate ELF binaries (if you specify @samp{-melf}) or COFF 
-binaries (the default).  If you are going to build your compiler in ELF 
-mode (once you have bootstrapped the first stage compiler) you 
-@strong{must} specify @samp{-melf} as part of @code{CC},
-@emph{not} @code{CFLAGS}, for example as
-@samp{CC="stage1/xgcc -melf -Bstage1/" }.  If you do not do this, the
-bootstrap will generate incorrect versions of @file{libgcc.a}.
-
-You must have TLS597 (from ftp.sco.com/TLS) installed for ELF
-binaries to work correctly. Note that Open Server 5.0.2 @emph{does}
-need TLS597 installed.
+GNU CC can generate either ELF or COFF binaries.   ELF is the default.
+To get COFF output, you must specify @samp{-mcoff} on the command line.
+  
+For 5.0.0 and 5.0.2, you must install TLS597 from ftp.sco.com/TLS.
+5.0.4 and later do not require this patch.
 
 @emph{NOTE:} You must follow the instructions about invoking
 @samp{make bootstrap} because the native OpenServer compiler builds
@@ -1086,7 +1087,7 @@ This configuration is intended for embedded systems.
 
 @item m68000-hp-bsd
 HP 9000 series 200 running BSD.  Note that the C compiler that comes
-with this system cannot compile GNU CC; contact @code{law@@cs.utah.edu}
+with this system cannot compile GNU CC; contact @code{law@@cygnus.com}
 to get binaries of GNU CC for bootstrapping.
 
 @item m68k-altos
@@ -1396,12 +1397,14 @@ stage3 object files, and errors when compiling @file{libgcc.a} or
 xlc-1.3.0.0 (distributed with AIX 3.2.5), and xlc-1.3.0.19.  Both
 xlc-1.2.1.28 and xlc-1.3.0.24 (PTF 432238) are known to produce working
 versions of GNU CC, but most other recent releases correctly bootstrap
-GNU CC.  Also, releases of AIX prior to AIX 3.2.4 include a version of
+GNU CC.
+
+Release 4.3.0 of AIX and ones prior to AIX 3.2.4 include a version of
 the IBM assembler which does not accept debugging directives: assembler
 updates are available as PTFs.  Also, if you are using AIX 3.2.5 or
 greater and the GNU assembler, you must have a version modified after
 October 16th, 1995 in order for the GNU C compiler to build.  See the
-file @file{README.RS6000} for more details on of these problems.
+file @file{README.RS6000} for more details on any of these problems.
 
 GNU CC does not yet support the 64-bit PowerPC instructions.
 
@@ -1953,8 +1956,12 @@ To install the cross-compiler, use @samp{make install}, as usual.
 @cindex Sun installation
 @cindex installing GNU CC on the Sun
 
-On Solaris (version 2.1), do not use the linker or other tools in
+On Solaris, do not use the linker or other tools in
 @file{/usr/ucb} to build GNU CC.  Use @code{/usr/ccs/bin}.
+
+If the assembler reports @samp{Error: misaligned data} when bootstrapping,
+you are probably using an obsolete version of the GNU assembler.  Upgrade
+to the latest version of GNU @code{binutils}, or use the Solaris assembler.
 
 Make sure the environment variable @code{FLOAT_OPTION} is not set when
 you compile @file{libgcc.a}.  If this option were set to @code{f68881}

@@ -1,5 +1,5 @@
 /* C Compatible Compiler Preprocessor (CCCP)
-   Copyright (C) 1986, 87, 89, 92-96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1986, 87, 89, 92-97, 1998 Free Software Foundation, Inc.
    Written by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
 
@@ -866,7 +866,8 @@ struct directive {
   enum node_type type;		/* Code which describes which directive.  */
 };
 
-#define IS_INCLUDE_DIRECTIVE_TYPE(t) (T_INCLUDE <= (t) && (t) <= T_IMPORT)
+#define IS_INCLUDE_DIRECTIVE_TYPE(t) \
+((int) T_INCLUDE <= (int) (t) && (int) (t) <= (int) T_IMPORT)
 
 /* These functions are declared to return int instead of void since they
    are going to be placed in the table and some old compilers have trouble with
@@ -1059,7 +1060,7 @@ static void macroexpand PROTO((HASHNODE *, FILE_BUF *));
 struct argdata;
 static char *macarg PROTO((struct argdata *, int));
 
-static U_CHAR *macarg1 PROTO((U_CHAR *, U_CHAR *, int *, int *, int *, int));
+static U_CHAR *macarg1 PROTO((U_CHAR *, U_CHAR *, struct hashnode *, int *, int *, int *, int));
 
 static int discard_comments PROTO((U_CHAR *, int, int));
 
@@ -2755,9 +2756,11 @@ do { ip = &instack[indepth];		\
 
       /* Handle any pending identifier;
 	 but the L in L'...' or L"..." is not an identifier.  */
-      if (ident_length
-	  && ! (ident_length == 1 && hash == HASHSTEP (0, 'L')))
-	goto specialchar;
+      if (ident_length) {
+	if (! (ident_length == 1 && hash == HASHSTEP (0, 'L')))
+	  goto specialchar;
+	ident_length = hash = 0;
+      }
 
       start_line = ip->lineno;
 
@@ -2776,9 +2779,11 @@ do { ip = &instack[indepth];		\
 	  if (!traditional) {
 	    error_with_line (line_for_error (start_line),
 			     "unterminated string or character constant");
-	    error_with_line (multiline_string_line,
-			     "possible real start of unterminated constant");
-	    multiline_string_line = 0;
+	    if (multiline_string_line) {
+	      error_with_line (multiline_string_line,
+			       "possible real start of unterminated constant");
+	      multiline_string_line = 0;
+	    }
 	  }
 	  break;
 	}
@@ -2807,20 +2812,25 @@ do { ip = &instack[indepth];		\
 	  break;
 
 	case '\\':
-	  if (ibp >= limit)
-	    break;
 	  if (*ibp == '\n') {
-	    /* Backslash newline is replaced by nothing at all,
-	       but keep the line counts correct.  */
-	    --obp;
+	    /* Backslash newline is replaced by nothing at all, but
+	       keep the line counts correct.  But if we are reading
+	       from a macro, keep the backslash newline, since backslash
+	       newlines have already been processed.  */
+	    if (ip->macro)
+	      *obp++ = '\n';
+	    else
+	      --obp;
 	    ++ibp;
 	    ++ip->lineno;
 	  } else {
 	    /* ANSI stupidly requires that in \\ the second \
 	       is *not* prevented from combining with a newline.  */
-	    while (*ibp == '\\' && ibp[1] == '\n') {
-	      ibp += 2;
-	      ++ip->lineno;
+	    if (!ip->macro) {
+	      while (*ibp == '\\' && ibp[1] == '\n') {
+		ibp += 2;
+		++ip->lineno;
+	      }
 	    }
 	    *obp++ = *ibp++;
 	  }
@@ -2837,13 +2847,12 @@ do { ip = &instack[indepth];		\
       break;
 
     case '/':
+      if (ip->macro != 0)
+	goto randomchar;
       if (*ibp == '\\' && ibp[1] == '\n')
 	newline_fix (ibp);
-
       if (*ibp != '*'
 	  && !(cplusplus_comments && *ibp == '/'))
-	goto randomchar;
-      if (ip->macro != 0)
 	goto randomchar;
       if (ident_length)
 	goto specialchar;
@@ -2995,9 +3004,11 @@ do { ip = &instack[indepth];		\
 
       if (ident_length == 0) {
 	for (;;) {
-	  while (ibp[0] == '\\' && ibp[1] == '\n') {
-	    ++ip->lineno;
-	    ibp += 2;
+	  if (!ip->macro) {
+	    while (ibp[0] == '\\' && ibp[1] == '\n') {
+	      ++ip->lineno;
+	      ibp += 2;
+	    }
 	  }
 	  c = *ibp++;
 	  if (!is_idchar[c] && c != '.') {
@@ -3008,9 +3019,11 @@ do { ip = &instack[indepth];		\
 	  /* A sign can be part of a preprocessing number
 	     if it follows an `e' or `p'.  */
 	  if (c == 'e' || c == 'E' || c == 'p' || c == 'P') {
-	    while (ibp[0] == '\\' && ibp[1] == '\n') {
-	      ++ip->lineno;
-	      ibp += 2;
+	    if (!ip->macro) {
+	      while (ibp[0] == '\\' && ibp[1] == '\n') {
+		++ip->lineno;
+		ibp += 2;
+	      }
 	    }
 	    if (*ibp == '+' || *ibp == '-') {
 	      *obp++ = *ibp++;
@@ -3270,35 +3283,6 @@ randomchar:
 		      old_iln = ip->lineno;
 		      old_oln = op->lineno;
 		    }
-		    /* A comment: copy it unchanged or discard it.  */
-		    else if (*ibp == '/' && ibp[1] == '*') {
-		      if (put_out_comments) {
-			*obp++ = '/';
-			*obp++ = '*';
-		      } else if (! traditional) {
-			*obp++ = ' ';
-		      }
-		      ibp += 2;
-		      while (ibp + 1 != limit
-			     && !(ibp[0] == '*' && ibp[1] == '/')) {
-			/* We need not worry about newline-marks,
-			   since they are never found in comments.  */
-			if (*ibp == '\n') {
-			  /* Newline in a file.  Count it.  */
-			  ++ip->lineno;
-			  ++op->lineno;
-			}
-			if (put_out_comments)
-			  *obp++ = *ibp++;
-			else
-			  ibp++;
-		      }
-		      ibp += 2;
-		      if (put_out_comments) {
-			*obp++ = '*';
-			*obp++ = '/';
-		      }
-		    }
 		    else if (is_space[*ibp]) {
 		      *obp++ = *ibp++;
 		      if (ibp[-1] == '\n') {
@@ -3324,6 +3308,59 @@ randomchar:
 			  *obp++ = *ibp++;
 			}
 		      }
+		    }
+		    else if (ip->macro)
+		      break;
+		    else if (*ibp == '/') {
+		      /* If a comment, copy it unchanged or discard it.  */
+		      if (ibp[1] == '\\' && ibp[2] == '\n')
+			newline_fix (ibp + 1);
+		      if (ibp[1] == '*') {
+			if (put_out_comments) {
+			  *obp++ = '/';
+			  *obp++ = '*';
+			} else if (! traditional) {
+			  *obp++ = ' ';
+			}
+			for (ibp += 2; ibp < limit; ibp++) {
+			  /* We need not worry about newline-marks,
+			     since they are never found in comments.  */
+			  if (ibp[0] == '*') {
+			    if (ibp[1] == '\\' && ibp[2] == '\n')
+			      newline_fix (ibp + 1);
+			    if (ibp[1] == '/') {
+			      ibp += 2;
+			      if (put_out_comments) {
+				*obp++ = '*';
+				*obp++ = '/';
+			      }
+			      break;
+			    }
+			  }
+			  if (*ibp == '\n') {
+			    /* Newline in a file.  Count it.  */
+			    ++ip->lineno;
+			    ++op->lineno;
+			  }
+			  if (put_out_comments)
+			    *obp++ = *ibp;
+			}
+		      } else if (ibp[1] == '/' && cplusplus_comments) {
+			if (put_out_comments) {
+			  *obp++ = '/';
+			  *obp++ = '/';
+			} else if (! traditional) {
+			  *obp++ = ' ';
+			}
+			for (ibp += 2; *ibp != '\n' || ibp[-1] == '\\'; ibp++)
+			  if (put_out_comments)
+			    *obp++ = *ibp;
+		      } else
+			break;
+		    }
+		    else if (ibp[0] == '\\' && ibp[1] == '\n') {
+		      ibp += 2;
+		      ++ip->lineno;
 		    }
 		    else break;
 		  }
@@ -3546,8 +3583,11 @@ handle_directive (ip, op)
       if (*bp != ' ' && *bp != '\t' && pedantic)
 	pedwarn ("%s in preprocessing directive", char_name[*bp]);
       bp++;
-    } else if (*bp == '/' && (bp[1] == '*'
-			      || (cplusplus_comments && bp[1] == '/'))) {
+    } else if (*bp == '/') {
+      if (bp[1] == '\\' && bp[2] == '\n')
+	newline_fix (bp + 1);
+      if (! (bp[1] == '*' || (cplusplus_comments && bp[1] == '/')))
+	break;
       ip->bufp = bp + 2;
       skip_to_end_of_comment (ip, &ip->lineno, 0);
       bp = ip->bufp;
@@ -3665,8 +3705,25 @@ handle_directive (ip, op)
 	  }
 	  break;
 
+	case '"':
+	  /* "..." is special for #include.  */
+	  if (IS_INCLUDE_DIRECTIVE_TYPE (kt->type)) {
+	    while (bp < limit && *bp != '\n') {
+	      if (*bp == '"') {
+		bp++;
+		break;
+	      }
+	      if (*bp == '\\' && bp[1] == '\n') {
+		ip->lineno++;
+		copy_directive = 1;
+		bp++;
+	      }
+	      bp++;
+	    }
+	    break;
+	  }
+	  /* Fall through.  */
 	case '\'':
-	case '\"':
 	  bp = skip_quoted_string (bp - 1, limit, ip->lineno, &ip->lineno, &copy_directive, &unterminated);
 	  /* Don't bother calling the directive if we already got an error
 	     message due to unterminated string.  Skip everything and pretend
@@ -3832,13 +3889,7 @@ handle_directive (ip, op)
 		= skip_quoted_string (xp - 1, bp, ip->lineno,
 				      NULL_PTR, NULL_PTR, NULL_PTR);
 	      while (xp != bp1)
-		if (*xp == '\\') {
-		  if (*++xp != '\n')
-		    *cp++ = '\\';
-		  else
-		    xp++;
-		} else
-		  *cp++ = *xp++;
+		*cp++ = *xp++;
 	    }
 	    break;
 
@@ -3875,7 +3926,7 @@ handle_directive (ip, op)
 	 directives through.  */
 
       if (!no_output && already_output == 0
-	  && (kt->type == T_DEFINE ? dump_names <= dump_macros
+	  && (kt->type == T_DEFINE ? (int) dump_names <= (int) dump_macros
 	      : IS_INCLUDE_DIRECTIVE_TYPE (kt->type) ? dump_includes
 	      : kt->type == T_PRAGMA)) {
         int len;
@@ -4202,10 +4253,15 @@ get_filename:
       FILE_BUF *fp;
       /* Copy the operand text, concatenating the strings.  */
       {
-	while (fin != limit) {
-	  while (fin != limit && *fin != '\"')
-	    *fend++ = *fin++;
-	  fin++;
+	for (;;) {
+	  for (;;) {
+	    if (fin == limit)
+	      goto invalid_include_file_name;
+	    *fend = *fin++;
+	    if (*fend == '"')
+	      break;
+	    fend++;
+	  }
 	  if (fin == limit)
 	    break;
 	  /* If not at the end, there had better be another string.  */
@@ -4288,16 +4344,18 @@ get_filename:
 #endif
 
   fail:
-    if (retried) {
-      error ("`#%s' expects \"FILENAME\" or <FILENAME>", keyword->name);
-      return 0;
-    } else {
+    if (! retried) {
       /* Expand buffer and then remove any newline markers.
 	 We can't just tell expand_to_temp_buffer to omit the markers,
 	 since it would put extra spaces in include file names.  */
       FILE_BUF trybuf;
       U_CHAR *src;
+      int errors_before_expansion = errors;
       trybuf = expand_to_temp_buffer (buf, limit, 1, 0);
+      if (errors != errors_before_expansion) {
+	free (trybuf.buf);
+	goto invalid_include_file_name;
+      }
       src = trybuf.buf;
       buf = (U_CHAR *) alloca (trybuf.bufp - trybuf.buf + 1);
       limit = buf;
@@ -4321,9 +4379,13 @@ get_filename:
       }
       *limit = 0;
       free (trybuf.buf);
-      retried++;
+      retried = 1;
       goto get_filename;
     }
+
+  invalid_include_file_name:
+    error ("`#%s' expects \"FILENAME\" or <FILENAME>", keyword->name);
+    return 0;
   }
 
   /* For #include_next, skip in the search path
@@ -7089,6 +7151,7 @@ skip_if_group (ip, any, op)
   /* Save info about where the group starts.  */
   U_CHAR *beg_of_group = bp;
   int beg_lineno = ip->lineno;
+  int skipping_include_directive = 0;
 
   if (output_conditionals && op != 0) {
     char *ptr = "#failed\n";
@@ -7117,22 +7180,49 @@ skip_if_group (ip, any, op)
 	bp = skip_to_end_of_comment (ip, &ip->lineno, 0);
       }
       break;
+    case '<':
+      if (skipping_include_directive) {
+	while (bp < endb && *bp != '>' && *bp != '\n') {
+	  if (*bp == '\\' && bp[1] == '\n') {
+	    ip->lineno++;
+	    bp++;
+	  }
+	  bp++;
+	}
+      }
+      break;
     case '\"':
+      if (skipping_include_directive) {
+	while (bp < endb && *bp != '\n') {
+	  if (*bp == '"') {
+	    bp++;
+	    break;
+	  }
+	  if (*bp == '\\' && bp[1] == '\n') {
+	    ip->lineno++;
+	    bp++;
+	  }
+	  bp++;
+	}
+	break;
+      }
+      /* Fall through.  */
     case '\'':
       bp = skip_quoted_string (bp - 1, endb, ip->lineno, &ip->lineno,
 			       NULL_PTR, NULL_PTR);
       break;
     case '\\':
-      /* Char after backslash loses its special meaning.  */
-      if (bp < endb) {
-	if (*bp == '\n')
-	  ++ip->lineno;		/* But do update the line-count.  */
+      /* Char after backslash loses its special meaning in some cases.  */
+      if (*bp == '\n') {
+	++ip->lineno;
 	bp++;
-      }
+      } else if (traditional && bp < endb)
+	bp++;
       break;
     case '\n':
       ++ip->lineno;
       beg_of_line = bp;
+      skipping_include_directive = 0;
       break;
     case '%':
       if (beg_of_line == 0 || traditional)
@@ -7194,6 +7284,8 @@ skip_if_group (ip, any, op)
 	else if (*bp == '\\' && bp[1] == '\n')
 	  bp += 2;
 	else if (*bp == '/') {
+	  if (bp[1] == '\\' && bp[2] == '\n')
+	    newline_fix (bp + 1);
 	  if (bp[1] == '*') {
 	    for (bp += 2; ; bp++) {
 	      if (*bp == '\n')
@@ -7201,6 +7293,8 @@ skip_if_group (ip, any, op)
 	      else if (*bp == '*') {
 		if (bp[-1] == '/' && warn_comments)
 		  warning ("`/*' within comment");
+		if (bp[1] == '\\' && bp[2] == '\n')
+		  newline_fix (bp + 1);
 		if (bp[1] == '/')
 		  break;
 	      }
@@ -7321,7 +7415,13 @@ skip_if_group (ip, any, op)
 	    free (temp);
 	    break;
 
-	   default:
+	  case T_INCLUDE:
+	  case T_INCLUDE_NEXT:
+	  case T_IMPORT:
+	    skipping_include_directive = 1;
+	    break;
+
+	  default:
 	    break;
 	  }
 	  break;
@@ -7645,10 +7745,11 @@ skip_quoted_string (bp, limit, start_line, count_newlines, backslash_newlines_p,
 	  ++*count_newlines;
 	bp += 2;
       }
-      if (*bp == '\n' && count_newlines) {
+      if (*bp == '\n') {
 	if (backslash_newlines_p)
 	  *backslash_newlines_p = 1;
-	++*count_newlines;
+	if (count_newlines)
+	  ++*count_newlines;
       }
       bp++;
     } else if (c == '\n') {
@@ -8082,29 +8183,30 @@ macroexpand (hp, op)
 	  for (; i < arglen; i++) {
 	    c = arg->raw[i];
 
-	    /* Special markers Newline Space
-	       generate nothing for a stringified argument.  */
-	    if (c == '\n' && arg->raw[i+1] != '\n') {
-	      i++;
-	      continue;
-	    }
-
-	    /* Internal sequences of whitespace are replaced by one space
-	       except within an string or char token.  */
-	    if (! in_string
-		&& (c == '\n' ? arg->raw[i+1] == '\n' : is_space[c])) {
-	      while (1) {
-		/* Note that Newline Space does occur within whitespace
-		   sequences; consider it part of the sequence.  */
-		if (c == '\n' && is_space[arg->raw[i+1]])
-		  i += 2;
-		else if (c != '\n' && is_space[c])
-		  i++;
-		else break;
-		c = arg->raw[i];
+	    if (! in_string) {
+	      /* Special markers Newline Space
+		 generate nothing for a stringified argument.  */
+	      if (c == '\n' && arg->raw[i+1] != '\n') {
+		i++;
+		continue;
 	      }
-	      i--;
-	      c = ' ';
+
+	      /* Internal sequences of whitespace are replaced by one space
+		 except within an string or char token.  */
+	      if (c == '\n' ? arg->raw[i+1] == '\n' : is_space[c]) {
+		while (1) {
+		  /* Note that Newline Space does occur within whitespace
+		     sequences; consider it part of the sequence.  */
+		  if (c == '\n' && is_space[arg->raw[i+1]])
+		    i += 2;
+		  else if (c != '\n' && is_space[c])
+		    i++;
+		  else break;
+		  c = arg->raw[i];
+		}
+		i--;
+		c = ' ';
+	      }
 	    }
 
 	    if (escaped)
@@ -8122,12 +8224,10 @@ macroexpand (hp, op)
 	    /* Escape these chars */
 	    if (c == '\"' || (in_string && c == '\\'))
 	      xbuf[totlen++] = '\\';
-	    if (isprint (c))
-	      xbuf[totlen++] = c;
-	    else {
-	      sprintf ((char *) &xbuf[totlen], "\\%03o", (unsigned int) c);
-	      totlen += 4;
-	    }
+	    /* We used to output e.g. \008 for control characters here,
+	       but this doesn't conform to the C Standard.
+	       Just output the characters as-is.  */
+	    xbuf[totlen++] = c;
 	  }
 	  if (!traditional)
 	    xbuf[totlen++] = '\"'; /* insert ending quote */
@@ -8281,7 +8381,7 @@ macarg (argptr, rest_args)
 
   /* Try to parse as much of the argument as exists at this
      input stack level.  */
-  U_CHAR *bp = macarg1 (ip->bufp, ip->buf + ip->length,
+  U_CHAR *bp = macarg1 (ip->bufp, ip->buf + ip->length, ip->macro,
 			&paren, &newlines, &comments, rest_args);
 
   /* If we find the end of the argument at this level,
@@ -8319,7 +8419,7 @@ macarg (argptr, rest_args)
       ip = &instack[--indepth];
       newlines = 0;
       comments = 0;
-      bp = macarg1 (ip->bufp, ip->buf + ip->length, &paren,
+      bp = macarg1 (ip->bufp, ip->buf + ip->length, ip->macro, &paren,
 		    &newlines, &comments, rest_args);
       final_start = bufsize;
       bufsize += bp - ip->bufp;
@@ -8382,8 +8482,6 @@ macarg (argptr, rest_args)
 #endif
       if (c == '\"' || c == '\\') /* escape these chars */
 	totlen++;
-      else if (!isprint (c))
-	totlen += 3;
     }
     argptr->stringified_length = totlen;
   }
@@ -8391,6 +8489,7 @@ macarg (argptr, rest_args)
 }
 
 /* Scan text from START (inclusive) up to LIMIT (exclusive),
+   taken from the expansion of MACRO,
    counting parens in *DEPTHPTR,
    and return if reach LIMIT
    or before a `)' that would make *DEPTHPTR negative
@@ -8404,9 +8503,10 @@ macarg (argptr, rest_args)
    Set *COMMENTS to 1 if a comment is seen.  */
 
 static U_CHAR *
-macarg1 (start, limit, depthptr, newlines, comments, rest_args)
+macarg1 (start, limit, macro, depthptr, newlines, comments, rest_args)
      U_CHAR *start;
      register U_CHAR *limit;
+     struct hashnode *macro;
      int *depthptr, *newlines, *comments;
      int rest_args;
 {
@@ -8423,18 +8523,15 @@ macarg1 (start, limit, depthptr, newlines, comments, rest_args)
       break;
     case '\\':
       /* Traditionally, backslash makes following char not special.  */
-      if (bp + 1 < limit && traditional)
-	{
-	  bp++;
-	  /* But count source lines anyway.  */
-	  if (*bp == '\n')
-	    ++*newlines;
-	}
+      if (traditional && bp + 1 < limit && bp[1] != '\n')
+	bp++;
       break;
     case '\n':
       ++*newlines;
       break;
     case '/':
+      if (macro)
+	break;
       if (bp[1] == '\\' && bp[2] == '\n')
 	newline_fix (bp + 1);
       if (bp[1] == '*') {
@@ -8475,8 +8572,11 @@ macarg1 (start, limit, depthptr, newlines, comments, rest_args)
 	    bp++;
 	    if (*bp == '\n')
 	      ++*newlines;
-	    while (*bp == '\\' && bp[1] == '\n') {
-	      bp += 2;
+	    if (!macro) {
+	      while (*bp == '\\' && bp[1] == '\n') {
+		bp += 2;
+		++*newlines;
+	      }
 	    }
 	  } else if (*bp == '\n') {
 	    ++*newlines;
@@ -8572,16 +8672,16 @@ discard_comments (start, length, newlines)
 	obp--;
       else
 	obp[-1] = ' ';
-      ibp++;
-      while (ibp + 1 < limit) {
-	if (ibp[0] == '*'
-	    && ibp[1] == '\\' && ibp[2] == '\n')
-	  newline_fix (ibp + 1);
-	if (ibp[0] == '*' && ibp[1] == '/')
-	  break;
-	ibp++;
+      while (++ibp < limit) {
+	if (ibp[0] == '*') {
+	  if (ibp[1] == '\\' && ibp[2] == '\n')
+	    newline_fix (ibp + 1);
+	  if (ibp[1] == '/') {
+	    ibp += 2;
+	    break;
+	  }
+	}
       }
-      ibp += 2;
       break;
 
     case '\'':
@@ -8597,10 +8697,16 @@ discard_comments (start, length, newlines)
 	    break;
 	  if (c == '\n' && quotec == '\'')
 	    break;
-	  if (c == '\\' && ibp < limit) {
-	    while (*ibp == '\\' && ibp[1] == '\n')
-	      ibp += 2;
-	    *obp++ = *ibp++;
+	  if (c == '\\') {
+	    if (ibp < limit && *ibp == '\n') {
+	      ibp++;
+	      obp--;
+	    } else {
+	      while (*ibp == '\\' && ibp[1] == '\n')
+		ibp += 2;
+	      if (ibp < limit)
+		*obp++ = *ibp++;
+	    }
 	  }
 	}
       }
@@ -8651,7 +8757,7 @@ change_newlines (start, length)
 	int quotec = c;
 	while (ibp < limit) {
 	  *obp++ = c = *ibp++;
-	  if (c == quotec)
+	  if (c == quotec && ibp[-2] != '\\')
 	    break;
 	  if (c == '\n' && quotec == '\'')
 	    break;
@@ -8738,6 +8844,7 @@ static void
 error_from_errno (name)
      char *name;
 {
+  int e = errno;
   int i;
   FILE_BUF *ip = NULL;
 
@@ -8752,7 +8859,7 @@ error_from_errno (name)
   if (ip != NULL)
     fprintf (stderr, "%s:%d: ", ip->nominal_fname, ip->lineno);
 
-  fprintf (stderr, "%s: %s\n", name, my_strerror (errno));
+  fprintf (stderr, "%s: %s\n", name, my_strerror (e));
 
   errors++;
 }
@@ -9586,10 +9693,7 @@ make_definition (str, op)
 	if (unterminated)
 	  return;
 	while (p != p1)
-	  if (*p == '\\' && p[1] == '\n')
-	    p += 2;
-	  else
-	    *q++ = *p++;
+	  *q++ = *p++;
       } else if (*p == '\\' && p[1] == '\n')
 	p += 2;
       /* Change newline chars into newline-markers.  */
@@ -9974,8 +10078,7 @@ static void
 perror_with_name (name)
      char *name;
 {
-  fprintf (stderr, "%s: ", progname);
-  fprintf (stderr, "%s: %s\n", name, my_strerror (errno));
+  fprintf (stderr, "%s: %s: %s\n", progname, name, my_strerror (errno));
   errors++;
 }
 

@@ -1,5 +1,5 @@
 /* Procedure integration for GNU CC.
-   Copyright (C) 1988, 91, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1988, 91, 93-97, 1998 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GNU CC.
@@ -77,6 +77,24 @@ static void set_block_abstract_flags PROTO((tree, int));
 
 void set_decl_abstract_flags	PROTO((tree, int));
 
+/* Returns the Ith entry in the label_map contained in MAP.  If the
+   Ith entry has not yet been set, return a fresh label.  This function
+   performs a lazy initialization of label_map, thereby avoiding huge memory
+   explosions when the label_map gets very large.  */
+
+rtx
+get_label_from_map (map, i)
+     struct inline_remap *map;
+     int i;
+{
+  rtx x = map->label_map[i];
+
+  if (x == NULL_RTX)
+    x = map->label_map[i] = gen_label_rtx();
+
+  return x;
+}
+
 /* Zero if the current function (whose FUNCTION_DECL is FNDECL)
    is safe and reasonable to integrate into other functions.
    Nonzero means value is a warning message with a single %s
@@ -93,9 +111,7 @@ function_cannot_inline_p (fndecl)
   register tree parms;
   rtx result;
 
-  /* No inlines with varargs.  `grokdeclarator' gives a warning
-     message about that if `inline' is specified.  This code
-     it put in to catch the volunteers.  */
+  /* No inlines with varargs.  */
   if ((last && TREE_VALUE (last) != void_type_node)
       || current_function_varargs)
     return "varargs function cannot be inline";
@@ -275,6 +291,7 @@ initialize_for_inline (fndecl, min_labelno, max_labelno, max_reg, copy)
        parms = TREE_CHAIN (parms), i++)
     {
       rtx p = DECL_RTL (parms);
+      int copied_incoming = 0;
 
       /* If we have (mem (addressof (mem ...))), use the inner MEM since
 	 otherwise the copy_rtx call below will not unshare the MEM since
@@ -297,7 +314,8 @@ initialize_for_inline (fndecl, min_labelno, max_labelno, max_reg, copy)
 		  && GET_CODE (DECL_INCOMING_RTL (parms)) == MEM
 		  && (XEXP (DECL_RTL (parms), 0)
 		      == XEXP (DECL_INCOMING_RTL (parms), 0))))
-	    DECL_INCOMING_RTL (parms) = new;
+	    DECL_INCOMING_RTL (parms) = new, copied_incoming = 1;
+
 	  DECL_RTL (parms) = new;
 	}
 
@@ -319,6 +337,23 @@ initialize_for_inline (fndecl, min_labelno, max_labelno, max_reg, copy)
       /* This flag is cleared later
 	 if the function ever modifies the value of the parm.  */
       TREE_READONLY (parms) = 1;
+
+      /* Copy DECL_INCOMING_RTL if not done already.  This can
+	 happen if DECL_RTL is a reg.  */
+      if (copy && ! copied_incoming)
+	{
+	  p = DECL_INCOMING_RTL (parms);
+
+	  /* If we have (mem (addressof (mem ...))), use the inner MEM since
+	     otherwise the copy_rtx call below will not unshare the MEM since
+	     it shares ADDRESSOF.  */
+	  if (GET_CODE (p) == MEM && GET_CODE (XEXP (p, 0)) == ADDRESSOF
+	      && GET_CODE (XEXP (XEXP (p, 0), 0)) == MEM)
+	    p = XEXP (XEXP (p, 0), 0);
+
+	  if (GET_CODE (p) == MEM)
+	    DECL_INCOMING_RTL (parms) = copy_rtx (p);
+	}
     }
 
   /* Assume we start out in the insns that set up the parameters.  */
@@ -1387,7 +1422,7 @@ expand_inline_function (fndecl, parms, target, ignore, type,
 	arg_vals[i] = copy_to_mode_reg (GET_MODE (loc), arg_vals[i]);
 
       if (arg_vals[i] != 0 && GET_CODE (arg_vals[i]) == REG
-	  && TREE_CODE (TREE_TYPE (formal)) == POINTER_TYPE)
+	  && POINTER_TYPE_P (TREE_TYPE (formal)))
 	mark_reg_pointer (arg_vals[i],
 			  (TYPE_ALIGN (TREE_TYPE (TREE_TYPE (formal)))
 			   / BITS_PER_UNIT));
@@ -1754,9 +1789,10 @@ expand_inline_function (fndecl, parms, target, ignore, type,
   pushlevel (0);
   expand_start_bindings (0);
 
-  /* Make new label equivalences for the labels in the called function.  */
-  for (i = min_labelno; i < max_labelno; i++)
-    map->label_map[i] = gen_label_rtx ();
+  /* Initialize label_map.  get_label_from_map will actually make
+     the labels.  */
+  bzero ((char *) &map->label_map [min_labelno],
+	 (max_labelno - min_labelno) * sizeof (rtx));
 
   /* Perform postincrements before actually calling the function.  */
   emit_queue ();
@@ -1949,7 +1985,8 @@ expand_inline_function (fndecl, parms, target, ignore, type,
 	  break;
 
 	case CODE_LABEL:
-	  copy = emit_label (map->label_map[CODE_LABEL_NUMBER (insn)]);
+	  copy = emit_label (get_label_from_map (map,
+						 CODE_LABEL_NUMBER (insn)));
 	  LABEL_NAME (copy) = LABEL_NAME (insn);
 	  map->const_age++;
 	  break;
@@ -1968,11 +2005,14 @@ expand_inline_function (fndecl, parms, target, ignore, type,
 	      && NOTE_LINE_NUMBER (insn) != NOTE_INSN_FUNCTION_BEG
 	      && NOTE_LINE_NUMBER (insn) != NOTE_INSN_DELETED)
 	    {
-	      copy = emit_note (NOTE_SOURCE_FILE (insn), NOTE_LINE_NUMBER (insn));
-	      if (copy && (NOTE_LINE_NUMBER (copy) == NOTE_INSN_EH_REGION_BEG
-			   || NOTE_LINE_NUMBER (copy) == NOTE_INSN_EH_REGION_END))
+	      copy = emit_note (NOTE_SOURCE_FILE (insn),
+				NOTE_LINE_NUMBER (insn));
+	      if (copy
+		  && (NOTE_LINE_NUMBER (copy) == NOTE_INSN_EH_REGION_BEG
+		      || NOTE_LINE_NUMBER (copy) == NOTE_INSN_EH_REGION_END))
 		{
-		  rtx label = map->label_map[NOTE_BLOCK_NUMBER (copy)];
+		  rtx label
+		    = get_label_from_map (map, NOTE_BLOCK_NUMBER (copy));
 
 		  /* We have to forward these both to match the new exception
 		     region.  */
@@ -2387,14 +2427,15 @@ copy_rtx_and_substitute (orig, map)
       return gen_rtx (code, VOIDmode, copy);
 
     case CODE_LABEL:
-      LABEL_PRESERVE_P (map->label_map[CODE_LABEL_NUMBER (orig)])
+      LABEL_PRESERVE_P (get_label_from_map (map, CODE_LABEL_NUMBER (orig)))
 	= LABEL_PRESERVE_P (orig);
-      return map->label_map[CODE_LABEL_NUMBER (orig)];
+      return get_label_from_map (map, CODE_LABEL_NUMBER (orig));
 
     case LABEL_REF:
       copy = gen_rtx (LABEL_REF, mode,
 		      LABEL_REF_NONLOCAL_P (orig) ? XEXP (orig, 0)
-		      : map->label_map[CODE_LABEL_NUMBER (XEXP (orig, 0))]);
+		      : get_label_from_map (map, 
+					    CODE_LABEL_NUMBER (XEXP (orig, 0))));
       LABEL_OUTSIDE_LOOP_P (copy) = LABEL_OUTSIDE_LOOP_P (orig);
 
       /* The fact that this label was previously nonlocal does not mean

@@ -1,5 +1,5 @@
 /* Try to unroll loops, and split induction variables.
-   Copyright (C) 1992, 1993, 1994, 1995, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93, 94, 95, 97, 1998 Free Software Foundation, Inc.
    Contributed by James E. Wilson, Cygnus Support/UC Berkeley.
 
 This file is part of GNU CC.
@@ -691,8 +691,9 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
       else if (GET_CODE (insn) == JUMP_INSN)
 	{
 	  if (JUMP_LABEL (insn))
-	    map->label_map[CODE_LABEL_NUMBER (JUMP_LABEL (insn))]
-	      = JUMP_LABEL (insn);
+	    set_label_in_map (map,
+			      CODE_LABEL_NUMBER (JUMP_LABEL (insn)),
+			      JUMP_LABEL (insn));
 	  else if (GET_CODE (PATTERN (insn)) == ADDR_VEC
 		   || GET_CODE (PATTERN (insn)) == ADDR_DIFF_VEC)
 	    {
@@ -704,7 +705,9 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
 	      for (i = 0; i < len; i++)
 		{
 		  label = XEXP (XVECEXP (pat, diff_vec_p, i), 0);
-		  map->label_map[CODE_LABEL_NUMBER (label)] = label;
+		  set_label_in_map (map,
+				    CODE_LABEL_NUMBER (label),
+				    label);
 		}
 	    }
 	}
@@ -1043,7 +1046,7 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
 
 	      for (j = 0; j < max_labelno; j++)
 		if (local_label[j])
-		  map->label_map[j] = gen_label_rtx ();
+		  set_label_in_map (map, j, gen_label_rtx ());
 
 	      for (j = FIRST_PSEUDO_REGISTER; j < max_reg_before_loop; j++)
 		if (local_regno[j])
@@ -1188,7 +1191,7 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
 
       for (j = 0; j < max_labelno; j++)
 	if (local_label[j])
-	  map->label_map[j] = gen_label_rtx ();
+	  set_label_in_map (map, j, gen_label_rtx ());
 
       for (j = FIRST_PSEUDO_REGISTER; j < max_reg_before_loop; j++)
 	if (local_regno[j])
@@ -1201,8 +1204,9 @@ unroll_loop (loop_end, insn_count, loop_start, end_insert_before,
 	  insn = PREV_INSN (copy_start);
 	  pattern = PATTERN (insn);
 	  
-	  tem = map->label_map[CODE_LABEL_NUMBER
-			       (XEXP (SET_SRC (pattern), 0))];
+	  tem = get_label_from_map (map,
+				    CODE_LABEL_NUMBER
+				    (XEXP (SET_SRC (pattern), 0)));
 	  SET_SRC (pattern) = gen_rtx (LABEL_REF, VOIDmode, tem);
 
 	  /* Set the jump label so that it can be used by later loop unrolling
@@ -1427,6 +1431,7 @@ init_reg_map (map, maxregnum)
    to the iv.  This procedure reconstructs the pattern computing the iv;
    verifying that all operands are of the proper form.
 
+   PATTERN must be the result of single_set.
    The return value is the amount that the giv is incremented by.  */
 
 static rtx
@@ -1594,7 +1599,7 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
      rtx start_label, loop_end, insert_before, copy_notes_from;
 {
   rtx insn, pattern;
-  rtx tem, copy;
+  rtx set, tem, copy;
   int dest_reg_was_split, i;
   rtx cc0_insn = 0;
   rtx final_label = 0;
@@ -1609,10 +1614,11 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
   if (! last_iteration)
     {
       final_label = gen_label_rtx ();
-      map->label_map[CODE_LABEL_NUMBER (start_label)] = final_label;
+      set_label_in_map (map, CODE_LABEL_NUMBER (start_label),
+			final_label); 
     }
   else
-    map->label_map[CODE_LABEL_NUMBER (start_label)] = start_label;
+    set_label_in_map (map, CODE_LABEL_NUMBER (start_label), start_label);
 
   start_sequence ();
   
@@ -1638,15 +1644,15 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 	     Do this before splitting the giv, since that may map the
 	     SET_DEST to a new register.  */
 	  
-	  if (GET_CODE (pattern) == SET
-	      && GET_CODE (SET_DEST (pattern)) == REG
-	      && addr_combined_regs[REGNO (SET_DEST (pattern))])
+	  if ((set = single_set (insn))
+	      && GET_CODE (SET_DEST (set)) == REG
+	      && addr_combined_regs[REGNO (SET_DEST (set))])
 	    {
 	      struct iv_class *bl;
 	      struct induction *v, *tv;
-	      int regno = REGNO (SET_DEST (pattern));
+	      int regno = REGNO (SET_DEST (set));
 	      
-	      v = addr_combined_regs[REGNO (SET_DEST (pattern))];
+	      v = addr_combined_regs[REGNO (SET_DEST (set))];
 	      bl = reg_biv_class[REGNO (v->src_reg)];
 	      
 	      /* Although the giv_inc amount is not needed here, we must call
@@ -1655,7 +1661,7 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 		 we might accidentally delete insns generated immediately
 		 below by emit_unrolled_add.  */
 
-	      giv_inc = calculate_giv_inc (pattern, insn, regno);
+	      giv_inc = calculate_giv_inc (set, insn, regno);
 
 	      /* Now find all address giv's that were combined with this
 		 giv 'v'.  */
@@ -1729,11 +1735,11 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 	  
 	  dest_reg_was_split = 0;
 	  
-	  if (GET_CODE (pattern) == SET
-	      && GET_CODE (SET_DEST (pattern)) == REG
-	      && splittable_regs[REGNO (SET_DEST (pattern))])
+	  if ((set = single_set (insn))
+	      && GET_CODE (SET_DEST (set)) == REG
+	      && splittable_regs[REGNO (SET_DEST (set))])
 	    {
-	      int regno = REGNO (SET_DEST (pattern));
+	      int regno = REGNO (SET_DEST (set));
 	      
 	      dest_reg_was_split = 1;
 	      
@@ -1741,9 +1747,9 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 		 already computed above.  */
 
 	      if (giv_inc == 0)
-		giv_inc = calculate_giv_inc (pattern, insn, regno);
-	      giv_dest_reg = SET_DEST (pattern);
-	      giv_src_reg = SET_DEST (pattern);
+		giv_inc = calculate_giv_inc (set, insn, regno);
+	      giv_dest_reg = SET_DEST (set);
+	      giv_src_reg = SET_DEST (set);
 
 	      if (unroll_type == UNROLL_COMPLETELY)
 		{
@@ -1896,8 +1902,9 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 	      if (invert_exp (pattern, copy))
 		{
 		  if (! redirect_exp (&pattern,
-				      map->label_map[CODE_LABEL_NUMBER
-						     (JUMP_LABEL (insn))],
+				      get_label_from_map (map,
+							  CODE_LABEL_NUMBER
+							  (JUMP_LABEL (insn))),
 				      exit_label, copy))
 		    abort ();
 		}
@@ -1914,8 +1921,9 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 		  emit_label_after (lab, jmp);
 		  LABEL_NUSES (lab) = 0;
 		  if (! redirect_exp (&pattern,
-				      map->label_map[CODE_LABEL_NUMBER
-						     (JUMP_LABEL (insn))],
+				      get_label_from_map (map,
+							  CODE_LABEL_NUMBER
+							  (JUMP_LABEL (insn))),
 				      lab, copy))
 		    abort ();
 		}
@@ -1936,9 +1944,9 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 
 	      /* Can't use the label_map for every insn, since this may be
 		 the backward branch, and hence the label was not mapped.  */
-	      if (GET_CODE (pattern) == SET)
+	      if ((set = single_set (copy)))
 		{
-		  tem = SET_SRC (pattern);
+		  tem = SET_SRC (set);
 		  if (GET_CODE (tem) == LABEL_REF)
 		    label = XEXP (tem, 0);
 		  else if (GET_CODE (tem) == IF_THEN_ELSE)
@@ -1958,7 +1966,8 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 		     for a switch statement.  This label must have been mapped,
 		     so just use the label_map to get the new jump label.  */
 		  JUMP_LABEL (copy)
-		    = map->label_map[CODE_LABEL_NUMBER (JUMP_LABEL (insn))];
+		    = get_label_from_map (map, 
+					  CODE_LABEL_NUMBER (JUMP_LABEL (insn))); 
 		}
 	  
 	      /* If this is a non-local jump, then must increase the label
@@ -2036,7 +2045,8 @@ copy_loop_body (copy_start, copy_end, map, exit_label, last_iteration,
 
 	  if (insn != start_label)
 	    {
-	      copy = emit_label (map->label_map[CODE_LABEL_NUMBER (insn)]);
+	      copy = emit_label (get_label_from_map (map,
+						     CODE_LABEL_NUMBER (insn)));
 	      map->const_age++;
 	    }
 	  break;

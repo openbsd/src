@@ -1,3 +1,21 @@
+1998-02-13  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* config.sub: Add PentiumII (i786).  Add '7' to all i[3456]
+ 	entries.  Add AMD and Cyrix names for P5 and P6.
+
+1998-02-03  Philip Blundell  <pb@nexus.co.uk>
+
+	* config.guess: Add support for Linux/ARM.
+
+1998-02-03  Paul Eggert  <eggert@twinsun.com>
+
+	* obstack.h (PTR_INT_TYPE): Use __PTRDIFF_TYPE__ if available.
+
+1998-01-28  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config.guess: Use ${UNAME_MACHINE} rather than i386 for cygwin32
+	and mingw32.
+
 Wed Jan  1 17:54:47 1998  J.J. van der Heijden <J.J.vanderHeijden@student.utwente.nl>
 
         * pexecute.c (pexecute, [_WIN32]): Yes, mask termstat for mingw32.

@@ -144,16 +144,16 @@ original English.
 @sp 2
 @center Richard M. Stallman
 @sp 3
-@center Last updated 7 January 1998
+@center Last updated 28 February 1998
 @sp 1
-@c The version number appears three times more in this file.
+@c The version number appears five times more in this file.
 
-@center for version 2.8.0
+@center for version 2.8.1
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} 1988, 89, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 @sp 2
-For GCC Version 2.8.0@*
+For GCC Version 2.8.1@*
 @sp 1
 Published by the Free Software Foundation @*
 59 Temple Place - Suite 330@*
@@ -194,19 +194,19 @@ original English.
 @ifset USING
 This manual documents how to run, install and port the GNU
 compiler, as well as its new features and incompatibilities, and how to
-report bugs.  It corresponds to GNU CC version 2.8.0.
+report bugs.  It corresponds to GNU CC version 2.8.1.
 @end ifset
 @end ifset
 
 @ifclear INTERNALS
 This manual documents how to run and install the GNU compiler,
 as well as its new features and incompatibilities, and how to report
-bugs.  It corresponds to GNU CC version 2.8.0.
+bugs.  It corresponds to GNU CC version 2.8.1.
 @end ifclear
 @ifclear USING
 This manual documents how to port the GNU compiler,
 as well as its new features and incompatibilities, and how to report
-bugs.  It corresponds to GNU CC version 2.7.1.
+bugs.  It corresponds to GNU CC version 2.8.1.
 @end ifclear
 
 @end ifinfo
@@ -1122,7 +1122,7 @@ the ordinary C compiler.  If you do so, you must specify the following
 options:
 
 @smallexample
--L/usr/local/lib/gcc-lib/we32k-att-sysv/2.7.1 -lgcc -lc_s
+-L/usr/local/lib/gcc-lib/we32k-att-sysv/2.8.1 -lgcc -lc_s
 @end smallexample
 
 The first specifies where to find the library @file{libgcc.a}

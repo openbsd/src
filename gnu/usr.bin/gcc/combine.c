@@ -2351,12 +2351,12 @@ try_combine (i3, i2, i1)
 	if (newi2pat && reg_set_p (i3dest_killed, newi2pat))
 	  distribute_notes (gen_rtx (EXPR_LIST, REG_DEAD, i3dest_killed,
 				     NULL_RTX),
-			    NULL_RTX, i2, NULL_RTX, NULL_RTX, NULL_RTX);
+			    NULL_RTX, i2, NULL_RTX, elim_i2, elim_i1);
 	else
 	  distribute_notes (gen_rtx (EXPR_LIST, REG_DEAD, i3dest_killed,
 				     NULL_RTX),
 			    NULL_RTX, i3, newi2pat ? i2 : NULL_RTX,
-			    NULL_RTX, NULL_RTX);
+			    elim_i2, elim_i1);
       }
 
     if (i2dest_in_i2src)
@@ -11307,15 +11307,21 @@ distribute_notes (notes, from_insn, i3, i2, elim_i2, elim_i1)
 		  if (reg_set_p (XEXP (note, 0), PATTERN (tem)))
 		    {
 		      rtx set = single_set (tem);
+		      rtx inner_dest = 0;
+
+		      if (set != 0)
+			for (inner_dest = SET_DEST (set);
+			     GET_CODE (inner_dest) == STRICT_LOW_PART
+			     || GET_CODE (inner_dest) == SUBREG
+			     || GET_CODE (inner_dest) == ZERO_EXTRACT;
+			     inner_dest = XEXP (inner_dest, 0))
+			  ;
 
 		      /* Verify that it was the set, and not a clobber that
 			 modified the register.  */
 
 		      if (set != 0 && ! side_effects_p (SET_SRC (set))
-			  && (rtx_equal_p (XEXP (note, 0), SET_DEST (set))
-			      || (GET_CODE (SET_DEST (set)) == SUBREG
-				  && rtx_equal_p (XEXP (note, 0),
-						  XEXP (SET_DEST (set), 0)))))
+			  && rtx_equal_p (XEXP (note, 0), inner_dest))
 			{
 			  /* Move the notes and links of TEM elsewhere.
 			     This might delete other dead insns recursively. 
@@ -11331,6 +11337,20 @@ distribute_notes (notes, from_insn, i3, i2, elim_i2, elim_i1)
 			  PUT_CODE (tem, NOTE);
 			  NOTE_LINE_NUMBER (tem) = NOTE_INSN_DELETED;
 			  NOTE_SOURCE_FILE (tem) = 0;
+			}
+		      /* If the register is both set and used here, put the
+			 REG_DEAD note here, but place a REG_UNUSED note
+			 here too unless there already is one.  */
+		      else if (reg_referenced_p (XEXP (note, 0),
+						 PATTERN (tem)))
+			{
+			  place = tem;
+
+			  if (! find_regno_note (tem, REG_UNUSED,
+						 REGNO (XEXP (note, 0))))
+			    REG_NOTES (tem)
+			      = gen_rtx (EXPR_LIST, REG_UNUSED, XEXP (note, 0),
+					 REG_NOTES (tem));
 			}
 		      else
 			{
@@ -11388,13 +11408,12 @@ distribute_notes (notes, from_insn, i3, i2, elim_i2, elim_i1)
 	    }
 
 	  /* If the register is set or already dead at PLACE, we needn't do
-	     anything with this note if it is still a REG_DEAD note.  
+	     anything with this note if it is still a REG_DEAD note.
+	     We can here if it is set at all, not if is it totally replace,
+	     which is what `dead_or_set_p' checks, so also check for it being
+	     set partially.  */
 
-	     Note that we cannot use just `dead_or_set_p' here since we can
-	     convert an assignment to a register into a bit-field assignment.
-	     Therefore, we must also omit the note if the register is the 
-	     target of a bitfield assignment.  */
-	     
+
 	  if (place && REG_NOTE_KIND (note) == REG_DEAD)
 	    {
 	      int regno = REGNO (XEXP (note, 0));

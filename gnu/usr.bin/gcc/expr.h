@@ -1,5 +1,5 @@
 /* Definitions for code generation pass of GNU compiler.
-   Copyright (C) 1987, 91-96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -138,7 +138,7 @@ extern int target_temp_slot_level;
 
 struct args_size
 {
-  int constant;
+  HOST_WIDE_INT constant;
   tree var;
 };
 #endif
@@ -416,7 +416,6 @@ extern rtx sjpopnthrow_libfunc;
 extern rtx terminate_libfunc;
 extern rtx setjmp_libfunc;
 extern rtx longjmp_libfunc;
-extern rtx get_dynamic_handler_chain_libfunc;
 
 extern rtx eqhf2_libfunc;
 extern rtx nehf2_libfunc;

@@ -2281,6 +2281,7 @@ build_x_function_call (function, params, decl)
      tree function, params, decl;
 {
   tree type;
+  tree template_id = NULL_TREE;
   int is_method;
 
   if (function == error_mark_node)
@@ -2288,6 +2289,13 @@ build_x_function_call (function, params, decl)
 
   if (processing_template_decl)
     return build_min_nt (CALL_EXPR, function, params, NULL_TREE);
+
+  /* Save explicit template arguments if found */
+  if (TREE_CODE (function) == TEMPLATE_ID_EXPR)
+    {
+      template_id = function;
+      function = TREE_OPERAND (function, 0);
+    }
 
   type = TREE_TYPE (function);
 
@@ -2383,6 +2391,9 @@ build_x_function_call (function, params, decl)
 	  decl = build_indirect_ref (decl, NULL_PTR);
 	}
 
+      /* Put back explicit template arguments, if any.  */
+      if (template_id)
+        function = template_id;
       return build_method_call (decl, function, params,
 				NULL_TREE, LOOKUP_NORMAL);
     }
@@ -2411,7 +2422,12 @@ build_x_function_call (function, params, decl)
 	  tree val = TREE_VALUE (function);
 
 	  if (flag_ansi_overloading)
-	    return build_new_function_call (function, params, NULL_TREE);
+	    {
+	      /* Put back explicit template arguments, if any.  */
+	      if (template_id)
+		function = template_id;
+	      return build_new_function_call (function, params);
+	    }
 
 	  if (TREE_CODE (val) == TEMPLATE_DECL)
 	    return build_overload_call_real
@@ -4791,12 +4807,15 @@ mark_addressable (exp)
 	return 1;
 
       case FUNCTION_DECL:
-	/* We have to test both conditions here.  The first may
-	   be non-zero in the case of processing a default function.
-	   The second may be non-zero in the case of a template function.  */
-	x = DECL_MAIN_VARIANT (x);
-	if (DECL_TEMPLATE_INFO (x) && !DECL_TEMPLATE_SPECIALIZATION (x))
-	  mark_used (x);
+	if (DECL_LANG_SPECIFIC (x) != 0)
+	  {
+	    x = DECL_MAIN_VARIANT (x);
+	    /* We have to test both conditions here.  The first may be
+	       non-zero in the case of processing a default function.  The
+	       second may be non-zero in the case of a template function.  */
+	    if (DECL_TEMPLATE_INFO (x) && !DECL_TEMPLATE_SPECIALIZATION (x))
+	      mark_used (x);
+	  }
 	TREE_ADDRESSABLE (x) = 1;
 	TREE_USED (x) = 1;
 	TREE_ADDRESSABLE (DECL_ASSEMBLER_NAME (x)) = 1;

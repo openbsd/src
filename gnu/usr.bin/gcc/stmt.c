@@ -1,5 +1,5 @@
 /* Expands front end tree to back end RTL for GNU C-Compiler
-   Copyright (C) 1987, 88, 89, 92-6, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 89, 92-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -1421,6 +1421,10 @@ expand_asm_operands (string, outputs, inputs, clobbers, vol, filename, line)
   /* The insn we have emitted.  */
   rtx insn;
 
+  /* An ASM with no outputs needs to be treated as volatile, for now.  */
+  if (noutputs == 0)
+    vol = 1;
+
   if (output_bytecode)
     {
       error ("`asm' is invalid when generating bytecode");
@@ -1566,9 +1570,7 @@ expand_asm_operands (string, outputs, inputs, clobbers, vol, filename, line)
 		  TREE_STRING_POINTER (string), "", 0, argvec, constraints,
 		  filename, line);
 
-  /* The only use of BODY is if no outputs are specified, so set
-     it volatile, at least for now.  */
-  MEM_VOLATILE_P (body) = 1;
+  MEM_VOLATILE_P (body) = vol;
 
   /* Eval the inputs and put them into ARGVEC.
      Put their constraints into ASM_INPUTs and store in CONSTRAINTS.  */
@@ -3134,10 +3136,8 @@ expand_start_bindings (exit_flag)
   nesting_stack = thisblock;
 
   if (!output_bytecode)
-    {
-      /* Make a new level for allocating stack slots.  */
-      push_temp_slots ();
-    }
+    /* Make a new level for allocating stack slots.  */
+    push_temp_slots_for_block ();
 }
 
 /* Specify the scope of temporaries created by TARGET_EXPRs.  Similar
@@ -3599,7 +3599,9 @@ expand_decl (decl)
 		&& TREE_CODE (type) == REAL_TYPE)
 	   && ! TREE_THIS_VOLATILE (decl)
 	   && ! TREE_ADDRESSABLE (decl)
-	   && (DECL_REGISTER (decl) || ! obey_regdecls))
+	   && (DECL_REGISTER (decl) || ! obey_regdecls)
+	   /* if -fcheck-memory-usage, check all variables.  */
+	   && ! flag_check_memory_usage)
     {
       /* Automatic variable that can go in a register.  */
       int unsignedp = TREE_UNSIGNED (type);
@@ -3609,7 +3611,7 @@ expand_decl (decl)
       DECL_RTL (decl) = gen_reg_rtx (reg_mode);
       mark_user_reg (DECL_RTL (decl));
 
-      if (TREE_CODE (type) == POINTER_TYPE)
+      if (POINTER_TYPE_P (type))
 	mark_reg_pointer (DECL_RTL (decl),
 			  (TYPE_ALIGN (TREE_TYPE (TREE_TYPE (decl)))
 			   / BITS_PER_UNIT));
@@ -3813,8 +3815,9 @@ expand_decl_init (decl)
   if (DECL_INITIAL (decl) == error_mark_node)
     {
       enum tree_code code = TREE_CODE (TREE_TYPE (decl));
+
       if (code == INTEGER_TYPE || code == REAL_TYPE || code == ENUMERAL_TYPE
-	  || code == POINTER_TYPE)
+	  || code == POINTER_TYPE || code == REFERENCE_TYPE)
 	expand_assignment (decl, convert (TREE_TYPE (decl), integer_zero_node),
 			   0, 0);
       emit_queue ();
@@ -3896,8 +3899,7 @@ bc_expand_decl_init (decl)
       enum tree_code code = TREE_CODE (TREE_TYPE (decl));
 
       if (code == INTEGER_TYPE || code == REAL_TYPE || code == ENUMERAL_TYPE
-	  || code == POINTER_TYPE)
-
+	  || code == POINTER_TYPE || code == REFERENCE_TYPE)
 	expand_assignment (TREE_TYPE (decl), decl, 0, 0);
     }
   else if (DECL_INITIAL (decl))
@@ -4240,7 +4242,16 @@ expand_cleanups (list, dont_do, in_fixup, reachable)
 		   the target.  Though the cleanups are expanded multiple
 		   times, the control paths are non-overlapping so the
 		   cleanups will not be executed twice.  */
+
+		/* We may need to protect fixups with rethrow regions.  */
+		int protect = (in_fixup && ! TREE_ADDRESSABLE (tail));
+
+		if (protect)
+		  expand_fixup_region_start ();
+
 		expand_expr (TREE_VALUE (tail), const0_rtx, VOIDmode, 0);
+		if (protect)
+		  expand_fixup_region_end (TREE_VALUE (tail));
 		free_temp_slots ();
 	      }
 	  }

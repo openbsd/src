@@ -1,6 +1,6 @@
 /* More subroutines needed by GCC output code on some machines.  */
 /* Compile this one with gcc.  */
-/* Copyright (C) 1989, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 92-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -933,17 +933,13 @@ XFtype
 __floatdixf (DItype u)
 {
   XFtype d;
-  SItype negate = 0;
 
-  if (u < 0)
-    u = -u, negate = 1;
-
-  d = (USItype) (u >> WORD_SIZE);
+  d = (SItype) (u >> WORD_SIZE);
   d *= HIGH_HALFWORD_COEFF;
   d *= HIGH_HALFWORD_COEFF;
   d += (USItype) (u & (HIGH_WORD_COEFF - 1));
 
-  return (negate ? -d : d);
+  return d;
 }
 #endif
 
@@ -956,17 +952,13 @@ TFtype
 __floatditf (DItype u)
 {
   TFtype d;
-  SItype negate = 0;
 
-  if (u < 0)
-    u = -u, negate = 1;
-
-  d = (USItype) (u >> WORD_SIZE);
+  d = (SItype) (u >> WORD_SIZE);
   d *= HIGH_HALFWORD_COEFF;
   d *= HIGH_HALFWORD_COEFF;
   d += (USItype) (u & (HIGH_WORD_COEFF - 1));
 
-  return (negate ? -d : d);
+  return d;
 }
 #endif
 
@@ -979,17 +971,13 @@ DFtype
 __floatdidf (DItype u)
 {
   DFtype d;
-  SItype negate = 0;
 
-  if (u < 0)
-    u = -u, negate = 1;
-
-  d = (USItype) (u >> WORD_SIZE);
+  d = (SItype) (u >> WORD_SIZE);
   d *= HIGH_HALFWORD_COEFF;
   d *= HIGH_HALFWORD_COEFF;
   d += (USItype) (u & (HIGH_WORD_COEFF - 1));
 
-  return (negate ? -d : d);
+  return d;
 }
 #endif
 
@@ -1034,10 +1022,6 @@ __floatdisf (DItype u)
      so that we don't lose any of the precision of the high word
      while multiplying it.  */
   DFtype f;
-  SItype negate = 0;
-
-  if (u < 0)
-    u = -u, negate = 1;
 
   /* Protect against double-rounding error.
      Represent any low-order bits, that might be truncated in DFmode,
@@ -1049,18 +1033,19 @@ __floatdisf (DItype u)
       && DF_SIZE > (DI_SIZE - DF_SIZE + SF_SIZE))
     {
 #define REP_BIT ((USItype) 1 << (DI_SIZE - DF_SIZE))
-      if (u >= ((UDItype) 1 << DF_SIZE))
+      if (! (- ((UDItype) 1 << DF_SIZE) < u
+	     && u < ((UDItype) 1 << DF_SIZE)))
 	{
 	  if ((USItype) u & (REP_BIT - 1))
 	    u |= REP_BIT;
 	}
     }
-  f = (USItype) (u >> WORD_SIZE);
+  f = (SItype) (u >> WORD_SIZE);
   f *= HIGH_HALFWORD_COEFF;
   f *= HIGH_HALFWORD_COEFF;
   f += (USItype) (u & (HIGH_WORD_COEFF - 1));
 
-  return (SFtype) (negate ? -f : f);
+  return (SFtype) f;
 }
 #endif
 
@@ -2873,7 +2858,10 @@ __enable_execute_stack ()
 
 /* Motorola forgot to put memctl.o in the libp version of libc881.a,
    so define it here, because we need it in __clear_insn_cache below */
+/* On older versions of this OS, no memctl or MCT_TEXT are defined;
+   hence we enable this stuff only if MCT_TEXT is #define'd.  */
 
+#ifdef MCT_TEXT
 asm("\n\
 	global memctl\n\
 memctl:\n\
@@ -2884,6 +2872,7 @@ memctl:\n\
 noerror:\n\
 	movq &0,%d0\n\
 	rts");
+#endif
 
 /* Clear instruction cache so we can call trampolines on stack.
    This is called from FINALIZE_TRAMPOLINE in mot3300.h.  */
@@ -2891,6 +2880,7 @@ noerror:\n\
 void
 __clear_insn_cache ()
 {
+#ifdef MCT_TEXT
   int save_errno;
 
   /* Preserve errno, because users would be surprised to have
@@ -2901,6 +2891,7 @@ __clear_insn_cache ()
      No need to use an address derived from _start or %sp, as 0 works also. */
   memctl(0, 4096, MCT_TEXT);
   errno = save_errno;
+#endif
 }
 
 #endif /* __sysV68__ */

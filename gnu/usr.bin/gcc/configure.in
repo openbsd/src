@@ -1,7 +1,7 @@
 # configure.in for GNU CC
 # Process this file with autoconf to generate a configuration script.
 
-# Copyright (C) 1997 Free Software Foundation, Inc.
+# Copyright (C) 1997, 1998 Free Software Foundation, Inc.
 
 #This file is part of GNU CC.
 
@@ -163,6 +163,7 @@ AC_CHECK_FUNCS(rindex)
 AC_CHECK_FUNCS(kill)
 AC_CHECK_FUNCS(getrlimit)
 AC_CHECK_FUNCS(setrlimit)
+AC_CHECK_FUNCS(sysconf)
 
 GCC_NEED_DECLARATION(malloc)
 GCC_NEED_DECLARATION(realloc)
@@ -171,6 +172,7 @@ GCC_NEED_DECLARATION(free)
 GCC_NEED_DECLARATION(index)
 GCC_NEED_DECLARATION(rindex)
 GCC_NEED_DECLARATION(getenv)
+GCC_NEED_DECLARATION(sbrk)
 
 AC_DECL_SYS_SIGLIST
 
@@ -239,7 +241,7 @@ for machine in $build $host $target; do
 	c*-convex-*)
 		cpu_type=convex
 		;;
-	i[[3456]]86-*-*)
+	i[[34567]]86-*-*)
 		cpu_type=i386
 		;;
 	hppa*-*-*)
@@ -327,6 +329,7 @@ for machine in $build $host $target; do
 		xm_file="${xm_file} alpha/xm-linux.h"
 		target_cpu_default="MASK_GAS"
 		tmake_file="t-linux alpha/t-linux"
+		extra_parts="crtbegin.o crtbeginS.o crtend.o crtendS.o"
 		xmake_file=none
 		fixincludes=Makefile.in
 		gas=yes gnu_ld=yes
@@ -663,7 +666,7 @@ for machine in $build $host $target; do
 		;;
 	i370-*-mvs*)
 		;;
-	i[[3456]]86-ibm-aix*)		# IBM PS/2 running AIX
+	i[[34567]]86-ibm-aix*)		# IBM PS/2 running AIX
                 if [[ x$gas = xyes ]]
 		then
 			tm_file=i386/aix386.h
@@ -689,7 +692,7 @@ for machine in $build $host $target; do
 		extra_parts="crtbegin.o crtend.o"
 		tmake_file=i386/t-crtpic
 		;;
-	i[[3456]]86-next-*)
+	i[[34567]]86-next-*)
 		tm_file=i386/next.h
 		xm_file=i386/xm-next.h
 		tmake_file=i386/t-next
@@ -699,7 +702,7 @@ for machine in $build $host $target; do
 			thread_file='mach'
 		fi
 		;;
-	i[[3456]]86-sequent-bsd*) 		# 80386 from Sequent
+	i[[34567]]86-sequent-bsd*) 		# 80386 from Sequent
 		use_collect2=yes
 		if [[ x$gas = xyes ]]
 		then
@@ -708,7 +711,7 @@ for machine in $build $host $target; do
 			tm_file=i386/sequent.h
 		fi
 		;;
-	i[[3456]]86-sequent-ptx1*)
+	i[[34567]]86-sequent-ptx1*)
 		xm_file=i386/xm-sysv3.h
 		xmake_file=i386/x-sysv3
 		tm_file=i386/seq-sysv3.h
@@ -718,7 +721,7 @@ for machine in $build $host $target; do
 		install_headers_dir=install-headers-cpio
 		broken_install=yes
 		;;
-	i[[3456]]86-sequent-ptx2* | i[[3456]]86-sequent-sysv3*)
+	i[[34567]]86-sequent-ptx2* | i[[34567]]86-sequent-sysv3*)
 		xm_file=i386/xm-sysv3.h
 		xmake_file=i386/x-sysv3
 		tm_file=i386/seq2-sysv3.h
@@ -728,7 +731,7 @@ for machine in $build $host $target; do
 		install_headers_dir=install-headers-cpio
 		broken_install=yes
 		;;
-	i[[3456]]86-sequent-ptx4* | i[[3456]]86-sequent-sysv4*)
+	i[[34567]]86-sequent-ptx4* | i[[34567]]86-sequent-sysv4*)
 		xm_file=i386/xm-sysv4.h
 		xmake_file=x-svr4
 		tm_file=i386/ptx4-i.h
@@ -743,23 +746,23 @@ for machine in $build $host $target; do
 		tm_file=i386/sun.h
 		use_collect2=yes
 		;;
-	i[[3456]]86-*-aout*)
+	i[[34567]]86-*-aout*)
 		tm_file=i386/i386-aout.h
 		tmake_file=i386/t-i386bare
 		;;
-	i[[3456]]86-*-bsdi* | i[[345]]86-*-bsd386*)
+	i[[34567]]86-*-bsdi* | i[[34567]]86-*-bsd386*)
 		tm_file=i386/bsd386.h
 		xm_file=i386/xm-bsd386.h
 #		tmake_file=t-libc-ok
 		;;
-	i[[3456]]86-*-bsd*)
+	i[[34567]]86-*-bsd*)
 		tm_file=i386/386bsd.h
 		xm_file=i386/xm-bsd386.h
 #		tmake_file=t-libc-ok
 # Next line turned off because both 386BSD and BSD/386 use GNU ld.
 #		use_collect2=yes
 		;;
-	i[[3456]]86-*-freebsdelf*)
+	i[[34567]]86-*-freebsdelf*)
 		tm_file="i386/i386.h i386/att.h linux.h i386/freebsd-elf.h i386/perform.h"
 		# On FreeBSD, the headers are already ok, except for math.h.
 		fixincludes=fixinc.math
@@ -768,26 +771,26 @@ for machine in $build $host $target; do
 		gnu_ld=yes
 		stabs=yes
 		;;
-	i[[3456]]86-*-freebsd*)
+	i[[34567]]86-*-freebsd*)
 		tm_file=i386/freebsd.h
 		# On FreeBSD, the headers are already ok, except for math.h.
 		fixincludes=fixinc.math
 		tmake_file=i386/t-freebsd
 		;;
-	i[[3456]]86-*-netbsd*)
+	i[[34567]]86-*-netbsd*)
 		tm_file=i386/netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.math
 		tmake_file=t-netbsd
 		;;
-	i[[3456]]86-*-coff*)
+	i[[34567]]86-*-coff*)
 		tm_file=i386/i386-coff.h
 		tmake_file=i386/t-i386bare
 		;;
-	i[[3456]]86-*-isc*)		# 80386 running ISC system
+	i[[34567]]86-*-isc*)		# 80386 running ISC system
 		xm_file=i386/xm-isc.h
 		case $machine in
-		  i[[345]]86-*-isc[[34]]*)
+		  i[[34567]]86-*-isc[[34]]*)
 		    xmake_file=i386/x-isc3
 		    ;;
 		  *)
@@ -807,7 +810,7 @@ for machine in $build $host $target; do
 		install_headers_dir=install-headers-cpio
 		broken_install=yes
 		;;
-	i[[3456]]86-*-linux-gnuoldld*)	# Intel 80386's running GNU/Linux
+	i[[34567]]86-*-linux-gnuoldld*)	# Intel 80386's running GNU/Linux
 		xm_file=i386/xm-linux.h # with a.out format using pre BFD linkers
 		xmake_file=x-linux-aout
 		tmake_file="t-linux-aout i386/t-crtstuff"
@@ -816,7 +819,7 @@ for machine in $build $host $target; do
 		broken_install=yes
 		gnu_ld=yes
 		;;
-	i[[3456]]86-*-linux-gnuaout*)	# Intel 80386's running GNU/Linux
+	i[[34567]]86-*-linux-gnuaout*)	# Intel 80386's running GNU/Linux
 		xm_file=i386/xm-linux.h		# with a.out format
 		xmake_file=x-linux-aout
 		tmake_file="t-linux-aout i386/t-crtstuff"
@@ -825,7 +828,7 @@ for machine in $build $host $target; do
 		broken_install=yes
 		gnu_ld=yes
 		;;
-	i[[3456]]86-*-linux-gnulibc1)
+	i[[34567]]86-*-linux-gnulibc1)
 		xm_file=i386/xm-linux.h	# Intel 80386's running GNU/Linux
 		xmake_file=x-linux	# with ELF format using the
 		tm_file=i386/linux.h	# GNU/Linux C library 5
@@ -838,7 +841,7 @@ for machine in $build $host $target; do
  			thread_file='single'
  		fi
 		;;
-	i[[3456]]86-*-linux-gnu*)	# Intel 80386's running GNU/Linux
+	i[[34567]]86-*-linux-gnu*)	# Intel 80386's running GNU/Linux
 		xm_file=i386/xm-linux.h # with ELF format using glibc 2
 		xmake_file=x-linux	# aka GNU/Linux C library 6
 		tm_file=i386/linux.h
@@ -851,21 +854,28 @@ for machine in $build $host $target; do
  			thread_file='posix'
  		fi
 		;;
-	i[[3456]]86-*-gnu*)
+	i[[34567]]86-*-gnu*)
 		;;
-	i[[3456]]86-go32-msdos | i[[3456]]86-*-go32*)
+	i[[34567]]86-go32-msdos | i[[34567]]86-*-go32*)
 		xm_file=i386/xm-go32.h
 		tm_file=i386/go32.h
 		tmake_file=i386/t-go32
 		;;
-	i[[3456]]86-moss-msdos* | i[[3456]]86-*-moss*)
+	i[[34567]]86-pc-msdosdjgpp*)
+		xm_file=i386/xm-go32.h
+		tm_file=i386/go32.h
+		tmake_file=i386/t-go32
+		gnu_ld=yes
+		gas=yes
+		;;
+	i[[34567]]86-moss-msdos* | i[[34567]]86-*-moss*)
 		tm_file=i386/moss.h
 		tmake_file=t-libc-ok
 		fixincludes=Makefile.in
 		gnu_ld=yes
 		gas=yes
 		;;
-	i[[3456]]86-*-lynxos*)
+	i[[34567]]86-*-lynxos*)
 		if [[ x$gas = xyes ]]
 		then
 			tm_file=i386/lynx.h
@@ -876,12 +886,12 @@ for machine in $build $host $target; do
 		tmake_file=i386/t-i386bare
 		xmake_file=x-lynx
 		;;
-	i[[3456]]86-*-mach*)
+	i[[34567]]86-*-mach*)
 		tm_file=i386/mach.h
 #		tmake_file=t-libc-ok
 		use_collect2=yes
 		;;
-	i[[3456]]86-*-osfrose*)		# 386 using OSF/rose
+	i[[34567]]86-*-osfrose*)		# 386 using OSF/rose
                 if [[ x$elf = xyes ]]
 		then
 			tm_file=i386/osfelf.h
@@ -895,27 +905,28 @@ for machine in $build $host $target; do
 		tmake_file=i386/t-osf
 		extra_objs=halfpic.o
 		;;
-	i[[345]]86-go32-rtems*)
+	i[[34567]]86-go32-rtems*)
 		cpu_type=i386
 		xm_file=i386/xm-go32.h
 		tm_file=i386/go32-rtems.h
 		tmake_file="i386/t-go32 t-rtems"
 		;;
-	i[[345]]86-*-rtems*)
+	i[[34567]]86-*-rtems*)
 		cpu_type=i386
 		tm_file=i386/rtems.h
 		tmake_file="i386/t-i386bare t-rtems"
 		;;
-	i[[3456]]86-*-sco3.2v5*)		# 80386 running SCO Open Server 5
+	i[[34567]]86-*-sco3.2v5*)		# 80386 running SCO Open Server 5
 		xm_file=i386/xm-sco5.h
 		xmake_file=i386/x-sco5
 		fixincludes=fixinc.sco
 		broken_install=yes
+		install_headers_dir=install-headers-cpio
 		tm_file=i386/sco5.h
 		tmake_file=i386/t-sco5
 		extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o"
 		;;
-	i[[3456]]86-*-sco3.2v4*)	 	# 80386 running SCO 3.2v4 system
+	i[[34567]]86-*-sco3.2v4*)	 	# 80386 running SCO 3.2v4 system
 		xm_file=i386/xm-sco.h
 		xmake_file=i386/x-sco4
 		fixincludes=fixinc.sco
@@ -933,7 +944,7 @@ for machine in $build $host $target; do
 		fi
 		truncate_target=yes
 		;;
-	i[[3456]]86-*-sco*)	 	# 80386 running SCO system
+	i[[34567]]86-*-sco*)	 	# 80386 running SCO system
 		xm_file=i386/xm-sco.h
 		xmake_file=i386/x-sco
 		broken_install=yes
@@ -950,7 +961,7 @@ for machine in $build $host $target; do
 		fi
 		truncate_target=yes
 		;;
-	i[[3456]]86-*-solaris2*)
+	i[[34567]]86-*-solaris2*)
 		xm_file=i386/xm-sysv4.h
 		if [[ x$stabs = xyes ]]
 		then
@@ -959,7 +970,7 @@ for machine in $build $host $target; do
 			tm_file=i386/sol2.h
 		fi
 		tmake_file=i386/t-sol2
-		extra_parts="crt1.o crti.o crtn.o crtbegin.o crtend.o"
+		extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtend.o"
 		xmake_file=x-svr4
 		fixincludes=fixinc.math
 		broken_install=yes
@@ -967,7 +978,7 @@ for machine in $build $host $target; do
 			thread_file='solaris'
 		fi
 		;;
-	i[[3456]]86-*-sysv4*)		# Intel 80386's running system V.4
+	i[[34567]]86-*-sysv4*)		# Intel 80386's running system V.4
 		xm_file=i386/xm-sysv4.h
 		tm_file=i386/sysv4.h
 		if [[ x$stabs = xyes ]]
@@ -978,7 +989,7 @@ for machine in $build $host $target; do
 		xmake_file=x-svr4
 		extra_parts="crtbegin.o crtend.o"
 		;;
-	i[[3456]]86-*-sysv*)		# Intel 80386's running system V
+	i[[34567]]86-*-sysv*)		# Intel 80386's running system V
 		xm_file=i386/xm-sysv3.h
 		xmake_file=i386/x-sysv3
 		if [[ x$gas = xyes ]]
@@ -1005,7 +1016,7 @@ for machine in $build $host $target; do
 		tmake_file=i386/t-vsta
 		xmake_file=i386/x-vsta
 		;;
-	i[[3456]]86-*-pe | i[[3456]]86-*-cygwin32)
+	i[[34567]]86-*-pe | i[[34567]]86-*-cygwin32)
 		xm_file="${xm_file} i386/xm-cygwin32.h"
 		tmake_file=i386/t-cygwin32
 		tm_file=i386/cygwin32.h
@@ -1017,7 +1028,7 @@ for machine in $build $host $target; do
 		fi
 		exeext=.exe
 		;;
-	i[[3456]]86-*-mingw32)
+	i[[34567]]86-*-mingw32*)
 		tm_file=i386/mingw32.h
 		xm_file="${xm_file} i386/xm-mingw32.h"
 		tmake_file=i386/t-cygwin32
@@ -1028,8 +1039,15 @@ for machine in $build $host $target; do
 			thread_file='win32'
 		fi
 		exeext=.exe
+		case $machine in
+			*mingw32msv*)
+				;;
+			*minwg32crt* | *mingw32*)
+				tm_file="${tm_file} i386/crtdll.h"
+				;;
+		esac
 		;;
-	i[[3456]]86-*-winnt3*)
+	i[[34567]]86-*-winnt3*)
 		tm_file=i386/win-nt.h
 		out_file=i386/i386.c
 		xm_file=i386/xm-winnt.h
@@ -1046,13 +1064,13 @@ for machine in $build $host $target; do
 			thread_file='win32'
 		fi
 		;;
-	i[[3456]]86-dg-dgux)
+	i[[34567]]86-dg-dgux*)
 		xm_file=i386/xm-dgux.h
 		out_file=i386/dgux.c
 		tm_file=i386/dgux.h
 		tmake_file=i386/t-dgux
 		xmake_file=i386/x-dgux
-		fixincludes=fixinc.dgux
+		fixincludes=Makefile.in # There is nothing to fix
 		install_headers_dir=install-headers-cpio
               ;;
 	i860-alliant-*)		# Alliant FX/2800
@@ -1098,7 +1116,7 @@ for machine in $build $host $target; do
 		tmake_file=i960/t-vxworks960
 		use_collect2=yes
 		;;
-	i960-wrs-vxworks5*)
+	i960-wrs-vxworks5* | i960-wrs-vxworks)
 		tm_file="${tm_file} dbxcoff.h i960/i960-coff.h i960/vx960-coff.h"
 		tmake_file=i960/t-vxworks960
 		use_collect2=yes
@@ -1760,7 +1778,6 @@ for machine in $build $host $target; do
 		if [[ x$prefix = xNONE ]]; then
 			prefix=$native_prefix
 		fi
-		prefix=$native_prefix
 		;;
 	mips-sony-bsd* | mips-sony-newsos*)	# Sony NEWS 3600 or risc/news.
 		tm_file=mips/news4.h
@@ -2387,7 +2404,12 @@ for machine in $build $host $target; do
 		tm_file=sparc/rtems.h
 		;;
 	sparc-*-solaris2*)
-		tm_file=sparc/sol2.h
+		if [[ x$gnu_ld = xyes ]]
+		then
+			tm_file=sparc/sol2.h
+		else
+			tm_file=sparc/sol2-sld.h
+		fi
 		xm_file=sparc/xm-sol2.h
 		tmake_file=sparc/t-sol2
 		xmake_file=sparc/x-sysv4
@@ -2550,7 +2572,7 @@ for machine in $build $host $target; do
 		;;
 	esac
 
-	# Distinguish i[3456]86
+	# Distinguish i[34567]86
 	# Also, do not run mips-tfile on MIPS if using gas.
 	# Process --with-cpu= for PowerPC/rs6000
 	target_cpu_default2=
@@ -2561,7 +2583,7 @@ for machine in $build $host $target; do
 	i586-*-*)
 		target_cpu_default2=2
 		;;
-	i686-*-*)
+	i686-*-* | i786-*-*)
 		target_cpu_default2=3
 		;;
 	alpha*-*-*)
@@ -2838,13 +2860,22 @@ do
 	done
 done
 
-# Truncate the target if necessary
-if [[ x$host_truncate_target != x ]]; then
-	target=`echo $target | sed -e 's/\(..............\).*/\1/'`
+# If we have a CVS directory, set up a rule so verion.c will be made
+# from CVS tag information and use a dummy version number here if we
+# don't have version.c.
+
+version_dep=
+if [[ -d $srcdir/CVS ]]; then
+	version_dep=ChangeLog
 fi
 
-# Get the version number from the toplevel
-version=`sed -e 's/.*\"\([[^ \"]]*\)[[ \"]].*/\1/' < ${srcdir}/version.c`
+if [[ ! -f $srcdir/version.c -a -d $srcdir/CVS ]]
+then
+	version=unknown
+else
+	# Get the version number from the toplevel
+	version=`sed -e 's/.*\"\([[^ \"]]*\)[[ \"]].*/\1/' < ${srcdir}/version.c`
+fi
 
 # Are we using gcc as the native compiler?
 case $host in
@@ -2891,12 +2922,18 @@ done
 # FLAGS_TO_PASS so CC="stage1/xgcc -Bstage1/" works.
 # Otherwise, we can use "CC=$(CC)".
 rm -f symtest.tem
-if $symbolic_link symtest1.tem symtest.tem 2>/dev/null
+if $symbolic_link $srcdir/gcc.c symtest.tem 2>/dev/null
 then
 	cc_set_by_configure="\$(CC)"
 	stage_prefix_set_by_configure="\$(STAGE_PREFIX)"
 else
-	symbolic_link="cp -p"
+	rm -f symtest.tem
+	if cp -p $srcdir/gcc.c symtest.tem 2>/dev/null
+	then
+		symbolic_link="cp -p"
+	else
+		symbolic_link="cp"
+	fi
 	cc_set_by_configure="\`case '\$(CC)' in stage*) echo '\$(CC)' | sed -e 's|stage|../stage|g';; *) echo '\$(CC)';; esac\`"
 	stage_prefix_set_by_configure="\`case '\$(STAGE_PREFIX)' in stage*) echo '\$(STAGE_PREFIX)' | sed -e 's|stage|../stage|g';; *) echo '\$(STAGE_PREFIX)';; esac\`"
 fi
@@ -3170,6 +3207,7 @@ AC_SUBST(maybe_use_collect2)
 AC_SUBST(cc_set_by_configure)
 AC_SUBST(stage_prefix_set_by_configure)
 AC_SUBST(symbolic_link)
+AC_SUBST(version_dep)
 
 AC_SUBST_FILE(target_overrides)
 AC_SUBST_FILE(host_overrides)
@@ -3203,6 +3241,11 @@ echo "Links are now set up to build a ${str1}compiler for ${target}$str4" 1>&2
 if [[ "x$str2" != x ]] || [[ "x$str3" != x ]]
 then
 	echo " ${str2}${str3}." 1>&2
+fi
+
+# Truncate the target if necessary
+if [[ x$host_truncate_target != x ]]; then
+	target=`echo $target | sed -e 's/\(..............\).*/\1/'`
 fi
 
 # Configure the subdirectories
@@ -3247,6 +3290,7 @@ srcdir='${srcdir}'
 subdirs='${subdirs}'
 oldstyle_subdirs='${oldstyle_subdirs}'
 symbolic_link='${symbolic_link}'
+version_dep='${version_dep}'
 program_transform_set='${program_transform_set}'
 program_transform_name='${program_transform_name}'
 dep_host_xmake_file='${dep_host_xmake_file}'

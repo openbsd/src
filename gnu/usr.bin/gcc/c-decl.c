@@ -1,5 +1,5 @@
 /* Process declarations and variables for C compiler.
-   Copyright (C) 1988, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1988, 92-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -776,6 +776,7 @@ c_decode_option (p)
       warn_unused = 1;
       warn_switch = 1;
       warn_format = 1;
+      warn_char_subscripts = 1;
       warn_parentheses = 1;
       warn_missing_braces = 1;
       /* We set this to 2 here, but 1 in -Wmain, so -ffreestanding can turn
@@ -1967,13 +1968,14 @@ duplicate_decls (newdecl, olddecl, different_binding_level)
     }
   if (different_binding_level)
     {
-      /* Don't output a duplicate symbol for this declaration.  */
-      TREE_ASM_WRITTEN (newdecl) = 1;
+      /* Don't output a duplicate symbol or debugging information for this
+	 declaration.  */
+      TREE_ASM_WRITTEN (newdecl) = DECL_IGNORED_P (newdecl) = 1;
       return 0;
     }
 
   /* Copy most of the decl-specific fields of NEWDECL into OLDDECL.
-     But preserve OLDdECL's DECL_UID.  */
+     But preserve OLDDECL's DECL_UID.  */
   {
     register unsigned olddecl_uid = DECL_UID (olddecl);
 
@@ -2131,7 +2133,8 @@ pushdecl (x)
 	      if (TYPE_NAME (TREE_TYPE (x)) == 0)
 	        TYPE_NAME (TREE_TYPE (x)) = x;
             }
-          else if (TREE_TYPE (x) != error_mark_node)
+          else if (TREE_TYPE (x) != error_mark_node
+		   && DECL_ORIGINAL_TYPE (x) == NULL_TREE)
             {
               tree tt = TREE_TYPE (x);
 	      DECL_ORIGINAL_TYPE (x) = tt;
@@ -5151,9 +5154,6 @@ grokdeclarator (declarator, declspecs, decl_context, initialized)
 
 	    if (! strcmp (IDENTIFIER_POINTER (declarator), "main"))
 	      warning ("cannot inline function `main'");
-	    else if (last && (TYPE_MAIN_VARIANT (TREE_VALUE (last))
-			      != void_type_node))
-	      warning ("inline declaration ignored for function with `...'");
 	    else
 	      /* Assume that otherwise the function can be inlined.  */
 	      DECL_INLINE (decl) = 1;

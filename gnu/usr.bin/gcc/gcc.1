@@ -20,7 +20,7 @@
 .if n .sp
 .if t .sp 0.4
 ..
-.Id $OpenBSD: gcc.1,v 1.4 1998/03/07 19:33:12 millert Exp $
+.Id $OpenBSD: gcc.1,v 1.5 1998/03/08 18:27:38 millert Exp $
 .TH GCC 1 "\*(Dt" "GNU Tools" "GNU Tools"
 .SH NAME
 gcc, g++ \- GNU project C and C++ Compiler (v2.7)
@@ -182,7 +182,7 @@ in the following sections.
 \-Waggregate\-return
 \-Wcast\-align
 \-Wcast\-qual
-\-Wchar\-subscripts
+\-Wchar\-subscript
 \-Wcomment
 \-Wconversion
 \-Wenum\-clash
@@ -1870,11 +1870,9 @@ fully available (C++ only).
 .B \-Wall
 All of the above `\|\c
 .B \-W\c
-\&\|' options, with the exception of
-.B \-Wchar\-subscripts,
-combined.  These are all the options which pertain to usage that
-we recommend avoiding and that we believe is easy to avoid, even
-in conjunction with macros.
+\&\|' options combined.  These are all the
+options which pertain to usage that we recommend avoiding and that we
+believe is easy to avoid, even in conjunction with macros.
 .PP
 The remaining `\|\c
 .B \-W.\|.\|.\c

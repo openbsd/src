@@ -1,5 +1,5 @@
 /* Handle exceptional things in C++.
-   Copyright (C) 1989, 92-96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1989, 92-97, 1998 Free Software Foundation, Inc.
    Contributed by Michael Tiemann <tiemann@cygnus.com>
    Rewritten by Mike Stump <mrs@cygnus.com>, based upon an
    initial re-implementation courtesy Tad Hunt.
@@ -177,9 +177,6 @@ static tree FirstExceptionMatch;
 /* Used to cache a call to __unwind_function.  */
 static tree Unwind;
 
-/* Holds a ready to emit call to "terminate".  */
-static tree TerminateFunctionCall;
-
 /* ====================================================================== */
 
 
@@ -282,15 +279,13 @@ init_exception_processing ()
 			NOT_BUILT_IN, NULL_PTR);
 
   Unexpected = default_conversion (unexpected_fndecl);
-  Terminate = default_conversion (terminate_fndecl);
+  Terminate = terminate_fndecl;
   SetTerminate = default_conversion (set_terminate_fndecl);
   SetUnexpected = default_conversion (set_unexpected_fndecl);
   CatchMatch = default_conversion (catch_match_fndecl);
   FirstExceptionMatch = default_conversion (find_first_exception_match_fndecl);
   Unwind = default_conversion (unwind_fndecl);
   BuiltinReturnAddress = default_conversion (builtin_return_address_fndecl);
-
-  TerminateFunctionCall = build_function_call (Terminate, NULL_TREE);
 
   pop_lang_context ();
 
@@ -479,8 +474,7 @@ build_eh_type (exp)
    if it is, it avoids destroying the object on rethrow.  */
 
 static tree
-do_pop_exception (handler)
-     tree handler;
+do_pop_exception ()
 {
   tree fn, cleanup;
   fn = get_identifier ("__cp_pop_exception");
@@ -495,9 +489,7 @@ do_pop_exception (handler)
       fn = build_lang_decl
 	(FUNCTION_DECL, fn,
 	 build_function_type (void_type_node, tree_cons
-			      (NULL_TREE, ptr_type_node, tree_cons
-			       (NULL_TREE, boolean_type_node,
-				void_list_node))));
+			      (NULL_TREE, ptr_type_node, void_list_node)));
       DECL_EXTERNAL (fn) = 1;
       TREE_PUBLIC (fn) = 1;
       DECL_ARTIFICIAL (fn) = 1;
@@ -510,8 +502,7 @@ do_pop_exception (handler)
   /* Arrange to do a dynamically scoped cleanup upon exit from this region.  */
   cleanup = lookup_name (get_identifier ("__exception_info"), 0);
   cleanup = build_function_call (fn, expr_tree_cons
-				 (NULL_TREE, cleanup, expr_tree_cons
-				  (NULL_TREE, handler, NULL_TREE)));
+				 (NULL_TREE, cleanup, NULL_TREE));
   return cleanup;
 }
 
@@ -520,17 +511,15 @@ do_pop_exception (handler)
 static void
 push_eh_cleanup ()
 {
-  /* All cleanups must last longer than normal.  */
-  int yes = suspend_momentary ();
-  expand_decl_cleanup_no_eh (NULL_TREE, do_pop_exception (boolean_false_node));
-  resume_momentary (yes);
+  int yes;
 
   expand_expr (build_unary_op (PREINCREMENT_EXPR, get_eh_handlers (), 1),
 	       const0_rtx, VOIDmode, EXPAND_NORMAL);
 
-  /* We don't destroy the exception object on rethrow, so we can't use
-     the normal cleanup mechanism for it.  */
-  expand_eh_region_start ();
+  yes = suspend_momentary ();
+  /* All cleanups must last longer than normal.  */
+  expand_decl_cleanup (NULL_TREE, do_pop_exception ());
+  resume_momentary (yes);
 }
 
 /* call this to start a catch block. Typename is the typename, and identifier
@@ -613,6 +602,13 @@ expand_start_catch_block (declspecs, declarator)
 	init_type = build_reference_type (init_type);
 
       exp = get_eh_value ();
+
+      /* Since pointers are passed by value, initialize a reference to
+	 pointer catch parm with the address of the value slot.  */
+      if (TREE_CODE (init_type) == REFERENCE_TYPE
+	  && TREE_CODE (TREE_TYPE (init_type)) == POINTER_TYPE)
+	exp = build_unary_op (ADDR_EXPR, exp, 1);
+
       exp = expr_tree_cons (NULL_TREE,
 		       build_eh_type_type (TREE_TYPE (decl)),
 		       expr_tree_cons (NULL_TREE,
@@ -643,12 +639,15 @@ expand_start_catch_block (declspecs, declarator)
          must call terminate.  See eh23.C.  */
       if (TYPE_NEEDS_CONSTRUCTING (TREE_TYPE (decl)))
 	{
+	  int yes = suspend_momentary ();
+	  tree term = build_function_call (Terminate, NULL_TREE);
+	  resume_momentary (yes);
+
 	  /* Generate the copy constructor call directly so we can wrap it.
 	     See also expand_default_init.  */
 	  init = ocp_convert (TREE_TYPE (decl), init,
 			      CONV_IMPLICIT|CONV_FORCE_TEMP, 0);
-	  init = build (TRY_CATCH_EXPR, TREE_TYPE (init), init,
-			TerminateFunctionCall);
+	  init = build (TRY_CATCH_EXPR, TREE_TYPE (init), init, term);
 	}
 
       /* Let `cp_finish_decl' know that this initializer is ok.  */
@@ -690,9 +689,6 @@ expand_end_catch_block ()
   expand_end_bindings (getdecls (), kept_level_p (), 0);
   poplevel (kept_level_p (), 1, 0);
       
-  /* Matches push_eh_cleanup.  */
-  expand_eh_region_end (do_pop_exception (boolean_true_node));
-
   /* Cleanup the EH object.  */
   expand_end_bindings (getdecls (), kept_level_p (), 0);
   poplevel (kept_level_p (), 1, 0);
@@ -988,7 +984,6 @@ expand_builtin_throw ()
   /* no it didn't --> therefore we need to call terminate */
   emit_label (gotta_call_terminate);
   do_function_call (Terminate, NULL_TREE, NULL_TREE);
-  assemble_external (TREE_OPERAND (Terminate, 0));
 
   {
     rtx ret_val, x;
@@ -1065,7 +1060,6 @@ expand_end_eh_spec (raises)
   emit_label (cont);
   jumpif (make_tree (integer_type_node, flag), end);
   do_function_call (Terminate, NULL_TREE, NULL_TREE);
-  assemble_external (TREE_OPERAND (Terminate, 0));
   emit_barrier ();
   do_pending_stack_adjust ();
   RTL_EXPR_SEQUENCE (expr) = get_insns ();
@@ -1171,9 +1165,6 @@ expand_exception_blocks ()
 	 the setjmp/longjmp approach.  */
       if (exceptions_via_longjmp == 0)
 	{
-	  /* Is this necessary?  */
-	  assemble_external (TREE_OPERAND (Terminate, 0));
-
 	  expand_eh_region_start ();
 	}
 
@@ -1181,7 +1172,7 @@ expand_exception_blocks ()
       catch_clauses = NULL_RTX;
 
       if (exceptions_via_longjmp == 0)
-	expand_eh_region_end (TerminateFunctionCall);
+	expand_eh_region_end (build_function_call (Terminate, NULL_TREE));
 
       expand_leftover_cleanups ();
 
@@ -1310,6 +1301,7 @@ expand_throw (exp)
 	      cleanup = lookup_fnfields (TYPE_BINFO (TREE_TYPE (object)),
 					 dtor_identifier, 0);
 	      cleanup = TREE_VALUE (cleanup);
+	      mark_used (cleanup);
 	      mark_addressable (cleanup);
 	      /* Pretend it's a normal function.  */
 	      cleanup = build1 (ADDR_EXPR, cleanup_type, cleanup);

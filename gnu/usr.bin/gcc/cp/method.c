@@ -1,9 +1,9 @@
 /* Handle the hair of processing (but not expanding) inline functions.
    Also manage function and variable name overloading.
-   Copyright (C) 1987, 89, 92-96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 89, 92-97, 1998 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com)
 
-   This file is part of GNU CC.
+This file is part of GNU CC.
    
 GNU CC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1119,19 +1119,17 @@ build_decl_overload_real (dname, parms, ret_type, tparms, targs,
   char *name = IDENTIFIER_POINTER (dname);
 
   /* member operators new and delete look like methods at this point.  */
-  if (! for_method && parms != NULL_TREE && TREE_CODE (parms) == TREE_LIST)
+  if (! for_method && parms != NULL_TREE && TREE_CODE (parms) == TREE_LIST
+      && TREE_CHAIN (parms) == void_list_node)
     {
       if (dname == ansi_opname[(int) DELETE_EXPR])
 	return get_identifier ("__builtin_delete");
       else if (dname == ansi_opname[(int) VEC_DELETE_EXPR])
 	return get_identifier ("__builtin_vec_delete");
-      else if (TREE_CHAIN (parms) == void_list_node)
-	{
-	  if (dname == ansi_opname[(int) NEW_EXPR])
-	    return get_identifier ("__builtin_new");
-	  else if (dname == ansi_opname[(int) VEC_NEW_EXPR])
-	    return get_identifier ("__builtin_vec_new");
-	}
+      if (dname == ansi_opname[(int) NEW_EXPR])
+	return get_identifier ("__builtin_new");
+      else if (dname == ansi_opname[(int) VEC_NEW_EXPR])
+	return get_identifier ("__builtin_vec_new");
     }
 
   OB_INIT ();
@@ -1807,7 +1805,7 @@ make_thunk (function, delta)
      tree function;
      int delta;
 {
-  char buffer[250];
+  char *buffer;
   tree thunk_id;
   tree thunk;
   char *func_name;
@@ -1818,6 +1816,7 @@ make_thunk (function, delta)
   if (TREE_CODE (func_decl) != FUNCTION_DECL)
     abort ();
   func_name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (func_decl));
+  buffer = (char *)alloca (strlen (func_name) + 32);
   if (delta<=0)
     sprintf (buffer, "__thunk_%d_%s", -delta, func_name);
   else

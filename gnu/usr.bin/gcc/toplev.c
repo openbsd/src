@@ -1,5 +1,5 @@
 /* Top level of GNU C compiler
-   Copyright (C) 1987, 88, 89, 92-6, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 89, 92-7, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -36,6 +36,10 @@ Boston, MA 02111-1307, USA.  */
 #include <ctype.h>
 #include <sys/stat.h>
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
 #undef FLOAT
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -68,6 +72,9 @@ Boston, MA 02111-1307, USA.  */
 #include "rtl.h"
 #include "flags.h"
 #include "insn-attr.h"
+#include "insn-codes.h"
+#include "insn-config.h"
+#include "recog.h"
 #include "defaults.h"
 #include "output.h"
 #include "bytecode.h"
@@ -191,7 +198,7 @@ void print_switch_values ();
 /* Length of line when printing switch values.  */
 #define MAX_LINE 75
 
-#ifdef __alpha
+#ifdef NEED_DECLARATION_SBRK
 extern char *sbrk ();
 #endif
 
@@ -968,8 +975,17 @@ get_run_time ()
     return (clock() * 1000);
 #else /* not _WIN32 */
 #ifdef USG
+# if HAVE_SYSCONF && defined _SC_CLK_TCK
+#  define TICKS_PER_SECOND sysconf (_SC_CLK_TCK) /* POSIX 1003.1-1996 */
+# else
+#  ifdef CLK_TCK
+#   define TICKS_PER_SECOND CLK_TCK /* POSIX 1003.1-1988; obsolescent */
+#  else
+#   define TICKS_PER_SECOND HZ /* traditional UNIX */
+#  endif
+# endif
   times (&tms);
-  return (tms.tms_utime + tms.tms_stime) * (1000000 / HZ);
+  return (tms.tms_utime + tms.tms_stime) * (1000000 / TICKS_PER_SECOND);
 #else
 #ifndef VMS
   getrusage (0, &rusage);
@@ -2436,7 +2452,14 @@ compile_file (name)
       /* Don't let the first function fall at the same address
 	 as gcc_compiled., if profiling.  */
       if (profile_flag || profile_block_flag)
-	assemble_zeros (UNITS_PER_WORD);
+	{
+	  /* It's best if we can write a nop here since some
+	     assemblers don't tolerate zeros in the text section.  */
+	  if (insn_template[CODE_FOR_nop] != 0)
+	    output_asm_insn (insn_template[CODE_FOR_nop], NULL_PTR);
+	  else
+	    assemble_zeros (UNITS_PER_WORD);
+	}
     }
 
   /* If dbx symbol table desired, initialize writing it
@@ -3010,7 +3033,8 @@ rest_of_compilation (decl)
 		   if (DECL_SAVED_INSNS (decl))
 		     fprintf (rtl_dump_file, ";; (integrable)\n\n");
 		   print_rtl (rtl_dump_file, insns);
-		   fflush (rtl_dump_file);
+		   if (! quiet_flag)
+		     fflush (rtl_dump_file);
 		 });
 
       /* If function is inline, and we don't yet know whether to
@@ -3185,7 +3209,8 @@ rest_of_compilation (decl)
 	       fprintf (jump_opt_dump_file, "\n;; Function %s\n\n",
 			(*decl_printable_name) (decl, 2));
 	       print_rtl (jump_opt_dump_file, insns);
-	       fflush (jump_opt_dump_file);
+	       if (! quiet_flag)
+		 fflush (jump_opt_dump_file);
 	     });
 
   /* Perform common subexpression elimination.
@@ -3222,7 +3247,8 @@ rest_of_compilation (decl)
     TIMEVAR (dump_time,
 	     {
 	       print_rtl (cse_dump_file, insns);
-	       fflush (cse_dump_file);
+	       if (! quiet_flag)
+		 fflush (cse_dump_file);
 	     });
 
   purge_addressof (insns);
@@ -3234,7 +3260,8 @@ rest_of_compilation (decl)
 	       fprintf (addressof_dump_file, "\n;; Function %s\n\n",
 			(*decl_printable_name) (decl, 2));
 	       print_rtl (addressof_dump_file, insns);
-	       fflush (addressof_dump_file);
+	       if (! quiet_flag)
+		 fflush (addressof_dump_file);
 	     });
 
   if (loop_dump)
@@ -3262,7 +3289,8 @@ rest_of_compilation (decl)
     TIMEVAR (dump_time,
 	     {
 	       print_rtl (loop_dump_file, insns);
-	       fflush (loop_dump_file);
+	       if (! quiet_flag)
+		 fflush (loop_dump_file);
 	     });
 
   if (cse2_dump)
@@ -3302,7 +3330,8 @@ rest_of_compilation (decl)
     TIMEVAR (dump_time,
 	     {
 	       print_rtl (cse2_dump_file, insns);
-	       fflush (cse2_dump_file);
+	       if (! quiet_flag)
+		 fflush (cse2_dump_file);
 	     });
 
   if (branch_prob_dump)
@@ -3322,7 +3351,8 @@ rest_of_compilation (decl)
     TIMEVAR (dump_time,
 	     {
 	       print_rtl (branch_prob_dump_file, insns);
-	       fflush (branch_prob_dump_file);
+	       if (! quiet_flag)
+		 fflush (branch_prob_dump_file);
 	     });
   /* We are no longer anticipating cse in this function, at least.  */
 
@@ -3376,7 +3406,8 @@ rest_of_compilation (decl)
     TIMEVAR (dump_time,
 	     {
 	       print_rtl_with_bb (flow_dump_file, insns);
-	       fflush (flow_dump_file);
+	       if (! quiet_flag)
+		 fflush (flow_dump_file);
 	     });
 
   /* If -opt, try combining insns through substitution.  */
@@ -3393,7 +3424,8 @@ rest_of_compilation (decl)
 			(*decl_printable_name) (decl, 2));
 	       dump_combine_stats (combine_dump_file);
 	       print_rtl_with_bb (combine_dump_file, insns);
-	       fflush (combine_dump_file);
+	       if (! quiet_flag)
+		 fflush (combine_dump_file);
 	     });
 
   /* Print function header into sched dump now
@@ -3420,7 +3452,8 @@ rest_of_compilation (decl)
     TIMEVAR (dump_time,
 	     {
 	       print_rtl_with_bb (sched_dump_file, insns);
-	       fflush (sched_dump_file);
+	       if (! quiet_flag)
+		 fflush (sched_dump_file);
 	     });
 
   /* Unless we did stupid register allocation,
@@ -3443,7 +3476,8 @@ rest_of_compilation (decl)
 	       dump_flow_info (local_reg_dump_file);
 	       dump_local_alloc (local_reg_dump_file);
 	       print_rtl_with_bb (local_reg_dump_file, insns);
-	       fflush (local_reg_dump_file);
+	       if (! quiet_flag)
+		 fflush (local_reg_dump_file);
 	     });
 
   if (global_reg_dump)
@@ -3472,7 +3506,8 @@ rest_of_compilation (decl)
 	     {
 	       dump_global_regs (global_reg_dump_file);
 	       print_rtl_with_bb (global_reg_dump_file, insns);
-	       fflush (global_reg_dump_file);
+	       if (! quiet_flag)
+		 fflush (global_reg_dump_file);
 	     });
 
   if (failure)
@@ -3511,7 +3546,8 @@ rest_of_compilation (decl)
 	TIMEVAR (dump_time,
 		 {
 		   print_rtl_with_bb (sched2_dump_file, insns);
-		   fflush (sched2_dump_file);
+		   if (! quiet_flag)
+		     fflush (sched2_dump_file);
 		 });
     }
 
@@ -3539,7 +3575,8 @@ rest_of_compilation (decl)
 	       fprintf (jump2_opt_dump_file, "\n;; Function %s\n\n",
 			(*decl_printable_name) (decl, 2));
 	       print_rtl_with_bb (jump2_opt_dump_file, insns);
-	       fflush (jump2_opt_dump_file);
+	       if (! quiet_flag)
+		 fflush (jump2_opt_dump_file);
 	     });
 
   /* If a machine dependent reorganization is needed, call it.  */
@@ -3561,7 +3598,8 @@ rest_of_compilation (decl)
 		   fprintf (dbr_sched_dump_file, "\n;; Function %s\n\n",
 			    (*decl_printable_name) (decl, 2));
 		   print_rtl_with_bb (dbr_sched_dump_file, insns);
-		   fflush (dbr_sched_dump_file);
+		   if (! quiet_flag)
+		     fflush (dbr_sched_dump_file);
 		 });
 	}
     }
@@ -3582,7 +3620,8 @@ rest_of_compilation (decl)
 		 fprintf (stack_reg_dump_file, "\n;; Function %s\n\n",
 		          (*decl_printable_name) (decl, 2));
 		 print_rtl_with_bb (stack_reg_dump_file, insns);
-		 fflush (stack_reg_dump_file);
+		 if (! quiet_flag)
+		   fflush (stack_reg_dump_file);
 	       });
     }
 #endif
@@ -3611,7 +3650,8 @@ rest_of_compilation (decl)
 	     final (insns, asm_out_file, optimize, 0);
 	     final_end_function (insns, asm_out_file, optimize);
 	     assemble_end_function (decl, fnname);
-	     fflush (asm_out_file);
+	     if (! quiet_flag)
+	       fflush (asm_out_file);
 
 	     /* Release all memory held by regsets now */
 	     regset_release_memory ();
@@ -4177,7 +4217,7 @@ main (argc, argv, envp)
 			  type = PREFERRED_DEBUGGING_TYPE;
 			  if (len > 1 && strncmp (str, "ggdb", len) == 0)
 			    {
-#ifdef DWARF2_DEBUGGING_INFO
+#if defined (DWARF2_DEBUGGING_INFO) && !defined (LINKER_DOES_NOT_WORK_WITH_DWARF2)
 			      type = DWARF2_DEBUG;
 #else
 #ifdef DBX_DEBUGGING_INFO
