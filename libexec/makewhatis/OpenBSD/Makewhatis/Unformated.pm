@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Unformated.pm,v 1.2 2004/12/24 00:00:05 espie Exp $
+# $OpenBSD: Unformated.pm,v 1.3 2005/01/13 11:22:24 espie Exp $
 # Copyright (c) 2000-2004 Marc Espie <espie@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -113,6 +113,8 @@ sub handle
     while (<$f>) {
 	next unless m/^\./ || $found_old || $found_new;
 	next if m/^\.\\\"/;
+	next if m/^\.if\s+t\s+/;
+	s/^\.if\s+n\s+//;
 	if (m/^\.\s*de/) {
 	    while (<$f>) {
 		last if m/^\.\s*\./;
