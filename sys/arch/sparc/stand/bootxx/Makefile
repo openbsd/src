@@ -17,8 +17,8 @@ _KOBJS=${KOBJS:S,^,${KOBJDIR}/,g}
 ${PROG}:${OBJS} ${_KOBJS} ${LIBS}
 	${LD} -N -T ${RELOC} -e start ${OBJS} ${_KOBJS} ${LIBS}
 	# convert to Sun magic
+	@size a.out
 	(echo -n 01 | tr 01 '\01\03'; tail +3c a.out) > ${.TARGET}
 	@rm a.out
-	@size ${.TARGET}
 
 .include <bsd.prog.mk>
