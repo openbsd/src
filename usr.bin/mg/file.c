@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.15 2002/03/11 13:02:56 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.16 2002/03/16 04:17:36 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -134,6 +134,14 @@ readin(fname)
 			wp->w_marko = 0;
 		}
 	}
+
+	/* We need to set the READONLY flag after we insert the file */
+	if (access(fname, W_OK) && errno != ENOENT)
+		curbp->b_flag |= BFREADONLY;
+	else
+		curbp->b_flag &=~ BFREADONLY;
+
+
 	return status;
 }
 

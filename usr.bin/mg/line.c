@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.14 2002/02/21 04:21:05 vincent Exp $	*/
+/*	$OpenBSD: line.c,v 1.15 2002/03/16 04:17:36 vincent Exp $	*/
 
 /*
  *		Text line handling.
@@ -83,8 +83,7 @@ lrealloc(LINE *lp, int newsize)
  * magic conditions described in the above comments don't hold here.
  */
 void
-lfree(lp)
-	LINE *lp;
+lfree(LINE *lp)
 {
 	BUFFER	*bp;
 	MGWIN	*wp;
@@ -128,8 +127,7 @@ lfree(lp)
  * mode line needs to be updated (the "*" has to be set).
  */
 void
-lchange(flag)
-	int flag;
+lchange(int flag)
 {
 	MGWIN	*wp;
 
@@ -157,19 +155,23 @@ lchange(flag)
  * if all is well, and FALSE on errors.
  */
 int
-linsert(n, c)
-	int n, c;
+linsert(int n, int c)
 {
 	LINE *lp1;
 	MGWIN	*wp;
 	RSIZE	 i;
 	int	 doto;
 
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read only");
+		return FALSE;
+	}
+
 	lchange(WFEDIT);
 
 	/* current line */
 	lp1 = curwp->w_dotp;
-	
+
 	/* special case for the end */
 	if (lp1 == curbp->b_linep) {
 		LINE *lp2, *lp3;
@@ -240,11 +242,16 @@ linsert(n, c)
  * current window.  The funny ass-backwards way is no longer used.
  */
 int
-lnewline()
+lnewline(void)
 {
 	LINE	*lp1, *lp2;
 	int	 doto, nlen;
 	MGWIN	*wp;
+
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read only");
+		return FALSE;
+	}
 
 	lchange(WFHARD);
 
@@ -253,7 +260,6 @@ lnewline()
 		undo_add_custom(INSERT, curwp->w_dotp, curwp->w_doto,
 		    strdup("\n"), 1);
 	}
-
 
 	/* Get the address and offset of "." */
 	lp1 = curwp->w_dotp;
@@ -309,9 +315,7 @@ lnewline()
  * of insertion into the kill buffer.
  */
 int
-ldelete(n, kflag)
-	RSIZE n;
-	int   kflag;
+ldelete(RSIZE n, int kflag)
 {
 	LINE	*dotp;
 	RSIZE	 chunk;
@@ -319,10 +323,15 @@ ldelete(n, kflag)
 	int	 doto;
 	char	*cp1, *cp2;
 
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read only");
+		return FALSE;
+	}
+
 	if (!undoaction) {
 		undo_add_delete(curwp->w_dotp, curwp->w_doto, n);
 	}
-	
+
 	/*
 	 * HACK - doesn't matter, and fixes back-over-nl bug for empty
 	 *	kill buffers.
@@ -402,10 +411,15 @@ ldelete(n, kflag)
  * TRUE if all looks ok.
  */
 int
-ldelnewline()
+ldelnewline(void)
 {
 	LINE	*lp1, *lp2, *lp3;
 	MGWIN	*wp;
+
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read only");
+		return FALSE;
+	}
 
 	lp1 = curwp->w_dotp;
 	lp2 = lp1->l_fp;
@@ -469,16 +483,18 @@ ldelnewline()
  * was there).
  */
 int
-lreplace(plen, st, f)
-	RSIZE	plen;	/* length to remove		 */
-	char	*st;	/* replacement string		 */
-	int	f;	/* case hack disable		 */
+lreplace(RSIZE plen, char *st, int f)
 {
 	RSIZE	rlen;	/* replacement length		 */
 	int	rtype;	/* capitalization		 */
 	int	c;	/* used for random characters	 */
 	int	doto;	/* offset into line		 */
-	
+
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read only");
+		return FALSE;
+	}
+
 	/*
 	 * Find the capitalization of the word that was found.  f says use
 	 * exact case of replacement string (same thing that happens with
@@ -497,7 +513,7 @@ lreplace(plen, st, f)
 			}
 		}
 	}
-	
+
 	/*
 	 * make the string lengths match (either pad the line
 	 * so that it will fit, or scrunch out the excess).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.11 2002/03/11 13:02:56 vincent Exp $	*/
+/*	$OpenBSD: display.c,v 1.12 2002/03/16 04:17:36 vincent Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -755,7 +755,7 @@ modeline(MGWIN *wp)
 {
 	int	n;
 	BUFFER *bp;
-	int	mode;
+	int mode;
 
 	n = wp->w_toprow + wp->w_ntrows;	/* Location.		 */
 	vscreen[n]->v_color = CMODE;		/* Mode line color.	 */
@@ -764,10 +764,13 @@ modeline(MGWIN *wp)
 	bp = wp->w_bufp;
 	vtputc('-');
 	vtputc('-');
-	if ((bp->b_flag & BFCHG) != 0) {	/* "*" if changed.	 */
+ 	if ((bp->b_flag & BFREADONLY) != 0) {
+		vtputc('%');
+		vtputc('%');
+	} else if ((bp->b_flag & BFCHG) != 0) {	/* "*" if changed.	 */
 		vtputc('*');
 		vtputc('*');
-	} else {
+ 	} else {
 		vtputc('-');
 		vtputc('-');
 	}

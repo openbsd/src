@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.36 2002/03/11 13:02:56 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.37 2002/03/16 04:17:36 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -234,6 +234,7 @@ typedef struct BUFFER {
 	struct fileinfo	b_fi;		/* File attributes		 */
 	LIST_HEAD(, undo_rec) b_undo;	/* Undo actions list */
 } BUFFER;
+
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
 
@@ -243,6 +244,8 @@ typedef struct BUFFER {
 #define BFNOTAB 0x04		/* no tab mode			 */
 #endif
 #define BFOVERWRITE 0x08	/* overwrite mode		 */
+#define BFREADONLY  0x10	/* read only mode */
+
 
 /*
  * This structure holds the starting position
@@ -363,6 +366,7 @@ int	 delwind(int, int);
 MGWIN   *wpopup(void);
 
 /* buffer.c */
+int	 togglereadonly(void);
 BUFFER  *bfind(const char *, int);
 int	 poptobuffer(int, int);
 int	 killbuffer(int, int);
