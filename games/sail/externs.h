@@ -305,7 +305,6 @@ char *saywhat();
 struct ship *closestenemy();
 
 char *calloc();
-char *rindex();
 char *strcpy();
 char *strcat();
 char *strncpy();
