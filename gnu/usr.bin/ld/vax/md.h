@@ -1,4 +1,4 @@
-/*	$OpenBSD: md.h,v 1.3 1998/05/11 20:27:19 niklas Exp $	*/
+/*	$OpenBSD: md.h,v 1.4 1998/05/14 13:51:50 niklas Exp $	*/
 /*	$NetBSD: md.h,v 1.1 1995/10/19 13:10:20 ragge Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -150,31 +150,31 @@ typedef struct jmpslot {
 
 #define get_byte(p)	( ((unsigned char *)(p))[0] )
 
-#define get_short(p)	( ( ((unsigned char *)(p))[0] << 8) | \
-			  ( ((unsigned char *)(p))[1]     )   \
+#define get_short(p)	( ( ((unsigned char *)(p))[0]     ) | \
+			  ( ((unsigned char *)(p))[1] << 8)   \
 			)
 
-#define get_long(p)	( ( ((unsigned char *)(p))[0] << 24) | \
-			  ( ((unsigned char *)(p))[1] << 16) | \
-			  ( ((unsigned char *)(p))[2] << 8 ) | \
-			  ( ((unsigned char *)(p))[3]      )   \
+#define get_long(p)	( ( ((unsigned char *)(p))[0]      ) | \
+			  ( ((unsigned char *)(p))[1] << 8 ) | \
+			  ( ((unsigned char *)(p))[2] << 16) | \
+			  ( ((unsigned char *)(p))[3] << 24)   \
 			)
 
 #define put_byte(p, v)	{ ((unsigned char *)(p))[0] = ((unsigned long)(v)); }
 
 #define put_short(p, v)	{ ((unsigned char *)(p))[0] =			\
-				((((unsigned long)(v)) >> 8) & 0xff); 	\
+				((((unsigned long)(v))     ) & 0xff); 	\
 			  ((unsigned char *)(p))[1] =			\
-				((((unsigned long)(v))     ) & 0xff); }
+				((((unsigned long)(v)) >> 8) & 0xff); }
 
 #define put_long(p, v)	{ ((unsigned char *)(p))[0] =			\
-				((((unsigned long)(v)) >> 24) & 0xff); 	\
+				((((unsigned long)(v))      ) & 0xff); 	\
 			  ((unsigned char *)(p))[1] =			\
-				((((unsigned long)(v)) >> 16) & 0xff); 	\
-			  ((unsigned char *)(p))[2] =			\
 				((((unsigned long)(v)) >>  8) & 0xff); 	\
+			  ((unsigned char *)(p))[2] =			\
+				((((unsigned long)(v)) >> 16) & 0xff); 	\
 			  ((unsigned char *)(p))[3] =			\
-				((((unsigned long)(v))      ) & 0xff); }
+				((((unsigned long)(v)) >> 24) & 0xff); }
 
 #ifdef NEED_SWAP
 
