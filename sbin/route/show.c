@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.30 2004/06/15 17:10:32 millert Exp $	*/
+/*	$OpenBSD: show.c,v 1.31 2004/06/16 11:47:35 cedric Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static const char rcsid[] = "$OpenBSD: show.c,v 1.30 2004/06/15 17:10:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: show.c,v 1.31 2004/06/16 11:47:35 cedric Exp $";
 #endif
 #endif /* not lint */
 
@@ -246,12 +246,12 @@ p_rtentry(rtm, Aflag, Sflag)
 	
 	if (old_af == AF_INET && Sflag) {
 		if (rti_info[RTAX_SRC] != NULL)
-			p_sockaddr(rti_info[RTAX_GATEWAY],
+			p_sockaddr(rti_info[RTAX_SRC],
 			    rti_info[RTAX_SRCMASK],
 			    rti_info[RTAX_SRCMASK] ? 0 : RTF_HOST,
-			    WID_GW(sa->sa_family));
+			    WID_DST(sa->sa_family));
 		else
-			printf("%-*s ", 16, "default");
+			printf("%-*s ", WID_DST(AF_INET), "default");
 	}
 
 	p_sockaddr(sa, mask, rtm->rtm_flags, WID_DST(sa->sa_family));
