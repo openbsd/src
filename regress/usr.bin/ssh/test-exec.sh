@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.15 2004/02/24 16:56:30 markus Exp $
+#	$OpenBSD: test-exec.sh,v 1.16 2004/04/27 09:47:30 djm Exp $
 #	Placed in the Public Domain.
 
 PORT=4242
@@ -130,6 +130,8 @@ cat << EOF > $OBJ/sshd_config
 	PidFile			$PIDFILE
 	AuthorizedKeysFile	$OBJ/authorized_keys_%u
 	LogLevel		QUIET
+	AcceptEnv		_XXX_TEST_*
+	AcceptEnv		_XXX_TEST
 EOF
 
 # server config for proxy connects
