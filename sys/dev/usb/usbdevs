@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.113 2004/10/18 12:52:13 dlg Exp $
+$OpenBSD: usbdevs,v 1.114 2004/10/20 12:56:39 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -344,16 +344,19 @@ vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor NEODIO		0x0aec  Neodio
 vendor TODOS		0x0b0c	Todos Data System
 vendor SIIG2		0x0b39	SIIG
+vendor TEKRAM		0x0b3b	Tekram Technology
 vendor HAL		0x0b41	HAL Corporation
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
+vendor USR		0x0baf	U.S. Robotics
 vendor GREENHOUSE2	0x0bda	GREENHOUSE
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
 vendor EASYDISK		0x0c76	EasyDisk
+vendor ZCOM		0x0cde	Z-Com
 vendor TANGTOP		0x0d3d	Tangtop
 vendor PEN		0x0d7d	Pen Drive
 vendor ABC		0x0d8c	ABC
@@ -382,12 +385,15 @@ vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor DLINK		0x2001	D-Link
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor NHJ		0x2770  NHJ
+vendor PLANEX		0x2c02	Planex Communications
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
 vendor MICRONET		0x3980	Micronet Communications
 vendor IODATA2		0x40bb	I-O Data
 vendor IRIVER		0x4102	iRiver
+vendor DELL		0x413c	Dell
+vendor AVERATEC		0x50c2	Averatec
 vendor ONSPEC2		0x55aa	OnSpec
 vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
@@ -426,6 +432,7 @@ product ABOCOM XX10		0xabc1	XX10
 
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet
+product ACCTON 111		0x3503	T-Sinus 111 WLAN
 product ACCTON SS1001		0x5046	SpeedStream Ethernet
 
 /* Acer Products */
@@ -441,6 +448,7 @@ product ACERP ATAPI		0x6003	ATA/ATAPI
 /* Actiontec products */
 product ACTIONTEC PRISM_25	0x0408	Prism2.5 WLAN
 product ACTIONTEC PRISM_25A	0x0421	Prism2.5 WLAN A
+product ACTIONTEC FREELAN	0x6106	ROPEX FreeLan 802.11b
 
 /* ACTiSYS products */
 product ACTISYS IR2000U		0x0011	ACT-IR2000U FIR
@@ -448,6 +456,9 @@ product ACTISYS IR2000U		0x0011	ACT-IR2000U FIR
 /* ActiveWire, Inc. products */
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board
 product ACTIVEWIRE IOBOARD_FW1	0x0101	I/O Board, rev. 1
+
+/* Adaptec products */
+product ADAPTEC AWN8020		0x0020	AWN-8020 WLAN
 
 /* Addonics products */
 product ADDONICS2 205		0xa001	Cable 205
@@ -533,6 +544,9 @@ product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
 
 /* Avance Logic products */
 product AVANCELOGIC USBAUDIO	0x0100	USB Audio Speaker
+
+/* Averatec products */
+product AVERATEC USBWLAN	0x4013	WLAN
 
 /* Avision products */
 product AVISION 1200U		0x0268	1200U
@@ -652,6 +666,9 @@ product DAISY DMC		0x6901	PhotoClip
 /* Dallas Semiconductor products */
 product DALLAS J6502		0x4201	J-6502 speakers
 product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
+
+/* Dell products */
+product DELL TM1180		0x8100	TrueMobile 1180 WLAN
 
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500
@@ -1078,6 +1095,7 @@ product MELCO MCRSM2		0x001b	MCR-SM2 SmartMedia
 product MELCO DUBPXXG		0x001c	USB-IDE Bridge: DUB-PxxG
 product MELCO KS11G		0x0027	WLI-USB-KS11G wlan
 product MELCO LUAU2KTX		0x003d	LUA-U2-KTX Ethernet
+product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
@@ -1270,6 +1288,9 @@ product PIENGINEERING XKEYS	0x0233	Xkeys Programmable Keyboard
 
 /* Pilotech Systems Co., Ltd products */
 product PILOTECH CRW600		0x0001	CRW-600 6-in-1
+
+/* Planex Communications products */
+product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	Platronics DSP-400 Headset
@@ -1517,6 +1538,10 @@ product TDK UPA6400		0x0118	USB-PHS Adapter UPA6400
 /* TEAC products */
 product TEAC FD05PUB		0x0000	FD-05PUB
 
+/* Tekram Technology products */
+product TEKRAM 0193		0x1601	ALLNET 0193 WLAN
+product TEKRAM ZYAIR_B200	0x1602	ZyXEL ZyAIR B200 WLAN
+
 /* Telex Communications products */
 product TELEX MIC1		0x0001	Microphone
 
@@ -1559,6 +1584,9 @@ product UMAX ASTRA3400		0x0060	Astra 3400
 /* Universal Access products */
 product UNIACCESS PANACHE	0x0101	Panache Surf ISDN
 
+/* U.S. Robotics products */
+product USR USR1120		0x00eb	USR1120 WLAN
+
 /* ViewSonic products */
 product VIEWSONIC G773HUB	0x00fe	G773 Monitor Hub
 product VIEWSONIC P815HUB	0x00ff	P815 Monitor Hub
@@ -1598,6 +1626,9 @@ product YAMAHA RPU200		0x3104	RP-U200
 
 /* Yano products */
 product YANO U640MO		0x0101	U640MO-03
+
+/* Z-Com products */
+product ZCOM 725		0x0002	725/726 Prism2.5 WLAN
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax Modem
