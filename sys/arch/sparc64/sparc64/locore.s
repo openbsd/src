@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.37 2003/05/17 07:45:54 mdw Exp $	*/
+/*	$OpenBSD: locore.s,v 1.38 2003/05/17 07:48:19 mdw Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -56,7 +56,12 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
+#undef HORRID_III_HACK	/* define this to make a locore.s for usIII */
+#ifdef HORRID_III_HACK
+#define	NO_VCACHE		/* Map w/D$ disabled */
+#else
 #undef	NO_VCACHE		/* Map w/D$ disabled */
+#endif
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
@@ -3981,12 +3986,15 @@ dostart:
 	sethi	%hi(_C_LABEL(nwindows)), %o1	! may as well tell everyone
 	st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
-#if 0
+#if 0 || defined(HORRID_III_HACK)
 	/*
 	 * Disable the DCACHE entirely for debug.
 	 */
 	ldxa	[%g0] ASI_MCCR, %o1
 	andn	%o1, MCCR_DCACHE_EN, %o1
+#ifdef HORRID_III_HACK
+	andn	%o1, MCCR_ICACHE_EN, %o1	! and Icache...
+#endif
 	stxa	%o1, [%g0] ASI_MCCR
 	membar	#Sync
 #endif	/* 0 */
@@ -4041,6 +4049,9 @@ _C_LABEL(cpu_initialize):
 	!! Turn off D$ in LSU
 	ldxa	[%g0] ASI_LSU_CONTROL_REGISTER, %g1
 	bclr	MCCR_DCACHE_EN, %g1
+#ifdef HORRID_III_HACK
+	andn	%o1, MCCR_ICACHE_EN, %o1	! and Icache...
+#endif
 	stxa	%g1, [%g0] ASI_LSU_CONTROL_REGISTER
 	membar	#Sync
 #endif	/*  */
