@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.3 1997/10/13 13:49:57 pefo Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /* 
@@ -32,6 +32,8 @@
  */
 #ifndef	_PPC_DB_MACHDEP_H_
 #define	_PPC_DB_MACHDEP_H_
+
+#define	MID_MACHINE 0
 
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>

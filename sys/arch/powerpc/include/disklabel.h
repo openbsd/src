@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.6 1997/10/13 10:53:42 pefo Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.7 1997/10/13 13:49:57 pefo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -74,7 +74,7 @@ struct mbr_partition {
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {
-	struct dos_partition dosparts[NDOSPART];
+	struct mbr_partition dosparts[NMBRPART];
 	struct dkbad bad;
 };
 
