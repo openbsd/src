@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.100 2001/03/05 15:13:42 aaron Exp $
+#	$OpenBSD: pnpdevs,v 1.101 2001/03/15 17:35:25 aaron Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -433,6 +433,7 @@ joy		CTL7002	# Creative SB AWE64 PnP (PNPB02F.. but some miss it)
 joy		ESS0001	# ESS ES1869 Plug and Play AudioD
 joy		ESS0005	# ESS ES1878 Plug and Play AudioD
 joy		OPT0001	# OPTi Audio 16
+joy		CDC0001	# OPL3-SAx Sound Board joy
 #joy		ASB16FD	# AdLib NSC 16 PNP (PNPB02F)
 #joy		YMH0022	# OPL3-SA3 Snd System (PNPB02F)
 
@@ -461,6 +462,7 @@ wss		CSC0000	# AW35/Pro sound emulation (both SB *and* WSS, somewhat weird)
 wss		CSC0100	# On Board Audio Chip
 wss		CSCA800	# AdLib NSC 16 PNP
 wss		OPT9310	# OPTi Audio 16
+wss		CDC0000	# OPL3-SAx Sound Board
 ym		@@@1001 # ALS100+
 ym		YMH0021	# OPL3-SA2 Sound Board
 
