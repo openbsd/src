@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.66 2002/02/16 21:27:58 millert Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.67 2002/03/12 00:59:48 ho Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -453,22 +453,22 @@ printhdr()
 {
 	int i;
 
-	(void)printf(" procs   memory       page%*s", 20, "");
+	(void)printf(" procs   memory        page%*s", 20, "");
 	if (ndrives > 0)
-		(void)printf("%s %*sfaults      cpu\n",
+		(void)printf("%s %*sfaults     cpu\n",
 		   ((ndrives > 1) ? "disks" : "disk"),
 		   ((ndrives > 1) ? ndrives * 4 - 4 : 0), "");
 	else
-		(void)printf("%*s  faults      cpu\n",
+		(void)printf("%*s  faults     cpu\n",
 		   ndrives * 3, "");
 
 	(void)printf(" r b w    avm    fre   flt  re  pi  po  fr  sr ");
 	for (i = 0; i < dk_ndrive; i++)
 		if (dk_select[i])
-			(void)printf("%c%c%c", dr_name[i][0],
+			(void)printf("%c%c%c ", dr_name[i][0],
 			    dr_name[i][1],
 			    dr_name[i][strlen(dr_name[i]) - 1]);
-	(void)printf("   in    sy   cs us sy id\n");
+	(void)printf("  in    sy   cs us sy id\n");
 	hdrcnt = winlines - 2;
 }
 
