@@ -467,6 +467,8 @@
 ./usr/share/man/cat4/drum.0
 ./usr/share/man/cat4/esis.0
 ./usr/share/man/cat4/fd.0
+./usr/share/man/cat4/de.0
+./usr/share/man/cat4/fxp.0
 ./usr/share/man/cat4/fpa.0
 ./usr/share/man/cat4/i386/pccom.0
 ./usr/share/man/cat4/icmp.0
@@ -860,3 +862,4 @@
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splx.0
 ./usr/share/man/cat8/mkisofs.0
+./usr/share/man/cat8/afterboot.0
