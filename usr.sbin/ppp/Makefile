@@ -1,9 +1,9 @@
-#	$Id: Makefile,v 1.3 1997/12/06 12:08:54 brian Exp $
+#	$Id: Makefile,v 1.4 1997/12/15 22:49:11 brian Exp $
 
 PROG=	ppp
 SRCS=	arp.c async.c auth.c ccp.c chap.c chap_ms.c chat.c \
 	command.c deflate.c defs.c filter.c fsm.c hdlc.c id.c ip.c ipcp.c \
-	lcp.c log.c lqr.c main.c mbuf.c modem.c os.c pap.c phase.c \
+	iplist.c lcp.c log.c lqr.c main.c mbuf.c modem.c os.c pap.c phase.c \
 	pred.c route.c server.c sig.c slcompress.c systems.c throughput.c \
 	timer.c tun.c vars.c vjcomp.c
 CFLAGS+=-Wall -Wmissing-prototypes -DHAVE_DES
