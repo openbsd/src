@@ -1,4 +1,4 @@
-/*	$OpenBSD: alpha_instruction.h,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: alpha_instruction.h,v 1.3 2002/07/10 20:30:15 jsyn Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -164,7 +164,7 @@ typedef union {
 	/*
 	 *	Operate instructions are of two types, with
 	 *	a second source register or with a literal
-	 *	specifier.  Bit 12 sez which is which.
+	 *	specifier.  Bit 12 says which is which.
 	 */
 	struct {
 		unsigned	rc : 5,

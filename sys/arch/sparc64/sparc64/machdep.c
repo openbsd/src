@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2002/07/03 21:19:05 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2002/07/10 20:30:15 jsyn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1835,7 +1835,7 @@ sparc_bus_unmap(t, bh, size)
 	vaddr_t endva = va + round_page(size);
 
 	int error = extent_free(io_space, va, size, EX_NOWAIT);
-	if (error) printf("sparc_bus_unmap: extent free sez %d\n", error);
+	if (error) printf("sparc_bus_unmap: extent free says %d\n", error);
 
 	pmap_remove(pmap_kernel(), va, endva);
 	return (0);

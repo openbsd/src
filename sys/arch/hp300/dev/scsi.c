@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.11 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.12 2002/07/10 20:30:14 jsyn Exp $	*/
 /*	$NetBSD: scsi.c,v 1.21 1997/05/05 21:08:26 thorpej Exp $	*/
 
 /*
@@ -736,7 +736,7 @@ mxfer_in(hd, len, buf, phase)
 	hd->scsi_tmod = 0;
 	for (i = 0; i < len; ++i) {
 		/*
-		 * manual sez: reset ATN before ACK is sent.
+		 * manual says: reset ATN before ACK is sent.
 		 */
 		if (hd->scsi_psns & PSNS_ATN)
 			hd->scsi_scmd = SCMD_RST_ATN;

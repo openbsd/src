@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicreg.h,v 1.3 1996/04/28 11:24:46 deraadt Exp $ */
+/*	$OpenBSD: sbicreg.h,v 1.4 2002/07/10 20:30:14 jsyn Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 /*
  * CDBn registers, note that
  *  cdb11 is used for status byte in target mode (send-status-and-cc)
- *  cdb12 sez if linked command complete, and w/flag if so
+ *  cdb12 says if linked command complete, and w/flag if so
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.5 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.6 2002/07/10 20:30:14 jsyn Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -234,7 +234,7 @@ fpu_cleanup(p, fs)
 #ifdef SUN4U
 		if (fs->fs_qsize == 0) {
 			printf("fpu_cleanup: unfinished fpop");
-			/* The book sez reexecute or emulate. */
+			/* The book says reexecute or emulate. */
 			return;
 		}
 		break;
