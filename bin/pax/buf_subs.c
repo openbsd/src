@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.9 2001/09/19 10:58:07 mpech Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.10 2001/10/06 20:21:55 niklas Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.9 2001/09/19 10:58:07 mpech Exp $";
+static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.10 2001/10/06 20:21:55 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -992,7 +992,7 @@ buf_flush(bufcnt)
 
 	/*
 	 * if we have reached the user specified byte count for each archive
-	 * volume, prompt for the next volume. (The non-standrad -R flag).
+	 * volume, prompt for the next volume. (The non-standard -R flag).
 	 * NOTE: If the wrlimit is smaller than wrcnt, we will always write
 	 * at least one record. We always round limit UP to next blocksize.
 	 */
