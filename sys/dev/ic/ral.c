@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.4 2005/02/17 17:38:12 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.5 2005/02/17 17:43:31 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1403,9 +1403,9 @@ ral_tx_bcn(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	wh = mtod(m0, struct ieee80211_frame *);
 
 	/* XXX beacons are always sent at 2Mbps */
-	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len, ic->ic_flags,
-	    ic->ic_fragthreshold, 4, &d0, &dn, &npkt,
-	    ifp->if_flags & IFF_DEBUG);
+	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len,
+	    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold, 4, &d0,
+	    &dn, &npkt, ifp->if_flags & IFF_DEBUG);
 	if (error != 0) {
 		printf("%s: could not compute duration\n", sc->sc_dev.dv_xname);
 		m_freem(m0);
@@ -1470,9 +1470,9 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	wh = mtod(m0, struct ieee80211_frame *);
 
 	/* XXX management frames are always sent at 2Mbps */
-	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len, ic->ic_flags,
-	    ic->ic_fragthreshold, 4, &d0, &dn, &npkt,
-	    ifp->if_flags & IFF_DEBUG);
+	error = ieee80211_compute_duration(wh, m0->m_pkthdr.len,
+	    ic->ic_flags & ~IEEE80211_F_WEPON, ic->ic_fragthreshold, 4, &d0,
+	    &dn, &npkt, ifp->if_flags & IFF_DEBUG);
 	if (error != 0) {
 		printf("%s: could not compute duration\n", sc->sc_dev.dv_xname);
 		m_freem(m0);
@@ -1561,6 +1561,12 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		m_freem(m0);
 		return error;
 	}
+
+	if (ic->ic_flags & IEEE80211_F_WEPON) {
+		m0 = ieee80211_wep_crypt(ifp, m0, 1);
+		if (m0 == NULL)
+			return ENOBUFS;
+        }
 
 	if (m0->m_pkthdr.len > ic->ic_rtsthreshold) {
 		desc = &sc->txq.desc[sc->txq.cur_encrypt];
