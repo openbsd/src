@@ -1,4 +1,4 @@
-/* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
+/* $OpenBSD: deflate.c,v 1.4 2005/03/24 11:43:40 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -48,11 +48,7 @@ int window_deflate = -12;
  */
 
 u_int32_t
-deflate_global(data, size, comp, out)
-	u_int8_t *data;
-	u_int32_t size;
-	int comp;
-	u_int8_t **out;
+deflate_global(u_int8_t *data, u_int32_t size, int comp, u_int8_t **out)
 {
 	/* comp indicates whether we compress (0) or decompress (1) */
 
@@ -168,9 +164,7 @@ bad:
 }
 
 void *
-z_alloc(nil, type, size)
-	void *nil;
-	u_int type, size;
+z_alloc(void *nil, u_int type, u_int size)
 {
 	void *ptr;
 
@@ -179,9 +173,7 @@ z_alloc(nil, type, size)
 }
 
 void
-z_free(nil, ptr, size)
-	void *nil, *ptr;
-	u_int size;
+z_free(void *nil, void *ptr, u_int size)
 {
 	free(ptr, M_CRYPTO_DATA);
 }
