@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.9 1997/04/19 17:19:52 pefo Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.10 1997/08/02 09:14:13 deraadt Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -377,7 +377,6 @@ snioctl(ifp, cmd, data)
 		if (((ifp->if_flags ^ sc->sc_iflags) & IFF_PROMISC) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
 			sc->sc_iflags = ifp->if_flags;
-			printf("change in flags\n");
 			temp = sc->sc_if.if_flags & IFF_UP;
 			snreset(sc);
 			sc->sc_if.if_flags |= temp;
@@ -1030,10 +1029,7 @@ sonictxint(sc)
 		mtd_free(mtd);
 
 		if ((SRD(txp->status) & TCR_PTX) == 0) {
-			printf("sonic: Tx packet status=0x%x\n", txp->status);
-
 			if (mtdhead != mtdnext) {
-				printf("resubmitting remaining packets\n");
 				csr->s_ctda = LOWER(v_tda + (mtdhead->mtd_txp - p_tda));
 				csr->s_cr = CR_TXP;
 				wbflush();
