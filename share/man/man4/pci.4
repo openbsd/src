@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.59 2002/02/18 01:55:30 krw Exp $
+.\"	$OpenBSD: pci.4,v 1.60 2002/04/02 13:37:04 nate Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -193,6 +193,8 @@ DEFPA
 interfaces.
 .It Xr fxp 4
 Intel EtherExpress PRO 10+/100B Ethernet interfaces.
+.It Xr gx 4
+Intel Gigabit Ethernet interfaces. (i82542, i82543, i82544)
 .It Xr le 4
 PCNet-PCI Ethernet interfaces.
 .It Xr lge 4
@@ -233,7 +235,7 @@ Winbond W89C840F Ethernet interfaces.
 WaveLAN/IEEE and PRISM-II 802.11DS wireless network interfaces behind
 a PLX 905x-based dumb PCMCIA->PCI bridge.
 .It Xr wx 4
-Intel Gigabit Ethernet interfaces.
+Intel Gigabit Ethernet interfaces. (i82542, i82543)
 .It Xr xl 4
 3Com 3c555, 3c556, 3c900, 3c905, 3c980, and 3cSOHO Ethernet interfaces.
 .El
