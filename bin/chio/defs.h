@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.2 1996/06/23 14:19:05 deraadt Exp $	*/
+/*	$OpenBSD: defs.h,v 1.3 1997/11/08 23:22:41 todd Exp $	*/
 /*	$NetBSD: defs.h,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -14,7 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgements:
+ *    must display the following acknowledgments:
  *	This product includes software developed by Jason R. Thorpe
  *	for And Communications, http://www.and.com/
  * 4. The name of the author may not be used to endorse or promote products

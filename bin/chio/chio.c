@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.6 1997/09/01 18:29:12 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.7 1997/11/08 23:22:40 todd Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -14,7 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgements:
+ *    must display the following acknowledgments:
  *	This product includes software developed by Jason R. Thorpe
  *	for And Communications, http://www.and.com/
  * 4. The name of the author may not be used to endorse or promote products
@@ -385,7 +385,7 @@ do_params(cname, argc, argv)
 
 	/* No arguments to this command. */
 	if (argc) {
-		warnx("%s: no arguements expected", cname);
+		warnx("%s: no arguments expected", cname);
 		goto usage;
 	}
 
