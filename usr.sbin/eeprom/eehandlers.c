@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.4 1996/08/31 12:42:49 deraadt Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.5 1996/08/31 12:56:06 deraadt Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -504,22 +504,22 @@ doio(ktent, buf, len, wr)
 
 	fd = open(path_eeprom, wr == IO_WRITE ? O_RDWR : O_RDONLY, 0640);
 	if (fd < 0) {
-		sprintf(err_str, "open: %s: %s", path_eeprom,
+		snprintf(err_str, sizeof err_str, "open: %s: %s", path_eeprom,
 		    strerror(errno));
 		free(buf2);
 		return (1);
 	}
 
 	if (lseek(fd, (off_t)ktent->kt_offset, SEEK_SET) < (off_t)0) {
-		sprintf(err_str, "lseek: %s:", path_eeprom,
+		snprintf(err_str, sizeof err_str, "lseek: %s: %s", path_eeprom,
 		    strerror(errno));
 		rval = 1;
 		goto done;
 	}
 
 	if (read(fd, buf2, len) != len) {
-		sprintf(err_str, "read: %s: %s", path_eeprom,
-		     strerror(errno));
+		snprintf(err_str, sizeof err_str, "read: %s: %s", path_eeprom,
+		    strerror(errno));
 		return (1);
 	}
 
@@ -528,16 +528,16 @@ doio(ktent, buf, len, wr)
 			goto done;
 
 		if (lseek(fd, (off_t)ktent->kt_offset, SEEK_SET) < (off_t)0) {
-			sprintf(err_str, "lseek: %s: %s", path_eeprom,
-			     strerror(errno));
+			snprintf(err_str, sizeof err_str, "lseek: %s: %s",
+			    path_eeprom, strerror(errno));
 			rval = 1;
 			goto done;
 		}
 
 		++update_checksums;
 		if (write(fd, buf, len) < 0) {
-			sprintf(err_str, "write: %s: %s", path_eeprom,
-			     strerror(errno));
+			snprintf(err_str, sizeof err_str, "write: %s: %s",
+			    path_eeprom, strerror(errno));
 			rval = 1;
 			goto done;
 		}
