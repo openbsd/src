@@ -1161,6 +1161,7 @@
 ./usr/share/man/cat4/ises.0
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/isp.0
+./usr/share/man/cat4/it.0
 ./usr/share/man/cat4/keynote.0
 ./usr/share/man/cat4/ksyms.0
 ./usr/share/man/cat4/kue.0
@@ -1836,6 +1837,7 @@
 ./usr/share/man/cat8/mount_mfs.0
 ./usr/share/man/cat8/mount_msdos.0
 ./usr/share/man/cat8/mount_nfs.0
+./usr/share/man/cat8/mount_ntfs.0
 ./usr/share/man/cat8/mount_null.0
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0

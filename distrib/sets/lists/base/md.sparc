@@ -381,6 +381,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/isapnpreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/isareg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/isavar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/itvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/madreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/mcdreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/isa/opti.ph
@@ -516,6 +517,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pciide_pdc202xx_reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pciide_piix_reg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pciide_sii3112_reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pciide_sis_reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pciidereg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pciidevar.ph
@@ -691,6 +693,9 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uhcivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uhidev.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ukbdvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umass_quirks.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umass_scsi.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umassvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/usb_mem.ph
@@ -2095,7 +2100,3 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umass_quirks.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umass_scsi.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umassvar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pciide_sii3112_reg.ph

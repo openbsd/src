@@ -339,6 +339,7 @@
 ./usr/include/dev/isa/isapnpreg.h
 ./usr/include/dev/isa/isareg.h
 ./usr/include/dev/isa/isavar.h
+./usr/include/dev/isa/itvar.h
 ./usr/include/dev/isa/madreg.h
 ./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/opti.h
