@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.5 2004/09/27 17:28:03 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.6 2004/09/27 18:15:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -62,10 +62,28 @@ void
 fhc_attach(struct fhc_softc *sc)
 {
 	int node0, node;
+	u_int32_t ctrl;
 
 	printf(": %s\n", getpropstring(sc->sc_node, "board-model"));
 
 	sc->sc_cbt = fhc_alloc_bus_tag(sc);
+
+	ctrl = bus_space_read_4(sc->sc_bt, sc->sc_preg, FHC_P_CTRL);
+	if (!sc->sc_is_central)
+		ctrl |= FHC_P_CTRL_IXIST;
+	ctrl &= ~(FHC_P_CTRL_AOFF | FHC_P_CTRL_BOFF | FHC_P_CTRL_SLINE);
+	bus_space_write_4(sc->sc_bt, sc->sc_preg, FHC_P_CTRL, ctrl);
+	bus_space_read_4(sc->sc_bt, sc->sc_preg, FHC_P_CTRL);
+
+	/* clear interrupts */
+	bus_space_write_4(sc->sc_bt, sc->sc_freg, FHC_F_ICLR, 0);
+	bus_space_read_4(sc->sc_bt, sc->sc_freg, FHC_F_ICLR);
+	bus_space_write_4(sc->sc_bt, sc->sc_sreg, FHC_S_ICLR, 0);
+	bus_space_read_4(sc->sc_bt, sc->sc_sreg, FHC_S_ICLR);
+	bus_space_write_4(sc->sc_bt, sc->sc_ureg, FHC_U_ICLR, 0);
+	bus_space_read_4(sc->sc_bt, sc->sc_ureg, FHC_U_ICLR);
+	bus_space_write_4(sc->sc_bt, sc->sc_treg, FHC_T_ICLR, 0);
+	bus_space_read_4(sc->sc_bt, sc->sc_treg, FHC_T_ICLR);
 
 	getprop(sc->sc_node, "ranges", sizeof(struct fhc_range),
 	    &sc->sc_nrange, (void **)&sc->sc_range);

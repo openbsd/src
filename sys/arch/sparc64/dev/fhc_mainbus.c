@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc_mainbus.c,v 1.2 2004/09/27 17:44:16 jason Exp $	*/
+/*	$OpenBSD: fhc_mainbus.c,v 1.3 2004/09/27 18:15:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -69,6 +69,7 @@ fhc_mainbus_attach(parent, self, aux)
 
 	sc->sc_node = ma->ma_node;
 	sc->sc_bt = ma->ma_bustag;
+	sc->sc_is_central = 0;
 
 	if (bus_space_map(sc->sc_bt, ma->ma_reg[0].ur_paddr,
 	    ma->ma_reg[0].ur_len, 0, &sc->sc_preg)) {

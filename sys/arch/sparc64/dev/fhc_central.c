@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc_central.c,v 1.3 2004/09/24 20:48:26 jason Exp $	*/
+/*	$OpenBSD: fhc_central.c,v 1.4 2004/09/27 18:15:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -71,6 +71,7 @@ fhc_central_attach(parent, self, aux)
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_bt = ca->ca_bustag;
+	sc->sc_is_central = 1;
 
 	if (central_bus_map(sc->sc_bt, ca->ca_reg[0].cbr_slot,
 	    ca->ca_reg[0].cbr_offset, ca->ca_reg[0].cbr_size, 0,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhcreg.h,v 1.1 2004/09/24 20:47:39 jason Exp $	*/
+/*	$OpenBSD: fhcreg.h,v 1.2 2004/09/27 18:15:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -32,6 +32,23 @@
 #define	FHC_P_BSR	0x00000030		/* board status */
 #define	FHC_P_ECC	0x00000040		/* ECC control */
 #define	FHC_P_JCTRL	0x000000f0		/* JTAG control */
+
+#define	FHC_P_CTRL_ICS		0x00100000	/* ignore centerplane sigs */
+#define	FHC_P_CTRL_FRST		0x00080000	/* fatal error reset enable */
+#define	FHC_P_CTRL_LFAT		0x00080000	/* AC/DC local error */
+#define	FHC_P_CTRL_SLINE	0x00010000	/* firmware sync line */
+#define	FHC_P_CTRL_DCD		0x00008000	/* DC/DC converter disable */
+#define	FHC_P_CTRL_POFF		0x00004000	/* AC/DC ctlr PLL disable */
+#define	FHC_P_CTRL_FOFF		0x00002000	/* FHC ctlr PLL disable */
+#define	FHC_P_CTRL_AOFF		0x00001000	/* cpu a sram low pwr mode */
+#define	FHC_P_CTRL_BOFF		0x00000800	/* cpu b sram low pwr mode */
+#define	FHC_P_CTRL_PSOFF	0x00000400	/* disable fhc power supply */
+#define	FHC_P_CTRL_IXIST	0x00000200	/* fhc notifies clock-board */
+#define	FHC_P_CTRL_XMSTR	0x00000100	/* xir master enable */
+#define	FHC_P_CTRL_LLED		0x00000040	/* left led (reversed) */
+#define	FHC_P_CTRL_MLED		0x00000020	/* middle led */
+#define	FHC_P_CTRL_RLED		0x00000010	/* right led */
+#define	FHC_P_CTRL_BPINS	0x00000003	/* spare bidir pins */
 
 #define	FHC_I_IGN	0x00000000		/* IGN register */
 
