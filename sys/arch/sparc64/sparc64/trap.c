@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2003/07/10 19:23:16 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2003/07/10 19:33:19 jason Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -48,8 +48,6 @@
  *
  *	@(#)trap.c	8.4 (Berkeley) 9/23/93
  */
-
-#define NEW_FPSTATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,27 +453,16 @@ trap(tf, type, pc, tstate)
 		 * the FPU.
 		 */
 		if (type == T_FPDISABLED) {
-#ifndef NEW_FPSTATE
-			if (fpproc != NULL) {	/* someone else had it */
-				savefpstate(fpproc->p_md.md_fpstate);
-				fpproc = NULL;
-				/* Enable the FPU */
-/*				loadfpstate(initfpstate);*/
-			}
-			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
-			return;
-#else
 			struct proc *newfpproc;
 
-			/* New scheme */
-			if (CLKF_INTR((struct clockframe *)tf) || !curproc) {
+			if (CLKF_INTR((struct clockframe *)tf) || !curproc)
 				newfpproc = &proc0;
-			} else {
+			else
 				newfpproc = curproc;
-			}
+
 			if (fpproc != newfpproc) {
 				if (fpproc != NULL) {
-				/* someone else had it, maybe? */
+					/* someone else had it, maybe? */
 					savefpstate(fpproc->p_md.md_fpstate);
 					fpproc = NULL;
 				}
@@ -489,7 +476,6 @@ trap(tf, type, pc, tstate)
 			/* Enable the FPU */
 			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 			return;
-#endif
 		}
 		goto dopanic;
 	}
