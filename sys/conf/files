@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.85 1998/08/27 05:00:09 deraadt Exp $
+#	$OpenBSD: files,v 1.86 1998/08/30 17:11:32 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -452,6 +452,14 @@ file ufs/ext2fs/ext2fs_readwrite.c	ext2fs
 file ufs/ext2fs/ext2fs_subr.c		ext2fs
 file ufs/ext2fs/ext2fs_vfsops.c		ext2fs
 file ufs/ext2fs/ext2fs_vnops.c		ext2fs
+file xfs/xfs_common.c			xfs
+file xfs/xfs_deb.c			xfs
+file xfs/xfs_dev.c			xfs
+file xfs/xfs_message.c			xfs
+file xfs/xfs_node.c			xfs
+file xfs/xfs_syscalls.c			xfs
+file xfs/xfs_vfsops.c			xfs
+file xfs/xfs_vnodeops.c			xfs
 file vm/device_pager.c			devpager
 file vm/swap_pager.c			swappager
 file vm/vm_fault.c

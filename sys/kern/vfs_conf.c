@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.11 1997/12/26 22:33:01 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.12 1998/08/30 17:11:36 art Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -57,6 +57,10 @@
 
 #ifdef MFS
 #include <ufs/mfs/mfs_extern.h>
+#endif
+
+#ifdef XFS
+#include <xfs/xfs_extern.h>
 #endif
 
 #ifdef NFSCLIENT
@@ -143,6 +147,10 @@ extern 	struct vfsops adosfs_vfsops;
 extern	struct vfsops ext2fs_vfsops;
 #endif
 
+#ifdef XFS
+extern  struct vfsops xfs_vfsops;
+#endif
+
 /*
  * Set up the filesystem operations for vnodes.
  */
@@ -191,6 +199,11 @@ static struct vfsconf vfsconflist[] = {
         { &afs_vfsops, MOUNT_AFS, 13, 0, 0, afs_mountroot, NULL },
 #endif
 
+	/* XFS */
+#ifdef XFS
+	{ &xfs_vfsops, MOUNT_XFS, 21, 0, 0, NULL, NULL },
+#endif
+	
         /* /proc Filesystem */
 #ifdef PROCFS
         { &procfs_vfsops, MOUNT_PROCFS, 12, 0, 0, NULL, NULL },
@@ -271,6 +284,7 @@ extern struct vnodeopv_desc adosfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_specop_opv_desc;
 extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
+extern struct vnodeopv_desc xfs_vnodeop_opv_desc;
 
 struct vnodeopv_desc *vfs_opv_descs[] = {
 	&sync_vnodeop_opv_desc,
@@ -343,6 +357,9 @@ struct vnodeopv_desc *vfs_opv_descs[] = {
 #ifdef FIFO
 	&ext2fs_fifoop_opv_desc,
 #endif
+#endif
+#ifdef XFS
+	&xfs_vnodeop_opv_desc,
 #endif
 	NULL
 };
