@@ -1,0 +1,46 @@
+.\"	$OpenBSD: zs.4,v 1.1 1998/03/07 21:54:29 johns Exp $
+.\"
+.\" Copyright (c) 1998 The OpenBSD Project 
+.\" All rights reserved.
+.\"
+.\"
+.Dd March 4, 1998
+.Dt ZS 4 sparc
+.Os
+.Sh NAME
+.Nm zs 
+.Nd Zilog 8530 (ZSCC) serial communications driver
+.Sh SYNOPSIS
+.Cd "zs0 at mainbus0                                  " Pq sun4c
+.Cd "zs0 at obio0                                     " Pq sun4m
+.Cd "zs0 at obio0 addr 0xf1000000 level 12 flags 0x103" Pq sun4/[23]00
+.Cd "zs0 at obio0 addr 0x01000000 level 12 flags 0x103" Pq sun4/100
+.Cd "zs1 at mainbus0                                  " Pq sun4c
+.Cd "zs1 at obio0                                     " Pq sun4m
+.Cd "zs1 at obio0 addr 0xf0000000 level 12 flags 0x103" Pq sun4/[23]00
+.Cd "zs1 at obio0 addr 0x00000000 level 12 flags 0x103" Pq sun4/100
+.Cd "zs2 at obio0 addr 0xe0000000 level 12 flags 0x103" Pq sun4/300
+.Sh DESCRIPTION
+The 
+.Nm
+is a Zilog 8530 serial interface chip used in Sun workstations.
+The Zilog 8530 provides two input/output channels per instance. 
+Most Sun workstations include two of these interfaces.  One of the
+interfaces is hardwired for use by the keyboard and mouse attached to
+the workstation console.  
+The remaining additional
+.Nm 
+interfaces provide RS-423
+and RS-232 serial ports for general purpose use.
+.Sh BUGS
+The 
+.Nm
+driver does not support cua minor devices (yet).
+.Sh SEE ALSO
+.Xr kbd 4 ,
+.Xr ms 4
+.Sh HISTORY
+The 
+.Nm
+driver first appeared in 
+.Bx 4.4 .
