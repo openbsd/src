@@ -1,4 +1,4 @@
-.\" $OpenBSD: atu.4,v 1.19 2005/03/08 12:59:39 dlg Exp $
+.\" $OpenBSD: atu.4,v 1.20 2005/03/08 13:13:38 dlg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -235,6 +235,12 @@ The adapter needs some firmware files, which are loaded on demand by the
 driver when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/atu-at76c503-i3863-int
+.It Pa /etc/firmware/atu-at76c503-i3863-ext
+.It Pa /etc/firmware/atu-at76c503-rfmd-acc-int
+.It Pa /etc/firmware/atu-at76c503-rfmd-acc-ext
+.It Pa /etc/firmware/atu-at76c505-rfmd-int
+.It Pa /etc/firmware/atu-at76c505-rfmd-ext
 .It Pa /etc/firmware/atu-intersil-int
 .It Pa /etc/firmware/atu-intersil-ext
 .It Pa /etc/firmware/atu-rfmd-int
