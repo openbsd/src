@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.8 2000/05/01 23:12:30 deraadt Exp $	*/
+/*	$OpenBSD: sem.h,v 1.9 2001/08/12 22:50:12 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ struct seminfo {
 		semvmx,		/* semaphore maximum value */
 		semaem;		/* adjust on exit max value */
 };
-struct seminfo	seminfo;
+extern struct seminfo	seminfo;
 
 /* internal "mode" bits */
 #define	SEM_ALLOC	01000	/* semaphore is allocated */
@@ -160,13 +160,12 @@ struct seminfo	seminfo;
 #define SEMUSZ	(sizeof(struct sem_undo)+sizeof(struct undo)*SEMUME)
 
 /*
- * Structures allocated in machdep.c
+ * Structures allocated in machdep.c, defined/initialized in sysv_sem.c
  */
-struct	semid_ds *sema;		/* semaphore id pool */
-struct	sem *sem;		/* semaphore pool */
-struct	map *semmap;		/* semaphore allocation map */
-struct	sem_undo *semu_list;	/* list of active undo structures */
-int	*semu;			/* undo structure pool */
+extern struct	semid_ds *sema;		/* semaphore id pool */
+extern struct	sem *sem;		/* semaphore pool */
+extern struct	sem_undo *semu_list;	/* list of active undo structures */
+extern int	*semu;			/* undo structure pool */
 
 /*
  * Macro to find a particular sem_undo vector

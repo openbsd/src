@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.19 2001/06/27 04:49:47 art Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.20 2001/08/12 22:50:12 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -48,6 +48,9 @@
 
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>
+
+struct shminfo shminfo;
+struct shmid_ds *shmsegs;
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int));
 
