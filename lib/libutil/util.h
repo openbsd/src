@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.13 2001/06/10 02:44:42 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.14 2001/08/12 22:00:34 millert Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -38,13 +38,8 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
-#include <stdio.h>
-#include <pwd.h>
-#include <utmp.h>
-#include <termios.h>
-#include <sys/ttycom.h>
-#include <sys/types.h>
 #include <sys/cdefs.h>
+#include <sys/types.h>
 
 /*
  * fparseln() specific operation flags.
@@ -62,8 +57,31 @@
 #define OPENDEV_DRCT	0x02		/* Obsolete (now default behavior). */
 #define OPENDEV_BLCK	0x04		/* Open block, not character device. */
 
+/*
+ * uucplock(3) specific flags.
+ */
+#define UU_LOCK_INUSE (1)
+#define UU_LOCK_OK (0)
+#define UU_LOCK_OPEN_ERR (-1)
+#define UU_LOCK_READ_ERR (-2)
+#define UU_LOCK_CREAT_ERR (-3)
+#define UU_LOCK_WRITE_ERR (-4)
+#define UU_LOCK_LINK_ERR (-5)
+#define UU_LOCK_TRY_ERR (-6)
+#define UU_LOCK_OWNER_ERR (-7)
+
+/*
+ * stub struct definitions.
+ */
+struct __sFILE;
+struct login_cap;
+struct passwd;
+struct termios;
+struct utmp;
+struct winsize;
+
 __BEGIN_DECLS
-char   *fparseln __P((FILE *, size_t *, size_t *, const char[3], int));
+char   *fparseln __P((struct __sFILE *, size_t *, size_t *, const char[3], int));
 void	login __P((struct utmp *));
 int	login_tty __P((int));
 int	logout __P((const char *));
@@ -89,22 +107,12 @@ pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
 int	getmaxpartitions __P((void));
 int	getrawpartition __P((void));
 void	login_fbtab __P((char *, uid_t, gid_t));
-int	login_check_expire __P((FILE *, struct passwd *, char *, int));
+int	login_check_expire __P((struct __sFILE *, struct passwd *, char *, int));
 char   *readlabelfs __P((char *, int));
 const char *uu_lockerr __P((int _uu_lockresult));
 int     uu_lock __P((const char *_ttyname)); 
 int	uu_lock_txfr __P((const char *_ttyname, pid_t _pid));
 int     uu_unlock __P((const char *_ttyname));
 __END_DECLS
-
-#define UU_LOCK_INUSE (1)
-#define UU_LOCK_OK (0)
-#define UU_LOCK_OPEN_ERR (-1)
-#define UU_LOCK_READ_ERR (-2)
-#define UU_LOCK_CREAT_ERR (-3)
-#define UU_LOCK_WRITE_ERR (-4)
-#define UU_LOCK_LINK_ERR (-5)
-#define UU_LOCK_TRY_ERR (-6)
-#define UU_LOCK_OWNER_ERR (-7)
 
 #endif /* !_UTIL_H_ */
