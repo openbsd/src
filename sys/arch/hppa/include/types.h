@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
+/*	$OpenBSD: types.h,v 1.7 2002/08/28 23:42:16 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -54,10 +54,6 @@ typedef	unsigned long		vaddr_t;
 typedef	unsigned long		vsize_t;
 typedef	unsigned long		paddr_t;
 typedef	unsigned long		psize_t;
-/* XXX DIE DIE DIE */
-typedef	unsigned long vm_offset_t;
-typedef unsigned long vm_size_t;
-
 #endif
 
 /*
