@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.27 1998/11/25 09:56:51 niklas Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.28 1999/01/08 21:40:26 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -178,7 +178,7 @@ static void
 blf_encrypt(void *pxd, u_int8_t *blk)
 {
      struct esp_new_xdata *xd = pxd;
-     Blowfish_encipher(&xd->edx_bks, (u_int32_t *)blk,
+     Blowfish_encipher(&xd->edx_bks, (u_int32_t *) blk,
 		       (u_int32_t *) (blk + 4));
 }
 
@@ -186,7 +186,7 @@ static void
 blf_decrypt(void *pxd, u_int8_t *blk)
 {
      struct esp_new_xdata *xd = pxd;
-     Blowfish_decipher(&xd->edx_bks, (u_int32_t *)blk,
+     Blowfish_decipher(&xd->edx_bks, (u_int32_t *) blk,
 		       (u_int32_t *) (blk + 4));
 }
 
@@ -714,22 +714,22 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 
     /*
      * Now, the entire chain has been decrypted. As a side effect,
-     * blk[7] contains the next protocol, and blk[6] contains the
-     * amount of padding the original chain had. Chop off the
+     * blk[blks - 1] contains the next protocol, and blk[blks - 2] contains
+     * the amount of padding the original chain had. Chop off the
      * appropriate parts of the chain, and return.
      * Verify correct decryption by checking the last padding bytes.
      */
 
     if ((xd->edx_flags & ESP_NEW_FLAG_NPADDING) == 0)
     {
-        if (blk[6] + 2 + alen > m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - xd->edx_ivlen)
+        if (blk[blks - 2] + 2 + alen > m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - xd->edx_ivlen)
         {
-	    DPRINTF(("esp_new_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	    DPRINTF(("esp_new_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[blks - 2], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	    espstat.esps_badilen++;
 	    m_freem(m);
 	    return NULL;
 	}
-        if ((blk[6] != blk[5]) && (blk[6] != 0))
+        if ((blk[blks - 2] != blk[blks - 3]) && (blk[blks - 2] != 0))
 	{
 	    if (encdebug)
 	      log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
@@ -737,18 +737,18 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	    return NULL;
 	} 
 
-      	m_adj(m, - blk[6] - 2 - alen);		/* Old type padding */
+      	m_adj(m, - blk[blks - 2] - 2 - alen);		/* Old type padding */
     }
     else
     {
-        if (blk[6] + 1 + alen > m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - xd->edx_ivlen)
+        if (blk[blks - 2] + 1 + alen > m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - xd->edx_ivlen)
         {
-	    DPRINTF(("esp_new_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	    DPRINTF(("esp_new_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[blks - 2], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	    espstat.esps_badilen++;
 	    m_freem(m);
 	    return NULL;
 	}
-	if (blk[6] == 0)
+	if (blk[blks - 2] == 0)
 	{
 	    if (encdebug)
 	      log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x -- peer is probably using old style padding\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
@@ -756,7 +756,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	    return NULL;
 	}
 	else
-	  if (blk[6] != blk[5] + 1)
+	  if (blk[blks - 2] != blk[blks - 3] + 1)
           {
 	      if (encdebug)
                 log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
@@ -764,7 +764,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
               return NULL;
           }
 
-      	m_adj(m, - blk[6] - 1 - alen);
+      	m_adj(m, - blk[blks - 2] - 1 - alen);
     }
 
     m_adj(m, 2 * sizeof(u_int32_t) + xd->edx_ivlen);
@@ -780,11 +780,11 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     }
 
     ip = mtod(m, struct ip *);
-    ipo.ip_p = blk[7];
+    ipo.ip_p = blk[blks - 1];
     ipo.ip_id = htons(ipo.ip_id);
     ipo.ip_off = 0;
     ipo.ip_len += (ipo.ip_hl << 2) -  2 * sizeof(u_int32_t) - xd->edx_ivlen -
-		  blk[6] - 1 - alen;
+		  blk[blks - 2] - 1 - alen;
 
     if ((xd->edx_flags & ESP_NEW_FLAG_NPADDING) == 0)
       ipo.ip_len -= 1;
@@ -802,9 +802,9 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     /* Update the counters */
     tdb->tdb_cur_packets++;
     tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + 
-	                  blk[6] + 1 + alen;
+	                  blk[blks - 2] + 1 + alen;
     espstat.esps_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + 
-                           blk[6] + 1 + alen;
+                           blk[blks - 2] + 1 + alen;
 
     if ((xd->edx_flags & ESP_NEW_FLAG_NPADDING) == 0)
     {
@@ -943,7 +943,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
         return EMSGSIZE;
     }
 
-    pad = (u_char *) m_pad(m, padding + alen);
+    pad = (u_char *) m_pad(m, padding + alen, 0);
     if (pad == NULL)
     {
         DPRINTF(("esp_new_output(): m_pad() failed for SA %x/%08x\n",

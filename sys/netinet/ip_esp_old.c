@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.23 1998/11/25 09:56:51 niklas Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.24 1999/01/08 21:40:27 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -458,7 +458,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 
 	    xd->edx_xform->decrypt(xd, idat);
 
-	    for (i=0; i<blks; i++)
+	    for (i = 0; i < blks; i++)
 		idat[i] ^= ivp[i];
 
 	    ivp = ivn;
@@ -481,23 +481,23 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 
     /*
      * Now, the entire chain has been decrypted. As a side effect,
-     * blk[7] contains the next protocol, and blk[6] contains the
-     * amount of padding the original chain had. Chop off the
+     * blk[blks - 1] contains the next protocol, and blk[blks - 2] contains
+     * the amount of padding the original chain had. Chop off the
      * appropriate parts of the chain, and return.
      * We cannot verify the decryption here (as in ip_esp_new.c), since
      * the padding may be random.
      */
     
-    if (blk[6] + 2 > m->m_pkthdr.len - (ip->ip_hl << 2) - sizeof(u_int32_t) -
+    if (blk[blks - 2] + 2 > m->m_pkthdr.len - (ip->ip_hl << 2) - sizeof(u_int32_t) -
 	xd->edx_ivlen)
     {
-	DPRINTF(("esp_old_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	DPRINTF(("esp_old_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[blks - 2], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	espstat.esps_badilen++;
 	m_freem(m);
 	return NULL;
     }
 
-    m_adj(m, -blk[6] - 2);
+    m_adj(m, - blk[blks - 2] - 2);
     m_adj(m, 4 + xd->edx_ivlen);
 
     if (m->m_len < (ipo.ip_hl << 2))
@@ -511,11 +511,11 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     }
 
     ip = mtod(m, struct ip *);
-    ipo.ip_p = blk[7];
+    ipo.ip_p = blk[blks - 1];
     ipo.ip_id = htons(ipo.ip_id);
     ipo.ip_off = 0;
     ipo.ip_len += (ipo.ip_hl << 2) - sizeof(u_int32_t) - xd->edx_ivlen -
-		  blk[6] - 2;
+		  blk[blks - 2] - 2;
     ipo.ip_len = htons(ipo.ip_len);
     ipo.ip_sum = 0;
     *ip = ipo;
@@ -528,8 +528,10 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 
     /* Update the counters */
     tdb->tdb_cur_packets++;
-    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + blk[6] + 2;
-    espstat.esps_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + blk[6] + 2;
+    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) +
+			  blk[blks - 2] + 2;
+    espstat.esps_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) +
+			   blk[blks - 2] + 2;
 
     /* Notify on expiration */
     if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
@@ -637,7 +639,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
         return EMSGSIZE;
     }
 
-    pad = (u_char *) m_pad(m, padding);
+    pad = (u_char *) m_pad(m, padding, 1);
     if (pad == NULL)
     {
 	DPRINTF(("esp_old_output(): m_pad() failed for SA %x/%08x\n",
@@ -742,7 +744,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
 	while (ilen >= blks && plen > 0)
 	{
-	    for (i=0; i<blks; i++)
+	    for (i = 0; i < blks; i++)
 		idat[i] ^= ivp[i];
 
 	    xd->edx_xform->encrypt(xd, idat);
@@ -853,12 +855,13 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
  *
  * m_pad(m, n) pads <m> with <n> bytes at the end. The packet header
  * length is updated, and a pointer to the first byte of the padding
- * (which is guaranteed to be all in one mbuf) is returned.
+ * (which is guaranteed to be all in one mbuf) is returned. The third
+ * argument specifies whether we need randompadding or not.
  *
  */
 
 caddr_t
-m_pad(struct mbuf *m, int n)
+m_pad(struct mbuf *m, int n, int randompadding)
 {
     register struct mbuf *m0, *m1;
     register int len, pad;
@@ -914,11 +917,12 @@ m_pad(struct mbuf *m, int n)
     m0->m_len += pad;
     m->m_pkthdr.len += pad;
 
-    for (len = 0; len < n; len++)
-    {
-	get_random_bytes((void *) &dat, sizeof(u_int8_t));
-	retval[len] = len + dat;
-    }
+    if (randompadding)
+      for (len = 0; len < n; len++)
+      {
+	  get_random_bytes((void *) &dat, sizeof(u_int8_t));
+	  retval[len] = len + dat;
+      }
 
     return retval;
 }
