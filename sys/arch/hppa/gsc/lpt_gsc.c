@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.1 1998/09/30 04:45:46 mickey Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.2 1998/11/30 21:16:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -98,7 +98,6 @@ lpt_gsc_probe(parent, match, aux)
 	void *match, *aux;
 {
 	register struct confargs *ca = aux;
-	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_addr_t base;
 	u_int8_t mask, data;
@@ -119,9 +118,8 @@ lpt_gsc_probe(parent, match, aux)
 #define	ABORT	goto out
 #endif
 
-	iot = ca->ca_iot;
 	base = ca->ca_hpa;
-	if (bus_space_map(iot, base, IOMOD_HPASIZE, 0, &ioh))
+	if (bus_space_map(ca->ca_iot, base, IOMOD_HPASIZE, 0, &ioh))
 		return 0;
 	ioh |= IOMOD_DEVOFFSET;
 
@@ -129,33 +127,33 @@ lpt_gsc_probe(parent, match, aux)
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
+	if (!lpt_port_test(ca->ca_iot, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
+	if (!lpt_port_test(ca->ca_iot, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 		data = ~(1 << i);
-		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
+		if (!lpt_port_test(ca->ca_iot, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 		data = (1 << i);
-		if (!lpt_port_test(iot, ioh, base, lpt_data, data, mask))
+		if (!lpt_port_test(ca->ca_iot, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
-	bus_space_write_1(iot, ioh, lpt_data, 0);
-	bus_space_write_1(iot, ioh, lpt_control, 0);
+	bus_space_write_1(ca->ca_iot, ioh, lpt_data, 0);
+	bus_space_write_1(ca->ca_iot, ioh, lpt_control, 0);
 
 	rv = 1;
 
 out:
 	ioh &= ~IOMOD_DEVOFFSET;
-	bus_space_unmap(iot, ioh, IOMOD_HPASIZE);
+	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
 	return rv;
 }
 
