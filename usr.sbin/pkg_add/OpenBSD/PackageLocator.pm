@@ -1,4 +1,4 @@
-# $OpenBSD: PackageLocator.pm,v 1.8 2004/03/07 19:29:08 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.9 2004/03/11 18:54:06 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -179,6 +179,19 @@ sub simplelist
 	return $_[0]->list();
 }
 
+package OpenBSD::PackageLocation::Local::Pipe;
+our @ISA=qw(OpenBSD::PackageLocation::Local);
+
+sub may_exist
+{
+	return 1;
+}
+
+sub pipename
+{
+	return "gzip -d -c -q -f 2>/dev/null -";
+}
+
 package OpenBSD::PackageLocation::FTPorSCP;
 
 sub _list
@@ -296,7 +309,7 @@ sub find
 	local $_ = shift;
 
 	if ($_ eq '-') {
-		my $location = OpenBSD::PackageLocation->new('-');
+		my $location = OpenBSD::PackageLocation::Local::Pipe->_new('./');
 		my $package = $class->openAbsolute($location, '');
 		return $package;
 	}
