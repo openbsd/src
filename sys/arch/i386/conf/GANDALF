@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.17 1996/11/05 03:57:15 tholo Exp $
+#	$OpenBSD: GANDALF,v 1.18 1996/12/08 20:01:35 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -52,7 +52,7 @@ option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
-option		QUOTA		# UFS quotas
+#option		QUOTA		# UFS quotas
 #option		LFS		# log-structured file system
 option		MFS		# memory file system
 
