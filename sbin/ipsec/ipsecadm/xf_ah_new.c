@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_espdes.c,v 1.4 1997/07/11 23:50:24 provos Exp $ */
+/* $OpenBSD: xf_ah_new.c,v 1.1 1997/08/26 12:04:36 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -6,9 +6,11 @@
  * This code was written for BSD/OS in Athens, Greece, in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
- * by Angelos D. Keromytis, kermit@forthnet.gr.
- *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis and Angelos D. Keromytis.
+ * by Angelos D. Keromytis, kermit@forthnet.gr. Additional code written by
+ * Niels Provos in Germany.
+ * 
+ * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis and
+ * Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
@@ -48,52 +50,47 @@
 #include <paths.h>
 #include "net/encap.h"
 #include "netinet/ip_ipsp.h"
-#include "netinet/ip_esp.h"
- 
-extern char buf[];
+#include "netinet/ip_ah.h"
+
+extern char buf[]; 
 
 int xf_set __P(( struct encap_msghdr *));
 int x2i __P((char *));
 
 int
-xf_espdes(argc, argv)
-int argc;
-char **argv;
+xf_ah_new(src, dst, spi, auth, keyp)
+struct in_addr src, dst;
+u_int32_t spi;
+int auth;
+u_char *keyp;
 {
-	int i;
+	int klen, i;
 
 	struct encap_msghdr *em;
-	struct esp_old_xencap *xd;
+	struct ah_new_xencap *xd;
 
-	if (argc != 6) {
-	  fprintf(stderr, "usage: %s src dst spi iv key\n", argv[0]);
-	  return 0;
-	}
-	
+	klen = strlen(keyp)/2;
+
 	em = (struct encap_msghdr *)&buf[0];
 	
-	em->em_msglen = EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN + 4 + 8;
+	em->em_msglen = EMT_SETSPI_FLEN + AH_NEW_XENCAP_LEN + klen;
 	em->em_version = PFENCAP_VERSION_1;
 	em->em_type = EMT_SETSPI;
-	em->em_spi = htonl(strtoul(argv[3], NULL, 16));
-	em->em_src.s_addr = inet_addr(argv[1]);
-	em->em_dst.s_addr = inet_addr(argv[2]);
-	em->em_alg = XF_OLD_ESP;
-	em->em_sproto = IPPROTO_ESP;
+	em->em_spi = spi;
+	em->em_src = src;
+	em->em_dst = dst;
+	em->em_alg = XF_NEW_AH;
+	em->em_sproto = IPPROTO_AH;
 
-	xd = (struct esp_old_xencap *)(em->em_dat);
+	xd = (struct ah_new_xencap *)(em->em_dat);
 
-	xd->edx_enc_algorithm = ALG_ENC_DES;
-	xd->edx_ivlen = 4;
-	xd->edx_keylen = 8;
+	xd->amx_hash_algorithm = auth;
+	xd->amx_wnd = 32;
+	xd->amx_keylen = klen;
 
-	for (i = 0; i < 4; i++)
-	  xd->edx_data[i] = x2i(&(argv[4][2*i]));
-
-	for (i = 0; i < 8; i++)
-	  xd->edx_data[i+4] = x2i(&(argv[5][2*i]));
+	bzero(xd->amx_key, klen);
+	for (i = 0; i < klen; i++ )
+	  xd->amx_key[i] = x2i(keyp+2*i);
 
 	return xf_set(em);
 }
-
-

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.5 1997/07/01 22:18:01 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.6 1997/08/26 12:04:35 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -9,7 +9,8 @@
  * by Angelos D. Keromytis, kermit@forthnet.gr.  Additional code written by
  * Niels Provos in Germany.
  *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis and Angelos D. Keromytis.
+ * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis
+ * and Niels Provos
  *
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
@@ -51,33 +52,41 @@
 #include "netinet/ip_ipsp.h"
 #include "netinet/ip_esp.h"
 
+#define ESP_OLD   0x01
+#define ESP_NEW   0x02
+#define AH_OLD    0x04
+#define AH_NEW    0x08
+
+#define XF_ENC    0x10
+#define XF_AUTH   0x20
+#define DEL_SPI   0x30
+#define GRP_SPI   0x40
+
+#define CMD_MASK  0xf0
+
+#define isencauth(x) ((x)&~CMD_MASK)
+#define iscmd(x,y)   (((x) & CMD_MASK) == (y))
+
 typedef struct {
 	char *name;
-	int    (*func) (int, char **);
+	int   id, flags;
 }       transform;
 
-int xf_espdes __P((int, char **));
-int xf_esp3des __P((int, char **));
-int xf_esp3desmd5 __P((int, char **));
-int xf_espdesmd5 __P((int, char **));
-int xf_ahmd5 __P((int, char **));
-int xf_ahsha1 __P((int, char **));
-int xf_ahhmacmd5 __P((int, char **));
-int xf_ahhmacsha1 __P((int, char **));
-int xf_grp __P((int, char **));
-int xf_delspi __P((int, char **));
+int xf_esp_new __P((struct in_addr, struct in_addr, u_int32_t, int, int, 
+		    u_char *, u_char *));
+int xf_esp_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
+		    u_char *)); 
+int xf_ah_new __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *));
+int xf_ah_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *));
+
+int xf_delspi __P((struct in_addr, u_int32_t, int, int));
+int xf_grp __P((struct in_addr, u_int32_t, int, struct in_addr, u_int32_t, int));
 
 transform xf[] = {
-	{"des", xf_espdes},
-	{"3des", xf_esp3des},
-	{"3desmd5", xf_esp3desmd5},
-	{"desmd5", xf_espdesmd5},
-	{"md5", xf_ahmd5},
-	{"sha1", xf_ahsha1},
-	{"hmacmd5", xf_ahhmacmd5},
-	{"hmacsha1", xf_ahhmacsha1},
-	{"grp", xf_grp},
-	{"delspi", xf_delspi}
+	{"des", ALG_ENC_DES,   XF_ENC |ESP_OLD|ESP_NEW},
+	{"3des", ALG_ENC_3DES, XF_ENC |ESP_OLD|ESP_NEW},
+	{"md5", ALG_AUTH_MD5,  XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
+	{"sha1", ALG_AUTH_SHA1,XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
 };
 
 char    buf[1024];
@@ -93,10 +102,25 @@ x2i(char *s)
 	return strtoul(ss, NULL, 16);
 }
 
+int
+isvalid(char *option, int type, int mode)
+{
+     int i;
+
+     for (i = sizeof(xf) / sizeof(transform) - 1; i >= 0; i--)
+	  if (!strcmp(option, xf[i].name))
+	       if ((xf[i].flags & CMD_MASK) == type && 
+		   (xf[i].flags & mode))
+		    return xf[i].id;
+	       else
+		    return 0;
+     return 0;
+}
+
 void
 usage()
 {
-	fprintf( stderr, "usage: ipsecadm <operation> <args...>\n\n" );
+	fprintf( stderr, "usage: ipsecadm [new|old] [esp|ah] <options...>\n\n" );
 }
 
 int
@@ -104,21 +128,185 @@ main(argc, argv)
 	int     argc;
 	char  **argv;
 {
-	int     i;
+	int i;
+	int mode = ESP_NEW, new = 1, flag = 0;
+	int auth = 0, enc = 0, ivlen = 0, klen = 0;
+	int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
+	int chain = 0; 
+	u_int32_t spi = 0, spi2 = 0;
+	struct in_addr src, dst, dst2;
+	u_char *ivp = NULL, *keyp = NULL;
+
+	src.s_addr = dst.s_addr = dst2.s_addr = 0;
+
 	if (argc < 2) {
 		usage();
 		exit(1);
 	}
-	/* Find the proper transform */
 
-	for (i = sizeof(xf) / sizeof(transform) - 1; i >= 0; i--)
-		if (!strcmp(xf[i].name, argv[1])) {
-			(*(xf[i].func)) (argc - 1, argv + 1);
-			return 1;
+	for (i=1; i < argc; i++) {
+	     if (!strcmp(argv[i], "new") && !flag) {
+		  flag = 1;
+		  new = 1;
+	     } else if (!strcmp(argv[i], "old") && !flag) {
+		  flag = 1;
+		  new = 0;
+	     } else if (!strcmp(argv[i], "esp") && flag < 2) {
+		  flag = 2;
+		  mode = new ? ESP_NEW : ESP_OLD;
+	     } else if (!strcmp(argv[i], "ah") && flag < 2) {
+		  flag = 2;
+		  mode = new ? AH_NEW : AH_OLD;
+	     } else if (!strcmp(argv[i], "delspi") && flag < 2) {
+		  flag = 2;
+		  mode = DEL_SPI;
+	     } else if (!strcmp(argv[i], "group") && flag < 2) {
+		  flag = 2;
+		  mode = GRP_SPI;
+	     } else if (argv[i][0] == '-') {
+		  break;
+	     } else {
+		  fprintf(stderr, "%s: Unknown command: %s", argv[0], argv[i]);
+		  exit(1);
+	     }
+	}
 
-		}
-	usage();
-        for (i = sizeof(xf) / sizeof(transform) - 1; i >= 0; i--)
-        	(*(xf[i].func)) (1, &(xf[i].name));
-	return 0;	
+	for (; i < argc; i++) {
+	     if (argv[i][0] != '-') {
+		  fprintf(stderr, "%s: Expected option, got %s\n", 
+			  argv[0], argv[i]);
+		  exit(1);
+	     } else if (!strcmp(argv[i]+1, "enc") && enc == 0 && i+1 < argc) {
+		  if ((enc = isvalid(argv[i+1], XF_ENC, mode)) == 0) {
+		       fprintf(stderr, "%s: Invalid encryption algorithm %s\n",
+			       argv[0], argv[i+1]);
+		       exit(1);
+		  }
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "auth") && auth == 0 && i+1 < argc) {
+		  if ((auth = isvalid(argv[i+1], XF_AUTH, mode)) == 0) {
+		       fprintf(stderr, "%s: Invalid auth algorithm %s\n",
+			       argv[0], argv[i+1]);
+		       exit(1);
+		  }
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "key") && keyp == NULL && i+1 < argc) {
+		  keyp = argv[++i];
+		  klen = strlen(keyp);
+	     } else if (!strcmp(argv[i]+1, "iv") && ivp == NULL && i+1 < argc) {
+		  if (mode & (AH_OLD|AH_NEW)) {
+		       fprintf(stderr, "%s: Invalid option %s with auth\n",
+			       argv[0], argv[i]);
+		       exit(1);
+		  }
+		  ivp = argv[++i];
+		  ivlen = strlen(ivp);
+	     } else if (!strcmp(argv[i]+1, "spi") && spi == 0 && i+1 < argc) {
+		  if ((spi = htonl(strtoul(argv[i+1], NULL, 16))) == 0) {
+		       fprintf(stderr, "%s: Invalid spi %s\n", 
+			       argv[0], argv[i+1]);
+		       exit(1);
+		  }
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "spi2") && spi2 == 0 && 
+			iscmd(mode, GRP_SPI) && i+1 < argc) {
+		  if ((spi2 = htonl(strtoul(argv[i+1], NULL, 16))) == 0) {
+		       fprintf(stderr, "%s: Invalid spi2 %s\n", 
+			       argv[0], argv[i+1]);
+		       exit(1);
+		  }
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "src") && i+1 < argc) {
+		  src.s_addr = inet_addr(argv[i+1]);
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "dst") && i+1 < argc) {
+		  dst.s_addr = inet_addr(argv[i+1]);
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "dst2") && 
+			iscmd(mode, GRP_SPI) && i+1 < argc) {
+		  dst2.s_addr = inet_addr(argv[i+1]);
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "proto") && i+1 < argc) {
+		  proto = atoi(argv[i+1]);
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "proto2") && 
+			iscmd(mode, GRP_SPI) && i+1 < argc) {
+		  proto2 = atoi(argv[i+1]);
+		  i++;
+	     } else if (!strcmp(argv[i]+1, "chain") && chain == 0 &&
+			iscmd(mode, DEL_SPI)) {
+		  chain = 1;
+	     } else {
+		  fprintf(stderr, "%s: Unkown option: %s\n", argv[0], argv[i]);
+		  exit(1);
+	     }
+	}
+
+
+	/* Sanity checks */
+	if ((mode & (ESP_NEW|ESP_OLD)) && enc == 0) {
+	     fprintf(stderr, "%s: No encryption algorithm specified\n", 
+		     argv[0]);
+	     exit(1);
+	} else if ((mode & (AH_NEW|AH_OLD)) && auth == 0) {
+	     fprintf(stderr, "%s: No authenication algorithm specified\n", 
+		     argv[0]);
+	     exit(1);
+	} else if (isencauth(mode) && keyp == NULL) {
+	     fprintf(stderr, "%s: No key material specified\n", argv[0]);
+	     exit(1);
+	} else if (spi == 0) {
+	     fprintf(stderr, "%s: No SPI specified\n", argv[0]);
+	     exit(1);
+	} else if (iscmd(mode, GRP_SPI) && spi2 == 0) {
+	     fprintf(stderr, "%s: No SPI2 specified\n", argv[0]);
+	     exit(1);
+	} else if (isencauth(mode) && src.s_addr == 0) {
+	     fprintf(stderr, "%s: No source address specified\n", argv[0]);
+	     exit(1);
+	} else if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI)) 
+		   && proto == 0) {
+	     fprintf(stderr, "%s: No security protocol specified\n", argv[0]);
+	     exit(1);
+	} else if (iscmd(mode, GRP_SPI) && proto2 == 0) {
+	     fprintf(stderr, "%s: No security protocol2 specified\n", argv[0]);
+	     exit(1);
+	} else if (dst.s_addr == 0) {
+	     fprintf(stderr, "%s: No destination address specified\n", 
+		     argv[0]);
+	     exit(1);
+	} else if (iscmd(mode, GRP_SPI) && dst2.s_addr == 0) {
+	     fprintf(stderr, "%s: No destination address2 specified\n", 
+		     argv[0]);
+	     exit(1);
+	}
+
+
+	if (isencauth(mode)) {
+	     switch(mode) {
+	     case ESP_NEW:
+		  xf_esp_new(src, dst, spi, enc, auth, ivp, keyp);
+		  break;
+	     case ESP_OLD:
+		  xf_esp_old(src, dst, spi, enc, ivp, keyp);
+		  break;
+	     case AH_NEW:
+		  xf_ah_new(src, dst, spi, auth, keyp);
+		  break;
+	     case AH_OLD:
+		  xf_ah_old(src, dst, spi, auth, keyp);
+		  break;
+	     }
+	} else {
+	     switch(mode & CMD_MASK) {
+	     case GRP_SPI:
+		  xf_grp(dst, spi, proto, dst2, spi2, proto2);
+		  break;
+	     case DEL_SPI:
+		  xf_delspi(dst, spi, proto, chain);
+		  break;
+	     }
+	}
+
+	return 1;
 }
