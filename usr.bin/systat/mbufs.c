@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.14 2004/07/03 22:25:15 deraadt Exp $	*/
+/*	$OpenBSD: mbufs.c,v 1.15 2004/07/09 16:33:15 deraadt Exp $	*/
 /*	$NetBSD: mbufs.c,v 1.2 1995/01/20 08:52:02 jtc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: mbufs.c,v 1.14 2004/07/03 22:25:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mbufs.c,v 1.15 2004/07/09 16:33:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,13 +44,12 @@ static char rcsid[] = "$OpenBSD: mbufs.c,v 1.14 2004/07/03 22:25:15 deraadt Exp 
 
 #include <stdlib.h>
 #include <string.h>
-#include <nlist.h>
 #include <err.h>
 #include <paths.h>
 #include "systat.h"
 #include "extern.h"
 
-static struct mbstat *mb;
+static struct mbstat mb;
 
 char *mtnames[] = {
 	"free",
@@ -101,13 +100,11 @@ showmbufs(void)
 	int i, j, max, index;
 	char buf[13];
 
-	if (mb == 0)
-		return;
 	for (j = 0; j < wnd->_maxy; j++) {
 		max = 0, index = -1;
 		for (i = 0; i < wnd->_maxy; i++)
-			if (mb->m_mtypes[i] > max) {
-				max = mb->m_mtypes[i];
+			if (mb.m_mtypes[i] > max) {
+				max = mb.m_mtypes[i];
 				index = i;
 			}
 		if (max == 0)
@@ -128,53 +125,26 @@ showmbufs(void)
 				waddch(wnd, 'X');
 			wclrtoeol(wnd);
 		}
-		mb->m_mtypes[index] = 0;
+		mb.m_mtypes[index] = 0;
 	}
 	wmove(wnd, 1+j, 0); wclrtobot(wnd);
 }
 
-static struct nlist namelist[] = {
-#define	X_MBSTAT	0			/* sysctl */
-	{ "_mbstat" },
-	{ "" }
-};
-
-int
-initmbufs(void)
-{
-	int ret;
-
-	if (kd != NULL) {
-		if (namelist[X_MBSTAT].n_type == 0) {
-			if ((ret = kvm_nlist(kd, namelist)) == -1)
-				errx(1, "%s", kvm_geterr(kd));
-			else if (ret)
-				nlisterr(namelist);
-			if (namelist[X_MBSTAT].n_type == 0) {
-				error("namelist on %s failed", _PATH_UNIX);
-				return(0);
-			}
-		}
-	}
-	if (mb == 0)
-		mb = (struct mbstat *)calloc(1, sizeof (*mb));
-	return(1);
-}
 
 void
 fetchmbufs(void)
 {
 	int mib[2];
-	size_t size = sizeof (*mb);
+	size_t size = sizeof (mb);
 
-	if (kd == NULL) {
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_MBSTAT;
-		if (sysctl(mib, 2, mb, &size, NULL, 0) < 0)
-			err(1, "sysctl(KERN_MBSTAT) failed");
-	} else {
-		if (namelist[X_MBSTAT].n_type == 0)
-			return;
-		NREAD(X_MBSTAT, mb, size);
-	}
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MBSTAT;
+	if (sysctl(mib, 2, &mb, &size, NULL, 0) < 0)
+		err(1, "sysctl(KERN_MBSTAT) failed");
+}
+
+int
+initmbufs(void)
+{
+	return (1);
 }
