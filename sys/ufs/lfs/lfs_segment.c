@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.2 1996/02/27 07:13:26 niklas Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.3 1996/06/14 04:39:14 tholo Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -860,6 +860,8 @@ lfs_writeseg(fs, sp)
 			p += bp->b_bcount;
 			if (bp->b_flags & B_LOCKED)
 				--locked_queue_count;
+			if (bp->b_flags & B_DELWRI)
+				TAILQ_REMOVE(&bdirties, bp, b_synclist);
 			bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
 			     B_LOCKED | B_GATHERED);
 			if (bp->b_flags & B_CALL) {
@@ -936,6 +938,8 @@ lfs_writesuper(fs)
 	/* XXX Toggle between first two superblocks; for now just write first */
 	bp->b_dev = i_dev;
 	bp->b_flags |= B_BUSY | B_CALL | B_ASYNC;
+	if (bp->b_flags & B_DELWRI)
+		TAILQ_REMOVE(&bdirties, bp, b_synclist);
 	bp->b_flags &= ~(B_DONE | B_ERROR | B_READ | B_DELWRI);
 	bp->b_iodone = lfs_supercallback;
 	vop_strategy_a.a_desc = VDESC(vop_strategy);

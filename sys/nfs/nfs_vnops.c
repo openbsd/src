@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.8 1996/05/22 11:47:16 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.9 1996/06/14 04:41:09 tholo Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62 1996/05/11 18:26:49 mycroft Exp $	*/
 
 /*
@@ -2806,6 +2806,8 @@ again:
 			else {
 			    vp->v_numoutput++;
 			    bp->b_flags |= B_ASYNC;
+			    if (bp->b_flags & B_DELWRI)
+				TAILQ_REMOVE(&bdirties, bp, b_synclist);
 			    bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI);
 			    bp->b_dirtyoff = bp->b_dirtyend = 0;
 			    reassignbuf(bp, vp);
@@ -3084,6 +3086,8 @@ nfs_writebp(bp, force)
 	    bp, bp->b_vp, bp->b_validoff, bp->b_validend, bp->b_dirtyoff,
 	    bp->b_dirtyend);
 #endif
+	if (bp->b_flags & B_DELWRI)
+	    TAILQ_REMOVE(&bdirties, bp, b_synclist);
 	bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI);
 
 	if (oldflags & B_ASYNC) {
