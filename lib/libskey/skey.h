@@ -11,12 +11,11 @@
  *
  * Main client header
  *
- * $Id: skey.h,v 1.8 1997/07/23 00:42:26 millert Exp $
+ * $Id: skey.h,v 1.9 1997/07/23 06:53:12 millert Exp $
  */
 
 /* Server-side data structure for reading keys file during login */
-struct skey
-{
+struct skey {
 	FILE *keyfile;
 	char buf[256];
 	char *logname;
@@ -27,8 +26,7 @@ struct skey
 };
 
 /* Client-side structure for scanning data stream for challenge */
-struct mc
-{
+struct mc {
 	char buf[256];
 	int skip;
 	int cnt;
@@ -89,5 +87,6 @@ int getskeyprompt __P((struct skey *mp, char *name, char *prompt));
 int atob8 __P((char *out, char *in));
 int btoa8 __P((char *out, char *in));
 int htoi __P((int c));
-const char * skey_get_algorithm __P((void));
-char * skey_set_algorithm __P((char *new));
+const char *skey_get_algorithm __P((void));
+char *skey_set_algorithm __P((char *new));
+int skeygetnext __P((struct skey *mp));

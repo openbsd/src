@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.13 1997/07/23 03:52:12 millert Exp $
+ * $Id: skeylogin.c,v 1.14 1997/07/23 06:53:12 millert Exp $
  */
 
 #include <sys/param.h>
@@ -18,23 +18,20 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-
-#include <err.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <time.h>
+
+#include <ctype.h>
+#include <err.h>
 #include <errno.h>
+#include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "skey.h"
-
-#ifndef _PATH_KEYFILE
-#define	_PATH_KEYFILE	"/etc/skeykeys"
-#endif
 
 char *skipspace __P((char *));
 int skeylookup __P((struct skey *, char *));
@@ -101,7 +98,7 @@ skeychallenge(mp, name, ss)
 		return -1;
 	}
 	return -1;	/* Can't happen */
-}	
+}
 
 /* Find an entry in the One-time Password database.
  * Return codes:
@@ -116,17 +113,17 @@ skeylookup(mp, name)
 {
 	int found = 0;
 	long recstart = 0;
-	char *cp, *ht;
+	char *cp, *ht = NULL;
 	struct stat statbuf;
 
-	/* See if _PATH_KEYFILE exists, and create it if not */
-	if (stat(_PATH_KEYFILE, &statbuf) == -1 && errno == ENOENT) {
-		mp->keyfile = fopen(_PATH_KEYFILE, "w+");
+	/* See if _PATH_SKEYKEYS exists, and create it if not */
+	if (stat(_PATH_SKEYKEYS, &statbuf) == -1 && errno == ENOENT) {
+		mp->keyfile = fopen(_PATH_SKEYKEYS, "w+");
 		if (mp->keyfile)
 			fchmod(fileno(mp->keyfile), 0600);
 	} else {
 		/* Otherwise open normally for update */
-		mp->keyfile = fopen(_PATH_KEYFILE, "r+");
+		mp->keyfile = fopen(_PATH_SKEYKEYS, "r+");
 		if (mp->keyfile && (statbuf.st_mode & 0007777) != 0600)
 			fchmod(fileno(mp->keyfile), 0600);
 	}
@@ -167,7 +164,79 @@ skeylookup(mp, name)
 	if (found) {
 		(void)fseek(mp->keyfile, recstart, SEEK_SET);
 		/* Set hash type */
-		if (skey_set_algorithm(ht) == NULL) {
+		if (ht && skey_set_algorithm(ht) == NULL) {
+			warnx("Unknown hash algorithm %s, using %s", ht,
+			      skey_get_algorithm());
+		}
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+/* Get the next entry in the One-time Password database.
+ * Return codes:
+ * -1: error in opening database
+ *  0: next entry found, file R/W pointer positioned at beginning of record
+ *  1: no more entries, file R/W pointer positioned at EOF
+ */
+int
+skeygetnext(mp)
+	struct skey *mp;
+{
+	long recstart = 0;
+	char *cp, *ht = NULL;
+	struct stat statbuf;
+
+	/* See if _PATH_SKEYKEYS exists, and create it if not */
+	if (mp->keyfile == NULL) {
+		if (stat(_PATH_SKEYKEYS, &statbuf) == -1 && errno == ENOENT) {
+			mp->keyfile = fopen(_PATH_SKEYKEYS, "w+");
+			if (mp->keyfile)
+				fchmod(fileno(mp->keyfile), 0600);
+		} else {
+			/* Otherwise open normally for update */
+			mp->keyfile = fopen(_PATH_SKEYKEYS, "r+");
+			if (mp->keyfile && (statbuf.st_mode & 0007777) != 0600)
+				fchmod(fileno(mp->keyfile), 0600);
+		}
+		if (mp->keyfile == NULL)
+			return -1;
+	}
+
+	/* Look up next user in database */
+	while (!feof(mp->keyfile)) {
+		recstart = ftell(mp->keyfile);
+		mp->recstart = recstart;
+		if (fgets(mp->buf, sizeof(mp->buf), mp->keyfile) != mp->buf)
+			break;
+		rip(mp->buf);
+		if (mp->buf[0] == '#')
+			continue;	/* Comment */
+		if ((mp->logname = strtok(mp->buf, " \t")) == NULL)
+			continue;
+		if ((cp = strtok(NULL, " \t")) == NULL)
+			continue;
+		/* Save hash type if specified, else use md4 */
+		if (isalpha(*cp)) {
+			ht = cp;
+			if ((cp = strtok(NULL, " \t")) == NULL)
+				continue;
+		} else {
+			ht = "md4";
+		}
+		mp->n = atoi(cp);
+		if ((mp->seed = strtok(NULL, " \t")) == NULL)
+			continue;
+		if ((mp->val = strtok(NULL, " \t")) == NULL)
+			continue;
+		/* Got a real entry */
+		break;
+	}
+	if (!feof(mp->keyfile)) {
+		(void)fseek(mp->keyfile, recstart, SEEK_SET);
+		/* Set hash type */
+		if (ht && skey_set_algorithm(ht) == NULL) {
 			warnx("Unknown hash algorithm %s, using %s", ht,
 			      skey_get_algorithm());
 		}

@@ -8,13 +8,14 @@
  *
  * Dictionary lookup and extraction.
  *
- * $Id: put.c,v 1.5 1996/11/03 18:57:28 millert Exp $
+ * $Id: put.c,v 1.6 1997/07/23 06:53:11 millert Exp $
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
+
 #include "skey.h"
 
 static unsigned long extract __P ((char *s, int start, int length));
