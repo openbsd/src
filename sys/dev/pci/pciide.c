@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.110 2003/01/17 00:54:23 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.111 2003/01/30 07:50:17 henric Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2808,6 +2808,16 @@ cmd0643_9_setup_channel(chp)
 		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
+#ifdef __sparc64__
+	/*
+	 * The Ultra 5 has a tendency to hang during reboot.  This is due
+	 * to the PCI0646U asserting a PCI interrtupt line when the chip
+	 * registers claim that it is not.  Performing a reset at this
+	 * point appears to eliminate the symptoms.  It is likely the
+	 * real cause is still lurking somewhere in the code.
+	 */
+	wdcreset(chp, SILENT);
+#endif /* __sparc64__ */
 }
 
 void
