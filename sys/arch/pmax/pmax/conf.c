@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1996/07/15 14:57:06 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 1996/08/29 09:26:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -145,8 +145,8 @@ cdev_decl(cfb);
 cdev_decl(xcfb);
 #include "mfb.h"
 cdev_decl(mfb);
-#include "rnd.h"
-cdev_decl(rnd);
+#include "random.h"
+cdev_decl(random);
 
 
 /* a framebuffer with an attached mouse: */
@@ -260,7 +260,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
 	cdev_gen_ipf(NIPF,ipl),	/* 88: IP filter log */
-	cdev_rnd_init(NRND,rnd);	/* 89: random data source */
+	cdev_random_init(NRANDOM,random);	/* 89: random data source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

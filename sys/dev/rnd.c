@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.6 1996/08/11 07:31:31 dm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.7 1996/08/29 09:26:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -199,8 +199,8 @@
  * 
  */
 
-#include "rnd.h"
-#if NRND > 0
+#include "random.h"
+#if NRANDOM > 0
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ struct arc4_stream {
 #define ENT_TTY		0x300
 
 /* device functions prototypes: XXX move em to dev_conf.h */
-cdev_decl(rnd);
+cdev_decl(random);
 
 static struct random_bucket random_state;
 struct arc4_stream arc4random_state;
@@ -332,14 +332,14 @@ arc4random (void)
 }
 	
 void
-rndattach(num)
+randomattach(num)
 	int	num;
 {
 	int i;
 	struct timeval tv;
 
 	if (num > 1)
-		panic("no more than one rnd device");
+		panic("no more than one random device");
 
 	random_state.add_ptr = 0;
 	random_state.entropy_count = 0;
@@ -359,7 +359,7 @@ rndattach(num)
 }
 
 int
-rndopen(dev, flag, mode, p)
+randomopen(dev, flag, mode, p)
 	dev_t	dev;
 	int	flag;
 	int	mode;
@@ -369,7 +369,7 @@ rndopen(dev, flag, mode, p)
 }
 
 int
-rndclose(dev, flag, mode, p)
+randomclose(dev, flag, mode, p)
 	dev_t	dev;
 	int	flag;
 	int	mode;
@@ -620,7 +620,7 @@ get_random_bytes(buf, nbytes)
 }
 
 int
-rndread(dev, uio, ioflag)
+randomread(dev, uio, ioflag)
 	dev_t	dev;
 	struct uio *uio;
 	int	ioflag;
@@ -694,7 +694,7 @@ rndread(dev, uio, ioflag)
 }
 
 int
-rndselect(dev, rw, p)
+randomselect(dev, rw, p)
 	dev_t	dev;
 	int	rw;
 	struct proc *p;
@@ -722,7 +722,7 @@ arc4_stir (struct arc4_stream *as)
 }
 
 int
-rndwrite(dev, uio, flags)
+randomwrite(dev, uio, flags)
 	dev_t	dev;
 	struct uio *uio;
 	int	flags;
@@ -757,7 +757,7 @@ rndwrite(dev, uio, flags)
 }
 
 int
-rndioctl(dev, cmd, data, flag, p)
+randomioctl(dev, cmd, data, flag, p)
 	dev_t	dev;
 	u_long	cmd;
 	caddr_t	data;

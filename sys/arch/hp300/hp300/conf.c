@@ -151,6 +151,8 @@ cdev_decl(tun);
 #define	NLKM	0
 #endif
 cdev_decl(lkm);
+#include "random.h"
+cdev_decl(random);
 
 struct cdevsw	cdevsw[] =
 {
@@ -179,12 +181,13 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
-	cdev_lkm_dummy(),		/* 25 */
+	cdev_random_init(NRANDOM,random), /* 25: random generator */
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_lkm_dummy(),		/* 27 */
 	cdev_lkm_dummy(),		/* 28 */
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
+	cdev_lkm_dummy(),		/* 31 */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

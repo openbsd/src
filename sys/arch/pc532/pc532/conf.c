@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1996/07/15 14:57:05 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 1996/08/29 09:26:22 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -107,8 +107,8 @@ cdev_decl(bpf);
 cdev_decl(tun);
 #include "lpt.h"
 cdev_decl(lpt);
-#include "rnd.h"
-cdev_decl(rnd);
+#include "random.h"
+cdev_decl(random);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -140,7 +140,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT, lpt),	/* 17: Centronics */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_gen_ipf(NIPF,ipl),         /* 19: IP filter log */
-	cdev_rnd_init(NRND,rnd),	/* 20: random data source */
+	cdev_random_init(NRANDOM,random), /* 20: random data source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

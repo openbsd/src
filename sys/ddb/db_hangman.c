@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.6 1996/06/17 12:07:00 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.7 1996/08/29 09:26:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -37,8 +37,8 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <dev/cons.h>
-#include "rnd.h"
-#if NRND
+#include "random.h"
+#if NRANDOM > 0
 #include <dev/rndvar.h>
 #endif
 
@@ -54,7 +54,7 @@ static __inline size_t
 db_random( mod )
 	register size_t	mod;
 {
-#if NRND
+#if NRANDOM > 0
 	size_t	ret;
 	get_random_bytes(&ret, sizeof(ret) );
 	return ret % mod;

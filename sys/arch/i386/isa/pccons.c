@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.24 1996/08/28 11:21:06 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.25 1996/08/29 09:26:08 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -71,8 +71,8 @@
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/kbdreg.h>
 
-#include "rnd.h"
-#if NRND > 0
+#include "random.h"
+#if NRANDOM > 0
 #include <dev/rndvar.h>
 #endif
 

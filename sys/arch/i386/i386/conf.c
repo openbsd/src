@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 1996/08/08 18:47:10 dm Exp $	*/
+/*	$OpenBSD: conf.c,v 1.22 1996/08/29 09:26:04 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -185,8 +185,8 @@ cdev_decl(ccd);
 cdev_decl(joy);
 #include "apm.h"
 cdev_decl(apm);
-#include "rnd.h"
-cdev_decl(rnd);
+#include "random.h"
+cdev_decl(random);
 #include "pctr.h"
 cdev_decl(pctr);
 
@@ -257,7 +257,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 43 */
 #endif
 	cdev_gen_ipf(NIPF,ipl),         /* 44 ip filtering */
-	cdev_rnd_init(NRND,rnd),	/* 45 random data source */
+	cdev_random_init(NRANDOM,random), /* 45 random data source */
 	cdev_uk_init(NPCTR,pctr),	/* 46: pentium performance counters */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);

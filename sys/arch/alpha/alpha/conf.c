@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 1996/07/29 22:57:17 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 1996/08/29 09:25:48 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.11 1996/04/12 02:07:23 cgd Exp $	*/
 
 /*-
@@ -141,8 +141,8 @@ cdev_decl(kbd);
 cdev_decl(ms);
 #include "lpt.h"
 cdev_decl(lpt);
-#include "rnd.h"
-cdev_decl(rnd);
+#include "random.h"
+cdev_decl(random);
 #include "uk.h"
 cdev_decl(uk);
 
@@ -184,7 +184,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSCONS,ms),	/* 30: /dev/mouse XXX */
 	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
 	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
-	cdev_rnd_init(NRND,rnd),	/* 33: random data source */
+	cdev_random_init(NRANDOM,random), /* 33: random data source */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
