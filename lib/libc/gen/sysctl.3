@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.48 2000/06/26 19:26:48 provos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.49 2000/07/09 13:34:10 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -839,6 +839,8 @@ The currently defined protocols and names are:
 .It icmp6	nd6_mmaxtries	integer	yes
 .It icmp6	nd6_useloopback	integer	yes
 .It icmp6	nodeinfo	integer	yes
+.It icmp6	errppslimit	integer	yes
+.It icmp6	nd6_maxnudhint	integer	yes
 .El
 .Pp
 The variables are as follows:
@@ -949,6 +951,20 @@ local traffic.
 .It Li icmp6.nodeinfo
 The variable enables, or disables, kernel support for
 ICMPv6 node information query/reply.
+.It Li icmp6.errppslimit
+The variable specifies the maximum number of outgoing ICMPv6 error messages,
+per second.
+ICMPv6 error messages that exceeded the value is subject to rate limitation
+and will not go out from the node.
+.It Li icmp6.nd6_maxnudhint
+IPv6 neighbor discovery permits upper layer protocols to supply reachability
+hints, to avoid unnecessary neighbor discovery exchanges.
+The variable defines the number of consecutive hints the neighbor discovery
+layer will take.
+For example, by setting the variable to 3, neighbor discovery layer
+will take 3 consecutive hints in maximum.
+After receiving 3 hints, neighbor discovery layer will perform
+normal neighbor discovery process.
 .El
 .Pp
 We reuse
