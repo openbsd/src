@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.112 2003/07/18 18:35:11 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.113 2003/07/23 12:46:29 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -121,7 +121,7 @@ Recurse into dependencies.
 .It Va flavors
 Clean all work directories.
 .It Va dist
-Clean distfiles.
+Clean distribution files.
 .It Va install
 Uninstall package.
 .It Va package
@@ -155,8 +155,8 @@ and
 .Ev PATCH_CASES
 for details.
 .It Ar extract
-Extract the distfiles under
-.Pa ${WRKDIST}
+Extract the distribution files under
+.Pa ${WRKDIR}
 (but see
 .Ev EXTRACT_ONLY ) .
 Refer to
@@ -172,7 +172,7 @@ Do a fake port installation, that is, simulate the port installation under
 ${WRKINST}.
 Described in a separate section below.
 .It Ar fetch
-Fetch the distfiles and patchfiles, using ${FETCH_CMD}.
+Fetch the distribution files and patchfiles, using ${FETCH_CMD}.
 Each file of the
 .Ev DISTFILES
 and
@@ -666,13 +666,13 @@ directories and needs to be configured with
 .Sq gnu dest ,
 so that those few directories do not get in the way.
 .It Ev DISTDIR
-Directory where all ports distfiles and patchfiles are stashed.
+Directory where all ports distribution files and patchfiles are stashed.
 Defaults to
 .Pa ${PORTSDIR}/distfiles .
-Override if distfiles are stored elsewhere.
+Override if distribution files are stored elsewhere.
 Always use
 .Ev FULLDISTDIR
-to refer to ports' distfiles location, as it takes an eventual
+to refer to ports' distribution files location, as it takes an eventual
 .Ev DIST_SUBDIR
 into account.
 .It Ev DISTFILES
@@ -709,8 +709,8 @@ Distinct from
 to avoid confusing
 .Ar update-patches .
 .It Ev DIST_SUBDIR
-Optional subdirectory of ${DISTDIR} where the current port's distfiles
-and patchfiles will be located.
+Optional subdirectory of ${DISTDIR} where the current port's distribution 
+files and patchfiles will be located.
 See target
 .Ar fetch .
 .It Ev ECHO_MSG
@@ -782,7 +782,7 @@ By default, ${DESTDIRNAME}=${WRKINST}.
 Target build by ${MAKE_PROGRAM} on fake invocation.
 Defaults to ${INSTALL_TARGET}.
 .It Ev FETCH_CMD
-Command used to fetch distfiles for this port.
+Command used to fetch distribution files for this port.
 Defaults to
 .Xr ftp 1 .
 User settings.
@@ -933,7 +933,8 @@ The make program that is used for building the port.
 Set to ${MAKE} or ${GMAKE} depending on USE_GMAKE.
 Read-only.
 .It Ev MASTER_SITES
-List of primary location from which distfiles and patchfiles are retrieved.
+List of primary location from which distribution files and patchfiles are 
+retrieved.
 See the
 .Ar fetch
 target for more details.
@@ -941,7 +942,8 @@ See
 .Xr ports 7
 for user configuration.
 .It Ev MASTER_SITES0 , ... , MASTER_SITES9
-Supplementary locations from which distfiles and patchfiles are retrieved.
+Supplementary locations from which distribution files and patchfiles are 
+retrieved.
 .It Ev MESSAGE
 File recorded in the package and displayed during installation.
 Defaults to ${PKGDIR}/MESSAGE if this file exists.
@@ -1003,7 +1005,8 @@ User settings.
 If set to
 .Sq Yes ,
 avoid ignoring a port for the usual reasons.
-Use, for instance, for fetching all distfiles, or for fixing a broken port.
+Use, for instance, for fetching all distribution files, or for fixing a 
+broken port.
 See also
 .Ev IGNORE .
 .It Ev NO_REGRESS
@@ -1288,8 +1291,8 @@ Supplementary files that need to be retrieved under some specific
 circumstances.
 For instance, a port might need architecture-specific files.
 .Ev SUPDISTFILES
-should hold a list of all distfiles and patchfiles that are not always
-needed, so that a mirror will be able to grab all files, or that
+should hold a list of all distribution files and patchfiles that are not 
+always needed, so that a mirror will be able to grab all files, or that
 .Ar makesum
 will work.
 Having an overlap between
@@ -1349,7 +1352,7 @@ Ports that need to know the WRKDIR of another port must use
 cd that_port_dir && make show=WRKDIR for this.
 Note that WRKDIR may be a symbolic link.
 .It Ev WRKDIST
-Subdirectory of ${WRKDIR} where the source is normally unpacked.
+Subdirectory of ${WRKDIR} in which the distribution files normally unpacks.
 Base for all patches (default: ${WRKDIR}/${DISTNAME}).
 Note that WRKDIST may be a symbolic link, if set to ${WRKDIR}.
 .It Ev WRKSRC
@@ -1665,8 +1668,8 @@ MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .It Ev PERMIT_{DISTFILES,PACKAGE}_{CDROM,FTP}
 Set to
 .Sq Yes
-if package or distfiles can be allowed on ftp sites or cdrom without legal
-issues.
+if package or distribution files can be allowed on ftp sites or cdrom without 
+legal issues.
 Set to reason not to otherwise.
 PERMIT_* lines in the Makefile should be preceded with a comment explaining
 details about licensing and patents issues the port may have.
