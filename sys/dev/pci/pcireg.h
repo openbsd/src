@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.17 2001/05/08 19:47:43 mickey Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.18 2002/04/06 04:29:43 jason Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -426,7 +426,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_CAPLIST_NEXT(cr) (((cr) >> 8) & 0xff)
 #define PCI_CAPLIST_CAP(cr) ((cr) & 0xff)
 
-#define PCI_CAP_REESSERVED	0x00
+#define PCI_CAP_RESERVED	0x00
 #define PCI_CAP_PWRMGMT		0x01
 #define PCI_CAP_AGP		0x02
 #define PCI_CAP_VPD		0x03
