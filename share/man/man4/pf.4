@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.47 2004/03/21 19:47:59 miod Exp $
+.\"	$OpenBSD: pf.4,v 1.48 2004/03/27 17:15:30 henning Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -257,11 +257,13 @@ struct pf_status {
 	u_int64_t	scounters[SCNT_MAX];
 	u_int64_t	pcounters[2][2][3];
 	u_int64_t	bcounters[2][2];
+	u_int64_t	stateid;
 	u_int32_t	running;
 	u_int32_t	states;
 	u_int32_t	src_nodes;
 	u_int32_t	since;
 	u_int32_t	debug;
+	u_int32_t	hostid;
 	char		ifname[IFNAMSIZ];
 };
 .Ed
