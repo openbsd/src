@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.1 1997/04/01 04:52:45 mickey Exp $	*/
+/*	$OpenBSD: debug.c,v 1.2 1997/04/05 18:56:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,10 +47,12 @@ debug_init()
 }
 
 void
-dump_regs()
+dump_regs(trapno)
+	int trapno;
 {
 	int i;
 
+	printf("trap: %u\n", trapno);
 	for (i = 0; i < nreg; putchar((++i % 4)?' ':'\n'))
 		printf ("%s=0x%x", reg_names[i], *reg_values[i]);
 	if (i % 4)

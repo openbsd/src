@@ -1,4 +1,4 @@
-/*	$OpenBSD: real_prot.S,v 1.3 1997/03/31 23:06:31 mickey Exp $	*/
+/*	$OpenBSD: real_prot.S,v 1.4 1997/04/05 18:56:28 mickey Exp $	*/
 
 /*
  * Mach Operating System
@@ -63,10 +63,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 	.globl	_codeseg
 	.globl	_Gdtr
-#ifndef NO_IDTR
 	.globl	_Idtr_prot
 	.globl	_Idtr_real
-#endif
 
 	.text
 
@@ -109,10 +107,8 @@ ENTRY(real_to_prot)
 	movl	%ax, %fs
 	movl	%ax, %gs
 
-#ifndef NO_IDTR
 	/* load idtr so we can debug */
 	lidt	_Idtr_prot
-#endif
 	ret
 
 /*
@@ -149,12 +145,11 @@ ENTRY(prot_to_real)
 	movl	%ax, %es
 	movl	%ax, %fs
 	movl	%ax, %gs
-#ifndef	NO_IDTR
 	/* load idtr so we can debug */
 	addr32
 	data32
 	lidt	_Idtr_real
-#endif
+
 	sti
 	data32
 	ret

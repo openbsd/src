@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/04/01 04:52:44 mickey Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/04/05 18:56:22 mickey Exp $
 
 
 LIB=	sa
@@ -39,7 +39,8 @@ SRCS+=	debug.c debug_aout.c debug_i386.S
 
 # i386 stuff
 SRCS+=	asm.S bioscom.S biosdev.c biosdisk.S bioskbd.S biostime.S biosmem.S \
-	dev_i386.c gateA20.c memprobe.c real_prot.S unixsys.S exec_i386.S
+	dev_i386.c gateA20.c memprobe.c real_prot.S unixsys.S exec_i386.S \
+	gidt.S
 
 NOPROFILE=noprofile
 NOPIC=nopic

@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.3 1997/04/04 04:47:46 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.4 1997/04/05 18:56:19 mickey Exp $	*/
 /*	$NetBSD: srt0.c,v 1.3 1994/10/27 04:21:59 cgd Exp $	*/
 
 /*-
@@ -49,9 +49,7 @@
 	.globl	_boot
 	.globl	__rtt
 	.globl	_Gdtr
-#ifndef NO_IDTR
 	.globl	_Idtr_prot
-#endif
 	.globl	_codeseg
 
 	.text
@@ -71,10 +69,8 @@ start_boot:
 	movl	%ax, %es
 	movl	%ax, %fs
 	movl	%ax, %gs
-#ifndef NO_IDTR
-	/* load idtr for debugger */
+	/* load idtr for interrupts */
 	lidt	_Idtr_prot
-#endif
 
 #ifdef DEBUG
 	movl	$0xb80a4, %ebx
@@ -111,35 +107,3 @@ __rtt:
 	movl	$0, %esp	# segment violation
 	ret
 
-	.data
-
-	.align	3
-gdt:
-null:		/* 0x00 : null */
-	.space	8
-		/* 0x08 : flat code */
-	.word	0xFFFF			# lolimit
-	.word	0			# lobase
-	.byte	0			# midbase
-	.byte	SDT_MEMERAC | 0 | 0x80	# RWXAC, dpl = 0, present
-	.byte	0xf | 0 | 0x40 | 0x80	# hilimit, xx, 32bit, 4k granularity
-	.byte	0			# hibase
-		/* 0x10 : flat data */
-	.word	0xFFFF			# lolimit
-	.word	0			# lobase
-	.byte	0			# midbase
-	.byte	SDT_MEMRWA | 0 | 0x80	# RWA, dpl = 0, present
-	.byte	0xf | 0 | 0x40 | 0x80	# hilimit, xx, 32bit, 4k granularity
-	.byte	0			# hibase
-		/* 0x18 : 16 bit code */
-	.word	0xFFFF			# lolimit
-	.word	0			# lobase
-	.byte	0			# midbase
-	.byte	SDT_MEMERAC | 0 | 0x80	# RWXAC, dpl = 0, present
-	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
-	.byte	0			# hibase
-_Gdtr:	.word	. - gdt - 1
-	.long	gdt
-	.word	0
-
-_codeseg:	.long	0
