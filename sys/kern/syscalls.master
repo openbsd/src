@@ -1,9 +1,9 @@
-	$OpenBSD: syscalls.master,v 1.12 1996/10/29 03:46:28 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.13 1997/01/26 05:18:27 downsj Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
-; NetBSD system call name/number "master" file.
+; OpenBSD system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
 ;
 ; Fields: number type [type-dependent ...]
@@ -458,3 +458,4 @@
 252	STD		{ int sys_poll(struct pollfd *fds, \
 			    unsigned long nfds, int timeout); }
 253	STD		{ int sys_issetugid(void); }
+254	STD		{ int sys_lchown(char *path, int uid, int gid); }

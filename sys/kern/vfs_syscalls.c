@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.19 1997/01/25 00:27:31 dm Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.20 1997/01/26 05:18:29 downsj Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1533,6 +1533,58 @@ sys_chown(p, v, retval)
 	u_short mode;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	vp = nd.ni_vp;
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	VOP_LOCK(vp);
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		error = EROFS;
+	else {
+		if (suser(p->p_ucred, &p->p_acflag) ||
+		    suid_clear) {
+			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
+			if (error)
+				goto out;
+			mode = vattr.va_mode & ~(VSUID | VSGID);
+			if (mode == vattr.va_mode)
+				mode = VNOVAL;
+		}
+		else
+			mode = VNOVAL;
+		VATTR_NULL(&vattr);
+		vattr.va_uid = SCARG(uap, uid);
+		vattr.va_gid = SCARG(uap, gid);
+		vattr.va_mode = mode;
+		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+	}
+out:
+	vput(vp);
+	return (error);
+}
+
+/*
+ * Set ownership given a path name, without following links.
+ */
+/* ARGSUSED */
+int
+sys_lchown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_lchown_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) uid;
+		syscallarg(int) gid;
+	} */ *uap = v;
+	register struct vnode *vp;
+	struct vattr vattr;
+	int error;
+	struct nameidata nd;
+	u_short mode;
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
