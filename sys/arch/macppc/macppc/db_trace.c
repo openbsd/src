@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.1 2001/09/01 15:44:20 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.2 2001/09/05 16:15:02 drahn Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 
 #include <machine/db_machdep.h>
 #include <machine/signal.h>
+#include <machine/pcb.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
@@ -93,28 +94,43 @@ db_save_regs(struct trapframe *frame)
 	bcopy(frame, &(ddb_regs.tf), sizeof (struct trapframe));
 }
 
+int db_read32(u_int32_t paddr, u_int32_t *value);
+
+int
+db_read32(u_int32_t paddr, u_int32_t *value)
+{
+	faultbuf env;
+	if (setfault(env)) {
+		curpcb->pcb_onfault = 0;
+		return EFAULT;
+	}
+	*value = *(u_int32_t *)paddr;
+	return 0;
+}
 
 db_expr_t
 db_dumpframe(u_int32_t pframe)
 {
 	u_int32_t nextframe;
 	u_int32_t lr;
-	u_int32_t *access;
 	char *name;
 	db_expr_t offset;
 
-	access = (u_int32_t *)(pframe);
-	nextframe = *access;
+	if (db_read32(pframe, &nextframe) == EFAULT) {
+		return 0;
+	}
 
-	access = (u_int32_t *)(pframe+4);
-	lr = *access;
+	if (db_read32(pframe+4, &lr) == EFAULT) {
+		return 0;
+	}
 
 	db_find_sym_and_offset(lr-4, &name, &offset);
 	if (!name) {
 		name = "?";
 		offset = 65536;
 	}
-	db_printf("%s+0x%x fp %x nfp %x\n", name, offset, pframe, nextframe);
+	db_printf("%08x: %s+0x%x fp %x nfp %x\n",
+		lr-4, name, offset, pframe, nextframe);
 
 	return nextframe;
 }
@@ -129,10 +145,13 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	char		*modif;
 {
 
+	if (count == 0)
+		count = INT_MAX;
 	if (have_addr == 0){
 		addr = ddb_regs.tf.fixreg[1];
 	}
-	while (addr != 0) {
+	while (addr != 0 && count > 0) {
 		addr = db_dumpframe(addr);
+		count --;
 	}
 }
