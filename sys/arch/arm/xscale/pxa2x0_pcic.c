@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.3 2005/01/04 23:48:31 drahn Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.4 2005/01/09 05:22:28 drahn Exp $ */
 /*
  * Copyright (c) Dale Rahn <drahn@openbsd.org>
  *
@@ -250,12 +250,9 @@ pxapcic_intr_establish(pch, pf, ipl, fct, arg, name)
 	char *name;
 {
         struct pxapcic_socket *so = pch;
-        struct pxapcic_softc *sc = so->sc;
-
         /* XXX need to check if something should be done here */
 
-	return pxa2x0_gpio_intr_establish(sc->sc_gpio, IST_EDGE_FALLING,
-	/* IST_EDGE_RISING,*/
+	return pxa2x0_gpio_intr_establish(so->irqpin, IST_EDGE_FALLING,
 	    ipl, fct, arg, name);
 }
 
@@ -326,6 +323,8 @@ pxapcic_event_thread(void *arg)
 
 	while (sock->sc->sc_shutdown == 0) {
 		/* sleep .25s to avoid chatterling interrupts */
+
+		(void) tsleep(sock, PWAIT, "pxapcicev", 0);
 
 		(void) tsleep((caddr_t)sock, PWAIT,
 		    "pxapcicss", hz/4);
@@ -430,7 +429,9 @@ pxapcic_create_event_thread(void *arg)
 		printf("%s: unable to create event thread for %s\n",
 		     sc->sc_dev.dv_xname,  sock->socket ? "1" : "0");
 	}
+	/*
 	config_pending_decr();
+	*/
 }
 
 int
@@ -525,47 +526,58 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 	pxa2x0_gpio_set_function(14, GPIO_IN);
 	pxa2x0_gpio_set_function(17, GPIO_IN);
 
-	sc->sc_irq  = pxa2x0_gpio_intr_establish(14 /*???*/, IST_EDGE_FALLING,
-	    IPL_BIO /* XXX */, pxapcic_intr_detect, so, sc->sc_dev.dv_xname);
+	sc->sc_socket[0].irq = pxa2x0_gpio_intr_establish(14 /*???*/,
+	    IST_EDGE_FALLING, IPL_BIO /* XXX */, pxapcic_intr_detect,
+	    so, sc->sc_dev.dv_xname);
 	sc->sc_socket[0].irqpin = 17;	/* GPIO pin for interrupt */
 
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
 
+	/*
 	config_pending_incr();
+	*/
 	kthread_create_deferred(pxapcic_create_event_thread, so);
 #else
+#define C3000_CF0_IRQ 105
+#define C3000_CF1_IRQ 106
+#define C3000_CF0_CD 94
+#define C3000_CF1_CD 93
 
 	/* XXX c3000 */
 	so = &sc->sc_socket[0];
-	pxa2x0_gpio_set_function(105, GPIO_IN); /* GPIO_CF_IRQ  */
-	pxa2x0_gpio_set_function(94, GPIO_IN); /* GPIO_CF_CD */
+	pxa2x0_gpio_set_function(C3000_CF0_IRQ, GPIO_IN); /* GPIO_CF_IRQ  */
+	pxa2x0_gpio_set_function(C3000_CF0_CD, GPIO_IN); /* GPIO_CF_CD */
 
-	sc->sc_socket[0].irq = pxa2x0_gpio_intr_establish(94 /*???*/,
+	sc->sc_socket[0].irq = pxa2x0_gpio_intr_establish(C3000_CF0_CD,
 	    IST_EDGE_FALLING, IPL_BIO /* XXX */, pxapcic_intr_detect,
 	    so, sc->sc_dev.dv_xname);
-	sc->sc_socket[0].irqpin = 105;	/* GPIO pin for interrupt */
+	sc->sc_socket[0].irqpin = C3000_CF0_IRQ;	/* GPIO pin for interrupt */
 
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
 
+	/*
 	config_pending_incr();
+	*/
 	kthread_create_deferred(pxapcic_create_event_thread, so);
 
 #if NUM_CF_CARDS > 1
-	pxa2x0_gpio_set_function(106, GPIO_IN); /* GPIO_CF2_IRQ */
-	pxa2x0_gpio_set_function(93, GPIO_IN); /* GPIO_CF2_CD */
+	pxa2x0_gpio_set_function(C3000_CF1_IRQ, GPIO_IN); /* GPIO_CF1_IRQ */
+	pxa2x0_gpio_set_function(C3000_CF1_CD, GPIO_IN); /* GPIO_CF1_CD */
 
 	so = &sc->sc_socket[1];
-	sc->sc_socket[1].irq = pxa2x0_gpio_intr_establish(93 /*???*/,
+	sc->sc_socket[1].irq = pxa2x0_gpio_intr_establish(C3000_CF1_CD, 
 	    IST_EDGE_FALLING, IPL_BIO /* XXX */, pxapcic_intr_detect,
 	    so, sc->sc_dev.dv_xname);
-	sc->sc_socket[1].irqpin = 106;	/* GPIO pin for interrupt */
+	sc->sc_socket[1].irqpin = C3000_CF1_IRQ;	/* GPIO pin for interrupt */
 
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
 	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
 
+	/*
 	config_pending_incr();
+	*/
 	kthread_create_deferred(pxapcic_create_event_thread, so);
 #endif /* NUM_CF_CARDS > 1 */
 #endif
@@ -576,12 +588,11 @@ int
 pxapcic_intr_detect(void *arg)
 {
         struct pxapcic_socket *so = arg;
+	printf("pxapcic_intr_detect %x\n", so->socket);
 
 	/*
         (so->pcictag->clear_intr)(so->socket);
 	*/
-        wakeup(so->sc);
+        wakeup(so);
         return 1;
 }
-
-
