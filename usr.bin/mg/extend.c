@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.9 2001/05/23 20:42:46 art Exp $	*/
+/*	$OpenBSD: extend.c,v 1.10 2001/05/23 20:57:54 art Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -497,17 +497,17 @@ define_key(f, n)
 	int f, n;
 {
 	static char	 buf[48] = "Define key map: ";
-	MAPS		*mp;
+	KEYMAP		*mp;
 
 	buf[16] = '\0';
 	if (eread(buf, &buf[16], 48 - 16, EFNEW) != TRUE)
 		return FALSE;
-	if ((mp = name_mode(&buf[16])) == NULL) {
+	if ((mp = name_map(&buf[16])) == NULL) {
 		ewprintf("Unknown map %s", &buf[16]);
 		return FALSE;
 	}
 	(VOID)strncat(&buf[16], " key: ", 48 - 16 - 1);
-	return dobind(mp->p_map, buf, FALSE);
+	return dobind(mp, buf, FALSE);
 }
 
 int
@@ -687,7 +687,6 @@ excline(line)
 #ifdef	FKEYS
 	int	 bind;
 	KEYMAP	*curmap;
-	MAPS	*mp;
 #define BINDARG		0  /* this arg is key to bind (local/global set key) */
 #define	BINDNO		1  /* not binding or non-quoted BINDARG */
 #define BINDNEXT	2  /* next arg " (define-key) */
@@ -862,13 +861,12 @@ excline(line)
 			break;
 		case BINDNEXT:
 			lp->l_text[lp->l_used] = '\0';
-			if ((mp = name_mode(lp->l_text)) == NULL) {
+			if ((curmap = name_map(lp->l_text)) == NULL) {
 				ewprintf("No such mode: %s", lp->l_text);
 				status = FALSE;
 				free((char *)lp);
 				goto cleanup;
 			}
-			curmap = mp->p_map;
 			free((char *)lp);
 			bind = BINDARG;
 			break;
