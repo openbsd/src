@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.45 2000/09/29 19:00:13 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.46 2000/10/09 02:51:46 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -1708,15 +1708,21 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    ipo->ipo_sproto = SADB_GETSPROTO(smsg->sadb_msg_satype);
 	    if (ipo->ipo_srcid)
-	      FREE(ipo->ipo_srcid, M_TEMP);
+	    {
+		FREE(ipo->ipo_srcid, M_TEMP);
+		ipo->ipo_srcid = NULL;
+	    }
+
 	    if (ipo->ipo_dstid)
-	      FREE(ipo->ipo_dstid, M_TEMP);
+	    {
+		FREE(ipo->ipo_dstid, M_TEMP);
+		ipo->ipo_dstid = NULL;
+	    }
 
 	    if ((sid = headers[SADB_EXT_IDENTITY_SRC]) != NULL)
 	    {
 		ipo->ipo_srcid_type = sid->sadb_ident_type;
-		ipo->ipo_srcid_len = (sid->sadb_ident_len * sizeof(u_int64_t)) -
-				     sizeof(struct sadb_ident);
+		ipo->ipo_srcid_len = (sid->sadb_ident_len * sizeof(u_int64_t)) - sizeof(struct sadb_ident);
 
 		MALLOC(ipo->ipo_srcid, u_int8_t *, ipo->ipo_srcid_len,
 		       M_TEMP, M_DONTWAIT);
