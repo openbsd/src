@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.80 2000/03/17 10:25:22 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.81 2000/03/28 06:58:14 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -645,23 +645,35 @@ gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 
     if (spi == 0 && proto == 0)
     {
-      /* tdb_bypass; a placeholder for bypass flows, allocate on first pass */
-      if (tdb_bypass == NULL)
-      {
-	s = spltdb();
-	MALLOC(tdb_bypass, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
-	tdb_count++;
-	splx(s);
+	/*
+	 * tdb_bypass; a placeholder for bypass flows, allocate on
+	 * first pass.
+	 */
+	if (tdb_bypass == NULL)
+	{
+	    s = spltdb();
+	    MALLOC(tdb_bypass, struct tdb *, sizeof(struct tdb), M_TDB,
+		   M_WAITOK);
+	    tdb_count++;
+	    splx(s);
 
-	bzero(tdb_bypass, sizeof(struct tdb));
-	tdb_bypass->tdb_satype = SADB_X_SATYPE_BYPASS;
-	tdb_bypass->tdb_established = time.tv_sec;
-	tdb_bypass->tdb_epoch = kernfs_epoch - 1;
-	tdb_bypass->tdb_flags = 0;
-	TAILQ_INIT(&tdb_bypass->tdb_bind_in);
-	TAILQ_INIT(&tdb_bypass->tdb_inp);
-      }
-      return tdb_bypass;
+	    bzero(tdb_bypass, sizeof(struct tdb));
+	    tdb_bypass->tdb_satype = SADB_X_SATYPE_BYPASS;
+	    tdb_bypass->tdb_established = time.tv_sec;
+	    tdb_bypass->tdb_epoch = kernfs_epoch - 1;
+	    tdb_bypass->tdb_flags = 0;
+
+#ifdef INET
+	    tdb_bypass->tdb_dst.sa.sa_family = AF_INET;
+#elif INET6
+	    tdb_bypass->tdb_dst.sa.sa_family = AF_INET6;
+#endif
+
+	    TAILQ_INIT(&tdb_bypass->tdb_bind_in);
+	    TAILQ_INIT(&tdb_bypass->tdb_inp);
+	}
+
+	return tdb_bypass;
     }
 
     if (tdbh == NULL)
