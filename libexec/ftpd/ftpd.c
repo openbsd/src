@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.153 2003/12/12 19:45:22 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.154 2004/09/30 20:33:52 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.153 2003/12/12 19:45:22 deraadt Exp $";
+    "$OpenBSD: ftpd.c,v 1.154 2004/09/30 20:33:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -481,9 +481,11 @@ main(int argc, char *argv[])
 					fd = accept(pfds[i].fd,
 					    (struct sockaddr *)&his_addr,
 					    &addrlen);
-					if (fork() == 0)
-						goto child;
-					close(fd);
+					if (fd != -1) {
+						if (fork() == 0)
+							goto child;
+						close(fd);
+					}
 				}
 		}
 
