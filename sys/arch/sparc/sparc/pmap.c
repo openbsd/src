@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 1999/11/12 21:02:50 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.42 1999/11/16 10:11:35 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3895,8 +3895,6 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 #ifdef DEBUG
 			printf("pmap_rmk4m: attempt to free base kernel alloc\n");
 #endif
-			/* sp->sg_pte = NULL; */
-			sp->sg_npte = 0;
 			return;
 		}
 		/* no need to free the table; it is statically allocated */
