@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.1 1996/07/27 07:20:03 deraadt Exp $	*/
+/*	$OpenBSD: cy.c,v 1.2 1996/08/23 20:20:15 niklas Exp $	*/
 
 /*
  * cy.c
@@ -31,9 +31,6 @@
 #include "cy.h"
 #if NCY > 0
 
-#include "isa.h"
-#include "pci.h"
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -48,16 +45,19 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+
 #include <machine/bus.h>
-#if NISA > 0	
+#include <machine/intr.h>
+
+#if NCY_ISA > 0	
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
-#endif /* NISA > 0 */
-#if NPCI > 0
+#endif /* NCY_ISA > 0 */
+#if NCY_PCI > 0
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-#endif /* NPCI > 0 */
+#endif /* NCY_PCI > 0 */
 
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cyreg.h>
@@ -67,16 +67,16 @@
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
 
-void cyattach __P((struct device *, struct device *, void *));
-
-static int cyintr __P((void *));
-static int cyparam __P((struct tty *, struct termios *));
-static void cystart __P((struct tty *));
-static void cy_poll __P((void *));
-static int cy_modem_control __P((struct cy_port *, int, int));
-static void cy_enable_transmitter __P((struct cy_port *));
-static void cd1400_channel_cmd __P((struct cy_port *, int));
-static int cy_speed __P((speed_t, int *, int *));
+void	cyattach __P((struct device *, struct device *, void *));
+int	cy_probe_common __P((int, bus_chipset_tag_t, bus_mem_handle_t, int));
+int	cyintr __P((void *));
+int	cyparam __P((struct tty *, struct termios *));
+void	cystart __P((struct tty *));
+void	cy_poll __P((void *));
+int	cy_modem_control __P((struct cy_port *, int, int));
+void	cy_enable_transmitter __P((struct cy_port *));
+void	cd1400_channel_cmd __P((struct cy_port *, int));
+int	cy_speed __P((speed_t, int *, int *));
 
 struct cfdriver cy_cd = {
   NULL, "cy", DV_TTY
@@ -212,12 +212,12 @@ cyattach(parent, self, aux)
   sc->sc_bustype = cy_bus_types[card];
   sc->sc_memh = cy_card_memh[card];
   switch(sc->sc_bustype) {
-#if NISA > 0
+#if NCY_ISA > 0
     case CY_BUSTYPE_ISA:
       sc->sc_bc = ((struct isa_attach_args *)(aux))->ia_bc;
       break;
 #endif
-#if NPCI > 0
+#if NCY_PCI > 0
     case CY_BUSTYPE_PCI:
       sc->sc_bc = ((struct pci_attach_args *)aux)->pa_bc;
       break;
@@ -267,7 +267,7 @@ cyattach(parent, self, aux)
 		  CY_CLEAR_INTR<<sc->sc_bustype, 0);
 
   switch(sc->sc_bustype) {
-#if NISA > 0
+#if NCY_ISA > 0
     case CY_BUSTYPE_ISA:
       {
 	struct isa_attach_args *ia = aux;
@@ -277,8 +277,8 @@ cyattach(parent, self, aux)
 	    IST_EDGE, IPL_TTY, cyintr, sc, sc->sc_dev.dv_xname);
       }
       break;
-#endif /* NISA > 0 */
-#if NPCI > 0
+#endif /* NCY_ISA > 0 */
+#if NCY_PCI > 0
     case CY_BUSTYPE_PCI:
       {
 	pci_intr_handle_t intrhandle;
@@ -292,8 +292,8 @@ cyattach(parent, self, aux)
 	  IPL_TTY, cyintr, sc, sc->sc_dev.dv_xname);
       }
       break;
+#endif /* NCY_PCI > 0 */
   }
-#endif /* NPCI > 0 */
 
   if(sc->sc_ih == NULL)
     panic("cy: couldn't establish interrupt");
@@ -723,7 +723,7 @@ cystop(tp, flag)
  * parameter setting routine.
  * returns 0 if successfull, else returns error code
  */
-static int
+int
 cyparam(tp, t)
      struct tty *tp;
      struct termios *t;
@@ -871,7 +871,7 @@ cyparam(tp, t)
  * RTS and DTR are exchanged if CY_HW_RTS is set
  *
  */
-static int
+int
 cy_modem_control(cy, bits, howto)
      struct cy_port *cy;
      int bits;
@@ -970,7 +970,7 @@ cy_modem_control(cy, bits, howto)
  * Upper-level handler loop (called from timer interrupt?)
  * This routine is common for multiple cards
  */
-static void
+void
 cy_poll(arg)
      void *arg;
 {
@@ -983,14 +983,23 @@ cy_poll(arg)
     int did_something;
 #endif
 
+    /* XXX */
+#ifdef i386
     disable_intr();
+#endif
     if(cy_events == 0 && ++counter < 200) {
+        /* XXX */
+#ifdef i386
 	enable_intr();
+#endif
 	goto out;
     }
 
     cy_events = 0;
+    /* XXX */
+#ifdef i386
     enable_intr();
+#endif
 
     for(card = 0; card < cy_cd.cd_ndevs; card++) {
 	sc = cy_cd.cd_devs[card];
@@ -1035,10 +1044,16 @@ cy_poll(arg)
 
 		(*linesw[tp->t_line].l_rint)(chr, tp);
 
+		/* XXX */
+#ifdef i386
 		disable_intr(); /* really necessary? */
+#endif
 		if((cy->cy_ibuf_rd_ptr += 2) == cy->cy_ibuf_end)
 		  cy->cy_ibuf_rd_ptr = cy->cy_ibuf;
+		/* XXX */
+#ifdef i386
 		enable_intr();
+#endif
 
 #ifdef CY_DEBUG1
 		did_something = 1;
@@ -1382,7 +1397,7 @@ txdone:
 /*
  * subroutine to enable CD1400 transmitter
  */
-static void
+void
 cy_enable_transmitter(cy)
      struct cy_port *cy;
 {
@@ -1396,7 +1411,7 @@ cy_enable_transmitter(cy)
 /*
  * Execute a CD1400 channel command
  */
-static void
+void
 cd1400_channel_cmd(cy, cmd)
      struct cy_port *cy;
      int cmd;
@@ -1425,7 +1440,7 @@ cd1400_channel_cmd(cy, cmd)
  * to be well within allowed limits (less than 3%)
  * with every speed value between 50 and 150000 bps.
  */
-static int
+int
 cy_speed(speed_t speed, int *cor, int *bpr)
 {
     int c, co, br;
