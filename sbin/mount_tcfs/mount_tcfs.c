@@ -83,8 +83,14 @@ main(argc, argv)
 		switch(ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags, &altflags);
-			if (altflags & ALTF_CIPHER)
-				args.cipher_num = atoi(strstr(optarg, "cipher=" + 7));
+			if (altflags & ALTF_CIPHER) {
+				char *p, *cipherfield;
+
+				cipherfield = strstr(optarg, "cipher=") + 7;
+				args.cipher_num = strtol(cipherfield, &p, 0);
+				if (cipherfield == p)
+					args.cipher_num = -1;
+			}
 			altflags = 0;
 			break;
 		case '?':
@@ -109,7 +115,6 @@ main(argc, argv)
 		exit(1);
 	}
         args.target = target;
-
 	
 	if (mount(MOUNT_TCFS, argv[1], mntflags, &args))
 		err(1, "%s", "");
