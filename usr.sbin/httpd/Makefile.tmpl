@@ -85,8 +85,8 @@ AUX             = @AUX@
 CP              = cp
 LN              = ln
 RM              = rm -f
-MKDIR           = $(TOP)/$(AUX)/mkdir.sh
-INSTALL         = $(TOP)/$(AUX)/install.sh -c
+MKDIR           = $(SHELL) $(TOP)/$(AUX)/mkdir.sh
+INSTALL         = $(SHELL) $(TOP)/$(AUX)/install.sh -c
 IFLAGS_PROGRAM  = @IFLAGS_PROGRAM@
 IFLAGS_CORE     = @IFLAGS_CORE@
 IFLAGS_DSO      = @IFLAGS_DSO@
@@ -338,7 +338,7 @@ install-mktree:
 	$(MKDIR) $(root)$(runtimedir)
 	$(MKDIR) $(root)$(logfiledir)
 	$(MKDIR) $(root)$(proxycachedir)
-	-@if [ "x`$(AUX)/getuid.sh`" = "x0" ]; then \
+	-@if [ "x`$(SHELL) $(AUX)/getuid.sh`" = "x0" ]; then \
 		echo "chown $(conf_user) $(root)$(proxycachedir)"; \
 		chown $(conf_user) $(root)$(proxycachedir); \
 		echo "chgrp $(conf_group) $(root)$(proxycachedir)"; \
@@ -387,7 +387,7 @@ install-programs:
 			file=`echo $${mod} | sed -e 's;^.*/\([^/]*\);\1;'`; \
 			echo "$(INSTALL_DSO) $(TOP)/$(SRC)/$${mod} $(root)$(libexecdir)/$${file}"; \
 			$(INSTALL_DSO) $(TOP)/$(SRC)/$${mod} $(root)$(libexecdir)/$${file}; \
-			name=`$(TOP)/$(AUX)/fmn.sh $(TOP)/$(SRC)/$${mod}`; \
+			name=`$(SHELL) $(TOP)/$(AUX)/fmn.sh $(TOP)/$(SRC)/$${mod}`; \
 			if [ ".$$name" = .ssl_module ]; then \
 				echo "<IfDefine SSL>" >>$(SRC)/.apaci.install.conf; \
 			fi; \
