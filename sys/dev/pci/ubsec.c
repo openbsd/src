@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.24 2000/08/13 22:06:47 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.25 2000/08/13 22:07:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -633,10 +633,13 @@ ubsec_process(crp)
 		q->q_ctx.pc_flags |= UBS_PKTCTX_ENC_3DES;
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
-			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, &q->q_ctx.pc_iv[0], 8);
-			else
-				bcopy(&ses->ses_iv[0], &q->q_ctx.pc_iv[0], 8);
+			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT) {
+				q->q_ctx.pc_iv[0] = enccrd->crd_iv[0];
+				q->q_ctx.pc_iv[1] = enccrd->crd_iv[1];
+			} else {
+				q->q_ctx.pc_iv[0] = ses->ses_iv[0];
+				q->q_ctx.pc_iv[1] = ses->ses_iv[1];
+			}
 
 			m_copyback(q->q_src_m, enccrd->crd_inject, 8,
 			    (caddr_t)&q->q_ctx.pc_iv);
@@ -647,9 +650,10 @@ ubsec_process(crp)
 		} else {
 			q->q_ctx.pc_flags |= UBS_PKTCTX_INBOUND;
 
-			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, &q->q_ctx.pc_iv[0], 8);
-			else
+			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT) {
+				q->q_ctx.pc_iv[0] = enccrd->crd_iv[0];
+				q->q_ctx.pc_iv[1] = enccrd->crd_iv[1];
+			} else
 				m_copydata(q->q_src_m, enccrd->crd_inject,
 				    8, (caddr_t)&q->q_ctx.pc_iv[0]);
 		}
