@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.31 2001/07/04 19:59:47 jasoni Exp $
+	$OpenBSD: syscalls.master,v 1.32 2002/02/04 20:04:52 provos Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -346,4 +346,4 @@
 218	NOARGS		{ int linux_sys_mincore(void); }
 219	NOARGS		{ int linux_sys_madvise(void); }
 220	NOARGS		{ int linux_sys_getdents64(void); }
-221	NOARGS		{ int linux_sys_fcntl64(void); }
+221	STD		{ int linux_sys_fcntl64(u_int fd, u_int cmd, void *arg); }

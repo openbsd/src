@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file64.c,v 1.1 2000/12/22 07:34:02 jasoni Exp $	*/
+/*	$OpenBSD: linux_file64.c,v 1.2 2002/02/04 20:04:52 provos Exp $	*/
 /*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
 
 /*-
@@ -67,6 +67,8 @@
 #include <machine/linux_machdep.h>
 
 
+void bsd_to_linux_flock64 __P((struct flock *, struct linux_flock64 *));
+void linux_to_bsd_flock64 __P((struct linux_flock64 *, struct flock *));
 static void bsd_to_linux_stat __P((struct stat *, struct linux_stat64 *));
 static int linux_do_stat64 __P((struct proc *, void *, register_t *, int));
 
@@ -221,4 +223,110 @@ linux_sys_truncate64(p, v, retval)
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return sys_truncate(p, uap, retval);
+}
+
+/*
+ * The next two functions take care of converting the flock
+ * structure back and forth between Linux and OpenBSD format.
+ * The only difference in the structures is the order of
+ * the fields, and the 'whence' value.
+ */
+void
+bsd_to_linux_flock64(struct flock *bfp, struct linux_flock64 *lfp)
+{
+	lfp->l_start = bfp->l_start;
+	lfp->l_len = bfp->l_len;
+	lfp->l_pid = bfp->l_pid;
+	lfp->l_whence = bfp->l_whence;
+	switch (bfp->l_type) {
+	case F_RDLCK:
+		lfp->l_type = LINUX_F_RDLCK;
+		break;
+	case F_UNLCK:
+		lfp->l_type = LINUX_F_UNLCK;
+		break;
+	case F_WRLCK:
+		lfp->l_type = LINUX_F_WRLCK;
+		break;
+	}
+}
+
+void
+linux_to_bsd_flock64(struct linux_flock64 *lfp, struct flock *bfp)
+{
+	bfp->l_start = lfp->l_start;
+	bfp->l_len = lfp->l_len;
+	bfp->l_pid = lfp->l_pid;
+	bfp->l_whence = lfp->l_whence;
+	switch (lfp->l_type) {
+	case LINUX_F_RDLCK:
+		bfp->l_type = F_RDLCK;
+		break;
+	case LINUX_F_UNLCK:
+		bfp->l_type = F_UNLCK;
+		break;
+	case LINUX_F_WRLCK:
+		bfp->l_type = F_WRLCK;
+		break;
+	}
+}
+
+int
+linux_sys_fcntl64(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_fcntl64_args /* {
+		syscallarg(u_int) fd;
+		syscallarg(u_int) cmd;
+		syscallarg(void *) arg;
+	} */ *uap = v;
+	int fd, cmd, error;
+	caddr_t arg, sg;
+	struct linux_flock64 lfl;
+	struct flock *bfp, bfl;
+	struct sys_fcntl_args fca;
+
+	fd = SCARG(uap, fd);
+	cmd = SCARG(uap, cmd);
+	arg = (caddr_t) SCARG(uap, arg);
+
+	switch (cmd) {
+	case LINUX_F_GETLK64:
+		sg = stackgap_init(p->p_emul);
+		if ((error = copyin(arg, &lfl, sizeof lfl)))
+			return error;
+		linux_to_bsd_flock64(&lfl, &bfl);
+		bfp = (struct flock *) stackgap_alloc(&sg, sizeof *bfp);
+		SCARG(&fca, fd) = fd;
+		SCARG(&fca, cmd) = F_GETLK;
+		SCARG(&fca, arg) = bfp;
+		if ((error = copyout(&bfl, bfp, sizeof bfl)))
+			return error;
+		if ((error = sys_fcntl(p, &fca, retval)))
+			return error;
+		if ((error = copyin(bfp, &bfl, sizeof bfl)))
+			return error;
+		bsd_to_linux_flock64(&bfl, &lfl);
+		error = copyout(&lfl, arg, sizeof lfl);
+		return (error);
+	case LINUX_F_SETLK64:
+	case LINUX_F_SETLKW64:
+		cmd = (cmd == LINUX_F_SETLK64 ? F_SETLK : F_SETLKW);
+		if ((error = copyin(arg, &lfl, sizeof lfl)))
+			return error;
+		linux_to_bsd_flock64(&lfl, &bfl);
+		sg = stackgap_init(p->p_emul);
+		bfp = (struct flock *) stackgap_alloc(&sg, sizeof *bfp);
+		if ((error = copyout(&bfl, bfp, sizeof bfl)))
+			return error;
+		SCARG(&fca, fd) = fd;
+		SCARG(&fca, cmd) = cmd;
+		SCARG(&fca, arg) = bfp;
+		return (sys_fcntl(p, &fca, retval));
+	default:
+		return (linux_sys_fcntl(p, v, retval));
+	}
+	/* NOTREACHED */
 }

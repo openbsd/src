@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_dummy.c,v 1.5 2001/07/04 19:59:47 jasoni Exp $ */
+/*	$OpenBSD: linux_dummy.c,v 1.6 2002/02/04 20:04:52 provos Exp $ */
 
 /*-
  * Copyright (c) 1994-1995 Søren Schmidt
@@ -120,4 +120,3 @@ DUMMY(pivot_root);		/* #217 */
 DUMMY(mincore);			/* #218 */
 DUMMY(madvise);			/* #219 */
 DUMMY(getdents64);		/* #220 */
-DUMMY(fcntl64);			/* #221 */
