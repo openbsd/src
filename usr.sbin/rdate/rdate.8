@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.15 2002/05/16 11:05:59 deraadt Exp $
+.\"	$OpenBSD: rdate.8,v 1.16 2002/05/16 20:10:15 stevesk Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -43,17 +43,20 @@
 .Nm
 displays and sets the local date and time from the
 host name or address given as the argument.
-By default it uses the RFC868
-protocol which is usually implemented as a built-in service of
+The time source may be an RFC868 TCP protocol server,
+which is usually implemented as a built-in service of
 .Xr inetd 8 ,
-but it can also use the RFC1361 protocol supplied by an NTP/SNTP server.
+or an RFC1361 protocol SNTP/NTP server.
+By default,
+.Nm
+uses the RFC868 TCP protocol.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl n
-Use SNTP (RFC1361) instead RFC868 time protocol
+Use SNTP (RFC1361) instead of the RFC868 time protocol.
 .It Fl p
-Do not set, just print the remote time
+Do not set, just print the remote time.
 .It Fl s
 Do not print the time.
 .It Fl a
