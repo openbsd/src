@@ -1,7 +1,7 @@
-#	$OpenBSD: devlist2h.awk,v 1.3 2000/02/09 07:23:19 mickey Exp $
+#	$OpenBSD: devlist2h.awk,v 1.4 2001/03/29 00:43:00 mickey Exp $
 
 #
-# Copyright (c) 1998-2000 Michael Shalayeff
+# Copyright (c) 1998-2001 Michael Shalayeff
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -65,9 +65,6 @@ NR == 1	{
 	       " * generated from:\n *\t%s\n */\n\n", VERSION) > cpud;
 	printf("/*\n * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.\n" \
 	       " * generated from:\n *\t%s\n */\n\n", VERSION) > cpuh;
-
-	printf("static const struct hppa_mod_info hppa_knownmods[] = {\n")\
-		> cpud;
 }
 
 $1 == "type"	{
@@ -80,7 +77,7 @@ NR > 1 {
 	if (tolower($1) in types) {
 		printf("#define\tHPPA_%s_%s\t%s\n", toupper($1),
 		       toupper($2), $3) > cpuh;
-		printf("\t{HPPA_TYPE_%s,\tHPPA_%s_%s,\t\"", toupper($1),
+		printf("{HPPA_TYPE_%s,\tHPPA_%s_%s,\t\"", toupper($1),
 		       toupper($1), toupper($2), $3) > cpud;
 		f = 4;
 		while (f <= NF) {
@@ -121,6 +118,6 @@ END	{
 		print("unteminated comment at the EOF\n");
 		exit(1);
 	}
-	printf("\t{ -1 }\n};\n") > cpud;
+	printf("{ -1 }\n") > cpud;
 }
 
