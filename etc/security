@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.46 2001/03/25 04:50:27 millert Exp $
+#	$OpenBSD: security,v 1.47 2001/04/05 18:47:00 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -70,7 +70,7 @@ if [ -s $OUTPUT ] ; then
 	column $OUTPUT
 fi
 
-awk -F: '{ print $1 " " $3 }' $MP | sort -n +1 | tee $TMP1 |
+awk -F: '/^[^\+]/ { print $1 " " $3 }' $MP | sort -n +1 | tee $TMP1 |
 uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 if [ -s $TMP2 ] ; then
 	echo "\n${MP} has duplicate user ID's."
