@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.7 1999/03/24 14:43:12 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.84 1999/03/24 11:00:47 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.8 1999/03/31 00:51:07 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.85 1999/03/30 21:39:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -152,6 +152,79 @@ int16_t script_new_group_mode[] = {
   EXCHANGE_SCRIPT_END
 };
 
+struct dst_spi_proto_arg {
+  in_addr_t dst;
+  u_int32_t spi;
+  u_int8_t proto;
+};
+
+/*
+ * Check if SA matches what we are asking for through V_ARG.  It has to
+ * be a finished phase 2 SA.
+ */
+static int
+ipsec_sa_check (struct sa *sa, void *v_arg)
+{
+  struct dst_spi_proto_arg *arg = v_arg;
+  struct proto *proto;
+  struct sockaddr *dst, *src;
+  int dstlen, srclen;
+  int incoming;
+
+  if (sa->phase != 2 || !(sa->flags & SA_FLAG_READY))
+    return 0;
+
+  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  if (((struct sockaddr_in *)dst)->sin_addr.s_addr == arg->dst)
+    incoming = 0;
+  else
+    {
+      sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
+      if (((struct sockaddr_in *)src)->sin_addr.s_addr == arg->dst)
+	incoming = 1;
+      else
+	return 0;
+    }
+
+  for (proto = TAILQ_FIRST (&sa->protos); proto;
+       proto = TAILQ_NEXT (proto, link))
+    if (proto->proto == arg->proto
+	&& memcmp (proto->spi[incoming], &arg->spi, sizeof arg->spi) == 0)
+      return 1;
+  return 0;
+}
+
+/* Find an SA with a "name" of DST, SPI & PROTO.  */
+struct sa *
+ipsec_sa_lookup (in_addr_t dst, u_int32_t spi, u_int8_t proto)
+{
+  struct dst_spi_proto_arg arg = { dst, spi, proto };
+
+  return sa_find (ipsec_sa_check, &arg);
+}
+
+/*
+ * Check if SA matches the flow of another SA in V_ARG.  It has to
+ * be a finished non-replaced phase 2 SA.
+ */
+static int
+ipsec_sa_check_flow (struct sa *sa, void *v_arg)
+{
+  struct sa *sa2 = v_arg;
+  struct ipsec_sa *isa = sa->data, *isa2 = sa2->data;
+
+  if (sa == sa2 || sa->phase != 2
+      || (sa->flags & (SA_FLAG_READY | SA_FLAG_REPLACED)) != SA_FLAG_READY)
+    return 0;
+
+  return isa->src_net == isa2->src_net && isa->src_mask == isa2->src_mask
+    && isa->dst_net == isa2->dst_net && isa->dst_mask == isa2->dst_mask;
+}
+
+/*
+ * Do IPSec DOI specific finalizations task for the exchange where MSG was
+ * the final message.
+ */
 static void
 ipsec_finalize_exchange (struct message *msg)
 {
@@ -159,7 +232,7 @@ ipsec_finalize_exchange (struct message *msg)
   struct ipsec_sa *isa = isakmp_sa->data;
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
-  struct sa *sa = 0;
+  struct sa *sa = 0, *old_sa;
   struct proto *proto, *last_proto = 0;
   int initiator = exchange->initiator;
   struct timeval expiration;
@@ -227,9 +300,6 @@ ipsec_finalize_exchange (struct message *msg)
 	  for (sa = TAILQ_FIRST (&exchange->sa_list); sa;
 	       sa = TAILQ_NEXT (sa, next))
 	    {
-	      /* Move over the name to the SA.  */
-	      sa->name = exchange->name;
-
 	      for (proto = TAILQ_FIRST (&sa->protos), last_proto = 0; proto;
 		   proto = TAILQ_NEXT (proto, link))
 		{
@@ -293,6 +363,10 @@ ipsec_finalize_exchange (struct message *msg)
 	      if (sysdep_ipsec_enable_sa (sa))
 		/* XXX Tear down this exchange.  */
 		return;
+
+	      /* Mark elder SAs with the same flow information as replaced.  */
+	      while ((old_sa = sa_find (ipsec_sa_check_flow, sa)) != 0)
+		sa_mark_replaced (old_sa);
 	    }
 	  exchange->name = 0;
 	  break;
@@ -1334,52 +1408,6 @@ ipsec_build_id (char *section, size_t *sz)
     }
 
   return p;
-}
-
-struct dst_spi_proto_arg {
-  in_addr_t dst;
-  u_int32_t spi;
-  u_int8_t proto;
-};
-
-static int
-ipsec_sa_check (struct sa *sa, void *v_arg)
-{
-  struct dst_spi_proto_arg *arg = v_arg;
-  struct proto *proto;
-  struct sockaddr *dst, *src;
-  int dstlen, srclen;
-  int incoming;
-
-  if (sa->phase != 2)
-    return 0;
-
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
-  if (((struct sockaddr_in *)dst)->sin_addr.s_addr == arg->dst)
-    incoming = 0;
-  else
-    {
-      sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
-      if (((struct sockaddr_in *)src)->sin_addr.s_addr == arg->dst)
-	incoming = 1;
-      else
-	return 0;
-    }
-
-  for (proto = TAILQ_FIRST (&sa->protos); proto;
-       proto = TAILQ_NEXT (proto, link))
-    if (proto->proto == arg->proto
-	&& memcmp (proto->spi[incoming], &arg->spi, sizeof arg->spi) == 0)
-      return 1;
-  return 0;
-}
-
-struct sa *
-ipsec_sa_lookup (in_addr_t dst, u_int32_t spi, u_int8_t proto)
-{
-  struct dst_spi_proto_arg arg = { dst, spi, proto };
-
-  return sa_find (ipsec_sa_check, &arg);
 }
 
 /*
