@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210.c,v 1.1 2004/11/02 03:01:16 reyk Exp $	*/
+/*	$OpenBSD: ar5210.c,v 1.2 2004/11/02 09:31:59 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>. 
@@ -1916,36 +1916,18 @@ ar5k_ar5210_setKeyCacheEntryMac(hal, entry, mac)
 	/*
 	 * Invalid entry (key table overflow)
 	 */
-	AR5K_TRACE;
-
 	AR5K_ASSERT_ENTRY(entry, AR5K_AR5210_KEYTABLE_SIZE);
-
-	AR5K_TRACE;
 
 	offset = AR5K_AR5210_KEYCACHE_SIZE - 2;
 
-	AR5K_TRACE;
-
 	/* XXX big endian problems? */
 	bcopy(mac, &low_id, 4);
-
-	AR5K_TRACE;
-
 	bcopy(mac + 4, &high_id, 2);
-
-	AR5K_TRACE;
 
 	high_id = 0x0000ffff & htole32(high_id);
 
-	AR5K_TRACE;
-
 	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset++ * 4), htole32(low_id));
-
-	AR5K_TRACE;
-
 	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset * 4), high_id);
-
-	AR5K_TRACE;
 
 	return(AH_TRUE);
 }
