@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.6 2003/09/29 03:24:27 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.7 2003/09/30 18:46:11 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.6 2003/09/29 03:24:27 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.7 2003/09/30 18:46:11 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -55,7 +55,10 @@ DIGIT		[0-9A-F]
 
 \"		BEGIN(string); init_strbuf();
 <string>{
-	[^"\n]+	add_str(yytext);
+	[^"\n\\\[\]]+	add_str(yytext);
+	\[	add_str("\\[");
+	\]	add_str("\\]");
+	\\	add_str("\\\\");
 	\n	add_str("\n"); lineno++;
 	\"	BEGIN(INITIAL); yylval.str = strbuf; return STRING;
 	<<EOF>>	fatal("end of file in string");

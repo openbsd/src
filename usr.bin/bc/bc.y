@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.9 2003/09/29 03:24:27 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.10 2003/09/30 18:46:11 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.9 2003/09/29 03:24:27 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.10 2003/09/30 18:46:11 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -717,12 +717,25 @@ yywrap(void)
 void
 yyerror(char *s)
 {
-	if (isspace(*yytext) || !isprint(*yytext))
-		printf("c[%s: %s:%d: %s: ascii char 0x%x unexpected]pc\n",
-		    __progname, filename, lineno, s, *yytext);
+	char	*str, *p;
+
+	if (isspace(yytext[0]) || !isprint(yytext[0]))
+		asprintf(&str, "%s: %s:%d: %s: ascii char 0x%x unexpected",
+		    __progname, filename, lineno, s, yytext[0]);
 	else
-		printf("c[%s: %s:%d: %s: %s unexpected]pc\n",
+		asprintf(&str, "%s: %s:%d: %s: %s unexpected",
 		    __progname, filename, lineno, s, yytext);
+	if (str == NULL)
+		err(1, "cannot allocate string");
+
+	fputs("c[", stdout);
+	for (p = str; *p != '\0'; p++) {
+		if (*p == '[' || *p == ']' || *p =='\\')
+			putchar('\\');
+		putchar(*p);
+	}
+	fputs("]pc\n", stdout);
+	free(str);
 }
 
 void
