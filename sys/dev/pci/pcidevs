@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.817 2005/01/15 10:14:17 jsg Exp $
+$OpenBSD: pcidevs,v 1.818 2005/01/16 20:10:35 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -249,6 +249,7 @@ vendor	ALTIMA		0x173b	Altima
 vendor	ANTARES		0x1754	Antares Microsystems
 vendor	CAVIUM		0x177d	Cavium
 vendor	BELKIN2		0x1799	Belkin
+vendor	HAWKING		0x17b3	Hawking Technology
 vendor	LANERGY		0x1812	Lanergy
 vendor	RALINK		0x1814	Ralink
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
@@ -1162,6 +1163,9 @@ product GEMTEK PR103		0x1001	PR103
 
 /* Hauppauge Computer Works */
 product HAUPPAUGE WINTV		0x13eb	WinTV
+
+/* Hawking products */
+product HAWKING PN672TX		0xab08	PN672TX 10/100
 
 /* Hewlett-Packard products */
 product HP VISUALIZE_EG		0x1005	Visualize EG
