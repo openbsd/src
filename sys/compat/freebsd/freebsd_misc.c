@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_misc.c,v 1.8 2002/07/06 19:14:20 nordin Exp $	*/
+/*	$OpenBSD: freebsd_misc.c,v 1.9 2005/02/19 21:19:28 matthieu Exp $	*/
 /*	$NetBSD: freebsd_misc.c,v 1.2 1996/05/03 17:03:10 christos Exp $	*/
 
 /*
@@ -40,6 +40,10 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
+#include <sys/file.h>
+#include <sys/dirent.h>
+#include <sys/filedesc.h>
+#include <sys/vnode.h>
 
 #include <sys/syscallargs.h>
 
@@ -47,6 +51,8 @@
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_util.h>
 #include <compat/freebsd/freebsd_rtprio.h>
+
+#include <compat/common/compat_dir.h>
 
 /* just a place holder */
 
@@ -90,5 +96,68 @@ freebsd_sys_madvise(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	return (0);
+}
+
+
+int freebsd_readdir_callback(void *, struct dirent *, off_t);
+
+struct freebsd_readdir_callback_args {
+	caddr_t outp;
+	int	resid;
+};
+
+int 
+freebsd_readdir_callback(void *arg, struct dirent *bdp, off_t cookie)
+{
+	struct freebsd_readdir_callback_args *cb = arg;
+	struct dirent idb;
+	int error;
+
+	if (cb->resid < bdp->d_reclen)
+		return (ENOMEM);
+	idb.d_fileno = bdp->d_fileno;
+	idb.d_reclen = bdp->d_reclen;
+	idb.d_type = bdp->d_type;
+	idb.d_namlen = bdp->d_namlen;
+	strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
+	
+	if ((error = copyout((caddr_t)&idb, cb->outp, bdp->d_reclen)))
+		return (error);
+	cb->outp += bdp->d_reclen;
+	cb->resid -= bdp->d_reclen;
+
+	return (0);
+}
+
+int
+freebsd_sys_getdents(struct proc *p, void *v, register_t *retval)
+{
+	struct freebsd_sys_getdents_args /* {
+		syscallarg(int) fd;
+		syscallarg(void *) dirent;
+		syscallarg(unsigned) count;
+	} */ *uap = v;
+	struct vnode *vp;
+	struct file *fp;
+	int error;
+	struct freebsd_readdir_callback_args args;
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0) 
+		return (error);
+	
+	vp = (struct vnode *)fp->f_data;
+	
+	args.resid = SCARG(uap, count);
+	args.outp = (caddr_t)SCARG(uap, dirent);
+	
+	error = readdir_with_callback(fp, &fp->f_offset, args.resid,
+	    freebsd_readdir_callback, &args);
+	
+	FRELE(fp);
+	if (error) 
+		return (error);
+	
+	*retval = SCARG(uap, count) - args.resid;
 	return (0);
 }
