@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.24 2001/05/28 05:52:51 angelos Exp $	*/
+/*	$OpenBSD: if.h,v 1.25 2001/05/28 10:29:21 angelos Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_IPv4		0x00000001	/* can do IPv4 header csum */
 #define	IFCAP_CSUM_TCPv4	0x00000002	/* can do IPv4/TCP csum */
 #define	IFCAP_CSUM_UDPv4	0x00000004	/* can do IPv4/UDP csum */
-#define	IFCAP_IPSECv4		0x00000008	/* can do IPv4 IPsec */
+#define	IFCAP_IPSEC		0x00000008	/* can do IPsec */
 #define	IFCAP_VLAN_MTU		0x00000010	/* VLAN-compatible MTU */
 #define	IFCAP_VLAN_HWTAGGING	0x00000020	/* hardware VLAN tag support */
 
