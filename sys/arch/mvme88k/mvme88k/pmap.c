@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.112 2004/04/24 20:35:27 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.113 2004/05/07 08:00:16 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -138,41 +138,6 @@ struct kpdt_entry {
 #define	KPDT_ENTRY_NULL		((kpdt_entry_t)0)
 
 kpdt_entry_t	kpdt_free;
-
-/*
- * MAX_KERNEL_VA_SIZE must fit into the virtual address space between
- * VM_MIN_KERNEL_ADDRESS and VM_MAX_KERNEL_ADDRESS.
- */
-
-#define	MAX_KERNEL_VA_SIZE	(256*1024*1024)	/* 256 Mb */
-
-/*
- * Size of kernel page tables, which is enough to map MAX_KERNEL_VA_SIZE
- */
-#define	KERNEL_PDT_SIZE	(atop(MAX_KERNEL_VA_SIZE) * sizeof(pt_entry_t))
-
-/*
- * Size of kernel page tables for mapping onboard IO space.
- */
-#if defined(MVME188)
-#define	M188_PDT_SIZE	(atop(UTIL_SIZE) * sizeof(pt_entry_t))
-#else
-#define	M188_PDT_SIZE 0
-#endif
-
-#if defined(MVME187) || defined(MVME197)
-#define	M1x7_PDT_SIZE	(atop(OBIO_SIZE) * sizeof(pt_entry_t))
-#else
-#define	M1x7_PDT_SIZE 0
-#endif
-
-#if defined(MVME188) && (defined(MVME187) || defined(MVME197))
-#define	OBIO_PDT_SIZE	((brdtyp == BRD_188) ? M188_PDT_SIZE : M1x7_PDT_SIZE)
-#else
-#define	OBIO_PDT_SIZE	MAX(M188_PDT_SIZE, M1x7_PDT_SIZE)
-#endif
-
-#define MAX_KERNEL_PDT_SIZE	(KERNEL_PDT_SIZE + OBIO_PDT_SIZE)
 
 /*
  * Two pages of scratch space per cpu.
@@ -694,9 +659,10 @@ pmap_bootstrap(vaddr_t load_start)
 {
 	kpdt_entry_t kpdt_virt;
 	sdt_entry_t *kmap;
-	vaddr_t vaddr, virt, kernel_pmap_size, pdt_size;
+	vaddr_t vaddr, virt;
 	paddr_t s_text, e_text, kpdt_phys;
 	pt_entry_t *pte;
+	unsigned int kernel_pmap_size, pdt_size;
 	int i;
 	pmap_table_t ptable;
 	extern void *kernelstart, *etext;
@@ -762,8 +728,12 @@ pmap_bootstrap(vaddr_t load_start)
 	kpdt_phys = avail_start;
 	kpdt_virt = (kpdt_entry_t)virtual_avail;
 
-	/* might as well round up to a page - XXX smurph */
-	pdt_size = round_page(MAX_KERNEL_PDT_SIZE);
+	/* Compute how much space we need for the kernel page table */
+	pdt_size = atop(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS)
+	    * sizeof(pt_entry_t);
+	for (ptable = pmap_table_build(); ptable->size != (vsize_t)-1; ptable++)
+		pdt_size += atop(ptable->size) * sizeof(pt_entry_t);
+	pdt_size = round_page(pdt_size);
 	kernel_pmap_size += pdt_size;
 	avail_start += pdt_size;
 	virtual_avail += pdt_size;
@@ -873,15 +843,12 @@ pmap_bootstrap(vaddr_t load_start)
 	 * OBIO should be mapped cache inhibited.
 	 */
 
-	ptable = pmap_table_build();
-
-	for (; ptable->size != (vsize_t)(-1); ptable++){
-		if (ptable->size) {
+	for (ptable = pmap_table_build(); ptable->size != (vsize_t)-1; ptable++)
+		if (ptable->size != 0) {
 			pmap_map(ptable->virt_start, ptable->phys_start,
 			    ptable->phys_start + ptable->size,
 			    ptable->prot, ptable->cacheability);
 		}
-	}
 
 	/*
 	 * Allocate all the submaps we need. Note that SYSMAP just allocates
