@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.33 1999/01/08 04:43:18 jason Exp $
+#	$OpenBSD: files.pci,v 1.34 1999/01/10 22:30:44 downsj Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -107,6 +107,11 @@ file	dev/pci/if_rl.c			rl
 device	mx: ether, ifnet, ifmedia
 attach	mx at pci
 file	dev/pci/if_mx.c			mx
+
+# Via Rhine
+device	vr: ether, ifnet, ifmedia
+attach	vr at pci
+file	dev/pci/if_vr.c			vr
 
 # Texas Instruments ThunderLAN
 device	tl: ether, ifnet, mii, ifmedia
