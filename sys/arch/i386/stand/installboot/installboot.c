@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.4 1997/07/17 22:47:01 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.5 1997/08/22 20:03:17 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -41,6 +41,13 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+
+#include <vm/vm.h>
+#include <sys/sysctl.h>
+
+#include <machine/cpu.h>
+#include <machine/biosvar.h>
+
 #include <err.h>
 #include <a.out.h>
 #include <fcntl.h>
@@ -64,6 +71,9 @@ u_int8_t *block_count_p;	/* block count var. in prototype image */
 u_int8_t *block_table_p;	/* block number array in prototype image */
 int	maxblocknum;	/* size of this array */
 
+#ifdef CPU_BIOSDEV
+int biosdev;
+#endif
 
 char		*loadprotoblocks __P((char *, long *));
 int		loadblocknums __P((char *, int));
@@ -126,6 +136,32 @@ main(argc, argv)
 		printf("proto: %s\n", proto);
 		printf("device: %s\n", dev);
 	}
+
+#ifdef CPU_BIOSDEV
+	if (heads == -1 || nsectors == -1) {
+		int mib[3], size;
+
+		mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_BIOSDEV;
+		size = sizeof(int);
+
+		if (sysctl(mib, 2, &biosdev, &size, NULL, 0) == -1)
+			err(1, "sysctl");
+
+		if (biosdev & 0x80) {
+			int geo;
+
+			mib[1] = CPU_BIOSGEOMETRY;
+			size = sizeof(int);
+
+			if (sysctl(mib, 2, &geo, &size, NULL, 0) == -1)
+				err(1, "sysctl");
+
+			heads = BIOSNHEADS(geo);
+			nsectors = BIOSNSECTS(geo);
+		}
+	}
+#endif
 
 	/* Load proto blocks into core */
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
