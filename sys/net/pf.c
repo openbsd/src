@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.9 2001/06/24 22:12:05 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.10 2001/06/24 22:42:18 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -39,6 +39,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/time.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -85,6 +86,12 @@ struct ifnet		*status_ifp;
 u_int32_t		 last_purge = 0;
 u_int16_t		 next_port_tcp = 50001;
 u_int16_t		 next_port_udp = 50001;
+
+struct pool		pf_tree_pl;
+struct pool		pf_rule_pl;
+struct pool		pf_nat_pl;
+struct pool		pf_rdr_pl;
+struct pool		pf_state_pl;
 
 /*
  * Prototypes
@@ -206,9 +213,8 @@ tree_insert(struct tree_node **p, struct tree_key *key, struct state *state)
 	int deltaH = 0;
 
 	if (*p == NULL) {
-		*p = malloc(sizeof(struct tree_node), M_DEVBUF, M_NOWAIT);
+		*p = pool_get(&pf_tree_pl, PR_NOWAIT);
 		if (*p == NULL) {
-			printf("packetfilter: malloc() failed\n");
 			return 0;
 		}
 		memcpy(&(*p)->key, key, sizeof(struct tree_key));
@@ -280,16 +286,19 @@ tree_remove(struct tree_node **p, struct tree_key *key)
 	} else {
 		if ((*p)->right == NULL) {
 			struct tree_node *p0 = *p;
+
 			*p = (*p)->left;
-			free(p0, M_DEVBUF);
+			pool_put(&pf_tree_pl, p0);
 			deltaH = 1;
 		} else if ((*p)->left == NULL) {
 			struct tree_node *p0 = *p;
+
 			*p = (*p)->right;
-			free(p0, M_DEVBUF);
+			pool_put(&pf_tree_pl, p0);
 			deltaH = 1;
 		} else {
 			struct tree_node **qq = &(*p)->left;
+
 			while ((*qq)->right != NULL)
 				qq = &(*qq)->right;
 			memcpy(&(*p)->key, &(*qq)->key, sizeof(struct tree_key));
@@ -392,7 +401,7 @@ purge_expired_states(void)
 			if (find_state(tree_ext_gwy, &key) != NULL)
 				printf("packetfilter: ERROR! remove failed\n");
 			(prev ? prev->next : statehead) = cur->next;
-			free(cur, M_DEVBUF);
+			pool_put(&pf_state_pl, cur);
 			cur = (prev ? prev->next : statehead);
 			status.state_removals++;
 			status.states--;
@@ -466,8 +475,17 @@ print_flags(u_int8_t f)
 void
 pfattach(int num)
 {
-	memset(&status, 0, sizeof(struct status));
-	printf("packetfilter: attached\n");
+	/* XXX - no M_* tags, but they are not used anyway */
+        pool_init(&pf_tree_pl, sizeof(struct tree_node), 0, 0, 0, "pftrpl",
+                0, NULL, NULL, 0);
+        pool_init(&pf_rule_pl, sizeof(struct rule), 0, 0, 0, "pfrulepl",
+                0, NULL, NULL, 0);
+        pool_init(&pf_nat_pl, sizeof(struct nat), 0, 0, 0, "pfnatpl",
+                0, NULL, NULL, 0);
+        pool_init(&pf_rdr_pl, sizeof(struct rdr), 0, 0, 0, "pfrdrpl",
+                0, NULL, NULL, 0);
+        pool_init(&pf_state_pl, sizeof(struct state), 0, 0, 0, "pfstatepl",
+                0, NULL, NULL, 0);
 }
 
 int
@@ -547,12 +565,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int16_t n;
 		while (rulehead != NULL) {
 			struct rule *next = rulehead->next;
-			free(rulehead, M_DEVBUF);
+			pool_put(&pf_rule_pl, rulehead);
 			rulehead = next;
 		}
 		for (n = 0; n < ub->entries; ++n) {
 			struct rule *rule;
-			rule = malloc(sizeof(struct rule), M_DEVBUF, M_NOWAIT);
+
+			rule = pool_get(&pf_rule_pl, PR_NOWAIT);
 			if (rule == NULL) {
 				error = ERROR_MALLOC;
 				goto done;
@@ -562,7 +581,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (rule->ifname[0]) {
 				rule->ifp = ifunit(rule->ifname);
 				if (rule->ifp == NULL) {
-					free(rule, M_DEVBUF);
+					pool_put(&pf_rule_pl, rule);
 					error = ERROR_INVALID_PARAMETERS;
 					goto done;
 				}
@@ -595,12 +614,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int16_t n;
 		while (nathead != NULL) {
 			struct nat *next = nathead->next;
-			free(nathead, M_DEVBUF);
+
+			pool_put(&pf_nat_pl, nathead);
 			nathead = next;
 		}
 		for (n = 0; n < ub->entries; ++n) {
 			struct nat *nat;
-			nat = malloc(sizeof(struct nat), M_DEVBUF, M_NOWAIT);
+
+			nat = pool_get(&pf_nat_pl, PR_NOWAIT);
 			if (nat == NULL) {
 				error = ERROR_MALLOC;
 				goto done;
@@ -608,7 +629,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			memcpy(nat, nats + n, sizeof(struct nat));
 			nat->ifp = ifunit(nat->ifname);
 			if (nat->ifp == NULL) {
-				free(nat, M_DEVBUF);
+				pool_put(&pf_nat_pl, nat);
 				error = ERROR_INVALID_PARAMETERS;
 				goto done;
 			}
@@ -636,12 +657,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int16_t n;
 		while (rdrhead != NULL) {
 			struct rdr *next = rdrhead->next;
-			free(rdrhead, M_DEVBUF);
+
+			pool_put(&pf_rdr_pl, rdrhead);
 			rdrhead = next;
 		}
 		for (n = 0; n < ub->entries; ++n) {
 			struct rdr *rdr;
-			rdr = malloc(sizeof(struct rdr), M_DEVBUF, M_NOWAIT);
+
+			rdr = pool_get(&pf_rdr_pl, PR_NOWAIT);
 			if (rdr == NULL) {
 				error = ERROR_MALLOC;
 				goto done;
@@ -649,7 +672,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			memcpy(rdr, rdrs + n, sizeof(struct rdr));
 			rdr->ifp = ifunit(rdr->ifname);
 			if (rdr->ifp == NULL) {
-				free(rdr, M_DEVBUF);
+				pool_put(&pf_rdr_pl, rdr);
 				error = ERROR_INVALID_PARAMETERS;
 				goto done;
 			}
@@ -1022,10 +1045,12 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct ip *h, struct tcphdr *th)
 
 	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL)) {
 		/* create new state */
-		u_int16_t len = h->ip_len - ((h->ip_hl + th->th_off) << 2);
-		struct state *s = malloc(sizeof(struct state), M_DEVBUF, M_NOWAIT);
+		u_int16_t len;
+		struct state *s;
+
+		len = h->ip_len - ((h->ip_hl + th->th_off) << 2);
+		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
-			printf("packetfilter: malloc() failed\n");
 			return PF_DROP;
 		}
 		s->proto	= IPPROTO_TCP;
@@ -1141,12 +1166,12 @@ pf_test_udp(int direction, struct ifnet *ifp, struct ip *h, struct udphdr *uh)
 
 	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL)) {
 		/* create new state */
-		u_int16_t len = h->ip_len - (h->ip_hl << 2) - 8;
-		struct state *s = malloc(sizeof(struct state),
-		    M_DEVBUF, M_NOWAIT);
+		u_int16_t len;
+		struct state *s;
 
+		len = h->ip_len - (h->ip_hl << 2) - 8;
+		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
-			printf("packetfilter: malloc() failed\n");
 			return PF_DROP;
 		}
 		s->proto	= IPPROTO_UDP;
@@ -1248,11 +1273,14 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *ih)
 
 	if (((rm != NULL) && rm->keep_state) || (nat != NULL)) {
 		/* create new state */
-		u_int16_t len = h->ip_len - (h->ip_hl << 2) - 8;
-		u_int16_t id = ih->icmp_hun.ih_idseq.icd_id;
-		struct state *s = malloc(sizeof(struct state), M_DEVBUF, M_NOWAIT);
+		u_int16_t len;
+		u_int16_t id;
+		struct state *s;
+
+		len = h->ip_len - (h->ip_hl << 2) - 8;
+		id = ih->icmp_hun.ih_idseq.icd_id;
+		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
-			printf("packetfilter: malloc() failed\n");
 			return PF_DROP;
 		}
 		s->proto	= IPPROTO_ICMP;
