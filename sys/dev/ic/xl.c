@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.45 2002/11/17 02:46:17 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.46 2002/11/25 16:07:08 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -765,8 +765,6 @@ void xl_setmode(sc, media)
 	u_int32_t icfg;
 	u_int16_t mediastat;
 
-	printf("xl%d: selecting ", sc->xl_unit);
-
 	XL_SEL_WIN(4);
 	mediastat = CSR_READ_2(sc, XL_W4_MEDIA_STATUS);
 	XL_SEL_WIN(3);
@@ -774,7 +772,6 @@ void xl_setmode(sc, media)
 
 	if (sc->xl_media & XL_MEDIAOPT_BT) {
 		if (IFM_SUBTYPE(media) == IFM_10_T) {
-			printf("10baseT transceiver, ");
 			sc->xl_xcvr = XL_XCVR_10BT;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_10BT << XL_ICFG_CONNECTOR_BITS);
@@ -786,7 +783,6 @@ void xl_setmode(sc, media)
 
 	if (sc->xl_media & XL_MEDIAOPT_BFX) {
 		if (IFM_SUBTYPE(media) == IFM_100_FX) {
-			printf("100baseFX port, ");
 			sc->xl_xcvr = XL_XCVR_100BFX;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_100BFX << XL_ICFG_CONNECTOR_BITS);
@@ -797,7 +793,6 @@ void xl_setmode(sc, media)
 
 	if (sc->xl_media & (XL_MEDIAOPT_AUI|XL_MEDIAOPT_10FL)) {
 		if (IFM_SUBTYPE(media) == IFM_10_5) {
-			printf("AUI port, ");
 			sc->xl_xcvr = XL_XCVR_AUI;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_AUI << XL_ICFG_CONNECTOR_BITS);
@@ -806,7 +801,6 @@ void xl_setmode(sc, media)
 			mediastat |= ~XL_MEDIASTAT_SQEENB;
 		}
 		if (IFM_SUBTYPE(media) == IFM_10_FL) {
-			printf("10baseFL transceiver, ");
 			sc->xl_xcvr = XL_XCVR_AUI;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_AUI << XL_ICFG_CONNECTOR_BITS);
@@ -818,7 +812,6 @@ void xl_setmode(sc, media)
 
 	if (sc->xl_media & XL_MEDIAOPT_BNC) {
 		if (IFM_SUBTYPE(media) == IFM_10_2) {
-			printf("BNC port, ");
 			sc->xl_xcvr = XL_XCVR_COAX;
 			icfg &= ~XL_ICFG_CONNECTOR_MASK;
 			icfg |= (XL_XCVR_COAX << XL_ICFG_CONNECTOR_BITS);
@@ -830,11 +823,9 @@ void xl_setmode(sc, media)
 
 	if ((media & IFM_GMASK) == IFM_FDX ||
 			IFM_SUBTYPE(media) == IFM_100_FX) {
-		printf("full duplex\n");
 		XL_SEL_WIN(3);
 		CSR_WRITE_1(sc, XL_W3_MAC_CTRL, XL_MACCTRL_DUPLEX);
 	} else {
-		printf("half duplex\n");
 		XL_SEL_WIN(3);
 		CSR_WRITE_1(sc, XL_W3_MAC_CTRL,
 			(CSR_READ_1(sc, XL_W3_MAC_CTRL) & ~XL_MACCTRL_DUPLEX));
