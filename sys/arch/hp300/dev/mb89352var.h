@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352var.h,v 1.3 2004/08/21 18:00:26 miod Exp $	*/
+/*	$OpenBSD: mb89352var.h,v 1.4 2004/12/22 21:07:29 miod Exp $	*/
 /*	$NetBSD: mb89352var.h,v 1.6 2003/08/02 12:48:09 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
@@ -175,7 +175,7 @@ struct spc_softc {
 	int	sc_ctlflags;
 
 	/* DMA function set from MD code */
-	void (*sc_dma_start)(struct spc_softc *, void *, size_t, int);
+	int (*sc_dma_start)(struct spc_softc *, void *, size_t, int);
 	void (*sc_dma_done)(struct spc_softc *);
 
 	/* Reset hook */

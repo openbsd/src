@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.8 2004/09/29 09:55:48 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.9 2004/12/22 21:07:29 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -96,7 +96,9 @@
  * kernel debugger.  If you set SPC_DEBUG to 0 they are not included (the
  * kernel uses less memory) but you lose the debugging facilities.
  */
-/* #define SPC_DEBUG */
+#if 0
+#define SPC_DEBUG
+#endif
 
 #define	SPC_ABORT_TIMEOUT	2000	/* time to wait for abort */
 
@@ -1811,9 +1813,11 @@ dophase:
 		SPC_MISC(("dataout dleft=%d  ", sc->sc_dleft));
 		if (sc->sc_dma_start != NULL &&
 		    sc->sc_dleft > SPC_MIN_DMA_LEN) {
-			(*sc->sc_dma_start)(sc, sc->sc_dp, sc->sc_dleft, 0);
-			sc->sc_prevphase = PH_DATAOUT;
-			goto out;
+			if ((*sc->sc_dma_start)
+			    (sc, sc->sc_dp, sc->sc_dleft, 0) == 0) {
+				sc->sc_prevphase = PH_DATAOUT;
+				goto out;
+			}
 		}
 		n = spc_dataout_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
@@ -1827,9 +1831,11 @@ dophase:
 		SPC_MISC(("datain  "));
 		if (sc->sc_dma_start != NULL &&
 		    sc->sc_dleft > SPC_MIN_DMA_LEN) {
-			(*sc->sc_dma_start)(sc, sc->sc_dp, sc->sc_dleft, 1);
-			sc->sc_prevphase = PH_DATAIN;
-			goto out;
+			if ((*sc->sc_dma_start)
+			    (sc, sc->sc_dp, sc->sc_dleft, 1) == 0) {
+				sc->sc_prevphase = PH_DATAIN;
+				goto out;
+			}
 		}
 		n = spc_datain_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
@@ -2007,7 +2013,8 @@ spc_dump_driver(struct spc_softc *sc)
 	struct spc_tinfo *ti;
 	int i;
 
-	printf("nexus=%p prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
+	printf("nexus=%p phase=%x prevphase=%x\n",
+	    sc->sc_nexus, sc->sc_phase, sc->sc_prevphase);
 	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x "
 	    "currmsg=%x\n", sc->sc_state, sc->sc_imess[0],
 	    sc->sc_msgpriq, sc->sc_msgoutq, sc->sc_lastmsg, sc->sc_currmsg);

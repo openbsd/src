@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.9 2004/09/29 07:35:52 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.10 2004/12/22 21:07:29 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -54,7 +54,7 @@
 
 int  spc_dio_match(struct device *, void *, void *);
 void spc_dio_attach(struct device *, struct device *, void *);
-void spc_dio_dmastart(struct spc_softc *, void *, size_t, int);
+int  spc_dio_dmastart(struct spc_softc *, void *, size_t, int);
 void spc_dio_dmadone(struct spc_softc *);
 void spc_dio_dmago(void *);
 void spc_dio_dmastop(void *);
@@ -169,10 +169,17 @@ spc_dio_attach(struct device *parent, struct device *self, void *aux)
 	hpspc_write(HPSCSI_CSR, CSR_IE);
 }
 
-void
+int
 spc_dio_dmastart(struct spc_softc *sc, void *addr, size_t size, int datain)
 {
 	struct spc_dio_softc *dsc = (struct spc_dio_softc *)sc;
+
+	/*
+	 * The HP98658 hardware cannot do odd length transfers, the
+	 * last byte of data will always be 0x00.
+	 */
+	if ((size & 1) != 0)
+		return (EINVAL);
 
 	dsc->sc_dq.dq_chan = DMA0 | DMA1;
 	dsc->sc_dflags |= SCSI_HAVEDMA;
@@ -185,6 +192,8 @@ spc_dio_dmastart(struct spc_softc *sc, void *addr, size_t size, int datain)
 		/* DMA channel is available, so start DMA immediately */
 		spc_dio_dmago((void *)dsc);
 	/* else dma start function will be called later from dmafree(). */
+
+	return (0);
 }
 
 void
