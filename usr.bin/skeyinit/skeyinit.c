@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.4 1996/09/27 15:49:04 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.5 1996/09/28 00:04:44 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -55,8 +55,7 @@ main(argc, argv)
 		errx(1, "must be setuid root.");
 
 	(void)time(&now);
-	tm = localtime(&now);
-	(void)strftime(tbuf, sizeof(tbuf), "%M%j", tm);
+	(void)sprintf(tbuf, "%05ld", (long) (now % 100000));
 
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
