@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.4 2001/11/27 02:33:15 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.5 2001/11/28 05:42:24 jason Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -296,9 +296,11 @@ beattach(parent, self, aux)
 	sc->sc_burst &= qec->sc_burst;
 
 	/* Establish interrupt handler */
-	if (sa->sa_nintr)
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
-					 0, beintr, sc);
+	if (sa->sa_nintr == 0 || bus_intr_establish(sa->sa_bustag, sa->sa_pri,
+	    IPL_NET, 0, beintr, sc) == NULL) {
+		printf(": no interrupt established\n");
+		return;
+	}
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
@@ -981,6 +983,11 @@ beioctl(ifp, cmd, data)
 	int s, error = 0;
 
 	s = splnet();
+
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return (error);
+	}
 
 	switch (cmd) {
 	case SIOCSIFADDR:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.4 2001/11/27 02:33:15 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.5 2001/11/28 05:42:24 jason Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -248,7 +248,12 @@ qeattach(parent, self, aux)
 	qestop(sc);
 
 	/* Note: no interrupt level passed */
-	(void)bus_intr_establish(sa->sa_bustag, 0, IPL_NET, 0, qeintr, sc);
+	if (bus_intr_establish(sa->sa_bustag, 0, IPL_NET, 0, qeintr, sc) ==
+	    NULL) {
+		printf(": no interrupt established\n");
+		return;
+	}
+
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 
 	/*
@@ -923,6 +928,11 @@ qeioctl(ifp, cmd, data)
 	int s, error = 0;
 
 	s = splnet();
+
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return (error);
+	}
 
 	switch (cmd) {
 	case SIOCSIFADDR:
