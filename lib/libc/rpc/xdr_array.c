@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_array.c,v 1.5 2002/07/29 23:00:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: xdr_array.c,v 1.6 2002/08/01 01:05:24 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -65,28 +65,25 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 	u_int elsize;		/* size in bytes of each element */
 	xdrproc_t elproc;	/* xdr routine to handle each element */
 {
-	u_int i;
 	caddr_t target = *addrp;
-	u_int c;  /* the actual element count */
+	u_int nodesize, c, i;
 	bool_t stat = TRUE;
-	u_int nodesize;
 
 	/* like strings, arrays are really counted arrays */
-	if (!xdr_u_int(xdrs, sizep)) {
+	if (!xdr_u_int(xdrs, sizep))
 		return (FALSE);
-	}
+
 	c = *sizep;
-	if ((c > maxsize && UINT_MAX/elsize < c) &&
-	    (xdrs->x_op != XDR_FREE)) {
+	if ((c > maxsize || c > UINT_MAX/elsize) &&
+	    xdrs->x_op != XDR_FREE)
 		return (FALSE);
-	}
 	nodesize = c * elsize;
 
 	/*
 	 * if we are deserializing, we may need to allocate an array.
 	 * We also save time by checking for a null array if we are freeing.
 	 */
-	if (target == NULL)
+	if (target == NULL) {
 		switch (xdrs->x_op) {
 		case XDR_DECODE:
 			if (c == 0)
@@ -94,14 +91,14 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 			*addrp = target = mem_alloc(nodesize);
 			if (target == NULL) {
 				(void) fprintf(stderr, 
-					"xdr_array: out of memory\n");
+				    "xdr_array: out of memory\n");
 				return (FALSE);
 			}
 			memset(target, 0, nodesize);
 			break;
-
 		case XDR_FREE:
 			return (TRUE);
+		}
 	}
 	
 	/*
@@ -140,16 +137,14 @@ xdr_vector(xdrs, basep, nelem, elemsize, xdr_elem)
 	u_int elemsize;
 	xdrproc_t xdr_elem;	
 {
-	u_int i;
 	char *elptr;
+	u_int i;
 
 	elptr = basep;
 	for (i = 0; i < nelem; i++) {
-		if (!(*xdr_elem)(xdrs, elptr)) {
+		if (!(*xdr_elem)(xdrs, elptr))
 			return(FALSE);
-		}
 		elptr += elemsize;
 	}
 	return(TRUE);	
 }
-
