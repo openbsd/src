@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.20 2000/03/26 16:45:00 millert Exp $
+# $OpenBSD: termtypes.master,v 1.21 2000/03/30 06:28:09 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -1796,7 +1796,7 @@ vt132|DEC vt132,
 # with the key marked (ESC) on the vt220.  See vt220d for an alternate mapping.
 # PF1--PF4 are used as F1--F4.
 #
-vt220-old|vt200-old|DEC VT220 in vt100 emulation mode, 
+vt220|vt200|DEC VT220 in vt100 emulation mode, 
 	OTbs, OTpt, am, mir, xenl, xon, 
 	cols#80, lines#24, vt#3, 
 	OTnl=^J, 
@@ -1821,9 +1821,7 @@ vt220-old|vt200-old|DEC VT220 in vt100 emulation mode,
 	smso=\E[7m, smul=\E[4m, 
 
 # A much better description of the VT200/220; used to be vt220-8
-# changed rmacs/smacs from shift-in/shift-out to vt200-old's explicit G0/G1
-# designation to accommodate bug in pcvt -TD
-vt220|vt200|dec vt220, 
+vt220-new|vt200-new|dec vt220, 
 	OTbs, am, mc5i, mir, msgr, xenl, xon, 
 	cols#80, it#8, lines#24, vt#3, 
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
@@ -1845,8 +1843,8 @@ vt220|vt200|dec vt220,
 	khome=\E[H, kich1=\E[2~, knp=\E[6~, kpp=\E[5~, krdo=\E[29~, 
 	kslt=\E[4~, lf1=pf1, lf2=pf2, lf3=pf3, lf4=pf4, mc0=\E[i, 
 	mc4=\E[4i, mc5=\E[5i, nel=\EE, rc=\E8, rev=\E[7m, ri=\EM, 
-	rmacs=\E(B$<4>, rmam=\E[?7l, rmir=\E[4l, rmso=\E[27m, 
-	rmul=\E[24m, rs1=\E[?3l, sc=\E7, sgr0=\E[m, smacs=\E(0$<2>, 
+	rmacs=^O, rmam=\E[?7l, rmir=\E[4l, rmso=\E[27m, 
+	rmul=\E[24m, rs1=\E[?3l, sc=\E7, sgr0=\E[m, smacs=^N, 
 	smam=\E[?7h, smir=\E[4h, smso=\E[7m, smul=\E[4m, tbc=\E[3g, 
 vt220-w|vt200-w|DEC vt220 in wide mode, 
 	cols#132, 
