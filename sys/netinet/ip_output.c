@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.81 2000/09/19 03:20:59 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.82 2000/09/29 03:51:11 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <net/pfkeyv2.h>
+#include <net/if_enc.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)    do { if (encdebug) printf x ; } while (0)
@@ -542,6 +543,27 @@ sendit:
 	if (sproto != 0) {
 	        s = splnet();
 
+#if defined(IPFILTER) || defined(IPFILTER_LKM)
+		if (fr_checkp) {
+		    /*
+		     * Ok, it's time for a simple round-trip to the IPF/NAT
+		     * code with the enc# interface
+		     */
+		    struct mbuf *m0 = m;
+		    void *ifp = tdb->tdb_interface ?
+				(void *)tdb->tdb_interface :
+				      (void *)&encif[0].sc_if;
+		    if ((*fr_checkp)(ip, hlen, ifp, 1, &m0)) {
+			error = EHOSTUNREACH;
+			splx(s);
+			goto done;
+		    } else {
+			ip = mtod(m = m0, struct ip *);
+			hlen = ip->ip_hl << 2;
+		    }
+  	        }
+#endif /* IPFILTER */
+		
 		tdb = gettdb(sspi, &sdst, sproto);
 		if (tdb == NULL) {
 			error = EHOSTUNREACH;
