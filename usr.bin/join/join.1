@@ -1,4 +1,4 @@
-.\"	$OpenBSD: join.1,v 1.14 2003/12/12 10:38:44 otto Exp $
+.\"	$OpenBSD: join.1,v 1.15 2003/12/28 19:53:23 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -164,8 +164,6 @@ or
 is
 .Dq - ,
 the standard input is used.
-.\" XXX - use .br as a work-around for an apparent bug in mdoc
-.br
 .Pp
 The
 .Nm
@@ -177,7 +175,22 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr sort 1 ,
 .Xr uniq 1
 .Sh STANDARDS
-For compatibility with historic versions of
+The
+.Nm
+command is expected to be
+.St -p1003.2
+compatible.
+.Pp
+In the absence of the
+.Fl o
+option,
+historical versions of
+.Nm
+wrote non-matching lines without reordering the fields.
+The current version writes the join field first, followed by the
+remaining fields.
+.Pp
+For compatibility with historical versions of
 .Nm join ,
 the following options are available:
 .Bl -tag -width Fl
@@ -211,11 +224,10 @@ This has obvious difficulties in the presence of files named
 .Dq 1.2 .
 .El
 .Pp
-These options are available only so historic shell scripts don't require
+These options are available only so historical shell scripts don't require
 modification and should not be used.
-.Pp
-The
+.Sh HISTORY
+A
 .Nm
-command is expected to be
-.St -p1003.2
-compatible.
+utility appeared in
+.At v7 .

@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.17 2003/12/12 10:38:44 otto Exp $	*/
+/* $OpenBSD: join.c,v 1.18 2003/12/28 19:53:23 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@ static const char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95"; */
-static const char rcsid[] = "$OpenBSD: join.c,v 1.17 2003/12/12 10:38:44 otto Exp $";
+static const char rcsid[] = "$OpenBSD: join.c,v 1.18 2003/12/28 19:53:23 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -449,9 +449,16 @@ outoneline(INPUT *F, LINE *lp)
 			else
 				outfield(lp, 0, 1);
 		}
-	else
+	else {
+		/*
+		 * Output the join field, then the remaining fields from F
+		 */
+		outfield(lp, F->joinf, 0);
 		for (cnt = 0; cnt < lp->fieldcnt; ++cnt)
-			outfield(lp, cnt, 0);
+			if (F->joinf != cnt)
+				outfield(lp, cnt, 0);
+	}
+
 	putchar('\n');
 	if (ferror(stdout))
 		err(1, "stdout");
