@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.32 2003/10/07 18:35:57 henning Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.33 2005/02/22 06:09:28 jaredy Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -78,8 +78,9 @@ The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
 .It Fl I Ar readdirsize
 Set the readdir read size to the specified value.
-The value should normally
-be a multiple of DIRBLKSIZ that is <= the read size for the mount.
+The value should normally be a multiple of
+.Dv DIRBLKSIZ
+that is less than or equal to the read size for the mount.
 .It Fl P
 The kernel always uses a reserved port number to communicate with
 clients.
@@ -89,25 +90,27 @@ with older systems.
 Set the retry count for doing the mount to the specified value.
 The default is 10000.
 .It Fl T
-Use TCP transport instead of UDP.
+Use TCP instead of UDP.
 This is recommended for servers that are not on the same LAN cable as
 the client.
 (NB: This is NOT supported by most non-BSD servers.)
 .It Fl U
-Force the mount protocol to use UDP transport, even for TCP NFS mounts.
-(Necessary for some old BSD servers.)
+Force the mount protocol to use UDP, even for TCP NFS mounts.
+(Necessary for some old
+.Bx
+servers.)
 .It Fl a Ar maxreadahead
 Set the read-ahead count to the specified value.
-This may be in the range of 0 - 4, and determines how many blocks
+This may be in the range of 0\-4, and determines how many blocks
 will be read ahead when a large file is being read sequentially.
 Trying a value greater than 1 for this is suggested for
-mounts with a large bandwidth * delay product.
+mounts with a large bandwidth-delay product.
 .It Fl b
 If an initial attempt to contact the server fails, fork off a child to keep
 trying the mount in the background.
 Useful for
 .Xr fstab 5 ,
-where the filesystem mount is not critical to multiuser operation.
+where the file system mount is not critical to multiuser operation.
 .It Fl c
 For UDP mount points, do not do a
 .Xr connect 2 .
@@ -140,8 +143,8 @@ This option reduces RPC traffic for cases such as
 but tends to flood the attribute and name caches with prefetched entries.
 Try this option and see whether performance improves or degrades.
 Probably
-most useful for client to server network interconnects with a large bandwidth
-times delay product.
+most useful for client to server network interconnects with a large
+bandwidth-delay product.
 .It Fl o Ar options
 Options are specified with a
 .Fl o
@@ -174,21 +177,20 @@ The default is 5 seconds.
 .It noac
 Disable attribute caching for both files and directories.
 .It port=portnumber
-Use specified port number for NFS requests.
+Use the specified port number for NFS requests.
 The default is to query the portmapper for the NFS port.
 .El
 .It Fl r Ar readsize
 Set the read data size to the specified value.
 It should normally be a power of 2 greater than or equal to 1024.
 This should be used for UDP mounts when the
-.Dq "fragments dropped due to timeout"
+.Dq "fragments dropped after timeout"
 value is getting large while actively using a mount point.
 (Use
 .Xr netstat 1
 with the
 .Fl s
-option to see what the
-.Dq "fragments dropped due to timeout"
+option to see what this
 value is.)
 See the
 .Fl w
@@ -214,7 +216,7 @@ Set the write data size to the specified value.
 Ditto the comments w.r.t. the
 .Fl r
 option, but using the
-.Dq "fragments dropped due to timeout"
+.Dq "fragments dropped after timeout"
 value on the server instead of the client.
 Note that both the
 .Fl r
@@ -228,7 +230,7 @@ Set the retransmit timeout count for soft mounts to the specified value.
 .Pp
 In versions prior to
 .Ox 2.7 ,
-.Nm nfsiod
+.Li nfsiod
 daemons were running to improve performance of client NFS I/O.
 This is no longer done this way.
 Use
@@ -236,7 +238,7 @@ Use
 or modify
 .Xr sysctl.conf 5
 to adjust the
-.Nm vfs.nfs.iothreads
+.Va vfs.nfs.iothreads
 value, which is the number of kernel threads created
 to serve asynchronous NFS I/O requests.
 .Sh SEE ALSO
@@ -247,12 +249,12 @@ to serve asynchronous NFS I/O requests.
 .Xr sysctl 8 ,
 .Xr umount 8
 .Sh BUGS
-Due to the way that Sun RPC is implemented on top of UDP (unreliable datagram)
-transport, tuning such mounts is really a black art that can only be expected
+Due to the way that Sun RPC is implemented on top of UDP (unreliable datagram),
+tuning such mounts is really a black art that can only be expected
 to have limited success.
 For clients mounting servers that are not on the same
 LAN cable or that tend to be overloaded,
-TCP transport is strongly recommended,
+TCP is strongly recommended,
 but unfortunately this is restricted to mostly
 .Bx 4.4
 servers.
