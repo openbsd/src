@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.41 2001/07/04 05:52:16 angelos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.42 2001/07/04 16:52:03 dhartmei Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -508,8 +508,9 @@ icmp_input(m, va_alist)
 			icmpdst.sin_addr = ip->ip_src;
 		else
 			icmpdst.sin_addr = ip->ip_dst;
-		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
-		    m->m_pkthdr.rcvif));
+		if (m->m_pkthdr.rcvif != NULL)
+			ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
+			    m->m_pkthdr.rcvif));
 		if (ia == 0)
 			break;
 		icp->icmp_type = ICMP_MASKREPLY;
@@ -632,7 +633,7 @@ icmp_reflect(m)
 			break;
 	}
 	icmpdst.sin_addr = t;
-	if (ia == (struct in_ifaddr *)0)
+	if ((ia == (struct in_ifaddr *)0) && (m->m_pkthdr.rcvif != NULL))
 		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
 					      m->m_pkthdr.rcvif));
 	/*
