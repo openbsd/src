@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.20 1998/03/04 10:58:11 niklas Exp $	*/
-/*	$NetBSD: pmap.c,v 1.96 1997/09/14 19:20:48 pk Exp $ */
+/*	$OpenBSD: pmap.c,v 1.21 1998/05/10 18:30:40 deraadt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 1998/05/06 14:17:53 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -192,16 +192,18 @@ struct pvlist {
 /*
  * Flags in pv_flags.  Note that PV_MOD must be 1 and PV_REF must be 2
  * since they must line up with the bits in the hardware PTEs (see pte.h).
- * Sun4M bits are different (reversed), and at a different location in the
- * pte. Now why did they do that?
+ * SUN4M bits are at a slightly different location in the PTE.
+ * Note: the REF, MOD and ANC flag bits occur only in the head of a pvlist.
+ * The cacheable bit (either PV_NC or PV_C4M) is meaningful in each
+ * individual pv entry.
  */
-#define PV_MOD	1		/* page modified */
-#define PV_REF	2		/* page referenced */
-#define PV_NC	4		/* page cannot be cached */
-#define PV_REF4M	1	/* page referenced on sun4m */
-#define PV_MOD4M	2	/* page modified on 4m (why reversed?!?) */
-#define PV_C4M		4	/* page _can_ be cached on 4m */
-/*efine	PV_ALLF	7		** all of the above */
+#define PV_MOD		1	/* page modified */
+#define PV_REF		2	/* page referenced */
+#define PV_NC		4	/* page cannot be cached */
+#define PV_REF4M	1	/* page referenced (SRMMU) */
+#define PV_MOD4M	2	/* page modified (SRMMU) */
+#define PV_C4M		4	/* page _can_ be cached (SRMMU) */
+#define PV_ANC		0x10	/* page has incongruent aliases */
 
 struct pvlist *pv_table;	/* array of entries, one per physical page */
 
@@ -447,7 +449,7 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 			  int, struct pvlist *, int));
 /*static*/ void pv_changepte4m __P((struct pvlist *, int, int));
 /*static*/ int  pv_syncflags4m __P((struct pvlist *));
-/*static*/ int  pv_link4m __P((struct pvlist *, struct pmap *, vm_offset_t));
+/*static*/ int  pv_link4m __P((struct pvlist *, struct pmap *, vm_offset_t, int));
 /*static*/ void pv_unlink4m __P((struct pvlist *, struct pmap *, vm_offset_t));
 #endif
 
@@ -463,7 +465,7 @@ static void  mmu_setup4m_L3 __P((int, struct segmap *));
 			  int, struct pvlist *, int));
 /*static*/ void pv_changepte4_4c __P((struct pvlist *, int, int));
 /*static*/ int  pv_syncflags4_4c __P((struct pvlist *));
-/*static*/ int  pv_link4_4c __P((struct pvlist *, struct pmap *, vm_offset_t));
+/*static*/ int  pv_link4_4c __P((struct pvlist *, struct pmap *, vm_offset_t, int));
 /*static*/ void pv_unlink4_4c __P((struct pvlist *, struct pmap *, vm_offset_t));
 #endif
 
@@ -641,25 +643,14 @@ setptesw4m(pm, va, pte)
 /* Set the page table entry for va to pte. */
 __inline void
 setpte4m(va, pte)
-	register vm_offset_t va;
-	register int pte;
+	vm_offset_t va;
+	int pte;
 {
-	register struct pmap *pm;
-	register struct regmap *rm;
-	register struct segmap *sm;
-	register union ctxinfo *c;
+	struct pmap *pm;
+	struct regmap *rm;
+	struct segmap *sm;
+	union ctxinfo *c;
 
-	/*
-	 * Walk tables to find pte. We use ctxinfo to locate the pmap
-	 * from the current context.
-	 */
-#if 0
-#ifdef DEBUG
-	if (ctxbusyvector[getcontext4m()] == 0)
-		panic("setpte4m: no pmap for current context (%d)",
-		      getcontext4m());
-#endif
-#endif
 	c = &cpuinfo.ctxinfo[getcontext4m()];
 	pm = c->c_pmap;
 
@@ -672,8 +663,13 @@ setpte4m(va, pte)
 	sm = &rm->rg_segmap[VA_VSEG(va)];
 
 #ifdef DEBUG
-	if (rm->rg_segmap == NULL || sm == NULL || sm->sg_pte == NULL)
-		panic("setpte4m: no segmap for va %p", (caddr_t)va);
+	if (rm == NULL || rm->rg_segmap == NULL)
+		panic("setpte4m: no segmap for va %p (rp=%p)",
+			(caddr_t)va, (caddr_t)rm);   
+
+	if (sm == NULL || sm->sg_pte == NULL)
+		panic("setpte4m: no pte for va %p (rp=%p, sp=%p)",
+			(caddr_t)va, rm, sm);
 #endif
 	tlb_flush_page(va);
 	setpgt4m(sm->sg_pte + VA_SUN4M_VPG(va), pte);
@@ -1911,19 +1907,24 @@ ctx_free(pm)
  * as long as the process has a context; this is overly conservative.
  * It also copies ref and mod bits to the pvlist, on the theory that
  * this might save work later.  (XXX should test this theory)
+ *
+ * In addition, if the cacheable bit (PG_NC) is updated in the PTE
+ * the corresponding PV_NC flag is also updated in each pv entry. This
+ * is done so kvm_uncache() can use this routine and have the uncached
+ * status stick.
  */
 
 #if defined(SUN4) || defined(SUN4C)
 
 void
 pv_changepte4_4c(pv0, bis, bic)
-	register struct pvlist *pv0;
-	register int bis, bic;
+	struct pvlist *pv0;
+	int bis, bic;
 {
-	register int *pte;
-	register struct pvlist *pv;
-	register struct pmap *pm;
-	register int va, vr, vs, flags;
+	int *pte;
+	struct pvlist *pv;
+	struct pmap *pm;
+	int va, vr, vs;
 	int ctx, s;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -1936,7 +1937,6 @@ pv_changepte4_4c(pv0, bis, bic)
 		return;
 	}
 	ctx = getcontext4();
-	flags = pv0->pv_flags;
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
 		pm = pv->pv_pmap;
 #ifdef DIAGNOSTIC
@@ -1995,14 +1995,19 @@ pv_changepte4_4c(pv0, bis, bic)
 				tpte = getpte4(va);
 			}
 			if (tpte & PG_V)
-				flags |= MR4_4C(tpte);
+				pv0->pv_flags |= MR4_4C(tpte);
 			tpte = (tpte | bis) & ~bic;
 			setpte4(va, tpte);
 			if (pte != NULL)	/* update software copy */
 				pte[VA_VPG(va)] = tpte;
+
+			/* Update PV_NC flag if required */
+			if (bis & PG_NC)
+				pv->pv_flags |= PV_NC;
+			if (bic & PG_NC)
+				pv->pv_flags &= ~PV_NC;
 		}
 	}
-	pv0->pv_flags = flags;
 	setcontext4(ctx);
 	splx(s);
 }
@@ -2104,13 +2109,24 @@ pv_unlink4_4c(pv, pm, va)
 	if (pv->pv_pmap == pm && pv->pv_va == va) {
 		pmap_stats.ps_unlink_pvfirst++;
 		if (npv != NULL) {
+			/*
+			 * Shift next entry into the head.
+			 * Make sure to retain the REF, MOD and ANC flags.
+			 */
 			pv->pv_next = npv->pv_next;
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
+			pv->pv_flags &= ~PV_NC;
+			pv->pv_flags |= npv->pv_flags & PV_NC;
 			FREE(npv, M_VMPVENT);
 		} else {
+			/*
+			 * No mappings left; we still need to maintain
+			 * the REF and MOD flags. since pmap_is_modified()
+			 * can still be called for this page.
+			 */
 			pv->pv_pmap = NULL;
-			pv->pv_flags &= ~PV_NC;
+			pv->pv_flags &= ~(PV_NC|PV_ANC);
 			return;
 		}
 	} else {
@@ -2126,15 +2142,15 @@ pv_unlink4_4c(pv, pm, va)
 		prev->pv_next = npv->pv_next;
 		FREE(npv, M_VMPVENT);
 	}
-	if (pv->pv_flags & PV_NC) {
+	if (pv->pv_flags & PV_ANC && (pv->pv_flags & PV_NC) == 0) {
 		/*
 		 * Not cached: check to see if we can fix that now.
 		 */
 		va = pv->pv_va;
 		for (npv = pv->pv_next; npv != NULL; npv = npv->pv_next)
-			if (BADALIAS(va, npv->pv_va))
+			if (BADALIAS(va, npv->pv_va) || (npv->pv_flags & PV_NC))
 				return;
-		pv->pv_flags &= ~PV_NC;
+		pv->pv_flags &= ~PV_ANC;
 		pv_changepte4_4c(pv, 0, PG_NC);
 	}
 }
@@ -2145,13 +2161,16 @@ pv_unlink4_4c(pv, pm, va)
  * be cached.
  */
 /*static*/ int
-pv_link4_4c(pv, pm, va)
-	register struct pvlist *pv;
-	register struct pmap *pm;
-	register vm_offset_t va;
+pv_link4_4c(pv, pm, va, nc)
+	struct pvlist *pv;
+	struct pmap *pm;
+	vm_offset_t va;
+	int nc;
 {
-	register struct pvlist *npv;
-	register int ret;
+	struct pvlist *npv;
+	int ret;
+
+	ret = nc ? PG_NC : 0;
 
 	if (pv->pv_pmap == NULL) {
 		/* no pvlist entries yet */
@@ -2159,21 +2178,24 @@ pv_link4_4c(pv, pm, va)
 		pv->pv_next = NULL;
 		pv->pv_pmap = pm;
 		pv->pv_va = va;
-		return (0);
+		pv->pv_flags |= nc ? PV_NC : 0;
+		return (ret);
 	}
 	/*
 	 * Before entering the new mapping, see if
 	 * it will cause old mappings to become aliased
 	 * and thus need to be `discached'.
 	 */
-	ret = 0;
 	pmap_stats.ps_enter_secondpv++;
-	if (pv->pv_flags & PV_NC) {
+	if (pv->pv_flags & (PV_NC|PV_ANC)) {
 		/* already uncached, just stay that way */
 		ret = PG_NC;
 	} else {
-		/* MAY NEED TO DISCACHE ANYWAY IF va IS IN DVMA SPACE? */
 		for (npv = pv; npv != NULL; npv = npv->pv_next) {
+			if (npv->pv_flags & PV_NC) {
+				ret = PG_NC;
+				break;
+			}
 			if (BADALIAS(va, npv->pv_va)) {
 #ifdef DEBUG
 				if (pmapdebug & PDB_CACHESTUFF)
@@ -2183,7 +2205,8 @@ pv_link4_4c(pv, pm, va)
 					va, npv->pv_va,
 					vm_first_phys + (pv-pv_table)*NBPG);
 #endif
-				pv->pv_flags |= PV_NC;
+				/* Mark list head `uncached due to aliases' */
+				pv->pv_flags |= PV_ANC;
 				pv_changepte4_4c(pv, ret = PG_NC, 0);
 				break;
 			}
@@ -2193,6 +2216,7 @@ pv_link4_4c(pv, pm, va)
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
+	npv->pv_flags = nc ? PV_NC : 0;
 	pv->pv_next = npv;
 	return (ret);
 }
@@ -2212,15 +2236,20 @@ pv_link4_4c(pv, pm, va)
  * as long as the process has a context; this is overly conservative.
  * It also copies ref and mod bits to the pvlist, on the theory that
  * this might save work later.  (XXX should test this theory)
+ *
+ * In addition, if the cacheable bit (SRMMU_PG_C) is updated in the PTE
+ * the corresponding PV_C4M flag is also updated in each pv entry. This
+ * is done so kvm_uncache() can use this routine and have the uncached
+ * status stick.
  */
 void
 pv_changepte4m(pv0, bis, bic)
-	register struct pvlist *pv0;
-	register int bis, bic;
+	struct pvlist *pv0;
+	int bis, bic;
 {
-	register struct pvlist *pv;
-	register struct pmap *pm;
-	register int va, vr, flags;
+	struct pvlist *pv;
+	struct pmap *pm;
+	int va, vr;
 	int ctx, s;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -2233,9 +2262,8 @@ pv_changepte4m(pv0, bis, bic)
 		return;
 	}
 	ctx = getcontext4m();
-	flags = pv0->pv_flags;
 	for (pv = pv0; pv != NULL; pv = pv->pv_next) {
-		register int tpte;
+		int tpte;
 		pm = pv->pv_pmap;
 #ifdef DIAGNOSTIC
 		if (pm == NULL)
@@ -2283,12 +2311,18 @@ pv_changepte4m(pv0, bis, bic)
 			continue;
 		}
 
-		flags |= (tpte >> PG_M_SHIFT4M) & (PV_MOD4M|PV_REF4M|PV_C4M);
+		pv0->pv_flags |= MR4M(tpte);
 		tpte = (tpte | bis) & ~bic;
-
 		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], tpte);
+
+		/* Update PV_C4M flag if required */
+		if (bis & SRMMU_PG_C)
+			pv->pv_flags |= PV_C4M;
+		if (bic & SRMMU_PG_C)
+			pv->pv_flags &= ~PV_C4M;
+
+
 	}
-	pv0->pv_flags = flags;
 	setcontext4m(ctx);
 	splx(s);
 }
@@ -2345,8 +2379,7 @@ pv_syncflags4m(pv0)
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE && /* if valid pte */
 		    (tpte & (SRMMU_PG_M|SRMMU_PG_R))) {	  /* and mod/refd */
 
-			flags |= (tpte >> PG_M_SHIFT4M) &
-				 (PV_MOD4M|PV_REF4M|PV_C4M);
+			flags |= MR4M(tpte);
 
 			if (pm->pm_ctx && (tpte & SRMMU_PG_M)) {
 				cache_flush_page(va); /* XXX: do we need this?*/
@@ -2383,13 +2416,24 @@ pv_unlink4m(pv, pm, va)
 	if (pv->pv_pmap == pm && pv->pv_va == va) {
 		pmap_stats.ps_unlink_pvfirst++;
 		if (npv != NULL) {
+			/*
+			 * Shift next entry into the head.
+			 * Make sure to retain the REF, MOD and ANC flags.
+			 */
 			pv->pv_next = npv->pv_next;
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
+			pv->pv_flags &= ~PV_C4M;
+			pv->pv_flags |= (npv->pv_flags & PV_C4M);
 			FREE(npv, M_VMPVENT);
 		} else {
+			/*
+			 * No mappings left; we still need to maintain
+			 * the REF and MOD flags. since pmap_is_modified()
+			 * can still be called for this page.
+			 */
 			pv->pv_pmap = NULL;
-			pv->pv_flags |= PV_C4M;
+			pv->pv_flags &= ~(PV_C4M|PV_ANC);
 			return;
 		}
 	} else {
@@ -2405,15 +2449,16 @@ pv_unlink4m(pv, pm, va)
 		prev->pv_next = npv->pv_next;
 		FREE(npv, M_VMPVENT);
 	}
-	if (!(pv->pv_flags & PV_C4M)) {
+	if ((pv->pv_flags & (PV_C4M|PV_ANC)) == (PV_C4M|PV_ANC)) {
 		/*
 		 * Not cached: check to see if we can fix that now.
 		 */
 		va = pv->pv_va;
 		for (npv = pv->pv_next; npv != NULL; npv = npv->pv_next)
-			if (BADALIAS(va, npv->pv_va))
+			if (BADALIAS(va, npv->pv_va) ||
+			    (npv->pv_flags & PV_C4M) == 0)
 				return;
-		pv->pv_flags |= PV_C4M;
+		pv->pv_flags &= PV_ANC;
 		pv_changepte4m(pv, SRMMU_PG_C, 0);
 	}
 }
@@ -2424,13 +2469,16 @@ pv_unlink4m(pv, pm, va)
  * be cached (i.e. its results must be (& ~)'d in.
  */
 /*static*/ int
-pv_link4m(pv, pm, va)
-	register struct pvlist *pv;
-	register struct pmap *pm;
-	register vm_offset_t va;
+pv_link4m(pv, pm, va, nc)
+	struct pvlist *pv;
+	struct pmap *pm;
+	vm_offset_t va;
+	int nc;
 {
-	register struct pvlist *npv;
-	register int ret;
+	struct pvlist *npv;
+	int ret;
+
+	ret = nc ? SRMMU_PG_C : 0;
 
 	if (pv->pv_pmap == NULL) {
 		/* no pvlist entries yet */
@@ -2438,21 +2486,24 @@ pv_link4m(pv, pm, va)
 		pv->pv_next = NULL;
 		pv->pv_pmap = pm;
 		pv->pv_va = va;
-		pv->pv_flags |= PV_C4M;
-		return (0);
+		pv->pv_flags |= nc ? 0 : PV_C4M;
+		return (ret);
 	}
 	/*
 	 * Before entering the new mapping, see if
 	 * it will cause old mappings to become aliased
 	 * and thus need to be `discached'.
 	 */
-	ret = 0;
 	pmap_stats.ps_enter_secondpv++;
-	if (!(pv->pv_flags & PV_C4M)) {
+	if ((pv->pv_flags & PV_ANC) != 0 || (pv->pv_flags & PV_C4M) == 0) {
 		/* already uncached, just stay that way */
 		ret = SRMMU_PG_C;
 	} else {
 		for (npv = pv; npv != NULL; npv = npv->pv_next) {
+			if ((npv->pv_flags & PV_C4M) == 0) {
+				ret = SRMMU_PG_C;
+				break;
+			}
 			if (BADALIAS(va, npv->pv_va)) {
 #ifdef DEBUG
 				if (pmapdebug & PDB_CACHESTUFF)
@@ -2462,7 +2513,8 @@ pv_link4m(pv, pm, va)
 					va, npv->pv_va,
 					vm_first_phys + (pv-pv_table)*NBPG);
 #endif
-				pv->pv_flags &= ~PV_C4M;
+				/* Mark list head `uncached due to aliases' */
+				pv->pv_flags |= PV_ANC;
 				pv_changepte4m(pv, 0, ret = SRMMU_PG_C);
 				/* cache_flush_page(va); XXX: needed? */
 				break;
@@ -2473,7 +2525,7 @@ pv_link4m(pv, pm, va)
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
-	npv->pv_flags |= (ret == SRMMU_PG_C ? 0 : PV_C4M);
+	npv->pv_flags = nc ? 0 : PV_C4M;
 	pv->pv_next = npv;
 	return (ret);
 }
@@ -5070,7 +5122,7 @@ printf("pmap_enk: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x\n",
 	 * unique (hence will never cause a second call to malloc).
 	 */
 	if (pv != NULL)
-		pteproto |= pv_link4_4c(pv, pm, va);
+		pteproto |= pv_link4_4c(pv, pm, va, pteproto & PG_NC);
 
 	if (sp->sg_pmeg == seginval) {
 		register int tva;
@@ -5260,7 +5312,7 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa entry\n",
 	}
 
 	if (pv != NULL)
-		pteproto |= pv_link4_4c(pv, pm, va);
+		pteproto |= pv_link4_4c(pv, pm, va, pteproto & PG_NC);
 
 	/*
 	 * Update hardware & software PTEs.
@@ -5436,7 +5488,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 	 * unique (hence will never cause a second call to malloc).
 	 */
 	if (pv != NULL)
-	        pteproto &= ~(pv_link4m(pv, pm, va));
+	        pteproto &= ~(pv_link4m(pv, pm, va, (pteproto & SRMMU_PG_C) == 0));
 
 #ifdef DEBUG
 	if (sp->sg_pte == NULL) /* If no existing pagetable */
@@ -5597,7 +5649,7 @@ printf("%s[%d]: pmap_enu: changing existing va(0x%x)=>pa(pte=0x%x) entry\n",
 		}
 	}
 	if (pv != NULL)
-		pteproto &= ~(pv_link4m(pv, pm, va));
+	        pteproto &= ~(pv_link4m(pv, pm, va, (pteproto & SRMMU_PG_C) == 0));
 
 	/*
 	 * Update PTEs, flush TLB as necessary.
@@ -5794,12 +5846,16 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 		npg = len >> PGSHIFT;
 		for (i = 0; i < npg; i++) {
 			tlb_flush_page(src_addr);
-			rm = &src_pmap->pm_regmap[VA_VREG(src_addr)];
-			if (rm == NULL)
+			if ((rm = src_pmap->pm_regmap) == NULL)
 				continue;
-			sm = &rm->rg_segmap[VA_VSEG(src_addr)];
-			if (sm == NULL || sm->sg_npte == 0)
+			rm += VA_VREG(src_addr);
+
+			if ((sm = rm->rg_segmap) == NULL)
 				continue;
+			sm += VA_VSEG(src_addr);
+			if (sm->sg_npte == 0)
+				continue;
+
 			pte = sm->sg_pte[VA_SUN4M_VPG(src_addr)];
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				continue;
@@ -6198,22 +6254,37 @@ pmap_phys_address(x)
  */
 void
 kvm_uncache(va, npages)
-	register caddr_t va;
-	register int npages;
+	caddr_t va;
+	int npages;
 {
-	register int pte;
+	int pte;
+	vm_offset_t pa;
 
 	if (CPU_ISSUN4M) {
 #if defined(SUN4M)
+		int ctx = getcontext4m();
+
+
+		setcontext4m(0);
 		for (; --npages >= 0; va += NBPG) {
 			pte = getpte4m((vm_offset_t) va);
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				panic("kvm_uncache: table entry not pte");
-			pte &= ~SRMMU_PG_C;
-			setpte4m((vm_offset_t) va, pte);
-			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
-				cache_flush_page((int)va);
+
+			pa = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
+			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM &&
+			    managed(pa)) {
+				pv_changepte4m(pvhead(pa), 0, SRMMU_PG_C);
+			} else {
+
+				pte &= ~SRMMU_PG_C;
+				setpte4m((vm_offset_t) va, pte);
+				if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
+					cache_flush_page((int)va);
+			}
 		}
+		setcontext4m(ctx);
+
 #endif
 	} else {
 #if defined(SUN4) || defined(SUN4C)
@@ -6221,10 +6292,18 @@ kvm_uncache(va, npages)
 			pte = getpte4(va);
 			if ((pte & PG_V) == 0)
 				panic("kvm_uncache !pg_v");
-			pte |= PG_NC;
-			setpte4(va, pte);
-			if ((pte & PG_TYPE) == PG_OBMEM)
-				cache_flush_page((int)va);
+
+			pa = ptoa(pte & PG_PFNUM);
+			if ((pte & PG_TYPE) == PG_OBMEM &&
+			    managed(pa)) {
+				pv_changepte4_4c(pvhead(pa), PG_NC, 0);
+			} else {
+
+				pte |= PG_NC;
+				setpte4(va, pte);
+				if ((pte & PG_TYPE) == PG_OBMEM)
+					cache_flush_page((int)va);
+			}
 		}
 #endif
 	}
