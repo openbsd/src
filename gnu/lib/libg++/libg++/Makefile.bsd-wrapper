@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1998/03/03 21:40:15 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 1998/06/07 23:22:11 millert Exp $
 
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -83,15 +83,15 @@ clean: _SUBDIRUSE
 afterinstall:
 	@-cd $(.CURDIR); for i in libg++.info*; do \
 		cmp -s $$i $(DESTDIR)/usr/share/info/$$i || \
-		install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		$(INSTALL) -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
 		$$i $(DESTDIR)/usr/share/info/$$i; \
 	done
 
 includes:
-	@-install -d -m 755 -o $(BINOWN) -g $(BINGRP) $(DESTDIR)/usr/include/g++/gen
+	@-$(INSTALL) -d -m 755 -o $(BINOWN) -g $(BINGRP) $(DESTDIR)/usr/include/g++/gen
 	@-cd $(.CURDIR)/src; for i in *.h gen/*.ccP gen/*.hP; do \
 		cmp -s $$i $(DESTDIR)/usr/include/g++/$$i || \
-		install -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+		$(INSTALL) -c -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
 		$$i $(DESTDIR)/usr/include/g++/$$i; \
 	done
 
