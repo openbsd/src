@@ -1,4 +1,4 @@
-.\"	$OpenBSD: format.8,v 1.3 2000/03/02 14:46:51 todd Exp $
+.\"	$OpenBSD: format.8,v 1.4 2000/10/13 04:09:23 aaron Exp $
 .\" Copyright (c) 1980, 1983 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -42,7 +42,7 @@ There are two ways to format disk packs.  The simplest is to
 use the
 .I format
 program.  The alternative is to use the DEC standard formatting
-software which operates under the DEC diagnostic supervisor. 
+software which operates under the DEC diagnostic supervisor.
 This manual page describes the operation of
 .IR format ,
 then concludes with some remarks about using the DEC formatter.
@@ -55,7 +55,7 @@ In addition to the formatting
 operation,
 .I format
 records any bad sectors encountered
-according to DEC standard 144. 
+according to DEC standard 144.
 Formatting is performed one track at a
 time by writing the appropriate
 headers and a test pattern and then checking
@@ -76,7 +76,7 @@ is written to the disk in the first five
 even numbered sectors of the last track.
 It is also possible to reformat sections of the disk
 in units of tracks.
-.I Format 
+.I Format
 may be used on any UNIBUS or MASSBUS drive
 supported by the \fIup\fP and \fIhp\fP device
 drivers which uses 4-byte headers (everything except RP's).
@@ -124,7 +124,7 @@ uses the standard notation of the standalone I/O library
 in identifying a drive to be formatted.  A drive is
 specified as
 .IR zz ( x , y ),
-where 
+where
 .I zz
 refers to the controller type (either
 .I hp
@@ -139,20 +139,20 @@ drive unit number; and
 is the file system partition
 on drive
 .I x
-(this should always be 0). 
+(this should always be 0).
 For example, ``hp(1,0)'' indicates that drive
 1 on MASSBUS adaptor 0 should be formatted; while
 ``up(10,0)'' indicates that UNIBUS drive 2 on UNIBUS adaptor 1
 should be formatted.
 .PP
-Before each formatting attempt, 
+Before each formatting attempt,
 .I format
 prompts the user in case debugging should be enabled
 in the appropriate device driver.  A carriage return
 disables debugging information.
 .PP
 .I Format
-should be used prior to building file systems (with 
+should be used prior to building file systems (with
 .IR newfs (8))
 to insure that all sectors with uncorrectable media errors
 are remapped.  If a drive develops uncorrectable
@@ -162,10 +162,10 @@ or
 .IR badsect (8)
 should be able to avoid the bad sectors.
 .SH EXAMPLE
-A sample run of 
+A sample run of
 .I format
-is shown below.  
-In this example (using a VAX-11/780), 
+is shown below.
+In this example (using a VAX-11/780),
 .I format
 is loaded from the console floppy;
 on an 11/750
@@ -233,7 +233,7 @@ covered in detail here.
 .I
 .PP
 The formatting procedures are different for each type of disk.  Listed
-here are the formatting procedures for RK07's, RP0X, and RM0X 
+here are the formatting procedures for RK07's, RP0X, and RM0X
 disks.
 .PP
 You should shut down UNIX and halt the machine to do any disk formatting.
@@ -288,7 +288,7 @@ badsect(8),
 newfs(8)
 .SH BUGS
 An equivalent facility should be available which operates under
-a running UNIX system. 
+a running UNIX system.
 .PP
 It should be possible to reformat or verify part or all of a disk,
 then update the existing bad sector table.

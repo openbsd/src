@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2000/04/26 16:01:09 millert Exp $
+#	$OpenBSD: Makefile,v 1.9 2000/10/13 04:09:19 aaron Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	assert.3 bitstring.3 dlfcn.3 end.3 intro.3 queue.3 stdarg.3 sysexits.3
@@ -28,7 +28,7 @@ MLINKS+=queue.3 TAILQ_ENTRY.3 queue.3 TAILQ_HEAD.3 \
 	queue.3 TAILQ_INSERT_TAIL.3 queue.3 TAILQ_REMOVE.3 \
 	queue.3 TAILQ_INSERT_AFTER.3 \
 	queue.3 TAILQ_FOREACH.3 queue.3 TAILQ_FOREACH_REVERSE.3 \
-	queue.3 TAILQ_EMPTY.3 
+	queue.3 TAILQ_EMPTY.3
 MLINKS+=queue.3 CIRCLEQ_ENTRY.3 queue.3 CIRCLEQ_HEAD.3 \
 	queue.3 CIRCLEQ_HEAD_INITIALIZER.3 queue.3 CIRCLEQ_FIRST.3 \
 	queue.3 CIRCLEQ_LAST.3 queue.3 CIRCLEQ_END.3 queue.3 CIRCLEQ_NEXT.3 \

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcibios.4,v 1.2 2000/08/17 21:50:03 deraadt Exp $
+.\" $OpenBSD: pcibios.4,v 1.3 2000/10/13 04:09:20 aaron Exp $
 .\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
 .\"
 .\" Copyright (c) 2000 Michale Shalayeff, All rights reserved.
@@ -89,11 +89,11 @@ space unallocated, the CardBus bridge device driver doesn't
 require this option, since the driver allocates necessary space
 by itself.
 .It 0x0002
-Fixup PCI bus numbering; needed for many 
+Fixup PCI bus numbering; needed for many
 .Xr cardbus 4
 bridges.
 .Pp
-Each PCI bus and CardBus should have a unique bus number. 
+Each PCI bus and CardBus should have a unique bus number.
 But some BIOS implementations don't assign a bus number
 for subordinate PCI buses. And many BIOS implementations
 don't assign a bus number for CardBuses.
@@ -106,9 +106,9 @@ but normally the bus number 0 is used by the machine's
 primary PCI bus. Thus, this bus number for cardbus is
 incorrect
 .Pq not assigned .
-In this situation, a device located in cardbus0 doesn't 
+In this situation, a device located in cardbus0 doesn't
 show correct device ID,
-because its bus number 0 incorrectly refers to the primary 
+because its bus number 0 incorrectly refers to the primary
 PCI bus, and a device ID in the primary PCI bus is shown
 in the boot message instead of the device's ID in the cardbus0.
 .Pp
@@ -146,7 +146,7 @@ procedure leaves the interrupt as is.
 .\" For example,
 .\" .Qq Sy options PCIBIOS_IRQS_HINT=0x0a00
 .\" allows IRQ 9 and IRQ 11.
-.\" 
+.\"
 .\" The kernel global variable
 .\" .Va pcibios_irqs_hint
 .\" holds this value,
@@ -170,13 +170,13 @@ procedure leaves the interrupt as is.
 .\" To modify kernel image without kernel recompilation,
 .\" run the following command on shell:
 .\" .Dl Ic gdb --write /netbsd
-.\" And type the following commands at the 
+.\" And type the following commands at the
 .\" .Qq Sy (gdb)
 .\" prompt:
 .\" .Dl Ic set pcibios_irqs_hint=0xa00
 .\" .Dl Ic quit
 .\" .El
-.\" 
+.\"
 .\" .It Nm PCIBIOS_INTR_FIXUP_FORCE
 .\" .Pp
 .\" Some buggy BIOS implementations provide inconsistent
@@ -188,22 +188,22 @@ procedure leaves the interrupt as is.
 .\" shows
 .\" .Qq Sy WARNING: preserving irq XX
 .\" in the PCI routing table.
-.\" 
+.\"
 .\" If
 .\" .Em PCIBIOS_INTR_FIXUP_FORCE
 .\" is specified in addition to the
 .\" .Em PCIBIOS_INTR_FIXUP ,
 .\" the PCI Interrupt Routing table takes precedence.
 .\" In this case, a kernel with
-.\" .Em PCIBIOSVERBOSE 
+.\" .Em PCIBIOSVERBOSE
 .\" shows
 .\" .Qq Sy WARNING: overriding irq XX
 .\" in the PCI routing table.
-.\" 
+.\"
 .\" The necessity of this option is doubtful, and we may
 .\" remove this option in the future. If you find that this
 .\" option is worth preserving, please report it with send-pr.
-.\" 
+.\"
 .\" .It Nm PCIBIOS_INTR_GUESS
 .\" make
 .\" .Em PCIBIOS_INTR_FIXUP
@@ -211,7 +211,7 @@ procedure leaves the interrupt as is.
 .\" .Pp
 .\" If a PCI interrupt router is not known, normally interrupt
 .\" configuraion will not be touched.
-.\" 
+.\"
 .\" But if
 .\" .Em PCIBIOS_INTR_GUESS
 .\" is specified in addition to the
@@ -220,12 +220,12 @@ procedure leaves the interrupt as is.
 .\" one IRQ is available for the entry, the IRQ is assumed to be already
 .\" connected to the device, and corresponding PCI Interrupt
 .\" Configuration Register will be configured accordingly.
-.\" 
+.\"
 .\" .It Nm PCIINTR_DEBUG
 .\" make the
 .\" .Em PCIBIOS_INTR_FIXUP
 .\" procedure verbose.
-.\" 
+.\"
 .\" .El
 .Sh SEE ALSO
 .Xr cardbus 4 ,

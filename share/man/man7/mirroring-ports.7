@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.3 2000/05/17 12:46:38 espie Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.4 2000/10/13 04:09:21 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -165,7 +165,7 @@ Sample scripts are provided in the
 directory.
 .Sh CAVEAT
 Changing checksums is a recurring problem that is outside the direct
-control of the 
+control of the
 .Ox
 Project.  Some software distributors change distribution files without
 warning, without changing the file name proper.  Once the problem has been
@@ -177,22 +177,22 @@ to provide some state to guard against shifting checksums.
 .Pp
 However, a more robust approach is also needed, so that ports users can
 depend on distfiles mirrors to carry what they need irregardless of those
-synchronization issues.  The 
+synchronization issues.  The
 .Pa link-checksums
 script creates another access to the distfiles, indexed through the actual
 checksums that the files should match.  Provided mirroring is run
 sufficiently often, together with
 .Pa link-checksums ,
-two versions of the same distfile with respective checksums cksum1 and cksum2 
+two versions of the same distfile with respective checksums cksum1 and cksum2
 will be available under the names
 .Pa ${DISTFILES}/sha1/cksum1/distfile
 and
 .Pa ${DISTFILES}/sha1/cksum2/distfile .
 .Pp
-Starting revision 1.281, if 
+Starting revision 1.281, if
 .Ev REFETCH
 is set to true,
-.Pa bsd.port.mk 
+.Pa bsd.port.mk
 will try to retrieve files under that naming scheme as a last resort.
 .Sh FILES
 .Bl -tag -width XXXXXXXXX -compact

@@ -22,15 +22,15 @@ and
 are most
 commonly used by the
 .Ar https
-protocol for encrypted web transactions, as can be done with 
+protocol for encrypted web transactions, as can be done with
 .Xr httpd 8 .
-The libcrypto library is also used by various progams such as 
+The libcrypto library is also used by various progams such as
 .Xr ssh 1 ,
 .Xr sshd 8 ,
 and
 .Xr isakmpd 8 .
 .Sh RANDOM DATA SOURCE
-OpenBSD uses the 
+OpenBSD uses the
 .Xr arandom 4
 device as the default source for random data when needed by the routines in
 libcrypto and libssl.
@@ -39,10 +39,10 @@ If the
 device does not exist or is not readable, many of the routines will fail.
 This is most commonly seen by users as the
 .Ar RSA
-routines failing in applications such as 
+routines failing in applications such as
 .Xr ssh 1 ,
-and 
-.Xr httpd 8 . 
+and
+.Xr httpd 8 .
 .Pp
 It is important to remember when using a random data source for certificate
 and key generation that the random data source should not be visible by
@@ -50,12 +50,12 @@ people who could duplicate the process and come up with the same result.
 You should ensure that nobody who you don't trust is in a position to read
 the same random data used by you to generate keys and certificates.
 The
-.Xr arandom 4 
-device ensures that no two users on the same machine will see the same 
+.Xr arandom 4
+device ensures that no two users on the same machine will see the same
 data.
 See
 .Xr openssl 1
-for more information on how to use different sources of random data. 
+for more information on how to use different sources of random data.
 .Sh SERVER CERTIFICATES
 The most common uses of
 .Ar SSL/TLS
@@ -179,7 +179,7 @@ The world needs more
 .Ar DSA
 capable
 .Ar SSL
-and 
+and
 .Ar SSH
 services.
 .Pp
@@ -200,20 +200,20 @@ Prior to Sept 21, 2000
 there were problems shipping fully fuctional implementations of these
 protocols everywhere in the world, as such shipment would include shipping
 .Ar into
-the United States, thus causing problems. 
+the United States, thus causing problems.
 .Ar RSA Data Security Inc (RSADSI)
 held the patent on the
 .Ar RSA
 algorithm in the United States.
 Because of this, free implementations of
 .Ar RSA
-were difficult to distribute and propagate. 
+were difficult to distribute and propagate.
 (The
 .Ar RSA
 patent was probably more effective at preventing the late adoption of
 widespread international integrated crypto than the much maligned
 ITAR restrictions were).
-Prior to OpenBSD 2.8, these libraries shipped without the 
+Prior to OpenBSD 2.8, these libraries shipped without the
 .Ar RSA
 algorithm -- all such functions
 were stubbed to fail.
@@ -266,8 +266,8 @@ The result of this was that while the
 protocol allowed for many cipher suites that did not require the use
 of patented algorithms, It was very difficult to use these with the
 popular commercially available software.
-Prior to version 2.8, OpenBSD allowed users to download 
-.Ar RSA 
+Prior to version 2.8, OpenBSD allowed users to download
+.Ar RSA
 enabled versions of the shared libssl and libcrypto libraries
 which allowed users to enable full function without recompiling
 the applications.

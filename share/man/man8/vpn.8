@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.44 2000/09/29 19:00:31 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.45 2000/10/13 04:09:22 aaron Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -54,7 +54,7 @@ Choose a key exchange method: manual keyed, or automated via
 or
 .Xr photurisd 8 .
 .It
-For manual keying, create the Security Associations (SA), one for 
+For manual keying, create the Security Associations (SA), one for
 each endpoint.
 .It
 For manual keying, create the appropriate IPsec flows.
@@ -76,12 +76,12 @@ manual (symmetric shared secret)
 .Xr photurisd 8
 .El
 .Pp
-At present, 
+At present,
 .Xr photurisd 8
 has a limitation in that the IP adress of the security gateway must
 fall within the range of adresses being tunnelled to, making VPNs
 between (non-routable) private (RFC 1918) networks difficult.
-This does not apply to 
+This does not apply to
 .Xr isakmpd 8 .
 .Ss Enabling the Appropriate Kernel Operations
 Make sure that the following options and devices are enabled in the kernel:
@@ -257,7 +257,7 @@ ipsecadm flow -dst A_EXTERNAL_IP -proto esp
 .Ed
 .Pp
 .Ss Configure and run the keying daemon [automated keying]
-Unless manual keying is used, both security gateways need to start 
+Unless manual keying is used, both security gateways need to start
 either the
 .Xr isakmpd 8
 or
@@ -332,8 +332,8 @@ To create a manual keyed VPN between two class C networks using
 .Pp
 .Bl -enum
 .It
-Choose the shared secrets using a suitably random method. 
-The 3DES encryption key needs 192 bits (3x64), or 24 bytes. 
+Choose the shared secrets using a suitably random method.
+The 3DES encryption key needs 192 bits (3x64), or 24 bytes.
 The SHA-1 authentication key for needs 160 bits, or 20 bytes.
 .Pp
 .Bd -literal
@@ -470,15 +470,15 @@ above, using
 .Xr isakmpd 8 :
 .Pp
 .Bl -enum
-.It 
-Create 
-.Pa /etc/isakmpd/isakmpd.conf 
+.It
+Create
+.Pa /etc/isakmpd/isakmpd.conf
 for machine A:
 .Pp
 .Bd -literal
 
 # Incoming phase 1 negotiations are multiplexed on the source IP
-# address. Phase 1 is used to setup a protected channel just 
+# address. Phase 1 is used to setup a protected channel just
 # between the two gateway machines. This channel is then used for
 # the phase 2 negotiation traffic (i.e encrypted & authenticated).
 
@@ -535,13 +535,13 @@ Suites=			QM-ESP-3DES-SHA-SUITE
 .Ed
 .Pp
 .It
-Create 
-.Pa /etc/isakmpd/isakmpd.conf 
+Create
+.Pa /etc/isakmpd/isakmpd.conf
 for machine B:
 .Bd -literal
 
 # Incoming phase 1 negotiations are multiplexed on the source IP
-# address. Phase 1 is used to setup a protected channel just 
+# address. Phase 1 is used to setup a protected channel just
 # between the two gateway machines. This channel is then used for
 # the phase 2 negotiation traffic (i.e encrypted & authenticated).
 
@@ -599,7 +599,7 @@ Suites=			QM-ESP-3DES-SHA-SUITE
 .Pp
 .It
 Read through the configuration one more time. The only real
-differences between the two files in this example is 
+differences between the two files in this example is
 the IP-addresses, and ordering of Local- and Remote-ID for the VPN
 itself. Note that the shared secret (the
 .Em Authentication
@@ -641,11 +641,11 @@ Conditions: app_domain == "IPsec policy" &&
 Configure the firewall rules on machines A and B:
 .Pp
 Use the same ruleset as the manual keying example, but add permission
-for the 
+for the
 .Xr isakmpd 8
-control traffic, on 
-.Tn UDP 
-port 500. 
+control traffic, on
+.Tn UDP
+port 500.
 .Pp
 For machineA, add:
 .Bd -literal
@@ -662,7 +662,7 @@ pass out proto udp from 192.168.2.1/32 to 193.127.1.254/32 port = 500
 .Ed
 .Pp
 .It
-Start 
+Start
 .Xr isakmpd 8
 .Pp
 On both machines, run:
@@ -692,7 +692,7 @@ Firewall configuration file
 can not be used in VPN mode unless both of the security gateway IP addresses
 lie within the network ranges being tunnelled to.
 In situations where the gateway IP is outside the desired netrange, such
-as with private (RFC 1918) networks, 
+as with private (RFC 1918) networks,
 .Xr isakmpd 8
 or manual keying must be used.
 .Sh SEE ALSO
