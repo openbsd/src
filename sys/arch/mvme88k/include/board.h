@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.7 2001/01/14 20:25:23 smurph Exp $ */
+/*	$OpenBSD: board.h,v 1.8 2001/02/01 03:38:17 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -63,52 +63,52 @@
 #endif
 #define UDEFINED
 
-#define MAX_CPUS	4		/* no. of CPUs */
-#define MAX_CMMUS	8		/* 2 CMMUs per CPU - 1 data and 1 code */
+#define MAX_CPUS	4	/* no. of CPUs */
+#define MAX_CMMUS	8	/* 2 CMMUs per CPU - 1 data and 1 code */
 
-#define SYSV_BASE			U(0x00000000) 	/* system virtual base */
+#define SYSV_BASE	U(0x00000000)	/* system virtual base */
 
-#define MAXU_ADDR			U(0x40000000) 	/* size of user virtual space */
-#define MAXPHYSMEM		U(0x10000000) 	/* max physical memory */
+#define MAXU_ADDR	U(0x40000000)	/* size of user virtual space */
+#define MAXPHYSMEM	U(0x10000000)	/* max physical memory */
 
-#define VMEA16				U(0xFFFF0000)	/* VMEbus A16 */
-#define VMEA16_SIZE		U(0x0000EFFF)	/* VMEbus A16 size */
-#define VMEA32D16    	U(0xFF000000)  /* VMEbus A32/D16 */
+#define VMEA16		U(0xFFFF0000)	/* VMEbus A16 */
+#define VMEA16_SIZE	U(0x0000EFFF)	/* VMEbus A16 size */
+#define VMEA32D16    	U(0xFF000000)	/* VMEbus A32/D16 */
 #define VMEA32D16_SIZE	U(0x007FFFFF)	/* VMEbus A32/D16 size */
 
 
 /* These need to be here because of the way m18x_cmmu.c 
    handles the CMMU's. */
-#define CMMU_SIZE			0x1000
+#define CMMU_SIZE	0x1000
 
 #ifndef CMMU_DEFS
 #define CMMU_DEFS
-#define SBC_CMMU_I		U(0xFFF77000) 	/* Single Board Computer code CMMU */
-#define SBC_CMMU_D		U(0xFFF7F000) 	/* Single Board Computer data CMMU */
+#define SBC_CMMU_I	U(0xFFF77000) 	/* Single Board Computer code CMMU */
+#define SBC_CMMU_D	U(0xFFF7F000) 	/* Single Board Computer data CMMU */
 
-#define VME_CMMU_I0		U(0xFFF7E000) 	/* MVME188 code CMMU 0 */
-#define VME_CMMU_I1		U(0xFFF7D000) 	/* MVME188 code CMMU 1 */
-#define VME_CMMU_I2		U(0xFFF7B000) 	/* MVME188 code CMMU 2 */
-#define VME_CMMU_I3		U(0xFFF77000) 	/* MVME188 code CMMU 3 */
-#define VME_CMMU_D0		U(0xFFF6F000) 	/* MVME188 data CMMU 0 */
-#define VME_CMMU_D1		U(0xFFF5F000) 	/* MVME188 data CMMU 1 */
-#define VME_CMMU_D2		U(0xFFF3F000) 	/* MVME188 data CMMU 2 */
-#define VME_CMMU_D3		U(0xFFF7F000) 	/* MVME188 data CMMU 3 */
+#define VME_CMMU_I0	U(0xFFF7E000) 	/* MVME188 code CMMU 0 */
+#define VME_CMMU_I1	U(0xFFF7D000) 	/* MVME188 code CMMU 1 */
+#define VME_CMMU_I2	U(0xFFF7B000) 	/* MVME188 code CMMU 2 */
+#define VME_CMMU_I3	U(0xFFF77000) 	/* MVME188 code CMMU 3 */
+#define VME_CMMU_D0	U(0xFFF6F000) 	/* MVME188 data CMMU 0 */
+#define VME_CMMU_D1	U(0xFFF5F000) 	/* MVME188 data CMMU 1 */
+#define VME_CMMU_D2	U(0xFFF3F000) 	/* MVME188 data CMMU 2 */
+#define VME_CMMU_D3	U(0xFFF7F000) 	/* MVME188 data CMMU 3 */
 #endif /* CMMU_DEFS */
 
 /* These are the hardware exceptions. */
-#define INT_BIT      0x1		/* interrupt exception		*/
-#define IACC_BIT     0x2		/* instruction access exception	*/
-#define DACC_BIT     0x4		/* data access exception	*/
-#define MACC_BIT     0x8		/* misaligned access exception	*/
-#define UOPC_BIT     0x10		/* unimplemented opcode exception*/
-#define PRIV_BIT     0x20		/* priviledge violation exception*/
-#define BND_BIT      0x40		/* bounds check violation	*/
-#define IDE_BIT      0x80		/* illegal integer divide	*/
-#define IOV_BIT      0x100		/* integer overflow exception	*/
-#define ERR_BIT      0x200		/* error exception		*/
-#define FPUP_BIT     0x400		/* FPU precise exception	*/
-#define FPUI_BIT     0x800		/* FPU imprecise exception	*/
+#define INT_BIT		0x1		/* interrupt exception		*/
+#define IACC_BIT	0x2		/* instruction access exception	*/
+#define DACC_BIT	0x4		/* data access exception	*/
+#define MACC_BIT	0x8		/* misaligned access exception	*/
+#define UOPC_BIT	0x10		/* unimplemented opcode exception*/
+#define PRIV_BIT	0x20		/* priviledge violation exception*/
+#define BND_BIT		0x40		/* bounds check violation	*/
+#define IDE_BIT		0x80		/* illegal integer divide	*/
+#define IOV_BIT		0x100		/* integer overflow exception	*/
+#define ERR_BIT		0x200		/* error exception		*/
+#define FPUP_BIT	0x400		/* FPU precise exception	*/
+#define FPUI_BIT	0x800		/* FPU imprecise exception	*/
 
 #if defined(MVME187) || defined(MVME197)
 #include <machine/mvme1x7.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.4 2001/01/13 05:18:58 smurph Exp $ */
+/*	$OpenBSD: siop.c,v 1.5 2001/02/01 03:38:15 smurph Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -229,9 +229,9 @@ siop_scsicmd(xs)
 	slp = xs->sc_link;
 	sc = slp->adapter_softc;
 	flags = xs->flags;
-   xs->error = XS_NOERROR;
+	xs->error = XS_NOERROR;
 	
-   /* XXXX ?? */
+	/* XXXX ?? */
 	if (flags & SCSI_DATA_UIO)
 		panic("siop: scsi data uio requested");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.6 2000/03/03 00:54:53 todd Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.7 2001/02/01 03:38:19 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -241,23 +241,23 @@ cpu_configuration_print(int master)
 void 
 cmmu_init(void)
 {
-   /* init the lock */
-   simple_lock_init(&cmmu_cpu_lock);
+	/* init the lock */
+	simple_lock_init(&cmmu_cpu_lock);
 
-   switch (cputyp) {
+	switch (cputyp) {
 #if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_init();
-      break;
+	case CPU_187:
+	case CPU_188:
+		m18x_cmmu_init();
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
 #ifdef MVME197
-   case CPU_197:
-      m197_cmmu_init();
-      break;
+	case CPU_197:
+		m197_cmmu_init();
+		break;
 #endif /* MVME197 */
-   }
-   return;
+	}
+	return;
 }
 
 /*
@@ -464,22 +464,24 @@ cmmu_remote_set_sapr(unsigned cpu, unsigned ap)
 void
 cmmu_set_uapr(unsigned ap)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
+	register s = splhigh();
+	CMMU_LOCK;
+	switch (cputyp) {
 #if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_set_uapr(ap);
-      break;
+	case CPU_187:
+	case CPU_188:
+		m18x_cmmu_set_uapr(ap);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
 #ifdef MVME197
-   case CPU_197:
-      m197_cmmu_set_uapr(ap);
-      break;
+	case CPU_197:
+		m197_cmmu_set_uapr(ap);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
-   return;
+	}
+	CMMU_UNLOCK;
+	splx(s);
+	return;
 }
 
 /*
@@ -590,27 +592,29 @@ cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size)
  */
 void
 cmmu_pmap_activate(
-                  unsigned cpu,
-                  unsigned uapr,
-                  batc_template_t i_batc[BATC_MAX],
-                  batc_template_t d_batc[BATC_MAX])
+		  unsigned cpu,
+		  unsigned uapr,
+		  batc_template_t i_batc[BATC_MAX],
+		  batc_template_t d_batc[BATC_MAX])
 {
-   CMMU_LOCK;
-   switch (cputyp) {
+	register s = splhigh();
+	CMMU_LOCK;
+	switch (cputyp) {
 #if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc);
-      break;
+	case CPU_187:
+	case CPU_188:
+		m18x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
 #ifdef MVME197
-   case CPU_197:
-      m197_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc);
-      break;
+	case CPU_197:
+		m197_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
-   return;
+	}
+	CMMU_UNLOCK;
+	splx(s);
+	return;
 }
 
 /**

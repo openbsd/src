@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.2 1999/09/27 18:43:26 smurph Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.3 2001/02/01 03:38:16 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -51,20 +51,19 @@
 #include <mvme88k/dev/vsreg.h>
 #include <mvme88k/dev/vsvar.h>
 #include <mvme88k/dev/vme.h>
-#include "machine/mmu.h"
 #else
 #include <mvme68k/dev/vsreg.h>
 #include <mvme68k/dev/vsvar.h>
 #include <mvme68k/dev/vme.h>
 #endif /* defined(MVME187) */
 
-int	vsmatch         __P((struct device *, void *, void *));
-void	vsattach        __P((struct device *, struct device *, void *));
-int	vsprint         __P((void *auxp, char *));
-void  vs_initialize   __P((struct vs_softc *));
-int	vs_intr         __P((struct vs_softc *));
-int	vs_nintr        __P((struct vs_softc *));
-int	vs_eintr        __P((struct vs_softc *));
+int     vsmatch         __P((struct device *, void *, void *));
+void    vsattach        __P((struct device *, struct device *, void *));
+int     vsprint         __P((void *auxp, char *));
+int     vs_initialize   __P((struct vs_softc *));
+int     vs_intr         __P((struct vs_softc *));
+int     vs_nintr        __P((struct vs_softc *));
+int     vs_eintr        __P((struct vs_softc *));
 
 struct scsi_adapter vs_scsiswitch = {
 	vs_scsicmd,
@@ -81,37 +80,31 @@ struct scsi_device vs_scsidev = {
 };
 
 struct cfattach vs_ca = {
-        sizeof(struct vs_softc), vsmatch, vsattach,
+	sizeof(struct vs_softc), vsmatch, vsattach,
 };    
- 
+
 struct cfdriver vs_cd = {
-        NULL, "vs", DV_DULL, 0 
+	NULL, "vs", DV_DULL, 0 
 }; 
 
 int
 vsmatch(pdp, vcf, args)
-	struct device *pdp;
-	void *vcf, *args;
+struct device *pdp;
+void *vcf, *args;
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	if (!badvaddr(ca->ca_vaddr, 1)) {
-      /*
-      if (ca->ca_vec & 0x03) {
-         printf("vs: bad vector 0x%x\n", ca->ca_vec);
-         return (0);
-      }
-		*/
-      return(1);
-   } else {
+		return (1);
+	} else {
 		return (0);
-	}	    
+	}           
 }
 
 void
 vsattach(parent, self, auxp)
-	struct device *parent, *self;
-	void *auxp;
+struct device *parent, *self;
+void *auxp;
 {
 	struct vs_softc *sc = (struct vs_softc *)self;
 	struct confargs *ca = auxp;
@@ -122,9 +115,10 @@ vsattach(parent, self, auxp)
 	sc->sc_vsreg = rp = ca->ca_vaddr;
 
 	sc->sc_ipl = ca->ca_ipl;
-   sc->sc_nvec = ca->ca_vec + 0;
-   sc->sc_evec = ca->ca_vec + 1;
-   sc->sc_link.adapter_softc = sc;
+	sc->sc_nvec = ca->ca_vec;
+	/* get the next available vector for the error interrupt func. */
+	sc->sc_evec = vme_findvec();
+	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &vs_scsiswitch;
 	sc->sc_link.device = &vs_scsidev;
@@ -133,28 +127,28 @@ vsattach(parent, self, auxp)
 	sc->sc_ih_n.ih_fn = vs_nintr;
 	sc->sc_ih_n.ih_arg = sc;
 	sc->sc_ih_n.ih_ipl = ca->ca_ipl;
-	
-   
-   sc->sc_ih_e.ih_fn = vs_eintr;
+
+	sc->sc_ih_e.ih_fn = vs_eintr;
 	sc->sc_ih_e.ih_arg = sc;
 	sc->sc_ih_e.ih_ipl = ca->ca_ipl;
-   
-	vs_initialize(sc);
+
+	if (vs_initialize(sc))
+		return;
 
 	vmeintr_establish(sc->sc_nvec, &sc->sc_ih_n);
 	vmeintr_establish(sc->sc_evec, &sc->sc_ih_e);
-   evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_n);
-   evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_e);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_n);
+	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt_e);
 
 	/*
 	 * attach all scsi units on us, watching for boot device
 	 * (see dk_establish).
 	 */
 	tmp = bootpart;
-	if (ca->ca_paddr != bootaddr) 
-		bootpart = -1;          /* invalid flag to dk_establish */
+	if (ca->ca_paddr != bootaddr)
+		bootpart = -1;		/* invalid flag to dk_establish */
 	config_found(self, &sc->sc_link, scsiprint);
-	bootpart = tmp;             /* restore old value */
+	bootpart = tmp;		    /* restore old value */
 }
 
 /*
@@ -162,38 +156,10 @@ vsattach(parent, self, auxp)
  */
 int
 vsprint(auxp, pnp)
-	void *auxp;
-	char *pnp;
+void *auxp;
+char *pnp;
 {
 	if (pnp == NULL)
 		return (UNCONF);
 	return (QUIET);
 }
-
-/* normal interrupt function */
-int
-vs_nintr(sc)
-	struct vs_softc *sc;
-{
-#ifdef SDEBUG
-   printf("Normal Interrupt!!!\n");
-#endif 
-   vs_intr(sc);
-	sc->sc_intrcnt_n.ev_count++;
-	return (1);
-}
-
-/* error interrupt function */
-int
-vs_eintr(sc)
-	struct vs_softc *sc;
-{
-#ifdef SDEBUG
-   printf("Error Interrupt!!!\n");
-#endif
-	vs_intr(sc);
-	sc->sc_intrcnt_e.ev_count++;
-	return (1);
-}
-
-

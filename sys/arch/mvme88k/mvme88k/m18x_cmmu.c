@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.4 2001/01/12 07:29:26 smurph Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.5 2001/02/01 03:38:20 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -73,9 +73,9 @@
 #define CMMU_DEBUG 1
 
 #ifdef DEBUG
-   #define DB_CMMU		0x4000	/* MMU debug */
-unsigned int debuglevel = 0;
-   #define dprintf(_L_,_X_) { if (debuglevel & (_L_)) { unsigned int psr = disable_interrupts_return_psr(); printf("%d: ", cpu_number()); printf _X_;  set_psr(psr); } }
+   #define DB_CMMU	0x4000	/* MMU debug */
+unsigned int m18x_debuglevel = 0;
+   #define dprintf(_L_,_X_) { if (m18x_debuglevel & (_L_)) { unsigned int psr = disable_interrupts_return_psr(); printf("%d: ", cpu_number()); printf _X_;  set_psr(psr); } }
 #else
    #define dprintf(_L_,_X_)
 #endif 
@@ -263,19 +263,19 @@ struct board_config {
 	{  1,  4,  8}, /* 4P128 - 4P512 */
 	{  1,  2,  8}, /* 2P128 - 2P512 */
 	{  1,  1,  8}, /* 1P128 - 1P512 */
-	{ -1, -1, -1},
-	{ -1, -1, -1},
+	{  0, -1, -1},
+	{  0, -1, -1},
 	{  1,  2,  4}, /* 2P64  - 2P256 */
 	{  1,  1,  4}, /* 1P64  - 1P256 */
-	{ -1, -1, -1},
-	{ -1, -1, -1},
-	{ -1, -1, -1},
+	{  0, -1, -1},
+	{  0, -1, -1},
+	{  0, -1, -1},
 	{  1,  1,  2}, /* 1P32  - 1P128 */
-	{ -1, -1, -1},
-	{ -1, -1, -1},
-	{ -1, -1, -1},
-	{ -1, -1, -1},
-	{ -1, -1, -1}
+	{  0, -1, -1},
+	{  0, -1, -1},
+	{  0, -1, -1},
+	{  0, -1, -1},
+	{  0, -1, -1}
 };
 
 /*
@@ -286,22 +286,22 @@ struct cmmu cmmu[MAX_CMMUS] =
 {
 	/* addr    cpu       mode           access
       alive   addr mask */
-	{(void *)VME_CMMU_I0, -1, INST_CMMU, CMMU_ACS_BOTH,       
-		CMMU_DEAD,      0, 0},                                 
+	{(void *)VME_CMMU_I0, -1, INST_CMMU, CMMU_ACS_BOTH, 
+		CMMU_DEAD, 0, 0},                                 
 	{(void *)VME_CMMU_D0, -1, DATA_CMMU, CMMU_ACS_BOTH,       
-		CMMU_DEAD,      0, 0},                                 
+		CMMU_DEAD, 0, 0},                                 
 	{(void *)VME_CMMU_I1, -1, INST_CMMU, CMMU_ACS_BOTH,       
-		CMMU_DEAD,      0, 0},                                 
+		CMMU_DEAD, 0, 0},                                 
 	{(void *)VME_CMMU_D1, -1, DATA_CMMU, CMMU_ACS_BOTH,       
-		CMMU_DEAD,      0, 0},                                 
+		CMMU_DEAD, 0, 0},                                 
 	{(void *)VME_CMMU_I2, -1, INST_CMMU, CMMU_ACS_BOTH,
-		CMMU_DEAD,      0, 0},
+		CMMU_DEAD, 0, 0},
 	{(void *)VME_CMMU_D2, -1, DATA_CMMU, CMMU_ACS_BOTH,
-		CMMU_DEAD,      0, 0},
+		CMMU_DEAD, 0, 0},
 	{(void *)VME_CMMU_I3, -1, INST_CMMU, CMMU_ACS_BOTH,
-		CMMU_DEAD,      0, 0},
+		CMMU_DEAD, 0, 0},
 	{(void *)VME_CMMU_D3, -1, DATA_CMMU, CMMU_ACS_BOTH,
-		CMMU_DEAD,      0, 0}
+		CMMU_DEAD, 0, 0}
 };
 
 struct cpu_cmmu {
@@ -341,8 +341,8 @@ m18x_setup_board_config(void)
 	case CPU_188:
 		whoami = (volatile unsigned long *)MVME188_WHOAMI;
 		vme188_config = (*whoami & 0xf0) >> 4;
-		dprintf(DB_CMMU,("m18x_setup_board_config: WHOAMI @ 0x%08x holds value 0x%08x\n",
-				 whoami, *whoami));
+		dprintf(DB_CMMU,("m18x_setup_board_config: WHOAMI @ 0x%08x holds value 0x%08x vme188_config = %d\n",
+				 whoami, *whoami, vme188_config));
 		max_cpus = bd_config[vme188_config].ncpus;
 		max_cmmus = bd_config[vme188_config].ncmmus;
 		break;
@@ -791,7 +791,7 @@ m18x_cmmu_init(void)
 		cpu_cmmu[cpu].pair[INST_CMMU] = cpu_cmmu[cpu].pair[DATA_CMMU] = 0;
 	}
 
-	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++)
+	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++){
 		if (m18x_cmmu_alive(cmmu_num)) {
 			id.cpupid = cmmu[cmmu_num].cmmu_regs->idr;
 
@@ -864,10 +864,10 @@ m18x_cmmu_init(void)
 			cmmu[cmmu_num].cmmu_regs->scr = CMMU_FLUSH_SUPER_ALL;
 			cmmu[cmmu_num].cmmu_regs->scr = CMMU_FLUSH_USER_ALL;
 		}
-
-		/*
-		 * Enable snooping...
-		 */
+	}
+	/*
+	 * Enable snooping...
+	 */
 	for (cpu = 0; cpu < max_cpus; cpu++) {
 		if (!cpu_sets[cpu])
 			continue;
@@ -1867,10 +1867,8 @@ union batcu {
 	  ((LINE) == 1 ? (UNION).field.vv1 : \
 	   ((LINE) == 0 ? (UNION).field.vv0 : ~0))))
 
-
    #undef VEQR_ADDR
    #define  VEQR_ADDR 0
-
 /*
  * Show (for debugging) how the given CMMU translates the given ADDRESS.
  * If cmmu == -1, the data cmmu for the current cpu is used.
@@ -1942,11 +1940,12 @@ m18x_cmmu_show_translation(
 #endif /* 0 */
 	{
 		if (cmmu_num == -1) {
-			if (cpu_cmmu[0].pair[DATA_CMMU] == 0) {
+			int cpu = cpu_number();
+			if (cpu_cmmu[cpu].pair[DATA_CMMU] == 0) {
 				db_printf("ack! can't figure my own data cmmu number.\n");
 				return;
 			}
-			cmmu_num = cpu_cmmu[0].pair[DATA_CMMU] - cmmu;
+			cmmu_num = cpu_cmmu[cpu].pair[DATA_CMMU] - cmmu;
 			if (verbose_flag)
 				db_printf("The data cmmu for cpu#%d is cmmu#%d.\n",
 					  0, cmmu_num);

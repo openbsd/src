@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt.c,v 1.1 2001/01/13 05:19:01 smurph Exp $ */
+/*	$OpenBSD: crt.c,v 1.2 2001/02/01 03:38:23 smurph Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -24,7 +24,6 @@ start()
 	extern int edata, end;
 	struct mvmeprom_brdid *id, *mvmeprom_brdid();
 
-#ifdef STAGE1
 	/* 
 	 * This code enables the SFU1 and is used for single stage 
 	 * bootstraps or the first stage of a two stage bootstrap.
@@ -33,9 +32,8 @@ start()
 	 */
 	asm("|	enable SFU1");
 	asm("	ldcr	r25,cr1");
-	asm("	xor	r25,r25,0x8");
+	asm("	clr	r25,r25,1<3>"); /* bit 3 is SFU1D */
 	asm("	stcr	r25,cr1");
-#endif
 
 	bugargs.dev_lun = dev_lun;
 	bugargs.ctrl_lun = ctrl_lun;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.6 2000/03/26 23:32:00 deraadt Exp $ */
+/*	$OpenBSD: cl.c,v 1.7 2001/02/01 03:38:14 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -895,25 +895,25 @@ clstop(tp, flag)
 
 int
 clcnprobe(cp)
-	struct consdev *cp;
+struct consdev *cp;
 {
 	/* always there ? */
 	/* serial major */
-   int maj;
-	
- 	/* bomb if it'a a MVME188 */
-   if (cputyp == CPU_188){
-      cp->cn_pri = CN_DEAD;
-      return 0;
-   }
-   /* locate the major number */
-  	for (maj = 0; maj < nchrdev; maj++)
-   	if (cdevsw[maj].d_open == clopen)
-	      break;
-   cp->cn_dev = makedev (maj, 0);
-   cp->cn_pri = CN_NORMAL;
-   
-   return 1;
+	int maj;
+
+	/* bomb if it'a a MVME188 */
+	if (cputyp == CPU_188) {
+		cp->cn_pri = CN_DEAD;
+		return 0;
+	}
+	/* locate the major number */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == clopen)
+			break;
+	cp->cn_dev = makedev (maj, 0);
+	cp->cn_pri = CN_NORMAL;
+
+	return 1;
 }
 
 int

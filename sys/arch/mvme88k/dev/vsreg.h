@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.2 1999/09/27 18:43:26 smurph Exp $ */
+/*	$OpenBSD: vsreg.h,v 1.3 2001/02/01 03:38:16 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -162,53 +162,6 @@ typedef struct mcsb
 
 /**************** END Master Control Status Block (MCSB) *******************/
 
-/****************     Scater/Gather Stuff                *******************/
-
-typedef struct {
-   union {
-      unsigned short bytes :16;
-   #define MAX_SG_BLOCK_SIZE	(1<<16)	/* the size *has* to be always *smaller* */
-      struct {
-         unsigned short :8;
-         unsigned short gather :8;
-      } scatter;
-   } count;
-   LONGV           address;
-   unsigned short  link :1;
-   unsigned short  :3;
-   unsigned short  transfer_type :2;
-   /* 				0x0 is reserved */
-   #define SHORT_TREANSFER 		0x1	
-   #define LONG_TRANSFER			0x2	
-   #define SCATTER_GATTER_LIST_IN_SHORT_IO	0x3	
-   unsigned short  memory_type :2;
-   #define NORMAL_TYPE			0x0	
-   #define BLOCK_MODE			0x1	
-   /*				0x2 is reserved */
-   /*				0x3 is reserved */
-   unsigned short  address_modifier :8;
-}sg_list_element_t;
-
-typedef sg_list_element_t * scatter_gather_list_t;
-
-#define MAX_SG_ELEMENTS 64
-
-struct m328_sg {
-   struct m328_sg  *up;
-   int                     elements;
-   int                     level;
-   struct m328_sg  *down[MAX_SG_ELEMENTS];
-   sg_list_element_t list[MAX_SG_ELEMENTS];
-};
-
-typedef struct m328_sg *M328_SG;
-
-typedef struct {
-   struct scsi_xfer  *xs;
-   M328_SG           top_sg_list;
-} M328_CMD;
-/**************** END Scater/Gather Stuff                *******************/
-
 /****************     Host Semaphore Block (HSB)         *******************/
 
 typedef struct hsb
@@ -344,6 +297,10 @@ typedef struct cqe
 
 #define CRB_CLR_DONE(crsw)      ((crsw) = 0)
 #define CRB_CLR_ER(crsw)        ((crsw) &= ~M_CRSW_ER)
+#define CRB_CLR_SC(crsw)	((crsw) &= ~M_CRSW_SC)
+#define CRB_CLR_SE(crsw)	((crsw) &= ~M_CRSW_SE)
+#define CRB_CLR_RST(crsw)	((crsw) &= ~M_CRSW_RST)
+#define CRB_CLR(crsw)		((crsw) &= ~(x))
 
 typedef struct crb
 {                                       /* Command Response Block */
@@ -358,9 +315,9 @@ typedef struct crb
 /**************** END Command Response Block (CRB)       *******************/
 
 /***********     Controller Error Vector Status Block (CEVSB) **************/
-
-typedef struct cevsb
-{                                       /* Command Response Block */
+#define CONTROLLER_ERROR    0x0085
+#define NR_SCSI_ERROR       0x0885
+typedef struct cevsb {				/* Command Response Block */
     volatile u_short      cevsb_CRSW;     /* Command Response Status Word */
     volatile u_char       cevsb_TYPE;     /* IOPB type */
     volatile u_char       cevsb_RES0;     /* Reserved byte */
@@ -370,6 +327,13 @@ typedef struct cevsb
     volatile u_short      cevsb_RES1;     /* Reserved word */
     volatile u_char       cevsb_RES2;     /* Reserved byte */
     volatile u_char       cevsb_ERROR;    /* error code */
+#define CEVSB_ERR_TYPE	0xC0			/* IOPB type error */
+#define CEVSB_ERR_TO	0xC1			/* IOPB timeout error */
+#define CEVSB_ERR_TR	0x82			/* Target Reconnect, no IOPB */
+#define CEVSB_ERR_OF	0x83			/* Overflow */
+#define CEVSB_ERR_BD	0x84			/* Bad direction */
+#define CEVSB_ERR_NR	0x86			/* Non-Recoverabl Error */
+#define CESVB_ERR_PANIC	0xFF			/* Board Painc!!! */
     volatile u_short      cevsb_AUXERR;   /* COUGAR error code */
 } M328_CEVSB;
 
@@ -738,19 +702,5 @@ typedef struct ipsg
 #define BLOCK_MOD       ( (TT_BLOCK << 10) | (MEMTYPE << 8) | ADRM_EXT_S_BM )
 #define D64_MOD         ( (TT_D64 << 10) | (MEMTYPE << 8) | ADRM_EXT_S_D64 )
 #define SHIO_MOD        ( (TT_NORMAL << 10) | (MEMT_SHIO << 8) | ADRM_SHT_N_IO)
-
-/*
- * Scatter/gather functions
- */
-
-M328_SG vs_alloc_scatter_gather __P((void));
-void    vs_dealloc_scatter_gather __P((M328_SG sg));
-void    vs_link_scatter_gather_element __P((sg_list_element_t *element,
-                                            register vm_offset_t phys_add,
-                                            register int len));
-void    vs_link_scatter_gather_list __P((sg_list_element_t *list,
-                                         register vm_offset_t phys_add,
-                                         register int elements));
-M328_SG vs_build_memory_structure __P((struct scsi_xfer *xs, M328_IOPB *iopb));
 
 #endif /* _M328REG_H_ */

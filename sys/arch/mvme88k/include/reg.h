@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.6 2001/01/12 07:29:27 smurph Exp $ */
+/*	$OpenBSD: reg.h,v 1.7 2001/02/01 03:38:18 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -78,7 +78,7 @@ struct reg {
     unsigned isr;          /* MVME197 */
     unsigned ilar;         /* MVME197 */
     unsigned ipar;         /* MVME197 */
-    unsigned pad;          /* alignment */
+    unsigned cpu;          /* cpu number */
 };
 
 struct fpreg {

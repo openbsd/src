@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.4 1999/09/27 18:43:21 smurph Exp $ */
+/*	$OpenBSD: bugio.c,v 1.5 2001/02/01 03:38:13 smurph Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <machine/bugio.h>
 
@@ -21,6 +21,7 @@
 #define	RTC_RD	"0x0053"
 #define	RETURN	"0x0063"
 #define	BRD_ID	"0x0070"
+#define	FORKMPU	"0x0100"
 #define BUGTRAP	"0x01F0"
 
 int ossr0, ossr1, ossr2, ossr3;
@@ -65,13 +66,13 @@ char
 buginchr(void)
 {
 	register int cc;
-   int ret;
+	int ret;
 	BUGCTXT();
 	asm volatile ("or r9,r0," INCHR);
 	asm volatile ("tb0 0,r0,0x1F0");
 	asm volatile ("or %0,r0,r2" : "=r" (cc) : );
-   ret = cc;
-   OSCTXT();
+	ret = cc;
+	OSCTXT();
 	return ((char)ret & 0xFF);
 }
 
@@ -83,7 +84,7 @@ bugoutchr(unsigned char c)
 		bugpcrlf();
 		return;
 	}
-	
+
 	BUGCTXT();
 
 	asm("or r2,r0,%0" : : "r" (cc));
@@ -97,7 +98,7 @@ bugoutchr(unsigned char c)
 
 buginstat(void)
 {
-	int ret;
+	register int ret;
 
 	BUGCTXT();
 	asm volatile ("or r9,r0," INSTAT);
@@ -131,7 +132,7 @@ bugdskrd(struct bugdisk_io *arg)
 
 	BUGCTXT();
 	asm("or r9,r0, " DSKRD);
-	asm("tb0 0,r0,0x1F0");	
+	asm("tb0 0,r0,0x1F0");  
 	asm("or %0,r0,r2" : "=r" (ret) : );
 	OSCTXT();
 
@@ -145,7 +146,7 @@ bugdskwr(struct bugdisk_io *arg)
 	int ret;
 	BUGCTXT();
 	asm("or r9,r0, " DSKWR);
-	asm("tb0 0,r0,0x1F0");	
+	asm("tb0 0,r0,0x1F0");  
 	asm("or %0,r0,r2" : "=r" (ret) : );
 	OSCTXT();
 	return ((ret&0x4) == 0x4 ? 1 : 0);
@@ -164,6 +165,14 @@ bugdelay(int delay)
 	BUGCTXT();
 	asm("or r2,r0,%0" : : "r" (delay));
 	asm("or r9,r0, " DELAY);
+	asm("tb0 0,r0,0x1F0");
+	OSCTXT();
+}
+
+bugfork(int cpu, unsigned address)
+{
+	BUGCTXT();
+	asm("or r9,r0, " FORKMPU);
 	asm("tb0 0,r0,0x1F0");
 	OSCTXT();
 }
@@ -196,26 +205,26 @@ bugnetctrl(struct bugniocall *niocall)
 /*	OSCTXT();*/
 }
 
-typedef struct netcnfgp { 
-    unsigned int magic;
-    unsigned int nodemem;
-    unsigned int bfla;
-    unsigned int bfea;
-    unsigned int bfed;
-    unsigned int bfl;
-    unsigned int bfbo;
-    unsigned int tbuffer;
-    unsigned char cipa[4];
-    unsigned char sipa[4];
-    unsigned char netmask[4];
-    unsigned char broadcast[4];
-    unsigned char gipa[4];
-    unsigned char bootp_retry;
-    unsigned char tftp_retry;
-    unsigned char bootp_ctl;
-    unsigned char cnfgp_ctl;
-    unsigned char filename[64];
-    unsigned char argfname[64];
+typedef struct netcnfgp {
+	unsigned int magic;
+	unsigned int nodemem;
+	unsigned int bfla;
+	unsigned int bfea;
+	unsigned int bfed;
+	unsigned int bfl;
+	unsigned int bfbo;
+	unsigned int tbuffer;
+	unsigned char cipa[4];
+	unsigned char sipa[4];
+	unsigned char netmask[4];
+	unsigned char broadcast[4];
+	unsigned char gipa[4];
+	unsigned char bootp_retry;
+	unsigned char tftp_retry;
+	unsigned char bootp_ctl;
+	unsigned char cnfgp_ctl;
+	unsigned char filename[64];
+	unsigned char argfname[64];
 } NETCNFGP;
 
 struct bugniotcall {

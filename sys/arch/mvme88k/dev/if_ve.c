@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.1 1999/05/29 04:41:43 smurph Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.2 2001/02/01 03:38:14 smurph Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -73,6 +73,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/bugio.h>
+#include <machine/mmu.h>	/* DMA_CACHE_SYNC, etc... */
 
 #include <mvme88k/dev/if_vereg.h>
 #include <mvme88k/dev/if_vevar.h>
@@ -109,17 +110,17 @@ hide void ve_shutdown __P((void *));
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	ve_softc {
-	struct vam7990_softc  sc_am7990; /* glue to MI code */
-	struct intrhand      sc_ih;      /* interrupt vectoring */
-	struct vereg1        *sc_r1;     /* LANCE registers */
-	u_short              csr;        /* Control/Status reg image */
-   u_long               board_addr;
-	struct evcnt	      sc_intrcnt;
-	struct evcnt	      sc_errcnt;
-	struct vme2reg	      *sc_vme2;
-	u_char               sc_ipl;
-	u_char               sc_vec;
-	int                  sc_flags;
+	struct vam7990_softc	sc_am7990; /* glue to MI code */
+	struct intrhand		sc_ih;      /* interrupt vectoring */
+	struct vereg1		*sc_r1;     /* LANCE registers */
+	u_short			csr;        /* Control/Status reg image */
+	u_long			board_addr;
+	struct evcnt		sc_intrcnt;
+	struct evcnt		sc_errcnt;
+	struct vme2reg		*sc_vme2;
+	u_char			sc_ipl;
+	u_char			sc_vec;
+	int			sc_flags;
 };
 
 struct cfdriver ve_cd = {
@@ -232,7 +233,7 @@ ve_ackint(sc)
 struct vam7990_softc *sc;
 {
 	register struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
-   ENABLE_INTR;
+	ENABLE_INTR;
 }
 
 int
@@ -326,7 +327,7 @@ veattach(parent, self, aux)
 	sc->sc_wrcsr = vewrcsr;
 	sc->sc_hwreset = vereset;
 	sc->sc_hwinit = NULL;
-   vereset(sc);
+	vereset(sc);
 
 	ve_config(sc);
 
@@ -384,7 +385,7 @@ ve_config(sc)
 		sc->sc_memsize = 262144;
 
 	switch (sc->sc_memsize) {
-   case 8192:
+	case 8192:
 		sc->sc_nrbuf = 4;
 		sc->sc_ntbuf = 1;
 		break;
@@ -896,9 +897,9 @@ ve_intr(arg)
 		return (0);
 
 	/* clear the interrupting condition */
-   (*sc->sc_wrcsr)(sc, LE_CSR0,
-	    isr & (LE_C0_INEA | LE_C0_BABL | LE_C0_MISS | LE_C0_MERR |
-		   LE_C0_RINT | LE_C0_TINT | LE_C0_IDON));
+	(*sc->sc_wrcsr)(sc, LE_CSR0,
+			isr & (LE_C0_INEA | LE_C0_BABL | LE_C0_MISS | 
+			       LE_C0_MERR | LE_C0_RINT | LE_C0_TINT | LE_C0_IDON));
 	if (isr & LE_C0_ERR) {
 		if (isr & LE_C0_BABL) {
 #ifdef LEDEBUG
@@ -942,7 +943,7 @@ ve_intr(arg)
 		ve_rint(sc);
 	if (isr & LE_C0_TINT)
 		ve_tint(sc);
-   ve_ackint(sc);
+	ve_ackint(sc);
 	return (1);
 }
 
@@ -1308,6 +1309,9 @@ ve_copytobuf_contig(sc, from, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
+	volatile caddr_t phys = (caddr_t)sc->sc_addr;
+	dma_cachectl((vm_offset_t)phys + boff, len, DMA_CACHE_SYNC);
+	dma_cachectl((vm_offset_t)buf + boff, len, DMA_CACHE_SYNC);
 
 	/*
 	 * Just call bcopy() to do the work.
@@ -1322,7 +1326,9 @@ ve_copyfrombuf_contig(sc, to, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-
+	volatile caddr_t phys = (caddr_t)sc->sc_addr;
+	dma_cachectl((vm_offset_t)phys + boff, len, DMA_CACHE_SYNC_INVAL);
+	dma_cachectl((vm_offset_t)buf + boff, len, DMA_CACHE_SYNC_INVAL);
 	/*
 	 * Just call bcopy() to do the work.
 	 */
@@ -1335,6 +1341,9 @@ ve_zerobuf_contig(sc, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
+	volatile caddr_t phys = (caddr_t)sc->sc_addr;
+	dma_cachectl((vm_offset_t)phys + boff, len, DMA_CACHE_SYNC);
+	dma_cachectl((vm_offset_t)buf + boff, len, DMA_CACHE_SYNC);
 
 	/*
 	 * Just let bzero() do the work

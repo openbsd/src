@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.9 2000/12/28 21:21:24 smurph Exp $   */
+/*   $OpenBSD: eh.S,v 1.10 2001/02/01 03:38:19 smurph Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -239,8 +239,20 @@
 
 #define INTSTACK      0   /* To make interupts use their own stack */
 
-   text
-   align 8
+	data
+	align 4
+sbadcpupanic:
+	string  "eh.S: bad cpu number in FLAGS\n"
+	
+	text
+	align 8
+
+Lbadcpupanic:
+	or.u r2, r0, hi16(sbadcpupanic)
+	or   r2, r2, lo16(sbadcpupanic)
+	bsr  _panic
+
+	align 8
 
 /***************************************************************************
  ***************************************************************************
@@ -274,7 +286,7 @@
  ** (which is pointed-to by r31).
  **/
 
-
+#if defined(MVME187) || defined (MVME188)
 #define PREP(NAME, NUM, BIT, SSBR_STUFF, FLAG_PRECHECK)	; \
 	xcr	FLAGS, FLAGS, SR1			; \
 	FLAG_PRECHECK					; \
@@ -293,6 +305,9 @@
 	/* TMP2 now free -- use to set EF_VECTOR */	; \
 	or	TMP2, r0, NUM				; \
 	st	TMP2, r31, REG_OFF(EF_VECTOR)		; \
+	/* TMP3 also free -- use to set last_vector */	; \
+	or.u	TMP3, r0,   hi16(_last_vector)		; \
+	st	TMP2, TMP3, lo16(_last_vector)		; \
 							; \
 	/* Clear any bits in the SSBR (held in TMP) */	; \
 	/* SSBR_STUFF may be empty, though.         */	; \
@@ -304,7 +319,9 @@
 							; \
 	/* All general regs free -- do any debugging */	; \
 	PREP_DEBUG(BIT, NAME)
+#endif /* defined(MVME187) || defined (MVME188) */
 
+#ifdef MVME197	
 #define PREP2(NAME, NUM, BIT, SSBR_STUFF, FLAG_PRECHECK); \
 	xcr	FLAGS, FLAGS, SR1			; \
 	FLAG_PRECHECK					; \
@@ -334,6 +351,7 @@
 							; \
 	/* All general regs free -- do any debugging */	; \
 	PREP_DEBUG(BIT, NAME)
+#endif /* MVME197 */
 
 /* Some defines for use with PREP() */
 #define No_SSBR_Stuff      /* empty */
@@ -405,9 +423,9 @@ LABEL(_eh_debug)    word 0x00000000
 #define DONE(num)      br return_from_exception_handler
 #endif
 
-
+#if defined(MVME187) || defined (MVME188)
 /*#########################################################################*/
-/*#### THE ACTUAL EXCEPTION HANDLER ENTRY POINTS ##########################*/
+/*#### THE ACTUAL EXCEPTION HANDLER ENTRY POINTS for MVME18x ##############*/
 /*#########################################################################*/
 
 /* unknown exception handler */
@@ -451,7 +469,7 @@ LABEL(_unimplemented_handler)
    DONE(DEBUG_UNIMPLEMENTED_BIT)
 
 /*
- * Some versions of the chip have * a bug whereby false privilege
+ * Some versions of the chip have a bug whereby false privilege
  * violation exceptions are raised. If the valid bit in the SXIP is clear,
  * it is false.  If so, just return.  The code before PREP handles this....
  */
@@ -659,10 +677,11 @@ LABEL(_error_handler)
 	ldcr	r10, SR3
 	st	r10, r31, REG_OFF(EF_FPHS2)
 
-	/* error vector is zippo numero el'zeroooo */
-	st	r0,  r31, REG_OFF(EF_VECTOR)
+	/* error vector is 10 */
+	or	r10, r0, 10
+	st	r10, r31, REG_OFF(EF_VECTOR)
 
-#ifdef MVME188
+#if 0 /* MVME188 */
 #define IST_REG      0xfff84040	/* interrupt status addr */
 	/* check if it's a mvme188 */
 	or.u	r10,  r0,   hi16(_cputyp)
@@ -876,8 +895,10 @@ _LABEL(ignore_data_exception)
 1:   
 
 	/* the following jumps to "badaddr__return_nonzero" in below */
-	NOP
 	RTE
+#endif /* defined(MVME187) || defined (MVME188) */
+
+#ifdef MVME197
 /*
  * This is part of baddadr (below).
  */
@@ -908,6 +929,8 @@ _LABEL(m197_ignore_data_exception)
 	/* the following jumps to "badaddr__return_nonzero" in below */
 	NOP
 	RTE
+#endif /* MVME197 */
+	
 
 /*
  * extern boolean_t badaddr(unsigned addr, unsigned len)
@@ -1036,6 +1059,7 @@ _LABEL(badaddr__return)
 ******************************************************************************
 */
 
+#if defined(MVME187) || defined (MVME188) 
 
 LABEL(setup_phase_one)
    /***************** REGISTER STATUS BLOCK ***********************\
@@ -1175,47 +1199,59 @@ _LABEL(pickup_stack)
    /*FALLTHROUGH */
 
 _LABEL(have_pcb)
-   /***************** REGISTER STATUS BLOCK ***********************\
-   * SR0: current thread                                          *
-   * SR1: saved copy of exception-time register now holding FLAGS *
-   * SR2: return address to the calling exception handler         *
-   * SR3: free                                                    *
-   * r1:  free                                                    *
-   * FLAGS: CPU status flags                                      *
-   * r31: our exception frame                                     *
-   *    Valid in the exception frame:                             *
-   *   Exception-time r1, r31, FLAGS.                             *
-   *   Exception SR3, if appropriate.                             *
-   ***************************************************            *
-   * immediate goal:                                              *
-   *    Save the shadow registers that need to be saved to        *
-   *   the exception frame.                                       *
-   \***************************************************************/
+	/***************** REGISTER STATUS BLOCK ***********************\
+	* SR0: current thread                                          *
+	* SR1: saved copy of exception-time register now holding FLAGS *
+	* SR2: return address to the calling exception handler         *
+	* SR3: free                                                    *
+	* r1:  free                                                    *
+	* FLAGS: CPU status flags                                      *
+	* r31: our exception frame                                     *
+	* Valid in the exception frame:                                *
+	*   Exception-time r1, r31, FLAGS.                             *
+	*   Exception SR3, if appropriate.                             *
+	***************************************************            *
+	* immediate goal:                                              *
+	*    Save the shadow registers that need to be saved to        *
+	*   the exception frame.                                       *
+	\***************************************************************/
 	stcr	TMP, SR3   /* free up TMP, TMP2, TMP3 */
 	SAVE_TMP2
 	SAVE_TMP3
 
-   /* save some exception-time registers to the exception frame */
+	/* save some exception-time registers to the exception frame */
 	ldcr	TMP,  EPSR
 	st	TMP,  r31,  REG_OFF(EF_EPSR)
 	ldcr	TMP3, SNIP
 	st	TMP3, r31,  REG_OFF(EF_SNIP)
 	ldcr	TMP2, SFIP
 	st	TMP2, r31,  REG_OFF(EF_SFIP)
+	/* get and store the cpu number */	
+	extu	TMP,  FLAGS,  FLAG_CPU_FIELD_WIDTH<0>  /* TMP = cpu# */
+	st	TMP,  r31,  REG_OFF(EF_CPU)
    
-   /*
-    * Save Pbus fault status register from data and inst CMMU.
-    */
+	/*
+	 * Save Pbus fault status register from data and inst CMMU.
+	 */
 #ifdef MVME188
 	/* check if it's a mvme188 */
 	or.u	TMP,  r0,   hi16(_cputyp)
 	ld	TMP2, TMP,  lo16(_cputyp)
 	cmp	TMP,  TMP2, 0x188
-	bb1	ne,   TMP,  4f
-	ldcr	TMP,  SR1
-	mak	TMP,  TMP,  FLAG_CPU_FIELD_WIDTH<2> /* TMP = cpu# */
-	cmp	TMP2, TMP,  0x0                     /* CPU0 ? */     
-	bb1	ne,   TMP2, 1f
+	bb1	ne,   TMP,  5f
+	
+	extu	TMP,  FLAGS, FLAG_CPU_FIELD_WIDTH<0>	/* TMP = cpu# */
+	cmp	TMP2, TMP, 0x0				/* CPU0 ? */     
+	bb1	eq,   TMP2, 1f
+	cmp	TMP2, TMP, 0x1				/* CPU1 ? */     
+	bb1	eq,   TMP2, 2f
+	cmp	TMP2, TMP, 0x2				/* CPU2 ? */     
+	bb1	eq,   TMP2, 3f
+	cmp	TMP2, TMP, 0x3				/* CPU3 ? */     
+	bb1	eq,   TMP2, 4f
+	/* Arrrrg! bad cpu# */ 
+	br	Lbadcpupanic				
+1:
 	/* must be CPU0 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I0)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I0) + 0x108
@@ -1224,10 +1260,8 @@ _LABEL(have_pcb)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
 	br	pfsr_done
-1:
-	cmp	TMP2, TMP,  0x1                     /* CPU1 ? */     
-	bb1	ne,   TMP2, 2f
-   /* must be CPU1 */
+2:
+	/* must be CPU1 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I1)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I1) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
@@ -1235,10 +1269,8 @@ _LABEL(have_pcb)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
 	br	pfsr_done
-2:
-	cmp	TMP2, TMP,  0x2                     /* CPU2 ? */     
-	bb1	ne,   TMP2, 3f
-   /* must be CPU2 */
+3:
+	/* must be CPU2 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I2)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I2) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
@@ -1246,8 +1278,8 @@ _LABEL(have_pcb)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
 	br	pfsr_done
-3:
-   /* must be CPU3 */
+4:
+	/* must be CPU3 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I3)
 	ld	TMP2, TMP,  lo16(VME_CMMU_I3) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_IPFSR)
@@ -1255,7 +1287,7 @@ _LABEL(have_pcb)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
 	br	pfsr_done
-4: 
+5: 
 #endif   /* MVME188 */
    /* it's a single processor SBC   */  
 	or.u	TMP,  r0,   hi16(SBC_CMMU_I)
@@ -1386,6 +1418,8 @@ _LABEL(DMT_check_finished)
    \***************************************************************/
 	ldcr	r1,   SR2
 	jmp	r1 /* return to allow the handler to clear more SSBR bits */
+
+#endif /* defined(MVME187) || defined (MVME188) */
 
 /************************************************************************/
 /************************************************************************/
@@ -1581,7 +1615,7 @@ _LABEL(misaligned_double)
 /************************************************************************/
 /************************************************************************/
 
-
+#if defined(MVME187) || defined (MVME188)
 
 LABEL(setup_phase_two)
    /***************** REGISTER STATUS BLOCK ***********************\
@@ -1834,6 +1868,7 @@ exception_handler_has_ksp:  global exception_handler_has_ksp
 
 _LABEL(return_to_calling_exception_handler)
    jmp   r14 /* loaded above */
+#endif /* defined(MVME187) || defined (MVME188) */
 
 
 /*
@@ -2021,26 +2056,31 @@ LABEL(oops2)
    /* clear the dmt0 word in the E.F. */
 	st	r0, FPTR, REG_OFF(EF_DSR)
 2:
+#endif /* MVME197 */
 
 /*
  *   If the saved ipl is 0, then call dosoftint() to process soft
  *   interrupts.
  *   If returning to user land, look for ASTs
  */
-#endif /* MVME197 */
 LABEL(_check_ast)
 
         ld      r2, FPTR, REG_OFF(EF_EPSR)   /* get pre-exception PSR */
         bb1     PSR_INTERRUPT_DISABLE_BIT, r2, 1f /* skip if ints off */
         ld      r2, FPTR, REG_OFF(EF_MASK)   /* get pre-exception ipl */
         bcnd    ne0, r2, 1f           /* can't do softint's */
-        bsr.n   _setipl
+        
+	subu	r31, r31, 32
+	bsr.n   _setipl
         or      r2,r0,1
+	addu	r31, r31, 32
         bsr     _dosoftint
         /* is this needed? we are going to restore the ipl below XXX nivas */
+	subu	r31, r31, 32
         bsr.n   _setipl
         or      r2,r0,0                   /* ints are enabled */
-                    /* at ipl 0 now */
+	addu	r31, r31, 32
+	/* at ipl 0 now */
 1:
         ld      r2, FPTR, REG_OFF(EF_EPSR)   /* get pre-exception PSR */
         bb1     PSR_SUPERVISOR_MODE_BIT, r2, no_ast /*skip if in system mode */
@@ -2076,14 +2116,16 @@ _LABEL(no_ast)
         stcr    r1, PSR
 
         /* now ready to return....*/
-
+        
+	ld      r2, FPTR, REG_OFF(EF_MASK)   /* get pre-exception ipl */
+	bsr.n   _setipl
+	subu	r31, r31, 40
+	addu	r31, r31, 40
+        
         /*
          * Transfer the frame pointer to r31, since we no longer need a stack.
          * No page faults here, and interrupts are disabled.
          */
-
-        ld      r2, FPTR, REG_OFF(EF_MASK)   /* get pre-exception ipl */
-        bsr     _setipl
 
         or      r31, r0,  FPTR
         /* restore r1 later */
@@ -2797,7 +2839,7 @@ LABEL(m197_setup_phase_two)
    *   Another exception (or exceptions) may be raised in          *
    *   this, which is why FLAG_ENABLING_FPU is set in SR1.         *
    \***************************************************************/
-   
+   NOP
    RTE   /* jumps to "fpu_enable" on the next line to enable the FPU. */
 
 _LABEL(m197_fpu_enable)
@@ -2959,5 +3001,4 @@ m197_exception_handler_has_ksp:  global m197_exception_handler_has_ksp
 _LABEL(m197_return_to_calling_exception_handler)
    jmp   r14 /* loaded above */
 
-#endif 
-	
+#endif

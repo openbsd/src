@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2001/01/14 20:25:22 smurph Exp $
+#	$OpenBSD: GENERIC,v 1.13 2001/02/01 03:38:11 smurph Exp $
 
 machine		mvme88k 
 
@@ -12,6 +12,7 @@ option		UVM		# use the UVM virtual memory system
 option		FFS_SOFTUPDATES	# Soft Updates
 option		"NCPUS=1"	# number of CPUs supported (max 4)
 option		BUGMAP		# use the Bug ROM VME mappings
+#option		DEBUG		# print debugging statements
 
 maxusers	64
 

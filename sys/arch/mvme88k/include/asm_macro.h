@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.8 2001/01/15 19:50:38 deraadt Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.9 2001/02/01 03:38:17 smurph Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -59,12 +59,12 @@ typedef unsigned long m88k_psr_type;
  */
 static __inline__ m88k_psr_type disable_interrupts_return_psr(void)
 {
-   m88k_psr_type temp, oldpsr;
-   __asm__ __volatile__ ("ldcr %0, cr1" : "=r" (oldpsr));
-   __asm__ __volatile__ ("set  %1, %0, 1<1>" : "=r" (oldpsr), "=r" (temp));
-   __asm__ __volatile__ ("stcr %0, cr1" : "=r" (temp));
-   __asm__ __volatile__ ("tcnd ne0, r0, 0");
-   return oldpsr;
+	m88k_psr_type temp, oldpsr;
+	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (oldpsr));
+	__asm__ __volatile__ ("set  %1, %0, 1<1>" : "=r" (oldpsr), "=r" (temp));
+	__asm__ __volatile__ ("stcr %0, cr1" : "=r" (temp));
+	__asm__ __volatile__ ("tcnd ne0, r0, 0");
+	return oldpsr;
 }
 #define disable_interrupt() (void)disable_interrupts_return_psr()
 
@@ -73,7 +73,7 @@ static __inline__ m88k_psr_type disable_interrupts_return_psr(void)
  */
 static __inline__ void set_psr(m88k_psr_type psr)
 {
-   __asm__ __volatile__ ("stcr %0, cr1" :: "r" (psr));
+	__asm__ __volatile__ ("stcr %0, cr1" :: "r" (psr));
 }
 
 /*
@@ -81,11 +81,11 @@ static __inline__ void set_psr(m88k_psr_type psr)
  */
 static __inline__ m88k_psr_type enable_interrupts_return_psr(void)
 {
-   m88k_psr_type temp, oldpsr; /* need a temporary register */
-   __asm__ __volatile__ ("ldcr %0, cr1" : "=r" (oldpsr));
-   __asm__ __volatile__ ("clr  %1, %0, 1<1>" : "=r" (oldpsr), "=r" (temp));
-   __asm__ __volatile__ ("stcr %0, cr1" : "=r" (temp));
-   return oldpsr;
+	m88k_psr_type temp, oldpsr; /* need a temporary register */
+	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (oldpsr));
+	__asm__ __volatile__ ("clr  %1, %0, 1<1>" : "=r" (oldpsr), "=r" (temp));
+	__asm__ __volatile__ ("stcr %0, cr1" : "=r" (temp));
+	return oldpsr;
 }
 #define enable_interrupt() (void)enable_interrupts_return_psr()
 
@@ -97,8 +97,19 @@ static __inline__ m88k_psr_type enable_interrupts_return_psr(void)
  */
 static __inline__ void flush_pipeline()
 {
-    __asm__ __volatile__ ("tcnd ne0, r0, 0");
+	__asm__ __volatile__ ("tcnd ne0, r0, 0");
 }
 #define db_flush_pipeline flush_pipeline
+
+/*
+ * gets the current stack pointer.
+ */
+static inline unsigned long stack_pointer()
+{
+	register unsigned long sp;
+	__asm__ __volatile__ ("or %0,r0,r31" : "=r" (sp));
+	return(sp);
+}
+
 
 #endif __MACHINE_M88K_ASM_MACRO_H__

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.4 1999/02/09 06:36:24 smurph Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 2001/02/01 03:38:12 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -42,6 +42,7 @@
 #include <machine/db_machdep.h>		 /* local ddb stuff             */
 #include <machine/bug.h>		 /* bug routines 		*/
 #include <machine/mmu.h>
+#include <machine/cpu_number.h>
 
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
@@ -705,12 +706,11 @@ m88k_db_noise(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 static void
 m88k_db_translate(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-#if 0
+#if 1
     char c;
     int verbose_flag = 0;
     int supervisor_flag = 1;
     int wanthelp = 0;
-
     if (!have_addr)
 	wanthelp = 1;
     else {
@@ -742,9 +742,21 @@ m88k_db_translate(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	db_printf("       u - use cmmu's user area pointer\n");
 	return;
     }
+    cmmu_show_translation(addr, supervisor_flag, verbose_flag, -1);
+#endif
+    return;
+}
 
-    cmmu_show_translation(addr, supervisor_flag, verbose_flag);
-#endif /* 0 */
+static void
+m88k_db_cmmucfg(db_expr_t addr, int have_addr, int count, char *modif)
+{
+    if (modif && *modif) {
+	db_printf("usage: mach cmmucfg\n");
+	return;
+    }
+
+    cmmu_dump_config();
+    return;
 }
 
 void cpu_interrupt_to_db(int cpu_no)
@@ -771,6 +783,7 @@ struct db_command db_machine_cmds[] =
     {"regs",		m88k_db_registers,	0, 0},
     {"searchframe",	m88k_db_frame_search,	0, 0},
     {"translate",	m88k_db_translate,      0, 0},
+    {"cmmucfg",		m88k_db_cmmucfg,        0, 0},
     {"where",		m88k_db_where,		0, 0},
     {(char  *) 0,}
 };

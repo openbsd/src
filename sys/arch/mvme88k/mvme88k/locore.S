@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 1999/09/27 19:13:22 smurph Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 2001/02/01 03:38:20 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -331,7 +331,7 @@ _LABEL(master_start)
 	 * can set interrupt_stack[cpu_number()] = _intstack
 	 */
 	ldcr  	r10, SR1
-	mak   	r10, r10, FLAG_CPU_FIELD_WIDTH<0>    /* r10 <-- CPU# */
+	extu   	r10, r10, FLAG_CPU_FIELD_WIDTH<0>    /* r10 <-- CPU# */
 	
 	/* figure interrupt_stack[cpu_number()] */
 	or.u	r11,  r0, hi16(_interrupt_stack)  
@@ -410,10 +410,6 @@ _m197_vector_list:     		  /* references memory BELOW this line */
 _m197_vector_list_end:
 	word END_OF_VECTOR_LIST
 #endif /* MVME197 */	
-	.align 4096		  /* Vector table is a page aligned list */
-LABEL(_vector_table)		  /* new vector table location, was addr 0 */
-	space	(0x1000)	  /* 16K */
-	
 	.align 4096		  /* SDT (segment descriptor table */
 	global _kernel_sdt
 _kernel_sdt:	

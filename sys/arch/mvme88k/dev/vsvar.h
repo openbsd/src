@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.1 1999/05/29 04:41:44 smurph Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.2 2001/02/01 03:38:16 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,6 +48,55 @@
 #define  LO(x) (u_short)((unsigned long)x & 0x0000FFFF)
 #define  HI(x) (u_short)((unsigned long)x >> 16)
 #define  OFF(x) (u_short)((long)kvtop(x) - (long)kvtop(sc->sc_vsreg))
+#define  vs_name(sc)	(sc)->sc_dev.dv_xname
+
+/****************     Scater/Gather Stuff                *******************/
+
+typedef struct {
+	union {
+		unsigned short bytes :16;
+   #define MAX_SG_BLOCK_SIZE	(1<<16)	/* the size *has* to be always *smaller* */
+		struct {
+			unsigned short :8;
+			unsigned short gather :8;
+		} scatter;
+	} count;
+	LONGV           address;
+	unsigned short  link :1;
+	unsigned short  :3;
+	unsigned short  transfer_type :2;
+	/* 				0x0 is reserved */
+   #define SHORT_TREANSFER 		0x1	
+   #define LONG_TRANSFER			0x2	
+   #define SCATTER_GATTER_LIST_IN_SHORT_IO	0x3	
+	unsigned short  memory_type :2;
+   #define NORMAL_TYPE			0x0	
+   #define BLOCK_MODE			0x1	
+	/*				0x2 is reserved */
+	/*				0x3 is reserved */
+	unsigned short  address_modifier :8;
+} sg_list_element_t;
+
+typedef sg_list_element_t * scatter_gather_list_t;
+
+#define MAX_SG_ELEMENTS 64
+
+struct m328_sg {
+	struct m328_sg  *up;
+	int                     elements;
+	int                     level;
+	struct m328_sg  *down[MAX_SG_ELEMENTS];
+	sg_list_element_t list[MAX_SG_ELEMENTS];
+};
+
+typedef struct m328_sg *M328_SG;
+
+typedef struct {
+   struct scsi_xfer  *xs;
+   M328_SG           top_sg_list;
+} M328_CMD;
+
+/**************** END Scater/Gather Stuff                *******************/
 
 struct vs_tinfo {
 	int	cmds;		/* #commands processed */
@@ -56,32 +105,32 @@ struct vs_tinfo {
 	int	perrs;		/* #parity errors */
 	int	senses;		/* #request sense commands sent */
 	ushort	lubusy;		/* What local units/subr. are busy? */
-	u_char  flags;
-	u_char  period;		/* Period suggestion */
-	u_char  offset;		/* Offset suggestion */
-   int   avail;      /* Is there a device there */
+	u_char	flags;
+	u_char	period;		/* Period suggestion */
+	u_char	offset;		/* Offset suggestion */
+	int	avail;		/* Is there a device there */
 } tinfo_t;
 
-struct	vs_softc {
-	struct	device sc_dev;
-	struct	intrhand sc_ih_e;
-	struct	intrhand sc_ih_n;
-	struct	evcnt sc_intrcnt_e;
-	struct	evcnt sc_intrcnt_n;
+struct  vs_softc {
+	struct  device sc_dev;
+	struct  intrhand sc_ih_e;
+	struct  intrhand sc_ih_n;
+	struct  evcnt sc_intrcnt_e;
+	struct  evcnt sc_intrcnt_n;
 	u_short  sc_ipl;
-   u_short  sc_evec;
-   u_short  sc_nvec;
-	struct	scsi_link sc_link;	/* proto for sub devices */
-	u_long	sc_chnl;		         /* channel 0 or 1 for dual bus cards */
-	u_long	sc_qhp;		         /* Command queue head pointer */
-	struct   vsreg	*sc_vsreg;
+	u_short  sc_evec;
+	u_short  sc_nvec;
+	struct  scsi_link sc_link;	/* proto for sub devices */
+	u_long  sc_chnl;		/* channel 0 or 1 for dual bus cards */
+	u_long  sc_qhp;			/* Command queue head pointer */
+	struct   vsreg  *sc_vsreg;
 #define SIOP_NACB 8
 	struct vs_tinfo sc_tinfo[8];
-	u_char	sc_flags;
-	u_char	sc_sien;
-	u_char	sc_dien;
+	u_char  sc_flags;
+	u_char  sc_sien;
+	u_char  sc_dien;
 	u_char  sc_minsync;
-   struct map *hus_map;
+	struct map *hus_map;
 	/* one for each target */
 	struct syncpar {
 		u_char state;
@@ -128,5 +177,18 @@ struct	vs_softc {
 
 void vs_minphys __P((struct buf *bp));
 int vs_scsicmd __P((struct scsi_xfer *));
+/*
+ * Scatter/gather functions
+ */
+
+M328_SG vs_alloc_scatter_gather __P((void));
+void    vs_dealloc_scatter_gather __P((M328_SG sg));
+void    vs_link_scatter_gather_element __P((sg_list_element_t *element,
+					    register vm_offset_t phys_add,
+					    register int len));
+void    vs_link_scatter_gather_list __P((sg_list_element_t *list,
+					 register vm_offset_t phys_add,
+					 register int elements));
+M328_SG vs_build_memory_structure __P((struct scsi_xfer *xs, M328_IOPB *iopb));
 
 #endif /* _M328VAR_H */

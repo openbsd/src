@@ -200,19 +200,18 @@
  *	in a rather precarious state and so special cautions must
  * 	be taken.
  */
-#define FLAG_CPU_FIELD_WIDTH		   4	/* must be <= 12 */
+#define FLAG_CPU_FIELD_WIDTH		2	/* must be <= 12 */
 #define FLAG_IGNORE_DATA_EXCEPTION	5	/* bit number 5  */
-#define FLAG_INTERRUPT_EXCEPTION	   6	/* bit number 6  */
-#define FLAG_ENABLING_FPU		      7	/* bit number 7  */
-#define FLAG_FROM_KERNEL            8  /* bit number 8  */
-#define FLAG_187 		               8	/* bit number 9  */
-#define FLAG_188 		               9	/* bit number 10 */
-#define FLAG_197 		              10	/* bit number 11 */
+#define FLAG_INTERRUPT_EXCEPTION	6	/* bit number 6  */
+#define FLAG_ENABLING_FPU		7	/* bit number 7  */
+#define FLAG_FROM_KERNEL		8	/* bit number 8  */
+#define FLAG_187			9	/* bit number 9  */
+#define FLAG_188			10	/* bit number 10 */
+#define FLAG_197			11	/* bit number 11 */
 
 /* REGister OFFset into the E.F. (exception frame) */
 #define REG_OFF(reg_num)  ((reg_num) * 4) /* (num * sizeof(register int))  */
 #define GENREG_OFF(num)	(REG_OFF(EF_R0 + (num))) /* GENeral REGister OFFset */
-
 
 #define GENERAL_BREATHING_ROOM	/* arbitrarily */ 200
 #define KERNEL_STACK_BREATHING_ROOM 	\

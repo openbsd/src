@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswitch.c,v 1.1 1999/09/27 18:43:22 smurph Exp $ */
+/*	$OpenBSD: busswitch.c,v 1.2 2001/02/01 03:38:13 smurph Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -134,7 +134,7 @@ busswitch_scan(parent, child, args)
 	bzero(&oca, sizeof oca);
 	oca.ca_offset = cf->cf_loc[0];
 	oca.ca_ipl = cf->cf_loc[1];
-	if ((oca.ca_offset != (void*)-1) && ISIIOVA(sc->sc_vaddr + oca.ca_offset)) {
+	if (((int)oca.ca_offset != -1) && ISIIOVA(sc->sc_vaddr + oca.ca_offset)) {
 		oca.ca_vaddr = sc->sc_vaddr + oca.ca_offset;
 		oca.ca_paddr = sc->sc_paddr + oca.ca_offset;
 	} else {

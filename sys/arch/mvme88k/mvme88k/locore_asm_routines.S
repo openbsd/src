@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.9 2001/01/14 20:25:25 smurph Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.10 2001/02/01 03:38:20 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -223,9 +223,10 @@ LABEL(lockpause)
 #undef simple_unlock
 ENTRY(simple_lock_init)
 	st      r0, r2, 0               /* init */
-        ldcr    r2, SR1                               /* extract cpu number*/
-        clr     r2, r2, 0<FLAG_CPU_FIELD_WIDTH>
-        mask    r2, r2, 3               /* play it safe */
+        
+	ldcr	r2, SR1
+	extu	r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
+	mask  	r2, r2, 3			/* play it safe */
         or.u    r3, r0, hi16(lockinit)
         or      r3, r3, lo16(lockinit)
         ld      r4, r3[r2]
@@ -256,9 +257,9 @@ ENTRY(simple_lock)
    xmem  r3, r2, r0
    bcnd  ne0, r3, 1f
 #if 0
-   ldcr  r5, SR1                               /* extract cpu number */
-   clr   r5, r5, 0<FLAG_CPU_FIELD_WIDTH>
-   mask  r5, r5, 3               /* play it safe */
+   ldcr  r5, SR1
+   extu  r5, r5, FLAG_CPU_FIELD_WIDTH<0>	/* r5 = cpu# */
+   mask  r5, r5, 3				/* play it safe */
    or.u  r3, r0, hi16(lockuse)
    or    r3, r3, lo16(lockuse)
    ld    r4, r3[r5]
@@ -309,9 +310,10 @@ ENTRY(db_simple_lock)
    or    r10, r0, 1
    xmem  r10, r2, r0
    bcnd  ne0, r10, db_simple_lock_watch
-   ldcr  r2, SR1                               /* extract cpu number*/
-   clr   r2, r2, 0<FLAG_CPU_FIELD_WIDTH>
-   mask  r2, r2, 3               /* play it safe*/
+   
+   ldcr  r2, SR1
+   extu  r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
+   mask  r2, r2, 3				/* play it safe */
    or.u  r3, r0, hi16(lockuse)
    or    r3, r3, lo16(lockuse)
    ld    r4, r3[r2]
@@ -380,9 +382,9 @@ ENTRY(db_simple_lock_held)
  */
 
 ENTRY(simple_lock_pause)
-        ldcr    r2, SR1                         /* extract cpu number*/
-        clr     r2, r2, FLAG_CPU_FIELD_WIDTH
-        mask    r2, r2, 3                       /* play it safe */
+	ldcr	r2, SR1
+	extu	r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
+	mask	r2, r2, 3				/* play it safe */
         or.u    r3, r0, hi16(lockpause)
         or      r3, r3, lo16(lockpause)
         ld      r4, r3[r2]
@@ -1138,10 +1140,10 @@ _LABEL(copyout_byte_only)
 	NOP
 	NOP
 	bcnd	ne0, LEN, 1b
-#   else
+#else
 	bcnd.n	ne0, LEN, 1b
 	st.b.usr r5, DEST, LEN
-#   endif
+#endif
 
    2:	or	r2, r0, r0	/* successful return */
 	br	.Lcodone
@@ -2471,7 +2473,7 @@ ENTRY(cpu_number)
 #endif /* MVME188 */	
 1:    
         jmp.n   r1
-        clr	r2, r2, 28<FLAG_CPU_FIELD_WIDTH>/* clears all but the CPU num */
+	extu	r2, r2, FLAG_CPU_FIELD_WIDTH<0>	/* r2 = cpu# */
 #endif
 	
 /*************************************************************************
@@ -2514,12 +2516,11 @@ ENTRY(set_cpu_number)
 	stcr	r4, PSR
 	jmp	r1
 
-     1: /* bad cpu number*/
+1: /* bad cpu number*/
 	or.u	r2, r0, hi16(1f)
 	bsr.n	_panic
 	or	r2, r2, lo16(1f)
-	1: string "set_cpu_number: bad CPU number\0"
+1:	string "set_cpu_number: bad CPU number\0"
 	align   4
 	/* will not return */
-
 
