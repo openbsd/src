@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.8 2001/09/04 21:25:17 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.9 2001/09/05 13:45:30 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -201,7 +201,7 @@ floppy)
 ramdisk)
 	R std lkm random
 	R fd0 rd0 wd0 wd1 wd2 wd3 bpf0
-	R sd0 sd1 sd2 sd3 st0 st1 cd0 cd1 mcd0
+	R sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	;;
 std)M console	c 0 0 600
 	M tty		c 2 0
@@ -242,7 +242,6 @@ cua[a-z])
 	esac
 	M cua$unit c 12 $(($n+128)) wheel uucp
 	;;
-speaker)M speaker c 27 0 600;;
 mouse*)name=${i##mouse-}
 	if [ ! -c $name ]; then
 		$0 $name	# make the appropriate device
@@ -345,9 +344,8 @@ vnd*)
 uk*)M uk$U c 60 $U 640 operator;;
 ss*)
 	M ss$U c 59 $U 440 operator
-	rm -f scan$U
-	umask 77
-	ln -s ss$U scan$U;;
+	RMlist="$RMlist scan$U"
+	MKlist="$MKlist;umask 77;ln -s ss$U scan$U";;
 st*)
     n=$(($U*16))
 	for pre in " " n e en
@@ -374,7 +372,8 @@ audio*)
 	M mixer$u	c 69 $(($U+16))
 	M audio$u	c 69 $(($U+128))
 	M audioctl$u	c 69 $(($U+192));;
-pf*)M pf$U c 73 $U 600;;
+pf*)
+	M pf c 73 0 600;;
 altq)
 	RMlist="mkdir -p altq;$RMlist"
 	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
@@ -395,11 +394,27 @@ esac
 done
 }
 R "$@"
-$eo eval $RMlist
+if [ "$os" = "SunOS" ]; then
+	eo=transform
+	transform() {
+		case $mode in
+		600)mask=077;;
+		640)mask=027;;
+		660)mask=007;;
+		644)mask=022;;
+		666)mask=0;;
+		440)mask=227;;
+		esac
+		echo eval `echo "$@"|sed \
+			's/mknod -m \([0-9]*\) /umask '$mask';mknod /;s/-m [0-9]* //g;\
+			 s/operator/5/g;s/root.kmem/root.2/g;s/root\./root:/g'`
+	}
+fi
+$eo eval "$RMlist"
 for mode in $modes; do
-    $eo eval ${mklist[$mode]}
+    $eo eval "${mklist[$mode]}"
 done
 for group in $groups; do
-	$eo eval ${grplist[$groupl]}
+	$eo eval "${grplist[$groupl]}"
 done
-$eo eval $MKlist
+$eo eval "$MKlist"
