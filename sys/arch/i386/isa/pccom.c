@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.17 1997/12/26 09:35:40 deraadt Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.18 1998/01/19 06:48:24 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -1651,7 +1651,7 @@ comcnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(commajor, CONUNIT);
-#if defined(COMCONSOLE) || defined(PCCOMSONSOLE)
+#if defined(COMCONSOLE) || defined(PCCOMCONSOLE)
 	cp->cn_pri = CN_REMOTE;		/* Force a serial port console */
 #else
 	cp->cn_pri = CN_NORMAL;
