@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.10 1997/06/18 01:58:32 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.11 1997/06/24 03:53:01 millert Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.10 1997/06/18 01:58:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.11 1997/06/24 03:53:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -382,7 +382,7 @@ np_rtentry(rtm)
 	else {
 		p_sockaddr(sa, rtm->rtm_flags, 16);
 		if (sa->sa_len == 0)
-			sa->sa_len = sizeof(long);
+			sa->sa_len = sizeof(u_int32_t);
 		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
 		p_sockaddr(sa, 0, 18);
 	}
@@ -576,8 +576,7 @@ netname(in, mask)
 	char *cp = 0;
 	static char line[MAXHOSTNAMELEN + 1];
 	struct netent *np = 0;
-	u_int32_t net;
-	int subnetshift;
+	u_int32_t net, subnetshift;
 
 	in = ntohl(in);
 	mask = ntohl(mask);
@@ -602,7 +601,7 @@ netname(in, mask)
 			 	* width subnet fields.
 			 	*/
 				while (in &~ mask)
-					mask = (long)mask >> subnetshift;
+					mask = (int)mask >> subnetshift;
 			}
 			net = in & mask;
 			while ((mask & 1) == 0)
