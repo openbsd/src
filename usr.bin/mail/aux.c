@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.10 1997/07/30 07:19:29 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.11 1997/07/31 02:36:32 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.10 1997/07/30 07:19:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.11 1997/07/31 02:36:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -473,6 +473,8 @@ skin(name)
 	if (strchr(name, '(') == NULL && strchr(name, '<') == NULL
 	    && strchr(name, ' ') == NULL)
 		return(name);
+
+	/* We assume that length(input) <= length(output) */
 	if ((bufend = (char *)malloc(strlen(name) + 1)) == NULL)
 		panic("Out of memory");
 	gotlt = 0;
