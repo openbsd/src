@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.33 2004/09/30 17:59:23 jason Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.34 2004/10/13 22:49:24 miod Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1237,11 +1237,8 @@ rl_attach(sc)
 		sc->rl_type = RL_8139;
 	else if (rl_did == RT_DEVICEID_8129)
 		sc->rl_type = RL_8129;
-	else {
-		printf("\n%s: unknown device id: %x\n", sc->sc_dev.dv_xname,
-		    rl_did);
-		return (1);
-	}
+	else
+		sc->rl_type = RL_UNKNOWN;	/* could be 8138 or other */
 
 	if (bus_dmamem_alloc(sc->sc_dmat, RL_RXBUFLEN + 32, PAGE_SIZE, 0,
 	    &sc->sc_rx_seg, 1, &rseg, BUS_DMA_NOWAIT)) {

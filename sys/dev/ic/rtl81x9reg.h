@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.16 2004/09/30 17:37:54 jason Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.17 2004/10/13 22:49:24 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -610,6 +610,7 @@ struct rl_mii_frame {
 #define RL_MII_WRITEOP		0x01
 #define RL_MII_TURNAROUND	0x02
 
+#define	RL_UNKNOWN		0
 #define RL_8129			1
 #define RL_8139			2
 #define RL_8139CPLUS		3
