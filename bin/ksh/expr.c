@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.15 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: expr.c,v 1.16 2004/12/22 18:57:28 otto Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -175,7 +175,7 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok)
 		/* Clear EXPRINEVAL in of any variables we were playing with */
 		if (curstate.evaling)
 			curstate.evaling->flag &= ~EXPRINEVAL;
-		quitenv();
+		quitenv(NULL);
 		if (i == LAEXPR) {
 			if (error_ok == KSH_RETURN_ERROR)
 				return 0;
@@ -203,7 +203,7 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok)
 		/* can fail if readonly */
 		setstr(vp, str_val(v), error_ok);
 
-	quitenv();
+	quitenv(NULL);
 
 	return 1;
 }

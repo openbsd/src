@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2004/12/22 18:57:28 otto Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -397,9 +397,7 @@ include(const char *name, int argc, char **argv, int intr_ok)
 	newenv(E_INCL);
 	i = sigsetjmp(e->jbuf, 0);
 	if (i) {
-		if (s) /* Do this before quitenv(), which frees the memory */
-			shf_close(s->u.shf);
-		quitenv();
+		quitenv(s ? s->u.shf : NULL);
 		if (old_argv) {
 			e->loc->argv = old_argv;
 			e->loc->argc = old_argc;
@@ -433,8 +431,7 @@ include(const char *name, int argc, char **argv, int intr_ok)
 	s->u.shf = shf;
 	s->file = str_save(name, ATEMP);
 	i = shell(s, false);
-	shf_close(s->u.shf);
-	quitenv();
+	quitenv(s->u.shf);
 	if (old_argv) {
 		e->loc->argv = old_argv;
 		e->loc->argc = old_argc;
@@ -498,12 +495,12 @@ shell(Source *volatile s, volatile int toplevel)
 		  case LLEAVE:
 		  case LRETURN:
 			source = old_source;
-			quitenv();
+			quitenv(NULL);
 			unwind(i);	/* keep on going */
 			/*NOREACHED*/
 		  default:
 			source = old_source;
-			quitenv();
+			quitenv(NULL);
 			internal_errorf(1, "shell: %d", i);
 			/*NOREACHED*/
 		}
@@ -556,7 +553,7 @@ shell(Source *volatile s, volatile int toplevel)
 
 		reclaim();
 	}
-	quitenv();
+	quitenv(NULL);
 	source = old_source;
 	return exstat;
 }
@@ -591,7 +588,7 @@ unwind(int i)
 			/* Fall through... */
 
 		  default:
-			quitenv();
+			quitenv(NULL);
 		}
 	}
 }
@@ -613,7 +610,7 @@ newenv(int type)
 }
 
 void
-quitenv(void)
+quitenv(struct shf *shf)
 {
 	struct env *ep = e;
 	int fd;
@@ -628,7 +625,6 @@ quitenv(void)
 		if (ep->savefd[2]) /* Clear any write errors */
 			shf_reopen(2, SHF_WR, shl_out);
 	}
-	reclaim();
 
 	/* Bottom of the stack.
 	 * Either main shell is exiting or cleanup_parents_env() was called.
@@ -654,8 +650,14 @@ quitenv(void)
 				}
 			}
 		}
+		if (shf)
+			shf_close(shf);
+		reclaim();
 		exit(exstat);
 	}
+	if (shf)
+		shf_close(shf);
+	reclaim();
 
 	e = e->oenv;
 	afree(ep, ATEMP);

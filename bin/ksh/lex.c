@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.29 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.30 2004/12/22 18:57:28 otto Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1154,7 +1154,7 @@ set_prompt(int to, Source *s)
 		} else
 			prompt = str_save(substitute(ps1, 0),
 					 saved_atemp);
-		quitenv();
+		quitenv(NULL);
 		break;
 	case PS2: /* command continuation */
 		prompt = str_val(global("PS2"));

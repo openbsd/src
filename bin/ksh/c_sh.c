@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.25 2004/12/22 18:48:56 millert Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.26 2004/12/22 18:57:28 otto Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -538,7 +538,7 @@ c_exitreturn(char **wp)
 		how = LSHELL;
 	}
 
-	quitenv();	/* get rid of any i/o redirections */
+	quitenv(NULL);	/* get rid of any i/o redirections */
 	unwind(how);
 	/*NOTREACHED*/
 	return 0;
