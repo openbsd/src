@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.27 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: vs.c,v 1.28 2004/01/20 16:48:27 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -84,7 +84,7 @@ struct cfdriver vs_cd = {
 	NULL, "vs", DV_DULL,
 };
 
-int	do_vspoll(struct vs_softc *, int);
+int	do_vspoll(struct vs_softc *, int, int);
 void	thaw_queue(struct vs_softc *, u_int8_t);
 M328_SG	vs_alloc_scatter_gather(void);
 M328_SG	vs_build_memory_structure(struct scsi_xfer *, M328_IOPB *);
@@ -169,9 +169,10 @@ vsattach(parent, self, auxp)
 }
 
 int
-do_vspoll(sc, to)
+do_vspoll(sc, to, canreset)
 	struct vs_softc *sc;
 	int to;
+	int canreset;
 {
 	int i;
 	if (to <= 0 ) to = 50000;
@@ -187,8 +188,10 @@ do_vspoll(sc, to)
 			--to;
 			if (to <= 0) {
 				/*splx(s);*/
-				vs_reset(sc);
-				vs_resync(sc);
+				if (canreset) {
+					vs_reset(sc);
+					vs_resync(sc);
+				}
 				printf ("timed out: timeout %d crsw 0x%x\n", to, CRSW);
 				return 1;
 			}
@@ -208,7 +211,7 @@ vs_poll(sc, xs)
 	/*s = splbio();*/
 	to = xs->timeout / 1000;
 	for (;;) {
-		if (do_vspoll(sc, to)) {
+		if (do_vspoll(sc, to, 1)) {
 			xs->error = XS_SELTIMEOUT;
 			xs->status = -1;
 			xs->flags |= ITSDONE;
@@ -454,7 +457,7 @@ vs_chksense(xs)
 	mc->cqe_QECR = M_QECR_GO;
 	/* poll for the command to complete */
 	s = splbio();
-	do_vspoll(sc, 0);
+	do_vspoll(sc, 0, 1);
 	/*
 	if (xs->cmd->opcode != PREVENT_ALLOW) {
 	   xs->error = XS_SENSE;
@@ -560,7 +563,7 @@ vs_initialize(sc)
 	mc->cqe_WORK_QUEUE = 0;
 	mc->cqe_QECR = M_QECR_GO;
 	/* poll for the command to complete */
-	do_vspoll(sc, 0);
+	do_vspoll(sc, 0, 1);
 	CRB_CLR_DONE(CRSW);
 
 	/* initialize work queues */
@@ -582,7 +585,7 @@ vs_initialize(sc)
 		mc->cqe_WORK_QUEUE = 0;
 		mc->cqe_QECR = M_QECR_GO;
 		/* poll for the command to complete */
-		do_vspoll(sc, 0);
+		do_vspoll(sc, 0, 1);
 		if (CRSW & M_CRSW_ER) {
 			/*printf("\nerror: queue %d status = 0x%x\n", i, riopb->iopb_STATUS);*/
 			/*failed = 1;*/
@@ -595,7 +598,7 @@ vs_initialize(sc)
 	CRSW = 0;
 	mcsb->mcsb_MCR |= M_MCR_SQM;
 	crsw = CRSW;
-	do_vspoll(sc, 0);
+	do_vspoll(sc, 0, 1);
 	if (CRSW & M_CRSW_ER) {
 		printf("error: status = 0x%x\n", riopb->iopb_STATUS);
 		CRB_CLR_ER(CRSW);
@@ -637,7 +640,7 @@ vs_resync(sc)
 		mc->cqe_WORK_QUEUE = 0;
 		mc->cqe_QECR = M_QECR_GO;
 		/* poll for the command to complete */
-		do_vspoll(sc, 0);
+		do_vspoll(sc, 0, 0);
 		if (riopb->iopb_STATUS) {
 #ifdef SDEBUG
 			printf("status: %x\n", riopb->iopb_STATUS);
@@ -678,7 +681,7 @@ vs_reset(sc)
 	mc->cqe_QECR = M_QECR_GO;
 	/* poll for the command to complete */
 	while (1) {
-		do_vspoll(sc, 0);
+		do_vspoll(sc, 0, 0);
 		/* ack & clear scsi error condition cause by reset */
 		if (CRSW & M_CRSW_ER) {
 			CRB_CLR_ER(CRSW);
