@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.6 2002/04/05 20:33:33 mickey Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.7 2002/04/06 01:01:39 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -134,6 +134,7 @@ l l l .
 Card:Chip:Bus
 3Com AirConnect 3CRWE737A:Spectrum24:PCMCIA
 3Com AirConnect 3CRWE777A:Prism-II:PCI
+ACTIONTEC HWC01170:Prism-2.5:PCMCIA
 Addtron AWP-100:Prism-II:PCMCIA
 Agere Orinoco:Hermes:PCMCIA
 Apple Airport:Hermes:macobio
@@ -151,6 +152,7 @@ ELSA XI800:Prism-II:CF
 EMTAC A2424i:Prism-II:PCMCIA
 Ericsson Wireless LAN CARD C11:Spectrum24:PCMCIA
 Gemtek WL-311:Prism-2.5:PCMCIA
+Hawking Technology WE110P:Prism-2.5:PCMCIA
 I-O DATA WN-B11/PCM:Prism-II:PCMCIA
 Intel PRO/Wireless 2011:Prism-II:PCMCIA
 Intersil Prism II:Prism-II:PCMCIA
@@ -161,6 +163,7 @@ Lucent WaveLAN:Hermes:PCMCIA
 NANOSPEED ROOT-RZ2000:Prism-II:PCMCIA
 NDC/Sohoware NCP130:Prism-II:PCI
 NEC CMZ-RT-WP:Prism-II:PCMCIA
+Netgear MA401:Prism-II:PCMCIA
 NTT-ME 11Mbps Wireless LAN:Prism-II:PCMCIA
 Proxim RangeLAN-DS:Prism-II:PCMCIA
 Samsung MagicLAN SWL-2000N:Prism-II:PCMCIA
