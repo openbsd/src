@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.6 2001/06/27 03:50:49 angelos Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.7 2001/06/27 08:38:57 aaron Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -77,9 +77,9 @@ struct m_tag {
 .Pp
 The
 .Va m_tag_link
-field is used to link tags together. See
+field is used to link tags together (see
 .Xr queue 3
-for more details.
+for more details).
 The
 .Va m_tag_id
 and
@@ -115,7 +115,7 @@ identifying the security association applied to the packet.
 This tag is primarily used to detect and avoid loops in IPsec
 processing on output.
 .It PACKET_TAG_IPSEC_IN_CRYPTO_DONE
-Used by network cards that implement on-board IPsec processing, to
+Used by network cards that implement on-board IPsec processing to
 indicate that the crypto processing of an IPsec packet has been done.
 The tag contains a
 .Va struct tdb_ident
@@ -178,7 +178,7 @@ attached to packet
 If
 .Va tag
 is
-.Va NULL ,
+.Dv NULL ,
 the first such tag is returned.
 Otherwise, the first tag of type
 .Va type
@@ -186,7 +186,7 @@ after
 .Va tag
 is returned.
 If no such tag is found,
-.Va NULL
+.Dv NULL
 is returned.
 .Pp
 .Fn m_tag_prepend
@@ -219,7 +219,7 @@ following tag
 If
 .Va tag
 is
-.Va NULL ,
+.Dv NULL ,
 all tags are deleted.
 .Pp
 .Fn m_tag_init
@@ -255,7 +255,7 @@ The
 .Fn M_DUP_PKTHDR
 and
 .Fn M_DUP_HDR
-create a new copy of the tag chain for the new mbuf.
+macros create copies of the tag chain for the new mbuf.
 .Pp
 .Sh CODE REFERENCES
 The tag-manipulating code is contained in the file
