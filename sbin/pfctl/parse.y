@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.109 2002/07/01 05:28:22 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.110 2002/07/01 10:07:40 espie Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -151,8 +151,8 @@ struct sym {
 };
 struct sym *symhead = NULL;
 
-int	symset(char *name, char *val);
-char *	symget(char *name);
+int	symset(const char *name, const char *val);
+char *	symget(const char *name);
 
 struct ifaddrs    *ifa0_lookup(char *ifa_name);
 struct ifaddrs    *ifa4_lookup(char *ifa_name);
@@ -2149,36 +2149,40 @@ lookup(char *s)
 	}
 }
 
+#define MAXPUSHBACK	128
+
 char	*parsebuf;
 int	parseindex;
+char	pushback_buffer[MAXPUSHBACK];
+int	pushback_index = 0;
 
 int
 lgetc(FILE *fin)
 {
 	int c, next;
 
-restart:
 	if (parsebuf) {
 		/* Reading characters from the parse buffer, instead of input */
-		c = parsebuf[parseindex++];
-		if (c != '\0')
-			return (c);
-		free(parsebuf);
-		parsebuf = NULL;
-		parseindex = 0;
-		goto restart;
+		if (parseindex >= 0) {
+			c = parsebuf[parseindex++];
+			if (c != '\0')
+				return (c);
+			parsebuf = NULL;
+		} else
+			parseindex++;
 	}
 
-	c = getc(fin);
-	if (c == '\\') {
+	if (pushback_index)
+		return (pushback_buffer[--pushback_index]);
+
+	while ((c = getc(fin)) == '\\') {
 		next = getc(fin);
 		if (next != '\n') {
 			ungetc(next, fin);
-			return (c);
+			break;
 		}
 		yylval.lineno = lineno;
 		lineno++;
-		goto restart;
 	}
 	return (c);
 }
@@ -2186,12 +2190,17 @@ restart:
 int
 lungetc(int c, FILE *fin)
 {
-	if (parsebuf && parseindex) {
-		/* XXX breaks on index 0 */
+	if (c == EOF)
+		return (EOF);
+	if (parsebuf) {
 		parseindex--;
-		return (c);
+		if (parseindex >= 0)
+			return (c);
 	}
-	return ungetc(c, fin);
+	if (pushback_index < MAXPUSHBACK-1)
+		return (pushback_buffer[pushback_index++] = c);
+	else
+		return (EOF);
 }
 
 int
@@ -2199,11 +2208,8 @@ findeol()
 {
 	int c;
 
-	if (parsebuf) {
-		free(parsebuf);
-		parsebuf = NULL;
-		parseindex = 0;
-	}
+	parsebuf = NULL;
+	pushback_index = 0;
 
 	/* skip to either EOF or the first real EOL */
 	while (1) {
@@ -2254,9 +2260,7 @@ top:
 		val = symget(buf);
 		if (val == NULL)
 			return (ERROR);
-		parsebuf = strdup(val);
-		if (parsebuf == NULL)
-			err(1, "parsebuf: strdup");
+		parsebuf = val;
 		parseindex = 0;
 		goto top;
 	}
@@ -2482,7 +2486,7 @@ ipmask(struct pf_addr *m, u_int8_t b)
  * we wait until they discover this ugliness and make it all fancy.
  */
 int
-symset(char *nam, char *val)
+symset(const char *nam, const char *val)
 {
 	struct sym *sym;
 
@@ -2506,7 +2510,7 @@ symset(char *nam, char *val)
 }
 
 char *
-symget(char *nam)
+symget(const char *nam)
 {
 	struct sym *sym;
 
