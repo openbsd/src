@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.19 1997/10/17 18:46:57 weingart Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.20 1997/10/18 00:33:16 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -33,16 +33,22 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <machine/biosvar.h>
 
 void gateA20 __P((int));
+
 void smpprobe __P((void));
 void memprobe __P((void));
 void diskprobe __P((void));
 void apmprobe __P((void));
+
 void devboot __P((dev_t, char *));
 void *alloca __P((size_t));
 void machdep __P((void));
 void time_print __P((void));
+
+bios_diskinfo_t *diskfind __P((int));
+
 
 extern const char bdevs[][4];
 extern const int nbdevs;

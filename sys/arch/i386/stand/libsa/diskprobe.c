@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.1 1997/10/17 18:46:56 weingart Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.2 1997/10/18 00:33:15 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,15 +33,33 @@
  */
 
 #include <sys/param.h>
+#include <sys/reboot.h>
 #include <machine/biosvar.h>
 #include "biosdev.h"
 #include "libsa.h"
 
 
+extern struct BIOS_vars BIOS_vars;
+
 /* These get passed to kernel */
 bios_diskinfo_t bios_diskinfo[16];
 
 
+/* Find info on given BIOS disk */
+bios_diskinfo_t *
+diskfind(dev)
+	int dev;
+{
+	int i;
+
+	for(i = 0; bios_diskinfo[i].bios_number != -1; i++)
+		if(bios_diskinfo[i].bios_number == dev)
+			return(&bios_diskinfo[i]);
+
+	return(NULL);
+}
+
+/* Probe for all BIOS disks */
 void
 diskprobe()
 {
@@ -62,7 +80,7 @@ diskprobe()
 			printf(" fd%d", drive);
 
 			/* Fill out best we can */
-			bios_diskinfo[i].bsd_major = 2;		/* fd? */
+			bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(2, 0, 0, 0, 0);	/* fd? */
 			bios_diskinfo[i].bios_number = drive;
 			bios_diskinfo[i].bios_cylinders = BIOSNTRACKS(p);
 			bios_diskinfo[i].bios_heads = BIOSNHEADS(p);
@@ -85,7 +103,7 @@ diskprobe()
 			printf(" hd%d", drive - 128);
 
 			/* Fill out best we can */
-			bios_diskinfo[i].bsd_major = -1;		/* XXX - fill in */
+			bios_diskinfo[i].bsd_dev = -1;		/* XXX - fill in */
 			bios_diskinfo[i].bios_number = drive;
 			bios_diskinfo[i].bios_cylinders = BIOSNTRACKS(p);
 			bios_diskinfo[i].bios_heads = BIOSNHEADS(p);
@@ -97,6 +115,9 @@ diskprobe()
 
 	/* End of list */
 	bios_diskinfo[i].bios_number = -1;
+
+	/* XXX - This needs a better place! */
+	BIOS_vars.boot_data = bios_diskinfo;
 
 	printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.18 1997/10/17 18:47:00 weingart Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.19 1997/10/18 00:33:14 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -146,10 +146,11 @@ typedef struct _bios_diskinfo {
 	unsigned int bios_sectors;		/* BIOS sectors */
 
 	/* BSD section */
-	signed int bsd_major;			/* Major number of driver (or -1) */
+	dev_t bsd_dev;				/* BSD device */
 
 	/* Checksum section */
 	u_int32_t checksum;				/* Checksum for drive */
+	unsigned int checklen;			/* Number of sectors done */
 } bios_diskinfo_t;
 
 

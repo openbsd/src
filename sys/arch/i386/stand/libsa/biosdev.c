@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.37 1997/10/17 15:03:21 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.38 1997/10/18 00:33:15 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -42,11 +42,10 @@
 #include "biosdev.h"
 
 extern int debug;
+extern bios_diskinfo_t bios_diskinfo[];
 
 struct biosdisk {
-	u_int32_t	dinfo;
-	dev_t	bsddev;
-	int	biosdev;
+	bios_diskinfo_t *bios_info;
 	int	edd_flags;
 	struct disklabel disklabel;
 };
@@ -109,7 +108,10 @@ biosdreset(dev)
 	return (rv & 0xff)? rv >> 8 : 0;
 }
 
-__inline int
+/*
+ * Read/Write a block from given place using the BIOS.
+ */
+int
 biosd_rw(rw, dev, cyl, head, sect, nsect, buf)
 	int rw, dev, cyl, head;
 	int sect, nsect;
@@ -171,6 +173,20 @@ EDD_rw(rw, dev, daddr, nblk, buf)
 	return (rv & 0xff)? rv >> 8 : 0;
 }
 
+char *
+bios_getdisklabel(dev, label)
+	int dev;
+	struct disklabel *label;
+{
+	char *st, buf[DEV_BSIZE];
+	struct dos_mbr mbr;
+	int error;
+
+	error = biosd_rw(F_READ, dev, 0, 0, 1, 1, &mbr);
+	st = getdisklabel(buf, label);
+	return(st);
+}
+
 int
 biosopen(struct open_file *f, ...)
 {
@@ -180,7 +196,7 @@ biosopen(struct open_file *f, ...)
 	register struct biosdisk *bd;
 	daddr_t off = LABELSECTOR;
 	u_int8_t *buf;
-	int i;
+	int i, biosdev;
 
 	va_start(ap, f);
 	cp = *(file = va_arg(ap, char **));
@@ -239,13 +255,13 @@ biosopen(struct open_file *f, ...)
 	case 0:  /* wd */
 	case 4:  /* sd */
 	case 17: /* hd */
-		bd->biosdev = unit | 0x80;
+		biosdev = unit | 0x80;
 		if (maj == 17)
 			unit = 0;
 		maj = 17;
 		break;
 	case 2:  /* fd */
-		bd->biosdev = unit;
+		biosdev = unit;
 		break;
 	case 7:  /* mcd */
 	case 15: /* scd */
@@ -264,17 +280,15 @@ biosopen(struct open_file *f, ...)
 		return ENXIO;
 	}
 
-	bd->dinfo = biosdinfo(bd->biosdev);
-	if (!bd->dinfo)
-		bd->dinfo = 0x01014f12; /* fake geometry */
-	/* pass c: geometry for floppy */
-	BIOS_vars.bios_geometry = (bd->biosdev & 0x80)? bd->dinfo
-		: biosdinfo(0x80);
-	BIOS_vars.bios_dev = (bd->biosdev & 0x80)? bd->biosdev : 0x80;
-		
+	bd->bios_info = diskfind(biosdev);
+	if (!bd->bios_info)
+		return ENXIO;
+
+	/* Get EDD stuff */
+	bd->edd_flags = EDDcheck(biosdev);
+
 	/* maj is fixed later w/ disklabel read */
-	bootdev = bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
-	bd->edd_flags = EDDcheck(bd->biosdev);
+	bootdev = MAKEBOOTDEV(maj, 0, 0, unit, part);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
@@ -361,7 +375,7 @@ biosopen(struct open_file *f, ...)
 	}
 
 	/* and again w/ fixed maj */
-	bootdev = bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);
+	bootdev = MAKEBOOTDEV(maj, 0, 0, unit, part);
 
 	f->f_devdata = bd;
 
@@ -461,9 +475,11 @@ biosstrategy(devdata, rw, blk, size, buf, rsize)
 	register size_t i, nsect, n, spt;
 
 	nsect = (size + DEV_BSIZE-1) / DEV_BSIZE;
+#if 0
 	if (rsize != NULL)
 		blk += bd->disklabel.
 			d_partitions[B_PARTITION(bd->bsddev)].p_offset;
+#endif
 
 #ifdef BIOS_DEBUG
 	if (debug)
@@ -474,17 +490,17 @@ biosstrategy(devdata, rw, blk, size, buf, rsize)
 #endif
 
 	/* handle floppies w/ different from drive geometry */
-	if (!(bd->biosdev & 0x80) && bd->disklabel.d_nsectors != 0)
+	if (!(bd->bios_info->bios_number & 0x80) && bd->disklabel.d_nsectors != 0)
 		spt = bd->disklabel.d_nsectors;
 	else
-		spt = BIOSNSECTS(bd->dinfo);
+		spt = bd->bios_info->bios_sectors;
 
 	for (i = 0; error == 0 && i < nsect;
 	     i += n, blk += n, buf += n * DEV_BSIZE) {
 		register int	cyl, hd, sect, j;
 		void *bb;
 
-		btochs(blk, cyl, hd, sect, BIOSNHEADS(bd->dinfo), spt);
+		btochs(blk, cyl, hd, sect, (bd->bios_info->bios_heads), spt);
 		if ((sect + (nsect - i)) >= spt)
 			n = spt - sect;
 		else
@@ -508,7 +524,7 @@ biosstrategy(devdata, rw, blk, size, buf, rsize)
 #endif
 		/* Try to do operation up to 5 times */
 		for (error = 1, j = 5; j-- && error;)
-			switch (error = biosd_rw(rw, bd->biosdev,
+			switch (error = biosd_rw(rw, bd->bios_info->bios_number,
 						 cyl, hd, sect, n, bb)) {
 			case 0x00:	/* No errors */
 			case 0x11:	/* ECC corrected */
@@ -518,7 +534,7 @@ biosstrategy(devdata, rw, blk, size, buf, rsize)
 			default:	/* All other errors */
 				printf("\nBIOS error 0x%x (%s)\n", error,
 				       biosdisk_err(error));
-				biosdreset(bd->biosdev);
+				biosdreset(bd->bios_info->bios_number);
 				break;
 			}
 
