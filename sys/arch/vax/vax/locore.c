@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.13 2001/02/24 10:31:58 hugh Exp $	*/
+/*	$OpenBSD: locore.c,v 1.14 2001/02/25 15:52:21 hugh Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -152,10 +152,16 @@ start()
 #if VAX48
 	case VAX_BTYP_48:
 		dep_call = &ka48_calls;
-		if (vax_confdata & 0x80)
+		switch((vax_siedata >> 8) & 0xFF) {
+		case VAX_STYP_45:
 			strcat(cpu_model, "3100/m{30,40}");
-		else
-			strcat(cpu_model, "4000 VLC");
+			break;
+		case VAX_STYP_48:
+			strcpy(cpu_model, "VAXstation 4000/VLC");
+			break;
+		default:
+			strcat(cpu_model, " - Unknown SOC");
+		}
 		break;
 #endif
 #if VAX49
