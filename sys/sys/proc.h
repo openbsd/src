@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.73 2004/06/20 08:25:30 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.74 2004/06/21 23:12:14 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -46,46 +46,7 @@
 #include <sys/timeout.h>		/* For struct timeout. */
 #include <sys/event.h>			/* For struct klist */
 
-/*
- * CPU states.
- * XXX Not really scheduler state, but no other good place to put
- * it right now, and it really is per-CPU.
- */
-#define CP_USER		0
-#define CP_NICE		1
-#define CP_SYS		2
-#define CP_INTR		3
-#define CP_IDLE		4
-#define CPUSTATES	5
-
-/*
- * Per-CPU scheduler state.
- */
-struct schedstate_percpu {
-	struct timeval spc_runtime;	/* time curproc started running */
-	__volatile int spc_schedflags;	/* flags; see below */
-	u_int spc_schedticks;		/* ticks for schedclock() */
-	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
-	u_char spc_curpriority;		/* usrpri of curproc */
-	int spc_rrticks;		/* ticks until roundrobin() */
-	int spc_pscnt;			/* prof/stat counter */
-	int spc_psdiv;			/* prof/stat divisor */	
-};
-
-/* spc_flags */
-#define SPCF_SEENRR             0x0001  /* process has seen roundrobin() */
-#define SPCF_SHOULDYIELD        0x0002  /* process should yield the CPU */
-#define SPCF_SWITCHCLEAR        (SPCF_SEENRR|SPCF_SHOULDYIELD)
-
 #ifdef __HAVE_CPUINFO
-/*
- * These are the fields we require in struct cpu_info that we get from
- * curcpu():
- *
- * struct proc *ci_curproc;
- * struct schedstate_percpu ci_schedstate;
- * cpuid_t ci_cpuid;
- */
 #define curproc curcpu()->ci_curproc
 #endif
 

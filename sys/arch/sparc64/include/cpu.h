@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.27 2004/06/20 08:25:30 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.28 2004/06/21 23:12:14 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -75,7 +75,7 @@
 #include <machine/reg.h>
 #include <machine/intr.h>
 
-#include <sys/proc.h>
+#include <sys/sched.h>
 
 /*
  * The cpu_info structure is part of a 64KB structure mapped both the kernel

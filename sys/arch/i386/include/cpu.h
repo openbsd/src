@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.63 2004/06/20 08:25:30 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.64 2004/06/21 23:12:14 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@
 
 #include <sys/device.h>
 #include <sys/lock.h>                  /* will also get LOCKDEBUG */
-#include <sys/proc.h>
+#include <sys/sched.h>
 
 struct intrsource;
 
