@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.67 2004/01/11 22:08:04 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.68 2004/01/14 12:33:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -80,7 +80,8 @@ int			 knexthop_insert(struct knexthop_node *);
 int			 knexthop_remove(struct knexthop_node *);
 
 struct kif_node		*kif_find(int);
-int			 kif_insert(struct kif_node *kif);
+int			 kif_insert(struct kif_node *);
+int			 kif_remove(struct kif_node *);
 
 int			 kif_kr_insert(struct kroute_node *);
 int			 kif_kr_remove(struct kroute_node *);
@@ -547,6 +548,26 @@ kif_insert(struct kif_node *kif)
 	return (0);
 }
 
+int
+kif_remove(struct kif_node *kif)
+{
+	struct kif_kr	*kkr;
+
+	if (RB_REMOVE(kif_tree, &kit, kif) == NULL) {
+		logit(LOG_CRIT, "RB_REMOVE(kif_tree, &kit, kif)");
+		return (-1);
+	}
+
+	while ((kkr = LIST_FIRST(&kif->kroute_l)) != NULL) {
+		LIST_REMOVE(kkr, entry);
+		kkr->kr->r.flags &= ~F_NEXTHOP;
+		kroute_remove(kkr->kr);
+		free(kkr);
+	}
+
+	free(kif);
+	return (0);
+}
 
 int
 kif_kr_insert(struct kroute_node *kr)
