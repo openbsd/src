@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.44 2001/03/07 22:01:20 ericj Exp $
+#	$OpenBSD: files.alpha,v 1.45 2001/03/18 04:39:07 nate Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -47,6 +47,10 @@ major { sd = 8 }
 # RAM Disk
 file	arch/alpha/alpha/rd_root.c	ramdisk_hooks
 major { rd = 6 }
+
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 #
 # "workstation console" routines
