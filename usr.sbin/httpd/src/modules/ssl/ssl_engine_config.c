@@ -562,7 +562,7 @@ const char *ssl_cmd_SSLCertificateFile(
     int i;
 
     cpPath = ssl_util_server_root_relative(cmd->pool, "certkey", arg);
-    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
+    if (!ap_server_is_chrooted() && !ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
         return ap_pstrcat(cmd->pool, "SSLCertificateFile: file '",
                           cpPath, "' not exists or empty", NULL);
     for (i = 0; i < SSL_AIDX_MAX && sc->szPublicCertFile[i] != NULL; i++)
@@ -583,7 +583,7 @@ const char *ssl_cmd_SSLCertificateKeyFile(
     int i;
 
     cpPath = ssl_util_server_root_relative(cmd->pool, "certkey", arg);
-    if (!ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
+    if (!ap_server_is_chrooted() && !ssl_util_path_check(SSL_PCM_EXISTS|SSL_PCM_ISREG|SSL_PCM_ISNONZERO, cpPath))
         return ap_pstrcat(cmd->pool, "SSLCertificateKeyFile: file '",
                           cpPath, "' not exists or empty", NULL);
     for (i = 0; i < SSL_AIDX_MAX && sc->szPrivateKeyFile[i] != NULL; i++)
