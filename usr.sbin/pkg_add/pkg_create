@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.25 2004/11/18 21:51:43 espie Exp $
+# $OpenBSD: pkg_create,v 1.26 2004/12/01 12:17:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -30,6 +30,8 @@ use File::Basename;
 # Extra stuff needed to archive files
 package OpenBSD::PackingElement;
 sub archive_cmd { () }
+
+sub anything { ${$_[1]}++; }
 
 package OpenBSD::PackingElement::FileBase;
 sub archive_cmd
@@ -75,6 +77,10 @@ sub compute_checksum
 {
 }
 
+sub verify_checksum
+{
+}
+
 package OpenBSD::PackingElement::FileBase;
 use OpenBSD::md5;
 
@@ -102,6 +108,37 @@ sub compute_checksum
 	} else {
 		print STDERR "Error in package: $base/$fname does not exist\n";
 		$main::errors++;
+	}
+}
+
+sub verify_checksum
+{
+	my ($self, $base, $stash) = @_;
+	my $fname = $self->fullname();
+	my $check = {};
+	if (-l "$base/$fname") {
+		my $value = readlink "$base/$fname";
+		$check->{symlink} = $value;
+	} elsif (-f _) {
+		my ($dev, $ino, $size) = (stat _)[0,1,7];
+		if (defined $stash->{"$dev/$ino"}) {
+			$check->{link} = $stash->{"$dev/$ino"};
+		} else {
+			$stash->{"$dev/$ino"} = $fname;
+			$check->{md5} = OpenBSD::md5::fromfile("$base/$fname");
+			$check->{size} = $size;
+		}
+	} else {
+		print STDERR "Error in package: $base/$fname does not exist\n";
+		$main::errors++;
+	}
+	for my $field (qw(symlink link md5 size)) {
+		if ((defined $check->{$field} && defined $self->{$field} &&
+		    $check->{$field} ne $self->{$field}) ||
+		    (defined $check->{$field} xor defined $self->{$field})) {
+			print STDERR "Error: $field inconsistency for $fname\n";
+			$main::errors++;
+		}
 	}
 }
 
@@ -145,6 +182,16 @@ sub makesum
 		push @{$self->{items}}, $item;
 		$self->{state}->{cwd} = $item->{cwd} if defined $item->{cwd};
 		$item->compute_checksum($self, $base, $stash);
+	}
+}
+
+sub checksum
+{
+	my ($self, $base) = @_;
+	my $stash = {};
+	for my $item (@{$self->{items}}) {
+		$self->{state}->{cwd} = $item->{cwd} if defined $item->{cwd};
+		$item->verify_checksum($base, $stash);
 	}
 }
 
@@ -219,13 +266,14 @@ our $errors = 0;
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, 
 	$opt_S, $opt_h, $opt_s, $opt_O, $opt_A, $opt_L,
-	$opt_M, $opt_U, $opt_P, $opt_W,
+	$opt_M, $opt_U, $opt_P, $opt_W, $opt_n,
 	$opt_B);
 
 my @contents;
+my $regen_package = 0;
 
 my $plist = new OpenBSD::PackingList;
-getopts('p:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:', 
+getopts('p:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:n', 
 	{'D' => 
 		sub { 
 			local $_ = shift;
@@ -247,11 +295,14 @@ getopts('p:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:',
 		}
 	});
 
-if (@ARGV != 1) {
+if (@ARGV == 0) {
+	$regen_package = 1;
+} elsif (@ARGV != 1) {
 	die "Exactly one single package name is required";
 }
 
 my $dir = OpenBSD::Temp::dir();
+my $dir2 = $dir;
 
 if (defined $opt_s) {
 	die "Option s is no longer supported";
@@ -274,7 +325,7 @@ if (defined $opt_c) {
 	copy_subst($opt_c, $dir.COMMENT);
     }
 } else {
-	die "Comment required";
+	die "Comment required" unless $regen_package;
 }
 
 if (defined $opt_d) {
@@ -286,10 +337,10 @@ if (defined $opt_d) {
 	copy_subst($opt_d, $dir.DESC);
     }
 } else {
-	die "Description required";
+	die "Description required" unless $regen_package;
 }
 
-print "Creating package $ARGV[0]\n" if $opt_v;
+print "Creating package $ARGV[0]\n" if $opt_v && !$regen_package;
 
 if (defined $opt_i) {
     copy_subst($opt_i, $dir.INSTALL);
@@ -322,11 +373,11 @@ for my $special (info_names()) {
 
 if (defined $opt_p) {
 	OpenBSD::PackingElement::Cwd->add($plist, $opt_p);
-} else {
+} elsif (!$regen_package) {
 	die "Prefix required";
 }
 
-if ($ARGV[0] =~ m|([^/]+)$|) {
+if (!$regen_package && $ARGV[0] =~ m|([^/]+)$|) {
 	my $pkgname = $1;
 	$pkgname =~ s/\.tgz$//;
 	OpenBSD::PackingElement::Name->add($plist, $pkgname);
@@ -338,6 +389,15 @@ if (defined $opt_A) {
 
 if (defined $opt_L) {
 	OpenBSD::PackingElement::LocalBase->add($plist, $opt_L);
+}
+
+if ($regen_package) {
+	my $v = 0;
+	$plist->visit('anything', \$v);
+	if ($v != 0 || @contents != 1) {
+		die "Exactly one single package name is required";
+	}
+	$dir = dirname($contents[0]);
 }
 
 for my $contentsfile (@contents) {
@@ -408,7 +468,12 @@ if (!defined $plist->{extrainfo} &&
 }
 
 
-$plist->makesum($base);
+if ($regen_package) {
+	$plist->checksum($base);
+	$dir2 = OpenBSD::Temp::dir();
+} else {
+	$plist->makesum($base);
+}
 $plist->avert_duplicates();
 if (defined $plist->{pkgcfl}) {
 	print STDERR "Error: \@pkgcfl is obsolete, use \@conflict instead\n";
@@ -421,16 +486,29 @@ if ($errors) {
 	exit(1);
 }
 
-my @cmd = $plist->archive_cmd($dir, $base);
+my @cmd = $plist->archive_cmd($dir2, $base);
 
 
 if (!defined $plist->{name}) {
 	print STDERR "Can't write unnamed packing list\n";
 	exit 1;
 }
-$plist->tofile($dir.CONTENTS) or die "Can't write packing list";
 
-print "Creating gzip'd tar ball in '$ARGV[0]'\n" if $opt_v;
-System('tar', $opt_h ? "zcfh" : "zcf", $ARGV[0], "-C", $dir, CONTENTS,
-    @extra_files, @cmd) == 0 or
-	die "tar failed";
+my $wname;
+if ($regen_package) {
+	$wname = $plist->pkgname().".tgz";
+} else {
+	$plist->tofile($dir.CONTENTS) or die "Can't write packing list";
+	$wname = $ARGV[0];
+}
+
+@cmd = ('tar', $opt_h ? "zcfh" : "zcf", $wname, "-C", $dir, CONTENTS,
+    @extra_files, @cmd);
+
+if ($opt_n) {
+	print join(' ', @cmd), "\n";
+	exit(0);
+} else {
+	print "Creating gzip'd tar ball in '$wname'\n" if $opt_v;
+	System(@cmd) == 0 or die "tar failed";
+}

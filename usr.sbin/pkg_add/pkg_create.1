@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.23 2004/11/21 11:29:35 xsa Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.24 2004/12/01 12:17:40 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -33,7 +33,7 @@
 .Sh SYNOPSIS
 .Nm pkg_create
 .Bk -words
-.Op Fl hv
+.Op Fl hnv
 .Op Fl A Ar arches
 .Op Fl B Ar pkg-destdir
 .Oo Fl D Ar name
@@ -153,6 +153,8 @@ Display the file (using
 after installing the package.
 Useful for things like
 legal notices on almost-free software, etc.
+.It Fl n
+Don't actually create a package.
 .It Fl P Ar pkg-dependency
 Specify a
 .Cm @depend
