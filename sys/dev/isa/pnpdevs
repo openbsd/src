@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.101 2001/03/15 17:35:25 aaron Exp $
+#	$OpenBSD: pnpdevs,v 1.102 2001/05/08 05:11:22 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -398,6 +398,7 @@ com/pccom	PNPC001	# Compaq 2400/9600 Modem (TBD)
 #com/pccom	BRI1500	# Internal Fax Data
 #com/pccom	AEI0276	# 56K v.90 Fax Modem (LKT)
 #com/pccom	WCI0003	# Fax/Voice/Modem/Speakphone/Asvd
+com/pccom	USR1001	# TelePath 28.8 fax modem
 
 #ep		TCM5090	# 3COM 3c509B		(PNP80F7)
 #ep		TCM5091	# 3COM 3c509B		(PNP80F7)
