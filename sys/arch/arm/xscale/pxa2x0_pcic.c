@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.8 2005/02/23 00:05:38 drahn Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.9 2005/03/08 23:07:17 uwe Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -277,14 +277,88 @@ void
 pxapcic_socket_enable(pch)
         pcmcia_chipset_handle_t pch;
 {
-	/* XXX */
+	struct pxapcic_socket *so = pch;
+	bus_space_tag_t iot = so->sc->sc_iot;
+	u_int16_t reg;
+
+	/* XXX fix scoop1 base address before trying that. */
+	if (so->socket == 1)
+		return;
+
+	/* XXX bit 2 was clear on boot with card preconfigured. */
+	reg = bus_space_read_2(iot, so->scooph, SCOOP_REG_IRM);
+	bus_space_write_2(iot, so->scooph, SCOOP_REG_IRM, reg & ~0x0004);
+
+	/* Enable CF socket 0 power. */
+	if (so->socket == 0) {
+		reg = bus_space_read_2(iot, so->scooph, SCOOP_REG_GPWR);
+		bus_space_write_2(iot, so->scooph, SCOOP_REG_GPWR,
+		    reg | (1<<6)); /* SCOOP0_CF_POWER_C3000 */
+		delay(1000);
+	}
+
+ 	/* XXX */
+	reg = bus_space_read_2(iot, so->scooph, SCOOP_REG_CPR);
+	reg = reg & ~(SCP_CPR_PWR|SCP_CPR_5V|SCP_CPR_3V);
+	bus_space_write_2(iot, so->scooph, SCOOP_REG_CPR, reg);
+
+	/*
+	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
+	 * we are changing Vcc (Toff).   
+	 */
+	delay((300 + 100) * 1000);
+
+	/* Socket 1 supports only 5 V (which really is 3.3) for C3000? */
+	reg = reg | (SCP_CPR_PWR|SCP_CPR_5V);
+	bus_space_write_2(iot, so->scooph, SCOOP_REG_CPR, reg);
+
+	/*
+	 * wait 100ms until power raise (Tpr) and 20ms to become
+	 * stable (Tsu(Vcc)).
+	 *
+	 * some machines require some more time to be settled
+	 * (another 200ms is added here).
+	 */
+	delay((100 + 20 + 200) * 1000);
+
+	bus_space_write_2(iot, so->scooph, SCOOP_REG_CCR, SCP_CCR_RESET);
+	delay(10);
+	bus_space_write_2(iot, so->scooph, SCOOP_REG_CCR, 0);
+
+
+	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
+		   
+	delay(20000);
+
+#if 0
+	printf("cardtype %d\n", h->pcmcia);
+#endif
 }
 
 void
 pxapcic_socket_disable(pch)
         pcmcia_chipset_handle_t pch;
 {
-        /* XXX */
+	struct pxapcic_socket *so = pch;
+	bus_space_tag_t iot = so->sc->sc_iot;
+	u_int16_t reg;
+
+	/* XXX fix scoop1 base address before trying that. */
+	if (so->socket == 1)
+		return;
+
+ 	/* XXX */
+	reg = bus_space_read_2(iot, so->scooph, SCOOP_REG_CPR);
+	reg = reg & ~(SCP_CPR_PWR|SCP_CPR_5V|SCP_CPR_3V);
+	bus_space_write_2(iot, so->scooph, SCOOP_REG_CPR, reg);
+
+	/* Disable CF socket 0 power. */
+	if (so->socket == 0) {
+		reg = bus_space_read_2(iot, so->scooph, SCOOP_REG_GPWR);
+		bus_space_write_2(iot, so->scooph, SCOOP_REG_GPWR,
+		    reg & ~(1<<6)); /* SCOOP0_CF_POWER_C3000 */
+		delay(1000);	/* XXX needed? */
+	}
 }
 
 #if 0
@@ -352,7 +426,7 @@ pxapcic_event_thread(void *arg)
 	}
 	
 	sock->event_thread = NULL;
-		
+
 	/* In case parent is waiting for us to exit. */
 	wakeup(sock->sc);
 	 
@@ -513,7 +587,7 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 		if (so->socket == 0)
 			pa = 0x10800000;
 		else if (so->socket == 1)
-			pa = 0x14800000;
+			pa = 0x14800000; /* 0x08800040 */
 		else {
 			printf ("%s: invalid CF slot %d\n", sc->sc_dev.dv_xname,
 			    i);
