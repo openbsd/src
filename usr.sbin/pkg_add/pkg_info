@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.27 2005/01/14 02:25:12 espie Exp $
+# $OpenBSD: pkg_info,v 1.28 2005/01/16 11:16:23 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -247,13 +247,15 @@ sub print_info
 
 set_usage('pkg_info [-cDdfIiKkLMpqRrsUv] [-E fname] [-e pkgname] [-l str] pkgname...', 'pkg_info [-Aa flags]');
 
-lock_db(1);
+my $locked;
 try { 
 	getopts('cDdfhIikKLmpqRrsvhe:E:MU:l:aA',
 	    {'e' =>
 		    sub {
 			    my $pat = shift;
 			    my @list;
+			    lock_db(1, $opt_q);
+			    $locked = 1;
 			    if ($pat =~ m/\//) {
 				    @list = find_by_path($pat);
 			    } else {
@@ -277,6 +279,8 @@ try {
 } catchall {
 	Usage($_);
 };
+
+lock_db(1, $opt_q) unless $locked;
 
 if ($opt_D) {
 	$opt_M = 1;
