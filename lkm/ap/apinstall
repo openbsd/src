@@ -1,7 +1,7 @@
 #! /bin/sh
-#	$OpenBSD: apinstall,v 1.2 1996/03/05 11:49:32 mickey Exp $
+#	$OpenBSD: apinstall,v 1.3 1998/02/03 23:33:53 deraadt Exp $
 #
-# Postinstall script for NetBSD Aperture Driver
+# Postinstall script for OpenBSD Aperture Driver
 # 
 # Copyright (C) 1994 The XFree86 Project Inc.
 #

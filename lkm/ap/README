@@ -1,10 +1,10 @@
-#	$OpenBSD: README,v 1.1 1996/03/05 11:25:27 mickey Exp $
+#	$OpenBSD: README,v 1.2 1998/02/03 23:33:51 deraadt Exp $
 
-	XFree86 Framebuffer aperture driver for NetBSD.
+	XFree86 Framebuffer aperture driver for OpenBSD.
 	-----------------------------------------------
 
 This module was written to help work around the security feature of
-NetBSD 0.9C and later that prevents read/write access to /dev/mem. 
+OpenBSD that prevents read/write access to /dev/mem. 
 
 XFree86 can take advantage of having direct access to video
 memory (especially with VLB and PCI cards) and even requires it for
@@ -42,25 +42,7 @@ Installation:
 
 4. Reboot your system.
 
-5. If you're running a version prior to NetBSD 1.0, modload does not
-   execute post-install scripts. So you have to create the device manually.
-   If you're running NetBSD 1.0 or later, skip this.
-  
-   WARNING: be sure to understand what you'll do before proceeding
-
-   a) find out what major device number will be allocated to you by
-      modload. Modload allocates major numbers beginning at 29. So if
-      'ap' is your only device driver module, it will have major
-      number 29. If it's the third, it will be 31...
-
-   b) goto the /dev directory and type ``mknod xf86 c 29 0'' (replace
-      29 by the appropriate value if you load more than one device
-      driver module.
-
-      Make sure that rc.local loads the module every time at the same
-      position as it did now.
-
-6. Test the module by running 'aptest' as root. The outpout will look like:
+5. Test the module by running 'aptest' as root. The outpout will look like:
 
 # ./aptest
 NOTICE: VGA mapped [0xa0000 ,size=4096) to addr=0x10073000...
@@ -69,9 +51,9 @@ DONE displaying memory contents (80 bytes)
 UNMAPPING [0xa0000 ,size=4096) to addr=0x10073000... and closing...DONE.
 Exiting successful...
 
-7. If you're running XFree86 3.1 or higher, just make sure that
-   HasNetBSDApertureDriver is set to YES in xf86site.def before building 
-   your server. The netBSD binary distribution has the aperture driver 
+6. If you're running XFree86 3.1 or higher, just make sure that
+   HasOpenBSDApertureDriver is set to YES in xf86site.def before building 
+   your server. The OpenBSD binary distribution has the aperture driver 
    code enabled.
 
 Bug reports, comments, suggestions can be sent to matthieu@laas.fr

@@ -5,7 +5,7 @@
  */
 
 /* 
- * linear framebuffer aperture driver for NetBSD
+ * linear framebuffer aperture driver for OpenBSD
  */
 
 #include <sys/param.h>
