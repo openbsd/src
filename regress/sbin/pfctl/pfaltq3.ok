@@ -1,28 +1,28 @@
 queue root_lo0 bandwidth 10Mb priority 0 cbq( wrr root ) {eins, zwei, drei}
-[ qid=4294967294 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=4294967294 ifname=lo0 ifbandwidth=10Mb ]
 queue  eins bandwidth 1Mb cbq( default ) 
-[ qid=4294967293 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=4294967293 ifname=lo0 ifbandwidth=10Mb ]
 queue  zwei bandwidth 8Mb {sub2, sub3}
-[ qid=2 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
 queue   sub2 bandwidth 4Mb 
-[ qid=3 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
 queue   sub3 bandwidth 4Mb 
-[ qid=4 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
 queue  drei bandwidth 1Mb {subseven}
-[ qid=5 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=5 ifname=lo0 ifbandwidth=10Mb ]
 queue   subseven bandwidth 900Kb 
-[ qid=7 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=7 ifname=lo0 ifbandwidth=10Mb ]
 queue root_tun0 bandwidth 33.60Kb priority 0 cbq( wrr root ) {zwei, vier, fuenf}
-[ qid=4294967294 ifname=tun0 ifbandwidth=33.60Kb ]
+  [ qid=4294967294 ifname=tun0 ifbandwidth=33.60Kb ]
 queue  zwei bandwidth 26.88Kb {sub2, sub3}
-[ qid=2 ifname=tun0 ifbandwidth=33.60Kb ]
+  [ qid=2 ifname=tun0 ifbandwidth=33.60Kb ]
 queue   sub2 bandwidth 13.40Kb 
-[ qid=3 ifname=tun0 ifbandwidth=33.60Kb ]
+  [ qid=3 ifname=tun0 ifbandwidth=33.60Kb ]
 queue   sub3 bandwidth 13.40Kb 
-[ qid=4 ifname=tun0 ifbandwidth=33.60Kb ]
+  [ qid=4 ifname=tun0 ifbandwidth=33.60Kb ]
 queue  vier bandwidth 16.80Kb cbq( default ) 
-[ qid=4294967293 ifname=tun0 ifbandwidth=33.60Kb ]
+  [ qid=4294967293 ifname=tun0 ifbandwidth=33.60Kb ]
 queue  fuenf bandwidth 16.80Kb {subseven}
-[ qid=6 ifname=tun0 ifbandwidth=33.60Kb ]
+  [ qid=6 ifname=tun0 ifbandwidth=33.60Kb ]
 queue   subseven bandwidth 15.12Kb 
-[ qid=7 ifname=tun0 ifbandwidth=33.60Kb ]
+  [ qid=7 ifname=tun0 ifbandwidth=33.60Kb ]

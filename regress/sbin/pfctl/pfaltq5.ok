@@ -1,9 +1,9 @@
 queue praise priq( default ) 
-[ qid=2 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
 queue wim priority 15 
-[ qid=3 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
 queue hi priority 7 
-[ qid=4 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
 @0 pass in on lo0 proto tcp from any to any port = ssh keep state queue(hi, wim) 
   [ Skip steps: d=end f=end p=end sa=end sp=end da=end dp=3 ]
   [ queue: qname=hi qid=4 pqname=wim pqid=3 ]
