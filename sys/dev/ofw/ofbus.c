@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofbus.c,v 1.7 2000/01/15 17:17:45 rahnds Exp $	*/
+/*	$OpenBSD: ofbus.c,v 1.8 2000/03/31 06:06:28 rahnds Exp $	*/
 /*	$NetBSD: ofbus.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -78,11 +78,16 @@ ofbprint(aux, name)
 		l = sizeof child - 1;
 	child[l] = 0;
 	
-	if (name)
+	if (name) {
+		/* Dont print anything here, be quiet
 		printf("%s at %s", child, name);
-	else
+		return UNCONF;
+		*/
+		return QUIET;
+	} else {
 		printf(" (%s)", child);
-	return UNCONF;
+	return QUIET;
+	}
 }
 
 int
