@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.2 1998/10/05 07:34:43 fgsch Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.3 2000/12/13 16:15:57 mickey Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -389,12 +389,12 @@ aic_init(sc)
 		sc->sc_state = AIC_CLEANING;
 		if ((acb = sc->sc_nexus) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(aic_timeout, acb);
+			timeout_del(&acb->xs->stimeout);
 			aic_done(sc, acb);
 		}
 		while ((acb = sc->nexus_list.tqh_first) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(aic_timeout, acb);
+			timeout_del(&acb->xs->stimeout);
 			aic_done(sc, acb);
 		}
 	}
@@ -516,6 +516,7 @@ aic_scsi_cmd(xs)
 	/* Initialize acb */
 	acb->xs = xs;
 	acb->timeout = xs->timeout;
+	timeout_set(&xs->stimeout, aic_timeout, acb);
 
 	if (xs->flags & SCSI_RESET) {
 		acb->flags |= ACB_RESET;
@@ -1781,7 +1782,7 @@ loop:
 
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->flags & SCSI_POLL) == 0)
-				timeout(aic_timeout, acb,
+				timeout_add(&acb->xs->stimeout,
 				    (acb->timeout * hz) / 1000);
 
 			sc->sc_state = AIC_CONNECTED;
@@ -1999,7 +2000,7 @@ reset:
 	return 1;
 
 finish:
-	untimeout(aic_timeout, acb);
+	timeout_del(&acb->xs->stimeout);
 	aic_done(sc, acb);
 	goto out;
 
