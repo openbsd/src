@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.3 1996/08/07 18:40:26 downsj Exp $
+.\" $OpenBSD: crypt.3,v 1.4 1996/11/01 03:45:28 deraadt Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -61,7 +61,7 @@ function performs password encryption, based on the
 Data Encryption Standard (DES).
 Additional code has been added to deter key search attempts.
 The first argument to
-.Nm crypt
+.Fn crypt
 is a
 .Dv null Ns -terminated
 string, typically a user's typed password.
@@ -231,8 +231,14 @@ first appeared in
 This library (FreeSec 1.0) was developed outside the United States of America
 as an unencumbered replacement for the U.S.-only libcrypt encryption
 library.
-Programs linked against the crypt() interface may be exported from the U.S.A.
-only if they use crypt() solely for authentication purposes and avoid use of
-the other programmer interfaces listed above.
+Programs linked against the 
+.Fn crypt
+interface may be exported from the U.S.A. only if they use 
+.Fn crypt
+solely for authentication purposes and avoid use of
+the other programmer interfaces listed above. Special care has been taken
+in the library so that programs which only use the 
+.Fn crypt
+interface do not pull in the other components.
 .Sh AUTHOR
 David Burren <davidb@werj.com.au>
