@@ -1,11 +1,10 @@
-/*	$OpenBSD: uthread_cancel.c,v 1.7 2001/12/08 14:51:36 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cancel.c,v 1.8 2001/12/11 00:19:47 fgsch Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  */
 #include <sys/errno.h>
 #include <pthread.h>
 #include "pthread_private.h"
-
 
 static void	finish_cancellation(void *arg);
 
@@ -44,6 +43,7 @@ pthread_cancel(pthread)
 			case PS_FDW_WAIT:
 			case PS_POLL_WAIT:
 			case PS_SELECT_WAIT:
+				/* Remove these threads from the work queue: */
 				if ((pthread->flags & PTHREAD_FLAGS_IN_WORKQ)
 				    != 0)
 					PTHREAD_WORKQ_REMOVE(pthread);
@@ -71,6 +71,19 @@ pthread_cancel(pthread)
 				break;
 
 			case PS_JOIN:
+				/*
+				 * Disconnect the thread from the joinee and
+				 * detach:
+				 */
+				if (pthread->data.thread != NULL) {
+					pthread->data.thread->joiner = NULL;
+					pthread_detach((pthread_t)
+					    pthread->data.thread);
+				}
+				pthread->cancelflags |= PTHREAD_CANCELLING;
+				PTHREAD_NEW_STATE(pthread, PS_RUNNING);
+				break;
+
 			case PS_SUSPENDED:
 				/* Simply wake: */
 				/* XXX may be incorrect */
@@ -165,6 +178,11 @@ pthread_testcancel()
 
 	if (((curthread->cancelflags & PTHREAD_CANCEL_DISABLE) == 0) &&
 	    ((curthread->cancelflags & PTHREAD_CANCELLING) != 0)) {
+		/*
+		 * It is possible for this thread to be swapped out
+		 * while performing cancellation; do not allow it
+		 * to be cancelled again.
+		 */
 		curthread->cancelflags &= ~PTHREAD_CANCELLING;
 #ifdef notyet
 		_thread_exit_cleanup();

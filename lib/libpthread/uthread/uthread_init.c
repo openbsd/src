@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.17 2001/12/08 14:51:36 fgsch Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.18 2001/12/11 00:19:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -186,8 +186,8 @@ _thread_init(void)
 		/* Initialise the state of the initial thread: */
 		_thread_initial->state = PS_RUNNING;
 
-		/* Initialise the queue: */
-		TAILQ_INIT(&(_thread_initial->join_queue));
+		/* Initialize joiner to NULL (no joiner): */
+		_thread_initial->joiner = NULL;
 
 		/* Initialize the owned mutex queue and count: */
 		TAILQ_INIT(&(_thread_initial->mutexq));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_detach.c,v 1.6 2000/01/06 07:15:05 d Exp $	*/
+/*	$OpenBSD: uthread_detach.c,v 1.7 2001/12/11 00:19:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,7 +41,6 @@ int
 pthread_detach(pthread_t pthread)
 {
 	int             rval = 0;
-	pthread_t       next_thread;
 
 	/* Check for invalid calling parameters: */
 	if (pthread == NULL || pthread->magic != PTHREAD_MAGIC)
@@ -59,13 +58,20 @@ pthread_detach(pthread_t pthread)
 		 */
 		_thread_kern_sig_defer();
 
-		/* Enter a loop to bring all threads off the join queue: */
-		while ((next_thread = TAILQ_FIRST(&pthread->join_queue)) != NULL) {
-			/* Remove the thread from the queue: */
-			TAILQ_REMOVE(&pthread->join_queue, next_thread, qe);
+		/* Check if there is a joiner: */
+		if (pthread->joiner != NULL) {
+			struct pthread	*joiner = pthread->joiner;
 
-			/* Make the thread run: */
-			PTHREAD_NEW_STATE(next_thread,PS_RUNNING);
+			/* Make the thread runnable: */
+			PTHREAD_NEW_STATE(joiner, PS_RUNNING);
+
+			/* Set the return value for the woken thread: */
+			joiner->error = ESRCH;
+
+			/*
+			 * Disconnect the joiner from the thread being detached:
+			 */
+			pthread->joiner = NULL;
 		}
 
 		/*

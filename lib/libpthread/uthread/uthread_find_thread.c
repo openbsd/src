@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_find_thread.c,v 1.4 1999/11/25 07:01:35 d Exp $	*/
+/*	$OpenBSD: uthread_find_thread.c,v 1.5 2001/12/11 00:19:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -62,38 +62,6 @@ _find_thread(pthread_t pthread)
 
 	/* Undefer and handle pending signals, yielding if necessary: */
 	_thread_kern_sig_undefer();
-
-	/* Return zero if the thread exists: */
-	return ((pthread1 != NULL) ? 0:ESRCH);
-}
-
-/* Find a thread in the linked list of dead threads: */
-int
-_find_dead_thread(pthread_t pthread)
-{
-	pthread_t pthread1;
-
-	/* Check if the caller has specified an invalid thread: */
-	if (pthread == NULL || pthread->magic != PTHREAD_MAGIC)
-		/* Invalid thread: */
-		return(EINVAL);
-
-	/*
-	 * Lock the garbage collector mutex to ensure that the garbage
-	 * collector is not using the dead thread list.
-	 */
-	if (pthread_mutex_lock(&_gc_mutex) != 0)
-		PANIC("Cannot lock gc mutex");
-
-	/* Search for the specified thread: */
-	TAILQ_FOREACH(pthread1, &_dead_list, dle) {
-		if (pthread1 == pthread)
-			break;
-	}
-
-	/* Unlock the garbage collector mutex: */
-	if (pthread_mutex_unlock(&_gc_mutex) != 0)
-		PANIC("Cannot lock gc mutex");
 
 	/* Return zero if the thread exists: */
 	return ((pthread1 != NULL) ? 0:ESRCH);

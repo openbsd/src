@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.30 2001/12/08 14:51:36 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.31 2001/12/11 00:19:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -538,6 +538,12 @@ typedef void	(*thread_continuation_t) (void *);
 
 typedef V_TAILQ_ENTRY(pthread) pthread_entry_t;
 
+struct join_status {
+	struct pthread	*thread;
+	void		*ret;
+	int		error;
+};
+
 /*
  * Thread structure.
  */
@@ -638,8 +644,12 @@ struct pthread {
 	 */
 	int	error;
 
-	/* Join queue head and link for waiting threads: */
-	V_TAILQ_HEAD(join_head, pthread)	join_queue;
+	/*
+	 * The joiner is the thread that is joining this thraed. The
+	 * join status keeps track of a join operation to another thread.
+	 */
+	struct pthread		*joiner;
+	struct join_status	join_status;
 
 	/*
 	 * The current thread can belong to only one scheduling queue at
@@ -648,8 +658,6 @@ struct pthread {
 	 *
 	 *   o A queue of threads waiting for a mutex
 	 *   o A queue of threads waiting for a condition variable
-	 *   o A queue of threads waiting for another thread to terminate
-	 *     (the join queue above)
 	 *   o A queue of threads waiting for a file descriptor lock
 	 *   o A queue of threads needing work done by the kernel thread
 	 *     (waiting for a spinlock or file I/O)
@@ -660,6 +668,9 @@ struct pthread {
 
 	/* Priority queue entry for this thread: */
 	pthread_entry_t		pqe;
+
+	/* Priority queue entry for this thread: */
+	pthread_entry_t		sqe;
 
 	/* Queue entry for this thread: */
 	pthread_entry_t		qe;
@@ -1018,7 +1029,6 @@ SCLASS int	_thread_kern_new_state
  * Function prototype definitions.
  */
 __BEGIN_DECLS
-int     _find_dead_thread(pthread_t);
 int     _find_thread(pthread_t);
 struct pthread *_get_curthread(void);
 void	_set_curthread(struct pthread *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_gc.c,v 1.10 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_gc.c,v 1.11 2001/12/11 00:19:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -59,8 +59,8 @@ _thread_gc(pthread_addr_t arg)
 	void		*p_stack;
 
 	/* Block all signals */
-	sigfillset (&mask);
-	sigprocmask (SIG_BLOCK, &mask, NULL);
+	sigfillset(&mask);
+	pthread_sigmask(SIG_BLOCK, &mask, NULL);
 
 	/* Mark this thread as a library thread (not a user thread). */
 	curthread->flags |= PTHREAD_FLAGS_PRIVATE;
@@ -98,16 +98,16 @@ _thread_gc(pthread_addr_t arg)
 		 */
 		_thread_kern_sig_undefer();
 
+		/* No stack of thread structure to free yet: */
+		p_stack = NULL;
+		pthread_cln = NULL;
+
 		/*
 		 * Lock the garbage collector mutex which ensures that
 		 * this thread sees another thread exit:
 		 */
 		if (pthread_mutex_lock(&_gc_mutex) != 0)
 			PANIC("Cannot lock gc mutex");
-
-		/* No stack of thread structure to free yet: */
-		p_stack = NULL;
-		pthread_cln = NULL;
 
 		/*
 		 * Enter a loop to search for the first dead thread that
@@ -124,7 +124,7 @@ _thread_gc(pthread_addr_t arg)
 			 * Check if this thread has detached:
 			 */
 			else if ((pthread->attr.flags &
-				  PTHREAD_DETACHED) != 0) {
+			    PTHREAD_DETACHED) != 0) {
 				/* Remove this thread from the dead list: */
 				TAILQ_REMOVE(&_dead_list, pthread, dle);
 
@@ -193,13 +193,14 @@ _thread_gc(pthread_addr_t arg)
 			_thread_stack_free(p_stack);
 
 		if (pthread_cln != NULL) {
+			if (pthread_cln->name != NULL) {
+				/* Free the thread name string. */
+				free(pthread_cln->name);
+			}
 			/*
 			 * Free the memory allocated for the thread
 			 * structure.
 			 */
-			if (pthread_cln->name != NULL)
-				free(pthread_cln->name);
-
 			if (pthread_cln->poll_data.fds != NULL)
 				free(pthread_cln->poll_data.fds);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_exit.c,v 1.13 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_exit.c,v 1.14 2001/12/11 00:19:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -146,7 +146,7 @@ void
 pthread_exit(void *status)
 {
 	struct pthread	*curthread = _get_curthread();
-	pthread_t       pthread;
+	pthread_t pthread;
 
 	/* Check if this thread is already in the process of exiting: */
 	if ((curthread->flags & PTHREAD_EXITING) != 0) {
@@ -162,36 +162,14 @@ pthread_exit(void *status)
 	while (curthread->cleanup != NULL) {
 		pthread_cleanup_pop(1);
 	}
-
 	if (curthread->attr.cleanup_attr != NULL) {
 		curthread->attr.cleanup_attr(curthread->attr.arg_attr);
 	}
-
 	/* Check if there is thread specific data: */
 	if (curthread->specific_data != NULL) {
 		/* Run the thread-specific data destructors: */
 		_thread_cleanupspecific();
 	}
-
-	/*
-	 * Defer signals to protect the scheduling queues from access
-	 * by the signal handler:
-	 */
-	_thread_kern_sig_defer();
-
-	/* Check if there are any threads joined to this one: */
-	while ((pthread = TAILQ_FIRST(&(curthread->join_queue))) != NULL) {
-		/* Remove the thread from the queue: */
-		TAILQ_REMOVE(&curthread->join_queue, pthread, qe);
-
-		/* Wake the joined thread and let it detach this thread: */
-		PTHREAD_NEW_STATE(pthread,PS_RUNNING);
-	}
-
-	/*
-	 * Undefer and handle pending signals, yielding if necessary:
-	 */
-	_thread_kern_sig_undefer();
 
 	/*
 	 * Lock the garbage collector mutex to ensure that the garbage
@@ -204,20 +182,6 @@ pthread_exit(void *status)
 	TAILQ_INSERT_HEAD(&_dead_list, curthread, dle);
 
 	/*
-	 * Defer signals to protect the scheduling queues from access
-	 * by the signal handler:
-	 */
-	_thread_kern_sig_defer();
-
-	/* Remove this thread from the thread list: */
-	TAILQ_REMOVE(&_thread_list, curthread, tle);
-
-	/*
-	 * Undefer and handle pending signals, yielding if necessary:
-	 */
-	_thread_kern_sig_undefer();
-
-	/*
 	 * Signal the garbage collector thread that there is something
 	 * to clean up.
 	 */
@@ -225,17 +189,56 @@ pthread_exit(void *status)
 		PANIC("Cannot signal gc cond");
 
 	/*
-	 * Mark the thread as dead so it will not return if it
-	 * gets context switched out when the mutex is unlocked.
+	 * Avoid a race condition where a scheduling signal can occur
+	 * causing the garbage collector thread to run.  If this happens,
+	 * the current thread can be cleaned out from under us.
 	 */
-	PTHREAD_SET_STATE(curthread, PS_DEAD);
+	_thread_kern_sig_defer();
 
 	/* Unlock the garbage collector mutex: */
 	if (pthread_mutex_unlock(&_gc_mutex) != 0)
-		PANIC("Cannot lock gc mutex");
+		PANIC("Cannot unlock gc mutex");
 
-	/* This this thread will never be re-scheduled. */
-	_thread_kern_sched(NULL);
+	/* Check if there is a thread joining this one: */
+	if (curthread->joiner != NULL) {
+		pthread = curthread->joiner;
+		curthread->joiner = NULL;
+
+		switch (pthread->suspended) {
+		case SUSP_JOIN:
+			/*
+			 * The joining thread is suspended.  Change the
+			 * suspension state to make the thread runnable when it
+			 * is resumed:
+			 */
+			pthread->suspended = SUSP_NO;
+			break;
+		case SUSP_NO:
+			/* Make the joining thread runnable: */
+			PTHREAD_NEW_STATE(pthread, PS_RUNNING);
+			break;
+		default:
+			PANIC("Unreachable code reached");
+		}
+
+		/* Set the return value for the joining thread: */
+		pthread->join_status.ret = curthread->ret;
+		pthread->join_status.error = 0;
+		pthread->join_status.thread = NULL;
+
+#ifdef notyet
+		/* Make this thread collectable by the garbage collector. */
+		PTHREAD_ASSERT(((curthread->attr.flags & PTHREAD_DETACHED) ==
+		    0), "Cannot join a detached thread");
+#endif
+		curthread->attr.flags |= PTHREAD_DETACHED;
+	}
+
+	/* Remove this thread from the thread list: */
+	TAILQ_REMOVE(&_thread_list, curthread, tle);
+
+	/* This thread will never be re-scheduled. */
+	_thread_kern_sched_state(PS_DEAD, __FILE__, __LINE__);
 
 	/* This point should not be reached. */
 	PANIC("Dead thread has resumed");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.16 2001/12/08 14:51:36 fgsch Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.17 2001/12/11 00:19:47 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -140,8 +140,8 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			new_thread->active_priority = new_thread->base_priority;
 			new_thread->inherited_priority = 0;
 
-			/* Initialise the join queue for the new thread: */
-			TAILQ_INIT(&(new_thread->join_queue));
+			/* Initialize joiner to NULL (no joiner): */
+			new_thread->joiner = NULL;
 
 			/* Initialize the mutex queue: */
 			TAILQ_INIT(&new_thread->mutexq);
