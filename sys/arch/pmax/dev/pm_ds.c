@@ -36,10 +36,10 @@
 
 #include "fb.h"
 #include "pm.h"
-#include "dc_ds.h"
+#include "dz_ds.h"
 
 #if 0
-#if NDC_DS == 0
+#if NDZ_DS == 0
 pm needs dc device
 #endif
 #endif

@@ -100,8 +100,8 @@
 
 #include "rasterconsole.h"
 
-#include "dc_ioasic.h"
-#include "dc_ds.h"
+#include "dz_ioasic.h"
+#include "dz_ds.h"
 #include "scc.h"
 #include "dtop.h"
 
@@ -123,7 +123,7 @@ extern int pmax_boardtype;
 extern void fbScreenInit __P (( struct fbinfo *fi));
 
 
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+#if (NDZ_DS > 0) || (NDZ_IOASIC > 0)
 #include <machine/dc7085cons.h>
 #include <pmax/dev/dcvar.h>
 #endif
@@ -272,13 +272,13 @@ tb_kbdmouseconfig(fi)
 
 	switch (pmax_boardtype) {
 
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+#if (NDZ_DS > 0) || (NDZ_IOASIC > 0)
 	case DS_PMAX:
 	case DS_3MAX:
 		fi->fi_glasstty->KBDPutc = dcPutc;
 		fi->fi_glasstty->kbddev = makedev(DCDEV, DCKBD_PORT);
 		break;
-#endif	/* NDC_DS || NDC_IOASIC */
+#endif	/* NDZ_DS || NDZ_IOASIC */
 
 #if NSCC > 0
 	case DS_3MIN:

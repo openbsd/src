@@ -44,7 +44,7 @@ file	dev/tc/tc.c			tc		needs-flag
 #
 device ioasic { offset = -1 } 		# not really optional
 attach ioasic at tc
-file	arch/pmax/tc/asic.c		ioasic | dc_ds # TTTTT dc_ds is ugly
+file	arch/pmax/tc/asic.c		ioasic | dz_ds # TTTTT dz_ds is ugly
 
 
 # Real-time clock (not optional)
@@ -112,12 +112,12 @@ file	arch/pmax/dev/led.c		led needs-count
 
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
-device dc
-file	arch/pmax/dev/dc.c		dc
-attach dc at ioasic with dc_ioasic
-file	arch/pmax/dev/dc_ioasic.c	dc_ioasic | dc_ds needs-flag # TTTTT ugly
-attach dc at mainbus with dc_ds
-file	arch/pmax/dev/dc_ds.c		dc_ds	needs-flag
+device dz
+file	arch/pmax/dev/dc.c		dz
+attach dz at ioasic with dz_ioasic
+file	arch/pmax/dev/dc_ioasic.c	dz_ioasic | dz_ds needs-flag # TTTTT ugly
+attach dz at mainbus with dz_ds
+file	arch/pmax/dev/dc_ds.c		dz_ds	needs-flag
 
 
 # The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?

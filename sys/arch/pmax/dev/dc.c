@@ -115,9 +115,9 @@ int	old_dcmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	old_dcattach __P((struct device *parent, struct device *self, void *aux));
 
 
-extern struct cfdriver dc_cd;
-struct  cfdriver dc_cd = {
-	NULL, "dc", DV_TTY
+extern struct cfdriver dz_cd;
+struct  cfdriver dz_cd = {
+	NULL, "dz", DV_TTY
 };
 
 
@@ -382,10 +382,10 @@ dcopen(dev, flag, mode, p)
 
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
-	if (unit >= dc_cd.cd_ndevs || line > 4)
+	if (unit >= dz_cd.cd_ndevs || line > 4)
 		return (ENXIO);
 
-	sc = dc_cd.cd_devs[unit];
+	sc = dz_cd.cd_devs[unit];
 	if (sc->dc_pdma[line].p_addr == (void *)0)
 		return (ENXIO);	  
 
@@ -451,7 +451,7 @@ dcclose(dev, flag, mode, p)
 	register int line, bit;
 	int s;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	sc = dz_cd.cd_devs[DCUNIT(dev)];
 	line = DCLINE(dev);
 	tp = sc->dc_tty[line];
 	bit = 1 << (line + 8);
@@ -477,7 +477,7 @@ dcread(dev, uio, flag)
 	register struct dc_softc *sc;
 	register struct tty *tp;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	sc = dz_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
 
 #ifdef HW_FLOW_CONTROL
@@ -499,7 +499,7 @@ dcwrite(dev, uio, flag)
 	register struct dc_softc *sc;
 	register struct tty *tp;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	sc = dz_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -511,7 +511,7 @@ dctty(dev)
 	register struct dc_softc *sc;
 	register struct tty *tp;
 
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	sc = dz_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->dc_tty[DCLINE(dev)];
         return (tp);
 }
@@ -534,7 +534,7 @@ dcioctl(dev, cmd, data, flag, p)
 
 	unit = DCUNIT(dev);
 	line = DCLINE(dev);
-	sc = dc_cd.cd_devs[unit];
+	sc = dz_cd.cd_devs[unit];
 	tp = sc->dc_tty[line];
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
@@ -603,7 +603,7 @@ dcparam(tp, t)
 	 * Extract softc data, and pass entire request onto
 	 * cold_dcparam() for argument checking and execution.
 	 */
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
+	sc = dz_cd.cd_devs[DCUNIT(tp->t_dev)];
 	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;
 	return (cold_dcparam(tp, t, dcaddr, sc->dc_19200));
 
@@ -709,7 +709,7 @@ dcrint(sc)
 	int overrun = 0;
 	register struct tty **dc_tty;
 
-	dc_tty = ((struct dc_softc*)dc_cd.cd_devs[0])->dc_tty;	/* XXX */
+	dc_tty = ((struct dc_softc*)dz_cd.cd_devs[0])->dc_tty;	/* XXX */
 
 	dcaddr = (dcregs *)sc->dc_pdma[0].p_addr;	/*XXX*/
 	while ((c = dcaddr->dc_rbuf) < 0) {	/* char present */
@@ -776,7 +776,7 @@ dcxint(tp)
 	register dcregs *dcaddr;
 	int line, linemask;
 
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];	/* XXX */
+	sc = dz_cd.cd_devs[DCUNIT(tp->t_dev)];	/* XXX */
 
 	line = DCLINE(tp->t_dev);
 	linemask = 1 << line;
@@ -846,7 +846,7 @@ dcstart(tp)
 	register int cc;
 	int line, s;
 
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
+	sc = dz_cd.cd_devs[DCUNIT(tp->t_dev)];
 	line = DCLINE(tp->t_dev);
 	dp = &sc->dc_pdma[line];
 	dcaddr = (dcregs *)dp->p_addr;
@@ -905,7 +905,7 @@ dcstop(tp, flag)
 	register struct pdma *dp;
 	register int s;
 
-	sc = dc_cd.cd_devs[DCUNIT(tp->t_dev)];
+	sc = dz_cd.cd_devs[DCUNIT(tp->t_dev)];
 	dp = &sc->dc_pdma[DCLINE(tp->t_dev)];
 	s = spltty();
 	if (tp->t_state & TS_BUSY) {
@@ -928,7 +928,7 @@ dcmctl(dev, bits, how)
 	register int tcr, msr;
 
 	line = DCLINE(dev);
-	sc = dc_cd.cd_devs[DCUNIT(dev)];
+	sc = dz_cd.cd_devs[DCUNIT(dev)];
 	b = 1 << line;
 	dcaddr = (dcregs *)sc->dc_pdma[line].p_addr;
 	s = spltty();
@@ -1049,7 +1049,7 @@ void
 dcscan(arg)
 	void *arg;
 {
-	register struct dc_softc *sc = dc_cd.cd_devs[0]; /* XXX */
+	register struct dc_softc *sc = dz_cd.cd_devs[0]; /* XXX */
 	register dcregs *dcaddr;
 	register struct tty *tp;
 	register int unit, limit, dtr, dsr;
@@ -1132,7 +1132,7 @@ dcGetc(dev)
 		dcaddr = dc_cons_addr;
 	} else {
 		struct dc_softc *sc;
-		sc = dc_cd.cd_devs[DCUNIT(dev)];
+		sc = dz_cd.cd_devs[DCUNIT(dev)];
 		dcaddr = (dcregs *)sc->dc_pdma[line].p_addr;
 	}
 	if (!dcaddr)
@@ -1172,7 +1172,7 @@ dcPutc(dev, c)
 	} else {
 		struct dc_softc *sc;
 
-		sc = dc_cd.cd_devs[DCUNIT(dev)];
+		sc = dz_cd.cd_devs[DCUNIT(dev)];
 		dcaddr = (dcregs *)sc->dc_pdma[out_line].p_addr;
 		brk = sc->dc_brk;
 	}

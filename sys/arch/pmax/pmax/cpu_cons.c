@@ -80,15 +80,15 @@
 #include "mfb.h"
 #include "xcfb.h"
 #include "sfb.h"
-#include "dc_ds.h"
-#include "dc_ioasic.h"
+#include "dz_ds.h"
+#include "dz_ioasic.h"
 #include "dtop.h"
 #include "scc.h"
 #include "asc.h"
 #include "tc.h"
 #include  "rasterconsole.h"
 
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+#if (NDZ_DS > 0) || (NDZ_IOASIC > 0)
 #include <machine/dc7085cons.h>
 #include <pmax/dev/dc_cons.h>
 #include <pmax/dev/dc_ds_cons.h>
@@ -232,7 +232,7 @@ consinit()
 	if (screen) {
 	    switch (pmax_boardtype) {
 	    case DS_PMAX:
-#if NDC_DS > 0 && NPM > 0
+#if NDZ_DS > 0 && NPM > 0
 		if (pminit(0, 0, 1)) {
 			cd.cn_pri = CN_INTERNAL;
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
@@ -241,7 +241,7 @@ consinit()
 			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
 		}
-#endif /* NDC_DS and NPM */
+#endif /* NDZ_DS and NPM */
 		goto remcons;
 
 	    case DS_MAXINE:
@@ -262,13 +262,13 @@ consinit()
 		break;
 
 	    case DS_3MAX:
-#if NDC_IOASIC > 0
+#if NDZ_IOASIC > 0
 		if (kbd == 7) {
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 			cd.cn_getc = LKgetc;
 			lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
 		} else
-#endif /* NDC_IOASIC */
+#endif /* NDZ_IOASIC */
 			goto remcons;
 		break;
 
@@ -317,22 +317,22 @@ remcons:
 	 */
 	switch (pmax_boardtype) {
 	case DS_PMAX:
-#if NDC_DS > 0
+#if NDZ_DS > 0
 		if (kbd == 4)
 			cd.cn_dev = makedev(DCDEV, DCCOMM_PORT);
 		else
 			cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
 		dc_ds_consinit(cd.cn_dev);
 		return;
-#endif /* NDC_DS */
+#endif /* NDZ_DS */
 		break;
 
 	case DS_3MAX:
-#if (NDC_IOASIC > 0)
+#if (NDZ_IOASIC > 0)
 		cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
 		dc_ioasic_consinit(cd.cn_dev);
 		return;
-#endif /* NDC */
+#endif /* NDZ */
 		break;
 
 	}

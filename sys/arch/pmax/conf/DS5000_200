@@ -1,4 +1,4 @@
-#	$OpenBSD: DS5000_200,v 1.6 1999/10/01 21:59:33 maja Exp $
+#	$OpenBSD: DS5000_200,v 1.7 2000/05/01 22:25:46 maja Exp $
 #
 # DECstation 5000/200 (KN02 motherboard, codname 3MAX) kernel config
 #
@@ -82,7 +82,7 @@ le0		at tc?			# decstation 5000/200 baseboard
 le*		at tc?			# other lance network interfaces
 # 5000/200-only (aka 3MAX aka KN02) baseboard devices (tc but no ioasic)
 clock0		at mainbus0		# rtc
-dc0		at mainbus0
+dz0		at mainbus0
 le0		at tc?			# tc ether "option" on baseboard
 asc0		at tc?			# tc scsi  "option" on baseboard
 # the scsi busses

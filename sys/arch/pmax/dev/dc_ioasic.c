@@ -33,7 +33,7 @@
 int	dc_ioasic_match  __P((struct device * parent, void *cfdata, void *aux));
 void	dc_ioasic_attach __P((struct device *parent, struct device *self, void *aux));
 
-struct cfattach dc_ioasic_ca = {
+struct cfattach dz_ioasic_ca = {
 	sizeof(struct dc_softc), dc_ioasic_match, dc_ioasic_attach
 };
 

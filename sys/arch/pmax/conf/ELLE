@@ -1,4 +1,4 @@
-#	$OpenBSD: ELLE,v 1.1 1999/10/01 21:59:33 maja Exp $
+#	$OpenBSD: ELLE,v 1.2 2000/05/01 22:25:46 maja Exp $
 #
 # ELLE kernel. Like GENERIC.rz0 but for rz1. 
 #
@@ -97,15 +97,15 @@ xcfb0		at tc?			# tc framebuffer "option"
 dtop0		at ioasic0 offset?	# destop bus,  lk501 kbd,  mouse
 # 5000/200-only (aka 3MAX aka KN02) baseboard devices (tc but no ioasic)
 clock0		at mainbus0		# rtc
-dc0		at mainbus0
+dz0		at mainbus0
 le0		at tc?			# tc ether "option" on baseboard
 asc0		at tc?			# tc scsi  "option" on baseboard
 # for now, pretend this machine has an ioasic
-dc0		at ioasic? offset?	# dc7083 four-port dz device
+dz0		at ioasic? offset?	# dc7083 four-port dz device
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
 clock0		at mainbus0		# rtc
 pm0		at mainbus0		# 3100 onboard fb
-dc0		at mainbus0		# dc7083 four-port dz device
+dz0		at mainbus0		# dc7083 four-port dz device
 le*		at mainbus0		# 3100 onboard lance
 sii0		at mainbus0		# onboard scsi
 # the scsi busses

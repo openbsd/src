@@ -48,7 +48,7 @@ mfb0		at tc?
 cfb0		at tc?
 sfb0		at tc?
 ioasic0		at tc?
-dc0		at ioasic? offset?
+dz0		at ioasic? offset?
 clock0		at ioasic? offset?
 asc0		at tc?
 oldscsibus*	at asc?

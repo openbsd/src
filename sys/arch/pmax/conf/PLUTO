@@ -1,4 +1,4 @@
-#	$OpenBSD: PLUTO,v 1.8 1999/10/01 21:59:33 maja Exp $
+#	$OpenBSD: PLUTO,v 1.9 2000/05/01 22:25:46 maja Exp $
 #
 #	PLUTO - specific config(8) file for pluto
 #
@@ -34,7 +34,7 @@ mainbus0	at root
 cpu*		at mainbus0
 clock0		at mainbus0
 pm0		at mainbus0
-dc0		at mainbus0
+dz0		at mainbus0
 le0		at mainbus0
 sii0		at mainbus0
 oldscsibus*	at sii?

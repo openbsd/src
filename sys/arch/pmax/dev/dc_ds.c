@@ -34,7 +34,7 @@ extern struct cfdriver mainbus_cd;	/* XXX */
 int	dc_ds_match  __P((struct device * parent, void *cfdata, void *aux));
 void	dc_ds_attach __P((struct device *parent, struct device *self, void *aux));
 
-struct cfattach dc_ds_ca = {
+struct cfattach dz_ds_ca = {
 	sizeof(struct dc_softc), dc_ds_match, dc_ds_attach
 };
 

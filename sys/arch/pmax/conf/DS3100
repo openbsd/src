@@ -1,4 +1,4 @@
-#	$OpenBSD: DS3100,v 1.7 1999/10/01 21:59:33 maja Exp $
+#	$OpenBSD: DS3100,v 1.8 2000/05/01 22:25:46 maja Exp $
 #
 # DECstation (3100 or 2100) config file
 #
@@ -75,7 +75,7 @@ mainbus0	at root
 cpu*		at mainbus0
 clock0		at mainbus0		# rtc
 pm0		at mainbus0		# 3100 onboard fb
-dc0		at mainbus0		# dc7083 four-port dz device
+dz0		at mainbus0		# dc7083 four-port dz device
 le*		at mainbus0		# 3100 onboard lance
 sii0		at mainbus0		# onboard scsi
 # the scsi busses
