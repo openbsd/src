@@ -740,7 +740,7 @@ test "$ac_cv_mingw32" = yes && MINGW32=yes
 # These need to be absolute paths, yet at the same time need to
 # canonicalize only relative paths, because then amd will not unmount
 # drives. Thus the use of PWDCMD: set it to 'pawd' or 'amq -w' if using amd.
-glibcpp_builddir=`pwd`
+glibcpp_builddir=`${PWDCMD-pwd}`
 case $srcdir in
 \\/$* | ?:\\/*) glibcpp_srcdir=${srcdir} ;;
 *) glibcpp_srcdir=`cd "$srcdir" && ${PWDCMD-pwd} || echo "$srcdir"` ;;
@@ -1867,6 +1867,7 @@ with_multisubdir=${with_multisubdir}
 ac_configure_args="--enable-multilib ${ac_configure_args}"
 toplevel_srcdir=${toplevel_srcdir}
 CONFIG_SHELL=${CONFIG_SHELL-/bin/sh}
+ORIGINAL_LD_FOR_MULTILIBS="${ORIGINAL_LD_FOR_MULTILIBS}"
 
 EOF
 cat >> $CONFIG_STATUS <<\EOF

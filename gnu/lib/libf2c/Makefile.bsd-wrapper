@@ -1,20 +1,8 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 2004/02/29 19:32:33 drahn Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 2004/12/30 17:35:26 espie Exp $
+
+# this only supports gcc3, because of internal types
 
 .include <bsd.own.mk>
-
-LIBIBERTY_INCLUDES=$(.CURDIR)/../../lib/libiberty/include
-# only supports gcc3
-GCC_DIR= $(.CURDIR)/../../usr.bin/gcc
-.if defined(OBJMACHINE)
-OBJDIR=	obj.${MACHINE}
-.else
-OBJDIR=	obj
-.endif
-GCC_OBJDIR!=	if [ -d $(GCC_DIR)/$(OBJDIR) ]; then \
-			echo $(GCC_DIR)/$(OBJDIR); \
-		else \
-			echo $(GCC_DIR); \
-		fi
 
 # for libfrtbegin
 SUBDIR=libF77
@@ -38,11 +26,10 @@ U77_SRCS = gerror_.c perror_.c ierrno_.c itime_.c time_.c \
 	umask_.c sys_clock_.c date_.c second_.c flush1_.c mclock_.c \
 	alarm_.c datetime_.c
 
-DEFS=-DAllow_TYQUAD -DSTDC_HEADERS=1 -D_POSIX_SOURCE=1 -DHAVE_TEMPNAM=1 \
--DNON_ANSI_RW_MODES=1 -DNO_EOF_CHAR_CHECK=1 -DSkip_f2c_Undefs=1 \
+DEFS=-DAllow_TYQUAD -D_POSIX_SOURCE=1 \
 -DRETSIGTYPE=void -DIEEE_drem=1 -DHAVE_CONFIG_H -DUSE_HCONFIG \
--I${LIBIBERTY_INCLUDES} -IlibU77 -I${.CURDIR}/libI77 -I${.OBJDIR} -I${.CURDIR} \
--I${GCC_DIR}/gcc/f -I${GCC_DIR}/gcc -I${GCC_DIR}/gcc/config -I${GCC_OBJDIR}
+-IlibU77 -I${.CURDIR}/libI77 -I${.OBJDIR} -I${.CURDIR}
+
 
 MISC =	F77_aloc.c s_rnge.c abort_.c getarg_.c iargc_.c\
 	getenv_.c signal_.c s_stop.c s_paus.c system_.c cabs.c\
@@ -112,7 +99,7 @@ ${F2CSO}: f2cext.c
 
 CLEANFILES=${VERSION_SRCS} config.cache config.status config.log Makefile \
 libU77/config.log libU77/config.h libU77/config.status libU77/Makefile \
-libI77/config.log libI77/config.status libI77/Makefile \
+libI77/config.log libI77/config.status libI77/Makefile libI77/config.h \
 libF77/config.log libF77/config.status libF77/Makefile \
 g2c.h
 
@@ -139,25 +126,24 @@ all: config.status
 	
 config.status: Makefile.in configure 
 	mkdir -p libE77
-	cd ${GCC_DIR} && \
-		make -f Makefile.bsd-wrapper config.status tree-check.h 
-	# fake g771 existence
-	cd $(GCC_OBJDIR)/ && touch f771
 	CPPFLAGS="$(CFLAGS)" \
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	r=$(GCC_OBJDIR) \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	g77_cv_compiler_exists=yes \
 	/bin/sh ${.CURDIR}/configure \
 		--prefix=/usr --with-local-prefix=/usr ${CF} \
 		&& touch config.status
 
-# Configuring is needed for g2c.h to be built
-prereq depend: config.status 
+depend: config.status 
+
+prereq:
+	# Nothing to do
 
 includes:
 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${.CURDIR}/f2c.h ${DESTDIR}/usr/include
 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-		g2c.h ${DESTDIR}/usr/include
+		${.CURDIR}/g2c.hin ${DESTDIR}/usr/include/g2c.h
 
 .include <bsd.lib.mk>

@@ -1,3 +1,5 @@
+/* kludge to build under OpenBSD */
+#include "libI77/config.h"
 /* config.hin.  Generated automatically from configure.in by autoheader.  */
 
 /* Define to empty if the keyword does not work.  */
@@ -33,6 +35,12 @@
 /* Define as the path of the `chmod' program. */
 #undef CHMOD_PATH
 
+/* Define if your gettimeofday takes only one argument. */
+#undef GETTIMEOFDAY_ONE_ARGUMENT
+
+/* Define if your gettimeofday takes a time zome argument. */
+#undef HAVE_TIMEZONE
+
 /* Define if you have the alarm function.  */
 #undef HAVE_ALARM
 
@@ -53,6 +61,9 @@
 
 /* Define if you have the getrusage function.  */
 #undef HAVE_GETRUSAGE
+
+/* Define if you have the gettimeofday function.  */
+#undef HAVE_GETTIMEOFDAY
 
 /* Define if you have the getuid function.  */
 #undef HAVE_GETUID
