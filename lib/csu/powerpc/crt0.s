@@ -1,4 +1,4 @@
-
+#	$OpenBSD: crt0.s,v 1.6 1999/08/20 14:11:36 niklas Exp $
 	
 	.section ".data"
 	.comm	environ, 4

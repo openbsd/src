@@ -1,5 +1,5 @@
+/*	$OpenBSD: crt0.c,v 1.3 1999/08/20 14:11:34 niklas Exp $	*/
 /*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
-/*	$OpenBSD: crt0.c,v 1.2 1997/06/24 17:15:49 tholo Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.2 1997/06/24 17:15:49 tholo Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.3 1999/08/20 14:11:34 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ECOFF_COMPAT

@@ -1,3 +1,4 @@
+/*	$OpenBSD: crtend.c,v 1.2 1999/08/20 14:11:36 niklas Exp $	*/
 /*	$NetBSD: crtend.c,v 1.1 1997/04/16 19:38:24 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
