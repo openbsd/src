@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)localtime.c	7.66";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.16 1999/02/02 00:22:42 d Exp $";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.17 1999/03/09 23:06:12 pjanzen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1433,14 +1433,7 @@ const int		do_norm_secs;
 		dir = tmcomp(&mytm, &yourtm);
 		if (dir != 0) {
 			if (bits-- < 0)
-#ifdef PCTS
-			{
-				t += 2;
-				break;
-			}
-#else
 				return WRONG;
-#endif
 			if (bits < 0)
 				--t; /* may be needed if new t is minimal */
 			else if (dir > 0)
