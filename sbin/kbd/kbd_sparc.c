@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_sparc.c,v 1.2 1999/07/18 18:30:11 deraadt Exp $ */
+/*	$OpenBSD: kbd_sparc.c,v 1.3 1999/07/20 21:02:25 maja Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -65,10 +65,19 @@ struct {
 #include "tables/sparc/us"
   },
   {
+#include "tables/sparc/be_fr"
+  },
+  {
+#include "tables/sparc/ca"
+  },
+  {
 #include "tables/sparc/dk"
   },
   {
 #include "tables/sparc/de"
+  },
+  {
+#include "tables/sparc/it"
   },
   {
 #include "tables/sparc/nl"
@@ -77,7 +86,19 @@ struct {
 #include "tables/sparc/no"
   },
   {
+#include "tables/sparc/pt"
+  },
+  {
+#include "tables/sparc/es"
+  },
+  {
 #include "tables/sparc/se_fi"
+  },
+  {
+#include "tables/sparc/ch_fr"
+  },
+  {
+#include "tables/sparc/ch_de"
   },
   {
 #include "tables/sparc/uk"
@@ -86,10 +107,16 @@ struct {
 #include "tables/sparc/us_5"
   },
   {
+#include "tables/sparc/fr_5"
+  },
+  {
 #include "tables/sparc/dk_5"
   },
   {
 #include "tables/sparc/de_5"
+  },
+  {
+#include "tables/sparc/it_5"
   },
   {
 #include "tables/sparc/nl_5"
@@ -98,7 +125,19 @@ struct {
 #include "tables/sparc/no_5"
   },
   {
+#include "tables/sparc/pt_5"
+  },
+  {
+#include "tables/sparc/es_5"
+  },
+  {
 #include "tables/sparc/se_5"
+  },
+  {
+#include "tables/sparc/ch_fr_5"
+  },
+  {
+#include "tables/sparc/ch_de_5"
   },
   {
 #include "tables/sparc/uk_5"
