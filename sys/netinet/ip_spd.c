@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.12 2001/02/28 08:24:53 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.13 2001/03/15 22:43:03 bjc Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -29,6 +29,8 @@
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+
+#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
