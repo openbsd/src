@@ -68,6 +68,7 @@ int really_quiet = FALSE;
 int quiet = FALSE;
 int trace = FALSE;
 int noexec = FALSE;
+int readonlyfs = FALSE;
 int logoff = FALSE;
 
 char *CurDir;
@@ -270,6 +271,8 @@ main (argc, argv)
     }
     if (getenv (CVSREAD_ENV) != NULL)
 	cvswrite = FALSE;
+    if (getenv (CVSREADONLYFS_ENV))
+	readonlyfs = TRUE;
 
     /* This has the effect of setting getopt's ordering to REQUIRE_ORDER,
        which is what we need to distinguish between global options and
