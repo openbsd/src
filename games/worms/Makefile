@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:37:17 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1998/02/26 07:58:11 deraadt Exp $
 
 PROG=	worms
 MAN=	worms.6
-DPADD=	${LIBCURSES} ${LIBTERMLIB}
-LDADD=	-lcurses -ltermlib
+DPADD=	${LIBTERMLIB}
+LDADD=	-ltermlib
 
 .include <bsd.prog.mk>
