@@ -1,20 +1,24 @@
-dnl	$OpenBSD: upgrade,v 1.23 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: upgrade,v 1.24 2004/03/28 20:38:09 millert Exp $
 dnl OpenBSDUpgrade({:-the CD-ROM or an installation floppy as you would do for
 dnl a new installation-:})
-Due to the change from a.out to ELF binary format in OpenBSD OSREV,
-upgrades can be a complex, delicate process. The best solution, whenever
-possible, is to back up your data and reinstall from scratch.
+Prior to version 3.4, OpenBSD used the a.out binary format.  Beginning
+with version 3.4, OpenBSD uses the ELF binary format.  Because of
+this, upgrades from a version of OpenBSD prior to 3.4 can be a
+complex, delicate process.  The best solution, whenever possible,
+is to back up your data and reinstall from scratch.
 
-The second best solution is to remove all ports, third party programs and
-libraries installed on your system; upgrade; and then add ELF versions of
-the removed files.
+The second best solution is to remove all ports, third party programs
+and libraries installed on your system; upgrade; and then add ELF
+versions of the removed files.
 
-In all cases, once you start the upgrade you MUST complete it. If the
-upgrade process fails, or is abandoned before it completes, you will almost
-certainly be left with a non-functional system.
+In all cases, once you start the upgrade you MUST complete it. If
+the upgrade process fails, or is abandoned before it completes, you
+will almost certainly be left with a non-functional system.
 
-Finally, you cannot use the bsd.rd kernel to upgrade the system. The
-existing bootblocks on your system cannot boot the OSREV bsd.rd.
+If upgrading from a version of OpenBSD prior to 3.4, you cannot use
+the bsd.rd kernel to upgrade the system.  The existing bootblocks
+on your system cannot boot the OSREV bsd.rd--use the bsd.rd-a.out
+kernel instead.
 
 If you must do an upgrade while preserving the functionality of any
 existing a.out binary files, then the rest of this section will guide you
@@ -71,8 +75,8 @@ changes and replace or remove your existing a.out binaries, it will be
 possible to disable a.out emulation.
 
 
-The upgrade is now possible. Boot from the CD-ROM or an installation
-floppy, as you would do for a new installation. 
+The upgrade is now possible. Boot from the CD-ROM, an installation
+floppy, or the bsd.rd-a.out kernel as you would do for a new installation. 
 
 When prompted, select the (U)pgrade option rather than the (I)nstall
 option at the prompt in the install process.
@@ -81,7 +85,7 @@ The upgrade script will ask you for the existing root partition, and
 will use the existing filesystems defined in /etc/fstab to install the
 new system in. It will also use your existing network parameters.
 
-From then, the upgrade procedure is very close to the installation
+From then on, the upgrade procedure is very close to the installation
 procedure described earlier in this document. Note that the upgrade
 procedure will not let you pick the ``etc{:--:}OSrev.tgz'' set, so as to
 preserve your files in `/etc' which you are likely to have customized
@@ -90,12 +94,12 @@ since a previous installation.
 When the upgrade procedure tells you that the upgrade is complete, do not
 reboot the system yet.
 
-However, it is strongly advised that you unpack the etc{:--:}OSrev.tgz set in
+It is STRONGLY advised that you unpack the etc{:--:}OSrev.tgz set in
 a temporary directory and merge changes by hand, since all components of
 your system may not function correctly until your files in `/etc' are
 updated.
 
-After the upgrade is completed, it is now possible to remove the old a.out
+After the upgrade is completed, it is possible to remove the old a.out
 shared libraries from their initial locations:
 
   rm -f $(file $(find $(< /root/a.out-libdirs) -name "lib*.so.*") |
