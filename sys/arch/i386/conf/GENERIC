@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.360 2004/05/11 04:01:00 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.361 2004/05/23 03:23:00 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -100,10 +100,12 @@ cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
 
 # PCI USB Controllers
+ehci*	at pci?				# Enhanced Host Controller
 uhci*	at pci?				# Universal Host Controller (Intel)
 ohci*	at pci?				# Open Host Controller
 
 # USB bus support
+usb*	at ehci?
 usb*	at uhci?
 usb*	at ohci?
 
