@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.403 2003/11/21 01:47:16 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.404 2003/11/28 01:06:59 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4966,13 +4966,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_test_state_icmp(&s, dir, ifp, m, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
-			r->packets++;
-			r->bytes += ntohs(h->ip_len);
 			a = s->anchor.ptr;
-			if (a != NULL) {
-				a->packets++;
-				a->bytes += ntohs(h->ip_len);
-			}
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_icmp(&r, &s, dir, ifp,
@@ -5030,19 +5024,21 @@ done:
 		pf_status.pcounters[0][dir == PF_OUT][action != PF_PASS]++;
 	}
 
-	r->packets++;
-	r->bytes += pd.tot_len;
-	if (a != NULL) {
-		a->packets++;
-		a->bytes += pd.tot_len;
-	}
-	if (s != NULL) {
-		dirndx = (dir == s->direction) ? 0 : 1;
-		s->packets[dirndx]++;
-		s->bytes[dirndx] += pd.tot_len;
-		if (s->nat_rule.ptr != NULL) {
-			s->nat_rule.ptr->packets++;
-			s->nat_rule.ptr->bytes += pd.tot_len;
+	if (action == PF_PASS || r->action == PF_DROP) {
+		r->packets++;
+		r->bytes += pd.tot_len;
+		if (a != NULL) {
+			a->packets++;
+			a->bytes += pd.tot_len;
+		}
+		if (s != NULL) {
+			dirndx = (dir == s->direction) ? 0 : 1;
+			s->packets[dirndx]++;
+			s->bytes[dirndx] += pd.tot_len;
+			if (s->nat_rule.ptr != NULL) {
+				s->nat_rule.ptr->packets++;
+				s->nat_rule.ptr->bytes += pd.tot_len;
+			}
 		}
 	}
 	tr = r;
@@ -5232,8 +5228,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		    m, off, h, &pd);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
-			r->packets++;
-			r->bytes += h->ip6_plen;
 			a = s->anchor.ptr;
 			log = s->log;
 		} else if (s == NULL)
@@ -5285,19 +5279,21 @@ done:
 		pf_status.pcounters[1][dir == PF_OUT][action != PF_PASS]++;
 	}
 
-	r->packets++;
-	r->bytes += pd.tot_len;
-	if (a != NULL) {
-		a->packets++;
-		a->bytes += pd.tot_len;
-	}
-	if (s != NULL) {
-		dirndx = (dir == s->direction) ? 0 : 1;
-		s->packets[dirndx]++;
-		s->bytes[dirndx] += pd.tot_len;
-		if (s->nat_rule.ptr != NULL) {
-			s->nat_rule.ptr->packets++;
-			s->nat_rule.ptr->bytes += pd.tot_len;
+	if (action == PF_PASS || r->action == PF_DROP) {
+		r->packets++;
+		r->bytes += pd.tot_len;
+		if (a != NULL) {
+			a->packets++;
+			a->bytes += pd.tot_len;
+		}
+		if (s != NULL) {
+			dirndx = (dir == s->direction) ? 0 : 1;
+			s->packets[dirndx]++;
+			s->bytes[dirndx] += pd.tot_len;
+			if (s->nat_rule.ptr != NULL) {
+				s->nat_rule.ptr->packets++;
+				s->nat_rule.ptr->bytes += pd.tot_len;
+			}
 		}
 	}
 	tr = r;
