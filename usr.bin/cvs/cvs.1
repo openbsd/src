@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.26 2005/01/16 11:10:36 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.27 2005/01/17 22:48:14 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -194,8 +194,8 @@ Aliases:
 .Ic get .
 .It Xo Ic commit
 .Op Fl flnR
-.Op Fl F Ar logfile
-.Op Fl m Ar msg
+.Oo Fl F Ar logfile \*(Ba
+.Fl m Ar msg Oc
 .Op Fl r Ar rev
 .Op Ar file ...
 .Xc
@@ -204,6 +204,31 @@ The
 .Ic commit
 command is used to send local changes back to the server and update the
 repository's information to reflect the changes.
+.Pp
+The
+.Fl l
+flag is used to limit the scope of the search to the local directory only.
+Sometimes one might want to force a file to be committed, even though
+it is unchanged: this can be done using the
+.Fl f
+flag, which also has the effect of disabling recursive behaviour,
+which can be requested with the
+.Fl R
+flag.
+When using the
+.Fl n
+flag, programs listed in the CVSROOT/modules file do not get executed.
+The
+.Fl m
+flag can be used to specify a log message on the command line which
+suppresses the editor invocation, or use the
+.Fl F
+flag to specify a
+.Ar file
+as argument which contains the log message.
+The
+.Fl r
+flag can be used to commit to a particular symbolic or numerical revision.
 .Pp
 Aliases:
 .Ic ci ,
