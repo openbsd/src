@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.35 2003/07/17 21:54:28 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.36 2003/07/21 15:56:48 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.35 2003/07/17 21:54:28 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.36 2003/07/21 15:56:48 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,6 +77,7 @@ static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.35 2003/07/17 21:54:28 mill
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -163,6 +164,18 @@ struct line {
 	int value;
 } *file[2];
 
+/*
+ * The following struct is used to record change information when
+ * doing a "context" or "unified" diff.  (see routine "change" to
+ * understand the highly mnemonic field names)
+ */
+struct context_vec {
+	int a;			/* start line in old file */
+	int b;			/* end line in old file */
+	int c;			/* start line in new file */
+	int d;			/* end line in new file */
+};
+
 static int  *J;			/* will be overlaid on class */
 static int  *class;		/* will be overlaid on file[0] */
 static int  *klist;		/* will be overlaid on file[0] after class */
@@ -178,6 +191,9 @@ static long *ixold;		/* will be overlaid on klist */
 static struct cand *clist;	/* merely a free storage pot for candidates */
 static struct line *sfile[2];	/* shortened by pruning common prefix/suffix */
 static u_char *chrtran;		/* translation table for case-folding */
+static struct context_vec *context_vec_start;
+static struct context_vec *context_vec_end;
+static struct context_vec *context_vec_ptr;
 
 static FILE *opentemp(const char *);
 static void fetch(long *, int, int, FILE *, char *, int);
@@ -272,6 +288,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 	pid_t pid = -1;
 
 	anychange = 0;
+	context_vec_ptr = context_vec_start - 1;
 	chrtran = (iflag ? cup2low : clow2low);
 	if (S_ISDIR(stb1.st_mode) != S_ISDIR(stb2.st_mode))
 		return (D_MISMATCH);
@@ -908,22 +925,6 @@ uni_range(int a, int b)
 }
 
 /*
- * The following struct is used to record change information when
- * doing a "context" or "unified" diff.  (see routine "change" to
- * understand the highly mnemonic field names)
- */
-struct context_vec {
-	int a;			/* start line in old file */
-	int b;			/* end line in old file */
-	int c;			/* start line in new file */
-	int d;			/* end line in new file */
-};
-
-struct context_vec *context_vec_start, *context_vec_end, *context_vec_ptr;
-
-#define	MAX_CONTEXT	128
-
-/*
  * Indicate that there is a difference between lines a and b of the from file
  * to get to lines c to d of the to file.  If a is greater then b then there
  * are no lines in the from file involved and this means that there were
@@ -933,34 +934,37 @@ struct context_vec *context_vec_start, *context_vec_end, *context_vec_ptr;
 static void
 change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 {
+	static size_t max_context = 64;
+
 	if (format != D_IFDEF && a > b && c > d)
 		return;
-	if (anychange == 0) {
-		anychange = 1;
-		if (format == D_CONTEXT || format == D_UNIFIED) {
+	if (format == D_CONTEXT || format == D_UNIFIED) {
+		/*
+		 * Allocate change records as needed.
+		 */
+		if (context_vec_ptr == context_vec_end - 1) {
+			ptrdiff_t offset = context_vec_ptr - context_vec_start;
+			max_context <<= 1;
+			context_vec_start = erealloc(context_vec_start,
+			    max_context * sizeof(struct context_vec));
+			context_vec_end = context_vec_start + max_context;
+			context_vec_ptr = context_vec_start + offset;
+		}
+		if (anychange == 0) {
+			/*
+			 * Print the context/unidiff header first time through.
+			 */
 			printf("%s %s	%s", format == D_CONTEXT ? "***" : "---",
 			   file1, ctime(&stb1.st_mtime));
 			printf("%s %s	%s", format == D_CONTEXT ? "---" : "+++",
 			    file2, ctime(&stb2.st_mtime));
-			if (context_vec_start == NULL)
-				context_vec_start = emalloc(MAX_CONTEXT *
-				    sizeof(struct context_vec));
-			context_vec_end = context_vec_start + MAX_CONTEXT;
-			context_vec_ptr = context_vec_start - 1;
-		}
-	}
-	if (format == D_CONTEXT || format == D_UNIFIED) {
-		/*
-		 * If this new change is within 'context' lines of
-		 * the previous change, just add it to the change
-		 * record.  If the record is full or if this
-		 * change is more than 'context' lines from the previous
-		 * change, dump the record, reset it & add the new change.
-		 */
-		if (context_vec_ptr >= context_vec_end ||
-		    (context_vec_ptr >= context_vec_start &&
-		    a > (context_vec_ptr->b + 2 * context) &&
-		    c > (context_vec_ptr->d + 2 * context))) {
+			anychange = 1;
+		} else if (a > context_vec_ptr->b + (2 * context) &&
+		    c > context_vec_ptr->d + (2 * context)) {
+			/*
+			 * If this change is more than 'context' lines from the
+			 * previous change, dump the record and reset it.
+			 */ 
 			if (format == D_CONTEXT)
 				dump_context_vec(f1, f2);
 			else
@@ -973,6 +977,8 @@ change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 		context_vec_ptr->d = d;
 		return;
 	}
+	if (anychange == 0)
+		anychange = 1;
 	switch (format) {
 
 	case D_NORMAL:
