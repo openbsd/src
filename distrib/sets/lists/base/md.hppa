@@ -1,3 +1,6 @@
+./etc/firmware/eprimsym
+./etc/firmware/esecsym
+./etc/firmware/symbol-license
 ./etc/firmware/atu-intersil-ext
 ./etc/firmware/atu-intersil-int
 ./etc/firmware/atu-license

@@ -1,3 +1,6 @@
+./etc/firmware/eprimsym
+./etc/firmware/esecsym
+./etc/firmware/symbol-license
 ./sbin/kbd
 ./sbin/ldconfig
 ./sbin/wicontrol

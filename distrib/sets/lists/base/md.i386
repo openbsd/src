@@ -7,8 +7,11 @@
 ./etc/firmware/atu-rfmd2958-int
 ./etc/firmware/atu-rfmd2958smc-ext
 ./etc/firmware/atu-rfmd2958smc-int
+./etc/firmware/eprimsym
+./etc/firmware/esecsym
 ./etc/firmware/neo-coefficients
 ./etc/firmware/neo-license
+./etc/firmware/symbol-license
 ./etc/firmware/tigon1
 ./etc/firmware/tigon2
 ./sbin/ancontrol
