@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.1 2001/06/27 19:41:45 rees Exp $ */
+/* $Id: cmds.c,v 1.2 2001/06/28 21:29:44 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -54,17 +54,13 @@ struct {
     { "help", help },
     { "?", help },
     { "reset", reset },
-    { "r", reset },
     { "open", reset },
     { "close", dclose },
     { "quit", quit },
-    { "q", quit },
 
     /* 7816-4 commands */
     { "apdu", apdu },
-    { "a", apdu },
     { "fid", selfid },
-    { "f", selfid },
     { "class", class },
     { "read", dread },
     { "write", dwrite },
@@ -89,8 +85,11 @@ int dispatch(int ac, char *av[])
 {
     int i;
 
+    if (ac < 1)
+	return 0;
+
     for (i = 0; dispatch_table[i].cmd; i++) {
-	if (!strcmp(av[0], dispatch_table[i].cmd)) {
+	if (!strncmp(av[0], dispatch_table[i].cmd, strlen(av[0]))) {
 	    (dispatch_table[i].action) (ac, av);
 	    break;
 	}
@@ -229,6 +228,7 @@ int apdu(int ac, char *av[])
 int selfid(int ac, char *av[])
 {
     unsigned char fid[2];
+    int r1, r2;
 
     if (ac != 2) {
 	printf("usage: f fid\n");
@@ -239,7 +239,10 @@ int selfid(int ac, char *av[])
 	reset(0, NULL);
 
     sectok_parse_fname(av[1], fid);
-    sectok_selectfile(fd, cla, fid, 1);
+    if (sectok_selectfile(fd, cla, fid, &r1, &r2) < 0) {
+	printf("selectfile: %s\n", get_r1r2s(r1, r2));
+	return -1;
+    }
 
     return 0;
 }

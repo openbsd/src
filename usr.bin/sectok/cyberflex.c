@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.1 2001/06/27 19:41:45 rees Exp $ */
+/* $Id: cyberflex.c,v 1.2 2001/06/28 21:29:45 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -362,38 +362,20 @@ int jload(int ac, char *av[])
     rv = scwrite(fd, cla, 0xa4, 0x04, 0, 0, NULL, &r1, &r2);
     if (r1 != 0x90 && r1 != 0x61) {
 	/* error */
-	printf("selecting default loader: ");
-	print_r1r2(r1, r2);
+	printf("can't select default loader: %s\n", get_r1r2s(r1, r2));
 	return -1;
     }
 
     /* select 3f.00 (root) */
-    rv = sectok_selectfile(fd, cla, root_fid, 0);
-    if (rv < 0) return rv;
+    if (sectok_selectfile(fd, cla, root_fid, &r1, &r2) < 0)
+	return -1;
 
     /* create program file */
-    data[0] = (size + 16) / 256; /* size, upper byte */
-    data[1] = (size + 16) % 256; /* size, lower byte */
-    data[2] = progID[0];	/* FID, upper */
-    data[3] = progID[1];	/* FID, lower */
-    data[4] = 0x03;		/* file type = 3 (program file) */
-    data[5] = 0x01;		/* status = 1 */
-    data[6] = data[7] = 0x00;	/* record related */
-    data[8] = 0xff;		/* ACL can do everything with AUT0 */
-    for (i = 9; i < 16; i++ ) {
-	data[i] = 0x00;		/* ACL : cannot do anything without AUT0 */
-    }
-
-    rv = scwrite(fd, cla, 0xe0, 0, 0, 0x10, data, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
+    if (cyberflex_create_file(fd, cla, progID, size, 3, &r1, &r2) < 0) {
 	/* error */
-	printf("creating file %s: %s\n", progname, get_r1r2s(r1, r2));
+	printf("can't create %s: %s\n", progname, get_r1r2s(r1, r2));
 	return -1;
     }
-
-    /* select program */
-    rv = sectok_selectfile(fd, cla, progID, 0);
-    if (rv < 0) return rv;
 
     /* update binary */
     for (i = 0; i < size; i += MAX_APDU_SIZE) {
@@ -495,29 +477,28 @@ int junload(int ac, char *av[])
     /*printf ("unload applet\n");*/
 
     /* select 3f.00 (root) */
-    rv = sectok_selectfile(fd, cla, root_fid, 0);
-    if (rv < 0) return rv;
+    if (sectok_selectfile(fd, cla, root_fid, &r1, &r2) < 0)
+	return -1;
 
     /* select program file */
-    rv = sectok_selectfile(fd, cla, progID, 0);
-    if (rv < 0) {
+    if (sectok_selectfile(fd, cla, progID, &r1, &r2) >= 0) {
+
+	/* manage program -- reset */
+	rv = scwrite(fd, cla, 0x0a, 02, 0, 0x0, NULL, &r1, &r2);
+	if (rv < 0 || (r1 != 0x90 && r1 != 0x61)) {
+	    /* error */
+	    printf("resetting applet: %s\n", get_r1r2s(r1, r2));
+	}
+
+	/* delete program file */
+	if (cyberflex_delete_file(fd, cla, progID[0], progID[1], &r1, &r2) < 0)
+	    printf("delete_file %s: %s\n", progname, get_r1r2s(r1, r2));
+    } else
 	printf ("no program file... proceed to delete data container\n");
-	goto del_container;
-    }
 
-    /* manage program -- reset */
-    rv = scwrite(fd, cla, 0x0a, 02, 0, 0x0, NULL, &r1, &r2);
-    if (r1 != 0x90 && r1 != 0x61) {
-	/* error */
-	printf("resetting applet: %s\n", get_r1r2s(r1, r2));
-    }
-
-    /* delete program file */
-    cyberflex_delete_file(fd, cla, progID[0], progID[1], 1);
-
- del_container:
     /* delete data container */
-    cyberflex_delete_file(fd, cla, contID[0], contID[1], 1);
+    if (cyberflex_delete_file(fd, cla, contID[0], contID[1], &r1, &r2) < 0)
+	printf("delete_file %s: %s\n", contname, get_r1r2s(r1, r2));
 
     return 0;
 }
@@ -654,25 +635,22 @@ int cyberflex_load_key (int fd, unsigned char *buf)
 	printf ("%02x ", data[i]);
     printf ("\n");
 
-    /* select the key file */
     /* select 3f.00 (root) */
-    rv = sectok_selectfile(fd, cla, root_fid, 0);
-    if (rv < 0) return rv;
+    if (sectok_selectfile(fd, cla, root_fid, &r1, &r2) < 0)
+	return -1;
 
     /* select 00.11 (key file) */
-    rv = sectok_selectfile(fd, cla, key_fid, 0);
-    if (rv < 0) return rv;
+    if (sectok_selectfile(fd, cla, key_fid, &r1, &r2) < 0)
+	return -1;
 
     /* all righty, now let's send it to the card! :) */
     rv = scwrite(fd, cla, 0xd6, 0, 0, KEY_BLOCK_SIZE * (argc + 2) + 2,
 		 data, &r1, &r2);
     if (r1 != 0x90 && r1 != 0x61) {
 	/* error */
-	printf("writing the key file 00.11: ");
-	print_r1r2(r1, r2);
+	printf("writing the key file 00.11: %s\n", get_r1r2s(r1, r2));
 	return -1;
     }
-    print_r1r2 (r1, r2);
 
     return 0;
 }
@@ -708,25 +686,22 @@ int load_AUT0(int fd, unsigned char *buf)
 	printf ("%02x ", data[i]);
     printf ("\n");
 
-    /* select the key file */
     /* select 3f.00 (root) */
-    rv = sectok_selectfile(fd, cla, root_fid, 0);
-    if (rv < 0) return rv;
+    if (sectok_selectfile(fd, cla, root_fid, &r1, &r2) < 0)
+	return -1;
 
     /* select 00.11 (key file) */
-    rv = sectok_selectfile(fd, cla, key_fid, 0);
-    if (rv < 0) return rv;
+    if (sectok_selectfile(fd, cla, key_fid, &r1, &r2) < 0)
+	return -1;
 
     /* all righty, now let's send it to the card! :) */
     rv = scwrite(fd, cla, 0xd6, 0, 0, KEY_BLOCK_SIZE,
 		 data, &r1, &r2);
     if (r1 != 0x90 && r1 != 0x61) {
 	/* error */
-	printf("writing the key file 00.11: ");
-	print_r1r2(r1, r2);
+	printf("writing the key file 00.11: %s\n", get_r1r2s(r1, r2));
 	return -1;
     }
-    print_r1r2(r1, r2);
 
     return 0;
 }
@@ -734,7 +709,7 @@ int load_AUT0(int fd, unsigned char *buf)
 /* download RSA private key into 3f.00/00.12 */
 int cyberflex_load_rsa(int fd, unsigned char *buf)
 {
-    int rv, i, j, tmp;
+    int rv, r1, r2, i, j, tmp;
     static unsigned char key_fid[] = {0x00, 0x12};
     static char *key_names[NUM_RSA_KEY_ELEMENTS]= {"p", "q", "1/p mod q",
 						       "d mod (p-1)", "d mod (q-1)"};
@@ -763,7 +738,11 @@ int cyberflex_load_rsa(int fd, unsigned char *buf)
     }
 #endif
 
-    rv = cyberflex_load_rsa_priv(fd, cla, key_fid, NUM_RSA_KEY_ELEMENTS, RSA_BIT_LEN, key_elements);
+    rv = cyberflex_load_rsa_priv(fd, cla, key_fid, NUM_RSA_KEY_ELEMENTS, RSA_BIT_LEN,
+				 key_elements, &r1, &r2);
+
+    if (rv < 0)
+	printf("load_rsa_priv: %s\n", get_r1r2s(r1, r2));
 
     for (i = 0; i < NUM_RSA_KEY_ELEMENTS; i++)
 	free(key_elements[i]);
