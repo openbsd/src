@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.99 2003/07/12 15:35:11 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.100 2003/07/12 15:36:24 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1145,10 +1145,6 @@ if this is the case.
 The ports infrastructure will generate a separate ${WRKBUILD} directory
 in which the port will be configured and built.
 Wipe ${WRKBUILD} to start anew, but skipping the extract/patch stage.
-Set to
-.Sq concurrent
-if the build process does not modify anything under ${WRKSRC}.
-The build process can then be run concurrently on different architectures.
 Set to
 .Sq flavored
 if distinct flavors of the port may share a common source tree.
