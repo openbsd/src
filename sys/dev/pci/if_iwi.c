@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.31 2005/03/17 20:08:13 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.32 2005/03/23 14:14:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -739,6 +739,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 	if (letoh16(frame->len) < sizeof (struct ieee80211_frame_min) ||
 	    letoh16(frame->len) > MCLBYTES) {
 		printf("%s: bad frame length\n", sc->sc_dev.dv_xname);
+		ifp->if_ierrors++;
 		return;
 	}
 
@@ -976,6 +977,7 @@ iwi_tx_intr(struct iwi_softc *sc)
 		ieee80211_release_node(ic, buf->ni);
 		buf->ni = NULL;
 
+		ifp->if_opackets++;
 		sc->tx_queued--;
 
 		/* kill watchdog timer */
@@ -1224,6 +1226,7 @@ iwi_start(struct ifnet *ifp)
 		if (iwi_tx_start(ifp, m0, ni) != 0) {
 			if (ni != NULL)
 				ieee80211_release_node(ic, ni);
+			ifp->if_oerrors++;
 			break;
 		}
 
@@ -1244,6 +1247,7 @@ iwi_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 			iwi_stop(ifp, 1);
+			ifp->if_oerrors++;
 			return;
 		}
 		ifp->if_timer = 1;

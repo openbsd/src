@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.44 2005/03/17 20:08:13 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.45 2005/03/23 14:14:30 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1021,12 +1021,18 @@ void
 ipw_tx_intr(struct ipw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	struct ipw_soft_bd *sbd;
 	u_int32_t r, i;
 
 	r = CSR_READ_4(sc, IPW_CSR_TX_READ_INDEX);
 
 	for (i = (sc->txold + 1) % IPW_NTBD; i != r; i = (i + 1) % IPW_NTBD) {
-		ipw_release_sbd(sc, &sc->stbd_list[i]);
+		sbd = &sc->stbd_list[i];
+
+		if (sbd->type == IPW_SBD_TYPE_DATA)
+			ifp->if_opackets++;
+
+		ipw_release_sbd(sc, sbd);
 		sc->txfree++;
 	}
 
@@ -1334,6 +1340,7 @@ ipw_start(struct ifnet *ifp)
 		if (ipw_tx_start(ifp, m, ni) != 0) {
 			if (ni != NULL)
 				ieee80211_release_node(ic, ni);
+			ifp->if_oerrors++;
 			break;
 		}
 
@@ -1354,6 +1361,7 @@ ipw_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 			ipw_stop(ifp, 1);
+			ifp->if_oerrors++;
 			return;
 		}
 		ifp->if_timer = 1;

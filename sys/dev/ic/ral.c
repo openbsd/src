@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.37 2005/03/19 09:49:35 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.38 2005/03/23 14:14:24 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1065,11 +1065,13 @@ ral_tx_intr(struct ral_softc *sc)
 				ieee80211_rssadapt_raise_rate(ic,
 				    &rn->rssadapt, &data->id);
 			}
+			ifp->if_opackets++;
 			break;
 
 		case RAL_TX_SUCCESS_RETRY:
 			DPRINTFN(9, ("data frame sent after %u retries\n",
 			    (letoh32(desc->flags) >> 5) & 0x7));
+			ifp->if_opackets++;
 			break;
 
 		case RAL_TX_FAIL_RETRY:
@@ -1079,6 +1081,7 @@ ral_tx_intr(struct ral_softc *sc)
 				ieee80211_rssadapt_lower_rate(ic, data->ni,
 				    &rn->rssadapt, &data->id);
 			}
+			ifp->if_oerrors++;
 			break;
 
 		case RAL_TX_FAIL_INVALID:
@@ -1086,6 +1089,7 @@ ral_tx_intr(struct ral_softc *sc)
 		default:
 			printf("%s: sending data frame failed 0x%08x\n",
 			    sc->sc_dev.dv_xname, letoh32(desc->flags));
+			ifp->if_oerrors++;
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -1214,12 +1218,16 @@ ral_decryption_intr(struct ral_softc *sc)
 		    (letoh32(desc->flags) & RAL_RX_CIPHER_BUSY))
 			break;
 
-		if (data->drop)
+		if (data->drop) {
+			ifp->if_ierrors++;
 			goto skip;
+		}
 
 		if ((letoh32(desc->flags) & RAL_RX_CIPHER_MASK) != 0 &&
-		    (letoh32(desc->flags) & RAL_RX_ICV_ERROR))
+		    (letoh32(desc->flags) & RAL_RX_ICV_ERROR)) {
+			ifp->if_ierrors++;
 			goto skip;
+		}
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 		    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -2014,6 +2022,7 @@ ral_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
 			ral_init(ifp);
+			ifp->if_oerrors++;
 			return;
 		}
 		ifp->if_timer = 1;

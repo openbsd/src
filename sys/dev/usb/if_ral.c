@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.16 2005/03/23 13:07:35 dlg Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.17 2005/03/23 14:14:31 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -788,6 +788,8 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall(sc->sc_rx_pipeh);
+
+		ifp->if_oerrors++;
 		return;
 	}
 
@@ -799,6 +801,7 @@ ural_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	data->ni = NULL;
 
 	sc->tx_queued--;
+	ifp->if_opackets++;
 
 	DPRINTFN(10, ("tx done\n"));
 
@@ -835,6 +838,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	if (len < RAL_RX_DESC_SIZE) {
 		printf("%s: xfer too short %d\n", USBDEVNAME(sc->sc_dev), len);
+		ifp->if_ierrors++;
 		goto skip;
 	}
 
@@ -848,6 +852,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		 * those frames when we filled RAL_TXRX_CSR2.
 		 */
 		DPRINTFN(5, ("PHY or CRC error\n"));
+		ifp->if_ierrors++;
 		goto skip;
 	}
 
@@ -1364,6 +1369,7 @@ ural_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", USBDEVNAME(sc->sc_dev));
 			/*ural_init(ifp); XXX needs a process context! */
+			ifp->if_oerrors++;
 			return;
 		}
 		ifp->if_timer = 1;
