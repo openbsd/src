@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.7 1997/09/22 05:09:15 millert Exp $	*/
+/*	$OpenBSD: proc.c,v 1.8 1998/05/13 06:50:14 deraadt Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: proc.c,v 1.7 1997/09/22 05:09:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: proc.c,v 1.8 1998/05/13 06:50:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -981,10 +981,23 @@ dokill(v, t)
     v++;
     if (v[0] && v[0][0] == '-') {
 	if (v[0][1] == 'l') {
-	    for (signum = 1; signum < NSIG; signum++) {
-		(void) fprintf(cshout, "%s ", sys_signame[signum]);
-		if (signum == NSIG / 2)
-		    (void) fputc('\n', cshout);
+	    if (v[1]) {
+		if (!Isdigit(v[1][0]))
+		    stderror(ERR_NAME | ERR_BADSIG);
+
+		signum = atoi(short2str(v[1]));
+		if (signum < 0 || signum >= NSIG)
+		    stderror(ERR_NAME | ERR_BADSIG);
+		else if (signum == 0)
+		    (void) fputc('0', cshout); /* 0's symbolic name is '0' */
+		else
+		    (void) fprintf(cshout, "%s ", sys_signame[signum]);
+	    } else {
+		for (signum = 1; signum < NSIG; signum++) {
+		    (void) fprintf(cshout, "%s ", sys_signame[signum]);
+		    if (signum == NSIG / 2)
+			(void) fputc('\n', cshout);
+	    	}
 	    }
 	    (void) fputc('\n', cshout);
 	    return;
@@ -995,17 +1008,28 @@ dokill(v, t)
 		stderror(ERR_NAME | ERR_BADSIG);
 	}
 	else {
-	    name = short2str(&v[0][1]);
-	    if (!strncasecmp(name, "sig", 3))
-		name += 3;
+	    if (v[0][1] == 's' && (Isspace(v[0][2]) || v[0][2] == '\0'))
+		v++;
+	    else
+		(*v)++;
 
+	    if (v[0] == NULL || v[1] == NULL) {
+		stderror(ERR_NAME | ERR_TOOFEW);
+		return;
+	    }
+
+	    name = short2str(&v[0][0]);
 	    for (signum = 1; signum < NSIG; signum++)
 		if (!strcasecmp(sys_signame[signum], name))
 		    break;
 
 	    if (signum == NSIG) {
-		setname(vis_str(&v[0][1]));
-		stderror(ERR_NAME | ERR_UNKSIG);
+		if (v[0][0] == '0')
+		    signum = 0;
+		else {
+		    setname(vis_str(&v[0][0]));
+		    stderror(ERR_NAME | ERR_UNKSIG);
+		}
 	    }
 	}
 	v++;

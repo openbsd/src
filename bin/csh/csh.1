@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.7 1997/11/17 06:55:49 deraadt Exp $
+.\"	$OpenBSD: csh.1,v 1.8 1998/05/13 06:50:12 deraadt Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -1325,15 +1325,20 @@ Lists the active jobs; the
 option lists process id's in addition to the normal information.
 .Pp
 .It Ic kill % Ns Ar job
-.It Ic kill Ar pid
+.It Ic kill
+.Op Fl s Ar signal_name 
+.Ar pid
 .It Ic kill Fl sig Ar pid ...
-.It Ic kill Fl l
+.It Ic kill Fl l Op exit_status
 Sends either the TERM (terminate) signal or the
 specified signal to the specified jobs or processes.
 Signals are either given by number or by names (as given in
-.Pa /usr/include/signal.h,
+.Aq Pa signal.h ,
 stripped of the prefix ``SIG'').
-The signal names are listed by ``kill \-l''.
+The signal names are listed by ``kill \-l'';
+if an
+.Ar exit_status
+is specified, only the corresponding signal name will be written.
 There is no default, just saying `kill' does not
 send a signal to the current job.
 If the signal being sent is TERM (terminate) or HUP (hangup),
