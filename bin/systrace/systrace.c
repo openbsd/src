@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.48 2004/01/07 21:15:43 sturm Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.49 2004/01/23 20:51:18 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/wait.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -52,6 +53,9 @@
 #include "systrace.h"
 #include "util.h"
 
+#define CRADLE_SERVER "cradle_server"
+#define CRADLE_UI     "cradle_ui"
+
 pid_t trpid;
 int trfd;
 int connected = 0;		/* Connected to GUI */
@@ -61,15 +65,17 @@ int allow = 0;			/* Allow all and generate */
 int userpolicy = 1;		/* Permit user defined policies */
 int noalias = 0;		/* Do not do system call aliasing */
 int iamroot = 0;		/* Set if we are running as root */
+int cradle = 0;			/* Set if we are running in cradle mode */
 int logstderr = 0;		/* Log to STDERR instead of syslog */
 char cwd[MAXPATHLEN];		/* Current working directory */
 char home[MAXPATHLEN];		/* Home directory of user */
 char username[MAXLOGNAME];	/* Username: predicate match and expansion */
+char *guipath = _PATH_XSYSTRACE; /* Path to GUI executable */
+char dirpath[MAXPATHLEN];
 
 static void child_handler(int);
 static void log_msg(int, const char *, ...);
 static void usage(void);
-static int requestor_start(char *);
 
 void
 systrace_parameters(void)
@@ -431,56 +437,92 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: systrace [-AaitUu] [-c uid:gid] [-d policydir] [-f file]\n"
+	    "Usage: systrace [-AaCeitUu] [-c uid:gid] [-d policydir] [-f file]\n"
 	    "\t [-g gui] [-p pid] command ...\n");
 	exit(1);
 }
 
-static int
-requestor_start(char *path)
+int
+requestor_start(char *path, int docradle)
 {
-	char *argv[2];
+	char *argv[3];
 	int pair[2];
 	pid_t pid;
 
 	argv[0] = path;
-	argv[1] = NULL;
+	argv[1] = docradle ? "-C" : NULL;
+	argv[2] = NULL;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
+	if (!docradle && socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1)
 		err(1, "socketpair");
 
 	pid = fork();
 	if (pid == -1)
 		err(1, "fork");
 	if (pid == 0) {
-		close(pair[0]);
-		if (dup2(pair[1], fileno(stdin)) == -1)
-			err(1, "dup2");
-		if (dup2(pair[1], fileno(stdout)) == -1)
-			err(1, "dup2");
-		setlinebuf(stdout);
+		if (!docradle) {
+			close(pair[0]);
+			if (dup2(pair[1], fileno(stdin)) == -1)
+				err(1, "dup2");
+			if (dup2(pair[1], fileno(stdout)) == -1)
+				err(1, "dup2");
+			setlinebuf(stdout);
 
-		close(pair[1]);
+			close(pair[1]);
+		}
 
 		execvp(path, argv);
 
 		err(1, "execvp: %s", path);
+
 	}
 
-	close(pair[1]);
-	if (dup2(pair[0], fileno(stdin)) == -1)
-		err(1, "dup2");
+	if (!docradle) {
+		close(pair[1]);
+		if (dup2(pair[0], fileno(stdin)) == -1)
+			err(1, "dup2");
 
-	if (dup2(pair[0], fileno(stdout)) == -1)
-		err(1, "dup2");
+		if (dup2(pair[0], fileno(stdout)) == -1)
+			err(1, "dup2");
 
-	close(pair[0]);
+		close(pair[0]);
 
-	setlinebuf(stdout);
+		setlinebuf(stdout);
 
-	connected = 1;
+		connected = 1;
+	}
 
 	return (0);
+}
+
+
+static void
+cradle_setup(char *pathtogui)
+{
+	struct stat sb;
+	char cradlepath[MAXPATHLEN], cradleuipath[MAXPATHLEN];
+
+	snprintf(dirpath, sizeof(dirpath), "/tmp/systrace-%d", getuid());
+
+	if (stat(dirpath, &sb) == -1) {
+		if (errno != ENOENT)
+			err(1, "stat()");
+		if (mkdir(dirpath, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
+			err(1, "mkdir()");
+	} else {
+		if (sb.st_uid != getuid())
+			errx(1, "Wrong owner on directory %s", dirpath);
+		if (sb.st_mode != (S_IFDIR | S_IRUSR | S_IWUSR | S_IXUSR))
+			errx(1, "Wrong permissions on directory %s", dirpath);
+	}
+
+	strlcpy(cradlepath, dirpath, sizeof (cradlepath));
+	strlcat(cradlepath, "/" CRADLE_SERVER, sizeof (cradlepath));
+
+	strlcpy(cradleuipath, dirpath, sizeof (cradleuipath));
+	strlcat(cradleuipath, "/" CRADLE_UI, sizeof (cradleuipath));
+
+	cradle_start(cradlepath, cradleuipath, pathtogui);
 }
 
 static int
@@ -538,7 +580,6 @@ main(int argc, char **argv)
 	char **args;
 	char *filename = NULL;
 	char *policypath = NULL;
-	char *guipath = _PATH_XSYSTRACE;
 	struct timeval tv, tv_wait = {60, 0};
 	pid_t pidattach = 0;
 	int usex11 = 1, count;
@@ -547,7 +588,7 @@ main(int argc, char **argv)
 	uid_t cr_uid;
 	gid_t cr_gid;
 
-	while ((c = getopt(argc, argv, "c:aAeituUd:g:f:p:")) != -1) {
+	while ((c = getopt(argc, argv, "c:aAeituUCd:g:f:p:")) != -1) {
 		switch (c) {
 		case 'c':
 			setcredentials = 1;
@@ -578,6 +619,9 @@ main(int argc, char **argv)
 			break;
 		case 'g':
 			guipath = optarg;
+			break;
+		case 'C':
+			cradle = 1;
 			break;
 		case 'f':
 			filename = optarg;
@@ -662,9 +706,14 @@ main(int argc, char **argv)
 	if (signal(SIGCHLD, child_handler) == SIG_ERR)
 		err(1, "signal");
 
-	/* Start the policy gui if necessary */
-	if (usex11 && !automatic && !allow)
-		requestor_start(guipath);
+	/* Start the policy gui or cradle if necessary */
+	if (usex11 && (!automatic && !allow)) {
+		if (cradle)
+			cradle_setup(guipath);
+		else
+			requestor_start(guipath, 0);
+
+	}
 
 	/* Loop on requests */
 	count = 0;

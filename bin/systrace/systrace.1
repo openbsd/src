@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.38 2004/01/07 21:15:42 sturm Exp $
+.\"	$OpenBSD: systrace.1,v 1.39 2004/01/23 20:51:18 sturm Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd May 21, 2003
+.Dd November 28, 2003
 .Dt SYSTRACE 1
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm systrace
 .Bk -words
-.Op Fl AaeitUu
+.Op Fl AaCeitUu
 .Op Fl c Ar uid:gid
 .Op Fl d Ar policydir
 .Op Fl f Ar file
@@ -92,6 +92,10 @@ or to
 if the
 .Fl e
 flag is specified.
+.It Fl C
+Run systrace in cradle mode; if a cradle server is not running, one is
+launched.
+This decouples UIs from systrace, allowing for re-attaching UIs.
 .It Fl c Ar uid:gid
 Specifies the
 .Va uid

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.24 2003/10/08 16:32:44 sturm Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.25 2004/01/23 20:51:18 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -202,6 +202,8 @@ char *filter_expand(char *);
 char *filter_dynamicexpand(struct intercept_pid *, char *);
 int filter_needexpand(char *);
 
+void cradle_start(char *, char *, char *);
+
 int parse_filter(char *, struct filter **);
 
 char *uid_to_name(uid_t);
@@ -231,5 +233,7 @@ extern struct intercept_translate ic_pidname;
 extern struct intercept_translate ic_signame;
 
 extern struct intercept_translate ic_linux_oflags;
+
+int requestor_start(char *, int);
 
 #endif /* _SYSTRACE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.29 2003/08/04 18:15:11 sturm Exp $	*/
+/*	$OpenBSD: filter.c,v 1.30 2004/01/23 20:51:18 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <regex.h>
+#include <errno.h>
 #include <fnmatch.h>
 #include <err.h>
 
@@ -51,9 +52,13 @@
 extern int allow;
 extern int noalias;
 extern int connected;
+extern int cradle;
 extern char cwd[];
 extern char home[];
 extern char username[];
+extern char *guipath;
+
+int requestor_restart = 0;
 
 static void logic_free(struct logic *);
 static int filter_match(struct intercept_pid *, struct intercept_tlq *,
@@ -561,8 +566,18 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 				}
 			}
 
-			if (fgets(line, sizeof(line), stdin) == NULL)
-				errx(1, "EOF on policy input request");
+			if (fgets(line, sizeof(line), stdin) == NULL) {
+				if (connected && !cradle && errno == EPIPE &&
+				    !requestor_restart) {
+					requestor_start(guipath, 0);
+					clearerr(stdin);
+					clearerr(stdout);
+					requestor_restart = 1;
+					printf("%s\n", output);
+					continue;
+				}
+				err(1, "EOF on policy input request");
+			}
 			p = line;
 			strsep(&p, "\n");
 		} else if (!first) {
@@ -570,6 +585,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 			errx(1, "Filter generation error: %s", line);
 		}
 		first = 0;
+		requestor_restart = 0;
 
 		/* Simple keywords */
 		if (!strcasecmp(line, "detach")) {
