@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.116 2004/09/14 22:23:03 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.117 2004/09/14 23:18:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -43,6 +43,7 @@
 #include <uvm/uvm.h>
 
 #include <machine/cpufunc.h>
+#include <machine/iomod.h>
 
 #include <dev/rndvar.h>
 
@@ -614,6 +615,8 @@ pmap_init()
 		pmap_pte_set(pde, SYSCALLGATE, (paddr_t)&gateway_page |
 		    PTE_PROT(TLB_GATE_PROT));
 	}
+
+	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_init(): done\n"));
 }
 
 void
