@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_dummy.c,v 1.13 2003/09/01 14:00:23 fgsch Exp $ */
+/*	$OpenBSD: linux_dummy.c,v 1.14 2003/09/04 02:57:22 tedu Exp $ */
 
 /*-
  * Copyright (c) 1994-1995 Søren Schmidt
@@ -117,3 +117,25 @@ DUMMY(pivot_root);		/* #217 */
 DUMMY(mincore);			/* #218 */
 DUMMY(madvise);			/* #219 */
 DUMMY(fadvise64);		/* #250 */
+
+#define DUMMY_XATTR(s)							\
+int									\
+linux_sys_ ## s ## xattr(p, v, retval)						\
+	struct proc *p;							\
+	void *v;							\
+	register_t *retval;						\
+{									\
+	return (ENOATTR);						\
+}									
+DUMMY_XATTR(set);
+DUMMY_XATTR(lset);
+DUMMY_XATTR(fset);
+DUMMY_XATTR(get);
+DUMMY_XATTR(lget);
+DUMMY_XATTR(fget);
+DUMMY_XATTR(list);
+DUMMY_XATTR(llist);
+DUMMY_XATTR(flist);
+DUMMY_XATTR(remove);
+DUMMY_XATTR(lremove);
+DUMMY_XATTR(fremove);

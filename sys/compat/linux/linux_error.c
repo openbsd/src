@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_error.c,v 1.2 1996/04/17 05:23:45 mickey Exp $	*/
+/*	$OpenBSD: linux_error.c,v 1.3 2003/09/04 02:57:22 tedu Exp $	*/
 /*	$NetBSD: linux_error.c,v 1.2 1995/04/22 19:48:32 christos Exp $	*/
 
 /*
@@ -117,7 +117,8 @@ int linux_error[] = {
 	-LINUX_ENOSYS,		/* not mapped (EFTYPE) */
 	-LINUX_ENOSYS,		/* not mapped (EAUTH) */
 	-LINUX_ENOSYS,		/* not mapped (ENEEDAUTH) */
-	-LINUX_ENOSYS,		/* not mapped (ELAST) */
+	-LINUX_ENOSYS,		/* not mapped (EIPSEC) */
+	-LINUX_EOPNOTSUPP,	/* what is ENOATTR? */
 
 	/*
 	 * The rest of the list consists of errors that only

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.44 2003/09/01 14:00:23 fgsch Exp $
+	$OpenBSD: syscalls.master,v 1.45 2003/09/04 02:57:22 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -362,18 +362,18 @@
 223	UNIMPL
 224	UNIMPL		linux_sys_gettid
 225	UNIMPL		linux_sys_readahead
-226	UNIMPL		linux_sys_setxattr
-227	UNIMPL		linux_sys_lsetxattr
-228	UNIMPL		linux_sys_fsetxattr
-229	UNIMPL		linux_sys_getxattr
-230	UNIMPL		linux_sys_lgetxattr
-231	UNIMPL		linux_sys_fgetxattr
-232	UNIMPL		linux_sys_listxattr
-233	UNIMPL		linux_sys_llistxattr
-234	UNIMPL		linux_sys_flistxattr
-235	UNIMPL		linux_sys_removexattr
-236	UNIMPL		linux_sys_lremovexattr
-237	UNIMPL		linux_sys_fremovexattr
+226	NOARGS		{ int linux_sys_setxattr(void); }
+227	NOARGS		{ int linux_sys_lsetxattr(void); }
+228	NOARGS		{ int linux_sys_fsetxattr(void); }
+229	NOARGS		{ int linux_sys_getxattr(void); }
+230	NOARGS		{ int linux_sys_lgetxattr(void); }
+231	NOARGS		{ int linux_sys_fgetxattr(void); }
+232	NOARGS		{ int linux_sys_listxattr(void); }
+233	NOARGS		{ int linux_sys_llistxattr(void); }
+234	NOARGS		{ int linux_sys_flistxattr(void); }
+235	NOARGS		{ int linux_sys_removexattr(void); }
+236	NOARGS		{ int linux_sys_lremovexattr(void); }
+237	NOARGS		{ int linux_sys_fremovexattr(void); }
 238	UNIMPL		linux_sys_tkill
 239	UNIMPL		linux_sys_sendfile64
 240	UNIMPL		linux_sys_futex
