@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2002/05/14 20:41:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -132,12 +132,8 @@ inittodr(t)
 void
 resettodr()
 {
-	struct pdc_tod tod PDC_ALIGNMENT;
-
-	tod.sec = time.tv_sec;
-	tod.usec = time.tv_usec;
-
-	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_WRITE, &tod);
+	pdc_call((iodcio_t)PAGE0->mem_pdc, 1, PDC_TOD, PDC_TOD_WRITE,
+	    time.tv_sec, time.tv_usec);
 }
 
 void
