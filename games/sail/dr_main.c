@@ -1,4 +1,4 @@
-/*	$OpenBSD: dr_main.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $	*/
+/*	$OpenBSD: dr_main.c,v 1.3 2002/06/11 05:22:40 jsyn Exp $	*/
 /*	$NetBSD: dr_main.c,v 1.4 1995/04/22 10:36:52 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_main.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: dr_main.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: dr_main.c,v 1.3 2002/06/11 05:22:40 jsyn Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ dr_main()
 	(void) signal(SIGQUIT, SIG_IGN);
 	(void) signal(SIGTSTP, SIG_IGN);
 	if (game < 0 || game >= NSCENE)
-		errx(1, "driver: Bad game number %d\n", game);
+		errx(1, "driver: Bad game number %d", game);
 	cc = &scene[game];
 	ls = SHIP(cc->vessels);
 	if (sync_open() < 0)

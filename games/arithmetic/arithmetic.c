@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.11 2002/05/31 04:21:20 pjanzen Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.12 2002/06/11 05:22:40 jsyn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.11 2002/05/31 04:21:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.12 2002/06/11 05:22:40 jsyn Exp $";
 #endif
 #endif /* not lint */
 
@@ -363,7 +363,7 @@ getrandom(maxval, op, operand)
 	 * correspond to the actual sum of penalties in the list.  Provide an
 	 * obscure message.
 	 */
-	errx(1, "bug: inconsistent penalties\n");
+	errx(1, "bug: inconsistent penalties.");
 	/* NOTREACHED */
 }
 
@@ -375,7 +375,7 @@ opnum(op)
 	char *p;
 
 	if (op == 0 || (p = strchr(keylist, op)) == NULL)
-		errx(1, "bug: op %c not in keylist %s\n", op, keylist);
+		errx(1, "bug: op %c not in keylist %s.", op, keylist);
 	return(p - keylist);
 }
 
