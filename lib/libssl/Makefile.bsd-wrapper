@@ -1,0 +1,82 @@
+# Build wrapper for SSLeay.
+
+# Our lndir is hacked; specify a full path to avoid potential conflicts
+# with the one installed with X11.
+LNDIR=          /usr/bin/lndir
+
+
+# Figure out what flag we use to SSLeay's configure. This
+# needs to be tested on all architectures.
+
+.if ${MACHINE_ARCH} == "i386"
+SSLCONF=	OpenBSD-x86
+.else
+.if ${MACHINE_ARCH} == "alpha"
+SSLCONF=	OpenBSD-alpha
+.else
+.if ${MACHINE_ARCH} == "sparc"
+SSLCONF=	OpenBSD-bigendian
+.else
+##UNTESTED!	
+SSLCONF=	OpenBSD-bigendian
+.endif
+.endif
+.endif
+
+
+.include <bsd.own.mk>
+
+#CLEANFILES = crypto/bf/bf_locl.h crypto/bn/bn.h  crypto/des/des.h \
+#	    crypto/des/des_locl.h crypto/rc2/rc2.h crypto/md2/md2.h \
+#	    crypto/rc4/rc4.h crypto/rc4/rc4_locl.h crypto/idea/idea.h
+
+.if exists(src-patent)
+SSL_SRC=src-patent
+.else
+SSL_SRC=src
+.endif 	  
+
+.BEGIN:
+	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper -e Makefile.ssl ${.CURDIR}; fi
+
+all: 	${SSL_SRC}/crypto/md2/md2.h 
+	(cd ${.OBJDIR}; ${MAKE})
+
+includes: ${SSL_SRC}/crypto/md2/md2.h
+	(cd ${.OBJDIR}; ${MAKE} includes)
+
+install:
+	(cd ${.OBJDIR}; ${MAKE} install)
+
+${SSL_SRC}/crypto/md2/md2.h : ${SSL_SRC}/Makefile.ssl
+	(cd ${.OBJDIR}/${SSL_SRC}; /usr/bin/perl Configure ${SSLCONF}) 
+
+${SSL_SRC}/Makefile.ssl: ${.CURDIR}/${SSL_SRC}/Makefile.ssl
+	(cp ${.CURDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC})
+
+
+clean:	
+	(cd ${.OBJDIR}; ${MAKE} clean)
+
+cleandir:	
+	(cd ${.OBJDIR}; rm -f ${SSL_SRC}/crypto/md2/md2.h; ${MAKE} cleandir)
+
+test:
+	# Nothing here so far...
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+
+
+
+
+
