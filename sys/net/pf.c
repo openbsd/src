@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.173 2001/11/27 20:29:25 jasoni Exp $ */
+/*	$OpenBSD: pf.c,v 1.174 2001/11/30 17:01:54 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4341,9 +4341,12 @@ pf_route(struct mbuf *m, struct pf_rule *r)
 	if (m == NULL)
 		return;
 
-	m0 = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
-	if (m0 == NULL)
-		return;
+	if (r->rt == PF_DUPTO) {
+		m0 = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
+		if (m0 == NULL)
+			return;
+	} else
+		m0 = m;
 
 	ip = mtod(m0, struct ip *);
 	hlen = ip->ip_hl << 2;
@@ -4535,9 +4538,12 @@ pf_route6(struct mbuf *m, struct pf_rule *r)
 	if (m == NULL)
 		return;
 
-	m0 = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
-	if (m0 == NULL)
-		return;
+	if (r->rt == PF_DUPTO) {
+		m0 = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
+		if (m0 == NULL)
+			return;
+	} else
+		m0 = m;
 
 	ip6 = mtod(m0, struct ip6_hdr *);
 
@@ -4730,7 +4736,7 @@ done:
 	if (r && r->rt) {
 		pf_route(m, r);
 		if (r->rt != PF_DUPTO) {
-			m_freem(*m0);
+			/* m0 already freed */
 			*m0 = NULL;
                 }
 	}
@@ -4912,7 +4918,7 @@ done:
 	if (r && r->rt) {
 		pf_route6(m, r);
 		if (r->rt != PF_DUPTO) {
-			m_freem(*m0);
+			/* m0 already freed */
 			*m0 = NULL;
                 }
 	}
