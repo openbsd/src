@@ -1,4 +1,4 @@
-#	$OpenBSD: zipcodes,v 1.10 2003/01/05 10:01:43 mickey Exp $
+#	$OpenBSD: zipcodes,v 1.11 2003/02/24 19:26:50 deraadt Exp $
 
 # Zip Code : Location
 #	@(#)zipcodes	5.1 (Berkeley) 2/8/91
@@ -20900,63 +20900,45 @@
 48005:Armada, MI
 48006:Avoca, MI
 48007:Troy, MI
-48008:Birmingham, MI
 48009:Birmingham, MI
-48010:Birmingham, MI
-48011:Birmingham, MI
 48012:Birmingham, MI
-48013:Bloomfield Hills, MI
 48014:Capac, MI
 48015:Center Line, MI
-48016:Clarkston, MI
 48017:Clawson, MI
-48018:Farmington, MI
-48019:Davisburg, MI
-48020:Drayton Plains, MI
-48021:East Detroit, MI
+48021:Eastpointe, MI
 48022:Emmett, MI
 48023:Fair Haven, MI
-48024:Farmington, MI
 48025:Franklin, MI
 48026:Fraser, MI
 48027:Goodells, MI
 48028:Harsens Island, MI
-48029:Hartland, MI
 48030:Hazel Park, MI
-48031:Highland, MI
 48032:Jeddo, MI
-48033:Pontiac, MI
 48034:Southfield, MI
-48035:Lake Orion, MI
-48036:Lakeville, MI
+48035:Clinton Township, MI
+48036:Clinton Township, MI
 48037:Southfield, MI
-48038:Leonard, MI
+48038:Clinton Township, MI
 48039:Marine City, MI
 48040:Marysville, MI
 48041:Memphis, MI
-48042:Milford, MI
+48042:Macomb, MI
 48043:Mount Clemens, MI
-48044:Mount Clemens, MI
-48045:Mount Clemens, MI
+48044:Macomb, MI
+48045:Harrison Township, MI
 48046:Mount Clemens, MI
 48047:New Baltimore, MI
 48048:New Haven, MI
 48049:North Street, MI
-48050:Novi, MI
-48051:Oxford, MI
-48052:Algonac, MI
-48053:Pontiac, MI
-48054:Pontiac, MI
-48055:Pontiac, MI
-48056:Pontiac, MI
-48057:Pontiac, MI
-48058:Pontiac, MI
-48059:Pontiac, MI
+48050:New Haven, MI
+48051:New Baltimore, MI
+48054:East China, MI
+48059:Fort Gratiot, MI
 48060:Port Huron, MI
 48061:Port Huron, MI
 48062:Richmond, MI
-48063:Rochester, MI
-48064:Rochester, MI
+48063:Columbus, MI
+48064:Casco, MI
 48065:Romeo, MI
 48066:Roseville, MI
 48067:Royal Oak, MI
@@ -20969,26 +20951,23 @@
 48074:Smiths Creek, MI
 48075:Southfield, MI
 48076:Southfield, MI
-48077:Utica, MI
-48078:Sterling Heights, MI
 48079:Saint Clair, MI
 48080:Saint Clair Shores, MI
 48081:Saint Clair Shores, MI
 48082:Saint Clair Shores, MI
 48083:Troy, MI
 48084:Troy, MI
-48085:Union Lake, MI
+48085:Troy, MI
 48086:Southfield, MI
-48087:Utica, MI
-48088:Walled Lake, MI
+48088:Warren, MI
 48089:Warren, MI
 48090:Warren, MI
 48091:Warren, MI
 48092:Warren, MI
 48093:Warren, MI
 48094:Washington, MI
-48095:Waterford, MI
-48096:Wixom, MI
+48095:Washington, MI
+48096:Ray, MI
 48097:Yale, MI
 48098:Troy, MI
 48099:Troy, MI
@@ -21002,6 +20981,9 @@
 48109:Ann Arbor, MI
 48110:Azalia, MI
 48111:Belleville, MI
+48112:Belleville, MI
+48113:Ann Arbor, MI
+48114:Brighton, MI
 48115:Bridgewater, MI
 48116:Brighton, MI
 48117:Carleton, MI
@@ -21011,7 +20993,7 @@
 48122:Melvindale, MI
 48123:Dearborn, MI
 48124:Dearborn, MI
-48125:Dearborn, MI
+48125:Dearborn Heights, MI
 48126:Dearborn, MI
 48127:Dearborn Heights, MI
 48128:Dearborn, MI
@@ -21020,6 +21002,7 @@
 48133:Erie, MI
 48134:Flat Rock, MI
 48135:Garden City, MI
+48136:Garden City, MI
 48137:Gregory, MI
 48138:Grosse Ile, MI
 48139:Hamburg, MI
@@ -21039,6 +21022,7 @@
 48159:Maybee, MI
 48160:Milan, MI
 48161:Monroe, MI
+48162:Monroe, MI
 48164:New Boston, MI
 48165:New Hudson, MI
 48166:Newport, MI
@@ -21057,6 +21041,7 @@
 48183:Trenton, MI
 48184:Wayne, MI
 48185:Westland, MI
+48186:Westland, MI
 48187:Canton, MI
 48188:Canton, MI
 48189:Whitmore Lake, MI
@@ -21091,7 +21076,7 @@
 48222:Detroit, MI
 48223:Detroit, MI
 48224:Detroit, MI
-48225:Detroit, MI
+48225:Harper Woods, MI
 48226:Detroit, MI
 48227:Detroit, MI
 48228:Detroit, MI
@@ -21125,25 +21110,78 @@
 48275:Detroit, MI
 48277:Detroit, MI
 48278:Detroit, MI
+48279:Detroit, MI
 48288:Detroit, MI
 48295:Detroit, MI
 48297:Detroit, MI
 48299:Detroit, MI
-48301:Port Huron, MI
-48302:Bloomfield Hills North, MI
+48301:Bloomfield Hills, MI
+48302:Bloomfield Hills, MI
 48303:Bloomfield Hills, MI
-48304:Pontiac, MI
-48305:Roseville, MI
+48304:Bloomfield Hills, MI
+48306:Rochester, MI
+48307:Rochester, MI
 48308:Rochester, MI
 48309:Rochester, MI
-48310:Utica, MI
-48311:Utica, MI
+48310:Sterling Heights, MI
+48311:Sterling Heights, MI
+48312:Sterling Heights, MI
+48313:Sterling Heights, MI
+48314:Sterling Heights, MI
+48315:Utica, MI
+48316:Utica, MI
+48317:Utica, MI
+48318:Utica, MI
 48320:Keego Harbor, MI
-48321:Pontiac, MI
-48322:Pontiac, MI
+48321:Auburn Hills, MI
+48322:West Bloomfield, MI
+48323:West Bloomfield, MI
+48324:West Bloomfield, MI
+48325:West Bloomfield, MI
+48326:Auburn Hills, MI
+48327:Waterford, MI
+48328:Waterford, MI
+48329:Waterford, MI
+48330:Drayton Plains, MI
 48331:Farmington, MI
 48332:Farmington, MI
 48333:Farmington, MI
+48334:Farmington, MI
+48335:Farmington, MI
+48336:Farmington, MI
+48340:Pontiac, MI
+48341:Pontiac, MI
+48342:Pontiac, MI
+48343:Pontiac, MI
+48346:Clarkston, MI
+48347:Clarkston, MI
+48348:Clarkston, MI
+48350:Davisburg, MI
+48353:Hartland, MI
+48356:Highland, MI
+48357:Highland, MI
+48359:Lake Orion, MI
+48360:Lake Orion, MI
+48361:Lake Orion, MI
+48362:Lake Orion, MI
+48363:Oakland, MI
+48366:Lakeville, MI
+48367:Leonard, MI
+48370:Oxford, MI
+48371:Oxford, MI
+48374:Novi, MI
+48375:Novi, MI
+48376:Novi, MI
+48377:Novi, MI
+48380:Milford, MI
+48381:Milford, MI
+48382:Commerce Township, MI
+48383:White Lake, MI
+48386:White Lake, MI
+48387:Union Lake, MI
+48390:Walled Lake, MI
+48391:Walled Lake, MI
+48393:Wixom, MI
 48397:Warren, MI
 48398:Clawson, MI
 48401:Applegate, MI
@@ -21183,7 +21221,6 @@
 48449:Lennon, MI
 48450:Lexington, MI
 48451:Linden, MI
-48452:Attica, MI
 48453:Marlette, MI
 48454:Melvin, MI
 48455:Metamora, MI
@@ -21195,7 +21232,7 @@
 48462:Ortonville, MI
 48463:Otisville, MI
 48464:Otter Lake, MI
-48465:Minden City, MI
+48465:Palms, MI
 48466:Peck, MI
 48467:Port Austin, MI
 48468:Port Hope, MI
@@ -21214,11 +21251,10 @@
 48505:Flint, MI
 48506:Flint, MI
 48507:Flint, MI
-48508:Flint, MI
-48509:Flint, MI
-48519:Flint, MI
-48529:Flint, MI
-48531:Northwest, MI
+48509:Burton, MI 
+48519:Burton, MI
+48529:Burton, MI
+48531:Flint, MI
 48532:Flint, MI
 48550:Flint, MI
 48551:Flint, MI
@@ -21237,10 +21273,11 @@
 48606:Saginaw, MI
 48607:Saginaw, MI
 48608:Saginaw, MI
+48609:Saginaw, MI
 48610:Alger, MI
 48611:Auburn, MI
 48612:Beaverton, MI
-48613:Rhodes, MI
+48613:Bentley, MI
 48614:Brant, MI
 48615:Breckenridge, MI
 48616:Chesaning, MI
@@ -21267,6 +21304,7 @@
 48637:Merrill, MI
 48640:Midland, MI
 48641:Midland, MI
+48642:Midland, MI
 48647:Mio, MI
 48649:Oakley, MI
 48650:Pinconning, MI
@@ -21292,7 +21330,7 @@
 48706:Bay City, MI
 48707:Bay City, MI
 48708:Bay City, MI
-48710:Bay City, MI
+48710:University Center, MI
 48720:Bay Port, MI
 48721:Black River, MI
 48722:Bridgeport, MI
@@ -21334,13 +21372,13 @@
 48760:Silverwood, MI
 48761:South Branch, MI
 48762:Spruce, MI
-48763:East Tawas, MI
+48763:Tawas City, MI
 48764:Tawas City, MI
 48765:Turner, MI
 48766:Twining, MI
 48767:Unionville, MI
 48768:Vassar, MI
-48769:Vassar, MI
+48769:Tuscola, MI
 48770:Whittemore, MI
 48787:Frankenmuth, MI
 48801:Alma, MI
@@ -21351,7 +21389,6 @@
 48807:Bannister, MI
 48808:Bath, MI
 48809:Belding, MI
-48810:Carland, MI
 48811:Carson City, MI
 48812:Cedar Lake, MI
 48813:Charlotte, MI
@@ -21360,7 +21397,7 @@
 48817:Corunna, MI
 48818:Crystal, MI
 48819:Dansville, MI
-48820:De Witt, MI
+48820:Dewitt, MI
 48821:Dimondale, MI
 48822:Eagle, MI
 48823:East Lansing, MI
@@ -21390,9 +21427,10 @@
 48849:Lake Odessa, MI
 48850:Lakeview, MI
 48851:Lyons, MI
-48852:Mc Brides, MI
+48852:Mcbrides, MI
 48853:Maple Rapids, MI
 48854:Mason, MI
+48855:Howell, MI
 48856:Middleton, MI
 48857:Morrice, MI
 48858:Mount Pleasant, MI
@@ -21456,13 +21494,15 @@
 48933:Lansing, MI
 48937:Lansing, MI
 48950:Lansing, MI
+48951:Lansing, MI
 48956:Lansing, MI
 48980:Lansing, MI
 49001:Kalamazoo, MI
-49002:Kalamazoo, MI
+49002:Portage, MI
 49003:Kalamazoo, MI
 49004:Kalamazoo, MI
 49005:Kalamazoo, MI
+49006:Kalamazoo, MI
 49007:Kalamazoo, MI
 49008:Kalamazoo, MI
 49009:Kalamazoo, MI
@@ -21470,12 +21510,17 @@
 49011:Athens, MI
 49012:Augusta, MI
 49013:Bangor, MI
+49014:Battle Creek, MI
 49015:Battle Creek, MI
 49016:Battle Creek, MI
 49017:Battle Creek, MI
+49018:Battle Creek, MI
+49019:Kalamazoo, MI
 49020:Bedford, MI
 49021:Bellevue, MI
 49022:Benton Harbor, MI
+49023:Benton Harbor, MI
+49024:Portage, MI
 49026:Bloomingdale, MI
 49027:Breedsville, MI
 49028:Bronson, MI
@@ -21496,6 +21541,7 @@
 49045:Decatur, MI
 49046:Delton, MI
 49047:Dowagiac, MI
+49048:Kalamazoo, MI
 49050:Dowling, MI
 49051:East Leroy, MI
 49052:Fulton, MI
@@ -21693,6 +21739,7 @@
 49410:Fountain, MI
 49411:Free Soil, MI
 49412:Fremont, MI
+49413:Fremont, MI
 49415:Fruitport, MI
 49416:Glenn, MI
 49417:Grand Haven, MI
@@ -24339,6 +24386,8 @@
 55486:Minneapolis, MN
 55487:Minneapolis, MN
 55488:Minneapolis, MN
+55550:Young America, MN
+55555:Young America, MN
 55601:Beaver Bay, MN
 55602:Brimson, MN
 55603:Finland, MN
