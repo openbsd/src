@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.47 2002/11/15 14:58:38 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.48 2002/12/06 07:46:50 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -347,8 +347,8 @@ conf_get_trans_str (int trans, char *section, char *tag)
 
   for (node = TAILQ_FIRST (&conf_trans_queue); node;
        node = TAILQ_NEXT (node, link))
-    if (node->trans == trans && strcmp (section, node->section) == 0
-	&& strcmp (tag, node->tag) == 0)
+    if (node->trans == trans && strcasecmp (section, node->section) == 0
+	&& strcasecmp (tag, node->tag) == 0)
       {
 	if (!nf)
 	  nf = node;
