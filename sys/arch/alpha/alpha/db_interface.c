@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 1997/07/09 09:11:54 deraadt Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 1997/07/19 20:54:28 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -30,7 +30,10 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+
+#include <vm/vm.h>
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
@@ -38,6 +41,7 @@
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
+#include <ddb/db_run.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
@@ -55,39 +59,39 @@ void kdbprinttrap __P((int, int));
  * You can add things at the end.
  */
 struct db_variable db_regs[] = {
-	{ "v0", (long *)&ddb_regs.tf_regs[FRAME_V0], FCN_NULL, },	/* 0 */
-	{ "t0", (long *)&ddb_regs.tf_regs[FRAME_T0], FCN_NULL, },	/* 1 */
-	{ "t1", (long *)&ddb_regs.tf_regs[FRAME_T1], FCN_NULL, },	/* 2 */
-	{ "t2", (long *)&ddb_regs.tf_regs[FRAME_T2], FCN_NULL, },	/* 3 */
-	{ "t3", (long *)&ddb_regs.tf_regs[FRAME_T3], FCN_NULL, },	/* 4 */
-	{ "t4", (long *)&ddb_regs.tf_regs[FRAME_T4], FCN_NULL, },	/* 5 */
-	{ "t5", (long *)&ddb_regs.tf_regs[FRAME_T5], FCN_NULL, },	/* 6 */
-	{ "t6", (long *)&ddb_regs.tf_regs[FRAME_T6], FCN_NULL, },	/* 7 */
-	{ "t7", (long *)&ddb_regs.tf_regs[FRAME_T7], FCN_NULL, },	/* 8 */
-	{ "s0", (long *)&ddb_regs.tf_regs[FRAME_S0], FCN_NULL, },	/* 9 */
-	{ "s1", (long *)&ddb_regs.tf_regs[FRAME_S1], FCN_NULL, },	/* 10 */
-	{ "s2", (long *)&ddb_regs.tf_regs[FRAME_S2], FCN_NULL, },	/* 11 */
-	{ "s3", (long *)&ddb_regs.tf_regs[FRAME_S3], FCN_NULL, },	/* 12 */
-	{ "s4", (long *)&ddb_regs.tf_regs[FRAME_S4], FCN_NULL, },	/* 13 */
-	{ "s5", (long *)&ddb_regs.tf_regs[FRAME_S5], FCN_NULL, },	/* 14 */
-	{ "s6", (long *)&ddb_regs.tf_regs[FRAME_S6], FCN_NULL, },	/* 15 */
-	{ "a0", (long *)&ddb_regs.tf_regs[FRAME_A0], FCN_NULL, },	/* 16 */
-	{ "a1", (long *)&ddb_regs.tf_regs[FRAME_A1], FCN_NULL, },	/* 17 */
-	{ "a2", (long *)&ddb_regs.tf_regs[FRAME_A2], FCN_NULL, },	/* 18 */
-	{ "a3", (long *)&ddb_regs.tf_regs[FRAME_A3], FCN_NULL, },	/* 19 */
-	{ "a4", (long *)&ddb_regs.tf_regs[FRAME_A4], FCN_NULL, },	/* 20 */
-	{ "a5", (long *)&ddb_regs.tf_regs[FRAME_A5], FCN_NULL, },	/* 21 */
-	{ "t8", (long *)&ddb_regs.tf_regs[FRAME_T8], FCN_NULL, },	/* 22 */
-	{ "t9", (long *)&ddb_regs.tf_regs[FRAME_T9], FCN_NULL, },	/* 23 */
-	{ "t10", (long *)&ddb_regs.tf_regs[FRAME_T10], FCN_NULL, },	/* 24 */
-	{ "t11", (long *)&ddb_regs.tf_regs[FRAME_T11], FCN_NULL, },	/* 25 */
-	{ "ra", (long *)&ddb_regs.tf_regs[FRAME_RA], FCN_NULL, },	/* 26 */
-	{ "t12", (long *)&ddb_regs.tf_regs[FRAME_T12], FCN_NULL, },	/* 27 */
-	{ "at", (long *)&ddb_regs.tf_regs[FRAME_AT], FCN_NULL, },	/* 28 */
-	{ "gp", (long *)&ddb_regs.tf_regs[FRAME_GP], FCN_NULL, },	/* 29 */
-	{ "sp", (long *)&ddb_regs.tf_regs[FRAME_SP], FCN_NULL, },	/* 30 */
-	{ "pc", (long *)&ddb_regs.tf_regs[FRAME_PC], FCN_NULL, },	/* not */
-	{ "ps", (long *)&ddb_regs.tf_regs[FRAME_PS], FCN_NULL, },	/* not */
+	{ "v0", (long *)&ddb_regs.tf_regs[FRAME_V0], FCN_NULL, },	/*0*/
+	{ "t0", (long *)&ddb_regs.tf_regs[FRAME_T0], FCN_NULL, },	/*1*/
+	{ "t1", (long *)&ddb_regs.tf_regs[FRAME_T1], FCN_NULL, },	/*2*/
+	{ "t2", (long *)&ddb_regs.tf_regs[FRAME_T2], FCN_NULL, },	/*3*/
+	{ "t3", (long *)&ddb_regs.tf_regs[FRAME_T3], FCN_NULL, },	/*4*/
+	{ "t4", (long *)&ddb_regs.tf_regs[FRAME_T4], FCN_NULL, },	/*5*/
+	{ "t5", (long *)&ddb_regs.tf_regs[FRAME_T5], FCN_NULL, },	/*6*/
+	{ "t6", (long *)&ddb_regs.tf_regs[FRAME_T6], FCN_NULL, },	/*7*/
+	{ "t7", (long *)&ddb_regs.tf_regs[FRAME_T7], FCN_NULL, },	/*8*/
+	{ "s0", (long *)&ddb_regs.tf_regs[FRAME_S0], FCN_NULL, },	/*9*/
+	{ "s1", (long *)&ddb_regs.tf_regs[FRAME_S1], FCN_NULL, },	/*10*/
+	{ "s2", (long *)&ddb_regs.tf_regs[FRAME_S2], FCN_NULL, },	/*11*/
+	{ "s3", (long *)&ddb_regs.tf_regs[FRAME_S3], FCN_NULL, },	/*12*/
+	{ "s4", (long *)&ddb_regs.tf_regs[FRAME_S4], FCN_NULL, },	/*13*/
+	{ "s5", (long *)&ddb_regs.tf_regs[FRAME_S5], FCN_NULL, },	/*14*/
+	{ "s6", (long *)&ddb_regs.tf_regs[FRAME_S6], FCN_NULL, },	/*15*/
+	{ "a0", (long *)&ddb_regs.tf_regs[FRAME_A0], FCN_NULL, },	/*16*/
+	{ "a1", (long *)&ddb_regs.tf_regs[FRAME_A1], FCN_NULL, },	/*17*/
+	{ "a2", (long *)&ddb_regs.tf_regs[FRAME_A2], FCN_NULL, },	/*18*/
+	{ "a3", (long *)&ddb_regs.tf_regs[FRAME_A3], FCN_NULL, },	/*19*/
+	{ "a4", (long *)&ddb_regs.tf_regs[FRAME_A4], FCN_NULL, },	/*20*/
+	{ "a5", (long *)&ddb_regs.tf_regs[FRAME_A5], FCN_NULL, },	/*21*/
+	{ "t8", (long *)&ddb_regs.tf_regs[FRAME_T8], FCN_NULL, },	/*22*/
+	{ "t9", (long *)&ddb_regs.tf_regs[FRAME_T9], FCN_NULL, },	/*23*/
+	{ "t10", (long *)&ddb_regs.tf_regs[FRAME_T10], FCN_NULL, },	/*24*/
+	{ "t11", (long *)&ddb_regs.tf_regs[FRAME_T11], FCN_NULL, },	/*25*/
+	{ "ra", (long *)&ddb_regs.tf_regs[FRAME_RA], FCN_NULL, },	/*26*/
+	{ "t12", (long *)&ddb_regs.tf_regs[FRAME_T12], FCN_NULL, },	/*27*/
+	{ "at", (long *)&ddb_regs.tf_regs[FRAME_AT], FCN_NULL, },	/*28*/
+	{ "gp", (long *)&ddb_regs.tf_regs[FRAME_GP], FCN_NULL, },	/*29*/
+	{ "sp", (long *)&ddb_regs.tf_regs[FRAME_SP], FCN_NULL, },	/*30*/
+	{ "pc", (long *)&ddb_regs.tf_regs[FRAME_PC], FCN_NULL, },	/*not*/
+	{ "ps", (long *)&ddb_regs.tf_regs[FRAME_PS], FCN_NULL, },	/*not*/
 };
 
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
@@ -131,6 +135,7 @@ db_write_bytes(addr, size, data)
 		--size;
 		*dst++ = *data++;
 	}
+	alpha_pal_imb();
 }
 
 /*
@@ -159,9 +164,11 @@ kdb_trap(type, code, regs)
 	int s;
 
 	switch (type) {
-	case ALPHA_IF_CODE_BPT:		/* breakpoint */
 	case -1:			/* keyboard interrupt */
 		break;
+	case ALPHA_KENTRY_IF:		/* breakpoint */
+		if (code == ALPHA_IF_CODE_BPT)
+			break;
 	default:
 		kdbprinttrap(type, code);
 		if (db_recover != 0) {
@@ -172,9 +179,11 @@ kdb_trap(type, code, regs)
 
 	/* XXX Should switch to kdb`s own stack here. */
 
-	db_printf("db_regs at %p\n", regs);
 	ddb_regs = *regs;
-	ddb_regs.tf_regs[FRAME_SP] = (u_long)regs + FRAME_SW_SIZE*8;
+#if 0
+	db_printf("db_regs at %p\n", regs);
+	ddb_regs.tf_regs[FRAME_SP] = (u_long)regs + FRAME_SIZE*8;
+#endif
 
 	s = splhigh();
 	db_active++;
@@ -184,7 +193,78 @@ kdb_trap(type, code, regs)
 	db_active--;
 	splx(s);
 
-	/* XXX set regs from ddb_regs here */
-
+	*regs = ddb_regs;
 	return (1);
+}
+
+register_t
+getreg_val(regs, reg)
+	db_regs_t *regs;
+	int reg;
+{
+	return ((register_t)*db_regs[reg].valuep);
+}
+
+/* XXX Where do jsr_coroutine fit in?  We do not use it anyhow so... */
+int
+inst_call(ins)
+	u_int ins;
+{
+	return ((ins & 0xfc000000) == 0xd0000000 ||	/* bsr */
+	    (ins & 0xfc00c000) == 0x68004000);		/* jsr */
+}
+
+int
+inst_branch(ins)
+	u_int ins;
+{
+	return ((ins & 0xc0000000) == 0xc0000000 &&	/* 30 - 3F */
+	    !((ins & 0xfc000000) == 0xd0000000 ||	/* but !34 (bsr) */
+	    (ins & 0xfc00c000) == 0x68000000));		/* nor jmp */
+}
+
+int
+inst_load(ins)
+	u_int ins;
+{
+	char *nm = opcode[ins >> 26].opc_name;
+
+	return (nm[0] == 'l' && nm[1] == 'd');
+}
+
+int
+inst_store(ins)
+	u_int ins;
+{
+	char *nm = opcode[ins >> 26].opc_name;
+
+	return (nm[0] == 's' && nm[1] == 't');
+}
+
+db_addr_t
+branch_taken(ins, pc, getreg, regs)
+	u_int ins;
+	db_addr_t pc;
+	register_t (*getreg) __P((db_regs_t *, int));
+	db_regs_t *regs;
+{
+	int offset;
+
+	if (opcode[ins >> 26].opc_fmt == OPC_BR) {
+		offset = ins & 0xfffff;
+		if (offset & 0x80000)
+			offset = offset - 0x100000;
+		return (pc + sizeof(int) + offset * sizeof(int));
+	} else
+		return (db_addr_t)(*getreg)(regs, (ins >> 16) & 0x1f);
+}
+
+db_addr_t
+next_instr_address(pc, branch)
+	db_addr_t pc;
+	int branch;
+{
+	if (!branch)
+		return (pc + sizeof(int));
+	return (branch_taken(*(u_int *)pc, pc, getreg_val, DDB_REGS));
 }
