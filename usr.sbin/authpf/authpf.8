@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.13 2002/06/16 19:35:07 miod Exp $
+.\" $OpenBSD: authpf.8,v 1.14 2002/06/24 07:43:10 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -385,7 +385,7 @@ Example
 external_if = "xl0"
 internal_if = "fxp0"
 
-pass in quick log on $internal_if proto tcp from $user_ip/32 to any \\
+pass in log quick on $internal_if proto tcp from $user_ip/32 to any \\
  keep state
 pass in quick on $internal_if from $user_ip/32 to any
 .Ed
@@ -408,7 +408,7 @@ internal_if="fxp1"
 ipsec_gw="10.2.3.4"
 # allow out ftp, ssh, www and https only, and allow user to negotiate
 # ipsec with the ipsec server.
-pass in quick log on $internal_if proto tcp from $user_ip/32 to any \\
+pass in log quick on $internal_if proto tcp from $user_ip/32 to any \\
  { port 21, 22, 80, 443 } flags S/SA
 pass in quick on $internal_if proto tcp from $user_ip/32 to any \\
  { port 21, 22, 80, 443 }
