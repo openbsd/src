@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: utime.c,v 1.3 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: utime.c,v 1.4 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/time.h>
@@ -36,9 +36,7 @@ static char rcsid[] = "$OpenBSD: utime.c,v 1.3 2003/06/02 20:18:35 millert Exp $
 #include <utime.h>
 
 int
-utime(path, times)
-	const char *path;
-	const struct utimbuf *times;
+utime(const char *path, const struct utimbuf *times)
 {
 	struct timeval tv[2], *tvp;
 

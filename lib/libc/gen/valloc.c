@@ -28,15 +28,14 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: valloc.c,v 1.3 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: valloc.c,v 1.4 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <unistd.h>
 
 void *
-valloc(i)
-	size_t i;
+valloc(size_t i)
 {
 	long valsiz = getpagesize(), j;
 	void *cp = malloc(i + (valsiz-1));

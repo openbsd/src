@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.19 2004/01/07 01:09:40 fgsch Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.20 2004/05/18 02:05:52 jfb Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -60,8 +60,7 @@ static	u_quad_t strtosize(char *, char **, int);
 static	int gsetrl(login_cap_t *lc, int what, char *name, int type);
 
 login_cap_t *
-login_getclass(class)
-	char *class;
+login_getclass(char *class)
 {
 	char *classfiles[2];
 	login_cap_t *lc;
@@ -135,10 +134,7 @@ login_getclass(class)
 }
 
 char *
-login_getstyle(lc, style, atype)
-	login_cap_t *lc;
-	char *style;
-	char *atype;
+login_getstyle(login_cap_t *lc, char *style, char *atype)
 {
     	char **authtypes = _authtypes;
 	char *auths, *ta;
@@ -209,11 +205,7 @@ login_getstyle(lc, style, atype)
 }
 
 char *
-login_getcapstr(lc, cap, def, e)
-	login_cap_t *lc;
-	char *cap;
-	char *def;
-	char *e;
+login_getcapstr(login_cap_t *lc, char *cap, char *def, char *e)
 {
 	char *res, *str;
 	int stat;
@@ -249,11 +241,7 @@ login_getcapstr(lc, cap, def, e)
 }
 
 quad_t
-login_getcaptime(lc, cap, def, e)
-	login_cap_t *lc;
-	char *cap;
-	quad_t def;
-	quad_t e;
+login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
 	char *res, *sres;
@@ -341,11 +329,7 @@ invalid:
 }
 
 quad_t
-login_getcapnum(lc, cap, def, e)
-	login_cap_t *lc;
-	char *cap;
-	quad_t def;
-	quad_t e;
+login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
 	char *res;
@@ -402,11 +386,7 @@ login_getcapnum(lc, cap, def, e)
 }
 
 quad_t
-login_getcapsize(lc, cap, def, e)
-	login_cap_t *lc;
-	char *cap;
-	quad_t def;
-	quad_t e;
+login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
 	char *res;
@@ -457,10 +437,7 @@ login_getcapsize(lc, cap, def, e)
 }
 
 int
-login_getcapbool(lc, cap, def)
-	login_cap_t *lc;
-	char *cap;
-	u_int def;
+login_getcapbool(login_cap_t *lc, char *cap, u_int def)
 {
     	if (!lc->lc_cap)
 		return (def);
@@ -469,8 +446,7 @@ login_getcapbool(lc, cap, def)
 }
 
 void
-login_close(lc)
-	login_cap_t *lc;
+login_close(login_cap_t *lc)
 {
 	if (lc) {
 		if (lc->lc_class)
@@ -505,11 +481,7 @@ static struct {
 };
 
 static int
-gsetrl(lc, what, name, type)
-	login_cap_t *lc;
-	int what;
-	char *name;
-	int type;
+gsetrl(login_cap_t *lc, int what, char *name, int type)
 {
 	struct rlimit rl;
 	struct rlimit r;
@@ -585,9 +557,7 @@ gsetrl(lc, what, name, type)
 }
 
 int
-setclasscontext(class, flags)
-	char *class;
-	u_int flags;
+setclasscontext(char *class, u_int flags)
 {
 	int ret;
 	login_cap_t *lc;
@@ -602,11 +572,7 @@ setclasscontext(class, flags)
 }
 
 int
-setusercontext(lc, pwd, uid, flags)
-	login_cap_t *lc;
-	struct passwd *pwd;
-	uid_t uid;
-	u_int flags;
+setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 {
 	login_cap_t *flc;
 	quad_t p;
@@ -692,9 +658,7 @@ setusercontext(lc, pwd, uid, flags)
  * the PATH environment variable to the result or _PATH_DEFPATH on error.
  */
 static int
-setuserpath(lc, home)
-	login_cap_t *lc;
-	char *home;
+setuserpath(login_cap_t *lc, char *home)
 {
 	size_t psize, n;
 	char *p, *path, *opath, *dst, *dend, *tmp, last;
@@ -779,10 +743,7 @@ done:
  */
 static
 u_quad_t
-strtosize(str, endptr, radix)
-	char *str;
-	char **endptr;
-	int radix;
+strtosize(char *str, char **endptr, int radix)
 {
 	u_quad_t num, num2, t;
 	char *expr, *expr2;
@@ -855,10 +816,7 @@ erange:
 
 static
 u_quad_t
-strtolimit(str, endptr, radix)
-	char *str;
-	char **endptr;
-	int radix;
+strtolimit(char *str, char **endptr, int radix)
 {
 	if (strcasecmp(str, "infinity") == 0 || strcasecmp(str, "inf") == 0) {
 		if (endptr)
@@ -869,9 +827,7 @@ strtolimit(str, endptr, radix)
 }
 
 static u_quad_t
-multiply(n1, n2)
-	u_quad_t n1;
-	u_quad_t n2;
+multiply(u_quad_t n1, u_quad_t n2)
 {
 	static int bpw = 0;
 	u_quad_t m;

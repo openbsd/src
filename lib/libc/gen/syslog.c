@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.25 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.26 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -69,32 +69,26 @@ syslog(int pri, const char *fmt, ...)
 }
 
 void
-vsyslog(pri, fmt, ap)
-	int pri;
-	register const char *fmt;
-	va_list ap;
+vsyslog(int pri, const char *fmt, va_list ap)
 {
 	vsyslog_r(pri, &sdata, fmt, ap);
 }
 
 void
-openlog(ident, logstat, logfac)
-	const char *ident;
-	int logstat, logfac;
+openlog(const char *ident, int logstat, int logfac)
 {
 	openlog_r(ident, logstat, logfac, &sdata);
 }
 
 void
-closelog()
+closelog(void)
 {
 	closelog_r(&sdata);
 }
 
 /* setlogmask -- set the log mask level */
 int
-setlogmask(pmask)
-	int pmask;
+setlogmask(int pmask)
 {
 	return setlogmask_r(pmask, &sdata);
 }
@@ -112,11 +106,7 @@ syslog_r(int pri, struct syslog_data *data, const char *fmt, ...)
 }
 
 void
-vsyslog_r(pri, data, fmt, ap)
-	int pri;
-	struct syslog_data *data;
-	const char *fmt;
-	va_list ap;
+vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 {
 	int cnt;
 	char ch, *p, *t;
@@ -295,8 +285,7 @@ vsyslog_r(pri, data, fmt, ap)
 }
 
 static void
-disconnectlog_r(data)
-	struct syslog_data *data;
+disconnectlog_r(struct syslog_data *data)
 {
 	/*
 	 * If the user closed the FD and opened another in the same slot,
@@ -311,8 +300,7 @@ disconnectlog_r(data)
 }
 
 static void
-connectlog_r(data)
-	struct syslog_data *data;
+connectlog_r(struct syslog_data *data)
 {
 	struct sockaddr_un SyslogAddr;	/* AF_UNIX address of local logger */
 
@@ -337,10 +325,7 @@ connectlog_r(data)
 }
 
 void
-openlog_r(ident, logstat, logfac, data)
-	const char *ident;
-	int logstat, logfac;
-	struct syslog_data *data;
+openlog_r(const char *ident, int logstat, int logfac, struct syslog_data *data)
 {
 	if (ident != NULL)
 		data->log_tag = ident;
@@ -355,8 +340,7 @@ openlog_r(ident, logstat, logfac, data)
 }
 
 void
-closelog_r(data)
-	struct syslog_data *data;
+closelog_r(struct syslog_data *data)
 {
 	(void)close(data->log_file);
 	data->log_file = -1;
@@ -366,9 +350,7 @@ closelog_r(data)
 
 /* setlogmask -- set the log mask level */
 int
-setlogmask_r(pmask, data)
-	int pmask;
-	struct syslog_data *data;
+setlogmask_r(int pmask, struct syslog_data *data)
 {
 	int omask;
 

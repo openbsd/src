@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: readdir.c,v 1.6 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: readdir.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -41,8 +41,7 @@ static char rcsid[] = "$OpenBSD: readdir.c,v 1.6 2003/06/02 20:18:34 millert Exp
  * get next entry in a directory.
  */
 struct dirent *
-readdir(dirp)
-	register DIR *dirp;
+readdir(DIR *dirp)
 {
 	register struct dirent *dp;
 
@@ -74,10 +73,7 @@ readdir(dirp)
 }
 
 int
-readdir_r(dirp, entry, result)
-	DIR *dirp;
-	struct dirent *entry;
-	struct dirent **result;
+readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 {
 	struct dirent *dp;
 	int ret;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.14 2003/09/29 15:52:28 deraadt Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.15 2004/05/18 02:05:52 jfb Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.14 2003/09/29 15:52:28 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getnetgrent.c,v 1.15 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ static int		 in_lookup(const char *, const char *,
  * _ng_sl_init(): Initialize a string list
  */
 struct stringlist *
-_ng_sl_init()
+_ng_sl_init(void)
 {
 	struct stringlist *sl = malloc(sizeof(struct stringlist));
 	if (sl == NULL)
@@ -104,9 +104,7 @@ _ng_sl_init()
  * _ng_sl_add(): Add an item to the string list
  */
 void
-_ng_sl_add(sl, name)
-	struct stringlist	*sl;
-	char			*name;
+_ng_sl_add(struct stringlist *sl, char *name)
 {
 	if (sl->sl_cur == sl->sl_max - 1) {
 		char **slstr;
@@ -129,9 +127,7 @@ _ng_sl_add(sl, name)
  * _ng_sl_free(): Free a stringlist
  */
 void
-_ng_sl_free(sl, all)
-	struct stringlist	*sl;
-	int			 all;
+_ng_sl_free(struct stringlist *sl, int all)
 {
 	size_t	i;
 
@@ -147,9 +143,7 @@ _ng_sl_free(sl, all)
  * sl_find(): Find a name in the string list
  */
 char *
-_ng_sl_find(sl, name)
-	struct stringlist	*sl;
-	char			*name;
+_ng_sl_find(struct stringlist *sl, char *name)
 {
 	size_t	i;
 
@@ -166,10 +160,7 @@ _ng_sl_find(sl, name)
  * trailing blanks and advancing the pointer
  */
 static int
-getstring(pp, del, str)
-	char	**pp;
-	int	  del;
-	char	**str;
+getstring(char **pp, int del, char **str)
 {
 	char *sp, *ep, *dp;
 
@@ -211,8 +202,7 @@ getstring(pp, del, str)
  * getnetgroup(): Parse a netgroup, and advance the pointer
  */
 static struct netgroup *
-getnetgroup(pp)
-	char	**pp;
+getnetgroup(char **pp)
 {
 	struct netgroup *ng = malloc(sizeof(struct netgroup));
 
@@ -255,11 +245,7 @@ badhost:
  * in *line; returns 1 if key was found, 0 otherwise
  */
 static int
-lookup(ypdom, name, line, bywhat)
-	const char	 *ypdom;
-	char		 *name;
-	char		**line;
-	int		  bywhat;
+lookup(const char *ypdom, char *name, char **line, int bywhat)
 {
 #ifdef YP
 	int	i;
@@ -328,10 +314,7 @@ lookup(ypdom, name, line, bywhat)
  * Public since used by netgroup_mkdb
  */
 int
-_ng_parse(p, name, ng)
-	char		**p;
-	char		**name;
-	struct netgroup	**ng;
+_ng_parse(char **p, char **name, struct netgroup **ng)
 {
 	while (**p) {
 		if (**p == '#')
@@ -373,10 +356,7 @@ _ng_parse(p, name, ng)
  * addgroup(): Recursively add all the members of the netgroup to this group
  */
 static void
-addgroup(ypdom, sl, grp)
-	char			*ypdom;
-	struct stringlist	*sl;
-	char			*grp;
+addgroup(char *ypdom, struct stringlist *sl, char *grp)
 {
 	char		*line, *p;
 	struct netgroup	*ng;
@@ -429,11 +409,8 @@ addgroup(ypdom, sl, grp)
  * in_check(): Compare the spec with the netgroup
  */
 static int
-in_check(host, user, domain, ng)
-	const char	*host;
-	const char	*user;
-	const char	*domain;
-	struct netgroup	*ng;
+in_check(const char *host, const char *user, const char *domain,
+    struct netgroup *ng)
 {
 	if ((host != NULL) && (ng->ng_host != NULL) &&
 	    strcmp(ng->ng_host, host) != 0)
@@ -455,13 +432,8 @@ in_check(host, user, domain, ng)
  * in_find(): Find a match for the host, user, domain spec
  */
 static int
-in_find(ypdom, sl, grp, host, user, domain)
-	char			*ypdom;
-	struct stringlist	*sl;
-	char			*grp;
-	const char		*host;
-	const char		*user;
-	const char		*domain;
+in_find(char *ypdom, struct stringlist *sl, char *grp, const char *host,
+    const char *user, const char *domain)
 {
 	char		*line, *p;
 	int		 i;
@@ -529,9 +501,7 @@ in_find(ypdom, sl, grp, host, user, domain)
  * <name1>.<name2> Names strings are replaced with * if they are empty;
  */
 char *
-_ng_makekey(s1, s2, len)
-	const char	*s1, *s2;
-	size_t		 len;
+_ng_makekey(const char *s1, const char *s2, size_t len)
 {
 	char *buf = malloc(len);
 	if (buf == NULL)
@@ -541,10 +511,7 @@ _ng_makekey(s1, s2, len)
 }
 
 void
-_ng_print(buf, len, ng)
-	char *buf;
-	size_t len;
-	const struct netgroup *ng;
+_ng_print(char *buf, size_t len, const struct netgroup *ng)
 {
 	(void) snprintf(buf, len, "(%s,%s,%s)", _NG_EMPTY(ng->ng_host),
 	    _NG_EMPTY(ng->ng_user), _NG_EMPTY(ng->ng_domain));
@@ -555,11 +522,7 @@ _ng_print(buf, len, ng)
  * in_lookup1(): Fast lookup for a key in the appropriate map
  */
 static char *
-in_lookup1(ypdom, key, domain, map)
-	const char	*ypdom;
-	const char	*key;
-	const char	*domain;
-	int		 map;
+in_lookup1(const char *ypdom, const char *key, const char *domain, int map)
 {
 	char	*line;
 	size_t	 len;
@@ -578,12 +541,8 @@ in_lookup1(ypdom, key, domain, map)
  * in_lookup(): Fast lookup for a key in the appropriate map
  */
 static int
-in_lookup(ypdom, group, key, domain, map)
-	const char	*ypdom;
-	const char	*group;
-	const char	*key;
-	const char	*domain;
-	int		 map;
+in_lookup(const char *ypdom, const char *group, const char *key,
+    const char *domain, int map)
 {
 	size_t	 len;
 	char	*ptr, *line;
@@ -623,7 +582,7 @@ in_lookup(ypdom, group, key, domain, map)
 
 
 void
-endnetgrent()
+endnetgrent(void)
 {
 	for (_nglist = _nghead; _nglist != NULL; _nglist = _nghead) {
 		_nghead = _nglist->ng_next;
@@ -644,8 +603,7 @@ endnetgrent()
 
 
 void
-setnetgrent(ng)
-	const char	*ng;
+setnetgrent(const char *ng)
 {
 	struct stringlist	*sl = _ng_sl_init();
 #ifdef YP
@@ -680,10 +638,7 @@ setnetgrent(ng)
 
 
 int
-getnetgrent(host, user, domain)
-	const char	**host;
-	const char	**user;
-	const char	**domain;
+getnetgrent(const char **host, const char **user, const char **domain)
 {
 	if (_nglist == NULL)
 		return 0;
@@ -699,8 +654,7 @@ getnetgrent(host, user, domain)
 
 
 int
-innetgr(grp, host, user, domain)
-	const char	*grp, *host, *user, *domain;
+innetgr(const char *grp, const char *host, const char *user, const char *domain)
 {
 	char	*ypdom = NULL, *grpdup;
 #ifdef YP

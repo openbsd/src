@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: scandir.c,v 1.8 2004/03/05 04:11:51 tedu Exp $";
+static char rcsid[] = "$OpenBSD: scandir.c,v 1.9 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -58,11 +58,8 @@ static char rcsid[] = "$OpenBSD: scandir.c,v 1.8 2004/03/05 04:11:51 tedu Exp $"
 	    (((dp)->d_namlen + 1 + 3) &~ 3))
 
 int
-scandir(dirname, namelist, select, dcomp)
-	const char *dirname;
-	struct dirent ***namelist;
-	int (*select)(struct dirent *);
-	int (*dcomp)(const void *, const void *);
+scandir(const char *dirname, struct dirent ***namelist,
+    int (*select)(struct dirent *), int (*dcomp)(const void *, const void *))
 {
 	struct dirent *d, *p, **names = NULL;
 	size_t nitems = 0;
@@ -143,9 +140,7 @@ fail:
  * Alphabetic order comparison routine for those who want it.
  */
 int
-alphasort(d1, d2)
-	const void *d1;
-	const void *d2;
+alphasort(const void *d1, const void *d2)
 {
 	return(strcmp((*(struct dirent **)d1)->d_name,
 	    (*(struct dirent **)d2)->d_name));

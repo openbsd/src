@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: initgroups.c,v 1.6 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: initgroups.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -38,9 +38,7 @@ static char rcsid[] = "$OpenBSD: initgroups.c,v 1.6 2003/06/02 20:18:34 millert 
 #include <unistd.h>
 
 int
-initgroups(uname, agroup)
-	const char *uname;
-	gid_t agroup;
+initgroups(const char *uname, gid_t agroup)
 {
 	gid_t groups[NGROUPS];
 	int ngroups;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: unvis.c,v 1.8 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: unvis.c,v 1.9 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -211,9 +211,7 @@ unvis(char *cp, char c, int *astate, int flag)
  */
 
 int
-strunvis(dst, src)
-	register char *dst;
-	register const char *src;
+strunvis(char *dst, const char *src)
 {
 	register char c;
 	char *start = dst;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.12 2003/06/02 20:18:34 millert Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.13 2004/05/18 02:05:52 jfb Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.12 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: setmode.c,v 1.13 2004/05/18 02:05:52 jfb Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -169,8 +169,7 @@ common:			if (set->cmd2 & CMD2_CLR) {
 #define	STANDARD_BITS	(S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO)
 
 void *
-setmode(p)
-	register const char *p;
+setmode(const char *p)
 {
 	register int perm, who;
 	register char op;
@@ -347,11 +346,7 @@ apply:		if (!*p)
 }
 
 static BITCMD *
-addcmd(set, op, who, oparg, mask)
-	BITCMD *set;
-	register int oparg, who;
-	register int op;
-	u_int mask;
+addcmd(BITCMD *set, int op, int who, int oparg, u_int mask)
 {
 	switch (op) {
 	case '=':
@@ -395,8 +390,7 @@ addcmd(set, op, who, oparg, mask)
 
 #ifdef SETMODE_DEBUG
 static void
-dumpmode(set)
-	register BITCMD *set;
+dumpmode(BITCMD *set)
 {
 	for (; set->cmd; ++set)
 		(void)printf("cmd: '%c' bits %04o%s%s%s%s%s%s\n",
@@ -416,8 +410,7 @@ dumpmode(set)
  * compacted, but it's not worth the effort.
  */
 static void
-compress_mode(set)
-	register BITCMD *set;
+compress_mode(BITCMD *set)
 {
 	register BITCMD *nset;
 	register int setbits, clrbits, Xbits, op;

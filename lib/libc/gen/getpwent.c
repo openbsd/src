@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.31 2003/06/25 21:16:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.32 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -97,8 +97,7 @@ static struct _ypexclude *__ypexclude = (struct _ypexclude *)NULL;
  * Using DB for this just wastes too damn much memory.
  */
 static int
-__ypexclude_add(name)
-	const char *name;
+__ypexclude_add(const char *name)
 {
 	struct _ypexclude *new;
 
@@ -121,8 +120,7 @@ __ypexclude_add(name)
 }
 
 static int
-__ypexclude_is(name)
-	const char *name;
+__ypexclude_is(const char *name)
 {
 	struct _ypexclude *curr;
 
@@ -135,7 +133,7 @@ __ypexclude_is(name)
 }
 
 static void
-__ypexclude_free()
+__ypexclude_free(void)
 {
 	struct _ypexclude *curr, *next;
 
@@ -150,7 +148,7 @@ __ypexclude_free()
 }
 
 static void
-__ypproto_set()
+__ypproto_set(void)
 {
 	register char *ptr;
 	register struct passwd *pw = &_pw_passwd;
@@ -227,9 +225,7 @@ __ypproto_set()
 }
 
 static int
-__ypparse(pw, s)
-struct passwd *pw;
-char *s;
+__ypparse(struct passwd *pw, char *s)
 {
 	char *bp, *cp, *endp;
 	u_long ul;
@@ -309,7 +305,7 @@ static int __getpwent_has_yppw = -1;
 #endif
 
 struct passwd *
-getpwent()
+getpwent(void)
 {
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];
@@ -492,7 +488,7 @@ again:
  * about the token.
  */
 static int
-__has_yppw()
+__has_yppw(void)
 {
 	DBT key, data;
 	DBT pkey, pdata;
@@ -520,7 +516,7 @@ __has_yppw()
  * libc code.
  */
 static int
-__has_ypmaster()
+__has_ypmaster(void)
 {
 	int keylen, resultlen;
 	char *key, *result;
@@ -568,8 +564,7 @@ __has_ypmaster()
 #endif
 
 struct passwd *
-getpwnam(name)
-	const char *name;
+getpwnam(const char *name)
 {
 	DBT key;
 	int len, rval;
@@ -921,8 +916,7 @@ pwuid_netgrp:
 }
 
 int
-setpassent(stayopen)
-	int stayopen;
+setpassent(int stayopen)
 {
 	_pw_keynum = 0;
 	_pw_stayopen = stayopen;
@@ -938,13 +932,13 @@ setpassent(stayopen)
 }
 
 void
-setpwent()
+setpwent(void)
 {
 	(void) setpassent(0);
 }
 
 void
-endpwent()
+endpwent(void)
 {
 	_pw_keynum = 0;
 	if (_pw_db) {
@@ -962,7 +956,7 @@ endpwent()
 }
 
 static int
-__initdb()
+__initdb(void)
 {
 	static int warned;
 
@@ -980,8 +974,7 @@ __initdb()
 }
 
 static int
-__hashpw(key)
-	DBT *key;
+__hashpw(DBT *key)
 {
 	register char *p, *t;
 	static u_int max;

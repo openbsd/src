@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.c,v 1.10 2003/06/02 20:18:34 millert Exp $	*/
+/*	$OpenBSD: fnmatch.c,v 1.11 2004/05/18 02:05:52 jfb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: fnmatch.c,v 1.10 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: fnmatch.c,v 1.11 2004/05/18 02:05:52 jfb Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,9 +59,7 @@ static char rcsid[] = "$OpenBSD: fnmatch.c,v 1.10 2003/06/02 20:18:34 millert Ex
 static int rangematch(const char *, char, int, char **);
 
 int
-fnmatch(pattern, string, flags)
-	const char *pattern, *string;
-	int flags;
+fnmatch(const char *pattern, const char *string, int flags)
 {
 	const char *stringstart;
 	char *newp;

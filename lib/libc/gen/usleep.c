@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: usleep.c,v 1.8 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: usleep.c,v 1.9 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -36,8 +36,7 @@ static char rcsid[] = "$OpenBSD: usleep.c,v 1.8 2003/06/02 20:18:35 millert Exp 
 #include <unistd.h>
 
 int
-usleep(useconds)
-	useconds_t useconds;
+usleep(useconds_t useconds)
 {
 	struct timespec rqt;
 

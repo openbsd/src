@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: getcap.c,v 1.21 2003/06/02 20:18:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: getcap.c,v 1.22 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -72,8 +72,7 @@ static int	usedb = 1;
  * text version.  By default, the getcap(3) routines will use a .db file.
  */
 int
-cgetusedb(new_usedb)
-	int new_usedb;
+cgetusedb(int new_usedb)
 {
 	int old_usedb = usedb;
 
@@ -87,8 +86,7 @@ cgetusedb(new_usedb)
  * virtual database. 0 is returned on success, -1 on failure.
  */
 int
-cgetset(ent)
-	const char *ent;
+cgetset(const char *ent)
 {
 	if (ent == NULL) {
 		if (toprec)
@@ -118,10 +116,7 @@ cgetset(ent)
  * return NULL.
  */
 char *
-cgetcap(buf, cap, type)
-	char *buf;
-	const char *cap;
-	int type;
+cgetcap(char *buf, const char *cap, int type)
 {
 	char *bp;
 	const char *cp;
@@ -172,9 +167,7 @@ cgetcap(buf, cap, type)
  * reference loop is detected.
  */
 int
-cgetent(buf, db_array, name)
-	char **buf, **db_array;
-	const char *name;
+cgetent(char **buf, char **db_array, const char *name)
 {
 	u_int dummy;
 
@@ -200,11 +193,8 @@ cgetent(buf, db_array, name)
  *	  MAX_RECURSION.
  */
 static int
-getent(cap, len, db_array, fd, name, depth, nfield)
-	char **cap, **db_array, *nfield;
-	const char *name;
-	u_int *len;
-	int fd, depth;
+getent(char **cap, u_int *len, char **db_array, int fd,
+	const char *name, int depth, char *nfield)
 {
 	DB *capdbp;
 	char *r_end, *rp, **db_p;
@@ -566,10 +556,7 @@ tc_exp:	{
 }
 
 static int
-cdbget(capdbp, bp, name)
-	DB *capdbp;
-	char **bp;
-	const char *name;
+cdbget(DB *capdbp, char **bp, const char *name)
 {
 	DBT key, data;
 
@@ -602,9 +589,7 @@ cdbget(capdbp, bp, name)
  * record buf, -1 if not.
  */
 int
-cgetmatch(buf, name)
-	char *buf;
-	const char *name;
+cgetmatch(char *buf, const char *name)
 {
 	char *bp;
 	const char *np;
@@ -642,8 +627,7 @@ cgetmatch(buf, name)
 }
 
 int
-cgetfirst(buf, db_array)
-	char **buf, **db_array;
+cgetfirst(char **buf, char **db_array)
 {
 
 	(void)cgetclose();
@@ -655,7 +639,7 @@ static int slash;
 static char **dbp;
 
 int
-cgetclose()
+cgetclose(void)
 {
 
 	if (pfp != NULL) {
@@ -674,9 +658,7 @@ cgetclose()
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
 int
-cgetnext(bp, db_array)
-	char **bp;
-	char **db_array;
+cgetnext(char **bp, char **db_array)
 {
 	size_t len;
 	int status, done;
@@ -805,10 +787,7 @@ cgetnext(bp, db_array)
  * allocation failure).
  */
 int
-cgetstr(buf, cap, str)
-	char *buf;
-	const char *cap;
-	char **str;
+cgetstr(char *buf, const char *cap, char **str)
 {
 	u_int m_room;
 	char *bp, *mp;
@@ -941,9 +920,7 @@ cgetstr(buf, cap, str)
  * error was encountered (storage allocation failure).
  */
 int
-cgetustr(buf, cap, str)
-	char *buf, **str;
-	const char *cap;
+cgetustr(char *buf, const char *cap, char **str)
 {
 	u_int m_room;
 	char *bp, *mp;
@@ -1021,10 +998,7 @@ cgetustr(buf, cap, str)
  * numeric capability couldn't be found.
  */
 int
-cgetnum(buf, cap, num)
-	char *buf;
-	const char *cap;
-	long *num;
+cgetnum(char *buf, const char *cap, long *num)
 {
 	long n;
 	int base, digit;
@@ -1085,9 +1059,7 @@ cgetnum(buf, cap, num)
  * Compare name field of record.
  */
 static int
-nfcmp(nf, rec)
-	const char *nf;
-	char *rec;
+nfcmp(const char *nf, char *rec)
 {
 	char *cp, tmp;
 	int ret;

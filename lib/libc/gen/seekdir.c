@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: seekdir.c,v 1.5 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: seekdir.c,v 1.6 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -41,9 +41,7 @@ void __seekdir(DIR *, long);
  * __seekdir is in telldir.c so that it can share opaque data structures.
  */
 void
-seekdir(dirp, loc)
-	DIR *dirp;
-	long loc;
+seekdir(DIR *dirp, long loc)
 {
 
 	__seekdir(dirp, loc);

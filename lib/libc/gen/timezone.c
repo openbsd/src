@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: timezone.c,v 1.7 2003/06/25 21:16:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: timezone.c,v 1.8 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -51,9 +51,7 @@ char *_tztab(int, int);
 static char	czone[TZ_MAX_CHARS];		/* space for zone name */
 
 char *
-timezone(zone, dst)
-	int	zone,
-		dst;
+timezone(int zone, int dst)
 {
 	register char	*beg,
 			*end;
@@ -103,9 +101,7 @@ static struct zone {
  *	STANDARD LIBRARY.
  */
 char *
-_tztab(zone,dst)
-	register int	zone;
-	int	dst;
+_tztab(int zone, int dst)
 {
 	register struct zone	*zp;
 	register char	sign;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setjmperr.c,v 1.3 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: setjmperr.c,v 1.4 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -42,7 +42,7 @@ static char rcsid[] = "$OpenBSD: setjmperr.c,v 1.3 2003/06/02 20:18:34 millert E
 #include <unistd.h>
 
 void
-longjmperror()
+longjmperror(void)
 {
 #define	ERRMSG	"longjmp botch.\n"
 	(void)write(STDERR_FILENO, ERRMSG, sizeof(ERRMSG) - 1);

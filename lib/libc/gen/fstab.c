@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fstab.c,v 1.12 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: fstab.c,v 1.13 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,7 +50,7 @@ static void error(int);
 static int fstabscan(void);
 
 static int
-fstabscan()
+fstabscan(void)
 {
 	register char *cp;
 #define	MAXLINELENGTH	1024
@@ -160,7 +160,7 @@ bad:		/* no way to distinguish between EOF and syntax error */
 }
 
 struct fstab *
-getfsent()
+getfsent(void)
 {
 	if ((!_fs_fp && !setfsent()) || !fstabscan())
 		return(NULL);
@@ -168,8 +168,7 @@ getfsent()
 }
 
 struct fstab *
-getfsspec(name)
-	register const char *name;
+getfsspec(const char *name)
 {
 	if (setfsent())
 		while (fstabscan())
@@ -179,8 +178,7 @@ getfsspec(name)
 }
 
 struct fstab *
-getfsfile(name)
-	register const char *name;
+getfsfile(const char *name)
 {
 	if (setfsent())
 		while (fstabscan())
@@ -190,7 +188,7 @@ getfsfile(name)
 }
 
 int
-setfsent()
+setfsent(void)
 {
 	struct stat sbuf;
 
@@ -215,7 +213,7 @@ fail:
 }
 
 void
-endfsent()
+endfsent(void)
 {
 	if (_fs_fp) {
 		(void)fclose(_fs_fp);
@@ -224,8 +222,7 @@ endfsent()
 }
 
 static void
-error(err)
-	int err;
+error(int err)
 {
 	struct iovec iov[5];
 

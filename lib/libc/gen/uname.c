@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: uname.c,v 1.6 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: uname.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -36,8 +36,7 @@ static char rcsid[] = "$OpenBSD: uname.c,v 1.6 2003/06/02 20:18:35 millert Exp $
 #include <sys/utsname.h>
 
 int
-uname(name)
-	struct utsname *name;
+uname(struct utsname *name)
 {
 	int mib[2], rval;
 	size_t len;

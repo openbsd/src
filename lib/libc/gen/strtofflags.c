@@ -1,4 +1,4 @@
-/*	$OpenBSD: strtofflags.c,v 1.3 2003/06/25 21:15:40 deraadt Exp $	*/
+/*	$OpenBSD: strtofflags.c,v 1.4 2004/05/18 02:05:52 jfb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@ static const char rcsid[] =
   "$FreeBSD: src/lib/libc/gen/strtofflags.c,v 1.18 2000/06/17 11:09:24 joe Exp $";
 #else
 static const char rcsid[] =
-	"$OpenBSD: strtofflags.c,v 1.3 2003/06/25 21:15:40 deraadt Exp $";
+	"$OpenBSD: strtofflags.c,v 1.4 2004/05/18 02:05:52 jfb Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,8 +86,7 @@ static const struct {
  *	are set, return the empty string.
  */
 char *
-fflagstostr(flags)
-	u_int32_t flags;
+fflagstostr(u_int32_t flags)
 {
 	char *string;
 	char *sp, *dp;
@@ -119,9 +118,7 @@ fflagstostr(flags)
  *	to the offending token.
  */
 int
-strtofflags(stringp, setp, clrp)
-	char **stringp;
-	u_int32_t *setp, *clrp;
+strtofflags(char **stringp, u_int32_t *setp, u_int32_t *clrp)
 {
 	char *string, *p;
 	int i;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getttyent.c,v 1.6 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: getttyent.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ttyent.h>
@@ -43,8 +43,7 @@ static char *skip(char *);
 static char *value(char *);
 
 struct ttyent *
-getttynam(tty)
-	const char *tty;
+getttynam(const char *tty)
 {
 	register struct ttyent *t;
 
@@ -57,7 +56,7 @@ getttynam(tty)
 }
 
 struct ttyent *
-getttyent()
+getttyent(void)
 {
 	static struct ttyent tty;
 	register int c;
@@ -138,8 +137,7 @@ getttyent()
  * the next field.
  */
 static char *
-skip(p)
-	register char *p;
+skip(char *p)
 {
 	register char *t;
 	register int c, q;
@@ -172,15 +170,14 @@ skip(p)
 }
 
 static char *
-value(p)
-	register char *p;
+value(char *p)
 {
 
 	return ((p = strchr(p, '=')) ? ++p : NULL);
 }
 
 int
-setttyent()
+setttyent(void)
 {
 
 	if (tf) {
@@ -192,7 +189,7 @@ setttyent()
 }
 
 int
-endttyent()
+endttyent(void)
 {
 	int rval;
 

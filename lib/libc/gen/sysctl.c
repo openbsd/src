@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sysctl.c,v 1.5 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: sysctl.c,v 1.6 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -44,13 +44,8 @@ static char rcsid[] = "$OpenBSD: sysctl.c,v 1.5 2003/06/02 20:18:35 millert Exp 
 int __sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 int
-sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
 {
 	if (name[0] != CTL_USER)
 		return (__sysctl(name, namelen, oldp, oldlenp, newp, newlen));

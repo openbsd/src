@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rewinddir.c,v 1.5 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: rewinddir.c,v 1.6 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -37,8 +37,7 @@ static char rcsid[] = "$OpenBSD: rewinddir.c,v 1.5 2003/06/02 20:18:34 millert E
 void __seekdir(DIR *, long);
 
 void
-rewinddir(dirp)
-	DIR *dirp;
+rewinddir(DIR *dirp)
 {
 
 	__seekdir(dirp, dirp->dd_rewind);

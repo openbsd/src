@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getusershell.c,v 1.4 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: getusershell.c,v 1.5 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -53,7 +53,7 @@ static char **initshells(void);
  * Get a list of shells from _PATH_SHELLS, if it exists.
  */
 char *
-getusershell()
+getusershell(void)
 {
 	char *ret;
 
@@ -66,7 +66,7 @@ getusershell()
 }
 
 void
-endusershell()
+endusershell(void)
 {
 	
 	if (shells != NULL)
@@ -79,14 +79,14 @@ endusershell()
 }
 
 void
-setusershell()
+setusershell(void)
 {
 
 	curshell = initshells();
 }
 
 static char **
-initshells()
+initshells(void)
 {
 	register char **sp, *cp;
 	register FILE *fp;

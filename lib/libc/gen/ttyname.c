@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ttyname.c,v 1.9 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: ttyname.c,v 1.10 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -79,10 +79,7 @@ ttyname(int fd)
 }
 
 static int
-__ttyname_r_basic(fd, buf, len)
-	int fd;
-	char *buf;
-	size_t len;
+__ttyname_r_basic(int fd, char *buf, size_t len)
 {
 	struct stat sb;
 	struct termios ttyb;
@@ -129,11 +126,7 @@ __ttyname_r_basic(fd, buf, len)
 
 /* ARGSUSED */
 static int
-oldttyname(fd, sb, buf, len)
-	int fd;
-	struct stat *sb;
-	char *buf;
-	size_t len;
+oldttyname(int fd, struct stat *sb, char *buf, size_t len)
 {
 	register struct dirent *dirp;
 	register DIR *dp;

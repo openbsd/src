@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vwarnx.c,v 1.6 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: vwarnx.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -39,9 +39,7 @@ static char rcsid[] = "$OpenBSD: vwarnx.c,v 1.6 2003/06/02 20:18:35 millert Exp 
 extern char *__progname;		/* Program name, from crt0. */
 
 void
-_vwarnx(fmt, ap)
-	const char *fmt;
-	va_list ap;
+_vwarnx(const char *fmt, va_list ap)
 {
 	(void)fprintf(stderr, "%s: ", __progname);
 	if (fmt != NULL)

@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: isctype.c,v 1.9 2003/06/10 22:00:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: isctype.c,v 1.10 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _ANSI_LIBRARY
@@ -42,128 +42,112 @@ static char rcsid[] = "$OpenBSD: isctype.c,v 1.9 2003/06/10 22:00:31 millert Exp
 
 #undef isalnum
 int
-isalnum(c)
-	int c;
+isalnum(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L|_N)));
 }
 
 #undef isalpha
 int
-isalpha(c)
-	int c;
+isalpha(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_U|_L)));
 }
 
 #undef isblank
 int
-isblank(c)
-	int c;
+isblank(int c)
 {
 	return (c == ' ' || c == '\t');
 }
 
 #undef iscntrl
 int
-iscntrl(c)
-	int c;
+iscntrl(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _C));
 }
 
 #undef isdigit
 int
-isdigit(c)
-	int c;
+isdigit(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _N));
 }
 
 #undef isgraph
 int
-isgraph(c)
-	int c;
+isgraph(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N)));
 }
 
 #undef islower
 int
-islower(c)
-	int c;
+islower(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _L));
 }
 
 #undef isprint
 int
-isprint(c)
-	int c;
+isprint(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_P|_U|_L|_N|_B)));
 }
 
 #undef ispunct
 int
-ispunct(c)
-	int c;
+ispunct(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _P));
 }
 
 #undef isspace
 int
-isspace(c)
-	int c;
+isspace(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _S));
 }
 
 #undef isupper
 int
-isupper(c)
-	int c;
+isupper(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & _U));
 }
 
 #undef isxdigit
 int
-isxdigit(c)
-	int c;
+isxdigit(int c)
 {
 	return (c == EOF ? 0 : ((_ctype_ + 1)[(unsigned char)c] & (_N|_X)));
 }
 
 #undef isascii
 int
-isascii(c)
-	int c;
+isascii(int c)
 {
 	return ((unsigned int)c <= 0177);
 }
 
 #undef toascii
 int
-toascii(c)
-	int c;
+toascii(int c)
 {
 	return (c & 0177);
 }
 
 #undef _toupper
 int
-_toupper(c)
-	int c;
+_toupper(int c)
 {
 	return (c - 'a' + 'A');
 }
 
 #undef _tolower
 int
-_tolower(c)
-	int c;
+_tolower(int c)
 {
 	return (c - 'A' + 'a');
 }

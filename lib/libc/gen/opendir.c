@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: opendir.c,v 1.9 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: opendir.c,v 1.10 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -63,17 +63,14 @@ direntcmp(const void *d1, const void *d2)
  * Open a directory.
  */
 DIR *
-opendir(name)
-	const char *name;
+opendir(const char *name)
 {
 
 	return (__opendir2(name, DTF_HIDEW|DTF_NODUP));
 }
 
 DIR *
-__opendir2(name, flags)
-	const char *name;
-	int flags;
+__opendir2(const char *name, int flags)
 {
 	DIR *dirp;
 	int fd;

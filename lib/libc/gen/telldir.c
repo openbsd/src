@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: telldir.c,v 1.4 2003/06/25 21:16:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: telldir.c,v 1.5 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -68,8 +68,7 @@ void __seekdir(DIR *, long);
  * return a pointer into a directory
  */
 long
-telldir(dirp)
-	const DIR *dirp;
+telldir(const DIR *dirp)
 {
 	register int index;
 	register struct ddloc *lp;
@@ -90,9 +89,7 @@ telldir(dirp)
  * Only values returned by "telldir" should be passed to seekdir.
  */
 void
-__seekdir(dirp, loc)
-	register DIR *dirp;
-	long loc;
+__seekdir(DIR *dirp, long loc)
 {
 	register struct ddloc *lp;
 	register struct ddloc **prevlp;

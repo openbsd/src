@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.47 2004/01/30 23:14:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.48 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -65,9 +65,7 @@ int	__elf_is_okay__(register Elf_Ehdr *ehdr);
 
 #ifdef _NLIST_DO_AOUT
 int
-__aout_fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
+__aout_fdnlist(int fd, struct nlist *list)
 {
 	register struct nlist *p, *s;
 	register char *strtab;
@@ -173,9 +171,7 @@ aout_done:
 #define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
 
 int
-__ecoff_fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
+__ecoff_fdnlist(int fd, struct nlist *list)
 {
 	struct nlist *p;
 	struct ecoff_exechdr *exechdrp;
@@ -280,8 +276,7 @@ out:
  * as such it's use should be restricted.
  */
 int
-__elf_is_okay__(ehdr)
-	register Elf_Ehdr *ehdr;
+__elf_is_okay__(Elf_Ehdr *ehdr)
 {
 	register int retval = 0;
 	/*
@@ -305,9 +300,7 @@ __elf_is_okay__(ehdr)
 }
 
 int
-__elf_fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
+__elf_fdnlist(int fd, struct nlist *list)
 {
 	register struct nlist *p;
 	register caddr_t strtab;
@@ -516,9 +509,7 @@ static struct nlist_handlers {
 };
 
 int
-__fdnlist(fd, list)
-	register int fd;
-	register struct nlist *list;
+__fdnlist(int fd, struct nlist *list)
 {
 	int n = -1, i;
 
@@ -532,9 +523,7 @@ __fdnlist(fd, list)
 
 
 int
-nlist(name, list)
-	const char *name;
-	struct nlist *list;
+nlist(const char *name, struct nlist *list)
 {
 	int fd, n;
 

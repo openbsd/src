@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: times.c,v 1.3 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: times.c,v 1.4 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -43,8 +43,7 @@ static char rcsid[] = "$OpenBSD: times.c,v 1.3 2003/06/02 20:18:35 millert Exp $
 #define	CONVTCK(r)	(r.tv_sec * CLK_TCK + r.tv_usec / (1000000 / CLK_TCK))
 
 clock_t
-times(tp)
-	register struct tms *tp;
+times(struct tms *tp)
 {
 	struct rusage ru;
 	struct timeval t;

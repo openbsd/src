@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sysconf.c,v 1.6 2004/05/07 18:39:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: sysconf.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -56,8 +56,7 @@ static char rcsid[] = "$OpenBSD: sysconf.c,v 1.6 2004/05/07 18:39:19 millert Exp
  * less useful than returning up-to-date values, however.
  */
 long
-sysconf(name)
-	int name;
+sysconf(int name)
 {
 	struct rlimit rl;
 	size_t len;

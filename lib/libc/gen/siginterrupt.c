@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: siginterrupt.c,v 1.4 2003/06/02 20:18:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: siginterrupt.c,v 1.5 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
@@ -38,8 +38,7 @@ static char rcsid[] = "$OpenBSD: siginterrupt.c,v 1.4 2003/06/02 20:18:34 miller
  * after an instance of the indicated signal.
  */
 int
-siginterrupt(sig, flag)
-	int sig, flag;
+siginterrupt(int sig, int flag)
 {
 	extern sigset_t __sigintr;
 	struct sigaction sa;

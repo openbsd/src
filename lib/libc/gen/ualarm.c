@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ualarm.c,v 1.5 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: ualarm.c,v 1.6 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,9 +43,7 @@ static char rcsid[] = "$OpenBSD: ualarm.c,v 1.5 2003/06/02 20:18:35 millert Exp 
  * every ``reload'' microseconds after the first signal.
  */
 useconds_t
-ualarm(usecs, reload)
-	register useconds_t usecs;
-	register useconds_t reload;
+ualarm(useconds_t usecs, useconds_t reload)
 {
 	struct itimerval new, old;
 

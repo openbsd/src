@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vis.c,v 1.12 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.13 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -51,10 +51,7 @@ static char rcsid[] = "$OpenBSD: vis.c,v 1.12 2003/06/02 20:18:35 millert Exp $"
  * vis - visually encode characters
  */
 char *
-vis(dst, c, flag, nextc)
-	register char *dst;
-	int c, nextc;
-	register int flag;
+vis(char *dst, int c, int flag, int nextc)
 {
 	if (isvisible(c)) {
 		*dst++ = c;
@@ -150,10 +147,7 @@ done:
  *	This is useful for encoding a block of data.
  */
 int
-strvis(dst, src, flag)
-	register char *dst;
-	register const char *src;
-	int flag;
+strvis(char *dst, const char *src, int flag)
 {
 	register char c;
 	char *start;
@@ -165,11 +159,7 @@ strvis(dst, src, flag)
 }
 
 int
-strnvis(dst, src, siz, flag)
-	char *dst;
-	const char *src;
-	size_t siz;
-	int flag;
+strnvis(char *dst, const char *src, size_t siz, int flag)
 {
 	char c;
 	char *start, *end;
@@ -214,11 +204,7 @@ strnvis(dst, src, siz, flag)
 }
 
 int
-strvisx(dst, src, len, flag)
-	register char *dst;
-	register const char *src;
-	register size_t len;
-	int flag;
+strvisx(char *dst, const char *src, size_t len, int flag)
 {
 	register char c;
 	char *start;

@@ -4,7 +4,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: toupper_.c,v 1.6 2002/12/13 23:16:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: toupper_.c,v 1.7 2004/05/18 02:05:52 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _ANSI_LIBRARY
@@ -51,8 +51,7 @@ const short *_toupper_tab_ = _C_toupper_;
 
 #undef toupper
 int
-toupper(c)
-	int c;
+toupper(int c)
 {
 	if ((unsigned int)c > 0177)
 		return(c);
