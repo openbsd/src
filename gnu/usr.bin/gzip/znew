@@ -12,9 +12,11 @@ block=1024
 # block is the disk block size (best guess, need not be exact)
 
 case "$GZIP" in
-  *-S*) ext=`echo "$GZIP" | sed 's/^.*-S[ 	]*\([^ 	]*\).*$/\1/'`
+  *-S*) ext=`echo "$GZIP" | sed 's/^.*-S[[:space:]]*\([^[:space:]]*\).*$/\1/'`
 	;;
-  *-suffix*) ext=`echo "$GZIP" | sed 's/^.*--suffix[ 	=]*\([^ 	]*\).*$/\1/'`
+  *-suffix=*) ext=`echo "$GZIP" | sed 's/^.*--suffix=\([^[:space:]]*\).*$/\1/'`
+	;;
+  *-suffix*) ext=`echo "$GZIP" | sed 's/^.*--suffix[[:space:]][[:space:]]*\([^[:space:]]*\).*$/\1/'`
 	;;
   *)	ext='.gz'
 	;;
