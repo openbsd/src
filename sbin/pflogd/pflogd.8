@@ -1,0 +1,118 @@
+.\"	$OpenBSD: pflogd.8,v 1.1 2001/08/21 22:29:14 deraadt Exp $
+.\"
+.\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 9, 2001
+.Dt PFLOGD 8
+.Os
+.Sh NAME
+.Nm pflogd
+.Nd packet filter loging daemon
+.Sh SYNOPSIS
+.Nm pflogd
+.Op Fl D
+.Op Fl d Ar delay
+.Op Fl f Ar filename
+.Op Fl i Ar interface
+.Op Fl s Ar snaplen
+.Op Ar expression
+.Sh DESCRIPTION
+.Nm
+is a background daemon which reads packets logged by
+.Xr pf 8
+to a logging interface (normally
+.Pa pflog0 )
+and writes the packets to a logfile (normally
+.Pa /var/log/pflog )
+in
+.Xr tcpdump 8
+binary format.
+These logs can be reviewed later using the
+.Ar -r
+option of
+.Xr tcpdump 8 .
+.Pp
+.Nm
+closes and then re-opens the log file when it receives
+.Va SIGHUP ,
+permitting
+.Xr newsyslog 8
+to rotate logfiles automatically.
+.Va SIGALRM
+causes
+.Nm
+to flush the current logfile buffers to the disk, thus making the most
+recent logs available.
+The buffers are also flushed every
+.Ar delay
+seconds.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d Ar delay
+Time in seconds to delay between automatic flushes of the file.
+This may be specified with a value between 5 and 3600 seconds.
+If not specified, the default is 60 seconds.
+.It Fl D
+Debugging mode.
+.Nm
+does not disassociate from the controlling terminal.
+.It Fl i Ar interface
+Specify the interface from which
+.Xr pf 8
+logs are read; the default is
+.Ar pflog0 .
+.It Fl f Ar filename
+Log output filename. Default is
+.Pa /var/log/pflog .
+.It Fl s Ar snaplen
+Analyze at most the first
+.Ar snaplen
+bytes of data from each packet rather than the default of 96.
+The default of 96 is adequate for IP, ICMP, TCP, and UDP headers but may
+truncate protocol information for other protocols.
+.It Ar expression
+selects which packets will be dumped, using the regular language of
+.Xr tcpdump 8 .
+.Sh FILES
+.Bl -tag -width /var/run/pflogd.pid -compact
+.It Pa /var/run/pflogd.pid
+process ID of current
+.It Pa /var/log/pflog
+Default log file
+.El
+.Sh SEE ALSO
+.Xr pcap 3 ,
+.Xr pf 4 ,
+.Xr pf.conf 5 ,
+.Xr tcpdump 8 ,
+.Xr newsyslog 8
+.Sh AUTHORS
+Can Erkin Acar
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Ox 3.0 .
