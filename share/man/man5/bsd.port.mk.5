@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.68 2002/05/03 15:03:02 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.69 2002/05/13 00:45:09 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -149,9 +149,7 @@ Each file of the
 and
 .Ev PATCHFILES
 lists is retrieved, if necessary, from the list of sites in
-.Ev MASTER_SITES ,
-with %SUBDIR% substituted with
-.Ev MASTER_SITE_SUBDIR .
+.Ev MASTER_SITES .
 If a filename ends with a
 .Sq :0
 to
@@ -1218,6 +1216,22 @@ Used to organize a collection of ports that share most files.
 .Ox
 uses a single port with flavors or multi-packages to produce
 package variations instead.
+.It Ev MASTER_SITE_SUBDIR
+Contents were used to replace 
+.Sq %SUBDIR%
+in all 
+.Ev MASTER_SITES
+variables.
+Since
+.Sq %SUBDIR%
+almost always occur at the end of the directory,
+the simpler
+.Li ${VARIABLE:=subdir/}
+construct is now used instead 
+.Po 
+taken from
+.Nx 
+.Pc .
 .It Ev MD5_FILE
 Use
 .Ev CHECKSUM_FILE
