@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.23 2002/06/27 02:04:50 deraadt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.24 2003/03/09 01:33:59 millert Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -137,13 +137,14 @@ sys_ptrace(p, v, retval)
 		 *	    gave us setuid/setgid privs (unless
 		 *	    you're root), or...
 		 * 
-		 *      [Note: once P_SUGID gets set in execve(), it stays
-		 *	set until the process does another execve(). Hence
-		 *	this prevents a setuid process which revokes it's
-		 *	special privilidges using setuid() from being
-		 *	traced. This is good security.]
+		 *      [Note: once P_SUGID or P_SUGIDEXEC gets set in
+		 *	execve(), they stay set until the process does
+		 *	another execve().  Hence this prevents a setuid
+		 *	process which revokes it's special privileges using
+		 *	setuid() from being traced.  This is good security.]
 		 */
 		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+		    ISSET(t->p_flag, P_SUGIDEXEC) ||
 		    ISSET(t->p_flag, P_SUGID)) &&
 		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
