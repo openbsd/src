@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.7 2001/06/10 16:54:42 jason Exp $	*/
+/*	$OpenBSD: led.c,v 1.8 2001/06/11 21:33:42 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -77,8 +77,10 @@ ledmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
-#if defined(SUN4) || defined(SUN4M)
+#if defined(SUN4)
 	struct cfdata *cf = vcf;
+#endif
+#if defined(SUN4) || defined(SUN4M)
 	struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
