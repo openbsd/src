@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.23 2004/07/28 21:27:52 jmc Exp $
+.\"	$OpenBSD: fsck.8,v 1.24 2005/01/27 19:06:24 jmc Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -82,7 +82,19 @@ as the answer to all operator questions, except
 This is assumed to be the default when dealing with filesystems currently
 mounted writeable.
 .It Fl p
-Enter preen mode.
+Enter preen mode:
+.Nm
+will check all file systems listed in
+.Xr fstab 5
+according to their pass number,
+or any special devices listed on the command line,
+and will make minor repairs without
+human intervention.
+Any major problems will cause
+.Nm
+to exit with a non-zero exit code,
+so as to alert any invoking program or script
+that human intervention is required.
 .It Xo
 .Fl T
 .Ar fstype Ns : Ns Ar fsoptions
