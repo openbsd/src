@@ -1,4 +1,4 @@
-/*	$OpenBSD: privs.h,v 1.2 1996/06/26 05:31:31 deraadt Exp $	*/
+/*	$OpenBSD: privs.h,v 1.3 1996/12/22 03:39:24 tholo Exp $	*/
 /*	$NetBSD: privs.h,v 1.3 1995/03/25 18:13:41 glass Exp $	*/
 
 /*
@@ -87,8 +87,8 @@ uid_t real_uid, effective_uid;
 }
 
 #define REDUCE_PRIV(a) { \
-	seteuid(effective_uid); \
 	real_uid = effective_uid = (a); \
+	seteuid(effective_uid); \
 	setuid(real_uid); \
 }
 #endif

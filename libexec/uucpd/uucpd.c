@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.6 1996/12/03 01:29:54 deraadt Exp $";
+static char rcsid[] = "$Id: uucpd.c,v 1.7 1996/12/22 03:41:24 tholo Exp $";
 #endif /* not lint */
 
 /*
@@ -202,8 +202,10 @@ struct sockaddr_in *sinp;
 	(void) snprintf(Loginname, sizeof(Loginname), "LOGNAME=%s", user);
 	dologin(pw, sinp);
 	setlogin(user);
+	setegid(pw->pw_gid);
 	setgid(pw->pw_gid);
 	initgroups(pw->pw_name, pw->pw_gid);
+	seteuid(pw->pw_uid);
 	setuid(pw->pw_uid);
 	chdir(pw->pw_dir);
 	execl(_PATH_UUCICO, "uucico", (char *)0);

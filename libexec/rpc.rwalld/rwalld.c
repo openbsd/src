@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rwalld.c,v 1.1.1.1 1995/10/18 08:43:21 deraadt Exp $";
+static char rcsid[] = "$Id: rwalld.c,v 1.2 1996/12/22 03:41:18 tholo Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -73,10 +73,14 @@ main(argc, argv)
 
 	if (geteuid() == 0) {
 		struct passwd *pep = getpwnam("nobody");
-		if (pep)
+		if (pep) {
+			seteuid(pep->pw_uid);
 			setuid(pep->pw_uid);
-		else
+		}
+		else {
+			seteuid(getuid());
 			setuid(getuid());
+		}
 	}
 
 	/*

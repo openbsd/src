@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.3 1996/08/27 11:43:52 deraadt Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.4 1996/12/22 03:41:12 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -245,8 +245,10 @@ jkfprintf(tp, name, offset)
 	char line[BUFSIZ];
 
 	/* Set effective uid to user in case mail drop is on nfs */
-	if ((p = getpwnam(name)) != NULL)
+	if ((p = getpwnam(name)) != NULL) {
+		(void) seteuid(p->pw_uid);
 		(void) setuid(p->pw_uid);
+	}
 
 	if ((fi = fopen(name, "r")) == NULL)
 		return;

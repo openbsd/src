@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.4 1996/07/28 06:33:16 deraadt Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.5 1996/12/22 03:41:16 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -229,8 +229,10 @@ doit(f, fromp)
 	if (f > 2)
 		(void) close(f);
 	setlogin(pwd->pw_name);
+	(void) setegid((gid_t)pwd->pw_gid);
 	(void) setgid((gid_t)pwd->pw_gid);
 	initgroups(pwd->pw_name, pwd->pw_gid);
+	(void) seteuid((uid_t)pwd->pw_uid);
 	(void) setuid((uid_t)pwd->pw_uid);
 	(void)strcat(path, _PATH_DEFPATH);
 	environ = envinit;

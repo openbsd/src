@@ -1,5 +1,5 @@
 /*
-**	$Id: identd.c,v 1.2 1996/07/25 09:50:02 deraadt Exp $
+**	$Id: identd.c,v 1.3 1996/12/22 03:41:14 tholo Exp $
 **
 ** identd.c                       A TCP/IP link identification protocol server
 **
@@ -450,13 +450,19 @@ int main(argc,argv)
       ERROR("main: listen");
   }
   
-  if (set_gid)
+  if (set_gid) {
+    if (setegid(set_gid) == -1)
+      ERROR("main: setgid");
     if (setgid(set_gid) == -1)
       ERROR("main: setgid");
+  }
   
-  if (set_uid)
+  if (set_uid) {
+    if (seteuid(set_uid) == -1)
+      ERROR("main: setuid");
     if (setuid(set_uid) == -1)
       ERROR("main: setuid");
+  }
 
   /*
   ** Do some special handling if the "-b" or "-w" flags are used

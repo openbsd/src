@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: tftpd.c,v 1.4 1996/12/03 00:25:52 deraadt Exp $";
+static char rcsid[] = "$Id: tftpd.c,v 1.5 1996/12/22 03:41:22 tholo Exp $";
 #endif /* not lint */
 
 /*
@@ -145,7 +145,9 @@ main(argc, argv)
 		exit(1);
 	}
 
+	(void) setegid(pw->pw_gid);
 	(void) setgid(pw->pw_gid);
+	(void) seteuid(pw->pw_uid);
 	(void) setuid(pw->pw_uid);
 
 	if (ioctl(fd, FIONBIO, &on) < 0) {

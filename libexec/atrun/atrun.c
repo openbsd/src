@@ -54,7 +54,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$Id: atrun.c,v 1.1.1.1 1995/10/18 08:43:14 deraadt Exp $";
+static char rcsid[] = "$Id: atrun.c,v 1.2 1996/12/22 03:41:10 tholo Exp $";
 
 /* Local functions */
 static void
@@ -195,9 +195,13 @@ run_file(filename, uid)
 		if (initgroups(pentry->pw_name, pentry->pw_gid) < 0)
 			perr("Cannot init group list");
 
+		if (setegid(pentry->pw_gid) < 0)
+			perr("Cannot change primary group");
 		if (setgid(pentry->pw_gid) < 0)
 			perr("Cannot change primary group");
 
+		if (seteuid(uid) < 0)
+			perr("Cannot set user id");
 		if (setuid(uid) < 0)
 			perr("Cannot set user id");
 
