@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.2 1997/01/27 23:21:57 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.3 1997/01/28 04:14:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.2 1997/01/27 23:21:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.3 1997/01/28 04:14:55 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/param.h>
@@ -49,21 +49,19 @@ static char rcsid[] = "$OpenBSD: fsirand.c,v 1.2 1997/01/27 23:21:57 millert Exp
 #include <unistd.h>
 #include <util.h>
 
-#define	INOBUFSIZE	56*1024	/* size of buffer to read inodes (from fsck) */
-
-void fsirand __P((int, struct fs *, int));
 void usage __P((int));
+void fsirand __P((char *));
 
 extern char *__progname;
+
+int printonly = 0, force = 0;
 
 int
 main(argc, argv)
 	int	argc;
 	char	*argv[];
 {
-	struct fs *sblock;
-	int devfd, n, force = 0, printonly = 0;
-	char sbuf[SBSIZE], *devpath;
+	int n;
 
 	while ((n = getopt(argc, argv, "fp")) != -1) {
 		switch (n) {
@@ -77,13 +75,38 @@ main(argc, argv)
 			usage(1);
 		}
 	}
-	if (argc - optind != 1)
+	if (argc - optind < 1)
 		usage(1);
 
+	for (n = optind; n < argc; n++) {
+		fsirand(argv[n]);
+		if (n < argc - 1)
+			putchar('\n');
+	}
+
+	exit(0);
+}
+
+void
+fsirand(device)
+	char *device;
+{
+	static struct dinode *inodebuf;
+	static size_t oldibufsize;
+	size_t ibufsize;
+	struct fs *sblock;
+	ino_t inumber, maxino;
+	static daddr_t dblk;
+	char sbuf[SBSIZE];
+	int devfd, n;
+	char *devpath;
+
 	/* Open device and read in superblock */
-	if ((devfd = opendev(argv[optind], printonly ? O_RDONLY : O_RDWR,
+	if ((devfd = opendev(device, printonly ? O_RDONLY : O_RDWR,
 	     OPENDEV_PART, &devpath)) < 0)
 		err(1, "Can't open %s", devpath);
+	(void)puts(devpath);
+
 	(void)memset(&sbuf, 0, sizeof(sbuf));
 	sblock = (struct fs *)&sbuf;
 	if (lseek(devfd, SBOFF, SEEK_SET) == -1)
@@ -101,90 +124,62 @@ main(argc, argv)
 		errx(1, "Filesystem is not clean, fsck %s before running %s\n",
 		     devpath, __progname);
 
-	/* Do the work */
-	fsirand(devfd, sblock, printonly);
-
-	(void)close(devfd);
-
-	exit(0);
-}
-
-void
-fsirand(fd, sblock, printonly)
-	int fd;
-	struct fs *sblock;
-	int printonly;
-{
-	size_t size, n;
-	daddr_t dblk;
-	static struct dinode *dp;
-	ino_t inumber, lastinum, maxino;
-	size_t readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
-	struct dinode *inodebuf;
-
-	/* Initialize variables and allocate buffer */
-	inumber = 0;
-	lastinum = 0;
-	readcnt = 0;
 	maxino = sblock->fs_ncg * sblock->fs_ipg;
-	inobufsize = blkroundup(sblock, INOBUFSIZE);
-	fullcnt = inobufsize / sizeof(struct dinode);
-	readpercg = sblock->fs_ipg / fullcnt;
-	partialcnt = sblock->fs_ipg % fullcnt;
-	partialsize = partialcnt * sizeof(struct dinode);
-	if (partialcnt != 0) {
-		readpercg++;
-	} else {
-		partialcnt = fullcnt;
-		partialsize = inobufsize;
+	ibufsize = sizeof(struct dinode) * sblock->fs_ipg;
+	if (oldibufsize < ibufsize) {
+		if ((inodebuf = realloc(inodebuf, ibufsize)) == NULL)
+			errx(1, "Can't allocate memory for inode buffer");
+		oldibufsize = ibufsize;
 	}
-	if ((inodebuf = (struct dinode *)malloc((unsigned)inobufsize)) == NULL)
-		errx(1, "Can't allocate memory for inode buffer");
 
-	/* Grab inodes a buffer's length at a time */
-	while (lastinum < maxino) {
-		readcnt++;
-		dblk = fsbtodb(sblock, ino_to_fsba(sblock, lastinum));
-		if (readcnt % readpercg == 0) {
-			size = partialsize;
-			lastinum += partialcnt;
-		} else {
-			size = inobufsize;
-			lastinum += fullcnt;
-		}
+	/* Randomize inodes a cylinder group at a time */
+	for (inumber = 0; inumber < maxino;) {
+		/* Read in inodes, then print or randomize generation nums */
+		dblk = fsbtodb(sblock, ino_to_fsba(sblock, inumber));
 		/* XXX - don't use DEV_BSIZE, get value from disklabel! */
-		if (lseek(fd, (off_t)(dblk * DEV_BSIZE), SEEK_SET) < 0)
-			err(1, "Can't seek to %qd", (off_t)(dblk * DEV_BSIZE));
-		else if ((n = read(fd, inodebuf, size)) != size)
-			errx(1, "Can't read inodes: %s",
-			     (n < size) ? "short read" : strerror(errno));
+		if (lseek(devfd, (off_t)(dblk * DEV_BSIZE), SEEK_SET) < 0) {
+			warn("Can't seek to %qd", (off_t)(dblk * DEV_BSIZE));
+			return;
+		} else if ((n = read(devfd, inodebuf, ibufsize)) != ibufsize) {
+			warnx("Can't read inodes: %s",
+			     (n < ibufsize) ? "short read" : strerror(errno));
+			return;
+		}
 
-		for (dp = inodebuf, n = 0; inumber < lastinum; n++, inumber++)
+		for (n = 0; n < sblock->fs_ipg; n++, inumber++) {
 			if (inumber >= ROOTINO) {
 				if (printonly)
-					(void)printf("ino %d gen %x\n",
-					    inumber, dp[n].di_gen);
+					(void)printf("ino %d gen %x\n", inumber,
+						     inodebuf[n].di_gen);
 				else
-					dp[n].di_gen = arc4random();
+					inodebuf[n].di_gen = arc4random();
 			}
+		}
+
+		/* Write out modified inodes */
 		if (!printonly) {
 			/* XXX - don't use DEV_BSIZE, get from disklabel! */
-			if (lseek(fd, (off_t)(dblk * DEV_BSIZE), SEEK_SET) < 0)
-				err(1, "Can't seek to %qd",
+			if (lseek(devfd, (off_t)(dblk * DEV_BSIZE), SEEK_SET) < 0) {
+				warn("Can't seek to %qd",
 				    (off_t)(dblk * DEV_BSIZE));
-			else if ((n = write(fd, inodebuf, size)) != size)
+				return;
+			} else if ((n = write(devfd, inodebuf, ibufsize)) !=
+				 ibufsize) {
 				errx(1, "Can't write inodes: %s",
-				     (n != size) ? "short write" :
+				     (n != ibufsize) ? "short write" :
 				     strerror(errno));
+				return;
+			}
 		}
 	}
-	(void)free(inodebuf);
+	(void)close(devfd);
 }
 
 void
 usage(ex)
 	int ex;
 {
-	(void)fprintf(stderr, "Usage: %s [ -p ] special\n", __progname);
+	(void)fprintf(stderr, "Usage: %s [ -p ] special [special ...]\n",
+		      __progname);
 	exit(ex);
 }
