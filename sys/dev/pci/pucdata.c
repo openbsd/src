@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.28 2003/06/27 10:04:53 henning Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.29 2003/08/02 17:15:01 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -618,17 +618,13 @@ const struct puc_device_description puc_devices[] = {
 	/*
 	 * VScom PCI 200HV2, is 200H Version 2.
 	 * Sells as 200H
-	 * strange things with the second port, either my card is simply
-	 * broken or something really strange is going on.
-	 * second port does not work at all. I'll request another one for
-	 * further testing.
 	 */
 	{   /* "VScom PCI-200HV2", */
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200HV2,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
 	    },
 	},
 
