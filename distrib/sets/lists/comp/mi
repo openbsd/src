@@ -1613,6 +1613,8 @@
 ./usr/lib/libfl_p.a
 ./usr/lib/libform.a
 ./usr/lib/libform_p.a
+./usr/lib/libfrtbegin.a
+./usr/lib/libfrtbegin_p.a
 ./usr/lib/libg2c.a
 ./usr/lib/libg2c_p.a
 ./usr/lib/libgssapi.a
