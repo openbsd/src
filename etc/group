@@ -49,6 +49,7 @@ _afs:*:81:
 _ppp:*:82:
 _ntp:*:83:
 _ftp:*:84:
+_ospfd:*:85:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
