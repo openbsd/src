@@ -1,0 +1,17 @@
+#	$OpenBSD: rc.shutdown,v 1.1 1999/07/06 07:55:03 deraadt Exp $
+#
+# If it exists, this script is run at system-shutdown by reboot(8),
+# halt(8).
+# If the architecture supports keyboard requested halting, it is also
+# run by init(8) when such an event happens.
+#
+
+echo -n /etc/rc.shutdown in progress...
+
+#
+# Your shell code goes here
+#
+
+
+echo done.
+exit 0		# An exit code of 2 will cause init(8) to attempt powerdown.
