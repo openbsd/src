@@ -1,4 +1,4 @@
-/*	$OpenBSD: nanosleep.c,v 1.3 2002/02/17 05:37:20 art Exp $	*/
+/*	$OpenBSD: nanosleep.c,v 1.4 2002/02/17 05:39:49 art Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain.
  */
@@ -211,8 +211,8 @@ time_elapsed_with_signal(void)
 
 	timeradd(&etv, &stv, &stv);
 
-	if (stv.tv_sec == 0 && stv.tv_usec < 500000) {
-		warnx("slept less than 0.5 sec");
+	if (stv.tv_sec < 10) {
+		warnx("slept time + leftover time < 10 sec");
 		return 1;
 	}
 
