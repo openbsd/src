@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.54 2001/12/16 23:49:47 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.55 2001/12/19 07:04:42 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -165,7 +165,7 @@ kpdt_entry_t     kpdt_free;
 #define	M1x7_PDT_SIZE 0
 #endif 
 
-#define	OBIO_PDT_SIZE	((cputyp == CPU_188) ? M188_PDT_SIZE : M1x7_PDT_SIZE)
+#define	OBIO_PDT_SIZE	((brdtyp == BRD_188) ? M188_PDT_SIZE : M1x7_PDT_SIZE)
 #define MAX_KERNEL_PDT_SIZE	(KERNEL_PDT_SIZE + OBIO_PDT_SIZE)
 
 /*
@@ -387,9 +387,21 @@ m88k_protection(pmap_t map, vm_prot_t prot)
 
 	p.bits = 0;
 	p.pte.prot = (prot & VM_PROT_WRITE) ? 0 : 1;
-
+#ifdef M88110
+	if (cputyp == CPU_88110) {
+		p.pte.pg_used = 1;
+		p.pte.modified = p.pte.prot ? 0 : 1;
+		/* if the map is the kernel's map and since this 
+		 * is not a paged kernel, we go ahead and mark 
+		 * the page as modified to avoid an exception 
+		 * upon writing to the page the first time.  XXX smurph 
+		 */
+		if (map == kernel_pmap) { 
+			p.pte.modified = p.pte.prot ? 0 : 1;
+		}
+	}
+#endif 
 	return (p.bits);
-
 } /* m88k_protection */
 
 /*
@@ -601,7 +613,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 		*pte = template.pte;
 #ifdef MVME197
 		/* hack for MVME197 */
-		if (cputyp == CPU_197 && m197_atc_initialized == FALSE) {
+		if (brdtyp == BRD_197 && m197_atc_initialized == FALSE) {
 			int i;
 
 			for (i = 0; i < 32; i++)
@@ -973,8 +985,8 @@ pmap_bootstrap(vm_offset_t load_start,
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("kernel_pmap->sdt_paddr = %x\n",kernel_pmap->sdt_paddr);
-		printf("kernel_pmap->sdt_vaddr = %x\n",kernel_pmap->sdt_vaddr);
+		printf("kernel_pmap->sdt_paddr = 0x%x\n",kernel_pmap->sdt_paddr);
+		printf("kernel_pmap->sdt_vaddr = 0x%x\n",kernel_pmap->sdt_vaddr);
 	}
 	/* init double-linked list of pmap structure */
 	kernel_pmap->next = kernel_pmap;
@@ -993,8 +1005,8 @@ pmap_bootstrap(vm_offset_t load_start,
 	 * Just to be consistent, we will maintain the shadow table for
 	 * kernel pmap also.
 	 */
-
 	kernel_pmap_size = 2*SDT_SIZE;
+
 #ifdef DEBUG
 	printf("kernel segment table from 0x%x to 0x%x\n", kernel_pmap->sdt_vaddr, 
 	       kernel_pmap->sdt_vaddr + kernel_pmap_size);
@@ -1106,7 +1118,7 @@ pmap_bootstrap(vm_offset_t load_start,
 	 *  used by the 1x7 ethernet driver. Remove this when that is fixed.
 	 *  XXX -nivas
 	 */
-	if (cputyp != CPU_188) { /*  != CPU_188 */
+	if (brdtyp != BRD_188) { /*  != BRD_188 */
 		*phys_start = vaddr;
 		etherlen = ETHERPAGES * NBPG;
 		etherbuf = (void *)vaddr;
@@ -1525,7 +1537,7 @@ pmap_pinit(pmap_t p)
 #endif
 
 #ifdef MVME188
-	if (cputyp == CPU_188) {
+	if (brdtyp == BRD_188) {
 		/*
 		 * memory for page tables should be CACHE DISABLED on MVME188
 		 */
@@ -2429,7 +2441,7 @@ pmap_expand(pmap_t map, vm_offset_t v)
 	pmap_extract(kernel_pmap, pdt_vaddr, &pdt_paddr);
 
 #ifdef MVME188
-	if (cputyp == CPU_188) {
+	if (brdtyp == BRD_188) {
 		/*
 		 * the page for page tables should be CACHE DISABLED on MVME188
 		 */

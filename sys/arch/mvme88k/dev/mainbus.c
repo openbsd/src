@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.6 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.7 2001/12/19 07:04:41 smurph Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ mainbus_attach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	printf (" machine type MVME%x\n", cputyp);
+	printf (" machine type MVME%x\n", brdtyp);
 
 	/* XXX
 	 * should have a please-attach-first list for mainbus,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.16 2001/12/16 23:49:46 miod Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.17 2001/12/19 07:04:41 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -66,10 +66,10 @@
 #include <machine/cmmu.h>
 #include <machine/cpus.h>
 #include <machine/cpu_number.h>
-#if defined(MVME187) || defined(MVME188)
+#ifdef M88100
 #include <machine/m882xx.h>
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
+#ifdef M88110
 #include <machine/m88110.h>
 #endif /* MVME197 */
 
@@ -95,56 +95,53 @@ int      cpu_cmmu_ratio;
 void
 show_apr(unsigned value)
 {
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_show_apr(value);
-      break;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_show_apr(value);
+		break;
 #endif
-#ifdef MVME197
-   case CPU_197:
-      m197_show_apr(value);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_show_apr(value);
+		break;
 #endif 
-   }
+	}
 }
 
 void
 show_sctr(unsigned value)
 {
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_show_sctr(value);
-      break;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_show_sctr(value);
+		break;
 #endif
-#ifdef MVME197
-   case CPU_197:
-      m197_show_sctr(value);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_show_sctr(value);
+		break;
 #endif 
-   }
+	}
 }
 #endif /* CMMU_DEBUG */
 
 void 
 setup_board_config(void)
 {
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_setup_board_config();
-      break;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_setup_board_config();
+		break;
 #endif
-#ifdef MVME197
-   case CPU_197:
-      m197_setup_board_config();
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_setup_board_config();
+		break;
 #endif 
-   }
+	}
 }
 
 void 
@@ -156,14 +153,13 @@ setup_cmmu_config(void)
 		cpu_sets[cpu] = 0;
 
 	switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-	case CPU_187:
-	case CPU_188:
+#ifdef M88100
+	case CPU_88100:
 		m18x_setup_cmmu_config();
 		break;
 #endif
-#ifdef MVME197
-	case CPU_197:
+#ifdef M88110
+	case CPU_88110:
 		m197_setup_cmmu_config();
 		break;
 #endif 
@@ -173,19 +169,18 @@ setup_cmmu_config(void)
 void 
 cmmu_dump_config(void)
 {
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_dump_config();
-      break;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_dump_config();
+		break;
 #endif
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_dump_config();
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_dump_config();
+		break;
 #endif 
-   }
+	}
 }
 
 #ifdef DDB
@@ -195,23 +190,22 @@ cmmu_dump_config(void)
 unsigned 
 cmmu_get_by_mode(int cpu, int mode)
 {
-   unsigned retval;
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      retval = m18x_cmmu_get_by_mode(cpu, mode);
-      break;
+	unsigned retval;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		retval = m18x_cmmu_get_by_mode(cpu, mode);
+		break;
 #endif
-#ifdef MVME197
-   case CPU_197:
-      retval = m197_cmmu_get_by_mode(cpu, mode);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		retval = m197_cmmu_get_by_mode(cpu, mode);
+		break;
 #endif 
-   }
-   CMMU_UNLOCK;
-   return retval;
+	}
+	CMMU_UNLOCK;
+	return retval;
 }
 #endif
 
@@ -223,21 +217,20 @@ cmmu_get_by_mode(int cpu, int mode)
 void 
 cpu_configuration_print(int master)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cpu_configuration_print(master);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cpu_configuration_print(master);
+		break;
 #endif
-#ifdef MVME197
-   case CPU_197:
-      m197_cpu_configuration_print(master);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cpu_configuration_print(master);
+		break;
 #endif 
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 /*
@@ -250,14 +243,13 @@ cmmu_init(void)
 	simple_lock_init(&cmmu_cpu_lock);
 
 	switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-	case CPU_187:
-	case CPU_188:
+#ifdef M88100
+	case CPU_88100:
 		m18x_cmmu_init();
 		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-	case CPU_197:
+#ifdef M88110
+	case CPU_88110:
 		m197_cmmu_init();
 		break;
 #endif /* MVME197 */
@@ -270,21 +262,20 @@ cmmu_init(void)
 void
 cmmu_shutdown_now(void)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_shutdown_now();
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_shutdown_now();
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_shutdown_now();
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_shutdown_now();
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 #define PARITY_ENABLE
@@ -296,21 +287,20 @@ void
 cmmu_parity_enable(void)
 {
 #ifdef PARITY_ENABLE
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_parity_enable();
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_parity_enable();
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_parity_enable();
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_parity_enable();
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 #endif  /* PARITY_ENABLE */
 }
 
@@ -322,23 +312,22 @@ cmmu_parity_enable(void)
 unsigned 
 cmmu_cpu_number(void)
 {
-   unsigned retval;
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      retval = m18x_cmmu_cpu_number();
-      break;
+	unsigned retval;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		retval = m18x_cmmu_cpu_number();
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      retval = m197_cmmu_cpu_number();
-      break;
+#ifdef M88110
+	case CPU_88110:
+		retval = m197_cmmu_cpu_number();
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
-   return retval;
+	}
+	CMMU_UNLOCK;
+	return retval;
 }
 
 /**
@@ -348,21 +337,20 @@ cmmu_cpu_number(void)
 void
 cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_remote_set(cpu, r, data, x);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_remote_set(cpu, r, data, x);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_remote_set(cpu, r, data, x);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_remote_set(cpu, r, data, x);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 /*
@@ -372,86 +360,82 @@ cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 unsigned
 cmmu_remote_get(unsigned cpu, unsigned r, unsigned data)
 {
-   unsigned retval;
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      retval = m18x_cmmu_remote_get(cpu, r, data);
-      break;
+	unsigned retval;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		retval = m18x_cmmu_remote_get(cpu, r, data);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      retval = m197_cmmu_remote_get(cpu, r, data);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		retval = m197_cmmu_remote_get(cpu, r, data);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
-   return retval;
+	}
+	CMMU_UNLOCK;
+	return retval;
 }
 
 /* Needs no locking - read only registers */
 unsigned
 cmmu_get_idr(unsigned data)
 {
-   unsigned retval;
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      retval = m18x_cmmu_get_idr(data);
-      break;
+	unsigned retval;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		retval = m18x_cmmu_get_idr(data);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      retval = m197_cmmu_get_idr(data);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		retval = m197_cmmu_get_idr(data);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
-   return retval;
+	}
+	CMMU_UNLOCK;
+	return retval;
 }
 
 void
 cmmu_set_sapr(unsigned ap)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_set_sapr(ap);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_set_sapr(ap);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_set_sapr(ap);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_set_sapr(ap);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 void
 cmmu_remote_set_sapr(unsigned cpu, unsigned ap)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_remote_set_sapr(cpu, ap);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_remote_set_sapr(cpu, ap);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_remote_set_sapr(cpu, ap);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_remote_set_sapr(cpu, ap);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 void
@@ -460,14 +444,13 @@ cmmu_set_uapr(unsigned ap)
 	register int s = splhigh();
 	CMMU_LOCK;
 	switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-	case CPU_187:
-	case CPU_188:
+#ifdef M88100
+	case CPU_88100:
 		m18x_cmmu_set_uapr(ap);
 		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-	case CPU_197:
+#ifdef M88110
+	case CPU_88110:
 		m197_cmmu_set_uapr(ap);
 		break;
 #endif /* MVME197 */
@@ -491,21 +474,20 @@ cmmu_set_batc_entry(
                    unsigned data,   /* 1 = data, 0 = instruction */
                    unsigned value)  /* the value to stuff into the batc */
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_set_batc_entry(cpu, entry_no, data, value);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_set_batc_entry(cpu, entry_no, data, value);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_set_batc_entry(cpu, entry_no, data, value);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_set_batc_entry(cpu, entry_no, data, value);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 /*
@@ -518,21 +500,20 @@ cmmu_set_pair_batc_entry(
                         unsigned entry_no,
                         unsigned value)  /* the value to stuff into the batc */
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_set_pair_batc_entry(cpu, entry_no, value);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_set_pair_batc_entry(cpu, entry_no, value);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_set_pair_batc_entry(cpu, entry_no, value);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_set_pair_batc_entry(cpu, entry_no, value);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 /**
@@ -546,21 +527,20 @@ cmmu_set_pair_batc_entry(
 void
 cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr, int size)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 /*
@@ -569,9 +549,9 @@ cmmu_flush_remote_tlb(unsigned cpu, unsigned kernel, vm_offset_t vaddr, int size
 void
 cmmu_flush_tlb(unsigned kernel, vm_offset_t vaddr, int size)
 {
-   int cpu;
-   cpu = cpu_number();
-   cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
+	int cpu;
+	cpu = cpu_number();
+	cmmu_flush_remote_tlb(cpu, kernel, vaddr, size);
 }
 
 /*
@@ -589,14 +569,13 @@ cmmu_pmap_activate(
 	register int s = splhigh();
 	CMMU_LOCK;
 	switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-	case CPU_187:
-	case CPU_188:
+#ifdef M88100
+	case CPU_88100:
 		m18x_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc);
 		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-	case CPU_197:
+#ifdef M88110
+	case CPU_88110:
 		m197_cmmu_pmap_activate(cpu, uapr, i_batc, d_batc);
 		break;
 #endif /* MVME197 */
@@ -624,21 +603,20 @@ cmmu_pmap_activate(
 void
 cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_flush_remote_cache(cpu, physaddr, size);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_flush_remote_cache(cpu, physaddr, size);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_flush_remote_cache(cpu, physaddr, size);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_flush_remote_cache(cpu, physaddr, size);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 /*
@@ -647,8 +625,8 @@ cmmu_flush_remote_cache(int cpu, vm_offset_t physaddr, int size)
 void
 cmmu_flush_cache(vm_offset_t physaddr, int size)
 {
-   int cpu = cpu_number();
-   cmmu_flush_remote_cache(cpu, physaddr, size);
+	int cpu = cpu_number();
+	cmmu_flush_remote_cache(cpu, physaddr, size);
 }
 
 /*
@@ -657,21 +635,20 @@ cmmu_flush_cache(vm_offset_t physaddr, int size)
 void
 cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_flush_remote_inst_cache(cpu, physaddr, size);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_flush_remote_inst_cache(cpu, physaddr, size);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_flush_remote_inst_cache(cpu, physaddr, size);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_flush_remote_inst_cache(cpu, physaddr, size);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 /*
@@ -680,29 +657,28 @@ cmmu_flush_remote_inst_cache(int cpu, vm_offset_t physaddr, int size)
 void
 cmmu_flush_inst_cache(vm_offset_t physaddr, int size)
 {
-   int cpu;
-   cpu = cpu_number();
-   cmmu_flush_remote_inst_cache(cpu, physaddr, size);
+	int cpu;
+	cpu = cpu_number();
+	cmmu_flush_remote_inst_cache(cpu, physaddr, size);
 }
 
 void
 cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size)
 { 
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_flush_remote_data_cache(cpu, physaddr, size);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_flush_remote_data_cache(cpu, physaddr, size);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_flush_remote_data_cache(cpu, physaddr, size);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_flush_remote_data_cache(cpu, physaddr, size);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 /*
@@ -711,9 +687,9 @@ cmmu_flush_remote_data_cache(int cpu, vm_offset_t physaddr, int size)
 void
 cmmu_flush_data_cache(vm_offset_t physaddr, int size)
 { 
-   int cpu;
-   cpu = cpu_number();
-   cmmu_flush_remote_data_cache(cpu, physaddr, size);
+	int cpu;
+	cpu = cpu_number();
+	cmmu_flush_remote_data_cache(cpu, physaddr, size);
 }
 
 #if 0
@@ -723,82 +699,78 @@ cmmu_flush_data_cache(vm_offset_t physaddr, int size)
 void
 cmmu_sync_cache(vm_offset_t physaddr, int size)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_sync_cache(physaddr, size);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_sync_cache(physaddr, size);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_sync_cache(physaddr, size);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_sync_cache(physaddr, size);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 void
 cmmu_sync_inval_cache(vm_offset_t physaddr, int size)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_sync_inval_cache(physaddr, size);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_sync_inval_cache(physaddr, size);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_sync_inval_cache(physaddr, size);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_sync_inval_cache(physaddr, size);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 void
 cmmu_inval_cache(vm_offset_t physaddr, int size)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_inval_cache(physaddr, size);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_inval_cache(physaddr, size);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_inval_cache(physaddr, size);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_inval_cache(physaddr, size);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 #endif
 
 void
 dma_cachectl(vm_offset_t va, int size, int op)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_dma_cachectl(va, size, op);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_dma_cachectl(va, size, op);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_dma_cachectl(va, size, op);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_dma_cachectl(va, size, op);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 #ifdef DDB
@@ -814,59 +786,56 @@ cmmu_show_translation(
                      unsigned verbose_flag,
                      int cmmu_num)
 {
-   CMMU_LOCK;
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_show_translation(address, supervisor_flag, 
-                                 verbose_flag, cmmu_num);
-      break;
+	CMMU_LOCK;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_show_translation(address, supervisor_flag, 
+					   verbose_flag, cmmu_num);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_show_translation(address, supervisor_flag, 
-                                 verbose_flag, cmmu_num);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_show_translation(address, supervisor_flag, 
+					   verbose_flag, cmmu_num);
+		break;
 #endif /* MVME197 */
-   }
-   CMMU_UNLOCK;
+	}
+	CMMU_UNLOCK;
 }
 
 
 void
 cmmu_cache_state(unsigned addr, unsigned supervisor_flag)
 {
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_cmmu_cache_state(addr, supervisor_flag);
-      break;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_cmmu_cache_state(addr, supervisor_flag);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_cmmu_cache_state(addr, supervisor_flag);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_cmmu_cache_state(addr, supervisor_flag);
+		break;
 #endif /* MVME197 */
-   }
+	}
 }
 
 void
 show_cmmu_info(unsigned addr)
 {
-   switch (cputyp) {
-#if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_show_cmmu_info(addr);
-      break;
+	switch (cputyp) {
+#ifdef M88100
+	case CPU_88100:
+		m18x_show_cmmu_info(addr);
+		break;
 #endif /* defined(MVME187) || defined(MVME188) */
-#ifdef MVME197
-   case CPU_197:
-      m197_show_cmmu_info(addr);
-      break;
+#ifdef M88110
+	case CPU_88110:
+		m197_show_cmmu_info(addr);
+		break;
 #endif /* MVME197 */
-   }
+	}
 }
 #endif /* end if DDB */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.14 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.15 2001/12/19 07:04:41 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -197,8 +197,6 @@ vxmatch(parent, self, aux)
 	struct vxreg *vx_reg;
 	struct confargs *ca = aux;
    
-	if (cputyp != CPU_187)
-		return 0;
 #ifdef OLD_MAPPINGS
 	ca->ca_vaddr = ca->ca_paddr;
 #endif

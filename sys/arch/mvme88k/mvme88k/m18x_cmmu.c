@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.16 2001/12/16 23:49:46 miod Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.17 2001/12/19 07:04:41 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -340,9 +340,9 @@ m18x_setup_board_config()
 	volatile unsigned long *whoami;
 
 	master_cpu = 0;	/* temp to get things going */
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME187
-	case CPU_187:
+	case BRD_187:
 		vme188_config = 10; /* There is no WHOAMI reg on MVME1x7 - fake it... */
 		cmmu[0].cmmu_regs = (void *)SBC_CMMU_I;
 		cmmu[0].cmmu_cpu = 0;
@@ -359,7 +359,7 @@ m18x_setup_board_config()
 		break;
 #endif /* defined(MVME187) */
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		whoami = (volatile unsigned long *)MVME188_WHOAMI;
 		vme188_config = (*whoami & 0xf0) >> 4;
 		dprintf(DB_CMMU,("m18x_setup_board_config: WHOAMI @ 0x%08x holds value 0x%08x vme188_config = %d\n",
@@ -415,7 +415,7 @@ m18x_setup_cmmu_config()
 			union cpupid id;
 
 			id.cpupid = cmmu[cmmu_num].cmmu_regs->idr;
-			if (id.m88200.type != M88200 && id.m88200.type != M88204) {
+			if (id.m88200.type != M88200_ID && id.m88200.type != M88204_ID) {
 				printf("WARNING: non M8820x circuit found at CMMU address 0x%08x\n",
 				       cmmu[cmmu_num].cmmu_regs);
 				continue;
@@ -444,7 +444,7 @@ m18x_setup_cmmu_config()
 		cpu_sets[num] = 1;   /* This cpu installed... */
 		id.cpupid = cmmu[num*cpu_cmmu_ratio].cmmu_regs->idr;
 
-		if (id.m88200.type == M88204)
+		if (id.m88200.type == M88204_ID)
 			printf("CPU%d is attached with %d MC88204 CMMUs\n",
 			       num, cpu_cmmu_ratio);
 		else
@@ -621,13 +621,13 @@ m18x_cmmu_dump_config()
 
 	DEBUG_MSG("Current CPU/CMMU configuration:\n\n");
 
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME187
-	case CPU_187:
+	case BRD_187:
 		DEBUG_MSG("VME1x7 split mode\n\n");
 #endif /* defined(MVME187) */
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
 		pcnfb = (volatile unsigned long *)MVME188_PCNFB;
 		DEBUG_MSG("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);
@@ -833,7 +833,7 @@ m18x_cmmu_init()
 			}
 
 			/* 88204 has additional cache to clear */
-			if (id.m88200.type == M88204) {
+			if (id.m88200.type == M88204_ID) {
 				for (tmp = 0; tmp < 255; tmp++) {
 					cmmu[cmmu_num].cmmu_regs->sar = tmp<<4;
 					cmmu[cmmu_num].cmmu_regs->cssp1 = 0x3f0ff000;
@@ -903,7 +903,7 @@ m18x_cmmu_init()
 		 * We enable it for instruction cmmus as well so that we can have
 		 * breakpoints, etc, and modify code.
 		 */
-		if (cputyp == CPU_188) {
+		if (brdtyp == BRD_188) {
 			tmp =
 			! CMMU_SCTR_PE |  /* not parity enable */
 			CMMU_SCTR_SE |	/* snoop enable */
@@ -967,7 +967,7 @@ m18x_cmmu_shutdown_now()
 	 * Now set some state as we like...
 	 */
 	for (cmmu_num = 0; cmmu_num < MAX_CMMUS; cmmu_num++) {
-		if (cputyp == CPU_188) {
+		if (brdtyp == BRD_188) {
 			tmp =
 			! CMMU_SCTR_PE |   /* parity enable */
 			! CMMU_SCTR_SE |   /* snoop enable */

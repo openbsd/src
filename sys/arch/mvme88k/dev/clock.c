@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.14 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.15 2001/12/19 07:04:41 smurph Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -264,7 +264,7 @@ delay(us)
 	 * Do not go to the real timer until vme device is present.
 	 * Or, in the case of MVME188, not at all.
 	 */
-	if (sys_vme2 == NULL || cputyp == CPU_188) {
+	if (sys_vme2 == NULL || brdtyp == BRD_188) {
 		c = 3 * us;
 		while (--c > 0);
 		return (0);

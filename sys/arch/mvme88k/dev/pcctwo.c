@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.12 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.13 2001/12/19 07:04:41 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -81,32 +81,32 @@ int pcctwo_scan __P((struct device *parent, void *child, void *args));
 
 int
 pcctwomatch(parent, vcf, args)
-	struct device *parent;
-	void *vcf, *args;
+struct device *parent;
+void *vcf, *args;
 {
 	struct confargs *ca = args;
 	struct pcctworeg *pcc2;
 
 	/* Bomb if wrong cpu */
-	switch (cputyp) {
-   case CPU_187:
-      pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr) + PCC2_PCC2CHIP_OFF);
-      break;
-   case CPU_197: /* pcctwo is a child of buswitch XXX smurph */
-      pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr));
-      break;
-   default:
-	   /* Bomb if wrong cpu */
-      return (0);
-   }
-	
-   if (badvaddr((vm_offset_t)pcc2, 4) <= 0){
-	    printf("==> pcctwo: failed address check.\n");
-	    return (0);
+	switch (brdtyp) {
+	case BRD_187:
+		pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr) + PCC2_PCC2CHIP_OFF);
+		break;
+	case BRD_197: /* pcctwo is a child of buswitch XXX smurph */
+		pcc2 = (struct pcctworeg *)(IIOV(ca->ca_paddr));
+		break;
+	default:
+		/* Bomb if wrong board */
+		return (0);
 	}
-	if (pcc2->pcc2_chipid != PCC2_CHIPID){
-	    printf("==> pcctwo: wrong chip id %x.\n", pcc2->pcc2_chipid);
-	    return (0);
+
+	if (badvaddr((vm_offset_t)pcc2, 4) <= 0) {
+		printf("==> pcctwo: failed address check.\n");
+		return (0);
+	}
+	if (pcc2->pcc2_chipid != PCC2_CHIPID) {
+		printf("==> pcctwo: wrong chip id %x.\n", pcc2->pcc2_chipid);
+		return (0);
 	}
 	return (1);
 }
@@ -160,8 +160,8 @@ pcctwo_scan(parent, child, args)
 
 void
 pcctwoattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+struct device *parent, *self;
+void *args;
 {
 	struct confargs *ca = args;
 	struct pcctwosoftc *sc = (struct pcctwosoftc *)self;
@@ -175,14 +175,14 @@ pcctwoattach(parent, self, args)
 	 */
 	sc->sc_paddr = ca->ca_paddr;
 	sc->sc_vaddr = (void *)IIOV(sc->sc_paddr);
-	switch (cputyp) {
-   case CPU_187:
-      sc->sc_pcc2 = (struct pcctworeg *)(sc->sc_vaddr + PCC2_PCC2CHIP_OFF);
-      break;
-   case CPU_197: /* pcctwo is a child of buswitch XXX smurph */
-      sc->sc_pcc2 = (struct pcctworeg *)sc->sc_vaddr;
-      break;
-   }
+	switch (brdtyp) {
+	case BRD_187:
+		sc->sc_pcc2 = (struct pcctworeg *)(sc->sc_vaddr + PCC2_PCC2CHIP_OFF);
+		break;
+	case BRD_197: /* pcctwo is a child of buswitch XXX smurph */
+		sc->sc_pcc2 = (struct pcctworeg *)sc->sc_vaddr;
+		break;
+	}
 	sys_pcc2 = sc->sc_pcc2;
 
 	printf(": rev %d\n", sc->sc_pcc2->pcc2_chiprev);

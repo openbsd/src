@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.24 2001/12/16 23:49:46 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.25 2001/12/19 07:04:41 smurph Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -216,10 +216,9 @@
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/board.h>
+#include <machine/param.h>          /* CPU_ and BRD_ defines */
 #include <machine/trap.h>           /* for T_ defines */
-#ifdef MVME188
-#include <machine/mvme188.h>
-#endif
+#include <machine/board.h>
 
 /*
  * The exception frame as defined in "machine/pcb.h" (among other places) is
@@ -286,7 +285,7 @@ Lbadcpupanic:
  ** (which is pointed-to by r31).
  **/
 
-#if defined(MVME187) || defined (MVME188)
+#ifdef M88100
 #define PREP(NAME, NUM, BIT, SSBR_STUFF, FLAG_PRECHECK)	; \
 	xcr	FLAGS, FLAGS, SR1			; \
 	FLAG_PRECHECK					; \
@@ -319,9 +318,9 @@ Lbadcpupanic:
 							; \
 	/* All general regs free -- do any debugging */	; \
 	PREP_DEBUG(BIT, NAME)
-#endif /* defined(MVME187) || defined (MVME188) */
+#endif /* m88100 */
 
-#ifdef MVME197	
+#ifdef M88110
 #define PREP2(NAME, NUM, BIT, SSBR_STUFF, FLAG_PRECHECK); \
 	xcr	FLAGS, FLAGS, SR1			; \
 	FLAG_PRECHECK					; \
@@ -341,17 +340,13 @@ Lbadcpupanic:
 	or	TMP2, r0, NUM				; \
 	st	TMP2, r31, REG_OFF(EF_VECTOR)		; \
 							; \
-	/* Clear any bits in the SSBR (held in TMP) */	; \
-	/* SSBR_STUFF may be empty, though.         */	; \
-	SSBR_STUFF					; \
-							; \
 	/* call setup_phase_two to restart the FPU  */	; \
 	/* and to save all general registers.       */	; \
 	bsr	m197_setup_phase_two			; \
 							; \
 	/* All general regs free -- do any debugging */	; \
 	PREP_DEBUG(BIT, NAME)
-#endif /* MVME197 */
+#endif /* M88110 */
 
 /* Some defines for use with PREP() */
 #define No_SSBR_Stuff      /* empty */
@@ -423,7 +418,7 @@ GLOBAL(eh_debug)    word 0x00000000
 #define DONE(num)      br return_from_exception_handler
 #endif
 
-#if defined(MVME187) || defined (MVME188)
+#ifdef M88100
 /*#########################################################################*/
 /*#### THE ACTUAL EXCEPTION HANDLER ENTRY POINTS for MVME18x ##############*/
 /*#########################################################################*/
@@ -684,9 +679,9 @@ GLOBAL(error_handler)
 #if 0 /* MVME188 */
 #define IST_REG      0xfff84040	/* interrupt status addr */
 	/* check if it's a mvme188 */
-	or.u	r10,  r0,   hi16(_cputyp)
-	ld	r11,  r10,  lo16(_cputyp)
-	cmp	r10,  r11,  0x188
+	or.u	r10,  r0,   hi16(_brdtyp)
+	ld	r11,  r10,  lo16(_brdtyp)
+	cmp	r10,  r11,  BRD_188
 	bb1	ne,   r10,  3f
 	or.u	r10,  r0,   hi16(IST_REG) /* interrupt status register */
 	ld	r11,  r10,  lo16(IST_REG)
@@ -896,9 +891,9 @@ ASGLOBAL(ignore_data_exception)
 
 	/* the following jumps to "badaddr__return_nonzero" in below */
 	RTE
-#endif /* defined(MVME187) || defined (MVME188) */
+#endif /* m88100 */
 
-#ifdef MVME197
+#ifdef M88110
 /*
  * This is part of baddadr (below).
  */
@@ -929,7 +924,7 @@ ASGLOBAL(m197_ignore_data_exception)
 	/* the following jumps to "badaddr__return_nonzero" in below */
 	NOP
 	RTE
-#endif /* MVME197 */
+#endif /* M88110 */
 	
 
 /*
@@ -1059,7 +1054,7 @@ ASGLOBAL(badaddr__return)
 ******************************************************************************
 */
 
-#if defined(MVME187) || defined (MVME188) 
+#ifdef M88100 
 
 ASGLOBAL(setup_phase_one)
    /***************** REGISTER STATUS BLOCK ***********************\
@@ -1235,9 +1230,9 @@ ASGLOBAL(have_pcb)
 	 */
 #ifdef MVME188
 	/* check if it's a mvme188 */
-	or.u	TMP,  r0,   hi16(_cputyp)
-	ld	TMP2, TMP,  lo16(_cputyp)
-	cmp	TMP,  TMP2, 0x188
+	or.u	TMP,  r0,   hi16(_brdtyp)
+	ld	TMP2, TMP,  lo16(_brdtyp)
+	cmp	TMP,  TMP2, BRD_188
 	bb1	ne,   TMP,  5f
 	
 	extu	TMP,  FLAGS, FLAG_CPU_FIELD_WIDTH<0>	/* TMP = cpu# */
@@ -1419,7 +1414,7 @@ ASGLOBAL(DMT_check_finished)
 	ldcr	r1,   SR2
 	jmp	r1 /* return to allow the handler to clear more SSBR bits */
 
-#endif /* defined(MVME187) || defined (MVME188) */
+#endif /* m88100 */
 
 /************************************************************************/
 /************************************************************************/
@@ -1504,15 +1499,12 @@ ASGLOBAL(clear_FPp_ssbr_bit)
    br.n  3f
    set   TMP3, TMP3, 1<5> /* set size=1 -- clear one bit for "float" */
 2: set   TMP3, TMP3, 1<6> /* set size=2 -- clear two bit for "double" */
-3:
-   clr   TMP,  TMP,  TMP3   /* clear bit(s) in ssbr. */
-4: 
-   jmp   r1
+3:	clr   TMP,  TMP,  TMP3   /* clear bit(s) in ssbr. */
+4:	jmp   r1
 
 
 /************************************************************************/
 /************************************************************************/
-
 
 ASGLOBAL(clear_dest_ssbr_bit)
    /*
@@ -1615,7 +1607,7 @@ ASGLOBAL(misaligned_double)
 /************************************************************************/
 /************************************************************************/
 
-#if defined(MVME187) || defined (MVME188)
+#ifdef M88100
 
 ASGLOBAL(setup_phase_two)
    /***************** REGISTER STATUS BLOCK ***********************\
@@ -1868,7 +1860,7 @@ exception_handler_has_ksp:  global exception_handler_has_ksp
 
 ASGLOBAL(return_to_calling_exception_handler)
    jmp   r14 /* loaded above */
-#endif /* defined(MVME187) || defined (MVME188) */
+#endif /* m88100 */
 
 
 /*
@@ -1924,15 +1916,14 @@ GLOBAL(return_from_main)
 	 * and thread_bootstrap in luna88k/locore.c.
 	 *
 	 */
-#if (defined(MVME187) || defined(MVME188)) && defined(MVME197)
+#ifdef M88110	
 	or.u	r2, r0, hi16(_cputyp)
 	ld	r3, r2, lo16(_cputyp)
-	cmp	r2, r3, 0x197
+	cmp	r2, r3, CPU_88110
 	bb1	eq, r2, m197_return_code
 #endif 
-
+#ifdef M88100
 	/* 18x part for return_from_exception_handler() follows... */
-#if defined(MVME187) || defined(MVME188)
 #define FPTR    r14
 	ld	FPTR, r31, 0                 /* grab exception frame pointer */ 
 	ld	r3, FPTR, REG_OFF(EF_DMT0)
@@ -1994,9 +1985,9 @@ GLOBAL(return_from_main)
 	st   r0 , FPTR, REG_OFF(EF_DMT0)
    2:
 	br   _check_ast
-#endif	/* defined(MVME187) || defined(MVME188) */
+#endif	/* M88100 */
 	/* 197 part for return_from_exception_handler() follows... */
-#ifdef MVME197
+#ifdef M88110
 ASLOCAL(m197_return_code)
 #define FPTR    r14
 	ld	FPTR, r31, 0                 /* grab exception frame pointer */ 
@@ -2059,7 +2050,7 @@ ASLOCAL(m197_return_code)
    /* clear the dmt0 word in the E.F. */
 	st	r0, FPTR, REG_OFF(EF_DSR)
 2:
-#endif /* MVME197 */
+#endif /* M88110 */
 
 /*
  *   If the saved ipl is 0, then call dosoftint() to process soft
@@ -2076,6 +2067,7 @@ GLOBAL(check_ast)
 	subu	r31, r31, 32
 	bsr.n   _setipl
         or      r2,r0,1
+	/* at ipl 1 now */	
 	addu	r31, r31, 32
         bsr     _dosoftint
         /* is this needed? we are going to restore the ipl below XXX nivas */
@@ -2097,45 +2089,37 @@ GLOBAL(check_ast)
         /*
          * trap(AST,...) will service ast's.
          */
-
-#if defined(MVME187) || defined(MVME188)
-#if defined(MVME197)
+#ifdef M88110         
 	or.u	r2, r0, hi16(_cputyp)
 	ld	r3, r2, lo16(_cputyp)
-	cmp	r2, r3, 0x197
-	bb1	eq, r2, 1f
-#endif
-        CALL(_C_LABEL(trap18x), T_ASTFLT, FPTR)
-#if defined(MVME197)
-	br	2f
-1:
-#endif
-#endif
-#if defined(MVME197)
+	cmp	r2, r3, CPU_88110
+	bb0	eq, r2, 2f
         CALL(_C_LABEL(trap197), T_ASTFLT, FPTR)
+	br	no_ast
 2:
+#endif
+#ifdef M88100
+        CALL(_C_LABEL(trap18x), T_ASTFLT, FPTR)
 #endif
 
 #if 0
         /* assert that ipl is 0; if going back to user, it should be 0 */
 
         bsr     _getipl
-        bcnd    eq0, r2, 2f
+        bcnd    eq0, r2, 3f
         bsr     _panic
-2:
+3:
 #endif
 
 ASGLOBAL(no_ast)
 
         /* disable interrupts */
-
         ldcr    r1, PSR                 
         set     r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
         FLUSH_PIPELINE
         stcr    r1, PSR
 
         /* now ready to return....*/
-        
 	ld      r2, FPTR, REG_OFF(EF_MASK)   /* get pre-exception ipl */
 	bsr.n   _setipl
 	subu	r31, r31, 40
@@ -2145,7 +2129,6 @@ ASGLOBAL(no_ast)
          * Transfer the frame pointer to r31, since we no longer need a stack.
          * No page faults here, and interrupts are disabled.
          */
-
         or      r31, r0,  FPTR
         /* restore r1 later */
         ld.d    r2 , r31, GENREG_OFF(2)
@@ -2170,18 +2153,20 @@ ASGLOBAL(no_ast)
         FLUSH_PIPELINE
         stcr    r1, PSR
 
+	/* reload the control regs*/
+#ifdef M88110
         or.u	r1, r0, hi16(_cputyp)
 	ld	r1, r1, lo16(_cputyp)
-	cmp	r1, r1, 0x197
-	bb0	eq, r1, 1f
-        
+	cmp	r1, r30, CPU_88110
+	bb1	ne, r1, 1f
+        /* mc88110 needs the EXIP */
 	ld      r30, r31, REG_OFF(EF_SNIP)
         ld      r1,  r31, REG_OFF(EF_SXIP)
         stcr    r30, SNIP
         stcr    r1,  SXIP
 	br 	2f      
 1:	
-	/* reload the control regs*/
+#endif 
         st      r0, r31, REG_OFF(EF_IPFSR)
         st      r0, r31, REG_OFF(EF_DPFSR)
 
@@ -2212,7 +2197,7 @@ ASGLOBAL(no_ast)
 ASGLOBAL(return_from_exception)
         RTE
 	
-#ifdef MVME197 	
+#ifdef M88110 	
 /*#########################################################################*/
 /*#### THE ACTUAL EXCEPTION HANDLER ENTRY POINTS - MVME197 ################*/
 /*#########################################################################*/
@@ -2376,7 +2361,6 @@ GLOBAL(m197_userbpt)
 #endif   /* DDB */
 
 /*--------------------------------------------------------------------------*/
-
 /*
  * The error exception handler.
  * The error exception is raised when any other non-trap exception is raised
@@ -2934,17 +2918,16 @@ ASGLOBAL(m197_fpu_enable)
    /*
     * If it's not the interrupt exception, enable interrupts and
     * take care of any data access exceptions......
-    *
-#if INTSTACK
-    * If interrupt exception, switch to interrupt stack if not
-    * already there. Else, switch to kernel stack.
-#endif
     */
    or    r30,  r0,   r31              /* get a copy of the e.f. pointer */
    ld    r2,   r31,  REG_OFF(EF_EPSR)
    bb1   PSR_SUPERVISOR_MODE_BIT, r2, 1f  /* If in kernel mode */
 
 #if INTSTACK
+	/*
+	 * If interrupt exception, switch to interrupt stack if not
+	 * already there. Else, switch to kernel stack.
+	 */
    ld    r3,   r31,  REG_OFF(EF_VECTOR)
    cmp   r3,   r3,   1      /* is interrupt ? */
    bb0   eq,   r3,   2f

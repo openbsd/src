@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.75 2001/12/16 23:49:46 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.76 2001/12/19 07:04:42 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -102,6 +102,7 @@
 
 #include <mvme88k/dev/sysconreg.h>
 #include <mvme88k/dev/pcctworeg.h>
+#include <mvme88k/dev/busswreg.h>
 
 #include "assym.h"			/* EF_EPSR, etc. */
 #include "ksyms.h"
@@ -251,6 +252,8 @@ extern char *esym;
 int boothowto; /* read in locore.S */
 int bootdev;   /* read in locore.S */
 int cputyp;
+int brdtyp;	/* set in locore.S */
+int cpumod = 0; /* set in mvme_bootstrap() */
 int cpuspeed = 25;   /* 25 MHZ XXX should be read from NVRAM */
 
 vm_offset_t first_addr = 0;
@@ -282,7 +285,8 @@ static struct consdev bootcons = {
 	bootcnpollc,
 	NULL,
 	makedev(14,0),
-	1};
+	1
+};
 
 /*
  * Console initialization: called early on from main,
@@ -351,10 +355,11 @@ size_memory()
 			break;
 		*look = save;
 	}
-	if ((look > (unsigned int *)0x01FFF000) && (cputyp == CPU_188)) {
+	if ((look > (unsigned int *)0x01FFF000) && (brdtyp == BRD_188)) {
                 /* temp hack to fake 32Meg on MVME188 */
 		look = (unsigned int *)0x01FFF000; 
 	}
+	
 	physmem = btoc(trunc_page((unsigned)look)); /* in pages */
 	return (trunc_page((unsigned)look));
 }
@@ -397,8 +402,7 @@ void
 identifycpu()
 {
 	cpuspeed = getcpuspeed();
-	sprintf(cpu_model, "Motorola MVME%x %dMhz", cputyp, cpuspeed);
-	printf("\nModel: %s\n", cpu_model);
+	printf("\nModel: Motorola MVME%x %dMhz\n", brdtyp, cpuspeed);
 }
 
 /*
@@ -517,14 +521,27 @@ cpu_startup()
 	/* 
 	 * Grab machine dependant memory spaces
 	 */
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME187
-	case CPU_187:
+	case BRD_187:
+		/*
+		 * Grab the SRAM space that we hardwired in pmap_bootstrap
+		 */
+		sramva = SRAM_START;
+		uvm_map(kernel_map, (vaddr_t *)&sramva, SRAM_SIZE,
+			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
+							     UVM_PROT_NONE,
+							     UVM_INH_NONE,
+							     UVM_ADV_NORMAL, 0));
+
+		if (sramva != SRAM_START) {
+			printf("sramva %x: SRAM not free\n", sramva);
+			panic("bad sramva");
+		}
 #endif 
 #ifdef MVME197
-	case CPU_197:
+	case BRD_197:
 #endif 
-
 #if defined(MVME187) || defined(MVME197)
 		/*
 		 * Grab the BUGROM space that we hardwired in pmap_bootstrap
@@ -542,21 +559,6 @@ cpu_startup()
 		}
 		
 		/*
-		 * Grab the SRAM space that we hardwired in pmap_bootstrap
-		 */
-		sramva = SRAM_START;
-		uvm_map(kernel_map, (vaddr_t *)&sramva, SRAM_SIZE,
-			NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, 
-							     UVM_PROT_NONE,
-							     UVM_INH_NONE,
-							     UVM_ADV_NORMAL, 0));
-
-		if (sramva != SRAM_START) {
-			printf("sramva %x: SRAM not free\n", sramva);
-			panic("bad sramva");
-		}
-
-		/*
 		 * Grab the OBIO space that we hardwired in pmap_bootstrap
 		 */
 		obiova = OBIO_START;
@@ -572,7 +574,7 @@ cpu_startup()
 		break;
 #endif 
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		/*
 		 * Grab the UTIL space that we hardwired in pmap_bootstrap
 		 */
@@ -1324,9 +1326,9 @@ setupiackvectors()
 	 * map a page in for phys address 0xfffe0000 (M187) and set the
 	 * addresses for various levels.
 	 */
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME187
-	case CPU_187:
+	case BRD_187:
 #ifdef MAP_VEC /* do for MVME188 too */
 		vaddr = (u_char *)iomap_mapin(M187_IACK, NBPG, 1);
 #else
@@ -1335,7 +1337,7 @@ setupiackvectors()
 		break;
 #endif /* MVME187 */
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 #ifdef MAP_VEC /* do for MVME188 too */
 		vaddr = (u_char *)iomap_mapin(M188_IACK, NBPG, 1);
 #else
@@ -1350,11 +1352,11 @@ setupiackvectors()
 		ivec[6] = vaddr + 0x18;
 		ivec[7] = vaddr + 0x1c;
 		ivec[8] = vaddr + 0x20;	/* for self inflicted interrupts */
-		*ivec[8] = M188_IVEC;	/* supply a vector for m188ih */
+		*ivec[8] = M188_IVEC;	/* supply a vector base for m188ih */
 		break;
 #endif /* MVME188 */
 #ifdef MVME197
-	case CPU_197:
+	case BRD_197:
 #ifdef MAP_VEC /* do for MVME188 too */
 		vaddr = (u_char *)iomap_mapin(M197_IACK, NBPG, 1);
 #else
@@ -1368,7 +1370,7 @@ setupiackvectors()
 #endif 
 
 #if defined(MVME187) || defined(MVME197)
-	if (cputyp != CPU_188) {
+	if (brdtyp != BRD_188) {
 		ivec[0] = vaddr + 0x03;	/* We dont use level 0 */
 		ivec[1] = vaddr + 0x07;
 		ivec[2] = vaddr + 0x0b;
@@ -1794,7 +1796,7 @@ sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 
 out:
 #ifdef MVME187
-	if (cputyp != CPU_197) {
+	if (brdtyp != BRD_197) {
 		if (eframe->dmt0 & DMT_VALID) {
 			trap18x(T_DATAFLT, eframe);
 			data_access_emulation((unsigned *)eframe);
@@ -2102,13 +2104,13 @@ regdump(struct trapframe *f)
 	printf("R24-29: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
 	       R(24),R(25),R(26),R(27),R(28),R(29));
 	printf("R30-31: 0x%08x  0x%08x\n",R(30),R(31));
-	if (cputyp == CPU_197) {
+	if (cputyp == CPU_88110) {
 		printf("exip %x enip %x\n", f->sxip, f->snip);
 	} else {
 		printf("sxip %x snip %x sfip %x\n", f->sxip, f->snip, f->sfip);
 	}
-#if defined(MVME187) || defined(MVME188)
-	if (f->vector == 0x3 && cputyp != CPU_197) {
+#ifdef M88100
+	if (f->vector == 0x3 && cputyp != CPU_88110) {
 		/* print dmt stuff for data access fault */
 		printf("dmt0 %x dmd0 %x dma0 %x\n", f->dmt0, f->dmd0, f->dma0);
 		printf("dmt1 %x dmd1 %x dma1 %x\n", f->dmt1, f->dmd1, f->dma1);
@@ -2116,7 +2118,7 @@ regdump(struct trapframe *f)
 		printf("fault type %d\n", (f->dpfsr >> 16) & 0x7);
 		dae_print((unsigned *)f);
 	}
-	if (longformat && cputyp != CPU_197) {
+	if (longformat && cputyp != CPU_88110) {
 		printf("fpsr %x ", f->fpsr);
 		printf("fpcr %x ", f->fpcr);
 		printf("epsr %x ", f->epsr);
@@ -2137,7 +2139,7 @@ regdump(struct trapframe *f)
 		printf("cpu %x\n", f->cpu);
 	}
 #endif 
-#ifdef MVME197
+#ifdef M88110
 	if (longformat && cputyp == CPU_197) {
 		printf("fpsr %x ", f->fpsr);
 		printf("fpcr %x ", f->fpcr);
@@ -2159,7 +2161,7 @@ regdump(struct trapframe *f)
 	}
 #endif
 #ifdef MVME188
-	if (cputyp == CPU_188 ) {
+	if (brdtyp == BRD_188 ) {
 		unsigned int istr, cur_mask;
 
 		istr = *(volatile int *)IST_REG;
@@ -2190,19 +2192,19 @@ mvme_bootstrap()
 
 	buginit(); /* init the bug routines */
 	bugbrdid(&brdid);
-	cputyp = brdid.brdno;
+	brdtyp = brdid.brdno;
 
 	/* to support the M8120.  It's based off of MVME187 */
-	if (cputyp == 0x8120)
-		cputyp = CPU_187;
+	if (brdtyp == BRD_8120)
+		brdtyp = BRD_187;
 
 	/* 
 	 * set up interrupt and fp exception handlers 
 	 * based on the machine.
 	 */
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		mdfp.interrupt_func = &m188_ext_int;
 		mdfp.fp_precise_func = &m88100_Xfp_precise;
 		/* clear and disable all interrupts */
@@ -2213,13 +2215,13 @@ mvme_bootstrap()
 		break;
 #endif /* MVME188 */
 #ifdef MVME187
-	case CPU_187:
+	case BRD_187:
 		mdfp.interrupt_func = &sbc_ext_int;
 		mdfp.fp_precise_func = &m88100_Xfp_precise;
 		break;
 #endif /* MVME187 */
 #ifdef MVME197
-	case CPU_197:
+	case BRD_197:
 		mdfp.interrupt_func = &sbc_ext_int;
 		mdfp.fp_precise_func = &m88110_Xfp_precise;
 		set_tcfp(); /* Set Time Critical Floating Point Mode */
@@ -2246,7 +2248,7 @@ mvme_bootstrap()
 	printf("CPU%d is master CPU\n", master_cpu);
 
 #ifdef notevenclose
-	if (cputyp == CPU_188 && (boothowto & RB_MINIROOT)) {
+	if (brdtyp == BRD_188 && (boothowto & RB_MINIROOT)) {
 		int i;
 		for (i=0; i<MAX_CPUS; i++) {
 			if (!spin_cpu(i))
@@ -2260,13 +2262,13 @@ mvme_bootstrap()
 	 * Steal MSGBUFSIZE at the top of physical memory for msgbuf
 	 */
 	avail_end -= round_page(MSGBUFSIZE);
+
 #ifdef DEBUG
-	printf("MVME%x boot: memory from 0x%x to 0x%x\n", cputyp, avail_start, avail_end);
+	printf("MVME%x boot: memory from 0x%x to 0x%x\n", brdtyp, avail_start, avail_end);
 #endif 
 	pmap_bootstrap((vm_offset_t)trunc_page((unsigned)&kernelstart) /* = loadpt */, 
 		       &avail_start, &avail_end, &virtual_avail,
 		       &virtual_end);
-
 	/*
 	 * Tell the VM system about available physical memory.  
 	 * mvme88k only has one segment.

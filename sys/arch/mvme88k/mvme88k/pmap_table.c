@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.11 2001/12/16 23:49:47 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.12 2001/12/19 07:04:42 smurph Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,7 +63,6 @@ static pmap_table_entry m188_board_table[] = {
 #ifdef MVME197
 static pmap_table_entry m197_board_table[] = {
 	{ BUGROM_START, BUGROM_START, BUGROM_SIZE, RW, CI},
-	{ SRAM_START  , SRAM_START  , SRAM_SIZE  , RW, CG},
 	{ OBIO_START  , OBIO_START  , OBIO_SIZE  , RW, CI},
 	{ 0           , 0           , 0xffffffff , 0 , 0},
 };
@@ -76,19 +75,19 @@ pmap_table_build(endoftext)
 	unsigned int i;
 	pmap_table_t bt, pbt;
 
-	switch (cputyp) {
+	switch (brdtyp) {
 #ifdef MVME187
-	case CPU_187:
+	case BRD_187:
 		bt = m187_board_table;
 		break;
 #endif 
 #ifdef MVME188
-	case CPU_188:
+	case BRD_188:
 		bt = m188_board_table;
 		break;
 #endif 
 #ifdef MVME197
-	case CPU_197:
+	case BRD_197:
 		bt = m197_board_table;
 		break;
 #endif 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.17 2001/12/16 23:49:46 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.18 2001/12/19 07:04:41 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -217,8 +217,6 @@ int dopoll = 1;
 #define CL_CHANNEL(x) (minor(x) & 3)
 #define CL_TTY(x) (minor(x))
 
-extern int cputyp;
-
 struct tty *cltty __P((dev_t dev));
 
 struct tty *cltty(dev)
@@ -247,20 +245,17 @@ clprobe(parent, self, aux)
 	 */
 	struct clreg *cl_reg;
 	struct confargs *ca = aux;
-	int ret;
-	if (cputyp != CPU_187)
+	
+	if (brdtyp == BRD_188)
 		return 0;
 
 	ca->ca_ipl = IPL_TTY;
-	ca->ca_paddr = (void *)CD2400_BASE_ADDR;
+	ca->ca_vaddr = ca->ca_paddr = (void *)CD2400_BASE_ADDR;
 	cl_reg = (struct clreg *)ca->ca_vaddr;
 
-#if 0
-	ret = !badvaddr(&cl_reg->cl_gfrcr,1);
-#else
-	ret = 1;
-#endif
-	return ret;
+	if (badvaddr((vm_offset_t)&cl_reg->cl_gfrcr,1))
+		return 0;
+	return 1;
 }
 
 void
@@ -928,7 +923,7 @@ clcnprobe(cp)
 	int maj;
 
 	/* bomb if it'a a MVME188 */
-	if (cputyp == CPU_188) {
+	if (brdtyp == BRD_188) {
 		cp->cn_pri = CN_DEAD;
 		return 0;
 	}
@@ -948,7 +943,7 @@ clcninit(cp)
 {
 	volatile struct clreg *cl_reg;
 	
-	cl_cons.cl_paddr = (void *)0xfff45000;
+	cl_cons.cl_paddr = (void *)CD2400_BASE_ADDR;
 	cl_cons.cl_vaddr   = (struct clreg *)IIOV(cl_cons.cl_paddr);
 	cl_cons.pcctwoaddr = (void *)IIOV(0xfff42000);
 	cl_reg = cl_cons.cl_vaddr;

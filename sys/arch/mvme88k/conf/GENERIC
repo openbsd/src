@@ -1,12 +1,14 @@
-#	$OpenBSD: GENERIC,v 1.27 2001/12/19 04:02:25 smurph Exp $
+#	$OpenBSD: GENERIC,v 1.28 2001/12/19 07:04:41 smurph Exp $
 
 machine		mvme88k 
 
 include "../../../conf/GENERIC"
 
-option		MVME187		# support for 187
-option		MVME188		# support for 188
-#option		MVME197		# support for 197
+option		M88100		# support for mc88110 processor
+#option		M88110		# support for mc88110 processor
+option		MVME187		# support for 187 (M88100 required)
+option		MVME188		# support for 188 (M88100 required)
+#option		MVME197		# support for 197 (M88110 required)
 option		"NCPUS=1"	# number of CPUs supported (max 4)
 option		BUGMAP		# use the Bug ROM VME mappings
 #option		DEBUG		# print debugging statements
@@ -31,7 +33,7 @@ pcctwo0 at mainbus0 addr 0xfff00000
 syscon0 at mainbus0 addr 0xfff00000
 bussw0  at mainbus0 addr 0xfff00000
 
-# ----------------------------- busswitch devices -----------------------
+# ------------------------------ bussw devices --------------------------
 pcctwo0 at bussw0 offset 0x42000
 
 # ------------------------------ pcctwo devices -------------------------
