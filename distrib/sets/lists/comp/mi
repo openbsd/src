@@ -205,7 +205,7 @@
 ./usr/include/dev/pci/if_fxpreg.h
 ./usr/include/dev/pci/if_fxpvar.h
 ./usr/include/dev/pci/if_levar.h
-./usr/include/dev/pci/if_tlvar.h
+./usr/include/dev/pci/if_tlreg.h
 ./usr/include/dev/pci/if_txvar.h
 ./usr/include/dev/pci/if_xlreg.h
 ./usr/include/dev/pci/ncrreg.h
