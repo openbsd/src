@@ -62,7 +62,8 @@ Supported devices {:-include-:}:
 		USB printers.
 
 	Cryptography Accelerators:
-		Hifn 7751/Hifn 7951
+		Hifn 7751/7811/7951 (hifn)
+		Bluesteelnet 5501/5601, Broadcom 5805/5820/5821 (ubsec)
 
 The built-in firewire (IEEE1394) ports available in some machines are
 not supported.
