@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.31 2003/06/02 23:28:13 millert Exp $	*/
+/*	$OpenBSD: in.c,v 1.32 2003/06/23 08:09:21 itojun Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -755,21 +755,20 @@ in_addprefix(target, flags)
 
 	if ((flags & RTF_HOST) != 0)
 		prefix = target->ia_dstaddr.sin_addr;
-	else
+	else {
 		prefix = target->ia_addr.sin_addr;
-	mask = target->ia_sockmask.sin_addr;
-	prefix.s_addr &= mask.s_addr;
+		mask = target->ia_sockmask.sin_addr;
+		prefix.s_addr &= mask.s_addr;
+	}
 
 	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
-		/* easy one first */
-		if (mask.s_addr != ia->ia_sockmask.sin_addr.s_addr)
-			continue;
-
 		if (rtinitflags(ia))
 			p = ia->ia_dstaddr.sin_addr;
-		else
+		else {
 			p = ia->ia_addr.sin_addr;
-		p.s_addr &= ia->ia_sockmask.sin_addr.s_addr;
+			p.s_addr &= ia->ia_sockmask.sin_addr.s_addr;
+		}
+
 		if (prefix.s_addr != p.s_addr)
 			continue;
 
@@ -808,21 +807,20 @@ in_scrubprefix(target)
 
 	if (rtinitflags(target))
 		prefix = target->ia_dstaddr.sin_addr;
-	else
+	else {
 		prefix = target->ia_addr.sin_addr;
-	mask = target->ia_sockmask.sin_addr;
-	prefix.s_addr &= mask.s_addr;
+		mask = target->ia_sockmask.sin_addr;
+		prefix.s_addr &= mask.s_addr;
+	}
 
 	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
-		/* easy one first */
-		if (mask.s_addr != ia->ia_sockmask.sin_addr.s_addr)
-			continue;
-
 		if (rtinitflags(ia))
 			p = ia->ia_dstaddr.sin_addr;
-		else
+		else {
 			p = ia->ia_addr.sin_addr;
-		p.s_addr &= ia->ia_sockmask.sin_addr.s_addr;
+			p.s_addr &= ia->ia_sockmask.sin_addr.s_addr;
+		}
+
 		if (prefix.s_addr != p.s_addr)
 			continue;
 
