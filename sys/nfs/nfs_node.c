@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.14 2001/06/24 21:16:19 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.15 2001/06/25 03:28:06 csapuntz Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
 #include <nfs/nfsmount.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
 LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
@@ -207,8 +206,7 @@ nfs_inactive(v)
 		vrele(sp->s_dvp);
 		FREE((caddr_t)sp, M_NFSREQ);
 	}
-	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
-		NQNFSNONCACHE | NQNFSWRITE);
+	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT);
 
 	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
 	return (0);
@@ -226,7 +224,6 @@ nfs_reclaim(v)
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct nfsnode *np = VTONFS(vp);
-	register struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	register struct nfsdmap *dp, *dp2;
 	extern int prtactive;
 
@@ -235,13 +232,6 @@ nfs_reclaim(v)
 
 	if (np->n_hash.le_prev != NULL)
 		LIST_REMOVE(np, n_hash);
-
-	/*
-	 * For nqnfs, take it off the timer queue as required.
-	 */
-	if ((nmp->nm_flag & NFSMNT_NQNFS) && np->n_timer.cqe_next != 0) {
-		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
-	}
 
 	/*
 	 * Free up any directory cookie structures and

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.13 2001/06/25 02:15:47 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.14 2001/06/25 03:28:12 csapuntz Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -46,8 +46,6 @@ struct vnode;
 struct nfsd;
 struct mbuf;
 struct file;
-struct nqlease;
-struct nqhost;
 struct nfssvc_sock;
 struct nfsmount;
 struct socket;
@@ -146,33 +144,6 @@ int nfsspec_close __P((void *));
 int nfsfifo_read __P((void *));
 int nfsfifo_write __P((void *));
 int nfsfifo_close __P((void *));
-
-/* nfs_nqlease.c */
-void nqnfs_lease_updatetime __P((int));
-void nqnfs_clientlease __P((struct nfsmount *, struct nfsnode *, int, int,
-			    time_t, u_quad_t));
-void nqsrv_locklease __P((struct nqlease *));
-void nqsrv_unlocklease __P((struct nqlease *));
-int nqsrv_getlease __P((struct vnode *, u_int32_t *, int, struct nfssvc_sock *,
-			struct proc *, struct mbuf *, int *, u_quad_t *,
-			struct ucred *));
-int nqnfs_vop_lease_check __P((void *));
-void nqsrv_addhost __P((struct nqhost *, struct nfssvc_sock *, struct mbuf *));
-void nqsrv_instimeq __P((struct nqlease *, u_int32_t));
-int nqsrv_cmpnam __P((struct nfssvc_sock *, struct mbuf *, struct nqhost *));
-void nqsrv_send_eviction __P((struct vnode *, struct nqlease *,
-			      struct nfssvc_sock *, struct mbuf *,
-			      struct ucred *));
-void nqsrv_waitfor_expiry __P((struct nqlease *));
-void nqnfs_serverd __P((void));
-int nqnfsrv_getlease __P((struct nfsrv_descript *, struct nfssvc_sock *,
-			  struct proc *, struct mbuf **));
-int nqnfsrv_vacated __P((struct nfsrv_descript *, struct nfssvc_sock *,
-			 struct proc *, struct mbuf **));
-int nqnfs_getlease __P((struct vnode *, int, struct ucred *, struct proc *));
-int nqnfs_vacated __P((struct vnode *, struct ucred *));
-int nqnfs_callback __P((struct nfsmount *, struct mbuf *, struct mbuf *,
-			caddr_t));
 
 /* nfs_serv.c */
 int nfsrv3_access __P((struct nfsrv_descript *, struct nfssvc_sock *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.30 2001/06/25 02:15:47 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.31 2001/06/25 03:28:10 csapuntz Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsmount.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
@@ -99,7 +98,7 @@ u_int32_t nfs_xdrneg1;
 u_int32_t rpc_call, rpc_vers, rpc_reply, rpc_msgdenied, rpc_autherr,
 	rpc_mismatch, rpc_auth_unix, rpc_msgaccepted,
 	rpc_auth_kerb;
-u_int32_t nfs_prog, nqnfs_prog, nfs_true, nfs_false;
+u_int32_t nfs_prog, nfs_true, nfs_false;
 
 /* And other global data */
 static u_int32_t nfs_xid = 0;
@@ -535,12 +534,7 @@ static short *nfsrv_v3errmap[] = {
 
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern struct nfsrtt nfsrtt;
-extern time_t nqnfsstarttime;
-extern int nqsrv_clockskew;
-extern int nqsrv_writeslack;
-extern int nqsrv_maxlease;
 extern struct nfsstats nfsstats;
-extern int nqnfs_piggy[NFS_NPROCS];
 extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
 extern struct nfsnodehashhead *nfsnodehashtbl;
@@ -561,11 +555,7 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 	caddr_t *bposp;
 {
 	register struct mbuf *mb;
-	register u_int32_t *tl;
 	register caddr_t bpos;
-	struct mbuf *mb2;
-	struct nfsmount *nmp;
-	int nqflag;
 
 	MGET(mb, M_WAIT, MT_DATA);
 	if (hsiz >= MINCLSIZE)
@@ -573,23 +563,6 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 	mb->m_len = 0;
 	bpos = mtod(mb, caddr_t);
 	
-	/*
-	 * For NQNFS, add lease request.
-	 */
-	if (vp) {
-		nmp = VFSTONFS(vp->v_mount);
-		if (nmp->nm_flag & NFSMNT_NQNFS) {
-			nqflag = NQNFS_NEEDLEASE(vp, procid);
-			if (nqflag) {
-				nfsm_build(tl, u_int32_t *, 2*NFSX_UNSIGNED);
-				*tl++ = txdr_unsigned(nqflag);
-				*tl = txdr_unsigned(nmp->nm_leaseterm);
-			} else {
-				nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
-				*tl = 0;
-			}
-		}
-	}
 	/* Finally, return values */
 	*bposp = bpos;
 	return (mb);
@@ -656,16 +629,11 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	*tl++ = *xidp = txdr_unsigned(nfs_xid);
 	*tl++ = rpc_call;
 	*tl++ = rpc_vers;
-	if (nmflag & NFSMNT_NQNFS) {
-		*tl++ = txdr_unsigned(NQNFS_PROG);
-		*tl++ = txdr_unsigned(NQNFS_VER3);
-	} else {
-		*tl++ = txdr_unsigned(NFS_PROG);
-		if (nmflag & NFSMNT_NFSV3)
-			*tl++ = txdr_unsigned(NFS_VER3);
-		else
-			*tl++ = txdr_unsigned(NFS_VER2);
-	}
+	*tl++ = txdr_unsigned(NFS_PROG);
+	if (nmflag & NFSMNT_NFSV3)
+		*tl++ = txdr_unsigned(NFS_VER3);
+	else
+		*tl++ = txdr_unsigned(NFS_VER2);
 	if (nmflag & NFSMNT_NFSV3)
 		*tl++ = txdr_unsigned(procid);
 	else
@@ -1115,7 +1083,6 @@ nfs_init()
 	rpc_auth_unix = txdr_unsigned(RPCAUTH_UNIX);
 	rpc_auth_kerb = txdr_unsigned(RPCAUTH_KERB4);
 	nfs_prog = txdr_unsigned(NFS_PROG);
-	nqnfs_prog = txdr_unsigned(NQNFS_PROG);
 	nfs_true = txdr_unsigned(TRUE);
 	nfs_false = txdr_unsigned(FALSE);
 	nfs_xdrneg1 = txdr_unsigned(-1);
@@ -1126,17 +1093,6 @@ nfs_init()
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
 #endif /* NFSSERVER */
-
-	/*
-	 * Initialize the nqnfs client/server stuff.
-	 */
-	if (nqnfsstarttime == 0) {
-		nqnfsstarttime = boottime.tv_sec + nqsrv_maxlease
-			+ nqsrv_clockskew + nqsrv_writeslack;
-		NQLOADNOVRAM(nqnfsstarttime);
-		CIRCLEQ_INIT(&nqtimerhead);
-		nqfhhashtbl = hashinit(NQLCHSZ, M_NQLEASE, M_WAITOK, &nqfhhash);
-	}
 
 	/*
 	 * Initialize reply list and start timer

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.34 2001/06/24 21:16:20 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.35 2001/06/25 03:28:12 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -67,8 +67,10 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsdiskless.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
+
+#define	NQ_DEADTHRESH	NQ_NEVERDEAD	/* Default nm_deadthresh */
+#define	NQ_NEVERDEAD	9	/* Greater than max. nm_timeouts */
 
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
@@ -522,13 +524,9 @@ nfs_decode_args(nmp, argp, nargp)
 	if ((argp->flags & NFSMNT_READAHEAD) && argp->readahead >= 0 &&
 		argp->readahead <= NFS_MAXRAHEAD)
 		nmp->nm_readahead = argp->readahead;
-	if ((argp->flags & NFSMNT_LEASETERM) && argp->leaseterm >= 2 &&
-		argp->leaseterm <= NQ_MAXLEASE)
-		nmp->nm_leaseterm = argp->leaseterm;
 	if ((argp->flags & NFSMNT_DEADTHRESH) && argp->deadthresh >= 1 &&
 		argp->deadthresh <= NQ_NEVERDEAD)
 		nmp->nm_deadthresh = argp->deadthresh;
-
 	if (argp->flags & NFSMNT_ACREGMIN && argp->acregmin >= 0) {
 		if (argp->acregmin > 0xffff)
 			nmp->nm_acregmin = 0xffff;
@@ -577,7 +575,6 @@ nfs_decode_args(nmp, argp, nargp)
 	nargp->retrans = nmp->nm_retry;
 	nargp->maxgrouplist = nmp->nm_numgrps;
 	nargp->readahead = nmp->nm_readahead;
-	nargp->leaseterm = nmp->nm_leaseterm;
 	nargp->deadthresh = nmp->nm_deadthresh;
 	nargp->acregmin = nmp->nm_acregmin;
 	nargp->acregmax = nmp->nm_acregmax;
@@ -640,10 +637,10 @@ nfs_mount(mp, path, data, ndp, p)
 			return (EIO);
 		/*
 		 * When doing an update, we can't change from or to
-		 * v3 and/or nqnfs.
+		 * v3.
 		 */
-		args.flags = (args.flags & ~(NFSMNT_NFSV3|NFSMNT_NQNFS)) |
-		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_NQNFS));
+		args.flags = (args.flags & ~(NFSMNT_NFSV3)) |
+		    (nmp->nm_flag & (NFSMNT_NFSV3));
 		nfs_decode_args(nmp, &args, &mp->mnt_stat.mount_info.nfs_args);
 		return (0);
 	}
@@ -696,14 +693,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 
 	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
-	if (argp->flags & NFSMNT_NQNFS)
-		/*
-		 * We have to set mnt_maxsymlink to a non-zero value so
-		 * that COMPAT_43 routines will know that we are setting
-		 * the d_type field in directories (and can zero it for
-		 * unsuspecting binaries).
-		 */
-		mp->mnt_maxsymlinklen = 1;
 	nmp->nm_timeo = NFS_TIMEO;
 	nmp->nm_retry = NFS_RETRANS;
 	nmp->nm_wsize = NFS_WSIZE;
@@ -711,7 +700,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	nmp->nm_readdirsize = NFS_READDIRSIZE;
 	nmp->nm_numgrps = NFS_MAXGRPS;
 	nmp->nm_readahead = NFS_DEFRAHEAD;
-	nmp->nm_leaseterm = NQ_DEFLEASE;
 	nmp->nm_deadthresh = NQ_DEADTHRESH;
 	CIRCLEQ_INIT(&nmp->nm_timerhead);
 	nmp->nm_inprog = NULLVP;
@@ -795,13 +783,13 @@ nfs_unmount(mp, mntflags, p)
 	 * We are now committed to the unmount.
 	 * For NQNFS, let the server daemon free the nfsmount structure.
 	 */
-	if (nmp->nm_flag & (NFSMNT_NQNFS | NFSMNT_KERB))
+	if (nmp->nm_flag & NFSMNT_KERB)
 		nmp->nm_flag |= NFSMNT_DISMNT;
 
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 
-	if ((nmp->nm_flag & (NFSMNT_NQNFS | NFSMNT_KERB)) == 0)
+	if ((nmp->nm_flag & NFSMNT_KERB) == 0)
 		free((caddr_t)nmp, M_NFSMNT);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.6 2001/06/22 14:14:10 deraadt Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.7 2001/06/25 03:28:03 csapuntz Exp $  */
 
 
 /*
@@ -301,4 +301,12 @@ filt_generic_readwrite(struct knote *kn, long hint)
 
         kn->kn_data = 0;
         return (1);
+}
+
+int lease_check(void *);
+
+int
+lease_check(void *v)
+{
+	return (0);
 }

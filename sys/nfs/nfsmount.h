@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.8 2001/02/20 01:50:11 assar Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.9 2001/06/25 03:28:14 csapuntz Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -71,7 +71,6 @@ struct	nfsmount {
 	int	nm_wsize;		/* Max size of write rpc */
 	int	nm_readdirsize;		/* Size of a readdir rpc */
 	int	nm_readahead;		/* Num. of blocks to readahead */
-	int	nm_leaseterm;		/* Term (sec) for NQNFS lease */
 	CIRCLEQ_HEAD(, nfsnode) nm_timerhead; /* Head of lease timer queue */
 	struct vnode *nm_inprog;	/* Vnode in prog by nqnfs_clientd() */
 	uid_t	nm_authuid;		/* Uid for authenticator */

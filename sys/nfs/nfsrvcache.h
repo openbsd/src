@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsrvcache.h,v 1.4 1996/04/17 04:50:40 mickey Exp $	*/
+/*	$OpenBSD: nfsrvcache.h,v 1.5 2001/06/25 03:28:16 csapuntz Exp $	*/
 /*	$NetBSD: nfsrvcache.h,v 1.10 1996/02/18 11:54:08 fvdl Exp $	*/
 
 /*
@@ -84,7 +84,6 @@ struct nfsrvcache {
 #define	RC_WANTED	0x02
 #define	RC_REPSTATUS	0x04
 #define	RC_REPMBUF	0x08
-#define	RC_NQNFS	0x10
 #define	RC_INETADDR	0x20
 #define	RC_NAM		0x40
 

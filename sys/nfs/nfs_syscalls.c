@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.17 2001/02/23 14:52:51 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.18 2001/06/25 03:28:11 csapuntz Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <nfs/nfsrvcache.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsnode.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
@@ -88,8 +87,6 @@ extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
 						struct proc *, struct mbuf **));
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nfs_numasync;
-extern time_t nqnfsstarttime;
-extern int nqsrv_writeslack;
 extern int nfsrtton;
 extern struct nfsstats nfsstats;
 extern int nfsrvw_procrastinate;
@@ -99,7 +96,6 @@ int nfsd_waiting = 0;
 #ifdef NFSSERVER
 static int nfs_numnfsd = 0;
 static int notstarted = 1;
-static int modify_flag = 0;
 static struct nfsdrt nfsdrt;
 #endif
 
@@ -114,6 +110,97 @@ int nfs_niothreads = -1;
 #ifdef NFSSERVER
 static void nfsd_rt __P((int, struct nfsrv_descript *, int));
 #endif
+
+int nfs_clientd(struct nfsmount *nmp, struct ucred *cred, 
+    struct nfsd_cargs *ncd, int flag, caddr_t argp, struct proc *p);
+
+/*
+ * Nfs client helper daemon.
+ * It also get authorization strings for "kerb" mounts.
+ * It must start at the beginning of the list again after any potential
+ * "sleep" since nfs_reclaim() called from vclean() can pull a node off
+ * the list asynchronously.
+ */
+int
+nfs_clientd(struct nfsmount *nmp, struct ucred *cred, struct nfsd_cargs *ncd, 
+    int flag, caddr_t argp, struct proc *p)
+{
+	struct nfsuid *nuidp, *nnuidp;
+	int error = 0;
+
+	/*
+	 * First initialize some variables
+	 */
+
+	/*
+	 * If an authorization string is being passed in, get it.
+	 */
+	if ((flag & NFSSVC_GOTAUTH) &&
+	    (nmp->nm_flag & (NFSMNT_WAITAUTH | NFSMNT_DISMNT)) == 0) {
+	    if (nmp->nm_flag & NFSMNT_HASAUTH)
+		panic("cld kerb");
+	    if ((flag & NFSSVC_AUTHINFAIL) == 0) {
+		if (ncd->ncd_authlen <= nmp->nm_authlen &&
+		    ncd->ncd_verflen <= nmp->nm_verflen &&
+		    !copyin(ncd->ncd_authstr,nmp->nm_authstr,ncd->ncd_authlen)&&
+		    !copyin(ncd->ncd_verfstr,nmp->nm_verfstr,ncd->ncd_verflen)){
+		    nmp->nm_authtype = ncd->ncd_authtype;
+		    nmp->nm_authlen = ncd->ncd_authlen;
+		    nmp->nm_verflen = ncd->ncd_verflen;
+#ifdef NFSKERB
+		    nmp->nm_key = ncd->ncd_key;
+#endif
+		} else
+		    nmp->nm_flag |= NFSMNT_AUTHERR;
+	    } else
+		nmp->nm_flag |= NFSMNT_AUTHERR;
+	    nmp->nm_flag |= NFSMNT_HASAUTH;
+	    wakeup((caddr_t)&nmp->nm_authlen);
+	} else
+	    nmp->nm_flag |= NFSMNT_WAITAUTH;
+
+	/*
+	 * Loop every second updating queue until there is a termination sig.
+	 */
+	while ((nmp->nm_flag & NFSMNT_DISMNT) == 0) {
+	    /*
+	     * Get an authorization string, if required.
+	     */
+	    if ((nmp->nm_flag & (NFSMNT_WAITAUTH | NFSMNT_DISMNT | NFSMNT_HASAUTH)) == 0) {
+		ncd->ncd_authuid = nmp->nm_authuid;
+		if (copyout((caddr_t)ncd, argp, sizeof (struct nfsd_cargs)))
+			nmp->nm_flag |= NFSMNT_WAITAUTH;
+		else
+			return (ENEEDAUTH);
+	    }
+
+	    /*
+	     * Wait a bit (no pun) and do it again.
+	     */
+	    if ((nmp->nm_flag & NFSMNT_DISMNT) == 0 &&
+		(nmp->nm_flag & (NFSMNT_WAITAUTH | NFSMNT_HASAUTH))) {
+		    error = tsleep((caddr_t)&nmp->nm_authstr, PSOCK | PCATCH,
+			"nqnfstimr", hz / 3);
+		    if (error == EINTR || error == ERESTART)
+			(void) dounmount(nmp->nm_mountp, MNT_FORCE, p);
+	    }
+	}
+
+	/*
+	 * Finally, we can free up the mount structure.
+	 */
+	for (nuidp = nmp->nm_uidlruhead.tqh_first; nuidp != 0; nuidp = nnuidp) {
+		nnuidp = nuidp->nu_lru.tqe_next;
+		LIST_REMOVE(nuidp, nu_hash);
+		TAILQ_REMOVE(&nmp->nm_uidlruhead, nuidp, nu_lru);
+		free((caddr_t)nuidp, M_NFSUID);
+	}
+	free((caddr_t)nmp, M_NFSMNT);
+	if (error == EWOULDBLOCK)
+		error = 0;
+	return (error);
+}
+
 
 /*
  * NFS server system calls
@@ -186,7 +273,7 @@ sys_nfssvc(p, v, retval)
 			(SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
 			return (0);
 		nmp->nm_flag |= NFSMNT_MNTD;
-		error = nqnfs_clientd(nmp, p->p_ucred, &ncd, SCARG(uap, flag),
+		error = nfs_clientd(nmp, p->p_ucred, &ncd, SCARG(uap, flag),
 			SCARG(uap, argp), p);
 #endif /* NFSCLIENT */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
@@ -545,31 +632,13 @@ nfssvc_nfsd(nsd, argp, p)
 		    } else
 			cacherep = nfsrv_getcache(nd, slp, &mreq);
 
-		    /*
-		     * Check for just starting up for NQNFS and send
-		     * fake "try again later" replies to the NQNFS clients.
-		     */
-		    if (notstarted && nqnfsstarttime <= time.tv_sec) {
-			if (modify_flag) {
-				nqnfsstarttime = time.tv_sec + nqsrv_writeslack;
-				modify_flag = 0;
-			} else
-				notstarted = 0;
-		    }
 		    if (notstarted) {
-			if ((nd->nd_flag & ND_NQNFS) == 0)
-				cacherep = RC_DROPIT;
-			else if (nd->nd_procnum != NFSPROC_WRITE) {
-				nd->nd_procnum = NFSPROC_NOOP;
-				nd->nd_repstat = NQNFS_TRYLATER;
-				cacherep = RC_DOIT;
-			} else
-				modify_flag = 1;
+			    cacherep = RC_DROPIT;
 		    } else if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
-			nfsd->nfsd_flag &= ~NFSD_AUTHFAIL;
-			nd->nd_procnum = NFSPROC_NOOP;
-			nd->nd_repstat = (NFSERR_AUTHERR | AUTH_TOOWEAK);
-			cacherep = RC_DOIT;
+			    nfsd->nfsd_flag &= ~NFSD_AUTHFAIL;
+			    nd->nd_procnum = NFSPROC_NOOP;
+			    nd->nd_repstat = (NFSERR_AUTHERR | AUTH_TOOWEAK);
+			    cacherep = RC_DOIT;
 		    }
 		}
 
@@ -590,8 +659,7 @@ nfssvc_nfsd(nsd, argp, p)
 			if (mreq == NULL)
 				break;
 			if (error) {
-				if (nd->nd_procnum != NQNFSPROC_VACATED)
-					nfsstats.srv_errs++;
+				nfsstats.srv_errs++;
 				nfsrv_updatecache(nd, FALSE, mreq);
 				if (nd->nd_nam2)
 					m_freem(nd->nd_nam2);
@@ -824,8 +892,6 @@ nfsd_rt(sotype, nd, cacherep)
 		rt->flag = DRT_CACHEDROP;
 	if (sotype == SOCK_STREAM)
 		rt->flag |= DRT_TCP;
-	if (nd->nd_flag & ND_NQNFS)
-		rt->flag |= DRT_NQNFS;
 	else if (nd->nd_flag & ND_NFSV3)
 		rt->flag |= DRT_NFSV3;
 	rt->proc = nd->nd_procnum;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.19 2001/06/25 02:15:46 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.20 2001/06/25 03:28:06 csapuntz Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -57,13 +57,12 @@
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsnode.h>
 #include <nfs/nfs_var.h>
 
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern int nfs_numasync;
-extern struct nfsstats nfsstats;
+struct nfsstats nfsstats;
 
 /*
  * Vnode op for read using bio
@@ -102,7 +101,6 @@ nfs_bioread(vp, uio, ioflag, cred)
 	 * For nfs, cache consistency can only be maintained approximately.
 	 * Although RFC1094 does not specify the criteria, the following is
 	 * believed to be compatible with the reference port.
-	 * For nqnfs, full cache consistency is maintained within the loop.
 	 * For nfs:
 	 * If the file's modify time on the server has changed since the
 	 * last read rpc or you have written to the file,
@@ -115,7 +113,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 	 * attributes this could be forced by setting n_attrstamp to 0 before
 	 * the VOP_GETATTR() call.
 	 */
-	if ((nmp->nm_flag & NFSMNT_NQNFS) == 0 && vp->v_type != VLNK) {
+	if (vp->v_type != VLNK) {
 		if (np->n_flag & NMODIFIED) {
 			np->n_attrstamp = 0;
 			error = VOP_GETATTR(vp, &vattr, cred, p);
@@ -135,31 +133,10 @@ nfs_bioread(vp, uio, ioflag, cred)
 		}
 	}
 	do {
-
-	    /*
-	     * Get a valid lease. If cached data is stale, flush it.
-	     */
-	    if (nmp->nm_flag & NFSMNT_NQNFS) {
-		if (NQNFS_CKINVALID(vp, np, ND_READ)) {
-		    do {
-			error = nqnfs_getlease(vp, ND_READ, cred, p);
-		    } while (error == NQNFS_EXPIRED);
-		    if (error)
-			return (error);
-		    if (np->n_lrev != np->n_brev ||
-			(np->n_flag & NQNFSNONCACHE)) {
-			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-			if (error)
-			    return (error);
-			np->n_brev = np->n_lrev;
-		    }
-		}
-	    }
 	    /*
 	     * Don't cache symlinks.
 	     */
-	    if (np->n_flag & NQNFSNONCACHE
-		|| ((vp->v_flag & VROOT) && vp->v_type == VLNK)) {
+	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
 		switch (vp->v_type) {
 		case VREG:
 			return (nfs_readrpc(vp, uio, cred));
@@ -321,7 +298,7 @@ nfs_write(v)
 	struct vattr vattr;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	daddr_t lbn, bn;
-	int n, on, error = 0, iomode, must_commit;
+	int n, on, error = 0;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
@@ -382,31 +359,6 @@ nfs_write(v)
 		(void)vnode_pager_uncache(vp);
 #endif
 
-		/*
-		 * Check for a valid write lease.
-		 */
-		if ((nmp->nm_flag & NFSMNT_NQNFS) &&
-		    NQNFS_CKINVALID(vp, np, ND_WRITE)) {
-			do {
-				error = nqnfs_getlease(vp, ND_WRITE, cred, p);
-			} while (error == NQNFS_EXPIRED);
-			if (error)
-				return (error);
-			if (np->n_lrev != np->n_brev ||
-			    (np->n_flag & NQNFSNONCACHE)) {
-				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-				if (error)
-					return (error);
-				np->n_brev = np->n_lrev;
-			}
-		}
-		if ((np->n_flag & NQNFSNONCACHE) && uio->uio_iovcnt == 1) {
-		    iomode = NFSV3WRITE_FILESYNC;
-		    error = nfs_writerpc(vp, uio, cred, &iomode, &must_commit);
-		    if (must_commit)
-			nfs_clearcommit(vp->v_mount);
-		    return (error);
-		}
 		nfsstats.biocache_writes++;
 		lbn = uio->uio_offset / biosize;
 		on = uio->uio_offset & (biosize-1);
@@ -443,29 +395,6 @@ again:
 			goto again;
 		}
 
-		/*
-		 * Check for valid write lease and get one as required.
-		 * In case getblk() and/or bwrite() delayed us.
-		 */
-		if ((nmp->nm_flag & NFSMNT_NQNFS) &&
-		    NQNFS_CKINVALID(vp, np, ND_WRITE)) {
-			do {
-				error = nqnfs_getlease(vp, ND_WRITE, cred, p);
-			} while (error == NQNFS_EXPIRED);
-			if (error) {
-				brelse(bp);
-				return (error);
-			}
-			if (np->n_lrev != np->n_brev ||
-			    (np->n_flag & NQNFSNONCACHE)) {
-				brelse(bp);
-				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-				if (error)
-					return (error);
-				np->n_brev = np->n_lrev;
-				goto again;
-			}
-		}
 		error = uiomove((char *)bp->b_data + on, n, uio);
 		if (error) {
 			bp->b_flags |= B_ERROR;
@@ -497,18 +426,12 @@ again:
 		/*
 		 * If the lease is non-cachable or IO_SYNC do bwrite().
 		 */
-		if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
+		if (ioflag & IO_SYNC) {
 			bp->b_proc = p;
 			error = VOP_BWRITE(bp);
 			if (error)
 				return (error);
-			if (np->n_flag & NQNFSNONCACHE) {
-				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-				if (error)
-					return (error);
-			}
-		} else if ((n + on) == biosize &&
-			(nmp->nm_flag & NFSMNT_NQNFS) == 0) {
+		} else if ((n + on) == biosize) {
 			bp->b_proc = (struct proc *)0;
 			bp->b_flags |= B_ASYNC;
 			(void)nfs_writebp(bp, 0);
@@ -747,11 +670,7 @@ nfs_doio(bp, cr, p)
 			bp->b_validend = bp->b_bcount;
 		}
 		if (p && (vp->v_flag & VTEXT) &&
-			(((nmp->nm_flag & NFSMNT_NQNFS) &&
-			  NQNFS_CKINVALID(vp, np, ND_READ) &&
-			  np->n_lrev != np->n_brev) ||
-			 (!(nmp->nm_flag & NFSMNT_NQNFS) &&
-			  np->n_mtime != np->n_vattr.va_mtime.tv_sec))) {
+		    (np->n_mtime != np->n_vattr.va_mtime.tv_sec)) {
 			uprintf("Process killed due to text file modification\n");
 			psignal(p, SIGKILL);
 			p->p_holdcnt++;

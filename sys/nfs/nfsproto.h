@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsproto.h,v 1.2 1996/04/17 04:50:39 mickey Exp $	*/
+/*	$OpenBSD: nfsproto.h,v 1.3 2001/06/25 03:28:15 csapuntz Exp $	*/
 /*	$NetBSD: nfsproto.h,v 1.1 1996/02/18 11:54:06 fvdl Exp $	*/
 
 /*
@@ -172,11 +172,6 @@
 #define	NFSPROC_FSINFO		19
 #define	NFSPROC_PATHCONF	20
 #define	NFSPROC_COMMIT		21
-
-/* And leasing (nqnfs) procedure numbers (must be last) */
-#define	NQNFSPROC_GETLEASE	22
-#define	NQNFSPROC_VACATED	23
-#define	NQNFSPROC_EVICTED	24
 
 #define NFSPROC_NOOP		25
 #define	NFS_NPROCS		26

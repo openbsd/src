@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.23 2000/10/10 13:36:49 itojun Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.24 2001/06/25 03:28:03 csapuntz Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -82,9 +82,6 @@ settime(tv)
 	(void) spllowersoftclock();
 	timeradd(&boottime, &delta, &boottime);
 	timeradd(&runtime, &delta, &runtime);
-#	if defined(NFS) || defined(NFSSERVER)
-		nqnfs_lease_updatetime(delta.tv_sec);
-#	endif
 	splx(s);
 	resettodr();
 }

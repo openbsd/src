@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.10 2000/05/22 17:33:18 mickey Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.11 2001/06/25 03:28:05 csapuntz Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -438,7 +438,6 @@ struct nfsrv_descript {
 	int			nd_len;		/* Length of this write */
 	int			nd_repstat;	/* Reply status */
 	u_int32_t		nd_retxid;	/* Reply xid */
-	u_int32_t		nd_duration;	/* Lease duration */
 	struct timeval		nd_starttime;	/* Time RPC initiated */
 	fhandle_t		nd_fh;		/* File handle */
 	struct ucred		nd_cr;		/* Credentials */
@@ -450,7 +449,6 @@ struct nfsrv_descript {
 #define ND_CHECK	0x04
 #define ND_LEASE	(ND_READ | ND_WRITE | ND_CHECK)
 #define ND_NFSV3	0x08
-#define ND_NQNFS	0x10
 #define ND_KERBNICK	0x20
 #define ND_KERBFULL	0x40
 #define ND_KERBAUTH	(ND_KERBNICK | ND_KERBFULL)

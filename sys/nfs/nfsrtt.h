@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsrtt.h,v 1.4 1996/04/17 04:50:39 mickey Exp $	*/
+/*	$OpenBSD: nfsrtt.h,v 1.5 2001/06/25 03:28:15 csapuntz Exp $	*/
 /*	$NetBSD: nfsrtt.h,v 1.4 1996/02/18 11:54:07 fvdl Exp $	*/
 
 /*
@@ -81,7 +81,6 @@ struct nfsrtt {
 /*
  * Bits for the flags field.
  */
-#define	DRT_NQNFS	0x01	/* Rpc used Nqnfs protocol */
 #define	DRT_TCP		0x02	/* Client used TCP transport */
 #define	DRT_CACHEREPLY	0x04	/* Reply was from recent request cache */
 #define	DRT_CACHEDROP	0x08	/* Rpc request dropped, due to recent reply */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.6 1999/04/28 09:28:17 art Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.7 2001/06/25 03:28:09 csapuntz Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsrvcache.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
 extern struct nfsstats nfsstats;

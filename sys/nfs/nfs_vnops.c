@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.32 2001/06/25 02:15:48 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.33 2001/06/25 03:28:13 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -73,7 +73,6 @@
 #include <nfs/nfsmount.h>
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
 #include <net/if.h>
@@ -364,7 +363,6 @@ nfs_open(v)
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
-	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct vattr vattr;
 	int error;
 
@@ -374,68 +372,42 @@ nfs_open(v)
 #endif
 		return (EACCES);
 	}
-	/*
-	 * Get a valid lease. If cached data is stale, flush it.
-	 */
-	if (nmp->nm_flag & NFSMNT_NQNFS) {
-		if (NQNFS_CKINVALID(vp, np, ND_READ)) {
-		    do {
-			error = nqnfs_getlease(vp, ND_READ, ap->a_cred,
-			    ap->a_p);
-		    } while (error == NQNFS_EXPIRED);
-		    if (error)
+
+	if (np->n_flag & NMODIFIED) {
+		if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
+			 ap->a_p, 1)) == EINTR)
 			return (error);
-		    if (np->n_lrev != np->n_brev ||
-			(np->n_flag & NQNFSNONCACHE)) {
-			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
-				ap->a_p, 1)) == EINTR)
-				return (error);
 #if defined(UVM)
-			uvm_vnp_uncache(vp);
+		uvm_vnp_uncache(vp);
 #else
-			(void) vnode_pager_uncache(vp);
+		(void) vnode_pager_uncache(vp);
 #endif
-			np->n_brev = np->n_lrev;
-		    }
-		}
+		np->n_attrstamp = 0;
+		if (vp->v_type == VDIR)
+			np->n_direofoffset = 0;
+		error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
+		if (error)
+			return (error);
+		np->n_mtime = vattr.va_mtime.tv_sec;
 	} else {
-		if (np->n_flag & NMODIFIED) {
-			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
-				ap->a_p, 1)) == EINTR)
-				return (error);
-#if defined(UVM)
-			uvm_vnp_uncache(vp);
-#else
-			(void) vnode_pager_uncache(vp);
-#endif
-			np->n_attrstamp = 0;
+		error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
+		if (error)
+			return (error);
+		if (np->n_mtime != vattr.va_mtime.tv_sec) {
 			if (vp->v_type == VDIR)
 				np->n_direofoffset = 0;
-			error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
-			if (error)
+			if ((error = nfs_vinvalbuf(vp, V_SAVE,
+				 ap->a_cred, ap->a_p, 1)) == EINTR)
 				return (error);
-			np->n_mtime = vattr.va_mtime.tv_sec;
-		} else {
-			error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
-			if (error)
-				return (error);
-			if (np->n_mtime != vattr.va_mtime.tv_sec) {
-				if (vp->v_type == VDIR)
-					np->n_direofoffset = 0;
-				if ((error = nfs_vinvalbuf(vp, V_SAVE,
-					ap->a_cred, ap->a_p, 1)) == EINTR)
-					return (error);
 #if defined(UVM)
-				uvm_vnp_uncache(vp);
+			uvm_vnp_uncache(vp);
 #else
-				(void) vnode_pager_uncache(vp);
+			(void) vnode_pager_uncache(vp);
 #endif
-				np->n_mtime = vattr.va_mtime.tv_sec;
-			}
+			np->n_mtime = vattr.va_mtime.tv_sec;
 		}
 	}
-	if ((nmp->nm_flag & NFSMNT_NQNFS) == 0)
-		np->n_attrstamp = 0; /* For Open/Close consistency */
+	np->n_attrstamp = 0; /* For Open/Close consistency */
 	return (0);
 }
 
@@ -465,9 +437,6 @@ nfs_open(v)
  *                     enough". Changing the last argument to nfs_flush() to
  *                     a 1 would force a commit operation, if it is felt a
  *                     commit is necessary now.
- * for NQNFS         - do nothing now, since 2 is dealt with via leases and
- *                     1 should be dealt with via an fsync() system call for
- *                     cases where write errors are important.
  */
 /* ARGSUSED */
 int
@@ -486,8 +455,7 @@ nfs_close(v)
 	int error = 0;
 
 	if (vp->v_type == VREG) {
-	    if ((VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_NQNFS) == 0 &&
-		(np->n_flag & NMODIFIED)) {
+	    if (np->n_flag & NMODIFIED) {
 		if (NFS_ISV3(vp)) {
 		    error = nfs_flush(vp, ap->a_cred, MNT_WAIT, ap->a_p, 0);
 		    np->n_flag &= ~NMODIFIED;
@@ -1890,17 +1858,9 @@ nfs_readdir(v)
 	 * First, check for hit on the EOF offset cache
 	 */
 	if (np->n_direofoffset != 0 && 
-	    uio->uio_offset == np->n_direofoffset &&
-	    (np->n_flag & NMODIFIED) == 0) {
-		if (VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_NQNFS) {
-			if (NQNFS_CKCACHABLE(vp, ND_READ)) {
-				nfsstats.direofcache_hits++;
-				*ap->a_eofflag = 1;
-				return (0);
-			}
-		} else if (
-			VOP_GETATTR(vp, &vattr, ap->a_cred, uio->uio_procp) == 0 &&
-			np->n_mtime == vattr.va_mtime.tv_sec) {
+	    uio->uio_offset == np->n_direofoffset) {
+		if (VOP_GETATTR(vp, &vattr, ap->a_cred, uio->uio_procp) == 0 &&
+		    np->n_mtime == vattr.va_mtime.tv_sec) {
 			nfsstats.direofcache_hits++;
 			*ap->a_eofflag = 1;
 			return (0);
