@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.8 2000/04/27 01:10:11 bjc Exp $	*/
+/*	$OpenBSD: db_machdep.c,v 1.9 2000/10/11 06:13:40 bjc Exp $	*/
 /*	$NetBSD: db_machdep.c,v 1.17 1999/06/20 00:58:23 ragge Exp $	*/
 
 /* 
@@ -293,7 +293,7 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase) {
 				db_printf("0x%x,", tmp_frame->vax_args[arg_base++]);
 
 			/* now print out the last arg with closing brace and \n */
-			db_printf("0x%x)\n", tmp_frame->vax_args[++arg_base]);
+			db_printf("0x%x)\n", tmp_frame->vax_args[arg_base]);
 		} else
 			db_printf("void)\n");
 		/* move to the next frame */
@@ -339,7 +339,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		}
 		db_printf("panic: %s\n", panicstr);
 		/* xxx ? where did we panic and whose stack are we using? */
-		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.sp), ddb_regs.ap);
+		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.fp), ddb_regs.ap);
 		return;
 	}
 
