@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.20 2001/06/17 21:06:13 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.21 2001/06/20 18:08:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -366,11 +366,11 @@ const struct ac97_vendorid {
 const char * const ac97enhancement[] = {
 	"No 3D Stereo",
 	"Analog Devices Phat Stereo",
-	"Creative"
+	"Creative",
 	"National Semi 3D",
 	"Yamaha Ymersion",
 	"BBE 3D",
-	"Crystal Semi 3D"
+	"Crystal Semi 3D",
 	"Qsound QXpander",
 	"Spatializer 3D",
 	"SRS 3D",
@@ -395,7 +395,7 @@ const char * const ac97enhancement[] = {
 	"Rockwell 3D",
 	"Unknown 3D",
 	"Unknown 3D",
-	"Unknown 3D",
+	"Unknown 3D"
 };
 
 const char * const ac97feature[] = {
