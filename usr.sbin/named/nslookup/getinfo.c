@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinfo.c,v 1.2 1997/03/12 10:42:47 downsj Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.3 1997/04/06 19:00:22 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)getinfo.c	5.26 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: getinfo.c,v 8.6 1996/12/02 09:17:24 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getinfo.c,v 1.2 1997/03/12 10:42:47 downsj Exp $";
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.3 1997/04/06 19:00:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -306,7 +306,7 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 		    hostPtr->name = Calloc(1, len);
 		    bcopy(bp, hostPtr->name, len);
 		}
-		bp += (((u_int32_t)bp) % sizeof(align));
+		bp += (((u_long)bp) % sizeof(align));
 
 		if (bp + dlen >= &hostbuf[sizeof(hostbuf)]) {
 		    if (_res.options & RES_DEBUG) {
