@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.11 2000/12/21 21:01:18 aaron Exp $
+.\"	$OpenBSD: pciide.4,v 1.12 2001/01/08 23:45:12 jeremy Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -97,9 +97,17 @@ This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed which uses the ISA legacy I/O ports
 and interrupts.
 .Pp
-Although this driver supports several UltraDMA/100 controllers, at this time
-it only uses them in UltraDMA/66 modes.
+For proper operation of UltraDMA 3 (44 MB/sec), 4 (66 MB/sec), or 5 (100 MB/sec),
+a 40-pin, 80-conductor cable must be used.  On some controllers, the pciide
+driver can probe the chip and see if it detects that an 80-conductor or 40-
+conductor cable was used.  If not, it will down-grade to UltraDMA 2 mode.
+On other controllers, no such capability exists, and the driver assumes
+you are using an 80-conductor cable.  If you are getting errors about
+corrupted data, check to make sure you are using the correct cable.
+An 80-conductor cable is recommended for any IDE installation, not just
+ones using faster UltraDMA modes, because it will decrease electrical
+noise and increase data reliability.  
 .Pp
 The timings used for the PIO and DMA modes for controllers listed above
-are for a PCI bus running at 30 or 33 Mhz.
-This driver may not work properly on overclocked systems.
+are for a PCI bus running at 30 or 33 Mhz. These timings will work on a slower
+bus, but they may cause errors on an over-clocked bus.
