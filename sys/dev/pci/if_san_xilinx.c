@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_xilinx.c,v 1.8 2005/04/01 21:42:36 canacar Exp $	*/
+/*	$OpenBSD: if_san_xilinx.c,v 1.9 2005/04/05 20:11:10 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -41,6 +41,7 @@
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
@@ -681,6 +682,9 @@ wan_xilinx_ioctl(struct ifnet *ifp, int cmd, struct ifreq *ifr)
 	switch (cmd)
 	{
 		case SIOC_WANPIPE_PIPEMON:
+
+			if ((err = suser(curproc, 0)) != 0)
+				break;
 
 			if (IF_QFULL(&sc->udp_queue)) {
 				return (EBUSY);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_common.c,v 1.7 2005/04/01 21:42:35 canacar Exp $	*/
+/*	$OpenBSD: if_san_common.c,v 1.8 2005/04/05 20:11:10 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -43,6 +43,7 @@
 # include <sys/errno.h>
 # include <sys/exec.h>
 # include <sys/mbuf.h>
+# include <sys/proc.h>
 # include <sys/socket.h>
 # include <sys/kernel.h>
 # include <sys/time.h>
@@ -266,6 +267,10 @@ wan_ioctl(struct ifnet *ifp, int cmd, struct ifreq *ifr)
 
 	SAN_ASSERT(common == NULL);
 	SAN_ASSERT(common->card == NULL);
+
+	if ((err = suser(curproc, 0)) != 0)
+		return err;
+
 	switch (cmd) {
 	case SIOC_WANPIPE_HWPROBE:
 		err = wan_ioctl_hwprobe(ifp, ifr->ifr_data);
