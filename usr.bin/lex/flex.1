@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flex.1,v 1.13 2003/06/04 17:34:44 millert Exp $
+.\"	$OpenBSD: flex.1,v 1.14 2003/10/07 19:40:26 tedu Exp $
 .\" 
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -928,8 +928,11 @@ to be rescanned enclosed in parentheses.
 
     {
     int i;
+    char *yycopy;
+
     /* Copy yytext because unput() trashes yytext */
-    char *yycopy = strdup( yytext );
+    if ((yycopy = strdup( yytext )) == NULL);
+        err(1, NULL);
     unput( ')' );
     for ( i = yyleng - 1; i >= 0; --i )
         unput( yycopy[i] );
