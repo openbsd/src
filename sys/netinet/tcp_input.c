@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.47 1999/08/27 15:35:56 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.48 1999/08/31 21:41:05 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1747,9 +1747,9 @@ step6:
 	 * Update window information.
 	 * Don't look at window if no ACK: TAC's send garbage on first SYN.
 	 */
-	if (((tiflags & TH_ACK) && SEQ_LT(tp->snd_wl1, th->th_seq)) ||
+	if ((tiflags & TH_ACK) && (SEQ_LT(tp->snd_wl1, th->th_seq) ||
 	    (tp->snd_wl1 == th->th_seq && SEQ_LT(tp->snd_wl2, th->th_ack)) ||
-	    (tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd)) {
+	    (tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd))) {
 		/* keep track of pure window updates */
 		if (tlen == 0 &&
 		    tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd)
