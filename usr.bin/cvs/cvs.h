@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.8 2004/07/25 03:18:53 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.9 2004/07/26 15:56:43 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -29,6 +29,8 @@
 
 #include <sys/param.h>
 #include <stdio.h>
+#include <dirent.h>
+
 #include "rcs.h"
 
 #define CVS_VERSION    "OpenCVS 0.1"
@@ -265,7 +267,7 @@ struct cvsroot {
 #define CVS_FST_REMOVED   4
 #define CVS_FST_CONFLICT  5
 
-struct cvs_file {
+typedef struct cvs_file {
 	char            *cf_path;
 	struct cvs_file *cf_parent;  /* parent directory (NULL if none) */
 	char            *cf_name;
@@ -275,7 +277,7 @@ struct cvs_file {
 	struct cvs_dir  *cf_ddat;    /* only for directories */
 
 	LIST_ENTRY(cvs_file)  cf_list;
-};
+} CVSFILE;
 
 
 struct cvs_dir {
@@ -351,6 +353,7 @@ typedef struct cvs_histfile {
 
 /* client command handlers */
 int  cvs_add      (int, char **);
+int  cvs_checkout (int, char **);
 int  cvs_commit   (int, char **);
 int  cvs_diff     (int, char **);
 int  cvs_getlog   (int, char **);
@@ -396,12 +399,13 @@ struct cvsroot*  cvsroot_get   (const char *);
 
 
 /* from file.c */
-int              cvs_file_init      (void);
-int              cvs_file_ignore    (const char *);
-int              cvs_file_isignored (const char *);
-char**           cvs_file_getv      (const char *, int *, int);
-struct cvs_file* cvs_file_get       (const char *, int);
-void             cvs_file_free      (struct cvs_file *);
+int      cvs_file_init    (void);
+int      cvs_file_ignore  (const char *);
+int      cvs_file_chkign  (const char *);
+char**   cvs_file_getv    (const char *, int *, int);
+CVSFILE* cvs_file_get     (const char *, int);
+void     cvs_file_free    (struct cvs_file *);
+int      cvs_file_examine (CVSFILE *, int (*)(CVSFILE *, void *), void *);
 
 
 /* Entries API */

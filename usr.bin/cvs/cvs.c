@@ -1,5 +1,5 @@
 #define DEBUG
-/*	$OpenBSD: cvs.c,v 1.3 2004/07/14 19:26:07 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.4 2004/07/26 15:56:42 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -101,13 +101,13 @@ static struct cvs_cmd {
 		"Show last revision where each line was modified",
 	},
 	{
-		"checkout", { "co",  "get" }, NULL,
+		"checkout", { "co",  "get" }, cvs_checkout,
 		"",
 		"Checkout sources for editing",
 	},
 	{
 		"commit",   { "ci",  "com" }, cvs_commit,
-		"",
+		"[-flR] [-F logfile | -m msg] [-r rev] ...",
 		"Check files into the repository",
 	},
 	{
