@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2001/08/06 22:59:13 pjanzen Exp $	*/
+/*	$OpenBSD: log.c,v 1.10 2002/06/23 03:01:12 deraadt Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: log.c,v 1.9 2001/08/06 22:59:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: log.c,v 1.10 2002/06/23 03:01:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ log_score(list_em)
 	if (!test_mode && !list_em) {
 		if ((pw = (struct passwd *) getpwuid(getuid())) == NULL) {
 			fprintf(stderr, 
-				"getpwuid failed for uid %d.  Who are you?\n",
+				"getpwuid failed for uid %u.  Who are you?\n",
 				getuid());
 			return (-1);
 		}

@@ -1,11 +1,11 @@
-/*	$OpenBSD: hack.main.c,v 1.7 2001/01/28 23:41:44 niklas Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.8 2002/06/23 03:01:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: hack.main.c,v 1.7 2001/01/28 23:41:44 niklas Exp $";
+static char rcsid[] = "$OpenBSD: hack.main.c,v 1.8 2002/06/23 03:01:13 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -251,7 +251,7 @@ char *argv[];
 	}
 #endif
 	setftty();
-	(void) sprintf(SAVEF, "save/%d%s", getuid(), plname);
+	(void) sprintf(SAVEF, "save/%u%s", getuid(), plname);
 	regularize(SAVEF+5);		/* avoid . or / in name */
 	if((fd = open(SAVEF, O_RDONLY)) >= 0 &&
 	   (uptodate(fd) || unlink(SAVEF) == 666)) {
