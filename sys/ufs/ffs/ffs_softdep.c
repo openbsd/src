@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.28 2001/12/04 15:05:56 art Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.29 2001/12/05 00:36:17 niklas Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -41,13 +41,10 @@
  */
 
 /*
- * For now we want the safety net that the DIAGNOSTIC and DEBUG flags provide.
+ * For now we want the safety net that the DIAGNOSTIC flag provide.
  */
 #ifndef DIAGNOSTIC
 #define DIAGNOSTIC
-#endif
-#ifndef DEBUG
-#define DEBUG
 #endif
 
 #include <sys/param.h>
@@ -370,8 +367,10 @@ sema_release(semap)
 {
 
 	if (semap->value <= 0 || semap->holder != CURPROC->p_pid) {
+#ifdef DEBUG
 		if (lk.lkt_held != -1)
 			FREE_LOCK(&lk);
+#endif
 		panic("sema_release: not held");
 	}
 	if (--semap->value > 0) {
@@ -517,8 +516,10 @@ add_to_worklist(wk)
 	static struct worklist *worklist_tail;
 
 	if (wk->wk_state & ONWORKLIST) {
+#ifdef DEBUG
 		if (lk.lkt_held != -1)
 			FREE_LOCK(&lk);
+#endif
 		panic("add_to_worklist: already on list");
 	}
 	wk->wk_state |= ONWORKLIST;
@@ -2939,7 +2940,9 @@ handle_workitem_freefile(freefile)
 {
 	struct fs *fs;
 	struct inode tip;
+#ifdef DEBUG
 	struct inodedep *idp;
+#endif
 	int error;
 
 	fs = VFSTOUFS(freefile->fx_mnt)->um_fs;
