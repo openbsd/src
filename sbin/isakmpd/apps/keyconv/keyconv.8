@@ -1,4 +1,4 @@
-.\" $OpenBSD: keyconv.8,v 1.1 2001/08/22 15:29:54 ho Exp $
+.\" $OpenBSD: keyconv.8,v 1.2 2001/08/22 15:37:55 ho Exp $
 .\"
 .\" Copyright (c) 2001 Hakan Olsson.  All rights reserved.
 .\"
@@ -66,12 +66,21 @@ Convert from OpenSSL to DNSSEC format. In this mode,
 .Nm
 outputs both the DNSSEC private key, plus a "outfile.pubkey"
 file containing the public key in a format suitable for inclusion
-in a DNS database file.
+in a DNS database.
 .El
 .Pp
 The
 .Nm dnssec-keygen
 command is supplied as part of BIND version 8 and 9.
+.Sh EXAMPLES
+Create a new RSA key for usage both in
+.Xr isakmpd 8
+and DNSSEC.
+.Pp
+.Bd -literal -offset 2n
+$ openssl genrsa -out testkey.ssl 1024
+$ keyconv -d testkey.ssl testkey.dns
+.Ed
 .Sh SEE ALSO
 .Xr isakmpd 8 ,
 .Xr openssl 1 ,
