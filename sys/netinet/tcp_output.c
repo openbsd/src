@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.61 2004/01/15 17:04:59 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.62 2004/01/22 14:38:28 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -890,32 +890,39 @@ send:
 #ifdef TCP_SIGNATURE
 	if (tp->t_flags & TF_SIGNATURE) {
 		MD5_CTX ctx;
-		union sockaddr_union sa;
+		union sockaddr_union src, dst;
 		struct tdb *tdb;
 
-		bzero(&sa, sizeof(union sockaddr_union));
+		bzero(&src, sizeof(union sockaddr_union));
+		bzero(&dst, sizeof(union sockaddr_union));
 
 		switch (tp->pf) {
 		case 0:	/*default to PF_INET*/
 #ifdef INET
 		case AF_INET:
-			sa.sa.sa_len = sizeof(struct sockaddr_in);
-			sa.sa.sa_family = AF_INET;
-			sa.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
+			src.sa.sa_len = sizeof(struct sockaddr_in);
+			src.sa.sa_family = AF_INET;
+			src.sin.sin_addr = mtod(m, struct ip *)->ip_src;
+			dst.sa.sa_len = sizeof(struct sockaddr_in);
+			dst.sa.sa_family = AF_INET;
+			dst.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
 			break;
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
-			sa.sa.sa_len = sizeof(struct sockaddr_in6);
-			sa.sa.sa_family = AF_INET6;
-			sa.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_dst;
+			src.sa.sa_len = sizeof(struct sockaddr_in6);
+			src.sa.sa_family = AF_INET6;
+			src.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_src;
+			dst.sa.sa_len = sizeof(struct sockaddr_in6);
+			dst.sa.sa_family = AF_INET6;
+			dst.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_dst;
 			break;
 #endif /* INET6 */
 		}
 
-		/* XXX gettdb() should really be called at spltdb().      */
+		/* XXX gettdbbysrcdst() should really be called at spltdb().      */
 		/* XXX this is splsoftnet(), currently they are the same. */
-		tdb = gettdb(0, &sa, IPPROTO_TCP);
+		tdb = gettdbbysrcdst(0, &src, &dst, IPPROTO_TCP);
 		if (tdb == NULL)
 			return (EPERM);
 

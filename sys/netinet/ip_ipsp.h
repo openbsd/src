@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.125 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.126 2004/01/22 14:38:28 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -533,6 +533,8 @@ extern struct tdb *gettdbbyaddr(union sockaddr_union *, u_int8_t,
 extern struct tdb *gettdbbysrc(union sockaddr_union *, u_int8_t,
     struct ipsec_ref *, struct ipsec_ref *, struct mbuf *, int,
     struct sockaddr_encap *, struct sockaddr_encap *);
+extern struct tdb *gettdbbysrcdst(u_int32_t, union sockaddr_union *,
+    union sockaddr_union *, u_int8_t);
 extern void puttdb(struct tdb *);
 extern void tdb_delete(struct tdb *);
 extern struct tdb *tdb_alloc(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.153 2003/12/02 23:16:28 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.154 2004/01/22 14:38:28 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -298,6 +298,33 @@ gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 
 	return tdbp;
 }
+
+#ifdef TCP_SIGNATURE
+/*
+ * Same as gettdb() but compare SRC as well.
+ */
+struct tdb *
+gettdbbysrcdst(u_int32_t spi, union sockaddr_union *src,
+    union sockaddr_union *dst, u_int8_t proto)
+{
+	u_int32_t hashval;
+	struct tdb *tdbp;
+
+	if (tdbh == NULL)
+		return (struct tdb *) NULL;
+
+	hashval = tdb_hash(spi, dst, proto);
+
+	for (tdbp = tdbh[hashval]; tdbp != NULL; tdbp = tdbp->tdb_hnext)
+		if ((tdbp->tdb_spi == spi) &&
+		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)) &&
+		    !bcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)) &&
+		    (tdbp->tdb_sproto == proto))
+			break;
+
+	return tdbp;
+}
+#endif
 
 /*
  * Check that credentials and IDs match. Return true if so. The t*

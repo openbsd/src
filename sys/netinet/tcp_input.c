@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.146 2004/01/15 17:04:59 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.147 2004/01/22 14:38:28 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2285,35 +2285,41 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 
 	if (sigp) {
 		MD5_CTX ctx;
-		union sockaddr_union sa;
+		union sockaddr_union src, dst;
 		struct tdb *tdb;
 		char sig[16];
 
-		memset(&sa, 0, sizeof(union sockaddr_union));
+		memset(&src, 0, sizeof(union sockaddr_union));
+		memset(&dst, 0, sizeof(union sockaddr_union));
 
 		switch (tp->pf) {
 		case 0:
 #ifdef INET
 		case AF_INET:
-			sa.sa.sa_len = sizeof(struct sockaddr_in);
-			sa.sa.sa_family = AF_INET;
-			sa.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
+			src.sa.sa_len = sizeof(struct sockaddr_in);
+			src.sa.sa_family = AF_INET;
+			src.sin.sin_addr = mtod(m, struct ip *)->ip_src;
+			dst.sa.sa_len = sizeof(struct sockaddr_in);
+			dst.sa.sa_family = AF_INET;
+			dst.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
 			break;
 #endif
 #ifdef INET6
 		case AF_INET6:
-			sa.sa.sa_len = sizeof(struct sockaddr_in6);
-			sa.sa.sa_family = AF_INET6;
-			sa.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_dst;
+			src.sa.sa_len = sizeof(struct sockaddr_in6);
+			src.sa.sa_family = AF_INET6;
+			src.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_src;
+			dst.sa.sa_len = sizeof(struct sockaddr_in6);
+			dst.sa.sa_family = AF_INET6;
+			dst.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_dst;
 			break;
 #endif /* INET6 */
 		}
 
-		tdb = gettdb(0, &sa, IPPROTO_TCP);
+		tdb = gettdbbysrcdst(0, &src, &dst, IPPROTO_TCP);
 		if (tdb == NULL) {
-			printf("tdb miss\n");
 			tcpstat.tcps_rcvbadsig++;
-			return -1;
+			return (-1);
 		}
 
 		MD5Init(&ctx);
@@ -4223,28 +4229,33 @@ syn_cache_respond(sc, m)
 #ifdef TCP_SIGNATURE
 	if (sc->sc_flags & SCF_SIGNATURE) {
 		MD5_CTX ctx;
-		union sockaddr_union sa;
+		union sockaddr_union src, dst;
 		struct tdb *tdb;
 
-		bzero(&sa, sizeof(union sockaddr_union));
-		sa.sa.sa_len = sc->sc_dst.sa.sa_len;
-		sa.sa.sa_family = sc->sc_dst.sa.sa_family;
+		bzero(&src, sizeof(union sockaddr_union));
+		bzero(&dst, sizeof(union sockaddr_union));
+		src.sa.sa_len = sc->sc_src.sa.sa_len;
+		src.sa.sa_family = sc->sc_src.sa.sa_family;
+		dst.sa.sa_len = sc->sc_dst.sa.sa_len;
+		dst.sa.sa_family = sc->sc_dst.sa.sa_family;
 
 		switch (sc->sc_src.sa.sa_family) {
 		case 0:	/*default to PF_INET*/
 #ifdef INET
 		case AF_INET:
-			sa.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
+			src.sin.sin_addr = mtod(m, struct ip *)->ip_src;
+			dst.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
 			break;
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
-			sa.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_dst;
+			src.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_src;
+			dst.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_dst;
 			break;
 #endif /* INET6 */
 		}
 
-		tdb = gettdb(0, &sa, IPPROTO_TCP);
+		tdb = gettdbbysrcdst(0, &src, &dst, IPPROTO_TCP);
 		if (tdb == NULL) {
 			if (m)
 				m_freem(m);
