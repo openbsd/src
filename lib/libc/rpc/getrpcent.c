@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getrpcent.c,v 1.4 1996/08/27 03:33:57 deraadt Exp $";
+static char *rcsid = "$OpenBSD: getrpcent.c,v 1.5 1996/09/02 02:48:57 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -100,14 +100,15 @@ getrpcbyname(name)
 	setrpcent(0);
 	while (rpc = getrpcent()) {
 		if (strcmp(rpc->r_name, name) == 0)
-			return (rpc);
+			goto done;
 		for (rp = rpc->r_aliases; *rp != NULL; rp++) {
 			if (strcmp(*rp, name) == 0)
-				return (rpc);
+				goto done;
 		}
 	}
+done:
 	endrpcent();
-	return (NULL);
+	return (rpc);
 }
 
 void
