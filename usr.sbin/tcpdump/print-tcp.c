@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-tcp.c,v 1.20 2004/07/28 14:08:14 markus Exp $	*/
+/*	$OpenBSD: print-tcp.c,v 1.21 2004/08/10 19:55:07 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.20 2004/07/28 14:08:14 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tcp.c,v 1.21 2004/08/10 19:55:07 markus Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -203,20 +203,29 @@ tcp_print(register const u_char *bp, register u_int length,
 		ip6 = NULL;
 #endif /*INET6*/
 	ch = '\0';
-	TCHECK(*tp);
 	if (length < sizeof(*tp)) {
 		(void)printf("truncated-tcp %d", length);
 		return;
 	}
 
+	if (!TTEST(tp->th_dport)) {
+#ifdef INET6
+		if (ip6) {
+			(void)printf("%s > %s: [|tcp]",
+				ip6addr_string(&ip6->ip6_src),
+				ip6addr_string(&ip6->ip6_dst));
+		} else
+#endif /*INET6*/
+		{
+			(void)printf("%s > %s: [|tcp]",
+				ipaddr_string(&ip->ip_src),
+				ipaddr_string(&ip->ip_dst));
+		}
+		return;
+	}
+
 	sport = ntohs(tp->th_sport);
 	dport = ntohs(tp->th_dport);
-	seq = ntohl(tp->th_seq);
-	ack = ntohl(tp->th_ack);
-	win = ntohs(tp->th_win);
-	urp = ntohs(tp->th_urp);
-	hlen = tp->th_off * 4;
-
 
 #ifdef INET6
 	if (ip6) {
@@ -244,6 +253,13 @@ tcp_print(register const u_char *bp, register u_int length,
 				tcpport_string(sport), tcpport_string(dport));
 		}
 	}
+
+	TCHECK(*tp);
+	seq = ntohl(tp->th_seq);
+	ack = ntohl(tp->th_ack);
+	win = ntohs(tp->th_win);
+	urp = ntohs(tp->th_urp);
+	hlen = tp->th_off * 4;
 
 	if (qflag) {
 		(void)printf("tcp %d", length - tp->th_off * 4);
