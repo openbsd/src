@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.3 1996/01/01 23:51:28 deraadt Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.4 1996/02/02 00:22:56 niklas Exp $
 
 MAN=	cccp.1 gcc.1 cp/g++.1
 MLINKS=	gcc.1 cc.1
@@ -9,6 +9,7 @@ all:	config.status
 .FORCE:	.IGNORE
 
 config: .FORCE
+	-rm -f config.cache
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
 		--prefix=/usr
 
