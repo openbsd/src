@@ -1,0 +1,104 @@
+.\" $OpenBSD: sasyncd.conf.5,v 1.1 2005/03/30 18:44:49 ho Exp $
+.\"
+.\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" This code was written under funding by Multicom Security AB.
+.\"
+.\" Manual page for sasyncd.conf
+.\"
+.Dd August 07, 2004
+.Dt SASYNCD.CONF 5
+.Os
+.Sh NAME
+.Nm sasyncd.conf
+.Nd configuration file for sasyncd
+.Sh DESCRIPTION
+.Nm
+is the configuration file for the
+.Xr sasyncd 8
+daemon.
+.Pp
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extends to the end of the current line.
+.Pp
+The following configuration settings are understood:
+.Bl -tag -width Ds
+.It Ic CAcertificate file Ar filename
+Specify a file containing the CA certificate.
+The default is
+.Pa /etc/ssl/ca.crt .
+.It Ic carp interface Ar interface
+Specify which
+.Xr carp 4
+interface
+.Nm sasyncd
+should track master/slave state on.
+.It Ic carp interval Ar seconds
+Specify how often the daemon should check the above interface for
+state changes.
+Defaults to once every 10 seconds.
+.It Ic certificate file Ar filename
+Specify a file containing our certificate.
+The default is
+.Pa /etc/ssl/sasyncd.crt .
+.It Ic listen on Ar address
+Specify a local IP address, hostname, or interface the
+.Xr sasyncd 8
+daemon should listen on.
+The default is to listen on all local addresses.
+.It Ic listen port Ar port
+Specify a local port the
+.Xr sasyncd 8
+daemon should listen on.
+The default is to listen on port 501.
+.It Ic peer Ar address
+Specify a
+.Xr sasyncd 8
+peer IP address or hostname.
+May be specified multiple times.
+For example:
+.Bd -literal -offset indent
+peer 10.0.0.2
+peer 10.0.0.3
+peer 10.0.0.4
+.Ed
+.It Ic private key file Ar filename
+Specify a file containing the private key matching the certificate
+specified using
+.Ar ceritificate file .
+The default is
+.Pa /etc/ssl/private/sasyncd.key .
+.It Ic run as master | slave
+Force the daemon to run as master or slave.
+Normally only intended for debugging use.
+.El
+.Sh SEE ALSO
+.Xr carp 4 ,
+.Xr sasyncd 8
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 3.7 .

@@ -1,0 +1,124 @@
+.\" $OpenBSD: sasyncd.8,v 1.1 2005/03/30 18:44:49 ho Exp $
+.\"
+.\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" This code was written under funding by Multicom Security AB.
+.\"
+.\" Manual page for sasyncd
+.\"
+.Dd August 07, 2004
+.Dt SASYNCD 8
+.Os
+.Sh NAME
+.Nm sasyncd
+.Nd IPSec SA synchronization daemon for failover gateways
+.Sh SYNOPSIS
+.Nm
+.Op Fl dv
+.Op Fl c Ar config-file
+.Sh DESCRIPTION
+The
+.Nm
+daemon synchronizes IPSec SA information between a number of failover
+IPsec gateways.
+The most typical scenario is to run
+.Nm
+on hosts also running
+.Xr isakmpd 8
+and sharing a common IP-address using
+.Xr carp 4 .
+.Pp
+The daemon runs either in master or slave mode, in which the master
+tracks all local IPsec SA changes and sends this information along to
+all slaves so they will have the same data.
+.Ss Failover
+.Nm
+does not itself do any failover processing; the normal mode of
+operation is to track state changes on a specified
+.Xr carp 4
+interface.
+Whenever it changes,
+.Nm
+will follow suit.
+It is possible to
+.Qq lock
+the daemon to a particular state; see
+.Xr sasyncd.conf 5 .
+.Ss Host to host communication
+All
+.Nm
+host to host communication is protected by
+.Xr ssl 8 ,
+so the daemon requires certificates configured for each host.
+Normally
+.Pa /etc/ssl/sasyncd.crt
+and
+.Pa /etc/ssl/private/sasyncd.key
+are used, although alternate locations may be specified in the
+configuration file.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c Ar config-file
+If given, the
+.Fl c
+option specifies an alternate configuration file instead of
+.Pa /etc/sasyncd.conf .
+.It Fl d
+The
+.Fl d
+option causes the daemon to run in the foreground, logging to stderr.
+.It Fl v
+The
+.Fl v
+option increases the verbosity level of the daemon.
+This option can be specified several times.
+.El
+.Sh FILES
+.Bl -tag -width /etc/ssl/private/sasyncd.key -compact
+.It Pa /etc/sasyncd.conf
+The default
+.Nm
+configuration file.
+.It Pa /etc/ssl/sascynd.crt
+The default certificate.
+.It Pa /etc/ssl/private/sasyncd.key
+The default private key.
+.It Pa /etc/ssl/ca.crt
+The default CA certificate.
+.El
+.Sh SEE ALSO
+.Xr openssl 1 ,
+.Xr carp 4 ,
+.Xr ipsec 4 ,
+.Xr sasyncd.conf 5 ,
+.Xr isakmpd 8 ,
+.Xr ssl 8
+.Sh HISTORY
+The
+.Nm
+daemon first appeared in
+.Ox 3.7 .
+It was written in 2004 by Hakan Olsson, in part sponsored by
+Multicom Security AB, Sweden.
