@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostname.3,v 1.2 1995/02/27 04:12:42 cgd Exp $
+.\"	$NetBSD: gethostname.3,v 1.3 1996/02/11 16:15:40 neil Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,8 +84,9 @@ invalid address.
 The caller tried to set the hostname and was not the super-user.
 .El
 .Sh SEE ALSO
-.Xr sysctl 2
+.Xr sysctl 3
 .Xr gethostid 3
+.Xr sysctl 8
 .Sh BUGS
 Host names are limited to
 .Dv MAXHOSTNAMELEN
