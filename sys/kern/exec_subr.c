@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.14 2001/11/07 01:18:01 art Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.15 2001/11/27 05:27:11 art Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -167,6 +167,7 @@ vmcmd_map_pagedvn(p, cmd)
 	uobj = uvn_attach((void *) cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
 	if (uobj == NULL)
 		return(ENOMEM);
+	VREF(cmd->ev_vp);
 
 	/*
 	 * do the map

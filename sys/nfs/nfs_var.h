@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.15 2001/11/15 23:15:15 art Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.16 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ int nfs_sillyrename __P((struct vnode *, struct vnode *,
 			 struct componentname *));
 int nfs_lookitup __P((struct vnode *, char *, int, struct ucred *,
 		      struct proc *, struct nfsnode **));
-int nfs_commit __P((struct vnode *, u_quad_t, int, struct proc *));
+int nfs_commit __P((struct vnode *, u_quad_t, unsigned, struct proc *));
 int nfs_bmap __P((void *));
 int nfs_strategy __P((void *));
 int nfs_mmap __P((void *));
@@ -134,7 +134,6 @@ int nfs_vfree __P((void *));
 int nfs_truncate __P((void *));
 int nfs_update __P((void *));
 int nfs_bwrite __P((void *));
-int nfs_writebp __P((struct buf *, int));
 int nfsspec_access __P((void *));
 int nfsspec_read __P((void *));
 int nfsspec_write __P((void *));
@@ -258,7 +257,16 @@ void nfsm_srvfattr __P((struct nfsrv_descript *, struct vattr *,
 int nfsrv_fhtovp __P((fhandle_t *, int, struct vnode **, struct ucred *,
 		      struct nfssvc_sock *, struct mbuf *, int *, int));
 int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
+
 void nfs_clearcommit __P((struct mount *));
+void nfs_merge_commit_ranges __P((struct vnode *));
+int nfs_in_committed_range __P((struct vnode *, off_t, off_t));
+int nfs_in_tobecommitted_range __P((struct vnode *, off_t, off_t));
+void nfs_add_committed_range __P((struct vnode *, off_t, off_t));
+void nfs_del_committed_range __P((struct vnode *, off_t, off_t));
+void nfs_add_tobecommitted_range __P((struct vnode *, off_t, off_t));
+void nfs_del_tobecommitted_range __P((struct vnode *, off_t, off_t));
+
 int nfsrv_errmap __P((struct nfsrv_descript *, int));
 void nfsrvw_sort __P((gid_t *, int));
 void nfsrv_setcred __P((struct ucred *, struct ucred *));

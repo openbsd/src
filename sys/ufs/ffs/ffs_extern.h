@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.14 2001/11/13 00:10:56 art Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.15 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*-
@@ -87,6 +87,7 @@ void ffs_clusteracct __P((struct fs *, struct cg *, daddr_t, int));
 
 /* ffs_balloc.c */
 int ffs_balloc(struct inode *, off_t, int, struct ucred *, int, struct buf **);
+int ffs_ballocn(void *);
 
 /* ffs_inode.c */
 int ffs_init __P((struct vfsconf *));
@@ -128,7 +129,7 @@ int ffs_read __P((void *));
 int ffs_write __P((void *));
 int ffs_fsync __P((void *));
 int ffs_reclaim __P((void *));
-
+int ffs_size __P((void *));
 
 /*
  * Soft dependency function prototypes.

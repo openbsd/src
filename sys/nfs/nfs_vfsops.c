@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.38 2001/11/14 23:37:33 mickey Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.39 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -748,6 +748,8 @@ mountnfs(argp, mp, nam, pth, hst)
 	 * point.
 	 */
 	mp->mnt_stat.f_iosize = NFS_MAXDGRAMDATA;
+	mp->mnt_fs_bshift = DEV_BSHIFT;
+	mp->mnt_dev_bshift = -1;
 
 	return (0);
 bad:
@@ -856,8 +858,9 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp) || vp->v_dirtyblkhd.lh_first == NULL ||
-		    waitfor == MNT_LAZY)
+		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
+		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
+		     vp->v_uvm.u_obj.uo_npages == 0))
 			continue;
 		if (vget(vp, LK_EXCLUSIVE, p))
 			goto loop;

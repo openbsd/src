@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.41 2001/09/11 13:11:18 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.42 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -227,3 +227,16 @@
 #define RFCNAMEG	(1<<10) /* UNIMPL zero plan9 `name space' */
 #define RFCENVG		(1<<11) /* UNIMPL zero plan9 `env space' */
 #define RFCFDG		(1<<12)	/* zero fd table */
+
+#ifdef _KERNEL
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSIZE
+#define UBC_WINSIZE 8192
+#endif
+#ifndef UBC_NWINS
+#define UBC_NWINS 1024
+#endif
+#endif /* _KERNEL */

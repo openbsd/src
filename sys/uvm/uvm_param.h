@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_param.h,v 1.2 2001/11/12 01:26:10 art Exp $	*/
+/*	$OpenBSD: uvm_param.h,v 1.3 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_param.h,v 1.5 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
@@ -114,7 +114,7 @@ typedef int	boolean_t;
 #define	VM_ANONMIN	7
 #define	VM_VTEXTMIN	8
 #define	VM_VNODEMIN	9
-#define	VM_MAXID	9		/* number of valid vm ids */
+#define	VM_MAXID	10		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -166,10 +166,8 @@ struct _ps_strings {
 #define	trunc_page(x)	((x) & ~PAGE_MASK)
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
-#ifdef UBC
 extern int		ubc_nwins;	/* number of UBC mapping windows */
 extern int		ubc_winsize;	/* size of a UBC mapping window */
-#endif
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */

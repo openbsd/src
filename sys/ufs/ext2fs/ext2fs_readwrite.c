@@ -79,6 +79,8 @@ ext2fs_read(v)
 	struct uio *uio;
 	struct m_ext2fs *fs;
 	struct buf *bp;
+	void *win;
+	vsize_t bytelen;
 	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
@@ -106,6 +108,27 @@ ext2fs_read(v)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
+
+	if (vp->v_type == VREG) {
+		error = 0;
+		while (uio->uio_resid > 0) {
+
+			bytelen = MIN(ip->i_e2fs_size - uio->uio_offset,
+			    uio->uio_resid);
+
+			if (bytelen == 0) {
+				break;
+			}
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_READ);
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error) {
+				break;
+			}
+		}
+		goto out;
+	}
 
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		if ((bytesinfile = ip->i_e2fs_size - uio->uio_offset) <= 0)
@@ -156,8 +179,11 @@ ext2fs_read(v)
 	if (bp != NULL)
 		brelse(bp);
 
+out:
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
+		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
+			error = ext2fs_update(ip, NULL, NULL, 1);
 	}
 	return (error);
 }
@@ -183,12 +209,17 @@ ext2fs_write(v)
 	struct proc *p;
 	ufs_daddr_t lbn;
 	off_t osize;
-	int blkoffset, error, flags, ioflag, resid, size, xfersize;
+	int blkoffset, error, flags, ioflag, resid, xfersize;
+	vsize_t bytelen;
+	void *win;
+	off_t oldoff;
+	boolean_t rv;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
+	error = 0;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
@@ -232,35 +263,65 @@ ext2fs_write(v)
 
 	resid = uio->uio_resid;
 	osize = ip->i_e2fs_size;
-	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 
+	if (vp->v_type == VREG) {
+		while (uio->uio_resid > 0) {
+			oldoff = uio->uio_offset;
+			blkoffset = blkoff(fs, uio->uio_offset);
+			bytelen = MIN(fs->e2fs_bsize - blkoffset,
+			    uio->uio_resid);
+
+			/*
+			 * XXXUBC if file is mapped and this is the last block,
+			 * process one page at a time.
+			 */
+
+			error = ext2fs_balloc_range(vp, uio->uio_offset,
+			    bytelen, ap->a_cred, 0);
+			if (error) {
+				break;
+			}
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+			    &bytelen, UBC_WRITE);
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error) {
+				break;
+			}
+
+			/*
+			 * flush what we just wrote if necessary.
+			 * XXXUBC simplistic async flushing.
+			 */
+
+			if (oldoff >> 16 != uio->uio_offset >> 16) {
+				simple_lock(&vp->v_uvm.u_obj.vmobjlock);
+				rv = vp->v_uvm.u_obj.pgops->pgo_flush(
+				    &vp->v_uvm.u_obj, (oldoff >> 16) << 16,
+				    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
+				simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+			}
+		}
+		goto out;
+	}
+
+	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	for (error = 0; uio->uio_resid > 0;) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
-		xfersize = fs->e2fs_bsize - blkoffset;
-		if (uio->uio_resid < xfersize)
-			xfersize = uio->uio_resid;
-		if (fs->e2fs_bsize > xfersize)
+		xfersize = MIN(fs->e2fs_bsize - blkoffset, uio->uio_resid);
+		if (xfersize < fs->e2fs_bsize)
 			flags |= B_CLRBUF;
 		else
 			flags &= ~B_CLRBUF;
-
 		error = ext2fs_buf_alloc(ip,
-			lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
+		    lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
 		if (error)
 			break;
-		if (uio->uio_offset + xfersize > ip->i_e2fs_size) {
+		if (ip->i_e2fs_size < uio->uio_offset + xfersize) {
 			ip->i_e2fs_size = uio->uio_offset + xfersize;
-			uvm_vnp_setsize(vp, ip->i_e2fs_size);
 		}
-		uvm_vnp_uncache(vp);
-
-		size = fs->e2fs_bsize - bp->b_resid;
-		if (size < xfersize)
-			xfersize = size;
-
-		error =
-			uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio);
+		error = uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->e2fs_bsize) {
@@ -272,13 +333,14 @@ ext2fs_write(v)
 			bdwrite(bp);
 		if (error || xfersize == 0)
 			break;
-		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	/*
 	 * If we successfully wrote any data, and we are not the superuser
 	 * we clear the setuid and setgid bits as a precaution against
 	 * tampering.
 	 */
+out:
+	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
 	if (error) {
@@ -288,8 +350,7 @@ ext2fs_write(v)
 			uio->uio_offset -= resid - uio->uio_resid;
 			uio->uio_resid = resid;
 		}
-	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC)) {
+	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
 		error = ext2fs_update(ip, NULL, NULL, 1);
-	}
 	return (error);
 }

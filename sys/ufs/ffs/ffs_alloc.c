@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.35 2001/11/21 21:23:56 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.36 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -169,14 +169,15 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	struct buf **bpp;
 	ufs_daddr_t *blknop;
 {
-	register struct fs *fs;
-	struct buf *bp = NULL;
+	struct fs *fs;
+	struct buf *bp;
 	ufs_daddr_t quota_updated = 0;
 	int cg, request, error;
 	daddr_t bprev, bno;
 
 	if (bpp != NULL)
 		*bpp = NULL;
+
 	fs = ip->i_fs;
 #ifdef DIAGNOSTIC
 	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
@@ -282,7 +283,6 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	if (bno <= 0) 
 		goto nospace;
 
-	(void) uvm_vnp_uncache(ITOV(ip));
 	if (!DOINGSOFTDEP(ITOV(ip)))
 		ffs_blkfree(ip, bprev, (long)osize);
 	if (nsize < request)
@@ -362,7 +362,8 @@ ffs_reallocblks(v)
 	struct indir start_ap[NIADDR + 1], end_ap[NIADDR + 1], *idp;
 	int i, len, start_lvl, end_lvl, pref, ssize;
 
-	if (doreallocblks == 0)
+	/* XXXUBC - don't reallocblks for now */
+	if (1 || doreallocblks == 0)
 		return (ENOSPC);
 
 	vp = ap->a_vp;

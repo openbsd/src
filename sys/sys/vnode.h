@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.41 2001/11/15 06:22:30 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.42 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -90,8 +90,10 @@ struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
 	int	(**v_op) __P((void *));		/* vnode operations vector */
 	enum	vtype v_type;			/* vnode type */
-	u_int	v_flag;				/* vnode flags (see below) */
-	u_int   v_usecount;			/* reference count of users */
+#define v_flag v_uvm.u_flags
+#define v_usecount v_uvm.u_obj.uo_refs
+#define v_interlock v_uvm.u_obj.vmobjlock
+#define v_numoutput v_uvm.u_nio
 	/* reference count of writers */
 	u_int   v_writecount;			
 	/* Flags that can be read/written in interrupts */
@@ -103,7 +105,6 @@ struct vnode {
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
-	u_int   v_numoutput;			/* num of writes in progress */
 	LIST_ENTRY(vnode) v_synclist;		/* vnode with dirty buffers */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
@@ -112,8 +113,8 @@ struct vnode {
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
 
-	struct  simplelock v_interlock;		/* lock on usecount and flag */
 	struct  lock *v_vnlock;			/* used for non-locking fs's */
+	struct	lock v_glock;			/* getpage lock */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
 	struct {
@@ -137,6 +138,9 @@ struct vnode {
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VALIASED	0x0800	/* vnode has an alias */
 #define VLOCKSWORK	0x4000	/* FS supports locking discipline */
+#define	VDIRTY		0x8000	/* vnode possibly has dirty pages */
+
+#define VSIZENOTSET	((voff_t)-1)
 
 /*
  * (v_bioflag) Flags that may be manipulated by interrupt handlers
@@ -445,6 +449,12 @@ int	vop_generic_lock __P((void *));
 int	vop_generic_unlock __P((void *));
 int	vop_generic_revoke __P((void *));
 int	vop_generic_kqfilter __P((void *));
+
+/* XXXUBC - doesn't really belong here. */
+int	genfs_getpages __P((void *));
+int	genfs_putpages __P((void *));
+int	genfs_size __P((void *));
+
 
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.39 2001/11/15 23:15:15 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.40 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -126,7 +126,9 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_advlock_desc, nfs_advlock },	/* advlock */
 	{ &vop_reallocblks_desc, nfs_reallocblks },	/* reallocblks */
 	{ &vop_bwrite_desc, nfs_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_getpages_desc, nfs_getpages },		/* getpages */
+	{ &vop_putpages_desc, nfs_putpages },		/* putpages */
+	{ NULL, NULL }
 };
 struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
 	{ &nfsv2_vnodeop_p, nfsv2_vnodeop_entries };
@@ -151,7 +153,7 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_ioctl_desc, spec_ioctl },	/* ioctl */
 	{ &vop_select_desc, spec_select },	/* select */
 	{ &vop_revoke_desc, spec_revoke },	/* revoke */
-	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
+	{ &vop_fsync_desc, spec_fsync },	/* fsync */
 	{ &vop_remove_desc, spec_remove },	/* remove */
 	{ &vop_link_desc, spec_link },		/* link */
 	{ &vop_rename_desc, spec_rename },	/* rename */
@@ -373,11 +375,30 @@ nfs_open(v)
 		return (EACCES);
 	}
 
+	/*
+	 * Initialize read and write creds here, for swapfiles
+	 * and other paths that don't set the creds themselves.
+	 */
+
+	if (ap->a_mode & FREAD) {
+		if (np->n_rcred) {
+			crfree(np->n_rcred);
+		}
+		np->n_rcred = ap->a_cred;
+		crhold(np->n_rcred);
+	}
+	if (ap->a_mode & FWRITE) {
+		if (np->n_wcred) {
+			crfree(np->n_wcred);
+		}
+		np->n_wcred = ap->a_cred;
+		crhold(np->n_wcred);
+	}
+
 	if (np->n_flag & NMODIFIED) {
 		if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 			 ap->a_p, 1)) == EINTR)
 			return (error);
-		uvm_vnp_uncache(vp);
 		np->n_attrstamp = 0;
 		if (vp->v_type == VDIR)
 			np->n_direofoffset = 0;
@@ -395,7 +416,6 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE,
 				 ap->a_cred, ap->a_p, 1)) == EINTR)
 				return (error);
-			uvm_vnp_uncache(vp);
 			np->n_mtime = vattr.va_mtime.tv_sec;
 		}
 	}
@@ -2511,7 +2531,7 @@ int
 nfs_commit(vp, offset, cnt, procp)
 	struct vnode *vp;
 	u_quad_t offset;
-	int cnt;
+	unsigned cnt;
 	struct proc *procp;
 {
 	caddr_t cp;
@@ -2626,9 +2646,7 @@ nfs_fsync(v)
 }
 
 /*
- * Flush all the blocks associated with a vnode.
- * 	Walk through the buffer pool and push any dirty pages
- *	associated with the vnode.
+ * Flush all the data associated with a vnode.
  */
 int
 nfs_flush(vp, cred, waitfor, p, commit)
@@ -2638,154 +2656,19 @@ nfs_flush(vp, cred, waitfor, p, commit)
 	struct proc *p;
 	int commit;
 {
+	struct uvm_object *uobj = &vp->v_uvm.u_obj;
 	struct nfsnode *np = VTONFS(vp);
-	struct buf *bp;
-	int i;
-	struct buf *nbp;
-	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int s, error = 0, slptimeo = 0, slpflag = 0, retv, bvecpos;
-	int passone = 1;
-	u_quad_t off = (u_quad_t)-1, endoff = 0, toff;
-#ifndef NFS_COMMITBVECSIZ
-#define NFS_COMMITBVECSIZ	20
-#endif
-	struct buf *bvec[NFS_COMMITBVECSIZ];
+	int error;
+	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;
+	int rv;
 
-	if (nmp->nm_flag & NFSMNT_INT)
-		slpflag = PCATCH;
-	if (!commit)
-		passone = 0;
-	/*
-	 * A b_flags == (B_DELWRI | B_NEEDCOMMIT) block has been written to the
-	 * server, but nas not been committed to stable storage on the server
-	 * yet. On the first pass, the byte range is worked out and the commit
-	 * rpc is done. On the second pass, nfs_writebp() is called to do the
-	 * job.
-	 */
-again:
-	bvecpos = 0;
-	if (NFS_ISV3(vp) && commit) {
-		s = splbio();
-		for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-			nbp = bp->b_vnbufs.le_next;
-			if (bvecpos >= NFS_COMMITBVECSIZ)
-				break;
-			if ((bp->b_flags & (B_BUSY | B_DELWRI | B_NEEDCOMMIT))
-				!= (B_DELWRI | B_NEEDCOMMIT))
-				continue;
-			bremfree(bp);
-			bp->b_flags |= (B_BUSY | B_WRITEINPROG);
-			/*
-			 * A list of these buffers is kept so that the
-			 * second loop knows which buffers have actually
-			 * been committed. This is necessary, since there
-			 * may be a race between the commit rpc and new
-			 * uncommitted writes on the file.
-			 */
-			bvec[bvecpos++] = bp;
-			toff = ((u_quad_t)bp->b_blkno) * DEV_BSIZE +
-				bp->b_dirtyoff;
-			if (toff < off)
-				off = toff;
-			toff += (u_quad_t)(bp->b_dirtyend - bp->b_dirtyoff);
-			if (toff > endoff)
-				endoff = toff;
-		}
-		splx(s);
-	}
-	if (bvecpos > 0) {
-		/*
-		 * Commit data on the server, as required.
-		 */
-		retv = nfs_commit(vp, off, (int)(endoff - off), p);
-		if (retv == NFSERR_STALEWRITEVERF)
-			nfs_clearcommit(vp->v_mount);
-		/*
-		 * Now, either mark the blocks I/O done or mark the
-		 * blocks dirty, depending on whether the commit
-		 * succeeded.
-		 */
-		for (i = 0; i < bvecpos; i++) {
-			bp = bvec[i];
-			bp->b_flags &= ~(B_NEEDCOMMIT | B_WRITEINPROG);
-			if (retv)
-			    brelse(bp);
-			else {
-			    s = splbio();
-			    buf_undirty(bp);
-			    vp->v_numoutput++;
-			    bp->b_flags |= B_ASYNC;
-			    bp->b_flags &= ~(B_READ|B_DONE|B_ERROR);
-			    bp->b_dirtyoff = bp->b_dirtyend = 0;
-			    splx(s);
-			    biodone(bp);
-			}
-		}
-	}
+	error = 0;
 
-	/*
-	 * Start/do any write(s) that are required.
-	 */
-loop:
-	s = splbio();
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
-		if (bp->b_flags & B_BUSY) {
-			if (waitfor != MNT_WAIT || passone)
-				continue;
-			bp->b_flags |= B_WANTED;
-			error = tsleep((caddr_t)bp, slpflag | (PRIBIO + 1),
-				"nfsfsync", slptimeo);
-			splx(s);
-			if (error) {
-			    if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
-				return (EINTR);
-			    if (slpflag == PCATCH) {
-				slpflag = 0;
-				slptimeo = 2 * hz;
-			    }
-			}
-			goto loop;
-		}
-		if ((bp->b_flags & B_DELWRI) == 0)
-			panic("nfs_fsync: not dirty");
-		if ((passone || !commit) && (bp->b_flags & B_NEEDCOMMIT))
-			continue;
-		bremfree(bp);
-		if (passone || !commit)
-		    bp->b_flags |= (B_BUSY|B_ASYNC);
-		else
-		    bp->b_flags |= (B_BUSY|B_ASYNC|B_WRITEINPROG|B_NEEDCOMMIT);
-		splx(s);
-		VOP_BWRITE(bp);
-		goto loop;
-	}
-	splx(s);
-	if (passone) {
-		passone = 0;
-		goto again;
-	}
-	if (waitfor == MNT_WAIT) {
- loop2:
-	        s = splbio();
-		error = vwaitforio(vp, slpflag, "nfs_fsync", slptimeo);
-		splx(s);
-		if (error) {
-			if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
-				return (EINTR);
-			if (slpflag == PCATCH) {
-				slpflag = 0;
-				slptimeo = 2 * hz;
-			}
-			goto loop2;
-		}
-			
-		if (vp->v_dirtyblkhd.lh_first && commit) {
-#if 0
-			vprint("nfs_fsync: dirty", vp);
-#endif
-			goto loop;
-		}
+	simple_lock(&uobj->vmobjlock);
+	rv = (uobj->pgops->pgo_flush)(uobj, 0, 0, flushflags);
+	simple_unlock(&uobj->vmobjlock);
+	if (!rv) {
+		error = EIO;
 	}
 	if (np->n_flag & NWRITEERR) {
 		error = np->n_error;
@@ -2860,7 +2743,7 @@ nfs_print(v)
 }
 
 /*
- * Just call nfs_writebp() with the force argument set to 1.
+ * Just call bwrite().
  */
 int
 nfs_bwrite(v)
@@ -2870,76 +2753,7 @@ nfs_bwrite(v)
 		struct buf *a_bp;
 	} */ *ap = v;
 
-	return (nfs_writebp(ap->a_bp, 1));
-}
-
-/*
- * This is a clone of vop_generic_bwrite(), except that B_WRITEINPROG isn't set unless
- * the force flag is one and it also handles the B_NEEDCOMMIT flag.
- */
-int
-nfs_writebp(bp, force)
-	register struct buf *bp;
-	int force;
-{
-	register int oldflags = bp->b_flags, retv = 1;
-	register struct proc *p = curproc;	/* XXX */
-	off_t off;
-	int   s;
-
-	if(!(bp->b_flags & B_BUSY))
-		panic("bwrite: buffer is not busy???");
-
-#ifdef fvdl_debug
-	printf("nfs_writebp(%x): vp %x voff %d vend %d doff %d dend %d\n",
-	    bp, bp->b_vp, bp->b_validoff, bp->b_validend, bp->b_dirtyoff,
-	    bp->b_dirtyend);
-#endif
-	bp->b_flags &= ~(B_READ|B_DONE|B_ERROR);
-
-	s = splbio();
-	buf_undirty(bp);
-
-	if ((oldflags & B_ASYNC) && !(oldflags & B_DELWRI) && p)
-		++p->p_stats->p_ru.ru_oublock;
-
-	bp->b_vp->v_numoutput++;
-	splx(s);
-
-	/*
-	 * If B_NEEDCOMMIT is set, a commit rpc may do the trick. If not
-	 * an actual write will have to be scheduled via. VOP_STRATEGY().
-	 * If B_WRITEINPROG is already set, then push it with a write anyhow.
-	 */
-	if ((oldflags & (B_NEEDCOMMIT | B_WRITEINPROG)) == B_NEEDCOMMIT) {
-		off = ((u_quad_t)bp->b_blkno) * DEV_BSIZE + bp->b_dirtyoff;
-		bp->b_flags |= B_WRITEINPROG;
-		retv = nfs_commit(bp->b_vp, off, bp->b_dirtyend-bp->b_dirtyoff,
-			bp->b_proc);
-		bp->b_flags &= ~B_WRITEINPROG;
-		if (!retv) {
-			bp->b_dirtyoff = bp->b_dirtyend = 0;
-			bp->b_flags &= ~B_NEEDCOMMIT;
-			biodone(bp);
-		} else if (retv == NFSERR_STALEWRITEVERF)
-			nfs_clearcommit(bp->b_vp->v_mount);
-	}
-	if (retv) {
-		if (force)
-			bp->b_flags |= B_WRITEINPROG;
-		VOP_STRATEGY(bp);
-	}
-
-	if( (oldflags & B_ASYNC) == 0) {
-		int rtval = biowait(bp);
-		if (!(oldflags & B_DELWRI) && p) {
-			++p->p_stats->p_ru.ru_oublock;
-		}
-		brelse(bp);
-		return (rtval);
-	} 
-
-	return (0);
+	return (bwrite(ap->a_bp));
 }
 
 /*

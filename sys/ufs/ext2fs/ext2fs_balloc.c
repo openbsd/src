@@ -1,5 +1,4 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.7 2001/11/06 19:53:21 miod Exp $	*/
-/*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.8 2000/12/10 06:38:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -44,8 +43,9 @@
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
+#include <sys/mount.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -73,8 +73,13 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 	u_int deallocated;
 	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 	int unwindidx = -1;
+	UVMHIST_FUNC("ext2fs_buf_alloc"); UVMHIST_CALLED(ubchist);
 
-	*bpp = NULL;
+	UVMHIST_LOG(ubchist, "bn 0x%x", bn,0,0,0);
+
+	if (bpp != NULL) {
+		*bpp = NULL;
+	}
 	if (bn < 0)
 		return (EFBIG);
 	fs = ip->i_e2fs;
@@ -86,20 +91,29 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 	if (bn < NDADDR) {
 		nb = fs2h32(ip->i_e2fs_blocks[bn]);
 		if (nb != 0) {
-			error = bread(vp, bn, fs->e2fs_bsize, NOCRED, &bp);
-			if (error) {
-				brelse(bp);
-				return (error);
+
+			/*
+			 * the block is already allocated, just read it.
+			 */
+
+			if (bpp != NULL) {
+				error = bread(vp, bn, fs->e2fs_bsize, NOCRED,
+					      &bp);
+				if (error) {
+					brelse(bp);
+					return (error);
+				}
+				*bpp = bp;
 			}
-			*bpp = bp;
 			return (0);
 		}
 
 		/*
 		 * allocate a new direct block.
 		 */
+
 		error = ext2fs_alloc(ip, bn,
-		    ext2fs_blkpref(ip, bn, (int)bn, &ip->i_e2fs_blocks[0]),
+		    ext2fs_blkpref(ip, bn, bn, &ip->i_e2fs_blocks[0]),
 		    cred, &newb);
 		if (error)
 			return (error);
@@ -107,11 +121,13 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 		ip->i_e2fs_last_blk = newb;
 		ip->i_e2fs_blocks[bn] = h2fs32(newb);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		bp = getblk(vp, bn, fs->e2fs_bsize, 0, 0);
-		bp->b_blkno = fsbtodb(fs, newb);
-		if (flags & B_CLRBUF)
-			clrbuf(bp);
-		*bpp = bp;
+		if (bpp != NULL) {
+			bp = getblk(vp, bn, fs->e2fs_bsize, 0, 0);
+			bp->b_blkno = fsbtodb(fs, newb);
+			if (flags & B_CLRBUF)
+				clrbuf(bp);
+			*bpp = bp;
+		}
 		return (0);
 	}
 	/*
@@ -229,26 +245,30 @@ ext2fs_buf_alloc(struct inode *ip, daddr_t bn, int size, struct ucred *cred,
 		} else {
 			bdwrite(bp);
 		}
-		nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
-		if (flags & B_CLRBUF)
-			clrbuf(nbp);
-		*bpp = nbp;
+		if (bpp != NULL) {
+			nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
+			nbp->b_blkno = fsbtodb(fs, nb);
+			if (flags & B_CLRBUF)
+				clrbuf(nbp);
+			*bpp = nbp;
+		}
 		return (0);
 	}
 	brelse(bp);
-	if (flags & B_CLRBUF) {
-		error = bread(vp, lbn, (int)fs->e2fs_bsize, NOCRED, &nbp);
-		if (error) {
-			brelse(nbp);
-			goto fail;
+	if (bpp != NULL) {
+		if (flags & B_CLRBUF) {
+			error = bread(vp, lbn, (int)fs->e2fs_bsize, NOCRED,
+				      &nbp);
+			if (error) {
+				brelse(nbp);
+				goto fail;
+			}
+		} else {
+			nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
+			nbp->b_blkno = fsbtodb(fs, nb);
 		}
-	} else {
-		nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
-		nbp->b_blkno = fsbtodb(fs, nb);
+		*bpp = nbp;
 	}
-
-	*bpp = nbp;
 	return (0);
 fail:
 	/*
@@ -291,4 +311,154 @@ fail:
 		ip->i_e2fs_flags |= IN_CHANGE | IN_UPDATE;
 	}
 	return error;
+}
+
+int
+ext2fs_ballocn(v)
+	void *v;
+{
+	struct vop_ballocn_args /* {
+		struct vnode *a_vp;
+		off_t a_offset;
+		off_t a_length;
+		struct ucred *a_cred;
+		int a_flags;
+	} */ *ap = v;
+	off_t off, len;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct m_ext2fs *fs = ip->i_e2fs;
+	int error, delta, bshift, bsize;
+	UVMHIST_FUNC("ext2fs_ballocn"); UVMHIST_CALLED(ubchist);
+
+	bshift = fs->e2fs_bshift;
+	bsize = 1 << bshift;
+
+	off = ap->a_offset;
+	len = ap->a_length;
+
+	delta = off & (bsize - 1);
+	off -= delta;
+	len += delta;
+
+	while (len > 0) {
+		bsize = min(bsize, len);
+		UVMHIST_LOG(ubchist, "off 0x%x len 0x%x bsize 0x%x",
+			    off, len, bsize, 0);
+
+		error = ext2fs_buf_alloc(ip, lblkno(fs, off), bsize, ap->a_cred,
+		    NULL, ap->a_flags);
+		if (error) {
+			UVMHIST_LOG(ubchist, "error %d", error, 0,0,0);
+			return error;
+		}
+
+		/*
+		 * increase file size now, VOP_BALLOC() requires that
+		 * EOF be up-to-date before each call.
+		 */
+
+		if (ip->i_e2fs_size < off + bsize) {
+			UVMHIST_LOG(ubchist, "old 0x%x new 0x%x",
+				    ip->i_e2fs_size, off + bsize,0,0);
+			ip->i_e2fs_size = off + bsize;
+			if (vp->v_uvm.u_size < ip->i_e2fs_size) {
+				uvm_vnp_setsize(vp, ip->i_e2fs_size);
+			}
+		}
+
+		off += bsize;
+		len -= bsize;
+	}
+	return 0;
+}
+
+/*
+ * allocate a range of blocks in a file.
+ * after this function returns, any page entirely contained within the range
+ * will map to invalid data and thus must be overwritten before it is made
+ * accessible to others.
+ */
+
+int
+ext2fs_balloc_range(vp, off, len, cred, flags)
+	struct vnode *vp;
+	off_t off, len;
+	struct ucred *cred;
+	int flags;
+{
+	off_t oldeof, eof, pagestart;
+	struct uvm_object *uobj;
+	int i, delta, error, npages;
+	int bshift = vp->v_mount->mnt_fs_bshift;
+	int bsize = 1 << bshift;
+	int ppb = max(bsize >> PAGE_SHIFT, 1);
+	struct vm_page *pgs[ppb];
+	UVMHIST_FUNC("ext2fs_balloc_range"); UVMHIST_CALLED(ubchist);
+	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
+		    vp, off, len, vp->v_uvm.u_size);
+
+	error = 0;
+	uobj = &vp->v_uvm.u_obj;
+	oldeof = vp->v_uvm.u_size;
+	eof = max(oldeof, off + len);
+	UVMHIST_LOG(ubchist, "new eof 0x%x", eof,0,0,0);
+	pgs[0] = NULL;
+
+	/*
+	 * cache the new range of the file.  this will create zeroed pages
+	 * where the new block will be and keep them locked until the
+	 * new block is allocated, so there will be no window where
+	 * the old contents of the new block is visible to racing threads.
+	 */
+
+	pagestart = trunc_page(off) & ~(bsize - 1);
+	npages = min(ppb, (round_page(eof) - pagestart) >> PAGE_SHIFT);
+	memset(pgs, 0, npages);
+	simple_lock(&uobj->vmobjlock);
+	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
+	    VM_PROT_READ, 0, PGO_SYNCIO | PGO_PASTEOF);
+	if (error) {
+		UVMHIST_LOG(ubchist, "getpages %d", error,0,0,0);
+		goto errout;
+	}
+	for (i = 0; i < npages; i++) {
+		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
+		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
+		pgs[i]->flags &= ~PG_CLEAN;
+		uvm_pageactivate(pgs[i]);
+	}
+
+	/*
+	 * adjust off to be block-aligned.
+	 */
+
+	delta = off & (bsize - 1);
+	off -= delta;
+	len += delta;
+
+	/*
+	 * now allocate the range.
+	 */
+
+	lockmgr(&vp->v_glock, LK_EXCLUSIVE, NULL, curproc);
+	error = VOP_BALLOCN(vp, off, len, cred, flags);
+	UVMHIST_LOG(ubchist, "ballocn %d", error,0,0,0);
+	lockmgr(&vp->v_glock, LK_RELEASE, NULL, curproc);
+
+	/*
+	 * unbusy any pages we are holding.
+	 */
+
+errout:
+	simple_lock(&uobj->vmobjlock);
+	if (error) {
+		(void) (uobj->pgops->pgo_flush)(uobj, oldeof, pagestart + ppb,
+		    PGO_FREE);
+	}
+	if (pgs[0] != NULL) {
+		uvm_page_unbusy(pgs, npages);
+	}
+	simple_unlock(&uobj->vmobjlock);
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.15 2001/11/11 01:16:56 art Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.16 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.15 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -518,9 +518,6 @@ anon_pagein(anon)
 	 */
 
 	pmap_clear_reference(pg);
-#ifndef UBC
-	pmap_page_protect(pg, VM_PROT_NONE);
-#endif
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();

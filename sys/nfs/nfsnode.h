@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.11 2001/11/15 23:15:15 art Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.12 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -119,7 +119,19 @@ struct nfsnode {
 	nfsfh_t			n_fh;		/* Small File Handle */
 	struct ucred		*n_rcred;
 	struct ucred		*n_wcred;
+	off_t			n_pushedlo;     /* 1st blk in commited range */
+	off_t			n_pushedhi;     /* Last block in range */
+	off_t			n_pushlo;       /* 1st block in commit range */
+	off_t			n_pushhi;       /* Last block in range */
+	struct lock		n_commitlock;   /* Serialize commits XXX */
+	int			n_commitflags;
 };
+
+/*
+ * Values for n_commitflags
+ */
+#define NFS_COMMIT_PUSH_VALID		0x0001	/* push range valid */
+#define NFS_COMMIT_PUSHED_VALID		0x0002	/* pushed range valid */
 
 #define n_atim		n_un1.nf_atim
 #define n_mtim		n_un2.nf_mtim
@@ -199,6 +211,8 @@ int	nfs_bwrite __P((void *));
 int	nfs_vget __P((struct mount *, ino_t, struct vnode **));
 #define nfs_reallocblks \
 	((int (*) __P((void *)))eopnotsupp)
+int	nfs_getpages __P((void *));
+int	nfs_putpages __P((void *));
 
 /* other stuff */
 int	nfs_removeit __P((struct sillyrename *));

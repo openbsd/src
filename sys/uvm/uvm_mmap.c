@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.27 2001/11/12 01:26:09 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.28 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1126,40 +1126,8 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			uobj = uvn_attach((void *) vp, (flags & MAP_SHARED) ?
 			   maxprot : (maxprot & ~VM_PROT_WRITE));
 
-#ifndef UBC
-			/*
-			 * XXXCDC: hack from old code
-			 * don't allow vnodes which have been mapped
-			 * shared-writeable to persist [forces them to be
-			 * flushed out when last reference goes].
-			 * XXXCDC: interesting side effect: avoids a bug.
-			 * note that in WRITE [ufs_readwrite.c] that we
-			 * allocate buffer, uncache, and then do the write.
-			 * the problem with this is that if the uncache causes
-			 * VM data to be flushed to the same area of the file
-			 * we are writing to... in that case we've got the
-			 * buffer locked and our process goes to sleep forever.
-			 *
-			 * XXXCDC: checking maxprot protects us from the
-			 * "persistbug" program but this is not a long term
-			 * solution.
-			 * 
-			 * XXXCDC: we don't bother calling uncache with the vp
-			 * VOP_LOCKed since we know that we are already
-			 * holding a valid reference to the uvn (from the
-			 * uvn_attach above), and thus it is impossible for
-			 * the uncache to kill the uvn and trigger I/O.
-			 */
-			if (flags & MAP_SHARED) {
-				if ((prot & VM_PROT_WRITE) ||
-				    (maxprot & VM_PROT_WRITE)) {
-					uvm_vnp_uncache(vp);
-				}
-			}
-#else
 			/* XXX for now, attach doesn't gain a ref */
 			VREF(vp);
-#endif
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,
 			    (flags & MAP_SHARED) ? maxprot :

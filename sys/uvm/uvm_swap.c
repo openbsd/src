@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.41 2001/11/15 23:15:15 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.42 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.46 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1393,32 +1393,6 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_vnbufs.le_next = NOLIST;
 		LIST_INIT(&nbp->vb_buf.b_dep);
 
-		/* 
-		 * set b_dirtyoff/end and b_validoff/end.   this is
-		 * required by the NFS client code (otherwise it will
-		 * just discard our I/O request).
-		 */
-		if (bp->b_dirtyend == 0) {
-			nbp->vb_buf.b_dirtyoff = 0;
-			nbp->vb_buf.b_dirtyend = sz;
-		} else {
-			nbp->vb_buf.b_dirtyoff =
-			    max(0, bp->b_dirtyoff - (bp->b_bcount-resid));
-			nbp->vb_buf.b_dirtyend =
-			    min(sz,
-				max(0, bp->b_dirtyend - (bp->b_bcount-resid)));
-		}
-		if (bp->b_validend == 0) {
-			nbp->vb_buf.b_validoff = 0;
-			nbp->vb_buf.b_validend = sz;
-		} else {
-			nbp->vb_buf.b_validoff =
-			    max(0, bp->b_validoff - (bp->b_bcount-resid));
-			nbp->vb_buf.b_validend =
-			    min(sz,
-				max(0, bp->b_validend - (bp->b_bcount-resid)));
-		}
-
 		nbp->vb_xfer = vnx;	/* patch it back in to vnx */
 
 		/*
@@ -1990,8 +1964,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * and we bump v_numoutput (counter of number of active outputs).
 	 */
 	if (write) {
-		bp->b_dirtyoff = 0;
-		bp->b_dirtyend = npages << PAGE_SHIFT;
 #ifdef UVM_SWAP_ENCRYPT
 		/* mark the pages in the drum for decryption */
 		if (swap_encrypt_initalized)

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.230 2001/11/21 21:23:56 csapuntz Exp $
+#	$OpenBSD: files,v 1.231 2001/11/27 05:27:11 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -801,6 +801,7 @@ file xfs/xfs_syscalls-dummy.c		!xfs
 file uvm/uvm_amap.c
 file uvm/uvm_anon.c
 file uvm/uvm_aobj.c
+file uvm/uvm_bio.c
 file uvm/uvm_device.c
 file uvm/uvm_fault.c
 file uvm/uvm_glue.c

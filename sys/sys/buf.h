@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.33 2001/11/15 23:15:15 art Exp $	*/
+/*	$OpenBSD: buf.h,v 1.34 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -68,6 +68,7 @@ extern struct bio_ops {
 	void	(*io_deallocate) __P((struct buf *));
 	void	(*io_movedeps) __P((struct buf *, struct buf *));
 	int	(*io_countdeps) __P((struct buf *, int, int));
+	void	(*io_pageiodone) __P((struct buf *));
 } bioops;
 
 /*
@@ -96,10 +97,7 @@ struct buf {
 					/* Function to call upon completion. */
 	void	(*b_iodone) __P((struct buf *));
 	struct	vnode *b_vp;		/* Device vnode. */
-	int	b_dirtyoff;		/* Offset in buffer of dirty region. */
-	int	b_dirtyend;		/* Offset of end of dirty region. */
-	int	b_validoff;		/* Offset in buffer of valid region. */
-	int	b_validend;		/* Offset of end of valid region. */
+	void	*b_private;
  	struct	workhead b_dep;		/* List of filesystem dependencies. */
 };
 
@@ -120,7 +118,6 @@ struct buf {
  * These flags are kept in b_flags.
  */
 #define	B_AGE		0x00000001	/* Move to age queue when I/O done. */
-#define	B_NEEDCOMMIT	0x00000002	/* Needs committing to stable storage */
 #define	B_ASYNC		0x00000004	/* Start I/O, do not wait. */
 #define	B_BAD		0x00000008	/* Bad block revectoring in progress. */
 #define	B_BUSY		0x00000010	/* I/O in progress. */
@@ -144,7 +141,6 @@ struct buf {
 #define	B_UAREA		0x00400000	/* Buffer describes Uarea I/O. */
 #define	B_WANTED	0x00800000	/* Process wants this buffer. */
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
-#define	B_WRITEINPROG	0x01000000	/* Write in progress. */
 #define	B_XXX		0x02000000	/* Debugging flag. */
 #define	B_DEFERRED	0x04000000	/* Skipped over for cleaning */
 #define	B_SCANNED	0x08000000	/* Block already pushed during sync */

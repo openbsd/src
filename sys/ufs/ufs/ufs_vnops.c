@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.39 2001/11/21 21:23:56 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.40 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -469,8 +469,6 @@ ufs_chmod(vp, mode, cred, p)
 	ip->i_ffs_mode &= ~ALLPERMS;
 	ip->i_ffs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
-	if ((vp->v_flag & VTEXT) && (ip->i_ffs_mode & S_ISTXT) == 0)
-		(void) uvm_vnp_uncache(vp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.12 2001/11/21 21:23:56 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.13 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -121,6 +121,7 @@ void ufs_ihashrem __P((struct inode *));
 /* ufs_inode.c */
 int ufs_init __P((struct vfsconf *));
 int ufs_reclaim __P((struct vnode *, struct proc *));
+int ufs_balloc_range __P((struct vnode *, off_t, off_t, struct ucred *, int));
 
 /* ufs_lookup.c */
 void ufs_dirbad __P((struct inode *, doff_t, char *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.33 2001/11/12 01:26:09 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.34 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -221,6 +221,21 @@ typedef int		vm_prot_t;
  */
 #define UVM_PGA_USERESERVE	0x0001	/* ok to use reserve pages */
 #define	UVM_PGA_ZERO		0x0002	/* returned page must be zero'd */
+
+/*
+ * the following defines are for ubc_alloc's flags
+ */
+#define UBC_READ	0
+#define UBC_WRITE	1
+
+/*
+ * flags for uvn_findpages().
+ */
+#define UFP_ALL		0x0
+#define UFP_NOWAIT	0x1
+#define UFP_NOALLOC	0x2
+#define UFP_NOCACHE	0x4
+#define UFP_NORDONLY	0x8
 
 /*
  * lockflags that control the locking behavior of various functions.
@@ -464,9 +479,16 @@ void			uao_detach_locked __P((struct uvm_object *));
 void			uao_reference __P((struct uvm_object *));
 void			uao_reference_locked __P((struct uvm_object *));
 
+/* uvm_bio.c */
+void			ubc_init __P((void));
+void *			ubc_alloc __P((struct uvm_object *, voff_t, vsize_t *,
+				       int));
+void			ubc_release __P((void *, vsize_t));
+void			ubc_flush __P((struct uvm_object *, voff_t, voff_t));
+
 /* uvm_fault.c */
-int			uvm_fault __P((vm_map_t, vaddr_t, 
-				vm_fault_t, vm_prot_t));
+int			uvm_fault __P((vm_map_t, vaddr_t, vm_fault_t,
+				       vm_prot_t));
 				/* handle a page fault */
 
 /* uvm_glue.c */
@@ -593,10 +615,11 @@ int			uvm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
 /* uvm_vnode.c */
 void			uvm_vnp_setsize __P((struct vnode *, voff_t));
 void			uvm_vnp_sync __P((struct mount *));
-void 			uvm_vnp_terminate __P((struct vnode *));
-				/* terminate a uvm/uvn object */
-boolean_t		uvm_vnp_uncache __P((struct vnode *));
 struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
+void			uvn_findpages __P((struct uvm_object *, voff_t,
+					   int *, struct vm_page **, int));
+void			uvm_vnp_zerorange __P((struct vnode *, off_t, size_t));
+void			uvm_vnp_asyncget __P((struct vnode *, off_t, size_t));
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages __P((void));

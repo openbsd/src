@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.8 1999/01/10 21:50:32 art Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.9 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -988,8 +988,7 @@ extendfile(dep, count, bpp, ncp, flags)
 	int flags;
 {
 	int error;
-	u_long frcn;
-	u_long cn, got;
+	u_long frcn = 0, cn, got;
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct buf *bp;
 	
@@ -1060,41 +1059,26 @@ extendfile(dep, count, bpp, ncp, flags)
 		}
 		
 		/*
-		 * Update the "last cluster of the file" entry in the denode's fat
-		 * cache.
+		 * Update the "last cluster of the file" entry in the
+		 * denode's fat cache.
 		 */
+
 		fc_setcache(dep, FC_LASTFC, frcn + got - 1, cn + got - 1);
-		
-		if (flags & DE_CLEAR) {
+		if (flags & DE_CLEAR &&
+		    (dep->de_Attributes & ATTR_DIRECTORY)) {
 			while (got-- > 0) {
-				/*
-				 * Get the buf header for the new block of the file.
-				 */
-				if (dep->de_Attributes & ATTR_DIRECTORY)
-					bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
-						    pmp->pm_bpcluster, 0, 0);
-				else {
-					bp = getblk(DETOV(dep), de_cn2bn(pmp, frcn++),
-					    pmp->pm_bpcluster, 0, 0);
-					/*
-					 * Do the bmap now, as in msdosfs_write
-					 */
-					if (pcbmap(dep,
-					    de_bn2cn(pmp, bp->b_lblkno),
-					    &bp->b_blkno, 0, 0))
-						bp->b_blkno = -1;
-					if (bp->b_blkno == -1)
-						panic("extendfile: pcbmap");
-				}
+				bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
+				    pmp->pm_bpcluster, 0, 0);
 				clrbuf(bp);
 				if (bpp) {
 					*bpp = bp;
 					bpp = NULL;
-				} else
+				} else {
 					bdwrite(bp);
+				}
 			}
 		}
 	}
-	
+
 	return (0);
 }

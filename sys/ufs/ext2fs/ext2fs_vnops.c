@@ -1,5 +1,5 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.17 2001/11/06 19:53:21 miod Exp $	*/
-/*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.18 2001/11/27 05:27:12 art Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.30 2000/11/27 08:39:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -402,8 +402,6 @@ ext2fs_chmod(vp, mode, cred, p)
 	ip->i_e2fs_mode &= ~ALLPERMS;
 	ip->i_e2fs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
-	if ((vp->v_flag & VTEXT) && (ip->i_e2fs_mode & S_ISTXT) == 0)
-		(void) uvm_vnp_uncache(vp);
 	return (0);
 }
 
@@ -1469,7 +1467,11 @@ struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, ufs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, ext2fs_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
+	{ &vop_ballocn_desc, ext2fs_ballocn },
+	{ &vop_getpages_desc, genfs_getpages },
+	{ &vop_putpages_desc, genfs_putpages },
+	{ &vop_size_desc, genfs_size },
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
 	{ &ext2fs_vnodeop_p, ext2fs_vnodeop_entries };

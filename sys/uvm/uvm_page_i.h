@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.10 2001/11/12 01:26:10 art Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.11 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_page_i.h,v 1.16 2001/01/28 23:30:45 thorpej Exp $	*/
 
 /* 
@@ -219,9 +219,6 @@ uvm_pagedeactivate(pg)
 			TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
 		pg->pqflags |= PQ_INACTIVE;
 		uvmexp.inactive++;
-#ifndef UBC
-		pmap_clear_reference(pg);
-#endif
 		/*
 		 * update the "clean" bit.  this isn't 100%
 		 * accurate, and doesn't have to be.  we'll

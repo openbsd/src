@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.31 2001/11/12 01:26:09 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.32 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.51 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
@@ -906,17 +906,11 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	 * the pagedaemon.
 	 */
 
-#ifdef UBC
 	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
 	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
 	     uvmexp.inactive < uvmexp.inactarg)) {
 		wakeup(&uvm.pagedaemon);
 	}
-#else
-	if (uvmexp.free < uvmexp.freemin || (uvmexp.free < uvmexp.freetarg &&
-	    uvmexp.inactive < uvmexp.inactarg))
-		wakeup(&uvm.pagedaemon);
-#endif
 
 	/*
 	 * fail if any of these conditions is true:

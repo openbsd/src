@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.24 2001/11/12 01:26:09 art Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.25 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.56 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -204,11 +204,7 @@ uvmfault_anonflush(anons, n)
 		if (pg && (pg->flags & PG_BUSY) == 0 && pg->loan_count == 0) {
 			uvm_lock_pageq();
 			if (pg->wire_count == 0) {
-#ifdef UBC
 				pmap_clear_reference(pg);
-#else
-				pmap_page_protect(pg, VM_PROT_NONE);
-#endif
 				uvm_pagedeactivate(pg);
 			}
 			uvm_unlock_pageq();

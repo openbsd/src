@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.84 2001/11/10 18:42:31 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.85 2001/11/27 05:27:11 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -216,6 +216,8 @@ main(framep)
 	timeout_startup();
 
 	cpu_configure();
+
+	ubc_init();		/* Initialize the unified buffer cache */
 
 	/* Initialize sysctls (must be done before any processes run) */
 	sysctl_init();

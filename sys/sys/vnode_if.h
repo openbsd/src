@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.11 2001/06/23 02:21:05 csapuntz Exp 
+ *	OpenBSD: vnode_if.src,v 1.13 2001/07/26 20:24:47 millert Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
  */
@@ -396,6 +396,52 @@ struct vop_whiteout_args {
 };
 extern struct vnodeop_desc vop_whiteout_desc;
 int VOP_WHITEOUT __P((struct vnode *, struct componentname *, int));
+
+struct vop_ballocn_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	off_t a_offset;
+	off_t a_length;
+	struct ucred *a_cred;
+	int a_flags;
+};
+extern struct vnodeop_desc vop_ballocn_desc;
+int VOP_BALLOCN __P((struct vnode *, off_t, off_t, struct ucred *, int));
+
+struct vop_getpages_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	voff_t a_offset;
+	vm_page_t *a_m;
+	int *a_count;
+	int a_centeridx;
+	vm_prot_t a_access_type;
+	int a_advice;
+	int a_flags;
+};
+extern struct vnodeop_desc vop_getpages_desc;
+int VOP_GETPAGES __P((struct vnode *, voff_t, vm_page_t *, int *, int, 
+    vm_prot_t, int, int));
+
+struct vop_putpages_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	vm_page_t *a_m;
+	int a_count;
+	int a_flags;
+	int *a_rtvals;
+};
+extern struct vnodeop_desc vop_putpages_desc;
+int VOP_PUTPAGES __P((struct vnode *, vm_page_t *, int, int, int *));
+
+struct vop_size_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	off_t a_size;
+	off_t *a_eobp;
+};
+extern struct vnodeop_desc vop_size_desc;
+int VOP_SIZE __P((struct vnode *, off_t, off_t *));
 
 /* Special cases: */
 #include <sys/buf.h>

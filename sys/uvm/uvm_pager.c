@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.22 2001/11/12 01:26:10 art Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.23 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.41 2001/02/18 19:26:50 chs Exp $	*/
 
 /*
@@ -58,17 +58,13 @@ struct pool *uvm_aiobuf_pool;
 
 extern struct uvm_pagerops uvm_deviceops;
 extern struct uvm_pagerops uvm_vnodeops;
-#ifdef UBC
 extern struct uvm_pagerops ubc_pager;
-#endif
 
 struct uvm_pagerops *uvmpagerops[] = {
 	&aobj_pager,
 	&uvm_deviceops,
 	&uvm_vnodeops,
-#ifdef UBC
 	&ubc_pager,
-#endif
 };
 
 /*
@@ -153,7 +149,7 @@ ReStart:
 	kva = 0;			/* let system choose VA */
 
 	if (uvm_map(pager_map, &kva, size, NULL, 
-	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
+	    UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
 		if (curproc == uvm.pagedaemon_proc) {
 			simple_lock(&pager_map_wanted_lock);
 			if (emerginuse) {
@@ -733,7 +729,6 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
 	}
 }
 
-#ifdef UBC
 /*
  * interrupt-context iodone handler for nested i/o bufs.
  *
@@ -757,7 +752,6 @@ uvm_aio_biodone1(bp)
 		biodone(mbp);
 	}
 }
-#endif
 
 /*
  * interrupt-context iodone handler for single-buf i/os
@@ -798,12 +792,10 @@ uvm_aio_aiodone(bp)
 
 	error = (bp->b_flags & B_ERROR) ? (bp->b_error ? bp->b_error : EIO) : 0;
 	write = (bp->b_flags & B_READ) == 0;
-#ifdef UBC
 	/* XXXUBC B_NOCACHE is for swap pager, should be done differently */
 	if (write && !(bp->b_flags & B_NOCACHE) && bioops.io_pageiodone) {
 		(*bioops.io_pageiodone)(bp);
 	}
-#endif
 
 	uobj = NULL;
 	for (i = 0; i < npages; i++) {

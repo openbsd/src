@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.14 2001/06/23 02:14:23 csapuntz Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.15 2001/11/27 05:27:11 art Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -314,9 +314,9 @@ cd9660_read(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
-	register struct iso_node *ip = VTOI(vp);
-	register struct iso_mnt *imp;
+	struct uio *uio = ap->a_uio;
+	struct iso_node *ip = VTOI(vp);
+	struct iso_mnt *imp;
 	struct buf *bp;
 	daddr_t lbn, rablock;
 	off_t diff;
@@ -329,6 +329,26 @@ cd9660_read(v)
 		return (EINVAL);
 	ip->i_flag |= IN_ACCESS;
 	imp = ip->i_mnt;
+
+	if (vp->v_type == VREG) {
+		error = 0;
+		while (uio->uio_resid > 0) {
+			void *win;
+			vsize_t bytelen = MIN(ip->i_size - uio->uio_offset,
+					uio->uio_resid);
+
+			if (bytelen == 0)
+				break;
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_READ);
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error)
+				break;
+		}
+		goto out;
+	}
+
 	do {
 		lbn = lblkno(imp, uio->uio_offset);
 		on = blkoff(imp, uio->uio_offset);
@@ -370,6 +390,8 @@ cd9660_read(v)
 			bp->b_flags |= B_AGE;
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
+
+out:
 	return (error);
 }
 
@@ -1045,7 +1067,9 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, cd9660_pathconf },/* pathconf */
 	{ &vop_advlock_desc, cd9660_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_getpages_desc, genfs_getpages },
+	{ &vop_size_desc, genfs_size },
+	{ NULL, NULL }
 };
 struct vnodeopv_desc cd9660_vnodeop_opv_desc =
 	{ &cd9660_vnodeop_p, cd9660_vnodeop_entries };

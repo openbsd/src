@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.15 2001/11/12 01:26:09 art Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.16 2001/11/27 05:27:12 art Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -427,7 +427,7 @@ vm_map_lock(map)
 	simple_lock(&map->flags_lock);
 	while (map->flags & VM_MAP_BUSY) {
 		map->flags |= VM_MAP_WANTLOCK;
-		ltsleep(&map->flags, PVM, (char *)vmmapbsy, 0, &map->flags_lock);
+		ltsleep(&map->flags, PVM, vmmapbsy, 0, &map->flags_lock);
 	}
 
 	error = lockmgr(&map->lock, LK_EXCLUSIVE|LK_SLEEPFAIL|LK_INTERLOCK,

@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.11 2001/06/23 02:21:05 csapuntz Exp 
+ *	OpenBSD: vnode_if.src,v 1.13 2001/07/26 20:24:47 millert Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
  */
@@ -1230,6 +1230,140 @@ int VOP_WHITEOUT(dvp, cnp, flags)
 	return (VCALL(dvp, VOFFSET(vop_whiteout), &a));
 }
 
+int vop_ballocn_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_ballocn_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_ballocn_desc = {
+	0,
+	"vop_ballocn",
+	0,
+	vop_ballocn_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_ballocn_args, a_cred),
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
+int VOP_BALLOCN(vp, offset, length, cred, flags)
+	struct vnode *vp;
+	off_t offset;
+	off_t length;
+	struct ucred *cred;
+	int flags;
+{
+	struct vop_ballocn_args a;
+	a.a_desc = VDESC(vop_ballocn);
+	a.a_vp = vp;
+	a.a_offset = offset;
+	a.a_length = length;
+	a.a_cred = cred;
+	a.a_flags = flags;
+	return (VCALL(vp, VOFFSET(vop_ballocn), &a));
+}
+
+int vop_getpages_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_getpages_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_getpages_desc = {
+	0,
+	"vop_getpages",
+	0,
+	vop_getpages_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
+int VOP_GETPAGES(vp, offset, m, count, centeridx, access_type, advice, flags)
+	struct vnode *vp;
+	voff_t offset;
+	vm_page_t *m;
+	int *count;
+	int centeridx;
+	vm_prot_t access_type;
+	int advice;
+	int flags;
+{
+	struct vop_getpages_args a;
+	a.a_desc = VDESC(vop_getpages);
+	a.a_vp = vp;
+	a.a_offset = offset;
+	a.a_m = m;
+	a.a_count = count;
+	a.a_centeridx = centeridx;
+	a.a_access_type = access_type;
+	a.a_advice = advice;
+	a.a_flags = flags;
+	return (VCALL(vp, VOFFSET(vop_getpages), &a));
+}
+
+int vop_putpages_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_putpages_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_putpages_desc = {
+	0,
+	"vop_putpages",
+	0,
+	vop_putpages_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
+int VOP_PUTPAGES(vp, m, count, flags, rtvals)
+	struct vnode *vp;
+	vm_page_t *m;
+	int count;
+	int flags;
+	int *rtvals;
+{
+	struct vop_putpages_args a;
+	a.a_desc = VDESC(vop_putpages);
+	a.a_vp = vp;
+	a.a_m = m;
+	a.a_count = count;
+	a.a_flags = flags;
+	a.a_rtvals = rtvals;
+	return (VCALL(vp, VOFFSET(vop_putpages), &a));
+}
+
+int vop_size_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_size_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_size_desc = {
+	0,
+	"vop_size",
+	0,
+	vop_size_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
+int VOP_SIZE(vp, size, eobp)
+	struct vnode *vp;
+	off_t size;
+	off_t *eobp;
+{
+	struct vop_size_args a;
+	a.a_desc = VDESC(vop_size);
+	a.a_vp = vp;
+	a.a_size = size;
+	a.a_eobp = eobp;
+	return (VCALL(vp, VOFFSET(vop_size), &a));
+}
+
 /* Special cases: */
 
 int vop_strategy_vp_offsets[] = {
@@ -1323,6 +1457,10 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_advlock_desc,
 	&vop_reallocblks_desc,
 	&vop_whiteout_desc,
+	&vop_ballocn_desc,
+	&vop_getpages_desc,
+	&vop_putpages_desc,
+	&vop_size_desc,
 	NULL
 };
 
