@@ -1,4 +1,4 @@
-/*	$OpenBSD: api.c,v 1.11 2002/02/16 21:27:56 millert Exp $	*/
+/*	$OpenBSD: api.c,v 1.12 2003/04/15 08:08:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -425,6 +425,7 @@ api_opts_get(sp, name, value, boolvalue)
 {
 	OPTLIST const *op;
 	int offset;
+	size_t len;
 
 	if ((op = opts_search(name)) == NULL) {
 		opts_nomatch(sp, name);
@@ -437,24 +438,27 @@ api_opts_get(sp, name, value, boolvalue)
 	switch (op->type) {
 	case OPT_0BOOL:
 	case OPT_1BOOL:
-		MALLOC_RET(sp, *value, char *, strlen(op->name) + 2 + 1);
-		(void)sprintf(*value,
+		len = strlen(op->name) + 2 + 1;
+		MALLOC_RET(sp, *value, char *, len);
+		(void)snprintf(*value, len,
 		    "%s%s", O_ISSET(sp, offset) ? "" : "no", op->name);
 		if (boolvalue != NULL)
 			*boolvalue = O_ISSET(sp, offset);
 		break;
 	case OPT_NUM:
-		MALLOC_RET(sp, *value, char *, 20);
-		(void)sprintf(*value, "%lu", (u_long)O_VAL(sp, offset));
+		len = 20;
+		MALLOC_RET(sp, *value, char *, len);
+		(void)snprintf(*value, len, "%lu", (u_long)O_VAL(sp, offset));
 		break;
 	case OPT_STR:
 		if (O_STR(sp, offset) == NULL) {
 			MALLOC_RET(sp, *value, char *, 2);
 			value[0] = '\0';
 		} else {
+			len = strlen(O_STR(sp, offset)) + 1;
 			MALLOC_RET(sp,
-			    *value, char *, strlen(O_STR(sp, offset)) + 1);
-			(void)sprintf(*value, "%s", O_STR(sp, offset));
+			    *value, char *, len);
+			(void)snprintf(*value, len, "%s", O_STR(sp, offset));
 		}
 		break;
 	}
