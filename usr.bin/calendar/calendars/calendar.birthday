@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.16 2002/08/09 09:27:33 pjanzen Exp $
+ * $OpenBSD: calendar.birthday,v 1.17 2002/08/24 21:15:37 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -214,9 +214,11 @@
 09/13	Walter Reed born, 1851
 09/15	Agatha Christie born in Torquay, England, 1890
 09/16	Allen Funt born in Brooklyn, NY, 1914
+09/18	Konstantin Eduardovich Tsiolkovsky born, 1857, father of rocket flight
 09/18	Greta Garbo born, 1905
 09/18	Jimi Hendrix dies from an overdose, 1970
 09/19	President Garfield dies of wounds in Elberon, N.J., 1881
+09/19	Tsiolkovsky died, 1935
 09/20	Upton (Beall) Sinclair born, 1878
 09/21	H.G. (Herbert George) Wells born in Bromley, England, 1866
 09/21	Louis Joliet born, 1645
