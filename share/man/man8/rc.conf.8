@@ -1,3 +1,4 @@
+.\"	$OpenBSD: rc.conf.8,v 1.9 2000/09/08 13:17:41 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Ian F. Darwin
 .\" All rights reserved.
@@ -27,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd January 5, 1998
-.Dt RC.CONF 8 SMM
+.Dt RC.CONF 8
 .Os
 .Sh NAME
 .Nm rc.conf
@@ -49,8 +50,9 @@ file.
 Variables set in this file will override variables previously set in
 .Pa /etc/rc.conf .
 .Pp
-There are three sections in this file. The first is used to turn features
-on or off. For example, whether the system runs the
+There are three sections in this file.
+The first is used to turn features on or off.
+For example, whether the system runs the
 .Nm sendmail
 daemon is determined by the line in this section
 .Bd -literal -indent xxx
@@ -66,8 +68,9 @@ sendmail_flags="-bd -q30m"
 then the sendmail daemon will be started with those options.
 .Pp
 The second section contains some other programs that can either be run or not,
-but that don't need options. They can be set to YES or NO. For example,
-the line
+but that don't need options.
+They can be set to YES or NO.
+For example, the line
 .Bd -literal -indent xxx
 nfs_server=NO
 .Ed
@@ -82,13 +85,14 @@ file etc.).
 .Pp
 The third section contains values that parameterize servers started by
 one of the first two sections, and are ignored if the corresponding
-server is not running. For example, if
+server is not running.
+For example, if
 .Nm nfs_server ,
 is enabled, then the line
 .Bd -literal -indent xxx
 nfsd_flags="-tun 4"
 .Ed
-provides command-line arguments for the nfs server.
+provides command-line arguments for the NFS server.
 .Pp
 This particular line instructs
 .Xr nfsd 8
@@ -96,12 +100,12 @@ to start four copies of the server.
 On a busy file server, 8 (or more) copies are recommended.
 .Sh SEE ALSO
 .Xr init 8 ,
-.Xr rc 8 .
+.Xr rc 8
 .Pp
 and the detailed documentation given for each server that is
 configurable in this fashion.
 .Sh HISTORY
-The file
-.Nm rc.conf
-first appeared in
+The
+.Nm
+file first appeared in
 .Ox 2.2 .
