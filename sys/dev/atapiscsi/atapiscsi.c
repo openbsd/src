@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.69 2004/01/14 02:00:41 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.70 2004/02/07 19:59:43 grange Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -635,6 +635,8 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 	int timeout_delay = hz / 10;
 
 	if (xfer->c_flags & C_POLL) {
+		wdc_disable_intr(chp);
+
 		if (ctxt != ctxt_process) {
 			if (ctxt == ctxt_interrupt)
 				xfer->endticks = 1;
@@ -1552,7 +1554,9 @@ wdc_atapi_done(chp, xfer, timeout, ret)
 
 	sc_xfer->flags |= ITSDONE;
 
-	if (!(xfer->c_flags & C_POLL)) {
+	if (xfer->c_flags & C_POLL) {
+		wdc_enable_intr(chp);
+	} else {
 		WDCDEBUG_PRINT(("wdc_atapi_done: scsi_done\n"), DEBUG_XFERS);
 		scsi_done(sc_xfer);
 	}
