@@ -1,8 +1,7 @@
-/*	$OpenBSD */
-/*	$NetBSD: etherent.c,v 1.2 1995/03/06 11:38:14 mycroft Exp $	*/
+/*	$OpenBSD: etherent.c,v 1.4 1996/07/12 13:19:07 mickey Exp $	*/
 
 /*
- * Copyright (c) 1990, 1993, 1994
+ * Copyright (c) 1990, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,19 +22,23 @@
  */
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: etherent.c,v 1.8 94/06/20 19:07:50 leres Exp (LBL)";
+    "@(#) Header: etherent.c,v 1.18 95/10/07 03:08:12 leres Exp (LBL)";
 #endif
 
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <memory.h>
 #include <pcap.h>
 #include <pcap-namedb.h>
 #include <stdio.h>
+#include <string.h>
 
-#ifndef __GNUC__
-#define inline
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
 #endif
+
+#include "pcap-int.h"
 
 static inline int xdtoi(int);
 static inline int skip_space(FILE *);
@@ -86,66 +89,71 @@ pcap_next_etherent(FILE *fp)
 	register int c, d, i;
 	char *bp;
 	static struct pcap_etherent e;
-	static int nline = 1;
- top:
-	while (nline) {
+
+	memset((char *)&e, 0, sizeof(e));
+	do {
 		/* Find addr */
 		c = skip_space(fp);
 		if (c == '\n')
 			continue;
+
 		/* If this is a comment, or first thing on line
-		   cannot be ethernet address, skip the line. */
-		else if (!isxdigit(c))
+		   cannot be etehrnet address, skip the line. */
+		if (!isxdigit(c)) {
 			c = skip_line(fp);
-		else {
-			/* must be the start of an address */
-			for (i = 0; i < 6; i += 1) {
-				d = xdtoi(c);
-				c = getc(fp);
-				if (c != ':') {
-					d <<= 4;
-					d |= xdtoi(c);
-					c = getc(fp);
-				}
-				e.addr[i] = d;
-				if (c != ':')
-					break;
+			continue;
+		}
+
+		/* must be the start of an address */
+		for (i = 0; i < 6; i += 1) {
+			d = xdtoi(c);
+			c = getc(fp);
+			if (isxdigit(c)) {
+				d <<= 4;
+				d |= xdtoi(c);
 				c = getc(fp);
 			}
-			nline = 0;
+			e.addr[i] = d;
+			if (c != ':')
+				break;
+			c = getc(fp);
 		}
 		if (c == EOF)
-			return 0;
-	}
+			break;
 
-	/* If we started a new line, 'c' holds the char past the ether addr,
-	   which we assume is white space.  If we are continuing a line,
-	   'c' is garbage.  In either case, we can throw it away. */
+		/* Must be whitespace */
+		if (!isspace(c)) {
+			c = skip_line(fp);
+			continue;
+		}
+		c = skip_space(fp);
 
-	c = skip_space(fp);
-	if (c == '\n') {
-		nline = 1;
-		goto top;
-	}
-	else if (c == '#') {
-		(void)skip_line(fp);
-		nline = 1;
-		goto top;
-	}
-	else if (c == EOF)
-		return 0;
+		/* hit end of line... */
+		if (c == '\n')
+			continue;
 
-	/* Must be a name. */
-	bp = e.name;
-	/* Use 'd' to prevent buffer overflow. */
-	d = sizeof(e.name) - 1;
-	do {
-		*bp++ = c;
-		c = getc(fp);
-	} while (!isspace(c) && c != EOF && --d > 0);
-	*bp = '\0';
-	if (c == '\n')
-		nline = 1;
+		if (c == '#') {
+			c = skip_line(fp);
+			continue;
+		}
 
-	return &e;
+		/* pick up name */
+		bp = e.name;
+		/* Use 'd' to prevent buffer overflow. */
+		d = sizeof(e.name) - 1;
+		do {
+			*bp++ = c;
+			c = getc(fp);
+		} while (!isspace(c) && c != EOF && --d > 0);
+		*bp = '\0';
+
+		/* Eat trailing junk */
+		if (c != '\n')
+			(void)skip_line(fp);
+
+		return &e;
+
+	} while (c != EOF);
+
+	return (NULL);
 }

@@ -1,9 +1,8 @@
 %{
-/*	$OpenBSD */
-/*	$NetBSD: scanner.l,v 1.2 1995/03/06 11:39:12 mycroft Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.5 1996/07/12 13:19:13 mickey Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,22 +24,25 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: scanner.l,v 1.40 94/06/10 17:21:44 mccanne Exp (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.5 1996/07/12 13:19:13 mickey Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 
 #include <ctype.h>
+#include <unistd.h>
+
 #include <pcap.h>
 #include <pcap-namedb.h>
 
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
+
+#include "pcap-int.h"
 #include "gencode.h"
 #include "grammar.tab.h"
-
-#ifndef __GNUC__
-#define inline
-#endif
 
 static int stoi(char *);
 static inline int xdtoi(int);
@@ -89,6 +91,7 @@ ip		return IP;
 tcp		return TCP;
 udp		return UDP;
 icmp		return ICMP;
+igmp		return IGMP;
 
 decnet		return DECNET;
 lat		return LAT;

@@ -1,8 +1,7 @@
-/*	$OpenBSD */
-/*	$NetBSD: bpf_image.c,v 1.2 1995/03/06 11:38:11 mycroft Exp $	*/
+/*      $OpenBSD */
 
 /*
- * Copyright (c) 1990, 1991, 1992, 1994
+ * Copyright (c) 1990, 1991, 1992, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +23,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) Header: bpf_image.c,v 1.12 94/01/31 03:22:34 leres Exp (LBL)";
+	"@(#) Header: bpf_image.c,v 1.19 95/11/26 14:02:36 leres Exp (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -35,6 +34,12 @@ static char rcsid[] =
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
+
+#include "pcap-int.h"
 
 char *
 bpf_image(p, n)
@@ -138,7 +143,7 @@ bpf_image(p, n)
 	case BPF_JMP|BPF_JA:
 		op = "ja";
 		fmt = "%d";
-		v = n + p->k;
+		v = n + 1 + p->k;
 		break;
 
 	case BPF_JMP|BPF_JGT|BPF_K:

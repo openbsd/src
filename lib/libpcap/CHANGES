@@ -1,6 +1,110 @@
-$OpenBSD: CHANGES,v 1.3 1996/06/10 07:23:23 deraadt Exp $
+$OpenBSD: CHANGES,v 1.4 1996/07/12 13:19:06 mickey Exp $
 $NetBSD: CHANGES,v 1.2 1995/03/06 11:37:58 mycroft Exp $
-@(#) Header: CHANGES,v 1.4 94/06/20 19:22:33 leres Exp (LBL)
+@(#) $Header: /home/cvs/src/lib/libpcap/CHANGES,v 1.4 1996/07/12 13:19:06 mickey Exp $ (LBL)
+
+v0.2 Sun Jun 23 02:28:42 PDT 1996
+
+- Add support for HP-UX. Resulted from code contributed by Tom Murray
+  (tmurray@hpindck.cup.hp.com) and Philippe-Andri Prindeville
+  (philipp@res.enst.fr)
+
+- Update INSTALL with a reminder to install include files. Thanks to
+  Mark Andrews (mandrews@aw.sgi.com)
+
+- Fix bpf compiler alignment bug on the alpha.
+
+- Use autoconf to detect architectures that can't handle misaligned
+  accesses.
+
+- Added loopback support for snoop. Resulted from report Steve
+  Alexander (sca@engr.sgi.com)
+
+v0.1 Fri Apr 28 18:11:03 PDT 1995
+
+- Fixed compiler and optimizer bugs.  The BPF filter engine uses unsigned
+  comparison operators, while the code generator and optimizer assumed
+  signed semantics in several places.  Thanks to Charlie Slater
+  (cslater@imatek.com) for pointing this out.
+
+- Removed FDDI ifdef's, they aren't really needed. Resulted from report
+  by Gary Veum (veum@boa.gsfc.nasa.gov).
+
+- Add pcap-null.c which allows offline use of libpcap on systems that
+  don't support live package capture. This feature resulting from a
+  request from Jan van Oorschot (j.p.m.voorschot@et.tudelft.nl).
+
+- Make bpf_compile() reentrant. Fix thanks to Pascal Hennequin
+  (Pascal.Hennequin@hugo.int-evry.fr).
+
+- Port to GNU autoconf.
+
+- Fix pcap-dlpi.c to work with isdn. Resulted from report by Flemming
+  Johansen (fsj@csd.cri.dk).
+
+- Handle multi-digit interface unit numbers (aka ppa's) under dlpi.
+  Resulted from report by Daniel Ehrlich (ehrlich@cse.psu.edu).
+
+- Fix pcap-dlpi.c to work in non-promiscuous mode. Resulted from report
+  by Jeff Murphy (jcmurphy@acsu.buffalo.edu).
+
+- Add support for "long jumps". Thanks to Jeffrey Mogul
+  (mogul@pa.dec.com).
+
+- Fix minor problems when compiling with BDEBUG as noticed by Scott
+  Bertilson (scott@unet.umn.edu).
+
+- Declare sys_errlist "const char *const" to avoid problems under
+  FreeBSD. Resulted from report by jher@eden.com.
+
+v0.0.6 Fri Apr 28 04:07:13 PDT 1995
+
+- Add missing variable declaration missing from 0.0.6
+
+v0.0.5 Fri Apr 28 00:22:21 PDT 1995
+
+- Workaround for problems when pcap_read() returns 0 due to the timeout
+  expiring.
+
+v0.0.4 Thu Apr 20 20:41:48 PDT 1995
+
+- Change configuration to not use gcc v2 flags with gcc v1.
+
+- Fixed a bug in pcap_next(); if pcap_dispatch() returns 0, pcap_next()
+  should also return 0. Thanks to Richard Stevens (rstevens@noao.edu).
+
+- Fixed configure to test for snoop before dlpi to avoid problems under
+  IRIX 5. Thanks to J. Eric Townsend (jet@abulafia.genmagic.com).
+
+- Hack around deficiency in Ultrix's make.
+
+- Fix two bugs related to the Solaris pre-5.3.2 bufmod bug; handle
+  savefiles that have more than snapshot bytes of data in them (so we
+  can read old savefiles) and avoid writing such files.
+
+- Added checkioctl which is used with gcc to check that the
+  "fixincludes" script has been run.
+
+v0.0.3 Tue Oct 18 18:13:46 PDT 1994
+
+- Fixed configure to test for snoop before dlpi to avoid problems under
+  IRIX 5. Thanks to J. Eric Townsend (jet@abulafia.genmagic.com).
+
+v0.0.2 Wed Oct 12 20:56:37 PDT 1994
+
+- Implement timeout in the dlpi pcap_open_live(). Thanks to Richard
+  Stevens.
+
+- Determine pcap link type from dlpi media type. Resulted from report
+  by Mahesh Jethanandani (mahesh@npix.com).
+
+v0.0.1 Fri Jun 24 14:50:57 PDT 1994
+
+- Fixed bug in nit_setflags() in pcap-snit.c. The streams ioctl timeout
+  wasn't being initialized sometimes resulting in an "NIOCSFLAGS:
+  Invalid argument" error under OSF/1. Reported by Matt Day
+  (mday@artisoft.com) and Danny Mitzel (dmitzel@whitney.hitc.com).
+
+- Turn on FDDI support by default.
 
 v0.0 Mon Jun 20 19:20:16 PDT 1994
 

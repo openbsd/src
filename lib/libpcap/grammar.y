@@ -1,9 +1,8 @@
 %{
-/*	$OpenBSD */
-/*	$NetBSD: grammar.y,v 1.2 1995/03/06 11:38:27 mycroft Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.4 1996/07/12 13:19:09 mickey Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,12 +24,17 @@
  */
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: grammar.y,v 1.39 94/06/14 20:09:25 leres Exp (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.4 1996/07/12 13:19:09 mickey Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
 
 #include <net/if.h>
 #include <net/bpf.h>
@@ -42,6 +46,11 @@ static char rcsid[] =
 #include <pcap.h>
 #include <pcap-namedb.h>
 
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
+#endif
+
+#include "pcap-int.h"
 #include "gencode.h"
 
 #define QSET(q, p, d, a) (q).proto = (p),\
@@ -61,6 +70,9 @@ yyerror(char *msg)
 }
 
 #ifndef YYBISON
+int yyparse(void);
+
+int
 pcap_parse()
 {
 	return (yyparse());
@@ -93,7 +105,7 @@ pcap_parse()
 
 %token  DST SRC HOST GATEWAY
 %token  NET PORT LESS GREATER PROTO BYTE
-%token  ARP RARP IP TCP UDP ICMP
+%token  ARP RARP IP TCP UDP ICMP IGMP
 %token  DECNET LAT MOPRC MOPDL
 %token  TK_BROADCAST TK_MULTICAST
 %token  NUM INBOUND OUTBOUND
@@ -217,6 +229,7 @@ pname:	  LINK			{ $$ = Q_LINK; }
 	| TCP			{ $$ = Q_TCP; }
 	| UDP			{ $$ = Q_UDP; }
 	| ICMP			{ $$ = Q_ICMP; }
+	| IGMP			{ $$ = Q_IGMP; }
 	| DECNET		{ $$ = Q_DECNET; }
 	| LAT			{ $$ = Q_LAT; }
 	| MOPDL			{ $$ = Q_MOPDL; }

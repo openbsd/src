@@ -1,8 +1,7 @@
-/*	$OpenBSD */
-/*	$NetBSD: pcap-bpf.c,v 1.3 1995/04/29 05:42:31 cgd Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.6 1996/07/12 13:19:10 mickey Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994
+ * Copyright (c) 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,25 +22,29 @@
  */
 #ifndef lint
 static  char rcsid[] =
-    "@(#)Header: pcap-bpf.c,v 1.14 94/06/03 19:58:49 leres Exp (LBL)";
+    "@(#)Header: pcap-bpf.c,v 1.25 96/06/24 02:50:11 leres Exp (LBL)";
 #endif
 
-#include <stdio.h>
-#include <netdb.h>
-#include <ctype.h>
-#include <signal.h>
-#include <errno.h>
 #include <sys/param.h>			/* optionally get BSD define */
 #include <sys/time.h>
 #include <sys/timeb.h>
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+
 #include <net/bpf.h>
 #include <net/if.h>
-#include <string.h>
-#ifdef __NetBSD__
+
+#include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
 #endif
 
 #include "pcap-int.h"
@@ -51,7 +54,7 @@ pcap_stats(pcap_t *p, struct pcap_stat *ps)
 {
 	struct bpf_stat s;
 
-	if (ioctl(p->fd, BIOCGSTATS, &s) < 0) {
+	if (ioctl(p->fd, BIOCGSTATS, (caddr_t)&s) < 0) {
 		sprintf(p->errbuf, "BIOCGSTATS: %s", pcap_strerror(errno));
 		return (-1);
 	}
@@ -88,8 +91,9 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 			 * The lseek() to 0 will fix things.
 			 */
 			case EINVAL:
-				if ((long)(tell(p->fd) + p->bufsize) < 0) {
-					(void)lseek(p->fd, 0, 0);
+				if (lseek(p->fd, 0L, SEEK_CUR) +
+				    p->bufsize < 0) {
+					(void)lseek(p->fd, 0L, SEEK_SET);
 					goto again;
 				}
 				/* fall through */
@@ -133,7 +137,7 @@ pcap_inject(pcap_t *p, const void *buf, size_t len)
 	return (write(p->fd, buf, len));
 }
 
-static __inline int
+static inline int
 bpf_open(pcap_t *p, char *errbuf)
 {
 	int fd;
@@ -220,7 +224,7 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 		goto bad;
 	}
 	p->bufsize = v;
-	p->buffer = (u_char*)malloc(p->bufsize);
+	p->buffer = (u_char *)malloc(p->bufsize);
 	if (p->buffer == NULL) {
 		sprintf(ebuf, "malloc: %s", pcap_strerror(errno));
 		goto bad;
@@ -228,6 +232,7 @@ pcap_open_live(char *device, int snaplen, int promisc, int to_ms, char *ebuf)
 
 	return (p);
  bad:
+	(void)close(fd);
 	free(p);
 	return (NULL);
 }

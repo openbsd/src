@@ -1,8 +1,7 @@
-/*	$OpenBSD */
-/*	$NetBSD: nametoaddr.c,v 1.3.6.1 1996/06/05 18:04:34 cgd Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.4 1996/07/12 13:19:09 mickey Exp $	*/
 
 /*
- * Copyright (c) 1990, 1991, 1992, 1993, 1994
+ * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,11 +26,17 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) Header: nametoaddr.c,v 1.21 94/06/20 19:07:54 leres Exp (LBL)";
+    "@(#) Header: nametoaddr.c,v 1.38 96/06/17 02:42:50 leres Exp (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
+
+#if __STDC__
+struct mbuf;
+struct rtentry;
+#endif
+
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -39,20 +44,19 @@ static char rcsid[] =
 
 #include <ctype.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <memory.h>
 #include <netdb.h>
 #include <pcap.h>
 #include <pcap-namedb.h>
 #include <stdio.h>
-#ifdef __NetBSD__
-#include <stdlib.h>
-#include <string.h>
+
+#ifdef HAVE_OS_PROTO_H
+#include "os-proto.h"
 #endif
 
+#include "pcap-int.h"
 #include "gencode.h"
-
-#ifndef __GNUC__
-#define inline
-#endif
 
 #ifndef NTOHL
 #define NTOHL(x) (x) = ntohl(x)
@@ -65,24 +69,24 @@ static inline int xdtoi(int);
  *  Convert host name to internet address.
  *  Return 0 upon failure.
  */
-u_int32_t **
+bpf_u_int32 **
 pcap_nametoaddr(const char *name)
 {
 #ifndef h_addr
-	static u_int32_t *hlist[2];
+	static bpf_u_int32 *hlist[2];
 #endif
-	u_int32_t **p;
+	bpf_u_int32 **p;
 	struct hostent *hp;
 
 	if ((hp = gethostbyname(name)) != NULL) {
 #ifndef h_addr
-		hlist[0] = (u_int32_t *)hp->h_addr;
+		hlist[0] = (bpf_u_int32 *)hp->h_addr;
 		NTOHL(hp->h_addr);
 		return hlist;
 #else
-		for (p = (u_int32_t **)hp->h_addr_list; *p; ++p)
+		for (p = (bpf_u_int32 **)hp->h_addr_list; *p; ++p)
 			NTOHL(**p);
-		return (u_int32_t **)hp->h_addr_list;
+		return (bpf_u_int32 **)hp->h_addr_list;
 #endif
 	}
 	else
@@ -93,7 +97,7 @@ pcap_nametoaddr(const char *name)
  *  Convert net name to internet address.
  *  Return 0 upon failure.
  */
-u_long
+bpf_u_int32
 pcap_nametonetaddr(const char *name)
 {
 	struct netent *np;
@@ -134,14 +138,12 @@ pcap_nametoport(const char *name, int *port, int *proto)
 		sp = getservbyname(name, other);
 		if (sp != 0) {
 			NTOHS(sp->s_port);
+#ifdef notdef
 			if (*port != sp->s_port)
 				/* Can't handle ambiguous names that refer
 				   to different port numbers. */
-#ifdef notdef
 				warning("ambiguous port %s in /etc/services",
 					name);
-#else
-			;
 #endif
 			*proto = PROTO_UNDEF;
 		}
@@ -226,10 +228,10 @@ xdtoi(c)
 		return c - 'A' + 10;
 }
 
-u_long
+bpf_u_int32
 __pcap_atoin(const char *s)
 {
-	u_long addr = 0;
+	bpf_u_int32 addr = 0;
 	u_int n;
 
 	while (1) {
@@ -245,14 +247,14 @@ __pcap_atoin(const char *s)
 	/* NOTREACHED */
 }
 
-u_long
+bpf_u_int32
 __pcap_atodn(const char *s)
 {
 #define AREASHIFT 10
 #define AREAMASK 0176000
 #define NODEMASK 01777
 
-	u_long addr = 0;
+	bpf_u_int32 addr = 0;
 	u_int node, area;
 
 	if (sscanf((char *)s, "%d.%d", &area, &node) != 2)
@@ -290,7 +292,7 @@ pcap_ether_aton(const char *s)
 	return (e);
 }
 
-#ifndef ETHER_SERVICE
+#ifndef HAVE_ETHER_HOSTTON
 /* Roll our own */
 u_char *
 pcap_ether_hostton(const char *name)
@@ -323,18 +325,20 @@ pcap_ether_hostton(const char *name)
 	return (NULL);
 }
 #else
+
+#ifndef sgi
+extern int ether_hostton(char *, struct ether_addr *);
+#endif
+
 /* Use the os supplied routines */
 u_char *
 pcap_ether_hostton(const char *name)
 {
 	register u_char *ap;
 	u_char a[6];
-#ifndef sgi
-	extern int ether_hostton(char *, struct ether_addr *);
-#endif
 
 	ap = NULL;
-	if (ether_hostton((char*)name, (struct ether_addr *)a) == 0) {
+	if (ether_hostton((char *)name, (struct ether_addr *)a) == 0) {
 		ap = (u_char *)malloc(6);
 		if (ap != NULL)
 			memcpy(ap, a, 6);
