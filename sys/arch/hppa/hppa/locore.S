@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.14 1999/06/24 01:19:16 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.15 1999/07/08 16:14:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -921,6 +921,8 @@ $ibreak_setpsw
 	b	$ibreak_exit
 	mtctl	arg0, ipsw
 
+	/* insert other fast breaks here */
+
 $ibreak_exit
 	/* skip the break */
 	mtctl	r0, pcoq
@@ -931,8 +933,9 @@ $ibreak_exit
 	mfctl	tr4, t3
 	mfctl	tr5, t2
 	mfctl	tr6, t1
-	rfi
 	mfctl	tr7, r1
+	rfi
+	nop
 
 
 	.export	TLABEL(all), code
@@ -1375,11 +1378,11 @@ ENTRY(setjmp)
 	stwm	r17,4(arg0)
 	stwm	r18,4(arg0)
 	stwm	r27,4(arg0)	/* Good idea to save the data pointer (dp) */
-	stwm    rp,4(arg0)	/* Save the return pointer */
+	stwm	rp,4(arg0)	/* Save the return pointer */
 	stwm	sp,4(arg0)	/* Save the original stack pointer */
 
 	bv	0(rp)
-	or      r0,r0,ret0
+	copy	r0, ret0
 EXIT(setjmp)
 
 ENTRY(longjmp)
@@ -1407,7 +1410,7 @@ ENTRY(longjmp)
 	ldwm	4(arg0),sp	/* stack pointer, */
 
 	bv	0(rp)
-	or	arg1,r0,ret0	/* Move return value to where it belongs. */
+	copy	arg1,ret0	/* Move return value to where it belongs. */
 EXIT(longjmp)
 
 
@@ -1503,11 +1506,36 @@ EXIT(spstrcpy)
 
 /*
  * adjust the time value
+ * XXX: do it the easy way, later we will calculate actual fuzz from itr
  */
 ENTRY(microtime)
 
+	.import time, data
+	ldil	L%-1000000, t3
+	ldil	L%time, t1
+	ldo	R%-1000000(t3), t3
+
+	/* t4 = splhigh() */
+	mfctl	eiem, t4
+	mtctl	r0, eiem
+
+	ldw	R%time+4(t1), t2
+	ldw	R%time(t1), t1
+
+	/* splx(t4) */
+	mtctl	t4, eiem
+
+	add	1, t2, t2
+	addb,<	t2, t3, microtime_no
+
+	add	1, t1, t1
+	copy	t3, t2
+
+microtime_no
+	stwm	t1, 4(arg0)
+	bv	(rp)
+	stw	t2, 0(arg0)
 	
-	bv,n	(rp)
 EXIT(microtime)
 
 	.import	whichqs, data
@@ -1621,10 +1649,10 @@ ENTRY(cpu_switch)
 
 switch_search
 	/* arg3 = splhigh() */
-	mfctl	cr15, arg3
+	mfctl	eiem, arg3
 idle_loop
 	rsm	PSW_I, r0
-	mtctl	r0, cr15
+	mtctl	r0, eiem
 
 	/* 1. find new process */
 	ldil	L%whichqs, t1
@@ -1632,7 +1660,7 @@ idle_loop
 
 	comb,<>	r0, t3, gotprocs
 
-	mtctl	arg3, cr15
+	mtctl	arg3, eiem
 	ssm	PSW_I, r0
 	/* XXX do idle work here */
 	b	idle_loop
@@ -1723,7 +1751,7 @@ switch_exited
 	mtctl	t1, pidr4
 
 switch_return
-	mtctl	arg3, cr15
+	mtctl	arg3, eiem
 	bv	0(rp)
 	ssm	PSW_I, r0
 
