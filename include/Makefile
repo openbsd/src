@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 1997/02/13 22:41:51 provos Exp $
+#	$OpenBSD: Makefile,v 1.38 1997/02/27 18:14:50 downsj Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -36,7 +36,8 @@ LDIRS=	dev net netinet netccitt netiso netns netipx nfs sys ufs vm ddb \
 RDIRS=	../lib/libcom_err ../lib/libcompat ../lib/libcurses ../lib/libform \
 	../lib/libmenu ../lib/libocurses ../lib/libpanel ../lib/librpcsvc \
 	../lib/libskey ../lib/libss ../lib/libtermlib ../lib/libedit \
-	../lib/libpcap ../lib/libutil ../lib/libz ../sys/arch/${MACHINE}
+	../lib/libpcap ../lib/libutil ../lib/libwrap ../lib/libz \
+	../sys/arch/${MACHINE}
 
 NOOBJ=	noobj
 
