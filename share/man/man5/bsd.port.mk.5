@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.35 2001/04/18 14:48:29 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.36 2001/06/03 14:42:44 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -649,6 +649,29 @@ Base location for packages built (default: ${PORTSDIR}/packages/${ARCH}).
 Command to use to apply all patches.
 Defaults to
 .Pa /usr/bin/patch .
+.It Ev PATCH_CASES
+In the normal distpatch stage (when
+.Ev PATCHFILES
+is not empty), this is the contents of a case statement, used to apply
+distribution patches.
+Fragments are automatically appended to handle gzip'ed and bzip'ed
+patches, so that the default case is equivalent to the following shell
+fragment:
+.Bd -literal -indent
+set -e
+cd ${FULLDISTDIR}
+for patchfile in ${_PATCHFILES}
+do
+    case $$patchfile in
+	*.bz2)
+	  bzip2 -dc $$patchfile | ${PATCH} ${PATCH_DIST_ARGS};;
+	*.Z|*.gz)
+	  gzcat $$patchfile | ${PATCH} ${PATCH_DIST_ARGS};;
+	*)
+	  ${PATCH} ${PATCH_DIST_ARGS} <$$patchfile;;
+    esac
+done
+.Ed
 .It Ev PATCHDIR
 Location for patches applied by patch target (default: patches.${ARCH} or
 patches).
