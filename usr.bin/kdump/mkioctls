@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.6 2001/08/18 00:48:57 espie Exp $
+#	$OpenBSD: mkioctls,v 1.7 2002/10/17 15:14:57 jason Exp $
 
 #
 # Copyright (c) 1994
@@ -49,6 +49,7 @@ BEGIN {
 	print "#include <sys/termios.h>"
 	print "#include <netinet/ip_ipsp.h>"
 	print "#include <net/if_enc.h>"
+	print "#include <sys/audioio.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
 	print ""
@@ -70,6 +71,18 @@ BEGIN {
 	printf("\tif (val == %s)\n\t\treturn (\"%s\");\n", $i, $i);
 
 }
+
+/^#[ 	]*define[ 	]*(AUDIO_)[A-Z]*[ 	]*_IO/ {
+	
+	# find where the name starts
+	for (i = 1; i <= NF; i++)
+		if ($i ~ /define/)
+			break;
+	++i;
+	# 
+	printf("\tif (val == %s)\n\t\treturn (\"%s\");\n", $i, $i);
+}
+
 END {
 	print "\n\treturn (NULL);"
 	print "}"
