@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.16 2000/11/08 16:01:21 art Exp $	*/
+/*	$OpenBSD: sio.c,v 1.17 2001/02/05 17:10:16 art Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ int	pcebmatch __P((struct device *, struct cfdata *, void *));
 #endif
 
 struct cfattach pceb_ca = {
-	sizeof(struct device), pcebmatch, sioattach,
+	sizeof(struct sio_softc), pcebmatch, sioattach,
 };
 
 struct cfdriver pceb_cd = {
