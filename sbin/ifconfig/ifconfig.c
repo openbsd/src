@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.27 2000/01/09 05:56:58 angelos Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.28 2000/01/15 23:56:24 angelos Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.27 2000/01/09 05:56:58 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.28 2000/01/15 23:56:24 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,6 +165,7 @@ void 	setsnpaoffset __P((char *));
 void	setipxframetype __P((char *, int));
 void    setatrange __P((char *, int));
 void    setatphase __P((char *, int));  
+void    gifsettunnel __P((char *, char *));
 void	dstsa __P((char *));
 void	srcsa __P((char *));
 void	clearsa __P((char *));
@@ -202,6 +203,7 @@ int	actions;			/* Actions performed */
 #define	A_MEDIAINST	0x0008		/* instance or inst command */
 
 #define	NEXTARG		0xffffff
+#define NEXTARG2        0xfffffe
 
 struct	cmd {
 	char	*c_name;
@@ -249,6 +251,7 @@ struct	cmd {
 	{ "snap",	ETHERTYPE_SNAP,	0,		setipxframetype },
 	{ "EtherII",	ETHERTYPE_II,	0,		setipxframetype },
 #endif	/* INET_ONLY */
+	{ "giftunnel",  NEXTARG2,       0,              gifsettunnel } ,
 	{ "dstsa",	NEXTARG,	0,		dstsa } ,
 	{ "srcsa",	NEXTARG,	0,		srcsa } ,
 	{ "clearsa",	NEXTARG,	0,		clearsa } ,
@@ -428,6 +431,14 @@ main(argc, argv)
 					    p->c_name);
 				(*p->c_func)(argv[1]);
 				argc--, argv++;
+			} else if (p->c_parameter == NEXTARG2) {
+			        if ((argv[1] == NULL) ||
+				    (argv[2] == NULL))
+					errx(1, "'%s' requires 2 arguments",
+					    p->c_name);
+				(*p->c_func)(argv[1], argv[2]);
+				argc -= 2;
+				argv += 2;
 			} else
 				(*p->c_func)(*argv, p->c_parameter);
 			actions |= p->c_action;
@@ -641,6 +652,68 @@ setifaddr(addr, param)
 	if (doalias == 0)
 		clearaddr = 1;
 	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
+}
+
+void
+gifsettunnel(src, dst)
+	char *src;
+	char *dst;
+{
+        struct addrinfo *srcres, *dstres;
+	struct ifaliasreq addreq;
+	int ecode;
+
+#ifdef INET6
+	struct in6_aliasreq in6_addreq;
+#endif /* INET6 */
+
+	if ((ecode = getaddrinfo(src, NULL, NULL, &srcres)) != 0)
+		errx(1, "error in parsing address string: %s",
+		     gai_strerror(ecode));
+
+	if ((ecode = getaddrinfo(dst, NULL, NULL, &dstres)) != 0)
+		errx(1, "error in parsing address string: %s",
+		     gai_strerror(ecode));
+
+	if (srcres->ai_addr->sa_family != dstres->ai_addr->sa_family)
+	        errx(1,
+		     "source and destination address families do not match");
+
+	switch (srcres->ai_addr->sa_family)
+	{
+	    case AF_INET:
+		bzero(&addreq, sizeof(addreq));
+		strncpy(addreq.ifra_name, name, IFNAMSIZ);
+		bcopy(srcres->ai_addr, &addreq.ifra_addr,
+		      srcres->ai_addr->sa_len);
+		bcopy(dstres->ai_addr, &addreq.ifra_dstaddr,
+		      dstres->ai_addr->sa_len);
+
+		if (ioctl(s, SIOCSIFPHYADDR, (struct ifreq *) &addreq) < 0)
+		  warn("SIOCSIFPHYADDR");
+		break;
+
+#ifdef INET6
+	    case AF_INET6:
+		bzero(&in6_addreq, sizeof(in6_addreq));
+		strncpy(in6_addreq.ifra_name, name, IFNAMSIZ);
+		bcopy(srcres->ai_addr, &in6_addreq.ifra_addr,
+		      srcres->ai_addr->sa_len);
+		bcopy(dstres->ai_addr, &in6_addreq.ifra_dstaddr,
+		      dstres->ai_addr->sa_len);
+
+		if (ioctl(s, SIOCSIFPHYADDR_IN6,
+			  (struct ifreq *) &in6_addreq) < 0)
+		  warn("SIOCSIFPHYADDR");
+		break;
+#endif /* INET6 */
+
+	    default:
+		warn("address family not supported");
+	}
+
+	freeaddrinfo(srcres);
+	freeaddrinfo(dstres);
 }
 
 static void
@@ -1172,6 +1245,53 @@ print_media_word(ifmw, print_type, as_syntax)
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
+static void
+phys_status(force)
+	int force;
+{
+	char psrcaddr[NI_MAXHOST];
+	char pdstaddr[NI_MAXHOST];
+	u_long srccmd, dstcmd;
+	struct ifreq *ifrp;
+	char *ver = "";
+
+#ifdef INET6
+	struct in6_ifreq in6_ifr;
+#endif /* INET6 */
+
+	force = 0;	/*fool gcc*/
+	psrcaddr[0] = pdstaddr[0] = '\0';
+
+#ifdef INET6
+	bzero(&in6_ifr, sizeof(in6_ifr));
+	strncpy(in6_ifr.ifr_name, name, IFNAMSIZ);
+	srccmd = SIOCGIFPSRCADDR_IN6;
+	dstcmd = SIOCGIFPDSTADDR_IN6;
+	ifrp = (struct ifreq *) &in6_ifr;
+#else /* INET6 */
+	ifrp = ifr;
+	srccmd = SIOCGIFPSRCADDR;
+	dstcmd = SIOCGIFPDSTADDR;
+#endif /* INET6 */
+
+	if (0 <= ioctl(s, srccmd, (caddr_t)ifrp)) {
+		getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
+			    psrcaddr, NI_MAXHOST, 0, 0, NI_NUMERICHOST);
+#ifdef INET6
+		if (ifrp->ifr_addr.sa_family == AF_INET6)
+			ver = "6";
+#endif /* INET6 */
+
+		if (0 <= ioctl(s, dstcmd, (caddr_t)ifrp))
+		        getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
+				    pdstaddr, NI_MAXHOST, 0, 0,
+				    NI_NUMERICHOST);
+
+		printf("\tphysical address inet%s %s --> %s\n", ver,
+		       psrcaddr, pdstaddr);
+	}
+}
+
 /*
  * Print the status of the interface.  If an address family was
  * specified, show it and it only; otherwise, show them all.
@@ -1269,7 +1389,10 @@ status(link)
 			(*p->af_status)(0);
 		}
 	}
+
+	phys_status(0);
 }
+
 
 void
 in_status(force)
@@ -2006,6 +2129,7 @@ usage()
 		"\t[ dstsa address/spi/protocol ]\n"
 		"\t[ srcsa address/spi/protocol ]\n"
 		"\t[ clearsa address/spi/protocol ]\n"
+		"\t[ giftunnel srcaddress dstaddress ]\n"
 		"\t[ arp | -arp ]\n"
 		"\t[ -802.2 | -802.3 | -802.2tr | -snap | -EtherII ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
