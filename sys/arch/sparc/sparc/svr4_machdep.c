@@ -53,7 +53,7 @@
 #include <machine/trap.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, int, caddr_t));
 
 #ifdef DEBUG
 extern int sigdebug;
@@ -330,13 +330,14 @@ svr4_setcontext(p, uc)
 }
 
 /*
- * map the trap code into the svr4 siginfo as best we can
+ * map the native sig/type code into the svr4 siginfo as best we can
  */
 static void
-svr4_getsiginfo(si, sig, code, addr)
+svr4_getsiginfo(si, sig, code, type, addr)
 	union svr4_siginfo	*si;
 	int			 sig;
 	u_long			 code;
+	int			 type;
 	caddr_t			 addr;
 {
 	si->svr4_si_signo = bsd_to_svr4_sig[sig];
@@ -348,106 +349,81 @@ svr4_getsiginfo(si, sig, code, addr)
 	 */
 	si->svr4_si_trap = code;
 
-	switch (code) {
-	case T_RESET:
-		si->svr4_si_code = 0;
-		break;
+	si->svr4_si_code = 0;
+	si->svr4_si_trap = 0;
 
-	case T_TEXTFAULT:
-		si->svr4_si_code = SVR4_BUS_ADRALN;
+	switch (sig) {
+	case SIGSEGV:
+		switch (type) {
+		case SEGV_ACCERR:
+			si->svr4_si_code = SVR4_SEGV_ACCERR;
+			si->svr4_si_trap = SVR4_T_PROTFLT;
+			break;
+		case SEGV_MAPERR:
+			si->svr4_si_code = SVR4_SEGV_MAPERR;
+			si->svr4_si_trap = SVR4_T_SEGNPFLT;
+			break;
+		}
 		break;
-
-	case T_ILLINST:
-		si->svr4_si_code = SVR4_ILL_ILLOPC;
+	case SIGBUS:
+		switch (type) {
+		case BUS_ADRALN:
+			si->svr4_si_code = SVR4_BUS_ADRALN;
+			si->svr4_si_trap = SVR4_T_ALIGNFLT;
+			break;
+		}
 		break;
-
-	case T_PRIVINST:
-		si->svr4_si_code = SVR4_ILL_PRVOPC;
+	case SIGTRAP:
+		switch (type) {
+		case TRAP_BRKPT:
+			si->svr4_si_code = SVR4_TRAP_BRKPT;
+			si->svr4_si_trap = SVR4_T_BPTFLT;
+			break;
+		case TRAP_TRACE:
+			si->svr4_si_code = SVR4_TRAP_TRACE;
+			si->svr4_si_trap = SVR4_T_TRCTRAP;
+			break;
+		}
 		break;
-
-	case T_FPDISABLED:
-		si->svr4_si_code = SVR4_FPE_FLTINV;
+	case SIGEMT:
+		switch (type) {
+		}
 		break;
-
-	case T_ALIGN:
-		si->svr4_si_code = SVR4_BUS_ADRALN;
+	case SIGILL:
+		switch (type) {
+		case ILL_PRVOPC:
+			si->svr4_si_code = SVR4_ILL_PRVOPC;
+			si->svr4_si_trap = SVR4_T_PRIVINFLT;
+			break;
+		case ILL_BADSTK:
+			si->svr4_si_code = SVR4_ILL_BADSTK;
+			si->svr4_si_trap = SVR4_T_STKFLT;
+			break;
+		}
 		break;
-
-	case T_FPE:
-		si->svr4_si_code = SVR4_FPE_FLTINV;
-		break;
-
-	case T_DATAFAULT:
-		si->svr4_si_code = SVR4_BUS_ADRALN;
-		break;
-
-	case T_TAGOF:
-		si->svr4_si_code = SVR4_EMT_TAGOVF;
-		break;
-
-	case T_CPDISABLED:
-		si->svr4_si_code = SVR4_FPE_FLTINV;
-		break;
-
-	case T_CPEXCEPTION:
-		si->svr4_si_code = SVR4_FPE_FLTINV;
-		break;
-
-	case T_DIV0:
-		si->svr4_si_code = SVR4_FPE_INTDIV;
-		break;
-
-	case T_INTOF:
-		si->svr4_si_code = SVR4_FPE_INTOVF;
-		break;
-
-	case T_BREAKPOINT:
-		si->svr4_si_code = SVR4_TRAP_BRKPT;
-		break;
-
-	/*
-	 * XXX - hardware traps with unknown code
-	 */
-	case T_WINOF:
-	case T_WINUF:
-	case T_L1INT:
-	case T_L2INT:
-	case T_L3INT:
-	case T_L4INT:
-	case T_L5INT:
-	case T_L6INT:
-	case T_L7INT:
-	case T_L8INT:
-	case T_L9INT:
-	case T_L10INT:
-	case T_L11INT:
-	case T_L12INT:
-	case T_L13INT:
-	case T_L14INT:
-	case T_L15INT:
-		si->svr4_si_code = 0;
-		break;
-
-	/*
-	 * XXX - software traps with unknown code
-	 */
-	case T_SUN_SYSCALL:
-	case T_FLUSHWIN:
-	case T_CLEANWIN:
-	case T_RANGECHECK:
-	case T_FIXALIGN:
-	case T_SVR4_SYSCALL:
-	case T_BSD_SYSCALL:
-	case T_KGDB_EXEC:
-		si->svr4_si_code = 0;
-		break;
-
-	default:
-		si->svr4_si_code = 0;
-#ifdef DIAGNOSTIC
-		printf("sig %d code %ld\n", sig, code);
-		panic("svr4_getsiginfo");
-#endif
+	case SIGFPE:
+		switch (type) {
+		case FPE_INTOVF:
+			si->svr4_si_code = SVR4_FPE_INTOVF;
+			si->svr4_si_trap = SVR4_T_DIVIDE;
+			break;
+		case FPE_FLTDIV:
+			si->svr4_si_code = SVR4_FPE_FLTDIV;
+			si->svr4_si_trap = SVR4_T_DIVIDE;
+			break;
+		case FPE_FLTOVF:
+			si->svr4_si_code = SVR4_FPE_FLTOVF;
+			si->svr4_si_trap = SVR4_T_DIVIDE;
+			break;
+		case FPE_FLTSUB:
+			si->svr4_si_code = SVR4_FPE_FLTSUB;
+			si->svr4_si_trap = SVR4_T_BOUND;
+			break;
+		case FPE_FLTINV:
+			si->svr4_si_code = SVR4_FPE_FLTINV;
+			si->svr4_si_trap = SVR4_T_FPOPFLT;
+			break;
+		}
 		break;
 	}
 }
@@ -501,7 +477,7 @@ svr4_sendsig(catcher, sig, mask, code, type, val)
 	/*
 	 * Build the argument list for the signal handler.
 	 */
-	svr4_getsiginfo(&frame.sf_si, sig, code, val.sival_ptr);
+	svr4_getsiginfo(&frame.sf_si, sig, code, type, val.sival_ptr);
 	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
 	frame.sf_signum = frame.sf_si.svr4_si_signo;
 	frame.sf_sip = &fp->sf_si;
