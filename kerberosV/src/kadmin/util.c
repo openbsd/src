@@ -199,7 +199,7 @@ str2time_t (const char *str, time_t *t)
     tm2.tm_min  = 59;
     tm2.tm_sec  = 59;
 
-    if(strptime (p, "%H:%M:%S", &tm2) != NULL) {
+    if(strptime (p, "%t%H:%M:%S", &tm2) != NULL) {
 	tm.tm_hour = tm2.tm_hour;
 	tm.tm_min  = tm2.tm_min;
 	tm.tm_sec  = tm2.tm_sec;
