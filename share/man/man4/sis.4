@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sis.4,v 1.2 1999/12/04 20:33:27 aaron Exp $
+.\"	$OpenBSD: sis.4,v 1.3 1999/12/07 01:48:59 aaron Exp $
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
 .\"
@@ -39,8 +39,7 @@
 .Nd
 Silicon Integrated Systems Fast Ethernet device driver
 .Sh SYNOPSIS
-.Cd "controller miibus0"
-.Cd "device sis0"
+.Cd "device sis* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
