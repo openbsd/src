@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.3 1999/07/20 07:48:12 fgsch Exp $     */
+/*      $OpenBSD: pciide.c,v 1.4 1999/07/22 04:37:30 deraadt Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -203,9 +203,8 @@ void pciide_print_modes __P((struct pciide_channel *));
 
 struct pciide_product_desc {
 	u_int32_t ide_product;
-	int ide_flags;
-	int ide_num_channels;
-	const char *ide_name;
+	u_short ide_flags;
+	u_short ide_num_channels;
 	/* init controller's capabilities for drives probe */
 	void (*setup_cap) __P((struct pciide_softc*));
 	/* init controller after drives probe */
@@ -221,175 +220,138 @@ struct pciide_product_desc {
 
 /* Default product description for devices not known from this controller */
 const struct pciide_product_desc default_product_desc = {
-	0,
+	0,				/* Generic PCI IDE controller */
 	0,
 	PCIIDE_NUM_CHANNELS,
-	"Generic PCI IDE controller",
 	default_setup_cap,
 	default_setup_chip,
 	default_channel_map
 };
 
 const struct pciide_product_desc pciide_intel_products[] =  {
-	{ PCI_PRODUCT_INTEL_82092AA,
+	{ PCI_PRODUCT_INTEL_82092AA,	/* Intel 82092AA IDE */
 	  0,
 	  PCIIDE_NUM_CHANNELS,
-	  "Intel 82092AA IDE controller",
 	  default_setup_cap,
 	  default_setup_chip,
 	  default_channel_map
 	},
-	{ PCI_PRODUCT_INTEL_82371FB_IDE,
+	{ PCI_PRODUCT_INTEL_82371FB_IDE, /* Intel 82371FB IDE (PIIX) */
 	  0,
 	  PCIIDE_NUM_CHANNELS,
-	  "Intel 82371FB IDE controller (PIIX)",
 	  piix_setup_cap,
 	  piix_setup_chip,
 	  piix_channel_map
 	},
-	{ PCI_PRODUCT_INTEL_82371SB_IDE,
+	{ PCI_PRODUCT_INTEL_82371SB_IDE, /* Intel 82371SB IDE (PIIX3) */
 	  0,
 	  PCIIDE_NUM_CHANNELS,
-	  "Intel 82371SB IDE Interface (PIIX3)",
 	  piix_setup_cap,
 	  piix3_4_setup_chip,
 	  piix_channel_map
 	},
-	{ PCI_PRODUCT_INTEL_82371AB_IDE,
+	{ PCI_PRODUCT_INTEL_82371AB_IDE, /* Intel 82371AB IDE (PIIX4) */
 	  0,
 	  PCIIDE_NUM_CHANNELS,
-	  "Intel 82371AB IDE controller (PIIX4)",
 	  piix_setup_cap,
 	  piix3_4_setup_chip,
 	  piix_channel_map
-	},
-	{ 0,
-	  0,
-	  0,
-	  NULL,
 	}
 };
 
 const struct pciide_product_desc pciide_cmd_products[] =  {
-	{ PCI_PRODUCT_CMDTECH_640,
+	{ PCI_PRODUCT_CMDTECH_640,	/* CMD Technology PCI0640 */
 	  ONE_QUEUE | CMD_PCI064x_IOEN,
 	  PCIIDE_NUM_CHANNELS,
-	  "CMD Technology PCI0640",
 	  default_setup_cap,
 	  default_setup_chip,
 	  cmd_channel_map
 	},
-	{ PCI_PRODUCT_CMDTECH_643,
+	{ PCI_PRODUCT_CMDTECH_643,	/* CMD Technology PCI0643 */
 	  ONE_QUEUE | CMD_PCI064x_IOEN,
 	  PCIIDE_NUM_CHANNELS,
-	  "CMD Technology PCI0643",
 	  cmd0643_6_setup_cap,
 	  cmd0643_6_setup_chip,
 	  cmd_channel_map
 	},
-	{ PCI_PRODUCT_CMDTECH_646,
+	{ PCI_PRODUCT_CMDTECH_646,	/* CMD Technology PCI0646 */
 	  ONE_QUEUE | CMD_PCI064x_IOEN,
 	  PCIIDE_NUM_CHANNELS,
-	  "CMD Technology PCI0646",
 	  cmd0643_6_setup_cap,
 	  cmd0643_6_setup_chip,
 	  cmd_channel_map
-	},
-	{ 0,
-	  0,
-	  0,
-	  NULL,
 	}
 };
 
 const struct pciide_product_desc pciide_via_products[] =  {
-	{ PCI_PRODUCT_VIATECH_VT82C586_IDE,
+	{ PCI_PRODUCT_VIATECH_VT82C586_IDE, /* VIA VT82C586 (Apollo VP) IDE */
 	  0,
 	  PCIIDE_NUM_CHANNELS,
-	  "VIA Technologies VT82C586 (Apollo VP) IDE Controller",
 	  apollo_setup_cap,
 	  apollo_setup_chip,
 	  apollo_channel_map
 	 },
-	{ PCI_PRODUCT_VIATECH_VT82C586A_IDE,
+	{ PCI_PRODUCT_VIATECH_VT82C586A_IDE, /* VIA VT82C586A IDE */
 	  0,
 	  PCIIDE_NUM_CHANNELS,
-	  "VIA Technologies VT82C586A IDE Controller",
 	  apollo_setup_cap,
 	  apollo_setup_chip,
 	  apollo_channel_map
-	},
-	{ 0,
-	  0,
-	  0,
-	  NULL,
 	}
 };
 
 const struct pciide_product_desc pciide_cypress_products[] =  {
-	{ PCI_PRODUCT_CONTAQ_82C693,
+	{ PCI_PRODUCT_CONTAQ_82C693,	/* Contaq CY82C693 IDE */
 	  0,
 	  1,
-	  "Contaq Microsystems CY82C693 IDE Controller",
 	  cy693_setup_cap,
 	  cy693_setup_chip,
 	  cy693_channel_map
-	},
-	{ 0,
-	  0,
-	  0,
-	  NULL,
 	}
 };
 
 const struct pciide_product_desc pciide_sis_products[] =  {
-	{ PCI_PRODUCT_SIS_5597,
+	{ PCI_PRODUCT_SIS_5597,		/* SIS 5597/5598 IDE */
 	  0,
 	  PCIIDE_NUM_CHANNELS,
-	  "Silicon Integrated System 5597/5598 IDE controller",
 	  sis_setup_cap,
 	  sis_setup_chip,
 	  sis_channel_map
-	},
-	{ 0,
-	  0,
-	  0,
-	  NULL,
 	}
 };
 
 const struct pciide_product_desc pciide_acer_products[] =  {
-	{ PCI_PRODUCT_ALI_M5229,
+	{ PCI_PRODUCT_ALI_M5229,	/* Acer Labs M5229 UDMA IDE */
 	  0,
 	  PCIIDE_NUM_CHANNELS,
-	  "Acer Labs M5229 UDMA IDE Controller",
 	  acer_setup_cap,
 	  acer_setup_chip,
 	  acer_channel_map
-	},
-	{ 0,
-	  0,
-	  0,
-	  NULL,
 	}
 };
 
 struct pciide_vendor_desc {
 	u_int32_t ide_vendor;
 	const struct pciide_product_desc *ide_products;
+	int ide_nproducts;
 };
 
 const struct pciide_vendor_desc pciide_vendors[] = {
-	{ PCI_VENDOR_INTEL, pciide_intel_products },
-	{ PCI_VENDOR_CMDTECH, pciide_cmd_products },
-	{ PCI_VENDOR_VIATECH, pciide_via_products },
-	{ PCI_VENDOR_CONTAQ, pciide_cypress_products },
-	{ PCI_VENDOR_SIS, pciide_sis_products },
-	{ PCI_VENDOR_ALI, pciide_acer_products },
-	{ 0, NULL }
+	{ PCI_VENDOR_INTEL, pciide_intel_products,
+	  sizeof(pciide_intel_products)/sizeof(pciide_intel_products[0]) },
+	{ PCI_VENDOR_CMDTECH, pciide_cmd_products,
+	  sizeof(pciide_cmd_products)/sizeof(pciide_cmd_products[0]) },
+	{ PCI_VENDOR_VIATECH, pciide_via_products,
+	  sizeof(pciide_via_products)/sizeof(pciide_via_products[0]) },
+	{ PCI_VENDOR_CONTAQ, pciide_cypress_products,
+	  sizeof(pciide_cypress_products)/sizeof(pciide_cypress_products[0]) },
+	{ PCI_VENDOR_SIS, pciide_sis_products,
+	  sizeof(pciide_sis_products)/sizeof(pciide_sis_products[0]) },
+	{ PCI_VENDOR_ALI, pciide_acer_products,
+	  sizeof(pciide_acer_products)/sizeof(pciide_acer_products[0]) }
 };
 
-#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
+#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "channel 0" : "channel 1")
 
 /* options passed via the 'flags' config keyword */
 #define PCIIDE_OPTIONS_DMA	0x01
@@ -430,19 +392,22 @@ pciide_lookup_product(id)
 {
 	const struct pciide_product_desc *pp;
 	const struct pciide_vendor_desc *vp;
+	int i;
 
-	for (vp = pciide_vendors; vp->ide_products != NULL; vp++)
+	for (i = 0, vp = pciide_vendors;
+	    i < sizeof(pciide_vendors)/sizeof(pciide_vendors[0]);
+	    vp++, i++)
 		if (PCI_VENDOR(id) == vp->ide_vendor)
 			break;
 
-	if ((pp = vp->ide_products) == NULL)
+	if (i == sizeof(pciide_vendors)/sizeof(pciide_vendors[0]))
 		return NULL;
 
-	for (; pp->ide_name != NULL; pp++)
+	for (pp = vp->ide_products, i = 0; i < vp->ide_nproducts; pp++, i++)
 		if (PCI_PRODUCT(id) == pp->ide_product)
 			break;
-    
-	if (pp->ide_name == NULL)
+
+	if (i == vp->ide_nproducts)
 		return NULL;
 	return pp;
 }
@@ -490,10 +455,6 @@ pciide_attach(parent, self, aux)
 	if (sc->sc_pp == NULL) {
 		sc->sc_pp = &default_product_desc;
 		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-		printf(": %s (rev. 0x%02x)\n", devinfo,
-		    PCI_REVISION(pa->pa_class));
-	} else {
-		printf(": %s\n", sc->sc_pp->ide_name);
 	}
 
 	if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0) {
@@ -512,7 +473,7 @@ pciide_attach(parent, self, aux)
 #else
 		if (1) {
 #endif
-			printf("%s: device disabled (at %s)\n",
+			printf(": device disabled (at %s)\n",
 		 	   sc->sc_wdcdev.sc_dev.dv_xname,
 		  	  (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
 			  "device" : "bridge");
@@ -544,12 +505,11 @@ pciide_attach(parent, self, aux)
 	 * XXX which type it is.  Either that or 'quirk' certain devices.
 	 */
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
-		printf("%s: bus-master DMA support present",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		printf(": DMA");
 		if (sc->sc_pp == &default_product_desc &&
 		    (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags &
 		    PCIIDE_OPTIONS_DMA) == 0) {
-			printf(", but unused (no driver support)");
+			printf(" (unsupported) ");
 			sc->sc_dma_ok = 0;
 		} else {
 			sc->sc_dma_ok = (pci_mapreg_map(pa,
@@ -557,11 +517,10 @@ pciide_attach(parent, self, aux)
 			    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
 			sc->sc_dmat = pa->pa_dmat;
 			if (sc->sc_dma_ok == 0) {
-				printf(", but unused (couldn't map registers)");
+				printf(" (unuseable) ");
 			} else {
 				if (sc->sc_pp == &default_product_desc)
-					printf(", used without full driver "
-					    "support");
+					printf(" (partial support) ");
 				sc->sc_wdcdev.dma_arg = sc;
 				sc->sc_wdcdev.dma_init = pciide_dma_init;
 				sc->sc_wdcdev.dma_start = pciide_dma_start;
@@ -569,14 +528,21 @@ pciide_attach(parent, self, aux)
 			}
 		}
 	} else {
-		printf("%s: hardware does not support DMA",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		printf(": no DMA");
 	}
-	printf("\n");
 	sc->sc_pp->setup_cap(sc);
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = sc->sc_pp->ide_num_channels;;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
+
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		printf(", %s %s to %s", PCIIDE_CHANNEL_NAME(i),
+		    (interface & PCIIDE_INTERFACE_SETTABLE(i)) ?
+		      "configured" : "wired",
+		    (interface & PCIIDE_INTERFACE_PCI(i)) ? "native-PCI" :
+		      "compatibility");
+	}
+	printf("\n");
 
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
@@ -587,30 +553,24 @@ pciide_attach(parent, self, aux)
 		cp->wdc_channel.channel = i;
 		cp->wdc_channel.wdc = &sc->sc_wdcdev;
 		if (i > 0 && (sc->sc_pp->ide_flags & ONE_QUEUE)) {
-		    cp->wdc_channel.ch_queue =
-			sc->pciide_channels[0].wdc_channel.ch_queue;
+			cp->wdc_channel.ch_queue =
+			    sc->pciide_channels[0].wdc_channel.ch_queue;
 		} else {
-		    cp->wdc_channel.ch_queue =
-		        malloc(sizeof(struct channel_queue), M_DEVBUF,
-			M_NOWAIT);
+			cp->wdc_channel.ch_queue =
+			    malloc(sizeof(struct channel_queue), M_DEVBUF,
+			    M_NOWAIT);
 		}
 		if (cp->wdc_channel.ch_queue == NULL) {
-		    printf("%s %s channel: "
-			"can't allocate memory for command queue",
-			sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			printf("%s: %s cannot allocate memory for "
+			    "command queue", sc->sc_wdcdev.sc_dev.dv_xname,
+			    cp->name);
 			continue;
 		}
-		printf("%s: %s channel %s to %s mode\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name,
-		    (interface & PCIIDE_INTERFACE_SETTABLE(i)) ?
-		      "configured" : "wired",
-		    (interface & PCIIDE_INTERFACE_PCI(i)) ? "native-PCI" :
-		      "compatibility");
 
 		/*
 		 * sc->sc_pp->channel_map() will also call wdcattach.
 		 * Eventually the channel will be  disabled if there's no
-		 * drive present. sc->hw_ok will be updated accordingly.
+		 * drive present. cp->hw_ok will be updated accordingly.
 		 */
 		sc->sc_pp->channel_map(pa, cp);
 			
@@ -653,7 +613,7 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	wdc_cp->cmd_iot = pa->pa_iot;
 	if (bus_space_map(wdc_cp->cmd_iot, PCIIDE_COMPAT_CMD_BASE(compatchan),
 	    PCIIDE_COMPAT_CMD_SIZE, 0, &wdc_cp->cmd_ioh) != 0) {
-		printf("%s: couldn't map %s channel cmd regs\n",
+		printf("%s: couldn't map %s cmd regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		rv = 0;
 	}
@@ -661,7 +621,7 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	wdc_cp->ctl_iot = pa->pa_iot;
 	if (bus_space_map(wdc_cp->ctl_iot, PCIIDE_COMPAT_CTL_BASE(compatchan),
 	    PCIIDE_COMPAT_CTL_SIZE, 0, &wdc_cp->ctl_ioh) != 0) {
-		printf("%s: couldn't map %s channel ctl regs\n",
+		printf("%s: couldn't map %s ctl regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh,
 		    PCIIDE_COMPAT_CMD_SIZE);
@@ -715,7 +675,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep)
 	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(wdc_cp->channel),
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &wdc_cp->cmd_iot, &wdc_cp->cmd_ioh, NULL, cmdsizep) != 0) {
-		printf("%s: couldn't map %s channel cmd regs\n",
+		printf("%s: couldn't map %s cmd regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return 0;
 	}
@@ -723,7 +683,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep)
 	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->channel),
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &wdc_cp->ctl_iot, &wdc_cp->ctl_ioh, NULL, ctlsizep) != 0) {
-		printf("%s: couldn't map %s channel ctl regs\n",
+		printf("%s: couldn't map %s ctl regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, *cmdsizep);
 		return 0;
@@ -1089,13 +1049,10 @@ int
 pciiide_chan_candisable(cp)
 	struct pciide_channel *cp;
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
 
 	if ((wdc_cp->ch_drive[0].drive_flags & DRIVE) == 0 &&
 	    (wdc_cp->ch_drive[1].drive_flags & DRIVE) == 0) {
-		printf("%s: disabling %s channel (no drives)\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		cp->hw_ok = 0;
 		return 1;
 	}
@@ -1123,8 +1080,8 @@ pciide_map_compat_intr(pa, cp, compatchan, interface)
 	cp->ih = pciide_machdep_compat_intr_establish(&sc->sc_wdcdev.sc_dev,
 	    pa, compatchan, pciide_compat_intr, cp);
 	if (cp->ih == NULL) {
-		printf("%s: no compatibility interrupt for use by %s "
-		    "channel\n", sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		printf("%s: no compatibility interrupt for use by %s\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		cp->hw_ok = 0;
 	}
 }
@@ -1257,7 +1214,7 @@ default_channel_map(pa, cp)
 
 out:
 	if (failreason) {
-		printf("%s: %s channel ignored (%s)\n",
+		printf("%s: %s ignored (%s)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name,
 		    failreason);
 		cp->hw_ok = 0;
@@ -1638,7 +1595,7 @@ piix_channel_map(pa, cp)
 
 	if ((PIIX_IDETIM_READ(idetim, wdc_cp->channel) &
 	    PIIX_IDETIM_IDE) == 0) {
-		printf("%s: %s channel ignored (disabled)\n",
+		printf("%s: %s ignored (disabled)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return;
 	}
@@ -1783,7 +1740,7 @@ apollo_channel_map(pa, cp)
 	    PCI_INTERFACE(pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 
 	if ((ideconf & APO_IDECONF_EN(wdc_cp->channel)) == 0) {
-		printf("%s: %s channel ignored (disabled)\n",
+		printf("%s: %s ignored (disabled)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return;
 	}
@@ -1816,7 +1773,7 @@ cmd_channel_map(pa, cp)
 	 * the whole device
 	 */
 	if (wdc_cp->channel != 0 && (ctrl & CMD_CTRL_2PORT) == 0) {
-		printf("%s: %s channel ignored (disabled)\n",
+		printf("%s: %s ignored (disabled)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return;
 	}
@@ -2151,7 +2108,7 @@ sis_channel_map(pa, cp)
 
 	if ((wdc_cp->channel == 0 && (sis_ctr0 & SIS_CTRL0_CHAN0_EN) == 0) ||
 	    (wdc_cp->channel == 1 && (sis_ctr0 & SIS_CTRL0_CHAN1_EN) == 0)) {
-		printf("%s: %s channel ignored (disabled)\n",
+		printf("%s: %s ignored (disabled)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return;
 	}
@@ -2307,7 +2264,7 @@ acer_channel_map(pa, cp)
 	    PCI_CLASS_REG));
 
 	if ((interface & PCIIDE_CHAN_EN(wdc_cp->channel)) == 0) {
-		printf("%s: %s channel ignored (disabled)\n",
+		printf("%s: %s ignored (disabled)\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return;
 	}
