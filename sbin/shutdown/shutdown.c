@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.11 1997/07/25 04:45:53 mickey Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.12 1997/08/24 16:36:26 deraadt Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.11 1997/07/25 04:45:53 mickey Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.12 1997/08/24 16:36:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,6 +237,7 @@ main(argc, argv)
 			exit(0);
 		}
 	}
+	setsid();
 #endif
 	openlog("shutdown", LOG_CONS, LOG_AUTH);
 	loop();
