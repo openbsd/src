@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.61 2002/03/11 22:22:57 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.62 2002/03/12 08:15:03 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -280,10 +280,11 @@ void
 print_addr(struct pf_addr *addr, struct pf_addr *mask, u_int8_t af)
 {
 	char buf[48];
-	const char *bf;
 
-	bf = inet_ntop(af, addr, buf, sizeof(buf));
-	printf("%s", bf);
+	if (inet_ntop(af, addr, buf, sizeof(buf)) == NULL)
+		printf("?");
+	else
+		printf("%s", buf);
 	if (mask != NULL) {
 		if (!PF_AZERO(mask, af))
 			printf("/%u", unmask(mask, af));
@@ -294,12 +295,14 @@ void
 print_name(struct pf_addr *addr, struct pf_addr *mask, int af)
 {
 	char buf[48];
-	const char *bf;
 	struct hostent *hp;
 
-	bf = inet_ntop(af, addr, buf, sizeof(buf));
-	hp = getpfhostname(bf); 
-	printf("%s", hp->h_name);
+	if (inet_ntop(af, addr, buf, sizeof(buf)) == NULL)
+		printf("?");
+	else {
+		hp = getpfhostname(buf); 
+		printf("%s", hp->h_name);
+	}
 	if (mask != NULL) {
 		if (!PF_AZERO(mask, af))
 			printf("/%u", unmask(mask, af));
