@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.1 2001/08/21 16:16:50 jason Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.2 2001/10/02 20:32:46 jason Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -38,6 +38,13 @@
  */
 
 #include <sys/timeout.h>
+
+#define	_HME_NDESC	32
+
+struct hme_sxd {
+	struct mbuf *sd_mbuf;
+	bus_dmamap_t sd_map;
+};
 
 struct hme_ring {
 	/* Ring Descriptors */
@@ -96,9 +103,8 @@ struct hme_softc {
 	void	(*sc_hwreset) __P((struct hme_softc *));
 	void	(*sc_hwinit) __P((struct hme_softc *));
 
-#if NRND > 0
-	rndsource_element_t	rnd_source;
-#endif
+	int	sc_tx_cnt;
+	struct hme_sxd sc_txd[_HME_NDESC], sc_rxd[_HME_NDESC];
 };
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.6 2001/09/23 20:03:01 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.7 2001/10/02 20:32:46 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -95,6 +95,8 @@ struct cfdriver hme_cd = {
 	NULL, "hme", DV_IFNET
 };
 
+#define	HME_RX_OFFSET	2
+
 void		hme_start __P((struct ifnet *));
 void		hme_stop __P((struct hme_softc *));
 int		hme_ioctl __P((struct ifnet *, u_long, caddr_t));
@@ -106,6 +108,8 @@ void		hme_meminit __P((struct hme_softc *));
 void		hme_mifinit __P((struct hme_softc *));
 void		hme_reset __P((struct hme_softc *));
 void		hme_setladrf __P((struct hme_softc *));
+int		hme_newbuf __P((struct hme_softc *, struct hme_sxd *, int));
+int		hme_encap __P((struct hme_softc *, struct mbuf *, int *));
 
 /* MII methods & callbacks */
 static int	hme_mii_readreg __P((struct device *, int, int));
@@ -180,7 +184,6 @@ hme_config(sc)
 	 * Also, apparently, the buffers must extend to a DMA burst
 	 * boundary beyond the maximum packet size.
 	 */
-#define _HME_NDESC	32
 #define _HME_BUFSZ	1600
 
 	/* Note: the # of descriptors must be a multiple of 16 */
@@ -367,6 +370,21 @@ hme_stop(sc)
 		DELAY(20);
 	}
 
+	for (n = 0; n < sc->sc_rb.rb_ntbuf; n++) {
+		if (sc->sc_txd[n].sd_map != NULL) {
+			bus_dmamap_sync(sc->sc_dmatag, sc->sc_txd[n].sd_map,
+			    0, sc->sc_txd[n].sd_map->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmatag, sc->sc_txd[n].sd_map);
+			bus_dmamap_destroy(sc->sc_dmatag, sc->sc_txd[n].sd_map);
+			sc->sc_txd[n].sd_map = NULL;
+		}
+		if (sc->sc_txd[n].sd_mbuf != NULL) {
+			m_free(sc->sc_txd[n].sd_mbuf);
+			sc->sc_txd[n].sd_mbuf = NULL;
+		}
+	}
+
 	printf("%s: hme_stop: reset failed\n", sc->sc_dev.dv_xname);
 }
 
@@ -429,21 +447,29 @@ hme_meminit(sc)
 	 * Initialize transmit buffer descriptors
 	 */
 	for (i = 0; i < ntbuf; i++) {
-		HME_XD_SETADDR(sc->sc_pci, hr->rb_txd, i, txbufdma + i * _HME_BUFSZ);
+		HME_XD_SETADDR(sc->sc_pci, hr->rb_txd, i, 0);
 		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_txd, i, 0);
+		sc->sc_txd[i].sd_mbuf = NULL;
+		sc->sc_txd[i].sd_map = NULL;
 	}
 
 	/*
 	 * Initialize receive buffer descriptors
 	 */
 	for (i = 0; i < nrbuf; i++) {
-		HME_XD_SETADDR(sc->sc_pci, hr->rb_rxd, i, rxbufdma + i * _HME_BUFSZ);
+		if (hme_newbuf(sc, &sc->sc_rxd[i], 1)) {
+			printf("%s: rx allocation failed\n",
+			    sc->sc_dev.dv_xname);
+			break;
+		}
+		HME_XD_SETADDR(sc->sc_pci, hr->rb_rxd, i,
+		    sc->sc_rxd[i].sd_map->dm_segs[0].ds_addr);
 		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_rxd, i,
-				HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
+		    HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
 	}
 
 	hr->rb_tdhead = hr->rb_tdtail = 0;
-	hr->rb_td_nbusy = 0;
+	sc->sc_tx_cnt = 0;
 	hr->rb_rdtail = 0;
 }
 
@@ -585,7 +611,7 @@ hme_init(sc)
 	}
 
 	/* Enable DMA */
-	v |= HME_ERX_CFG_DMAENABLE;
+	v |= HME_ERX_CFG_DMAENABLE | (HME_RX_OFFSET << 3);
 	bus_space_write_4(t, erx, HME_ERXI_CFG, v);
 
 	/* step 11. XIF Configuration */
@@ -763,19 +789,16 @@ hme_start(ifp)
 	struct ifnet *ifp;
 {
 	struct hme_softc *sc = (struct hme_softc *)ifp->if_softc;
-	caddr_t txd = sc->sc_rb.rb_txd;
 	struct mbuf *m;
-	unsigned int ri, len;
-	unsigned int ntbuf = sc->sc_rb.rb_ntbuf;
+	int bix;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	ri = sc->sc_rb.rb_tdhead;
-
-	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+	bix = sc->sc_rb.rb_tdhead;
+	while (sc->sc_txd[bix].sd_mbuf == NULL) {
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
 
 #if NBPFILTER > 0
@@ -787,32 +810,19 @@ hme_start(ifp)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		/*
-		 * Copy the mbuf chain into the transmit buffer.
-		 */
-		len = hme_put(sc, ri, m);
-
-		/*
-		 * Initialize transmit registers and start transmission
-		 */
-		HME_XD_SETFLAGS(sc->sc_pci, txd, ri,
-			HME_XD_OWN | HME_XD_SOP | HME_XD_EOP |
-			HME_XD_ENCODE_TSIZE(len));
-
-		/*if (sc->sc_rb.rb_td_nbusy <= 0)*/
-		bus_space_write_4(sc->sc_bustag, sc->sc_etx, HME_ETXI_PENDING,
-				  HME_ETX_TP_DMAWAKEUP);
-
-		if (++ri == ntbuf)
-			ri = 0;
-
-		if (++sc->sc_rb.rb_td_nbusy == ntbuf) {
+		if (hme_encap(sc, m, &bix)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+
+		bus_space_write_4(sc->sc_bustag, sc->sc_etx, HME_ETXI_PENDING,
+				  HME_ETX_TP_DMAWAKEUP);
 	}
 
-	sc->sc_rb.rb_tdhead = ri;
+	sc->sc_rb.rb_tdhead = bix;
+	ifp->if_timer = 5;
 }
 
 /*
@@ -826,6 +836,7 @@ hme_tint(sc)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_mac;
 	unsigned int ri, txflags;
+	struct hme_sxd *sd;
 
 	/*
 	 * Unload collision counters
@@ -846,9 +857,10 @@ hme_tint(sc)
 
 	/* Fetch current position in the transmit ring */
 	ri = sc->sc_rb.rb_tdtail;
+	sd = &sc->sc_txd[ri];
 
 	for (;;) {
-		if (sc->sc_rb.rb_td_nbusy <= 0)
+		if (sc->sc_tx_cnt <= 0)
 			break;
 
 		txflags = HME_XD_GETFLAGS(sc->sc_pci, sc->sc_rb.rb_txd, ri);
@@ -857,12 +869,28 @@ hme_tint(sc)
 			break;
 
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_opackets++;
+		if (txflags & HME_XD_EOP)
+			ifp->if_opackets++;
 
-		if (++ri == sc->sc_rb.rb_ntbuf)
+		if (sd->sd_map != NULL) {
+			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map,
+			    0, sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
+			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
+			sd->sd_map = NULL;
+		}
+		if (sd->sd_mbuf != NULL) {
+			m_free(sd->sd_mbuf);
+			sd->sd_mbuf = NULL;
+		}
+
+		if (++ri == sc->sc_rb.rb_ntbuf) {
 			ri = 0;
+			sd = sc->sc_txd;
+		} else
+			sd++;
 
-		--sc->sc_rb.rb_td_nbusy;
+		--sc->sc_tx_cnt;
 	}
 
 	/* Update ring */
@@ -870,7 +898,7 @@ hme_tint(sc)
 
 	hme_start(ifp);
 
-	if (sc->sc_rb.rb_td_nbusy == 0)
+	if (sc->sc_tx_cnt == 0)
 		ifp->if_timer = 0;
 
 	return (1);
@@ -883,39 +911,66 @@ int
 hme_rint(sc)
 	struct hme_softc *sc;
 {
-	caddr_t xdr = sc->sc_rb.rb_rxd;
-	unsigned int nrbuf = sc->sc_rb.rb_nrbuf;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct mbuf *m;
+	struct hme_sxd *sd;
 	unsigned int ri, len;
 	u_int32_t flags;
 
 	ri = sc->sc_rb.rb_rdtail;
+	sd = &sc->sc_rxd[ri];
 
 	/*
 	 * Process all buffers with valid data.
 	 */
 	for (;;) {
-		flags = HME_XD_GETFLAGS(sc->sc_pci, xdr, ri);
+		flags = HME_XD_GETFLAGS(sc->sc_pci, sc->sc_rb.rb_rxd, ri);
 		if (flags & HME_XD_OWN)
 			break;
 
 		if (flags & HME_XD_OFL) {
 			printf("%s: buffer overflow, ri=%d; flags=0x%x\n",
 					sc->sc_dev.dv_xname, ri, flags);
-		} else {
-			len = HME_XD_DECODE_RSIZE(flags);
-			hme_read(sc, ri, len);
+			goto again;
 		}
 
-		/* This buffer can be used by the hardware again */
-		HME_XD_SETFLAGS(sc->sc_pci, xdr, ri,
-				HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
+		m = sd->sd_mbuf;
+		len = HME_XD_DECODE_RSIZE(flags);
+		m->m_pkthdr.len = m->m_len = len;
 
-		if (++ri == nrbuf)
+		if (hme_newbuf(sc, sd, 0)) {
+			/*
+			 * Allocation of new mbuf cluster failed, leave the
+			 * old one in place and keep going.
+			 */
+			ifp->if_ierrors++;
+			goto again;
+		}
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf) {
+			m->m_pkthdr.len = m->m_len = len;
+			bpf_mtap(ifp->if_bpf, m);
+		}
+#endif
+
+		ifp->if_ipackets++;
+		ether_input_mbuf(ifp, m);
+
+again:
+		HME_XD_SETADDR(sc->sc_pci, sc->sc_rb.rb_rxd, ri,
+		    sd->sd_map->dm_segs[0].ds_addr);
+		HME_XD_SETFLAGS(sc->sc_pci, sc->sc_rb.rb_rxd, ri,
+		    HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
+
+		if (++ri == sc->sc_rb.rb_nrbuf) {
 			ri = 0;
+			sd = sc->sc_rxd;
+		} else
+			sd++;
 	}
 
 	sc->sc_rb.rb_rdtail = ri;
-
 	return (1);
 }
 
@@ -1349,4 +1404,157 @@ chipit:
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB2, hash[2]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB3, hash[3]);
 	bus_space_write_4(t, mac, HME_MACI_RXCFG, v);
+}
+
+int
+hme_encap(sc, mhead, bixp)
+	struct hme_softc *sc;
+	struct mbuf *mhead;
+	int *bixp;
+{
+	struct hme_sxd *sd;
+	struct mbuf *m, *mx;
+	int frag, cur, cnt = 0;
+	u_int32_t flags;
+	struct hme_ring *hr = &sc->sc_rb;
+
+	cur = frag = *bixp;
+	sd = &sc->sc_txd[frag];
+
+	m = mhead;
+	while (m != NULL) {
+		if (m->m_len == 0) {
+			mx = m_free(m);
+			m = mx;
+			continue;
+		}
+
+		if ((sc->sc_rb.rb_ntbuf - (sc->sc_tx_cnt + cnt)) < 5)
+			goto err;
+
+		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sd->sd_map) != 0) {
+			sd->sd_map = NULL;
+			goto err;
+		}
+
+		if (bus_dmamap_load(sc->sc_dmatag, sd->sd_map,
+		    mtod(m, caddr_t), m->m_len, NULL, BUS_DMA_NOWAIT) != 0) {
+			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
+			sd->sd_map = NULL;
+			goto err;
+		}
+
+		bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
+		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+		sd->sd_mbuf = m;
+
+		flags = HME_XD_ENCODE_TSIZE(m->m_len);
+		if (cnt == 0)
+			flags |= HME_XD_SOP;
+		else
+			flags |= HME_XD_OWN;
+
+		HME_XD_SETADDR(sc->sc_pci, hr->rb_txd, frag,
+		    sd->sd_map->dm_segs[0].ds_addr);
+		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_txd, frag, flags);
+
+		cur = frag;
+		cnt++;
+		if (++frag == sc->sc_rb.rb_ntbuf) {
+			frag = 0;
+			sd = sc->sc_txd;
+		} else
+			sd++;
+
+		m = m->m_next;
+	}
+
+	/* Set end of packet on last descriptor. */
+	flags = HME_XD_GETFLAGS(sc->sc_pci, hr->rb_txd, cur);
+	flags |= HME_XD_EOP;
+	HME_XD_SETFLAGS(sc->sc_pci, hr->rb_txd, cur, flags);
+
+	/* Give first frame over to the hardware. */
+	flags = HME_XD_GETFLAGS(sc->sc_pci, hr->rb_txd, (*bixp));
+	flags |= HME_XD_OWN;
+	HME_XD_SETFLAGS(sc->sc_pci, hr->rb_txd, (*bixp), flags);
+
+	sc->sc_tx_cnt += cnt;
+	*bixp = frag;
+
+	/* sync descriptors */
+
+	return (0);
+
+err:
+	/*
+	 * Invalidate the stuff we may have already put into place. We
+	 * will be called again to queue it later.
+	 */
+	for (; cnt > 0; cnt--) {
+		if (--frag == -1)
+			frag = sc->sc_rb.rb_ntbuf - 1;
+		sd = &sc->sc_txd[frag];
+		bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
+		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
+		bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
+		sd->sd_mbuf = NULL;
+		sd->sd_map = NULL;
+	}
+	return (ENOBUFS);
+}
+
+int
+hme_newbuf(sc, d, f)
+	struct hme_softc *sc;
+	struct hme_sxd *d;
+	int f;
+{
+	bus_dmamap_t map = NULL;
+	struct mbuf *m;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (ENOBUFS);
+	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+
+	MCLGET(m, M_DONTWAIT);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		return (ENOBUFS);
+	}
+
+	if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1, MCLBYTES, 0,
+	    BUS_DMA_NOWAIT, &map) != 0) {
+		m_freem(m);
+		return (ENOBUFS);
+	}
+
+	if (bus_dmamap_load(sc->sc_dmatag, map, mtod(m, caddr_t), MCLBYTES,
+	    NULL, BUS_DMA_NOWAIT) != 0) {
+		bus_dmamap_destroy(sc->sc_dmatag, map);
+		m_freem(m);
+		return (ENOBUFS);
+	}
+
+	bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
+
+	if (d->sd_mbuf != NULL && f) {
+		if (f)
+			m_freem(d->sd_mbuf);
+	}
+	if (d->sd_map != NULL) {
+		bus_dmamap_sync(sc->sc_dmatag, d->sd_map,
+		    0, d->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmatag, d->sd_map);
+		bus_dmamap_destroy(sc->sc_dmatag, d->sd_map);
+	}
+	m->m_data += HME_RX_OFFSET;
+	d->sd_mbuf = m;
+	d->sd_map = map;
+	return (0);
 }
