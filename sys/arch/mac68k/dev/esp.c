@@ -223,9 +223,9 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 void esp_sense __P((struct esp_softc *, struct esp_ecb *));
 void esp_free_ecb __P((struct esp_softc *, struct esp_ecb *, int));
 struct esp_ecb *esp_get_ecb __P((struct esp_softc *, int));
-static inline int esp_stp2cpb __P((struct esp_softc *, int));
-static inline int esp_cpb2stp __P((struct esp_softc *, int));
-static inline void esp_setsync __P((struct esp_softc *, struct esp_tinfo *));
+static __inline int esp_stp2cpb __P((struct esp_softc *, int));
+static __inline int esp_cpb2stp __P((struct esp_softc *, int));
+static __inline void esp_setsync __P((struct esp_softc *, struct esp_tinfo *));
 
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
@@ -781,7 +781,7 @@ espreadregs(sc)
 /*
  * Convert chip register Clock Per Byte value to Synchronous Transfer Period.
  */
-static inline int
+static __inline int
 esp_cpb2stp(sc, cpb)
 	struct esp_softc *sc;
 	int cpb;
@@ -792,7 +792,7 @@ esp_cpb2stp(sc, cpb)
 /*
  * Convert Synchronous Transfer Period to chip register Clock Per Byte value.
  */
-static inline int
+static __inline int
 esp_stp2cpb(sc, period)
 	struct esp_softc *sc;
 	int period;
@@ -805,7 +805,7 @@ esp_stp2cpb(sc, period)
 	return v;
 }
 
-static inline void
+static __inline void
 esp_setsync(sc, ti)
 	struct esp_softc *sc;
 	struct esp_tinfo *ti;
