@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.9 1996/07/02 06:52:01 niklas Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.10 1996/07/21 08:05:34 tholo Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -395,9 +395,12 @@ bdwrite(bp)
 		 * a timeout to flush it to disk
 		 */
 		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
-		if (bdirties.tqh_first == bp)
+		if (bdirties.tqh_first == bp) {
+			untimeout((void (*)__P((void *)))wakeup,
+				  &bdirties);		/* XXX */
 			timeout((void (*)__P((void *)))wakeup,
 				&bdirties, 30 * hz);
+		}
 		SET(bp->b_flags, B_DELWRI);
 		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
 		reassignbuf(bp, bp->b_vp);
@@ -455,9 +458,12 @@ vn_update()
 		 * a wakeup will be scheduled at the time a new
 		 * buffer is enqueued
 		 */
-		if ((bp = bdirties.tqh_first) != NULL)
+		if ((bp = bdirties.tqh_first) != NULL) {
+                        untimeout((void (*)__P((void *)))wakeup,
+				  &bdirties);		/* XXX */
                         timeout((void (*)__P((void *)))wakeup,
 				&bdirties, (bp->b_synctime - time.tv_sec) * hz);
+		}
 		tsleep(&bdirties, PZERO - 1, "dirty", 0);
 		/*
 		 * Walk the dirty block list, starting an asyncroneous

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.8 1996/06/14 04:41:07 tholo Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.9 1996/07/21 08:05:37 tholo Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.1 1996/05/25 22:40:32 fvdl Exp $	*/
 
 /*
@@ -744,9 +744,12 @@ nfs_asyncio(bp, cred)
 	    TAILQ_REMOVE(&bdirties, bp, b_synclist);
 	TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
 	bp->b_synctime = time.tv_sec + 30;
-	if (bdirties.tqh_first == bp)
-	    timeout((void (*)__P((void *)))wakeup,
-		    &bdirties, 30 * hz);
+	if (bdirties.tqh_first == bp) {
+		untimeout((void (*)__P((void *)))wakeup,
+			  &bdirties);
+		timeout((void (*)__P((void *)))wakeup,
+			&bdirties, 30 * hz);
+	}
 	bp->b_flags |= B_DELWRI;
 	reassignbuf(bp, bp->b_vp);
 	biodone(bp);
@@ -911,9 +914,12 @@ nfs_doio(bp, cr, p)
 		    TAILQ_REMOVE(&bdirties, bp, b_synclist);
 		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
 		bp->b_synctime = time.tv_sec + 30;
-		if (bdirties.tqh_first == bp)
+		if (bdirties.tqh_first == bp) {
+		    untimeout((void (*)__P((void *)))wakeup,
+			      &bdirties);
 		    timeout((void (*)__P((void *)))wakeup,
 			    &bdirties, 30 * hz);
+		}
 		bp->b_flags |= B_DELWRI;
 
 		/*
