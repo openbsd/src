@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.12 1998/12/21 08:21:59 deraadt Exp $
+.\"	$OpenBSD: rpc.3,v 1.13 1998/12/30 22:18:46 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -443,8 +443,11 @@ but instead of sending a message to the standard error
 indicating why an
 .Tn RPC
 call failed, return a pointer to a string which contains
-the message.  The string ends with a
-.Tn NEWLINE .
+the message.  Unlike
+.Fn clnt_perror ,
+it does not append a
+.Tn NEWLINE
+to the end of the message. 
 .IP
 .Fn clnt_sperrno
 is used instead of
