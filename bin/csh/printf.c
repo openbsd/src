@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.14 2003/06/11 21:09:50 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.15 2003/06/23 16:40:44 millert Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.14 2003/06/11 21:09:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.15 2003/06/23 16:40:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,16 +94,7 @@ main(int argc, char *argv[])
 	int ch, end, fieldwidth, precision;
 	char convch, nextch, *format, *fmt, *start;
 
-	while ((ch = getopt(argc, argv, "")) != -1)
-		switch (ch) {
-		default:
-			usage();
-			return (1);
-		}
-	argc -= optind;
-	argv += optind;
-
-	if (argc < 1) {
+	if (argc < 2) {
 		usage();
 		return (1);
 	}
@@ -119,7 +110,7 @@ main(int argc, char *argv[])
 	skip1 = "#-+ 0";
 	skip2 = "*0123456789";
 
-	escape(fmt = format = *argv);		/* backslash interpretation */
+	escape(fmt = format = *++argv);		/* backslash interpretation */
 	gargv = ++argv;
 	for (;;) {
 		end = 0;
