@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.35 1999/11/12 05:58:54 angelos Exp $	*/
+/*	$OpenBSD: systm.h,v 1.36 1999/12/02 00:23:35 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -165,6 +165,10 @@ int	vsprintf __P((char *, const char *, va_list))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
 int	sprintf __P((char *buf, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
+int	vsnprintf __P((char *, size_t, const char *, va_list))
+    __kprintf_attribute__((__format__(__kprintf__,3,4)));
+int	snprintf __P((char *buf, size_t, const char *, ...))
+    __kprintf_attribute__((__format__(__kprintf__,3,4)));
 struct tty;
 void	ttyprintf __P((struct tty *, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
