@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.56 2002/04/23 22:25:29 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.57 2002/04/26 19:20:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.56 2002/04/23 22:25:29 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.57 2002/04/26 19:20:27 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -953,7 +953,7 @@ wi_write_record(sc, ltv)
 				 * IEEE80211_AUTH_SHARED since Symbol cards
 				 * have 2 shared key modes.
 				 */
-				if (sc->wi_authmode != IEEE80211_AUTH_OPEN ||
+				if (sc->wi_authtype != IEEE80211_AUTH_OPEN ||
 				    sc->sc_firmware_type == WI_SYMBOL)
 					val |= EXCLUDE_UNENCRYPTED;
 				/* TX encryption is broken in Host AP mode. */

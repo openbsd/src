@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.10 2002/04/11 00:08:25 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.11 2002/04/26 19:20:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -73,7 +73,6 @@ struct wi_softc	{
 
 	u_int8_t		wi_txbuf[1596];
 	int			wi_use_wep;
-	int			wi_authmode;
 	int			wi_tx_key;
 	struct wi_ltv_keys	wi_keys;
 	struct wi_counters	wi_stats;
