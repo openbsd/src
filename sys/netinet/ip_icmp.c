@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.38 2001/06/19 00:48:23 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.39 2001/06/29 18:08:39 provos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -126,8 +126,8 @@ icmp_error(n, type, code, dest, destifp)
 	register struct ip *oip = mtod(n, struct ip *), *nip;
 	register unsigned oiplen = oip->ip_hl << 2;
 	register struct icmp *icp;
-	struct mbuf *m, m0;
-	unsigned icmplen;
+	struct mbuf *m;
+	unsigned icmplen, mblen;
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
@@ -140,7 +140,7 @@ icmp_error(n, type, code, dest, destifp)
 	 * Don't error if the old packet protocol was ICMP
 	 * error message, only known informational types.
 	 */
-	if (oip->ip_off &~ (IP_MF|IP_DF))
+	if (oip->ip_off & IP_OFFMASK)
 		goto freeit;
 	if (oip->ip_p == IPPROTO_ICMP && type != ICMP_REDIRECT &&
 	  n->m_len >= oiplen + ICMP_MINLEN &&
@@ -163,12 +163,41 @@ icmp_error(n, type, code, dest, destifp)
 	/*
 	 * Now, formulate icmp message
 	 */
+	icmplen = oiplen + min(8, oip->ip_len);
+ 	/*
+	 * Defend against mbuf chains shorter than oip->ip_len:
+	 */
+	mblen = 0;
+	for (m = n; m && (mblen < icmplen); m = m->m_next)
+		mblen += m->m_len;
+	icmplen = min(mblen, icmplen);
+
+	/*
+	 * As we are not required to return everything we have,
+	 * we return whatever we can return at ease.
+	 *
+	 * Note that ICMP datagrams longer than 576 octets are out of spec
+	 * according to RFC1812;
+	 */
+
+	KASSERT(ICMP_MINLEN <= MCLBYTES);
+
+	if (icmplen + ICMP_MINLEN > MCLBYTES)
+		icmplen = MCLBYTES - ICMP_MINLEN - sizeof (struct ip);
+
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
+	if (m && (sizeof (struct ip) + icmplen + ICMP_MINLEN > MHLEN)) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
+			m = NULL;
+		}
+	}
 	if (m == NULL)
 		goto freeit;
-	icmplen = oiplen + min(8, oip->ip_len);
 	m->m_len = icmplen + ICMP_MINLEN;
-	MH_ALIGN(m, m->m_len);
+	if ((m->m_flags & M_EXT) == 0)
+		MH_ALIGN(m, m->m_len);
 	icp = mtod(m, struct icmp *);
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
@@ -190,35 +219,34 @@ icmp_error(n, type, code, dest, destifp)
 			icp->icmp_nextmtu = htons(destifp->if_mtu);
 	}
 
+	HTONS(oip->ip_off);
+	HTONS(oip->ip_len);
 	icp->icmp_code = code;
-	bcopy((caddr_t)oip, (caddr_t)&icp->icmp_ip, icmplen);
+	m_copydata(n, 0, icmplen, (caddr_t)&icp->icmp_ip);
 	nip = &icp->icmp_ip;
-	nip->ip_off = htons(nip->ip_off);
-	nip->ip_len = htons(nip->ip_len);
-
-	m0.m_next = NULL;			/* correct nip->ip_sum */
-	m0.m_data = (char *)nip;
-	m0.m_len = nip->ip_hl << 2;
-	nip->ip_sum = 0;
-	nip->ip_sum = in_cksum(&m0, nip->ip_hl << 2);
 
 	/*
 	 * Now, copy old ip header (without options)
 	 * in front of icmp message.
 	 */
-	if (m->m_data - sizeof(struct ip) < m->m_pktdat)
+	if ((m->m_flags & M_EXT) == 0 &&
+	    m->m_data - sizeof(struct ip) < m->m_pktdat)
 		panic("icmp len");
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
 	m->m_pkthdr.len = m->m_len;
 	m->m_pkthdr.rcvif = n->m_pkthdr.rcvif;
 	nip = mtod(m, struct ip *);
-	bcopy((caddr_t)oip, (caddr_t)nip, sizeof(struct ip));
-	nip->ip_off = htons(nip->ip_off);
-	nip->ip_len = m->m_len;
+	/* ip_v set in ip_output */
 	nip->ip_hl = sizeof(struct ip) >> 2;
-	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_tos = 0;
+	nip->ip_len = m->m_len;
+	/* ip_id set in ip_output */
+	nip->ip_off = 0;
+	/* ip_ttl set in icmp_reflect */
+	nip->ip_p = IPPROTO_ICMP;
+	nip->ip_src = oip->ip_src;
+	nip->ip_dst = oip->ip_dst;
 	icmp_reflect(m);
 
 freeit:
