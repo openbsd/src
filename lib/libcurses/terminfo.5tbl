@@ -33,16 +33,16 @@
 .\"***************************************************************************
 .\"
 .\" $From: terminfo.head,v 1.9 2000/08/13 01:56:40 tom Exp $
-.\" $OpenBSD: terminfo.5tbl,v 1.11 2000/10/22 18:27:19 millert Exp $
+.\" $OpenBSD: terminfo.5tbl,v 1.12 2004/11/04 15:36:47 otto Exp $
 .TH TERMINFO 5 "" "" "File Formats"
 .ds n 5
-.ds d /usr/share/terminfo
+.ds d /usr/share/misc/terminfo
 .SH NAME
 terminfo \- terminal capability data base
 .SH SYNOPSIS
 \*d.db
 .br
-\*d/*/*
+/usr/share/terminfo/?/*
 .SH DESCRIPTION
 .I Terminfo
 is a data base describing terminals, used by screen-oriented programs such as
@@ -3112,7 +3112,7 @@ Supports both the SVr4 set and the AIX extensions.
 \*d.db
 file containing terminal descriptions on OpenBSD
 .TP 25
-\*d/?/*
+/usr/share/terminfo/?/*
 files containing terminal descriptions on other systems
 .SH "SEE ALSO"
 \fBcap_mkdb(1)\fR, \fBtic\fR(1M), \fBcurses\fR(3), \fBprintf\fR(3), \fBterm\fR(\*n).
