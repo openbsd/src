@@ -1,0 +1,69 @@
+.\"	$OpenBSD: atapiscsi.4,v 1.1 1999/07/25 15:50:44 csapuntz Exp $
+.\"
+.\" Copyright (c) 1999 Constantine Sapuntzakis.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+
+.Dd July 25, 1999
+.Dt ATAPISCSI 4
+.Os
+.Sh NAME
+.Nm atapiscsi
+.Nd ATAPI<->SCSI adapter
+.Sh SYNOPSIS
+.Cd "atapiscsi* at wdc? channel ?"
+.Cd "atapiscsi* at pciide? channel ?"
+.Cd "scsibus* at atapiscsi?"
+.Sh DESCRIPTION
+The 
+.Nm
+driver supports ATAPI (also called IDE) devices such as CD-ROMs, ZIP drives,
+floppy drives, and (eventually) tape drives. All ATAPI devices talk some
+subset of the SCSI protocol. For example, our SCSI 
+.Xr cd 4
+driver, with minimal changes, was able to sucessfully control ATAPI CD-ROMs.
+.Pp
+The
+.Nm
+driver acts like a SCSI adapter. Thus, the ATAPI devices connected to
+the system will appear as SCSI devices.
+.Pp
+For performance reasons, you should avoid putting an ATAPI device and
+a hard disk on the same cable. Our driver does not support bus release
+and, even if it did, many ATAPI devices do not support it. There is
+only one command outstanding on a cable at a time. For example, if you
+have a hard disk and a CD drive on the same cable, your hard disk
+requests may get queued behind slow CD operations.
+.Sh BUGS
+Tape devices don't work yet.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pciide 4 ,
+.Xr scsi 4 ,
+.Xr wdc 4 ,
+.Xr cd 4 ,
+.Xr st 4 ,
+.Xr sd 4 
