@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.6 1996/04/28 11:23:19 deraadt Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.7 1996/05/27 22:11:36 chuck Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -143,7 +143,7 @@ links:
 
 SRCS=	${MVME68K}/mvme68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
