@@ -1331,6 +1331,103 @@ static struct so_map dlmap = {
 };
 static int dlerrno;
 
+/*
+ * Populate sod struct for dlopen's call to map_obj
+ */
+void
+build_sod(name, sodp)
+	char		*name;
+	struct	sod	*sodp;
+{
+	unsigned int	number;
+	unsigned int	tuplet;
+	unsigned int	strange = 0;
+	int		major, minor;
+	char		*realname, *tok, *tok1;
+
+	/* default is an absolute or relative path */
+	sodp->sod_name = (long)strdup(name);	/* strtok is destructive */
+	sodp->sod_library = 0;
+	sodp->sod_major = sodp->sod_minor = 0;
+	/* asking for lookup? */
+	if (strncmp((char *)sodp->sod_name, "lib", 3) == NULL) {
+		/* skip over 'lib' */
+		tok = (char *)sodp->sod_name + 3;
+		/* dot guardian */
+		if((strchr(tok, '.') != NULL) && (*(tok+strlen(tok)-1)!='.')) {
+			tok = strtok(tok, ".");
+			/* default */
+			major = minor = -1;
+			/* removed 'lib' and extensions from name */
+			realname = tok;
+			/* loop through name - parse skipping name */
+			for(tuplet=1;((tok=strtok(NULL,"."))!=NULL);tuplet++) {
+				switch (tuplet) {
+					/* 'so' extension */
+					case 1:
+						if(strcmp(tok, "so") != NULL)
+							strange = 1;
+						break;
+					/* major ver extension */
+					case 2:
+						for(tok1=tok;
+						    (*tok1 != '\0');
+						    tok1++) {
+							if(isdigit(*tok1))
+								number = 1;
+							else {
+								number = 0;
+								break;
+							}
+						}
+						if(number)
+							major = atoi(tok);
+						else {
+							major = 0;
+							strange = 1;
+						}
+						break;
+					/* minor ver extension */
+					case 3:
+						for(tok1=tok;
+						    (*tok1 != '\0');
+						    tok1++) {
+							if(isdigit(*tok1))
+								number = 1;
+							else {
+								number = 0;
+								break;
+							}
+						}
+						if(number)
+							minor = atoi(tok);
+						else {
+							minor = 0;
+							strange = 1;
+						}
+						break;
+					/* if we get here, it must be weird */
+					default:
+						strange = 1;
+				} /* end switch */
+			} /* end for */
+			/* normal */
+			if(!strange) {
+				free((char *)sodp->sod_name);
+				sodp->sod_name = (long)strdup(realname);
+				sodp->sod_library = 1;
+				sodp->sod_major = major;
+				sodp->sod_minor = minor;
+			}
+			/* strange */
+			else {
+				free((char *)sodp->sod_name);
+				sodp->sod_name = (long)strdup(name);
+			}
+		} /* end if dots */
+	}  /* end if lookup */
+}
+
 static void *
 __dlopen(name, mode)
 	char	*name;
@@ -1352,11 +1449,9 @@ __dlopen(name, mode)
 		return NULL;
 	}
 
-	sodp->sod_name = (long)strdup(name);
-	sodp->sod_library = 0;
-	sodp->sod_major = sodp->sod_minor = 0;
+	build_sod(name, sodp);
 
-	if ((smp = map_object(name, sodp, 0)) == NULL) {
+	if ((smp = map_object((char *)sodp->sod_name, sodp, 0)) == NULL) {
 #ifdef DEBUG
 xprintf("%s: %s\n", name, strerror(errno));
 #endif

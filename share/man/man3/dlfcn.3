@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Fd #include <dlfcn.h>
 .Ft "void *"
-.Fn dlopen "char *path" "int mode"
+.Fn dlopen "char *name" "int mode"
 .Ft "int"
 .Fn dlclose "void *handle"
 .Ft "void *"
@@ -57,10 +57,11 @@ They allow new shared objects to be loaded into the process' address space
 under program control.
 The
 .Fn dlopen
-function takes a pathname of a shared object as the first argument. The
-shared object is mapped into the address space, relocated and its external
-references are resolved in the same way as is done with the implicitly loaded
-shared libraries at program startup.
+function takes a filename of the forms 'libname.so', 'libname.so.xx.xx' where
+xx are the major and minor revisions, or 'pathname/filename' of a shared object
+as the first argument. The shared object is mapped into the address space,
+relocated and its external references are resolved in the same way as is done
+with the implicitly loaded shared libraries at program startup.
 The second argument has currently no effect, but should be set to
 .Dv DL_LAZY
 for future compatibility.
