@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.67 2004/01/12 07:46:17 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.68 2004/01/12 21:33:15 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -528,7 +528,7 @@ user_fault:
 			unsigned instr;
 			struct uio uio;
 			struct iovec iov;
-			unsigned pc = PC_REGS((struct reg *)frame);
+			unsigned pc = PC_REGS(&frame->tf_regs);
 
 			/* read break instruction */
 			copyin((caddr_t)pc, &instr, sizeof(unsigned));
@@ -1045,7 +1045,7 @@ m88110_user_fault:
 			unsigned instr;
 			struct uio uio;
 			struct iovec iov;
-			unsigned pc = PC_REGS((struct reg *)frame);
+			unsigned pc = PC_REGS(&frame->tf_regs);
 
 			/* read break instruction */
 			copyin((caddr_t)pc, &instr, sizeof(unsigned));

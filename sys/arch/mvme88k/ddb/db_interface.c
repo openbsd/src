@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.38 2004/01/12 07:46:14 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.39 2004/01/12 21:33:10 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -211,7 +211,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	}
 
 	if (badwordaddr((vaddr_t)s) ||
-	    badwordaddr((vaddr_t)(&((db_regs_t*)s)->mode))) {
+	    badwordaddr((vaddr_t)(&((db_regs_t*)s)->fpit))) {
 		db_printf("frame at %8p is unreadable\n", s);
 		return;
 	}
@@ -375,25 +375,20 @@ m88k_db_pause(ticks)
 }
 
 /*
- *  m88k_db_trap - field a TRACE or BPT trap
+ * m88k_db_trap - field a TRACE or BPT trap
+ * Note that only the tf_regs part of the frame is valid - some ddb routines
+ * invoke this function with a promoted struct reg!
  */
 void
-m88k_db_trap(type, regs)
+m88k_db_trap(type, frame)
 	int type;
-	struct trapframe *regs;
+	struct trapframe *frame;
 {
-#if 0
-	int i;
-
-	if ((i = db_spl()) != 7)
-		db_printf("WARNING: spl is not high in m88k_db_trap (spl=%x)\n", i);
-#endif /* 0 */
 
 	if (db_are_interrupts_disabled())
 		db_printf("WARNING: entered debugger with interrupts disabled\n");
 
 	switch(type) {
-
 	case T_KDB_BREAK:
 	case T_KDB_TRACE:
 	case T_KDB_ENTRY:
@@ -408,7 +403,7 @@ m88k_db_trap(type, regs)
 		}
 	}
 
-	ddb_regs = *((struct reg *)regs);
+	ddb_regs = frame->tf_regs;
 
 	db_active++;
 	cnpollc(TRUE);
@@ -416,11 +411,7 @@ m88k_db_trap(type, regs)
 	cnpollc(FALSE);
 	db_active--;
 
-	*((struct reg *)regs) = ddb_regs;
-
-#if 0
-	(void) spl7();
-#endif
+	frame->tf_regs = ddb_regs;
 }
 
 extern const char *trap_type[];
@@ -514,7 +505,7 @@ ddb_error_trap(error, regs)
 {
 	db_printf("KERNEL:  terminal error [%s]\n", error);
 	db_printf("KERNEL:  Exiting debugger will cause abort to rom\n");
-	db_printf("at 0x%x ", regs->sxip & ~3);
+	db_printf("at 0x%x ", regs->sxip & XIP_ADDR);
 	db_printf("dmt0 0x%x dma0 0x%x", regs->dmt0, regs->dma0);
 	m88k_db_pause(1000000);
 	m88k_db_trap(T_KDB_BREAK, (struct trapframe *)regs);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.24 2004/01/12 07:46:14 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.25 2004/01/12 21:33:10 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -176,9 +176,6 @@ struct db_variable db_regs[] = {
 	N("dma2", dma2),   N("fpecr", fpecr),N("fphs1", fphs1),N("fpls1", fpls1),
 	N("fphs2", fphs2), N("fpls2", fpls2),N("fppt", fppt),  N("fprh", fprh),
 	N("fprl", fprl),   N("fpit", fpit),  N("fpsr", fpsr),  N("fpcr", fpcr),
-	N("mask", mask), /* interrupt mask */
-	N("mode", mode), /* interrupt mode */
-	N("exvc", vector), /* exception vector */
 };
 #undef N
 
@@ -282,7 +279,7 @@ int
 frame_is_sane(db_regs_t *regs)
 {
 	/* no good if we can't read the whole frame */
-	if (badwordaddr((vaddr_t)regs) || badwordaddr((vaddr_t)&regs->mode)) {
+	if (badwordaddr((vaddr_t)regs) || badwordaddr((vaddr_t)&regs->fpit)) {
 		db_printf("[WARNING: frame at %p : unreadable]\n", regs);
 		return 0;
 	}
@@ -940,12 +937,13 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 			}
 
 			else if (frame_is_sane((db_regs_t*)pair[0])) {
-				db_regs_t *frame = (db_regs_t *) pair[0];
-				char *cause = m88k_exception_name(frame -> vector);
+				struct trapframe *frame =
+				    (struct trapframe *)pair[0];
 
 				(*pr)("-------------- %s [EF: 0x%x] -------------\n",
-					  cause, frame);
-				db_stack_trace_cmd2(frame, pr);
+				    m88k_exception_name(frame->tf_vector),
+				    frame);
+				db_stack_trace_cmd2(&frame->tf_regs, pr);
 				return;
 			}
 #ifdef TRACE_DEBUG
@@ -965,7 +963,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	 * if the "u" option was specified.
 	 */
 	if (trace_flags & TRACE_USER_FLAG) {
-		db_regs_t *user;
+		struct trapframe *user;
 
 		/* Make sure we are back on the right page */
 		stack -= 4*FRAME_PLAY;
@@ -981,12 +979,12 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 			return;
 
 		/* have a hit */
-		user = *((db_regs_t **) stack);
+		user = *((struct trapframe **)stack);
 
-		if (frame_is_sane(user) == 2) {
+		if (frame_is_sane(&user->tf_regs) == 2) {
 			(*pr)("---------------- %s [EF : 0x%x] -------------\n",
-				  m88k_exception_name(user->vector), user);
-			db_stack_trace_cmd2(user, pr);
+			    m88k_exception_name(user->tf_vector), user);
+			db_stack_trace_cmd2(&user->tf_regs, pr);
 		}
 	}
 }

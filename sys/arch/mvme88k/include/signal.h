@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.9 2001/12/20 06:20:26 smurph Exp $ */
+/*	$OpenBSD: signal.h,v 1.10 2004/01/12 21:33:15 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -29,8 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
 #ifndef __MACHINE_SIGNAL_H__
 #define __MACHINE_SIGNAL_H__
+
 typedef int sig_atomic_t;
 
 /*
@@ -48,12 +50,12 @@ struct  sigcontext {
 	/* begin machine dependent portion */
 	int	sc_regs[32];
 #define	sc_sp	sc_regs[31]
-	int	sc_xip;
-	int	sc_nip;
-	int	sc_fip;
 	int	sc_ps;
 	int	sc_fpsr;
 	int	sc_fpcr;
+	int	sc_xip;
+	int	sc_nip;
+	int	sc_fip;
 	int	sc_ssbr;
 #define sc_duap	sc_ssbr	/* mc88110 */
 	int	sc_dmt0;
@@ -83,6 +85,9 @@ struct  sigcontext {
 	int	sc_fprh;
 	int	sc_fprl;
 	int	sc_fpit;
-	int	sc_xxxx;	/* pad to double word boundary */
+
+	/* XXX this structure needs to be a multiple of 8 bytes for now */
+	int	sc_pad;
 };
+
 #endif /* __MACHINE_SIGNAL_H__ */
