@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.h,v 1.5 2003/08/25 23:28:16 tedu Exp $	*/
+/*	$OpenBSD: restore.h,v 1.6 2004/03/31 22:08:32 henning Exp $	*/
 /*	$NetBSD: restore.h,v 1.8 1997/07/01 05:37:54 lukem Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ struct entry {
 	char	e_type;			/* type of this entry, see below */
 	short	e_flags;		/* status flags, see below */
 	ino_t	e_ino;			/* inode number in previous file sys */
-	long	e_index;		/* unique index (for dumpped table) */
+	long	e_index;		/* unique index (for dumped table) */
 	struct	entry *e_parent;	/* pointer to parent directory (..) */
 	struct	entry *e_sibling;	/* next element in this directory (.) */
 	struct	entry *e_links;		/* hard links to this inode */

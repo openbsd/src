@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprestore.h,v 1.6 2003/08/25 23:28:34 tedu Exp $	*/
+/*	$OpenBSD: dumprestore.h,v 1.7 2004/03/31 22:08:32 henning Exp $	*/
 /*	$NetBSD: dumprestore.h,v 1.6 1994/10/26 00:56:49 cgd Exp $	*/
 
 /*
@@ -81,9 +81,9 @@ union u_spcl {
 		char	c_addr[TP_NINDIR];  /* 1 => data; 0 => hole in inode */
 		char	c_label[LBLSIZE];   /* dump label */
 		int32_t	c_level;	    /* level of this dump */
-		char	c_filesys[NAMELEN]; /* name of dumpped file system */
-		char	c_dev[NAMELEN];	    /* name of dumpped device */
-		char	c_host[NAMELEN];    /* name of dumpped host */
+		char	c_filesys[NAMELEN]; /* name of dumped file system */
+		char	c_dev[NAMELEN];	    /* name of dumped device */
+		char	c_host[NAMELEN];    /* name of dumped host */
 		int32_t	c_flags;	    /* additional information */
 		int32_t	c_firstrec;	    /* first record on volume */
 		int32_t	c_spare[32];	    /* reserved for future uses */
