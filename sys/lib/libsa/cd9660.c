@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.5 1997/10/06 20:20:18 deraadt Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.6 1997/11/09 19:37:20 millert Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -52,20 +52,6 @@ struct proc;
 struct statfs;
 struct ucred;
 #include <isofs/cd9660/iso.h>
-/* These once were in iso.h, but got deleted??? */
-extern __inline int
-isonum_722(p)
-	unsigned char *p;
-{
-	return ((char)*p << 8)|p[1];
-}
-
-extern __inline int
-isonum_732(p)
-	unsigned char *p;
-{
-	return (*p << 24)|(p[1] << 16)|(p[2] << 8)|p[3];
-}
 
 #include "stand.h"
 #include "cd9660.h"
