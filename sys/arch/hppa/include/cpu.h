@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 1998/08/29 01:17:06 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 1998/10/30 19:18:32 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -23,8 +23,8 @@
  * 	Utah $Hdr: cpu.h 1.19 94/12/16$
  */
 
-#ifndef	_HPPA_CPU_H_
-#define	_HPPA_CPU_H_
+#ifndef	_MACHINE_CPU_H_
+#define	_MACHINE_CPU_H_
 
 #include <machine/frame.h>
 
@@ -49,10 +49,11 @@
 #define	HPPA_SPA_ENABLE	0x00000020
 #define	HPPA_NMODSPBUS	64
 
-#define	CLKF_BASEPRI(framep)	(0)	/* XXX */
-#define	CLKF_PC(framep)		(0)	/* XXX */
+#define	clockframe	trapframe
+#define	CLKF_BASEPRI(framep)	((framep)->eiem)
+#define	CLKF_PC(framep)		((framep)->iioq_head)
 #define	CLKF_INTR(framep)	(0)	/* XXX */
-#define	CLKF_USERMODE(framep)	(0)	/* XXX */
+#define	CLKF_USERMODE(framep)	(USERMODE((framep)->iioq_head))
 
 #define	signotify(p)		(void)(p)
 #define	need_resched()		{(void)1;}
@@ -68,6 +69,8 @@
 void	delay __P((u_int));
 void	hppa_init __P((void));
 void	trap __P((int, struct trapframe *));
+int	kvtop __P((const caddr_t));
+int	dma_cachectl __P((caddr_t, int));
 #endif
 
 /*
@@ -88,4 +91,4 @@ void	trap __P((int, struct trapframe *));
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
-#endif /* _HPPA_CPU_H_ */
+#endif /* _MACHINE_CPU_H_ */
