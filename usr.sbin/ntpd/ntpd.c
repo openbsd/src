@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.29 2005/02/02 18:52:32 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.30 2005/03/08 14:28:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -165,11 +165,11 @@ main(int argc, char *argv[])
 			}
 
 		if (nfds == 0 && conf.settime) {
-			log_debug("no reply received, skipping initial time "
-			    "setting");
 			conf.settime = 0;
 			timeout = INFTIM;
 			log_init(conf.debug);
+			log_debug("no reply received, skipping initial time "
+			    "setting");
 			if (!conf.debug)
 				if (daemon(1, 0))
 					fatal("daemon");
