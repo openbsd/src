@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.841 2005/03/07 15:56:34 xsa Exp 
+ *	OpenBSD: pcidevs,v 1.842 2005/03/09 12:12:56 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1635,12 +1635,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9200 SE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS200_AGP,
-	    "RS200 AGP",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS100_PCI,
+	    "RS100 PCI",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS200_PCI,
 	    "RS200 PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS100_AGP,
+	    "RS100 AGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS200_AGP,
+	    "RS200 AGP",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
