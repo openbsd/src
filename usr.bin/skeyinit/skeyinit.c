@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.9 1996/09/29 23:11:04 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.10 1996/09/30 06:30:43 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -115,19 +115,21 @@ main(argc, argv)
 	}
 	salt = pp->pw_passwd;
 
-	(void)setpriority(PRIO_PROCESS, 0, -4);
-
 	if (getuid() != 0) {
-		(void)setpriority(PRIO_PROCESS, 0, -4);
-
 		pw = getpass("Password:");
-		p = crypt(pw, salt);
-
-		(void)setpriority(PRIO_PROCESS, 0, 0);
-
-		if (pp && strcmp(p, pp->pw_passwd))
-			errx(1, "Password incorrect.");
+		if (strcasecmp(pw, "s/key") == 0) {
+			if (skey_haskey(me))
+				exit(1);
+			if (skey_authenticate(me))
+				errx(1, "Password incorrect.");
+		} else {
+			p = crypt(pw, salt);
+			if (strcmp(p, pp->pw_passwd))
+				errx(1, "Password incorrect.");
+		}
 	}
+
+	(void)setpriority(PRIO_PROCESS, 0, -4);
 
 	rval = skeylookup(&skey, pp->pw_name);
 	switch (rval) {
@@ -177,20 +179,37 @@ main(argc, argv)
 		for (i = 0;; i++) {
 			if (i >= 2)
 				exit(1);
+
 			(void)printf("Enter sequence count from 1 to %d: ",
 				     SKEY_MAXSEQ);
 			(void)fgets(tmp, sizeof(tmp), stdin);
 			n = atoi(tmp);
 			if (n > 0 && n < SKEY_MAXSEQ)
 				break;	/* Valid range */
-			(void)printf("\n Error: Count must be > 0 and < %d\n",
+			(void)printf("Error: Count must be > 0 and < %d\n",
 				     SKEY_MAXSEQ);
 		}
 
-		(void)printf("Enter new key [default %s]: ", defaultseed);
-		(void)fflush(stdout);
-		(void)fgets(seed, sizeof(seed), stdin);
-		rip(seed);
+		for (i = 0;; i++) {
+			if (i >= 2)
+				exit(1);
+
+			(void)printf("Enter new key [default %s]: ",
+				     defaultseed);
+			(void)fgets(seed, sizeof(seed), stdin);
+			rip(seed);
+			for (p = seed; *p; p++) {
+				if (isalpha(*p)) {
+					if (isupper(*p))
+						*p = tolower(*p);
+				} else if (!isdigit(*p)) {
+					(void)puts("Error: seed may only contain alpha numeric characters");
+					break;
+				}
+			}
+			if (*p == '\0')
+				break;  /* Valid seed */
+		}
 		if (strlen(seed) > 16) {
 			(void)puts("Notice: Seed truncated to 16 characters.");
 			seed[16] = '\0';
@@ -202,8 +221,8 @@ main(argc, argv)
 			if (i >= 2)
 				exit(1);
 
-			(void)printf("skey %d %s\nskey access password: ",
-			    n, seed);
+			(void)printf("otp-%s %d %s\nS/Key access password: ",
+				     skey_get_algorithm(), n, seed);
 			(void)fgets(tmp, sizeof(tmp), stdin);
 			rip(tmp);
 			backspace(tmp);
@@ -268,9 +287,12 @@ main(argc, argv)
 	(void)fprintf(skey.keyfile, "%s %s %04d %-16s %s %-21s\n",
 	    pp->pw_name, skey_get_algorithm(), n, seed, skey.val, tbuf);
 	(void)fclose(skey.keyfile);
-	(void)printf("\nID %s skey is %d %s\n", pp->pw_name, n, seed);
-	(void)printf("Next login password: %s\n", hexmode ? put8(buf, key) : btoe(buf, key));
 
+	(void)setpriority(PRIO_PROCESS, 0, 0);
+
+	(void)printf("\nID %s skey is %d %s\n", pp->pw_name, n, seed);
+	(void)printf("Next login password: %s\n\n",
+		     hexmode ? put8(buf, key) : btoe(buf, key));
 	exit(0);
 }
 
