@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.15 1997/08/26 20:02:32 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.16 1997/11/12 20:57:43 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -157,24 +157,20 @@ tck_addfriend(struct in_addr f)
 static u_int32_t
 tck_makecookie(struct in_addr f)
 {
-        static MD5_CTX ctx;
+	static MD5_CTX ctx;
 	u_int8_t buf[16];
 	MD5_CTX ctx2;
-	
-	if (tck_initialized == 0)	/* This only happens once per reboot */
-	{
-	    tck_initialized = 1;
-	    
-	    get_random_bytes((void *) buf, 16);
-	    
-	    MD5Init(&ctx);
-	    MD5Update(&ctx, buf, 16);
-	}
 
+	if (tck_initialized == 0) {	/* This only happens once per reboot */
+		tck_initialized = 1;
+
+		get_random_bytes((void *) buf, 16);
+		MD5Init(&ctx);
+		MD5Update(&ctx, buf, 16);
+	}
 	ctx2 = ctx;
 	MD5Update(&ctx2, (void *) &f, sizeof(f));
 	MD5Final(buf, &ctx2);		/* This may not be necessary */
-	
 	return ((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3]);
 }	
 
@@ -185,13 +181,11 @@ tck_chkcookie(struct tcpiphdr *ti)
 	printf("tck_chkcookie: src = 0x%08x, cookie = 0x%08x, seq = 0x%08x, ack = 0x%08x\n", ntohl(ti->ti_src.s_addr), tck_makecookie(ti->ti_src), ti->ti_seq, ti->ti_ack);
 #endif /* DEBUG_TCPCOOKIE */
 
-	if (tck_makecookie(ti->ti_src) == ti->ti_seq) /* seq in host order */
-	{
+	if (tck_makecookie(ti->ti_src) == ti->ti_seq) { /* seq in host order */
 		tck_addfriend(ti->ti_src);
 		return 1;
 	}
-	else
-	  return 0;
+	return 0;
 }
 
 #endif /* TCPCOOKIE */
@@ -370,7 +364,7 @@ tcpdropoldhalfopen(avoidtp, port)
 
 	s = splnet();
 	inp = tcbtable.inpt_queue.cqh_first;
-	if (inp)                                                /* XXX */
+	if (inp)						/* XXX */
 	for (; inp != (struct inpcb *)&tcbtable.inpt_queue && --ncheck;
 	    inp = inp->inp_queue.cqe_prev) {
 		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
@@ -383,7 +377,7 @@ tcpdropoldhalfopen(avoidtp, port)
 	}
 
 	inp = tcbtable.inpt_queue.cqh_first;
-	if (inp)                                                /* XXX */
+	if (inp)						/* XXX */
 	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
 	    inp = inp->inp_queue.cqe_prev) {
 		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
@@ -1063,11 +1057,11 @@ trimthenstep6:
 	 *    CLOSING, LAST_ACK, TIME_WAIT STATES
 	 *	Close the tcb.
 	 */
-	if (tiflags&TH_RST) {
+	if (tiflags & TH_RST) {
 
 		if ((ti->ti_seq != tp->rcv_nxt) ||
 		    (ti->ti_ack && ((SEQ_LEQ(ti->ti_ack, tp->iss) ||
-		      SEQ_GT(ti->ti_ack, tp->snd_max)))))
+		    SEQ_GT(ti->ti_ack, tp->snd_max)))))
 			goto drop;
 
 		switch (tp->t_state) {
@@ -1196,7 +1190,7 @@ trimthenstep6:
 					tp->snd_cwnd = tp->t_maxseg;
 					(void) tcp_output(tp);
 					tp->snd_cwnd = tp->snd_ssthresh +
-					       tp->t_maxseg * tp->t_dupacks;
+					    tp->t_maxseg * tp->t_dupacks;
 					if (SEQ_GT(onxt, tp->snd_nxt))
 						tp->snd_nxt = onxt;
 					goto drop;
