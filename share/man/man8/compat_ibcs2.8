@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ibcs2.8,v 1.13 2003/08/06 12:06:55 jmc Exp $
+.\"	$OpenBSD: compat_ibcs2.8,v 1.14 2003/08/23 19:26:25 tedu Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -47,6 +47,8 @@ Binaries are supported from SCO UNIX and other systems derived from UNIX
 System V Release 3.
 iBCS2 support is only well tested using SCO binaries.
 XENIX binaries are also supported although not as well tested.
+This option is controlled by the kern.emul.ibcs2
+.Xr sysctl 8 .
 SVR4 binaries are supported by the
 .Nm COMPAT_SVR4
 option.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.30 2003/08/06 12:06:55 jmc Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.31 2003/08/23 19:26:25 tedu Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -55,7 +55,9 @@ filesystem), and i386-specific calls, such as enabling virtual 8086 mode.
 The Linux compatibility feature is active
 for kernels compiled with the
 .Nm COMPAT_LINUX
-option enabled.
+option and kern.emul.linux
+.Xr sysctl 8
+enabled.
 .Pp
 A lot of programs are dynamically linked.
 This means that the Linux shared libraries that the programs depend on

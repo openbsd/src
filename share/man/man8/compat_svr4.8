@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_svr4.8,v 1.14 2003/07/21 12:43:42 jmc Exp $
+.\"	$OpenBSD: compat_svr4.8,v 1.15 2003/08/23 19:26:25 tedu Exp $
 .\"	$NetBSD: compat_svr4.8,v 1.1 1996/07/06 17:14:50 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
@@ -58,7 +58,9 @@ filesystem
 The SVR4 compatibility feature is active
 for kernels compiled with the
 .Nm COMPAT_SVR4
-option enabled.
+option and kern.emul.svr4
+.Xr sysctl 8
+enabled.
 .Pp
 Most SVR4 programs are dynamically linked.
 This means that the shared libraries that the programs depend on

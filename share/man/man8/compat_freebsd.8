@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_freebsd.8,v 1.15 2003/08/06 12:06:55 jmc Exp $
+.\"	$OpenBSD: compat_freebsd.8,v 1.16 2003/08/23 19:26:25 tedu Exp $
 .\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -53,7 +53,9 @@ The
 compatibility feature is active for kernels compiled
 with the
 .Nm COMPAT_FREEBSD
-option enabled.
+option and the kern.emul.freebsd
+.Xr sysctl 8
+enabled.
 .Pp
 A lot of programs are dynamically linked.
 This means that the

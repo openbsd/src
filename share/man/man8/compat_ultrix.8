@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ultrix.8,v 1.15 2003/07/21 12:46:47 jmc Exp $
+.\"	$OpenBSD: compat_ultrix.8,v 1.16 2003/08/23 19:26:25 tedu Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -42,6 +42,8 @@ ULTRIX executables, respectively.
 However, the user is responsible for
 the legal issues of ensuring that they have a right to use any ULTRIX
 binaries on their machine.
+Emulation is controlled by the kern.emul.ultrix
+.Xr sysctl 8 .
 .Pp
 Most executables will work.
 The exceptions include programs that use

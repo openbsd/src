@@ -1,4 +1,4 @@
-.\" $OpenBSD: compat_osf1.8,v 1.5 2003/08/06 12:06:55 jmc Exp $
+.\" $OpenBSD: compat_osf1.8,v 1.6 2003/08/23 19:26:25 tedu Exp $
 .\" $NetBSD: compat_osf1.8,v 1.8 2002/01/14 13:50:43 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,8 +50,9 @@ libraries.
 Programs that make direct MACH system calls will not work.
 The OSF/1 compatibility feature is active for kernels compiled with the
 .Nm COMPAT_OSF1
-option enabled (see
-.Xr options 4 ) .
+option and kern.emul.osf1
+.Xr sysctl 8
+enabled.
 .Pp
 To run dynamically linked programs, the OSF/1 shared libraries,
 runtime linker, and certain configuration files found in

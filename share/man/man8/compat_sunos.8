@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_sunos.8,v 1.15 2003/06/26 20:12:25 jmc Exp $
+.\"	$OpenBSD: compat_sunos.8,v 1.16 2003/08/23 19:26:25 tedu Exp $
 .\"	$NetBSD: compat_sunos.8,v 1.6 1995/06/11 23:05:17 pk Exp $
 .\"
 .\" Copyright (c) 1994 Theo de Raadt
@@ -39,7 +39,9 @@ Most executables will work.
 The SunOS compatibility feature is active
 for kernels compiled with the
 .Nm COMPAT_SUNOS
-option enabled.
+option and kern.emul.sunos
+.Xr sysctl 8
+enabled.
 .Pp
 Compatibility with SunOS version 5 and later, better known as Solaris,
 is

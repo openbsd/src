@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_hpux.8,v 1.5 2003/08/06 12:06:55 jmc Exp $
+.\"	$OpenBSD: compat_hpux.8,v 1.6 2003/08/23 19:26:25 tedu Exp $
 .\"	$NetBSD: compat_hpux.8,v 1.2 2001/12/16 23:47:19 wiz Exp $
 .\"     from: compat_linux.8,v 1.23 2001/10/07 10:12:05 mbw Exp
 .\"
@@ -50,7 +50,9 @@ for kernels compiled with the
 .Nm COMPAT_HPUX
 and
 .Nm COMPAT_M68K4K
-options enabled.
+options and the kern.emul.hpux
+.Xr sysctl 8
+enabled.
 HP-UX for m68k uses 4 KB page sizes, and
 .Ox
 for all m68k platforms now uses 8 KB page sizes.

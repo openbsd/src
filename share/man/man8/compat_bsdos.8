@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_bsdos.8,v 1.8 2003/06/04 04:11:37 deraadt Exp $
+.\"	$OpenBSD: compat_bsdos.8,v 1.9 2003/08/23 19:26:25 tedu Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -39,7 +39,9 @@ supported are proprietary extensions made to the BSDI kernel.
 To activate the BSDI compatibility feature, the kernel must be compiled
 with the
 .Nm COMPAT_BSDOS
-option enabled.
+option and the kern.emul.bsdos
+.Xr sysctl 8
+enabled.
 .Pp
 .Nm COMPAT_BSDOS
 follows the standard
