@@ -185,6 +185,9 @@
 >belwue.uni-tuebingen.de  #ZDV Universitaet Tuebingen
 134.2.2.15                      #belwue1.zdv.uni-tuebingen.de
 134.2.2.117                     #belwue2.zdv.uni-tuebingen.de
+>biocenter.helsinki.fi	# Univ of Helsinki, Institute of Biotechnology, Finland
+128.214.58.174		# afsdb1.biocenter.helsinki.fi
+128.214.88.114		# afsdb2.biocenter.helsinki.fi
 >zdvpool.uni-tuebingen.de  # Eberhard-Karls-Universitaet Tuebingen, WS-Pools
 134.2.4.1			#aixserv1.zdv.uni-tuebingen.de
 >cs.arizona.edu            # University of Arizona - Computer Science Dept.
@@ -211,7 +214,8 @@
 128.2.10.28			#vice28.fs.andrew.cmu.edu
 128.2.10.7			#vice7.fs.andrew.cmu.edu
 >club.cc.cmu.edu           # Carnegie Mellon University Computer Club
-128.2.232.123			#helium.club.cc.cmu.edu
+128.2.4.131                     #yttrium.club.cc.cmu.edu
+128.2.4.132                     #zirconium.club.cc.cmu.edu
 >ce.cmu.edu                # Carnegie Mellon University - Civil Eng. Dept.
 128.2.231.39			#newmark.ce.cmu.edu
 >cheme.cmu.edu             # Carnegie Mellon Univ. Chemical Engineering Dept.
@@ -275,17 +279,17 @@
 >athena.mit.edu           #MIT/Athena cell
 18.70.0.6                       #prill.mit.edu.
 18.145.0.25                     #agamemnon.mit.edu.
-18.159.0.34                     #chimera.mit.edu.
+18.7.1.66			#paris.mit.edu
 >dev.mit.edu              #MIT/IS Development cell
-18.86.0.28                      #wham.mit.edu.
+18.7.1.70                      #wham.mit.edu.
 18.86.0.50                      #hum.mit.edu
-18.86.0.51                      #rattle.mit.edu
+18.7.15.89                      #rattle.mit.edu
 >lees.mit.edu             #MIT/Lab for Electromagnetic and Electronic Systems
 18.90.1.184                     #power.mit.edu
 >ops.mit.edu              #MIT/Athena Ops Group cell
-18.86.0.79                      #bitterness.mit.edu.
-18.86.0.80                      #heartbreak.mit.edu.
-18.86.0.81                      #despair.mit.edu.
+18.7.14.107                     #bitterness.mit.edu.
+18.7.14.108                     #heartbreak.mit.edu.
+18.7.14.109                     #despair.mit.edu.
 >net.mit.edu		  #MIT/Network Group cell
 18.72.1.38			#gracie.mit.edu.
 18.72.0.26			#cetus.mit.edu.
@@ -294,9 +298,9 @@
 18.181.0.22			#rosebud.mit.edu
 18.181.0.23			#ronald-ann.mit.edu
 >zone.mit.edu             #MIT/Watchmaker Zone cell
-18.177.0.20                     #casio.mit.edu
-18.177.0.21                     #timex.mit.edu
-18.177.0.22                     #seiko.mit.edu
+18.18.0.229                     #casio.mit.edu
+18.18.0.231                     #timex.mit.edu
+18.18.0.232                     #seiko.mit.edu
 >msu.edu                  #Michigan State University home cell
 35.9.7.10                       #afsdb0.cl.msu.edu
 35.9.7.11                       #afsdb1.cl.msu.edu
@@ -449,9 +453,9 @@
 131.151.1.70   			#afs6.umr.edu
 131.151.1.146   		#afs5.umr.edu
 >cs.unc.edu                # University of North Carolina at Chapel Hill
-152.2.128.3			#alpha.cs.unc.edu
-152.2.128.4			#zeta.cs.unc.edu
-152.2.128.9			#gamma.cs.unc.edu
+152.2.128.1			#crow.cs.unc.edu
+152.2.128.2			#falcon.cs.unc.edu
+152.2.128.8			#thrush.cs.unc.edu
 >isis.unc.edu           #UNC campus computing
 152.2.25.120                    #db0.isis.unc.edu
 152.2.25.121                    #db1.isis.unc.edu
@@ -665,13 +669,16 @@
 130.237.48.244			#fadern.e.kth.se
 >arla.e.kth.se             # KTH, Elektro, Arla cell
 130.237.48.94                   #colossus-of-rhodes.e.kth.se
+>hallf.kth.se		# Royal Institute of Technology, Solid Mechanics
+130.237.24.141                  #rasmus13.hallf.kth.se
+130.237.24.152                  #rasmus3.hallf.kth.se
 >isk.kth.se             # KTH College of Engineering
 130.237.206.13                  #afsdb1.isk.kth.se
-130.237.206.29                  #afsdb2.isk.kth.se
+130.237.202.12                  #afsdb2.isk.kth.se
 130.237.209.141                 #afsdb3.isk.kth.se
 >it.kth.se		   # Royal Institute of Technology, IT
 130.237.212.15                  #ptah.it.kth.se
-130.237.214.7                   #toth.it.kth.se
+130.237.212.16                  #toth.it.kth.se
 130.237.215.7                   #isis.it.kth.se
 >mech.kth.se		   # Royal Institute of Technology, MECH
 130.237.233.142			#eiger.mech.kth.se
@@ -695,6 +702,8 @@
 130.237.237.230   		#fishburger.stacken.kth.se
 >telge.kth.se             # Royal Institute of Technology, Telge
 130.237.77.7      		#gandalf.telge.kth.se
+>admin.kth.se		# Royal Institute of Technology, Admin
+130.237.32.19			#malvolio.admin.kth.se
 >bcc.ac.uk                 # Bloomsbury Computing Consortium
 128.40.101.3			#rs6-svr-3.cls-1.bcc.ac.uk
 >athena.ox.ac.uk          #Oxford cell
@@ -716,3 +725,10 @@
 134.2.12.2			#pu-afs.informatik.uni-tuebingen.de
 134.2.10.50			#ra-afs.informatik.uni-tuebingen.de
 134.2.14.2			#ti-afs1.informatik.uni-tuebingen.de
+>ies.auc.dk     	# Aalborg Univ., Inst. of Electronic Systems, Denmark
+130.225.51.73			#afsdb1.kom.auc.dk
+130.225.51.74			#afsdb2.kom.auc.dk
+>zepa.net                  #Kolya/zepa.net cell
+>extundo.com		# Simon Josefsson's cell
+>openafs.org		#OpenAFS project
+128.2.121.218                   #virtue.openafs.org
