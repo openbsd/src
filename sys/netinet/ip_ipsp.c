@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.60 1999/12/25 04:48:16 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.61 1999/12/25 07:09:42 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1619,29 +1619,26 @@ ipsp_process_packet(struct mbuf *m, struct mbuf **mp, struct tdb *tdb, int *af,
 		{
 		    ip->ip_len = htons(m->m_pkthdr.len);
 		    ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
-		    i = ip->ip_hl << 2;
-		    off = offsetof(struct ip, ip_p);
 		}
 #endif /* INET */
 
 #ifdef INET6
 		/* Fix IPv6 header payload length */
 		if ((*af) == AF_INET6)
-		{
-		    ip6->ip6_plen = htons(m->m_pkthdr.len);
-		    i = sizeof(struct ip6_hdr);
-		    off = offsetof(struct ip6_hdr, ip6_nxt);
-		}
+		  ip6->ip6_plen = htons(m->m_pkthdr.len);
 #endif /* INET6 */
 
-		/* Encapsulate */
-		error = ipe4_output(m, tdb, mp, i, off);
-		if ((*mp) == NULL)
+		/* Encapsulate -- the last two arguments are unused */
+		error = ipe4_output(m, tdb, mp, 0, 0);
+		if (((*mp) == NULL) && (!error))
 		  error = EFAULT;
 		if (error)
 		{
 		    if (*mp)
-		      m_freem(*mp);
+		    {
+		      	m_freem(*mp);
+			*mp = NULL;
+		    }
 		    return error;
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.1 1999/12/09 10:15:23 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.2 1999/12/25 07:09:43 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -569,34 +569,42 @@ esp_input(struct mbuf *m, ...)
 
 #ifdef INET6
 /* IPv6 AH wrapper */
-void
+int
 ah6_input(struct mbuf *m, ...)
 {
-    int skip, protoff;
+    int *skip, protoff;
 
     va_list ap;
 	
     va_start(ap, m);
-    skip = va_arg(ap, int);
+    skip = va_arg(ap, int *);
     protoff = va_arg(ap, int);
     va_end(ap);
 
-    ipsec_common_input(m, skip, protoff, AF_INET6, IPPROTO_AH);
+    ipsec_common_input(m, *skip, protoff, AF_INET6, IPPROTO_AH);
+
+    /* Retrieve new protocol */
+    m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &protoff);
+    return protoff;
 }
 
 /* IPv6 ESP wrapper */
-void
+int
 esp6_input(struct mbuf *m, ...)
 {
-    int skip, protoff;
+    int *skip, protoff;
 
     va_list ap;
 	
     va_start(ap, m);
-    skip = va_arg(ap, int);
+    skip = va_arg(ap, int *);
     protoff = va_arg(ap, int);
     va_end(ap);
 
-    ipsec_common_input(m, skip, protoff, AF_INET6, IPPROTO_ESP);
+    ipsec_common_input(m, *skip, protoff, AF_INET6, IPPROTO_ESP);
+
+    /* Retrieve new protocol */
+    m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &protoff);
+    return protoff;
 }
 #endif /* INET6 */

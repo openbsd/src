@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.19 1999/12/09 10:11:11 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.20 1999/12/25 07:09:42 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -103,7 +103,7 @@ int	ah_output __P((struct mbuf *, struct tdb *, struct mbuf **));
 int	ah_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
 #ifdef INET6
-void	ah6_input __P((struct mbuf *, ...));
+int	ah6_input __P((struct mbuf *, ...));
 #endif /* INET6 */
 
 extern int ah_enable;
