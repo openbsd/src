@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: setruid.c,v 1.9 2002/10/30 20:15:29 millert Exp $";
+static char *rcsid = "$OpenBSD: setruid.c,v 1.1 2003/05/08 23:30:02 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,5 +43,5 @@ __warn_references(setruid, "warning: this program uses setruid(), which is depre
 int
 setruid(uid_t ruid)
 {
-	return (setresuid(ruid, (uid_t)-1, ruid));
+	return (setreuid(ruid, (uid_t)-1));
 }
