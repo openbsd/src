@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.18 1996/12/24 01:33:38 deraadt Exp $	*/
+/*	$OpenBSD: acd.c,v 1.19 1997/02/23 02:31:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -37,10 +37,10 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/malloc.h>
 #include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
@@ -63,6 +63,16 @@ struct cd_toc {
 	struct ioc_toc_header hdr;
 	struct cd_toc_entry tab[MAXTRACK+1];	/* One extra for the leadout */
 };
+
+#define TOC_HEADER_LEN			0
+#define TOC_HEADER_STARTING_TRACK	2
+#define TOC_HEADER_ENDING_TRACK		3
+#define TOC_HEADER_SZ			4
+
+#define TOC_ENTRY_CONTROL_ADDR_TYPE	1
+#define TOC_ENTRY_TRACK			2
+#define TOC_ENTRY_MSF_LBA		4
+#define TOC_ENTRY_SZ			8
 
 #ifdef ACD_DEBUG
 #define ACD_DEBUG_PRINT(args)		printf args
@@ -960,13 +970,18 @@ acdgetdisklabel(acd)
 {
 	struct disklabel *lp = acd->sc_dk.dk_label;
 	char *errstring;
+	u_int8_t hdr[TOC_HEADER_SZ], *toc, *ent, *lent;
+	u_int32_t lba, nlba;
+	int i, n, len;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(acd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = acd->params.blksize;
+#if 0
 	if (lp->d_secsize > 2048)
 		lp->d_secsize = 2048;
+#endif
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
 	lp->d_ncylinders = (acd->params.disksize / 100) + 1;
@@ -976,7 +991,6 @@ acdgetdisklabel(acd)
 		/* as long as it's not 0 - readdisklabel divides by it (?) */
 	}
 
-	strncpy(lp->d_typename, "ATAPI CD-ROM", 16);
 	lp->d_type = DTYPE_SCSI;	/* XXX */
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = acd->params.disksize;
@@ -984,24 +998,83 @@ acdgetdisklabel(acd)
 	lp->d_interleave = 1;
 	lp->d_flags = D_REMOVABLE;
 
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
-	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	lp->d_npartitions = RAW_PART + 1;
-
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
 
 	/*
-	 * Call the generic disklabel extraction routine
+	 * Call the generic disklabel extraction routine if we have a data CD
 	 */
-	errstring = readdisklabel(MAKECDDEV(0, acd->sc_dev.dv_unit, RAW_PART),
-	    acdstrategy, lp, acd->sc_dk.dk_cpulabel);
-	if (errstring) {
-		printf("%s: %s\n", acd->sc_dev.dv_xname, errstring);
+	if (acd_read_toc(acd, 0, 0, hdr, TOC_HEADER_SZ))
 		return;
+	n = ((acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
+	    (hdr[TOC_HEADER_LEN] | hdr[TOC_HEADER_LEN + 1] << 8) :
+	    (hdr[TOC_HEADER_LEN] << 8 | hdr[TOC_HEADER_LEN + 1])) + 1;
+	len = TOC_HEADER_SZ + n * TOC_ENTRY_SZ;
+	MALLOC(toc, u_int8_t *, len, M_TEMP, M_WAITOK);
+	if (acd_read_toc (acd, 0, 0, toc, len))
+		return;
+
+	if (toc[TOC_HEADER_SZ + TOC_ENTRY_CONTROL_ADDR_TYPE] & 4) {
+		strncpy(lp->d_typename, "ATAPI CD-ROM", 16);
+		lp->d_partitions[RAW_PART].p_offset = 0;
+		lp->d_partitions[RAW_PART].p_size =
+		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+		lp->d_npartitions = RAW_PART + 1;
+
+		errstring =
+		    readdisklabel(MAKECDDEV(0, acd->sc_dev.dv_unit, RAW_PART),
+		    acdstrategy, lp, acd->sc_dk.dk_cpulabel);
+		if (errstring) {
+			printf("%s: %s\n", acd->sc_dev.dv_xname, errstring);
+			return;
+		}
+	} else {
+		strncpy(lp->d_typename, "ATAPI audio CD", 16);
+		lp->d_npartitions = n + 1;
+		ent = toc + TOC_HEADER_SZ;
+		lba =
+		    (ent[TOC_ENTRY_CONTROL_ADDR_TYPE] >> 4) == CD_LBA_FORMAT ?
+		    (acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
+		    ent[TOC_ENTRY_MSF_LBA] | ent[TOC_ENTRY_MSF_LBA + 1] << 8 :
+		    ent[TOC_ENTRY_MSF_LBA] << 8 | ent[TOC_ENTRY_MSF_LBA + 1] :
+		    msf2lba(ent[TOC_ENTRY_MSF_LBA + 1],
+		    ent[TOC_ENTRY_MSF_LBA + 2], ent[TOC_ENTRY_MSF_LBA + 3]);
+		for (i = 0; i < min(n + 1, MAXPARTITIONS); i++) {
+			if (i == RAW_PART) {
+				lp->d_partitions[i].p_offset = 0;
+				lent = toc + TOC_HEADER_SZ + n * TOC_ENTRY_SZ;
+				lp->d_partitions[i].p_size =
+				    (lent[TOC_ENTRY_CONTROL_ADDR_TYPE] >>
+				    4) == CD_LBA_FORMAT ?
+				    (acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
+				    lent[TOC_ENTRY_MSF_LBA] |
+				    lent[TOC_ENTRY_MSF_LBA + 1] << 8 :
+				    lent[TOC_ENTRY_MSF_LBA] << 8 |
+				    lent[TOC_ENTRY_MSF_LBA + 1] :
+				    msf2lba(lent[TOC_ENTRY_MSF_LBA + 1],
+				    lent[TOC_ENTRY_MSF_LBA + 2],
+				    lent[TOC_ENTRY_MSF_LBA + 3]);
+				lp->d_partitions[i].p_fstype = FS_UNUSED;
+			} else {
+				lp->d_partitions[i].p_fstype = FS_OTHER;
+				ent += TOC_ENTRY_SZ;
+				nlba = (ent[TOC_ENTRY_CONTROL_ADDR_TYPE] >>
+				    4) == CD_LBA_FORMAT ?
+				    (acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
+				    ent[TOC_ENTRY_MSF_LBA] |
+				    ent[TOC_ENTRY_MSF_LBA + 1] << 8 :
+				    ent[TOC_ENTRY_MSF_LBA] << 8 |
+				    ent[TOC_ENTRY_MSF_LBA + 1] :
+				    msf2lba(ent[TOC_ENTRY_MSF_LBA + 1],
+				    ent[TOC_ENTRY_MSF_LBA + 2],
+				    ent[TOC_ENTRY_MSF_LBA + 3]);
+				lp->d_partitions[i].p_offset = lba;
+				lp->d_partitions[i].p_size = nlba - lba;
+				lba = nlba;
+			}
+		}
 	}
 }
 
