@@ -101,7 +101,7 @@ output_data (const char *format, ...)
 		   remaining,
 		   format,
 		   args);
-  nfrontp += ret;
+  nfrontp += ((ret < remaining - 1) ? ret : remaining - 1);
   va_end(args);
   return ret;
 }
