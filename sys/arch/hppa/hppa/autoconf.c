@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.33 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.34 2003/07/30 21:18:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -134,6 +134,8 @@ heartbeat(v)
 	static u_int hbcnt = 0, ocp_total, ocp_idle;
 	int toggle, cp_mask, cp_total;
 
+	timeout_add(&heartbeat_tmo, hz / 16);
+
 	cp_total = cp_time[CP_USER] + cp_time[CP_NICE] + cp_time[CP_SYS] +
 	    cp_time[CP_INTR] + cp_time[CP_IDLE];
 	if (!cp_total)
@@ -150,10 +152,9 @@ heartbeat(v)
 	 *  _| |_| |_,_,_,_
 	 *   0 1 2 3 4 6 7
 	 */
-	if (hbcnt++ < 4)
+	if (hbcnt++ < 8 && hbcnt & 1)
 		toggle = PALED_HEARTBEAT;
-	timeout_add(&heartbeat_tmo, hz / 8);
-	hbcnt &= 7;
+	hbcnt &= 15;
 	ledctl(cp_mask,
 	    (~cp_mask & 0xf0) | PALED_NETRCV | PALED_NETSND | PALED_DISK,
 	    toggle);
