@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.6 1997/08/23 14:31:49 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.7 1997/08/29 20:08:36 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -56,9 +56,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 int	verbose, nowrite, heads, nsectors;
-char	*boot, *proto, *dev;
+char	*boot, *proto, *dev, *realdev;
 struct nlist nl[] = {
 #define X_BLOCK_COUNT	0
 	{{"_block_count"}},
@@ -69,14 +70,14 @@ struct nlist nl[] = {
 
 u_int8_t *block_count_p;	/* block count var. in prototype image */
 u_int8_t *block_table_p;	/* block number array in prototype image */
-int	maxblocknum;	/* size of this array */
+int	maxblocknum;		/* size of this array */
 
 #ifdef CPU_BIOSDEV
 int biosdev;
 #endif
 
 char		*loadprotoblocks __P((char *, long *));
-int		loadblocknums __P((char *, int));
+int		loadblocknums __P((char *, int, struct disklabel *));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 static int	record_block
@@ -100,6 +101,9 @@ main(argc, argv)
 	char	*protostore;
 	long	protosize;
 	struct stat sb;
+	struct disklabel dl;
+	struct dos_mbr mbr;
+	struct dos_partition *dp;
 
 	nsectors = heads = -1;
 	while ((c = getopt(argc, argv, "vnh:s:")) != EOF) {
@@ -129,13 +133,7 @@ main(argc, argv)
 
 	boot = argv[optind];
 	proto = argv[optind + 1];
-	dev = argv[optind + 2];
-
-	if (verbose) {
-		printf("boot: %s\n", boot);
-		printf("proto: %s\n", proto);
-		printf("device: %s\n", dev);
-	}
+	realdev = dev = argv[optind + 2];
 
 #ifdef CPU_BIOSDEV
 	if (heads == -1 || nsectors == -1) {
@@ -163,6 +161,24 @@ main(argc, argv)
 	}
 #endif
 
+	/* Open and check raw disk device */
+	if ((devfd = opendev(dev, (nowrite? O_RDONLY:O_RDWR),
+			     OPENDEV_PART, &realdev)) < 0)
+		err(1, "open: %s", realdev);
+
+	if (verbose) {
+		fprintf(stderr, "boot: %s\n", boot);
+		fprintf(stderr, "proto: %s\n", proto);
+		fprintf(stderr, "device: %s\n", realdev);
+	}
+
+	if (ioctl(devfd, DIOCGDINFO, &dl) != 0)
+		err(1, "disklabel: %s", realdev);
+
+	/* check disklabel */
+	if (dl.d_magic != DISKMAGIC)
+		err(1, "bad disklabel magic=%0x8x", dl.d_magic);
+
 	/* Load proto blocks into core */
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
 		exit(1);
@@ -171,38 +187,53 @@ main(argc, argv)
 	if (protosize & (DEV_BSIZE - 1))
 		err(1, "proto bootblock bad size=%ld", protosize);
 
-	/* Open and check raw disk device */
-	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
-		err(1, "open: %s", dev);
-
-	if (fstat(devfd, &sb) < 0)
-		err(1, "stat: %s", dev);
-
-	if (!S_ISCHR(sb.st_mode))
-		errx(1, "%s: Not a character device", dev);
-
-	/* Extract and load block numbers */
-	if (loadblocknums(boot, devfd) != 0)
-		exit(1);
-
-	(void)close(devfd);
-
-	if (nowrite)
-		return 0;
-
 	/* Write patched proto bootblocks into the superblock */
 	if (protosize > SBSIZE - DEV_BSIZE)
 		errx(1, "proto bootblocks too big");
 
-	if ((devfd = open(dev, (nowrite? O_RDONLY:O_RDWR), 0)) < 0)
-		err(1, "open: %s", dev);
+	if (fstat(devfd, &sb) < 0)
+		err(1, "stat: %s", realdev);
+
+	if (!S_ISCHR(sb.st_mode))
+		errx(1, "%s: Not a character device", realdev);
+
+	/* Extract and load block numbers */
+	if (loadblocknums(boot, devfd, &dl) != 0)
+		exit(1);
 
 	/* Sync filesystems (to clean in-memory superblock?) */
-	sync();
+	sync(); sleep(1);
 
-	if (write(devfd, protostore, protosize) != protosize)
-		err(1, "write bootstrap");
+	if (lseek(devfd, (off_t)DOSBBSECTOR, SEEK_SET) < 0 ||
+	    read(devfd, &mbr, sizeof(mbr)) < sizeof(mbr))
+		err(4, "can't read master boot record");
+
+	if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
+		errx(1, "broken MBR");
+
+	/* Find OpenBSD partition. */
+	for (dp = mbr.dmbr_parts; dp < &mbr.dmbr_parts[NDOSPART]; dp++) {
+		if (dp->dp_size && dp->dp_typ == DOSPTYP_OPENBSD) {
+			fprintf(stderr, "using MBR partition %d: "
+				"type %d (0x%02x) offset %d (0x%x)\n",
+				dp - mbr.dmbr_parts,
+				dp->dp_typ, dp->dp_typ,
+				dp->dp_start, dp->dp_start);
+			break;
+		}
+	}
+	/* don't check for old part number, that is ;-p */
+	if (dp >= &mbr.dmbr_parts[NDOSPART])
+		errx(1, "no OpenBSD partition");
+
+	if (!nowrite) {
+		if (lseek(devfd, dp->dp_start * dl.d_secsize, SEEK_SET) < 0 ||
+		    write(devfd, protostore, protosize) != protosize)
+			err(1, "write bootstrap");
+	}
+
 	(void)close(devfd);
+
 	return 0;
 }
 
@@ -275,9 +306,9 @@ loadprotoblocks(fname, size)
 	maxblocknum = *block_count_p;
 
 	if (verbose) {
-		printf("%s: entry point %#lx\n", fname, eh.a_entry);
-		printf("proto bootblock size %ld\n", *size);
-		printf("room for %d filesystem blocks at %#lx\n",
+		fprintf(stderr, "%s: entry point %#lx\n", fname, eh.a_entry);
+		fprintf(stderr, "proto bootblock size %ld\n", *size);
+		fprintf(stderr, "room for %d filesystem blocks at %#lx\n",
 			maxblocknum, nl[X_BLOCK_TABLE].n_value);
 	}
 
@@ -310,14 +341,14 @@ devread(fd, buf, blk, size, msg)
 static char sblock[SBSIZE];
 
 int
-loadblocknums(boot, devfd)
+loadblocknums(boot, devfd, dl)
 	char	*boot;
 	int	devfd;
+	struct disklabel *dl;
 {
 	int		i, fd;
 	struct stat	statbuf;
 	struct statfs	statfsbuf;
-	struct disklabel dl;
 	struct partition *pl;
 	struct fs	*fs;
 	char		*buf;
@@ -334,19 +365,6 @@ loadblocknums(boot, devfd)
 
 	/* Make sure the (probably new) boot file is on disk. */
 	sync(); sleep(1);
-
-	if (ioctl(devfd, DIOCGDINFO, &dl) != 0)
-		err(1, "disklabel: %s", dev);
-
-	/* check disklabel */
-	if (dl.d_magic != DISKMAGIC)
-		err(1, "bad disklabel magic=%0x8x", dl.d_magic);
-
-	/* get partition pointer */
-	if (fstat(devfd, &statbuf) < 0)
-		err(1, "stat: %s", dev);
-
-	pl = &dl.d_partitions[DISKPART(statbuf.st_rdev)];
 
 	if ((fd = open(boot, O_RDONLY)) < 0)
 		err(1, "open: %s", boot);
@@ -373,10 +391,11 @@ loadblocknums(boot, devfd)
 	if (fstat(fd, &statbuf) != 0)
 		err(1, "fstat: %s", boot);
 
+	pl = &dl->d_partitions[DISKPART(statbuf.st_dev)];
 	close(fd);
 
 	/* Read superblock */
-	devread(devfd, sblock, SBLOCK, SBSIZE, "superblock");
+	devread(devfd, sblock, pl->p_offset + SBLOCK, SBSIZE, "superblock");
 	fs = (struct fs *)sblock;
 
 	/* Sanity-check super-block. */
@@ -390,7 +409,7 @@ loadblocknums(boot, devfd)
 		errx(1, "No memory for filesystem block");
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
-	devread(devfd, buf, blk, fs->fs_bsize, "inode");
+	devread(devfd, buf, pl->p_offset + blk, fs->fs_bsize, "inode");
 	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
@@ -400,15 +419,15 @@ loadblocknums(boot, devfd)
 	if (ndb > maxblocknum)
 		errx(1, "Too many blocks");
 	if (verbose)
-		printf("Will load %d blocks of size %d each.\n",
-			   ndb, fs->fs_bsize);
+		fprintf(stderr, "Will load %d blocks of size %d each.\n",
+			ndb, fs->fs_bsize);
 
-	if (dl.d_type != 0 && dl.d_type < DTYPE_FLOPPY) {
+	if (dl->d_type != 0 && dl->d_type < DTYPE_FLOPPY) {
 		/* adjust disklabel w/ synthetic geometry */
 		if (nsectors > 0)
-			dl.d_nsectors = nsectors;
+			dl->d_nsectors = nsectors;
 		if (heads > 0)
-			dl.d_secpercyl = dl.d_nsectors * heads;
+			dl->d_secpercyl = dl->d_nsectors * heads;
 	}
 
 	/*
@@ -418,7 +437,7 @@ loadblocknums(boot, devfd)
 	bt = block_table_p;
 	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++, ndb--)
 		bt += record_block(bt, pl->p_offset + fsbtodb(fs, *ap),
-					    fs->fs_bsize / 512, &dl);
+					    fs->fs_bsize / 512, dl);
 	if (ndb != 0) {
 
 		/*
@@ -426,21 +445,23 @@ loadblocknums(boot, devfd)
 		 * for more in the 2nd-level /boot anyway.
 		 */
 		blk = fsbtodb(fs, ip->di_ib[0]);
-		devread(devfd, buf, blk, fs->fs_bsize, "indirect block");
+		devread(devfd, buf, pl->p_offset + blk, fs->fs_bsize,
+			"indirect block");
 		ap = (daddr_t *)buf;
 		for (; i < NINDIR(fs) && *ap && ndb; i++, ap++, ndb--)
 			bt += record_block(bt, pl->p_offset + fsbtodb(fs, *ap),
-					   fs->fs_bsize / 512, &dl);
+					   fs->fs_bsize / 512, dl);
 	}
 
 	/* write out remaining piece */
-	bt += record_block(bt, 0, 0, &dl);
+	bt += record_block(bt, 0, 0, dl);
 	/* and again */
-	bt += record_block(bt, 0, 0, &dl);
+	bt += record_block(bt, 0, 0, dl);
 	*block_count_p = (bt - block_table_p) / 4;
 
 	if (verbose)
-		printf("%s: %d entries total\n", boot, *block_count_p);
+		fprintf(stderr, "%s: %d entries total\n",
+			boot, *block_count_p);
 
 	return 0;
 }
@@ -479,8 +500,8 @@ record_block(bt, blk, bs, dl)
 			((c & 0xff) << 8) | ((c & 0x300) >> 2);
 
 		if (verbose)
-			printf("%2d: %2d @(%d %d %d) (%d-%d)\n",
-			       i, bt[3], c, bt[2], s, ss, ss + bt[3] - 1);
+			fprintf(stderr, "%2d: %2d @(%d %d %d) (%d-%d)\n",
+				i, bt[3], c, bt[2], s, ss, ss + bt[3] - 1);
 
 		if ((ss % dl->d_nsectors + l) >= dl->d_nsectors) {
 			ss += bt[3];
