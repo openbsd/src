@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.6 2004/09/24 15:51:07 jfb Exp $	*/
+/*	$OpenBSD: sock.c,v 1.7 2004/11/09 20:43:22 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -162,7 +162,7 @@ cvsd_sock_accept(int fd)
 		return (-1);
 	}
 
-	return (0);
+	return (cfd);
 }
 #endif
 
