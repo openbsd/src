@@ -252,5 +252,6 @@ int pfkeyv2_init(void);
 int pfkeyv2_cleanup(void);
 int pfkeyv2_parsemessage(void *, int, void **);
 int pfkeyv2_expire(struct tdb *, u_int16_t);
+int pfkeyv2_acquire(struct tdb *, int);
 #endif /* _KERNEL */
 #endif /* _NET_PFKEY_V2_H */
