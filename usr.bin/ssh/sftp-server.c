@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.1 2000/08/31 21:52:23 markus Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.2 2000/09/01 22:29:32 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -125,10 +125,10 @@ struct Stat
 };
 
 int
-errno_to_portable(int errno)
+errno_to_portable(int unixerrno)
 {
 	int ret = 0;
-	switch (errno) {
+	switch (unixerrno) {
 	case 0:
 		ret = SSH_FX_OK;
 		break;
@@ -198,9 +198,7 @@ decode_attrib(Buffer *b)
 	if (a.flags & SSH_FXA_HAVE_SIZE) {
 		a.size_high = get_int();
 		a.size_low = get_int();
-		a.size = a.size_high;
-		a.size <<= 32;
-		a.size += a.size_low;
+		a.size = (u_int64_t) a.size_high << 32 + a.size_low;
 	}
 	if (a.flags & SSH_FXA_HAVE_UGID) {
 		a.uid = get_int();
@@ -245,8 +243,8 @@ stat_to_attrib(struct stat *st)
 	a.flags = 0;
 	a.flags |= SSH_FXA_HAVE_SIZE;
 	a.size = st->st_size;
-	a.size_low = st->st_size;
-	a.size_high = st->st_size >> 32;
+	a.size_low = a.size;
+	a.size_high = (u_int32_t) a.size >> 32;
 	a.flags |= SSH_FXA_HAVE_UGID;
 	a.uid = st->st_uid;
 	a.gid = st->st_gid;
@@ -483,8 +481,6 @@ process_init(void)
 	int version = buffer_get_int(&iqueue);
 
 	TRACE("client version %d", version);
-	if (version != SSH_FILEXFER_VERSION)
-		exit(1);
 	buffer_init(&msg);
 	buffer_put_char(&msg, SSH_FXP_VERSION);
 	buffer_put_int(&msg, SSH_FILEXFER_VERSION);
@@ -552,9 +548,7 @@ process_read(void)
 	off_low = get_int();
 	len = get_int();
 
-	off = off_high;
-	off <<= 32;
-	off += off_low;
+	off = (u_int64_t) off_high << 32 + off_low;
 	TRACE("read id %d handle %d off %qd len %d", id, handle, off, len);
 	if (len > sizeof buf) {
 		len = sizeof buf;
@@ -596,9 +590,7 @@ process_write(void)
 	off_low = get_int();
 	data = get_string(&len);
 
-	off = off_high;
-	off <<= 32;
-	off += off_low;
+	off = (u_int64_t) off_high << 32 + off_low;
 	TRACE("write id %d handle %d off %qd len %d", id, handle, off, len);
 	fd = handle_to_fd(handle);
 	if (fd >= 0) {
@@ -921,16 +913,14 @@ process_rename(void)
 {
 	u_int32_t id;
 	char *oldpath, *newpath;
-	int ret;
-	int status = SSH_FX_FAILURE;
+	int ret, status;
 
 	id = get_int();
 	oldpath = get_string(NULL);
 	newpath = get_string(NULL);
 	TRACE("rename id %d old %s new %s", id, oldpath, newpath);
 	ret = rename(oldpath, newpath);
-	if (ret != -1)
-		status = SSH_FX_OK;
+	status = (ret == -1) ? errno_to_portable(errno) : SSH_FX_OK;
 	send_status(id, status);
 	xfree(oldpath);
 	xfree(newpath);
