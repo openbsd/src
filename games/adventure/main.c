@@ -1,4 +1,4 @@
-/*    $NetBSD: main.c,v 1.3 1996/02/06 22:47:06 jtc Exp $     */
+/*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,14 +48,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.4 1996/05/21 10:48:07 mrg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $";
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: main program                          */
 
 #include <sys/file.h>
-#include <sys/signal.h>
+#include <signal.h>
 #include <stdio.h>
 #include "hdr.h"
 

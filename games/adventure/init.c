@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.3 1996/05/21 10:48:09 mrg Exp $	*/
+/*	$NetBSD: init.c,v 1.4 1996/05/21 21:53:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,14 +42,14 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.3 1996/05/21 10:48:09 mrg Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.4 1996/05/21 21:53:05 mrg Exp $";
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: data initialization                   */
 
 #include <sys/types.h>
-#include <sys/signal.h>
+#include <signal.h>
 #include <stdio.h>
 #include "hdr.h"
 
