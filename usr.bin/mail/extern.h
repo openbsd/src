@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2003/06/03 02:56:11 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.22 2004/05/10 12:10:50 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.21 2003/06/03 02:56:11 millert Exp $
+ *	$OpenBSD: extern.h,v 1.22 2004/05/10 12:10:50 millert Exp $
  */
 
 struct name;
@@ -94,8 +94,6 @@ int	 blankline(char *);
 int	 charcount(char *, int);
 int	 check(int, int);
 void	 clearnew(void);
-void	 clob1(int);
-int	 clobber(void *);
 void	 close_all_files(void);
 int	 cmatch(char *, char *);
 int	 collabort(void);
