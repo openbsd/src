@@ -1,7 +1,11 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/08/20 18:01:36 downsj Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/08/21 06:58:46 downsj Exp $
 #
 # Build wrapper for Perl 5.003.
 #
+
+# Our lndir is hacked; specify a full path to avoid potential conflicts
+# with the one installed with X11.
+LNDIR=		/usr/bin/lndir
 
 MAN=		x2p/a2p.man x2p/s2p.man pod/perl.man pod/perlbook.man \
 		pod/perlbot.man pod/perlcall.man pod/perldata.man \
@@ -31,7 +35,7 @@ GENERATED=	config.sh Makefile cflags config.h makeaperl makedepend \
 CLEANFILES=	config.sh
 
 .BEGIN:
-	@if [ ${.CURDIR} != ${.OBJDIR} ]; then lndir -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
+	@if [ ${.CURDIR} != ${.OBJDIR} ]; then ${LNDIR} -s -e obj -e obj.${MACHINE_ARCH} -e Makefile.bsd-wrapper ${.CURDIR}; fi
 
 all:	${GENERATED}
 	(cd ${.OBJDIR}; ${MAKE})
