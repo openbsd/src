@@ -1,106 +1,112 @@
-.TH IPRESEND 1
-.SH NAME
-ipresend \- resend IP packets out to network
-.SH SYNOPSIS
-.B ipsend
-[
-.B \-EHPRSTX
-] [
-.B \-d
-<device>
-] [
-.B \-g
-<\fIgateway\fP>
-] [
-.B \-m
-<\fIMTU\fP>
-] [
-.B \-r
-<\fIfilename\fP>
-]
-.SH DESCRIPTION
-.PP
-\fBipresend\fP was designed to allow packets to be resent, once captured,
-back out onto the network for use in testing.  \fIipresend\fP supports a
-number of different file formats as input, including saved snoop/tcpdump
+.Dd October  9, 1999
+.Dt IPRESEND 1
+.Os
+.Sh NAME
+.Nm ipresend
+.Nd resend IP packets out to network
+.Sh SYNOPSIS
+.Nm ipsend
+.Op Fl EHPRSTX
+.Op Fl d Ar device
+.Op Fl g Ar gateway
+.Op Fl m Ar mtu
+.Op Fl r Ar filename
+.Sh DESCRIPTION
+.Nm
+was designed to allow captured packets to be resent
+onto the network for use in testing.
+.Nm
+supports a
+number of different file formats as input, including saved snoop and
+.Xr tcpdump 8
 binary data.
-.SH OPTIONS
-.TP
-.BR \-d \0<interface>
+.Pp
+.Nm
+must be run as root.
+.Ss OPTIONS
+.Bl -tag -width "d interface "
+.It Fl d Ar interface
 Set the interface name to be the name supplied.  This is useful with the
-\fB\-P, \-S, \-T\fP and \fB\-E\fP options, where it is not otherwise possible
-to associate a packet with an interface.  Normal "text packets" can override
-this setting.
-.TP
-.BR \-g \0<gateway>
-Specify the hostname of the gateway through which to route packets.  This
+.Fl P ,
+.Fl S ,
+.Fl T
+and
+.Fl E
+options, where it is not otherwise possible
+to associate a packet with an interface.  Normal
+.Sq text packets
+can override this setting.
+.It Fl g Ar gateway
+Specify the hostname of the gateway through which to route packets. This
 is required whenever the destination host isn't directly attached to the
 same network as the host from which you're sending.
-.TP
-.BR \-m \0<MTU>
-Specify the MTU to be used when sending out packets.  This option allows you
+.It Fl m Ar mtu
+Set the MTU used when sending out packets to
+.Ar mtu .
+This option allows you
 to set a fake MTU, allowing the simulation of network interfaces with small
-MTU's without setting them so.
-.TP
-.BR \-r \0<filename>
-Specify the filename from which to take input.  Default is stdin.
-.TP
-.B \-E
-The input file is to be text output from etherfind.  The text formats which
+MTU's.
+.It Fl r Ar filename
+Specify the filename from which to take input. Default is
+.Va stdin .
+.It Fl E
+The input file is to be text output from etherfind. The text formats which
 are currently supported are those which result from the following etherfind
 option combinations:
-.PP
-.nf
-		etherfind -n
-		etherfind -n -t
-.fi
-.LP
-.TP
-.B \-H
+.Bd -literal -offset indent
+etherfind -n
+etherfind -n -t
+.Ed
+.It Fl H
 The input file is to be hex digits, representing the binary makeup of the
-packet.  No length correction is made, if an incorrect length is put in
+packet. No length correction is made if an incorrect length is put in
 the IP header.
-.TP
-.B \-P
-The input file specified by \fB\-i\fP is a binary file produced using libpcap
-(i.e., tcpdump version 3).  Packets are read from this file as being input
+.It Fl P
+The input file specified by
+.Fl r
+is a binary file produced using libpcap
+(i.e.,
+.Xr tcpdump 8
+version 3). Packets are read from this file as being input
 (for rule purposes).
-.TP
-.B \-R
-When sending packets out, send them out "raw" (the way they came in).  The
+.It Fl R
+When sending packets out, send them out
+.Sq  raw
+(the way they came in). The
 only real significance here is that it will expect the link layer (i.e.
 Ethernet) headers to be prepended to the IP packet being output.
-.TP
-.B \-S
-The input file is to be in "snoop" format (see RFC 1761).  Packets are read
-from this file and used as input from any interface.  This is perhaps the
+.It Fl S
+The input file is to be in
+.Sq snoop
+format (see
+.Tn RFC 1761 ) .
+Packets are read
+from this file and used as input from any interface. This is perhaps the
 most useful input type, currently.
-.TP
-.B \-T
-The input file is to be text output from tcpdump.  The text formats which
-are currently supported are those which result from the following tcpdump
+.It Fl T
+The input file is to be text output from
+.Xr tcpdump 8 .
+The text formats which
+are currently supported are those which result from the following
+.Xr tcpdump 8
 option combinations:
-.PP
-.nf
-		tcpdump -n
-		tcpdump -nq
-		tcpdump -nqt
-		tcpdump -nqtt
-		tcpdump -nqte
-.fi
-.LP
-.TP
-.B \-X
+.Bd -literal -offset indent
+tcpdump -n
+tcpdump -nq
+tcpdump -nqt
+tcpdump -nqtt
+tcpdump -nqte
+.Ed
+.It Fl X
 The input file is composed of text descriptions of IP packets.
-.DT
-.SH SEE ALSO
-tcpdump(8), ipftest(1), ipresend(1), iptest(1), bpf(4)
-.SH DIAGNOSTICS
-.PP
-Needs to be run as root.
-.SH BUGS
-.PP
+.El
+.Sh SEE ALSO
+.Xr ipftest 1 ,
+.Xr ipresend 1 ,
+.Xr iptest 1 ,
+.Xr bpf 4 ,
+.Xr tcpdump 8
+.Sh BUGS
 Not all of the input formats are sufficiently capable of introducing a
 wide enough variety of packets for them to be all useful in testing.
 If you find any, please send email to me at darrenr@cyber.com.au
-
