@@ -465,7 +465,7 @@ extern void check_numeric PROTO ((const char *, int, char **));
 char *getcaller PROTO((void));
 char *time_stamp PROTO((char *file));
 
-char *xmalloc PROTO((size_t bytes));
+void *xmalloc PROTO((size_t bytes));
 void *xrealloc PROTO((void *ptr, size_t bytes));
 void expand_string PROTO ((char **, size_t *, size_t));
 char *xstrdup PROTO((const char *str));

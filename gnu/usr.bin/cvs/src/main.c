@@ -222,6 +222,7 @@ static const char *const cmd_usage[] =
 
 static const char *const opt_usage[] =
 {
+    /* Omit -b because it is just for compatibility.  */
     "CVS global options (specified before the command name) are:\n",
     "    -H           Displays usage information for command.\n",
     "    -Q           Cause CVS to be really quiet.\n",
@@ -232,7 +233,6 @@ static const char *const opt_usage[] =
     "    -n           Do not execute anything that will change the disk.\n",
     "    -t           Show trace of program execution -- try with -n.\n",
     "    -v           CVS version and copyright.\n",
-    "    -b bindir    Find RCS programs in 'bindir'.\n",
     "    -T tmpdir    Use 'tmpdir' for temporary files.\n",
     "    -e editor    Use 'editor' for editing log information.\n",
     "    -d CVS_root  Overrides $CVSROOT as the root of the CVS tree.\n",

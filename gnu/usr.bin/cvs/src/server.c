@@ -751,9 +751,7 @@ serve_root (arg)
 	return;
     }
 
-    /* Sending "Root" twice is illegal.  It would also be nice to
-       check for the other case, in which there is no Root request
-       prior to a request which requires one.
+    /* Sending "Root" twice is illegal.
 
        The other way to handle a duplicate Root requests would be as a
        request to clear out all state and start over as if it was a
@@ -874,6 +872,73 @@ server_pathname_check (path)
     }
 }
 
+static int outside_root PROTO ((char *));
+
+/* Is file or directory REPOS an absolute pathname within the
+   CVSroot_directory?  If yes, return 0.  If no, set pending_error
+   and return 1.  */
+static int
+outside_root (repos)
+    char *repos;
+{
+    size_t repos_len = strlen (repos);
+    size_t root_len = strlen (CVSroot_directory);
+
+    /* I think isabsolute (repos) should always be true, and that
+       any RELATIVE_REPOS stuff should only be in CVS/Repository
+       files, not the protocol (for compatibility), but I'm putting
+       in the isabsolute check just in case.  */
+    if (!isabsolute (repos))
+    {
+	if (alloc_pending (repos_len + 80))
+	    sprintf (pending_error_text, "\
+E protocol error: %s is not absolute", repos);
+	return 1;
+    }
+
+    if (repos_len < root_len
+	|| strncmp (CVSroot_directory, repos, root_len) != 0)
+    {
+    not_within:
+	if (alloc_pending (strlen (CVSroot_directory)
+			   + strlen (repos)
+			   + 80))
+	    sprintf (pending_error_text, "\
+E protocol error: directory '%s' not within root '%s'",
+		     repos, CVSroot_directory);
+	return 1;
+    }
+    if (repos_len > root_len)
+    {
+	if (repos[root_len] != '/')
+	    goto not_within;
+	if (pathname_levels (repos + root_len + 1) > 0)
+	    goto not_within;
+    }
+    return 0;
+}
+
+static int outside_dir PROTO ((char *));
+
+/* Is file or directory FILE outside the current directory (that is, does
+   it contain '/')?  If no, return 0.  If yes, set pending_error
+   and return 1.  */
+static int
+outside_dir (file)
+    char *file;
+{
+    if (strchr (file, '/') != NULL)
+    {
+	if (alloc_pending (strlen (file)
+			   + 80))
+	    sprintf (pending_error_text, "\
+E protocol error: directory '%s' not within current directory",
+		     file);
+	return 1;
+    }
+    return 0;
+}
+	
 /*
  * Add as many directories to the temp directory as the client tells us it
  * will use "..", so we never try to access something outside the temp
@@ -918,6 +983,25 @@ dirswitch (dir, repos)
     server_write_entries ();
 
     if (error_pending()) return;
+
+    /* Check for bad directory name.
+
+       FIXME: could/should unify these checks with server_pathname_check
+       except they need to report errors differently.  */
+    if (isabsolute (dir))
+    {
+	if (alloc_pending (80 + strlen (dir)))
+	    sprintf (pending_error_text,
+		     "E absolute pathname `%s' illegal for server", dir);
+	return;
+    }
+    if (pathname_levels (dir) > max_dotdot_limit)
+    {
+	if (alloc_pending (80 + strlen (dir)))
+	    sprintf (pending_error_text,
+		     "E protocol error: `%s' has too many ..", dir);
+	return;
+    }
 
     if (dir_name != NULL)
 	free (dir_name);
@@ -1074,24 +1158,8 @@ serve_directory (arg)
     status = buf_read_line (buf_from_net, &repos, (int *) NULL);
     if (status == 0)
     {
-	/* I think isabsolute (repos) should always be true, and that
-	   any RELATIVE_REPOS stuff should only be in CVS/Repository
-	   files, not the protocol (for compatibility), but I'm putting
-	   in the in isabsolute check just in case.  */
-	if (isabsolute (repos)
-	    && strncmp (CVSroot_directory,
-			repos,
-			strlen (CVSroot_directory)) != 0)
-	{
-	    if (alloc_pending (strlen (CVSroot_directory)
-			       + strlen (repos)
-			       + 80))
-		sprintf (pending_error_text, "\
-E protocol error: directory '%s' not within root '%s'",
-			 repos, CVSroot_directory);
+	if (outside_root (repos))
 	    return;
-	}
-
 	dirswitch (arg, repos);
 	free (repos);
     }
@@ -1478,6 +1546,9 @@ serve_modified (arg)
 	return;
     }
 
+    if (outside_dir (arg))
+	return;
+
     if (size >= 0)
     {
 	receive_file (size, arg, gzipped);
@@ -1550,6 +1621,9 @@ serve_unchanged (arg)
     if (error_pending ())
 	return;
 
+    if (outside_dir (arg))
+	return;
+
     /* Rewrite entries file to have `=' in timestamp field.  */
     for (p = entries; p != NULL; p = p->next)
     {
@@ -1588,6 +1662,9 @@ serve_is_modified (arg)
     int found;
 
     if (error_pending ())
+	return;
+
+    if (outside_dir (arg))
 	return;
 
     /* Rewrite entries file to have `M' in timestamp field.  */
@@ -1840,6 +1917,9 @@ serve_notify (arg)
 
     if (error_pending ()) return;
 
+    if (outside_dir (arg))
+	return;
+
     new = (struct notify_note *) malloc (sizeof (struct notify_note));
     if (new == NULL)
     {
@@ -1891,6 +1971,9 @@ serve_notify (arg)
     {
 	char *cp;
 
+	if (strchr (data, '+'))
+	    goto error;
+
 	new->type = data;
 	if (data[1] != '\t')
 	    goto error;
@@ -1930,7 +2013,7 @@ serve_notify (arg)
     }
     return;
   error:
-    pending_error_text = malloc (40);
+    pending_error_text = malloc (80);
     if (pending_error_text)
 	strcpy (pending_error_text,
 		"E Protocol error; misformed Notify request");
@@ -1990,6 +2073,8 @@ server_notify ()
 
 	Lock_Cleanup ();
     }
+
+    last_node = NULL;
 
     /* The code used to call fflush (stdout) here, but that is no
        longer necessary.  The data is now buffered in buf_to_net,
@@ -2235,6 +2320,9 @@ serve_questionable (arg)
 	buf_output0 (buf_to_net, "E Protocol error: 'Directory' missing");
 	return;
     }
+
+    if (outside_dir (arg))
+	return;
 
     if (!ign_name (arg))
     {
@@ -4934,6 +5022,21 @@ error ENOMEM Virtual memory exhausted.\n");
 		if (!(rq->flags & RQ_ROOTLESS)
 		    && CVSroot_directory == NULL)
 		{
+		    /* For commands which change the way in which data
+		       is sent and received, for example Gzip-stream,
+		       this does the wrong thing.  Since the client
+		       assumes that everything is being compressed,
+		       unconditionally, there is no way to give this
+		       error to the client without turning on
+		       compression.  The obvious fix would be to make
+		       Gzip-stream RQ_ROOTLESS (with the corresponding
+		       change to the spec), and that might be a good
+		       idea but then again I can see some settings in
+		       CVSROOT about what compression level to allow.
+		       I suppose a more baroque answer would be to
+		       turn on compression (say, at level 1), just
+		       enough to give the "Root request missing"
+		       error.  For now we just lose.  */
 		    if (alloc_pending (80))
 			sprintf (pending_error_text,
 				 "E Protocol error: Root request missing");
@@ -4971,48 +5074,74 @@ switch_to_user (username)
     pw = getpwnam (username);
     if (pw == NULL)
     {
+	/* Normally this won't be reached; check_password contains
+	   a similar check.  */
+
 	printf ("E Fatal error, aborting.\n\
 error 0 %s: no such user\n", username);
-	/* I'm doing this manually rather than via error_exit ()
-	   because I'm not sure whether we want to call server_cleanup.
-	   Needs more investigation....  */
-
-#ifdef SYSTEM_CLEANUP
-	/* Hook for OS-specific behavior, for example socket subsystems on
-	   NT and OS2 or dealing with windows and arguments on Mac.  */
-	SYSTEM_CLEANUP ();
-#endif
-
-	exit (EXIT_FAILURE);
+	/* Don't worry about server_cleanup; server_active isn't set yet.  */
+	error_exit ();
     }
 
-    /* FIXME?  We don't check for errors from initgroups, setuid, &c.
-       I think this mainly would come up if someone is trying to run
-       the server as a non-root user.  I think we should be checking for
-       errors and aborting (as with the error above from getpwnam) if
-       there is an error (presumably EPERM).  That means that pserver
-       should continue to work right if all of the "system usernames"
-       in CVSROOT/passwd match the user which the server is being run
-       as (in inetd.conf), but fail otherwise.  */
-
 #if HAVE_INITGROUPS
-    initgroups (pw->pw_name, pw->pw_gid);
+    if (initgroups (pw->pw_name, pw->pw_gid) < 0
+#  ifdef EPERM
+	/* At least on the system I tried, initgroups() only works as root.
+	   But we do still want to report ENOMEM and whatever other
+	   errors initgroups() might dish up.  */
+	&& errno != EPERM
+#  endif
+	)
+    {
+	/* This could be a warning, but I'm not sure I see the point
+	   in doing that instead of an error given that it would happen
+	   on every connection.  We could log it somewhere and not tell
+	   the user.  But at least for now make it an error.  */
+	printf ("error 0 initgroups failed: %s\n", strerror (errno));
+	/* Don't worry about server_cleanup; server_active isn't set yet.  */
+	error_exit ();
+    }
 #endif /* HAVE_INITGROUPS */
 
 #ifdef SETXID_SUPPORT
     /* honor the setgid bit iff set*/
     if (getgid() != getegid())
     {
-	setgid (getegid ());
+	if (setgid (getegid ()) < 0)
+	{
+	    /* See comments at setuid call below for more discussion.  */
+	    printf ("error 0 setuid failed: %s\n", strerror (errno));
+	    /* Don't worry about server_cleanup;
+	       server_active isn't set yet.  */
+	    error_exit ();
+	}
     }
     else
-#else
-    {
-	setgid (pw->pw_gid);
-    }
 #endif
+    {
+	if (setgid (pw->pw_gid) < 0)
+	{
+	    /* See comments at setuid call below for more discussion.  */
+	    printf ("error 0 setuid failed: %s\n", strerror (errno));
+	    /* Don't worry about server_cleanup;
+	       server_active isn't set yet.  */
+	    error_exit ();
+	}
+    }
     
-    setuid (pw->pw_uid);
+    if (setuid (pw->pw_uid) < 0)
+    {
+	/* Note that this means that if run as a non-root user,
+	   CVSROOT/passwd must contain the user we are running as
+	   (e.g. "joe:FsEfVcu:cvs" if run as "cvs" user).  This seems
+	   cleaner than ignoring the error like CVS 1.10 and older but
+	   it does mean that some people might need to update their
+	   CVSROOT/passwd file.  */
+	printf ("error 0 setuid failed: %s\n", strerror (errno));
+	/* Don't worry about server_cleanup; server_active isn't set yet.  */
+	error_exit ();
+    }
+
     /* We don't want our umask to change file modes.  The modes should
        be set by the modes used in the repository, and by the umask of
        the client.  */
@@ -5417,32 +5546,23 @@ pserver_authenticate_connection ()
     host_user = check_password (username, descrambled_password, repository);
     memset (descrambled_password, 0, strlen (descrambled_password));
     free (descrambled_password);
-    if (host_user)
-    {
-	printf ("I LOVE YOU\n");
-	fflush (stdout);
-    }
-    else
+    if (host_user == NULL)
     {
     i_hate_you:
 	printf ("I HATE YOU\n");
 	fflush (stdout);
-	/* I'm doing this manually rather than via error_exit ()
-	   because I'm not sure whether we want to call server_cleanup.
-	   Needs more investigation....  */
 
-#ifdef SYSTEM_CLEANUP
-	/* Hook for OS-specific behavior, for example socket subsystems on
-	   NT and OS2 or dealing with windows and arguments on Mac.  */
-	SYSTEM_CLEANUP ();
-#endif
-
-	exit (EXIT_FAILURE);
+	/* Don't worry about server_cleanup, server_active isn't set
+	   yet.  */
+	error_exit ();
     }
 
     /* Don't go any farther if we're just responding to "cvs login". */
     if (verify_and_exit)
     {
+	printf ("I LOVE YOU\n");
+	fflush (stdout);
+
 #ifdef SYSTEM_CLEANUP
 	/* Hook for OS-specific behavior, for example socket subsystems on
 	   NT and OS2 or dealing with windows and arguments on Mac.  */
@@ -5464,6 +5584,8 @@ pserver_authenticate_connection ()
     free (username);
     free (password);
 
+    printf ("I LOVE YOU\n");
+    fflush (stdout);
 #endif /* AUTH_SERVER_SUPPORT */
 }
 

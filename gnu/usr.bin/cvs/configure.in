@@ -402,5 +402,5 @@ AC_OUTPUT(Makefile lib/Makefile src/Makefile zlib/Makefile diff/Makefile doc/Mak
 	  man/Makefile tools/Makefile \
 	  contrib/Makefile \
 	  windows-NT/Makefile windows-NT/SCC/Makefile \
-	  os2/Makefile emx/Makefile macintosh/Makefile vms/Makefile \
+	  os2/Makefile emx/Makefile vms/Makefile \
 	  stamp-h)

@@ -489,9 +489,12 @@ do_update (argc, argv, xoptions, xtag, xdate, xforce, local, xbuild, xaflag,
     {
 	time_t now;
 
-	(void) time (&now);
-	if (now == last_register_time)
+	for (;;)
+	{
+	    (void) time (&now);
+	    if (now != last_register_time) break;
 	    sleep (1);			/* to avoid time-stamp races */
+	}
     }
 
     return (err);
@@ -1645,7 +1648,7 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
 	cvs_MD5Init (&data.context);
 
 	retcode = RCS_checkout (vers_ts->srcfile, (char *) NULL,
-				vers_ts->vn_rcs, (char *) NULL,
+				vers_ts->vn_rcs, vers_ts->vn_tag,
 				vers_ts->options, RUN_TTY,
 				patch_file_write, (void *) &data);
 

@@ -168,7 +168,8 @@ import (argc, argv)
     }
 
     /* XXX - this should be a module, not just a pathname */
-    if (! isabsolute (argv[0]))
+    if (! isabsolute (argv[0])
+	&& pathname_levels (argv[0]) == 0)
     {
 	if (CVSroot_directory == NULL)
 	{
@@ -183,9 +184,11 @@ import (argc, argv)
     }
     else
     {
-	repository = xmalloc (strlen (argv[0]) + 5);
-	(void) strcpy (repository, argv[0]);
-	repos_len = 0;
+	/* It is somewhere between a security hole and "unexpected" to
+	   let the client start mucking around outside the cvsroot
+	   (wouldn't get the right CVSROOT configuration, &c).  */
+	error (1, 0, "directory %s not relative within the repository",
+	       argv[0]);
     }
 
     /*

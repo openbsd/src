@@ -362,7 +362,7 @@ static const struct admin_file filelist[] = {
     {CVSROOTADM_CONFIG,
 	 "a %s file configures various behaviors",
 	 config_contents},
-    {NULL, NULL}
+    {NULL, NULL, NULL}
 };
 
 /* Rebuild the checked out administrative files in directory DIR.  */

@@ -160,7 +160,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 	    && client_active)
 	{
 	    char *root = Name_Root (NULL, update_dir);
-	    if (root == NULL || strcmp (root, current_root) != 0)
+	    if (root && strcmp (root, current_root) != 0)
 		/* We're skipping this directory because it is for
 		   a different root.  Therefore, we just want to
 		   do the subdirectories only.  Processing files would
@@ -565,9 +565,7 @@ do_recursion (frame)
        directories, since we're guaranteed to have only one CVSROOT --
        our own.  */
 
-#ifdef SERVER_SUPPORT
-    if (! server_active
-
+    if (
 	/* If -d was specified, it should override CVS/Root.
 
 	   In the single-repository case, it is long-standing CVS behavior
@@ -577,8 +575,12 @@ do_recursion (frame)
 	   In the multiple-repository case, -d overrides all CVS/Root
 	   files.  That is the only plausible generalization I can
 	   think of.  */
-	&& CVSroot_cmdline == NULL)
+	CVSroot_cmdline == NULL
+
+#ifdef SERVER_SUPPORT
+	&& ! server_active
 #endif
+	)
     {
 	char *this_root = Name_Root ((char *) NULL, update_dir);
 	if (this_root != NULL)
@@ -988,9 +990,7 @@ but CVS uses %s for its own purposes; skipping %s directory",
     /* Only process this directory if the root matches.  This nearly
        duplicates code in do_recursion. */
 
-#ifdef SERVER_SUPPORT
-    if (! server_active
-
+    if (
 	/* If -d was specified, it should override CVS/Root.
 
 	   In the single-repository case, it is long-standing CVS behavior
@@ -1000,8 +1000,12 @@ but CVS uses %s for its own purposes; skipping %s directory",
 	   In the multiple-repository case, -d overrides all CVS/Root
 	   files.  That is the only plausible generalization I can
 	   think of.  */
-	&& CVSroot_cmdline == NULL)
+	CVSroot_cmdline == NULL
+
+#ifdef SERVER_SUPPORT
+	&& ! server_active
 #endif
+	)
     {
 	char *this_root = Name_Root (dir, update_dir);
 	if (this_root != NULL)

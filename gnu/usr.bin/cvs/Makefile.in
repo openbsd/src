@@ -89,7 +89,7 @@ DISTFILES = \
 	ChangeLog NEWS ChangeLog.zoo \
 	configure configure.in stamp-h.in config.h.in Makefile.in acconfig.h \
 	cvs-format.el mkinstalldirs install-sh \
-	cvsnt.mak cvsnt.dsp \
+	cvsnt.mak cvsnt.dsp cvsnt.dsw \
 	.cvsignore cvs.spec
 
 ### Subdirectories to run make in for the primary targets.
@@ -99,7 +99,7 @@ USOURCE_SUBDIRS = lib @ZLIBSUBDIRS@ diff src
 INSTALL_MAN=man
 # All other subdirs:
 SUBDIRS = ${USOURCE_SUBDIRS} ${INSTALL_MAN} doc contrib tools \
-	windows-NT os2 emx macintosh vms
+	windows-NT os2 emx vms
 # Only make TAGS/tags files in these directories.
 TSUBDIRS= src lib
 

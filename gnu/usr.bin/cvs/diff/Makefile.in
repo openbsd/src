@@ -43,7 +43,8 @@ SOURCES = diff.c diff3.c analyze.c cmpbuf.c cmpbuf.h io.c context.c ed.c \
 	diffrun.h
 OBJECTS = diff.o diff3.o analyze.o cmpbuf.o dir.o io.o util.o \
 	context.o ed.o ifdef.o normal.o side.o version.o
-DISTFILES = $(SOURCES) ChangeLog build_diff.com Makefile.in diagmeet.note
+DISTFILES = $(SOURCES) ChangeLog build_diff.com Makefile.in diagmeet.note \
+	libdiff.dsp .cvsignore
 
 all: libdiff.a
 
