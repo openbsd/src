@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.29 2004/08/13 13:28:53 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.30 2004/08/27 13:05:55 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -254,7 +254,6 @@ cvs_file_create(const char *path, u_int type, mode_t mode)
 		}
 
 		cfp->cf_ddat->cd_ent = cvs_ent_open(path, O_RDWR);
-
 	}
 	else {
 		fd = open(path, O_WRONLY|O_CREAT|O_EXCL, mode);
@@ -428,6 +427,8 @@ cvs_file_attach(CVSFILE *parent, CVSFILE *file)
  * cvs_file_getdir()
  *
  * Get a cvs directory structure for the directory whose path is <dir>.
+ * This function should not free the directory information on error, as this
+ * is performed by cvs_file_free().
  */
 
 static int
@@ -450,10 +451,8 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 
 	if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
 		cdp->cd_root = cvsroot_get(cf->cf_path);
-		if (cdp->cd_root == NULL) {
-			cvs_file_freedir(cdp);
+		if (cdp->cd_root == NULL)
 			return (-1);
-		}
 
 		if (flags & CF_MKADMIN)
 			cvs_mkadmin(cf, 0755);
@@ -468,7 +467,6 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 				if (cdp->cd_repo == NULL) {
 					cvs_log(LP_ERRNO,
 					    "failed to dup repository string");
-					free(cdp);
 					return (-1);
 				}
 			}
@@ -483,7 +481,6 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 	fd = open(cf->cf_path, O_RDONLY);
 	if (fd == -1) {
 		cvs_log(LP_ERRNO, "failed to open `%s'", cf->cf_path);
-		cvs_file_freedir(cdp);
 		return (-1);
 	}
 
@@ -492,7 +489,6 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 		if (ret == -1) {
 			cvs_log(LP_ERRNO, "failed to get directory entries");
 			(void)close(fd);
-			cvs_file_freedir(cdp);
 			return (-1);
 		}
 
