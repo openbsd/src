@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vnops.c,v 1.1 1996/06/24 03:34:58 downsj Exp $	*/
+/*	$OpenBSD: ext2_vnops.c,v 1.2 1996/07/14 04:15:04 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -75,6 +75,7 @@
 #include <gnu/ext2fs/ext2_extern.h>
 
 int ext2_fsync __P((void *));
+int ext2_reclaim __P((void *));
 int ext2_read __P((void *));
 int ext2_write __P((void *));
 
@@ -107,7 +108,7 @@ static struct vnodeopv_entry_desc ext2_vnodeop_entries[] = {
 	{ &vop_readlink_desc, ufs_readlink },	/* readlink */
 	{ &vop_abortop_desc, ufs_abortop },	/* abortop */
 	{ &vop_inactive_desc, ext2_inactive },	/* inactive */
-	{ &vop_reclaim_desc, ffs_reclaim },	/* reclaim */
+	{ &vop_reclaim_desc, ext2_reclaim },	/* reclaim */
 	{ &vop_lock_desc, ufs_lock },		/* lock */
 	{ &vop_unlock_desc, ufs_unlock },	/* unlock */
 	{ &vop_bmap_desc, ufs_bmap },		/* bmap */
@@ -156,7 +157,7 @@ static struct vnodeopv_entry_desc ext2_specop_entries[] = {
 	{ &vop_readlink_desc, spec_readlink },	/* readlink */
 	{ &vop_abortop_desc, spec_abortop },	/* abortop */
 	{ &vop_inactive_desc, ext2_inactive },	/* inactive */
-	{ &vop_reclaim_desc, ffs_reclaim },	/* reclaim */
+	{ &vop_reclaim_desc, ext2_reclaim },	/* reclaim */
 	{ &vop_lock_desc, ufs_lock },		/* lock */
 	{ &vop_unlock_desc, ufs_unlock },	/* unlock */
 	{ &vop_bmap_desc, spec_bmap },		/* bmap */
@@ -206,7 +207,7 @@ static struct vnodeopv_entry_desc ext2_fifoop_entries[] = {
 	{ &vop_readlink_desc, fifo_readlink },	/* readlink */
 	{ &vop_abortop_desc, fifo_abortop },	/* abortop */
 	{ &vop_inactive_desc, ext2_inactive },	/* inactive */
-	{ &vop_reclaim_desc, ffs_reclaim },	/* reclaim */
+	{ &vop_reclaim_desc, ext2_reclaim },	/* reclaim */
 	{ &vop_lock_desc, ufs_lock },		/* lock */
 	{ &vop_unlock_desc, ufs_unlock },	/* unlock */
 	{ &vop_bmap_desc, fifo_bmap },		/* bmap */
@@ -261,60 +262,34 @@ ext2_fsync(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	register struct buf *bp;
 	struct timespec ts;
-	struct buf *nbp;
-	int s;
-
-#if 0
-	/* 
-	 * Clean memory object.
-	 * XXX add this to all file systems.
-	 * XXX why is all this fs specific?
-	 */
-	vn_pager_sync(vp, ap->a_waitfor);
-#endif
 
 	/*
 	 * Flush all dirty buffers associated with a vnode.
 	 */
 	ext2_discard_prealloc(VTOI(vp));
 
-loop:
-	s = splbio();
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
-		if ((bp->b_flags & B_BUSY))
-			continue;
-		if ((bp->b_flags & B_DELWRI) == 0)
-			panic("ext2_fsync: not dirty");
-		bremfree(bp);
-		bp->b_flags |= B_BUSY;
-		splx(s);
-		/*
-		 * Wait for I/O associated with indirect blocks to complete,
-		 * since there is no way to quickly wait for them below.
-		 */
-		if (bp->b_vp == vp || ap->a_waitfor == MNT_NOWAIT)
-			(void) bawrite(bp);
-		else
-			(void) bwrite(bp);
-		goto loop;
-	}
-	if (ap->a_waitfor == MNT_WAIT) {
-		while (vp->v_numoutput) {
-			vp->v_flag |= VBWAIT;
-			tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "extfsn", 0);
-		}
-#if DIAGNOSTIC
-		if (vp->v_dirtyblkhd.lh_first) {
-			vprint("ext2_fsync: dirty", vp);
-			goto loop;
-		}
-#endif
-	}
-	splx(s);
-
+	vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	return (VOP_UPDATE(ap->a_vp, &ts, &ts, ap->a_waitfor == MNT_WAIT));
+}
+
+/*
+ * Reclaim an inode so that it can be used for other purposes.
+ */
+int
+ext2_reclaim(v)
+	void *v;
+{
+	struct vop_reclaim_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	register struct vnode *vp = ap->a_vp;
+	int error;
+
+	if ((error = ufs_reclaim(vp)) != 0)
+		return (error);
+	FREE(vp->v_data, M_EXT2FSNODE);
+	vp->v_data = NULL;
+	return (0);
 }

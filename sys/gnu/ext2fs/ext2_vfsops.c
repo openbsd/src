@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.4 1996/06/27 08:17:51 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.5 1996/07/14 04:15:04 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -891,7 +891,7 @@ ext2_vget(mp, ino, vpp)
 	struct buf *bp;
 	struct vnode *vp;
 	dev_t dev;
-	int i, type, error;
+	int i, error;
 	int used_blocks;
 
 	ump = VFSTOUFS(mp);
@@ -919,12 +919,8 @@ restart:
 		*vpp = NULL;
 		return (error);
 	}
-	/* I don't really know what this 'type' does. I suppose it's some kind
-	 * of memory accounting. Let's just book this memory on FFS's account 
-	 * If I'm not mistaken, this stuff isn't implemented anyway in Lites
-	 */
-	type = ump->um_devvp->v_tag == VT_MFS ? M_MFSNODE : M_FFSNODE; /* XXX */
-	MALLOC(ip, struct inode *, sizeof(struct inode), type, M_WAITOK);
+	MALLOC(ip, struct inode *, sizeof(struct inode),
+	       M_EXT2FSNODE, M_WAITOK);
 	bzero((caddr_t)ip, sizeof(struct inode));
 
 	vp->v_data = ip;
