@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.32 2004/12/20 21:20:56 millert Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.33 2004/12/20 21:35:10 millert Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -31,9 +31,10 @@
 .Ft void
 .Fn freeaddrinfo "struct addrinfo *ai"
 .Sh DESCRIPTION
+The
 .Fn getaddrinfo
-is used to get a list of
-.Dv IP
+function is used to get a list of
+.Tn IP
 addresses and port numbers for host
 .Fa hostname
 and service
@@ -44,13 +45,14 @@ and
 .Xr getservbyname 3
 functions.
 .Pp
+The
 .Fa hostname
 and
 .Fa servname
-are either pointers to NUL-terminated strings or the null pointer.
+arguments are either pointers to NUL-terminated strings or the null pointer.
 An acceptable value for
 .Fa hostname
-is either a host name or a numeric host address string consisting
+is either a valid host name or a numeric host address string consisting
 of a dotted decimal IPv4 address or an IPv6 address.
 The
 .Fa servname
@@ -111,7 +113,10 @@ If
 .Fa ai_protocol
 is zero the caller will accept any protocol.
 .It Fa ai_flags
-Flag bits.
+.Fa ai_flags
+is formed by
+.Tn OR Ns 'ing
+the following values:
 .Bl -tag -width "AI_CANONNAMEXX"
 .It Dv AI_CANONNAME
 If the
@@ -158,7 +163,7 @@ or
 .Xr sendmsg 2
 if a connectionless protocol was chosen.
 The
-.Dv IP
+.Tn IP
 address portion of the socket address structure will be set to the
 loopback address if
 .Fa hostname
@@ -180,10 +185,12 @@ is the null pointer,
 .Fn getaddrinfo
 behaves as if the caller provided a
 .Li struct addrinfo
-initialized to zero and with
+with
 .Fa ai_family
 set to
-.Dv PF_UNSPEC .
+.Dv PF_UNSPEC
+and all other elements set to zero or
+.Dv NULL .
 .Pp
 After a successful call to
 .Fn getaddrinfo ,
