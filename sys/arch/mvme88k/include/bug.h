@@ -1,4 +1,4 @@
-/*	$OpenBSD: bug.h,v 1.5 2001/01/14 20:25:23 smurph Exp $ */
+/*	$OpenBSD: bug.h,v 1.6 2001/08/12 12:03:02 heko Exp $ */
 #ifndef __MACHINE_BUG_H__
 #define __MACHINE_BUG_H__
 #include <machine/bugio.h>
@@ -13,4 +13,4 @@ struct bugenv {
 	char	*argstart;
 	char	*argend;
 };
-#endif __MACHINE_BUG_H__
+#endif /* __MACHINE_BUG_H__ */

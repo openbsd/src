@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.9 2001/01/22 14:51:05 art Exp $ */
+/*	$OpenBSD: exec.h,v 1.10 2001/08/12 12:03:02 heko Exp $ */
 #ifndef __MACHINE_EXEC_H__
 #define __MACHINE_EXEC_H__
 
@@ -29,4 +29,4 @@ struct relocation_info_m88k {
 #define _KERN_DO_AOUT
 #define _KERN_DO_ELF
 
-#endif __MACHINE_EXEC_H__
+#endif /* __MACHINE_EXEC_H__ */

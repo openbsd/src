@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.4 1999/01/06 23:14:17 d Exp $
+ *	$OpenBSD: SYS.h,v 1.5 2001/08/12 12:03:01 heko Exp $
  */
 
 #include <sys/syscall.h>
@@ -85,7 +85,7 @@
 # define RSYSCALL(x)    __RSYSCALL(_thread_sys_,x)
 # define PSEUDO(x,y)    __PSEUDO(_thread_sys_,x,y)
 # define SYSENTRY(x)    __ENTRY(_thread_sys_,x)
-#else _THREAD_SAFE
+#else /* _THREAD_SAFE */
 /*
  * The non-threaded library defaults to traditional syscalls where
  * the function name matches the syscall name.
@@ -94,7 +94,7 @@
 # define RSYSCALL(x)    __RSYSCALL(,x)
 # define PSEUDO(x,y)    __PSEUDO(,x,y)
 # define SYSENTRY(x)    __ENTRY(,x)
-#endif _THREAD_SAFE
+#endif /* _THREAD_SAFE */
 
 #define	ASMSTR		.asciz
 

@@ -119,4 +119,4 @@ __panic(type, errstr, filenm, lineno, fmt)
 #define OK		(0)
 #define NOTOK		(-1)
 
-#endif _h_test_
+#endif /* _h_test_ */

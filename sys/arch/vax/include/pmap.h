@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.11 2001/06/15 22:45:33 miod Exp $     */
+/*      $OpenBSD: pmap.h,v 1.12 2001/08/12 12:03:03 heko Exp $     */
 /*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
 
 /* 
@@ -149,4 +149,4 @@ void	pmap_activate __P((struct proc *));
 
 #endif	/* _KERNEL */
 
-#endif PMAP_H
+#endif /* PMAP_H */

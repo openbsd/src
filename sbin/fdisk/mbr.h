@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.h,v 1.5 2001/01/28 00:51:47 weingart Exp $	*/
+/*	$OpenBSD: mbr.h,v 1.6 2001/08/12 12:03:01 heko Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -70,5 +70,5 @@ int MBR_write __P((int, off_t, char *));
 #error "DEV_BSIZE != 512, somebody better fix me!"
 #endif
 
-#endif _MBR_H
+#endif /* _MBR_H */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.14 2001/07/07 18:26:17 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.15 2001/08/12 12:03:02 heko Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 static char copyright[] =
 "@(#) Copyright (c) 1989, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#endif not lint
+#endif /* not lint */
 
 #ifndef lint
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.3 1997/10/16 01:47:11 deraadt Exp $	*/
+/*	$OpenBSD: misc.h,v 1.4 2001/08/12 12:03:01 heko Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,5 +49,5 @@ u_int32_t getlong __P((void *));
 void putshort __P((void *, u_int16_t));
 void putlong __P((void *, u_int32_t));
 
-#endif _MISC_H
+#endif /* _MISC_H */
 

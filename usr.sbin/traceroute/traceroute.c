@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.39 2001/06/10 05:49:23 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.40 2001/08/12 12:03:03 heko Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.39 2001/06/10 05:49:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.40 2001/08/12 12:03:03 heko Exp $";
 #endif
 #endif /* not lint */
 
@@ -509,12 +509,12 @@ main(argc, argv)
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
 	    sizeof(datalen)) < 0)
 		err(6, "SO_SNDBUF");
-#endif SO_SNDBUF
+#endif /* SO_SNDBUF */
 #ifdef IP_HDRINCL
 	if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
 	    sizeof(on)) < 0)
 		err(6, "IP_HDRINCL");
-#endif IP_HDRINCL
+#endif /* IP_HDRINCL */
 	if (options & SO_DEBUG)
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
 				  (char *)&on, sizeof(on));
@@ -607,7 +607,7 @@ main(argc, argv)
 					ip = (struct ip *)packet;
 					if (ip->ip_ttl <= 1)
 						Printf(" !");
-#endif ARCHAIC
+#endif /* ARCHAIC */
 					++got_there;
 					break;
 				case ICMP_UNREACH_NET:
@@ -854,7 +854,7 @@ packet_ok(buf, cc, from, seq, iflag)
 	icp = (struct icmp *)(buf + hlen);
 #else
 	icp = (struct icmp *)buf;
-#endif ARCHAIC
+#endif /* ARCHAIC */
 	type = icp->icmp_type; code = icp->icmp_code;
 	if ((type == ICMP_TIMXCEED && code == ICMP_TIMXCEED_INTRANS) ||
 	    type == ICMP_UNREACH || type == ICMP_ECHOREPLY ) {
@@ -909,7 +909,7 @@ packet_ok(buf, cc, from, seq, iflag)
 		for (i = 4; i < cc ; i += sizeof(in_addr_t))
 			Printf("%2d: x%8.8lx\n", i, (unsigned long)*lp++);
 	}
-#endif ARCHAIC
+#endif /* ARCHAIC */
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.s,v 1.5 2001/06/26 21:35:43 miod Exp $ */
+/*	$OpenBSD: vectors.s,v 1.6 2001/08/12 12:03:02 heko Exp $ */
 
 | Copyright (c) 1995 Theo de Raadt
 |
@@ -174,4 +174,4 @@ GLOBAL(fpsp_tab)
 	ASVECTOR(operr)		/* 52: FPCP operand error */
 	ASVECTOR(ovfl)		/* 53: FPCP overflow */
 	ASVECTOR(snan)		/* 54: FPCP signalling NAN */
-#endif FPSP
+#endif /* FPSP */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.16 2001/07/25 13:25:31 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.17 2001/08/12 12:03:02 heko Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1043,7 +1043,7 @@ pmap_uses_prom_console(void)
 	    || cputype == ST_DEC_3000_500);
 #endif /* NEW_SCC_DRIVER */
 }
-#endif _PMAP_MAY_USE_PROM_CONSOLE
+#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
 /*
  * pmap_steal_memory:		[ INTERFACE ]

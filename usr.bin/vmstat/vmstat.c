@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.58 2001/07/28 05:36:18 pvalchev Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.59 2001/08/12 12:03:03 heko Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -247,7 +247,7 @@ main(argc, argv)
 		}
 #ifdef notyet
 	}
-#endif notyet
+#endif /* notyet */
 
 	setegid(getegid());
 	setgid(getgid());

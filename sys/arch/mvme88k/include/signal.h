@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.5 2001/01/14 20:25:24 smurph Exp $ */
+/*	$OpenBSD: signal.h,v 1.6 2001/08/12 12:03:02 heko Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -75,4 +75,4 @@ struct  sigcontext {
 	int	sc_fpit;
 	int	sc_xxxx;	/* padd to double word boundary */
 };
-#endif __MACHINE_SIGNAL_H__
+#endif /* __MACHINE_SIGNAL_H__ */

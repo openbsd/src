@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.11 2001/07/04 08:09:23 niklas Exp $	*/
+/*	$OpenBSD: asm.h,v 1.12 2001/08/12 12:03:02 heko Exp $	*/
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 /* Define EH_DEBUG to be non-zero to compile-in various debugging things */
 #ifndef	EH_DEBUG
 #define EH_DEBUG 1
-#endif	EH_DEBUG
+#endif /* EH_DEBUG */
 
 #define	ENTRY(NAME) \
     .align 8; .globl FUNC(NAME); FUNC(NAME):
@@ -320,4 +320,4 @@
 #define VME_CMMU_D3		0xFFF7F000 	/* MVME188 data CMMU 3 */
 #endif /* CMMU_DEFS */
 
-#endif __MACHINE_M88K_ASM_H__
+#endif /* __MACHINE_M88K_ASM_H__ */

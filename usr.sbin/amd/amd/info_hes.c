@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_hes.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_hes.c,v 1.4 1997/12/17 07:40:42 deraadt Exp $
+ *	$Id: info_hes.c,v 1.5 2001/08/12 12:03:03 heko Exp $
  */
 
 /*
@@ -187,7 +187,7 @@ void (*fn)();
 
 #ifdef DEBUG
 	dlog("hesiod_reload (%x %s %x)", m, map, fn);
-#endif DEBUG
+#endif /* DEBUG */
 	if (status = res_init()) {
 #ifdef DEBUG
 		dlog("hesiod_reload: res_init failed with %d", status);
@@ -436,7 +436,7 @@ char *msg, *eom;
 		char dq[20];
 #ifdef DEBUG
 		dlog("Bad response (%d) from nameserver %s", hp->rcode, inet_dquad(dq, hs_server_addr(servernum)->s_addr));
-#endif DEBUG
+#endif /* DEBUG */
 		return(-1);
 	}
 	cp = msg + sizeof(HEADER);
@@ -513,7 +513,7 @@ int len;
 	char *dbgname;
 
 	dbgname = &cp[1];
-#endif DEBUG
+#endif /* DEBUG */
 
 	lencpy = len;
 	cpcpy = cp;
@@ -532,7 +532,7 @@ int len;
 #ifdef DEBUG
 		dlog("TXT RR not of expected length (%d %d): %s", totalcnt,
 		     len, dbgname);
-#endif DEBUG
+#endif /* DEBUG */
 		return(NULL);
 	}
 	/* Allocate null terminated string */
@@ -587,7 +587,7 @@ struct in_addr *addr;
 	bcopy((char *)addr, nsaddr_list[hs_nscount++], sizeof(struct in_addr));
 #ifdef DEBUG
 	dlog("Adding NS address %s", inet_dquad(dq, addr->s_addr));
-#endif DEBUG
+#endif /* DEBUG */
 }
 
 hs_get_ns_list(domain)
@@ -615,7 +615,7 @@ char *domain;
 #ifdef DEBUG
 		dlog("Bad response (%d) from nameserver %#x", hp->rcode,
 		      hs_server_addr(servernum)->s_addr);
-#endif DEBUG
+#endif /* DEBUG */
 		return(-1);
 	}
 	cp = msg + sizeof(HEADER);
@@ -695,7 +695,7 @@ char *domain;
 #ifdef DEBUG
 	dlog("No NS records found for %s", domain);
 	return(-1);
-#endif DEBUG
+#endif /* DEBUG */
 }
 #endif /* HAS_HESIOD_RELOAD */
 #endif /* HAS_HESIOD_MAPS */

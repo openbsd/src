@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.6 2001/01/04 21:45:30 todd Exp $ */
+/* $OpenBSD: thread_private.h,v 1.7 2001/08/12 12:03:01 heko Exp $ */
 
 #ifndef _THREAD_PRIVATE_H_
 #define _THREAD_PRIVATE_H_
@@ -132,4 +132,4 @@ int	_thread_fd_lock_debug(int, int, struct timespec *, const char *, int);
 void	_thread_fd_unlock(int, int);
 void	_thread_fd_unlock_debug(int, int, const char *, int);
 
-#endif _THREAD_PRIVATE_H_
+#endif /* _THREAD_PRIVATE_H_ */

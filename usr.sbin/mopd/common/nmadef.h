@@ -1,4 +1,4 @@
-/*	$OpenBSD: nmadef.h,v 1.2 1996/09/21 19:11:48 maja Exp $ */
+/*	$OpenBSD: nmadef.h,v 1.3 2001/08/12 12:03:03 heko Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: nmadef.h,v 1.2 1996/09/21 19:11:48 maja Exp $
+ *	$OpenBSD: nmadef.h,v 1.3 2001/08/12 12:03:03 heko Exp $
  *
  */
 
@@ -180,4 +180,4 @@
 #define   NMA_C_SOFD_DW4   150	/* DSW-41/42 */
 #define   NMA_C_SOFD_TRA   175	/* DETRA-AA */
 
-#endif _NMADEF_H_
+#endif /* _NMADEF_H_ */

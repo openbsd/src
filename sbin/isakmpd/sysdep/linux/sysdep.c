@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.8 2001/06/29 22:12:56 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.9 2001/08/12 12:03:02 heko Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -50,7 +50,7 @@
 #include "conf.h"
 #include "ipsec.h"
 #include "klips.h"
-#endif NEED_SYSDEP_APP
+#endif /* NEED_SYSDEP_APP */
 #include "log.h"
 #include "sysdep.h"
 

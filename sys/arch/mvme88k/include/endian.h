@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.11 2001/03/02 20:45:21 jason Exp $ */
+/*	$OpenBSD: endian.h,v 1.12 2001/08/12 12:03:02 heko Exp $ */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -37,5 +37,5 @@
 
 #define	__STRICT_ALIGNMENT
 
-#endif __MVME88K_ENDIAN_H__
+#endif /* __MVME88K_ENDIAN_H__ */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.8 2001/07/06 09:35:58 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.9 2001/08/12 12:03:02 heko Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -54,7 +54,7 @@
 #define KEY_API(x) pf_key_v2_##x
 #endif
 
-#endif NEED_SYSDEP_APP
+#endif /* NEED_SYSDEP_APP */
 #include "log.h"
 
 extern char *__progname;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aarp.c,v 1.1 1997/07/23 03:39:50 denny Exp $	*/
+/*	$OpenBSD: aarp.c,v 1.2 2001/08/12 12:03:03 heko Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -97,7 +97,7 @@ void aarp_clean			__P((void));
 #else
 #define AARPTAB_BSIZ	9
 #define AARPTAB_NB	19
-#endif GATEWAY
+#endif /* GATEWAY */
 
 #define AARPTAB_SIZE	(AARPTAB_BSIZ * AARPTAB_NB)
 struct aarptab		aarptab[AARPTAB_SIZE];

@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.13 2001/05/20 05:53:09 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.14 2001/08/12 12:03:02 heko Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1818,7 +1818,7 @@ exception_handler_has_ksp:  global exception_handler_has_ksp
    st    r30,  r31,  0  /* store frame pointer on the stack */
 #if DDB
    st    r30,  r31,  4  /* store it again for the debugger to recognize */
-#endif DDB
+#endif /* DDB */
 
    ld    r2,   r30,  REG_OFF(EF_VECTOR)
    bcnd.n eq0, r2,   return_to_calling_exception_handler  /* is error */
@@ -2950,7 +2950,7 @@ m197_exception_handler_has_ksp:  global m197_exception_handler_has_ksp
    st    r30,  r31,  0  /* store frame pointer on the stack */
 #if DDB
    st    r30,  r31,  4  /* store it again for the debugger to recognize */
-#endif DDB
+#endif /* DDB */
 
    ld    r2,   r30,  REG_OFF(EF_VECTOR)
    bcnd.n eq0, r2,   m197_return_to_calling_exception_handler  /* is error */

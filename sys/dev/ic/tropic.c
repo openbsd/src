@@ -1,4 +1,4 @@
-/*	$OpenBSD: tropic.c,v 1.2 2001/06/27 06:34:43 kjc Exp $	*/
+/*	$OpenBSD: tropic.c,v 1.3 2001/08/12 12:03:03 heko Exp $	*/
 /*	$NetBSD: tropic.c,v 1.6 1999/12/17 08:26:31 fvdl Exp $	*/
 
 /* 
@@ -1560,7 +1560,7 @@ caddr_t data;
 			}
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif INET
+#endif /* INET */
 		default:
 			/* XXX if not running */
 			if ((ifp->if_flags & IFF_RUNNING) == 0) {

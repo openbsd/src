@@ -1,4 +1,4 @@
-/*      $OpenBSD: pte.h,v 1.6 2000/04/26 03:08:42 bjc Exp $      */
+/*      $OpenBSD: pte.h,v 1.7 2001/08/12 12:03:03 heko Exp $      */
 /*      $NetBSD: pte.h,v 1.13 1999/08/03 19:53:23 ragge Exp $      */
 
 /*
@@ -53,7 +53,7 @@ struct pte {
 
 typedef struct pte	pt_entry_t;	/* Mach page table entry */
 
-#endif _LOCORE
+#endif /* _LOCORE */
 
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.10 2001/03/07 23:38:22 miod Exp $ */
+/*	$OpenBSD: profile.h,v 1.11 2001/08/12 12:03:02 heko Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.10 2001/03/07 23:38:22 miod Exp $
+ *	$Id: profile.h,v 1.11 2001/08/12 12:03:02 heko Exp $
  */
 #ifndef __MACHINE_PROFILE_H__
 #define __MACHINE_PROFILE_H__
@@ -73,4 +73,4 @@ mcount()								\
 #define	MCOUNT_ENTER	s = splhigh()
 #define	MCOUNT_EXIT	splx(s)
 #endif /* _KERNEL */
-#endif __MACHINE_PROFILE_H__
+#endif /* __MACHINE_PROFILE_H__ */

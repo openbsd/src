@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1997/08/18 03:11:27 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 2001/08/12 12:03:03 heko Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1994/06/29 06:41:07 cgd Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ register char *proto;
 	IFDEBUG(X)
 #ifdef DEBUG
 		DOIT(astringfile);
-#endif DEBUG
+#endif /* DEBUG */
 		fprintf(astringfile, 
 				"#ifndef _NFILE\n#include <stdio.h>\n#endif _NFILE\n" );
 	ENDDEBUG
@@ -197,7 +197,7 @@ char *argv[];
 			actfile_name =  (char *)strcpy(actfile_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(actfile_name, ".c");
 			fprintf(stdout, "debugging file is %s\n",actfile_name);
 			break;
@@ -213,7 +213,7 @@ char *argv[];
 			astringfile_name =  (char *)strcpy(astringfile_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(astringfile_name, ".c");
 			fprintf(OUT, "option %c, astringfile name %s\n",c, name);
 			break;
@@ -223,7 +223,7 @@ char *argv[];
 			eventfile_h_name =  (char *)strcpy(eventfile_h_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(eventfile_h_name, ".h");
 			fprintf(stdout, "event files is %s\n",eventfile_h_name);
 			break;
@@ -233,7 +233,7 @@ char *argv[];
 			statevalfile_name =  (char *)strcpy(statevalfile_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(statevalfile_name, ".init");
 			fprintf(stdout, "state table initial values file is %s\n",statevalfile_name);
 			break;
@@ -243,7 +243,7 @@ char *argv[];
 			statefile_name =  (char *)strcpy(statefile_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(statefile_name, ".h");
 			fprintf(stdout, "state file is %s\n",statefile_name);
 			break;
@@ -292,7 +292,7 @@ char *argv[];
 			fprintf(OUT, "Option K overrides option X\n");
 			debug['X'] = 0;
 		}
-#endif notdef
+#endif /* notdef */
 		if(strlen(kerneldirname)<1) {
 			fprintf(OUT, "K option: dir name too short!\n");
 			exit(-1);

@@ -35,12 +35,12 @@
 static char copyright[] =
 "@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#endif not lint
+#endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.8 2001/07/02 16:51:46 jasoni Exp $";
-#endif not lint
+static char *rcsid = "$Id: bad144.c,v 1.9 2001/08/12 12:03:03 heko Exp $";
+#endif /* not lint */
 
 /*
  * bad144

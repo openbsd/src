@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.13 2001/08/07 22:18:04 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.14 2001/08/12 12:03:02 heko Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -122,4 +122,4 @@ static __inline__ unsigned ff1(register unsigned val)
 	return val;
 }
 
-#endif __MACHINE_M88K_ASM_MACRO_H__
+#endif /* __MACHINE_M88K_ASM_MACRO_H__ */

@@ -18,7 +18,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigreturn.S,v 1.2 1996/08/19 08:17:17 tholo Exp $"
+	.asciz "$OpenBSD: sigreturn.S,v 1.3 2001/08/12 12:03:01 heko Exp $"
 #endif /* SYSLIBC_SCCS */
 
 /*
@@ -33,7 +33,7 @@
 	.data; 1:; .long 0; \
 	.text; addr 1b(pc),r0; bsr mcount; \
 	restore [r0,r1,r2]
-#endif PROF
+#endif /* PROF */
 
 SYSCALL(sigreturn)
 	ret	0

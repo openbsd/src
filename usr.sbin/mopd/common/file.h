@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.2 1996/09/21 19:11:33 maja Exp $ */
+/*	$OpenBSD: file.h,v 1.3 2001/08/12 12:03:03 heko Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: file.h,v 1.2 1996/09/21 19:11:33 maja Exp $
+ *	$OpenBSD: file.h,v 1.3 2001/08/12 12:03:03 heko Exp $
  *
  */
 
@@ -66,4 +66,4 @@ int	GetFileInfo     __P((int, u_long *, u_long *, int *,
 __END_DECLS
 #endif
 
-#endif _FILE_H_
+#endif /* _FILE_H_ */

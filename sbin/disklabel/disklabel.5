@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.5,v 1.10 2001/08/06 17:36:44 millert Exp $
+.\"	$OpenBSD: disklabel.5,v 1.11 2001/08/12 12:03:01 heko Exp $
 .\"	$NetBSD: disklabel.5,v 1.3 1995/03/18 14:54:36 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
@@ -413,7 +413,7 @@ struct partinfo {
 #define DIOCGPDINFO	_IOR('d', 114, struct disklabel)/* get physical */
 #define DIOCRLDINFO	_IO('d', 115)                   /* reload disklabel */
 
-#endif LOCORE
+#endif /* LOCORE */
 .Ed
 .Sh SEE ALSO
 .Xr disktab 5 ,

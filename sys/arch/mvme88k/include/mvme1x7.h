@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme1x7.h,v 1.4 2001/03/07 23:37:17 miod Exp $ */
+/*	$OpenBSD: mvme1x7.h,v 1.5 2001/08/12 12:03:02 heko Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -100,4 +100,4 @@
 #define M187_IACK	U(0xFFFE0000)
 #define M197_IACK	U(0xFFF00100)
 
-#endif __MACHINE_MVME1X7_H__
+#endif /* __MACHINE_MVME1X7_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopdef.h,v 1.2 1996/09/21 19:11:43 maja Exp $ */
+/*	$OpenBSD: mopdef.h,v 1.3 2001/08/12 12:03:03 heko Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: mopdef.h,v 1.2 1996/09/21 19:11:43 maja Exp $
+ *	$OpenBSD: mopdef.h,v 1.3 2001/08/12 12:03:03 heko Exp $
  *
  */
 
@@ -193,6 +193,6 @@ extern char rc_mcst[];
 extern char dl_802_proto[];
 extern char rc_802_proto[];
 extern char lp_802_proto[];
-#endif	MOPDEF_SUPRESS_EXTERN
+#endif /* MOPDEF_SUPRESS_EXTERN */
 
-#endif _MOPDEF_H_
+#endif /* _MOPDEF_H_ */

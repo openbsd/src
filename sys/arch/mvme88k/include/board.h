@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.9 2001/03/07 23:37:15 miod Exp $ */
+/*	$OpenBSD: board.h,v 1.10 2001/08/12 12:03:02 heko Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -118,6 +118,6 @@
 #include <machine/mvme188.h>
 #endif
 
-#endif __MACHINE_BOARD_H__
+#endif /* __MACHINE_BOARD_H__ */
 
 

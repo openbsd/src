@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.h,v 1.3 1997/10/21 22:49:36 provos Exp $	*/
+/*	$OpenBSD: user.h,v 1.4 2001/08/12 12:03:01 heko Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,5 +41,5 @@ int USER_init __P((disk_t *, mbr_t *));
 int USER_modify __P((disk_t *, mbr_t *, off_t, off_t));
 int USER_print_disk __P((disk_t *));
 
-#endif _USER_H
+#endif /* _USER_H */
 

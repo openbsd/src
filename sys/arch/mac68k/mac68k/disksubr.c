@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.13 2000/10/18 21:00:36 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.14 2001/08/12 12:03:02 heko Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -574,7 +574,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	nlp->d_checksum = 0;
 	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
-#endif
+#endif /* #if 0 */
 	return (0);
 }
 
@@ -630,7 +630,7 @@ done:
 	return (error);
 #else
 	return 0;
-#endif
+#endif /* #if 0 */
 }
 
 /*
@@ -664,12 +664,12 @@ bounds_check_with_label(bp, lp, osdep, wlabel)
 	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
 #if LABELSECTOR != 0
 	    bp->b_blkno + p->p_offset + sz > LABELSECTOR + labelsect &&
-#endif
+#endif /* LABELSECTOR != 0 */
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
-#endif
+#endif /* #if 0 */
 
 #if defined(DOSBBSECTOR) && defined(notyet)
 	/* overwriting master boot record? */

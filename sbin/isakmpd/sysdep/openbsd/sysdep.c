@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.14 2001/07/06 15:46:16 niklas Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.15 2001/08/12 12:03:02 heko Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 #define KEY_API(x) pf_key_v2_##x
 #endif
 
-#endif NEED_SYSDEP_APP
+#endif /* NEED_SYSDEP_APP */
 #include "log.h"
 
 extern char *__progname;

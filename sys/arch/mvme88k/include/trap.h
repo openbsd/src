@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.9 2001/03/12 23:00:48 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.10 2001/08/12 12:03:02 heko Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -101,5 +101,5 @@ void m197_syscall(register_t code, struct m88100_saved_state *tf);
 #endif /* MVME197 */
 #endif /* _LOCORE */
 
-#endif __MACHINE_TRAP_H__
+#endif /* __MACHINE_TRAP_H__ */
 

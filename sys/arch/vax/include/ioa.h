@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioa.h,v 1.5 2000/04/26 03:08:41 bjc Exp $	*/
+/*	$OpenBSD: ioa.h,v 1.6 2001/08/12 12:03:03 heko Exp $	*/
 /*	$NetBSD: ioa.h,v 1.5 1999/04/12 20:57:52 pk Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -116,4 +116,4 @@ struct	ioa {
 #define IOA_TYPMSK 0xf0
 #define IOA_SBIA	0x10
 
-#endif VAX8600
+#endif /* VAX8600 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cia.h,v 1.3 1996/05/06 11:36:52 niklas Exp $	*/
+/*	$OpenBSD: cia.h,v 1.4 2001/08/12 12:03:02 heko Exp $	*/
 /*	$NetBSD: cia.h,v 1.9 1996/02/01 22:29:06 mycroft Exp $	*/
 
 /*
@@ -143,4 +143,4 @@ void dispatch_cia_ints __P((int, int));
 void ciaa_intr __P((void));
 void ciab_intr __P((void));
 
-#endif _AMIGA_CIA_
+#endif /* _AMIGA_CIA_ */

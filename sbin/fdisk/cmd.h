@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.5 2001/01/01 21:05:33 angelos Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.6 2001/08/12 12:03:01 heko Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -77,6 +77,6 @@ int Xhelp __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xflag __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xupdate __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 
-#endif _CMD_H
+#endif /* _CMD_H */
 
 

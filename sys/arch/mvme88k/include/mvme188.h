@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.5 2001/03/16 00:05:25 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.6 2001/08/12 12:03:02 heko Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -385,6 +385,6 @@ extern volatile unsigned int *int_mask_reg[MAX_CPUS];
 #define M188_IACK		U(0xFFF85000)
 #define M188_IVEC		0x40	/* vector returned upon MVME188 int */
 
-#endif	__MACHINE_MVME188_H__
+#endif /* __MACHINE_MVME188_H__ */
 
 

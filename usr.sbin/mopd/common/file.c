@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.3 1999/03/27 14:31:21 maja Exp $ */
+/*	$OpenBSD: file.c,v 1.4 2001/08/12 12:03:03 heko Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: file.c,v 1.3 1999/03/27 14:31:21 maja Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.4 2001/08/12 12:03:03 heko Exp $";
 #endif
 
 #include "os.h"
@@ -437,7 +437,7 @@ CheckAOutFile(fd)
 	} else {
 		return(-1);
 	}
-#endif NOAOUT
+#endif /* NOAOUT */
 }
 
 int
@@ -671,7 +671,7 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 	}
 
 	return(0);
-#endif NOAOUT
+#endif /* NOAOUT */
 }
 
 int

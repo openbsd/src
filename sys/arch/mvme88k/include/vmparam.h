@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.13 2001/06/27 06:19:49 art Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.14 2001/08/12 12:03:02 heko Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -162,4 +162,4 @@ struct pmap_physseg {
 };
 #endif /* _LOCORE */
 
-#endif	_MACHINE_VM_PARAM_
+#endif /* _MACHINE_VM_PARAM_ */

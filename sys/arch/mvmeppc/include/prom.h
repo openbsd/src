@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.1 2001/06/26 21:57:48 smurph Exp $ */
+/*	$OpenBSD: prom.h,v 1.2 2001/08/12 12:03:02 heko Exp $ */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -373,4 +373,4 @@ struct mvmeprom_args {
 #ifndef RB_NOSYM
 #define RB_NOSYM 0x400
 #endif
-#endif __MACHINE_PROM_H__
+#endif /* __MACHINE_PROM_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2001/07/01 23:27:46 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.11 2001/08/12 12:03:02 heko Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -201,4 +201,4 @@ int badvaddr __P((vm_offset_t va, int size));
 void nmihand __P((void *framep));
 
 #endif /* _KERNEL */
-#endif __MACHINE_CPU_H__
+#endif /* __MACHINE_CPU_H__ */

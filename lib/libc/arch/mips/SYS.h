@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $OpenBSD: SYS.h,v 1.5 1999/01/19 01:38:54 d Exp $ 
+ *      $OpenBSD: SYS.h,v 1.6 2001/08/12 12:03:01 heko Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -73,10 +73,10 @@
 # define PSEUDO(x,y)	__PSEUDO(_thread_sys_,x,y)
 # define SYSLEAF(x)	__LEAF2(_thread_sys_,x)
 # define SYSEND(x)	__END2(_thread_sys_,x)
-#else _THREAD_SAFE
+#else /* _THREAD_SAFE */
 # define RSYSCALL(x)	__RSYSCALL(,x)
 # define PSEUDO(x,y)	__PSEUDO(,x,y)
 # define SYSLEAF(x)	__LEAF2(,x)
 # define SYSEND(x)	__END2(,x)
-#endif _THREAD_SAFE
+#endif /* _THREAD_SAFE */
 

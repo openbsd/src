@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.3 2001/03/22 05:18:30 mickey Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.4 2001/08/12 12:03:03 heko Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: arcs.c,v 1.3 2001/03/22 05:18:30 mickey Exp $";
+static char rcsid[] = "$OpenBSD: arcs.c,v 1.4 2001/08/12 12:03:03 heko Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ int visited;
 int viable;
 int newcycle;
 int oldcycle;
-#endif DEBUG
+#endif /* DEBUG */
 
     /*
      *	add (or just increment) an arc
@@ -767,7 +767,7 @@ printsubcycle( clp )
 	printf( "\t(%d) -> %s\n" , (*arcpp) -> arc_count ,
 	    (*arcpp) -> arc_childp -> name ) ;
 }
-#endif DEBUG
+#endif /* DEBUG */
 
 void
 cycletime()

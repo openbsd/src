@@ -1,4 +1,4 @@
-/*	$OpenBSD: vid.h,v 1.6 2001/07/04 08:09:24 niklas Exp $	*/
+/*	$OpenBSD: vid.h,v 1.7 2001/08/12 12:03:02 heko Exp $	*/
 
 #ifndef __MACHINE_VID_H__
 #define __MACHINE_VID_H__
@@ -59,4 +59,4 @@ struct cfg {
 	unsigned char	cfg_4[196];
 };
 #endif
-#endif __MACHINE_VID_H__
+#endif /* __MACHINE_VID_H__ */

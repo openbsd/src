@@ -37,7 +37,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigreturn.S,v 1.3 1999/01/06 23:14:17 d Exp $"
+	.asciz "$OpenBSD: sigreturn.S,v 1.4 2001/08/12 12:03:01 heko Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
@@ -52,7 +52,7 @@
 	.globl _/**/x; .even; _/**/x:; moveml #0xC0C0,sp@-; .data; \
 	PROF/**/x:; .long 0; .text; lea PROF/**/x,a0; jbsr mcount; \
 	moveml sp@+,#0x0303
-#endif PROF
+#endif /* PROF */
 
 SYSENTRY(sigreturn)
 	trap	#1		/* signals sigreturn() */

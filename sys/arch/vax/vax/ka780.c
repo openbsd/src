@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka780.c,v 1.5 2000/04/27 01:10:12 bjc Exp $	*/
+/*	$OpenBSD: ka780.c,v 1.6 2001/08/12 12:03:03 heko Exp $	*/
 /*	$NetBSD: ka780.c,v 1.14 1999/08/07 10:36:49 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -298,7 +298,7 @@ memlog(m, mcr)
 	printf ("mcr%d: multiple errors, not traceable\n", m);
 	break;
 }
-#endif TRENDATA
+#endif /* TRENDATA */
 
 char *mc780[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13",
 	"14","15"};

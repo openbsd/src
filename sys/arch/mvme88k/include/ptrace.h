@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.5 2001/01/14 20:25:24 smurph Exp $ */
+/*	$OpenBSD: ptrace.h,v 1.6 2001/08/12 12:03:02 heko Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  *	@(#)ptrace.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ptrace.h,v 1.6 92/11/26 02:04:43 torek Exp  (LBL)
- * $Id: ptrace.h,v 1.5 2001/01/14 20:25:24 smurph Exp $
+ * $Id: ptrace.h,v 1.6 2001/08/12 12:03:02 heko Exp $
  */
 
 /*
@@ -57,4 +57,4 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
-#endif __MACHINE_PTRACE_H__
+#endif /* __MACHINE_PTRACE_H__ */

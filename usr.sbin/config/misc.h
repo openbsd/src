@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.1 1999/10/04 20:00:51 deraadt Exp $	*/
+/*	$OpenBSD: misc.h,v 1.2 2001/08/12 12:03:03 heko Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -40,5 +40,5 @@
 int ask_cmd __P((cmd_t *));
 int ask_yn __P((const char *));
 
-#endif _MISC_H
+#endif /* _MISC_H */
 

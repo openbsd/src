@@ -1,4 +1,4 @@
-/*	$OpenBSD: os.h,v 1.3 1997/08/18 03:11:31 millert Exp $ */
+/*	$OpenBSD: os.h,v 1.4 2001/08/12 12:03:03 heko Exp $ */
 
 /*
  * Copyright (c) 1994-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: os.h,v 1.3 1997/08/18 03:11:31 millert Exp $
+ *	$OpenBSD: os.h,v 1.4 2001/08/12 12:03:03 heko Exp $
  *
  */
 
@@ -56,4 +56,4 @@
 
 #define  DEV_NEW_CONF
 
-#endif _OS_H_
+#endif /* _OS_H_ */

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: abort.c,v 1.6 1998/11/20 11:18:49 d Exp $";
+static char *rcsid = "$OpenBSD: abort.c,v 1.7 2001/08/12 12:03:01 heko Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
@@ -57,9 +57,9 @@ abort()
 	sigdelset(&mask, SIGABRT);
 #ifdef _THREAD_SAFE
 	(void)_thread_sys_sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-#else  _THREAD_SAFE
+#else  /* _THREAD_SAFE */
 	(void)sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-#endif _THREAD_SAFE
+#endif /* _THREAD_SAFE */
 
 	/*
 	 * POSIX requires we flush stdio buffers on abort
@@ -78,9 +78,9 @@ abort()
 	(void)signal(SIGABRT, SIG_DFL);
 #ifdef _THREAD_SAFE
 	(void)_thread_sys_sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-#else  _THREAD_SAFE
+#else  /* _THREAD_SAFE */
 	(void)sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
-#endif _THREAD_SAFE
+#endif /* _THREAD_SAFE */
 	(void)kill(getpid(), SIGABRT);
 	exit(1);
 }
