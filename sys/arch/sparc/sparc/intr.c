@@ -68,6 +68,9 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
 #ifdef NS
 #include <netns/ns_var.h>
 #endif
