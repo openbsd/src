@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rwhod.8,v 1.11 2000/03/19 17:57:14 aaron Exp $
+.\"	$OpenBSD: rwhod.8,v 1.12 2001/02/08 15:03:19 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,13 +32,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"     $OpenBSD: rwhod.8,v 1.11 2000/03/19 17:57:14 aaron Exp $
+.\"     $OpenBSD: rwhod.8,v 1.12 2001/02/08 15:03:19 deraadt Exp $
 .\"
 .Dd December 11, 1993
 .Dt RWHOD 8
 .Os
 .Sh NAME
 .Nm rwhod
+.Op Ar d
 .Nd system status server
 .Sh SYNOPSIS
 .Nm rwhod
@@ -63,6 +64,13 @@ As a consumer of information, it listens for other
 servers' status messages, validating them, then recording
 them in a collection of files located in the directory
 .Pa /var/rwho .
+.Pp
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Turn on debug mode.
+.El
 .Pp
 The server transmits and receives messages at the port indicated
 in the ``who'' service specification; see
