@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.18 2001/07/07 00:10:49 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.19 2001/12/07 04:15:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.18 2001/07/07 00:10:49 millert Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.19 2001/12/07 04:15:08 millert Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -64,6 +64,7 @@ static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.18 2001/07/07 00:10:49 mi
 extern int pwd_gensalt __P((char *, int, struct passwd *, login_cap_t *, char));
 extern int pwd_check __P((struct passwd *, login_cap_t *, char *));
 extern int pwd_gettries __P((struct passwd *, login_cap_t *));
+extern void kbintr __P((int));
 
 char *ypgetnewpasswd __P((struct passwd *, login_cap_t *, char **));
 struct passwd *ypgetpwnam __P((char *));
@@ -193,6 +194,10 @@ ypgetnewpasswd(pw, lc, old_pass)
 	char *p;
 	int tries, pwd_tries;
 	char salt[_PASSWORD_LEN];
+	sig_t saveint, savequit;
+
+	saveint = signal(SIGINT, kbintr);
+	savequit = signal(SIGQUIT, kbintr);
 	
 	printf("Changing YP password for %s.\n", pw->pw_name);
 	if (old_pass) {
@@ -239,6 +244,9 @@ ypgetnewpasswd(pw, lc, old_pass)
 	p = strdup(crypt(buf, salt));
 	if (p == NULL)
 		pw_error(NULL, 1, 1);
+	(void)signal(SIGINT, saveint);
+	(void)signal(SIGQUIT, savequit);
+
 	return (p);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.23 2001/12/07 03:48:39 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.24 2001/12/07 04:15:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.23 2001/12/07 03:48:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.24 2001/12/07 04:15:08 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,9 +151,10 @@ getnewpasswd(pw, lc, authenticated)
 	char *p;
 	int tries, pwd_tries;
 	char buf[_PASSWORD_LEN+1], salt[_PASSWORD_LEN];
+	sig_t saveint, savequit;
 
-	(void)signal(SIGINT, kbintr);
-	(void)signal(SIGQUIT, kbintr);
+	saveint = signal(SIGINT, kbintr);
+	savequit = signal(SIGQUIT, kbintr);
 
 	if (!authenticated) {
 		(void)printf("Changing local password for %s.\n", pw->pw_name);
@@ -190,8 +191,8 @@ getnewpasswd(pw, lc, authenticated)
 		(void)printf("Couldn't generate salt.\n");
 		pw_error(NULL, 0, 0);
 	}
-	(void)signal(SIGINT, SIG_DFL);
-	(void)signal(SIGQUIT, SIG_DFL);
+	(void)signal(SIGINT, saveint);
+	(void)signal(SIGQUIT, savequit);
 
 	return(crypt(buf, salt));
 }
@@ -204,7 +205,7 @@ kbintr(signo)
 	struct iovec iv[5];
 	extern char *__progname;
 
-	iv[0].iov_base = "\nPassword unchanged.\n";
+	iv[0].iov_base = msg;
 	iv[0].iov_len = sizeof(msg) - 1;
 	iv[1].iov_base = __progname;
 	iv[1].iov_len = strlen(__progname);
