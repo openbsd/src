@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncr.4,v 1.3 1999/07/09 13:35:46 aaron Exp $
+.\"	$OpenBSD: ncr.4,v 1.4 2000/03/27 23:28:23 millert Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 15, 1997
+.Dd March 24, 2000
 .Dt NCR 4
 .Os
 .Sh NAME
@@ -32,15 +32,102 @@
 .Sh SYNOPSIS
 .Cd "ncr* at pci? dev ? function ?"
 .Cd "scsibus* at ncr?"
+.Pp
+.Cd "option FAILSAFE"
+.Cd "option NCR_CDROM_ASYNC"
+.Cd "option NCR_IOMAPPED"
+.Cd "option NCR_TEKRAM_EEPROM"
+.Cd "option NCR_VERBOSE=integer"
+.Cd "option SCSI_NCR_DFLT_TAGS=integer"
+.Cd "option SCSI_NCR_MAX_SYNC=integer"
+.Cd "option SCSI_NCR_MAX_WIDE=integer"
+.Cd "option SCSI_NCR_SYMBIOS_COMPAT"
+.Cd "option SCSI_NCR_TRUST_BIOS"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the NCR 53C810, 53C825, 53C860, and 53C875
-SCSI controller chips.
+driver provides support for the NCR (now Symbios) 53C810, 53C815, 53C820,
+53C825, 53C860, 53C875, 53C876, 53C885, 53C895, and 53C896
+.Tn SCSI
+controller chips.
+.Pp
+The following kernel configuration options are available:
+.Bl -ohang
+.It Cd option FAILSAFE
+Disables tagged command queuing and forces asynchronous transfers for
+.Tn CD-ROM
+devices.
+.It Cd option NCR_CDROM_ASYNC
+Always use asynchronous transfers with
+.Tn CD-ROM
+devices.
+By default, synchronous transfers are used if the
+.Tn CD-ROM
+supports it.
+.It Cd option NCR_IOMAPPED
+Attempt to access the controller chip via I/O port-mapped I/O, falling back
+to memory-mapped I/O if the I/O ports couldn't be mapped.
+By default, memory-mapped I/O is tried first.
+.It Cd option NCR_TEKRAM_EEPROM
+Enables support for reading the configuration
+.Tn EEPROM
+of the Tekram DC-390 series of
+.Tn SCSI
+cards.
+Enable this only if using a Tekram DC-390 card.
+.It Cd option NCR_VERBOSE=integer
+Specifies the verbosity of driver messages during a kernel boot.
+A value of 1 will provide extra information about the controller's
+capabilities and setup.  A value of 2 or greater will print information
+about the controller's registers.
+.It Cd option SCSI_NCR_DFLT_TAGS=integer
+Specifies the maximum number of tags per logical unit.
+Unless
+.Dv FAILSAFE
+is defined, the default value is 4.
+A value of 0 will disable tagged command queuing.
+.It Cd option SCSI_NCR_MAX_SYNC=integer
+Specifies the maximum synchronous transfer frequency to use, in kHz.
+A value of 0 means asynchronous transfers only.
+The default is 25000 (25MHz), but the actual value used depends on
+the type of controller chip and what its maximum transfer rate is.
+For controllers supporting fast transfers only, this is 10000 (10MHz).
+If wide transfers are supported, the value is 20000 (20MHz).
+.It Cd option SCSI_NCR_MAX_WIDE=integer
+Specifies the maximum
+.Tn SCSI
+bus width, with 0 meaning 8 bits and 1 meaning 16 bits.
+Defaults to 1 on chips that support wide
+.Tn SCSI ,
+0 otherwise.
+Set this to 0 to disable wide transfers even if both controller
+and device support them (e.g. when using a wide controller and wide
+drive through a narrow cable).
+.It Cd option SCSI_NCR_SYMBIOS_COMPAT
+Enables the use of the GPIO register as a disk activity indicator.
+Enable this if the activity LED isn't working, but make sure the
+card doesn't use GPIO for something else.
+Cards known to support this:
+ASUS SC875, Diamond FirePort 40, and Symbios SYM8751S.
+.It Cd option SCSI_NCR_TRUST_BIOS
+Specifies that the driver should use the register configuration set by the
+firmware instead of configuring the chip itself.
+.El
+.Sh BUGS
+Some Quantum drives (specifically the Atlas series) return
+.Dq queue full
+responses when a very small number of tags is used which can confuse
+the driver.  With such drives, you can use
+.Bd -literal
+option  SCSI_NCR_DFLT_TAGS=0
+
+.Ed
+in your kernel configuration file to disable tagged command queuing.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
 .Xr intro 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4 ,
 .Xr uk 4
