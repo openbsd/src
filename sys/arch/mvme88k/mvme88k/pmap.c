@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.37 2001/07/25 13:25:32 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.38 2001/08/12 00:17:45 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -61,7 +61,6 @@
 #include <uvm/uvm.h>
 
 #include <machine/asm_macro.h>
-#include <machine/assert.h>
 #include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu_number.h>
@@ -1040,8 +1039,6 @@ pmap_bootstrap(vm_offset_t load_start,
 		      0,
 		      0x10000,
 		      (VM_PROT_WRITE | VM_PROT_READ)|(CACHE_INH <<16));
-
-	assert(vaddr == trunc_page((unsigned)&kernelstart));
 
 	/*  map the kernel text read only */
 	vaddr = PMAPER(
@@ -4360,8 +4357,6 @@ pmap_range_add(pmap_range_t *ranges, vm_offset_t start, vm_offset_t end)
 	range->start = start;
 
 start_overlaps:
-	assert((range->start <= start) && (start <= range->end));
-
 	/* delete redundant ranges */
 
 	while ((range->next != 0) && (range->next->start <= end)) {
