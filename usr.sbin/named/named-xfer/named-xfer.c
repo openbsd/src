@@ -1,4 +1,4 @@
-/*	$OpenBSD: named-xfer.c,v 1.6 1998/05/22 07:09:23 millert Exp $	*/
+/*	$OpenBSD: named-xfer.c,v 1.7 1998/08/16 21:20:03 millert Exp $	*/
 
 /*
  * The original version of xfer by Kevin Dunlap.
@@ -97,7 +97,7 @@ char copyright[] =
 static char sccsid[] = "@(#)named-xfer.c	4.18 (Berkeley) 3/7/91";
 static char rcsid[] = "$From: named-xfer.c,v 8.24 1998/04/07 04:59:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.6 1998/05/22 07:09:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.7 1998/08/16 21:20:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -665,7 +665,7 @@ getzone(zp, serial_no, port)
 			continue;
 		}
 		if (len > bufsize) {
-			if ((buf = (u_char *)realloc(buf, len)) == NULL) {
+			if ((tmp = (u_char *)realloc(buf, len)) == NULL) {
 				syslog(LOG_INFO,
 		       "malloc(%u) failed for SOA from server [%s], zone %s\n",
 				       len,
@@ -674,6 +674,7 @@ getzone(zp, serial_no, port)
 				(void) my_close(s);
 				continue;
 			}
+			buf = tmp;
 			bufsize = len;
 		}
 		if (netread(s, (char *)buf, len, XFER_TIMER) < 0) {
@@ -906,8 +907,8 @@ getzone(zp, serial_no, port)
 				if ((len = _getshort(buf)) == 0)
 					break;
 				if (len > bufsize) {
-					buf = (u_char *)realloc(buf, len);
-					if (buf == NULL) {
+					tmp = (u_char *)realloc(buf, len);
+					if (tmp == NULL) {
 						syslog(LOG_INFO,
 		    "malloc(%u) failed for packet from server [%s], zone %s\n",
 						       len,
@@ -916,6 +917,7 @@ getzone(zp, serial_no, port)
 						error++;
 						break;
 					}
+					buf = tmp;
 					bufsize = len;
 				}
 				hp = (HEADER *)buf;

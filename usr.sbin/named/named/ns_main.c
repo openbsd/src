@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.15 1998/08/14 15:07:36 millert Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.16 1998/08/16 21:20:07 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.15 1998/08/14 15:07:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.16 1998/08/16 21:20:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1037,14 +1037,16 @@ main(argc, argv, envp)
 					if (sp->s_size > sp->s_bufsize &&
 					    sp->s_bufsize != 0
 					) {
-					    sp->s_buf = (u_char *)
-						realloc((char *)sp->s_buf,
-							(unsigned)sp->s_size);
-					    if (sp->s_buf == NULL) {
+					    u_char *s_buf = (u_char *)
+						realloc((void *)sp->s_buf,
+							(size_t)sp->s_size);
+					    if (s_buf == NULL) {
+						free(sp->s_buf);
 						sp->s_buf = buf;
 						sp->s_bufsize = 0;
 						sp->s_size = sizeof(buf);
 					    } else {
+						sp->s_buf = s_buf;
 						sp->s_bufsize = sp->s_size;
 					    }
 					}
