@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.1 2001/06/26 17:37:27 kjell Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.2 2001/07/01 22:09:09 angelos Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -116,5 +116,20 @@ nat kue0 ! 157.161.48.183 -> 157.161.48.183
 rdr kue0 157.161.48.183/32 port 8080 -> 10.1.2.151 port 22 proto tcp
 rdr kue0 157.161.48.183/32 port 8080 -> 10.1.2.151 port 53 proto udp
 .Ed
+.Sh FILES
+.Bl -tag -width "/etc/nat.conf" -compact
+.It Pa /etc/hosts
+.It Pa /etc/nat.conf
+.It Pa /etc/services
+.El
 .Sh SEE ALSO
+.Xr pf 4 ,
+.Xr hosts 5 ,
+.Xr pf.conf 5 ,
+.Xr services 5 ,
 .Xr pfctl 8
+.Sh HISTORY
+The
+.Nm
+file format appeared in
+.Ox 3.0 .
