@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.15 2003/12/29 08:51:19 otto Exp $	*/
+/*	$OpenBSD: jot.c,v 1.16 2003/12/30 19:41:48 otto Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: jot.c,v 1.15 2003/12/29 08:51:19 otto Exp $";
+static const char rcsid[] = "$OpenBSD: jot.c,v 1.16 2003/12/30 19:41:48 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -56,7 +56,6 @@ static const char rcsid[] = "$OpenBSD: jot.c,v 1.15 2003/12/29 08:51:19 otto Exp
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #define	REPS_DEF	100
 #define	BEGIN_DEF	1
@@ -138,6 +137,8 @@ main(int argc, char *argv[])
 			if (!sscanf(argv[3], "%lf", &s))
 				errx(1, "Bad s value:  %s", argv[3]);
 			mask |= 01;
+			if (randomize)
+				warnx("random seeding not supported");
 		}
 	case 3:
 		if (!is_default(argv[2])) {
@@ -225,7 +226,7 @@ main(int argc, char *argv[])
 			mask = 015;
 			break;
 		case 012:
-			s = (randomize ? time(NULL) : STEP_DEF);
+			s = STEP_DEF;
 			mask = 013;
 			break;
 		case 013:
@@ -237,7 +238,7 @@ main(int argc, char *argv[])
 			mask = 0;
 			break;
 		case 014:
-			s = (randomize ? time(NULL) : STEP_DEF);
+			s = STEP_DEF;
 			mask = 015;
 			break;
 		case 015:
@@ -248,9 +249,7 @@ main(int argc, char *argv[])
 			mask = 0;
 			break;
 		case 016:
-			if (randomize)
-				s = time(NULL);
-			else if (reps == 0)
+			if (reps == 0)
 				errx(1, "Infinite sequences cannot be bounded");
 			else if (reps == 1)
 				s = 0.0;
@@ -276,7 +275,7 @@ main(int argc, char *argv[])
 	if (randomize) {
 		x = (ender - begin) * (ender > begin ? 1 : -1);
 		for (i = 1; i <= reps || infinity; i++) {
-			y = (double) arc4random() / UINT_MAX;
+			y = arc4random() / ((double)0xffffffff + 1);
 			putdata(y * x + begin, reps - i == 0 && !infinity);
 		}
 	}

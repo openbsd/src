@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jot.1,v 1.12 2003/12/18 11:51:13 jmc Exp $
+.\"	$OpenBSD: jot.1,v 1.13 2003/12/30 19:41:48 otto Exp $
 .\"	$NetBSD: jot.1,v 1.2 1994/11/14 20:27:36 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -103,7 +103,7 @@ in which case the data is inserted rather than appended.
 .Pp
 The last four arguments indicate, respectively,
 the maximum number of data, the lower bound, the upper bound,
-and the step size or, for random data, the seed.
+and the step size.
 While at least one of them must appear,
 any of the other three may be omitted, and
 will be considered as such if given as
@@ -122,9 +122,7 @@ and
 are given.
 .Pp
 Defaults for the four arguments are, respectively,
-100, 1, 100, and 1, except that when random data are requested,
-.Ar s
-defaults to a seed depending upon the time of day.
+100, 1, 100, and 1.
 .Ar reps
 is expected to be an unsigned integer,
 and if given as zero is taken to be infinite.
@@ -137,6 +135,12 @@ The last argument must be a real number.
 .Pp
 Random numbers are obtained through
 .Xr arc4random 3 .
+Historical versions of
+.Nm
+used
+.Ar s
+to seed the random number generator.
+This is no longer supported.
 The name
 .Nm
 derives in part from
