@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.33 2004/04/18 01:14:54 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.34 2004/04/25 01:49:12 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -1403,54 +1403,58 @@ siop_scsicmd(xs)
 	TAILQ_INSERT_TAIL(&sc->ready_list, siop_cmd, next);
 
 	siop_start(sc);
-	if (xs->flags & SCSI_POLL) {
-		/* poll for command completion */
-		for(i = xs->timeout; i > 0; i--) {
-			siop_intr(sc);
-			if (xs->flags & ITSDONE) {
-				if ((xs->cmd->opcode == INQUIRY)
-				    && (xs->error == XS_NOERROR)) {
-					error = ((struct scsi_inquiry_data *)xs->data)->device & SID_QUAL;
-					if (error != SID_QUAL_BAD_LU) {
-						/* 
-						 * Allocate enough commands to hold at least max openings
-						 * worth of commands. Do this statically now 'cuz 
-						 * a) We can't rely on the upper layers to ask for more
-						 * b) Doing it dynamically in siop_startcmd may cause 
-						 *    calls to bus_dma* functions in interrupt context
-						 */
-						for (j = 0; j < SIOP_NTAG; j += SIOP_NCMDPB)
-							siop_morecbd(sc);
-						if (sc->sc_c.targets[target]->status == TARST_PROBING)
-							sc->sc_c.targets[target]->status = TARST_ASYNC;
-
-						/* Set TARF_DT here because if it is turned off during PPR, it must STAY off! */
-						if ((lun == 0) && 
-						    (sc->sc_c.features & SF_BUS_ULTRA3))
- 							sc->sc_c.targets[target]->flags |= TARF_DT;
-						/* Can't do lun 0 here, because flags not set yet */
-						/* But have to do other lun's here because they never go through TARST_ASYNC */
-						if (lun > 0)
-							siop_add_dev(sc, target, lun);
-					}
-				}
-				break;
-			}
-			delay(1000);
-		}
+	if ((xs->flags & SCSI_POLL) == 0) {
 		splx(s);
-		if (i == 0) {
-			siop_timeout(siop_cmd);
-			while ((xs->flags & ITSDONE) == 0) {
-				s = splbio();
-				siop_intr(sc);
-				splx(s);
-			}
-		}
-		return (COMPLETE);
+		return (SUCCESSFULLY_QUEUED);
 	}
+
+	/* Poll for command completion. */
+	for(i = xs->timeout; i > 0; i--) {
+		siop_intr(sc);
+		if ((xs->flags & ITSDONE) == 0) {
+			delay(1000);
+			continue;
+		}
+		if (xs->cmd->opcode == INQUIRY && xs->error == XS_NOERROR) {
+			struct scsi_inquiry_data *inqbuf =
+			    (struct scsi_inquiry_data *)xs->data;
+		 	if ((inqbuf->device & SID_QUAL) == SID_QUAL_BAD_LU)
+				break;
+			/* 
+			 * Allocate cbd's to hold maximum openings worth of
+			 * commands. Do this now because doing it dynamically in
+			 * siop_startcmd may cause calls to bus_dma* functions
+			 * in interrupt context.
+			 */
+			for (j = 0; j < SIOP_NTAG; j += SIOP_NCMDPB)
+				siop_morecbd(sc);
+			if (sc->sc_c.targets[target]->status == TARST_PROBING)
+				sc->sc_c.targets[target]->status = TARST_ASYNC;
+
+			/*
+			 * Set TARF_DT here because if it is turned off during
+			 * PPR, it must STAY off!
+			 */
+			if ((lun == 0) && (sc->sc_c.features & SF_BUS_ULTRA3))
+				sc->sc_c.targets[target]->flags |= TARF_DT;
+			/*
+			 * Can't do lun 0 here, because flags are not set yet.
+			 * But have to do other lun's here because they never go
+			 * through TARST_ASYNC.
+			 */
+			if (lun > 0)
+				siop_add_dev(sc, target, lun);
+		}
+		break;
+	}
+	if (i == 0) {
+		siop_timeout(siop_cmd);
+		while ((xs->flags & ITSDONE) == 0)
+			siop_intr(sc);
+	}
+
 	splx(s);
-	return (SUCCESSFULLY_QUEUED);
+	return (COMPLETE);
 }
 
 void
