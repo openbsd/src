@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.54 2002/12/31 16:22:25 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.55 2003/01/06 05:57:32 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -602,7 +602,7 @@ __devitem(mouse-, mouse-*, "mouse link")dnl
 __devitem(mouse, mouse, mouse (provides events, for X11))dnl
 __devitem(amouse, mouse*, Amiga mice)dnl
 __devitem(lkm, lkm, loadable kernel modules interface)dnl
-_cdev(lkm, lkm, {-major_lkm_c-}, 0, 640, kmem)dnl
+_cdev(lkm, lkm, {-major_lkm_c-}, 0, 640, _lkm)dnl
 __devitem(mmcl, mmclock, memory mapped clock)dnl
 __devitem(tun, tun*, network tunnel driver)dnl
 __devitem(rnd, *random, inkernel random data source)dnl
