@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.57 2003/04/29 21:19:25 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.58 2004/06/08 18:06:53 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4513,7 +4513,6 @@ Lsw_panic_srun:
  * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
  * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
  */
-	.globl	_C_LABEL(runtime)
 	.globl	_C_LABEL(time)
 ENTRY(cpu_switch)
 	/*
@@ -4556,15 +4555,6 @@ ENTRY(cpu_switch)
 
 Lsw_scan:
 	nop; nop; nop				! paranoia
-	/*
-	 * We're about to run a (possibly) new process.  Set runtime
-	 * to indicate its start time.
-	 */
-	sethi	%hi(_C_LABEL(time)), %o0
-	ldd	[%o0 + %lo(_C_LABEL(time))], %o2
-	sethi	%hi(_C_LABEL(runtime)), %o0
-	std	%o2, [%o0 + %lo(_C_LABEL(runtime))]
-
 	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
 
 	/*
