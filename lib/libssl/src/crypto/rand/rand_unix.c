@@ -125,40 +125,21 @@
 #include <time.h>
 
 #ifdef __OpenBSD__
-#undef DEVRANDOM
-#define DEVRANDOM "/dev/arandom"
 int RAND_poll(void)
 {
-        unsigned long l;
-        pid_t curr_pid = getpid();
-        FILE *fh;
+	u_int32_t rnd = 0, i;
+	unsigned char buf[ENTROPY_NEEDED];
 
-        /* Use a random entropy pool device. Linux, FreeBSD and OpenBSD
-         * have this. Use /dev/urandom if you can as /dev/random may block
-         * if it runs out of random entries.  */
+	for (i = 0; i < sizeof(buf); i++) {
+		if (i % 4 == 0)
+			rnd = arc4random();
+		buf[i] = rnd;
+		rnd >>= 8;
+	}
+	RAND_add(buf, sizeof(buf), ENTROPY_NEEDED);
+	memset(buf, 0, sizeof(buf));
 
-        if ((fh = fopen(DEVRANDOM, "r")) != NULL)
-                {
-                unsigned char tmpbuf[ENTROPY_NEEDED];
-                int n;
-
-                setvbuf(fh, NULL, _IONBF, 0);
-                n=fread((unsigned char *)tmpbuf,1,ENTROPY_NEEDED,fh);
-                fclose(fh);
-                RAND_add(tmpbuf,sizeof tmpbuf,n);
-                memset(tmpbuf,0,n);
-                }
-
-        /* put in some default random data, we need more than just this */
-        l=curr_pid;
-        RAND_add(&l,sizeof(l),0);
-        l=getuid();
-        RAND_add(&l,sizeof(l),0);
-
-        l=time(NULL);
-        RAND_add(&l,sizeof(l),0);
-
-        return 1;
+	return 1;
 }
 #else
 int RAND_poll(void)
