@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.35 1998/03/19 07:36:11 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.36 1999/02/24 22:59:43 angelos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.35 1998/03/19 07:36:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.36 1999/02/24 22:59:43 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,6 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.35 1998/03/19 07:36:11 deraadt Exp 
 #include <sys/socket.h>
 #include <vm/vm_param.h>
 #include <machine/cpu.h>
-
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -77,7 +76,7 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.35 1998/03/19 07:36:11 deraadt Exp 
 #include <netipx/spx_var.h>
 #include <ddb/db_var.h>
 #include <dev/rndvar.h>
-#include <net/encap.h>
+#include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
 
 #include <err.h>
@@ -392,7 +391,7 @@ parse(string, flags)
 				break;
 			return;
 		}
-		if (mib[1] == PF_ENCAP) {
+		if (mib[1] == PF_KEY_V2) {
 			len = sysctl_ipsec(string, &bufp, mib, flags, &type);
 			if (len >= 0)
 				break;
@@ -886,11 +885,11 @@ sysctl_bios(string, bufpp, mib, flags, typep)
 }
 #endif
 
-struct ctlname encapname[] = ENCAPCTL_NAMES;
+struct ctlname encapname[] = PFKEYCTL_NAMES;
 struct ctlname ipsecname[] = CTL_IPSEC_NAMES;
 struct list ipseclist = { ipsecname, IPSECCTL_MAXID };
 struct list ipsecvars[] = {
-	{ encapname, ENCAPCTL_MAXID }, 
+	{ encapname, IPSECCTL_MAXID }, 
 };
 
 /*
