@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.151 2004/04/26 01:43:13 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.152 2004/04/26 09:35:39 markus Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -450,11 +450,11 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			msgbuf_init(&peer->wbuf);
 
 			/* init pfkey */
-			if (pfkey_auth_establish(peer) == -1) {
+			if (pfkey_establish(peer) == -1) {
 				log_peer_warnx(&peer->conf,
-				    "pfkey_auth setup failed");
+				    "pfkey setup failed");
 				return;
-			}
+			} 
 
 			if (peer->conf.passive || peer->conf.template) {
 				change_state(peer, STATE_ACTIVE, event);
@@ -720,7 +720,7 @@ change_state(struct peer *peer, enum session_state state,
 		msgbuf_clear(&peer->wbuf);
 		free(peer->rbuf);
 		peer->rbuf = NULL;
-		pfkey_auth_remove(peer);
+		pfkey_remove(peer);
 		if (peer->state == STATE_ESTABLISHED)
 			session_down(peer);
 		if (event != EVNT_STOP && !peer->conf.cloned) {
