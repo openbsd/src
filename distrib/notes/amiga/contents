@@ -7,8 +7,8 @@ out as follows:
 
 		kernels/	A generic OpenBSD kernel is found here.
 
-		miniroots/	amiga installation and upgrade
-				file system images; see below.
+		miniroots/	An amiga installation and upgrade
+				file system image; see below.
 
 		tars/		amiga binary distribution sets;
 				see below.
@@ -20,41 +20,28 @@ out as follows:
 				installation utilities; see
 				installation section, below.
 
-There are two amiga file system images to be found in the "amiga/miniroots"
-subdirectory of the OpenBSD 2.1 distribution.  One of them is a upgrade
-image and one is an installation image. They are described in more
-detail below.  There are gzipped versions of each available, for easier
-downloading.  (The gzipped version have the ".gz" extension added to
-their names.)
+There is one amiga file system image to be found in the "amiga/miniroots"
+subdirectory of the OpenBSD 2.1 distribution.  It's a combined upgrade
+and installation image.  It's described in more detail below.  There is
+a gzipped version available, for easier downloading.  (The gzipped version
+has the ".gz" extension added to its name.)
 
-Installation file system:
+Installation/upgrade file system:
 
 	This file contains a BSD root file system setup to help
-	you install the rest of OpenBSD.  This includes formatting
-	and mounting your root and /usr partitions and getting
+	you install or upgrade the rest of OpenBSD.  This includes
+	formatting root and /usr partitions in the case of an install
+	or converting existing ones if doing an upgrade (this conversion
+	is only needed if you are coming from a real old NetBSD world),
+	then mounting your root and /usr partitions and getting
 	ready to extract (and possibly first fetching) the distribution
 	sets.  There is enough on this file system to allow you to
 	make a slip or ppp connection, configure an ethernet, mount an
 	NFS file system or ftp.  You can also load distribution sets from
 	a SCSI tape or from one of your existing AmigaDOS partitions.
 
-	This file is named "inst-21.fs".
+	This file is named "miniroot21.fs".
 
-
-Upgrade file system:
-
-	This file contains a BSD root file system setup to help
-	you upgrade a previous version of OpenBSD.  This includes
-	converting existing partitions and mounting your root and
-	/usr partitions and getting ready to extract (and possibly
-	first fetching) the distribution sets.  There is enough on
-	this file system to allow you to make a slip or ppp connection,
-	configure an ethernet, mount an NFS file system or ftp.
-	You can also load distribution sets from a SCSI tape, from
-	one of your existing AmigaDOS partitions, or from an existing
-	OpenBSD partition.
-
-	This file is named "upgr-21.fs".
 
 The OpenBSD/amiga binary distribution sets contain the binaries which
 comprise the OpenBSD 2.1 release for the amiga.  There are seven binary
@@ -71,24 +58,24 @@ the name given in the table below):
 		everything described below.
 		[ 11M gzipped, 35M uncompressed ]
 
-	comp21	The OpenBSD/amiga Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN (yes, there are two!).
-		This set includes the system include files
-		(/usr/include), the linker, the compiler tool chain,
-		and the various system libraries (except the shared
-		libraries, which are included as part of the base
-		set).  This set also includes the manual pages for all
-		of the utilities it contains, as well as the system
-		call and library manual pages.
+	comp21	The OpenBSD/amiga Compiler tools.  The C, C++, and
+		FORTRAN language environments are supported.  This set
+		includes the system include files (/usr/include), the
+		linker, the compiler tool chain, and the various system
+		libraries (except the shared libraries, which are
+		included as part of the base set).  This set also
+		includes the manual pages for all of the utilities it
+		contains, as well as the system call and library manual
+		pages.
 		[ 7M gzipped, 23M uncompressed ]
 
-	etc21	This distribution set contains the system
-		configuration files that reside in /etc and in several
-		other places.  This set MUST be installed if you are
-		installing the system from scratch, but should NOT be
-		used if you are upgrading.  (If you are upgrading,
-		it's recommended that you get a copy of this set and
-		CAREFULLY upgrade your configuration files by hand.)
+	etc21	This distribution set contains the system configuration
+		files that reside in /etc and in several other places.
+		This set MUST be installed if you are installing the
+		system from scratch, but should NOT be used if you are
+		upgrading.  (If you are upgrading, it's recommended that
+		you get a copy of this set and CAREFULLY upgrade your
+		configuration files by hand.)
 		[ 70K gzipped, 380K uncompressed ]
 
 	game21	This set includes the games and their manual pages.
