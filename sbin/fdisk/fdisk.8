@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.8 1997/09/30 00:10:34 mickey Exp $
+.\"	$OpenBSD: fdisk.8,v 1.9 1997/10/16 10:17:53 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -79,14 +79,8 @@ When called with no special flags, it prints the MBR partition
 table of the specified device, ie.
 .Bd -literal
     # fdisk fd0
-    Disk: fd0
-    Disk GEO: 80/2/18
-    Bios GEO: 80/2/18
-
-    Disk offset: 0
-    NT Serial#: 0
-    Signature: 0xAA55
-
+    Disk: fd0       geometry: 80/2/18 [2880 sectors]
+    Offset: 0       Signatures: 0xAA55,0x6F727265
              Starting        Ending
      #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
     ----------------------------------------------------------------------
@@ -166,7 +160,7 @@ explanations are given below.
 This command gives you a list of commands that
 .Nm
 understands in the interactive edit mode.
-.It Em init
+.It Em reinit
 This command initializes the currently selected, in memory copy, of the
 boot block.
 .It Em disk
@@ -198,6 +192,12 @@ This will exit the current level of fdisk, either returning to the
 previously selected in memory copy of a boot block, or exit the
 program if there is none.
 .It Em quit
+This will exit the current level of fdisk, either returning to the
+previously selected in memory copy of a boot block, or exit the
+program if there is none.  Unlike
+.Em exit
+it does NOT write the modified block out.
+.It Em abort
 Quit program without saving current changes.
 .El
 .Pp
