@@ -497,15 +497,3 @@ again:
 	fatal("Your host does not have line printer access");
 	/*NOTREACHED*/
 }
-
-
-
-
-
-
-
-
-
-
-
-
