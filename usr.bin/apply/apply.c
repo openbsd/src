@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.5 1997/08/31 08:25:55 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.6 1999/12/03 23:55:18 deraadt Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.5 1997/08/31 08:25:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.6 1999/12/03 23:55:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,7 @@ main(argc, argv)
 		 * there's enough space to build it.
 		 */
 		for (l = strlen(cmd), i = 0; i < nargs; i++)
-			l += strlen(argv[i]);
+			l += strlen(argv[i+1]);
 		if (l > clen && (c = realloc(c, clen = l)) == NULL)
 			err(1, NULL);
 
