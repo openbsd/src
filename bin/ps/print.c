@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.19 2001/11/07 08:19:43 miod Exp $	*/
+/*	$OpenBSD: print.c,v 1.20 2001/11/07 08:23:08 miod Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.19 2001/11/07 08:19:43 miod Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.20 2001/11/07 08:23:08 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ static char rcsid[] = "$OpenBSD: print.c,v 1.19 2001/11/07 08:19:43 miod Exp $";
 
 #include <sys/ucred.h>
 #include <sys/sysctl.h>
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <err.h>
 #include <grp.h>
