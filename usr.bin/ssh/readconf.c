@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.20 1999/11/24 20:19:37 markus Exp $");
+RCSID("$Id: readconf.c,v 1.21 1999/11/24 20:24:09 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -229,7 +229,7 @@ process_config_line(Options *options, const char *host,
 		    char *line, const char *filename, int linenum,
 		    int *activep)
 {
-	char buf[256], *cp, *string, **charptr;
+	char buf[256], *cp, *string, **charptr, *cp2;
 	int opcode, *intptr, value, fwd_port, fwd_host_port;
 
 	/* Skip leading whitespace. */
@@ -420,17 +420,11 @@ parse_int:
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		if (cp[0] < '0' || cp[0] > '9')
 			fatal("%.200s line %d: Bad number.", filename, linenum);
-#if 0
-		value = atoi(cp);
-#else
-		{
-			char *ptr;
-			/* Octal, decimal, or hex format? */
-			value = strtol(cp, &ptr, 0);
-			if (cp == ptr)
-				fatal("%.200s line %d: Bad number.", filename, linenum);
-		}
-#endif
+
+		/* Octal, decimal, or hex format? */
+		value = strtol(cp, &cp2, 0);
+		if (cp == cp2)
+			fatal("%.200s line %d: Bad number.", filename, linenum);
 		if (*activep && *intptr == -1)
 			*intptr = value;
 		break;
