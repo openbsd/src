@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $	*/
+/*	$OpenBSD: stack.c,v 1.3 2003/09/28 19:29:33 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: stack.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: stack.c,v 1.3 2003/09/28 19:29:33 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -119,15 +119,15 @@ stack_dup(struct stack *stack)
 static void
 stack_grow(struct stack *stack)
 {
-	int old_size, i;
+	int new_size, i;
 
 	if (++stack->sp == stack->size) {
-		old_size = stack->size;
-		stack->size *= 2;
+		new_size = stack->size * 2 + 1;
 		stack->stack = brealloc(stack->stack,
-		    ++stack->size * sizeof(*stack->stack));
-		for (i = old_size; i < stack->size; i++)
+		    new_size * sizeof(*stack->stack));
+		for (i = stack->size; i < new_size; i++)
 			stack->stack[i].array = NULL;
+		stack->size = new_size;
 	}
 }
 

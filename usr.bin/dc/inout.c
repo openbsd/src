@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.3 2003/09/19 19:06:29 deraadt Exp $	*/
+/*	$OpenBSD: inout.c,v 1.4 2003/09/28 19:29:32 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: inout.c,v 1.3 2003/09/19 19:06:29 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: inout.c,v 1.4 2003/09/28 19:29:32 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -214,7 +214,7 @@ readnumber(struct source *src, u_int base)
 char *
 read_string(struct source *src)
 {
-	int count, i, sz, ch;
+	int count, i, sz, new_sz, ch;
 	char *p;
 
 	count = 1;
@@ -230,8 +230,9 @@ read_string(struct source *src)
 		if (count == 0)
 			break;
 		if (i == sz) {
-			sz *= 2;
-			p = brealloc(p, sz + 1);
+			new_sz = sz * 2;
+			p = brealloc(p, new_sz + 1);
+			sz = new_sz;
 		}
 		p[i++] = ch;
 	}
