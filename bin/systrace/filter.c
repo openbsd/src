@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.25 2003/04/24 09:49:06 mpech Exp $	*/
+/*	$OpenBSD: filter.c,v 1.26 2003/05/29 00:39:12 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -134,19 +134,36 @@ filter_match(struct intercept_pid *icpid, struct intercept_tlq *tls,
 int
 filter_predicate(struct intercept_pid *icpid, struct predicate *pdc)
 {
-	int negative;
+	int pidnr, pdcnr;
 	int res = 0;
 
 	if (!pdc->p_flags)
 		return (1);
 
-	negative = pdc->p_flags & PREDIC_NEGATIVE;
-	if (pdc->p_flags & PREDIC_UID)
-		res = icpid->uid == pdc->p_uid;
-	else if (pdc->p_flags & PREDIC_GID)
-		res = icpid->gid == pdc->p_gid;
+	if (pdc->p_flags & PREDIC_UID) {
+		pidnr = icpid->uid;
+		pdcnr = pdc->p_uid;
+	} else {
+		pidnr = icpid->gid;
+		pdcnr = pdc->p_gid;
+	}
 
-	return (negative ? !res : res);
+	switch (pdc->p_flags & PREDIC_MASK) {
+	case PREDIC_NEGATIVE:
+		res = pidnr != pdcnr;
+		break;
+	case PREDIC_LESSER:
+		res = pidnr < pdcnr;
+		break;
+	case PREDIC_GREATER:
+		res = pidnr > pdcnr;
+		break;
+	default:
+		res = pidnr == pdcnr;
+		break;
+	}
+
+	return (res);
 }
 
 short

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.20 2002/12/09 07:24:56 itojun Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.21 2003/05/29 00:39:12 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -69,6 +69,9 @@ struct filter {
 #define PREDIC_UID	0x01
 #define PREDIC_GID	0x02
 #define PREDIC_NEGATIVE	0x10
+#define PREDIC_LESSER	0x20
+#define PREDIC_GREATER	0x30
+#define PREDIC_MASK	0x30
 		int p_flags;
 		uid_t p_uid;
 		gid_t p_gid;
