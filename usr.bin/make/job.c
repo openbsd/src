@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.23 2000/02/01 03:23:32 deraadt Exp $	*/
+/*	$OpenBSD: job.c,v 1.24 2000/03/26 16:08:27 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.23 2000/02/01 03:23:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.24 2000/03/26 16:08:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -299,7 +299,7 @@ static int JobPrintCommand __P((ClientData, ClientData));
 static int JobSaveCommand __P((ClientData, ClientData));
 static void JobClose __P((Job *));
 #ifdef REMOTE
-static int JobCmpRmtID __P((Job *, int));
+static int JobCmpRmtID __P((Job *, ClientData));
 # ifdef RMT_WILL_WATCH
 static void JobLocalInput __P((int, Job *));
 # endif
@@ -479,7 +479,7 @@ JobCmpRmtID(job, rmtID)
     ClientData      job;	/* job to examine */
     ClientData      rmtID;	/* remote id desired */
 {
-    return(*(int *) rmtID - *(int *) job->rmtID);
+    return *(int *) rmtID - *(int *) job->rmtID;
 }
 #endif
 
@@ -3088,10 +3088,10 @@ JobFlagForMigration(hostID)
 	(void) fprintf(stdout, "JobFlagForMigration(%d) called.\n", hostID);
 	(void) fflush(stdout);
     }
-    jnode = Lst_Find(jobs, JobCmpRmtID, (ClientData)hostID);
+    jnode = Lst_Find(jobs, JobCmpRmtID, (ClientData)&hostID);
 
     if (jnode == NULL) {
-	jnode = Lst_Find(stoppedJobs, JobCmpRmtID, (ClientData)hostID);
+	jnode = Lst_Find(stoppedJobs, JobCmpRmtID, (ClientData)&hostID);
 		if (jnode == NULL) {
 		    if (DEBUG(JOB)) {
 			Error("Evicting host(%d) not in table", hostID);
