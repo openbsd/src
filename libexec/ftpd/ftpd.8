@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.55 2002/11/15 19:52:15 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.56 2003/01/31 21:54:40 jmc Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -91,7 +91,7 @@ Instead of simply using
 .Pa ~ftp
 for anonymous transfers, a directory matching the fully qualified name of
 the IP number the client connected to, and located inside
-.Pa ~ftp
+.Pa ~ftp ,
 is used instead.
 .It Fl n
 Do not permit anonymous ftp logins.
@@ -233,7 +233,7 @@ SITE request.
 .It UMASK Ta change umask, e.g., ``SITE UMASK 002''
 .It IDLE Ta set idle-timer, e.g., ``SITE IDLE 60''
 .It CHMOD Ta change mode of a file, e.g., ``SITE CHMOD 755 filename''
-.It HELP Ta give help information.
+.It HELP Ta give help information
 .El
 .Pp
 The remaining ftp requests specified in Internet RFC 959
@@ -528,9 +528,9 @@ list of users on the system
 .Xr chroot 2 ,
 .Xr login.conf 5 ,
 .Xr shells 5 ,
+.Xr ftp-proxy 8 ,
 .Xr inetd 8 ,
-.Xr syslogd 8 ,
-.Xr ftp-proxy 8
+.Xr syslogd 8
 .Sh HISTORY
 The
 .Nm

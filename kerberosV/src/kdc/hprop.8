@@ -7,7 +7,8 @@
 .Nm hprop
 .Nd propagate the KDC database
 .Sh SYNOPSIS
-.Nm
+.Nm hprop
+.Bk -words
 .Oo Fl m Ar file \*(Ba Xo
 .Fl -master-key= Ns Pa file
 .Xc
@@ -42,6 +43,7 @@
 .Op Fl h | Fl -help
 .Op Ar host Ns Op : Ns Ar port
 .Ar ...
+.Ek
 .Sh DESCRIPTION
 .Nm
 takes a principal database in a specified format and converts it into
@@ -125,7 +127,7 @@ is compiled with support for Kerberos 4 (kaserver).
 .Fl r Ar string Ns ,
 .Fl -v4-realm= Ns Ar string
 .Xc
-v4 realm to use
+v4 realm to use.
 .It Xo
 .Fl c Ar cell Ns ,
 .Fl -cell= Ns Ar cell

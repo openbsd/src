@@ -1,4 +1,4 @@
-.\" $OpenBSD: groupmod.8,v 1.9 2002/11/22 04:38:54 millert Exp $
+.\" $OpenBSD: groupmod.8,v 1.10 2003/01/31 21:54:40 jmc Exp $
 .\" $NetBSD: groupmod.8,v 1.5 2000/10/03 19:32:23 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -51,7 +51,7 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl g Ar gid
 gives the numeric group identifier to be used for the new group.
-.It Fl n Ar new-group-name
+.It Fl n Ar newname
 gives the new name which the group shall have.
 .It Fl o
 allow the new group to have a gid which is already in use for another group.
@@ -64,8 +64,8 @@ The
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr group 5 ,
-.Xr groupdel 8 ,
 .Xr groupadd 8 ,
+.Xr groupdel 8 ,
 .Xr groupinfo 8 ,
 .Xr user 8
 .Sh HISTORY

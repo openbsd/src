@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.38 2002/01/04 21:20:56 kjell Exp $
+.\"	$OpenBSD: fdisk.8,v 1.39 2003/01/31 21:54:40 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -70,7 +70,7 @@ Edit existing MBR sectors.
 .It Fl f Ar mbrname
 Specifies an alternate MBR template file.
 .It Fl u
-Update MBR code, preserving existing partition table
+Update MBR code, preserving existing partition table.
 .It Xo Fl c Ar cylinders ,
 .Fl h Ar heads ,
 .Fl s Ar sectors
@@ -129,7 +129,7 @@ If no 166 partition is found, it will use an older
 partition (with a magic number of 165 or A5 in hex).
 .It Em "cyl/hd/sec"
 These fields provide the starting and ending address of the partition
-in BIOS geometry
+in BIOS geometry.
 .It Em "start/size"
 These fields provide the starting sector and size in sectors of the
 partition in linear block addresses.
@@ -171,9 +171,10 @@ equivalent to the DOS command
 .Dq FDISK /MBR .
 Note that this option will overwrite the NT disk signature, if present.
 .Pp
-The flag
+The
 .Fl e
-is used to modify a partition table using a interactive edit mode of the
+flag is used to modify a partition table using an 
+interactive edit mode of the
 .Nm
 program.
 This mode is designed to allow you to change any partition on the
@@ -196,7 +197,7 @@ If it has been modified, the prompt will change to look like:
 The second piece of information pertains to the number given in the prompt.
 This number specifies the disk offset of the currently selected boot block
 you are editing.
-This number could be something different that zero when
+This number could be something other than zero when
 you are editing extended partitions.
 The list of commands and their explanations are given below.
 .Bl -tag -width "update"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.11 2001/12/04 19:18:31 miod Exp $
+.\"	$OpenBSD: eeprom.8,v 1.12 2003/01/31 21:54:39 jmc Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,18 +41,7 @@
 .Sh NAME
 .Nm eeprom
 .Nd display or modify contents of the EEPROM or OpenProm
-.Sh SUN 3 SYNOPSIS
-.Nm eeprom
-.Op Fl
-.Op Fl c
-.Op Fl f Ar device
-.Op Fl i
-.Oo
-.Ar field Ns Oo
-.Li = Ns Ar value
-.Oc ...
-.Oc
-.Sh SPARC AND SPARC64 SYNOPSIS
+.Sh SYNOPSIS
 .Nm eeprom
 .Op Fl
 .Op Fl c
@@ -101,11 +90,6 @@ If checksum values are incorrect,
 .Nm eeprom
 will ignore them and continue after displaying a warning.
 This flag is quietly ignored on systems with an OpenProm.
-.El
-.Pp
-The following options are valid only on the sparc and sparc64 and will
-produce an error when used on a sun3:
-.Bl -tag -width indent
 .It Fl v
 On systems with an OpenProm, be verbose when setting a value.
 Systems with an EEPROM are always verbose.
@@ -118,7 +102,7 @@ instead of the default
 .Sh FIELDS AND VALUES
 The following fields and values are for systems with an EEPROM:
 .Bl -tag -width "watchdog_reboot  "
-.It hwupdate
+.It Ar hwupdate
 A valid date, such as
 .Dq 7/12/95 .
 The strings
@@ -126,11 +110,11 @@ The strings
 and
 .Dq now
 are also acceptable.
-.It memsize
+.It Ar memsize
 How much memory, in megabytes, is installed in the system.
-.It memtest
+.It Ar memtest
 How much memory, in megabytes, is to be tested upon power-up.
-.It scrsize
+.It Ar scrsize
 The size of the screen.
 Acceptable values are
 .Dq 1024x1024 ,
@@ -138,13 +122,13 @@ Acceptable values are
 .Dq 1600x1280 ,
 and
 .Dq 1440x1440 .
-.It watchdog_reboot
+.It Ar watchdog_reboot
 If true, the system will reboot upon reset.
 Otherwise, the system will fall into the monitor.
-.It default_boot
+.It Ar default_boot
 If true, the system will use the boot device stored in
-.Pa bootdev .
-.It bootdev
+.Ar bootdev .
+.It Ar bootdev
 Specifies the default boot device in the form cc(x,x,x), where
 .Dq cc
 is a combination of two letters such as
@@ -155,11 +139,11 @@ and each
 .Dq x
 is a hexadecimal number between 0 and ff, less the prepending
 .Dq 0x .
-.It kbdtype
+.It Ar kbdtype
 This value is
 .Dq 0
 for all Sun keyboards.
-.It console
+.It Ar console
 Specifies the console type.
 Valid values are
 .Dq b&w ,
@@ -168,50 +152,50 @@ Valid values are
 .Dq color ,
 and
 .Dq p4opt .
-.It keyclick
+.It Ar keyclick
 If true, the keys click annoyingly.
-.It diagdev
+.It Ar diagdev
 This is a string very similar to that used by
-.Pa bootdev .
+.Ar bootdev .
 It specifies the default boot device when the diagnostic switch is
 turned on.
-.It diagpath
+.It Ar diagpath
 A 40-character, NULL-terminated string specifying the kernel or standalone
 program to load when the diagnostic switch is turned on.
-.It columns
+.It Ar columns
 An 8-bit integer specifying the number of columns on the console.
-.It rows
+.It Ar rows
 An 8-bit integer specifying the number of rows on the console.
-.It ttya_use_baud
+.It Ar ttya_use_baud
 Use the baud rate stored in
-.Pa ttya_baud
+.Ar ttya_baud
 instead of the default 9600.
-.It ttya_baud
+.It Ar ttya_baud
 A 16-bit integer specifying the baud rate to use on ttya.
-.It ttya_no_rtsdtr
+.It Ar ttya_no_rtsdtr
 If true, disables RTS/DTR.
-.It ttyb_use_baud
+.It Ar ttyb_use_baud
 Similar to
-.Pa ttya_use_baud ,
+.Ar ttya_use_baud ,
 but for ttyb.
-.It ttyb_baud
+.It Ar ttyb_baud
 Similar to
-.Pa ttya_baud ,
+.Ar ttya_baud ,
 but for ttyb.
-.It ttyb_no_rtsdtr
+.It Ar ttyb_no_rtsdtr
 Similar to
-.Pa ttya_no_rtsdtr ,
+.Ar ttya_no_rtsdtr ,
 but for ttyb.
-.It banner
+.It Ar banner
 An 80-character, NULL-terminated string to use at power-up instead
 of the default Sun banner.
 .El
 .Pp
 Note that the
-.Pa secure ,
-.Pa bad_login ,
+.Ar secure ,
+.Ar bad_login ,
 and
-.Pa password
+.Ar password
 fields are not currently supported.
 .Pp
 Since the OpenProm is designed such that the field names are arbitrary,
@@ -222,27 +206,27 @@ NOTE: this list
 may be incomplete or incorrect due to differences between revisions
 of the OpenProm.
 .Bl -tag -width "last-hardware-update  "
-.It sunmon-compat?
+.It Ar sunmon-compat?
 If true, the old EEPROM-style interface will be used while in the monitor,
 rather than the OpenProm-style interface.
-.It selftest-#megs
+.It Ar selftest-#megs
 A 32-bit integer specifying the number of megabytes of memory to
 test upon power-up.
-.It oem-logo
+.It Ar oem-logo
 A 64bitx64bit bitmap in Sun Iconedit format.
-To set the bitmpa, give the pathname of the file containing the image.
+To set the bitmap, give the pathname of the file containing the image.
 NOTE: this property is not yet supported.
-.It oem-logo?
+.It Ar oem-logo?
 If true, enables the use of the bitmap stored in
-.Pa oem-logo
+.Ar oem-logo
 rather than the default Sun logo.
-.It oem-banner
+.It Ar oem-banner
 A string to use at power-up, rather than the default Sun banner.
-.It oem-banner?
+.It Ar oem-banner?
 If true, enables the use of the banner stored in
-.Pa oem-banner
+.Ar oem-banner
 rather than the default Sun banner.
-.It ttya-mode
+.It Ar ttya-mode
 A string of five comma separated fields in the format
 .Dq 9600,8,n,1,- .
 The first field is the baud rate.
@@ -268,79 +252,79 @@ field; acceptable values are
 (RTS/CTS), and
 .Dq s
 (XON/XOFF).
-.It ttya-rts-dtr-off
+.It Ar ttya-rts-dtr-off
 If true, the system will ignore RTS/DTR.
-.It ttya-ignore-cd
+.It Ar ttya-ignore-cd
 If true, the system will ignore carrier detect.
-.It ttyb-mode
+.It Ar ttyb-mode
 Similar to
-.Pa ttya-mode ,
+.Ar ttya-mode ,
 but for ttyb.
-.It ttyb-rts-dtr-off
+.It Ar ttyb-rts-dtr-off
 Similar to
-.Pa ttya-rts-dtr-off ,
+.Ar ttya-rts-dtr-off ,
 but for ttyb.
-.It ttyb-ignore-cd
+.It Ar ttyb-ignore-cd
 Similar to
-.Pa ttya-ignore-cd ,
+.Ar ttya-ignore-cd ,
 but for ttyb.
-.It sbus-probe-list
+.It Ar sbus-probe-list
 Four digits in the format
 .Dq 0123
 specifying which order to probe the sbus at power-up.
 It is unlikely that this value should ever be changed.
-.It screen-#columns
+.It Ar screen-#columns
 An 8-bit integer specifying the number of columns on the console.
-.It screen-#rows
+.It Ar screen-#rows
 An 8-bit integer specifying the number of rows on the console.
-.It auto-boot?
+.It Ar auto-boot?
 If true, the system will boot automatically at power-up.
-.It watchdog-reboot?
+.It Ar watchdog-reboot?
 If true, the system will reboot upon reset.
-Otherwise, system will fall into the monitor.
-.It input-device
+Otherwise, the system will fall into the monitor.
+.It Ar input-device
 One of the strings
 .Dq keyboard ,
 .Dq ttya ,
 or
 .Dq ttyb
 specifying the default console input device.
-.It output-device
+.It Ar output-device
 One of the strings
 .Dq screen ,
 .Dq ttya ,
 or
 .Dq ttyb
 specifying the default console output device.
-.It keyboard-click?
+.It Ar keyboard-click?
 If true, the keys click annoyingly.
-.It sd-targets
+.It Ar sd-targets
 A string in the format
 .Dq 31204567
 describing the translation of physical to logical target.
-.It st-targets
+.It Ar st-targets
 Similar to
-.Pa sd-targets ,
+.Ar sd-targets ,
 but for tapes.
 The default translation is
 .Dq 45670123 .
-.It scsi-initiator-id
+.It Ar scsi-initiator-id
 The SCSI ID of the on-board SCSI controller.
-.It hardware-revision
+.It Ar hardware-revision
 A 7-character string describing a date, such as
 .Dq 25May95 .
-.It last-hardware-update
+.It Ar last-hardware-update
 Similar to
-.Pa hardware-revision ,
+.Ar hardware-revision ,
 describing when the CPU was last updated.
-.It diag-switch?
+.It Ar diag-switch?
 If true, the system will boot and run in diagnostic mode.
-.It local-mac-address?
+.It Ar local-mac-address?
 When set to
-.Pa false
+.Em false
 all Ethernet devices will use same system default MAC address.
 When
-.Pa true ,
+.Em true ,
 Ethernet devices which have a unique MAC address will use it
 rather than the system default MAC address.
 .El

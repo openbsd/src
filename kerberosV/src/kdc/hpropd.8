@@ -7,7 +7,8 @@
 .Nm hpropd
 .Nd receive a propagated database
 .Sh SYNOPSIS
-.Nm
+.Nm hpropd
+.Bk -words
 .Oo Fl d Ar file \*(Ba Xo
 .Fl -database= Ns Ar file
 .Xc
@@ -20,10 +21,11 @@
 .Xc
 .Oc
 .Op Fl 4 | Fl -v4dump
+.Ek
 .Sh DESCRIPTION
 .Nm
-receives databases sent by
-.Nm hprop .
+receives a database sent by
+.Xr hprop 8
 and writes it as a local database.
 .Pp
 By default,
@@ -58,7 +60,7 @@ print dump to stdout
 .Fl i Ns ,
 .Fl -no-inetd
 .Xc
-Not started from inetd
+not started from inetd
 .It Xo
 .Fl k Ar keytab Ns ,
 .Fl -keytab= Ns Ar keytab
