@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.20 2004/06/30 21:01:08 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.21 2004/07/13 19:12:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -34,6 +34,8 @@
 #include <sys/malloc.h>
 
 #include <net/netisr.h>
+
+#include <uvm/uvm_extern.h>	/* for uvmexp */
 
 #include <machine/autoconf.h>
 #include <machine/frame.h>
@@ -287,6 +289,9 @@ cpu_intr(void *v)
 		ipending &= ~(1L << bit);
 		if (iv->flags & HPPA_IV_CALL)
 			continue;
+
+		if (iv->flags & HPPA_IV_SOFT)
+			uvmexp.softs++;
 
 		cpl = iv->pri;
 		mtctl(frame->tf_eiem, CR_EIEM);
