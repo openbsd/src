@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.20 2002/05/16 20:16:15 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.21 2002/05/18 09:49:17 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -235,11 +235,12 @@ db_valid_breakpoint(addr)
 }
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;
 	int		have_addr;
 	db_expr_t	count;
 	char		*modif;
+	int		(*pr)(const char *, ...);
 {
 	register_t fp, pc, rp, nargs, *argp;
 	db_sym_t sym;
@@ -261,7 +262,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	}
 
 #ifdef DDB_DEBUG
-	/* db_printf (">> %x, %x, %x\t", fp, pc, rp); */
+	/* (*pr) (">> %x, %x, %x\t", fp, pc, rp); */
 #endif
 	while (fp && count--) {
 
@@ -271,7 +272,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		sym = db_search_symbol(pc, DB_STGY_ANY, &off);
 		db_symbol_values (sym, &name, NULL);
 
-		db_printf("%s(", name);
+		(*pr)("%s(", name);
 
 		/* args */
 		nargs = HPPA_FRAME_NARGS;
@@ -286,13 +287,13 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		 */
 		for (argp = &((register_t *)fp)[-9]; nargs--; argp--) {
 			if (argnp)
-				db_printf("%s=", *argnp++);
-			db_printf("%x%s", db_get_value((int)argp, 4, FALSE),
+				(*pr)("%s=", *argnp++);
+			(*pr)("%x%s", db_get_value((int)argp, 4, FALSE),
 				  nargs? ",":"");
 		}
-		db_printf(") at ");
-		db_printsym(pc, DB_STGY_PROC, db_printf);
-		db_printf("\n");
+		(*pr)(") at ");
+		db_printsym(pc, DB_STGY_PROC, pr);
+		(*pr)("\n");
 
 		/* TODO: print locals */
 
@@ -301,13 +302,13 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		rp = ((register_t *)fp)[-5];
 		fp = ((register_t *)fp)[0];
 #ifdef DDB_DEBUG
-		/* db_printf (">> %x, %x, %x\t", fp, pc, rp); */
+		/* (*pr) (">> %x, %x, %x\t", fp, pc, rp); */
 #endif
 	}
 
 	if (count && pc) {
-		db_printsym(pc, DB_STGY_XTRN, db_printf);
-		db_printf(":\n");
+		db_printsym(pc, DB_STGY_XTRN, pr);
+		(*pr)(":\n");
 	}
 }
 

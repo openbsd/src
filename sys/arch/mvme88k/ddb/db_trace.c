@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.15 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.16 2002/05/18 09:49:17 art Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -99,8 +99,8 @@ extern void db_read_bytes(vm_offset_t addr, int size, char *data);
 int frame_is_sane(db_regs_t *regs);
 char *m88k_exception_name(unsigned vector);
 unsigned db_trace_get_val(vm_offset_t addr, unsigned *ptr);
-void db_stack_trace_cmd(db_regs_t *addr, int have_addr,
-			     db_expr_t count, char *modif);
+void db_stack_trace_print(db_regs_t *addr, int have_addr,
+    db_expr_t count, char *modif, int (*pr)(const char *, ...));
 
 /*
  * Some macros to tell if the given text is the instruction.
@@ -559,7 +559,7 @@ static int next_address_likely_wrong = 0;
  *
  */
 static int
-stack_decode(unsigned addr, unsigned *stack)
+stack_decode(unsigned addr, unsigned *stack, int (*pr)(const char *, ...))
 {
 	db_sym_t proc;
 	unsigned offset_from_proc;
@@ -573,7 +573,7 @@ stack_decode(unsigned addr, unsigned *stack)
 
 #ifdef TRACE_DEBUG
 	if (DEBUGGING_ON)
-		db_printf("\n>>>stack_decode(addr=%x, stack=%x)\n",
+		(*pr)("\n>>>stack_decode(addr=%x, stack=%x)\n",
 			  addr, *stack);
 #endif
 
@@ -593,7 +593,7 @@ stack_decode(unsigned addr, unsigned *stack)
 		if (names == 0)
 			return 0;
 #ifdef TRACE_DEBUG
-		if (DEBUGGING_ON) db_printf("name %s address 0x%x\n",
+		if (DEBUGGING_ON) (*pr)("name %s address 0x%x\n",
 					    names, function_addr);
 #endif
 	} else {
@@ -637,7 +637,7 @@ stack_decode(unsigned addr, unsigned *stack)
 			if (JMP_R1(inst) || JMPN_R1(inst)) {
 #ifdef TRACE_DEBUG
 				if (DEBUGGING_ON)
-					db_printf("ran into a [jmp r1] at %x (addr=%x)\n",
+					(*pr)("ran into a [jmp r1] at %x (addr=%x)\n",
 						  check_addr, addr);
 #endif
 				return 0;
@@ -646,7 +646,7 @@ stack_decode(unsigned addr, unsigned *stack)
 		if (instructions_to_check < 0) {
 #ifdef TRACE_DEBUG
 			if (DEBUGGING_ON)
-				db_printf("couldn't find func start (addr=%x)\n", addr);
+				(*pr)("couldn't find func start (addr=%x)\n", addr);
 #endif
 			return 0; /* bummer, couldn't find it */
 		}
@@ -661,13 +661,13 @@ stack_decode(unsigned addr, unsigned *stack)
 	 */
 	if (addr == function_addr) {
 #ifdef TRACE_DEBUG
-		if (DEBUGGING_ON) db_printf("at start of func\n");
+		if (DEBUGGING_ON) (*pr)("at start of func\n");
 #endif
 		return 0;
 	}
 	if (!db_trace_get_val(function_addr, &inst)) {
 #ifdef TRACE_DEBUG
-		if (DEBUGGING_ON) db_printf("couldn't read %x at line %d\n",
+		if (DEBUGGING_ON) (*pr)("couldn't read %x at line %d\n",
 					    function_addr, __LINE__);
 #endif
 		return 0;
@@ -675,7 +675,7 @@ stack_decode(unsigned addr, unsigned *stack)
 	SHOW_INSTRUCTION(function_addr, inst, "start of function: ");
 	if (!SUBU_R31_R31_IMM(inst)) {
 #ifdef TRACE_DEBUG
-		if (DEBUGGING_ON) db_printf("<not subu,r31,r31,imm>\n");
+		if (DEBUGGING_ON) (*pr)("<not subu,r31,r31,imm>\n");
 #endif
 		return 0;
 	}
@@ -702,7 +702,7 @@ stack_decode(unsigned addr, unsigned *stack)
 		/* read the instruction */
 		if (!db_trace_get_val(check_addr, &instruction.rawbits)) {
 #ifdef TRACE_DEBUG
-			if (DEBUGGING_ON) db_printf("couldn't read %x at line %d\n",
+			if (DEBUGGING_ON) (*pr)("couldn't read %x at line %d\n",
 						    check_addr, __LINE__);
 #endif
 			break;
@@ -747,11 +747,11 @@ stack_decode(unsigned addr, unsigned *stack)
 	 */
 	if (!have_local_reg(1)) {
 		if (tried_to_save_r1) {
-			db_printf("    <return value of next fcn unreadable in %08x>\n",
+			(*pr)("    <return value of next fcn unreadable in %08x>\n",
 				  tried_to_save_r1);
 		}
 #ifdef TRACE_DEBUG
-		if (DEBUGGING_ON) db_printf("didn't save r1\n");
+		if (DEBUGGING_ON) (*pr)("didn't save r1\n");
 #endif
 		return 0;
 	}
@@ -760,7 +760,7 @@ stack_decode(unsigned addr, unsigned *stack)
 
 #ifdef TRACE_DEBUG
 	if (DEBUGGING_ON)
-		db_printf("Return value is = %x, function_addr is %x.\n",
+		(*pr)("Return value is = %x, function_addr is %x.\n",
 			  ret_addr, function_addr);
 #endif
 
@@ -779,7 +779,7 @@ stack_decode(unsigned addr, unsigned *stack)
 
 		case JUMP_SOURCE_IS_BAD:
 #ifdef TRACE_DEBUG
-			if (DEBUGGING_ON) db_printf("jump is bad\n");
+			if (DEBUGGING_ON) (*pr)("jump is bad\n");
 #endif
 			return 0; /* bummer */
 
@@ -793,7 +793,7 @@ stack_decode(unsigned addr, unsigned *stack)
 }
 
 static void
-db_stack_trace_cmd2(db_regs_t *regs)
+db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 {
 	unsigned stack;
 	unsigned depth=1;
@@ -810,7 +810,7 @@ db_stack_trace_cmd2(db_regs_t *regs)
 	 *   0 if this looks like neither.
 	 */
 	if (ft = frame_is_sane(regs), ft == 0) {
-		db_printf("Register frame 0x%x is suspicous; skipping trace\n", regs);
+		(*pr)("Register frame 0x%x is suspicous; skipping trace\n", regs);
 		return;
 	}
 
@@ -828,25 +828,25 @@ db_stack_trace_cmd2(db_regs_t *regs)
 			  regs->sfip) ) & ~3;
 	}
 	stack = regs->r[31];
-	db_printf("stack base = 0x%x\n", stack);
-	db_printf("(0) "); /*depth of trace */
+	(*pr)("stack base = 0x%x\n", stack);
+	(*pr)("(0) "); /*depth of trace */
 	if (trace_flags & TRACE_SHOWADDRESS_FLAG)
-		db_printf("%08x ", where);
-	db_printsym(where, DB_STGY_PROC, db_printf);
+		(*pr)("%08x ", where);
+	db_printsym(where, DB_STGY_PROC, pr);
 	clear_global_saved_regs();
 
 	/* see if this routine had a stack frame */
-	if ((where=stack_decode(where, &stack))==0) {
+	if ((where=stack_decode(where, &stack, pr))==0) {
 		where = regs->r[1];
-		db_printf("(stackless)");
+		(*pr)("(stackless)");
 	} else {
 		print_args();
 		if (trace_flags & TRACE_SHOWFRAME_FLAG)
-			db_printf(" [frame 0x%x]", stack);
+			(*pr)(" [frame 0x%x]", stack);
 	}
-	db_printf("\n");
+	(*pr)("\n");
 	if (note) {
-		db_printf("   %s\n", note);
+		(*pr)("   %s\n", note);
 		note = 0;
 	}
 
@@ -865,33 +865,33 @@ db_stack_trace_cmd2(db_regs_t *regs)
 					unsigned value = saved_reg_value(r);
 					if (title_printed == 0) {
 						title_printed = 1;
-						db_printf("[in next func:");
+						(*pr)("[in next func:");
 					}
 					if (value == 0)
-						db_printf(" r%d", r);
+						(*pr)(" r%d", r);
 					else if (value <= 9)
-						db_printf(" r%d=%x", r, value);
+						(*pr)(" r%d=%x", r, value);
 					else
-						db_printf(" r%d=x%x", r, value);
+						(*pr)(" r%d=x%x", r, value);
 				}
 			}
 			if (title_printed)
-				db_printf("]\n");
+				(*pr)("]\n");
 		}
 
-		db_printf("(%d)%c", depth++, next_address_likely_wrong ? '?':' ');
+		(*pr)("(%d)%c", depth++, next_address_likely_wrong ? '?':' ');
 		next_address_likely_wrong = 0;
 
 		if (trace_flags & TRACE_SHOWADDRESS_FLAG)
-			db_printf("%08x ", where);
-		db_printsym(where, DB_STGY_PROC, db_printf);
-		where = stack_decode(where, &stack);
+			(*pr)("%08x ", where);
+		db_printsym(where, DB_STGY_PROC, pr);
+		where = stack_decode(where, &stack, pr);
 		print_args();
 		if (trace_flags & TRACE_SHOWFRAME_FLAG)
-			db_printf(" [frame 0x%x]", stack);
-		db_printf("\n");
+			(*pr)(" [frame 0x%x]", stack);
+		(*pr)("\n");
 		if (note) {
-			db_printf("   %s\n", note);
+			(*pr)("   %s\n", note);
 			note = 0;
 		}
 	} while (where);
@@ -905,7 +905,7 @@ db_stack_trace_cmd2(db_regs_t *regs)
 
 #ifdef TRACE_DEBUG
 	if (DEBUGGING_ON)
-		db_printf("(searching for exception frame at 0x%x)\n", stack);
+		(*pr)("(searching for exception frame at 0x%x)\n", stack);
 #endif
 
 	while (i) {
@@ -941,7 +941,7 @@ db_stack_trace_cmd2(db_regs_t *regs)
 			if (pair[0] != stack+8) {
 				/*
 				if (!badwordaddr((vm_offset_t)pair[0]) && (pair[0]!=0))
-				db_printf("stack_trace:found pair 0x%x but != to stack+8\n",
+				(*pr)("stack_trace:found pair 0x%x but != to stack+8\n",
 				pair[0]);
 				*/
 				
@@ -951,14 +951,14 @@ db_stack_trace_cmd2(db_regs_t *regs)
 				db_regs_t *frame = (db_regs_t *) pair[0];
 				char *cause = m88k_exception_name(frame -> vector);
 
-				db_printf("-------------- %s [EF: 0x%x] -------------\n",
+				(*pr)("-------------- %s [EF: 0x%x] -------------\n",
 					  cause, frame);
-				db_stack_trace_cmd2(frame);
+				db_stack_trace_cmd2(frame, pr);
 				return;
 			}
 #ifdef TRACE_DEBUG
 			else if (DEBUGGING_ON)
-				db_printf("pair matched, but frame at 0x%x looks insane\n",
+				(*pr)("pair matched, but frame at 0x%x looks insane\n",
 					  stack+8);
 #endif
 		}
@@ -992,9 +992,9 @@ db_stack_trace_cmd2(db_regs_t *regs)
 		user = *((db_regs_t **) stack);
 
 		if (frame_is_sane(user) == 2) {
-			db_printf("---------------- %s [EF : 0x%x] -------------\n",
+			(*pr)("---------------- %s [EF : 0x%x] -------------\n",
 				  m88k_exception_name(user->vector), user);
-			db_stack_trace_cmd2(user);
+			db_stack_trace_cmd2(user, pr);
 		}
 	}
 }
@@ -1006,10 +1006,11 @@ db_stack_trace_cmd2(db_regs_t *regs)
  * printed.
  */
 void
-db_stack_trace_cmd(db_regs_t *addr,
+db_stack_trace_print(db_regs_t *addr,
 		   int have_addr,
 		   db_expr_t count,
-		   char *modif)
+		   char *modif,
+		   int (*pr)(const char *, ...))
 {
 	enum {
 		Default, Stack, Proc, Frame
@@ -1042,25 +1043,25 @@ db_stack_trace_cmd(db_regs_t *addr,
 		case 'F': trace_flags |= TRACE_SHOWFRAME_FLAG; break;
 		case 'u': trace_flags |= TRACE_USER_FLAG; break;
 		default:
-			db_printf("unknown trace modifier [%c]\n", modif[-1]);
+			(*pr)("unknown trace modifier [%c]\n", modif[-1]);
 			/*FALLTHROUGH*/
 		case 'h':
-			db_printf("usage: trace/[MODIFIER]  [ARG]\n");
-			db_printf("  u = include user trace\n");
-			db_printf("  F = print stack frames\n");
-			db_printf("  a = show return addresses\n");
-			db_printf("  p = show call-preserved registers\n");
-			db_printf("  s = ARG is a stack pointer\n");
-			db_printf("  f = ARG is a frame pointer\n");
+			(*pr)("usage: trace/[MODIFIER]  [ARG]\n");
+			(*pr)("  u = include user trace\n");
+			(*pr)("  F = print stack frames\n");
+			(*pr)("  a = show return addresses\n");
+			(*pr)("  p = show call-preserved registers\n");
+			(*pr)("  s = ARG is a stack pointer\n");
+			(*pr)("  f = ARG is a frame pointer\n");
 #ifdef TRACE_DEBUG
-			db_printf("  d = trace-debugging output\n");
+			(*pr)("  d = trace-debugging output\n");
 #endif
 			return;
 		}
 	}
 
 	if (!have_addr && style != Default) {
-		db_printf("expecting argument with /s or /f\n");
+		(*pr)("expecting argument with /s or /f\n");
 		return;
 	}
 	if (have_addr && style == Default)
@@ -1089,7 +1090,7 @@ db_stack_trace_cmd(db_regs_t *addr,
 			for (ptr = arg.num;/**/; ptr += 4) {
 				/* Read a word from the named stack */
 				if (db_trace_get_val(ptr, &val1) == 0) {
-					db_printf("can't read from %x, aborting.\n", ptr);
+					(*pr)("can't read from %x, aborting.\n", ptr);
 					return;
 				}
 
@@ -1105,14 +1106,14 @@ db_stack_trace_cmd(db_regs_t *addr,
 
 				/* peek at the next word to see if it could be a return address */
 				if (db_trace_get_val(ptr, &sxip) == 0) {
-					db_printf("can't read from %x, aborting.\n", ptr);
+					(*pr)("can't read from %x, aborting.\n", ptr);
 					return;
 				}
 				if (sxip == 0 || !db_trace_get_val(sxip, &val2))
 					continue;
 
 				if (db_trace_get_val(val1, &val2) == 0) {
-					db_printf("can't read from %x, aborting.\n", val1);
+					(*pr)("can't read from %x, aborting.\n", val1);
 					continue;
 				}
 
@@ -1129,13 +1130,13 @@ db_stack_trace_cmd(db_regs_t *addr,
 				   && db_trace_get_val(val1-4, &val2) && val2 == val1
 				   && db_trace_get_val(val1-8, &val2) && val2 == val1) {
 					/* we've found a frame, so the stack must have been good */
-					db_printf("%x looks like a frame, accepting %x\n",val1,ptr);
+					(*pr)("%x looks like a frame, accepting %x\n",val1,ptr);
 					break;
 				}
 
 				if (val2 > val1 && (val2 & 3) == 0) {
 					/* well, looks close enough to be another frame pointer */
-					db_printf("*%x = %x looks like a stack frame pointer, accepting %x\n", val1, val2, ptr);
+					(*pr)("*%x = %x looks like a stack frame pointer, accepting %x\n", val1, val2, ptr);
 					break;
 				}
 			}
@@ -1146,11 +1147,11 @@ db_stack_trace_cmd(db_regs_t *addr,
 				frame.snip = frame.sxip + 4;
 				frame.sfip = frame.snip + 4;
 			}
-			db_printf("[r31=%x, %sxip=%x]\n", frame.r[31],
+			(*pr)("[r31=%x, %sxip=%x]\n", frame.r[31],
 				  cputyp == CPU_88110 ? "e" : "s", frame.sxip);
 			regs = &frame;
 		}
 	}
-	db_stack_trace_cmd2(regs);
+	db_stack_trace_cmd2(regs, pr);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2002/05/18 09:49:17 art Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.9 1997/07/29 09:42:00 fair Exp $ */
 
 /*
@@ -39,11 +39,12 @@
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK)
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
 	char            *modif;
+	int		(*pr)(const char *, ...);
 {
 	struct frame	*frame;
 	boolean_t	kernel_only = TRUE;
@@ -84,17 +85,17 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (name == NULL)
 			name = "?";
 
-		db_printf("%s(", name);
+		(*pr)("%s(", name);
 
 		/*
 		 * Print %i0..%i5, hope these still reflect the
 		 * actual arguments somewhat...
 		 */
 		for (i=0; i < 5; i++)
-			db_printf("0x%x, ", frame->fr_arg[i]);
-		db_printf("0x%x) at ", frame->fr_arg[i]);
-		db_printsym(pc, DB_STGY_PROC, db_printf);
-		db_printf("\n");
+			(*pr)("0x%x, ", frame->fr_arg[i]);
+		(*pr)("0x%x) at ", frame->fr_arg[i]);
+		db_printsym(pc, DB_STGY_PROC, pr);
+		(*pr)("\n");
 
 	}
 }

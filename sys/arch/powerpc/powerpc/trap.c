@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2002/05/16 21:11:17 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2002/05/18 09:49:17 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 
 #include <ddb/db_extern.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_output.h>
 
 static int fix_unaligned(struct proc *p, struct trapframe *frame);
 int badaddr(char *addr, u_int32_t len);
@@ -82,7 +83,7 @@ ppc_dumpbt(struct trapframe *frame)
 	/* dumpframe is defined in db_trace.c */
 	addr=frame->fixreg[1];
 	while (addr != 0) {
-		addr = db_dumpframe(addr);
+		addr = db_dumpframe(addr, db_printf);
 	}
 	return;
 }

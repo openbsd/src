@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.1 2001/06/26 21:57:39 smurph Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.2 2002/05/18 09:49:17 art Exp $	*/
 
 /* 
  * Mach Operating System
@@ -89,7 +89,7 @@ db_save_regs(struct trapframe *frame)
 }
 
 db_expr_t
-db_dumpframe (u_int32_t pframe)
+db_dumpframe (u_int32_t pframe, int (*pr)(const char *, ...))
 {
 	u_int32_t nextframe;
 	u_int32_t lr;
@@ -102,7 +102,7 @@ db_dumpframe (u_int32_t pframe)
 	access = (u_int32_t *)(pframe+4);
 	lr = *access;
 
-	db_printf("lr %x fp %x nfp %x\n", lr, pframe, nextframe);
+	(*pr)("lr %x fp %x nfp %x\n", lr, pframe, nextframe);
 
 	return nextframe;
 }
@@ -110,11 +110,12 @@ db_dumpframe (u_int32_t pframe)
  *	Frame tracing.
  */
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
         db_expr_t addr;
         int have_addr;
         db_expr_t count;
         char *modif;
+	int (*pr)(const char *, ...);
 {
         db_addr_t frame, lr, caller;
         db_expr_t diff;
@@ -144,7 +145,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 
                 lr = *(db_addr_t *)(frame + 4) - 4;
                 if ((lr & 3) || (lr < 0x10000)) {
-                        printf("saved LR(0x%x) is invalid.", lr);
+                        (*pr)("saved LR(0x%x) is invalid.", lr);
                         break;
                 }
                 if ((caller = (db_addr_t)vtophys(lr)) == 0)
@@ -156,15 +157,15 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
                 sym = db_search_symbol(caller, DB_STGY_ANY, &diff);
                 db_symbol_values(sym, &symname, 0);
                 if (symname == NULL)
-                        printf("%p ", caller);
+                        (*pr)("%p ", caller);
                 else
-                        printf("%s+%x ", symname, diff);
+                        (*pr)("%s+%x ", symname, diff);
                 if (full)
                         /* Print all the args stored in that stackframe. */
-                        printf(" (%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx) %lx ",
+                        (*pr)(" (%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx) %lx ",
                                 args[0], args[1], args[2], args[3],
                                 args[4], args[5], args[6], args[7], frame);
-		printf("\n");
+		(*pr)("\n");
         }
 }
 

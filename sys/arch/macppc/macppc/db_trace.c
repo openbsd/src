@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 2001/09/15 21:15:03 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2002/05/18 09:49:17 art Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ db_read32(u_int32_t paddr, u_int32_t *value)
 }
 
 db_expr_t
-db_dumpframe(u_int32_t pframe)
+db_dumpframe(u_int32_t pframe, int (*pr)(const char *, ...))
 {
 	u_int32_t nextframe;
 	u_int32_t lr;
@@ -131,7 +131,7 @@ db_dumpframe(u_int32_t pframe)
 		name = "0";
 		offset = lr-4;
 	}
-	db_printf("%08x: %s+0x%x fp %x nfp %x\n",
+	(*pr)("%08x: %s+0x%x fp %x nfp %x\n",
 		lr-4, name, offset, pframe, nextframe);
 
 	return nextframe;
@@ -140,11 +140,12 @@ db_dumpframe(u_int32_t pframe)
  *	Frame tracing.
  */
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;
 	int		have_addr;
 	db_expr_t	count;
 	char		*modif;
+	int		(*pr)(const char *, ...);
 {
 
 	if (count == 0 || count == -1)
@@ -153,7 +154,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		addr = ddb_regs.tf.fixreg[1];
 	}
 	while (addr != 0 && count > 0) {
-		addr = db_dumpframe(addr);
+		addr = db_dumpframe(addr, pr);
 		count --;
 	}
 }

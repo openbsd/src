@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.4 2002/05/18 09:49:17 art Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ void	kdb_kintr(void *);
 int	kdb_trap(int, void *);
 void	db_save_regs(struct trapframe *frame);
 void	ddb_trap(void);
-db_expr_t db_dumpframe(u_int32_t pframe);
+db_expr_t db_dumpframe(u_int32_t pframe, int (*pr)(const char *, ...));
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.6 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2002/05/18 09:49:17 art Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /* 
@@ -83,7 +83,8 @@ boolean_t	db_trace_symbols_found = FALSE;
 
 void db_find_trace_symbols(void);
 int db_numargs(struct i386_frame *);
-void db_nextframe(struct i386_frame **, db_addr_t *, int *, int);
+void db_nextframe(struct i386_frame **, db_addr_t *, int *, int,
+    int (*pr)(const char *, ...));
 
 void
 db_find_trace_symbols()
@@ -137,11 +138,12 @@ db_numargs(fp)
  *   of the function that faulted, but that could get hairy.
  */
 void
-db_nextframe(fp, ip, argp, is_trap)
+db_nextframe(fp, ip, argp, is_trap, pr)
 	struct i386_frame **fp;		/* in/out */
 	db_addr_t	*ip;		/* out */
 	int *argp;			/* in */
 	int is_trap;			/* in */
+	int (*pr)(const char *, ...);
 {
 
 	switch (is_trap) {
@@ -159,13 +161,13 @@ db_nextframe(fp, ip, argp, is_trap)
 		tf = (struct trapframe *)argp;
 		switch (is_trap) {
 		case TRAP:
-			db_printf("--- trap (number %d) ---\n", tf->tf_trapno);
+			(*pr)("--- trap (number %d) ---\n", tf->tf_trapno);
 			break;
 		case SYSCALL:
-			db_printf("--- syscall (number %d) ---\n", tf->tf_eax);
+			(*pr)("--- syscall (number %d) ---\n", tf->tf_eax);
 			break;
 		case INTERRUPT:
-			db_printf("--- interrupt ---\n");
+			(*pr)("--- interrupt ---\n");
 			break;
 		}
 		*fp = (struct i386_frame *)tf->tf_ebp;
@@ -176,11 +178,12 @@ db_nextframe(fp, ip, argp, is_trap)
 }
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;
 	boolean_t	have_addr;
 	db_expr_t	count;
 	char		*modif;
+	int		(*pr)(const char *, ...);
 {
 	struct i386_frame *frame, *lastframe;
 	int		*argp;
@@ -213,7 +216,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		frame = (struct i386_frame *)ddb_regs.tf_ebp;
 		callpc = (db_addr_t)ddb_regs.tf_eip;
 	} else if (trace_thread) {
-		db_printf ("db_trace.c: can't trace thread\n");
+		(*pr) ("db_trace.c: can't trace thread\n");
 	} else {
 		frame = (struct i386_frame *)addr;
 		callpc = (db_addr_t)
@@ -273,7 +276,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				narg = db_numargs(frame);
 		}
 
-		db_printf("%s(", name);
+		(*pr)("%s(", name);
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/*
@@ -287,15 +290,15 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 
 		while (narg) {
 			if (argnp)
-				db_printf("%s=", *argnp++);
-			db_printf("%x", db_get_value((int)argp, 4, FALSE));
+				(*pr)("%s=", *argnp++);
+			(*pr)("%x", db_get_value((int)argp, 4, FALSE));
 			argp++;
 			if (--narg != 0)
-				db_printf(",");
+				(*pr)(",");
 		}
-		db_printf(") at ");
-		db_printsym(callpc, DB_STGY_PROC, db_printf);
-		db_printf("\n");
+		(*pr)(") at ");
+		db_printsym(callpc, DB_STGY_PROC, pr);
+		(*pr)("\n");
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/* Frame really belongs to next callpc */
@@ -306,7 +309,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		}
 
 		lastframe = frame;
-		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap);
+		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap, pr);
 
 		if (frame == 0) {
 			/* end of chain */
@@ -315,7 +318,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
 			if (frame <= lastframe) {
-				db_printf("Bad frame pointer: %p\n", frame);
+				(*pr)("Bad frame pointer: %p\n", frame);
 				break;
 			}
 		} else if (INKERNEL((int)lastframe)) {
@@ -325,7 +328,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		} else {
 			/* in user */
 			if (frame <= lastframe) {
-				db_printf("Bad user frame pointer: %p\n",
+				(*pr)("Bad user frame pointer: %p\n",
 					  frame);
 				break;
 			}
@@ -334,7 +337,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	}
 
 	if (count && is_trap != NONE) {
-		db_printsym(callpc, DB_STGY_XTRN, db_printf);
-		db_printf(":\n");
+		db_printsym(callpc, DB_STGY_XTRN, pr);
+		(*pr)(":\n");
 	}
 }

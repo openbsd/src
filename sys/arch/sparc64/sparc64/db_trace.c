@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 2002/05/16 13:01:41 art Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2002/05/18 09:49:17 art Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -56,19 +56,17 @@ void db_print_window(u_int64_t);
 #define ULOAD(x)	probeget((paddr_t)(u_long)&(x), ASI_AIUS, sizeof(x))	
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
 	char            *modif;
+	int		(*pr)(const char *, ...);
 {
 	vaddr_t		frame;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 	char		c, *cp = modif;
-	int		(*pr)(const char *, ...);
-
-	pr = db_printf;
 
 	while ((c = *cp++) != 0) {
 		if (c == 't')
