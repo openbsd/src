@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.7 2001/05/03 13:41:13 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.8 2001/05/07 22:59:33 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -659,7 +659,7 @@ get_sysvpattern(p, ctxt, err, endc)
     Boolean		err	UNUSED;
     int			endc;
 {
-    static VarPattern	pattern;
+    VarPattern		*pattern;
     const char		*cp, *cp2;
     int cnt = 0;
     char startc = endc == ')' ? '(' : '}';
@@ -689,13 +689,14 @@ get_sysvpattern(p, ctxt, err, endc)
 	}
     }
 	
-    pattern.lhs = interval_dup(*p, cp);
-    pattern.leftLen = cp - *p;
-    pattern.rhs = interval_dup(cp+1, cp2);
-    pattern.rightLen = cp2 - (cp+1);
-    pattern.flags = 0;
+    pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+    pattern->lbuffer = pattern->lhs = interval_dup(*p, cp);
+    pattern->leftLen = cp - *p;
+    pattern->rhs = interval_dup(cp+1, cp2);
+    pattern->rightLen = cp2 - (cp+1);
+    pattern->flags = 0;
     *p = cp2;
-    return &pattern;
+    return pattern;
 }
 
 
@@ -1314,47 +1315,48 @@ get_patternarg(p, ctxt, err, endc)
     Boolean	err;
     int		endc;
 {
-    static VarPattern	pattern;	/* just one for the whole system */
+    VarPattern *pattern;
     char	delim;
     const char	*s;
 
+    pattern = (VarPattern *)emalloc(sizeof(VarPattern));
+    pattern->flags = 0;
     s = *p;
 
-    pattern.flags = 0;
     delim = s[1];
     if (delim == '\0')
 	return NULL;
     s += 2;
 
-    pattern.rhs = NULL;
-    pattern.lhs = VarGetPattern(ctxt, err, &s, delim, delim,
-	&pattern.leftLen, NULL);
-    pattern.lbuffer = pattern.lhs;
-    if (pattern.lhs != NULL) {
-	pattern.rhs = VarGetPattern(ctxt, err, &s, delim, delim,
-	    &pattern.rightLen, &pattern);
-	if (pattern.rhs != NULL) {
+    pattern->rhs = NULL;
+    pattern->lhs = VarGetPattern(ctxt, err, &s, delim, delim,
+	&pattern->leftLen, NULL);
+    pattern->lbuffer = pattern->lhs;
+    if (pattern->lhs != NULL) {
+	pattern->rhs = VarGetPattern(ctxt, err, &s, delim, delim,
+	    &pattern->rightLen, pattern);
+	if (pattern->rhs != NULL) {
 	    /* Check for global substitution. If 'g' after the final
 	     * delimiter, substitution is global and is marked that
 	     * way.  */
 	    for (;; s++) {
 		switch (*s) {
 		case 'g':
-		    pattern.flags |= VAR_SUB_GLOBAL;
+		    pattern->flags |= VAR_SUB_GLOBAL;
 		    continue;
 		case '1':
-		    pattern.flags |= VAR_SUB_ONE;
+		    pattern->flags |= VAR_SUB_ONE;
 		    continue;
 		}
 		break;
 	    }
 	    if (*s == endc || *s == ':') {
 		*p = s;
-		return &pattern;
+		return pattern;
 	    }
 	}
     }
-    free_patternarg(&pattern);
+    free_patternarg(pattern);
     return NULL;
 }
 
@@ -1396,18 +1398,19 @@ get_value(p, ctxt, err, endc)
     Boolean	err;
     int		endc;
 {
-    static VarPattern pattern;
+    VarPattern *pattern;
     const char *s;
 
+    pattern = (VarPattern *)emalloc(sizeof(VarPattern));
     s = *p + 1;
-    pattern.rhs = NULL;
-    pattern.lbuffer = VarGetPattern(ctxt, err, &s, ':', endc,
-    	&pattern.leftLen, NULL);
+    pattern->rhs = NULL;
+    pattern->lbuffer = VarGetPattern(ctxt, err, &s, ':', endc,
+    	&pattern->leftLen, NULL);
     if (s[-1] == endc || s[-1] == ':') {
     	*p = s-1;
-	return &pattern;
+	return pattern;
     }
-    free_patternarg(&pattern);
+    free_patternarg(pattern);
     return NULL;
 }
 
@@ -1418,18 +1421,19 @@ get_cmd(p, ctxt, err, endc)
     Boolean	err;
     int		endc	UNUSED;
 {
-    static VarPattern pattern;
+    VarPattern *pattern;
     const char *s;
 
+    pattern = (VarPattern *)emalloc(sizeof(VarPattern));
     s = *p + 1;
-    pattern.rhs = NULL;
-    pattern.lbuffer = VarGetPattern(ctxt, err, &s, '!', '!',
-    	&pattern.leftLen, NULL);
+    pattern->rhs = NULL;
+    pattern->lbuffer = VarGetPattern(ctxt, err, &s, '!', '!',
+    	&pattern->leftLen, NULL);
     if (s[-1] == '!') {
     	*p = s-1;
-	return &pattern;
+	return pattern;
     }
-    free_patternarg(&pattern);
+    free_patternarg(pattern);
     return NULL;
 }
 
@@ -1438,8 +1442,10 @@ free_patternarg(p)
     void *p;
 {
     VarPattern *vp = (VarPattern *)p;
+
     free(vp->lbuffer);
     free(vp->rhs);
+    free(vp);
 }
 
 #ifndef MAKE_BOOTSTRAP
