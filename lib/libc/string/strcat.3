@@ -33,9 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcat.3,v 1.2 1996/08/19 08:34:10 tholo Exp $
+.\"	$OpenBSD: strcat.3,v 1.3 1997/07/09 00:19:53 millert Exp $
 .\"
-.Dd June 29, 1991
+.Dd July 8, 1997
 .Dt STRCAT 3
 .Os
 .Sh NAME
@@ -68,7 +68,10 @@ The
 function
 appends not more than
 .Fa count
-characters.
+characters where space for the terminating
+.Ql \e0
+should not be included in
+.Fa count .
 .Sh RETURN VALUES
 The
 .Fn strcat
