@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.11 1999/01/22 21:15:21 art Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.12 1999/03/17 18:34:15 art Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -213,6 +213,8 @@ mfs_doio(bp, base)
 		bp->b_error = copyout(bp->b_data, base, bp->b_bcount);
 	if (bp->b_error)
 		bp->b_flags |= B_ERROR;
+	else
+		bp->b_resid = 0;
 	biodone(bp);
 }
 
