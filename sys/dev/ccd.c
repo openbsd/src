@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.25 1998/01/09 14:36:11 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.26 1998/01/21 12:16:04 niklas Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -162,11 +162,6 @@ struct ccdbuf {
 #define CBF_MIRROR	0x01		/* we're for a mirror component */
 #define CBF_OLD		0x02		/* use old I/O protocol */
 
-	/*
-	 * XXX These statically sized scatter/gather parameter vectors
-	 * should maybe be dynamic instead... but that costs malloc time
-	 * in ccdstart.
-	 */
 	int		cb_sgcnt;	/* scatter/gather segment count */
 	struct ccdseg	*cb_sg;		/* scatter/gather segments */
 };
