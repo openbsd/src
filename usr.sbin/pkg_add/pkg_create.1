@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.6 2004/07/05 23:21:56 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.7 2004/07/14 10:44:03 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -298,6 +298,11 @@ Note that
 .Nm
 will derive this field from the package name and add it automatically
 if none is given.
+.It Cm @dir Ar name
+Create directory 
+.Pa name 
+at install time, taking @mode, @group, @owner into account, 
+and remove it at deinstall time.
 .It Cm @dirrm Ar name
 Declare directory
 .Pa name
@@ -305,13 +310,11 @@ to be deleted at deinstall time.
 By default, directories created by a
 package installation are not deleted when the package is deinstalled;
 this provides an explicit directory cleanup method.
-This directive should appear at the end of the package list.
-If more than one
-.Cm @dirrm
-directive is used, the directories are removed in the order specified.
 The
 .Pa name
-directory will not be removed unless it is empty.
+directory will not be removed unless it is empty after the package is
+de-installed.
+Directories to remove can be shared between packages.
 .It Cm @extra Ar file
 Declare extra file
 .Pa file

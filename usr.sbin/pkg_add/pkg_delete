@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.24 2004/06/21 16:33:45 espie Exp $
+# $OpenBSD: pkg_delete,v 1.25 2004/07/14 10:44:03 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -37,6 +37,40 @@ use OpenBSD::Vstat;
 
 our %forced = ();
 
+use OpenBSD::PackageInfo;
+
+sub find_alldirrms
+{
+	my $db = {};
+	my @list = installed_packages();
+	for my $e (@list) {
+		my $plist = OpenBSD::PackingList->fromfile(installed_info($e).CONTENTS, \&OpenBSD::PackingList::DirrmOnly) or next;
+		for my $item (@{$plist->{items}}) {
+			$item->record_dirrm($e, $db);
+		}
+	}
+	return $db;
+}
+
+sub remove_dirs
+{
+	my $state = shift;
+
+	my $h = $state->{dirs_to_rm};
+	return unless defined $h;
+
+	my $remaining = find_alldirrms();
+
+	for my $d (sort {$b cmp $a} keys %$h) {
+		next if defined $remaining->{$d};
+		my $realname = $state->{destdir}.$d;
+		if (!rmdir $realname) {
+			    print "Error deleting directory $realname\n";
+		}
+	}
+}
+
+
 package OpenBSD::PackingElement;
 sub delete
 {
@@ -56,9 +90,8 @@ sub log_pkgname
 	}
 }
 
-package OpenBSD::PackingElement::DirRm;
-use OpenBSD::PackageInfo;
 
+package OpenBSD::PackingElement::Dirs;
 sub record_dirrm
 {
 	my ($self, $pkgname, $db) = @_;
@@ -67,58 +100,21 @@ sub record_dirrm
 	push(@{$db->{$k}}, $pkgname);
 }
 
-sub find_alldirrms
-{
-	my $db = {};
-	my @list = installed_packages();
-	for my $e (@list) {
-		my $plist = OpenBSD::PackingList->fromfile(installed_info($e).CONTENTS, \&OpenBSD::PackingList::DirrmOnly) or next;
-		for my $item (@{$plist->{items}}) {
-			$item->record_dirrm($e, $db);
-		}
-	}
-	return $db;
-}
-
 sub delete
 {
 	my ($self, $state) = @_;
+
 	my $name = $self->fullname();
-	my $realname = $state->{destdir}.$name;
 
 	if ($state->{verbose} or $state->{not}) {
 		print "dirrm: $name\n";
 	}
-	unless (defined $state->{dirrms}) {
-		$state->{dirrms} = find_alldirrms();
-	}
-	return if $state->{not};
-	my $entry = $state->{dirrms}->{$name};
-	unless (defined $entry) {
-		print "Error: dirrm $name was not recorded\n";
-		return;
-	}
-	if (@$entry == 0) {
-		print "Error: no dirrm $name left\n";
-	}
-	elsif (@$entry == 1) {
-		if ($entry->[0] eq $state->{pkgname}) {
-			if (!rmdir $realname) {
-			    print "Error deleting directory $realname\n";
-			    $self->log_pkgname($state);
-			    OpenBSD::Logger::log "rmdir $state->{destdirname}$name\n";
-			}
-			$state->{dirrms}->{$name} = undef;
-		} else {
-			print "Error: dirrm $name recorded as ", 
-			    $entry->[0], "\n";
-		}
-	}
-	elsif (@$entry > 1) {
-		print "Dirrm $name defined in multiple packages: ",
-			join(",", @$entry), "\n" if $state->{verbose};
-	    	@$entry = grep { $_ ne $state->{pkgname} }  @$entry;
-	}
+
+	$state->{dirs_to_rm} = {} unless defined $state->{dirs_to_rm};
+
+	my $h = $state->{dirs_to_rm};
+	$h->{$name} = [] unless defined $h->{$name};
+	push(@{$h->{$name}}, $state->{pkgname});
 }
 
 package OpenBSD::PackingElement::Unexec;
@@ -460,6 +456,9 @@ if ($opt_B eq '') {
 	# to ever finish
 	last if $opt_n;
 } while ($removed); }
+
+# delayed directory removal
+remove_dirs($state);
 
 my $logname = OpenBSD::Logger::logname();
 if (defined $logname) {

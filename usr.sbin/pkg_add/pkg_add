@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.33 2004/07/11 20:46:08 espie Exp $
+# $OpenBSD: pkg_add,v 1.34 2004/07/14 10:44:03 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -56,6 +56,22 @@ sub install
 {
 }
 
+sub set_modes
+{
+	my ($self, $name) = @_;
+
+	if (defined $self->{owner} && defined $self->{group}) {
+		system('chown', $self->{owner}.':'.$self->{group}, $name);
+	} elsif (defined $self->{owner}) {
+		system('chown', $self->{owner}, $name);
+	} elsif (defined $self->{group}) {
+		system('chown', ':'.$self->{group}, $name);
+	}
+	if (defined $self->{mode}) {
+		system('chmod', $self->{mode}, $name);
+	}
+}
+
 package OpenBSD::PackingElement::File;
 use File::Basename;
 use File::Path;
@@ -63,28 +79,32 @@ use File::Path;
 sub install
 {
 	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	my $fullname = $self->fullname();
 
 	my $file=$archive->next();
 	if ($file->{name} ne $self->{name}) {
 		die "Error: archive does not match", $file->{name}, "!=",
 		$self->{name}, "\n";
 	}
-	print "extracting ", $destdir, $self->fullname(), "\n" if $verbose;
-	$file->{name} = $self->fullname();
+	print "extracting ", $destdir, $fullname, "\n" if $verbose;
+	return if $not;
+	$file->{name} = $fullname;
 	$file->{cwd} = $self->{cwd};
 	$file->{destdir} = $destdir;
-	return if $not;
 	$file->create();
-	if (defined $self->{owner} && defined $self->{group}) {
-		system('chown', $self->{owner}.':'.$self->{group}, $destdir.$self->fullname());
-	} elsif (defined $self->{owner}) {
-		system('chown', $self->{owner}, $destdir.$self->fullname());
-	} elsif (defined $self->{group}) {
-		system('chown', ':'.$self->{group}, $destdir.$self->fullname());
-	}
-	if (defined $self->{mode}) {
-		system('chmod', $self->{mode}, $destdir.$self->fullname());
-	}
+	$self->set_modes($destdir.$fullname);
+}
+
+package OpenBSD::PackingElement::Dir;
+sub install
+{
+	my ($self, $archive, $destdir, $verbose, $not) = @_;
+	my $fullname = $self->fullname();
+
+	print "new directory ", $destdir, $fullname, "\n" if $verbose;
+	return if $not;
+	File::Path::mkpath($destdir.$fullname);
+	$self->set_modes($destdir.$fullname);
 }
 
 package OpenBSD::PackingElement::Exec;

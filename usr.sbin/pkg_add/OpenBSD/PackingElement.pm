@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.10 2004/07/13 00:35:39 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.11 2004/07/14 10:44:03 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -112,6 +112,20 @@ sub compute_fullname
 	return $fullname;
 }
 
+sub compute_modes
+{
+	my ($self, $state) = @_;
+	if (defined $state->{mode}) {
+		$self->{mode} = $state->{mode};
+	}
+	if (defined $state->{owner}) {
+		$self->{owner} = $state->{owner};
+	}
+	if (defined $state->{group}) {
+		$self->{group} = $state->{group};
+	}
+}
+
 sub expand
 {
 	my $state = $_[2];
@@ -175,15 +189,7 @@ sub destate
 {
 	my ($self, $state) = @_;
 	$self->compute_fullname($state);
-	if (defined $state->{mode}) {
-		$self->{mode} = $state->{mode};
-	}
-	if (defined $state->{owner}) {
-		$self->{owner} = $state->{owner};
-	}
-	if (defined $state->{group}) {
-		$self->{group} = $state->{group};
-	}
+	$self->compute_modes($state);
 	if (defined $state->{nochecksum}) {
 		$self->{nochecksum} = 1;
 		undef $state->{nochecksum};
@@ -563,8 +569,10 @@ sub destate
 	$self->{expanded} = $self->expand($self->{name}, $state);
 }
 
+package OpenBSD::PackingElement::Dirs;
+
 package OpenBSD::PackingElement::DirRm;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Dirs OpenBSD::PackingElement);
 
 __PACKAGE__->setKeyword('dirrm');
 sub keyword() { "dirrm" }
@@ -573,6 +581,19 @@ sub destate
 {
 	my ($self, $state) = @_;
 	$self->compute_fullname($state);
+}
+
+package OpenBSD::PackingElement::Dir;
+our @ISA=qw(OpenBSD::PackingElement::Dirs OpenBSD::PackingElement);
+
+__PACKAGE__->setKeyword('dir');
+sub keyword() { "dir" }
+
+sub destate
+{
+	my ($self, $state) = @_;
+	$self->compute_fullname($state);
+	$self->compute_modes($state);
 }
 
 package OpenBSD::PackingElement::Extra;
