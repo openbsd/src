@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_compat.c,v 1.8 1997/03/26 08:11:04 downsj Exp $	*/
-/*	$NetBSD: hpux_compat.c,v 1.30 1997/03/16 10:13:12 thorpej Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.9 1997/04/16 09:18:02 downsj Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.31 1997/04/01 19:58:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,6 +80,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
+#include <compat/hpux/hpux_sig.h>
 #include <compat/hpux/hpux_util.h>
 #include <compat/hpux/hpux_termio.h>
 #include <compat/hpux/hpux_syscall.h>
@@ -111,7 +112,11 @@ extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
 extern char *hpux_syscallnames[];
 
-static	int hpux_scale __P((struct timeval *));
+int	hpux_shmctl1 __P((struct proc *, struct hpux_sys_shmctl_args *,
+	    register_t *, int));
+int	hpuxtobsdioctl __P((u_long));
+
+static int	hpux_scale __P((struct timeval *));
 
 /*
  * HP-UX fork and vfork need to map the EAGAIN return value appropriately.
@@ -122,7 +127,7 @@ hpux_sys_fork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sys_fork_args *uap = v;
+	/* struct hpux_sys_fork_args *uap = v; */
 	int error;
 
 	error = sys_fork(p, v, retval);
@@ -137,7 +142,7 @@ hpux_sys_vfork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sys_vfork_args *uap = v;
+	/* struct hpux_sys_vfork_args *uap = v; */
 	int error;
 
 	error = sys_vfork(p, v, retval);
@@ -174,11 +179,11 @@ hpux_sys_wait3(p, v, retval)
 
 int
 hpux_sys_wait(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_wait_args *uap = v;
+	struct hpux_sys_wait_args *uap = v;
 	struct sys_wait4_args w4;
 	int error;
 	int sig;
@@ -381,15 +386,15 @@ hpux_sys_dup(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_dup_args *uap = v;
-	register struct filedesc *fdp = p->p_fd;
+	struct hpux_sys_dup_args *uap = v;
+	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int fd, error;
 
 	if (((unsigned)SCARG(uap, fd)) >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
 		return (EBADF);
-	if (error = fdalloc(p, 0, &fd))
+	if ((error = fdalloc(p, 0, &fd)))
 		return (error);
 	fdp->fd_ofiles[fd] = fp;
 	fdp->fd_ofileflags[fd] =
@@ -407,11 +412,11 @@ hpux_sys_utssys(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_utssys_args *uap = v;
-	register int i;
+	struct hpux_sys_utssys_args *uap = v;
+	int i;
 	int error;
 	struct hpux_utsname	ut;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
+	extern char ostype[], hostname[], osrelease[], version[];
 
 	switch (SCARG(uap, request)) {
 	/* uname */
@@ -497,7 +502,7 @@ hpux_sys_ulimit(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_ulimit_args *uap = v;
+	struct hpux_sys_ulimit_args *uap = v;
 	struct rlimit *limp;
 	int error = 0;
 
@@ -537,7 +542,7 @@ hpux_sys_rtprio(cp, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_rtprio_args *uap = v;
+	struct hpux_sys_rtprio_args *uap = v;
 	struct proc *p;
 	int nice, error;
 
@@ -584,8 +589,11 @@ hpux_sys_ptrace(p, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_ptrace_args *uap = v;
-	int error, isps = 0;
+	int error;
+#if defined(PT_READ_U) || defined(PT_WRITE_U)
+	int isps = 0;
 	struct proc *cp;
+#endif
 
 	switch (SCARG(uap, req)) {
 	/* map signal */
@@ -662,7 +670,7 @@ hpux_sys_shmctl(p, v, retval)
 {
 	struct hpux_sys_shmctl_args *uap = v;
 
-	return (hpux_shmctl1(p, (struct hpux_shmctl_args *) uap, retval, 0));
+	return (hpux_shmctl1(p, (struct hpux_sys_shmctl_args *)uap, retval, 0));
 }
 
 int
@@ -673,7 +681,7 @@ hpux_sys_nshmctl(p, v, retval)
 {
 	struct hpux_sys_nshmctl_args *uap = v;
 
-	return (hpux_shmctl1(p, (struct hpux_shmctl_args *) uap, retval, 1));
+	return (hpux_shmctl1(p, (struct hpux_sys_shmctl_args *)uap, retval, 1));
 }
 
 /*
@@ -686,8 +694,8 @@ hpux_shmctl1(p, uap, retval, isnew)
 	register_t *retval;
 	int isnew;
 {
-	register struct shmid_ds *shp;
-	register struct ucred *cred = p->p_ucred;
+	struct shmid_ds *shp;
+	struct ucred *cred = p->p_ucred;
 	struct hpux_shmid_ds sbuf;
 	int error;
 	extern struct shmid_ds *shm_find_segment_by_shmid __P((int));
@@ -827,15 +835,15 @@ hpux_sys_ioctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_ioctl_args /* {
+	struct hpux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
-	register int com, error;
-	register u_int size;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	int com, error = 0;
+	u_int size;
 	caddr_t memp = 0;
 #define STK_PARAMS	128
 	char stkbuf[STK_PARAMS];
@@ -976,8 +984,8 @@ hpux_sys_getpgrp2(cp, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_getpgrp2_args *uap = v;
-	register struct proc *p;
+	struct hpux_sys_getpgrp2_args *uap = v;
+	struct proc *p;
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = cp->p_pid;
@@ -1083,22 +1091,22 @@ hpux_sys_lockf(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sys_lockf_args *uap = v;
+	/* struct hpux_sys_lockf_args *uap = v; */
 
 	return (0);
 }
 
 int
 hpux_sys_getaccess(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_getaccess_args *uap = v;
+	struct hpux_sys_getaccess_args *uap = v;
 	int lgroups[NGROUPS];
 	int error = 0;
-	register struct ucred *cred;
-	register struct vnode *vp;
+	struct ucred *cred;
+	struct vnode *vp;
 	struct nameidata nd;
 
 	/*
@@ -1204,7 +1212,7 @@ hpux_sys_getaccess(p, v, retval)
  */
 int
 hpux_sys_setpgrp_6x(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -1249,7 +1257,7 @@ hpux_sys_stime_6x(p, v, retval)
 
 	tv.tv_sec = SCARG(uap, time);
 	tv.tv_usec = 0;
-	if (error = suser(p->p_ucred, &p->p_acflag))
+	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
@@ -1282,7 +1290,7 @@ hpux_sys_ftime_6x(p, v, retval)
 
 int
 hpux_sys_alarm_6x(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -1311,7 +1319,7 @@ hpux_sys_alarm_6x(p, v, retval)
 
 int
 hpux_sys_nice_6x(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -1359,7 +1367,7 @@ hpux_sys_times_6x(p, v, retval)
  */
 static int
 hpux_scale(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	return (tvp->tv_sec * HPUX_HZ + tvp->tv_usec * HPUX_HZ / 1000000);
 }
@@ -1378,7 +1386,7 @@ hpux_sys_utime_6x(p, v, retval)
 		syscallarg(char *) fname;
 		syscallarg(time_t *) tptr;
 	} */ *uap = v;
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct vattr vattr;
 	time_t tv[2];
 	int error;
@@ -1398,7 +1406,7 @@ hpux_sys_utime_6x(p, v, retval)
 	vattr.va_mtime.tv_nsec = 0;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, fname), p);
-	if (error = namei(&nd))
+	if ((error = namei(&nd)))
 		return (error);
 	vp = nd.ni_vp;
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)

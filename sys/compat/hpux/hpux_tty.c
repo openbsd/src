@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_tty.c,v 1.3 1996/08/02 20:35:00 niklas Exp $	*/
-/*	$NetBSD: hpux_tty.c,v 1.13 1995/12/11 16:32:46 thorpej Exp $	*/
+/*	$OpenBSD: hpux_tty.c,v 1.4 1997/04/16 09:18:17 downsj Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.14 1997/04/01 19:59:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,8 +78,11 @@ hpux_termio(fd, com, data, p)
 	struct file *fp;
 	struct termios tios;
 	struct hpux_termios htios;
-	int line, error, (*ioctlrout)();
+	int line, error;
 	int newi = 0;
+	int (*ioctlrout) __P((struct file *fp, u_long com,
+	    caddr_t data, struct proc *p));
+
 
 	fp = p->p_fd->fd_ofiles[fd];
 	ioctlrout = fp->f_ops->fo_ioctl;
@@ -91,7 +94,7 @@ hpux_termio(fd, com, data, p)
 		/*
 		 * Get BSD terminal state
 		 */
-		if (error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p))
+		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p)))
 			break;
 		bzero((char *)&htios, sizeof htios);
 		/*
@@ -219,12 +222,13 @@ hpux_termio(fd, com, data, p)
 		/*
 		 * Get old characteristics and determine if we are a tty.
 		 */
-		if (error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p))
+		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p)))
 			break;
 		if (newi)
 			bcopy(data, (char *)&htios, sizeof htios);
 		else
-			termiototermios((struct termio *)data, &htios, &tios);
+			termiototermios((struct hpux_termio *)data,
+			    &htios, &tios);
 		/*
 		 * Set iflag.
 		 * Same through ICRNL, no HP-UX equiv for IMAXBEL
@@ -351,8 +355,8 @@ hpux_termio(fd, com, data, p)
 
 				nbio = (htios.c_cc[HPUXVMINS] == 0 &&
 					htios.c_cc[HPUXVTIMES] == 0);
-				if (nbio && (fp->f_flag & FNONBLOCK) == 0 ||
-				    !nbio && (fp->f_flag & FNONBLOCK)) {
+				if ((nbio && (fp->f_flag & FNONBLOCK) == 0) ||
+				    (!nbio && (fp->f_flag & FNONBLOCK))) {
 					args.fdes = fd;
 					args.cmd = F_GETFL;
 					args.arg = 0;
@@ -376,7 +380,7 @@ hpux_termio(fd, com, data, p)
 	return(error);
 }
 
-int
+void
 termiototermios(tio, tios, bsdtios)
 	struct hpux_termio *tio;
 	struct hpux_termios *tios;
@@ -408,7 +412,7 @@ termiototermios(tio, tios, bsdtios)
 	tios->c_cc[HPUXVSTOP] = bsdtios->c_cc[VSTOP];
 }
 
-int
+void
 termiostotermio(tios, tio)
 	struct hpux_termios *tios;
 	struct hpux_termio *tio;
@@ -508,8 +512,8 @@ getsettty(p, fdes, com, cmarg)
 	int fdes, com;
 	caddr_t cmarg;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct hpux_sgttyb hsb;
 	struct sgttyb sb;
 	int error;
@@ -520,7 +524,7 @@ getsettty(p, fdes, com, cmarg)
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
 		return (EBADF);
 	if (com == HPUXTIOCSETP) {
-		if (error = copyin(cmarg, (caddr_t)&hsb, sizeof hsb))
+		if ((error = copyin(cmarg, (caddr_t)&hsb, sizeof hsb)))
 			return (error);
 		sb.sg_ispeed = hsb.sg_ispeed;
 		sb.sg_ospeed = hsb.sg_ospeed;

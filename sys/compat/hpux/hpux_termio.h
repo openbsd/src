@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_termio.h,v 1.2 1996/08/02 20:34:59 niklas Exp $	*/
-/*	$NetBSD: hpux_termio.h,v 1.6 1994/10/26 02:45:20 cgd Exp $	*/
+/*	$OpenBSD: hpux_termio.h,v 1.3 1997/04/16 09:18:14 downsj Exp $	*/
+/*	$NetBSD: hpux_termio.h,v 1.7 1997/04/01 19:59:04 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -191,3 +191,16 @@ struct hpux_termios {
 #define	HPUXTCSETATTR	_IOW('T', 17, struct hpux_termios)
 #define	HPUXTCSETATTRD	_IOW('T', 18, struct hpux_termios)
 #define	HPUXTCSETATTRF	_IOW('T', 19, struct hpux_termios)
+
+#ifdef _KERNEL
+struct termio;
+struct termios;
+
+int	hpux_termio __P((int, int, caddr_t, struct proc *));
+void	termiototermios __P((struct hpux_termio *, struct hpux_termios *,
+	    struct termios *));
+void	termiostotermio __P((struct hpux_termios *, struct hpux_termio *));
+int	bsdtohpuxbaud __P((long));
+int	hpuxtobsdbaud __P((int));
+int	getsettty __P((struct proc *, int, int, caddr_t));
+#endif /* _KERNEL */

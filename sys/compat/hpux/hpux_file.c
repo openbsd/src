@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpux_file.c,v 1.4 1997/01/27 00:18:36 downsj Exp $	*/
-/*	$NetBSD: hpux_file.c,v 1.3 1996/01/06 12:44:14 thorpej Exp $	*/
+/*	$OpenBSD: hpux_file.c,v 1.5 1997/04/16 09:18:05 downsj Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.4 1997/04/01 19:59:01 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -83,9 +83,11 @@
 #include <compat/hpux/hpux_syscall.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
-static	int hpux_stat1 __P((struct proc *, void *, register_t *, int));
-static	void bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
-static	void bsd_to_hpux_ostat __P((struct stat *, struct hpux_ostat *));
+#include <machine/hpux_machdep.h>
+
+static int	hpux_stat1 __P((struct proc *, void *, register_t *, int));
+static void	bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
+static void	bsd_to_hpux_ostat __P((struct stat *, struct hpux_ostat *));
 
 /*
  * HP-UX creat(2) system call.
@@ -317,7 +319,8 @@ hpux_sys_fcntl(p, v, retval)
 		if (fl.l_whence == SEEK_CUR)
 			fl.l_start += fp->f_offset;
 
-		if (error = VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX))
+		if ((error =
+		    VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX)))
 			return (error);
 
 		hfl.hl_start = fl.l_start;
