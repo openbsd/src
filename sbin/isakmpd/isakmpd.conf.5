@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.13 1999/03/31 23:47:23 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.15 1999/03/31 23:33:21 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.14 1999/04/01 00:37:50 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.16 1999/04/01 00:37:37 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -311,7 +311,7 @@ An example of a configuration file:
 # A configuration sample for the isakmpd ISAKMP/Oakley (aka IKE) daemon.
 
 [General]
-Retransmits=		3
+Retransmits=		5
 Exchange-max-time=	120
 Listen-on=		10.1.0.2
 
@@ -328,14 +328,14 @@ Connections=		IPsec-east-west
 [ISAKMP-peer-west]
 Phase=			1
 Transport=		udp
-# XXX Not yet implemented
-#Local-address=		10.1.0.2
+Local-address=		10.1.0.2
 Address=		10.1.0.1
 # Default values for "Port" commented out
 #Port=			isakmp
 #Port=			500
 Configuration=		Default-main-mode
 Authentication=		mekmitasdigoat
+Flags=			Stayalive
 
 [IPsec-east-west]
 Phase=			2
@@ -343,6 +343,7 @@ ISAKMP-peer=		ISAKMP-peer-west
 Configuration=		Default-quick-mode
 Local-ID=		Net-east
 Remote-ID=		Net-west
+Flags=			Stayalive
 
 [Net-west]
 ID-type=		IPV4_ADDR_SUBNET
@@ -394,7 +395,7 @@ ENCRYPTION_ALGORITHM=	3DES_CBC
 HASH_ALGORITHM=		SHA
 AUTHENTICATION_METHOD=	PRE_SHARED
 GROUP_DESCRIPTION=	MODP_1024
-Life=			LIFE_600_SECS,LIFE_1000_KB
+Life=			LIFE_3600_SECS
 
 # Blowfish
 
