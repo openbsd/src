@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1997/08/24 21:55:10 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1998/09/13 01:30:32 pjanzen Exp $	*/
 /*	$NetBSD: misc.c,v 1.3 1995/03/21 15:07:37 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.3 1995/03/21 15:07:37 cgd Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1998/09/13 01:30:32 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,11 +46,11 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.3 1995/03/21 15:07:37 cgd Exp $";
 
 int
 card(array, size)		/* for beenthere, injuries */
-	register char *array;
-	int size;
+	char   *array;
+	int     size;
 {
-	register char *end = array + size;
-	register int i = 0;
+	char   *end = array + size;
+	int     i = 0;
 
 	while (array < end)
 		if (*array++)
@@ -60,12 +60,12 @@ card(array, size)		/* for beenthere, injuries */
 
 int
 ucard(array)
-	register unsigned *array;
+	unsigned int *array;
 {
-	register int j = 0, n;
+	int     j = 0, n;
 
 	for (n = 0; n < NUMOFOBJECTS; n++)
 		if (testbit(array, n))
-			    j++;
+			j++;
 	return (j);
 }

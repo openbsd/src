@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.3 1997/08/24 21:55:13 deraadt Exp $	*/
+/*	$OpenBSD: room.c,v 1.4 1998/09/13 01:30:33 pjanzen Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $";
+static char rcsid[] = "$OpenBSD: room.c,v 1.4 1998/09/13 01:30:33 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,14 +47,14 @@ static char rcsid[] = "$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $";
 void
 writedes()
 {
-	int compass;
-	register char *p;
-	register c;
+	int     compass;
+	char   *p;
+	int     c;
 
 	printf("\n\t%s\n", location[position].name);
 	if (beenthere[position] < 3) {
 		compass = NORTH;
-		for (p = location[position].desc; c = *p++;)
+		for (p = location[position].desc; (c = *p++);)
 			if (c != '-' && c != '*' && c != '+')
 				putchar(c);
 			else {
@@ -68,8 +68,8 @@ writedes()
 void
 printobjs()
 {
-	register unsigned int *p = location[position].objects;
-	register n;
+	unsigned int *p = location[position].objects;
+	int     n;
 
 	printf("\n");
 	for (n = 0; n < NUMOFOBJECTS; n++)
@@ -79,159 +79,159 @@ printobjs()
 
 void
 whichway(here)
-struct room here;
+	struct room here;
 {
-	switch(direction) {
+	switch (direction) {
 
-		case NORTH:
-			left = here.west;
-			right = here.east;
-			ahead = here.north;
-			back = here.south;
-			break;
-		
-		case SOUTH:
-			left = here.east;
-			right = here.west;
-			ahead = here.south;
-			back = here.north;
-			break;
+	case NORTH:
+		left = here.west;
+		right = here.east;
+		ahead = here.north;
+		back = here.south;
+		break;
 
-		case EAST:
-			left = here.north;
-			right = here.south;
-			ahead = here.east;
-			back = here.west;
-			break;
+	case SOUTH:
+		left = here.east;
+		right = here.west;
+		ahead = here.south;
+		back = here.north;
+		break;
 
-		case WEST:
-			left = here.south;
-			right = here.north;
-			ahead = here.west;
-			back = here.east;
-			break;
+	case EAST:
+		left = here.north;
+		right = here.south;
+		ahead = here.east;
+		back = here.west;
+		break;
+
+	case WEST:
+		left = here.south;
+		right = here.north;
+		ahead = here.west;
+		back = here.east;
+		break;
 
 	}
 }
 
-char *
+char   *
 truedirec(way, option)
-int way;
-char option;
+	int     way;
+	char    option;
 {
-	switch(way) {
+	switch (way) {
 
+	case NORTH:
+		switch (direction) {
 		case NORTH:
-			switch(direction) {
-				case NORTH:
-					return("ahead");
-				case SOUTH:
-					return(option == '+' ? "behind you" : "back");
-				case EAST:
-					return("left");
-				case WEST:
-					return("right");
-			}
-
+			return ("ahead");
 		case SOUTH:
-			switch(direction) {
-				case NORTH:
-					return(option == '+' ? "behind you" : "back");
-				case SOUTH:
-					return("ahead");
-				case EAST:
-					return("right");
-				case WEST:
-					return("left");
-			}
-
+			return (option == '+' ? "behind you" : "back");
 		case EAST:
-			switch(direction) {
-				case NORTH:
-					return("right");
-				case SOUTH:
-					return("left");
-				case EAST:
-					return("ahead");
-				case WEST:	
-					return(option == '+' ? "behind you" : "back");
-			}
-
+			return ("left");
 		case WEST:
-			switch(direction) {
-				case NORTH:
-					return("left");
-				case SOUTH:
-					return("right");
-				case EAST:
-					return(option == '+' ? "behind you" : "back");
-				case WEST:
-					return("ahead");
-			}
+			return ("right");
+		}
 
-		default:
-			printf("Error: room %d.  More than four directions wanted.", position);
-			return("!!");
-      }
+	case SOUTH:
+		switch (direction) {
+		case NORTH:
+			return (option == '+' ? "behind you" : "back");
+		case SOUTH:
+			return ("ahead");
+		case EAST:
+			return ("right");
+		case WEST:
+			return ("left");
+		}
+
+	case EAST:
+		switch (direction) {
+		case NORTH:
+			return ("right");
+		case SOUTH:
+			return ("left");
+		case EAST:
+			return ("ahead");
+		case WEST:
+			return (option == '+' ? "behind you" : "back");
+		}
+
+	case WEST:
+		switch (direction) {
+		case NORTH:
+			return ("left");
+		case SOUTH:
+			return ("right");
+		case EAST:
+			return (option == '+' ? "behind you" : "back");
+		case WEST:
+			return ("ahead");
+		}
+
+	default:
+		printf("Error: room %d.  More than four directions wanted.", position);
+		return ("!!");
+	}
 }
 
 void
 newway(thisway)
-int thisway;
+	int     thisway;
 {
-	switch(direction){
+	switch (direction) {
 
-		case NORTH:
-			switch(thisway){
-				case LEFT:
-					direction = WEST;
-					break;
-				case RIGHT:
-					direction = EAST;
-					break;
-				case BACK:
-					direction = SOUTH;
-					break;
-			}
+	case NORTH:
+		switch (thisway) {
+		case LEFT:
+			direction = WEST;
 			break;
-		case SOUTH:
-			switch(thisway){
-				case LEFT:
-					direction = EAST;
-					break;
-				case RIGHT:
-					direction = WEST;
-					break;
-				case BACK:
-					direction = NORTH;
-					break;
-			}
+		case RIGHT:
+			direction = EAST;
 			break;
-		case EAST:
-			switch(thisway){
-				case LEFT:
-					direction = NORTH;
-					break;
-				case RIGHT:
-					direction = SOUTH;
-					break;
-				case BACK:
-					direction = WEST;
-					break;
-			}
+		case BACK:
+			direction = SOUTH;
 			break;
-		case WEST:
-			switch(thisway){
-				case LEFT:
-					direction = SOUTH;
-					break;
-				case RIGHT:
-					direction = NORTH;
-					break;
-				case BACK:
-					direction = EAST;
-					break;
-			}
+		}
+		break;
+	case SOUTH:
+		switch (thisway) {
+		case LEFT:
+			direction = EAST;
 			break;
-      }
+		case RIGHT:
+			direction = WEST;
+			break;
+		case BACK:
+			direction = NORTH;
+			break;
+		}
+		break;
+	case EAST:
+		switch (thisway) {
+		case LEFT:
+			direction = NORTH;
+			break;
+		case RIGHT:
+			direction = SOUTH;
+			break;
+		case BACK:
+			direction = WEST;
+			break;
+		}
+		break;
+	case WEST:
+		switch (thisway) {
+		case LEFT:
+			direction = SOUTH;
+			break;
+		case RIGHT:
+			direction = NORTH;
+			break;
+		case BACK:
+			direction = EAST;
+			break;
+		}
+		break;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nightobjs.c,v 1.3 1997/08/24 21:55:12 deraadt Exp $	*/
+/*	$OpenBSD: nightobjs.c,v 1.4 1998/09/13 01:30:33 pjanzen Exp $	*/
 /*	$NetBSD: nightobjs.c,v 1.3 1995/03/21 15:07:46 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nightobjs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: nightobjs.c,v 1.3 1995/03/21 15:07:46 cgd Exp $";
+static char rcsid[] = "$OpenBSD: nightobjs.c,v 1.4 1998/09/13 01:30:33 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,5 +103,5 @@ struct objs nightobjs[] = {
 	{ 249,	FOOT },
 	{ 250,	FOOT },
 	{ 93,	PAPAYAS },
-	0
+	{ 0 }
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: words.c,v 1.3 1997/08/24 21:55:14 deraadt Exp $	*/
+/*	$OpenBSD: words.c,v 1.4 1998/09/13 01:30:34 pjanzen Exp $	*/
 /*	$NetBSD: words.c,v 1.3 1995/03/21 15:08:00 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)words.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: words.c,v 1.3 1995/03/21 15:08:00 cgd Exp $";
+static char rcsid[] = "$OpenBSD: words.c,v 1.4 1998/09/13 01:30:34 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -209,5 +209,5 @@ struct wlist wlist[] = {
 	{ "move",	0,		ADJS },
 	{ "make",	0,		ADJS },
 	{ "to",		0,		ADJS },
-	0
+	{ 0 }
 };

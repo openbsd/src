@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.4 1997/08/24 21:55:12 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.5 1998/09/13 01:30:33 pjanzen Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -38,20 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.5 1998/09/13 01:30:33 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
-int hash __P((char *));
-void install __P((struct wlist *));
-struct wlist *lookup __P((char *));
-
 void
 wordinit()
 {
-	register struct wlist *w;
+	struct wlist *w;
 
 	for (w = wlist; w->string; w++)
 		install(w);
@@ -59,9 +55,9 @@ wordinit()
 
 int
 hash(s)
-	register char *s;
+	char   *s;
 {
-	register hashval = 0;
+	int     hashval = 0;
 
 	while (*s) {
 		hashval += *s++;
@@ -73,9 +69,9 @@ hash(s)
 
 struct wlist *
 lookup(s)
-	char *s;
+	char   *s;
 {
-	register struct wlist *wp;
+	struct wlist *wp;
 
 	for (wp = hashtab[hash(s)]; wp != NULL; wp = wp->next)
 		if (*s == *wp->string && strcmp(s, wp->string) == 0)
@@ -85,9 +81,9 @@ lookup(s)
 
 void
 install(wp)
-	register struct wlist *wp;
+	struct wlist *wp;
 {
-	int hashval;
+	int     hashval;
 
 	if (lookup(wp->string) == NULL) {
 		hashval = hash(wp->string);
@@ -100,17 +96,17 @@ install(wp)
 void
 parse()
 {
-	register struct wlist *wp;
-	register n;
+	struct wlist *wp;
+	int     n;
 
-	wordnumber = 0;		  /* for cypher */
+	wordnumber = 0;		/* for cypher */
 	for (n = 0; n <= wordcount; n++) {
 		if ((wp = lookup(words[n])) == NULL) {
 			wordvalue[n] = -1;
 			wordtype[n] = -1;
 		} else {
-			wordvalue[n] = wp -> value;
-			wordtype[n] = wp -> article;
+			wordvalue[n] = wp->value;
+			wordtype[n] = wp->article;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.5 1997/08/24 21:55:01 deraadt Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.6 1998/09/13 01:30:30 pjanzen Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $";
+static char rcsid[] = "$OpenBSD: battlestar.c,v 1.6 1998/09/13 01:30:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,33 +57,33 @@ static char rcsid[] = "$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $
 
 #include "extern.h"
 
-int main __P((int, char **));
+int main __P((int, char *[]));
 
 int
-main(argc,argv)
-int  argc;
-char **argv;
+main(argc, argv)
+	int     argc;
+	char  **argv;
 {
-	char mainbuf[LINELENGTH];
-	char *next;
+	char    mainbuf[LINELENGTH];
+	char   *next;
 
 	open_score_file();
 
 	/* revoke privs. */
-	egid = getegid();
 	setegid(getgid());
+	setgid(getgid());
 
 	initialize(argc < 2 || strcmp(argv[1], "-r"));
 start:
 	news();
 	beenthere[position]++;
 	if (notes[LAUNCHED])
-		crash();		/* decrements fuel & crash */
+		crash();	/* decrements fuel & crash */
 	if (matchlight) {
 		puts("Your match splutters out.");
 		matchlight = 0;
 	}
-	if (!notes[CANTSEE] || testbit(inven,LAMPON) ||
+	if (!notes[CANTSEE] || testbit(inven, LAMPON) ||
 	    testbit(location[position].objects, LAMPON)) {
 		writedes();
 		printobjs();
@@ -92,16 +92,16 @@ start:
 	whichway(location[position]);
 run:
 	next = getcom(mainbuf, sizeof mainbuf, ">-: ",
-		"Please type in something.");
+	    "Please type in something.");
 	for (wordcount = 0; next && wordcount < 20; wordcount++)
 		next = getword(next, words[wordcount], -1);
 	parse();
 	switch (cypher()) {
-		case -1:
-			goto run;
-		case 0:
-			goto start;
-		default:
-			exit(1);
+	case -1:
+		goto run;
+	case 0:
+		goto start;
+	default:
+		exit(1);
 	}
 }

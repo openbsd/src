@@ -1,4 +1,4 @@
-.\"	$OpenBSD: battlestar.6,v 1.2 1997/06/30 19:56:28 kstailey Exp $
+.\"	$OpenBSD: battlestar.6,v 1.3 1998/09/13 01:30:30 pjanzen Exp $
 .\"	$NetBSD: battlestar.6,v 1.4 1995/03/21 15:06:42 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -41,11 +41,11 @@
 .Nm battlestar
 .Nd a tropical adventure game
 .Sh SYNOPSIS
-.Nm battlestar
-.Op Fl r Em Pq recover a saved game
+.Nm
+.Op -r | saved-file
 .Sh DESCRIPTION
-.Nm Battlestar
-is an adventure game in the classic style.  However, It's slightly less
+.Nm
+is an adventure game in the classic style.  However, it's slightly less
 of a
 puzzle and more a game of exploration.  There are a few magical words
 in the game, but on the whole, simple English
@@ -120,12 +120,20 @@ want to take advantage of it.  That is, saying "take knife" and then
 "drop"
 will drop the knife you just took.
 .Sh SCORE & INVEN
-The two commands "score" and "inven" will print out your current status
-in the game.
+The two commands
+.Dq score
+and
+.Dq inven
+will print out your current status in the game.
 .Sh SAVING A GAME
-The command "save" will save your game in a file called "Bstar."  You
-can recover a saved game by using the "-r" option when you start up the
-game.
+The command 
+.Dq save
+will save your game in a file called 
+.Pa ~/Bstar .
+You can recover a saved game by using the 
+.Fl r
+option when you start up the
+game, or by giving the name of the saved file as an argument.
 .Sh DIRECTIONS
 The compass directions N, S, E, and W can be used if you have a compass.
 If you don't have a compass, you'll have to say R, L, A, or B, which
@@ -139,22 +147,19 @@ Most interesting things that happen in the game are hardwired into the
 code, so don't send me any hate mail about it!
 Instead, enjoy art for art's sake!
 .Sh AUTHOR
-David Riggle
+David Riggle (riggle.pa@xerox.arpa)
 .Sh INSPIRATION & ASSISTANCE
 .Bl -item -compact
 .It
-Chris Guthrie
+Chris Guthrie (chris%ucbcory@berkeley.arpa)
 .It
 Peter Da Silva
 .It
 Kevin Brown
 .It
-Edward Wang
+Edward Wang (edward%ucbarpa@berkeley.arpa)
 .It 
 Ken Arnold & Company
 .El
 .Sh BUGS
-Countless.
-.Sh FAN MAIL
-Send to edward%ucbarpa@berkeley.arpa, chris%ucbcory@berkeley.arpa,
-riggle.pa@xerox.arpa.
+Finite.

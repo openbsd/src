@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.6 1997/09/01 18:13:20 millert Exp $	*/
+/*	$OpenBSD: save.c,v 1.7 1998/09/13 01:30:33 pjanzen Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/03/21 15:07:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: save.c,v 1.3 1995/03/21 15:07:57 cgd Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.7 1998/09/13 01:30:33 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,11 +47,11 @@ static char rcsid[] = "$NetBSD: save.c,v 1.3 1995/03/21 15:07:57 cgd Exp $";
 void
 restore()
 {
-	char *home;
-	char home1[PATH_MAX];
-	register int n;
-	int tmp;
-	register FILE *fp;
+	char   *home;
+	char    home1[PATH_MAX];
+	int     n;
+	int     tmp;
+	FILE   *fp;
 
 	home = getenv("HOME");
 	if (strlen(home) + 6 < sizeof(home1)) {
@@ -61,16 +61,13 @@ restore()
 		fprintf(stderr, "%s: %s\n", home1, strerror(ENAMETOOLONG));
 		return;
 	}
-	setegid(egid);
 	if ((fp = fopen(home1, "r")) == NULL) {
-		warn("can't open %s for reading", home1);
-		setegid(getgid());
+		err(1, "can't open %s for reading", home1);
 		return;
 	}
-	setegid(getgid());
 	fread(&WEIGHT, sizeof WEIGHT, 1, fp);
 	fread(&CUMBER, sizeof CUMBER, 1, fp);
-	fread(&bclock, sizeof bclock, 1, fp);
+	fread(&ourclock, sizeof ourclock, 1, fp);
 	fread(&tmp, sizeof tmp, 1, fp);
 	location = tmp ? dayfile : nightfile;
 	for (n = 1; n <= NUMOFROOMS; n++) {
@@ -83,7 +80,7 @@ restore()
 	fread(notes, sizeof notes, 1, fp);
 	fread(&direction, sizeof direction, 1, fp);
 	fread(&position, sizeof position, 1, fp);
-	fread(&btime, sizeof btime, 1, fp);
+	fread(&ourtime, sizeof ourtime, 1, fp);
 	fread(&fuel, sizeof fuel, 1, fp);
 	fread(&torps, sizeof torps, 1, fp);
 	fread(&carrying, sizeof carrying, 1, fp);
@@ -102,18 +99,20 @@ restore()
 	fread(&loved, sizeof loved, 1, fp);
 	fread(&pleasure, sizeof pleasure, 1, fp);
 	fread(&power, sizeof power, 1, fp);
-	fread(&ego, sizeof ego, 1, fp);
+	/* Check the final read in case file was truncated */
+	if (fread(&ego, sizeof ego, 1, fp) < 1)
+		errx(1, "save file %s is truncated", home1);
 	fclose(fp);
 }
 
 void
 save()
 {
-	char *home;
-	char home1[PATH_MAX];
-	register int n;
-	int tmp;
-	FILE *fp;
+	char   *home;
+	char    home1[PATH_MAX];
+	int     n;
+	int     tmp;
+	FILE   *fp;
 
 	home = getenv("HOME");
 	if (strlen(home) + 6 < sizeof(home1)) {
@@ -123,17 +122,14 @@ save()
 		fprintf(stderr, "%s/Bstar: %s\n", home, strerror(ENAMETOOLONG));
 		return;
 	}
-	setegid(egid);
 	if ((fp = fopen(home1, "w")) == NULL) {
 		warn("can't open %s for writing", home1);
-		setegid(getgid());
 		return;
 	}
-	setegid(getgid());
 	printf("Saved in %s.\n", home1);
 	fwrite(&WEIGHT, sizeof WEIGHT, 1, fp);
 	fwrite(&CUMBER, sizeof CUMBER, 1, fp);
-	fwrite(&bclock, sizeof bclock, 1, fp);
+	fwrite(&ourclock, sizeof ourclock, 1, fp);
 	tmp = location == dayfile;
 	fwrite(&tmp, sizeof tmp, 1, fp);
 	for (n = 1; n <= NUMOFROOMS; n++) {
@@ -146,7 +142,7 @@ save()
 	fwrite(notes, sizeof notes, 1, fp);
 	fwrite(&direction, sizeof direction, 1, fp);
 	fwrite(&position, sizeof position, 1, fp);
-	fwrite(&btime, sizeof btime, 1, fp);
+	fwrite(&ourtime, sizeof ourtime, 1, fp);
 	fwrite(&fuel, sizeof fuel, 1, fp);
 	fwrite(&torps, sizeof torps, 1, fp);
 	fwrite(&carrying, sizeof carrying, 1, fp);
@@ -166,5 +162,8 @@ save()
 	fwrite(&pleasure, sizeof pleasure, 1, fp);
 	fwrite(&power, sizeof power, 1, fp);
 	fwrite(&ego, sizeof ego, 1, fp);
+	fflush(fp);
+	if (ferror(fp))
+		warn("fwrite %s", home1);
 	fclose(fp);
 }
