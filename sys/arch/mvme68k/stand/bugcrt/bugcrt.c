@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugcrt.c,v 1.4 1997/04/22 16:05:38 gvf Exp $ */
+/*	$OpenBSD: bugcrt.c,v 1.5 2003/08/20 00:25:08 deraadt Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -6,12 +6,17 @@
 #include "libbug.h"
 #include "stand.h"
 
+void __main(void);
+void start(void);
+
 struct mvmeprom_args bugargs = { 1 };	/* not in BSS */
 
 	asm (".text");
 	asm (".long _start-0x10");
 	asm (".long _start");
-start()
+
+void
+start(void)
 {
 	register int dev_lun asm (MVMEPROM_REG_DEVLUN);
 	register int ctrl_lun asm (MVMEPROM_REG_CTRLLUN);
@@ -24,7 +29,7 @@ start()
 	register char *nbarg_start asm (MVMEPROM_REG_NBARGSTART);
 	register char *nbarg_end asm (MVMEPROM_REG_NBARGEND);
 	extern int edata, end;
-	struct mvmeprom_brdid *id, *mvmeprom_getbrdid();
+	struct mvmeprom_brdid *id, *mvmeprom_getbrdid(void);
 
 	bugargs.dev_lun = dev_lun;
 	bugargs.ctrl_lun = ctrl_lun;
@@ -46,16 +51,14 @@ start()
 	/* NOTREACHED */
 }
 
-__main()
+void
+__main(void)
 {
 }
 
 
 void
-bugexec(addr)
-
-void (*addr)();
-
+bugexec(void (*addr)(void))
 {
 	register int dev_lun asm (MVMEPROM_REG_DEVLUN);
 	register int ctrl_lun asm (MVMEPROM_REG_CTRLLUN);
