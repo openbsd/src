@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.10 2000/04/15 02:15:28 aaron Exp $
+.\"	$OpenBSD: exp.3,v 1.11 2003/02/27 01:07:43 jason Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -81,28 +81,48 @@ The
 .Fn exp
 function computes the exponential value of the given argument
 .Fa x .
+The
+.Fn expf
+function is a single precision version of 
+.Fn exp .
 .Pp
 The
 .Fn expm1
 function computes the value exp(x)\-1 accurately even for tiny argument
 .Fa x .
+The
+.Fn expm1f
+function is a single precision version of
+.Fn expm1 .
 .Pp
 The
 .Fn log
 function computes the value of the natural logarithm of argument
 .Fa x .
+The
+.Fn logf
+function is a single precision version of
+.Fn log .
 .Pp
 The
 .Fn log10
 function computes the value of the logarithm of argument
 .Fa x
 to base 10.
+The
+.Fn log10f
+function is a single precision version of
+.Fn log10 .
 .Pp
 The
 .Fn log1p
 function computes
 the value of log(1+x) accurately even for tiny argument
 .Fa x .
+The
+.Fn log1pf
+function is a single precision version of
+.Fn log1p .
 .Pp
 The
 .Fn pow
@@ -111,6 +131,10 @@ of
 .Ar x
 to the exponent
 .Ar y .
+The
+.Fn powf
+function is a single precision version of
+.Fn pow .
 .Sh ERROR (due to Roundoff etc.)
 exp(x), log(x), expm1(x) and log1p(x) are accurate to within
 an

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atan.3,v 1.7 2000/03/02 00:29:49 todd Exp $
+.\"	$OpenBSD: atan.3,v 1.8 2003/02/27 01:07:43 jason Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -48,14 +48,16 @@
 .Sh DESCRIPTION
 The
 .Fn atan
-and
-.Fn atanf
-functions compute the principal value of the arc tangent of
+function computes the principal value of the arc tangent of
 .Fa x
 in the range
 .Bk -words
 .Bq -\*(Pi/2 , +\*(Pi/2 .
 .Ek
+The
+.Fn atanf
+function is a single precision version of
+.Fn atan .
 .Sh SEE ALSO
 .Xr acos 3 ,
 .Xr asin 3 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atan2.3,v 1.6 2000/03/02 00:29:49 todd Exp $
+.\"	$OpenBSD: atan2.3,v 1.7 2003/02/27 01:07:43 jason Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -48,12 +48,14 @@
 .Sh DESCRIPTION
 The
 .Fn atan2
-and
-.Fn atan2f
-functions compute the principal value of the arc tangent of
+function computes the principal value of the arc tangent of
 .Ar y/ Ns Ar x ,
 using the signs of both arguments to determine the quadrant of
 the return value.
+The
+.Fn atan2f
+function is a single precision version of
+.Fn atan2 .
 .Sh RETURN VALUES
 The
 .Xr atan2
