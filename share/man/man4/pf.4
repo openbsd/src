@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.33 2003/08/09 13:36:25 dhartmei Exp $
+.\"	$OpenBSD: pf.4,v 1.34 2003/08/11 20:39:38 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -335,7 +335,7 @@ indicate which anchor and ruleset the operation applies to.
 .Va nr
 indicates the rule number against which PF_CHANGE_ADD_BEFORE,
 PF_CHANGE_ADD_AFTER or PF_CHANGE_REMOVE actions are applied.
-.It Dv DIOCCHANGEADDR  Fa "struct pfioc_addr"
+.It Dv DIOCCHANGEADDR  Fa "struct pfioc_pooladdr"
 Adds or removes a pool address
 .Va addr
 from a rule specified with
