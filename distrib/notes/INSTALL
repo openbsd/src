@@ -25,7 +25,7 @@ of-service, data destruction, and information-gathering problems.
 In addition to bug fixing, OpenBSD has integrated strong cryptography
 into the base system.  A fully functional IPsec implementation is
 provided as well as support for common protocols such as SSL and SSH.
-Network filtering and monitoring tools such as ipf, ipnat, and
+Network filtering and monitoring tools such as packet filtering, NAT, and
 bridging are also standard.  For high performance demands, support for
 hardware cryptography has also been added to the base system.  Because
 security is often seen as a tradeoff with usability, OpenBSD provides
