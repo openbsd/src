@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.20 2003/03/03 19:35:17 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.21 2003/03/04 05:54:53 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -784,7 +784,7 @@ main(int argc, char *argv[])
 	lin.sin_len = sizeof(sin);
 	lin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	lin.sin_family = AF_INET;
-	lin.sin_port = htons(port);
+	lin.sin_port = htons(port + 1);
 
 	if (bind(conflisten, (struct sockaddr *)&lin, sizeof lin) == -1)
 		err(1, "bind local");
