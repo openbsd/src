@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.59 2002/04/27 15:29:30 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.60 2002/05/16 00:03:05 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -484,6 +484,8 @@ void
 buf_dirty(bp)
 	struct buf *bp;
 {
+	splassert(IPL_BIO);
+
 	if (ISSET(bp->b_flags, B_DELWRI) == 0) {
 		SET(bp->b_flags, B_DELWRI);
 		reassignbuf(bp);
@@ -497,6 +499,8 @@ void
 buf_undirty(bp)
 	struct buf *bp;
 {
+	splassert(IPL_BIO);
+
 	if (ISSET(bp->b_flags, B_DELWRI)) {
 		CLR(bp->b_flags, B_DELWRI);
 		reassignbuf(bp);

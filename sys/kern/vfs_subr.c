@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.83 2002/03/14 01:27:06 millert Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.84 2002/05/16 00:03:05 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1924,6 +1924,8 @@ vwaitforio(vp, slpflag, wmesg, timeo)
 {
 	int error = 0;
 
+	splassert(IPL_BIO);
+
 	while (vp->v_numoutput) {
 		vp->v_bioflag |= VBIOWAIT;
 		error = tsleep((caddr_t)&vp->v_numoutput,
@@ -1945,6 +1947,8 @@ void
 vwakeup(vp)
 	struct vnode *vp;
 {
+	splassert(IPL_BIO);
+
 	if (vp != NULL) {
 		if (vp->v_numoutput-- == 0)
 			panic("vwakeup: neg numoutput");
@@ -2089,6 +2093,8 @@ bgetvp(vp, bp)
 	register struct vnode *vp;
 	register struct buf *bp;
 {
+	splassert(IPL_BIO);
+
 
 	if (bp->b_vp)
 		panic("bgetvp: not free");
@@ -2114,6 +2120,8 @@ brelvp(bp)
 	register struct buf *bp;
 {
 	struct vnode *vp;
+
+	splassert(IPL_BIO);
 
 	if ((vp = bp->b_vp) == (struct vnode *) 0)
 		panic("brelvp: NULL");
@@ -2166,6 +2174,8 @@ buf_replacevnode(bp, newvp)
 {
 	struct vnode *oldvp = bp->b_vp;
 
+	splassert(IPL_BIO);
+
 	if (oldvp)
 		brelvp(bp);
 
@@ -2192,6 +2202,8 @@ reassignbuf(bp)
 	struct buflists *listheadp;
 	int delay;
 	struct vnode *vp = bp->b_vp;
+
+	splassert(IPL_BIO);
 
 	/*
 	 * Delete from old vnode list, if on one.
