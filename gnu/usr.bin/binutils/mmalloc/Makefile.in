@@ -73,7 +73,7 @@ TARGETLIB =	libmmalloc.a
 
 CFILES =	mcalloc.c mfree.c mmalloc.c mmcheck.c mmemalign.c mmstats.c \
 		mmtrace.c mrealloc.c mvalloc.c mmap-sup.c attach.c detach.c \
-		keys.c sbrk-sup.c
+		keys.c sbrk-sup.c mm.c
 
 HFILES =	mmalloc.h
 
@@ -82,6 +82,11 @@ OFILES =	mcalloc.o mfree.o mmalloc.o mmcheck.o mmemalign.o mmstats.o \
 		keys.o sbrk-sup.o
 
 DEFS =		@DEFS@
+
+# The current default is to build a single object module with all the mmalloc
+# functions.  To build a more traditional library, flip this macro definition.
+#TARGETOBJS =	$(OFILES)
+TARGETOBJS =	mm.o
 
 .c.o:
 	$(CC) -c $(CFLAGS) $(DEFS) -I. -I$(srcdir)/../include $<
@@ -122,12 +127,15 @@ install:	all
 		$(RANLIB) $(DESTDIR)$(libdir)/$(TARGETLIB).n
 		mv -f $(DESTDIR)$(libdir)/$(TARGETLIB).n $(DESTDIR)$(libdir)/$(TARGETLIB)
 
-$(TARGETLIB):	$(OFILES)
+$(TARGETLIB):	$(TARGETOBJS)
 		$(RM) -rf $@
-		$(AR) $(AR_FLAGS) $@ $(OFILES)
+		$(AR) $(AR_FLAGS) $@ $(TARGETOBJS)
 		$(RANLIB) $@
 
 $(OFILES) :	$(HFILES) Makefile
+
+mm.o:		$(HFILES) $(CFILES)
+		$(CC) -c $(CFLAGS) $(DEFS) -I. -I$(srcdir)/../include $(srcdir)/mm.c
 
 .always.:
 # Do nothing.

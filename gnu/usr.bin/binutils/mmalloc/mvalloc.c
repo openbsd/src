@@ -23,7 +23,7 @@ Boston, MA 02111-1307, USA.  */
    elsewhere, not clutter up this file with lots of kluges to try to figure
    it out. */
 
-static size_t pagesize;
+static size_t cache_pagesize;
 extern int getpagesize PARAMS ((void));
 
 PTR
@@ -31,12 +31,12 @@ mvalloc (md, size)
   PTR md;
   size_t size;
 {
-  if (pagesize == 0)
+  if (cache_pagesize == 0)
     {
-      pagesize = getpagesize ();
+      cache_pagesize = getpagesize ();
     }
 
-  return (mmemalign (md, pagesize, size));
+  return (mmemalign (md, cache_pagesize, size));
 }
 
 
