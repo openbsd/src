@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.32 1998/05/16 05:52:36 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.33 1998/05/16 05:57:46 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.32 1998/05/16 05:52:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.33 1998/05/16 05:57:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -581,8 +581,8 @@ pinger()
 		struct tvi tvi;
 
 		(void)gettimeofday(&tv, (struct timezone *)NULL);
-		tvi.tv_sec = tv.tv_sec;
-		tvi.tv_usec = tv.tv_usec;
+		tvi.tv_sec = htonl(tv.tv_sec);
+		tvi.tv_usec = htonl(tv.tv_usec);
 		memcpy((u_int *)&outpack[8], &tvi, sizeof tvi);
 	}
 
@@ -666,8 +666,8 @@ pr_pack(buf, cc, from)
 			pkttime = (char *)icp->icmp_data;
 #endif
 			memcpy(&tvi, pkttime, sizeof tvi);
-			tp.tv_sec = tvi.tv_sec;
-			tp.tv_usec = tvi.tv_usec;
+			tp.tv_sec = ntohl(tvi.tv_sec);
+			tp.tv_usec = ntohl(tvi.tv_usec);
 			
 			timersub(&tv, &tp, &tv);
 			triptime = (tv.tv_sec * 1000000) + tv.tv_usec;
