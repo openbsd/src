@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.116 1999/04/01 17:41:26 millert Exp $
+#	$OpenBSD: install.sub,v 1.117 1999/04/01 21:25:48 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -81,8 +81,8 @@ SNAPSETS="bin dev etc games man misc sbin \
 	  usr.lib usr.libexec usr.misc usr.sbin usr.share var"
 THESETS=					# one of the above
 
-local_sets_dir=""			# Path searched for sets by install_sets
-					# on the local filesystems
+# Path searched for sets by install_sets on the local filesystems
+local_sets_dir=""
 
 # decide upon an editor
 if [ X$EDITOR = X ]; then
@@ -122,9 +122,9 @@ getresp() {
 
 isin() {
 # test the first argument against the remaining ones, return succes on a match
-	local	_a
+	local	_a=$1
 
-	_a=$1; shift
+	shift
 	while [ $# != 0 ]; do
 		if [ "$_a" = "$1" ]; then return 0; fi
 		shift
@@ -135,11 +135,9 @@ isin() {
 addel() {
 # add first argument to list formed by the remaining arguments
 # adds to the tail if the element does not already exist
-	local	_a
-	local	_seen
+	local	_a=$1 _seen=""
 
-	_seen=""
-	_a=$1; shift
+	shift
 	while [ $# != 0 ]; do
 		echo "$1"
 		if [ "$_a" = "$1" ]; then
@@ -154,9 +152,9 @@ addel() {
 
 rmel() {
 # remove first argument from list formed by the remaining arguments
-	local	_a
+	local	_a=$1
 
-	_a=$1; shift
+	shift
 	while [ $# != 0 ]; do
 		if [ "$_a" != "$1" ]; then
 			echo "$1"
@@ -167,12 +165,9 @@ rmel() {
 
 cutword () {
 # read lines on stdin, return Nth element of each line, like cut(1)
-	local _a
-	local _n
-	local _oifs
+	local _a _n _oifs="$IFS"
 
 	# optional field separator
-	_oifs="$IFS"
 	case "$1" in
 		-t?*) IFS=${1#-t}; shift;;
 	esac
@@ -188,11 +183,9 @@ cutword () {
 
 cutlast () {
 # read a line of data, return last element. Equiv. of awk '{print $NF}'.
-	local _a
-	local _oifs
+	local _a _oifs="$IFS"
 
 	# optional field separator
-	_oifs="$IFS"
 	case "$1" in
 		-t?*) IFS=${1#-t}; shift;;
 	esac
@@ -206,8 +199,8 @@ cutlast () {
 
 firstchar () {
 # return first character of argument
-	local _a
-	_a=$1
+	local _a=$1
+
 	while [ ${#_a} != 1 ]; do
 		_a=${_a%?}
 	done
@@ -216,6 +209,7 @@ firstchar () {
 
 basename () {
 	local _oifs
+
 	if [ "$1" = "" ]; then return; fi
 	_oifs="$IFS"
 	IFS="/"
@@ -226,8 +220,8 @@ basename () {
 }
 
 isnumeric() {
-	local _a
-	_a=$1
+	local _a=$1
+
 	while [ ${#_a} != 0 ]; do
 		case $_a in
 			[0-9]*) ;;
@@ -245,10 +239,9 @@ get_ifdevs() {
 
 dir_has_sets() {
 	# return true when the directory $1 contains a set for $2...$n
-	local _dir
-	local _file
+	local _dir=$1 _file
 
-	_dir=$1; shift
+	shift
 	for _file in $*
 	do
 		if [ -f $_dir/${_file}${VERSION}.tar.gz ]; then
@@ -268,10 +261,9 @@ dir_has_sets() {
 
 list_has_sets() {
 	# return true when the list $1 contains a set, given dir $2 for $3...$n
-	local _list
-	local _file
+	local _list=$1 _file
 
-	_list=$1; shift
+	shift
 	for _file in $*
 	do
 		if isin ${_file}${VERSION}.tar.gz $_list; then
@@ -292,15 +284,9 @@ list_has_sets() {
 ftp_list_files() {
 	# log in via ftp to host $1 as user $2 with password $3
 	# and return a list of all files in the directory $4 on stdout
-	local _host
-	local _user
-	local _pass
-	local _dir
+	local _host=$1 _user=$2 _pass=$3 _dir=$4
 
-	_host=$1; shift
-	_user=$1; shift
-	_pass=$1; shift
-	_dir=$1; shift
+	shift; shift; shift; shift
 
 	ftp ${_ftp_active} -V -n $_host  <<__ptf
 user $_user $_pass
@@ -310,23 +296,10 @@ quit
 __ptf
 }
 
-twiddle() {
-# spin the propeller so we don't get bored
-	while : ; do  
-		sleep 1; echo -n "/";
-		sleep 1; echo -n "-";
-		sleep 1; echo -n "\\";
-		sleep 1; echo -n "|";
-	done > /dev/tty & echo $!
-}
-
 get_localdir() {
 	# $1 is relative mountpoint
-	local _mp
-	local _dir
+	local _mp=$1 _dir=""
 
-	_mp=$1
-	_dir=
 	while : ; do
 	    echo -n "Enter the pathname where the sets are stored [$_dir] "
 	    getresp "$_dir"
@@ -458,15 +431,9 @@ addifconfig() {
 }
 
 configurenetwork() {
-	local _ifsdone
-	local _ifs
-	local _ouranswer
-	local _reprompt
+	local _ifsdone="" _ifs _ouranswer="" _reprompt=1
 
 	_IFS=`get_ifdevs`
-	_ifsdone=""
-	_ouranswer=""
-	_reprompt=1
 	resp=""		# force at least one iteration
 	while [ "X${resp}" != X"done" ]; do
 		if [ $_reprompt = 1 ]; then
@@ -519,17 +486,10 @@ __configurenetwork_1
 
 configure_ifs() {
 
-	local _up
-	local _interface_name
-	local _interface_ip
-	local _interface_mask
-	local _interface_symname
-	local _interface_extra
-	local _hostname
+	local _up _if_name=$1 _if_ip _if_mask
+	local _if_symname _if_extra _hostname
 
-	_interface_name=$1
-
-	set -- `ifconfig $_interface_name | sed -n '
+	set -- `ifconfig $_if_name | sed -n '
 		1s/.*<UP,.*$/UP/p
 		1s/.*<.*>*$/DOWN/p
 		/media:/s/^.*$//
@@ -540,19 +500,19 @@ configure_ifs() {
 		/inet/s/inet// p'`
 
 	_up=$1
-	_interface_ip=$2
-	_interface_mask=$3
+	_if_ip=$2
+	_if_mask=$3
 
 	if [ $_up = "UP" ]; then
-		ifconfig $_interface_name delete down
+		ifconfig $_if_name delete down
 	fi
 
 	# Get IP address
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "IP address (or 'dhcp') ? [$_interface_ip] "
-		getresp "$_interface_ip"
-		_interface_ip=$resp
+		echo -n "IP address (or 'dhcp') ? [$_if_ip] "
+		getresp "$_if_ip"
+		_if_ip=$resp
 	done
 
 	# Get symbolic name
@@ -561,56 +521,56 @@ configure_ifs() {
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Symbolic (host) name? [$_hostname] "
 		getresp "$_hostname"
-		_interface_symname=$resp
+		_if_symname=$resp
 	done
 
 	# Get netmask
-	if [ "$_interface_ip" != "dhcp" ]; then
+	if [ "$_if_ip" != "dhcp" ]; then
 		resp=""
-		if [ "X${_interface_mask}" = X"" ]; then
-			_interface_mask=255.255.255.0
+		if [ "X${_if_mask}" = X"" ]; then
+			_if_mask=255.255.255.0
 		fi
 		while [ "X${resp}" = X"" ]; do
-			echo -n "Netmask ? [$_interface_mask] "
-			getresp "$_interface_mask"
-			_interface_mask=$resp
+			echo -n "Netmask ? [$_if_mask] "
+			getresp "$_if_mask"
+			_if_mask=$resp
 		done
 	fi
 
-	if [ -n "`ifconfig -m ${_interface_name} | sed -n '/media/p'`" ]; then
+	if [ -n "`ifconfig -m ${_if_name} | sed -n '/media/p'`" ]; then
 		echo "Your use of the network interface may require non-default"
 		echo "media directives.  The default media is:"
-		ifconfig -m ${_interface_name} | sed -n '
+		ifconfig -m ${_if_name} | sed -n '
 			/supported/D
 			/media:/p'
 		echo "This is a list of supported media:"
-		ifconfig -m ${_interface_name} | sed -n '
+		ifconfig -m ${_if_name} | sed -n '
 			/media:/D
 			s/^	//
 			/media/p'
 		echo "If the default is not satisfactory, and you wish to use another"
 		echo "media, copy that line from above (ie. \"media 100baseTX\")"
-		echo -n "Media directives? [$_interface_extra] "
-		getresp "$_interface_extra"
+		echo -n "Media directives? [$_if_extra] "
+		getresp "$_if_extra"
 		if [ "X${resp}" != X"" ]; then
-			_interface_extra=$resp
+			_if_extra=$resp
 		fi
 	fi
 
 	# Configure the interface.  If it
 	# succeeds, add it to the permanent
 	# network configuration info.
-	if [ "$_interface_ip" = "dhcp" ]; then
-		ifconfig ${_interface_name} down ${_interface_extra}
+	if [ "$_if_ip" = "dhcp" ]; then
+		ifconfig ${_if_name} down ${_if_extra}
 cat > /etc/dhclient.conf << __dhclientedit1
 initial-interval 1;
 send host-name "$_hostname";
 request subnet-mask, broadcast-address, routers,
        domain-name, domain-name-servers, host-name;
 __dhclientedit1
-		dhclient -1 ${_interface_name}
+		dhclient -1 ${_if_name}
 
-		set -- `ifconfig $_interface_name | sed -n '
+		set -- `ifconfig $_if_name | sed -n '
 			1s/.*<UP,.*$/UP/p
 			1s/.*<.*>*$/DOWN/p
 			/media:/s/^.*$//
@@ -621,16 +581,16 @@ __dhclientedit1
 			/inet/s/inet// p'`
 
 		if [ $1 = "UP" -a $2 = "0.0.0.0" ]; then
-			echo "hostname-associated DHCP attempt for $_interface_name failed..."
-			ifconfig $_interface_name delete down
+			echo "hostname-associated DHCP attempt for $_if_name failed..."
+			ifconfig $_if_name delete down
 
 			cat > /etc/dhclient.conf << __dhclientedit2
 initial-interval 1;
 request subnet-mask, broadcast-address, routers,
        domain-name, domain-name-servers, host-name;
 __dhclientedit2
-			dhclient -1 ${_interface_name}
-			set -- `ifconfig $_interface_name | sed -n '
+			dhclient -1 ${_if_name}
+			set -- `ifconfig $_if_name | sed -n '
 				1s/.*<UP,.*$/UP/p
 				1s/.*<.*>*$/DOWN/p
 				/media:/s/^.*$//
@@ -641,35 +601,25 @@ __dhclientedit2
 				/inet/s/inet// p'`
 
 			if [ $1 = "UP" -a $2 = "0.0.0.0" ]; then
-				echo "free-roaming DHCP attempt for $_interface_name failed."
-				ifconfig $_interface_name delete down
+				echo "free-roaming DHCP attempt for $_if_name failed."
+				ifconfig $_if_name delete down
 				return 1
 			else
-				echo "DHCP attempt for $_interface_name successful."
-				addifconfig \
-					${_interface_name} \
-					${_interface_symname} \
-					${_interface_ip}
+				echo "DHCP attempt for $_if_name successful."
+				addifconfig ${_if_name} ${_if_symname} ${_if_ip}
 				return 0
 			fi
 		else
-			echo "DHCP configuration of $_interface_name successful."
-			addifconfig \
-				${_interface_name} \
-				${_interface_symname} \
-				${_interface_ip}
+			echo "DHCP configuration of $_if_name successful."
+			addifconfig ${_if_name} ${_if_symname} ${_if_ip}
 			return 0
 		fi
 	else
-		ifconfig ${_interface_name} down
-		if ifconfig ${_interface_name} inet \
-		    ${_interface_ip} \
-		    netmask ${_interface_mask} ${_interface_extra} up ; then
-			addifconfig \
-			    ${_interface_name} \
-			    ${_interface_symname} \
-			    ${_interface_ip} \
-			    ${_interface_mask} "${_interface_extra}"
+		ifconfig ${_if_name} down
+		if ifconfig ${_if_name} inet \
+		    ${_if_ip} \
+		    netmask ${_if_mask} ${_if_extra} up ; then
+			addifconfig ${_if_name} ${_if_symname} ${_if_ip} ${_if_mask} "${_if_extra}"
 			return 0
 		fi
 	fi
@@ -761,12 +711,8 @@ enable_network() {
 # Print the selector and get a response
 # The list of sets is passed in as $1, sets $resp 
 get_selection() {
-	local _next
-	local _f
-	local _sets
+	local _next="" _f _sets=$1
 
-	_sets=$1
-	_next=""
 	for _f in $_sets ; do
 		if isin $_f $_setsdone ; then
 			echo -n "	[X] "
@@ -788,13 +734,8 @@ get_selection() {
 # Do globbing on the selection and parse +/-, sets _get_files and _setsdone
 # (which must exist in the local namespace) as side effects.
 glob_selection() {
-	local _selection="$1"
-	local _parent_dir="$2"
-	local _sets="$3"
-	local _action
-	local _matched
-	local _tfile
-	local _f
+	local _selection="$1" _parent_dir="$2" _sets="$3"
+	local _action _matched _tfile _f
 
 	if [ "X${_selection}" = X"" ]; then
 		return
@@ -853,15 +794,8 @@ install_url() {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	_ftp_server_password, and _ftp_active must be global.
 
-local _sets
-local _kernel
-local _f
-local _file_list
-local _get_files
-local _failed_files
-local _osetsdone
-local _url_type
-local _url_base
+local _sets _kernel _f _file_list _get_files _failed_files _osetsdone
+local _url_type _url_base
 
 # Is this an ftp or http install?
 _url_type=$1; shift
@@ -1181,19 +1115,13 @@ done
 
 install_from_mounted_fs() {
 # $1 - directory containing installation sets
-local _sets
-local _kernel
-local _f
-local _get_files
-local _failed_files
-local _osetsdone
+local _sets="" _kernel _f _get_files _failed_files _osetsdone
 
 if [ ! -d $1 ]; then
 	echo "No such directory: $1"
 	return
 fi
 
-_sets=""
 if dir_has_sets $1 $THESETS; then
 	for _f in $THESETS ; do
 		if [ "X${_f}" = "Xkernel" ]; then
@@ -1339,11 +1267,7 @@ done
 }
 
 install_cdrom() {
-local _drive
-local _partition_range
-local _partition
-local _fstype
-local _directory
+local _drive _partition_range _partition _fstype _directory
 
 # Get the cdrom device info
 cat << \__install_cdrom_1
@@ -1445,15 +1369,8 @@ mount_a_disk() {
 # is $_DKDEVS.
 # returns 0 on failure.
 
-local _drive
-local _def_partition
-local _partition_range
-local _partition
-local _fstype
-local _fsopts
-local _directory
-local _md_fstype
-local _md_fsopts
+local _drive _def_partition _partition_range _partition _fstype
+local _fsopts _directory _md_fstype _md_fsopts
 
 getresp "abort"
 case "$resp" in
@@ -1736,8 +1653,7 @@ echo "Extraction complete."
 }
 
 get_timezone() {
-local _a
-local _zonepath
+local _a _zonepath
 
 #
 # If the zoneinfo is not on the installation medium or on the
@@ -1810,8 +1726,7 @@ done
 
 install_sets()
 {
-local _yup
-_yup="FALSE"
+local _yup="FALSE"
 
 # Ask the user which media to load the distribution from.
 cat << \__install_sets_1
@@ -1912,12 +1827,7 @@ done
 
 munge_fstab()
 {
-local _fstab
-local _fstab_shadow
-local _dev
-local _mp
-local _fstype
-local _rest
+local _fstab _fstab_shadow _dev _mp _fstype _rest
 
 # Now that the 'real' fstab is configured, we munge it into a 'shadow'
 # fstab which we'll use for mounting and unmounting all of the target
@@ -1948,9 +1858,7 @@ mount_fs()
 # Must mount filesystems manually, one at a time, so we can make
 # sure the mount points exist.
 # $1 is a file in fstab format
-local _fstab
-
-_fstab=$1
+local _fstab=$1
 
 ( while read line; do
 	set -- $line
@@ -1988,9 +1896,7 @@ unmount_fs()
 {
 # Unmount all filesystems and check their integrity.
 # Usage: [-check] <fstab file>
-local _check
-local _fstab
-local _pid
+local _check _fstab _pid
 
 if [ "$1" = "-check" ]; then
 	_check=1
@@ -2036,9 +1942,7 @@ check_fs()
 {
 # Check filesystem integrity.
 # $1 is a file in fstab format
-local _fstab
-
-_fstab=$1
+local _fstab=$1
 
 (
 	_devs=""
