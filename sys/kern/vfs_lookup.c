@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.6 1997/03/01 23:03:38 tholo Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.7 1997/05/21 14:51:26 tholo Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -184,7 +184,10 @@ namei(ndp)
 			if (dironly && ndp->ni_vp != NULL && ndp->ni_vp->v_type != VDIR) {
 				if ((cnp->cn_flags & LOCKPARENT) && ndp->ni_pathlen == 1)
 					VOP_UNLOCK(ndp->ni_dvp);
-				vput(ndp->ni_vp);
+				if (cnp->cn_flags & LOCKLEAF)
+					vput(ndp->ni_vp);
+				else
+					vrele(ndp->ni_vp);
 				FREE(cnp->cn_pnbuf, M_NAMEI);
 				return (ENOTDIR);
 			}
