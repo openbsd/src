@@ -127,9 +127,11 @@ to a horizontal tab.
 @menu
 * Entries Lines::               
 * Modes::                       
+* Filenames::                       Conventions regarding filenames
 * Requests::                    
 * Responses::                   
 * Example::                     
+* Requirements::
 @end menu
 
 @node Entries Lines
@@ -188,6 +190,19 @@ unix, much less across operating systems with diverse protection
 features.  So all the ins and outs of what the mode means across
 operating systems haven't really been worked out (e.g. should the VMS
 port use ACLs to get POSIX semantics for groups?).
+
+@node Filenames
+@section Conventions regarding transmission of file names
+
+In most contexts, @samp{/} is used to separate directory and file
+names in filenames, and any use of other conventions (for example,
+that the user might type on the command line) is converted to that
+form.  The only exceptions might be a few cases in which the server
+provides a magic cookie which the client then repeats verbatim, but as
+the server has not yet been ported beyond unix, the two rules provide
+the same answer (and what to do if future server ports are operating
+on a repository like e:/foo or CVS_ROOT:[FOO.BAR] has not been
+carefully thought out).
 
 @node Requests
 @section Requests
@@ -352,6 +367,9 @@ strings, no variations (such as combining of options) are allowed.  For
 graceful handling of @code{valid-requests}, it is probably better to
 make new global options separate requests, rather than trying to add
 them to this request.
+
+@item Set @var{variable}=@var{value} \n
+Set a user variable @var{variable} to @var{value}.
 
 @item expand-modules \n
 Response expected: yes.  Expand the modules which are specified in the
@@ -664,4 +682,24 @@ s> M new revision: 1.5; previous revision: 1.4
 s> M done
 s> ok
 @end example
+
+@node Requirements
+@section Required versus optional parts of the protocol
+
+The following are part of every known implementation of the CVS
+protocol and it is considered reasonable behavior to completely fail
+to work if you are connected with an implementation which attempts to
+not support them.  Requests: Root, Valid-responses, valid-requests,
+Repository, Entry, Modified, Argument, Argumentx, ci, co, update.
+Responses: ok, error, Valid-requests, Checked-in, Updated, Merged,
+Removed, M, E.
+
+Failure to support the Directory, UseUnchanged, and Unchanged requests
+is deprecated.  CVS 1.5 and later have supported these requests and in
+the future it will be considered reasonable behavior to completely
+fail to work with an implementation which attempts to not support
+them.  Support for the Repository and Lost requests is deprecated; CVS
+clients 1.5 and later will not use them if communicating with a server
+which supports Directory and UseUnchanged.
+
 @bye

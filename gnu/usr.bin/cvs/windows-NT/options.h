@@ -80,23 +80,6 @@
 #endif
 
 /*
- * The "rm" program to execute when pruning directories that are not part of
- * a release.  This "rm" must support the "-fr" options.  Specify a full
- * pathname if your site wants to use a particular rm.
- */
-#ifndef RM
-#define	RM	"rm"
-#endif
-
-/*
- * The "sort" program to execute when displaying the module database. Specify
- * a full pathname if your site wants to use a particular sort.
- */
-#ifndef SORT
-#define	SORT	"sort"
-#endif
-
-/*
  * The "patch" program to run when using the CVS server and accepting
  * patches across the network.  Specify a full pathname if your site
  * wants to use a particular patch.
@@ -242,10 +225,11 @@
 #endif
 
 /*
- * The authenticated client/server is under construction -- it is not
- * known to work with Windows NT.
+ * Yes, we can do the authenticated client.
  */
-/* #define AUTH_CLIENT_SUPPORT 1 */
+#define AUTH_CLIENT_SUPPORT 1
+
+/* Authenticated server doesn't work yet on NT.  */
 /* #define AUTH_SERVER_SUPPORT 1 */
 
 /*
@@ -256,7 +240,7 @@
  * and recv(), or maybe one has to link against a different library or something,
  * I don't know.  So this is commented out.
  */
-/* #define NO_SOCKET_TO_FD 1 */
+#define NO_SOCKET_TO_FD 1
 
 /* End of CVS configuration section */
 

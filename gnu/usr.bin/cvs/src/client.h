@@ -59,6 +59,10 @@ int connect_to_pserver PROTO((int *tofdp, int* fromfdp, int verify_only));
 # endif /* CVS_AUTH_PORT */
 #endif /* AUTH_CLIENT_SUPPORT */
 
+#ifdef AUTH_SERVER_SUPPORT
+extern void authenticate_connection PROTO ((void));
+#endif
+
 /* Talking to the server. */
 void send_to_server PROTO((char *str, size_t len));
 void read_from_server PROTO((char *buf, size_t len));

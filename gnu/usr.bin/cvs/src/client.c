@@ -2,15 +2,20 @@
 
 #include "cvs.h"
 #include "getline.h"
+#include "edit.h"
 
 #ifdef CLIENT_SUPPORT
 
 #include "md5.h"
 
 #if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS
+#ifdef HAVE_WINSOCK_H
+#include <winsock.h>
+#else /* No winsock.h */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#endif /* No winsock.h */
 #endif /* defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS */
 
 #ifdef AUTH_CLIENT_SUPPORT
@@ -390,7 +395,7 @@ read_line (resultp, eof_ok)
 	    if (eof_ok)
 		return 0;
 	    else
-		error (1, 0, "premature end of file from server");
+		error (1, 0, "end of file from server (consult above messages if any)");
 	}
 
 	if (c == '\n')
@@ -1793,6 +1798,27 @@ send_repository (dir, repos, update_dir)
 {
     char *adm_name;
 
+    /* FIXME: this is probably not the best place to check; I wish I
+     * knew where in here's callers to really trap this bug.  To
+     * reproduce the bug, just do this:
+     * 
+     *       mkdir junk
+     *       cd junk
+     *       cvs -d some_repos update foo
+     *
+     * Poof, CVS seg faults and dies!  It's because it's trying to
+     * send a NULL string to the server but dies in send_to_server.
+     * That string was supposed to be the repository, but it doesn't
+     * get set because there's no CVSADM dir, and somehow it's not
+     * getting set from the -d argument either... ?
+     */
+    if (repos == NULL)
+    {
+        /* Lame error.  I want a real fix but can't stay up to track
+           this down right now. */
+        error (1, 0, "no repository");
+    }
+
     if (update_dir == NULL || update_dir[0] == '\0')
 	update_dir = ".";
 
@@ -1942,6 +1968,7 @@ send_repository (dir, repos, update_dir)
 		error (0, errno, "closing %s", adm_name);
 	}
     }
+    free (adm_name);
     if (last_repos != NULL)
 	free (last_repos);
     if (last_update_dir != NULL)
@@ -2216,7 +2243,7 @@ send_to_server (str, len)
   if (use_socket_style)
     {
       int just_wrtn = 0;
-      int wrtn = 0;
+      size_t wrtn = 0;
 
       while (wrtn < len)
         {
@@ -2266,7 +2293,7 @@ read_from_server (buf, len)
   if (use_socket_style)
     {
       int just_red = 0;
-      int red = 0;
+      size_t red = 0;
 
       while (red < len)
         {
@@ -2295,7 +2322,7 @@ read_from_server (buf, len)
           if (ferror (from_server))
             error (1, errno, "reading from server");
           if (feof (from_server))
-            error (1, 0, "premature end-of-file from server");
+            error (1, 0, "end of file from server (consult above messages if any)");
         }
     }
   
@@ -2498,9 +2525,10 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
      int verify_only;
 {
     int sock;
+#ifndef NO_SOCKET_TO_FD
     int tofd, fromfd;
+#endif
     int port_number;
-    struct hostent *host;
     struct sockaddr_in client_sai;
 
     /* Does nothing if already called before now. */
@@ -2777,6 +2805,21 @@ start_kerberos_server (tofdp, fromfdp)
 
 #endif /* HAVE_KERBEROS */
 
+static int send_variable_proc PROTO ((Node *, void *));
+
+static int
+send_variable_proc (node, closure)
+    Node *node;
+    void *closure;
+{
+    send_to_server ("Set ", 0);
+    send_to_server (node->key, 0);
+    send_to_server ("=", 1);
+    send_to_server (node->data, 0);
+    send_to_server ("\012", 1);
+    return 0;
+}
+
 /* Contact the server.  */
 void
 start_server ()
@@ -2984,22 +3027,29 @@ start_server ()
 	}
     }
     if (gzip_level)
-      {
+    {
 	if (supported_request ("gzip-file-contents"))
-	  {
+	{
             char gzip_level_buf[5];
 	    send_to_server ("gzip-file-contents ", 0);
             sprintf (gzip_level_buf, "%d", gzip_level);
 	    send_to_server (gzip_level_buf, 0);
 
 	    send_to_server ("\012", 1);
-	  }
+	}
 	else
-	  {
+	{
 	    fprintf (stderr, "server doesn't support gzip-file-contents\n");
 	    gzip_level = 0;
-	  }
-      }
+	}
+    }
+    /* If "Set" is not supported, just silently fail to send the variables.
+       Users with an old server should get a useful error message when it
+       fails to recognize the ${=foo} syntax.  This way if someone uses
+       several server, some of which are new and some old, they can still
+       set user variables in their .cvsrc without trouble.  */
+    if (supported_request ("Set"))
+	walklist (variable_list, send_variable_proc, NULL);
 }
 
 #ifndef RSH_NOT_TRANSPARENT
@@ -3176,8 +3226,8 @@ send_arg (string)
 	}
 	else
         {
-          buf[0] = *p;
-          send_to_server (buf, 1);
+	    buf[0] = *p;
+	    send_to_server (buf, 1);
         }
 	++p;
     }
@@ -3379,39 +3429,35 @@ send_modified (file, short_pathname, vers)
     free (mode_string);
 }
 
-static int send_fileproc PROTO ((char *, char *, char *, List *, List *));
+static int send_fileproc PROTO ((struct file_info *finfo));
 
 /* Deal with one file.  */
 static int
-send_fileproc (file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List *entries;
-    List *srcfiles;
+send_fileproc (finfo)
+    struct file_info *finfo;
 {
     Vers_TS *vers;
-    int update_dir_len = strlen (update_dir);
-    char *short_pathname = xmalloc (update_dir_len + strlen (file) + 40);
-    strcpy (short_pathname, update_dir);
-    if (update_dir[0] != '\0')
+    int update_dir_len = strlen (finfo->update_dir);
+    char *short_pathname = xmalloc (update_dir_len + strlen (finfo->file) + 40);
+    strcpy (short_pathname, finfo->update_dir);
+    if (finfo->update_dir[0] != '\0')
 	strcat (short_pathname, "/");
-    strcat (short_pathname, file);
+    strcat (short_pathname, finfo->file);
 
-    send_a_repository ("", repository, update_dir);
+    send_a_repository ("", finfo->repository, finfo->update_dir);
 
     vers = Version_TS ((char *)NULL, (char *)NULL, (char *)NULL,
 		       (char *)NULL,
-		       file, 0, 0, entries, (List *)NULL);
+		       finfo->file, 0, 0, finfo->entries, (List *)NULL);
 
     if (vers->vn_user != NULL)
     {
       char *tmp;
 
-      tmp = xmalloc (strlen (file) + strlen (vers->vn_user)
+      tmp = xmalloc (strlen (finfo->file) + strlen (vers->vn_user)
 		     + strlen (vers->options) + 200);
       sprintf (tmp, "Entry /%s/%s/%s%s/%s/", 
-               file, vers->vn_user,
+               finfo->file, vers->vn_user,
                vers->ts_conflict == NULL ? "" : "+",
                (vers->ts_conflict == NULL ? ""
                 : (vers->ts_user != NULL &&
@@ -3448,7 +3494,7 @@ send_fileproc (file, update_dir, repository, entries, srcfiles)
 	{
 	    /* if the server is old, use the old request... */
 	    send_to_server ("Lost ", 0);
-	    send_to_server (file, 0);
+	    send_to_server (finfo->file, 0);
 	    send_to_server ("\012", 1);
 	    /*
 	     * Otherwise, don't do anything for missing files,
@@ -3459,7 +3505,7 @@ send_fileproc (file, update_dir, repository, entries, srcfiles)
     else if (vers->ts_rcs == NULL
 	     || strcmp (vers->ts_user, vers->ts_rcs) != 0)
     {
-	send_modified (file, short_pathname, vers);
+	send_modified (finfo->file, short_pathname, vers);
     }
     else
     {
@@ -3467,7 +3513,7 @@ send_fileproc (file, update_dir, repository, entries, srcfiles)
 	if (use_unchanged)
           {
 	    send_to_server ("Unchanged ", 0);
-	    send_to_server (file, 0);
+	    send_to_server (finfo->file, 0);
 	    send_to_server ("\012", 1);
           }
     }
@@ -3479,7 +3525,7 @@ send_fileproc (file, update_dir, repository, entries, srcfiles)
 
 	p = getnode ();
 	p->type = FILES;
-	p->key = xstrdup (file);
+	p->key = xstrdup (finfo->file);
 	(void) addnode (ignlist, p);
     }
 
@@ -3674,7 +3720,32 @@ send_file_names (argc, argv)
     }
 
     for (i = 0; i < argc; ++i)
-	send_arg (argv[i]);
+    {
+	char buf[1];
+	char *p = argv[i];
+
+	send_to_server ("Argument ", 0);
+
+	while (*p)
+	{
+	    if (*p == '\n')
+	    {
+		send_to_server ("\012Argumentx ", 0);
+	    }
+	    else if (ISDIRSEP (*p))
+	    {
+		buf[0] = '/';
+		send_to_server (buf, 1);
+	    }
+	    else
+	    {
+		buf[0] = *p;
+		send_to_server (buf, 1);
+	    }
+	    ++p;
+	}
+	send_to_server ("\012", 1);
+    }
 }
 
 

@@ -398,16 +398,16 @@ run_print (fp)
 }
 
 FILE *
-Popen (cmd, mode)
+run_popen (cmd, mode)
     const char *cmd;
     const char *mode;
 {
     if (trace)
 #ifdef SERVER_SUPPORT
-	(void) fprintf (stderr, "%c-> Popen(%s,%s)\n",
+	(void) fprintf (stderr, "%c-> run_popen(%s,%s)\n",
 			(server_active) ? 'S' : ' ', cmd, mode);
 #else
-	(void) fprintf (stderr, "-> Popen(%s,%s)\n", cmd, mode);
+	(void) fprintf (stderr, "-> run_popen(%s,%s)\n", cmd, mode);
 #endif
     if (noexec)
 	return (NULL);

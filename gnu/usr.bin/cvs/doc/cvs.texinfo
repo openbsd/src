@@ -22,6 +22,7 @@
 
 @afourpaper
 @setfilename cvs.info
+@include CVSvn.texi
 @settitle CVS---Concurrent Versions System
 @setchapternewpage odd
 
@@ -73,13 +74,10 @@ Free Software Foundation instead of in the original English.
 @sp
 @center @titlefont{CVS}
 @sp 2
-@center for @sc{cvs} 1.6.87+
+@center for @sc{cvs} @value{CVSVN}
 @comment -release-
 @sp 3
 @center Per Cederqvist et al
-@sp 3
-@center last updated 23 Jan 1996
-@comment -date-
 
 @comment  The following two commands start the copyright page
 @comment  for the printed manual.  This will not appear in the Info file.
@@ -111,7 +109,12 @@ Free Software Foundation instead of in the original English.
 @ifinfo
 @c ---------------------------------------------------------------------
 @node    Top
-@top
+@top 
+@c Note: there is a space after that @top command.
+@c The texinfo-format-buffer Emacs function and
+@c the makeinfo shell command disagree on what arguments
+@c @top takes; @top followed by a single space is
+@c something they can both cope with.
 
 This info manual describes how to use and administer
 @sc{cvs} and is updated to release 1.4 or something
@@ -1065,9 +1068,11 @@ The most important of these files is the @file{modules}
 file.  It defines all modules in the repository.  This
 is a sample @file{modules} file.
 
+@c FIXME: The CVSROOT line is a goofy example now that
+@c mkmodules doesn't exist.
 @example
-CVSROOT         -i mkmodules CVSROOT
-modules         -i mkmodules CVSROOT modules
+CVSROOT         CVSROOT
+modules         CVSROOT modules
 cvs             gnu/cvs
 rcs             gnu/rcs
 diff            gnu/diff
@@ -1080,14 +1085,8 @@ where the module resides.  The directory is a path relative to
 @code{$CVSROOT}.  The last for lines in the example
 above are examples of such lines.
 
-@cindex mkmodules
-Each module definition can contain options.  The @samp{-i mkmodules} is
-an example of an option.  It arranges for @sc{cvs} to run the
-@code{mkmodules} program whenever any file in the module CVSROOT is
-committed.  That program is responsible for checking out read-only
-copies from the @sc{rcs} @dfn{history files} of all the administrative files.
-These read-only copies are used internally by @sc{cvs}.  You
-should never edit them directly.
+@c FIXME: might want to introduce the concept of options in modules file
+@c (the old example which was here, -i mkmodules, is obsolete).
 
 The line that defines the module called @samp{modules}
 uses features that are not explained here.
@@ -1309,13 +1308,16 @@ for the user in the @sc{cvs} @file{passwd} file.  If it
 finds the user, it compares against that password.  If
 it does not find the user, or if the @sc{cvs}
 @file{passwd} file does not exist, then the server
-tries the system's @file{/etc/passwd} file.  In either
-case, assuming the password is correct, the server
-switches to run as that user immediately after
-authentication, so that it will have no privileges
-which that user would not have.  Therefore it is
-necessary that usernames in the @sc{cvs} @file{passwd}
-file be valid usernames on the system.
+tries to match the password using the system's
+user-lookup routine.  When using the @sc{cvs}
+@file{passwd} file, the server runs under as the
+username specified in the the third argument in the
+entry, or as the first argument if there is no third
+argument (in this way @sc{cvs} allows imaginary
+usernames provided the @sc{cvs} @file{passwd} file
+indicates corresponding valid system usernames).  In
+any case, @sc{cvs} will have no privileges which the
+(valid) user would not have.
 
 Right now, the only way to put a password in the
 @sc{cvs} @file{passwd} file is to paste it there from
@@ -2518,12 +2520,21 @@ gives branches even numbers, starting at 2.
 @cindex Tags, sticky
 @cindex Branches, sticky
 
-The @samp{-r release-1-0-patches} flag that was given to @code{checkout}
+@c FIXME: make this stand alone better; many places
+@c @xref to this node.
+The @samp{-r release-1-0-patches} flag that was given
+to @code{checkout} in the previous example
 is @dfn{sticky}, that is, it will apply to subsequent commands
 in this directory.  If you commit any modifications, they are
 committed on the branch.  You can later merge the modifications into
 the main trunk.  @xref{Merging}.
 
+You can use the @code{status} command to see what
+sticky tags or dates are set:
+
+@c FIXME: This example needs to stand alone better and it
+@c would also better if it didn't use -v which only
+@c clutters the output in this context.
 @example
 $ vi driver.c   # @r{Fix the bugs}
 $ cvs commit -m "Fixed initialization bug" driver.c
@@ -2551,19 +2562,52 @@ File: driver.c          Status: Up-to-date
 @cindex Sticky tags, resetting
 @cindex Deleting sticky tags
 The sticky tags will remain on your working files until
-you delete them with @samp{cvs update -A}.  @xref{update}.
+you delete them with @samp{cvs update -A}.  The
+@samp{-A} option retrieves the version of the file from
+the head of the trunk, and forgets any sticky tags,
+dates, or options.
 
+@c Is the fact that CVS works this way a bug or a
+@c feature?  If a feature, describe how you would use
+@c it to do something useful.
 Sticky tags are not just for branches.  If you check
 out a certain revision (such as 1.4) it will also
 become sticky.  Subsequent @samp{cvs update} will not
 retrieve the latest revision until you reset the tag
-with @samp{cvs update -A}.
+with @samp{cvs update -A}.  Likewise, use of the
+@samp{-D} option to @code{update} or @code{checkout}
+sets a @dfn{sticky date}, which, similarly, causes that
+date to be used for future retrievals.
 
-See the descriptions in Appendix A for more information
-about sticky tags.  Dates and some other options can
-also be sticky.  Again, see Appendix A for details.
-@c -- xref to relevant part of App A.
-@c -- Re-evaluate this node.
+@cindex Restoring old version of removed file
+@cindex Resurrecting old version of dead file
+Many times you will want to retrieve an old version of
+a file without setting a sticky tag.  The way to do
+that is with the @samp{-p} option to @code{checkout} or
+@code{update}, which sends the contents of the file to
+standard output.  For example, suppose you have a file
+named @file{file1} which existed as revision 1.1, and
+you then removed it (thus adding a dead revision 1.2).
+Now suppose you want to add it again, with the same
+contents it had previously.  Here is how to do it:
+
+@example
+$ cvs update -p -r 1.1 file1 >file1
+===================================================================
+Checking out file1
+RCS:  /tmp/cvs-sanity/cvsroot/first-dir/Attic/file1,v
+VERS: 1.1
+***************
+$ cvs add file1
+cvs add: version 1.2 of `file1' will be resurrected
+cvs add: use 'cvs commit' to add this file permanently
+$ cvs commit -m test
+Checking in file1;
+/tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
+new revision: 1.3; previous revision: 1.2
+done
+$ 
+@end example
 
 @c ---------------------------------------------------------------------
 @node Merging
@@ -2892,15 +2936,67 @@ Use @samp{cvs commit @var{filename}} to actually
 perform the removal of the file from the repository.
 @end itemize
 
-What happens when you commit the removal of the file is
-that inside the source repository, it is moved into a
-subdirectory called @file{Attic}.  @sc{cvs} normally doesn't
-look in that directory when you run e.g.
-@code{checkout}.  However, if you are retrieving a
-certain revision via e.g. @samp{cvs checkout -r
-@var{some-tag}}, it will look at the files inside the
-@file{Attic} and include any files that contain the
-specified tag.
+When you commit the removal of the file, @sc{cvs}
+records the fact that the file no longer exists.  It is
+possible for a file to exist on only some branches and
+not on others, or to re-add another file with the same
+name later.  CVS will correctly create or not create
+the file, based on the @samp{-r} and @samp{-D} options
+specified to @code{checkout} or @code{update}.
+
+@cindex Remove (subcommand)
+@deffn Command {cvs remove} [@code{-lR}] files @dots{}
+
+Schedule file(s) to be removed from the repository
+(files which have not already been removed from the
+working directory are not processed).  This command
+does not actually remove the file from the repository
+until you commit the removal.  The @samp{-R} option
+(the default) specifies that it will recurse into
+subdirectories; @samp{-l} specifies that it will not.
+@end deffn
+
+Here is an example of removing several files:
+
+@example
+$ cd test
+$ rm ?.c
+$ cvs remove
+cvs remove: Removing .
+cvs remove: scheduling a.c for removal
+cvs remove: scheduling b.c for removal
+cvs remove: use 'cvs commit' to remove these files permanently
+$ cvs ci -m "Removed unneeded files"
+cvs commit: Examining .
+cvs commit: Committing .
+@end example
+
+If you change your mind you can easily resurrect the
+file before you commit it, using the @code{add}
+command.
+
+@example
+$ ls
+CVS   ja.h  oj.c
+$ rm oj.c
+$ cvs remove oj.c
+cvs remove: scheduling oj.c for removal
+cvs remove: use 'cvs commit' to remove this file permanently
+$ cvs add oj.c
+U oj.c
+cvs add: oj.c, version 1.1.1.1, resurrected
+@end example
+
+If you realize your mistake before you run the
+@code{remove} command you can use @code{update} to
+resurrect the file:
+
+@example
+$ rm oj.c
+$ cvs update oj.c
+cvs update: warning: oj.c was lost
+U oj.c
+@end example
 
 @c ---------------------------------------------------------------------
 @node Tracking sources
@@ -3726,7 +3822,6 @@ particular subcommand, see @ref{Index}.
 * log::                         Print out 'rlog' information for files
 * rdiff::                       'patch' format diffs between releases
 * release::                     Indicate that a Module is no longer in use
-* remove::                      Remove an entry from the repository
 * rtag::                        Add a tag to a module
 * status::                      Status info on the revisions
 * tag::                         Add a tag to checked out version
@@ -3911,7 +4006,11 @@ suppressed.
 Make new working files files read-only.  Same effect
 as if the @code{$CVSREAD} environment variable is set
 (@pxref{Environment variables}).  The default is to
-make working files writable.
+make working files writable, unless watches are on
+(@pxref{Watches}).
+
+@item -s @var{variable}=@var{value}
+Set a user variable (@pxref{Variables}).
 
 @cindex Trace
 @item -t
@@ -3929,6 +4028,10 @@ Make new working files read-write.  Overrides the
 setting of the @code{$CVSREAD} environment variable.
 Files are created read-write by default, unless @code{$CVSREAD} is
 set or @samp{-r} is given.
+
+@item -z @var{gzip-level}
+Set the compression level.  Only has an effect on the
+@sc{cvs} client.
 
 @end table
 
@@ -3966,7 +4069,7 @@ The specification is @dfn{sticky} when you use it to make a
 private copy of a source file; that is, when you get a working
 file using @samp{-D}, @sc{cvs} records the date you specified, so that
 further updates in the same directory will use the same date
-(unless you explicitly override it; @pxref{update}).
+(for more information on sticky tags/dates, @pxref{Sticky tags}).
 
 A wide variety of date formats are supported by the underlying
 @sc{rcs} facilities, similar to those described in co(1), but not
@@ -4106,7 +4209,8 @@ revision you last checked out into the current working directory.
 The tag specification is sticky when you use this option
 with @code{checkout} or @code{update} to make your own
 copy of a file: @sc{cvs} remembers the tag and continues to use it on
-future update commands, until you specify otherwise.  The
+future update commands, until you specify otherwise (for more information
+on sticky tags/dates, @pxref{Sticky tags}).  The
 tag can be either a symbolic or numeric tag.
 @xref{Tags}.
 
@@ -4180,7 +4284,7 @@ use @code{commit} to make the change permanent.  Doing an
 @code{add} on a file that was removed with the @code{remove}
 command will resurrect the file, unless a @code{commit} command
 intervened.
-@xref{remove examples} for an example.
+@xref{Removing files}, for an example.
 
 
 Unlike most other commands @code{add} never recurses down
@@ -4300,12 +4404,15 @@ login names appearing in the comma-separated list
 @var{logins} to the access list of the @sc{rcs} file.
 
 @item -b[@var{rev}]
-Breaks @sc{cvs}.  When used with bare @sc{rcs}, this
-option sets the default branch to @var{rev}.
-If @var{rev} is omitted, the default branch is reset to
-the (dynamically) highest branch on the trunk.  Use
-sticky tags instead, as in @code{cvs co -r}.
-@xref{Sticky tags}.
+When used with bare @sc{rcs}, this
+option sets the default branch to @var{rev}; in
+@sc{cvs} sticky tags (@pxref{Sticky tags}) are a better
+way to decide which branch you want to work on.  With
+@sc{cvs}, this option can be used to control behavior
+with respect to the vendor branch.
+@c FIXME: document how you use it with the vendor
+@c branch (or fix cvs so that there is a more graceful
+@c way to handle the case).
 
 @item -c@var{string}
 Useful with @sc{cvs}.  Sets the comment leader to
@@ -4336,24 +4443,32 @@ without depositing a revision.
 Useful with @sc{cvs}.  Set the default keyword
 substitution to @var{subst}.  @xref{Keyword
 substitution}.  Giving an explicit @samp{-k} option to
-@code{cvs update} or @code{cvs checkout} overrides this
-default.  @code{cvs export} always uses @code{-kv},
-regardless of which keyword substitution is set with
-@code{cvs admin}.
+@code{cvs update}, @code{cvs export}, or @code{cvs
+checkout} overrides this default.
 
+@cindex Reserved checkouts
+@cindex RCS-style locking
 @item -l[@var{rev}]
-Probably useless with @sc{cvs}.  With bare @sc{rcs},
-this option can be used to lock the revision with
-number @var{rev}.  If a branch is given, lock the
-latest revision on that branch.  If @var{rev} is
-omitted, lock the latest revision on the default
-branch.
+Lock the revision with number @var{rev}.  If a branch
+is given, lock the latest revision on that branch.  If
+@var{rev} is omitted, lock the latest revision on the
+default branch.
+
+This can be used in conjunction with the
+@file{rcslock.pl} script in the @file{contrib}
+directory of the @sc{cvs} source distribution to
+provide reserved checkouts (where only one user can be
+editing a given file at a time).  See the comments in
+that file for details (and see the @file{README} file
+in that directory for disclaimers about the unsupported
+nature of contrib).  According to comments in that
+file, locking must set to strict (which is the default).
 
 @item -L
-Probably useless with @sc{cvs}.  Used with bare
-@sc{rcs} to set locking to strict.  Strict
-locking means that the owner of an RCS file is not
-exempt from locking for checkin.
+Set locking to strict.  Strict locking means that the
+owner of an RCS file is not exempt from locking for
+checkin.  For use with @sc{cvs}, strict locking must be
+set; see the discussion under the @samp{-l} option above.
 
 @cindex Changing a log message
 @cindex Replacing a log message
@@ -4452,23 +4567,24 @@ from the @var{string} into the @sc{rcs} file, deleting
 the existing text.
 
 @item -U
-Probably useless with @sc{cvs}.  Used with bare
-@sc{rcs} to set locking to non-strict.  Non-strict
-locking means that the owner of a file need not lock a
-revision for checkin.
+Set locking to non-strict.  Non-strict locking means
+that the owner of a file need not lock a revision for
+checkin.  For use with @sc{cvs}, strict locking must be
+set; see the discussion under the @samp{-l} option
+above.
 
 @item -u[@var{rev}]
-Probably useless with @sc{cvs}.  With bare @sc{rcs},
-unlock the revision with number @var{rev}.  If a branch
-is given, unlock the latest revision on that branch.
-If @var{rev} is omitted, remove the latest lock held by
-the caller.  Normally, only the locker of a revision
-may unlock it.  Somebody else unlocking a revision
-breaks the lock.  This causes a mail message to be sent
-to the original locker.  The message contains a
-commentary solicited from the breaker.  The commentary
-is terminated by end-of-file or by a line containing
-@code{.} by itself.
+See the option @samp{-l} above, for a discussion of
+using this option with @sc{cvs}.  Unlock the revision
+with number @var{rev}.  If a branch is given, unlock
+the latest revision on that branch.  If @var{rev} is
+omitted, remove the latest lock held by the caller.
+Normally, only the locker of a revision may unlock it.
+Somebody else unlocking a revision breaks the lock.
+This causes a mail message to be sent to the original
+locker.  The message contains a commentary solicited
+from the breaker.  The commentary is terminated by
+end-of-file or by a line containing @code{.} by itself.
 
 @item -V@var{n}
 Emulate @sc{rcs} version @var{n}. Use -V@var{n} to make
@@ -4618,7 +4734,8 @@ them):
 @table @code
 @item -D @var{date}
 Use the most recent revision no later than @var{date}.
-This option is sticky, and implies @samp{-P}.
+This option is sticky, and implies @samp{-P}.  See
+@ref{Sticky tags}, for more information on sticky tags/dates.
 
 @item -f
 Only useful with the @samp{-D @var{date}} or @samp{-r
@@ -4649,6 +4766,7 @@ Pipe files to the standard output.
 
 @item -r @var{tag}
 Use revision @var{tag}.  This option is sticky, and implies @samp{-P}.
+See @ref{Sticky tags}, for more information on sticky tags/dates.
 @end table
 
 In addition to those, you can use these special command
@@ -4657,12 +4775,7 @@ options with @code{checkout}:
 @table @code
 @item -A
 Reset any sticky tags, dates, or @samp{-k} options.
-(If you get a working file using one of the @samp{-r},
-@samp{-D}, or @samp{-k} options, @sc{cvs} remembers the
-corresponding tag, date, or @var{kflag} and continues using
-it for future updates; use the @samp{-A} option to make
-@sc{cvs} forget these specifications, and retrieve the
-`head' revision of the file).
+See @ref{Sticky tags}, for more information on sticky tags/dates.
 
 @item -c
 Copy the module file, sorted, to the standard output,
@@ -5099,7 +5212,7 @@ $ cvs diff -u | less
 
 @itemize @bullet
 @item
-Synopsis: export [-flNn] -r rev|-D date [-d dir] module@dots{}
+Synopsis: export [-flNn] [-r rev|-D date] [-k subst] [-d dir] module@dots{}
 @item
 Requires: repository.
 @item
@@ -5114,15 +5227,17 @@ off-site.  This command requires that you specify a
 date or tag (with @samp{-D} or @samp{-r}), so that you
 can count on reproducing the source you ship to others.
 
-The keyword substitution option @samp{-kv} is always set when
-export is used.  This causes any @sc{rcs} keywords to be
+One often would like to use @samp{-kv} with @code{cvs
+export}.  This causes any @sc{rcs} keywords to be
 expanded such that an import done at some other site
-will not lose the keyword revision information.  There
-is no way to override this.  Note that this breaks the
-@code{ident} command (which is part of the @sc{rcs}
-suite---see ident(1)) which looks for @sc{rcs} keyword
-strings.  If you want to be able to use @code{ident}
-you must use @code{checkout} instead.
+will not lose the keyword revision information.  But be
+aware that doesn't handle an export containing binary
+files correctly.  Also be aware that after having used
+@samp{-kv}, one can no longer use the @code{ident}
+command (which is part of the @sc{rcs} suite---see
+ident(1)) which looks for @sc{rcs} keyword strings.  If
+you want to be able to use @code{ident} you must not
+use @samp{-kv}.
 
 @menu
 * export options::              export options
@@ -5166,6 +5281,9 @@ Create a directory called @var{dir} for the working
 files, instead of using the module name.  Unless you
 also use @samp{-N}, the paths created under @var{dir}
 will be as short as possible.
+
+@item -k @var{subst}
+Set keyword expansion mode (@pxref{Substitution modes}).
 
 @item -N
 Only useful together with @samp{-d @var{dir}}.  With this
@@ -5894,111 +6012,6 @@ Are you sure you want to release (and delete) module `tc': y
 $
 @end example
 
-@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node remove
-@appendixsec remove---Remove an entry from the repository
-@cindex Remove (subcommand)
-
-@itemize @bullet
-@item
-remove [-lR] [files@dots{}]
-@item
-Requires: Working directory.
-@item
-Changes: Working directory.
-@item
-Synonyms: rm, delete
-@end itemize
-
-Use this command to declare that you wish to remove
-files from the source repository.  Like most @sc{cvs}
-commands, @samp{cvs remove} works on files in your working
-directory, not directly on the repository.  As a
-safeguard, it also requires that you first erase the
-specified files from your working directory.
-
-The files are not actually removed until you apply your
-changes to the repository with @code{commit}; at that
-point, the corresponding @sc{rcs} files in the source
-repository are moved into the @file{Attic} directory
-(also within the source repository).
-
-This command is recursive by default, scheduling all
-physically removed files that it finds for removal by
-the next commit.  Use the @samp{-l} option to avoid
-this recursion, or just specify the actual files that
-you wish removed.
-
-
-@menu
-* remove options::              remove options
-* remove examples::             remove examples
-@end menu
-
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-@node remove options
-@appendixsubsec remove options
-
-Two of the standard options are the only options
-supported by @code{remove}.
-
-@table @code
-@item -l
-Local; run only in current working directory.
-
-@item -R
-Commit directories recursively.  This is on by default.
-@end table
-
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-@node remove examples
-@appendixsubsec remove examples
-
-@appendixsubsubsec Remove a couple of files.
-
-@example
-$ cd test
-$ rm ?.c
-$ cvs remove
-cvs remove: Removing .
-cvs remove: scheduling a.c for removal
-cvs remove: scheduling b.c for removal
-cvs remove: use 'cvs commit' to remove these files permanently
-$ cvs ci -m "Removed unneeded files"
-cvs commit: Examining .
-cvs commit: Committing .
-@end example
-
-@appendixsubsubsec Resurrecting removed files
-
-If you change your mind you can easily resurrect the
-file before you commit it, using the @code{add}
-command.
-
-@example
-$ ls
-CVS   ja.h  oj.c
-$ rm oj.c
-$ cvs remove oj.c
-cvs remove: scheduling oj.c for removal
-cvs remove: use 'cvs commit' to remove this file permanently
-$ cvs add oj.c
-U oj.c
-cvs add: oj.c, version 1.1.1.1, resurrected
-@end example
-
-If you realize your mistake before you run the
-@code{remove} command you can use @code{update} to
-resurrect the file:
-
-@example
-$ rm oj.c
-$ cvs update oj.c
-cvs update: warning: oj.c was lost
-U oj.c
-@end example
-
-@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node rtag
 @appendixsec rtag---Add a tag to the RCS file
 @cindex Rtag (subcommand)
@@ -6307,6 +6320,7 @@ them):
 @item -D date
 Use the most recent revision no later than @var{date}.
 This option is sticky, and implies @samp{-P}.
+See @ref{Sticky tags}, for more information on sticky tags/dates.
 
 @item -f
 Only useful with the @samp{-D @var{date}} or @samp{-r
@@ -6337,6 +6351,7 @@ Operate recursively.  This is on by default.
 @item -r tag
 Retrieve revision @var{tag}.  This option is sticky,
 and implies @samp{-P}.
+See @ref{Sticky tags}, for more information on sticky tags/dates.
 @end table
 
 @need 800
@@ -6346,12 +6361,7 @@ These special options are also available with
 @table @code
 @item -A
 Reset any sticky tags, dates, or @samp{-k} options.
-(If you get a working copy of a file by using one of
-the @samp{-r}, @samp{-D}, or @samp{-k} options, @sc{cvs}
-remembers the corresponding tag, date, or @var{kflag} and
-continues using it on future updates; use the @samp{-A}
-option to make @sc{cvs} forget these specifications, and
-retrieve the head revision of the file).
+See @ref{Sticky tags}, for more information on sticky tags/dates.
 
 @item -d
 Create any directories that exist in the repository if
@@ -6521,6 +6531,7 @@ file, which defines the modules inside the repository.
 * cvsignore::                   Ignoring files via cvsignore
 * history file::                History information
 * Setting up::                  Setting up the repository
+* Variables::                   Various variables are expanded
 @end menu
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -6530,37 +6541,10 @@ file, which defines the modules inside the repository.
 @cindex Defining modules (reference manual)
 
 The @file{modules} file records your definitions of
-names for collections of source code.  @sc{cvs} will use
-these definitions if you create a file with the right
-format in @file{$CVSROOT/CVSROOT/modules,v}.  The
-mkmodules(1) command should be run whenever the modules
-file changes, so that the appropriate files can be
-generated (depending on how you have configured @sc{cvs}
-operation).
-
-To allow convenient editing of the @file{modules} file
-itself, the file should include an entry like the
-following (where @var{localbin} represents the
-directory where your site installs programs like
-mkmodules(1)):
-
-@example
-modules    -i /@var{localbin}/mkmodules CVSROOT modules
-@end example
-
-@noindent
-This defines the name @samp{modules} as the module name
-for the file itself, so that you can use
-
-@example
-$ cvs checkout modules
-@end example
-
-@noindent
-to get a copy of the file that you can edit.  You should define
-similar module entries for the other configuration
-files described in this appendix, except
-@file{history}).
+names for collections of source code.  @sc{cvs} will
+use these definitions if you use @sc{cvs} to update the
+modules file (use normal commands like @code{add},
+@code{commit}, etc).
 
 The @file{modules} file may contain blank lines and
 comments (lines beginning with @samp{#}) as well as
@@ -7208,6 +7192,82 @@ you run @code{cvsinit} on an already set-up
 repository.  In fact, running it on an already set-up
 repository is the best way to update the various
 scripts from the @samp{contrib} directory.)
+
+@node Variables
+@appendixsec Expansions in administrative files
+
+Sometimes in writing an administrative file, you might
+want the file to be able to know various things based
+on environment @sc{cvs} is running in.  There are
+several mechanisms to do that.
+
+To find the home directory of the user running @sc{cvs}
+(from the @code{HOME} environment variable), use
+@samp{~} followed by @samp{/} or the end of the line.
+Likewise for the home directory of @var{user}, use
+@samp{~@var{user}}.  These variables are expanded on
+the server machine, and don't get any resonable
+expansion if pserver (@pxref{Password authenticated})
+is in used; therefore user variables (see below) may be
+a better choice to customize behavior based on the user
+running @sc{cvs}.
+@c Based on these limitations, should we deprecate ~?
+@c What is it good for?  Are people using it?
+
+One may want to know about various pieces of
+information internal to @sc{cvs}.  A @sc{cvs} internal
+variable has the syntax @code{$@{@var{variable}@}},
+where @var{variable} starts with a letter and consists
+of alphanumberic characters and @samp{_}.  If the
+character following @var{variable} is a
+non-alphanumeric character other than @samp{_}, the
+@samp{@{} and @samp{@}} can be omitted.  The @sc{cvs}
+internal variables are:
+
+@table @code
+@item CVSROOT
+This is the value of the @sc{cvs} root in use.
+@xref{Repository}, for a description of the various
+ways to specify this.
+
+@item RCSBIN
+This is the value @sc{cvs} is using for where to find
+@sc{rcs} binaries.  @xref{Global options}, for a
+description of how to specify this.
+
+@item CVSEDITOR
+@itemx VISUAL
+@itemx EDITOR
+These all expand to the same value, which is the editor
+that @sc{cvs} is using.  @xref{Global options}, for how
+to specify this.
+
+@item USER
+Username of the user running @sc{cvs} (on the @sc{cvs}
+server machine).
+@end table
+
+If you want to pass a value to the administrative files
+which the user that is running @sc{cvs} can specify,
+use a user variable.  To expand a user variable, the
+administrative file contains
+@code{$@{=@var{variable}@}}.  To set a user variable,
+specify the global option @samp{-s} to @sc{cvs}, with
+argument @code{@var{variable}=@var{value}}.  It may be
+particularly useful to specify this option via
+@file{.cvsrc} (@pxref{~/.cvsrc}).
+
+For example, if you want the administrative file to
+refer to a test directory you might create a user
+variable @code{TESTDIR}.  Then if @sc{cvs} is invoked
+as @code{cvs -s TESTDIR=/work/local/tests}, and the
+administrative file contains @code{sh
+$@{=TESTDIR@}/runtests}, then that string is expanded
+to @code{sh /work/local/tests/runtests}.
+
+All other strings containing @samp{$} are reserved;
+there is no way to quote a @samp{$} character so that
+@samp{$} represents itself.
 
 @c ---------------------------------------------------------------------
 @node Environment variables

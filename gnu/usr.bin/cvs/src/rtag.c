@@ -13,14 +13,7 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)rtag.c 1.61 94/09/30 $";
-USE(rcsid);
-#endif
-
-static int check_fileproc PROTO((char *file, char *update_dir,
-     			 char *repository, List * entries,
-			 List * srcfiles));
+static int check_fileproc PROTO((struct file_info *finfo));
 static int check_filesdoneproc PROTO((int err, char *repos, char *update_dir));
 static int pretag_proc PROTO((char *repository, char *filter));
 static void masterlist_delproc PROTO((Node *p));
@@ -28,9 +21,7 @@ static void tag_delproc PROTO((Node *p));
 static int pretag_list_proc PROTO((Node *p, void *closure));
 
 static Dtype rtag_dirproc PROTO((char *dir, char *repos, char *update_dir));
-static int rtag_fileproc PROTO((char *file, char *update_dir,
-			  char *repository, List * entries,
-			  List * srcfiles));
+static int rtag_fileproc PROTO((struct file_info *finfo));
 static int rtag_proc PROTO((int *pargc, char **argv, char *xwhere,
 		      char *mwhere, char *mfile, int shorten,
 		      int local_specified, char *mname, char *msg));
@@ -56,7 +47,7 @@ static List *tlist;
 static char *symtag;
 static char *numtag;
 static int numtag_validated = 0;
-static int delete;			/* adding a tag by default */
+static int delete_flag;			/* adding a tag by default */
 static int attic_too;			/* remove tag from Attic files */
 static int branch_mode;			/* make an automagic "branch" tag */
 static char *date;
@@ -122,7 +113,7 @@ rtag (argc, argv)
 		local = 0;
 		break;
 	    case 'd':
-		delete = 1;
+		delete_flag = 1;
 		break;
 	    case 'f':
 		force_tag_match = 0;
@@ -157,7 +148,7 @@ rtag (argc, argv)
 
     if (date && numtag)
 	error (1, 0, "-r and -D options are mutually exclusive");
-    if (delete && branch_mode)
+    if (delete_flag && branch_mode)
 	error (0, 0, "warning: -b ignored with -d options");
     RCS_check_tag (symtag);
 
@@ -171,7 +162,7 @@ rtag (argc, argv)
 
 	if (local)
 	    send_arg("-l");
-	if (delete)
+	if (delete_flag)
 	    send_arg("-d");
 	if (branch_mode)
 	    send_arg("-b");
@@ -204,9 +195,9 @@ rtag (argc, argv)
     for (i = 0; i < argc; i++)
     {
 	/* XXX last arg should be repository, but doesn't make sense here */
-	history_write ('T', (delete ? "D" : (numtag ? numtag : 
+	history_write ('T', (delete_flag ? "D" : (numtag ? numtag : 
 		       (date ? date : "A"))), symtag, argv[i], "");
-	err += do_module (db, argv[i], TAG, delete ? "Untagging" : "Tagging",
+	err += do_module (db, argv[i], TAG, delete_flag ? "Untagging" : "Tagging",
 			  rtag_proc, (char *) NULL, 0, 0, run_module_prog,
 			  symtag);
     }
@@ -284,7 +275,7 @@ rtag_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
 	return (1);
     }
 
-    if (delete || attic_too || (force_tag_match && numtag))
+    if (delete_flag || attic_too || (force_tag_match && numtag))
 	which = W_REPOS | W_ATTIC;
     else
 	which = W_REPOS;
@@ -323,21 +314,17 @@ rtag_proc (pargc, argv, xwhere, mwhere, mfile, shorten, local_specified,
 /* All we do here is add it to our list */
 
 static int
-check_fileproc(file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List * entries;
-    List * srcfiles;
+check_fileproc (finfo)
+    struct file_info *finfo;
 {
     char *xdir;
     Node *p;
     Vers_TS *vers;
     
-    if (update_dir[0] == '\0')
+    if (finfo->update_dir[0] == '\0')
 	xdir = ".";
     else
-	xdir = update_dir;
+	xdir = finfo->update_dir;
     if ((p = findnode (mtlist, xdir)) != NULL)
     {
 	tlist = ((struct master_lists *) p->data)->tlist;
@@ -359,11 +346,11 @@ check_fileproc(file, update_dir, repository, entries, srcfiles)
     }
     /* do tlist */
     p = getnode ();
-    p->key = xstrdup (file);
+    p->key = xstrdup (finfo->file);
     p->type = UPDATE;
     p->delproc = tag_delproc;
-    vers = Version_TS (repository, (char *) NULL, (char *) NULL,
-        (char *) NULL, file, 0, 0, entries, srcfiles);
+    vers = Version_TS (finfo->repository, (char *) NULL, (char *) NULL,
+        (char *) NULL, finfo->file, 0, 0, finfo->entries, finfo->srcfiles);
     p->data = RCS_getversion(vers->srcfile, numtag, date, force_tag_match, 0);
     if (p->data != NULL)
     {
@@ -373,7 +360,7 @@ check_fileproc(file, update_dir, repository, entries, srcfiles)
         oversion = RCS_getversion (vers->srcfile, symtag, (char *) NULL, 1, 0);
         if (oversion == NULL) 
         {
-            if (delete)
+            if (delete_flag)
             {
                 addit = 0;
             }
@@ -460,7 +447,7 @@ pretag_proc(repository, filter)
     run_setup("%s %s %s %s",
               filter,
               symtag,
-              delete ? "del" : force_tag_move ? "mov" : "add",
+              delete_flag ? "del" : force_tag_move ? "mov" : "add",
               repository);
     walklist(tlist, pretag_list_proc, NULL);
     return (run_exec(RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL|RUN_REALLY));
@@ -509,12 +496,8 @@ pretag_list_proc(p, closure)
  */
 /* ARGSUSED */
 static int
-rtag_fileproc (file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List *entries;
-    List *srcfiles;
+rtag_fileproc (finfo)
+    struct file_info *finfo;
 {
     Node *p;
     RCSNode *rcsfile;
@@ -522,7 +505,7 @@ rtag_fileproc (file, update_dir, repository, entries, srcfiles)
     int retcode = 0;
 
     /* find the parsed RCS data */
-    p = findnode (srcfiles, file);
+    p = findnode (finfo->srcfiles, finfo->file);
     if (p == NULL)
 	return (1);
     rcsfile = (RCSNode *) p->data;
@@ -533,7 +516,7 @@ rtag_fileproc (file, update_dir, repository, entries, srcfiles)
      * correctly without breaking your link!
      */
 
-    if (delete)
+    if (delete_flag)
 	return (rtag_delete (rcsfile));
 
     /*
@@ -582,7 +565,7 @@ rtag_fileproc (file, update_dir, repository, entries, srcfiles)
        
        /*
 	* As an enhancement for the case where a tag is being re-applied to
-	* a large body of a module, make one extra call to Version_Number to
+	* a large body of a module, make one extra call to RCS_getversion to
 	* see if the tag is already set in the RCS file.  If so, check to
 	* see if it needs to be moved.  If not, do nothing.  This will
 	* likely save a lot of time when simply moving the tag to the
@@ -593,7 +576,7 @@ rtag_fileproc (file, update_dir, repository, entries, srcfiles)
        oversion = RCS_getversion (rcsfile, symtag, (char *) NULL, 1, 0);
        if (oversion != NULL)
        {
-	  int isbranch = RCS_isbranch (file, symtag, srcfiles);
+	  int isbranch = RCS_isbranch (finfo->file, symtag, finfo->srcfiles);
 
 	  /*
 	   * if versions the same and neither old or new are branches don't
@@ -607,10 +590,10 @@ rtag_fileproc (file, update_dir, repository, entries, srcfiles)
 	  }
 	  
 	  if (!force_tag_move) {	/* we're NOT going to move the tag */
-	     if (update_dir[0])
-		(void) printf ("W %s/%s", update_dir, file);
+	     if (finfo->update_dir[0])
+		(void) printf ("W %s/%s", finfo->update_dir, finfo->file);
 	     else
-		(void) printf ("W %s", file);
+		(void) printf ("W %s", finfo->file);
 	     
 	     (void) printf (" : %s already exists on %s %s", 
 			    symtag, isbranch ? "branch" : "version", oversion);
@@ -630,16 +613,20 @@ rtag_fileproc (file, update_dir, repository, entries, srcfiles)
 	error (1, retcode == -1 ? errno : 0,
 	       "failed to set tag `%s' to revision `%s' in `%s'",
 	       symtag, rev, rcsfile->path);
-       free (version);
-       return (1);
+        if (branch_mode)
+	    free (rev);
+        free (version);
+        return (1);
     }
+    if (branch_mode)
+	free (rev);
     free (version);
     return (0);
 }
 
 /*
  * If -d is specified, "force_tag_match" is set, so that this call to
- * Version_Number() will return a NULL version string if the symbolic
+ * RCS_getversion() will return a NULL version string if the symbolic
  * tag does not exist in the RCS file.
  * 
  * If the -r flag was used, numtag is set, and we only delete the
@@ -690,7 +677,7 @@ rtag_dirproc (dir, repos, update_dir)
     char *update_dir;
 {
     if (!quiet)
-	error (0, 0, "%s %s", delete ? "Untagging" : "Tagging", update_dir);
+	error (0, 0, "%s %s", delete_flag ? "Untagging" : "Tagging", update_dir);
     return (R_PROCESS);
 }
 

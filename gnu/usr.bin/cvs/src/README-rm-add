@@ -1,23 +1,15 @@
 WHAT THE "DEATH SUPPORT" FEATURES DO:
 
-(this really should be in the main manual, but noone has gotten around
-to updating it).
+(Some of the death support stuff is documented in the main manual, but
+this file is for stuff which noone has gotten around to adding to the
+main manual yet).
 
 CVS with death support can record when a file is active, or alive, and
 when it is removed, or dead.  With this facility you can record the
 history of a file, including the fact that at some point in its life
 the file was removed and then later added.
 
-First, the following now works as expected:
-
-	touch foo
-	cvs add foo ; cvs ci -m "added" foo
-	rm foo
-	cvs rm foo ; cvs ci -m "removed" foo
-	touch foo
-	cvs add foo ; cvs ci -m "resurrected" foo
-
-Second, files can now be added or removed in a branch and later merged
+Files can now be added or removed in a branch and later merged
 into the trunk.
 
 	cvs update -A
@@ -37,12 +29,3 @@ Files removed in the trunk may be merged into branches.
 
 Files added on the trunk are a special case.  They cannot be merged
 into a branch.  Instead, simply branch the file by hand.
-
-I also extended the "cvs update -j" semantic slightly.  Like before,
-if you use two -j options, the changes made between the first and the
-second will be merged into your working files.  This has not changed.
-
-If you use only one -j option, it is used as the second -j option.
-The first is assumed to be the greatest common ancestor revision
-between the revision specified by the -j and the BASE revision of your
-working file.

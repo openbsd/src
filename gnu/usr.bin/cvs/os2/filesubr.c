@@ -25,11 +25,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid:$";
-USE(rcsid);
-#endif
-
 /*
  * I don't know of a convenient way to test this at configure time, or else
  * I'd certainly do it there.  -JimB

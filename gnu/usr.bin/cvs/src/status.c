@@ -10,15 +10,8 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)status.c 1.56 94/10/07 $";
-USE(rcsid);
-#endif
-
 static Dtype status_dirproc PROTO((char *dir, char *repos, char *update_dir));
-static int status_fileproc PROTO((char *file, char *update_dir,
-			    char *repository, List * entries,
-			    List * srcfiles));
+static int status_fileproc PROTO((struct file_info *finfo));
 static int tag_list_proc PROTO((Node * p, void *closure));
 
 static int local = 0;
@@ -107,20 +100,16 @@ status (argc, argv)
  */
 /* ARGSUSED */
 static int
-status_fileproc (file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List *entries;
-    List *srcfiles;
+status_fileproc (finfo)
+    struct file_info *finfo;
 {
     Ctype status;
     char *sstat;
     Vers_TS *vers;
 
-    status = Classify_File (file, (char *) NULL, (char *) NULL, (char *) NULL,
-			    1, 0, repository, entries, srcfiles, &vers,
-			    update_dir, 0);
+    status = Classify_File (finfo->file, (char *) NULL, (char *) NULL, (char *) NULL,
+			    1, 0, finfo->repository, finfo->entries, finfo->srcfiles, &vers,
+			    finfo->update_dir, 0);
     switch (status)
     {
 	case T_UNKNOWN:
@@ -165,12 +154,12 @@ status_fileproc (file, update_dir, repository, entries, srcfiles)
 
     (void) printf ("===================================================================\n");
     if (vers->ts_user == NULL)
-	(void) printf ("File: no file %s\t\tStatus: %s\n\n", file, sstat);
+	(void) printf ("File: no file %s\t\tStatus: %s\n\n", finfo->file, sstat);
     else
-	(void) printf ("File: %-17s\tStatus: %s\n\n", file, sstat);
+	(void) printf ("File: %-17s\tStatus: %s\n\n", finfo->file, sstat);
 
     if (vers->vn_user == NULL)
-	(void) printf ("   Working revision:\tNo entry for %s\n", file);
+	(void) printf ("   Working revision:\tNo entry for %s\n", finfo->file);
     else if (vers->vn_user[0] == '0' && vers->vn_user[1] == '\0')
 	(void) printf ("   Working revision:\tNew file!\n");
 #ifdef SERVER_SUPPORT
@@ -204,14 +193,18 @@ status_fileproc (file, update_dir, repository, entries, srcfiles)
 		    (void) printf ("   Sticky Tag:\t\t%s\n", edata->tag);
 		else
 		{
-		    int isbranch = RCS_isbranch (file, edata->tag, srcfiles);
+		    char *branch = NULL;
+	
+		    if (RCS_isbranch (finfo->file, edata->tag, finfo->srcfiles))
+			branch = RCS_whatbranch(finfo->file, edata->tag, finfo->srcfiles);
 
 		    (void) printf ("   Sticky Tag:\t\t%s (%s: %s)\n",
 				   edata->tag,
-				   isbranch ? "branch" : "revision",
-				   isbranch ?
-				   RCS_whatbranch(file, edata->tag, srcfiles) :
-				   vers->vn_rcs);
+				   branch ? "branch" : "revision",
+				   branch ? branch : vers->vn_rcs);
+
+		    if (branch)
+			free (branch);
 		}
 	    }
 	}
@@ -235,8 +228,8 @@ status_fileproc (file, update_dir, repository, entries, srcfiles)
 	    (void) printf ("\n   Existing Tags:\n");
 	    if (symbols)
 	    {
-		xfile = file;
-		xsrcfiles = srcfiles;
+		xfile = finfo->file;
+		xsrcfiles = finfo->srcfiles;
 		(void) walklist (symbols, tag_list_proc, NULL);
 	    }
 	    else
@@ -272,11 +265,17 @@ tag_list_proc (p, closure)
     Node *p;
     void *closure;
 {
-    int isbranch = RCS_isbranch (xfile, p->key, xsrcfiles);
+    char *branch = NULL;
+
+    if (RCS_isbranch (xfile, p->key, xsrcfiles))
+	branch = RCS_whatbranch(xfile, p->key, xsrcfiles) ;
 
     (void) printf ("\t%-25.25s\t(%s: %s)\n", p->key,
-		   isbranch ? "branch" : "revision",
-		   isbranch ? RCS_whatbranch(xfile, p->key, xsrcfiles) :
-		   p->data);
+		   branch ? "branch" : "revision",
+		   branch ? branch : p->data);
+
+    if (branch)
+	free (branch);
+
     return (0);
 }

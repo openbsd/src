@@ -15,7 +15,6 @@
 #define	RCS_CO		"co"
 #define	RCS_RLOG	"rlog"
 #define	RCS_DIFF	"rcsdiff"
-#define	RCS_MERGE	"merge"
 #define	RCS_RCSMERGE	"rcsmerge"
 #define	RCS_MERGE_PAT	"^>>>>>>> "	/* runs "grep" with this pattern */
 #define	RCSEXT		",v"
@@ -27,9 +26,10 @@
 #define	RCSDESC		"desc"
 #define RCSEXPAND	"expand"
 
-/* Used by the version of death support which results if you define
-   DEATH_SUPPORT and not DEATH_STATE.  Requires a hacked up RCS.  Considered
-   obsolete.  */
+/* Used by the version of death support which resulted from old
+   versions of CVS (e.g. 1.5 if you define DEATH_SUPPORT and not
+   DEATH_STATE).  Only a hacked up RCS (used by those old versions of
+   CVS) will put this into RCS files.  Considered obsolete.  */
 #define RCSDEAD		"dead"
 
 #define	DATEFORM	"%02d.%02d.%02d.%02d.%02d.%02d"
@@ -53,7 +53,6 @@ struct rcsnode
     char *expand;
     List *symbols;
     List *versions;
-    List *dates;
 };
 
 typedef struct rcsnode RCSNode;
@@ -102,6 +101,4 @@ void freercsnode PROTO((RCSNode ** rnodep));
 void RCS_addnode PROTO((const char *file, RCSNode *rcs, List *list));
 char *RCS_getbranch PROTO((RCSNode * rcs, char *tag, int force_tag_match));
 
-#ifdef DEATH_SUPPORT
 int RCS_isdead PROTO((RCSNode *, const char *));
-#endif

@@ -80,23 +80,6 @@
 #endif
 
 /*
- * The "rm" program to execute when pruning directories that are not part of
- * a release.  This "rm" must support the "-fr" options.  Specify a full
- * pathname if your site wants to use a particular rm.
- */
-#ifndef RM
-#define	RM	"rm"
-#endif
-
-/*
- * The "sort" program to execute when displaying the module database. Specify
- * a full pathname if your site wants to use a particular sort.
- */
-#ifndef SORT
-#define	SORT	"sort"
-#endif
-
-/*
  * The "patch" program to run when using the CVS server and accepting
  * patches across the network.  Specify a full pathname if your site
  * wants to use a particular patch.

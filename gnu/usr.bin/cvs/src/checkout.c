@@ -35,11 +35,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)checkout.c 1.78 94/10/07 $";
-USE(rcsid);
-#endif
-
 static char *findslash PROTO((char *start, char *p));
 static int build_dirs_and_chdir PROTO((char *dir, char *prepath, char *realdir,
 				 int sticky));
@@ -431,7 +426,10 @@ safe_location ()
     {
         strcpy(hardpath, CVSroot);
     }
-    hardpath[x] = '\0';
+    else
+    {
+        hardpath[x] = '\0';
+    }
     getwd (current);
     if (strncmp(current, hardpath, strlen(hardpath)) == 0)
     {

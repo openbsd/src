@@ -39,7 +39,7 @@ DISTFILES = \
 	cvsclient.texi
 
 OBJDIR_DISTFILES = cvs.ps cvs.info cvs.aux \
-	cvsclient.ps cvsclient.info cvsclient.aux
+	cvsclient.ps cvsclient.info cvsclient.aux CVSvn.texi
 
 # these are part of the texinfo distribution
 MAKEINFO=makeinfo
@@ -73,7 +73,11 @@ doc: cvs.ps cvs-paper.ps cvsclient.ps
 
 info: cvs.info cvsclient.info
 
-cvs.info: cvs.texinfo
+cvs.info: cvs.texinfo CVSvn.texi
+	if [ ! -f ./CVSvn.texi ]; then \
+		ln -s $(srcdir)/CVSvn.texi . || \
+		ln $(srcdir)/CVSvn.texi . || \
+		cp $(srcdir)/CVSvn.texi . ; else true; fi
 	$(MAKEINFO) $(srcdir)/cvs.texinfo -o cvs.info
 
 cvsclient.info: cvsclient.texi
@@ -95,7 +99,18 @@ installdirs:
 
 dvi: cvs.dvi cvsclient.dvi
 
-cvs.dvi cvs.aux: cvs.texinfo
+CVSvn.texi: $(top_srcdir)/src/version.c
+	echo "@set CVSVN `sed < $(top_srcdir)/src/version.c \
+		    -e '/version_string/!d' \
+		    -e 's/[^0-9.]*\([0-9.]*\).*/\1/' \
+		    -e q`" >CVSvn.new
+	mv CVSvn.new CVSvn.texi
+
+cvs.dvi cvs.aux: cvs.texinfo CVSvn.texi
+	if [ ! -f ./CVSvn.texi ]; then \
+		ln -s $(srcdir)/CVSvn.texi . || \
+		ln $(srcdir)/CVSvn.texi . || \
+		cp $(srcdir)/CVSvn.texi . ; else true; fi
 	$(TEXI2DVI) $(srcdir)/cvs.texinfo
 
 cvsclient.dvi cvsclient.aux: cvsclient.texi

@@ -1,3 +1,31 @@
+Fri Feb 23 18:00:00 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* options.h: Define AUTH_CLIENT_SUPPORT and NO_SOCKET_TO_FD.
+	* config.h: Define HAVE_WINSOCK_H.
+	* win32.c (getpass): New function.
+	* filesubr.c (get_homedir): New function.
+
+Mon Feb 12 16:09:24 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* run.c (run_popen): Changed more Popen() to run_popen()
+
+Mon Feb 12 03:33:27 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+        * run.c: Changed Popen() to run_popen() for the benefit of
+        case-insensitive linkers (VMS) which confuse Popen() with popen()
+
+Fri Feb  9 22:10:12 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (distclean): Remove Makefile.
+
+	* config.h: Remove SYSTEM_COMMENT_TABLE.
+
+Thu Feb  1 15:09:17 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Remove RM; no longer used.
+
+	* filesubr.c: Remove rcsid.
+
 Thu Jan 11 16:01:27 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* README: Update with information for Visual C++ 4.0, some

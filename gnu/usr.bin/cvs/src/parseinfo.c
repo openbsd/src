@@ -8,11 +8,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)parseinfo.c 1.18 94/09/23 $";
-USE(rcsid);
-#endif
-
 /*
  * Parse the INFOFILE file for the specified REPOSITORY.  Invoke CALLPROC for
  * the first line in the file that matches the REPOSITORY, or if ALL != 0, any lines
@@ -98,14 +93,10 @@ Parse_Info (infofile, repository, callproc, all)
 	if ((cp = strrchr (value, '\n')) != NULL)
 	    *cp = '\0';
 
-	expanded_value = expand_path (value);
+	expanded_value = expand_path (value, infofile, line_number);
 	if (!expanded_value)
 	{
-	    error (0, 0,
-		   "Invalid environmental variable at line %d in file %s",
-		   line_number, infofile);
 	    continue;
-
 	}
 
 	/*

@@ -1,3 +1,13 @@
+Mon Feb 19 13:37:36 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Don't just tell people "we don't want your script"; tell
+	them what to do instead.
+
+Thu Feb  1 14:28:16 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * Makefile.in (DISTFILES): added `rcs2sccs.sh', as mentioned in
+        README.
+
 Thu Jan 18 09:39:16 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* README: Talk about submitting changes to contrib directory.

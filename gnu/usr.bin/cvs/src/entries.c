@@ -14,11 +14,6 @@
 #include "cvs.h"
 #include "getline.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)entries.c 1.44 94/10/07 $";
-USE(rcsid);
-#endif
-
 static Node *AddEntryNode PROTO((List * list, Entnode *entnode));
 
 static Entnode *fgetentent PROTO((FILE *));

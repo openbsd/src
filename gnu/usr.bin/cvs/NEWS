@@ -1,6 +1,16 @@
 Changes since 1.7:
 
-<none yet>
+* There is now a $USER internal variable for *info files.
+
+* There is no longer a separate `mkmodules' program; the functionality
+is now built into `cvs'.  If upgrading an old repository, it is OK to
+leave in the lines in the modules file which run mkmodules (the
+mkmodules actions will get done twice, but that is harmless); you will
+probably want to remove them once you are no longer using the old CVS.
+
+* One can now specify user variables in *info files via the
+${=varname} syntax; there is a -s global option to set them.  See the
+Variables node in cvs.texinfo for details.
 
 Changes from 1.6 to 1.7:
 

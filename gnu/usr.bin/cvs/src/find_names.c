@@ -18,11 +18,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)find_names.c 1.45 94/10/22 $";
-USE(rcsid);
-#endif
-
 static int find_dirs PROTO((char *dir, List * list, int checkadm));
 static int find_rcs PROTO((char *dir, List * list));
 

@@ -211,19 +211,17 @@ watch_modify_watchers (file, what)
 	free (curattr);
     if (mycurattr != NULL)
 	free (mycurattr);
+    if (mynewattr != NULL)
+	free (mynewattr);
 }
 
-static int addremove_fileproc PROTO ((char *, char *, char *, List *, List *));
+static int addremove_fileproc PROTO ((struct file_info *finfo));
 
 static int
-addremove_fileproc (file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List *entries;
-    List *srcfiles;
+addremove_fileproc (finfo)
+    struct file_info *finfo;
 {
-    watch_modify_watchers (file, &the_args);
+    watch_modify_watchers (finfo->file, &the_args);
     return 0;
 }
 
@@ -381,7 +379,7 @@ watch (argc, argv)
     int argc;
     char **argv;
 {
-    if (argc == -1)
+    if (argc <= 1)
 	usage (watch_usage);
     if (strcmp (argv[1], "on") == 0)
     {
@@ -418,27 +416,23 @@ static const char *const watchers_usage[] =
     NULL
 };
 
-static int watchers_fileproc PROTO ((char *, char *, char *, List *, List *));
+static int watchers_fileproc PROTO ((struct file_info *finfo));
 
 static int
-watchers_fileproc (file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List *entries;
-    List *srcfiles;
+watchers_fileproc (finfo)
+    struct file_info *finfo;
 {
     char *them;
     char *p;
 
-    them = fileattr_get0 (file, "_watchers");
+    them = fileattr_get0 (finfo->file, "_watchers");
     if (them == NULL)
 	return 0;
 
-    if (update_dir[0] == '\0')
-	printf ("%s", file);
+    if (finfo->update_dir[0] == '\0')
+	printf ("%s", finfo->file);
     else
-	printf ("%s/%s", update_dir, file);
+	printf ("%s/%s", finfo->update_dir, finfo->file);
 
     p = them;
     while (1)

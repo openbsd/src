@@ -37,9 +37,10 @@ program and fill out the template:
 The "cvsbug" program is installed in the same location as the "cvs"
 program.  If your installation failed, you may need to run "cvsbug"
 directly out of the "src" directory as "src/cvsbug.sh".  This is also
-the procedure for submitting suggested changes to CVS--note that all
-submitted changes may be distributed under the terms of the GNU Public
-License, so if you don't like this, don't submit them.
+the procedure for submitting suggested changes to CVS (see the file
+HACKING for more details).  Note that all submitted changes may be
+distributed under the terms of the GNU Public License, so if you don't
+like this, don't submit them.
 
 Please consult the INSTALL file for information on tested
 configurations.  If you have a comment about an already tested
@@ -76,23 +77,31 @@ Short blurb from the manual page (larger blurb is included there):
      the  concurrent  editing  of  source  files  among  multiple
      software developers.
 
-And a whole lot more.  See the man/cvs.1 file for more information.
+And a whole lot more.  See the doc/cvs.texinfo file for more information.
 
 -------------------------------------------------------------------------------
 
-Special note to current CVS 1.3 users:
-
---> You can skip this section and go straight to "Installation" if you  <--
---> have not been running any previous releases of CVS.                 <--
+Notes to people upgrading from a previous release of CVS:
 
 See the NEWS file for a description of features new in this version.
 
-Some files have been renamed from the CVS 1.3 distribution.  If you're
-not careful, this can cause your CVS build to fail in strange ways.
-In particular, be sure to remove the src/config.h file (which is now
-src/options.h), as the correct config.h file is generated
-automatically by the "configure" stage of installation (and installed
-in this directory).
+The repository format is compatible going back to CVS 1.3.  But see
+the "Watches compatibility" section of doc/cvs.texinfo if you have
+copies of CVS 1.6 or older and you want to use the optional developer
+communication features.
+
+The working directory format is compatible going back to CVS 1.5.  It
+did change between CVS 1.3 and CVS 1.5.  If you run CVS 1.5 or newer
+on a working directory checked out with CVS 1.3, CVS will convert it,
+but to go back to CVS 1.3 you need to check out a new working
+directory with CVS 1.3.
+
+The remote protocol is interoperable going back to CVS 1.5.  Using a
+client or server older than 1.5 is deprecated and may fail to work at
+some point in the future (1.5 was the first official release with the
+remote protocol, but some older versions might still be floating
+around).  In many cases you need to upgrade both the client and the
+server to take advantage of new features and bugfixes, however.
 
 -------------------------------------------------------------------------------
 
@@ -117,9 +126,10 @@ The mailing list for CVS is info-cvs@prep.ai.mit.edu.  Send
 subscription and removal requests for that list to
 info-cvs-request@prep.ai.mit.edu.
 
-[Historical note: info-cvs@prep.ai.mit.edu is now the union of
- info-cvs@prep and cyclic-cvs@cyclic.com.  Please use the prep
- address.]
+The newsgroup for CVS (and other configuration management systems) is
+comp.software.config-mgmt.  There is not yet a CVS-specific newsgroup,
+but perhaps if comp.software.config-mgmt gets enough CVS discussion,
+then it will be possible to create one.
 
 -------------------------------------------------------------------------------
 

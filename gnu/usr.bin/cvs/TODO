@@ -155,20 +155,6 @@ $CVSid: @(#)TODO 1.26 94/09/21 $
 113. The "cvs update" command should tee its output to a log file in ".".
      (why?  What is wrong with piping stdout to "tee"? -kingdon, Jun 1995)
 
-115. I still think "cvs modules" is a good idea.
-   Since everything else is inside cvs, "mkmodules" should be in there too:
-
-   Add a "modules" (synonym "mod") command directly in cvs.
-   ("checkout -c" is not really intuitive.  I'd move it into "mod -s".)
-
-   "mod"		Print database as typed. (line count as record id?)
-   "mod -s"		Print the sorted database (as "checkout -c" does now)
-   "mod -m"		Internal replacement for "mkmodules" command.
-   "mod module ..."	Print the raw dbm record for the named modules
-   "mod -p module ..."	Print relative filenames contained in modules.(no ",v")
-   "mod -l module ..."	Prints more info about relative filenames ("ls -l"?)
-   "mod -f file ..."	Tells you what module(s) the filenames are in.
-
 119. Consider an option to have import checkout the RCS or SCCS files
      if necessary.
 
@@ -178,7 +164,7 @@ $CVSid: @(#)TODO 1.26 94/09/21 $
 123. Add a flag to import to not build vendor branches for local code.
 
 124. Anyway, I thought you might want to add something like the following
-     to the cvs and mkmodules man pages:
+     to the cvs man pages:
 
      BUGS
  	The sum of the sizes of a module key and its contents are
@@ -312,8 +298,7 @@ $CVSid: @(#)TODO 1.26 94/09/21 $
 
 154. When committing the modules file, a pre-commit check should be done to
      verify the validity of the new modules file before allowing it to be
-     committed.  This could easily be done by adding an option to mkmodules
-     to perform the verification.
+     committed.
 
 155. The options for "cvs history" are mutually exclusive, even though
      useful queries can be done if they are not, as in specifying both a

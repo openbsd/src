@@ -340,15 +340,6 @@ extern void convert_file (char *INFILE,  int INFLAGS,
 /* This is where old bits go to die under OS/2 as well as WinNT.  */
 #define DEVNULL "nul"
 
-/* Comment markers for some OS/2-specific file types.  */
-/* Actually, these come from WinNT, but what the heck. */
-#define SYSTEM_COMMENT_TABLE \
-    "mak", "# ",    			/* makefile */                    \
-    "rc",  " * ",   			/* MS Windows resource file */    \
-    "dlg", " * ",   			/* MS Windows dialog file */      \
-    "frm", "' ",    			/* Visual Basic form */           \
-    "bas", "' ",    			/* Visual Basic code */
-
 /* Make sure that we don't try to perform operations on RCS files on the
    local machine.  I think I neglected to apply some changes from
    MHI's port in that area of code, or found some issues I didn't want

@@ -16,15 +16,8 @@
 #include <grp.h>
 #endif
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)admin.c 1.20 94/09/30 $";
-USE(rcsid);
-#endif
-
 static Dtype admin_dirproc PROTO((char *dir, char *repos, char *update_dir));
-static int admin_fileproc PROTO((char *file, char *update_dir,
-			   char *repository, List *entries,
-			   List *srcfiles));
+static int admin_fileproc PROTO((struct file_info *finfo));
 
 static const char *const admin_usage[] =
 {
@@ -120,12 +113,8 @@ admin (argc, argv)
  */
 /* ARGSUSED */
 static int
-admin_fileproc (file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List *entries;
-    List *srcfiles;
+admin_fileproc (finfo)
+    struct file_info *finfo;
 {
     Vers_TS *vers;
     char *version;
@@ -134,19 +123,19 @@ admin_fileproc (file, update_dir, repository, entries, srcfiles)
     int retcode = 0;
     int status = 0;
 
-    vers = Version_TS (repository, (char *) NULL, (char *) NULL, (char *) NULL,
-		       file, 0, 0, entries, srcfiles);
+    vers = Version_TS (finfo->repository, (char *) NULL, (char *) NULL, (char *) NULL,
+		       finfo->file, 0, 0, finfo->entries, finfo->srcfiles);
 
     version = vers->vn_user;
     if (version == NULL)
 	goto exitfunc;
     else if (strcmp (version, "0") == 0)
     {
-	error (0, 0, "cannot admin newly added file `%s'", file);
+	error (0, 0, "cannot admin newly added file `%s'", finfo->file);
 	goto exitfunc;
     }
 
-    run_setup ("%s%s", Rcsbin, RCS);
+    run_setup ("%s%s -x,v/", Rcsbin, RCS);
     for (argc = ac, argv = av; argc; argc--, argv++)
 	run_arg (*argv);
     run_arg (vers->srcfile->path);
@@ -154,7 +143,7 @@ admin_fileproc (file, update_dir, repository, entries, srcfiles)
     {
 	if (!quiet)
 	    error (0, retcode == -1 ? errno : 0,
-		   "%s failed for `%s'", RCS, file);
+		   "%s failed for `%s'", RCS, finfo->file);
 	status = 1;
 	goto exitfunc;
     }

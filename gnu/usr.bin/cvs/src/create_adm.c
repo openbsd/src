@@ -13,11 +13,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)create_adm.c 1.28 94/09/23 $";
-USE(rcsid);
-#endif
-
 /* update_dir includes dir as its last component.  */
 
 void
@@ -56,11 +51,9 @@ Create_Admin (dir, update_dir, repository, tag, date)
 
     make_directory (tmp);
 
-#ifdef CVSADM_ROOT
     /* record the current cvs root for later use */
 
     Create_Root (dir, CVSroot);
-#endif /* CVSADM_ROOT */
     if (dir != NULL)
 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_REP);
     else

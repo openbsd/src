@@ -8,11 +8,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)vers_ts.c 1.45 94/10/07 $";
-USE(rcsid);
-#endif
-
 #ifdef SERVER_SUPPORT
 static void time_stamp_server PROTO((char *, Vers_TS *));
 #endif
@@ -138,39 +133,29 @@ Version_TS (repository, options, tag, date, user, force_tag_match,
 	/* squirrel away the rcsdata pointer for others */
 	vers_ts->srcfile = rcsdata;
 
-#ifndef DEATH_SUPPORT
-	/* (is this indeed death support?  I haven't looked carefully).  */
-	/* get RCS version number into vn_rcs (if appropriate) */
-	if (((vers_ts->tag || vers_ts->date) && force_tag_match) ||
-	    ((rcsdata->flags & VALID) && (rcsdata->flags & INATTIC) == 0))
+	if (vers_ts->tag && strcmp (vers_ts->tag, TAG_BASE) == 0)
 	{
-#endif
-	    if (vers_ts->tag && strcmp (vers_ts->tag, TAG_BASE) == 0)
-	    {
-		vers_ts->vn_rcs = xstrdup (vers_ts->vn_user);
-		vers_ts->vn_tag = xstrdup (vers_ts->vn_user);
-	    }
+	    vers_ts->vn_rcs = xstrdup (vers_ts->vn_user);
+	    vers_ts->vn_tag = xstrdup (vers_ts->vn_user);
+	}
+	else
+	{
+	    vers_ts->vn_rcs = RCS_getversion (rcsdata, vers_ts->tag,
+					vers_ts->date, force_tag_match, 1);
+	    if (vers_ts->vn_rcs == NULL)
+		vers_ts->vn_tag = NULL;
 	    else
 	    {
-		vers_ts->vn_rcs = RCS_getversion (rcsdata, vers_ts->tag,
-					    vers_ts->date, force_tag_match, 1);
-		if (vers_ts->vn_rcs == NULL)
-		    vers_ts->vn_tag = NULL;
-		else
+		char *colon = strchr (vers_ts->vn_rcs, ':');
+		if (colon)
 		{
-		    char *colon = strchr (vers_ts->vn_rcs, ':');
-		    if (colon)
-		    {
-			vers_ts->vn_tag = xstrdup (colon+1);
-			*colon = '\0';
-		    }
-		    else
-			vers_ts->vn_tag = xstrdup (vers_ts->vn_rcs);
+		    vers_ts->vn_tag = xstrdup (colon+1);
+		    *colon = '\0';
 		}
+		else
+		    vers_ts->vn_tag = xstrdup (vers_ts->vn_rcs);
 	    }
-#ifndef DEATH_SUPPORT
-	} 
-#endif
+	}
 
 	/*
 	 * If the source control file exists and has the requested revision,

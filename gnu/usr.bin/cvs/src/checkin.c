@@ -19,11 +19,6 @@
 #include "fileattr.h"
 #include "edit.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)checkin.c 1.48 94/10/07 $";
-USE(rcsid);
-#endif
-
 int
 Checkin (type, file, update_dir, repository,
 	 rcs, rev, tag, options, message, entries)
@@ -78,12 +73,7 @@ Checkin (type, file, update_dir, repository,
 	}
     }
 
-    run_setup ("%s%s -f %s%s", Rcsbin, RCS_CI,
-	       rev ? "-r" : "", rev ? rev : "");
-    run_args ("-m%s", make_message_rcslegal (message));
-    run_arg (rcs);
-
-    switch (run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL))
+    switch (RCS_checkin (rcs, NULL, message, rev, 0, 0))
     {
 	case 0:			/* everything normal */
 
@@ -98,10 +88,10 @@ Checkin (type, file, update_dir, repository,
 
 	    if (strcmp (options, "-V4") == 0) /* upgrade to V5 now */
 		options[0] = '\0';
-	    run_setup ("%s%s -q %s %s%s", Rcsbin, RCS_CO, options,
-		       rev ? "-r" : "", rev ? rev : "");
-	    run_arg (rcs);
-	    (void) run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL);
+
+	    /* FIXME: should be checking for errors.  */
+	    (void) RCS_checkout (rcs, "", rev, options, RUN_TTY, 0, 0);
+
 	    xchmod (file, 1);
 	    if (xcmp (file, fname) == 0)
 	    {
@@ -125,16 +115,6 @@ Checkin (type, file, update_dir, repository,
 	     */
 	    if (cvswrite == FALSE || fileattr_get (file, "_watched"))
 		xchmod (file, 0);
-
-#ifndef DEATH_SUPPORT
- /* With death_support, files added with tags go into branches immediately. */
-
-	    /* for added files with symbolic tags, need to add the tag too */
-	    if (type == 'A' && tag && !isdigit (*tag))
-	    {
-		(void) RCS_settag(rcs, tag, rev);
-	    }
-#endif /* No DEATH_SUPPORT */
 
 	    /* re-register with the new data */
 	    vers = Version_TS (repository, (char *) NULL, tag, (char *) NULL,

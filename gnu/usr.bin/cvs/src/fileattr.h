@@ -63,7 +63,9 @@ extern void fileattr_startdir PROTO ((char *repos));
    points into memory managed by the fileattr_* routines, should not
    be altered by the caller, and is only good until the next call to
    fileattr_clear or fileattr_set.  It points to the value, terminated
-   by '\0' or ';'.  Return NULL if said file lacks said attribute.  */
+   by '\0' or ';'.  Return NULL if said file lacks said attribute.
+   If FILENAME is NULL, return default attributes (attributes for
+   files created in the future).  */
 extern char *fileattr_get PROTO ((char *filename, char *attrname));
 
 /* Like fileattr_get, but return a pointer to a newly malloc'd string

@@ -23,11 +23,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid:$";
-USE(rcsid);
-#endif
-
 /*
  * I don't know of a convenient way to test this at configure time, or else
  * I'd certainly do it there.
@@ -640,4 +635,12 @@ last_component (path)
         return last + 1;
     else
         return path;
+}
+
+/* Return the home directory.  Returns a pointer to storage
+   managed by this function or its callees (currently getenv).  */
+char *
+get_homedir ()
+{
+    return getenv ("HOME");
 }

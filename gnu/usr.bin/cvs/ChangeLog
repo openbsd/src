@@ -1,3 +1,121 @@
+Sun Feb 25 15:23:31 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* HACKING: Fix typo.
+
+Fri Feb 23 1996  Jim Kingdon  <kingdon@cyclic.com>
+
+	* cvsnt.mak: Add login.c and scramble.c.
+
+Fri Feb 23 16:36:11 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Mention comp.software.config-mgmt.  Don't mention old
+	cyclic-cvs mailing list.
+
+	* acconfig.h: Add AUTH_SERVER_SUPPORT.  Remove DIFF and GREP (no
+	longer used).
+	* configure.in: Define AUTH_SERVER_SUPPORT.
+	* config.h.in, configure: Regenerated.
+
+Thu Feb 22 22:32:09 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in: Remove AC_FUNC_ALLOCA.
+	* configure: Regenerated.
+
+Mon Feb 19 09:39:21 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* HACKING: Add comments about portability and assert().
+
+Thu Feb 15 16:40:13 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Mention $USER internal variable.
+
+Thu Feb 15 14:00:00 1996  Gary Oberbrunner  <garyo@avs.com>
+			  and Jim Kingdon  <kingdon@cyclic.com>
+
+	* cvsnt.mak: Add vasprintf.c and mkmodules.c
+
+Tue Feb 13 20:05:47 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in (AC_REPLACE_FUNCS): Add strtoul.
+	* configure: Regenerated.
+
+Mon Feb 12 10:06:27 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TODO: Remove mkmodules stuff.
+	* NEWS: Add item concerning mkmodules.
+
+	* configure.in (AC_REPLACE_FUNCS): Add vasprintf.
+	* configure: Regenerated.
+
+Sun Feb 11 16:43:38 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * Makefile.in (DISTFILES): added HACKING.
+
+Sun Feb 11 12:38:51 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Revise *info files feature (now user vars, not env vars).
+
+Fri Feb  9 23:51:39 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Mention env var in *info files feature.
+
+Fri Feb  9 02:41:50 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in (DISTFILES): Remove config.sub and config.guess from
+	the list; they're not distributed any more.
+
+Thu Feb  1 19:47:46 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Remove RM; no longer used.
+
+Thu Feb  1 14:38:04 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * configure: re-ran autoconf.
+
+        * Makefile.in (USOURCE_SUBDIRS, SUBDIRS): abstract unix source
+        subdirs to new var USOURCE_SUBDIRS, for lint's sake and possibly
+        etags's someday.
+        (lint): run in USOURCE_SUBDIRS only.
+
+Thu Feb  1 13:06:47 1996  Roland McGrath  <roland@baalperazim.frob.com>
+
+	* configure.in (WITH_KRB4): Escape $ in help text.
+
+Wed Jan 31 19:03:37 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* HACKING: Add info about NEWS file and release process.
+
+Tue Jan 30 16:00:00 1996  Jim Kingdon  <kingdon@peary.cyclic.com>
+
+	* cvsnt.mak: Change save-cwd.c to savecwd.c and regenerate
+	dependencies to take care of save-cwd.h.
+	* windows-NT/README: Update information about Visual C++ 4.0.
+
+Tue Jan 30 16:09:53 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Rename lib/save-cwd.c to lib/savecwd.c.  Avoiding a hyphen
+	seems to be the only way to get Visual C++ 2.1 to generate a
+	cvsnt.mak which Visual C++ 4.0 will accept.
+	* Rename lib/save-cwd.h to lib/savecwd.h for consistency.
+	* os2/Makefile.in, lib/Makefile.in, lib/savecwd.c, src/add.c,
+	src/import.c, src/modules.c, src/recurse.c, src/tag.c: Update
+	accordingly.
+
+	* INSTALL, os2/options.h, windows-NT/options.h,
+	macintosh/options.h, src/options.h.in: Remove SORT; it is no
+	longer used.
+
+Mon Jan 29 15:16:39 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Mention -b.  Don't talk about RCS 5.6.[5-7] beta
+	releases; this will be an issue for few if any people.  Remove
+	stuff about diff and --with-diffutils which is no longer true.
+
+	* README: Refer to HACKING file.  Refer to cvs.texinfo not
+	manpage.  Rewrite section about compatibility between CVS versions.
+	* HACKING: New file.
+	* INSTALL: Move -Wall section to HACKING; refer to HACKING.
+
 Wed Jan 24 20:26:55 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* configure.in: Remove diff stuff.  Also remove AC_CANONICAL_HOST

@@ -48,7 +48,10 @@ ls:
 	@echo ${DISTFILES}
 
 .PHONY: clean distclean realclean mostlyclean
-clean distclean realclean mostlyclean:
+clean realclean mostlyclean:
+
+distclean:
+	rm -f Makefile
 
 .PHONY: lint
 lint:

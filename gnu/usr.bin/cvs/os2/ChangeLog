@@ -1,3 +1,34 @@
+Mon Feb 19 00:35:24 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * Makefile.in: deal with new objects `mkmodules' and `vasprintf'.
+
+        * getpass.c (EchoOn, EchoOff): new funcs.
+        (getpass): use above new funcs to avoid echoing the password to
+        the screen.
+
+Mon Feb 12 16:09:55 1996  Norbert Kiesel  <nk@col.sw-ley.de>
+
+	* run.c (run_popen): Changed more Popen() to run_popen()
+
+Mon Feb 12 03:33:27 1996  Benjamin J. Lee  <benjamin@cyclic.com>
+
+	* run.c: Changed Popen() to run_popen() for the benefit of
+	case-insensitive linkers (VMS) which confuse Popen() with popen()
+
+Mon Feb 12 03:14:36 1996  Karl Fogel  <kfogel@floss.red-bean.com>
+
+        * options.h (PATCH_PROGRAM): "cvspatch" (see comment).
+
+Fri Feb  9 22:10:12 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h: Remove SYSTEM_COMMENT_TABLE.
+
+Thu Feb  1 15:07:13 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Remove RM; no longer used.
+
+	* filesubr.c: Remove rcsid.
+
 Sun Jan 28 12:31:03 1996  Jim Kingdon  (kingdon@beezley)
 
 	* filesubr.c (unlink_file): Use xchmod, not chmod, to make the

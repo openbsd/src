@@ -28,7 +28,6 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 
 SOURCES = \
-	alloca.c \
 	argmatch.c \
 	dup2.c \
 	fnmatch.c \
@@ -45,28 +44,30 @@ SOURCES = \
 	mkdir.c \
 	regex.c \
 	rename.c \
-	save-cwd.c \
+	savecwd.c \
 	sighandle.c \
 	strdup.c \
 	strstr.c \
 	strerror.c \
 	strippath.c \
 	stripslash.c \
+	strtoul.c \
 	valloc.c \
+	vasprintf.c \
 	waitpid.c \
 	xgetwd.c \
 	yesno.c
 
-HEADERS = getline.h getopt.h fnmatch.h regex.h system.h wait.h md5.h save-cwd.h
+HEADERS = getline.h getopt.h fnmatch.h regex.h system.h wait.h md5.h savecwd.h
 
 OBJECTS = \
-    @ALLOCA@ @LIBOBJS@ \
+    @LIBOBJS@ \
     argmatch.o \
     getline.o \
     getopt.o \
     getopt1.o \
     md5.o \
-    save-cwd.o \
+    savecwd.o \
     sighandle.o \
     strippath.o \
     stripslash.o \
@@ -148,6 +149,9 @@ getopt1.o: getopt.h
 regex.o: regex.h
 getwd.o: system.h
 md5.o: md5.h
+
+xlint:
+	@echo xlint does nothing
 
 subdir = lib
 Makefile: ../config.status Makefile.in

@@ -17,12 +17,7 @@
  */
 
 #include "cvs.h"
-#include "save-cwd.h"
-
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)import.c 1.63 94/09/30 $";
-USE(rcsid);
-#endif
+#include "savecwd.h"
 
 #define	FILE_HOLDER	".#cvsxxx"
 
@@ -264,11 +259,21 @@ import (argc, argv)
     {
 	if (!really_quiet)
 	{
-	    (void) printf ("\n%d conflicts created by this import.\n",
-			   conflicts);
-	    (void) printf ("Use the following command to help the merge:\n\n");
-	    (void) printf ("\t%s checkout -j%s:yesterday -j%s %s\n\n",
-			   program_name, argv[1], argv[1], argv[0]);
+	    char buf[80];
+	    sprintf (buf, "\n%d conflicts created by this import.\n",
+		     conflicts);
+	    cvs_output (buf, 0);
+	    cvs_output ("Use the following command to help the merge:\n\n",
+			0);
+	    cvs_output ("\t", 1);
+	    cvs_output (program_name, 0);
+	    cvs_output (" checkout -j", 0);
+	    cvs_output (argv[1], 0);
+	    cvs_output (":yesterday -j", 0);
+	    cvs_output (argv[1], 0);
+	    cvs_output (" ", 1);
+	    cvs_output (argv[0], 0);
+	    cvs_output ("\n\n", 0);
 	}
 
 	(void) fprintf (logfp, "\n%d conflicts created by this import.\n",
@@ -281,7 +286,7 @@ import (argc, argv)
     else
     {
 	if (!really_quiet)
-	    (void) printf ("\nNo conflicts created by this import\n\n");
+	    cvs_output ("\nNo conflicts created by this import\n\n", 0);
 	(void) fprintf (logfp, "\nNo conflicts created by this import\n\n");
     }
 
@@ -471,12 +476,8 @@ update_rcs_file (message, vfile, vtag, targc, targv, inattic)
 
     vers = Version_TS (repository, (char *) NULL, vbranch, (char *) NULL, vfile,
 		       1, 0, (List *) NULL, (List *) NULL);
-#ifdef DEATH_SUPPORT
     if (vers->vn_rcs != NULL
 	&& !RCS_isdead(vers->srcfile, vers->vn_rcs))
-#else
-    if (vers->vn_rcs != NULL)
-#endif
     {
 	char xtmpfile[PATH_MAX];
 	int different;
@@ -497,14 +498,16 @@ update_rcs_file (message, vfile, vtag, targc, targv, inattic)
 	 * This is to try to cut down the number of "C" conflict messages for
 	 * locally modified import source files.
 	 */
+	/* Why is RCS_FLAGS_FORCE here?  I wouldn't think that it would have any
+	   effect in conjunction with passing NULL for workfile (i.e. to stdout).  */
+	retcode = RCS_checkout (vers->srcfile->path, NULL, vers->vn_rcs,
 #ifdef HAVE_RCS5
-	run_setup ("%s%s -q -f -r%s -p -ko", Rcsbin, RCS_CO, vers->vn_rcs);
+	                        "-ko",
 #else
-	run_setup ("%s%s -q -f -r%s -p", Rcsbin, RCS_CO, vers->vn_rcs);
+	                        NULL,
 #endif
-	run_arg (vers->srcfile->path);
-	if ((retcode = run_exec (RUN_TTY, xtmpfile, RUN_TTY,
-				 RUN_NORMAL|RUN_REALLY)) != 0)
+	                        xtmpfile, RCS_FLAGS_FORCE, 0);
+	if (retcode != 0)
 	{
 	    ierrno = errno;
 	    fperror (logfp, 0, retcode == -1 ? ierrno : 0,
@@ -616,13 +619,11 @@ add_rev (message, rcs, vfile, vers)
 	}
     }
 
-    run_setup ("%s%s -q -f -r%s", Rcsbin, RCS_CI, vbranch);
-    run_args ("-m%s", make_message_rcslegal (message));
-    if (use_file_modtime)
-	run_arg ("-d");
-    run_arg (tocvsPath == NULL ? vfile : tocvsPath);
-    run_arg (rcs);
-    status = run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_NORMAL);
+    status = RCS_checkin (rcs, tocvsPath == NULL ? vfile : tocvsPath,
+			  message, vbranch,
+			  (RCS_FLAGS_QUIET
+			   | (use_file_modtime ? RCS_FLAGS_MODTIME : 0)),
+			  0);
     ierrno = errno;
 
     if (tocvsPath == NULL)
@@ -717,6 +718,7 @@ static const struct compair comtable[] =
     {"adb", "-- "},
     {"asm", ";; "},			/* assembler (MS-DOS) */
     {"ads", "-- "},			/* Ada		 */
+    {"bas", "' "},    			/* Visual Basic code */
     {"bat", ":: "},			/* batch (MS-DOS) */
     {"body", "-- "},			/* Ada		 */
     {"c", " * "},			/* C		 */
@@ -730,12 +732,14 @@ static const struct compair comtable[] =
     {"cmf", "c "},			/* CM Fortran	 */
     {"cs", " * "},			/* C*		 */
     {"csh", "# "},			/* shell	 */
+    {"dlg", " * "},   			/* MS Windows dialog file */
     {"e", "# "},			/* efl		 */
     {"epsf", "% "},			/* encapsulated postscript */
     {"epsi", "% "},			/* encapsulated postscript */
     {"el", "; "},			/* Emacs Lisp	 */
     {"f", "c "},			/* Fortran	 */
     {"for", "c "},
+    {"frm", "' "},    			/* Visual Basic form */
     {"h", " * "},			/* C-header	 */
     {"hh", "// "},			/* C++ header	 */
     {"hpp", "// "},
@@ -745,6 +749,7 @@ static const struct compair comtable[] =
 					 * franzlisp) */
     {"mac", ";; "},			/* macro (DEC-10, MS-DOS, PDP-11,
 					 * VMS, etc) */
+    {"mak", "# "},    			/* makefile, e.g. Visual C++ */
     {"me", ".\\\" "},			/* me-macros	t/nroff	 */
     {"ml", "; "},			/* mocklisp	 */
     {"mm", ".\\\" "},			/* mm-macros	t/nroff	 */
@@ -766,6 +771,7 @@ static const struct compair comtable[] =
     {"psw", "% "},			/* postscript wrap */
     {"pswm", "% "},			/* postscript wrap */
     {"r", "# "},			/* ratfor	 */
+    {"rc", " * "},			/* Microsoft Windows resource file */
     {"red", "% "},			/* psl/rlisp	 */
 #ifdef sparc
     {"s", "! "},			/* assembler	 */
@@ -790,9 +796,6 @@ static const struct compair comtable[] =
     {"y", " * "},			/* yacc		 */
     {"ye", " * "},			/* yacc-efl	 */
     {"yr", " * "},			/* yacc-ratfor	 */
-#ifdef SYSTEM_COMMENT_TABLE
-    SYSTEM_COMMENT_TABLE
-#endif
     {"", "# "},				/* default for empty suffix	 */
     {NULL, "# "}			/* default for unknown suffix;	 */
 /* must always be last		 */
@@ -1084,12 +1087,22 @@ add_log (ch, fname)
 {
     if (!really_quiet)			/* write to terminal */
     {
+	char buf[2];
+	buf[0] = ch;
+	buf[1] = ' ';
+	cvs_output (buf, 2);
 	if (repos_len)
-	    (void) printf ("%c %s/%s\n", ch, repository + repos_len + 1, fname);
-	else if (repository[0])
-	    (void) printf ("%c %s/%s\n", ch, repository, fname);
-	else
-	    (void) printf ("%c %s\n", ch, fname);
+	{
+	    cvs_output (repository + repos_len + 1, 0);
+	    cvs_output ("/", 1);
+	}
+	else if (repository[0] != '\0')
+	{
+	    cvs_output (repository, 0);
+	    cvs_output ("/", 1);
+	}
+	cvs_output (fname, 0);
+	cvs_output ("\n", 1);
     }
 
     if (repos_len)			/* write to logfile */
@@ -1139,14 +1152,7 @@ import_descend_dir (message, dir, vtag, targc, targv)
 #else
     if (!quiet)
 #endif
-#ifdef SERVER_SUPPORT
-	/* Needs to go on stdout, not stderr, to avoid being interspersed
-	   with the add_log messages.  */
-	printf ("%s %s: Importing %s\n",
-		program_name, command_name, repository);
-#else
 	error (0, 0, "Importing %s", repository);
-#endif
 
     if (chdir (dir) < 0)
     {

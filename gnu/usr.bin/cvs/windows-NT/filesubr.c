@@ -25,11 +25,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid:$";
-USE(rcsid);
-#endif
-
 /*
  * I don't know of a convenient way to test this at configure time, or else
  * I'd certainly do it there.
@@ -789,4 +784,10 @@ convert_file (char *infile,  int inflags,
         error (0, errno, "warning: couldn't close %s", outfile);
     if (close (infd) < 0)
         error (0, errno, "warning: couldn't close %s", infile);
+}
+
+char *
+get_homedir ()
+{
+    return getenv ("HOMEPATH");
 }

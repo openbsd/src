@@ -8,11 +8,7 @@
  */
 
 #include "cvs.h"
-
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)hash.c 1.19 94/09/23 $";
-USE(rcsid);
-#endif
+#include <assert.h>
 
 /* global caches */
 static List *listcache = NULL;
@@ -28,6 +24,8 @@ hashp (key)
     unsigned int h = 0;
     unsigned int g;
 
+    assert(key != NULL);
+    
     while (*key != 0)
     {
 	unsigned int c = *key++;
@@ -260,11 +258,15 @@ findnode (list, key)
 {
     Node *head, *p;
 
-    if (list == (List *) NULL)
+    /* This probably should be "assert (list != NULL)" (or if not we
+       should document the current behavior), but only if we check all
+       the callers to see if any are relying on this behavior.  */
+    if ((list == (List *) NULL))
 	return ((Node *) NULL);
 
     head = list->hasharray[hashp (key)];
     if (head == (Node *) NULL)
+	/* Not found.  */
 	return ((Node *) NULL);
 
     for (p = head->hashnext; p != head; p = p->hashnext)
@@ -391,6 +393,7 @@ nodetypestring (type)
     case LOCK:		return("LOCK");
     case NDBMNODE:	return("NDBMNODE");
     case FILEATTR:	return("FILEATTR");
+    case VARIABLE:	return("VARIABLE");
     }
 
     return("<trash>");

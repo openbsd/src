@@ -19,11 +19,6 @@
 
 #ifdef MY_NDBM
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)myndbm.c 1.7 94/09/23 $";
-USE(rcsid);
-#endif
-
 static void mydbm_load_file ();
 
 /* ARGSUSED */
@@ -36,7 +31,7 @@ mydbm_open (file, flags, mode)
     FILE *fp;
     DBM *db;
 
-    fp = fopen (file, "r");
+    fp = fopen (file, FOPEN_BINARY_READ);
     if (fp == NULL && !(existence_error (errno) && (flags & O_CREAT)))
 	return ((DBM *) 0);
 
@@ -65,7 +60,7 @@ write_item (node, data)
     fputs (node->key, fp);
     fputs (" ", fp);
     fputs (node->data, fp);
-    fputs ("\n", fp);
+    fputs ("\012", fp);
     return 0;
 }
 
@@ -76,7 +71,7 @@ mydbm_close (db)
     if (db->modified)
     {
 	FILE *fp;
-	fp = fopen (db->name, "w");
+	fp = fopen (db->name, FOPEN_BINARY_WRITE);
 	if (fp == NULL)
 	    error (1, errno, "cannot write %s", db->name);
 	walklist (db->dbm_list, write_item, (void *)fp);
@@ -211,8 +206,15 @@ mydbm_load_file (fp, list)
 
     for (cont = 0; getline (&line, &line_len, fp) >= 0;)
     {
-	if ((cp = strrchr (line, '\n')) != NULL)
+	if ((cp = strrchr (line, '\012')) != NULL)
 	    *cp = '\0';			/* strip the newline */
+	cp = line + strlen (line);
+	if (cp > line && cp[-1] == '\015')
+	    /* If the file (e.g. modules) was written on an NT box, it will
+	       contain CRLF at the ends of lines.  Strip them (we can't do
+	       this by opening the file in text mode because we might be
+	       running on unix).  */
+	    cp[-1] = '\0';	    
 
 	/*
 	 * Add the line to the value, at the end if this is a continuation

@@ -10,11 +10,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)subr.c 1.64 94/10/07 $";
-USE(rcsid);
-#endif
-
 extern char *getlogin ();
 
 /*
@@ -300,7 +295,8 @@ gca (rev1, rev2)
 /*
  *  Sanity checks and any required fix-up on message passed to RCS via '-m'.
  *  RCS 5.7 requires that a non-total-whitespace, non-null message be provided
- *  with '-m'.
+ *  with '-m'.  Returns the original argument or a pointer to readonly
+ *  static storage.
  */
 char *
 make_message_rcslegal (message)

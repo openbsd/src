@@ -12,11 +12,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)repos.c 1.32 94/09/23 $";
-USE(rcsid);
-#endif
-
 char *
 Name_Repository (dir, update_dir)
     char *dir;

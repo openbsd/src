@@ -217,26 +217,29 @@ wrap_add (line, isTemp)
 	case 'f':
 	    if(e.fromcvsFilter)
 		free(e.fromcvsFilter);
-	    e.fromcvsFilter=expand_path (temp);
+	    /* FIXME: error message should say where the bad value
+	       came from.  */
+	    e.fromcvsFilter=expand_path (temp, "<wrapper>", 0);
             if (!e.fromcvsFilter)
-		error (1, 0,
-		       "Invalid environmental variable string '%s'",temp);
+		error (1, 0, "Correct above errors first");
 	    break;
 	case 't':
 	    if(e.tocvsFilter)
 		free(e.tocvsFilter);
-	    e.tocvsFilter=expand_path (temp);
+	    /* FIXME: error message should say where the bad value
+	       came from.  */
+	    e.tocvsFilter=expand_path (temp, "<wrapper>", 0);
             if (!e.tocvsFilter)
-		error (1, 0,
-		       "Invalid environmental variable string '%s'",temp);
+		error (1, 0, "Correct above errors first");
 	    break;
 	case 'c':
 	    if(e.conflictHook)
 		free(e.conflictHook);
-	    e.conflictHook=expand_path (temp);
+	    /* FIXME: error message should say where the bad value
+	       came from.  */
+	    e.conflictHook=expand_path (temp, "<wrapper>", 0);
             if (!e.conflictHook)
-		error (1, 0,
-		       "Invalid environmental variable string '%s'",temp);
+		error (1, 0, "Correct above errors first");
 	    break;
 	case 'm':
 	    if(*temp=='C' || *temp=='c')

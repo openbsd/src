@@ -84,10 +84,6 @@
    GNU application programs can use a third alternative mode in which
    they can distinguish the relative order of options and other arguments.  */
 
-#ifndef lint
-static char rcsid[] = "$CVSid: @(#)getopt.c 1.10 94/09/21 $";
-#endif
-
 #include "getopt.h"
 
 /* For communication from `getopt' to the caller.

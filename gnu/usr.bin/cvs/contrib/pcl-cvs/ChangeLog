@@ -1,3 +1,8 @@
+Fri Feb  9 14:29:07 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in (mostlyclean clean realclean): Remove 'realclean'
+	from this target list; it's already defined later in the file.
+
 Tue Jan 23 13:02:24 1996  Greg A. Woods  <woods@most.weird.com>
 
 	* pcl-cvs.el (pcl-cvs-bugs-address): change the default address

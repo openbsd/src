@@ -16,18 +16,12 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)diff.c 1.61 94/10/22 $";
-USE(rcsid);
-#endif
-
 static Dtype diff_dirproc PROTO((char *dir, char *pos_repos, char *update_dir));
 static int diff_filesdoneproc PROTO((int err, char *repos, char *update_dir));
 static int diff_dirleaveproc PROTO((char *dir, int err, char *update_dir));
 static int diff_file_nodiff PROTO((char *file, char *repository, List *entries,
 			     List *srcfiles, Vers_TS *vers));
-static int diff_fileproc PROTO((char *file, char *update_dir, char *repository,
-			  List * entries, List * srcfiles));
+static int diff_fileproc PROTO((struct file_info *finfo));
 static void diff_mark_errors PROTO((int err));
 
 static char *diff_rev1, *diff_rev2;
@@ -227,12 +221,8 @@ diff (argc, argv)
  */
 /* ARGSUSED */
 static int
-diff_fileproc (file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List *entries;
-    List *srcfiles;
+diff_fileproc (finfo)
+    struct file_info *finfo;
 {
     int status, err = 2;		/* 2 == trouble, like rcsdiff */
     Vers_TS *vers;
@@ -249,8 +239,8 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
 #ifdef SERVER_SUPPORT
     user_file_rev = 0;
 #endif
-    vers = Version_TS (repository, (char *) NULL, (char *) NULL, (char *) NULL,
-		       file, 1, 0, entries, srcfiles);
+    vers = Version_TS (finfo->repository, (char *) NULL, (char *) NULL, (char *) NULL,
+		       finfo->file, 1, 0, finfo->entries, finfo->srcfiles);
 
     if (diff_rev2 != NULL || diff_date2 != NULL)
     {
@@ -259,7 +249,7 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
     }
     else if (vers->vn_user == NULL)
     {
-	error (0, 0, "I know nothing about %s", file);
+	error (0, 0, "I know nothing about %s", finfo->file);
 	freevers_ts (&vers);
 	diff_mark_errors (err);
 	return (err);
@@ -270,7 +260,7 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
 	    empty_file = DIFF_ADDED;
 	else
 	{
-	    error (0, 0, "%s is a new entry, no comparison available", file);
+	    error (0, 0, "%s is a new entry, no comparison available", finfo->file);
 	    freevers_ts (&vers);
 	    diff_mark_errors (err);
 	    return (err);
@@ -282,7 +272,7 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
 	    empty_file = DIFF_REMOVED;
 	else
 	{
-	    error (0, 0, "%s was removed, no comparison available", file);
+	    error (0, 0, "%s was removed, no comparison available", finfo->file);
 	    freevers_ts (&vers);
 	    diff_mark_errors (err);
 	    return (err);
@@ -292,7 +282,7 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
     {
 	if (vers->vn_rcs == NULL && vers->srcfile == NULL)
 	{
-	    error (0, 0, "cannot find revision control file for %s", file);
+	    error (0, 0, "cannot find revision control file for %s", finfo->file);
 	    freevers_ts (&vers);
 	    diff_mark_errors (err);
 	    return (err);
@@ -301,7 +291,7 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
 	{
 	    if (vers->ts_user == NULL)
 	    {
-		error (0, 0, "cannot find %s", file);
+		error (0, 0, "cannot find %s", finfo->file);
 		freevers_ts (&vers);
 		diff_mark_errors (err);
 		return (err);
@@ -318,64 +308,65 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
 	}
     }
 
-    if (empty_file == DIFF_NEITHER && diff_file_nodiff (file, repository, entries, srcfiles, vers))
+    if (empty_file == DIFF_NEITHER && diff_file_nodiff (finfo->file, finfo->repository, finfo->entries, finfo->srcfiles, vers))
     {
 	freevers_ts (&vers);
 	return (0);
     }
 
-#ifdef DEATH_SUPPORT
     /* FIXME: Check whether use_rev1 and use_rev2 are dead and deal
        accordingly.  */
-#endif
 
     /* Output an "Index:" line for patch to use */
     (void) fflush (stdout);
-    if (update_dir[0])
-	(void) printf ("Index: %s/%s\n", update_dir, file);
+    if (finfo->update_dir[0])
+	(void) printf ("Index: %s/%s\n", finfo->update_dir, finfo->file);
     else
-	(void) printf ("Index: %s\n", file);
+	(void) printf ("Index: %s\n", finfo->file);
     (void) fflush (stdout);
 
-    tocvsPath = wrap_tocvs_process_file(file);
+    tocvsPath = wrap_tocvs_process_file(finfo->file);
     if (tocvsPath)
     {
 	/* Backup the current version of the file to CVS/,,filename */
-	sprintf(fname,"%s/%s%s",CVSADM, CVSPREFIX, file);
+	sprintf(fname,"%s/%s%s",CVSADM, CVSPREFIX, finfo->file);
 	if (unlink_file_dir (fname) < 0)
 	    if (! existence_error (errno))
-		error (1, errno, "cannot remove %s", file);
-	rename_file (file, fname);
+		error (1, errno, "cannot remove %s", finfo->file);
+	rename_file (finfo->file, fname);
 	/* Copy the wrapped file to the current directory then go to work */
-	copy_file (tocvsPath, file);
+	copy_file (tocvsPath, finfo->file);
     }
 
     if (empty_file == DIFF_ADDED || empty_file == DIFF_REMOVED)
     {
 	(void) printf ("===================================================================\nRCS file: %s\n",
-		       file);
-	(void) printf ("diff -N %s\n", file);
+		       finfo->file);
+	(void) printf ("diff -N %s\n", finfo->file);
 
 	if (empty_file == DIFF_ADDED)
 	{
-	    run_setup ("%s %s %s %s", DIFF, opts, DEVNULL, file);
+	    run_setup ("%s %s %s %s", DIFF, opts, DEVNULL, finfo->file);
 	}
 	else
 	{
+	    int retcode;
+
 	    /*
 	     * FIXME: Should be setting use_rev1 using the logic in
 	     * diff_file_nodiff, and using that revision.  This code
 	     * is broken for "cvs diff -N -r foo".
 	     */
-	    run_setup ("%s%s -p -q %s -r%s", Rcsbin, RCS_CO,
-		       *options ? options : vers->options, vers->vn_rcs);
-	    run_arg (vers->srcfile->path);
-	    if (run_exec (RUN_TTY, tmpnam (tmp), RUN_TTY, RUN_REALLY) == -1)
+	    retcode = RCS_checkout (vers->srcfile->path, NULL, vers->vn_rcs,
+	                            *options ? options : vers->options, tmpnam (tmp),
+	                            0, 0);
+	    if (retcode == -1)
 	    {
 		(void) unlink (tmp);
 		error (1, errno, "fork failed during checkout of %s",
 		       vers->srcfile->path);
 	    }
+	    /* FIXME: what if retcode > 0?  */
 
 	    run_setup ("%s %s %s %s", DIFF, opts, tmp, DEVNULL);
 	}
@@ -384,13 +375,13 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
     {
 	if (use_rev2)
 	{
-	    run_setup ("%s%s %s %s -r%s -r%s", Rcsbin, RCS_DIFF,
+	    run_setup ("%s%s -x,v/ %s %s -r%s -r%s", Rcsbin, RCS_DIFF,
 		       opts, *options ? options : vers->options,
 		       use_rev1, use_rev2);
 	}
 	else
 	{
-	    run_setup ("%s%s %s %s -r%s", Rcsbin, RCS_DIFF, opts,
+	    run_setup ("%s%s -x,v/ %s %s -r%s", Rcsbin, RCS_DIFF, opts,
 		       *options ? options : vers->options, use_rev1);
 	}
 	run_arg (vers->srcfile->path);
@@ -412,13 +403,13 @@ diff_fileproc (file, update_dir, repository, entries, srcfiles)
 
     if (tocvsPath)
     {
-	if (unlink_file_dir (file) < 0)
+	if (unlink_file_dir (finfo->file) < 0)
 	    if (! existence_error (errno))
-		error (1, errno, "cannot remove %s", file);
+		error (1, errno, "cannot remove %s", finfo->file);
 
-	rename_file (fname,file);
+	rename_file (fname,finfo->file);
 	if (unlink_file (tocvsPath) < 0)
-	    error (1, errno, "cannot remove %s", file);
+	    error (1, errno, "cannot remove %s", finfo->file);
     }
 
     if (empty_file == DIFF_REMOVED)
@@ -503,6 +494,7 @@ diff_file_nodiff (file, repository, entries, srcfiles, vers)
 {
     Vers_TS *xvers;
     char tmp[L_tmpnam+1];
+    int retcode;
 
     /* free up any old use_rev* variables and reset 'em */
     if (use_rev1)
@@ -530,6 +522,8 @@ diff_file_nodiff (file, repository, entries, srcfiles, vers)
 		else
 		    error (0, 0, "no revision for date %s in file %s",
 			   diff_date1, file);
+
+		freevers_ts (&xvers);
 		return (1);
 	    }
 	    use_rev1 = xstrdup (xvers->vn_rcs);
@@ -555,6 +549,8 @@ diff_file_nodiff (file, repository, entries, srcfiles, vers)
 		else
 		    error (0, 0, "no revision for date %s in file %s",
 			   diff_date2, file);
+
+		freevers_ts (&xvers);
 		return (1);
 	    }
 	    use_rev2 = xstrdup (xvers->vn_rcs);
@@ -602,10 +598,9 @@ diff_file_nodiff (file, repository, entries, srcfiles, vers)
      * with 0 or 1 -r option specified, run a quick diff to see if we
      * should bother with it at all.
      */
-    run_setup ("%s%s -p -q %s -r%s", Rcsbin, RCS_CO,
-	       *options ? options : vers->options, use_rev1);
-    run_arg (vers->srcfile->path);
-    switch (run_exec (RUN_TTY, tmpnam (tmp), RUN_TTY, RUN_REALLY))
+    retcode = RCS_checkout (vers->srcfile->path, NULL, use_rev1,
+                            *options ? options : vers->options, tmpnam (tmp), 0, 0);
+    switch (retcode)
     {
 	case 0:				/* everything ok */
 	    if (xcmp (file, tmp) == 0)

@@ -345,14 +345,6 @@ extern void convert_file (char *INFILE,  int INFLAGS,
 /* This is where old bits go to die under Windows NT.  */
 #define DEVNULL "nul"
 
-/* Comment markers for some Windows NT-specific file types.  */
-#define SYSTEM_COMMENT_TABLE \
-    "mak", "# ",    			/* makefile */                    \
-    "rc",  " * ",   			/* MS Windows resource file */    \
-    "dlg", " * ",   			/* MS Windows dialog file */      \
-    "frm", "' ",    			/* Visual Basic form */           \
-    "bas", "' ",    			/* Visual Basic code */
-
 /* Make sure that we don't try to perform operations on RCS files on the
    local machine.  I think I neglected to apply some changes from
    MHI's port in that area of code, or found some issues I didn't want
@@ -373,3 +365,5 @@ extern void wnt_shutdown_server (int fd);
 
 #define INITIALIZE_SOCKET_SUBSYSTEM init_winsock
 extern void init_winsock();
+
+#define HAVE_WINSOCK_H

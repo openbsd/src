@@ -178,11 +178,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)history.c 1.33 94/09/21 $";
-USE(rcsid);
-#endif
-
 static struct hrec
 {
     char *type;		/* Type of record (In history record) */
@@ -673,7 +668,7 @@ history_write (type, update_dir, revs, name, repository)
     char *repository;
 {
     char fname[PATH_MAX], workdir[PATH_MAX], homedir[PATH_MAX];
-    static char username[20];		/* !!! Should be global */
+    char *username = getcaller ();
     int fd;
     char *line;
     char *slash = "", *cp, *cp2, *repos;
@@ -701,24 +696,23 @@ history_write (type, update_dir, revs, name, repository)
 #endif
     if (noexec)
 	return;
-    if ((fd = open (fname, O_WRONLY | O_APPEND | O_CREAT, 0666)) < 0)
+    fd = open (fname, O_WRONLY | O_APPEND | O_CREAT | OPEN_BINARY, 0666);
+    if (fd < 0)
 	error (1, errno, "cannot open history file: %s", fname);
 
     repos = Short_Repository (repository);
 
     if (!PrCurDir)
     {
-	struct passwd *pw;
+	char *pwdir;
 
-	(void) strcpy (username, getcaller ());
+	pwdir = get_homedir ();
 	PrCurDir = CurDir;
-	if (!(pw = (struct passwd *) getpwnam (username)))
-	    error (0, 0, "cannot find own username");
-	else
+	if (pwdir != NULL)
 	{
-	    /* Assumes neither CurDir nor pw->pw_dir ends in '/' */
-	    i = strlen (pw->pw_dir);
-	    if (!strncmp (CurDir, pw->pw_dir, i))
+	    /* Assumes neither CurDir nor pwdir ends in '/' */
+	    i = strlen (pwdir);
+	    if (!strncmp (CurDir, pwdir, i))
 	    {
 		PrCurDir += i;		/* Point to '/' separator */
 		tilde = "~";
@@ -728,10 +722,10 @@ history_write (type, update_dir, revs, name, repository)
 		/* Try harder to find a "homedir" */
 		if (!getwd (workdir))
 		    error (1, errno, "can't getwd in history");
-		if (chdir (pw->pw_dir) < 0)
-		    error (1, errno, "can't chdir(%s)", pw->pw_dir);
+		if (chdir (pwdir) < 0)
+		    error (1, errno, "can't chdir(%s)", pwdir);
 		if (!getwd (homedir))
-		    error (1, errno, "can't getwd in %s", pw->pw_dir);
+		    error (1, errno, "can't getwd in %s", pwdir);
 		(void) chdir (workdir);
 
 		i = strlen (homedir);
@@ -1000,7 +994,7 @@ read_hrecs (fname)
     struct hrec *hr;
     struct stat st_buf;
 
-    if ((fd = open (fname, O_RDONLY)) < 0)
+    if ((fd = open (fname, O_RDONLY | OPEN_BINARY)) < 0)
 	error (1, errno, "cannot open history file: %s", fname);
 
     if (fstat (fd, &st_buf) < 0)

@@ -2,24 +2,66 @@
 #include <string.h>
 #include "cvs.h"
 
+#define INCL_BASE
+#define INCL_SUB
+#define INCL_KBD
+#include <os2.h>
+
+/* Only define this if you're testing and want to compile this file
+   standalone. */
+/* #define DIAGNOSTIC */
+
+/* Turn off keyboard echo.  Does not check error returns. */
+static void
+EchoOff (void)
+{
+  KBDINFO KbdInfo;
+  
+  KbdGetStatus (&KbdInfo, 0);
+  KbdInfo.fsMask = (KbdInfo.fsMask & ~KEYBOARD_ECHO_ON) | KEYBOARD_ECHO_OFF;
+  KbdSetStatus (&KbdInfo, 0);
+}
+
+/* Turn on keyboard echo.  Does not check error returns. */
+static void
+EchoOn( void )
+{
+  KBDINFO KbdInfo;
+  
+  KbdGetStatus (&KbdInfo, 0);
+  KbdInfo.fsMask = (KbdInfo.fsMask & ~KEYBOARD_ECHO_OFF) | KEYBOARD_ECHO_ON;
+  KbdSetStatus (&KbdInfo, 0);
+}
+
 char *
 getpass (char *prompt)
 {
-    static char passbuf[30];
-    int i;
-    char *p;
-    int ch;
-    
-    printf ("%s", prompt);
-    fflush (stdout);
-    
-    p = passbuf, i = 0;
-    while (((ch = getchar ()) != '\n') && (ch != EOF))
-    {
-        if (i++ < 24)
-            *p++ = ch;
-    }
-    *p = '\0';
+  static char Buf[80];
+  STRINGINBUF StringInBuf;
+  
+  printf ("%s", prompt);
+  fflush (stdout);
 
-    return passbuf;
+  EchoOff ();
+
+  StringInBuf.cb = sizeof (Buf) - 1;
+  StringInBuf.cchIn = 0;
+  KbdStringIn ((PSZ) Buf, &StringInBuf, IO_WAIT, 0);
+  Buf[StringInBuf.cchIn] = '\0';
+
+  EchoOn ();
+
+  return Buf;
 }
+
+
+#ifdef DIAGNOSTIC
+main()
+{
+  char *s;
+  s = getpass ("Input password (no echo): ");
+  printf ("String was \"%s\"\n", s);
+  fflush (stdout);
+}
+#endif /* DIAGNOSTIC */
+

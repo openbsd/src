@@ -114,41 +114,12 @@ The creation of this file enables history logging.
 .B modules
 The `\|modules\|' file records your definitions of names for
 collections of source code.  \fBcvs\fP will use these definitions if
-you create a file with the right format in
+you use \fBcvs\fP to check in a file with the right format to
 `\|\fB$CVSROOT/CVSROOT/modules,v\fP\|'.  
-The
-.BR mkmodules ( 1 )
-command should be run whenever the modules file changes, so that the
-appropriate files can be generated (depending on how you have configured
-.B cvs
-operation).
 .SP
-To allow convenient editing of the `\|modules\|' file itself, the file should
-include an entry like the following (where \fIlocalbin\fP represents the
-directory where your site installs programs like
-.BR mkmodules ( 1 )):
-.SP
-.nf
-\&\fBmodules    \-i /\fP\fIlocalbin\fP\fB/mkmodules CVSROOT modules\fP
-.fi
-.SP
-This defines the name `\|\fBmodules\fP\|' as the module name for the
-file itself, so that you can use
-.SP
-.in +1i
-.ft B
-.nf
-example% cvs checkout modules
-.fi
-.ft P
-.in -1i
-.SP
-to get an editable copy of the file.  You should define similar module
-entries for the other configuration files described here (except
-\&`\|history\|').
 The
 .BR cvsinit ( 8 )
-script will setup a smilar `\|modules\|' file for you automatically.
+script will setup a sample `\|modules\|' file for you automatically.
 .SP
 The `\|modules\|' file may contain blank lines and comments (lines
 beginning with `\|\fB#\fP\|') as well as module definitions.
@@ -347,7 +318,6 @@ Create this file in \fB$CVSROOT/CVSROOT\fP to enable history logging
 (see the description of `\|\fBcvs history\fP\|').
 .SH "SEE ALSO"
 .BR cvs ( 1 ),
-.BR mkmodules ( 1 ).
 .SH COPYING
 Copyright \(co 1992 Cygnus Support, Brian Berliner, and Jeff Polk
 .PP

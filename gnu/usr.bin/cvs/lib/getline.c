@@ -24,7 +24,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include <sys/types.h>
 #include <stdio.h>
-#define NDEBUG
 #include <assert.h>
 
 #if STDC_HEADERS
@@ -76,7 +75,7 @@ getstr (lineptr, n, stream, terminator, offset)
 	 always (unless we get an error while reading the first char)
 	 NUL-terminate the line buffer.  */
 
-      assert(*n - nchars_avail == read_pos - *lineptr);
+      assert((*lineptr + *n) == (read_pos + nchars_avail));
       if (nchars_avail < 2)
 	{
 	  if (*n > MIN_CHUNK)
@@ -89,7 +88,7 @@ getstr (lineptr, n, stream, terminator, offset)
 	  if (!*lineptr)
 	    return -1;
 	  read_pos = *n - nchars_avail + *lineptr;
-	  assert(*n - nchars_avail == read_pos - *lineptr);
+	  assert((*lineptr + *n) == (read_pos + nchars_avail));
 	}
 
       if (c == EOF || ferror (stream))

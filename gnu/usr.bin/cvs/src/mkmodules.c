@@ -3,35 +3,17 @@
  * Copyright (c) 1989-1992, Brian Berliner
  * 
  * You may distribute under the terms of the GNU General Public License as
- * specified in the README file that comes with the CVS 1.4 kit.
- * 
- * mkmodules
- * 
- * Re-build the modules database for the CVS system.  Accepts one argument,
- * which is the directory that the modules,v file lives in.
- */
+ * specified in the README file that comes with the CVS kit.  */
 
 #include "cvs.h"
-
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)mkmodules.c 1.45 94/09/30 $";
-USE(rcsid);
-#endif
+#include "savecwd.h"
 
 #ifndef DBLKSIZ
 #define	DBLKSIZ	4096			/* since GNU ndbm doesn't define it */
 #endif
 
-char *program_name, *command_name;
-
-char *Rcsbin = RCSBIN_DFLT;
-char *CVSroot = CVSROOT_DFLT;
-int noexec = 0;				/* Here only to satisfy use in subr.c */
-int trace = 0;				/* Here only to satisfy use in subr.c */
-
 static int checkout_file PROTO((char *file, char *temp));
 static void make_tempfile PROTO((char *temp));
-static void mkmodules_usage PROTO((void));
 static void rename_rcsfile PROTO((char *temp, char *real));
 
 #ifndef MY_NDBM
@@ -40,17 +22,20 @@ static void write_dbmfile PROTO((char *temp));
 #endif				/* !MY_NDBM */
 
 
+/* Rebuild the checked out administrative files in directory DIR.  */
 int
-main (argc, argv)
-    int argc;
-    char **argv;
+mkmodules (dir)
+    char *dir;
 {
+    struct saved_cwd cwd;
+    /* FIXME: arbitrary limit */
     char temp[PATH_MAX];
     char *cp, *last, *fname;
 #ifdef MY_NDBM
     DBM *db;
 #endif
     FILE *fp;
+    /* FIXME: arbitrary limit */
     char line[512];
     static struct _checkout_file {
        char *filename;
@@ -76,37 +61,11 @@ main (argc, argv)
 	"a %s file can be used to specify where notifications go"},
     {NULL, NULL}};
 
-    /*
-     * Just save the last component of the path for error messages
-     */
-    program_name = last_component (argv[0]);
+    if (save_cwd (&cwd))
+	exit (1);
 
-    if (argc != 2)
-	mkmodules_usage ();
-
-    if ((cp = getenv (RCSBIN_ENV)) != NULL)
-	Rcsbin = cp;
-
-    /*
-     * If Rcsbin is set to something, make sure it is terminated with a slash
-     * character.  If not, add one.
-     */
-    if (Rcsbin[0] != '\0')
-    {
-	int len = strlen (Rcsbin);
-	char *rcsbin;
-
-	if (Rcsbin[len - 1] != '/')
-	{
-	    rcsbin = Rcsbin;
-	    Rcsbin = xmalloc (len + 2);	/* one for '/', one for NULL */
-	    (void) strcpy (Rcsbin, rcsbin);
-	    (void) strcat (Rcsbin, "/");
-	}
-    }
-
-    if (chdir (argv[1]) < 0)
-	error (1, errno, "cannot chdir to %s", argv[1]);
+    if (chdir (dir) < 0)
+	error (1, errno, "cannot chdir to %s", dir);
 
     /*
      * First, do the work necessary to update the "modules" database.
@@ -204,6 +163,10 @@ main (argc, argv)
 	(void) fclose (fp);
     }
 
+    if (restore_cwd (&cwd, NULL))
+	exit (1);
+    free_cwd (&cwd);
+
     return (0);
 }
 
@@ -242,7 +205,7 @@ checkout_file (file, temp)
     (void) sprintf (rcs, "%s%s", file, RCSEXT);
     if (!isfile (rcs))
 	return (1);
-    run_setup ("%s%s -q -p", Rcsbin, RCS_CO);
+    run_setup ("%s%s -x,v/ -q -p", Rcsbin, RCS_CO);
     run_arg (rcs);
     if ((retcode = run_exec (RUN_TTY, temp, RUN_TTY, RUN_NORMAL)) != 0)
     {
@@ -411,27 +374,4 @@ rename_rcsfile (temp, real)
     (void) unlink_file (bak);		/* rm .#loginfo */
     (void) rename (real, bak);		/* mv loginfo .#loginfo */
     (void) rename (temp, real);		/* mv "temp" loginfo */
-}
-
-/*
- * For error() only
- */
-void
-Lock_Cleanup ()
-{
-}
-
-int server_active = 0;
-
-void
-server_cleanup (sig)
-    int sig;
-{
-}
-
-static void
-mkmodules_usage ()
-{
-    (void) fprintf (stderr, "Usage: %s modules-directory\n", program_name);
-    exit (1);
 }

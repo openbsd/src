@@ -17,10 +17,12 @@
 extern int watch_on PROTO ((int argc, char **argv));
 extern int watch_off PROTO ((int argc, char **argv));
 
+#ifdef CLIENT_SUPPORT
 /* Check to see if any notifications are sitting around in need of being
    sent.  These are the notifications stored in CVSADM_NOTIFY (edit,unedit);
    commit calls notify_do directly.  */
 extern void notify_check PROTO ((char *repository, char *update_dir));
+#endif /* CLIENT_SUPPORT */
 
 /* Issue a notification for file FILENAME.  TYPE is 'E' for edit, 'U'
    for unedit, and 'C' for commit.  WHO is the user currently running.

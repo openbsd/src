@@ -46,34 +46,30 @@ LIBS = @LIBS@
 SOURCES = add.c admin.c checkin.c checkout.c classify.c client.c commit.c \
 create_adm.c cvsrc.c diff.c edit.c entries.c error.c expand_path.c \
 fileattr.c find_names.c hash.c history.c ignore.c import.c \
-lock.c log.c login.c logmsg.c main.c modules.c myndbm.c no_diff.c \
+lock.c log.c login.c logmsg.c main.c mkmodules.c modules.c myndbm.c no_diff.c \
 parseinfo.c patch.c rcs.c rcscmds.c recurse.c release.c remove.c repos.c \
 root.c rtag.c scramble.c server.c status.c subr.c filesubr.c run.c \
 tag.c update.c watch.c wrapper.c vers_ts.c version.c
-MSOURCES = mkmodules.c
 
 OBJECTS = add.o admin.o checkin.o checkout.o classify.o client.o commit.o \
 create_adm.o cvsrc.o diff.o edit.o entries.o expand_path.o \
 fileattr.o find_names.o hash.o history.o ignore.o import.o \
-lock.o log.o login.o logmsg.o main.o modules.o myndbm.o no_diff.o \
+lock.o log.o login.o logmsg.o main.o mkmodules.o modules.o myndbm.o no_diff.o \
 parseinfo.o patch.o rcs.o rcscmds.o recurse.o release.o remove.o repos.o \
 root.o rtag.o scramble.o server.o status.o tag.o update.o \
-watch.o wrapper.o vers_ts.o
-
-MOBJECTS = hash.o mkmodules.o myndbm.o
-
-COMMON_OBJECTS = subr.o filesubr.o run.o version.o error.o
+watch.o wrapper.o vers_ts.o \
+subr.o filesubr.o run.o version.o error.o
 
 HEADERS = cvs.h rcs.h hash.h myndbm.h \
 	update.h server.h client.h error.h fileattr.h edit.h watch.h
 
-TAGFILES = $(HEADERS) options.h.in $(SOURCES) $(MSOURCES)
+TAGFILES = $(HEADERS) options.h.in $(SOURCES)
 
-DISTFILES = .cvsignore Makefile.in ChangeLog ChangeLog.fsf \
+DISTFILES = .cvsignore Makefile.in ChangeLog ChangeLog-9395 ChangeLog-9194 \
 	    NOTES README-rm-add \
             sanity.sh cvsbug.sh $(TAGFILES)
 
-PROGS = cvs mkmodules cvsbug
+PROGS = cvs cvsbug
 
 DEFS = @DEFS@ @includeopt@
 
@@ -136,7 +132,7 @@ ls:
 .PHONY: ls
 
 clean:
-	/bin/rm -f $(PROGS) *.o core
+	/bin/rm -f $(PROGS) *.o core check.log check.plog
 .PHONY: clean
 
 distclean: clean
@@ -157,8 +153,8 @@ dist-dir:
 
 $(PROGS): ../lib/libcvs.a
 
-cvs: $(OBJECTS) $(COMMON_OBJECTS)
-	$(CC) $(OBJECTS) $(COMMON_OBJECTS) ../lib/libcvs.a $(LIBS) $(LDFLAGS) -o $@ 
+cvs: $(OBJECTS)
+	$(CC) $(OBJECTS) ../lib/libcvs.a $(LIBS) $(LDFLAGS) -o $@ 
 
 xlint: $(SOURCES)
 	files= ; \
@@ -171,9 +167,6 @@ xlint: $(SOURCES)
 saber: $(SOURCES)
 	# load $(CFLAGS) $(SOURCES)
 	# load ../lib/libcvs.a $(LIBS)
-
-mkmodules: $(MOBJECTS) $(COMMON_OBJECTS)
-	$(CC) $(LDFLAGS) -o $@ $(MOBJECTS) $(COMMON_OBJECTS) ../lib/libcvs.a $(LIBS) $(LIBIBERTY)
 
 cvsbug: cvsbug.sh
 	echo > .fname \
@@ -189,7 +182,7 @@ cvsbug: cvsbug.sh
 
 # Compilation rules.
 
-$(OBJECTS) $(COMMON_OBJECTS) mkmodules.o: $(HEADERS) options.h
+$(OBJECTS): $(HEADERS) options.h
 
 subdir = src
 Makefile: ../config.status Makefile.in

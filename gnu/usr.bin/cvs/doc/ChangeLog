@@ -1,3 +1,73 @@
+Mon Feb 26 13:48:01 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Filenames): New node, documents / vs \, etc.
+
+Wed Feb 24 1996  Marcus Daniels  <marcus@sayre.sysc.pdx.edu>
+
+	* cvs.texinfo (Password authentication server): Mention
+	support for imaginary usernames.
+
+Thu Feb 15 16:34:56 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Variables): Add new internal variable $USER.
+
+Wed Feb 14 22:52:58 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (export, admin): Document -k option to cvs export.
+
+	* cvs.texinfo (admin options): Mention using -l, -u, -L, and -U in
+	conjunction with rcslock.pl.
+
+Mon Feb 12 16:38:41 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo: Remove references to mkmodules.
+
+Sun Feb 11 12:31:36 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi: Add Set request.
+
+	* cvs.texinfo (Variables): Rewrite to reflect user variables
+	replacing environment variables; motivate the discussion better.
+	(Global options): Add -s option.
+
+Sat Feb 10 11:18:37 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* cvs.texinfo (Variables): Fix @table commands.
+
+Fri Feb  9 17:31:18 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Variables): New node.
+
+	* Makefile.in (CVSvn.texi): New rule.
+	(OBJDIR_DISTFILES): Add CVSvn.texi.
+	(cvs.dvi,cvs.info): Add cruft to deal with it being in build dir
+	or srcdir.
+	* cvs.texinfo: Include CVSvn.texi and use the version number from
+	it instead of a hardcoded version number and date.
+
+Thu Feb  1 13:28:03 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Sticky tags): Expand so it really documents the
+	features it is talking about rather than referring to "Appendix
+	A".  Add example of how to restore the old version of a dead
+	file.  In various other parts of the manual refer to this node, in
+	some cases deleting duplicative text.  In the case of cvs admin
+	-b, mention vendor branch usage.
+	(Removing files): Discuss removing files (in user-visible terms,
+	not in terms of the Attic and such).
+	(remove): Remove node; merge contents into Removing files.
+
+Tue Jan 30 17:52:06 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* cvs.texinfo: Tweak @top node, to make file compatible with both
+	makeinfo and texinfo-format-buffer.  Perhaps we should fix the
+	formatters to agree on what constitutes valid texinfo.
+
+Mon Jan 29 16:38:33 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Requirements): New node, to talk about required
+	versus optional parts of the protocol.
+
 Sun Jan 28 09:00:34 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* cvsclient.texi (Modes): Add discussion what what the mode really

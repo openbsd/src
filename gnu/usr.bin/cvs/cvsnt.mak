@@ -61,6 +61,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 BSC32_FLAGS=/nologo /o$(OUTDIR)/"cvsnt.bsc" 
 BSC32_SBRS= \
+	$(INTDIR)/mkmodules.sbr \
 	$(INTDIR)/subr.sbr \
 	$(INTDIR)/admin.sbr \
 	$(INTDIR)/server.sbr \
@@ -107,6 +108,8 @@ BSC32_SBRS= \
 	$(INTDIR)/edit.sbr \
 	$(INTDIR)/fileattr.sbr \
 	$(INTDIR)/watch.sbr \
+	$(INTDIR)/login.sbr \
+	$(INTDIR)/scramble.sbr \
 	$(INTDIR)/getwd.sbr \
 	$(INTDIR)/sighandle.sbr \
 	$(INTDIR)/getopt.sbr \
@@ -119,8 +122,9 @@ BSC32_SBRS= \
 	$(INTDIR)/regex.sbr \
 	$(INTDIR)/fnmatch.sbr \
 	$(INTDIR)/getdate.sbr \
-	$(INTDIR)/"save-cwd.sbr" \
 	$(INTDIR)/getline.sbr \
+	$(INTDIR)/savecwd.sbr \
+	$(INTDIR)/vasprintf.sbr \
 	$(INTDIR)/mkdir.sbr \
 	$(INTDIR)/run.sbr \
 	$(INTDIR)/pwd.sbr \
@@ -147,6 +151,7 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /PDB:$(OUTDIR)/"cvsnt.pdb" /MACHINE:I386 /OUT:"WinRel/cvs.exe" 
 DEF_FILE=
 LINK32_OBJS= \
+	$(INTDIR)/mkmodules.obj \
 	$(INTDIR)/subr.obj \
 	$(INTDIR)/admin.obj \
 	$(INTDIR)/server.obj \
@@ -193,6 +198,8 @@ LINK32_OBJS= \
 	$(INTDIR)/edit.obj \
 	$(INTDIR)/fileattr.obj \
 	$(INTDIR)/watch.obj \
+	$(INTDIR)/login.obj \
+	$(INTDIR)/scramble.obj \
 	$(INTDIR)/getwd.obj \
 	$(INTDIR)/sighandle.obj \
 	$(INTDIR)/getopt.obj \
@@ -205,8 +212,9 @@ LINK32_OBJS= \
 	$(INTDIR)/regex.obj \
 	$(INTDIR)/fnmatch.obj \
 	$(INTDIR)/getdate.obj \
-	$(INTDIR)/"save-cwd.obj" \
 	$(INTDIR)/getline.obj \
+	$(INTDIR)/savecwd.obj \
+	$(INTDIR)/vasprintf.obj \
 	$(INTDIR)/mkdir.obj \
 	$(INTDIR)/run.obj \
 	$(INTDIR)/pwd.obj \
@@ -256,6 +264,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 BSC32_FLAGS=/nologo /o$(OUTDIR)/"cvsnt.bsc" 
 BSC32_SBRS= \
+	$(INTDIR)/mkmodules.sbr \
 	$(INTDIR)/subr.sbr \
 	$(INTDIR)/admin.sbr \
 	$(INTDIR)/server.sbr \
@@ -302,6 +311,8 @@ BSC32_SBRS= \
 	$(INTDIR)/edit.sbr \
 	$(INTDIR)/fileattr.sbr \
 	$(INTDIR)/watch.sbr \
+	$(INTDIR)/login.sbr \
+	$(INTDIR)/scramble.sbr \
 	$(INTDIR)/getwd.sbr \
 	$(INTDIR)/sighandle.sbr \
 	$(INTDIR)/getopt.sbr \
@@ -314,8 +325,9 @@ BSC32_SBRS= \
 	$(INTDIR)/regex.sbr \
 	$(INTDIR)/fnmatch.sbr \
 	$(INTDIR)/getdate.sbr \
-	$(INTDIR)/"save-cwd.sbr" \
 	$(INTDIR)/getline.sbr \
+	$(INTDIR)/savecwd.sbr \
+	$(INTDIR)/vasprintf.sbr \
 	$(INTDIR)/mkdir.sbr \
 	$(INTDIR)/run.sbr \
 	$(INTDIR)/pwd.sbr \
@@ -342,6 +354,7 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  /PDB:$(OUTDIR)/"cvsnt.pdb" /DEBUG /MACHINE:I386 /OUT:"WinDebug/cvs.exe" 
 DEF_FILE=
 LINK32_OBJS= \
+	$(INTDIR)/mkmodules.obj \
 	$(INTDIR)/subr.obj \
 	$(INTDIR)/admin.obj \
 	$(INTDIR)/server.obj \
@@ -388,6 +401,8 @@ LINK32_OBJS= \
 	$(INTDIR)/edit.obj \
 	$(INTDIR)/fileattr.obj \
 	$(INTDIR)/watch.obj \
+	$(INTDIR)/login.obj \
+	$(INTDIR)/scramble.obj \
 	$(INTDIR)/getwd.obj \
 	$(INTDIR)/sighandle.obj \
 	$(INTDIR)/getopt.obj \
@@ -400,8 +415,9 @@ LINK32_OBJS= \
 	$(INTDIR)/regex.obj \
 	$(INTDIR)/fnmatch.obj \
 	$(INTDIR)/getdate.obj \
-	$(INTDIR)/"save-cwd.obj" \
 	$(INTDIR)/getline.obj \
+	$(INTDIR)/savecwd.obj \
+	$(INTDIR)/vasprintf.obj \
 	$(INTDIR)/mkdir.obj \
 	$(INTDIR)/run.obj \
 	$(INTDIR)/pwd.obj \
@@ -433,6 +449,35 @@ $(OUTDIR)/cvs.exe : $(OUTDIR)  $(DEF_FILE) $(LINK32_OBJS)
 ################################################################################
 # Begin Group "src"
 
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\mkmodules.c
+DEP_MKMOD=\
+	.\src\cvs.h\
+	.\lib\savecwd.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\windows-NT\alloca.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/mkmodules.obj :  $(SOURCE)  $(DEP_MKMOD) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
 ################################################################################
 # Begin Source File
 
@@ -555,6 +600,7 @@ SOURCE=.\src\client.c
 DEP_CLIEN=\
 	.\src\cvs.h\
 	.\lib\getline.h\
+	.\src\edit.h\
 	.\lib\md5.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
@@ -669,7 +715,7 @@ $(INTDIR)/entries.obj :  $(SOURCE)  $(DEP_ENTRI) $(INTDIR)
 SOURCE=.\src\tag.c
 DEP_TAG_C=\
 	.\src\cvs.h\
-	".\lib\save-cwd.h"\
+	.\lib\savecwd.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
 	".\windows-NT\alloca.h"\
@@ -924,6 +970,7 @@ SOURCE=.\src\checkin.c
 DEP_CHECKI=\
 	.\src\cvs.h\
 	.\src\fileattr.h\
+	.\src\edit.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
 	".\windows-NT\alloca.h"\
@@ -1185,7 +1232,7 @@ $(INTDIR)/history.obj :  $(SOURCE)  $(DEP_HISTO) $(INTDIR)
 SOURCE=.\src\add.c
 DEP_ADD_C=\
 	.\src\cvs.h\
-	".\lib\save-cwd.h"\
+	.\lib\savecwd.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
 	".\windows-NT\alloca.h"\
@@ -1242,7 +1289,7 @@ $(INTDIR)/lock.obj :  $(SOURCE)  $(DEP_LOCK_) $(INTDIR)
 SOURCE=.\src\recurse.c
 DEP_RECUR=\
 	.\src\cvs.h\
-	".\lib\save-cwd.h"\
+	.\lib\savecwd.h\
 	.\src\fileattr.h\
 	.\src\edit.h\
 	".\windows-NT\config.h"\
@@ -1273,7 +1320,7 @@ $(INTDIR)/recurse.obj :  $(SOURCE)  $(DEP_RECUR) $(INTDIR)
 SOURCE=.\src\modules.c
 DEP_MODUL=\
 	.\src\cvs.h\
-	".\lib\save-cwd.h"\
+	.\lib\savecwd.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
 	".\windows-NT\alloca.h"\
@@ -1499,7 +1546,7 @@ $(INTDIR)/rcscmds.obj :  $(SOURCE)  $(DEP_RCSCM) $(INTDIR)
 SOURCE=.\src\import.c
 DEP_IMPOR=\
 	.\src\cvs.h\
-	".\lib\save-cwd.h"\
+	.\lib\savecwd.h\
 	".\windows-NT\config.h"\
 	".\windows-NT\options.h"\
 	".\windows-NT\alloca.h"\
@@ -1755,6 +1802,63 @@ $(INTDIR)/watch.obj :  $(SOURCE)  $(DEP_WATCH) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
 # End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\login.c
+DEP_LOGIN=\
+	.\src\cvs.h\
+	.\lib\getline.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\alloca.h"\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/login.obj :  $(SOURCE)  $(DEP_LOGIN) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\src\scramble.c
+DEP_SCRAM=\
+	.\src\cvs.h\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	.\lib\fnmatch.h\
+	".\windows-NT\pwd.h"\
+	.\lib\system.h\
+	.\src\hash.h\
+	.\src\server.h\
+	.\src\client.h\
+	.\src\myndbm.h\
+	.\lib\regex.h\
+	.\lib\getopt.h\
+	.\lib\wait.h\
+	.\src\rcs.h\
+	.\src\error.h\
+	.\src\update.h\
+	".\windows-NT\alloca.h"\
+	".\windows-NT\ndir.h"
+
+$(INTDIR)/scramble.obj :  $(SOURCE)  $(DEP_SCRAM) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
 # End Group
 ################################################################################
 # Begin Group "lib"
@@ -1913,24 +2017,35 @@ $(INTDIR)/getdate.obj :  $(SOURCE)  $(DEP_GETDA) $(INTDIR)
 ################################################################################
 # Begin Source File
 
-SOURCE=".\lib\save-cwd.c"
-DEP_SAVE_=\
-	".\windows-NT\config.h"\
-	".\lib\save-cwd.h"\
-	.\src\error.h
+SOURCE=.\lib\getline.c
+DEP_GETLI=\
+	".\windows-NT\config.h"
 
-$(INTDIR)/"save-cwd.obj" :  $(SOURCE)  $(DEP_SAVE_) $(INTDIR)
+$(INTDIR)/getline.obj :  $(SOURCE)  $(DEP_GETLI) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
 # End Source File
 ################################################################################
 # Begin Source File
 
-SOURCE=.\lib\getline.c
-DEP_GETLI=\
+SOURCE=.\lib\savecwd.c
+DEP_SAVEC=\
+	".\windows-NT\config.h"\
+	.\lib\savecwd.h\
+	.\src\error.h
+
+$(INTDIR)/savecwd.obj :  $(SOURCE)  $(DEP_SAVEC) $(INTDIR)
+   $(CPP) $(CPP_PROJ)  $(SOURCE) 
+
+# End Source File
+################################################################################
+# Begin Source File
+
+SOURCE=.\lib\vasprintf.c
+DEP_VASPR=\
 	".\windows-NT\config.h"
 
-$(INTDIR)/getline.obj :  $(SOURCE)  $(DEP_GETLI) $(INTDIR)
+$(INTDIR)/vasprintf.obj :  $(SOURCE)  $(DEP_VASPR) $(INTDIR)
    $(CPP) $(CPP_PROJ)  $(SOURCE) 
 
 # End Source File

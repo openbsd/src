@@ -11,11 +11,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)release.c 1.23 94/09/21 $";
-USE(rcsid);
-#endif
-
 static void release_delete PROTO((char *dir));
 
 static const char *const release_usage[] =
@@ -25,7 +20,7 @@ static const char *const release_usage[] =
     NULL
 };
 
-static short delete;
+static short delete_flag;
 
 /* FIXME: This implementation is cheezy in quite a few ways:
 
@@ -78,7 +73,7 @@ release (argc, argv)
                          command_name);
 		break;
               case 'd':
-		delete++;
+		delete_flag++;
 		break;
               case '?':
               default:
@@ -174,7 +169,7 @@ release (argc, argv)
            * modified, and asking if she still wants to do the
            * release.
            */
-          fp = Popen (update_cmd, "r");
+          fp = run_popen (update_cmd, "r");
           c = 0;
 
           while (fgets (line, sizeof (line), fp))
@@ -198,7 +193,7 @@ release (argc, argv)
           (void) printf ("You have [%d] altered files in this repository.\n",
                          c);
           (void) printf ("Are you sure you want to release %smodule `%s': ",
-                         delete ? "(and delete) " : "", thisarg);
+                         delete_flag ? "(and delete) " : "", thisarg);
           c = !yesno ();
           if (c)			/* "No" */
           {
@@ -246,7 +241,7 @@ release (argc, argv)
 #endif /* CLIENT_SUPPORT */
         
         free (repository);
-        if (delete) release_delete (thisarg);
+        if (delete_flag) release_delete (thisarg);
         
 #ifdef CLIENT_SUPPORT
         if (client_active)

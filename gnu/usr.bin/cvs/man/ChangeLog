@@ -1,3 +1,17 @@
+Tue Feb 13 22:30:54 1996  Samuel Tardieu  <sam@inf.enst.fr>
+
+	* Makefile.in: Remove reference to mkmodules.1
+
+Mon Feb 12 16:30:40 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.1, cvsinit.8: Remove references to mkmodules, rm, sort
+	* cvs.5: Remove references to mkmodules.
+	* mkmodules.1: Removed.
+
+Tue Jan 30 18:32:27 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: Revise comment regarding install and installdirs.
+
 Tue Nov 14 15:47:44 1995  Greg A. Woods  <woods@most.weird.com>
 
 	* cvs.5:

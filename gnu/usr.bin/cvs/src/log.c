@@ -17,14 +17,8 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)log.c 1.44 94/09/30 $";
-USE(rcsid);
-#endif
-
 static Dtype log_dirproc PROTO((char *dir, char *repository, char *update_dir));
-static int log_fileproc PROTO((char *file, char *update_dir, char *repository,
-			 List * entries, List * srcfiles));
+static int log_fileproc PROTO((struct file_info *finfo));
 
 static const char *const log_usage[] =
 {
@@ -95,22 +89,18 @@ cvslog (argc, argv)
  */
 /* ARGSUSED */
 static int
-log_fileproc (file, update_dir, repository, entries, srcfiles)
-    char *file;
-    char *update_dir;
-    char *repository;
-    List *entries;
-    List *srcfiles;
+log_fileproc (finfo)
+    struct file_info *finfo;
 {
     Node *p;
     RCSNode *rcsfile;
     int retcode = 0;
 
-    p = findnode (srcfiles, file);
+    p = findnode (finfo->srcfiles, finfo->file);
     if (p == NULL || (rcsfile = (RCSNode *) p->data) == NULL)
     {
 	/* no rcs file.  What *do* we know about this file? */
-	p = findnode (entries, file);
+	p = findnode (finfo->entries, finfo->file);
 	if (p != NULL)
 	{
 	    Entnode *e;
@@ -120,18 +110,18 @@ log_fileproc (file, update_dir, repository, entries, srcfiles)
 	    {
 		if (!really_quiet)
 		    error (0, 0, "%s has been added, but not committed",
-			   file);
+			   finfo->file);
 		return(0);
 	    }
 	}
 	
 	if (!really_quiet)
-	    error (0, 0, "nothing known about %s", file);
+	    error (0, 0, "nothing known about %s", finfo->file);
 	
 	return (1);
     }
 
-    run_setup ("%s%s", Rcsbin, RCS_RLOG);
+    run_setup ("%s%s -x,v/", Rcsbin, RCS_RLOG);
     {
       int i;
       for (i = 1; i < ac && av[i][0] == '-'; i++)
@@ -140,17 +130,17 @@ log_fileproc (file, update_dir, repository, entries, srcfiles)
     }
     run_arg (rcsfile->path);
 
-    if (*update_dir)
+    if (*finfo->update_dir)
     {
-      char *workfile = xmalloc (strlen (update_dir) + strlen (file) + 2);
-      sprintf (workfile, "%s/%s", update_dir, file);
+      char *workfile = xmalloc (strlen (finfo->update_dir) + strlen (finfo->file) + 2);
+      sprintf (workfile, "%s/%s", finfo->update_dir, finfo->file);
       run_arg (workfile);
       free (workfile);
     }
 
     if ((retcode = run_exec (RUN_TTY, RUN_TTY, RUN_TTY, RUN_REALLY)) == -1)
     {
-	error (1, errno, "fork failed for rlog on %s", file);
+	error (1, errno, "fork failed for rlog on %s", finfo->file);
     }
     return (retcode);
 }

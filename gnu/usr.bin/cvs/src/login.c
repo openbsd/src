@@ -8,17 +8,11 @@
  */
 
 #include "cvs.h"
+#include "getline.h"
 
 #ifdef AUTH_CLIENT_SUPPORT   /* This covers the rest of the file. */
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)login.c 1.1 95/10/01 $";
-USE(rcsid);
-#endif
+extern char *getpass ();
 
 #ifndef CVS_PASSWORD_FILE 
 #define CVS_PASSWORD_FILE ".cvspass"
@@ -39,8 +33,8 @@ construct_cvspass_filename ()
     return xstrdup (passfile);
 
   /* Construct absolute pathname to user's password file. */
-  /* todo: does this work under Win-NT and OS/2 ? */
-  homedir = getenv ("HOME");
+  /* todo: does this work under OS/2 ? */
+  homedir = get_homedir ();
   if (! homedir)
     {
       error (1, errno, "could not find out home directory");
@@ -90,8 +84,6 @@ login (argc, argv)
     int argc;
     char **argv;
 {
-  char *username;
-  int i;
   char *passfile;
   FILE *fp;
   char *typed_password, *found_password;
@@ -158,6 +150,23 @@ login (argc, argv)
       }
   }
     
+  /* CVSroot is now fully qualified and has ":pserver:" prepended.
+     We'll print out most of it so user knows exactly what is being
+     dealt with here. */
+  {
+    char *s;
+    s = strchr (CVSroot, ':');
+    s++;
+    s = strchr (s, ':');
+    s++;
+
+    if (s == NULL)
+      error (1, 0, "NULL CVSroot");
+
+    printf ("(Logging in to %s)\n", s);
+    fflush (stdout);
+  }
+
   passfile = construct_cvspass_filename ();
   typed_password = getpass ("CVS password: ");
   typed_password = scramble (typed_password);
@@ -192,6 +201,8 @@ login (argc, argv)
      inefficient, but we're not talking about a gig of data here. */
 
   fp = fopen (passfile, "r");
+  /* FIXME: should be printing a message if fp == NULL and not
+     existence_error (errno).  */
   if (fp != NULL)
     {
       /* Check each line to see if we have this entry already. */
@@ -208,9 +219,8 @@ login (argc, argv)
               linebuf = (char *) NULL;
             }
         }
+      fclose (fp);
     }
-  fclose (fp);
-
       
   if (already_entered)
     {
@@ -365,6 +375,7 @@ get_cvs_password ()
       strcpy (tmp, password);
       tmp[strlen (password)] = '\0';
       memset (password, 0, strlen (password));
+      free (linebuf);
       return tmp;
     }
   else
@@ -373,7 +384,8 @@ get_cvs_password ()
       error (0, 0, "use \"cvs login\" to log in first");
       error (1, 0, "or set the CVS_PASSWORD environment variable");
     }
-  free (linebuf);
+  /* NOTREACHED */
+  return NULL;
 }
 
 #endif /* AUTH_CLIENT_SUPPORT from beginning of file. */

@@ -20,11 +20,6 @@
 
 #include "cvs.h"
 
-#ifndef lint
-static const char rcsid[] = "$CVSid: @(#)error.c 1.13 94/09/30 $";
-USE(rcsid);
-#endif /* not lint */
-
 #include <stdio.h>
 
 /* If non-zero, error will use the CVS protocol to stdout to report error
@@ -68,6 +63,8 @@ void exit ();
 
 extern char *strerror ();
 
+extern int vasprintf ();
+
 typedef void (*fn_returning_void) PROTO((void));
 
 /* Function to call before exiting.  */
@@ -77,9 +74,9 @@ fn_returning_void
 error_set_cleanup (arg)
      fn_returning_void arg;
 {
-  fn_returning_void retval = cleanup_fn;
-  cleanup_fn = arg;
-  return retval;
+    fn_returning_void retval = cleanup_fn;
+    cleanup_fn = arg;
+    return retval;
 }
 
 /* Print the program name and error message MESSAGE, which is a printf-style
@@ -92,52 +89,124 @@ void
 error (int status, int errnum, const char *message, ...)
 #else
 error (status, errnum, message, va_alist)
-     int status;
-     int errnum;
-     const char *message;
-     va_dcl
+    int status;
+    int errnum;
+    const char *message;
+    va_dcl
 #endif
 {
-  FILE *out = stderr;
-  extern char *program_name;
-  extern char *command_name;
+    FILE *out = stderr;
 #ifdef HAVE_VPRINTF
-  va_list args;
+    va_list args;
 #endif
 
-  if (error_use_protocol)
+    if (error_use_protocol)
     {
-      out = stdout;
-      printf ("E ");
+	out = stdout;
+	printf ("E ");
     }
 
-  if (command_name && *command_name)
-    if (status)
-      fprintf (out, "%s [%s aborted]: ", program_name, command_name);
-    else
-      fprintf (out, "%s %s: ", program_name, command_name);
-  else
-    fprintf (out, "%s: ", program_name);
 #ifdef HAVE_VPRINTF
-  VA_START (args, message);
-  vfprintf (out, message, args);
-  va_end (args);
+    {
+	char *mess = NULL;
+	char *entire;
+	size_t len;
+
+	VA_START (args, message);
+	vasprintf (&mess, message, args);
+	va_end (args);
+
+	if (mess == NULL)
+	{
+	    entire = NULL;
+	    status = 1;
+	}
+	else
+	{
+	    len = strlen (mess) + strlen (program_name) + 80;
+	    if (command_name != NULL)
+		len += strlen (command_name);
+	    if (errnum != 0)
+		len += strlen (strerror (errnum));
+	    entire = malloc (len);
+	    if (entire == NULL)
+	    {
+		free (mess);
+		status = 1;
+	    }
+	    else
+	    {
+		strcpy (entire, program_name);
+		if (command_name != NULL && command_name[0] != '\0')
+		{
+		    strcat (entire, " ");
+		    if (status != 0)
+			strcat (entire, "[");
+		    strcat (entire, command_name);
+		    if (status != 0)
+			strcat (entire, " aborted]");
+		}
+		strcat (entire, ": ");
+		strcat (entire, mess);
+		if (errnum != 0)
+		{
+		    strcat (entire, ": ");
+		    strcat (entire, strerror (errnum));
+		}
+		strcat (entire, "\n");
+		free (mess);
+	    }
+	}
+	if (error_use_protocol)
+	    fputs (entire ? entire : "out of memory", out);
+	else
+	    cvs_outerr (entire ? entire : "out of memory", 0);
+	if (entire != NULL)
+	    free (entire);
+    }
+
+#else /* No HAVE_VPRINTF */
+    /* I think that all relevant systems have vprintf these days.  But
+       just in case, I'm leaving this code here.  */
+
+    if (command_name && *command_name)
+    {
+	if (status)
+	    fprintf (out, "%s [%s aborted]: ", program_name, command_name);
+	else
+	    fprintf (out, "%s %s: ", program_name, command_name);
+    }
+    else
+	fprintf (out, "%s: ", program_name);
+
+#ifdef HAVE_VPRINTF
+    VA_START (args, message);
+    vfprintf (out, message, args);
+    va_end (args);
 #else
 #ifdef HAVE_DOPRNT
-  _doprnt (message, &args, out);
+    _doprnt (message, &args, out);
 #else
-  fprintf (out, message, a1, a2, a3, a4, a5, a6, a7, a8);
+    fprintf (out, message, a1, a2, a3, a4, a5, a6, a7, a8);
 #endif
 #endif
-  if (errnum)
-    fprintf (out, ": %s", strerror (errnum));
-  putc ('\n', out);
-  fflush (out);
-  if (status)
+    if (errnum)
+	fprintf (out, ": %s", strerror (errnum));
+    putc ('\n', out);
+
+#endif /* No HAVE_VPRINTF */
+
+    /* In the error_use_protocol case, this probably does something useful.
+       In most other cases, I suspect it is a noop (either stderr is line
+       buffered or we haven't written anything to stderr) or unnecessary
+       (if stderr is not line buffered, maybe there is a reason....).  */
+    fflush (out);
+
+    if (status)
     {
-      if (cleanup_fn)
-	(*cleanup_fn) ();
-      exit (status);
+	if (cleanup_fn)
+	    (*cleanup_fn) ();
+	exit (status);
     }
 }
 
@@ -151,38 +220,37 @@ void
 fperror (FILE *fp, int status, int errnum, char *message, ...)
 #else
 fperror (fp, status, errnum, message, va_alist)
-     FILE *fp;
-     int status;
-     int errnum;
-     char *message;
-     va_dcl
+    FILE *fp;
+    int status;
+    int errnum;
+    char *message;
+    va_dcl
 #endif
 {
-  extern char *program_name;
 #ifdef HAVE_VPRINTF
-  va_list args;
+    va_list args;
 #endif
 
-  fprintf (fp, "%s: ", program_name);
+    fprintf (fp, "%s: ", program_name);
 #ifdef HAVE_VPRINTF
-  VA_START (args, message);
-  vfprintf (fp, message, args);
-  va_end (args);
+    VA_START (args, message);
+    vfprintf (fp, message, args);
+    va_end (args);
 #else
 #ifdef HAVE_DOPRNT
-  _doprnt (message, &args, fp);
+    _doprnt (message, &args, fp);
 #else
-  fprintf (fp, message, a1, a2, a3, a4, a5, a6, a7, a8);
+    fprintf (fp, message, a1, a2, a3, a4, a5, a6, a7, a8);
 #endif
 #endif
-  if (errnum)
-    fprintf (fp, ": %s", strerror (errnum));
-  putc ('\n', fp);
-  fflush (fp);
-  if (status)
+    if (errnum)
+	fprintf (fp, ": %s", strerror (errnum));
+    putc ('\n', fp);
+    fflush (fp);
+    if (status)
     {
-      if (cleanup_fn)
-	(*cleanup_fn) ();
-      exit (status);
+	if (cleanup_fn)
+	    (*cleanup_fn) ();
+	exit (status);
     }
 }
