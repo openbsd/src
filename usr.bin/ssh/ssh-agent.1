@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 23 20:10:43 1995 ylo
 .\"
-.\" $Id: ssh-agent.1,v 1.3 1999/10/02 13:10:26 deraadt Exp $
+.\" $Id: ssh-agent.1,v 1.4 1999/10/14 18:17:42 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH-AGENT 1
@@ -58,27 +58,15 @@ However, the connection to the agent is forwarded over SSH
 remote logins, and the user can thus use the privileges given by the
 identities anywhere in the network in a secure way.
 .Pp
-A connection to the agent is inherited by child programs. 
-There are two alternative
-methods for inheriting the agent.  The preferred method is to have an
-open file descriptor which is inherited, and have an environment
-variable
-.Pq Ev SSH_AUTHENTICATION_FD
-contain the number of this
-descriptor.  This restricts access to the authentication agent to only
-those programs that are siblings of the agent, and it is fairly
-difficult even for root to get unauthorized access to the agent.
-.Pp
-On some machines, an alternative method is used.  A unix-domain
-socket is created
-.Pq Pa /tmp/ssh_agent.* ,
+A connection to the agent is inherited by child programs:
+A unix-domain socket is created
+.Pq Pa /tmp/ssh-XXXX/agent.<pid> ,
 and the name of this socket is stored in the
-.Ev SSH_AUTHENTICATION_SOCKET
+.Ev SSH_AUTH_SOCKET
 environment
 variable.  The socket is made accessible only to the current user.
 This method is easily abused by root or another instance of the same
-user.  The socket is only used if ssh is unable to find a file
-descriptor that would not be closed by shells.
+user.
 .Pp
 The agent exits automatically when the command given on the command
 line terminates.
@@ -94,7 +82,7 @@ is not used by
 but is normally added to the agent using
 .Xr ssh-add 1
 at login time.
-.It Pa /tmp/ssh_agent.<pid>
+.It Pa /tmp/ssh-XXXX/agent.<pid> ,
 Unix-domain sockets used to contain the connection to the
 authentication agent.  These sockets should only be readable by the
 owner.  The sockets should get automatically removed when the agent

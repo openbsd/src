@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.12 1999/10/05 22:18:52 markus Exp $");
+RCSID("$Id: channels.c,v 1.13 1999/10/14 18:17:42 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -36,9 +36,9 @@ RCSID("$Id: channels.c,v 1.12 1999/10/05 22:18:52 markus Exp $");
 #define SSH_CHANNEL_OPENING		3 /* waiting for confirmation */
 #define SSH_CHANNEL_OPEN		4 /* normal open two-way channel */
 #define SSH_CHANNEL_CLOSED		5 /* waiting for close confirmation */
-#define SSH_CHANNEL_AUTH_FD		6 /* authentication fd */
+/*	SSH_CHANNEL_AUTH_FD		6    authentication fd */
 #define SSH_CHANNEL_AUTH_SOCKET		7 /* authentication socket */
-#define SSH_CHANNEL_AUTH_SOCKET_FD	8 /* connection to auth socket */
+/*	SSH_CHANNEL_AUTH_SOCKET_FD	8    connection to auth socket */
 #define SSH_CHANNEL_X11_OPEN		9 /* reading first X11 packet */
 #define SSH_CHANNEL_INPUT_DRAINING	10 /* sending remaining data to conn */
 #define SSH_CHANNEL_OUTPUT_DRAINING	11 /* sending remaining data to app */
@@ -222,8 +222,6 @@ void channel_prepare_select(fd_set *readset, fd_set *writeset)
 	case SSH_CHANNEL_X11_LISTENER:
 	case SSH_CHANNEL_PORT_LISTENER:
 	case SSH_CHANNEL_AUTH_SOCKET:
-	case SSH_CHANNEL_AUTH_SOCKET_FD:
-	case SSH_CHANNEL_AUTH_FD:
 	  FD_SET(ch->sock, readset);
 	  break;
 
@@ -350,7 +348,7 @@ void channel_prepare_select(fd_set *readset, fd_set *writeset)
 void channel_after_select(fd_set *readset, fd_set *writeset)
 {
   struct sockaddr addr;
-  int addrlen, newsock, i, newch, len, port;
+  int addrlen, newsock, i, newch, len;
   Channel *ch;
   char buf[16384], *remote_hostname;
   
@@ -417,40 +415,25 @@ void channel_after_select(fd_set *readset, fd_set *writeset)
 	    }
 	  break;
 
-	case SSH_CHANNEL_AUTH_FD:
-	  /* This is the authentication agent file descriptor.  It is used to
-	     obtain the real connection to the agent. */
-	case SSH_CHANNEL_AUTH_SOCKET_FD:
-	  /* This is the temporary connection obtained by connecting the
-	     authentication agent socket. */
-	  if (FD_ISSET(ch->sock, readset))
-	    {
-	      len = recv(ch->sock, buf, sizeof(buf), 0);
-	      if (len <= 0)
-		{
-		  channel_free(i);
-		  break;
-		}
-	      if (len != 3 || (unsigned char)buf[0] != SSH_AUTHFD_CONNECT)
-		break; /* Ignore any messages of wrong length or type. */
-	      port = 256 * (unsigned char)buf[1] + (unsigned char)buf[2];
-	      packet_start(SSH_SMSG_AGENT_OPEN);
-	      packet_put_int(port);
-	      packet_send();
-	    }
-	  break;
-
 	case SSH_CHANNEL_AUTH_SOCKET:
 	  /* This is the authentication agent socket listening for connections
 	     from clients. */
 	  if (FD_ISSET(ch->sock, readset))
 	    {
+	      int nchan;
 	      len = sizeof(addr);
 	      newsock = accept(ch->sock, &addr, &len);
 	      if (newsock < 0)
-		error("Accept from authentication socket failed");
-	      (void)channel_allocate(SSH_CHANNEL_AUTH_SOCKET_FD, newsock,
+		{
+		  error("accept from auth socket: %.100s", strerror(errno));
+		  break;
+		}
+
+	      nchan = channel_allocate(SSH_CHANNEL_OPENING, newsock,
 				     xstrdup("accepted auth socket"));
+	      packet_start(SSH_SMSG_AGENT_OPEN);
+	      packet_put_int(nchan);
+	      packet_send();
 	    }
 	  break;
 
@@ -592,8 +575,6 @@ int channel_not_very_much_buffered_data()
 	case SSH_CHANNEL_X11_LISTENER:
 	case SSH_CHANNEL_PORT_LISTENER:
 	case SSH_CHANNEL_AUTH_SOCKET:
-	case SSH_CHANNEL_AUTH_SOCKET_FD:
-	case SSH_CHANNEL_AUTH_FD:
 	  continue;
 	case SSH_CHANNEL_OPEN:
 	  if (buffer_len(&ch->input) > 32768)
@@ -762,9 +743,7 @@ int channel_still_open()
       case SSH_CHANNEL_X11_LISTENER:
       case SSH_CHANNEL_PORT_LISTENER:
       case SSH_CHANNEL_CLOSED:
-      case SSH_CHANNEL_AUTH_FD:
       case SSH_CHANNEL_AUTH_SOCKET:
-      case SSH_CHANNEL_AUTH_SOCKET_FD:
 	continue;
       case SSH_CHANNEL_OPENING:
       case SSH_CHANNEL_OPEN:
@@ -799,9 +778,7 @@ char *channel_open_message()
       case SSH_CHANNEL_X11_LISTENER:
       case SSH_CHANNEL_PORT_LISTENER:
       case SSH_CHANNEL_CLOSED:
-      case SSH_CHANNEL_AUTH_FD:
       case SSH_CHANNEL_AUTH_SOCKET:
-      case SSH_CHANNEL_AUTH_SOCKET_FD:
 	continue;
       case SSH_CHANNEL_OPENING:
       case SSH_CHANNEL_OPEN:
@@ -1437,22 +1414,26 @@ void auth_input_request_forwarding(struct passwd *pw)
 
 void auth_input_open_request()
 {
-  int port, sock, newch;
+  int remch, sock, newch;
   char *dummyname;
 
-  /* Read the port number from the message. */
-  port = packet_get_int();
+  /* Read the remote channel number from the message. */
+  remch = packet_get_int();
   
   /* Get a connection to the local authentication agent (this may again get
      forwarded). */
-  sock = ssh_get_authentication_connection_fd();
+  sock = ssh_get_authentication_socket();
 
-  /* If we could not connect the agent, just return.  This will cause the
-     client to timeout and fail.  This should never happen unless the agent
+  /* If we could not connect the agent, send an error message back to
+     the server. This should never happen unless the agent
      dies, because authentication forwarding is only enabled if we have an
      agent. */
-  if (sock < 0)
+  if (sock < 0){
+    packet_start(SSH_MSG_CHANNEL_OPEN_FAILURE);
+    packet_put_int(remch);
+    packet_send();
     return;
+  }
 
   debug("Forwarding authentication connection.");
 
@@ -1461,15 +1442,12 @@ void auth_input_open_request()
      yet be freed at that point. */
   dummyname = xstrdup("authentication agent connection");
   
-  /* Allocate a channel for the new connection. */
-  newch = channel_allocate(SSH_CHANNEL_OPENING, sock, dummyname);
-
-  /* Fake a forwarding request. */
-  packet_start(SSH_MSG_PORT_OPEN);
+  newch = channel_allocate(SSH_CHANNEL_OPEN, sock, dummyname);
+  channels[newch].remote_id = remch;
+  
+  /* Send a confirmation to the remote host. */
+  packet_start(SSH_MSG_CHANNEL_OPEN_CONFIRMATION);
+  packet_put_int(remch);
   packet_put_int(newch);
-  packet_put_string("localhost", strlen("localhost"));
-  packet_put_int(port);
-  if (have_hostname_in_open)
-    packet_put_string(dummyname, strlen(dummyname));
   packet_send();
 }

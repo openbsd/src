@@ -14,7 +14,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.11 1999/10/07 22:46:32 markus Exp $");
+RCSID("$Id: ssh-agent.c,v 1.12 1999/10/14 18:17:42 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -31,8 +31,7 @@ RCSID("$Id: ssh-agent.c,v 1.11 1999/10/07 22:46:32 markus Exp $");
 typedef struct
 {
   int fd;
-  enum { AUTH_UNUSED, AUTH_FD, AUTH_SOCKET, AUTH_SOCKET_FD, 
-    AUTH_CONNECTION } type;
+  enum { AUTH_UNUSED, AUTH_SOCKET, AUTH_CONNECTION } type;
   Buffer input;
   Buffer output;
 } SocketEntry;
@@ -324,6 +323,7 @@ process_message(SocketEntry *e)
     return;
   buffer_consume(&e->input, 4);
   type = buffer_get_char(&e->input);
+
   switch (type)
     {
     case SSH_AGENTC_REQUEST_RSA_IDENTITIES:
@@ -391,10 +391,8 @@ prepare_select(fd_set *readset, fd_set *writeset)
   for (i = 0; i < sockets_alloc; i++)
     switch (sockets[i].type)
       {
-      case AUTH_FD:
-      case AUTH_CONNECTION:
       case AUTH_SOCKET:
-      case AUTH_SOCKET_FD:
+      case AUTH_CONNECTION:
 	FD_SET(sockets[i].fd, readset);
 	if (buffer_len(&sockets[i].output) > 0)
 	  FD_SET(sockets[i].fd, writeset);
@@ -410,48 +408,14 @@ prepare_select(fd_set *readset, fd_set *writeset)
 void after_select(fd_set *readset, fd_set *writeset)
 {
   unsigned int i;
-  int len, sock, port;
+  int len, sock;
   char buf[1024];
-  struct sockaddr_in sin;
   struct sockaddr_un sunaddr;
 
   for (i = 0; i < sockets_alloc; i++)
     switch (sockets[i].type)
       {
       case AUTH_UNUSED:
-	break;
-      case AUTH_FD:
-	if (FD_ISSET(sockets[i].fd, readset))
-	  {
-	    len = recv(sockets[i].fd, buf, sizeof(buf), 0);
-	    if (len <= 0)
-	      { /* All instances of the other side have been closed. */
-		log("Authentication agent exiting.");
-		exit(0);
-	      }
-	  process_auth_fd_input:
-	    if (len != 3 || (unsigned char)buf[0] != SSH_AUTHFD_CONNECT)
-	      break; /* Incorrect message; ignore it. */
-	    /* It is a connection request message. */
-	    port = (unsigned char)buf[1] * 256 + (unsigned char)buf[2];
-	    memset(&sin, 0, sizeof(sin));
-	    sin.sin_family = AF_INET;
-	    sin.sin_addr.s_addr = htonl(0x7f000001); /* localhost */
-	    sin.sin_port = htons(port);
-	    sock = socket(AF_INET, SOCK_STREAM, 0);
-	    if (sock < 0)
-	      {
-		perror("socket");
-		break;
-	      }
-	    if (connect(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0)
-	      {
-		perror("connecting to port requested in authfd message");
-		close(sock);
-		break;
-	      }
-	    new_socket(AUTH_CONNECTION, sock);
-	  }
 	break;
       case AUTH_SOCKET:
 	if (FD_ISSET(sockets[i].fd, readset))
@@ -463,21 +427,7 @@ void after_select(fd_set *readset, fd_set *writeset)
 		perror("accept from AUTH_SOCKET");
 		break;
 	      }
-	    new_socket(AUTH_SOCKET_FD, sock);
-	  }
-	break;
-      case AUTH_SOCKET_FD:
-	if (FD_ISSET(sockets[i].fd, readset))
-	  {
-	    len = recv(sockets[i].fd, buf, sizeof(buf), 0);
-	    if (len <= 0)
-	      { /* The other side has closed the socket. */
-		shutdown(sockets[i].fd, SHUT_RDWR);
-		close(sockets[i].fd);
-		sockets[i].type = AUTH_UNUSED;
-		break;
-	      }
-	    goto process_auth_fd_input;
+	    new_socket(AUTH_CONNECTION, sock);
 	  }
 	break;
       case AUTH_CONNECTION:
@@ -568,7 +518,7 @@ main(int ac, char **av)
      the authentication agent. */
   if (fork() != 0)
     { /* Parent - execute the given command. */
-      setenv("SSH_AUTHENTICATION_SOCKET", socket_name, 1);
+      setenv(SSH_AUTHSOCKET_ENV_NAME, socket_name, 1);
       execvp(av[1], av + 1);
       perror(av[1]);
       exit(1);

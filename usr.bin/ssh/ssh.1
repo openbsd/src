@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.16 1999/10/12 21:04:22 markus Exp $
+.\" $Id: ssh.1,v 1.17 1999/10/14 18:17:42 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -745,16 +745,9 @@ Set to the default
 .Ev PATH ,
 as specified when compiling
 .Nm ssh .
-.It Ev SSH_AUTHENTICATION_FD
-This is set to an integer value if you are using the authentication
-agent and a connection to it has been forwarded.  The value indicates
-a file descriptor number used for communicating with the agent.  On
-some systems, 
-.Ev SSH_AUTHENTICATION_SOCKET
-may be used instead to
-indicate the path of a unix-domain socket used to communicate with the
-agent (this method is less secure, and is only used on systems that
-don't support the first method).
+.It Ev SSH_AUTH_SOCKET
+indicates the path of a unix-domain socket used to communicate with the
+agent.
 .It Ev SSH_CLIENT
 Identifies the client end of the connection.  The variable contains
 three space-separated values: client ip-address, client port number,

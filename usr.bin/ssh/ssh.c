@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.23 1999/10/12 21:04:22 markus Exp $");
+RCSID("$Id: ssh.c,v 1.24 1999/10/14 18:17:42 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -736,7 +736,7 @@ main(int ac, char **av)
   packet_set_interactive(interactive, options.keepalives);
 
   /* Clear agent forwarding if we don\'t have an agent. */
-  authfd = ssh_get_authentication_fd();
+  authfd = ssh_get_authentication_socket();
   if (authfd < 0)
     options.forward_agent = 0;
   else

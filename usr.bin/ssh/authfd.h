@@ -13,15 +13,12 @@ Functions to interface with the SSH_AUTHENTICATION_FD socket.
 
 */
 
-/* RCSID("$Id: authfd.h,v 1.2 1999/09/28 04:45:35 provos Exp $"); */
+/* RCSID("$Id: authfd.h,v 1.3 1999/10/14 18:17:42 markus Exp $"); */
 
 #ifndef AUTHFD_H
 #define AUTHFD_H
 
 #include "buffer.h"
-
-/* Message types for SSH_AUTHENTICATION_FD socket. */
-#define SSH_AUTHFD_CONNECT	0xf0
 
 /* Messages for the authentication agent connection. */
 #define SSH_AGENTC_REQUEST_RSA_IDENTITIES	1
@@ -43,16 +40,12 @@ typedef struct
 } AuthenticationConnection;
 
 /* Returns the number of the authentication fd, or -1 if there is none. */
-int ssh_get_authentication_fd();
+int ssh_get_authentication_socket();
 
 /* This should be called for any descriptor returned by 
-   ssh_get_authentication_fd().  Depending on the way the descriptor was
+   ssh_get_authentication_socket().  Depending on the way the descriptor was
    obtained, this may close the descriptor. */
 void ssh_close_authentication_socket(int authfd);
-
-/* Opens a socket to the authentication server.  Returns the number of
-   that socket, or -1 if no connection could be made. */
-int ssh_get_authentication_connection_fd();
 
 /* Opens and connects a private socket for communication with the
    authentication agent.  Returns NULL if an error occurred and the 

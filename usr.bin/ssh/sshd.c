@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.30 1999/10/12 18:11:55 markus Exp $");
+RCSID("$Id: sshd.c,v 1.31 1999/10/14 18:17:42 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -712,6 +712,13 @@ main(int ac, char **av)
   /* Check that the client has sufficiently high software version. */
   if (remote_major == 1 && remote_minor == 0)
     packet_disconnect("Your ssh version is too old and is no longer supported.  Please install a newer version.");
+
+  if (strcmp(remote_version, SSH_VERSION) != 0)
+    {
+      debug("Agent forwarding disabled, remote version is not '%s'.",
+	    SSH_VERSION);
+      no_agent_forwarding_flag = 1;
+    }
 
   /* Check whether logins are permitted from this host. */
   if (options.num_allow_hosts > 0)

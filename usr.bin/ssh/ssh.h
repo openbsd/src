@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.10 1999/10/11 20:00:36 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.11 1999/10/14 18:17:42 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -118,7 +118,7 @@ only by root, whereas ssh_config should be world-readable. */
 
 /* Name of the environment variable containing the pathname of the
    authentication socket. */
-#define SSH_AUTHSOCKET_ENV_NAME	"SSH_AUTHENTICATION_SOCKET"
+#define SSH_AUTHSOCKET_ENV_NAME	"SSH_AUTH_SOCKET"
 
 /* Force host key length and server key length to differ by at least this
    many bits.  This is to make double encryption with rsaref work. */
