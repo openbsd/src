@@ -2,7 +2,7 @@
  * See copyright notice at end of file
  */
 
-static char *rcsid = "$Id: cmdtab.c,v 1.1 2001/06/07 15:17:32 rees Exp $";
+static char *rcsid = "$Id: cmdtab.c,v 1.2 2001/06/07 16:09:59 rees Exp $";
 
 #ifdef __palmos__
 #include <Common.h>
@@ -22,67 +22,67 @@ struct cmd {
     char *name;
 } cmdtab[] = {
     /* 7816-4 */
-    0x0e, 0, "erase binary",
-    0x20, 0, "verify",
-    0x70, 0, "manage channel",
-    0x82, 0, "ext auth",
-    0x84, 1, "get challenge",
-    0x88, 0, "int auth",
-    0xa4, 0, "select",
-    0xb0, 1, "read binary",
-    0xb2, 1, "read record",
-    0xc0, 1, "get response",
-    0xc2, 0, "envelope",
-    0xca, 0, "get data",
-    0xd0, 0, "write binary",
-    0xd2, 0, "write record",
-    0xd6, 0, "update binary",
-    0xda, 0, "put data",
-    0xdc, 0, "update record",
-    0xe2, 0, "append record",
+    {0x0e, 0, "erase binary"},
+    {0x20, 0, "verify"},
+    {0x70, 0, "manage channel"},
+    {0x82, 0, "ext auth"},
+    {0x84, 1, "get challenge"},
+    {0x88, 0, "int auth"},
+    {0xa4, 0, "select"},
+    {0xb0, 1, "read binary"},
+    {0xb2, 1, "read record"},
+    {0xc0, 1, "get response"},
+    {0xc2, 0, "envelope"},
+    {0xca, 0, "get data"},
+    {0xd0, 0, "write binary"},
+    {0xd2, 0, "write record"},
+    {0xd6, 0, "update binary"},
+    {0xda, 0, "put data"},
+    {0xdc, 0, "update record"},
+    {0xe2, 0, "append record"},
     /* Webcard */
-    0xfe, 0, "ip7816",
+    {0xfe, 0, "ip7816"},
     /* Cyberflex Access */
-    0x04, 0, "invalidate",
-    0x08, 0, "manage instance",
-    0x0a, 0, "manage program",
-    0x0c, 0, "execute method",
-    0x22, 0, "logout all",
-    0x24, 0, "change PIN",
-    0x2a, 0, "verify key",
-    0x2c, 0, "unblock",
-    0x44, 0, "rehabilitate",
-    0xa8, 1, "directory",
-    0xe0, 0, "create",
-    0xe4, 0, "delete",
-    0xfa, 0, "change java atr",
-    0xfc, 0, "change acl",
-/*    0xfe, 1, "get acl",*/
+    {0x04, 0, "invalidate"},
+    {0x08, 0, "manage instance"},
+    {0x0a, 0, "manage program"},
+    {0x0c, 0, "execute method"},
+    {0x22, 0, "logout all"},
+    {0x24, 0, "change PIN"},
+    {0x2a, 0, "verify key"},
+    {0x2c, 0, "unblock"},
+    {0x44, 0, "rehabilitate"},
+    {0xa8, 1, "directory"},
+    {0xe0, 0, "create"},
+    {0xe4, 0, "delete"},
+    {0xfa, 0, "change java atr"},
+    {0xfc, 0, "change acl"},
+/*    {0xfe, 1, "get acl"},*/
     /* GSM */
-    0x26, 0, "disable PIN",
-    0x28, 0, "enable PIN",
-    0x30, 0, "decrease",
-    0x32, 0, "increase",
-    0xf2, 1, "get status",
+    {0x26, 0, "disable PIN"},
+    {0x28, 0, "enable PIN"},
+    {0x30, 0, "decrease"},
+    {0x32, 0, "increase"},
+    {0xf2, 1, "get status"},
     /* Visa cash / open platform */
-    0x50, 0, "init update",
-    0x80, 0, "install default app",
+    {0x50, 0, "init update"},
+    {0x80, 0, "install default app"},
 #ifdef PAYFLEX
     /* Payflex */
-    0x52, 0, "credit",
-    0x54, 0, "debit",
-    0x56, 0, "replace debit",
-    0x58, 0, "token debit",
-    0x5a, 0, "token purchase",
-    0x5c, 0, "update currency",
-    0x8a, 0, "cert credit",
-    0x8c, 0, "cert debit",
-    0x8e, 0, "generate diversified key",
-    0xd8, 0, "load key",
-    0xde, 0, "update max amount",
-    0xf4, 0, "load exe",
+    {0x52, 0, "credit"},
+    {0x54, 0, "debit"},
+    {0x56, 0, "replace debit"},
+    {0x58, 0, "token debit"},
+    {0x5a, 0, "token purchase"},
+    {0x5c, 0, "update currency"},
+    {0x8a, 0, "cert credit"},
+    {0x8c, 0, "cert debit"},
+    {0x8e, 0, "generate diversified key"},
+    {0xd8, 0, "load key"},
+    {0xde, 0, "update max amount"},
+    {0xf4, 0, "load exe"},
 #endif /* PAYFLEX */
-    0, 0, NULL
+    {0, 0, NULL}
 };
 
 struct cmd *

@@ -5,7 +5,7 @@
  *
  * Jim Rees, University of Michigan, October 1997
  */
-static char *rcsid = "$Id: scrw.c,v 1.1 2001/06/07 15:17:33 rees Exp $";
+static char *rcsid = "$Id: scrw.c,v 1.2 2001/06/07 16:10:00 rees Exp $";
 
 #ifdef __palmos__
 #include <Common.h>
@@ -49,7 +49,7 @@ int todos_scioT1(int ttyn, int cla, int ins, int p1, int p2, int ilen, unsigned 
 int
 todos_scxreset(int ttyn, int flags, unsigned char *atr, int *ep)
 {
-    unsigned char *ap, buf[33];
+    unsigned char buf[33];
     int n, err;
 
     if (ep)

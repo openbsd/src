@@ -5,7 +5,7 @@
  *
  * Jim Rees, University of Michigan, October 1997
  */
-static char *rcsid = "$Id: scio.c,v 1.1 2001/06/07 15:17:33 rees Exp $";
+static char *rcsid = "$Id: scio.c,v 1.2 2001/06/07 16:10:00 rees Exp $";
 
 #include <sys/ioctl.h>
 #include <sys/file.h>
@@ -23,6 +23,9 @@ static char *rcsid = "$Id: scio.c,v 1.1 2001/06/07 15:17:33 rees Exp $";
 
 #include "sectok.h"
 #include "todos_scrw.h"
+
+int todos_scfdopen(int ttyn, int fd, int flags, int *ep);
+int todos_sccts(int ttyn);
 
 #ifdef __linux
 static char ttynametmpl[] = "/dev/cua%01d";

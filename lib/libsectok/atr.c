@@ -5,7 +5,7 @@
  *
  * Jim Rees, University of Michigan CITI
  */
-static char *rcsid = "$Id: atr.c,v 1.1 2001/06/07 15:17:32 rees Exp $";
+static char *rcsid = "$Id: atr.c,v 1.2 2001/06/07 16:09:59 rees Exp $";
 
 #ifdef __palmos__
 #include <Common.h>
@@ -134,9 +134,6 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
 	    printf("inverse conversion\n");
 	for (i = 0; i < len; i++)
 	    atr[i] = scinvert[atr[i]];
-#ifdef SCPPS
-	scsetflags(ttyn, SCOINVRT, SCOINVRT);
-#endif
     }
 
     ts = *ap++;
@@ -248,36 +245,8 @@ parse_atr(int ttyn, int flags, unsigned char *atr, int len, struct scparam *para
     if (!(flags & SCRTODOS)) {
 	for (i = 0; bps[i].bps; i++) {
 	    if (((TA1 >> 4) & 0xf) >= bps[i].Fi && (TA1 & 0xf) >= bps[i].Di) {
-		int j;
-		unsigned char c;
-		static unsigned char pps[4] = {0xff, 0x10, 0, 0};
-
-		pps[2] = (bps[i].Fi << 4) | bps[i].Di;
-		pps[3] = 0;
-
 		if (flags & SCRV)
 		    printf("speed %ld\n", bps[i].bps);
-
-#ifdef SCPPS
-		/* Compute checksum */
-		for (j = 0; j < 3; j++)
-		    pps[3] ^= pps[j];
-
-		for (j = 0; j < 4; j++)
-		    scputc(ttyn, pps[j]);
-		for (j = 0; j < 4; j++)
-		    if (scgetc(ttyn, &c, 100) != SCEOK || c != pps[j])
-			break;
-		if (j != 4)
-		    continue;
-		if (scsetspeed(ttyn, bps[i].bps) < 0) {
-		    /* We already sent the pps, can't back out now, so fail. */
-		    if (flags & SCRV)
-			printf("scsetspeed %ld failed\n", bps[i].bps);
-		    param->t = -1;
-		    return len;
-		}
-#endif
 		Fi = bps[i].Fi;
 		Di = bps[i].Di;
 		break;

@@ -5,7 +5,7 @@
  *
  * Jim Rees, University of Michigan CITI
  */
-static char *rcsid = "$Id: todos_atr.c,v 1.1 2001/06/07 15:17:33 rees Exp $";
+static char *rcsid = "$Id: todos_atr.c,v 1.2 2001/06/07 16:10:00 rees Exp $";
 
 #ifdef __palmos__
 #include <Common.h>
@@ -22,6 +22,10 @@ static char *rcsid = "$Id: todos_atr.c,v 1.1 2001/06/07 15:17:33 rees Exp $";
 
 #include "sectok.h"
 #include "todos_scrw.h"
+
+#ifdef __unix__
+#define SCPPS
+#endif
 
 /*
  * 7816 says ATR will appear within 40000 clocks (12 msec)
@@ -129,9 +133,9 @@ static struct bps {
 int
 todos_get_atr(int ttyn, int flags, unsigned char *atr, struct scparam *param)
 {
-    int len, i, c, t, ts, t0, tck, nhb, pbn;
+    int len, i, t, ts, t0, tck, nhb, pbn;
     int F, D, Fi, Di, N, etu, WI;
-    unsigned char *ap, *hb;
+    unsigned char *ap;
     unsigned char tpb[8][4];
     int hiproto = 0;
 

@@ -5,7 +5,7 @@
  *
  * Jim Rees, University of Michigan CITI, August 2000
  */
-static char *rcsid = "$Id: ifdhandler.c,v 1.1 2001/06/07 15:17:32 rees Exp $";
+static char *rcsid = "$Id: ifdhandler.c,v 1.2 2001/06/07 16:09:59 rees Exp $";
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -190,7 +190,7 @@ IFD_Transmit_to_ICC(struct SCARD_IO_HEADER SendPci,
 		    struct SCARD_IO_HEADER *RecvPci)
 {
     unsigned char buf[255+2];
-    int n, p3, sw1, sw2;
+    int n, sw1, sw2;
 
 #ifdef DEBUG
     printf("p3 %x ilen %x *olen %x\n", ibuf[4], ilen, *olen);
