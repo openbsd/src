@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.39 2003/09/09 22:29:04 miod Exp $
+dnl	$OpenBSD: contents,v 1.40 2004/03/15 08:37:25 xsa Exp $
 TopPart
 
 OpenBSDdistsets
@@ -16,7 +16,7 @@ OpenBSDdistsets
 				function with OpenBSD/MACHINE.  You must
 				install either this or bsd.tgz.
 
-		utils/		The MACHINE installation utilities for MacOS.
+		utils/		The MACHINE installation utilities for Mac OS.
 
 DistributionDescription(ten)
 
@@ -41,23 +41,23 @@ OpenBSDxserv(0.5,1.1)
 OpenBSDxshare(1.7,8.6)
 
 The directory '../OSREV/MACHINE/utils' contains a number of utilities for the
-MacOS to aid the installation and configuration of OpenBSD.  The files are
+Mac OS to aid the installation and configuration of OpenBSD.  The files are
 distributed in Macintosh BinHex format, which is used to make SEA (Self-
 Extracting Archive) files, which are then used to make the executables.  The
 files in this directory are as follows:
 
 	Booter1.11.3.sea.hqx
-		 This MacOS program is used to load the OpenBSD kernel and
+		 This Mac OS program is used to load the OpenBSD kernel and
 		 start the operating system.  In all cases, you will need to
 		 download this file.
 
 	Installer_1.2.sea.hqx
-		 This is the MacOS program used to install downloaded sets
+		 This is the Mac OS program used to install downloaded sets
 		 (such as those from the bins directory) onto a BSD partition.
 		 It is necessary in either the case of a fresh install or an
 		 upgrade.
 
 	Mkfs_1.45.sea.hqx
-		 A MacOS program to build BSD filesystems on various
+		 A Mac OS program to build BSD filesystems on various
 		 partitions you have created (see below).  You will need this
 		 if you are performing a new installation.

@@ -1,18 +1,18 @@
-dnl	$OpenBSD: install,v 1.18 2004/01/20 17:33:18 miod Exp $
+dnl	$OpenBSD: install,v 1.19 2004/03/15 08:37:25 xsa Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
-on the whole disk or share the disk with MacOS.
+on the whole disk or share the disk with Mac OS.
 
-For stand-alone (No MacOS installed) or dedicated disks, the MBR
+For stand-alone (No Mac OS installed) or dedicated disks, the MBR
 installation method should be chosen and no additional prep is necessary.
 
-If the disk is to be shared with MacOS, a partition must be preallocated
-by the MacOS partition editor and MacOS installed to the proper partition.
+If the disk is to be shared with Mac OS, a partition must be preallocated
+by the Mac OS partition editor and Mac OS installed to the proper partition.
 This expects that the HFS partition will be the first partition on
 the disk, and then the OpenBSD partition will follow.
 This may require the disk be reformatted using the "Drive Setup" application
-and reinstalled under MacOS.
+and reinstalled under Mac OS.
 
 OpenBSDInstallPart2
 
@@ -21,14 +21,14 @@ OpenBSDInstallPart2
 	the bootloader and kernel from a HFS partition.
 
 	Once the bootloader is installed on the local hard drive, the
-	system can boot from it. OpenBSD may share a drive with MacOS
+	system can boot from it. OpenBSD may share a drive with Mac OS
 	if the process is followed carefully. Currently it is
 	necessary to use OpenFirmware commands to dual boot between
 	OS's, or multiple drives may be used with each OS owning drive(s).
 	It is also possible on some newer models to set up the system
-	to auto boot OpenBSD and if MacOS is desired, choose it using
+	to auto boot OpenBSD and if Mac OS is desired, choose it using
 	the firmware boot selector by holding down the <option> key
-	during reboot and selecting the MacOS Disk icon.
+	during reboot and selecting the Mac OS Disk icon.
 
 	(Refer to "Preparing your System for OpenBSD Installation" above
 	 for information on how to access and boot from Open Firmware)
@@ -110,14 +110,14 @@ OpenBSDInstallPart4({:-If you have DOS or Linux
 	partitions defined on the disk, these will usually show up as
 	partition 'h', 'i' and so on.
 
-	OpenBSD/MACHINE can share a disk with MacOS or MacOS X by using
+	OpenBSD/MACHINE can share a disk with Mac OS or Mac OS X by using
 	an HFS partitioned disk. For proper layout, the disk should be
-	partitioned with MacOS or MacOS X first with unused space or a
+	partitioned with Mac OS or Mac OS X first with unused space or a
 	spare partition where OpenBSD can be installed.  No low disk
 	boundaries exist on MACHINE. MACHINE is unable to install the
 	bootloader into the HFS(+) partition to boot OpenBSD so it is
 	necessary copy 'ofwboot' from the installation media into
-	the first HFS(+) partition using MacOS or MacOS X.
+	the first HFS(+) partition using Mac OS or Mac OS X.
 
 	If the disk is partitioned using MBR, the bootloader is
 	automatically installed. However because fdisk is not LBA

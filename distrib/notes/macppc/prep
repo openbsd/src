@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.8 2003/03/24 11:33:56 miod Exp $
+dnl	$OpenBSD: prep,v 1.9 2004/03/15 08:37:25 xsa Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -37,7 +37,7 @@ boot ide1:,ofwboot /bsd
 		(After installation, boot /bsd from the slave
 		 device on the second ATA bus)
 
-mac-boot	(boot into MacOS)
+mac-boot	(boot into Mac OS)
 reset-all	(reboot the machine)
 shut-down	(halt the machine; shutdown)
 printenv	(print current machine variables)
@@ -84,7 +84,7 @@ available.
 
 Autobooting OpenBSD/MACHINE
 
-It is possible to automatically boot into OpenBSD (selectably into MacOS)
+It is possible to automatically boot into OpenBSD (selectably into Mac OS)
 by setting up the following:
 
 setenv auto-boot? true
@@ -99,9 +99,9 @@ copied into the first HFS(+) partition. It is not necessary to specify
 '/bsd' on the boot line or in the boot-device variable, since it is the
 default.
 
-To boot in MacOS with this setup (works on most supported machines)
+To boot in Mac OS with this setup (works on most supported machines)
 press and hold down the Alt/Option key during reboot, and select which
-(MacOS/MacOS X) partition to boot in the graphical boot selector
+(Mac OS/Mac OS X) partition to boot in the graphical boot selector
 presented. Note that OpenBSD does not currently show up in this boot
 selector except for the installation CD-ROM. This works on most machines
 this has been tested with, but does not work on a Rev C (333MHz) iMac,
@@ -109,13 +109,13 @@ perhaps this feature was added to the Openfirmware ROM after that
 machine.
 
 
-Sharing a disk with MacOS:
+Sharing a disk with Mac OS:
 
 OpenBSD/MACHINE is capable of booting either from a dedicated disk using
-a MBR partitioned disk or sharing a disk with MacOS.
+a MBR partitioned disk or sharing a disk with Mac OS.
 
-If the disk is to be shared between MacOS and OpenBSD, it is necessary
-to reformat and install the MacOS partitions first, using "Drive Setup",
+If the disk is to be shared between Mac OS and OpenBSD, it is necessary
+to reformat and install the Mac OS partitions first, using "Drive Setup",
 leaving space on the disk as an "Unused" partition.
 If the disk was previously partitioned, it is possible to reuse a Partition
 for OpenBSD, as long as it is not the first Partition on the disk.

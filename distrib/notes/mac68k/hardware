@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.17 2003/05/05 20:18:02 miod Exp $
+dnl	$OpenBSD: hardware,v 1.18 2004/03/15 08:37:25 xsa Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 6MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 100MB partition by installing just the minimum sets.
@@ -7,7 +7,7 @@ booting, more RAM and disk space is highly recommended. About 250MB will be
 necessary to install all of the OpenBSD OSREV binary distribution (note that
 this does not count swap space!).  Much more disk space is required to
 install the source and objects as well (about another 600MB).
-A MacOS partition is also required to install OpenBSD/MACHINE OSREV and boot it,
+A Mac OS partition is also required to install OpenBSD/MACHINE OSREV and boot it,
 see below.
 
 OpenBSD/MACHINE OSREV now runs on most 680x0 MacIntosh's.  Specifically, it
