@@ -1508,12 +1508,14 @@ S_parse_body(pTHX_ char **env, XSINIT_t xsinit)
 		}
 #endif
 		Perl_sv_catpvf(aTHX_ PL_Sv,"\"  Built under %s\\n\"",OSNAME);
+#ifndef __OpenBSD__
 #ifdef __DATE__
 #  ifdef __TIME__
 		Perl_sv_catpvf(aTHX_ PL_Sv,",\"  Compiled at %s %s\\n\"",__DATE__,__TIME__);
 #  else
 		Perl_sv_catpvf(aTHX_ PL_Sv,",\"  Compiled on %s\\n\"",__DATE__);
 #  endif
+#endif
 #endif
 		sv_catpv(PL_Sv, "; \
 $\"=\"\\n    \"; \
