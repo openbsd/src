@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.8 1997/09/01 18:29:51 deraadt Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.9 2001/02/12 13:51:15 danh Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.8 1997/09/01 18:29:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.9 2001/02/12 13:51:15 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,7 @@ static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.8 1997/09/01 18:29:51 deraadt Ex
 #define SIXMONTHS	 ((DAYSPERNYEAR / 2) * SECSPERDAY)
 #define CURFRMT		"%b %e %H:%M"
 #define OLDFRMT		"%b %e  %Y"
-#ifndef UT_NAMESIZE
-#define UT_NAMESIZE	8
-#endif
-#define UT_GRPSIZE	6
+#define NAME_WIDTH	8
 
 /*
  * ls_list()
@@ -129,9 +126,9 @@ ls_list(arcn, now, fp)
 	 */
 	if (strftime(f_date,DATELEN,timefrmt,localtime(&(sbp->st_mtime))) == 0)
 		f_date[0] = '\0';
-	(void)fprintf(fp, "%s%2u %-*s %-*s ", f_mode, sbp->st_nlink,
-		UT_NAMESIZE, name_uid(sbp->st_uid, 1), UT_GRPSIZE,
-		name_gid(sbp->st_gid, 1));
+	(void)fprintf(fp, "%s%2u %-*.*s %-*.*s ", f_mode, sbp->st_nlink,
+		NAME_WIDTH, UT_NAMESIZE, name_uid(sbp->st_uid, 1), 
+		NAME_WIDTH, UT_NAMESIZE, name_gid(sbp->st_gid, 1));
 
 	/*
 	 * print device id's for devices, or sizes for other nodes
