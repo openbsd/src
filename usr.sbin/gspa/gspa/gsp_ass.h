@@ -171,10 +171,4 @@ extern char line[], *lineptr;
 #endif
 #endif
 
-#ifndef BSD
-#ifndef amiga
-#define bcopy(s, d, l) memcpy(d, s, l)
-#endif
-#endif
-
 #define new(x)	((x) = (typeof (x)) alloc (sizeof(*(x))))
