@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.27 2003/07/09 00:07:44 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.28 2003/07/09 00:39:25 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.27 2003/07/09 00:07:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.28 2003/07/09 00:39:25 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -30,6 +30,7 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.27 2003/07/09 00:07:44 millert
 #include <err.h>
 #include <errno.h>
 #include <getopt.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -120,6 +121,7 @@ main(int argc, char **argv)
 			break;
 		case 'l':
 			lflag = 1;
+			signal(SIGPIPE, SIG_IGN);
 			break;
 		case 'N':
 			Nflag = 1;
@@ -183,34 +185,34 @@ main(int argc, char **argv)
 		fstat(STDIN_FILENO, &stb1);
 		gotstdin = 1;
 	} else if (stat(argv[0], &stb1) != 0)
-		error("%s", argv[0]);
+		err(2, "%s", argv[0]);
 	if (strcmp(argv[1], "-") == 0) {
 		fstat(STDIN_FILENO, &stb2);
 		gotstdin = 1;
 	} else if (stat(argv[1], &stb2) != 0)
-		error("%s", argv[1]);
+		err(2, "%s", argv[1]);
 	if (gotstdin && (S_ISDIR(stb1.st_mode) || S_ISDIR(stb2.st_mode)))
-		errorx("can't compare - to a directory");
+		errx(2, "can't compare - to a directory");
 	set_argstr(oargv, argv);
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode)) {
 		if (format == D_IFDEF)
-			errorx("-D option not supported with directories");
+			errx(2, "-D option not supported with directories");
 		diffdir(argv[0], argv[1]);
 	} else {
+		if (S_ISDIR(stb1.st_mode)) {
+			argv[0] = splice(argv[0], argv[1]);
+			if (stat(argv[0], &stb1) < 0)
+				err(2, "%s", argv[0]);
+		}
+		if (S_ISDIR(stb2.st_mode)) {
+			argv[1] = splice(argv[1], argv[0]);
+			if (stat(argv[1], &stb2) < 0)
+				err(2, "%s", argv[1]);
+		}
 		print_status(diffreg(argv[0], argv[1], 0), argv[0], argv[1],
 		    NULL);
 	}
 	exit(status);
-}
-
-void
-quit(int signo)
-{
-	if (tempfiles[0] != NULL)
-		unlink(tempfiles[0]);
-	if (tempfiles[1] != NULL)
-		unlink(tempfiles[1]);
-	_exit(status);
 }
 
 void *
@@ -219,7 +221,7 @@ emalloc(size_t n)
 	void *p;
 
 	if ((p = malloc(n)) == NULL)
-		error(NULL);
+		err(2, NULL);
 	return (p);
 }
 
@@ -229,7 +231,7 @@ erealloc(void *p, size_t n)
 	void *q;
 
 	if ((q = realloc(p, n)) == NULL)
-		error(NULL);
+		err(2, NULL);
 	return (q);
 }
 
@@ -244,38 +246,8 @@ easprintf(char **ret, const char *fmt, ...)
 	va_end(ap);
 
 	if (len == -1)
-		error(NULL);
+		err(2, NULL);
 	return(len);
-}
-
-__dead void
-error(const char *fmt, ...)
-{
-	va_list ap;
-	int sverrno = errno;
-
-	if (tempfiles[0] != NULL)
-		unlink(tempfiles[0]);
-	if (tempfiles[1] != NULL)
-		unlink(tempfiles[1]);
-	errno = sverrno;
-	va_start(ap, fmt);
-	verr(2, fmt, ap);
-	va_end(ap);
-}
-
-__dead void
-errorx(const char *fmt, ...)
-{
-	va_list ap;
-
-	if (tempfiles[0] != NULL)
-		unlink(tempfiles[0]);
-	if (tempfiles[1] != NULL)
-		unlink(tempfiles[1]);
-	va_start(ap, fmt);
-	verrx(2, fmt, ap);
-	va_end(ap);
 }
 
 void
@@ -308,7 +280,7 @@ read_excludes_file(char *file)
 	if (strcmp(file, "-") == 0)
 		fp = stdin;
 	else if ((fp = fopen(file, "r")) == NULL)
-		error("%s", file);
+		err(2, "%s", file);
 	while ((buf = fgetln(fp, &len)) != NULL) {
 		if (buf[len - 1] == '\n')
 			len--;
@@ -361,6 +333,10 @@ print_status(int val, char *path1, char *path2, char *entry)
 			printf("Files %s%s and %s%s are identical\n",
 			    path1, entry ? entry : "",
 			    path2, entry ? entry : "");
+		break;
+	case D_MISMATCH:
+		printf("File %s/%s is a directory but file %s/%s is not\n",
+		    path1, entry ? entry : "", path2, entry ? entry : "");
 		break;
 	}
 }

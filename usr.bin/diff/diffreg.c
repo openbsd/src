@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.31 2003/07/09 00:07:44 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.32 2003/07/09 00:39:26 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,18 +65,18 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.31 2003/07/09 00:07:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.32 2003/07/09 00:39:26 millert Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -179,6 +179,7 @@ static struct cand *clist;	/* merely a free storage pot for candidates */
 static struct line *sfile[2];	/* shortened by pruning common prefix/suffix */
 static u_char *chrtran;		/* translation table for case-folding */
 
+static FILE *opentemp(const char *);
 static void fetch(long *, int, int, FILE *, char *, int);
 static void output(char *, FILE *, char *, FILE *);
 static void check(char *, FILE *, char *, FILE *);
@@ -271,29 +272,22 @@ diffreg(char *ofile1, char *ofile2, int flags)
 
 	anychange = 0;
 	chrtran = (iflag ? cup2low : clow2low);
+	if (S_ISDIR(stb1.st_mode) != S_ISDIR(stb2.st_mode))
+		return (D_MISMATCH);
 	if (strcmp(file1, "-") == 0 && strcmp(file2, "-") == 0)
 		goto notsame;
 
-	/* XXX - only make temp file for stdin if not seekable? (millert) */
 	if (flags & D_EMPTY1)
 		f1 = fopen(_PATH_DEVNULL, "r");
 	else {
-		if (S_ISDIR(stb1.st_mode)) {
-			file1 = splice(file1, file2);
-			if (stat(file1, &stb1) < 0) {
+		if (!S_ISREG(stb1.st_mode)) {
+			if ((f1 = opentemp(file1)) == NULL ||
+			    fstat(fileno(f1), &stb1) < 0) {
 				warn("%s", file1);
 				status |= 2;
 				goto closem;
 			}
-		} else if (!S_ISREG(stb1.st_mode)) {
-			file1 = copytemp(file1, 1);
-			if (file1 == NULL || stat(file1, &stb1) < 0) {
-				warn("%s", file1);
-				status |= 2;
-				goto closem;
-			}
-		}
-		if (strcmp(file1, "-") == 0)
+		} else if (strcmp(file1, "-") == 0)
 			f1 = stdin;
 		else
 			f1 = fopen(file1, "r");
@@ -307,22 +301,14 @@ diffreg(char *ofile1, char *ofile2, int flags)
 	if (flags & D_EMPTY2)
 		f2 = fopen(_PATH_DEVNULL, "r");
 	else {
-		if (S_ISDIR(stb2.st_mode)) {
-			file2 = splice(file2, file1);
-			if (stat(file2, &stb2) < 0) {
+		if (!S_ISREG(stb2.st_mode)) {
+			if ((f2 = opentemp(file2)) == NULL ||
+			    fstat(fileno(f2), &stb2) < 0) {
 				warn("%s", file2);
 				status |= 2;
 				goto closem;
 			}
-		} else if (!S_ISREG(stb2.st_mode)) {
-			file2 = copytemp(file2, 2);
-			if (file2 == NULL || stat(file2, &stb2) < 0) {
-				warn("%s", file2);
-				status |= 2;
-				goto closem;
-			}
-		}
-		if (strcmp(file2, "-") == 0)
+		} else if (strcmp(file2, "-") == 0)
 			f2 = stdin;
 		else
 			f2 = fopen(file2, "r");
@@ -450,17 +436,9 @@ closem:
 		fclose(f1);
 	if (f2 != NULL)
 		fclose(f2);
-	if (tempfiles[0] != NULL) {
-		unlink(tempfiles[0]);
-		free(tempfiles[0]);
-		tempfiles[0] = NULL;
-	} else if (file1 != ofile1)
+	if (file1 != ofile1)
 		free(file1);
-	if (tempfiles[1] != NULL) {
-		unlink(tempfiles[1]);
-		free(tempfiles[1]);
-		tempfiles[1] = NULL;
-	} else if (file2 != ofile2)
+	if (file2 != ofile2)
 		free(file2);
 	return (rval);
 }
@@ -494,17 +472,12 @@ files_differ(FILE *f1, FILE *f2, int flags)
 	}
 }
 
-char *tempfiles[2];
-
-/* XXX - pass back a FILE * too (millert) */
-char *
-copytemp(const char *file, int n)
+static FILE *
+opentemp(const char *file)
 {
-	char buf[BUFSIZ], *tempdir, *tempfile;
-	int i, ifd, ofd;
-
-	if (n != 1 && n != 2)
-		return (NULL);
+	char buf[BUFSIZ], *tempdir, tempfile[MAXPATHLEN];
+	ssize_t nread;
+	int ifd, ofd;
 
 	if (strcmp(file, "-") == 0)
 		ifd = STDIN_FILENO;
@@ -513,25 +486,25 @@ copytemp(const char *file, int n)
 
 	if ((tempdir = getenv("TMPDIR")) == NULL)
 		tempdir = _PATH_TMP;
-	if (asprintf(&tempfile, "%s/diff%d.XXXXXXXX", tempdir, n) == -1)
+	if (snprintf(tempfile, sizeof(tempfile), "%s/diff.XXXXXXXX",
+	    tempdir) >= sizeof(tempfile)) {
+		close(ifd);
+		errno = ENAMETOOLONG;
 		return (NULL);
-	tempfiles[n - 1] = tempfile;
+	}
 
-	signal(SIGHUP, quit);
-	signal(SIGINT, quit);
-	signal(SIGPIPE, quit);
-	signal(SIGTERM, quit);
-	signal(SIGPIPE, SIG_IGN);
-	ofd = mkstemp(tempfile);
-	if (ofd < 0)
+	if ((ofd = mkstemp(tempfile)) < 0)
 		return (NULL);
-	while ((i = read(ifd, buf, BUFSIZ)) > 0) {
-		if (write(ofd, buf, i) != i)
+	unlink(tempfile);
+	while ((nread = read(ifd, buf, BUFSIZ)) > 0) {
+		if (write(ofd, buf, nread) != nread) {
+			close(ifd);
+			close(ofd);
 			return (NULL);
+		}
 	}
 	close(ifd);
-	close(ofd);
-	return (tempfile);
+	return (fdopen(ofd, "r"));
 }
 
 char *
@@ -539,8 +512,7 @@ splice(char *dir, char *file)
 {
 	char *tail, *buf;
 
-	tail = strrchr(file, '/');
-	if (tail == NULL)
+	if ((tail = strrchr(file, '/')) == NULL)
 		tail = file;
 	else
 		tail++;
