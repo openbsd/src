@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.51 2002/05/26 09:25:22 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.52 2002/06/05 17:12:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.51 2002/05/26 09:25:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.52 2002/06/05 17:12:52 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,6 +234,7 @@ main(argc, argv)
 	int ch, i, fklog, len, linesize, fdsrmax = 0;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
+	socklen_t slen;
 	fd_set *fdsr = NULL;
 	char *p, *line;
 	FILE *fp;
@@ -324,6 +325,13 @@ main(argc, argv)
 			if (i == 0)
 				die(0);
 		}
+		/* double socket receive buffer size */
+		if (getsockopt(funix[i], SOL_SOCKET, SO_RCVBUF, &len,
+		    &slen) == 0) {
+			len *= 2;
+			(void)setsockopt(funix[i], SOL_SOCKET, SO_RCVBUF, &len,
+			    slen);
+		}
 	}
 	finet = socket(AF_INET, SOCK_DGRAM, 0);
 	if (finet >= 0) {
@@ -345,6 +353,13 @@ main(argc, argv)
 				die(0);
 		} else {
 			InetInuse = 1;
+			/* double socket receive buffer size */
+			if (getsockopt(finet, SOL_SOCKET, SO_RCVBUF, &len,
+			    &slen) == 0) {
+				len *= 2;
+				(void)setsockopt(funix[i], SOL_SOCKET,
+				    SO_RCVBUF, &len, slen);
+			}
 		}
 	}
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0)
