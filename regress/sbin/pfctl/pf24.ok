@@ -1,7 +1,7 @@
-a = ssh
-b = ftp
-c = ssh ftp
-d = ssh ftp ssh ftp
-e = ssh ftp ftp test ssh ftp
+a = "ssh"
+b = "ftp"
+c = "ssh ftp"
+d = "ssh ftp ssh ftp"
+e = "ssh ftp ftp test ssh ftp"
 @0 pass in proto tcp from any to any port = ssh 
 @1 pass in proto tcp from any to any port = ftp 

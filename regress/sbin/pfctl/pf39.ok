@@ -1,17 +1,17 @@
-body1 = pass in log quick on lo0 inet proto icmp all 
-body2 = pass in log quick on lo0 inet proto tcp all 
-o_user = user root 
-o_user2 = user bin 
-o_group = group wheel 
-o_group2 = group nobody 
-o_flags = flags S/SA 
-o_icmpspec = icmp-type 0 code 0 
-o_tos = tos 0x08 
-o_keep = keep state 
-o_fragment = fragment 
-o_allowopts = allow-opts 
-o_label = label blah
-o_qname = queue blah
+body1 = "pass in log quick on lo0 inet proto icmp all "
+body2 = "pass in log quick on lo0 inet proto tcp all "
+o_user = "user root "
+o_user2 = "user bin "
+o_group = "group wheel "
+o_group2 = "group nobody "
+o_flags = "flags S/SA "
+o_icmpspec = "icmp-type 0 code 0 "
+o_tos = "tos 0x08 "
+o_keep = "keep state "
+o_fragment = "fragment "
+o_allowopts = "allow-opts "
+o_label = "label blah"
+o_qname = "queue blah"
 @0 pass in log quick on lo0 inet proto tcp all tos 0x08 keep state fragment label blah 
 @1 pass in log quick on lo0 inet proto icmp all user = 3 group = 32767 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah
 @2 pass in log quick on lo0 inet proto icmp all user = 3 group = 0 icmp-type echorep code 0 tos 0x08 keep state allow-opts label blah queue blah

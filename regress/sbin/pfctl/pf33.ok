@@ -1,4 +1,4 @@
-ext_if = lo0
+ext_if = "lo0"
 altq on lo0 scheduler cbq bandwidth 10.00Mb tbrsize 6000 queue { deflt http ssh mail rsets }
 queue deflt bandwidth 1000.00Kb priority 0 cbq( red ecn default ) 
 queue http bandwidth 1.50Mb priority 3 { http_vhosts http_cust1 }

@@ -1,6 +1,6 @@
-foo = ssh, ftp
-bar = other thing
-inside = 10.0.0.0/8
+foo = "ssh, ftp"
+bar = "other thing"
+inside = "10.0.0.0/8"
 @0 block in inet proto udp from 10.0.0.0/8 port = echo to 12.34.56.78 port = 6667 
 @1 block in inet proto udp from 10.0.0.0/8 port = echo to 12.34.56.78 port = 16 
 @2 block in inet proto udp from 10.0.0.0/8 port = ssh to 12.34.56.78 port = 6667 

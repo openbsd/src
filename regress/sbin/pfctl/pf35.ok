@@ -1,6 +1,6 @@
-intf = lo0
-developerhosts = 10.0.0.0/24
-employeehosts = 10.0.1.0/24
+intf = "lo0"
+developerhosts = "10.0.0.0/24"
+employeehosts = "10.0.1.0/24"
 altq on lo0 scheduler cbq( red ecn ) bandwidth 10.00Mb qlimit 100 tbrsize 5000 queue { std http mail ssh }
 queue std bandwidth 1000.00Kb qlimit 1 cbq( default ) 
 queue http bandwidth 6.00Mb priority 2 cbq( red borrow ) { employees developers }
