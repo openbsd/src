@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2002/05/24 04:17:01 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.9 2002/06/05 19:34:44 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -60,7 +60,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	int	i;
 	int	numrela;
 	int	fails = 0;
-	load_list_t *load_list;
+	struct load_list *load_list;
 	Elf32_Addr loff;
 	Elf32_Rela  *relas;
 	/* for jmp table relocations */
@@ -160,8 +160,8 @@ _dl_printf("object relocation size %x, numrela %x\n",
 #if 1
 		case RELOC_32:
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-			   (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
-			   ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
+			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
+			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*r_addr = ooff + relas->r_addend;
 			} else {
 				*r_addr = ooff + this->st_value +
@@ -171,8 +171,8 @@ _dl_printf("object relocation size %x, numrela %x\n",
 #endif
 		case RELOC_RELATIVE:
 			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-			   (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
-			   ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
+			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
+			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*r_addr = loff + relas->r_addend;
 
 #ifdef DL_PRINTF_DEBUG

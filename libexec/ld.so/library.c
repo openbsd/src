@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.14 2002/05/28 00:22:01 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.15 2002/06/05 19:34:44 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -154,9 +154,9 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 }
 
 void
-_dl_load_list_free(load_list_t *load_list)
+_dl_load_list_free(struct load_list *load_list)
 {
-	load_list_t *next;
+	struct load_list *next;
 
 	while (load_list != NULL) {
 		next = load_list->next;
@@ -180,7 +180,7 @@ elf_object_t *
 _dl_tryload_shlib(const char *libname, int type)
 {
 	int	libfile, i, align = _dl_pagesz - 1;
-	load_list_t *next_load, *load_list = NULL;
+	struct load_list *next_load, *load_list = NULL;
 	Elf_Addr maxva = 0, minva = 0x7fffffff;	/* XXX Correct for 64bit? */
 	Elf_Addr libaddr, loff;
 	elf_object_t *object;
@@ -259,8 +259,7 @@ _dl_tryload_shlib(const char *libname, int type)
 			res = _dl_mmap(start, size, PFLAGS(phdp->p_flags),
 			    MAP_FIXED|MAP_PRIVATE, libfile,
 			    phdp->p_offset & ~align);
-			next_load = (load_list_t *)_dl_malloc(
-			    sizeof(load_list_t));
+			next_load = _dl_malloc(sizeof(struct load_list));
 			next_load->next = load_list;
 			load_list = next_load;
 			next_load->start = start;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.10 2002/05/24 04:17:00 deraadt Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.11 2002/06/05 19:34:44 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -69,7 +69,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	long	fails = 0;
 	Elf64_Addr loff;
 	Elf64_Rela  *relas;
-	load_list_t *llist;
+	struct load_list *llist;
 
 	loff = object->load_offs;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);

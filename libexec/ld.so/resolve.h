@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.10 2002/05/24 04:17:00 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.11 2002/06/05 19:34:44 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -37,12 +37,12 @@
 
 #include <link.h>
 
-typedef struct load_list {
+struct load_list {
 	struct load_list *next;
 	char	*start;
 	size_t	size;
 	int	prot;
-} load_list_t;
+};
 
 /*
  *  Structure describing a loaded object.
@@ -58,7 +58,7 @@ typedef struct elf_object {
 	struct elf_object *prev;
 /* End struct link_map compatible */
 
-	load_list_t *load_list;
+	struct load_list *load_list;
 
 	u_int32_t  load_size;
 
