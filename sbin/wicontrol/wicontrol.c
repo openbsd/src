@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.49 2004/05/29 17:49:19 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.50 2004/06/22 20:49:22 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,7 +68,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.49 2004/05/29 17:49:19 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.50 2004/06/22 20:49:22 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -117,7 +117,7 @@ wi_getval(char *iface, struct wi_req *wreq)
 		err(1, "socket");
 
 	if (ioctl(s, SIOCGWAVELAN, &ifr) == -1)
-		err(1, "SIOCGWAVELAN");
+		warn("SIOCGWAVELAN (0x%x)", wreq->wi_type);
 
 	close(s);
 }
@@ -593,7 +593,7 @@ struct wi_table wi_table[] = {
 	{ WI_RID_SYSTEM_SCALE, WI_WORDS, "Access point density:\t\t\t" },
 	{ WI_RID_PM_ENABLED, WI_BOOL, "Power Management:\t\t\t" },
 	{ WI_RID_MAX_SLEEP, WI_WORDS, "Max sleep time:\t\t\t\t" },
-	{ WI_RID_CNF_ENH_SECURITY, WI_WORDS, "Enhanced Security mode:\t\t\t" },
+	{ WI_RID_ENH_SECURITY, WI_WORDS, "Enhanced Security mode:\t\t\t" },
 	{ WI_RID_PRISM2, WI_WORDS, "Intersil Prism2-based card:\t\t" },
 	{ WI_RID_STA_IDENTITY, WI_CARDINFO, "Card info:\t\t\t\t" },
 	{ 0, NULL }
@@ -842,7 +842,7 @@ struct wi_func wi_opt[] = {
 	{ 'x', wi_setword, WI_FRID_CRYPTO_ALG, NULL },
 	{ 'A', wi_setword, WI_RID_CNFAUTHMODE, NULL },
 	{ 'D', wi_setword, WI_RID_SYMBOL_DIVERSITY, NULL },
-	{ 'E', wi_setword, WI_RID_CNF_ENH_SECURITY, NULL },
+	{ 'E', wi_setword, WI_RID_ENH_SECURITY, NULL },
 	{ 'M', wi_setword, WI_RID_MICROWAVE_OVEN, NULL },
 	{ 'P', wi_setword, WI_RID_PM_ENABLED, NULL },
 	{ 'R', wi_setword, WI_RID_ROAMING_MODE, NULL },
