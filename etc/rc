@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.71 1998/04/07 06:11:52 deraadt Exp $
+#	$OpenBSD: rc,v 1.72 1998/05/13 21:10:03 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -236,7 +236,7 @@ if [ -f /etc/sysctl.conf ]; then
 )
 fi
 
-test -f /etc/rc.securelevel && . /etc/rc.securelevel
+[ -f /etc/rc.securelevel ] && . /etc/rc.securelevel
 if [ X${securelevel} != X"" ]; then
 	echo -n 'setting kernel security level: '
 	sysctl -w kern.securelevel=${securelevel}
@@ -268,7 +268,7 @@ if [ "$vibackup" != "/var/tmp/vi.recover/vi.*" ]; then
 	for i in $vibackup; do
 		# Unmodified nvi editor backup files either have the
 		# execute bit set or are zero length.  Delete them.
-		if test -x $i -o ! -s $i; then
+		if [ -x $i -o ! -s $i ]; then
 			rm $i
 		fi
 	done
@@ -281,7 +281,7 @@ if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
 		# or that have no corresponding backup file.  Else send mail
 		# to the user.
 		recfile=`awk '/^X-vi-recover-path:/{print $2}' < $i`
-		if test -n "$recfile" -a -s "$recfile"; then
+		if [ -n "$recfile" -a -s "$recfile" ]; then
 			sendmail -t < $i
 		else
 			rm $i
@@ -413,7 +413,7 @@ if [ X${kerberos_slave} = X"YES" ]; then
 	/usr/libexec/kpropd -i &
 fi
 
-. /etc/rc.local
+[ -f /etc/rc.local ] && . /etc/rc.local
 
 date
 
