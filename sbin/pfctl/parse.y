@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.251 2002/12/12 15:06:16 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.252 2002/12/13 12:06:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -203,6 +203,17 @@ struct filter_opts {
 	char *qname;
 } filter_opts;
 
+struct scrub_opts {
+	int			marker;
+#define SOM_MINTTL	0x01
+#define SOM_MAXMSS	0x02
+#define SOM_FRAGCACHE	0x04
+	int			nodf;
+	int			minttl;
+	int			maxmss;
+	int			fragcache;
+} scrub_opts;
+
 struct queue_opts {
 	int			marker;
 #define QOM_BWSPEC	0x01
@@ -330,6 +341,7 @@ typedef struct {
 		struct node_queue_bw	queue_bwspec;
 		struct filter_opts	filter_opts;
 		struct queue_opts	queue_opts;
+		struct scrub_opts	scrub_opts;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -364,9 +376,9 @@ typedef struct {
 %token	<v.string> STRING
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
-%type	<v.number>	number port icmptype icmp6type minttl uid gid maxmss
+%type	<v.number>	number port icmptype icmp6type uid gid
 %type	<v.number>	tos
-%type	<v.i>	no dir log af nodf allowopts fragment fragcache
+%type	<v.i>	no dir log af fragcache
 %type	<v.i>	staticport
 %type	<v.b>	action flags flag blockspec
 %type	<v.range>	dport rport
@@ -389,7 +401,6 @@ typedef struct {
 %type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>	logquick
 %type	<v.interface>	antispoof_ifspc antispoof_iflst
-%type	<v.number>	priority qlimit tbrsize
 %type	<v.string>	qname
 %type	<v.queue>	qassign qassign_list qassign_item
 %type	<v.queue_options>	scheduler
@@ -397,6 +408,7 @@ typedef struct {
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
+%type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
 %%
 
 ruleset		: /* empty */
@@ -552,7 +564,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 		}
 		;
 
-scrubrule	: SCRUB dir interface af fromto nodf minttl maxmss fragcache
+scrubrule	: SCRUB dir interface af fromto scrub_opts
 		{
 			struct pf_rule	r;
 
@@ -572,19 +584,76 @@ scrubrule	: SCRUB dir interface af fromto nodf minttl maxmss fragcache
 				}
 			}
 			r.af = $4;
-			if ($6)
+			if ($6.nodf)
 				r.rule_flag |= PFRULE_NODF;
-			if ($7)
-				r.min_ttl = $7;
-			if ($8)
-				r.max_mss = $8;
-			if ($9)
-				r.rule_flag |= $9;
+			if ($6.minttl)
+				r.min_ttl = $6.minttl;
+			if ($6.maxmss)
+				r.max_mss = $6.maxmss;
+			if ($6.fragcache)
+				r.rule_flag |= $6.fragcache;
 
 			expand_rule(&r, $3, NULL, NULL,
 			    $5.src.host, $5.src.port, $5.dst.host, $5.dst.port,
 			    NULL, NULL, NULL);
 		}
+		;
+
+scrub_opts	:	{
+			bzero(&scrub_opts, sizeof scrub_opts);
+		}
+		  scrub_opts_l
+			{ $$ = scrub_opts; }
+		| /* empty */ {
+			bzero(&scrub_opts, sizeof scrub_opts);
+			$$ = scrub_opts;
+		}
+		;
+
+scrub_opts_l	: scrub_opts_l scrub_opt
+		| scrub_opt
+		;
+
+scrub_opt	: NODF	{
+			if (scrub_opts.nodf) {
+				yyerror("nodf cannot be respecified");
+				YYERROR;
+			}
+			scrub_opts.nodf = 1;
+		}
+		| MINTTL number {
+			if (scrub_opts.marker & SOM_MINTTL) {
+				yyerror("minttl cannot be respecified");
+				YYERROR;
+			}
+			if ($2 > 255) {
+				yyerror("illegal min-ttl value %d", $2);
+				YYERROR;
+			}
+			scrub_opts.marker |= SOM_MINTTL;
+			scrub_opts.minttl = $2;
+		}
+		| MAXMSS number {
+			if (scrub_opts.marker & SOM_MAXMSS) {
+				yyerror("maxmss cannot be respecified");
+				YYERROR;
+			}
+			scrub_opts.marker |= SOM_MAXMSS;
+			scrub_opts.maxmss = $2;
+		}
+		| fragcache {
+			if (scrub_opts.marker & SOM_FRAGCACHE) {
+				yyerror("fragcache cannot be respecified");
+				YYERROR;
+			}
+			scrub_opts.marker |= SOM_FRAGCACHE;
+			scrub_opts.fragcache = $1;
+		}
+		;
+
+fragcache	: FRAGMENT FRAGNORM	{ $$ = 0; /* default */ }
+		| FRAGMENT FRAGCROP	{ $$ = PFRULE_FRAGCROP; }
+		| FRAGMENT FRAGDROP	{ $$ = PFRULE_FRAGDROP; }
 		;
 
 antispoof	: ANTISPOOF logquick antispoof_ifspc af {
@@ -737,21 +806,29 @@ queue_opt	: bandwidth	{
 			queue_opts.marker |= QOM_BWSPEC;
 			queue_opts.queue_bwspec = $1;
 		}
-		| priority	{
+		| PRIORITY number	{
 			if (queue_opts.marker & QOM_PRIORITY) {
 				yyerror("priority cannot be respecified");
 				YYERROR;
 			}
+			if ($2 > 255) {
+				yyerror("priority out of range: max 255");
+				YYERROR;
+			}
 			queue_opts.marker |= QOM_PRIORITY;
-			queue_opts.priority = $1;
+			queue_opts.priority = $2;
 		}
-		| qlimit	{
+		| QLIMIT number	{
 			if (queue_opts.marker & QOM_QLIMIT) {
 				yyerror("qlimit cannot be respecified");
 				YYERROR;
 			}
+			if ($2 > 65535) {
+				yyerror("qlimit out of range: max 65535");
+				YYERROR;
+			}
 			queue_opts.marker |= QOM_QLIMIT;
-			queue_opts.qlimit = $1;
+			queue_opts.qlimit = $2;
 		}
 		| scheduler	{
 			if (queue_opts.marker & QOM_SCHEDULER) {
@@ -761,13 +838,17 @@ queue_opt	: bandwidth	{
 			queue_opts.marker |= QOM_SCHEDULER;
 			queue_opts.scheduler = $1;
 		}
-		| tbrsize	{
+		| TBRSIZE number	{
 			if (queue_opts.marker & QOM_TBRSIZE) {
 				yyerror("tbrsize cannot be respecified");
 				YYERROR;
 			}
+			if ($2 > 65535) {
+				yyerror("tbrsize too big: max 65535");
+				YYERROR;
+			}
 			queue_opts.marker |= QOM_TBRSIZE;
-			queue_opts.tbrsize = $1;
+			queue_opts.tbrsize = $2;
 		}
 		;
 
@@ -803,15 +884,6 @@ bandwidth	: BANDWIDTH STRING {
 			$$.bw_absolute = (u_int32_t)bps;
 		}
 
-priority	: PRIORITY number	{
-			if ($2 > 255) {
-				yyerror("priority out of range: max 255");
-				YYERROR;
-			}
-			$$ = $2;
-		}
-		;
-
 scheduler	: CBQ				{
 			$$.qtype = ALTQT_CBQ;
 			$$.data.cbq_opts.flags = 0;
@@ -832,24 +904,6 @@ cbqflags_item	: DEFAULT	{ $$ = CBQCLF_DEFCLASS; }
 		| RED		{ $$ = CBQCLF_RED; }
 		| ECN		{ $$ = CBQCLF_RED|CBQCLF_ECN; }
 		| RIO		{ $$ = CBQCLF_RIO; }
-		;
-
-qlimit		: QLIMIT number		{
-			if ($2 > 65535) {
-				yyerror("qlimit out of range: max 65535");
-				YYERROR;
-			}
-			$$ = $2;
-		}
-		;
-
-tbrsize		: TBRSIZE number	{
-			if ($2 > 65535) {
-				yyerror("tbrsize too big: max 65535");
-				YYERROR;
-			}
-			$$ = $2;
-		}
 		;
 
 qassign		: /* empty */		{ $$ = NULL; }
@@ -1070,11 +1124,11 @@ filter_opt	: USER uids {
 			filter_opts.keep.action = $1.action;
 			filter_opts.keep.options = $1.options;
 		}
-		| fragment {
-			filter_opts.fragment = $1;
+		| FRAGMENT {
+			filter_opts.fragment = 1;
 		}
-		| allowopts {
-			filter_opts.allowopts = $1;
+		| ALLOWOPTS {
+			filter_opts.allowopts = 1;
 		}
 		| label	{
 			if (filter_opts.label) {
@@ -1149,12 +1203,6 @@ blockspec	: /* empty */		{
 			$$.w = returnicmpdefault;
 			$$.w2 = returnicmp6default;
 		}
-		;
-
-fragcache	: /* empty */		{ $$ = 0; }
-		| fragment FRAGNORM	{ $$ = 0; /* default */ }
-		| fragment FRAGCROP	{ $$ = PFRULE_FRAGCROP; }
-		| fragment FRAGDROP	{ $$ = PFRULE_FRAGDROP; }
 		;
 
 dir		: /* empty */			{ $$ = 0; }
@@ -1802,28 +1850,6 @@ state_opt_item	: MAXIMUM number		{
 		}
 		;
 
-fragment	: FRAGMENT			{ $$ = 1; }
-
-minttl		: /* empty */			{ $$ = 0; }
-		| MINTTL number			{
-			if ($2 > 255) {
-				yyerror("illegal min-ttl value %d", $2);
-				YYERROR;
-			}
-			$$ = $2;
-		}
-		;
-
-nodf		: /* empty */			{ $$ = 0; }
-		| NODF				{ $$ = 1; }
-		;
-
-maxmss		: /* empty */			{ $$ = 0; }
-		| MAXMSS number			{ $$ = $2; }
-		;
-
-allowopts	: ALLOWOPTS			{ $$ = 1; }
-
 label		: LABEL STRING			{
 			if (($$ = strdup($2)) == NULL) {
 				yyerror("rule label strdup() failed");
@@ -1831,6 +1857,7 @@ label		: LABEL STRING			{
 			}
 		}
 		;
+
 qname		: QUEUE STRING			{
 			if (($$ = strdup($2)) == NULL) {
 				yyerror("qname strdup() failed");
