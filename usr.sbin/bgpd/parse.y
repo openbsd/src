@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2003/12/24 13:49:21 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.12 2003/12/24 14:10:49 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -308,7 +308,7 @@ lookup(char *s)
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
 		{ "listen",		LISTEN},
-		{ "local-address",	LOCALADDR},
+		{ "local-addr",		LOCALADDR},
 		{ "min",		YMIN},
 		{ "mrtdump",		MRTDUMP},
 		{ "multihop",		MULTIHOP},
