@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.1 2003/05/20 20:26:27 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.2 2003/05/28 19:21:11 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greygats.org>
@@ -82,14 +82,18 @@ it_match(struct device *parent, void *match, void *aux)
 	u_int8_t cr;
 
 	/* Must supply an address */
-	if (ia->ipa_nio < 1)
+	if (ia->ipa_nio < 1) {
+		DPRINTF(("%s: ipa_nio=%d\n", __func__, ia->ipa_nio));
 		return (0);
+	}
 
 	iot = ia->ia_iot;
 	iobase = ia->ipa_io[0].base;
 
-	if (bus_space_map(iot, iobase, 8, 0, &ioh))
+	if (bus_space_map(iot, iobase, 8, 0, &ioh)) {
+		DPRINTF(("%s: can't map i/o space\n", __func__));
 		return (0);
+	}
 
 	/* Check for some power-on defaults */
 	bus_space_write_1(iot, ioh, ITC_ADDR, ITD_CONFIG);
