@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 1998/05/16 20:56:52 niklas Exp $
+#	$OpenBSD: Makefile,v 1.33 1998/05/17 06:32:07 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -93,7 +93,7 @@ CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		LD=${CROSSDIR}/usr/bin/ld NM=${CROSSDIR}/usr/bin/nm \
 		RANLIB=${CROSSDIR}/usr/bin/ranlib \
 		SIZE=${CROSSDIR}/usr/bin/size STRIP=${CROSSDIR}/usr/bin/strip \
-		HOSTCC=cc
+		HOSTCC=cc MAKEOBJDIR=obj.${MACHINE}.${TARGET}
 
 cross-helpers:
 	-mkdir -p ${CROSSDIR}/usr/include
@@ -277,12 +277,11 @@ cross-lib:
 	    ${MAKE} obj; \
 	    for lib in csu libc; do \
 		(cd $$lib; \
-		    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
-		    ${MAKE} NOMAN=; \
+		    ${CROSSENV} ${MAKE} NOMAN=; \
 		    DESTDIR=${CROSSDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		    ${MAKE} NOMAN= install); \
 	    done; \
-	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} ${MAKE} NOMAN=; \
+	    ${CROSSENV} ${MAKE} NOMAN=; \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} DESTDIR=${CROSSDIR} \
 	    SKIPDIR=libocurses/PSD.doc ${MAKE} NOMAN= install)
 	ln -sf ${CROSSDIR}/usr/lib \
