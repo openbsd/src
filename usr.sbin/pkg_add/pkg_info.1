@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.7 2004/11/10 09:55:43 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.8 2004/11/11 11:54:09 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -30,7 +30,7 @@
 .Op Fl l Ar prefix
 .Ar pkg-name Op Ar ...
 .Nm pkg_info
-.Op Fl a Ar flags
+.Op Fl aA Ar flags
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,6 +54,9 @@ The following command-line options are supported:
 .Bl -tag -width indent
 .It Fl a
 Show information for all currently installed packages.
+.It Fl A
+Show information for all currently installed packages, 
+including internal packages.
 .It Fl c
 Show the one-line comment field for each package.
 .It Fl D

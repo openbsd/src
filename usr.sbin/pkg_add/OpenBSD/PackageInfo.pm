@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.10 2004/11/11 11:16:39 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.11 2004/11/11 11:54:09 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -70,7 +70,7 @@ sub delete_installed
 	}
 }
 
-sub installed_packages()
+sub installed_packages(;$)
 {
 	if (!defined $list) {
 		$list = {};
@@ -95,7 +95,11 @@ sub installed_packages()
 			print "Warning: can't access information for ", join(", ", @bad), "\n";
 		}
 	}
-	return keys %$list;
+	if ($_[0]) {
+		return grep { !/^\./ } keys %$list;
+	} else {
+		return keys %$list;
+	}
 }
 
 sub installed_info($)
