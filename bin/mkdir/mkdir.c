@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.3 1996/08/02 12:40:58 deraadt Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.4 1996/08/14 03:49:14 tholo Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$OpenBSD: mkdir.c,v 1.3 1996/08/02 12:40:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkdir.c,v 1.4 1996/08/14 03:49:14 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,7 +149,7 @@ mkpath(path, mode, dir_mode)
 		*slash = '\0';
 
 		if (stat(path, &sb)) {
-			if (errno != ENOENT || mkdir(path, dir_mode)) {
+			if (errno != ENOENT || mkdir(path, done ? mode : dir_mode)) {
 				warn("%s", path);
 				return (-1);
 			}
