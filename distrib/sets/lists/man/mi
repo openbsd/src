@@ -1576,6 +1576,7 @@
 ./usr/share/man/cat8/activinit.0
 ./usr/share/man/cat8/afsd.0
 ./usr/share/man/cat8/alpha
+./usr/share/man/cat8/alpha/MAKEDEV.0
 ./usr/share/man/cat8/alpha/boot_alpha.0
 ./usr/share/man/cat8/alpha/fdisk.0
 ./usr/share/man/cat8/alpha/installboot.0
@@ -1594,7 +1595,6 @@
 ./usr/share/man/cat8/amiga/iteconfig.0
 ./usr/share/man/cat8/amiga/loadbsd.0
 ./usr/share/man/cat8/amiga/loadkmap.0
-./usr/share/man/cat8/amiga/makedev.0
 ./usr/share/man/cat8/amq.0
 ./usr/share/man/cat8/ancontrol.0
 ./usr/share/man/cat8/apachectl.0
@@ -1674,7 +1674,6 @@
 ./usr/share/man/cat8/hp300/boot_hp300.0
 ./usr/share/man/cat8/hp300/format.0
 ./usr/share/man/cat8/hp300/hilinfo.0
-./usr/share/man/cat8/hp300/makedev.0
 ./usr/share/man/cat8/hppa
 ./usr/share/man/cat8/hppa/wsconscfg.0
 ./usr/share/man/cat8/hppa/wsconsctl.0
@@ -1693,7 +1692,6 @@
 ./usr/share/man/cat8/i386/boot_i386.0
 ./usr/share/man/cat8/i386/fdisk.0
 ./usr/share/man/cat8/i386/installboot.0
-./usr/share/man/cat8/i386/makedev.0
 ./usr/share/man/cat8/i386/memconfig.0
 ./usr/share/man/cat8/i386/wsconscfg.0
 ./usr/share/man/cat8/i386/wsconsctl.0
@@ -1751,13 +1749,11 @@
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/mac68k/MAKEDEV.0
 ./usr/share/man/cat8/mac68k/boot_mac68k.0
-./usr/share/man/cat8/mac68k/makedev.0
 ./usr/share/man/cat8/macppc
 ./usr/share/man/cat8/macppc/MAKEDEV.0
 ./usr/share/man/cat8/macppc/apm.0
 ./usr/share/man/cat8/macppc/apmd.0
 ./usr/share/man/cat8/macppc/fdisk.0
-./usr/share/man/cat8/macppc/makedev.0
 ./usr/share/man/cat8/macppc/pdisk.0
 ./usr/share/man/cat8/macppc/wsconscfg.0
 ./usr/share/man/cat8/macppc/wsconsctl.0
@@ -1801,6 +1797,7 @@
 ./usr/share/man/cat8/mountd.0
 ./usr/share/man/cat8/mtree.0
 ./usr/share/man/cat8/mvme68k
+./usr/share/man/cat8/mvme68k/MAKEDEV.0
 ./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/mvme88k
 ./usr/share/man/cat8/mvmeppc
@@ -1921,13 +1918,11 @@
 ./usr/share/man/cat8/sparc/boot_sparc.0
 ./usr/share/man/cat8/sparc/eeprom.0
 ./usr/share/man/cat8/sparc/installboot.0
-./usr/share/man/cat8/sparc/makedev.0
 ./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sparc64/MAKEDEV.0
 ./usr/share/man/cat8/sparc64/boot_sparc64.0
 ./usr/share/man/cat8/sparc64/eeprom.0
 ./usr/share/man/cat8/sparc64/installboot.0
-./usr/share/man/cat8/sparc64/makedev.0
 ./usr/share/man/cat8/sparc64/wsconscfg.0
 ./usr/share/man/cat8/sparc64/wsconsctl.0
 ./usr/share/man/cat8/spppcontrol.0
@@ -1947,7 +1942,6 @@
 ./usr/share/man/cat8/sun3/boot_sun3.0
 ./usr/share/man/cat8/sun3/eeprom.0
 ./usr/share/man/cat8/sun3/installboot.0
-./usr/share/man/cat8/sun3/makedev.0
 ./usr/share/man/cat8/supfilesrv.0
 ./usr/share/man/cat8/supscan.0
 ./usr/share/man/cat8/supservers.0
@@ -1984,7 +1978,6 @@
 ./usr/share/man/cat8/vax/boot_vax.0
 ./usr/share/man/cat8/vax/drtest.0
 ./usr/share/man/cat8/vax/format.0
-./usr/share/man/cat8/vax/makedev.0
 ./usr/share/man/cat8/verify_krb5_conf.0
 ./usr/share/man/cat8/vipw.0
 ./usr/share/man/cat8/visudo.0
