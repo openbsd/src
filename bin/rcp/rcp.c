@@ -1,5 +1,5 @@
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
-/*	$OpenBSD: rcp.c,v 1.15 1997/09/01 18:30:22 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.16 1997/09/12 04:43:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -429,7 +429,8 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			 * versions expecting microseconds.
 			 */
 			(void)snprintf(buf, sizeof(buf), "T%ld 0 %ld 0\n",
-			    stb.st_mtimespec.tv_sec, stb.st_atimespec.tv_sec);
+			    (long)stb.st_mtimespec.tv_sec,
+			    (long)stb.st_atimespec.tv_sec);
 			(void)write(rem, buf, strlen(buf));
 			if (response() < 0)
 				goto next;
@@ -493,7 +494,8 @@ rsource(name, statp)
 		last++;
 	if (pflag) {
 		(void)snprintf(path, sizeof(path), "T%ld 0 %ld 0\n",
-		    statp->st_mtimespec.tv_sec, statp->st_atimespec.tv_sec);
+		    (long)statp->st_mtimespec.tv_sec,
+		    (long)statp->st_atimespec.tv_sec);
 		(void)write(rem, path, strlen(path));
 		if (response() < 0) {
 			closedir(dirp);
