@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.4 2004/03/15 01:07:21 djm Exp $ */
+/* $OpenBSD: syslogc.c,v 1.5 2004/04/13 01:10:05 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -29,7 +29,8 @@
 
 #define DEFAULT_CTLSOCK		"/var/run/syslogd.sock"
 
-#define MAX_MEMBUF_NAME	64		/* Max length of membuf log name */
+#define MAX_MEMBUF_NAME	64	/* Max length of membuf log name */
+
 struct ctl_cmd {
 #define CMD_READ	1	/* Read out log */
 #define CMD_READ_CLEAR	2	/* Read and clear log */
@@ -66,17 +67,17 @@ main(int argc, char **argv)
 	ctlsock_path = DEFAULT_CTLSOCK;
 	while ((ch = getopt(argc, argv, "Cchqs:")) != -1) {
 		switch (ch) {
+		case 'C':
+			cc.cmd = CMD_CLEAR;
+			break;
+		case 'c':
+			cc.cmd = CMD_READ_CLEAR;
+			break;
 		case 'h':
 			usage();
 			break;
 		case 'q':
 			cc.cmd = CMD_LIST;
-			break;
-		case 'c':
-			cc.cmd = CMD_READ_CLEAR;
-			break;
-		case 'C':
-			cc.cmd = CMD_CLEAR;
 			break;
 		case 's':
 			ctlsock_path = optarg;
@@ -96,7 +97,7 @@ main(int argc, char **argv)
 		usage();
 
 	if (cc.cmd != CMD_LIST) {
-		if (strlcpy(cc.logname, argv[optind], sizeof(cc.logname)) >
+		if (strlcpy(cc.logname, argv[optind], sizeof(cc.logname)) >=
 		    sizeof(cc.logname))
 			errx(1, "Specified log name is too long");
 	}
@@ -105,14 +106,14 @@ main(int argc, char **argv)
 	strlcpy(ctl.sun_path, ctlsock_path, sizeof(ctl.sun_path));
 	ctl.sun_family = AF_UNIX;
 
-	if ((ctlsock = socket(PF_UNIX, SOCK_STREAM, 0)) < 0)
+	if ((ctlsock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 	if (connect(ctlsock, (struct sockaddr*)&ctl, sizeof(ctl)) == -1)
-		err(1, "%s", ctl.sun_path);
+		err(1, "connect: %s", ctl.sun_path);
 	if ((ctlf = fdopen(ctlsock, "r+")) == NULL)
 		err(1, "fdopen");
 	/* Send command */
-	if (fwrite(&cc, sizeof(cc), 1, ctlf) <= 0)
+	if (fwrite(&cc, sizeof(cc), 1, ctlf) != 1)
 		err(1, "fwrite");
 
 	fflush(ctlf);
