@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.42 2004/11/23 13:33:14 grange Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.43 2005/01/12 18:19:05 grange Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -230,11 +230,13 @@ pchbattach(parent, self, aux)
 			 * fetched from the wrong location.  This is
 			 * the workaround.
 			 */
-			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    PCISET_INTEL_SDRAMC_REG);
-			bcreg |= PCISET_INTEL_SDRAMC_IPDLT;
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-			    PCISET_INTEL_SDRAMC_REG, bcreg);
+			if (PCI_REVISION(pa->pa_class) < 0x3) {
+				bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+				    PCISET_INTEL_SDRAMC_REG);
+				bcreg |= PCISET_INTEL_SDRAMC_IPDLT;
+				pci_conf_write(pa->pa_pc, pa->pa_tag,
+				    PCISET_INTEL_SDRAMC_REG, bcreg);
+			}
 			break;
 		case PCI_PRODUCT_INTEL_PCI450_PB:
 			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
