@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.78 2002/08/30 08:08:22 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.79 2002/08/30 08:19:49 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.78 2002/08/30 08:08:22 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.79 2002/08/30 08:19:49 fgsch Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -2010,6 +2010,7 @@ nextpkt:
 				    ": wi_start: dropping unassoc dst %s\n",
 				    WI_PRT_ARG(sc),
 				    ether_sprintf(eh->ether_dhost));
+			m_freem(m0);
 			goto nextpkt;
 		}
 	}
