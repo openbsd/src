@@ -3981,6 +3981,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "V96DPC i960 (Dual) Host-PCI",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
+	    0,
+	    "VIA",
+	    "VT8371 (Apollo 133) Host Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
 	    0,
 	    "VIA",
@@ -4035,10 +4041,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C598 (Apollo MVP3) Host-PCI",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA,
 	    0,
 	    "VIA",
-	    "VT82C686 PCI-ISA",
+	    "VT82C686A (Apollo 133) PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C691,
+	    0,
+	    "VIA",
+	    "VT82C691 (Apollo Pro) Host-PCI",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C693,
+	    0,
+	    "VIA",
+	    "VT82C693 (Apollo Pro Plus) Host-PCI",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
@@ -4081,6 +4099,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA",
 	    "VT82C586 (Apollo VP) Power Management",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
+	    0,
+	    "VIA",
+	    "VT82C686A (Apollo 133) SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AUD,
+	    0,
+	    "VIA",
+	    "VT82C686A (Apollo 133) AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
+	    0,
+	    "VIA",
+	    "VT8371 (Apollo 133) PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
