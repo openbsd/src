@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.31 2001/06/27 07:23:58 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.32 2001/08/02 21:00:14 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -171,9 +171,9 @@ main(argc, argv)
 	if (lflag && pflag)
 		errx(1, "cannot use -p and -l");
 	if (lflag && zflag)
-		errx(1, "cannot use -p and -l");
+		errx(1, "cannot use -z and -l");
 	if (!lflag && kflag)
-		errx(1, "must use -k with -l");
+		errx(1, "must use -l with -k");
 
 	/* Initialize addrinfo structure */
 	memset(&hints, 0, sizeof(struct addrinfo));
