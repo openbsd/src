@@ -1,4 +1,4 @@
-/*      $OpenBSD: extern.h,v 1.2 1996/06/26 05:33:35 deraadt Exp $      */
+/*      $OpenBSD: extern.h,v 1.3 1996/09/03 18:00:05 deraadt Exp $      */
 /*      $NetBSD: extern.h,v 1.4 1995/09/08 01:06:19 tls Exp $      */
 
 /*-
@@ -142,6 +142,7 @@ void	status __P((int, char **));
 void	syst __P((int, char **));
 void    tvsub __P((struct timeval *, struct timeval *, struct timeval *));
 void	user __P((int, char **));
+int	http_fetch __P((char *));
 
 extern jmp_buf	abortprox;
 extern int	abrtflag;
