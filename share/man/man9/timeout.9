@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.18 2002/02/15 02:02:50 art Exp $
+.\"	$OpenBSD: timeout.9,v 1.19 2002/12/20 06:13:44 art Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -93,8 +93,8 @@ structure can be used in repeatedly in
 .Fn timeout_add
 and
 .Fn timeout_del
-and does not need to be reinitialized unless you wish to
-change the function called and/or the argument to it.
+and does not need to be reinitialized unless
+the function called and/or its argument must change.
 .Pp
 The function
 .Fn timeout_add
