@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.32 2003/12/05 21:55:29 millert Exp $
+.\"	$OpenBSD: queue.3,v 1.33 2003/12/16 21:08:20 millert Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -42,10 +42,12 @@
 .Nm SLIST_END ,
 .Nm SLIST_EMPTY ,
 .Nm SLIST_FOREACH ,
+.Nm SLIST_FOREACH_PREVPTR ,
 .Nm SLIST_INIT ,
 .Nm SLIST_INSERT_AFTER ,
 .Nm SLIST_INSERT_HEAD ,
 .Nm SLIST_REMOVE_HEAD ,
+.Nm SLIST_REMOVE_NEXT ,
 .Nm SLIST_REMOVE ,
 .Nm LIST_ENTRY ,
 .Nm LIST_HEAD ,
@@ -124,6 +126,7 @@
 .Ft "bool"
 .Fn SLIST_EMPTY "SLIST_HEAD *head"
 .Fn SLIST_FOREACH "VARNAME" "SLIST_HEAD *head" "SLIST_ENTRY NAME"
+.Fn SLIST_FOREACH_PREVPTR "VARNAME" "VARNAMEP" "SLIST_HEAD *head" "SLIST_ENTRY NAME"
 .Ft void
 .Fn SLIST_INIT "SLIST_HEAD *head"
 .Ft void
@@ -132,6 +135,8 @@
 .Fn SLIST_INSERT_HEAD "SLIST_HEAD *head" "struct TYPE *elm" "SLIST_ENTRY NAME"
 .Ft void
 .Fn SLIST_REMOVE_HEAD "SLIST_HEAD *head" "SLIST_ENTRY NAME"
+.Ft void
+.Fn SLIST_REMOVE_NEXT "SLIST_HEAD *head" "struct TYPE *elm" "SLIST_ENTRY NAME"
 .Ft void
 .Fn SLIST_REMOVE "SLIST_HEAD *head" "struct TYPE *elm" "TYPE" "SLIST_ENTRY NAME"
 .Pp
@@ -443,6 +448,11 @@ macro removes the first element of the list pointed by
 .Fa head .
 .Pp
 The
+.Fn SLIST_REMOVE_NEXT
+macro removes the list element immediately following
+.Fa elm .
+.Pp
+The
 .Fn SLIST_REMOVE
 macro removes the element
 .Fa elm
@@ -464,6 +474,15 @@ macro:
 .Bd -literal -offset indent
 SLIST_FOREACH(np, head, NAME)
 .Ed
+.Pp
+The
+.Fn SLIST_FOREACH_PREVPTR
+macro is similar to
+.Fn SLIST_FOREACH
+except that it stores a pointer to the previous element in
+.Fa VARNAMEP .
+This provides access to the previous element while traversing the list,
+as one would have with a doubly-linked list.
 .Pp
 The
 .Fn SLIST_EMPTY
