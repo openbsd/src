@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.7 2002/02/08 21:21:11 deraadt Exp $	*/
+/*	$OpenBSD: basic.c,v 1.8 2002/02/13 22:36:58 vincent Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -166,7 +166,7 @@ forwline(f, n)
 		}
 		curwp->w_doto = 0;
 		while (n-- >= 0) {
-			if ((dlp = lallocx(0)) == NULL)
+			if ((dlp = lalloc(0)) == NULL)
 				return FALSE;
 			dlp->l_fp = curbp->b_linep;
 			dlp->l_bp = lback(dlp->l_fp);

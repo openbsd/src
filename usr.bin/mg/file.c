@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.10 2002/02/13 03:03:49 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.11 2002/02/13 22:36:58 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -96,7 +96,7 @@ findbuffer(fname)
 {
 	BUFFER		*bp;
 	char		 bname[NBUFN];
-	unsigned int	 count = 1;
+	unsigned int	 count;
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (strcmp(bp->b_fname, fname) == 0)

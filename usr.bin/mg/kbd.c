@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.10 2001/05/24 03:05:23 mickey Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.11 2002/02/13 22:36:58 vincent Exp $	*/
 
 /*
  *	Terminal independent keyboard handling.
@@ -375,28 +375,20 @@ selfinsert(f, n)
 		/* last command was insert -- tack on the end */
 		if (lastflag & CFINS) {
 			macrocount--;
+			/* Ensure the line can handle the new characters */
 			if (maclcur->l_size < maclcur->l_used + n) {
-				if ((lp = lallocx(maclcur->l_used + n)) == NULL)
+				if (lrealloc(maclcur, maclcur->l_used + n) ==
+				    FALSE)
 					return FALSE;
-				lp->l_fp = maclcur->l_fp;
-				lp->l_bp = maclcur->l_bp;
-				lp->l_fp->l_bp = lp->l_bp->l_fp = lp;
-				bcopy(maclcur->l_text, lp->l_text,
-				    maclcur->l_used);
-				for (count = maclcur->l_used;
-				    count < lp->l_used; count++)
-					lp->l_text[count] = c;
-				free((char *)maclcur);
-				maclcur = lp;
-			} else {
-				maclcur->l_used += n;
-				for (count = maclcur->l_used - n;
-				    count < maclcur->l_used; count++)
-					maclcur->l_text[count] = c;
 			}
+			maclcur->l_used += n;
+			/* Copy in the new data */
+			for (count = maclcur->l_used - n;
+			     count < maclcur->l_used; count++)
+				maclcur->l_text[count] = c;
 		} else {
 			macro[macrocount - 1].m_funct = insert;
-			if ((lp = lallocx(n)) == NULL)
+			if ((lp = lalloc(n)) == NULL)
 				return FALSE;
 			lp->l_bp = maclcur;
 			lp->l_fp = maclcur->l_fp;

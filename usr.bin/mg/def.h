@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.25 2002/02/13 03:03:49 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.26 2002/02/13 22:36:58 vincent Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -121,11 +121,7 @@ typedef struct LINE {
 	struct LINE	*l_bp;	/* Link to the previous line	 */
 	int		l_size;	/* Allocated size		 */
 	int		l_used;	/* Used size			 */
-#ifndef ZEROARRAY
-	char		l_text[1];	/* A bunch of chars.	 */
-#else
-	char		l_text[];	/* A bunch of chars.	 */
-#endif
+	char		*l_text;	/* Content of the line */
 } LINE;
 
 /*
@@ -318,7 +314,7 @@ void	 upmodes		__P((BUFFER *));
 
 /* line.c X */
 LINE	*lalloc			__P((int));
-LINE	*lallocx		__P((int));
+int	 lrealloc		__P((LINE *, int));
 void	 lfree			__P((LINE *));
 void	 lchange		__P((int));
 int	 linsert		__P((int, int));
