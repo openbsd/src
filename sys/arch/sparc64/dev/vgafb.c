@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.35 2004/08/10 21:57:51 millert Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.36 2004/11/30 13:23:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -75,19 +75,6 @@ struct vgafb_softc {
 	int *sc_crowp, *sc_ccolp;
 };
 
-struct wsscreen_descr vgafb_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *vgafb_scrlist[] = {
-	&vgafb_stdscreen,
-	/* XXX other formats? */
-};
-
-struct wsscreen_list vgafb_screenlist = {
-	sizeof(vgafb_scrlist) / sizeof(struct wsscreen_descr *), vgafb_scrlist
-};
-
 int vgafb_mapregs(struct vgafb_softc *, struct pci_attach_args *);
 int vgafb_rommap(struct vgafb_softc *, struct pci_attach_args *);
 int vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -152,7 +139,6 @@ vgafbattach(parent, self, aux)
 {
 	struct vgafb_softc *sc = (struct vgafb_softc *)self;
 	struct pci_attach_args *pa = aux;
-	struct wsemuldisplaydev_attach_args waa;
 
 	sc->sc_mem_t = pa->pa_memt;
 	sc->sc_io_t = pa->pa_iot;
@@ -182,26 +168,16 @@ vgafbattach(parent, self, aux)
 	fbwscons_init(&sc->sc_sunfb,
 	    RI_BSWAP | (sc->sc_console ? 0 : RI_CLEAR));
 
-	vgafb_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	vgafb_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	vgafb_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	vgafb_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	if (sc->sc_console) {
 		sc->sc_ofhandle = OF_stdout();
 		fbwscons_setcolormap(&sc->sc_sunfb, vgafb_setcolor);
 		sc->sc_sunfb.sf_ro.ri_updatecursor = vgafb_updatecursor;
-		fbwscons_console_init(&sc->sc_sunfb, &vgafb_stdscreen, -1,
-		    NULL);
+		fbwscons_console_init(&sc->sc_sunfb, -1, NULL);
 	} else {
 		/* sc->sc_ofhandle = XXX */
 	}
 
-	waa.console = sc->sc_console;
-	waa.scrdata = &vgafb_screenlist;
-	waa.accessops = &vgafb_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &vgafb_accessops, sc->sc_console);
 }
 
 int
