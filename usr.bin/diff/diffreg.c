@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.6 2003/06/25 03:38:34 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.7 2003/06/25 03:39:23 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -118,7 +118,6 @@ static char const sccsid[] = "@(#)diffreg.c 4.21 4/6/90";
 #define	prints(s)	fputs(s,stdout)
 
 FILE *input[2];
-FILE *fopen();
 
 struct cand {
 	int x;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.7 2003/06/25 03:37:32 deraadt Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.8 2003/06/25 03:39:23 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -81,6 +82,8 @@ static void setfile(char **fpp, char **epp, char *file);
 static int useless(char *);
 static void only(struct dir *dp, int which);
 static void scanpr(struct dir *, int, char *, char *, char *, char *, char *);
+static int entcmp(const void *, const void *);
+
 
 void
 diffdir(char **argv)
@@ -218,8 +221,6 @@ only(struct dir *dp, int which)
 	printf("Only in %.*s: %s\n", (int)(efile - file - 1), file, dp->d_entry);
 }
 
-int entcmp();
-
 struct dir *
 setupdir(char *cp)
 {
@@ -254,9 +255,13 @@ setupdir(char *cp)
 	return (dp);
 }
 
-int
-entcmp(struct dir *d1, struct dir *d2)
+static int
+entcmp(const void *v1, const void *v2)
 {
+	const struct dir *d1, *d2;
+
+	d1 = v1;
+	d2 = v2;
 	return (strcmp(d1->d_entry, d2->d_entry));
 }
 
