@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.34 2000/01/14 19:59:18 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.35 2000/02/05 18:46:50 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.34 2000/01/14 19:59:18 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.35 2000/02/05 18:46:50 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -708,7 +708,7 @@ netname6(sa6, mask)
 	struct in6_addr *mask;
 {
 	static char line[MAXHOSTNAMELEN + 1];
-	struct in6_addr net6;
+	struct sockaddr_in6 sin6;
 	u_char *p;
 	u_char *lim;
 	int masklen, final = 0, illegal = 0;
@@ -720,15 +720,15 @@ netname6(sa6, mask)
 	int flag = 0;
 #endif
 
-	net6 = sa6->sin6_addr;
-	for (i = 0; i < sizeof(net6); i++)
-		net6.s6_addr[i] &= mask->s6_addr[i];
+	sin6 = *sa6;
 	
 	masklen = 0;
-	lim = (u_char *)mask + 16;
+	lim = (u_char *)(mask + 1);
+	i = 0;
 	for (p = (u_char *)mask; p < lim; p++) {
 		if (final && *p) {
 			illegal++;
+			sin6.sin6_addr.s6_addr[i++] = 0x00;
 			continue;
 		}
 
@@ -772,9 +772,14 @@ netname6(sa6, mask)
 			illegal++;
 			break;
 		}
+
+		if (!illegal)
+			sin6.sin6_addr.s6_addr[i++] &= *p;
+		else
+			sin6.sin6_addr.s6_addr[i++] = 0x00;
 	}
 
-	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sa6->sin6_addr))
+	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr))
 		return("default");
 
 	if (illegal)
@@ -782,7 +787,7 @@ netname6(sa6, mask)
 
 	if (nflag)
 		flag |= NI_NUMERICHOST;
-	getnameinfo((struct sockaddr *)sa6, sa6->sin6_len, hbuf, sizeof(hbuf),
+	getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len, hbuf, sizeof(hbuf),
 		    NULL, 0, flag);
 	snprintf(line, sizeof(line), "%s/%d", hbuf, masklen);
 	return line;
