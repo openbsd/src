@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.1 2000/12/12 02:32:11 millert Exp $
+#	$OpenBSD: Makefile,v 1.1 2001/06/24 23:31:45 hin Exp $
 
-PROG=	login_krb-or-pwd
-SRCS=	login_kerberos.c
-MAN=	login_krb-or-pwd.8
+PROG=	login_krb4-or-pwd
+SRCS=	login_krb4.c
+MAN=	login_krb4-or-pwd.8
 DPADD=  ${LIBUTIL}
 LDADD=  -lutil
-.PATH:	${.CURDIR}/../login_kerberos
+.PATH:	${.CURDIR}/../login_krb4
 
 .include <bsd.own.mk>	# For KERBEROS
 
