@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.3 2002/06/04 19:15:54 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -162,7 +162,7 @@ filter_policyrecord(struct policy *policy, struct filter *filter,
 
 	strlcpy(filter->name, name, sizeof(filter->name));
 	strlcpy(filter->emulation, emulation, sizeof(filter->emulation));
-	
+
 	TAILQ_INSERT_TAIL(&policy->filters, filter, policy_next);
 	policy->nfilters++;
 
@@ -246,7 +246,7 @@ filter_prepolicy(int fd, struct policy *policy)
 	short action, future;
 
 	/* Commit all matching pre-filters */
-	for (filter = TAILQ_FIRST(&policy->prefilters); 
+	for (filter = TAILQ_FIRST(&policy->prefilters);
 	    filter; filter = TAILQ_FIRST(&policy->prefilters)) {
 		future = ICPOLICY_ASK;
 
@@ -406,7 +406,7 @@ filter_fnmatch(struct intercept_translate *tl, struct logic *logic)
 {
 	int res;
 	char *line;
-	
+
 	if (tl->trans_size == 0)
 		return (0);
 
@@ -421,7 +421,7 @@ int
 filter_substrmatch(struct intercept_translate *tl, struct logic *logic)
 {
 	char *line;
-	
+
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (0);
 
@@ -432,7 +432,7 @@ int
 filter_negsubstrmatch(struct intercept_translate *tl, struct logic *logic)
 {
 	char *line;
-	
+
 	if ((line = intercept_translate_print(tl)) == NULL)
 		return (0);
 

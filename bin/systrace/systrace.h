@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.2 2002/06/04 19:15:54 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -78,7 +78,7 @@ struct policy {
 	char emulation[16];
 
 	SPLAY_HEAD(syscalltree, policy_syscall) pflqs;
-	
+
 	int policynr;
 	int flags;
 
@@ -87,7 +87,7 @@ struct policy {
 	struct filterq prefilters;
 };
 
-#define POLICY_PATH		"/etc/systrace"	
+#define POLICY_PATH		"/etc/systrace"
 
 #define POLICY_UNSUPERVISED	0x01	/* Auto-Pilot */
 #define POLICY_DETACHED		0x02	/* Ignore this program */

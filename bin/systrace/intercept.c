@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.3 2002/06/04 19:15:54 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -83,7 +83,7 @@ int
 pidcompare(struct intercept_pid *a, struct intercept_pid *b)
 {
 	int diff = a->pid - b->pid;
-	
+
 	if (diff == 0)
 		return (0);
 	if (diff > 0)
@@ -289,8 +289,8 @@ intercept_open(void)
 	int fd;
 
 	fd = intercept.open();
-        if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
-                warn("fcntl(O_NONBLOCK)");
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
+		warn("fcntl(O_NONBLOCK)");
 
 	return (fd);
 }
@@ -515,7 +515,7 @@ intercept_child_info(pid_t opid, pid_t npid)
 		return;
 
 	inpid = intercept_getpid(npid);
-	
+
 	inpid->policynr = ipid->policynr;
 	if (ipid->name != NULL)
 		inpid->name = strdup(ipid->name);

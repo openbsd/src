@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.3 2002/06/04 19:09:45 provos Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.4 2002/06/04 19:15:54 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -181,7 +181,7 @@ obsd_getpid(pid_t pid)
 
 	if ((icpid->data = malloc(sizeof(struct obsd_data))) == NULL)
 		err(1, "%s:%d: malloc", __func__, __LINE__);
-	
+
 	data = icpid->data;
 	data->current = &emulations[0];
 	data->commit = NULL;
@@ -441,7 +441,7 @@ obsd_read(int fd)
 
 	current = data->current;
 
-	switch(msg.msg_type) {
+	switch (msg.msg_type) {
 	case SYSTR_MSG_ASK:
 		code = msg.msg_data.msg_ask.code;
 		sysname = obsd_syscall_name(msg.msg_pid, code);
@@ -473,7 +473,7 @@ obsd_read(int fd)
 	case SYSTR_MSG_EMUL:
 		memcpy(name, msg.msg_data.msg_emul.emul, SYSTR_EMULEN);
 		name[SYSTR_EMULEN] = '\0';
-		    
+
 		if (obsd_set_emulation(msg.msg_pid, name) == -1)
 			errx(1, "%s:%d: set_emulation(%s)",
 			    __func__, __LINE__, name);

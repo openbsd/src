@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.2 2002/06/04 19:15:54 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -62,7 +62,7 @@ extern struct intercept_system intercept;
 /* Takes a translation structure and retrieves the right data */
 
 int
-intercept_translate(struct intercept_translate *trans, 
+intercept_translate(struct intercept_translate *trans,
     int fd, pid_t pid, int off, void *args, int argsize)
 {
 	void *addr, *addr2;
@@ -123,7 +123,7 @@ ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
 	char buf[MAXPATHLEN];
 	char *path, *name;
 	int len;
-	
+
 	name = intercept_filename(fd, pid, addr);
 	if (name == NULL)
 		return (-1);
@@ -149,7 +149,7 @@ ic_get_string(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 {
 	char *name;
 	int len;
-	
+
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
 		return (-1);
@@ -171,7 +171,7 @@ ic_get_linkname(struct intercept_translate *trans, int fd, pid_t pid,
 {
 	char *name;
 	int len;
-	
+
 	name = intercept_filename(fd, pid, addr);
 	if (name == NULL)
 		return (-1);

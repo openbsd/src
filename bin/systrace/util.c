@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2002/06/04 17:20:04 provos Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2002/06/04 19:15:54 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -51,7 +51,6 @@ strrpl(char *str, size_t size, char *match, char *value)
 
 		if (p >= e)
 			return (NULL);
-		    
 	}
 
 	if (p == NULL)
@@ -84,9 +83,9 @@ strrpl(char *str, size_t size, char *match, char *value)
  * cyg 		//foo		yes		yes		no
  */
 #ifdef OS2
-# define PATHSEP        ';'
-# define DIRSEP         '/'	/* even though \ is native */
-# define DIRSEPSTR      "\\"
+# define PATHSEP	';'
+# define DIRSEP		'/'	/* even though \ is native */
+# define DIRSEPSTR	"\\"
 # define ISDIRSEP(c)    ((c) == '\\' || (c) == '/')
 # define ISABSPATH(s)	(((s)[0] && (s)[1] == ':' && ISDIRSEP((s)[2])))
 # define ISROOTEDPATH(s) (ISDIRSEP((s)[0]) || ISABSPATH(s))
@@ -96,16 +95,16 @@ strrpl(char *str, size_t size, char *match, char *value)
 # define FILENCMP(s1, s2, n) strnicmp(s1, s2, n)
 extern char *ksh_strchr_dirsep(const char *path);
 extern char *ksh_strrchr_dirsep(const char *path);
-# define chdir          _chdir2
-# define getcwd         _getcwd2
+# define chdir		_chdir2
+# define getcwd		_getcwd2
 #else
-# define PATHSEP        ':'
-# define DIRSEP         '/'
-# define DIRSEPSTR      "/"
+# define PATHSEP	':'
+# define DIRSEP		'/'
+# define DIRSEPSTR	"/"
 # define ISDIRSEP(c)    ((c) == '/')
 #ifdef __CYGWIN__
 #  define ISABSPATH(s) \
-       (((s)[0] && (s)[1] == ':' && ISDIRSEP((s)[2])) || ISDIRSEP((s)[0]))
+	(((s)[0] && (s)[1] == ':' && ISDIRSEP((s)[2])) || ISDIRSEP((s)[0]))
 #  define ISRELPATH(s) (!(s)[0] || ((s)[1] != ':' && !ISDIRSEP((s)[0])))
 #else /* __CYGWIN__ */
 # define ISABSPATH(s)	ISDIRSEP((s)[0])
@@ -161,9 +160,9 @@ simplify_path(path)
 	 */
 
 #ifdef __CYGWIN__
-       /* preserve leading double-slash on pathnames (for UNC paths) */
-       if (path[0] && ISDIRSEP(path[0]) && path[1] && ISDIRSEP(path[1]))
-               very_start++;
+	/* preserve leading double-slash on pathnames (for UNC paths) */
+	if (path[0] && ISDIRSEP(path[0]) && path[1] && ISDIRSEP(path[1]))
+		very_start++;
 #endif /* __CYGWIN__ */
 
 	for (cur = t = start = very_start; ; ) {

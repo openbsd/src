@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.3 2002/06/04 19:15:54 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -71,7 +71,7 @@ int
 polnrcompare(struct policy *a, struct policy *b)
 {
 	int diff = a->policynr - b->policynr;
-	
+
 	if (diff == 0)
 		return (0);
 	if (diff > 0 )
@@ -298,7 +298,7 @@ systrace_readpolicy(char *filename)
 			goto out;
 		}
 		*p = '\0';
-		
+
 		p = line;
 		strsep(&p, "#");
 
@@ -322,7 +322,7 @@ systrace_readpolicy(char *filename)
 				goto error;
 			continue;
 		}
-		
+
 		if (policy == NULL)
 			goto error;
 
@@ -354,7 +354,7 @@ systrace_readpolicy(char *filename)
 		filter = calloc(1, sizeof(struct filter));
 		if (filter == NULL)
 			err(1, "%s:%d: calloc", __func__, __LINE__);
-		
+
 		filter->rule = strdup(rule);
 		strlcpy(filter->name, name, sizeof(filter->name));
 		strlcpy(filter->emulation,emulation,sizeof(filter->emulation));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.2 2002/06/04 19:07:04 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.3 2002/06/04 19:15:54 deraadt Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -64,7 +64,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	int size;
 
 	action = ICPOLICY_PERMIT;
-		
+
 	if (policynr == -1)
 		goto out;
 
@@ -221,7 +221,7 @@ void
 child_handler(int sig)
 {
 	int s = errno, status;
-	
+
 	if (signal(SIGCHLD, child_handler) == SIG_ERR) {
 		close(fd);
 	}
@@ -247,13 +247,13 @@ systrace_initcb(void)
 
 	X(intercept_register_sccb("native", "connect", trans_cb, NULL));
 	X(intercept_register_translation("native", "connect", 1,
-	      &ic_translate_connect));
+	    &ic_translate_connect));
 	X(intercept_register_sccb("native", "sendto", trans_cb, NULL));
 	X(intercept_register_translation("native", "sendto", 4,
-	      &ic_translate_connect));
+	    &ic_translate_connect));
 	X(intercept_register_sccb("native", "bind", trans_cb, NULL));
 	X(intercept_register_translation("native", "bind", 1,
-	      &ic_translate_connect));
+	    &ic_translate_connect));
 	X(intercept_register_sccb("native", "execve", trans_cb, NULL));
 	X(intercept_register_transfn("native", "execve", 0));
 	X(intercept_register_sccb("native", "stat", trans_cb, NULL));

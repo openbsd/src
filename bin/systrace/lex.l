@@ -90,11 +90,11 @@ true		{ return TRUE; }
 	 return CMDSTRING; }
 \[		{ return LSQBRACE; }
 \]		{ return RSQBRACE; }
-\        { ; }
-\n       { ;}
-\t       { ; }
-"#".*\n { ; }
-.        { yyerror("illegal token"); }
+\ 		{ ; }
+\n		{ ; }
+\t		{ ; }
+"#".*\n		{ ; }
+.		{ yyerror("illegal token"); }
 %%
 #ifndef yywrap
 int yywrap() { return 1; }
