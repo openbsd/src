@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2004/07/03 20:36:04 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 2004/07/08 04:23:04 david Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -543,6 +543,7 @@ x86_64_proc0_tss_ldt_init(void)
  * Set up TSS and LDT for a new PCB.
  */         
          
+#ifdef MULTIPROCESSOR
 void    
 x86_64_init_pcb_tss_ldt(ci)   
 	struct cpu_info *ci;
@@ -562,6 +563,7 @@ x86_64_init_pcb_tss_ldt(ci)
         
         ci->ci_idle_tss_sel = tss_alloc(pcb);
 }       
+#endif	/* MULTIPROCESSOR */
 
 bios_diskinfo_t *
 bios_getdiskinfo(dev)

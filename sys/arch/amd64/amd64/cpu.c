@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.5 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.6 2004/07/08 04:23:04 david Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -118,10 +118,12 @@ struct cpu_softc {
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
+#ifdef MULTIPROCESSOR
 int mp_cpu_start(struct cpu_info *);
 void mp_cpu_start_cleanup(struct cpu_info *);
 struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
+#endif /* MULTIPROCESSOR */
 
 struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpu_match, cpu_attach
@@ -608,8 +610,6 @@ cpu_copy_trampoline()
 		mp_pdirpa = kmp->pm_pdirpa;
 }
 
-#endif
-
 
 int
 mp_cpu_start(struct cpu_info *ci)
@@ -677,6 +677,7 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 	outb(IO_RTC, NVRAM_RESET);
 	outb(IO_RTC+1, NVRAM_RESET_RST);
 }
+#endif	/* MULTIPROCESSOR */
 
 typedef void (vector)(void);
 extern vector Xsyscall, Xsyscall32;
