@@ -1,8 +1,12 @@
-/*	$OpenBSD: version.c,v 1.3 1996/05/13 09:13:07 mickey Exp $	*/
+/*	$OpenBSD: version.c,v 1.4 1996/09/28 08:13:50 deraadt Exp $	*/
 /*	$NetBSD: version.c,v 1.28 1995/12/23 17:21:23 perry Exp $	*/
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
+ *
+ *      1.29 -> 1.30
+ *		Prefer a type 166 partition if found. 166 is the OpenBSD
+ *		partition type.
  *
  *	1.28 -> 1.29
  *		adding program for booting from DOS file.
@@ -59,4 +63,4 @@
  *		look in boot.c revision logs
  */
 
-char version[] = "1.29";
+char version[] = "1.30";
