@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.4 2005/02/07 05:51:00 david Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.5 2005/02/27 08:21:15 norby Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -89,17 +89,17 @@ The default is
 .It Ic router-id Ar address
 Set the router ID; if not specified, the lowest IP address of the router
 will be used.
-.\".It Ic spf-delay Ar seconds
-.\"Set SPF delay in seconds.
-.\"The delay between receiving an update to the link
-.\"state database and starting the shortest path first calculation.
-.\"The default value is 1; valid range is 1\-10 seconds.
-.\".Pp
-.\".It Ic spf-holdtime Ar seconds
-.\"Set the SPF holdtime in seconds.
-.\"The minimum time between two consecutive
-.\"shortest path first calculations.
-.\"The default value is 5 seconds; the valid is range 1\-5 seconds.
+.It Ic spf-delay Ar seconds
+Set SPF delay in seconds.
+The delay between receiving an update to the link
+state database and starting the shortest path first calculation.
+The default value is 1; valid range is 1\-10 seconds.
+.Pp
+.It Ic spf-holdtime Ar seconds
+Set the SPF holdtime in seconds.
+The minimum time between two consecutive
+shortest path first calculations.
+The default value is 5 seconds; the valid is range 1\-5 seconds.
 .El
 .Sh AREAS
 Areas are used for grouping interfaces.

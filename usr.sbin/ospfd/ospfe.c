@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.7 2005/02/19 10:19:56 norby Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.8 2005/02/27 08:21:15 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -340,7 +340,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			if (nbr == NULL)
 				fatalx("ospfe_dispatch_rde: "
 				    "neighbor not found");
-			
+
 			nbr->dd_pending--;
 			if (nbr->dd_pending == 0 && nbr->state & NBR_STA_LOAD) {
 				if (ls_req_list_empty(nbr))
@@ -660,7 +660,7 @@ orig_rtr_lsa(struct area *area)
 			num_links++;
 			if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
 				fatalx("orig_rtr_lsa: buf_add failed");
-			
+
 			LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 				if (nbr != iface->self &&
 				    nbr->state & NBR_STA_FULL) {
@@ -692,7 +692,7 @@ orig_rtr_lsa(struct area *area)
 	}
 
 	/* LSA router header */
-	lsa_rtr.flags = 0;	/* XXX */
+	lsa_rtr.flags = oeconf->flags;	/* XXX */
 	lsa_rtr.dummy = 0;
 	lsa_rtr.nlinks = htons(num_links);
 	memcpy(buf_seek(buf, sizeof(lsa_hdr), sizeof(lsa_rtr)),
@@ -712,7 +712,7 @@ orig_rtr_lsa(struct area *area)
 	chksum = htons(iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET));
 	memcpy(buf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
 	    &chksum, sizeof(chksum));
-	
+
 	if (self)
 		imsg_compose(ibuf_rde, IMSG_LS_UPD,
 		    self->peerid, 0, -1, buf->buf, buf->wpos);

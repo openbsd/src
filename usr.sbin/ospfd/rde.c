@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.6 2005/02/10 14:05:48 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.7 2005/02/27 08:21:15 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -142,6 +142,10 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	    ibuf_main->handler, ibuf_main);
 	event_add(&ibuf_main->ev, NULL);
 
+	evtimer_set(&rdeconf->spf_timer, spf_timer, rdeconf);
+	cand_list_init();
+	rt_init();
+
 	event_dispatch();
 
 	rde_shutdown();
@@ -153,8 +157,8 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 void
 rde_shutdown(void)
 {
-
-	/* ... */
+	stop_spf_timer(rdeconf);
+	cand_list_clr();
 
 	msgbuf_write(&ibuf_ospfe->w);
 	msgbuf_clear(&ibuf_ospfe->w);
@@ -356,6 +360,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 			if (nbr->self) {
 				lsa_merge(nbr, lsa, v);
+				start_spf_timer(rdeconf);
 				break;
 			}
 
@@ -379,6 +384,10 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					    v->nbr->peerid, 0, -1,
 					    v->lsa, ntohs(v->lsa->hdr.len));
 			/* TODO LSA on req list -> BadLSReq */
+
+				/* start spf_timer */
+				log_debug("rde_dispatch_imsg: start spf_timer");
+				start_spf_timer(rdeconf);
 			} else if (r < 0) {
 				/* new LSA older than DB */
 				if (ntohl(db_hdr->seq_num) == MAX_SEQ_NUM &&
@@ -463,7 +472,18 @@ rde_router_id(void)
 	return (rdeconf->rtr_id.s_addr);
 }
 
+void
+rde_send_kroute(struct rt_node *r)
+{
+	struct kroute	 kr;
 
+	bzero(&kr, sizeof(kr));
+	kr.prefix.s_addr = r->prefix.s_addr;
+	kr.nexthop.s_addr = r->nexthop.s_addr;
+	kr.prefixlen = r->prefixlen;
+
+	imsg_compose(ibuf_main, IMSG_KROUTE_CHANGE, 0, 0, -1, &kr, sizeof(kr));
+}
 
 LIST_HEAD(rde_nbr_head, rde_nbr);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.9 2005/02/09 22:58:08 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.10 2005/02/27 08:21:15 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -424,6 +424,38 @@ lsa_find(struct area *area, u_int8_t type, u_int32_t ls_id, u_int32_t adv_rtr)
 	return (v);
 }
 
+struct vertex *
+lsa_find_net(struct area *area, u_int32_t ls_id)
+{
+	struct lsa_tree	*tree = &area->lsa_tree;
+	struct vertex	*v;
+
+	RB_FOREACH(v, lsa_tree, tree) {
+		if ((v->lsa->hdr.type == LSA_TYPE_NETWORK) &&
+		    (v->lsa->hdr.ls_id == (ls_id))) {
+			return (v);
+		}
+	}
+
+	return (NULL);
+}
+
+int
+lsa_num_links(struct vertex *v)
+{
+	switch (v->type) {
+	case LSA_TYPE_ROUTER:
+		return (ntohs(v->lsa->data.rtr.nlinks));
+	case LSA_TYPE_NETWORK:
+		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr)
+		    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link));
+	default:
+		fatalx("lsa_num_links: invalid LSA type");
+	}
+
+	return (0);
+}
+
 void
 lsa_snap(struct area *area, u_int32_t peerid)
 {
@@ -520,11 +552,11 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	/* overwrite the lsa all other fields are unaffected */
 	free(v->lsa);
 	v->lsa = lsa;
-	
+
 	/* set correct timeout for reflooding the LSA */
 	now = time(NULL);
 	timerclear(&tv);
-	if (v->changed + MIN_LS_ARRIVAL >= now) 
+	if (v->changed + MIN_LS_ARRIVAL >= now)
 		tv.tv_sec = MIN_LS_ARRIVAL;
 	evtimer_add(&v->ev, &tv);
 }

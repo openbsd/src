@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.7 2005/02/08 21:52:48 norby Exp $ */
+/*	$OpenBSD: ospf.h,v 1.8 2005/02/27 08:21:15 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -59,6 +59,14 @@
 #define DEFAULT_ADJ_TMOUT	60	/* XXX sane value? */
 
 #define DEFAULT_NBR_TMOUT	86400	/* 24 hours */
+
+#define DEFAULT_SPF_DELAY	1
+#define MIN_SPF_DELAY		1
+#define MAX_SPF_DELAY		10
+
+#define DEFAULT_SPF_HOLDTIME	5
+#define MIN_SPF_HOLDTIME	1
+#define MAX_SPF_HOLDTIME	5
 
 /* OSPF compatibility flags */
 #define OSPF_OPTION_E		0x02
@@ -160,6 +168,10 @@ struct ls_upd_hdr {
 #define LSA_METRIC_MASK		0x00ffffff	/* only for sum & as-ext */
 #define LSA_ASEXT_E_FLAG	0x80000000
 
+#define OSPF_RTR_B		0x01
+#define OSPF_RTR_E		0x02
+#define OSPF_RTR_V		0x04
+
 struct lsa_rtr {
 	u_int8_t		flags;
 	u_int8_t		dummy;
@@ -177,6 +189,10 @@ struct lsa_rtr_link {
 struct lsa_net {
 	u_int32_t		mask;
 	u_int32_t		att_rtr[1];
+};
+
+struct lsa_net_link {
+	u_int32_t		att_rtr;
 };
 
 struct lsa_sum {

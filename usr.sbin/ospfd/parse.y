@@ -1,7 +1,7 @@
-/*	$OpenBSD: parse.y,v 1.4 2005/02/02 21:02:25 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.5 2005/02/27 08:21:15 norby Exp $ */
 
 /*
- * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
+ * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -98,6 +98,7 @@ typedef struct {
 %}
 
 %token	AREA INTERFACE ROUTERID FIBUPDATE
+%token	SPFDELAY SPFHOLDTIME
 %token	AUTHKEY AUTHTYPE
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL TRANSMITDELAY
@@ -228,6 +229,24 @@ conf_main	: METRIC number {
 				conf->flags |= OSPFD_FLAG_NO_FIB_UPDATE;
 			else
 				conf->flags &= ~OSPFD_FLAG_NO_FIB_UPDATE;
+		}
+		| SPFDELAY number {
+			if ($2 < MIN_SPF_DELAY || $2 > MAX_SPF_DELAY) {
+				yyerror("spf-delay out of range "
+				    "(%d-%d)", MIN_SPF_DELAY,
+				    MAX_SPF_DELAY);
+				YYERROR;
+			}
+			conf->spf_delay = $2;
+		}
+		| SPFHOLDTIME number {
+			if ($2 < MIN_SPF_HOLDTIME || $2 > MAX_SPF_HOLDTIME) {
+				yyerror("spf-holdtime out of range "
+				    "(%d-%d)", MIN_SPF_HOLDTIME,
+				    MAX_SPF_HOLDTIME);
+				YYERROR;
+			}
+			conf->spf_hold_time = $2;
 		}
 		;
 
@@ -466,7 +485,9 @@ lookup(char *s)
 		{"router-dead-time",	ROUTERDEADTIME},
 		{"router-id",		ROUTERID},
 		{"router-priority",	ROUTERPRIORITY},
-		{"transmit-delay",	TRANSMITDELAY},
+		{"spf-delay",		SPFDELAY},
+		{"spf-holdtime",	SPFHOLDTIME},
+		{"transmit-delay",	TRANSMITDELAY}
 	};
 	const struct keywords	*p;
 
@@ -689,6 +710,9 @@ parse_config(char *filename, int opts)
 	defaults.priority = DEFAULT_PRIORITY;
 
 	conf->options = OSPF_OPTION_E;
+	conf->spf_delay = DEFAULT_SPF_DELAY;
+	conf->spf_hold_time = DEFAULT_SPF_HOLDTIME;
+	conf->spf_state = SPF_IDLE;
 
 	if ((fin = fopen(filename, "r")) == NULL) {
 		warn("%s", filename);

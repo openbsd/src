@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.10 2005/02/24 16:28:43 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.11 2005/02/27 08:21:15 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -29,9 +29,9 @@
 #include <event.h>
 #include <stdbool.h>
 
-#define CONF_FILE			"/etc/ospfd.conf"
-#define	OSPFD_SOCKET			"/var/run/ospfd.sock"
-#define OSPFD_USER			"_ospfd"
+#define CONF_FILE		"/etc/ospfd.conf"
+#define	OSPFD_SOCKET		"/var/run/ospfd.sock"
+#define OSPFD_USER		"_ospfd"
 
 #define NBR_HASHSIZE		128
 #define LSA_HASHSIZE		512
@@ -95,6 +95,8 @@ enum imsg_type {
 	IMSG_CTL_FIB_DECOUPLE,
 	IMSG_CTL_AREA,
 	IMSG_CTL_END,
+	IMSG_KROUTE_CHANGE,
+	IMSG_KROUTE_DELETE,
 	IMSG_IFINFO,
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
@@ -134,24 +136,24 @@ struct rde_nbr;
 RB_HEAD(lsa_tree, vertex);
 
 struct area {
-	LIST_ENTRY(area)		 entry;
-	struct in_addr			 id;
+	LIST_ENTRY(area)	 entry;
+	struct in_addr		 id;
 
-	struct lsa_tree			 lsa_tree;
-	LIST_HEAD(, iface)		 iface_list;
-	LIST_HEAD(, rde_nbr)		 nbr_list;
-/*	list				 addr_range_list; */
-	u_int32_t			 stub_default_cost;
+	struct lsa_tree		 lsa_tree;
+	LIST_HEAD(, iface)	 iface_list;
+	LIST_HEAD(, rde_nbr)	 nbr_list;
+/*	list			 addr_range_list; */
+	u_int32_t		 stub_default_cost;
 
-	u_int32_t	dead_interval;
-	u_int16_t	transfer_delay;
-	u_int16_t	hello_interval;
-	u_int16_t	rxmt_interval;
-	u_int16_t	metric;
-	u_int8_t	priority;
+	u_int32_t		 dead_interval;
+	u_int16_t		 transfer_delay;
+	u_int16_t		 hello_interval;
+	u_int16_t		 rxmt_interval;
+	u_int16_t		 metric;
+	u_int8_t		 priority;
 
-	bool				 transit;
-	bool				 stub;
+	bool			 transit;
+	bool			 stub;
 };
 
 /* interface states */
@@ -213,6 +215,28 @@ enum auth_type {
 	AUTH_CRYPT
 };
 
+/* spf states */
+enum spf_state {
+	SPF_IDLE,
+	SPF_DELAY,
+	SPF_HOLD,
+	SPF_HOLDQUEUE
+};
+
+enum path_type {
+	PT_INTRA_AREA,
+	PT_INTER_AREA,
+	PT_TYPE1_EXT,
+	PT_TYPE2_EXT
+};
+
+static const char * const path_type_names[] = {
+	"Intra-Area",
+	"Inter-Area",
+	"Type 1 external",
+	"Type 2 external"
+};
+
 /* lsa list used in RDE and OE */
 TAILQ_HEAD(lsa_head, lsa_entry);
 
@@ -265,6 +289,7 @@ enum {
 
 struct ospfd_conf {
 	struct event		ev;
+	struct event		spf_timer;
 	struct in_addr		rtr_id;
 	u_int32_t		opts;
 #define OSPFD_OPT_VERBOSE	0x00000001
@@ -272,8 +297,11 @@ struct ospfd_conf {
 #define OSPFD_OPT_NOACTION	0x00000004
 	int			maxdepth;
 	LIST_HEAD(, area)	area_list;
-
+	LIST_HEAD(, vertex)	cand_list;
 	struct lsa_tree		lsa_tree;
+	u_int32_t		spf_delay;
+	u_int32_t		spf_hold_time;
+	int			spf_state;
 	int			ospf_socket;
 	int			flags;
 	int			options; /* OSPF options */

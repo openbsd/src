@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.4 2005/02/09 22:58:08 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.5 2005/02/27 08:21:15 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -28,6 +28,7 @@
 
 struct vertex {
 	RB_ENTRY(vertex)	 entry;
+	TAILQ_ENTRY(vertex)	 cand;
 	struct event		 ev;
 	struct in_addr		 nexthop;
 	struct vertex		*prev;
@@ -54,12 +55,22 @@ struct rde_nbr {
 	int			 self;
 };
 
+struct rt_node {
+	RB_ENTRY(rt_node)	 entry;
+	struct in_addr		 prefix;
+	u_int8_t		 prefixlen;
+	struct in_addr		 nexthop;
+	enum path_type		 p_type;
+	u_int32_t		 cost;
+};
+
 /* rde.c */
 pid_t		 rde(struct ospfd_conf *, int [2], int [2], int [2]);
 int		 rde_imsg_compose_parent(int, pid_t, void *, u_int16_t);
 int		 rde_imsg_compose_ospfe(int, u_int32_t, pid_t, void *,
 		     u_int16_t);
 u_int32_t	 rde_router_id(void);
+void		 rde_send_kroute(struct rt_node *);
 void		 rde_nbr_del(struct rde_nbr *);
 int		 rde_nbr_loading(struct area *);
 struct rde_nbr	*rde_nbr_self(struct area *);
@@ -74,9 +85,37 @@ int		 lsa_self(struct rde_nbr *, struct lsa *, struct vertex *);
 void		 lsa_add(struct rde_nbr *, struct lsa *);
 void		 lsa_del(struct rde_nbr *, struct lsa_hdr *);
 struct vertex	*lsa_find(struct area *, u_int8_t, u_int32_t, u_int32_t);
+struct vertex	*lsa_find_net(struct area *area, u_int32_t);
+int		 lsa_num_links(struct vertex *);
 void		 lsa_snap(struct area *, u_int32_t);
 void		 lsa_dump(struct lsa_tree *, pid_t);
 void		 lsa_merge(struct rde_nbr *, struct lsa *, struct vertex *);
+
+/* rde_spf.c */
+void		 spf_calc(struct area *);
+void		 spf_tree_clr(struct area *);
+
+void		 cand_list_init(void);
+void		 cand_list_add(struct vertex *);
+struct vertex	*cand_list_pop(void);
+bool		 cand_list_present(struct vertex *);
+void		 cand_list_clr(void);
+bool		 cand_list_empty(void);
+
+void		 spf_timer(int, short, void *);
+int		 start_spf_timer(struct ospfd_conf *);
+int		 stop_spf_timer(struct ospfd_conf *);
+int		 start_spf_holdtimer(struct ospfd_conf *);
+
+void		 rt_init(void);
+int		 rt_compare(struct rt_node *, struct rt_node *);
+struct rt_node	*rt_find(in_addr_t, u_int8_t);
+int		 rt_insert(struct rt_node *);
+int		 rt_remove(struct rt_node *);
+void		 rt_clear(void);
+
+struct lsa_rtr_link	*get_rtr_link(struct vertex *, int);
+struct lsa_net_link	*get_net_link(struct vertex *, int);
 
 RB_PROTOTYPE(lsa_tree, vertex, entry, lsa_compare)
 
