@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.40 2000/09/24 01:02:24 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.41 2001/01/27 03:23:31 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.40 2000/09/24 01:02:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.41 2001/01/27 03:23:31 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -823,7 +823,8 @@ newroute(argc, argv)
 		if (*gateway) {
 			(void) printf(": gateway %s", gateway);
 			if (attempts > 1 && ret == 0 && af == AF_INET)
-			    (void) printf(" (%s)", routename(&so_gate.sa));
+			    (void) printf(" (%s)",
+			        inet_ntoa(so_gate.sin.sin_addr));
 		}
 		if (ret == 0)
 			(void) printf("\n");
