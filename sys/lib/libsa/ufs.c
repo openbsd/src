@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.13 1995/10/20 00:42:21 cgd Exp $	*/
+/*	$NetBSD: ufs.c,v 1.14 1996/01/13 22:25:44 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -152,7 +152,7 @@ read_inode(inumber, f)
 	}
 out:
 	free(buf, fs->fs_bsize);
-	return (0);	 
+	return (rc);	 
 }
 
 /*
