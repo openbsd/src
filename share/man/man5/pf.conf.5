@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.93 2002/10/09 14:37:01 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.94 2002/10/13 15:51:55 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -598,6 +598,7 @@ supports macro definition and expansion like:
 .Pp
 Macro names must start with a letter and may contain letters, digits
 and underscores.
+Macro names may not be pf reserved words (e.g.  pass, in, out).
 Macros are not expanded recursively.
 .Sh STATEFUL INSPECTION
 .Em pf
@@ -800,6 +801,21 @@ expands to
 .Bd -literal
     block in on ! wi0 inet from 10.0.0.1/24 to any 
     block in inet from 10.0.0.1 to any 
+.Ed
+.Pp
+Caveat: Rules created by the
+.Pa antispoof
+directive interfere with packets sent over loopback interfaces
+to local addresses.
+One should pass these explicitely.
+.Sh FILTERING ON LOOPBACK INTERFACES
+There's hardly a point in filtering on loopback interfaces such as lo0.
+Every packet seen there is sent from and to the local host.
+One may want to include these rules at the very beginning
+of your ruleset to pass all traffic on lo0:
+.Bd -literal
+pass in quick on lo0 all
+pass out quick on lo0 all
 .Ed
 .Sh FRAGMENT HANDLING
 The size of IP datagrams (packets) can be significantly larger than the
