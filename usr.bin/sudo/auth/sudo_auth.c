@@ -95,7 +95,8 @@ sudo_auth auth_switch[] = {
 int nil_pw;		/* I hate resorting to globals like this... */
 
 void
-verify_user(prompt)
+verify_user(pw, prompt)
+    struct passwd *pw;
     char *prompt;
 {
     short counter = def_ival(I_PW_TRIES) + 1;
@@ -121,7 +122,7 @@ verify_user(prompt)
 	    if (NEEDS_USER(auth))
 		set_perms(PERM_USER, 0);
 
-	    status = (auth->init)(sudo_user.pw, &prompt, auth);
+	    status = (auth->init)(pw, &prompt, auth);
 	    if (status == AUTH_FAILURE)
 		auth->flags &= ~FLAG_CONFIGURED;
 	    else if (status == AUTH_FATAL)	/* XXX log */
@@ -139,7 +140,7 @@ verify_user(prompt)
 		if (NEEDS_USER(auth))
 		    set_perms(PERM_USER, 0);
 
-		status = (auth->setup)(sudo_user.pw, &prompt, auth);
+		status = (auth->setup)(pw, &prompt, auth);
 		if (status == AUTH_FAILURE)
 		    auth->flags &= ~FLAG_CONFIGURED;
 		else if (status == AUTH_FATAL)	/* XXX log */
@@ -169,7 +170,7 @@ verify_user(prompt)
 	    if (NEEDS_USER(auth))
 		set_perms(PERM_USER, 0);
 
-	    success = auth->status = (auth->verify)(sudo_user.pw, p, auth);
+	    success = auth->status = (auth->verify)(pw, p, auth);
 
 	    if (NEEDS_USER(auth))
 		set_perms(PERM_ROOT, 0);
@@ -199,7 +200,7 @@ cleanup:
 	    if (NEEDS_USER(auth))
 		set_perms(PERM_USER, 0);
 
-	    status = (auth->cleanup)(sudo_user.pw, auth);
+	    status = (auth->cleanup)(pw, auth);
 	    if (status == AUTH_FATAL)	/* XXX log */
 		exit(1);		/* assume error msg already printed */
 

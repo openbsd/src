@@ -115,8 +115,9 @@ static int set_loginclass		__P((struct passwd *));
 static void add_env			__P((int));
 static void clean_env			__P((char **, struct env_table *));
 static void initial_setup		__P((void));
-static void update_epasswd		__P((void));
+static struct passwd *get_authpw	__P((void));
 extern struct passwd *sudo_getpwuid	__P((uid_t));
+extern struct passwd *sudo_getpwnam	__P((const char *));
 extern void list_matches		__P((void));
 
 /*
@@ -127,6 +128,7 @@ char **Argv;
 int NewArgc = 0;
 char **NewArgv = NULL;
 struct sudo_user sudo_user;
+struct passwd *auth_pw;
 FILE *sudoers_fp = NULL;
 struct interface *interfaces;
 int num_interfaces;
@@ -316,8 +318,8 @@ main(argc, argv)
 	    (void) close(fd);
     }
 
-    /* Update encrypted password in user_password if sudoers said to.  */
-    update_epasswd();
+    /* Fill in passwd struct based on user we are authenticating as.  */
+    auth_pw = get_authpw();
 
     /* Require a password unless the NOPASS tag was set.  */
     if (!(validated & FLAG_NOPASS))
@@ -345,7 +347,7 @@ main(argc, argv)
 	/* This *must* have been set if we got a match but... */
 	if (safe_cmnd == NULL) {
 	    log_error(MSG_ONLY,
-		"internal error, safe_cmnd never got set for %s; %s",
+		"internal error, cmnd_safe never got set for %s; %s",
 		user_cmnd,
 		"please report this error at http://courtesan.com/sudo/bugs/");
 	}
@@ -1167,39 +1169,35 @@ set_fqdn()
 }
 
 /*
- * If the sudoers file says to prompt for a different user's password,
- * update the encrypted password in user_passwd accordingly.
+ * Get passwd entry for the user we are going to authenticate as.
+ * By default, this is the user invoking sudo...
  */
-static void
-update_epasswd()
+static struct passwd *
+get_authpw()
 {
     struct passwd *pw;
 
-    /* We may be configured to prompt for a password other than the user's */
     if (def_ival(I_ROOTPW)) {
-	if ((pw = getpwuid(0)) == NULL)
+	if ((pw = sudo_getpwuid(0)) == NULL)
 	    log_error(0, "uid 0 does not exist in the passwd file!");
-	free(user_passwd);
-	user_passwd = estrdup(sudo_getepw(pw));
     } else if (def_ival(I_RUNASPW)) {
-	if ((pw = getpwnam(def_str(I_RUNAS_DEF))) == NULL)
+	if ((pw = sudo_getpwnam(def_str(I_RUNAS_DEF))) == NULL)
 	    log_error(0, "user %s does not exist in the passwd file!",
 		def_str(I_RUNAS_DEF));
-	free(user_passwd);
-	user_passwd = estrdup(sudo_getepw(pw));
     } else if (def_ival(I_TARGETPW)) {
 	if (**user_runas == '#') {
-	    if ((pw = getpwuid(atoi(*user_runas + 1))) == NULL)
+	    if ((pw = sudo_getpwuid(atoi(*user_runas + 1))) == NULL)
 		log_error(0, "uid %s does not exist in the passwd file!",
 		    user_runas);
 	} else {
-	    if ((pw = getpwnam(*user_runas)) == NULL)
+	    if ((pw = sudo_getpwnam(*user_runas)) == NULL)
 		log_error(0, "user %s does not exist in the passwd file!",
 		    user_runas);
 	}
-	free(user_passwd);
-	user_passwd = estrdup(sudo_getepw(pw));
-    }
+    } else
+	pw = sudo_user.pw;
+
+    return(pw);
 }
 
 /*

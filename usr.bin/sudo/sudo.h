@@ -196,7 +196,7 @@ int sudo_setenv		__P((char *, char *));
 char *tgetpass		__P((const char *, int, int));
 int find_path		__P((char *, char **));
 void check_user		__P((void));
-void verify_user	__P((char *));
+void verify_user	__P((struct passwd *, char *));
 int sudoers_lookup	__P((int));
 void set_perms		__P((int, int));
 void remove_timestamp	__P((int));
@@ -208,8 +208,8 @@ void pass_warn		__P((FILE *));
 VOID *emalloc		__P((size_t));
 VOID *erealloc		__P((VOID *, size_t));
 char *estrdup		__P((const char *));
-void easprintf		__P((char **, const char *, ...));
-void evasprintf		__P((char **, const char *, va_list));
+int easprintf		__P((char **, const char *, ...));
+int evasprintf		__P((char **, const char *, va_list));
 void dump_defaults	__P((void));
 void dump_auth_methods	__P((void));
 int lock_file		__P((int, int));
@@ -222,6 +222,7 @@ YY_DECL;
 /* Only provide extern declarations outside of sudo.c. */
 #ifndef _SUDO_SUDO_C
 extern struct sudo_user sudo_user;
+extern struct passwd *auth_pw;
 
 extern int Argc;
 extern char **Argv;

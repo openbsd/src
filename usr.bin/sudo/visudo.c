@@ -214,7 +214,6 @@ main(argc, argv)
 	/* Parse sudoers to pull in editor and env_editor conf values. */
 	if ((yyin = fopen(stmp, "r"))) {
 	    yyout = stdout;
-	    init_defaults();
 	    init_parser();
 	    yyparse();
 	    parse_error = FALSE;
@@ -230,7 +229,7 @@ main(argc, argv)
      */
     if (!def_flag(I_ENV_EDITOR) ||
 	(!(Editor = getenv("EDITOR")) && !(Editor = getenv("VISUAL"))))
-	Editor = def_str(I_EDITOR);
+	Editor = estrdup(def_str(I_EDITOR));
 
     /*
      * Edit the temp file and parse it (for sanity checking)
@@ -286,6 +285,7 @@ main(argc, argv)
 	    }
 
 	    /* Clean slate for each parse */
+	    user_runas = NULL;
 	    init_defaults();
 	    init_parser();
 

@@ -1297,3 +1297,21 @@ Sudo 1.6.2 released.
      not being used correctly and the entry was being applied globally.
 
 Sudo 1.6.3 released.
+
+409) Fixed targetpw, rootpw, and runaspw options when used with non-passwd
+     authentication (pam, etc).
+
+Sudo 1.6.3p1 released.
+
+410) When the targetpw flag is set, use the target username as part
+     of the timestamp path.
+
+Sudo 1.6.3p2 released.
+
+411) Fixed a bug that prevented the -H option from being useful.
+
+Sudo 1.6.3p3 released.
+
+412) Fixed a case where a string was used after it has been freed.
+
+Sudo 1.6.3p4 released.

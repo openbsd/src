@@ -93,7 +93,8 @@ int crypt_type = INT_MAX;
 /*
  * Local functions not visible outside getspwuid.c
  */
-static char *sudo_getshell	__P((struct passwd *));
+static char *sudo_getshell		__P((struct passwd *));
+static struct passwd *sudo_pwdup	__P((struct passwd *));
 
 
 /*
@@ -191,14 +192,11 @@ sudo_getepw(pw)
  * Dynamically allocate space for a struct password and the constituent parts
  * that we care about.  Fills in pw_passwd from shadow file if necessary.
  */
-struct passwd *
-sudo_getpwuid(uid)
-    uid_t uid;
+static struct passwd *
+sudo_pwdup(pw)
+    struct passwd *pw;
 {
-    struct passwd *pw, *local_pw;
-
-    if ((pw = getpwuid(uid)) == NULL)
-	return(NULL);
+    struct passwd *local_pw;
 
     /* Allocate space for a local copy of pw. */
     local_pw = (struct passwd *) emalloc(sizeof(struct passwd));
@@ -217,4 +215,36 @@ sudo_getpwuid(uid)
     local_pw->pw_passwd = estrdup(sudo_getepw(pw));
 
     return(local_pw);
+}
+
+/*
+ * Get a password entry by uid and allocate space for it.
+ * Fills in pw_passwd from shadow file if necessary.
+ */
+struct passwd *
+sudo_getpwuid(uid)
+    uid_t uid;
+{
+    struct passwd *pw;
+
+    if ((pw = getpwuid(uid)) == NULL)
+	return(NULL);
+    else
+	return(sudo_pwdup(pw));
+}
+
+/*
+ * Get a password entry by name and allocate space for it.
+ * Fills in pw_passwd from shadow file if necessary.
+ */
+struct passwd *
+sudo_getpwnam(name)
+    const char *name;
+{
+    struct passwd *pw;
+
+    if ((pw = getpwnam(name)) == NULL)
+	return(NULL);
+    else
+	return(sudo_pwdup(pw));
 }

@@ -102,7 +102,7 @@ check_user()
 	prompt = expand_prompt(user_prompt ? user_prompt : def_str(I_PASSPROMPT),
 	    user_name, user_shost);
 
-	verify_user(prompt);
+	verify_user(auth_pw, prompt);
     }
     if (status != TS_ERROR)
 	update_timestamp(timestampdir, timestampfile);
@@ -251,8 +251,18 @@ build_timestamp(timestampdir, timestampfile)
     char **timestampdir;
     char **timestampfile;
 {
-    char *dirparent = def_str(I_TIMESTAMPDIR);
+    char *dirparent;
+    int len;
 
+    dirparent = def_str(I_TIMESTAMPDIR);
+    len = easprintf(timestampdir, "%s/%s", dirparent, user_name);
+    if (len >= MAXPATHLEN)
+	log_error(0, "timestamp path too long: %s", timestampdir);
+
+    /*
+     * Timestamp file may be a file in the directory or NUL to use
+     * the directory as the timestamp.
+     */
     if (def_flag(I_TTY_TICKETS)) {
 	char *p;
 
@@ -260,17 +270,20 @@ build_timestamp(timestampdir, timestampfile)
 	    p++;
 	else
 	    p = user_tty;
-	if (strlen(dirparent) + strlen(user_name) + strlen(p) + 3 > MAXPATHLEN)
-	    log_error(0, "timestamp path too long: %s/%s/%s", dirparent,
-		user_name, p);
-	easprintf(timestampdir, "%s/%s", dirparent, user_name);
-	easprintf(timestampfile, "%s/%s/%s", dirparent, user_name, p);
-    } else {
-	if (strlen(dirparent) + strlen(user_name) + 2 > MAXPATHLEN)
-	    log_error(0, "timestamp path too long: %s/%s", dirparent, user_name);
-	easprintf(timestampdir, "%s/%s", dirparent, user_name);
+	if (def_flag(I_TARGETPW))
+	    len = easprintf(timestampfile, "%s/%s/%s:%s", dirparent, user_name,
+		p, *user_runas);
+	else
+	    len = easprintf(timestampfile, "%s/%s/%s", dirparent, user_name, p);
+	if (len >= MAXPATHLEN)
+	    log_error(0, "timestamp path too long: %s", timestampfile);
+    } else if (def_flag(I_TARGETPW)) {
+	len = easprintf(timestampfile, "%s/%s/%s", dirparent, user_name,
+	    *user_runas);
+	if (len >= MAXPATHLEN)
+	    log_error(0, "timestamp path too long: %s", timestampfile);
+    } else
 	*timestampfile = NULL;
-    }
 }
 
 /*

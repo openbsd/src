@@ -121,7 +121,7 @@ estrdup(src)
  * easprintf() calls vasprintf() and exits with an error if vasprintf()
  * returns -1 (out of memory).
  */
-void
+int
 #ifdef __STDC__
 easprintf(char **ret, const char *fmt, ...)
 #else
@@ -148,21 +148,24 @@ easprintf(va_alist)
 	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	exit(1);
     }
+    return(len);
 }
 
 /*
  * evasprintf() calls vasprintf() and exits with an error if vasprintf()
  * returns -1 (out of memory).
  */
-void
+int
 evasprintf(ret, format, args)
     char **ret;
     const char *format;
     va_list args;
 {
+    int len;
 
-    if (vasprintf(ret, format, args) == -1) {
+    if ((len = vasprintf(ret, format, args)) == -1) {
 	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
 	exit(1);
     }
+    return(len);
 }
