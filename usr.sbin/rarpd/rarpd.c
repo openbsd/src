@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.18 1998/04/25 06:29:53 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.19 1998/05/03 22:49:09 d Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.18 1998/04/25 06:29:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.19 1998/05/03 22:49:09 d Exp $";
 #endif
 
 
@@ -748,10 +748,14 @@ update_arptab(ep, ipaddr)
 	memcpy((char *) request.arp_ha.sa_data, (char *) ep, 6);
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (ioctl(s, SIOCSARP, (caddr_t) & request) < 0) {
-		err(NONFATAL, "SIOCSARP: %s", strerror(errno));
+	if (s < 0) {
+		err(NONFATAL, "socket: %s", strerror(errno));
+	} else {
+		if (ioctl(s, SIOCSARP, (caddr_t) & request) < 0) {
+		    err(NONFATAL, "SIOCSARP: %s", strerror(errno));
+		}
+		(void) close(s);
 	}
-	(void) close(s);
 #else
 	if (arptab_set(ep, ipaddr) > 0)
 		syslog(LOG_ERR, "couldn't update arp table");
