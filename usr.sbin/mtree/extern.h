@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 2004/05/02 17:55:53 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1995/03/07 21:12:07 cgd Exp $	*/
 
 /*-
@@ -32,12 +32,15 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-int	 compare(char *, NODE *, FTSENT *);
-int	 crc(int, u_int32_t *, u_int32_t *);
-void	 cwalk(void);
-void	 error(const char *, ...);
-char	*inotype(u_int);
-u_int	 parsekey(char *, int *);
-char	*rlink(char *);
-NODE	*spec(void);
-int	 verify(void);
+struct _node;
+struct _ftsent;
+
+int		 compare(char *, struct _node *, struct _ftsent *);
+int		 crc(int, u_int32_t *, u_int32_t *);
+void		 cwalk(void);
+void		 error(const char *, ...);
+char		*inotype(u_int);
+u_int		 parsekey(char *, int *);
+char		*rlink(char *);
+struct _node	*spec(void);
+int		 verify(void);

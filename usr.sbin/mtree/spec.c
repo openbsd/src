@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.18 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: spec.c,v 1.19 2004/05/02 17:55:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,13 +34,12 @@
 #if 0
 static const char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: spec.c,v 1.18 2003/06/02 23:36:54 millert Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.19 2004/05/02 17:55:53 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fts.h>
 #include <pwd.h>
 #include <grp.h>
 #include <errno.h>
