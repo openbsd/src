@@ -187,7 +187,7 @@ mouse_t mouse = {
     proto : P_UNKNOWN,
     baudrate : 1200, 
     old_baudrate : 1200,
-    rate : 0,
+    rate : MOUSE_RATE_UNKNOWN,
     resolution : MOUSE_RES_UNKNOWN, 
     zmap: 0,
     wmode: 0,
@@ -329,8 +329,6 @@ mouse_fill_mousemode(void)
 	/* default settings */
 	
 	mouse.mode.protocol = P_UNKNOWN; 
-	mouse.mode.rate = -1; /* unknown */
-	mouse.mode.resolution = MOUSE_RES_UNKNOWN;
 	mouse.mode.accelfactor = 0; /* no accel */
 
 	if (strcmp(mouse.portname,PMS_DEV) == 0) {
@@ -358,6 +356,47 @@ mouse_fill_mousemode(void)
 	}
 	if (mouse.proto != -1)
 		mouse.mode.protocol = mouse.proto;
+	
+	/* resolution */
+	
+	switch (mouse.resolution) {
+	case MOUSE_RES_HIGH:
+	case MOUSE_RES_MEDIUMHIGH:
+	case MOUSE_RES_MEDIUMLOW:
+	case MOUSE_RES_LOW:
+		mouse.mode.resolution = mouse.resolution;
+		break;
+	case MOUSE_RES_DEFAULT:
+	case MOUSE_RES_UNKNOWN:
+		/* default to low resolution */
+		mouse.mode.resolution = MOUSE_RES_LOW;
+		break;
+	default:
+		if (mouse.resolution >= 200)
+			mouse.mode.resolution = MOUSE_RES_HIGH;
+		else if (mouse.resolution >= 100)
+			mouse.mode.resolution = MOUSE_RES_MEDIUMHIGH;
+		else if (mouse.resolution >= 50)
+			mouse.mode.resolution = MOUSE_RES_MEDIUMLOW;
+		else mouse.mode.resolution = MOUSE_RES_LOW;
+	}
+		
+	/* sample rate */
+
+	if (mouse.rate != MOUSE_RATE_UNKNOWN) {
+		if (mouse.rate >= 200)
+			mouse.mode.rate = MOUSE_RATE_VERY_HIGH;
+		else if (mouse.rate >= 100)
+			mouse.mode.rate = MOUSE_RATE_HIGH;
+		else if (mouse.rate >= 80)
+			mouse.mode.rate = MOUSE_RATE_MEDIUM_HIGH;
+		else if (mouse.rate >= 60)
+			mouse.mode.rate = MOUSE_RATE_MEDIUM_LOW;
+		else if (mouse.rate >= 40)
+			mouse.mode.rate = MOUSE_RATE_LOW;
+		else 
+			mouse.mode.rate = MOUSE_RATE_VERY_LOW;
+	}
 }
 
 static void
@@ -1010,13 +1049,27 @@ mouse_init(void)
         }
 	break;
 
-    case P_BM:
+    case P_BM: 
+    	break;
+    
     case P_PS2:
-	if (mouse.rate >= 0)
-	    mouse.mode.rate = mouse.rate;
-	if (mouse.resolution != MOUSE_RES_UNKNOWN)
-	    mouse.mode.resolution = mouse.resolution;
-	/* XXX Rate and resolution are not set ! (pms driver can't) XXX */
+	
+	/* now sets the resolution and rate for PS/2 mice */
+	
+	/* always sets resolution, to a default value if no value is given */
+
+	c = PS2_SET_RES;
+	write(mouse.mfd, &c, 1);
+	c = mouse.mode.resolution;
+	write(mouse.mfd, &c, 1);
+	
+	if (mouse.rate != MOUSE_RATE_UNKNOWN) {
+		c = PS2_SET_RATE;
+		write(mouse.mfd, &c, 1);
+		c = mouse.mode.rate;
+		write(mouse.mfd, &c, 1);
+	}
+
 	break;
 
     default:
@@ -1868,7 +1921,7 @@ main(int argc, char **argv)
 				if (strcmp(optarg, "high") == 0)
 					mouse.resolution = MOUSE_RES_HIGH;
 				else if (strcmp(optarg, "medium-high") == 0)
-					mouse.resolution = MOUSE_RES_HIGH;
+					mouse.resolution = MOUSE_RES_MEDIUMHIGH;
 				else if (strcmp(optarg, "medium-low") == 0)
 					mouse.resolution = MOUSE_RES_MEDIUMLOW;
 				else if (strcmp(optarg, "low") == 0)

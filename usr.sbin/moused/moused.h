@@ -273,12 +273,28 @@ typedef struct {
 
 /* Mouse resolutions */
 
-#define MOUSE_RES_UNKNOWN	(-1)
-#define MOUSE_RES_DEFAULT	0
-#define MOUSE_RES_LOW		(-2)
-#define MOUSE_RES_MEDIUMLOW	(-3)
-#define MOUSE_RES_MEDIUMHIGH	(-4)
-#define MOUSE_RES_HIGH		(-5)
+#define MOUSE_RES_DEFAULT	254	
+#define MOUSE_RES_UNKNOWN	255
+#define MOUSE_RES_LOW		0	
+#define MOUSE_RES_MEDIUMLOW	1
+#define MOUSE_RES_MEDIUMHIGH	2
+#define MOUSE_RES_HIGH		3
+
+/* Mouse report rates */
+
+#define MOUSE_RATE_UNKNOWN	255	
+#define MOUSE_RATE_DEFAULT	80
+#define MOUSE_RATE_VERY_LOW	20
+#define MOUSE_RATE_LOW		40
+#define MOUSE_RATE_MEDIUM_LOW	60
+#define MOUSE_RATE_MEDIUM_HIGH	80
+#define MOUSE_RATE_HIGH		100
+#define MOUSE_RATE_VERY_HIGH	200	
+
+/* PS/2 rate and resolution */
+
+#define PS2_SET_RATE 0xf3
+#define PS2_SET_RES  0xe8
 
 /* serial PnP ID string */
 typedef struct {
@@ -308,8 +324,8 @@ typedef struct mousehw {
 
 typedef struct mousemode {
 	int protocol;		/* MOUSE_PROTO_XXX */
-	int rate;		/* report rate (per sec), -1 if unknown */
-	int resolution;		/* MOUSE_RES_XXX, -1 if unknown */
+	unsigned char rate;	/* report rate (per sec), -1 if unknown */
+	unsigned char resolution;/* MOUSE_RES_XXX, -1 if unknown */
 	int accelfactor;	/* accelation factor (must be 1 or greater) */
 	int packetsize;		/* the length of the data packet */
 	unsigned char syncmask[2]; /* sync. data bits in the header byte */
@@ -323,8 +339,8 @@ typedef struct mouse_s {
     int proto;			/* MOUSE_PROTO_XXX */
     int baudrate;
     int old_baudrate;
-    int rate;			/* report rate */
-    int resolution;		/* MOUSE_RES_XXX or a positive number */
+    unsigned char rate;			/* report rate */
+    unsigned char resolution;		/* MOUSE_RES_XXX or a positive number */
     int zmap;			/* MOUSE_{X|Y}AXIS or a button number */
     int wmode;			/* wheel mode button number */
     int mfd;			/* mouse file descriptor */
