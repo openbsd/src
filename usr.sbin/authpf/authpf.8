@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.17 2002/07/27 07:27:04 nordin Exp $
+.\" $OpenBSD: authpf.8,v 1.18 2002/10/25 18:34:53 camield Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -34,12 +34,12 @@
 .Nm authpf
 .Sh DESCRIPTION
 .Nm
-is used as a user shell for authenticating gateways.
+is a user shell for authenticating gateways.
 It is used to change
 .Xr pf 4
 rules when a user authenticates and starts a session with
 .Xr sshd 8
-and to then undo the changes when the user's session exits.
+and to undo these changes when the user's session exits.
 It is designed for changing filter and translation rules for an individual
 source IP address as long as a user maintains an active
 .Xr ssh 1
@@ -69,8 +69,8 @@ On startup,
 .Nm
 retrieves the client's connecting IP address via the
 .Ev SSH_CLIENT
-environment variable, and after performing additional access checks,
-a template file is read to determine what filter and translation (if
+environment variable and, after performing additional access checks,
+reads a template file to determine what filter and translation (if
 any) rules to add.
 On session exit the same rules that were added at startup are removed.
 By default, filter rules are added at the end of the active
@@ -86,11 +86,11 @@ use the same format described in
 The only difference is that these rules may (and probably should) use
 the macro
 .Em user_ip
-which is defined to the connecting ip address whenever
+which is assigned the connecting ip address whenever
 .Nm
 is run.
 .Pp
-Filter and nat rules will be searched for first in
+Filter and nat rules will first be searched for in
 .Pa /etc/authpf/users/$USER/
 and then in
 .Pa /etc/authpf/ .
@@ -99,7 +99,7 @@ Per-user rules from the
 directory are intended to be used when non-default rules
 are needed on an individual user basis.
 It is important to ensure that a user can not write or change
-these configuration files in this case.
+these configuration files.
 .Pp
 Filter and translation rules are loaded from the file
 .Pa /etc/authpf/users/$USER/authpf.rules .
@@ -154,8 +154,9 @@ offered by
 authenticated to
 .Xr ssh 1
 and deny access to only a few troublesome individuals.
-This is done by creating a file with the banned user's login name in
-.Pa /etc/authpf/banned .
+This is done by creating a file with the banned user's login name as the
+filename in
+.Pa /etc/authpf/banned/ .
 The contents of this file will be displayed to a banned user, thus providing
 a method for informing the user that they have been banned, and where they can
 go and how to get there if they want to have their service restored.
@@ -187,23 +188,23 @@ maintains the changed filter rules as long as the user maintains an
 active session.
 It is important to remember however, that the existence
 of this session means the user is authenticated.
-Because of this, it is important to both configure
+Because of this, it is important to configure
 .Xr sshd 8
 to ensure the security of the session, and to ensure that the network
-by which users connect to use.
+through which users connect is secure.
 .Xr sshd 8
 should be configured to use the
 .Dv ClientAliveInterval
 and
 .Dv ClientAliveCountMax
-parameters to ensure than an ssh session is terminated quickly if
+parameters to ensure that an ssh session is terminated quickly if
 it becomes unresponsive, or if arp or address spoofing is used to
 hijack the session.
 Note that TCP keepalives are not sufficient for
 this, since they are not secure.
 .Pp
 .Nm
-will remove state table entries that were created during a user's
+will remove statetable entries that were created during a user's
 session.
 This ensures that there will be no unauthenticated traffic
 allowed to pass after the controlling
@@ -211,7 +212,7 @@ allowed to pass after the controlling
 session has been closed.
 .Pp
 .Nm
-is designed for gateway machines which don't typically have regular
+is designed for gateway machines which typically do not have regular
 (non-administrative) users using the machine.
 An administrator must remember that
 .Nm
@@ -325,7 +326,7 @@ ClientAliveInterval 15
 ClientAliveCountMax 3
 .Ed
 .Pp
-This ensures that unresponsive or spoofed session are terminated in under a
+This ensures that unresponsive or spoofed sessions are terminated within a
 minute, since a hijacker should not be able to spoof ssh keepalive messages.
 .Pp
 .Pp
@@ -371,9 +372,9 @@ Example
 internal_if="fxp1"
 gateway_addr="10.0.1.1"
 block in on $internal_if from any to any
-pass in quick on $internal_if proto tcp from any to $gateway_addr/32 \\
+pass in quick on $internal_if proto tcp from any to $gateway_addr \\
  port = ssh
-pass in quick on $internal_if proto udp from any to $gateway_addr/32 \\
+pass in quick on $internal_if proto udp from any to $gateway_addr \\
  port = domain
 .Ed
 .Pp
@@ -385,18 +386,9 @@ Example
 external_if = "xl0"
 internal_if = "fxp0"
 
-pass in log quick on $internal_if proto tcp from $user_ip/32 to any \\
+pass in log quick on $internal_if proto tcp from $user_ip to any \\
  keep state
-pass in quick on $internal_if from $user_ip/32 to any
-.Ed
-.Pp
-Example
-.Pa /etc/authpf/authpf.nat :
-.Bd -literal
-# When the user authenticates, rdr ftp for proxying by ftp-proxy(8)
-internal_if="fxp1"
-rdr on $internal_if proto tcp from $user_ip/32 to any port 21 \\
- -> 127.0.0.1 port 8081
+pass in quick on $internal_if from $user_ip to any
 .Ed
 .Pp
 Another example
@@ -406,22 +398,26 @@ we might need to be a bit more restrictive.
 .Bd -literal
 internal_if="fxp1"
 ipsec_gw="10.2.3.4"
+
+# rdr ftp for proxying by ftp-proxy(8)
+rdr on $internal_if proto tcp from $user_ip to any port 21 \\
+ -> 127.0.0.1 port 8081
+
 # allow out ftp, ssh, www and https only, and allow user to negotiate
 # ipsec with the ipsec server.
-pass in log quick on $internal_if proto tcp from $user_ip/32 to any \\
+pass in log quick on $internal_if proto tcp from $user_ip to any \\
  port { 21, 22, 80, 443 } flags S/SA
-pass in quick on $internal_if proto tcp from $user_ip/32 to any \\
+pass in quick on $internal_if proto tcp from $user_ip to any \\
  port { 21, 22, 80, 443 }
-pass in quick proto udp from $user_ip/32 to $ipsec_gw/32 port = isakmp \\
+pass in quick proto udp from $user_ip to $ipsec_gw port = isakmp \\
  keep state
-pass in quick proto esp from $user_ip/32 to $ipsec_gw/32
+pass in quick proto esp from $user_ip to $ipsec_gw
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/authpf/authpf.conf" -compact
 .It Pa /etc/authpf/authpf.conf
 .It Pa /etc/authpf/authpf.allow
 .It Pa /etc/authpf/authpf.rules
-.It Pa /etc/authpf/authpf.nat
 .It Pa /etc/authpf/authpf.message
 .It Pa /etc/authpf/authpf.problem
 .El
