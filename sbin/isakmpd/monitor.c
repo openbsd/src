@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.8 2003/07/29 02:01:22 avsm Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.9 2003/09/05 07:50:04 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -697,6 +697,8 @@ m_priv_setsockopt (int s)
   int32_t v;
 
   sock = mm_receive_fd (s);
+  if (sock < 0)
+    goto errout;
 
   if (m_read_int32 (s, &level))
     goto errout;
@@ -716,6 +718,7 @@ m_priv_setsockopt (int s)
 
   v = (int32_t) setsockopt (sock, level, optname, optval, optlen);
   close (sock);
+  sock = -1;
   if (m_write_int32 (s, v))
     goto errout;
 
@@ -726,6 +729,8 @@ m_priv_setsockopt (int s)
   log_print ("m_priv_setsockopt: read/write error");
   if (optval)
     free (optval);
+  if (sock >= 0)
+    close (sock);
   return;
 }
 
@@ -739,6 +744,8 @@ m_priv_bind (int s)
   int32_t v;
 
   sock = mm_receive_fd (s);
+  if (sock < 0)
+    goto errout;
 
   if (m_read_int32 (s, &v))
     goto errout;
@@ -757,6 +764,7 @@ m_priv_bind (int s)
 	       sock, name, namelen, v);
 
   close (sock);
+  sock = -1;
   if (m_write_int32 (s, v))
     goto errout;
 
@@ -767,6 +775,8 @@ m_priv_bind (int s)
   log_print ("m_priv_bind: read/write error");
   if (name)
     free (name);
+  if (sock >= 0)
+    close (sock);
   return;
 }
 
