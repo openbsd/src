@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.33 2000/12/30 06:18:27 angelos Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.34 2001/01/16 02:59:46 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -193,6 +193,7 @@ int	xdr_dir __P((XDR *, char *));
 int	xdr_explist __P((XDR *, caddr_t));
 int	xdr_fhs __P((XDR *, caddr_t));
 int	xdr_mlist __P((XDR *, caddr_t));
+void	mountd_svc_run __P((void));
 
 struct exportlist *exphead;
 struct mountlist *mlhead;
@@ -216,6 +217,8 @@ int opt_flags;
 #define	OP_ALLDIRS	0x40
 
 int debug = 0;
+
+volatile int gothup;
 
 /*
  * Mountd server for NFS mount protocol as described in:
@@ -308,9 +311,54 @@ main(argc, argv)
 		syslog(LOG_ERR, "Can't register mount");
 		exit(1);
 	}
-	svc_run();
+	mountd_svc_run();
 	syslog(LOG_ERR, "Mountd died");
 	exit(1);
+}
+
+void
+mountd_svc_run()
+{
+	fd_set *fds = NULL;
+	int fds_size = 0;
+	extern fd_set *__svc_fdset;
+	extern int __svc_fdsetsize;
+
+	for (;;) {
+		if (__svc_fdset) {
+			int bytes = howmany(__svc_fdsetsize, NFDBITS) *
+			    sizeof(fd_mask);
+			if (fds_size != __svc_fdsetsize) {
+				if (fds)
+					free(fds);
+				fds = (fd_set *)malloc(bytes);  /* XXX */
+				fds_size = __svc_fdsetsize;
+			}
+			memcpy(fds, __svc_fdset, bytes);
+		} else {
+			if (fds)
+				free(fds);
+			fds = NULL;
+		}
+		switch (select(svc_maxfd+1, fds, 0, 0, (struct timeval *)0)) {
+		case -1:
+			if (errno == EINTR)
+				break;
+			perror("mountd_svc_run: - select failed");
+			if (fds)
+				free(fds);
+			return;
+		case 0:
+			break;
+		default:
+			svc_getreqset2(fds, svc_maxfd+1);
+			break;
+		}
+		if (gothup) {
+			get_exportlist();
+			gothup = 0;
+		}
+	}
 }
 
 /*
@@ -646,10 +694,8 @@ FILE *exp_file;
 void
 new_exportlist()
 {
-	int save_errno = errno;
+	gothup = 1;
 
-	get_exportlist();
-	errno = save_errno;
 }
 
 /*
