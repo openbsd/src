@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.23 2002/03/25 20:28:06 mickey Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.24 2002/07/02 16:44:25 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -89,8 +89,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#include <uvm/uvm_extern.h>		/* for vtophys */
 
 #include <sys/device.h>
 
@@ -640,7 +638,7 @@ void sis_attach(parent, self, aux)
 	struct device		*parent, *self;
 	void			*aux;
 {
-	int			s;
+	int			i, s;
 	const char		*intrstr = NULL;
 	u_int32_t		command;
 	struct sis_softc	*sc = (struct sis_softc *)self;
@@ -831,15 +829,60 @@ void sis_attach(parent, self, aux)
 
 	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
-	sc->sis_ldata_ptr = malloc(sizeof(struct sis_list_data) + 8,
-				M_DEVBUF, M_NOWAIT);
-	if (sc->sis_ldata_ptr == NULL) {
-		printf("%s: no memory for list buffers!\n", sc->sis_unit);
-		goto fail;
+	sc->sc_dmat = pa->pa_dmat;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct sis_list_data),
+	    PAGE_SIZE, 0, sc->sc_listseg, 1, &sc->sc_listnseg,
+	    BUS_DMA_NOWAIT) != 0) {
+		printf(": can't alloc list mem\n");
+		return;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, sc->sc_listseg, sc->sc_listnseg,
+	    sizeof(struct sis_list_data), &sc->sc_listkva,
+	    BUS_DMA_NOWAIT) != 0) {
+		printf(": can't map list mem\n");
+		return;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct sis_list_data), 1,
+	    sizeof(struct sis_list_data), 0, BUS_DMA_NOWAIT,
+	    &sc->sc_listmap) != 0) {
+		printf(": can't alloc list map\n");
+		return;
+	}
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_listmap, sc->sc_listkva,
+	    sizeof(struct sis_list_data), NULL, BUS_DMA_NOWAIT) != 0) {
+		printf(": can't load list map\n");
+		return;
+	}
+	sc->sis_ldata = (struct sis_list_data *)sc->sc_listkva;
+	bzero(sc->sis_ldata, sizeof(struct sis_list_data));
+
+	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
+		    BUS_DMA_NOWAIT, &sc->sis_ldata->sis_rx_list[i].map) != 0) {
+			printf(": can't create rx map\n");
+			return;
+		}
+	}
+	if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
+	    BUS_DMA_NOWAIT, &sc->sc_rx_sparemap) != 0) {
+		printf(": can't create rx spare map\n");
+		return;
 	}
 
-	sc->sis_ldata = (struct sis_list_data *)sc->sis_ldata_ptr;
-	bzero(sc->sis_ldata, sizeof(struct sis_list_data));
+	for (i = 0; i < SIS_TX_LIST_CNT; i++) {
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		    SIS_TX_LIST_CNT - 3, MCLBYTES, 0, BUS_DMA_NOWAIT,
+		    &sc->sis_ldata->sis_tx_list[i].map) != 0) {
+			printf(": can't create tx map\n");
+			return;
+		}
+	}
+	if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, SIS_TX_LIST_CNT - 3,
+	    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->sc_tx_sparemap) != 0) {
+		printf(": can't create tx spare map\n");
+		return;
+	}
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
@@ -892,17 +935,26 @@ int sis_list_tx_init(sc)
 {
 	struct sis_list_data	*ld;
 	struct sis_ring_data	*cd;
-	int			i, nexti;
+	int			i;
+	bus_addr_t		next;
 
 	cd = &sc->sis_cdata;
 	ld = sc->sis_ldata;
 
 	for (i = 0; i < SIS_TX_LIST_CNT; i++) {
-		nexti = (i == (SIS_TX_LIST_CNT - 1)) ? 0 : i+1;
-		ld->sis_tx_list[i].sis_nextdesc =
-		    &ld->sis_tx_list[nexti];
-		ld->sis_tx_list[i].sis_next =
-		    vtophys(&ld->sis_tx_list[nexti]);
+		next = sc->sc_listmap->dm_segs[0].ds_addr;
+		if (i == (SIS_TX_LIST_CNT - 1)) {
+			ld->sis_tx_list[i].sis_nextdesc =
+			    &ld->sis_tx_list[0];
+			next +=
+			    offsetof(struct sis_list_data, sis_tx_list[0]);
+		} else {
+			ld->sis_tx_list[i].sis_nextdesc =
+			    &ld->sis_tx_list[i+1];
+			next +=
+			    offsetof(struct sis_list_data, sis_tx_list[i+1]);
+		}
+		ld->sis_tx_list[i].sis_next = next;
 		ld->sis_tx_list[i].sis_mbuf = NULL;
 		ld->sis_tx_list[i].sis_ptr = 0;
 		ld->sis_tx_list[i].sis_ctl = 0;
@@ -924,7 +976,8 @@ int sis_list_rx_init(sc)
 {
 	struct sis_list_data	*ld;
 	struct sis_ring_data	*cd;
-	int			i, nexti;
+	int			i;
+	bus_addr_t		next;
 
 	ld = sc->sis_ldata;
 	cd = &sc->sis_cdata;
@@ -932,11 +985,17 @@ int sis_list_rx_init(sc)
 	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
 		if (sis_newbuf(sc, &ld->sis_rx_list[i], NULL) == ENOBUFS)
 			return(ENOBUFS);
-		nexti = (i == (SIS_RX_LIST_CNT - 1)) ? 0 : i+1;
-		ld->sis_rx_list[i].sis_nextdesc =
-		    &ld->sis_rx_list[nexti];
-		ld->sis_rx_list[i].sis_next =
-		    vtophys(&ld->sis_rx_list[nexti]);
+		next = sc->sc_listmap->dm_segs[0].ds_addr;
+		if (i == (SIS_RX_LIST_CNT - 1)) {
+			ld->sis_rx_list[i].sis_nextdesc = &ld->sis_rx_list[0];
+			next +=
+			    offsetof(struct sis_list_data, sis_rx_list[0]);
+		} else {
+			ld->sis_rx_list[i].sis_nextdesc = &ld->sis_rx_list[i+1];
+			next +=
+			    offsetof(struct sis_list_data, sis_rx_list[i+1]);
+		}
+		ld->sis_rx_list[i].sis_next = next;
 	}
 
 	cd->sis_rx_prod = 0;
@@ -953,6 +1012,7 @@ int sis_newbuf(sc, c, m)
 	struct mbuf		*m;
 {
 	struct mbuf		*m_new = NULL;
+	bus_dmamap_t		map;
 
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -976,11 +1036,28 @@ int sis_newbuf(sc, c, m)
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
 
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_rx_sparemap,
+	    mtod(m_new, caddr_t), MCLBYTES, NULL, BUS_DMA_NOWAIT) != 0) {
+		printf("%s: rx load failed\n", sc->sc_dev.dv_xname);
+		m_freem(m_new);
+		return (ENOBUFS);
+	}
+	map = c->map;
+	c->map = sc->sc_rx_sparemap;
+	sc->sc_rx_sparemap = map;
+
+	bus_dmamap_sync(sc->sc_dmat, c->map, 0, c->map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
+
 	m_adj(m_new, sizeof(u_int64_t));
 
 	c->sis_mbuf = m_new;
-	c->sis_ptr = vtophys(mtod(m_new, caddr_t));
+	c->sis_ptr = c->map->dm_segs[0].ds_addr + sizeof(u_int64_t);
 	c->sis_ctl = SIS_RXLEN;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    ((caddr_t)c->sis_ptr - sc->sc_listkva), sizeof(struct sis_desc),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return(0);
 }
@@ -1010,6 +1087,11 @@ void sis_rxeof(sc)
 		total_len = SIS_RXBYTES(cur_rx);
 		SIS_INC(i, SIS_RX_LIST_CNT);
 
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+		    ((caddr_t)cur_rx->sis_ptr - sc->sc_listkva),
+		    sizeof(struct sis_desc),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 		/*
 		 * If an error occurs, update stats, clear the
 		 * status word and leave the mbuf cluster in place:
@@ -1025,6 +1107,8 @@ void sis_rxeof(sc)
 		}
 
 		/* No errors; receive the packet. */	
+		bus_dmamap_sync(sc->sc_dmat, cur_rx->map, 0,
+		    cur_rx->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 #ifndef __STRICT_ALIGNMENT
 		/*
 		 * On some architectures, we do not have alignment problems,
@@ -1102,6 +1186,11 @@ void sis_txeof(sc)
 	while (idx != sc->sis_cdata.sis_tx_prod) {
 		cur_tx = &sc->sis_ldata->sis_tx_list[idx];
 
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+		    ((caddr_t)cur_tx->sis_ptr - sc->sc_listkva),
+		    sizeof(struct sis_desc),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 		if (SIS_OWNDESC(cur_tx))
 			break;
 
@@ -1123,6 +1212,13 @@ void sis_txeof(sc)
 		    (cur_tx->sis_txstat & SIS_TXSTAT_COLLCNT) >> 16;
 
 		ifp->if_opackets++;
+		if (cur_tx->map->dm_nsegs != 0) {
+			bus_dmamap_t map = cur_tx->map;
+
+			bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, map);
+		}
 		if (cur_tx->sis_mbuf != NULL) {
 			m_freem(cur_tx->sis_mbuf);
 			cur_tx->sis_mbuf = NULL;
@@ -1241,41 +1337,46 @@ int sis_encap(sc, m_head, txidx)
 	u_int32_t		*txidx;
 {
 	struct sis_desc		*f = NULL;
-	struct mbuf		*m;
-	int			frag, cur, cnt = 0;
+	int			frag, cur, i;
+	bus_dmamap_t		map;
+
+	map = sc->sc_tx_sparemap;
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, map,
+	    m_head, BUS_DMA_NOWAIT) != 0)
+		return (ENOBUFS);
 
 	/*
  	 * Start packing the mbufs in this chain into
 	 * the fragment pointers. Stop when we run out
  	 * of fragments or hit the end of the mbuf chain.
 	 */
-	m = m_head;
 	cur = frag = *txidx;
 
-	for (m = m_head; m != NULL; m = m->m_next) {
-		if (m->m_len != 0) {
-			if ((SIS_TX_LIST_CNT -
-			    (sc->sis_cdata.sis_tx_cnt + cnt)) < 2)
-				return(ENOBUFS);
-			f = &sc->sis_ldata->sis_tx_list[frag];
-			f->sis_ctl = SIS_CMDSTS_MORE | m->m_len;
-			f->sis_ptr = vtophys(mtod(m, vm_offset_t));
-			if (cnt != 0)
-				f->sis_ctl |= SIS_CMDSTS_OWN;
-			cur = frag;
-			SIS_INC(frag, SIS_TX_LIST_CNT);
-			cnt++;
-		}
+	for (i = 0; i < map->dm_nsegs; i++) {
+		if ((SIS_TX_LIST_CNT - (sc->sis_cdata.sis_tx_cnt + i)) < 2)
+			return(ENOBUFS);
+		f = &sc->sis_ldata->sis_tx_list[frag];
+		f->sis_ctl = SIS_CMDSTS_MORE | map->dm_segs[i].ds_len;
+		f->sis_ptr = map->dm_segs[i].ds_addr;
+		if (i != 0)
+			f->sis_ctl |= SIS_CMDSTS_OWN;
+		cur = frag;
+		SIS_INC(frag, SIS_TX_LIST_CNT);
 	}
 
-	if (m != NULL)
-		return(ENOBUFS);
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	sc->sis_ldata->sis_tx_list[cur].sis_mbuf = m_head;
 	sc->sis_ldata->sis_tx_list[cur].sis_ctl &= ~SIS_CMDSTS_MORE;
 	sc->sis_ldata->sis_tx_list[*txidx].sis_ctl |= SIS_CMDSTS_OWN;
-	sc->sis_cdata.sis_tx_cnt += cnt;
+	sc->sis_cdata.sis_tx_cnt += i - 1;
 	*txidx = frag;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+	    offsetof(struct sis_list_data, sis_tx_list[0]),
+	    sizeof(struct sis_desc) * SIS_TX_LIST_CNT,  
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return(0);
 }
@@ -1436,10 +1537,10 @@ void sis_init(xsc)
 	/*
 	 * Load the address of the RX and TX lists.
 	 */
-	CSR_WRITE_4(sc, SIS_RX_LISTPTR,
-	    vtophys(&sc->sis_ldata->sis_rx_list[0]));
-	CSR_WRITE_4(sc, SIS_TX_LISTPTR,
-	    vtophys(&sc->sis_ldata->sis_tx_list[0]));
+	CSR_WRITE_4(sc, SIS_RX_LISTPTR, sc->sc_listmap->dm_segs[0].ds_addr +
+	    offsetof(struct sis_list_data, sis_rx_list[0]));
+	CSR_WRITE_4(sc, SIS_TX_LISTPTR, sc->sc_listmap->dm_segs[0].ds_addr +
+	    offsetof(struct sis_list_data, sis_tx_list[0]));
 
 	/* Set RX configuration */
 	CSR_WRITE_4(sc, SIS_RX_CFG, SIS_RXCFG);
@@ -1670,26 +1771,39 @@ void sis_stop(sc)
 	 * Free data in the RX lists.
 	 */
 	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
+		if (sc->sis_ldata->sis_rx_list[i].map->dm_nsegs != 0) {
+			bus_dmamap_t map = sc->sis_ldata->sis_rx_list[i].map;
+
+			bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+			    BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->sc_dmat, map);
+		}
 		if (sc->sis_ldata->sis_rx_list[i].sis_mbuf != NULL) {
 			m_freem(sc->sis_ldata->sis_rx_list[i].sis_mbuf);
 			sc->sis_ldata->sis_rx_list[i].sis_mbuf = NULL;
 		}
+		bzero((char *)&sc->sis_ldata->sis_rx_list[i],
+		    sizeof(struct sis_desc) - sizeof(bus_dmamap_t));
 	}
-	bzero((char *)&sc->sis_ldata->sis_rx_list,
-		sizeof(sc->sis_ldata->sis_rx_list));
 
 	/*
 	 * Free the TX list buffers.
 	 */
 	for (i = 0; i < SIS_TX_LIST_CNT; i++) {
+		if (sc->sis_ldata->sis_tx_list[i].map->dm_nsegs != 0) {
+			bus_dmamap_t map = sc->sis_ldata->sis_tx_list[i].map;
+
+			bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, map);
+		}
 		if (sc->sis_ldata->sis_tx_list[i].sis_mbuf != NULL) {
 			m_freem(sc->sis_ldata->sis_tx_list[i].sis_mbuf);
 			sc->sis_ldata->sis_tx_list[i].sis_mbuf = NULL;
 		}
+		bzero((char *)&sc->sis_ldata->sis_tx_list[i],
+		    sizeof(struct sis_desc) - sizeof(bus_dmamap_t));
 	}
-
-	bzero((char *)&sc->sis_ldata->sis_tx_list,
-		sizeof(sc->sis_ldata->sis_tx_list));
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 

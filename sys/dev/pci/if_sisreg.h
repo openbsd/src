@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.9 2002/03/25 20:28:06 mickey Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.10 2002/07/02 16:44:25 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -297,6 +297,7 @@ struct sis_desc {
 	/* Driver software section */
 	struct mbuf		*sis_mbuf;
 	struct sis_desc		*sis_nextdesc;
+	bus_dmamap_t		map;
 };
 
 #define SIS_CMDSTS_BUFLEN	0x00000FFF
@@ -393,9 +394,15 @@ struct sis_softc {
 	u_int8_t		sis_type;
 	u_int8_t		sis_link;
 	struct sis_list_data	*sis_ldata;
-	caddr_t			sis_ldata_ptr;
 	struct sis_ring_data	sis_cdata;
 	struct timeout		sis_timeout;
+	bus_dma_tag_t		sc_dmat;
+	bus_dmamap_t		sc_listmap;
+	bus_dma_segment_t	sc_listseg[1];
+	int			sc_listnseg;
+	caddr_t			sc_listkva;
+	bus_dmamap_t		sc_rx_sparemap;
+	bus_dmamap_t		sc_tx_sparemap;
 };
 
 /*
@@ -449,8 +456,3 @@ struct sis_softc {
 #define SIS_PSTATE_D3		0x0003
 #define SIS_PME_EN		0x0010
 #define SIS_PME_STATUS		0x8000
-
-#ifdef __alpha__
-#undef vtophys
-#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
-#endif
