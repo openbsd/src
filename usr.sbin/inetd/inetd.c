@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.68 2000/08/20 18:42:42 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.69 2000/08/22 14:47:54 millert Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.68 2000/08/20 18:42:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.69 2000/08/22 14:47:54 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -564,12 +564,12 @@ main(argc, argv, envp)
 				} else {
 					tmpint = LOGIN_SETALL &
 					    ~(LOGIN_SETGROUP|LOGIN_SETLOGIN);
+					if (pwd->pw_uid)
+						tmpint |= LOGIN_SETGROUP|LOGIN_SETLOGIN;
 					if (sep->se_group) {
 						pwd->pw_gid = grp->gr_gid;
 						tmpint |= LOGIN_SETGROUP;
 					}
-					if (pwd->pw_uid)
-						tmpint |= LOGIN_SETLOGIN;
 					if (setusercontext(0, pwd, pwd->pw_uid,
 					    tmpint) < 0)
 						syslog(LOG_ERR,
