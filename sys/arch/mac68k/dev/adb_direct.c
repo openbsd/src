@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.1 1997/02/23 06:04:52 briggs Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.2 1997/03/29 17:26:59 briggs Exp $	*/
 /*  adb_direct.c 1.91 1/20/97 jpw */
 
 /*
@@ -1216,7 +1216,7 @@ command)
 void adb_comp_exec(void)
 {
 	if ( (long)0 != adbCompRout )			/* don't call if empty return location */
-		#ifdef __NetBSD__
+		#if defined(__NetBSD__) || defined(__OpenBSD__)
 		asm ( "
 			movml   #0xffff, sp@-   | save all registers
 			movl    %0,a2       	| adbCompData
@@ -1777,7 +1777,7 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
  */
 void adb_op_comprout(void)
 {
-	#ifdef __NetBSD__
+	#if defined(__NetBSD__) || defined(__OpenBSD__)
     	asm ( "movw    #1,a2@			| update flag value" );
 	#else					/* for macos based testing */
 	asm	{ move.w #1,(a2) }		/* update flag value */
