@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.24 2004/06/23 05:16:35 marius Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.25 2004/07/07 07:31:40 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -139,6 +139,7 @@ static int obsd_setcwd(int, pid_t);
 static int obsd_restcwd(int);
 static int obsd_argument(int, void *, int, void **);
 static int obsd_read(int);
+static int obsd_scriptname(int, pid_t, char *);
 
 static int
 obsd_init(void)
@@ -380,6 +381,17 @@ obsd_answer(int fd, pid_t pid, u_int32_t seqnr, short policy, int nerrno,
 		return (-1);
 
 	return (0);
+}
+
+static int 
+obsd_scriptname(int fd, pid_t pid, char *scriptname)
+{
+	struct systrace_scriptname sn;
+
+	sn.sn_pid = pid;
+	strlcpy(sn.sn_scriptname, scriptname, sizeof(sn.sn_scriptname));
+
+	return (ioctl(fd, STRIOCSCRIPTNAME, &sn));
 }
 
 static int
@@ -663,4 +675,5 @@ struct intercept_system intercept = {
 	obsd_replace,
 	obsd_clonepid,
 	obsd_freepid,
+	obsd_scriptname,
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.35 2004/06/23 05:16:35 marius Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.36 2004/07/07 07:31:40 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -118,6 +118,9 @@ struct str_process {
 	gid_t setegid;
 	gid_t savegid;
 	
+	int isscript;
+	char scriptname[MAXPATHLEN];
+
 	struct str_message msg;
 };
 
@@ -140,6 +143,8 @@ systrace_unlock(void)
 int	systrace_attach(struct fsystrace *, pid_t);
 int	systrace_detach(struct str_process *);
 int	systrace_answer(struct str_process *, struct systrace_answer *);
+int     systrace_setscriptname(struct str_process *,
+	    struct systrace_scriptname *);
 int	systrace_io(struct str_process *, struct systrace_io *);
 int	systrace_policy(struct fsystrace *, struct systrace_policy *);
 int	systrace_preprepl(struct str_process *, struct systrace_replace *);
@@ -283,6 +288,11 @@ systracef_ioctl(fp, cmd, data, p)
 		if (!pid)
 			ret = EINVAL;
 		break;
+	case STRIOCSCRIPTNAME:
+		pid = ((struct systrace_scriptname *)data)->sn_pid;
+		if (!pid)
+			ret = EINVAL;
+		break;
 	case STRIOCGETCWD:
 		pid = *(pid_t *)data;
 		if (!pid)
@@ -336,6 +346,10 @@ systracef_ioctl(fp, cmd, data, p)
 		break;
 	case STRIOCIO:
 		ret = systrace_io(strp, (struct systrace_io *)data);
+		break;
+	case STRIOCSCRIPTNAME:
+		ret = systrace_setscriptname(strp,
+		    (struct systrace_scriptname *)data);
 		break;
 	case STRIOCPOLICY:
 		ret = systrace_policy(fst, (struct systrace_policy *)data);
@@ -959,6 +973,15 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 }
 
 int
+systrace_setscriptname(struct str_process *strp, struct systrace_scriptname *ans)
+{
+	strlcpy(strp->scriptname,
+	    ans->sn_scriptname, sizeof(strp->scriptname));
+
+	return (0);
+}
+
+int
 systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 {
 	struct str_policy *strpol;
@@ -1192,37 +1215,49 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 }
 
 void
-systrace_execve(char *path, struct proc *p)
+systrace_execve0(struct proc *p)
+{  
+	struct str_process *strp;
+
+	systrace_lock();
+	strp = p->p_systrace;
+	strp->isscript = 0;
+	systrace_unlock();
+}
+
+void
+systrace_execve1(char *path, struct proc *p)
 {
-       struct str_process *strp;
-       struct fsystrace *fst;
-       struct str_msg_execve *msg_execve;
+	struct str_process *strp;
+	struct fsystrace *fst;
+	struct str_msg_execve *msg_execve;
 
-       do { 
-               systrace_lock();
-               strp = p->p_systrace;
-               if (strp == NULL) {
-                       systrace_unlock();
-                       return;
-               }
+	do { 
+		systrace_lock();
+		strp = p->p_systrace;
+		if (strp == NULL) {
+			systrace_unlock();
+			return;
+		}
 
-               msg_execve = &strp->msg.msg_data.msg_execve;
-               fst = strp->parent;
-               lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
-               systrace_unlock();
+		msg_execve = &strp->msg.msg_data.msg_execve;
+		fst = strp->parent;
+		lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
+		systrace_unlock();
 
-               /*
-                * susers will get the execve call anyway.  Also, if
-                * we're not allowed to control the process, escape.
-                */
-               if (fst->issuser ||
-                   fst->p_ruid != p->p_cred->p_ruid ||
-                   fst->p_rgid != p->p_cred->p_rgid) {
-                       lockmgr(&fst->lock, LK_RELEASE, NULL, p);
-                       return;
-               }
-	       strlcpy(msg_execve->path, path, MAXPATHLEN);
-       } while (systrace_make_msg(strp, SYSTR_MSG_EXECVE) != 0);
+		/*
+		 * susers will get the execve call anyway.  Also, if
+		 * we're not allowed to control the process, escape.
+		 */
+
+		if (fst->issuser ||
+		    fst->p_ruid != p->p_cred->p_ruid ||
+		    fst->p_rgid != p->p_cred->p_rgid) {
+			lockmgr(&fst->lock, LK_RELEASE, NULL, p);
+			return;
+		}
+		strlcpy(msg_execve->path, path, MAXPATHLEN);
+	} while (systrace_make_msg(strp, SYSTR_MSG_EXECVE) != 0);
 }
 
 /* Prepare to replace arguments */
@@ -1352,6 +1387,44 @@ systrace_replacefree(struct str_process *strp)
 		strp->fname[strp->nfname] = NULL;
 	}
 }
+int
+systrace_scriptname(struct proc *p, char *dst)
+{
+	struct str_process *strp;
+	struct fsystrace *fst;
+	int error = 0;
+
+	systrace_lock();  
+	strp = p->p_systrace;
+	fst = strp->parent;
+
+	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
+	systrace_unlock();
+
+	if (!fst->issuser && (ISSET(p->p_flag, P_SUGID) ||
+		ISSET(p->p_flag, P_SUGIDEXEC) ||
+		fst->p_ruid != p->p_cred->p_ruid ||
+		fst->p_rgid != p->p_cred->p_rgid)) {
+		error = EPERM;
+		goto out;
+	}
+
+	if (strp != NULL) {
+		if (strp->scriptname[0] == '\0') {
+			error = ENOENT;
+			goto out;
+		}
+
+		strlcpy(dst, strp->scriptname, MAXPATHLEN);
+		strp->isscript = 1;
+	}
+
+ out:
+	strp->scriptname[0] = '\0';
+	lockmgr(&fst->lock, LK_RELEASE, NULL, p);
+
+	return (error);
+}
 
 void
 systrace_namei(struct nameidata *ndp)
@@ -1374,6 +1447,10 @@ systrace_namei(struct nameidata *ndp)
 				hamper = 1;
 				break;
 			}
+
+		if (!hamper && strp->isscript &&
+		    strcmp(cnp->cn_pnbuf, strp->scriptname) == 0)
+			hamper = 1;
 
 		lockmgr(&fst->lock, LK_RELEASE, NULL, curproc);
 	} else

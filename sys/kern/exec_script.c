@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.20 2004/06/23 05:16:35 marius Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.21 2004/07/07 07:31:40 marius Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -221,11 +221,23 @@ check_shell:
 #endif
 		/* normally can't fail, but check for it if diagnostic */
 #if NSYSTRACE > 0
-		error = copystr(epp->ep_name, *tmpsap++, MAXPATHLEN,
-		    (size_t *)0);
+		error = 1;
+		if (ISSET(p->p_flag, P_SYSTRACE)) {
+			error = systrace_scriptname(p, *tmpsap);
+			if (error == 0)
+				tmpsap++;
+		}
+		if (error != 0)
+			/*
+			 * Since systrace_scriptname() provides a
+			 * convenience, not a security issue, we are
+			 * safe to do this.
+			 */
+			error = copystr(epp->ep_name, *tmpsap++,
+			    MAXPATHLEN, NULL);
 #else
 		error = copyinstr(epp->ep_name, *tmpsap++, MAXPATHLEN,
-		    (size_t *)0);		
+		    (size_t *)0);
 #endif
 #ifdef DIAGNOSTIC
 		if (error != 0)

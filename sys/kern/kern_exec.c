@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.87 2004/06/23 05:16:35 marius Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.88 2004/07/07 07:31:40 marius Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -275,6 +275,9 @@ sys_execve(p, v, retval)
 	p->p_flag |= P_INEXEC;
 
 #if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		systrace_execve0(p);
+
 	error = copyinstr(SCARG(uap, path), pathbuf, MAXPATHLEN, &pathbuflen);
 	if (error != 0)
 		goto clrflag;
@@ -653,7 +656,7 @@ sys_execve(p, v, retval)
 	if (ISSET(p->p_flag, P_SYSTRACE) &&
 	    wassugid && !ISSET(p->p_flag, P_SUGID) &&
 	    !ISSET(p->p_flag, P_SUGIDEXEC))
-		systrace_execve(pathbuf, p);
+		systrace_execve1(pathbuf, p);
 #endif
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.48 2004/06/24 21:00:10 marius Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.49 2004/07/07 07:31:40 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -585,12 +585,15 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 }
 
 char *
-intercept_filename(int fd, pid_t pid, void *addr, int userp)
+intercept_filename(int fd, pid_t pid, void *addr, int userp, char *before)
 {
 	char *name;
 
 	if ((name = intercept_get_string(fd, pid, addr)) == NULL)
 		goto abort;
+
+	if (before != NULL)
+		strlcpy(before, name, MAXPATHLEN);
 
 	if ((name = normalize_filename(fd, pid, name, userp)) == NULL)
 		goto abort;
@@ -746,7 +749,7 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	/* Special handling for the exec call */
 	if (!strcmp(name, "execve")) {
 		void *addr;
-		char *argname;
+		char *argname, before[MAXPATHLEN];
 
 		icpid->execve_code = code;
 		icpid->policynr = policynr;
@@ -755,10 +758,14 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 			free(icpid->newname);
 
 		intercept.getarg(0, args, argsize, &addr);
-		argname = intercept_filename(fd, pid, addr, ICLINK_ALL);
+		argname = intercept_filename(fd, pid, addr, ICLINK_ALL, before);
 		if (argname == NULL)
 			err(1, "%s:%d: intercept_filename",
 			    __func__, __LINE__);
+
+		if (intercept.scriptname(fd, pid, before) != 0)
+			err(1, "%s:%d: ioctl", __func__, __LINE__);
+
 		icpid->newname = strdup(argname);
 		if (icpid->newname == NULL)
 			err(1, "%s:%d: strdup", __func__, __LINE__);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.10 2003/10/08 16:32:44 sturm Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.11 2004/07/07 07:31:40 marius Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -133,7 +133,7 @@ ic_get_filename(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr, ICLINK_ALL);
+	name = intercept_filename(fd, pid, addr, ICLINK_ALL, NULL);
 	if (name == NULL)
 		return (-1);
 
@@ -180,7 +180,7 @@ ic_get_linkname(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr, ICLINK_NONE);
+	name = intercept_filename(fd, pid, addr, ICLINK_NONE, NULL);
 	if (name == NULL)
 		return (-1);
 
@@ -204,7 +204,7 @@ ic_get_unlinkname(struct intercept_translate *trans, int fd, pid_t pid,
 	char *name;
 	int len;
 
-	name = intercept_filename(fd, pid, addr, ICLINK_NOLAST);
+	name = intercept_filename(fd, pid, addr, ICLINK_NOLAST, NULL);
 	if (name == NULL)
 		return (-1);
 
