@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.305 2000/09/01 00:16:18 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.306 2000/09/01 02:06:33 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -515,7 +515,7 @@ vendor SIIG		0x131f	SIIG
 vendor LMC		0x1376	LAN Media Corp
 vendor NETGEAR		0x1385	Netgear
 vendor HIFN		0x13a3	Hi/Fn
-vendor THREEWARE	0x13c1	3ware
+vendor TRIWARE		0x13c1	3ware
 vendor SUNDANCE		0x13f0	Sundance
 vendor CMI		0x13f6	C-Media Electronics Inc.
 vendor LAVA		0x1407	Lava
@@ -596,6 +596,8 @@ product 3DLABS DELTA		0x0003	GLINT Delta
 product 3DLABS PERMEDIA		0x0004	GLINT Permedia
 product 3DLABS 500MX		0x0006	GLINT 500MX
 product 3DLABS PERMEDIA2	0x0007	GLINT Permedia 2
+
+product TRIWARE ESCALADE	0x1000	Escalade Storage Controller
 
 /* Aironet Products */
 product AIRONET PC4500		0x4500	PC4500 Wireless
