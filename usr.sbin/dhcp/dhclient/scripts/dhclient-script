@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.8 2000/09/05 07:21:34 peter Exp $
+# $OpenBSD: dhclient-script,v 1.9 2000/09/05 08:28:04 deraadt Exp $
 #
 
 if [ "x$new_network_number" != "x" ]; then
@@ -59,7 +59,7 @@ if [ "x$reason" = "xBOUND" ] || [ "x$reason" = "xRENEW" ] || \
 	ifconfig "$interface" inet -alias "$old_ip_address"
     fi
     route delete "$old_ip_address" 127.1 >/dev/null 2>&1
-    for router in $old_routers; do
+    for router in "$old_routers"; do
       route delete default "$router" >/dev/null 2>&1
     done
     if [ "$old_static_routes" != "" ]; then
@@ -81,7 +81,7 @@ if [ "x$reason" = "xBOUND" ] || [ "x$reason" = "xRENEW" ] || \
 					    $new_broadcast_arg
     fi
     route add "$new_ip_address" 127.1 >/dev/null 2>&1
-    for router in $new_routers; do
+    for router in "$new_routers"; do
       route add default "$router" >/dev/null 2>&1
     done
     if [ "$new_static_routes" != "" ]; then
@@ -102,7 +102,7 @@ if [ "x$reason" = "xBOUND" ] || [ "x$reason" = "xRENEW" ] || \
     if [ -n "$new_domain_name_servers" ];
      then
       echo "search $new_domain_name" >/etc/resolv.conf
-      for nameserver in $new_domain_name_servers; do
+      for nameserver in "$new_domain_name_servers"; do
         echo "nameserver $nameserver" >>/etc/resolv.conf
       done
       if [ -f /etc/resolv.conf.tail ]; then
@@ -125,7 +125,7 @@ if [ "x$reason" = "xEXPIRE" ] || [ "x$reason" = "xFAIL" ]; then
 	ifconfig "$interface" inet -alias "$old_ip_address"
     fi
     route delete "$old_ip_address" 127.1 >/dev/null 2>&1
-    for router in $old_routers; do
+    for router in "$old_routers"; do
       route delete default "$router" >/dev/null 2>&1
     done
     if [ "$old_static_routes" != "" ]; then
@@ -167,7 +167,7 @@ if [ "x$reason" = "xTIMEOUT" ]; then
 	route add "$alias_ip_address" 127.0.0.1
       fi
       route add "$new_ip_address" 127.1 >/dev/null 2>&1
-      for router in $new_routers; do
+      for router in "$new_routers"; do
 	route add default "$router" >/dev/null 2>&1
       done
       if [ "$new_static_routes" != "" ]; then
@@ -180,7 +180,7 @@ if [ "x$reason" = "xTIMEOUT" ]; then
       if [ "$new_domain_name" != "" ]; then
         if [ -n "$new_domain_name_servers" ]; then
           echo "search $new_domain_name" >/etc/resolv.conf.std
-          for nameserver in $new_domain_name_servers; do
+          for nameserver in "$new_domain_name_servers"; do
   	    echo "nameserver $nameserver" >>/etc/resolv.conf.std
           done
           if [ -f /etc/resolv.conf.tail ]; then
@@ -200,7 +200,7 @@ if [ "x$reason" = "xTIMEOUT" ]; then
   else
     ifconfig "$interface" inet -alias "$new_ip_address"
   fi
-  for router in $old_routers; do
+  for router in "$old_routers"; do
     route delete default "$router" >/dev/null 2>&1
   done
   if [ "$old_static_routes" != "" ]; then
