@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.15 2001/11/19 04:21:41 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.16 2001/11/19 09:01:43 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.15 2001/11/19 04:21:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.16 2001/11/19 09:01:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -169,12 +169,12 @@ char *indata;
 	int status;
 	struct rusage res;
 
-	snprintf(host,sizeof host,"%*.*s" ,inlen ,inlen, indata);
+	snprintf(host, sizeof host, "%*.*s" ,inlen ,inlen, indata);
 
 	client = clnt_create(host, YPPROG, YPVERS, "tcp");
 	if (client == NULL) {
 		if (Verbose)
-			fprintf(stderr,"Target Host: %s\n",host);
+			fprintf(stderr, "Target Host: %s\n",host);
 		clnt_pcreateerror("yppush: Cannot create client");
 		return;
 	}
@@ -244,7 +244,7 @@ char **argv;
 	struct ypall_callback ypcb;
 	extern char *optarg;
 	extern int optind;
-	char	*domain,*map,*hostname,*parallel,*timeout;
+	char	*domain, *map, *hostname, *parallel, *timeout;
 	int c, r, i;
 	char *ypmap = "ypservers";
 	CLIENT *client;
@@ -283,48 +283,48 @@ char **argv;
 
 	map = argv[optind];
 
-	strncpy(Domain,domain,sizeof(Domain)-1);
+	strncpy(Domain, domain, sizeof(Domain)-1);
 	Domain[sizeof(Domain)-1] = '\0';
-	strncpy(Map,map,sizeof(Map)-1);
+	strncpy(Map, map, sizeof(Map)-1);
 	Map[sizeof(Map)-1] = '\0';
 
 	/* Check domain */
-	snprintf(map_path,sizeof map_path,"%s/%s",YP_DB_PATH,domain);
+	snprintf(map_path, sizeof map_path, "%s/%s", YP_DB_PATH, domain);
 	if (!((stat(map_path, &finfo) == 0) &&
 	      ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
-	  	fprintf(stderr,"yppush: Map does not exist.\n");
+	  	fprintf(stderr, "yppush: Map does not exist.\n");
 		exit(1);
 	}
 		
 	
 	/* Check map */
-	snprintf(map_path,sizeof map_path,"%s/%s/%s%s",
-	    YP_DB_PATH,domain,Map,YPDB_SUFFIX);
+	snprintf(map_path, sizeof map_path, "%s/%s/%s%s",
+	    YP_DB_PATH, domain, Map, YPDB_SUFFIX);
 	if (!(stat(map_path, &finfo) == 0)) {
-		fprintf(stderr,"yppush: Map does not exist.\n");
+		fprintf(stderr, "yppush: Map does not exist.\n");
 		exit(1);
 	}
 		
-	snprintf(map_path,sizeof map_path,"%s/%s/%s",YP_DB_PATH,domain,Map);
-	yp_databas = ypdb_open(map_path,0,O_RDONLY);
+	snprintf(map_path, sizeof map_path, "%s/%s/%s",
+	    YP_DB_PATH, domain, Map);
+	yp_databas = ypdb_open(map_path, 0, O_RDONLY);
 	OrderNum=0xffffffff;
 	if (yp_databas == 0) {
 		fprintf(stderr, "yppush: %s%s: Cannot open database\n",
-			map_path, YPDB_SUFFIX);
+		    map_path, YPDB_SUFFIX);
 	} else {
 		o.dptr = (char *) &order_key;
 		o.dsize = YP_LAST_LEN;
-		o=ypdb_fetch(yp_databas,o);
+		o = ypdb_fetch(yp_databas, o);
 		if (o.dptr == NULL) {
 			fprintf(stderr,
-				"yppush: %s: Cannot determine order number\n",
-				Map);
+			    "yppush: %s: Cannot determine order number\n",
+			    Map);
 		} else {
 			OrderNum=0;
 			for (i=0; i<o.dsize-1; i++) {
-				if (!isdigit(o.dptr[i])) {
+				if (!isdigit(o.dptr[i]))
 					OrderNum=0xffffffff;
-				}
 			}
 			if (OrderNum != 0) {
 				fprintf(stderr,
@@ -357,7 +357,7 @@ char **argv;
 
 		ypcb.foreach = pushit;
 		ypcb.data = NULL;
-		r = yp_all_host(client,Domain, ypmap, &ypcb);
+		r = yp_all_host(client, Domain, ypmap, &ypcb);
 	}
 
 	exit(0);
