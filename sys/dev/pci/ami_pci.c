@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.11 2002/10/03 23:59:43 jason Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.12 2002/10/04 16:10:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -126,8 +126,7 @@ ami_pci_match(parent, match, aux)
 	const struct ami_pci_device *pami;
 	pcireg_t sig;
 
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_I2O &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_I2O_STANDARD)
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_I2O)
 		return (0);
 
 	for (pami = ami_pci_devices; pami->vendor; pami++) {
@@ -135,6 +134,7 @@ ami_pci_match(parent, match, aux)
 		    pami->product == PCI_PRODUCT(pa->pa_id)) {
 			if (!(pami->flags & AMI_CHECK_SIGN))
 				return (1);
+			/* some cards have 0x11223344, but somee only 16bit */
 			sig = pci_conf_read(pa->pa_pc, pa->pa_tag,
 			    AMI_PCI_SIG) & 0xffff;
 			if (sig == AMI_SIGNATURE_1 ||
