@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.18 1997/07/17 05:48:41 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.19 1997/07/25 00:27:30 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -16,15 +16,17 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <err.h>
+#include <ctype.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
-#include <pwd.h>
-#include <unistd.h>
+#include <syslog.h>
 #include <time.h>
+#include <unistd.h>
 #include <utmp.h>
-#include <ctype.h>
+
 #include <skey.h>
 
 #ifndef SKEY_NAMELEN
@@ -263,8 +265,14 @@ main(argc, argv)
 				exit(1);
 
 			if (strlen(passwd) < SKEY_MIN_PW_LEN) {
-				(void)fputs("Your password must be longer.\n",
-					    stderr);
+				(void)fprintf(stderr,
+				    "Your password must be at least %d characters long.\n", SKEY_MIN_PW_LEN);
+				continue;
+			} else if (strcmp(passwd, pp->pw_name) == 0) {
+				(void)fputs("Your password may not be the same as your user name.\n", stderr);
+				continue;
+			} else if (strspn(passwd, "abcdefghijklmnopqrstuvwxyz") == strlen(passwd)) {
+				(void)fputs("Your password must contain more than just lower case letters.\nWhitespace, numbers, and puctuation are suggested.\n", stderr);
 				continue;
 			}
 
