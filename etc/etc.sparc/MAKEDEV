@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.5 2002/01/23 06:17:09 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.20 2002/01/23 06:43:53 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.75 2002/01/23 06:21:20 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.76 2002/01/23 07:54:42 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -190,12 +190,6 @@ case $i in
 floppy)
 	R std random
 	R fd0 sd0 sd1
-	;;
-
-ramdisk)
-	R std random
-	R fd0 sd0 sd1 sd2 sd3 rd0 cd0
-	R bpf0
 	;;
 
 std)

@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.9 2002/01/23 06:18:52 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.20 2002/01/23 06:43:53 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.42 2002/01/23 06:21:20 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.43 2002/01/23 07:54:42 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -201,12 +201,6 @@ case $i in
 floppy)
 	R std fd0 wd0 wd1 sd0 sd1
 	R st0 cd0 random
-	;;
-
-ramdisk)
-	R std lkm random
-	R fd0 rd0 wd0 wd1 wd2 wd3 bpf0
-	R sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	;;
 
 std)
@@ -537,12 +531,12 @@ local)
 all)
 	R wscons usbs audio0 xfs0 ss0 uk0 ses0 rndrandom lkm tty00
 	R tty01 tty02 tty03 cuaa cuab cuac cuad ttya ttyb ttyc ttyd
-	R tth0 tth1 crypto pf altq tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2
-	R bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 fd1 fd1B fd1C fd1D fd1E
-	R fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H rd0
-	R raid0 raid1 raid2 raid3 wd0 wd1 wd2 wd3 ccd0 ccd1 ccd2 ccd3
-	R vnd0 vnd1 vnd2 vnd3 std cd0 ch0 st0 pty0 fd sd0 sd1 sd2 sd3
-	R sd4
+	R ttyh0 ttyh1 crypto pf altq tun0 tun1 tun2 tun3 bpf0 bpf1
+	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 fd1 fd1B fd1C fd1D
+	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
+	R rd0 raid0 raid1 raid2 raid3 wd0 wd1 wd2 wd3 ccd0 ccd1 ccd2
+	R ccd3 vnd0 vnd1 vnd2 vnd3 std cd0 ch0 st0 pty0 fd sd0 sd1 sd2
+	R sd3 sd4
 	;;
 
 wd*|sd*|raid*|ccd*)

@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.1 2002/01/08 03:14:50 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.20 2002/01/23 06:43:53 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.38 2002/01/23 06:21:20 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.39 2002/01/23 07:54:41 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -171,13 +171,6 @@ U=`unt $i`
 [ "$U" ] || U=0
 
 case $i in
-ramdisk)
-	R std
-	R sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	R adb asc0 grf0 grf1 ttye0
-	R tty00 tty01 pty0
-	;;
-
 std)
 	M console	c 0 0 600
 	M tty		c 1 0
@@ -342,6 +335,10 @@ st*)
 		M ${pre}rst$U	c 14 $n 660 operator
 		n=$(($n+1))
 	done
+	;;
+
+ramdisk)
+	R bpf0 std pty0 tty00 tty01 asc0 adb st0 st1 sd0 sd1 sd2 sd3
 	;;
 
 local)
