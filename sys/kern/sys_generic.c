@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.25 2000/07/07 13:24:09 art Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.26 2000/07/07 14:33:20 art Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -989,12 +989,6 @@ sys_poll(p, v, retval)
 		}
 		s = splclock();
 		timeradd(&atv, &time, &atv);
-		timo = hzto(&atv);
-		/*
-		 * Avoid inadvertently sleeping forever.
-		 */
-		if (timo == 0)
-			timo = 1;
 		splx(s);
 	} else
 		timo = 0;
@@ -1005,11 +999,15 @@ retry:
 	pollscan(p, pl, SCARG(uap, nfds), retval);
 	if (*retval)
 		goto done;
-	s = splhigh();
-	if (timo && timercmp(&time, &atv, >=)) {
-		splx(s);
-		goto done;
+	if (msec != -1) {
+		/*
+		 * We have to recalculate the timeout on every retry.
+		 */
+		timo = hzto(&atv);
+		if (timo <= 0)
+			goto done;
 	}
+	s = splhigh();
 	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
@@ -1034,3 +1032,4 @@ bad:
 		free((char *) pl, M_TEMP);
 	return (error);
 }
+
