@@ -1,4 +1,4 @@
-/*	$OpenBSD: symbol.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: symbol.c,v 1.3 2002/03/15 17:49:51 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -51,7 +51,8 @@ sym_init_exec(struct pstate *ps, const char *name)
 		warnx("sym_init_exec: %s is not a supported file format", name);
 
 	if (ps->ps_sops) {
-		ps->ps_sym_exe = st_open(ps, name);
+		/* XXX - this 0 doesn't have to be correct.. */
+		ps->ps_sym_exe = st_open(ps, name, 0);
 		if (ps->ps_sym_exe)
 			ps->ps_sym_exe->st_flags |= ST_EXEC;
 	}
@@ -139,12 +140,12 @@ sym_print(struct pstate *ps, reg pc, char *buf, size_t buflen)
  * it's already there.
  */
 struct sym_table *
-st_open(struct pstate *ps, const char *name)
+st_open(struct pstate *ps, const char *name, reg offs)
 {
 	struct sym_table *st;
 
 	TAILQ_FOREACH(st, &ps->ps_syms, st_list) {
-		if (!strcmp(name, st->st_fname))
+		if (!strcmp(name, st->st_fname) && (st->st_offs == offs))
 			return (st);
 	}
 
@@ -154,6 +155,8 @@ st_open(struct pstate *ps, const char *name)
 		TAILQ_INSERT_TAIL(&ps->ps_syms, st, st_list);
 		strlcpy(st->st_fname, name, sizeof(st->st_fname));
 	}
+
+	st->st_offs = offs;
 
 	return (st);
 }

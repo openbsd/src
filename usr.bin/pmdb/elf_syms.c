@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_syms.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: elf_syms.c,v 1.3 2002/03/15 17:49:51 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -56,7 +56,6 @@ struct elf_symbol_handle {
 	Elf_Word	esh_strsize;
 	Elf_Sym 	*esh_symtab;
 	Elf_Word	esh_symsize;
-	Elf_Addr	esh_offs;
 };
 
 #define ESH_TO_ST(esh) (&(esh)->esh_st)
@@ -203,7 +202,7 @@ elf_name_and_off(struct sym_table *st, reg pc, reg *offs)
 	int nsyms, i;
 	char *symn;
 
-#define SYMVAL(S) (unsigned long)((S)->st_value + esh->esh_offs)
+#define SYMVAL(S) (unsigned long)((S)->st_value + st->st_offs)
 
 	nsyms = esh->esh_symsize / sizeof(Elf_Sym);
 
@@ -266,7 +265,7 @@ elf_lookup(struct pstate *ps, const char *name, reg *res)
 	}
 
 	if (s != NULL) {
-		*res = s->st_value + ST_TO_ESH(st)->esh_offs;
+		*res = s->st_value + st->st_offs;
 		return (0);
 	}
 
@@ -319,7 +318,6 @@ elf_update(struct pstate *ps)
 #ifndef __NetBSD__
 	pid_t pid = ps->ps_pid;
 	struct elf_object_v1 eobj;
-	struct sym_table *st;
 	struct r_debug rdeb;
 	reg addr;
 	Elf_Dyn dyn;
@@ -330,7 +328,7 @@ elf_update(struct pstate *ps)
 		warnx("Can't find _DYNAMIC");
 		return;
 	}
-	addr = s->st_value + ST_TO_ESH(ps->ps_sym_exe)->esh_offs;
+	addr = s->st_value + ps->ps_sym_exe->st_offs;
 
 	do {
 		if (read_from_pid(pid, addr, &dyn, sizeof(dyn)) < 0) {
@@ -392,12 +390,8 @@ elf_update(struct pstate *ps)
 		if (i == MAXPATHLEN)
 			continue;
 
-		st = st_open(ps, fname);
-		if (st == NULL) {
+		if (st_open(ps, fname, eobj.load_offs) == NULL)
 			warn("symbol loading failed");
-			continue;
-		}
-		ST_TO_ESH(st)->esh_offs = eobj.load_offs;
 	}
 #endif
 }

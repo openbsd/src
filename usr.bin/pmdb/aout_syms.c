@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_syms.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: aout_syms.c,v 1.3 2002/03/15 17:49:51 art Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -54,7 +54,6 @@ struct aout_symbol_handle {
 	u_int32_t	ash_strsize;
 	struct nlist   *ash_symtab;
 	int		ash_symsize;
-	int		ash_offs;
 };
 
 #define ASH_TO_ST(ash) (&(ash)->ash_st)
@@ -184,7 +183,7 @@ aout_name_and_off(struct sym_table *st, reg pc, reg *offs)
 	int nsyms, i;
 	char *symn;
 
-#define SYMVAL(S) (unsigned long)((S)->n_value + ash->ash_offs)
+#define SYMVAL(S) (unsigned long)((S)->n_value + st->st_offs)
 
 	nsyms = ash->ash_symsize / sizeof(struct nlist);
 
@@ -262,7 +261,7 @@ restart:
 		return (-1);
 	}
 
-	*res = s->n_value + ST_TO_ASH(st)->ash_offs;
+	*res = s->n_value + st->st_offs;
 	return (0);
 }
 
@@ -285,7 +284,7 @@ aout_update(struct pstate *ps)
 		warnx("Can't find __DYNAMIC");
 		return;
 	}
-	addr = s->n_value + ST_TO_ASH(ps->ps_sym_exe)->ash_offs;
+	addr = s->n_value + ps->ps_sym_exe->st_offs;
 
 	if (read_from_pid(pid, addr, &dyn, sizeof(dyn)) < 0) {
 		warn("Can't read __DYNAMIC");
@@ -314,7 +313,6 @@ aout_update(struct pstate *ps)
 
 	somp = (off_t)(reg)sdt.sdt_loaded;
 	while (somp) {
-		struct sym_table *st;
 		char fname[MAXPATHLEN];
 		int i;
 
@@ -338,11 +336,7 @@ aout_update(struct pstate *ps)
 			continue;
 		}
 
-		st = st_open(ps, fname);
-		if (st == NULL) {
+		if (st_open(ps, fname, (reg)som.som_addr) == NULL)
 			warn("symbol loading failed");
-			continue;
-		}
-		ST_TO_ASH(st)->ash_offs = (int)som.som_addr;
 	}
 }
