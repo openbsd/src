@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: uthread_fd.c,v 1.9 1998/09/13 15:33:42 dt Exp $
- * $OpenBSD: uthread_fd.c,v 1.3 1998/12/23 22:49:46 d Exp $
+ * $OpenBSD: uthread_fd.c,v 1.4 1999/01/10 23:09:36 d Exp $
  *
  */
 #include <errno.h>
@@ -80,7 +80,7 @@ _thread_fd_table_init(int fd)
 		ret = -1;
 	} else {
 		/* Initialise the file locks: */
-		memset(&entry->lock, 0, sizeof(entry->lock));
+		_SPINUNLOCK(&entry->lock);
 		entry->r_owner = NULL;
 		entry->w_owner = NULL;
 		entry->r_fname = NULL;
