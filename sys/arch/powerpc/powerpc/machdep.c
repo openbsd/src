@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.65 2001/06/24 05:14:38 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.66 2001/06/24 22:00:12 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -177,6 +177,7 @@ initppc(startkernel, endkernel, args)
 	extern void *tlbimiss; extern int tlbimsize;
 	extern void *tlbdlmiss; extern int tlbdlmsize;
 	extern void *tlbdsmiss; extern int tlbdsmsize;
+	extern void *ddblow; extern int ddbsize;
 #if NIPKDB > 0
 	extern ipkdblow, ipkdbsize;
 #endif
@@ -296,13 +297,17 @@ where = 3;
 		case EXC_DSMISS:
 			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
 			break;
-#if NIPKDB > 0
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
+#if defined(DDB)
+			bcopy(&ddblow, (void *)exc, (size_t)&ddbsize);
+#else 
+#if NIPKDB > 0
 			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
-			break;
 #endif
+#endif
+			break;
 		}
 
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);

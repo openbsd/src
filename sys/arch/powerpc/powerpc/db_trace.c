@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.7 2001/06/23 01:58:01 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.8 2001/06/24 22:00:13 drahn Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /* 
@@ -113,7 +113,7 @@ db_dumpframe (u_int32_t pframe)
 		name = "?";
 		offset = 65536;
 	}
-	db_printf("lr %s+%x fp %x nfp %x\n", name, offset, pframe, nextframe);
+	db_printf("%s+0x%x fp %x nfp %x\n", name, offset, pframe, nextframe);
 
 	return nextframe;
 }

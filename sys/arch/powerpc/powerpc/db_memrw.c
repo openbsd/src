@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_memrw.c,v 1.2 1996/12/28 06:21:52 rahnds Exp $	*/
-/*	$NetBSD: db_memrw.c,v 1.1 1996/02/22 23:23:35 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4 2001/05/18 20:38:27 matt Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.3 2001/06/24 22:00:13 drahn Exp $	*/
 
 /* 
  * Mach Operating System
@@ -40,6 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 
@@ -52,7 +53,7 @@
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {
@@ -79,7 +80,7 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {
@@ -99,5 +100,6 @@ db_write_bytes(addr, size, data)
 		--size;
 		*dst++ = *data++;
 	}
+	syncicache((void *)addr, size);
 }
 
