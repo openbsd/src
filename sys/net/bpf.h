@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.12 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.13 2000/06/19 03:00:54 jason Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -97,28 +97,7 @@ struct bpf_version {
 
 /*
  * BPF ioctls
- *
- * The first set is for compatibility with Sun's pcc style
- * header files.  If you're using gcc, we assume that you
- * have run fixincludes so the latter set should work.
  */
-#if (defined(sun) || defined(ibm032)) && !defined(__GNUC__)
-#define	BIOCGBLEN	_IOR(B,102, u_int)
-#define	BIOCSBLEN	_IOWR(B,102, u_int)
-#define	BIOCSETF	_IOW(B,103, struct bpf_program)
-#define	BIOCFLUSH	_IO(B,104)
-#define BIOCPROMISC	_IO(B,105)
-#define	BIOCGDLT	_IOR(B,106, u_int)
-#define BIOCGETIF	_IOR(B,107, struct ifreq)
-#define BIOCSETIF	_IOW(B,108, struct ifreq)
-#define BIOCSRTIMEOUT	_IOW(B,109, struct timeval)
-#define BIOCGRTIMEOUT	_IOR(B,110, struct timeval)
-#define BIOCGSTATS	_IOR(B,111, struct bpf_stat)
-#define BIOCIMMEDIATE	_IOW(B,112, u_int)
-#define BIOCVERSION	_IOR(B,113, struct bpf_version)
-#define BIOCSRSIG	_IOW(B,114, u_int)
-#define BIOCGRSIG	_IOR(B,115, u_int)
-#else
 #define	BIOCGBLEN	_IOR('B',102, u_int)
 #define	BIOCSBLEN	_IOWR('B',102, u_int)
 #define	BIOCSETF	_IOW('B',103, struct bpf_program)
@@ -134,7 +113,6 @@ struct bpf_version {
 #define BIOCVERSION	_IOR('B',113, struct bpf_version)
 #define BIOCSRSIG	_IOW('B',114, u_int)
 #define BIOCGRSIG	_IOR('B',115, u_int)
-#endif
 
 /*
  * Structure prepended to each packet.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.6 1999/09/13 22:35:44 niklas Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.7 2000/06/19 03:00:54 jason Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -45,14 +45,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#ifdef sun
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#endif
-
-#if defined(sparc) || defined(__mips__) || defined(ibm032) || \
-    ((defined(__NetBSD__) || defined(__OpenBSD__)) && !defined(UNALIGNED_ACCESS))
+#ifndef UNALIGNED_ACCESS
 #define BPF_ALIGN
 #endif
 

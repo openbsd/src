@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.5 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.6 2000/06/19 03:00:54 jason Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -80,14 +80,8 @@ struct bpf_d {
 	pid_t		bd_pgid;	/* process or group id for signal */
 	uid_t		bd_siguid;	/* uid for process that set pgid */
 	uid_t		bd_sigeuid;	/* euid for process that set pgid */
-#if BSD < 199103
-	u_char		bd_selcoll;	/* true if selects collide */
-	int		bd_timedout;
-	struct proc *	bd_selproc;	/* process that last selected us */
-#else
 	u_char		bd_pad;		/* explicit alignment */
 	struct selinfo	bd_sel;		/* bsd select info */
-#endif
 };
 
 /*
