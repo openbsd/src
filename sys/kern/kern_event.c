@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.8 2001/05/14 12:38:46 art Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.9 2001/07/17 01:51:37 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -41,6 +41,7 @@
 #include <sys/queue.h>
 #include <sys/event.h>
 #include <sys/eventvar.h>
+#include <sys/pool.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -79,6 +80,7 @@ void	knote_attach(struct knote *kn, struct filedesc *fdp);
 void	knote_drop(struct knote *kn, struct proc *p);
 void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
+void	knote_init(void);
 struct	knote *knote_alloc(void);
 void	knote_free(struct knote *kn);
 
@@ -95,6 +97,8 @@ struct filterops proc_filtops =
 	{ 0, filt_procattach, filt_procdetach, filt_proc };
 struct filterops file_filtops =
 	{ 1, filt_fileattach, NULL, NULL };
+
+struct	pool knote_pool;
 
 #define KNOTE_ACTIVATE(kn) do {						\
 	kn->kn_status |= KN_ACTIVE;					\
@@ -883,14 +887,28 @@ knote_dequeue(struct knote *kn)
 	splx(s);
 }
 
+void
+knote_init(void)
+{
+	pool_init(&knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_KNOTE);
+}
+
 struct knote *
 knote_alloc(void)
 {
-	return (malloc(sizeof (struct knote), M_KNOTE, M_NOWAIT));
+	static int knote_pool_initialised;
+
+	if (!knote_pool_initialised) { 
+		knote_init();
+		knote_pool_initialised++;
+	}
+
+	return (pool_get(&knote_pool, PR_WAITOK));
 }
 
 void
 knote_free(struct knote *kn)
 {
-	free(kn, M_KNOTE);
+	pool_put(&knote_pool, kn);
 }
