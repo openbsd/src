@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.8 2002/07/22 03:06:00 art Exp $	*/
+/*	$OpenBSD: process.c,v 1.9 2002/07/31 02:38:39 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -165,15 +165,13 @@ int
 process_getregs(struct pstate *ps, struct reg *r)
 {
 
-	if (ps->ps_state == STOPPED) {
-		if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)r, 0) != 0)
-			return (-1);
-	} else if (ps->ps_flags & PSF_CORE) {
+	if (ps->ps_flags & PSF_CORE) {
 		memcpy(r, ps->ps_core->regs, sizeof(*r));
-	} else
-		return (-1);
 
-	return (0);
+		return (0);
+	}
+
+	return (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)r, 0));
 }
 
 int
