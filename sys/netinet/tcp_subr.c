@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.85 2004/11/25 15:32:08 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.86 2005/01/10 23:53:49 mcbride Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_do_ecn = 0;		/* RFC3168 ECN enabled/disabled? */
 int	tcp_do_rfc3390 = 0;	/* RFC3390 Increasing TCP's Initial Window */
 
-u_int32_t	tcp_now;
+u_int32_t	tcp_now = 1;
 
 #ifndef TCBHASHSIZE
 #define	TCBHASHSIZE	128

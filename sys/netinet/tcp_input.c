@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.180 2004/12/30 01:30:30 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.181 2005/01/10 23:53:49 mcbride Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -932,9 +932,17 @@ after_listen:
 		if (tcp_dooptions(tp, optp, optlen, th, m, iphlen, &opti))
 			goto drop;
 
-	/* subtract out the tcp timestamp modulator */
-	if (opti.ts_present)
+	if (opti.ts_present && opti.ts_ecr) {
+		int rtt_test;
+
+		/* subtract out the tcp timestamp modulator */
 		opti.ts_ecr -= tp->ts_modulate;
+                                                     
+		/* make sure ts_ecr is sensible */
+		rtt_test = tcp_now - opti.ts_ecr;
+		if (rtt_test < 0 || rtt_test > (TCP_RTT_MAX - 1))
+			opti.ts_ecr = 0;
+	}
 
 #ifdef TCP_SACK
 	if (tp->sack_enable) {
@@ -993,7 +1001,7 @@ after_listen:
 				 * this is a pure ack for outstanding data.
 				 */
 				++tcpstat.tcps_predack;
-				if (opti.ts_present)
+				if (opti.ts_present && opti.ts_ecr)
 					tcp_xmit_timer(tp, tcp_now-opti.ts_ecr+1);
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
@@ -1755,7 +1763,7 @@ trimthenstep6:
 		 * timer backoff (cf., Phil Karn's retransmit alg.).
 		 * Recompute the initial retransmit timer.
 		 */
-		if (opti.ts_present)
+		if (opti.ts_present && opti.ts_ecr)
 			tcp_xmit_timer(tp, tcp_now-opti.ts_ecr+1);
 		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
@@ -2796,11 +2804,13 @@ tcp_xmit_timer(tp, rtt)
 	short delta;
 	short rttmin;
 
+	--rtt;
 	if (rtt < 0)
-		return;
+		rtt = 0;
+	if (rtt > TCP_RTT_MAX)
+		rtt = TCP_RTT_MAX;
 
 	tcpstat.tcps_rttupdated++;
-	--rtt;
 	if (tp->t_srtt != 0) {
 		/*
 		 * srtt is stored as fixed point with 3 bits after the
