@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.33 2002/03/14 01:27:19 millert Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.34 2002/03/17 18:28:48 art Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1669,7 +1669,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	 */
 	result = 0;
 	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-		result = vn_lock(vn, LK_EXCLUSIVE | LK_RETRY | LK_RECURSEFAIL, curproc);
+		result = vn_lock(vn, LK_EXCLUSIVE | LK_RECURSEFAIL, curproc);
 
 	if (result == 0) {
 		/* NOTE: vnode now locked! */
