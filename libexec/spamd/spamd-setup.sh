@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$OpenBSD: spamd-setup.sh,v 1.2 2003/01/03 04:52:43 deraadt Exp $
+#	$OpenBSD: spamd-setup.sh,v 1.3 2003/01/06 00:05:04 deraadt Exp $
 #
 # Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 #
@@ -53,8 +53,6 @@ trap "rm -f $R $W; exit 1" 1 2 3 13 15
 
 while :
 	do case "$1" in
-	-x)	echo 199.185.137.1 >> $R
-		;;
 	-s|-1)
 		fetch http://www.spews.org/spews_list_level1.txt | filter >> $R
 		;;
