@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.21 2004/03/31 21:22:06 mickey Exp $	*/
+/*	$OpenBSD: strip.c,v 1.22 2004/07/12 10:44:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.21 2004/03/31 21:22:06 mickey Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.22 2004/07/12 10:44:11 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,6 +63,11 @@ static char rcsid[] = "$OpenBSD: strip.c,v 1.21 2004/03/31 21:22:06 mickey Exp $
 #undef ELF_TARG_DATA
 #undef ELF_TARG_MACH
 #include "m68k/exec.h"
+#elif MID_MACHINE_OVERRIDE == MID_M88K
+#undef __LDPGSZ
+#undef ELF_TARG_DATA
+#undef ELF_TARG_MACH
+#include "m88k/exec.h"
 #endif
 #endif
 
