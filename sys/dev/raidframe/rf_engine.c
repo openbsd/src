@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.c,v 1.9 2002/03/06 11:28:27 tdeval Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.10 2002/03/08 09:25:57 tdeval Exp $	*/
 /*	$NetBSD: rf_engine.c,v 1.10 2000/08/20 16:51:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -67,14 +67,14 @@
 #include "rf_shutdown.h"
 #include "rf_raid.h"
 
-#ifdef RAID_AUTOCONFIG
-#define	RF_ENGINE_PID	10
-extern int	  numraid;
-extern pid_t	  lastpid;
-void	DAGExecutionThread_pre(RF_ThreadArg_t arg);
-#endif	/* RAID_AUTOCONFIG */
 void	DAGExecutionThread(RF_ThreadArg_t arg);
-void	**rf_hook_cookies;
+#ifdef RAID_AUTOCONFIG
+void	DAGExecutionThread_pre(RF_ThreadArg_t arg);
+#define	RF_ENGINE_PID	10
+extern pid_t	  lastpid;
+#endif	/* RAID_AUTOCONFIG */
+void		**rf_hook_cookies;
+extern int	  numraid;
 
 #define DO_INIT(_l_,_r_) { \
   int _rc; \
