@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.10 1998/06/30 16:58:34 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.11 1998/08/17 22:12:44 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -202,6 +202,7 @@ init_attributes(void)
      int i, def_flag = 0;
      char attrib[257];
      struct cfgx *cfgattrib = NULL;
+     u_int8_t *newbuf;
 
 #ifdef DEBUG
      printf("[Setting up attributes]\n");
@@ -299,11 +300,15 @@ init_attributes(void)
 	       attrib[1] = 0;
 		    
 	       /* Copy attributes in object */
-	       ob->attributes = realloc(ob->attributes, 
-					ob->attribsize + attrib[1] +2);
-	       if (ob->attributes == NULL)
+	       newbuf = realloc(ob->attributes, 
+				ob->attribsize + attrib[1] +2);
+	       if (newbuf == NULL) {
+		    if (ob->attributes != NULL)
+			 free (ob->attributes);
 		    crit_error(1, "realloc() in init_attributes()");
-
+	       }
+	       ob->attributes = newbuf;
+	       
 	       bcopy(attrib, ob->attributes + ob->attribsize, attrib[1] + 2);
 	       ob->attribsize += attrib[1] + 2;
 			
@@ -348,6 +353,7 @@ init_schemes(void)
      struct moduli_cache *tmp;
      mpz_t generator, bits;
      u_int32_t scheme_bits;
+     u_int8_t *newbuf;
 
      char *p, *p2;
      u_int16_t size;
@@ -419,11 +425,14 @@ init_schemes(void)
 	       buffer[2] = buffer[3] = 0;
 	  }
 	       
-	  global_schemes = realloc(global_schemes, global_schemesize
-					+ size + 2);
-	  if (global_schemes == NULL)
+	  newbuf = realloc(global_schemes, global_schemesize + size + 2);
+	  if (newbuf == NULL) {
+	       if (global_schemes != NULL)
+		    free (global_schemes);
 	       crit_error(1, "out of memory in init_schems()");
-	  
+	  }
+	  global_schemes = newbuf;
+
 	  /* DH_G_2_MD5 is a MUST, so we generate it if gen_flag == 0 */
 	  if (*(u_int16_t *)buffer == htons(DH_G_2_MD5))
 	       gen_flag = 1;

@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: server.c,v 1.6 1998/06/30 16:58:40 provos Exp $";
+static char rcsid[] = "$Id: server.c,v 1.7 1998/08/17 22:12:42 provos Exp $";
 #endif
 
 #define _SERVER_C_
@@ -79,6 +79,7 @@ init_server(void)
      struct stat sb;
      int sock, d, i, ip, on = 1; 
      struct ifconf ifconf; 
+     void *newbuf;
      char buf[1024];
 
      readfds = normfds = NULL;
@@ -154,16 +155,24 @@ init_server(void)
 
 #ifdef IPSEC
      /* We also listen on PF_ENCAP for notify messages */
-     addresses = (char **) realloc(addresses, 
-				   (i + 2) * sizeof(char *)); 
-     if (addresses == (char **) NULL) 
+     newbuf = realloc(addresses, (i + 2) * sizeof(char *)); 
+     if (newbuf == NULL) {
+	  if (addresses != NULL)
+	       free (addresses);
 	  crit_error(1, "realloc() in init_server()"); 
+     }
+     addresses = (char **) newbuf;
      
      addresses[i + 1] = (char *) NULL; 
 
-     sockets = (int *) realloc(sockets, (i + 2)* sizeof(int));
-     if (sockets == (int *) NULL)
+     newbuf = realloc(sockets, (i + 2)* sizeof(int));
+     if (newbuf == NULL) {
+	  if (sockets != NULL)
+	       free (sockets);
 	  crit_error(1, "realloc() in init_server()");
+     }
+     sockets = (int *) newbuf;
+
      sockets[i] = kernel_get_socket();
      sockets[i+1] = -1;
 
@@ -184,19 +193,27 @@ init_server(void)
 	       continue; 
 	  } 
  
-	  addresses = (char **) realloc(addresses, 
-					(i + 2) * sizeof(char *)); 
-	  if (addresses == (char **) NULL) 
+	  newbuf =  realloc(addresses, (i + 2) * sizeof(char *)); 
+	  if (newbuf == NULL) {
+	       if (addresses != NULL)
+		    free (addresses);
 	       crit_error(1, "realloc() in init_server()"); 
+	  }
+	  addresses = (char **) newbuf;
 	     
 	  addresses[i] = strdup(inet_ntoa(sin2->sin_addr)); 
 	  if (addresses[i] == (char *) NULL) 
 	       crit_error(1, "strdup() in init_server()"); 
 	  addresses[i + 1] = (char *) NULL; 
 
-	  sockets = (int *) realloc(sockets, (i + 2)* sizeof(int));
-	  if (sockets == (int *) NULL)
+	  newbuf = realloc(sockets, (i + 2)* sizeof(int));
+	  if (newbuf == NULL) {
+	       if (sockets != NULL)
+		    free (sockets);
 	       crit_error(1, "realloc() in init_server()");
+	  }
+	  sockets = (int *) newbuf;
+
 	  sockets[i+1] = -1;
 
 	  if ((sock = socket(PF_INET, SOCK_DGRAM, proto->p_proto)) < 0)
