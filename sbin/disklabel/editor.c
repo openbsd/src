@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.30 1998/02/19 20:43:37 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.31 1998/02/28 02:52:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.30 1998/02/19 20:43:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.31 1998/02/28 02:52:08 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1589,10 +1589,16 @@ getdisktype(lp, banner)
 
 		for (;;) {
 			s = getstring(lp, "Disk type",
-			    "What kind of disk is this?  Usually SCSI, ST506, or floppy (use ST506 for IDE).",
+			    "What kind of disk is this?  Usually SCSI, ESDI, "
+			    "ST506, or floppy (use ESDI for IDE).",
 			    "SCSI");
 			if (s == NULL)
 				continue;
+			if (strcasecmp(s, "IDE") == 0) {
+				lp->d_type = DTYPE_ESDI;
+				putchar('\n');
+				return;
+			}
 			for (i = 1; i < DKMAXTYPES; i++)
 				if (strcasecmp(s, dktypenames[i]) == 0) {
 					lp->d_type = i;
