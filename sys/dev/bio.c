@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio.c,v 1.3 2003/08/06 21:08:06 millert Exp $	*/
+/*	$OpenBSD: bio.c,v 1.4 2005/04/01 20:02:27 marco Exp $	*/
 
 /*
  * Copyright (c) 2002 Niklas Hallqvist.  All rights reserved.
@@ -89,7 +89,8 @@ bioioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	char name[16];
-	int len, error;
+	size_t len;
+	int error;
 	struct bio_locate *locate;
 	struct bio_common *common;
 
