@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2000/02/02 14:00:12 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2000/02/02 14:05:22 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.29 2000/02/02 14:00:12 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.30 2000/02/02 14:05:22 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -327,6 +327,10 @@ macro()
 		else if (LOOK_AHEAD(t,lquote)) {	/* strip quotes */
 			nlpar = 0;
 			record(quotes, nlpar++);
+			/*
+			 * Opening quote: scan forward until matching
+			 * closing quote has been found.
+			 */
 			do {
 
 				l = gpbc();
