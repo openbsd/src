@@ -11,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: servconf.h,v 1.43 2001/05/20 17:20:35 markus Exp $"); */
+/* RCSID("$OpenBSD: servconf.h,v 1.44 2001/06/23 02:34:31 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -125,8 +125,8 @@ typedef struct {
 					 * diconnect the session 
 					 */
 
-	char   *authorized_keys_file;	/* File containing public RSA keys */
-	char   *authorized_keys_file2;	/* File containing public SSH2 keys */
+	char   *authorized_keys_file;	/* File containing public keys */
+	char   *authorized_keys_file2;
 
 }       ServerOptions;
 /*
