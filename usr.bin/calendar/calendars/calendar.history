@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.10 2001/12/04 12:26:45 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.11 2002/01/31 00:49:14 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -39,6 +39,7 @@
 01/28	Space Shuttle Challenger (51-L) explodes 74 seconds after liftoff
 	killing Scobee, Smith, McNair, Resnick, Jarvis, Onizuka and McAuliffe,
 	1986
+01/29	Anre the Giant died, 1993
 01/30	Mohandas Gandhi assassinated in New Delhi by Hindu fanatic, 1948
 01/30	Tet Offensive, 1968
 01/31	"Ham" the chimpanzee soars into space aboard Mercury-Redstone 2, 1961
@@ -114,6 +115,7 @@
 04/18	San Francisco earthquake, 1906
 04/19	Landing of the "33" in Uruguay
 04/19	Warsaw Ghetto uprising, 1943
+04/19	Andre the Giant (Rousinoff) born in Grunoble, France, 1946
 04/20	Supreme Court unanimously rules in favor of busing, 1971
 04/21	Lyrid meteor shower
 04/23	Hank Aaron hits his first home run, 1954
