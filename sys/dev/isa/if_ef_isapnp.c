@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.3 1999/08/05 18:06:28 jason Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.4 1999/08/08 19:16:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -405,7 +405,7 @@ efinit(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_tag_t ioh = sc->sc_ioh;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
 	efstop(sc);
