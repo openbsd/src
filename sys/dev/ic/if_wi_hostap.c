@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.22 2003/01/21 16:26:40 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.23 2003/01/21 20:09:39 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -76,6 +76,7 @@
 #include <dev/ic/if_wi_ieee.h>
 #include <dev/ic/if_wivar.h>
 
+void wihap_timeout(void *v);
 void wihap_sta_timeout(void *v);
 struct wihap_sta_info *wihap_sta_alloc(struct wi_softc *sc, u_int8_t *addr);
 void wihap_sta_delete(struct wihap_sta_info *sta);
@@ -198,11 +199,12 @@ wihap_init(struct wi_softc *sc)
 
 	whi->apflags = WIHAPFL_ACTIVE;
 
-	LIST_INIT(&whi->sta_list);
+	TAILQ_INIT(&whi->sta_list);
 	for (i = 0; i < WI_STA_HASH_SIZE; i++)
 		LIST_INIT(&whi->sta_hash[i]);
 
 	whi->inactivity_time = WIHAP_DFLT_INACTIVITY_TIME;
+	timeout_set(&whi->tmo, wihap_timeout, sc);
 }
 
 /* wihap_sta_disassoc()
@@ -266,7 +268,6 @@ wihap_sta_deauth(struct wi_softc *sc, u_int8_t sta_addr[], u_int16_t reason)
 /* wihap_shutdown()
  *
  *	Disassociate all stations and free up data structures.
- *	Caller must raise to splimp().
  */
 void
 wihap_shutdown(struct wi_softc *sc)
@@ -284,18 +285,21 @@ wihap_shutdown(struct wi_softc *sc)
 
 	s = splimp();
 
+	/* Disable wihap inactivity timer. */
+	timeout_del(&whi->tmo);
+
 	/* Delete all stations from the list. */
-	for (sta = LIST_FIRST(&whi->sta_list);
-	    sta != LIST_END(&whi->sta_list); sta = next) {
+	for (sta = TAILQ_FIRST(&whi->sta_list);
+	    sta != TAILQ_END(&whi->sta_list); sta = next) {
 		timeout_del(&sta->tmo);
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 			printf("wihap_shutdown: FREE(sta=0x%x)\n", sta);
-		next = LIST_NEXT(sta, list);
+		next = TAILQ_NEXT(sta, list);
 		if (sta->challenge)
 			FREE(sta->challenge, M_TEMP);
 		FREE(sta, M_DEVBUF);
 	}
-	LIST_INIT(&whi->sta_list);
+	TAILQ_INIT(&whi->sta_list);
 
 	/* Broadcast disassoc and deauth to all the stations. */
 	if (sc->wi_flags & WI_FLAGS_ATTACHED) {
@@ -328,6 +332,75 @@ addr_cmp(u_int8_t a[], u_int8_t b[])
 		*(u_int32_t *)(a    ) == *(u_int32_t *)(b));
 }
 
+/* wihap_sta_movetail(): move sta to the tail of the station list in whi */
+static __inline void
+wihap_sta_movetail(struct wihap_info *whi, struct wihap_sta_info *sta)
+{
+	TAILQ_REMOVE(&whi->sta_list, sta, list);
+	sta->flags &= ~WI_SIFLAGS_DEAD;
+	TAILQ_INSERT_TAIL(&whi->sta_list, sta, list);
+}
+
+void
+wihap_timeout(void *v)
+{
+	struct wi_softc		*sc = v;
+	struct wihap_info	*whi = &sc->wi_hostap_info;
+	struct wihap_sta_info	*sta, *next;
+	int	i, s;
+
+	s = splimp();
+
+	for (i = 10, sta = TAILQ_FIRST(&whi->sta_list);
+	    i != 0 && sta != TAILQ_END(&whi->sta_list) &&
+	    (sta->flags & WI_SIFLAGS_DEAD); i--, sta = next) {
+		next = TAILQ_NEXT(sta, list);
+		if (timeout_pending(&sta->tmo)) {
+			/* Became alive again, move to end of list. */
+			wihap_sta_movetail(whi, sta);
+		} else if (sta->flags & WI_SIFLAGS_ASSOC) {
+			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+				printf("wihap_timeout: disassoc due to inactivity: %s\n",
+				    ether_sprintf(sta->addr));
+
+			/* Disassoc station. */
+			wihap_sta_disassoc(sc, sta->addr,
+			    IEEE80211_REASON_ASSOC_EXPIRE);
+			sta->flags &= ~WI_SIFLAGS_ASSOC;
+
+			/*
+			 * Move to end of the list and reset station timeout.
+			 * We do this to make sure we don't get deauthed
+			 * until inactivity_time seconds have passed.
+			 */
+			wihap_sta_movetail(whi, sta);
+			timeout_add(&sta->tmo, hz * whi->inactivity_time);
+		} else if (sta->flags & WI_SIFLAGS_AUTHEN) {
+			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+				printf("wihap_timeout: deauth due to inactivity: %s\n",
+				    ether_sprintf(sta->addr));
+
+			/* Deauthenticate station. */
+			wihap_sta_deauth(sc, sta->addr,
+			    IEEE80211_REASON_AUTH_EXPIRE);
+			sta->flags &= ~WI_SIFLAGS_AUTHEN;
+
+			/* Delete the station if it's not permanent. */
+			if (sta->flags & WI_SIFLAGS_PERM)
+				wihap_sta_movetail(whi, sta);
+			else
+				wihap_sta_delete(sta);
+		}
+	}
+
+	/* Restart the timeout if there are still dead stations left. */
+	sta = TAILQ_FIRST(&whi->sta_list);
+	if (sta != NULL && (sta->flags & WI_SIFLAGS_DEAD))
+		timeout_add(&whi->tmo, 1);	/* still work left, requeue */
+
+	splx(s);
+}
+
 void
 wihap_sta_timeout(void *v)
 {
@@ -336,39 +409,23 @@ wihap_sta_timeout(void *v)
 	struct wihap_info	*whi = &sc->wi_hostap_info;
 	int	s;
 
-	s = splsoftnet();
+	s = splimp();
 
-	if (sta->flags & WI_SIFLAGS_ASSOC) {
-		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
-			printf("wihap_timer: disassoc due to inactivity: %s\n",
-			    ether_sprintf(sta->addr));
+	/* Mark sta as dead and move it to the head of the list. */
+	TAILQ_REMOVE(&whi->sta_list, sta, list);
+	sta->flags |= WI_SIFLAGS_DEAD;
+	TAILQ_INSERT_HEAD(&whi->sta_list, sta, list);
 
-		/* Disassoc station. */
-		wihap_sta_disassoc(sc, sta->addr,
-		    IEEE80211_REASON_ASSOC_EXPIRE);
-		sta->flags &= ~WI_SIFLAGS_ASSOC;
+	/* Add wihap timeout if we have not already done so. */
+	if (!timeout_pending(&whi->tmo))
+		timeout_add(&whi->tmo, hz / 10);
 
-		timeout_add(&sta->tmo, hz * whi->inactivity_time);
-
-	} else if (sta->flags & WI_SIFLAGS_AUTHEN) {
-
-		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
-			printf("wihap_timer: deauth due to inactivity: %s\n",
-			    ether_sprintf(sta->addr));
-
-		/* Deauthenticate station. */
-		wihap_sta_deauth(sc, sta->addr, IEEE80211_REASON_AUTH_EXPIRE);
-		sta->flags &= ~WI_SIFLAGS_AUTHEN;
-
-		/* Delete the station if it's not permanent. */
-		if (!(sta->flags & WI_SIFLAGS_PERM))
-			wihap_sta_delete(sta);
-	}
 	splx(s);
 }
 
 /* wihap_sta_delete()
  * Delete a single station and free up its data structure.
+ * Caller must raise to splimp().
  */
 void
 wihap_sta_delete(struct wihap_sta_info *sta)
@@ -381,7 +438,7 @@ wihap_sta_delete(struct wihap_sta_info *sta)
 
 	whi->asid_inuse_mask[i >> 4] &= ~(1UL << (i & 0xf));
 
-	LIST_REMOVE(sta, list);
+	TAILQ_REMOVE(&whi->sta_list, sta, list);
 	LIST_REMOVE(sta, hash);
 	if (sta->challenge)
 		FREE(sta->challenge, M_TEMP);
@@ -417,7 +474,7 @@ wihap_sta_alloc(struct wi_softc *sc, u_int8_t *addr)
 	sta->asid = 0xc001 + i;
 
 	/* Insert in list and hash list. */
-	LIST_INSERT_HEAD(&whi->sta_list, sta, list);
+	TAILQ_INSERT_TAIL(&whi->sta_list, sta, list);
 	LIST_INSERT_HEAD(&whi->sta_hash[hash], sta, hash);
 
 	sta->sc = sc;
@@ -494,7 +551,7 @@ wihap_auth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 {
 	struct wihap_info	*whi = &sc->wi_hostap_info;
 	struct wihap_sta_info	*sta;
-	int			i;
+	int			i, s;
 
 	u_int16_t		algo;
 	u_int16_t		seq;
@@ -542,7 +599,9 @@ wihap_auth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 			printf("wihap_auth_req: new station\n");
 
 		/* Create new station. */
+		s = splimp();
 		sta = wihap_sta_alloc(sc, rxfrm->wi_addr2);
+		splx(s);
 		if (sta == NULL) {
 			/* Out of memory! */
 			status = IEEE80211_STATUS_TOO_MANY_STATIONS;
@@ -1231,7 +1290,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 		reqall.nstations = whi->n_stations;
 		n = 0;
 		s = splimp();
-		sta = LIST_FIRST(&whi->sta_list);
+		sta = TAILQ_FIRST(&whi->sta_list);
 		while (sta && reqall.size >= n+sizeof(struct hostap_sta)) {
 
 			bcopy(sta->addr, stabuf.addr, ETHER_ADDR_LEN);
@@ -1246,7 +1305,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 			if (error)
 				break;
 
-			sta = LIST_NEXT(sta, list);
+			sta = TAILQ_NEXT(sta, list);
 			n += sizeof(struct hostap_sta);
 		}
 		splx(s);
