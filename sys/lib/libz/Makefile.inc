@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1997/02/07 13:14:59 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1997/04/03 13:01:40 briggs Exp $
 #	$NetBSD: Makefile.inc,v 1.2 1997/01/23 22:29:09 cgd Exp $
 #
 #	Configuration variables (default values are below):
@@ -29,7 +29,7 @@ ZLIB_PROF=	${ZDST}/libz_p.a
 
 ZMAKE= \
 	cd ${ZDIR} && MAKEOBJDIR=${ZDST} ${MAKE} \
-	    CC=${CC} CFLAGS="${CFLAGS}" \
+	    CC="${CC}" CFLAGS="${CFLAGS}" \
 	    AS=${AS} AFLAGS="${AFLAGS}" \
 	    LD=${LD} STRIP=${STRIP} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} \
@@ -39,7 +39,7 @@ ZMAKE= \
 ${ZLIB}:		.NOTMAIN __always_make_zlib
 	@echo making sure the z library is up to date...
 .if (${Z_AS} == "library")
-	@${ZMAKE} libz.a
+	${ZMAKE} libz.a
 .else
 	@${ZMAKE} libz.o
 .endif
