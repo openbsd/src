@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.14 2000/05/25 03:10:18 deraadt Exp $");
+RCSID("$OpenBSD: session.c,v 1.15 2000/05/30 17:23:37 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -300,8 +300,7 @@ do_authenticated(struct passwd * pw)
 				break;
 			}
 			debug("Received authentication agent forwarding request.");
-			auth_input_request_forwarding(pw);
-			success = 1;
+			success = auth_input_request_forwarding(pw);
 			break;
 
 		case SSH_CMSG_PORT_FORWARD_REQUEST:
