@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.15 1996/11/29 22:54:50 niklas Exp $	*/
+/*	$OpenBSD: ast.c,v 1.16 1996/12/03 02:31:57 deraadt Exp $	*/
 /*	$NetBSD: ast.c,v 1.28 1996/05/12 23:51:45 mycroft Exp $	*/
 
 /*
@@ -43,8 +43,8 @@
 #include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 
 #define	NSLAVES	4
 
