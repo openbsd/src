@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.9 1995/10/10 02:35:16 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.10 1995/12/26 17:56:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -451,12 +451,40 @@ ibcs2_sys_ioctl(p, v, retval)
 		return ENOSYS;
 
 	case IBCS2_TCXONC:
-		DPRINTF(("ibcs2_ioctl(%d): TCXONC ", p->p_pid));
-		return ENOSYS;
+	    {
+		switch ((int)SCARG(uap, data)) {
+		case 0:
+		case 1:
+			DPRINTF(("ibcs2_ioctl(%d): TCXONC ", p->p_pid));
+			return ENOSYS;
+		case 2:
+			return (*ctl)(fp, TIOCSTOP, (caddr_t)0, p);
+		case 3:
+			return (*ctl)(fp, TIOCSTART, (caddr_t)1, p);
+		default:
+			return EINVAL;
+		}
+	    }
 
 	case IBCS2_TCFLSH:
-		DPRINTF(("ibcs2_ioctl(%d): TCFLSH ", p->p_pid));
-		return ENOSYS;
+	    {
+		int arg;
+
+		switch ((int)SCARG(uap, data)) {
+		case 0:
+			arg = FREAD;
+			break;
+		case 1:
+			arg = FWRITE;
+			break;
+		case 2:
+			arg = FREAD | FWRITE;
+			break;
+		default:
+			return EINVAL;
+		}
+		return (*ctl)(fp, TIOCFLUSH, (caddr_t)&arg, p);
+	    }
 
 	case IBCS2_TIOCGWINSZ:
 		SCARG(uap, cmd) = TIOCGWINSZ;
