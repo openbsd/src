@@ -3883,6 +3883,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "TSB12LV22 FireWire",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450_FW,
+	    "PCI4450 FireWire",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410_FW,
+	    "PCI4410 FireWire",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
 	    "TSB12LV23 FireWire",
 	},
@@ -3891,8 +3899,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "TSB12LV26 FireWire",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AB22,
+	    "TSB43AB22 FireWire",
+	},
+	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451_FW,
-	    "PCI4451 OHCI FireWire",
+	    "PCI4451 FireWire",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
