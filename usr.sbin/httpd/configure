@@ -55,15 +55,15 @@
 ## project, please see <http://www.apache.org/>.
 ##
 
-## Force SSL_BASE=SYSTEM
-SSL_BASE=SYSTEM
-export SSL_BASE
-
 ##
 ##  configure -- Apache Autoconf-style Interface (APACI) 
 ##
 ##  Initially written by Ralf S. Engelschall <rse@apache.org>
 ##
+
+## Force SSL_BASE=SYSTEM
+SSL_BASE=SYSTEM
+export SSL_BASE
 
 #   default input separator chars: <space><tab><cr>
 DIFS=' 	
@@ -138,6 +138,7 @@ if [ $# -eq 0 ]; then
 fi
 
 ##
+##
 ##  determine path to (optional) Perl interpreter
 ##
 PERL=no-perl-on-this-system
@@ -201,6 +202,16 @@ case "`$TAR -tf /dev/null --version 2>/dev/null`" in
 esac
 
 ##
+## Request USTAR format for tar files on OS/390
+## Request that prelink step be used for 390
+##
+case $PLATFORM in
+    *-IBM-OS390*)
+       TAROPT="${TAROPT}U"
+       ;;
+esac
+
+##
 ##  determine path to sh, it's not /bin/sh on ALL systems
 ##
 SHELL=/bin/sh
@@ -233,6 +244,8 @@ suexec_userdir=public_html
 suexec_uidmin=100
 suexec_gidmin=100
 suexec_safepath="/usr/local/bin:/usr/bin:/bin"
+# if the umask is undefined, we don't change it
+#suexec_umask=0755
 
 #   the installation flags
 iflags_program="-m 755 -s"
@@ -240,12 +253,6 @@ iflags_core="-m 755"
 iflags_dso="-m 755"
 iflags_script="-m 755"
 iflags_data="-m 644"
-case $PLATFORM in
-    *OS/2* ) 
-        iflags_program="$iflags_program -e .exe" 
-        iflags_core="$iflags_core -e .exe" 
-        ;;
-esac
 
 #   ssl defaults
 ssl=0
@@ -264,7 +271,7 @@ IFS='
 for rule in `grep '^Rule' $src/Configuration.tmpl`; do
     rule=`echo "$rule" | sed -e 's/^Rule[ 	]*//'`
     name=`echo "$rule" | sed -e 's/=.*$//'`
-    namelow=`echo "$name" | tr 'A-Z' 'a-z'`
+    namelow=`echo "$name" | tr '[A-Z]' '[a-z]'`
     arg=`echo "$rule" | sed -e 's/^.*=//'`
     eval "rule_$namelow=$arg"
     rules="$rules:$namelow"
@@ -334,7 +341,16 @@ case $PLATFORM in
 	iflags_core="${iflags_core} -S \"-S\"" 
 	iflags_dso="${iflags_dso} -S \"-S\""
 	;;
-   *)
+    *OS/2* ) 
+        default_layout="Apache"
+        iflags_program="${iflags_program} -e .exe" 
+        iflags_core="${iflags_core} -e .exe" 
+        ;;
+    *MPE/iX* )
+       default_layout="Apache"
+       iflags_program="-m 755"
+       ;;
+    *)
 	default_layout="Apache"
 	;;
 esac
@@ -353,6 +369,12 @@ case "$*" in
         fi
         ;;
 esac
+
+##
+##  Initialize server user ID and group ID variables
+##
+conf_user=""
+conf_group=""
 
 ##
 ##  Iterate over the command line options the first time.
@@ -421,9 +443,12 @@ do
             echo " --enable-shared=NAME   enable  build of Module named 'NAME' as a DSO"
             echo " --disable-shared=NAME  disable build of Module named 'NAME' as a DSO"
             echo " --with-perl=FILE       path to the optional Perl interpreter"
+            echo " --with-port=PORT       set the port number for httpd.conf"
             echo " --without-support      disable the build and installation of support tools"
             echo " --without-confadjust   disable the user/situation adjustments in config"
             echo " --without-execstrip    disable the stripping of executables on installation"
+            echo " --server-uid=UID       set the user ID the web server should run as [nobody]"
+            echo " --server-gid=GID       set the group ID the web server UID is a memeber of [-1]"
             echo ""
             echo "suEXEC options:"
             echo " --enable-suexec        enable the suEXEC feature"
@@ -434,6 +459,7 @@ do
             echo " --suexec-uidmin=UID    set the suEXEC minimal allowed UID [$suexec_uidmin]"
             echo " --suexec-gidmin=GID    set the suEXEC minimal allowed GID [$suexec_gidmin]"
             echo " --suexec-safepath=PATH set the suEXEC safe PATH [$suexec_safepath]"
+            echo " --suexec-umask=UMASK   set the umask for the suEXEC'd script [server's umask]"
             echo ""
             echo "Deprecated options:"
             echo " --layout               backward compat only: use --show-layout"
@@ -552,9 +578,7 @@ do
                     ;;
             esac
             #   determine GNU platform triple
-            #   (the use of `awk' and not `$AWK' here is correct, because this
-            #   Makefile is for platform bootstrapping, so don't hardcode paths)
-            gnutriple=`$aux/GuessOS | sed -e 's:/:-:g' | awk '{ printf("%s",$1); }'`
+            gnutriple=`$aux/GuessOS | sed -e 's:/:-:g' | $AWK '{ printf("%s",$1); }'`
             #   create Makefile wrapper (the first time only)
             if [ "x`ls $top/src.* 2>/dev/null`" = "x" ]; then
                 if [ "x$quiet" = "xno" ]; then
@@ -569,7 +593,9 @@ do
                 else
                     echo "SHADOW=." >> Makefile
                 fi
-                echo "GNUTRIPLE=\`$aux/GuessOS | sed -e 's:/:-:g' | $AWK '{ printf(\"%s\",\$\$1); }'\`" >> Makefile
+                #   (the use of `awk' and not `$AWK' here is correct, because this
+                #   Makefile is for platform bootstrapping, so don't hardcode paths)
+                echo "GNUTRIPLE=\`$aux/GuessOS | sed -e 's:/:-:g' | awk '{ printf(\"%s\",\$\$1); }'\`" >> Makefile
                 echo "" >> Makefile
                 echo "all build install install-quiet clean distclean:" >> Makefile
                 echo "	@cd \$(SHADOW); \$(MAKE) -f Makefile.\$(GNUTRIPLE) \$(MFLAGS) \$@" >> Makefile
@@ -633,6 +659,18 @@ do
         --datadir=*)       
             datadir="$apc_optarg"       
             autosuffix_datadir=no
+            ;;
+        --iconsdir=*) 
+            iconsdir="$apc_optarg" 
+            autosuffix_iconsdir=no
+            ;;
+        --htdocsdir=*) 
+            htdocsdir="$apc_optarg" 
+            autosuffix_htdocsdir=no
+            ;;
+        --cgidir=*) 
+            cgidir="$apc_optarg" 
+            autosuffix_cgidir=no
             ;;
         --includedir=*)       
             includedir="$apc_optarg"       
@@ -909,6 +947,9 @@ do
         --with-perl=*)
             PERL="$apc_optarg"
             ;;
+        --with-port=*)
+            port="$apc_optarg"
+            ;;
         --without-support)
             support=0
             ;;
@@ -945,6 +986,27 @@ do
         --suexec-safepath=*)
             suexec_safepath="$apc_optarg"
             suexec_ok=1
+            ;;
+        --suexec-umask=*)
+            suexec_umask_val="$apc_optarg"
+            suexec_umask="-DSUEXEC_UMASK=$apc_optarg"
+            suexec_ok=1
+            ;;
+        --server-uid=*)
+            conf_user="$apc_optarg"
+	    # protect the '#' against interpretation as comment
+	    case x"${conf_user}" in
+              "#"*)  conf_user="\\\\${conf_user}";;
+              "\\#"*)conf_user="\\${conf_user}";;
+            esac
+            ;;
+        --server-gid=*)
+            conf_group="$apc_optarg"
+	    # protect the '#' against interpretation as comment
+	    case x"${conf_group}" in
+              "#"*)  conf_group="\\\\${conf_group}";;
+              "\\#"*)conf_group="\\${conf_group}";;
+            esac
             ;;
         * )
             echo "configure:Error: invalid option '$apc_option'" 1>&2
@@ -1046,9 +1108,9 @@ IFS="$DIFS"
 for var in prefix exec_prefix bindir sbindir libexecdir mandir \
            sysconfdir datadir iconsdir htdocsdir cgidir includedir \
            localstatedir runtimedir logfiledir proxycachedir \
-           suexec_docroot suexec_logexec; do
+           suexec_docroot suexec_logexec ; do
     eval "val=\"\$$var\"";
-    val=`echo $val | sed -e 's:/*$::'`
+    val=`echo $val | sed -e 's:\(.\)/*$:\1:'`
     eval "$var=\"$val\""
     #   expand value
     eval "val=\$$var"
@@ -1097,20 +1159,25 @@ fi
 ##  on platforms using NIS. But then you propably do not want a
 ##  UID/GID as production oriented as a web server in NIS anyway.
 ##
-conf_user="nobody"
-conf_group="#-1"
-conf_port="80"
+if [ "x$port" != "x" ]; then
+    conf_port=$port
+else
+    conf_port="80"
+fi
 conf_port_ssl="443"
 conf_serveradmin="you@your.address"
 conf_servername="new.host.name"
 if [ "x$confadjust" = "x1" ]; then
     if [ -f /etc/passwd ]; then
+        if [ "x$conf_user" = "x" ]; then
         for uid in nobody www daemon demon http httpd; do 
             if [ "x`egrep \^${uid}: /etc/passwd`" != "x" ]; then
                 conf_user="$uid"
                 break
             fi
         done
+        fi
+        if [ "x$conf_group" = "x" ]; then
         for gid in nobody nogroup www daemon demon http httpd; do 
             if [ "x`egrep \^${gid}: /etc/group`" != "x" ]; then
                 conf_group="$gid"
@@ -1118,7 +1185,8 @@ if [ "x$confadjust" = "x1" ]; then
             fi
         done
     fi
-    if [ "x`${SHELL} $aux/getuid.sh`" != "x0" ]; then
+    fi
+    if [ "x`${SHELL} $aux/getuid.sh`" != "x0" -a "x$port" = "x" ]; then
         conf_port="8080"
         conf_port_ssl="8443"
     fi
@@ -1126,6 +1194,17 @@ if [ "x$confadjust" = "x1" ]; then
     conf_servername="`${SHELL} $aux/buildinfo.sh -n %h%d`"
 fi
  
+##
+## Default server user id and group id if not specified on configure invocation and none
+## of the ids in /etc/passwd or /etc/group worked.
+##
+if [ "x$conf_user" = "x" ]; then
+    conf_user="nobody"
+fi
+if [ "x$conf_group" = "x" ]; then
+    conf_group="\\\\#-1"
+fi
+
 ##
 ##  determine prefix-relative paths for directories
 ##  because Apache supports them for the -d and -f 
@@ -1187,6 +1266,11 @@ if [ "x$show_layout" = "x1" ]; then
         echo "            caller ID: $suexec_caller"
         echo "      minimum user ID: $suexec_uidmin"
         echo "     minimum group ID: $suexec_gidmin"
+        if [ "x$suexec_umask" != "x" ]; then
+            echo "                umask: $suexec_umask_val"
+	else
+            echo "                umask: running server's"
+        fi
         echo ""
     fi
     exit 0
@@ -1199,6 +1283,7 @@ if [ "x$quiet" = "xno" ]; then
     echo "Creating $mkf"
 fi
 sed <Makefile.tmpl >$mkf \
+-e "s%@PLATFORM@%$PLATFORM%g" \
 -e "s%@PERL@%$PERL%g" \
 -e "s%@TAR@%$TAR%g" \
 -e "s%@TAROPT@%$TAROPT%g" \
@@ -1236,6 +1321,7 @@ sed <Makefile.tmpl >$mkf \
 -e "s%@suexec_uidmin@%$suexec_uidmin%g" \
 -e "s%@suexec_gidmin@%$suexec_gidmin%g" \
 -e "s%@suexec_safepath@%$suexec_safepath%g" \
+-e "s%@suexec_umask@%$suexec_umask%g" \
 -e "s%@ssl@%$ssl%g" \
 -e "s%@conf_user@%$conf_user%g" \
 -e "s%@conf_group@%$conf_group%g" \
@@ -1490,10 +1576,13 @@ rm -f $tplconf 2>/dev/null
 ##  create all other Makefiles by running the proprietary 
 ##  $src/Configure script with our custom Configuration.apaci file
 ##
+if [ "x$verbose" = "xyes" ]; then
+    vflag="-v";
+fi
 if [ "x$quiet" = "xyes" ]; then
-    (cd $src; ${SHELL} ./Configure -file Configuration.apaci >/dev/null);
+    (cd $src; ${SHELL} ./Configure ${vflag} -file Configuration.apaci >/dev/null);
 else
-    (cd $src; ${SHELL} ./Configure -file Configuration.apaci |\
+    (cd $src; ${SHELL} ./Configure ${vflag} -file Configuration.apaci |\
      sed -e '/^Using config file:.*/d' \
          -e "s:Makefile in :Makefile in $src\\/:" \
          -e "s:Makefile\$:Makefile in $src:")

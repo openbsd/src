@@ -150,6 +150,46 @@
     proxycachedir: $localstatedir/proxy
 </Layout>
 
+#   SuSE 6.x layout
+<Layout SuSE>
+    prefix:        /usr
+    exec_prefix:   $prefix
+    bindir:        $prefix/bin
+    sbindir:       $prefix/sbin
+    libexecdir:    $prefix/lib/apache
+    mandir:        $prefix/man
+    sysconfdir:    /etc/httpd
+    datadir:       /usr/local/httpd
+    iconsdir:      $datadir/icons
+    htdocsdir:     $datadir/htdocs
+    cgidir:        $datadir/cgi-bin
+    includedir:    $prefix/include/apache
+    localstatedir: /var
+    runtimedir:    $localstatedir/run
+    logfiledir:    $localstatedir/log/httpd
+    proxycachedir: $localstatedir/cache/httpd
+</Layout>
+
+#   BSD/OS layout
+<Layout BSDI>
+    prefix:        /var/www
+    exec_prefix:   /usr/contrib
+    bindir:        $exec_prefix/bin
+    sbindir:       $exec_prefix/bin
+    libexecdir:    $exec_prefix/libexec/apache
+    mandir:        $exec_prefix/man
+    sysconfdir:    $prefix/conf
+    datadir:       $prefix
+    iconsdir:      $datadir/icons
+    htdocsdir:     $datadir/htdocs
+    cgidir:        $datadir/cgi-bin
+    includedir:    $exec_prefix/include/apache
+    localstatedir: /var
+    runtimedir:    $localstatedir/run
+    logfiledir:    $localstatedir/log/httpd
+    proxycachedir: $localstatedir/proxy
+</Layout>
+
 #   OpenBSD apache path layout.
 <Layout OpenBSD>
     prefix:        /var/www

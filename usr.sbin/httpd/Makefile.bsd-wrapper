@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.11 2000/01/04 17:43:12 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.12 2000/01/28 18:24:19 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -328,6 +328,7 @@ MANUALFILES= \
 	manual/new_features_1_1.html \
 	manual/new_features_1_2.html \
 	manual/new_features_1_3.html \
+	manual/netware.html \
 	manual/process-model.html \
 	manual/readme-tpf.html \
 	manual/sections.html \
@@ -349,6 +350,7 @@ MANUALFILES= \
 	manual/images/apache_pb.gif \
 	manual/images/mod_ssl_sb.gif \
 	manual/images/openssl_ics.gif \
+	manual/images/feather.jpg \
 	manual/misc/API.html \
 	manual/misc/fin_wait_2.html \
 	manual/misc/FAQ.html \
@@ -370,6 +372,7 @@ MANUALFILES= \
 	manual/misc/security_tips.html \
 	manual/misc/perf.html \
 	manual/misc/vif-info.html \
+	manual/misc/rewriteguide.html \
 	manual/misc/windoz_keepalive.html \
 	manual/search/manual-index.cgi \
 	manual/vhosts/details.html \

@@ -36,9 +36,10 @@
 
    o  Open-Source software (BSD-style license)
    o  Useable for both commercial and non-commercial use
-   o  Available for both Unix and Win32 platforms
+   o  Available for both Unix and Win32 (Windows 95/98/NT) platforms 
    o  128-bit strong cryptography world-wide
    o  Support for SSLv2, SSLv3 and TLSv1 protocols
+   o  Support for both RSA and Diffie-Hellman ciphers
    o  Clean reviewable ANSI C source code 
    o  Clean Apache module architecture
    o  Integrates seamlessly into Apache through an Extended API (EAPI)

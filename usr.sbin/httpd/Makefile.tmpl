@@ -69,6 +69,9 @@
 #   safe environment
 SHELL           = @SHELL@
 
+#   what platform are we on
+PLATFORM	= @PLATFORM@
+
 #   paths to the source tree parts
 TOP             = .
 SRC             = @SRC@
@@ -132,6 +135,7 @@ suexec_userdir  = @suexec_userdir@
 suexec_uidmin   = @suexec_uidmin@
 suexec_gidmin   = @suexec_gidmin@
 suexec_safepath = @suexec_safepath@
+suexec_umask    = @suexec_umask@
 
 #  SSL (optional)
 ssl = @ssl@
@@ -188,12 +192,18 @@ build-quiet:
 
 #   build the standard stuff
 build-std:
-	@cd $(TOP)/$(SRC); $(MAKE) $(MFLAGS) SDP=$(SRC)/ all
+	@case "x$(PLATFORM)" in \
+	  x*390*) _C89_STEPS="0xffffffff"; export _C89_STEPS;; \
+	esac; \
+	cd $(TOP)/$(SRC); $(MAKE) $(MFLAGS) SDP=$(SRC)/ all
 
 #   build the additional support stuff
 build-support:
 	@echo "===> $(SRC)/support"; \
-	cd $(TOP)/$(SRC)/support; $(MAKE) $(MFLAGS) all; \
+	case "x$(PLATFORM)" in \
+	  x*390*) _C89_STEPS="0xffffffff"; export _C89_STEPS;; \
+	esac; \
+	cd $(TOP)/$(SRC)/support; $(MAKE) $(MFLAGS) all || exit 1; \
 	if [ ".$(suexec)" = .1 ]; then \
 	    $(MAKE) $(MFLAGS) \
 		EXTRA_CFLAGS='\
@@ -203,10 +213,11 @@ build-support:
 			-DUSERDIR_SUFFIX=\"$(suexec_userdir)\" \
 			-DLOG_EXEC=\"$(suexec_logexec)\" \
 			-DDOC_ROOT=\"$(suexec_docroot)\" \
-			-DSAFE_PATH=\"$(suexec_safepath)\" ' \
+			-DSAFE_PATH=\"$(suexec_safepath)\" \
+			$(suexec_umask)' \
 		suexec; \
-	fi; \
-	echo "<=== $(SRC)/support"
+	fi
+	@echo "<=== $(SRC)/support"
 
 #   SSL certificate generation
 build-certificate:
@@ -326,7 +337,7 @@ install-mktree:
 		echo "chown $(conf_user) $(root)$(proxycachedir)"; \
 		chown $(conf_user) $(root)$(proxycachedir); \
 		echo "chgrp $(conf_group) $(root)$(proxycachedir)"; \
-		chgrp $(conf_group) $(root)$(proxycachedir); \
+		chgrp "$(conf_group)" $(root)$(proxycachedir); \
 	fi
 	@echo "<=== [mktree]"
 
@@ -515,7 +526,7 @@ install-include:
 #   icons and distributed CGI scripts.
 install-data:
 	@echo "===> [data: Installing initial data files]"
-	-@if [ -f $(root)$(htdocsdir)/index.html ]; then \
+	-@if [ -f $(root)$(htdocsdir)/index.html ] || [ -f $(root)$(htdocsdir)/index.html.en ]; then \
 		echo "[PRESERVING EXISTING DATA SUBDIR: $(root)$(htdocsdir)/]"; \
 	else \
 		echo "Copying tree $(TOP)/htdocs/ -> $(root)$(htdocsdir)/"; \
