@@ -29,6 +29,8 @@ Supported devices {:-include-:}:
 			PCI to PCI bridge.
 		Adaptec AIC-7770-based SCSI host adapters (including the
 			Adaptec AHA-274x, AHA-284x families).
+		Adaptec Ultra160 controller family, including 7892, 7899,
+			29160, 39160, and other variants
 		AdvanSys PCI SCSI host adapters (including ABP-940, ASB-3940
 			and ASB-3950 families)
 		WD-7000 SCSI host adapters.
