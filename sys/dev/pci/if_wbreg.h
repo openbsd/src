@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wbreg.h,v 1.1 1999/03/11 18:20:13 jason Exp $	*/
+/*	$OpenBSD: if_wbreg.h,v 1.2 1999/09/03 01:48:39 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_wbreg.h,v 1.2 1999/01/16 06:25:59 wpaul Exp $
+ *	$FreeBSD: if_wbreg.h,v 1.4 1999/07/11 00:56:07 wpaul Exp $
  */
 
 /*
@@ -588,4 +588,12 @@ struct wb_softc {
 
 #ifndef ETHER_CRC_LEN
 #define	ETHER_CRC_LEN 4
+#endif
+#ifndef ETHER_ALIGN
+#define	ETHER_ALIGN 2
+#endif
+
+#ifdef __alpha__
+#undef vtophys
+#define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
 #endif
