@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.4 2003/10/23 23:11:22 espie Exp $
+# $OpenBSD: pkg_delete,v 1.5 2003/10/27 22:46:23 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -290,7 +290,7 @@ $state->{quick} = $opt_q;
 $state->{verbose} = $opt_v;
 $state->{extra} = $opt_c;
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
-do {
+{ do {
 	$removed = 0;
 	for my $pkgname (@ARGV) {
 		next if $done{$pkgname};
@@ -324,4 +324,4 @@ do {
 	# we're not actually doing anything, so we can't expect this loop 
 	# to ever finish
 	last if $opt_n;
-} while ($removed);
+} while ($removed); }
