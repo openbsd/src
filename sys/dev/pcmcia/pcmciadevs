@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.24 1999/10/01 04:04:01 downsj Exp $
+	$OpenBSD: pcmciadevs,v 1.25 1999/10/31 17:24:04 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -67,7 +67,7 @@ vendor LASAT			0x3401	Lasat Communications A/S
 vendor COMPEX			0x8a01	Compex
 vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
-vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K
+vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 
 /*
@@ -87,8 +87,8 @@ product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET IEEE 802.11 FHSS
 product 3COM 3CXEM556B		0x003d 3Com/Megahertz 3CXEM556B-INT Ethernet/Modem
 product 3COM 3CXEM556		0x0035 3Com/Megahertz 3CXEM556 Ethernet/Modem
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
-product 3COM 3C589		0x0589 3Com 3c589
-product 3COM 3C574		0x0574 3Com 3c574-TX
+product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
+product 3COM 3C574		0x0574 3Com 3c574-TX 10/100Mbps Ethernet
 
 /* Contec C-NET(PC) */
 product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
@@ -115,9 +115,10 @@ product MOTOROLA MONTANA_336	0x0505 Motorola Montana 33.6
 
 /* IBM */
 product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
-product IBM PORTABLE_CDROM_DRIVE 0x002d Portable CD-ROM Drive
-product IBM HOME_AND_AWAY	0x002e IBM Home and Away
-product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry
+product IBM PORTABLE_CDROM_DRIVE 0x002d PCMCIA Portable CD-ROM Drive
+product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
+product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry 
+product IBM ETHERJET_PCCARD	0x003f IBM EtherJet Ethernet PC Card
 
 /* I-O DATA */
 product IODATA PCLAT		0x2216 I-O DATA PCLA/T
@@ -129,7 +130,7 @@ product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 product KINGSTON KNE_PC2	0x0100 Kingston KNE-PC2
 
 /* Lasat */
-product LASAT CREDIT_288	0x2811 Lasat Credit 288
+product LASAT CREDIT_288	0x2811 Lasat Credit 288 Modem
 
 /* Linksys corporation */
 product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
@@ -141,10 +142,11 @@ product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LUCENT WAVELAN		0x0002 Lucent WaveLAN IEEE 802.11 DSSS
 
 /* Megahertz */
-product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288
-product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK
-product MEGAHERTZ2 XJEM1144	0x0101 Megahertz XJEM1144
-product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK
+product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
+product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps Modem
+product MEGAHERTZ2 XJEM1144	0x0101 Megahertz X-JACK Ethernet Modem
+product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
+product MEGAHERTZ XJEM3336 	0x0006 Megahertz X-JACK Ethernet Modem
 
 /* Proxim */
 product PROXIM ROAMABOUT_2400FH	0x1058 Digital RoamAbout 2400FH
@@ -154,7 +156,7 @@ product PROXIM RANGELAN2_7401	0x1158 Proxim RangeLAN2 7401
 product QUATECH DSP_225		0x0008 Quatech Dual Serial Port
 
 /* US Robotics */
-product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4
+product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
 
 /* Sandisk */
 product SANDISK SDCFB		0x0401 Sandisk CompactFlash Card
@@ -165,13 +167,14 @@ product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
 /* Socket Communications */
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
 product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
+product SOCKET LP_ETHER_CF	0x0075 Socket Communications Low Power Ethernet CF
 
 /* Symbol */
 product SYMBOL SPECTRUM24	0x0801 Spectrum24 WLAN IEEE 802.11 FHSS
 
 /* TDK */
-product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX
-product TDK DFL9610		0x0d0a TDK DFL9610
+product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
+product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 
 /* Xircom */
 product XIRCOM XIR_CE_10	0x0108 Xircom CE10
@@ -186,13 +189,14 @@ product NEWMEDIA MULTIMEDIA	0x100b NewMedia Multimedia Sound/SCSI
 product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster SCSI
 
 /* Standard Microsystems Corporation */
-product SMC 8016		0x0105 SMC 8016
+product SMC 8016		0x0105 SMC 8016 EtherCard
 product SMC 8020		0x0001 SMC EtherEZ 8020
 product SMC EZCARD		0x8022 SMC EXCard 10 PCMCIA
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
 vendor PLANET			-1 	Planet
+vendor PLANEX			-1	Planex Communications Inc
 vendor DLINK			-1 	D-Link
 vendor RPTI			-1 	RPTI
 vendor ACCTON			-1 	ACCTON
@@ -200,10 +204,16 @@ vendor YEDATA			-1 	Y-E DATA
 vendor DIGITAL			-1 	Digital
 vendor TEAC			-1	TEAC
 vendor SVEC			-1	SVEC/Hawking Technology
+vendor AMBICOM			-1	AmbiCom Inc
 
-product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288
+product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
 product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL } Planet SmartCOM 2000
+/*
+ * vendor ID of FNW-3600-T is LINKSYS(0x0149) and product ID is 0xc1ab, but
+ * it conflicts with LINKSYS Combo EhternetCard.
+ */
+product PLANEX FNW3600T		{ "Fast&spEthernet", "Adapter", "1.0", NULL } Planex FNW-3600-T
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL } D-Link DE-650
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL } D-Link DE-660
 product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NULL } RPTI EP401
@@ -212,10 +222,12 @@ product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E D
 product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
 product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
-product COREGA PCC_2		{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega
-product SVEC COMBOCARD		{ "Ethernet", "Adapter", NULL, NULL } SVEC Combo Card
-product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL } SVEC Lan Card
+product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL } Corega
+product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NULL, NULL } Corega
+product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX", NULL, NULL } Corega
+product SVEC COMBOCARD		{ "Ethernet", "Adapter", NULL, NULL } SVEC/Hawking Tech. Combo Card
+product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL } SVEC PCMCIA Lan Card
 product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB8002T
-product PROXIM RL2_7200		{ "PROXIM", "LAN&spCARD", "RANGELAN2", NULL } Blah
-product PROXIM RL2_7400		{ "PROXIM", "LAN&spPC&spCARD", "RANGELAN2", NULL }
-product PROXIM SYMPHONY		{ "PROXIM", "LAN&spPC&spCARD", "SYMPHONY", NULL }
+product PROXIM RL2_7200		{ "PROXIM", "LAN&spCARD", "RANGELAN2", NULL } Proxim
+product PROXIM RL2_7400		{ "PROXIM", "LAN&spPC&spCARD", "RANGELAN2", NULL } Proxim
+product PROXIM SYMPHONY		{ "PROXIM", "LAN&spPC&spCARD", "SYMPHONY", NULL } Proxim
