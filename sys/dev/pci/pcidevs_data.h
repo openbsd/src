@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.56 1998/06/02 09:33:58 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.57 1998/06/15 00:48:41 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2097,10 +2097,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C576 3V",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C585,
+	    0,
+	    "VIA Technologies",
+	    "VT82C585 (Apollo) PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586,
 	    0,
 	    "VIA Technologies",
-	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
+	    "VT82C586 (Apollo VP) PCI-ISA Bridge w/IDE",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597PCI,
