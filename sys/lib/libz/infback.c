@@ -307,7 +307,11 @@ void FAR *out_desc;
                 state->mode = TABLE;
                 break;
             case 3:
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid block type";
+#endif
                 state->mode = BAD;
             }
             DROPBITS(2);
@@ -318,7 +322,11 @@ void FAR *out_desc;
             BYTEBITS();                         /* go to byte boundary */
             NEEDBITS(32);
             if ((hold & 0xffff) != ((hold >> 16) ^ 0xffff)) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid stored block lengths";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -356,7 +364,11 @@ void FAR *out_desc;
             DROPBITS(4);
 #ifndef PKZIP_BUG_WORKAROUND
             if (state->nlen > 286 || state->ndist > 30) {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"too many length or distance symbols";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -458,6 +470,7 @@ void FAR *out_desc;
             state->mode = LEN;
 
         case LEN:
+#ifndef SLOW
             /* use inflate_fast() if we have enough input and output */
             if (have >= 6 && left >= 258) {
                 RESTORE();
@@ -467,6 +480,7 @@ void FAR *out_desc;
                 LOAD();
                 break;
             }
+#endif
 
             /* get a literal, length, or end-of-block code */
             for (;;) {

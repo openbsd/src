@@ -1,4 +1,4 @@
-/*	$OpenBSD: inffast.c,v 1.8 2003/12/16 23:57:48 millert Exp $	*/
+/*	$OpenBSD: inffast.c,v 1.9 2003/12/16 23:58:30 millert Exp $	*/
 /* inffast.c -- fast decoding
  * Copyright (C) 1995-2003 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -175,7 +175,11 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                 if (dist > op) {                /* see if copy from window */
                     op = dist - op;             /* distance back in window */
                     if (op > whave) {
+#ifdef SMALL  
+			strm->msg = "error";
+#else
                         strm->msg = (char *)"invalid distance too far back";
+#endif
                         state->mode = BAD;
                         break;
                     }
@@ -251,7 +255,11 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
                 goto dodist;
             }
             else {
+#ifdef SMALL  
+		strm->msg = "error";
+#else
                 strm->msg = (char *)"invalid distance code";
+#endif
                 state->mode = BAD;
                 break;
             }
@@ -266,7 +274,11 @@ unsigned start;         /* inflate()'s starting value for strm->avail_out */
             break;
         }
         else {
+#ifdef SMALL  
+	    strm->msg = "error";
+#else
             strm->msg = (char *)"invalid literal/length code";
+#endif
             state->mode = BAD;
             break;
         }

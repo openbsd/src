@@ -1,4 +1,4 @@
-/*	$OpenBSD: zconf.h,v 1.7 2003/12/16 23:57:48 millert Exp $	*/
+/*	$OpenBSD: zconf.h,v 1.8 2003/12/16 23:58:30 millert Exp $	*/
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2003 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -275,8 +275,8 @@ typedef uLong FAR uLongf;
    typedef Byte       *voidp;
 #endif
 
-#include <sys/types.h> /* for off_t */
-#include <unistd.h>    /* for SEEK_* and off_t */
+#include <sys/types.h>  /* for off_t */
+#include <sys/unistd.h> /* for SEEK_* and off_t */
 #define z_off_t  off_t
 #ifndef SEEK_SET
 #  define SEEK_SET        0       /* Seek from beginning of file.  */
