@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.14 1999/10/06 20:07:42 dugsong Exp $
+.\" $Id: ssh.1,v 1.15 1999/10/11 20:40:08 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -773,7 +773,11 @@ modify this file.
 .It Pa $HOME/.ssh/identity
 Contains the RSA authentication identity of the user.  This file
 contains sensitive data and should be readable by the user but not
-accessible by others.  It is possible to specify a passphrase when
+accessible by others (read/write/execute).
+Note that
+.Nm
+ignores this file if it is accessible by others.
+It is possible to specify a passphrase when
 generating the key; the passphrase will be used to encrypt the
 sensitive part of this file using 3DES.
 .It Pa $HOME/.ssh/identity.pub 

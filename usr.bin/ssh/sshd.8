@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.8 1999/10/07 22:46:33 markus Exp $
+.\" $Id: sshd.8,v 1.9 1999/10/11 20:40:08 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -213,6 +213,9 @@ The default is
 .It Cm HostKey
 Specifies the file containing the private host key (default
 .Pa /etc/ssh_host_key ) .
+Note that
+.Nm
+does not start if the private host key file is group/world-accessible.
 .It Cm IgnoreRhosts
 Specifies that rhosts and shosts files will not be used in
 authentication.
