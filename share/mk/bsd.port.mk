@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.87 1999/04/20 18:09:37 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.88 1999/04/20 18:22:56 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.87 1999/04/20 18:09:37 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.88 1999/04/20 18:22:56 espie Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -368,6 +368,7 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #				  Typical use is (from the top level of the ports tree)
 #				  make ECHO_MSG=: list-distfiles | tee some-file
 # obj			- pre-build ${WRKDIR} -> ${WRKOBJDIR}/${PORTSUBDIR} links
+# print-depends - print all dependencies for the given package
 #
 # Default sequence for "all" is:  fetch checksum extract patch configure build
 #
@@ -718,8 +719,10 @@ PLIST?=		${PKGDIR}/PLIST
 
 PKG_CMD?=		/usr/sbin/pkg_create
 PKG_DELETE?=	/usr/sbin/pkg_delete
+SORT_DEPENDS?=tsort|tail +2|tail -r
+
 .if !defined(PKG_ARGS)
-PKG_ARGS=		-v -c ${COMMENT} -d ${DESCR} -f ${PLIST} -p ${PREFIX} -P "`${MAKE} package-depends|sort -u`"
+PKG_ARGS=		-v -c ${COMMENT} -d ${DESCR} -f ${PLIST} -p ${PREFIX} -P "`${MAKE} package-depends|${SORT_DEPENDS}`"
 .if exists(${PKGDIR}/INSTALL)
 PKG_ARGS+=		-i ${PKGDIR}/INSTALL
 .endif
@@ -905,7 +908,7 @@ PKGNAME?=		${DISTNAME}
 .endif
 .if defined(SUPPATCHFILES)
  PATCHFILES+=${SUPPATCHFILES}
- .endif
+.endif
 .endif
 ALLFILES?=	${DISTFILES} ${PATCHFILES}
 
@@ -1962,38 +1965,39 @@ plist: install
 # You probably won't need to touch these
 ################################################################
 
-HTMLIFY=	${SED} -e 's/&/\&amp;/g' -e 's/>/\&gt;/g' -e 's/</\&lt;/g'
 
-# Set to YES by the README.html target (and passed via depends-list
-# and package-depends)
-.ifndef PACKAGE_NAME_AS_LINK
-PACKAGE_NAME_AS_LINK=NO
-.endif # PACKAGE_NAME_AS_LINK
+# The README.html target needs full information (this is passed via 
+# depends-list and package-depends)
+.ifndef FULL_PACKAGE_NAME
+FULL_PACKAGE_NAME=NO
+.endif 
 
 
 # Nobody should want to override this unless PKGNAME is simply bogus.
 
 .if !target(package-name)
 package-name:
-.if (${PACKAGE_NAME_AS_LINK} == "YES")
-	@${ECHO} '<A HREF="../../'`${MAKE} package-path | ${HTMLIFY}`'/README.html">'`echo ${PKGNAME} | ${HTMLIFY}`'</A>'
+.if (${FULL_PACKAGE_NAME} == "YES")
+	@${ECHO} `${MAKE} package-path`/${PKGNAME}
 .else
 	@${ECHO} '${PKGNAME}'
-.endif # PACKAGE_NAME_AS_LINK != ""
-.endif # !target(package-name)
+.endif 
+.endif 
 
 .if !target(package-path)
 package-path:
 	@pwd | sed s@`cd ${PORTSDIR} ; pwd`/@@g
 .endif
 
-# Show (recursively) all the packages this package depends on.
+# Build (recursively) a list of package dependencies suitable for tsort
 
 .if !target(package-depends)
 package-depends:
 	@for dir in `${ECHO} ${LIB_DEPENDS} ${RUN_DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/^[^:]*://' -e 's/:.*//' | sort -u` `${ECHO} ${DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/:.*//' | sort -u`; do \
 		if [ -d $$dir ]; then \
-			(cd $$dir ; ${MAKE} package-name package-depends PACKAGE_NAME_AS_LINK=${PACKAGE_NAME_AS_LINK}); \
+			${MAKE} ECHO='${ECHO} -n' package-name FULL_PACKAGE_NAME=${FULL_PACKAGE_NAME}; \
+			${ECHO} -n " "; \
+			(cd $$dir ; ${MAKE} package-name package-depends FULL_PACKAGE_NAME=${FULL_PACKAGE_NAME}); \
 		else \
 			${ECHO_MSG} "Warning: \"$$dir\" non-existent -- @pkgdep registration incomplete" >&2; \
 		fi; \
@@ -2195,7 +2199,13 @@ clean-depends:
 .if !target(depends-list)
 depends-list:
 	@for dir in `${ECHO} ${FETCH_DEPENDS} ${BUILD_DEPENDS} ${LIB_DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/^[^:]*://' -e 's/:.*//' | sort -u` `${ECHO} ${DEPENDS} | ${TR} '\040' '\012' | ${SED} -e 's/:.*//' | sort -u`; do \
-		(cd $$dir; ${MAKE} package-name depends-list PACKAGE_NAME_AS_LINK=${PACKAGE_NAME_AS_LINK}; ); \
+		if [ -d $$dir ]; then \
+			${MAKE} ECHO='${ECHO} -n' package-name FULL_PACKAGE_NAME=${FULL_PACKAGE_NAME}; \
+			${ECHO} -n " "; \
+			(cd $$dir ; ${MAKE} package-name depends-list FULL_PACKAGE_NAME=${FULL_PACKAGE_NAME}); \
+		else \
+			${ECHO_MSG} "Warning: \"$$dir\" non-existent" >&2; \
+		fi; \
 	done
 .endif
 
@@ -2227,12 +2237,12 @@ describe:
 	${ECHO} -n "|${MAINTAINER}|${CATEGORIES}|"; \
 	case "A${FETCH_DEPENDS}B${BUILD_DEPENDS}C${LIB_DEPENDS}D${DEPENDS}E" in \
 		ABCDE) ;; \
-		*) cd ${.CURDIR} && ${ECHO} -n `make depends-list|sort -u`;; \
+		*) cd ${.CURDIR} && ${ECHO} -n `make depends-list|${SORT_DEPENDS}`;; \
 	esac; \
 	${ECHO} -n "|"; \
 	case "A${RUN_DEPENDS}B${LIB_DEPENDS}C${DEPENDS}D" in \
 		ABCD) ;; \
-		*) cd ${.CURDIR} && ${ECHO} -n `make package-depends|sort -u`;; \
+		*) cd ${.CURDIR} && ${ECHO} -n `make package-depends|${SORT_DEPENDS}`;; \
 	esac; \
 	${ECHO} -n "|"; \
 	if [ "${ONLY_FOR_ARCHS}" = "" ]; then \
@@ -2243,6 +2253,8 @@ describe:
 	${ECHO} ""
 .endif
 
+README_NAME?=	${TEMPLATES}/README.port
+
 .if !target(readmes)
 readmes:	readme
 .endif
@@ -2250,37 +2262,50 @@ readmes:	readme
 .if !target(readme)
 readme:
 	@rm -f README.html
-	@cd ${.CURDIR} && make README.html
+	@cd ${.CURDIR} && make README_NAME=${README_NAME} README.html
 .endif
 
-README_NAME=	${TEMPLATES}/README.port
+
+HTMLIFY=	${SED} -e 's/&/\&amp;/g' -e 's/>/\&gt;/g' -e 's/</\&lt;/g'
+
+.if make(README.html) || make(readme) || make(readmes)
+PKGDEPTH!=${MAKE} package-path|${SED} -e 's|[^./][^/]*|..|g'
+.endif
 
 README.html:
 	@${ECHO_MSG} "===>  Creating README.html for ${PKGNAME}"
-	@${MAKE} depends-list PACKAGE_NAME_AS_LINK=YES >> $@.tmp1
-	@[ -s $@.tmp1 ] || echo "(none)" >> $@.tmp1
-	@${MAKE} package-depends PACKAGE_NAME_AS_LINK=YES >> $@.tmp2
-	@[ -s $@.tmp2 ] || echo "(none)" >> $@.tmp2
-	@${ECHO} ${PKGNAME} | ${HTMLIFY} >> $@.tmp3
+	@${ECHO} ${PKGNAME} | ${HTMLIFY} > $@.tmp3
+	@${MAKE} depends-list FULL_PACKAGE_NAME=YES | ${SORT_DEPENDS}>$@.tmp1
+	@${MAKE} package-depends FULL_PACKAGE_NAME=YES | ${SORT_DEPENDS} >$@.tmp2
+.for I in 1 2
+	@if [ -s $@.tmp$I ]; then \
+		(${CAT} $@.tmp$I | while read n; do \
+			j=`dirname $$n|${HTMLIFY}`; k=`basename $$n|${HTMLIFY}`; \
+			echo "<A HREF=\"${PKGDEPTH}/$$j/README.html\">$$k</A>"; \
+		 done;) >$@.tmp$Ia; \
+    else \
+    echo "(none)" > $@.tmp$Ia; \
+	fi
+.endfor
 	@${CAT} ${README_NAME} | \
 		${SED} -e 's|%%PORT%%|'"`${MAKE} package-path | ${HTMLIFY}`"'|g' \
 			-e '/%%PKG%%/r$@.tmp3' \
 			-e '/%%PKG%%/d' \
 			-e '/%%COMMENT%%/r${PKGDIR}/COMMENT' \
 			-e '/%%COMMENT%%/d' \
-			-e '/%%BUILD_DEPENDS%%/r$@.tmp1' \
+			-e '/%%BUILD_DEPENDS%%/r$@.tmp1a' \
 			-e '/%%BUILD_DEPENDS%%/d' \
-			-e '/%%RUN_DEPENDS%%/r$@.tmp2' \
+			-e '/%%RUN_DEPENDS%%/r$@.tmp2a' \
 			-e '/%%RUN_DEPENDS%%/d' \
 		>> $@
-	@rm -f $@.tmp1 $@.tmp2 $@.tmp3
+	@rm -f $@.tmp*
 
 .if !target(print-depends-list)
 print-depends-list:
 .if defined(FETCH_DEPENDS) || defined(BUILD_DEPENDS) || \
 	defined(LIB_DEPENDS) || defined(DEPENDS)
 	@${ECHO} -n 'This port requires package(s) "'
-	@${ECHO} -n `make depends-list | sort -u`
+	@${ECHO} -n `make FULL_PACKAGE_NAME=${FULL_PACKAGE_NAME} depends-list | ${SORT_DEPENDS}`
 	@${ECHO} '" to build.'
 .endif
 .endif
@@ -2289,9 +2314,14 @@ print-depends-list:
 print-package-depends:
 .if defined(RUN_DEPENDS) || defined(LIB_DEPENDS) || defined(DEPENDS)
 	@${ECHO} -n 'This port requires package(s) "'
-	@${ECHO} -n `make package-depends | sort -u`
+	@${ECHO} -n `make FULL_PACKAGE_NAME=${FULL_PACKAGE_NAME} package-depends | ${SORT_DEPENDS}`
 	@${ECHO} '" to run.'
 .endif
+.endif
+
+.if !target(print-depends)
+print-depends: 
+	@${MAKE} FULL_PACKAGE_NAME=YES print-depends-list print-package-depends
 .endif
 
 # Fake installation of package so that user can pkg_delete it later.
@@ -2327,7 +2357,7 @@ fake-pkg:
 		if [ -f ${PKGDIR}/MESSAGE ]; then \
 			${CP} ${PKGDIR}/MESSAGE ${PKG_DBDIR}/${PKGNAME}/+DISPLAY; \
 		fi; \
-		for dep in `make package-depends ECHO_MSG=${TRUE} | sort -u`; do \
+		for dep in `make package-depends ECHO_MSG=${TRUE} | ${SORT_DEPENDS}`; do \
 			if [ -d ${PKG_DBDIR}/$$dep ]; then \
 				if ! ${GREP} ^${PKGNAME}$$ ${PKG_DBDIR}/$$dep/+REQUIRED_BY \
 					>/dev/null 2>&1; then \
@@ -2366,4 +2396,4 @@ tags:
    pre-extract pre-fetch pre-install pre-package pre-patch \
    pre-repackage print-depends-list print-package-depends readme \
    readmes real-extract real-fetch real-install reinstall \
-   repackage run-depends tags uninstall fetch-all
+   repackage run-depends tags uninstall fetch-all print-depends
