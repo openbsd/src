@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.98 2002/05/26 09:24:35 deraadt Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.99 2002/05/27 04:21:38 deraadt Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -380,8 +380,8 @@ pf_key_v2_read (u_int32_t seq)
 	      LOG_DBG ((LOG_SYSDEP, 90,
 			"pf_key_v2_read:"
 			"bad version (%d) or PID (%ld, mine is %d), ignored",
-			msg->sadb_msg_version, (long)msg->sadb_msg_pid,
-			getpid ()));
+			msg->sadb_msg_version, msg->sadb_msg_pid,
+			(long)getpid ()));
 	      goto cleanup;
 	    }
 	}
