@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.91 2004/11/28 23:39:45 canacar Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.92 2004/12/01 09:59:35 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -61,6 +61,10 @@
 .Nm ifconfig
 .Ar interface
 .Cm destroy
+.Nm
+.Ar interface
+.Cm group
+.Ar group-name
 .Nm ifconfig
 .Ar carp-interface
 .Cm vhid
@@ -71,23 +75,6 @@
 .Ar peer_address
 .Cm syncif
 .Ar iface
-.Nm ifconfig
-.Ar tunnel-interface
-.Cm tunnel
-.Ar src_address dest_address
-.Nm ifconfig
-.Ar tunnel-interface
-.Cm deletetunnel
-.Nm ifconfig
-.Ar vlan-interface
-.Cm vlan
-.Ar vlan-tag
-.Cm vlandev
-.Ar parent-interface
-.Nm
-.Ar interface
-.Cm group
-.Ar group-name
 .Nm
 .Ar pppoe-interface
 .Oo
@@ -102,6 +89,19 @@
 .Cm pppoeac
 .Ar access-concentrator
 .Oc
+.Nm ifconfig
+.Ar tunnel-interface
+.Cm tunnel
+.Ar src_address dest_address
+.Nm ifconfig
+.Ar tunnel-interface
+.Cm deletetunnel
+.Nm ifconfig
+.Ar vlan-interface
+.Cm vlan
+.Ar vlan-tag
+.Cm vlandev
+.Ar parent-interface
 .Sh DESCRIPTION
 The
 .Nm
@@ -325,6 +325,7 @@ At least the following devices can be created on demand:
 .Xr gre 4 ,
 .Xr lo 4 ,
 .Xr ppp 4 ,
+.Xr pppoe 4 ,
 .Xr sl 4 ,
 .Xr tun 4 ,
 .Xr vlan 4
@@ -569,17 +570,22 @@ Disable 802.11 power saving mode.
 .It Cm powersavesleep Ar duration
 (IEEE 802.11 devices only)
 Set the receiver sleep duration (in milliseconds) for 802.11 power saving mode.
-.It Cm pppoedev Ar parent-interface
-Set the name of the interface through which the pppoe packets
-will be transmitted and received.
-.It Cm pppoesvc Ar service
-Set the service name of the pppoe interface.
-.It Fl pppoesvc
-Clear a previously set service name.
 .It Cm pppoeac Ar access-concentrator
-Set the name of the access-concentrator for pppoe interface.
+Set the name of the access-concentrator for the
+.Xr pppoe 4
+interface.
 .It Fl pppoeac
 Clear a previously set access-concentrator name.
+.It Cm pppoedev Ar parent-interface
+Set the name of the interface through which
+.Xr pppoe 4
+packets will be transmitted and received.
+.It Cm pppoesvc Ar service
+Set the service name of the
+.Xr pppoe 4
+interface.
+.It Fl pppoesvc
+Clear a previously set service name.
 .It Cm prefixlen Ar n
 (inet and inet6 only)
 Effect is similar to
