@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.5 1996/05/05 13:37:27 mickey Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.6 1996/05/10 12:42:23 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -289,7 +289,7 @@ static void ie_obreset __P((struct ie_softc *));
 static void ie_obattend __P((struct ie_softc *));
 static void ie_obrun __P((struct ie_softc *));
 
-void iewatchdog __P((/* short */));
+void iewatchdog __P((struct ifnet *));
 int ieintr __P((void *));
 int iefailintr __P((void *));
 int ieinit __P((struct ie_softc *));
@@ -487,8 +487,8 @@ ieattach(parent, self, aux)
 		/* XXX should reclaim resources? */
 		return;
 	}
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ie_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
@@ -546,10 +546,10 @@ ieattach(parent, self, aux)
  * an interrupt after a transmit has been started on it.
  */
 void
-iewatchdog(unit)
-	short unit;
+iewatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ie_softc *sc = ie_cd.cd_devs[unit];
+	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1287,7 +1287,7 @@ void
 iestart(ifp)
 	struct ifnet *ifp;
 {
-	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;
@@ -1819,7 +1819,7 @@ ieioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
