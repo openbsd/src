@@ -2544,6 +2544,7 @@
 ./usr/share/man/cat3/clock.0
 ./usr/share/man/cat3/closedir.0
 ./usr/share/man/cat3/closelog.0
+./usr/share/man/cat3/closelog_r.0
 ./usr/share/man/cat3/clrtobot.0
 ./usr/share/man/cat3/clrtoeol.0
 ./usr/share/man/cat3/color_content.0
@@ -3549,6 +3550,7 @@
 ./usr/share/man/cat3/opendir.0
 ./usr/share/man/cat3/opendisk.0
 ./usr/share/man/cat3/openlog.0
+./usr/share/man/cat3/openlog_r.0
 ./usr/share/man/cat3/openpty.0
 ./usr/share/man/cat3/ossaudio.0
 ./usr/share/man/cat3/otermcap.0
@@ -3591,6 +3593,7 @@
 ./usr/share/man/cat3/pclose.0
 ./usr/share/man/cat3/pechochar.0
 ./usr/share/man/cat3/perror.0
+./usr/share/man/cat3/pidfile.0
 ./usr/share/man/cat3/pmap_getmaps.0
 ./usr/share/man/cat3/pmap_getport.0
 ./usr/share/man/cat3/pmap_rmtcall.0
@@ -3891,6 +3894,7 @@
 ./usr/share/man/cat3/setlinebuf.0
 ./usr/share/man/cat3/setlocale.0
 ./usr/share/man/cat3/setlogmask.0
+./usr/share/man/cat3/setlogmask_r.0
 ./usr/share/man/cat3/setmode.0
 ./usr/share/man/cat3/setnetent.0
 ./usr/share/man/cat3/setnetgrent.0
@@ -4064,6 +4068,7 @@
 ./usr/share/man/cat3/sysctl.0
 ./usr/share/man/cat3/sysexits.0
 ./usr/share/man/cat3/syslog.0
+./usr/share/man/cat3/syslog_r.0
 ./usr/share/man/cat3/system.0
 ./usr/share/man/cat3/tan.0
 ./usr/share/man/cat3/tanf.0
@@ -4176,6 +4181,7 @@
 ./usr/share/man/cat3/vsprintf.0
 ./usr/share/man/cat3/vsscanf.0
 ./usr/share/man/cat3/vsyslog.0
+./usr/share/man/cat3/vsyslog_r.0
 ./usr/share/man/cat3/vtimes.0
 ./usr/share/man/cat3/vw_printw.0
 ./usr/share/man/cat3/vw_scanw.0
