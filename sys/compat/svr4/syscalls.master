@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.15 1997/08/29 19:55:57 kstailey Exp $
+	$OpenBSD: syscalls.master,v 1.16 1997/08/29 20:15:07 kstailey Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -297,15 +297,19 @@
 188	UNIMPL		processor_info
 189	UNIMPL		p_online
 190	UNIMPL		sigqueue
-191	UNIMPL		clock_gettime
-192	UNIMPL		clock_settime
-193	UNIMPL		clock_getres
+191	NOARGS		{ int sys_clock_gettime(clockid_t clock_id, \
+			    struct timespec *tp); }
+192	NOARGS		{ int sys_clock_settime(clockid_t clock_id, \
+			    const struct timespec *tp); }
+193	NOARGS		{ int sys_clock_getres(clockid_t clock_id, \
+			    struct timespec *tp); }
 194	UNIMPL		timer_create
 195	UNIMPL		timer_delete
 196	UNIMPL		timer_settime
 197	UNIMPL		timer_gettime
 198	UNIMPL		timer_getoverrun
-199	UNIMPL		nanosleep
+199	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
+			    struct timespec *rmtp); }
 200	STD		{ int svr4_sys_facl(int fd, int cmd, int num, \
 			    struct svr4_aclent *buf); }
 201	UNIMPL		door
