@@ -1,4 +1,4 @@
-/*	$OpenBSD: natparse.c,v 1.10 2001/02/05 17:33:08 millert Exp $	*/
+/*	$OpenBSD: natparse.c,v 1.11 2001/02/18 23:20:42 millert Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -318,10 +318,6 @@ int linenum;
 		return NULL;
 	}
 
-	/* TCP only by default */
-	ipn.in_flags |= IPN_TCP;
-	proto = "tcp";
-
 	cpp++;
 
 	strncpy(ipn.in_ifname, *cpp, sizeof(ipn.in_ifname) - 1);
@@ -438,6 +434,10 @@ int linenum;
 				linenum);
 			return NULL;
 		}
+
+		/* The default protocol for "redir" is TCP */
+		ipn.in_flags |= IPN_TCP;
+		proto = "tcp";
 
 		cpp++;
 
