@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 2000/03/02 14:46:39 todd Exp $
 #
 # Makefile for sample loadable file system
 #
@@ -33,7 +34,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:44:22 deraadt Exp $
 #
 
 SUBDIR=	module

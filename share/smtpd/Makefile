@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 2000/03/02 14:46:52 todd Exp $
 #
-#	$Id: Makefile,v 1.1 1998/02/07 21:05:50 beck Exp $
 #
 FILES=	example.* 
 NOOBJ=	noobj

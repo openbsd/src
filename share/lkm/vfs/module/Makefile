@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.5 2000/03/02 14:46:40 todd Exp $
 #
 # Makefile for newsyscall
 #
@@ -33,7 +34,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.4 2000/01/28 06:11:30 fgsch Exp $
 #
 
 SRCS=kernfsmod.c

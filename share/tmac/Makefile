@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.3 2000/03/02 14:46:54 todd Exp $
 #	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$Id: Makefile,v 1.2 1996/09/03 22:51:15 etheisen Exp $
 
 BINDIR= /usr/share
 FILES=	tmac.andoc

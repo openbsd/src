@@ -1,3 +1,4 @@
+#	$OpenBSD: README,v 1.2 2000/03/02 14:46:35 todd Exp $
 #
 # Copyright (c) 1993 Terrence R. Lambert.
 # All rights reserved.
@@ -29,7 +30,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: README,v 1.1.1.1 1995/10/18 08:44:20 deraadt Exp $
 #
 
 0.0	README

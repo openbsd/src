@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.3 2000/03/02 14:46:37 todd Exp $
 #
 # Makefile for newsyscall
 #
@@ -33,7 +34,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.2 1997/03/03 05:10:54 flipk Exp $
 #
 
 SRCS=newsyscall.c

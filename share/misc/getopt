@@ -1,8 +1,8 @@
+/*	$OpenBSD: getopt,v 1.3 2000/03/02 14:46:51 todd Exp $	*/
 /*
  * Main/getopt(3) fragment.
  *
  *	from: @(#)getopt	5.3 (Berkeley) 3/28/94
- *	$Id: getopt,v 1.2 1997/01/20 17:19:31 millert Exp $
  */
 
 #include <sys/types.h>

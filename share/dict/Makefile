@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 2000/03/02 14:46:34 todd Exp $
 #	from: @(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:43:52 deraadt Exp $
 
 # Missing: connectives, words
 
