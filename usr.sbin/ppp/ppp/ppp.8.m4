@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.18 2004/07/13 13:44:25 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.19 2004/07/30 22:25:37 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -1486,7 +1486,7 @@ ui-gate:
  set ifaddr 10.0.4.2 10.0.4.1
 .Ed
 .Pp
-\&...with the route setup in
+\&...with the route set up in
 .Pa /etc/ppp/ppp.linkup :
 .Bd -literal -offset indent
 ui-gate:
