@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.21 1997/07/25 21:56:17 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.22 1997/08/30 20:48:41 kstailey Exp $	*/
 /*	$NetBSD: cmds.c,v 1.26 1997/07/21 14:03:48 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.21 1997/07/25 21:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.22 1997/08/30 20:48:41 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -1922,8 +1922,8 @@ restart(argc, argv)
 		fputs("restart: offset not specified.\n", ttyout);
 	else {
 		restart_point = atol(argv[1]);
-		fprintf(ttyout, "Restarting at %qd. Execute get, put or append to"
-			"initiate transfer\n", (quad_t)restart_point);
+		fprintf(ttyout, "Restarting at %qd. Execute get, put or append"
+			" to initiate transfer\n", (quad_t)restart_point);
 	}
 }
 
