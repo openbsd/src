@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.3 1999/04/20 21:12:24 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.4 1999/07/07 20:03:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -200,7 +200,7 @@ gsc_intr_establish(sc, pri, irq, handler, arg, name)
 	evcnt_attach(&sc->sc_dev, name, &iv->evcnt);
 	(sc->sc_ic->gsc_intr_establish)(sc->sc_ic->gsc_dv, mask);
 #ifdef GSCDEBUG
-	printf("gsc_intr_stablish: mask=0x%08x irq=%d iv=%p\n", mask, irq, iv);
+	printf("gsc_intr_establish: mask=0x%08x irq=%d iv=%p\n", mask, irq, iv);
 #endif
 
 	return &sc->sc_intrvs[irq];
