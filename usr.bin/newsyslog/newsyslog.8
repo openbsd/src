@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.15 1999/07/03 02:11:09 aaron Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.16 1999/11/11 22:24:14 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -48,7 +48,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\"
-.Dd July 7, 1997
+.Dd November 11, 1999
 .Dt NEWSYSLOG 8
 .Os
 .Sh NAME
@@ -160,6 +160,16 @@ Specify a file containing the PID of a process to send a
 .Dv SIGHUP
 signal to instead of
 .Pa /var/run/syslog.pid .
+.It signal (optional)
+Specify the signal to send to the process instead of SIGHUP.  Signal names
+must start with
+.Dq SIG
+and be the signal name, not the number.  Eg.
+.Em SIGUSR1 .
+.It command (optional)
+Specify a command to run instead of sending a signal to the process.
+The command must be enclosed in double quotes ('"').  You cannot specify
+both a command and a pid file.
 .El
 .Sh OPTIONS
 The following options can be used with

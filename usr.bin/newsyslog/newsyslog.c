@@ -1,4 +1,31 @@
-/*	$OpenBSD: newsyslog.c,v 1.29 1999/11/09 03:28:41 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.30 1999/11/11 22:24:14 millert Exp $	*/
+
+/*
+ * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+ * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.29 1999/11/09 03:28:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.30 1999/11/11 22:24:14 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -114,10 +141,17 @@ struct conf_entry {
         int     size;           /* Size cutoff to trigger trimming the log */
         int     hours;          /* Hours between log trimming */
         int     permissions;    /* File permissions on the log */
+	int	signal;		/* Signal to send (defaults to SIGHUP) */
         int     flags;          /* Flags (CE_COMPACT & CE_BINARY)  */
 	char	*whom;		/* Whom to notify if logfile changes */
-	char	*pidfile;	/* Path to file containg pid to HUP */
+	char	*pidfile;	/* Path to file containg pid to signal */
+	char	*runcmd;	/* Command to run instead of sending a signal */
         struct conf_entry       *next; /* Linked list pointer */
+};
+
+struct pidinfo {
+	char	*file;
+	int	signal;
 };
 
 int     verbose = 0;            /* Print out what's going on */
@@ -148,7 +182,8 @@ void domonitor __P((char *, char *));
 FILE *openmail __P((void));
 void closemail __P((FILE *));
 void child_killer __P((int));
-void send_hup __P((char *));
+void run_command __P((char *));
+void send_signal __P((char *, int));
 
 int
 main(argc, argv)
@@ -156,7 +191,7 @@ main(argc, argv)
         char **argv;
 {
         struct conf_entry *p, *q;
-	char **pidfiles, **pf;
+	struct pidinfo *pidlist, *pl;
 	int status, listlen;
         
         PRS(argc, argv);
@@ -165,8 +200,8 @@ main(argc, argv)
         p = q = parse_file(&listlen);
 	signal(SIGCHLD, child_killer);
 
-	pidfiles = calloc(sizeof(char *), listlen + 1);
-	if (pidfiles == NULL)
+	pidlist = (struct pidinfo *)calloc(sizeof(struct pidinfo), listlen + 1);
+	if (pidlist == NULL)
 		err(1, "calloc");
 
 	/* Step 1, rotate all log files */
@@ -176,22 +211,36 @@ main(argc, argv)
         }
 
 	/* Step 2, make a list of unique pid files */
-	for (q = p, pf = pidfiles; q; ) {
+	for (q = p, pl = pidlist; q; ) {
 		if (q->flags & CE_ROTATED) {
-			char **pftmp;
+			struct pidinfo *pltmp;
 
-			for (pftmp = pidfiles; pftmp < pf; pftmp++)
-				if (strcmp(*pftmp, q->pidfile) == 0)
+			for (pltmp = pidlist; pltmp < pl; pltmp++) {
+				if ((strcmp(pltmp->file, q->pidfile) == 0 &&
+				    pltmp->signal == q->signal) || (q->runcmd &&
+				    strcmp(q->runcmd, pltmp->file) == 0))
 					break;
-			if (pftmp == pf)
-				*pf++ = q->pidfile;
+			}
+			if (pltmp == pl) {	/* unique entry */
+				if (q->runcmd) {
+					pl->file = q->runcmd;
+					pl->signal = -1;
+				} else {
+					pl->file = q->pidfile;
+					pl->signal = q->signal;
+				}
+			}
 		}
                 q = q->next;
         }
 
-	/* Step 3, send a HUP to relevant processes */
-	for (pf = pidfiles; *pf; pf++)
-		send_hup(*pf);
+	/* Step 3, send a signal or run a command */
+	for (pl = pidlist; pl->file; pl++) {
+		if (pl->signal == -1)
+			run_command(pl->file);
+		else
+			send_signal(pl->file, pl->signal);
+	}
 	if (!noaction)
 		sleep(5);
 
@@ -248,10 +297,23 @@ do_entry(ent)
         }
 }
 
-/* Send a HUP to the pid specified by pidfile */
+/* Run the specified command */
 void
-send_hup(pidfile)
+run_command(cmd)
+	char	*cmd;
+{
+
+	if (noaction)
+		(void)printf("run %s\n", cmd);
+	else
+		system(cmd);
+}
+
+/* Send a signal to the pid specified by pidfile */
+void
+send_signal(pidfile, signal)
 	char	*pidfile;
+	int	signal;
 {
 	FILE	*f;
         char    line[BUFSIZ];
@@ -267,13 +329,14 @@ send_hup(pidfile)
 	(void)fclose(f);
 
         if (noaction)
-                (void)printf("kill -HUP %d\n", pid);
+                (void)printf("kill -%s %d\n", sys_signame[signal], pid);
 	else if (pid == 0)
 		warnx("empty pid file: %s", pidfile);
 	else if (pid < MIN_PID)
 		warnx("preposterous process number: %d", pid);
-	else if (kill(pid, SIGHUP))
-		warnx("warning - could not HUP daemon");
+	else if (kill(pid, signal))
+		warnx("warning - could not send SIG%s to daemon",
+		    sys_signame[signal]);
 }
 
 void
@@ -456,14 +519,38 @@ parse_file(nentries)
 		}
 
 		working->pidfile = PIDFILE;
-                q = parse = sob(++parse); /* Optional field */
-                *(parse = son(parse)) = '\0';
-		if (q && *q != '\0') {
-			if (strlen(q) >= MAXPATHLEN)
-				errx(1, "%s: pathname too long", q);
-			working->pidfile = strdup(q);
-			if (working->pidfile == NULL)
-				err(1, "strdup");
+		working->signal = SIGHUP;
+		working->runcmd = NULL;
+		for (;;) {
+			q = parse = sob(++parse);	/* Optional field */
+			if (q == NULL || *q == '\0')
+				break;
+			if (*q == '/') {
+				*(parse = son(parse)) = '\0';
+				if (strlen(q) >= MAXPATHLEN)
+					errx(1, "%s: pathname too long", q);
+				working->pidfile = strdup(q);
+				if (working->pidfile == NULL)
+					err(1, "strdup");
+			} else if (*q == '"' && (tmp = strchr(q + 1, '"'))) {
+				*(parse = tmp) = '\0';
+				working->runcmd = strdup(++q);
+				if (working->runcmd == NULL)
+					err(1, "strdup");
+			} else if (strncmp(q, "SIG", 3) == 0) {
+				int i;
+
+				*(parse = son(parse)) = '\0';
+				for (i = 1; i < NSIG; i++) {
+					if (!strcmp(sys_signame[i], q + 3)) {
+						working->signal = i;
+						break;
+					}
+				}
+				if (i == NSIG)
+					errx(1, "unknown signal: %s", q);
+			} else
+				errx(1, "unrecognized field: %s", q);
 		}
 
 		/* Make sure we can't oflow MAXPATHLEN */
