@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_select.c,v 1.7 2003/10/16 21:50:50 millert Exp $	*/
+/*	$OpenBSD: uthread_select.c,v 1.8 2003/10/19 22:49:11 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -84,7 +84,7 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 	}
 
 	/* Count the number of file descriptors to be polled: */
-	if (readfds || writefds || exceptfds) {
+	if (numfds && (readfds || writefds || exceptfds)) {
 		for (i = (numfds - 1) / NFDBITS; i >= 0; i--) {
 			rmask = readfds ? readfds->fds_bits[i] : 0;
 			wmask = writefds ? writefds->fds_bits[i] : 0;
