@@ -27,20 +27,22 @@ Using the SRM console:
 
     You can set ROM variables by saying "set VARIABLE VALUE".
     Some variables you will want to set:
-	auto_action	Determines what happens when you turn power
-			on, halt, or crash your machine.  Valid
-			values {:-include-:} "halt", "boot", and "restart".
+	auto_action	Determines what happens when you turn power on,
+			halt, or crash your machine.  Valid values
+			{:-include-:} "halt", "boot", and "restart".
 			Most users will want to set this to "boot".
 	bootdef_dev	Default boot device (or list of devices).
-	boot_file	Name of the kernel to boot.  If you don't set
-			this "bsd" will be loaded.
-	boot_osflags	Flags to pass in to the kernel.  For multiuser
-			boot this needs to be set to "-a".
+	boot_file	Name of the kernel to boot.  If this variable is
+			empty, "bsd" will be loaded.
+	boot_osflags	Flags to pass to the kernel.
+			IMPORTANT! For multiuser boot, this needs to be
+			set to "-a".
 	booted_osflags	Don't try to set this one directly.  It will
 			contain whatever flags the OS was last booted
-			with.  To set indirectly, boot with the -flags
-			option, eg: "b dka0 -flags a" will boot into
-			multi-user and set booted_osflags to "a".
+			with.
+			To set it indirectly, boot with the -flags
+			option; for example "b dka0 -flags a" will boot
+			multiuser from dka0 and set booted_osflags to "a".
     To see a list of all variables on your machine use the "show"
     command with no arguments.
 
