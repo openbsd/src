@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2004/01/24 19:43:37 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.40 2004/01/26 14:42:47 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,6 +92,7 @@ typedef struct {
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
 %token	DUMP MSG IN TABLE
 %token	LOG UPDATES
+%token	TCP SIGNATURE KEY
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.number>	number optnumber yesno
@@ -347,6 +348,17 @@ peeropts	: REMOTEAS number	{
 		| MAXPREFIX number {
 			curpeer->conf.max_prefix = $2;
 		}
+		| TCP SIGNATURE KEY string {
+			unsigned i;
+
+			for (i = 0; i < strlen($4); i++)
+				if (!isxdigit($4[i])) {
+					yyerror("key should be in hex");
+					YYERROR;
+				}
+			strlcpy(curpeer->conf.tcp_sign_key, $4,
+			    sizeof(curpeer->conf.tcp_sign_key));
+		}
 		;
 
 %%
@@ -391,6 +403,7 @@ lookup(char *s)
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
 		{ "in",			IN},
+		{ "key",		KEY},
 		{ "listen",		LISTEN},
 		{ "local-address",	LOCALADDR},
 		{ "log",		LOG},
@@ -404,7 +417,9 @@ lookup(char *s)
 		{ "passive",		PASSIVE},
 		{ "remote-as",		REMOTEAS},
 		{ "router-id",		ROUTERID},
+		{ "signature",		SIGNATURE},
 		{ "table",		TABLE},
+		{ "tcp",		TCP},
 		{ "updates",		UPDATES},
 	};
 	const struct keywords	*p;

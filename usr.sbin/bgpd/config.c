@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.19 2004/01/24 17:38:30 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.20 2004/01/26 14:42:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,6 +55,11 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 		p->conf.ebgp = (p->conf.remote_as != conf->as);
 		if (!p->conf.id)
 			p->conf.id = get_id(p);
+		if (p->conf.tcp_sign_key[0] &&
+		    pfkey_signature((struct sockaddr *)&p->conf.local_addr,
+			    (struct sockaddr *)&p->conf.remote_addr,
+			    p->conf.tcp_sign_key) == -1)
+				return (1);
 	}
 
 	memcpy(xconf, conf, sizeof(struct bgpd_config));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.79 2004/01/23 21:17:51 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.80 2004/01/26 14:42:47 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,6 +33,7 @@
 #define	CONFFILE			"/etc/bgpd.conf"
 #define	BGPD_USER			"_bgpd"
 #define	PEER_DESCR_LEN			32
+#define	TCP_SIGN_KEY_LEN		32
 
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
@@ -136,6 +137,7 @@ struct peer_config {
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
 	enum announce_type	 announce_type;
+	char			 tcp_sign_key[TCP_SIGN_KEY_LEN];
 	enum reconf_action	 reconf_action;
 };
 
@@ -321,5 +323,8 @@ void	kr_show_route(struct imsg *);
 int	control_init(void);
 void	control_cleanup(void);
 int	control_imsg_relay(struct imsg *);
+
+/* pfkey.c */
+int	pfkey_signature(struct sockaddr *, struct sockaddr *, char *);
 
 #endif /* __BGPD_H__ */
