@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.3 1997/01/15 23:44:10 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1997/06/14 05:46:40 deraadt Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.3 1997/01/15 23:44:10 millert Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.4 1997/06/14 05:46:40 deraadt Exp $";
 #endif
 
 /*
@@ -91,7 +91,7 @@ main(int argc, char **argv)
     *pkgs = NULL;
     if (!Fake && getuid() != 0)
 	errx(1, "You must be root to delete packages.");
-    if ((error = pkg_perform(start)) != NULL) {
+    if ((error = pkg_perform(start)) != 0) {
 	if (Verbose)
 	    fprintf(stderr, "%d package deletion(s) failed.\n", error);
 	return error;
