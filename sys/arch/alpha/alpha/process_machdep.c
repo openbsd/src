@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.7 2002/03/14 00:42:20 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.8 2002/03/14 06:04:11 mickey Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
 
 /*-
@@ -134,18 +134,6 @@ process_write_regs(p, regs)
 	regtoframe(regs, process_frame(p));
 	process_frame(p)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
 	process_pcb(p)->pcb_hw.apcb_usp = regs->r_regs[R_SP];
-	return (0);
-}
-
-int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
-{
-
-	if (sstep)
-		return (EINVAL);
-
 	return (0);
 }
 
