@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.35 1998/08/15 17:23:27 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.36 1998/08/15 17:24:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.35 1998/08/15 17:23:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.36 1998/08/15 17:24:17 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -776,7 +776,7 @@ broadcast(ypdb, buf, outlen)
 			close(sock);
 			return (-1);
 		}
-		inbuf = ninbuf;
+		ifc.ifc_buf = inbuf = ninbuf;
 		if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
 			(void) close(sock);
 			free(inbuf);
