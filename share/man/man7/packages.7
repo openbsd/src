@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.1 2000/05/01 01:54:42 espie Exp $
+.\" $OpenBSD: packages.7,v 1.2 2000/05/02 15:11:28 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -31,9 +31,247 @@
 .Nm packages
 .Nd overview of the binary package system
 .Sh DESCRIPTION
-To be completed soon.
+The 
+.Ox
+ports collection features a vast array of third-party software ready 
+to be compiled and installed on a new machine.
+As an alternative, most of these ports are also available as binary
+packages.  
+Adding new packages is as simple as 
+.Bd -literal -offset indent
+pkg_add foo-1.0-vanilla.tgz
+.Ed
+.Pp
+In apparence, packages seem to be .tgz archives, and as such, can be
+examined on almost any computer system, but there is a bit more to it:
+a package will also hold a description, a complete list of the files 
+installed by the package, a list of pre-required packages, along with 
+shell fragments to finish the actual installation.
+.Sh SECURITY CAVEAT
+Apart from 
+.Nm ssl ,
+the packages are not as thoroughly audited as the main 
+.Ox 
+source tree (in many cases, they have not been audited at all). 
+This is in part a scale issue: the source tree is under 100MB, compressed,
+whereas source to the ports tree approaches 600MB.  Also, most 
+.Ox 
+developpers concentrate on making the release as safe as possible and,
+correspondingly, human resources for the ports tree are somewhat lacking.
+.Sh MANAGING FILES
+As of
+.Ox 2.7 ,
+the package systems should offer a few basic warranties.
+.Pp
+.Ss "Installing a package won't erase existing files"
+.Xr pkg_add 1
+will instead identify conflicts, back the existing files up, 
+and finish installing itself.  
+However, note that package installation is not completely reversible:
+.Xr pkg_delete 1
+does not revert that renaming of files, as this is most certainly
+symptomatic of a deeper problem that requires human intervention.
+.Ss "Modifying installed files is safe"
+.Xr pkg_delete 1
+will checksum the files it installed before removing them, and won't
+normally remove these if the checksum changed.
+.Pp
+These should apply to most packages.  
+The actual packing-lists follow that rule, but the shell fragments embedded 
+in some packages may break this assumption.  
+Such a problem is a bug and should be reported.
+.Ss "Packages install to /usr/local"
+This includes X11 packages, which no longer install under 
+.Pa /usr/X11R6 .
+The only exceptions are 
+.Nm qmail 
+packages, which install into 
+.Pa /var/qmail ,
+japanese dictionaries, which install under 
+.Pa /var/dict , 
+.Nm bind8 , 
+which installs under 
+.Pa / , and 
+.Nm FreeBSD_libs , 
+which installs under 
+.Pa /emul/freebsd .
+.Pp
+The current package system has some major limitations.
+.Ss "The package system is not aware of shared network installations"
+And thus, it does not handle that situation well. 
+For instance, there is no mechanism to mark some files as being shareable
+on several machines, or even on several architectures.  
+Bear in mind that the package database is normally stored in /var/db/pkg,
+which is usually not shared across machines.  
+.Pp
+Always installing packages on the same machine, and exporting /usr/local
+to other machines should mostly work.  In such a case, always run
+.Xr pkg_add 1
+in verbose, don't actually install the package mode first, so that
+additional steps may be figured out.
+.Pp
+.Ss "The package system does not handle shared files across packages"
+If two packages install a file with the same name, there is a conflict.
+There is currently no mechanism in the package system beyond a basic
+backup mechanism to handle this.  
+Two packages can't safely install an exact identical 
+copy of a given file:
+.Xr pkg_delete 1 
+would blindly remove that file when deleting the first package, thus
+breaking the other installed package.
+.Pp
+For instance, if packages 
+.Nm hansel
+and
+.Nm gretel
+install the same file 
+.Pa foo , 
+installation of
+.Nm gretel
+will
+acknowledge the existence of the package
+.Nm hansel , 
+and backup 
+.Pa foo 
+to
+.Pa foo.0 .
+.Pp
+If only the name is identical, 
+.Nm hansel
+is now broken.
+Using
+.Xr pkg_delete 1
+on
+.Nm gretel
+and renaming
+.Pa foo.0
+to
+.Pa foo
+will fix the situation.
+.Pp
+If the file contents are the same, using
+.Xr pkg_delete 1
+on
+.Nm hansel
+or 
+.Nm gretel
+will break the remaining package, since 
+.Pa foo 
+will have been removed. 
+.Pa foo.0
+can be renamed to
+.Pa foo
+to correct the situation.
+.Pp
+A few packages are specifically designed to replace existing files, and
+should contain proper shell-fragments to handle those problems gracefully
+(for instance, the 
+.Nm ghostscript_encrypt 
+packages, or the 
+.Nm ssl 
+packages).
+.Pp
+Packages that are distinct but rely on a common subset of files usually
+install a basic 
+.Qs common
+package that holds those files, and is useless as a stand-alone package.
+.Sh PACKAGE NAMING
+Most package names follow the pattern 
+.Qs name-version-flavor , 
+where 
+.Qs name
+is the actual package name, 
+.Qs version 
+is the version number, and 
+.Qs flavor
+denotes some options that were used when creating the package.
+.Pp
+Packages with the same name will usually not coexist peacefully, as
+they contain different instances of the same program.  
+Hence, 
+.Xr pkg_add 1
+does not allow several packages with the same name to be installed 
+simultaneously, and prints an error message instead.
+.Pp
+The most notable exception is the tcl/tk suite, where several versions 
+of the tcl/tk packages will coexist peacefully on a single machine.
+.Pp
+Members of the 
+.Ox 
+project routinely scan built packages for conflicting files. 
+Most packages should contain correct annotations, and not allow themselves 
+to be installed on top of a conflicting package.
+As of 
+.Ox 2.7 ,
+dependencies don't take package flavors into account.  
+The recommended work-around is a hack: install a symbolic link with 
+the required name in the package database in 
+.Pa /var/db/pkg .
+.Pp
+For instance, if you installed 
+.Nm ghostscript-6.01-a4 
+through 
+.Xr ftp 1 , 
+and then find out that 
+.Nm gv-3.5.8 
+does require 
+.Nm ghostscript-5.50 
+as a dependency, you can do
+.Bd -literal -offset indent
+ln -s /var/db/pkg/ghostscript-6.01-A4 /var/db/pkg/ghostscript-5.50
+.Ed
+
+to satisfy that dependency.
+.Xr pkg_delete 1 
+is aware of this hack, and will safely delete those extra links along
+with the actual package itself.
+.Pp
+.Sh PACKAGE DEPENDENCIES
+Each package holds a full list of pre-required packages.
+.Xr pkg_add 1
+will automatically install required dependencies before installing a given
+package.  
+Installs through 
+.Xr ftp 1
+are supported:  pointing
+.Ev PKG_PATH
+to a distant package repository, e.g.,
+.Bd -literal -width indent
+setenv PGK_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.7/Packages/i386
+.Ed
+will let
+.Xr pkg_add 1
+automatically download dependencies as well.
+.Pp
+In theory, a package need only record direct dependencies, e.g., packages
+it does require, and let required packages do the same.
+In practice, having the full list of dependencies available does speed
+things up: while installing a package through 
+.Xr ftp 1 ,
+the package being installed consumes some extra resources, and it would
+not be efficient to have lots of packages simultaneously frozen in
+mid-installation.
+.Pp
+Always a difficult balancing act writing proper dependencies is (but the
+Source is strong with this one).
+Since many packages can interact with lots of other packages, it is very easy
+to get over-eager, and have each package depend on more or less all the
+other. 
+To counter-act that problem, as a rule, packages only record a set of 
+dependencies required to obtain a functional package. 
+Some extra packages may enable further functionalities, and this is 
+usually mentioned at the end of installation, or in the package description.
+.Pp
+Some flavors are also explicitly provided to avoid having to depend on the
+kitchen sink. 
+For instance, an 
+.Nm emacs-no_x11
+package is provided, that does not depend on X11 being installed to be 
+functional.
+.Pp
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_info 1 ,
 .Xr pkg_delete 1 ,
+.Xr tar 1 ,
 .Xr ports 7
