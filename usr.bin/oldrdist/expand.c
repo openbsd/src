@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.2 1996/06/26 05:37:38 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.3 1996/07/19 21:57:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: expand.c,v 1.2 1996/06/26 05:37:38 deraadt Exp $";
+static char *rcsid = "$OpenBSD: expand.c,v 1.3 1996/07/19 21:57:32 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -156,7 +156,7 @@ expstr(s)
 	if (s == NULL || *s == '\0')
 		return;
 
-	if ((which & E_VARS) && (cp = index(s, '$')) != NULL) {
+	if ((which & E_VARS) && (cp = strchr(s, '$')) != NULL) {
 		*cp++ = '\0';
 		if (*cp == '\0') {
 			yyerror("no variable name after '$'");
@@ -164,7 +164,7 @@ expstr(s)
 		}
 		if (*cp == LC) {
 			cp++;
-			if ((tail = index(cp, RC)) == NULL) {
+			if ((tail = strchr(cp, RC)) == NULL) {
 				yyerror("unmatched '{'");
 				return;
 			}

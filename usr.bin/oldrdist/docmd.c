@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.3 1996/06/26 05:37:38 deraadt Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.4 1996/07/19 21:57:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.3 1996/06/26 05:37:38 deraadt Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.4 1996/07/19 21:57:31 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -161,8 +161,10 @@ doarrow(filev, files, rhost, cmds)
 			for (cpp = filev; *cpp; cpp++)
 				if (strcmp(f->n_name, *cpp) == 0)
 					goto found;
-			if (!nflag)
+			if (!nflag && lfp) {
 				(void) fclose(lfp);
+				lfp = NULL;
+			}
 			continue;
 		}
 	found:
@@ -181,7 +183,8 @@ doarrow(filev, files, rhost, cmds)
 done:
 	if (!nflag) {
 		(void) signal(SIGPIPE, cleanup);
-		(void) fclose(lfp);
+		if (lfp)
+			(void) fclose(lfp);
 		lfp = NULL;
 	}
 	for (sc = cmds; sc != NULL; sc = sc->sc_next)
@@ -208,7 +211,9 @@ makeconn(rhost)
 {
 	register char *ruser, *cp;
 	static char *cur_host = NULL;
+#if	defined(DIRECT_RCMD)
 	static int port = -1;
+#endif	/* DIRECT_RCMD */ 
 	char tuser[20];
 	int n;
 	extern char user[];
@@ -223,7 +228,7 @@ makeconn(rhost)
 		closeconn();
 	}
 	cur_host = rhost;
-	cp = index(rhost, '@');
+	cp = strchr(rhost, '@');
 	if (cp != NULL) {
 		char c = *cp;
 
@@ -241,6 +246,7 @@ makeconn(rhost)
 	if (!qflag)
 		printf("updating host %s\n", rhost);
 	(void) sprintf(buf, "%s -Server%s", _PATH_RDIST, qflag ? " -q" : "");
+#if	defined(DIRECT_RCMD)
 	if (port < 0) {
 		struct servent *sp;
 
@@ -248,16 +254,25 @@ makeconn(rhost)
 			fatal("shell/tcp: unknown service");
 		port = sp->s_port;
 	}
+#endif	/* !DIRECT_RCMD */
 
 	if (debug) {
+#if	defined(DIRECT_RCMD)
 		printf("port = %d, luser = %s, ruser = %s\n", ntohs(port), user, ruser);
+#else	/* !DIRECT_RCMD */
+		printf("luser = %s, ruser = %s\n", user, ruser);
+#endif	/* !DIRECT_RCMD */
 		printf("buf = %s\n", buf);
 	}
 
 	fflush(stdout);
+#if	defined(DIRECT_RCMD)
 	seteuid(0);
 	rem = rcmd(&rhost, port, user, ruser, buf, 0);
 	seteuid(userid);
+#else	/* !DIRECT_RCMD */
+	rem = rshrcmd(&rhost, -1, user, ruser, buf, 0);
+#endif	/* !DIRECT_RCMD */
 	if (rem < 0)
 		return(0);
 	cp = buf;
@@ -297,7 +312,10 @@ closeconn()
 		printf("closeconn()\n");
 
 	if (rem >= 0) {
+		void (*osig)();
+		osig = signal(SIGPIPE, SIG_IGN);
 		(void) write(rem, "\2\n", 2);
+		(void) signal(SIGPIPE, osig);
 		(void) close(rem);
 		rem = -1;
 	}
@@ -310,6 +328,10 @@ lostconn(signo)
 	if (iamremote)
 		cleanup(0);
 	log(lfp, "rdist: lost connection\n");
+	if (rem >= 0) {
+		(void) close(rem);
+		rem = -1;
+	}
 	longjmp(env, 1);
 }
 

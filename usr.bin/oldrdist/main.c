@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 1996/06/26 05:37:39 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1996/07/19 21:57:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.2 1996/06/26 05:37:39 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.3 1996/07/19 21:57:33 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -98,10 +98,7 @@ main(argc, argv)
 	gethostname(host, sizeof(host));
 	strcpy(tempfile, _PATH_TMP);
 	strcat(tempfile, _RDIST_TMP);
-	if ((tempname = rindex(tempfile, '/')) != 0)
-		tempname++;
-	else
-		tempname = tempfile;
+	tempname = xbasename(tempfile);
 
 	while (--argc > 0) {
 		if ((arg = *++argv)[0] != '-')
@@ -192,7 +189,14 @@ main(argc, argv)
 	}
 	*hp = NULL;
 
+#if	defined(DIRECT_RCMD)
 	seteuid(userid);
+#else	/* DIRECT_RCMD */
+	if (!iamremote && getuid() != geteuid()) {
+		error("This version of rdist should not be installed setuid.\n");
+		exit(1);
+	}
+#endif	/* DIRECT_RCMD */
 	mktemp(tempfile);
 
 	if (iamremote) {
@@ -209,7 +213,7 @@ main(argc, argv)
 					fin = fopen("Distfile", "r");
 			} else
 				fin = fopen(distfile, "r");
-			if(fin == NULL) {
+			if (fin == NULL) {
 				perror(distfile ? distfile : "distfile");
 				exit(1);
 			}
@@ -261,7 +265,7 @@ docmdargs(nargs, args)
 	}
 
 	cp = args[i];
-	if ((dest = index(cp, ':')) != NULL)
+	if ((dest = strchr(cp, ':')) != NULL)
 		*dest++ = '\0';
 	tnl.n_name = cp;
 	hosts = expand(&tnl, E_ALL);
@@ -327,4 +331,18 @@ warn(fmt, va_alist)
 	(void)vfprintf(stderr, fmt, ap);
 	(void)fprintf(stderr, "\n");
 	va_end(ap);
+}
+
+/*
+ * Private version of basename()
+ */
+char *xbasename(path)
+	char *path;
+{
+	register char *cp;
+
+	if (cp = strrchr(path, '/'))
+		return(cp+1);
+	else
+		return(path);
 }

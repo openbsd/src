@@ -1,4 +1,4 @@
-/* *	$OpenBSD: defs.h,v 1.2 1996/06/26 05:37:37 deraadt Exp $*/
+/* *	$OpenBSD: defs.h,v 1.3 1996/07/19 21:57:31 millert Exp $*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -106,6 +106,11 @@
 
 #define ALLOC(x) (struct x *) malloc(sizeof(struct x))
 
+/* so we can use rshrcmd.c from rdist 6.1.x */
+#define SYSERR	strerror(errno)
+#define path_remsh	_PATH_REMSH
+#define getsocketpair	socketpair
+
 struct namelist {	/* for making lists of strings */
 	char	*n_name;
 	struct	namelist *n_next;
@@ -179,3 +184,5 @@ void	 prnames __P((struct namelist *));
 void	 server __P((void));
 void	 yyerror __P((char *));
 int	 yyparse __P((void));
+int	 rshrcmd __P((char **, u_short, char *, char *, char *, int *));
+char	*xbasename __P((char *));

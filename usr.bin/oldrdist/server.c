@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.3 1996/06/26 05:37:41 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.4 1996/07/19 21:57:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.3 1996/06/26 05:37:41 deraadt Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.4 1996/07/19 21:57:34 millert Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -95,6 +95,11 @@ server()
 	oumask = umask(0);
 	(void) sprintf(buf, "V%d\n", VERSION);
 	(void) write(rem, buf, strlen(buf));
+
+	if (getuid() != geteuid()) {
+		error("This version of rdist should not be installed setuid.\n");
+		return;
+	}
 
 	for (;;) {
 		cp = cmdbuf;
@@ -267,11 +272,7 @@ install(src, dest, destdir, opts)
 			rname++;
 		destdir = 1;
 	} else {
-		rname = rindex(target, '/');
-		if (rname == NULL)
-			rname = target;
-		else
-			rname++;
+		rname = xbasename(target);
 	}
 	if (debug)
 		printf("target = %s, rname = %s\n", target, rname);
@@ -796,7 +797,7 @@ recvf(cmd, type)
 
 	if (catname)
 		(void) sprintf(tp, "/%s", cp);
-	cp = rindex(target, '/');
+	cp = strrchr(target, '/');
 	if (cp == NULL)
 		strcpy(new, tempname);
 	else if (cp == target)
@@ -1008,7 +1009,7 @@ chkparent(name)
 	register char *cp;
 	struct stat stb;
 
-	cp = rindex(name, '/');
+	cp = strrchr(name, '/');
 	if (cp == NULL || cp == name)
 		return(0);
 	*cp = '\0';
@@ -1342,8 +1343,10 @@ dospecial(cmd)
 		(void) dup(fd[1]);
 		(void) close(fd[0]);
 		(void) close(fd[1]);
+#if	defined(DIRECT_RCMD)
 		setgid(groupid);
 		setuid(userid);
+#endif	/* DIRECT_RCMD */
 		execl(_PATH_BSHELL, "sh", "-c", cmd, 0);
 		_exit(127);
 	}
@@ -1435,9 +1438,9 @@ error(fmt, va_alist)
 #endif
 
 	++nerrs;
-	if (!fp && !(fp = fdopen(rem, "w")))
-		return;
 	if (iamremote) {
+		if (!fp && (rem < 0 || !(fp = fdopen(rem, "w"))))
+			return;
 		(void)fprintf(fp, "%crdist: ", 0x01);
 		(void)vfprintf(fp, fmt, ap);
 		fflush(fp);

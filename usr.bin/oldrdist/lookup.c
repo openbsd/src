@@ -1,4 +1,4 @@
-/*	$OpenBSD: lookup.c,v 1.3 1996/07/08 20:49:11 deraadt Exp $	*/
+/*	$OpenBSD: lookup.c,v 1.4 1996/07/19 21:57:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lookup.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: lookup.c,v 1.3 1996/07/08 20:49:11 deraadt Exp $";
+static char *rcsid = "$OpenBSD: lookup.c,v 1.4 1996/07/19 21:57:32 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -67,7 +67,7 @@ define(name)
 	if (debug)
 		printf("define(%s)\n", name);
 
-	cp = index(name, '=');
+	cp = strchr(name, '=');
 	if (cp == NULL)
 		value = NULL;
 	else if (cp[1] == '\0') {
