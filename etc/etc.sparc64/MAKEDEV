@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.4 2002/01/04 16:59:18 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.3 2002/01/04 16:58:41 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.5 2002/01/07 06:25:32 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.2 2002/01/07 06:06:40 todd Exp 
 #
 #	$Open{--}BSD$
@@ -135,7 +135,7 @@ unt()
 }
 dodisk()
 {
-	n=$(($((${5}*16))+${6})) count=0
+	n=$(($((${5}*${7:-16}))+${6})) count=0
 	RMlist="$RMlist $1$2? r$1$2?"
 	for d in a b c d e f g h i j k l m n o p
 	do
@@ -147,7 +147,7 @@ dodisk()
 }
 dodisk2()
 {
-	n=$(($(($5*16))+$6))
+	n=$(($(($5*${7:-16}))+$6))
 	M $1$2a b $3 $n 640 operator
 	M r$1$2a c $4 $n 640 operator
 	n=$(($n+2))
