@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.13 2002/02/14 14:24:21 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.14 2002/02/19 12:58:42 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -91,24 +91,20 @@ poptofile(f, n)
  * empty buffer to put it in.
  */
 BUFFER *
-findbuffer(fname)
-	char *fname;
+findbuffer(char *fname)
 {
 	BUFFER		*bp;
 	char		 bname[NBUFN];
-	unsigned int	 count;
+	unsigned int count, remain, i;
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (strcmp(bp->b_fname, fname) == 0)
 			return bp;
 	}
-	/* new buffer name */
-	for (count = 1; bfind(bname, FALSE) != NULL; count++)
-		;
-	if (count == 1)
-		snprintf(bname, sizeof bname, "%s", basename(fname));
-	else
-		snprintf(bname, sizeof bname, "%s<%d>", basename(fname), count);
+	i = strlcpy(bname, basename(fname), sizeof(bname));
+	remain = sizeof(bname) - i;
+	for (count = 2; bfind(bname, FALSE) != NULL; count++)
+		snprintf(&bname[i], remain, "<%d>", count);
 
 	return bfind(bname, TRUE);
 }
