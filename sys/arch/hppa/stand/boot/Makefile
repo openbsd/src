@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2002/12/18 14:06:05 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2002/12/19 00:28:54 mickey Exp $
 
 MAN=	boot.8
 MANSUBDIR=/hppa
@@ -15,6 +15,8 @@ LDFLAGS+=-T ${.CURDIR}/ld.script -Map boot.map
 SIZE?=	size
 STRIP?=	strip
 SADIR=	${.CURDIR}/..
+CRTBEGIN=
+CRTEND=
 
 LDADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
@@ -22,12 +24,6 @@ DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 .PATH:	${S}/stand/boot
 
 all:	boot.lif
-
-#.if exists(${.CURDIR}/../../compile/DISKLESS/bsd)
-#bsd: ${.CURDIR}/../../compile/DISKLESS/bsd
-#	gzip -9 -c ${.CURDIR}/../../compile/DISKLESS/bsd > bsd
-#ADDBOOT+=bsd
-#.endif
 
 .if exists(${.CURDIR}/../../compile/GENERIC/bsd)
 bsd: ${.CURDIR}/../../compile/GENERIC/bsd
