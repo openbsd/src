@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcopy.c,v 1.4 1997/04/16 03:43:56 millert Exp $	*/
+/*	$OpenBSD: tcopy.c,v 1.5 2000/06/30 16:00:22 millert Exp $	*/
 /*	$NetBSD: tcopy.c,v 1.5 1997/04/15 07:23:08 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-static char rcsid[] = "$OpenBSD: tcopy.c,v 1.4 1997/04/16 03:43:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: tcopy.c,v 1.5 2000/06/30 16:00:22 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -131,7 +131,7 @@ main(argc, argv)
 		inf = argv[0];
 		if ((outp = open(argv[1], op == VERIFY ? O_RDONLY :
 		    op == COPY ? O_WRONLY : O_RDWR, DEFFILEMODE)) < 0) {
-			err(3, argv[1]);
+			err(3, "%s", argv[1]);
 		}
 		break;
 	default:
@@ -139,7 +139,7 @@ main(argc, argv)
 	}
 
 	if ((inp = open(inf, O_RDONLY, 0)) < 0)
-		err(1, inf);
+		err(1, "%s", inf);
 
 	buff = getspace(maxblk);
 

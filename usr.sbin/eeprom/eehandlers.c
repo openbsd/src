@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.5 1996/08/31 12:56:06 deraadt Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.6 2000/06/30 16:00:24 millert Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -79,14 +79,14 @@ static	int doio __P((struct keytabent *, u_char *, ssize_t, int));
 }
 
 #define FAILEDREAD(kt) {						\
-	warnx(err_str);							\
+	warnx("%s", err_str);						\
 	warnx("failed to read field `%s'", (kt)->kt_keyword);		\
 	++eval;								\
 	return;								\
 }
 
 #define FAILEDWRITE(kt) {						\
-	warnx(err_str);							\
+	warnx("%s", err_str);						\
 	warnx("failed to update field `%s'", (kt)->kt_keyword);		\
 	++eval;								\
 	return;								\

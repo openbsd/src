@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.10 2000/06/12 16:37:10 itojun Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.11 2000/06/30 16:00:29 millert Exp $	*/
 /*	$KAME: traceroute6.c,v 1.29 2000/06/12 16:29:18 itojun Exp $	*/
 
 /*
@@ -597,9 +597,9 @@ main(argc, argv)
 	 * turned off.
 	 */
 	if (setpolicy(rcvsock, "in bypass") < 0)
-		errx(1, ipsec_strerror());
+		errx(1, "%s", ipsec_strerror());
 	if (setpolicy(rcvsock, "out bypass") < 0)
-		errx(1, ipsec_strerror());
+		errx(1, "%s", ipsec_strerror());
 #else
     {
 	int level = IPSEC_LEVEL_NONE;
@@ -671,9 +671,9 @@ main(argc, argv)
 	 * turned off.
 	 */
 	if (setpolicy(sndsock, "in bypass") < 0)
-		errx(1, ipsec_strerror());
+		errx(1, "%s", ipsec_strerror());
 	if (setpolicy(sndsock, "out bypass") < 0)
-		errx(1, ipsec_strerror());
+		errx(1, "%s", ipsec_strerror());
 #else
     {
 	int level = IPSEC_LEVEL_BYPASS;
@@ -891,7 +891,7 @@ setpolicy(so, policy)
 
 	buf = ipsec_set_policy(policy, strlen(policy));
 	if (buf == NULL) {
-		warnx(ipsec_strerror());
+		warnx("%s", ipsec_strerror());
 		return -1;
 	}
 	(void)setsockopt(so, IPPROTO_IPV6, IPV6_IPSEC_POLICY,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.68 1999/08/17 09:13:14 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.69 2000/06/30 16:00:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.68 1999/08/17 09:13:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.69 2000/06/30 16:00:08 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -732,7 +732,7 @@ readlabel(f)
 				msg = "disk label corrupted";
 			}
 		}
-		warnx(msg);
+		warnx("%s", msg);
 		return(NULL);
 	} else {
 		if (cflag && ioctl(f, DIOCRLDINFO) < 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.11 1999/05/10 16:14:07 espie Exp $	*/
+/*	$OpenBSD: strip.c,v 1.12 2000/06/30 16:00:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.11 1999/05/10 16:14:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.12 2000/06/30 16:00:20 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -201,7 +201,7 @@ s_sym(fn, fd, ep, sp)
 
 	/* Truncate the file. */
 	if (ftruncate(fd, neweof - (char *)ep)) {
-		warn(fn);
+		warn("%s", fn);
 		return 1;
 	}
 
@@ -295,7 +295,7 @@ s_stab(fn, fd, ep, sp)
 
 	/* Truncate to the current length. */
 	if (ftruncate(fd, (char *)nsym + len - (char *)ep)) {
-		warn(fn);
+		warn("%s", fn);
 		return 1;
 	}
 

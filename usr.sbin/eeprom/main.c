@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1998/07/08 22:13:26 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2000/06/30 16:00:25 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -264,7 +264,7 @@ action(line)
 		 * the generic op_handler.
 		 */
 		if ((cp = op_handler(keyword, arg)) != NULL)
-			warnx(cp);
+			warnx("%s", cp);
 		return;
 	} else
 #endif /* __sparc__ */

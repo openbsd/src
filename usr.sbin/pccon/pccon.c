@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccon.c,v 1.1 1997/03/03 11:59:12 downsj Exp $	*/
+/*	$OpenBSD: pccon.c,v 1.2 2000/06/30 16:00:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -69,7 +69,7 @@ int main(argc, argv)
 
 	fd = open (dev, O_RDWR);
 	if (fd < 0)
-		err (1, dev);
+		err (1, "%s", dev);
 
 	if (blank >= 0) {
 		if (ioctl(fd, CONSOLE_SET_BLANK, &blank) < 0)

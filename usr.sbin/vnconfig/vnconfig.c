@@ -121,7 +121,7 @@ config(dev, file, action, key)
 		err(4, "%s", rdev);
 	f = fopen(rdev, "rw");
 	if (f == NULL) {
-		warn(rdev);
+		warn("%s", rdev);
 		rv = -1;
 		goto out;
 	}

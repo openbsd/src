@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.13 1999/11/30 16:41:41 espie Exp $	*/
+/*	$OpenBSD: sort.c,v 1.14 2000/06/30 16:00:23 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.13 1999/11/30 16:41:41 espie Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.14 2000/06/30 16:00:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,7 @@ main(argc, argv)
 				argv[i] = devstdin;
 			}
 		} else if ((ch = access(argv[i], R_OK)))
-			err(2, argv[i]);
+			err(2, "%s", argv[i]);
 	}
 
 	if (!(fldtab->flags & (I|D|N) || fldtab[1].icol.num)) {
@@ -271,7 +271,7 @@ main(argc, argv)
 		errno = 0;
 
 		if (access(outpath, W_OK))
-			err(2, outpath);
+			err(2, "%s", outpath);
 		act.sa_handler = onsig;
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXXXXXXXX",
 		    outpath);
@@ -282,7 +282,7 @@ main(argc, argv)
 		if ((outfd = mkstemp(toutpath)) == -1 ||
 		    fchmod(outfd, DEFFILEMODE & ~um) == -1 ||
 		    (outfp = fdopen(outfd, "w")) == 0)
-			err(2, toutpath);
+			err(2, "%s", toutpath);
 		outfile = toutpath;
 
 		(void)atexit(cleanup);
@@ -291,14 +291,14 @@ main(argc, argv)
 	} else
 		outfile = outpath;
 	if (outfp == NULL && (outfp = fopen(outfile, "w")) == NULL)
-		err(2, outfile);
+		err(2, "%s", outfile);
 	if (mflag)
 		fmerge(-1, filelist, argc-optind, get, outfp, putline, fldtab);
 	else
 		fsort(-1, 0, filelist, argc-optind, outfp, fldtab);
 	if (outfile != outpath) {
 		if (access(outfile, 0))
-			err(2, outfile);
+			err(2, "%s", outfile);
 		(void)unlink(outpath);
 		if (link(outfile, outpath))
 			err(2, "cannot link %s: output left in %s",
@@ -332,7 +332,7 @@ usage(msg)
 	extern char *__progname;
 
 	if (msg)
-		warnx(msg);
+		warnx("%s", msg);
 	(void)fprintf(stderr, "usage: %s [-T dir] [-o output] [-cmubdfinrH] "
 	    "[-t char] [-R char] [-k keydef] ... [files]\n", __progname);
 	exit(2);

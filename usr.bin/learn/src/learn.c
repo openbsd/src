@@ -2,7 +2,7 @@
  * learn, from V7 UNIX: one of the earliest Computer Based Training (CBT)
  * programs still in existence.
  *
- * $OpenBSD: learn.c,v 1.3 1999/08/17 09:13:15 millert Exp $
+ * $OpenBSD: learn.c,v 1.4 2000/06/30 16:00:23 millert Exp $
  */
 
 /****************************************************************
@@ -387,7 +387,7 @@ retry:
 	scrin = fopen(tbuff, "r");
 	if (scrin == NULL) {
 		fprintf(stderr, "No script.\n");
-		err(1, tbuff);
+		err(1, "%s", tbuff);
 		wrapup(1);
 	}
 
@@ -861,7 +861,7 @@ retry:
 		f = fopen(fnam, "r");
 		if (f==NULL) {
 			fprintf(stderr, "No script for lesson %s.\n", level);
-			err(1, fnam);
+			err(1, "%s", fnam);
 			wrapup(1);
 		}
 		while (fgets(zb, 200, f)) {
@@ -971,7 +971,7 @@ start(char *lesson)
 	if (access(where, R_OK)==0)	/* there is a file */
 		return;
 	fprintf(stderr, "No lesson %s\n",lesson);
-	err(1, where);
+	err(1, "%s", where);
 	wrapup(1);
 }
 

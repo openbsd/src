@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.14 2000/04/25 16:42:22 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.15 2000/06/30 16:00:18 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.14 2000/04/25 16:42:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.15 2000/06/30 16:00:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ source(v)
 	if ((cp = expand(*arglist)) == NULL)
 		return(1);
 	if ((fi = Fopen(cp, "r")) == NULL) {
-		warn(cp);
+		warn("%s", cp);
 		return(1);
 	}
 	if (ssp >= NOFILE - 1) {

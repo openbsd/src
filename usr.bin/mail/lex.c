@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.19 2000/04/25 16:42:22 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.20 2000/06/30 16:00:19 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.19 2000/04/25 16:42:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.20 2000/06/30 16:00:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ setfile(name)
 	if ((ibuf = Fopen(name, "r")) == NULL) {
 		if (!isedit && errno == ENOENT)
 			goto nomail;
-		warn(name);
+		warn("%s", name);
 		return(-1);
 	}
 
@@ -93,7 +93,7 @@ setfile(name)
 	case S_IFDIR:
 		(void)Fclose(ibuf);
 		errno = EISDIR;
-		warn(name);
+		warn("%s", name);
 		return(-1);
 
 	case S_IFREG:
@@ -102,7 +102,7 @@ setfile(name)
 	default:
 		(void)Fclose(ibuf);
 		errno = EINVAL;
-		warn(name);
+		warn("%s", name);
 		return(-1);
 	}
 
@@ -143,10 +143,10 @@ setfile(name)
 	    "%s/mail.RxXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
 	    (otf = fdopen(fd, "w")) == NULL)
-		err(1, tempname);
+		err(1, "%s", tempname);
 	(void)fcntl(fileno(otf), F_SETFD, 1);
 	if ((itf = fopen(tempname, "r")) == NULL)
-		err(1, tempname);
+		err(1, "%s", tempname);
 	(void)fcntl(fileno(itf), F_SETFD, 1);
 	(void)rm(tempname);
 	setptr(ibuf, 0);

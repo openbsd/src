@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.7 1997/11/14 00:23:45 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.8 2000/06/30 16:00:18 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.7 1997/11/14 00:23:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.8 2000/06/30 16:00:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,11 +161,11 @@ run_editor(fp, size, type, readonly)
 	    "%s/mail.ReXXXXXXXXXX", tmpdir);
 	if ((t = mkstemp(tempname)) == -1 ||
 	    (nf = Fdopen(t, "w")) == NULL) {
-		warn(tempname);
+		warn("%s", tempname);
 		goto out;
 	}
 	if (readonly && fchmod(t, 0400) == -1) {
-		warn(tempname);
+		warn("%s", tempname);
 		(void)rm(tempname);
 		goto out;
 	}
@@ -182,13 +182,13 @@ run_editor(fp, size, type, readonly)
 		modtime = statb.st_mtime;
 	if (ferror(nf)) {
 		(void)Fclose(nf);
-		warn(tempname);
+		warn("%s", tempname);
 		(void)rm(tempname);
 		nf = NULL;
 		goto out;
 	}
 	if (Fclose(nf) < 0) {
-		warn(tempname);
+		warn("%s", tempname);
 		(void)rm(tempname);
 		nf = NULL;
 		goto out;
@@ -209,7 +209,7 @@ run_editor(fp, size, type, readonly)
 		goto out;
 	}
 	if (stat(tempname, &statb) < 0) {
-		warn(tempname);
+		warn("%s", tempname);
 		goto out;
 	}
 	if (modtime == statb.st_mtime) {
@@ -220,7 +220,7 @@ run_editor(fp, size, type, readonly)
 	 * Now switch to new file.
 	 */
 	if ((nf = Fopen(tempname, "a+")) == NULL) {
-		warn(tempname);
+		warn("%s", tempname);
 		(void)rm(tempname);
 		goto out;
 	}

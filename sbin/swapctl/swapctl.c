@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.2 2000/02/26 04:06:23 hugh Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.3 2000/06/30 16:00:09 millert Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -406,7 +406,7 @@ do_fstab()
 			 * Determine blk-ness.
 			 */
 			if (stat(spec, &st) < 0) {
-				warn(spec);
+				warn("%s", spec);
 				continue;
 			}
 			if (S_ISBLK(st.st_mode))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.12 2000/04/26 15:47:31 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.13 2000/06/30 16:00:18 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: quit.c,v 1.12 2000/04/26 15:47:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: quit.c,v 1.13 2000/06/30 16:00:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -221,13 +221,13 @@ quit()
 		    "%s/mail.RmXXXXXXXXXX", tmpdir);
 		if ((fd = mkstemp(tempname)) == -1 ||
 		    (obuf = Fdopen(fd, "w")) == NULL) {
-			warn(tempname);
+			warn("%s", tempname);
 			(void)Fclose(fbuf);
 			spool_unlock();
 			return;
 		}
 		if ((ibuf = Fopen(tempname, "r")) == NULL) {
-			warn(tempname);
+			warn("%s", tempname);
 			(void)rm(tempname);
 			(void)Fclose(obuf);
 			(void)Fclose(fbuf);
@@ -241,7 +241,7 @@ quit()
 			(void)Fclose(abuf);
 		}
 		if (ferror(obuf)) {
-			warn(tempname);
+			warn("%s", tempname);
 			(void)Fclose(ibuf);
 			(void)Fclose(obuf);
 			(void)Fclose(fbuf);
@@ -251,7 +251,7 @@ quit()
 		(void)Fclose(obuf);
 		(void)close(creat(mbox, 0600));
 		if ((obuf = Fopen(mbox, "r+")) == NULL) {
-			warn(mbox);
+			warn("%s", mbox);
 			(void)Fclose(ibuf);
 			(void)Fclose(fbuf);
 			spool_unlock();
@@ -260,7 +260,7 @@ quit()
 	}
 	else {
 		if ((obuf = Fopen(mbox, "a")) == NULL) {
-			warn(mbox);
+			warn("%s", mbox);
 			(void)Fclose(fbuf);
 			spool_unlock();
 			return;
@@ -270,7 +270,7 @@ quit()
 	for (mp = &message[0]; mp < &message[msgCount]; mp++)
 		if (mp->m_flag & MBOX)
 			if (sendmessage(mp, obuf, saveignore, NULL) < 0) {
-				warn(mbox);
+				warn("%s", mbox);
 				(void)Fclose(ibuf);
 				(void)Fclose(obuf);
 				(void)Fclose(fbuf);
@@ -298,7 +298,7 @@ quit()
 	}
 	trunc(obuf);
 	if (ferror(obuf)) {
-		warn(mbox);
+		warn("%s", mbox);
 		(void)Fclose(obuf);
 		(void)Fclose(fbuf);
 		spool_unlock();
@@ -371,7 +371,7 @@ writeback(res)
 
 	p = 0;
 	if ((obuf = Fopen(mailname, "r+")) == NULL) {
-		warn(mailname);
+		warn("%s", mailname);
 		return(-1);
 	}
 #ifndef APPEND
@@ -383,7 +383,7 @@ writeback(res)
 		if ((mp->m_flag&MPRESERVE)||(mp->m_flag&MTOUCH)==0) {
 			p++;
 			if (sendmessage(mp, obuf, NULL, NULL) < 0) {
-				warn(mailname);
+				warn("%s", mailname);
 				(void)Fclose(obuf);
 				return(-1);
 			}
@@ -396,7 +396,7 @@ writeback(res)
 	fflush(obuf);
 	trunc(obuf);
 	if (ferror(obuf)) {
-		warn(mailname);
+		warn("%s", mailname);
 		(void)Fclose(obuf);
 		return(-1);
 	}
@@ -457,12 +457,12 @@ edstop()
 		    tmpdir);
 		if ((fd = mkstemp(tempname)) == -1 ||
 		    (obuf = Fdopen(fd, "w")) == NULL) {
-			warn(tempname);
+			warn("%s", tempname);
 			relsesigs();
 			reset(0);
 		}
 		if ((ibuf = Fopen(mailname, "r")) == NULL) {
-			warn(mailname);
+			warn("%s", mailname);
 			(void)Fclose(obuf);
 			(void)rm(tempname);
 			relsesigs();
@@ -474,7 +474,7 @@ edstop()
 		(void)Fclose(ibuf);
 		(void)Fclose(obuf);
 		if ((ibuf = Fopen(tempname, "r")) == NULL) {
-			warn(tempname);
+			warn("%s", tempname);
 			(void)rm(tempname);
 			relsesigs();
 			reset(0);
@@ -484,7 +484,7 @@ edstop()
 	printf("\"%s\" ", mailname);
 	fflush(stdout);
 	if ((obuf = Fopen(mailname, "r+")) == NULL) {
-		warn(mailname);
+		warn("%s", mailname);
 		relsesigs();
 		reset(0);
 	}
@@ -495,7 +495,7 @@ edstop()
 			continue;
 		c++;
 		if (sendmessage(mp, obuf, NULL, NULL) < 0) {
-			warn(mailname);
+			warn("%s", mailname);
 			relsesigs();
 			reset(0);
 		}
@@ -508,7 +508,7 @@ edstop()
 	}
 	fflush(obuf);
 	if (ferror(obuf)) {
-		warn(mailname);
+		warn("%s", mailname);
 		relsesigs();
 		reset(0);
 	}

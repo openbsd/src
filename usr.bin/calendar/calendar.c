@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.12 1998/12/13 07:31:07 pjanzen Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.13 2000/06/30 16:00:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.12 1998/12/13 07:31:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.13 2000/06/30 16:00:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ main(argc, argv)
 		case '-':		/* backward contemptible */
 		case 'a':
 			if (getuid())
-				errx(1, strerror(EPERM));
+				errx(1, "%s", strerror(EPERM));
 			doall = 1;
 			break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.9 1999/12/06 00:32:28 deraadt Exp $	*/
+/*	$OpenBSD: apprentice.c,v 1.10 2000/06/30 16:00:13 millert Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -36,7 +36,7 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: apprentice.c,v 1.9 1999/12/06 00:32:28 deraadt Exp $";
+static char *moduleid = "$OpenBSD: apprentice.c,v 1.10 2000/06/30 16:00:13 millert Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -108,7 +108,7 @@ int check;			/* non-zero? checking-only run. */
 	f = fopen(fn, "r");
 	if (f==NULL) {
 		if (errno != ENOENT)
-			warn(fn);
+			warn("%s", fn);
 		return -1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.17 1999/06/17 20:53:28 millert Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.18 2000/06/30 16:00:08 millert Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -437,7 +437,7 @@ main(argc, argv)
 		if (errno == EOPNOTSUPP)
 			errx(1, "%s: Filesystem not supported by kernel", name);
 		else
-			err(1, name);
+			err(1, "%s", name);
 	}
 	if (nfsargsp->flags & (NFSMNT_NQNFS | NFSMNT_KERB)) {
 		if ((opflags & ISBGRND) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.10 2000/03/23 19:32:13 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.11 2000/06/30 16:00:16 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.10 2000/03/23 19:32:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.11 2000/06/30 16:00:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -260,14 +260,14 @@ outof(names, fo, hp)
 			    "%s/mail.ReXXXXXXXXXX", tmpdir);
 			if ((fd = mkstemp(tempname)) == -1 ||
 			    (fout = Fdopen(fd, "a")) == NULL) {
-				warn(tempname);
+				warn("%s", tempname);
 				senderr++;
 				goto cant;
 			}
 			image = open(tempname, O_RDWR);
 			(void)rm(tempname);
 			if (image < 0) {
-				warn(tempname);
+				warn("%s", tempname);
 				senderr++;
 				(void)Fclose(fout);
 				goto cant;
@@ -281,7 +281,7 @@ outof(names, fo, hp)
 			(void)putc('\n', fout);
 			(void)fflush(fout);
 			if (ferror(fout))
-				warn(tempname);
+				warn("%s", tempname);
 			(void)Fclose(fout);
 		}
 
@@ -319,7 +319,7 @@ outof(names, fo, hp)
 		} else {
 			int f;
 			if ((fout = Fopen(fname, "a")) == NULL) {
-				warn(fname);
+				warn("%s", fname);
 				senderr++;
 				goto cant;
 			}
@@ -339,7 +339,7 @@ outof(names, fo, hp)
 				(void)putc(c, fout);
 			if (ferror(fout)) {
 				senderr++;
-				warn(fname);
+				warn("%s", fname);
 			}
 			(void)Fclose(fout);
 			(void)Fclose(fin);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.12 1998/08/15 20:16:34 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.13 2000/06/30 16:00:07 millert Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -492,7 +492,7 @@ do_io(path, cmd, cciop)
 #define KVM_ABORT(kd, str) {						\
 	(void)kvm_close((kd));						\
 	warnx((str));							\
-	warnx(kvm_geterr((kd)));					\
+	warnx("%s", kvm_geterr((kd)));					\
 	return (1);							\
 }
 
@@ -629,7 +629,7 @@ print_ccd_info(cs, kd)
 	    readsize) != readsize) {
 		printf("\n");
 		warnx("can't read component info");
-		warnx(kvm_geterr(kd));
+		warnx("%s", kvm_geterr(kd));
 		goto done;
 	}
 
@@ -639,7 +639,7 @@ print_ccd_info(cs, kd)
 		    cip[i].ci_pathlen) != cip[i].ci_pathlen) {
 			printf("\n");
 			warnx("can't read component pathname");
-			warnx(kvm_geterr(kd));
+			warnx("%s", kvm_geterr(kd));
 			goto done;
 		}
 		printf((i + 1 < cs->sc_nccdisks) ? "%s " : "%s\n", path);

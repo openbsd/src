@@ -1,4 +1,4 @@
-/*	$OpenBSD: cards.c,v 1.3 1998/09/20 23:36:50 pjanzen Exp $	*/
+/*	$OpenBSD: cards.c,v 1.4 2000/06/30 16:00:04 millert Exp $	*/
 /*	$NetBSD: cards.c,v 1.3 1995/03/23 08:34:35 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cards.c,v 1.3 1998/09/20 23:36:50 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: cards.c,v 1.4 2000/06/30 16:00:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ init_decks()
 {
 	if ((deckf = fopen(cardfile, "r")) == NULL)
 file_err:
-		err(1, cardfile);
+		err(1, "%s", cardfile);
 	if (fread(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, deckf) != 1)
 		goto file_err;
 	if (fread(&deck[0].last_card, sizeof(deck[0].last_card), 1, deckf) != 1)
@@ -108,7 +108,7 @@ set_up(dp)
 		errx(1, "malloc");
 	for (i = 0 ; i < dp->num_cards ; i++) {
 		if (fread(&dp->offsets[i], sizeof(dp->offsets[i]), 1, deckf) != 1)
-			err(1, cardfile);
+			err(1, "%s", cardfile);
 		dp->offsets[i] = ntohl(dp->offsets[i]);
 	}
 	dp->last_card = 0;

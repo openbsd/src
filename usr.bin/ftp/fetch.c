@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.32 2000/05/25 16:09:26 itojun Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.33 2000/06/30 16:00:15 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.32 2000/05/25 16:09:26 itojun Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.33 2000/06/30 16:00:15 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -338,7 +338,7 @@ again:
 	}
 	freeaddrinfo(res0);
 	if (s < 0) {
-		warn(cause);
+		warn("%s", cause);
 		goto cleanup_url_get;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.12 2000/04/16 20:28:54 espie Exp $	*/
+/*	$OpenBSD: script.c,v 1.13 2000/06/30 16:00:20 millert Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.12 2000/04/16 20:28:54 espie Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.13 2000/06/30 16:00:20 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -115,7 +115,7 @@ main(argc, argv)
 		fname = "typescript";
 
 	if ((fscript = fopen(fname, aflg ? "a" : "w")) == NULL)
-		err(1, fname);
+		err(1, "%s", fname);
 
 	(void)tcgetattr(STDIN_FILENO, &tt);
 	(void)ioctl(STDIN_FILENO, TIOCGWINSZ, &win);

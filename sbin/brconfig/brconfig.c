@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.6 2000/02/04 06:32:04 deraadt Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.7 2000/06/30 16:00:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -545,7 +545,7 @@ bridge_list(s, brdg, delim)
 		if (inbuf == NULL)
 			err(1, "malloc");
 		if (ioctl(s, SIOCBRDGIFS, &bifc) < 0)
-			err(1, brdg);
+			err(1, "%s", brdg);
 		if (bifc.ifbic_len + sizeof(*reqp) < len)
 			break;
 		len *= 2;

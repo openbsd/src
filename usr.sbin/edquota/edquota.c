@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.23 1999/06/15 17:21:25 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.24 2000/06/30 16:00:24 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -117,7 +117,7 @@ main(argc, argv)
 	if (argc < 2)
 		usage();
 	if (getuid())
-		errx(1, strerror(EPERM));
+		errx(1, "%s", strerror(EPERM));
 	quotatype = USRQUOTA;
 	while ((ch = getopt(argc, argv, "ugtp:")) != -1) {
 		switch(ch) {
@@ -156,7 +156,7 @@ main(argc, argv)
 		exit(0);
 	}
 	if ((tmpfd = mkstemp(tmpfil)) == -1)
-		errx(1, tmpfil);
+		errx(1, "%s", tmpfil);
 	if (tflag) {
 		protoprivs = getprivs(0, quotatype);
 		if (writetimes(protoprivs, tmpfd, quotatype) == 0) {
@@ -344,7 +344,7 @@ putprivs(id, quotatype, quplist)
 			lseek(fd, (off_t)(id * sizeof (struct dqblk)), 0);
 			if (write(fd, &qup->dqblk, sizeof (struct dqblk)) !=
 			    sizeof (struct dqblk))
-				warn(qup->qfname);
+				warn("%s", qup->qfname);
 			close(fd);
 		}
 	}
@@ -424,7 +424,7 @@ writeprivs(quplist, outfd, name, quotatype)
 	ftruncate(outfd, 0);
 	lseek(outfd, 0, SEEK_SET);
 	if ((fd = fdopen(dup(outfd), "w")) == NULL)
-		err(1, tmpfil);
+		err(1, "%s", tmpfil);
 	(void)fprintf(fd, "Quotas for %s %s:\n", qfextension[quotatype], name);
 	for (qup = quplist; qup; qup = qup->next) {
 		(void)fprintf(fd, "%s: %s %d, limits (soft = %d, hard = %d)\n",
@@ -564,7 +564,7 @@ writetimes(quplist, outfd, quotatype)
 	ftruncate(outfd, 0);
 	lseek(outfd, 0, SEEK_SET);
 	if ((fd = fdopen(dup(outfd), "w")) == NULL)
-		err(1, tmpfil);
+		err(1, "%s", tmpfil);
 	(void)fprintf(fd,
 	    "Time units may be: days, hours, minutes, or seconds\n");
 	(void)fprintf(fd,

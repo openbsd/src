@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.23 1998/09/27 21:16:42 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.24 2000/06/30 16:00:18 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.23 1998/09/27 21:16:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.24 2000/06/30 16:00:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -263,7 +263,7 @@ start_command(cmd, nset, infd, outfd, a0, a1, a2)
 			argv[i] = NULL;
 		prepare_child(nset, infd, outfd);
 		execvp(argv[0], argv);
-		warn(argv[0]);
+		warn("%s", argv[0]);
 		_exit(1);
 	}
 	return(pid);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.20 1999/04/21 21:15:12 alex Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.21 2000/06/30 16:00:26 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.20 1999/04/21 21:15:12 alex Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.21 2000/06/30 16:00:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -357,7 +357,7 @@ error(name)
 	char *name;
 {
 
-	warn(name);
+	warn("%s", name);
 	cleanup();
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.18 1999/03/24 05:25:57 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.19 2000/06/30 16:00:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.18 1999/03/24 05:25:57 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.19 2000/06/30 16:00:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -393,7 +393,7 @@ __elf_knlist(fd, db)
 			if (feof(fp))
 				fmterr = "corrupted symbol table";
 			else
-				warn(kfile);
+				warn("%s", kfile);
 			return (-1);
 		}
 		if (!sbuf.st_name)

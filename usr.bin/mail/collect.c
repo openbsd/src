@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.18 2000/04/26 15:47:30 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.19 2000/06/30 16:00:17 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.18 2000/04/26 15:47:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.19 2000/06/30 16:00:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ collect(hp, printheaders)
 	    "%s/mail.RsXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
 	    (collf = Fdopen(fd, "w+")) == NULL) {
-		warn(tempname);
+		warn("%s", tempname);
 		goto err;
 	}
 	(void)rm(tempname);
@@ -305,7 +305,7 @@ cont:
 				break;
 			}
 			if ((fbuf = Fopen(cp, "r")) == NULL) {
-				warn(cp);
+				warn("%s", cp);
 				break;
 			}
 			printf("\"%s\" ", cp);
@@ -465,7 +465,7 @@ exwrite(name, fp, f)
 			lc++;
 		(void)putc(c, of);
 		if (ferror(of)) {
-			warn(name);
+			warn("%s", name);
 			(void)Fclose(of);
 			return(-1);
 		}
@@ -516,7 +516,7 @@ mespipe(fp, cmd)
 	    "%s/mail.ReXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
 	    (nf = Fdopen(fd, "w+")) == NULL) {
-		warn(tempname);
+		warn("%s", tempname);
 		goto out;
 	}
 	(void)rm(tempname);
@@ -590,7 +590,7 @@ forward(ms, fp, fn, f)
 		touch(mp);
 		printf(" %d", *msgvec);
 		if (sendmessage(mp, fp, ig, tabst) < 0) {
-			warn(fn);
+			warn("%s", fn);
 			return(-1);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.7 1999/05/23 17:19:22 aaron Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.8 2000/06/30 16:00:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.7 1999/05/23 17:19:22 aaron Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.8 2000/06/30 16:00:11 millert Exp $";
 #endif /* not lint */
 #endif
 
@@ -192,7 +192,7 @@ main(argc, argv)
 	lseek(to, 0, SEEK_END);
 
 	if (close(to) < 0)
-		err(1, to_file);
+		err(1, "%s", to_file);
 
 	return(0);
 }
@@ -209,7 +209,7 @@ putfile(from_file, to)
 	struct lif_load load;
 
 	if ((from = open(from_file, O_RDONLY)) < 0)
-		err(1, from_file);
+		err(1, "%s", from_file);
 
 	n = read(from, &ex, sizeof(ex));
 	if (n != sizeof(ex))
@@ -263,12 +263,12 @@ putfile(from_file, to)
 	for (lseek(from, 0, 0); ; n = sizeof(buf)) {
 		bzero(buf, sizeof(buf));
 		if ((n = read(from, buf, n)) < 0)
-			err(1, from_file);
+			err(1, "%s", from_file);
 		else if (n == 0)
 			break;
 
 		if (write(to, buf, n) != n)
-			err(1, to_file);
+			err(1, "%s", to_file);
 
 		total += n;
 		check_sum = cksum(check_sum, (int *)buf, n);
@@ -286,7 +286,7 @@ putfile(from_file, to)
 	/* insert the header */
 	lseek(to, -total, SEEK_CUR);
 	if (write(to, &load, sizeof(load)) != sizeof(load))
-		err(1, to_file);
+		err(1, "%s", to_file);
 	lseek(to, total - sizeof(load), SEEK_CUR);
 
 	bzero(buf, sizeof(buf));
@@ -294,7 +294,7 @@ putfile(from_file, to)
 	n = sizeof(int) - total % sizeof(int);
 	if (total % sizeof(int)) {
 		if (write(to, buf, n) != n)
-			err(1, to_file);
+			err(1, "%s", to_file);
 		else
 			total += n;
 	}
@@ -315,15 +315,15 @@ putfile(from_file, to)
 
 	check_sum = htobe32(-check_sum);
 	if (write(to, &check_sum, sizeof(int)) != sizeof(int))
-		err(1, to_file);
+		err(1, "%s", to_file);
 
 	n -= sizeof(int);
 
 	if (write(to, buf, n) != n)
-		err(1, to_file);
+		err(1, "%s", to_file);
 
 	if (close(from) < 0 )
-		err(1, from_file);
+		err(1, "%s", from_file);
 
 	return total;
 }

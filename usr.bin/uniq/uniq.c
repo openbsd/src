@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.5 1997/07/25 22:21:40 mickey Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.6 2000/06/30 16:00:22 millert Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.5 1997/07/25 22:21:40 mickey Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.6 2000/06/30 16:00:22 millert Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -210,7 +210,7 @@ file(name, mode)
 	FILE *fp;
 
 	if ((fp = fopen(name, mode)) == NULL)
-		err(1, name);
+		err(1, "%s", name);
 	return(fp);
 }
 

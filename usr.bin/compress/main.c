@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2000/03/10 06:53:51 d Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2000/06/30 16:00:12 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2000/03/10 06:53:51 d Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2000/06/30 16:00:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -267,7 +267,7 @@ main(argc, argv)
 		isreg = oreg = !exists || S_ISREG(sb.st_mode);
 
 		if (stat(infile, &sb) != 0 && verbose >= 0)
-			err(1, infile);
+			err(1, "%s", infile);
 
 		if (!S_ISREG(sb.st_mode))
 			isreg = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.10 2000/04/26 15:47:31 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.11 2000/06/30 16:00:18 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: send.c,v 1.10 2000/04/26 15:47:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.11 2000/06/30 16:00:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -385,7 +385,7 @@ mail1(hp, printheaders)
 		else
 			cp = _PATH_SENDMAIL;
 		execv(cp, namelist);
-		warn(cp);
+		warn("%s", cp);
 		_exit(1);
 	}
 	if (value("verbose") != NULL)
@@ -439,11 +439,11 @@ infix(hp, fi)
 	    "%s/mail.RsXXXXXXXXXX", tmpdir);
 	if ((fd = mkstemp(tempname)) == -1 ||
 	    (nfo = Fdopen(fd, "w")) == NULL) {
-		warn(tempname);
+		warn("%s", tempname);
 		return(fi);
 	}
 	if ((nfi = Fopen(tempname, "r")) == NULL) {
-		warn(tempname);
+		warn("%s", tempname);
 		(void)Fclose(nfo);
 		(void)rm(tempname);
 		return(fi);
@@ -462,7 +462,7 @@ infix(hp, fi)
 	}
 	(void)fflush(nfo);
 	if (ferror(nfo)) {
-		warn(tempname);
+		warn("%s", tempname);
 		(void)Fclose(nfo);
 		(void)Fclose(nfi);
 		rewind(fi);
@@ -550,7 +550,7 @@ savemail(name, fi)
 	time_t now;
 
 	if ((fo = Fopen(name, "a")) == NULL) {
-		warn(name);
+		warn("%s", name);
 		return(-1);
 	}
 	(void)time(&now);
@@ -560,7 +560,7 @@ savemail(name, fi)
 	(void)putc('\n', fo);
 	(void)fflush(fo);
 	if (ferror(fo))
-		warn(name);
+		warn("%s", name);
 	(void)Fclose(fo);
 	rewind(fi);
 	return(0);

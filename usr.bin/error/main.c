@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1998/07/10 14:09:55 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 2000/06/30 16:00:12 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/09/02 06:15:37 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.3 1998/07/10 14:09:55 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.4 2000/06/30 16:00:12 millert Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -164,7 +164,7 @@ main(argc, argv)
 		if (argc > 3)
 			errx(3, "Only takes 0 or 1 arguments\n");
 		if ( (errorfile = fopen(argv[1], "r")) == NULL)
-			err(4, argv[1]);
+			err(4, "%s", argv[1]);
 	}
 	if ( (queryfile = fopen(im_on, "r")) == NULL){
 		if (query){

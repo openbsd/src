@@ -1,4 +1,4 @@
-/*	$OpenBSD: initdeck.c,v 1.6 1998/09/20 23:36:51 pjanzen Exp $	*/
+/*	$OpenBSD: initdeck.c,v 1.7 2000/06/30 16:00:04 millert Exp $	*/
 /*	$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: initdeck.c,v 1.6 1998/09/20 23:36:51 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: initdeck.c,v 1.7 2000/06/30 16:00:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ main(ac, av)
 
 	getargs(ac, av);
 	if ((inf = fopen(infile, "r")) == NULL)
-		err(1, infile);
+		err(1, "%s", infile);
 	count();
 	/*
 	 * allocate space for pointers.
@@ -106,7 +106,7 @@ main(ac, av)
 		errx(1, "malloc");
 	fseek(inf, 0L, 0);
 	if ((outf = fopen(outfile, "w")) == NULL)
-		err(1, outfile);
+		err(1, "%s", outfile);
 
 	fwrite(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, outf);
 	fwrite(&deck[0].last_card, sizeof(deck[0].last_card), 1, outf);
