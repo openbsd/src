@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_main.c,v 1.5 1999/03/27 05:07:07 pjanzen Exp $	*/
+/*	$OpenBSD: pl_main.c,v 1.6 1999/06/13 16:43:12 pjanzen Exp $	*/
 /*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_main.c,v 1.5 1999/03/27 05:07:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pl_main.c,v 1.6 1999/06/13 16:43:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ reprint:
 		printf("\nScenario number? ");
 		(void) fflush(stdout);
 		(void) scanf("%d", &game);
-		while (getchar() != '\n')
+		while (getchar() != '\n' && !feof(stdin))
 			;
 	}
 	if (game < 0 || game >= NSCENE)
@@ -148,12 +148,16 @@ reprint:
 			(void) fflush(stdout);
 			if (scanf("%d", &player) != 1 || player < 0
 			    || player >= cc->vessels) {
-				while (getchar() != '\n')
+				while (getchar() != '\n' && !feof(stdin))
 					;
+				if (feof(stdin)) {
+					printf("\nExiting...\n");
+					leave(LEAVE_QUIT);
+				}
 				(void) puts("Say what?");
 				player = -1;
 			} else
-				while (getchar() != '\n')
+				while (getchar() != '\n' && !feof(stdin))
 					;
 		}
 		if (player < 0)
@@ -236,6 +240,8 @@ reprint:
 		}
 	}
 
+	printf("\n");
+	(void) fflush(stdout);
 	initscreen();
 	draw_board();
 	(void) snprintf(message, sizeof message, "Captain %s assuming command",
