@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.12 1996/06/22 17:38:14 tholo Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.13 1996/06/24 23:51:59 tholo Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -724,7 +724,9 @@ dointr()
 }
 #elif defined(i386)
 /* To get struct intrhand */
+#define _KERNEL
 #include <machine/psl.h>
+#undef _KERNEL
 void
 dointr()
 {

@@ -74,7 +74,6 @@
 
 #ifdef _KERNEL
 #include <machine/intr.h>
-#endif
 
 #ifndef _LOCORE
 
@@ -94,5 +93,6 @@ struct intrhand {
 };
 
 #endif /* _LOCORE */
+#endif /* _KERNEL */
  
 #endif /* !_I386_PSL_H_ */
