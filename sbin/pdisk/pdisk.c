@@ -1042,7 +1042,10 @@ do_display_block(partition_map_header *map, char *alt_name)
 		return;
 	    }
 	} else {
-	    name = strdup(alt_name);
+	    if ((name = strdup(alt_name)) == NULL) {
+		error(errno, "strdup failed");
+		return;
+	    }
 	}
 	m = open_pathname_as_media(name, O_RDONLY);
 	if (m == 0) {
