@@ -1,3 +1,4 @@
+#	$OpenBSD: GENERIC,v 1.19 2000/04/30 15:27:57 miod Exp $
 #	$NetBSD: GENERIC,v 1.27.4.1 1996/08/19 23:35:06 gwr Exp $
 
 #
@@ -10,18 +11,18 @@ include "arch/sun3/conf/std.sun3"
 # Machines to be supported by this kernel
 option	 	GENERIC
 option	 	FPU_EMULATE
-option	 	HAVECACHE		# Sun3/260 VAC
+option	 	HAVECACHE	# Sun3/260 VAC
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
 
 # Standard system options
-option	 	KTRACE				# system call tracing support
+option	 	KTRACE		# system call tracing support
 
 # Debugging options.  Uncomment either this:
 option	 	DDB
 # ... or these two: (for KGDB on another machine)
-#makeoptions DEBUG="-g"			# symbols for kgdb + nm
+#makeoptions DEBUG="-g"		# symbols for kgdb + nm
 #option 	KGDB
 
 # Filesystem options
@@ -99,9 +100,9 @@ le0 at obio0 addr   0x120000 level 3
 #
 # E.g. "flags 0x07" would enable DMA, interrupts, and reselect.
 # Note: these values are quite a bit paranoid...
-si0 at obio0 addr   0x140000 level 2
-si0 at vmes0 addr 0xff200000 level 2 vect 0x40
-si1 at vmes0 addr 0xff204000 level 2 vect 0x41
+si0 at obio0 addr   0x140000 level 2 flags 0x07
+si0 at vmes0 addr 0xff200000 level 2 vect 0x40 flags 0x07
+si1 at vmes0 addr 0xff204000 level 2 vect 0x41 flags 0x07
 
 # Xylogics 7053 controllers
 # xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
@@ -168,20 +169,17 @@ ch* at scsibus? target ? lun ?
 ss* at scsibus? target ? lun ?
 uk* at scsibus? target ? lun ?
 
-# RAM-disk drivers
-pseudo-device	rd	2
+pseudo-device	loop		1	# network loopback
+pseudo-device	bpfilter 	8	# packet filter
+pseudo-device	sl		2	# CSLIP
+pseudo-device	ppp		2	# PPP
+pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	enc		4	# encryption device
 
-# Misc.
-pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
-pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp	2		# PPP
-pseudo-device	tun	2		# network tunneling over tty
-
-pseudo-device	pty	64		# pseudo-terminals
-#pseudo-device	vnd	4		# paging to files
+pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	vnd		4	# paging to files
+pseudo-device	ksyms		1	# kernel symbols device
 
 # for IPv6
 pseudo-device	gif		4
 #pseudo-device	faith		1
-pseudo-device	ksyms	1		# kernel symbols device

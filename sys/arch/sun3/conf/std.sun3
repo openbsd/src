@@ -1,3 +1,4 @@
+#	$OpenBSD: std.sun3,v 1.7 2000/04/30 15:27:57 miod Exp $
 #	$NetBSD: std.sun3,v 1.19 1996/11/19 21:04:50 gwr Exp $
 
 # Standard information for sun3's.
