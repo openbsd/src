@@ -1,0 +1,85 @@
+The pmax-specific portion of the OpenBSD 2.1 release is found in the
+"pmax" subdirectory of the distribution.  That subdirectory is laid
+out as follows:
+
+.../2.1/pmax/
+		INSTALL.pmax	Installation notes; this file.
+
+		bins/		pmax binary distribution sets;
+				see below.
+
+		simpleroot/	pmax boot and installation
+				floppies; see below.
+
+There is a pmax simpleroot image to be found in the "pmax/simpleroot"
+subdirectory of the OpenBSD 2.1 distribution.  Also there is a
+simpleroot tar file there.
+
+The OpenBSD/pmax binary distribution sets contain the binaries which
+comprise the OpenBSD 2.1 release for the pmax.  There are seven binary
+distribution sets.  The binary distribution sets can be found in
+subdirectories of the "pmax/bins" subdirectory of the OpenBSD 2.1
+distribution tree, and are as follows:
+
+	base21	The OpenBSD/pmax 2.1 base binary distribution.  You
+		MUST install this distribution set.  It contains the
+		base OpenBSD utilities that are necessary for the
+		system to run and be minimally functional.  It
+		includes shared library support, and excludes
+		everything described below.
+		[ 15.0M gzipped, 50.8M uncompressed ]
+
+	comp21	The OpenBSD/pmax Compiler tools.  All of the tools
+		relating to C, C++, and FORTRAN (yes, there are two!).
+		This set includes the system include files
+		(/usr/include), the linker, the compiler tool chain,
+		and the various system libraries (except the shared
+		libraries, which are included as part of the base
+		set).  This set also includes the manual pages for all
+		of the utilities it contains, as well as the system
+		call and library manual pages.
+		[ 16.2M gzipped, 61.1M uncompressed ]
+
+	etc21	This distribution set contains the system
+		configuration files that reside in /etc and in several
+		other places.  This set MUST be installed if you are
+		installing the system from scratch, but should NOT be
+		used if you are upgrading.  (If you are upgrading,
+		it's recommended that you get a copy of this set and
+		CAREFULLY upgrade your configuration files by hand.)
+		[ 93K gzipped, 450K uncompressed ]
+
+	game21	This set includes the games and their manual pages.
+		[ 2.9M gzipped, 7.5M uncompressed ]
+
+	man21	This set includes all of the manual pages for the
+		binaries and other software contained in the base set.
+		Note that it does not include any of the manual pages
+		that are included in the other sets.
+		[ 2.5M gzipped, 9.4M uncompressed ]
+
+	misc21	This set includes the system dictionaries (which are
+		rather large), the typesettable document set, and
+		man pages for other architectures which happen to be
+		installed from the source tree by default.
+		[ 1.8M gzipped, 6.2M uncompressed ]
+
+	text21	This set includes OpenBSD's text processing tools,
+		including groff, all related programs, and their
+		manual pages.
+		[ 1.0M gzipped, 4.2M uncompressed ]
+
+The pmax binary distribution sets are distributed in the same form as
+the source distribution sets; catted together, the members of a set
+form a gzipped tar file.  Each pmax binary distribution set also has
+its own "CKSUMS" file, just as the source distribution sets do.
+
+The instructions given for extracting the source sets work equally
+well for the binary sets, but it is worth noting that if you use that
+method, the files are extracted "below" the current directory.  That
+is, if you want to extract the binaries "into" your system, i.e.
+replace the system binaries with them, you have to run the "tar xfp"
+from /.  Also note that if you upgrade or install this way, those
+programs that you are using at the time will NOT be replaced.  If you
+follow the normal installation or upgrade procedures, this will be
+taken care of for you.

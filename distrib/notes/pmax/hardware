@@ -1,0 +1,66 @@
+OpenBSD/pmax 2.1 runs on the following classes of machines:
+	- Decstation 2100 and 3100, also known as "pmin" and  "pmax" 
+	- Personal Decstations (5000/20, and /25)  also knonw as "MAXINE"
+	- Decstation 5000/120, /125, and /133, also knonw as "3MIN"
+	- Decstation 5000/200, also knonw as "3MAX"
+	- Decstation 5000/240, als knonw as "3MAXPLUS"
+
+OpenBSD/pmax 2.1 does *not* (yet) run on these machines:
+	- Decstation 5100 (an r2000-based cousin of the Decstation 3100)
+	- Decsystem 5400 and 5500 (Qbus-based systems, similar to 
+ 		a Vax 'Mayfair' and 'Mayfair II', but with an r2000a or r3000
+		cpu instead of a CVAX cpu.)
+	- Decsystem 5800 (xbi-based multiprocessor, a Vax 8800 with
+		 Vax CPU boards replaced with Mips cpu boards)
+
+The minimal configuration requires 8M of RAM and ~60M of disk space.
+To install the entire system requires much more disk space, and to run
+X or compile the system, more RAM is recommended.  (OpenBSD with 8M of
+RAM feels like Ultrix with 8M of RAM.) Note that until you have
+around 16M of RAM, getting more RAM is more important than getting a
+faster CPU.
+
+Supported devices include:
+	Decstation 2100 and 3100 baseboard video: 
+		pm one-bit mono or 8-bit pseudocolour fraem buffers.
+
+	Decstation 5000 series TurboChannel video:
+		PMAG-DV Personal Decstation baseboard 1024x768 frame buffer.
+		PMAG-BA	1024x768 8-bit colour frame buffer.
+		PMAGB-BA  1024x768 8-bit colour frame buffer.
+		PMAG-AA  1280x1024 four-bit greyscale frame buffer.
+
+		NOTE:  All supported DECstation vide produces sync-on-green.
+		Be sure to use either a DEC-compatible fixed-sync monitor
+		or a multisync monitor that supports sync-on-green.
+
+	serial ports: 
+		ttya and ttyb (can be used as console if needed)
+
+	ethernet: 
+		on-board AMD Lance ethernet ("le0"), 
+		TURBOchannel AMD Lance ethernet cards.
+
+	SCSI: 
+		on-board DEC "sii" SCSI controller (2100 and 3100)
+		on-board "asc" SCSI controller (5000 series machines)
+		TurboChannel "asc" SCSI controller, 
+	DEC (LK-201 or compatible) keyboard 
+	DEC ("hockey puck" or compatible) mouse.
+
+
+Hardware the we do NOT currently support, but get questions
+about from time to time:
+	Q-bus Decsystem machines
+	Decstation 5100 machines
+	PrestoServe NVRAM on Decstation 5100 machines 
+	audio drivers for  Personal Decstation machines
+	floppy driver for Personal Decstation machines
+	TurboChannel audio hardware (LoFi)
+	PMAG-C 2-D accelerated framebuffers with onboard i860 processors
+
+	NOTE: the primary obstacle to support  of all but the very
+	last item is non-availability of sample hardware for development.
+
+	The primary obstacle for the i860-based framebuffers is that there
+	is no documentation on the accelerator board.
