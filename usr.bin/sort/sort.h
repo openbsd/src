@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.h,v 1.2 1997/06/24 02:37:17 dgregor Exp $	*/
+/*	$OpenBSD: sort.h,v 1.3 1997/06/30 05:36:18 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -84,7 +84,7 @@
 /* length of record is currently limited to 2^16 - 1 */
 typedef u_short length_t;
 
-#define SALIGN(n) ((n+1) & ~1)
+#define SALIGN(n) ((n+(sizeof(length_t)-1)) & ~(sizeof(length_t)-1))
 
 /* a record is a key/line pair starting at rec.data. It has a total length
  * and an offset to the start of the line half of the pair.

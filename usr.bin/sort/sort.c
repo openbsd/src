@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.5 1997/06/16 02:39:15 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.6 1997/06/30 05:36:18 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.5 1997/06/16 02:39:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.6 1997/06/30 05:36:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ main(argc, argv)
 {
 	int (*get)();
 	int ch, i, stdinflag = 0, tmp = 0;
-	char cflag = 0, mflag = 0, nflag = 0;
+	char cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;
 	struct field fldtab[ND+2], *ftpos;
 	union f_handle filelist;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.4 1997/06/16 02:21:55 millert Exp $	*/
+/*	$OpenBSD: files.c,v 1.5 1997/06/30 05:36:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)files.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: files.c,v 1.4 1997/06/16 02:21:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: files.c,v 1.5 1997/06/30 05:36:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,13 +58,13 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 	int binno;
 	union f_handle infl0;
 	int nfiles;
-	register struct recheader *pos;
+	register RECHEADER *pos;
 	register u_char *end;
 	struct field *dummy;
 {
 	register int i;
 	register u_char *hp;
-	static long nleft = 0;
+	static int nleft = 0;
 	static int cnt = 0, flag = -1;
 	static u_char maxb = 0;
 	static FILE *fp;
@@ -133,7 +133,7 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 	int flno;
 	union f_handle filelist;
 	int nfiles;
-	struct recheader *buffer;
+	RECHEADER *buffer;
 	u_char *bufend;
 	struct field *dummy2;
 {
@@ -199,7 +199,7 @@ int
 makekey(flno, filelist, nfiles, buffer, bufend, ftbl)
 	int flno, nfiles;
 	union f_handle filelist;
-	struct recheader *buffer;
+	RECHEADER *buffer;
 	u_char *bufend;
 	struct field *ftbl;
 {
@@ -301,7 +301,7 @@ seq(fp, line, key)
  */
 void
 putrec(rec, fp)
-	register struct recheader *rec;
+	register RECHEADER *rec;
 	register FILE *fp;
 {
 	EWRITE(rec, 1, rec->length + sizeof(TRECHEADER), fp);
@@ -312,7 +312,7 @@ putrec(rec, fp)
  */
 void
 putline(rec, fp)
-	register struct recheader *rec;
+	register RECHEADER *rec;
 	register FILE *fp;
 {
 	EWRITE(rec->data+rec->offset, 1, rec->length - rec->offset, fp);
@@ -325,7 +325,7 @@ int
 geteasy(flno, filelist, nfiles, rec, end, dummy2)
 	int flno, nfiles;
 	union f_handle filelist;
-	register struct recheader *rec;
+	register RECHEADER *rec;
 	register u_char *end;
 	struct field *dummy2;
 {

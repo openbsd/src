@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.2 1997/06/16 02:21:54 millert Exp $	*/
+/*	$OpenBSD: fields.c,v 1.3 1997/06/30 05:36:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.2 1997/06/16 02:21:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.3 1997/06/30 05:36:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ u_char fnum[NBINS], rnum[NBINS];
  */
 length_t
 enterkey(keybuf, line, size, fieldtable)
-	struct recheader *keybuf;	/* pointer to start of key */
+	RECHEADER *keybuf;	/* pointer to start of key */
 	DBT *line;
 	int size;
 	struct field fieldtable[];

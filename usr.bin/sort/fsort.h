@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.h,v 1.1 1997/01/20 19:39:51 millert Exp $	*/
+/*	$OpenBSD: fsort.h,v 1.2 1997/06/30 05:36:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -57,6 +57,6 @@ struct tempfile {
 	FILE *fp;
 	u_char maxb;
 	u_char lastb;
-	long max_o;
+	int max_o;
 };
 extern struct tempfile fstack[MAXFCT];

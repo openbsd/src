@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.4 1997/06/16 02:21:55 millert Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.5 1997/06/30 05:36:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.4 1997/06/16 02:21:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.5 1997/06/30 05:36:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,20 +65,21 @@ int PANIC = FSORTMAX;
 
 void
 fsort(binno, depth, infiles, nfiles, outfp, ftbl)
-	register int binno, depth, nfiles;
+	register int binno, depth;
 	register union f_handle infiles;
+	register int nfiles;
 	FILE *outfp;
 	register struct field *ftbl;
 {
 	register u_char *bufend, **keypos, *tmpbuf;
 	u_char *weights;
 	int ntfiles, mfct = 0, total, i, maxb, lastb, panic = 0;
-	register int c, nelem;
-	long sizes [NBINS+1];
+	int c, nelem;
+	int sizes [NBINS+1];
 	union f_handle tfiles, mstart = {MAXFCT-16};
 	register int (*get)(int, union f_handle, int, RECHEADER *,
 		u_char *, struct field *);
-	register struct recheader *crec;
+	register RECHEADER *crec;
 	struct field tfield[2];
 	FILE *prevfp, *tailfp[FSORTMAX+1];
 
@@ -246,11 +247,12 @@ void
 onepass(a, depth, n, sizes, tr, fp)
 	u_char **a;
 	int depth;
-	long n, sizes[];
+	int n;
+	int sizes[];
 	u_char *tr;
 	FILE *fp;
 {
-	long tsizes[NBINS+1];
+	int tsizes[NBINS+1];
 	u_char **bin[257], **top[256], ***bp, ***bpmax, ***tp;
 	static histo[256];
 	int *hp;
@@ -284,7 +286,7 @@ onepass(a, depth, n, sizes, tr, fp)
 		n = an - ak;
 		tsizes[c] += n * sizeof(TRECHEADER);
 		/* tell getnext how many elements in this bin, this segment. */
-		EWRITE(tsizes+c, sizeof(long), 1, fp);
+		EWRITE(tsizes+c, sizeof(int), 1, fp);
 		sizes[c] += tsizes[c];
 		for (; ak < an; ++ak)
 			putrec((RECHEADER *) *ak, fp);

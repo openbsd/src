@@ -1,4 +1,4 @@
-/*	$OpenBSD: append.c,v 1.2 1997/06/16 02:21:53 millert Exp $	*/
+/*	$OpenBSD: append.c,v 1.3 1997/06/30 05:36:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)append.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: append.c,v 1.2 1997/06/16 02:21:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: append.c,v 1.3 1997/06/30 05:36:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ append(keylist, nelem, depth, fp, put, ftbl)
 	register n, odepth;
 	register u_char **cpos, **ppos, **lastkey;
 	register u_char *cend, *pend, *start;
-	register struct recheader *crec, *prec;
+	register RECHEADER *crec, *prec;
 
 	if (*keylist == '\0' && UNIQUE)
 		return;
@@ -168,7 +168,7 @@ rd_append(binno, infl0, nfiles, outfp, buffer, bufend)
 	union f_handle infl0;
 	FILE *outfp;
 {
-	struct recheader *rec;
+	RECHEADER *rec;
 
 	rec = (RECHEADER *) buffer;
 	if (!getnext(binno, infl0, nfiles, (RECHEADER *) buffer, bufend, 0)) {
