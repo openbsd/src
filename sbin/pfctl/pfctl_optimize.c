@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.4 2004/12/14 20:16:37 frantzen Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.5 2005/01/03 15:18:10 frantzen Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -464,6 +464,7 @@ combine_rules(struct pfctl *pf, struct superblock *block)
 
 			if (src_eq && !dst_eq && p1->por_src_tbl == NULL &&
 			    p2->por_dst_tbl == NULL &&
+			    p2->por_src_tbl == NULL &&
 			    rules_combineable(&p1->por_rule, &p2->por_rule) &&
 			    addrs_combineable(&p1->por_rule.dst,
 			    &p2->por_rule.dst)) {
@@ -485,6 +486,7 @@ combine_rules(struct pfctl *pf, struct superblock *block)
 				}
 			} else if (!src_eq && dst_eq && p1->por_dst_tbl == NULL
 			    && p2->por_src_tbl == NULL &&
+			    p2->por_dst_tbl == NULL &&
 			    rules_combineable(&p1->por_rule, &p2->por_rule) &&
 			    addrs_combineable(&p1->por_rule.src,
 			    &p2->por_rule.src)) {
