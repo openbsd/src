@@ -55,9 +55,13 @@ extern int fdmatch PARAMS ((int fd1, int fd2));
 
 extern long get_run_time PARAMS ((void));
 
-/* Choose a temporary directory to use for scratch files.  */
+/* Choose a temporary directory to use for scratch files, DEPRECATED */
 
 extern char *choose_temp_base PARAMS ((void));
+
+/* Create a temporary file with a given suffix (optional) */
+
+extern char *make_temp_file PARAMS ((char *));
 
 /* Allocate memory filled with spaces.  Allocates using malloc.  */
 
