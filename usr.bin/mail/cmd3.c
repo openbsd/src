@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.14 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.15 2001/01/19 04:11:28 millert Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.14 2001/01/16 05:36:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.15 2001/01/19 04:11:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ shell(v)
 	if (bangexp(cmd, sizeof(cmd)) < 0)
 		return(1);
 	shell = value("SHELL");
-	(void)run_command(shell, 0, -1, -1, "-c", cmd, NULL);
+	(void)run_command(shell, 0, 0, -1, "-c", cmd, NULL);
 	(void)signal(SIGINT, sigint);
 	puts("!");
 	return(0);
@@ -88,7 +88,7 @@ dosh(v)
 	char *shell;
 
 	shell = value("SHELL");
-	(void)run_command(shell, 0, -1, -1, NULL, NULL, NULL);
+	(void)run_command(shell, 0, 0, -1, NULL, NULL, NULL);
 	(void)signal(SIGINT, sigint);
 	putchar('\n');
 	return(0);

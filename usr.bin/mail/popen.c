@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.25 2001/01/16 05:36:08 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.26 2001/01/19 04:11:29 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.25 2001/01/16 05:36:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.26 2001/01/19 04:11:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -224,7 +224,8 @@ file_pid(fp)
 
 /*
  * Run a command without a shell, with optional arguments and splicing
- * of stdin and stdout.  The command name can be a sequence of words.
+ * of stdin (-1 means none) and stdout.  The command name can be a sequence
+ * of words.
  * Signals must be handled by the caller.
  * "nset" contains the signals to ignore in the new process.
  * SIGINT is enabled unless it's in "nset".
@@ -321,14 +322,14 @@ prepare_child(nset, infd, outfd)
 	 * All file descriptors other than 0, 1, and 2 are supposed to be
 	 * close-on-exec.
 	 */
-	if (infd >= 0) {
+	if (infd > 0) {
 		dup2(infd, 0);
-	} else {
+	} else if (infd != 0) {
 		/* we don't want the child stealing my stdin input */
 		close(0);
 		open(_PATH_DEVNULL, O_RDONLY, 0);
 	}
-	if (outfd >= 0)
+	if (outfd >= 0 && outfd != 1)
 		dup2(outfd, 1);
 	if (nset == NULL)
 		return;
