@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.12 1999/06/05 01:21:42 aaron Exp $
+.\"	$OpenBSD: systat.1,v 1.13 1999/06/26 13:19:17 aaron Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -48,13 +48,13 @@
 .Op Ar display
 .Op Ar refresh-interval
 .Sh DESCRIPTION
-.Nm systat
+.Nm
 displays various system statistics in a screen oriented fashion
 using the curses screen display library,
 .Xr curses 3 .
 .Pp
 While
-.Nm systat
+.Nm
 is running the screen is usually divided into two windows (an exception
 is the vmstat display which uses the entire screen).  The
 upper window depicts the current system load average.  The
@@ -63,19 +63,23 @@ user commands.  The last line on the screen is reserved for user
 input and error messages.
 .Pp
 By default
-.Nm systat
+.Nm
 displays the processes getting the largest percentage of the processor
 in the lower window.  Other displays show swap space usage, disk
 .Tn I/O
 statistics (a la
-.Xr iostat  8  ) ,
+.Xr iostat 8 ) ,
 virtual memory statistics (a la
-.Xr vmstat  8  ) ,
-network ``mbuf'' utilization, and network connections (a la
-.Xr netstat  1  ) .
+.Xr vmstat 8 ) ,
+network
+.Dq mbuf
+utilization, and network connections (a la
+.Xr netstat 1 ) .
 .Pp
 Input is interpreted at two different levels.
-A ``global'' command interpreter processes all keyboard input.
+A
+.Dq global
+command interpreter processes all keyboard input.
 If this command interpreter fails to recognize a command, the
 input line is passed to a per-display command interpreter.  This
 allows each display to have certain display-specific commands.
@@ -117,17 +121,19 @@ flag.
 .El
 .Pp
 Certain characters cause immediate action by
-.Nm systat  .
+.Nm systat .
 These are
 .Bl -tag -width Fl
 .It Ic \&^L
 Refresh the screen.
 .It Ic \&^G
-Print the name of the current ``display'' being shown in
+Print the name of the current
+.Dq display
+being shown in
 the lower window and the refresh interval.
 .It Ic \&^Z
 Stop
-.Nm systat  .
+.Nm systat .
 .It Ic \&:
 Move the cursor to the command line and interpret the input
 line typed as a command.  While entering a command the
@@ -135,7 +141,8 @@ current character erase, word erase, and line kill characters
 may be used.
 .El
 .Pp
-The following commands are interpreted by the ``global''
+The following commands are interpreted by the
+.Dq global
 command interpreter.
 .Bl -tag -width Fl
 .It Ic help
@@ -156,9 +163,9 @@ Supplying only a number will set the refresh interval to this
 value.
 .It Ic quit
 Exit
-.Nm systat  .
+.Nm systat .
 (This may be abbreviated to
-.Ic q  . )
+.Ic q . )
 .El
 .Pp
 The available displays are:
@@ -169,7 +176,9 @@ memory and getting the
 largest portion of the processor (the default display).
 When less than 100% of the
 processor is scheduled to user processes, the remaining time
-is accounted to the ``idle'' process.
+is accounted to the
+.Dq idle
+process.
 .It Ic iostat
 Display, in the lower window, statistics about processor use
 and disk throughput.  Statistics on processor use appear as
@@ -241,9 +250,16 @@ Finally, the last column shows the number of physical pages
 on the free list.
 .Pp
 Below the memory display is a list of the average number of processes
-(over the last refresh interval) that are runnable (`r'), in page wait (`p'),
-in disk wait other than paging (`d'),
-sleeping (`s'), and swapped out but desiring to run (`w').
+(over the last refresh interval) that are runnable
+.Pq Sq r ,
+in page wait
+.Pq Sq p ,
+in disk wait other than paging
+.Pq Sq d ,
+sleeping
+.Pq Sq s ,
+and swapped out but desiring to run
+.Pq Sq w .
 Below the queue length listing is a numerical listing and
 a bar graph showing the amount of
 system (shown as `='), user (shown as `>'),
@@ -327,7 +343,9 @@ revolutions of the hand in page out daemon
 intransit blocking page faults
 .El
 .Pp
-The `%zfod' value is more interesting when observed over a long
+The
+.Ql %zfod
+value is more interesting when observed over a long
 period, such as from boot time (see the
 .Cm boot
 option below).
@@ -361,14 +379,17 @@ Toggle the displaying of server processes awaiting requests (this
 is the equivalent of the
 .Fl a
 flag to
-.Ar netstat  1  ) .
+.Xr netstat 1 ) .
 .It Cm numbers
 Display network addresses numerically.
 .It Cm names
 Display network addresses symbolically.
 .It Ar protocol
 Display only network connections using the indicated protocol
-(currently either ``tcp'' or ``udp'').
+(currently either
+.Dq tcp
+or
+.Dq udp ) .
 .It Cm ignore Op Ar items
 Do not display information about connections associated with
 the specified hosts or ports.  Hosts and ports may be specified
@@ -379,7 +400,7 @@ spaces.
 .It Cm display Op Ar items
 Display information about the connections associated with the
 specified hosts or ports.  As for
-.Ar ignore  ,
+.Ar ignore ,
 .Ar items
 may be names or numbers.
 .It Cm show Op Ar ports\&|hosts
@@ -390,7 +411,7 @@ are prefixed with a `!'.  If
 or
 .Ar hosts
 is supplied as an argument to
-.Cm show  ,
+.Cm show ,
 then only the requested information will be displayed.
 .It Cm reset
 Reset the port, host, and protocol matching mechanisms to the default
@@ -431,15 +452,15 @@ for information in main memory
 .It Pa /dev/drum
 for information about swapped out processes
 .It Pa /etc/hosts
-or host names
+for host names
 .It Pa /etc/networks
 for network names
 .It Pa /etc/services
-or port names
+for port names
 .El
 .Sh HISTORY
 The
-.Nm systat
+.Nm
 program appeared in
 .Bx 4.3 .
 .Sh BUGS
