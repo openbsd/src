@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.502 2002/04/22 21:29:52 matthieu Exp 
+ *		OpenBSD: pcidevs,v 1.503 2002/04/26 04:14:48 nate Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1085,7 +1085,6 @@
 #define	PCI_PRODUCT_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3SI_2	0x0004		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3DI_2	0x0008		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3DI_2_SUB	0x00cf		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3SI_2_SUB	0x00d0		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3DI_SUB2	0x00d1		/* PERC 3/Di */
