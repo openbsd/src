@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.8 1997/02/06 14:26:08 mickey Exp $	*/
+/*	$OpenBSD: printf.c,v 1.9 1997/02/06 15:51:13 mickey Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -206,6 +206,8 @@ reswitch:	switch (ch = *fmt++) {
 			kprintn(put, ul, 10);
 			break;
 		case 'p':
+			putchar('0');
+			putchar('x');
 			lflag += sizeof(void *)==sizeof(u_long)? 1 : 0;
 		case 'x':
 			ul = lflag ?
