@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.5 1996/07/11 00:53:35 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.6 1996/08/25 09:53:45 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -459,8 +459,10 @@ sys_execve(p, v, retval)
 		if (attr.va_mode & VSGID)
 			p->p_ucred->cr_gid = attr.va_gid;
 		p->p_flag |= P_SUGID;
+		p->p_flag |= P_SUGIDEXEC;
 	} else {
 		p->p_flag &= ~P_SUGID;
+		p->p_flag &= ~P_SUGIDEXEC;
 	}
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
 	p->p_cred->p_svgid = p->p_ucred->cr_gid;
