@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_mtd_pci.c,v 1.2 2003/08/19 04:45:04 mickey Exp $	*/
+
 /*
  * Copyright (c) 2003 Oleg Safiullin
  * All rights reserved.
@@ -30,17 +32,23 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
+
 #include <net/if.h>
 #include <net/if_media.h>
+
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
+
 #include <machine/bus.h>
+
 #include <dev/mii/miivar.h>
+
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
 #include <dev/ic/mtd803reg.h>
 #include <dev/ic/mtd803var.h>
 
@@ -69,43 +77,23 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_addr_t iobase;
 	bus_size_t iosize;
 	u_int32_t command;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
 #ifdef MTD_USE_MEMIO
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		return;
-	}
-	if (pci_mem_find(pa->pa_pc, pa->pa_tag, MTD_PCI_LOMEM, &iobase,
-	    &iosize, NULL)) {
-		printf(": can't find mem space\n");
-		return;
-	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->bus_handle)) {
+	if (pci_mapreg_map(pa, MTD_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->bus_tag, &sc->bus_handle, NULL, &iosize, 0)) {
 		printf(": can't map mem space\n");
 		return;
 	}
-	sc->bus_tag = pa->pa_memt;
 #else	/* !MTD_USE_MEMIO */
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable i/o ports\n");
+	if (pci_mapreg_map(pa, MTD_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->bus_tag, &sc->bus_handle, NULL, &iosize, 0)) {
+		printf(": can't map io space\n");
 		return;
 	}
-
-	if (pci_io_find(pa->pa_pc, pa->pa_tag, MTD_PCI_LOIO, &iobase,
-	    &iosize)) {
-		printf(": can't find i/o space\n");
-		return;
-	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->bus_handle)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-	sc->bus_tag = pa->pa_iot;
 #endif	/* MTD_USE_MEMIO */
 
 	/*
@@ -113,6 +101,7 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->bus_tag, sc->bus_handle, iosize);
 		return;
 	}
 
@@ -123,6 +112,7 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->bus_tag, sc->bus_handle, iosize);
 		return;
 	}
 	printf(": %s", intrstr);
