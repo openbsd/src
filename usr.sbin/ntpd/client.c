@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.22 2004/07/10 19:09:13 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.23 2004/07/10 19:16:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -237,10 +237,11 @@ client_update(struct ntp_peer *p)
 		    p->reply[i].rcvd + REPLY_MAXAGE < time(NULL))
 			p->reply[i].good = 0;
 
-		if (p->reply[i].good)
+		if (p->reply[i].good) {
 			good++;
 			if (p->reply[i].delay < p->reply[best].delay)
 				best = i;
+		}
 	}
 
 	if (good < 8)
