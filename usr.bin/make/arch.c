@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.40 2000/11/27 18:58:10 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.41 2000/11/27 20:35:27 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.40 2000/11/27 18:58:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.41 2000/11/27 20:35:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,7 @@ static struct hash_info arch_info = {
 
 static struct arch_member *new_arch_member __P((struct ar_hdr *, const char *));
 static TIMESTAMP mtime_of_member __P((struct arch_member *));
+static long field2long __P((const char *, size_t));
 static Arch *read_archive __P((const char *, const char *));
 
 #ifdef CLEANUP
@@ -507,24 +508,34 @@ Arch_ParseArchive(linePtr, nodeLst, ctxt)
     return (SUCCESS);
 }
 
+/* Helper function: ar fields are not null terminated.  */
+static long
+field2long(field, len)
+    const char *field;
+    size_t len;
+{
+    static char enough[32];
+
+    assert(len < sizeof(enough));
+    memcpy(enough, field, len);
+    enough[len] = '\0';
+    return strtol(enough, NULL, 10);
+}
+
 static Arch *
 read_archive(archive, end)
     const char *archive;
     const char *end;
 {
-    FILE 		*arch;	/* Stream to archive */
-    char		magic[SARMAG];
-    Arch		*ar;
-    struct ar_hdr 	arh;	/* archive-member header for reading archive */
-    char		*cp;
+    FILE 	*arch;	/* Stream to archive */
+    char	magic[SARMAG];
+    Arch	*ar;
 
 #ifdef SVR4ARCHIVES
     struct SVR4namelist list;
 
     list.fnametab = NULL;
 #endif
-
-#define AR_MAX_NAME_LEN	    (sizeof(arh.ar_name)-1)
 
     /* When we encounter an archive for the first time, we read its
      * whole contents, to place it in the cache.  */
@@ -534,7 +545,7 @@ read_archive(archive, end)
 
     /* Make sure this is an archive we can handle.  */
     if ((fread(magic, SARMAG, 1, arch) != 1) ||
-    	(strncmp(magic, ARMAG, SARMAG) != 0)) {
+	(strncmp(magic, ARMAG, SARMAG) != 0)) {
 	    fclose(arch);
 	    return NULL;
     }
@@ -542,39 +553,47 @@ read_archive(archive, end)
     ar = hash_create_entry(&arch_info, archive, &end);
     hash_init(&ar->members, 8, &members_info);
 
-
-    while (fread((char *)&arh, sizeof (struct ar_hdr), 1, arch) == 1) {
-	int		size;	/* Size of archive member */
+    for (;;) {
+    	size_t 		n;
+	struct ar_hdr 	arh;  	/* Archive-member header for reading archive */
+	off_t		size;	/* Size of archive member */
 	char		buffer[MAXPATHLEN+1];
 	char 		*memName;
 				/* Current member name while hashing. */
+	char	  	*cp;	/* Useful character pointer */
+
 	memName = buffer;
-	memName[AR_MAX_NAME_LEN] = '\0';
+    	n = fread(&arh, 1, sizeof(struct ar_hdr), arch);
 
-	if (strncmp( arh.ar_fmag, ARFMAG, sizeof (arh.ar_fmag)) != 0) {
-	    /*
-	     * The header is bogus, so the archive is bad
-	     * and there's no way we can recover...
-	     */
-	    goto badarch;
+	/*  Whole archive read ok.  */
+	if (n == 0 && feof(arch)) {
+#ifdef SVR4ARCHIVES
+	    efree(list.fnametab);
+#endif
+	    fclose(arch);
+	    return ar;
+	}
+	if (n < sizeof(struct ar_hdr))
+	    break;
+
+	if (memcmp(arh.ar_fmag, ARFMAG, sizeof(arh.ar_fmag)) != 0) {
+	    /* The header is bogus.  */
+	    break;
 	} else {
-	    /*
-	     * We need to advance the stream's pointer to the start of the
-	     * next header. Files are padded with newlines to an even-byte
-	     * boundary, so we need to extract the size of the file from the
-	     * 'size' field of the header and round it up during the seek.
-	     */
-	    arh.ar_size[sizeof(arh.ar_size)-1] = '\0';
-	    size = (int) strtol(arh.ar_size, NULL, 10);
+	    /* We need to advance the stream's pointer to the start of the
+	     * next header.  Records are padded with newlines to an even-byte
+	     * boundary, so we need to extract the size of the record and 
+	     * round it up during the seek.  */
+	    size = (off_t) field2long(arh.ar_size, sizeof(arh.ar_size));
 
-	    (void) strncpy(memName, arh.ar_name, sizeof(arh.ar_name));
-	    for (cp = &memName[AR_MAX_NAME_LEN]; *cp == ' '; cp--) {
-		continue;
-	    }
+	    (void)memcpy(memName, arh.ar_name, AR_NAME_SIZE);
+	    /* Find real end of name (strip extranous ' ')  */
+	    for (cp = memName + AR_NAME_SIZE - 1; *cp == ' ';) 
+		cp--;
 	    cp[1] = '\0';
 
 #ifdef SVR4ARCHIVES
-	    /* SVR4 names are slash terminated. Also svr4 extended AR format.
+	    /* SVR4 names are slash terminated.  Also svr4 extended AR format.
 	     */
 	    if (memName[0] == '/') {
 		/* SVR4 magic mode.  */
@@ -594,24 +613,23 @@ read_archive(archive, end)
 #endif
 
 #ifdef AR_EFMT1
-	    /*
-	     * BSD 4.4 extended AR format: #1/<namelen>, with name as the
-	     * first <namelen> bytes of the file
-	     */
-	    if (strncmp(memName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
+	    /* BSD 4.4 extended AR format: #1/<namelen>, with name as the
+	     * first <namelen> bytes of the file.  */
+	    if (memcmp(memName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
 		isdigit(memName[sizeof(AR_EFMT1) - 1])) {
 
-		unsigned int elen = atoi(&memName[sizeof(AR_EFMT1)-1]);
-
-		if (elen > MAXPATHLEN)
-			goto badarch;
-		if (fread (memName, elen, 1, arch) != 1)
-			goto badarch;
+		int elen = atoi(memName + sizeof(AR_EFMT1)-1);
+ 
+		if (elen <= 0 || elen > MAXPATHLEN)
+			break;
+		memName = buffer;
+		if (fread(memName, elen, 1, arch) != 1)
+			break;
 		memName[elen] = '\0';
-		fseek(arch, -elen, SEEK_CUR);
-		if (DEBUG(ARCH) || DEBUG(MAKE)) {
+		if (fseek(arch, -elen, SEEK_CUR) != 0)
+			break;
+		if (DEBUG(ARCH) || DEBUG(MAKE))
 		    printf("ArchStat: Extended format entry for %s\n", memName);
-		}
 	    }
 #endif
 
@@ -619,14 +637,10 @@ read_archive(archive, end)
 		hash_qlookup(&ar->members, memName),
 		    new_arch_member(&arh, memName));
 	}
-	fseek(arch, (size + 1) & ~1, SEEK_CUR);
+	if (fseek(arch, (size + 1) & ~1, SEEK_CUR) != 0)
+	    break;
     }
 
-    fclose(arch);
-
-    return ar;
-
-badarch:
     fclose(arch);
     hash_delete(&ar->members);
 #ifdef SVR4ARCHIVES
