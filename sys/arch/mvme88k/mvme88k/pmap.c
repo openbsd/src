@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.115 2004/05/23 21:09:50 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.116 2004/06/22 05:04:59 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -201,7 +201,7 @@ vaddr_t kmapva = 0;
 /*
  * Internal routines
  */
-void flush_atc_entry(long, vaddr_t, boolean_t);
+static void flush_atc_entry(long, vaddr_t, boolean_t);
 pt_entry_t *pmap_expand_kmap(vaddr_t, vm_prot_t);
 void pmap_remove_pte(pmap_t, vaddr_t, pt_entry_t *);
 void pmap_remove_range(pmap_t, vaddr_t, vaddr_t);
@@ -223,35 +223,7 @@ boolean_t pmap_testbit(struct vm_page *, int);
 #define	pmap_pte_w_chg(pte, nw)		((nw) ^ pmap_pte_w(pte))
 #define	pmap_pte_prot_chg(pte, np)	((np) ^ pmap_pte_prot(pte))
 
-/*
- * Convert machine-independent protection code to M88K protection bits.
- */
-static __inline u_int32_t
-m88k_protection(pmap_t pmap, vm_prot_t prot)
-{
-	pt_entry_t p;
-
-	p = (prot & VM_PROT_WRITE) ? PG_RW : PG_RO;
-	/*
-	 * XXX this should not be necessary anymore now that pmap_enter
-	 * does the correct thing... -- miod
-	 */
-#ifdef M88110
-	if (cputyp == CPU_88110) {
-		p |= PG_U;
-		/* if the map is the kernel's map and since this
-		 * is not a paged kernel, we go ahead and mark
-		 * the page as modified to avoid an exception
-		 * upon writing to the page the first time.  XXX smurph
-		 */
-		if (pmap == kernel_pmap) {
-			if ((p & PG_RO) == 0)
-				p |= PG_M;
-		}
-	}
-#endif
-	return p;
-}
+#define	m88k_protection(prot)	((prot) & VM_PROT_WRITE ? PG_RW : PG_RO)
 
 /*
  * Routine:	FLUSH_ATC_ENTRY
@@ -267,7 +239,7 @@ m88k_protection(pmap_t pmap, vm_prot_t prot)
  *	va	virtual address that should be flushed
  *	kernel	TRUE if supervisor mode, FALSE if user mode
  */
-void
+static __inline__ void
 flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 {
 #if NCPUS > 1
@@ -278,7 +250,7 @@ flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
 
 #ifdef DEBUG
 	if (ff1(users) >= MAX_CPUS) {
-		panic("flush_atc_entry: invalid ff1 users = %d", ff1(tusers));
+		panic("flush_atc_entry: invalid ff1 users = %d", ff1(users));
 	}
 #endif
 
@@ -354,9 +326,6 @@ pmap_pte(pmap_t pmap, vaddr_t virt)
  * Extern/Global:
  *	kpdt_free	kernel page table free queue
  *
- * Calls:
- *	m88k_protection
- *
  * This routine simply dequeues a table from the kpdt_free list,
  * initializes all its entries (invalidates them), and sets the
  * corresponding segment table entry to point to it. If the kpdt_free
@@ -376,7 +345,7 @@ pmap_expand_kmap(vaddr_t virt, vm_prot_t prot)
 		printf("(pmap_expand_kmap: %x) v %x\n", curproc, virt);
 #endif
 
-	template = m88k_protection(kernel_pmap, prot) | SG_V;
+	template = m88k_protection(prot) | PG_M | SG_V;
 
 	/* segment table entry derivate from map and virt. */
 	sdt = SDTENT(kernel_pmap, virt);
@@ -464,7 +433,11 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 	}
 #endif
 
-	template = m88k_protection(kernel_pmap, prot) | cmode | PG_V;
+	template = m88k_protection(prot) | cmode | PG_V;
+#ifdef M88110
+	if (cputyp == CPU_88110 && m88k_protection(prot) != PG_RO)
+		template |= PG_M;
+#endif
 
 #ifdef	PMAP_USE_BATC
 	batctmp = BATC_SO | BATC_V;
@@ -956,9 +929,6 @@ pmap_init(void)
  * Extern/Global:
  *	phys_map_vaddr
  *
- * Calls:
- *	m88k_protection
- *
  * Special Assumptions:
  *	no locking required
  *
@@ -982,8 +952,8 @@ pmap_zero_page(struct vm_page *pg)
 
 	SPLVM(spl);
 
-	*pte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | PG_V | pa;
+	*pte = m88k_protection(VM_PROT_READ | VM_PROT_WRITE) |
+	    CACHE_GLOBAL | PG_M /* 88110 */ | PG_V | pa;
 
 	/*
 	 * We don't need the flush_atc_entry() dance, as these pages are
@@ -1049,8 +1019,7 @@ pmap_create(void)
 	if (pmap_extract(kernel_pmap, (vaddr_t)segdt,
 	    (paddr_t *)&stpa) == FALSE)
 		panic("pmap_create: pmap_extract failed!");
-	pmap->pm_apr = (atop(stpa) << PG_SHIFT) |
-	    CACHE_GLOBAL | APR_V;
+	pmap->pm_apr = (atop(stpa) << PG_SHIFT) | CACHE_GLOBAL | APR_V;
 
 #ifdef DEBUG
 	if (!PAGE_ALIGNED(stpa))
@@ -1592,7 +1561,7 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 		return;
 	}
 
-	ap = m88k_protection(pmap, prot) & PG_PROT;
+	ap = m88k_protection(prot);
 
 	PMAP_LOCK(pmap, spl);
 
@@ -1758,7 +1727,6 @@ pmap_expand(pmap_t pmap, vaddr_t v)
  *	pv lists
  *
  * Calls:
- *	m88k_protection
  *	pmap_pte
  *	pmap_expand
  *	pmap_remove_pte
@@ -1829,7 +1797,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 #endif
 
-	template = m88k_protection(pmap, prot);
+	template = m88k_protection(prot);
 
 	PMAP_LOCK(pmap, spl);
 	users = pmap->pm_cpus;
@@ -2271,9 +2239,6 @@ pmap_deactivate(struct proc *p)
  * Extern/Global:
  *	phys_map_vaddr
  *
- * Calls:
- *	m88k_protection
- *
  * Special Assumptions:
  *	no locking required
  *
@@ -2301,9 +2266,9 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	SPLVM(spl);
 
-	*dstpte = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
-	    CACHE_GLOBAL | PG_V | dst;
-	*srcpte = m88k_protection(kernel_pmap, VM_PROT_READ) |
+	*dstpte = m88k_protection(VM_PROT_READ | VM_PROT_WRITE) |
+	    CACHE_GLOBAL | PG_M /* 88110 */ | PG_V | dst;
+	*srcpte = m88k_protection(VM_PROT_READ) |
 	    CACHE_GLOBAL | PG_V | src;
 
 	/*
@@ -2682,7 +2647,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	PMAP_LOCK(kernel_pmap, spl);
 	users = kernel_pmap->pm_cpus;
 
-	template = m88k_protection(kernel_pmap, prot);
+	template = m88k_protection(prot);
+#ifdef M88110
+	if (cputyp == CPU_88110 && m88k_protection(prot) != PG_RO)
+		template |= PG_M;
+#endif
 
 	/*
 	 * Expand pmap to include this pte.
