@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.16 2001/09/04 22:17:45 fgsch Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.17 2001/12/08 14:51:36 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -175,8 +175,8 @@ _thread_init(void)
 		_thread_initial->magic = PTHREAD_MAGIC;
 
 		/* Set the initial cancel state */
-		_thread_initial->cancelstate = PTHREAD_CANCEL_ENABLE;
-		_thread_initial->canceltype = PTHREAD_CANCEL_DEFERRED;
+		_thread_initial->cancelflags = PTHREAD_CANCEL_ENABLE |
+		    PTHREAD_CANCEL_DEFERRED;
 
 		/* Default the priority of the initial thread: */
 		_thread_initial->base_priority = PTHREAD_DEFAULT_PRIORITY;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.29 2001/09/04 23:28:31 fgsch Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.30 2001/12/08 14:51:36 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -588,12 +588,6 @@ struct pthread {
 	int	sig_saved;
 
 	/*
-	 * Cancelability state.
-	 */
-	int	cancelstate;
-	int	canceltype;
-
-	/*
 	 * Cancelability flags - the lower 2 bits are used by cancel
 	 * definitions in pthread.h
 	 */
@@ -703,13 +697,16 @@ struct pthread {
 	int		flags;
 #define PTHREAD_FLAGS_PRIVATE	0x0001
 #define PTHREAD_EXITING		0x0002
-#define PTHREAD_FLAGS_IN_CONDQ	0x0004	/* in condition queue using qe link*/
-#define PTHREAD_FLAGS_IN_WORKQ	0x0008	/* in work queue using qe link */
-#define PTHREAD_FLAGS_IN_WAITQ	0x0010	/* in waiting queue using pqe link*/
-#define PTHREAD_FLAGS_IN_PRIOQ	0x0020	/* in priority queue using pqe link*/
-#define PTHREAD_FLAGS_TRACE	0x0040	/* for debugging purposes */
-#define PTHREAD_FLAGS_CANCELED	0x1000	/* thread has been cancelled */
-#define PTHREAD_FLAGS_CANCELPT	0x2000	/* thread at cancel point */
+#define PTHREAD_FLAGS_IN_WAITQ	0x0004	/* in waiting queue using pqe link*/
+#define PTHREAD_FLAGS_IN_PRIOQ	0x0008	/* in priority queue using pqe link*/
+#define PTHREAD_FLAGS_IN_WORKQ	0x0010	/* in work queue using qe link */
+#define PTHREAD_FLAGS_IN_FILEQ	0x0020	/* in file lock queue using qe link */
+#define PTHREAD_FLAGS_IN_FDQ	0x0040	/* in fd lock queue using qe link */
+#define PTHREAD_FLAGS_IN_CONDQ	0x0080	/* in condition queue using sqe link*/
+#define PTHREAD_FLAGS_IN_MUTEXQ	0x0100	/* in mutex queue using sqe link*/
+#define PTHREAD_FLAGS_TRACE	0x0200	/* for debugging purposes */
+#define PTHREAD_FLAGS_IN_SYNQ	\
+    (PTHREAD_FLAGS_IN_CONDQ | PTHREAD_FLAGS_IN_MUTEXQ)
 
 	/*
 	 * Base priority is the user setable and retrievable priority

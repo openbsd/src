@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.16 2001/09/04 22:17:45 fgsch Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.17 2001/12/08 14:51:36 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -59,18 +59,6 @@ dequeue_signals(void);
 
 static inline void
 thread_run_switch_hook(pthread_t thread_out, pthread_t thread_in);
-
-static void
-_thread_check_cancel()
-{
-	if (!(_thread_run->flags & PTHREAD_FLAGS_CANCELPT) &&
-	    (_thread_run->canceltype == PTHREAD_CANCEL_ASYNCHRONOUS))
-		/*
-		 * Check if an async-cancellable thread
-		 * has been cancelled.
-		 */
-		_thread_cancellation_point();
-}
 
 void
 _thread_kern_sched(struct sigcontext * scp)
@@ -551,7 +539,13 @@ _thread_kern_sched(struct sigcontext * scp)
 					thread_run_switch_hook(_last_user_thread,
 					    _thread_run);
 				}
-				_thread_check_cancel();
+
+				if (((curthread->cancelflags &
+				    PTHREAD_AT_CANCEL_POINT) == 0) &&
+				    ((curthread->cancelflags &
+				     PTHREAD_CANCEL_ASYNCHRONOUS) != 0))
+					pthread_testcancel();
+
 				_thread_sys_sigreturn(&_thread_run->saved_sigcontext);
 			} else {
 				/*
@@ -565,7 +559,11 @@ _thread_kern_sched(struct sigcontext * scp)
 					    _thread_run);
 				}
 
-				_thread_check_cancel();
+				if (((curthread->cancelflags &
+				    PTHREAD_AT_CANCEL_POINT) == 0) &&
+				    ((curthread->cancelflags &
+				     PTHREAD_CANCEL_ASYNCHRONOUS) != 0))
+					pthread_testcancel();
 				return;
 			}
 
@@ -1063,6 +1061,14 @@ _thread_kern_sig_undefer(void)
 			/* Reenable signals: */
 			curthread->sig_defer_count = 0;
 		}
+
+		/*
+		 * Check for asynchronous cancellation before delivering any
+		 * pending signals:
+		 */
+		if (((curthread->cancelflags & PTHREAD_AT_CANCEL_POINT) == 0) &&
+		    ((curthread->cancelflags & PTHREAD_CANCEL_ASYNCHRONOUS) != 0))
+			pthread_testcancel();
 
 		/* Yield the CPU if necessary: */
 		if (need_resched || curthread->yield_on_sig_undefer != 0) {

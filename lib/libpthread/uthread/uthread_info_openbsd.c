@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_info_openbsd.c,v 1.3 2000/02/26 13:32:01 d Exp $
+ * $OpenBSD: uthread_info_openbsd.c,v 1.4 2001/12/08 14:51:36 fgsch Exp $
  */
 #include <stdio.h>
 #include <fcntl.h>
@@ -129,8 +129,7 @@ _thread_dump_entry(pthread, fd, verbose)
 	    pthread->active_priority,
 	    (pthread->flags & PTHREAD_FLAGS_PRIVATE)	  ? 'p' : '-',
 	    (pthread->flags & PTHREAD_EXITING)		  ? 'E' :
-	    (pthread->flags & PTHREAD_FLAGS_CANCELED)	  ? 'C' :
-	    (pthread->flags & PTHREAD_FLAGS_CANCELPT)	  ? 'c' : '-',
+	    (pthread->cancelflags & PTHREAD_AT_CANCEL_POINT) ? 'c' : '-',
 	    (pthread->flags & PTHREAD_FLAGS_TRACE)	  ? 't' : '-',
 	    (pthread->flags & PTHREAD_FLAGS_IN_CONDQ)     ? 'C' : '-',
 	    (pthread->flags & PTHREAD_FLAGS_IN_WORKQ)     ? 'R' : '-',

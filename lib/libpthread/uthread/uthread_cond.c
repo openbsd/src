@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_cond.c,v 1.10 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_cond.c,v 1.11 2001/12/08 14:51:36 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -159,7 +159,8 @@ int
 pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 {
 	struct pthread	*curthread = _get_curthread();
-	int             rval = 0;
+	int	rval = 0;
+	int	interrupted = 0;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
@@ -252,6 +253,9 @@ pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 			rval = EINVAL;
 			break;
 		}
+
+		if ((interrupted != 0) && (curthread->continuation != NULL))
+			curthread->continuation((void *) curthread);
 	}
 
 	/* No longer in a cancellation point: */
@@ -266,7 +270,8 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 		       const struct timespec * abstime)
 {
 	struct pthread	*curthread = _get_curthread();
-	int             rval = 0;
+	int	rval = 0;
+	int	interrupted = 0;
 
 	/* This is a cancellation point: */
 	_thread_enter_cancellation_point();
@@ -396,6 +401,8 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 			break;
 		}
 
+		if ((interrupted != 0) && (curthread->continuation != NULL))
+			curthread->continuation((void *) curthread);
 	}
 
 	/* No longer in a cancellation point: */

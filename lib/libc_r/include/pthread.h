@@ -1,3 +1,5 @@
+/*	$OpenBSD: pthread.h,v 1.13 2001/12/08 14:51:36 fgsch Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
  * Copyright (c) 1995-1998 by John Birrell <jb@cimlogic.com.au>
@@ -29,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
- *
- * $OpenBSD: pthread.h,v 1.12 2000/12/06 17:18:47 deraadt Exp $
  *
  * $FreeBSD: pthread.h,v 1.13 1999/07/31 08:36:07 rse Exp $
  */
@@ -100,7 +100,7 @@
 #define PTHREAD_CANCEL_ENABLE		0
 #define PTHREAD_CANCEL_DISABLE		1
 #define PTHREAD_CANCEL_DEFERRED		0
-#define PTHREAD_CANCEL_ASYNCHRONOUS	1
+#define PTHREAD_CANCEL_ASYNCHRONOUS	2
 #define PTHREAD_CANCELED		((void *) 1)
 
 /*
@@ -246,6 +246,7 @@ int		pthread_key_delete __P((pthread_key_t));
 int		pthread_kill __P((struct pthread *, int));
 int		pthread_mutexattr_init __P((pthread_mutexattr_t *));
 int		pthread_mutexattr_destroy __P((pthread_mutexattr_t *));
+int		pthread_mutexattr_gettype __P((pthread_mutexattr_t *, int *));
 int		pthread_mutexattr_settype __P((pthread_mutexattr_t *, int));
 int		pthread_mutex_destroy __P((pthread_mutex_t *));
 int		pthread_mutex_init __P((pthread_mutex_t *,
@@ -306,6 +307,11 @@ int		pthread_mutexattr_setprotocol __P((pthread_mutexattr_t *,
 			int protocol));
 #endif
 
+int		pthread_getschedparam __P((pthread_t pthread, int *policy,
+			struct sched_param * param));
+int		pthread_setschedparam __P((pthread_t pthread, int policy,
+			const struct sched_param * param));
+
 #if defined(_POSIX_THREAD_PRIORITY_SCHEDULING)
 int		pthread_attr_getinheritsched __P((const pthread_attr_t *, int *));
 int		pthread_attr_getschedparam __P((const pthread_attr_t *,
@@ -317,10 +323,6 @@ int		pthread_attr_setschedparam __P((pthread_attr_t *,
 			const struct sched_param *));
 int		pthread_attr_setschedpolicy __P((pthread_attr_t *, int));
 int		pthread_attr_setscope __P((pthread_attr_t *, int));
-int		pthread_getschedparam __P((pthread_t pthread, int *policy,
-			struct sched_param * param));
-int		pthread_setschedparam __P((pthread_t pthread, int policy,
-			const struct sched_param * param));
 #endif
 
 int		pthread_attr_setfloatstate __P((pthread_attr_t *, int));
@@ -341,8 +343,6 @@ int		pthread_attr_getguardsize __P((const pthread_attr_t *,
 int		pthread_attr_setguardsize __P((const pthread_attr_t *, 
 			size_t));
 int		pthread_getconcurrency __P((void));
-int		pthread_mutexattr_gettype __P((const pthread_mutexattr_t *,
-			int *));
 int		pthread_setconcurrency __P((int));
 #endif	/* susv2 */
 

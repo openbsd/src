@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_create.c,v 1.15 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_create.c,v 1.16 2001/12/08 14:51:36 fgsch Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -93,8 +93,8 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			new_thread->stack = stack;
 			new_thread->start_routine = start_routine;
 			new_thread->arg = arg;
-			new_thread->cancelstate = PTHREAD_CANCEL_ENABLE;
-			new_thread->canceltype = PTHREAD_CANCEL_DEFERRED;
+			new_thread->cancelflags = PTHREAD_CANCEL_ENABLE |
+			    PTHREAD_CANCEL_DEFERRED;
 
 			/*
 			 * Write a magic value to the thread structure
@@ -152,6 +152,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			new_thread->flags = 0;
 			new_thread->poll_data.nfds = 0;
 			new_thread->poll_data.fds = NULL;
+			new_thread->continuation = NULL;
 
 			/*
 			 * Defer signals to protect the scheduling queues
