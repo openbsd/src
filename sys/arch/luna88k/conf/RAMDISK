@@ -1,0 +1,60 @@
+#	$OpenBSD: RAMDISK,v 1.1 2004/04/21 18:40:21 miod Exp $
+
+machine		luna88k
+
+# 4 meg ramdisk
+option		MINIROOTSIZE=4096
+option		RAMDISK_HOOKS
+
+option		"NCPUS=1"	# number of CPUs supported (max 4)
+
+# Define this if your processor has the xxx.usr bug (mask C82N)
+option		ERRATA__XXX_USR	
+
+maxusers	32
+
+config		bsd		root rd0 swap on rd0b
+
+option		SCSITERSE
+option		SMALL_KERNEL
+option		NO_PROPOLICE
+option		TIMEZONE=0
+option		DST=0
+option		FFS
+option		NFSCLIENT
+option		CD9660
+option		FIFO
+option		INET
+option		INET6
+option		BOOT_CONFIG
+
+#
+# devices
+#
+
+mainbus0 at root
+clock0   at mainbus0
+le0      at mainbus0
+sio0     at mainbus0
+siotty0  at sio0
+ws0      at sio0
+fb0      at mainbus0
+spc0     at mainbus0
+spc1     at mainbus0
+
+# Workstation Console attachments
+wsdisplay* at fb?
+wskbd*     at ws? console ?
+wsmouse*   at ws?
+
+# SCSI bus support
+scsibus*   at spc?
+
+# SCSI devices
+sd* at scsibus? target ? lun ?          # SCSI disks
+st* at scsibus? target ? lun ?          # SCSI tapes
+cd* at scsibus? target ? lun ?		# SCSI CD-ROM
+
+pseudo-device	loop	1
+pseudo-device	bpfilter 1
+pseudo-device	rd	1
