@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.54 2004/01/16 10:51:57 hshoexer Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.55 2004/02/19 09:46:19 ho Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -339,18 +339,18 @@ write_pid_file (void)
 {
   FILE *fp;
 
-  /* Ignore errors. XXX Will fail with USE_PRIVSEP.  */
+  /* Ignore errors. This will fail with USE_PRIVSEP.  */
   unlink (pid_file);
 
   fp = monitor_fopen (pid_file, "w");
   if (fp != NULL)
     {
-      /* XXX Error checking!  */
-      fprintf (fp, "%ld\n", (long) getpid ());
+      if (fprintf (fp, "%ld\n", (long) getpid ()) < 0)
+	log_error ("main: failed to write PID to \"%.100s\"", pid_file);
       fclose (fp);
     }
   else
-    log_fatal ("main: fopen (\"%s\", \"w\") failed", pid_file);
+    log_fatal ("main: fopen (\"%.100s\", \"w\") failed", pid_file);
 }
 
 int
