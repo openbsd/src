@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.55 2000/01/27 09:05:33 mickey Exp $	*/
+/*	$OpenBSD: com.c,v 1.56 2000/11/08 15:42:48 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -90,6 +90,8 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#include <dev/cons.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -629,8 +631,19 @@ comattach(parent, self, aux)
 #endif
 
 	/* XXX maybe move up some? */
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		int maj;
+
+		/* locate the major number */
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == comopen)
+				break;
+
+		if (maj < nchrdev && cn_tab->cn_dev == NODEV)
+			cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+
 		printf("%s: console\n", sc->sc_dev.dv_xname);
+	} 
 
 	/*
 	 * If there are no enable/disable functions, assume the device
@@ -1673,7 +1686,6 @@ ohfudge:
 /*
  * Following are all routines needed for COM to act as console
  */
-#include <dev/cons.h>
 
 #if defined(arc) || defined(hppa)
 #undef CONADDR
@@ -1759,6 +1771,32 @@ cominit(iot, ioh, rate)
 	bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
 	stat = bus_space_read_1(iot, ioh, com_iir);
 	splx(s);
+}
+
+int
+comcnattach(iot, iobase, rate, frequency, cflag)
+	bus_space_tag_t iot;
+	int iobase;
+	int rate, frequency;
+	tcflag_t cflag;
+{
+	static struct consdev comcons = {
+		NULL, NULL, comcngetc, comcnputc, comcnpollc,
+		NODEV, CN_NORMAL
+	};
+
+	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &comconsioh))
+		return ENOMEM;
+
+	cominit(iot, comconsioh, rate);
+
+	cn_tab = &comcons;
+
+	comconsiot = iot;
+	comconsaddr = iobase;
+	comconscflag = cflag;
+
+	return (0);
 }
 
 int
