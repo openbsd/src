@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2001/11/07 01:02:36 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2001/11/11 04:43:53 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -400,6 +400,7 @@ for (i = 0; i < errnum; i++) {
 		sv.sival_int = frame->srr0;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		break;
+	}
 	case EXC_PGM:
 		/* should check for correct byte here or panic */
 #ifdef DDB
@@ -410,7 +411,6 @@ for (i = 0; i < errnum; i++) {
 #endif
 		break;
 
-	}
 	/* This is not really a perf exception, but is an ALTIVEC unavail
 	 * which we do not handle, kill the process with illegal instruction.
 	 */
