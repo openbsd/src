@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.66 2003/11/10 16:23:41 jakob Exp $");
+RCSID("$OpenBSD: cipher.c,v 1.67 2004/01/23 17:06:03 hshoexer Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -85,6 +85,7 @@ struct Cipher {
 	{ "aes128-ctr", 	SSH_CIPHER_SSH2, 16, 16, evp_aes_128_ctr },
 	{ "aes192-ctr", 	SSH_CIPHER_SSH2, 16, 24, evp_aes_128_ctr },
 	{ "aes256-ctr", 	SSH_CIPHER_SSH2, 16, 32, evp_aes_128_ctr },
+	{ "acss@openbsd.org",	SSH_CIPHER_SSH2, 16, 5, EVP_acss },
 
 	{ NULL,			SSH_CIPHER_ILLEGAL, 0, 0, NULL }
 };
@@ -373,7 +374,7 @@ cipher_get_keycontext(const CipherContext *cc, u_char *dat)
 	Cipher *c = cc->cipher;
 	int plen = 0;
 
-	if (c->evptype == EVP_rc4) {
+	if (c->evptype == EVP_rc4 || c->evptype == EVP_acss) {
 		plen = EVP_X_STATE_LEN(cc->evp);
 		if (dat == NULL)
 			return (plen);
@@ -388,7 +389,7 @@ cipher_set_keycontext(CipherContext *cc, u_char *dat)
 	Cipher *c = cc->cipher;
 	int plen;
 
-	if (c->evptype == EVP_rc4) {
+	if (c->evptype == EVP_rc4 || c->evptype == EVP_acss) {
 		plen = EVP_X_STATE_LEN(cc->evp);
 		memcpy(EVP_X_STATE(cc->evp), dat, plen);
 	}
