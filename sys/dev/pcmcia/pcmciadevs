@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.12 1999/05/27 13:32:38 niklas Exp $
+	$OpenBSD: pcmciadevs,v 1.13 1999/06/03 06:40:28 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -36,6 +36,7 @@
  * List of known PCMCIA vendors
  */
 
+vendor FUJITSU			0x0004  Fujitsu
 vendor SANDISK			0x0045	Sandisk
 vendor NEWMEDIA			0x0057	NewMedia
 vendor INTEL			0x0089	Intel
@@ -84,6 +85,10 @@ product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 
 /* DIGITAL Products */
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
+
+/* Fujitsu Products */
+product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
+product FUJITSU LA501		0x2000 Fujitsu Towa LA501 Ethernet
 
 /* Motorola Products */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
@@ -148,6 +153,7 @@ product NEWMEDIA MULTIMEDIA	0x100b NewMedia Multimedia Sound/SCSI
 
 /* Standard Microsystems Corporation Products */
 product SMC 8016		0x0105 SMC 8016 EtherCard
+product SMC EZCARD		0x8022 SMC EXCard 10 PCMCIA
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax

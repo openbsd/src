@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.8 1999/03/26 06:34:28 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.9 1999/06/03 06:40:28 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -225,6 +225,12 @@ struct ne2000dev {
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_FAST_ECARD,
       PCMCIA_CIS_LINKSYS_FAST_ECARD,
       0, -1, { 0x00, 0x80, 0xc8} },
+
+    { PCMCIA_STR_SMC_EZCARD,
+      PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_EZCARD,
+      PCMCIA_CIS_SMC_EZCARD,
+      0, 0x01c0, { 0x00, 0xe0, 0x29 } },
+
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
