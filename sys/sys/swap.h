@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.h,v 1.1 1999/05/22 21:22:34 weingart Exp $	*/
+/*	$OpenBSD: swap.h,v 1.2 1999/08/23 17:08:37 art Exp $	*/
 /*	$NetBSD: swap.h,v 1.2 1998/09/13 14:46:24 christos Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ struct swapent {
 #define SWAP_NSWAP	3		/* how many swap devices ? */
 #define SWAP_STATS	4		/* get device info */
 #define SWAP_CTL	5		/* change priority on device */
+#define SWAP_DUMPDEV 	7		/* use this device as dump device */
 
 #define SWF_INUSE	0x00000001	/* in use: we have swapped here */
 #define SWF_ENABLE	0x00000002	/* enabled: we can swap here */
