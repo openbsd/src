@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.22 2001/01/05 04:27:23 marc Exp $
+.\"	$OpenBSD: shutdown.8,v 1.23 2001/01/26 20:20:28 marc Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -51,12 +51,20 @@
 provides an automated shutdown procedure for superusers
 to nicely notify users when the system is shutting down,
 saving them from system administrators, hackers, and gurus, who
-would otherwise not bother with such niceties.
+would otherwise not bother with such niceties.  When the
+.Nm
+command is issued without options the system is placed in single
+user mode at the indicated time after shutting down all system
+services.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
-Causes system to perform a dump before rebooting.
+When used with
+.Fl h
+or
+.Fl r
+causes system to perform a dump.
 This option is useful for debugging system dump procedures or capturing the
 state of a corrupted or misbehaving system.
 See
@@ -79,13 +87,6 @@ when
 .Nm
 execs
 .Xr halt 8 .
-.Sy Note :
-If this option does not work on your i386 machine try setting
-.Li machdep.apmhalt
-to the value 1 using
-.Xr sysctl 8 .
-This can be set at boot time in
-.Pa sysctl.conf .
 .It Fl k
 Kick everybody off.
 The
@@ -94,9 +95,13 @@ option
 does not actually halt the system, but leaves the
 system multi-user with logins disabled (for all but superuser).
 .It Fl n
-Prevent the normal
+When used with
+.Fl h
+or
+.Fl r
+prevents the normal
 .Xr sync 2
-before stopping.
+before stopping the system.
 .It Fl r
 .Nm
 execs
@@ -110,6 +115,13 @@ flag is passed on to
 .Xr halt 8 ,
 causing machines which support automatic power down to do so after halting.
 (Currently supported on some i386, sparc, and mac68k platforms.)
+.Sy Note :
+If this option does not work on your i386 machine try setting
+.Li machdep.apmhalt
+to the value 1 using
+.Xr sysctl 8 .
+This can be set at boot time in
+.Pa sysctl.conf .
 .It Ar time
 .Ar time
 is the time at which
