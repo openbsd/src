@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.43 1997/10/17 04:33:05 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.44 1997/10/17 07:30:03 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.43 1997/10/17 04:33:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.44 1997/10/17 07:30:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -599,7 +599,7 @@ readmbr(f)
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_OPENBSD) {
 			fprintf(stderr, "# using MBR partition %d: "
 			    "type %02X off %d (0x%x) size %d (0x%x)\n", part,
-			    dp[part].dp_typ, dp[part].dp_typ,
+			    dp[part].dp_typ,
 			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
 			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
 			return (&dp[part]);
@@ -609,7 +609,7 @@ readmbr(f)
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_386BSD) {
 			fprintf(stderr, "# using MBR partition %d: "
 			    "type %02X off %d (0x%x) size %d (0x%x)\n", part,
-			    dp[part].dp_typ, dp[part].dp_typ, 
+			    dp[part].dp_typ,
 			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
 			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
 			return (&dp[part]);
