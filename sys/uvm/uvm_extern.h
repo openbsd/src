@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.18 2001/08/08 02:36:59 millert Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.38 2000/03/26 20:54:46 kleink Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.19 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.42 2000/06/08 05:52:34 thorpej Exp $	*/
 
 /*
  *
@@ -133,7 +133,8 @@
 /*
  * flags for uvm_pagealloc_strat()
  */
-#define UVM_PGA_USERESERVE		0x0001
+#define UVM_PGA_USERESERVE	0x0001	/* ok to use reserve pages */
+#define	UVM_PGA_ZERO		0x0002	/* returned page must be zero'd */
 
 /*
  * lockflags that control the locking behavior of various functions.
@@ -176,6 +177,7 @@ struct uvmexp {
 	int inactive;   /* number of pages that we free'd but may want back */
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
+	int zeropages;	/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
 	int reserve_kernel; /* number of pages reserved for kernel */
 
@@ -212,6 +214,10 @@ struct uvmexp {
 	int forks;  		/* forks */
 	int forks_ppwait;	/* forks where parent waits */
 	int forks_sharevm;	/* forks where vmspace is shared */
+	int pga_zerohit;	/* pagealloc where zero wanted and zero
+				   was available */
+	int pga_zeromiss;	/* pagealloc where zero wanted and zero
+				   not available */
 
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
@@ -291,8 +297,6 @@ int			uvm_fault __P((vm_map_t, vaddr_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
-void			uvm_sleep __P((void *, struct simplelock *, boolean_t,
-			    const char *, int));
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
 			    void *, size_t));
 void			uvm_exit __P((struct proc *));

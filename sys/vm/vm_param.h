@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.24 2001/08/06 14:03:05 art Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.25 2001/08/11 10:57:22 art Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.25 2000/03/26 20:42:45 kleink Exp $	*/
 
 /* 
@@ -165,11 +165,8 @@ struct _ps_strings {
  * Round off or truncate to the nearest page.  These will work
  * for either addresses or counts (i.e., 1 byte rounds to 1 page).
  */
-#define	round_page(x) \
-	(((x) + PAGE_MASK) & ~PAGE_MASK)
-#define	trunc_page(x) \
-	((x) & ~PAGE_MASK)
-
+#define	round_page(x) (((x) + PAGE_MASK) & ~PAGE_MASK)
+#define	trunc_page(x) ((x) & ~PAGE_MASK)
 #else
 /* out-of-kernel versions of round_page and trunc_page */
 #define	round_page(x) \

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.13 2001/08/06 14:03:04 art Exp $	*/
-/*	$NetBSD: uvm_aobj.c,v 1.28 2000/03/26 20:54:46 kleink Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.14 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.31 2000/05/19 04:34:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -203,7 +203,6 @@ struct uvm_pagerops aobj_pager = {
 	NULL,			/* put (done by pagedaemon) */
 	NULL,			/* cluster */
 	NULL,			/* mk_pcluster */
-	uvm_shareprot,		/* shareprot */
 	NULL,			/* aiodone */
 	uao_releasepg		/* releasepg */
 };
@@ -298,7 +297,7 @@ uao_find_swslot(aobj, pageidx)
 		if (elt)
 			return(UAO_SWHASH_ELT_PAGESLOT(elt, pageidx));
 		else
-			return(NULL);
+			return(0);
 	}
 
 	/* 
@@ -1005,19 +1004,18 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			ptmp = uvm_pagelookup(uobj, current_offset);
 
 			/*
- 			 * if page is new, attempt to allocate the page, then
-			 * zero-fill it.
+ 			 * if page is new, attempt to allocate the page,
+			 * zero-fill'd.
  			 */
 			if (ptmp == NULL && uao_find_swslot(aobj,
 			    current_offset >> PAGE_SHIFT) == 0) {
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL, 0);
+				    NULL, UVM_PGA_ZERO);
 				if (ptmp) {
 					/* new page */
 					ptmp->flags &= ~(PG_BUSY|PG_FAKE);
 					ptmp->pqflags |= PQ_AOBJ;
 					UVM_PAGE_OWN(ptmp, NULL);
-					uvm_pagezero(ptmp);
 				}
 			}
 

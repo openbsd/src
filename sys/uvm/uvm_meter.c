@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_meter.c,v 1.11 2001/08/02 11:06:38 art Exp $	*/
-/*	$NetBSD: uvm_meter.c,v 1.11 2000/02/11 19:22:54 thorpej Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.12 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.12 2000/05/26 00:36:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.

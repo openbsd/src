@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_stat.h,v 1.8 2001/06/24 21:29:04 mickey Exp $	*/
-/*	$NetBSD: uvm_stat.h,v 1.15 1999/06/21 17:25:12 thorpej Exp $	*/
+/*	$OpenBSD: uvm_stat.h,v 1.9 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.18 2000/04/11 08:12:14 pk Exp $	*/
 
 /*
  *
@@ -192,24 +192,24 @@ do { \
 
 #define UVMHIST_LOG(NAME,FMT,A,B,C,D) \
 do { \
-	register int i, s = splhigh(); \
+	int _i_, _s_ = splhigh(); \
 	simple_lock(&(NAME).l); \
-	i = (NAME).f; \
-	(NAME).f = (i + 1) % (NAME).n; \
+	_i_ = (NAME).f; \
+	(NAME).f = (_i_ + 1) % (NAME).n; \
 	simple_unlock(&(NAME).l); \
-	splx(s); \
+	splx(_s_); \
 	if (!cold) \
-		microtime(&(NAME).e[i].tv); \
-	(NAME).e[i].fmt = (FMT); \
-	(NAME).e[i].fmtlen = strlen((NAME).e[i].fmt); \
-	(NAME).e[i].fn = _uvmhist_name; \
-	(NAME).e[i].fnlen = strlen((NAME).e[i].fn); \
-	(NAME).e[i].call = _uvmhist_call; \
-	(NAME).e[i].v[0] = (u_long)(A); \
-	(NAME).e[i].v[1] = (u_long)(B); \
-	(NAME).e[i].v[2] = (u_long)(C); \
-	(NAME).e[i].v[3] = (u_long)(D); \
-	UVMHIST_PRINTNOW(&((NAME).e[i])); \
+		microtime(&(NAME).e[_i_].tv); \
+	(NAME).e[_i_].fmt = (FMT); \
+	(NAME).e[_i_].fmtlen = strlen((NAME).e[_i_].fmt); \
+	(NAME).e[_i_].fn = _uvmhist_name; \
+	(NAME).e[_i_].fnlen = strlen((NAME).e[_i_].fn); \
+	(NAME).e[_i_].call = _uvmhist_call; \
+	(NAME).e[_i_].v[0] = (u_long)(A); \
+	(NAME).e[_i_].v[1] = (u_long)(B); \
+	(NAME).e[_i_].v[2] = (u_long)(C); \
+	(NAME).e[_i_].v[3] = (u_long)(D); \
+	UVMHIST_PRINTNOW(&((NAME).e[_i_])); \
 } while (0)
 
 #define UVMHIST_CALLED(NAME) \

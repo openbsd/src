@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page.c,v 1.21 2001/08/06 14:03:05 art Exp $	*/
-/*	$NetBSD: uvm_page.c,v 1.31 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.22 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.37 2000/06/09 04:43:19 soda Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -74,7 +74,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
+#include <sys/sched.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -93,6 +93,14 @@
 
 struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physmem */
 int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
+
+/*
+ * Some supported CPUs in a given architecture don't support all
+ * of the things necessary to do idle page zero'ing efficiently.
+ * We therefore provide a way to disable it from machdep code here.
+ */
+
+boolean_t vm_page_zero_enable = TRUE;
 
 /*
  * local variables
@@ -218,8 +226,10 @@ uvm_page_init(kvm_startp, kvm_endp)
 	/*
 	 * step 1: init the page queues and page queue locks
 	 */
-	for (lcv = 0; lcv < VM_NFREELIST; lcv++)
-	  TAILQ_INIT(&uvm.page_free[lcv]);
+	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
+		for (i = 0; i < PGFL_NQUEUES; i++)
+			TAILQ_INIT(&uvm.page_free[lcv].pgfl_queues[i]);
+	}
 	TAILQ_INIT(&uvm.page_active);
 	TAILQ_INIT(&uvm.page_inactive_swp);
 	TAILQ_INIT(&uvm.page_inactive_obj);
@@ -333,6 +343,16 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 */
 	uvmexp.reserve_pagedaemon = 4;
 	uvmexp.reserve_kernel = 6;
+
+  	/*
+	 * step 8: determine if we should zero pages in the idle
+	 * loop.
+	 *
+	 * XXXJRT - might consider zero'ing up to the target *now*,
+	 *	    but that could take an awfully long time if you
+	 *	    have a lot of memory.
+	 */
+	uvm.page_idle_zero = vm_page_zero_enable;
 
 	/*
 	 * done!
@@ -604,8 +624,8 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	if (vm_nphysseg == VM_PHYSSEG_MAX) {
 		printf("uvm_page_physload: unable to load physical memory "
 		    "segment\n");
-		printf("\t%d segments allocated, ignoring 0x%lx -> 0x%lx\n",
-		    VM_PHYSSEG_MAX, start, end);
+		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
+		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
 		return;
 	}
 
@@ -827,9 +847,11 @@ uvm_page_physdump()
 	printf("rehash: physical memory config [segs=%d of %d]:\n",
 				 vm_nphysseg, VM_PHYSSEG_MAX);
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++)
-		printf("0x%lx->0x%lx [0x%lx->0x%lx]\n", vm_physmem[lcv].start,
-		    vm_physmem[lcv].end, vm_physmem[lcv].avail_start,
-		    vm_physmem[lcv].avail_end);
+		printf("0x%llx->0x%llx [0x%llx->0x%llx]\n",
+		    (long long)vm_physmem[lcv].start,
+		    (long long)vm_physmem[lcv].end,
+		    (long long)vm_physmem[lcv].avail_start,
+		    (long long)vm_physmem[lcv].avail_end);
 	printf("STRATEGY = ");
 	switch (VM_PHYSSEG_STRAT) {
 	case VM_PSTRAT_RANDOM: printf("RANDOM\n"); break;
@@ -851,6 +873,12 @@ uvm_page_physdump()
  * => only one of obj or anon can be non-null
  * => caller must activate/deactivate page if it is not wired.
  * => free_list is ignored if strat == UVM_PGA_STRAT_NORMAL.
+ * => policy decision: it is more important to pull a page off of the
+ *	appropriate priority free list than it is to get a zero'd or
+ *	unknown contents page.  This is because we live with the
+ *	consequences of a bad free list decision for the entire
+ *	lifetime of the page, e.g. if the page comes from memory that
+ *	is slower to access.
  */
 
 struct vm_page *
@@ -861,9 +889,10 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	struct vm_anon *anon;
 	int strat, free_list;
 {
-	int lcv, s;
+	int lcv, try1, try2, s, zeroit = 0;
 	struct vm_page *pg;
 	struct pglist *freeq;
+	struct pgfreelist *pgfl;
 	boolean_t use_reserve;
 
 #ifdef DIAGNOSTIC
@@ -900,13 +929,32 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 				curproc == syncerproc))))
 		goto fail;
 
+#if PGFL_NQUEUES != 2
+#error uvm_pagealloc_strat needs to be updated
+#endif
+
+	/*
+	 * If we want a zero'd page, try the ZEROS queue first, otherwise
+	 * we try the UNKNOWN queue first.
+	 */
+	if (flags & UVM_PGA_ZERO) {
+		try1 = PGFL_ZEROS;
+		try2 = PGFL_UNKNOWN;
+	} else {
+		try1 = PGFL_UNKNOWN;
+		try2 = PGFL_ZEROS;
+	}
+
  again:
 	switch (strat) {
 	case UVM_PGA_STRAT_NORMAL:
 		/* Check all freelists in descending priority order. */
 		for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
-			freeq = &uvm.page_free[lcv];
-			if ((pg = freeq->tqh_first) != NULL)
+			pgfl = &uvm.page_free[lcv];
+			if ((pg = TAILQ_FIRST((freeq =
+			      &pgfl->pgfl_queues[try1]))) != NULL ||
+			    (pg = TAILQ_FIRST((freeq =
+			      &pgfl->pgfl_queues[try2]))) != NULL)
 				goto gotit;
 		}
 
@@ -921,8 +969,11 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 			panic("uvm_pagealloc_strat: bad free list %d",
 			    free_list);
 #endif
-		freeq = &uvm.page_free[free_list];
-		if ((pg = freeq->tqh_first) != NULL)
+		pgfl = &uvm.page_free[free_list];
+		if ((pg = TAILQ_FIRST((freeq =
+		      &pgfl->pgfl_queues[try1]))) != NULL ||
+		    (pg = TAILQ_FIRST((freeq =
+		      &pgfl->pgfl_queues[try2]))) != NULL)
 			goto gotit;
 
 		/* Fall back, if possible. */
@@ -942,6 +993,24 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
  gotit:
 	TAILQ_REMOVE(freeq, pg, pageq);
 	uvmexp.free--;
+
+	/* update zero'd page count */
+	if (pg->flags & PG_ZERO)
+		uvmexp.zeropages--;
+
+	/*
+	 * update allocation statistics and remember if we have to
+	 * zero the page
+	 */
+	if (flags & UVM_PGA_ZERO) {
+		if (pg->flags & PG_ZERO) {
+			uvmexp.pga_zerohit++;
+			zeroit = 0;
+		} else {
+			uvmexp.pga_zeromiss++;
+			zeroit = 1;
+		}
+	}
 
 	uvm_unlock_fpageq(s);		/* unlock free page queue */
 
@@ -964,6 +1033,16 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	pg->owner_tag = NULL;
 #endif
 	UVM_PAGE_OWN(pg, "new alloc");
+
+	if (flags & UVM_PGA_ZERO) {
+		/*
+		 * A zero'd page is not clean.  If we got a page not already
+		 * zero'd, then we have to zero it ourselves.
+		 */
+		pg->flags &= ~PG_CLEAN;
+		if (zeroit)
+			pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+	}
 
 	return(pg);
 
@@ -1143,8 +1222,7 @@ struct vm_page *pg;
 	/*
 	 * if the page was wired, unwire it now.
 	 */
-	if (pg->wire_count)
-	{
+	if (pg->wire_count) {
 		pg->wire_count = 0;
 		uvmexp.wired--;
 	}
@@ -1153,9 +1231,11 @@ struct vm_page *pg;
 	 * and put on free queue 
 	 */
 
+	pg->flags &= ~PG_ZERO;
+
 	s = uvm_lock_fpageq();
-	TAILQ_INSERT_TAIL(&uvm.page_free[uvm_page_lookup_freelist(pg)],
-	    pg, pageq);
+	TAILQ_INSERT_TAIL(&uvm.page_free[
+	    uvm_page_lookup_freelist(pg)].pgfl_queues[PGFL_UNKNOWN], pg, pageq);
 	pg->pqflags = PQ_FREE;
 #ifdef DEBUG
 	pg->uobject = (void *)0xdeadbeef;
@@ -1163,6 +1243,10 @@ struct vm_page *pg;
 	pg->uanon = (void *)0xdeadbeef;
 #endif
 	uvmexp.free++;
+
+	if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
+		uvm.page_idle_zero = vm_page_zero_enable;
+
 	uvm_unlock_fpageq(s);
 }
 
@@ -1204,3 +1288,66 @@ uvm_page_own(pg, tag)
 	return;
 }
 #endif
+
+/*
+ * uvm_pageidlezero: zero free pages while the system is idle.
+ *
+ * => we do at least one iteration per call, if we are below the target.
+ * => we loop until we either reach the target or whichqs indicates that
+ *	there is a process ready to run.
+ */
+void
+uvm_pageidlezero()
+{
+	struct vm_page *pg;
+	struct pgfreelist *pgfl;
+	int free_list, s;
+
+	do {
+		s = uvm_lock_fpageq();
+
+		if (uvmexp.zeropages >= UVM_PAGEZERO_TARGET) {
+			uvm.page_idle_zero = FALSE;
+			uvm_unlock_fpageq(s);
+			return;
+		}
+
+		for (free_list = 0; free_list < VM_NFREELIST; free_list++) {
+			pgfl = &uvm.page_free[free_list];
+			if ((pg = TAILQ_FIRST(&pgfl->pgfl_queues[
+			    PGFL_UNKNOWN])) != NULL)
+				break;
+		}
+
+		if (pg == NULL) {
+			/*
+			 * No non-zero'd pages; don't bother trying again
+			 * until we know we have non-zero'd pages free.
+			 */
+			uvm.page_idle_zero = FALSE;
+			uvm_unlock_fpageq(s);
+			return;
+		}
+
+		TAILQ_REMOVE(&pgfl->pgfl_queues[PGFL_UNKNOWN], pg, pageq);
+		uvmexp.free--;
+		uvm_unlock_fpageq(s);
+
+#ifdef PMAP_PAGEIDLEZERO
+		PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg));
+#else
+		/*
+		 * XXX This will toast the cache unless the pmap_zero_page()
+		 * XXX implementation does uncached access.
+		 */
+		pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+#endif
+		pg->flags |= PG_ZERO;
+
+		s = uvm_lock_fpageq();
+		TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_ZEROS], pg, pageq);
+		uvmexp.free++;
+		uvmexp.zeropages++;
+		uvm_unlock_fpageq(s);
+	} while (whichqs == 0);
+}

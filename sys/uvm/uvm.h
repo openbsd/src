@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm.h,v 1.11 2001/07/18 15:19:12 art Exp $	*/
-/*	$NetBSD: uvm.h,v 1.18 1999/11/13 00:21:17 thorpej Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.12 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm.h,v 1.22 2000/06/08 05:52:34 thorpej Exp $	*/
 
 /*
  *
@@ -75,13 +75,15 @@
 struct uvm {
 	/* vm_page related parameters */
 		/* vm_page queues */
-	struct pglist page_free[VM_NFREELIST];	/* unallocated pages */
+	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
 	struct pglist page_active;	/* allocated pages, in use */
 	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
 	simple_lock_data_t pageqlock;	/* lock for active/inactive page q */
 	simple_lock_data_t fpageqlock;	/* lock for free page q */
 	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
+	boolean_t page_idle_zero;	/* TRUE if we should try to zero
+					   pages in the idle loop */
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
 	struct proc *pagedaemon_proc;	/* daemon's pid */
@@ -114,17 +116,6 @@ struct uvm {
 	struct uvm_object *kernel_object;
 };
 
-extern struct uvm uvm;
-
-/*
- * historys
- */
-
-#ifdef _KERNEL
-UVMHIST_DECL(maphist);
-UVMHIST_DECL(pdhist);
-#endif /* _KERNEL */
-
 /*
  * vm_map_entry etype bits:
  */
@@ -145,13 +136,25 @@ UVMHIST_DECL(pdhist);
 
 #ifdef _KERNEL
 
+extern struct uvm uvm;
+
 /*
- * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... front end for the 
- * uvm_sleep() function.
+ * historys
  */
 
-#define UVM_UNLOCK_AND_WAIT(event, lock, intr, msg, timo) \
-	uvm_sleep(event, lock, intr, msg, timo)
+UVMHIST_DECL(maphist);
+UVMHIST_DECL(pdhist);
+
+/*
+ * UVM_UNLOCK_AND_WAIT: atomic unlock+wait... wrapper around the
+ * interlocked tsleep() function.
+ */
+
+#define	UVM_UNLOCK_AND_WAIT(event, slock, intr, msg, timo)		\
+do {									\
+	(void) ltsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
+	    msg, timo, slock);						\
+} while (0)
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.c,v 1.13 2001/08/06 14:03:05 art Exp $	*/
-/*	$NetBSD: uvm_pager.c,v 1.26 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.14 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.30 2000/05/20 03:36:06 thorpej Exp $	*/
 
 /*
  *
@@ -55,7 +55,6 @@
  * list of uvm pagers in the system
  */
 
-extern struct uvm_pagerops aobj_pager;
 extern struct uvm_pagerops uvm_deviceops;
 extern struct uvm_pagerops uvm_vnodeops;
 
@@ -114,31 +113,39 @@ uvm_pager_init()
  *
  * we basically just map in a blank map entry to reserve the space in the
  * map and then use pmap_enter() to put the mappings in by hand.
- *
- * XXX It would be nice to know the direction of the I/O, so that we can
- * XXX map only what is necessary.
  */
 
 vaddr_t
-uvm_pagermapin(pps, npages, aiop, waitf)
+uvm_pagermapin(pps, npages, aiop, flags)
 	struct vm_page **pps;
 	int npages;
 	struct uvm_aiodesc **aiop;	/* OUT */
-	int waitf;
+	int flags;
 {
 	vsize_t size;
 	vaddr_t kva;
 	struct uvm_aiodesc *aio;
 	vaddr_t cva;
 	struct vm_page *pp;
+	vm_prot_t prot;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, aiop=0x%x, waitf=%d)",
-	      pps, npages, aiop, waitf);
+	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d, aiop=0x%x, flags=0x%x)",
+	      pps, npages, aiop, flags);
+
+	/*
+	 * compute protection.  outgoing I/O only needs read
+	 * access to the page, whereas incoming needs read/write.
+	 */
+
+	prot = VM_PROT_READ;
+	if (flags & UVMPAGER_MAPIN_READ)
+		prot |= VM_PROT_WRITE;
 
 ReStart:
 	if (aiop) {
-		MALLOC(aio, struct uvm_aiodesc *, sizeof(*aio), M_TEMP, waitf);
+		MALLOC(aio, struct uvm_aiodesc *, sizeof(*aio), M_TEMP,
+		    (flags & UVMPAGER_MAPIN_WAITOK));
 		if (aio == NULL)
 			return(0);
 		*aiop = aio;
@@ -147,15 +154,15 @@ ReStart:
 	}
 
 	size = npages << PAGE_SHIFT;
-	kva = NULL;			/* let system choose VA */
+	kva = 0;			/* let system choose VA */
 
 	if (uvm_map(pager_map, &kva, size, NULL, 
 	      UVM_UNKNOWN_OFFSET, UVM_FLAG_NOMERGE) != KERN_SUCCESS) {
-		if (waitf == M_NOWAIT) {
+		if ((flags & UVMPAGER_MAPIN_WAITOK) == 0) {
 			if (aio)
 				FREE(aio, M_TEMP);
 			UVMHIST_LOG(maphist,"<- NOWAIT failed", 0,0,0,0);
-			return(NULL);
+			return(0);
 		}
 		simple_lock(&pager_map_wanted_lock);
 		pager_map_wanted = TRUE; 
@@ -172,14 +179,8 @@ ReStart:
 		if ((pp->flags & PG_BUSY) == 0)
 			panic("uvm_pagermapin: page not busy");
 #endif
-
-		/*
-		 * XXX VM_PROT_DEFAULT includes VM_PROT_EXEC; is that
-		 * XXX really necessary?  It could lead to unnecessary
-		 * XXX instruction cache flushes.
-		 */
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    VM_PROT_DEFAULT, PMAP_WIRED | VM_PROT_READ | VM_PROT_WRITE);
+		    prot, PMAP_WIRED | prot);
 	}
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
@@ -358,41 +359,6 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
 
 	UVMHIST_LOG(maphist, "<- done",0,0,0,0);
 	return(ppsp);
-}
-
-
-/*
- * uvm_shareprot: generic share protect routine
- *
- * => caller must lock map entry's map
- * => caller must lock object pointed to by map entry
- */
-
-void
-uvm_shareprot(entry, prot)
-	vm_map_entry_t entry;
-	vm_prot_t prot;
-{
-	struct uvm_object *uobj = entry->object.uvm_obj;
-	struct vm_page *pp;
-	voff_t start, stop;
-	UVMHIST_FUNC("uvm_shareprot"); UVMHIST_CALLED(maphist);
-
-	if (UVM_ET_ISSUBMAP(entry)) 
-		panic("uvm_shareprot: non-object attached");
-
-	start = entry->offset;
-	stop = start + (entry->end - entry->start);
-
-	/*
-	 * traverse list of pages in object.   if page in range, pmap_prot it
-	 */
-
-	for (pp = uobj->memq.tqh_first ; pp != NULL ; pp = pp->listq.tqe_next) {
-		if (pp->offset >= start && pp->offset < stop)
-			pmap_page_protect(pp, prot);
-	}
-	UVMHIST_LOG(maphist, "<- done",0,0,0,0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.11 2001/07/18 14:27:07 art Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.12 2001/08/11 10:57:22 art Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.19 1999/11/04 21:51:42 thorpej Exp $	*/
 
 /* 
@@ -148,7 +148,7 @@ uvm_wait(wmsg)
 
 	simple_lock(&uvm.pagedaemon_lock);
 	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm.pagedaemon_lock, FALSE, wmsg,
+	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm.pagedaemon_lock, FALSE, (char *)wmsg,
 	    timo);
 
 	splx(s);

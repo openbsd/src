@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_device.h,v 1.6 2001/03/09 05:34:38 smart Exp $	*/
-/*	$NetBSD: uvm_device.h,v 1.8 1999/06/21 17:25:11 thorpej Exp $	*/
+/*	$OpenBSD: uvm_device.h,v 1.7 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.9 2000/05/28 10:21:55 drochner Exp $	*/
 
 /*
  *
@@ -70,7 +70,7 @@ struct uvm_device {
  * prototypes
  */
 
-struct uvm_object *udv_attach __P((void *, vm_prot_t, vaddr_t, vsize_t));
+struct uvm_object *udv_attach __P((void *, vm_prot_t, voff_t, vsize_t));
 
 #endif /* _KERNEL */
 

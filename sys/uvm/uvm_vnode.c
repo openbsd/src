@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.17 2001/08/06 14:03:05 art Exp $	*/
-/*	$NetBSD: uvm_vnode.c,v 1.30 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.18 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.33 2000/05/19 03:45:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -90,7 +90,6 @@ lock_data_t uvn_sync_lock;			/* locks sync operation */
 
 static int		   uvn_asyncget __P((struct uvm_object *, voff_t,
 					    int));
-struct uvm_object 	  *uvn_attach __P((void *, vm_prot_t));
 static void		   uvn_cluster __P((struct uvm_object *, voff_t,
 					   voff_t *, voff_t *));
 static void                uvn_detach __P((struct uvm_object *));
@@ -123,7 +122,6 @@ struct uvm_pagerops uvm_vnodeops = {
 	uvn_put,
 	uvn_cluster,
 	uvm_mk_pcluster, /* use generic version of this: see uvm_pager.c */
-	uvm_shareprot,	 /* !NULL: allow us in share maps */
 	NULL,		 /* AIO-DONE function (not until we have asyncio) */
 	uvn_releasepg,
 };
@@ -1594,7 +1592,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	struct iovec iov;
 	vaddr_t kva;
 	off_t file_offset;
-	int waitf, result;
+	int waitf, result, mapinflags;
 	size_t got, wanted;
 	UVMHIST_FUNC("uvn_io"); UVMHIST_CALLED(maphist);
 
@@ -1638,8 +1636,11 @@ uvn_io(uvn, pps, npages, flags, rw)
 	 * first try and map the pages in (without waiting)
 	 */
 
-	kva = uvm_pagermapin(pps, npages, NULL, M_NOWAIT);
-	if (kva == NULL && waitf == M_NOWAIT) {
+	mapinflags = (rw == UIO_READ) ?
+	    UVMPAGER_MAPIN_READ : UVMPAGER_MAPIN_WRITE;
+
+	kva = uvm_pagermapin(pps, npages, NULL, mapinflags);
+	if (kva == 0 && waitf == M_NOWAIT) {
 		simple_unlock(&uvn->u_obj.vmobjlock);
 		UVMHIST_LOG(maphist,"<- mapin failed (try again)",0,0,0,0);
 		return(VM_PAGER_AGAIN);
@@ -1654,9 +1655,9 @@ uvn_io(uvn, pps, npages, flags, rw)
 	uvn->u_nio++;			/* we have an I/O in progress! */
 	simple_unlock(&uvn->u_obj.vmobjlock);
 	/* NOTE: object now unlocked */
-	if (kva == NULL) {
-		kva = uvm_pagermapin(pps, npages, NULL, M_WAITOK);
-	}
+	if (kva == 0)
+		kva = uvm_pagermapin(pps, npages, NULL,
+		    mapinflags | UVMPAGER_MAPIN_WAITOK);
 
 	/*
 	 * ok, mapped in.  our pages are PG_BUSY so they are not going to

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.18 2001/08/06 14:03:04 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.31 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.19 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.36 2000/06/18 05:20:27 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -107,31 +107,6 @@ int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
 
 
 /*
- * uvm_sleep: atomic unlock and sleep for UVM_UNLOCK_AND_WAIT().
- */
-
-void
-uvm_sleep(event, slock, canintr, msg, timo)
-	void *event;
-	struct simplelock *slock;
-	boolean_t canintr;
-	const char *msg;
-	int timo;
-{
-	int s, pri;
-
-	pri = PVM;
-	if (canintr)
-		pri |= PCATCH;
-
-	s = splhigh();
-	if (slock != NULL)
-		simple_unlock(slock);
-	(void) tsleep(event, pri, (char *)msg, timo);
-	splx(s);
-}
-
-/*
  * uvm_kernacc: can the kernel access a region of memory
  *
  * - called from malloc [DIAGNOSTIC], and /dev/kmem driver (mem.c)
@@ -210,7 +185,7 @@ uvm_useracc(addr, len, rw)
  */
 void
 uvm_chgkprot(addr, len, rw)
-	register caddr_t addr;
+	caddr_t addr;
 	size_t len;
 	int rw;
 {
@@ -433,8 +408,8 @@ uvm_swapin(p)
 void
 uvm_scheduler()
 {
-	register struct proc *p;
-	register int pri;
+	struct proc *p;
+	int pri;
 	struct proc *pp;
 	int ppri;
 	UVMHIST_FUNC("uvm_scheduler"); UVMHIST_CALLED(maphist);
@@ -525,7 +500,7 @@ loop:
 void
 uvm_swapout_threads()
 {
-	register struct proc *p;
+	struct proc *p;
 	struct proc *outp, *outp2;
 	int outpri, outpri2;
 	int didswap = 0;
@@ -595,7 +570,7 @@ uvm_swapout_threads()
 
 static void
 uvm_swapout(p)
-	register struct proc *p;
+	struct proc *p;
 {
 	vaddr_t addr;
 	int s;

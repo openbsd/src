@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_swap.c,v 1.33 2001/08/06 22:34:44 mickey Exp $	*/
-/*	$NetBSD: uvm_swap.c,v 1.34 2000/02/07 20:16:59 thorpej Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.34 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.37 2000/05/19 03:45:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/disklabel.h>
@@ -48,10 +49,8 @@
 #include <sys/pool.h>
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
-#include <sys/conf.h>
 
 #include <vm/vm.h>
-
 #include <uvm/uvm.h>
 #ifdef UVM_SWAP_ENCRYPT
 #include <sys/syslog.h>
@@ -230,6 +229,9 @@ struct pool vndbuf_pool;
 	pool_put(&vndbuf_pool, (void *)(vbp));				\
 }
 
+/* /dev/drum */
+bdev_decl(sw);
+cdev_decl(sw);
 
 /*
  * local variables
@@ -1575,6 +1577,13 @@ sw_reg_iodone(bp)
 	}
 
 	/*
+	 * disassociate this buffer from the vnode (if any).
+	 */
+	if (vbp->vb_buf.b_vp != NULLVP) {
+		brelvp(&vbp->vb_buf);
+	}
+
+	/*
 	 * kill vbp structure
 	 */
 	putvndbuf(vbp);
@@ -1865,7 +1874,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	struct swapbuf *sbp;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	result, s, waitf, pflag;
+	int	result, s, mapinflags, pflag;
 #ifdef UVM_SWAP_ENCRYPT
 	vaddr_t dstkva;
 	struct vm_page *tpps[MAXBSIZE >> PAGE_SHIFT];
@@ -1888,9 +1897,12 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 * an aiodesc structure because we don't want to chance a malloc.
 	 * we've got our own pool of aiodesc structures (in swapbuf).
 	 */
-	waitf = (flags & B_ASYNC) ? M_NOWAIT : M_WAITOK;
-	kva = uvm_pagermapin(pps, npages, NULL, waitf);
-	if (kva == NULL)
+	mapinflags = (flags & B_READ) ? UVMPAGER_MAPIN_READ :
+	    UVMPAGER_MAPIN_WRITE;
+	if ((flags & B_ASYNC) == 0)
+		mapinflags |= UVMPAGER_MAPIN_WAITOK;
+	kva = uvm_pagermapin(pps, npages, NULL, mapinflags);
+	if (kva == 0)
 		return (VM_PAGER_AGAIN);
 
 #ifdef UVM_SWAP_ENCRYPT
@@ -1928,13 +1940,19 @@ uvm_swap_io(pps, startslot, npages, flags)
 		caddr_t src, dst;
 		struct swap_key *key;
 		u_int64_t block;
+		int swmapflags;
+
+		/* We always need write access. */
+		swmapflags = UVMPAGER_MAPIN_READ;
+		if ((flags & B_ASYNC) == 0)
+			swmapflags |= UVMPAGER_MAPIN_WAITOK;
 
 		if (!uvm_swap_allocpages(tpps, npages)) {
 			uvm_pagermapout(kva, npages);
 			return (VM_PAGER_AGAIN);
 		}
 		
-		dstkva = uvm_pagermapin(tpps, npages, NULL, waitf);
+		dstkva = uvm_pagermapin(tpps, npages, NULL, swmapflags);
 		if (dstkva == NULL) {
 			uvm_pagermapout(kva, npages);
 			uvm_swap_freepages(tpps, npages);

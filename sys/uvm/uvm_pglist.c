@@ -1,8 +1,6 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.6 2001/03/08 15:21:37 smart Exp $	*/
-/*	$NetBSD: uvm_pglist.c,v 1.8 1999/07/22 22:58:39 thorpej Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.7 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.10 2000/05/20 19:54:01 thorpej Exp $	*/
 
-#define VM_PAGE_ALLOC_MEMORY_STATS
- 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,9 +40,6 @@
 
 /*
  * uvm_pglist.c: pglist functions
- *
- * XXX: was part of uvm_page but has an incompatable copyright so it
- * gets its own file now.
  */
 
 #include <sys/param.h>
@@ -53,8 +48,6 @@
 #include <sys/proc.h>
 
 #include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
 
@@ -101,7 +94,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	paddr_t try, idxpa, lastidxpa;
 	int psi;
 	struct vm_page *pgs;
-	int s, tryidx, idx, end, error, free_list;
+	int s, tryidx, idx, pgflidx, end, error, free_list;
 	vm_page_t m;
 	u_long pagemask;
 #ifdef DEBUG
@@ -110,10 +103,10 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 
 #ifdef DIAGNOSTIC
 	if ((alignment & (alignment - 1)) != 0)
-		panic("vm_page_alloc_memory: alignment must be power of 2");
+		panic("uvm_pglistalloc: alignment must be power of 2");
 
 	if ((boundary & (boundary - 1)) != 0)
-		panic("vm_page_alloc_memory: boundary must be power of 2");
+		panic("uvm_pglistalloc: boundary must be power of 2");
 #endif
 	
 	/*
@@ -140,10 +133,8 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	s = uvm_lock_fpageq();		/* lock free page queue */
 
 	/* Are there even any free pages? */
-	for (idx = 0; idx < VM_NFREELIST; idx++)
-		if (uvm.page_free[idx].tqh_first != NULL)
-			break;
-	if (idx == VM_NFREELIST)
+	if (uvmexp.free <= (uvmexp.reserve_pagedaemon +
+	    uvmexp.reserve_kernel))
 		goto out;
 
 	for (;; try += alignment) {
@@ -207,6 +198,10 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 		}
 	}
 
+#if PGFL_NQUEUES != 2
+#error uvm_pglistalloc needs to be updated
+#endif
+
 	/*
 	 * we have a chunk of memory that conforms to the requested constraints.
 	 */
@@ -214,17 +209,23 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	while (idx < end) {
 		m = &pgs[idx];
 		free_list = uvm_page_lookup_freelist(m);
+		pgflidx = (m->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
 #ifdef DEBUG
-		for (tp = uvm.page_free[free_list].tqh_first;
-		     tp != NULL; tp = tp->pageq.tqe_next) {
+		for (tp = TAILQ_FIRST(&uvm.page_free[
+		  free_list].pgfl_queues[pgflidx]);
+		     tp != NULL;
+		     tp = TAILQ_NEXT(tp, pageq)) {
 			if (tp == m)
 				break;
 		}
 		if (tp == NULL)
 			panic("uvm_pglistalloc: page not on freelist");
 #endif
-		TAILQ_REMOVE(&uvm.page_free[free_list], m, pageq);
+		TAILQ_REMOVE(&uvm.page_free[free_list].pgfl_queues[pgflidx],
+		    m, pageq);
 		uvmexp.free--;
+		if (m->flags & PG_ZERO)
+			uvmexp.zeropages--;
 		m->flags = PG_CLEAN;
 		m->pqflags = 0;
 		m->uobject = NULL;
@@ -279,9 +280,12 @@ uvm_pglistfree(list)
 #endif
 		TAILQ_REMOVE(list, m, pageq);
 		m->pqflags = PQ_FREE;
-		TAILQ_INSERT_TAIL(&uvm.page_free[uvm_page_lookup_freelist(m)],
+		TAILQ_INSERT_TAIL(&uvm.page_free[
+		    uvm_page_lookup_freelist(m)].pgfl_queues[PGFL_UNKNOWN],
 		    m, pageq);
 		uvmexp.free++;
+		if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
+			uvm.page_idle_zero = vm_page_zero_enable;
 		STAT_DECR(uvm_pglistalloc_npages);
 	}
 

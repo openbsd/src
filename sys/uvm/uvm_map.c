@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.c,v 1.22 2001/08/06 14:03:04 art Exp $	*/
-/*	$NetBSD: uvm_map.c,v 1.70 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.23 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.77 2000/06/13 04:10:47 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -667,6 +667,7 @@ step3:
 		new_entry->aref.ar_pageoff = 0;
 		new_entry->aref.ar_amap = amap;
 	} else {
+		new_entry->aref.ar_pageoff = 0;
 		new_entry->aref.ar_amap = NULL;
 	}
 
@@ -1163,7 +1164,7 @@ uvm_map_reserve(map, size, offset, raddr)
 	vm_map_t map;
 	vsize_t size;
 	vaddr_t offset;    /* hint for pmap_prefer */
-	vaddr_t *raddr;	/* OUT: reserved VA */
+	vaddr_t *raddr;	/* IN:hint, OUT: reserved VA */
 {
 	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist); 
  
@@ -1563,13 +1564,15 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		while (entry->start < end && entry != &srcmap->header) {
 
 			if (copy_ok) {
-	oldoffset = (entry->start + fudge) - start;
-	elen = min(end, entry->end) - (entry->start + fudge);
-	pmap_copy(dstmap->pmap, srcmap->pmap, dstaddr + oldoffset, 
-		  elen, entry->start + fudge);
+				oldoffset = (entry->start + fudge) - start;
+				elen = min(end, entry->end) -
+				    (entry->start + fudge);
+				pmap_copy(dstmap->pmap, srcmap->pmap,
+				    dstaddr + oldoffset, elen,
+				    entry->start + fudge);
 			}
 
-      /* we advance "entry" in the following if statement */
+			/* we advance "entry" in the following if statement */
 			if (flags & UVM_EXTRACT_REMOVE) {
 				pmap_remove(srcmap->pmap, entry->start, 
 						entry->end);
@@ -2757,7 +2760,6 @@ uvmspace_unshare(p)
 	struct proc *p; 
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
-	int s;
  
 	if (ovm->vm_refcnt == 1)
 		/* nothing to do: vmspace isn't shared in the first place */
@@ -2766,11 +2768,9 @@ uvmspace_unshare(p)
 	/* make a new vmspace, still holding old one */
 	nvm = uvmspace_fork(ovm);
 
-	s = splhigh();			/* make this `atomic' */
 	pmap_deactivate(p);		/* unbind old vmspace */
 	p->p_vmspace = nvm; 
 	pmap_activate(p);		/* switch to new vmspace */
-	splx(s);			/* end of critical section */
 
 	uvmspace_free(ovm);		/* drop reference to old vmspace */
 }
@@ -2787,9 +2787,8 @@ uvmspace_exec(p)
 {
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	vm_map_t map = &ovm->vm_map;
-	int s;
 
-#ifdef sparc
+#ifdef __sparc__
 	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
 	kill_user_windows(p);   /* before stack addresses go away */
 #endif
@@ -2840,11 +2839,9 @@ uvmspace_exec(p)
 		 * install new vmspace and drop our ref to the old one.
 		 */
 
-		s = splhigh();
 		pmap_deactivate(p);
 		p->p_vmspace = nvm;
 		pmap_activate(p);
-		splx(s);
 
 		uvmspace_free(ovm);
 	}
@@ -3274,21 +3271,35 @@ uvm_object_printit(uobj, full, pr)
 	struct vm_page *pg;
 	int cnt = 0;
 
-	(*pr)("OBJECT %p: pgops=%p, npages=%d, ", uobj, uobj->pgops,
-	    uobj->uo_npages);
+	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
+	    uobj, uobj->vmobjlock.lock_data, uobj->pgops, uobj->uo_npages);
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		(*pr)("refs=<SYSTEM>\n");
 	else
 		(*pr)("refs=%d\n", uobj->uo_refs);
 
-	if (!full) return;
-	(*pr)("  PAGES <pg,offset>:\n  ");
-	for (pg = uobj->memq.tqh_first ; pg ; pg = pg->listq.tqe_next, cnt++) {
-		(*pr)("<%p,0x%lx> ", pg, pg->offset);
-		if ((cnt % 3) == 2) (*pr)("\n  ");
+	if (!full) {
+		return;
 	}
-	if ((cnt % 3) != 2) (*pr)("\n");
+	(*pr)("  PAGES <pg,offset>:\n  ");
+	for (pg = TAILQ_FIRST(&uobj->memq);
+	     pg != NULL;
+	     pg = TAILQ_NEXT(pg, listq), cnt++) {
+		(*pr)("<%p,0x%lx> ", pg, pg->offset);
+		if ((cnt % 3) == 2) {
+			(*pr)("\n  ");
+		}
+	}
+	if ((cnt % 3) != 2) {
+		(*pr)("\n");
+	}
 } 
+
+const char page_flagbits[] =
+	"\20\4CLEAN\5BUSY\6WANTED\7TABLED\12FAKE\13FILLED\14DIRTY\15RELEASED"
+	"\16FAULTING\17CLEANCHK";
+const char page_pqflagbits[] =
+	"\20\1FREE\2INACTIVE\3ACTIVE\4LAUNDRY\5ANON\6AOBJ";
 
 /*
  * uvm_page_print: print out a page
@@ -3316,12 +3327,16 @@ uvm_page_printit(pg, full, pr)
 	struct vm_page *lcv;
 	struct uvm_object *uobj;
 	struct pglist *pgl;
+	char pgbuf[128];
+	char pqbuf[128];
 
 	(*pr)("PAGE %p:\n", pg);
-	(*pr)("  flags=0x%x, pqflags=0x%x, vers=%d, wire_count=%d, pa=0x%lx\n", 
-	pg->flags, pg->pqflags, pg->version, pg->wire_count, (long)pg->phys_addr);
+	snprintf(pgbuf, sizeof(pgbuf), "%b", pg->flags, page_flagbits);
+	snprintf(pqbuf, sizeof(pqbuf), "%b", pg->pqflags, page_pqflagbits);
+	(*pr)("  flags=%s, pqflags=%s, vers=%d, wire_count=%d, pa=0x%lx\n",
+	    pgbuf, pqbuf, pg->version, pg->wire_count, (long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%lx loan_count=%d\n", 
-	pg->uobject, pg->uanon, pg->offset, pg->loan_count);
+	    pg->uobject, pg->uanon, pg->offset, pg->loan_count);
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->flags & PG_BUSY)
 		(*pr)("  owning process = %d, tag=%s\n",
@@ -3360,8 +3375,11 @@ uvm_page_printit(pg, full, pr)
 	}
 
 	/* cross-verify page queue */
-	if (pg->pqflags & PQ_FREE)
-		pgl = &uvm.page_free[uvm_page_lookup_freelist(pg)];
+	if (pg->pqflags & PQ_FREE) {
+		int fl = uvm_page_lookup_freelist(pg);
+		pgl = &uvm.page_free[fl].pgfl_queues[((pg)->flags & PG_ZERO) ?
+		    PGFL_ZEROS : PGFL_UNKNOWN];
+	}
 	else if (pg->pqflags & PQ_INACTIVE)
 		pgl = (pg->pqflags & PQ_SWAPBACKED) ? 
 		    &uvm.page_inactive_swp : &uvm.page_inactive_obj;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pager.h,v 1.9 2001/08/06 14:03:05 art Exp $	*/
-/*	$NetBSD: uvm_pager.h,v 1.12 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.10 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.15 2000/05/19 03:45:04 thorpej Exp $	*/
 
 /*
  *
@@ -88,8 +88,6 @@ struct uvm_pagerops {
 			 __P((struct uvm_object *, struct vm_page **,
 				 int *, struct vm_page *, int, voff_t,
 				 voff_t));
-	void			(*pgo_shareprot)	/* share protect */
-			 __P((vm_map_entry_t, vm_prot_t));
 	void			(*pgo_aiodone)		/* async iodone */
 			 __P((struct uvm_aiodesc *));
 	boolean_t		(*pgo_releasepg)	/* release page */
@@ -148,7 +146,11 @@ void		uvm_pagermapout __P((vaddr_t, int));
 struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 				       int *, struct vm_page *, int, 
 				       voff_t, voff_t));
-void		uvm_shareprot __P((vm_map_entry_t, vm_prot_t));
+
+/* Flags to uvm_pagermapin() */
+#define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */
+#define	UVMPAGER_MAPIN_READ	0x02	/* host <- device */
+#define	UVMPAGER_MAPIN_WRITE	0x00	/* device -> host (pseudo flag) */
 
 #endif /* _KERNEL */
 

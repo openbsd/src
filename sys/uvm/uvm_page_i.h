@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_page_i.h,v 1.7 2001/08/06 14:03:05 art Exp $	*/
-/*	$NetBSD: uvm_page_i.h,v 1.12 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$OpenBSD: uvm_page_i.h,v 1.8 2001/08/11 10:57:22 art Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.13 2000/05/08 23:11:53 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -216,7 +216,7 @@ uvm_pagedeactivate(pg)
 	}
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 #ifdef DIAGNOSTIC 
-		if (pg->wire_count)
+		if (__predict_false(pg->wire_count))
 			panic("uvm_pagedeactivate: caller did not check "
 			    "wire count");
 #endif
@@ -312,7 +312,7 @@ uvm_page_lookup_freelist(pg)
 
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
 #ifdef DIAGNOSTIC
-	if (lcv == -1)
+	if (__predict_false(lcv == -1))
 		panic("uvm_page_lookup_freelist: unable to locate physseg");
 #endif
 	return (vm_physmem[lcv].free_list);
