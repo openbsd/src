@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.8 1997/07/18 01:24:47 mickey Exp $
+$OpenBSD: README,v 1.9 1997/08/27 20:35:21 mickey Exp $
 
 # hmm, no copyright
 
@@ -119,3 +119,17 @@ whole gidt.S code must be in the 1st 64k of /boot .text section.
 This saves about 2k of code (idt initialization).
 APM information is now gathered and passed to the locore.s upon kernel
 startup as pointer to the struct apm_connect_info.
+
+
+Wed Aug 27 16:30:51 EDT 1997
+----------------------------
+
+BIOS boot device number is passed to kernel along with BIOS geometry for that
+drive and other info. APM connect info is passed as well not in that
+apm0 structure, so apm0 will become a slave on bios0 soon.
+To get your /boot installed properly on a hardrive you have to load /bsd
+from that hd/partition (since only boot drive geometry is passed).
+The passed geometry will be used for all the drives, if you
+will try to installboot on other disks (floppies and pseudo-disks will
+honour the disklabel), that might be usefull on some bioses,
+esp. SCSI HAs wich use fixed translated geometry for all the drives.
