@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.60 2004/11/10 12:41:58 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.61 2004/11/10 16:12:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -497,7 +497,7 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
 {
 	int	totlen;
 
-	if (prefix->af != AF_INET)
+	if (prefix->af != AF_INET && prefix->af != AF_INET6)
 		return (-1);
 
 	totlen = PREFIX_SIZE(plen);
