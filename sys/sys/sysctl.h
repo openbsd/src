@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.57 2002/07/06 19:14:20 nordin Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.58 2002/07/07 18:20:02 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -141,41 +141,43 @@ struct ctlname {
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
 #define	KERN_RAWPARTITION	24	/* int: raw partition number */
-#define	KERN_OSVERSION		25	/* string: kernel build version */
-#define	KERN_SOMAXCONN		26	/* int: listen queue maximum */
-#define	KERN_SOMINCONN		27	/* int: half-open controllable param */
-#define	KERN_USERMOUNT		28	/* int: users may mount filesystems */
-#define	KERN_RND		29	/* struct: rnd(4) statistics */
-#define	KERN_NOSUIDCOREDUMP	30	/* int: no setuid coredumps ever */ 
-#define	KERN_FSYNC		31	/* int: file synchronization support */
-#define	KERN_SYSVMSG		32	/* int: SysV message queue suppoprt */
-#define	KERN_SYSVSEM		33	/* int: SysV semaphore support */
-#define	KERN_SYSVSHM		34	/* int: SysV shared memory support */
-#define	KERN_ARND		35	/* int: random integer from arc4rnd */
-#define	KERN_MSGBUFSIZE		36	/* int: size of message buffer */
-#define KERN_MALLOCSTATS	37	/* node: malloc statistics */
-#define KERN_CPTIME		38	/* array: cp_time */
-#define KERN_NCHSTATS		39	/* struct: vfs cache statistics */
-#define KERN_FORKSTAT		40	/* struct: fork statistics */
-#define KERN_NSELCOLL		41	/* int: select(2) collisions */
-#define KERN_TTY		42	/* node: tty information */
-#define	KERN_CCPU		43	/* int: ccpu */
-#define	KERN_FSCALE		44	/* int: fscale */
-#define	KERN_NPROCS		45	/* int: number of processes */
-#define	KERN_MSGBUF		46	/* message buffer, KERN_MSGBUFSIZE */
-#define	KERN_POOL		47	/* struct: pool information */
-#define	KERN_STACKGAPRANDOM	48	/* int: stackgap_random */
-#define	KERN_SYSVIPC_INFO	49	/* struct: SysV sem/shm/msg info */
-#define KERN_USERCRYPTO		50	/* int: usercrypto */
-#define KERN_CRYPTODEVALLOWSOFT	51	/* int: cryptodevallowsoft */
-#define KERN_SPLASSERT		52	/* int: splassert */
-#define KERN_PROC_ARGS		53	/* node: proc args and env */
-#define	KERN_NFILES		54	/* int: number of open files */
-#define	KERN_TTYCOUNT		55	/* int: number of tty devices */
-#define KERN_NUMVNODES		56	/* int: number of vnodes in use */
-#define	KERN_MBSTAT		57	/* struct: mbuf statistics */
-#define KERN_USERASYMCRYPTO	58	/* int: usercrypto */
-#define	KERN_MAXID		59	/* number of valid kern ids */
+#define	KERN_NTPTIME		25	/* struct: extended-precision time */
+#define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
+#define	KERN_OSVERSION		27	/* string: kernel build version */
+#define	KERN_SOMAXCONN		28	/* int: listen queue maximum */
+#define	KERN_SOMINCONN		29	/* int: half-open controllable param */
+#define	KERN_USERMOUNT		30	/* int: users may mount filesystems */
+#define	KERN_RND		31	/* struct: rnd(4) statistics */
+#define	KERN_NOSUIDCOREDUMP	32	/* int: no setuid coredumps ever */ 
+#define	KERN_FSYNC		33	/* int: file synchronization support */
+#define	KERN_SYSVMSG		34	/* int: SysV message queue suppoprt */
+#define	KERN_SYSVSEM		35	/* int: SysV semaphore support */
+#define	KERN_SYSVSHM		36	/* int: SysV shared memory support */
+#define	KERN_ARND		37	/* int: random integer from arc4rnd */
+#define	KERN_MSGBUFSIZE		38	/* int: size of message buffer */
+#define KERN_MALLOCSTATS	39	/* node: malloc statistics */
+#define KERN_CPTIME		40	/* array: cp_time */
+#define KERN_NCHSTATS		41	/* struct: vfs cache statistics */
+#define KERN_FORKSTAT		42	/* struct: fork statistics */
+#define KERN_NSELCOLL		43	/* int: select(2) collisions */
+#define KERN_TTY		44	/* node: tty information */
+#define	KERN_CCPU		45	/* int: ccpu */
+#define	KERN_FSCALE		46	/* int: fscale */
+#define	KERN_NPROCS		47	/* int: number of processes */
+#define	KERN_MSGBUF		48	/* message buffer, KERN_MSGBUFSIZE */
+#define	KERN_POOL		49	/* struct: pool information */
+#define	KERN_STACKGAPRANDOM	50	/* int: stackgap_random */
+#define	KERN_SYSVIPC_INFO	51	/* struct: SysV sem/shm/msg info */
+#define KERN_USERCRYPTO		52	/* int: usercrypto */
+#define KERN_CRYPTODEVALLOWSOFT	53	/* int: cryptodevallowsoft */
+#define KERN_SPLASSERT		54	/* int: splassert */
+#define KERN_PROC_ARGS		55	/* node: proc args and env */
+#define	KERN_NFILES		56	/* int: number of open files */
+#define	KERN_TTYCOUNT		57	/* int: number of tty devices */
+#define KERN_NUMVNODES		58	/* int: number of vnodes in use */
+#define	KERN_MBSTAT		59	/* struct: mbuf statistics */
+#define KERN_USERASYMCRYPTO	60	/* int: usercrypto */
+#define	KERN_MAXID		61	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -203,6 +205,8 @@ struct ctlname {
 	{ "domainname", CTLTYPE_STRING }, \
 	{ "maxpartitions", CTLTYPE_INT }, \
 	{ "rawpartition", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
+	{ "gap", 0 }, \
 	{ "osversion", CTLTYPE_STRING }, \
 	{ "somaxconn", CTLTYPE_INT }, \
 	{ "sominconn", CTLTYPE_INT }, \
