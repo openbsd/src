@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.9 1997/04/18 01:28:01 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.10 1997/04/18 04:23:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -279,7 +279,7 @@ biosstrategy(void *devdata, int rw,
 #endif
 
 	/* handle floppies w/ different from drive geometry */
-	if (!(bd->biosdev & 0x80))
+	if (!(bd->biosdev & 0x80) && bd->disklabel.d_nsectors != 0)
 		spt = bd->disklabel.d_nsectors;
 	else
 		spt = BIOSNSECTS(bd->dinfo);
