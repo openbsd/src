@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.4 1998/02/10 05:03:30 jason Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.5 1998/04/30 01:43:46 jason Exp $	*/
 /*	$NetBSD: ncr53c9x.c,v 1.23 1998/01/31 23:37:51 pk Exp $	*/
 
 /*
@@ -455,7 +455,7 @@ ncr53c9x_select(sc, ecb)
 		size_t dmasize;
 
 		ecb->cmd.id = 
-		    MSG_IDENTIFY(lun, (ti->flags & T_RSELECTOFF)?0:1);
+		    MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
 
 		/* setup DMA transfer for command */
 		dmasize = clen = ecb->clen + 1;
@@ -484,7 +484,7 @@ ncr53c9x_select(sc, ecb)
 	 * happy for it to disconnect etc.
 	 */
 	NCR_WRITE_REG(sc, NCR_FIFO,
-		MSG_IDENTIFY(lun, (ti->flags & T_RSELECTOFF)?0:1));
+			MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1));
 
 	if (ti->flags & T_NEGOTIATE) {
 		/* Arbitrate, select and stop after IDENTIFY message */
@@ -853,7 +853,8 @@ ncr53c9x_reselect(sc, message)
 	for (ecb = sc->nexus_list.tqh_first; ecb != NULL;
 	     ecb = ecb->chain.tqe_next) {
 		sc_link = ecb->xs->sc_link;
-		if (sc_link->target == target && sc_link->lun == lun)
+		if (sc_link->target == target &&
+		    sc_link->lun == lun)
 			break;
 	}
 	if (ecb == NULL) {
