@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.34 2000/02/09 10:29:56 assar Exp $	*/
+/*	$OpenBSD: mount.h,v 1.35 2000/03/24 19:07:48 millert Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ union mount_info {
 /* new statfs structure with mount options */
 struct statfs {
 	u_int32_t  f_flags;		/* copy of mount flags */
-	u_int32_t  f_bsize;		/* fundamental file system block size */
+	int32_t    f_bsize;		/* fundamental file system block size */
 	u_int32_t  f_iosize;		/* optimal transfer block size */
 	u_int32_t  f_blocks;		/* total data blocks in file system */
 	u_int32_t  f_bfree;		/* free blocks in fs */

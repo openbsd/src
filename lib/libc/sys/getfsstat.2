@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfsstat.2,v 1.11 1999/12/31 03:43:23 millert Exp $
+.\"	$OpenBSD: getfsstat.2,v 1.12 2000/03/24 19:07:49 millert Exp $
 .\"	$NetBSD: getfsstat.2,v 1.6 1995/06/29 11:40:44 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -60,7 +60,7 @@ typedef struct { int32_t val[2]; } fsid_t;
 
 struct statfs {
     u_int32_t  f_flags;       /* copy of mount flags */
-    u_int32_t  f_bsize;       /* fundamental file system block size */
+    int32_t    f_bsize;       /* fundamental file system block size */
     u_int32_t  f_iosize;      /* optimal transfer block size */
     u_int32_t  f_blocks;      /* total data blocks in file system */
     u_int32_t  f_bfree;       /* free blocks in fs */

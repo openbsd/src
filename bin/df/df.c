@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.25 1999/12/31 05:00:04 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.26 2000/03/24 19:07:49 millert Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.25 1999/12/31 05:00:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.26 2000/03/24 19:07:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -382,7 +382,7 @@ prtstat(sfsp, maxwidth, headerlen, blocksize)
 		(void)printf(" %*u %8u %8d", headerlen,
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 		    fsbtoblk(used, sfsp->f_bsize, blocksize),
-		    fsbtoblk(sfsp->f_bavail, (int)sfsp->f_bsize, blocksize));
+		    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
 	(void)printf(" %5.0f%%",
 	    availblks == 0 ? 100.0 : (double)used / (double)availblks * 100.0);
 	if (iflag) {
