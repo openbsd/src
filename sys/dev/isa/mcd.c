@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.22 1997/10/18 10:37:12 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.23 1997/11/30 22:33:21 mickey Exp $ */
 /*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
@@ -81,6 +81,8 @@
 #include <dev/isa/mcdreg.h>
 #include <dev/isa/opti.h>
 
+#include <lib/libkern/libkern.h>
+
 #ifndef MCDDEBUG
 #define MCD_TRACE(fmt,a,b,c,d)
 #else
@@ -150,8 +152,6 @@ struct mcd_softc {
 cdev_decl(mcd);
 bdev_decl(mcd);
 
-static int bcd2bin __P((bcd_t));
-static bcd_t bin2bcd __P((int));
 static void hsg2msf __P((int, bcd_t *));
 static daddr_t msf2hsg __P((bcd_t *, int));
 
@@ -999,22 +999,6 @@ mcd_send(sc, mbx, diskin)
 		return EIO;
 
 	return 0;
-}
-
-static int
-bcd2bin(b)
-	bcd_t b;
-{
-
-	return (b >> 4) * 10 + (b & 15);
-}
-
-static bcd_t
-bin2bcd(b)
-	int b;
-{
-
-	return ((b / 10) << 4) | (b % 10);
 }
 
 static void
