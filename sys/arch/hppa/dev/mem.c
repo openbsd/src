@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.6 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.7 2002/02/02 21:06:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -76,21 +76,24 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
 #include <sys/types.h>
 #include <sys/device.h>
-
-#include <sys/conf.h>
 #include <sys/errno.h>
-#include <sys/systm.h>
-#include <sys/uio.h>
-#include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
-#include <sys/proc.h>
+
+#include <uvm/uvm.h>
 
 #include <machine/bus.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
+#include <machine/pmap.h>
 
 #include <hppa/dev/cpudevs.h>
 #include <hppa/dev/viper.h>
@@ -116,7 +119,11 @@ struct cfdriver mem_cd = {
 #define mmwrite mmrw
 cdev_decl(mm);
 
+extern char *vmmap;
 caddr_t zeropage;
+
+/* A lock for the vmmap, 16-byte aligned as PA-RISC semaphores must be. */
+static int32_t vmmap_lock __attribute__ ((aligned (16))) = 1;
 
 int
 memmatch(parent, cfdata, aux)   
@@ -229,9 +236,14 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register u_int	 	c;
-	register struct iovec 	*iov;
-	int 			error = 0;
+	extern u_int totalphysmem;
+	extern vaddr_t virtual_avail;
+	struct iovec 	*iov;
+	int32_t lockheld = 0;
+	vaddr_t	v, o;
+	vm_prot_t prot;
+	int rw, error = 0;
+	u_int 	c;
 
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -244,36 +256,104 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-		/* minor device 0 is physical memory */
-		case 0:
-			break;
-		/* minor device 1 is kernel memory */
-		case 1:
+		case 0:				/*  /dev/mem  */
+
+			/* If the address isn't in RAM, bail. */
+			v = uio->uio_offset;
+			if (btoc(v) > totalphysmem) {
+				error = EFAULT;
+				/* this will break us out of the loop */
+				continue;
+			}
+
+			/*
+			 * If the address is inside our large 
+			 * directly-mapped kernel BTLB entry, 
+			 * use kmem instead.
+			 */
+			if (v < virtual_avail)
+				goto use_kmem;
+
+			/*
+			 * If we don't already hold the vmmap lock,
+			 * acquire it.
+			 */
+			while (!lockheld) {
+				__asm __volatile("ldcws 0(%1), %0\n\tsync"
+				    : "=r" (lockheld) : "r" (&vmmap_lock));
+				if (lockheld)
+					break;
+				error = tsleep((caddr_t)&vmmap_lock, 
+				    PZERO | PCATCH,
+				    "mmrw", 0);
+				if (error)
+					return (error);
+			}
+
+			/* Temporarily map the memory at vmmap. */
+			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
+			    VM_PROT_WRITE;
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
+			    trunc_page(v), prot, prot|PMAP_WIRED);
+			pmap_update(pmap_kernel());
+			o = v & PGOFSET;
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
+			error = uiomove((caddr_t)vmmap + o, c, uio);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+			    (vaddr_t)vmmap + PAGE_SIZE);
+			pmap_update(pmap_kernel());
 			break;
 
-		case 2:
+		case 1:				/*  /dev/kmem  */
+			v = uio->uio_offset;
+use_kmem:
+			o = v & PGOFSET;
+			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
+			rw = (uio->uio_rw == UIO_READ) ? B_READ : B_WRITE;
+			if (!uvm_kernacc((caddr_t)v, c, rw)) {
+				error = EFAULT;
+				/* this will break us out of the loop */
+				continue;
+			}
+			error = uiomove((caddr_t)v, c, uio);
+			break;
+
+		case 2:				/*  /dev/null  */
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
 
-		case 12:
+		case 12:			/*  /dev/zero  */
+			/* Write to /dev/zero is ignored. */
 			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
+				uio->uio_resid = 0;
+				return (0);
+			} 
+			/* 
+			 * On the first call, allocate and zero a page
+			 * of memory for use with /dev/zero.
+			 */
+			if (zeropage == NULL) {
+				zeropage = (caddr_t)
+				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				memset(zeropage, 0, PAGE_SIZE);
 			}
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
-			continue;
+			break;
+
 		default:
 			return (ENXIO);
 		}
-		if (error)
-			break;
-		iov->iov_base += c;
-		iov->iov_len -= c;
-		uio->uio_offset += c;
-		uio->uio_resid -= c;
 	}
+
+	/* If we hold the vmmap lock, release it. */
+	if (lockheld) {
+		__asm __volatile("sync\n\tstw	%1, 0(%0)"
+		    :: "r" (&vmmap_lock), "r" (1));
+		wakeup((caddr_t)&vmmap_lock);
+	}
+
 	return (error);
 }
 
