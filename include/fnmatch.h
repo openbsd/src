@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.h,v 1.3 1997/09/22 05:03:30 millert Exp $	*/
+/*	$OpenBSD: fnmatch.h,v 1.4 1997/09/22 05:25:32 millert Exp $	*/
 /*	$NetBSD: fnmatch.h,v 1.5 1994/10/26 00:55:53 cgd Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #define	FNM_LEADING_DIR	0x08	/* Ignore /<tail> after Imatch. */
 #define	FNM_CASEFOLD	0x10	/* Case insensitive search. */
 #define	FNM_IGNORECASE	FNM_CASEFOLD
+#define	FNM_FILE_NAME	FNM_PATHNAME
 #endif
 
 #include <sys/cdefs.h>
