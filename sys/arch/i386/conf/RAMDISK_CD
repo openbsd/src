@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.36 2001/03/06 04:57:34 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.37 2001/03/09 11:36:24 mickey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -172,6 +172,8 @@ gdt*	at pci? dev ? function ?	# ICP Vortex GDT RAID controllers
 scsibus* at gdt?
 aac*	at pci? dev ? function ?	# Adaptec FSA RAID controllers
 scsibus* at aac?
+ami*	at pci? dev ? function ?	# AMI MegaRAID controllers
+scsibus* at ami?
 cac*	at pci? dev ? function ?	# Compaq Smart ARRAY RAID controllers
 cac*	at eisa? slot ?
 scsibus* at cac?
