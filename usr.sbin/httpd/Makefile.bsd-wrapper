@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.13 2000/04/18 21:48:38 fgsch Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.14 2000/07/07 18:53:02 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -441,7 +441,7 @@ all: 	prereq
 prereq: ${.OBJDIR}/config.status
 
 ${.OBJDIR}/config.status : ${.OBJDIR}/config.layout
-	cd ${.OBJDIR} && sh configure ${CONFIG_ARGS}
+	cd ${.OBJDIR} && OPTIM="${CFLAGS}" sh configure ${CONFIG_ARGS}
 
 .if !exists(${.OBJDIR}/config.layout)
 ${.OBJDIR}/config.layout: ${.CURDIR}/config.layout
