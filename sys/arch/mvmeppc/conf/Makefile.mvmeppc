@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.13 2003/05/13 22:45:11 miod Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.14 2003/05/23 22:16:16 tedu Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -143,7 +143,7 @@ clean::
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-		${PPC}/mvmeppc/Locore.c ${CFILES} ${PPC}/mvmeppc/swapgeneric.c \
+		${PPC}/mvmeppc/Locore.c \
 		ioconf.c param.c | \
 		grep -v 'static function .* unused'
 
