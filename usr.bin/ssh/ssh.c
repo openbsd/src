@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.6 1999/09/29 06:15:18 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.7 1999/09/29 11:45:50 provos Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -87,7 +87,7 @@ usage()
   fprintf(stderr, "Options:\n");
   fprintf(stderr, "  -l user     Log in using this user name.\n");
   fprintf(stderr, "  -n          Redirect input from /dev/null.\n");
-  fprintf(stderr, "  -k          Disable authentication agent forwarding.\n");
+  fprintf(stderr, "  -a          Disable authentication agent forwarding.\n");
 #if defined(KERBEROS_TGT_PASSING) || defined(AFS)
   fprintf(stderr, "              This also disables passing of AFS tokens/Kerberos tickets.\n");
 #endif /* KERBEROS_TGT_PASSING || AFS */
