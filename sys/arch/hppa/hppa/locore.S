@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.93 2002/10/17 20:35:24 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.94 2002/10/25 22:02:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -107,6 +107,30 @@
 	.data
 $trap_tmp_save			/* XXX assumed to be aligned on 2048 */
 	.block	TF_PHYS		/* XXX must be aligned to 64 */
+
+	.globl	intrcnt, eintrcnt, intrnames, eintrnames
+intrcnt
+	.block	16 * 4
+eintrcnt
+intrnames
+	.asciz	"spur"
+	.asciz	"lev1"
+	.asciz	"lev2"
+	.asciz	"lev3"
+	.asciz	"lev4"
+	.asciz	"lev5"
+	.asciz	"lev6"
+	.asciz	"lev7"
+	.asciz	"lev8"
+	.asciz	"lev9"
+	.asciz	"lev10"
+	.asciz	"lev11"
+	.asciz	"lev12"
+	.asciz	"lev13"
+	.asciz	"lev14"
+	.asciz	"lev15"
+	.asciz	"clock"
+eintrnames
 	.align	NBPG
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
