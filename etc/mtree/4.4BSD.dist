@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.69 1999/03/01 05:00:39 beck Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.70 1999/03/16 07:15:43 beck Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -69,6 +69,11 @@ ssl
 # ./etc/ssl/private
 private		uname=root mode=0700
 # ./etc/ssl/private
+..
+
+# ./etc/ssl/lib
+lib
+# ./etc/ssl/lib
 ..
 
 # ./etc/ssl
