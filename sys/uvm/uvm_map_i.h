@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map_i.h,v 1.13 2002/02/25 00:20:45 provos Exp $	*/
+/*	$OpenBSD: uvm_map_i.h,v 1.14 2002/02/25 05:38:50 provos Exp $	*/
 /*	$NetBSD: uvm_map_i.h,v 1.18 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -114,7 +114,6 @@ uvm_map_setup(map, min, max, flags)
 	int flags;
 {
 
-	RB_INIT(&map->rbhead);
 	map->header.next = map->header.prev = &map->header;
 	map->nentries = 0;
 	map->size = 0;
