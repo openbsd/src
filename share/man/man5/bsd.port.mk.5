@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.153 2004/11/17 11:01:55 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.154 2004/11/27 10:01:54 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1574,6 +1574,9 @@ if the port requires a lot of memory to compile, and the user is
 likely to see a message like
 .Qq virtual memory exhausted
 with the default process limits.
+.It Ev WANTLIB
+Extra list of library specifications that a package will need.
+May include system and X11 libraries.
 .It Ev WARNINGS
 User settings.
 If set to
