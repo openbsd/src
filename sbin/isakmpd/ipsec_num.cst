@@ -1,5 +1,5 @@
-#	$OpenBSD: ipsec_num.cst,v 1.3 1998/11/17 11:10:14 niklas Exp $
-#	$EOM: ipsec_num.cst,v 1.1 1998/07/25 11:19:11 niklas Exp $
+#	$OpenBSD: ipsec_num.cst,v 1.4 1998/11/20 07:34:07 niklas Exp $
+#	$EOM: ipsec_num.cst,v 1.2 1998/11/20 07:17:03 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -92,19 +92,19 @@ IPSEC_ID
 
 # IKE SA attributes
 IKE_ATTR
-  ENCRYPTION_ALGORITHM			1
-  HASH_ALGORITHM			2
-  AUTHENTICATION_METHOD			3
-  GROUP_DESCRIPTION			4
-  GROUP_TYPE				5
+  ENCRYPTION_ALGORITHM			1	ike_encrypt_cst
+  HASH_ALGORITHM			2	ike_hash_cst
+  AUTHENTICATION_METHOD			3	ike_auth_cst
+  GROUP_DESCRIPTION			4	ike_group_desc_cst
+  GROUP_TYPE				5	ike_group_cst
   GROUP_PRIME				6
   GROUP_GENERATOR_1			7
   GROUP_GENERATOR_2			8
   GROUP_CURVE_A				9
   GROUP_CURVE_B				10
-  LIFE_TYPE				11
+  LIFE_TYPE				11	ike_duration_cst
   LIFE_DURATION				12
-  PRF					13
+  PRF					13	ike_prf_cst
   KEY_LENGTH				14
   FIELD_SIZE				15
   GROUP_ORDER				16

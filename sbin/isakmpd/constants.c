@@ -1,5 +1,5 @@
-/*	$OpenBSD: constants.c,v 1.3 1998/11/17 11:10:08 niklas Exp $	*/
-/*	$EOM: constants.c,v 1.4 1998/08/28 23:04:27 niklas Exp $	*/
+/*	$OpenBSD: constants.c,v 1.4 1998/11/20 07:34:06 niklas Exp $	*/
+/*	$EOM: constants.c,v 1.5 1998/11/20 07:17:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -58,6 +58,17 @@ constant_lookup (struct constant_map *map, int value)
   for (entry = map; entry->name; entry++)
     if (entry->value == value)
       return entry->name;
+  return 0;
+}
+
+struct constant_map *
+constant_link_lookup (struct constant_map *map, int value)
+{
+  struct constant_map *entry = map;
+
+  for (entry = map; entry->name; entry++)
+    if (entry->value == value)
+      return entry->link;
   return 0;
 }
 

@@ -1,5 +1,6 @@
-#	$OpenBSD: genconstants.sh,v 1.2 1998/11/17 11:10:11 niklas Exp $
-#	$EOM: genconstants.sh,v 1.2 1998/07/24 22:25:42 niklas Exp $
+#	$OpenBSD: genconstants.sh,v 1.3 1998/11/20 07:34:07 niklas Exp $
+#	$EOM: genconstants.sh,v 1.3 1998/11/20 07:17:02 niklas Exp $
+#	$EOM: genconstants.sh,v 1.3 1998/11/20 07:17:02 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -106,7 +107,7 @@ BEGIN {
 }
 
 /^[ 	]/ && $1 {
-  printf ("  { %s_%s, \"%s\" }, \n", prefix, $1, $1)
+  printf ("  { %s_%s, \"%s\", %s }, \n", prefix, $1, $1, $3 ? $3 : 0)
   next
 }
 

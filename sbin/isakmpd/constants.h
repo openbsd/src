@@ -1,5 +1,5 @@
-/*	$OpenBSD: constants.h,v 1.3 1998/11/17 11:10:08 niklas Exp $	*/
-/*	$EOM: constants.h,v 1.4 1998/08/28 23:04:28 niklas Exp $	*/
+/*	$OpenBSD: constants.h,v 1.4 1998/11/20 07:34:06 niklas Exp $	*/
+/*	$EOM: constants.h,v 1.5 1998/11/20 07:17:01 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -40,8 +40,10 @@
 struct constant_map {
   int value;
   char *name;
+  struct constant_map *link;
 };
 
+struct constant_map *constant_link_lookup (struct constant_map *, int);
 extern char *constant_lookup (struct constant_map *, int);
 extern char *constant_name (struct constant_map *, int);
 extern char *constant_name_maps (struct constant_map **, int);
