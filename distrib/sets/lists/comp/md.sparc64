@@ -18,6 +18,7 @@
 ./usr/include/sparc64/asm.h
 ./usr/include/sparc64/autoconf.h
 ./usr/include/sparc64/boot_flag.h
+./usr/include/sparc64/bppioctl.h
 ./usr/include/sparc64/bsd_openprom.h
 ./usr/include/sparc64/bus.h
 ./usr/include/sparc64/cdefs.h

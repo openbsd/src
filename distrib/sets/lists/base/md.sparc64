@@ -1,4 +1,5 @@
 ./sbin/ldconfig
+./sbin/wsconsctl
 ./usr/bin/ldd
 ./usr/include/readline
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd3.0
@@ -1182,6 +1183,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/asm.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/autoconf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/boot_flag.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/bppioctl.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/bsd_openprom.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/bus.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/cdefs.ph
@@ -1858,3 +1860,4 @@
 ./usr/mdec/ofwboot
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
+./usr/sbin/wsconscfg
