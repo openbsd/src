@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.3 2000/09/19 05:32:21 rahnds Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.4 2000/09/19 05:56:51 rahnds Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -165,10 +165,6 @@ vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosi
 			goto bad;
 		printf("vgafb_common_probe, mmio done\n");
 		gotmmio = 1;
-	}
-	/* hack */
-	if (memsize > 0x00010000) { 
-		memsize = 0x00010000;
 	}
 	printf("vgafb_common_probe, mem base %x size %x memt %x\n",
 		membase, memsize, memt);
