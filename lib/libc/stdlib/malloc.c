@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.44 2001/11/01 07:00:51 mickey Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.45 2001/12/05 22:54:01 tdeval Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -726,19 +726,28 @@ malloc_make_chunks(bits)
 	}
     }
 
-    bp->size = (1UL<<bits);
-    bp->shift = bits;
-    bp->total = bp->free = malloc_pagesize >> bits;
-    bp->page = pp;
-
     /* memory protect the page allocated in the malloc(0) case */
     if (bits == 0) {
+
+	bp->size = 0;
+	bp->shift = 1;
+	i = malloc_minsize-1;
+	while (i >>= 1)
+	    bp->shift++;
+	bp->total = bp->free = malloc_pagesize >> bp->shift;
+	bp->page = pp;
+
 	k = mprotect(pp, malloc_pagesize, PROT_NONE);
 	if (k < 0) {
 	    ifree(pp);
 	    ifree(bp);
 	    return 0;
 	}
+    } else {
+	bp->size = (1UL<<bits);
+	bp->shift = bits;
+	bp->total = bp->free = malloc_pagesize >> bits;
+	bp->page = pp;
     }
 
     /* set all valid bits in the bitmap */
@@ -831,7 +840,7 @@ malloc_bytes(size)
     k += (lp-bp->bits)*MALLOC_BITS;
     k <<= bp->shift;
 
-    if (malloc_junk && bp->shift != 0)
+    if (malloc_junk && bp->size != 0)
 	memset((char *)bp->page + k, SOME_JUNK, bp->size);
 
     return (u_char *)bp->page + k;
@@ -924,7 +933,7 @@ irealloc(ptr, size)
     } else if (*mp >= MALLOC_MAGIC) {		/* Chunk allocation */
 
 	/* Check the pointer for sane values */
-	if (((u_long)ptr & ((*mp)->size-1))) {
+	if ((u_long)ptr & ((1UL<<((*mp)->shift))-1)) {
 	    wrtwarning("modified (chunk-) pointer.\n");
 	    return 0;
 	}
@@ -957,7 +966,7 @@ irealloc(ptr, size)
     if (p) {
 	/* copy the lesser of the two sizes, and free the old one */
 	/* Don't move from/to 0 sized region !!! */
-	if (osize != 1 && size != 0) {
+	if (osize != 0 && size != 0) {
 	    if (osize < size)
 		memcpy(p, ptr, osize);
 	    else
@@ -1121,7 +1130,7 @@ free_bytes(ptr, index, info)
     /* Find the chunk number on the page */
     i = ((u_long)ptr & malloc_pagemask) >> info->shift;
 
-    if (((u_long)ptr & (info->size-1))) {
+    if ((u_long)ptr & ((1UL<<(info->shift))-1)) {
 	wrtwarning("modified (chunk-) pointer.\n");
 	return;
     }
@@ -1131,19 +1140,21 @@ free_bytes(ptr, index, info)
 	return;
     }
 
-    if (malloc_junk && info->shift != 0)
+    if (malloc_junk && info->size != 0)
 	memset(ptr, SOME_JUNK, info->size);
 
     info->bits[i/MALLOC_BITS] |= 1UL<<(i%MALLOC_BITS);
     info->free++;
 
-    mp = page_dir + info->shift;
+    if (info->size != 0)
+	mp = page_dir + info->shift;
+    else
+	mp = page_dir;
 
     if (info->free == 1) {
 
 	/* Page became non-full */
 
-	mp = page_dir + info->shift;
 	/* Insert in address order */
 	while (*mp && (*mp)->next && (*mp)->next->page < info->page)
 	    mp = &(*mp)->next;
@@ -1169,7 +1180,7 @@ free_bytes(ptr, index, info)
     page_dir[ptr2index(info->page)] = MALLOC_FIRST;
 
     /* If the page was mprotected, unprotect it before releasing it */
-    if (info->shift == 0) {
+    if (info->size == 0) {
 	mprotect(info->page, malloc_pagesize, PROT_READ|PROT_WRITE);
 	/* Do we have to care if mprotect succeeds here ? */
     }
