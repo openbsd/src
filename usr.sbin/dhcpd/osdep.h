@@ -36,8 +36,6 @@
  * under a contract with Vixie Laboratories.
  */
 
-#include "site.h"
-
 /* Porting::
 
    If you add a new network API, you must add a check for it below: */
