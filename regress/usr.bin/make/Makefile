@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.17 2002/04/16 14:43:56 espie Exp $
+# $OpenBSD: Makefile,v 1.18 2002/04/16 16:15:30 espie Exp $
 
 # We don't pass t7, t13, t14, t17
 # and t16 yields piss poor performance
-REGRESSTARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17
+REGRESSTARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out
@@ -79,13 +79,16 @@ t16:
 t17:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk17
 
+t18:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk18
+
 z.a:
 	touch $@
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 regress
+.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17 t18 regress
 
 CLEANFILES+=t1.out z.a a.a a.b goodfile phony t15file
 
