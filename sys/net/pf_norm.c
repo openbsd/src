@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.9 2001/09/06 20:53:44 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.10 2001/09/08 02:10:33 provos Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -243,7 +243,8 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
     struct pf_frent *frent, int mff)
 {
 	struct mbuf *m = *m0, *m2;
-	struct pf_frent *frep, *frea, *next;
+	struct pf_frent *frea, *next;
+	struct pf_frent *frep = NULL;
 	struct ip *ip = frent->fr_ip;
 	int hlen = ip->ip_hl << 2;
 	u_int16_t off = ip->ip_off;
@@ -300,7 +301,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 		u_int16_t precut;
 
 		precut = frep->fr_ip->ip_off + frep->fr_ip->ip_len - off;
-		if (precut > ip->ip_len)
+		if (precut >= ip->ip_len)
 			goto drop_fragment;
 		if (precut) {
 			m_adj(frent->fr_m, precut);
