@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.19 1998/06/15 17:56:21 mickey Exp $
+.\"	$OpenBSD: sysctl.8,v 1.20 1999/02/23 04:20:27 marc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -180,6 +180,7 @@ privilege can change the value.
 .It hw.usermem	integer	no
 .It hw.pagesize	integer	no
 .It machdep.console_device	dev_t	no
+.It machdep.apmwarn	integer	yes (i386 only)
 .It user.cs_path	string	no
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
