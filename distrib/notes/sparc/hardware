@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.55 2003/06/29 16:38:53 miod Exp $
+dnl	$OpenBSD: hardware,v 1.56 2003/07/08 21:15:49 mickey Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -260,6 +260,10 @@ Supported devices {:-include-:}:
 	    Telecom Device TCD-HPC100
 	    Wisecom T210CT, iPort
 	    Xircom CFE-10
+	- 3Com EtherLink LAN PC Cards
+	    3Com 3C556, 3C562
+	    3Com 3C574TX, 3C[CX]FE574BT
+	    3Com 3C589, 3C589B, 3C589C, 3C589D, 3C589E
 
     * Miscellaneous:
 	- SBus Expansion Subsystem (SUNW,xbox) (xbox)
