@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.13 1997/07/31 20:04:40 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.14 1997/08/07 09:07:54 niklas Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -320,7 +320,7 @@ Gdtr:	.word	. - 1b
 
 	.globl	_block_table
 _block_table:
-	.word	0	/* cyllinder/sector */
+	.word	0	/* cylinder/sector */
 	.byte	0	/* head */
 	.byte	0	/* nsect */
 	. = _block_table + BLKCNT*4
