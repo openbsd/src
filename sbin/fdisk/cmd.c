@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.2 1997/09/29 23:33:32 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.3 1997/09/30 00:07:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -98,33 +98,40 @@ Xedit(cmd, disk, mbr, tt, offset)
 	mbr_t *tt;
 	int offset;
 {
-	int num;
+	int pn, num, ret;
 	prt_t *pp;
+
+	ret = CMD_CONT;
 
 	if(!isdigit(cmd->args[0])){
 		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
-		return(CMD_CONT);
+		return (ret);
 	}
-	num = atoi(cmd->args);
+	pn = atoi(cmd->args);
 
-	if(num < 0 || num > 3){
+	if(pn < 0 || pn > 3){
 		printf("Invalid partition number.\n");
-		return(CMD_CONT);
+		return (ret);
 	}
 
 	/* Print out current table entry */
-	pp = &mbr->part[num];
+	pp = &mbr->part[pn];
 	PRT_print(0, NULL);
-	PRT_print(num, pp);
+	PRT_print(pn, pp);
+
+#define	EDIT(p, f, v, n, m)				\
+	if ((num = ask_num(p, f, v, n, m)) != v)	\
+		ret = CMD_DIRTY;			\
+	v = num;
 
 	/* Ask for partition type */
-	pp->id = ask_num("Partition id", ASK_HEX, pp->id, 0, 0xFF);
+	EDIT("Partition id", ASK_HEX, pp->id, 0, 0xFF);
 
 	/* Unused, so just zero out */
 	if(pp->id == DOSPTYP_UNUSED){
 		memset(pp, 0, sizeof(*pp));
-		printf("Partiton %d cleared.\n", num);
-		return(CMD_DIRTY);
+		printf("Partiton %d cleared.\n", pn);
+		return(ret);
 	}
 
 	/* Change table entry */
@@ -137,31 +144,25 @@ Xedit(cmd, disk, mbr, tt, offset)
 		maxsect = disk->bios->sectors;
 
 		/* Get data */
-		pp->scyl = ask_num("Starting cylinder", ASK_DEC, pp->scyl, 0, maxcyl);
-		pp->shead = ask_num("Starting head", ASK_DEC, pp->shead, 0, maxhead);
-		pp->ssect = ask_num("Starting sector", ASK_DEC, pp->ssect, 1, maxsect);
-		pp->ecyl = ask_num("Ending cylinder", ASK_DEC, pp->ecyl, 0, maxcyl);
-		pp->ehead = ask_num("Ending head", ASK_DEC, pp->ehead, 0, maxhead);
-		pp->esect = ask_num("Ending sector", ASK_DEC, pp->esect, 1, maxsect);
-
+		EDIT("Starting cylinder", ASK_DEC, pp->scyl,  0, maxcyl);
+		EDIT("Starting head",     ASK_DEC, pp->shead, 0, maxhead);
+		EDIT("Starting sector",   ASK_DEC, pp->ssect, 1, maxsect);
+		EDIT("Ending cylinder",   ASK_DEC, pp->ecyl,  0, maxcyl);
+		EDIT("Ending head",       ASK_DEC, pp->ehead, 0, maxhead);
+		EDIT("Ending sector",     ASK_DEC, pp->esect, 1, maxsect);
 		/* Fix up off/size values */
 		PRT_fix_BN(disk, pp);
 	}else{
-		int start, size;
-
-
 		/* Get data */
-		start = disk->bios->size;
-		pp->bs = ask_num("Partition offset", ASK_DEC, pp->bs, 0, start);
-
-		size = disk->bios->size - pp->bs;
-		pp->ns = ask_num("Partition size", ASK_DEC, pp->ns, 1, size);
+		EDIT("Partition offset", ASK_DEC, pp->bs, 0, disk->bios->size);
+		EDIT("Partition size",   ASK_DEC, pp->ns, 1,
+		     disk->bios->size - pp->bs);
 
 		/* Fix up CHS values */
 		PRT_fix_CHS(disk, pp);
 	}
-
-	return(CMD_DIRTY);
+#undef EDIT
+	return(ret);
 }
 
 int
@@ -173,26 +174,26 @@ Xselect(cmd, disk, mbr, tt, offset)
 	int offset;
 {
 	int off;
-	int num;
+	int pn;
 
 	if(!isdigit(cmd->args[0])){
 		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
 		return(CMD_CONT);
 	}
 
-	num = atoi(cmd->args);
-	off = mbr->part[num].bs;
+	pn = atoi(cmd->args);
+	off = mbr->part[pn].bs;
 
 	/* Sanity checks */
-	if(mbr->part[num].id != DOSPTYP_EXTEND){
-		printf("Partition %d is not an extended partition.\n", num);
+	if(mbr->part[pn].id != DOSPTYP_EXTEND){
+		printf("Partition %d is not an extended partition.\n", pn);
 		return(CMD_CONT);
 	}
 	if(!off){
 		printf("Loop to offset 0!  Not selected.\n");
 		return(CMD_CONT);
 	}else{
-		printf("Selected extended partition %d\n", num);
+		printf("Selected extended partition %d\n", pn);
 		printf("New MBR at offset %d.\n", off);
 	}
 
@@ -313,27 +314,27 @@ Xflag(cmd, disk, mbr, tt, offset)
 	mbr_t *tt;
 	int offset;
 {
-	int i, num = -1;
+	int i, pn = -1;
 
 	/* Parse partition table entry number */
 	if(!isdigit(cmd->args[0])){
 		printf("Invalid argument: %s <partition number>\n", cmd->cmd);
 		return(CMD_CONT);
 	}
-	num = atoi(cmd->args);
+	pn = atoi(cmd->args);
 
-	if(num < 0 || num > 3){
+	if(pn < 0 || pn > 3){
 		printf("Invalid partition number.\n");
 		return(CMD_CONT);
 	}
 
 	/* Set active flag */
 	for(i = 0; i < 4; i++){
-		if(i == num) mbr->part[i].flag = DOSACTIVE;
+		if(i == pn) mbr->part[i].flag = DOSACTIVE;
 		else mbr->part[i].flag = 0x00;
 	}
 
-	printf("Partition %d marked active.\n", num);
+	printf("Partition %d marked active.\n", pn);
 
 	return(CMD_DIRTY);
 }
