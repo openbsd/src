@@ -21,6 +21,7 @@
 ./usr/share/doc/html/lynx_help/about_lynx.html
 ./usr/share/doc/html/lynx_help/keystrokes
 ./usr/share/doc/html/lynx_help/keystrokes/alt_edit_help.html
+./usr/share/doc/html/lynx_help/keystrokes/bashlike_edit_help.html
 ./usr/share/doc/html/lynx_help/keystrokes/bookmark_help.html
 ./usr/share/doc/html/lynx_help/keystrokes/cookie_help.html
 ./usr/share/doc/html/lynx_help/keystrokes/dired_help.html
