@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.com_err.inc,v 1.2 2003/06/23 14:39:14 mho Exp $
+# $OpenBSD: Makefile.com_err.inc,v 1.3 2003/07/15 19:29:29 deraadt Exp $
 
 DIR_COM_ERR=	${KRB5SRC}/lib/com_err
 HDR_COM_ERR=	com_err.h com_right.h
@@ -7,5 +7,7 @@ HDR_COM_ERR=	com_err.h com_right.h
 
 SRCS+=	com_err.c \
 	error.c
+
+MAN+=	com_err.3
 
 CFLAGS+=	-I${DIR_COM_ERR}
