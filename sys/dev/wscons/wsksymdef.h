@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.1 2000/05/16 23:49:12 mickey Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.2 2000/06/30 05:32:12 mickey Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.32 2000/05/13 12:16:35 bjh21 Exp $ */
 
 /*-
@@ -471,6 +471,7 @@
 #define KB_JP			0x0800
 #define KB_SV			0x0900
 #define KB_NO			0x0a00
+#define KB_ES			0x0b00
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
@@ -490,7 +491,8 @@
 	{ KB_UK,	"uk" }, \
 	{ KB_JP,	"jp" }, \
 	{ KB_SV,	"sv" }, \
-	{ KB_NO,	"no" }
+	{ KB_NO,	"no" }, \
+	{ KB_ES,	"es" }
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \
