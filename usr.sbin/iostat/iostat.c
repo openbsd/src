@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.18 2003/06/26 19:47:09 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.19 2004/02/15 02:45:47 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -265,14 +265,16 @@ double etime;
 			continue;
 
 		/* average Kbytes per transfer. */
-		if (cur.dk_xfer[dn])
-			mbps = (cur.dk_bytes[dn] / (1024.0)) / cur.dk_xfer[dn];
+		if (cur.dk_rxfer[dn] + cur.dk_wxfer[dn])
+			mbps = ((cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) /
+			    (1024.0)) / (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]);
 		else
 			mbps = 0.0;
 		(void)printf(" %5.2f", mbps);
 
 		/* average transfers per second. */
-		(void)printf(" %3.0f", cur.dk_xfer[dn] / etime);
+		(void)printf(" %3.0f",
+		    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
 
 		/* time busy in disk activity */
 		atime = (double)cur.dk_time[dn].tv_sec +
@@ -280,7 +282,8 @@ double etime;
 
 		/* Megabytes per second. */
 		if (atime != 0.0)
-			mbps = cur.dk_bytes[dn] / (double)(1024 * 1024);
+			mbps = (cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) /
+			    (double)(1024 * 1024);
 		else
 			mbps = 0;
 		(void)printf(" %4.2f ", mbps / etime);
@@ -299,10 +302,12 @@ double etime;
 			continue;
 
 		/* average kbytes per second. */
-		(void)printf(" %4.0f", cur.dk_bytes[dn] / (1024.0) / etime);
+		(void)printf(" %4.0f",
+		    (cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / (1024.0) / etime);
 
 		/* average transfers per second. */
-		(void)printf(" %3.0f", cur.dk_xfer[dn] / etime);
+		(void)printf(" %3.0f",
+		    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
 
 		/* average time busy in disk activity. */
 		atime = (double)cur.dk_time[dn].tv_sec +

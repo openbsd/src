@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.81 2004/01/15 20:39:33 otto Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.82 2004/02/15 02:45:47 tedu Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.81 2004/01/15 20:39:33 otto Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.82 2004/02/15 02:45:47 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -672,7 +672,8 @@ dkstats(void)
 	for (dn = 0; dn < dk_ndrive; ++dn) {
 		if (!dk_select[dn])
 			continue;
-		(void)printf("%3.0f ", cur.dk_xfer[dn] / etime);
+		(void)printf("%3.0f ",
+		    (cur.dk_rxfer[dn] + cur.dk_rxfer[dn]) / etime);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.34 2004/01/12 11:35:08 jmc Exp $	*/
+/*	$OpenBSD: fd.c,v 1.35 2004/02/15 02:45:46 tedu Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1363,7 +1363,7 @@ loop:
 		}
 		/*FALLTHROUGH*/
 	case SEEKCOMPLETE:
-		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
+		disk_unbusy(&fd->sc_dk, 0, 0);	/* no data on seek */
 
 		/* Make sure seek really happened. */
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 ||
@@ -1391,7 +1391,8 @@ loop:
 	case IOCOMPLETE: /* IO DONE, post-analyze */
 		timeout_del(&fdc->fdctimeout_to);
 
-		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid),
+		    (bp->b_flags & B_READ));
 
 		if (fdc->sc_nstat != 7 || st1 != 0 ||
 		    ((st0 & 0xf8) != 0 &&

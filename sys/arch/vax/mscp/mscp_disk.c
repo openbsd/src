@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.13 2003/06/02 23:27:57 millert Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.14 2004/02/15 02:45:46 tedu Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -324,8 +324,9 @@ rastrategy(bp)
 		goto done;
 
 	/* Make some statistics... /bqt */
-	ra->ra_disk.dk_xfer++;
-	ra->ra_disk.dk_bytes += bp->b_bcount;
+	s = splbio();
+	disk_busy(&ra->ra_disk);
+	splx(s);
 	mscp_strategy(bp, ra->ra_dev.dv_parent);
 	return;
 
@@ -707,8 +708,9 @@ rxstrategy(bp)
 	}
 
 	/* Make some statistics... /bqt */
-	rx->ra_disk.dk_xfer++;
-	rx->ra_disk.dk_bytes += bp->b_bcount;
+	s = splbio();
+	disk_busy(&rx->ra_disk);
+	splx(s);
 	mscp_strategy(bp, rx->ra_dev.dv_parent);
 	return;
 

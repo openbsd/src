@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.99 2004/02/14 15:09:22 grange Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.100 2004/02/15 02:45:46 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1528,10 +1528,14 @@ sysctl_diskinit(update, p)
 			    dk->dk_name ? dk->dk_name : "");
 			l += strlen(disknames + l);
 			sdk = diskstats + i;
+			strlcpy(sdk->ds_name, dk->dk_name,
+			    sizeof(sdk->ds_name));
 			sdk->ds_busy = dk->dk_busy;
-			sdk->ds_xfer = dk->dk_xfer;
+			sdk->ds_rxfer = dk->dk_rxfer;
+			sdk->ds_wxfer = dk->dk_wxfer;
 			sdk->ds_seek = dk->dk_seek;
-			sdk->ds_bytes = dk->dk_bytes;
+			sdk->ds_rbytes = dk->dk_rbytes;
+			sdk->ds_wbytes = dk->dk_wbytes;
 			sdk->ds_attachtime = dk->dk_attachtime;
 			sdk->ds_timestamp = dk->dk_timestamp;
 			sdk->ds_time = dk->dk_time;
@@ -1546,10 +1550,14 @@ sysctl_diskinit(update, p)
 		for (dk = TAILQ_FIRST(&disklist), i = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
 			sdk = diskstats + i;
+			strlcpy(sdk->ds_name, dk->dk_name,
+			    sizeof(sdk->ds_name));
 			sdk->ds_busy = dk->dk_busy;
-			sdk->ds_xfer = dk->dk_xfer;
+			sdk->ds_rxfer = dk->dk_rxfer;
+			sdk->ds_wxfer = dk->dk_wxfer;
 			sdk->ds_seek = dk->dk_seek;
-			sdk->ds_bytes = dk->dk_bytes;
+			sdk->ds_rbytes = dk->dk_rbytes;
+			sdk->ds_wbytes = dk->dk_wbytes;
 			sdk->ds_attachtime = dk->dk_attachtime;
 			sdk->ds_timestamp = dk->dk_timestamp;
 			sdk->ds_time = dk->dk_time;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.11 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: disk.h,v 1.12 2004/02/15 02:45:46 tedu Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -56,11 +56,16 @@ struct buf;
 struct disklabel;
 struct cpu_disklabel;
 
+#define DS_DISKNAMELEN	16
+
 struct diskstats {
+	char		ds_name[DS_DISKNAMELEN];
 	int		ds_busy;	/* busy counter */
-	u_int64_t	ds_xfer;	/* total number of transfers */
+	u_int64_t	ds_rxfer;	/* total number of read transfers */
+	u_int64_t	ds_wxfer;	/* total number of write transfers */
 	u_int64_t	ds_seek;	/* total independent seek operations */
-	u_int64_t	ds_bytes;	/* total bytes transferred */
+	u_int64_t	ds_rbytes;	/* total bytes read */
+	u_int64_t	ds_wbytes;	/* total bytes written */
 	struct timeval	ds_attachtime;	/* time disk was attached */
 	struct timeval	ds_timestamp;	/* timestamp of last unbusy */
 	struct timeval	ds_time;	/* total time spent busy */
@@ -78,9 +83,11 @@ struct disk {
 	 * on certain types of disks.
 	 */
 	int		dk_busy;	/* busy counter */
-	u_int64_t	dk_xfer;	/* total number of transfers */
+	u_int64_t	dk_rxfer;	/* total number of read transfers */
+	u_int64_t	dk_wxfer;	/* total number of write transfers */
 	u_int64_t	dk_seek;	/* total independent seek operations */
-	u_int64_t	dk_bytes;	/* total bytes transferred */
+	u_int64_t	dk_rbytes;	/* total bytes read */
+	u_int64_t	dk_wbytes;	/* total bytes written */
 	struct timeval	dk_attachtime;	/* time disk was attached */
 	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
 	struct timeval	dk_time;	/* total time spent busy */
@@ -154,7 +161,7 @@ int	disk_construct(struct disk *, char *);
 void	disk_attach(struct disk *);
 void	disk_detach(struct disk *);
 void	disk_busy(struct disk *);
-void	disk_unbusy(struct disk *, long);
+void	disk_unbusy(struct disk *, long, int);
 void	disk_resetstat(struct disk *);
 struct	disk *disk_find(char *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.21 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.22 2004/02/15 02:45:47 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.21 2003/06/03 02:56:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.22 2004/02/15 02:45:47 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -252,16 +252,18 @@ stats(int row, int col, int dn)
 	atime = (double)cur.dk_time[dn].tv_sec +
 		((double)cur.dk_time[dn].tv_usec / (double)1000000);
 
-	words = cur.dk_bytes[dn] / 1024.0;	/* # of K transferred */
+	/* # of K transferred */
+	words = (cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / 1024.0;
 	if (numbers) {
 		mvwprintw(wnd, row, col, "%5.0f%4.0f%5.1f",
-		    words / etime, cur.dk_xfer[dn] / etime, atime / etime);
+		    words / etime, (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) /
+		    etime, atime / etime);
 		return (row);
 	}
 	wmove(wnd, row++, col);
 	histogram(words / etime, 50, 0.5);
 	wmove(wnd, row++, col);
-	histogram(cur.dk_xfer[dn] / etime, 50, 0.5);
+	histogram((cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime, 50, 0.5);
 	if (secs) {
 		wmove(wnd, row++, col);
 		atime *= 1000;	/* In milliseconds */

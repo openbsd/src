@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.41 2003/10/17 23:05:39 tedu Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.42 2004/02/15 02:45:46 tedu Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -651,7 +651,6 @@ vndiodone(bp)
 	struct vndbuf *vbp = (struct vndbuf *) bp;
 	struct buf *pbp = vbp->vb_obp;
 	struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
-	long count;
 
 	splassert(IPL_BIO);
 
@@ -673,21 +672,22 @@ vndiodone(bp)
 	}
 	pbp->b_resid -= vbp->vb_buf.b_bcount;
 	putvndbuf(vbp);
-	count = pbp->b_bcount - pbp->b_resid;
-	if (pbp->b_resid == 0) {
-#ifdef DEBUG
-		if (vnddebug & VDB_IO)
-			printf("vndiodone: pbp %p iodone\n", pbp);
-#endif
-		biodone(pbp);
-	}
 	if (vnd->sc_tab.b_active) {
-		disk_unbusy(&vnd->sc_dk, count);
+		disk_unbusy(&vnd->sc_dk, (pbp->b_bcount - pbp->b_resid),
+		    (pbp->b_flags & B_READ));
 		if (vnd->sc_tab.b_actf)
 			vndstart(vnd);
 		else
 			vnd->sc_tab.b_active--;
 	}
+        if (pbp->b_resid == 0) {
+#ifdef DEBUG
+                if (vnddebug & VDB_IO)
+                        printf("vndiodone: pbp %p iodone\n", pbp);
+#endif
+                biodone(pbp);
+        }
+
 }
 
 /* ARGSUSED */

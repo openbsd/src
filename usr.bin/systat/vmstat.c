@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.43 2003/10/16 07:09:09 mickey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.44 2004/02/15 02:45:47 tedu Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.43 2003/10/16 07:09:09 mickey Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.44 2004/02/15 02:45:47 tedu Exp $";
 #endif /* not lint */
 
 /*
@@ -705,10 +705,12 @@ dinfo(int dn, int c)
 	atime = (double)cur.dk_time[dn].tv_sec +
 	    ((double)cur.dk_time[dn].tv_usec / (double)1000000);
 
-	words = cur.dk_bytes[dn] / 1024.0;	/* # of K transferred */
+	/* # of K transferred */
+	words = (cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / 1024.0;
 
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
-	putint((int)((float)cur.dk_xfer[dn]/etime+0.5), DISKROW + 2, c, 5);
+	putint((int)((float)(cur.dk_rxfer[dn] + cur.dk_wxfer[dn])/etime+0.5),
+	    DISKROW + 2, c, 5);
 	putint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
 	putfloat(atime/etime, DISKROW + 4, c, 5, 1, 1);
 }

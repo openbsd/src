@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdisk.c,v 1.7 2003/04/06 18:54:20 ho Exp $	*/
+/*	$OpenBSD: ofdisk.c,v 1.8 2004/02/15 02:45:47 tedu Exp $	*/
 /*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
@@ -270,7 +270,8 @@ ofdstrategy(bp)
 	} else
 		bp->b_resid = bp->b_bcount - read;
 
-	disk_unbusy(&of->sc_dk, bp->b_bcount - bp->b_resid);
+	disk_unbusy(&of->sc_dk, bp->b_bcount - bp->b_resid,
+	    (bp->b_flags & B_READ));
 
 done:
 	s = splbio();

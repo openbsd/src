@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.h,v 1.8 2002/12/16 01:57:04 tdeval Exp $	*/
+/*	$OpenBSD: dkstats.h,v 1.9 2004/02/15 02:45:47 tedu Exp $	*/
 /*	$NetBSD: dkstats.h,v 1.1 1996/05/10 23:19:28 thorpej Exp $	*/
 
 /*
@@ -41,9 +41,11 @@ struct _disk {
 	int		  dk_ndrive;	/* # of drives. */
 	int		 *dk_select;	/* Display stats for selected disks. */
 	char		**dk_name;	/* Disk names (sd0, wd1, etc). */
-	u_int64_t	 *dk_xfer;	/* # of transfers. */
+	u_int64_t	 *dk_rxfer;	/* # of read transfers. */
+	u_int64_t	 *dk_wxfer;	/* # of read transfers. */
 	u_int64_t	 *dk_seek;	/* # of seeks (currently unused). */
-	u_int64_t	 *dk_bytes;	/* # of bytes transferred. */
+	u_int64_t	 *dk_rbytes;	/* # of bytes read. */
+	u_int64_t	 *dk_wbytes;	/* # of bytes written. */
 	struct timeval	 *dk_time;	/* Time spent in disk i/o. */
 	int64_t	tk_nin;			/* TTY Chars in. */
 	int64_t	tk_nout;		/* TTY Chars out. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.54 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.55 2004/02/15 02:45:46 tedu Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1013,7 +1013,8 @@ ccdintr(cs, bp)
 	 */
 	if (bp->b_flags & B_ERROR)
 		bp->b_resid = bp->b_bcount;
-	disk_unbusy(&cs->sc_dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&cs->sc_dkdev, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 	biodone(bp);
 }
 

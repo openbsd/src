@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.23 2003/06/18 04:13:10 millert Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.24 2004/02/15 02:45:47 tedu Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -129,9 +129,11 @@ dkswap(void)
 			continue;
 
 		/* Delta Values. */
-		SWAP(dk_xfer[i]);
+		SWAP(dk_rxfer[i]);
+		SWAP(dk_wxfer[i]);
 		SWAP(dk_seek[i]);
-		SWAP(dk_bytes[i]);
+		SWAP(dk_rbytes[i]);
+		SWAP(dk_wbytes[i]);
 
 		/* Delta Time. */
 		timerclear(&tmp_timer);
@@ -205,56 +207,76 @@ dkreadstats(void)
 
 					if (j >= cur.dk_ndrive) {
 						cur.dk_select[i] = 1;
-						last.dk_xfer[i] = 0;
+						last.dk_rxfer[i] = 0;
+						last.dk_wxfer[i] = 0;
 						last.dk_seek[i] = 0;
-						last.dk_bytes[i] = 0;
+						last.dk_rbytes[i] = 0;
+						last.dk_wbytes[i] = 0;
 						bzero(&last.dk_time[i],
 						    sizeof(struct timeval));
 						continue;
 					}
 
 					cur.dk_select[i] = cur.dk_select[j];
-					last.dk_xfer[i] = last.dk_xfer[j];
+					last.dk_rxfer[i] = last.dk_rxfer[j];
+					last.dk_wxfer[i] = last.dk_wxfer[j];
 					last.dk_seek[i] = last.dk_seek[j];
-					last.dk_bytes[i] = last.dk_bytes[j];
+					last.dk_rbytes[i] = last.dk_rbytes[j];
+					last.dk_wbytes[i] = last.dk_wbytes[j];
 					last.dk_time[i] = last.dk_time[j];
 				}
 
 				cur.dk_select = realloc(cur.dk_select,
 				    dk_ndrive * sizeof(*cur.dk_select));
-				cur.dk_xfer = realloc(cur.dk_xfer,
-				    dk_ndrive * sizeof(*cur.dk_xfer));
+				cur.dk_rxfer = realloc(cur.dk_rxfer,
+				    dk_ndrive * sizeof(*cur.dk_rxfer));
+				cur.dk_wxfer = realloc(cur.dk_wxfer,
+				    dk_ndrive * sizeof(*cur.dk_wxfer));
 				cur.dk_seek = realloc(cur.dk_seek,
 				    dk_ndrive * sizeof(*cur.dk_seek));
-				cur.dk_bytes = realloc(cur.dk_bytes,
-				    dk_ndrive * sizeof(*cur.dk_bytes));
+				cur.dk_rbytes = realloc(cur.dk_rbytes,
+				    dk_ndrive * sizeof(*cur.dk_rbytes));
+				cur.dk_wbytes = realloc(cur.dk_wbytes,
+				    dk_ndrive * sizeof(*cur.dk_wbytes));
 				cur.dk_time = realloc(cur.dk_time,
 				    dk_ndrive * sizeof(*cur.dk_time));
-				last.dk_xfer = realloc(last.dk_xfer,
-				    dk_ndrive * sizeof(*last.dk_xfer));
+				last.dk_rxfer = realloc(last.dk_rxfer,
+				    dk_ndrive * sizeof(*last.dk_rxfer));
+				last.dk_wxfer = realloc(last.dk_rxfer,
+				    dk_ndrive * sizeof(*last.dk_rxfer));
 				last.dk_seek = realloc(last.dk_seek,
 				    dk_ndrive * sizeof(*last.dk_seek));
-				last.dk_bytes = realloc(last.dk_bytes,
-				    dk_ndrive * sizeof(*last.dk_bytes));
+				last.dk_rbytes = realloc(last.dk_rbytes,
+				    dk_ndrive * sizeof(*last.dk_rbytes));
+				last.dk_wbytes = realloc(last.dk_wbytes,
+				    dk_ndrive * sizeof(*last.dk_wbytes));
 				last.dk_time = realloc(last.dk_time,
 				    dk_ndrive * sizeof(*last.dk_time));
 			} else {
 				cur.dk_select = realloc(cur.dk_select,
 				    dk_ndrive * sizeof(*cur.dk_select));
-				cur.dk_xfer = realloc(cur.dk_xfer,
-				    dk_ndrive * sizeof(*cur.dk_xfer));
+				cur.dk_rxfer = realloc(cur.dk_rxfer,
+				    dk_ndrive * sizeof(*cur.dk_rxfer));
+				cur.dk_wxfer = realloc(cur.dk_wxfer,
+				    dk_ndrive * sizeof(*cur.dk_wxfer));
 				cur.dk_seek = realloc(cur.dk_seek,
 				    dk_ndrive * sizeof(*cur.dk_seek));
-				cur.dk_bytes = realloc(cur.dk_bytes,
-				    dk_ndrive * sizeof(*cur.dk_bytes));
+				cur.dk_rbytes = realloc(cur.dk_rbytes,
+				    dk_ndrive * sizeof(*cur.dk_rbytes));
+				cur.dk_wbytes = realloc(cur.dk_wbytes,
+				    dk_ndrive * sizeof(*cur.dk_wbytes));
 				cur.dk_time = realloc(cur.dk_time,
 				    dk_ndrive * sizeof(*cur.dk_time));
-				last.dk_xfer = realloc(last.dk_xfer,
-				    dk_ndrive * sizeof(*last.dk_xfer));
+				last.dk_rxfer = realloc(last.dk_rxfer,
+				    dk_ndrive * sizeof(*last.dk_rxfer));
+				last.dk_wxfer = realloc(last.dk_wxfer,
+				    dk_ndrive * sizeof(*last.dk_wxfer));
 				last.dk_seek = realloc(last.dk_seek,
 				    dk_ndrive * sizeof(*last.dk_seek));
-				last.dk_bytes = realloc(last.dk_bytes,
-				    dk_ndrive * sizeof(*last.dk_bytes));
+				last.dk_rbytes = realloc(last.dk_rbytes,
+				    dk_ndrive * sizeof(*last.dk_rbytes));
+				last.dk_wbytes = realloc(last.dk_wbytes,
+				    dk_ndrive * sizeof(*last.dk_wbytes));
 				last.dk_time = realloc(last.dk_time,
 				    dk_ndrive * sizeof(*last.dk_time));
 
@@ -265,9 +287,11 @@ dkreadstats(void)
 					    strcmp(cur.dk_name[j], dk_name[i]))
 					{
 						cur.dk_select[i] = 1;
-						last.dk_xfer[i] = 0;
+						last.dk_rxfer[i] = 0;
+						last.dk_wxfer[i] = 0;
 						last.dk_seek[i] = 0;
-						last.dk_bytes[i] = 0;
+						last.dk_rbytes[i] = 0;
+						last.dk_wbytes[i] = 0;
 						bzero(&last.dk_time[i],
 						    sizeof(struct timeval));
 						continue;
@@ -276,12 +300,16 @@ dkreadstats(void)
 					if (i > j) {
 						cur.dk_select[i] =
 						    cur.dk_select[j];
-						last.dk_xfer[i] =
-						    last.dk_xfer[j];
+						last.dk_rxfer[i] =
+						    last.dk_rxfer[j];
+						last.dk_wxfer[i] =
+						    last.dk_wxfer[j];
 						last.dk_seek[i] =
 						    last.dk_seek[j];
-						last.dk_bytes[i] =
-						    last.dk_bytes[j];
+						last.dk_rbytes[i] =
+						    last.dk_rbytes[j];
+						last.dk_wbytes[i] =
+						    last.dk_wbytes[j];
 						last.dk_time[i] =
 						    last.dk_time[j];
 					}
@@ -310,9 +338,11 @@ dkreadstats(void)
 		}
 
 		for (i = 0; i < cur.dk_ndrive; i++)	{
-			cur.dk_xfer[i] = q[i].ds_xfer;
+			cur.dk_rxfer[i] = q[i].ds_rxfer;
+			cur.dk_wxfer[i] = q[i].ds_wxfer;
 			cur.dk_seek[i] = q[i].ds_seek;
-			cur.dk_bytes[i] = q[i].ds_bytes;
+			cur.dk_rbytes[i] = q[i].ds_rbytes;
+			cur.dk_wbytes[i] = q[i].ds_wbytes;
 			timerset(&(q[i].ds_time), &(cur.dk_time[i]));
 		}
 		free(q);
@@ -346,9 +376,11 @@ dkreadstats(void)
 
 		for (i = 0; i < cur.dk_ndrive; i++) {
 			deref_kptr(p, &cur_disk, sizeof(cur_disk));
-			cur.dk_xfer[i] = cur_disk.dk_xfer;
+			cur.dk_rxfer[i] = cur_disk.dk_rxfer;
+			cur.dk_wxfer[i] = cur_disk.dk_wxfer;
 			cur.dk_seek[i] = cur_disk.dk_seek;
-			cur.dk_bytes[i] = cur_disk.dk_bytes;
+			cur.dk_rbytes[i] = cur_disk.dk_rbytes;
+			cur.dk_wbytes[i] = cur_disk.dk_wbytes;
 			timerset(&(cur_disk.dk_time), &(cur.dk_time[i]));
 			p = cur_disk.dk_link.tqe_next;
 		}
@@ -439,19 +471,24 @@ dkinit(int select)
 
 	/* allocate space for the statistics */
 	cur.dk_time = calloc(cur.dk_ndrive, sizeof(struct timeval));
-	cur.dk_xfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_rxfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_wxfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
 	cur.dk_seek = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	cur.dk_bytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_rbytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	cur.dk_wbytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
 	last.dk_time = calloc(cur.dk_ndrive, sizeof(struct timeval));
-	last.dk_xfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_rxfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_wxfer = calloc(cur.dk_ndrive, sizeof(u_int64_t));
 	last.dk_seek = calloc(cur.dk_ndrive, sizeof(u_int64_t));
-	last.dk_bytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_rbytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
+	last.dk_wbytes = calloc(cur.dk_ndrive, sizeof(u_int64_t));
 	cur.dk_select = calloc(cur.dk_ndrive, sizeof(int));
 	cur.dk_name = calloc(cur.dk_ndrive, sizeof(char *));
 	
-	if (!cur.dk_time || !cur.dk_xfer || !cur.dk_seek || !cur.dk_bytes ||
-	    !last.dk_time || !last.dk_xfer || !last.dk_seek ||
-	    !last.dk_bytes || !cur.dk_select || !cur.dk_name)
+	if (!cur.dk_time || !cur.dk_rxfer || !cur.dk_wxfer || !cur.dk_seek ||
+	    !cur.dk_rbytes || !cur.dk_wbytes || !last.dk_time ||
+	    !last.dk_rxfer || !last.dk_wxfer || !last.dk_seek ||
+	    !cur.dk_select || !cur.dk_name)
 		errx(1, "Memory allocation failure.");
 
 	/* Set up the compatibility interfaces. */

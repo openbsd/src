@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.24 2004/01/21 21:00:14 tedu Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.25 2004/02/15 02:45:46 tedu Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -371,9 +371,10 @@ disk_busy(diskp)
  * time, and reset the timestamp.
  */
 void
-disk_unbusy(diskp, bcount)
+disk_unbusy(diskp, bcount, read)
 	struct disk *diskp;
 	long bcount;
+	int read;
 {
 	int s;
 	struct timeval dv_time, diff_time;
@@ -390,10 +391,15 @@ disk_unbusy(diskp, bcount)
 
 	diskp->dk_timestamp = dv_time;
 	if (bcount > 0) {
-		diskp->dk_bytes += bcount;
-		diskp->dk_xfer++;
-	}
-	diskp->dk_seek++;
+		if (read) {
+			diskp->dk_rbytes += bcount;
+			diskp->dk_rxfer++;
+		} else {
+			diskp->dk_wbytes += bcount;
+			diskp->dk_wxfer++;
+		}
+	} else
+		diskp->dk_seek++;
 
 	add_disk_randomness(bcount ^ diff_time.tv_usec);
 }
@@ -430,8 +436,10 @@ disk_resetstat(diskp)
 {
 	int s = splbio(), t;
 
-	diskp->dk_xfer = 0;
-	diskp->dk_bytes = 0;
+	diskp->dk_rxfer = 0;
+	diskp->dk_rbytes = 0;
+	diskp->dk_wxfer = 0;
+	diskp->dk_wbytes = 0;
 	diskp->dk_seek = 0;
 
 	t = splclock();

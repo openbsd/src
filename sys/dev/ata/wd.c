@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.38 2004/02/02 21:29:38 tedu Exp $ */
+/*	$OpenBSD: wd.c,v 1.39 2004/02/15 02:45:47 tedu Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -648,7 +648,8 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 			printf("%s: soft error (corrected)\n",
 			    wd->sc_dev.dv_xname);
 	}
-	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
+	    (bp->b_flags & B_READ));
 #if NRND > 0
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
 #endif
