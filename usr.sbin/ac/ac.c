@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ac.c,v 1.16 2004/01/21 07:52:02 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ac.c,v 1.17 2004/03/18 01:28:40 tedu Exp $";
 #endif
 
 #include <sys/types.h>
@@ -486,7 +486,7 @@ ac(FILE	*fp)
 			 */
 			if (*usr.ut_name) {
 				if (strncmp(usr.ut_line, "tty", 3) != 0 ||
-				    strchr("pqrstuvwxyzPQRST", usr.ut_line[3]) != 0 ||
+				    strchr("pqrstuvwxyzPQRST", usr.ut_line[3]) != NULL ||
 				    *usr.ut_host != '\0')
 					head = log_in(head, &usr);
 			} else
@@ -496,7 +496,7 @@ ac(FILE	*fp)
 	}
 	(void)fclose(fp);
 	if (!(Flags & AC_W))
-		usr.ut_time = time((time_t *)0);
+		usr.ut_time = time(NULL);
 	(void)strlcpy(usr.ut_line, "~", sizeof usr.ut_line);
 
 	if (Flags & AC_D) {
@@ -518,7 +518,7 @@ ac(FILE	*fp)
 	head = log_out(head, &usr);
 
 	if (Flags & AC_D)
-		show_today(Users, head, time((time_t *)0));
+		show_today(Users, head, time(NULL));
 	else {
 		if (Flags & AC_P)
 			show_users(Users);
