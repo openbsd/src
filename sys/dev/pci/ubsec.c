@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.28 2000/08/15 17:39:19 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.29 2000/08/15 17:50:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -125,7 +125,6 @@ ubsec_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_addr_t iobase;
 	bus_size_t iosize;
 	u_int32_t cmd;
 
@@ -148,21 +147,17 @@ ubsec_attach(parent, self, aux)
 		return;
 	}
 
-	if (pci_mem_find(pc, pa->pa_tag, BS_BAR, &iobase, &iosize, NULL)) {
+	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_st, &sc->sc_sh, NULL, &iosize)) {
 		printf(": can't find mem space\n");
 		return;
 	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sc_sh)) {
-		printf(": can't map mem space\n");
-		return;
-	}
-	sc->sc_st = pa->pa_memt;
-
 	sc->sc_dmat = pa->pa_dmat;
 
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
 		printf(": couldn't map interrupt\n");
+		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -173,12 +168,16 @@ ubsec_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
 		return;
 	}
 
 	sc->sc_cid = crypto_get_driverid();
-	if (sc->sc_cid < 0)
+	if (sc->sc_cid < 0) {
+		pci_intr_disestablish(pc, sc->sc_ih);
+		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
 		return;
+	}
 
 	crypto_register(sc->sc_cid, CRYPTO_3DES_CBC,
 	    ubsec_newsession, ubsec_freesession, ubsec_process);
