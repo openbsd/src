@@ -2086,6 +2086,7 @@
 ./usr/share/pf/queue1
 ./usr/share/pf/queue2
 ./usr/share/pf/queue3
+./usr/share/pf/spamd
 ./usr/share/sendmail
 ./usr/share/sendmail/README
 ./usr/share/sendmail/TUNING
