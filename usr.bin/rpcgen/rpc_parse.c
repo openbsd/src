@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.11 2002/07/05 05:39:42 deraadt Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.12 2003/04/26 18:29:51 pvalchev Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -478,7 +478,6 @@ get_prog_declaration(dec, dkind, num)
 	int num;  /* arg number */
 {
 	token tok;
-	char name[10]; /* argument name */
 
 	if (dkind == DEF_PROGRAM) {
 		peek(&tok);
@@ -492,16 +491,15 @@ get_prog_declaration(dec, dkind, num)
 	}
 	get_type(&dec->prefix, &dec->type, dkind);
 	dec->rel = REL_ALIAS;
-	if (peekscan(TOK_IDENT, &tok))  /* optional name of argument */
-		strlcpy(name, tok.str, sizeof name);
-	else {
+	if (peekscan(TOK_IDENT, &tok)) {  /* optional name of argument */
+		dec->name = (char *)strdup(tok.str);
+		if (dec->name == NULL)
+			error("out of memory");
+	} else {
 		/* default name of argument */
-		snprintf(name, sizeof name, "%s%d", ARGNAME, num);
+		if (asprintf(&dec->name, "%s%d", ARGNAME, num) == -1)
+			error("out of memory");
 	}
-
-	dec->name = (char *)strdup(name);
-	if (dec->name == NULL)
-		error("out of memory");
 
 	if (streq(dec->type, "void"))
 		return;
