@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390var.h,v 1.1 1998/09/22 06:41:13 fgsch Exp $	*/
+/*	$OpenBSD: dp8390var.h,v 1.2 2000/04/19 21:52:38 fgsch Exp $	*/
 /*	$NetBSD: dp8390var.h,v 1.8 1998/08/12 07:19:09 scottr Exp $	*/
 
 /*
@@ -24,11 +24,7 @@ struct dp8390_softc {
 	void	*sc_ih;
 	int	sc_flags;		/* interface flags, from config */
 
-#ifdef __NetBSD__
-	struct ethercom sc_ec;		/* ethernet common */
-#else
 	struct arpcom sc_arpcom;	/* ethernet common */
-#endif
 	struct ifmedia sc_media;	/* supported media information */
 
 	bus_space_tag_t	sc_regt;	/* NIC register space tag */
@@ -58,10 +54,6 @@ struct dp8390_softc {
 	u_short	rec_page_start; /* first page of RX ring-buffer */
 	u_short	rec_page_stop;	/* last page of RX ring-buffer */
 	u_short	next_packet;	/* pointer to next unread RX packet */
-
-#ifdef __NetBSD__
-	u_int8_t sc_enaddr[6];	/* storage for MAC address */
-#endif
 
 	int	sc_enabled;	/* boolean; power enabled on interface */
 
@@ -143,10 +135,6 @@ void	dp8390_stop __P((struct dp8390_softc *));
 
 void	dp8390_rint __P((struct dp8390_softc *));
 
-#ifdef __NetBSD__
-void	dp8390_getmcaf __P((struct ethercom *, u_int8_t *));
-#else
 void	dp8390_getmcaf __P((struct arpcom *, u_int8_t *));
-#endif
 struct mbuf *dp8390_get __P((struct dp8390_softc *, int, u_short));
 void	dp8390_read __P((struct dp8390_softc *, int, u_short));
