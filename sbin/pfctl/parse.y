@@ -1,4 +1,4 @@
-/*      $OpenBSD: parse.y,v 1.2 2001/07/16 22:09:55 markus Exp $ */
+/*      $OpenBSD: parse.y,v 1.3 2001/07/16 22:43:19 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -282,10 +282,16 @@ port:		NUMBER			{ $$ = htons($1); }
 			struct servent *s = NULL;
 
 			/* use synthesysed attribute */
-			if (proto)
+			if (proto) {
 				s = getservbyname($1,
 				    proto == IPPROTO_TCP ? "tcp" : "udp");
-			$$ = (s == NULL) ? 0 : s->s_port;
+				if (s == NULL)
+					errx(1, "line %d: unknown protocol %s",
+					    lineno, $1);
+				$$ = s->s_port;
+			} else {
+				$$ = 0;
+			}
 		}
 		;
 
