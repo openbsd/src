@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtab_file.c	8.1 (Berkeley) 6/6/93
- *	$Id: mtab_file.c,v 1.1.1.1 1995/10/18 08:47:14 deraadt Exp $
+ *	$Id: mtab_file.c,v 1.2 2002/06/10 21:07:14 itojun Exp $
  */
 
 #include "am.h"
@@ -282,7 +282,7 @@ mntlist *mp;
 		plog(XLOG_WARNING, "No '/' in mtab (%s), using \".\" as tmp directory", mtab);
 		tmpname[0] = '.'; tmpname[1] = '\0';
 	}
-	strcat(tmpname, "/mtabXXXXXX");
+	strlcat(tmpname, "/mtabXXXXXX", sizeof(tmpname));
 	mktemp(tmpname);
 	retries = 0;
 enfile1:

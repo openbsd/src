@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount_fs.c	8.1 (Berkeley) 6/6/93
- *	$Id: mount_fs.c,v 1.5 2001/03/02 06:22:03 deraadt Exp $
+ *	$Id: mount_fs.c,v 1.6 2002/06/10 21:07:14 itojun Exp $
  */
 
 #include "am.h"
@@ -256,8 +256,7 @@ char *opt;
 	char *f;
 	char *o = t;
 	int l = strlen(opt);
-	strncpy(t, mnt->mnt_opts, MNTMAXSTR - 1);
-	t[MNTMAXSTR - 1] = 0;
+	strlcpy(t, mnt->mnt_opts, sizeof(t));
 
 	while (*(f = nextmntopt(&o)))
 		if (strncmp(opt, f, l) == 0)

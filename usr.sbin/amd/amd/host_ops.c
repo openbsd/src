@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.4 2001/03/02 06:22:02 deraadt Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.5 2002/06/10 21:07:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -367,7 +367,7 @@ mntfs *mf;
 	 * error code 0 at the end.  If they all fail then return
 	 * the last error code.
 	 */
-	strncpy(fs_name, mf->mf_info, sizeof(fs_name));
+	strlcpy(fs_name, mf->mf_info, sizeof(fs_name));
 	if ((rfs_dir = strchr(fs_name, ':')) == (char *) 0) {
 		plog(XLOG_FATAL, "host_fmount: mf_info has no colon");
 		error = EINVAL;

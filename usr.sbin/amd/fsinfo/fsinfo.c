@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.c,v 1.4 2001/01/02 20:01:35 mickey Exp $
+ *	$Id: fsinfo.c,v 1.5 2002/06/10 21:07:14 itojun Exp $
  */
 
 #ifndef lint
@@ -107,7 +107,7 @@ char *v[];
 		dumpset_pref = optarg;
 		break;
 	case 'h':
-		strncpy(hostname, optarg, sizeof(hostname)-1);
+		strlcpy(hostname, optarg, sizeof(hostname));
 		break;
 	case 'e':
 		if (exportfs_pref)

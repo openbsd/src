@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_passwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_passwd.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: info_passwd.c,v 1.2 2002/06/10 21:07:14 itojun Exp $
  */
 
 /*
@@ -125,11 +125,11 @@ time_t *tp;
 		do {
 			q = strrchr(p, '/');
 			if (q) {
-				strcat(rhost, q + 1);
-				strcat(rhost, ".");
+				strlcat(rhost, q + 1, sizeof(rhost));
+				strlcat(rhost, ".", sizeof(rhost));
 				*q = '\0';
 			} else {
-				strcat(rhost, p);
+				strlcat(rhost, p, sizeof(rhost));
 			}
 		} while (q);
 		/*

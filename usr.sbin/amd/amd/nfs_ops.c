@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.10 2002/05/26 02:49:50 deraadt Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.11 2002/06/10 21:07:14 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.10 2002/05/26 02:49:50 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.11 2002/06/10 21:07:14 itojun Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -507,7 +507,7 @@ mntfs *mf;
 #ifndef NFS_ARGS_NEEDS_PATH
 	*colon = '\0';
 #endif
-	strncpy(host, fs_name, sizeof(host));
+	strlcpy(host, fs_name, sizeof(host));
 #ifndef NFS_ARGS_NEEDS_PATH
 	*colon = ':';
 #endif /* NFS_ARGS_NEEDS_PATH */
