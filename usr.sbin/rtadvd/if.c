@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.15 2003/09/21 04:06:01 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.16 2003/09/23 18:18:09 itojun Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -85,53 +85,29 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 struct sockaddr_dl *
 if_nametosdl(char *name)
 {
-	int mib[6] = {CTL_NET, AF_ROUTE, 0, 0, NET_RT_IFLIST, 0};
-	char *buf, *next, *lim;
-	size_t len;
-	struct if_msghdr *ifm;
-	struct sockaddr *sa, *rti_info[RTAX_MAX];
-	struct sockaddr_dl *sdl = NULL, *ret_sdl = NULL;
+	struct ifaddrs *ifap, *ifa;
+	struct sockaddr_dl *sdl;
 
-	if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0)
+	if (getifaddrs(&ifap) != 0)
 		return (NULL);
-	if ((buf = malloc(len)) == NULL)
-		return (NULL);
-	if (sysctl(mib, 6, buf, &len, NULL, 0) < 0)
-		goto end;
 
-	lim = buf + len;
-	for (next = buf; next < lim; next += ifm->ifm_msglen) {
-		ifm = (struct if_msghdr *)next;
-		if (ifm->ifm_type == RTM_IFINFO) {
-			sa = (struct sockaddr *)(ifm + 1);
-			get_rtaddrs(ifm->ifm_addrs, sa, rti_info);
-			if ((sa = rti_info[RTAX_IFP]) != NULL) {
-				if (sa->sa_family == AF_LINK) {
-					sdl = (struct sockaddr_dl *)sa;
-					if (strlen(name) != sdl->sdl_nlen)
-						continue; /* not same len */
-					if (strncmp(&sdl->sdl_data[0],
-						    name,
-						    sdl->sdl_nlen) == 0) {
-						break;
-					}
-				}
-			}
-		}
-	}
-	if (next == lim) {
-		/* search failed */
-		goto end;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (strcmp(ifa->ifa_name, name) != 0)
+			continue;
+		if (ifa->ifa_addr->sa_family != AF_LINK)
+			continue;
+
+		sdl = malloc(ifa->ifa_addr->sa_len);
+		if (!sdl)
+			continue;	/*XXX*/
+
+		memcpy(sdl, ifa->ifa_addr, ifa->ifa_addr->sa_len);
+		freeifaddrs(ifap);
+		return (sdl);
 	}
 
-	if ((ret_sdl = malloc(sdl->sdl_len)) == NULL)
-		goto end;
-	memcpy((caddr_t)ret_sdl, (caddr_t)sdl, sdl->sdl_len);
-	return (ret_sdl);
-
-  end:
-	free(buf);
-	return (ret_sdl);
+	freeifaddrs(ifap);
+	return (NULL);
 }
 
 int
