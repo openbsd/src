@@ -35,7 +35,7 @@ krb_err.c krb_err.h: krb_err.et
 	${COMPILE_ET} krb_err.et
 	-test -h krb_err.et && rm krb_err.et
 
-beforeinstall:
+includes: krb_err.h
 	-cd ${.OBJDIR}; cmp -s krb_err.h ${DESTDIR}/usr/include/kerberosIV/krb_err.h || \
 	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 krb_err.h ${DESTDIR}/usr/include/kerberosIV
 

@@ -1,12 +1,14 @@
-#	$OpenBSD: Makefile,v 1.3 1996/05/15 08:51:59 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/06/02 07:21:30 tholo Exp $
 #	from @(#)Makefile	5.1 (Berkeley) 6/25/90
 
 # do compile_et and mk_cmds first, used by other directories
 
-.ifmake install
-SUBDIR=	include
-.else
+.ifnmake install
 SUBDIR=	compile_et mk_cmds
+.endif
+
+.ifmake includes
+SUBDIR+=include
 .endif
 
 SUBDIR+=acl com_err des krb kadm kafs kdb ss
@@ -18,8 +20,9 @@ SUBDIR+=ext_srvtab kadmin kadmind kdb_destroy kdb_edit kdb_init kdb_util \
 SUBDIR+=man
 
 build:
-	(cd ${.CURDIR}/include && ${MAKE} install)
+	(cd ${.CURDIR}/include && ${MAKE} includes)
 	${MAKE} cleandir
+	${MAKE} includes
 	(cd ${.CURDIR}/compile_et && ${MAKE} depend && ${MAKE})
 	(cd ${.CURDIR}/mk_cmds && ${MAKE} depend && ${MAKE})
 	(cd ${.CURDIR}/acl && ${MAKE} depend && ${MAKE} && ${MAKE} install)
