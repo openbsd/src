@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.62 2002/06/08 23:58:12 art Exp $	*/
+/*	$OpenBSD: cd.c,v 1.63 2002/06/08 23:59:47 art Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -504,7 +504,7 @@ cdstrategy(bp)
 	struct buf *bp;
 {
 	struct cd_softc *cd;
-	int opri;
+	int s;
 
 	if ((cd = cdlookup(CDUNIT(bp->b_dev))) == NULL) {
 		bp->b_error = ENXIO;
@@ -545,7 +545,7 @@ cdstrategy(bp)
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 
-	opri = splbio();
+	s = splbio();
 
 	/*
 	 * Place it in the queue of disk activities for this disk
@@ -559,7 +559,7 @@ cdstrategy(bp)
 	cdstart(cd);
 	
 	device_unref(&cd->sc_dev);
-	splx(opri);
+	splx(s);
 	return;
 
 bad:
@@ -569,9 +569,9 @@ done:
 	 * Correctly set the buf to indicate a completed xfer
 	 */
 	bp->b_resid = bp->b_bcount;
-	opri = splbio();
+	s = splbio();
 	biodone(bp);
-	splx(opri);
+	splx(s);
 	if (cd != NULL)
 		device_unref(&cd->sc_dev);
 }
