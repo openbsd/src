@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.84 2002/09/15 19:36:22 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.85 2002/09/18 16:14:31 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -33,11 +33,11 @@
 .Sh NAME
 .Nm pf.conf
 .Nd filtering and translation (NAT) rules file for the
-packet filter
+Packet Filter
 .Sh DESCRIPTION
 The
 .Xr pf 4
-packet filter drops, passes and modifies packets according to the
+Packet Filter drops, passes and modifies packets according to the
 rules defined in this file.
 Filter rules are used to selectively pass traffic while translation
 rules specify which addresses are to be mapped and which are to be
@@ -51,14 +51,14 @@ performed.
 In short: filters are last match, nat is first match.
 Rules must be in order: options, scrub, nat, filter.
 .Sh FILTER RULES
-While filter rules are typically manipulated using
-.Xr pfctl 8
+Although filter rules are typically manipulated using
+.Xr pfctl 8 ,
 other utilities may be written using the
 .Xr ioctl 2
 interface described in
 .Xr pf 4 .
 .Pp
-For each packet processed by the packet filter, the filter rules are
+For each packet processed by the Packet Filter, the filter rules are
 evaluated in sequential order, from first to last.
 Each rule either matches the packet or doesn't.
 The last matching rule decides what action is taken.
@@ -173,13 +173,13 @@ In this example pf is told to collect statistics on the interface named dc0:
     set loginterface dc0
 .Ed
 .Pp
-One can unset the loginterface using
+One stops interface statistics collection using
 .Bd -literal
     set loginterface none
 .Ed
 .Pp
 .Ss limit
-Sets hard limits on the memory pools used by the packet filter.
+Sets hard limits on the memory pools used by the Packet Filter.
 See
 .Xr pool 9
 for an explanation of memory pools.
@@ -208,7 +208,7 @@ environments:
 .Bl -tag -width "O high-latency " -compact
 .It Em default
 A normal network environment.
-Suitable for almost all networks.
+Suitable for most networks.
 .It Em normal
 Alias for
 .Em default
@@ -336,8 +336,10 @@ Common protocols used here are tcp, udp, icmp and ipv6-icmp.
 The rule applies only to packets with the specified source and destination
 addresses/ports.
 .Pp
-Addresses can be specified in CIDR notation (matching netblocks), as
-symbolic host names or interface names, or as any of the following keywords:
+Addresses can be specified in CIDR notation (1.2.3.0/24, matching
+the entire netblock), as
+symbolic host names (www.openbsd.org) or interface names (dc0), or as 
+any of the following keywords:
 .Bl -tag -width no-route -compact
 .It Em any
 means any address;
@@ -348,7 +350,8 @@ means any address which is not currently routable.
 Host name resolution and interface to address translation are done at
 rule set load-time. 
 When the address of an interface (or host name) changes (by DHCP or PPP,
-for instance), the rule set must be reloaded for the change to be reflected
+for instance), the rule set normally must be reloaded for the change 
+to be reflected
 in the kernel.
 Interface names surrounded by parentheses cause an automatic update of
 the rule whenever the referenced interface changes its address.
@@ -369,7 +372,7 @@ means
 hence ports 2001, 2002 and 2003.
 .It Em port 2000 <> 2004
 means 
-.Sq all ports < 2000 or > 2004 ,
+.Sq all ports < 2000 and > 2004 ,
 hence ports 1-1999 and 2005-65535.
 .El
 .Pp
@@ -512,7 +515,7 @@ option is to a NAT rule what the
 option is to a filter rule.
 This option causes matching packets to remain untranslated.
 .Sh ROUTING
-If a packet matches a rule with a route option set, the packet filter will
+If a packet matches a rule with a route option set, the Packet Filter will
 route the packet according to the type of route option.
 .Ss fastroute
 The
@@ -543,7 +546,7 @@ and underscores.
 Macros are not expanded recursively.
 .Sh STATEFUL INSPECTION
 .Em pf
-is a stateful packet filter, which means it can track the state of
+is a stateful Packet Filter, which means it can track the state of
 a connection.
 Instead of passing all traffic to port 25, for instance, one can pass
 only the initial packet and keep state.
@@ -741,7 +744,8 @@ on IP level, and such headers are not part of all fragments of a packet.
 It's even possible that no fragment contains a complete subprotocol
 header, because that header is split among fragments.
 .Pp
-There are two options for handling fragments in the packet filter:
+There are two options for handling fragments in the Packet Filter:
+A
 .Pp
 Using scrub rules, fragments can be reassembled by normalization.
 In this case, fragments are cached until they form a complete
