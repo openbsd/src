@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.11 2003/01/24 19:16:43 deraadt Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.12 2003/01/24 21:14:27 millert Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -55,7 +55,7 @@ static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #include <fcntl.h>
 #include <util.h>
 
-void	copyfile(int, int);
+void	copyfile(int, int, struct stat *);
 void	usage(void);
 
 int
@@ -85,12 +85,10 @@ main(int argc, char *argv[])
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
 	if (pfd < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
-	copyfile(pfd, tfd);
+	copyfile(pfd, tfd, &begin);
 	(void)close(tfd);
 
 	for (;;) {
-		if (stat(_PATH_MASTERPASSWD_LOCK, &begin))
-			pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
 		pw_edit(0, NULL);
 		if (stat(_PATH_MASTERPASSWD_LOCK, &end))
 			pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
@@ -107,14 +105,13 @@ main(int argc, char *argv[])
 }
 
 void
-copyfile(int from, int to)
+copyfile(int from, int to, struct stat *sb)
 {
 	int nr, nw, off;
 	char buf[8*1024];
-	struct stat sb;
 	struct timeval tv[2];
 
-	if (fstat(from, &sb) == -1)
+	if (fstat(from, sb) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 	while ((nr = read(from, buf, sizeof(buf))) > 0)
 		for (off = 0; off < nr; nr -= nw, off += nw)
@@ -123,8 +120,8 @@ copyfile(int from, int to)
 	if (nr < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
-	TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
+	TIMESPEC_TO_TIMEVAL(&tv[0], &sb->st_atimespec);
+	TIMESPEC_TO_TIMEVAL(&tv[1], &sb->st_mtimespec);
 	(void)futimes(to, tv);
 }
 
