@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.10 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: ln.c,v 1.11 2004/12/17 00:36:07 jaredy Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: ln.c,v 1.10 2003/06/02 23:32:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ln.c,v 1.11 2004/12/17 00:36:07 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,8 @@ usage(void)
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "usage: %s [-fhns] file1 file2\n\tln [-fs] file ... directory\n",
-	    __progname);
+	    "usage: %s [-fhns] file1 file2\n"
+	    "       %s [-fs] file ... directory\n",
+	    __progname, __progname);
 	exit(1);
 }

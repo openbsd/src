@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ln.1,v 1.20 2003/06/02 23:32:08 millert Exp $
+.\"	$OpenBSD: ln.1,v 1.21 2004/12/17 00:36:07 jaredy Exp $
 .\"	$NetBSD: ln.1,v 1.10 1995/07/25 19:37:04 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -45,8 +45,8 @@
 .Ar source_file
 .Op Ar target_file
 .Nm ln
-.Op Fl fhns
-.Ar source_file ...
+.Op Fl fs
+.Ar source_file ...\&
 .Op Ar target_dir
 .Sh DESCRIPTION
 The
@@ -122,27 +122,32 @@ makes links in
 .Ar target_dir
 to all the named source files.
 The links made will have the same name as the files being linked to.
+.Pp
+The
+.Nm
+utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
-.Li # ln -s /var/www /home/www
-.Pp
-Creates a symbolic link named
+Create a symbolic link named
 .Pa /home/www
-and points it to
-.Pa /var/www .
+and point it to
+.Pa /var/www :
 .Pp
-.Li # ln /usr/local/bin/fooprog-1.0 /usr/local/bin/fooprog
+.Dl # ln -s /var/www /home/www
 .Pp
 Hard link
 .Pa /usr/local/bin/fooprog
 to file
-.Pa /usr/local/bin/fooprog-1.0 .
+.Pa /usr/local/bin/fooprog-1.0 :
+.Pp
+.Dl # ln /usr/local/bin/fooprog-1.0 /usr/local/bin/fooprog
 .Pp
 As an exercise, try the following commands:
-.Pp
-.D1 Ic $ ls -i /bin/[
-.D1 Li 11553 /bin/[
-.D1 Ic $ ls -i /bin/test
-.D1 Li 11553 /bin/test
+.Bd -literal -offset indent
+$ ls -i /bin/[
+11553 /bin/[
+$ ls -i /bin/test
+11553 /bin/test
+.Ed
 .Pp
 Note that both files have the same inode; that is,
 .Pa /bin/[
@@ -155,16 +160,20 @@ may be invoked from shell scripts, for example, using the
 .Li "if [ ]"
 construct.
 .Pp
-.Li "$ mkdir bar baz; ln -s bar foo; ln -shf baz foo"
-.Pp
-The second call to
+In the next example, the second call to
 .Nm
 removes the original
 .Pa foo
 and creates a replacement pointing to
-.Pa baz .
+.Pa baz :
+.Bd -literal -offset indent
+$ mkdir bar baz
+$ ln -s bar foo
+$ ln -shf baz foo
+.Ed
+.Pp
 Without the
-.Ar -h
+.Fl h
 option, this would instead leave
 .Pa foo
 pointing to
