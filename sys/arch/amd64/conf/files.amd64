@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.4 2004/07/20 20:17:16 art Exp $
+#	$OpenBSD: files.amd64,v 1.5 2004/08/20 15:19:28 millert Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -89,6 +89,8 @@ file	arch/amd64/amd64/ioapic.c	ioapic needs-flag
 include "dev/pci/files.pci"
 file	arch/amd64/pci/pci_machdep.c	pci
 file	arch/amd64/pci/pciide_machdep.c	pciide
+
+include "dev/puc/files.puc"
 
 # PCI Host bridge chipsets
 device	pchb: pcibus

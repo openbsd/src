@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.26 2004/08/01 21:34:34 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.27 2004/08/20 15:19:28 millert Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -150,7 +150,7 @@ ugen*	at uhub? port ? configuration ? # USB Generic driver
 #option	SBP2_DEBUG
 #option	FWSCSI_DEBUG
 
-#puc*	at pci?				# PCI "universal" communication device
+puc*	at pci?				# PCI "universal" communication device
 
 #isadma0	at isa?
 
@@ -191,7 +191,7 @@ com1	at isa? port 0x2f8 irq 3
 #hsq0	at isa? port 0x140 irq 10	# Hostess 4-port serial card
 #com*	at hsq? slave ?
 #com*	at pcmcia? function ?		# PCMCIA modems/serial ports
-#com*	at puc? port ?
+com*	at puc? port ?
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
