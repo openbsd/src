@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.3 2001/09/11 20:05:24 miod Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.4 2001/09/15 01:51:11 mickey Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -32,17 +32,13 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 
 #include <dev/auconv.h>
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 
-#include <vm/vm.h>
-#include <uvm/uvm.h>
-
+#include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/pio.h>
 #include <macppc/dev/dbdma.h>
 
 #ifdef AWACS_DEBUG
@@ -51,12 +47,24 @@
 # define DPRINTF while (0) printf
 #endif
 
+#define	AWACS_DMALIST_MAX	32
+#define	AWACS_DMASEG_MAX	NBPG
+
+struct awacs_dma {
+	bus_dmamap_t map;
+	caddr_t addr;
+	bus_dma_segment_t segs[AWACS_DMALIST_MAX];
+	int nsegs;
+	size_t size;
+	struct awacs_dma *next;
+};
+
+
 struct awacs_softc {
 	struct device sc_dev;
 
 	void (*sc_ointr)(void *);	/* dma completion intr handler */
 	void *sc_oarg;			/* arg for sc_ointr() */
-	int sc_opages;			/* # of output pages */
 
 	void (*sc_iintr)(void *);	/* dma completion intr handler */
 	void *sc_iarg;			/* arg for sc_iintr() */
@@ -71,10 +79,14 @@ struct awacs_softc {
 	u_int sc_codecctl4;
 	u_int sc_soundctl;
 
+	bus_dma_tag_t sc_dmat;
 	struct dbdma_regmap *sc_odma;
 	struct dbdma_regmap *sc_idma;
-	struct dbdma_command *sc_odmacmd;
-	struct dbdma_command *sc_idmacmd;
+	struct dbdma_command *sc_odmacmd, *sc_odmap;
+	struct dbdma_command *sc_idmacmd, *sc_idmap;
+	dbdma_t sc_odbdma, sc_idbdma;
+
+	struct awacs_dma *sc_dmas;
 };
 
 int awacs_match(struct device *, void *, void *);
@@ -102,6 +114,7 @@ int awacs_query_devinfo(void *, mixer_devinfo_t *);
 size_t awacs_round_buffersize(void *, int, size_t);
 int awacs_mappage(void *, void *, int, int);
 int awacs_get_props(void *);
+void *awacs_allocm __P((void *, int, size_t, int, int));
 
 static inline u_int awacs_read_reg(struct awacs_softc *, int);
 static inline void awacs_write_reg(struct awacs_softc *, int, int);
@@ -122,31 +135,31 @@ struct cfdriver awacs_cd = {
 struct audio_hw_if awacs_hw_if = {
 	awacs_open,
 	awacs_close,
-	NULL,
+	NULL,			/* drain */
 	awacs_query_encoding,
 	awacs_set_params,
 	awacs_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	NULL,			/* commit_setting */
+	NULL,			/* init_output */
+	NULL,			/* init_input */
+	NULL,			/* start_output */
+	NULL,			/* start_input */
 	awacs_halt_output,
 	awacs_halt_input,
-	NULL,
+	NULL,			/* speaker_ctl */
 	awacs_getdev,
-	NULL,
+	NULL,			/* getfd */
 	awacs_set_port,
 	awacs_get_port,
 	awacs_query_devinfo,
-	NULL,
-	NULL,
-	NULL,
+	NULL,			/* allocm_old */
+	NULL,			/* freem */
+	NULL,			/* round_buffersize_old */
 	awacs_mappage,
 	awacs_get_props,
 	awacs_trigger_output,
 	awacs_trigger_input,
-	NULL,
+	awacs_allocm,
 	awacs_round_buffersize,
 
 };
@@ -255,10 +268,13 @@ awacs_attach(parent, self, aux)
 
 	sc->sc_reg = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
 
+	sc->sc_dmat = ca->ca_dmat;
 	sc->sc_odma = mapiodev(ca->ca_reg[2], ca->ca_reg[3]); /* out */
 	sc->sc_idma = mapiodev(ca->ca_reg[4], ca->ca_reg[5]); /* in */
-	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
-	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
+	sc->sc_odbdma = dbdma_alloc(sc->sc_dmat, AWACS_DMALIST_MAX);
+	sc->sc_odmacmd = sc->sc_odbdma->d_addr;
+	sc->sc_idbdma = dbdma_alloc(sc->sc_dmat, AWACS_DMALIST_MAX);
+	sc->sc_idmacmd = sc->sc_idbdma->d_addr;
 
 	if (ca->ca_nintr == 24) {
 		cirq = ca->ca_intr[0];
@@ -406,29 +422,35 @@ awacs_intr(v)
 	awacs_write_reg(sc, AWACS_SOUND_CTRL, reason); /* clear interrupt */
 	return 1;
 }
+
 int
 awacs_tx_intr(v)
 	void *v;
 {
 	struct awacs_softc *sc = v;
-	struct dbdma_command *cmd = sc->sc_odmacmd;
-	int count = sc->sc_opages;
-	int status;
+	struct dbdma_command *cmd = sc->sc_odmap;
+	u_int16_t c, status;
 
-	/* Fill used buffer(s). */
-	while (count-- > 0) {
-		/* if DBDMA_INT_ALWAYS */
-		if (in16rb(&cmd->d_command) & 0x30) {	/* XXX */
-			status = in16rb(&cmd->d_status);
-			cmd->d_status = 0;
-			if (status)	/* status == 0x8400 */
-				if (sc->sc_ointr)
-					(*sc->sc_ointr)(sc->sc_oarg);
-		}
-		cmd++;
+	/* if not set we are not running */
+	if (!cmd)
+		return (0);
+
+	c = in16rb(&cmd->d_command);
+	status = in16rb(&cmd->d_status);
+
+	if (c >> 12 == DBDMA_CMD_OUT_LAST)
+		sc->sc_odmap = sc->sc_odmacmd;
+	else
+		sc->sc_odmap++;
+
+	if (c & (DBDMA_INT_ALWAYS << 4)) {
+		cmd->d_status = 0;
+		if (status)	/* status == 0x8400 */
+			if (sc->sc_ointr)
+				(*sc->sc_ointr)(sc->sc_oarg);
 	}
 
-	return 1;
+	return (1);
 }
 
 int
@@ -614,9 +636,9 @@ awacs_round_blocksize(h, size)
 	void *h;
 	int size;
 {
-	if (size < NBPG)
-		size = NBPG;
-	return size & ~PGOFSET;
+	if (size < PAGE_SIZE)
+		size = PAGE_SIZE;
+	return (size + PAGE_SIZE / 2) & ~(PGOFSET);
 }
 
 int
@@ -628,6 +650,7 @@ awacs_halt_output(h)
 	dbdma_stop(sc->sc_odma);
 	dbdma_reset(sc->sc_odma);
 	dbdma_stop(sc->sc_odma);
+	sc->sc_odmap = NULL;
 	return 0;
 }
 
@@ -900,9 +923,77 @@ awacs_round_buffersize(h, dir, size)
 	int dir;
 	size_t size;
 {
-	if (size > 65536)
-		size = 65536;
-	return size;
+	size = (size + PGOFSET) & ~(PGOFSET);
+	if (size > AWACS_DMALIST_MAX * AWACS_DMASEG_MAX)
+		size = AWACS_DMALIST_MAX * AWACS_DMASEG_MAX;
+	return (size);
+}
+
+void *
+awacs_allocm(h, dir, size, type, flags)
+	void *h;
+	int dir, type, flags;
+	size_t size;
+{
+	struct awacs_softc *sc = h;
+	struct awacs_dma *p;
+	int error;
+
+	if (size > AWACS_DMALIST_MAX * AWACS_DMASEG_MAX)
+		return (NULL);
+
+	p = malloc(sizeof(*p), type, flags);
+	if (!p)
+		return (NULL);
+	bzero(p, sizeof(*p));
+
+	/* convert to the bus.h style, not used otherwise */
+	if (flags & M_NOWAIT)
+		flags = BUS_DMA_NOWAIT;
+
+	p->size = size;
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, p->size, NBPG, 0, p->segs,
+	    1, &p->nsegs, flags)) != 0) {
+		printf("%s: unable to allocate dma, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		free(p, type);
+		return NULL;
+	}
+
+	if ((error = bus_dmamem_map(sc->sc_dmat, p->segs, p->nsegs, p->size,
+	    &p->addr, flags | BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map dma, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		bus_dmamem_free(sc->sc_dmat, p->segs, p->nsegs);
+		free(p, type);
+		return NULL;
+	}
+
+	if ((error = bus_dmamap_create(sc->sc_dmat, p->size, 1,
+	    p->size, 0, flags, &p->map)) != 0) {
+		printf("%s: unable to create dma map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		bus_dmamem_unmap(sc->sc_dmat, p->addr, size);
+		bus_dmamem_free(sc->sc_dmat, p->segs, p->nsegs);
+		free(p, type);
+		return NULL;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat, p->map, p->addr, p->size,
+	    NULL, flags)) != 0) {
+		printf("%s: unable to load dma map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		bus_dmamap_destroy(sc->sc_dmat, p->map);
+		bus_dmamem_unmap(sc->sc_dmat, p->addr, size);
+		bus_dmamem_free(sc->sc_dmat, p->segs, p->nsegs);
+		free(p, type);
+		return NULL;
+	}
+
+	p->next = sc->sc_dmas;
+	sc->sc_dmas = p;
+
+	return p->addr;
 }
 
 int
@@ -934,43 +1025,38 @@ awacs_trigger_output(h, start, end, bsize, intr, arg, param)
 	struct audio_params *param;
 {
 	struct awacs_softc *sc = h;
+	struct awacs_dma *p;
 	struct dbdma_command *cmd = sc->sc_odmacmd;
-	vaddr_t va;
-	int i, len, intmode;
+	vaddr_t spa, pa, epa;
+	int c;
 
 	DPRINTF("trigger_output %p %p 0x%x\n", start, end, bsize);
 
+	for (p = sc->sc_dmas; p && p->addr != start; p = p->next);
+	if (!p)
+		return -1;
+
 	sc->sc_ointr = intr;
 	sc->sc_oarg = arg;
-	sc->sc_opages = ((char *)end - (char *)start) / NBPG;
+	sc->sc_odmap = sc->sc_odmacmd;
 
-#ifdef DIAGNOSTIC
-	if (sc->sc_opages > 16)
-		panic("awacs_trigger_output");
-#endif
+	spa = p->segs[0].ds_addr;
+	c = DBDMA_CMD_OUT_MORE;
+	for (pa = spa, epa = spa + (end - start);
+	    pa < epa; pa += bsize, cmd++) {
 
-	va = (vaddr_t)start;
-	len = 0;
-	for (i = sc->sc_opages; i > 0; i--) {
-		len += NBPG;
-		if (len < bsize)
-			intmode = DBDMA_INT_NEVER;
-		else {
-			len = 0;
-			intmode = DBDMA_INT_ALWAYS;
-		}
+		if (pa + bsize == epa)
+			c = DBDMA_CMD_OUT_LAST;
 
-		DBDMA_BUILD(cmd, DBDMA_CMD_OUT_MORE, 0, NBPG, vtophys(va),
-			intmode, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-		va += NBPG;
-		cmd++;
+		DBDMA_BUILD(cmd, c, 0, bsize, pa, DBDMA_INT_ALWAYS,
+			DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	}
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
+	dbdma_st32(&cmd->d_cmddep, sc->sc_odbdma->d_paddr);
 
-	dbdma_start(sc->sc_odma, sc->sc_odmacmd);
+	dbdma_start(sc->sc_odma, sc->sc_odbdma);
 
 	return 0;
 }

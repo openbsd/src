@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.3 2001/09/15 01:51:11 mickey Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -54,8 +54,8 @@
 
 #include <dev/ofw/openfirm.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/pio.h>
 
 #include <macppc/dev/dbdma.h>
 #include <macppc/dev/if_bmreg.h>
@@ -77,10 +77,10 @@ struct bmac_softc {
 #endif
 	struct ifmedia sc_media;
 	vaddr_t sc_regs;
-	dbdma_regmap_t *sc_txdma;
-	dbdma_regmap_t *sc_rxdma;
-	dbdma_command_t *sc_txcmd;
-	dbdma_command_t *sc_rxcmd;
+	bus_dma_tag_t sc_dmat;
+	dbdma_regmap_t *sc_txdma, *sc_rxdma;
+	dbdma_command_t *sc_txcmd, *sc_rxcmd;
+	dbdma_t sc_rxdbdma, sc_txdbdma;
 	caddr_t sc_txbuf;
 	caddr_t sc_rxbuf;
 	int sc_rxlast;
@@ -215,10 +215,13 @@ bmac_attach(parent, self, aux)
 	}
 	bcopy(laddr, sc->arpcom.ac_enaddr, 6);
 
+	sc->sc_dmat = ca->ca_dmat;
 	sc->sc_txdma = mapiodev(ca->ca_reg[2], 0x100);
 	sc->sc_rxdma = mapiodev(ca->ca_reg[4], 0x100);
-	sc->sc_txcmd = dbdma_alloc(BMAC_TXBUFS * sizeof(dbdma_command_t));
-	sc->sc_rxcmd = dbdma_alloc((BMAC_RXBUFS + 1) * sizeof(dbdma_command_t));
+	sc->sc_txdbdma = dbdma_alloc(sc->sc_dmat, BMAC_TXBUFS);
+	sc->sc_txcmd = sc->sc_txdbdma->d_addr;
+	sc->sc_rxdbdma = dbdma_alloc(sc->sc_dmat, BMAC_RXBUFS + 1);
+	sc->sc_rxcmd = sc->sc_rxdbdma->d_addr;
 	sc->sc_txbuf = malloc(BMAC_BUFLEN * BMAC_TXBUFS, M_DEVBUF, M_NOWAIT);
 	sc->sc_rxbuf = malloc(BMAC_BUFLEN * BMAC_RXBUFS, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_txbuf == NULL || sc->sc_rxbuf == NULL ||
@@ -411,11 +414,11 @@ bmac_init_dma(sc)
 	}
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_rxcmd));
+	dbdma_st32(&cmd->d_cmddep, sc->sc_rxdbdma->d_paddr);
 
 	sc->sc_rxlast = 0;
 
-	dbdma_start(sc->sc_rxdma, sc->sc_rxcmd);
+	dbdma_start(sc->sc_rxdma, sc->sc_rxdbdma);
 }
 
 #ifdef WHY_IS_THIS_XXXX
@@ -650,7 +653,7 @@ bmac_transmit_packet(sc, buff, len)
 	DBDMA_BUILD(cmd, DBDMA_CMD_STOP, 0, 0, 0,
 		DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
-	dbdma_start(sc->sc_txdma, sc->sc_txcmd);
+	dbdma_start(sc->sc_txdma, sc->sc_txdbdma);
 }
 
 int

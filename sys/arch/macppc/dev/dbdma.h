@@ -1,26 +1,26 @@
-/*	$OpenBSD: dbdma.h,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: dbdma.h,v 1.2 2001/09/15 01:51:11 mickey Exp $	*/
 /*	$NetBSD: dbdma.h,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
- * Copyright 1991-1998 by Open Software Foundation, Inc. 
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
- * 
+ * Copyright 1991-1998 by Open Software Foundation, Inc.
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
  */
 
 #include "machine/pio.h"
@@ -95,6 +95,7 @@
 #define	DBDMA_SET_CNTRL(x)	( ((x) | (x) << 16) )
 #define	DBDMA_CLEAR_CNTRL(x)	( (x) << 16)
 
+#define	DBDMA_COUNT_MAX		0x8000
 
 #define	DBDMA_REGMAP(channel) \
 		(dbdma_regmap_t *)((v_u_char *) POWERMAC_IO(PCI_DMA_BASE_PHYS) \
@@ -179,11 +180,11 @@ dbdma_ld16(a)
 	return	swap;
 }
 
-#define	DBDMA_LD4_ENDIAN(a) 	dbdma_ld32(a)
-#define	DBDMA_ST4_ENDIAN(a, x) 	dbdma_st32(a, x)
+#define	DBDMA_LD4_ENDIAN(a)	dbdma_ld32(a)
+#define	DBDMA_ST4_ENDIAN(a, x)	dbdma_st32(a, x)
 #else
-#define	DBDMA_LD4_ENDIAN(a) 	in32rb(a)
-#define	DBDMA_ST4_ENDIAN(a, x) 	out32rb(a, x)
+#define	DBDMA_LD4_ENDIAN(a)	in32rb(a)
+#define	DBDMA_ST4_ENDIAN(a, x)	out32rb(a, x)
 #define dbdma_st16(a,x)		out16rb((a),(x))
 #define dbdma_ld16(a)		in16rb(a)
 #define dbdma_st32(a,x)		out32rb((a),(x))
@@ -194,7 +195,7 @@ dbdma_ld16(a)
 /*
  * DBDMA Channel layout
  *
- * NOTE - This structure is in little-endian format. 
+ * NOTE - This structure is in little-endian format.
  */
 
 struct dbdma_regmap {
@@ -217,14 +218,23 @@ struct dbdma_regmap {
 typedef volatile struct dbdma_regmap dbdma_regmap_t;
 
 /* DBDMA routines */
+typedef
+struct dbdma_desc {
+	bus_dmamap_t d_map;
+	dbdma_command_t *d_addr;
+#define	d_paddr	d_segs->ds_addr
+	bus_dma_segment_t d_segs[1];
+	size_t d_size;
+} *dbdma_t;
 
-void	dbdma_start(dbdma_regmap_t *channel, dbdma_command_t *commands);
-void	dbdma_stop(dbdma_regmap_t *channel);	
+dbdma_t	dbdma_alloc(bus_dma_tag_t, int); /* Allocate command structures */
+void	dbdma_free(dbdma_t);	/* Dispose command structures */
+void	dbdma_start(dbdma_regmap_t *channel, dbdma_t dt);
+void	dbdma_stop(dbdma_regmap_t *channel);
 void	dbdma_flush(dbdma_regmap_t *channel);
 void	dbdma_reset(dbdma_regmap_t *channel);
 void	dbdma_continue(dbdma_regmap_t *channel);
 void	dbdma_pause(dbdma_regmap_t *channel);
 
-dbdma_command_t	*dbdma_alloc(int);	/* Allocate command structures */
 
 #endif /* !defined(_POWERMAC_DBDMA_H_) */

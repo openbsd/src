@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.2 2001/09/15 01:51:11 mickey Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -53,21 +53,17 @@
 #include "scsipi/scsiconf.h"
 #include "scsipi/scsi_message.h"*/
 
-
-
 #include <dev/ofw/openfirm.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/pio.h>
 
 #include "dbdma.h"
 #include "meshreg.h"
 
 #define T_SYNCMODE 0x01		/* target uses sync mode */
 #define T_SYNCNEGO 0x02		/* sync negotiation done */
-
-
 
 struct mesh_tinfo {
 	int flags;
@@ -97,14 +93,18 @@ struct mesh_scb {
 /* sc_flags value */
 #define MESH_DMA_ACTIVE	0x01
 
+#define	MESH_DMALIST_MAX	32
+
 struct mesh_softc {
 	struct device sc_dev;		/* us as a device */
 	struct scsi_link sc_link;
 	struct scsi_adapter sc_adapter;
 
 	u_char *sc_reg;			/* MESH base address */
+	bus_dma_tag_t sc_dmat;
 	dbdma_regmap_t *sc_dmareg;	/* DMA register address */
 	dbdma_command_t *sc_dmacmd;	/* DMA command area */
+	dbdma_t sc_dbdma;
 
 	int sc_flags;
 	int sc_cfflags;			/* copy of config flags */
@@ -154,8 +154,8 @@ void mesh_error __P((struct mesh_softc *, struct mesh_scb *, int, int));
 void mesh_select __P((struct mesh_softc *, struct mesh_scb *));
 void mesh_identify __P((struct mesh_softc *, struct mesh_scb *));
 void mesh_command __P((struct mesh_softc *, struct mesh_scb *));
-void mesh_dma_setup __P((struct mesh_softc *, struct mesh_scb *));
-void mesh_dataio __P((struct mesh_softc *, struct mesh_scb *));
+int mesh_dma_setup __P((struct mesh_softc *, struct mesh_scb *));
+int mesh_dataio __P((struct mesh_softc *, struct mesh_scb *));
 void mesh_status __P((struct mesh_softc *, struct mesh_scb *));
 void mesh_msgin __P((struct mesh_softc *, struct mesh_scb *));
 void mesh_msgout __P((struct mesh_softc *, int));
@@ -228,7 +228,7 @@ mesh_attach(parent, self, aux)
 {
 	struct mesh_softc *sc = (void *)self;
 	struct confargs *ca = aux;
-	int i;
+	int i, error;
 	u_int *reg;
 	
 	printf("MESH_ATTACH called\n");
@@ -252,6 +252,15 @@ mesh_attach(parent, self, aux)
 		printf(": cannot get clock-frequency\n");
 		return;
 	}
+
+	sc->sc_dmat = ca->ca_dmat;
+	if ((error = bus_dmamap_create(sc->sc_dmat,
+	    MESH_DMALIST_MAX * DBDMA_COUNT_MAX, MESH_DMALIST_MAX,
+	    DBDMA_COUNT_MAX, NBPG, BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
+		printf(": cannot create dma map, error = %d\n", error);
+		return;
+	}
+
 	sc->sc_freq /= 1000000;	/* in MHz */
 	sc->sc_minsync = 25;	/* maximum sync rate = 10MB/sec */
 	sc->sc_id = 7;
@@ -261,7 +270,8 @@ mesh_attach(parent, self, aux)
 	for (i = 0; i < sizeof(sc->sc_scb)/sizeof(sc->sc_scb[0]); i++)
 		TAILQ_INSERT_TAIL(&sc->free_scb, &sc->sc_scb[i], chain);
 
-	sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
+	sc->sc_dbdma = dbdma_alloc(sc->sc_dmat, MESH_DMALIST_MAX);
+	sc->sc_dmacmd = sc->sc_dbdma->d_addr;
 	timeout_set(&sc->sc_tmo, mesh_timeout, scb);
 
 	mesh_reset(sc);
@@ -363,6 +373,7 @@ mesh_intr(arg)
 
 	if (sc->sc_flags & MESH_DMA_ACTIVE) {
 		dbdma_stop(sc->sc_dmareg);
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap);
 
 		sc->sc_flags &= ~MESH_DMA_ACTIVE;
 		scb->resid = MESH_GET_XFER(sc);
@@ -411,7 +422,8 @@ mesh_intr(arg)
 		break;
 	case MESH_DATAIN:
 	case MESH_DATAOUT:
-		mesh_dataio(sc, scb);
+		if (mesh_dataio(sc, scb))
+			return (1);
 		printf("mesh_intr:case MESH_DATAIN or MESH_DATAOUT\n");
 		break;
 	case MESH_STATUS:
@@ -548,7 +560,7 @@ mesh_command(sc, scb)
 		sc->sc_nextstate = MESH_DATAIN;
 }
 
-void
+int
 mesh_dma_setup(sc, scb)
 	struct mesh_softc *sc;
 	struct mesh_scb *scb;
@@ -557,72 +569,52 @@ mesh_dma_setup(sc, scb)
 	int datain = scb->flags & MESH_READ;
 	dbdma_command_t *cmdp;
 	u_int cmd;
-	vaddr_t va;
-	int count, offset;
+	int i, error;
+
+	if ((error = bus_dmamap_load(sc->dmat, sc->sc_dmamap, scb->daddr,
+	    scb->dlen, NULL, BUS_DMA_NOWAIT)) != 0)
+		return (error);
 
 	cmdp = sc->sc_dmacmd;
 	cmd = datain ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;
 
-	count = scb->dlen;
-
-	if (count / NBPG > 32)
-		panic("mesh: transfer size >= 128k");
-
-	va = scb->daddr;
-	offset = va & PGOFSET;
-
-	/* if va is not page-aligned, setup the first page */
-	if (offset != 0) {
-		int rest = NBPG - offset;	/* the rest in the page */
-
-		if (count > rest) {		/* if continues to next page */
-			DBDMA_BUILD(cmdp, cmd, 0, rest, vtophys(va),
-				DBDMA_INT_NEVER, DBDMA_WAIT_NEVER,
-				DBDMA_BRANCH_NEVER);
-			count -= rest;
-			va += rest;
-			cmdp++;
-		}
-	}
-
-	/* now va is page-aligned */
-	while (count > NBPG) {
-		DBDMA_BUILD(cmdp, cmd, 0, NBPG, vtophys(va),
+	for (i = 0; i < sc->sc_dmamap->dm_nsegs; i++, cmdp++) {
+		if (i + 1 == sc->sc_dmamap->dm_nsegs)
+			cmd = read ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
+		DBDMA_BUILD(cmdp, cmd, 0, sc->sc_dmamap->dm_segs[i].ds_len,
+			sc->sc_dmamap->dm_segs[i].ds_addr,
 			DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-		count -= NBPG;
-		va += NBPG;
-		cmdp++;
 	}
-
-	/* the last page (count <= NBPG here) */
-	cmd = datain ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
-	DBDMA_BUILD(cmdp, cmd , 0, count, vtophys(va),
-		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
-	cmdp++;
 
 	DBDMA_BUILD(cmdp, DBDMA_CMD_STOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+
+	return (0);
 }
 
-void
+int
 mesh_dataio(sc, scb)
 	struct mesh_softc *sc;
 	struct mesh_scb *scb;
 {
-	mesh_dma_setup(sc, scb);
+	int error;
+
+	if ((error = mesh_dma_setup(sc, scb)))
+		return (error);
 
 	if (scb->dlen == 65536)
 		MESH_SET_XFER(sc, 0);	/* TC = 0 means 64KB transfer */
 	else
 		MESH_SET_XFER(sc, scb->dlen);
 
-	if (scb->flags & MESH_READ)
-		mesh_set_reg(sc, MESH_SEQUENCE, MESH_CMD_DATAIN | MESH_SEQ_DMA);
-	else
-		mesh_set_reg(sc, MESH_SEQUENCE, MESH_CMD_DATAOUT | MESH_SEQ_DMA);
-	dbdma_start(sc->sc_dmareg, sc->sc_dmacmd);
+	mesh_set_reg(sc, MESH_SEQUENCE, MESH_SEQ_DMA |
+	    (scb->flags & MESH_READ)? MESH_CMD_DATAIN : MESH_CMD_DATAOUT);
+
+	dbdma_start(sc->sc_dmareg, sc->sc_dbdma);
 	sc->sc_flags |= MESH_DMA_ACTIVE;
 	sc->sc_nextstate = MESH_STATUS;
+
+	return (0);
 }
 
 void
