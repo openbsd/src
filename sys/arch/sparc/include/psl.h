@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.15 2002/08/12 10:44:04 miod Exp $	*/
+/*	$OpenBSD: psl.h,v 1.16 2002/11/11 05:04:44 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -226,7 +226,6 @@ SPLHOLD(spltty, IPL_TTY)
 SPLHOLD(splvm, IPL_VM)
 /* XXX - the following two should die. */
 #define splimp splvm
-#define splpmap splvm
 SPLHOLD(splclock, IPL_CLOCK)
 SPLHOLD(splfd, IPL_FD)
 SPLHOLD(splzs, IPL_ZS)

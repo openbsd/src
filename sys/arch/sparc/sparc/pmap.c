@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.130 2002/10/28 19:30:21 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.131 2002/11/11 05:04:46 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -1612,7 +1612,7 @@ printf("mmu_pagein: kernel wants map at va 0x%x, vr %d, vs %d\n", va, vr, vs);
 		unsigned int tva = VA_ROUNDDOWNTOREG(va);
 		struct segmap *sp = rp->rg_segmap;
 
-		s = splpmap();		/* paranoid */
+		s = splvm();		/* paranoid */
 		smeg = region_alloc(&region_lru, pm, vr)->me_cookie;
 		setregmap(tva, smeg);
 		i = NSEGRG;
@@ -1635,7 +1635,7 @@ printf("mmu_pagein: kernel wants map at va 0x%x, vr %d, vs %d\n", va, vr, vs);
 
 	/* reload segment: write PTEs into a new LRU entry */
 	va = VA_ROUNDDOWNTOSEG(va);
-	s = splpmap();		/* paranoid */
+	s = splvm();		/* paranoid */
 	pmeg = me_alloc(&segm_lru, pm, vr, vs)->me_cookie;
 	setsegmap(va, pmeg);
 	i = NPTESG;
@@ -1677,7 +1677,7 @@ ctx_alloc(pm)
 		gap_end = pm->pm_gap_end;
 	}
 
-	s = splpmap();
+	s = splvm();
 	if ((c = ctx_freelist) != NULL) {
 		ctx_freelist = c->c_nextfree;
 		cnum = c - cpuinfo.ctxinfo;
@@ -1907,7 +1907,7 @@ pv_changepte4_4c(pv0, bis, bic)
 
 	write_user_windows();		/* paranoid? */
 
-	s = splpmap();			/* paranoid? */
+	s = splvm();			/* paranoid? */
 	if (pv0->pv_pmap == NULL) {
 		splx(s);
 		return;
@@ -2006,7 +2006,7 @@ pv_syncflags4_4c(pv0)
 
 	write_user_windows();		/* paranoid? */
 
-	s = splpmap();			/* paranoid? */
+	s = splvm();			/* paranoid? */
 	if (pv0->pv_pmap == NULL) {	/* paranoid */
 		splx(s);
 		return (0);
@@ -2158,6 +2158,7 @@ pv_link4_4c(pv, pm, va, nc)
 		pv->pv_flags |= nc ? PV_NC : 0;
 		return (ret);
 	}
+
 	/*
 	 * Before entering the new mapping, see if
 	 * it will cause old mappings to become aliased
@@ -2189,6 +2190,7 @@ pv_link4_4c(pv, pm, va, nc)
 			}
 		}
 	}
+
 	npv = pool_get(&pvpool, PR_NOWAIT);
 	if (npv == NULL)
 		panic("pv_link_4_4c: allocation failed");
@@ -2233,7 +2235,7 @@ pv_changepte4m(pv0, bis, bic)
 
 	write_user_windows();		/* paranoid? */
 
-	s = splpmap();			/* paranoid? */
+	s = splvm();			/* paranoid? */
 	if (pv0->pv_pmap == NULL) {
 		splx(s);
 		return;
@@ -2321,7 +2323,7 @@ pv_syncflags4m(pv0)
 
 	write_user_windows();		/* paranoid? */
 
-	s = splpmap();			/* paranoid? */
+	s = splvm();			/* paranoid? */
 	if (pv0->pv_pmap == NULL) {	/* paranoid */
 		splx(s);
 		return (0);
@@ -2549,7 +2551,7 @@ pg_flushcache(struct vm_page *pg)
 
 	write_user_windows();	/* paranoia? */
 
-	s = splpmap();		/* XXX extreme paranoia */
+	s = splvm();		/* XXX extreme paranoia */
 	if ((pm = pv->pv_pmap) != NULL) {
 		ctx = getcontext();
 		for (;;) {
@@ -3552,7 +3554,7 @@ pmap_release(pm)
 	struct pmap *pm;
 {
 	union ctxinfo *c;
-	int s = splpmap();	/* paranoia */
+	int s = splvm();	/* paranoia */
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_DESTROY)
@@ -3670,7 +3672,7 @@ pmap_remove(pm, va, endva)
 	}
 
 	ctx = getcontext();
-	s = splpmap();		/* XXX conservative */
+	s = splvm();		/* XXX conservative */
 	simple_lock(&pm->pm_lock);
 	for (; va < endva; va = nva) {
 		/* do one virtual segment at a time */
@@ -3924,9 +3926,9 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	sp = &rp->rg_segmap[vs];
 	if ((nleft = sp->sg_npte) == 0)
 		return;
+
 	if (sp->sg_pte == NULL)
 		panic("pmap_rmu: no pages");
-
 
 	pmeg = sp->sg_pmeg;
 	pte0 = sp->sg_pte;
@@ -3980,8 +3982,8 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	 */
 	if (CTX_USABLE(pm,rp)) {
 		/* process has a context, must flush cache */
-		npg = (endva - va) >> PGSHIFT;
 		setcontext4(pm->pm_ctxnum);
+		npg = (endva - va) >> PGSHIFT;
 		if (npg > PMAP_RMU_MAGIC) {
 			perpage = 0; /* flush the whole segment */
 			cache_flush_segment(vr, vs);
@@ -4195,10 +4197,10 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 	    (pmapdebug & PDB_REMOVE && prot == VM_PROT_NONE))
 		printf("pmap_page_protect(0x%lx, 0x%x)\n", pa, prot);
 #endif
+	pv = &pg->mdpage.pv_head;
 	/*
 	 * Skip operations that do not take away write permission.
 	 */
-	pv = &pg->mdpage.pv_head;
 	if (prot & VM_PROT_WRITE)
 		return;
 	write_user_windows();	/* paranoia */
@@ -4213,7 +4215,7 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 	 * The logic is much like that for pmap_remove,
 	 * but we know we are removing exactly one page.
 	 */
-	s = splpmap();
+	s = splvm();
 	if ((pm = pv->pv_pmap) == NULL) {
 		splx(s);
 		return;
@@ -4221,18 +4223,22 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 	ctx = getcontext4();
 	pv0 = pv;
 	flags = pv->pv_flags & ~PV_NC;
-	for (;; pm = pv->pv_pmap) {
+	while (pv != NULL) {
+		pm = pv->pv_pmap;
 		va = pv->pv_va;
 		vr = VA_VREG(va);
 		vs = VA_VSEG(va);
 		rp = &pm->pm_regmap[vr];
+#ifdef DIAGNOSTIC
 		if (rp->rg_nsegmap == 0)
 			panic("pmap_remove_all: empty vreg");
+#endif
 		sp = &rp->rg_segmap[vs];
-		if ((nleft = sp->sg_npte) == 0)
+#ifdef DIAGNOSTIC
+		if (sp->sg_npte == 0)
 			panic("pmap_remove_all: empty vseg");
-		nleft--;
-		sp->sg_npte = nleft;
+#endif
+		nleft = --sp->sg_npte;
 
 		if (sp->sg_pmeg == seginval) {
 			/* Definitely not a kernel map */
@@ -4274,9 +4280,11 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 		}
 
 		tpte = getpte4(pteva);
+#ifdef DIAGNOSTIC
 		if ((tpte & PG_V) == 0)
 			panic("pmap_page_protect !PG_V: ctx %d, va 0x%x, pte 0x%x",
 			      pm->pm_ctxnum, va, tpte);
+#endif
 		flags |= MR4_4C(tpte);
 
 		if (nleft) {
@@ -4342,11 +4350,10 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 		npv = pv->pv_next;
 		if (pv != pv0)
 			pool_put(&pvpool, pv);
-		if ((pv = npv) == NULL)
-			break;
+		pv = npv;
 	}
 	pv0->pv_pmap = NULL;
-	pv0->pv_next = NULL; /* ? */
+	pv0->pv_next = NULL;
 	pv0->pv_flags = flags;
 	setcontext4(ctx);
 	splx(s);
@@ -4362,10 +4369,7 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
  * fairly easy.
  */
 void
-pmap_protect4_4c(pm, sva, eva, prot)
-	struct pmap *pm;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_protect4_4c(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	int va, nva, vr, vs;
 	int s, ctx;
@@ -4382,7 +4386,7 @@ pmap_protect4_4c(pm, sva, eva, prot)
 
 	write_user_windows();
 	ctx = getcontext4();
-	s = splpmap();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 
 	for (va = sva; va < eva;) {
@@ -4407,7 +4411,7 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 			continue;
 		}
 #ifdef DEBUG
-		if (pm != pmap_kernel() && sp->sg_pte == NULL)
+		if (sp->sg_pte == NULL)
 			panic("pmap_protect: no pages");
 #endif
 		if (sp->sg_pmeg == seginval) {
@@ -4491,14 +4495,16 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 		newprot = prot & VM_PROT_WRITE ? PG_W : 0;
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
-	s = splpmap();		/* conservative */
+	s = splvm();		/* conservative */
 	rp = &pm->pm_regmap[vr];
 	if (rp->rg_nsegmap == 0) {
 		printf("pmap_changeprot: no segments in %d\n", vr);
+		splx(s);
 		return;
 	}
 	if (rp->rg_segmap == NULL) {
 		printf("pmap_changeprot: no segments in %d!\n", vr);
+		splx(s);
 		return;
 	}
 	sp = &rp->rg_segmap[vs];
@@ -4605,7 +4611,7 @@ pmap_page_protect4m(struct vm_page *pg, vm_prot_t prot)
 	 * The logic is much like that for pmap_remove,
 	 * but we know we are removing exactly one page.
 	 */
-	s = splpmap();
+	s = splvm();
 	if ((pm = pv->pv_pmap) == NULL) {
 		splx(s);
 		return;
@@ -4710,7 +4716,7 @@ pmap_protect4m(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	write_user_windows();
 	ctx = getcontext4m();
-	s = splpmap();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 
 	for (va = sva; va < eva;) {
@@ -4743,7 +4749,7 @@ pmap_protect4m(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		if (pm->pm_ctx)
 			setcontext4m(pm->pm_ctxnum);
 
-		pmap_stats.ps_npg_prot_all = (nva - va) >> PGSHIFT;
+		pmap_stats.ps_npg_prot_all += (nva - va) >> PGSHIFT;
 		for (; va < nva; va += NBPG) {
 			int tpte, npte;
 
@@ -4801,7 +4807,7 @@ pmap_changeprot4m(pm, va, prot, wired)
 
 	pmap_stats.ps_changeprots++;
 
-	s = splpmap();		/* conservative */
+	s = splvm();		/* conservative */
 	ptep = getptep4m(pm, va);
 	if (pm->pm_ctx) {
 		ctx = getcontext4m();
@@ -4895,7 +4901,7 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	else
 		ret = pmap_enu4_4c(pm, va, prot, flags, pv, pteproto);
 #ifdef DIAGNOSTIC
-	if ((flags & PMAP_CANFAIL) == 0 && ret)
+	if ((flags & PMAP_CANFAIL) == 0 && ret != 0)
 		panic("pmap_enter4_4c: can't fail, but did");
 #endif
 	setcontext4(ctx);
@@ -4922,7 +4928,7 @@ pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
-	s = splpmap();		/* XXX way too conservative */
+	s = splvm();		/* XXX way too conservative */
 
 #if defined(SUN4_MMU3L)
 	if (HASSUN4_MMU3L && rp->rg_smeg == reginval) {
@@ -5045,7 +5051,7 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
-	s = splpmap();			/* XXX conservative */
+	s = splvm();			/* XXX conservative */
 
 	/*
 	 * If there is no space in which the PTEs can be written
@@ -5193,7 +5199,25 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter4_4c(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	struct pvlist *pv;
+	int pteproto, ctx;
+
+	pteproto = PG_S | PG_V | PMAP_T2PTE_4(pa);
+	if (prot & VM_PROT_WRITE)
+		pteproto |= PG_W;
+
+	pa &= ~PMAP_TNC_4;
+
+	if ((pteproto & PG_TYPE) == PG_OBMEM)
+		pv = pvhead(atop(pa));
+	else
+		pv = NULL;
+
+	pteproto |= atop(pa) & PG_PFNUM;
+
+	ctx = getcontext4();
+	pmap_enk4_4c(pmap_kernel(), va, prot, PMAP_WIRED, pv, pteproto);
+	setcontext4(ctx);
 }
 
 void
@@ -5201,9 +5225,7 @@ pmap_kremove4_4c(va, len)
 	vaddr_t va;
 	vsize_t len;
 {
-	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
-	}
+	pmap_remove(pmap_kernel(), va, va + len);
 }
 
 #endif /*sun4,4c*/
@@ -5311,7 +5333,7 @@ pmap_enk4m(pm, va, prot, flags, pv, pteproto)
 	rp = &pm->pm_regmap[VA_VREG(va)];
 	sp = &rp->rg_segmap[VA_VSEG(va)];
 
-	s = splpmap();		/* XXX way too conservative */
+	s = splvm();		/* XXX way too conservative */
 
 #ifdef DEBUG
 	if (rp->rg_seg_ptps == NULL) /* enter new region */
@@ -5522,7 +5544,7 @@ pmap_kenter_pa4m(va, pa, prot)
 	pv = pvhead(atop(pa));
 
 	ctx = getcontext4m();
-	pmap_enk4m(pmap_kernel(), va, prot, TRUE, pv, pteproto);
+	pmap_enk4m(pmap_kernel(), va, prot, PMAP_WIRED, pv, pteproto);
 	setcontext4m(ctx);
 }
 
@@ -6205,7 +6227,7 @@ pmap_activate(p)
 	 * the new context.
 	 */
 
-	s = splpmap();
+	s = splvm();
 	if (p == curproc) {
 		write_user_windows();
 		if (pmap->pm_ctx == NULL) {
@@ -6529,7 +6551,7 @@ pmap_writetext(dst, ch)
 	int s, pte0, pte, ctx;
 	vaddr_t va;
 
-	s = splpmap();
+	s = splvm();
 	va = (unsigned long)dst & (~PGOFSET);
 	cpuinfo.cache_flush(dst, 1);
 
