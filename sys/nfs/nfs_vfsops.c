@@ -486,6 +486,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	register struct nfsmount *nmp;
 	struct nfsnode *np;
 	int error;
+	struct vattr attrs;
 
 	if (mp->mnt_flag & MNT_UPDATE) {
 		nmp = VFSTONFS(mp);
@@ -565,6 +566,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	if (error = nfs_nget(mp, &nmp->nm_fh, &np))
 		goto bad;
 	*vpp = NFSTOV(np);
+	VOP_GETATTR(*vpp, &attrs, curproc->p_ucred, curproc);
 
 	return (0);
 bad:
@@ -664,7 +666,8 @@ nfs_root(mp, vpp)
 	if (error = nfs_nget(mp, &nmp->nm_fh, &np))
 		return (error);
 	vp = NFSTOV(np);
-	vp->v_type = VDIR;
+	if (vp->v_type == VNON)
+	    vp->v_type = VDIR;
 	vp->v_flag = VROOT;
 	*vpp = vp;
 	return (0);

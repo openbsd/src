@@ -167,7 +167,11 @@ nfs_bioread(vp, uio, ioflag, cred)
 			return (error);
 		}
 	    }
-	    if (np->n_flag & NQNFSNONCACHE) {
+	    /*
+	     * Don't cache magic amd symlinks.
+	     */
+	    if (np->n_flag & NQNFSNONCACHE
+		|| ((vp->v_flag & VROOT) && vp->v_type == VLNK)) {
 		switch (vp->v_type) {
 		case VREG:
 			error = nfs_readrpc(vp, uio, cred);

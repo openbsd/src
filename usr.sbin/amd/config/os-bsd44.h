@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
- *	$Id: os-bsd44.h,v 1.1.1.1 1995/10/18 08:47:14 deraadt Exp $
+ *	$Id: os-bsd44.h,v 1.2 1996/01/08 07:36:31 dm Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -196,3 +196,8 @@ struct mntent {
  */
 #undef RE_HDR
 #define RE_HDR <regexp.h>
+
+/*
+ * Need precise length links
+ */
+#define	PRECISE_SYMLINKS

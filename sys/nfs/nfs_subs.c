@@ -698,7 +698,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	 * information.
 	 */
 	np = VTONFS(vp);
-	if (vp->v_type == VNON) {
+	if (vp->v_type != vtyp) {
 		if (vtyp == VCHR && rdev == 0xffffffff)
 			vp->v_type = vtyp = VFIFO;
 		else
