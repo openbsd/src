@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2004/02/02 21:01:19 drahn Exp $
+#	$OpenBSD: Makefile,v 1.3 2004/02/09 02:27:25 drahn Exp $
 
 REV=	${OSrev}
 
@@ -22,7 +22,7 @@ VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 
 
-DISKTYPE=       rdrootcats
+DISKTYPE=       rdroot
 NBLKS=          8192
 # minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -m 0 -o space -c 16 -i 4096
@@ -73,7 +73,7 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 install:
-	cp ${BSD_RD} cd${REV}.iso ${DESTDIR}/snapshot/
+	cp ${BSD_RD} ${DESTDIR}/snapshot/
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
@@ -93,13 +93,13 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	*.o *.lo *.c bsd ${BSD_RD} cd${REV}.iso \
+	*.o *.lo *.c bsd ${BSD_RD} \
 	rdsetroot
 	rm -f instbin.conf
 	rm -rf cd-dir
 
 beforeinstall:
-	cp ${BSD.RD} cd${REV}.iso ${DESTDIR}/snapshot
+	cp ${BSD.RD} ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
