@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.7 2003/10/03 16:44:50 miod Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.8 2004/09/13 20:31:25 deraadt Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -333,8 +333,11 @@ pcons_poll(aux)
 	
 	while (OF_read(stdin, &ch, 1) > 0) {
 		cn_check_magic(tp->t_dev, ch, pcons_cnm_state);
-		if (tp && (tp->t_state & TS_ISOPEN))
+		if (tp && (tp->t_state & TS_ISOPEN)) {
+			if (ch == '\b')
+				ch = '\177';
 			(*linesw[tp->t_line].l_rint)(ch, tp);
+		}
 	}
 	timeout_add(&sc->sc_poll_to, 1);
 }
