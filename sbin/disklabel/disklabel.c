@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.30 1997/04/20 08:59:40 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.31 1997/05/21 16:02:33 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.30 1997/04/20 08:59:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.31 1997/05/21 16:02:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -918,10 +918,20 @@ edit(lp, f)
 	FILE *fp;
 
 	if ((fd = mkstemp(tmpfil)) == -1 || (fp = fdopen(fd, "w")) == NULL) {
+		if (fd != -1)
+			close(fd);
 		warn("%s", tmpfil);
 		return (1);
 	}
 	display(fp, lp);
+	fprintf(fp, "\n# Notes:\n");
+	fprintf(fp,
+"# Up to 16 partitions are valid, named from 'a' to 'p'.  Partition 'a' is\n"
+"# your root filesystem, 'b' is your swap, and 'c' should cover your whole\n"
+"# disk. Any other partition is free for any use.  'size' and 'offset' are\n"
+"# in 512-byte blocks. fstype should be '4.2BSD', 'swap', or 'none' or some\n"
+"# other values.  fsize/bsize/cpg should typically be '1024 8192 16' for a\n"
+"# 4.2BSD filesystem (or '512 4096 16' except on alpha, sun4, amiga, sun3...)\n");
 	fclose(fp);
 	for (;;) {
 		if (!editit())
