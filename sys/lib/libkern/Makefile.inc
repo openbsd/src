@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 1998/03/18 20:47:07 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2000/06/29 16:28:29 mickey Exp $
 #	$NetBSD: Makefile.inc,v 1.22 1996/09/30 15:54:35 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
@@ -18,12 +18,10 @@ KERNLIB_PROF=	${KERNDST}/libkern.po
 
 KERNMAKE= \
 	cd ${KERNDIR} && MAKEOBJDIR=${KERNDST} ${MAKE} \
-	    CC='${CC}' CFLAGS='${CFLAGS}' \
-	    AS='${AS}' AFLAGS='${AFLAGS}' \
-	    LD='${LD}' STRIP='${STRIP}' \
-	    CPP='${CPP}' STRIP='${STRIP}' AR='${AR}' \
-	    NM='${NM}' LORDER='${LORDER}' \
-	    XMACHINE='${MACHINE}' XMACHINE_ARCH='${MACHINE_ARCH}' \
+	    CC='${CC}' CFLAGS='${CFLAGS}' AS='${AS}' AFLAGS='${AFLAGS}' \
+	    LD='${LD}' STRIP='${STRIP}' CPP='${CPP}' STRIP='${STRIP}' \
+	    AR='${AR}' NM='${NM}' LORDER='${LORDER}' XMACHINE='${MACHINE}' \
+	    XMACHINE_ARCH='${MACHINE_ARCH}' KERNDIR=${KERNDIR} \
 	    KERNCPPFLAGS='${CPPFLAGS:S@^-I.@-I../../.@g}'
 
 ${KERNLIB}:		.NOTMAIN __always_make_kernlib
