@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-i386.c,v 1.8 2001/09/05 08:27:31 espie Exp $	*/
+/*	$OpenBSD: tc-i386.c,v 1.9 2001/09/17 15:41:24 espie Exp $	*/
 
 /* i386.c -- Assemble code for the Intel 80386
    Copyright (C) 1989, 1991, 1992 Free Software Foundation.
@@ -27,7 +27,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tc-i386.c,v 1.8 2001/09/05 08:27:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: tc-i386.c,v 1.9 2001/09/17 15:41:24 espie Exp $";
 #endif
 
 #include "as.h"
@@ -1462,7 +1462,7 @@ char *operand_string;
 			break;
 		default:
 		seg_unimplemented:
-			as_bad("Unimplemented segment type %d in parse_operand", exp_seg);
+			as_bad("Unimplemented segment type %d in parse_operand(%s)", exp_seg, operand_string);
 			return 0;
 		}
 		/* shorten this type of this operand if the instruction wants
