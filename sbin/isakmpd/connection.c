@@ -1,5 +1,5 @@
-/*	$OpenBSD: connection.c,v 1.8 2000/08/03 07:25:39 niklas Exp $	*/
-/*	$EOM: connection.c,v 1.23 2000/07/02 18:47:15 provos Exp $	*/
+/*	$OpenBSD: connection.c,v 1.9 2000/08/03 07:29:11 niklas Exp $	*/
+/*	$EOM: connection.c,v 1.24 2000/08/03 07:20:35 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -429,7 +429,7 @@ connection_report (void)
   struct connection_passive *pconn;
   struct timeval now;
 #ifdef USE_DEBUG
-  struct doi *doi = doi_lookup(ISAKMP_DOI_ISAKMP);
+  struct doi *doi = doi_lookup (ISAKMP_DOI_ISAKMP);
 #endif
 
   gettimeofday (&now, 0);
