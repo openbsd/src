@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.30 1998/08/31 20:53:10 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.31 1999/01/24 16:07:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -101,6 +101,11 @@ bios_E820(mp)
 	return (mp);
 }
 
+/* XXX Disabled until it is shown it is needed, and a version that does not
+ * confuse the AT&T Globalyst 580 comes up.  Ask niklas@openbsd.org if you
+ * want to know details.
+ */
+#if 0
 /* BIOS int 15, AX=E801
  *
  * Only used if int 15, AX=E820 does not work.
@@ -114,7 +119,7 @@ bios_E801(mp)
 
 	/* Test for 0xE801 */
 	__asm __volatile(DOINT(0x15) "; setc %b1"
-		: "=a" (m1), "=c" (rc), "=d" (m2) : "0" (0xE801));
+		: "=a" (m1), "=b" (m2), "=c" (rc) : "0" (0xE801));
 
 	/* Make a memory map from info */
 	if(rc & 0xff)
@@ -134,7 +139,7 @@ bios_E801(mp)
 
 	return ++mp;
 }
-
+#endif
 
 /* BIOS int 15, AX=8800
  *
@@ -285,8 +290,10 @@ memprobe()
 #endif
 	if(!(pm = bios_E820(bios_memmap))) {
 		im = bios_int12(bios_memmap);
+#if 0
 		pm = bios_E801(im);
 		if (!pm)
+#endif
 			pm = bios_8800(im);
 		if (!pm)
 			pm = badprobe(im);
