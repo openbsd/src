@@ -890,6 +890,7 @@
 ./usr/share/man/cat4/alpha/mem.0
 ./usr/share/man/cat4/alpha/pms.0
 ./usr/share/man/cat4/alpha/scc.0
+./usr/share/man/cat4/alpha/tga.0
 ./usr/share/man/cat4/alpha/wd.0
 ./usr/share/man/cat4/ami.0
 ./usr/share/man/cat4/amiga
@@ -1228,6 +1229,7 @@
 ./usr/share/man/cat4/sun3/cgfour.0
 ./usr/share/man/cat4/sun3/cgtwo.0
 ./usr/share/man/cat4/sun3/ie.0
+./usr/share/man/cat4/sun3/intro.0
 ./usr/share/man/cat4/sun3/kmem.0
 ./usr/share/man/cat4/sun3/le.0
 ./usr/share/man/cat4/sun3/leds.0
