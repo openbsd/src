@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.64 2004/07/02 16:29:55 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.65 2004/08/14 00:14:11 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -856,15 +856,14 @@ child_return(arg)
 	tf->tf_eax = 0;
 	tf->tf_eflags &= ~PSL_C;
 
-#ifdef notyet
 	KERNEL_PROC_UNLOCK(p);
-#endif
 
 	userret(p, tf->tf_eip, 0);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
