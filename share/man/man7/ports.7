@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.33 2003/04/15 07:02:40 david Exp $
+.\" $OpenBSD: ports.7,v 1.34 2003/06/06 13:44:30 jmc Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -128,9 +128,11 @@ line, e.g., to avoid stopping after each problem.
 .Ed
 .Pp
 The targets that do this are
-.Ar build , checksum , clean , configure , extract , fake, fetch ,
-.Ar install , distclean , deinstall, reinstall, mirror-distfiles, obj ,
-.Ar package , cdrom-packages , link-categories, unlink-categories ,
+.Ar build , checksum , clean , configure ,
+.Ar extract , fake , fetch , install ,
+.Ar distclean , deinstall , reinstall , mirror-distfiles ,
+.Ar obj , package , cdrom-packages , link-categories ,
+.Ar unlink-categories ,
 and
 .Ar ftp-packages .
 .Pp
@@ -264,14 +266,14 @@ If
 and
 .Ev BULK
 are set to
-.Sq Yes 
+.Sq Yes
 for a package build, some shortcuts are taken to allow cleaning up working
 directories on the fly.
 .Pp
 Some important caveats apply:
-the packages already built in the package repository are assumed to be 
-up-to-date (BIN_PACKAGES), the database of installed packages is assumed 
-to be accurate (TRUST_PACKAGES), and the bulk cookies are assumed to be 
+the packages already built in the package repository are assumed to be
+up-to-date (BIN_PACKAGES), the database of installed packages is assumed
+to be accurate (TRUST_PACKAGES), and the bulk cookies are assumed to be
 up-to-date (BULK).
 .Pp
 This means that newer iterations of package buildings should make sure
@@ -309,27 +311,27 @@ Go to this site first for all files.
 The
 .Ox
 ports tree comes with a mechanism called
-.Ic FLAVORS.
+.Ic FLAVORS .
 Thanks to this mechanism, users can select specific options provided by
 a given port.
 .Pp
-If a port is "flavored", there should be a terse description of 
+If a port is "flavored", there should be a terse description of
 available flavors in the
 .Pa pkg/DESCR
 file.
 .Pp
 For example, the shells/bash port comes with a flavor called
-.Ic static.
+.Ic static .
 This changes the building process so a statically compiled version of
-the program will be built. 
-To avoid confusion with other packages or flavors, 
+the program will be built.
+To avoid confusion with other packages or flavors,
 the package name will be extended with a dash-separated list of
 the selected flavors.
 .Pp
 In this instance, the corresponding package will be called
 .Ic bash-1.14.7p1-static .
 .Pp
-To build a port with a specific flavor, just pass 
+To build a port with a specific flavor, just pass
 .Ev FLAVOR
 in the environment of the
 .Xr make 1
@@ -358,7 +360,7 @@ combinations, when such combinations do not make sense.
 Lots of ports can be built without X11 requirement and accordingly
 have a
 .Ic no_x11
-flavor. 
+flavor.
 .Pp
 Flavor settings are not propagated to dependencies.
 If a specific combination is needed, careful hand-building of the
@@ -381,7 +383,7 @@ should not be changed by the user, and are liable to change without notice.
 .It Ev PORTSDIR
 Location of the ports tree
 .Po
-usually 
+usually
 .Pa /usr/ports
 .Pc
 .It Ev DISTDIR
@@ -406,10 +408,10 @@ Directory to put the package in.
 The full path to the package.
 .El
 .It Ev BULK_COOKIES_DIR
-During bulk package building, used to store cookies for already built 
-packages to avoid rebuilding them, since the actual  
-working directory will already have been cleaned out. 
-Defaults to bulk/${MACHINE_ARCH} under 
+During bulk package building, used to store cookies for already built
+packages to avoid rebuilding them, since the actual
+working directory will already have been cleaned out.
+Defaults to bulk/${MACHINE_ARCH} under
 .Ev PORTSDIR .
 .It Ev LOCALBASE
 Where to install things in general
@@ -493,11 +495,6 @@ Ports Mechanism: http://www.openbsd.org/ports.html
 The
 .Ox
 Porting Checklist: http://www.openbsd.org/checklist.html
-.Sh AUTHORS
-This man page was originated by
-David O'Brien, from the
-.Fx
-project.
 .Sh HISTORY
 .Nm The Ports Collection
 appeared in
@@ -508,6 +505,11 @@ by Ejovi Nuwere, with much initial effort by Angelos D. Keromytis.
 Maintenance passed then to Marco S. Hyman, and then to Christopher Turan.
 It is currently managed by Marc Espie, Brad Smith, and Christian Weisgerber,
 along with a host of others found at ports@openbsd.org.
+.Sh AUTHORS
+This man page was originated by
+David O'Brien, from the
+.Fx
+project.
 .Sh BUGS
 Ports documentation is split over several places ---
 .Xr bsd.port.mk 5 ,

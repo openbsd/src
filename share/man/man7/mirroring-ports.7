@@ -1,4 +1,4 @@
-.\" $OpenBSD: mirroring-ports.7,v 1.9 2003/03/16 10:30:26 avsm Exp $
+.\" $OpenBSD: mirroring-ports.7,v 1.10 2003/06/06 13:44:30 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -163,6 +163,25 @@ releases happen every six months, this delay should be longer than that.
 Sample scripts are provided in the
 .Pa ${PORTSDIR}/infrastructure/fetch
 directory.
+.Sh FILES
+.Bl -tag -width XXXXXXXXX -compact
+.It Pa ${DISTDIR}/Makefile
+Main mirroring Makefile
+.It Pa ${PORTSDIR}/infrastructure/fetch/fetch-all
+Sample script usable to retrieve distfiles.
+.It Pa ${PORTSDIR}/infrastructure/fetch/check-all
+Sample script to check all distfiles checksums.
+.It Pa ${PORTSDIR}/infrastructure/fetch/link-checksums
+Populating checksums subdirectories with links, to guard against shifting
+checksums.
+.El
+.Sh SEE ALSO
+.Xr ports 7
+.Sh HISTORY
+This infrastructure was introduced for
+.Ox 2.7
+by Marc Espie, with feedback from Bob Beck, Todd Fries, Camiel Dobbelaar,
+and a few other people.
 .Sh CAVEATS
 Changing checksums is a recurring problem that is outside the direct
 control of the
@@ -196,22 +215,3 @@ Starting revision 1.281, if
 is set to true,
 .Pa bsd.port.mk
 will try to retrieve files under that naming scheme as a last resort.
-.Sh FILES
-.Bl -tag -width XXXXXXXXX -compact
-.It Pa ${DISTDIR}/Makefile
-Main mirroring Makefile
-.It Pa ${PORTSDIR}/infrastructure/fetch/fetch-all
-Sample script usable to retrieve distfiles.
-.It Pa ${PORTSDIR}/infrastructure/fetch/check-all
-Sample script to check all distfiles checksums.
-.It Pa ${PORTSDIR}/infrastructure/fetch/link-checksums
-Populating checksums subdirectories with links, to guard against shifting
-checksums.
-.El
-.Sh HISTORY
-This infrastructure was introduced for
-.Ox 2.7
-by Marc Espie, with feedback from Bob Beck, Todd Fries, Camiel Dobbelaar,
-and a few other people.
-.Sh SEE ALSO
-.Xr ports 7
