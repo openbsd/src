@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.17 2003/06/12 01:07:31 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.18 2003/10/01 06:01:55 cloder Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -236,7 +236,7 @@ intr_establish(level, ih)
 	}
 #endif
 
-	if (ih->ih_number <= 0 || ih->ih_number > MAXINTNUM)
+	if (ih->ih_number <= 0 || ih->ih_number >= MAXINTNUM)
 		panic("intr_establish: bad intr number %x", ih->ih_number);
 
 	q = intrlev[ih->ih_number];
