@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.88 2001/01/09 05:07:01 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.89 2001/01/09 06:07:03 itojun Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1974,7 +1974,7 @@ replydirname(name, message)
 	const char *name, *message;
 {
 	char *p, *ep;
-	char npath[MAXPATHLEN];
+	char npath[MAXPATHLEN * 2];
 
 	p = npath;
 	ep = &npath[sizeof(npath) - 1];
