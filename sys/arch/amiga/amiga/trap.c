@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 1997/01/19 13:53:12 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 1997/02/03 11:38:10 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.53 1997/01/16 15:30:57 gwr Exp $	*/
 
 /*
@@ -508,7 +508,7 @@ nogo:
 		       type, code);
 		panictrap(type, code, v, fp);
 	}
-	trapsignal(p, SIGSEGV, v);
+	trapsignal(p, SIGSEGV, v, T_MMUFLT, (caddr_t)v);
 	if ((type & T_USER) == 0)
 		return;
 	userret(p, fp->f_pc, sticks); 
@@ -528,13 +528,13 @@ trap(type, code, v, frame)
 	struct proc *p;
 	u_int ucode;
 	u_quad_t sticks = 0;
-	int i;
+	int typ, i;
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
 
 	p = curproc;
-	ucode = 0;
+	typ = ucode = 0;
 	cnt.v_trap++;
 
 	if (USERMODE(frame.f_sr)) {
@@ -570,24 +570,44 @@ trap(type, code, v, frame)
 	 * User Bus/Addr error.
 	 */
 	case T_BUSERR|T_USER:
+		ucode = code & ~T_USER;
+		typ = BUS_OBJERR;
+		i = SIGBUS;
+		break;
 	case T_ADDRERR|T_USER:
+		ucode = code & ~T_USER;
+		typ = BUS_ADRALN;
 		i = SIGBUS;
 		break;
 	/*
 	 * User illegal/privleged inst fault
 	 */
 	case T_ILLINST|T_USER:
+		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
+		typ = ILL_ILLOPC;
+		i = SIGILL;
+		break;
 	case T_PRIVINST|T_USER:
 		ucode = frame.f_format;	/* XXX was ILL_PRIVIN_FAULT */
+		typ = ILL_PRVOPC;
 		i = SIGILL;
 		break;
 	/*
 	 * divde by zero, CHK/TRAPV inst 
 	 */
 	case T_ZERODIV|T_USER:
+		ucode = frame.f_format;
+		typ = FPE_INTDIV;
+		i = SIGFPE;
+		break;
 	case T_CHKINST|T_USER:
+		ucode = frame.f_format;
+		typ = FPE_FLTSUB;
+		i = SIGFPE;
+		break;
 	case T_TRAPVINST|T_USER:
 		ucode = frame.f_format;
+		typ = FPE_FLTOVF;
 		i = SIGFPE;
 		break;
 #ifdef FPCOPROC
@@ -596,6 +616,7 @@ trap(type, code, v, frame)
 	 */
 	case T_COPERR|T_USER:
 		ucode = 0;
+		typ = FPE_FLTINV;
 		i = SIGFPE;	/* XXX What is a proper response here? */
 		break;
 	/* 
@@ -613,6 +634,7 @@ trap(type, code, v, frame)
 		 * there is no clash.
 		 */
 		ucode = code;
+		typ = FPE_FLTRES;
 		i = SIGFPE;
 		break;
 	/* 
@@ -639,6 +661,7 @@ trap(type, code, v, frame)
 		p->p_sigignore &= ~i;
 		p->p_sigcatch &= ~i;
 		p->p_sigmask &= ~i;
+		typ = ILL_COPROC;
 		i = SIGILL;
 		ucode = frame.f_format;	/* XXX was ILL_RESAD_FAULT */
 		break;
@@ -656,6 +679,7 @@ trap(type, code, v, frame)
 	case T_TRACE:
 	case T_TRAP15:
 		frame.f_sr &= ~PSL_T;
+		typ = TRAP_TRACE;
 		i = SIGTRAP;
 		break;
 	case T_TRACE|T_USER:
@@ -673,6 +697,7 @@ trap(type, code, v, frame)
 		}
 #endif
 		frame.f_sr &= ~PSL_T;
+		typ = TRAP_TRACE;
 		i = SIGTRAP;
 		break;
 	/* 
@@ -713,7 +738,7 @@ trap(type, code, v, frame)
 		printf("trapsignal(%d, %d, %d, %x, %x)\n", p->p_pid, i,
 		    ucode, v, frame.f_pc);
 #endif
-	trapsignal(p, i, ucode);
+	trapsignal(p, i, ucode, typ, (caddr_t)ucode);
 	if ((type & T_USER) == 0)
 		return;
 	userret(p, frame.f_pc, sticks); 
