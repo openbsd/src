@@ -1266,6 +1266,10 @@
 ./usr/share/man/cat4/pcppi.0
 ./usr/share/man/cat4/pcscp.0
 ./usr/share/man/cat4/pegasos
+./usr/share/man/cat4/pegasos/autoconf.0
+./usr/share/man/cat4/pegasos/intro.0
+./usr/share/man/cat4/pegasos/kmem.0
+./usr/share/man/cat4/pegasos/mem.0
 ./usr/share/man/cat4/pf.0
 ./usr/share/man/cat4/pflog.0
 ./usr/share/man/cat4/pfsync.0
@@ -1922,6 +1926,7 @@
 ./usr/share/man/cat8/ntalkd.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pegasos
+./usr/share/man/cat8/pegasos/MAKEDEV.0
 ./usr/share/man/cat8/pegasos/wsconscfg.0
 ./usr/share/man/cat8/pegasos/wsconsctl.0
 ./usr/share/man/cat8/pfctl.0
