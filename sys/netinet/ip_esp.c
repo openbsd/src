@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.41 2000/04/25 02:53:45 jason Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.42 2000/05/15 03:36:34 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -616,9 +616,9 @@ esp_input_cb(void *op)
     m_copydata(m, m->m_pkthdr.len - 3, 3, lastthree);
 
     /* Verify pad length */
-    if (lastthree[1] + 2 > m->m_pkthdr.len - skip - hlen)
+    if (lastthree[1] + 2 > m->m_pkthdr.len - skip)
     {
-	DPRINTF(("esp_input_cb(): invalid padding length %d for packet in SA %s/%08x\n", lastthree[2], ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	DPRINTF(("esp_input_cb(): invalid padding length %d for packet in SA %s/%08x\n", lastthree[1], ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	espstat.esps_badilen++;
 	m_freem(m);
 	return EINVAL;
