@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.7 2002/07/03 22:32:32 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.8 2002/09/06 21:16:16 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 static char rcsid[] = "$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $";
 #endif /* not lint */
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -151,7 +152,7 @@ unrawname(char *name)
 	char *dp;
 	struct stat stb;
 
-	if ((dp = strrchr(name, '/')) == 0)
+	if ((dp = strrchr(name, '/')) == NULL)
 		return (name);
 	if (stat(name, &stb) < 0)
 		return (name);
@@ -166,16 +167,16 @@ unrawname(char *name)
 char *
 rawname(char *name)
 {
-	static char rawbuf[32];
+	static char rawbuf[MAXPATHLEN];
 	char *dp;
 
-	if ((dp = strrchr(name, '/')) == 0)
+	if ((dp = strrchr(name, '/')) == NULL)
 		return (0);
 	*dp = 0;
-	(void)strcpy(rawbuf, name);
+	(void)strlcpy(rawbuf, name, sizeof rawbuf);
 	*dp = '/';
-	(void)strcat(rawbuf, "/r");
-	(void)strcat(rawbuf, &dp[1]);
+	(void)strlcat(rawbuf, "/r", sizeof rawbuf);
+	(void)strlcat(rawbuf, &dp[1], sizeof rawbuf);
 	return (rawbuf);
 }
 
