@@ -20,7 +20,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-static char rcsid[] ="$Id: mkisofs.c,v 1.2 2001/04/15 00:48:35 deraadt Exp $";
+static char rcsid[] ="$Id: mkisofs.c,v 1.3 2001/10/01 17:05:05 drahn Exp $";
 
 /* APPLE_HYB James Pearson j.pearson@ge.ucl.ac.uk 12/3/99 */
 
@@ -147,6 +147,8 @@ char	*deftype = DEFTYPE;	/* default Apple TYPE */
 char	*defcreator = DEFCREATOR; /* default Apple CREATOR */
 char	*trans_tbl = "TRANS.TBL"; /* default name for translation table */
 char	*hfs_volume_id = NULL;	/* HFS volume ID */
+char	*hfs_bless = NULL;	/* name of folder to 'bless' (System Folder) */
+
 #endif /* APPLE_HYB */
 
 struct rcopts{
@@ -249,6 +251,8 @@ struct ld_option
 #define OPTION_I_LIST			242
 #define OPTION_J_LIST			243
 #define OPTION_X_LIST			244
+
+#define OPTION_HFS_BLESS		245
 #endif /* APPLE_HYB */
 
 static const struct ld_option ld_options[] =
@@ -389,6 +393,8 @@ static const struct ld_option ld_options[] =
       '\0', "TABLE_NAME", "translation table file name", ONE_DASH },
   { {"hfs-volid", required_argument, NULL, OPTION_HFS_VOLID},
       '\0', "HFS_VOLID", "Volume name for the HFS partition", ONE_DASH },
+  {{"hfs-bless", required_argument, NULL, OPTION_HFS_BLESS},
+      '\0', "FOLDER_NAME", "Name of Folder to be blessed", ONE_DASH},
   { {"cap", no_argument, NULL, OPTION_CAP},
       '\0', NULL, "Look for AUFS CAP Macintosh files", TWO_DASHES },
   { {"netatalk", no_argument, NULL, OPTION_NETA},
@@ -1069,6 +1075,9 @@ int FDECL2(main, int, argc, char **, argv){
 	break;
       case OPTION_HFS_VOLID:
 	hfs_volume_id = optarg;
+	break;
+      case OPTION_HFS_BLESS:
+	hfs_bless = optarg;
 	break;
       /* Mac/Unix types to include */
       case OPTION_CAP:

@@ -521,6 +521,18 @@ int FDECL2(copy_to_mac_vol, hfsvol *, vol, struct directory *, node)
 			s_entry->whole_name);
 		}
 
+		/* see if we need to "bless" this folder */
+		if (hfs_bless && strcmp(s_entry->whole_name, hfs_bless) == 0) {
+		    hfs_stat(vol, ent->name, ent);
+		    hfs_vsetbless(vol, ent->cnid);
+		    if (verbose > 0) {
+			fprintf(stderr, "Blessing %s (%s)\n",
+				ent->name, s_entry->whole_name);
+		    }
+		    /* stop any further checks */
+		    hfs_bless = NULL;
+		}
+
 		/* change to sub-folder */
 		if (hfs_chdir(vol, ent->name) < 0)
 		    return(-1);

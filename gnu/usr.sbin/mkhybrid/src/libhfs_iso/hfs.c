@@ -2057,4 +2057,18 @@ hfs_set_drAllocPtr(hfsfile *file, unsigned short drAllocPtr, int size)
 
   return result;
 }
+
+/*
+ * NAME:        hfs->vsetbless()
+ * DESCRIPTION: set blessed folder
+ *
+ * adapted from vsetattr() from v3.2.6
+ */
+void
+hfs_vsetbless(hfsvol *vol, unsigned long cnid) 
+{ 
+  vol->mdb.drFndrInfo[0] = cnid;
+  
+  vol->flags |= HFS_UPDATE_MDB;
+}
 #endif /* APPLE_HYB */

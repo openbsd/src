@@ -20,7 +20,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /*
- * 	$Id: mkisofs.h,v 1.1 2000/10/10 20:40:19 beck Exp $
+ * 	$Id: mkisofs.h,v 1.2 2001/10/01 17:05:05 drahn Exp $
  */
 
 /* APPLE_HYB James Pearson j.pearson@ge.ucl.ac.uk 12/3/99 */
@@ -321,6 +321,7 @@ extern char *hfs_volume_id;	/* HFS volume ID */
 #define ASSOC_FLAG	4       /* ISO flag for "associated" file */
 #define MAP_LAST	1	/* process magic then map file */
 #define MAG_LAST	2	/* process map then magic file */
+extern char *hfs_bless;		/* name of folder to 'bless' (System Folder) */
 #endif /* APPLE_HYB */
 
 /* tree.c */
