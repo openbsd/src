@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.22 1997/06/11 10:04:24 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.23 1997/06/23 22:45:53 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.22 1997/06/11 10:04:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.23 1997/06/23 22:45:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ void fill __P((char *, char *));
 void catcher(), prtsig(), finish(), summary(int);
 int in_cksum __P((u_short *, int));
 void pinger();
-char *pr_addr __P((u_long));
+char *pr_addr __P((in_addr_t));
 int check_icmph __P((struct ip *));
 void pr_icmph __P((struct icmp *));
 void pr_pack __P((char *, int, struct sockaddr_in *));
@@ -608,7 +608,7 @@ pr_pack(buf, cc, from)
 	struct sockaddr_in *from;
 {
 	register struct icmp *icp;
-	register u_long l;
+	register in_addr_t l;
 	register int i, j;
 	register u_char *cp,*dp;
 	static int old_rrlen;
@@ -616,7 +616,7 @@ pr_pack(buf, cc, from)
 	struct ip *ip, *ip2;
 	struct timeval tv, tp;
 	char *pkttime;
-	quad_t triptime;
+	quad_t triptime = 0;
 	int hlen, hlen2, dupflag;
 
 	(void)gettimeofday(&tv, (struct timezone *)NULL);
@@ -1124,7 +1124,7 @@ pr_iph(ip)
  */
 char *
 pr_addr(l)
-	u_long l;
+	in_addr_t l;
 {
 	struct hostent *hp;
 	static char buf[16+3+MAXHOSTNAMELEN];
