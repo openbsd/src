@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.78 2004/04/09 16:54:35 deraadt Exp $
+$OpenBSD: usbdevs,v 1.79 2004/04/10 08:03:52 grange Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1372,6 +1372,7 @@ product SONY CLIE_S360		0x0095	Sony Clie s360
 product SONY CLIE_41_MS		0x0099	Clie v4.1 Memory Stick slot
 product SONY CLIE_41		0x009a	Clie v4.1
 product SONY CLIE_NX60		0x00da	Sony Clie nx60
+product SONY CLIE_TJ25		0x0169	Sony Clie tj25
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	Communicator
