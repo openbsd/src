@@ -1,4 +1,4 @@
-/*	$OpenBSD: state.c,v 1.9 2002/06/09 08:13:09 todd Exp $	*/
+/*	$OpenBSD: state.c,v 1.10 2002/06/10 19:58:20 espie Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -82,7 +82,7 @@ state_save_verification(struct stateob *st, u_int8_t *buf, u_int16_t len)
 
 		st->verification = calloc(len, sizeof(u_int8_t));
 		if (st->verification == NULL) {
-			log_error(__FUNCTION__": calloc()");
+			log_error("%s: calloc()", __func__);
 			return (-1);
 		}
 	}
@@ -122,7 +122,7 @@ state_new(void)
 	struct stateob *p;
 
 	if((p = calloc(1, sizeof(struct stateob)))==NULL) {
-		log_error(__FUNCTION__": calloc");
+		log_error("%s: calloc", __func__);
 		return (NULL);
 	}
 
@@ -280,9 +280,9 @@ state_expire(void)
 		    (tmp->lifetime == -1 || tmp->lifetime > tm))
 			continue;
 
-		LOG_DBG((LOG_MISC, 35, __FUNCTION__
-			 ": Expiring state to %s in phase %d",
-			 tmp->address, tmp->phase));
+		LOG_DBG((LOG_MISC, 35, 
+			 "%s: Expiring state to %s in phase %d",
+			 __func__, tmp->address, tmp->phase));
 
 		state_value_reset(tmp);
 		state_unlink(tmp);

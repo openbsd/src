@@ -1,4 +1,4 @@
-/*	$OpenBSD: spi.c,v 1.9 2002/06/09 08:13:09 todd Exp $	*/
+/*	$OpenBSD: spi.c,v 1.10 2002/06/10 19:58:20 espie Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: spi.c,v 1.9 2002/06/09 08:13:09 todd Exp $";
+static char rcsid[] = "$OpenBSD: spi.c,v 1.10 2002/06/10 19:58:20 espie Exp $";
 #endif
 
 #define _SPI_C_
@@ -128,7 +128,7 @@ spi_insert(struct spiob *ob)
 int
 spi_unlink(struct spiob *ob)
 {
-	LOG_DBG((LOG_SPI, 45, __FUNCTION__": unlinking %s spi %x",
+	LOG_DBG((LOG_SPI, 45, "%s: unlinking %s spi %x", __func__,
 		 ob->flags & SPI_OWNER ? "Owner" : "User",
 		 ntohl(*(u_int32_t *)ob->SPI)));
 
@@ -245,8 +245,8 @@ spi_expire(void)
 		if (tmp->lifetime == -1 || tmp->lifetime > tm)
 			continue;
 
-		LOG_DBG((LOG_SPI, 30, __FUNCTION__
-			 ": expiring %s spi %x to %s",
+		LOG_DBG((LOG_SPI, 30, 
+			 "%s: expiring %s spi %x to %s", __func__,
 			 tmp->flags & SPI_OWNER ? "Owner" : "User",
 			 ntohl(*(u_int32_t *)tmp->SPI), tmp->address));
 
@@ -289,12 +289,12 @@ spi_update(int sock, u_int8_t *spinr)
 		return;
 
 	if (spi->flags & SPI_UPDATED) {
-		LOG_DBG((LOG_SPI, 55, __FUNCTION__": SPI %x already updated",
+		LOG_DBG((LOG_SPI, 55, "%s: SPI %x already updated", __func__,
 			 ntohl(*(u_int32_t *)spinr)));
 		return;
 	}
 
-	LOG_DBG((LOG_SPI, 45, __FUNCTION__": updating SPI %x",
+	LOG_DBG((LOG_SPI, 45, "%s: updating SPI %x", __func__,
 		 ntohl(*(u_int32_t *)spinr)));
 
 
@@ -303,7 +303,7 @@ spi_update(int sock, u_int8_t *spinr)
 		 * This happens always when an exchange expires but
 		 * updates are still scheduled for it.
 		 */
-		LOG_DBG((LOG_SPI, 65, __FUNCTION__": state_find_cookies()"));
+		LOG_DBG((LOG_SPI, 65, "%s: state_find_cookies()", __func__));
 		return;
 	}
 
@@ -319,13 +319,13 @@ spi_update(int sock, u_int8_t *spinr)
 	/* We can keep our old attributes, this is only an update */
 	if (make_spi(st, spi->local_address, st->oSPI, &(st->olifetime),
 		     &(st->oSPIattrib), &(st->oSPIattribsize)) == -1) {
-		log_print(__FUNCTION__": make_spi()");
+		log_print("%s: make_spi()", __func__);
 		return;
 	}
 
 	packet_size = PACKET_BUFFER_SIZE;
 	if (photuris_spi_update(st, packet_buffer, &packet_size) == -1) {
-		log_print(__FUNCTION__": photuris_spi_update()");
+		log_print("%s: photuris_spi_update()", __func__);
 		return;
 	}
 

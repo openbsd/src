@@ -1,4 +1,4 @@
-/*	$OpenBSD: handle_value_request.c,v 1.8 2002/06/09 08:13:08 todd Exp $	*/
+/*	$OpenBSD: handle_value_request.c,v 1.9 2002/06/10 19:58:20 espie Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: handle_value_request.c,v 1.8 2002/06/09 08:13:08 todd Exp $";
+static char rcsid[] = "$OpenBSD: handle_value_request.c,v 1.9 2002/06/10 19:58:20 espie Exp $";
 #endif
 
 #include <stdio.h>
@@ -267,8 +267,9 @@ handle_value_request(u_char *packet, int size,
 	     /* Now put the filled state object in the chain */
 	     state_insert(st);
 	} else if (st->phase != VALUE_RESPONSE) {
-		LOG_DBG((LOG_PROTOCOL, 55, __FUNCTION__
-			 ": value request from %s, but we are in state %d",
+		LOG_DBG((LOG_PROTOCOL, 55, 
+			 "%s: value request from %s, but we are in state %d",
+			 __func__,
 			 st->address, st->phase));
 		return (-1);
 	}

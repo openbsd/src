@@ -1,4 +1,4 @@
-/*	$OpenBSD: modulus.c,v 1.7 2002/06/09 08:13:08 todd Exp $	*/
+/*	$OpenBSD: modulus.c,v 1.8 2002/06/10 19:58:20 espie Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -97,7 +97,7 @@ mod_check_prime(int iter, int tm)
 		    (p->status == MOD_UNUSED || p->status == MOD_COMPUTING)) {
 			flag = BN_is_prime(p->modulus, iter, NULL, ctx, NULL);
 			if (!flag)
-				log_print(__FUNCTION__": found a non prime");
+				log_print("%s: found a non prime", __func__);
 
 			tmp = mod_find_modulus(p->modulus);
 			while (tmp != NULL) {
@@ -123,17 +123,17 @@ mod_check_prime(int iter, int tm)
 				else
 					msg = "undecided.";
 				hex = BN_bn2hex(p->modulus);
-				LOG_DBG((LOG_CRYPTO, 50, __FUNCTION__
-					 ": check prime: %s: %s",
-					 hex, msg));
+				LOG_DBG((LOG_CRYPTO, 50, 
+					 "%s: check prime: %s: %s",
+					 __func__, hex, msg));
 				free(hex);
 			}
 #endif
 		}
 
 		if (p->status == MOD_NOTPRIME && p->lifetime < now) {
-			LOG_DBG((LOG_CRYPTO, 40, __FUNCTION__
-				 ": unlinking non prime modulus"));
+			LOG_DBG((LOG_CRYPTO, 40, 
+				 "%s: unlinking non prime modulus", __func__));
 			mod_value_reset(tmp);
 			mod_unlink(tmp);
 		}

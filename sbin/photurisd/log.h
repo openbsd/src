@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.4 2002/06/09 08:13:08 todd Exp $	*/
+/*	$OpenBSD: log.h,v 1.5 2002/06/10 19:58:20 espie Exp $	*/
 /*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
 
 /*
@@ -77,9 +77,18 @@ extern void log_debug_cmd (int, int);
 #endif /* USE_DEBUG */
 
 extern FILE *log_current (void);
+#if defined(__GNUC__)
+extern void log_error (const char *, ...)
+	__attribute__((__format__ (printf, 1, 2))) __attribute__((__nonnull__(1)));
+extern void log_fatal (const char *, ...)
+	__attribute__((__format__ (printf, 1, 2))) __attribute__((__nonnull__(1)));
+extern void log_print (const char *, ...)
+	__attribute__((__format__ (printf, 1, 2))) __attribute__((__nonnull__(1)));
+#else
 extern void log_error (const char *, ...);
 extern void log_fatal (const char *, ...);
 extern void log_print (const char *, ...);
+#endif
 extern void log_to (FILE *);
 extern void log_init (void);
 

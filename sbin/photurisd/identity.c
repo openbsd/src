@@ -1,4 +1,4 @@
-/*	$OpenBSD: identity.c,v 1.6 2002/06/09 08:13:08 todd Exp $	*/
+/*	$OpenBSD: identity.c,v 1.7 2002/06/10 19:58:20 espie Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: identity.c,v 1.6 2002/06/09 08:13:08 todd Exp $";
+static char rcsid[] = "$OpenBSD: identity.c,v 1.7 2002/06/10 19:58:20 espie Exp $";
 #endif
 
 #define _IDENTITY_C_
@@ -546,7 +546,7 @@ create_identity_verification(struct stateob *st, u_int8_t *buffer,
 
 	  st->oSPIidentver = calloc(hash_size+2,sizeof(u_int8_t));
 	  if(st->oSPIidentver == NULL) {
-	       log_error("Not enough memory in create_identity_verification()", 0);
+	       log_error("Not enough memory in create_identity_verification()");
 	       return 0;
 	  }
 
