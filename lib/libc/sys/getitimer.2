@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.15 2001/08/06 10:42:26 mpech Exp $
+.\"	$OpenBSD: getitimer.2,v 1.16 2001/09/07 14:35:59 niklas Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -162,8 +162,7 @@ CMP
 .Fa b Ns ,
 where
 .Fa CMP
-is <, =, or > .
-Beware that >= and <= do not work with this macro.
+is <, <=, ==, !=, >=, or > .
 .Pp
 .Fn timersub "a, b, res"
 subtracts
