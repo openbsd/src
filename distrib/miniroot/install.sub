@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.66 1998/03/29 19:54:50 millert Exp $
+#	$OpenBSD: install.sub,v 1.67 1998/03/29 20:34:02 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -903,6 +903,17 @@ eval echo "\\\\n"\
 "You will want at least the base and bsd sets.\\\\n"\
 "Consult the intallation notes if you are not sure which sets are required!\\\\n"
 _osetsdone="$_setsdone"
+# Set a minimal default
+for _f in $_sets $_kernel; do
+	case "$_f" in
+		base*.tar.gz|base*.tgz|etc*.tar.gz|etc*.tgz|bsd)
+			_get_files="${_get_files} ${_f}"
+			_setsdone="${_f} ${_setsdone}"
+			;;
+	esac
+done
+
+# Allow the user to select/de-select additional sets
 while : ; do
 	echo ""
 	echo "The following sets are available for extraction."
@@ -1140,6 +1151,17 @@ echo "\n"\
 "You will want at least the base and bsd sets.\n"\
 "Consult the intallation notes if you are not sure which sets are required!\n"
 _osetsdone="$_setsdone"
+# Set a minimal default
+for _f in $_sets $_kernel; do
+	case "$_f" in
+		base*.tar.gz|base*.tgz|etc*.tar.gz|etc*.tgz|bsd)
+			_get_files="${_get_files} ${_f}"
+			_setsdone="${_f} ${_setsdone}"
+			;;
+	esac
+done
+
+# Allow the user to select/de-select additional sets
 while : ; do
 	echo ""
 	echo "The following sets are available for extraction."
