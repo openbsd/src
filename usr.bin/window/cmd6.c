@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd6.c,v 1.3 1997/02/25 00:04:00 downsj Exp $	*/
+/*	$OpenBSD: cmd6.c,v 1.4 2000/04/15 05:22:14 millert Exp $	*/
 /*	$NetBSD: cmd6.c,v 1.3 1995/09/28 10:34:10 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd6.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd6.c,v 1.3 1997/02/25 00:04:00 downsj Exp $";
+static char rcsid[] = "$OpenBSD: cmd6.c,v 1.4 2000/04/15 05:22:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,11 +78,11 @@ c_debug()
 		debug_str();
 		break;
 	case 'v':
-		if ((w = getwin()) != 0)
+		if ((w = getwindow()) != 0)
 			wwdumpnvis(w);
 		break;
 	case 'w':
-		if ((w = getwin()) != 0)
+		if ((w = getwindow()) != 0)
 			wwdumpwin(w);
 		break;
 	default:

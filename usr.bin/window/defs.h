@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.4 1997/06/24 02:44:45 dgregor Exp $	*/
+/*	$OpenBSD: defs.h,v 1.5 2000/04/15 05:22:14 millert Exp $	*/
 /*	$NetBSD: defs.h,v 1.3 1995/09/28 10:34:19 tls Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ char terse;			/* terse mode */
 char debug;			/* debug mode */
 char incmd;			/* in command mode */
 
-struct ww *getwin();
+struct ww *getwindow();
 struct ww *openwin();
 struct ww *vtowin();
 struct ww *openiwin();
