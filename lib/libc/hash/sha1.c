@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.6 1997/07/11 04:17:10 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.7 1997/07/12 00:51:18 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -45,8 +45,9 @@
 #define R4(v,w,x,y,z,i) z+=(w^x^y)+blk(i)+0xCA62C1D6+rol(v,5);w=rol(w,30);
 
 
-/* Hash a single 512-bit block. This is the core of the algorithm. */
-
+/*
+ * Hash a single 512-bit block. This is the core of the algorithm.
+ */
 void SHA1Transform(state, buffer)
     u_int32_t state[5];
     u_char buffer[64];
@@ -56,14 +57,14 @@ void SHA1Transform(state, buffer)
 	u_char c[64];
 	u_int l[16];
     } CHAR64LONG16;
-    CHAR64LONG16* block;
+    CHAR64LONG16 *block;
 
 #ifdef SHA1HANDSOFF
     static u_char workspace[64];
-    block = (CHAR64LONG16*)workspace;
-    memcpy(block, buffer, 64);
+    block = (CHAR64LONG16 *)workspace;
+    (void)memcpy(block, buffer, 64);
 #else
-    block = (CHAR64LONG16*)buffer;
+    block = (CHAR64LONG16 *)buffer;
 #endif
 
     /* Copy context->state[] to working vars */
@@ -113,6 +114,7 @@ void SHA1Transform(state, buffer)
 void SHA1Init(context)
     SHA1_CTX *context;
 {
+
     /* SHA1 initialization constants */
     context->state[0] = 0x67452301;
     context->state[1] = 0xEFCDAB89;
@@ -131,15 +133,14 @@ void SHA1Update(context, data, len)
     u_char *data;
     u_int len;
 {
-    u_int i;
-    u_int j;
+    u_int i, j;
 
     j = context->count[0];
     if ((context->count[0] += len << 3) < j)
 	context->count[1] += (len>>29)+1;
     j = (j >> 3) & 63;
     if ((j + len) > 63) {
-        memcpy(&context->buffer[j], data, (i = 64-j));
+        (void)memcpy(&context->buffer[j], data, (i = 64-j));
         SHA1Transform(context->state, context->buffer);
         for ( ; i + 63 < len; i += 64)
             SHA1Transform(context->state, &data[i]);
@@ -147,7 +148,7 @@ void SHA1Update(context, data, len)
     } else {
 	i = 0;
     }
-    memcpy(&context->buffer[j], &data[i], len - i);
+    (void)memcpy(&context->buffer[j], &data[i], len - i);
 }
 
 
