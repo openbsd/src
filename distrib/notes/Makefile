@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2001/06/25 00:29:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2001/08/22 18:26:28 miod Exp $
 
 NOPROG=
 NOMAN=
@@ -10,23 +10,23 @@ TARG=	INSTALL.$M
 SRC=	$(.CURDIR)/INSTALL
 DEP=	$(SRC) $(.CURDIR)/mirrors $(.CURDIR)/$M/whatis $(.CURDIR)/$M/contents \
 	$(.CURDIR)/$M/hardware $(.CURDIR)/$M/xfer $(.CURDIR)/$M/prep \
-	$(.CURDIR)/$M/install $(.CURDIR)/$M/upgrade $(.CURDIR)/donations \
+	$(.CURDIR)/$M/install $(.CURDIR)/$M/upgrade \
 	$(.CURDIR)/packages $(.CURDIR)/m4.common
 
 all:	$(TARG)
 
 allarchs:
 	@cd $(.CURDIR); \
-	    make MACHINE=alpha MACHINE_ARCH=alpha; \
-	    make MACHINE=amiga MACHINE_ARCH=m68k; \
-	    make MACHINE=hp300 MACHINE_ARCH=m68k; \
-	    make MACHINE=i386 MACHINE_ARCH=i386; \
-	    make MACHINE=mac68k MACHINE_ARCH=m68k; \
-	    make MACHINE=mvme68k MACHINE_ARCH=m68k; \
-	    make MACHINE=powerpc MACHINE_ARCH=powerpc; \
-	    make MACHINE=sparc MACHINE_ARCH=sparc; \
-	    make MACHINE=sun3 MACHINE_ARCH=m68k; \
-	    make MACHINE=vax MACHINE_ARCH=vax ;
+	    ${MAKE} M=alpha   M_A=alpha; \
+	    ${MAKE} M=amiga   M_A=m68k; \
+	    ${MAKE} M=hp300   M_A=m68k; \
+	    ${MAKE} M=i386    M_A=i386; \
+	    ${MAKE} M=mac68k  M_A=m68k; \
+	    ${MAKE} M=mvme68k M_A=m68k; \
+	    ${MAKE} M=powerpc M_A=powerpc; \
+	    ${MAKE} M=sparc   M_A=sparc; \
+	    ${MAKE} M=sun3    M_A=m68k; \
+	    ${MAKE} M=vax     M_A=vax ;
 
 $(TARG): $(DEP)
 	m4 -DOSREV=$(OSREV) -DOSrev=$(OSrev) -DINCLUDE=$(.CURDIR)/$M \
