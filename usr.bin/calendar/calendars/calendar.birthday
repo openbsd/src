@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.4 1997/04/03 19:20:11 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.5 1997/04/04 05:54:26 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -104,6 +104,7 @@
 03/31	Rene Descartes born, 1596, mathematician & philosopher
 04/01	Nikolay Vasilyevich Gogol born, 1809
 04/03	Washington Irving born, 1783
+04/04	Andrey Tarkovskey born, 1932
 04/05	Thomas Hobbes born, 1588, philosopher
 04/08	Buddha born, 563 BC
 04/08	David Rittenhouse born, 1732, astronomer & mathematician
