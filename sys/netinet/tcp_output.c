@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.13 1998/11/18 21:13:06 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.14 1998/11/25 05:20:51 millert Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -267,7 +267,7 @@ again:
 #ifdef TCP_SACK
 	if (!sack_rxmit) {
 #endif
-	len = min(so->so_snd.sb_cc, win) - off;
+	len = lmin(so->so_snd.sb_cc, win) - off;
 
 #if defined(TCP_SACK) && defined(TCP_FACK)
 	/* 
