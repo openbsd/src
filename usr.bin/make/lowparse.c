@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lowparse.c,v 1.11 2001/05/29 12:53:41 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.12 2001/07/11 12:59:43 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -401,7 +401,7 @@ ParseSkipEmptyLines(linebuf)
 }
 
 /* Parse_ReadNormalLine removes beginning and trailing blanks (but keeps
- * the first tab), handles escaped newlinews, and skip over uninteresting
+ * the first tab), handles escaped newlines, and skip over uninteresting
  * lines.  
  *
  * The line number is advanced, which implies that continuation
