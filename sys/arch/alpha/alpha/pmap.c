@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.30 2001/12/05 16:30:47 art Exp $ */
+/* $OpenBSD: pmap.c,v 1.31 2001/12/08 02:24:05 art Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1300,6 +1300,7 @@ pmap_destroy(pmap_t pmap)
 			printf("pmap_release: %ld level 3 tables left\n",
 			    pmap->pm_nlev3);
 		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+		pmap_update(pmap);
 		if (pmap->pm_lev1map != kernel_lev1map)
 			panic("pmap_release: pmap_remove() didn't");
 	}

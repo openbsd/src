@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.12 2001/11/22 09:47:37 art Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.13 2001/12/08 02:24:07 art Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -199,6 +199,7 @@ iommu_attach(parent, self, aux)
 		va += PAGE_SIZE;
 		m = TAILQ_NEXT(m, pageq);
 	}
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Now we build our own copy of the IOMMU page tables. We need to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 2001/11/28 16:13:28 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 2001/12/08 02:24:06 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -583,6 +583,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -1174,6 +1175,7 @@ bus_space_unmap(t, bsh, size)
 	}
 #endif
 	pmap_remove(vm_map_pmap(phys_map), sva, sva+len);
+	pmap_update(pmap_kernel());
 }
 
 int
@@ -1300,7 +1302,7 @@ unmapiodev(kva, p_size)
 #endif
 		vaddr += PAGE_SIZE;
 	}
-	return;
+	pmap_update(pmap_kernel());
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.28 2001/11/17 05:07:55 hugh Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.29 2001/12/08 02:24:07 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
@@ -335,6 +335,7 @@ vmapbuf(bp, len)
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
+	pmap_update(vm_map_pmap(phys_map));
 #endif
 }
 

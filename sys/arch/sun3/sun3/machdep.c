@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2001/11/28 16:13:29 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.47 2001/12/08 02:24:07 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -317,6 +317,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update(kernel_map->pmap);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -788,8 +789,10 @@ dumpsys()
 			printf("\r%4d", todo);
 		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
 			VM_PROT_READ, VM_PROT_READ);
+		pmap_update(pmap_kernel());
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
+		pmap_update(pmap_kernel());
 		if (error)
 			goto fail;
 		paddr += NBPG;

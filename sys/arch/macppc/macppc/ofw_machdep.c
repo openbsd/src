@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.4 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.5 2001/12/08 02:24:06 art Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -197,6 +197,7 @@ restore_ofw_mapping()
 			size -= NBPG;
 		}
 	}
+	pmap_update(pmap_kernel());
 
 	return 0;
 }

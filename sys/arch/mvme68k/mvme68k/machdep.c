@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2001/11/30 02:12:09 art Exp $ */
+/*	$OpenBSD: machdep.c,v 1.61 2001/12/08 02:24:06 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -259,6 +259,7 @@ cpu_startup()
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vm_offset_t)msgbufp,
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
@@ -380,6 +381,7 @@ again:
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -856,8 +858,11 @@ dumpsys()
 			printf("%d ", pg / NPGMB);
 #undef	NPGMB
 		pmap_kenter_pa((vaddr_t)vmmap, maddr, VM_PROT_READ);
-
+		pmap_update(pmap_kernel());
 		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
+		pmap_kremove((vaddr_t)vmmap, PAGE_SIZE);
+		pmap_update(pmap_kernel());
+
 		if (error == 0) {
 			maddr += PAGE_SIZE;
 			blkno += btodb(PAGE_SIZE);

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.60 2001/11/28 16:13:27 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.61 2001/12/08 02:24:05 art Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -942,6 +942,7 @@ cpu_startup()
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
+		pmap_update(pmap_kernel());
 	}
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

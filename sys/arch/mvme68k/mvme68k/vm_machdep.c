@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.32 2001/11/06 19:53:15 miod Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.33 2001/12/08 02:24:06 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -178,6 +178,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -270,6 +271,7 @@ vmapbuf(bp, siz)
 		addr += PAGE_SIZE;
 		kva += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*

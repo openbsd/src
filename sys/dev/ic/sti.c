@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.8 2001/12/02 04:29:11 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.9 2001/12/08 02:24:07 art Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -253,6 +253,7 @@ sti_attach_common(sc)
 
 	pmap_protect(pmap_kernel(), sc->sc_code,
 	    sc->sc_code + round_page(size), VM_PROT_READ|VM_PROT_EXECUTE);
+	pmap_update(pmap_kernel());
 
 	cc = &sc->sc_cfg;
 	bzero(cc, sizeof (*cc));

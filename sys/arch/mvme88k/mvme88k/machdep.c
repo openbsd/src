@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.69 2001/11/30 23:16:51 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.70 2001/12/08 02:24:06 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -479,6 +479,7 @@ cpu_startup()
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vm_offset_t)msgbufp, 
 			   avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
@@ -633,6 +634,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2001/11/30 02:09:34 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 2001/12/08 02:24:06 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -299,15 +299,17 @@ consinit()
 void
 cpu_startup()
 {
-	register unsigned i;
-	register caddr_t v, firstaddr;
+	unsigned i;
+	caddr_t v, firstaddr;
 	int base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
-	vm_offset_t minaddr, maxaddr;
+	vaddr_t minaddr, maxaddr;
 	vm_size_t size = 0;
+	vaddr_t va;
+	paddr_t pa;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -322,10 +324,14 @@ cpu_startup()
 	/*
 	 * XXX - shouldn't this be msgbufp + i * PAGE_SIZE?
 	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufp,
-		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	va = (vaddr_t)msgbufp;
+	pa = (paddr_t)msgbufpa;
+	for (i = 0; i < btoc(MSGBUFSIZE); i++) {
+		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE);
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
@@ -452,6 +458,7 @@ again:
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
+		pmap_update(pmap_kernel());
 	}
 
 	/*

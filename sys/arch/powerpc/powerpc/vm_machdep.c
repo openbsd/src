@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.27 2001/11/13 14:31:52 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.28 2001/12/08 02:24:07 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -156,6 +156,7 @@ pagemove(from, to, size)
 		va += NBPG;
 		to += NBPG;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -243,6 +244,7 @@ vmapbuf(bp, len)
 		faddr += NBPG;
 		taddr += NBPG;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*

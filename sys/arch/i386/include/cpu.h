@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.39 2001/11/06 18:41:09 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.40 2001/12/08 02:24:06 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -220,7 +220,6 @@ int	isa_nmi __P((void));
 
 /* pmap.c */
 void	pmap_bootstrap __P((vm_offset_t));
-vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 /* vm_machdep.c */
 int	kvtop __P((caddr_t));

@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.8 2001/11/09 15:14:13 art Exp $        */
+/*      $OpenBSD: bus_dma.c,v 1.9 2001/12/08 02:24:06 art Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -521,6 +521,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
                             VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
                 }
         }
+	pmap_update(pmap_kernel());
 
         return (0);
 }

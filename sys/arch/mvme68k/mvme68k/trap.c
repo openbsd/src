@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.40 2001/11/28 16:13:28 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.41 2001/12/08 02:24:06 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -713,12 +713,14 @@ writeback(fp, docachepush)
 
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
 						  trunc_page(f->f_fa), VM_PROT_WRITE, VM_PROT_WRITE|PMAP_WIRED);
+			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			pmap_extract(pmap_kernel(), (vm_offset_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 							(vm_offset_t)&vmmap[NBPG]);
+			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
 					 p->p_pid, p->p_comm, p->p_ucred->cr_uid);

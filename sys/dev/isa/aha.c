@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.40 2001/11/30 17:24:19 art Exp $	*/
+/*	$OpenBSD: aha.c,v 1.41 2001/12/08 02:24:07 art Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1105,6 +1105,7 @@ aha_init(sc)
 			VM_PROT_READ|VM_PROT_WRITE);
 		va += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 	/*
 	 * XXXEND
 	 */

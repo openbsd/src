@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.29 2001/12/07 15:29:44 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.30 2001/12/08 02:24:06 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -164,6 +164,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -331,6 +332,7 @@ vmapbuf(bp, len)
                 kva += PAGE_SIZE;
                 len -= PAGE_SIZE;
         } while (len);
+	pmap_update(kpmap);
 }
 
 /*
@@ -351,10 +353,8 @@ vunmapbuf(bp, len)
         off = (vaddr_t)bp->b_data - kva;
         len = m68k_round_page(off + len);
 
-        /*
-         * pmap_remove() is unnecessary here, as kmem_free_wakeup()
-         * will do it for us.
-         */
+	pmap_remove(pmap_kernel(), kva, kva + len);
+	pmap_update(pmap_kernel());
         uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

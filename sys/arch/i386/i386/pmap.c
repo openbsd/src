@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.51 2001/11/28 16:13:28 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.52 2001/12/08 02:24:06 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1156,6 +1156,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
+	pmap_update(pmap_kernel());
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
 	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -2027,27 +2028,6 @@ pmap_virtual_space(startp, endp)
 {
 	*startp = virtual_avail;
 	*endp = virtual_end;
-}
-
-/*
- * pmap_map: map a range of PAs into kvm
- *
- * => used during crash dump
- * => XXX: pmap_map() should be phased out?
- */
-
-vaddr_t
-pmap_map(va, spa, epa, prot)
-	vaddr_t va;
-	paddr_t spa, epa;
-	vm_prot_t prot;
-{
-	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
-		va += NBPG;
-		spa += NBPG;
-	}
-	return va;
 }
 
 /*
@@ -2940,6 +2920,7 @@ pmap_collect(pmap)
 	 */
 
 	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+	pmap_update(pmap);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.38 2001/12/07 10:47:38 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.39 2001/12/08 02:24:07 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -95,6 +95,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -150,6 +151,7 @@ again:
 			pa |= PMAP_NC;
 		pmap_kenter_pa(kva + maplen, pa, VM_PROT_ALL);
 	}
+	pmap_update(pmap_kernel());
 
 	*(vaddr_t *)kaddr = kva;
 	dva = dvma_mapin_space(kernel_map, kva, len, waitok ? 1 : 0, space);
@@ -167,6 +169,7 @@ dropit:
 		pmap_kremove(kva + tmplen, PAGE_SIZE);
 		uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 	}
+	pmap_update(pmap_kernel());
 
 	uvm_km_free(kmem_map, kva, len);
 
@@ -269,6 +272,7 @@ dvma_mapin_space(map, va, len, canwait, space)
 		tva += PAGE_SIZE;
 		va += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 
 	/*
 	 * XXX Only have to do this on write.
@@ -300,7 +304,10 @@ dvma_mapout(kva, va, len)
 		iommu_remove(kva, klen);
 	else
 #endif
+	{
 		pmap_remove(pmap_kernel(), kva, kva + klen);
+		pmap_update(pmap_kernel());
+	}
 
 	s = splhigh();
 	error = extent_free(dvmamap_extent, kva, klen, EX_NOWAIT);
@@ -371,6 +378,7 @@ vmapbuf(bp, sz)
 		kva += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*

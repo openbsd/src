@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.40 2001/11/28 16:13:29 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.41 2001/12/08 02:24:06 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -264,6 +264,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -338,6 +339,7 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
 		tva += PAGE_SIZE;
 		ppa += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 #ifndef NEW_MAPPING
 	return (iova + off);
 #else
@@ -360,6 +362,7 @@ iomap_mapout(vm_offset_t kva, vm_size_t len)
 	len = round_page(off + len);
 
 	pmap_remove(vm_map_pmap(iomap_map), kva, kva + len);
+	pmap_update(vm_map_pmap(iomap_map));
 
 	s = splhigh();
 	error = extent_free(iomap_extent, kva, len, EX_NOWAIT);
@@ -409,6 +412,7 @@ mapiospace(caddr_t pa, int len)
 
 	pmap_kenter_pa(phys_map_vaddr1, (vm_offset_t)pa,
 	    VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 	
 	return (phys_map_vaddr1 + off);
 }
@@ -423,6 +427,7 @@ unmapiospace(vm_offset_t va)
 	va = trunc_page(va);
 
 	pmap_kremove(va, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 }
 
 int
@@ -496,6 +501,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 }
 
 u_int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2001/11/28 14:20:16 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.28 2001/12/08 02:24:07 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -706,6 +706,7 @@ if (startpmapdebug)
 			bzero((caddr_t)(phys|KERNBASE), NBPG);
 			pmap_kenter_pa(ptaddr, phys,
 			    VM_PROT_READ|VM_PROT_WRITE);
+			pmap_update(pmap_kernel());
 		}
 	}
 	if (flags & PMAP_WIRED)

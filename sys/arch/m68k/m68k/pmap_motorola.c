@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.4 2001/12/06 01:03:58 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.5 2001/12/08 02:24:06 art Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -832,6 +832,7 @@ pmap_release(pmap)
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + MACHINE_MAX_PTSIZE);
+		pmap_update(pmap_kernel());
 		uvm_km_pgremove(uvm.kernel_object, (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + MACHINE_MAX_PTSIZE);
 		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
@@ -2406,6 +2407,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				pmap_remove(pmap_kernel(),
 				    (vaddr_t)ptpmap->pm_stab,
 				    (vaddr_t)ptpmap->pm_stab + MACHINE_STSIZE);
+				pmap_update(pmap_kernel());
 				uvm_pagefree(PHYS_TO_VM_PAGE((paddr_t)
 				    ptpmap->pm_stpa));
 				uvm_km_free_wakeup(st_map,

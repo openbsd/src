@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.19 2001/12/02 04:10:25 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.20 2001/12/08 02:24:06 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -745,6 +745,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 #endif
 		va += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 
 	return 0;
 }

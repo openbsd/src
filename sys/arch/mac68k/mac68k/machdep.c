@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.90 2001/11/28 16:13:28 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.91 2001/12/08 02:24:06 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -346,6 +346,7 @@ cpu_startup(void)
 		    high[numranges - 1] + i * NBPG,
 		    VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
@@ -475,12 +476,12 @@ again:
 			if (pg == NULL) 
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_ALL,
-			    VM_PROT_ALL|PMAP_WIRED);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
+		pmap_update(pmap_kernel());
 	}
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -705,7 +706,7 @@ haltsys:
 	/* Map the last physical page VA = PA for doboot() */
 	pmap_enter(pmap_kernel(), (vm_offset_t)maxaddr, (vm_offset_t)maxaddr,
 	    VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
-
+	pmap_update(pmap_kernel());
 
 	printf("rebooting...\n");
 	DELAY(1000000);
@@ -897,6 +898,7 @@ dumpsys()
 		}
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, vmmap, NBPG);
  bad:

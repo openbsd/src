@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.188 2001/12/07 17:30:14 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.189 2001/12/08 02:24:06 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -359,6 +359,7 @@ cpu_startup()
 		va += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
@@ -617,6 +618,7 @@ setup_buffers(maxaddr)
 			pg = TAILQ_NEXT(pg, pageq);
 		}
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*  
@@ -2670,7 +2672,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 			pmap_update_pg(va);
 		}
 	}
-	tlbflush();
+	pmap_update(pmap_kernel());
 
 	return 0;
 }
@@ -3100,7 +3102,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
-	tlbflush();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

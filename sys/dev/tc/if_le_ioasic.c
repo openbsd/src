@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ioasic.c,v 1.8 2001/11/30 17:24:19 art Exp $	*/
+/*	$OpenBSD: if_le_ioasic.c,v 1.9 2001/12/08 02:24:07 art Exp $	*/
 /*	$NetBSD: if_le_ioasic.c,v 1.2 1996/05/07 02:24:56 thorpej Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ le_ioasic_attach(parent, self, aux)
 			VM_PROT_READ|VM_PROT_WRITE);
 		va += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 	/*
 	 * XXXEND
 	 */

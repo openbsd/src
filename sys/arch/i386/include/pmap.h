@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.21 2001/12/04 23:22:42 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.22 2001/12/08 02:24:06 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -501,8 +501,6 @@ pmap_protect(pmap, sva, eva, prot)
 		}
 	}
 }
-
-vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 
 #if defined(USER_LDT)
 void	pmap_ldt_cleanup __P((struct proc *));
