@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.45 2003/06/02 23:28:14 millert Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.46 2003/10/25 12:15:24 markus Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ union inpaddru {
  */
 struct inpcb {
 	LIST_ENTRY(inpcb) inp_hash;
+	LIST_ENTRY(inpcb) inp_lhash;		/* extra hash for lport */
 	CIRCLEQ_ENTRY(inpcb) inp_queue;
 	struct	  inpcbtable *inp_table;
 	union	  inpaddru inp_faddru;		/* Foreign address. */
@@ -147,8 +148,8 @@ struct inpcb {
 
 struct inpcbtable {
 	CIRCLEQ_HEAD(, inpcb) inpt_queue;
-	LIST_HEAD(inpcbhead, inpcb) *inpt_hashtbl;
-	u_long	  inpt_hash;
+	LIST_HEAD(inpcbhead, inpcb) *inpt_hashtbl, *inpt_lhashtbl;
+	u_long	  inpt_hash, inpt_lhash;
 	u_int16_t inpt_lastport;
 };
 

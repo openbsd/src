@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.67 2003/08/15 20:32:20 tedu Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.68 2003/10/25 12:15:24 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -117,6 +117,9 @@ int ipport_hilastauto = IPPORT_HILASTAUTO;	/* 44999 */
 	(faddr)->s6_addr32[3]) + ntohs((fport)) + ntohs((lport))) & \
 	(table->inpt_hash)]
 
+#define	INPCBLHASH(table, lport) \
+	&(table)->inpt_lhashtbl[lport & table->inpt_lhash]
+
 void
 in_pcbinit(table, hashsize)
 	struct inpcbtable *table;
@@ -124,9 +127,14 @@ in_pcbinit(table, hashsize)
 {
 
 	CIRCLEQ_INIT(&table->inpt_queue);
-	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &table->inpt_hash);
+	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_NOWAIT,
+	    &table->inpt_hash);
 	if (table->inpt_hashtbl == NULL)
 		panic("in_pcbinit: hashinit failed");
+	table->inpt_lhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT,
+	    &table->inpt_lhash);
+	if (table->inpt_lhashtbl == NULL)
+		panic("in_pcbinit: hashinit failed for lport");
 	table->inpt_lastport = 0;
 }
 
@@ -175,6 +183,7 @@ in_pcballoc(so, v)
 	inp->inp_seclevel[SL_IPCOMP] = ipsec_ipcomp_default_level;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
+	LIST_INSERT_HEAD(INPCBLHASH(table, inp->inp_lport), inp, inp_lhash);
 	LIST_INSERT_HEAD(INPCBHASH(table, &inp->inp_faddr, inp->inp_fport,
 	    &inp->inp_laddr, inp->inp_lport), inp, inp_hash);
 	splx(s);
@@ -496,6 +505,7 @@ in_pcbdetach(v)
 	splx(s);
 #endif
 	s = splnet();
+	LIST_REMOVE(inp, inp_lhash);
 	LIST_REMOVE(inp, inp_hash);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
 	splx(s);
@@ -713,9 +723,8 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 	struct in_addr faddr = *(struct in_addr *)faddrp;
 	struct in_addr laddr = *(struct in_addr *)laddrp;
 
-	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;
-	    inp = inp->inp_queue.cqe_next) {
+	for (inp = LIST_FIRST(INPCBLHASH(table, lport)); inp;
+	    inp = LIST_NEXT(inp, inp_lhash)) {
 		if (inp->inp_lport != lport)
 			continue;
 		wildcard = 0;
@@ -923,6 +932,8 @@ in_pcbrehash(inp)
 	int s;
 
 	s = splnet();
+	LIST_REMOVE(inp, inp_lhash);
+	LIST_INSERT_HEAD(INPCBLHASH(table, inp->inp_lport), inp, inp_lhash);
 	LIST_REMOVE(inp, inp_hash);
 #ifdef INET6
 	if (inp->inp_flags & INP_IPV6) {
