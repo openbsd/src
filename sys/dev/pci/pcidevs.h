@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.788 2004/10/30 14:11:23 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.790 2004/11/06 01:54:12 reyk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -273,6 +273,7 @@
 #define	PCI_VENDOR_ADP2	0x9005		/* Adaptec */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_NETMOS	0x9710		/* NetMos */
+#define	PCI_VENDOR_3COM2	0xa727		/* 3Com */
 #define	PCI_VENDOR_TIGERJET	0xe159		/* TigerJet Network */
 #define	PCI_VENDOR_ENDACE	0xeace		/* Endace */
 #define	PCI_VENDOR_BELKIN	0xec80		/* Belkin Components */
@@ -294,6 +295,8 @@
 /* 3Com Products */
 #define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 */
 #define	PCI_PRODUCT_3COM_3C996	0x0003		/* 3c996 */
+#define	PCI_PRODUCT_3COM_3CRDAG675	0x0013		/* 3CRDAG675 (Atheros AR5212) */
+#define	PCI_PRODUCT_3COM2_3CRPAG175	0x0013		/* 3CRPAG175 (Atheros AR5212) */
 #define	PCI_PRODUCT_3COM_3C_MPCI_MODEM	0x1007		/* V.90 Modem */
 #define	PCI_PRODUCT_3COM_3C940	0x1700		/* 3c940 */
 #define	PCI_PRODUCT_3COM_3C339	0x3390		/* 3c339 */
@@ -741,8 +744,9 @@
 #define	PCI_PRODUCT_ATHEROS_AR5311	0x0011		/* AR5211 */
 #define	PCI_PRODUCT_ATHEROS_AR5211	0x0012		/* AR5211 */
 #define	PCI_PRODUCT_ATHEROS_AR5212	0x0013		/* AR5212 */
-#define	PCI_PRODUCT_ATHEROS_AR5201_AP	0x0207		/* AR5201 (Early) */
-#define	PCI_PRODUCT_ATHEROS_AR5201_DEFAULT	0x1107		/* AR5201 (no eeprom) */
+#define	PCI_PRODUCT_ATHEROS_AR5210_AP	0x0207		/* AR5210 (Early) */
+#define	PCI_PRODUCT_ATHEROS_AR5212_IBM	0x1014		/* AR5212 (IBM MiniPCI) */
+#define	PCI_PRODUCT_ATHEROS_AR5210_DEFAULT	0x1107		/* AR5210 (no eeprom) */
 #define	PCI_PRODUCT_ATHEROS_AR5212_DEFAULT	0x1113		/* AR5212 (no eeprom) */
 #define	PCI_PRODUCT_ATHEROS_AR5211_DEFAULT	0x1112		/* AR5211 (no eeprom) */
 #define	PCI_PRODUCT_ATHEROS_AR5212_FPGA	0xf013		/* AR5212 (emulation board) */
