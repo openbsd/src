@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.70 2003/06/09 20:43:44 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.71 2003/06/10 22:58:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -68,7 +68,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.70 2003/06/09 20:43:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.71 2003/06/10 22:58:45 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -568,7 +568,7 @@ parse_file(int *nentries)
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
 		l = strtol(q, &ep, 10);
-		if (l <= 0 || l >= INT_MAX)
+		if (l < 0 || l >= INT_MAX)
 			errx(1, "%s:%d: interval out of range: %s", conf,
 			    lineno, q);
 		working->hours = (int)l;
