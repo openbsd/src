@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.2 1998/10/04 22:28:14 niklas Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.3 1998/11/28 01:29:05 deraadt Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -57,7 +57,9 @@
  */
 
 #include "bpfilter.h"
+#include "we.h"
 
+#define WE_DEBUG
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -132,9 +134,15 @@ struct we_softc {
 int	we_probe __P((struct device *, void *, void *));
 void	we_attach __P((struct device *, struct device *, void *));
 
-struct cfattach we_ca = {
+struct cfattach we_isa_ca = {
 	sizeof(struct we_softc), we_probe, we_attach
 };
+
+#if NWE_ISAPNP
+struct cfattach we_isapnp_ca = {
+	sizeof(struct we_softc), we_probe, we_attach
+};
+#endif /* NWE_ISAPNP */
 
 #ifdef __NetBSD__
 extern struct cfdriver we_cd;
@@ -235,9 +243,13 @@ we_probe(parent, match, aux)
 		return (0);
 
 	/* Attempt to map the device. */
-	if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich))
-		goto out;
-	asich_valid = 1;
+	if (ia->ia_ioh)
+		asich = ia->ia_ioh;
+	else {
+		if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich))
+			goto out;
+		asich_valid = 1;
+	}
 
 #ifdef TOSH_ETHER
 	bus_space_write_1(asict, asich, WE_MSR, WE_MSR_POW);
@@ -291,9 +303,13 @@ we_probe(parent, match, aux)
 		memsize = ia->ia_msize;
 
 	/* Attempt to map the memory space. */
-	if (bus_space_map(memt, ia->ia_maddr, memsize, 0, &memh))
-		goto out;
-	memh_valid = 1;
+	if (ia->ia_memh)
+		memh = ia->ia_memh;
+	else {
+		if (bus_space_map(memt, ia->ia_maddr, memsize, 0, &memh))
+			goto out;
+		memh_valid = 1;
+	}
 
 	/*
 	 * If possible, get the assigned interrupt number from the card
@@ -358,29 +374,27 @@ we_attach(parent, self, aux)
 	u_int8_t x;
 	int i;
 
-	printf("\n");
-
 	nict = asict = ia->ia_iot;
 	memt = ia->ia_memt;
 
 	/* Map the device. */
-	if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich)) {
-		printf("%s: can't map nic i/o space\n",
-		    sc->sc_dev.dv_xname);
+	if (ia->ia_ioh)
+		asich = ia->ia_ioh;
+	else if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich)) {
+		printf(": can't map nic i/o space\n");
 		return;
 	}
 
 	if (bus_space_subregion(asict, asich, WE_NIC_OFFSET, WE_NIC_NPORTS,
 	    &nich)) {
-		printf("%s: can't subregion i/o space\n",
-		    sc->sc_dev.dv_xname);
+		printf(": can't subregion i/o space\n");
 		return;
 	}
 
 	typestr = we_params(asict, asich, &wsc->sc_type, NULL,
 	    &wsc->sc_16bitp, &sc->is790);
 	if (typestr == NULL) {
-		printf("%s: where did the card go?\n", sc->sc_dev.dv_xname);
+		printf(": where did the card go?\n");
 		return;
 	}
 
@@ -388,9 +402,10 @@ we_attach(parent, self, aux)
 	 * Map memory space.  Note we use the size that might have
 	 * been overridden by the user.
 	 */
-	if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh)) {
-		printf("%s: can't map shared memory\n",
-		    sc->sc_dev.dv_xname);
+	if (ia->ia_memh)
+		memh = ia->ia_memh;
+	else if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh)) {
+		printf(": can't map shared memory\n");
 		return;
 	}
 
@@ -420,8 +435,7 @@ we_attach(parent, self, aux)
 
 	/* Now we can use the NIC_{GET,PUT}() macros. */
 
-	printf("%s: %s Ethernet (%s-bit)\n", sc->sc_dev.dv_xname,
-	    typestr, wsc->sc_16bitp ? "16" : "8");
+	printf(": %s (%s-bit)\n", typestr, wsc->sc_16bitp ? "16" : "8");
 
 	/* Get station address from EEPROM. */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
@@ -429,7 +443,7 @@ we_attach(parent, self, aux)
 		sc->sc_enaddr[i] = bus_space_read_1(asict, asich, WE_PROM + i);
 #else
 		sc->sc_arpcom.ac_enaddr[i] =
-				bus_space_read_1(asict, asich, WE_PROM + i);
+		    bus_space_read_1(asict, asich, WE_PROM + i);
 #endif
 
 	/*

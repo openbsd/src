@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.46 1998/11/06 06:32:15 fgsch Exp $
+#	$OpenBSD: files.isa,v 1.47 1998/11/28 01:29:05 deraadt Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -143,8 +143,8 @@ file	dev/isa/wt.c			wt needs-flag
 # MUST be first: probe is non invasive, and registers are clobbered
 # by other drivers's probe
 device	we: ether, ifnet, dp8390nic, ifmedia
-attach	we at isa
-file	dev/isa/if_we.c			we
+attach	we at isa with we_isa
+file	dev/isa/if_we.c			we & (we_isa | we_isapnp) needs-flag
 
 # 3Com common probe code
 define	elink
