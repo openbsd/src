@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.13 2005/03/26 13:35:16 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.14 2005/03/26 13:39:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -52,8 +52,6 @@ int		check_child(pid_t, const char *);
 
 void	main_dispatch_ospfe(int, short, void *);
 void	main_dispatch_rde(int, short, void *);
-void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);
-void	main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
 
 int	check_file_secrecy(int, const char *);
 
@@ -419,7 +417,6 @@ main_imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 
 	imsg_compose(ibuf_rde, type, 0, pid, -1, data, datalen);
 }
-
 
 int
 check_file_secrecy(int fd, const char *fname)
