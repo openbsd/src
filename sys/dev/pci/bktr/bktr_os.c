@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.18 2004/05/24 21:56:41 mickey Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.19 2004/06/29 12:24:57 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -296,14 +296,14 @@ bktr_probe( device_t dev )
 static int
 bktr_attach( device_t dev )
 {
-	u_long		latency;
-	u_long		fun;
-	u_long		val;
+	u_int		latency;
+	u_int		fun;
+	u_int		val;
 	unsigned int	rev;
 	unsigned int	unit;
 	int		error = 0;
 #ifdef BROOKTREE_IRQ
-	u_long		old_irq, new_irq;
+	u_int		old_irq, new_irq;
 #endif 
 
         struct bktr_softc *bktr = device_get_softc(dev);
@@ -913,8 +913,8 @@ static void
 bktr_attach(struct device *parent, struct device *self, void *aux)
 {
 	bktr_ptr_t	bktr;
-	u_long		latency;
-	u_long		fun;
+	u_int		latency;
+	u_int		fun;
 	unsigned int	rev;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.h,v 1.2 2003/01/05 01:24:53 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.h,v 1.3 2004/06/29 12:24:57 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.4 2000/06/26 09:41:32 roger Exp $ */
 
 /*
@@ -74,7 +74,7 @@ const char *bktr_name(bktr_ptr_t bktr);
 
 /* Prototypes for attatch and interrupt functions */
 void	common_bktr_attach( bktr_ptr_t bktr, int unit,
-			u_long pci_id, u_int rev );
+			u_int pci_id, u_int rev );
 int	common_bktr_intr( void *arg );
 
 

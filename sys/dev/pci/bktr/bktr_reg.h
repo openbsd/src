@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_reg.h,v 1.6 2003/01/05 01:24:53 mickey Exp $	*/
+/*	$OpenBSD: bktr_reg.h,v 1.7 2004/06/29 12:24:57 mickey Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp $
  *
@@ -606,7 +606,7 @@ struct bktr_softc {
     int         vbiinsert;      /* Position for next write into circular buffer */
     int         vbistart;       /* Position of last read from circular buffer */
     int         vbisize;        /* Number of bytes in the circular buffer */
-    u_long	vbi_sequence_number;	/* sequence number for VBI */
+    u_int	vbi_sequence_number;	/* sequence number for VBI */
     int		vbi_read_blocked;	/* user process blocked on read() from /dev/vbi */
     struct selinfo vbi_select;	/* Data used by select() on /dev/vbi */
     
@@ -619,7 +619,7 @@ struct bktr_softc {
 #define	METEOR_SIG_FRAME_MODE	0x00000000
     char         dma_prog_loaded;
     struct meteor_mem *mem;	/* used to control sync. multi-frame output */
-    u_long	synch_wait;	/* wait for free buffer before continuing */
+    u_int	synch_wait;	/* wait for free buffer before continuing */
     short	current;	/* frame number in buffer (1-frames) */
     short	rows;		/* number of rows in a frame */
     short	cols;		/* number of columns in a frame */
@@ -630,15 +630,15 @@ struct bktr_softc {
     char	capture_area_enabled;  /* When TRUE use user's capture area. */
     int		pixfmt;         /* active pixel format (idx into fmt tbl) */
     int		pixfmt_compat;  /* Y/N - in meteor pix fmt compat mode */
-    u_long	format;		/* frame format rgb, yuv, etc.. */
+    u_int	format;		/* frame format rgb, yuv, etc.. */
     short	frames;		/* number of frames allocated */
     int		frame_size;	/* number of bytes in a frame */
-    u_long	fifo_errors;	/* number of fifo capture errors since open */
-    u_long	dma_errors;	/* number of DMA capture errors since open */
-    u_long	frames_captured;/* number of frames captured since open */
-    u_long	even_fields_captured; /* number of even fields captured */
-    u_long	odd_fields_captured; /* number of odd fields captured */
-    u_long	range_enable;	/* enable range checking ?? */
+    u_int	fifo_errors;	/* number of fifo capture errors since open */
+    u_int	dma_errors;	/* number of DMA capture errors since open */
+    u_int	frames_captured;/* number of frames captured since open */
+    u_int	even_fields_captured; /* number of even fields captured */
+    u_int	odd_fields_captured; /* number of odd fields captured */
+    u_int	range_enable;	/* enable range checking ?? */
     u_short     capcontrol;     /* reg 0xdc capture control */
     u_short     bktr_cap_ctl;
     volatile u_int	flags;
@@ -695,8 +695,8 @@ struct bktr_softc {
     u_char		audio_mux_select;	/* current mode of the audio */
     u_char		audio_mute_state;	/* mute state of the audio */
     u_char		format_params;
-    u_long              current_sol;
-    u_long              current_col;
+    u_int		current_sol;
+    u_int		current_col;
     int                 clip_start;
     int                 line_length;
     int                 last_y;
@@ -709,7 +709,7 @@ struct bktr_softc {
     int                 reverse_mute;		/* Swap the GPIO values for Mute and TV Audio */
     int                 bt848_tuner;
     int                 bt848_card;
-    u_long              id;
+    u_int		id;
 #define BT848_USE_XTALS 0
 #define BT848_USE_PLL   1
     int			xtal_pll_mode;	/* Use XTAL or PLL mode for PAL/SECAM */

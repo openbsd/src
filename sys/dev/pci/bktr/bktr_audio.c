@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_audio.c,v 1.5 2004/03/19 09:14:15 mickey Exp $	*/
+/*	$OpenBSD: bktr_audio.c,v 1.6 2004/06/29 12:24:57 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp $ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -122,7 +122,7 @@ void init_audio_devices( bktr_ptr_t bktr ) {
 int
 set_audio( bktr_ptr_t bktr, int cmd )
 {
-	u_long		temp;
+	u_int		temp;
 	volatile u_char	idx;
 
 #if defined( AUDIOMUX_DISCOVER )
@@ -387,7 +387,7 @@ set_bctv_audio( bktr_ptr_t bktr )
 void
 bctv_gpio_write( bktr_ptr_t bktr, int port, int val )
 {
-        u_long data, outbits;
+        u_int data, outbits;
 
         port &= BCTV_GPIO_PORT_MASK;
         switch (port) {
@@ -417,7 +417,7 @@ bctv_gpio_write( bktr_ptr_t bktr, int port, int val )
 int
 bctv_gpio_read( bktr_ptr_t bktr, int port )
 {
-        u_long data, outbits, ret;
+        u_int data, outbits, ret;
 
         port &= BCTV_GPIO_PORT_MASK;
         switch (port) {

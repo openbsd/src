@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.12 2004/05/24 21:59:28 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.13 2004/06/29 12:24:57 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -343,7 +343,7 @@ static const struct meteor_pixfmt_internal {
 
 /*  FIXME:  Also add YUV_422 and YUV_PACKED as well  */
 static const struct {
-	u_long               meteor_format;
+	u_int	meteor_format;
 	struct meteor_pixfmt public;
 } meteor_pixfmt_table[] = {
     { METEOR_GEO_YUV_12,
@@ -388,7 +388,7 @@ static const struct {
 
 /* debug utility for holding previous INT_STAT contents */
 #define STATUS_SUM
-static u_long	status_sum = 0;
+static u_int	status_sum = 0;
 
 /*
  * defines to make certain bit-fiddles understandable
@@ -410,7 +410,7 @@ static u_long	status_sum = 0;
 
 
 
-static int		oformat_meteor_to_bt( u_long format );
+static int		oformat_meteor_to_bt( u_int format );
 
 static u_int		pixfmt_swap_flags( int pixfmt );
 
@@ -470,7 +470,7 @@ static int      i2c_read_byte( bktr_ptr_t bktr, unsigned char *data, int last );
  * the common attach code, used by all OS versions.
  */
 void
-common_bktr_attach( bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev )
+common_bktr_attach( bktr_ptr_t bktr, int unit, u_int pci_id, u_int rev )
 {
 	vaddr_t	buf = 0;
 
@@ -1433,12 +1433,12 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		break;
 
 	case METEORGFMT:	/* get input format */
-		*(u_long *)arg = bktr->flags & METEOR_FORM_MASK;
+		*(u_int *)arg = bktr->flags & METEOR_FORM_MASK;
 		break;
 
 
 	case BT848GFMT:		/* get input format */
-	        *(u_long *)arg = INB(bktr, BKTR_IFORM) & BT848_IFORM_FORMAT;
+	        *(u_int *)arg = INB(bktr, BKTR_IFORM) & BT848_IFORM_FORMAT;
 		break;
 
 	case METEORSCOUNT:	/* (re)set error counts */
@@ -1890,11 +1890,11 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 	int		offset;
 	int		count;
 	u_char		*buf;
-	u_long          par;
-	u_char          write;
-	int             i2c_addr;
-	int             i2c_port;
-	u_long          data;
+	u_int		par;
+	u_char		write;
+	int		i2c_addr;
+	int		i2c_port;
+	u_int		data;
 
 	switch ( cmd ) {
 
@@ -2251,7 +2251,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 
 	/* Luigi's I2CWR ioctl */
 	case BT848_I2CWR:
-		par = *(u_long *)arg;
+		par = *(u_int *)arg;
 		write = (par >> 24) & 0xff ;
 		i2c_addr = (par >> 16) & 0xff ;
 		i2c_port = (par >> 8) & 0xff ;
@@ -2262,7 +2262,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		} else {
 			data = i2cRead( bktr, i2c_addr);
 		}
-		*(u_long *)arg = (par & 0xffffff00) | ( data & 0xff );
+		*(u_int *)arg = (par & 0xffffff00) | ( data & 0xff );
 		break;
 
 
@@ -2407,7 +2407,7 @@ bktr_common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg )
 		break;
 
 	case METEORGINPUT:	/* get input device */
-		*(u_long *)arg = bktr->flags & METEOR_DEV_MASK;
+		*(u_int *)arg = bktr->flags & METEOR_DEV_MASK;
 		break;
 
 	case METEORSACTPIXFMT:
@@ -2626,7 +2626,7 @@ split(bktr_reg_t *bktr, u_int **dma_prog, int width, u_int operation,
     int pixel_width, u_int *target_buffer, int cols)
 {
 
- u_long flag, flag2;
+ u_int flag, flag2;
  const struct meteor_pixfmt *pf = &pixfmt_table[ bktr->pixfmt ].public;
  u_int  skip, start_skip;
 
@@ -2837,7 +2837,7 @@ rgb_vbi_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	for(i = 0; i < vbilines; i++) {
 		*dma_prog++ = htole32(OP_WRITE | OP_SOL | OP_EOL | vbisamples);
 #ifdef __FreeBSD__
-		*dma_prog++ = (u_long) vtophys((caddr_t)bktr->vbidata +
+		*dma_prog++ = (u_int) vtophys((caddr_t)bktr->vbidata +
 				((i+MAX_VBI_LINES) * VBI_LINE_SIZE));
 #else
 		*dma_prog++ = htole32(bktr->dm_vbidata->dm_segs->ds_addr +
@@ -2933,12 +2933,12 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	/* Construct Write */
 
 	if (bktr->video.addr) {
-		target_buffer = (u_long) bktr->video.addr;
+		target_buffer = (u_int) bktr->video.addr;
 		pitch = bktr->video.width;
 	}
 	else {
 #ifdef __FreeBSD__
-		target_buffer = (u_long) vtophys(bktr->bigbuf);
+		target_buffer = (u_int) vtophys(bktr->bigbuf);
 #else
 		target_buffer = bktr->dm_mem->dm_segs->ds_addr;
 #endif
@@ -2983,7 +2983,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 
 		*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_int) vtophys(bktr->dma_prog);
 #else
 		*dma_prog++ = htole32(bktr->dm_prog->dm_segs->ds_addr);
 #endif
@@ -2996,7 +2996,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 
 		*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_int) vtophys(bktr->dma_prog);
 #else
 		*dma_prog++ = htole32(bktr->dm_prog->dm_segs->ds_addr);
 #endif
@@ -3008,7 +3008,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 		*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog = (u_int) vtophys(bktr->odd_dma_prog);
 #else
 		*dma_prog++ = htole32(bktr->dm_oprog->dm_segs->ds_addr);
 #endif
@@ -3052,7 +3052,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 	*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog) ;
+	*dma_prog++ = (u_ong ) vtophys(bktr->dma_prog) ;
 #else
 	*dma_prog++ = htole32(bktr->dm_prog->dm_segs->ds_addr);
 #endif
@@ -3070,8 +3070,8 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	int			i;
 	volatile unsigned int	inst;
 	volatile unsigned int	inst3;
-	volatile u_long		target_buffer, buffer;
-	volatile  u_long	*dma_prog;
+	volatile u_int		target_buffer, buffer;
+	volatile u_int		*dma_prog;
         const struct meteor_pixfmt_internal *pf_int = &pixfmt_table[ bktr->pixfmt ];
 	int			b;
 
@@ -3086,7 +3086,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	bktr->capcontrol =   1 << 6 | 1 << 4 | 1 << 2 | 3;
 	bktr->capcontrol = 3 << 2 |  3;
 
-	dma_prog = (u_long *) bktr->dma_prog;
+	dma_prog = (u_int *) bktr->dma_prog;
 
 	/* Construct Write */
 
@@ -3096,10 +3096,10 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	inst3 = OP_WRITE | OP_EOL | (cols);
 
 	if (bktr->video.addr)
-		target_buffer = (u_long) bktr->video.addr;
+		target_buffer = bktr->video.addr;
 	else
 #ifdef __FreeBSD__
-		target_buffer = (u_long) vtophys(bktr->bigbuf);
+		target_buffer = vtophys(bktr->bigbuf);
 #else
 		target_buffer = bktr->dm_mem->dm_segs->ds_addr;
 #endif
@@ -3129,7 +3129,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 
 		*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_int) vtophys(bktr->dma_prog);
 #else
 		*dma_prog++ = htole32(bktr->dm_prog->dm_segs->ds_addr);
 #endif
@@ -3141,7 +3141,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 		*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
-		*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+		*dma_prog++ = (u_int) vtophys(bktr->dma_prog);
 #else
 		*dma_prog++ = htole32(bktr->dm_prog->dm_segs->ds_addr);
 #endif
@@ -3153,7 +3153,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 		*dma_prog++ = htole32(0);  /* NULL WORD */
 		*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
-		*dma_prog = (u_long ) vtophys(bktr->odd_dma_prog);
+		*dma_prog = (u_int) vtophys(bktr->odd_dma_prog);
 #else
 		*dma_prog++ = htole32(bktr->dm_oprog->dm_segs->ds_addr);
 #endif
@@ -3162,9 +3162,9 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 
 	if (interlace == 2) {
 
-		target_buffer =	 (u_long) buffer + cols*2;
+		target_buffer =	buffer + cols*2;
 
-		dma_prog = (u_long * ) bktr->odd_dma_prog;
+		dma_prog = (u_int * ) bktr->odd_dma_prog;
 
 		/* sync vre */
 		*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
@@ -3184,14 +3184,14 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 	*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+	*dma_prog++ = (u_int) vtophys(bktr->dma_prog);
 #else
 	*dma_prog++ = htole32(bktr->dm_prog->dm_segs->ds_addr);
 #endif
 
 	*dma_prog++ = htole32(OP_JUMP);
 #ifdef __FreeBSD__
-	*dma_prog++ = (u_long ) vtophys(bktr->dma_prog);
+	*dma_prog++ = (u_int) vtophys(bktr->dma_prog);
 #else
 	*dma_prog++ = htole32(bktr->dm_prog->dm_segs->ds_addr);
 #endif
@@ -3362,10 +3362,10 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 	inst  = OP_WRITE123  | OP_SOL | OP_EOL |  (cols);
 	inst1  = OP_WRITES123  | OP_SOL | OP_EOL |  (cols);
 	if (bktr->video.addr)
-		target_buffer = (u_long) bktr->video.addr;
+		target_buffer = (u_int) bktr->video.addr;
 	else
 #ifdef __FreeBSD__
-		target_buffer = (u_long) vtophys(bktr->bigbuf);
+		target_buffer = (u_int) vtophys(bktr->bigbuf);
 #else
 		target_buffer = bktr->dm_mem->dm_segs->ds_addr;
 #endif
@@ -3433,7 +3433,7 @@ yuv12_prog( bktr_ptr_t bktr, char i_flag,
 
 		dma_prog = (u_int *)bktr->odd_dma_prog;
 
-		target_buffer  = (u_long) buffer + cols;
+		target_buffer  = (u_int) buffer + cols;
 		t1 = buffer + cols/2;
 		*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3);
 		*dma_prog++ = htole32(0);  /* NULL WORD */
@@ -3834,7 +3834,7 @@ static u_int pixfmt_swap_flags( int pixfmt )
  *   our pixfmt_table indices.
  */
 
-static int oformat_meteor_to_bt( u_long format )
+static int oformat_meteor_to_bt( u_int format )
 {
 	int    i;
         const struct meteor_pixfmt *pf1, *pf2;
@@ -4036,8 +4036,8 @@ static void remote_read(bktr_ptr_t bktr, struct bktr_remote *remote) {
 int
 i2cWrite( bktr_ptr_t bktr, int addr, int byte1, int byte2 )
 {
-	u_long		x;
-	u_long		data;
+	u_int		x;
+	u_int		data;
 
 	/* clear status bits */
 	OUTL(bktr, BKTR_INT_STAT, BT848_INT_RACK | BT848_INT_I2CDONE);
