@@ -1,7 +1,10 @@
-#	$NetBSD: netconfig,v 1.1 1995/07/02 06:29:49 christos Exp $
+#	$NetBSD: netconfig,v 1.2 1996/04/11 12:59:47 christos Exp $
 # SVR4 Network configuration file
 #
-# service name	       fl family  proto  device		library
-udp       tpi_clts     v inet     udp    /dev/udp       -
-tcp       tpi_cots_ord v inet     tcp    /dev/tcp       -
-ticotsord tpi_cots_ord v loopback -      /dev/ticotsord straddr.so
+# service name	       fl family   proto device         library
+udp       tpi_clts     v  inet     udp   /dev/udp       -
+tcp       tpi_cots_ord v  inet     tcp   /dev/tcp       -
+rawip     tpi_raw      -  inet     -     /dev/rawip     -
+ticlts    tpi_clts     v  loopback -     /dev/ticlts    straddr.so
+ticotsord tpi_cots_ord v  loopback -     /dev/ticotsord straddr.so
+ticots    tpi_cots     v  loopback -     /dev/ticots    straddr.so

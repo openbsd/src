@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1995/09/06 16:17:41 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1996/03/22 05:14:27 scottr Exp $
 #
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 
@@ -20,9 +20,9 @@ netbsd-dl:
 	    ${DESTDIR}/snapshot/netbsd-dl
 
 netbsd-gen.gz: netbsd-gen
-	gzip -9 ${DESTDIR}/snapshot/netbsd-gen
+	gzip -f9 ${DESTDIR}/snapshot/netbsd-gen
 
 netbsd-dl.gz: netbsd-dl
-	gzip -9 ${DESTDIR}/snapshot/netbsd-dl
+	gzip -f9 ${DESTDIR}/snapshot/netbsd-dl
 
 .endif	# DESTDIR check

@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+#	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
+#
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
 #
@@ -39,6 +41,7 @@
 #	cd*	SCSI CD-ROM
 #	mcd*	Mitsumi CD-ROM
 #	vnd*	"file" pseudo-disks
+#	rd*	"ramdisk" pseudo-disks
 #	ccd*	contatenated disk devices
 #
 # Console ports:
@@ -86,7 +89,7 @@ all)
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
-	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio local joy0 joy1
+	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 local
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -148,6 +151,15 @@ wt*)
 	mknod nr$name$unit	c $chr `expr $unit '*' 8 + 4`
 	chgrp operator $name$unit n$name$unit r$name$unit nr$name$unit
 	chmod 640 $name$unit n$name$unit r$name$unit nr$name$unit
+	umask 77
+	;;
+
+rd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	mknod rd${unit} b 17 $unit
+#	mknod rrd${unit} c 9 $unit
+	chgrp operator rd${unit} rrd${unit}
+	chmod 640 rd${unit} rrd${unit}
 	umask 77
 	;;
 
@@ -362,7 +374,15 @@ pcmcia*)
 	chmod 700 pcmcia
 	chmod 600 pcmcia/*
 	;;
-	
+
+joy*)
+	unit=`expr $i : 'joy\(.*\)'`
+	rm -f joy$unit
+	mknod joy$unit c 26 $unit
+	chown root.wheel joy$unit
+	chmod 666 joy$unit
+	;;
+
 local)
 	umask 0
 	sh MAKEDEV.local

@@ -216,9 +216,10 @@ echo -n ' printer';		lpd
 
 # $sendmail_flags is imported from /etc/netstart;
 # If $sendmail_flags == NO or /etc/sendmail.cf doesn't exist, then
-# sendmail isn't run.
+# sendmail isn't run.  We call sendmail with a full path so that
+# SIGHUP works.
 if [ "X${sendmail_flags}" != X"NO" -a -r /etc/sendmail.cf ]; then
-	echo -n ' sendmail';		sendmail ${sendmail_flags}
+	echo -n ' sendmail';		/usr/sbin/sendmail ${sendmail_flags}
 fi
 
 echo -n ' inetd';		inetd

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.7 1996/01/11 21:34:48 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.8 1996/03/27 14:27:53 leo Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -61,6 +61,9 @@
 # Pointing devices:
 #	mouse*	Atari mice
 #
+# Printer:
+#	lpt0	centronics printer
+#
 # Terminal ports:
 #	ser02	serial2 port (channel A on 8530)
 #	mdm02	modem2 port (channel B on 8530)
@@ -89,7 +92,7 @@ all)
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
 	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 local
+	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 lpt0 local
 	;;
 
 floppy)
@@ -362,6 +365,13 @@ pty*)
 		umask 77
 		;;
 	esac
+	;;
+
+lpt*)
+	unit=`expr $i : 'lpt\(.*\)'`
+	rm -f lpt$unit
+	mknod lpt$unit c 29 $unit
+	chown root.wheel lpt$unit
 	;;
 
 bpf*)

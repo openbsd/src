@@ -898,10 +898,10 @@ vax             type=dir uname=root gname=wheel mode=0775
 ..
 
 
-# ./share/doc/smm/03.fsck
+# ./share/doc/smm/03.fsck_ffs
 /set type=file gname=bin uname=bin mode=0444
 03.fsck         type=dir uname=root gname=wheel mode=0775
-# ./share/doc/smm/03.fsck
+# ./share/doc/smm/03.fsck_ffs
 ..
 
 
