@@ -1,4 +1,4 @@
-/*	$OpenBSD: timedc.c,v 1.11 2003/06/26 21:36:40 deraadt Exp $	*/
+/*	$OpenBSD: timedc.c,v 1.12 2003/10/12 23:44:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -51,7 +51,8 @@ int	trace = 0;
 FILE	*fd = NULL;
 int	margc;
 int	fromatty;
-char	*margv[20];
+#define	MAX_MARGV 20
+char	*margv[MAX_MARGV];
 char	cmdline[200];
 
 static struct cmd *getcmd(char *);
@@ -133,7 +134,10 @@ main(int argc, char *argv[])
 
 		if (cmdline[0] == 0)
 			break;
-		makeargv();
+		if (makeargv()) {
+			printf("?Too many arguments\n");
+			continue;
+		}
 		if (margv[0] == 0)
 			continue;
 		c = getcmd(margv[0]);
@@ -196,14 +200,14 @@ getcmd(char *name)
 /*
  * Slice a string up into argc/argv.
  */
-void
+int
 makeargv(void)
 {
 	char **argp = margv;
 	char *cp;
 
 	margc = 0;
-	for (cp = cmdline; *cp;) {
+	for (cp = cmdline; margc < MAX_MARGV - 1 && *cp; ) {
 		while (isspace(*cp))
 			cp++;
 		if (*cp == '\0')
@@ -216,7 +220,10 @@ makeargv(void)
 			break;
 		*cp++ = '\0';
 	}
+	if (margc == MAX_MARGV - 1)
+		return 1;
 	*argp++ = 0;
+	return 0;
 }
 
 #define HELPINDENT (sizeof ("directory"))

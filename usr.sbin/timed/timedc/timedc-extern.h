@@ -1,4 +1,4 @@
-/*	$OpenBSD: timedc-extern.h,v 1.6 2003/06/26 21:36:40 deraadt Exp $	*/
+/*	$OpenBSD: timedc-extern.h,v 1.7 2003/10/12 23:44:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -37,7 +37,7 @@ void	bytehostorder(struct tsp *);
 void	bytenetorder(struct tsp *);
 void	clockdiff(int, char *[]);
 void	help(int, char *[]);
-void	makeargv(void);
+int	makeargv(void);
 void	msite(int, char *[]);
 void	quit(int, char *[]);
 void	testing(int, char *[]);
