@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.25 2000/05/30 19:43:35 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.26 2000/06/07 00:41:23 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -10,8 +10,12 @@ maxusers 2 8 64
 # 
 # "workstation console" routines
 #
-
 include "dev/wscons/files.wscons"
+
+#
+# Media Independent Interface (mii)
+#
+include "dev/mii/files.mii"
 
 #
 # Machine-independent SCSI drivers
