@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.5 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: boot.c,v 1.6 2003/08/14 17:13:57 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.2 1997/09/14 19:27:21 pk Exp $	*/
 
 /*-
@@ -56,8 +56,7 @@ char		fbuf[80], dbuf[128];
 typedef void (*entry_t)(caddr_t, int, int, int, long, long);
 int loadfile(int, vaddr_t *);
 
-
-main()
+main(int argc, char *argv[])
 {
 	int	io;
 	char	*file;

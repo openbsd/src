@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.8 2003/06/01 17:00:39 deraadt Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.9 2003/08/14 17:13:57 deraadt Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -72,8 +72,17 @@ extern struct filesystem file_system_nfs[];
 extern struct filesystem file_system_cd9660[];
 extern struct filesystem file_system_ufs[];
 
-int prom_open(struct open_file *f, ...) { return 0; }
-int prom_ioctl(struct open_file *f, u_long c, void *d) { return EIO; }
+int
+prom_open(struct open_file *f, ...)
+{
+	return 0;
+}
+
+int
+prom_ioctl(struct open_file *f, u_long c, void *d)
+{
+	return EIO;
+}
 
 struct devsw devsw[] = {
 	{ "prom0", prom0_strategy, prom_open, prom0_close, prom_ioctl },
@@ -236,15 +245,15 @@ obp_strategy(devdata, flag, dblk, size, buf, rsize)
 		if (pd->devtype == DT_BLOCK)
 			(*promvec->pv_v2devops.v2_seek)(fd, 0, dbtob(dblk));
 
-		*rsize = (*((flag == F_READ)
-				? (u_int (*)())promvec->pv_v2devops.v2_read
-				: (u_int (*)())promvec->pv_v2devops.v2_write
-			 ))(fd, buf, size);
+		*rsize = (*((flag == F_READ) ?
+		    (u_int (*)(int, char *, size_t))promvec->pv_v2devops.v2_read :
+		    (u_int (*)(int, char *, size_t))promvec->pv_v2devops.v2_write))
+		    (fd, buf, size);
 	} else {
-		int n = (*((flag == F_READ)
-				? (u_int (*)())promvec->pv_v0devops.v0_rbdev
-				: (u_int (*)())promvec->pv_v0devops.v0_wbdev
-			))(fd, btodb(size), dblk, buf);
+		int n = (*((flag == F_READ) ?
+		    (u_int (*)(int, int, daddr_t, void *))promvec->pv_v0devops.v0_rbdev :
+		    (u_int (*)(int, int, daddr_t, void *))promvec->pv_v0devops.v0_wbdev))
+		    (fd, btodb(size), dblk, buf);
 		*rsize = dbtob(n);
 	}
 
@@ -434,13 +443,13 @@ getchar()
 }
  
 int
-cngetc()
+cngetc(void)
 {
 	return getchar();
 }
 
 int
-peekchar()
+peekchar(void)
 {
 	char c;
 	register int n;
@@ -460,8 +469,7 @@ peekchar()
 #endif
 
 static void
-pv_putchar(c)
-	int c;
+pv_putchar(int c)
 {
 	char c0 = c;
 
@@ -492,14 +500,14 @@ _rtt()
 int hz = 1000;
 
 time_t
-getsecs()
+getsecs(void)
 {
 	register int ticks = getticks();
 	return ((time_t)(ticks / hz));
 }
 
 int
-getticks()
+getticks(void)
 {
 	if (promvec->pv_romvec_vers >= 2) {
 		char c;
@@ -512,8 +520,7 @@ getticks()
 }
 
 void
-prom_getether(fd, ea)
-	u_char *ea;
+prom_getether(int fd, u_char *ea)
 {
 	if (cputyp == CPU_SUN4) {
 		static struct idprom sun4_idprom;

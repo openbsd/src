@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.3 2002/08/11 23:11:22 art Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.4 2003/08/14 17:13:57 deraadt Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.2 1997/09/14 19:28:17 pk Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ daddr_t			block_table[MAXBLOCKNUM] = { 0 };
 void	loadboot(struct open_file *, caddr_t);
 
 int
-main()
+main(int argc, char *argv[])
 {
 	char	*dummy;
 	size_t	n;
