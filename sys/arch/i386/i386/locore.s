@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.42 1998/02/26 20:53:23 weingart Exp $	*/
+/*	$OpenBSD: locore.s,v 1.43 1998/05/10 18:29:49 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1018,10 +1018,11 @@ ENTRY(copyoutstr)
 
 2:	/* Copy up to end of this page. */
 	subl	%ecx,%edx		# predecrement total count
-	jnc	3f
+	jnc	6f
 	addl	%edx,%ecx		# ecx += (edx - ecx) = edx
 	xorl	%edx,%edx
 
+6:	pushl	%eax			# save PT index
 3:	decl	%ecx
 	js	4f
 	lodsb
@@ -1030,11 +1031,13 @@ ENTRY(copyoutstr)
 	jnz	3b
 
 	/* Success -- 0 byte reached. */
+	addl	$4,%esp			# discard PT index
 	addl	%ecx,%edx		# add back residual for this page
 	xorl	%eax,%eax
 	jmp	copystr_return
 
 4:	/* Go to next page, if any. */
+	popl	%eax			# restore PT index
 	movl	$NBPG,%ecx
 	incl	%eax
 	testl	%edx,%edx
