@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 1996/11/27 12:07:55 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.8 1996/11/27 19:54:52 niklas Exp $	*/
 /*	$NetBSD: boot.c,v 1.8 1996/09/17 22:00:26 cgd Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
 
+#include <machine/rpb.h>
 #include <machine/prom.h>
 
 #define _KERNEL

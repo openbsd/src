@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1996/10/30 22:40:51 niklas Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/11/27 19:54:54 niklas Exp $
 #	$NetBSD: Makefile,v 1.3 1996/10/18 06:02:24 thorpej Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
@@ -11,7 +11,7 @@ BOOT_SRCS+= printf.c bzero.c rpcc.S
 
 BOOT_SRCS+= dev_net.c conf.c devopen.c
 BOOT_SRCS+= nfs.c rpc.c alloc.c ntohl.c htonl.c ntohs.c htons.c net.c bootp.c
-BOOT_SRCS+= strlen.c bcopy.c dev.c bcmp.c strerror.c rarp.c read.c lseek.c
+BOOT_SRCS+= strlen.c dev.c bcmp.c strerror.c rarp.c read.c lseek.c
 BOOT_SRCS+= in_cksum.c exit.c closeall.c arp.c strncpy.c globals.c open.c
 BOOT_SRCS+= close.c ether.c netif.c
 
@@ -25,7 +25,7 @@ AFLAGS += -DASSEMBLER
 CPPFLAGS += -I${.CURDIR}/../../../../ \
 	    -I${.CURDIR}/../../../../lib/libsa \
 	    -I${.CURDIR}/../.. -DPRIMARY_BOOTBLOCK \
-	    -DALPHA_BOOT_ECOFF -DALPHA_BOOT_ELF
+	    -DALPHA_BOOT_ECOFF # -DALPHA_BOOT_ELF
 CFLAGS = -Werror -mno-fp-regs -g
 
 CLEANFILES+= vers.c vers.o

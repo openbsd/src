@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_prom.c,v 1.1 1996/10/30 22:40:56 niklas Exp $	*/
+/*	$OpenBSD: if_prom.c,v 1.2 1996/11/27 19:54:55 niklas Exp $	*/
 /*	$NetBSD: if_prom.c,v 1.4 1996/10/02 21:18:49 cgd Exp $	*/
 
 /*
@@ -39,8 +39,10 @@
 #include <netinet/in_systm.h>
 
 #include "netif.h"
+#include "include/rpb.h"
 #include "include/prom.h"
 #include "lib/libkern/libkern.h"
+#include "lib/libsa/stand.h"
 
 int prom_probe();
 int prom_match();

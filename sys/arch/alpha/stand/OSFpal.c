@@ -1,4 +1,4 @@
-/*	$OpenBSD: OSFpal.c,v 1.4 1996/10/30 22:40:27 niklas Exp $	*/
+/*	$OpenBSD: OSFpal.c,v 1.5 1996/11/27 19:54:45 niklas Exp $	*/
 /*	$NetBSD: OSFpal.c,v 1.4 1996/10/13 03:00:24 christos Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
 
 #include <sys/types.h>
 
-#include <machine/prom.h>
 #include <machine/rpb.h>
+#include <machine/prom.h>
 
 void
 OSFpal()

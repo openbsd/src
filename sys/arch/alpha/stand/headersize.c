@@ -1,4 +1,4 @@
-/*	$OpenBSD: headersize.c,v 1.4 1996/10/30 22:40:30 niklas Exp $	*/
+/*	$OpenBSD: headersize.c,v 1.5 1996/11/27 19:54:47 niklas Exp $	*/
 /*	$NetBSD: headersize.c,v 1.5 1996/09/23 04:32:59 cgd Exp $	*/
 
 /*
@@ -48,7 +48,9 @@ main(argc, argv)
 {
 	char buf[HDR_BUFSIZE], *fname;
 	struct ecoff_exechdr *ecoffp;
+#ifdef ALPHA_BOOT_ELF
 	Elf_Ehdr *elfp;
+#endif
 	int fd;
 	unsigned long loadaddr;
 
@@ -64,11 +66,15 @@ main(argc, argv)
 	if (read(fd, &buf, HDR_BUFSIZE) < HDR_BUFSIZE)
 		err(1, "%s: read failed", fname);
 	ecoffp = (struct ecoff_exechdr *)buf;
+#ifdef ALPHA_BOOT_ELF
 	elfp = (Elf_Ehdr *)buf;
+#endif
 
 	if (!ECOFF_BADMAG(ecoffp)) {
 		printf("%d\n", ECOFF_TXTOFF(ecoffp));
-	} else if (memcmp(Elf_e_ident, elfp->e_ident, Elf_e_siz) == 0) {
+	}
+#ifdef ALPHA_BOOT_ELF
+	else if (memcmp(Elf_e_ident, elfp->e_ident, Elf_e_siz) == 0) {
 		Elf_Phdr phdr;
 
 		/* XXX assume the first segment is the one we want */
@@ -78,7 +84,9 @@ main(argc, argv)
 			err(1, "%s: read phdr failed", fname);
 
 		printf("%d\n", phdr.p_offset + (loadaddr - phdr.p_vaddr));
-	} else
+	}
+#endif
+	else
 		errx(1, "%s: bad magic number", fname);
 
 	close(fd);

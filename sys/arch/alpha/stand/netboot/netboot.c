@@ -1,4 +1,4 @@
-/*	$OpenBSD: netboot.c,v 1.2 1996/11/27 12:07:55 mickey Exp $	*/
+/*	$OpenBSD: netboot.c,v 1.3 1996/11/27 19:54:56 niklas Exp $	*/
 /*	$NetBSD: netboot.c,v 1.1 1996/09/18 20:03:12 cgd Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
 
+#include <machine/rpb.h>
 #include <machine/prom.h>
 
 #define _KERNEL

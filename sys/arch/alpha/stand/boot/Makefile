@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/10/30 22:40:38 niklas Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/11/27 19:54:51 niklas Exp $
 #	$NetBSD: Makefile,v 1.10 1996/10/18 06:01:41 thorpej Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
@@ -10,13 +10,13 @@ BOOT_SRCS = start.S boot.c loadfile.c disk.c conf.c prom.c prom_disp.S OSFpal.c
 
 BOOT_SRCS+= alloc.c bzero.c close.c dev.c devopen.c disklabel.c dkcksum.c
 BOOT_SRCS+= getfile.c gets.c ioctl.c lseek.c open.c printf.c read.c
-BOOT_SRCS+= strcmp.c ufs.c write.c bcopy.c filesystem.c strlen.c
+BOOT_SRCS+= strcmp.c ufs.c write.c filesystem.c strlen.c
 BOOT_SRCS+= ntohl.c prom_swpal.S
 BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
 
 HEADERSIZE_PROG = headersize
 
-DEFNS= -DCOMPAT_UFS -DALPHA_BOOT_ECOFF -DALPHA_BOOT_ELF
+DEFNS= -DCOMPAT_UFS -DALPHA_BOOT_ECOFF # -DALPHA_BOOT_ELF
 
 AFLAGS += -DASSEMBLER ${DEFNS}
 CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../..

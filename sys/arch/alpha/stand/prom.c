@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.3 1996/10/30 22:40:33 niklas Exp $	*/
+/*	$OpenBSD: prom.c,v 1.4 1996/11/27 19:54:49 niklas Exp $	*/
 /*	$NetBSD: prom.c,v 1.1 1995/11/23 02:39:07 cgd Exp $	*/
 
 /*  
@@ -29,8 +29,8 @@
 
 #include <sys/types.h>
 
-#include <machine/prom.h>
 #include <machine/rpb.h>
+#include <machine/prom.h>
 
 int console;
 

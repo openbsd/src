@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.1 1996/10/30 22:40:33 niklas Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.2 1996/11/27 19:54:48 niklas Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1996/09/23 04:32:44 cgd Exp $	*/
 
 /*
@@ -41,14 +41,15 @@
 
 #define	ELFSIZE		64
 
-#include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
+#include <lib/libsa/stand.h>
 
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
 #include <sys/exec_elf.h>
 
+#include <machine/rpb.h>
 #include <machine/prom.h>
 
 #define _KERNEL
@@ -148,7 +149,7 @@ coff_exec(fd, coff, entryp)
 	/* Zero out bss. */
 	if (coff->a.bsize != 0) {
 		(void)printf("+%lu", coff->a.bsize);
-		bzero(coff->a.bss_start, coff->a.bsize);
+		bzero((void *)coff->a.bss_start, coff->a.bsize);
 	}
 
 	ffp_save = coff->a.text_start + coff->a.tsize;

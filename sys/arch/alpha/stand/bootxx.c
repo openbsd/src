@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.5 1996/10/30 22:40:29 niklas Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.6 1996/11/27 19:54:47 niklas Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.3 1996/06/14 20:04:45 cgd Exp $	*/
 
 /*
@@ -29,6 +29,7 @@
  */
 
 #include <sys/param.h>
+#include <machine/rpb.h>
 #include <machine/prom.h>
 
 #include "bbinfo.h"
