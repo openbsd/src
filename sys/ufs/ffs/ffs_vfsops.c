@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.55 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.56 2003/06/10 17:51:02 millert Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ ffs_mount(mp, path, data, ndp, p)
 					printf(
 "WARNING: R/W mount of %s denied.  Filesystem is not clean - run fsck\n",
 					    fs->fs_fsmnt);
-					error = EPERM;
+					error = EROFS;
 					goto error_1;
 				}
 			}
@@ -686,7 +686,7 @@ ffs_mountfs(devvp, mp, p)
 			printf(
 "WARNING: R/W mount of %s denied.  Filesystem is not clean - run fsck\n",
 			    fs->fs_fsmnt);
-			error = EPERM;
+			error = EROFS;
 			goto out;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ffs.c,v 1.14 2003/06/02 20:06:15 millert Exp $	*/
+/*	$OpenBSD: mount_ffs.c,v 1.15 2003/06/10 17:51:01 millert Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.14 2003/06/02 20:06:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.15 2003/06/10 17:51:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,10 @@ main(argc, argv)
 			break;
 		case EOPNOTSUPP:
 			errcause = "filesystem not supported by kernel";
+			break;
+		case EROFS:
+			errcause =
+			    "filesystem must be mounted read-only; you may need to run fsck";
 			break;
 		default:
 			errcause = strerror(errno);
