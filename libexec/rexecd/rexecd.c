@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.6 1997/01/17 07:12:06 millert Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.7 1997/02/06 12:49:56 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -258,7 +258,7 @@ error(fmt, a1, a2, a3)
 	char buf[BUFSIZ];
 
 	buf[0] = 1;
-	(void) sprintf(buf+1, fmt, a1, a2, a3);
+	(void) snprintf(buf+1, sizeof buf-1, fmt, a1, a2, a3);
 	(void) write(2, buf, strlen(buf));
 }
 
