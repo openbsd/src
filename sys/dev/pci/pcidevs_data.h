@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.794 2004/11/20 22:49:41 brad Exp 
+ *	OpenBSD: pcidevs,v 1.796 2004/11/20 23:07:18 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3503,8 +3503,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801BA SMBus",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB2,
-	    "82801BA USB2",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB,
+	    "82801BA USB",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
@@ -3731,22 +3731,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82850/82860 AGP",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO1,
-	    "82852/82855 CPU-I/O-1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_AGP,
-	    "82852/82855 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO2,
-	    "82852/82855 CPU-I/O-2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO3,
-	    "82852/82855 CPU-I/O-3",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI1,
 	    "82860 PCI-PCI",
 	},
@@ -3839,7 +3823,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6300ESB APIC",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB2,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB,
 	    "6300ESB USB",
 	},
 	{
@@ -3847,32 +3831,32 @@ static const struct pci_known_product pci_known_products[] = {
 	    "6300ESB PCIX",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801_SATA,
-	    "82801FB/FR/FW/FRW SATA",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SATA,
+	    "82801FB SATA",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801_USB_1,
-	    "82801FB/FR/FW/FRW USB",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_1,
+	    "82801FB USB",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801_USB_2,
-	    "82801FB/FR/FW/FRW USB",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_2,
+	    "82801FB USB",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801_USB_3,
-	    "82801FB/FR/FW/FRW USB",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_3,
+	    "82801FB USB",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801_USB2,
-	    "82801FB/FR/FW/FRW USB 2.0",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB,
+	    "82801FB USB",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801_PCIE_1,
-	    "82801FB/FR/FW/FRW PCIE Port 1",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_PCIE_1,
+	    "82801FB PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801_PCIE_2,
-	    "82801FB/FR/FW/FRW PCIE Port 2",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_PCIE_2,
+	    "82801FB PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
@@ -3923,6 +3907,22 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RCU32 I2O RAID",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO1,
+	    "82852/82855 CPU-I/O-1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_AGP,
+	    "82852/82855 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO2,
+	    "82852/82855 CPU-I/O-2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82852_IO3,
+	    "82852/82855 CPU-I/O-3",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_SMCH,
 	    "E7710 SMCH",
 	},
@@ -3936,27 +3936,27 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_MCH_PCIEA0,
-	    "E7710 MCH PCIE Port A0",
+	    "E7710 MCH PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_MCH_PCIEA1,
-	    "E7710 MCH PCIE Port A1",
+	    "E7710 MCH PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_MCH_PCIEB0,
-	    "E7710 MCH PCIE Port B0",
+	    "E7710 MCH PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_MCH_PCIEB1,
-	    "E7710 MCH PCIE Port B1",
+	    "E7710 MCH PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_MCH_PCIEC0,
-	    "E7710 MCH PCIE Port C0",
+	    "E7710 MCH PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_MCH_PCIEC1,
-	    "E7710 MCH PCIE Port C1",
+	    "E7710 MCH PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7710_WMCH,
@@ -4779,8 +4779,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Firewire",
 	},
 	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB2,
-	    "USB 2.0",
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB,
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSAMAESTRO,
@@ -5244,7 +5244,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_USB2,
-	    "nForce2 USB2",
+	    "nForce2 USB",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_ACA,
@@ -5308,7 +5308,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_USB2,
-	    "nForce3 USB2",
+	    "nForce3 USB",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_ACA,
@@ -7476,7 +7476,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6202,
-	    "VT6202 USB 2.0",
+	    "VT6202 USB",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
