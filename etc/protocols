@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.4 1997/02/21 10:01:29 angelos Exp $
+#	$OpenBSD: protocols,v 1.5 1997/02/22 04:32:53 angelos Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 #
@@ -80,8 +80,6 @@ sun-nd	77	SUN-ND		# SUN ND PROTOCOL-Temporary
 wb-mon	78	WB-MON		# WIDEBAND Monitoring
 wb-expak 79	WB-EXPAK	# WIDEBAND EXPAK
 iso-ip	80	ISO-IP		# ISO Internet Protocol
-sipp-esp 50	SIPP-ESP	# SIPP Encap Security Payload
-sipp-ah	51	SIPP-AH		# SIPP Authentication Header
 vmtp	81	VMTP		# Versatile Message Transport
 secure-vmtp 82	SECURE-VMTP	# SECURE-VMTP
 vines	83	VINES		# VINES
