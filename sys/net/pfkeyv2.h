@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.52 2004/11/26 18:02:22 markus Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.53 2005/04/04 22:18:47 hshoexer Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -426,6 +426,7 @@ int pfkeyv2_flush_walker(struct tdb *, void *, int);
 int pfkeyv2_get_proto_alg(u_int8_t, u_int8_t *, int *);
 int pfkeyv2_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pfkeyv2_sysctl_walker(struct tdb *, void *, int);
+int pfkeyv2_sysctl_dump(void *);
 
 int pfdatatopacket(void *, int, struct mbuf **);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.50 2005/03/22 12:22:00 henning Exp $	*/
+/*	$OpenBSD: socket.h,v 1.51 2005/04/04 22:18:47 hshoexer Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -309,11 +309,13 @@ struct sockcred {
  * PF_KEY - Key Management
  */
 #define NET_KEY_SADB_DUMP	1	/* return SADB */
-#define NET_KEY_MAXID		2
+#define NET_KEY_SPD_DUMP	2	/* return SPD */
+#define NET_KEY_MAXID		3
 
 #define CTL_NET_KEY_NAMES { \
 	{ 0, 0 }, \
 	{ "sadb_dump", CTLTYPE_STRUCT }, \
+	{ "spd_dump", CTLTYPE_STRUCT }, \
 }
 
 /*

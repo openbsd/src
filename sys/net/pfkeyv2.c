@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.100 2005/01/13 10:08:14 hshoexer Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.101 2005/04/04 22:18:47 hshoexer Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2210,6 +2210,32 @@ done:
 }
 
 int
+pfkeyv2_sysctl_dump(void *arg)
+{
+	struct pfkeyv2_sysctl_walk *w = (struct pfkeyv2_sysctl_walk *)arg;
+	struct ipsec_policy *ipo;
+	int error = 0;
+
+	TAILQ_FOREACH(ipo, &ipsec_policy_head, ipo_list) {
+		if (w->w_where) {
+			if (w->w_len < sizeof(struct ipsec_policy)) {
+				error = ENOMEM;
+				goto done;
+			}
+			if ((error = copyout(ipo, w->w_where,
+			    sizeof(struct ipsec_policy))) != 0)
+				goto done;
+			w->w_where += sizeof(struct ipsec_policy);
+			w->w_len -= sizeof(struct ipsec_policy);
+		} else
+			w->w_len += sizeof(struct ipsec_policy);
+	}
+
+done:
+	return (error);
+}
+
+int
 pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *new, size_t newlen)
 {
@@ -2225,18 +2251,30 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	w.w_where = oldp;
 	w.w_len = oldp ? *oldlenp : 0;
 
+	s = spltdb();
 	switch(w.w_op) {
 	case NET_KEY_SADB_DUMP:
-		if ((error = suser(curproc, 0)) != 0)
+		if ((error = suser(curproc, 0)) != 0) {
+			splx(s);
 			return (error);
-		s = spltdb();
+		}
 		error = tdb_walk(pfkeyv2_sysctl_walker, &w);
-		splx(s);
 		if (oldp)
 			*oldlenp = w.w_where - oldp;
 		else
 			*oldlenp = w.w_len;
+		break;
+
+	case NET_KEY_SPD_DUMP:
+		error = pfkeyv2_sysctl_dump(&w);
+		if (oldp)
+			*oldlenp = w.w_where - oldp;
+		else
+			*oldlenp = w.w_len;
+		break;
 	}
+	splx(s);
+
 	return (error);
 }
 
