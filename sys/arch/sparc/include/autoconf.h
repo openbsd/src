@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.12 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.13 2005/03/15 18:46:30 miod Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
@@ -156,16 +156,6 @@ extern int optionsnode;
 int	romprop(struct romaux *ra, const char *name, int node);
 
 /*
- * The matchbyname function is useful in drivers that are matched
- * by romaux name, i.e., all `mainbus attached' devices.  It expects
- * its aux pointer to point to a pointer to the name (the address of
- * a romaux structure suffices, for instance).
- */
-struct device;
-struct cfdata;
-int	matchbyname(struct device *, void *cf, void *aux);
-
-/*
  * `clockfreq' produces a printable representation of a clock frequency
  * (this is just a frill).
  */
@@ -188,6 +178,7 @@ int	makememarr(struct memarr *, int max, int which);
 void	rominterpret(char *);
 
 /* Openprom V2 style boot path */
+struct device;
 struct bootpath {
 	char	name[16];	/* name of this node */
 	int	val[3];		/* up to three optional values */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.37 2004/12/25 23:02:25 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.38 2005/03/15 18:46:39 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -157,20 +157,6 @@ int autoconf_debug = 0x0;
 #else
 #define DPRINTF(l, s)
 #endif
-
-/*
- * Most configuration on the SPARC is done by matching OPENPROM Forth
- * device names with our internal names.
- */
-int
-matchbyname(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	printf("%s: WARNING: matchbyname\n", cf->cf_driver->cd_name);
-	return (0);
-}
 
 /*
  * Convert hex ASCII string to a value.  Returns updated pointer.

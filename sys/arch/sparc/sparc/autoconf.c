@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.60 2004/12/25 23:02:25 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.61 2005/03/15 18:46:37 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -144,26 +144,6 @@ int	intr_sbus2ipl_4c[] = {
 int	intr_sbus2ipl_4m[] = {
 	0, 2, 3, 5, 7, 9, 11, 13
 };
-
-/*
- * Most configuration on the SPARC is done by matching OPENPROM Forth
- * device names with our internal names.
- */
-int
-matchbyname(parent, vcf, aux)
-	struct device *parent;
-	void *aux, *vcf;
-{
-	struct cfdata *cf = vcf;
-	struct confargs *ca = aux;
-
-	if (CPU_ISSUN4) {
-		printf("WARNING: matchbyname not valid on sun4!");
-		printf("%s\n", cf->cf_driver->cd_name);
-		return (0);
-	}
-	return (strcmp(cf->cf_driver->cd_name, ca->ca_ra.ra_name) == 0);
-}
 
 /*
  * Convert hex ASCII string to a value.  Returns updated pointer.
