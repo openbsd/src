@@ -242,6 +242,7 @@
 ./usr/bin/ftp
 ./usr/bin/gdbtui
 ./usr/bin/gencat
+./usr/bin/getcap
 ./usr/bin/getconf
 ./usr/bin/getopt
 ./usr/bin/grep
