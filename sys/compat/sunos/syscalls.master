@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.3 1996/08/02 20:20:31 niklas Exp $
+	$OpenBSD: syscalls.master,v 1.4 1996/08/02 21:55:22 niklas Exp $
 ;	$NetBSD: syscalls.master,v 1.33 1996/02/28 16:05:43 pk Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -233,7 +233,7 @@
 			    int *alen); }
 151	UNIMPL		getmsg
 152	UNIMPL		putmsg
-153	STD		{ int sys_poll(struct pollfd *fds, \
+153	NOARGS		{ int sys_poll(struct pollfd *fds, \
 			    unsigned long nfds, int timeout); }
 154	UNIMPL		
 #ifdef NFSSERVER

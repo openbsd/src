@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.7 1996/08/02 20:20:33 niklas Exp $
+	$OpenBSD: syscalls.master,v 1.8 1996/08/02 21:55:24 niklas Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -157,7 +157,7 @@
 			    struct svr4_strbuf *dat, int *flags); }
 86	STD		{ int svr4_sys_putmsg(int fd, struct svr4_strbuf *ctl, \
 			    struct svr4_strbuf *dat, int flags); }
-87	STD		{ int sys_poll(struct pollfd *fds, \
+87	NOARGS		{ int sys_poll(struct pollfd *fds, \
 			    unsigned long nfds, int timeout); }
 88	STD		{ int svr4_sys_lstat(char *path, \
 			    struct svr4_stat *ub); }
