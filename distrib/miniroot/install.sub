@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.47 1997/10/19 09:07:47 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.48 1997/10/25 05:22:19 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -474,6 +474,7 @@ configure_ifs() {
 	done
 
 	# Get netmask
+	resp=""
 	if [ "X${_interface_mask}" = X"" ]; then
 		_interface_mask=255.255.255.0
 	fi
