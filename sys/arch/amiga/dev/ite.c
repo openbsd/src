@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.12 2000/07/19 13:44:25 art Exp $  */
+/*	$OpenBSD: ite.c,v 1.13 2000/07/22 00:35:50 espie Exp $  */
 /*	$NetBSD: ite.c,v 1.47 1996/12/23 09:10:20 veego Exp $	*/
 
 /*
@@ -665,7 +665,7 @@ itestart(tp)
 		/* we have characters remaining. */
 		if (rbp->c_cc) {
 			tp->t_state |= TS_TIMEOUT;
-			timeout_add(&to->t_rstrt_to, 1);
+			timeout_add(&tp->t_rstrt_to, 1);
 		}
 		/* wakeup we are below */
 		if (rbp->c_cc <= tp->t_lowat) {
