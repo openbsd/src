@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.94 2002/12/01 19:56:42 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.95 2002/12/01 22:10:40 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -75,6 +75,7 @@ int	 pfctl_rules(int, char *, int);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 int	 pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
+int	 pfctl_test_altqsupport(int);
 
 char	*clearopt;
 char	*rulesopt;
@@ -83,6 +84,7 @@ char	*debugopt;
 int	 state_killers;
 char	*state_kill[2];
 int	 loadopt = PFCTL_FLAG_ALL;
+int	 altqsupport;
 
 const char *infile;
 
@@ -173,14 +175,16 @@ pfctl_enable(int dev, int opts)
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "pf enabled\n");
 
-	if (ioctl(dev, DIOCSTARTALTQ)) {
-		if (errno == EEXIST)
-			errx(1, "altq already enabled");
-		else
-			err(1, "DIOCSTARTALTQ");
+	if (altqsupport) {
+		if (ioctl(dev, DIOCSTARTALTQ)) {
+			if (errno == EEXIST)
+				errx(1, "altq already enabled");
+			else
+				err(1, "DIOCSTARTALTQ");
+		}
+		if ((opts & PF_OPT_QUIET) == 0)
+			fprintf(stderr, "altq enabled\n");
 	}
-	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "altq enabled\n");
 
 	return (0);
 }
@@ -197,14 +201,16 @@ pfctl_disable(int dev, int opts)
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "pf disabled\n");
 
-	if (ioctl(dev, DIOCSTOPALTQ)) {
-		if (errno == ENOENT)
-			errx(1, "altq not enabled");
-		else
-			err(1, "DIOCSTOPALTQ");
+	if (altqsupport) {
+		if (ioctl(dev, DIOCSTOPALTQ)) {
+			if (errno == ENOENT)
+				errx(1, "altq not enabled");
+			else
+				err(1, "DIOCSTOPALTQ");
+		}
+		if ((opts & PF_OPT_QUIET) == 0)
+			fprintf(stderr, "altq disabled\n");
 	}
-	if ((opts & PF_OPT_QUIET) == 0)
-		fprintf(stderr, "altq disabled\n");
 
 	return (0);
 }
@@ -261,6 +267,9 @@ int
 pfctl_clear_altq(int dev, int opts)
 {
 	struct pfioc_altq pa;
+
+	if (!altqsupport)
+		return (-1);
 
 	if (ioctl(dev, DIOCBEGINALTQS, &pa.ticket))
 		err(1, "DIOCBEGINALTQS");
@@ -482,6 +491,9 @@ pfctl_show_altq(int dev)
 
 	struct pfioc_altq pa;
 	u_int32_t mnr, nr;
+
+	if (!altqsupport)
+		return (-1);
 
 	if (ioctl(dev, DIOCGETALTQS, &pa)) {
 		warnx("DIOCGETALTQS");
@@ -745,7 +757,8 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 int
 pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
 {
-	if ((loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) {
+	if ((altqsupport && loadopt
+	    & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) {
 		memcpy(&pf->paltq->altq, a, sizeof(struct pf_altq));
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			if (ioctl(pf->dev, DIOCADDALTQ, pf->paltq))
@@ -787,9 +800,11 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCBEGINBINATS, &pb.ticket))
 				err(1, "DIOCBEGINBINATS");
 		}
-		if (((loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
-		    ioctl(dev, DIOCBEGINALTQS, &pa.ticket))
+		if (((altqsupport && loadopt
+		    & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
+		    ioctl(dev, DIOCBEGINALTQS, &pa.ticket)) {
 			err(1, "DIOCBEGINALTQS");
+		}
 		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
 		    ioctl(dev, DIOCBEGINRULES, &pl.ticket))
 			err(1, "DIOCBEGINRULES");
@@ -805,7 +820,7 @@ pfctl_rules(int dev, char *filename, int opts)
 	pf.rule_nr = 0;
 	if (parse_rules(fin, &pf) < 0)
 		errx(1, "Syntax error in file: pf rules not loaded");
-	if ((loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0)
+	if ((altqsupport && loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0)
 		if (check_commit_altq(dev, opts) != 0)
 			errx(1, "errors in altq config");
 	if ((opts & PF_OPT_NOACTION) == 0) {
@@ -817,7 +832,8 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCCOMMITBINATS, &pb.ticket))
 				err(1, "DIOCCOMMITBINATS");
 		}
-		if (((loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
+		if (((altqsupport && loadopt
+		    & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
 		    ioctl(dev, DIOCCOMMITALTQS, &pa.ticket))
 			err(1, "DIOCCOMMITALTQS");
 		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
@@ -979,6 +995,22 @@ pfctl_clear_rule_counters(int dev, int opts)
 }
 
 int
+pfctl_test_altqsupport(int dev)
+{
+	struct pfioc_altq pa;
+
+	if (ioctl(dev, DIOCGETALTQS, &pa)) {
+		if (errno == ENODEV) {
+			fprintf(stderr, "No ALTQ support in the kernel\n");
+			fprintf(stderr, "ALTQ related functions disabled\n");
+			return (0);
+		} else
+			err(1, "DIOCGETALTQS");
+	} else
+		return (1);
+}
+
+int
 main(int argc, char *argv[])
 {
 	int error = 0;
@@ -1076,10 +1108,12 @@ main(int argc, char *argv[])
 		dev = open("/dev/pf", mode);
 		if (dev == -1)
 			err(1, "open(\"/dev/pf\")");
+		altqsupport = pfctl_test_altqsupport(dev);
 	} else {
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
 		clearopt = showopt = debugopt = NULL;
+		altqsupport = 1;
 	}
 
 	if (opts & PF_OPT_DISABLE)
