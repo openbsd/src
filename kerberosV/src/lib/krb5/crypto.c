@@ -293,12 +293,13 @@ krb5_DES_AFS3_Transarc_string_to_key (krb5_data pw,
     memcpy(&temp_key, "kerberos", 8);
     des_set_odd_parity (&temp_key);
     des_set_key (&temp_key, schedule);
-    des_cbc_cksum (password, &ivec, passlen, schedule, &ivec);
+    des_cbc_cksum ((des_cblock *) password, &ivec, passlen, schedule, &ivec);
 
     memcpy(&temp_key, &ivec, 8);
     des_set_odd_parity (&temp_key);
     des_set_key (&temp_key, schedule);
-    des_cbc_cksum (password, key, passlen, schedule, &ivec);
+    des_cbc_cksum ((des_cblock *) password, (des_cblock *) key, passlen,
+		   schedule, &ivec);
     memset(&schedule, 0, sizeof(schedule));
     memset(&temp_key, 0, sizeof(temp_key));
     memset(&ivec, 0, sizeof(ivec));
@@ -406,8 +407,8 @@ DES3_string_to_key(krb5_context context,
 	    des_set_key(keys + i, s[i]);
 	}
 	memset(&ivec, 0, sizeof(ivec));
-	des_ede3_cbc_encrypt(tmp,
-			     tmp, sizeof(tmp), 
+	des_ede3_cbc_encrypt((des_cblock *) tmp,
+			     (des_cblock *) tmp, sizeof(tmp), 
 			     s[0], s[1], s[2], &ivec, DES_ENCRYPT);
 	memset(s, 0, sizeof(s));
 	memset(&ivec, 0, sizeof(ivec));
@@ -1188,8 +1189,8 @@ RSA_MD4_DES_checksum(krb5_context context,
     MD4_Update (&md4, data, len);
     MD4_Final (p + 8, &md4);
     memset (&ivec, 0, sizeof(ivec));
-    des_cbc_encrypt(p, 
-		    p, 
+    des_cbc_encrypt((des_cblock *) p, 
+		    (des_cblock *) p, 
 		    24, 
 		    key->schedule->data, 
 		    &ivec, 
@@ -1263,8 +1264,8 @@ RSA_MD5_DES_checksum(krb5_context context,
     MD5_Update (&md5, data, len);
     MD5_Final (p + 8, &md5);
     memset (&ivec, 0, sizeof(ivec));
-    des_cbc_encrypt(p, 
-		    p, 
+    des_cbc_encrypt((des_cblock *) p, 
+		    (des_cblock *) p, 
 		    24, 
 		    key->schedule->data, 
 		    &ivec, 
