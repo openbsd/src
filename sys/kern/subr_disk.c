@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.17 1999/11/17 04:31:22 d Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.18 2000/04/09 19:26:35 csapuntz Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -53,9 +53,11 @@
 #include <sys/time.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
+#include <sys/lock.h>
 #include <sys/disk.h>
 #include <sys/dkio.h>
 #include <sys/dkstat.h>		/* XXX */
+#include <sys/proc.h>
 
 #include <dev/rndvar.h>
 
@@ -266,6 +268,19 @@ disk_find(name)
 	return (NULL);
 }
 
+int
+disk_construct(diskp, lockname)
+	struct disk *diskp;
+	char *lockname;
+{
+	lockinit(&diskp->dk_lock, PRIBIO | PCATCH, lockname,
+		 0, LK_CANRECURSE);
+	
+	diskp->dk_flags |= DKF_CONSTRUCTED;
+	    
+	return (0);
+}
+
 /*
  * Attach a disk.
  */
@@ -274,6 +289,9 @@ disk_attach(diskp)
 	struct disk *diskp;
 {
 	int s;
+
+	if (!diskp->dk_flags & DKF_CONSTRUCTED)
+		disk_construct(diskp, diskp->dk_name);
 
 	/*
 	 * Allocate and initialize the disklabel structures.  Note that
@@ -377,6 +395,26 @@ disk_unbusy(diskp, bcount)
 
 	add_disk_randomness(bcount ^ diff_time.tv_usec);
 }
+
+
+int
+disk_lock(dk)
+	struct disk *dk;
+{
+	int error;
+
+	error = lockmgr(&dk->dk_lock, LK_EXCLUSIVE, 0, curproc);
+
+	return (error);
+}
+
+void
+disk_unlock(dk)
+	struct disk *dk;
+{
+	lockmgr(&dk->dk_lock, LK_RELEASE, 0, curproc);
+}
+
 
 /*
  * Reset the metrics counters on the given disk.  Note that we cannot
