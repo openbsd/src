@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.9 1997/07/02 00:18:55 millert Exp $	*/
+/*	$OpenBSD: in.h,v 1.10 1997/07/28 15:22:30 millert Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -122,7 +122,7 @@
  * Internet address (a structure for historical reasons)
  */
 struct in_addr {
-	u_int32_t s_addr;
+	in_addr_t s_addr;
 };
 
 /*
