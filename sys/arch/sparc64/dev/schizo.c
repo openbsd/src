@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.11 2003/03/06 08:26:08 henric Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.12 2003/05/11 04:44:22 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -193,14 +193,14 @@ schizo_init(struct schizo_softc *sc, int busa)
 	match = bus_space_read_8(sc->sc_bust, sc->sc_ctrlh,
 	    (busa ? SCZ_PCIA_IO_MATCH : SCZ_PCIB_IO_MATCH));
 	pbm->sp_confpaddr = match & ~0x8000000000000000UL;
+	printf("config paddr: %llx\n", pbm->sp_confpaddr);
 
 	pbm->sp_memt = schizo_alloc_mem_tag(pbm);
 	pbm->sp_iot = schizo_alloc_io_tag(pbm);
 	pbm->sp_cfgt = schizo_alloc_config_tag(pbm);
 	pbm->sp_dmat = schizo_alloc_dma_tag(pbm);
 
-	if (bus_space_map(pbm->sp_cfgt, pbm->sp_confpaddr, 0x1000000,
-	    0, &pbm->sp_cfgh))
+	if (bus_space_map(pbm->sp_cfgt, 0, 0x1000000, 0, &pbm->sp_cfgh))
 		panic("schizo: could not map config space");
 
 	pbm->sp_pc = schizo_alloc_chipset(pbm, sc->sc_node,
