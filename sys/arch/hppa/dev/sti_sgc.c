@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.10 2003/03/29 00:56:08 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.11 2003/05/07 18:26:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -55,7 +55,7 @@
 
 #include <hppa/dev/cpudevs.h>
 
-#define	STI_MEMSIZE	0x1000000
+#define	STI_MEMSIZE	0x2000000
 #define	STI_ROMSIZE	0x30000
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
 
