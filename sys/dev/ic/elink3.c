@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.32 1999/07/26 12:31:43 niklas Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.33 1999/08/05 18:08:55 jason Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -939,9 +939,11 @@ readcheck:
 	} else {
 		/* Check if we are stuck and reset [see XXX comment] */
 		if (epstatus(sc)) {
+#ifdef EP_DEBUG
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: adapter reset\n",
 				    sc->sc_dev.dv_xname);
+#endif
 			epreset(sc);
 		}
 	}
@@ -973,27 +975,35 @@ epstatus(sc)
 	GO_WINDOW(1);
 
 	if (fifost & FIFOS_RX_UNDERRUN) {
+#ifdef EP_DEBUG
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 			printf("%s: RX underrun\n", sc->sc_dev.dv_xname);
+#endif
 		epreset(sc);
 		return 0;
 	}
 
 	if (fifost & FIFOS_RX_STATUS_OVERRUN) {
+#ifdef EP_DEBUG
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 			printf("%s: RX Status overrun\n", sc->sc_dev.dv_xname);
+#endif
 		return 1;
 	}
 
 	if (fifost & FIFOS_RX_OVERRUN) {
+#ifdef EP_DEBUG
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 			printf("%s: RX overrun\n", sc->sc_dev.dv_xname);
+#endif
 		return 1;
 	}
 
 	if (fifost & FIFOS_TX_OVERRUN) {
+#ifdef EP_DEBUG
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 			printf("%s: TX overrun\n", sc->sc_dev.dv_xname);
+#endif
 		epreset(sc);
 		return 0;
 	}
@@ -1020,16 +1030,20 @@ eptxstat(sc)
 
 		if (i & TXS_JABBER) {
 			++sc->sc_arpcom.ac_if.if_oerrors;
+#ifdef EP_DEBUG
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
+#endif
 			epreset(sc);
 		} else if (i & TXS_UNDERRUN) {
 			++sc->sc_arpcom.ac_if.if_oerrors;
+#ifdef EP_DEBUG
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 				printf("%s: fifo underrun (%x) @%d\n",
 				       sc->sc_dev.dv_xname, i,
 				       sc->tx_start_thresh);
+#endif
 			if (sc->tx_succ_ok < 100)
 				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
 					    sc->tx_start_thresh + 20);
@@ -1110,6 +1124,7 @@ epread(sc)
 	len = bus_space_read_2(iot, ioh, EP_W1_RX_STATUS);
 
 again:
+#ifdef EP_DEBUG
 	if (ifp->if_flags & IFF_DEBUG) {
 		int err = len & ERR_MASK;
 		char *s = NULL;
@@ -1132,6 +1147,7 @@ again:
 		if (s)
 			printf("%s: %s\n", sc->sc_dev.dv_xname, s);
 	}
+#endif
 
 	if (len & ERR_INCOMPLETE)
 		return;
@@ -1188,9 +1204,11 @@ again:
 		len = bus_space_read_2(iot, ioh, EP_W1_RX_STATUS);
 		/* Check if we are stuck and reset [see XXX comment] */
 		if (len & ERR_INCOMPLETE) {
+#ifdef EP_DEBUG
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: adapter reset\n",
 				    sc->sc_dev.dv_xname);
+#endif
 			epreset(sc);
 			return;
 		}
