@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2002/02/23 05:44:20 jason Exp $ */
+/*	$OpenBSD: util.c,v 1.9 2002/05/22 20:36:06 mickey Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -127,7 +127,7 @@ field_by_name(field_tab, name)
 	const char *p = strchr(name, '.');
 
 	if (!p++)
-		errx(1, "%s: illigale variable name", name);
+		errx(1, "%s: illegal variable name", name);
 
 	for (; field_tab->name; field_tab++)
 		if (strcmp(field_tab->name, p) == 0)
@@ -187,9 +187,10 @@ pr_field(pre, f, sep)
 	struct field *f;
 	const char *sep;
 {
-	char *p;
+	struct field_pc *pc;
 	u_int flags;
-	int i;
+	char *p;
+	int i, n;
 
 	if (sep)
 		printf("%s.%s%s", pre, f->name, sep);
@@ -200,6 +201,12 @@ pr_field(pre, f, sep)
 		break;
 	case FMT_BOOL:
 		printf("%s", *((u_int *) f->valp)? "on" : "off");
+		break;
+	case FMT_PC:
+		pc = f->valp;
+		i = pc->max - pc->min;
+		n = pc->cur - pc->min;
+		printf("%u.%02u%%", n * 100 / i, ((n * 100) % i) * 100 / i);
 		break;
 	case FMT_KBDTYPE:
 		p = int2name(*((u_int *) f->valp), 1,
@@ -247,8 +254,9 @@ rd_field(f, val, merge)
 	char *val;
 	int merge;
 {
+	struct field_pc *pc;
 	int i;
-	u_int u;
+	u_int u, r, fr;
 	char *p;
 	struct wscons_keymap *mp;
 
@@ -266,6 +274,24 @@ rd_field(f, val, merge)
 		    (val[1] != 'f' || val[2] != 'f')))
 			errx(1, "%s: invalid value (on/off)", val);
 		*((u_int *) f->valp) = val[1] == 'n'? 1 : 0;
+		break;
+	case FMT_PC:
+		fr = 0;
+		if ((i = sscanf(val, "%u.%u%%", &u, &fr)) != 2 && i != 1)
+			errx(1, "%s: not a valid number", val);
+		pc = f->valp;
+		r = pc->max - pc->min;
+		i = pc->min + (r * u) / 100 + (r * fr) / 100 / 100;
+		if (merge == '+')
+			pc->cur += i;
+		else if (merge == '-')
+			pc->cur -= i;
+		else
+			pc->cur = i;
+		if (pc->cur > pc->max)
+			pc->cur = pc->max;
+		if (pc->cur < pc->min)
+			pc->cur = pc->min;
 		break;
 	case FMT_KBDENC:
 		p = strchr(val, '.');

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.h,v 1.4 2002/02/16 21:27:38 millert Exp $	*/
+/*	$OpenBSD: wsconsctl.h,v 1.5 2002/05/22 20:36:06 mickey Exp $	*/
 /*	$NetBSD: wsconsctl.h 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -44,6 +44,7 @@ struct field {
 	void *valp;
 #define FMT_UINT	1		/* unsigned integer */
 #define FMT_BOOL	2		/* boolean on/off */
+#define FMT_PC		3		/* percentage fixed point 000.00 */
 #define FMT_KBDTYPE	101		/* keyboard type */
 #define FMT_MSTYPE	102		/* mouse type */
 #define FMT_DPYTYPE	103		/* display type */
@@ -56,7 +57,13 @@ struct field {
 #define FLG_MODIFY	0x0008		/* variable may be modified with += */
 #define FLG_GET		0x0100		/* read this variable from driver */
 #define FLG_SET		0x0200		/* write this variable to driver */
+#define FLG_INIT	0x0400		/* init (read) before write */
+#define FLG_DEAD	0x0800		/* the var isn't there, let it rest */
 	int flags;
+};
+
+struct field_pc {
+	int max, min, cur;
 };
 
 struct field *field_by_name(struct field *, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.10 2002/02/16 21:27:38 millert Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.11 2002/05/22 20:36:06 mickey Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -139,17 +139,18 @@ main(argc, argv)
 				error = 1;
 				continue;
 			}
-			for (i = 0; sw->field_tab[i].name; i++)
-				if ((sw->field_tab[i].flags &
-				    (FLG_NOAUTO|FLG_WRONLY)) == 0)
-					sw->field_tab[i].flags |= FLG_GET;
+			for (f = sw->field_tab; f->name; f++)
+				if ((f->flags & (FLG_NOAUTO|FLG_WRONLY)) == 0)
+					f->flags |= FLG_GET;
 			(*sw->getval)(sw->name, sw->fd);
-			for (i = 0; sw->field_tab[i].name; i++)
-				if (sw->field_tab[i].flags & FLG_NOAUTO)
+			for (f = sw->field_tab; f->name; f++)
+				if (f->flags & FLG_DEAD)
+					continue;
+				else if (f->flags & FLG_NOAUTO)
 					warnx("Use explicit arg to view %s.%s.",
-					      sw->name, sw->field_tab[i].name);
-				else if (sw->field_tab[i].flags & FLG_GET)
-					pr_field(sw->name, sw->field_tab + i, sep);
+					      sw->name, f->name);
+				else if (f->flags & FLG_GET)
+					pr_field(sw->name, f, sep);
 		}
 	} else if (argc > 0) {
 		if (wflag != 0)
@@ -159,9 +160,10 @@ main(argc, argv)
 					warnx("'=' not found");
 					continue;
 				}
-				if (p > argv[i] && *(p - 1) == '+') {
+				if (p > argv[i] &&
+				    (*(p - 1) == '+' || *(p - 1) == '-')) {
+					do_merge = *(p - 1);
 					*(p - 1) = '\0';
-					do_merge = 1;
 				} else
 					do_merge = 0;
 				*p++ = '\0';
@@ -176,11 +178,13 @@ main(argc, argv)
 					continue;
 				}
 				f = field_by_name(sw->field_tab, argv[i]);
+				if (f->flags & FLG_DEAD)
+					continue;
 				if ((f->flags & FLG_RDONLY) != 0) {
 					warnx("%s: read only", argv[i]);
 					continue;
 				}
-				if (do_merge) {
+				if (do_merge || f->flags & FLG_INIT) {
 					if ((f->flags & FLG_MODIFY) == 0)
 						errx(1, "%s: can only be set",
 						     argv[i]);
@@ -206,6 +210,8 @@ main(argc, argv)
 					continue;
 				}
 				f = field_by_name(sw->field_tab, argv[i]);
+				if (f->flags & FLG_DEAD)
+					continue;
 				if ((f->flags & FLG_WRONLY) != 0) {
 					warnx("%s: write only", argv[i]);
 					continue;
