@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.39 1997/09/30 17:54:15 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.40 1997/10/02 00:49:11 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.39 1997/09/30 17:54:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.40 1997/10/02 00:49:11 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -120,7 +120,6 @@ struct dos_partition *readmbr __P((int));
 void	makelabel __P((char *, char *, struct disklabel *));
 int	writelabel __P((int, char *, struct disklabel *));
 void	l_perror __P((char *));
-struct disklabel *newlabel __P((int));
 struct disklabel *readlabel __P((int));
 struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 void	display __P((FILE *, struct disklabel *));
@@ -248,14 +247,14 @@ main(argc, argv)
 	case EDIT:
 		if (argc != 1)
 			usage();
-		if ((lp = newlabel(f)) == NULL)
+		if ((lp = readlabel(f)) == NULL)
 			exit(1);
 		error = edit(lp, f);
 		break;
 	case EDITOR:
 		if (argc != 1)
 			usage();
-		if ((lp = newlabel(f)) == NULL)
+		if ((lp = readlabel(f)) == NULL)
 			exit(1);
 		error = editor(lp, f);
 		break;
@@ -300,7 +299,7 @@ main(argc, argv)
 	{
 		struct disklabel tlab;
 
-		if ((lp = newlabel(f)) == NULL)
+		if ((lp = readlabel(f)) == NULL)
 			exit(1);
 		tlab = *lp;
 		if (argc == 2)
@@ -1534,43 +1533,6 @@ setbootflag(lp)
 		errx(4, "cannot install boot program");
 }
 #endif
-
-/*
- * Get existing label or create a new one if none exists.
- */
-struct disklabel *
-newlabel(f)
-	int f;
-{
-	int orflag = rflag;
-	struct disklabel fictlabel, *lp = NULL;
-
-	rflag = 1;
-	if ((lp = readlabel(f)) == NULL) {
-		if (get_yn("No label found on disk, write a new one?") != 'y')
-			return(NULL);
-
-		/* Read fake label */
-		rflag = 0;
-		lp = readlabel(f);
-		fictlabel = *lp;
-		rflag = 1;
-		nwflag = 0;		/* set by readlabel() */
-
-		/* Make boot area and fill in values from fictious label */
-		lp = makebootarea(bootarea, &lab, f);
-		*lp = fictlabel;
-
-		/* Write fake label to disk */
-		if (checklabel(lp))
-			warnx("you must correct these errors in the editor.");
-		if (writelabel(f, bootarea, lp))
-			err(4, "unable to write new label");
-	}
-
-	rflag = orflag;
-	return(lp);
-}
 
 void
 usage()
