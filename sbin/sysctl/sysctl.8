@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.106 2003/08/23 19:26:25 tedu Exp $
+.\"	$OpenBSD: sysctl.8,v 1.107 2003/09/09 11:55:05 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -39,22 +39,23 @@
 .Sh SYNOPSIS
 .Nm sysctl
 .Op Fl n
-.Ar name ...
+.Ar variable ...
 .Nm sysctl
 .Op Fl nq
 .Fl w
-.Ar name=value ...
+.Ar variable Ns = Ns Ar value ...
 .Nm sysctl
-.Op Fl n
 .Fl aA
+.Op Fl n
 .Sh DESCRIPTION
 The
 .Nm
 utility retrieves kernel state and allows processes with
 appropriate privilege to set kernel state.
 The state to be retrieved or set is described using a
-``Management Information Base'' (``MIB'') style name,
-described as a dotted set of components.
+.Dq Management Information Base
+.Pq MIB
+style name, described as a dotted set of components.
 .Pp
 The options are as follows:
 .Bl -tag -width xxx
@@ -68,11 +69,10 @@ flag; for the table values, the name of the utility to retrieve them is given.
 .It Fl n
 Suppress printing of the field name, only output the field value.
 Useful for setting shell variables.
-.Bd -literal
-Example:
-      Set the psize shell variable to the pagesize of the hardware
-    # set psize=`sysctl -n hw.pagesize`
-.Ed
+For example, to set the psize shell variable to the pagesize of the hardware:
+.Pp
+.Dl # set psize=`sysctl -n hw.pagesize`
+.Pp
 .It Fl q
 Suppress all output when setting a variable.
 This option overrides the behaviour of
@@ -376,7 +376,7 @@ Use of the
 .Fl A
 flag lists all the filesystems compiled into the running kernel.
 .Sh FILES
-.Bl -tag -width <ufs/ffs/ffs_extern.h> -compact
+.Bl -tag -width <uvm/uvm_swap_encrypt.h> -compact
 .It Aq Pa sys/sysctl.h
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
