@@ -4,6 +4,8 @@
 
 #define TC_VAX 1
 
+#define AOUT_MACHTYPE 140
+
 #define	LOCAL_LABELS_FB
 #define NO_LISTING
 
