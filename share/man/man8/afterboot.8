@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.99 2004/09/09 10:23:43 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.100 2004/12/01 16:25:20 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -689,7 +689,8 @@ for the mount option:
 .Pp
 .Dl /dev/wd0j /altroot ffs xx 0 0
 .Pp
-and you must add a line to root's crontab:
+and you must add a line to root's
+.Xr crontab 5 :
 .Pp
 .Dl ROOTBACKUP=1
 .Pp
