@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.175 1999/08/27 05:52:02 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.176 1999/08/27 06:06:11 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1383,10 +1383,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Light Pulse FibreChannel",
 	},
 	{
-	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_SB64PCI,
+	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI97,
 	    0,
 	    "Ensoniq",
-	    "SoundBlaster 64PCI",
+	    "AudioPCI97",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
@@ -1549,6 +1549,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Industrial Computer Source",
 	    "WDT 50x Watchdog Timer",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_INIC940,
+	    0,
+	    "Initio",
+	    "INIC-940 SCSI",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_INIC941,
+	    0,
+	    "Initio",
+	    "INIC-941 SCSI",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_INIC950,
+	    0,
+	    "Initio",
+	    "INIC-950 SCSI",
 	},
 	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
