@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.349 2004/07/18 03:26:21 krw Exp $
+#	$OpenBSD: install.sub,v 1.350 2004/07/25 03:33:04 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1667,7 +1667,7 @@ questions() {
 	_td=$2
 	ask_yn "Change the default console to $_bd?"
 	[[ $resp == n ]] && return
-	ask_which "speed" "should $_bd use" "9600 19200 38400 57600 115200" 9600
+	ask_which "speed" "should $_bd use" "9600 19200 38400 57600 115200"
 	[[ $resp == done ]] && return
 	echo "set tty $_bd\nstty $_bd $resp" >>/mnt/etc/boot.conf
 	sed	-e "/^${_td}/s/std.9600/std.${resp}/" \
