@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1999/02/03 23:31:15 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.8 2000/02/21 03:12:44 ho Exp $
 
 SUBDIR=bcwrap
 
 MAN=	doc/bc.1 doc/dc.1
 LDFLAGS+=	-s ${LDSTATIC}
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
+CLEANFILES+=	bc/libmath.h doc/dc.info
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS}
@@ -45,9 +46,14 @@ install: maninstall
 		bindir=${DESTDIR}/usr/bin infodir=${PREFIX}/usr/share/info install
 	cd ${.CURDIR}/bcwrap && ${MAKE} install
 
-clean cleandir:
+clean:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 	cd ${.CURDIR}/bcwrap && ${MAKE} clean
+
+cleandir:
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+	cd ${.CURDIR}/bcwrap && ${MAKE} cleandir
+	rm -f ${CLEANFILES}
 
 depend:
 	# Nothing here so far...
