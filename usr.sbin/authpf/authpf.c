@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.20 2002/06/11 04:45:32 kjell Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.21 2002/06/11 17:13:55 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -153,6 +153,9 @@ main(int argc, char *argv[])
 
 	strlcpy(luser, pw->pw_name, sizeof(luser));
 
+        /* Make our entry in /var/run as /var/run/authpf-ipaddr */
+        snprintf(pidfile, sizeof pidfile, "%s/%s", PATH_PIDFILE, ipsrc);
+	
 	/*
 	 * If someone else is already using this ip, then this person
 	 * wants to switch users - so kill the old process and exit
