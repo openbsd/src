@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.20 2002/12/10 20:32:57 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.21 2002/12/12 20:21:34 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -156,7 +156,6 @@ void cgfourteen_free_screen(void *, void *);
 int cgfourteen_show_screen(void *, void *, int, void (*cb)(void *, int, int),
     void *);
 paddr_t cgfourteen_mmap(void *, off_t, int);
-int cgfourteen_is_console(int);
 void cgfourteen_reset(struct cgfourteen_softc *);
 void cgfourteen_burner(void *, u_int, u_int);
 void cgfourteen_prom(void *);
