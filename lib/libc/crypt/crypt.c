@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypt.c,v 1.4 1996/06/03 22:20:35 niklas Exp $	*/
+/*	$OpenBSD: crypt.c,v 1.5 1996/07/02 23:05:55 deraadt Exp $	*/
 
 /*
  * FreeSec: libcrypt
@@ -596,13 +596,16 @@ crypt(key, setting)
 	const char *setting;
 {
 	int		i;
-	u_int32_t		count, salt, l, r0, r1, keybuf[2];
+	u_int32_t	count, salt, l, r0, r1, keybuf[2];
 	u_char		*p, *q;
 	static u_char	output[21];
+	extern char	*md5crypt __P((const char *, const char *));
+
+	if (strncmp(setting, "$1$", sizeof("$1")) == 0)
+		return (md5crypt(key, setting));
 
 	if (!des_initialised)
 		des_init();
-
 
 	/*
 	 * Copy the key, shifting each character up by one bit
