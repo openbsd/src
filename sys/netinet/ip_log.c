@@ -1,4 +1,5 @@
-/* $OpenBSD: ip_log.c,v 1.5 1999/12/15 05:20:22 kjell Exp $ */
+/*	$OpenBSD: ip_log.c,v 1.6 2000/02/01 19:29:58 kjell Exp $	*/
+
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
  *
@@ -6,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $Id: ip_log.c,v 1.5 1999/12/15 05:20:22 kjell Exp $
+ * $IPFilter: ip_log.c,v 2.1.2.2 1999/09/21 11:55:44 darrenr Exp $
  */
 #include <sys/param.h>
 #if defined(KERNEL) && !defined(_KERNEL)

@@ -1,4 +1,5 @@
-/* $OpenBSD: ip_raudio_pxy.c,v 1.3 1999/12/28 08:20:40 kjell Exp $ */
+/*	$OpenBSD: ip_raudio_pxy.c,v 1.4 2000/02/01 19:29:59 kjell Exp $	*/
+
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
 #endif

@@ -1,4 +1,5 @@
-/* $OpenBSD: ip_nat.h,v 1.13 1999/12/15 05:20:22 kjell Exp $ */
+/*	$OpenBSD: ip_nat.h,v 1.14 2000/02/01 19:29:58 kjell Exp $	*/
+
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -7,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $Id: ip_nat.h,v 1.13 1999/12/15 05:20:22 kjell Exp $
+ * $IPFilter: ip_nat.h,v 2.1.2.3 2000/01/24 12:44:24 darrenr Exp $
  */
 
 #ifndef	__IP_NAT_H__
@@ -187,6 +188,7 @@ typedef	struct	natlog {
 	int	nl_rule;
 	U_QUAD_T	nl_pkts;
 	U_QUAD_T	nl_bytes;
+	u_char	nl_p;
 } natlog_t;
 
 

@@ -1,4 +1,5 @@
-/* $OpenBSD: misc.c,v 1.9 1999/12/15 05:20:27 kjell Exp $ */
+/*	$OpenBSD: misc.c,v 1.10 2000/02/01 19:30:02 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -53,7 +54,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: misc.c,v 1.9 1999/12/15 05:20:27 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: misc.c,v 2.1 1999/08/04 17:30:11 darrenr Exp $";
 #endif
 
 extern	int	opts;

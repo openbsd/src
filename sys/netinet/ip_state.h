@@ -1,4 +1,5 @@
-/* $OpenBSD: ip_state.h,v 1.10 1999/12/15 05:20:23 kjell Exp $ */
+/*	$OpenBSD: ip_state.h,v 1.11 2000/02/01 19:29:59 kjell Exp $	*/
+
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -7,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $Id: ip_state.h,v 1.10 1999/12/15 05:20:23 kjell Exp $
+ * $IPFilter: ip_state.h,v 2.1.2.2 2000/01/24 13:13:52 darrenr Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -152,6 +153,7 @@ extern	int	fr_stateinit __P((void));
 extern	int	fr_tcpstate __P((ipstate_t *, fr_info_t *, ip_t *, tcphdr_t *));
 extern	ipstate_t	*fr_addstate __P((ip_t *, fr_info_t *, u_int));
 extern	frentry_t	*fr_checkstate __P((ip_t *, fr_info_t *));
+extern	void	ip_statesync __P((void *));
 extern	void	fr_timeoutstate __P((void));
 extern	void	fr_tcp_age __P((u_long *, u_char *, ip_t *, fr_info_t *, int));
 extern	void	fr_stateunload __P((void));

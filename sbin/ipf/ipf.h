@@ -1,4 +1,5 @@
-/* $OpenBSD: ipf.h,v 1.11 1999/12/15 05:20:24 kjell Exp $ */
+/*	$OpenBSD: ipf.h,v 1.12 2000/02/01 19:30:00 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -7,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ipf.h	1.12 6/5/96
- * $Id: ipf.h,v 1.11 1999/12/15 05:20:24 kjell Exp $
+ * $IPFilter: ipf.h,v 2.1.2.1 1999/10/05 12:59:25 darrenr Exp $
  */
 
 #ifndef	__IPF_H__

@@ -1,4 +1,5 @@
-/* $OpenBSD: facpri.c,v 1.1 1999/12/14 04:17:17 kjell Exp $ */
+/*	$OpenBSD: facpri.c,v 1.2 2000/02/01 19:30:00 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -20,7 +21,7 @@
 #include "facpri.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: facpri.c,v 1.1 1999/12/14 04:17:17 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: facpri.c,v 1.2 1999/08/01 11:10:45 darrenr Exp $";
 #endif
 
 typedef	struct	table	{

@@ -1,4 +1,5 @@
-/* $OpenBSD: natparse.c,v 1.1 1999/12/14 04:17:17 kjell Exp $ */
+/*	$OpenBSD: natparse.c,v 1.2 2000/02/01 19:30:00 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -54,7 +55,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: natparse.c,v 1.1 1999/12/14 04:17:17 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: natparse.c,v 1.2.2.1 1999/11/20 22:50:30 darrenr Exp $";
 #endif
 
 

@@ -1,4 +1,5 @@
-/* $OpenBSD: ipft_pc.c,v 1.13 1999/12/15 05:20:26 kjell Exp $ */
+/*	$OpenBSD: ipft_pc.c,v 1.14 2000/02/01 19:30:01 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -34,7 +35,7 @@
 #include "ipt.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: ipft_pc.c,v 1.13 1999/12/15 05:20:26 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipft_pc.c,v 2.1 1999/08/04 17:30:03 darrenr Exp $";
 #endif
 
 struct	llc	{

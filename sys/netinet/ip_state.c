@@ -1,4 +1,5 @@
-/* $OpenBSD: ip_state.c,v 1.17 1999/12/28 09:43:33 kjell Exp $ */
+/*	$OpenBSD: ip_state.c,v 1.18 2000/02/01 19:29:59 kjell Exp $	*/
+
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -8,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.17 1999/12/28 09:43:33 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_state.c,v 2.3.2.18 2000/01/27 08:51:30 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -175,11 +176,10 @@ int which;
 				delete = 1;
 				break;
 			case 1 :
-				if ((is->is_p == IPPROTO_TCP) &&
-				    (((is->is_state[0] <= TCPS_ESTABLISHED) &&
-				      (is->is_state[1] > TCPS_ESTABLISHED)) ||
-				     ((is->is_state[1] <= TCPS_ESTABLISHED) &&
-				      (is->is_state[0] > TCPS_ESTABLISHED))))
+				if (is->is_p != IPPROTO_TCP)
+					break;
+				if ((is->is_state[0] != TCPS_ESTABLISHED) ||
+				    (is->is_state[1] != TCPS_ESTABLISHED))
 					delete = 1;
 				break;
 			}
@@ -458,7 +458,7 @@ tcphdr_t *tcp;
 	win = ntohs(tcp->th_win);
 	end = seq + ip->ip_len - fin->fin_hlen - (tcp->th_off << 2) +
 	       ((tcp->th_flags & TH_SYN) ? 1 : 0) +
-	       ((tcp->th_flags & TH_FIN) ? 1 : 0);      
+	       ((tcp->th_flags & TH_FIN) ? 1 : 0);
 
 	if (fdata->td_end == 0) {
 		/*
@@ -472,6 +472,8 @@ tcphdr_t *tcp;
 	if (!(tcp->th_flags & TH_ACK)) {  /* Pretend an ack was sent */
 		ack = tdata->td_end;
 		win = 1;
+		if ((tcp->th_flags == TH_SYN) && (tdata->td_maxwin == 0))
+			 tdata->td_maxwin = 1;
 	} else if (((tcp->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)) &&
 		   (ack == 0)) {
 		/* gross hack to get around certain broken tcp stacks */
@@ -487,7 +489,7 @@ tcphdr_t *tcp;
 #define	SEQ_GE(a,b)	((int)((a) - (b)) >= 0)
 #define	SEQ_GT(a,b)	((int)((a) - (b)) > 0)
 	if ((SEQ_GE(fdata->td_maxend, end)) &&
-	    (SEQ_GE(seq + maxwin, fdata->td_end - maxwin)) && 
+	    (SEQ_GE(seq, fdata->td_end - maxwin)) &&
 /* XXX what about big packets */
 #define MAXACKWINDOW 66000
 	    (ackskew >= -MAXACKWINDOW) &&
@@ -672,8 +674,8 @@ fr_info_t *fin;
 	int type;
 	u_int hv;
 
-	/* 
-	 * Does it at least have the return (basic) IP header ? 
+	/*
+	 * Does it at least have the return (basic) IP header ?
 	 * Only a basic IP header (no options) should be with
 	 * an ICMP error header.
 	 */
@@ -707,10 +709,10 @@ fr_info_t *fin;
 		 if ((icmp->icmp_type != ICMP_ECHO) &&
 		     (icmp->icmp_type != ICMP_TSTAMP) &&
 		     (icmp->icmp_type != ICMP_IREQ) &&
-		     (icmp->icmp_type != ICMP_MASKREQ))  
+		     (icmp->icmp_type != ICMP_MASKREQ))
 		    	return NULL;
 
-		/* 
+		/*
 		 * perform a lookup of the ICMP packet in the state table
 		 */
 
@@ -734,9 +736,9 @@ fr_info_t *fin;
 		for (isp = &ips_table[hv]; (is = *isp); isp = &is->is_next)
 			if ((is->is_p == pr) &&
 			    fr_matchsrcdst(is, src, dst, &ofin, NULL)) {
-			    	/* 
+			    	/*
 			    	 * in the state table ICMP query's are stored
-			    	 * with the type of the corresponding ICMP 
+			    	 * with the type of the corresponding ICMP
 			    	 * response. Correct here
 			    	 */
 				if (((is->is_type == ICMP_ECHOREPLY) &&
@@ -746,7 +748,7 @@ fr_info_t *fin;
 				    (is->is_type - 1 == ic->icmp_type)) {
 				    	ips_stats.iss_hits++;
     		                        is->is_pkts++;
-                	                is->is_bytes += ip->ip_len;     
+                	                is->is_bytes += ip->ip_len;
 					fr = is->is_rule;
 					RWLOCK_EXIT(&ipf_state);
 					return fr;
@@ -804,7 +806,7 @@ fr_info_t *fin;
 			 * comes the other way around
 			 */
 			is->is_pkts++;
-			is->is_bytes += ip->ip_len;     
+			is->is_bytes += ip->ip_len;
 			/*
 			 * we deliberately do not touch the timeouts
 			 * for the accompanying state table entry.
@@ -1040,11 +1042,11 @@ void fr_timeoutstate()
 			} else
 				isp = &is->is_next;
 	RWLOCK_EXIT(&ipf_state);
+	SPL_X(s);
 	if (fr_state_doflush) {
 		(void) fr_state_flush(1);
 		fr_state_doflush = 0;
 	}
-	SPL_X(s);
 }
 
 
@@ -1181,3 +1183,21 @@ u_int type;
 	(void) ipllog(IPL_LOGSTATE, NULL, items, sizes, types, 1);
 }
 #endif
+
+
+void ip_statesync(ifp)
+void *ifp;
+{
+	register ipstate_t *is;
+	register int i;
+
+	WRITE_ENTER(&ipf_state);
+	for (i = fr_statesize - 1; i >= 0; i--)
+		for (is = ips_table[i]; is != NULL; is = is->is_next) {
+			if (is->is_ifpin == ifp)
+				is->is_ifpin = NULL;
+			if (is->is_ifpout == ifp)
+				is->is_ifpout = NULL;
+		}
+	RWLOCK_EXIT(&ipf_state);
+}

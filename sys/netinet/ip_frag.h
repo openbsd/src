@@ -1,4 +1,5 @@
-/* $OpenBSD: ip_frag.h,v 1.9 1999/12/15 05:20:22 kjell Exp $ */
+/*	$OpenBSD: ip_frag.h,v 1.10 2000/02/01 19:29:58 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -7,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * $Id: ip_frag.h,v 1.9 1999/12/15 05:20:22 kjell Exp $
+ * $IPFilter: ip_frag.h,v 2.2 1999/08/06 06:26:38 darrenr Exp $
  */
 
 #ifndef	__IP_FRAG_H__

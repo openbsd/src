@@ -1,4 +1,5 @@
-/* $OpenBSD: fils.c,v 1.17 1999/12/15 05:20:25 kjell Exp $ */
+/*	$OpenBSD: fils.c,v 1.18 2000/02/01 19:30:00 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -52,7 +53,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fils.c,v 1.17 1999/12/15 05:20:25 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: fils.c,v 2.2.2.5 2000/01/27 08:49:40 darrenr Exp $";
 #endif
 
 #define	F_IN	0
@@ -81,7 +82,7 @@ static void Usage(name)
 char *name;
 {
 	fprintf(stderr,
-	    "usage: %s [-aAfhIinosv] [-d device] [-M core] [-N system]\n", 
+	    "usage: %s [-aAfhIinosv] [-d device] [-M core]\n", 
 		name);
 	exit(1);
 }
@@ -98,7 +99,7 @@ char *argv[];
 	char	*name = NULL, *device = IPL_NAME;
 	int	c, fd;
 
-	while ((c = getopt(argc, argv, "AafhIinosvd:M:")) != -1)
+	while ((c = getopt(argc, argv, "AafhgIinosvd:M:")) != -1)
 	{
 		switch (c)
 		{
@@ -247,11 +248,13 @@ struct	friostat	*fp;
 	printf(" input packets:\t\tblocked %lu passed %lu nomatch %lu",
 			fp->f_st[0].fr_block, fp->f_st[0].fr_pass,
 			fp->f_st[0].fr_nom);
-	printf(" counted %lu\n", fp->f_st[0].fr_acct);
+	printf(" counted %lu short %lu\n", 
+			fp->f_st[0].fr_acct, fp->f_st[0].fr_short);
 	printf("output packets:\t\tblocked %lu passed %lu nomatch %lu",
 			fp->f_st[1].fr_block, fp->f_st[1].fr_pass,
 			fp->f_st[1].fr_nom);
-	printf(" counted %lu\n", fp->f_st[0].fr_acct);
+	printf(" counted %lu short %lu\n", 
+			fp->f_st[1].fr_acct, fp->f_st[1].fr_short);
 	printf(" input packets logged:\tblocked %lu passed %lu\n",
 			fp->f_st[0].fr_bpkl, fp->f_st[0].fr_ppkl);
 	printf("output packets logged:\tblocked %lu passed %lu\n",

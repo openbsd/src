@@ -1,4 +1,5 @@
-/* $OpenBSD: parse.c,v 1.30 1999/12/28 08:30:31 kjell Exp $ */
+/*	$OpenBSD: parse.c,v 1.31 2000/02/01 19:30:00 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -42,7 +43,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: parse.c,v 1.30 1999/12/28 08:30:31 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.1.2.8 2000/01/27 08:49:42 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -129,21 +130,25 @@ int     linenum;
 
 	if (!strcasecmp("block", *cpp)) {
 		fil.fr_flags |= FR_BLOCK;
-		if (!strncasecmp(*(cpp+1), "return-icmp-as-dest", 19))
+		if (!strncasecmp(*(cpp+1), "return-icmp-as-dest", 19) &&
+		    (i = 19))
 			fil.fr_flags |= FR_FAKEICMP;
-		else if (!strncasecmp(*(cpp+1), "return-icmp", 11))
+		else if (!strncasecmp(*(cpp+1), "return-icmp", 11) && (i = 11))
 			fil.fr_flags |= FR_RETICMP;
 		if (fil.fr_flags & FR_RETICMP) {
 			cpp++;
-			if (!*(cpp+1)) {
-				fprintf(stderr, "%d: missing icmp code\n",
-					linenum);
-				return NULL;
+			if (strlen(*cpp) == i) {
+				if (*(cpp + 1) && **(cpp +1) == '(') {
+					cpp++;
+					i = 0;
+				} else
+					i = -1;
 			}
-			i = 11;
-			if ((strlen(*cpp) > i) && (*(*cpp + i) != '('))
-				i = 19;
-			if (*(*cpp + i) == '(') {
+
+			/*
+			 * The ICMP code is not required to follow in ()'s
+			 */
+			if ((i >= 0) && (*(*cpp + i) == '(')) {
 				i++;
 				j = icmpcode(*cpp + i);
 				if (j == -1) {
@@ -256,7 +261,7 @@ int     linenum;
 
 	if (!strcasecmp("log", *cpp)) {
 		if (!*++cpp) {
-			fprintf(stderr, "%d: missing source specification\n", 
+			fprintf(stderr, "%d: missing source specification\n",
 				linenum);
 			return NULL;
 		}
@@ -766,7 +771,7 @@ int     linenum;
 
 /*
  * returns an ip address as a long var as a result of either a DNS lookup or
- * straight inet_aton() call
+ * straight inet_addr() call
  */
 u_32_t	hostnum(host, resolved, linenum)
 char	*host;
@@ -1247,12 +1252,13 @@ int     linenum;
 }
 
 
-#define	MAX_ICMPCODE	12
+#define	MAX_ICMPCODE	15
 
 char	*icmpcodes[] = {
 	"net-unr", "host-unr", "proto-unr", "port-unr", "needfrag", "srcfail",
 	"net-unk", "host-unk", "isolate", "net-prohib", "host-prohib",
-	"net-tos", "host-tos", NULL };
+	"net-tos", "host-tos", "filter-prohib", "host-preced", "preced-cutoff", 
+	NULL };
 /*
  * Return the number for the associated ICMP unreachable code.
  */

@@ -1,4 +1,5 @@
-/* $OpenBSD: ipf.c,v 1.20 1999/12/15 05:20:24 kjell Exp $ */
+/*	$OpenBSD: ipf.c,v 1.21 2000/02/01 19:30:00 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -44,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipf.c,v 1.20 1999/12/15 05:20:24 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipf.c,v 2.2 1999/08/06 15:26:08 darrenr Exp $";
 #endif
 
 #if	SOLARIS

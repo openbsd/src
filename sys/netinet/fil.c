@@ -1,4 +1,5 @@
-/*       $OpenBSD: fil.c,v 1.19 1999/12/17 06:17:07 kjell Exp $       */
+/*	$OpenBSD: fil.c,v 1.20 2000/02/01 19:29:57 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -8,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fil.c,v 1.19 1999/12/17 06:17:07 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: fil.c,v 2.3.2.16 2000/01/27 08:49:37 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -246,6 +247,12 @@ fr_info_t *fin;
 		if (!off && (icmp->icmp_type == ICMP_ECHOREPLY ||
 		     icmp->icmp_type == ICMP_ECHO))
 			minicmpsz = ICMP_MINLEN;
+		if (!off && (icmp->icmp_type == ICMP_TSTAMP ||
+		     icmp->icmp_type == ICMP_TSTAMPREPLY))
+			minicmpsz = 20; /* type(1) + code(1) + cksum(2) + id(2) + seq(2) + 3*timestamp(3*4) */
+		if (!off && (icmp->icmp_type == ICMP_MASKREQ ||
+		     icmp->icmp_type == ICMP_MASKREPLY))
+			minicmpsz = 12; /* type(1) + code(1) + cksum(2) + id(2) + seq(2) + mask(4) */
 		if ((!(ip->ip_len >= hlen + minicmpsz) && !off) ||
 		    (off && off < sizeof(struct icmp)))
 			fi->fi_fl |= FI_SHORT;
@@ -631,7 +638,7 @@ int out;
 			case IPPROTO_UDP:
 				plen = sizeof(udphdr_t);
 				break;
-			/* need enough for complete ICMP error IP header */
+			/* 96 - enough for complete ICMP error IP header */
 			case IPPROTO_ICMP:
 				plen = ICMPERR_MAXPKTLEN - sizeof(ip_t);
 				break;
@@ -689,6 +696,9 @@ int out;
 
 	READ_ENTER(&ipf_mutex);
 
+	if (fin->fin_fi.fi_fl & FI_SHORT)
+		ATOMIC_INC(frstats[out].fr_short);
+	
 	/*
 	 * Check auth now.  This, combined with the check below to see if apass
 	 * is 0 is to ensure that we don't count the packet twice, which can
@@ -1179,7 +1189,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * $Id: fil.c,v 1.19 1999/12/17 06:17:07 kjell Exp $
+ * $IPFilter: fil.c,v 2.3.2.16 2000/01/27 08:49:37 darrenr Exp $
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -1580,7 +1590,10 @@ void frsync()
 #  else
 	for (ifp = ifnet; ifp; ifp = ifp->if_next)
 #  endif
+	{
 		ip_natsync(ifp);
+		ip_statesync(ifp);
+	}
 # endif
 
 	WRITE_ENTER(&ipf_mutex);

@@ -1,4 +1,5 @@
-/* $OpenBSD: ipt.c,v 1.14 1999/12/15 05:20:26 kjell Exp $ */
+/*	$OpenBSD: ipt.c,v 1.15 2000/02/01 19:30:02 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -56,7 +57,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipt.c,v 1.14 1999/12/15 05:20:26 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipt.c,v 2.1.2.1 2000/01/24 14:49:11 darrenr Exp $";
 #endif
 
 extern	char	*optarg;
@@ -65,6 +66,7 @@ extern	struct ipread	snoop, etherf, tcpd, pcap, iptext, iphex;
 extern	struct ifnet	*get_unit __P((char *));
 extern	void	init_ifp __P((void));
 extern	ipnat_t	*natparse __P((char *, int));
+extern	int	fr_running;
 
 int	opts = 0;
 int	main __P((int, char *[]));
@@ -135,6 +137,7 @@ char *argv[];
 	nat_init();
 	fr_stateinit();
 	initparse();
+	fr_running = 1;
 
 	if (rules) {
 		char	line[513], *s;

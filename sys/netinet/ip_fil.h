@@ -1,4 +1,5 @@
-/* $OpenBSD: ip_fil.h,v 1.14 1999/12/28 08:20:40 kjell Exp $ */
+/*	$OpenBSD: ip_fil.h,v 1.15 2000/02/01 19:29:58 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -7,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.14 1999/12/28 08:20:40 kjell Exp $
+ * $IPFilter: ip_fil.h,v 2.3.2.7 2000/01/27 08:49:41 darrenr Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -272,6 +273,7 @@ typedef	struct	filterstats {
 	u_long	fr_pass;	/* packets allowed */
 	u_long	fr_block;	/* packets denied */
 	u_long	fr_nom;		/* packets which don't match any rule */
+	u_long	fr_short;	/* packets which are short */
 	u_long	fr_ppkl;	/* packets allowed and logged */
 	u_long	fr_bpkl;	/* packets denied and logged */
 	u_long	fr_npkl;	/* packets unmatched and logged */
@@ -448,15 +450,7 @@ extern	int	iplclose __P((dev_t, int));
 # if defined(__NetBSD__) && defined(PFIL_HOOKS)
 extern	void	ipfilterattach __P((int));
 # endif
-
-#if !defined(__OpenBSD__)
-/*
- * OpenBSD has this call in the kernel but doesn't export it to userland.
- * See ip_fil.c for actual hook and more details.
- */
 extern	int	iplattach __P((void));
-#endif
-
 extern	int	ipl_enable __P((void));
 extern	int	ipl_disable __P((void));
 extern	void	ipflog_init __P((void));
@@ -563,7 +557,7 @@ extern  void	fr_makefrip __P((int, ip_t *, fr_info_t *));
 extern	int	fr_ifpaddr __P((void *, struct in_addr *));
 extern	char	*memstr __P((char *, char *, int, int));
 extern	int	ipl_unreach;
-extern	int	ipl_inited;
+extern	int	fr_running;
 extern	u_long	ipl_frouteok[2];
 extern	int	fr_pass;
 extern	int	fr_flags;

@@ -1,4 +1,5 @@
-/* $OpenBSD: ipft_tx.c,v 1.13 1999/12/15 05:20:26 kjell Exp $ */
+/*	$OpenBSD: ipft_tx.c,v 1.14 2000/02/01 19:30:01 kjell Exp $	*/
+
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -44,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipft_tx.c,v 1.13 1999/12/15 05:20:26 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipft_tx.c,v 2.1 1999/08/04 17:30:05 darrenr Exp $";
 #endif
 
 extern	int	opts;

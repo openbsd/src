@@ -1,4 +1,5 @@
-/* $OpenBSD: ipnat.c,v 1.33 1999/12/16 07:38:45 kjell Exp $ */
+/*	$OpenBSD: ipnat.c,v 1.34 2000/02/01 19:30:00 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -57,7 +58,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.33 1999/12/16 07:38:45 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipnat.c,v 2.1.2.2 1999/12/04 02:09:30 darrenr Exp $";
 #endif
 
 
@@ -401,6 +402,7 @@ char	*msk;
 	mask = htonl(mask);
 	return mask;
 }
+
 
 /*
  * returns an ip address as a long var as a result of either a DNS lookup or

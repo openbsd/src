@@ -1,4 +1,5 @@
-/*    $OpenBSD: ip_fil.c,v 1.28 1999/12/17 06:17:08 kjell Exp $    */
+/*	$OpenBSD: ip_fil.c,v 1.29 2000/02/01 19:29:58 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -8,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.28 1999/12/17 06:17:08 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.4.2.16 2000/01/16 10:12:42 darrenr Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -127,7 +128,6 @@ extern	int	tcp_ttl;
 # endif
 #endif
 
-int	ipl_inited = 0;
 # if defined (__OpenBSD__)
 int	ipl_unreach = ICMP_UNREACH_FILTER_PROHIB;
 # else
@@ -226,20 +226,8 @@ int count;
 }
 # endif
 
-#if defined( __OpenBSD__)
-/*
- * Since iplattach() is called by main() at boot time, we put in a 
- * fake stub so that none of the machinery is initialized till explicitly
- * enabled via ipf -E. Therefore we rename the real iplattach() to 
- * ipl_enable(). See also skeleton iplinit() later in this file. 
- */
-void iplattach __P((int));
-void iplattach(int dummy) {};
 
-int ipl_enable()
-# else
 int iplattach()
-# endif /* OpenBSD */
 {
 	char *defpass;
 	int s;
@@ -248,7 +236,7 @@ int iplattach()
 # endif
 
 	SPL_NET(s);
-	if (ipl_inited || (fr_checkp == fr_check)) {
+	if (fr_running || (fr_checkp == fr_check)) {
 		printf("IP Filter: already initialized\n");
 		SPL_X(s);
 		return EBUSY;
@@ -276,7 +264,6 @@ int iplattach()
 	}
 # endif
 
-	ipl_inited = 1;
 	bzero((char *)frcache, sizeof(frcache));
 	fr_savep = fr_checkp;
 	fr_checkp = fr_check;
@@ -304,6 +291,7 @@ int iplattach()
 	timeout(ipfr_slowtimer, NULL, hz/2);
 # endif
 #endif
+	fr_running = 1;
 	return 0;
 }
 
@@ -312,11 +300,7 @@ int iplattach()
  * Disable the filter by removing the hooks from the IP input/output
  * stream.
  */
-# if defined(__OpenBSD__)
-int ipl_disable()
-# else
 int ipldetach()
-# endif
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 
@@ -332,7 +316,7 @@ int ipldetach()
 # endif
 #endif
 	SPL_NET(s);
-	if (!ipl_inited)
+	if (!fr_running)
 	{
 		printf("IP Filter: not initialized\n");
 		SPL_X(s);
@@ -341,7 +325,7 @@ int ipldetach()
 
 	fr_checkp = fr_savep;
 	i = frflush(IPL_LOGIPF, i);
-	ipl_inited = 0;
+	fr_running = 0;
 
 # ifdef NETBSD_PF
 	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
@@ -464,11 +448,15 @@ int mode;
 	SPL_NET(s);
 
 	if (unit == IPL_LOGNAT) {
+		if (!fr_running)
+			return EIO;
 		error = nat_ioctl(data, cmd, mode);
 		SPL_X(s);
 		return error;
 	}
 	if (unit == IPL_LOGSTATE) {
+		if (!fr_running)
+			return EIO;
 		error = fr_state_ioctl(data, cmd, mode);
 		SPL_X(s);
 		return error;
@@ -489,23 +477,10 @@ int mode;
 			error = EPERM;
 		else {
 			IRCOPY(data, (caddr_t)&enable, sizeof(enable));
-			if (enable) {
-# if defined(__OpenBSD__)
-				error = ipl_enable();
-# else
+			if (enable)
 				error = iplattach();
-# endif
-				if (error == 0)
-					fr_running = 1;
-			} else {
-# if defined(__OpenBSD__)
-				error = ipl_disable();
-# else
+			else
 				error = ipldetach();
-# endif
-				if (error == 0)
-					fr_running = 0;
-			}
 		}
 		break;
 	}
@@ -762,13 +737,15 @@ caddr_t data;
 	}
 
 	if (!f) {
-		if (req != SIOCINAFR || req != SIOCINIFR)
+		if (req != SIOCINAFR && req != SIOCINIFR)
 			while ((f = *ftail))
 				ftail = &f->fr_next;
 		else {
-			if (fp->fr_hits)
+			if (fp->fr_hits) {
+				ftail = fprev;
 				while (--fp->fr_hits && (f = *ftail))
 					ftail = &f->fr_next;
+			}
 			f = NULL;
 		}
 	}
@@ -1004,8 +981,8 @@ ip_t *ip;
 #  if _BSDI_VERSION >= 199802
 	return ip_output(m, (struct mbuf *)0, &ro, 0, 0, NULL);
 #  else
-#   if defined(__OpenBSD__)
-       return ip_output(m, (struct mbuf *)0, 0, 0, 0, NULL);
+#   if	defined(__OpenBSD__)
+	return ip_output(m, (struct mbuf *)0, 0, 0, 0, NULL);
 #   else
 	return ip_output(m, (struct mbuf *)0, 0, 0, 0);
 #   endif
@@ -1091,13 +1068,8 @@ void
 #  endif
 iplinit()
 {
-#  if defined(__OpenBSD__)
-	/* must explicitly enable with 'ipf -E'
-	 * which invokes ipl_enable(); */
-#  else
 	if (iplattach() != 0)
 		printf("IP Filter failed to attach\n");
-#  endif
 	ip_init();
 }
 # endif /* ! __NetBSD__ */

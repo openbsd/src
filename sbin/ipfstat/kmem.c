@@ -1,4 +1,5 @@
-/* $OpenBSD: kmem.c,v 1.12 1999/12/15 05:20:25 kjell Exp $ */
+/*	$OpenBSD: kmem.c,v 1.13 2000/02/01 19:30:00 kjell Exp $	*/
+
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -21,7 +22,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
-static const char rcsid[] = "@(#)$Id: kmem.c,v 1.12 1999/12/15 05:20:25 kjell Exp $";
+static const char rcsid[] = "@(#)$IPFilter: kmem.c,v 2.1 1999/08/04 17:30:09 darrenr Exp $";
 #endif
 
 static	int	kmemfd = -1;
