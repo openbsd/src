@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.3 1999/12/15 07:08:00 itojun Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.4 2000/01/08 05:49:40 angelos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -74,6 +74,7 @@
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/syslog.h>
+#include <dev/rndvar.h>
 
 #include <net/if.h>
 
