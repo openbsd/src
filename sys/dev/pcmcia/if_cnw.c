@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.12 2002/11/19 18:36:18 jason Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.13 2003/11/07 20:34:27 jmc Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,9 +41,8 @@
  *
  * When this driver was developed, the Linux Netwave driver was used
  * as a hardware manual. That driver is Copyright (c) 1997 University
- * of Tromsø, Norway. It is part of the Linix pcmcia-cs package that
- * can be found at
- * http://hyper.stanford.edu/HyperNews/get/pcmcia/home.html. The most
+ * of Tromsø, Norway. It is part of the Linux pcmcia-cs package that
+ * can be found at http://pcmcia-cs.sourceforge.net/. The most
  * recent version of the pcmcia-cs package when this driver was
  * written was 3.0.6.
  *
