@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.13 1997/07/10 22:53:37 millert Exp $
+ * $Id: skeysubr.c,v 1.14 1997/07/11 01:32:57 millert Exp $
  */
 
 #include <stdio.h>
@@ -173,11 +173,6 @@ keycrunch_sha1(result, seed, passwd)
 	results[0] ^= results[4];
 
 	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
-#if 0 /* XXX */
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sha1ByteReverse((u_int32_t *)result, SKEY_BINKEY_SIZE);
-#endif /* LITTLE_ENDIAN */
-#endif
 
 	return 0;
 }
@@ -246,11 +241,6 @@ f_sha1(x)
 	results[0] ^= results[4];
 
 	(void)memcpy((void *)x, (void *)results, SKEY_BINKEY_SIZE);
-#if 0 /* XXX */
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sha1ByteReverse((u_int32_t *)x, SKEY_BINKEY_SIZE);
-#endif /* LITTLE_ENDIAN */
-#endif
 }
 
 /* Strip trailing cr/lf from a line of text */
