@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.68 2001/07/11 03:02:24 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.69 2001/07/31 08:07:52 jakob Exp $
 
 .include <bsd.own.mk>
 
@@ -11,14 +11,14 @@ SUBDIR= apply apropos arch asa at aucat audioctl awk banner basename bdes \
 	ktrace lam last lastcomm leave less lex lndir locate lock logger \
 	login logname look lorder m4 mail make man mesg mg midiplay mixerctl \
 	mkdep mkstr mktemp modstat msgs nc netstat newsyslog nfsstat nice \
-	nohup oldrdist pagesize passwd paste patch pctr pr printenv printf quota \
-	rdist rdistd readlink renice rev rlogin rpcgen rpcinfo rs rsh rup \
-	ruptime rusers rwall rwho script sed shar showmount skey skeyaudit \
-	skeyinfo skeyinit sort split ssh su sup systat sudo tail talk tcopy \
-	tee telnet tftp tic time tip tn3270 top touch tput tr true tset tsort \
-	tty ul uname unexpand unifdef uniq units unvis users uudecode \
-	uuencode vacation vgrind vi vis vmstat w wall wc what whatis which \
-	who whois window write xargs xinstall xlint xstr yacc yes
+	nohup oldrdist pagesize passwd paste patch pctr pr printenv printf \
+	quota rdist rdistd readlink renice rev rlogin rpcgen rpcinfo rs rsh \
+	rup ruptime rusers rwall rwho script sectok sed shar showmount skey \
+	skeyaudit skeyinfo skeyinit sort split ssh su sup systat sudo tail \
+	talk tcopy tee telnet tftp tic time tip tn3270 top touch tput tr true \
+	tset tsort tty ul uname unexpand unifdef uniq units unvis users \
+	uudecode uuencode vacation vgrind vi vis vmstat w wall wc what whatis \
+	which who whois window write xargs xinstall xlint xstr yacc yes
 
 .if (${YP:L} == "yes")
 SUBDIR+=ypcat ypmatch ypwhich
