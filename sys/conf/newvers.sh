@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.17 1999/04/18 18:31:08 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.18 1999/04/19 19:43:09 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -51,6 +51,8 @@ id=`basename ${d}`
 #		OpenBSD_X_X symbol
 #	src/share/tmac/mdoc/doc-common
 #		.       ds oS OpenBSD X.X
+#	src/share/tmac/mdocs/doc-syms
+#		ensure new release is listed
 #	src/share/mk/sys.mk
 #		OSMAJOR
 #		OSMINOR
