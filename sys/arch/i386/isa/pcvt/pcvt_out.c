@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.27 2000/09/28 17:45:42 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.28 2000/10/16 02:34:41 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1033,6 +1033,7 @@ vt_coldinit(void)
 		svsp->scrr_beg = 0;		/* scrolling region begin row*/
 		svsp->scrr_len = svsp->screen_rows; /* scrolling region length*/
 		svsp->scrr_end = svsp->scrr_len - 1;/* scrolling region end */
+		svsp->mouse_flags = 0;		/* mouse flags */
 
 		if(nscr == 0)
 		{
