@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.36 2001/05/03 13:41:02 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.37 2001/05/23 12:34:40 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -40,40 +40,32 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * compat.c --
- *	The routines in this file implement the full-compatibility
- *	mode of PMake. Most of the special functionality of PMake
- *	is available in this mode. Things not supported:
- *	    - different shells.
- *	    - friendly variable substitution.
- *
- * Interface:
- *	Compat_Run	    Initialize things for this module and recreate
- *			    thems as need creatin'
- */
-
-#include    <sys/types.h>
-#include    <sys/stat.h>
-#include    <sys/wait.h>
-#include    <ctype.h>
-#include    <errno.h>
-#include    <signal.h>
-#include    <stddef.h>
-#include    <stdio.h>
-#include    "make.h"
-#include    "ohash.h"
-#include    "dir.h"
-#include    "job.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: compat.c,v 1.36 2001/05/03 13:41:02 espie Exp $";
-#endif
-#endif /* not lint */
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <ctype.h>
+#include <errno.h>
+#include <signal.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <unistd.h>
+#include "config.h"
+#include "defines.h"
+#include "dir.h"
+#include "job.h"
+#include "compat.h"
+#include "suff.h"
+#include "var.h"
+#include "targ.h"
+#include "error.h"
+#include "str.h"
+#include "extern.h"
+#include "memory.h"
+#include "gnode.h"
+#include "make.h"
+#include "timestamp.h"
+#include "lst.h"
+#include "pathnames.h"
 
 /* The following array is used to make a fast determination of which
  * characters are interpreted specially by the shell.  If a command
@@ -114,7 +106,7 @@ CompatInterrupt(signo)
 
 	/* Run .INTERRUPT only if hit with interrupt signal.  */
 	if (signo == SIGINT) {
-	    gn = Targ_FindNode(".INTERRUPT", NULL, TARG_NOCREATE);
+	    gn = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
 	    if (gn != NULL)
 		Lst_Find(&gn->commands, CompatRunCommand, gn);
 	}
@@ -196,22 +188,22 @@ CompatRunCommand(cmdp, gnp)
 {
     char	  *cmdStart;	/* Start of expanded command */
     char *cp, *bp = NULL;
-    Boolean	  silent,	/* Don't print command */
+    bool	  silent,	/* Don't print command */
 		  errCheck,	/* Check errors */
 		  doExecute;	/* Execute the command */
     int 	  reason;	/* Reason for child's death */
     int 	  status;	/* Description of child's death */
     int 	  cpid; 	/* Child actually found */
-    ReturnStatus  stat; 	/* Status of fork */
+    int		  stat; 	/* Status of fork */
     LstNode	  cmdNode;	/* Node where current command is located */
     char	  **av; 	/* Argument vector for thing to exec */
     int 	  argc; 	/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
-    Boolean	  local;	/* TRUE if command should be executed
+    bool	  local;	/* true if command should be executed
 				 * locally */
     char	  *cmd = (char *)cmdp;
     GNode	  *gn = (GNode *)gnp;
-    static char *shargv[4] = { "/bin/sh" };
+    static char *shargv[4] = { _PATH_BSHELL };
 
     /* Avoid clobbered variable warnings by forcing the compiler
      * to ``unregister'' variables.  */
@@ -224,7 +216,7 @@ CompatRunCommand(cmdp, gnp)
     doExecute = !noExecute;
 
     cmdNode = Lst_Member(&gn->commands, cmd);
-    cmdStart = Var_Subst(cmd, &gn->context, FALSE);
+    cmdStart = Var_Subst(cmd, &gn->context, false);
 
     /* brk_string will return an argv with a NULL in av[0], thus causing
      * execvp to choke and die horribly. Besides, how can we execute a null
@@ -249,11 +241,11 @@ CompatRunCommand(cmdp, gnp)
 
     for (;; cmd++) {
 	if (*cmd == '@')
-	    silent = DEBUG(LOUD) ? FALSE : TRUE;
+	    silent = DEBUG(LOUD) ? false : true;
 	else if (*cmd == '-')
-	    errCheck = FALSE;
+	    errCheck = false;
 	else if (*cmd == '+')
-	    doExecute = TRUE;
+	    doExecute = true;
 	else
 	    break;
     }
@@ -316,7 +308,7 @@ CompatRunCommand(cmdp, gnp)
 	}
     }
 
-    local = TRUE;
+    local = true;
 
     /* Fork and execute the single command. If the fork fails, we abort.  */
     cpid = vfork();
@@ -412,16 +404,16 @@ CompatMake(gnp, pgnp)
 	/* First mark ourselves to be made, then apply whatever transformations
 	 * the suffix module thinks are necessary. Once that's done, we can
 	 * descend and make all our children. If any of them has an error
-	 * but the -k flag was given, our 'make' field will be set FALSE again.
+	 * but the -k flag was given, our 'make' field will be set false again.
 	 * This is our signal to not attempt to do anything but abort our
 	 * parent as well.  */
-	gn->make = TRUE;
+	gn->make = true;
 	gn->made = BEINGMADE;
 	Suff_FindDeps(gn);
 	Lst_ForEach(&gn->children, CompatMake, gn);
 	if (!gn->make) {
 	    gn->made = ABORTED;
-	    pgn->make = FALSE;
+	    pgn->make = false;
 	    return;
 	}
 
@@ -525,17 +517,17 @@ CompatMake(gnp, pgnp)
 	     */
 	    if (noExecute || is_out_of_date(Dir_MTime(gn)))
 		gn->mtime = now;
-	    if (is_before(gn->mtime, gn->cmtime))
+	    if (is_strictly_before(gn->mtime, gn->cmtime))
 		gn->mtime = gn->cmtime;
 	    if (DEBUG(MAKE))
 		printf("update time: %s\n", Targ_FmtTime(gn->mtime));
 #endif
 	    if (!(gn->type & OP_EXEC)) {
-		pgn->childMade = TRUE;
+		pgn->childMade = true;
 		Make_TimeStamp(pgn, gn);
 	    }
 	} else if (keepgoing)
-	    pgn->make = FALSE;
+	    pgn->make = false;
 	else {
 
 	    if (gn->lineno)
@@ -550,7 +542,7 @@ CompatMake(gnp, pgnp)
     } else if (gn->made == ERROR)
 	/* Already had an error when making this beastie. Tell the parent
 	 * to abort.  */
-	pgn->make = FALSE;
+	pgn->make = false;
     else {
 	if (Lst_Member(&gn->iParents, pgn) != NULL) {
 	    Varq_Set(IMPSRC_INDEX, Varq_Value(TARGET_INDEX, gn), pgn);
@@ -559,11 +551,11 @@ CompatMake(gnp, pgnp)
 	    case BEINGMADE:
 		Error("Graph cycles through %s\n", gn->name);
 		gn->made = ERROR;
-		pgn->make = FALSE;
+		pgn->make = false;
 		break;
 	    case MADE:
 		if ((gn->type & OP_EXEC) == 0) {
-		    pgn->childMade = TRUE;
+		    pgn->childMade = true;
 		    Make_TimeStamp(pgn, gn);
 		}
 		break;
@@ -577,15 +569,6 @@ CompatMake(gnp, pgnp)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Compat_Run --
- *	Initialize this mode and start making.
- *
- * Side Effects:
- *	Guess what?
- *-----------------------------------------------------------------------
- */
 void
 Compat_Run(targs)
     Lst 	  targs;    /* List of target nodes to re-create */
@@ -608,11 +591,11 @@ Compat_Run(targs)
     /* The null character serves as a sentinel in the string.  */
     meta[0] = 1;
 
-    ENDNode = Targ_FindNode(".END", NULL, TARG_CREATE);
+    ENDNode = Targ_FindNode(".END", TARG_CREATE);
     /* If the user has defined a .BEGIN target, execute the commands attached
      * to it.  */
     if (!queryFlag) {
-	gn = Targ_FindNode(".BEGIN", NULL, TARG_NOCREATE);
+	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
 	if (gn != NULL) {
 	    Lst_Find(&gn->commands, CompatRunCommand, gn);
 	    if (gn->made == ERROR) {

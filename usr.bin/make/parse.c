@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.60 2001/05/15 12:52:15 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.61 2001/05/23 12:34:47 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -66,82 +66,40 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * parse.c --
- *	Functions to parse a makefile.
- *
- *	One function, Parse_Init, must be called before any functions
- *	in this module are used. After that, the function Parse_File is the
- *	main entry point and controls most of the other functions in this
- *	module.
- *
- *	Most important structures are kept in Lsts. Directories for
- *	the #include "..." function are kept in the 'parseIncPath' Lst, while
- *	those for the #include <...> are kept in the 'sysIncPath' Lst. The
- *	targets currently being defined are kept in the 'targets' Lst.
- *
- *	The variables 'fname' and 'lineno' are used to track the name
- *	of the current file and the line number in that file so that error
- *	messages can be more meaningful.
- *
- * Interface:
- *	Parse_Init		    Initialization function which must be
- *				    called before anything else in this module
- *				    is used.
- *
- *	Parse_End		    Cleanup the module
- *
- *	Parse_File		    Function used to parse a makefile. It must
- *				    be given the name of the file, which should
- *				    already have been opened, and a function
- *				    to call to read a character from the file.
- *
- *	Parse_IsVar		    Returns TRUE if the given line is a
- *				    variable assignment. Used by MainParseArgs
- *				    to determine if an argument is a target
- *				    or a variable assignment. Used internally
- *				    for pretty much the same thing...
- *
- *	Parse_Error		    Function called when an error occurs in
- *				    parsing. Used by the variable and
- *				    conditional modules.
- *	Parse_MainName		    Returns a Lst of the main target to create.
- */
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <assert.h>
-#include <stddef.h>
-#include <stdio.h>
 #include <ctype.h>
-#include <errno.h>
-#include "make.h"
-#include "ohash.h"
+#include <stdio.h>
+#include <string.h>
+#include "config.h"
+#include "defines.h"
 #include "dir.h"
 #include "job.h"
 #include "buf.h"
-#include "pathnames.h"
+#include "for.h"
 #include "lowparse.h"
+#include "arch.h"
+#include "cond.h"
+#include "suff.h"
+#include "parse.h"
+#include "var.h"
+#include "targ.h"
+#include "error.h"
+#include "str.h"
+#include "main.h"
+#include "gnode.h"
+#include "memory.h"
+#include "extern.h"
+#include "lst.h"
+#include "parsevar.h"
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: parse.c,v 1.60 2001/05/15 12:52:15 espie Exp $";
-#endif
-#endif /* not lint */
-
-LIST		parseIncPath;	/* list of directories for "..." includes */
-LIST		sysIncPath;	/* list of directories for <...> includes */
+static LIST	theParseIncPath;/* list of directories for "..." includes */
+static LIST	theSysIncPath;	/* list of directories for <...> includes */
+Lst sysIncPath = &theSysIncPath;
+Lst parseIncPath = &theParseIncPath;
 
 static LIST	    targets;	/* targets we're working on */
 #ifdef CLEANUP
 static LIST	    targCmds;	/* command lines for targets */
-static LIST	    fileNames;
 #endif
 
 static GNode	    *mainNode;	/* The main target to create. This is the
@@ -254,15 +212,13 @@ static void ParseHasCommands(void *);
 static void ParseDoInclude(char *);
 static void ParseTraditionalInclude(char *);
 static void ParseConditionalInclude(char *);
-static void ParseLookupIncludeFile(char *, char *, Boolean, Boolean);
-#define ParseGetLoopLine(linebuf)	ParseGetLine(linebuf, "for loop")
+static void ParseLookupIncludeFile(char *, char *, bool, bool);
+#define ParseReadLoopLine(linebuf) Parse_ReadUnparsedLine(linebuf, "for loop")
 static void ParseFinishDependency(void);
-static Boolean ParseIsCond(Buffer, Buffer, char *);
+static bool ParseIsCond(Buffer, Buffer, char *);
 static char *strip_comments(Buffer, const char *);
 
 static void ParseDoCommands(const char *);
-static const char *find_op1(const char *);
-static const char *find_op2(const char *);
 
 /*-
  *----------------------------------------------------------------------
@@ -317,7 +273,7 @@ ParseLinkSrc(pgn, cgn)
     GNode		*pgn;	/* The parent node */
     GNode		*cgn;	/* The child node */
 {
-    if (Lst_AddNew(&pgn->children, cgn) == SUCCESS) {
+    if (Lst_AddNew(&pgn->children, cgn)) {
 	if (specType == Not)
 	    Lst_AtEnd(&cgn->parents, pgn);
 	pgn->unmade++;
@@ -366,7 +322,7 @@ ParseDoOp(gnp, opp)
 	GNode		*cohort;
 	LstNode 	ln;
 
-	cohort = Targ_NewGN(gn->name, NULL);
+	cohort = Targ_NewGN(gn->name);
 	/* Duplicate links to parents so graph traversal is simple. Perhaps
 	 * some type bits should be duplicated?
 	 *
@@ -470,14 +426,14 @@ ParseDoSrc(tOp, src, allsrc)
 	/*
 	 * If we have noted the existence of a .MAIN, it means we need
 	 * to add the sources of said target to the list of things
-	 * to create. The string 'src' is likely to be free, so we
+	 * to create. The string 'src' is likely to be freed, so we
 	 * must make a new copy of it. Note that this will only be
 	 * invoked if the user didn't specify a target on the command
 	 * line. This is to allow #ifmake's to succeed, or something...
 	 */
-	Lst_AtEnd(&create, estrdup(src));
+	Lst_AtEnd(create, estrdup(src));
 	/*
-	 * Add the name to the .TARGETS variable as well, so the user cna
+	 * Add the name to the .TARGETS variable as well, so the user can
 	 * employ that, if desired.
 	 */
 	Var_Append(".TARGETS", src, VAR_GLOBAL);
@@ -488,7 +444,7 @@ ParseDoSrc(tOp, src, allsrc)
 	 * Create proper predecessor/successor links between the previous
 	 * source and the current one.
 	 */
-	gn = Targ_FindNode(src, NULL, TARG_CREATE);
+	gn = Targ_FindNode(src, TARG_CREATE);
 	if (predecessor != NULL) {
 	    Lst_AtEnd(&predecessor->successors, gn);
 	    Lst_AtEnd(&gn->preds, predecessor);
@@ -511,7 +467,7 @@ ParseDoSrc(tOp, src, allsrc)
 	 * the 'cohorts' list of the node) or all the cohorts are linked
 	 * to all the targets.
 	 */
-	gn = Targ_FindNode(src, NULL, TARG_CREATE);
+	gn = Targ_FindNode(src, TARG_CREATE);
 	if (tOp) {
 	    gn->type |= tOp;
 	} else {
@@ -589,7 +545,7 @@ ParseAddDir(path, name)
     void *path;
     void *name;
 {
-    Dir_AddDir((Lst)path, (char *)name, NULL);
+    Dir_AddDir((Lst)path, (char *)name);
 }
 
 /*-
@@ -712,10 +668,10 @@ ParseDoDependency(line)
 	     * things like "archive(file1.o file2.o file3.o)" are permissible.
 	     * Arch_ParseArchive will set 'line' to be the first non-blank
 	     * after the archive-spec. It creates/finds nodes for the members
-	     * and places them on the given list, returning SUCCESS if all
-	     * went well and FAILURE if there was an error in the
+	     * and places them on the given list, returning true if all
+	     * went well and false if there was an error in the
 	     * specification. On error, line should remain untouched.  */
-	    if (Arch_ParseArchive(&line, &targets, NULL) != SUCCESS) {
+	    if (!Arch_ParseArchive(&line, &targets, NULL)) {
 		Parse_Error(PARSE_FATAL,
 			     "Error in archive specification: \"%s\"", line);
 		return;
@@ -777,22 +733,22 @@ ParseDoDependency(line)
 		 */
 		switch (specType) {
 		    case ExPath:
-			Lst_AtEnd(&paths, &dirSearchPath);
+			Lst_AtEnd(&paths, dirSearchPath);
 			break;
 		    case Main:
-			if (!Lst_IsEmpty(&create)) {
+			if (!Lst_IsEmpty(create)) {
 			    specType = Not;
 			}
 			break;
 		    case Begin:
 		    case End:
 		    case Interrupt:
-			gn = Targ_FindNode(line, NULL, TARG_CREATE);
+			gn = Targ_FindNode(line, TARG_CREATE);
 			gn->type |= OP_NOTMAIN;
 			Lst_AtEnd(&targets, gn);
 			break;
 		    case Default:
-			gn = Targ_NewGN(".DEFAULT", NULL);
+			gn = Targ_NewGN(".DEFAULT");
 			gn->type |= OP_NOTMAIN|OP_TRANSFORM;
 			Lst_AtEnd(&targets, gn);
 			DEFAULT = gn;
@@ -863,7 +819,7 @@ ParseDoDependency(line)
 
 	    while ((targName = (char *)Lst_DeQueue(&curTargs)) != NULL) {
 		if (!Suff_IsTransform(targName)) {
-		    gn = Targ_FindNode(targName, NULL, TARG_CREATE);
+		    gn = Targ_FindNode(targName, TARG_CREATE);
 		} else {
 		    gn = Suff_AddTransform(targName);
 		}
@@ -881,11 +837,11 @@ ParseDoDependency(line)
 	 * allow on this line...
 	 */
 	if (specType != Not && specType != ExPath) {
-	    Boolean warn = FALSE;
+	    bool warn = false;
 
 	    while (*cp != '!' && *cp != ':' && *cp) {
 		if (*cp != ' ' && *cp != '\t') {
-		    warn = TRUE;
+		    warn = true;
 		}
 		cp++;
 	    }
@@ -965,13 +921,13 @@ ParseDoDependency(line)
 		Suff_ClearSuffixes();
 		break;
 	    case Precious:
-		allPrecious = TRUE;
+		allPrecious = true;
 		break;
 	    case Ignore:
-		ignoreErrors = TRUE;
+		ignoreErrors = true;
 		break;
 	    case Silent:
-		beSilent = TRUE;
+		beSilent = true;
 		break;
 	    case ExPath:
 		Lst_Every(&paths, ParseClearPath);
@@ -988,7 +944,7 @@ ParseDoDependency(line)
 	Main_ParseArgLine(line);
 	*line = '\0';
     } else if (specType == ExShell) {
-	if (Job_ParseShell(line) != SUCCESS) {
+	if (!Job_ParseShell(line)) {
 	    Parse_Error(PARSE_FATAL, "improper shell specification");
 	    return;
 	}
@@ -1090,7 +1046,7 @@ ParseDoDependency(line)
 				    * expansion */
 
 		Lst_Init(&sources);
-		if (Arch_ParseArchive(&line, &sources, NULL) != SUCCESS) {
+		if (!Arch_ParseArchive(&line, &sources, NULL)) {
 		    Parse_Error(PARSE_FATAL,
 				 "Error in source archive spec \"%s\"", line);
 		    return;
@@ -1125,241 +1081,6 @@ ParseDoDependency(line)
     /* Finally, destroy the list of sources.  */
     Lst_Destroy(&curSrcs, NOFREE);
 }
-
-/*-
- *---------------------------------------------------------------------
- * Parse_IsVar	--
- *	Return TRUE if the passed line is a variable assignment. A variable
- *	assignment consists of a single word followed by optional whitespace
- *	followed by either a += or an = operator.
- *	This function is used both by the Parse_File function and main when
- *	parsing the command-line arguments.
- *
- * Results:
- *	TRUE if it is. FALSE if it ain't
- *---------------------------------------------------------------------
- */
-Boolean
-Parse_IsVar(line)
-    char  *line;	/* the line to check */
-{
-    Boolean wasSpace = FALSE;	/* set TRUE if found a space */
-    Boolean haveName = FALSE;	/* Set TRUE if have a variable name */
-    int level = 0;
-#define ISEQOPERATOR(c) \
-	((c) == '+' || (c) == ':' || (c) == '?' || (c) == '!')
-
-    for (; *line != '=' || level != 0; line++)
-	switch (*line) {
-	case '\0':
-	    /* end-of-line -- can't be a variable assignment.  */
-	    return FALSE;
-
-	case ' ':
-	case '\t':
-	    /*
-	     * there can be as much white space as desired so long as there is
-	     * only one word before the operator
-	     */
-	    wasSpace = TRUE;
-	    break;
-
-	case '(':
-	case '{':
-	    level++;
-	    break;
-
-	case '}':
-	case ')':
-	    level--;
-	    break;
-
-	default:
-	    if (wasSpace && haveName) {
-		    if (ISEQOPERATOR(*line)) {
-			/* We must have a finished word.  */
-			if (level != 0)
-			    return FALSE;
-
-			/* When an = operator [+?!:] is found, the next
-			 * character must be an = or it ain't a valid
-			 * assignment.	*/
-			if (line[1] == '=')
-			    return haveName;
-			/* This is a shell command.  */
-			if (FEATURES(FEATURE_SUNSHCMD) && 
-			    strncmp(line, ":sh", 3) == 0)
-			    return haveName;
-		    }
-		    /* This is the start of another word, so not assignment.  */
-		    return FALSE;
-	    }
-	    else {
-		haveName = TRUE;
-		wasSpace = FALSE;
-	    }
-	    break;
-	}
-
-    return haveName;
-}
-
-static const char *
-find_op1(p)
-    const char *p;
-{
-    for(;; p++) {
-    	if (*p == '=' || isspace(*p) || *p == '$')
-	    break;
-	if (p[1] == '=' && (*p == '?' || *p == ':' || *p == '!' || *p == '+'))
-	    break;
-	if (p[0] == ':' && p[1] == 's' && p[2] == 'h')
-	    break;
-    }
-    return p;
-}
-
-static const char *
-find_op2(p)
-    const char *p;
-{
-    for(;; p++) {
-    	if (*p == '=' || isspace(*p) || *p == '$')
-	    break;
-	if (p[1] == '=' && (*p == '?' || *p == ':' || *p == '!' || *p == '+'))
-	    break;
-    }
-    return p;
-}
-
-/*-
- *---------------------------------------------------------------------
- * Parse_DoVar	--
- *	Take the variable assignment in the passed line and do it in the
- *	global context.
- *
- *	Note: There is a lexical ambiguity with assignment modifier characters
- *	in variable names. This routine interprets the character before the =
- *	as a modifier. Therefore, an assignment like
- *	    C++=/usr/bin/CC
- *	is interpreted as "C+ +=" instead of "C++ =".
- *
- * Side Effects:
- *	the variable structure of the given variable name is altered in the
- *	global context.
- *---------------------------------------------------------------------
- */
-void
-Parse_DoVar(line, ctxt)
-    const char	    *line;	/* a line guaranteed to be a variable
-				 * assignment. This reduces error checks */
-    GSymT	    *ctxt;    /* Context in which to do the assignment */
-{
-    const char	    *end;
-    const char	    *arg;
-    enum {
-	VAR_SUBST, VAR_APPEND, VAR_SHELL, VAR_NORMAL
-    }		    type;	/* Type of assignment */
-    struct Name	    name;
-
-    end = Var_Name_Get(line, &name, (SymTable *)ctxt, TRUE,
-	FEATURES(FEATURE_SUNSHCMD) ? find_op1 : find_op2);
-
-    while (isspace(*end))
-    	end++;
-
-    /* Check operator type.  */
-    switch (*end) {
-	case '+':
-	    type = VAR_APPEND;
-	    break;
-
-	case '?':
-	    /* If the variable already has a value, we don't do anything.  */
-	    if (Var_Value_interval(name.s, name.e) != NULL) {
-	    	Var_Name_Free(&name);
-		return;
-	    }
-	    type = VAR_NORMAL;
-	    break;
-
-	case ':':
-	    if (FEATURES(FEATURE_SUNSHCMD) && strncmp(end, ":sh", 3) == 0)
-		type = VAR_SHELL;
-	    else 
-		type = VAR_SUBST;
-	    break;
-
-	case '!':
-	    type = VAR_SHELL;
-	    break;
-
-	default:
-	    type = VAR_NORMAL;
-	    break;
-    }
-
-    /* Find operator itself and go over it.  */
-    arg = end;
-    while (*arg != '=')
-    	arg++;
-    arg++;
-    while (isspace(*arg))
-	arg++;
-
-    if (type == VAR_APPEND)
-	Var_Append_interval(name.s, name.e, arg, ctxt);
-    else if (type == VAR_SUBST) {
-	char *sub;
-	/*
-	 * Allow variables in the old value to be undefined, but leave their
-	 * invocation alone -- this is done by forcing oldVars to be false.
-	 * XXX: This can cause recursive variables, but that's not hard to do,
-	 * and this allows someone to do something like
-	 *
-	 *  CFLAGS = $(.INCLUDES)
-	 *  CFLAGS := -I.. $(CFLAGS)
-	 *
-	 * And not get an error.
-	 */
-	Boolean   oldOldVars = oldVars;
-
-	oldVars = FALSE;
-	/* ensure the variable is set to something to avoid `variable
-	 * is recursive' errors.  */
-	if (Var_Value_interval(name.s, name.e) == NULL)
-	    Var_Set_interval(name.s, name.e, "", ctxt);
-
-	sub = Var_Subst(arg, (SymTable *)ctxt, FALSE);
-	oldVars = oldOldVars;
-
-	Var_Set_interval(name.s, name.e, sub, ctxt);
-	free(sub);
-    } else if (type == VAR_SHELL) {
-	char *res, *err;
-
-	if (strchr(arg, '$') != NULL) {
-	    char *sub;
-	    /* There's a dollar sign in the command, so perform variable
-	     * expansion on the whole thing. */
-	    sub = Var_Subst(arg, NULL, TRUE);
-	    res = Cmd_Exec(sub, &err);
-	    free(sub);
-	} else
-	    res = Cmd_Exec(arg, &err);
-
-	Var_Set_interval(name.s, name.e, res, ctxt);
-	free(res);
-
-	if (err)
-	    Parse_Error(PARSE_WARNING, err, arg);
-
-    } else
-	/* Normal assignment -- just do it.  */
-	Var_Set_interval(name.s, name.e, arg, ctxt);
-    Var_Name_Free(&name);
-}
-
 
 /*-
  * ParseAddCmd	--
@@ -1417,7 +1138,7 @@ void
 Parse_AddIncludeDir(dir)
     const char	*dir;	/* The name of the directory to add */
 {
-    Dir_AddDir(&parseIncPath, dir, NULL);
+    Dir_AddDir(parseIncPath, dir);
 }
 
 /*-
@@ -1441,7 +1162,7 @@ ParseDoInclude(file)
 {
     char	  endc; 	/* the character which ends the file spec */
     char	  *cp;		/* current position in file spec */
-    Boolean	  isSystem;	/* TRUE if makefile is a system makefile */
+    bool	  isSystem;	/* true if makefile is a system makefile */
 
     /* Skip to delimiter character so we know where to look.  */
     while (*file == ' ' || *file == '\t')
@@ -1457,10 +1178,10 @@ ParseDoInclude(file)
      * characters which bracket its name. Angle-brackets imply it's
      * a system Makefile while double-quotes imply it's a user makefile */
     if (*file == '<') {
-	isSystem = TRUE;
+	isSystem = true;
 	endc = '>';
     } else {
-	isSystem = FALSE;
+	isSystem = false;
 	endc = '"';
     }
 
@@ -1473,7 +1194,7 @@ ParseDoInclude(file)
 	    return;
 	}
     }
-    ParseLookupIncludeFile(file, cp, isSystem, TRUE);
+    ParseLookupIncludeFile(file, cp, isSystem, true);
 }
 
 /*-
@@ -1509,7 +1230,7 @@ ParseTraditionalInclude(file)
     for (cp = file; *cp != '\0' && !isspace(*cp);)
 	cp++;
 
-    ParseLookupIncludeFile(file, cp, TRUE, TRUE);
+    ParseLookupIncludeFile(file, cp, true, true);
 }
 
 /*-
@@ -1539,7 +1260,7 @@ ParseConditionalInclude(file)
     for (cp = file; *cp != '\0' && !isspace(*cp);)
 	cp++;
 
-    ParseLookupIncludeFile(file, cp, TRUE, FALSE);
+    ParseLookupIncludeFile(file, cp, true, false);
 }
 
 /* Common part to lookup and read an include file.  */
@@ -1547,8 +1268,8 @@ static void
 ParseLookupIncludeFile(spec, endSpec, isSystem, errIfNotFound)
     char *spec;
     char *endSpec;
-    Boolean isSystem;
-    Boolean errIfNotFound;
+    bool isSystem;
+    bool errIfNotFound;
 {
     char *file;
     char *fullname;
@@ -1558,7 +1279,7 @@ ParseLookupIncludeFile(spec, endSpec, isSystem, errIfNotFound)
      * find the thing.	*/
     endc = *endSpec;
     *endSpec = '\0';
-    file = Var_Subst(spec, NULL, FALSE);
+    file = Var_Subst(spec, NULL, false);
     *endSpec = endc;
 
     /* Now that we know the file name and its search path, we attempt to
@@ -1572,18 +1293,19 @@ ParseLookupIncludeFile(spec, endSpec, isSystem, errIfNotFound)
 	 * location. We don't want to cd there, of course, so we
 	 * just tack on the old file's leading path components
 	 * and call Dir_FindFile to see if we can locate the beast.  */
-	char	  *slash;
+	char		*slash;
+	const char	*fname;
 
-	slash = strrchr(Parse_Getfilename(), '/');
+	fname = Parse_Getfilename();
+
+	slash = strrchr(fname, '/');
 	if (slash != NULL) {
-	    char *base, *newName;
+	    char *newName;
 
-	    base = interval_dup(Parse_Getfilename(), slash);
-	    newName = str_concat(base, file, '/');
-	    free(base);
-	    fullname = Dir_FindFile(newName, &parseIncPath);
+	    newName = Str_concati(fname, slash, file, strchr(file, '\0'), '/');
+	    fullname = Dir_FindFile(newName, parseIncPath);
 	    if (fullname == NULL)
-		fullname = Dir_FindFile(newName, &dirSearchPath);
+		fullname = Dir_FindFile(newName, dirSearchPath);
 	    free(newName);
 	}
     }
@@ -1592,14 +1314,14 @@ ParseLookupIncludeFile(spec, endSpec, isSystem, errIfNotFound)
      * search path, if not found in a -I directory.
      * XXX: Suffix specific?  */
     if (fullname == NULL)
-	fullname = Dir_FindFile(file, &parseIncPath);
+	fullname = Dir_FindFile(file, parseIncPath);
     if (fullname == NULL)
-	fullname = Dir_FindFile(file, &dirSearchPath);
+	fullname = Dir_FindFile(file, dirSearchPath);
 
     /* Still haven't found the makefile. Look for it on the system
      * path as a last resort.  */
     if (fullname == NULL)
-	fullname = Dir_FindFile(file, &sysIncPath);
+	fullname = Dir_FindFile(file, sysIncPath);
 
     if (fullname == NULL && errIfNotFound)
 	    Parse_Error(PARSE_FATAL, "Could not find %s", file);
@@ -1646,7 +1368,7 @@ strip_comments(copy, line)
 	for (p = line; *p != '\0'; p++) {
 	    if (*p == '\\') {
 		if (p[1] == '#') {
-		    Buf_AddInterval(copy, line, p);
+		    Buf_Addi(copy, line, p);
 		    Buf_AddChar(copy, '#');
 		    line = p+2;
 		}
@@ -1655,13 +1377,13 @@ strip_comments(copy, line)
 	    } else if (*p == '#')
 		break;
 	}
-	Buf_AddInterval(copy, line, p);
+	Buf_Addi(copy, line, p);
 	Buf_KillTrailingSpaces(copy);
 	return Buf_Retrieve(copy);
     }
 }
 
-static Boolean
+static bool
 ParseIsCond(linebuf, copy, line)
     Buffer	linebuf;
     Buffer	copy;
@@ -1679,7 +1401,7 @@ ParseIsCond(linebuf, copy, line)
     case COND_SKIP:
 	/* Skip to next conditional that evaluates to COND_PARSE.  */
 	do {
-	    line = ParseSkipGetLine(linebuf);
+	    line = Parse_ReadNextConditionalLine(linebuf);
 	    if (line != NULL) {
 		while (*line != '\0' && isspace(*line))
 		    line++;
@@ -1688,7 +1410,7 @@ ParseIsCond(linebuf, copy, line)
 	} while (line != NULL && Cond_Eval(stripped) != COND_PARSE);
 	/* FALLTHROUGH */
     case COND_PARSE:
-	return TRUE;
+	return true;
     default:
 	break;
     }
@@ -1698,25 +1420,25 @@ ParseIsCond(linebuf, copy, line)
 
     loop = For_Eval(line);
     if (loop != NULL) {
-	Boolean ok;
+	bool ok;
 	do {
 	    /* Find the matching endfor.  */
-	    line = ParseGetLoopLine(linebuf);
+	    line = ParseReadLoopLine(linebuf);
 	    if (line == NULL) {
 		Parse_Error(PARSE_FATAL,
 			 "Unexpected end of file in for loop.\n");
-		return FALSE;
+		return false;
 	    }
 	    ok = For_Accumulate(loop, line);
 	} while (ok);
 	For_Run(loop);
-	return TRUE;
+	return true;
     }
     }
 
     if (strncmp(line, "include", 7) == 0) {
 	ParseDoInclude(line + 7);
-	return TRUE;
+	return true;
     } else if (strncmp(line, "undef", 5) == 0) {
 	char *cp;
 
@@ -1727,9 +1449,9 @@ ParseIsCond(linebuf, copy, line)
 	    cp++;
 	*cp = '\0';
 	Var_Delete(line);
-	return TRUE;
+	return true;
     }
-    return FALSE;
+    return false;
 }
 
 /*-
@@ -1763,26 +1485,14 @@ ParseDoCommands(line)
 #endif
 }
 
-/*-
- *---------------------------------------------------------------------
- * Parse_File --
- *	Parse a file into its component parts, incorporating it into the
- *	current dependency graph. This is the main function and controls
- *	almost every other function in this module
- *
- * Side Effects:
- *	Loads. Nodes are added to the list of all targets, nodes and links
- *	are added to the dependency graph. etc. etc. etc.
- *---------------------------------------------------------------------
- */
 void
 Parse_File(name, stream)
-    char	  *name;	/* the name of the file being read */
+    const char	  *name;	/* the name of the file being read */
     FILE	  *stream;	/* Stream open to makefile to parse */
 {
     char	  *cp,		/* pointer into the line */
 		  *line;	/* the line we're working on */
-    Boolean	  inDependency; /* true if currently in a dependency
+    bool	  inDependency; /* true if currently in a dependency
 				 * line or its commands */
 
     BUFFER	  buf;
@@ -1790,11 +1500,11 @@ Parse_File(name, stream)
 
     Buf_Init(&buf, MAKE_BSIZE);
     Buf_Init(&copy, MAKE_BSIZE);
-    inDependency = FALSE;
+    inDependency = false;
     Parse_FromFile(name, stream);
 
     do {
-	while ((line = ParseReadLine(&buf)) != NULL) {
+	while ((line = Parse_ReadNormalLine(&buf)) != NULL) {
 	    if (*line == '\t') {
 		if (inDependency)
 		    ParseDoCommands(line+1);
@@ -1824,16 +1534,15 @@ Parse_File(name, stream)
 
 		    if (inDependency)
 			ParseFinishDependency();
-		    if (Parse_IsVar(stripped)) {
-			inDependency = FALSE;
-			Parse_DoVar(stripped, VAR_GLOBAL);
-		    } else {
+		    if (Parse_DoVar(stripped, VAR_GLOBAL))
+			inDependency = false;
+		    else {
 			size_t pos;
 			char *end;
 
 			/* Need a new list for the target nodes.  */
 			Lst_Init(&targets);
-			inDependency = TRUE;
+			inDependency = true;
 
 			dep = NULL;
 			/* First we need to find eventual dependencies */
@@ -1854,7 +1563,7 @@ Parse_File(name, stream)
 			 * have all variables expanded before being parsed.
 			 * Tell the variable module to complain if some
 			 * variable is undefined... */
-			cp = Var_Subst(stripped, NULL, TRUE);
+			cp = Var_Subst(stripped, NULL, true);
 			ParseDoDependency(cp);
 			free(cp);
 
@@ -1877,58 +1586,37 @@ Parse_File(name, stream)
     /* Make sure conditionals are clean.  */
     Cond_End();
 
-    Finish_Errors();
+    Parse_ReportErrors();
     Buf_Destroy(&buf);
     Buf_Destroy(&copy);
 }
 
-/*-
- *---------------------------------------------------------------------
- * Parse_Init --
- *	initialize the parsing module
- *
- * Side Effects:
- *	the parseIncPath list is initialized...
- *---------------------------------------------------------------------
- */
 void
 Parse_Init()
 {
     mainNode = NULL;
-    Lst_Init(&parseIncPath);
-    Lst_Init(&sysIncPath);
+    Lst_Init(parseIncPath);
+    Lst_Init(sysIncPath);
     Lst_Init(&targets);
-#ifdef CLEANUP
     LowParse_Init();
+#ifdef CLEANUP
     Lst_Init(&targCmds);
-    Lst_Init(&fileNames);
 #endif
 }
 
+#ifdef CLEANUP
 void
 Parse_End()
 {
-#ifdef CLEANUP
     Lst_Destroy(&targCmds, (SimpleProc)free);
-    Lst_Destroy(&fileNames, (SimpleProc)free);
     Lst_Destroy(&targets, NOFREE);
-    Lst_Destroy(&sysIncPath, Dir_Destroy);
-    Lst_Destroy(&parseIncPath, Dir_Destroy);
+    Lst_Destroy(sysIncPath, Dir_Destroy);
+    Lst_Destroy(parseIncPath, Dir_Destroy);
     LowParse_End();
-#endif
 }
+#endif
 
 
-/*-
- *-----------------------------------------------------------------------
- * Parse_MainName --
- *	Return a Lst of the main target to create for main()'s sake. If
- *	no such target exists, we Punt with an obnoxious error message.
- *
- * Side effect:
- *	Add the node to create to the list.
- *-----------------------------------------------------------------------
- */
 void
 Parse_MainName(listmain)
     Lst 	  listmain;	/* result list */

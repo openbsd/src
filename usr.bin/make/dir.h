@@ -1,5 +1,8 @@
+#ifndef DIR_H
+#define DIR_H
+
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.h,v 1.14 2001/05/03 13:41:04 espie Exp $	*/
+/*	$OpenBSD: dir.h,v 1.15 2001/05/23 12:34:42 espie Exp $	*/
 /*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -42,34 +45,124 @@
  *	from: @(#)dir.h 8.1 (Berkeley) 6/6/93
  */
 
-/* dir.h --
+#ifndef TIMESTAMP_TYPE
+#include "timestamp_t.h"
+#endif
+
+/* dir --
+ *	Directory searching using wildcards and/or normal names...
+ *	Used both for source wildcarding in the Makefile and for finding
+ *	implicit sources.
  */
 
-#ifndef DIR_H
-#define DIR_H
-
-typedef struct Path_ {
-    int 	  refCount;	/* Number of paths with this directory */
-    int 	  hits; 	/* the number of times a file in this
-				 * directory has been found */
-    struct ohash   files;	/* Hash table of files in directory */
-    char	  name[1];	/* Name of directory */
-} Path;
-
+/* Dir_Init()
+ *	Initialize the module.
+ */
 extern void Dir_Init(void);
+
+/* Dir_End()
+ *	Cleanup the module.
+ */
+#ifdef CLEANUP
 extern void Dir_End(void);
-extern Boolean Dir_HasWildcards(const char *);
-extern void Dir_Expand(const char *, Lst, Lst);
+#else
+#define Dir_End()
+#endif
+
+/*
+ * Manipulating paths. By convention, the empty path always allows for
+ * finding files in the current directory.
+ */
+
+/* Dir_AddDiri(path, name, end);
+ *	Add directory (name, end) to a search path.
+ */
+extern void Dir_AddDiri(Lst, const char *, const char *);
+#define Dir_AddDir(l, n)	Dir_AddDiri(l, n, NULL)
+
+/* Dir_Concat(p1, p2);
+ *	Concatenate two paths, adding dirs in p2 to the end of p1, but
+ *	avoiding duplicates.
+ */
+extern void Dir_Concat(Lst, Lst);
+
+/* Dir_Destroy(d);	    
+ *	Destroy a directory in a search path. 
+ */
+extern void Dir_Destroy(void *);
+
+/* p2 = Dir_CopyDir(p);
+ * 	Return a copy of a directory. Callback to duplicate search paths.
+ */
+extern void *Dir_CopyDir(void *);
+
+/* Dir_PrintPath(p);
+ *	Print the directory names along a given path.
+ */
+extern void Dir_PrintPath(Lst);
+
+
+/*
+ * Handling file names, and looking them up in paths
+ */
+
+/* boolean = Dir_HasWildcardsi(name, end)
+ *	Returns true if (name, end) needs to be wildcard-expanded.
+ */
+extern bool Dir_HasWildcardsi(const char *, const char *);
+#define Dir_HasWildcards(n) Dir_HasWildcardsi(n, strchr(n, '\0'))
+
+/* Dir_Expandi(pattern, endp, path, expansions);
+ *	Expand (pattern, endp) to Lst of names matching on the search path.
+ *	Put result in expansions.
+ */
+extern void Dir_Expandi(const char *, const char *, Lst, Lst);
+#define Dir_Expand(n, l1, l2) Dir_Expandi(n, strchr(n, '\0'), l1, l2)
+
+/* fullname = Dir_FindFilei(name, end, path)
+ *	Searches for a file (name, end) on a given search path.  If it exists, 
+ *	return the fullname of the file, otherwise NULL.
+ *	The fullname is always a copy, and the caller is responsible for
+ *	free()ing it.
+ *	Looking for a simple name always looks in the current directory.
+ *	For complex names, the current directory search only occurs for
+ *	paths with dot in them.
+ */
 extern char *Dir_FindFilei(const char *, const char *, Lst);
 #define Dir_FindFile(n, e) Dir_FindFilei(n, strchr(n, '\0'), e)
+
+/* stamp = Dir_MTime(gn);
+ *	Return the modification time of node gn, searching along
+ *	the default search path. 
+ *	Side effect: the path and mtime fields of gn are filled in.
+ *	Return specific value if file can't be found, to be tested by
+ *	is_out_of_date().
+ */
 extern TIMESTAMP Dir_MTime(GNode *);
-extern void Dir_AddDir(Lst, const char *, const char *);
+
+
+
+
+/* 
+ * Misc
+ */
+
+/* string = Dir_MakeFlags(flag, path);
+ *	Given a search path and a command flag, create a string with each 
+ *	of the directories in the path preceded by the command flag and all 
+ *	of them separated by spaces.
+ */
 extern char *Dir_MakeFlags(const char *, Lst);
-extern void Dir_Concat(Lst, Lst);
+
+
+#ifdef DEBUG_DIRECTORY_CACHE
+/* Dir_PrintDirectories();
+ *	Print stats about the directory cache.
+ */
 extern void Dir_PrintDirectories(void);
-extern void Dir_PrintPath(Lst);
-extern void Dir_Destroy(void *);
-extern void *Dir_CopyDir(void *);
-extern int set_times(const char *);
+#endif
+
+/* List of directories to search when looking for targets. */
+extern Lst	dirSearchPath;	
 
 #endif /* DIR_H */

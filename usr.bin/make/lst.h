@@ -1,5 +1,8 @@
+#ifndef _LST_H_
+#define _LST_H_
+
 /*	$OpenPackages$ */
-/*	$OpenBSD: lst.h,v 1.19 2001/05/03 13:41:07 espie Exp $ */
+/*	$OpenBSD: lst.h,v 1.20 2001/05/23 12:34:45 espie Exp $ */
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $ */
 
 /*
@@ -46,10 +49,6 @@
  * lst.h --
  *	Header for using the list library
  */
-#ifndef _LST_H_
-#define _LST_H_
-
-#include	"sprite.h"
 #include	<sys/param.h>
 #ifdef __STDC__
 #include	<stdlib.h>
@@ -58,18 +57,15 @@
 /* These data structures are PRIVATE !!!
  * Here for efficiency, so that some functions can be recoded as inlines,
  * and so that lst headers don't need dynamic allocation most of the time.  */
-typedef struct ListNode_ {
+struct ListNode_ {
 	struct ListNode_    *prevPtr;	/* previous element in list */
 	struct ListNode_    *nextPtr;	/* next in list */
 	void		    *datum;	/* datum associated with this element */
-} *LstNode;
+};
 
-typedef struct	{
-	LstNode 	firstPtr; /* first node in list */
-	LstNode 	lastPtr;  /* last node in list */
-} LIST;
-
-typedef LIST *Lst;
+#ifndef LIST_TYPE
+#include "lst_t.h"
+#endif
 
 typedef void (*SimpleProc)(void *);
 typedef int (*FindProc)(void *, void *);
@@ -137,13 +133,19 @@ extern LstNode		Lst_Member(Lst, void *);
 extern void		Lst_ForEachFrom(LstNode, ForEachProc, void *);
 extern void		Lst_Every(Lst, SimpleProc);
 
-extern ReturnStatus	Lst_AddNew(Lst, void *);
+extern bool		Lst_AddNew(Lst, void *);
 /*
  * for using the list as a queue
  */
 /* Place an element at tail of queue */
 #define Lst_EnQueue	Lst_AtEnd
 #define Lst_QueueNew	Lst_AddNew
+
+/*
+ * for using the list as a stack
+ */
+#define Lst_Push	Lst_AtFront
+#define Lst_Pop		Lst_DeQueue
 
 /* Remove an element from head of queue */
 extern void *	Lst_DeQueue(Lst);
@@ -157,6 +159,7 @@ extern void *	Lst_DeQueue(Lst);
 #define Lst_Rev(ln)	((ln)->prevPtr)
 
 
+/* Inlines are preferable to macros here because of the type checking. */
 #ifdef HAS_INLINES
 static INLINE LstNode
 Lst_FindConst(Lst l, FindProcConst cProc, const void *d)

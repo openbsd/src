@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.25 2001/05/03 13:41:08 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.26 2001/05/23 12:34:46 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -47,8 +47,9 @@
  *
  * Interface:
  *	Make_Run		Initialize things for the module and recreate
- *				whatever needs recreating. Returns TRUE if
- *				work was (or would have been) done and FALSE
+ *				whatever needs recreating. Returns true if
+ *				work was (or would have been) done and
+ *				false
  *				otherwise.
  *
  *	Make_Update		Update all parents of a given child. Performs
@@ -72,21 +73,21 @@
  *				and perform the .USE actions if so.
  */
 
-#include    <stddef.h>
-#include    "make.h"
-#include    "ohash.h"
-#include    "dir.h"
-#include    "job.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: make.c,v 1.25 2001/05/03 13:41:08 espie Exp $";
-#endif
-#endif /* not lint */
-
+#include <stdio.h>
+#include "config.h"
+#include "defines.h"
+#include "dir.h"
+#include "job.h"
+#include "arch.h"
+#include "suff.h"
+#include "var.h"
+#include "targ.h"
+#include "error.h"
+#include "make.h"
+#include "gnode.h"
+#include "extern.h"
+#include "timestamp.h"
+#include "lst.h"
 
 static LIST	toBeMade;	/* The current fringe of the graph. These
 				 * are nodes which await examination by
@@ -95,13 +96,13 @@ static LIST	toBeMade;	/* The current fringe of the graph. These
 				 * MakeStartJobs */
 static int	numNodes;	/* Number of nodes to be processed. If this
 				 * is non-zero when Job_Empty() returns
-				 * TRUE, there's a cycle in the graph */
+				 * true, there's a cycle in the graph */
 
 static void MakeAddChild(void *, void *);
 static void MakeAddAllSrc(void *, void *);
 static void MakeTimeStamp(void *, void *);
 static void MakeHandleUse(void *, void *);
-static Boolean MakeStartJobs(void);
+static bool MakeStartJobs(void);
 static void MakePrintStatus(void *, void *);
 /*-
  *-----------------------------------------------------------------------
@@ -119,7 +120,7 @@ Make_TimeStamp(pgn, cgn)
     GNode *pgn; /* the current parent */
     GNode *cgn; /* the child we've just examined */
 {
-    if (is_before(pgn->cmtime, cgn->mtime))
+    if (is_strictly_before(pgn->cmtime, cgn->mtime))
 	pgn->cmtime = cgn->mtime;
 }
 
@@ -143,18 +144,18 @@ MakeTimeStamp(pgn, cgn)
  *	will have been recreated.
  *
  * Results:
- *	TRUE if the node is out of date. FALSE otherwise.
+ *	true if the node is out of date. false otherwise.
  *
  * Side Effects:
  *	The mtime field of the node and the cmtime field of its parents
  *	will/may be changed.
  *-----------------------------------------------------------------------
  */
-Boolean
+bool
 Make_OODate(gn)
     GNode	    *gn;	      /* the node to check */
 {
-    Boolean	    oodate;
+    bool	    oodate;
 
     /*
      * Certain types of targets needn't even be sought as their datedness
@@ -193,7 +194,7 @@ Make_OODate(gn)
 	if (DEBUG(MAKE)) {
 	    printf(".USE node...");
 	}
-	oodate = FALSE;
+	oodate = false;
     } else if ((gn->type & OP_LIB) && Arch_IsLib(gn)) {
 	if (DEBUG(MAKE)) {
 	    printf("library...");
@@ -228,8 +229,8 @@ Make_OODate(gn)
 		printf(".EXEC node...");
 	    }
 	}
-	oodate = TRUE;
-    } else if (is_before(gn->mtime, gn->cmtime) ||
+	oodate = true;
+    } else if (is_strictly_before(gn->mtime, gn->cmtime) ||
 	       (is_out_of_date(gn->cmtime) &&
 		(is_out_of_date(gn->mtime) || (gn->type & OP_DOUBLEDEP))))
     {
@@ -241,7 +242,7 @@ Make_OODate(gn)
 	 * it.
 	 */
 	if (DEBUG(MAKE)) {
-	    if (is_before(gn->mtime, gn->cmtime)) {
+	    if (is_strictly_before(gn->mtime, gn->cmtime)) {
 		printf("modified before source...");
 	    } else if (is_out_of_date(gn->mtime)) {
 		printf("non-existent and no sources...");
@@ -249,7 +250,7 @@ Make_OODate(gn)
 		printf(":: operator and no sources...");
 	    }
 	}
-	oodate = TRUE;
+	oodate = true;
     } else {
 #if 0
 	/* WHY? */
@@ -258,7 +259,7 @@ Make_OODate(gn)
 	}
 	oodate = gn->childMade;
 #else
-	oodate = FALSE;
+	oodate = false;
 #endif /* 0 */
     }
 
@@ -279,7 +280,7 @@ Make_OODate(gn)
  *-----------------------------------------------------------------------
  * MakeAddChild  --
  *	Function used by Make_Run to add a child to the list l.
- *	It will only add the child if its make field is FALSE.
+ *	It will only add the child if its make field is false.
  *
  * Side Effects:
  *	The given list is extended
@@ -335,7 +336,7 @@ Make_HandleUse(cgn, pgn)
 	for (ln = Lst_First(&cgn->children); ln != NULL; ln = Lst_Adv(ln)) {
 	    gn = (GNode *)Lst_Datum(ln);
 
-	    if (Lst_AddNew(&pgn->children, gn) == SUCCESS) {
+	    if (Lst_AddNew(&pgn->children, gn)) {
 		Lst_AtEnd(&gn->parents, pgn);
 		pgn->unmade += 1;
 	    }
@@ -473,8 +474,8 @@ Make_Update(cgn)
 
 	    if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
 		if (cgn->made == MADE) {
-		    pgn->childMade = TRUE;
-		    if (is_before(pgn->cmtime, cgn->mtime))
+		    pgn->childMade = true;
+		    if (is_strictly_before(pgn->cmtime, cgn->mtime))
 			pgn->cmtime = cgn->mtime;
 		} else {
 		    (void)Make_TimeStamp(pgn, cgn);
@@ -558,8 +559,8 @@ MakeAddAllSrc(cgnp, pgnp)
 	    if (cgn->made == MADE) {
 		Varq_Append(OODATE_INDEX, child, pgn);
 	    }
-	} else if (is_before(pgn->mtime, cgn->mtime) ||
-		   (!is_before(cgn->mtime, now) && cgn->made == MADE))
+	} else if (is_strictly_before(pgn->mtime, cgn->mtime) ||
+		   (!is_strictly_before(cgn->mtime, now) && cgn->made == MADE))
 	{
 	    /*
 	     * It goes in the OODATE variable if the parent is younger than the
@@ -624,14 +625,14 @@ Make_DoAllVar(gn)
  * Results:
  *	If the query flag was given to pmake, no job will be started,
  *	but as soon as an out-of-date target is found, this function
- *	returns TRUE. At all other times, this function returns FALSE.
+ *	returns true. At all other times, this function returns false.
  *
  * Side Effects:
  *	Nodes are removed from the toBeMade queue and job table slots
  *	are filled.
  *-----------------------------------------------------------------------
  */
-static Boolean
+static bool
 MakeStartJobs()
 {
     GNode	*gn;
@@ -674,7 +675,7 @@ MakeStartJobs()
 		printf("out-of-date\n");
 	    }
 	    if (queryFlag) {
-		return TRUE;
+		return true;
 	    }
 	    Make_DoAllVar(gn);
 	    Job_Make(gn);
@@ -696,7 +697,7 @@ MakeStartJobs()
 	    Make_Update(gn);
 	}
     }
-    return FALSE;
+    return false;
 }
 
 /*-
@@ -718,12 +719,12 @@ MakePrintStatus(gnp, cyclep)
 			     * inferior */
 {
     GNode	*gn = (GNode *)gnp;
-    Boolean	cycle = *(Boolean *)cyclep;
+    bool	cycle = *(bool *)cyclep;
     if (gn->made == UPTODATE) {
 	printf("`%s' is up to date.\n", gn->name);
     } else if (gn->unmade != 0) {
 	if (cycle) {
-	    Boolean t = TRUE;
+	    bool t = true;
 	    /*
 	     * If printing cycles and came to one that has unmade children,
 	     * print out the cycle by recursing on its children. Note a
@@ -763,7 +764,7 @@ MakePrintStatus(gnp, cyclep)
  *	possible.
  *
  * Results:
- *	TRUE if work was done. FALSE otherwise.
+ *	true if work was done. false otherwise.
  *
  * Side Effects:
  *	The make field of all nodes involved in the creation of the given
@@ -771,7 +772,7 @@ MakePrintStatus(gnp, cyclep)
  *	'leaves' of these subgraphs.
  *-----------------------------------------------------------------------
  */
-Boolean
+bool
 Make_Run(targs)
     Lst 	    targs;	/* the initial list of targets */
 {
@@ -794,7 +795,7 @@ Make_Run(targs)
      */
     while ((gn = (GNode *)Lst_DeQueue(&examine)) != NULL) {
 	if (!gn->make) {
-	    gn->make = TRUE;
+	    gn->make = true;
 	    numNodes++;
 
 	    /*
@@ -855,5 +856,5 @@ Make_Run(targs)
     errors = errors == 0 && numNodes != 0;
     Lst_ForEach(targs, MakePrintStatus, &errors);
 
-    return TRUE;
+    return true;
 }

@@ -1,6 +1,5 @@
-/*	$OpenPackages$ */
-/*	$OpenBSD: sprite.h,v 1.10 2001/05/03 13:41:10 espie Exp $	*/
-/*	$NetBSD: sprite.h,v 1.6 1996/11/06 17:59:22 christos Exp $	*/
+/* $OpenPackages$ */
+/* $OpenBSD: memory.c,v 1.1 2001/05/23 12:34:47 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,25 +37,153 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)sprite.h	8.1 (Berkeley) 6/6/93
  */
 
-#ifndef _SPRITE
-#define _SPRITE
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include "defines.h"
+#include "memory.h"
 
-/* Some basic types and definitions, originally from Sprite */
+static void enomem(size_t);
 
-typedef int Boolean;
-#ifndef TRUE
-#define TRUE 1
-#endif
-#ifndef FALSE
-#define FALSE 0
-#endif
+/*
+ * emalloc --
+ *	malloc, but die on error.
+ */
+void *
+emalloc(len)
+	size_t len;
+{
+	void *p;
 
-typedef int ReturnStatus;
-#define SUCCESS 0
-#define FAILURE 1
+	if ((p = malloc(len)) == NULL)
+		enomem(len);
+	return p;
+}
 
-#endif /* _SPRITE */
+/*
+ * estrdup --
+ *	strdup, but die on error.
+ */
+char *
+estrdup(str)
+	const char *str;
+{
+	char *p;
+	size_t size;
+
+	size = strlen(str) + 1;
+
+	p = emalloc(size);
+	memcpy(p, str, size);
+	return p;
+}
+
+/*
+ * erealloc --
+ *	realloc, but die on error.
+ */
+void *
+erealloc(ptr, size)
+	void *ptr;
+	size_t size;
+{
+	if ((ptr = realloc(ptr, size)) == NULL)
+		enomem(size);
+	return ptr;
+}
+
+void *
+ecalloc(s1, s2)
+	size_t s1;
+	size_t s2;
+{
+	void *p;
+
+	if ((p = calloc(s1, s2)) == NULL)
+		enomem(s1 * s2);
+	return p;
+}
+
+/* Support routines for hash tables.  */
+void *
+hash_alloc(s, u)
+	size_t s;
+	void *u 	UNUSED;
+{
+	return ecalloc(s, 1);
+}
+
+void
+hash_free(p, s, u)
+	void *p;
+	size_t s	UNUSED;
+	void *u 	UNUSED;
+{
+	free(p);
+}
+
+void *
+element_alloc(s, u)
+	size_t s;
+	void *u 	UNUSED;
+{
+	return emalloc(s);
+}
+
+
+
+/*
+ * enomem --
+ *	die when out of memory.
+ */
+void
+enomem(size)
+	size_t size;
+{
+	fprintf(stderr, "make: %s (%lu)\n", strerror(errno), (u_long)size);
+	exit(2);
+}
+
+/*
+ * esetenv --
+ *	change environment, die on error.
+ */
+void
+esetenv(name, value)
+	const char *name;
+	const char *value;
+{
+	if (setenv(name, value, 1) == 0)
+	    return;
+
+	fprintf(stderr, "make: setenv failed (%s)\n", strerror(errno));
+	exit(2);
+}
+
+
+/*
+ * enunlink --
+ *	Remove a file carefully, avoiding directories.
+ */
+int
+eunlink(file)
+	const char *file;
+{
+	struct stat st;
+
+	if (lstat(file, &st) == -1)
+		return -1;
+
+	if (S_ISDIR(st.st_mode)) {
+		errno = EISDIR;
+		return -1;
+	}
+	return unlink(file);
+}
+

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstForEachFrom.c,v 1.10 2001/05/03 13:41:21 espie Exp $	*/
+/*	$OpenBSD: lstForEachFrom.c,v 1.11 2001/05/23 12:34:56 espie Exp $	*/
 /*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.10 2001/05/03 13:41:21 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.11 2001/05/23 12:34:56 espie Exp $";
 #endif
 #endif /* not lint */
 

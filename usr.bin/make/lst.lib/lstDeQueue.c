@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDeQueue.c,v 1.11 2001/05/03 13:41:19 espie Exp $	*/
+/*	$OpenBSD: lstDeQueue.c,v 1.12 2001/05/23 12:34:54 espie Exp $	*/
 /*	$NetBSD: lstDeQueue.c,v 1.5 1996/11/06 17:59:36 christos Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 static char sccsid[] = "@(#)lstDeQueue.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.11 2001/05/03 13:41:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.12 2001/05/23 12:34:54 espie Exp $";
 #endif
 #endif /* not lint */
 

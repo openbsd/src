@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDupl.c,v 1.14 2001/05/03 13:41:20 espie Exp $	*/
+/*	$OpenBSD: lstDupl.c,v 1.15 2001/05/23 12:34:55 espie Exp $	*/
 /*	$NetBSD: lstDupl.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.14 2001/05/03 13:41:20 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.15 2001/05/23 12:34:55 espie Exp $";
 #endif
 #endif /* not lint */
 

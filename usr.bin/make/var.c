@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.54 2001/05/15 13:31:03 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.55 2001/05/23 12:34:51 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -66,72 +66,40 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * var.c --
- *	Variable-handling functions
- *
- * Basic interface:
- *	Var_Set 	    Set the value of a variable in the given
- *			    context. The variable is created if it doesn't
- *			    yet exist. The value and variable name need not
- *			    be preserved.
- *
- *	Var_Append	    Append more characters to an existing variable
- *			    in the given context. The variable needn't
- *			    exist already -- it will be created if it doesn't.
- *			    A space is placed between the old value and the
- *			    new one.
- *
- *	Var_Value	    Return the value of a variable in a context or
- *			    NULL if the variable is undefined.
- *
- *	Var_Delete	    Delete a variable in a context.
- *
- *	Var_Init	    Initialize this module.
- *
- * Fast interface:
- *	Varq_Set, Varq_Append, Varq_Value:
- *			    Use index form of local variables
- *
- * Higher level functions:
- *	Var_Subst	    Substitute variables in a string using
- *			    the given context as the top-most one. If the
- *			    third argument is non-zero, Parse_Error is
- *			    called if any variables are undefined.
- *
- *	Var_SubstVar	    Substitute a named variable in a string using
- *			    the given context as the top-most one,
- *			    accumulating the result into a user-supplied
- *			    buffer.
- *
- *	Var_Parse	    Parse a variable expansion from a string and
- *			    return the result and the number of characters
- *			    consumed.
- *
- * Debugging:
- *	Var_Dump	    Print out all global variables.
- */
+#include <sys/types.h>
+#include <assert.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include    <assert.h>
-#include    <ctype.h>
-#include    <stdlib.h>
-#include    <stddef.h>
-#include    <string.h>
-#include    "make.h"
-#include    "buf.h"
-#include    "stats.h"
-#include    "ohash.h"
-#include    "varmodifiers.h"
+#include "config.h"
+#include "defines.h"
+#include "buf.h"
+#include "stats.h"
+#include "ohash.h"
+#include "varmodifiers.h"
+#include "var.h"
+#include "varname.h"
+#include "error.h"
+#include "str.h"
+#include "var_int.h"
+#include "memory.h"
+#include "symtable.h"
+#include "gnode.h"
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: var.c,v 1.54 2001/05/15 13:31:03 espie Exp $";
-#endif
-#endif /* not lint */
+/* extended indices for System V stuff */
+#define FTARGET_INDEX	7
+#define DTARGET_INDEX	8
+#define FPREFIX_INDEX	9
+#define DPREFIX_INDEX	10
+#define FARCHIVE_INDEX	11
+#define DARCHIVE_INDEX	12
+#define FMEMBER_INDEX	13
+#define DMEMBER_INDEX	14
 
+#define EXTENDED2SIMPLE(i)	(((i)-LOCAL_SIZE)/2)
+#define IS_EXTENDED_F(i)	((i)%2 == 1)
 
 /*
  * This is a harmless return value for Var_Parse that can be used by Var_Subst
@@ -210,7 +178,7 @@ static struct ohash_info var_info = {
 static int quick_lookup(const char *, const char **, u_int32_t *);
 #define VarValue(v)	Buf_Retrieve(&((v)->val))
 static Var *varfind(const char *, const char *, SymTable *, int, int, u_int32_t);
-static Var *VarFind_interval(const char *, const char *, SymTable *, int);
+static Var *VarFindi(const char *, const char *, SymTable *, int);
 static Var *VarAdd(const char *, const char *, u_int32_t, const char *, GSymT *);
 static void VarDelete(void *);
 static void VarPrintVar(Var *);
@@ -229,57 +197,6 @@ static find_t find_pos(int);
 
 /* retrieve the hashed values  for well-known variables.  */
 #include    "varhashconsts.h"
-
-/* Parse a variable name for embedded $, to handle recursive variables */
-const char *
-Var_Name_Get(start, name, ctxt, err, cont)
-	const char 	*start;	/* start of variable spec */
-	struct Name 	*name;  /* result, might be a copy or not */
-	SymTable 	*ctxt;	/* context in which to expand */
-	Boolean		err;	/* whether to error out for undefined sub */
-	const char *(*cont)(const char *);
-				/* hook: find the next interesting character */
-{
-	const char *p;
-	size_t len;
-
-	p = cont(start);
-	/* If we don't want recursive variables, we skip over '$' */
-	if (!FEATURES(FEATURE_RECVARS)) {
-		while (*p == '$')
-		    p = cont(p);
-	}
-	if (*p != '$') {
-		name->s = start;
-		name->e = p;
-		name->tofree = FALSE;
-		return p;
-	} else {
-		BUFFER buf;
-		Buf_Init(&buf, MAKE_BSIZE);
-		for (;;) {
-			Buf_AddInterval(&buf, start, p);
-			if (*p != '$') {
-				name->s = (const char *)Buf_Retrieve(&buf);
-				name->e = name->s + Buf_Size(&buf);
-				name->tofree = TRUE;
-				return p;
-			}
-			start = p;
-			Var_ParseBuffer(&buf, start, ctxt, err, &len);
-			start += len;
-			p = cont(start);
-		}
-	}
-}
-
-void
-Var_Name_Free(name)
-	struct Name *name;
-{
-	if (name->tofree)
-		free((char *)name->s);
-}
 
 void
 SymTable_Init(ctxt)
@@ -573,7 +490,7 @@ getvar(ctxt, name, end, k)
 
 /*-
  *-----------------------------------------------------------------------
- * VarFind_interval --
+ * VarFindi --
  *	Find the given variable in the given context and any other contexts
  *	indicated.  if end is NULL, name is a string, otherwise, only
  *	the interval name - end  is concerned.
@@ -584,7 +501,7 @@ getvar(ctxt, name, end, k)
  *-----------------------------------------------------------------------
  */
 static Var *
-VarFind_interval(name, end, ctxt, flags)
+VarFindi(name, end, ctxt, flags)
     const char		*name;	/* name to find */
     const char		*end;	/* end of name */
     SymTable		*ctxt;	/* context in which to find it */
@@ -725,15 +642,6 @@ VarDelete(vp)
 
 
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Delete --
- *	Remove a global variable.
- *
- * Side Effects:
- *	The Var structure is removed and freed.
- *-----------------------------------------------------------------------
- */
 void
 Var_Delete(name)
     const char	  *name;
@@ -759,24 +667,13 @@ Var_Delete(name)
     }
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Set --
- *	Set the variable name to the value val in the given context.
- *
- * Side Effects:
- *	If the variable doesn't yet exist, a new record is created for it.
- *	Else the old value is freed and the new one stuck in its place
- *
- * Notes:
- *	The variable is searched for only in its context before being
+/* 	The variable is searched for only in its context before being
  *	created in that context. I.e. if the context is CTXT_GLOBAL,
  *	only CTXT_GLOBAL is searched. Likewise if it is CTXT_CMD, only
  *	CTXT_CMD is searched.
- *-----------------------------------------------------------------------
  */
 void
-Var_Set_interval(name, end, val, ctxt)
+Var_Seti(name, end, val, ctxt)
     const char	*name;	/* name of variable to set */
     const char	*end;
     const char	*val;	/* value to give to the variable */
@@ -817,20 +714,8 @@ Var_Set_interval(name, end, val, ctxt)
 	esetenv(v->name, val);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Append --
- *	The variable of the given name has the given value appended to it in
- *	the given context.
- *
- * Side Effects:
- *	If the variable doesn't exist, it is created. Else the strings
- *	are concatenated (with a space in between).
- *
- *-----------------------------------------------------------------------
- */
 void
-Var_Append_interval(name, end, val, ctxt)
+Var_Appendi(name, end, val, ctxt)
     const char	*name;	/* Name of variable to modify */
     const char	*end;
     const char	*val;	/* String to append to it */
@@ -863,23 +748,14 @@ Var_Append_interval(name, end, val, ctxt)
 	printf("%s:%s = %s\n", context_name(ctxt), v->name, VarValue(v));
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Value --
- *	Return the value of a global named variable
- *
- * Results:
- *	The value if the variable exists, NULL if it doesn't
- *-----------------------------------------------------------------------
- */
 char *
-Var_Value_interval(name, end)
+Var_Valuei(name, end)
     const char	*name;	/* name to find */
     const char	*end;
 {
     Var 	   *v;
 
-    v = VarFind_interval(name, end, NULL, FIND_ENV | FIND_MINE);
+    v = VarFindi(name, end, NULL, FIND_ENV | FIND_MINE);
     if (v != NULL && (v->flags & VAR_DUMMY) == 0)
 	return VarValue(v);
     else
@@ -929,20 +805,11 @@ find_pos(c)
 	}
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_ParseSkip --
- *	Do whatever is needed to skip over a var specification.  Since the
- *	result is not needed at this point, some shortcuts may be taken.
- *
- * Return value: the amount to skip
- *-----------------------------------------------------------------------
- */
 size_t
 Var_ParseSkip(str, ctxt, result)
     const char	*str;
     SymTable	*ctxt;
-    ReturnStatus *result;
+    bool *result;
 {
     const char	*tstr;		/* Pointer into str */
     Var 	*v;		/* Variable in invocation */
@@ -957,7 +824,7 @@ Var_ParseSkip(str, ctxt, result)
     str++;
 
     if (*str != '(' && *str != '{') {
-	name.tofree = FALSE;
+	name.tofree = false;
 	tstr = str + 1;
 	length = 2;
 	endc = '\0';
@@ -966,82 +833,53 @@ Var_ParseSkip(str, ctxt, result)
 	str++;
 
 	/* Find eventual modifiers in the variable */
-	tstr = Var_Name_Get(str, &name, ctxt, FALSE, find_pos(endc));
-	Var_Name_Free(&name);
+	tstr = VarName_Get(str, &name, ctxt, false, find_pos(endc));
+	VarName_Free(&name);
 	length = tstr - start;
-	/* Terminated correctly */
-	if (*tstr != '\0')
-		length++;
+	if (*tstr != 0)
+	    length++;
     }
 
     if (result != NULL)
-	*result = SUCCESS;
+	*result = true;
     if (*tstr == ':' && endc != '\0')
-	 if (VarModifiers_Apply(NULL, NULL, ctxt, TRUE, NULL, tstr, endc,
+	 if (VarModifiers_Apply(NULL, NULL, ctxt, true, NULL, tstr, endc,
 	    &length) == var_Error)
-		*result = FAILURE;
+		*result = false;
     return length;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_ParseBuffer --
- *	Given the start of a variable invocation, extract the variable
- *	name and find its value, then modify it according to the
- *	specification, and add the result to the buffer.
- *
- * Results:
- *	FAILURE for invalid specifications.
- *
- * Side-effects:
- *	The length of the specification is placed in *lengthPtr
- *	(for invalid specifications, this is just 2...?).
- *-----------------------------------------------------------------------
- */
-ReturnStatus
+/* As of now, Var_ParseBuffer is just a wrapper around Var_Parse. For
+ * speed, it may be better to revisit the implementation to do things
+ * directly. */
+bool
 Var_ParseBuffer(buf, str, ctxt, err, lengthPtr)
     Buffer	buf;
     const char	*str;
     SymTable	*ctxt;
-    Boolean	err;
+    bool	err;
     size_t	*lengthPtr;
 {
     char	*result;
-    Boolean	freeIt;
+    bool	freeIt;
 
     result = Var_Parse(str, ctxt, err, lengthPtr, &freeIt);
     if (result == var_Error)
-	return FAILURE;
+	return false;
 
     Buf_AddString(buf, result);
     if (freeIt)
 	free(result);
-    return SUCCESS;
+    return true;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Parse --
- *	Given the start of a variable invocation, extract the variable
- *	name and find its value, then modify it according to the
- *	specification.
- *
- * Results:
- *	The (possibly-modified) value of the variable or var_Error if the
- *	specification is invalid. The length of the specification is
- *	placed in *lengthPtr (for invalid specifications, this is just
- *	2...?).
- *	A Boolean in *freePtr telling whether the returned string should
- *	be freed by the caller.
- *-----------------------------------------------------------------------
- */
 char *
 Var_Parse(str, ctxt, err, lengthPtr, freePtr)
     const char	*str;		/* The string to parse */
     SymTable	*ctxt;		/* The context for the variable */
-    Boolean	err;		/* TRUE if undefined variables are an error */
+    bool	err;		/* true if undefined variables are an error */
     size_t	*lengthPtr;	/* OUT: The length of the specification */
-    Boolean	*freePtr;	/* OUT: TRUE if caller should free result */
+    bool	*freePtr;	/* OUT: true if caller should free result */
 {
     const char	*tstr;		/* Pointer into str */
     Var 	*v;		/* Variable in invocation */
@@ -1053,7 +891,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
     u_int32_t	k;
     int 	idx;
 
-    *freePtr = FALSE;
+    *freePtr = false;
     start = str++;
 
     val = NULL;
@@ -1063,7 +901,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
     if (*str != '(' && *str != '{') {
     	name.s = str;
 	name.e = str+1;
-	name.tofree = FALSE;
+	name.tofree = false;
 	tstr = str + 1;
 	*lengthPtr = 2;
 	endc = '\0';
@@ -1072,7 +910,7 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	str++;
 
 	/* Find eventual modifiers in the variable */
-	tstr = Var_Name_Get(str, &name, ctxt, FALSE, find_pos(endc));
+	tstr = VarName_Get(str, &name, ctxt, false, find_pos(endc));
 	*lengthPtr = tstr - start;
 	if (*tstr != '\0')
 		(*lengthPtr)++;
@@ -1098,14 +936,14 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	if (idx == -1) {
 	    if (strchr(val, '$') != NULL) {
 		val = Var_Subst(val, ctxt, err);
-		*freePtr = TRUE;
+		*freePtr = true;
 	    }
 	} else if (idx >= LOCAL_SIZE) {
 	    if (IS_EXTENDED_F(idx))
 		val = Var_GetTail(val);
 	    else
 		val = Var_GetHead(val);
-	    *freePtr = TRUE;
+	    *freePtr = true;
 	}
 	v->flags &= ~VAR_IN_USE;
     }
@@ -1118,8 +956,8 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	if (idx != -1) {
 	    /* can't be expanded for now: copy the var spec instead. */
 	    if (ctxt == NULL || ctxt == CTXT_GLOBAL || ctxt == CTXT_CMD) {
-		*freePtr = TRUE;
-		val = interval_dup(start, start+ *lengthPtr);
+		*freePtr = true;
+		val = Str_dupi(start, start+ *lengthPtr);
 	    } else {
 	    /* somehow, this should have been expanded already. */
 		GNode *n;
@@ -1139,48 +977,34 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
 	    }
 	}
     }
-    Var_Name_Free(&name);
+    VarName_Free(&name);
     return val;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Subst  --
- *	Substitute for all variables in a string in a context
- *	If undefErr is TRUE, Parse_Error will be called when an undefined
- *	variable is encountered.
- *
- * Results:
- *	The resulting string.
- *
- * Side Effects:
- *	The new string must be freed by the caller
- *-----------------------------------------------------------------------
- */
 char *
 Var_Subst(str, ctxt, undefErr)
     const char	  *str; 	    /* the string in which to substitute */
     SymTable	  *ctxt;	    /* the context wherein to find variables */
-    Boolean	  undefErr;	    /* TRUE if undefineds are an error */
+    bool	  undefErr;	    /* true if undefineds are an error */
 {
     BUFFER	  buf;		    /* Buffer for forming things */
-    static Boolean errorReported;   /* Set true if an error has already
+    static bool errorReported;   /* Set true if an error has already
 				     * been reported to prevent a plethora
 				     * of messages when recursing */
 
     Buf_Init(&buf, MAKE_BSIZE);
-    errorReported = FALSE;
+    errorReported = false;
 
     for (;;) {
 	char		*val;		/* Value to substitute for a variable */
 	size_t		length; 	/* Length of the variable invocation */
-	Boolean 	doFree; 	/* Set true if val should be freed */
+	bool 	doFree; 	/* Set true if val should be freed */
 	const char *cp;
 
 	/* copy uninteresting stuff */
 	for (cp = str; *str != '\0' && *str != '$'; str++)
 	    ;
-	Buf_AddInterval(&buf, cp, str);
+	Buf_Addi(&buf, cp, str);
 	if (*str == '\0')
 	    break;
 	if (str[1] == '$') {
@@ -1209,7 +1033,7 @@ Var_Subst(str, ctxt, undefErr)
 		    Parse_Error(PARSE_FATAL,
 				 "Undefined variable \"%.*s\"",length,str);
 		str += length;
-		errorReported = TRUE;
+		errorReported = true;
 	    } else {
 		Buf_AddChar(&buf, *str);
 		str++;
@@ -1229,14 +1053,6 @@ Var_Subst(str, ctxt, undefErr)
     return  Buf_Retrieve(&buf);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_SubstVar  --
- *	Substitute for one variable in the given string in the given context
- *	If undefErr is TRUE, Parse_Error will be called when an undefined
- *	variable is encountered. Add the substituted string to buffer.
- *-----------------------------------------------------------------------
- */
 void
 Var_SubstVar(buf, str, var, val)
     Buffer	buf;
@@ -1252,7 +1068,7 @@ Var_SubstVar(buf, str, var, val)
 	/* Copy uninteresting stuff */
 	for (start = str; *str != '\0' && *str != '$'; str++)
 	    ;
-	Buf_AddInterval(buf, start, str);
+	Buf_Addi(buf, start, str);
 
 	start = str;
 	if (*str++ == '\0')
@@ -1260,7 +1076,7 @@ Var_SubstVar(buf, str, var, val)
 	str++;
 	/* and escaped dollars */
 	if (start[1] == '$') {
-	    Buf_AddInterval(buf, start, start+2);
+	    Buf_Addi(buf, start, start+2);
 	    continue;
 	}
 	/* Simple variable, if it's not us, copy.  */
@@ -1286,7 +1102,7 @@ Var_SubstVar(buf, str, var, val)
 	     * expand the external variable at this point, so we try
 	     * again with the nested variable.	*/
 	    if (*p == '$') {
-		Buf_AddInterval(buf, start, p);
+		Buf_Addi(buf, start, p);
 		str = p;
 		continue;
 	    }
@@ -1294,24 +1110,24 @@ Var_SubstVar(buf, str, var, val)
 	    if (strncmp(var, str, p - str) != 0 ||
 		var[p - str] != '\0') {
 		/* Not the variable we want to expand.	*/
-		Buf_AddInterval(buf, start, p);
+		Buf_Addi(buf, start, p);
 		str = p;
 		continue;
 	    }
 	    if (*p == ':') {
 		size_t	length; 	/* Length of the variable invocation */
-		Boolean doFree; 	/* Set true if val should be freed */
+		bool doFree; 	/* Set true if val should be freed */
 		char	*newval;	/* Value substituted for a variable */
 		struct Name name;
 
 		length = p - str + 1;
-		doFree = FALSE;
+		doFree = false;
 		name.s = var;
 		name.e = var + (p-str);
 
-		/* val won't be freed since doFree == FALSE, but
+		/* val won't be freed since doFree == false, but
 		 * VarModifiers_Apply doesn't know that, hence the cast. */
-		newval = VarModifiers_Apply((char *)val, &name, NULL, FALSE,
+		newval = VarModifiers_Apply((char *)val, &name, NULL, false,
 		    &doFree, p, endc, &length);
 		Buf_AddString(buf, newval);
 		if (doFree)
@@ -1350,10 +1166,10 @@ Var_Init()
 }
 
 
+#ifdef CLEANUP
 void
 Var_End()
 {
-#ifdef CLEANUP
     Var *v;
     unsigned int i;
 
@@ -1363,8 +1179,8 @@ Var_End()
     for (v = ohash_first(VAR_CMD, &i); v != NULL;
 	v = ohash_next(VAR_CMD, &i))
 	    VarDelete(v);
-#endif
 }
+#endif
 
 static const char *interpret(int);
 
@@ -1387,12 +1203,6 @@ VarPrintVar(v)
 	(v->flags & VAR_DUMMY) == 0 ? VarValue(v) : "(none)");
 }
 
-/*-
- *-----------------------------------------------------------------------
- * Var_Dump --
- *	print all variables
- *-----------------------------------------------------------------------
- */
 void
 Var_Dump()
 {

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.31 2001/05/03 13:41:12 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.32 2001/05/23 12:34:50 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -87,13 +87,13 @@
  *	Targ_FindList		Given a list of names, find nodes for all
  *				of them, creating nodes if needed.
  *
- *	Targ_Ignore		Return TRUE if errors should be ignored when
+ *	Targ_Ignore		Return true if errors should be ignored when
  *				creating the given target.
  *
- *	Targ_Silent		Return TRUE if we should be silent when
+ *	Targ_Silent		Return true if we should be silent when
  *				creating the given target.
  *
- *	Targ_Precious		Return TRUE if the target is precious and
+ *	Targ_Precious		Return true if the target is precious and
  *				should not be removed if we are interrupted.
  *
  * Debugging:
@@ -102,23 +102,21 @@
  *				print something for suffixes, too, but...
  */
 
-#include	  <stddef.h>
-#include	  <stdio.h>
-#include	  <time.h>
-#include	  "make.h"
-#include	  "ohash.h"
-#include	  "dir.h"
-#include	  "stats.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
-#else
-UNUSED
-static char *rcsid = "$OpenBSD: targ.c,v 1.31 2001/05/03 13:41:12 espie Exp $";
-#endif
-#endif /* not lint */
-
+#include <sys/types.h>
+#include <stddef.h>
+#include <stdio.h>
+#include "config.h"
+#include "defines.h"
+#include "ohash.h"
+#include "stats.h"
+#include "suff.h"
+#include "var.h"
+#include "targ.h"
+#include "memory.h"
+#include "gnode.h"
+#include "extern.h"
+#include "timestamp.h"
+#include "lst.h"
 
 static struct ohash targets;	/* a hash table of same */
 static struct ohash_info gnode_info = {
@@ -157,10 +155,10 @@ Targ_Init()
  *	All lists and gnodes are cleared
  *-----------------------------------------------------------------------
  */
+#ifdef CLEANUP
 void
 Targ_End()
 {
-#ifdef CLEANUP
     unsigned int i;
     GNode *n;
 
@@ -168,12 +166,12 @@ Targ_End()
      	TargFreeGN(n);
 
     ohash_delete(&targets);
-#endif
 }
+#endif
 
 /*-
  *-----------------------------------------------------------------------
- * Targ_NewGN  --
+ * Targ_NewGNi  --
  *	Create and initialize a new graph node
  *
  * Results:
@@ -185,7 +183,7 @@ Targ_End()
  *-----------------------------------------------------------------------
  */
 GNode *
-Targ_NewGN(name, end)
+Targ_NewGNi(name, end)
     const char	*name;	/* the name to stick in the new node */
     const char	*end;
 {
@@ -199,12 +197,12 @@ Targ_NewGN(name, end)
 	gn->type = 0;
     }
     gn->unmade =	0;
-    gn->make =		FALSE;
+    gn->make =		false;
     gn->made =		UNMADE;
-    gn->childMade =	FALSE;
+    gn->childMade =	false;
     gn->order = 	0;
-    set_out_of_date(gn->mtime);
-    set_out_of_date(gn->cmtime);
+    ts_set_out_of_date(gn->mtime);
+    ts_set_out_of_date(gn->cmtime);
     Lst_Init(&gn->iParents);
     Lst_Init(&gn->cohorts);
     Lst_Init(&gn->parents);
@@ -253,7 +251,7 @@ TargFreeGN(gnp)
 
 /*-
  *-----------------------------------------------------------------------
- * Targ_FindNode  --
+ * Targ_FindNodei  --
  *	Find a node in the list using the given name for matching
  *
  * Results:
@@ -266,7 +264,7 @@ TargFreeGN(gnp)
  *-----------------------------------------------------------------------
  */
 GNode *
-Targ_FindNode(name, end, flags)
+Targ_FindNodei(name, end, flags)
     const char		*name;	/* the name to find */
     const char		*end;
     int 		flags;	/* flags governing events when target not
@@ -280,7 +278,7 @@ Targ_FindNode(name, end, flags)
     gn = ohash_find(&targets, slot);
 
     if (gn == NULL && (flags & TARG_CREATE)) {
-	gn = Targ_NewGN(name, end);
+	gn = Targ_NewGNi(name, end);
 	ohash_insert(&targets, slot, gn);
     }
 
@@ -311,7 +309,7 @@ Targ_FindList(nodes, names)
 
     for (ln = Lst_First(names); ln != NULL; ln = Lst_Adv(ln)) {
 	name = (char *)Lst_Datum(ln);
-	gn = Targ_FindNode(name, NULL, TARG_CREATE);
+	gn = Targ_FindNode(name, TARG_CREATE);
 	    /* Note: Lst_AtEnd must come before the Lst_Concat so the nodes
 	     * are added to the list in the order in which they were
 	     * encountered in the makefile.  */
@@ -327,14 +325,14 @@ Targ_FindList(nodes, names)
  *	Return true if should ignore errors when creating gn
  *-----------------------------------------------------------------------
  */
-Boolean
+bool
 Targ_Ignore(gn)
     GNode	   *gn; 	/* node to check for */
 {
     if (ignoreErrors || gn->type & OP_IGNORE)
-	return TRUE;
+	return true;
     else
-	return FALSE;
+	return false;
 }
 
 /*-
@@ -343,14 +341,14 @@ Targ_Ignore(gn)
  *	Return true if be silent when creating gn
  *-----------------------------------------------------------------------
  */
-Boolean
+bool
 Targ_Silent(gn)
     GNode	   *gn; 	/* node to check for */
 {
     if (beSilent || gn->type & OP_SILENT)
-	return TRUE;
+	return true;
     else
-	return FALSE;
+	return false;
 }
 
 /*-
@@ -359,14 +357,14 @@ Targ_Silent(gn)
  *	See if the given target is precious
  *-----------------------------------------------------------------------
  */
-Boolean
+bool
 Targ_Precious(gn)
     GNode	   *gn; 	/* the node to check */
 {
     if (allPrecious || (gn->type & (OP_PRECIOUS|OP_DOUBLEDEP)))
-	return TRUE;
+	return true;
     else
-	return FALSE;
+	return false;
 }
 
 /******************* DEBUG INFO PRINTING ****************/
@@ -595,7 +593,9 @@ Targ_PrintGraph(pass)
 		TargPrintOnlySrc(gn);
     Var_Dump();
     printf("\n");
+#ifdef DEBUG_DIRECTORY_CACHE
     Dir_PrintDirectories();
     printf("\n");
+#endif
     Suff_PrintAll();
 }

@@ -1,5 +1,8 @@
+#ifndef _JOB_H_
+#define _JOB_H_
+
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.h,v 1.9 2001/05/03 13:41:06 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.10 2001/05/23 12:34:45 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -47,9 +50,6 @@
  *	Definitions pertaining to the running of jobs in parallel mode.
  *	Exported from job.c for the use of remote-execution modules.
  */
-#ifndef _JOB_H_
-#define _JOB_H_
-
 #define TMPPAT	"/tmp/makeXXXXXXXXXX"
 
 /*
@@ -175,7 +175,7 @@ typedef struct Job_ {
  * a case, errCheck becomes a printf template for echoing the command,
  * should echoing be on and ignErr becomes another printf template for
  * executing the command while ignoring the return status. If either of these
- * strings is empty when hasErrCtl is FALSE, the command will be executed
+ * strings is empty when hasErrCtl is false, the command will be executed
  * anyway as is and if it causes an error, so be it.
  */
 typedef struct Shell_ {
@@ -185,14 +185,14 @@ typedef struct Shell_ {
 				 * source of a .SHELL target. For user-defined
 				 * shells, this is the full path of the shell.
 				 */
-    Boolean	  hasEchoCtl;	/* True if both echoOff and echoOn defined */
+    bool	  hasEchoCtl;	/* True if both echoOff and echoOn defined */
     char	  *echoOff;	/* command to turn off echo */
     char	  *echoOn;	/* command to turn it back on again */
     char	  *noPrint;	/* command to skip when printing output from
 				 * shell. This is usually the command which
 				 * was executed to turn off echoing */
     int 	  noPLen;	/* length of noPrint command */
-    Boolean	  hasErrCtl;	/* set if can control error checking for
+    bool	  hasErrCtl;	/* set if can control error checking for
 				 * individual commands */
     char	  *errCheck;	/* string to turn error checking on */
     char	  *ignErr;	/* string to turn off error checking */
@@ -216,24 +216,28 @@ extern GNode	*lastNode;	/* Last node for which a banner was printed.
 extern int	nJobs;		/* Number of jobs running (local and remote) */
 extern int	nLocal; 	/* Number of jobs running locally */
 extern LIST	jobs;		/* List of active job descriptors */
-extern Boolean	jobFull;	/* Non-zero if no more jobs should/will start*/
+extern bool	jobFull;	/* Non-zero if no more jobs should/will start*/
 extern LIST	stoppedJobs;	/* List of jobs that are stopped or didn't
 				 * quite get started */
 #endif
 
 
-extern void Job_Touch(GNode *, Boolean);
-extern Boolean Job_CheckCommands(GNode *,
+extern void Job_Touch(GNode *, bool);
+extern bool Job_CheckCommands(GNode *,
 	void (*abortProc )(char *, ...));
-extern void Job_CatchChildren(Boolean);
+extern void Job_CatchChildren(bool);
 extern void Job_CatchOutput(void);
 extern void Job_Make(GNode *);
 extern void Job_Init(int, int);
-extern Boolean Job_Full(void);
-extern Boolean Job_Empty(void);
-extern ReturnStatus Job_ParseShell(char *);
+extern bool Job_Full(void);
+extern bool Job_Empty(void);
+extern bool Job_ParseShell(char *);
 extern int Job_Finish(void);
+#ifdef CLEANUP
 extern void Job_End(void);
+#else
+#define Job_End()
+#endif
 extern void Job_Wait(void);
 extern void Job_AbortAll(void);
 extern void JobFlagForMigration(int);

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstConcat.c,v 1.12 2001/05/03 13:41:19 espie Exp $	*/
+/*	$OpenBSD: lstConcat.c,v 1.13 2001/05/23 12:34:54 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -43,14 +43,15 @@
  *	Function to copy a list and append it to another.
  */
 
-#include    "lstInt.h"
+#include "lstInt.h"
+#include "memory.h"
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstConcat.c 8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.12 2001/05/03 13:41:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.13 2001/05/23 12:34:54 espie Exp $";
 #endif
 #endif /* not lint */
 

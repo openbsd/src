@@ -1,14 +1,8 @@
-/* $OpenPackages$ */
-/* $OpenBSD: error.c,v 1.5 2001/05/03 13:41:04 espie Exp $ */
+/*	$OpenPackages$ */
+/*	$OpenBSD: error.c,v 1.6 2001/05/23 12:34:42 espie Exp $ */
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
- * Copyright (c) 1989 by Berkeley Softworks
- * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Adam de Boor.
+ * Copyright (c) 2001 Marc Espie.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,177 +12,223 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+ * PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include "error.h"
-
-#ifdef __GNUC__
-#define UNUSED	__attribute__((unused))
+#ifdef __STDC__
+#include <stdarg.h>
 #else
-#define UNUSED
+#include <varargs.h>
 #endif
 
-static void enomem(size_t);
+#include <stdio.h>
 
-/*
- * emalloc --
- *	malloc, but die on error.
+#include "config.h"
+#include "defines.h"
+#include "error.h"
+#include "job.h"
+#include "targ.h"
+
+#include "lowparse.h"
+
+int	    fatal_errors = 0;
+static void ParseVErrorInternal(const char *, unsigned long, int, const char *, va_list);
+/*-
+ * Error --
+ *	Print an error message given its format.
  */
-void *
-emalloc(len)
-	size_t len;
-{
-	void *p;
-
-	if ((p = malloc(len)) == NULL)
-		enomem(len);
-	return p;
-}
-
-/*
- * estrdup --
- *	strdup, but die on error.
- */
-char *
-estrdup(str)
-	const char *str;
-{
-	char *p;
-	size_t size;
-
-	size = strlen(str) + 1;
-
-	p = emalloc(size);
-	memcpy(p, str, size);
-	return p;
-}
-
-/*
- * erealloc --
- *	realloc, but die on error.
- */
-void *
-erealloc(ptr, size)
-	void *ptr;
-	size_t size;
-{
-	if ((ptr = realloc(ptr, size)) == NULL)
-		enomem(size);
-	return ptr;
-}
-
-void *
-ecalloc(s1, s2)
-	size_t s1;
-	size_t s2;
-{
-	void *p;
-
-	if ((p = calloc(s1, s2)) == NULL)
-		enomem(s1 * s2);
-	return p;
-}
-
-/* Support routines for hash tables.  */
-void *
-hash_alloc(s, u)
-	size_t s;
-	void *u 	UNUSED;
-{
-	return ecalloc(s, 1);
-}
-
+/* VARARGS */
 void
-hash_free(p, s, u)
-	void *p;
-	size_t s	UNUSED;
-	void *u 	UNUSED;
+#ifdef __STDC__
+Error(char *fmt, ...)
+#else
+Error(va_alist)
+	va_dcl
+#endif
 {
-	free(p);
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap, char *);
+#endif
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
 }
 
-void *
-element_alloc(s, u)
-	size_t s;
-	void *u 	UNUSED;
+/*-
+ * Fatal --
+ *	Produce a Fatal error message. If jobs are running, waits for them
+ *	to finish.
+ *
+ * Side Effects:
+ *	The program exits
+ */
+/* VARARGS */
+void
+#ifdef __STDC__
+Fatal(char *fmt, ...)
+#else
+Fatal(va_alist)
+	va_dcl
+#endif
 {
-	return emalloc(s);
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap, char *);
+#endif
+	Job_Wait();
+
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
+
+	if (DEBUG(GRAPH2))
+		Targ_PrintGraph(2);
+	exit(2);		/* Not 1 so -q can distinguish error */
 }
-
-
 
 /*
- * enomem --
- *	die when out of memory.
+ * Punt --
+ *	Major exception once jobs are being created. Kills all jobs, prints
+ *	a message and exits.
+ *
+ * Side Effects:
+ *	All children are killed indiscriminately and the program Lib_Exits
+ */
+/* VARARGS */
+void
+#ifdef __STDC__
+Punt(char *fmt, ...)
+#else
+Punt(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	char *fmt;
+
+	va_start(ap);
+	fmt = va_arg(ap, char *);
+#endif
+
+	(void)fprintf(stderr, "make: ");
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
+
+	DieHorribly();
+}
+
+/*-
+ * DieHorribly --
+ *	Exit without giving a message.
+ *
+ * Side Effects:
+ *	A big one...
  */
 void
-enomem(size)
-	size_t size;
+DieHorribly()
 {
-	fprintf(stderr, "make: %s (%lu)\n", strerror(errno), (u_long)size);
-	exit(2);
+	Job_AbortAll();
+	if (DEBUG(GRAPH2))
+		Targ_PrintGraph(2);
+	exit(2);		/* Not 1, so -q can distinguish error */
 }
 
 /*
- * esetenv --
- *	change environment, die on error.
+ * Finish --
+ *	Called when aborting due to errors in child shell to signal
+ *	abnormal exit.
+ *
+ * Side Effects:
+ *	The program exits
  */
 void
-esetenv(name, value)
-	const char *name;
-	const char *value;
+Finish(errors)
+	int errors;	/* number of errors encountered in Make_Make */
 {
-	if (setenv(name, value, 1) == 0)
-	    return;
-
-	fprintf(stderr, "make: setenv failed (%s)\n", strerror(errno));
-	exit(2);
+	Fatal("%d error%s", errors, errors == 1 ? "" : "s");
 }
 
 
-/*
- * enunlink --
- *	Remove a file carefully, avoiding directories.
+/*-
+ * ParseVErrorInternal	--
+ *	Error message abort function for parsing. Prints out the context
+ *	of the error (line number and file) as well as the message with
+ *	two optional arguments.
+ *
+ * Side Effects:
+ *	"fatals" is incremented if the level is PARSE_FATAL.
  */
-int
-eunlink(file)
-	const char *file;
+/* VARARGS */
+static void
+#ifdef __STDC__
+ParseVErrorInternal(const char *cfname, unsigned long clineno, int type, 
+	const char *fmt, va_list ap)
+#else
+ParseVErrorInternal(va_alist)
+	va_dcl
+#endif
 {
-	struct stat st;
+	(void)fprintf(stderr, "\"%s\", line %lu: ", cfname, clineno);
+	if (type == PARSE_WARNING)
+		(void)fprintf(stderr, "warning: ");
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
+	if (type == PARSE_FATAL)
+		fatal_errors ++;
+}
 
-	if (lstat(file, &st) == -1)
-		return -1;
+/*-
+ * Parse_Error	--
+ *	External interface to ParseVErrorInternal; uses the default filename
+ *	Line number.
+ */
+/* VARARGS */
+void
+#ifdef __STDC__
+Parse_Error(int type, const char *fmt, ...)
+#else
+Parse_Error(va_alist)
+	va_dcl
+#endif
+{
+	va_list ap;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	int type;		/* Error type (PARSE_WARNING, PARSE_FATAL) */
+	char *fmt;
 
-	if (S_ISDIR(st.st_mode)) {
-		errno = EISDIR;
-		return -1;
-	}
-	return unlink(file);
+	va_start(ap);
+	type = va_arg(ap, int);
+	fmt = va_arg(ap, char *);
+#endif
+
+	ParseVErrorInternal(Parse_Getfilename(), Parse_Getlineno(), type, fmt, ap);
 }
 

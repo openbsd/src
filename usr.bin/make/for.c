@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: for.c,v 1.24 2001/05/03 13:41:05 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.25 2001/05/23 12:34:42 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -62,31 +62,21 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * for.c --
- *	Functions to handle loops in a makefile.
- *
- * Interface:
- *	For_Eval	Evaluate the .for in the passed line.
- *	For_Accumulate	Add lines to an accumulating loop
- *	For_Run 	Run accumulated loop
- *
- */
-
-#include    <ctype.h>
-#include    <assert.h>
-#include    <stddef.h>
-#include    "make.h"
-#include    "buf.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: for.c,v 1.24 2001/05/03 13:41:05 espie Exp $";
-#endif
-#endif /* not lint */
+#include <assert.h>
+#include <ctype.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+#include "config.h"
+#include "defines.h"
+#include "buf.h"
+#include "for.h"
+#include "lst.h"
+#include "error.h"
+#include "var.h"
+#include "lowparse.h"
+#include "str.h"
+#include "memory.h"
 
 /*
  * For statements are of the form:
@@ -104,22 +94,28 @@ static char rcsid[] = "$OpenBSD: for.c,v 1.24 2001/05/03 13:41:05 espie Exp $";
 
 /* State of a for loop.  */
 struct For_ {
-    char		*text;		/* unexpanded text		*/
-    LIST		vars;		/* list of variables		*/
-    LstNode		var;		/* current var			*/
-    int			nvars;		/* total number of vars		*/
+    char		*text;		/* Unexpanded text		*/
+    LIST		vars;		/* List of variables		*/
+    LstNode		var;		/* Current var			*/
+    int			nvars;		/* Total number of vars		*/
     LIST		lst;		/* List of items		*/
     size_t		guess;		/* Estimated expansion size	*/
     BUFFER		buf;		/* Accumulating text		*/
     unsigned long	lineno; 	/* Line number at start of loop */
     unsigned long	level;		/* Nesting level		*/
-    Boolean		freeold;
+    bool		freeold;
 };
 
+/* ForExec(value, handle);
+ *	Expands next variable in loop sequence described by handle to value. */
 static void ForExec(void *, void *);
+
+/* n = build_words_list(lst, s);
+ *	Cuts string into words, pushes words into list, in reverse order,
+ *	because Parse_FromString works as a stack.
+ *	Returns the number of words.  */
 static unsigned long build_words_list(Lst, const char *);
 
-/* Cut a string into words, stuff that into list.  */
 static unsigned long
 build_words_list(lst, s)
     Lst lst;
@@ -132,24 +128,11 @@ build_words_list(lst, s)
     end = s;
 
     while ((wrd = iterate_words(&end)) != NULL) {
-	Lst_AtFront(lst, escape_dup(wrd, end, "\"'"));
+	Lst_AtFront(lst, escape_dupi(wrd, end, "\"'"));
 	n++;
     }
     return n;
 }
-
-/*
- *-----------------------------------------------------------------------
- * For_Eval --
- *	Evaluate the for loop in the passed line. The line
- *	looks like this:
- *	    .for <variable> in <varlist>
- *
- * Results:
- *	Loop structure, to accumulate further lines.
- *	NULL if this was not a for loop after all.
- *-----------------------------------------------------------------------
- */
 
 For *
 For_Eval(line)
@@ -189,10 +172,10 @@ For_Eval(line)
 	endVar = ptr++;
 	while (*ptr && isspace(*ptr))
 	    ptr++;
-	/* finished variable list */
+	/* End of variable list ? */
 	if (endVar - wrd == 2 && wrd[0] == 'i' && wrd[1] == 'n')
 	    break;
-	Lst_AtEnd(&arg->vars, interval_dup(wrd, endVar));
+	Lst_AtEnd(&arg->vars, Str_dupi(wrd, endVar));
 	arg->nvars++;
     }
     if (arg->nvars == 0) {
@@ -201,7 +184,7 @@ For_Eval(line)
     }
 
     /* Make a list with the remaining words.  */
-    sub = Var_Subst(ptr, NULL, FALSE);
+    sub = Var_Subst(ptr, NULL, false);
     if (DEBUG(FOR)) {
     	LstNode ln;
 	(void)fprintf(stderr, "For: Iterator ");
@@ -225,20 +208,7 @@ For_Eval(line)
 }
 
 
-/*-
- *-----------------------------------------------------------------------
- * For_Accumulate --
- *	Accumulate lines in a for loop, until we find the matching endfor.
- *
- * Results:
- *	TRUE: keep accumulating lines.
- *	FALSE: We found the matching .endfor
- *
- * Side Effects:
- *	Accumulate lines in arg.
- *-----------------------------------------------------------------------
- */
-Boolean
+bool
 For_Accumulate(arg, line)
     For 	    *arg;
     const char	    *line;    /* Line to parse */
@@ -258,7 +228,7 @@ For_Accumulate(arg, line)
 		(void)fprintf(stderr, "For: end for %lu\n", arg->level);
 	    /* If matching endfor, don't add line to buffer.  */
 	    if (--arg->level == 0)
-		return FALSE;
+		return false;
 	}
 	else if (strncmp(ptr, "for", 3) == 0 &&
 		 isspace(ptr[3])) {
@@ -269,23 +239,17 @@ For_Accumulate(arg, line)
     }
     Buf_AddString(&arg->buf, line);
     Buf_AddChar(&arg->buf, '\n');
-    return TRUE;
+    return true;
 }
 
 
 #define GUESS_EXPANSION 32
-/*-
- *-----------------------------------------------------------------------
- * ForExec --
- *	Expand the for loop for this index and push it in the Makefile
- *-----------------------------------------------------------------------
- */
 static void
-ForExec(namep, argp)
-    void *namep;
+ForExec(valuep, argp)
+    void *valuep;
     void *argp;
 {
-    char *name = (char *)namep;
+    char *value = (char *)valuep;
     For *arg = (For *)argp;
     BUFFER buf;
 
@@ -294,29 +258,23 @@ ForExec(namep, argp)
     if (arg->var == NULL) {
     	arg->var = Lst_Last(&arg->vars);
 	arg->text = Buf_Retrieve(&arg->buf);
-	arg->freeold = FALSE;
+	arg->freeold = false;
     }
 
     if (DEBUG(FOR))
-	(void)fprintf(stderr, "--- %s = %s\n", (char *)Lst_Datum(arg->var), name);
+	(void)fprintf(stderr, "--- %s = %s\n", (char *)Lst_Datum(arg->var),
+	    value);
     Buf_Init(&buf, arg->guess);
-    Var_SubstVar(&buf, arg->text, Lst_Datum(arg->var), name);
+    Var_SubstVar(&buf, arg->text, Lst_Datum(arg->var), value);
     if (arg->freeold)
     	free(arg->text);
     arg->text = Buf_Retrieve(&buf);
-    arg->freeold = TRUE;
+    arg->freeold = true;
     arg->var = Lst_Rev(arg->var);
     if (arg->var == NULL)
 	Parse_FromString(arg->text, arg->lineno);
 }
 
-
-/*-
- *-----------------------------------------------------------------------
- * For_Run --
- *	Run the for loop, pushing expanded lines for reparse
- *-----------------------------------------------------------------------
- */
 
 void
 For_Run(arg)

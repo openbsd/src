@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: pathnames.h,v 1.8 2001/05/03 13:41:09 espie Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.9 2001/05/23 12:34:48 espie Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.6 1996/11/06 17:59:21 christos Exp $	*/
 
 /*
@@ -37,6 +37,12 @@
  *	from: @(#)pathnames.h	5.2 (Berkeley) 6/1/90
  */
 
+#ifdef HAS_PATH_H
+# include <paths.h>
+#endif
+#ifndef _PATH_BSHELL
+# define _PATH_BSHELL	"/bin/sh"
+#endif
 #ifndef _PATH_OBJDIR
 #define _PATH_OBJDIR		"obj"
 #endif /* !_PATH_OBJDIR */

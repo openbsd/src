@@ -1,5 +1,8 @@
+#ifndef VARMODIFIERS_H
+#define VARMODIFIERS_H
+
 /* $OpenPackages$ */
-/* $OpenBSD: varmodifiers.h,v 1.2 2001/05/03 13:41:15 espie Exp $ */
+/* $OpenBSD: varmodifiers.h,v 1.3 2001/05/23 12:34:52 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -27,11 +30,35 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef VARMODIFIERS_H
-#define VARMODIFIERS_H
-extern char *VarModifiers_Apply(char *, const struct Name *, SymTable *, 
-	Boolean, Boolean *, const char *, int, size_t *);
-extern char *Var_GetTail(char *);
-extern char *Var_GetHead(char *);
+
+/* VarModifiers_Init();
+ *	Set up varmodifiers internal table according to selected features.
+ *	This can be called several times without harm. */
 extern void VarModifiers_Init(void);
+
+
+/* result = VarModifiers_Apply(val, name, ctxt, undef_is_bad,
+ *   &should_free, modstart, endc, &length);
+ *	Applies variable modifiers starting at modstart (including :), 
+ *	ending with character endc, to value val.  
+ *	Variables in spec are taken from context ctxt.
+ *	If undef_is_bad, error occurs if undefined variables are mentioned.
+ *	length is filled with the total length of the modifier spec.
+ *	name holds the name of the corresponding variable, as some ODE
+ *	modifiers need it.
+ *
+ *	If both val and name are NULL, VarModifiers_Apply just parses the
+ *	modifiers specification, as it can't apply it to anything. */
+extern char *VarModifiers_Apply(char *, const struct Name *, SymTable *, 
+	bool, bool *, const char *, int, size_t *);
+
+/* Direct interface to specific modifiers used under special circumstances. */
+/* tails = Var_GetTail(string);
+ *	Returns the tail of list of words in string (needed for SysV locals). */
+extern char *Var_GetTail(char *);
+/* heads = Var_GetHead(string);
+ *	Returns the head of list of words in string. */
+/* XXX this does not replace foo with ., as (sun) System V make does.
+ * Should it ? */
+extern char *Var_GetHead(char *);
 #endif

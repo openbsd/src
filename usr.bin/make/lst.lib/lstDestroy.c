@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDestroy.c,v 1.12 2001/05/03 13:41:19 espie Exp $	*/
+/*	$OpenBSD: lstDestroy.c,v 1.13 2001/05/23 12:34:55 espie Exp $	*/
 /*	$NetBSD: lstDestroy.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.12 2001/05/03 13:41:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.13 2001/05/23 12:34:55 espie Exp $";
 #endif
 #endif /* not lint */
 

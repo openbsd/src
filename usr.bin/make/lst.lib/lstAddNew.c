@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstAddNew.c,v 1.1 2001/05/03 13:41:16 espie Exp $	*/
+/*	$OpenBSD: lstAddNew.c,v 1.2 2001/05/23 12:34:53 espie Exp $	*/
 /* ex:ts=8 sw=4:
  */
 
@@ -34,22 +34,22 @@
 
 #ifndef lint
 UNUSED
-static char rcsid[] = "$OpenBSD: lstAddNew.c,v 1.1 2001/05/03 13:41:16 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAddNew.c,v 1.2 2001/05/23 12:34:53 espie Exp $";
 #endif /* not lint */
 
 /* Add datum to the end of a list only if it wasn't there already.
- * Returns FAILURE if datum was already there.
+ * Returns false if datum was already there.
  */
-ReturnStatus
+bool
 Lst_AddNew(l, d)
     Lst 	l;
     void	*d;
 {
     if (Lst_Member(l, d) != NULL)
-	return FAILURE;
+	return false;
     else {
 	Lst_AtEnd(l, d);
-	return SUCCESS;
+	return true;
     }
 }
 

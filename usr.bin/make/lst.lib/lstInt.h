@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstInt.h,v 1.12 2001/05/03 13:41:22 espie Exp $	*/
+/*	$OpenBSD: lstInt.h,v 1.13 2001/05/23 12:34:56 espie Exp $	*/
 /*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -47,8 +47,9 @@
 #ifndef _LSTINT_H_
 #define _LSTINT_H_
 
-#include	  "make.h"
-#include	  "lst.h"
+#include "config.h"
+#include "defines.h"
+#include "lst.h"
 
 /*
  * PAlloc(var, ptype) --

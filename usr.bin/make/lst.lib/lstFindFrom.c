@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstFindFrom.c,v 1.10 2001/05/03 13:41:21 espie Exp $	*/
+/*	$OpenBSD: lstFindFrom.c,v 1.11 2001/05/23 12:34:56 espie Exp $	*/
 /*	$NetBSD: lstFindFrom.c,v 1.6 1996/11/06 17:59:40 christos Exp $ */
 
 /*
@@ -50,7 +50,7 @@
 static char sccsid[] = "@(#)lstFindFrom.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char *rcsid = "$OpenBSD: lstFindFrom.c,v 1.10 2001/05/03 13:41:21 espie Exp $";
+static char *rcsid = "$OpenBSD: lstFindFrom.c,v 1.11 2001/05/23 12:34:56 espie Exp $";
 #endif
 #endif /* not lint */
 

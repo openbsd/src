@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: str.c,v 1.18 2001/05/07 22:54:53 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.19 2001/05/23 12:34:49 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -40,34 +40,24 @@
  * SUCH DAMAGE.
  */
 
-#include "make.h"
+#include <ctype.h>
+#include <string.h>
+#include "config.h"
+#include "defines.h"
+#include "str.h"
+#include "memory.h"
+#include "buf.h"
 
-#ifndef lint
-#if 0
-static char	sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: str.c,v 1.18 2001/05/07 22:54:53 espie Exp $";
-#endif
-#endif				/* not lint */
-
-/*-
- * str_concati --
- *	concatenate the two strings, possibly inserting a separator
- *
- * returns --
- *	the resulting string in allocated space.
- */
 char *
-str_concati(s1, s2, e2, sep)
-    const char *s1, *s2, *e2;
+Str_concati(s1, e1, s2, e2, sep)
+    const char *s1, *e1, *s2, *e2;
     int sep;
 {
     size_t len1, len2;
     char *result;
 
     /* get the length of both strings */
-    len1 = strlen(s1);
+    len1 = e1 - s1;
     len2 = e2 - s2;
 
     /* space for separator */
@@ -208,15 +198,7 @@ done:
     return argv;
 }
 
-/* Iterate through a string word by word,
- * without needing to copy anything.
- * More light-weight than brk_string, handles \ ' " as well.
- *
- * position = s;
- * while ((begin = iterate_words(&position)) != NULL) {
- *   do_something_with_word_interval(begin, position);
- * }
- */
+
 const char *
 iterate_words(end)
     const char	**end;
@@ -256,18 +238,10 @@ iterate_words(end)
 	    }
 }
 
-/*
- * Str_Matchi --
- *
- * See if a particular string matches a particular pattern.
- *
- * Results: TRUE is returned if string matches pattern, FALSE otherwise. The
- * matching operation permits the following special characters in the
- * pattern: *?\[] (see the man page for details on what these mean).
- */
-Boolean
-Str_Matchi(string, pattern, end)
+bool
+Str_Matchi(string, estring, pattern, end)
     const char *string; 		/* String */
+    const char *estring;		/* End of string */
     const char *pattern;		/* Pattern */
     const char *end;			/* End of Pattern */
 {
@@ -282,52 +256,52 @@ Str_Matchi(string, pattern, end)
 	     * calls only occur on `real' characters.  */
 	    while (pattern != end && (*pattern == '?' || *pattern == '*')) {
 		if (*pattern == '?') {
-		    if (*string == '\0')
-			return FALSE;
+		    if (string == estring)
+			return false;
 		    else
 			string++;
 		}
 		pattern++;
 	    }
 	    if (pattern == end)
-		return TRUE;
-	    for (; *string != '\0'; string++)
-		if (Str_Matchi(string, pattern, end))
-		    return TRUE;
-	    return FALSE;
-	} else if (*string == '\0')
-	    return FALSE;
+		return true;
+	    for (; string != estring; string++)
+		if (Str_Matchi(string, estring, pattern, end))
+		    return true;
+	    return false;
+	} else if (string == estring)
+	    return false;
 	/* Check for a "[" as the next pattern character.  It is
 	 * followed by a list of characters that are acceptable, or
 	 * by a range (two characters separated by "-").  */
 	else if (*pattern == '[') {
 	    pattern++;
 	    if (pattern == end)
-		return FALSE;
+		return false;
 	    if (*pattern == '!' || *pattern == '^') {
 		pattern++;
 		if (pattern == end)
-			return FALSE;
+			return false;
 		/* Negative match */
 		for (;;) {
 		    if (*pattern == '\\') {
 			if (++pattern == end)
-			    return FALSE;
+			    return false;
 		    }
 		    if (*pattern == *string)
-			return FALSE;
+			return false;
 		    if (pattern[1] == '-') {
 			if (pattern + 2 == end)
-			    return FALSE;
+			    return false;
 			if (*pattern < *string && *string <= pattern[2])
-			    return FALSE;
+			    return false;
 			if (pattern[2] <= *string && *string < *pattern)
-			    return FALSE;
+			    return false;
 			pattern += 3;
 		    } else
 			pattern++;
 		    if (pattern == end)
-			return FALSE;
+			return false;
 		    /* The test for ']' is done at the end so that ']'
 		     * can be used at the start of the range without '\' */
 		    if (*pattern == ']')
@@ -337,13 +311,13 @@ Str_Matchi(string, pattern, end)
 		for (;;) {
 		    if (*pattern == '\\') {
 			if (++pattern == end)
-			    return FALSE;
+			    return false;
 		    }
 		    if (*pattern == *string)
 			break;
 		    if (pattern[1] == '-') {
 			if (pattern + 2 == end)
-			    return FALSE;
+			    return false;
 			if (*pattern < *string && *string <= pattern[2])
 			    break;
 			if (pattern[2] <= *string && *string < *pattern)
@@ -354,7 +328,7 @@ Str_Matchi(string, pattern, end)
 		    /* The test for ']' is done at the end so that ']'
 		     * can be used at the start of the range without '\' */
 		    if (pattern == end || *pattern == ']')
-			return FALSE;
+			return false;
 		}
 		/* Found matching character, skip over rest of class.  */
 		while (*pattern != ']') {
@@ -373,20 +347,20 @@ Str_Matchi(string, pattern, end)
 	     * '\' so we do exact matching on the character that follows.  */
 	    if (*pattern == '\\') {
 		if (++pattern == end)
-		    return FALSE;
+		    return false;
 	    }
 	    /* There's no special character.  Just make sure that
 	     * the next characters of each string match.  */
 	    if (*pattern != *string)
-		return FALSE;
+		return false;
 	}
 	pattern++;
 	string++;
     }
-    if (*string == '\0')
-	return TRUE;
+    if (string == estring)
+	return true;
     else
-	return FALSE;
+	return false;
 }
 
 
@@ -468,7 +442,7 @@ Str_SYSVSubst(buf, pat, src, len)
 
     if ((m = strchr(pat, '%')) != NULL) {
 	/* Copy the prefix.  */
-	Buf_AddInterval(buf, pat, m);
+	Buf_Addi(buf, pat, m);
 	/* Skip the %.	*/
 	pat = m + 1;
     }
@@ -481,7 +455,7 @@ Str_SYSVSubst(buf, pat, src, len)
 }
 
 char *
-interval_dup(begin, end)
+Str_dupi(begin, end)
     const char *begin;
     const char *end;
 {
@@ -493,9 +467,8 @@ interval_dup(begin, end)
     return s;
 }
 
-/* copy interval, skipping characters in the set.  */
 char *
-escape_dup(begin, end, set)
+escape_dupi(begin, end, set)
     const char *begin;
     const char *end;
     const char *set;
@@ -520,7 +493,7 @@ escape_dup(begin, end, set)
 }
 
 char *
-lastchar(s, e, c)
+Str_rchri(s, e, c)
     const char *s;
     const char *e;
     int c;

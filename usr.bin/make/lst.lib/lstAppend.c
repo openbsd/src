@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstAppend.c,v 1.12 2001/05/03 13:41:17 espie Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.13 2001/05/23 12:34:53 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -43,14 +43,15 @@
  *	Add a new node with a new datum after an existing node
  */
 
-#include	"lstInt.h"
+#include "lstInt.h"
+#include "memory.h"
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstAppend.c 8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.12 2001/05/03 13:41:17 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.13 2001/05/23 12:34:53 espie Exp $";
 #endif
 #endif /* not lint */
 
