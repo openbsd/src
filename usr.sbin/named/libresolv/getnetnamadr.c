@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.4 2002/06/26 06:08:17 itojun Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.5 2002/11/14 02:54:22 millert Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.4 2002/06/26 06:08:17 itojun Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.5 2002/11/14 02:54:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,10 +105,11 @@ getnetanswer(answer, anslen, net_i)
 	register int n;
 	u_char *eom;
 	int type, class, ancount, qdcount, haveanswer, i, nchar;
-	char aux1[30], aux2[30], ans[30], *in, *st, *pauxt, *bp, **ap,
-		*paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0, *ep;
-static	struct netent net_entry;
-static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
+	char aux1[30], aux2[30], *in, *st, *pauxt, *bp, **ap,
+		*paux1 = &aux1[0], *paux2 = &aux2[0], *ep;
+	static	struct netent net_entry;
+	static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
+	static  char ans[MAXDNAME];
 
 	/*
 	 * find first satisfactory answer
@@ -138,8 +139,14 @@ static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
 			h_errno = TRY_AGAIN;
 		return (NULL);
 	}
-	while (qdcount-- > 0)
-		cp += __dn_skipname(cp, eom) + QFIXEDSZ;
+	while (qdcount-- > 0) {
+		n = __dn_skipname(cp, eom);
+		if (n < 0 || (cp + n + QFIXEDSZ) > eom) {
+			h_errno = NO_RECOVERY;
+			return(NULL);
+		}
+		cp += n + QFIXEDSZ;
+	}
 	ap = net_aliases;
 	*ap = NULL;
 	net_entry.n_aliases = net_aliases;
@@ -150,7 +157,7 @@ static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
 			break;
 		cp += n;
 		ans[0] = '\0';
-		(void)strcpy(&ans[0], bp);
+		(void)strcpy(ans, bp);
 		GETSHORT(type, cp);
 		GETSHORT(class, cp);
 		cp += INT32SZ;		/* TTL */
@@ -162,11 +169,13 @@ static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
 				return (NULL);
 			}
 			cp += n; 
-			*ap++ = bp;
-			bp += strlen(bp) + 1;
-			net_entry.n_addrtype =
-				(class == C_IN) ? AF_INET : AF_UNSPEC;
-			haveanswer++;
+			if ((ap + 2) < &net_aliases[MAXALIASES]) {
+				*ap++ = bp;
+				bp += strlen(bp) + 1;
+				net_entry.n_addrtype =
+					(class == C_IN) ? AF_INET : AF_UNSPEC;
+				haveanswer++;
+			}
 		}
 	}
 	if (haveanswer) {
@@ -177,26 +186,33 @@ static	char *net_aliases[MAXALIASES], netbuf[PACKETSZ];
 			net_entry.n_net = 0L;
 			break;
 		case BYNAME:
-			in = *net_entry.n_aliases;
-			net_entry.n_name = &ans[0];
+			ap = net_entry.n_aliases;
+		next_alias:
+			in = *ap++;
+			if (in == NULL) {
+				h_errno = HOST_NOT_FOUND;
+				return (NULL);
+			}
+			net_entry.n_name = ans;
 			aux2[0] = '\0';
 			for (i = 0; i < 4; i++) {
 				for (st = in, nchar = 0;
-				     *st != '.';
+				     isdigit((unsigned char)*st);
 				     st++, nchar++)
 					;
-				if (nchar != 1 || *in != '0' || flag) {
-					flag = 1;
-					(void)strncpy(paux1,
-						      (i==0) ? in : in-1,
-						      (i==0) ?nchar : nchar+1);
-					paux1[(i==0) ? nchar : nchar+1] = '\0';
-					pauxt = paux2;
-					paux2 = strcat(paux1, paux2);
-					paux1 = pauxt;
-				}
+				if (*st != '.' || nchar == 0 || nchar > 3)
+					goto next_alias;
+				if (i != 0)
+					nchar++;
+				(void)strncpy(paux1, in, nchar);
+				paux1[nchar] = '\0';
+				pauxt = paux2;
+				paux2 = strcat(paux1, paux2);
+				paux1 = pauxt;
 				in = ++st;
 			}		  
+			if (strcasecmp(in, "IN-ADDR.ARPA") != 0)
+				goto next_alias;
 			net_entry.n_net = inet_network(paux2);
 			break;
 		}

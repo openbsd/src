@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_defs.h,v 1.3 1998/05/22 00:47:31 millert Exp $	*/
+/*	$OpenBSD: db_defs.h,v 1.4 2002/11/14 02:54:22 millert Exp $	*/
 
 /*
  *	from db.h	4.16 (Berkeley) 6/1/90
@@ -68,7 +68,7 @@
 #define INVHASHSZ	919	/* size of inverse hash table */
 
 	/* max length of data in RR data field */
-#define MAXDATA		2048
+#define MAXDATA		(3*MAXDNAME + 5*INT32SZ)
 
 #define DB_ROOT_TIMBUF	3600
 #define TIMBUF		300

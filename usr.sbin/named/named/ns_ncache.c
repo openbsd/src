@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ncache.c,v 1.4 1998/05/22 07:09:17 millert Exp $	*/
+/*	$OpenBSD: ns_ncache.c,v 1.5 2002/11/14 02:54:22 millert Exp $	*/
 
 /**************************************************************************
  * ns_ncache.c
@@ -81,8 +81,8 @@ cache_n_resp(msg, msglen)
 		u_int16_t atype;
 		u_char *tp = cp;
 		u_char *cp1;
-		u_char data[MAXDNAME*2 + INT32SZ*5];
-		size_t len = sizeof data;
+		u_char data[MAXDATA];
+		u_char *eod = data + sizeof(data);
 
 		/* we store NXDOMAIN as T_SOA regardless of the query type */
 		if (hp->rcode == NXDOMAIN)
@@ -109,7 +109,7 @@ cache_n_resp(msg, msglen)
 		rdatap = tp;
 
 		/* origin */
-		n = dn_expand(msg, eom, tp, (char*)data, len);
+		n = dn_expand(msg, eom, tp, (char*)data, eod - data);
 		if (n < 0) {
 			dprintf(3, (ddt, "ncache: form error 2\n"));
 			return;
@@ -117,9 +117,8 @@ cache_n_resp(msg, msglen)
 		tp += n;
 		n = strlen((char*)data) + 1;
 		cp1 = data + n;
-		len -= n;
 		/* mail */
-		n = dn_expand(msg, msg + msglen, tp, (char*)cp1, len);
+		n = dn_expand(msg, msg + msglen, tp, (char*)cp1, eod - cp1);
 		if (n < 0) {
 			dprintf(3, (ddt, "ncache: form error 2\n"));
 			return;
@@ -127,20 +126,20 @@ cache_n_resp(msg, msglen)
 		tp += n;
 		n = strlen((char*)cp1) + 1;
 		cp1 += n;
-		len -= n;
 		n = 5 * INT32SZ;
+		if (n > (eod - cp1))	/* Can't happen. See MAXDATA. */
+			return;
 		BOUNDS_CHECK(tp, n);
 		bcopy(tp, cp1, n);
 		/* serial, refresh, retry, expire, min */
 		cp1 += n;
-		len -= n;
 		tp += n;
 		if (tp != rdatap + dlen) {
 			dprintf(3, (ddt, "ncache: form error 2\n"));
 			return;
 		}
 		/* store the zone of the soa record */
-		n = dn_expand(msg, msg + msglen, cp, (char*)cp1, len);
+		n = dn_expand(msg, msg + msglen, cp, (char*)cp1, eod - cp1);
 		if (n < 0) {
 			dprintf(3, (ddt, "ncache: form error 2\n"));
 			return;

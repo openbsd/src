@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_resp.c,v 1.8 2002/06/09 01:27:29 kjell Exp $	*/
+/*	$OpenBSD: ns_resp.c,v 1.9 2002/11/14 02:54:22 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_resp.c,v 8.41 1998/04/07 04:59:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.8 2002/06/09 01:27:29 kjell Exp $";
+static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.9 2002/11/14 02:54:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1676,7 +1676,7 @@ rrextract(msg, msglen, rrp, dpp, dname, namelen, tnamep)
 		 * to BOUNDS_CHECK() here.
 		 */
 		cp1 += (n = strlen((char *)cp1) + 1);
-		n1 = sizeof(data) - n;
+		n1 = sizeof(data) - n - INT16SZ;
 		n = dn_expand(msg, eom, cp, (char *)cp1, n1);
 		if (n < 0) {
 			hp->rcode = FORMERR;
@@ -1694,7 +1694,7 @@ rrextract(msg, msglen, rrp, dpp, dname, namelen, tnamep)
 		break;
 
 	case T_SIG: {
-		u_long origTTL, exptime, signtime, timetilexp, now;
+		u_int32_t origTTL, exptime, signtime, timetilexp, now;
 
 		/* Check signature time, expiration, and adjust TTL.  */
 		/* This code is similar to that in db_load.c.  */
@@ -1715,8 +1715,18 @@ rrextract(msg, msglen, rrp, dpp, dname, namelen, tnamep)
 			ttl = origTTL;
 		}
 
+		/*
+		 * Check that expire and signature times are internally
+		 * consistant.
+		 */
+		if (!SEQ_GT(exptime, signtime) && exptime != signtime) {
+			dprintf(3, (ddt,
+		       "ignoring SIG: signature expires before it was signed"));
+			return ((cp - rrp) + dlen);
+		}
+
 		/* Don't let bogus signers "sign" in the future.  */
-		if (signtime > now) {
+		if (SEQ_GT(signtime, now)) {
 			dprintf(3, (ddt,
 			  "ignoring SIG: signature date %s is in the future\n",
 				    p_secstodate (signtime)));
@@ -1724,7 +1734,7 @@ rrextract(msg, msglen, rrp, dpp, dname, namelen, tnamep)
 		}
 		
 		/* Ignore received SIG RR's that are already expired.  */
-		if (exptime <= now) {
+		if (SEQ_GT(exptime, now)) {
 			dprintf(3, (ddt,
 				 "ignoring SIG: expiration %s is in the past\n",
 				    p_secstodate (exptime)));
