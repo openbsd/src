@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 1997/05/03 22:27:11 niklas Exp $
+#	$OpenBSD: list,v 1.2 1997/05/04 01:27:10 niklas Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
@@ -17,7 +17,7 @@ SYMLINK ../../instbin		usr/bin/rsh
 SYMLINK ../../instbin		usr/bin/strings
 SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
 SYMLINK	../../instbin		usr/bin/less usr/bin/more
-SYMLINK	../../instbin		usr/sbin/installboot
+#SYMLINK	../../instbin		usr/sbin/installboot
 SYMLINK	../../instbin		usr/sbin/sysctl
 
 # crunchgen source directory specials
