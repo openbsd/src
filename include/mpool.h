@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpool.h,v 1.5 1999/02/15 21:13:07 millert Exp $	*/
+/*	$OpenBSD: mpool.h,v 1.6 1999/02/15 21:17:48 millert Exp $	*/
 /*	$NetBSD: mpool.h,v 1.7 1996/05/03 21:13:41 cgd Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  * pool is handed an opaque MPOOL cookie which stores all of this information.
  */
 #define	HASHSIZE	128
-#define	HASHKEY(pgno)	((pgno - 1) % HASHSIZE)
+#define	HASHKEY(pgno)	((pgno - 1 + HASHSIZE) % HASHSIZE)
 
 /* The BKT structures are the elements of the queues. */
 typedef struct _bkt {
