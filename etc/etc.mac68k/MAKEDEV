@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.1 2002/01/08 03:14:50 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.20 2002/01/23 06:43:53 todd Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.2 2002/01/23 07:53:01 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.22 2002/01/23 08:09:30 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.39 2002/01/23 07:54:41 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.40 2002/01/23 08:23:19 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -352,11 +352,11 @@ fd)
 	;;
 
 all)
-	R local grf0 grf1 grf2 grf3 adb asc0 xfs0 ss0 uk0 rndrandom
-	R lkm ttye0 tty00 tty01 pf altq tun0 tun1 tun2 tun3 bpf0 bpf1
-	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 ccd0 ccd1 ccd2 ccd3
-	R vnd0 vnd1 vnd2 vnd3 std cd0 ch0 st0 pty0 fd sd0 sd1 sd2 sd3
-	R sd4
+	R local grf0 grf1 grf2 grf3 adb asc0 xfs0 ss0 ss1 uk0
+	R rndrandom lkm ttye0 tty00 tty01 pf altq tun0 tun1 tun2 tun3
+	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 ccd0 ccd1
+	R ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0 cd1 ch0 st0 st1 pty0
+	R pty1 fd sd0 sd1 sd2 sd3 sd4
 	;;
 
 sd*|ccd*)

@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.3 2002/01/23 06:40:28 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.20 2002/01/23 06:43:53 todd Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.4 2002/01/23 07:53:01 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.22 2002/01/23 08:09:30 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.65 2002/01/23 07:54:41 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.66 2002/01/23 08:23:19 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -487,14 +487,14 @@ local)
 all)
 	R wscons pci iop0 iop1 usbs rmidi0 rmidi1 rmidi2 rmidi3
 	R rmidi4 rmidi5 rmidi6 rmidi7 music0 speaker audio0 xfs0 ss0
-	R uk0 rndrandom lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 mmclock lkm
+	R ss1 uk0 rndrandom lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 mmclock lkm
 	R tty00 tty01 tty02 tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5
 	R ttyc6 ttyc7 ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 pf altq tun0
 	R tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8
 	R bpf9 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
 	R fd0D fd0E fd0F fd0G fd0H rd0 raid0 raid1 raid2 raid3 wd0 wd1
-	R wd2 wd3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0 ch0
-	R st0 pty0 fd sd0 sd1 sd2 sd3 sd4
+	R wd2 wd3 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 std cd0 cd1
+	R ch0 st0 st1 pty0 pty1 fd sd0 sd1 sd2 sd3 sd4
 	;;
 
 wd*|sd*|raid*|ccd*)
