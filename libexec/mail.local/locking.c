@@ -1,4 +1,4 @@
-/*	$OpenBSD: locking.c,v 1.3 2001/08/18 21:37:38 deraadt Exp $	*/
+/*	$OpenBSD: locking.c,v 1.4 2002/02/17 23:16:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: locking.c,v 1.3 2001/08/18 21:37:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: locking.c,v 1.4 2002/02/17 23:16:09 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ getlock(name, pw)
 			 */
 			if (readlink(lpath, buf, sizeof buf-1) != -1) {
 				if (lstat(lpath, &sb) != -1 &&
-				    S_ISLNK(fsb.st_mode)) {
+				    S_ISLNK(sb.st_mode)) {
 					seteuid(sb.st_uid);
 					unlink(lpath);
 					seteuid(pw->pw_uid);
