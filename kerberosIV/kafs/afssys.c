@@ -1,10 +1,12 @@
-/*	$Id: afssys.c,v 1.1.1.1 1995/12/14 06:52:46 tholo Exp $	*/
+/*	$Id: afssys.c,v 1.2 1996/09/16 03:18:08 tholo Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <setjmp.h>
 #include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <kerberosIV/krb.h>
 #include <kerberosIV/kafs.h>
