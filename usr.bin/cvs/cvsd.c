@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.10 2004/09/27 13:42:39 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.11 2004/11/25 18:30:12 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -50,7 +50,7 @@
 
 
 static void  cvsd_parent_loop (void);
-static void  cvsd_child_loop  (void);
+static void  cvsd_child_main  (void);
 static int   cvsd_privdrop    (void);
 static void  cvsd_report      (void);
 
@@ -59,21 +59,19 @@ extern char *__progname;
 
 
 
-int cvsd_fg = 0;
+int    cvsd_fg = 0;
+uid_t  cvsd_uid = -1;
+gid_t  cvsd_gid = -1;
 
 volatile sig_atomic_t cvsd_running = 1;
 volatile sig_atomic_t cvsd_restart = 0;
-
-
-uid_t  cvsd_uid = -1;
-gid_t  cvsd_gid = -1;
 
 static char  *cvsd_user = NULL;
 static char  *cvsd_group = NULL;
 static char  *cvsd_root = NULL;
 static char  *cvsd_conffile = CVSD_CONF;
+static char  *cvsd_moddir = NULL;
 static int    cvsd_privfd = -1;
-
 
 
 static TAILQ_HEAD(,cvsd_child) cvsd_children;
@@ -229,6 +227,7 @@ main(int argc, char **argv)
 	signal(SIGQUIT, cvsd_sighdlr);
 	signal(SIGTERM, cvsd_sighdlr);
 	signal(SIGCHLD, cvsd_sighdlr);
+	signal(SIGPIPE, SIG_IGN);
 
 	if (!cvsd_fg && daemon(0, 0) == -1) {
 		cvs_log(LP_ERRNO, "failed to become a daemon");
@@ -255,13 +254,9 @@ main(int argc, char **argv)
 	}
 
 	/* spawn the initial pool of children */
-	for (i = 0; i < (u_int)cvsd_chmin; i++) {
-		ret = cvsd_child_fork(NULL);
-		if (ret == -1) {
-			cvs_log(LP_ERR, "failed to spawn child");
+	for (i = 0; i < (u_int)cvsd_chmin; i++)
+		if (cvsd_child_fork(NULL) < 0)
 			exit(EX_OSERR);
-		}
-	}
 
 	signal(SIGINFO, cvsd_sighdlr);
 	cvsd_parent_loop();
@@ -454,21 +449,8 @@ cvsd_child_fork(struct cvsd_child **chpp)
 		cvsd_privfd = svec[1];
 		(void)close(svec[0]);
 
-		cvs_log(LP_INFO, "changing root to %s", cvsd_root);
-		if (chroot(cvsd_root) == -1) {
-			cvs_log(LP_ERRNO, "failed to chroot to `%s'",
-			    cvsd_root);
-			exit(EX_OSERR);
-		}
-		(void)chdir("/");
-
-		if (cvsd_privdrop() < 0)
-			exit(EX_OSERR);
-
-		setproctitle("%s [child %d]", __progname, getpid());
-
-		cvsd_child_loop();
-		exit(0);
+		cvsd_child_main();
+		/* NOTREACHED */
 	}
 
 	cvs_log(LP_INFO, "spawning child %d", pid);
@@ -654,6 +636,8 @@ cvsd_parent_loop(void)
 			cvs_log(LP_ERR, "poll error on request socket");
 		}
 		else if (pfd[0].revents & POLLIN) {
+			uid_t uid;
+			gid_t gid;
 			cfd = cvsd_sock_accept(pfd[0].fd);
 			if (cfd == -1)
 			chp = cvsd_child_get();
@@ -663,6 +647,8 @@ cvsd_parent_loop(void)
 				break;
 			}
 
+			if (getpeereid(cfd, &uid, &gid) < 0)
+				err(1, "failed to get UID");
 			if (cvsd_sendmsg(chp->ch_sock, CVSD_MSG_PASSFD,
 			    &cfd, sizeof(cfd)) < 0)
 				break;
@@ -694,22 +680,36 @@ cvsd_parent_loop(void)
 
 
 /*
- * cvsd_child_loop()
+ * cvsd_child_main()
  *
  */
 
 static void
-cvsd_child_loop(void)
+cvsd_child_main(void)
 {
 	int ret, timeout;
 	u_int mtype;
 	size_t mlen;
 	char mbuf[CVSD_MSG_MAXLEN];
 	struct pollfd pfd[1];
+	struct cvsd_sess *sessp;
+
+	cvs_log(LP_INFO, "changing root to %s", cvsd_root);
+	if (chroot(cvsd_root) == -1) {
+		cvs_log(LP_ERRNO, "failed to chroot to `%s'", cvsd_root);
+		exit(EX_OSERR);
+	}
+	(void)chdir("/");
+
+	if (cvsd_privdrop() < 0)
+		exit(EX_OSERR);
+
+	setproctitle("%s [child %d]", __progname, getpid());
 
 	pfd[0].fd = cvsd_privfd;
 	pfd[0].events = POLLIN;
 	timeout = INFTIM;
+	sessp = NULL;
 
 	while (cvsd_running) {
 		ret = poll(pfd, 1, timeout);
@@ -737,14 +737,14 @@ cvsd_child_loop(void)
 
 		switch (mtype) {
 		case CVSD_MSG_PASSFD:
+			sessp = cvsd_sess_alloc(*(int *)mbuf);
 			break;
 		case CVSD_MSG_SHUTDOWN:
 			cvsd_running = 0;
 			break;
 		default:
 			cvs_log(LP_ERR,
-			    "unexpected message type %u from parent",
-			    mtype);
+			    "unexpected message type %u from parent", mtype);
 			break;
 		}
 
@@ -867,7 +867,8 @@ cvsd_set(int what, ...)
 	va_start(vap, what);
 
 	if ((what == CVSD_SET_ROOT) || (what == CVSD_SET_SOCK) ||
-	    (what == CVSD_SET_USER) || (what == CVSD_SET_GROUP)) {
+	    (what == CVSD_SET_USER) || (what == CVSD_SET_GROUP) ||
+	    (what == CVSD_SET_MODDIR)) {
 		str = strdup(va_arg(vap, char *));
 		if (str == NULL) {
 			cvs_log(LP_ERRNO, "failed to set string");
@@ -897,6 +898,11 @@ cvsd_set(int what, ...)
 		if (cvsd_group != NULL)
 			free(cvsd_group);
 		cvsd_group = str;
+		break;
+	case CVSD_SET_MODDIR:
+		if (cvsd_moddir != NULL)
+			free(cvsd_moddir);
+		cvsd_moddir = str;
 		break;
 	case CVSD_SET_CHMIN:
 		cvsd_chmin = va_arg(vap, int);
