@@ -1,4 +1,4 @@
-/*	$OpenBSD: connection.c,v 1.14 2001/03/14 10:33:16 deraadt Exp $	*/
+/*	$OpenBSD: connection.c,v 1.15 2001/03/14 10:42:19 deraadt Exp $	*/
 /*	$EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	*/
 
 /*
@@ -461,10 +461,10 @@ connection_reinit (void)
 
   /* Remove all present connections.  */
 
-  while (conn = TAILQ_FIRST (&connections))
+  while ((conn = TAILQ_FIRST (&connections)))
     connection_teardown (conn->name);
 
-  while (pconn = TAILQ_FIRST (&connections_passive))
+  while ((pconn = TAILQ_FIRST (&connections_passive)))
     connection_passive_teardown (pconn->name);
 
   /* Setup new connections, as the (new) config directs.  */
