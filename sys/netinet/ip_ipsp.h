@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.78 2001/02/28 04:16:57 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.79 2001/03/04 20:34:00 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -292,10 +292,12 @@ struct tdb				/* tunnel descriptor block */
     u_int16_t         tdb_amxkeylen;    /* Raw authentication key length */
     u_int16_t         tdb_emxkeylen;    /* Raw encryption key length */
     u_int16_t         tdb_ivlen;        /* IV length */
+    u_int16_t         tdb_cred_len;     /* size of tdb_credentials */
     u_int8_t	      tdb_sproto;	/* IPsec protocol */
     u_int8_t          tdb_wnd;          /* Replay window */
     u_int8_t          tdb_satype;       /* SA type (RFC2367, PF_KEY) */
-    
+    u_int8_t          tdb_cred_type;    /* type of tdb_credentials */
+
     union sockaddr_union tdb_dst;	/* Destination address for this SA */
     union sockaddr_union tdb_src;	/* Source address for this SA */
     union sockaddr_union tdb_proxy;
@@ -318,6 +320,7 @@ struct tdb				/* tunnel descriptor block */
     u_int8_t          tdb_iv[4];        /* Used for HALF-IV ESP */
 
     caddr_t           tdb_interface;
+    caddr_t           tdb_credentials;
 
     TAILQ_HEAD(tdb_inp_head, inpcb) tdb_inp;
     TAILQ_HEAD(tdb_policy_head, ipsec_policy) tdb_policy_head;

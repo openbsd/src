@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.106 2001/02/28 04:16:57 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.107 2001/03/04 20:34:00 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -908,6 +908,12 @@ tdb_delete(struct tdb *tdbp, int expflags)
     {
       	FREE(tdbp->tdb_dstid, M_XDATA);
 	tdbp->tdb_dstid = NULL;
+    }
+
+    if (tdbp->tdb_credentials)
+    {
+	FREE(tdbp->tdb_credentials, M_XDATA);
+	tdbp->tdb_credentials = NULL;
     }
 
     if ((tdbp->tdb_onext) && (tdbp->tdb_onext->tdb_inext == tdbp))
