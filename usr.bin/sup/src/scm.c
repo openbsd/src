@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.17 2004/01/12 04:22:23 beck Exp $	*/
+/*	$OpenBSD: scm.c,v 1.18 2005/03/10 01:36:37 cloder Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -307,7 +307,7 @@ servicesetup(server)		/* listen for clients */
 			return (scmerr(-1, "Can't find %s server description",
 			    server));
 		(void) scmerr(-1, "%s/tcp: unknown service: using port %d",
-		    server,port);
+		    server, ntohs(port));
 	} else
 		port = sp->s_port;
 	endservent();
@@ -450,7 +450,7 @@ request(server, hostname, retry)	/* connect to server */
 					server));
 		if (!silent)
 		    (void) scmerr (-1, "%s/tcp: unknown service: using port %d",
-				    server, port);
+				    server, ntohs(port));
 	} else
 		port = sp->s_port;
 	(void) memset(&sin, 0, sizeof(sin));
