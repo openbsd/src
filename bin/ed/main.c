@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2000/04/01 17:20:10 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2000/05/01 18:30:52 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.18 2000/04/01 17:20:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.19 2000/05/01 18:30:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -958,7 +958,6 @@ get_filename()
 {
 	static char *file = NULL;
 	static int filesz = 0;
-
 	int n;
 
 	if (*ibufp != '\n') {
@@ -974,7 +973,7 @@ get_filename()
 				return NULL;
 			if (n) printf("%s\n", shcmd + 1);
 			return shcmd;
-		} else if (n - 1 > MAXPATHLEN) {
+		} else if (n >= MAXPATHLEN) {
 			strcpy(errmsg, "filename too long");
 			return  NULL;
 		}
@@ -985,7 +984,7 @@ get_filename()
 		return  NULL;
 	}
 #endif
-	REALLOC(file, filesz, MAXPATHLEN + 1, NULL);
+	REALLOC(file, filesz, MAXPATHLEN, NULL);
 	for (n = 0; *ibufp != '\n';)
 		file[n++] = *ibufp++;
 	file[n] = '\0';
