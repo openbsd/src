@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.24 2002/07/26 15:49:56 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.25 2002/07/30 18:07:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -240,13 +240,16 @@ cgsixattach(parent, self, aux)
 	rasops_init(&sc->sc_rasops,
 	    a2int(getpropstring(optionsnode, "screen-#rows"), 34),
 	    a2int(getpropstring(optionsnode, "screen-#columns"), 80));
-	sc->sc_rasops.ri_hw = sc;
-	sc->sc_rasops.ri_ops.copyrows = cgsix_ras_copyrows;
-	sc->sc_rasops.ri_ops.copycols = cgsix_ras_copycols;
-	sc->sc_rasops.ri_ops.eraserows = cgsix_ras_eraserows;
-	sc->sc_rasops.ri_ops.erasecols = cgsix_ras_erasecols;
-	sc->sc_rasops.ri_do_cursor = cgsix_ras_do_cursor;
-	cgsix_ras_init(sc);
+
+	if ((sc->sc_dev.dv_cfdata->cf_flags & CG6_CFFLAG_NOACCEL) == 0) {
+		sc->sc_rasops.ri_hw = sc;
+		sc->sc_rasops.ri_ops.copyrows = cgsix_ras_copyrows;
+		sc->sc_rasops.ri_ops.copycols = cgsix_ras_copycols;
+		sc->sc_rasops.ri_ops.eraserows = cgsix_ras_eraserows;
+		sc->sc_rasops.ri_ops.erasecols = cgsix_ras_erasecols;
+		sc->sc_rasops.ri_do_cursor = cgsix_ras_do_cursor;
+		cgsix_ras_init(sc);
+	}
 
 	cgsix_stdscreen.nrows = sc->sc_rasops.ri_rows;
 	cgsix_stdscreen.ncols = sc->sc_rasops.ri_cols;
@@ -320,6 +323,9 @@ cgsix_ioctl(v, cmd, data, flags, p)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		break;
+	case WSDISPLAYIO_SMODE:
+		sc->sc_mode = *(u_int *)data;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -404,6 +410,12 @@ cgsix_show_screen(v, cookie, waitok, cb, cbarg)
 	return (0);
 }
 
+struct mmo {
+	off_t mo_uaddr;
+	bus_size_t mo_size;
+	bus_size_t mo_physoff;
+};
+
 paddr_t
 cgsix_mmap(v, off, prot)
 	void *v;
@@ -411,14 +423,51 @@ cgsix_mmap(v, off, prot)
 	int prot;
 {
 	struct cgsix_softc *sc = v;
+	struct mmo *mo;
+	bus_addr_t u;
+	bus_size_t sz;
 
-	if (off & PGOFSET)
+	static struct mmo mmo[] = {
+		{ CG6_USER_RAM, 0, CGSIX_VID_OFFSET },
+
+		/* do not actually know how big most of these are! */
+		{ CG6_USER_FBC, 1, CGSIX_FBC_OFFSET },
+		{ CG6_USER_TEC, 1, CGSIX_TEC_OFFSET },
+		{ CG6_USER_BTREGS, 8192 /* XXX */, CGSIX_BT_OFFSET },
+		{ CG6_USER_FHC, 1, CGSIX_FHC_OFFSET },
+		{ CG6_USER_THC, CGSIX_THC_SIZE, CGSIX_THC_OFFSET },
+		{ CG6_USER_ROM, 65536, CGSIX_ROM_OFFSET },
+		{ CG6_USER_DHC, 1, CGSIX_DHC_OFFSET },
+	};
+#define	NMMO (sizeof mmo / sizeof *mmo)
+
+	if (off & PGOFSET || off < 0)
 		return (-1);
 
-	/* Allow mapping as a dumb framebuffer from offset 0 */
-	if (off >= 0 && off < (sc->sc_linebytes * sc->sc_height))
-		return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
-		    off + CGSIX_VID_OFFSET, prot, BUS_SPACE_MAP_LINEAR));
+	switch (sc->sc_mode) {
+	case WSDISPLAYIO_MODE_MAPPED:
+		for (mo = mmo; mo < &mmo[NMMO]; mo++) {
+			if (off < mo->mo_uaddr)
+				continue;
+			u = off - mo->mo_uaddr;
+			sz = mo->mo_size ? mo->mo_size :
+			    sc->sc_linebytes * sc->sc_height;
+			if (u < sz) {
+				return (bus_space_mmap(sc->sc_bustag,
+				    sc->sc_paddr, u + mo->mo_physoff,
+				    prot, BUS_SPACE_MAP_LINEAR));
+			}
+		}
+		break;
+
+	case WSDISPLAYIO_MODE_DUMBFB:
+		/* Allow mapping as a dumb framebuffer from offset 0 */
+		if (off >= 0 && off < (sc->sc_linebytes * sc->sc_height))
+			return (bus_space_mmap(sc->sc_bustag, sc->sc_paddr,
+			    off + CGSIX_VID_OFFSET, prot,
+			    BUS_SPACE_MAP_LINEAR));
+		break;
+	}
 
 	return (-1);
 }
