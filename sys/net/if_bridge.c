@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.88 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.89 2002/05/28 15:46:24 jasoni Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -156,6 +156,8 @@ u_int8_t bridge_filterrule(struct brl_head *, struct ether_header *);
 struct mbuf *bridge_filter(struct bridge_softc *, int, struct ifnet *,
     struct ether_header *, struct mbuf *m);
 #endif
+void	bridge_fragment(struct bridge_softc *, struct ifnet *,
+    struct altq_pktattr *, struct ether_header *, struct mbuf *);
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -1220,23 +1222,28 @@ bridgeintr_frame(sc, m)
 	if (ALTQ_IS_ENABLED(&dst_if->if_snd))
 		altq_etherclassify(&dst_if->if_snd, m, &pktattr);
 #endif
+
 	len = m->m_pkthdr.len;
-	mflags = m->m_flags;
-	s = splimp();
-	IFQ_ENQUEUE(&dst_if->if_snd, m, &pktattr, error);
-	if (error) {
-		sc->sc_if.if_oerrors++;
+	if ((len - sizeof(struct ether_header)) > dst_if->if_mtu)
+		bridge_fragment(sc, dst_if, &pktattr, &eh, m);
+	else {
+		mflags = m->m_flags;
+		s = splimp();
+		IFQ_ENQUEUE(&dst_if->if_snd, m, &pktattr, error);
+		if (error) {
+			sc->sc_if.if_oerrors++;
+			splx(s);
+			return;
+		}
+		sc->sc_if.if_opackets++;
+		sc->sc_if.if_obytes += len;
+		dst_if->if_obytes += len;
+		if (mflags & M_MCAST)
+			dst_if->if_omcasts++;
+		if ((dst_if->if_flags & IFF_OACTIVE) == 0)
+			(*dst_if->if_start)(dst_if);
 		splx(s);
-		return;
 	}
-	sc->sc_if.if_opackets++;
-	sc->sc_if.if_obytes += len;
-	dst_if->if_obytes += len;
-	if (mflags & M_MCAST)
-		dst_if->if_omcasts++;
-	if ((dst_if->if_flags & IFF_OACTIVE) == 0)
-		(*dst_if->if_start)(dst_if);
-	splx(s);
 }
 
 /*
@@ -1487,18 +1494,22 @@ bridge_broadcast(sc, ifp, eh, m)
 		if (ALTQ_IS_ENABLED(&dst_if->if_snd))
 			altq_etherclassify(&dst_if->if_snd, mc, &pktattr);
 #endif
-		IFQ_ENQUEUE(&dst_if->if_snd, mc, &pktattr, error);
-		if (error) {
-			sc->sc_if.if_oerrors++;
-			continue;
+		if ((len - sizeof(struct ether_header)) > dst_if->if_mtu)
+			bridge_fragment(sc, dst_if, &pktattr, eh, mc);
+		else {
+			IFQ_ENQUEUE(&dst_if->if_snd, mc, &pktattr, error);
+			if (error) {
+				sc->sc_if.if_oerrors++;
+				continue;
+			}
+			sc->sc_if.if_opackets++;
+			sc->sc_if.if_obytes += len;
+			dst_if->if_obytes += len;
+			if (mflags & M_MCAST)
+				dst_if->if_omcasts++;
+			if ((dst_if->if_flags & IFF_OACTIVE) == 0)
+				(*dst_if->if_start)(dst_if);
 		}
-		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += len;
-		dst_if->if_obytes += len;
-		if (mflags & M_MCAST)
-			dst_if->if_omcasts++;
-		if ((dst_if->if_flags & IFF_OACTIVE) == 0)
-			(*dst_if->if_start)(dst_if);
 	}
 
 	if (!used)
@@ -2307,3 +2318,106 @@ dropit:
 	return (NULL);
 }
 #endif /* NPF > 0 */
+
+void
+bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
+    struct altq_pktattr *pktattr, struct ether_header *eh, struct mbuf *m)
+{
+	struct llc llc;
+	struct mbuf *m0 = m;
+	int s, len, error = 0;
+	int hassnap = 0;
+	short mflags = m->m_flags;
+#ifdef INET
+	struct ip *ip;
+#endif
+
+#ifndef INET
+	goto dropit;
+#else
+	if (eh->ether_type != htons(ETHERTYPE_IP)) {
+		if (eh->ether_type > ETHERMTU ||
+		    m->m_pkthdr.len < (LLC_SNAPFRAMELEN +
+		    sizeof(struct ether_header)))
+			goto dropit;
+		
+		m_copydata(m, sizeof(struct ether_header),
+		    LLC_SNAPFRAMELEN, (caddr_t)&llc);
+		
+		if (llc.llc_dsap != LLC_SNAP_LSAP ||
+		    llc.llc_ssap != LLC_SNAP_LSAP ||
+		    llc.llc_control != LLC_UI ||
+		    llc.llc_snap.org_code[0] ||
+		    llc.llc_snap.org_code[1] ||
+		    llc.llc_snap.org_code[2] ||
+		    llc.llc_snap.ether_type != htons(ETHERTYPE_IP))
+			goto dropit;
+		
+		hassnap = 1;
+	}
+	
+	m_adj(m, sizeof(struct ether_header));
+	if (hassnap)
+		m_adj(m, LLC_SNAPFRAMELEN);
+
+	ip = mtod(m, struct ip *);
+	NTOHS(ip->ip_len);
+	NTOHS(ip->ip_off);
+
+	/* Respect IP_DF */
+	if (ip->ip_off & IP_DF)
+		goto dropit;
+
+	error = ip_fragment(m, ifp);
+	if (error == EMSGSIZE)
+		goto dropit;
+
+	for (m = m0; m; m = m0) {
+		m0 = m->m_nextpkt;
+		m->m_nextpkt = 0;
+		if (error == 0) {
+			if (hassnap) {
+				M_PREPEND(m, LLC_SNAPFRAMELEN, M_DONTWAIT);
+				if (m == NULL) {
+					error = ENOBUFS;
+					continue;
+				}
+				bcopy(&llc, mtod(m, caddr_t),
+				    LLC_SNAPFRAMELEN);
+			}
+			M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
+			if (m == NULL) {
+				error = ENOBUFS;
+				continue;
+			}
+			len = m->m_pkthdr.len;
+			bcopy(eh, mtod(m, caddr_t), sizeof(*eh));
+			s = splimp();
+			IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+			if (error) {
+				sc->sc_if.if_oerrors++;
+				splx(s);
+				continue;
+			}
+			sc->sc_if.if_opackets++;
+			sc->sc_if.if_obytes += len;
+			ifp->if_obytes += len;
+			if (mflags & M_MCAST)
+				ifp->if_omcasts++;
+			if ((ifp->if_flags & IFF_OACTIVE) == 0)
+				(*ifp->if_start)(ifp);
+			splx(s);
+			
+		} else
+			m_freem(m);
+	}
+	
+	if (error == 0)
+		ipstat.ips_fragmented++;
+	
+	return;
+#endif /* INET */	
+ dropit:
+	if (m != NULL)
+		m_freem(m);
+}
