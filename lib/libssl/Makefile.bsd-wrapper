@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.21 2000/04/04 03:23:02 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.22 2000/04/16 05:00:06 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -59,6 +59,8 @@ MANALL=	ssl.cat3 SSL_get_error.cat3 \
 	ERR_print_errors.cat3 ERR_put_error.cat3 rsa.cat3 \
 	ERR_remove_state.cat3 SHA1.cat3 EVP_DigestInit.cat3 \
 	EVP_EncryptInit.cat3 BUF_MEM_new.cat3 \
+	EVP_OpenInit.cat3 EVP_SealInit.cat3 \
+	EVP_SignInit.cat3 EVP_VerifyInit.cat3 \
 	\
 	openssl.cat1 \
 	\
@@ -347,6 +349,15 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_CTX_cipher.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_param_to_asn1.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_asn1_to_param.3 \
+	EVP_OpenInit.3 EVP_OpenUpdate.3 \
+	EVP_OpenInit.3 EVP_OpenFinal.3 \
+	EVP_SealInit.3 EVP_SealUpdate.3 \
+	EVP_SealInit.3 EVP_SealFinal.3 \
+	EVP_SignInit.3 EVP_SignUpdate.3 \
+	EVP_SignInit.3 EVP_SignFinal.3 \
+	EVP_SignInit.3 EVP_PKEY_size.3 \
+	EVP_VerifyInit.3 EVP_VerifyUpdate.3 \
+	EVP_VerifyInit.3 EVP_VerifyFinal.3 \
 	RSA_print.3 RSA_print_fp.3 \
 	RSA_print.3 DSAparams_print.3 \
 	RSA_print.3 DSAparams_print_fp.3 \
