@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.30 2004/12/14 01:59:07 mickey Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.31 2004/12/14 13:41:01 mickey Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -160,5 +160,8 @@
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */
+
+#define	SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)
+#define	SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)
 
 #endif /* !_SYS_SOCKIO_H_ */

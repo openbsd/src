@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.17 2004/11/16 20:07:56 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.18 2004/12/14 13:41:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -226,8 +226,6 @@ struct pfsyncreq {
 	int		 pfsyncr_maxupdates;
 	int		 pfsyncr_authlevel;
 };
-#define SIOCSETPFSYNC	_IOW('i', 247, struct ifreq)
-#define SIOCGETPFSYNC	_IOWR('i', 248, struct ifreq)
 
 
 #define pf_state_peer_hton(s,d) do {		\
