@@ -71,7 +71,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.115 2004/06/21 17:36:31 avsm Exp $");
+RCSID("$OpenBSD: scp.c,v 1.116 2004/07/08 12:47:21 dtucker Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -936,14 +936,18 @@ bad:			run_err("%s: %s", np, strerror(errno));
 		}
 		if (pflag) {
 			if (exists || omode != mode)
-				if (fchmod(ofd, omode))
+				if (fchmod(ofd, omode)) {
 					run_err("%s: set mode: %s",
 					    np, strerror(errno));
+					wrerr = DISPLAYED;
+				}
 		} else {
 			if (!exists && omode != mode)
-				if (fchmod(ofd, omode & ~mask))
+				if (fchmod(ofd, omode & ~mask)) {
 					run_err("%s: set mode: %s",
 					    np, strerror(errno));
+					wrerr = DISPLAYED;
+				}
 		}
 		if (close(ofd) == -1) {
 			wrerr = YES;
