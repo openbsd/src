@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.31 2004/11/04 15:51:44 pedro Exp $
+#	$OpenBSD: inter.phone,v 1.32 2004/12/02 21:48:30 jmc Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -9269,10 +9269,7 @@
 44:996:Broadband Services:United Kingdom
 44:997:Broadband Services:United Kingdom
 44:998:Broadband Services:United Kingdom
-45:3:Copenhagen:Denmark
-45:6:Aarhus:Denmark
-45:8:Aalborg:Denmark
-45:9:Odense:Denmark
+45:::Denmark
 46:11:Norrkoping (Norrköping):Sweden
 46:120:Atvidaberg (Åtvidaberg):Sweden
 46:121:Soderkoping (Söderköping):Sweden
