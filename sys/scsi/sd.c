@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.54 2002/08/12 06:59:46 fgsch Exp $	*/
+/*	$OpenBSD: sd.c,v 1.55 2002/09/04 23:07:28 tdeval Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -129,6 +129,10 @@ struct scsi_inquiry_pattern sd_patterns[] = {
 	 "",         "",                 ""},
 	{T_DIRECT, T_REMOV,
 	 "",         "",                 ""},
+	{T_RDIRECT, T_FIXED,
+	 "",         "",                 ""},
+	{T_RDIRECT, T_REMOV,
+	 "",         "",                 ""},
 	{T_OPTICAL, T_FIXED,
 	 "",         "",                 ""},
 	{T_OPTICAL, T_REMOV,
@@ -196,6 +200,9 @@ sdattach(parent, self, aux)
 	} else {
 		sd->sc_ops = &sd_scsibus_ops;
 	}
+
+	if (!(sc_link->inquiry_flags & SID_RelAdr))
+		sc_link->quirks |= SDEV_NOCDB6;
 
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.67 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.68 2002/09/04 23:07:28 tdeval Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -730,6 +730,9 @@ scsibusprint(aux, pnp)
 		case T_ENCLOSURE:
 			dtype = "enclosure services";
 			break;
+		case T_RDIRECT:
+			dtype = "simplified direct";
+			break;
 		case T_NODEVICE:
 			panic("scsibusprint: impossible device type");
 		default:
@@ -903,6 +906,7 @@ scsi_probedev(scsi, target, lun)
 		case T_OPTICAL:
 		case T_CHANGER:
 		case T_COMM:
+		case T_RDIRECT:
 		default:
 			break;
 		case T_NODEVICE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.3 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.4 2002/09/04 23:07:28 tdeval Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -177,6 +177,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	int flags;
 {
 	struct sd_scsibus_mode_sense_data scsi_sense;
+	union scsi_disk_pages *sense_pages;
 	u_long sectors;
 	int page;
 	int error;
@@ -192,13 +193,17 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	if ((error = sd_scsibus_mode_sense(sd, &scsi_sense, page = 4,
 	    flags)) == 0) {
+		sense_pages = (union scsi_disk_pages *)
+		    ((char *)&scsi_sense.blk_desc +
+		     (size_t)scsi_sense.header.blk_desc_len);
 		SC_DEBUG(sd->sc_link, SDEV_DB3,
-		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
-		    _3btol(scsi_sense.pages.rigid_geometry.ncyl),
-		    scsi_sense.pages.rigid_geometry.nheads,
-		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_wp),
-		    _2btol(scsi_sense.pages.rigid_geometry.st_cyl_rwc),
-		    _2btol(scsi_sense.pages.rigid_geometry.land_zone)));
+		    ("%d cyls, %d heads, %d precomp, %d red_write,"
+		     " %d land_zone\n",
+		    _3btol(sense_pages->rigid_geometry.ncyl),
+		    sense_pages->rigid_geometry.nheads,
+		    _2btol(sense_pages->rigid_geometry.st_cyl_wp),
+		    _2btol(sense_pages->rigid_geometry.st_cyl_rwc),
+		    _2btol(sense_pages->rigid_geometry.land_zone)));
 
 		/*
 		 * KLUDGE!! (for zone recorded disks)
@@ -206,9 +211,12 @@ sd_scsibus_get_parms(sd, dp, flags)
 		 * is <= disk_size
 		 * can lead to wasted space! THINK ABOUT THIS !
 		 */
-		dp->heads = scsi_sense.pages.rigid_geometry.nheads;
-		dp->cyls = _3btol(scsi_sense.pages.rigid_geometry.ncyl);
-		dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
+		dp->heads = sense_pages->rigid_geometry.nheads;
+		dp->cyls = _3btol(sense_pages->rigid_geometry.ncyl);
+		if (scsi_sense.header.blk_desc_len >= 8)
+			dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
+		else
+			dp->blksize = 0;
 
 		if (dp->heads == 0 || dp->cyls == 0)
 			goto fake_it;
@@ -226,12 +234,46 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	if ((error = sd_scsibus_mode_sense(sd, &scsi_sense, page = 5,
 	    flags)) == 0) {
-		dp->heads = scsi_sense.pages.flex_geometry.nheads;
-		dp->cyls = _2btol(scsi_sense.pages.flex_geometry.ncyl);
-		dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
-		dp->sectors = scsi_sense.pages.flex_geometry.ph_sec_tr;
+		sense_pages = (union scsi_disk_pages *)
+		    ((char *)&scsi_sense.blk_desc +
+		     (size_t)scsi_sense.header.blk_desc_len);
+		dp->heads = sense_pages->flex_geometry.nheads;
+		dp->cyls = _2btol(sense_pages->flex_geometry.ncyl);
+		if (scsi_sense.header.blk_desc_len >= 8)
+			dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
+		else
+			dp->blksize =
+			    _2btol(sense_pages->reduced_geometry.bytes_s);
+		dp->sectors = sense_pages->flex_geometry.ph_sec_tr;
 		dp->disksize = dp->heads * dp->cyls * dp->sectors;
 		if (dp->disksize == 0)
+			goto fake_it;
+
+		if (dp->blksize == 0)
+			dp->blksize = 512;
+
+		return (SDGP_RESULT_OK);
+	}
+
+	/* T_RDIRECT define page 6. */
+	if ((error = sd_scsibus_mode_sense(sd, &scsi_sense, page = 6,
+	    flags)) == 0) {
+		sense_pages = (union scsi_disk_pages *)
+		    ((char *)&scsi_sense.blk_desc +
+		     (size_t)scsi_sense.header.blk_desc_len);
+		dp->heads = 64;
+		dp->sectors = 32;
+		dp->disksize =
+		    _4btol(sense_pages->reduced_geometry.sectors+1);
+		dp->cyls = dp->disksize / (64 * 32);
+		if (scsi_sense.header.blk_desc_len >= 8)
+			dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
+		else
+			dp->blksize =
+			    _2btol(sense_pages->reduced_geometry.bytes_s);
+
+		if (dp->disksize == 0 ||
+		    sense_pages->reduced_geometry.sectors[0] != 0)
 			goto fake_it;
 
 		if (dp->blksize == 0)
