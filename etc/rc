@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.177 2001/07/03 03:28:19 deraadt Exp $
+#	$OpenBSD: rc,v 1.178 2001/07/04 06:34:19 mickey Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -524,6 +524,17 @@ if [ X"${sshd_flags}" != X"NO" ]; then
 fi
 
 echo '.'
+
+if [ -f /etc/wsconsctl.conf ]; then
+(
+	# delete comments and blank lines
+	set -- `stripcom /etc/wsconsctl.conf`
+	while [ $# -ge 1 ] ; do
+		wsconsctl -w $1
+		shift
+	done
+)
+fi
 
 if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
 	kbd `cat /etc/kbdtype`
