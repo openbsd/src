@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $	*/
+/*	$OpenBSD: inout.c,v 1.3 2003/09/19 19:06:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: inout.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: inout.c,v 1.3 2003/09/19 19:06:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -243,6 +243,7 @@ static char *
 get_digit(u_long num, int digits, u_int base)
 {
 	char *p;
+
 	if (base <= 16) {
 		p = bmalloc(2);
 		p[0] = num >= 10 ? num + 'A' - 10 : num + '0';
