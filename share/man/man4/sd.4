@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sd.4,v 1.12 2003/11/09 16:06:07 jmc Exp $
+.\"	$OpenBSD: sd.4,v 1.13 2004/04/28 16:59:00 grange Exp $
 .\"	$NetBSD: sd.4,v 1.3 1996/10/20 23:15:23 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -46,11 +46,8 @@ It allows the disk to be divided up into a set of pseudo devices called
 In general the interfaces are similar to those described by
 .Xr wd 4 .
 .Pp
-Where the
-.Xr wd 4
-device has a fairly low level interface to the system,
 .Tn SCSI
-devices have a much higher level interface and talk to the system via
+devices have a fairly high level interface to the system and talk to it via
 a
 .Tn SCSI
 host adapter
