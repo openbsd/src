@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.59 1999/11/29 20:17:09 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.60 1999/12/01 06:33:24 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -265,9 +265,6 @@ main(argc, argv, envp)
 
 	tzset();	/* in case no timezone database in ~ftp */
 
-	/* set this here so klogin can use it... */
-	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
-
 	while ((ch = getopt(argc, argv, argstr)) != -1) {
 		switch (ch) {
 		case 'A':
@@ -427,6 +424,9 @@ main(argc, argv, envp)
 			exit(1);
 		}
 	}
+
+	/* set this here so klogin can use it... */
+	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
 	(void) signal(SIGHUP, sigquit);
 	(void) signal(SIGINT, sigquit);
