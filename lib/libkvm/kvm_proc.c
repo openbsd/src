@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.21 2004/01/07 03:47:46 millert Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.22 2004/06/13 23:01:09 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.21 2004/01/07 03:47:46 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.22 2004/06/13 23:01:09 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -545,7 +545,9 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2p->p_pctcpu = kp->kp_proc.p_pctcpu;
 			kp2p->p_swtime = kp->kp_proc.p_swtime;
 			kp2p->p_slptime = kp->kp_proc.p_slptime;
+#if 0
 			kp2p->p_schedflags = kp->kp_proc.p_schedflags;
+#endif
 
 			kp2p->p_uticks = kp->kp_proc.p_uticks;
 			kp2p->p_sticks = kp->kp_proc.p_sticks;
