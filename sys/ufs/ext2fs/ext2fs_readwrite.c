@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.3 1997/06/12 21:09:34 downsj Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.4 1998/03/01 08:07:09 niklas Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.1 1997/06/11 09:34:01 bouyer Exp $	*/
 
 /*-
@@ -268,12 +268,12 @@ ext2fs_write(v)
 			uiomove((char *)bp->b_data + blkoffset, (int)xfersize, uio);
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
-		else if (xfersize + blkoffset == fs->e2fs_bsize)
+		else if (xfersize + blkoffset == fs->e2fs_bsize) {
 			if (doclusterwrite)
 				cluster_write(bp, ip->i_e2fs_size);
 			else
 				bawrite(bp);
-		else
+		} else
 			bdwrite(bp);
 		if (error || xfersize == 0)
 			break;
