@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.76 1999/03/05 16:32:49 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.77 1999/03/10 23:22:19 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.76 1999/03/05 16:32:49 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.77 1999/03/10 23:22:19 marc Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -558,6 +558,11 @@ CIPHERS=		${SHA1}.SHA1 ${RMD160}.RMD160 ${MD5}.MD5
 PREFERRED_CIPHERS?= ${CIPHERS}
 
 PORTPATH?= /usr/bin:/bin:/usr/sbin:/sbin:${LOCALBASE}/bin:${X11BASE}/bin
+
+# Add any COPTS to CFLAGS.  Note: programs that use imake do not
+# use CFLAGS!  Also, many (most?) ports hard code CFLAGS, ignoring
+# what we pass in.
+CFLAGS+=		${COPTS}
 
 MAKE_FLAGS?=	-f
 MAKEFILE?=		Makefile
