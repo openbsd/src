@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.4 1999/02/17 22:58:05 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.5 1999/11/16 16:44:04 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -32,7 +32,7 @@
 #define	__LDPGSZ	4096
 
 #define ELF_TARG_CLASS          ELFCLASS32
-#define ELF_TARG_DATA           ELFDATA2LSB
+#define ELF_TARG_DATA           ELFDATA2MSB
 #define ELF_TARG_MACH           EM_PARISC   
 
 /* #define _NLIST_DO_AOUT */
