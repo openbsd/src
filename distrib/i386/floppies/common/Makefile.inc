@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 1999/08/06 20:49:08 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 1999/08/07 18:05:33 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -25,6 +25,7 @@ PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
 LISTFLOPPY=	${.CURDIR}/../common/list_floppy
 FLOPPYSIZE?=	144
+FLOPPYSECS?=	18
 FLOPPYTYPE?=	floppy3
 
 all:	${FS}
@@ -37,7 +38,7 @@ ${FS}:	bsd.gz
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
-	/usr/mdec/installboot -v -s 18 -h 2 ${MOUNT_POINT}/boot \
+	/usr/mdec/installboot -v -s ${FLOPPYSECS} -h 2 ${MOUNT_POINT}/boot \
 	    ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
 	@echo ""
 	@df -i ${MOUNT_POINT}
