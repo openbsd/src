@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.86 2000/12/27 12:30:20 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.87 2000/12/28 14:25:03 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -597,12 +597,11 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		} else if (options.strict_host_key_checking == 2) {
 			/* The default */
 			char prompt[1024];
-			char *fp = key_fingerprint(host_key);
 			snprintf(prompt, sizeof(prompt),
 			    "The authenticity of host '%.200s (%s)' can't be established.\n"
 			    "%s key fingerprint is %s.\n"
 			    "Are you sure you want to continue connecting (yes/no)? ",
-			    host, ip, type, fp);
+			    host, ip, type, key_fingerprint(host_key));
 			if (!read_yes_or_no(prompt, -1))
 				fatal("Aborted by user!\n");
 		}
@@ -647,9 +646,11 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		error("IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!");
 		error("Someone could be eavesdropping on you right now (man-in-the-middle attack)!");
 		error("It is also possible that the %s host key has just been changed.", type);
+		error("The fingerprint for the %s key sent by the remote host is\n%s.",
+		    type, key_fingerprint(host_key));
 		error("Please contact your system administrator.");
 		error("Add correct host key in %.100s to get rid of this message.",
-		      user_hostfile);
+		    user_hostfile);
 		error("Offending key in %s:%d", host_file, host_line);
 
 		/*
