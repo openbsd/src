@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 2002/04/21 23:43:40 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.10 2002/04/23 08:04:14 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -137,7 +137,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched;
+int want_resched;
 #define	need_resched()	{ want_resched = 1; aston(); }
 
 /*
@@ -153,7 +153,7 @@ extern int want_resched;
  */
 #define	signotify(p)	aston()
 
-extern int astpending;
+int astpending;
 #define aston() (astpending = 1)
 
 extern	char *intiobase, *intiolimit;
