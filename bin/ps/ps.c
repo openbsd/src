@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.12 1999/06/21 20:47:59 art Exp $	*/
+/*	$OpenBSD: ps.c,v 1.13 2000/04/16 02:19:55 ericj Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.12 1999/06/21 20:47:59 art Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.13 2000/04/16 02:19:55 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ main(argc, argv)
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
-	    "acCeghjLlM:mN:O:o:p:rSTt:U:uvW:wx")) != EOF)
+	    "acCeghjLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
 		switch((char)ch) {
 		case 'a':
 			all = 1;
