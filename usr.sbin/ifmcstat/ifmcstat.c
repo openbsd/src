@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifmcstat.c,v 1.1 1999/12/08 12:34:24 itojun Exp $	*/
+/*	$OpenBSD: ifmcstat.c,v 1.2 2000/02/26 08:15:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -60,11 +60,17 @@
 #include <netinet/in_var.h>
 #include <arpa/inet.h>
 
+#include <netdb.h>
+
 kvm_t	*kvmd;
 
 struct	nlist nl[] = {
 #define	N_IFNET	0
 	{ "_ifnet" },
+#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
+#define N_IN6_MK 1
+	{ "_in6_mk" },
+#endif
 	{ "" },
 };
 
@@ -91,14 +97,43 @@ static char *ether_ntoa __P((struct ether_addr *));
 #define	KREAD(addr, buf, type) \
 	kread((u_long)addr, (void *)buf, sizeof(type))
 
+#ifdef N_IN6_MK
+struct multi6_kludge {
+	LIST_ENTRY(multi6_kludge) mk_entry;
+	struct ifnet *mk_ifp;
+	struct in6_multihead mk_head;
+};
+#endif
+
 const char *inet6_n2a(p)
 	struct in6_addr *p;
 {
-	static char buf[BUFSIZ];
+	static char buf[NI_MAXHOST];
+	struct sockaddr_in6 sin6;
+	u_int32_t scopeid;
+#ifdef NI_WITHSCOPEID
+	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST;
+#endif
 
-	if (IN6_IS_ADDR_UNSPECIFIED(p))
-		return "*";
-	return inet_ntop(AF_INET6, (void *)p, buf, sizeof(buf));
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(struct sockaddr_in6);
+	sin6.sin6_addr = *p;
+	if (IN6_IS_ADDR_LINKLOCAL(p) || IN6_IS_ADDR_MC_LINKLOCAL(p)) {
+		scopeid = ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
+		if (scopeid) {
+			sin6.sin6_scope_id = scopeid;
+			sin6.sin6_addr.s6_addr[2] = 0;
+			sin6.sin6_addr.s6_addr[3] = 0;
+		}
+	}
+	if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+			buf, sizeof(buf), NULL, 0, niflags) == 0)
+		return buf;
+	else
+		return "(invalid)";
 }
 
 int main()
@@ -179,9 +214,13 @@ char *ifname(ifp)
 	struct ifnet *ifp;
 {
 	static char buf[BUFSIZ];
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	struct ifnet ifnet;
+#endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	KREAD(ifp->if_xname, buf, IFNAMSIZ);
+	KREAD(ifp, &ifnet, struct ifnet);
+	strncpy(buf, ifnet.if_xname, BUFSIZ);
 #else
 	KREAD(ifp->if_name, buf, IFNAMSIZ);
 #endif
@@ -225,18 +264,13 @@ void
 if6_addrlist(ifap)
 	struct ifaddr *ifap;
 {
-	static char in6buf[BUFSIZ];
 	struct ifaddr ifa;
 	struct sockaddr sa;
 	struct in6_ifaddr if6a;
 	struct in6_multi *mc = 0;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	struct ifaddr *ifap0;
-#endif /* __FreeBSD__ >= 3 */
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	ifap0 = ifap;
-#endif /* __FreeBSD__ >= 3 */
 	while (ifap) {
 		KREAD(ifap, &ifa, struct ifaddr);
 		if (ifa.ifa_addr == NULL)
@@ -245,10 +279,7 @@ if6_addrlist(ifap)
 		if (sa.sa_family != PF_INET6)
 			goto nextifap;
 		KREAD(ifap, &if6a, struct in6_ifaddr);
-		printf("\tinet6 %s\n",
-		       inet_ntop(AF_INET6,
-				 (const void *)&if6a.ia_addr.sin6_addr,
-				 in6buf, sizeof(in6buf)));
+		printf("\tinet6 %s\n", inet6_n2a(&if6a.ia_addr.sin6_addr));
 #if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		mc = mc ? mc : if6a.ia6_multiaddrs.lh_first;
 #endif
@@ -297,19 +328,40 @@ if6_addrlist(ifap)
 	if (mc)
 		in6_multilist(mc);
 #endif
+#ifdef N_IN6_MK
+	if (nl[N_IN6_MK].n_value != 0) {
+		LIST_HEAD(in6_mktype, multi6_kludge) in6_mk;
+		struct multi6_kludge *mkp, mk;
+		char *nam;
+
+		KREAD(nl[N_IN6_MK].n_value, &in6_mk, struct in6_mktype);
+		KREAD(ifap0, &ifa, struct ifaddr);
+
+		nam = strdup(ifname(ifa.ifa_ifp));
+
+		for (mkp = in6_mk.lh_first; mkp; mkp = mk.mk_entry.le_next) {
+			KREAD(mkp, &mk, struct multi6_kludge);
+			if (strcmp(nam, ifname(mk.mk_ifp)) == 0 &&
+			    mk.mk_head.lh_first) {
+				printf("\t(on kludge entry for %s)\n", nam);
+				in6_multilist(mk.mk_head.lh_first);
+			}
+		}
+
+		free(nam);
+	}
+#endif
 }
 
 struct in6_multi *
 in6_multientry(mc)
 	struct in6_multi *mc;
 {
-	static char mcbuf[BUFSIZ];
 	struct in6_multi multi;
 
 	KREAD(mc, &multi, struct in6_multi);
-	printf("\t\tgroup %s\n", inet_ntop(AF_INET6,
-					   (const void *)&multi.in6m_addr,
-					   mcbuf, sizeof(mcbuf)));
+	printf("\t\tgroup %s", inet6_n2a(&multi.in6m_addr));
+	printf(" refcnt %u\n", multi.in6m_refcount);
 	return(multi.in6m_entry.le_next);
 }
 
