@@ -5,7 +5,7 @@ ENTRY(_start)
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
-  . = 0x80800000 + SIZEOF_HEADERS;
+  . = 0x80100000 + SIZEOF_HEADERS;
   .text      :
   {
     _ftext = . ;
