@@ -33,8 +33,8 @@
  *	@(#)curses.h	8.4 (Berkeley) 8/10/94
  */
 
-#ifndef _CURSES_H_
-#define	_CURSES_H_
+#ifndef _OCURSES_H_
+#define	_OCURSES_H_
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
@@ -338,4 +338,4 @@ char	*tgoto __P((char *, int, int));
 void	 tputs __P((char *, int, void (*)(int)));
 __END_DECLS
 
-#endif /* !_CURSES_H_ */
+#endif /* !_OCURSES_H_ */
