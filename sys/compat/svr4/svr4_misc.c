@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.6 1996/08/03 15:29:32 deraadt Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.7 1997/01/27 01:16:51 deraadt Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.36 1996/03/30 22:38:02 christos Exp $	 */
 
 /*
@@ -906,42 +906,43 @@ svr4_setinfo(p, st, s)
 
 	bzero(&i, sizeof(i));
 
-	i.si_signo = SVR4_SIGCHLD;
-	i.si_errno = 0;	/* XXX? */
+	i.svr4_si_signo = SVR4_SIGCHLD;
+	i.svr4_si_errno = 0;	/* XXX? */
 
 	if (p) {
-		i.si_pid = p->p_pid;
+		i.svr4_si_pid = p->p_pid;
 		if (p->p_stat == SZOMB) {
-			i.si_stime = p->p_ru->ru_stime.tv_sec;
-			i.si_utime = p->p_ru->ru_utime.tv_sec;
+			i.svr4_si_stime = p->p_ru->ru_stime.tv_sec;
+			i.svr4_si_utime = p->p_ru->ru_utime.tv_sec;
 		} else {
-			i.si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
-			i.si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
+			i.svr4_si_stime = p->p_stats->p_ru.ru_stime.tv_sec;
+			i.svr4_si_utime = p->p_stats->p_ru.ru_utime.tv_sec;
 		}
 	}
 
 	if (WIFEXITED(st)) {
-		i.si_status = WEXITSTATUS(st);
-		i.si_code = SVR4_CLD_EXITED;
+		i.svr4_si_status = WEXITSTATUS(st);
+		i.svr4_si_code = SVR4_CLD_EXITED;
 	}
 	else if (WIFSTOPPED(st)) {
-		i.si_status = bsd_to_svr4_sig[WSTOPSIG(st)];
+		i.svr4_si_status = bsd_to_svr4_sig[WSTOPSIG(st)];
 
-		if (i.si_status == SVR4_SIGCONT)
-			i.si_code = SVR4_CLD_CONTINUED;
+		if (i.svr4_si_status == SVR4_SIGCONT)
+			i.svr4_si_code = SVR4_CLD_CONTINUED;
 		else
-			i.si_code = SVR4_CLD_STOPPED;
+			i.svr4_si_code = SVR4_CLD_STOPPED;
 	} else {
-		i.si_status = bsd_to_svr4_sig[WTERMSIG(st)];
+		i.svr4_si_status = bsd_to_svr4_sig[WTERMSIG(st)];
 
 		if (WCOREDUMP(st))
-			i.si_code = SVR4_CLD_DUMPED;
+			i.svr4_si_code = SVR4_CLD_DUMPED;
 		else
-			i.si_code = SVR4_CLD_KILLED;
+			i.svr4_si_code = SVR4_CLD_KILLED;
 	}
 
 	DPRINTF(("siginfo [pid %ld signo %d code %d errno %d status %d]\n",
-		 i.si_pid, i.si_signo, i.si_code, i.si_errno, i.si_status));
+		 i.svr4_si_pid, i.svr4_si_signo, i.svr4_si_code,
+		 i.svr4_si_errno, i.svr4_si_status));
 
 	return copyout(&i, s, sizeof(i));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_siginfo.h,v 1.2 1996/08/02 20:35:40 niklas Exp $	 */
+/*	$OpenBSD: svr4_siginfo.h,v 1.3 1997/01/27 01:16:52 deraadt Exp $	 */
 /*	$NetBSD: svr4_siginfo.h,v 1.2 1995/07/04 19:47:05 christos Exp $	 */
 
 /*
@@ -96,16 +96,16 @@ typedef union svr4_siginfo {
 	} _info;
 } svr4_siginfo_t;
 
-#define	si_signo	_info._signo
-#define	si_code		_info._code
-#define	si_errno	_info._errno
+#define	svr4_si_signo	_info._signo
+#define	svr4_si_code	_info._code
+#define	svr4_si_errno	_info._errno
 
-#define si_pid		_info._reason._child._pid
-#define si_stime	_info._reason._child._stime
-#define si_status	_info._reason._child._status
-#define si_utime	_info._reason._child._utime
+#define svr4_si_pid	_info._reason._child._pid
+#define svr4_si_stime	_info._reason._child._stime
+#define svr4_si_status	_info._reason._child._status
+#define svr4_si_utime	_info._reason._child._utime
 
-#define si_addr		_info._reason._fault._addr
-#define si_trap		_info._reason._fault._trap
+#define svr4_si_addr	_info._reason._fault._addr
+#define svr4_si_trap	_info._reason._fault._trap
 
 #endif /* !_SVR4_SIGINFO_H_ */
