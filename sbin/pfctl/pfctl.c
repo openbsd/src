@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.159 2003/03/10 13:28:00 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.160 2003/03/11 11:53:28 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -499,7 +499,7 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 		}
 		printf("]\n");
 
-		printf("[ Queue: qname=%s qid=%d pqname=%s pqid=%d ]\n",
+		printf("[ queue: qname=%s qid=%u pqname=%s pqid=%u ]\n",
 		    rule->qname, rule->qid, rule->pqname, rule->pqid);
 	}
 	if (opts & PF_OPT_VERBOSE)
