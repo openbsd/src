@@ -1,4 +1,4 @@
-/*	$OpenBSD: isesreg.h,v 1.2 2001/06/04 13:07:19 ho Exp $ $	*/
+/*	$OpenBSD: isesreg.h,v 1.3 2001/06/23 23:29:47 ho Exp $ $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -33,12 +33,30 @@
  * Definitions from revision 1.6 of the product datasheet.
  */
 
-/* DMA offsets */
-#define ISES_DMA_WRITE_COUNT	0x0100
-#define ISES_DMA_READ_COUNT	0x0102
+/* 
+ * PCC-ISES Evaluation board DMA offsets 
+ */
+#define ISES_DMA_READ_COUNT	0x0100		/* bit 31-16 */
+#define ISES_DMA_RCOUNT(x)	((x) << 16)
+#define ISES_DMA_WRITE_COUNT	0x0100		/* bit 15-0  */
+#define ISES_DMA_WCOUNT(x)	((x) & 0x00FF)
+
 #define ISES_DMA_WRITE_START	0x0104
 #define ISES_DMA_READ_START	0x0108
-#define ISES_DMA_STATUS		0x010c
+#define ISES_DMA_CTRL		0x010C
+#define ISES_DMA_STATUS		ISES_DMA_CTRL
+#define ISES_DMA_RESET		0x0110
+
+#define ISES_DMA_CTRL_ILT	0x40000000	/* Ignore Latency Timer */
+#define ISES_DMA_CTRL_RMULT	0x0D000000	/* Enable PCI Read Multiple */
+#define ISES_DMA_CTRL_RLINE	0x09000000	/* Enable PCI Read Line */
+#define ISES_DMA_CTRL_READ	0x01000000	/* Enable PCI Read */
+#define ISES_DMA_CTRL_WRITE	0x00000100	/* Enable PCI Write */
+
+#define ISES_DMA_STATUS_R_RUN	0x01000000	/* PCI Read running */
+#define ISES_DMA_STATUS_R_ERR	0x02000000	/* PCI Read error */
+#define ISES_DMA_STATUS_W_RUN	0x00000100	/* PCI Write running */
+#define ISES_DMA_STATUS_W_ERR	0x00000200	/* PCI Write error */
 
 /* 
  * PCC-ISES A-interface 
