@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.24 2001/03/11 08:41:28 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.25 2001/03/17 18:54:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -50,7 +50,7 @@
  * without an NDA (if at all). What they do release is an API library
  * called the HCF (Hardware Control Functions) which is supposed to
  * do the device-specific operations of a device driver for you. The
- * publically available version of the HCF library (the 'HCF Light') is
+ * publically available version of the HCF library (the 'HCF Light') is 
  * a) extremely gross, b) lacks certain features, particularly support
  * for 802.11 frames, and c) is contaminated by the GNU Public License.
  *
@@ -133,7 +133,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.24 2001/03/11 08:41:28 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.25 2001/03/17 18:54:52 deraadt Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -187,7 +187,7 @@ wi_pcmcia_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
-
+	
 	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
 		return (0);
 
@@ -665,7 +665,7 @@ wi_cmd(sc, cmd, val)
 	CSR_WRITE_2(sc, WI_PARAM0, val);
 	CSR_WRITE_2(sc, WI_COMMAND, cmd);
 
-	for (i = WI_TIMEOUT; i--; DELAY(10)) {
+	for (i = 0; i < WI_TIMEOUT; i++) {
 		/*
 		 * Wait for 'command complete' bit to be
 		 * set in the event status register.
@@ -685,7 +685,7 @@ wi_cmd(sc, cmd, val)
 		}
 	}
 
-	if (i < 0)
+	if (i == WI_TIMEOUT)
 		return(ETIMEDOUT);
 
 	return(0);
@@ -803,11 +803,12 @@ wi_seek(sc, id, off, chan)
 	CSR_WRITE_2(sc, selreg, id);
 	CSR_WRITE_2(sc, offreg, off);
 
-	for (i = WI_TIMEOUT; i--; DELAY(10))
+	for (i = 0; i < WI_TIMEOUT; i++) {
 		if (!(CSR_READ_2(sc, offreg) & (WI_OFF_BUSY|WI_OFF_ERR)))
 			break;
+	}
 
-	if (i < 0)
+	if (i == WI_TIMEOUT)
 		return(ETIMEDOUT);
 
 	return(0);
@@ -899,12 +900,12 @@ wi_alloc_nicmem(sc, len, id)
 		return(ENOMEM);
 	}
 
-	for (i = WI_TIMEOUT; i--; DELAY(10)) {
+	for (i = 0; i < WI_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, WI_EVENT_STAT) & WI_EV_ALLOC)
 			break;
 	}
 
-	if (i < 0)
+	if (i == WI_TIMEOUT)
 		return(ETIMEDOUT);
 
 	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_ALLOC);
@@ -982,7 +983,7 @@ wi_setdef(sc, wreq)
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 		bcopy((char *)&wreq->wi_val, LLADDR(sdl), ETHER_ADDR_LEN);
 		bcopy((char *)&wreq->wi_val, (char *)&sc->arpcom.ac_enaddr,
-		    ETHER_ADDR_LEN);
+		      ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
 		sc->wi_ptype = wreq->wi_val[0];
@@ -1067,7 +1068,7 @@ wi_ioctl(ifp, command, data)
 	}
 
 	DPRINTF (WID_IOCTL, ("wi_ioctl: command %lu data %p\n",
-	    command, data));
+			     command, data));
 
 	if ((error = ether_ioctl(ifp, &sc->arpcom, command, data)) > 0) {
 		splx(s);
@@ -1127,7 +1128,7 @@ wi_ioctl(ifp, command, data)
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
+                         * accordingly.
 			 */
 			wi_setmulti(sc);
 			error = 0;
@@ -1145,10 +1146,10 @@ wi_ioctl(ifp, command, data)
 			/* For non-root user, return all-zeroes keys */
 			if (suser(p->p_ucred, &p->p_acflag))
 				bzero((char *)&wreq,
-					sizeof(struct wi_ltv_keys));
+			    		sizeof(struct wi_ltv_keys));
 			else
 				bcopy((char *)&sc->wi_keys, (char *)&wreq,
-					sizeof(struct wi_ltv_keys));
+			    		sizeof(struct wi_ltv_keys));
 		} else {
 			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
 				error = EINVAL;
@@ -1429,7 +1430,7 @@ wi_mgmt_xmit(sc, data, len)
 	return(0);
 }
 
-STATIC void
+STATIC void 
 wi_stop(sc)
 	struct wi_softc		*sc;
 {
