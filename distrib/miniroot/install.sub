@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.354 2004/10/02 18:45:08 krw Exp $
+#	$OpenBSD: install.sub,v 1.355 2004/10/12 21:57:07 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -163,6 +163,11 @@ get_dkdevs() {
 
 get_cddevs() {
 	bsort `sed -ne "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}" /var/run/dmesg.boot`
+}
+
+get_tapedevs () {
+	bsort $(egrep "^(ct|mt|st|ts|wt)[[:digit:]]+ " /var/run/dmesg.boot \
+		| sed -e "s/ .*//p" )
 }
 
 get_ifdevs() {
@@ -436,30 +441,20 @@ quit
 __EOT
 }
 
-# Check for the existence of the device nodes for the
-# supplied device name. If they are missing (as indicated
-# by r${1}c not being found) then create them. In either
-# case, return true if the nodes exist and false if not.
+# Create a device.
 #
-# $1 = name of the device that is about to be used.
+# $1 = name of the device to create.
 makedev() {
-	local _dev=$1 _node=/dev/r${1}c
-
-	# If the device node exists, don't need to create it.
-	[[ -c $_node ]] && return 0
+	local _dev=$1
 
 	if [[ ! -r /dev/MAKEDEV ]] ; then
-		echo "No /dev/MAKEDEV. Can't create device nodes for ${_dev}."
+		echo "MAKEDEV not found. Can't create device nodes."
 		return 1
 	fi
 
-	(cd /dev; sh MAKEDEV $_dev)
+	cd /dev ; sh MAKEDEV $_dev || return 1 ; cd - >/dev/null
 
-	# If the device nodes still do not exist, assume MAKEDEV issued a useful
-	# error message and return false.
-	[[ -c $_node ]] || return 1
-
-	DEVSMADE=`addel $_dev $DEVSMADE`
+	DEVSMADE=$(addel $_dev $DEVSMADE)
 }
 
 # Create an entry in the hosts file. If an entry with the
@@ -1153,85 +1148,61 @@ install_nfs() {
 		return
 	fi
 
-	install_mounted_fs /mnt2
+	Install_mounted_fs /mnt2
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
 install_tape() {
-	local _xcmd
+	local _z _bs
 
-	# Get the name of the tape from the user.
-	cat << __EOT
-
-The installation program needs to know which tape device to use. Make
-sure you use a "no rewind on close" device.
-
-__EOT
-	ask_until "Name of tape device?" "${TAPE##*/}"
-	TAPE=/dev/${resp##*/}
-	if [ ! -c $TAPE ]; then
-		echo "$TAPE does not exist or is not a character special file."
+	# Can't use tape without /bin/mt.
+	if [[ ! -x /bin/mt ]]; then
+		echo "/bin/mt not found. Can't $MODE from tape."
 		return
 	fi
-	export TAPE
 
-	# Rewind the tape device
-	echo -n "Rewinding ${TAPE} (mt rewind)..."
-	if ! mt rewind ; then
-		echo "FAILED."
+	# Get the name of the tape device.
+	get_drive "tape drive" "$TAPEDEVS" || return
+	export TAPE=/dev/nr$resp
+	if [[ ! -c $TAPE ]]; then
+		echo "$TAPE is not a character special file."
 		return
 	fi
+
+	# Rewind the tape device.
+	echo -n "Rewinding $TAPE (mt rewind)..."
+	mt rewind || return
 	echo "done."
 
-	# Get the file number
-	resp=
-	while [ -z "$resp" ]; do
-		ask "File number?"
-		case $resp in
-		[1-9]*)	_nskip=$(( $resp - 1 ))
-			;;
-		*)	echo "Invalid file number ${resp}."
-			# force loop to repeat
-			resp=
-			;;
-		esac
-	done
+	# Extract the desired files.
+	while :; do
+		ask_until "Skip how many files? (or 'done')" 0
+		[[ $resp == done ]] && return
+		[[ $resp == +([0-9]) ]] || continue
+		(($resp < 0)) && continue
 
-	# Skip to correct file.
-	if [ $_nskip -ne 0 ]; then
-		echo -n "Skipping to source file (mt fsf ${_nskip})..."
-		if ! mt fsf $_nskip ; then
-			echo "FAILED. Could not skip $_nskip files."
-			return
+		if (($resp > 0)); then
+			echo -n "Skipping $resp file(s)..."
+			mt fsf $resp || return
+			echo "done."
+		elif [[ -n $_bs ]]; then
+			# Dance to start of next file.
+			mt bsf ; mt fsf
 		fi
-		echo "done."
-	fi
 
-cat << __EOT
+		unset _z
+		ask_yn "Is the file gzipped?" yes
+		[[ $resp == y ]] && _z=z
 
-There are 2 different ways the file can be stored on tape:
+		# Get the blocksize to use. If the file isn't gzipped then
+		# default to the 20 x 512 = 10,240 byte tar default.
+		[[ $_z == z ]] || _bs=10240
+		ask_until "Blocksize for this file?" "${_bs:-8k}"
+		[[ $resp == done ]] && return
+		_bs=$resp
 
-1) an image of a gzipped tar file
-2) a standard tar image
-
-__EOT
-
-	resp=
-	while [ -z "$resp" ]; do
-		ask "Which way is it?" 1
-		case $resp in
-		1)	_xcmd="tar zxvphf -"
-			;;
-		2)	_xcmd="tar xvphf -"
-			;;
-		*)	echo "Invalid response: $resp."
-			# force loop to repeat
-			resp=
-			;;
-		esac
-		( cd /mnt; dd if=$TAPE | $_xcmd )
+		dd if=$TAPE bs=$_bs | tar ${_z}xvphf - -C /mnt || return
 	done
-	echo "Extraction complete."
 }
 
 set_timezone() {
@@ -1640,6 +1611,7 @@ dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /var/run/dmesg.boot
 DKDEVS=$(get_dkdevs)
 CDDEVS=$(get_cddevs)
 IFDEVS=$(get_ifdevs)
+TAPEDEVS=$(get_tapedevs)
 SERIALDEV=$(get_serialdev)
 
 # Devices created with makedev().
