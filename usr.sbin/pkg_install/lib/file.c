@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.17 2003/04/19 10:46:16 henning Exp $	*/
+/*	$OpenBSD: file.c,v 1.18 2003/04/25 23:26:17 henning Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.17 2003/04/19 10:46:16 henning Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.18 2003/04/25 23:26:17 henning Exp $";
 #endif
 
 /*
@@ -294,17 +294,8 @@ fileGetURL(char *base, char *spec)
 	       we don't yet need to backup the category and switch to all.
 	     */
 	    cp = strrchr(fname, '/');
-#if 0
-	    if (cp) {
-		*cp = '\0';	/* chop name */
-		cp = strrchr(fname, '/');
-	    }
-#endif
 	    if (cp) {
 		*(cp + 1) = '\0';
-#if 0
-		strcat(cp, "All/");
-#endif
 		strlcat(cp, ensure_tgz(spec), sizeof fname);
 	    }
 	    else
