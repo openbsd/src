@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.2 1996/06/26 09:55:53 maja Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.3 1996/06/27 08:43:06 maja Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -110,7 +110,7 @@ userconf_more()
 			printf("\r            \r");
 		}
 		userconf_cnt++;
-		if (c == 'q' | c == 'Q') quit = 1;
+		if (c == 'q' || c == 'Q') quit = 1;
 	}
 	return(quit);
 }
@@ -230,22 +230,23 @@ int *val;
 	if (*c == '0') {
 		base = 8;
 		c++;
-		if (*c == 'x' || *c == 'X')
+		if (*c == 'x' || *c == 'X') {
 			base = 16;
-		c++;
+			c++;
+		}
 	}
 	while (*c != '\n' & *c != '\t' & *c != ' ' & *c != '\000') {
 		u_char cc = *c;
 
-		if (base > 10) {
-			if (cc >= 'a' && cc <= 'f')
-				cc = cc - 'a' + 10;
-			else if (cc >= 'A' && cc <= 'F')
-				cc = cc - 'A' + 10;
-			else
-				return (-1);
-		} else
+		if (cc >= '0' && cc <= '9')
 			cc = cc - '0';
+		else if (cc >= 'a' && cc <= 'f')
+			cc = cc - 'a' + 10;
+		else if (cc >= 'A' && cc <= 'F')
+			cc = cc - 'A' + 10;
+		else
+			return (-1);
+
 		if (cc > base)
 			return (-1);
 		num = num * base + cc;
@@ -282,7 +283,7 @@ short *unit, *state;
 			c++;
 		};
 	}
-	while(*c == ' ' | *c == '\t' | *c == '\n') c++;
+	while(*c == ' ' || *c == '\t' || *c == '\n') c++;
 
 	if (*c == '\000') {
 		*len = l;
@@ -311,7 +312,7 @@ int  *val;
 		i = getsn(userconf_argbuf,sizeof(userconf_argbuf));
 
 		c = userconf_argbuf;
-		while (*c == ' ' | *c == '\t' | *c == '\n') c++;
+		while (*c == ' ' || *c == '\t' || *c == '\n') c++;
 
 		if (*c != '\000') {
 			if (userconf_number(c,&a) == 0) {
@@ -338,13 +339,13 @@ int devno;
 
 		userconf_pdev(devno);
 
-		while(c != 'y' & c != 'Y' & c != 'n' & c != 'N') {
+		while(c != 'y' && c != 'Y' && c != 'n' && c != 'N') {
 			printf("change (y/n) ?");
 			c = cngetc();
 			printf("\n");
 		}
 
-		if (c == 'y' | c == 'Y') {
+		if (c == 'y' || c == 'Y') {
 			int share = 0, i, *lk;
 			
 			cd = &cfdata[devno];
@@ -591,7 +592,7 @@ char *cmd;
 	while (*c != ' ' & *c != '\t' & *c != '\n' & *c != '\000') {
 		c++; l++;
 	}
-	while (*c == ' ' | *c == '\t' | *c == '\n') {
+	while (*c == ' ' || *c == '\t' || *c == '\n') {
 		c++;
 	}
 	
@@ -647,14 +648,14 @@ char routine;
 			 *  If state == FSTATE_NOTFOUND, look for "dev0"
 			 */
 			if (strncasecmp(dev,cfdata[i].cf_driver->cd_name,
-					len) == 0 &
-			    (state == FSTATE_FOUND |
-			     (state == FSTATE_STAR &
-			      (cfdata[i].cf_fstate == FSTATE_STAR |
-			       cfdata[i].cf_fstate == FSTATE_DSTAR)) |
-			     (state == FSTATE_NOTFOUND &
-			      cfdata[i].cf_unit == unit &
-			      (cfdata[i].cf_fstate == FSTATE_NOTFOUND |
+					len) == 0 &&
+			    (state == FSTATE_FOUND ||
+			     (state == FSTATE_STAR &&
+			      (cfdata[i].cf_fstate == FSTATE_STAR ||
+			       cfdata[i].cf_fstate == FSTATE_DSTAR)) ||
+			     (state == FSTATE_NOTFOUND &&
+			      cfdata[i].cf_unit == unit &&
+			      (cfdata[i].cf_fstate == FSTATE_NOTFOUND ||
 			       cfdata[i].cf_fstate == FSTATE_DNOTFOUND)))) {
 			  	if (userconf_more()) break;
 				switch(routine) {
@@ -700,9 +701,9 @@ char *cmd;
 	short unit, state;
 
 	c = cmd;
-	while (*c == ' ' | *c == '\t') c++;
+	while (*c == ' ' || *c == '\t') c++;
 	v = c;
-	while (*c != ' ' & *c != '\t' & *c != '\n' & *c != '\000') {
+	while (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\000') {
 	  c++; i++;
 	}
 
@@ -716,7 +717,7 @@ char *cmd;
 		j++; j++;
 	}
 
-	while (*c == ' ' | *c == '\t' | *c == '\n') {
+	while (*c == ' ' || *c == '\t' || *c == '\n') {
 		c++;
 	}
 	
@@ -739,7 +740,7 @@ char *cmd;
 			if (*c == '\000') {
 				printf("8|10|16 expected\n");
 			} else if (userconf_number(c,&a) == 0) {
-				if (a == 8 | a == 10 | a == 16) {
+				if (a == 8 || a == 10 || a == 16) {
 					userconf_base = a;
 				} else {
 					printf("8|10|16 expected\n");
