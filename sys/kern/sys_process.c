@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.28 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.29 2005/04/03 20:21:44 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -87,6 +87,9 @@ sys_ptrace(p, v, retval)
 	struct uio uio;
 	struct iovec iov;
 	struct ptrace_io_desc piod;
+#if defined (PT_SETXMMREGS) || defined (PT_GETXMMREGS)
+	struct xmmregs xmmregs;
+#endif
 #ifdef PT_WCOOKIE
 	register_t wcookie;
 #endif
@@ -178,6 +181,12 @@ sys_ptrace(p, v, retval)
 #endif
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
+#endif
+#ifdef PT_GETXMMREGS
+	case  PT_GETXMMREGS:
+#endif
+#ifdef PT_SETXMMREGS
+	case  PT_SETXMMREGS:
 #endif
 #ifdef PT_WCOOKIE
 	case  PT_WCOOKIE:
@@ -431,6 +440,37 @@ sys_ptrace(p, v, retval)
 			uio.uio_procp = p;
 			return (procfs_dofpregs(p, t, NULL, &uio));
 		}
+#endif
+#ifdef PT_SETXMMREGS
+	case  PT_SETXMMREGS:
+		if (!procfs_validfpregs(t, NULL))
+			return (EINVAL);
+
+		if ((error = procfs_checkioperm(p, t)) != 0)
+			return (error);
+
+		error = copyin(SCARG(uap, addr), &xmmregs, sizeof(xmmregs));
+		if (error)
+			return (error);
+		PHOLD(p);
+		error = process_write_xmmregs(t, &xmmregs);
+		PRELE(p);
+		return (error);
+#endif
+#ifdef PT_GETXMMREGS
+	case  PT_GETXMMREGS:
+		if (!procfs_validfpregs(t, NULL))
+			return (EINVAL);
+
+		if ((error = procfs_checkioperm(p, t)) != 0)
+			return (error);
+
+		PHOLD(p);
+		error = process_read_xmmregs(t, &xmmregs);
+		PRELE(p);
+		if (error)
+			return (error);
+		return (copyout(&xmmregs, SCARG(uap, addr), sizeof (xmmregs)));
 #endif
 #ifdef PT_WCOOKIE
 	case  PT_WCOOKIE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.2 2000/08/05 22:07:32 niklas Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.3 2005/04/03 20:21:44 kettenis Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.6 1995/08/06 05:33:23 mycroft Exp $	*/
 
 /*
@@ -39,3 +39,12 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+#define	PT_GETXMMREGS	(PT_FIRSTMACH + 5)
+#define	PT_SETXMMREGS	(PT_FIRSTMACH + 6)
+
+#ifdef _KERNEL
+struct xmmregs;
+
+int 	process_read_xmmregs(struct proc *, struct xmmregs *);
+int	process_write_xmmregs(struct proc *, const struct xmmregs *);
+#endif

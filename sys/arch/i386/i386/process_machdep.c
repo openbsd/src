@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.19 2004/07/20 21:04:37 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.20 2005/04/03 20:21:44 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
 
 static __inline struct trapframe *process_frame(struct proc *);
 static __inline union savefpu *process_fpframe(struct proc *);
+void process_fninit_xmm(struct savexmm *);
 
 static __inline struct trapframe *
 process_frame(struct proc *p)
@@ -164,6 +165,24 @@ process_s87_to_xmm(const struct save87 *s87, struct savexmm *sxmm)
 	sxmm->sv_ex_sw = s87->sv_ex_sw;
 }
 
+void
+process_fninit_xmm(struct savexmm *sxmm)
+{
+	/*
+	 * The initial control word was already set by setregs(), so
+	 * save it temporarily.
+	 */
+	uint32_t mxcsr = sxmm->sv_env.en_mxcsr;
+	uint16_t cw = sxmm->sv_env.en_cw;
+
+	/* XXX Don't zero XMM regs? */
+	memset(sxmm, 0, sizeof(*sxmm));
+	sxmm->sv_env.en_cw = cw;
+	sxmm->sv_env.en_mxcsr = mxcsr;
+	sxmm->sv_env.en_sw = 0x0000;
+	sxmm->sv_env.en_tw = 0x00;
+}
+
 int
 process_read_regs(p, regs)
 	struct proc *p;
@@ -214,22 +233,14 @@ process_read_fpregs(p, regs)
 		npxsave_proc(p, 1);
 #endif
 	} else {
-		/*
-		 * Fake a FNINIT.
-		 * The initial control word was already set by setregs(), so
-		 * save it temporarily.
-		 */
+		/* Fake a FNINIT. */
 		if (i386_use_fxsave) {
-			uint32_t mxcsr = frame->sv_xmm.sv_env.en_mxcsr;
-			uint16_t cw = frame->sv_xmm.sv_env.en_cw;
-
-			/* XXX Don't zero XMM regs? */
-			memset(&frame->sv_xmm, 0, sizeof(frame->sv_xmm));
-			frame->sv_xmm.sv_env.en_cw = cw;
-			frame->sv_xmm.sv_env.en_mxcsr = mxcsr;
-			frame->sv_xmm.sv_env.en_sw = 0x0000;
-			frame->sv_xmm.sv_env.en_tw = 0x00;
+			process_fninit_xmm(&frame->sv_xmm);
 		} else {
+			/*
+			 * The initial control word was already set by
+			 * setregs(), so save it temporarily.
+			 */
 			uint16_t cw = frame->sv_87.sv_env.en_cw;
 
 			memset(&frame->sv_87, 0, sizeof(frame->sv_87));
@@ -322,6 +333,47 @@ process_write_fpregs(p, regs)
 	} else
 		memcpy(&frame->sv_87, regs, sizeof(*regs));
 
+	return (0);
+}
+
+int
+process_read_xmmregs(struct proc *p, struct xmmregs *regs)
+{
+	union savefpu *frame = process_fpframe(p);
+
+	if (!i386_use_fxsave)
+		return (EINVAL);
+
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+#if NNPX > 0
+		npxsave_proc(p, 1);
+#endif
+	} else {
+		/* Fake a FNINIT. */
+		process_fninit_xmm(&frame->sv_xmm);
+		p->p_md.md_flags |= MDP_USEDFPU;
+	}
+
+	memcpy(regs, &frame->sv_xmm, sizeof(*regs));
+	return (0);
+}
+
+int
+process_write_xmmregs(struct proc *p, const struct xmmregs *regs)
+{
+	union savefpu *frame = process_fpframe(p);
+
+	if (!i386_use_fxsave)
+		return (EINVAL);
+
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+#if NNPX > 0
+		npxsave_proc(p, 0);
+#endif
+	} else
+		p->p_md.md_flags |= MDP_USEDFPU;
+
+	memcpy(&frame->sv_xmm, regs, sizeof(*regs));
 	return (0);
 }
 

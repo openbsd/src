@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.5 2005/02/17 18:07:35 jfb Exp $	*/
+/*	$OpenBSD: reg.h,v 1.6 2005/04/03 20:21:44 kettenis Exp $	*/
 /*	$NetBSD: reg.h,v 1.14 1995/10/11 04:20:24 mycroft Exp $	*/
 
 /*-
@@ -94,6 +94,10 @@ struct fpreg {
 	 * Fill this in with real info.
 	 */
 	char	__data[116];
+};
+
+struct xmmregs {
+	char	__data[512];
 };
 
 #endif /* !_I386_REG_H_ */
