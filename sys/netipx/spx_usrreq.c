@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.8 2000/01/11 01:57:05 fgsch Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.9 2000/01/11 02:14:07 fgsch Exp $	*/
 
 /*-
  *
@@ -185,7 +185,7 @@ spx_input(struct mbuf *m, ...)
 		am = m_get(M_DONTWAIT, MT_SONAME);
 		if (am == NULL)
 			goto drop;
-		am->m_len = sizeof (struct sockaddr_ipx);
+		am->m_len = sizeof(struct sockaddr_ipx);
 		sipx = mtod(am, struct sockaddr_ipx *);
 		sipx->sipx_len = sizeof(*sipx);
 		sipx->sipx_family = AF_IPX;
@@ -270,9 +270,9 @@ spx_input(struct mbuf *m, ...)
 	if (so->so_options & SO_DEBUG || traceallspxs)
 		spx_trace(SA_INPUT, (u_char)ostate, cb, &spx_savesi, 0);
 
-	m->m_len -= sizeof (struct ipx);
-	m->m_pkthdr.len -= sizeof (struct ipx);
-	m->m_data += sizeof (struct ipx);
+	m->m_len -= sizeof(struct ipx);
+	m->m_pkthdr.len -= sizeof(struct ipx);
+	m->m_data += sizeof(struct ipx);
 
 	if (spx_reass(cb, si)) {
 		(void) m_freem(m);
@@ -733,7 +733,7 @@ spx_output(cb, m0)
 				recordp = 1;
 		}
 		datalen = (cb->s_flags & SF_HO) ?
-				len - sizeof (struct spxhdr) : len;
+				len - sizeof(struct spxhdr) : len;
 		if (datalen > mtu) {
 			if (cb->s_flags & SF_PI) {
 				m_freem(m0);
@@ -798,15 +798,15 @@ spx_output(cb, m0)
 		 * Fill in mbuf with extended SP header
 		 * and addresses and length put into network format.
 		 */
-		MH_ALIGN(m, sizeof (struct spx));
-		m->m_len = sizeof (struct spx);
+		MH_ALIGN(m, sizeof(struct spx));
+		m->m_len = sizeof(struct spx);
 		m->m_next = m0;
 		si = mtod(m, struct spx *);
 		si->si_i = *cb->s_ipx;
 		si->si_s = cb->s_shdr;
 		if ((cb->s_flags & SF_PI) && (cb->s_flags & SF_HO)) {
 			register struct spxhdr *sh;
-			if (m0->m_len < sizeof (*sh)) {
+			if (m0->m_len < sizeof(*sh)) {
 				if((m0 = m_pullup(m0, sizeof(*sh))) == NULL) {
 					(void) m_free(m);
 					m_freem(m0);
@@ -817,9 +817,9 @@ spx_output(cb, m0)
 			sh = mtod(m0, struct spxhdr *);
 			si->si_dt = sh->spx_dt;
 			si->si_cc |= sh->spx_cc & SPX_EM;
-			m0->m_len -= sizeof (*sh);
-			m0->m_data += sizeof (*sh);
-			len -= sizeof (*sh);
+			m0->m_len -= sizeof(*sh);
+			m0->m_data += sizeof(*sh);
+			len -= sizeof(*sh);
 		}
 		len += sizeof(*si);
 		if ((cb->s_flags2 & SF_NEWCALL) && recordp) {
@@ -1009,14 +1009,14 @@ send:
 		 * Fill in mbuf with extended SP header
 		 * and addresses and length put into network format.
 		 */
-		MH_ALIGN(m, sizeof (struct spx));
-		m->m_len = sizeof (*si);
-		m->m_pkthdr.len = sizeof (*si);
+		MH_ALIGN(m, sizeof(struct spx));
+		m->m_len = sizeof(*si);
+		m->m_pkthdr.len = sizeof(*si);
 		si = mtod(m, struct spx *);
 		si->si_i = *cb->s_ipx;
 		si->si_s = cb->s_shdr;
 		si->si_seq = cb->s_smax + 1;
-		si->si_len = htons(sizeof (*si));
+		si->si_len = htons(sizeof(*si));
 		si->si_cc |= SPX_SP;
 	} else {
 		cb->s_outx = 3;
@@ -1323,11 +1323,11 @@ spx_usrreq(so, req, m, nam, controlp)
 		cb->s_swl1 = -1;
 		TAILQ_INIT(&cb->spxp_queue);
 		cb->s_ipxpcb = ipxp;
-		cb->s_mtu = 576 - sizeof (struct spx);
+		cb->s_mtu = 576 - sizeof(struct spx);
 		cb->s_cwnd = sbspace(sb) * CUNIT / cb->s_mtu;
 		cb->s_ssthresh = cb->s_cwnd;
 		cb->s_cwmx = sbspace(sb) * CUNIT /
-				(2 * sizeof (struct spx));
+				(2 * sizeof(struct spx));
 		/* Above is recomputed when connecting to account
 		   for changed buffering or mtu's */
 		cb->s_rtt = SPXTV_SRTTBASE;
@@ -1450,7 +1450,8 @@ spx_usrreq(so, req, m, nam, controlp)
 			break;
 		}
 		cb->s_oobflags |= SF_SOOB;
-		/* fall into */
+		/* FALLTRHOUGH */
+
 	case PRU_SEND:
 		if (controlp) {
 			u_short *p = mtod(controlp, u_short *);
