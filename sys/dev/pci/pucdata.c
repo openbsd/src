@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.37 2004/08/18 17:34:53 millert Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.38 2004/08/18 19:58:14 millert Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -985,15 +985,15 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	/* NetMos 4S PCI 16C650 : 4S */
+	/* NetMos 4S PCI 16C650 : 4S, 0P */
 	{   /* "NetMos NM9845 Quad UART" */
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_4S,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 4 },
-		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ * 4 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
 	    },
 	},
 
