@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.10 2000/10/14 21:56:48 deraadt Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.11 2000/10/14 21:59:55 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -34,7 +34,9 @@
 .Dt HOSTS_ACCESS 5
 .Os
 .Sh NAME
-.Nm hosts_access
+.Nm hosts_access ,
+.Nm hosts.deny ,
+.Nm hosts.allow
 .Nd tcp wrapper format of host access control files
 .Sh DESCRIPTION
 This manual page describes a simple access control language that is
