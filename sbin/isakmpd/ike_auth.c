@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.57 2001/08/16 16:51:57 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.58 2001/08/22 17:24:45 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -787,17 +787,15 @@ rsa_sig_decode_hash (struct message *msg)
   if (!found)
     {
       rawkey = dns_get_key (IKE_AUTH_RSA_SIG, msg, &rawkeylen);
-      if (rawkey)
-	found++;
 
       /* We need to convert 'void *rawkey' into 'RSA *key'.  */
-      if (dns_RSA_dns_to_x509 (rawkey, rawkeylen, &key) == -1)
-	{
-	  log_print ("rsa_sig_decode_hash: KEY to RSA key conversion failed");
-	  free (rawkey);
-	  return -1;
-	}
-      free (rawkey);
+      if (dns_RSA_dns_to_x509 (rawkey, rawkeylen, &key) == 0)
+	found++;
+      else
+	log_print ("rsa_sig_decode_hash: KEY to RSA key conversion failed");
+
+      if (rawkey)
+	free (rawkey);
     }
 #endif /* USE_DNSSEC */
 
