@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.27 1999/01/08 00:56:45 deraadt Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.28 1999/02/26 17:01:32 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -73,6 +73,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in_var.h>
 #endif
 #include <netinet/if_ether.h>
+
+#include "bridge.h"
+#if NBRIDGE > 0
+#include <net/if_bridge.h>
+#endif
 
 #ifdef NS
 #include <netns/ns.h>
@@ -451,6 +456,18 @@ ether_output(ifp, m0, dst, rt0)
  	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));
  	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
 	    sizeof(eh->ether_shost));
+
+#if NBRIDGE > 0
+	/*
+	 * Interfaces that are bridge members need special handling
+	 * for output.
+	 */
+	if (ifp->if_bridge) {
+		bridge_output(ifp, m, NULL, NULL);
+		return (error);
+	}
+#endif
+
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface
@@ -491,9 +508,7 @@ ether_input(ifp, eh, m)
 	u_int16_t etype;
 	int s, llcfound = 0;
 	register struct llc *l;
-#if defined(ISO)
 	struct arpcom *ac = (struct arpcom *)ifp;
-#endif
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -510,6 +525,32 @@ ether_input(ifp, eh, m)
 	}
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
+
+#if NBRIDGE > 0
+	/*
+	 * Tap the packet off here for a bridge, if configured and
+	 * active for this interface.  bridge_input returns
+	 * NULL if it has consumed the packet, otherwise, it
+	 * gets processed as normal.
+	 */
+	if (ifp->if_bridge) {
+		m = bridge_input(ifp, eh, m);
+		if (m == NULL)
+			return;
+	}
+#endif
+	/*
+	 * If packet is unicast and we're in promiscuous mode, make sure it
+	 * is for us.  Drop otherwise.
+	 */
+	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+	    (ifp->if_flags & IFF_PROMISC)) {
+		if (bcmp(ac->ac_enaddr, (caddr_t)eh->ether_dhost,
+		    ETHER_ADDR_LEN)) {
+			m_freem(m);
+			return;
+		}
+	}
 
 decapsulate:
 	etype = ntohs(eh->ether_type);

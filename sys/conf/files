@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.110 1999/02/26 01:33:07 art Exp $
+#	$OpenBSD: files,v 1.111 1999/02/26 17:01:29 jason Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -150,6 +150,7 @@ pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device random
 pseudo-device enc: ifnet
+pseudo-device bridge: ifnet, ether
 
 pseudo-device sequencer
 
@@ -391,6 +392,7 @@ file net/bsd-comp.c			ppp_bsdcomp
 file net/ppp-deflate.c			ppp_deflate
 file net/zlib.c				ppp_deflate
 file net/if_tun.c			tun			needs-count
+file net/if_bridge.c			bridge			needs-count
 file net/radix.c
 file net/raw_cb.c
 file net/raw_usrreq.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.4 1998/09/03 13:00:03 jason Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.5 1999/02/26 17:01:33 jason Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -82,6 +82,11 @@
 
 #define	SIOCSIFMEDIA	_IOWR('i', 53, struct ifreq)	/* set net media */
 #define	SIOCGIFMEDIA	_IOWR('i', 54, struct ifmediareq) /* get net media */
+
+#define	SIOCBRDGADD	_IOWR('i', 60, struct ifbreq)	/* add bridge ifs */
+#define	SIOCBRDGDEL	_IOWR('i', 61, struct ifbreq)	/* del bridge ifs */
+#define	SIOCBRDGIDX	_IOWR('i', 62, struct ifbreq)	/* get ifs by index */
+#define	SIOCBRDGRT	_IOWR('i', 63, struct ifbrtreq)	/* get rts by index */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
