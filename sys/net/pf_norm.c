@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.39 2002/11/23 05:16:58 mcbride Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.40 2002/12/06 00:47:32 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -699,7 +699,8 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 		if (merge) {
 			if (cur && fra->fr_off <= cur->fr_end) {
 				/* Need to merge in a previous 'cur' */
-				DPFPRINTF(("fragcache[%d]: adjacent(merge %d-%d) %d-%d (%d-%d)\n",
+				DPFPRINTF(("fragcache[%d]: adjacent(merge "
+				    "%d-%d) %d-%d (%d-%d)\n",
 				    h->ip_id, cur->fr_off, cur->fr_end, off,
 				    max, fra->fr_off, fra->fr_end));
 				fra->fr_off = cur->fr_off;
@@ -711,7 +712,8 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 			} else if (frp && fra->fr_off <= frp->fr_end) {
 				/* Need to merge in a modified 'frp' */
 				KASSERT(cur == NULL);
-				DPFPRINTF(("fragcache[%d]: adjacent(merge %d-%d) %d-%d (%d-%d)\n",
+				DPFPRINTF(("fragcache[%d]: adjacent(merge "
+				    "%d-%d) %d-%d (%d-%d)\n",
 				    h->ip_id, frp->fr_off, frp->fr_end, off,
 				    max, fra->fr_off, fra->fr_end));
 				fra->fr_off = frp->fr_off;
@@ -797,13 +799,13 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	int ip_len;
 	int ip_off;
 
-	r = TAILQ_FIRST(pf_rules_active);
+	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
 	while (r != NULL) {
 		if (r->action != PF_SCRUB)
 			r = r->skip[PF_SKIP_ACTION];
 		else if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[PF_SKIP_IFP];
-		else if (r->direction != dir)
+		else if (r->direction && r->direction != dir)
 			r = r->skip[PF_SKIP_DIR];
 		else if (r->af && r->af != AF_INET)
 			r = r->skip[PF_SKIP_AF];
@@ -998,13 +1000,13 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	u_int8_t flags;
 	sa_family_t af = pd->af;
 
-	r = TAILQ_FIRST(pf_rules_active);
+	r = TAILQ_FIRST(pf_main_ruleset.rules.active.ptr);
 	while (r != NULL) {
 		if (r->action != PF_SCRUB)
 			r = r->skip[PF_SKIP_ACTION];
 		else if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[PF_SKIP_IFP];
-		else if (r->direction != dir)
+		else if (r->direction && r->direction != dir)
 			r = r->skip[PF_SKIP_DIR];
 		else if (r->af && r->af != af)
 			r = r->skip[PF_SKIP_AF];

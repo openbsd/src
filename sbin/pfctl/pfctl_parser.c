@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.116 2002/12/05 14:10:45 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.117 2002/12/06 00:47:32 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -471,6 +471,10 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 void
 print_nat(struct pf_nat *n)
 {
+	if (n->anchorname[0]) {
+		printf("nat-anchor %s\n", n->anchorname);
+		return;
+	}
 	if (n->no)
 		printf("no ");
 	printf("nat ");
@@ -506,6 +510,10 @@ print_nat(struct pf_nat *n)
 void
 print_binat(struct pf_binat *b)
 {
+	if (b->anchorname[0]) {
+		printf("binat-anchor %s\n", b->anchorname);
+		return;
+	}
 	if (b->no)
 		printf("no ");
 	printf("binat ");
@@ -549,6 +557,10 @@ print_binat(struct pf_binat *b)
 void
 print_rdr(struct pf_rdr *r)
 {
+	if (r->anchorname[0]) {
+		printf("rdr-anchor %s\n", r->anchorname);
+		return;
+	}
 	if (r->no)
 		printf("no ");
 	printf("rdr ");
@@ -645,23 +657,23 @@ print_status(struct pf_status *s)
 		printf("Interface Stats for %-16s %5s %16s\n",
 		    s->ifname, "IPv4", "IPv6");
 		printf("  %-25s %14llu %16llu\n", "Bytes In",
-		    s->bcounters[0][PF_IN], s->bcounters[1][PF_IN]);
+		    s->bcounters[0][0], s->bcounters[1][0]);
 		printf("  %-25s %14llu %16llu\n", "Bytes Out",
-		    s->bcounters[0][PF_OUT], s->bcounters[1][PF_OUT]);
+		    s->bcounters[0][1], s->bcounters[1][1]);
 		printf("  Packets In\n");
 		printf("    %-23s %14llu %16llu\n", "Passed",
-		    s->pcounters[0][PF_IN][PF_PASS],
-		    s->pcounters[1][PF_IN][PF_PASS]);
+		    s->pcounters[0][0][PF_PASS],
+		    s->pcounters[1][0][PF_PASS]);
 		printf("    %-23s %14llu %16llu\n", "Blocked",
-		    s->pcounters[0][PF_IN][PF_DROP],
-		    s->pcounters[1][PF_IN][PF_DROP]);
+		    s->pcounters[0][0][PF_DROP],
+		    s->pcounters[1][0][PF_DROP]);
 		printf("  Packets Out\n");
 		printf("    %-23s %14llu %16llu\n", "Passed",
-		    s->pcounters[0][PF_OUT][PF_PASS],
-		    s->pcounters[1][PF_OUT][PF_PASS]);
+		    s->pcounters[0][1][PF_PASS],
+		    s->pcounters[1][1][PF_PASS]);
 		printf("    %-23s %14llu %16llu\n\n", "Blocked",
-		    s->pcounters[0][PF_OUT][PF_DROP],
-		    s->pcounters[1][PF_OUT][PF_DROP]);
+		    s->pcounters[0][1][PF_DROP],
+		    s->pcounters[1][1][PF_DROP]);
 	}
 	printf("%-27s %14s %16s\n", "State Table", "Total", "Rate");
 	printf("  %-25s %14u %14s\n", "current entries", s->states, "");
@@ -693,6 +705,10 @@ print_rule(struct pf_rule *r, int verbose)
 
 	if (verbose)
 		printf("@%d ", r->nr);
+	if (r->anchorname[0]) {
+		printf("anchor %s\n", r->anchorname);
+		return;
+	}
 	if (r->action == PF_PASS)
 		printf("pass ");
 	else if (r->action == PF_DROP) {
@@ -743,9 +759,9 @@ print_rule(struct pf_rule *r, int verbose)
 	} else {
 		printf("scrub ");
 	}
-	if (r->direction == 0)
+	if (r->direction == PF_IN)
 		printf("in ");
-	else
+	else if (r->direction == PF_OUT)
 		printf("out ");
 	if (r->log == 1)
 		printf("log ");

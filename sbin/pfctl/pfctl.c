@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.98 2002/12/05 14:10:45 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.99 2002/12/06 00:47:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -76,15 +76,19 @@ int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
 int	 pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
 int	 pfctl_test_altqsupport(int);
+int	 pfctl_show_anchors(int, int);
 
 char	*clearopt;
 char	*rulesopt;
 char	*showopt;
 char	*debugopt;
+char	*anchoropt;
 int	 state_killers;
 char	*state_kill[2];
 int	 loadopt = PFCTL_FLAG_ALL;
 int	 altqsupport;
+char	 anchorname[PF_ANCHOR_NAME_SIZE];
+char	 rulesetname[PF_RULESET_NAME_SIZE];
 
 const char *infile;
 
@@ -156,10 +160,10 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-AdeqhnNrROvz] [-f file] ", __progname);
-	fprintf(stderr, "[-F modifier] [-k host]\n");
+	fprintf(stderr, "usage: %s [-AdeqhnNrROvz] ", __progname);
+	fprintf(stderr, "[-a anchor:ruleset] [-f file]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-s modifier] [-x level]\n");
+	fprintf(stderr, "[-F modifier] [-k host] [-s modifier] [-x level]\n");
 	exit(1);
 }
 
@@ -230,9 +234,12 @@ pfctl_clear_rules(int dev, int opts)
 {
 	struct pfioc_rule pr;
 
-	if (ioctl(dev, DIOCBEGINRULES, &pr.ticket))
+	memset(&pr, 0, sizeof(pr));
+	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
+	if (ioctl(dev, DIOCBEGINRULES, &pr))
 		err(1, "DIOCBEGINRULES");
-	else if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket))
+	else if (ioctl(dev, DIOCCOMMITRULES, &pr))
 		err(1, "DIOCCOMMITRULES");
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "rules cleared\n");
@@ -246,17 +253,26 @@ pfctl_clear_nat(int dev, int opts)
 	struct pfioc_binat pb;
 	struct pfioc_rdr pr;
 
-	if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
+	memset(&pn, 0, sizeof(pn));
+	memset(&pb, 0, sizeof(pb));
+	memset(&pr, 0, sizeof(pr));
+	memcpy(pn.anchor, anchorname, sizeof(pn.anchor));
+	memcpy(pn.ruleset, rulesetname, sizeof(pn.ruleset));
+	memcpy(pb.anchor, anchorname, sizeof(pb.anchor));
+	memcpy(pb.ruleset, rulesetname, sizeof(pb.ruleset));
+	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
+	if (ioctl(dev, DIOCBEGINNATS, &pn))
 		err(1, "DIOCBEGINNATS");
-	else if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
+	else if (ioctl(dev, DIOCCOMMITNATS, &pn))
 		err(1, "DIOCCOMMITNATS");
-	if (ioctl(dev, DIOCBEGINBINATS, &pb.ticket))
+	if (ioctl(dev, DIOCBEGINBINATS, &pb))
 		err(1, "DIOCBEGINBINATS");
-	else if (ioctl(dev, DIOCCOMMITBINATS, &pb.ticket))
+	else if (ioctl(dev, DIOCCOMMITBINATS, &pb))
 		err(1, "DIOCCOMMITBINATS");
-	else if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
+	else if (ioctl(dev, DIOCBEGINRDRS, &pr))
 		err(1, "DIOCBEGINRDRS");
-	else if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
+	else if (ioctl(dev, DIOCCOMMITRDRS, &pr))
 		err(1, "DIOCCOMMITRDRS");
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "nat cleared\n");
@@ -270,7 +286,7 @@ pfctl_clear_altq(int dev, int opts)
 
 	if (!altqsupport)
 		return (-1);
-
+	memset(&pa, 0, sizeof(pa));
 	if (ioctl(dev, DIOCBEGINALTQS, &pa.ticket))
 		err(1, "DIOCBEGINALTQS");
 	else if (ioctl(dev, DIOCCOMMITALTQS, &pa.ticket))
@@ -399,6 +415,9 @@ pfctl_get_pool(int dev, struct pf_pool *pool, u_int32_t nr,
 	struct pf_pooladdr *pa;
 	u_int32_t pnr, mpnr;
 
+	memset(&pp, 0, sizeof(pp));
+	memcpy(pp.anchor, anchorname, sizeof(pp.anchor));
+	memcpy(pp.ruleset, rulesetname, sizeof(pp.ruleset));
 	pp.r_id = id;
 	pp.r_num = nr;
 	pp.ticket = ticket;
@@ -443,6 +462,9 @@ pfctl_show_rules(int dev, int opts, int format)
 	struct pfioc_rule pr;
 	u_int32_t nr, mnr;
 
+	memset(&pr, 0, sizeof(pr));
+	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
 		warn("DIOCGETRULES");
 		return (-1);
@@ -495,7 +517,7 @@ pfctl_show_altq(int dev)
 
 	if (!altqsupport)
 		return (-1);
-
+	memset(&pa, 0, sizeof(pa));
 	if (ioctl(dev, DIOCGETALTQS, &pa)) {
 		warn("DIOCGETALTQS");
 		return (-1);
@@ -523,6 +545,15 @@ pfctl_show_nat(int dev)
 	struct pfioc_binat pb;
 	u_int32_t mnr, nr;
 
+	memset(&pn, 0, sizeof(pn));
+	memset(&pr, 0, sizeof(pr));
+	memset(&pb, 0, sizeof(pb));
+	memcpy(pn.anchor, anchorname, sizeof(pn.anchor));
+	memcpy(pn.ruleset, rulesetname, sizeof(pn.ruleset));
+	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
+	memcpy(pb.anchor, anchorname, sizeof(pb.anchor));
+	memcpy(pb.ruleset, rulesetname, sizeof(pb.ruleset));
 	if (ioctl(dev, DIOCGETNATS, &pn)) {
 		warn("DIOCGETNATS");
 		return (-1);
@@ -582,6 +613,7 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 	unsigned len = 0;
 	int i;
 
+	memset(&ps, 0, sizeof(ps));
 	for (;;) {
 		ps.ps_len = len;
 		if (len) {
@@ -631,6 +663,7 @@ pfctl_show_timeouts(int dev)
 	struct pfioc_tm pt;
 	int i;
 
+	memset(&pt, 0, sizeof(pt));
 	for (i = 0; pf_timeouts[i].name; i++) {
 		pt.timeout = pf_timeouts[i].timeout;
 		if (ioctl(dev, DIOCGETTIMEOUT, &pt))
@@ -647,6 +680,7 @@ pfctl_show_limits(int dev)
 	struct pfioc_limit pl;
 	int i;
 
+	memset(&pl, 0, sizeof(pl));
 	for (i = 0; pf_limits[i].name; i++) {
 		pl.index = i;
 		if (ioctl(dev, DIOCGETLIMIT, &pl))
@@ -667,7 +701,7 @@ pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
 	struct pf_pooladdr *pa;
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
+		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr))
 			err(1, "DIOCBEGINADDRS");
 	}
 
@@ -781,6 +815,20 @@ pfctl_rules(int dev, char *filename, int opts)
 	struct pfioc_altq	pa;
 	struct pfctl		pf;
 
+	memset(&pn, 0, sizeof(pn));
+	memset(&pb, 0, sizeof(pb));
+	memset(&pr, 0, sizeof(pr));
+	memset(&pl, 0, sizeof(pl));
+	memset(&pa, 0, sizeof(pa));
+	memset(&pf, 0, sizeof(pf));
+	memcpy(pn.anchor, anchorname, sizeof(pn.anchor));
+	memcpy(pn.ruleset, rulesetname, sizeof(pn.ruleset));
+	memcpy(pb.anchor, anchorname, sizeof(pb.anchor));
+	memcpy(pb.ruleset, rulesetname, sizeof(pb.ruleset));
+	memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+	memcpy(pr.ruleset, rulesetname, sizeof(pr.ruleset));
+	memcpy(pl.anchor, anchorname, sizeof(pl.anchor));
+	memcpy(pl.ruleset, rulesetname, sizeof(pl.ruleset));
 	if (strcmp(filename, "-") == 0) {
 		fin = stdin;
 		infile = "stdin";
@@ -794,11 +842,11 @@ pfctl_rules(int dev, char *filename, int opts)
 	}
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
-			if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
+			if (ioctl(dev, DIOCBEGINNATS, &pn))
 				err(1, "DIOCBEGINNATS");
-			if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
+			if (ioctl(dev, DIOCBEGINRDRS, &pr))
 				err(1, "DIOCBEGINRDRS");
-			if (ioctl(dev, DIOCBEGINBINATS, &pb.ticket))
+			if (ioctl(dev, DIOCBEGINBINATS, &pb))
 				err(1, "DIOCBEGINBINATS");
 		}
 		if (((altqsupport && loadopt
@@ -807,7 +855,7 @@ pfctl_rules(int dev, char *filename, int opts)
 			err(1, "DIOCBEGINALTQS");
 		}
 		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
-		    ioctl(dev, DIOCBEGINRULES, &pl.ticket))
+		    ioctl(dev, DIOCBEGINRULES, &pl))
 			err(1, "DIOCBEGINRULES");
 	}
 	/* fill in callback data */
@@ -826,11 +874,11 @@ pfctl_rules(int dev, char *filename, int opts)
 			errx(1, "errors in altq config");
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
-			if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
+			if (ioctl(dev, DIOCCOMMITNATS, &pn))
 				err(1, "DIOCCOMMITNATS");
-			if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
+			if (ioctl(dev, DIOCCOMMITRDRS, &pr))
 				err(1, "DIOCCOMMITRDRS");
-			if (ioctl(dev, DIOCCOMMITBINATS, &pb.ticket))
+			if (ioctl(dev, DIOCCOMMITBINATS, &pb))
 				err(1, "DIOCCOMMITBINATS");
 		}
 		if (((altqsupport && loadopt
@@ -838,7 +886,7 @@ pfctl_rules(int dev, char *filename, int opts)
 		    ioctl(dev, DIOCCOMMITALTQS, &pa.ticket))
 			err(1, "DIOCCOMMITALTQS");
 		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
-		    ioctl(dev, DIOCCOMMITRULES, &pl.ticket))
+		    ioctl(dev, DIOCCOMMITRULES, &pl))
 			err(1, "DIOCCOMMITRULES");
 #if 0
 		if ((opts & PF_OPT_QUIET) == 0) {
@@ -860,6 +908,7 @@ pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 	struct pfioc_limit pl;
 	int i;
 
+	memset(&pl, 0, sizeof(pl));
 	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
 		for (i = 0; pf_limits[i].name; i++) {
 			if (strcasecmp(opt, pf_limits[i].name) == 0) {
@@ -894,6 +943,7 @@ pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds)
 	struct pfioc_tm pt;
 	int i;
 
+	memset(&pt, 0, sizeof(pt));
 	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
 		for (i = 0; pf_timeouts[i].name; i++) {
 			if (strcasecmp(opt, pf_timeouts[i].name) == 0) {
@@ -946,6 +996,7 @@ pfctl_set_logif(struct pfctl *pf, char *ifname)
 {
 	struct pfioc_if pi;
 
+	memset(&pi, 0, sizeof(pi));
 	if ((loadopt & (PFCTL_FLAG_OPTION | PFCTL_FLAG_ALL)) != 0) {
 		if ((pf->opts & PF_OPT_NOACTION) == 0) {
 			if (!strcmp(ifname, "none"))
@@ -1012,6 +1063,56 @@ pfctl_test_altqsupport(int dev)
 }
 
 int
+pfctl_show_anchors(int dev, int opts)
+{
+	u_int32_t nr, mnr;
+
+	if (!*anchorname) {
+		struct pfioc_anchor pa;
+
+		memset(&pa, 0, sizeof(pa));
+		if (ioctl(dev, DIOCGETANCHORS, &pa)) {
+			warnx("DIOCGETANCHORS");
+			return (-1);
+		}
+		mnr = pa.nr;
+		printf("%u anchors:\n", mnr);
+		for (nr = 0; nr < mnr; ++nr) {
+			pa.nr = nr;
+			if (ioctl(dev, DIOCGETANCHOR, &pa)) {
+				warnx("DIOCGETANCHOR");
+				return (-1);
+			}
+			printf("  %s\n", pa.name);
+		}
+	} else {
+		struct pfioc_ruleset pr;
+
+		memset(&pr, 0, sizeof(pr));
+		memcpy(pr.anchor, anchorname, sizeof(pr.anchor));
+		if (ioctl(dev, DIOCGETRULESETS, &pr)) {
+			if (errno == EINVAL)
+				fprintf(stderr, "No rulesets in anchor '%s'.\n",
+				    anchorname);
+			else
+				warnx("DIOCGETRULESETS");
+			return (-1);
+		}
+		mnr = pr.nr;
+		printf("%u rulesets in anchor %s:\n", mnr, anchorname);
+		for (nr = 0; nr < mnr; ++nr) {
+			pr.nr = nr;
+			if (ioctl(dev, DIOCGETRULESET, &pr)) {
+				warnx("DIOCGETRULESET");
+				return (-1);
+			}
+			printf("  %s:%s\n", pr.anchor, pr.name);
+		}
+	}
+	return (0);
+}
+
+int
 main(int argc, char *argv[])
 {
 	int error = 0;
@@ -1023,8 +1124,11 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "Adeqf:F:hk:nNOrRs:vx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "a:Adeqf:F:hk:nNOrRs:vx:z")) != -1) {
 		switch (ch) {
+		case 'a':
+			anchoropt = optarg;
+			break;
 		case 'd':
 			opts |= PF_OPT_DISABLE;
 			mode = O_RDWR;
@@ -1105,6 +1209,29 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	}
 
+	memset(anchorname, 0, sizeof(anchorname));
+	memset(rulesetname, 0, sizeof(rulesetname));
+	if (anchoropt != NULL) {
+		char *t = strchr(anchoropt, ':');
+
+		if (t == NULL) {
+			if (strlen(anchoropt) >= sizeof(anchorname))
+				err(1, "anchor name '%s' too long",
+				    anchoropt);
+			strcpy(anchorname, anchoropt);
+		} else {
+			if (t == anchoropt || !strlen(t+1))
+				err(1, "anchor names '%s' invalid",
+				    anchoropt);
+			if (t-anchoropt >= sizeof(anchorname) ||
+			    strlen(t+1) >= sizeof(rulesetname))
+				err(1, "anchor names '%s' too long",
+				    anchoropt);
+			strncpy(anchorname, anchoropt, t-anchoropt);
+			strcpy(rulesetname, t+1);
+		}
+	}
+
 	if (opts & PF_OPT_NOACTION)
 		mode = O_RDONLY;
 	if ((opts & PF_OPT_NOACTION) == 0) {
@@ -1161,6 +1288,9 @@ main(int argc, char *argv[])
 
 	if (showopt != NULL) {
 		switch (*showopt) {
+		case 'A':
+			pfctl_show_anchors(dev, opts);
+			break;
 		case 'r':
 			pfctl_show_rules(dev, opts, 0);
 			break;

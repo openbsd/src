@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.236 2002/12/05 15:28:00 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.237 2002/12/06 00:47:31 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -313,6 +313,18 @@ typedef struct {
 	int lineno;
 } YYSTYPE;
 
+#define PREPARE_ANCHOR_RULE(r, a)				\
+	do { 							\
+		if (strlen(a) >= PF_ANCHOR_NAME_SIZE) {		\
+			yyerror("anchor name '%s' too long",	\
+			    (a));				\
+			YYERROR;				\
+		}						\
+		memset(&(r), 0, sizeof(r));			\
+		strcpy(r.anchorname, (a));			\
+	} while (0)
+
+
 %}
 
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
@@ -320,7 +332,7 @@ typedef struct {
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP
-%token	FRAGNORM FRAGDROP FRAGCROP
+%token	FRAGNORM FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY
 %token	REQUIREORDER YES
 %token	ANTISPOOF FOR
@@ -373,6 +385,7 @@ ruleset		: /* empty */
 		| ruleset binatrule '\n'
 		| ruleset rdrrule '\n'
 		| ruleset pfrule '\n'
+		| ruleset anchorrule '\n'
 		| ruleset altqif '\n'
 		| ruleset queuespec '\n'
 		| ruleset varset '\n'
@@ -448,6 +461,33 @@ varset		: STRING PORTUNARY string		{
 				yyerror("cannot store variable %s", $1);
 				YYERROR;
 			}
+		}
+		;
+
+anchorrule	: ANCHOR string				{
+			struct pf_rule r;
+
+			PREPARE_ANCHOR_RULE(r, $2);
+			r.nr = pf->rule_nr++;
+			pfctl_add_rule(pf, &r);
+		}
+		| NATANCHOR string			{
+			struct pf_nat r;
+
+			PREPARE_ANCHOR_RULE(r, $2);
+			pfctl_add_nat(pf, &r);
+		}
+		| RDRANCHOR string			{
+			struct pf_rdr r;
+
+			PREPARE_ANCHOR_RULE(r, $2);
+			pfctl_add_rdr(pf, &r);
+		}
+		| BINATANCHOR string			{
+			struct pf_binat r;
+
+			PREPARE_ANCHOR_RULE(r, $2);
+			pfctl_add_binat(pf, &r);
 		}
 		;
 
@@ -992,7 +1032,8 @@ fragcache	: /* empty */		{ $$ = 0; }
 		;
 
 
-dir		: IN				{ $$ = PF_IN; }
+dir		: /* empty */			{ $$ = 0; }
+		| IN				{ $$ = PF_IN; }
 		| OUT				{ $$ = PF_OUT; }
 		;
 
@@ -1131,9 +1172,11 @@ host_list	: xhost				{ $$ = $1; }
 		;
 
 xhost		: '!' host			{
-			struct node_host *h;
-			for (h = $2; h; h = h->next)
-				h->not = 1;
+			if ($2->next != NULL) {
+				yyerror("negated address list");
+				YYERROR;
+			} else
+				$2->not = 1;
 			$$ = $2;
 		}
 		| host				{ $$ = $1; }
@@ -3022,86 +3065,90 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "all",	ALL},
-		{ "allow-opts",	ALLOWOPTS},
-		{ "altq",	ALTQ},
-		{ "antispoof",	ANTISPOOF},
-		{ "any",	ANY},
-		{ "bandwidth",	BANDWIDTH},
-		{ "binat",	BINAT},
-		{ "bitmask",	BITMASK},
-		{ "block",	BLOCK},
-		{ "block-policy", BLOCKPOLICY},
-		{ "borrow",	BORROW},
-		{ "cbq",	CBQ},
-		{ "code",	CODE},
-		{ "control",	CONTROL},
-		{ "crop",	FRAGCROP},
-		{ "default",	DEFAULT},
-		{ "drop",	DROP},
-		{ "drop-ovl",	FRAGDROP},
-		{ "dup-to",	DUPTO},
-		{ "ecn",	ECN},
-		{ "fastroute",	FASTROUTE},
-		{ "flags",	FLAGS},
-		{ "for",	FOR},
-		{ "fragment",	FRAGMENT},
-		{ "from",	FROM},
-		{ "group",	GROUP},
-		{ "icmp-type",	ICMPTYPE},
-		{ "in",		IN},
-		{ "inet",	INET},
-		{ "inet6",	INET6},
-		{ "ipv6-icmp-type", ICMP6TYPE},
-		{ "keep",	KEEP},
-		{ "label",	LABEL},
-		{ "limit",	LIMIT},
-		{ "log",	LOG},
-		{ "log-all",	LOGALL},
-		{ "loginterface", LOGINTERFACE},
-		{ "max",	MAXIMUM},
-		{ "max-mss",	MAXMSS},
-		{ "min-ttl",	MINTTL},
-		{ "modulate",	MODULATE},
-		{ "nat",	NAT},
-		{ "no",		NO},
-		{ "no-df",	NODF},
-		{ "no-route",	NOROUTE},
-		{ "on",		ON},
-		{ "optimization", OPTIMIZATION},
-		{ "out",	OUT},
-		{ "pass",	PASS},
-		{ "port",	PORT},
-		{ "priority",	PRIORITY},
-		{ "proto",	PROTO},
-		{ "qlimit",	QLIMIT},
-		{ "queue",	QUEUE},
-		{ "quick",	QUICK},
-		{ "random",	RANDOM},
-		{ "rdr",	RDR},
-		{ "reassemble",	FRAGNORM},
-		{ "red",	RED},
-		{ "reply-to",	REPLYTO},
-		{ "require-order", REQUIREORDER},
-		{ "return",	RETURN},
-		{ "return-icmp",RETURNICMP},
-		{ "return-icmp6",RETURNICMP6},
-		{ "return-rst",	RETURNRST},
-		{ "rio",	RIO},
-		{ "round-robin",ROUNDROBIN},
-		{ "route-to",	ROUTETO},
-		{ "scheduler",	SCHEDULER},
-		{ "scrub",	SCRUB},
-		{ "set",	SET},
-		{ "source-hash",SOURCEHASH},
-		{ "state",	STATE},
-		{ "tbrsize",	TBRSIZE},
-		{ "timeout",	TIMEOUT},
-		{ "to",		TO},
-		{ "tos",	TOS},
-		{ "ttl",	TTL},
-		{ "user",	USER},
-		{ "yes",	YES},
+		{ "all",		ALL},
+		{ "allow-opts",		ALLOWOPTS},
+		{ "altq",		ALTQ},
+		{ "anchor",		ANCHOR},
+		{ "antispoof",		ANTISPOOF},
+		{ "any",		ANY},
+		{ "bandwidth",		BANDWIDTH},
+		{ "binat",		BINAT},
+		{ "binat-anchor",	BINATANCHOR},
+		{ "bitmask",		BITMASK},
+		{ "block",		BLOCK},
+		{ "block-policy",	BLOCKPOLICY},
+		{ "borrow",		BORROW},
+		{ "cbq",		CBQ},
+		{ "code",		CODE},
+		{ "control",		CONTROL},
+		{ "crop",		FRAGCROP},
+		{ "default",		DEFAULT},
+		{ "drop",		DROP},
+		{ "drop-ovl",		FRAGDROP},
+		{ "dup-to",		DUPTO},
+		{ "ecn",		ECN},
+		{ "fastroute",		FASTROUTE},
+		{ "flags",		FLAGS},
+		{ "for",		FOR},
+		{ "fragment",		FRAGMENT},
+		{ "from",		FROM},
+		{ "group",		GROUP},
+		{ "icmp-type",		ICMPTYPE},
+		{ "in",			IN},
+		{ "inet",		INET},
+		{ "inet6",		INET6},
+		{ "ipv6-icmp-type",	ICMP6TYPE},
+		{ "keep",		KEEP},
+		{ "label",		LABEL},
+		{ "limit",		LIMIT},
+		{ "log",		LOG},
+		{ "log-all",		LOGALL},
+		{ "loginterface",	LOGINTERFACE},
+		{ "max",		MAXIMUM},
+		{ "max-mss",		MAXMSS},
+		{ "min-ttl",		MINTTL},
+		{ "modulate",		MODULATE},
+		{ "nat",		NAT},
+		{ "nat-anchor",		NATANCHOR},
+		{ "no",			NO},
+		{ "no-df",		NODF},
+		{ "no-route",		NOROUTE},
+		{ "on",			ON},
+		{ "optimization",	OPTIMIZATION},
+		{ "out",		OUT},
+		{ "pass",		PASS},
+		{ "port",		PORT},
+		{ "priority",		PRIORITY},
+		{ "proto",		PROTO},
+		{ "qlimit",		QLIMIT},
+		{ "queue",		QUEUE},
+		{ "quick",		QUICK},
+		{ "random",		RANDOM},
+		{ "rdr",		RDR},
+		{ "rdr-anchor",		RDRANCHOR},
+		{ "reassemble",		FRAGNORM},
+		{ "red",		RED},
+		{ "reply-to",		REPLYTO},
+		{ "require-order", 	REQUIREORDER},
+		{ "return",		RETURN},
+		{ "return-icmp",	RETURNICMP},
+		{ "return-icmp6",	RETURNICMP6},
+		{ "return-rst",		RETURNRST},
+		{ "rio",		RIO},
+		{ "round-robin",	ROUNDROBIN},
+		{ "route-to",		ROUTETO},
+		{ "scheduler",		SCHEDULER},
+		{ "scrub",		SCRUB},
+		{ "set",		SET},
+		{ "source-hash",	SOURCEHASH},
+		{ "state",		STATE},
+		{ "tbrsize",		TBRSIZE},
+		{ "timeout",		TIMEOUT},
+		{ "to",			TO},
+		{ "tos",		TOS},
+		{ "ttl",		TTL},
+		{ "user",		USER},
+		{ "yes",		YES},
 	};
 	const struct keywords *p;
 

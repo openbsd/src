@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.137 2002/12/05 15:00:47 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.138 2002/12/06 00:47:32 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1253,6 +1253,101 @@ also be adjusted.
 .Pp
 Currently, only IPv4 fragments are supported and IPv6 fragments
 are blocked unconditionally.
+.Sh ANCHORS AND NAMED RULE SETS
+Besides the main rule set,
+.Xr pfctl 8
+can load named rule sets into
+.Pa anchor
+attachment points.
+An
+.Pa anchor
+contains a list of named rule sets.
+An
+.Pa anchor
+has a name which specifies where
+.Xr pfctl 8
+can be used to attach sub rule-sets.
+A named rule set contains filter and translation rules, like the
+main rule set.
+The main rule set can reference
+.Pa anchor
+attachment points
+using the following kinds
+of rules:
+.Bl -tag -width xxxx
+.It Em anchor-nat name
+Evaluates the
+.Pa nat
+rules of all named rule sets in the specified
+.Pa anchor .
+.It Em anchor-rdr name
+Evaluates the
+.Pa rdr
+rules of all named rule sets in the specified
+.Pa anchor .
+.It Em anchor-binat name
+Evaluates the
+.Pa binat
+rules of all named rule sets in the specified
+.Pa anchor .
+.It Em anchor name
+Evaluates the filter rules of all named rule sets in the specified
+.Pa anchor .
+.El
+.Pp
+When evaluation of the main rule set reaches an
+.Pa anchor
+rule,
+.Xr pf 4
+will proceed to evaluate all rules specified in the
+named rule sets attached to that
+.Pa anchor .
+.Pp
+Matching filter rules in named rule sets with the
+.Em quick
+option and matching translation rules are final and abort the
+evaluation of both the rules in the
+.Pa anchor
+and the main rule set.
+.Pp
+Only the main rule set can contain
+.Pa anchor
+rules.
+.Pp
+When an
+.Pa anchor
+contains more than one named rule set, they are evaluated
+in the alphabetical order of their names.
+.Pp
+Rules may contain
+.Pa anchor
+attachment points that do not contain any rules when the main rule set
+is loaded, and named rule sets can be manipulated through
+.Xr pfctl 8
+without reloading the main rule set.
+For example,
+.Pp
+.Bd -literal
+    ext_if = "kue0"
+    block on $ext_if all
+    anchor spews
+    pass out on $ext_if all keep state
+    pass in  on $ext_if proto tcp from any to $ext_if port smtp keep state
+.Ed
+.Pp
+blocks all packets on the external interface by default, then evaluates
+all rule sets in the
+.Pa anchor
+named "spews", and finally passes all outgoing connections and
+incoming connections to port 25.
+.Pp
+Then
+.Bd -literal
+    # echo "block in quick from 1.2.3.4 to any" | pfctl -a spews:manual -f -
+.Pp
+loads a single rule set containing a single rule into the
+.Pa anchor ,
+which blocks all packets from a specific address.
 .Sh TRANSLATION EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
 which Apache Tomcat is running (say Tomcat is not run as root,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.32 2002/12/04 08:06:58 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.33 2002/12/06 00:47:32 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -751,7 +751,7 @@ pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
 	struct pf_pooladdr *pa;
 
 	if ((pf->opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr.ticket))
+		if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr))
 			err(1, "DIOCBEGINADDRS");
 	}
 
