@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.58 1999/02/28 06:51:36 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.59 1999/03/04 00:00:13 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -127,6 +127,8 @@ ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
 adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
 scsibus* at adv?
+#adw*	at pci? dev ? function ?	# AdvanSys ULTRA WIDE SCSI
+#scsibus* at adw?
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
 scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
@@ -192,17 +194,20 @@ xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
 tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
+#mx*	at pci? dev ? function ?		# Macronix PMAC ethernet
+#vr*	at pci? dev ? function ?		# VIA Rhine ethernet
+pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
 inphy*	at mii? phy ?				# Intel 82555 PHYs
-#icsphy*	at mii? phy ?				# ICS 1890 PHYs
-#lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
+#icsphy*	at mii? phy ?			# ICS 1890 PHYs
+#lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
-#mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
+#mtdphy*	at mii? phy ?			# Myson MTD972 PHYs
 #ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pseudo-device	loop	1		# network loopback
