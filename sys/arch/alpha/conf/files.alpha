@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.63 2004/10/08 13:04:35 grange Exp $
+#	$OpenBSD: files.alpha,v 1.64 2004/11/04 11:03:44 miod Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -132,7 +132,7 @@ include "dev/puc/files.puc"
 file	arch/alpha/isa/isa_machdep.c	isa
 
 define isadma_bounce
-file arch/alpha/isa/isadma_bounce.c	isadma_bounce
+file arch/alpha/isa/isadma_bounce.c	isadma_bounce & isa_dma
 
 device isabeep
 attach isabeep at pcppi
