@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.14 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: hme.c,v 1.15 2002/06/05 22:13:18 fgsch Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -1305,6 +1305,11 @@ hme_newbuf(sc, d, freeit)
 	struct mbuf *m;
 	bus_dmamap_t map;
 
+	/*
+	 * All operations should be on local variables and/or rx spare map
+	 * until we're sure everything is a success.
+	 */
+
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
@@ -1316,6 +1321,19 @@ hme_newbuf(sc, d, freeit)
 		return (ENOBUFS);
 	}
 
+	if (bus_dmamap_load(sc->sc_dmatag, sc->sc_rxmap_spare,
+	    mtod(m, caddr_t), MCLBYTES - HME_RX_OFFSET, NULL,
+	    BUS_DMA_NOWAIT) != 0) {
+		m_freem(m);
+		return (ENOBUFS);
+	}
+
+	/*
+	 * At this point we have a new buffer loaded into the spare map.
+	 * Just need to clear out the old mbuf/map and put the new one
+	 * in place.
+	 */
+
 	if (d->sd_loaded) {
 		bus_dmamap_sync(sc->sc_dmatag, d->sd_map,
 		    0, d->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -1323,21 +1341,6 @@ hme_newbuf(sc, d, freeit)
 		d->sd_loaded = 0;
 	}
 
-	if (bus_dmamap_load(sc->sc_dmatag, sc->sc_rxmap_spare,
-	    mtod(m, caddr_t), MCLBYTES - HME_RX_OFFSET, NULL,
-	    BUS_DMA_NOWAIT) != 0) {
-		if (d->sd_mbuf == NULL)
-			return (ENOBUFS);
-		m_freem(m);
-		return (ENOBUFS);
-	}
-
-	if (d->sd_loaded) {
-		bus_dmamap_sync(sc->sc_dmatag, d->sd_map, 0,
-		    d->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmatag, d->sd_map);
-		d->sd_loaded = 0;
-	}
 	if ((d->sd_mbuf != NULL) && freeit) {
 		m_freem(d->sd_mbuf);
 		d->sd_mbuf = NULL;
