@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.62 2004/12/05 18:35:51 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.63 2005/02/06 17:10:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -312,7 +312,7 @@ main(int argc, char *argv[])
 	read_client_conf();
 
 	if (!interface_link_status(ifi->name)) {
-		fprintf(stderr, "%s: no link ", ifi->name);
+		fprintf(stderr, "%s: no link ...", ifi->name);
 		fflush(stderr);
 		sleep(1);
 		while (!interface_link_status(ifi->name)) {
@@ -324,7 +324,7 @@ main(int argc, char *argv[])
 			}
 			sleep(1);
 		}
-		fprintf(stderr, "got link\n");
+		fprintf(stderr, " got link\n");
 	}
 
 	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
