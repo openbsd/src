@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.405 2001/06/16 20:17:40 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.406 2001/06/16 20:29:14 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -637,7 +637,7 @@
 #define	PCI_PRODUCT_TRIWARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID */
 
 /* Aironet Products */
-#define	PCI_PRODUCT_AIRONET_PCI352	0x0350		/* Cisco/Aironet PCI352 WLAN */
+#define	PCI_PRODUCT_AIRONET_PCI352	0x0350		/* Cisco/Aironet PCI35x WLAN */
 #define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless */
 #define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* PC4800 Wireless */
 
@@ -652,7 +652,7 @@
 #define	PCI_PRODUCT_ACCTON_EN1217	0x1217		/* EN1217 */
 
 /* Addtron products */
-#define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 */
+#define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* rtl8139 */
 #define	PCI_PRODUCT_ADDTRON_RHINEII	0x1320		/* RhineII */
 
 /* Acer products */

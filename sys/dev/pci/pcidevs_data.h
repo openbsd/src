@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.405 2001/06/16 20:17:40 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.406 2001/06/16 20:29:14 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -240,7 +240,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PCI352,
-	    "Cisco/Aironet PCI352 WLAN",
+	    "Cisco/Aironet PCI35x WLAN",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
@@ -276,7 +276,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
-	    "8139",
+	    "rtl8139",
 	},
 	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
