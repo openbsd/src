@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.9 1997/04/14 04:23:26 tholo Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.10 1997/04/25 09:33:24 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1365,7 +1365,7 @@ vfs_hang_addrlist(mp, nep, argp)
 		saddr->sa_len = argp->ex_addrlen;
 	if (argp->ex_masklen) {
 		smask = (struct sockaddr *)((caddr_t)saddr + argp->ex_addrlen);
-		error = copyin(argp->ex_addr, (caddr_t)smask, argp->ex_masklen);
+		error = copyin(argp->ex_mask, (caddr_t)smask, argp->ex_masklen);
 		if (error)
 			goto out;
 		if (smask->sa_len > argp->ex_masklen)
