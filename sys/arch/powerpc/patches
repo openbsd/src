@@ -4,43 +4,6 @@
 #	some need to be determined if they are to be commited
 #	or not.
 #
-Index: src/lib/libc/stdlib/strtod.c
-#	what define should be used here,
-#	port currently defines both.
-===================================================================
-RCS file: /cvs/src/lib/libc/stdlib/strtod.c,v
-retrieving revision 1.7
-diff -r1.7 strtod.c
-98c98
-<     defined(__ppc__)
----
->     defined(__powerpc__)
-Index: src/lib/libkvm/kvm.c
-#	Hackery to avoid problems with no MID_MACHINE for MID_POWERPC
-===================================================================
-RCS file: /cvs/src/lib/libkvm/kvm.c,v
-retrieving revision 1.4
-diff -r1.4 kvm.c
-1c1
-< /*	$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $ */
----
-> /*	$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $ */
-45c45
-< static char *rcsid = "$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $";
----
-> static char *rcsid = "$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $";
-361a362
-> #if #defined(__powerpc__)
-368a370
-> #endif
-475a478
-> #if !defined (__powerpc__)
-477a481
-> #endif
-510a515
-> #if !defined(__powerpc__)
-511a517
-> #endif
 Index: src/sbin/Makefile
 # powerpc and arc use fdisk.
 ===================================================================
@@ -170,7 +133,8 @@ diff -r1.9 fdisk.c
 > 		warnx("invalid fdisk partition table found!\n");
 Index: src/share/mk/bsd.prog.mk
 #	Support DESTDIR compilation under elf.
-#	Probably needed for mips and alpha
+#	This is needed for alpha, but not currently
+#	needed for mips because they still use stabs.
 ===================================================================
 RCS file: /cvs/src/share/mk/bsd.prog.mk,v
 retrieving revision 1.7
@@ -185,82 +149,17 @@ diff -r1.7 bsd.prog.mk
 < 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${OBJS} ${LDADD} -lgcc -lc -lgcc
 ---
 > 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${CRTBEGIN} ${OBJS} ${LDADD} -lgcc -lc -lgcc ${CRTEND}
-Index: src/sys/conf/param.c
-# this should not be necessary now. Need to check on this.
-===================================================================
-RCS file: /cvs/src/sys/conf/param.c,v
-retrieving revision 1.2
-diff -r1.2 param.c
-1c1
-< /*	$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $	*/
----
-> /*	$OpenBSD: patches,v 1.3 1997/01/05 08:33:42 deraadt Exp $	*/
-103c103
-< int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
----
-> int	fscale __asm__ ("_fscale") = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
-Index: src/sys/kern/kern_synch.c
-# this should not be necessary now. Need to check on this.
-===================================================================
-RCS file: /cvs/src/sys/kern/kern_synch.c,v
-retrieving revision 1.5
-diff -r1.5 kern_synch.c
-148c148
-< fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
----
-> fixpt_t	ccpu __asm__ ("_ccpu") = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
 Index: src/sys/kern/vfs_cache.c
 # Probably a bug in the port, but this makes the system MANY TIMES
-# more stable.
+# more stablility.
 ===================================================================
 RCS file: /cvs/src/sys/kern/vfs_cache.c,v
 retrieving revision 1.2
 diff -r1.2 vfs_cache.c
-75c75
-< int doingcache = 1;			/* 1 => enable the cache */
----
-> int doingcache = 0;			/* 1 => enable the cache */
-Index: src/sys/lib/libsa/Makefile
-#	Powerpc port uses memset by default instead of bzero.
-#	Compiler configuration.
-===================================================================
-RCS file: /cvs/src/sys/lib/libsa/Makefile,v
-retrieving revision 1.9
-diff -r1.9 Makefile
-26c26
-< 	printf.c strerror.c strcmp.c memset.c memcmp.c strncpy.c
----
-> 	printf.c strerror.c memset.c memcmp.c strncpy.c
-Index: src/sys/lib/libsa/Makefile.inc
-#	Is this patch necessary, Correct???
-===================================================================
-RCS file: /cvs/src/sys/lib/libsa/Makefile.inc,v
-retrieving revision 1.4
-diff -r1.4 Makefile.inc
-7c7
-< SADST=	lib/sa
----
-> SADST=	${.OBJDIR}/lib/sa
-Index: src/sys/lib/libsa/memcpy.c
-#	Ok, why did we need both...
-===================================================================
-RCS file: /cvs/src/sys/lib/libsa/memcpy.c,v
-retrieving revision 1.3
-diff -r1.3 memcpy.c
-41a42,47
-> #undef bcopy
-> void *
-> bcopy(s2, s1, n)
-> {
-> 	return 	memcpy(s1,s2,n);
-> }
-Index: src/usr.bin/xlint/lint1/param.h
-#	Which is the correct define to use for the port.
-===================================================================
-RCS file: /cvs/src/usr.bin/xlint/lint1/param.h,v
-retrieving revision 1.5
-diff -r1.5 param.h
-88c88
-< #elif __ppc__
----
-> #elif __powerpc__
+74a75,78
+> #ifdef __powerpc__
+> /* WRONG, hack for stability for now -- XXX */
+> int doingcache = 0;                   /* 1 => enable the cache */
+> #else
+75a80
+> #endif
