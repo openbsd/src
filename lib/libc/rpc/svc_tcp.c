@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.15 1997/07/09 03:05:05 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.16 1998/05/19 06:59:43 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -365,7 +365,7 @@ readtcp(xprt, buf, len)
 				goto fatal_err;
 			gettimeofday(&tmp1, NULL);
 			timersub(&tmp1, &start, &tmp2);
-			timersub(&delta, &tmp2, &tmp1);
+			timersub(&wait_per_try, &tmp2, &tmp1);
 			if (tmp1.tv_sec < 0 || !timerisset(&tmp1))
 				goto fatal_err;
 			delta = tmp1;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.15 1997/09/22 05:11:06 millert Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.16 1998/05/19 06:58:51 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -429,7 +429,7 @@ readtcp(ct, buf, len)
 
 		gettimeofday(&after, NULL);
 		timersub(&start, &after, &duration);
-		timersub(&delta, &duration, &tmp);
+		timersub(&ct->ct_wait, &duration, &tmp);
 		delta = tmp;
 		if (delta.tv_sec < 0 || !timerisset(&delta))
 			r = 0;
