@@ -73,7 +73,7 @@ static const char rcsid[] = "$Sudo: kerb5.c,v 1.18 2003/04/16 00:42:10 millert E
 #endif /* lint */
 
 #ifdef HAVE_HEIMDAL
-# define extract_name(c, p)		krb5_principal_get_comp_string(c, p, 0);
+# define extract_name(c, p)		krb5_principal_get_comp_string(c, p, 0)
 # define krb5_free_data_contents(c, d)	krb5_data_free(d)
 # define ENCTYPE_DES_CBC_MD5		ETYPE_DES_CBC_MD5	/* XXX */
 #else

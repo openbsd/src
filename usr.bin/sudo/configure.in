@@ -4,12 +4,12 @@ dnl $Sudo: configure.in,v 1.383 2003/04/13 19:48:15 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2003 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT(sudo, 1.6.7p4)
+AC_INIT(sudo, 1.6.7p5)
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-AC_MSG_NOTICE([Configuring Sudo version 1.6.7p4])
+AC_MSG_NOTICE([Configuring Sudo version 1.6.7p5])
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
@@ -1506,6 +1506,12 @@ case "$host" in
 		fi
 		;;
     *-*-*bsd*)
+		if test "$CHECKSHADOW" = "true"; then
+		    CHECKSHADOW="false"
+		fi
+		;;
+    *-*-darwin*)
+		SKIP_SETREUID=yes
 		if test "$CHECKSHADOW" = "true"; then
 		    CHECKSHADOW="false"
 		fi

@@ -1,10 +1,11 @@
 A Brief history of sudo(8):
 
-The sudo philosophy originated at SUNY-Buffalo in the early 1980's.
-The first version of sudo was written there by Cliff Spencer in
-1983.  An updated version, credited to Phil Betchel, Cliff Spencer,
-Gretchen Phillips, John LoVerso and Don Gworek, was posted to the
-net.sources newsgroup in December of 1985.
+Sudo was first conceived and implemented by Bob Coggeshall and Cliff
+Spencer around 1980 at the Department of Computer Science at
+SUNY/Buffalo.  It ran on a VAX-11/750 running 4.1BSD.  An updated
+version, credited to Phil Betchel, Cliff Spencer, Gretchen Phillips,
+John LoVerso and Don Gworek, was posted to the net.sources newsgroup
+in December of 1985.
 
 In the Summer of 1986, Garth Snyder released and enhanced version
 of sudo. For the next 5 years, sudo was fed and watered by a handful

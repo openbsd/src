@@ -250,8 +250,8 @@ insert_env(str, dupcheck)
     char **nep;
     size_t varlen;
 
-    /* Make sure there is room for the new entry. */
-    if (env_len + 1 > env_size) {
+    /* Make sure there is room for the new entry plus a NULL. */
+    if (env_len + 2 > env_size) {
 	env_size += 128;
 	new_environ = erealloc3(new_environ, env_size, sizeof(char *));
     }
