@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.9 2000/10/25 15:03:41 aaron Exp $
+.\"	$OpenBSD: style.9,v 1.10 2000/12/20 21:09:07 aaron Exp $
 .\"
 .Dd August 19, 1999
 .Dt STYLE 9
@@ -262,7 +262,10 @@ call and the switch statement, unless
 parts of the switch cascade.
 Elements in a switch statement that cascade should have a FALLTHROUGH comment.
 Numerical arguments should be checked for accuracy.
-Code that cannot be reached should have a NOTREACHED comment.
+Code that cannot be reached should have a NOTREACHED comment, except following,
+i.e., an
+.Xr exit 3
+call, where it is obvious.
 .Bd -literal -offset 0i
 	while ((ch = getopt(argc, argv, "abn")) != -1)
 		switch (ch) {		/* Indent the switch. */
