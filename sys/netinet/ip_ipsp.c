@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.125 2001/06/04 18:38:12 mickey Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.126 2001/06/05 06:38:07 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -360,17 +360,15 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 			    ipo->ipo_local_cred->ref_len)))
 		    continue;
 	      }
-	      else
-		continue; /* If no credential was used in the TDB, try
-			   * to establish a new SA with the given
-			   * credential, since some type of access control
-			   * may be done on the other side based on that
-			   * credential.
-			   */
 	  }
 	  else
 	    if (ipo->ipo_local_cred != NULL)
-	      continue;
+	      continue; /* If no credential was used in the TDB, try
+			 * to establish a new SA with the given
+			 * credential, since some type of access control
+			 * may be done on the other side based on that
+			 * credential.
+			 */
 
 	  /* XXX Check for filter matches */
 	  break;
@@ -453,17 +451,15 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 			    ipo->ipo_local_cred->ref_len)))
 		    continue;
 	      }
-	      else
-		continue; /* If no credential was used in the TDB, try
-			   * to establish a new SA with the given
-			   * credential, since some type of access control
-			   * may be done on the other side based on that
-			   * credential.
-			   */
 	  }
 	  else
 	    if (ipo->ipo_local_cred != NULL)
-	      continue;
+	      continue; /* If no credential was used in the TDB, try
+			 * to establish a new SA with the given
+			 * credential, since some type of access control
+			 * may be done on the other side based on that
+			 * credential.
+			 */
 
 	  /* XXX Check for filter matches */
 	  break;
