@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2005/03/19 00:10:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/03/19 00:18:53 deraadt Exp $
 
 TOP=    ${.CURDIR}/..
 IPK=	openbsd${OSrev}_arm.ipk
 
-all: ${IPK}
+all: ${IPK} Packages
 
 ${IPK}:
 	install -o ${BINOWN} -g ${BINGRP} -m 755 -d ${.OBJDIR}/data/hdd2/OpenBSD
@@ -43,7 +43,20 @@ ${IPK}:
 	echo 2.0 > debian-binary; chown ${BINOWN}:${BINGRP} debian-binary
 	tar -czf ${IPK} ./debian-binary ./data.tar.gz ./control.tar.gz
 
-install:
+Packages:
+	echo "Package: openbsd" > ${.OBJDIR}/Packages
+	echo "Version: ${OSREV}" >> ${.OBJDIR}/Packages
+	echo "Priority: optional" >> ${.OBJDIR}/Packages
+	echo "Section: Misc" >> ${.OBJDIR}/Packages
+	echo "Architecture: arm" >> ${.OBJDIR}/Packages
+	echo "Maintainer: uwe@openbsd.org" >> ${.OBJDIR}/Packages
+	echo "Filename: ${IPK}" >> ${.OBJDIR}/Packages
+	echo "Size: " `/bin/ls -l ${IPK} | awk '{print $5}'` \
+	    >> ${.OBJDIR}/Packages
+	echo "Description: OpenBSD ${OSREV} boot loader and kernel" \
+	    >> ${.OBJDIR}/Packages
+
+install: ${IPK} Packages
 	cp ${IPK} ${DESTDIR}/snapshot
 	cp Packages ${DESTDIR}/snapshot
 

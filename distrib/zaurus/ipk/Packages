@@ -1,9 +1,0 @@
-Package: openbsd
-Version: 3.7
-Priority: optional
-Section: Misc
-Architecture: arm
-Maintainer: uwe@openbsd.org
-Filename: openbsd37_arm.ipk
-Size: 4576890
-Description: OpenBSD boot loader and kernel
