@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.17 1996/11/22 16:15:23 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.18 1996/11/23 19:10:26 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -455,6 +455,28 @@ fls(size)
 }
 #endif /* fls */
 
+#if LONG_BITS == WORD_BITS
+#define ffs_ul ffs
+#else
+static __inline int
+ffs_ul(u_long ul)
+{
+    u_int n;
+    int i;
+    int k;
+
+    for (i = 0; i < sizeof (u_long) / sizeof (u_int); i++) {
+	n = ul & UINT_MAX;
+	k = ffs (n);
+	if (k)
+	    break;
+	ul >>= (sizeof (u_int) * 8);
+    }
+    if (k)
+	k += i * sizeof (u_int) * 8;
+}
+#endif
+
 /*
  * Extend page directory
  */
@@ -838,8 +860,8 @@ malloc_bytes(size)
 	;
 
     /* Find that bit, and tweak it */
-    k = ffs((unsigned)*lp) - 1;
-    *lp ^= 1<<k;
+    k = ffs_ul(*lp) - 1;
+    *lp ^= 1UL<<k;
 
     /* If there are no more free, remove from free-list */
     if (!--bp->free) {
