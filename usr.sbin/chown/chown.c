@@ -1,4 +1,4 @@
-/*	$OpenBSD: chown.c,v 1.6 1997/06/27 19:02:09 deraadt Exp $	*/
+/*	$OpenBSD: chown.c,v 1.7 1997/06/28 16:41:08 grr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$Id: chown.c,v 1.6 1997/06/27 19:02:09 deraadt Exp $";
+static char *rcsid = "$Id: chown.c,v 1.7 1997/06/28 16:41:08 grr Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@ static char *rcsid = "$Id: chown.c,v 1.6 1997/06/27 19:02:09 deraadt Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <locale.h>
 
 void	a_gid __P((char *));
 void	a_uid __P((char *));
