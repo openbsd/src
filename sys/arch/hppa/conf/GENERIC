@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2003/12/16 21:04:23 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.44 2003/12/23 12:29:39 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -131,7 +131,7 @@ dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
 #xl*	at pci? dev ? function ?	# 3C9xx ethernet
 #em*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 #ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
-#fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
+fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
 #txp*	at pci? dev ? function ?	# 3com 3CR990
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #an*	at pci? dev ? function ?	# Cisco/Aironet 802.11DS
@@ -140,9 +140,9 @@ dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
 dcphy*		at mii? phy ?		# Digital Clone PHYs
 amphy*		at mii? phy ?		# AMD 79C873 PHYs
 #exphy*		at mii? phy ?		# 3Com internal PHYs
-#inphy*		at mii? phy ?		# Intel 82555 PHYs
+inphy*		at mii? phy ?		# Intel 82555 PHYs
 #iophy*		at mii? phy ?		# Intel 82553 PHYs
-#icsphy*	at mii? phy ?		# ICS1890 PHYs
+icsphy*		at mii? phy ?		# ICS1890 PHYs
 lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs
 #nsphyter*	at mii? phy ?		# NS83843 PHYs
