@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.1.1.1 1995/10/18 08:48:07 deraadt Exp $";
+static char rcsid[] = "$Id: rwhod.c,v 1.2 1996/08/16 23:24:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -193,12 +193,13 @@ main(argc, argv)
 			continue;
 		if (wd.wd_type != WHODTYPE_STATUS)
 			continue;
+		wd.wd_hostname[sizeof(wd.wd_hostname)-1] = '\0';
 		if (!verify(wd.wd_hostname)) {
 			syslog(LOG_WARNING, "malformed host name from %x",
 				from.sin_addr);
 			continue;
 		}
-		(void) sprintf(path, "whod.%s", wd.wd_hostname);
+		(void) snprintf(path, sizeof path, "whod.%s", wd.wd_hostname);
 		/*
 		 * Rather than truncating and growing the file each time,
 		 * use ftruncate if size is less than previous size.
