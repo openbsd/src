@@ -1,4 +1,4 @@
-/*	$OpenBSD: libcrypto.c,v 1.7 2000/10/07 06:57:08 niklas Exp $	*/
+/*	$OpenBSD: libcrypto.c,v 1.8 2000/12/19 22:00:02 markus Exp $	*/
 /*	$EOM: libcrypto.c,v 1.14 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ int (*lc_i2d_RSAPublicKey) (RSA *, unsigned char **);
 int (*lc_i2d_RSAPrivateKey) (RSA *, unsigned char **);
 int (*lc_i2d_X509) (X509 *, unsigned char **);
 int (*lc_i2d_X509_NAME) (X509_NAME *, unsigned char **);
-#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+#if (SSLEAY_VERSION_NUMBER >= 0x00904100L && SSLEAY_VERSION_NUMBER < 0x0090600fL)
 void (*lc_sk_X509_free) (STACK_OF (X509) *);
 STACK_OF (X509) *(*lc_sk_X509_new_null) ();
 #else
@@ -177,7 +177,7 @@ static struct dynload_script libcrypto_script[] = {
   SYMENTRY (i2d_RSAPrivateKey),
   SYMENTRY (i2d_X509),
   SYMENTRY (i2d_X509_NAME),
-#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+#if (SSLEAY_VERSION_NUMBER >= 0x00904100L && SSLEAY_VERSION_NUMBER < 0x0090600fL)
   SYMENTRY (sk_X509_free),
   SYMENTRY (sk_X509_new_null),
 #else
