@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.72 2004/11/18 21:46:07 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.73 2004/11/21 15:36:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -414,58 +414,27 @@ sub register_manpage
 
 package OpenBSD::PackingElement::Lib;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
-use File::Basename;
-use OpenBSD::Error;
+
+our $todo = 0;
 
 __PACKAGE__->setKeyword('lib');
 sub keyword() { "lib" }
 
-my $todo = 0;
-my $path;
-our @ldconfig = ('/sbin/ldconfig');
-
-sub init_path($)
-{
-	my $destdir = shift;
-	$path={};
-	if ($destdir ne '') {
-		unshift @ldconfig, 'chroot', $destdir;
-	}
-	open my $fh, "-|", @ldconfig, "-r";
-	if (defined $fh) {
-		local $_;
-		while (<$fh>) {
-			if (m/^\s*search directories:\s*(.*?)\s*$/) {
-				for my $d (split(':', $1)) {
-					$path->{$d} = 1;
-				}
-			}
-		}
-		close($fh);
-	} else {
-		print STDERR "Can't find ldconfig\n";
-	}
-}
-
 sub mark_ldconfig_directory
 {
+	require OpenBSD::SharedLibs;
+
 	my ($self, $destdir) = @_;
-	if (!defined $path) {
-		init_path($destdir);
-	}
-	my $d = dirname($self->fullname());
-	if ($path->{$d}) {
-		$todo = 1;
-	}
+	OpenBSD::SharedLibs::mark_ldconfig_directory($self->fullname(), 
+	    $destdir);
 }
 
 sub ensure_ldconfig
 {
-	my $state = shift;
 	if ($todo) {
-		VSystem($state->{very_verbose}, 
-		    @ldconfig, "-R") unless $state->{not};
-		$todo = 0;
+		require OpenBSD::SharedLibs;
+
+		&OpenBSD::SharedLibs::ensure_ldconfig();
 	}
 }
 
