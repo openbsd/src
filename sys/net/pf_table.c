@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_table.c,v 1.8 2003/01/01 16:08:52 henning Exp $ */
+/*      $OpenBSD: pf_table.c,v 1.9 2003/01/01 22:07:57 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -794,6 +794,7 @@ pfr_route_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 	struct radix_node_head	*head;
 	int			 s;
 
+	bzero(ke->pfrke_node, sizeof(ke->pfrke_node));
 	if (ke->pfrke_af == AF_INET)
 		head = kt->pfrkt_ip4;
 	else
