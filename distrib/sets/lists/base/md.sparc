@@ -615,6 +615,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/sbusvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/spifreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/spifvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sbus/uperf_sbusreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/disklabel.ph
@@ -623,6 +624,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/kbd_xlate.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/sunkbdreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/sunkbdvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/uperfio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/if_levar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/ioasicvar.ph

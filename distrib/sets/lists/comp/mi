@@ -565,6 +565,7 @@
 ./usr/include/dev/sbus/sbusvar.h
 ./usr/include/dev/sbus/spifreg.h
 ./usr/include/dev/sbus/spifvar.h
+./usr/include/dev/sbus/uperf_sbusreg.h
 ./usr/include/dev/sequencervar.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
@@ -573,6 +574,7 @@
 ./usr/include/dev/sun/kbd_xlate.h
 ./usr/include/dev/sun/sunkbdreg.h
 ./usr/include/dev/sun/sunkbdvar.h
+./usr/include/dev/sun/uperfio.h
 ./usr/include/dev/tc
 ./usr/include/dev/tc/if_levar.h
 ./usr/include/dev/tc/ioasicvar.h

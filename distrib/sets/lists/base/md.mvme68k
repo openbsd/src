@@ -955,6 +955,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/sbusvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/spifreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/spifvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sbus/uperf_sbusreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/disklabel.ph
@@ -963,6 +964,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/kbd_xlate.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/sunkbdreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/sunkbdvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/sun/uperfio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/tc
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/tc/if_levar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/tc/ioasicvar.ph
