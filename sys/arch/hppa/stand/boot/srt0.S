@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.2 1998/07/20 18:40:30 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.3 1998/08/29 01:54:25 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -21,9 +21,6 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
  * 
  */
-/*
- * pmk1.1
- */
 ;
 ; Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
 ; Copyright (c) 1990 University of Utah.  All rights reserved.
@@ -35,10 +32,6 @@
 ; WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 ;
 ;	Utah $Hdr: srt0.c 1.3 94/12/13$
-;
-
-;
-; Startup code for standalone HP700 system.
 ;
 
 #define	_LOCORE
@@ -93,7 +86,7 @@ zeroloop
 	ldil	L%begin,%r1		; set %r1 to address of begin
 	ldo	R%begin(%r1),%r1
 	sub	%r21,%r1,%r21		; Subtract to get length
-	mtsp	%r0,%sr0			; Set sr0 to kernel space.
+	mtsp	%r0,%sr0		; Set sr0 to kernel space.
 	ldo	-1(%r21),%r21
 	fdc	%r21(0,%r22)
 loop	addib,>,n -16,%r21,loop		; Decrement by cache line size (16).
@@ -114,15 +107,16 @@ start
 	ldo	R%stack_base(%sp),%sp
 	dep	%r0,31,6,%sp		;   and ensure maximum alignment.	
 
+	copy	%r0, arg0		; use default boot device
 	b,n	boot			; Call boot(),
 
 /*
  * rtt - restart the box
  */
 	ENTRY(_rtt)
-	ldi     CMD_RESET,r26
-	ldil    L%LBCAST_ADDR,r25
-	stw     r26,R%48(r25)		; iomod->io_command
+	ldi     CMD_RESET, %r26
+	ldil    L%LBCAST_ADDR, %r25
+	stw     %r26,R%48(%r25)		; iomod->io_command
 forever                                 ; Loop until bus reset takes effect.
 	b,n     forever
 
