@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_cancel.3,v 1.4 1999/11/24 05:35:31 d Exp $
+.\" $OpenBSD: pthread_cancel.3,v 1.5 2000/01/22 13:59:29 aaron Exp $
 .Dd January 17, 1999
 .Dt PTHREAD_CANCEL 3
 .Os
@@ -14,7 +14,7 @@ The
 .Fn pthread_cancel
 function requests that
 .Fa thread
-be canceled. The target thread's cancelability state and type determines
+be cancelled. The target thread's cancelability state and type determines
 when the cancellation takes effect. When the cancellation is acted on,
 the cancellation cleanup handlers for
 .Fa thread

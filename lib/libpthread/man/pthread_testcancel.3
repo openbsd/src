@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_testcancel.3,v 1.5 1999/11/24 05:35:33 d Exp $
+.\" $OpenBSD: pthread_testcancel.3,v 1.6 2000/01/22 13:59:29 aaron Exp $
 .Dd January 17, 1999
 .Dt PTHREAD_TESTCANCEL 3
 .Os
@@ -122,7 +122,7 @@ The
 and
 .Fn pthread_setcanceltype
 functions are used to control the points at which a thread may be
-asynchronously canceled. For cancellation control to be usable in modular
+asynchronously cancelled. For cancellation control to be usable in modular
 fashion, some rules must be followed.
 .Pp
 For purposes of this discussion, consider an object to be a generalization
@@ -137,9 +137,9 @@ always be restored to its value on entry to the object.
 This follows from a modularity argument: if the client of an object (or the
 client of an object that uses that object) has disabled cancelability, it is
 because the client doesn't want to have to worry about how to clean up if the
-thread is canceled while executing some sequence of actions. If an object
+thread is cancelled while executing some sequence of actions. If an object
 is called in such a state and it enables cancelability and a cancellation
-request is pending for that thread, then the thread will be canceled,
+request is pending for that thread, then the thread will be cancelled,
 contrary to the wish of the client that disabled.
 .Pp
 Second, the cancelability type may be explicitly set to either
