@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.20 2005/03/23 20:15:50 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.21 2005/03/26 11:06:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -487,5 +487,9 @@ struct kif	*kif_findname(char *);
 
 u_int8_t	mask2prefixlen(in_addr_t);
 in_addr_t	prefixlen2mask(u_int8_t);
+
+/* ospfd.c */
+void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);
+void	main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
 
 #endif	/* _OSPFD_H_ */

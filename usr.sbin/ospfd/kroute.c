@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.10 2005/03/23 20:28:29 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.11 2005/03/26 11:06:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -36,11 +36,7 @@
 #include <unistd.h>
 
 #include "ospfd.h"
-#include "ospfd.h"
 #include "log.h"
-
-/* XXX */
-void main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);
 
 struct {
 	u_int32_t		rtseq;
@@ -60,12 +56,9 @@ struct kif_kr {
 	struct kroute_node	*kr;
 };
 
-LIST_HEAD(kif_kr_head, kif_kr);
-
 struct kif_node {
 	RB_ENTRY(kif_node)	 entry;
 	struct kif		 k;
-	struct kif_kr_head	 kroute_l;
 };
 
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
@@ -80,9 +73,6 @@ struct kif_node		*kif_find(int);
 int			 kif_insert(struct kif_node *);
 int			 kif_remove(struct kif_node *);
 void			 kif_clear(void);
-
-int			 kif_kr_insert(struct kroute_node *);
-int			 kif_kr_remove(struct kroute_node *);
 
 struct kroute_node	*kroute_match(in_addr_t);
 
@@ -376,14 +366,6 @@ kroute_insert(struct kroute_node *kr)
 		return (-1);
 	}
 
-	if (kr->r.flags & F_KERNEL) {
-		if (!(kr->r.flags & F_CONNECTED))
-			kr->r.flags |= F_STATIC;
-
-		if (kr->r.flags & F_CONNECTED)
-			if (kif_kr_insert(kr) == -1)
-				return (-1);
-	}
 	return (0);
 }
 
@@ -395,12 +377,6 @@ kroute_remove(struct kroute_node *kr)
 		    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
 		return (-1);
 	}
-
-	if (kr->r.flags & F_CONNECTED)
-		if (kif_kr_remove(kr) == -1) {
-			free(kr);
-			return (-1);
-		}
 
 	free(kr);
 	return (0);
@@ -441,8 +417,6 @@ kif_findname(char *ifname)
 int
 kif_insert(struct kif_node *kif)
 {
-	LIST_INIT(&kif->kroute_l);
-
 	if (RB_INSERT(kif_tree, &kit, kif) != NULL) {
 		log_warnx("RB_INSERT(kif_tree, &kit, kif)");
 		free(kif);
@@ -455,17 +429,9 @@ kif_insert(struct kif_node *kif)
 int
 kif_remove(struct kif_node *kif)
 {
-	struct kif_kr	*kkr;
-
 	if (RB_REMOVE(kif_tree, &kit, kif) == NULL) {
 		log_warnx("RB_REMOVE(kif_tree, &kit, kif)");
 		return (-1);
-	}
-
-	while ((kkr = LIST_FIRST(&kif->kroute_l)) != NULL) {
-		LIST_REMOVE(kkr, entry);
-		kroute_remove(kkr->kr);
-		free(kkr);
 	}
 
 	free(kif);
@@ -479,60 +445,6 @@ kif_clear(void)
 
 	while ((kif = RB_MIN(kif_tree, &kit)) != NULL)
 		kif_remove(kif);
-}
-
-int
-kif_kr_insert(struct kroute_node *kr)
-{
-	struct kif_node	*kif;
-	struct kif_kr	*kkr;
-
-	if ((kif = kif_find(kr->r.ifindex)) == NULL) {
-		if (kr->r.ifindex)
-			log_warnx("interface with index %u not found",
-			    kr->r.ifindex);
-		return (0);
-	}
-
-	if ((kkr = calloc(1, sizeof(struct kif_kr))) == NULL) {
-		log_warn("kif_kr_insert");
-		return (-1);
-	}
-
-	kkr->kr = kr;
-
-	LIST_INSERT_HEAD(&kif->kroute_l, kkr, entry);
-
-	return (0);
-}
-
-int
-kif_kr_remove(struct kroute_node *kr)
-{
-	struct kif_node	*kif;
-	struct kif_kr	*kkr;
-
-	if ((kif = kif_find(kr->r.ifindex)) == NULL) {
-		if (kr->r.ifindex)
-			log_warnx("interface with index %u not found",
-			    kr->r.ifindex);
-		return (0);
-	}
-
-	for (kkr = LIST_FIRST(&kif->kroute_l); kkr != NULL && kkr->kr != kr;
-	    kkr = LIST_NEXT(kkr, entry))
-		;	/* nothing */
-
-	if (kkr == NULL) {
-		log_warnx("can't remove connected route from interface "
-		    "with index %u: not found", kr->r.ifindex);
-		return (-1);
-	}
-
-	LIST_REMOVE(kkr, entry);
-	free(kkr);
-
-	return (0);
 }
 
 struct kroute_node *
@@ -631,7 +543,6 @@ void
 if_change(u_short ifindex, int flags, struct if_data *ifd)
 {
 	struct kif_node		*kif;
-	struct kif_kr		*kkr;
 	u_int8_t		 reachable;
 
 	if ((kif = kif_find(ifindex)) == NULL) {
@@ -651,18 +562,6 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 
 	kif->k.nh_reachable = reachable;
 	main_imsg_compose_ospfe(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
-
-	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
-		/*
-		 * we treat link_state == LINK_STATE_UNKNOWN as valid
-		 * not all interfaces have a concept of "link state" and/or
-		 * do not report up
-		 */
-		if (reachable)
-			kkr->kr->r.flags &= ~F_DOWN;
-		else
-			kkr->kr->r.flags |= F_DOWN;
-	}
 }
 
 void
@@ -1026,12 +925,6 @@ dispatch_rtmsg(void)
 			    NULL) {
 				if (kr->r.flags & F_KERNEL) {
 					kr->r.nexthop.s_addr = nexthop.s_addr;
-					if ((kr->r.flags & F_CONNECTED) &&
-					    !(flags & F_CONNECTED))
-						kif_kr_remove(kr);
-					if ((flags & F_CONNECTED) &&
-					    !(kr->r.flags & F_CONNECTED))
-						kif_kr_insert(kr);
 					kr->r.flags = flags;
 				}
 			} else if (rtm->rtm_type == RTM_CHANGE) {
