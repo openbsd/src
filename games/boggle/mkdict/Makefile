@@ -4,6 +4,7 @@
 PROG=	mkdict
 CFLAGS+=-I${.CURDIR}/../boggle
 NOMAN=noman
+CC=${HOSTCC}
 
 install:
 

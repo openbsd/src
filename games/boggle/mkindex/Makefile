@@ -4,6 +4,7 @@
 PROG=	mkindex
 CFLAGS+=-I${.CURDIR}/../boggle
 NOMAN=noman
+CC=${HOSTCC}
 
 install:
 
