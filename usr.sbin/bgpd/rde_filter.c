@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.6 2004/03/02 19:29:01 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.7 2004/03/11 17:12:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -87,6 +87,11 @@ rde_filter_match(struct filter_rule *f, struct attr_flags *attrs,
 		    f->match.as.as) == 0)
 			return (0);
 
+	if (attrs != NULL && f->match.community.as != 0)
+		if (rde_filter_community(attrs, f->match.community.as,
+		    f->match.community.type) == 0)
+			return (0);
+
 	if (f->match.prefix.addr.af != 0 &&
 	    f->match.prefix.addr.af == prefix->af) {
 		switch (f->match.prefix.addr.af) {
@@ -159,4 +164,17 @@ rde_filter_match(struct filter_rule *f, struct attr_flags *attrs,
 
 	/* matched somewhen or is anymatch rule  */
 	return (1);
+}
+
+int
+rde_filter_community(struct attr_flags *attr, int as, int type)
+{
+	struct attr	*a;
+
+	a = attr_optget(attr, ATTR_COMMUNITIES);
+	if (a == NULL)
+		/* no communities, no match */
+		return (0);
+
+	return (community_match(a->data, a->len, as, type));
 }

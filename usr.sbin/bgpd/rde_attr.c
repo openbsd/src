@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.19 2004/03/11 16:38:23 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.20 2004/03/11 17:12:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -37,8 +37,8 @@
 		plen += n; \
 	} while (0)
 
-#define CHECK_FLAGS(s, t)	\
-	(((s) & ~ATTR_EXTLEN) == (t))
+#define CHECK_FLAGS(s, t, m)	\
+	(((s) & ~(ATTR_EXTLEN | (m))) == (t))
 
 #define F_ATTR_ORIGIN		0x01
 #define F_ATTR_ASPATH		0x02
@@ -97,7 +97,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 	case ATTR_ORIGIN:
 		if (attr_len != 1)
 			return (-1);
-		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			return (-1);
 		UPD_READ(&a->origin, p, plen, 1);
 		if (a->origin > ORIGIN_INCOMPLETE)
@@ -105,7 +105,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 		WFLAG(a->wflags, F_ATTR_ORIGIN);
 		break;
 	case ATTR_ASPATH:
-		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			return (-1);
 		if (aspath_verify(p, attr_len) != 0)
 			return (-1);
@@ -120,7 +120,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 	case ATTR_NEXTHOP:
 		if (attr_len != 4)
 			return (-1);
-		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			return (-1);
 		WFLAG(a->wflags, F_ATTR_NEXTHOP);
 		UPD_READ(&a->nexthop, p, plen, 4);	/* network byte order */
@@ -136,7 +136,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 	case ATTR_MED:
 		if (attr_len != 4)
 			return (-1);
-		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL))
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			return (-1);
 		WFLAG(a->wflags, F_ATTR_MED);
 		UPD_READ(&tmp32, p, plen, 4);
@@ -145,7 +145,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 	case ATTR_LOCALPREF:
 		if (attr_len != 4)
 			return (-1);
-		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			return (-1);
 		if (ebgp) {
 			/* ignore local-pref attr for non ibgp peers */
@@ -160,13 +160,20 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 	case ATTR_ATOMIC_AGGREGATE:
 		if (attr_len != 0)
 			return (-1);
-		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			return (-1);
 		goto optattr;
 	case ATTR_AGGREGATOR:
 		if (attr_len != 6)
 			return (-1);
-		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE))
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, 0))
+			return (-1);
+		goto optattr;
+	case ATTR_COMMUNITIES:
+		if ((attr_len & 0x3) != 0)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
+		    ATTR_PARTIAL))
 			return (-1);
 		goto optattr;
 	default:
@@ -238,7 +245,7 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 			*size = 0;
 			return (NULL);
 		}
-		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN)) {
+		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0)) {
 			/* malformed aspath detected by exclusion method */
 			*size = 0;
 			*suberr = ERR_UPD_ASPATH;
@@ -253,7 +260,7 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 			*size = 0;
 			return (NULL);
 		}
-		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN)) {
+		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0)) {
 			/* malformed nexthop detected by exclusion method */
 			*suberr = ERR_UPD_NETWORK;
 			return (p);
@@ -285,13 +292,13 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 		if (attr_len != 6)
 			return (p);
 		break;
-	default:
-		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN)) {
-			*suberr = ERR_UPD_UNKNWN_WK_ATTR;
+	case ATTR_COMMUNITIES:
+		if ((attr_len & 0x3) != 0)
 			return (p);
-		}
-		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL)) {
-			*suberr = ERR_UPD_ATTRFLAGS;
+		/* FALLTHROUGH */
+	default:
+		if ((flags & ATTR_OPTIONAL) == 0) {
+			*suberr = ERR_UPD_UNKNWN_WK_ATTR;
 			return (p);
 		}
 		TAILQ_FOREACH(a, &attr->others, attr_l)
@@ -495,6 +502,21 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 	}
 	TAILQ_INSERT_HEAD(&attr->others, a, attr_l);
 	return (0);
+}
+
+struct attr *
+attr_optget(struct attr_flags *attr, u_int8_t type)
+{
+	struct attr	*a;
+	
+	TAILQ_FOREACH(a, &attr->others, attr_l) {
+		if (type == a->type)
+			return (a);
+		if (type < a->type)
+			/* list is sorted */
+			break;
+	}
+	return (NULL);
 }
 
 void
@@ -821,7 +843,10 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 		seg_size = 2 + 2 * seg_len;
 
 		if (seg_type == AS_SET) {
-			r = snprintf(buf, size, "{ ");
+			if (total_size != 0)
+				r = snprintf(buf, size, " { ");
+			else
+				r = snprintf(buf, size, "{ ");
 			UPDATE();
 		} else if (total_size != 0) {
 			r = snprintf(buf, size, " ");
@@ -948,3 +973,24 @@ aspath_match(struct aspath *a, enum as_spec type, u_int16_t as)
 	}
 	return (0);
 }
+
+int
+community_match(void *data, u_int16_t len, int as, int type)
+{
+	u_int8_t	*p = data;
+	u_int16_t	 eas, etype, l;
+
+	for (l = 0; l + 3 < len; len +=4) {
+		eas = *p++;
+		eas <<= 8;
+		eas |= *p++;
+		etype = *p++;
+		etype <<= 8;
+		etype |= *p++;
+		if ((as == COMMUNITY_ANY || (u_int16_t)as == eas) &&
+		    (type == COMMUNITY_ANY || type == etype))
+			return 1;
+	}
+	return 0;
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.13 2004/03/09 13:51:16 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.14 2004/03/11 17:12:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -252,6 +252,17 @@ up_generate_updates(struct rde_peer *peer,
 			break;
 		}
 
+		/* well known communites */
+		if (rde_filter_community(&old->aspath->flags,
+		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_ADVERTISE))
+			return;
+		if (peer->conf.ebgp && rde_filter_community(&old->aspath->flags,
+		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPORT))
+			return;
+		if (peer->conf.ebgp && rde_filter_community(&old->aspath->flags,
+		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPSUBCONFED))
+			return;
+
 		/* copy attributes for output filter */
 		attr_copy(&attrs, &old->aspath->flags);
 
@@ -315,6 +326,23 @@ up_generate_updates(struct rde_peer *peer,
 				return;
 			}
 			break;
+		}
+
+		/* well known communites */
+		if (rde_filter_community(&new->aspath->flags,
+		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_ADVERTISE)) {
+			up_generate_updates(peer, NULL, old);
+			return;
+		}
+		if (peer->conf.ebgp && rde_filter_community(&new->aspath->flags,
+		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPORT)) {
+			up_generate_updates(peer, NULL, old);
+			return;
+		}
+		if (peer->conf.ebgp && rde_filter_community(&new->aspath->flags,
+		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPSUBCONFED)) {
+			up_generate_updates(peer, NULL, old);
+			return;
 		}
 
 		/* copy attributes for output filter */
@@ -457,17 +485,17 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 			break;
 		case ATTR_AGGREGATOR:
 			if ((r = attr_write(up_attr_buf + wlen, len,
-			    ATTR_OPTIONAL | ATTR_TRANSITIVE, ATTR_AGGREGATOR,
-			    oa->data, oa->len)) == -1)
+			    oa->flags, oa->type, oa->data, oa->len)) == -1)
 				return (-1);
 			break;
-		/*
-		 * currently there are no non-transitive or transitive known
-		 * attributes.
-		 */
+		case ATTR_COMMUNITIES:
+			if ((r = attr_write(up_attr_buf + wlen, len,
+			    oa->flags, oa->type, oa->data, oa->len)) == -1)
+				return (-1);
+			break;
 		default:
 			/* unknown attribute */
-			if (!(oa->flags & ATTR_OPTIONAL))
+			if (!(oa->flags & ATTR_TRANSITIVE))
 				/* somehow a non-transitive slipped through */
 				break;
 			if ((r = attr_write(up_attr_buf + wlen, len,

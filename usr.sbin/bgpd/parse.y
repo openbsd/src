@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.75 2004/03/10 11:40:33 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.76 2004/03/11 17:12:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,6 +81,7 @@ struct sym {
 int	 symset(const char *, const char *, int);
 char	*symget(const char *);
 int	 atoul(char *, u_long *);
+int	 getcommunity(char *);
 
 typedef struct {
 	union {
@@ -111,11 +112,11 @@ typedef struct {
 %token	ALLOW DENY MATCH
 %token	QUICK
 %token	FROM TO ANY
-%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS
+%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
 %token	SET LOCALPREF MED NEXTHOP PREPEND
 %token	ERROR
 %token	<v.string>		STRING
-%type	<v.number>		number asnumber optnumber yesno inout
+%type	<v.number>		number asnumber optnumber cnumber yesno inout
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix
@@ -625,14 +626,31 @@ filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
 			$$.prefixlen = $2.prefixlen;
 			$$.prefixlen.af = AF_INET;
 		}
-		| filter_as number		{
+		| filter_as asnumber		{
 			bzero(&$$, sizeof($$));
-			if ($2 > 0xffff) {
-				yyerror("AS out of range, max %u", 0xffff);
-				YYERROR;
-			}
 			$$.as.as = $2;
 			$$.as.type = $1;
+		}
+		| COMMUNITY STRING	{
+			char	*p;
+			int	 i;
+
+			bzero(&$$, sizeof($$));
+			if ((p = strchr($2, ':')) == NULL) {
+				yyerror("Bad community syntax");
+				YYERROR;
+			}
+			*p++ = 0;
+			if ((i = getcommunity($2)) == COMMUNITY_ERROR)
+				YYERROR;
+			if (i == 0 || i == USHRT_MAX) {
+				yyerror("Bad community as number");
+				YYERROR;
+			}
+			$$.community.as = i;
+			if ((i = getcommunity(p)) == COMMUNITY_ERROR)
+				YYERROR;
+			$$.community.type = i;
 		}
 		;
 
@@ -771,6 +789,7 @@ lookup(char *s)
 		{ "announce",		ANNOUNCE},
 		{ "any",		ANY},
 		{ "capabilities",	CAPABILITIES},
+		{ "community",		COMMUNITY},
 		{ "deny",		DENY},
 		{ "descr",		DESCR},
 		{ "dump",		DUMP},
@@ -992,7 +1011,7 @@ top:
 	x != '!' && x != '=' && x != '/' && x != '#' && \
 	x != ','))
 
-	if (isalnum(c) || c == ':' || c == '_') {
+	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
 			*p++ = c;
 			if ((unsigned)(p-buf) >= sizeof(buf)) {
@@ -1182,6 +1201,24 @@ atoul(char *s, u_long *ulvalp)
 		return (-1);
 	*ulvalp = ulval;
 	return (0);
+}
+
+int
+getcommunity(char *s)
+{
+	u_long	ulval;
+
+	if (strcmp(s, "*") == 0)
+		return (COMMUNITY_ANY);
+	if (atoul(s, &ulval) == -1) {
+		yyerror("\"%s\" is not a number", s);
+		return (COMMUNITY_ERROR);
+	}
+	if (ulval > USHRT_MAX) {
+		yyerror("Community too big: max %u", USHRT_MAX);
+		return (COMMUNITY_ERROR);
+	}
+	return (ulval);
 }
 
 struct peer *

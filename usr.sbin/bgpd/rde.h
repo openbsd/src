@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.35 2004/03/11 14:22:23 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.36 2004/03/11 17:12:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -106,7 +106,8 @@ enum attrtypes {
 	ATTR_MED,
 	ATTR_LOCALPREF,
 	ATTR_ATOMIC_AGGREGATE,
-	ATTR_AGGREGATOR
+	ATTR_AGGREGATOR,
+	ATTR_COMMUNITIES
 };
 
 /* attribute flags. 4 low order bits reserved */
@@ -232,6 +233,7 @@ int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
 		     u_int16_t);
 int		 attr_optadd(struct attr_flags *, u_int8_t, u_int8_t,
 		     u_char *, u_int16_t);
+struct attr	*attr_optget(struct attr_flags *, u_int8_t);
 void		 attr_optfree(struct attr_flags *);
 
 int		 aspath_verify(void *, u_int16_t);
@@ -253,6 +255,7 @@ int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
 int		 aspath_match(struct aspath *, enum as_spec, u_int16_t);
+int		 community_match(void *, u_int16_t, int, int);
 
 /* rde_rib.c */
 void		 path_init(u_int32_t);
@@ -306,5 +309,6 @@ void		 pt_dump(void (*)(struct pt_entry *, void *), void *);
 enum filter_actions rde_filter(struct rde_peer *, struct attr_flags *,
     struct bgpd_addr *, u_int8_t, enum directions);
 void		 rde_apply_set(struct attr_flags *, struct filter_set *);
+int		 rde_filter_community(struct attr_flags *, int, int);
 
 #endif /* __RDE_H__ */
