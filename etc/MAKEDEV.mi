@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.12 2002/01/08 01:33:19 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.13 2002/01/08 03:14:50 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -138,10 +138,14 @@ _dl({-std-},{-std-},
 {-ttyB-},{-ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5-},
 {-attyB-},{-ttyB0 ttyB1 ttyB2 ttyB3 ttyB4-},
 {-tty0-},{-tty00 tty01 tty02 tty03-},
+{-mac_tty0-},{-tty00 tty01-},
 {-tzs-},{-ttya ttyb ttyc ttyd-},
 {-czs-},{-cuaa cuab cuac cuad-},
+{-ttyc-},{-ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7-},
+{-com-},{-tty00 tty01 tty02 tty03-},
+{-mac_ttye-},{-ttye0-},
+{-ttye-},{-ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6-},
 {-lkm-},{-lkm-},
-{-iop-},{-iop0 iop1-},
 {-mmcl-},{-mmclock-},dnl
 {-lpt-},{-lpa0 lpt0 lpa1 lpt1 lpa2 lpt2-},
 {-joy-},{-joy0 joy1-},
@@ -151,21 +155,22 @@ _dl({-std-},{-std-},
 {-ss-},{-ss0 ss1-},
 {-wt-},{-wt0-},
 {-wdt-},{-wdt0-},
-{-ttyc-},{-ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7-},
-{-com-},{-tty00 tty01 tty02 tty03-},
-{-ttye-},{-ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6-},
 {-xfs-},{-xfs0-},
 {-au-},{-audio0-},
+{-asc-},{-asc0-},
 {-music-},{-music0-},
 {-radio-},{-radio0-},
 {-tuner-},{-tuner0-},
 {-rmidi-},{-rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7-},
 {-usbs-},{-usbs-},
+{-adb-},{-adb-},
+{-iop-},{-iop0 iop1-},
 {-pci-},{-pci-},
 {-wsmouse-},{-wscons-},
 {-btw-},{-bwtwo0-},
 {-ctw-},{-cgtwo0-},
 {-cfr-},{-cgfour0-},
+{-mac_grf-},{-grf0 grf1 grf2 grf3-},
 {-grf-},{-grf0 grf1 grf2 grf3 grf4 grf5 grf6-},
 {-par-},{-par0-},
 {-amouse-},{-mouse0 mouse1-},
@@ -349,6 +354,7 @@ __devtitle(cons,Console ports)dnl
 __devitem(ttyv0,ttyv0,pccons or pcvt screen 0)dnl
 __devitem(ttyv,ttyv*,pcvt)dnl
 __devitem(ttye,ttye*,ite bitmapped consoles)dnl
+__devitem(mac_ttye,ttye*,ite bitmapped consoles)dnl
 __devitem(wscons,ttyC0,wscons screen 0)dnl
 _mkdev({-wscons-},{-wscons-},{-dnl
 _dl(dnl
@@ -474,6 +480,7 @@ _mkdev(czs,cua[a-z],{-u=${i#cua*}
 	M cua$u c major_czs_c Add($n,128) 660 dialer uucp-})dnl
 __devitem(arm_tty,tty*,{-alias for PC COM ports{-,-} this is what the system really wants-})dnl
 __devitem(tty0,tty00,standard serial port)dnl
+__devitem(mac_tty0,tty00,standard serial port)dnl
 __devitem(ttyA,ttyA*,mfc serial ports)dnl
 __devitem(attyB,ttyB*,ISA COM ports)dnl  amiga
 __devitem(ttyz,tty[a-d],onboard zs serial ports)dnl
@@ -502,6 +509,8 @@ _mkdev(au,audio*,{-M sound$U	c major_au_c $U
 	MKlist="$MKlist;[ -e mixer ] || ln -s mixer$U mixer"
 	MKlist="$MKlist;[ -e sound ] || ln -s sound$U sound"
 	MKlist="$MKlist;[ -e audioctl ] || ln -s audioctl$U audioctl"-})dnl
+__devitem(asc,asc*,ASC Audio device)dnl
+_mkdev(asc,asc*,{-M asc$U major_asc_c 0-})dnl
 __devitem(music,music*,midi devices)dnl
 _mkdev(music,music*,{-M music$U     c major_music_c $U
 	M sequencer$U c major_music_c Add($U,128)
@@ -515,7 +524,7 @@ _mkdev(fdesc,fd,{-RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c major_fdesc_c $n;n=Add($n,1);done
 	MKlist="$MKlist;chmod 555 fd"-})dnl
 __devtitle(graph,Graphics devices)dnl
-__devitem(grf,grf*,{-custom chip (grf0){-,-} Retina Z2/Z3 (grf1/grf2){-,-}
+__devitem(mac_grf,grf*,{-custom chip (grf0){-,-} Retina Z2/Z3 (grf1/grf2){-,-}
 {-#-}		Cirrus boards (grf3){-,-} A2410 (grf4) video or
 {-#-}		CyberVision 64 (grf5)-})dnl
 __devitem(grf_amiga,grf*,{-Motherboard bitmapped video.-})dnl
@@ -596,6 +605,8 @@ __devitem(tuner,tuner*,tuner device)dnl
 _mkdev(tuner,tuner*,{-M tuner$U c major_tuner_c Add(Mult($U,2),16) 644-},644)dnl
 __devitem(pci,pci,PCI bus device)dnl
 _mkdev(pci,pci,{-M pci c major_pci_c 0 664-},664)dnl
+__devitem(adb,adb,Apple Desktop bus event interface)dnl
+_mkdev(adb,adb,{-M adb c major_adb_c 0-})dnl
 _mkdev(local,local,{-test -s $T.local && sh $T.local-},666)dnl
 dnl
 divert(1)dnl
@@ -665,7 +676,8 @@ dodisk()
 {
 	n=Add(Mult(${5},${7:-16}),${6}) count=0
 	RMlist="$RMlist {-$-}1{-$-}2? r{-$-}1{-$-}2?"
-	for d in a b c d e f g h i j k l m n o p
+	[ 0$7 -ne 8 ] && l="i j k l m n o p"
+	for d in a b c d e f g h $l
 	do
 		M {-$-}1{-$-}2$d	b {-$-}3 Add($n,$count) 640
 		M r{-$-}1{-$-}2$d	c {-$-}4 Add($n,$count) 640
