@@ -1,3 +1,4 @@
+/*	$OpenBSD: ite_gb.c,v 1.3 1997/01/17 08:32:49 downsj Exp $	*/
 /*	$NetBSD: ite_gb.c,v 1.8 1996/03/03 04:23:36 thorpej Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: volhdr.h,v 1.2 1997/01/17 08:33:02 downsj Exp $	*/
 /*	$NetBSD: volhdr.h,v 1.4 1994/10/26 07:28:08 cgd Exp $	*/
 
 /*

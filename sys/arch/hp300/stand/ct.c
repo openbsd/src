@@ -1,4 +1,5 @@
-/*	$NetBSD: ct.c,v 1.7 1995/09/23 17:17:03 thorpej Exp $	*/
+/*	$OpenBSD: ct.c,v 1.2 1997/01/17 08:32:42 downsj Exp $	*/
+/*	$NetBSD: ct.c,v 1.9 1996/10/14 07:29:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -63,6 +64,8 @@ struct	ct_softc {
 #define	MTFSF		10
 #define	MTREW		11
 
+char ctio_buf[MAXBSIZE];
+
 struct	ctinfo {
 	short	hwid;
 	short	punit;
@@ -86,6 +89,7 @@ ctinit(ctlr, unit)
 		return (0);
 	if (ctident(ctlr, unit) < 0)
 		return (0);
+	bzero(&ct_ssmc, sizeof(ct_ssmc));
 	ct_ssmc.unit = C_SUNIT(rs->sc_punit);
 	ct_ssmc.cmd = C_SSM;
 	ct_ssmc.fefm = FEF_MASK;
@@ -148,56 +152,79 @@ ctident(ctlr, unit)
 	return(id);
 }
 
+int
+ctpunit(ctlr, slave, punit)
+	int ctlr, slave, *punit;
+{
+	register struct ct_softc *rs;
+
+	if (ctlr >= NHPIB || hpibalive(ctlr) == 0)
+		return(EADAPT);
+	if (slave >= NCT)
+		return(ECTLR);
+	rs = &ct_softc[ctlr][slave];
+
+	if (rs->sc_alive == 0)
+		return(ENXIO);
+
+	*punit = rs->sc_punit;
+	return (0);
+}
+
 ctopen(f, ctlr, unit, part)
 	struct open_file *f;
 	int ctlr, unit, part;
 {
 	register struct ct_softc *rs;
 	register int skip;
+	size_t resid;
 
 	if (ctlr >= NHPIB || hpibalive(ctlr) == 0)
 		return(EADAPT);
 	if (unit >= NCT)
 		return(ECTLR);
 	rs = &ct_softc[ctlr][unit];
+	rs->sc_blkno = 0;
 	rs->sc_unit = unit;
 	rs->sc_ctlr = ctlr;
 	if (rs->sc_alive == 0)
 		if (ctinit(ctlr, unit) == 0)
 			return(ENXIO);
 	f->f_devdata = (void *)rs;
-	ctstrategy(f, MTREW);
+	ctstrategy(f->f_devdata, MTREW, 0, 0, ctio_buf, &resid);
 	skip = part;
 	while (skip--)
-		ctstrategy(f, MTFSF);
+		ctstrategy(f->f_devdata, MTFSF, 0, 0, ctio_buf, &resid);
 	return(0);
 }
 
 ctclose(f)
 	struct open_file *f;
 {
-	ctstrategy(f, MTREW);
+	size_t resid;
+
+	ctstrategy(f->f_devdata, MTREW, 0, 0, ctio_buf, &resid);
 }
 
-char io_buf[MAXBSIZE];
-
-ctstrategy(rs, func, dblk, size, v_buf, rsize)
-	register struct ct_softc *rs;
+ctstrategy(devdata, func, dblk, size, v_buf, rsize)
+	void *devdata;
 	int func;
 	daddr_t dblk;
 	size_t size;
 	void *v_buf;
 	size_t *rsize;
 {
+	struct ct_softc *rs = devdata;
 	char *buf = v_buf;
-	register int ctlr = rs->sc_ctlr;
-	register int unit = rs->sc_unit;
+	int ctlr = rs->sc_ctlr;
+	int unit = rs->sc_unit;
 	char stat;
 
 	if (size == 0 && (func == F_READ || func == F_WRITE))
 		return(0);
 
 	rs->sc_retry = 0;
+	bzero(&ct_ioc, sizeof(ct_ioc));
 	ct_ioc.unit = C_SUNIT(rs->sc_punit);
 	ct_ioc.saddr = C_SADDR;
 	ct_ioc.nop2 = C_NOP;
@@ -218,7 +245,6 @@ top:
 		ct_ioc.cmd = C_READ;
 		ct_ioc.addr = rs->sc_blkno;
 		ct_ioc.len = size = MAXBSIZE;
-		buf = io_buf;
 	}
 	else {
 		ct_ioc.cmd = C_READ;
@@ -263,6 +289,8 @@ cterror(ctlr, unit)
 	register struct ct_softc *rs = &ct_softc[ctlr][unit];
 	char stat;
 
+	bzero(&ct_rsc, sizeof(ct_rsc));
+	bzero(&ct_stat, sizeof(ct_stat));
 	ct_rsc.unit = C_SUNIT(rs->sc_punit);
 	ct_rsc.cmd = C_STATUS;
 	hpibsend(ctlr, unit, C_CMD, &ct_rsc, sizeof(ct_rsc));

@@ -1,3 +1,4 @@
+/*	$OpenBSD: prf.c,v 1.2 1997/01/17 08:32:56 downsj Exp $	*/
 /*	$NetBSD: prf.c,v 1.5 1994/10/26 07:27:50 cgd Exp $	*/
 
 /*

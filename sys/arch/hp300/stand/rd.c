@@ -1,4 +1,5 @@
-/*	$NetBSD: rd.c,v 1.10 1995/09/23 17:19:59 thorpej Exp $	*/
+/*	$OpenBSD: rd.c,v 1.2 1997/01/17 08:32:56 downsj Exp $	*/
+/*	$NetBSD: rd.c,v 1.11 1996/12/21 21:34:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -250,17 +251,22 @@ rdgetinfo(rs)
 	register struct rdminilabel *pi = &rs->sc_pinfo;
 	register struct disklabel *lp = &rdlabel;
 	char *msg, *getdisklabel();
-	int rdstrategy(), err;
+	int rdstrategy(), err, savepart;
 	size_t i;
 
 	bzero((caddr_t)lp, sizeof *lp);
 	lp->d_secsize = DEV_BSIZE;
-	if (err = rdstrategy(rs, F_READ,
-		       LABELSECTOR,
-		       lp->d_secsize ? lp->d_secsize : DEV_BSIZE,
-		       io_buf, &i) < 0) {
-	    printf("rdgetinfo: rdstrategy error %d\n", err);
-	    return(0);
+
+	/* Disklabel is always from RAW_PART. */
+	savepart = rs->sc_part;
+	rs->sc_part = RAW_PART;
+	err = rdstrategy(rs, F_READ, LABELSECTOR,
+	    lp->d_secsize ? lp->d_secsize : DEV_BSIZE, io_buf, &i);
+	rs->sc_part = savepart;
+
+	if (err) {
+		printf("rdgetinfo: rdstrategy error %d\n", err);
+		return(0);
 	}
 	
 	msg = getdisklabel(io_buf, lp);
@@ -313,7 +319,8 @@ rdopen(f, ctlr, unit, part)
 		if (rdgetinfo(rs) == 0)
 			return (ERDLAB);
 	}
-	if (part >= rs->sc_pinfo.npart || rs->sc_pinfo.offset[part] == -1)
+	if (part != RAW_PART &&     /* always allow RAW_PART to be opened */
+	    (part >= rs->sc_pinfo.npart || rs->sc_pinfo.offset[part] == -1))
 		return (EPART);
 	f->f_devdata = (void *)rs;
 	return (0);
@@ -346,11 +353,17 @@ rdstrategy(devdata, func, dblk, size, v_buf, rsize)
 	struct rd_softc *rs = devdata;
 	register int ctlr = rs->sc_ctlr;
 	register int unit = rs->sc_unit;
-	daddr_t blk = (dblk + rs->sc_pinfo.offset[rs->sc_part]);
+	daddr_t blk;
 	char stat;
 
 	if (size == 0)
 		return(0);
+
+	/*
+	 * Don't do partition translation on the `raw partition'.
+	 */
+	blk = (dblk + ((rs->sc_part == RAW_PART) ? 0 :
+	    rs->sc_pinfo.offset[rs->sc_part]));
 
 	rs->sc_retry = 0;
 	rd_ioc.c_unit = C_SUNIT(0);
@@ -370,9 +383,9 @@ retry:
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 	if (stat) {
 		if (rderror(ctlr, unit, rs->sc_part) == 0)
-			return(-1);
+			return(EIO);
 		if (++rs->sc_retry > RDRETRY)
-			return(-1);
+			return(EIO);
 		goto retry;
 	}
 	*rsize = size;

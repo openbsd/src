@@ -1,4 +1,5 @@
-/*	$NetBSD: dca.c,v 1.9 1996/02/26 21:51:25 thorpej Exp $	*/
+/*	$OpenBSD: dca.c,v 1.3 1997/01/17 08:32:42 downsj Exp $	*/
+/*	$NetBSD: dca.c,v 1.10 1996/10/06 01:42:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,6 +105,9 @@ dcainit(cp)
 	dca->dca_data = DCABRD(9600) & 0xFF;
 	dca->dca_ier = DCABRD(9600) >> 8;
 	dca->dca_cfcr = CFCR_8BITS;
+	dca->dca_fifo =
+	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1;
+	dca->dca_mcr = MCR_DTR | MCR_RTS;
 }
 
 /* ARGSUSED */

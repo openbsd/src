@@ -1,3 +1,5 @@
+/*	$OpenBSD: mkboot.c,v 1.2 1997/01/17 08:32:53 downsj Exp $	*/
+
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,8 +44,9 @@ static char copyright[] =
 #ifndef lint
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
-#endif
 static char rcsid[] = "$NetBSD: mkboot.c,v 1.5 1994/10/26 07:27:45 cgd Exp $";
+#endif
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.2 1997/01/17 08:32:53 downsj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,3 +1,4 @@
+/*	$OpenBSD: nhpib.c,v 1.2 1997/01/17 08:32:55 downsj Exp $	*/
 /*	$NetBSD: nhpib.c,v 1.5 1995/08/05 16:47:46 thorpej Exp $	*/
 
 /*

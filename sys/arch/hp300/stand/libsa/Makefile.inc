@@ -1,11 +1,12 @@
+#	$OpenBSD: Makefile.inc,v 1.2 1997/01/17 08:33:07 downsj Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/08/04 07:55:50 thorpej Exp $
 
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 SA_DIR=	$S/arch/hp300/stand/libsa
 
-.if exists($(SA_DIR)/obj.${MACHINE})
-SA_LIBDIR=	$(SA_DIR)/obj.${MACHINE}
+.if exists($(SA_DIR)/${__objdir})
+SA_LIBDIR=	$(SA_DIR)/${__objdir}
 .else
 SA_LIBDIR=	$(SA_DIR)
 .endif

@@ -1,6 +1,8 @@
-/*	$NetBSD: devopen.c,v 1.5 1995/08/05 16:47:41 thorpej Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.2 1997/01/17 08:32:43 downsj Exp $	*/
+/*	$NetBSD: devopen.c,v 1.7 1996/10/14 07:31:47 thorpej Exp $	*/
 
 /*-
+ *  Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
  * 
@@ -61,10 +63,35 @@ devlookup(d, len)
     struct devsw *dp = devsw;
     int i;
     
-    for (i = 0; i < ndevs; i++, dp++)
-	if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0)
-	    return(i);
+    for (i = 0; i < ndevs; i++, dp++) {
+	if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0) {
+	    /*
+	     * Set the filesystem and startup up according to the device
+	     * being opened.
+	     */
+	    switch (i) {
+	    case 0:	/* ct */
+		bcopy(file_system_rawfs, file_system, sizeof(struct fs_ops));
+		break;
 
+	    case 2:	/* rd */
+	    case 4:	/* sd */
+		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		break;
+
+	    case 6:	/* le */
+		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
+		break;
+
+	    default:
+		/* Agh!  What happened?! */
+		goto bad;
+	    }
+	    return(i);
+	}
+    }
+
+ bad:
     printf("No such device - Configured devices are:\n");
     for (dp = devsw, i = 0; i < ndevs; i++, dp++)
 	if (dp->dv_name)
@@ -88,7 +115,7 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 {
     int *argp, i;
     char *s, *args[4];
-    
+
     /* get device name and make lower case */
     for (s = (char *)fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
 	if (isupper(*s)) *s = tolower(*s);
@@ -132,7 +159,7 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 
     /* second form */
     else if (*s == ':') {
-	int unit;
+	int temp;
 
 	/* isolate device */
 	for (s = (char *)fname; *s != ':' && !isdigit(*s); s++);
@@ -142,10 +169,10 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 	    goto baddev;
 
 	/* isolate unit */
-	if ((unit = atoi(s)) > 255)
+	if ((temp = atoi(s)) > 255)
 	    goto bad;
-	*adapt = unit / 8;
-	*ctlr = unit % 8;
+	*adapt = temp / 8;
+	*ctlr = temp % 8;
 	for (; isdigit(*s); s++);
 	
 	/* translate partition */
@@ -187,24 +214,52 @@ devopen(f, fname, file)
 	ctlr  = B_CONTROLLER(bootdev);
 	unit  = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
-	
+
 	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
 	    return(error);
-	
+
+	/*
+	 * Set up filesystem type based on what device we're opening.
+	 */
+	switch (dev) {
+	case 0:		/* ct */
+		bcopy(file_system_rawfs, file_system, sizeof(struct fs_ops));
+		break;
+
+	case 2:		/* rd */
+	case 4:		/* sd */
+		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		break; 
+
+	case 6:		/* le */
+		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
+		break;
+
+	default:
+		/* XXX what else should we do here? */
+		printf("WARNING: BOGUS BOOT DEV TYPE 0x%x!\n", dev);
+		return (EIO);
+	}
+
 	dp = &devsw[dev];
 	
 	if (!dp->dv_open)
 		return(ENODEV);
 
-	opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
-	
 	f->f_dev = dp;
-    
-	if ((error = (*dp->dv_open)(f, adapt, ctlr, part)) == 0)
-	    return(0);
-	
+
+	if ((error = (*dp->dv_open)(f, adapt, ctlr, part)) == 0) {
+		if ((error =
+		    (*punitsw[dev].p_punit)(adapt, ctlr, &unit)) != 0) {
+			goto bad;
+		}
+		opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
+		return(0);
+	}
+
+ bad:
 	printf("%s(%d,%d,%d,%d): %s\n", devsw[dev].dv_name,
 	    adapt, ctlr, unit, part, strerror(error));
 
 	return(error);
-}    
+}

@@ -1,4 +1,5 @@
-/*	$NetBSD: autoconf.c,v 1.9 1995/08/05 16:47:34 thorpej Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 1997/01/17 08:32:38 downsj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 1996/10/14 07:26:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +58,9 @@
  * WARNING: major numbers must match bdevsw indices in hp300/conf.c.
  */
 char rom2mdev[] = {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 0-13: none */
+	0, 0, 						/* 0-1: none */
+	6,	/* 2: network device; special */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		/* 3-13: none */
 	4,	/* 14: SCSI disk */
 	0,	/* 15: none */
 	2,	/* 16: CS/80 device on HPIB */
@@ -70,7 +73,7 @@ int cpuspeed;
 
 extern int internalhpib;
 
-#if 0
+#ifdef PRINTROMINFO
 printrominfo()
 {
 	struct rominfo *rp = (struct rominfo *)ROMADDR;
@@ -114,7 +117,7 @@ configure()
 	}
 	find_devs();
 	cninit();
-#if 0
+#ifdef PRINTROMINFO
 	printrominfo();
 #endif
 	hpibinit();
@@ -138,19 +141,21 @@ msustobdev()
 	struct rominfo *rp = (struct rominfo *) ROMADDR;
 	u_long bdev = 0;
 	register struct hp_hw *hw;
-	int sc;
+	int sc, type, ctlr, slave, punit;
 
 	sc = (rp->msus >> 8) & 0xFF;
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++)
 		if (hw->hw_sc == sc)
 			break;
-	bdev |= rom2mdev[(rp->msus >> 24) & 0x1F] << B_TYPESHIFT;
-	bdev |= 0 << B_PARTITIONSHIFT;
-	bdev |= ((rp->msus >> 16) & 0xFF) << B_UNITSHIFT;
-	bdev |= (rp->msus & 0xFF) << B_CONTROLLERSHIFT;
-	bdev |= (int)hw->hw_pa << B_ADAPTORSHIFT;
-	bdev |= B_DEVMAGIC;
-#if 0
+
+	type  = rom2mdev[(rp->msus >> 24) & 0x1F];
+	ctlr  = (int)hw->hw_pa;
+	slave = (rp->msus & 0xFF);
+	punit = ((rp->msus >> 16) & 0xFF);
+
+	bdev  = MAKEBOOTDEV(type, ctlr, slave, punit, 0);
+
+#ifdef PRINTROMINFO
 	printf("msus %x -> bdev %x\n", rp->msus, bdev);
 #endif
 	return (bdev);
@@ -174,7 +179,7 @@ sctoaddr(sc)
  * Probe all DIO select codes (0 - 32), the internal display address,
  * and DIO-II select codes (132 - 256).
  *
- * Note that we only care about displays, SCSIs and HP-IBs.
+ * Note that we only care about displays, LANCEs, SCSIs and HP-IBs.
  */
 find_devs()
 {
@@ -220,6 +225,9 @@ find_devs()
 		case 8:		/* 98625B */
 		case 128:	/* 98624A */
 			hw->hw_type = C_HPIB;
+			break;
+		case 21:	/* LANCE */
+			hw->hw_type = D_LAN;
 			break;
 		case 57:	/* Displays */
 			hw->hw_type = D_BITMAP;

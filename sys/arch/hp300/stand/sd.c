@@ -1,4 +1,5 @@
-/*	$NetBSD: sd.c,v 1.8 1995/09/23 17:19:58 thorpej Exp $	*/
+/*	$OpenBSD: sd.c,v 1.2 1997/01/17 08:32:59 downsj Exp $	*/
+/*	$NetBSD: sd.c,v 1.9 1996/12/21 21:34:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,18 +130,22 @@ sdgetinfo(ss)
 	register struct sdminilabel *pi = &ss->sc_pinfo;
 	register struct disklabel *lp = &sdlabel;
 	char *msg, *getdisklabel();
-	int sdstrategy(), err;
+	int sdstrategy(), err, savepart;
 	size_t i;
 
 	bzero((caddr_t)lp, sizeof *lp);
 	lp->d_secsize = (DEV_BSIZE << ss->sc_blkshift);
 
-	if (err = sdstrategy(ss, F_READ,
-		       LABELSECTOR,
-		       lp->d_secsize ? lp->d_secsize : DEV_BSIZE,
-		       io_buf, &i) < 0) {
-	    printf("sdgetinfo: sdstrategy error %d\n", err);
-	    return(0);
+	/* Disklabel is always from RAW_PART. */
+	savepart = ss->sc_part;
+	ss->sc_part = RAW_PART;
+	err = sdstrategy(ss, F_READ, LABELSECTOR,
+	    lp->d_secsize ? lp->d_secsize : DEV_BSIZE, io_buf, &i);
+	ss->sc_part = savepart;
+
+	if (err) {
+		printf("sdgetinfo: sdstrategy error %d\n", err);
+		return(0);
 	}
 	
 	msg = getdisklabel(io_buf, lp);
@@ -191,7 +196,8 @@ sdopen(f, ctlr, unit, part)
 		if (sdgetinfo(ss) == 0)
 			return (ERDLAB);
 	}
-	if (part >= ss->sc_pinfo.npart || ss->sc_pinfo.offset[part] == -1)
+	if (part != RAW_PART &&     /* always allow RAW_PART to be opened */
+	    (part >= ss->sc_pinfo.npart || ss->sc_pinfo.offset[part] == -1))
 		return (EPART);
 	f->f_devdata = (void *)ss;
 	return (0);
@@ -223,12 +229,18 @@ sdstrategy(ss, func, dblk, size, v_buf, rsize)
 	char *buf = v_buf;
 	register int ctlr = ss->sc_ctlr;
 	register int unit = ss->sc_unit;
-	daddr_t blk = (dblk + ss->sc_pinfo.offset[ss->sc_part])>> ss->sc_blkshift;
 	u_int nblk = size >> ss->sc_blkshift;
+	daddr_t blk;
 	char stat;
 
 	if (size == 0)
 		return(0);
+
+	/*
+	 * Don't do partition translation on the `raw partition'.
+	 */
+	blk = (dblk + ((ss->sc_part == RAW_PART) ? 0 :
+	    ss->sc_pinfo.offset[ss->sc_part])) >> ss->sc_blkshift;
 
 	ss->sc_retry = 0;
 

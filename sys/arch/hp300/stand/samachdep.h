@@ -1,4 +1,5 @@
-/*	$NetBSD: samachdep.h,v 1.5 1995/08/05 16:47:50 thorpej Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.2 1997/01/17 08:32:58 downsj Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.7 1996/10/14 07:34:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -35,6 +36,8 @@
  *	@(#)samachdep.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/types.h>
+
 #define	NHPIB		4
 #define	NSCSI		2
 #define NRD		8
@@ -68,7 +71,9 @@
 
 extern	int cpuspeed, machineid;
 extern	int howto;
-extern	unsigned int bootdev;
+extern	int cons_scode;
+extern	u_int opendev;
+extern	u_int bootdev;
 extern	char *getmachineid();
 
 #define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
@@ -77,3 +82,22 @@ extern	char *getmachineid();
 struct grfinfo {
 	int	grf_foo;
 };
+
+/*
+ * Switch we use to set punit in devopen.
+ */
+struct punitsw {
+	int	(*p_punit) __P((int, int, int *));
+};
+extern	struct punitsw punitsw[];
+extern	int npunit;
+
+extern	struct devsw devsw_net[];
+extern	int ndevs_net;
+
+extern	struct devsw devsw_general[];
+extern	int ndevs_general;
+
+extern	struct fs_ops file_system_rawfs[];
+extern	struct fs_ops file_system_ufs[];
+extern	struct fs_ops file_system_nfs[];

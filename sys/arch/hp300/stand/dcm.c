@@ -1,3 +1,4 @@
+/*	$OpenBSD: dcm.c,v 1.3 1997/01/17 08:32:43 downsj Exp $	*/
 /*	$NetBSD: dcm.c,v 1.9 1996/02/27 22:11:44 scottr Exp $	*/
 
 /*

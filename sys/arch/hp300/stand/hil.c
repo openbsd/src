@@ -1,3 +1,4 @@
+/*	$OpenBSD: hil.c,v 1.2 1997/01/17 08:32:44 downsj Exp $	*/
 /*	$NetBSD: hil.c,v 1.5 1994/10/26 07:27:19 cgd Exp $	*/
 
 /*
