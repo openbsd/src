@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.26 2000/04/22 01:50:15 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.27 2000/09/19 03:18:11 angelos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -147,71 +147,97 @@ The specified SA will be deleted.
 Allowed modifiers are:
 .Fl dst ,
 .Fl spi ,
-.Fl proto ,
 and
-.Fl chain .
-.It group
-Group two SAs together.
-Allowed modifiers are:
-.Fl dst ,
-.Fl spi ,
-.Fl proto ,
-.Fl dst2 ,
-.Fl spi2 ,
-and
-.Fl proto2 .
+.Fl proto .
 .It flow
-Create a flow determining which packets are routed via which Security
-Association, or (for ingress flows) which packets may be received over
-an incoming SA.
+Create a flow determining what security parameters a packet should
+have (input or output).
 Allowed modifiers are:
+.Fl src ,
 .Fl dst ,
-.Fl spi ,
+.Fl spi , 
 .Fl proto ,
 .Fl addr ,
 .Fl transport ,
 .Fl sport ,
 .Fl dport ,
 .Fl delete ,
-.Fl ingress ,
+.Fl in ,
+.Fl out ,
+.Fl deny ,
+.Fl use ,
+.Fl acquire ,
+.Fl require ,
+.Fl dontacq ,
+.Fl permit ,
 and
 .Fl bypass .
 The
 .Xr netstat 1
-command shows the existing egress (outbound) flows.
+command shows all specified flows.
+Flows are directional, and the
+.Fl in
+and
+.Fl out
+modifiers are used to specify the direction.
+By default, flows are assumed to apply to outgoing packets.
+If the
+.Fl spi
+is not specified, the kernel will attempt to find an appropriate
+Security Association from those already present (an SA that matches
+the destination address, if set, and the security protocol).
+If the destination address is set to all zeroes (0.0.0.0) or left
+unspecified, the destination address from the packet will be used
+to locate an SA (the source address is used for incoming flows).
+For incoming flows, the destination address (if specified) should
+point to the expected source of the SA (the remote SA peer). 
+If no such SA exists, key management daemons will be used to generate
+them if
+.Fl acquire
+or
+.Fl require
+were used.
+If
+.Fl acquire
+was used, traffic will be allowed out (or in) and IPsec will be used
+when the relevant SAs have been established.
+If
+.Fl require
+was used, traffic will not be allowed in or out until it is protected
+by IPsec.
+If
+.Fl dontacq
+was used, traffic will not be allowed in or out until it is protected
+by IPsec, but key management will not be asked to provide such an SA.
+The
+.Fl proto
+argument (by default set to
+.Nm esp )
+will be used to determine what type of SA should be established.
 A
 .Nm bypass
+or
+.Nm permit
 flow is used to specify a flow for which IPSec processing will be
-bypassed, i.e packets will not be processed by any SAs.
+bypassed, i.e packets will/need not be processed by any SAs.
 For
-.Nm bypass
+.Nm permit
 flows, additional modifiers are restricted to:
 .Fl addr ,
 .Fl transport ,
 .Fl sport ,
 .Fl dport ,
+.Fl in ,
+.Fl out ,
 and
 .Fl delete .
-These flows always have SPI 0, destination 0.0.0.0 and protocol 0.
-.It bind
-Associate an incoming Security Association with an outgoing Security
-Association.
-When a socket receives packets secured by the incoming SA all
-responses will be processed by the outgoing SA.
-Allowed modifiers are:
-.Fl dst ,
-.Fl spi ,
-.Fl proto ,
-.Fl dst2 ,
-.Fl spi2 ,
-and
-.Fl proto2 .
-The IP address 0.0.0.0 can be used as wildcard for
-.Fl src
-and
-.Fl dst .
-This can be useful while travelling where the IP address of potential
-clients is not known.
+A
+.Nm deny
+flow is used to specify classes of packets that must be dropped
+(either on output or input) without further processing.
+.Nm deny
+takes the same additional modifiers as
+.Nm bypass .
 .It flush
 Flush SAs from from kernel.
 This includes flushing any flows and
@@ -372,35 +398,14 @@ This option causes use of a 4 byte IV in old ESP (as opposed to 8 bytes).
 It may only be used with old ESP.
 .It Fl proto
 The security protocol needed by
-.Nm delspi ,
-.Nm flow ,
-.Nm group
+.Nm delspi
 or
-.Nm bind
+.Nm flow ,
 to uniquely specify the SA.
 The default value is 50 which means
 .Nm IPPROTO_ESP .
 Other accepted values are 51
 .Nm ( IPPROTO_AH ) ,
-and 4
-.Nm ( IPPROTO_IP ) .
-One can also specify the symbolic names "esp", "ah", and "ip4",
-case insensitive.
-.It Fl chain
-Delete the whole SPI chain, otherwise delete only the SPI given.
-.It Fl dst2
-The second IP destination address used by
-.Nm group .
-.It Fl spi2
-The second SPI used by
-.Nm group .
-.It Fl proto2
-The second security protocol used by
-.Nm group .
-It defaults to
-.Nm IPPROTO_AH .
-Other accepted values are 50
-.Nm ( IPPROTO_ESP ) ,
 and 4
 .Nm ( IPPROTO_IP ) .
 One can also specify the symbolic names "esp", "ah", and "ip4",
@@ -432,21 +437,6 @@ Instead of a number, a valid service name that appears in
 can be used.
 .It Fl delete
 Instead of creating a flow, an existing flow is deleted.
-.It Fl ingress
-For
-.Nm flow ,
-create or delete an
-.Nm ingress
-flow.
-An SA's
-.Nm ingress
-flows specify the types of packets that may be accepted over that SA,
-if the sysctl variable
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
-.It net.inet.ip.ipsec-acl
-.El
-.Pp
-is set to any non-zero value.
 .It Fl bypass
 For
 .Nm flow ,
@@ -454,9 +444,48 @@ create or delete a
 .Nm bypass
 flow.
 Packets matching this flow will not be processed by IPSec.
+.It Fl deny
 For
-.Nm flush ,
-only flush SAs of type bypass.
+.Nm flow ,
+create or delete a
+.Nm deny
+flow.
+Packets matching this flow will be dropped.
+.It Fl use
+For
+.Nm flow ,
+specify that packets matching this flow should try to use IPsec if
+possible.
+.It Fl acquire
+For
+.Nm flow ,
+specify that packets matching this flow should try to use IPsec and
+establish SAs dynamically if possible, but permit unencrypted
+traffic.
+.It Fl require
+For
+.Nm flow ,
+specify that packets matching this flow must use IPsec, and establish
+SAs dynamically as needed. If no SAs are established, traffic is not
+allowed through.
+.It Fl acquire
+For
+.Nm flow ,
+specify that packets matching this flow must use IPsec.
+If such SAs are not present, simply drop the packets.
+Such a policy may be used to demand peers to establish SAs before they
+can communicate with us, without going through the burden of
+initiating the SA ourselves (thus allowing for some denial of service
+attacks).
+This flow type is particularly suitable for security gateways.
+.It Fl in
+For
+.Nm flow ,
+specify that it should be used to match incoming packets only.
+.It Fl out
+For
+.Nm flow ,
+specify that it should be used to match outgoing packets only.
 .It Fl ah
 For
 .Nm flush ,
@@ -497,7 +526,7 @@ ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 \e\
 Setup a flow using the above SA:
 .Bd -literal
 ipsecadm flow -dst 169.20.12.2 -spi 1001 -proto ah \e\ 
-	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0
+	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0 -out
 .Ed
 .Pp
 Setup an inbound SA:
@@ -511,12 +540,12 @@ ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\
 Setup an ingress flow on for the inbound SA:
 .Bd -literal
 ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\ 
-	-dst 10.10.32.1 -spi 1002 -proto esp -ingress
+	-dst 10.10.32.1 -spi 1002 -proto esp -in
 .Ed
 .Pp
 Setup a bypass flow:
 .Bd -literal
-ipsecadm flow -bypass \e\ 
+ipsecadm flow -bypass -out \e\ 
 	-addr 10.1.1.0 255.255.255.0 10.1.1.0 255.255.255.0
 .Ed
 .Pp
