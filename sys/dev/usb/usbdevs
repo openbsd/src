@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.84 2004/05/10 10:46:10 peter Exp $
+$OpenBSD: usbdevs,v 1.85 2004/05/19 16:58:35 grange Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -372,6 +372,7 @@ vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
 vendor IODATA2		0x40bb	I-O Data
+vendor IRIVER		0x4102	iRiver
 vendor ONSPEC2		0x55aa	OnSpec
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
@@ -872,6 +873,10 @@ product IOMEGA ZIP100		0x0001	Zip 100
 product IOMEGA ZIP250		0x0030	Zip 250
 product IOMEGA ZIP250_2		0x0032	Zip 250
 product IOMEGA CDRW		0x0055	CDRW 9602
+
+/* iRiver products */
+product IRIVER IFP_3XX		0x1103	iFP-3xx
+product IRIVER IFP_5XX		0x1105	iFP-5xx
 
 /* Jaton products */
 product JATON EDA		0x5704	Ethernet Device Adapter
