@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.25 2004/11/28 23:39:45 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.26 2004/12/10 14:35:30 naddy Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -3969,8 +3969,10 @@ sppp_set_ip_addr(struct sppp *sp, u_long src)
 		}
 	}
 
-	if (ifa && si)
+	if (ifa && si) {
 		si->sin_addr.s_addr = htonl(src);
+		dohooks(ifp->if_addrhooks, 0);
+	}
 }
 
 HIDE int
