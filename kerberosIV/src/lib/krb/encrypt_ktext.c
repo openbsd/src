@@ -40,7 +40,7 @@ encrypt_ktext(KTEXT cip, des_cblock *key, int encrypt)
 {
     des_key_schedule schedule;
     des_set_key(key, schedule);
-    des_pcbc_encrypt(cip->dat, cip->dat, 
+    des_pcbc_encrypt((des_cblock *)cip->dat, (des_cblock *)cip->dat, 
 		     cip->length, schedule, key, encrypt);
     memset(schedule, 0, sizeof(des_key_schedule));
 }

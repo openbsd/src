@@ -70,7 +70,7 @@ decomp_ticket(KTEXT tkt,	/* The ticket to be decoded */
     
     int little_endian;
 
-    des_pcbc_encrypt(tkt->dat, tkt->dat,
+    des_pcbc_encrypt((des_cblock *)tkt->dat, (des_cblock *)tkt->dat,
 		     tkt->length, schedule, key, DES_DECRYPT);
 
     tkt->mbz = 0;

@@ -113,7 +113,7 @@ krb_mk_priv(void *in, void *out, u_int32_t length,
     
     memset(p, 0, 7);
 
-    des_pcbc_encrypt(cipher, cipher,
+    des_pcbc_encrypt((des_cblock *)cipher, (des_cblock *)cipher,
 		     len, schedule, key, DES_ENCRYPT);
 
     return  (cipher - (unsigned char*)out) + len;

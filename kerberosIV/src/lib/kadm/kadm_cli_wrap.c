@@ -283,7 +283,7 @@ kadm_cli_send(u_char *st_dat,	/* the actual data */
 #ifdef NOENCRYPTION
 	cksum = 0;
 #else
-	cksum = des_quad_cksum(priv_pak, 0, priv_len, 0, &sess_key);
+	cksum = des_quad_cksum((des_cblock *)priv_pak, 0, priv_len, 0, &sess_key);
 #endif
 	
 	retdat = krb_mk_req(&authent, client_parm.sname, client_parm.sinst,

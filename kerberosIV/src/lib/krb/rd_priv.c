@@ -83,7 +83,7 @@ krb_rd_priv(void *in, u_int32_t in_length,
     if(clen + 2 > in_length)
 	return RD_AP_MODIFIED;
 
-    des_pcbc_encrypt(p, p, clen, 
+    des_pcbc_encrypt((des_cblock *)p, (des_cblock *)p, clen, 
 		     schedule, key, DES_DECRYPT);
     
     p += krb_get_int(p, &m_data->app_length, 4, little_endian);

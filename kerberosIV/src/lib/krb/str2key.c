@@ -92,13 +92,13 @@ afs_string_to_key(const char *pass, const char *cell, des_cblock *key)
       memcpy(key, "kdsbdsns", 8);
       des_key_sched(key, sched);
       /* Beware, ivec is passed twice */
-      des_cbc_cksum(buf, &ivec, plen + clen, sched, &ivec);
+      des_cbc_cksum((des_cblock *)buf, &ivec, plen + clen, sched, &ivec);
 
       memcpy(key, &ivec, 8);
       des_fixup_key_parity(key);
       des_key_sched(key, sched);
       /* Beware, ivec is passed twice */
-      des_cbc_cksum(buf, key, plen + clen, sched, &ivec);
+      des_cbc_cksum((des_cblock *)buf, key, plen + clen, sched, &ivec);
       free(buf);
       des_fixup_key_parity(key);
     }
