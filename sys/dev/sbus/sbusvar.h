@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.7 2003/02/17 01:29:21 henric Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.8 2005/03/05 01:44:52 miod Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.11 2000/11/01 06:18:45 eeh Exp $ */
 
 /*-
@@ -99,9 +99,6 @@ struct sbus_attach_args {
 	int		sa_frequency;	/* SBus clockrate */
 };
 
-/* sbus_attach_internal() is also used from obio.c */
-void	sbus_attach_common(struct sbus_softc *, char *, int, 
-				const char * const *);
 int	sbus_print(void *, const char *);
 
 void	sbus_establish(struct sbusdev *, struct device *);

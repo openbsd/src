@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.117 2005/02/15 11:03:46 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.118 2005/03/05 01:44:52 miod Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -314,6 +314,10 @@ pcmcia*		at stp?
 #com*		at pcmcia?		# PCMCIA modems/serial ports
 wi*		at pci?			# WaveLAN IEEE 802.11DS
 wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
+
+# ``XBox'' SBus Expansion
+xbox*		at sbus?
+sbus*		at xbox?
 
 #pseudo-device	hotplug	1		# devices hot plugging
 

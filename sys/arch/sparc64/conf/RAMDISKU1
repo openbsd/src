@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISKU1,v 1.12 2004/11/29 18:12:50 miod Exp $
+# 	$OpenBSD: RAMDISKU1,v 1.13 2005/03/05 01:44:52 miod Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -102,6 +102,10 @@ vigra*		at sbus?		# Viagra framebuffer series
 wsdisplay*	at vigra?
 creator*	at mainbus0
 wsdisplay*	at creator?
+
+# ``XBox'' SBus Expansion
+xbox*		at sbus?
+sbus*		at xbox?
 
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0			# PROM console

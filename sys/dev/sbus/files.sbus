@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.28 2004/11/29 18:12:51 miod Exp $
+#	$OpenBSD: files.sbus,v 1.29 2005/03/05 01:44:52 miod Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -122,3 +122,7 @@ device	stp: pcmciabus
 attach	stp at sbus with stp_sbus
 file	dev/sbus/stp4020.c		stp
 
+# ``XBox'' SBus Expansion
+device	xbox {}
+attach	xbox at sbus
+file	dev/sbus/xbox.c			xbox

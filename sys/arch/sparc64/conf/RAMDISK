@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.38 2005/02/15 11:03:46 jsg Exp $
+# 	$OpenBSD: RAMDISK,v 1.39 2005/03/05 01:44:52 miod Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -190,6 +190,10 @@ wsdisplay*	at vigra?
 creator*	at mainbus0
 creator*	at upa0
 wsdisplay*	at creator?
+
+# ``XBox'' SBus Expansion
+xbox*		at sbus?
+sbus*		at xbox?
 
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0			# PROM console

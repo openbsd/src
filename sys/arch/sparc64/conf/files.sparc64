@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.55 2004/10/08 13:04:36 grange Exp $
+#	$OpenBSD: files.sparc64,v 1.56 2005/03/05 01:44:52 miod Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -67,7 +67,8 @@ file	arch/sparc64/sparc64/netbsd_machdep.c	compat_netbsd
 # Sun specific files
 include "../../../dev/sun/files.sun"
 
-attach sbus at mainbus
+attach	sbus at mainbus with sbus_mb
+attach	sbus at xbox with sbus_xbox
 file	arch/sparc64/dev/sbus.c			sbus
 
 device creator: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun

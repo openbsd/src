@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.21 2005/01/27 21:17:50 miod Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.22 2005/03/05 01:44:52 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -118,6 +118,7 @@
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
+#include <dev/sbus/xboxvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -136,32 +137,37 @@ int sbus_debug = 0;
 
 void sbusreset(int);
 
-static bus_space_tag_t sbus_alloc_bustag(struct sbus_softc *);
-static bus_dma_tag_t sbus_alloc_dmatag(struct sbus_softc *);
-static int sbus_get_intr(struct sbus_softc *, int,
+bus_space_tag_t sbus_alloc_bustag(struct sbus_softc *, int);
+bus_dma_tag_t sbus_alloc_dmatag(struct sbus_softc *, bus_dma_tag_t);
+int sbus_get_intr(struct sbus_softc *, int,
     struct sbus_intr **, int *, int);
-static int sbus_overtemp(void *);
-static int _sbus_bus_map(bus_space_tag_t, bus_space_tag_t,
+int sbus_overtemp(void *);
+int _sbus_bus_map(bus_space_tag_t, bus_space_tag_t,
     bus_addr_t,		/*offset*/
     bus_size_t,		/*size*/
     int,		/*flags*/
     bus_space_handle_t *);
-static void *sbus_intr_establish(bus_space_tag_t, bus_space_tag_t,
+void *sbus_intr_establish(bus_space_tag_t, bus_space_tag_t,
     int,		/*Sbus interrupt level*/
     int,		/*`device class' priority*/
     int,		/*flags*/
     int (*)(void *),	/*handler*/
     void *,		/*handler arg*/
     const char *);	/*what*/
-
+void	sbus_attach_common(struct sbus_softc *, int, int);
 
 /* autoconfiguration driver */
-int	sbus_match(struct device *, void *, void *);
-void	sbus_attach(struct device *, struct device *, void *);
+void	sbus_mb_attach(struct device *, struct device *, void *);
+void	sbus_xbox_attach(struct device *, struct device *, void *);
+int	sbus_mb_match(struct device *, void *, void *);
+int	sbus_xbox_match(struct device *, void *, void *);
 
+struct cfattach sbus_mb_ca = {
+	sizeof(struct sbus_softc), sbus_mb_match, sbus_mb_attach
+};
 
-struct cfattach sbus_ca = {
-	sizeof(struct sbus_softc), sbus_match, sbus_attach
+struct cfattach sbus_xbox_ca = {
+	sizeof(struct sbus_softc), sbus_xbox_match, sbus_xbox_attach
 };
 
 struct cfdriver sbus_cd = {
@@ -232,7 +238,7 @@ sbus_print(void *args, const char *busname)
 }
 
 int
-sbus_match(struct device *parent, void *vcf, void *aux)
+sbus_mb_match(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct mainbus_attach_args *ma = aux;
@@ -240,35 +246,39 @@ sbus_match(struct device *parent, void *vcf, void *aux)
 	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
 
-/*
- * Attach an Sbus.
- */
+int
+sbus_xbox_match(struct device *parent, void *vcf, void *aux)
+{
+	struct xbox_softc *xsc = (struct xbox_softc *)parent;
+
+	/* Prevent multiple attachments */
+	if (xsc->sc_attached == 0) {
+		xsc->sc_attached = 1;
+		return (1);
+	}
+
+	return (0);
+}
+
 void
-sbus_attach(struct device *parent, struct device *self, void *aux)
+sbus_xbox_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_softc *sc = (struct sbus_softc *)self;
-	struct mainbus_attach_args *ma = aux;
-	struct intrhand *ih;
-	struct sysioreg *sysio;
-	int ipl;
-	char *name;
-	int node = ma->ma_node;
-	int node0, error;
-	bus_space_tag_t sbt;
-	struct sbus_attach_args sa;
+	struct xbox_softc *xsc = (struct xbox_softc *)parent;
+	struct sbus_softc *sbus = (struct sbus_softc *)parent->dv_parent;
+	struct xbox_attach_args *xa = aux;
+	int node = xa->xa_node;
 
-	sc->sc_bustag = ma->ma_bustag;
-	sc->sc_dmatag = ma->ma_dmatag;
-	/* Find interrupt group no */
-	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;
+	sc->sc_master = sbus->sc_master;
 
-	bus_space_map(sc->sc_bustag,
-	    ma->ma_address[0], sizeof(struct sysioreg),
-	    BUS_SPACE_MAP_PROMADDRESS, &sc->sc_bh);
-	sysio = bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
+	sc->sc_bustag = xa->xa_bustag;
+	sc->sc_dmatag = sbus_alloc_dmatag(sc, xa->xa_dmatag);
 
-	/* Setup interrupt translation tables */
-	sc->sc_intr2ipl = intr_sbus2ipl_4u;
+	/*
+	 * Parent has already done the address translation computations.
+	 */
+	sc->sc_nrange = xsc->sc_nrange;
+	sc->sc_range = xsc->sc_range;
 
 	/*
 	 * Record clock frequency for synchronous SCSI.
@@ -277,13 +287,26 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
-	sbt = sbus_alloc_bustag(sc);
-	sc->sc_dmatag = sbus_alloc_dmatag(sc);
+	sbus_attach_common(sc, node, 1);
+}
 
-	/*
-	 * Get the SBus burst transfer size if burst transfers are supported
-	 */
-	sc->sc_burst = getpropint(node, "burst-sizes", 0);
+void
+sbus_mb_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct sbus_softc *sc = (struct sbus_softc *)self;
+	struct mainbus_attach_args *ma = aux;
+	int node = ma->ma_node;
+	struct intrhand *ih;
+	int ipl, error;
+	struct sysioreg *sysio;
+	char *name;
+
+	sc->sc_master = sc;
+
+	sc->sc_bustag = ma->ma_bustag;
+
+	/* Find interrupt group no */
+	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;
 
 	/*
 	 * Collect address translations from the OBP.
@@ -292,6 +315,18 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 			 &sc->sc_nrange, (void **)&sc->sc_range);
 	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
+
+	/*
+	 * Record clock frequency for synchronous SCSI.
+	 * IS THIS THE CORRECT DEFAULT??
+	 */
+	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
+	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
+
+	bus_space_map(sc->sc_bustag,
+	    ma->ma_address[0], sizeof(struct sysioreg),
+	    BUS_SPACE_MAP_PROMADDRESS, &sc->sc_bh);
+	sysio = bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
 
 	/* initialize the IOMMU */
 
@@ -350,6 +385,31 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 		    (u_long *)&dummy) != 0)
 			panic("sbus iommu: can't toss first dvma page");
 	}
+
+	sc->sc_dmatag = sbus_alloc_dmatag(sc, ma->ma_dmatag);
+
+	sbus_attach_common(sc, node, 0);
+}
+
+/*
+ * Attach an Sbus (main part).
+ */
+void
+sbus_attach_common(struct sbus_softc *sc, int node, int indirect)
+{
+	bus_space_tag_t sbt;
+	struct sbus_attach_args sa;
+	int node0;
+
+	/* Setup interrupt translation tables */
+	sc->sc_intr2ipl = intr_sbus2ipl_4u;
+
+	sbt = sbus_alloc_bustag(sc, indirect);
+
+	/*
+	 * Get the SBus burst transfer size if burst transfers are supported
+	 */
+	sc->sc_burst = getpropint(node, "burst-sizes", 0);
 
 	/*
 	 * Loop through ROM children, fixing any relative addresses
@@ -512,7 +572,7 @@ sbus_establish(struct sbusdev *sd, struct device *dev)
 	 * We have to look for the sbus by name, since it is not necessarily
 	 * our immediate parent (i.e. sun4m /iommu/sbus/espdma/esp)
 	 * We don't just use the device structure of the above-attached
-	 * sbus, since we might (in the future) support multiple sbus's.
+	 * sbus, since we support multiple sbus's.
 	 */
 	for (curdev = dev->dv_parent; ; curdev = curdev->dv_parent) {
 		if (!curdev || !curdev->dv_xname)
@@ -657,6 +717,9 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 	int ipl;
 	long vec = pri; 
 
+	/* Pick the master SBus as all do not have IOMMU registers */
+	sc = sc->sc_master;
+
 	sysio = bus_space_vaddr(sc->sc_bustag, sc->sc_bh);
 
 	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) != 0)
@@ -760,8 +823,8 @@ sbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 	return (ih);
 }
 
-static bus_space_tag_t
-sbus_alloc_bustag(struct sbus_softc *sc)
+bus_space_tag_t
+sbus_alloc_bustag(struct sbus_softc *sc, int indirect)
 {
 	struct sparc_bus_space_tag *sbt;
 
@@ -773,7 +836,10 @@ sbus_alloc_bustag(struct sbus_softc *sc)
 	snprintf(sbt->name, sizeof(sbt->name), "%s",
 		sc->sc_dev.dv_xname);
 	sbt->cookie = sc;
-	sbt->parent = sc->sc_bustag;
+	if (indirect)
+		sbt->parent = sc->sc_bustag->parent;
+	else
+		sbt->parent = sc->sc_bustag;
 	sbt->default_type = SBUS_BUS_SPACE;
 	sbt->asi = ASI_PRIMARY;
 	sbt->sasi = ASI_PRIMARY;
@@ -784,10 +850,10 @@ sbus_alloc_bustag(struct sbus_softc *sc)
 }
 
 
-static bus_dma_tag_t
-sbus_alloc_dmatag(struct sbus_softc *sc)
+bus_dma_tag_t
+sbus_alloc_dmatag(struct sbus_softc *sc, bus_dma_tag_t psdt)
 {
-	bus_dma_tag_t sdt, psdt = sc->sc_dmatag;
+	bus_dma_tag_t sdt;
 
 	sdt = (bus_dma_tag_t)
 		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
@@ -807,7 +873,6 @@ sbus_alloc_dmatag(struct sbus_softc *sc)
 	sdt->_dmamem_free	= iommu_dvmamem_free;
 	sdt->_dmamem_map	= iommu_dvmamem_map;
 	sdt->_dmamem_unmap	= iommu_dvmamem_unmap;
-	sc->sc_dmatag = sdt;
 	return (sdt);
 }
 
@@ -818,7 +883,10 @@ sbus_dmamap_create(bus_dma_tag_t t, bus_dma_tag_t t0, bus_size_t size,
 {
 	struct sbus_softc *sc = t->_cookie;
 
+	/* Disallow DMA on secondary SBuses for now */
+	if (sc != sc->sc_master)
+		return (EINVAL);
+
         return (iommu_dvmamap_create(t, t0, &sc->sc_sb, size, nsegments,
 	    maxsegsz, boundary, flags, dmamp));
 }
-

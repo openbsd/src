@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.6 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.7 2005/03/05 01:44:52 miod Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.7 1999/06/05 05:30:43 mrg Exp $ */
 
 /*-
@@ -111,6 +111,7 @@ struct sbus_softc {
 	struct iommu_state	sc_is;		/* IOMMU state, see iommureg.h */
 	struct strbuf_ctl	sc_sb;		/* Streaming buffer control */
 	int64_t			sc_flush;	/* Streaming buffer flush */
+	struct sbus_softc	*sc_master;	/* main SBus */
 };
 
 bus_addr_t sbus_bus_addr(bus_space_tag_t, u_int, u_int);
