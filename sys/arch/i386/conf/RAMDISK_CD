@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.57 2002/04/02 17:14:47 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.58 2002/05/09 21:17:48 marc Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -94,11 +94,12 @@ uhub*	at uhub? port ? configuration ?	# USB Hubs
 #ucom*	at uftdi? portno ?
 #uaudio* at uhub? port ? configuration ?# USB Audio
 #ulpt*	at uhub? port ? configuration ? # USB Printers
-ukbd*	at uhub? port ? configuration ?	# USB Keyboards
+uhidev*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
-#ums*	at uhub? port ? configuration ?	# USB Mice
+#ums*	at uhidev? reportid ?
 #wsmouse* at ums? mux 0
 #aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
 #cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
