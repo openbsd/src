@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.3 2004/02/22 00:24:28 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.4 2004/02/25 18:25:54 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -210,10 +210,10 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 #ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above
-#em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
+em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 #txp*	at pci? dev ? function ?		# 3com 3CR990
 #nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
-#bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
+bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
 #mtd*	at pci? dev ? function ?		# Myson MTD803
 
