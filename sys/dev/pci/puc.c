@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.6 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: puc.c,v 1.7 2002/12/11 18:44:23 henning Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ puc_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		printf("%s: mesage buffer (via 'options MSGBUFSIZE=...'),\n",
 		    sc->sc_dev.dv_xname);
-		printf("%s: and report the result with send-pr\n",
+		printf("%s: and report the result with sendbug(1)\n",
 		    sc->sc_dev.dv_xname);
 #endif
 		return;
