@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.15 2004/12/05 12:25:59 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.16 2004/12/08 21:01:33 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.15 2004/12/05 12:25:59 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.16 2004/12/08 21:01:33 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -183,16 +183,8 @@
 #define ATU_ENDPT_TX		0x1
 #define ATU_ENDPT_MAX		0x2
 
-#define ATU_TX_TIMEOUT	10000
-
+#define ATU_TX_TIMEOUT		10000
 #define ATU_JOIN_TIMEOUT	2000
-
-#define ATU_MGMT_INTERVAL	1000 * hz / 1000
-#define ATU_SCAN_RETRIES	2
-#define ATU_JOIN_RETRIES	1
-#define ATU_AUTH_RETRIES	3
-#define ATU_ASSOC_RETRIES	3
-#define ATU_IBSS_RETRIES	0
 
 #define ATU_NO_QUIRK		0x0000
 #define ATU_QUIRK_NO_REMAP	0x0001
