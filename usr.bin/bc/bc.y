@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.19 2003/11/17 11:20:13 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.20 2003/12/02 09:00:07 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,12 +31,13 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.19 2003/11/17 11:20:13 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.20 2003/12/02 09:00:07 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
+#include <search.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -69,6 +70,11 @@ static void		emit(ssize_t);
 static void		emit_macro(int, ssize_t);
 static void		free_tree(void);
 static ssize_t		numnode(int);
+static ssize_t		lookup(char *, size_t, char);
+static ssize_t		letter_node(char *);
+static ssize_t		array_node(char *);
+static ssize_t		function_node(char *);
+
 static void		add_par(ssize_t);
 static void		add_local(ssize_t);
 static void		warning(const char *);
@@ -92,18 +98,20 @@ static int		sargc;
 static char		**sargv;
 static char		*filename;
 static bool		do_fork = true;
+static u_short		var_count;
 
 extern char *__progname;
 
 #define BREAKSTACK_SZ	(sizeof(breakstack)/sizeof(breakstack[0]))
 
-/* These values are 4.4BSD dc compatible */
+/* These values are 4.4BSD bc compatible */
 #define FUNC_CHAR	0x01
 #define ARRAY_CHAR	0xa1
 
-#define LETTER_NODE(str)	(cs(str_table[(int)str[0]]))
-#define ARRAY_NODE(str)		(cs(str_table[(int)str[0] - 'a' + ARRAY_CHAR]))
-#define FUNCTION_NODE(str)	(cs(str_table[(int)str[0] - 'a' + FUNC_CHAR]))
+/* Skip '\0', [, \ and ] */
+#define ENCODE(c)	((c) < '[' ? (c) : (c) + 3);
+#define VAR_BASE	(256-4)
+#define MAX_VARIABLES	(VAR_BASE * VAR_BASE)
 
 %}
 
@@ -113,11 +121,13 @@ extern char *__progname;
 	ssize_t		node;
 	struct lvalue	lvalue;
 	const char	*str;
+	char		*astr;
 }
 
 %token COMMA SEMICOLON LPAR RPAR LBRACE RBRACE LBRACKET RBRACKET DOT
 %token NEWLINE
-%token <str> LETTER NUMBER STRING
+%token <astr> LETTER
+%token <str> NUMBER STRING
 %token DEFINE BREAK QUIT LENGTH
 %token RETURN FOR IF WHILE SQRT
 %token SCALE IBASE OBASE AUTO
@@ -156,12 +166,7 @@ extern char *__progname;
 %%
 
 program		: /* empty */
-			{
-				putchar('q');
-				fflush(stdout);
-				exit(0);
-			}
-		| input_item program
+		| program input_item
 		;
 
 input_item	: semicolon_list NEWLINE
@@ -342,7 +347,7 @@ alloc_macro	: /* empty */
 					macro_char = '{';
 				else if (macro_char == ARRAY_CHAR)
 					macro_char += 26;
-				else if (macro_char == 256)
+				else if (macro_char == 255)
 					fatal("program too big");
 				if (breaksp == BREAKSTACK_SZ)
 					fatal("nesting too deep");
@@ -372,7 +377,8 @@ function	: function_header opt_parameter_list RPAR opt_newline
 
 function_header : DEFINE LETTER LPAR
 			{
-				$$ = FUNCTION_NODE($2);
+				$$ = function_node($2);
+				free($2);
 				prologue = cs("");
 				epilogue = cs("");
 				nesting = 1;
@@ -393,19 +399,23 @@ opt_parameter_list
 
 parameter_list	: LETTER
 			{
-				add_par(LETTER_NODE($1));
+				add_par(letter_node($1));
+				free($1);
 			}
 		| LETTER LBRACKET RBRACKET
 			{
-				add_par(ARRAY_NODE($1));
+				add_par(array_node($1));
+				free($1);
 			}
 		| parameter_list COMMA LETTER
 			{
-				add_par(LETTER_NODE($3));
+				add_par(letter_node($3));
+				free($3);
 			}
 		| parameter_list COMMA LETTER LBRACKET RBRACKET
 			{
-				add_par(ARRAY_NODE($3));
+				add_par(array_node($3));
+				free($3);
 			}
 		;
 
@@ -420,19 +430,23 @@ opt_auto_define_list
 
 define_list	: LETTER
 			{
-				add_local(LETTER_NODE($1));
+				add_local(letter_node($1));
+				free($1);
 			}
 		| LETTER LBRACKET RBRACKET
 			{
-				add_local(ARRAY_NODE($1));
+				add_local(array_node($1));
+				free($1);
 			}
 		| define_list COMMA LETTER
 			{
-				add_local(LETTER_NODE($3));
+				add_local(letter_node($3));
+				free($3);
 			}
 		| define_list COMMA LETTER LBRACKET RBRACKET
 			{
-				add_local(ARRAY_NODE($3));
+				add_local(array_node($3));
+				free($3);
 			}
 		;
 
@@ -453,8 +467,9 @@ argument_list	: expression
 			}
 		| argument_list COMMA LETTER LBRACKET RBRACKET
 			{
-				$$ = node($1, cs("l"), ARRAY_NODE($3),
+				$$ = node($1, cs("l"), array_node($3),
 				    END_NODE);
+				free($3);
 			}
 		;
 
@@ -542,8 +557,9 @@ expression	: named_expression
 		| LETTER LPAR opt_argument_list RPAR
 			{
 				$$ = node($3, cs("l"),
-				    FUNCTION_NODE($1), cs("x"),
+				    function_node($1), cs("x"),
 				    END_NODE);
+				free($1);
 			}
 		| MINUS expression %prec UMINUS
 			{
@@ -660,17 +676,19 @@ expression	: named_expression
 named_expression
 		: LETTER
 			{
-				$$.load = node(cs("l"), LETTER_NODE($1),
+				$$.load = node(cs("l"), letter_node($1),
 				    END_NODE);
-				$$.store = node(cs("s"), LETTER_NODE($1),
+				$$.store = node(cs("s"), letter_node($1),
 				    END_NODE);
+				free($1);
 			}
 		| LETTER LBRACKET expression RBRACKET
 			{
 				$$.load = node($3, cs(";"),
-				    ARRAY_NODE($1), END_NODE);
+				    array_node($1), END_NODE);
 				$$.store = node($3, cs(":"),
-				    ARRAY_NODE($1), END_NODE);
+				    array_node($1), END_NODE);
+				free($1);
 			}
 		| SCALE
 			{
@@ -810,8 +828,82 @@ numnode(int num)
 	else if (num < 16)
 		p = str_table['A' - 10 + num];
 	else
-		err(1, "internal error: break num > 15");
+		errx(1, "internal error: break num > 15");
 	return node(cs(" "), cs(p), END_NODE);
+}
+
+
+static ssize_t
+lookup(char * str, size_t len, char type)
+{
+	ENTRY	entry, *found;
+	u_short	num;
+	u_char	*p;
+
+	/* The scanner allocated an extra byte already */
+	if (str[len-1] != type) {
+		str[len] = type;
+		str[len+1] = '\0';
+	}
+	entry.key = str;
+	found = hsearch(entry, FIND);
+	if (found == NULL) {
+		if (var_count == MAX_VARIABLES)
+			errx(1, "too many variables");
+		p = malloc(4);
+		if (p == NULL)
+			err(1, NULL);
+		num = var_count++;
+		p[0] = 255;
+		p[1] = ENCODE(num / VAR_BASE + 1);
+		p[2] = ENCODE(num % VAR_BASE + 1);
+		p[3] = '\0';
+
+		entry.data = p;
+		entry.key = strdup(str);
+		if (entry.key == NULL)
+			err(1, NULL);
+		found = hsearch(entry, ENTER);
+		if (found == NULL)
+			err(1, NULL);
+	}
+	return cs(found->data);
+}
+
+static ssize_t
+letter_node(char *str)
+{
+	size_t len;
+
+	len = strlen(str);
+	if (len == 1 && str[0] != '_')
+		return cs(str_table[(int)str[0]]);
+	else
+		return lookup(str, len, 'L');
+}
+
+static ssize_t
+array_node(char *str)
+{
+	size_t len;
+
+	len = strlen(str);
+	if (len == 1 && str[0] != '_')
+		return cs(str_table[(int)str[0] - 'a' + ARRAY_CHAR]);
+	else
+		return lookup(str, len, 'A');
+}
+
+static ssize_t
+function_node(char *str)
+{
+	size_t len;
+
+	len = strlen(str);
+	if (len == 1 && str[0] != '_')
+		return cs(str_table[(int)str[0] - 'a' + FUNC_CHAR]);
+	else
+		return lookup(str, len, 'F');
 }
 
 static void
@@ -893,6 +985,8 @@ init(void)
 		str_table[i][0] = i;
 		str_table[i][1] = '\0';
 	}
+	if (hcreate(1 << 16) == 0)
+		err(1, NULL);
 }
 
 
@@ -1003,7 +1097,7 @@ main(int argc, char *argv[])
 			dup(p[0]);
 			close(p[0]);
 			close(p[1]);
-			execl(_PATH_DC, "dc", "-", (char *)NULL);
+			execl(_PATH_DC, "dc", "-x", (char *)NULL);
 			err(1, "cannot find dc");
 		}
 	}

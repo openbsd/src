@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.13 2003/11/17 11:20:13 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.14 2003/12/02 09:00:07 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.13 2003/11/17 11:20:13 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.14 2003/12/02 09:00:07 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -40,6 +40,9 @@ static void	add_str(const char *);
 %}
 
 DIGIT		[0-9A-F]
+ALPHA		[a-z_]
+ALPHANUM	[a-z_0-9]
+
 %x		comment string number
 
 %%
@@ -162,13 +165,22 @@ DIGIT		[0-9A-F]
 "{"		return LBRACE;
 "}"		return RBRACE;
 
-[a-z]		yylval.str = yytext; return LETTER;
+{ALPHA}{ALPHANUM}* {
+			/* alloc an extra byte for the type marker */
+			char *p = malloc(yyleng + 2);
+			if (p == NULL)
+				err(1, NULL);
+			strlcpy(p, yytext, yyleng + 1);
+			yylval.astr = p;
+			return LETTER;
+		}
 
 \\\n		lineno++;
 \n		lineno++; return NEWLINE;
 
 #[^\n]*		;
 [ \t]		;
+<<EOF>>		return QUIT;
 .		yyerror("illegal character");
 
 %%
@@ -191,7 +203,7 @@ add_str(const char *str)
 
 	arglen = strlen(str);
 
-	if (strlen(strbuf) + arglen + 1> strbuf_sz) {
+	if (strlen(strbuf) + arglen + 1 > strbuf_sz) {
 		size_t newsize;
 		char *p;
 
