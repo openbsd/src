@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.9 2000/11/10 15:33:12 provos Exp $	*/
+/*	$OpenBSD: nm.c,v 1.10 2001/02/18 21:45:09 espie Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.9 2000/11/10 15:33:12 provos Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.10 2001/02/18 21:45:09 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,6 +66,7 @@ static char rcsid[] = "$OpenBSD: nm.c,v 1.9 2000/11/10 15:33:12 provos Exp $";
 #include "byte.c"
 
 
+int demangle = 0;
 int ignore_bad_archive_entries = 1;
 int print_only_external_symbols;
 int print_only_undefined_symbols;
@@ -85,6 +86,8 @@ int (*sfunc)() = fname;
 
 void *emalloc(), *erealloc();
 
+void pipe2cppfilt();
+
 /*
  * main()
  *	parse command line, execute process_file() for each file
@@ -97,10 +100,16 @@ main(argc, argv)
 	extern int optind;
 	int ch, errors;
 
-	while ((ch = getopt(argc, argv, "agnopruw")) != -1) {
+	while ((ch = getopt(argc, argv, "aBCgnopruw")) != -1) {
 		switch (ch) {
 		case 'a':
 			print_all_symbols = 1;
+			break;
+		case 'B':
+			/* no-op, compat with gnu-nm */
+			break;
+		case 'C':
+			demangle = 1;
 			break;
 		case 'g':
 			print_only_external_symbols = 1;
@@ -128,6 +137,9 @@ main(argc, argv)
 			usage();
 		}
 	}
+
+	if (demangle)
+		pipe2cppfilt();
 	fcount = argc - optind;
 	argv += optind;
 
@@ -450,29 +462,29 @@ print_symbol(objname, sym)
 		(void)printf("%s:", objname);
 
 	/*
-	 * handle undefined-only format separately (no space is
+	 * handle undefined-only format especially (no space is
 	 * left for symbol values, no type field is printed)
 	 */
-	if (print_only_undefined_symbols) {
-		(void)puts(sym->n_un.n_name);
-		return;
+	if (!print_only_undefined_symbols) {
+		/* print symbol's value */
+		if (SYMBOL_TYPE(sym->n_type) == N_UNDF)
+			(void)printf("        ");
+		else
+			(void)printf("%08lx", sym->n_value);
+
+		/* print type information */
+		if (IS_DEBUGGER_SYMBOL(sym->n_type))
+			(void)printf(" - %02x %04x %5s ", sym->n_other,
+			    sym->n_desc&0xffff, typestring(sym->n_type));
+		else
+			(void)printf(" %c ", typeletter(sym->n_type));
 	}
 
-	/* print symbol's value */
-	if (SYMBOL_TYPE(sym->n_type) == N_UNDF)
-		(void)printf("        ");
-	else
-		(void)printf("%08lx", sym->n_value);
-
-	/* print type information */
-	if (IS_DEBUGGER_SYMBOL(sym->n_type))
-		(void)printf(" - %02x %04x %5s ", sym->n_other,
-		    sym->n_desc&0xffff, typestring(sym->n_type));
-	else
-		(void)printf(" %c ", typeletter(sym->n_type));
-
 	/* print the symbol's name */
-	(void)puts(sym->n_un.n_name);
+	if (demangle && sym->n_un.n_name[0] == '_') 
+		(void)puts(sym->n_un.n_name + 1);
+	else
+		(void)puts(sym->n_un.n_name);
 }
 
 /*
@@ -629,8 +641,37 @@ erealloc(p, size)
 	exit(1);
 }
 
+#define CPPFILT	"/usr/bin/c++filt"
+
+void
+pipe2cppfilt()
+{
+	int pip[2];
+	char *argv[2];
+
+	argv[0] = "c++filt";
+	argv[1] = NULL;
+
+	if (pipe(pip) == -1)
+		err(1, "pipe");
+	switch(fork()) {
+	case -1:
+		err(1, "fork");
+	default:
+		dup2(pip[0], 0);
+		close(pip[0]);
+		close(pip[1]);
+		execve(CPPFILT, argv, NULL);
+		err(1, "execve");
+	case 0:
+		dup2(pip[1], 1);
+		close(pip[1]);
+		close(pip[0]);
+	}
+}
+
 usage()
 {
-	(void)fprintf(stderr, "usage: nm [-agnopruw] [file ...]\n");
+	(void)fprintf(stderr, "usage: nm [-aCgnopruw] [file ...]\n");
 	exit(1);
 }
