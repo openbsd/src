@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 1996/04/17 05:18:49 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 1996/04/18 03:57:59 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.14 1995/12/28 19:16:48 thorpej Exp $	*/
 
 /*-
@@ -58,6 +58,9 @@
 #include <sys/device.h>
 
 #include <machine/pte.h>
+
+void	swapconf __P((void));
+void	setroot __P((void));
 
 /*
  * The following several variables are related to
