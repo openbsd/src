@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.8 2000/07/23 22:23:42 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.9 2000/09/08 02:23:11 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: bs.c,v 1.8 2000/07/23 22:23:42 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: bs.c,v 1.9 2000/09/08 02:23:11 pjanzen Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* (setegid, random) */
@@ -45,7 +45,7 @@ static int getcoord(int atcpu);
 
 /* miscellaneous constants */
 #define SHIPTYPES	5
-#define	OTHER		(1-turn)
+#define OTHER		(1-turn)
 #define PLAYER		0
 #define COMPUTER	1
 #define MARK_HIT	'H'
@@ -360,9 +360,11 @@ static void initgame(void)
     for (i = 0; i < SHIPTYPES; i++)
     {
 	ss = cpuship + i;
-	ss->x = ss->y = ss->dir = ss->hits = ss->placed = 0;
+	ss->x = ss->y = ss->dir = ss->hits = 0;
+	ss->placed = FALSE;
 	ss = plyship + i;
-	ss->x = ss->y = ss->dir = ss->hits = ss->placed = 0;
+	ss->x = ss->y = ss->dir = ss->hits = 0;
+	ss->placed = FALSE;
 
      if (ss->length > cpulongest)
 		cpulongest  = ss->length;
@@ -705,7 +707,7 @@ static bool checkplace(int b, ship_t *ss, int vis)
 		error("Figure I won't find it if you put it there?");
 		break;
 	    }
-	return(0);
+	return(FALSE);
     }
 
     for(l = 0; l < ss->length; ++l)
@@ -823,7 +825,7 @@ static ship_t *hitship(int x, int y)
 static int plyturn(void)
 {
     ship_t *ss;
-    bool hit;
+    int hit;
     char *m = NULL;
 
     prompt(1, "Where do you want to shoot? ", "");
@@ -842,11 +844,12 @@ static int plyturn(void)
     hits[PLAYER][curx][cury] = hit ? MARK_HIT : MARK_MISS;
     cgoto(cury, curx);
 #ifdef A_COLOR
-    if (has_colors())
+    if (has_colors()) {
 	if (hit)
 	    attron(COLOR_PAIR(COLOR_RED));
 	else
 	    attron(COLOR_PAIR(COLOR_GREEN));
+    }
 #endif /* A_COLOR */
     (void) addch((chtype)hits[PLAYER][curx][cury]);
 #ifdef A_COLOR
@@ -982,10 +985,11 @@ static void randomfire(int *px, int *py)
 #define S_HIT	1
 #define S_SUNK	-1
 
-static bool cpufire(int x, int y)
+static int cpufire(int x, int y)
 /* fire away at given location */
 {
-    bool hit, sunk;
+    int hit;
+    bool sunk;
     ship_t *ss = NULL;
 
     hits[COMPUTER][x][y] = (hit = (board[PLAYER][x][y])) ? MARK_HIT : MARK_MISS;
@@ -997,11 +1001,12 @@ static bool cpufire(int x, int y)
 
     pgoto(y, x);
 #ifdef A_COLOR
-    if (has_colors())
+    if (has_colors()) {
 	if (hit)
 	    attron(COLOR_PAIR(COLOR_RED));
 	else
 	    attron(COLOR_PAIR(COLOR_GREEN));
+    }
 #endif /* A_COLOR */
     (void) addch((chtype)(hit ? SHOWHIT : SHOWSPLASH));
 #ifdef A_COLOR
@@ -1016,7 +1021,7 @@ static bool cpufire(int x, int y)
  * unstructuredness below. The five labels are states which need to be held
  * between computer turns.
  */
-static bool cputurn(void)
+static int cputurn(void)
 {
     static bool used[4];
     static ship_t ts;
@@ -1106,7 +1111,7 @@ static bool cputurn(void)
 	    if ((hit = cpufire(x, y)))
 	    {
 		    ts.x = x; ts.y = y; ts.hits++;
-		    next = (hit == S_SUNK) ? RANDOM_FIRE: SECOND_PASS;
+		    next = (hit == S_SUNK) ? RANDOM_FIRE : SECOND_PASS;
 	    }
 	    else
 	    {
@@ -1323,7 +1328,7 @@ static int scount(int who)
     else
 	sp = plyship;	/* count player shots */
 
-    for (i=0, shots = 0; i < SHIPTYPES; i++, sp++)
+    for (i = 0, shots = 0; i < SHIPTYPES; i++, sp++)
     {
 	if (sp->hits >= sp->length)
 	    continue;		/* dead ship */
