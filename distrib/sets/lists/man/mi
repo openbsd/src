@@ -23,8 +23,6 @@
 ./usr/share/doc/html/lynx_help/lynx_url_support.html
 ./usr/share/info/cpp.info
 ./usr/share/info/cpp.info-1
-./usr/share/info/history.info
-./usr/share/info/readline.info
 ./usr/share/info/cpp.info-2
 ./usr/share/info/cpp.info-3
 ./usr/share/info/cvs.info
@@ -87,6 +85,7 @@
 ./usr/share/info/gmp.info-3
 ./usr/share/info/gperf.info
 ./usr/share/info/gzip.info
+./usr/share/info/history.info
 ./usr/share/info/info-stnd.info
 ./usr/share/info/info.info
 ./usr/share/info/iostream.info
@@ -97,6 +96,7 @@
 ./usr/share/info/libg++.info-3
 ./usr/share/info/libg++.info-4
 ./usr/share/info/libg++.info-5
+./usr/share/info/readline.info
 ./usr/share/info/standards.info
 ./usr/share/info/texinfo
 ./usr/share/info/texinfo-1
@@ -533,6 +533,7 @@
 ./usr/share/man/cat4/ddb.0
 ./usr/share/man/cat4/de.0
 ./usr/share/man/cat4/drum.0
+./usr/share/man/cat4/eap.0
 ./usr/share/man/cat4/esis.0
 ./usr/share/man/cat4/fd.0
 ./usr/share/man/cat4/ffs_softupdates.0
@@ -590,7 +591,6 @@
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sparc/cgeight.0
 ./usr/share/man/cat4/sparc/cgfour.0
-./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/cgfourteen.0
 ./usr/share/man/cat4/sparc/cgtwo.0
 ./usr/share/man/cat4/sparc/esp.0
@@ -598,6 +598,7 @@
 ./usr/share/man/cat4/sparc/ie.0
 ./usr/share/man/cat4/sparc/intro.0
 ./usr/share/man/cat4/sparc/kbd.0
+./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/ms.0
 ./usr/share/man/cat4/sparc/si.0
 ./usr/share/man/cat4/sparc/sw.0
@@ -676,6 +677,7 @@
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
+./usr/share/man/cat5/resolver.0
 ./usr/share/man/cat5/rpc.0
 ./usr/share/man/cat5/securenet.0
 ./usr/share/man/cat5/services.0
@@ -946,6 +948,7 @@
 ./usr/share/man/cat8/visudo.0
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
+./usr/share/man/cat8/vpn.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/ypinit.0
@@ -979,4 +982,3 @@
 ./usr/share/man/cat9/splx.0
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
-./usr/share/man/cat8/vpn.0
