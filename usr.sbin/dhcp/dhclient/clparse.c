@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.4 1999/02/11 22:49:59 deraadt Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.5 1999/12/04 00:15:08 angelos Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -494,7 +494,7 @@ struct interface_info *interface_or_dummy (name)
 			error ("Insufficient memory to record interface %s",
 			       name);
 		memset (ip, 0, sizeof *ip);
-		strcpy (ip -> name, name);
+		strlcpy (ip -> name, name, IFNAMSIZ);
 		ip -> next = dummy_interfaces;
 		dummy_interfaces = ip;
 	}
