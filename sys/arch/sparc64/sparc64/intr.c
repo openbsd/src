@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.4 2001/09/20 21:29:26 jason Exp $	*/
+/*	$OpenBSD: intr.c,v 1.5 2001/09/21 02:02:22 art Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -266,8 +266,10 @@ intr_establish(level, ih)
 			 * Interrupt is already there.  We need to create a
 			 * new interrupt handler and interpose it.
 			 */
+#ifdef DEBUG
 			printf("intr_establish: intr reused %x\n", 
 				ih->ih_number);
+#endif
 
 			if (q->ih_fun != intr_list_handler) {
 				nih = (struct intrhand *)
