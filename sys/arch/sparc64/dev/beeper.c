@@ -1,4 +1,4 @@
-/*	$OpenBSD: beeper.c,v 1.1 2001/09/29 07:16:12 jason Exp $	*/
+/*	$OpenBSD: beeper.c,v 1.2 2002/02/19 04:14:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 
@@ -48,10 +49,18 @@
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 
+#include "pckbd.h"
+#if NPCKBD > 0
+#include <dev/ic/pckbcvar.h>
+#include <dev/pckbc/pckbdvar.h>
+#endif
+
 struct beeper_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	struct timeout		sc_to;
+	int 			sc_belltimeout, sc_bellactive;
 };
 
 #define	BEEP_REG	0
@@ -66,6 +75,11 @@ struct cfattach beeper_ca = {
 struct cfdriver beeper_cd = {
 	NULL, "beeper", DV_DULL
 };
+
+#if NPCKBD > 0
+void beeper_stop(void *);
+void beeper_bell(void *, u_int, u_int, u_int, int);
+#endif
 
 int
 beeper_match(parent, match, aux)
@@ -89,6 +103,7 @@ beeper_attach(parent, self, aux)
 	struct ebus_attach_args *ea = aux;
 
 	sc->sc_iot = ea->ea_bustag;
+	timeout_set(&sc->sc_to, beeper_stop, sc);
 
 	/* Use prom address if available, otherwise map it. */
 	if (ea->ea_nvaddrs)
@@ -102,8 +117,56 @@ beeper_attach(parent, self, aux)
                 return;
 	}
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BEEP_REG, 1);
-	DELAY(0xc8 * 1000);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BEEP_REG, 0);
+#if NPCKBD > 0
+	pckbd_hookup_bell(beeper_bell, sc);
+#endif
 	printf("\n");
 }
+
+#if NPCKBD > 0
+void
+beeper_stop(vsc)
+	void *vsc;
+{
+	struct beeper_softc *sc = vsc;
+	int s;
+
+	s = spltty();
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BEEP_REG, 0);
+	sc->sc_bellactive = 0;
+	sc->sc_belltimeout = 0;
+	splx(s);
+}
+
+void
+beeper_bell(vsc, pitch, period, volume, poll)
+	void *vsc;
+	u_int pitch, period, volume;
+	int poll;
+{
+	struct beeper_softc *sc = vsc;
+	int s, ticks;
+
+	ticks = (period * hz) / 1000;
+	if (ticks <= 0)
+		ticks = 1;
+
+	s = spltty();
+	if (sc->sc_bellactive) {
+		if (sc->sc_belltimeout == 0)
+			timeout_del(&sc->sc_to);
+	}
+	if (pitch == 0 || period == 0) {
+		beeper_stop(sc);
+		splx(s);
+		return;
+	}
+	if (!sc->sc_bellactive) {
+		sc->sc_bellactive = 1;
+		sc->sc_belltimeout = 1;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BEEP_REG, 1);
+		timeout_add(&sc->sc_to, ticks);
+	}
+	splx(s);
+}
+#endif /* NPCKBD > 0 */
