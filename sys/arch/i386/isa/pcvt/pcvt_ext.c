@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.10 1997/05/29 02:20:57 mickey Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.11 1998/01/04 12:50:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -265,6 +265,10 @@ vga_chipset(void)
 			case 0x93:
 				return(VGA_TR9100);
 
+			case 0xe3:
+				can_do_132col = 1;
+				return(VGA_TR9440);
+
 			default:
 				return(VGA_TRUNKNOWN);
 		}
@@ -473,6 +477,7 @@ vga_chipset(void)
 							return VGA_S3_765;
 						else
 							return VGA_S3_764;
+					case 0x31:
 					case 0x3d:
 						outb(addr_6845, 0x38);
 						outb(addr_6845+1, old1byte);
@@ -611,52 +616,53 @@ char *
 vga_string(int number)
 {
 	static char *vga_tab[] = {
-		"generic",
-		"et4000",
-		"et3000",
-		"pvga1a",
-		"wd90c00",
-		"wd90c10",
-		"wd90c11",
-		"v7 vega",
-		"v7 fast",
-		"v7 ver5",
-		"v7 1024i",
-		"unknown v7",
-		"tvga 8800br",
-		"tvga 8800cs",
-		"tvga 8900b",
-		"tvga 8900c",
-		"tvga 8900cl",
-		"tvga 9000",
-		"tvga 9100",
-		"tvga 9200",
-		"unknown trident",
-		"s3 911",
-		"s3 924",
-		"s3 801/805",
-		"s3 928",
-		"s3 864",
-		"s3 964",
-		"s3 732 (Trio32)",
-		"s3 764 (Trio64)",
-		"s3 866",
-		"s3 868",
-		"s3 968",
-		"s3 765 (Trio64 V+)",
-		"s3 ViRGE",
-		"unknown s3",
-		"cl-gd5402",
-		"cl-gd5402r1",
-		"cl-gd5420",
-		"cl-gd5420r1",
-		"cl-gd5422",
-		"cl-gd5424",
-		"cl-gd5426",
-		"cl-gd5428",
-		"cl-gd5430",
-		"cl-gd62x5",
-		"unknown cirrus",
+		"generic VGA",
+		"ET4000",
+		"ET3000",
+		"PVGA1A",
+		"WD90C00",
+		"WD90C10",
+		"WD90C11",
+		"Video7 VEGA",
+		"Video7 FAST",
+		"Video7 VER5",
+		"Video7 1024i",
+		"unknown Video7",
+		"TVGA 8800BR",
+		"TVGA 8800CS",
+		"TVGA 8900B",
+		"TVGA 8900C",
+		"TVGA 8900CL",
+		"TVGA 9000",
+		"TVGA 9100",
+		"TVGA 9200",
+		"TVGA 9440",
+		"unknown Trident",
+		"S3 911",
+		"S3 924",
+		"S3 801/805",
+		"S3 928",
+		"S3 864",
+		"S3 964",
+		"S3 732 (Trio32)",
+		"S3 764 (Trio64)",
+		"S3 866",
+		"S3 868",
+		"S3 968",
+		"S3 765 (Trio64 V+)",
+		"S3 ViRGE",
+		"unknown S3",
+		"CL-GD5402",
+		"CL-GD5402r1",
+		"CL-GD5420",
+		"CL-GD5420r1",
+		"CL-GD5422",
+		"CL-GD5424",
+		"CL-GD5426",
+		"CL-GD5428",
+		"CL-GD5430",
+		"CL-GD62x5",
+		"unknown Cirrus",
 						/* VGA_MAX_CHIPSET */
 		"vga_string: chipset name table ptr overflow!"
 	};
@@ -2961,4 +2967,3 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 #endif	/* NVT > 0 */
 
 /* ------------------------- E O F ------------------------------------------*/
-
