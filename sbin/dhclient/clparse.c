@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.14 2004/05/04 22:23:01 mickey Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.15 2004/05/13 07:35:17 wilfried Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -162,6 +162,7 @@ read_client_leases(void)
 			parse_client_lease_statement(cfile, 0);
 
 	} while (1);
+	fclose(cfile);
 }
 
 /*
