@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.27 2004/03/16 00:40:34 millert Exp $	*/
+/*	$OpenBSD: diff.h,v 1.28 2004/06/20 18:47:45 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -30,6 +30,9 @@
  *
  *	@(#)diff.h	8.1 (Berkeley) 6/6/93
  */
+
+#include <sys/types.h>
+#include <regex.h>
 
 /*
  * Output format options
@@ -73,9 +76,10 @@ struct excludes {
 extern int	aflag, bflag, dflag, iflag, lflag, Nflag, Pflag, pflag, rflag,
 		sflag, tflag, Tflag, wflag;
 extern int	format, context, status;
-extern char	*start, *ifdefname, *diffargs, *label;
+extern char	*start, *ifdefname, *diffargs, *label, *ignore_pats;
 extern struct	stat stb1, stb2;
 extern struct	excludes *excludes_list;
+extern regex_t	ignore_re;
 
 char	*splice(char *, char *);
 int	diffreg(char *, char *, int);

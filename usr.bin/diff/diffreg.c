@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.56 2004/06/18 07:23:50 otto Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.57 2004/06/20 18:47:45 otto Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.56 2004/06/18 07:23:50 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.57 2004/06/20 18:47:45 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -214,6 +214,7 @@ static void unravel(int);
 static void unsort(struct line *, int, int *);
 static void change(char *, FILE *, char *, FILE *, int, int, int, int);
 static void sort(struct line *, int);
+static int  ignoreline(char *);
 static int  asciifile(FILE *);
 static int  fetch(long *, int, int, FILE *, int, int);
 static int  newcand(int, int, int);
@@ -226,6 +227,7 @@ static int  files_differ(FILE *, FILE *, int);
 static __inline int min(int, int);
 static __inline int max(int, int);
 static char *match_function(const long *, int, FILE *);
+static char *preadline(int, size_t, off_t);
 
 
 /*
@@ -965,6 +967,29 @@ uni_range(int a, int b)
 		printf("%d,0", b);
 }
 
+static char *
+preadline(int fd, size_t len, off_t off)
+{
+	char *line;
+	ssize_t nr;
+
+	line = emalloc(len + 1);
+	if ((nr = pread(fd, line, len, off)) < 0)
+		err(1, "preadline");
+	line[nr] = '\0';
+	return (line);
+}
+
+static int
+ignoreline(char *line)
+{
+	int ret;
+
+	ret = regexec(&ignore_re, line, 0, NULL, 0);
+	free(line);
+	return (ret == 0);	/* if it matched, it should be ignored. */
+}
+
 /*
  * Indicate that there is a difference between lines a and b of the from file
  * to get to lines c to d of the to file.  If a is greater then b then there
@@ -981,6 +1006,32 @@ change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 restart:
 	if (format != D_IFDEF && a > b && c > d)
 		return;
+	if (ignore_pats != NULL) {
+		char *line;
+		/*
+		 * All lines in the change, insert, or delete must
+		 * match an ignore pattern for the change to be
+		 * ignored.
+		 */
+		if (a <= b) {		/* Changes and deletes. */
+			for (i = a; i <= b; i++) {
+				line = preadline(fileno(f1),
+				    ixold[i] - ixold[i - 1], ixold[i - 1]);
+				if (!ignoreline(line))
+					goto proceed;
+			}
+		}
+		if (a > b || c <= d) {	/* Changes and inserts. */
+			for (i = c; i <= d; i++) {
+				line = preadline(fileno(f2),
+				    ixnew[i] - ixnew[i - 1], ixnew[i - 1]);
+				if (!ignoreline(line))
+					goto proceed;
+			}
+		}
+		return;
+	}
+proceed:
 	if (format == D_CONTEXT || format == D_UNIFIED) {
 		/*
 		 * Allocate change records as needed.

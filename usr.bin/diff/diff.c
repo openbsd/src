@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.45 2004/03/16 00:40:34 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.46 2004/06/20 18:47:45 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.45 2004/03/16 00:40:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.46 2004/06/20 18:47:45 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -43,11 +43,12 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.45 2004/03/16 00:40:34 millert
 int	 aflag, bflag, dflag, iflag, lflag, Nflag, Pflag, pflag, rflag;
 int	 sflag, tflag, Tflag, wflag;
 int	 format, context, status;
-char	*start, *ifdefname, *diffargs, *label;
+char	*start, *ifdefname, *diffargs, *label, *ignore_pats;
 struct stat stb1, stb2;
 struct excludes *excludes_list;
+regex_t	 ignore_re;
 
-#define	OPTIONS	"0123456789abC:cdD:efhiL:lnNPpqrS:sTtU:uwX:x:"
+#define	OPTIONS	"0123456789abC:cdD:efhI:iL:lnNPpqrS:sTtU:uwX:x:"
 static struct option longopts[] = {
 	{ "text",			no_argument,		0,	'a' },
 	{ "ignore-space-change",	no_argument,		0,	'b' },
@@ -56,6 +57,7 @@ static struct option longopts[] = {
 	{ "minimal",			no_argument,		0,	'd' },
 	{ "ed",				no_argument,		0,	'e' },
 	{ "forward-ed",			no_argument,		0,	'f' },
+	{ "ignore-matching-lines",	required_argument,	0,	'I' },
 	{ "ignore-case",		no_argument,		0,	'i' },
 	{ "paginate",			no_argument,		0,	'l' },
 	{ "label",			required_argument,	0,	'L' },
@@ -78,6 +80,7 @@ static struct option longopts[] = {
 
 __dead void usage(void);
 void push_excludes(char *);
+void push_ignore_pats(char *);
 void read_excludes_file(char *file);
 void set_argstr(char **, char **);
 
@@ -138,6 +141,9 @@ main(int argc, char **argv)
 			break;
 		case 'h':
 			/* silently ignore for backwards compatibility */
+			break;
+		case 'I':
+			push_ignore_pats(optarg);
 			break;
 		case 'i':
 			iflag = 1;
@@ -216,6 +222,19 @@ main(int argc, char **argv)
 	 */
 	if (argc != 2)
 		usage();
+	if (ignore_pats != NULL) {
+		char buf[BUFSIZ];
+		int error;
+
+		if ((error = regcomp(&ignore_re, ignore_pats,
+				     REG_NEWLINE | REG_EXTENDED)) != 0) {
+			regerror(error, &ignore_re, buf, sizeof(buf));
+			if (*ignore_pats != '\0')
+				errx(2, "%s: %s", ignore_pats, buf);
+			else
+				errx(2, "%s", buf);
+		}
+	}
 	if (strcmp(argv[0], "-") == 0) {
 		fstat(STDIN_FILENO, &stb1);
 		gotstdin = 1;
@@ -343,6 +362,25 @@ push_excludes(char *pattern)
 }
 
 void
+push_ignore_pats(char *pattern)
+{
+	size_t len;
+
+	if (ignore_pats == NULL) {
+		/* XXX: estrdup */
+		len = strlen(pattern) + 1;
+		ignore_pats = emalloc(len);
+		strlcpy(ignore_pats, pattern, len);
+	} else {
+		/* old + "|" + new + NUL */
+		len = strlen(ignore_pats) + strlen(pattern) + 2;
+		ignore_pats = erealloc(ignore_pats, len);
+		strlcat(ignore_pats, "|", len);
+		strlcat(ignore_pats, pattern, len);
+	}
+}
+
+void
 print_only(const char *path, size_t dirlen, const char *entry)
 {
 	if (dirlen > 1)
@@ -400,12 +438,14 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: diff [-abdilpqtTw] [-c | -e | -f | -n | -u] [-L label] file1 file2\n"
-	    "       diff [-abdilpqtTw] [-L label] -C number file1 file2\n"
-	    "       diff [-abdilqtw] -D string file1 file2\n"
-	    "       diff [-abdilpqtTw] [-L label] -U number file1 file2\n"
-	    "       diff [-abdilNPpqtTw] [-c | -e | -f | -n | -u ] [-L label] [-r] [-s]\n"
-	    "            [-S name] [-X file] [-x pattern] dir1 dir2\n");
+	    "usage: diff [-abdilpqtTw] [-I pattern] [-c | -e | -f | -n | -u]\n"
+	    "            [-L label] file1 file2\n"
+	    "       diff [-abdilpqtTw] [-I pattern] [-L label] -C number file1 file2\n"
+	    "       diff [-abdilqtw] [-I pattern] -D string file1 file2\n"
+	    "       diff [-abdilpqtTw] [-I pattern] [-L label] -U number file1 file2\n"
+	    "       diff [-abdilNPpqtTw] [-I pattern] [-c | -e | -f | -n | -u]\n"
+	    "            [-L label] [-r] [-s] [-S name] [-X file] [-x pattern] dir1\n"
+	    "            dir2\n");
 
 	exit(2);
 }
