@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.6 2001/01/15 19:50:38 deraadt Exp $ */
+/*	$OpenBSD: prom.h,v 1.7 2001/06/29 21:52:05 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -175,6 +175,6 @@ struct mvmeprom_args {
 #define MVMEPROM_REG_NBARGEND	"r11"
 
 #ifndef RB_NOSYM
-#define RB_NOSYM 0x400
+#define RB_NOSYM 0x4000
 #endif
 #endif __MACHINE_PROM_H__
