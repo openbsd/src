@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.16 2004/12/14 19:53:12 xsa Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.17 2005/02/15 15:17:34 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -147,6 +147,7 @@ main(int argc, char **argv)
 	struct group *grp;
 
 	checkrepo = 0;
+	cvsd_set(CVSD_SET_SOCK, CVSD_SOCK_PATH);
 	cvsd_set(CVSD_SET_USER, CVSD_USER);
 	cvsd_set(CVSD_SET_GROUP, CVSD_GROUP);
 
@@ -177,10 +178,10 @@ main(int argc, char **argv)
 			checkrepo = 1;
 			break;
 		case 'r':
-			cvsd_root = optarg;
+			cvsd_set(CVSD_SET_ROOT, optarg);
 			break;
 		case 's':
-			cvsd_sock_path = optarg;
+			cvsd_set(CVSD_SET_SOCK, optarg);
 			break;
 		case 'u':
 			cvsd_set(CVSD_SET_USER, optarg);
@@ -870,7 +871,6 @@ cvsd_set(int what, ...)
 		if (cvsd_sock_path != NULL)
 			free(cvsd_sock_path);
 		cvsd_sock_path = str;
-		error = cvsd_sock_open();
 		break;
 	case CVSD_SET_USER:
 		if (cvsd_user != NULL)
