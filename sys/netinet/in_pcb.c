@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.73 2003/12/21 15:12:27 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.74 2004/01/02 16:08:54 markus Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -108,6 +108,9 @@ int ipport_lastauto = IPPORT_USERRESERVED;	/* 5000 */
 int ipport_hifirstauto = IPPORT_HIFIRSTAUTO;	/* 40000 */
 int ipport_hilastauto = IPPORT_HILASTAUTO;	/* 44999 */
 
+struct pool inpcb_pool;
+int inpcb_pool_initalized = 0;
+
 #define	INPCBHASH(table, faddr, fport, laddr, lport) \
 	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + \
 	ntohs((fport)) + ntohs((lport))) & (table->inpt_hash)]
@@ -171,7 +174,12 @@ in_pcballoc(so, v)
 	struct inpcb *inp;
 	int s;
 
-	MALLOC(inp, struct inpcb *, sizeof(*inp), M_PCB, M_NOWAIT);
+	if (inpcb_pool_initalized == 0) {
+		pool_init(&inpcb_pool, sizeof(struct inpcb), 0, 0, 0,
+		    "inpcbpl", NULL);
+		inpcb_pool_initalized = 1;
+	}
+	inp = pool_get(&inpcb_pool, PR_NOWAIT);
 	if (inp == NULL)
 		return (ENOBUFS);
 	bzero((caddr_t)inp, sizeof(*inp));
@@ -509,7 +517,7 @@ in_pcbdetach(v)
 	LIST_REMOVE(inp, inp_hash);
 	CIRCLEQ_REMOVE(&inp->inp_table->inpt_queue, inp, inp_queue);
 	splx(s);
-	FREE(inp, M_PCB);
+	pool_put(&inpcb_pool, inp);
 }
 
 void
