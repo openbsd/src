@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.10 2001/10/04 19:17:59 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.11 2001/10/04 20:36:16 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -133,7 +133,7 @@ hme_config(sc)
 	bus_dma_tag_t dmatag = sc->sc_dmatag;
 	bus_dma_segment_t seg;
 	bus_size_t size;
-	int rseg, error;
+	int rseg, error, i;
 
 	/*
 	 * HME common initialization.
@@ -166,6 +166,23 @@ hme_config(sc)
 	/* Make sure the chip is stopped. */
 	hme_stop(sc);
 
+
+	for (i = 0; i < HME_TX_RING_SIZE; i++) {
+		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    &sc->sc_txd[i].sd_map) != 0) {
+			sc->sc_txd[i].sd_map = NULL;
+			goto fail;
+		}
+	}
+	for (i = 0; i < HME_RX_RING_SIZE; i++) {
+		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    &sc->sc_rxd[i].sd_map) != 0) {
+			sc->sc_rxd[i].sd_map = NULL;
+			goto fail;
+		}
+	}
 
 	/*
 	 * Allocate DMA capable memory
@@ -285,6 +302,15 @@ hme_config(sc)
 		panic("hme_config: can't establish shutdownhook");
 
 	timeout_set(&sc->sc_tick_ch, hme_tick, sc);
+	return;
+
+fail:
+	for (i = 0; i < HME_TX_RING_SIZE; i++)
+		if (sc->sc_txd[i].sd_map != NULL)
+			bus_dmamap_destroy(sc->sc_dmatag, sc->sc_txd[i].sd_map);
+	for (i = 0; i < HME_RX_RING_SIZE; i++)
+		if (sc->sc_rxd[i].sd_map != NULL)
+			bus_dmamap_destroy(sc->sc_dmatag, sc->sc_rxd[i].sd_map);
 }
 
 void
@@ -292,9 +318,29 @@ hme_tick(arg)
 	void *arg;
 {
 	struct hme_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t mac = sc->sc_mac;
 	int s;
 
 	s = splnet();
+	/*
+	 * Unload collision counters
+	 */
+	ifp->if_collisions +=
+	    bus_space_read_4(t, mac, HME_MACI_NCCNT) +
+	    bus_space_read_4(t, mac, HME_MACI_FCCNT) +
+	    bus_space_read_4(t, mac, HME_MACI_EXCNT) +
+	    bus_space_read_4(t, mac, HME_MACI_LTCNT);
+
+	/*
+	 * then clear the hardware counters.
+	 */
+	bus_space_write_4(t, mac, HME_MACI_NCCNT, 0);
+	bus_space_write_4(t, mac, HME_MACI_FCCNT, 0);
+	bus_space_write_4(t, mac, HME_MACI_EXCNT, 0);
+	bus_space_write_4(t, mac, HME_MACI_LTCNT, 0);
+
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
@@ -335,13 +381,12 @@ hme_stop(sc)
 	}
 
 	for (n = 0; n < HME_TX_RING_SIZE; n++) {
-		if (sc->sc_txd[n].sd_map != NULL) {
+		if (sc->sc_txd[n].sd_loaded) {
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_txd[n].sd_map,
 			    0, sc->sc_txd[n].sd_map->dm_mapsize,
 			    BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmatag, sc->sc_txd[n].sd_map);
-			bus_dmamap_destroy(sc->sc_dmatag, sc->sc_txd[n].sd_map);
-			sc->sc_txd[n].sd_map = NULL;
+			sc->sc_txd[n].sd_loaded = 0;
 		}
 		if (sc->sc_txd[n].sd_mbuf != NULL) {
 			m_freem(sc->sc_txd[n].sd_mbuf);
@@ -393,7 +438,6 @@ hme_meminit(sc)
 		HME_XD_SETADDR(sc->sc_pci, hr->rb_txd, i, 0);
 		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_txd, i, 0);
 		sc->sc_txd[i].sd_mbuf = NULL;
-		sc->sc_txd[i].sd_map = NULL;
 	}
 
 	/*
@@ -625,27 +669,8 @@ hme_tint(sc)
 	struct hme_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t mac = sc->sc_mac;
 	unsigned int ri, txflags;
 	struct hme_sxd *sd;
-
-	/*
-	 * Unload collision counters
-	 */
-	ifp->if_collisions +=
-	    bus_space_read_4(t, mac, HME_MACI_NCCNT) +
-	    bus_space_read_4(t, mac, HME_MACI_FCCNT) +
-	    bus_space_read_4(t, mac, HME_MACI_EXCNT) +
-	    bus_space_read_4(t, mac, HME_MACI_LTCNT);
-
-	/*
-	 * then clear the hardware counters.
-	 */
-	bus_space_write_4(t, mac, HME_MACI_NCCNT, 0);
-	bus_space_write_4(t, mac, HME_MACI_FCCNT, 0);
-	bus_space_write_4(t, mac, HME_MACI_EXCNT, 0);
-	bus_space_write_4(t, mac, HME_MACI_LTCNT, 0);
 
 	/* Fetch current position in the transmit ring */
 	ri = sc->sc_tx_cons;
@@ -664,13 +689,11 @@ hme_tint(sc)
 		if (txflags & HME_XD_EOP)
 			ifp->if_opackets++;
 
-		if (sd->sd_map != NULL) {
-			bus_dmamap_sync(sc->sc_dmatag, sd->sd_map,
-			    0, sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
-			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
-			sd->sd_map = NULL;
-		}
+		bus_dmamap_sync(sc->sc_dmatag, sd->sd_map,
+		    0, sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
+		sd->sd_loaded = 0;
+
 		if (sd->sd_mbuf != NULL) {
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
@@ -1218,19 +1241,11 @@ hme_encap(sc, mhead, bixp)
 		if ((HME_TX_RING_SIZE - (sc->sc_tx_cnt + cnt)) < 5)
 			goto err;
 
-		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sd->sd_map) != 0) {
-			sd->sd_map = NULL;
-			goto err;
-		}
-
 		if (bus_dmamap_load(sc->sc_dmatag, sd->sd_map,
-		    mtod(m, caddr_t), m->m_len, NULL, BUS_DMA_NOWAIT) != 0) {
-			bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
-			sd->sd_map = NULL;
+		    mtod(m, caddr_t), m->m_len, NULL, BUS_DMA_NOWAIT) != 0)
 			goto err;
-		}
 
+		sd->sd_loaded = 1;
 		bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
@@ -1285,9 +1300,8 @@ err:
 		bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
-		bus_dmamap_destroy(sc->sc_dmatag, sd->sd_map);
+		sd->sd_loaded = 0;
 		sd->sd_mbuf = NULL;
-		sd->sd_map = NULL;
 	}
 	return (ENOBUFS);
 }
@@ -1298,7 +1312,6 @@ hme_newbuf(sc, d, freeit)
 	struct hme_sxd *d;
 	int freeit;
 {
-	bus_dmamap_t map = NULL;
 	struct mbuf *m;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1312,32 +1325,36 @@ hme_newbuf(sc, d, freeit)
 		return (ENOBUFS);
 	}
 
-	if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1, MCLBYTES, 0,
-	    BUS_DMA_NOWAIT, &map) != 0) {
+	if (d->sd_loaded) {
+		bus_dmamap_sync(sc->sc_dmatag, d->sd_map,
+		    0, d->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmatag, d->sd_map);
+		d->sd_loaded = 0;
+	}
+
+	if (bus_dmamap_load(sc->sc_dmatag, d->sd_map, mtod(m, caddr_t),
+	    MCLBYTES - HME_RX_OFFSET, NULL, BUS_DMA_NOWAIT) != 0) {
+		if (d->sd_mbuf == NULL)
+			return (ENOBUFS);
+
+		/* XXX Reload old mbuf, and return. */
+		bus_dmamap_load(sc->sc_dmatag, d->sd_map,
+		    mtod(d->sd_mbuf, caddr_t), MCLBYTES - HME_RX_OFFSET,
+		    NULL, BUS_DMA_NOWAIT);
+		d->sd_loaded = 1;
+		bus_dmamap_sync(sc->sc_dmatag, d->sd_map,
+		    0, d->sd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 		m_freem(m);
 		return (ENOBUFS);
 	}
+	d->sd_loaded = 1;
 
-	if (bus_dmamap_load(sc->sc_dmatag, map, mtod(m, caddr_t), MCLBYTES,
-	    NULL, BUS_DMA_NOWAIT) != 0) {
-		bus_dmamap_destroy(sc->sc_dmatag, map);
-		m_freem(m);
-		return (ENOBUFS);
-	}
-
-	bus_dmamap_sync(sc->sc_dmatag, map, 0, map->dm_mapsize,
+	bus_dmamap_sync(sc->sc_dmatag, d->sd_map, 0, d->sd_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
 
 	if ((d->sd_mbuf != NULL) && freeit)
 		m_freem(d->sd_mbuf);
-	if (d->sd_map != NULL) {
-		bus_dmamap_sync(sc->sc_dmatag, d->sd_map,
-		    0, d->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmatag, d->sd_map);
-		bus_dmamap_destroy(sc->sc_dmatag, d->sd_map);
-	}
 	m->m_data += HME_RX_OFFSET;
 	d->sd_mbuf = m;
-	d->sd_map = map;
 	return (0);
 }

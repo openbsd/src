@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.3 2001/10/02 21:21:52 jason Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.4 2001/10/04 20:36:16 jason Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -46,8 +46,9 @@
 #define	HME_RX_PKTSIZE		1600
 
 struct hme_sxd {
-	struct mbuf *sd_mbuf;
-	bus_dmamap_t sd_map;
+	struct mbuf *sd_mbuf;		/* descriptor mbuf */
+	bus_dmamap_t sd_map;		/* descriptor dmamap */
+	int sd_loaded;			/* descriptor dmamap loaded? */
 };
 
 struct hme_ring {
