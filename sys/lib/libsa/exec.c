@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.12 1996/05/14 10:28:18 leo Exp $	*/
+/*	$NetBSD: exec.c,v 1.12.4.1 1996/06/02 12:08:48 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -33,13 +33,13 @@
  * SUCH DAMAGE.
  */
 
-#include <string.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
 #ifndef INSECURE
 #include <sys/stat.h>
 #endif
 #include <a.out.h>
+#include <string.h>
 
 #include "stand.h"
 

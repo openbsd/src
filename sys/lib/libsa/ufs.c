@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.14 1996/01/13 22:25:44 leo Exp $	*/
+/*	$NetBSD: ufs.c,v 1.14.4.1 1996/06/02 12:08:45 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -66,13 +66,14 @@
  *	Stand-alone file reading package.
  */
 
-#include <string.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <lib/libkern/libkern.h>
+
+#include <string.h>
 
 #include "stand.h"
 
