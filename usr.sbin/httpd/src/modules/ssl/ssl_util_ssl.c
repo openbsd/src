@@ -279,14 +279,15 @@ char *SSL_make_ciphersuite(pool *p, SSL *ssl)
 
     if (ssl == NULL) 
         return "";
-    sk = SSL_get_ciphers(ssl);
-    if (sk == NULL) 
+    if ((sk = SSL_get_ciphers(ssl)) == NULL)
         return "";
     l = 0;
     for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
         c = sk_SSL_CIPHER_value(sk, i);
-        l += strlen(c->name+2+1);
+        l += strlen(c->name)+2+1;
     }
+    if (l == 0)
+        return "";
     cpCipherSuite = (char *)ap_palloc(p, l+1);
     cp = cpCipherSuite;
     for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
@@ -298,7 +299,7 @@ char *SSL_make_ciphersuite(pool *p, SSL *ssl)
         *cp++ = (c->valid == 1 ? '1' : '0');
         *cp++ = ':';
     }
-    *cp = NUL;
+    *(cp-1) = NUL;
     return cpCipherSuite;
 }
 

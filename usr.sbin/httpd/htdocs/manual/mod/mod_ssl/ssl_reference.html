@@ -412,12 +412,14 @@ which can be configured by <em>type</em>:
 <li><code>exec:/path/to/program</code>
     <p>
     Here an external program is configured which is called at startup for each
-    encrypted Private Key file. It is called with an argument of
-    ``<code>servername:portnumber</code>'' for which it has to print the
-    corresponding Pass Phrase to <code>stdout</code>. The intent is that this
-    external program first runs security checks to make sure that the system
-    is not compromised by an attacker, and only when these checks were passed
-    successfully it provides the Pass Phrase.
+    encrypted Private Key file. It is called with two arguments (the first is
+    of the form ``<code>servername:portnumber</code>'', the second is either
+    ``<code>RSA</code>'' or ``<code>DSA</code>''), which indicate for which
+    server and algorithm it has to print the corresponding Pass Phrase to
+    <code>stdout</code>. The intent is that this external program first runs
+    security checks to make sure that the system is not compromised by an
+    attacker, and only when these checks were passed successfully it provides
+    the Pass Phrase.
     <p>
     Both these security checks, and the way the Pass Phrase is determined, can
     be as complex as you like. Mod_ssl just defines the interface: an
@@ -2014,13 +2016,15 @@ The available <em>option</em>s are:
 <p>
 <li><code>ExportCertData</code>
     <p>
-    When this option is enabled, two additional CGI/SSI environment variables
-    are created: <code>SSL_CLIENT_CERT</code> and
-    <code>SSL_SERVER_CERT</code>. These contain the PEM-encoded X.509
-    Certificates of client and server for the current HTTPS connection and can
-    be used by CGI scripts for deeper Certificate checking. This bloats up
-    the environment a little bit which is why you have to use this option to
-    enable it on demand.
+    When this option is enabled, additional CGI/SSI environment variables are
+    created: <code>SSL_SERVER_CERT</code>, <code>SSL_CLIENT_CERT</code> and
+    <code>SSL_CLIENT_CERT_CHAIN</code><i>n</i> (with <i>n</i> = 0,1,2,..).
+    These contain the PEM-encoded X.509 Certificates of server and client for
+    the current HTTPS connection and can be used by CGI scripts for deeper
+    Certificate checking. Additionally all other certificates of the client
+    certificate chain are provided, too. This bloats up the environment a
+    little bit which is why you have to use this option to enable it on
+    demand.
 <p>
 <li><code>FakeBasicAuth</code>
     <p>
@@ -2272,29 +2276,31 @@ REQUEST_FILENAME
 </pre>
 <em>SSL-related variables:</em>
 <pre>
-HTTPS                  SSL_CLIENT_M_VERSION  SSL_SERVER_M_VERSION
-                       SSL_CLIENT_M_SERIAL   SSL_SERVER_M_SERIAL
-SSL_PROTOCOL           SSL_CLIENT_V_START    SSL_SERVER_V_START
-SSL_SESSION_ID         SSL_CLIENT_V_END      SSL_SERVER_V_END
-SSL_CIPHER             SSL_CLIENT_S_DN       SSL_SERVER_S_DN
-SSL_CIPHER_ALGKEYSIZE  SSL_CLIENT_S_DN_C     SSL_SERVER_S_DN_C
-SSL_CIPHER_USEKEYSIZE  SSL_CLIENT_S_DN_SP    SSL_SERVER_S_DN_SP
-SSL_VERSION_LIBRARY    SSL_CLIENT_S_DN_L     SSL_SERVER_S_DN_L
-SSL_VERSION_INTERFACE  SSL_CLIENT_S_DN_O     SSL_SERVER_S_DN_O
-                       SSL_CLIENT_S_DN_OU    SSL_SERVER_S_DN_OU
-                       SSL_CLIENT_S_DN_CN    SSL_SERVER_S_DN_CN
-                       SSL_CLIENT_S_DN_Email SSL_SERVER_S_DN_Email
-                       SSL_CLIENT_I_DN       SSL_SERVER_I_DN
-                       SSL_CLIENT_I_DN_C     SSL_SERVER_I_DN_C
-                       SSL_CLIENT_I_DN_SP    SSL_SERVER_I_DN_SP
-                       SSL_CLIENT_I_DN_L     SSL_SERVER_I_DN_L
-                       SSL_CLIENT_I_DN_O     SSL_SERVER_I_DN_O
-                       SSL_CLIENT_I_DN_OU    SSL_SERVER_I_DN_OU
-                       SSL_CLIENT_I_DN_CN    SSL_SERVER_I_DN_CN
-                       SSL_CLIENT_I_DN_Email SSL_SERVER_I_DN_Email
-                       SSL_CLIENT_A_SIG      SSL_SERVER_A_SIG
-                       SSL_CLIENT_A_KEY      SSL_SERVER_A_KEY
-                       SSL_CLIENT_CERT       SSL_SERVER_CERT
+HTTPS                  SSL_CLIENT_M_VERSION   SSL_SERVER_M_VERSION
+                       SSL_CLIENT_M_SERIAL    SSL_SERVER_M_SERIAL
+SSL_PROTOCOL           SSL_CLIENT_V_START     SSL_SERVER_V_START
+SSL_SESSION_ID         SSL_CLIENT_V_END       SSL_SERVER_V_END
+SSL_CIPHER             SSL_CLIENT_S_DN        SSL_SERVER_S_DN
+SSL_CIPHER_EXPORT      SSL_CLIENT_S_DN_C      SSL_SERVER_S_DN_C
+SSL_CIPHER_ALGKEYSIZE  SSL_CLIENT_S_DN_SP     SSL_SERVER_S_DN_SP
+SSL_CIPHER_USEKEYSIZE  SSL_CLIENT_S_DN_L      SSL_SERVER_S_DN_L
+SSL_VERSION_LIBRARY    SSL_CLIENT_S_DN_O      SSL_SERVER_S_DN_O
+SSL_VERSION_INTERFACE  SSL_CLIENT_S_DN_OU     SSL_SERVER_S_DN_OU
+                       SSL_CLIENT_S_DN_CN     SSL_SERVER_S_DN_CN
+                       SSL_CLIENT_S_DN_Email  SSL_SERVER_S_DN_Email
+                       SSL_CLIENT_I_DN        SSL_SERVER_I_DN
+                       SSL_CLIENT_I_DN_C      SSL_SERVER_I_DN_C
+                       SSL_CLIENT_I_DN_SP     SSL_SERVER_I_DN_SP
+                       SSL_CLIENT_I_DN_L      SSL_SERVER_I_DN_L
+                       SSL_CLIENT_I_DN_O      SSL_SERVER_I_DN_O
+                       SSL_CLIENT_I_DN_OU     SSL_SERVER_I_DN_OU
+                       SSL_CLIENT_I_DN_CN     SSL_SERVER_I_DN_CN
+                       SSL_CLIENT_I_DN_Email  SSL_SERVER_I_DN_Email
+                       SSL_CLIENT_A_SIG       SSL_SERVER_A_SIG
+                       SSL_CLIENT_A_KEY       SSL_SERVER_A_KEY
+                       SSL_CLIENT_CERT        SSL_SERVER_CERT
+                       SSL_CLIENT_CERT_CHAIN<b>n</b>
+                       SSL_CLIENT_VERIFY
 </pre>
 </td></tr></table></td>
 </tr></table>
@@ -2328,6 +2334,7 @@ compatibility variables.
 <tr id="H"><td><code>SSL_PROTOCOL</code></td>                  <td>string</td>    <td>The SSL protocol version (SSLv2, SSLv3, TLSv1)</td></tr>
 <tr id="H"><td><code>SSL_SESSION_ID</code></td>                <td>string</td>    <td>The hex-encoded SSL session id</td></tr>
 <tr id="D"><td><code>SSL_CIPHER</code></td>                    <td>string</td>    <td>The cipher specification name</td></tr>
+<tr id="D"><td><code>SSL_CIPHER_EXPORT</code></td>             <td>string</td>    <td><code>true</code> if cipher is an export cipher</td></tr>
 <tr id="H"><td><code>SSL_CIPHER_USEKEYSIZE</code></td>         <td>number</td>    <td>Number of cipher bits (actually used)</td></tr>
 <tr id="D"><td><code>SSL_CIPHER_ALGKEYSIZE</code></td>         <td>number</td>    <td>Number of cipher bits (possible)</td></tr>
 <tr id="H"><td><code>SSL_VERSION_INTERFACE</code></td>         <td>string</td>    <td>The mod_ssl program version</td></tr>
@@ -2342,16 +2349,20 @@ compatibility variables.
 <tr id="D"><td><code>SSL_CLIENT_V_END</code></td>              <td>string</td>    <td>Validity of client's certificate (end time)</td></tr>
 <tr id="H"><td><code>SSL_CLIENT_A_SIG</code></td>              <td>string</td>    <td>Algorithm used for the signature of client's certificate</td></tr>
 <tr id="D"><td><code>SSL_CLIENT_A_KEY</code></td>              <td>string</td>    <td>Algorithm used for the public key of client's certificate</td></tr>
-<tr id="H"><td><code>SSL_SERVER_M_VERSION</code></td>          <td>string</td>    <td>The version of the server certificate</td></tr>
-<tr id="D"><td><code>SSL_SERVER_M_SERIAL</code></td>           <td>string</td>    <td>The serial of the server certificate</td></tr>
-<tr id="H"><td><code>SSL_SERVER_S_DN</code></td>               <td>string</td>    <td>Subject DN in server's certificate</td></tr>
-<tr id="D"><td><code>SSL_SERVER_S_DN_</code><em>x509</em></td> <td>string</td>    <td>Component of server's Subject DN</td></tr>
-<tr id="H"><td><code>SSL_SERVER_I_DN</code></td>               <td>string</td>    <td>Issuer DN of server's certificate</td></tr>
-<tr id="D"><td><code>SSL_SERVER_I_DN_</code><em>x509</em></td> <td>string</td>    <td>Component of server's Issuer DN</td></tr>
-<tr id="H"><td><code>SSL_SERVER_V_START</code></td>            <td>string</td>    <td>Validity of server's certificate (start time)</td></tr>
-<tr id="D"><td><code>SSL_SERVER_V_END</code></td>              <td>string</td>    <td>Validity of server's certificate (end time)</td></tr>
-<tr id="H"><td><code>SSL_SERVER_A_SIG</code></td>              <td>string</td>    <td>Algorithm used for the signature of server's certificate</td></tr>
-<tr id="D"><td><code>SSL_SERVER_A_KEY</code></td>              <td>string</td>    <td>Algorithm used for the public key of server's certificate</td></tr>
+<tr id="H"><td><code>SSL_CLIENT_CERT</code></td>               <td>string</td>    <td>PEM-encoded client certificate</td></tr>
+<tr id="D"><td><code>SSL_CLIENT_CERT_CHAIN</code><i>n</i></td> <td>string</td>    <td>PEM-encoded certificates in client certificate chain</td></tr>
+<tr id="H"><td><code>SSL_CLIENT_VERIFY</code></td>             <td>string</td>    <td><tt>NONE</tt>, <tt>SUCCESS</tt>, <tt>GENEROUS</tt> or <tt>FAILED:</tt><i>reason</i></td></tr>
+<tr id="D"><td><code>SSL_SERVER_M_VERSION</code></td>          <td>string</td>    <td>The version of the server certificate</td></tr>
+<tr id="H"><td><code>SSL_SERVER_M_SERIAL</code></td>           <td>string</td>    <td>The serial of the server certificate</td></tr>
+<tr id="D"><td><code>SSL_SERVER_S_DN</code></td>               <td>string</td>    <td>Subject DN in server's certificate</td></tr>
+<tr id="H"><td><code>SSL_SERVER_S_DN_</code><em>x509</em></td> <td>string</td>    <td>Component of server's Subject DN</td></tr>
+<tr id="D"><td><code>SSL_SERVER_I_DN</code></td>               <td>string</td>    <td>Issuer DN of server's certificate</td></tr>
+<tr id="H"><td><code>SSL_SERVER_I_DN_</code><em>x509</em></td> <td>string</td>    <td>Component of server's Issuer DN</td></tr>
+<tr id="D"><td><code>SSL_SERVER_V_START</code></td>            <td>string</td>    <td>Validity of server's certificate (start time)</td></tr>
+<tr id="H"><td><code>SSL_SERVER_V_END</code></td>              <td>string</td>    <td>Validity of server's certificate (end time)</td></tr>
+<tr id="D"><td><code>SSL_SERVER_A_SIG</code></td>              <td>string</td>    <td>Algorithm used for the signature of server's certificate</td></tr>
+<tr id="H"><td><code>SSL_SERVER_A_KEY</code></td>              <td>string</td>    <td>Algorithm used for the public key of server's certificate</td></tr>
+<tr id="D"><td><code>SSL_SERVER_CERT</code></td>               <td>string</td>    <td>PEM-encoded server certificate</td></tr>
 </table>
 [ where <em>x509</em> is a component of a X.509 DN: <code>C, SP, L, O, OU, CN, Email</code> ]</td>
 </tr></table>

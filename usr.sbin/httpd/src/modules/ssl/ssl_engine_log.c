@@ -139,10 +139,13 @@ static struct {
     { "*envelope*bad*decrypt*", "wrong pass phrase!?" },
     { "*CLIENT_HELLO*unknown*protocol*", "speaking not SSL to HTTPS port!?" },
     { "*CLIENT_HELLO*http*request*", "speaking HTTP to HTTPS port!?" },
-    { "*SSL3_READ_BYTES:sslv3*alert*bad*certificate*", "Subject CN in certificate not server name!?" },
+    { "*SSL3_READ_BYTES:sslv3*alert*bad*certificate*", "Subject CN in certificate not server name or identical to CA!?" },
     { "*self signed certificate in certificate chain*", "Client certificate signed by CA not known to server?" },
     { "*peer did not return a certificate*", "No CAs known to server for verification?" },
     { "*no shared cipher*", "Too restrictive SSLCipherSuite or using DSA server certificate?" },
+    { "*no start line*", "Bad file contents or format - or even just a forgotten SSLCertificateKeyFile?" },
+    { "*bad password read*", "You entered an incorrect pass phrase!?" },
+    { "*bad mac decode*", "Browser still remembered details of a re-created server certificate?" },
     { NULL, NULL }
 };
 

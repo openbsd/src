@@ -63,9 +63,7 @@
       Description:  RSA Reference Implementation
       Reason:       Deprecated RSA library for US citizens
       Homepage:     -
-      Distribution: ftp://ftp.replay.com/pub/crypto/crypto/LIBS/rsa/
-                    ftp://utopia.hacktic.nl/pub/replay/pub/crypto/LIBS/rsa/
-                    Or ask http://ftpsearch.lycos.com/ for "rsaref20.tar.Z" !!
+      Distribution: Search on http://ftpsearch.lycos.com/ for "rsaref20.tar.Z" !!
       Tarball:      rsaref20.tar.Z
       Location:     Netherlands (because no longer distributed by RSA DSI)
       Author(s):    RSA DSI
@@ -176,10 +174,11 @@
      $ cd ..                                                               ALL
 
      NOTE: OpenSSL understands a lot more options on the `config'
-           command line. For instance you can add some command line options
-           (like `-DSSL_FORBID_ENULL' for not allowing Null encryptions, etc)
-           to adjust the OpenSSL internals (see OpenSSL's top-level Makefile
-           for details).
+           command line. For instance you can add some command line
+           options (like `-DSSL_FORBID_ENULL' for not allowing Null
+           encryptions, or adding `-DSSL_ALLOW_ADH' for allowing
+           Anonymous Diffie-Hellman ciphers, etc) to adjust the OpenSSL
+           internals (see OpenSSL's top-level Makefile for details).
 
      NOTE: When your system already has OpenSSL installed (for instance some
            Linux distributions ship with OpenSSL installed out-of-the-box) in
@@ -271,7 +270,7 @@
               When this is the case for you, then try to recompile OpenSSL
               with Position Independent Code (PIC) by adding a `-fPIC' (for
               GCC) or `-KPIC' (for SVR4-style compilers) to the platform
-              configuration line in OpenSSL's `Configure' script.  The the
+              configuration line in OpenSSL's `Configure' script.  The
               -fPIC option above when you build OpenSSL.
 
         NOTE: The --disable-rule=SSL_COMPAT option disables the building of
@@ -349,7 +348,7 @@
               When this is the case for you, then try to recompile OpenSSL
               with Position Independent Code (PIC) by adding a `-fPIC' (for
               GCC) or `-KPIC' (for SVR4-style compilers) to the platform
-              configuration line in OpenSSL's `Configure' script.  The the
+              configuration line in OpenSSL's `Configure' script.  The
               -fPIC option above when you build OpenSSL.
 
         NOTE: The --disable-rule=SSL_COMPAT option disables the building of

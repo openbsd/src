@@ -72,7 +72,7 @@
 **  _________________________________________________________________
 */
 
-#define STDERR_FILENO_STORE 10
+#define STDERR_FILENO_STORE 50
 #define BUILTIN_DIALOG_BACKOFF 2
 #define BUILTIN_DIALOG_RETRIES 5
 
@@ -400,6 +400,7 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
     int *pnPassPhraseDialog;
     int *pnPassPhraseDialogCur;
     BOOL *pbPassPhraseDialogOnce;
+    int stderr_store;
     char **cpp;
     int len = -1;
 
@@ -448,7 +449,13 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
          * at our init stage Apache already connected STDERR
          * to the general error logfile.
          */
-        dup2(STDERR_FILENO, STDERR_FILENO_STORE);
+#ifdef WIN32
+        stderr_store = STDERR_FILENO_STORE;
+#else
+        if ((stderr_store = open("/dev/null", O_WRONLY)) == -1)
+            stderr_store = STDERR_FILENO_STORE;
+#endif
+        dup2(STDERR_FILENO, stderr_store);
 #ifdef WIN32
         if ((con = fopen("con", "w")) != NULL)
             dup2(fileno(con), STDERR_FILENO);
@@ -497,9 +504,11 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
         /*
          * Restore STDERR to Apache error logfile
          */
-        dup2(STDERR_FILENO_STORE, STDERR_FILENO);
+        dup2(stderr_store, STDERR_FILENO);
+        close(stderr_store);
 #ifdef WIN32
-        fclose(con);
+        if (con != NULL)
+            fclose(con);
 #endif
     }
 

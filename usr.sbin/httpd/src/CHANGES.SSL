@@ -23,6 +23,90 @@
       / __/ |__   _|
   __ |_____(_) |_| ___________________________________________
 
+  Changes with mod_ssl 2.4.9 (05-Nov-1999 to 24-Nov-1999)
+
+   *) Fixed SSLRequire expression evaluation for number strings.
+      Expressions like `SSLRequire %{SSL_CIPHER_USEKEYSIZE} >= 128'
+      didn't work if SSL_CIPHER_USEKEYSIZE was "40" because the evaluation
+      used strcmp(3) and this fails to compare numbers of different length.
+      An own comparison function is now used to avoid this problem.
+
+   *) Now on Win32 a warning is logged once on startup that mod_ssl is
+      NOT officially supported under Win32 and people have to use it there on
+      their own risk (and so shouldn't complain if it doesn't work). Because
+      only the Unix platform is officially supported and mod_ssl is checked
+      for security issues only related this platform.
+
+   *) For performance reasons it is unreasonable to create the SSL_*
+      CGI/SSI variables _all the time_, because their creation is
+      a rather expensive operation which slows down the server
+      noticeable. Instead it is more reasonable to let them create for
+      CGI and SSI requests _only_. For consistency reason with other
+      `SSLOptions' variables (which all have positive names) and to
+      avoid necessary cleanups changes in the future, I decided to make
+      the incompatibility change _NOW_ (sorry).
+
+      In short: With mod_ssl 2.4.9 per default no SSI/CGI variables
+      SSL_* are created any longer (only the special "HTTPS" variable is
+      always created). Instead one has to use `SSLOptions +StdEnvVars'
+      to switch the creation on.
+
+   *) Added an `SSLOptions' variable `StdEnvVars' which now controls 
+      the creation of the numerious SSL_* CGI/SSI variables.
+
+   *) Renamed old variable SSL_{CLIENT,SERVER}_{S,I}_DN_SP to more
+      correct SSL_{CLIENT,SERVER}_{S,I}_DN_ST variable to conform to
+      RFC2156 and current OpenSSL state (which also prints this OID as
+      "ST" and no longer "SP").
+
+   *) Added support for SSL_{CLIENT,SERVER}_{S,I}_DN_{T,I,G,S,D,UID}
+      variables (corresponding to X.509 title, initials, givenName, surname,
+      description and uniqueIdentifier OIDs) to allow the checking of more
+      X.509 certificate ingredients.
+
+   *) Allow mod_rewrite to also lookup the "HTTPS" variable, for instance
+      via ``RewriteCond %{HTTPS} !=on''.
+
+   *) Removed old URL references to rsaref20.tar.Z from INSTALL document.
+
+   *) Now an explicit error message is logged also if an SSL session cannot be
+      stored to the DBM file via dbm_store (and not just if dbm_open failed).
+
+   *) Now the pass phrase dialog no longer uses the hard-coded
+      filedescriptor 10 as the storage for stderr while the pass phrase dialog
+      is displayed. Instead (at least under Unix) it tries to open /dev/null
+      and uses this filedescriptor instead. And when this fails (or always
+      under Win32) it uses the hard-coded filedescriptor 50 (a lot higher than
+      10 to avoid problems with logfile rotation programs and other things
+      Apache could have started).
+
+   *) Fixed SSL_make_ciphersuite() function: it calculated the required string
+      length incorrectly and could segfault. BUT THIS FUNCTION IS STILL NOT
+      USED IN MOD_SSL AT ALL, so don't panic. This function is for debugging
+      purposes only.
+
+   *) Fixed a filedescriptor leak which happened if encrypted private keys
+      were used. Here the pass phrase dialog forgot to close a temporary
+      filedescriptor.
+
+   *) Added three new OpenSSL log entry annotations: First, "*no start
+      line*" now triggers "Bad file contents or format - or even just
+      a forgotten SSLCertificate KeyFile?" and "*bad password read*"
+      triggers "You entered an incorrect pass phrase!?". Additionally
+      "*bad mac decode*" now triggers "Browser still remembered details
+      of a re-created server certificate?" because people often get "bad
+      data" dialog boxes while (re-)testing with Snake Oil certs.
+
+   *) Added hint about possibly blocking /dev/random devices also to
+      httpd.conf-default to make sure people don't overlook this subtle
+      platform-dependent problem. Additionally a new FAQ entry was
+      made about this, too.
+
+   *) Added an entry to the FAQ about GIDs and their intermediate
+      certificate which has to be configured with SSLCertificateChainFile.
+
+   *) Fixed some external URLs in the FAQ.
+
   Changes with mod_ssl 2.4.8 (02-Nov-1999 to 05-Nov-1999)
 
    *) ** IMPORTANT BUGFIX **

@@ -164,11 +164,17 @@ void ssl_init_Module(server_rec *s, pool *p)
     /*
      * Identification
      */
-    if (mc->nInitCount == 1)
+    if (mc->nInitCount == 1) {
         ssl_log(s, SSL_LOG_INFO, "Server: %s, Interface: %s, Library: %s",
                 SERVER_BASEVERSION,
                 ssl_var_lookup(p, NULL, NULL, NULL, "SSL_VERSION_INTERFACE"),
                 ssl_var_lookup(p, NULL, NULL, NULL, "SSL_VERSION_LIBRARY"));
+#ifdef WIN32
+        ssl_log(s, SSL_LOG_WARN, "You are using mod_ssl under Win32. " 
+                "This combination is *NOT* officially supported. "
+                "Use it at your own risk!");
+#endif
+    }
 
     /*
      * Initialization round information

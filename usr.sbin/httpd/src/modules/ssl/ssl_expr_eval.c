@@ -70,9 +70,10 @@
 **  _________________________________________________________________
 */
 
-static BOOL  ssl_expr_eval_comp(request_rec *r, ssl_expr *node);
-static char *ssl_expr_eval_word(request_rec *r, ssl_expr *node);
-static char *ssl_expr_eval_func_file(request_rec *r, char *filename);
+static BOOL  ssl_expr_eval_comp(request_rec *, ssl_expr *);
+static char *ssl_expr_eval_word(request_rec *, ssl_expr *);
+static char *ssl_expr_eval_func_file(request_rec *, char *);
+static int   ssl_expr_eval_strcmplex(char *, char *);
 
 BOOL ssl_expr_eval(request_rec *r, ssl_expr *node)
 {
@@ -124,22 +125,22 @@ static BOOL ssl_expr_eval_comp(request_rec *r, ssl_expr *node)
         case op_LT: {
             ssl_expr *e1 = (ssl_expr *)node->node_arg1;
             ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (strcmp(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) <  0);
+            return (ssl_expr_eval_strcmplex(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) <  0);
         }
         case op_LE: {
             ssl_expr *e1 = (ssl_expr *)node->node_arg1;
             ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (strcmp(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) <= 0);
+            return (ssl_expr_eval_strcmplex(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) <= 0);
         }
         case op_GT: {
             ssl_expr *e1 = (ssl_expr *)node->node_arg1;
             ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (strcmp(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) >  0);
+            return (ssl_expr_eval_strcmplex(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) >  0);
         }
         case op_GE: {
             ssl_expr *e1 = (ssl_expr *)node->node_arg1;
             ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (strcmp(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) >= 0);
+            return (ssl_expr_eval_strcmplex(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) >= 0);
         }
         case op_IN: {
             ssl_expr *e1 = (ssl_expr *)node->node_arg1;
@@ -253,5 +254,29 @@ static char *ssl_expr_eval_func_file(request_rec *r, char *filename)
     }
     ap_pfclose(r->pool, fp);
     return buf;
+}
+
+/* a variant of strcmp(3) which works correctly also for number strings */
+static int ssl_expr_eval_strcmplex(char *cpNum1, char *cpNum2)
+{
+    int i, n1, n2;
+
+    if (cpNum1 == NULL)
+        return -1;
+    if (cpNum2 == NULL)
+        return +1;
+    n1 = strlen(cpNum1);
+    n2 = strlen(cpNum2);
+    if (n1 > n2)
+        return 1;
+    if (n1 < n2)
+        return -1;
+    for (i = 0; i < n1; i++) {
+        if (cpNum1[i] > cpNum2[i])
+            return 1;
+        if (cpNum1[i] < cpNum2[i])
+            return -1;
+    }
+    return 0;
 }
 

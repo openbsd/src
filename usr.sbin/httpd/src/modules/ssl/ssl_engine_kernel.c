@@ -641,8 +641,8 @@ int ssl_hook_Access(request_rec *r)
     X509_STORE *certstore;
     X509_STORE_CTX certstorectx;
     int depth;
-    STACK_OF(SSL_CIPHER)  *skCipherOld;
-    STACK_OF(SSL_CIPHER)  *skCipher;
+    STACK_OF(SSL_CIPHER) *skCipherOld;
+    STACK_OF(SSL_CIPHER) *skCipher;
     SSL_CIPHER *pCipher;
     ap_ctx *apctx;
     int nVerifyOld;
@@ -1169,19 +1169,31 @@ static const char *ssl_hook_Fixup_vars[] = {
     "SSL_CLIENT_V_END",
     "SSL_CLIENT_S_DN",
     "SSL_CLIENT_S_DN_C",
-    "SSL_CLIENT_S_DN_SP",
+    "SSL_CLIENT_S_DN_ST",
     "SSL_CLIENT_S_DN_L",
     "SSL_CLIENT_S_DN_O",
     "SSL_CLIENT_S_DN_OU",
     "SSL_CLIENT_S_DN_CN",
+    "SSL_CLIENT_S_DN_T",
+    "SSL_CLIENT_S_DN_I",
+    "SSL_CLIENT_S_DN_G",
+    "SSL_CLIENT_S_DN_S",
+    "SSL_CLIENT_S_DN_D",
+    "SSL_CLIENT_S_DN_UID",
     "SSL_CLIENT_S_DN_Email",
     "SSL_CLIENT_I_DN",
     "SSL_CLIENT_I_DN_C",
-    "SSL_CLIENT_I_DN_SP",
+    "SSL_CLIENT_I_DN_ST",
     "SSL_CLIENT_I_DN_L",
     "SSL_CLIENT_I_DN_O",
     "SSL_CLIENT_I_DN_OU",
     "SSL_CLIENT_I_DN_CN",
+    "SSL_CLIENT_I_DN_T",
+    "SSL_CLIENT_I_DN_I",
+    "SSL_CLIENT_I_DN_G",
+    "SSL_CLIENT_I_DN_S",
+    "SSL_CLIENT_I_DN_D",
+    "SSL_CLIENT_I_DN_UID",
     "SSL_CLIENT_I_DN_Email",
     "SSL_CLIENT_A_KEY",
     "SSL_CLIENT_A_SIG",
@@ -1191,19 +1203,31 @@ static const char *ssl_hook_Fixup_vars[] = {
     "SSL_SERVER_V_END",
     "SSL_SERVER_S_DN",
     "SSL_SERVER_S_DN_C",
-    "SSL_SERVER_S_DN_SP",
+    "SSL_SERVER_S_DN_ST",
     "SSL_SERVER_S_DN_L",
     "SSL_SERVER_S_DN_O",
     "SSL_SERVER_S_DN_OU",
     "SSL_SERVER_S_DN_CN",
+    "SSL_SERVER_S_DN_T",
+    "SSL_SERVER_S_DN_I",
+    "SSL_SERVER_S_DN_G",
+    "SSL_SERVER_S_DN_S",
+    "SSL_SERVER_S_DN_D",
+    "SSL_SERVER_S_DN_UID",
     "SSL_SERVER_S_DN_Email",
     "SSL_SERVER_I_DN",
     "SSL_SERVER_I_DN_C",
-    "SSL_SERVER_I_DN_SP",
+    "SSL_SERVER_I_DN_ST",
     "SSL_SERVER_I_DN_L",
     "SSL_SERVER_I_DN_O",
     "SSL_SERVER_I_DN_OU",
     "SSL_SERVER_I_DN_CN",
+    "SSL_SERVER_I_DN_T",
+    "SSL_SERVER_I_DN_I",
+    "SSL_SERVER_I_DN_G",
+    "SSL_SERVER_I_DN_S",
+    "SSL_SERVER_I_DN_D",
+    "SSL_SERVER_I_DN_UID",
     "SSL_SERVER_I_DN_Email",
     "SSL_SERVER_A_KEY",
     "SSL_SERVER_A_SIG",
@@ -1233,12 +1257,16 @@ int ssl_hook_Fixup(request_rec *r)
     /*
      * Annotate the SSI/CGI environment with standard SSL information
      */
-    ap_table_set(e, "HTTPS", "on"); /* the HTTPS (=HTTP over SSL) flag! */
-    for (i = 0; ssl_hook_Fixup_vars[i] != NULL; i++) {
-        var = (char *)ssl_hook_Fixup_vars[i];
-        val = ssl_var_lookup(r->pool, r->server, r->connection, r, var);
-        if (!strIsEmpty(val))
-            ap_table_set(e, var, val);
+    /* the always present HTTPS (=HTTP over SSL) flag! */
+    ap_table_set(e, "HTTPS", "on"); 
+    /* standard SSL environment variables */
+    if (dc->nOptions & SSL_OPT_STDENVVARS) {
+        for (i = 0; ssl_hook_Fixup_vars[i] != NULL; i++) {
+            var = (char *)ssl_hook_Fixup_vars[i];
+            val = ssl_var_lookup(r->pool, r->server, r->connection, r, var);
+            if (!strIsEmpty(val))
+                ap_table_set(e, var, val);
+        }
     }
 
     /*

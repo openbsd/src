@@ -189,6 +189,12 @@ char *ssl_var_lookup(pool *p, server_rec *s, conn_rec *c, request_rec *r, char *
             result = c->ap_auth_type;
         else if (strlen(var) > 4 && strcEQn(var, "SSL_", 4))
             result = ssl_var_lookup_ssl(p, c, var+4);
+        else if (strcEQ(var, "HTTPS")) {
+            if (ap_ctx_get(c->client->ctx, "ssl") != NULL)
+                result = "on";
+            else
+                result = "off";
+        }
     }
 
     /*
@@ -390,11 +396,18 @@ static const struct {
     int   nid;
 } ssl_var_lookup_ssl_cert_dn_rec[] = {
     { "C",     NID_countryName            },
-    { "SP",    NID_stateOrProvinceName    },
+    { "ST",    NID_stateOrProvinceName    }, /* officially    (RFC2156) */
+    { "SP",    NID_stateOrProvinceName    }, /* compatibility (SSLeay)  */
     { "L",     NID_localityName           },
     { "O",     NID_organizationName       },
     { "OU",    NID_organizationalUnitName },
     { "CN",    NID_commonName             },
+    { "T",     NID_title                  },
+    { "I",     NID_initials               },
+    { "G",     NID_givenName              },
+    { "S",     NID_surname                },
+    { "D",     NID_description            },
+    { "UID",   NID_uniqueIdentifier       },
     { "Email", NID_pkcs9_emailAddress     },
     { NULL,    0                          }
 };

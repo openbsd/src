@@ -250,8 +250,8 @@ When I access my website the first time via HTTPS I get a core dump?
     a buggy mod_ssl version. But the above situation is often caused by old or
     broken vendor DBM libraries. To solve it either build mod_ssl with the
     built-in SDBM library (specify <tt>--enable-rule=SSL_SDBM</tt> at the
-    APACI command line) or switch from ``<tt>SSLSessioCache dbm:</tt>'' to the
-    newer ``<tt>SSLSessioCache shm:</tt>'' variant (after you've rebuilt
+    APACI command line) or switch from ``<tt>SSLSessionCache dbm:</tt>'' to the
+    newer ``<tt>SSLSessionCache shm:</tt>'' variant (after you've rebuilt
     Apache with MM, of course).
 
 <faq ref="core-php3" toc="Core dumps for Apache+mod_ssl+PHP3?">
@@ -287,7 +287,7 @@ When I startup Apache I get permission errors related to SSLMutex?
     set at least for the UID under which Apache's children are running (see
     the <code>User</code> directive of Apache).
 
-<faq ref="mm" toc="shared memory and process size?">
+<faq ref="mm" toc="Shared memory and process size?">
 When I use the MM library and the shared memory cache each process grows
 1.5MB according to `top' although I specified 512000 as the cache size?
 </faq>
@@ -369,6 +369,20 @@ Why does the connection hang when I connect to my SSL-aware Apache server?
     doesn't support SSL (on this port).  Make sure you are connecting to a
     virtual server that supports SSL, which is probably the IP associated with
     your hostname, not localhost (127.0.0.1).
+
+<faq ref="hang" toc="Why do I get connection refused?">
+Why do I get ``Connection Refused'' messages when trying to access my freshly
+installed Apache+mod_ssl server via HTTPS?
+</faq>
+
+    There can be various reasons. Some of the common mistakes is that people
+    start Apache with just ``<tt>apachectl start</tt>'' (or
+    ``<tt>httpd</tt>'') instead of ``<tt>apachectl startssl</tt>'' (or
+    ``<tt>httpd -DSSL</tt>''. Or you're configuration is not correct.  At
+    least make sure that your ``<tt>Listen</tt>'' directives match your
+    ``<tt>&lt;VirtualHost&gt;</tt>'' directives.  And if all fails, please do
+    yourself a favor and start over with the default configuration mod_ssl
+    provides you. 
 
 <faq ref="relative-links" toc="How to switch with relative hyperlinks?">
 How can I use relative hyperlinks to switch between HTTP and HTTPS?

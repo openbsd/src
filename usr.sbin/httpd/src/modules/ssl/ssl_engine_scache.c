@@ -404,7 +404,15 @@ BOOL ssl_scache_dbm_store(server_rec *s, ssl_scinfo_t *SCI)
         free(dbmval.dptr);
         return FALSE;
     }
-    ssl_dbm_store(dbm, dbmkey, dbmval, DBM_INSERT);
+    if (ssl_dbm_store(dbm, dbmkey, dbmval, DBM_INSERT) < 0) {
+        ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
+                "Cannot store SSL session to DBM file `%s'",
+                mc->szSessionCacheDataFile);
+        ssl_dbm_close(dbm);
+        ssl_mutex_off(s);
+        free(dbmval.dptr);
+        return FALSE;
+    }
     ssl_dbm_close(dbm);
     ssl_mutex_off(s);
 

@@ -778,7 +778,9 @@ const char *ssl_cmd_SSLOptions(
             first = FALSE;
         }
 
-        if (strcEQ(w, "CompatEnvVars"))
+        if (strcEQ(w, "StdEnvVars"))
+            opt = SSL_OPT_STDENVVARS;
+        else if (strcEQ(w, "CompatEnvVars"))
             opt = SSL_OPT_COMPATENVVARS;
         else if (strcEQ(w, "ExportCertData"))
             opt = SSL_OPT_EXPORTCERTDATA;
