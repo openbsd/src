@@ -115,6 +115,16 @@ and using
 and
 .Nm route add
 if you do not wish to reboot.
+.Pp
+If you wish to route packets between interfaces you do that by doing
+.Bd -literal -offset indent
+# sysctl -w net.inet.ip.forwarding=1
+.Ed
+.Pp
+early on in the boot process (ie. start of
+.Pa /etc/netstart ,
+or by compiling a new kernel with the option GATEWAY.  By default,
+packets are not forwarded due to RFC requirements.
 \!\"--------------------------------------------------------------------------
 .Ss Bind Name Server
 If you are using the Bind Name Server (DNS), check the
