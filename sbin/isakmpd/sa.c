@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.54 2002/03/17 21:50:59 angelos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.55 2002/05/23 13:58:57 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -457,13 +457,14 @@ sa_dump (int cls, int level, char *header, struct sa *sa)
 static void
 report_spi (FILE *fd, const u_int8_t *buf, size_t sz, int index)
 {
-  char s[73];
+#define SBUFSZ (2 * 32 + 9)
+  char s[SBUFSZ];
   int i, j;
 
   {
     for (i = j = 0; i < sz;)
       {
-	sprintf (s + j, "%02x", buf[i++]);
+	snprintf (s + j, SBUFSZ - j, "%02x", buf[i++]);
 	j += 2;
 	if (i % 4 == 0)
 	  {
