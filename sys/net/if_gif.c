@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.4 2000/01/10 22:40:16 angelos Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.5 2000/01/12 06:40:45 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -193,93 +193,6 @@ gif_output(ifp, m, dst, rt)
 	if (error) ifp->if_oerrors++;
 	return error;
 }
-
-void
-gif_input(m, af, gifp)
-	struct mbuf *m;
-	int af;
-	struct ifnet *gifp;
-{
-	int s, isr;
-	register struct ifqueue *ifq = 0;
-
-	if (gifp == NULL) {
-		/* just in case */
-		m_freem(m);
-		return;
-	}
-
-	if (m->m_pkthdr.rcvif)
-		m->m_pkthdr.rcvif = gifp;
-	
-#if NBPFILTER > 0
-	if (gifp->if_bpf) {
-		/*
-		 * We need to prepend the address family as
-		 * a four byte field.  Cons up a dummy header
-		 * to pacify bpf.  This is safe because bpf
-		 * will only read from the mbuf (i.e., it won't
-		 * try to free it or keep a pointer a to it).
-		 */
-		struct mbuf m0;
-		u_int af = AF_INET6;
-		
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char *) &af;
-		
-		bpf_mtap(gifp->if_bpf, &m0);
-	}
-#endif /*NBPFILTER > 0*/
-
-	/*
-	 * Put the packet to the network layer input queue according to the
-	 * specified address family.
-	 * Note: older versions of gif_input directly called network layer
-	 * input functions, e.g. ip6_input, here. We changed the policy to
-	 * prevent too many recursive calls of such input functions, which
-	 * might cause kernel panic. But the change may introduce another
-	 * problem; if the input queue is full, packets are discarded.
-	 * We believed it rarely occurs and changed the policy. If we find
-	 * it occurs more times than we thought, we may change the policy
-	 * again.
-	 */
-	switch (af) {
-#ifdef INET
-	case AF_INET:
-		ifq = &ipintrq;
-		isr = NETISR_IP;
-		break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-		ifq = &ip6intrq;
-		isr = NETISR_IPV6;
-		break;
-#endif
-	default:
-		m_freem(m);
-		return;
-	}
-
-	s = splimp();
-	if (IF_QFULL(ifq)) {
-		IF_DROP(ifq);	/* update statistics */
-		m_freem(m);
-		splx(s);
-		return;
-	}
-	IF_ENQUEUE(ifq, m);
-
-	/* We need schednetisr since the address family may change */
-	schednetisr(isr);
-	gifp->if_ipackets++;
-	gifp->if_ibytes += m->m_pkthdr.len;
-	splx(s);
-
-	return;
-}
-	
 
 int
 gif_ioctl(ifp, cmd, data)
