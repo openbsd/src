@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.28 2002/08/08 00:47:33 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -527,19 +527,18 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 {
 	static char cwd[2*MAXPATHLEN];
 	char *name;
-	int norescwd = 0;
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
 		goto abort;
 
 	if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL) {
-		if (name[0] != '/') {
-			if (errno == EBUSY)
-				goto abort;
-			err(1, "%s: getcwd", __func__);
-		}
-		norescwd = 1;
+		if (errno == EBUSY)
+			goto abort;
+		if (strcmp(name, "/") == 0)
+			return (name);
+
+		err(1, "%s: getcwd", __func__);
 	}
 
 	if (name[0] != '/') {
@@ -619,7 +618,7 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 
 
 	/* Restore working directory and change root space after realpath */
-	if (!norescwd && intercept.restcwd(fd) == -1)
+	if (intercept.restcwd(fd) == -1)
 		err(1, "%s: restcwd", __func__);
 
 	return (name);
