@@ -218,6 +218,8 @@
 ./usr/share/doc/smm/15.uucpnet
 ./usr/share/doc/smm/16.security
 ./usr/share/doc/smm/17.password
+./usr/share/doc/smm/17.password/Makefile
+./usr/share/doc/smm/17.password/password.ms
 ./usr/share/doc/smm/18.net
 ./usr/share/doc/smm/18.net/0.t
 ./usr/share/doc/smm/18.net/1.t
