@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.52 2001/12/08 02:24:06 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.53 2001/12/10 17:27:01 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1029,8 +1029,8 @@ pmap_alloc_pv(pmap, mode)
 
 	simple_lock(&pvalloc_lock);
 
-	if (pv_freepages.tqh_first != NULL) {
-		pvpage = pv_freepages.tqh_first;
+	pvpage = TAILQ_FIRST(&pv_freepages);
+	if (pvpage != NULL) {
 		pvpage->pvinfo.pvpi_nfree--;
 		if (pvpage->pvinfo.pvpi_nfree == 0) {
 			/* nothing left in this one? */
@@ -1090,10 +1090,10 @@ pmap_alloc_pvpage(pmap, mode)
 	 * if we need_entry and we've got unused pv_pages, allocate from there
 	 */
 
-	if (mode != ALLOCPV_NONEED && pv_unusedpgs.tqh_first != NULL) {
+	pvpage = TAILQ_FIRST(&pv_unusedpgs);
+	if (mode != ALLOCPV_NONEED && pvpage != NULL) {
 
 		/* move it to pv_freepages list */
-		pvpage = pv_unusedpgs.tqh_first;
 		TAILQ_REMOVE(&pv_unusedpgs, pvpage, pvinfo.pvpi_list);
 		TAILQ_INSERT_HEAD(&pv_freepages, pvpage, pvinfo.pvpi_list);
 
@@ -1155,9 +1155,10 @@ pmap_alloc_pvpage(pmap, mode)
 	 * pmap is already locked!  (...but entering the mapping is safe...)
 	 */
 
-	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
+	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg),
+	    VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
-	pvpage = (struct pv_page *) pv_cachedva;
+	pvpage = (struct pv_page *)pv_cachedva;
 	pv_cachedva = 0;
 	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
 
@@ -1352,7 +1353,7 @@ pmap_free_pv(pmap, pv)
 	 * Can't free the PV page if the PV entries were associated with
 	 * the kernel pmap; the pmap is already locked.
 	 */
-	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL &&
+	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
@@ -1383,7 +1384,7 @@ pmap_free_pvs(pmap, pvs)
 	 * Can't free the PV page if the PV entries were associated with
 	 * the kernel pmap; the pmap is already locked.
 	 */
-	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL &&
+	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
@@ -1411,18 +1412,17 @@ pmap_free_pvpage()
 	struct pv_page *pvp;
 
 	s = splimp(); /* protect kmem_map */
-
-	pvp = pv_unusedpgs.tqh_first;
+	pvp = TAILQ_FIRST(&pv_unusedpgs);
 
 	/*
 	 * note: watch out for pv_initpage which is allocated out of
 	 * kernel_map rather than kmem_map.
 	 */
+
 	if (pvp == pv_initpage)
 		map = kernel_map;
 	else
 		map = kmem_map;
-
 	if (vm_map_lock_try(map)) {
 
 		/* remove pvp from pv_unusedpgs */
@@ -1837,8 +1837,7 @@ pmap_release(pmap)
 	 * free any remaining PTPs
 	 */
 
-	while (pmap->pm_obj.memq.tqh_first != NULL) {
-		pg = pmap->pm_obj.memq.tqh_first;
+	while ((pg = TAILQ_FIRST(&pmap->pm_obj.memq)) != NULL) {
 #ifdef DIAGNOSTIC
 		if (pg->flags & PG_BUSY)
 			panic("pmap_release: busy page table page");
@@ -2352,7 +2351,7 @@ pmap_remove(pmap, sva, eva)
 				pmap->pm_stats.resident_count--;
 				if (pmap->pm_ptphint == ptp)
 					pmap->pm_ptphint =
-						pmap->pm_obj.memq.tqh_first;
+					    TAILQ_FIRST(&pmap->pm_obj.memq);
 				ptp->wire_count = 0;
 				uvm_pagefree(ptp);
 			}
@@ -2440,7 +2439,8 @@ pmap_remove(pmap, sva, eva)
 #endif
 			pmap->pm_stats.resident_count--;
 			if (pmap->pm_ptphint == ptp)	/* update hint? */
-				pmap->pm_ptphint = pmap->pm_obj.memq.tqh_first;
+				pmap->pm_ptphint =
+				    TAILQ_FIRST(&pmap->pm_obj.memq);
 			ptp->wire_count = 0;
 			uvm_pagefree(ptp);
 		}
@@ -2560,7 +2560,7 @@ pmap_page_remove(pg)
 				/* update hint? */
 				if (pve->pv_pmap->pm_ptphint == pve->pv_ptp)
 					pve->pv_pmap->pm_ptphint =
-					    pve->pv_pmap->pm_obj.memq.tqh_first;
+					    TAILQ_FIRST(&pve->pv_pmap->pm_obj.memq);
 				pve->pv_ptp->wire_count = 0;
 				uvm_pagefree(pve->pv_ptp);
 			}
@@ -3656,8 +3656,7 @@ pmap_growkernel(maxkvaddr)
 
 		/* distribute new kernel PTP to all active pmaps */
 		simple_lock(&pmaps_lock);
-		for (pm = pmaps.lh_first; pm != NULL;
-		     pm = pm->pm_list.le_next) {
+		LIST_FOREACH(pm, &pmaps, pm_list) {
 			pm->pm_pdir[PDSLOT_KERN + nkpde] =
 				kpm->pm_pdir[PDSLOT_KERN + nkpde];
 		}
