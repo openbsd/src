@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.2 2005/01/19 15:56:44 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.3 2005/01/20 23:34:37 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -44,9 +44,6 @@ struct cfdriver scoop_cd = {
 	NULL, "scoop", DV_DULL
 };
 
-/* GPIO pin/bit numbers for the Zaurus C3000. */
-#define SCOOP1_BACKLIGHT_ON     8
-
 int	scoop_gpio_pin_read(struct scoop_softc *sc, int);
 void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
 
@@ -54,11 +51,7 @@ void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
 int
 scoopmatch(struct device *parent, void *match, void *aux)
 {
-	struct pxaip_attach_args *pxa = aux;
 	struct cfdata *cf = match;
-
-	if (pxa->pxa_addr == -1)
-		return 0;
 
 	/*
 	 * Only the C3000 models (pxa270) are known to have two SCOOPs,
@@ -75,13 +68,21 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
 	struct scoop_softc *sc = (struct scoop_softc *)self;
+	bus_addr_t addr;
 	bus_size_t size;
 
 	sc->sc_iot = pxa->pxa_iot;
+
+	if (pxa->pxa_addr != -1)
+		addr = pxa->pxa_addr;
+	else if (sc->sc_dev.dv_unit == 0)
+		addr = SCOOP0_BASE;
+	else
+		addr = SCOOP1_BASE;
+
 	size = pxa->pxa_size < SCOOP_SIZE ? SCOOP_SIZE : pxa->pxa_size;
 
-	if (bus_space_map(sc->sc_iot, pxa->pxa_addr, size, 0,
-	    &sc->sc_ioh) != 0) {
+	if (bus_space_map(sc->sc_iot, addr, size, 0, &sc->sc_ioh) != 0) {
 		printf(": failed to map %s\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -111,12 +112,30 @@ scoop_gpio_pin_write(struct scoop_softc *sc, int pin, int value)
 }
 
 void
-scoop_backlight_on(int enable)
+scoop_backlight_set(int on)
 {
 
 #if 0	/* XXX no effect. maybe the pin is incorrectly configured? */
 	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL)
 		scoop_gpio_pin_write(scoop_cd.cd_devs[1],
-		    SCOOP1_BACKLIGHT_ON, enable);
+		    SCOOP1_BACKLIGHT_ON, on);
 #endif
+}
+
+void
+scoop_led_set(int led, int on)
+{
+
+	if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
+		switch(led) {
+		case SCOOP_LED_GREEN:
+			scoop_gpio_pin_write(scoop_cd.cd_devs[0],
+			    C3000_SCOOP0_LED_GREEN, on);
+			break;
+		case SCOOP_LED_ORANGE:
+			scoop_gpio_pin_write(scoop_cd.cd_devs[0],
+			    C3000_SCOOP0_LED_ORANGE, on);
+			break;
+		}
+	}
 }

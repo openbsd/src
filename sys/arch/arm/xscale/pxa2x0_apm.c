@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.1 2005/01/19 02:02:34 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.2 2005/01/20 23:34:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -64,13 +64,6 @@
 #define APM_LOCK(sc)    lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL, curproc)
 #define APM_UNLOCK(sc)  lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL, curproc)
 
-int	apmmatch(struct device *, void *, void *);
-void	apmattach(struct device *, struct device *, void *);
-
-struct cfattach apm_ca = {
-	sizeof(struct pxa2x0_apm_softc), apmmatch, apmattach
-};
-
 struct cfdriver apm_cd = {
 	NULL, "apm", DV_DULL
 };
@@ -84,6 +77,8 @@ int	apm_userstandbys;
 int	apm_suspends;
 int	apm_battlow;
 
+void	apm_battery_info(struct pxa2x0_apm_softc *,
+    struct pxaapm_battery_info *);
 void	apm_standby(struct pxa2x0_apm_softc *);
 void	apm_suspend(struct pxa2x0_apm_softc *);
 void	apm_resume(struct pxa2x0_apm_softc *);
@@ -119,18 +114,14 @@ struct filterops apmread_filtops =
 #define	SCFLAG_OWRITE	(1 << 1)
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
 
-int
-apmmatch(struct device *parent, void *match, void *aux)
-{
-	return 1;
-}
-
 void
-apmattach(struct device *parent, struct device *self, void *aux)
+apm_battery_info(struct pxa2x0_apm_softc *sc,
+    struct pxaapm_battery_info *battp)
 {
-	struct pxa2x0_apm_softc *sc = (struct pxa2x0_apm_softc *)self;
 
-	pxa2x0_apm_attach_sub((struct pxa2x0_apm_softc *)sc);
+	bzero(battp, sizeof(struct pxaapm_battery_info));
+	if (sc->sc_battery_info != NULL)
+		sc->sc_battery_info(battp);
 }
 
 void
@@ -172,6 +163,9 @@ apm_resume(struct pxa2x0_apm_softc *sc)
 void
 apm_periodic_check(struct pxa2x0_apm_softc *sc)
 {
+
+	if (sc->sc_periodic_check != NULL)
+		sc->sc_periodic_check(sc);
 
 	if (apm_suspends) {
 		apm_userstandbys = 0;
@@ -278,9 +272,7 @@ int
 apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pxa2x0_apm_softc *sc;
-#if 0
-	struct pmu_battery_info batt;
-#endif
+	struct pxaapm_battery_info batt;
 	struct apm_power_info *power;
 	int error = 0;
 
@@ -334,25 +326,19 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case APM_IOC_GETPOWER:
 	        power = (struct apm_power_info *)data;
 
-#if 0
-		pm_battery_info(0, &batt);
+		apm_battery_info(sc, &batt);
 
-		power->ac_state = ((batt.flags & PMU_PWR_AC_PRESENT) ?
+		power->ac_state = ((batt.flags & PXAAPM_AC_PRESENT) ?
 		    APM_AC_ON : APM_AC_OFF);
 		power->battery_life =
 		    ((batt.cur_charge * 100) / batt.max_charge);
-#else
-		power->ac_state = APM_AC_ON;
-		power->battery_life = 100;
-#endif
 
 		/*
 		 * If the battery is charging, return the minutes left until
 		 * charging is complete. apmd knows this.
 		 */
 
-#if 0
-		if (!(batt.flags & PMU_PWR_BATT_PRESENT)) {
+		if (!(batt.flags & PXAAPM_BATT_PRESENT)) {
 			power->battery_state = APM_BATT_UNKNOWN;
 			power->minutes_left = 0;
 			power->battery_life = 0;
@@ -374,11 +360,6 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			else
 				power->battery_state = APM_BATT_LOW;
 		}
-#else
-		power->battery_state = APM_BATT_UNKNOWN;
-		power->minutes_left = 0;
-		power->battery_life = 0;
-#endif
 		break;
 
 	default:

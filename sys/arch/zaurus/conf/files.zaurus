@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.12 2005/01/19 02:02:34 uwe Exp $
+#	$OpenBSD: files.zaurus,v 1.13 2005/01/20 23:34:36 uwe Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -37,6 +37,10 @@ file arch/zaurus/dev/zaurus_kbd.c		zkbd
 device scoop
 attach scoop at pxaip with scoop_pxaip
 file arch/zaurus/dev/zaurus_scoop.c		scoop
+
+# Power manager and APM emulation
+attach apm at pxaip with apm_pxaip
+file arch/zaurus/zaurus/zaurus_apm.c		apm_pxaip
 
 #
 # Machine-independent ATA drivers

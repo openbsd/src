@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.16 2005/01/19 02:02:34 uwe Exp $
+#	$OpenBSD: RAMDISK,v 1.17 2005/01/20 23:34:36 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -66,8 +66,8 @@ pxaip0		at mainbus?
 
 pxaintc0	at pxaip?	# interrupt controller
 pxagpio0	at pxaip?	# GPIO
-#scoop0		at pxaip? addr 0x10800000 size 0x2c
-#scoop1		at pxaip? addr 0x14800000 size 0x2c
+scoop0		at pxaip?
+scoop1		at pxaip?
 saost0		at pxaip? addr 0x40a00000 size 0x20
 ohci0		at pxaip? addr 0x4c000000 size 0x70 intr 3
 usb*		at ohci?
@@ -163,7 +163,7 @@ lcd0		at pxaip?
 wsdisplay*	at lcd? console ?
 
 # APM emulation
-#apm0		at pxaip?
+apm0		at pxaip?
 
 # Pseudo-Devices
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
