@@ -11,6 +11,8 @@ _rstatd:*:30:30::0:0:rpc.rstatd:/var/empty:/sbin/nologin
 _rusersd:*:32:32::0:0:rpc.rusersd:/var/empty:/sbin/nologin
 _fingerd:*:33:33::0:0:fingerd:/var/empty:/sbin/nologin
 _x11:*:35:35::0:0:X server:/var/empty:/sbin/nologin
+_kdc:*:59:59::0:0:Kerberos Server:/var/empty:/sbin/nologin
+_kadmin:*:60:60::0:0:Kerberos Admin Server:/var/empty:/sbin/nologin
 _spamd:*:62:62::0:0:Spam daemon:/var/empty:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
 www:*:67:67::0:0:HTTP server:/var/www:/sbin/nologin
