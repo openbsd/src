@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.44 2000/09/19 03:20:57 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.45 2000/09/20 16:39:50 provos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -870,6 +870,12 @@ in_pcbrtentry(inp)
 	 * No route yet, so try to acquire one.
 	 */
 	if (ro->ro_rt == NULL) {
+#ifdef INET6
+		bzero(ro, sizeof(struct route_in6));
+#else
+		bzero(ro, sizeof(struct route));
+#endif
+
 		switch(sotopf(inp->inp_socket)) {
 #ifdef INET6
 		case PF_INET6:
@@ -883,7 +889,7 @@ in_pcbrtentry(inp)
 			break;
 #endif /* INET6 */
 		case PF_INET:
-			if (inp->inp_faddr.s_addr != INADDR_ANY)
+			if (inp->inp_faddr.s_addr == INADDR_ANY)
 				break;
 			ro->ro_dst.sa_family = AF_INET;
 			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
