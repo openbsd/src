@@ -69,7 +69,7 @@ noinst_LIBRARIES = libbc.a
 
 INCLUDES = -I$(srcdir) -I$(srcdir)/../h
 
-libbc_a_SOURCES = getopt.c getopt1.c vfprintf.c number.c
+libbc_a_SOURCES = number.c
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
@@ -81,7 +81,7 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libbc_a_LIBADD = 
-libbc_a_OBJECTS =  getopt.o getopt1.o vfprintf.o number.o
+libbc_a_OBJECTS =  number.o
 AR = ar
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS)
