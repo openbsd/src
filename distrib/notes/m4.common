@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.19 2001/10/02 20:08:46 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.20 2001/10/02 23:03:04 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -492,7 +492,7 @@ dnl
 dnl
 dnl Upgrade instructions
 dnl
-dnl OpenBSDUpgrade({:- or <list of additional boot methods>-:})dnl
+dnl OpenBSDUpgrade({:-<list of available boot methods>-:})dnl
 dnl Note the spacing used above.  It is crucial to keep words from running
 dnl together in the actual document.
 dnl Parameter is optional.
@@ -500,7 +500,7 @@ define({:-OpenBSDUpgrade-:},
 {:-To upgrade OpenBSD OSREV from a previous version, start with the general
 instructions in the section "Installing OpenBSD".
 
-Boot from the miniroot$1.
+Boot from $1.
 When prompted, select the (U)pgrade option rather than the (I)nstall
 option at the prompt in the install process.
 
