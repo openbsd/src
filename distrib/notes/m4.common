@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.6 1999/09/23 08:12:25 todd Exp $
+dnl	$OpenBSD: m4.common,v 1.7 1999/09/23 08:18:41 todd Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -153,18 +153,17 @@ dnl
 dnl floppy stuff
 dnl
 define({:-OpenBSDfloppy-:},
-{:-		floppy{:--:}OSrev.fs	 The standard MACHINE boot and
-				 installation floppy; see below.-:})dnl
+{:-		floppy{:--:}OSrev.fs	The standard MACHINE boot and installation
+				floppy; see below.-:})dnl
 define({:-OpenBSDfloppyB-:},
-{:-		floppyB{:--:}OSrev.fs	 The MACHINE boot and installation
-				 floppy; this removes all scsi drivers in
-				 floppy{:--:}OSrev.fs, and replaces them
-				 with OTHERS; see below.-:})dnl
+{:-		floppyB{:--:}OSrev.fs	The MACHINE boot and installation floppy;
+				this removes all scsi drivers in floppy{:--:}OSrev.fs,
+				and replaces them with OTHERS; see below.-:})dnl
 define({:-OpenBSDcdrom-:},
-{:-		cdrom{:--:}OSrev.fs	 The MACHINE boot and installation
-				 2.88mb floppy image that contains all drivers
-				 from floppy{:--:}OSrev.fs and floppyB{:--:}OSrev.fs
-				 above; see below.-:})dnl
+{:-		cdrom{:--:}OSrev.fs	The MACHINE boot and installation
+				2.88mb floppy image that contains all drivers
+				from floppy{:--:}OSrev.fs and floppyB{:--:}OSrev.fs
+				above; see below.-:})dnl
 dnl
 define({:-OpenBSDfloppydesc-:},
 {:-In summary, there is one MACHINE floppy image called "floppy{:--:}OSrev.fs" (which
