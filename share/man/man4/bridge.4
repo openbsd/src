@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.9 1999/05/17 14:57:43 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.10 1999/06/25 22:27:46 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -45,6 +45,31 @@ The bridges provided by this interface are learning bridges with the ability
 to do IP filtering, see
 .Xr ipf 4 , Ns
 before packets are forwarded by the bridge.
+.Pp
+A bridge is a device that has multiple interfaces attached to it.
+It functions much like a hub, listening to incoming traffic on
+each segment it is attached to and forwarding the traffic to every other
+segment.
+A bridge differs from a hub in that it will "learn" which machines
+are on each of its attached segments by actively listening to
+incoming traffic and examining the headers of each frame.
+A table is built containing the MAC address and segment to which the
+MAC address is attached.
+This allows a bridge to be more selective about what it forwards.
+This can be used to reduce traffic on a network and also to provide
+an IP firewall without modifying the topology of the network.
+.Pp
+The algorithm works as follows by default, but can be modified via
+.Xr ioctl 2 .
+When a frame comes in, the origin segment and the source address are
+recorded.
+If the bridge has no knowlege about where the destination is to be found,
+the bridge will forward the frame to all attached segments.
+If the destination is known to be on a different segment from its origin, the
+bridge will forward the packet only to the destination segment.
+If the destination is on the same segment as the origin segment, the bridge
+will drop the packet because the receiver has already had a chance to see
+the frame.
 .Sh IOCTLS
 A
 .Nm bridge
