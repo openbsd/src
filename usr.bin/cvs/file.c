@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.27 2004/08/12 21:05:32 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.28 2004/08/13 12:44:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -245,6 +245,7 @@ cvs_file_create(const char *path, u_int type, mode_t mode)
 	cfp->cf_type = type;
 	cfp->cf_mode = mode;
 	cfp->cf_ddat->cd_root = cvsroot_get(path);
+	cfp->cf_ddat->cd_repo = strdup(cfp->cf_path);
 
 	if (type == DT_DIR) {
 		if ((mkdir(path, mode) == -1) || (cvs_mkadmin(cfp, mode) < 0)) {
@@ -466,6 +467,8 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 			    sizeof(pbuf)) == 0) {
 				cdp->cd_repo = strdup(pbuf);
 				if (cdp->cd_repo == NULL) {
+					cvs_log(LP_ERRNO,
+					    "failed to dup repository string");
 					free(cdp);
 					return (-1);
 				}
@@ -473,7 +476,6 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 
 			cdp->cd_ent = cvs_ent_open(cf->cf_path, O_RDWR);
 		}
-
 	}
 
 	if (!(flags & CF_RECURSE) || (cf->cf_cvstat == CVS_FST_UNKNOWN))
@@ -786,19 +788,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 			cfp->cf_cvstat = CVS_FST_ADDED;
 		else {
 			/* check last modified time */
-			if ((gmtime_r((time_t *)&(st.st_mtime),
-			    &lmtm) == NULL) ||
-			    (asctime_r(&lmtm, buf) == NULL)) {
-				cvs_log(LP_ERR,
-				    "failed to generate file timestamp");
-				/* fake an up to date file */
-				strlcpy(buf, ent->ce_timestamp, sizeof(buf));
-			}
-			len = strlen(buf);
-			if ((len > 0) && (buf[len - 1] == '\n'))
-				buf[--len] = '\0';
-
-			if (strcmp(buf, ent->ce_timestamp) == 0)
+			if (ent->ce_mtime == st.st_mtime)
 				cfp->cf_cvstat = CVS_FST_UPTODATE;
 			else
 				cfp->cf_cvstat = CVS_FST_MODIFIED;
