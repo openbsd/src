@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.115 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.116 2004/02/13 01:29:46 brad Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -360,7 +360,7 @@ ipv4_input(m)
 		ipstat.ips_inhwcsum++;
 	}
 
-	/* Retrieve the packet lenght. */
+	/* Retrieve the packet length. */
 	len = ntohs(ip->ip_len);
 
 	/*
