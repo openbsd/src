@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.7 1997/04/19 17:19:38 pefo Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.8 1997/05/01 15:13:28 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996 Per Fogelstrom.  All rights reserved.
@@ -29,6 +29,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <lib/libkern/libkern.h>
@@ -46,6 +47,8 @@ extern int	physmem;		/* Total physical memory size */
 
 int Bios_Read __P((int, char *, int, int *));
 int Bios_Write __P((int, char *, int, int *));
+int Bios_Open __P((char *, int, u_int *));
+int Bios_Close __P((u_int));
 arc_mem_t *Bios_GetMemoryDescriptor __P((arc_mem_t *));
 arc_sid_t *Bios_GetSystemId __P((void));
 arc_config_t *Bios_GetChild __P((arc_config_t *));
@@ -258,7 +261,8 @@ get_cpu_type()
 	arc_sid_t	*sid;
 	int		i;
 
-	if(bios_base->magic != ARC_PARAM_BLK_MAGIC) {
+	if((bios_base->magic != ARC_PARAM_BLK_MAGIC) &&
+	   (bios_base->magic != ARC_PARAM_BLK_MAGIC_BUG)) {
 		return(-1);	/* This is not an ARC system */
 	}
 
@@ -316,5 +320,45 @@ bios_display_info(xpos, ypos, xsize, ysize)
 	*ypos = displayinfo.CursorYPosition;
 	*xsize = displayinfo.CursorMaxXPosition;
 	*ysize = displayinfo.CursorMaxYPosition;
+}
+
+/*
+ * Load the incore miniroot into memory. This is used for
+ * Initial booting before we have any file system. CD-rom booting.
+ */
+int
+bios_load_miniroot(path, where)
+	char *path;
+	caddr_t where;
+{
+	u_int file;
+	u_int count;
+	int i;
+	char s[32];
+
+static char mrdefault[] = {"scsi(0)disk(0)rdisk(0)partition(1)\\miniroot" };
+
+	bios_putstring("Loading miniroot:");
+
+	if(path == 0)
+		path = mrdefault;
+	bios_putstring(path);
+	bios_putstring("\n");
+
+	if((i = Bios_Open(path,0,&file)) != arc_ESUCCESS) {
+		sprintf(s, "Error %d. Load failed!\n", i);
+		bios_putstring(s);
+		return(-1);
+	}
+	do {
+
+		i = Bios_Read(file, where, 4096, &count);
+		bios_putstring(".");
+		where += count;
+	} while((i == 0) && (count != 0));
+
+	Bios_Close(file);
+	bios_putstring("\nLoaded.\n");
+	return(0);
 }
 
