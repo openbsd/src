@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.158 2004/11/28 19:36:48 henning Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.159 2004/11/28 22:29:44 henning Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.158 2004/11/28 19:36:48 henning Exp $";
+    "$OpenBSD: ftpd.c,v 1.159 2004/11/28 22:29:44 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,6 @@ static const char rcsid[] =
 #include <bsd_auth.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
@@ -353,7 +352,7 @@ main(int argc, char *argv[])
 			val = strtol(optarg, &p, 8);
 			if (*p != '\0' || val < 0 || (val & ~ACCESSPERMS)) {
 				syslog(LOG_ERR,
-				    "ftpd: %s is a bad value for -u, aborting..",
+				    "%s is a bad value for -u, aborting..",
 				    optarg);
 				exit(2);
 			} else
@@ -482,7 +481,8 @@ main(int argc, char *argv[])
 			if (poll(pfds, n, INFTIM) < 0) {
 				if (errno == EINTR)
 					continue;
-				err(1, "poll");
+				syslog(LOG_ERR, "poll: %m");
+				exit(1);
 			}
 			for (i = 0; i < n; i++)
 				if (pfds[i].revents & POLLIN) {
