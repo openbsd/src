@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.27 2001/06/24 05:18:19 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.28 2001/06/25 04:52:35 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -463,14 +463,6 @@ mpcpcibrattach(parent, self, aux)
 				sc->sc_membus_space.bus_size = size;
 
 			}
-#if 0
-			printf("membase %x size %x iobase %x size %x\n",
-				sc->sc_membus_space.bus_base,
-				sc->sc_membus_space.bus_size,
-				sc->sc_iobus_space.bus_base,
-				sc->sc_iobus_space.bus_size);
-#endif
-			
 			addr_offset = 0;
 			for (i = 0; config_offsets[i].compat != NULL; i++) {
 				if (strcmp(config_offsets[i].compat, compat)
@@ -488,11 +480,13 @@ mpcpcibrattach(parent, self, aux)
 					" compatible %s\n", compat);
 				return;
 			}
-#if 0
-			printf(" mem base %x io base %x config addr %x"
+#ifdef PCI_DEBUG
+			printf(" mem base %x sz %x io base %x sz %x\n config addr %x"
 				" config data %x\n",
 				sc->sc_membus_space.bus_base,
+				sc->sc_membus_space.bus_size,
 				sc->sc_iobus_space.bus_base,
+				sc->sc_iobus_space.bus_size,
 				addr_offset, data_offset);
 #endif
 
