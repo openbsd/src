@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.2 1999/08/05 00:12:09 niklas Exp $      */
+/*      $OpenBSD: ata.c,v 1.3 1999/11/05 04:32:03 csapuntz Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -57,6 +57,8 @@ extern int wdcdebug_mask; /* init'ed in wdc.c */
 #define WDCDEBUG_PRINT(args, level)
 #endif
 
+#define ATAPARAMS_SIZE 512
+
 /* Get the disk's parameters */
 int
 ata_get_params(drvp, flags, prms)
@@ -64,17 +66,15 @@ ata_get_params(drvp, flags, prms)
 	u_int8_t flags;
 	struct ataparams *prms;
 {
-	char tb[DEV_BSIZE];
+	char tb[ATAPARAMS_SIZE];
 	struct wdc_command wdc_c;
 
-#if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
 	u_int16_t *p;
-#endif
 
 	WDCDEBUG_PRINT(("wdc_ata_get_parms\n"), DEBUG_FUNCS);
 
-	bzero(tb, DEV_BSIZE);
+	bzero(tb, sizeof(tb));
 	bzero(prms, sizeof(struct ataparams));
 	bzero(&wdc_c, sizeof(struct wdc_command));
 
@@ -93,7 +93,7 @@ ata_get_params(drvp, flags, prms)
 	}
 	wdc_c.flags = AT_READ | flags;
 	wdc_c.data = tb;
-	wdc_c.bcount = DEV_BSIZE;
+	wdc_c.bcount = ATAPARAMS_SIZE;
 
 	{
 		int ret;
@@ -106,9 +106,24 @@ ata_get_params(drvp, flags, prms)
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		return CMD_ERR;
 	} else {
+#if BYTE_ORDER == BIG_ENDIAN
+		/* All the fields in the params structure are 16-bit
+		   integers except for the ID strings which are char
+		   strings.  The 16-bit integers are currently in
+		   memory in little-endian, regardless of architecture.
+		   So, they need to be swapped on big-endian architectures
+		   before they are accessed through the ataparams structure.
+
+		   The swaps below avoid touching the char strings.
+		*/
+		  
+		swap16_multi((u_int16_t *)tb, 10);
+		swap16_multi((u_int16_t *)tb + 20, 3);
+		swap16_multi((u_int16_t *)tb + 47, ATAPARAMS_SIZE / 2 - 47);
+#endif
 		/* Read in parameter block. */
 		bcopy(tb, prms, sizeof(struct ataparams));
-#if BYTE_ORDER == LITTLE_ENDIAN
+
 		/*
 		 * Shuffle string byte order.
 		 * ATAPI Mitsumi and NEC drives don't need this.
@@ -122,17 +137,17 @@ ata_get_params(drvp, flags, prms)
 			return 0;
 		for (i = 0; i < sizeof(prms->atap_model); i += 2) {
 			p = (u_short *)(prms->atap_model + i);
-			*p = ntohs(*p);
+			*p = swap16(*p);
 		}
 		for (i = 0; i < sizeof(prms->atap_serial); i += 2) {
 			p = (u_short *)(prms->atap_serial + i);
-			*p = ntohs(*p);
+			*p = swap16(*p);
 		}
 		for (i = 0; i < sizeof(prms->atap_revision); i += 2) {
 			p = (u_short *)(prms->atap_revision + i);
-			*p = ntohs(*p);
+			*p = swap16(*p);
 		}
-#endif
+
 		return CMD_OK;
 	}
 }
