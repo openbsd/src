@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.17 2000/04/25 06:10:15 niklas Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.18 2001/02/20 01:50:08 assar Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include <adosfs/adosfs.h>
 
 int	 adosfs_init __P((struct vfsconf *));
-int	 adosfs_mount __P((struct mount *, const char *, caddr_t, struct nameidata *,
+int	 adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
     struct proc *));
 int	 adosfs_start __P((struct mount *, int, struct proc *));
 int	 adosfs_unmount __P((struct mount *, int, struct proc *));
@@ -72,7 +72,7 @@ int
 adosfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
@@ -83,7 +83,7 @@ adosfs_mount(mp, path, data, ndp, p)
 	int error;
 	mode_t accessmode;
 
-	error = copyin(data, (caddr_t)&args, sizeof(struct adosfs_args));
+	error = copyin(data, &args, sizeof(struct adosfs_args));
 	if (error)
 		return(error);
 	

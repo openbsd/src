@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.31 2000/05/19 16:36:04 mickey Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.32 2001/02/20 01:50:11 assar Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -601,7 +601,7 @@ int
 nfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
@@ -613,7 +613,7 @@ nfs_mount(mp, path, data, ndp, p)
 	size_t len;
 	u_char nfh[NFSX_V3FHMAX];
 
-	error = copyin (data, (caddr_t)&args, sizeof (args.version));
+	error = copyin (data, &args, sizeof (args.version));
 	if (error)
 		return (error);
 	if (args.version == 3) {

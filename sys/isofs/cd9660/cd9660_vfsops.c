@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.20 2000/06/07 23:25:08 millert Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.21 2001/02/20 01:50:09 assar Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -134,7 +134,7 @@ int
 cd9660_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
@@ -144,7 +144,7 @@ cd9660_mount(mp, path, data, ndp, p)
 	int error;
 	struct iso_mnt *imp = NULL;
 	
-	error = copyin(data, (caddr_t)&args, sizeof (struct iso_args));
+	error = copyin(data, &args, sizeof (struct iso_args));
 	if (error)
 		return (error);
 	

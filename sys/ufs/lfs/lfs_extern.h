@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_extern.h,v 1.5 2000/02/07 04:57:18 assar Exp $	*/
+/*	$OpenBSD: lfs_extern.h,v 1.6 2001/02/20 01:50:12 assar Exp $	*/
 /*	$NetBSD: lfs_extern.h,v 1.5 1996/02/12 15:20:12 christos Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ struct buf *lfs_fakebuf __P((struct vnode *, int, size_t, caddr_t));
 
 /* lfs_vfsops.c */
 int lfs_mountroot __P((void));
-int lfs_mount __P((struct mount *, const char *, caddr_t, struct nameidata *, struct proc *));
+int lfs_mount __P((struct mount *, const char *, void *, struct nameidata *, struct proc *));
 int lfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
 int lfs_unmount __P((struct mount *, int, struct proc *));
 int lfs_statfs __P((struct mount *, struct statfs *, struct proc *));

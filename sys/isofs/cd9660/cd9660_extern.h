@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_extern.h,v 1.5 2000/06/07 23:25:08 millert Exp $	*/
+/*	$OpenBSD: cd9660_extern.h,v 1.6 2001/02/20 01:50:08 assar Exp $	*/
 /*	$NetBSD: cd9660_extern.h,v 1.1 1997/01/24 00:24:53 cgd Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ struct iso_mnt {
 #define lblkno(imp, loc)	((loc) >> (imp)->im_bshift)
 #define blksize(imp, ip, lbn)	((imp)->logical_block_size)
 
-int cd9660_mount __P((struct mount *, const char *, caddr_t,
+int cd9660_mount __P((struct mount *, const char *, void *,
                       struct nameidata *, struct proc *));
 int cd9660_start __P((struct mount *, int, struct proc *));
 int cd9660_unmount __P((struct mount *, int, struct proc *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.66 2001/02/12 07:03:13 fgsch Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.67 2001/02/20 01:50:09 assar Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ sys_mount(p, v, retval)
 		syscallarg(char *) type;
 		syscallarg(char *) path;
 		syscallarg(int) flags;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	register struct vnode *vp;
 	register struct mount *mp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.11 2000/02/07 04:57:16 assar Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.12 2001/02/20 01:50:10 assar Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 #include <uvm/uvm_extern.h>
 #endif
 
-int	procfs_mount __P((struct mount *, const char *, caddr_t,
+int	procfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
 int	procfs_start __P((struct mount *, int, struct proc *));
 int	procfs_unmount __P((struct mount *, int, struct proc *));
@@ -76,7 +76,7 @@ int
 procfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

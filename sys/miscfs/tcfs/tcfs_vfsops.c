@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_vfsops.c,v 1.3 2000/06/17 20:25:55 provos Exp $	*/
+/*	$OpenBSD: tcfs_vfsops.c,v 1.4 2001/02/20 01:50:10 assar Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/malloc.h>
 #include <miscfs/tcfs/tcfs.h>
 
-int	tcfs_mount __P((struct mount *, const char *, caddr_t,
+int	tcfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
 int	tcfs_start __P((struct mount *, int, struct proc *));
 int	tcfs_unmount __P((struct mount *, int, struct proc *));
@@ -54,7 +54,7 @@ int
 tcfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
@@ -73,7 +73,7 @@ tcfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct tcfs_args));
+	error = copyin(data, &args, sizeof(struct tcfs_args));
 	if (error)
 		return (error);
 

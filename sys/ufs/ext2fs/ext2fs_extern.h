@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.7 2000/04/26 23:24:40 jasoni Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.8 2001/02/20 01:50:12 assar Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ void	ext2fs_checkoverlap __P((struct buf *, struct inode *));
 
 /* ext2fs_vfsops.c */
 int ext2fs_mountroot __P((void));
-int ext2fs_mount __P((struct mount *, const char *, caddr_t,
+int ext2fs_mount __P((struct mount *, const char *, void *,
 		   struct nameidata *, struct proc *));
 int ext2fs_reload __P((struct mount *, struct ucred *, struct proc *));
 int ext2fs_mountfs __P((struct vnode *, struct mount *, struct proc *));

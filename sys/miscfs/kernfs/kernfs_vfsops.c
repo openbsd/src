@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.13 2000/02/07 04:57:16 assar Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.14 2001/02/20 01:50:09 assar Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ dev_t rrootdev = NODEV;
 
 int kernfs_init __P((struct vfsconf *));
 void	kernfs_get_rrootdev __P((void));
-int	kernfs_mount __P((struct mount *, const char *, caddr_t, struct nameidata *,
+int	kernfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 			  struct proc *));
 int	kernfs_start __P((struct mount *, int, struct proc *));
 int	kernfs_unmount __P((struct mount *, int, struct proc *));
@@ -112,7 +112,7 @@ int
 kernfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.10 2000/02/07 04:57:17 assar Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.11 2001/02/20 01:50:11 assar Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 
 #include <miscfs/union/union.h>
 
-int union_mount __P((struct mount *, const char *, caddr_t, struct nameidata *,
+int union_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		     struct proc *));
 int union_start __P((struct mount *, int, struct proc *));
 int union_unmount __P((struct mount *, int, struct proc *));
@@ -73,7 +73,7 @@ int
 union_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
@@ -107,7 +107,7 @@ union_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct union_args));
+	error = copyin(data, &args, sizeof(struct union_args));
 	if (error)
 		goto bad;
 

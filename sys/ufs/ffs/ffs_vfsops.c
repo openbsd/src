@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.28 2000/02/07 04:57:18 assar Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.29 2001/02/20 01:50:12 assar Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ int
 ffs_mount(mp, path, data, ndp, p)
 	register struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
@@ -151,7 +151,7 @@ ffs_mount(mp, path, data, ndp, p)
 	mode_t accessmode;
 	size_t size;
 
-	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
+	error = copyin(data, &args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
 	/*

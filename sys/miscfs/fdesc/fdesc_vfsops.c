@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vfsops.c,v 1.8 2000/02/07 04:57:16 assar Exp $	*/
+/*	$OpenBSD: fdesc_vfsops.c,v 1.9 2001/02/20 01:50:09 assar Exp $	*/
 /*	$NetBSD: fdesc_vfsops.c,v 1.21 1996/02/09 22:40:07 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 #include <sys/malloc.h>
 #include <miscfs/fdesc/fdesc.h>
 
-int	fdesc_mount __P((struct mount *, const char *, caddr_t,
+int	fdesc_mount __P((struct mount *, const char *, void *,
 			 struct nameidata *, struct proc *));
 int	fdesc_start __P((struct mount *, int, struct proc *));
 int	fdesc_unmount __P((struct mount *, int, struct proc *));
@@ -78,7 +78,7 @@ int
 fdesc_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

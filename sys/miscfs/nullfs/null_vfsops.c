@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vfsops.c,v 1.11 2000/02/07 04:57:16 assar Exp $	*/
+/*	$OpenBSD: null_vfsops.c,v 1.12 2001/02/20 01:50:10 assar Exp $	*/
 /*	$NetBSD: null_vfsops.c,v 1.11 1996/05/10 22:50:56 jtk Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 #include <sys/malloc.h>
 #include <miscfs/nullfs/null.h>
 
-int	nullfs_mount __P((struct mount *, const char *, caddr_t,
+int	nullfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
 int	nullfs_start __P((struct mount *, int, struct proc *));
 int	nullfs_unmount __P((struct mount *, int, struct proc *));
@@ -76,7 +76,7 @@ int
 nullfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
@@ -102,7 +102,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct null_args));
+	error = copyin(data, &args, sizeof(struct null_args));
 	if (error)
 		return (error);
 

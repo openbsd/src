@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.21 2001/02/07 17:51:48 mickey Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.22 2001/02/20 01:50:11 assar Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@
 #include <msdosfs/msdosfsmount.h>
 #include <msdosfs/fat.h>
 
-int msdosfs_mount __P((struct mount *, const char *, caddr_t, struct nameidata *,
+int msdosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		       struct proc *));
 int msdosfs_start __P((struct mount *, int, struct proc *));
 int msdosfs_unmount __P((struct mount *, int, struct proc *));
@@ -94,7 +94,7 @@ int
 msdosfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
-	caddr_t data;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
@@ -106,7 +106,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	int error, flags;
 	mode_t accessmode;
 
-	error = copyin(data, (caddr_t)&args, sizeof(struct msdosfs_args));
+	error = copyin(data, &args, sizeof(struct msdosfs_args));
 	if (error)
 		return (error);
 	/*
