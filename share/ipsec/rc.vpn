@@ -1,174 +1,160 @@
 #!/bin/sh
 
 #
-# rc.vpn -- configure IPSec in tunnel mode for M x N networks
+#    $OpenBSD: rc.vpn,v 1.3 1999/08/28 12:10:37 ho Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
 # v0.81 / 26Jul98
 #
+# Modifications and cleanup by H. Olsson <ho@openbsd.org>, 28Aug99
+#
+# rc.vpn -- configure IPSec in tunnel mode for a mesh of N local and
+#           M remote networks. (N x M mesh)
+#
+# For this to work, you will need to have these enabled (in /etc/sysct.conf):
+#   'sysctl -w net.inet.ip.forwarding=1'   (IP packet routing)
+#   'sysctl -w net.inet.esp.enable=1'      (IPsec ESP protocol)
 
-echo ' VPN'
+# XXX The configuration parameters should be moved to another file.
 
+# Uncomment to debug (and not execute) commands
+#DEBUG=echo
+
+# Gateway adresses
+GW_LOCAL=192.168.254.254
+GW_PEER=192.168.1.2
+
+# Local and remote networks, numbered, syntax <network>:<mask>
+LOCAL_NET_0=192.168.254.0:0xffffff00
+LOCAL_NET_1=192.168.253.0:0xffffff00
+REMOTE_NET_0=192.168.1.0:0xffffff00
+REMOTE_NET_1=192.168.2.0:0xffffff00
+
+# Crypto options and keys, note that key/iv lengths need to correspond
+# to the selected encryption and authentication algorithms.
+ENC=des
+AUTH=sha1
+SPI_OUT=1000
+SPI_IN=1001
+KEY=2ea140ac3911cb27
+AUTHKEY=176cc284bc1631afbd1468fbe976fa729fcb4321
+IV=c4b279f1a9bcd849
 
 #############################################################################
-#
-# Configurable parameters
-#
-
-# Should all the commands executed be printed when the script runs?
-# N.B. setting this to "YES" may reveal your keys to persons present
-# at the console when your system boots.
-VPN_DO_ECHO_COMMANDS="YES"
-
-# My interfaces
-VPN_MY_INT_IFACE="ep0"
-VPN_MY_EXT_IFACE="ep1"
-
-# External IP of my tunnel partner
-VPN_PEER_EXT_IP="207.253.158.194"
-
-# The internal IP(s) and mask(s) on the other end of the tunnel -- add as
-# many sets as necessary, numbered from 0 upwards.
-VPN_PEER_INT_IP_0="192.139.247.253"
-VPN_PEER_INT_MASK_0="255.255.255.0"
-
-# IP(s) and mask(s) for *additional* subnets on *our* end of the tunnel
-# (the first one is automagically determined below) -- add as many sets
-# as necessary, numbered from *1* upwards, or comment out if not needed.
-VPN_MY_INT_IP_1="192.139.241.1"
-VPN_MY_INT_MASK_1="255.255.255.0"
-VPN_MY_INT_IP_2="192.139.243.1"
-VPN_MY_INT_MASK_2="255.255.255.0"
-
-# Crypto options and keys
-VPN_ENC="des"
-VPN_AUTH="sha1"
-VPN_SPI_OUT="1000"
-VPN_SPI_IN="1001"
-VPN_KEY="2ea140ac3911cb27"
-VPN_AUTHKEY="176cc284bc1631afbd1468fbe976fa729fcb4321"
-VPN_IV="c4b279f1a9bcd849"
-
-
-
-#############################################################################
-#############                                                   #############
 ############# -- NO CHANGES SHOULD BE NEEDED BELOW THIS LINE -- #############
-#############                                                   #############
 #############################################################################
 
-
-
-#############################################################################
-#
-# Derived (automagically found) parameters
-#
-# Hostnames for ech of our interfaces
-VPN_MY_EXT_NAME=`cut -d" " -f2 < /etc/hostname.$VPN_MY_EXT_IFACE`
-VPN_MY_INT_NAME=`cut -d" " -f2 < /etc/hostname.$VPN_MY_INT_IFACE`
-
-# Our internal IP and mask (extra subnets, if any, are configured above)
-VPN_MY_INT_IP_0=`grep $VPN_MY_INT_NAME < /etc/hosts | cut -d" " -f1`
-VPN_MY_INT_MASK_0=`cut -d" " -f3 < /etc/hostname.$VPN_MY_INT_IFACE`
-
-# Our external IP and mask
-VPN_MY_EXT_IP=`grep $VPN_MY_EXT_NAME < /etc/hosts | cut -d" " -f1`
-VPN_MY_EXT_MASK=`cut -d" " -f3 < /etc/hostname.$VPN_MY_INT_IFACE`
-
-
-#############################################################################
-#
-# Pseudo-constants
-#
 ipsecadm=/sbin/ipsecadm
 
-
-#############################################################################
 #
-# Function definitions
-#
-eval_and_echo () {
-  if [ "$VPN_DO_ECHO_COMMANDS" = "YES" ]; then
-    echo "$*"
-  fi
-  eval "$*"
-}
-
-
-#############################################################################
-#
-# Executable setup statements
+# Sanity, be verbose about errors.
+# XXX In a 1 x M mesh, ip.forwarding may not be strictly necessary.
 #
 
-# Create the SAs
-eval_and_echo "$ipsecadm new esp -src $VPN_MY_EXT_IP -dst $VPN_PEER_EXT_IP -forcetunnel -spi $VPN_SPI_OUT -enc $VPN_ENC -auth $VPN_AUTH -key $VPN_KEY -authkey $VPN_AUTHKEY"
+abort=0
+if [ `/usr/sbin/sysctl -n net.inet.esp.enable` == 0 ]; then
+    echo " VPN: variable 'net.inet.esp.enable' (IPsec ESP protocol)"
+    abort=1
+fi
+if [ `/usr/sbin/sysctl -n net.inet.ip.forwarding` == 0 ]; then
+    echo " VPN: variable 'net.inet.ip.forwarding' (IP forwarding/routing)"
+    abort=1
+fi
+if [ ${abort} = 1 ]; then
+    echo " VPN: must be enabled in /etc/sysctl.conf. Aborting VPN setup." 
+    exit 0
+fi
 
-eval_and_echo "$ipsecadm new esp -src $VPN_PEER_EXT_IP -dst $VPN_MY_EXT_IP -forcetunnel -spi $VPN_SPI_IN -enc $VPN_ENC -auth $VPN_AUTH -key $VPN_KEY -authkey $VPN_AUTHKEY"
-
+[ ! -n "${DEBUG}" ] && echo " VPN "
 
 #
-# Create IPSec routes
+# Setup the SAs
 #
 
-# Route between the two external IPs
-eval_and_echo "ipsecadm flow -proto esp -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $VPN_MY_EXT_IP 255.255.255.255 $VPN_PEER_EXT_IP 255.255.255.255 -local"
+$DEBUG $ipsecadm new esp -src $GW_LOCAL -dst $GW_PEER \
+    -forcetunnel -spi $SPI_OUT -enc $ENC -auth $AUTH \
+    -key $KEY -authkey $AUTHKEY
 
-# Routes from each internal subnet, to each internal subnet on the far side
+$DEBUG $ipsecadm new esp -src $GW_PEER -dst $GW_LOCAL \
+    -forcetunnel -spi $SPI_IN -enc $ENC -auth $AUTH \
+    -key $KEY -authkey $AUTHKEY
+
+#
+# Create the flows
+#
+
+# Gateway to gateway
+$DEBUG ipsecadm flow -proto esp -dst $GW_PEER -spi $SPI_OUT \
+    -addr 0.0.0.0 0xffffffff $GW_PEER 0xffffffff
+
+# Flows from each local, to each remote, subnet
 mycount=0
 while :
 do
-    eval next_my_ip=\$VPN_MY_INT_IP_${mycount}
-    eval next_my_mask=\$VPN_MY_INT_MASK_${mycount}
-    if [ -n "${next_my_ip}" ]; then
-
+    eval network=\$LOCAL_NET_${mycount}
+    set `echo $network | sed 's/:/ /g'` 0x0 0x0
+    local_net=$1
+    local_mask=$2
+    if [ "${local_net}" != "0x0" ]; then
 	peercount=0
 	while :
 	do
-	    eval next_peer_ip=\$VPN_PEER_INT_IP_${peercount}
-	    eval next_peer_mask=\$VPN_PEER_INT_MASK_${peercount}
-	    if [ -n "${next_peer_ip}" ]; then
-		# set an IPSec route for this pair of networks
-		eval_and_echo "$ipsecadm flow -proto esp -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $next_my_ip $next_my_mask $next_peer_ip $next_peer_mask"
-		peercount=`expr ${peercount} + 1`
+	    eval network=\$REMOTE_NET_${peercount}
+	    set `echo $network | sed 's/:/ /g'` 0x0 0x0
+	    remote_net=$1
+	    remote_mask=$2
+	    if [ "${remote_net}" != "0x0" ]; then
+		$DEBUG $ipsecadm flow \
+		    -proto esp -dst $GW_PEER -spi $SPI_OUT \
+		    -addr $local_net $local_mask $remote_net $remote_mask
+		peercount=$(($peercount + 1))
 	    else
-		    break;
+		break;
 	    fi
 	done
-	mycount=`expr ${mycount} + 1`
+	mycount=$(($mycount + 1))
     else
 	break;
     fi
 done
 
+# XXX Stuff below is mainly for testing, may be removed later.
 
-# Routes to each remote internal subnet
+# Flows from local gw to each remote subnet
 peercount=0
 while :
 do
-    eval next_peer_ip=\$VPN_PEER_INT_IP_${peercount}
-    eval next_peer_mask=\$VPN_PEER_INT_MASK_${peercount}
-    if [ -n "${next_peer_ip}" ]; then
-
-        # Route from my ext IP to each remote internal subnet
-	eval_and_echo "$ipsecadm flow -proto esp -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $VPN_MY_EXT_IP 255.255.255.255 $next_peer_ip $next_peer_mask -local"
-	peercount=`expr ${peercount} + 1`
+    eval network=\$REMOTE_NET_${peercount}
+    set `echo $network | sed 's/:/ /g'` 0x0 0x0
+    remote_net=$1
+    remote_mask=$2
+    if [ "${remote_net}" != "0x0" ]; then
+	$DEBUG $ipsecadm flow \
+	    -proto esp -dst $GW_PEER -spi $SPI_OUT \
+	    -addr 0.0.0.0 0xffffffff $remote_net $remote_mask
+	peercount=$(($peercount + 1))
     else
 	break;
     fi
 done
 
-
-# Routes from each of my internal subnets to the remote external IP
+# Flows from local subnets to the remote gw
 mycount=0
 while :
 do
-    eval next_my_ip=\$VPN_MY_INT_IP_${mycount}
-    eval next_my_mask=\$VPN_MY_INT_MASK_${mycount}
-    if [ -n "${next_my_ip}" ]; then
-	eval_and_echo $ipsecadm flow -proto esp -dst $VPN_PEER_EXT_IP -spi $VPN_SPI_OUT -addr $next_my_ip $next_my_mask $VPN_PEER_EXT_IP 255.255.255.255
-	mycount=`expr ${mycount} + 1`
+    eval network=\$LOCAL_NET_${mycount}
+    set `echo $network | sed 's/:/ /g'` 0x0 0x0
+    local_net=$1
+    local_mask=$2
+    if [ "${local_net}" != "0x0" ]; then
+	$DEBUG $ipsecadm flow \
+	    -proto esp -dst $GW_PEER -spi $SPI_OUT \
+	    -addr $local_net $local_mask $GW_PEER 0xffffffff
+	mycount=$(($mycount + 1))
     else
 	break;
     fi
 done
+
+exit 0
