@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: main.c,v 1.7 1997/12/24 09:30:41 brian Exp $
+ * $Id: main.c,v 1.8 1997/12/27 13:45:20 brian Exp $
  *
  *	TODO:
  *		o Add commands for traffic summary, version display, etc.
@@ -183,7 +183,7 @@ TtyOldMode()
 void
 Cleanup(int excode)
 {
-  DropClient();
+  DropClient(1);
   ServerClose();
   OsInterfaceDown(1);
   HangupModem(1);
@@ -535,12 +535,15 @@ main(int argc, char **argv)
     close(2);
 
     if (mode & MODE_DIRECT)
+      /* fd 0 gets used by OpenModem in DIRECT mode */
       TtyInit(1);
     else if (mode & MODE_DAEMON) {
       setsid();
       close(0);
     }
   } else {
+    close(0);
+    close(2);
     TtyInit(0);
     TtyCommandMode(1);
   }
@@ -626,8 +629,10 @@ ReadTty(void)
       if (n)
         DecodeCommand(linebuff, n, IsInteractive(0) ? NULL : "Client");
       Prompt();
-    } else if (n <= 0)
-      DropClient();
+    } else if (n <= 0) {
+      LogPrintf(LogPHASE, "Client connection closed.\n");
+      DropClient(0);
+    }
     return;
   }
 
