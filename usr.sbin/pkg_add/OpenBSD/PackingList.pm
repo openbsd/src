@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.36 2004/11/13 11:39:40 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.37 2004/11/13 11:48:46 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -17,20 +17,45 @@
 
 use strict;
 use warnings;
+
+package OpenBSD::PackingList::State;
+my $dot = '.';
+
+sub new
+{
+	my $class = shift;
+	bless { default_owner=>'root', 
+	     default_group=>'bin', 
+	     default_mode=> 0444,
+	     cwd=>\$dot}, $class;
+}
+
+sub cwd
+{
+	return ${$_[0]->{cwd}};
+}
+
+sub set_cwd
+{
+	my ($self, $p) = @_;
+
+	require File::Spec;
+
+	$p = File::Spec->canonpath($p);
+	$self->{cwd} = \$p;
+}
+
 package OpenBSD::PackingList;
 
 use OpenBSD::PackingElement;
 use OpenBSD::PackageInfo;
 
-my $dot = '.';
 sub new
 {
 	my $class = shift;
 	bless {state => 
-	    {default_owner=>'root', 
-	     default_group=>'bin', 
-	     default_mode=> 0444,
-	     cwd=>\$dot} }, $class;
+		OpenBSD::PackingList::State->new()
+	}, $class;
 }
 
 sub read

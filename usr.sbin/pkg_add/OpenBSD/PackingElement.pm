@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.69 2004/11/13 11:39:40 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.70 2004/11/13 11:48:46 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -839,8 +839,7 @@ sub keyword() { 'cwd' }
 sub destate
 {
 	my ($self, $state) = @_;
-	my $name = File::Spec->canonpath($self->{name});
-	$state->{cwd} = \$name;
+	$state->set_cwd($self->{name});
 }
 
 package OpenBSD::PackingElement::EndFake;
@@ -947,7 +946,7 @@ sub expand
 	}
 	if (m/\%D/) {
 		die "Bad expand" unless defined $state->{cwd};
-		s/\%D/${$state->{cwd}}/g;
+		s/\%D/$state->cwd()/ge;
 	}
 	if (m/\%B/) {
 		die "Bad expand" unless defined $state->{lastfile};
