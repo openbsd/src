@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.12 2002/10/16 14:43:33 itojun Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.13 2002/11/16 14:27:17 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -306,52 +306,52 @@ print_argv(char *buf, size_t buflen, struct intercept_translate *tl)
 	return (0);
 }
 
-struct intercept_translate trargv = {
+struct intercept_translate ic_trargv = {
 	"argv",
 	get_argv, print_argv,
 };
 
-struct intercept_translate oflags = {
+struct intercept_translate ic_oflags = {
 	"oflags",
 	NULL, print_oflags,
 };
 
-struct intercept_translate linux_oflags = {
+struct intercept_translate ic_linux_oflags = {
 	"oflags",
 	NULL, linux_print_oflags,
 };
 
-struct intercept_translate modeflags = {
+struct intercept_translate ic_modeflags = {
 	"mode",
 	NULL, print_modeflags,
 };
 
-struct intercept_translate uidt = {
+struct intercept_translate ic_uidt = {
 	"uid",
 	NULL, print_number,
 };
 
-struct intercept_translate uname = {
+struct intercept_translate ic_uname = {
 	"uname",
 	NULL, print_uname,
 };
 
-struct intercept_translate gidt = {
+struct intercept_translate ic_gidt = {
 	"gid",
 	NULL, print_number,
 };
 
-struct intercept_translate fdt = {
+struct intercept_translate ic_fdt = {
 	"fd",
 	NULL, print_number,
 };
 
-struct intercept_translate sockdom = {
+struct intercept_translate ic_sockdom = {
 	"sockdom",
 	NULL, print_sockdom,
 };
 
-struct intercept_translate socktype = {
+struct intercept_translate ic_socktype = {
 	"socktype",
 	NULL, print_socktype,
 };
