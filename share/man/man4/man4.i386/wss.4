@@ -1,4 +1,5 @@
-.\"   $NetBSD: wss.4,v 1.1 1995/11/13 09:44:14 pk Exp $
+.\"   $OpenBSD: wss.4,v 1.4 1998/05/12 09:29:45 provos Exp $
+.\"   $NetBSD: wss.4,v 1.8 1998/01/19 20:22:30 augustss Exp $
 .\"
 .\" Copyright (c) 1995 Michael Long.
 .\" All rights reserved.
@@ -32,11 +33,14 @@
 .Nm wss
 .Nd Windows Sound System hardware driver
 .Sh SYNOPSIS
-.Cd "device wss0 at isa? port 0x530 irq 10 drq 0"
+.Cd "device wss0 at isa? port 0x530 irq 10 drq 0 drq2 1"
+.Cd "device wss0 at isa? port 0x530 irq 10 drq 0 flags 1"
+.Cd "audio* at wss?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Microsoft's Windows Sound System hardware and its clones.
+driver supports Microsoft's Windows Sound System, MAD16 chip based
+hardware and their clones.
 The Windows Sound System is a half-duplex device.
 .Pp
 The base I/O port is set by a jumper on the board; valid choices are
@@ -44,9 +48,16 @@ The base I/O port is set by a jumper on the board; valid choices are
 Both IRQ and DMA channels are software programmable.
 The IRQ may be set to 7, 9, 10, or 11, and
 the DMA channel may be set to 0, 1, or 3.
-.Sh BUGS
-This driver doesn't work yet.
 .Pp
+The configuration file must have bit 1 set in
+.Cm flags
+to enable the MAD16 support.  This is to avoid potential
+conflicts with other devices when probing the MAD16 because it requires
+use of extra I/O ports not in the base port range.
+Bit 2 in 
+.Cm flags
+disables the joystick port on MAD16 hardware.
+.Sh BUGS
 The FM synthesizer is not supported.
 .Sh SEE ALSO
 .Xr audio 4 ,
