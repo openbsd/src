@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.5 1998/02/24 04:29:05 deraadt Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.6 2001/01/11 23:37:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mknetid.c,v 1.5 1998/02/24 04:29:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mknetid.c,v 1.6 2001/01/11 23:37:22 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -51,8 +51,8 @@ struct user {
 	int	usr_gid;		/* user gid */
 	int	gid_count;		/* number of gids */
 	int	gid[NGROUPS];		/* additional gids */
-	struct user *prev,*next;	/* links in read order */
-	struct user *hprev,*hnext;	/* links in hash order */
+	struct user *prev, *next;	/* links in read order */
+	struct user *hprev, *hnext;	/* links in hash order */
 };
 
 #ifdef HOSTS
@@ -85,7 +85,8 @@ char *ProgramName = "mknetid";
 struct user *root = NULL, *tail = NULL;
 struct user *hroot[HASHMAX], *htail[HASHMAX];
 
-static int read_line(fp, buf, size)
+int
+read_line(fp, buf, size)
 	FILE *fp;
 	char *buf;
 	int size;
@@ -97,17 +98,18 @@ static int read_line(fp, buf, size)
 			int len = strlen(buf);
 			done += len;
 			if (len > 1 && buf[len-2] == '\\' &&
-					buf[len-1] == '\n') {
+			    buf[len-1] == '\n') {
 				int ch;
 				buf += len - 2;
 				size -= len - 2;
 				*buf = '\n'; buf[1] = '\0';
+
 				/*
 				 * Skip leading white space on next line
 				 */
 				while ((ch = getc(fp)) != EOF &&
-					isascii(ch) && isspace(ch))
-						;
+				    isascii(ch) && isspace(ch))
+					;
 				(void) ungetc(ch, fp);
 			} else {
 				return done;
@@ -123,29 +125,33 @@ hashidx(key)
 char key;
 {
 	if (key < 'A')
-		return(0);
+		return (0);
 	if (key <= 'Z')
-		return(1 + key - 'A');
+		return (1 + key - 'A');
 	if (key < 'a')
-		return(27);
+		return (27);
 	if (key <= 'z')
-		return(28 + key - 'a');
-	return(54);
+		return (28 + key - 'a');
+	return (54);
 }
 
-void add_user(username, uid, gid)
+void
+add_user(username, uid, gid)
 char *username, *uid, *gid;
 {
 	struct user *u;
 	int idx;
 
 	u = (struct user *) malloc(sizeof(struct user));
-	bzero((void *) u,sizeof(struct user));
-	u->usr_name = (char *) malloc(strlen(username) + 1);
-	strcpy(u->usr_name,username);
-	u->usr_uid=atoi(uid);
-	u->usr_gid=atoi(gid);
-	u->gid_count=-1;
+	if (u == NULL)
+		err(1, "malloc");
+	bzero(u, sizeof(struct user));
+	u->usr_name = strdup(username);
+	if (u->usr_name == NULL)
+		err(1, "strdup");
+	u->usr_uid = atoi(uid);
+	u->usr_gid = atoi(gid);
+	u->gid_count = -1;
 	if (root == NULL) {
 		root = tail = u;
 	} else {
@@ -172,9 +178,9 @@ char *username, *gid;
 	idx = hashidx(username[0]);
 	u = hroot[idx];
 	g = atoi(gid);
-	
+
 	while (u != NULL) {
-		if (strcmp(username,u->usr_name) == 0) {
+		if (strcmp(username, u->usr_name) == 0) {
 			if (g != u->usr_gid) {
 				u->gid_count++;
 				if (u->gid_count < NGROUPS) {
@@ -195,13 +201,12 @@ char *fname;
 	char  line[1024];
 	int   line_no = 0;
 	int   len, colon;
-	char  *p,*k,*u,*g;
+	char  *p, *k, *u, *g;
 
-	while (read_line(pfile,line,sizeof(line))) {
-		
+	while (read_line(pfile, line, sizeof(line))) {
 		line_no++;
 		len = strlen(line);
-		
+
 		if (len > 0) {
 			if (line[0] == '#')
 				continue;
@@ -210,17 +215,15 @@ char *fname;
 		/*
 		 * Check if we have the whole line
 		 */ 
-		
 		if (line[len-1] != '\n') {
-			fprintf(stderr,
-				"line %d in \"%s\" is too long\n",
-				line_no, fname);
+			fprintf(stderr, "line %d in \"%s\" is too long\n",
+			    line_no, fname);
 		} else {
 			line[len-1] = '\0';
 		}
 
 		p = (char *) &line;
-		
+
 		k = p; colon = 0;
 		while (*k != '\0') {
 			if (*k == ':')
@@ -229,71 +232,73 @@ char *fname;
 		}
 
 		if (colon > 0) {
-			k = p;			     /* save start of key  */
-			while (*p != ':') { p++; };  /* find first "colon" */
-			if (*p==':') { *p = '\0'; p++; }; /* terminate key */
+			k = p;			/* save start of key  */
+			while (*p != ':')
+				p++;		/* find first "colon" */
+			if (*p==':')
+				*p++ = '\0';	/* terminate key */
 			if (strlen(k) == 1) {
 				if (*k == '+')
 					continue;
 			}
 		}
-		
+
 		if (colon < 4) {
-			fprintf(stderr,
-				"syntax error at line %d in \"%s\"\n",
-				line_no, fname);
+			fprintf(stderr, "syntax error at line %d in \"%s\"\n",
+			    line_no, fname);
 			continue;
 		}
 
-		while (*p != ':') { p++; };	/* find second "colon" */
-		if (*p==':') { *p = '\0'; p++; }; /* terminate passwd */
+		while (*p != ':')
+			p++;			/* find second "colon" */
+		if (*p==':')
+			*p++ = '\0';		/* terminate passwd */
 		u = p;
-		while (*p != ':') { p++; };	/* find third "colon" */
-		if (*p==':') { *p = '\0'; p++; }; /* terminate uid */
+		while (*p != ':')
+			p++;			/* find third "colon" */
+		if (*p==':')
+			*p++ = '\0';		/* terminate uid */
 		g = p;
-		while (*p != ':') { p++; };	/* find forth "colon" */
-		if (*p==':') { *p = '\0'; p++; }; /* terminate gid */
-		while(*p != '\0') { p++; };	/* find end of string */
-		
-		add_user(k,u,g);
+		while (*p != ':')
+			p++;			/* find fourth "colon" */
+		if (*p==':')
+			*p++ = '\0';		/* terminate gid */
+		while (*p != '\0')
+			p++;	/* find end of string */
+
+		add_user(k, u, g);
 	}
 }
 
 int
 isgsep(ch)
-char ch;
+	char ch;
 {
-	int ret;
-
 	switch(ch)  {
 	case ',':
 	case ' ':
 	case '\t':
 	case '\0':
-		ret = 1;
-		break;
+		return (1);
 	default:
-		ret = 0;
+		return (0);
 	}
-
-	return ret;
 }
 
 void
 read_group(gfile, fname)
-FILE *gfile;
-char *fname;
+	FILE *gfile;
+	char *fname;
 {
 	char  line[2048];
 	int   line_no = 0;
 	int   len, colon;
-	char  *p,*k,*u,*g;
+	char  *p, *k, *u, *g;
 
-	while (read_line(gfile,line,sizeof(line))) {
-		
+	while (read_line(gfile, line, sizeof(line))) {
 		line_no++;
 		len = strlen(line);
-		
+
 		if (len > 0) {
 			if (line[0] == '#')
 				continue;
@@ -301,18 +306,16 @@ char *fname;
 
 		/*
 		 * Check if we have the whole line
-		 */ 
-		
+		 */
 		if (line[len-1] != '\n') {
-			fprintf(stderr,
-				"line %d in \"%s\" is too long\n",
-				line_no, fname);
+			fprintf(stderr, "line %d in \"%s\" is too long\n",
+			    line_no, fname);
 		} else {
 			line[len-1] = '\0';
 		}
 
 		p = (char *) &line;
-		
+
 		k = p; colon = 0;
 		while (*k != '\0') {
 			if (*k == ':')
@@ -321,42 +324,46 @@ char *fname;
 		}
 
 		if (colon > 0) {
-			k = p;			     /* save start of key  */
-			while (*p != ':') { p++; };  /* find first "colon" */
-			if (*p==':') { *p = '\0'; p++; }; /* terminate key */
+			k = p;			/* save start of key  */
+			while (*p != ':')
+				p++;		/* find first "colon" */
+			if (*p==':')
+				*p++ = '\0';	/* terminate key */
 			if (strlen(k) == 1) {
 				if (*k == '+')
 					continue;
 			}
 		}
-		
+
 		if (colon < 3) {
-			fprintf(stderr,
-				"syntax error at line %d in \"%s\"\n",
-				line_no, fname);
+			fprintf(stderr, "syntax error at line %d in \"%s\"\n",
+			    line_no, fname);
 			continue;
 		}
 
-		while (*p != ':') { p++; };	/* find second "colon" */
-		if (*p==':') { *p = '\0'; p++; }; /* terminate passwd */
+		while (*p != ':')
+			p++;			/* find second "colon" */
+		if (*p==':')
+			*p++ = '\0';		/* terminate passwd */
 		g = p;
-		while (*p != ':') { p++; };	/* find third "colon" */
-		if (*p==':') { *p = '\0'; p++; }; /* terminate gid */
+		while (*p != ':')
+			p++;			/* find third "colon" */
+		if (*p==':')
+			*p++ = '\0';		/* terminate gid */
 
 		u = p;
 
 		while (*u != '\0') {
-			while (!isgsep(*p)) { p++; };	/* find separator */
+			while (!isgsep(*p))
+				p++;		/* find separator */
 			if (*p != '\0') {
 				*p = '\0';
-				if (u != p) {
-					add_group(u,g);
-				}
+				if (u != p)
+					add_group(u, g);
 				p++;
 			} else {
-				if (u != p) {
-					add_group(u,g);
-				}
+				if (u != p)
+					add_group(u, g);
 			}
 			u = p;
 		}
@@ -364,39 +371,33 @@ char *fname;
 }
 
 void
-print_passwd_group(qflag,domain)
-int qflag;
-char *domain;
+print_passwd_group(qflag, domain)
+	int qflag;
+	char *domain;
 {
-	struct user *u,*p;
+	struct user *u, *p;
 	int i;
 
 	u = root;
 
 	while (u != NULL) {
 		p = root;
-		while(p->usr_uid != u->usr_uid) {
+		while (p->usr_uid != u->usr_uid)
 			p = p->next;
-		}
+
 		if (p != u) {
 			if (!qflag) {
-				fprintf(stderr,
-					"%s: unix.%d@%s %s\n",
-					ProgramName,
-					u->usr_uid,
-					domain,
-					"multiply defined, other definitions ignored");
+				fprintf(stderr, "%s: unix.%d@%s %s\n",
+				    ProgramName, u->usr_uid, domain,
+				    "multiply defined, other definitions ignored");
 			}
 		} else {
 			printf("unix.%d@%s %d:%d",
-				u->usr_uid,
-				domain,
-			       u->usr_uid,
-			       u->usr_gid);
+			    u->usr_uid, domain, u->usr_uid, u->usr_gid);
 			if (u->gid_count >= 0) {
-				i=0;
+				i = 0;
 				while (i <= u->gid_count) {
-					printf(",%d",u->gid[i]);
+					printf(",%d", u->gid[i]);
 					i++;
 				}
 			}
@@ -408,19 +409,18 @@ char *domain;
 
 void
 print_hosts(pfile, fname, domain)
-FILE *pfile;
-char *fname, *domain;
+	FILE *pfile;
+	char *fname, *domain;
 {
 	char  line[1024];
 	int   line_no = 0;
 	int   len, colon;
-	char  *p,*k,*u;
+	char  *p, *k, *u;
 
-	while (read_line(pfile,line,sizeof(line))) {
-		
+	while (read_line(pfile, line, sizeof(line))) {
 		line_no++;
 		len = strlen(line);
-		
+
 		if (len > 0) {
 			if (line[0] == '#')
 				continue;
@@ -429,23 +429,20 @@ char *fname, *domain;
 		/*
 		 * Check if we have the whole line
 		 */ 
-		
 		if (line[len-1] != '\n') {
-			fprintf(stderr,
-				"line %d in \"%s\" is too long\n",
-				line_no, fname);
+			fprintf(stderr, "line %d in \"%s\" is too long\n",
+			    line_no, fname);
 		} else {
 			line[len-1] = '\0';
 		}
 
 		p = (char *) &line;
-		
+
 		k = p;				/* save start of key  */
-		while (!isspace(*p)) { p++; };	/* find first "space" */
-		while (isspace(*p)) {		/* replace space with <NUL> */
-			*p = '\0';
-			p++;
-		}
+		while (!isspace(*p))
+			p++;			/* find first "space" */
+		while (isspace(*p))
+			*p++ = '\0';		/* replace space with <NUL> */
 
 		u = p;
 		while (p != NULL) {
@@ -461,10 +458,7 @@ char *fname, *domain;
 			}
 		}
 
-		printf("unix.%s@%s 0:%s\n",
-		       u,
-		       domain,
-		       u);
+		printf("unix.%s@%s 0:%s\n", u, domain, u);
 	}
 }
 
@@ -476,13 +470,12 @@ char *fname;
 	char  line[1024];
 	int   line_no = 0;
 	int   len, colon;
-	char  *p,*k,*u;
+	char  *p, *k, *u;
 
-	while (read_line(mfile,line,sizeof(line))) {
-		
+	while (read_line(mfile, line, sizeof(line))) {
 		line_no++;
 		len = strlen(line);
-		
+
 		if (len > 0) {
 			if (line[0] == '#')
 				continue;
@@ -491,23 +484,20 @@ char *fname;
 		/*
 		 * Check if we have the whole line
 		 */ 
-		
 		if (line[len-1] != '\n') {
-			fprintf(stderr,
-				"line %d in \"%s\" is too long\n",
-				line_no, fname);
+			fprintf(stderr, "line %d in \"%s\" is too long\n",
+			    line_no, fname);
 		} else {
 			line[len-1] = '\0';
 		}
 
 		p = (char *) &line;
-		
+
 		k = p;				/* save start of key  */
-		while (!isspace(*p)) { p++; };	/* find first "space" */
-		while (isspace(*p)) {		/* replace space with <NUL> */
-			*p = '\0';
-			p++;
-		}
+		while (!isspace(*p))
+			p++;			/* find first "space" */
+		while (isspace(*p))
+			*p++ = '\0';		/* replace space with <NUL> */
 
 		u = p;
 		while (p != NULL) {
@@ -523,14 +513,14 @@ char *fname;
 			}
 		}
 
-		printf("%s %s\n",k,u);
+		printf("%s %s\n", k, u);
 	}
 }
 
 int
-main (argc,argv)
-int argc;
-char *argv[];
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
 	int	qflag, ch, usage;
 	char   *domain;
@@ -538,43 +528,44 @@ char *argv[];
 
 	qflag = usage = 0;
 	domain = NULL;
-	
+
 	while ((ch = getopt(argc, argv, "d:g:h:m:p:q")) != -1)
 		switch (ch) {
-			case 'd':
-				domain = optarg;
-				break;
-			case 'g':
-				GroupFile = optarg;
-				break;
-			case 'h':
-				HostFile = optarg;
-				break;
-			case 'm':
-				NetidFile = optarg;
-				break;
-			case 'p':
-				PasswdFile = optarg;
-				break;
-			case 'q':
-				qflag++;
-				break;
-			default:
-				usage++;
-				break;
+		case 'd':
+			domain = optarg;
+			break;
+		case 'g':
+			GroupFile = optarg;
+			break;
+		case 'h':
+			HostFile = optarg;
+			break;
+		case 'm':
+			NetidFile = optarg;
+			break;
+		case 'p':
+			PasswdFile = optarg;
+			break;
+		case 'q':
+			qflag++;
+			break;
+		default:
+			usage++;
+			break;
 		}
-	
+
 	if (argc > optind) {
-	  usage++;
+		usage++;
 	}
 
 	if (usage) {
 		fprintf(stderr,
-			"usage:\t%s [-d domain] [-q] [-p passwdfile] [-g groupfile]\n\t\t[-h hostfile] [-m netidfile]\n",
-			ProgramName);
+		    "usage:\t%s [-d domain] [-q] [-p passwdfile] [-g groupfile]\n"
+		    "\t\t[-h hostfile] [-m netidfile]\n",
+		    ProgramName);
 		exit(1);
 	}
-	
+
 	if (domain == NULL) {
 		yp_get_default_domain(&domain);
 	}
@@ -582,36 +573,34 @@ char *argv[];
 	pfile = fopen(PasswdFile, "r");
 	if (pfile == NULL) {
 		fprintf(stderr,"%s: can't open file \"%s\"\n",
-			ProgramName, PasswdFile);
+		    ProgramName, PasswdFile);
 		exit(1);
 	}
 
 	gfile = fopen(GroupFile, "r");
 	if (gfile == NULL) {
 		fprintf(stderr,"%s: can't open file \"%s\"\n",
-			ProgramName, PasswdFile);
-		exit(1);		
+		    ProgramName, PasswdFile);
+		exit(1);
 	}
 
 	hfile = fopen(HostFile, "r");
 	if (hfile == NULL) {
 		fprintf(stderr,"%s: can't open file \"%s\"\n",
-			ProgramName, PasswdFile);
+		    ProgramName, PasswdFile);
 		exit(1);
 	}
 
-	printf("NetidFile: %s\n",NetidFile);
+	printf("NetidFile: %s\n", NetidFile);
 	mfile = fopen(NetidFile, "r");
 
-	read_passwd(pfile,PasswdFile);
-	read_group(gfile,GroupFile);
+	read_passwd(pfile, PasswdFile);
+	read_group(gfile, GroupFile);
 
-	print_passwd_group(qflag,domain);
-	print_hosts(hfile,HostFile,domain);
-	if (mfile != NULL) {
-		print_netid(mfile,NetidFile);
-	}
+	print_passwd_group(qflag, domain);
+	print_hosts(hfile, HostFile, domain);
 
-	return(0);
-  
+	if (mfile != NULL)
+		print_netid(mfile, NetidFile);
+	return (0);
 }
