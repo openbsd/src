@@ -1,4 +1,4 @@
-.\"	$Id: smtpd.8,v 1.1 1997/12/12 20:44:37 beck Exp $
+.\"	$Id: smtpd.8,v 1.2 1997/12/12 20:50:33 deraadt Exp $
 .Dd Dec 10, 1997
 .Dt SMTPD 8
 .Os OpenBSD
@@ -16,26 +16,24 @@ Obtuse Systems SMTPD message storing daemon
 .Op Fl m Ar myname
 .Op Fl s Ar maxsize
 .Sh DESCRIPTION
- The
+The
 .Nmsmtpd
 daemon talks the Simple Mail Transfer Protocol (SMTP) with
 other SMTP daemons to receive mail from them, and saves it into a spool
 directory for later processing. It is the store portion of an SMTP
-store and foward proxy. The symbiotic companion program smtpfwdd is
+store and forward proxy. The symbiotic companion program smtpfwdd is
 used to forward the spooled mail on to its eventual destination.
 smtpd is normally invoked from a super-server such as 
 .Xr inetd 8 . 
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl c
-Specigy a different 
+Specify a different 
 .Ar chrootdir
 directory to chroot into on startup. The default is 
 .Pa /var/spool/smtpd.  
-This directory should be re
 This directory should be readable and writable only to the user that
 smtpd runs as.
-
 .It Fl d
 Specify a different spool
 .Ar directory
@@ -57,7 +55,7 @@ and will complain in the syslogs if the DNS information on a host
 seems to indicate a possible spoof or misconfiguration.
 .It Fl m
 Specify
-.Ar myname,
+.Ar myname ,
 the hostname the daemon should announce itself
 as. the default is whatever gethostname() returns.
 .It Fl s
@@ -83,7 +81,7 @@ your chroot jail for smtpd in a manner that an openlog() call will
 work in it.
 .Sh FILES
 The address checking file is normally 
-.Pa etc/smtpd_check_rules,
+.Pa etc/smtpd_check_rules ,
 within the chroot directory unless otherwise configured at compile time.
 .Pp
 The address check file, when enabled is read for each RCPT line in the
@@ -94,6 +92,7 @@ RCPT: addresses.
 .Xr smtpfwdd 8 ,
 .Xr sendmail 8 ,
 .Xr inetd 8
+.Pp
 .Pa http://www.obtuse.com/smtpd.html
 for examples and rules file details.
 .Sh BUGS
