@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.49 2002/06/07 23:59:19 jasoni Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.50 2002/06/08 21:53:53 jasoni Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -128,14 +128,8 @@ icmp_init()
 	}
 }
 
-/*
- * Generate an error packet of type error
- * in response to bad packet ip.
- *
- * The ip packet inside has ip_off and ip_len in host byte order.
- */
-void
-icmp_error(n, type, code, dest, destifp)
+struct mbuf *
+icmp_do_error(n, type, code, dest, destifp)
 	struct mbuf *n;
 	int type, code;
 	n_long dest;
@@ -272,9 +266,32 @@ icmp_error(n, type, code, dest, destifp)
 		m_tag_unlink(n, mtag);
 		m_tag_prepend(m, mtag);
 	}
-	icmp_reflect(m);
+
+	return (m);
 
 freeit:
+	m_freem(n);
+	return (NULL);
+}
+
+/*
+ * Generate an error packet of type error
+ * in response to bad packet ip.
+ *
+ * The ip packet inside has ip_off and ip_len in host byte order.
+ */
+void
+icmp_error(n, type, code, dest, destifp)
+	struct mbuf *n;
+	int type, code;
+	n_long dest;
+	struct ifnet *destifp;
+{
+	struct mbuf *m;
+
+	m = icmp_do_error(n, type, code, dest, destifp);
+	if (m != NULL)
+		icmp_reflect(m);
 	m_freem(n);
 }
 
