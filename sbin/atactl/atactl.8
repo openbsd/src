@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.24 2003/06/03 13:16:07 jmc Exp $
+.\"	$OpenBSD: atactl.8,v 1.25 2004/01/13 22:44:58 grange Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -434,10 +434,10 @@ Displays the vendor, product, revision strings and capabilities (such as
 support for SMART) as reported by
 .Pa /dev/wd0 .
 .Pp
-.Li # atactl /dev/wd1c smartenable
+.Li # atactl /dev/wd0c smartenable
 .Pp
 Enables the SMART support on
-.Pa /dev/wd1
+.Pa /dev/wd0
 for detection of early warning signs of device failure.
 .Pp
 .Li 0 * * * * /sbin/atactl /dev/wd0c smartstatus >/dev/null
