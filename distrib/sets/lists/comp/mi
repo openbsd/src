@@ -1889,6 +1889,7 @@
 ./usr/share/man/cat2/mmap.0
 ./usr/share/man/cat2/mount.0
 ./usr/share/man/cat2/mprotect.0
+./usr/share/man/cat2/mquery.0
 ./usr/share/man/cat2/msgctl.0
 ./usr/share/man/cat2/msgget.0
 ./usr/share/man/cat2/msgrcv.0
