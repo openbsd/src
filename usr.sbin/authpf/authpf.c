@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.39 2002/12/22 16:19:32 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.40 2002/12/29 22:00:37 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -580,7 +580,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	}
 
 	if (add) {
-		if (symset("user_ip", ipsrc)) {
+		if (symset("user_ip", ipsrc) || symset("user_id", luser)) {
 			syslog(LOG_ERR, "symset");
 			goto error;
 		}
