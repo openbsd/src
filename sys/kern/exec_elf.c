@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.43 2002/11/22 22:10:21 drahn Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.44 2003/02/18 03:54:40 drahn Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -242,8 +242,9 @@ void
 ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	Elf_Phdr *ph, Elf_Addr *addr, Elf_Addr *size, int *prot, int flags)
 {
-	u_long uaddr, msize, psize, rm, rf;
-	long diff, offset;
+	u_long uaddr, msize, lsize, psize, rm, rf;
+	long diff, offset, bdiff;
+	Elf_Addr base;
 
 	/*
 	 * If the user specified an address, then we load there.
@@ -252,12 +253,20 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		if (ph->p_align > 1) {
 			*addr = ELF_TRUNC(*addr, ph->p_align);
 			diff = ph->p_vaddr - ELF_TRUNC(ph->p_vaddr, ph->p_align);
+			/* page align vaddr */
+			base = *addr + trunc_page(ph->p_vaddr) 
+			    - ELF_TRUNC(ph->p_vaddr, ph->p_align);
+
+			bdiff = ph->p_vaddr - trunc_page(ph->p_vaddr);
+
 		} else
 			diff = 0;
 	} else {
 		*addr = uaddr = ph->p_vaddr;
 		if (ph->p_align > 1)
 			*addr = ELF_TRUNC(uaddr, ph->p_align);
+		base = trunc_page(uaddr);
+		bdiff = uaddr - base;
 		diff = uaddr - *addr;
 	}
 
@@ -265,40 +274,40 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	*prot |= (ph->p_flags & PF_W) ? VM_PROT_WRITE : 0;
 	*prot |= (ph->p_flags & PF_X) ? VM_PROT_EXECUTE : 0;
 
-	offset = ph->p_offset - diff;
-	*size = ph->p_filesz + diff;
 	msize = ph->p_memsz + diff;
-	psize = round_page(*size);
+	offset = ph->p_offset - bdiff;
+	lsize = ph->p_filesz + bdiff;
+	psize = round_page(lsize);
 
 	/*
 	 * Because the pagedvn pager can't handle zero fill of the last
 	 * data page if it's not page aligned we map the last page readvn.
 	 */
 	if (ph->p_flags & PF_W) {
-		psize = trunc_page(*size);
+		psize = trunc_page(lsize);
 		if (psize > 0)
-			NEW_VMCMD2(vcset, vmcmd_map_pagedvn, psize, *addr, vp,
+			NEW_VMCMD2(vcset, vmcmd_map_pagedvn, psize, base, vp,
 			    offset, *prot, flags);
-		if (psize != *size) {
-			NEW_VMCMD2(vcset, vmcmd_map_readvn, *size - psize,
-			    *addr + psize, vp, offset + psize, *prot, flags);
+		if (psize != lsize) {
+			NEW_VMCMD2(vcset, vmcmd_map_readvn, lsize - psize,
+			    base + psize, vp, offset + psize, *prot, flags);
 		}
 	} else {
-		NEW_VMCMD2(vcset, vmcmd_map_pagedvn, psize, *addr, vp, offset,
+		NEW_VMCMD2(vcset, vmcmd_map_pagedvn, psize, base, vp, offset,
 		    *prot, flags);
 	}
 
 	/*
 	 * Check if we need to extend the size of the segment
 	 */
-	rm = round_page(*addr + msize);
-	rf = round_page(*addr + *size);
+	rm = round_page(*addr + ph->p_memsz + diff);
+	rf = round_page(*addr + ph->p_filesz + diff);
 
 	if (rm != rf) {
 		NEW_VMCMD2(vcset, vmcmd_map_zero, rm - rf, rf, NULLVP, 0,
 		    *prot, flags);
-		*size = msize;
 	}
+	*size = msize;
 }
 
 /*
