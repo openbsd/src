@@ -54,7 +54,7 @@ process again from scratch.
 	the prompt asking you for a shell name, just hit return.
 
 	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "ansi-mini"
+	installing from a non-serial console, the default of "sun"
 	if correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
 	(If your terminal type is xterm, just use vt100).  After
