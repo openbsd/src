@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.15 2001/06/22 14:14:09 deraadt Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.16 2001/07/05 10:00:45 art Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -506,7 +506,7 @@ extent_alloc_region(ex, start, size, flags)
  * a power of 2.
  */
 int
-extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
+extent_alloc_subregion(ex, substart, subend, size, alignment, skew, boundary,
     flags, result)
 	struct extent *ex;
 	u_long substart, subend, size, alignment, skew, boundary;

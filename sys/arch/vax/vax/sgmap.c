@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgmap.c,v 1.4 2001/06/08 08:09:33 art Exp $	*/
+/*	$OpenBSD: sgmap.c,v 1.5 2001/07/05 10:00:41 art Exp $	*/
 /* $NetBSD: sgmap.c,v 1.8 2000/06/29 07:14:34 mrg Exp $ */
 
 /*-
@@ -142,7 +142,7 @@ vax_sgmap_alloc(map, origlen, sgmap, flags)
 	    origlen, len, map->_dm_sgvalen, map->_dm_boundary, boundary);
 #endif
 
-	error = extent_alloc(sgmap->aps_ex, map->_dm_sgvalen, VAX_NBPG,
+	error = extent_alloc(sgmap->aps_ex, map->_dm_sgvalen, VAX_NBPG, 0,
 	    0, (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT : EX_WAITOK,
 	    &map->_dm_sgva);
 #if 0

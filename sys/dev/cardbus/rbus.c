@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.c,v 1.2 2000/05/31 15:52:50 aaron Exp $ */
+/*	$OpenBSD: rbus.c,v 1.3 2001/07/05 10:00:43 art Exp $ */
 /*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
@@ -123,14 +123,14 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 
     if (decodesize == align) {
       if(extent_alloc_subregion(rbt->rb_ext, substart, subend, size, align, 0,
-				exflags, (u_long *)&result)) {
+				0, exflags, (u_long *)&result)) {
 	return 1;
       }
     } else if (decodesize == 0) {
       /* maybe, the resister is overflowed. */
       
       if (extent_alloc_subregion(rbt->rb_ext, addr, addr + size, size,
-				 0, 0, exflags, (u_long *)&result)) {
+				 0, 0, 0, exflags, (u_long *)&result)) {
 	return 1;
       }
     } else {
@@ -146,7 +146,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
       val = 1;
       for (; search_addr + size <= subend; search_addr += boundary) {
 	val = extent_alloc_subregion(rbt->rb_ext,search_addr, search_addr+size,
-				size, align, 0, exflags, (u_long *)&result);
+				size, align, 0, 0, exflags, (u_long *)&result);
         DPRINTF(("rbus: trying [%lx:%lx] %lx\n",
             search_addr, search_addr+size, align));
 	if (val == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.8 2001/06/27 04:22:37 art Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.9 2001/07/05 10:00:35 art Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.5 1999/03/26 23:41:30 mycroft Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags, bpap, bshp)
 	 * Do the requested allocation.
 	 */
 	error = extent_alloc_subregion(iomem_ex, rstart, rend, size, alignment,
-	    boundary,
+	    0, boundary,
 	    EX_FAST | EX_NOWAIT | (iomem_malloc_safe ?  EX_MALLOCOK : 0),
 	    &bpa);
 

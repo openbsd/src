@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.166 2001/06/29 19:56:37 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.167 2001/07/05 10:00:30 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -476,9 +476,6 @@ allocsys(v)
 
 #define	valloc(name, type, num) \
 	    v = (caddr_t)(((name) = (type *)v) + (num))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
 	valloc(timeouts, struct timeout, ntimeout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
@@ -2612,7 +2609,7 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	/*
 	 * Do the requested allocation.
 	 */
-	error = extent_alloc_subregion(ex, rstart, rend, size, alignment,
+	error = extent_alloc_subregion(ex, rstart, rend, size, alignment, 0,
 	    boundary, EX_NOWAIT | (ioport_malloc_safe ?  EX_MALLOCOK : 0),
 	    &bpa);
 

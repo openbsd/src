@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.27 2001/06/23 15:26:29 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.28 2001/07/05 10:00:49 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.28 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /*
@@ -615,7 +615,7 @@ swapdrum_add(sdp, npages)
 {
 	u_long result;
 
-	if (extent_alloc(swapmap, npages, EX_NOALIGN, EX_NOBOUNDARY,
+	if (extent_alloc(swapmap, npages, EX_NOALIGN, 0, EX_NOBOUNDARY,
 	    EX_WAITOK, &result))
 		panic("swapdrum_add");
 
@@ -1731,7 +1731,7 @@ ReTry:	/* XXXMRG */
 				continue;
 			if (sdp->swd_npginuse + *nslots > sdp->swd_npages)
 				continue;
-			if (extent_alloc(sdp->swd_ex, *nslots, EX_NOALIGN,
+			if (extent_alloc(sdp->swd_ex, *nslots, EX_NOALIGN, 0,
 					 EX_NOBOUNDARY, EX_MALLOCOK|EX_NOWAIT,
 					 &result) != 0) {
 				continue;

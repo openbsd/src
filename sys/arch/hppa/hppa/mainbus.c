@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.10 2001/01/12 23:49:52 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.11 2001/07/05 10:00:28 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -242,7 +242,7 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 		panic("bus_space_alloc: bad region start/end");
 
 	if ((error = extent_alloc_subregion(hppa_ex, rstart, rend, size,
-					    align, boundary, EX_NOWAIT, &bpa)))
+					    align, 0, boundary, EX_NOWAIT, &bpa)))
 		return (error);
 
 	if ((error = mbus_add_mapping(bpa, size, cachable, bshp))) {

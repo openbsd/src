@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2001/06/08 08:09:32 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.18 2001/07/05 10:00:40 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -403,7 +403,7 @@ pmap_pinit(pmap)
 	 * XXX Ok to use kmem_alloc_wait() here?
 	 */
 	bytesiz = USRPTSIZE * sizeof(struct pte);
-	res = extent_alloc(ptemap, bytesiz, 4, 0, EX_WAITSPACE|EX_WAITOK,
+	res = extent_alloc(ptemap, bytesiz, 4, 0, 0, EX_WAITSPACE|EX_WAITOK,
 	    (u_long *)&pmap->pm_p0br);
 	if (res)
 		panic("pmap_pinit");
