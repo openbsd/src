@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.34 1997/09/17 17:50:40 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.35 1997/09/24 22:42:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -94,7 +94,7 @@ biosd_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void* buf)
 			  "xchgb %%ch, %%cl\n\t"
 			  "rorb  $2, %%cl\n\t"
 			  "orb %b5, %%cl\n\t"
-			  "incb %%cl\n\t"
+			  "incl %%cx\n\t"
 			  DOINT(0x13) "\n\t"
 			  "setc %b0"
 			  : "=a" (rv)
