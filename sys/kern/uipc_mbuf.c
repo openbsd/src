@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.8 1999/01/07 22:28:01 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.9 1999/02/26 04:49:07 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -64,6 +64,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #include <vm/vm.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 extern	vm_map_t mb_map;
 struct	mbuf *mbutl;
 char	*mclrefcnt;
@@ -101,7 +105,12 @@ m_clalloc(ncl, nowait)
 	int npg, s;
 
 	npg = ncl * CLSIZE;
+#if defined(UVM)
+	p = (caddr_t)uvm_km_kmemalloc(mb_map, uvmexp.mb_object, ctob(npg),
+			      nowait ? 0 : UVM_KMF_NOWAIT);
+#else
 	p = (caddr_t)kmem_malloc(mb_map, ctob(npg), !nowait);
+#endif
 	if (p == NULL) {
 		s = splclock();
 		curtime = time;

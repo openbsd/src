@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.24 1999/02/19 17:17:49 art Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.25 1999/02/26 04:54:00 art Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -250,7 +250,11 @@ lkmunreserve()
 	 * Actually unreserve the memory
 	 */
 	if (curp && curp->area) {
+#if defined(UVM)
+		uvm_km_free(kmem_map, curp->area, curp->size);
+#else
 		kmem_free(kmem_map, curp->area, curp->size);/**/
+#endif
 		curp->area = 0;
 	}
 
@@ -326,7 +330,11 @@ lkmioctl(dev, cmd, data, flag, p)
 		 */
 		curp->size = resrvp->size;
 
+#if defined(UVM)
+		curp->area = uvm_km_zalloc(kmem_map, curp->size);
+#else
 		curp->area = kmem_alloc(kmem_map, curp->size);/**/
+#endif
 
 		curp->offset = 0;		/* load offset */
 
@@ -335,7 +343,13 @@ lkmioctl(dev, cmd, data, flag, p)
 		if (cmd == LMRESERV && resrvp->sym_size) {
 			curp->sym_size = resrvp->sym_size;
 			curp->sym_symsize = resrvp->sym_symsize;
-			curp->syms = (caddr_t)kmem_alloc(kmem_map, curp->sym_size);
+#if defined(UVM)
+			curp->syms = (caddr_t)uvm_km_zalloc(kmem_map,
+							    curp->sym_size);
+#else
+			curp->syms = (caddr_t)kmem_alloc(kmem_map,
+							 curp->sym_size);
+#endif
 			curp->sym_offset = 0;
 			resrvp->sym_addr = curp->syms; /* ret symbol addr */
 		} else {
