@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.21 2003/08/08 09:26:03 jmc Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.22 2004/02/19 22:20:05 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -352,7 +352,7 @@ but would perform username lookups with all other systems.
 A flaw in the sequence number generator of many TCP/IP implementations
 allows intruders to easily impersonate trusted hosts and to break in
 via, for example, the remote shell service.
-The IDENT (RFC 931 etc.)
+The IDENT (RFC 931 etc.\&)
 service can be used to detect such and other host address spoofing attacks.
 .Pp
 Before accepting a client request, the wrappers can use the IDENT

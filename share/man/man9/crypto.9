@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.26 2003/10/23 18:31:34 jmc Exp $
+.\"	$OpenBSD: crypto.9,v 1.27 2004/02/19 22:20:05 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -443,8 +443,7 @@ elements, indicating which algorithms are supported.
 The last three arguments are pointers to three
 driver-provided functions that the framework may call to establish new
 cryptographic context with the driver, free already established
-context, and ask for a request to be processed (encrypt, decrypt,
-etc.)
+context, and ask for a request to be processed (encrypt, decrypt, etc.\&)
 .Fn crypto_unregister
 is called by drivers that wish to withdraw support for an algorithm.
 The two arguments are the driver and algorithm identifiers, respectively.
