@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.22 2002/11/24 20:36:11 henning Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.23 2002/12/11 19:44:34 grange Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -1327,9 +1327,7 @@ smart_print_errdata(struct smart_log_errdata *data)
 }
 
 int
-smart_cksum(data, len)
-	u_int8_t *data;
-	int len;
+smart_cksum(u_int8_t *data, int len)
 {
 	u_int8_t sum = 0;
 	int i;
