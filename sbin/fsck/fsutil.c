@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.2 1997/07/25 19:13:18 mickey Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.3 2001/05/15 22:03:03 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -291,7 +291,11 @@ void *
 emalloc(s)
 	size_t s;
 {
-	void *p = malloc(s);
+	void *p;
+
+	if (s == 0)
+		err(1, "malloc failed");
+	p = malloc(s);
 	if (p == NULL)
 		err(1, "malloc failed");
 	return p;
@@ -303,6 +307,8 @@ erealloc(p, s)
 	void *p;
 	size_t s;
 {
+	if (s == 0)
+		err(1, "realloc failed");
 	p = realloc(p, s);
 	if (p == NULL)
 		err(1, "realloc failed");
