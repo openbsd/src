@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.21 2004/04/03 10:07:08 jmc Exp $
+.\"	$OpenBSD: rfork.2,v 1.22 2004/12/31 21:05:47 jaredy Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -42,8 +42,9 @@ except as outlined in the
 .Xr fork 2
 manual page.
 .Fn rfork
-can be used to manipulate the resources of the parent process and the
+is used to manipulate the resources of the parent process and the
 child process.
+.Pp
 Operations currently supported include whether to copy or share the file
 descriptor table between the two processes, whether to share the address
 space, and whether the parent should
@@ -58,50 +59,65 @@ They are defined in the header file
 .Aq Pa sys/param.h
 and are the logical OR of one or more of the following:
 .Bl -tag -width "RFNOWAIT"
-.It Dv RFNAMEG
-New Plan 9
-.Sq name space .
-This is a Plan 9 specific flag, and not implemented.
-.It Dv RFENVG
-Copy Plan 9
-.Sq env space .
-This is a Plan 9 specific flag, and not implemented.
+.\" .It Dv RFNAMEG
+.\" New Plan 9
+.\" .Sq name space .
+.\" This is a Plan 9 specific flag, and is not implemented.
+.\" .It Dv RFENVG
+.\" Copy Plan 9
+.\" .Sq env space .
+.\" This is a Plan 9 specific flag, and is not implemented.
 .It Dv RFFDG
 Copy the parent's file descriptor table.
 If this flag is unset, the parent and child will share the parent's
 file descriptor table.
+Descriptors will remain in existence until they are closed by all
+child processes using the table copies as well as by the parent process.
 May not be used in conjunction with
 .Dv RFCFDG .
-.It Dv RFNOTEG
-Create new Plan 9
-.Sq note group .
-This is a Plan 9 specific flag, and not implemented.
+.\" .It Dv RFNOTEG
+.\" Create new Plan 9
+.\" .Sq note group .
+.\" This is a Plan 9 specific flag, and is not implemented.
 .It Dv RFPROC
 Create a new process.
 The current implementation requires this flag to always be set.
 .It Dv RFMEM
-The kernel forces sharing of the entire address space.
+Force sharing of the entire address space between the parent and child
+processes.
 The child will then inherit all the shared segments the parent process owns.
 Subsequent forks by the parent will then propagate the shared
-data and bss between children.
+data and BSS segments among children.
 .It Dv RFNOWAIT
-Parent need not
+Child processes will have their resources reaped immediately and
+implicitly when they terminate instead of turning into zombies,
+so the parent process may not call
 .Xr wait 2
-on child.
-.It Dv RFCNAMEG
-Zero Plan 9
-.Sq name space .
-This is a Plan 9 specific flag, and not implemented.
-.It Dv RFCENVG
-Zero Plan 9
-.Sq env space .
-This is a Plan 9 specific flag, and not implemented.
+to collect their exit statuses and have their resources released
+explicitly.
+.\" .It Dv RFCNAMEG
+.\" Zero Plan 9
+.\" .Sq name space .
+.\" This is a Plan 9 specific flag, and is not implemented.
+.\" .It Dv RFCENVG
+.\" Zero Plan 9
+.\" .Sq env space .
+.\" This is a Plan 9 specific flag, and is not implemented.
 .It Dv RFCFDG
 Zero the child's file descriptor table
 .Pq i.e. start with a blank file descriptor table .
 May not be used in conjunction with
 .Dv RFFDG .
 .El
+.Pp
+.Xr fork 2
+can be implemented as a call to
+.Fn rfork
+using "RFFDG|RFPROC", but isn't for backwards compatibility.
+If a process has file descriptor table sharing active, setuid or setgid
+programs will not
+.Xr execve 2
+with extra privileges.
 .Sh RETURN VALUES
 The parent process returns the process ID
 .Pq PID
@@ -110,15 +126,6 @@ The child process returns 0.
 The range of the process ID is defined in
 .Aq Pa sys/proc.h
 and is currently between 1 and 32766, inclusive.
-.Pp
-.Fn fork
-can be implemented as a call to
-.Fn rfork
-using "RFFDG|RFPROC", but isn't for backwards compatibility.
-If a process has file descriptor table sharing active, setuid or setgid
-programs will not
-.Xr execve 2
-with extra privileges.
 .Sh ERRORS
 .Fn rfork
 will fail and no child process will be created if:
@@ -149,7 +156,7 @@ is currently defined in
 as
 .Dv CHILD_MAX ,
 which is currently defined as 80 in
-.Aq Pa sys/limits.h .
+.Aq Pa sys/syslimits.h .
 .El
 .Sh SEE ALSO
 .Xr _exit 2 ,
