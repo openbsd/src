@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.24 2001/11/21 21:16:18 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.25 2001/11/21 21:37:01 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -733,7 +733,8 @@ msdosfs_sync_vnode(struct vnode *vp, void *arg)
 
 	if ((error = VOP_FSYNC(vp, msa->cred, msa->waitfor, msa->p)) != 0)
 		msa->allerror = error;
-	vput(vp);
+	VOP_UNLOCK(vp, 0, msa->p);
+	vrele(vp);
 
 	return (0);
 }
