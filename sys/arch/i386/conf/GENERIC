@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.102 1999/01/11 14:28:57 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.103 1999/03/04 00:00:47 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -200,13 +200,13 @@ pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
 inphy*	at mii? phy ?				# Intel 82555 PHYs
-#icsphy*	at mii? phy ?				# ICS 1890 PHYs
-#lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
+#icsphy*	at mii? phy ?			# ICS 1890 PHYs
+#lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
-#mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
+#mtdphy*	at mii? phy ?			# Myson MTD972 PHYs
 #ukphy*	at mii? phy ?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
@@ -217,6 +217,7 @@ sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
 sb*	at isapnp?
 wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
+wss*	at isapnp?
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis UltraSound (drq2 is record drq)
 ym*	at isapnp?
@@ -238,6 +239,7 @@ audio*  at sb?
 audio*  at gus?
 audio*  at pas?
 audio*  at sp?
+#option	CONFIG_CS4232 /* horrible hack for "wss0 at isapnp"
 audio*  at wss?
 audio*  at ym?
 audio*  at eap?
