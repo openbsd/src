@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.18 2003/10/28 13:23:59 avsm Exp $	*/
+/*	$OpenBSD: util.c,v 1.19 2003/12/06 20:14:40 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -292,7 +292,7 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 		} else if (fg->pattern[i] == '.') {
 			hasDot = i;
 			if (i < fg->patternLen / 2) {
-				if (firstHalfDot < -1)
+				if (firstHalfDot < 0)
 					/* Closest dot to the beginning */
 					firstHalfDot = i;
 			} else {
