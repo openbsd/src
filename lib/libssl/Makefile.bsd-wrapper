@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.29 2001/01/31 20:49:10 brad Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.30 2001/02/05 22:03:06 todd Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -41,7 +41,19 @@ MUNGEDFILES= \
 	${.OBJDIR}/${SSL_SRC}/Makefile.ssl \
 	${.OBJDIR}/${SSL_SRC}/Makefile \
 	${.OBJDIR}/${SSL_SRC}/apps/der_chop \
-	${.OBJDIR}/${SSL_SRC}/tools/c_rehash
+	${.OBJDIR}/${SSL_SRC}/tools/c_rehash \
+	${.OBJDIR}/${SSL_SRC}/apps/CA.pl \
+	${.OBJDIR}/${SSL_SRC}/apps/CA.pl.bak \
+	${.OBJDIR}/des_random_key.pm \
+	${.OBJDIR}/HMAC.pm \
+	${.OBJDIR}/MD5.pm \
+	${.OBJDIR}/MDC2.pm \
+	${.OBJDIR}/SHA1.pm \
+	${.OBJDIR}/BUF_MEM_new.pm \
+	${.OBJDIR}/RC4.pm \
+	${.OBJDIR}/RIPEMD160.pm \
+	${.OBJDIR}/CRYPTO_set_locking_callback.pm
+
 
 .include <bsd.own.mk>		# for NOMAN
 
