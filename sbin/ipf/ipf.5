@@ -4,7 +4,7 @@ ipf \- IP packet filter rule syntax
 .SH DESCRIPTION
 .PP
 A rule file for \fBipf\fP may have any name or even be stdin.  As
-\fBipfstat\fP produces parseable rules as output when displaying the internal
+\fBipfstat\fP produces parsable rules as output when displaying the internal
 kernel filter lists, it is quite plausible to use its output to feed back
 into \fBipf\fP.  Thus, to remove all filters on input packets, the following
 could be done:
@@ -69,7 +69,7 @@ seclvl  = "unclass" | "confid" | "reserv-1" | "reserv-2" | "reserv-3" |
 icmp-type = "unreach" | "echo" | "echorep" | "squench" | "redir" |
 	    "timex" | "paramprob" | "timest" | "timestrep" | "inforeq" |
 	    "inforep" | "maskreq" | "maskrep"  | decnumber .
-icmp-code = decumber | "net-unr" | "host-unr" | "proto-unr" | "port-unr" |
+icmp-code = decnumber | "net-unr" | "host-unr" | "proto-unr" | "port-unr" |
 	    "needfrag" | "srcfail" | "net-unk" | "host-unk" | "isolate" |
 	    "net-prohib" | "host-prohib" | "net-tos" | "host-tos" .
 optlist	= "nop" | "rr" | "zsu" | "mtup" | "mtur" | "encode" | "ts" | "tr" |
@@ -123,7 +123,7 @@ information.
 .PP
 The action indicates what to do with the packet if it matches the rest
 of the filter rule. Each rule MUST have an action. The following
-actions are recognised:
+actions are recognized:
 .TP
 .B block
 indicates that the packet should be flagged to be dropped. In response
@@ -149,7 +149,7 @@ the filter. These statistics are viewable with ipfstat(8).
 .TP
 .B call
 this action is used to invoke the named function in the kernel, which
-must conform to a specific calling interface. Customised actions and
+must conform to a specific calling interface. Customized actions and
 semantics can thus be implemented to supplement those available. This
 feature is for use by knowledgeable hackers, and is not currently
 documented.
@@ -230,7 +230,7 @@ This value can only be given as a decimal integer value.
 .TP
 .B proto
 allows a specific protocol to be matched against.  All protocol names
-found in \fB/etc/protocols\fP are recognised and may be used.
+found in \fB/etc/protocols\fP are recognized and may be used.
 However, the protocol may also be given as a DECIMAL number, allowing
 for rules to match your own protocols, or new ones which would
 out-date any attempted listing.
@@ -249,7 +249,7 @@ address\fB/\fPmask, or as a hostname \fBmask\fP netmask.  The hostname
 may either be a valid hostname, from either the hosts file or DNS
 (depending on your configuration and library) or of the dotted numeric
 form.  There is no special designation for networks but network names
-are recognised.  Note that having your filter rules depend on DNS
+are recognized.  Note that having your filter rules depend on DNS
 results can introduce an avenue of attack, and is discouraged.
 .PP
 There is a special case for the hostname \fBany\fP which is taken to
@@ -347,8 +347,8 @@ against, e.g.:
 .TP
 .B icmp-type
 is only effective when used with \fBproto icmp\fP and must NOT be used
-in conjuction with \fBflags\fP.  There are a number of types, which can be
-referred to by an abbreviation recognised by this language, or the numbers
+in conjunction with \fBflags\fP.  There are a number of types, which can be
+referred to by an abbreviation recognized by this language, or the numbers
 with which they are associated can be used.  The most important from
 a security point of view is the ICMP redirect.
 .SH KEEP HISTORY
@@ -370,7 +370,7 @@ than going through the access control list.
 .PP
 When a packet is logged, with either the \fBlog\fP action or option,
 the headers of the packet are written to the \fBipl\fP packet logging
-psuedo-device. Immediately following the \fBlog\fP keyword, the
+pseudo-device. Immediately following the \fBlog\fP keyword, the
 following qualifiers may be used (in order):
 .TP
 .B body
