@@ -1,5 +1,5 @@
-queue zwei already exists on interface gif3
+stdin:2: unknown interface gif3
+stdin:3: queue eins has no parent
+stdin:3: errors in queue definition
+stdin:4: queue zwei has no parent
 stdin:4: errors in queue definition
-altq on gif3 cbq bandwidth 100Kb tbrsize 1280 queue { eins zwei }
-queue eins cbq( default ) { zwei }
-queue zwei 

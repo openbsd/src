@@ -50,7 +50,7 @@
   [ Skip steps: i=16 d=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@13 scrub log on lo0 inet6 proto tcp from (lo1) to 2000::1 reassemble tcp fragment reassemble
+@13 scrub log on lo0 inet6 proto tcp from (lo1000000) to 2000::1 reassemble tcp fragment reassemble
   [ Skip steps: i=16 d=end f=15 p=end sp=end da=15 dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -62,7 +62,7 @@
   [ Skip steps: d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@16 scrub log on lo1 proto tcp all reassemble tcp fragment reassemble
+@16 scrub log on lo1000000 proto tcp all reassemble tcp fragment reassemble
   [ Skip steps: d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

@@ -1,1 +1,1 @@
-ifconfig lo1 mtu 33224
+ifconfig lo1000010 destroy

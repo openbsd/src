@@ -58,7 +58,7 @@
   [ Skip steps: i=18 d=29 p=end sp=43 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@15 scrub in log on lo0 inet6 proto tcp from (lo1) to 2000::1 fragment reassemble
+@15 scrub in log on lo0 inet6 proto tcp from (lo1000000) to 2000::1 fragment reassemble
   [ Skip steps: i=18 d=29 f=17 p=end sp=43 da=17 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -70,7 +70,7 @@
   [ Skip steps: d=29 f=28 p=end sa=28 sp=43 da=31 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@18 scrub in log on lo1 proto tcp all fragment reassemble
+@18 scrub in log on lo1000000 proto tcp all fragment reassemble
   [ Skip steps: d=29 f=28 p=end sa=28 sp=43 da=31 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -130,7 +130,7 @@
   [ Skip steps: d=34 p=end sa=36 sp=43 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@33 scrub out log on lo1 inet proto tcp from any to 10.0.0.1 no-df max-mss 224 fragment reassemble
+@33 scrub out log on lo1000000 inet proto tcp from any to 10.0.0.1 no-df max-mss 224 fragment reassemble
   [ Skip steps: p=end sa=36 sp=43 dp=35 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -170,7 +170,7 @@
   [ Skip steps: i=46 d=62 p=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@43 scrub in log on lo0 inet6 proto tcp from (lo1) port = www to 2000::1 fragment reassemble
+@43 scrub in log on lo0 inet6 proto tcp from (lo1000000) port = www to 2000::1 fragment reassemble
   [ Skip steps: i=46 d=62 f=45 p=end sp=48 da=45 dp=49 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -182,7 +182,7 @@
   [ Skip steps: d=62 f=61 p=end sa=61 sp=48 da=63 dp=49 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@46 scrub in log on lo1 proto tcp from any port = www to any fragment reassemble
+@46 scrub in log on lo1000000 proto tcp from any port = www to any fragment reassemble
   [ Skip steps: d=62 f=61 p=end sa=61 sp=48 da=63 dp=49 ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
@@ -258,7 +258,7 @@
   [ Skip steps: d=end p=end sa=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@65 scrub out log on lo1 inet proto tcp from any to 10.0.0.1 port = www no-df max-mss 224 fragment reassemble
+@65 scrub out log on lo1000000 inet proto tcp from any to 10.0.0.1 port = www no-df max-mss 224 fragment reassemble
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
