@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.2 1998/11/11 19:34:48 jason Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.3 1999/01/04 04:26:46 jason Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.16 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ struct cfdriver nsphy_cd = {
 
 int	nsphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	nsphy_status __P((struct mii_softc *));
+void	nsphy_reset __P((struct mii_softc *));
 
 int
 nsphymatch(parent, match, aux)
@@ -162,7 +163,7 @@ nsphyattach(parent, self, aux)
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
 	    BMCR_LOOP|BMCR_S100);
 
-	mii_phy_reset(sc);
+	nsphy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -246,6 +247,7 @@ nsphy_service(sc, mii, cmd)
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
+			nsphy_reset(sc);
 			/*
 			 * If we're already in auto mode, just return.
 			 */
@@ -258,6 +260,21 @@ nsphy_service(sc, mii, cmd)
 			 * XXX Not supported as a manual setting right now.
 			 */
 			return (EINVAL);
+		case IFM_100_TX:
+			PHY_WRITE(sc, MII_ANAR,
+			    mii_anar(ife->ifm_media));
+
+			reg = 0;
+			reg |= BMCR_ISO | BMCR_S100;
+			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX)
+				reg |= BMCR_FDX;
+			PHY_WRITE(sc, MII_BMCR, reg);
+			delay(1000000);		/* XXX too long, will adjust */
+
+			reg &= ~BMCR_ISO;
+			PHY_WRITE(sc, MII_BMCR, reg);
+			break;
+
 		default:
 			/*
 			 * BMCR data is stored in the ifmedia entry.
@@ -304,7 +321,7 @@ nsphy_service(sc, mii, cmd)
 			return (0);
 
 		sc->mii_ticks = 0;
-		mii_phy_reset(sc);
+		nsphy_reset(sc);
 		(void) mii_phy_auto(sc);
 		break;
 	}
@@ -395,4 +412,16 @@ nsphy_status(sc)
 #endif
 	} else
 		mii->mii_media_active = mii_media_from_bmcr(bmcr);
+}
+
+void
+nsphy_reset(sc)
+	struct mii_softc *sc;
+{
+	int anar;
+
+	mii_phy_reset(sc);
+	anar = PHY_READ(sc, MII_ANAR);
+	anar |= BMSR_MEDIA_TO_ANAR(PHY_READ(sc, MII_BMSR));
+	PHY_WRITE(sc, MII_ANAR, anar);
 }
