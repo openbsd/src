@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.16 2004/04/23 09:26:15 mickey Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.17 2004/10/04 20:03:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -164,6 +164,13 @@ int ac97_set_rate(struct ac97_codec_if *, struct audio_params *, int);
 #define AC97_AD_MISC_DAM	0x0400	/*10 */
 #define AC97_AD_MISC_MSPLT	0x1000	/*12 */
 #define AC97_AD_MISC_DACZ	0x4000	/*14 */
+
+/* Avance Logic codec specific data*/
+#define	AC97_AV_REG_MULTICH	0x6a
+#define	AC97_AV_MULTICH_MAGIC	0x8000
+#define	AC97_AV_REG_MISC	0x7a
+#define	AC97_AV_MISC_SPDIFEN	0x0002
+#define	AC97_AV_MISC_VREFDIS	0x1000
 
 /* Conexant codec specific data */
 #define AC97_CX_REG_MISC	0x5c

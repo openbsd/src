@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.44 2004/09/14 22:06:49 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.45 2004/10/04 20:03:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -295,6 +295,7 @@ int ac97_get_portnum_by_name(struct ac97_codec_if *, char *, char *,
 void ac97_restore_shadow(struct ac97_codec_if *self);
 
 void ac97_ad198x_init(struct ac97_softc *);
+void ac97_alc655_init(struct ac97_softc *);
 void ac97_cx20468_init(struct ac97_softc *);
 
 struct ac97_codec_if_vtbl ac97civ = {
@@ -331,6 +332,15 @@ const struct ac97_codecid {
 }, ac97_av[] = {
 	{ 0x10, 0xff, 0, 0,	"ALC200" },
 	{ 0x20, 0xff, 0, 0,	"ALC650" },
+	{ 0x21, 0xff, 0, 0,	"ALC650D" },
+	{ 0x22, 0xff, 0, 0,	"ALC650E" },
+	{ 0x23, 0xff, 0, 0,	"ALC650F" },
+	{ 0x30, 0xff, 0, 0,	"ALC101" },
+	{ 0x40, 0xff, 0, 0,	"ALC202" },
+	{ 0x50, 0xff, 0, 0,	"ALC250" },
+	{ 0x60, 0xff, 0, 0,	"ALC655",	ac97_alc655_init },
+	{ 0x70, 0xff, 0, 0,	"ALC203" },
+	{ 0x80, 0xff, 0, 0,	"ALC658",	ac97_alc655_init },
 }, ac97_rl[] = {
 	{ 0x00, 0xf0, 0xf, 0,	"RL5306" },
 	{ 0x10, 0xf0, 0xf, 0,	"RL5382" },
@@ -1064,7 +1074,7 @@ ac97_set_rate(codec_if, p, mode)
 void
 ac97_ad198x_init(struct ac97_softc *as)
 {
-	unsigned short misc;
+	u_int16_t misc;
 
 	ac97_read(as, AC97_AD_REG_MISC, &misc);
 	ac97_write(as, AC97_AD_REG_MISC,
@@ -1072,9 +1082,22 @@ ac97_ad198x_init(struct ac97_softc *as)
 }
 
 void
+ac97_alc655_init(struct ac97_softc *as)
+{
+	u_int16_t misc;
+
+	ac97_read(as, AC97_AV_REG_MISC, &misc);
+	misc |= AC97_AV_MISC_SPDIFEN;
+	misc &= ~AC97_AV_MISC_VREFDIS;
+	ac97_write(as, AC97_AV_REG_MISC, misc);
+
+	ac97_write(as, AC97_AV_REG_MULTICH, AC97_AV_MULTICH_MAGIC);
+}
+
+void
 ac97_cx20468_init(struct ac97_softc *as)
 {
-	unsigned short misc;
+	u_int16_t misc;
 
 	ac97_read(as, AC97_CX_REG_MISC, &misc);
 	ac97_write(as, AC97_CX_REG_MISC,
