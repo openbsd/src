@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.23 2004/12/03 06:37:49 miod Exp $
+#       $OpenBSD: install.md,v 1.24 2004/12/10 20:18:34 miod Exp $
 #
 # Copyright (c) 2002, Miodrag Vallat.
 # All rights reserved.
@@ -79,7 +79,7 @@ md_installboot() {
 md_checkfordisklabel() {
 	local rval=0
 
-	disklabel $1 >/dev/null 2>/tmp/checkfordisklabel
+	disklabel $1 >/tmp/checkfordisklabel 2>&1
 
 	if grep "disk label corrupted" /tmp/checkfordisklabel; then
 		rval=2
