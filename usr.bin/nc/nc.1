@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.22 2002/02/28 18:05:36 markus Exp $
+.\"     $OpenBSD: nc.1,v 1.23 2002/11/14 00:50:40 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -151,40 +151,40 @@ If version is not specified, SOCKS version 5 is used.
 .El
 .Sh EXAMPLES
 .Bl -tag -width x
-.It Li "nc hostname 42"
+.It Li "$ nc hostname 42"
 Open a TCP connection to port 42 of hostname.
-.It Li "nc -p 31337 hostname 42"
+.It Li "$ nc -p 31337 hostname 42"
 Open a TCP connection to port 42 of hostname, and use port 31337 as
 the source port.
-.It Li "nc -w 5 hostname 42"
+.It Li "$ nc -w 5 hostname 42"
 Open a TCP connection to port 42 of hostname, and timeout after
 five seconds while attempting to connect.
-.It Li "nc -u hostname 53"
+.It Li "$ nc -u hostname 53"
 Open a UDP connection to port 53 of hostname.
-.It Li "nc -s 10.1.2.3 example.host 42"
+.It Li "$ nc -s 10.1.2.3 example.host 42"
 Open a TCP connection to port 42 of example.host using 10.1.2.3 as the
 IP for the local end of the connection.
-.It Li "nc -v hostname 42"
+.It Li "$ nc -v hostname 42"
 Open a TCP connection to port 42 of hostname, displaying some
 diagnostic messages on stderr.
-.It Li "nc -v -z hostname 20-30"
+.It Li "$ nc -v -z hostname 20-30"
 Attempt to open TCP connections to ports 20 through 30 of
 hostname, and report which ones
 .Nm
 was able to connect to.
-.It Li "nc -v -u -z -w 3 hostname 20-30"
+.It Li "$ nc -v -u -z -w 3 hostname 20-30"
 Send UDP packets to ports 20-30 of example.host, and report which ones
 did not respond with an ICMP packet after three seconds.
-.It Li "nc -l 3000"
+.It Li "$ nc -l 3000"
 Listen on TCP port 3000, and once there is a connection, send stdin to
 the remote host, and send data from the remote host to stdout.
-.It Li "echo foobar | nc hostname 1000"
+.It Li "$ echo foobar | nc hostname 1000"
 Connect to port 1000 of hostname, send the string "foobar"
 followed by a newline, and move data from port 1000 of hostname to
 stdout until hostname closes the connection.
-.It Li "nc -U /var/tmp/dsocket"
+.It Li "$ nc -U /var/tmp/dsocket"
 Connect to a Unix Domain Socket.
-.It Li "nc -lU /var/tmp/dsocket"
+.It Li "$ nc -lU /var/tmp/dsocket"
 Create and listen on a Unix Domain Socket.
 .El
 .Sh SEE ALSO
