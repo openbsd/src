@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.86 2003/08/08 09:51:54 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.87 2003/11/06 12:22:10 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -303,11 +303,7 @@ lookup file bind
 If using a caching name server, add the line "nameserver 127.0.0.1" first.
 To get a local caching name server to run
 you will need to set "named_flags" in
-.Pa /etc/rc.conf.local
-and create the
-.Pa named.boot
-file in the appropriate place for
-.Xr named 8 .
+.Pa /etc/rc.conf.local .
 The same holds true if the machine is going to be a
 name server for your domain.
 In both these cases, make sure that
