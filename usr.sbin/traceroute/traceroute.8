@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.35 2003/06/12 12:59:53 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.36 2003/08/27 08:17:33 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -41,27 +41,20 @@
 .Nd print the route packets take to network host
 .Sh SYNOPSIS
 .Nm traceroute
-.Op Fl S
-.Op Fl D
-.Op Fl I
-.Op Fl c
-.Op Fl d
+.Bk -words
+.Op Fl cdDIlnrSv
 .Op Fl f Ar first_ttl
 .Op Fl g Ar gateway_addr
-.Op Fl l
 .Op Fl m Ar max_ttl
-.Op Fl n
 .Op Fl p Ar port
 .Op Fl P Ar proto
 .Op Fl q Ar nqueries
-.Op Fl r
-.Bk -words
 .Op Fl s Ar src_addr
-.Ek
 .Op Fl t Ar tos
 .Op Fl w Ar waittime
 .Ar host
 .Op Ar packetsize
+.Ek
 .Sh DESCRIPTION
 The Internet is a large and complex aggregation of
 network hardware, connected together by gateways.
@@ -81,12 +74,15 @@ name.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl S
-Print how many probes were not answered for each hop.
-.It Fl D
-Dump the packet data to standard error before transmitting it.
+.It Fl c
+Do not increment the destination port number in successive UDP packets.
+Rather, all UDP packets will have the same destination port, as set via the
+.Fl p
+flag (or 33434 if none is specified).
 .It Fl d
 Turn on socket-level debugging.
+.It Fl D
+Dump the packet data to standard error before transmitting it.
 .It Fl f Ar first_ttl
 Set the first time-to-live used in outgoing probe packets. The effect is that
 the first first_ttl - 1 hosts will be skipped in the output of
@@ -98,6 +94,11 @@ Add
 to the list of addresses in the IP Loose Source Record Route (LSRR)
 option.
 If no gateways are specified, the LSRR option is omitted.
+.It Fl I
+Equivalent to
+.Fl P
+1.
+Used for compatibility with other OSes.
 .It Fl l
 Display the ttl value of the returned packet.
 This is useful for checking for asymmetric routing.
@@ -111,20 +112,6 @@ MIB variable, which defaults to 64.
 Print hop addresses numerically rather than symbolically and numerically
 (saves a nameserver address-to-name lookup for each gateway found on the
 path).
-.It Fl P Ar proto
-Change the protocol being used from
-.Tn UDP
-to a numeric protocol or a name as specified in
-.Pa /etc/protocols .
-This will not work reliably for most protocols.
-If set to 1 (ICMP), then
-ICMP Echo Request messages will be used (same as
-.Xr ping 8 ) .
-.It Fl I
-Equivalent to
-.Fl P
-1.
-Used for compatibility with other OSes.
 .It Fl p Ar port
 Set the base
 .Tn UDP
@@ -145,11 +132,15 @@ be returned to terminate the route tracing).
 If something is
 listening on a port in the default range, this option can be used
 to pick an unused port range.
-.It Fl c
-Do not increment the destination port number in successive UDP packets.
-Rather, all UDP packets will have the same destination port, as set via the
-.Fl p
-flag (or 33434 if none is specified).
+.It Fl P Ar proto
+Change the protocol being used from
+.Tn UDP
+to a numeric protocol or a name as specified in
+.Pa /etc/protocols .
+This will not work reliably for most protocols.
+If set to 1 (ICMP), then
+ICMP Echo Request messages will be used (same as
+.Xr ping 8 ) .
 .It Fl q Ar nqueries
 Set the number of probes per ``ttl'' to
 .Ar nqueries
@@ -172,6 +163,8 @@ of the interface the probe packet is sent on.
 If the IP address
 is not one of this machine's interface addresses and the user is
 not the superuser, an error is returned and nothing is sent.
+.It Fl S
+Print how many probes were not answered for each hop.
 .It Fl t Ar tos
 Set the
 .Em type-of-service
@@ -189,9 +182,9 @@ Not all values of
 are legal or
 meaningful \- see the IP spec for definitions.
 Useful values are probably
-.Ql \-t 16
+.Ql -t 16
 (low delay) and
-.Ql \-t 8
+.Ql -t 8
 (high throughput).
 .It Fl v
 Verbose output.
@@ -244,7 +237,7 @@ value, it can be changed with the
 flag).
 .Pp
 A sample use and output might be:
-.Bd -literal
+.Bd -literal -offset indent
 $ traceroute nis.nsf.net.
 traceroute to nis.nsf.net (35.1.1.48), 64 hops max, 56 byte packet
 1  helios.ee.lbl.gov (128.3.112.1)  19 ms  19 ms  0 ms
@@ -258,8 +251,8 @@ traceroute to nis.nsf.net (35.1.1.48), 64 hops max, 56 byte packet
 9  129.140.71.6 (129.140.71.6)  139 ms  239 ms  319 ms
 10  129.140.81.7 (129.140.81.7)  220 ms  199 ms  199 ms
 11  nic.merit.edu (35.1.1.48)  239 ms  239 ms  239 ms
-
 .Ed
+.Pp
 Note that lines 2 & 3 are the same.
 This is due to a buggy
 kernel on the 2nd hop system \- lbl-csam.arpa \- that forwards
@@ -274,7 +267,7 @@ doesn't supply address-to-name translations for its
 .Tn NSS Ns es .
 .Pp
 A more interesting example is:
-.Bd -literal
+.Bd -literal -offset indent
 $ traceroute allspice.lcs.mit.edu.
 traceroute to allspice.lcs.mit.edu (18.26.0.115), 64 hops max
 1  helios.ee.lbl.gov (128.3.112.1)  0 ms  0 ms  0 ms
@@ -295,8 +288,8 @@ traceroute to allspice.lcs.mit.edu (18.26.0.115), 64 hops max
 16  * * *
 17  * * *
 18  ALLSPICE.LCS.MIT.EDU (18.26.0.115)  339 ms  279 ms  279 ms
-
 .Ed
+.Pp
 Note that the gateways 12, 14, 15, 16 & 17 hops away
 either don't send
 .Tn ICMP
@@ -318,7 +311,7 @@ Since, for gateways, the remaining ttl is zero, the
 "time exceeded" is guaranteed to not make it back to us.
 The behavior of this bug is slightly more interesting
 when it appears on the destination system:
-.Bd -literal
+.Bd -literal -offset indent
 1  helios.ee.lbl.gov (128.3.112.1)  0 ms  0 ms  0 ms
 2  lilac-dmc.Berkeley.EDU (128.32.216.1)  39 ms  19 ms  39 ms
 3  lilac-dmc.Berkeley.EDU (128.32.216.1)  19 ms  39 ms  19 ms
@@ -332,8 +325,8 @@ when it appears on the destination system:
 11  * * *
 12  * * *
 13  rip.Berkeley.EDU (128.32.131.22)  59 ms !  39 ms !  39 ms !
-
 .Ed
+.Pp
 Notice that there are 12 "gateways" (13 is the final
 destination) and exactly the last half of them are "missing".
 What's really happening is that rip (a Sun-3 running Sun OS3.5)
@@ -385,15 +378,12 @@ If almost all the probes result in some kind of unreachable,
 .Nm
 will give up and exit.
 .Pp
-.Bd -literal
-$ traceroute \-g 10.3.0.5 128.182.0.0
-
-.Ed
+.Dl $ traceroute -g 10.3.0.5 128.182.0.0
+.Pp
 will show the path from the Cambridge Mailbridge to PSC, while
-.Bd -literal
-$ traceroute \-g 192.5.146.4 \-g 10.3.0.5 35.0.0.0
-
-.Ed
+.Pp
+.Dl $ traceroute -g 192.5.146.4 -g 10.3.0.5 35.0.0.0
+.Pp
 will show the path from the Cambridge Mailbridge to Merit, using PSC to
 reach the Mailbridge.
 .Pp

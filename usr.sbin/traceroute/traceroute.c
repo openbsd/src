@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.59 2003/06/11 23:33:29 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.60 2003/08/27 08:17:34 jmc Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.59 2003/06/11 23:33:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.60 2003/08/27 08:17:34 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -1033,8 +1033,8 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-SDIdnrvc] [-g gateway_addr] ... [-m max_ttl] [-p port#]\n"
-	    "\t[-P proto] [-q nqueries] [-s src_addr] [-t tos]\n"
-	    "\t[-w wait] [-f first_ttl] host [data size]\n", __progname);
+	    "usage: %s [-cdDIlnrSv] [-f first_ttl] [-g gateway_addr] [-m max_ttl]\n"
+	    "\t[-p port] [-P proto] [-q nqueries] [-s src_addr] [-t tos]\n"
+	    "\t[-w waittime] host [packetsize]\n", __progname);
 	exit(1);
 }
