@@ -1840,6 +1840,7 @@
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/sshd.0
 ./usr/share/man/cat8/ssl.0
+./usr/share/man/cat8/starttls.0
 ./usr/share/man/cat8/stdethers.0
 ./usr/share/man/cat8/stdhosts.0
 ./usr/share/man/cat8/sticky.0
