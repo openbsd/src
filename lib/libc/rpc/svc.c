@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.9 1997/03/29 05:55:06 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.10 1997/09/22 05:11:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -431,7 +431,7 @@ svc_getreqset2(readfds, width)
 
 	maskp = readfds->fds_bits;
 	for (sock = 0; sock < width; sock += NFDBITS) {
-	    for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
+	    for (mask = *maskp++; (bit = ffs(mask)); mask ^= (1 << (bit - 1))) {
 		/* sock has input waiting */
 		xprt = xports[sock + bit - 1];
 		if (xprt == NULL)

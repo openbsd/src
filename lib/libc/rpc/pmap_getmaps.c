@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_getmaps.c,v 1.5 1997/07/09 03:05:04 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_getmaps.c,v 1.6 1997/09/22 05:11:08 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -46,6 +46,7 @@ static char *rcsid = "$OpenBSD: pmap_getmaps.c,v 1.5 1997/07/09 03:05:04 deraadt
 #include <netdb.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #define NAMELEN 255

@@ -28,15 +28,17 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.4 1996/08/19 08:31:48 tholo Exp $";
+static char *rcsid = "$OpenBSD: rpc_dtablesize.c,v 1.5 1997/09/22 05:11:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <unistd.h>
 #include <sys/types.h>
 
 /*
  * Cache the result of getdtablesize(), so we don't have to do an
  * expensive system call every time.
  */
+int
 _rpc_dtablesize()
 {
 	static int size;
