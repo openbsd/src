@@ -7,6 +7,7 @@
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
+./usr/include/ieeefp.h
 ./usr/include/hppa
 ./usr/include/hppa/ansi.h
 ./usr/include/hppa/asm.h
@@ -50,9 +51,12 @@
 ./usr/include/hppa/types.h
 ./usr/include/hppa/varargs.h
 ./usr/include/hppa/vmparam.h
-./usr/lib/crt0.o
+./usr/include/link.h
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/scrt0.o
-./usr/lib/gcrt0.o
 ./usr/lib/libbfd.a
 ./usr/lib/libmmalloc.a
 ./usr/lib/libopcodes.a

@@ -20,3 +20,6 @@
 ./usr/share/info/ld.info-4
 ./usr/share/info/ld.info-5
 ./usr/share/info/ld.info-6
+./usr/share/man/cat8/hppa/boot.0
+./usr/share/man/cat8/hppa/boot.conf.0
+./usr/share/man/cat8/hppa/mkboot.0
