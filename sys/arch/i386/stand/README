@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.7 1997/05/31 16:08:34 mickey Exp $
+$OpenBSD: README,v 1.8 1997/07/18 01:24:47 mickey Exp $
 
 # hmm, no copyright
 
@@ -109,3 +109,13 @@ Sat May 31 12:06:37 EDT 1997
 usleep(int15,f86) BIOS call is not supported well in all the BIOSes,
 especially some laptop BIOSes and Compaq machines. Everybody is encouraged
 to use sleep instead, it's known to work.
+
+
+Thu Jul 17 21:24:42 EDT 1997
+----------------------------
+
+Return to the way when code have to be less then 64k, or better say that
+whole gidt.S code must be in the 1st 64k of /boot .text section.
+This saves about 2k of code (idt initialization).
+APM information is now gathered and passed to the locore.s upon kernel
+startup as pointer to the struct apm_connect_info.
