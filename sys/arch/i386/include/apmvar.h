@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.12 2001/06/24 21:17:33 mickey Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.13 2001/08/18 06:08:08 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -174,7 +174,11 @@
 /* 0x0100 - 0x01ff	Reserved device events */
 /* 0x0200 - 0x02ff	OEM-defined APM events */
 /* 0x0300 - 0xffff	Reserved */
-#define		APM_DEFEVENT		0xffffffff	/* for customization */
+#define		APM_EVENT_MASK		0xffff
+
+#define	APM_EVENT_COMPOSE(t,i)	((((i) & 0x7fff) << 16)|((t) & APM_EVENT_MASK))
+#define	APM_EVENT_TYPE(e)	((e) & APM_EVENT_MASK)
+#define	APM_EVENT_INDEX(e)	((e) >> 16)
 
 #define	APM_GET_POWER_STATE	0x530c
 #define	APM_DEVICE_MGMT_ENABLE	0x530d
@@ -256,12 +260,6 @@
  * Sep., 1994	Implemented on FreeBSD 1.1.5.1R (Toshiba AVS001WD)
  */
 
-struct apm_event_info {
-	u_int type;
-	u_int index;
-	u_int spare[8];
-};
-
 #define APM_BATTERY_ABSENT 4
 
 struct apm_power_info {
@@ -282,7 +280,6 @@ struct apm_ctl {
 #define	APM_IOC_STANDBY	_IO('A', 1)	/* put system into standby */
 #define	APM_IOC_SUSPEND	_IO('A', 2)	/* put system into suspend */
 #define	APM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) /* fetch battery state */
-#define	APM_IOC_NEXTEVENT _IOR('A', 4, struct apm_event_info) /* fetch event */
 #define	APM_IOC_DEV_CTL	_IOW('A', 5, struct apm_ctl) /* put device into mode */
 #define APM_IOC_PRN_CTL _IOW('A', 6, int ) /* driver power status msg */
 #define		APM_PRINT_ON	0	/* driver power status displayed */
@@ -295,6 +292,7 @@ extern void apm_cpu_busy __P((void));
 extern void apm_cpu_idle __P((void));
 extern void apminit __P((void));
 int apm_set_powstate __P((u_int devid, u_int powstate));
+int apm_kqfilter __P((dev_t dev, struct knote *kn));
 #endif /* _KERNEL */
 
 #endif /* _I386_APMVAR_H_ */

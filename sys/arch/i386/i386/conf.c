@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.78 2001/08/06 22:34:43 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.79 2001/08/18 06:08:08 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -272,7 +272,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_ss_init(NSS,ss),           /* 19: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
-	cdev_ocis_init(NAPM,apm),	/* 21: Advancded Power Management */
+	cdev_apm_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_ses_init(NSES,ses),	/* 24: SES/SAF-TE SCSI */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.7 1997/09/27 06:31:32 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.8 2001/08/18 06:08:08 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -53,6 +53,12 @@ cdev_decl(pc);
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
+
+#define	cdev_apm_init(c,n) {\
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev, D_KQFILTER, dev_init(c,n,kqfilter) }
 
 cdev_decl(spkr);
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: apm.c,v 1.48 2001/06/24 20:38:04 fgsch Exp $	*/
+/*	$OpenBSD: apm.c,v 1.49 2001/08/18 06:08:08 mickey Exp $	*/
 
 /*-
- * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
+ * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,7 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/event.h>
 #include <sys/mount.h>	/* for vfs_syncwait() proto */
 
 #include <machine/conf.h>
@@ -78,31 +79,41 @@
 #define	APM_LOCK(sc)	lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL, curproc)
 #define	APM_UNLOCK(sc)	lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL, curproc)
 
-int apmprobe __P((struct device *, void *, void *));
-void apmattach __P((struct device *, struct device *, void *));
-
-/* battery percentage at where we get verbose in our warnings.  This
-   value can be changed using sysctl(8), value machdep.apmwarn.
-   Setting it to zero kills all warnings */
-int cpu_apmwarn = 10;
-
-#define	APM_NEVENTS 16
-#define	APM_RESUME_HOLDOFF	3
+struct cfdriver apm_cd = {
+	NULL, "apm", DV_DULL
+};
 
 struct apm_softc {
 	struct device sc_dev;
-	struct selinfo sc_rsel;
+	struct klist sc_note;
 	int	sc_flags;
 	int	batt_life;
-	int	event_count;
-	int	event_ptr;
-	struct	apm_event_info event_list[APM_NEVENTS];
 	struct proc *sc_thread;
 	struct lock sc_lock;
 };
 #define	SCFLAG_OREAD	0x0000001
 #define	SCFLAG_OWRITE	0x0000002
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
+
+int apmprobe __P((struct device *, void *, void *));
+void apmattach __P((struct device *, struct device *, void *));
+
+struct cfattach apm_ca = {
+	sizeof(struct apm_softc), apmprobe, apmattach
+};
+
+void filt_apmrdetach __P((struct knote *kn));
+int filt_apmread __P((struct knote *kn, long hint));
+
+struct filterops apmread_filtops =
+	{ 1, NULL, filt_apmrdetach, filt_apmread};
+
+/* battery percentage at where we get verbose in our warnings.  This
+   value can be changed using sysctl(8), value machdep.apmwarn.
+   Setting it to zero kills all warnings */
+int cpu_apmwarn = 10;
+
+#define	APM_RESUME_HOLDOFF	3
 
 /*
  * Flags to control kernel display
@@ -121,14 +132,6 @@ struct apm_softc {
 #define	APMDEV(dev)	(minor(dev)&0x0f)
 #define APMDEV_NORMAL	0
 #define APMDEV_CTL	8
-
-struct cfattach apm_ca = {
-	sizeof(struct apm_softc), apmprobe, apmattach
-};
-
-struct cfdriver apm_cd = {
-	NULL, "apm", DV_DULL
-};
 
 int apm_standbys;
 int apm_userstandbys;
@@ -170,7 +173,7 @@ void apm_perror __P((const char *, struct apmregs *));
 void apm_powmgt_enable __P((int onoff));
 void apm_powmgt_engage __P((int onoff, u_int devid));
 /* void apm_devpowmgt_enable __P((int onoff, u_int devid)); */
-int  apm_record_event __P((struct apm_softc *sc, u_int event_type));
+int  apm_record_event __P((struct apm_softc *sc, u_int type));
 const char *apm_err_translate __P((int code));
 
 #define	apm_get_powstat(r) apmcall(APM_POWER_STATUS, APM_DEV_ALLDEVS, r)
@@ -343,9 +346,6 @@ apm_resume(sc, regs)
 {
 	apm_resumes = APM_RESUME_HOLDOFF;
 
-	/* flush the event queue */
-	sc->event_count = 0;
-
 	/* they say that some machines may require reinitializing the clock */
 	initrtclock();
 
@@ -359,34 +359,20 @@ apm_resume(sc, regs)
 }
 
 int
-apm_record_event(sc, event_type)
+apm_record_event(sc, type)
 	struct apm_softc *sc;
-	u_int event_type;
+	u_int type;
 {
-	struct apm_event_info *evp;
-
 	if (!apm_error && (sc->sc_flags & SCFLAG_OPEN) == 0) {
 		DPRINTF(("apm_record_event: no user waiting\n"));
 		apm_error++;
 		return 1;
 	}
 
-	if (sc->event_count >= APM_NEVENTS) {
-		DPRINTF(("apm_record_event: overflow\n"));
-		apm_error++;
-	} else {
-		int s = splhigh();
-		evp = &sc->event_list[sc->event_ptr];
-		sc->event_count++;
-		sc->event_ptr++;
-		sc->event_ptr %= APM_NEVENTS;
-		evp->type = event_type;
-		evp->index = ++apm_evindex;
-		splx(s);
-	}
-	selwakeup(&sc->sc_rsel);
+	apm_evindex++;
+	KNOTE(&sc->sc_note, APM_EVENT_COMPOSE(type, apm_evindex));
 
-	return (sc->sc_flags & SCFLAG_OWRITE) ? 0 : 1; /* user may handle */
+	return (0);
 }
 
 int
@@ -994,10 +980,6 @@ apmclose(dev, flag, mode, p)
 		sc->sc_flags &= ~SCFLAG_OREAD;
 		break;
 	}
-	if ((sc->sc_flags & SCFLAG_OPEN) == 0) {
-		sc->event_count = 0;
-		sc->event_ptr = 0;
-	}
 	APM_UNLOCK(sc);
 	return 0;
 }
@@ -1012,7 +994,7 @@ apmioctl(dev, cmd, data, flag, p)
 {
 	struct apm_softc *sc;
 	struct apmregs regs;
-	int i, error = 0;
+	int error = 0;
 
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
@@ -1072,17 +1054,6 @@ apmioctl(dev, cmd, data, flag, p)
 			error = apm_set_powstate(actl->dev, actl->mode);
 		}
 		break;
-	case APM_IOC_NEXTEVENT:
-		if (sc->event_count) {
-			struct apm_event_info *evp =
-			    (struct apm_event_info *)data;
-			i = sc->event_ptr + APM_NEVENTS - sc->event_count;
-			i %= APM_NEVENTS;
-			*evp = sc->event_list[i];
-			sc->event_count--;
-		} else
-			error = EAGAIN;
-		break;
 	case APM_IOC_GETPOWER:
 		if (apm_get_powstat(&regs) == 0) {
 			struct apm_power_info *powerp =
@@ -1128,32 +1099,54 @@ apmioctl(dev, cmd, data, flag, p)
 	return error;
 }
 
+void
+filt_apmrdetach(kn)
+	struct knote *kn;
+{
+	struct apm_softc *sc = (struct apm_softc *)kn->kn_hook;
+
+	APM_LOCK(sc);
+	SLIST_REMOVE(&sc->sc_note, kn, knote, kn_selnext);
+	APM_UNLOCK(sc);
+}
+
 int
-apmselect(dev, rw, p)
+filt_apmread(kn, hint)
+	struct knote *kn;
+	long hint;
+{
+	/* XXX weird kqueue_scan() semantics */
+	if (hint && !kn->kn_data)
+		kn->kn_data = (int)hint;
+
+	return (1);
+}
+
+int
+apmkqfilter(dev, kn)
 	dev_t dev;
-	int rw;
-	struct proc *p;
+	struct knote *kn;
 {
 	struct apm_softc *sc;
-	int ret = 0;
 
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
 		return ENXIO;
 
-	APM_LOCK(sc);
-	switch (rw) {
-	case FREAD:
-		if (sc->event_count)
-			ret++;
-		else
-			selrecord(p, &sc->sc_rsel);
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &apmread_filtops;
 		break;
-	case FWRITE:
-	case 0:
-		break;
+	default:
+		return (1);
 	}
+
+	kn->kn_hook = (caddr_t)sc;
+
+	APM_LOCK(sc);
+	SLIST_INSERT_HEAD(&sc->sc_note, kn, kn_selnext);
 	APM_UNLOCK(sc);
-	return ret;
+
+	return (0);
 }
