@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.92 2002/10/07 15:40:39 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.93 2002/10/17 20:35:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1063,14 +1063,13 @@ ENTRY(TLABEL(emu),0)
 	 *
 	 */
 
-	mfctl	iir, r1
-	extru	r1, 5, 6, r1	/* no sfu implementation right now */
-	comib,=	4, r1, TLABEL(all)
+	mfctl	iir, r8
+	extru	r8, 5, 6, r9	/* no sfu implementation right now */
+	comib,=	4, r9, TLABEL(all)
 	ldi	T_ILLEGAL, r1
 
-	mfctl	iir, r1
-	extru	r1, 25, 3, r1	/* only fpu coprocessor emulation now */
-	comib,<< 4, r1, TLABEL(all)
+	extru	r8, 25, 3, r9	/* only fpu coprocessor emulation now */
+	comib,<< 4, r9, TLABEL(all)
 	ldi	T_ILLEGAL, r1
 
 	/* if we are already enabled and hit again, emulate */
@@ -1100,69 +1099,69 @@ $fpusw_set
 	depi	3, 25, 2, r1
 	mtctl	r1, ccr
 
-	copy	arg0, arg1
-	ldil	L%fpu_curpcb, arg0
+	ldil	L%fpu_curpcb, r16
 	mfctl	cr30, r9
-	ldw	R%fpu_curpcb(arg0), arg0
+	ldw	R%fpu_curpcb(r16), r16
 
-	comb,=,n arg0, r9, $fpusw_done
-	comb,=,n arg0, r0, $fpusw_nosave
+	comb,=,n r16, r9, $fpusw_done
+	comb,=,n r16, r0, $fpusw_nosave
 
+	copy	arg0, r17
 	copy	rp, r1
+	copy	r16, arg0
 	.import	fpu_save, code
 	.call
 	bl	fpu_save, rp
 	ldo	PCB_FPREGS+U_PCB(arg0), arg0
 	copy	r1, rp
+	copy	r17, arg0
 
 $fpusw_nosave
 
 	/* count switches */
 	ldil	L%fpu_csw, r1
-	ldw	R%fpu_csw(r1), arg0
-	ldo	1(arg0), arg0
-	stw	arg0, R%fpu_csw(r1)
+	ldw	R%fpu_csw(r1), r16
+	ldo	1(r16), r16
+	ldo	31*8+PCB_FPREGS+U_PCB(r9), r17
+	stw	r16, R%fpu_csw(r1)
 
-	ldo	31*8+PCB_FPREGS+U_PCB(r9), arg0
-
-	fldds,ma -8(arg0), fr31
-	fldds,ma -8(arg0), fr30
-	fldds,ma -8(arg0), fr29
-	fldds,ma -8(arg0), fr28
-	fldds,ma -8(arg0), fr27
-	fldds,ma -8(arg0), fr26
-	fldds,ma -8(arg0), fr25
-	fldds,ma -8(arg0), fr24
-	fldds,ma -8(arg0), fr23
-	fldds,ma -8(arg0), fr22
-	fldds,ma -8(arg0), fr21
-	fldds,ma -8(arg0), fr20
-	fldds,ma -8(arg0), fr19
-	fldds,ma -8(arg0), fr18
-	fldds,ma -8(arg0), fr17
-	fldds,ma -8(arg0), fr16
-	fldds,ma -8(arg0), fr15
-	fldds,ma -8(arg0), fr14
-	fldds,ma -8(arg0), fr13
-	fldds,ma -8(arg0), fr12
-	fldds,ma -8(arg0), fr11
-	fldds,ma -8(arg0), fr10
-	fldds,ma -8(arg0), fr9
-	fldds,ma -8(arg0), fr8
-	fldds,ma -8(arg0), fr7
-	fldds,ma -8(arg0), fr6
-	fldds,ma -8(arg0), fr5
-	fldds,ma -8(arg0), fr4
-	fldds,ma -8(arg0), fr3
-	fldds,ma -8(arg0), fr2
-	fldds,ma -8(arg0), fr1
-	fldds     0(arg0), fr0	/* fr0 must be restored last */
+	fldds,ma -8(r17), fr31
+	fldds,ma -8(r17), fr30
+	fldds,ma -8(r17), fr29
+	fldds,ma -8(r17), fr28
+	fldds,ma -8(r17), fr27
+	fldds,ma -8(r17), fr26
+	fldds,ma -8(r17), fr25
+	fldds,ma -8(r17), fr24
+	fldds,ma -8(r17), fr23
+	fldds,ma -8(r17), fr22
+	fldds,ma -8(r17), fr21
+	fldds,ma -8(r17), fr20
+	fldds,ma -8(r17), fr19
+	fldds,ma -8(r17), fr18
+	fldds,ma -8(r17), fr17
+	fldds,ma -8(r17), fr16
+	fldds,ma -8(r17), fr15
+	fldds,ma -8(r17), fr14
+	fldds,ma -8(r17), fr13
+	fldds,ma -8(r17), fr12
+	fldds,ma -8(r17), fr11
+	fldds,ma -8(r17), fr10
+	fldds,ma -8(r17), fr9
+	fldds,ma -8(r17), fr8
+	fldds,ma -8(r17), fr7
+	fldds,ma -8(r17), fr6
+	fldds,ma -8(r17), fr5
+	fldds,ma -8(r17), fr4
+	fldds,ma -8(r17), fr3
+	fldds,ma -8(r17), fr2
+	fldds,ma -8(r17), fr1
+	fldds     0(r17), fr0	/* fr0 must be restored last */
 
 	ldil	L%fpu_curpcb, r1
-	stw	arg0, R%fpu_curpcb(r1)
+	stw	r17, R%fpu_curpcb(r1)
 
 $fpusw_done
-	copy	arg1, arg0
 	rfir
 	nop
 EXIT(TLABEL(emu))
@@ -1928,7 +1927,7 @@ $ibrk_exit
 	mfctl	tr3, t2
 	mfctl	tr2, t1
 	mfctl	tr7, r1
-	rfi
+	rfir
 	nop
 EXIT(TLABEL(ibrk))
 
@@ -2110,7 +2109,6 @@ ENTRY($fpu_emulate,320)
 	comb,<>	r0, r1, TLABEL(all)
 	ldi	T_EXCEPTION, r1
 
-	mfctl	tr7, r1
 	rfir
 	nop
 EXIT($fpu_emulate)
