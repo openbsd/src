@@ -1,4 +1,4 @@
-/*	$OpenBSD: XBUG.S,v 1.3 1996/04/28 10:49:32 deraadt Exp $ */
+/*	$OpenBSD: XBUG.S,v 1.4 1998/04/02 10:49:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -59,7 +59,8 @@ bootlabelend:
 
 		| clear bss and the kernel location
 bssclr:		movl	#_edata,a0
-		movl	#_end - _edata,d0
+		movl	#_end,d0
+		subl	#_edata,d0
 1:		clrb	a0@+
 		subql	#1,d0
 		bpl	1b
@@ -67,7 +68,8 @@ bssclr:		movl	#_edata,a0
 		| rip the data segment from ROM into ram..
 		movl	#_etext,a2		| start of data
 		movl	#0x4000,a1		| shovel address
-		movl	#_edata - _etext,d0
+		movl	#_edata,d0
+		subl	#_etext,d0
 1:		movb	a2@+,a1@+
 		subql	#1,d0
 		bpl	1b
