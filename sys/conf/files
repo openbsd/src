@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.135 1999/11/26 20:19:42 niklas Exp $
+#	$OpenBSD: files,v 1.136 1999/11/28 11:50:36 downsj Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -135,7 +135,7 @@ file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
 
 # PC parallel ports (IEEE 1284)
 device	lpt
-file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc) needs-flag
+file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc | lpt_puc) needs-flag
 
 # VGA
 device	vga: wsconsdev
