@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.7 2004/07/07 06:57:13 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.8 2004/07/08 15:06:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -91,8 +91,6 @@ main(int argc, char *argv[])
 	conffile = CONFFILE;
 
 	bzero(&conf, sizeof(conf));
-	TAILQ_INIT(&conf.listen_addrs);
-	TAILQ_INIT(&conf.ntp_peers);
 
 	log_init(1);		/* log to stderr until daemonized */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2004/07/08 01:22:57 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.9 2004/07/08 15:06:43 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -425,11 +425,8 @@ int
 parse_config(char *filename, struct ntpd_conf *xconf)
 {
 	struct sym		*sym, *next;
-	struct listen_addr	*la;
-	struct ntp_peer		*p;
 
-	if ((conf = calloc(1, sizeof(struct ntpd_conf))) == NULL)
-		fatal(NULL);
+	conf = xconf;
 	lineno = 1;
 	errors = 0;
 	TAILQ_INIT(&conf->listen_addrs);
@@ -459,30 +456,6 @@ parse_config(char *filename, struct ntpd_conf *xconf)
 			free(sym);
 		}
 	}
-
-	while ((la = TAILQ_FIRST(&xconf->listen_addrs)) != NULL) {
-		TAILQ_REMOVE(&xconf->listen_addrs, la, entry);
-		free(la);
-	}
-
-	while ((la = TAILQ_FIRST(&conf->listen_addrs)) != NULL) {
-		TAILQ_REMOVE(&conf->listen_addrs, la, entry);
-		TAILQ_INSERT_TAIL(&xconf->listen_addrs, la, entry);
-	}
-
-	while ((p = TAILQ_FIRST(&xconf->ntp_peers)) != NULL) {
-		TAILQ_REMOVE(&xconf->ntp_peers, p, entry);
-		free(p);
-	}
-
-	while ((p = TAILQ_FIRST(&conf->ntp_peers)) != NULL) {
-		TAILQ_REMOVE(&conf->ntp_peers, p, entry);
-		TAILQ_INSERT_TAIL(&xconf->ntp_peers, p, entry);
-	}
-
-	xconf->listen_all = conf->listen_all;
-
-	free(conf);
 
 	return (errors ? -1 : 0);
 }
