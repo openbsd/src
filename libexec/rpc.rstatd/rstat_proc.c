@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.2 1996/03/28 23:21:51 niklas Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.3 1997/02/09 00:03:32 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.2 1996/03/28 23:21:51 niklas Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.3 1997/02/09 00:03:32 deraadt Exp $";
 #endif
 
 /*
@@ -130,7 +130,7 @@ rstatproc_stats_3_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	if (!stat_is_init)
-	        stat_init();
+		stat_init();
 	sincelastreq = 0;
 	return (&stats_all.s3);
 }
@@ -141,7 +141,7 @@ rstatproc_stats_2_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	if (!stat_is_init)
-	        stat_init();
+		stat_init();
 	sincelastreq = 0;
 	return (&stats_all.s2);
 }
@@ -152,7 +152,7 @@ rstatproc_stats_1_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	if (!stat_is_init)
-	        stat_init();
+		stat_init();
 	sincelastreq = 0;
 	return (&stats_all.s1);
 }
@@ -165,7 +165,7 @@ rstatproc_havedisk_3_svc(arg, rqstp)
 	static u_int have;
 
 	if (!stat_is_init)
-	        stat_init();
+		stat_init();
 	sincelastreq = 0;
 	have = havedisk();
 	return (&have);
@@ -205,14 +205,14 @@ updatestat()
 #endif
 	if (sincelastreq >= closedown) {
 #ifdef DEBUG
-                syslog(LOG_DEBUG, "about to closedown");
+		syslog(LOG_DEBUG, "about to closedown");
 #endif
-                if (from_inetd)
-                        exit(0);
-                else {
-                        stat_is_init = 0;
-                        return;
-                }
+		if (from_inetd)
+			exit(0);
+		else {
+			stat_is_init = 0;
+			return;
+		}
 	}
 	sincelastreq++;
 
@@ -222,9 +222,8 @@ updatestat()
 		exit(1);
 	}
 #ifdef BSD
- 	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value, (char *)cp_time,
-		     sizeof (cp_time))
-	    != sizeof (cp_time)) {
+	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value, (char *)cp_time,
+	    sizeof (cp_time)) != sizeof (cp_time)) {
 		syslog(LOG_ERR, "can't read cp_time from kmem");
 		exit(1);
 	}
@@ -232,21 +231,20 @@ updatestat()
 		stats_all.s1.cp_time[i] = cp_time[cp_xlat[i]];
 #else
  	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value,
-		     (char *)stats_all.s1.cp_time,
-		     sizeof (stats_all.s1.cp_time))
+	    (char *)stats_all.s1.cp_time, sizeof (stats_all.s1.cp_time))
 	    != sizeof (stats_all.s1.cp_time)) {
 		syslog(LOG_ERR, "can't read cp_time from kmem");
 		exit(1);
 	}
 #endif
 #ifdef BSD
-        (void)getloadavg(avrun, sizeof(avrun) / sizeof(avrun[0]));
+	(void)getloadavg(avrun, sizeof(avrun) / sizeof(avrun[0]));
 #endif
 	stats_all.s2.avenrun[0] = avrun[0] * FSCALE;
 	stats_all.s2.avenrun[1] = avrun[1] * FSCALE;
 	stats_all.s2.avenrun[2] = avrun[2] * FSCALE;
  	if (kvm_read(kfd, (long)nl[X_BOOTTIME].n_value,
-		     (char *)&btm, sizeof (stats_all.s2.boottime))
+	    (char *)&btm, sizeof (stats_all.s2.boottime))
 	    != sizeof (stats_all.s2.boottime)) {
 		syslog(LOG_ERR, "can't read boottime from kmem");
 		exit(1);
@@ -257,7 +255,8 @@ updatestat()
 
 #ifdef DEBUG
 	syslog(LOG_DEBUG, "%d %d %d %d\n", stats_all.s1.cp_time[0],
-	    stats_all.s1.cp_time[1], stats_all.s1.cp_time[2], stats_all.s1.cp_time[3]);
+	    stats_all.s1.cp_time[1], stats_all.s1.cp_time[2],
+	    stats_all.s1.cp_time[3]);
 #endif
 
  	if (kvm_read(kfd, (long)nl[X_CNT].n_value, (char *)&cnt, sizeof cnt) !=
@@ -276,8 +275,7 @@ updatestat()
 	stats_all.s2.v_swtch = cnt.v_swtch;
 
  	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,
-		     (char *)stats_all.s1.dk_xfer,
-		     sizeof (stats_all.s1.dk_xfer))
+	    (char *)stats_all.s1.dk_xfer, sizeof (stats_all.s1.dk_xfer))
 	    != sizeof (stats_all.s1.dk_xfer)) {
 		syslog(LOG_ERR, "can't read dk_xfer from kmem");
 		exit(1);
@@ -321,13 +319,13 @@ setup()
 	if (kvm_nlist(kfd, nl) != 0) {
 		syslog(LOG_ERR, "can't get namelist");
 		exit (1);
-        }
+	}
 
 	if (kvm_read(kfd, (long)nl[X_IFNET].n_value, &ifnetq,
-                     sizeof ifnetq) != sizeof ifnetq)  {
+	    sizeof ifnetq) != sizeof ifnetq) {
 		syslog(LOG_ERR, "can't read ifnet queue head from kmem");
 		exit(1);
-        }
+	}
 
 	numintfs = 0;
 	for (off = (long)ifnetq.tqh_first; off;) {
@@ -348,15 +346,15 @@ int
 havedisk()
 {
 	int i, cnt;
-	long  xfer[DK_NDRIVE];
+	long xfer[DK_NDRIVE];
 
 	if (kvm_nlist(kfd, nl) != 0) {
 		syslog(LOG_ERR, "can't get namelist");
 		exit (1);
-        }
+	}
 
 	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,
-		     (char *)xfer, sizeof xfer) != sizeof xfer) {
+	    (char *)xfer, sizeof xfer) != sizeof xfer) {
 		syslog(LOG_ERR, "can't read dk_xfer from kmem");
 		exit(1);
 	}
@@ -386,45 +384,45 @@ rstat_service(rqstp, transp)
 	case RSTATPROC_STATS:
 		xdr_argument = (xdrproc_t)xdr_void;
 		xdr_result = (xdrproc_t)xdr_statstime;
-                switch (rqstp->rq_vers) {
-                case RSTATVERS_ORIG:
-                        local = (char *(*) __P((void *, struct svc_req *)))
+		switch (rqstp->rq_vers) {
+		case RSTATVERS_ORIG:
+			local = (char *(*) __P((void *, struct svc_req *)))
 				rstatproc_stats_1_svc;
-                        break;
-                case RSTATVERS_SWTCH:
-                        local = (char *(*) __P((void *, struct svc_req *)))
+			break;
+		case RSTATVERS_SWTCH:
+			local = (char *(*) __P((void *, struct svc_req *)))
 				rstatproc_stats_2_svc;
-                        break;
-                case RSTATVERS_TIME:
-                        local = (char *(*) __P((void *, struct svc_req *)))
+			break;
+		case RSTATVERS_TIME:
+			local = (char *(*) __P((void *, struct svc_req *)))
 				rstatproc_stats_3_svc;
-                        break;
-                default:
-                        svcerr_progvers(transp, RSTATVERS_ORIG, RSTATVERS_TIME);
-                        goto leave;
-                }
+			break;
+		default:
+			svcerr_progvers(transp, RSTATVERS_ORIG, RSTATVERS_TIME);
+			goto leave;
+		}
 		break;
 
 	case RSTATPROC_HAVEDISK:
 		xdr_argument = (xdrproc_t)xdr_void;
 		xdr_result = (xdrproc_t)xdr_u_int;
-                switch (rqstp->rq_vers) {
-                case RSTATVERS_ORIG:
-                        local = (char *(*) __P((void *, struct svc_req *)))
+		switch (rqstp->rq_vers) {
+		case RSTATVERS_ORIG:
+			local = (char *(*) __P((void *, struct svc_req *)))
 				rstatproc_havedisk_1_svc;
-                        break;
-                case RSTATVERS_SWTCH:
-                        local = (char *(*) __P((void *, struct svc_req *)))
+			break;
+		case RSTATVERS_SWTCH:
+			local = (char *(*) __P((void *, struct svc_req *)))
 				rstatproc_havedisk_2_svc;
-                        break;
-                case RSTATVERS_TIME:
-                        local = (char *(*) __P((void *, struct svc_req *)))
+			break;
+		case RSTATVERS_TIME:
+			local = (char *(*) __P((void *, struct svc_req *)))
 				rstatproc_havedisk_3_svc;
-                        break;
-                default:
-                        svcerr_progvers(transp, RSTATVERS_ORIG, RSTATVERS_TIME);
-                        goto leave;
-                }
+			break;
+		default:
+			svcerr_progvers(transp, RSTATVERS_ORIG, RSTATVERS_TIME);
+			goto leave;
+		}
 		break;
 
 	default:
@@ -445,6 +443,6 @@ rstat_service(rqstp, transp)
 		exit(1);
 	}
 leave:
-        if (from_inetd)
-                exit(0);
+	if (from_inetd)
+		exit(0);
 }
