@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.36 2002/12/11 18:28:22 deraadt Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.37 2003/01/18 23:30:20 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/lkm.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -47,12 +48,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <nlist.h>
+
+#include "modload.h"
 #include "pathnames.h"
 
 #define TRUE 1
 #define FALSE 0
-
-#include "modload.h"
 
 #ifndef DFLT_ENTRY
 #define	DFLT_ENTRY	"xxxinit"
@@ -293,7 +294,7 @@ main(int argc, char *argv[])
 	 * kernel).
 	 */
 	if ((devfd = open(_PATH_LKM, O_RDWR, 0)) == -1)
-		err(3, _PATH_LKM);
+		err(3, "%s", _PATH_LKM);
 	fileopen |= DEV_OPEN;
 
 	strncpy(modout, modobj, sizeof(modout) - 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.19 2002/12/12 00:00:16 deraadt Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.20 2003/01/18 23:30:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -38,14 +38,16 @@
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/lkm.h>
+
+#include <a.out.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <err.h>
-#include <fcntl.h>
 #include <string.h>
-#include <a.out.h>
-#include <errno.h>
+#include <unistd.h>
+
 #include "pathnames.h"
 
 #define POINTERSIZE	((int)(2 * sizeof(void*)))
@@ -59,7 +61,7 @@ static char *type_names[] = {
 };
 
 static void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
@@ -141,7 +143,7 @@ main(argc, argv)
 	 * to ioctl() to retrive the loaded module(s) status).
 	 */
 	if ((devfd = open(_PATH_LKM, O_RDONLY)) == -1)
-		err(2, _PATH_LKM);
+		err(2, "%s", _PATH_LKM);
 
 	setegid(getgid());
 	setgid(getgid());
