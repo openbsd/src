@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.6 2002/07/15 17:20:36 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.7 2003/04/06 20:39:20 tdeval Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -56,8 +56,8 @@
 static char *next_field(char *);
 static int scanint(char *, int *);
 static char *err_string(void);
-static int str_adderr(char *, int, int);
-static int str_addarg(char *, int, char *, int);
+static size_t str_adderr(char *, size_t, int);
+static size_t str_addarg(char *, size_t, char *, int);
 static int err_compar(const void *, const void *);
 
 /*
@@ -215,7 +215,6 @@ static char *err_string()
     int  cnt = 0;
     int  first = Yes;
     int  currerr = -1;
-    int stringlen;		/* characters still available in "string" */
     static char string[STRMAX];
 
     /* if there are no errors, return NULL */
@@ -230,7 +229,6 @@ static char *err_string()
     /* need a space at the front of the error string */
     string[0] = ' ';
     string[1] = '\0';
-    stringlen = STRMAX - 2;
 
     /* loop thru the sorted list, building an error string */
     while (cnt < errcnt)
@@ -240,7 +238,8 @@ static char *err_string()
 	{
 	    if (currerr != -1)
 	    {
-		if ((stringlen = str_adderr(string, stringlen, currerr)) < 2)
+		if (str_adderr(string, sizeof string, currerr) >
+		    (sizeof string - 2))
 		{
 		    return(err_listem);
 		}
@@ -250,7 +249,8 @@ static char *err_string()
 	    currerr = errp->errno;
 	    first = Yes;
 	}
-	if ((stringlen = str_addarg(string, stringlen, errp->arg, first)) ==0)
+	if (str_addarg(string, sizeof string, errp->arg, first) >=
+	    sizeof string)
 	{
 	    return(err_listem);
 	}
@@ -258,10 +258,11 @@ static char *err_string()
     }
 
     /* add final message */
-    stringlen = str_adderr(string, stringlen, currerr);
+    if (str_adderr(string, sizeof string, currerr) >= sizeof string)
+	return(err_listem);
 
     /* return the error string */
-    return(stringlen == 0 ? err_listem : string);
+    return(string);
 }
 
 /*
@@ -269,25 +270,20 @@ static char *err_string()
  *	the string "str".
  */
 
-static int str_adderr(str, len, err)
+static size_t str_adderr(str, len, err)
 
 char *str;
-int len;
+size_t len;
 int err;
 
 {
     char *msg;
-    int  msglen;
+    size_t msglen;
 
     msg = err == 0 ? "Not a number" : strerror(err);
-    msglen = strlen(msg) + 2;
-    if (len <= msglen)
-    {
-	return(0);
-    }
-    (void) strcat(str, ": ");
-    (void) strcat(str, msg);
-    return(len - msglen);
+    if ((msglen = strlcat(str, ": ", len)) >= len)
+	return(msglen);
+    return(strlcat(str, msg, len));
 }
 
 /*
@@ -296,31 +292,22 @@ int err;
  *	is set (indicating that a comma should NOT be added to the front).
  */
 
-static int str_addarg(str, len, arg, first)
+static size_t str_addarg(str, len, arg, first)
 
 char *str;
-int  len;
+size_t len;
 char *arg;
 int  first;
 
 {
-    int arglen;
+    size_t msglen;
 
-    arglen = strlen(arg);
     if (!first)
     {
-	arglen += 2;
+	if ((msglen = strlcat(str, ", ", len)) >= len)
+	    return(msglen);
     }
-    if (len <= arglen)
-    {
-	return(0);
-    }
-    if (!first)
-    {
-	(void) strcat(str, ", ");
-    }
-    (void) strcat(str, arg);
-    return(len - arglen);
+    return(strlcat(str, arg, len));
 }
 
 /*
