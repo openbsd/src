@@ -681,8 +681,9 @@ Makefile: $(srcdir)/Makefile.in config.status $(srcdir)/version.c \
 	$(SHELL) config.run
 	rm -f config.run
 
-$(srcdir)/configure: $(srcdir)/configure.in
-	cd $(srcdir); autoconf
+# XXX OpenBSD
+#$(srcdir)/configure: $(srcdir)/configure.in
+#	cd $(srcdir); autoconf
 
 # cstamp-h.in controls rebuilding of config.in.
 # It is named cstamp-h.in and not stamp-h.in so the mostlyclean rule doesn't

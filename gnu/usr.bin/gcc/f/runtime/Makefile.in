@@ -105,8 +105,9 @@ libf77: libF77/Makefile
 	  cd libF77;  $(MAKE) $(FLAGS_TO_PASS) all ; \
 	fi
 
-${srcdir}/configure: ${srcdir}/configure.in
-	cd ${srcdir} && autoconf && rm -f config.cache
+# XXX OpenBSD
+#${srcdir}/configure: ${srcdir}/configure.in
+#	cd ${srcdir} && autoconf && rm -f config.cache
 ../include/f2c.h libI77/Makefile libF77/Makefile Makefile: Makefile.in \
   config.status
 	$(FLAGS_TO_PASS) CONFIG_SITE=/dev/null $(SHELL) config.status
