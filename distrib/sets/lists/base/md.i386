@@ -5,7 +5,7 @@
 ./usr/bin/ldd
 ./usr/bin/pctr
 ./usr/include/i386
-./usr/lib/gcc-lib/i386-unknown-openbsd2.4
+./usr/lib/gcc-lib/i386-unknown-openbsd2.5
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.21.1
 ./usr/lib/libc_r.so.0.0

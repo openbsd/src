@@ -5,10 +5,10 @@
 ./usr/bin/ldd
 ./usr/include/m68k
 ./usr/include/readline
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.4
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.4/2.8.1
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.4/2.8.1/include
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.4/2.8.1/include/objc
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.5
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/2.8.1
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/2.8.1/include
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.5/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.21.1
 ./usr/lib/libcrypto.so.1.0

@@ -3,10 +3,10 @@
 ./sbin/fdisk
 ./usr/include/powerpc
 ./usr/include/readline
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.4
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.4/2.8.1
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.4/2.8.1/include
-./usr/lib/gcc-lib/powerpc-unknown-openbsd2.4/2.8.1/include/objc
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.5
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.5/2.8.1
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.5/2.8.1/include
+./usr/lib/gcc-lib/powerpc-unknown-openbsd2.5/2.8.1/include/objc
 ./usr/lib/perl5/powerpc-openbsd
 ./usr/lib/perl5/powerpc-openbsd/5.00404
 ./usr/lib/perl5/powerpc-openbsd/5.00404/CORE
@@ -373,7 +373,7 @@
 ./usr/mdec/mbr
 ./usr/mdec/msdos1mb.gz
 ./usr/mdec/ofwboot
-./usr/powerpc-unknown-openbsd2.4
-./usr/powerpc-unknown-openbsd2.4/bin
-./usr/powerpc-unknown-openbsd2.4/lib
-./usr/powerpc-unknown-openbsd2.4/lib/ldscripts
+./usr/powerpc-unknown-openbsd2.5
+./usr/powerpc-unknown-openbsd2.5/bin
+./usr/powerpc-unknown-openbsd2.5/lib
+./usr/powerpc-unknown-openbsd2.5/lib/ldscripts
