@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.18 2004/07/15 15:50:51 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.63 2004/07/15 07:25:40 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.19 2004/07/15 16:11:51 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.64 2004/07/15 07:26:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.63 2004/07/15 07:25:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.64 2004/07/15 07:26:17 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -190,55 +190,87 @@ void atw_si4126_print(struct atw_softc *);
 void	atw_print_stats(struct atw_softc *);
 #endif
 
+/* ifnet methods */
 void	atw_start(struct ifnet *);
 void	atw_watchdog(struct ifnet *);
 int	atw_ioctl(struct ifnet *, u_long, caddr_t);
 int	atw_init(struct ifnet *);
-void	atw_txdrain(struct atw_softc *);
 void	atw_stop(struct ifnet *, int);
 
-void	atw_reset(struct atw_softc *);
-int	atw_read_srom(struct atw_softc *);
+/* Device attachment */
+void	atw_attach(struct atw_softc *);
+int	atw_detach(struct atw_softc *);
 
-void	atw_shutdown(void *);
-
+/* Rx/Tx process */
 void	atw_rxdrain(struct atw_softc *);
+void	atw_txdrain(struct atw_softc *);
 int	atw_add_rxbuf(struct atw_softc *, int);
 void	atw_idle(struct atw_softc *, u_int32_t);
 
+/* Device (de)activation and power state */
 int	atw_enable(struct atw_softc *);
 void	atw_disable(struct atw_softc *);
 void	atw_power(int, void *);
+void	atw_shutdown(void *);
+void	atw_reset(struct atw_softc *);
 
+/* Interrupt handlers */
 void	atw_rxintr(struct atw_softc *);
 void	atw_txintr(struct atw_softc *);
 void	atw_linkintr(struct atw_softc *, u_int32_t);
 
+/* 802.11 state machine */
 int	atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
+int	atw_tune(struct atw_softc *);
+void	atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
+	    struct ieee80211_node *, int, int, u_int32_t);
+void	atw_next_scan(void *);
+
+/* Device initialization */
+void	atw_wcsr_init(struct atw_softc *);
+void	atw_cmdr_init(struct atw_softc *);
+void	atw_tofs2_init(struct atw_softc *);
+void	atw_txlmt_init(struct atw_softc *);
+void	atw_test1_init(struct atw_softc *);
+void	atw_rf_reset(struct atw_softc *);
+void	atw_cfp_init(struct atw_softc *);
+void	atw_tofs0_init(struct atw_softc *);
+void	atw_ifs_init(struct atw_softc *);
+void	atw_response_times_init(struct atw_softc *);
+void	atw_bbp_io_init(struct atw_softc *);
+void	atw_nar_init(struct atw_softc *);
+
+/* RAM/ROM utilities */
+void	atw_clear_sram(struct atw_softc *);
+void	atw_write_sram(struct atw_softc *, u_int, u_int8_t *, u_int);
+int	atw_read_srom(struct atw_softc *);
+
+/* BSS setup */
 void	atw_tsf(struct atw_softc *);
 void	atw_start_beacon(struct atw_softc *, int);
-void	atw_write_wep(struct atw_softc *);
 void	atw_write_bssid(struct atw_softc *);
 void	atw_write_ssid(struct atw_softc *);
 void	atw_write_sup_rates(struct atw_softc *);
-void	atw_clear_sram(struct atw_softc *);
-void	atw_write_sram(struct atw_softc *, u_int, u_int8_t *, u_int);
+void	atw_write_wep(struct atw_softc *);
+
+/* Media */
 int	atw_media_change(struct ifnet *);
 void	atw_media_status(struct ifnet *, struct ifmediareq *);
+
 void	atw_filter_setup(struct atw_softc *);
+
+/* 802.11 utilities */
 void	atw_frame_setdurs(struct atw_softc *, struct atw_frame *, int, int);
-static __inline uint32_t atw_last_even_tsft(uint32_t, uint32_t, uint32_t);
-static __inline void atw_tsft(struct atw_softc *, uint32_t *, uint32_t *);
+struct	ieee80211_node *atw_node_alloc(struct ieee80211com *);
+void	atw_node_free(struct ieee80211com *, struct ieee80211_node *);
 void	atw_recv_beacon(struct ieee80211com *, struct mbuf *,
 	    struct ieee80211_node *, int, int, u_int32_t);
-void	atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
-	    struct ieee80211_node *, int, int, u_int32_t);
-void	atw_node_free(struct ieee80211com *, struct ieee80211_node *);
-void	atw_next_scan(void *);
-struct ieee80211_node *atw_node_alloc(struct ieee80211com *);
+static	__inline uint32_t atw_last_even_tsft(uint32_t, uint32_t, uint32_t);
+static	__inline void atw_tsft(struct atw_softc *, uint32_t *, uint32_t *);
 
-int	atw_tune(struct atw_softc *);
-
+/*
+ * Tuner/transceiver/modem
+ */
 void	atw_bbp_io_enable(struct atw_softc *, int);
 
 /* RFMD RF3000 Baseband Processor */
@@ -937,6 +969,186 @@ atw_clear_sram(struct atw_softc *sc)
  * set TX rate
  */
 
+/* Tell the ADM8211 to raise ATW_INTR_LINKOFF if 7 beacon intervals pass
+ * without receiving a beacon with the preferred BSSID & SSID.
+ * atw_write_bssid & atw_write_ssid set the BSSID & SSID.
+ */
+void
+atw_wcsr_init(struct atw_softc *sc)
+{
+	uint32_t wcsr;
+
+	wcsr = ATW_READ(sc, ATW_WCSR);
+	wcsr &= ~(ATW_WCSR_BLN_MASK|ATW_WCSR_LSOE|ATW_WCSR_MPRE|ATW_WCSR_LSOE);
+	wcsr |= LSHIFT(7, ATW_WCSR_BLN_MASK);
+	ATW_WRITE(sc, ATW_WCSR, wcsr);	/* XXX resets wake-up status bits */
+
+	DPRINTF(sc, ("%s: %s reg[WCSR] = %08x\n",
+	    sc->sc_dev.dv_xname, __func__, ATW_READ(sc, ATW_WCSR)));
+}
+
+/* Turn off power management.  Set Rx store-and-forward mode. */
+void
+atw_cmdr_init(struct atw_softc *sc)
+{
+	uint32_t cmdr;
+	cmdr = ATW_READ(sc, ATW_CMDR);
+	cmdr &= ~ATW_CMDR_APM;
+	cmdr |= ATW_CMDR_RTE;
+	cmdr &= ~ATW_CMDR_DRT_MASK;
+	cmdr |= ATW_CMDR_DRT_SF;
+
+	ATW_WRITE(sc, ATW_CMDR, cmdr);
+}
+
+void
+atw_tofs2_init(struct atw_softc *sc)
+{
+	uint32_t tofs2;
+	/* XXX this magic can probably be figured out from the RFMD docs */
+#ifndef ATW_REFSLAVE
+	tofs2 = LSHIFT(4, ATW_TOFS2_PWR1UP_MASK)    | /* 8 ms = 4 * 2 ms */
+	      LSHIFT(13, ATW_TOFS2_PWR0PAPE_MASK) | /* 13 us */
+	      LSHIFT(8, ATW_TOFS2_PWR1PAPE_MASK)  | /* 8 us */
+	      LSHIFT(5, ATW_TOFS2_PWR0TRSW_MASK)  | /* 5 us */
+	      LSHIFT(12, ATW_TOFS2_PWR1TRSW_MASK) | /* 12 us */
+	      LSHIFT(13, ATW_TOFS2_PWR0PE2_MASK)  | /* 13 us */
+	      LSHIFT(4, ATW_TOFS2_PWR1PE2_MASK)   | /* 4 us */
+	      LSHIFT(5, ATW_TOFS2_PWR0TXPE_MASK);  /* 5 us */
+#else
+	/* XXX new magic from reference driver source */
+	tofs2 = LSHIFT(8, ATW_TOFS2_PWR1UP_MASK)    | /* 8 ms = 4 * 2 ms */
+	      LSHIFT(8, ATW_TOFS2_PWR0PAPE_MASK) | /* 13 us */
+	      LSHIFT(1, ATW_TOFS2_PWR1PAPE_MASK)  | /* 8 us */
+	      LSHIFT(5, ATW_TOFS2_PWR0TRSW_MASK)  | /* 5 us */
+	      LSHIFT(12, ATW_TOFS2_PWR1TRSW_MASK) | /* 12 us */
+	      LSHIFT(13, ATW_TOFS2_PWR0PE2_MASK)  | /* 13 us */
+	      LSHIFT(1, ATW_TOFS2_PWR1PE2_MASK)   | /* 4 us */
+	      LSHIFT(8, ATW_TOFS2_PWR0TXPE_MASK);  /* 5 us */
+#endif
+	ATW_WRITE(sc, ATW_TOFS2, tofs2);
+}
+
+void
+atw_nar_init(struct atw_softc *sc)
+{
+	ATW_WRITE(sc, ATW_NAR, ATW_NAR_SF|ATW_NAR_PB);
+}
+
+void
+atw_txlmt_init(struct atw_softc *sc)
+{
+	ATW_WRITE(sc, ATW_TXLMT, LSHIFT(512, ATW_TXLMT_MTMLT_MASK) |
+	                         LSHIFT(1, ATW_TXLMT_SRTYLIM_MASK));
+}
+
+void
+atw_test1_init(struct atw_softc *sc)
+{
+	uint32_t test1;
+
+	test1 = ATW_READ(sc, ATW_TEST1);
+	test1 &= ~(ATW_TEST1_DBGREAD_MASK|ATW_TEST1_CONTROL);
+	/* XXX magic 0x1 */
+	test1 |= LSHIFT(0x1, ATW_TEST1_DBGREAD_MASK) | ATW_TEST1_CONTROL;
+	ATW_WRITE(sc, ATW_TEST1, test1);
+}
+
+void
+atw_rf_reset(struct atw_softc *sc)
+{
+	/* XXX this resets an Intersil RF front-end? */
+	/* TBD condition on Intersil RFType? */
+	ATW_WRITE(sc, ATW_SYNRF, ATW_SYNRF_INTERSIL_EN);
+	DELAY(10 * 1000);
+	ATW_WRITE(sc, ATW_SYNRF, 0);
+	DELAY(5 * 1000);
+}
+
+/* Set 16 TU max duration for the contention-free period (CFP). */
+void
+atw_cfp_init(struct atw_softc *sc)
+{
+	uint32_t cfpp;
+
+	cfpp = ATW_READ(sc, ATW_CFPP);
+	cfpp &= ~ATW_CFPP_CFPMD;
+	cfpp |= LSHIFT(16, ATW_CFPP_CFPMD);
+	ATW_WRITE(sc, ATW_CFPP, cfpp);
+}
+
+void
+atw_tofs0_init(struct atw_softc *sc)
+{
+	/* XXX I guess that the Cardbus clock is 22MHz?
+	 * I am assuming that the role of ATW_TOFS0_USCNT is
+	 * to divide the bus clock to get a 1MHz clock---the datasheet is not
+	 * very clear on this point. It says in the datasheet that it is
+	 * possible for the ADM8211 to accomodate bus speeds between 22MHz
+	 * and 33MHz; maybe this is the way? I see a binary-only driver write
+	 * these values. These values are also the power-on default.
+	 */
+	ATW_WRITE(sc, ATW_TOFS0,
+	    LSHIFT(22, ATW_TOFS0_USCNT_MASK) |
+	    ATW_TOFS0_TUCNT_MASK /* set all bits in TUCNT */);
+}
+
+/* Initialize interframe spacing: 802.11b slot time, SIFS, DIFS, EIFS. */
+void
+atw_ifs_init(struct atw_softc *sc)
+{
+	uint32_t ifst;
+	/* XXX EIFS=0x64, SIFS=110 are used by the reference driver.
+	 * Go figure.
+	 */
+	ifst = LSHIFT(IEEE80211_DUR_DS_SLOT, ATW_IFST_SLOT_MASK) |
+	    LSHIFT(22 * 5 /* IEEE80211_DUR_DS_SIFS */ /* # of 22MHz cycles */,
+		   ATW_IFST_SIFS_MASK) |
+	    LSHIFT(IEEE80211_DUR_DS_DIFS, ATW_IFST_DIFS_MASK) |
+	    LSHIFT(0x64 /* IEEE80211_DUR_DS_EIFS */, ATW_IFST_EIFS_MASK);
+
+	ATW_WRITE(sc, ATW_IFST, ifst);
+}
+
+void
+atw_response_times_init(struct atw_softc *sc)
+{
+	/* XXX More magic. Relates to ACK timing?  The datasheet seems to
+	 * indicate that the MAC expects at least SIFS + MIRT microseconds
+	 * to pass after it transmits a frame that requires a response;
+	 * it waits at most SIFS + MART microseconds for the response.
+	 * Surely this is not the ACK timeout?
+	 */
+	ATW_WRITE(sc, ATW_RSPT, LSHIFT(0xffff, ATW_RSPT_MART_MASK) |
+	    LSHIFT(0xff, ATW_RSPT_MIRT_MASK));
+}
+
+/* Set up the MMI read/write addresses for the baseband. The Tx/Rx
+ * engines read and write baseband registers after Rx and before
+ * Tx, respectively.
+ */
+void
+atw_bbp_io_init(struct atw_softc *sc) 
+{
+	switch (sc->sc_bbptype) {
+	case ATW_BBPTYPE_INTERSIL:
+		ATW_WRITE(sc, ATW_MMIWADDR, ATW_MMIWADDR_INTERSIL);
+		ATW_WRITE(sc, ATW_MMIRADDR1, ATW_MMIRADDR1_INTERSIL);
+		ATW_WRITE(sc, ATW_MMIRADDR2, ATW_MMIRADDR2_INTERSIL);
+		break;
+	case ATW_BBPTYPE_MARVEL:
+		/* TBD find out the Marvel settings. */
+		break;
+	case ATW_BBPTYPE_RFMD:
+	default:
+		ATW_WRITE(sc, ATW_MMIWADDR, ATW_MMIWADDR_RFMD);
+		ATW_WRITE(sc, ATW_MMIRADDR1, ATW_MMIRADDR1_RFMD);
+		ATW_WRITE(sc, ATW_MMIRADDR2, ATW_MMIRADDR2_RFMD);
+		break;
+	}
+	ATW_WRITE(sc, ATW_MACTEST, ATW_MACTEST_MMI_USETXCLK);
+}
+
 /*
  * atw_init:		[ ifnet interface function ]
  *
@@ -949,7 +1161,6 @@ atw_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct atw_txsoft *txs;
 	struct atw_rxsoft *rxs;
-	u_int32_t reg;
 	int i, error = 0;
 
 	if ((error = atw_enable(sc)) != 0)
@@ -965,173 +1176,51 @@ atw_init(struct ifnet *ifp)
 	    __func__, ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan),
 	    ic->ic_bss->ni_chan->ic_freq, ic->ic_bss->ni_chan->ic_flags));
 
-	/* Turn off APM??? (A binary-only driver does this.)
-	 *
-	 * Set Rx store-and-forward mode.
-	 */
-	reg = ATW_READ(sc, ATW_CMDR);
-	reg &= ~ATW_CMDR_APM;
-	reg &= ~ATW_CMDR_DRT_MASK;
-	reg |= ATW_CMDR_RTE | LSHIFT(0x2, ATW_CMDR_DRT_MASK);
+	atw_wcsr_init(sc);
 
-	ATW_WRITE(sc, ATW_CMDR, reg);
+	atw_cmdr_init(sc);
 
 	/* Set data rate for PLCP Signal field, 1Mbps = 10 x 100Kb/s.
 	 *
-	 * XXX a binary-only driver sets a different service field than
-	 * 0. why?
+	 * XXX Set transmit power for ATIM, RTS, Beacon.
 	 */
-	reg = ATW_READ(sc, ATW_PLCPHD);
-	reg &= ~(ATW_PLCPHD_SERVICE_MASK|ATW_PLCPHD_SIGNAL_MASK);
-	reg |= LSHIFT(10, ATW_PLCPHD_SIGNAL_MASK) |
-	    LSHIFT(0xb0, ATW_PLCPHD_SERVICE_MASK);
-	ATW_WRITE(sc, ATW_PLCPHD, reg);
+	ATW_WRITE(sc, ATW_PLCPHD, LSHIFT(10, ATW_PLCPHD_SIGNAL_MASK) |
+	    LSHIFT(0xb0, ATW_PLCPHD_SERVICE_MASK));
 
-	/* XXX this magic can probably be figured out from the RFMD docs */
-	reg = LSHIFT(4, ATW_TOFS2_PWR1UP_MASK)    | /* 8 ms = 4 * 2 ms */
-	      LSHIFT(13, ATW_TOFS2_PWR0PAPE_MASK) | /* 13 us */
-	      LSHIFT(8, ATW_TOFS2_PWR1PAPE_MASK)  | /* 8 us */
-	      LSHIFT(5, ATW_TOFS2_PWR0TRSW_MASK)  | /* 5 us */
-	      LSHIFT(12, ATW_TOFS2_PWR1TRSW_MASK) | /* 12 us */
-	      LSHIFT(13, ATW_TOFS2_PWR0PE2_MASK)  | /* 13 us */
-	      LSHIFT(4, ATW_TOFS2_PWR1PE2_MASK)   | /* 4 us */
-	      LSHIFT(5, ATW_TOFS2_PWR0TXPE_MASK);  /* 5 us */
-	ATW_WRITE(sc, ATW_TOFS2, reg);
+	atw_tofs2_init(sc);
 
-	ATW_WRITE(sc, ATW_TXLMT, LSHIFT(512, ATW_TXLMT_MTMLT_MASK) |
-	                         LSHIFT(224, ATW_TXLMT_SRTYLIM_MASK));
+	atw_nar_init(sc);
 
-	/* XXX this resets an Intersil RF front-end? */
-	/* TBD condition on Intersil RFType? */
-	ATW_WRITE(sc, ATW_SYNRF, ATW_SYNRF_INTERSIL_EN);
-	DELAY(10 * 1000);
-	ATW_WRITE(sc, ATW_SYNRF, 0);
-	DELAY(5 * 1000);
+	atw_txlmt_init(sc);
 
-	/* 16 TU max duration for contention-free period */
-	reg = ATW_READ(sc, ATW_CFPP) & ~ATW_CFPP_CFPMD;
-	ATW_WRITE(sc, ATW_CFPP, reg | LSHIFT(16, ATW_CFPP_CFPMD));
+	atw_test1_init(sc);
 
-	/* XXX I guess that the Cardbus clock is 22MHz?
-	 * I am assuming that the role of ATW_TOFS0_USCNT is
-	 * to divide the bus clock to get a 1MHz clock---the datasheet is not
-	 * very clear on this point. It says in the datasheet that it is
-	 * possible for the ADM8211 to accomodate bus speeds between 22MHz
-	 * and 33MHz; maybe this is the way? I see a binary-only driver write
-	 * these values. These values are also the power-on default.
+	atw_rf_reset(sc);
+
+	atw_cfp_init(sc);
+
+	atw_tofs0_init(sc);
+
+	atw_ifs_init(sc);
+
+	/* XXX Fall asleep after one second of inactivity.
+	 * XXX A frame may only dribble in for 65536us.
 	 */
-	ATW_WRITE(sc, ATW_TOFS0,
-	    LSHIFT(22, ATW_TOFS0_USCNT_MASK) |
-	    ATW_TOFS0_TUCNT_MASK /* set all bits in TUCNT */);
+	ATW_WRITE(sc, ATW_RMD,
+	    LSHIFT(1, ATW_RMD_PCNT) | LSHIFT(0xffff, ATW_RMD_RMRD_MASK));
 
-	/* Initialize interframe spacing.  EIFS=0x64 is used by a binary-only
-	 * driver. Go figure.
-	 */
-	reg = LSHIFT(IEEE80211_DUR_DS_SLOT, ATW_IFST_SLOT_MASK) |
-	      LSHIFT(22 * IEEE80211_DUR_DS_SIFS /* # of 22MHz cycles */,
-	             ATW_IFST_SIFS_MASK) |
-	      LSHIFT(IEEE80211_DUR_DS_DIFS, ATW_IFST_DIFS_MASK) |
-	      LSHIFT(0x64 /* IEEE80211_DUR_DS_EIFS */, ATW_IFST_EIFS_MASK);
-	ATW_WRITE(sc, ATW_IFST, reg);
+	atw_response_times_init(sc);
 
-	/* XXX More magic. Might relate to ACK timing. */
-	ATW_WRITE(sc, ATW_RSPT, LSHIFT(0xffff, ATW_RSPT_MART_MASK) |
-	    LSHIFT(0xff, ATW_RSPT_MIRT_MASK));
+	atw_bbp_io_init(sc);
 
-	/* Set up the MMI read/write addresses for the BBP.
-	 *
-	 * TBD find out the Marvel settings.
-	 */
-	switch (sc->sc_bbptype) {
-	case ATW_BBPTYPE_INTERSIL:
-		ATW_WRITE(sc, ATW_MMIWADDR, ATW_MMIWADDR_INTERSIL);
-		ATW_WRITE(sc, ATW_MMIRADDR1, ATW_MMIRADDR1_INTERSIL);
-		ATW_WRITE(sc, ATW_MMIRADDR2, ATW_MMIRADDR2_INTERSIL);
-		break;
-	case ATW_BBPTYPE_MARVEL:
-		break;
-	case ATW_BBPTYPE_RFMD:
-		ATW_WRITE(sc, ATW_MMIWADDR, ATW_MMIWADDR_RFMD);
-		ATW_WRITE(sc, ATW_MMIRADDR1, ATW_MMIRADDR1_RFMD);
-		ATW_WRITE(sc, ATW_MMIRADDR2, ATW_MMIRADDR2_RFMD);
-	default:
-		break;
-	}
-
-	sc->sc_wepctl = 0;
-	ATW_WRITE(sc, ATW_MACTEST, ATW_MACTEST_MMI_USETXCLK);
+	ATW_WRITE(sc, ATW_STSR, 0xffffffff);
 
 	if ((error = atw_rf3000_init(sc)) != 0)
 		goto out;
 
-	/*
-	 * Initialize the PCI Access Register.
-	 */
-	sc->sc_busmode = ATW_PAR_BAR;	/* XXX what is this? */
-
-	/*
-	 * If we're allowed to do so, use Memory Read Line
-	 * and Memory Read Multiple.
-	 *
-	 * XXX Should we use Memory Write and Invalidate?
-	 */
-	if (sc->sc_flags & ATWF_MRL)
-		sc->sc_busmode |= ATW_PAR_MRLE;
-	if (sc->sc_flags & ATWF_MRM)
-		sc->sc_busmode |= ATW_PAR_MRME;
-	if (sc->sc_flags & ATWF_MWI)
-		sc->sc_busmode |= ATW_PAR_MWIE;
-	if (sc->sc_maxburst == 0)
-		sc->sc_maxburst = 8;	/* ADM8211 default */
-
-	switch (sc->sc_cacheline) {
-	default:
-		/* Use burst length. */
-		break;
-	case 8:
-		sc->sc_busmode |= ATW_PAR_CAL_8DW;
-		break;
-	case 16:
-		sc->sc_busmode |= ATW_PAR_CAL_16DW;
-		break;
-	case 32:
-		sc->sc_busmode |= ATW_PAR_CAL_32DW;
-		break;
-	}
-	switch (sc->sc_maxburst) {
-	case 1:
-		sc->sc_busmode |= ATW_PAR_PBL_1DW;
-		break;
-	case 2:
-		sc->sc_busmode |= ATW_PAR_PBL_2DW;
-		break;
-	case 4:
-		sc->sc_busmode |= ATW_PAR_PBL_4DW;
-		break;
-	case 8:
-		sc->sc_busmode |= ATW_PAR_PBL_8DW;
-		break;
-	case 16:
-		sc->sc_busmode |= ATW_PAR_PBL_16DW;
-		break;
-	case 32:
-		sc->sc_busmode |= ATW_PAR_PBL_32DW;
-		break;
-	default:
-		sc->sc_busmode |= ATW_PAR_PBL_8DW;
-		break;
-	}
-
 	ATW_WRITE(sc, ATW_PAR, sc->sc_busmode);
 	DPRINTF(sc, ("%s: ATW_PAR %08x busmode %08x\n", sc->sc_dev.dv_xname,
 	    ATW_READ(sc, ATW_PAR), sc->sc_busmode));
-
-	/*
-	 * Initialize the OPMODE register.  We don't write it until
-	 * we're ready to begin the transmit and receive processes.
-	 */
-	sc->sc_opmode = ATW_NAR_SR | ATW_NAR_ST |
-	    sc->sc_txth[sc->sc_txthresh].txth_opmode;
 
 	/*
 	 * Initialize the transmit descriptor ring.
@@ -1185,15 +1274,6 @@ atw_init(struct ifnet *ifp)
 	}
 	sc->sc_rxptr = 0;
 
-	/* disable all wake-up events */
-	ATW_CLR(sc, ATW_WCSR, ATW_WCSR_WP1E|ATW_WCSR_WP2E|ATW_WCSR_WP3E|
-	                      ATW_WCSR_WP4E|ATW_WCSR_WP5E|ATW_WCSR_TSFTWE|
-			      ATW_WCSR_TIMWE|ATW_WCSR_ATIMWE|ATW_WCSR_KEYWE|
-			      ATW_WCSR_WFRE|ATW_WCSR_MPRE|ATW_WCSR_LSOE);
-
-	/* ack all wake-up events */
-	ATW_SET(sc, ATW_WCSR, 0);
-
 	/*
 	 * Initialize the interrupt mask and enable interrupts.
 	 */
@@ -1225,8 +1305,12 @@ atw_init(struct ifnet *ifp)
 	/*
 	 * Give the transmit and receive rings to the ADM8211.
 	 */
-	ATW_WRITE(sc, ATW_TDBD, ATW_CDTXADDR(sc, sc->sc_txnext));
 	ATW_WRITE(sc, ATW_RDB, ATW_CDRXADDR(sc, sc->sc_rxptr));
+	ATW_WRITE(sc, ATW_TDBD, ATW_CDTXADDR(sc, sc->sc_txnext));
+
+	sc->sc_txthresh = 0;
+	sc->sc_opmode = ATW_NAR_SR | ATW_NAR_ST |
+	    sc->sc_txth[sc->sc_txthresh].txth_opmode;
 
 	/* common 802.11 configuration */
 	ic->ic_flags &= ~IEEE80211_F_IBSSON;
@@ -1243,8 +1327,6 @@ atw_init(struct ifnet *ifp)
 		break;
 	}
 
-	atw_start_beacon(sc, 0);
-
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_AHDEMO:
 	case IEEE80211_M_HOSTAP:
@@ -1256,10 +1338,14 @@ atw_init(struct ifnet *ifp)
 		break;
 	}
 
+	sc->sc_wepctl = 0;
+
 	atw_write_ssid(sc);
 	atw_write_sup_rates(sc);
 	if (ic->ic_caps & IEEE80211_C_WEP)
 		atw_write_wep(sc);
+
+	ic->ic_state = IEEE80211_S_INIT;
 
 	/*
 	 * Set the receive filter.  This will start the transmit and
@@ -1277,12 +1363,14 @@ atw_init(struct ifnet *ifp)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	ic->ic_state = IEEE80211_S_INIT;
 
-	if (ic->ic_opmode != IEEE80211_M_MONITOR)
-		error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
-	else
+	/* send no beacons, yet. */
+	atw_start_beacon(sc, 0);
+
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		error = ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
+	else
+		error = ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
  out:
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
