@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.42 2004/04/23 09:26:15 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.43 2004/04/23 09:31:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -725,8 +725,7 @@ ac97_attach(host_if)
 				} else
 					printf(" <%02x>", id & 0xff);
 				if (codec >= vendor->codecs && codec->rev)
-					printf(" rev %d",
-					    id & codec->rev);
+					printf(" rev %d", id & codec->rev);
 				printf(")");
 				break;
 			}
@@ -963,7 +962,7 @@ ac97_mixer_get_port(codec_if, cp)
 		    (cp->un.value.num_channels > value->num_channels))
 			return (EINVAL);
 
-		if (value->num_channels == 1) 
+		if (value->num_channels == 1)
 			l = r = (val >> si->ofs) & mask;
 		else {
 			if (!(as->host_flags & AC97_HOST_SWAPPED_CHANNELS)) {
@@ -1059,23 +1058,23 @@ ac97_set_rate(codec_if, p, mode)
 /*
  * Codec-dependent initialization
  */
-  	 
+
 void
 ac97_ad198x_init(struct ac97_softc *as)
 {
-        unsigned short misc;
+	unsigned short misc;
 
-        ac97_read(as, AC97_AD_REG_MISC, &misc);
-        ac97_write(as, AC97_AD_REG_MISC,
+	ac97_read(as, AC97_AD_REG_MISC, &misc);
+	ac97_write(as, AC97_AD_REG_MISC,
 	    misc|AC97_AD_MISC_DAM|AC97_AD_MISC_MADPD);
 }
 
 void
 ac97_cx20468_init(struct ac97_softc *as)
 {
-        unsigned short misc;
+	unsigned short misc;
 
-        ac97_read(as, AC97_CX_REG_MISC, &misc);
-        ac97_write(as, AC97_CX_REG_MISC,
+	ac97_read(as, AC97_CX_REG_MISC, &misc);
+	ac97_write(as, AC97_CX_REG_MISC,
 	    AC97_CX_SPDIFEN | AC97_CX_COPYRIGHT | AC97_CX_MASK);
 }
