@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc32.c,v 1.5 2003/12/16 22:33:02 henning Exp $	*/
+/*	$OpenBSD: crc32.c,v 1.6 2003/12/16 23:27:23 millert Exp $	*/
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-2003 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -59,7 +59,6 @@
 
 local int crc_table_empty = 1;
 local unsigned long FAR crc_table[TBLS][256];
-local uLongf crc_table[256];
 local void make_crc_table OF((void));
 #ifdef MAKECRCH
    local void write_table OF((FILE *, const unsigned long FAR *));
