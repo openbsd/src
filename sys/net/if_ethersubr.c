@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.10 1996/05/06 05:43:41 mickey Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.11 1996/05/06 14:13:53 mickey Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.18 1996/02/13 22:00:14 christos Exp $	*/
 
 /*
@@ -80,13 +80,15 @@
 #endif
 
 #ifdef LLC
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
 #endif
 
 #if defined(LLC) && defined(CCITT)
 #include <sys/socketvar.h>
-#include <netccitt/x25.h>
 #endif
 
 u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
