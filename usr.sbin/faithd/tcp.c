@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.c,v 1.6 2001/09/05 01:31:33 itojun Exp $	*/
+/*	$OpenBSD: tcp.c,v 1.7 2001/11/05 09:56:02 deraadt Exp $	*/
 /*	$KAME: tcp.c,v 1.6 2001/07/02 14:36:49 itojun Exp $	*/
 
 /*
@@ -78,22 +78,28 @@ static void relay __P((int, int, const char *, int));
 static void
 sig_ctimeout(int sig)
 {
+	int save_errno = errno;
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
+
 	/* parent side: record notification from the child */
 	if (dflag)
-		syslog(LOG_DEBUG, "activity timer from child");
+		syslog_r(LOG_DEBUG, &sdata, "activity timer from child");
 	child_lastactive = time(NULL);
+	errno = save_errno;
 }
 
 /* parent will terminate if child dies. */
 static void
 sig_child(int sig)
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	int status;
 	pid_t pid;
 
 	pid = wait3(&status, WNOHANG, (struct rusage *)0);
 	if (pid && WEXITSTATUS(status))
-		syslog(LOG_WARNING, "child %d exit status 0x%x", pid, status);
+		syslog_r(LOG_WARNING, &sdata,
+		    "child %d exit status 0x%x", pid, status);
 	exit_success("terminate connection due to child termination");
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.13 2001/09/05 01:31:33 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.14 2001/11/05 09:56:01 deraadt Exp $	*/
 /*	$KAME: faithd.c,v 1.40 2001/07/02 14:36:48 itojun Exp $	*/
 
 /*
@@ -775,19 +775,26 @@ map4to6(struct sockaddr_in *dst4, struct sockaddr_in6 *dst6)
 static void
 sig_child(int sig)
 {
-	int status;
+	int save_errno = errno, status;
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	pid_t pid;
 
-	pid = wait3(&status, WNOHANG, (struct rusage *)0);
-	if (pid && WEXITSTATUS(status))
-		syslog(LOG_WARNING, "child %d exit status 0x%x", pid, status);
+	while ((pid = wait3(&status, WNOHANG, (struct rusage *)0)) != -1) {
+		if (pid && WEXITSTATUS(status))
+			syslog_r(LOG_WARNING, &sdata,
+			    "child %d exit status 0x%x", pid, status);
+	}
+
+	errno = save_errno;
 }
 
 void
 sig_terminate(int sig)
 {
-	syslog(LOG_INFO, "Terminating faith daemon");	
-	exit(EXIT_SUCCESS);
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
+
+	syslog_r(LOG_INFO, &sdata, "Terminating faith daemon");	
+	_exit(EXIT_SUCCESS);
 }
 
 static void
@@ -848,14 +855,15 @@ exit_failure(const char *fmt, ...)
 void
 exit_success(const char *fmt, ...)
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	va_list ap;
 	char buf[BUFSIZ];
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	syslog(LOG_INFO, "%s", buf);
-	exit(EXIT_SUCCESS);
+	syslog_r(LOG_INFO, &sdata, "%s", buf);
+	_exit(EXIT_SUCCESS);
 }
 
 #ifdef USE_ROUTE
