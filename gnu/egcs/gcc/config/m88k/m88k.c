@@ -47,8 +47,6 @@ Boston, MA 02111-1307, USA.  */
 extern char *version_string;
 extern time_t time ();
 extern char *ctime ();
-extern int flag_traditional;
-extern FILE *asm_out_file;
 
 char *m88k_pound_sign = "";	/* Either # for SVR4 or empty for SVR3 */
 const char *m88k_short_data;
@@ -1752,14 +1750,8 @@ static int  nxregs;
 static char save_regs[FIRST_PSEUDO_REGISTER];
 static int  frame_laid_out;
 static int  frame_size;
-static int  variable_args_p;
 static int  epilogue_marked;
 static int  prologue_marked;
-
-extern char call_used_regs[];
-extern int  current_function_pretend_args_size;
-extern int  current_function_outgoing_args_size;
-extern int  frame_pointer_needed;
 
 #define FIRST_OCS_PRESERVE_REGISTER	14
 #define LAST_OCS_PRESERVE_REGISTER	30
@@ -1779,7 +1771,7 @@ m88k_layout_frame ()
 {
   int regno, sp_size;
 
-  frame_laid_out++;
+  frame_laid_out = 1;
 
   bzero ((char *) &save_regs[0], sizeof (save_regs));
   sp_size = nregs = nxregs = 0;
@@ -1907,8 +1899,7 @@ uses_arg_area_p ()
   register tree parm;
 
   if (current_function_decl == 0
-      || current_function_varargs
-      || variable_args_p)
+      || current_function_varargs || current_function_stdarg)
     return 1;
 
   for (parm = DECL_ARGUMENTS (current_function_decl);
@@ -2062,7 +2053,6 @@ m88k_end_epilogue (stream, size)
 
   m88k_function_number++;
   m88k_prologue_done	= 0;		/* don't put out ln directives */
-  variable_args_p	= 0;		/* has variable args */
   frame_laid_out	= 0;
   epilogue_marked	= 0;
   prologue_marked	= 0;
@@ -2538,9 +2528,6 @@ m88k_function_arg (args_so_far, mode, type, named)
       && (TREE_CODE (type) == RECORD_TYPE || TREE_CODE (type) == UNION_TYPE))
     mode = BLKmode;
 
-  if (mode == BLKmode && TARGET_WARN_PASS_STRUCT)
-    warning ("argument #%d is a structure", args_so_far + 1);
-
   if ((args_so_far & 1) != 0
       && (mode == DImode || mode == DFmode
 	  || (type != 0 && TYPE_ALIGN (type) > BITS_PER_WORD)))
@@ -2591,15 +2578,12 @@ m88k_function_arg_advance (args_so_far, mode, type, named)
 
   /* as soon as we put a structure of 32 bytes or more on stack, everything
      needs to go on stack, or varargs will lose. */
-  if (bytes >= 8 * UNITS_PER_WORD)
+  if (bytes < 8 * UNITS_PER_WORD)
     {
-      (*args_so_far) += 8;
-      return;
+      if (mode == BLKmode
+	  && (TYPE_ALIGN (type) != BITS_PER_WORD || bytes != UNITS_PER_WORD))
+	return;
     }
-
-  if (mode == BLKmode
-      && (TYPE_ALIGN (type) != BITS_PER_WORD || bytes != UNITS_PER_WORD))
-    return;
 
   if ((*args_so_far & 1) && (mode == DImode || mode == DFmode
        || ((type != 0) && TYPE_ALIGN (type) > BITS_PER_WORD)))
@@ -2624,7 +2608,6 @@ m88k_builtin_saveregs (arglist)
 		       != void_type_node)))
 		? -UNITS_PER_WORD : 0) + UNITS_PER_WORD - 1;
   int fixed;
-  variable_args_p = 1;
 
   if (CONSTANT_P (current_function_arg_offset_rtx))
     {
