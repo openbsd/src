@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.30 2001/02/19 16:33:20 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.31 2001/02/27 09:07:53 csapuntz Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -566,8 +566,9 @@ unsleep(p)
  * Make all processes sleeping on the specified identifier runnable.
  */
 void
-wakeup(ident)
+wakeup_n(ident, n)
 	void *ident;
+	int n;
 {
 	struct slpque *qp;
 	struct proc *p, **q;
@@ -582,6 +583,7 @@ restart:
 			panic("wakeup");
 #endif
 		if (p->p_wchan == ident) {
+			--n;
 			p->p_wchan = 0;
 			*q = p->p_forw;
 			if (qp->sq_tailp == &p->p_forw)
@@ -607,7 +609,10 @@ restart:
 				}
 				/* END INLINE EXPANSION */
 
-				goto restart;
+				if (n != 0)
+					goto restart;
+				else
+					break;
 			}
 		} else
 			q = &p->p_forw;

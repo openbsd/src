@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.16 2001/02/26 17:54:07 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.17 2001/02/27 09:07:54 csapuntz Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -477,15 +477,6 @@ struct ctldebug debug29 = { "inode_bitmap", &stat_inode_bitmap };
 struct ctldebug debug30 = { "direct_blk_ptrs", &stat_direct_blk_ptrs };
 struct ctldebug debug31 = { "dir_entry", &stat_dir_entry };
 #endif /* DEBUG */
-
-void wakeup_one __P((void *));
-
-void
-wakeup_one(c) 
-	void *c;
-{
-	wakeup(c);
-}
 
 /*
  * Add an item to the end of the work queue.
