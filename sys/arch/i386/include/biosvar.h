@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.14 1997/10/03 20:56:29 deraadt Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.15 1997/10/12 23:55:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -83,6 +83,7 @@ extern struct BIOS_vars {
 	int	bios_dev;
 	u_int	bios_geometry;
 
+	/* APM_CONNECT returned values */
 	u_int	bios_apm_detail;
 	u_int	bios_apm_code32_base;
 	u_int	bios_apm_code16_base;
@@ -91,6 +92,7 @@ extern struct BIOS_vars {
 	u_int	bios_apm_data_len;
 	u_int	bios_apm_entry;
 
+	void	*boot_data;
 }	BIOS_vars;
 
 extern struct BIOS_regs {
