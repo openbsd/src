@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.714 2004/02/27 16:03:06 niklas Exp 
+ *	OpenBSD: pcidevs,v 1.715 2004/02/27 21:30:51 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -670,8 +670,10 @@
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
 #define	PCI_PRODUCT_ATI_MACH64_VU	0x5655		/* Mach64 VU */
 #define	PCI_PRODUCT_ATI_MACH64_VV	0x5656		/* Mach64 VV */
+#define	PCI_PRODUCT_ATI_RADEON_RV280_2	0x5941		/* Radeon 9200 2nd */
+#define	PCI_PRODUCT_ATI_RADEON_RV280	0x5961		/* Radeon 9200 */
 
-/* Applied Micro Circuts products */
+/* Applied Micro Circuits products */
 #define	PCI_PRODUCT_AMCIRCUITS_S5933	0x4750		/* S5933 PCI Matchmaker */
 #define	PCI_PRODUCT_AMCIRCUITS_LANAI	0x8043		/* Myrinet LANai */
 

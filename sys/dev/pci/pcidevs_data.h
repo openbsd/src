@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.714 2004/02/27 16:03:06 niklas Exp 
+ *	OpenBSD: pcidevs,v 1.715 2004/02/27 21:30:51 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1393,6 +1393,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VV,
 	    "Mach64 VV",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_2,
+	    "Radeon 9200 2nd",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280,
+	    "Radeon 9200",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
