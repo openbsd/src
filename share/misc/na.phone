@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.21 2001/07/13 20:26:20 mickey Exp $
+#	$OpenBSD: na.phone,v 1.22 2001/07/13 20:32:15 mickey Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -448,9 +448,14 @@
 646:New York City Cellular and Pagers:New York:NY
 647:Toronto:Ontario:ON
 649::Turks & Caicos:
-650 CA   California: Daly City, Redwood City, San Mateo (split from 415)
-651 MN   Minnesota: St. Paul, Hastings (split from Mineapolis, see 612)
-660 MO   Missouri: Sedalia, Marshall, Kirksville
+650:Daly City:California:CA
+650:Redwood City:California:CA
+650:San Mateo:California:CA
+651:Hastings:Minnesota:MN
+651:St. Paul:Minnesota:MN
+660:Kirksville:Missouri:MO
+660:Marshall:Missouri:MO
+660:Sedalia:Missouri:MO
 661:Bakersfield:California:CA
 661:Lancaster:California:CA
 661:Mojave:California:CA
@@ -458,14 +463,18 @@
 661:Palmdale:California:CA
 661:Santa Clarita:California:CA
 664::Montserrat:
-670 --   Northern Mariana Islands (CNMI, US Commonwealth)
-671 --   Guam: Yigo, Dededo
-678 GA   Georgia: Atlanta, Marietta, Smyrna (overlay; see 404, 770)
-680 PW   Palau: 
-682 TX   Texas: Fort Worth, Arlington, Bedford
-684 AS   American Samoa: Pago Pago
-691 FM   Federated Micronesia: Yap, Chuuk
-692 MH   Marshal Islands: Ebeye
+670::Northern Mariana Islands (CNMI, US Commonwealth):
+671:Yigo, Dededo:Guam:
+678:Atlanta:Georgia:GA
+678:Marietta:Georgia:GA
+678:Smyrna:Georgia:GA
+680::Palau:PW
+682:Arlington:Texas:TX
+682:Bedford:Texas:TX
+682:Fort Worth:Texas:TX
+684:Pago Pago:American Samoa:AS
+691:Yap, Chuuk:Federated Micronesia:FM
+692:Ebeye:Marshal Islands:MH
 700::Interexchange Carrier Services:
 701::North Dakota:ND
 702::Nevada:NV
