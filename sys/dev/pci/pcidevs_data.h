@@ -5584,7 +5584,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C596,
-	    "85C596",
+	    "SiS596",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530,

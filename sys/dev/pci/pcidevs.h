@@ -40,8 +40,7 @@
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
- *	http://members.hyperlink.net.au/~chart/pci.htm
- *	http://www.yourvote.com/pci/
+ *	http://www.pcidatabase.com/
  *
  * There is a Vendor ID search engine available at:
  *
@@ -1993,7 +1992,7 @@
 #define	PCI_PRODUCT_SIS_300	0x0300		/* 300/305/630 VGA */
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
-#define	PCI_PRODUCT_SIS_85C596	0x0496		/* 85C596 */
+#define	PCI_PRODUCT_SIS_85C596	0x0596		/* SiS596 */
 #define	PCI_PRODUCT_SIS_530	0x0530		/* 530 PCI */
 #define	PCI_PRODUCT_SIS_540	0x0540		/* 540 PCI */
 #define	PCI_PRODUCT_SIS_550	0x0550		/* 550 PCI */
