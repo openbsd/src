@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.22 1997/04/06 06:26:23 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.23 1997/04/12 17:25:25 tholo Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.22 1997/04/06 06:26:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.23 1997/04/12 17:25:25 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -1147,7 +1147,7 @@ cpio_options(argc, argv)
 			maxflt = 0;
 			while ((str = fgetln(stdin, &len)) != NULL) {
 				str[len - 1] = '\0';
-				ftree_add(str, NULL);
+				ftree_add(strdup(str), NULL);
 			}
 			break;
 		default:
