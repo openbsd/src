@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.55 2005/03/01 09:33:47 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.56 2005/03/02 09:50:15 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -1190,8 +1190,63 @@ Aliases:
 .Ic delete .
 .It Ic rlog
 Print out history information for a module.
-.It Ic rtag
-Add a symbolic link to a module.
+.It Xo Ic rtag
+.Op Fl aFflnR
+.Op Fl b
+.Op Fl d
+.Oo Fl D Ar date \*(Ba
+.Fl r Ar rev Oc
+.Ar symbolic_tag
+.Ar modules ...
+.Xc
+The
+.Ic rtag
+command adds a symbolic tag to one or more modules.
+It is often used to create a new branch using the
+.Fl b
+option.
+.Pp
+The
+.Ic rtag
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl a
+Clear tag from files already removed with the
+.Ic remove
+command.
+.It Fl b
+Create a branch.
+.It Fl D Ar date
+Tag the most recent revision before
+.Ar date .
+.It Fl d
+Delete tag.
+.It Fl F
+Move tag if it already exists.
+If this option is not used and a tag is used a second time,
+.Nm
+will not execute the action.
+.It Fl f
+Force the use of the head revision if the specified
+revision or date is not found.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl n
+Do not execute programs listed in the
+.Pa CVSROOT/modules
+file.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Fl r Ar rev
+Tag at revision
+.Ar rev .
+.El
+.Pp
+Aliases:
+.Ic rt ,
+.Ic rfreeze .
 .It Ic server
 Server mode.
 .It Xo Ic status
