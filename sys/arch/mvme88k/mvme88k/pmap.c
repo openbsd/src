@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.111 2004/04/14 13:43:48 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.112 2004/04/24 20:35:27 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -89,7 +89,6 @@ extern vaddr_t	virtual_avail, virtual_end;
 #define CD_KMAP		0x0000008	/* pmap_expand_kmap */
 #define CD_MAP		0x0000010	/* pmap_map */
 #define CD_CACHE	0x0000020	/* pmap_cache_ctrl */
-#define CD_BOOT		0x0000040	/* pmap_bootstrap */
 #define CD_INIT		0x0000080	/* pmap_init */
 #define CD_CREAT	0x0000100	/* pmap_create */
 #define CD_FREE		0x0000200	/* pmap_release */
@@ -919,11 +918,6 @@ pmap_bootstrap(vaddr_t load_start)
 	 */
 
 	for (i = 0, virt = UADDR; i < UPAGES; i++, virt += PAGE_SIZE) {
-#ifdef DEBUG
-		if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-			printf("setting up mapping for Upage %d @ %x\n", i, virt);
-		}
-#endif
 		if ((pte = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL)
 			pmap_expand_kmap(virt, VM_PROT_READ | VM_PROT_WRITE);
 	}
