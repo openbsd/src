@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.6 1996/09/02 11:33:23 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 1996/09/02 20:45:45 imp Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.6 1996/09/02 11:33:23 pefo Exp $
+ *      $Id: machdep.c,v 1.7 1996/09/02 20:45:45 imp Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -182,7 +182,7 @@ mips_init(argc, argv, code)
 		u_char prodid[8];
 	} *sys_id;
 
-	/* clear the BSS segment in NetBSD code */
+	/* clear the BSS segment in OpenBSD code */
 	v = (caddr_t)mips_round_page(end);
 	bzero(edata, v - edata);
 
