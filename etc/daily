@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.11 1996/12/04 02:02:23 deraadt Exp $
+#	$OpenBSD: daily,v 1.12 1996/12/06 16:49:12 deraadt Exp $
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -137,4 +137,4 @@ if [ -f /etc/Distfile ]; then
 	rdist -f /etc/Distfile
 fi
 
-sh /etc/security 2>&1 | mail -s "daily insecurity output" root
+sh /etc/security 2>&1 | mail -s "$host daily insecurity output" root
