@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.32 1997/04/03 21:01:07 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.33 1997/07/04 17:01:07 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/vnode.h>
 
 #include "wdc.h"
+#include "wd.h"
 bdev_decl(wd);
 bdev_decl(sw);
 #include "fdc.h"
@@ -64,7 +65,7 @@ cdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
+	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_disk_init(NFD,fd),		/* 2: floppy diskette */
 	bdev_tape_init(NWT,wt),		/* 3: QIC-02/QIC-36 tape */
@@ -185,7 +186,7 @@ struct cdevsw	cdevsw[] =
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_disk_init(NWDC,wd),	/* 3: ST506/ESDI/IDE disk */
+	cdev_disk_init(NWD,wd),		/* 3: ST506/ESDI/IDE disk */
 	cdev_swap_init(1,sw),		/* 4: /dev/drum (swap pseudo-device) */
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
