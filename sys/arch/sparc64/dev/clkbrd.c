@@ -1,4 +1,4 @@
-/*	$OpenBSD: clkbrd.c,v 1.1 2004/09/28 02:06:36 jason Exp $	*/
+/*	$OpenBSD: clkbrd.c,v 1.2 2004/09/28 14:34:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -127,7 +127,7 @@ clkbrd_attach(parent, self, aux)
 		slots = 4;
 	}
 
-	printf(": slots %d\n", slots);
+	printf(": %d slots\n", slots);
 
 	for (i = 0; i < fa->fa_nreg; i++) {
 		printf(" r[%d] slot %x offset %x size %x\n",
