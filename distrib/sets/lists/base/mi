@@ -1698,6 +1698,7 @@
 ./usr/sbin/pppoe
 ./usr/sbin/pppstats
 ./usr/sbin/praliases
+./usr/sbin/procmap
 ./usr/sbin/pstat
 ./usr/sbin/pts
 ./usr/sbin/pwd_mkdb
