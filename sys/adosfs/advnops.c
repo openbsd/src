@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.27 2003/10/17 18:25:06 tedu Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.28 2003/11/13 17:19:40 drahn Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ adosfs_poll(v)
 		struct vnode *a_vp;
 		int  a_events;
 		struct proc *a_p;
-	} */ *sp = v;
+	} */ *ap = v;
 #ifdef ADOSFS_DIAGNOSTIC
 	/*
 	 * sure there's something to read...

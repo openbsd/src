@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.42 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.43 2003/11/13 17:19:40 drahn Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -714,7 +714,7 @@ msdosfs_poll(v)
 		struct vnode *a_vp;
 		int a_events;
 		struct proc *a_p;
-	} */ *ap;
+	} */ *ap = v;
 
 	return (seltrue(ap->a_vp->v_rdev, ap->a_events, ap->a_p));
 }
