@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2002/05/19 20:47:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2004/01/24 18:43:22 deraadt Exp $
 
 PCAPDIR=${.CURDIR}/../../lib/libpcap
 
@@ -9,7 +9,7 @@ SRCS=	auth.c cbcp.c ccp.c chap.c chap_ms.c demand.c fsm.c ipcp.c \
 .PATH:	${.CURDIR}/../../lib/libpcap ${.CURDIR}/../../sys/net
 MAN=	pppd.8
 SUBDIR=	pppstats chat
-BINMODE=4554
+BINMODE=4550
 BINOWN=	root
 BINGRP=	network
 
