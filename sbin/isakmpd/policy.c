@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.29 2001/05/31 20:21:08 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.30 2001/06/07 03:15:15 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1849,16 +1849,22 @@ keynote_cert_get_key (void *scert, void *keyp)
 
   foo = LK (kn_read_asserts, ((char *)scert, strlen ((char *)scert), &num));
   if (foo == NULL || num == 0)
-    return 0;
+    {
+      log_print ("keynote_cert_get_key: failed to decompose credentials");
+      return 0;
+    }
 
   sid = LK (kn_add_assertion, (keynote_sessid, foo[num - 1],
-			       strlen (scert), 0));
+			       strlen (foo[num - 1]), 0));
   while (num--)
     free (foo[num]);
   free (foo);
 
   if (sid == -1)
-    return 0;
+    {
+      log_print ("keynote_cert_get_key: failed to add assertion");
+      return 0;
+    }
 
   *(RSA **)keyp = NULL;
 
