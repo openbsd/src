@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.8 2002/05/29 18:33:39 deraadt Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.9 2002/12/03 22:27:42 pvalchev Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * mixerctl(1) - a program to control audio mixing.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -50,10 +55,9 @@ struct field *findfield(char *name);
 void prfield(struct field *p, char *sep, int prvalset);
 int rdfield(struct field *p, char *q);
 int main(int argc, char **argv);
+void usage(void);
 
 FILE *out = stdout;
-
-char *prog;
 
 struct field {
 	char *name;
@@ -66,37 +70,32 @@ mixer_ctrl_t *values;
 mixer_devinfo_t *infos;
 
 char *
-catstr(p, q)
-	char *p;
-	char *q;
+catstr(char *p, char *q)
 {
 	int len;
 	char *r;
 
 	len = strlen(p) + 1 + strlen(q) + 1;
-	r = malloc(len);
+	if ((r = malloc(len)) == NULL)
+		err(1, "malloc()");
 	strlcpy(r, p, len);
 	strlcat(r, ".", len);
 	strlcat(r, q, len);
-	return r;
+	return (r);
 }
 
 struct field *
-findfield(name)
-	char *name;
+findfield(char *name)
 {
 	int i;
 	for(i = 0; fields[i].name; i++)
 		if (strcmp(fields[i].name, name) == 0)
 			return &fields[i];
-	return 0;
+	return (0);
 }
 
 void
-prfield(p, sep, prvalset)
-	struct field *p;
-	char *sep;
-	int prvalset;
+prfield(struct field *p, char *sep, int prvalset)
 {
 	mixer_ctrl_t *m;
 	int i, n;
@@ -139,15 +138,12 @@ prfield(p, sep, prvalset)
 			fprintf(out, " %s", p->infp->un.v.units.name);
 		break;
 	default:
-		printf("\n");
 		errx(1, "Invalid format.");
 	}
 }
 
 int
-rdfield(p, q)
-	struct field *p;
-	char *q;
+rdfield(struct field *p, char *q)
 {
 	mixer_ctrl_t *m;
 	int v, v0, v1, mask;
@@ -162,26 +158,21 @@ rdfield(p, q)
 				break;
 		if (i < p->infp->un.e.num_mem)
 			m->un.ord = p->infp->un.e.member[i].ord;
-		else {
-			warnx("Bad enum value %s", q);
-			return 0;
-		}
+		else
+		        errx(1, "Bad enum value %s", q);
 		break;
 	case AUDIO_MIXER_SET:
 		mask = 0;
 		for(v = 0; q && *q; q = s) {
-			s = strchr(q, ',');
-			if (s)
+			if (s = strchr(q, ','))
 				*s++ = 0;
 			for (i = 0; i < p->infp->un.s.num_mem; i++)
 				if (strcmp(p->infp->un.s.member[i].label.name, q) == 0)
 					break;
-			if (i < p->infp->un.s.num_mem) {
+			if (i < p->infp->un.s.num_mem)
 				mask |= p->infp->un.s.member[i].mask;
-			} else {
-				warnx("Bad set value %s", q);
-				return 0;
-			}
+			else
+			        errx(1, "Bad set value %s", q);
 		}
 		m->un.mask = mask;
 		break;
@@ -197,10 +188,8 @@ rdfield(p, q)
 					m->un.value.level[0] = v;
 					break;
 				}
-			} else {
-				warnx("Bad number %s", q);
-				return 0;
-			}
+			} else
+				errx(1, "Bad number %s", q);
 		} else {
 			if (sscanf(q, "%d,%d", &v0, &v1) == 2) {
 				switch (*q) {
@@ -230,27 +219,23 @@ rdfield(p, q)
 					m->un.value.level[1] += v;
 					break;
 				default:
-					m->un.value.level[0] =
-					    m->un.value.level[1] = v;
+					m->un.value.level[0] = v;
+					m->un.value.level[1] = v;
 					break;
 				}
-			} else {
-				warnx("Bad numbers %s", q);
-				return 0;
-			}
+			} else
+				errx(1, "Bad numbers %s", q);
 		}
 		break;
 	default:
 		errx(1, "Invalid format.");
 	}
 	p->changed = 1;
-	return 1;
+	return (1);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int fd, i, j, ch, pos;
 	int aflag = 0, wflag = 0, vflag = 0;
@@ -258,13 +243,10 @@ main(argc, argv)
 	char *sep = "=";
 	mixer_devinfo_t dinfo;
 	mixer_ctrl_t val;
-	int ndev;
+	int ndev = 0;
 
-	file = getenv("MIXERDEVICE");
-	if (file == 0)
-		file = "/dev/mixer";
-
-	prog = *argv;
+	if ((file = getenv("MIXERDEVICE")) == 0 || *file == '\0')
+	        file = "/dev/mixer";
 
 	while ((ch = getopt(argc, argv, "af:nvw")) != -1) {
 		switch(ch) {
@@ -285,33 +267,29 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-		usage:
-		fprintf(out, "%s [-f file] [-v] [-n] name ...\n", prog);
-		fprintf(out, "%s [-f file] [-v] [-n] -w name=value ...\n", prog);
-		fprintf(out, "%s [-f file] [-v] [-n] -a\n", prog);
-		exit(0);
+			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-	fd = open(file, wflag? O_RDWR : O_RDONLY);
-	if (fd < 0)
+	if ((fd = open(file, wflag ? O_RDWR : O_RDONLY)) < 0)
 		err(1, "%s", file);
 
-	for(ndev = 0; ; ndev++) {
-		dinfo.index = ndev;
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) < 0)
-			break;
+	for(;;) {
+	       dinfo.index = ndev++;
+	       if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) < 0)
+	 	       break;
 	}
 
-	if (ndev == 0)
+	if (!ndev)
 		errx(1, "no mixer devices configured");
 
-	rfields = calloc(ndev, sizeof *rfields);
-	fields = calloc(ndev, sizeof *fields);
-	infos = calloc(ndev, sizeof *infos);
-	values = calloc(ndev, sizeof *values);
+	if ((rfields = calloc(ndev, sizeof *rfields)) == NULL ||
+	    (fields = calloc(ndev, sizeof *fields)) == NULL ||
+	    (infos = calloc(ndev, sizeof *infos)) == NULL ||
+	    (values = calloc(ndev, sizeof *values)) == NULL)
+		err(1, "calloc()");
 
 	for(i = 0; i < ndev; i++) {
 		infos[i].index = i;
@@ -359,7 +337,7 @@ main(argc, argv)
 						fields[i].name);
 	}
 
-	if (argc == 0 && aflag && !wflag) {
+	if (!argc && aflag && !wflag) {
 		for(i = 0; fields[i].name; i++) {
 			prfield(&fields[i], sep, vflag);
 			fprintf(out, "\n");
@@ -370,8 +348,7 @@ main(argc, argv)
 			while(argc--) {
 				char *q;
 
-				q = strchr(*argv, '=');
-				if (q) {
+				if (q = strchr(*argv, '=')) {
 					*q++ = 0;
 					p = findfield(*argv);
 					if (p == 0)
@@ -391,9 +368,8 @@ main(argc, argv)
 							}
 						}
 					}
-				} else {
+				} else
 					warnx("No `=' in %s", *argv);
-				}
 				argv++;
 			}
 		} else {
@@ -407,6 +383,20 @@ main(argc, argv)
 			}
 		}
 	} else
-		goto usage;
+		usage();
 	exit(0);
+}
+
+void
+usage(void)
+{
+	extern char *__progname;	/* from crt0.o */
+
+	fprintf(stderr,
+	    "usage: %s [-f file] [-n] [-v] name ...\n"
+	    "       %s [-f file] [-n] [-v] -w name=value ...\n"
+	    "       %s [-f file] [-n] [-v] -a\n", __progname,
+		__progname, __progname);
+
+	exit(1);
 }
