@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.21 1999/12/19 00:04:25 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.22 2000/01/20 18:14:58 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.21 1999/12/19 00:04:25 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.22 2000/01/20 18:14:58 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,9 +165,8 @@ static int     	  numCommands; 	    /* The number of commands actually printed
 #define JOB_STOPPED	3   	/* The job is stopped */
 
 /*
- * tfile is the name of a file into which all shell commands are put. It is
- * used over by removing it before the child shell is executed. The XXXXXXXXXX
- * in the string are replaced by mkstemp(3).
+ * tfile is used to build temp file names to store shell commands to
+ * execute. 
  */
 static char     tfile[sizeof(TMPPAT)];
 
@@ -994,13 +993,11 @@ JobFinish(job, status)
 	aborting = ABORT_ERROR;
     }
 
-    if ((aborting == ABORT_ERROR) && Job_Empty()) {
+    if ((aborting == ABORT_ERROR) && Job_Empty())
 	/*
 	 * If we are aborting and the job table is now empty, we finish.
 	 */
-	(void) eunlink(tfile);
 	Finish(errors);
-    }
 }
 
 /*-
@@ -1679,6 +1676,7 @@ JobStart(gn, flags, previous)
     Boolean	  cmdsOK;     /* true if the nodes commands were all right */
     Boolean 	  local;      /* Set true if the job was run locally */
     Boolean 	  noExec;     /* Set true if we decide not to run the job */
+    int	          tfd;	      /* where to stash those pesky commands */
 
     if (previous != NULL) {
 	previous->flags &= ~(JOB_FIRST|JOB_IGNERR|JOB_SILENT|JOB_REMOTE);
@@ -1733,8 +1731,13 @@ JobStart(gn, flags, previous)
 	    DieHorribly();
 	}
 
-	job->cmdFILE = fopen(tfile, "w+");
+	(void) strcpy(tfile, TMPPAT);
+	if ((tfd = mkstemp(tfile)) == -1)
+	    Punt("Cannot create temp file: %s", strerror(errno));
+	job->cmdFILE = fdopen(tfd, "w+");
+	eunlink(tfile);
 	if (job->cmdFILE == NULL) {
+	    close(tfd);
 	    Punt("Could not open %s", tfile);
 	}
 	(void) fcntl(FILENO(job->cmdFILE), F_SETFD, 1);
@@ -1841,7 +1844,6 @@ JobStart(gn, flags, previous)
 	 * Unlink and close the command file if we opened one
 	 */
 	if (job->cmdFILE != stdout) {
-	    (void) eunlink(tfile);
 	    if (job->cmdFILE != NULL)
 		(void) fclose(job->cmdFILE);
 	} else {
@@ -1869,7 +1871,6 @@ JobStart(gn, flags, previous)
 	}
     } else {
 	(void) fflush(job->cmdFILE);
-	(void) eunlink(tfile);
     }
 
     /*
@@ -2420,13 +2421,6 @@ Job_Init(maxproc, maxlocal)
 			     * be running at once. */
 {
     GNode         *begin;     /* node for commands to do at the very start */
-    int	          tfd;
-
-    (void) strcpy(tfile, TMPPAT);
-    if ((tfd = mkstemp(tfile)) == -1)
-	Punt("Cannot create temp file: %s", strerror(errno));
-    else
-	(void) close(tfd);
 
     jobs =  	  Lst_Init();
     stoppedJobs = Lst_Init();
@@ -2935,7 +2929,6 @@ JobInterrupt(runINTERRUPT, signo)
 	    }
 	}
     }
-    (void) eunlink(tfile);
     exit(signo);
 }
 
@@ -2947,10 +2940,6 @@ JobInterrupt(runINTERRUPT, signo)
  *
  * Results:
  *	Number of errors reported.
- *
- * Side Effects:
- *	The process' temporary file (tfile) is removed if it still
- *	existed.
  *-----------------------------------------------------------------------
  */
 int
@@ -2970,7 +2959,6 @@ Job_Finish()
 	    }
 	}
     }
-    (void) eunlink(tfile);
     return(errors);
 }
 
@@ -3074,7 +3062,6 @@ Job_AbortAll()
      */
     while (waitpid((pid_t) -1, &foo, WNOHANG) > 0)
 	continue;
-    (void) eunlink(tfile);
 }
 
 #ifdef REMOTE
