@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.35 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.36 2004/04/01 23:56:05 tedu Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -499,7 +499,7 @@ sbappend(sb, m)
 {
 	register struct mbuf *n;
 
-	if (m == 0)
+	if (m == NULL)
 		return;
 
 	SBLASTRECORDCHK(sb, "sbappend 1");
@@ -579,7 +579,7 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 {
 	struct mbuf *m;
 
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 	/*
@@ -590,7 +590,7 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 	SBLASTRECORDCHK(sb, "sbappendrecord 1");
 	SBLINKRECORD(sb, m0);
 	m = m0->m_next;
-	m0->m_next = 0;
+	m0->m_next = NULL;
 	if (m && (m0->m_flags & M_EOR)) {
 		m0->m_flags &= ~M_EOR;
 		m->m_flags |= M_EOR;
@@ -609,7 +609,7 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
 {
 	struct mbuf *m, **mp;
 
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 
 	SBLASTRECORDCHK(sb, "sbinsertoob 1");
@@ -639,7 +639,7 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
 	}
 	*mp = m0;
 	m = m0->m_next;
-	m0->m_next = 0;
+	m0->m_next = NULL;
 	if (m && (m0->m_flags & M_EOR)) {
 		m0->m_flags &= ~M_EOR;
 		m->m_flags |= M_EOR;
@@ -667,7 +667,7 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 		space += m0->m_pkthdr.len;
 	for (n = control; n; n = n->m_next) {
 		space += n->m_len;
-		if (n->m_next == 0)	/* keep pointer to last control buf */
+		if (n->m_next == NULL)	/* keep pointer to last control buf */
 			break;
 	}
 	if (space > sbspace(sb))
@@ -675,7 +675,7 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 	if (asa->sa_len > MLEN)
 		return (0);
 	MGET(m, M_DONTWAIT, MT_SONAME);
-	if (m == 0)
+	if (m == NULL)
 		return (0);
 	m->m_len = asa->sa_len;
 	bcopy(asa, mtod(m, caddr_t), asa->sa_len);
@@ -707,11 +707,11 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 	struct mbuf *m, *mlast, *n;
 	int space = 0;
 
-	if (control == 0)
+	if (control == NULL)
 		panic("sbappendcontrol");
 	for (m = control; ; m = m->m_next) {
 		space += m->m_len;
-		if (m->m_next == 0)
+		if (m->m_next == NULL)
 			break;
 	}
 	n = m;			/* save pointer to last control buffer */
@@ -780,7 +780,7 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 		n = m;
 		m->m_flags &= ~M_EOR;
 		m = m->m_next;
-		n->m_next = 0;
+		n->m_next = NULL;
 	}
 	if (eor) {
 		if (n)
@@ -821,8 +821,8 @@ sbdrop(struct sockbuf *sb, int len)
 
 	next = (m = sb->sb_mb) ? m->m_nextpkt : 0;
 	while (len > 0) {
-		if (m == 0) {
-			if (next == 0)
+		if (m == NULL) {
+			if (next == NULL)
 				panic("sbdrop");
 			m = next;
 			next = m->m_nextpkt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.57 2004/01/06 04:18:18 tedu Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.58 2004/04/01 23:56:05 tedu Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -719,7 +719,7 @@ recvit(p, s, mp, namelenp, retsize)
 	if (mp->msg_name) {
 		socklen_t alen;
 
-		if (from == 0)
+		if (from == NULL)
 			alen = 0;
 		else {
 			/* save sa_len before it is destroyed by MSG_COMPAT */
@@ -770,7 +770,7 @@ recvit(p, s, mp, namelenp, retsize)
 		}
 #endif
 		len = mp->msg_controllen;
-		if (len <= 0 || control == 0)
+		if (len <= 0 || control == NULL)
 			len = 0;
 		else {
 			struct mbuf *m = control;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.64 2004/01/28 20:19:24 dhartmei Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.65 2004/04/01 23:56:05 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -314,7 +314,7 @@ m_copym0(m, off0, len, wait, deep)
 	if (off == 0 && m->m_flags & M_PKTHDR)
 		copyhdr = 1;
 	while (off > 0) {
-		if (m == 0)
+		if (m == NULL)
 			panic("m_copym0: null mbuf");
 		if (off < m->m_len)
 			break;
@@ -322,16 +322,16 @@ m_copym0(m, off0, len, wait, deep)
 		m = m->m_next;
 	}
 	np = &top;
-	top = 0;
+	top = NULL;
 	while (len > 0) {
-		if (m == 0) {
+		if (m == NULL) {
 			if (len != M_COPYALL)
-				panic("m_copym0: m == 0 and not COPYALL");
+				panic("m_copym0: m == NULL and not COPYALL");
 			break;
 		}
 		MGET(n, wait, m->m_type);
 		*np = n;
-		if (n == 0)
+		if (n == NULL)
 			goto nospace;
 		if (copyhdr) {
 			M_DUP_PKTHDR(n, m);
@@ -376,13 +376,13 @@ m_copym0(m, off0, len, wait, deep)
 		}
 		np = &n->m_next;
 	}
-	if (top == 0)
+	if (top == NULL)
 		MCFail++;
 	return (top);
 nospace:
 	m_freem(top);
 	MCFail++;
-	return (0);
+	return (NULL);
 }
 
 /*
@@ -439,14 +439,14 @@ m_copyback(m0, off, len, cp)
 	register struct mbuf *m = m0, *n;
 	int totlen = 0;
 
-	if (m0 == 0)
+	if (m0 == NULL)
 		return;
 	while (off > (mlen = m->m_len)) {
 		off -= mlen;
 		totlen += mlen;
-		if (m->m_next == 0) {
+		if (m->m_next == NULL) {
 			n = m_getclr(M_DONTWAIT, m->m_type);
-			if (n == 0)
+			if (n == NULL)
 				goto out;
 			n->m_len = min(MLEN, len + off);
 			m->m_next = n;
@@ -463,9 +463,9 @@ m_copyback(m0, off, len, cp)
 		totlen += mlen;
 		if (len == 0)
 			break;
-		if (m->m_next == 0) {
+		if (m->m_next == NULL) {
 			n = m_get(M_DONTWAIT, m->m_type);
-			if (n == 0)
+			if (n == NULL)
 				break;
 			n->m_len = min(MLEN, len);
 			m->m_next = n;
@@ -741,8 +741,7 @@ m_getptr(m, loc, off)
 				}
 				else
 		  			return (NULL);
-	    		}
-	    		else
+	    		} else
 	      			m = m->m_next;
 		}
     	}

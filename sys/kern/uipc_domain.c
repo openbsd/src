@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.16 2004/02/24 21:43:55 tedu Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.17 2004/04/01 23:56:05 tedu Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -145,12 +145,12 @@ pffindtype(family, type)
 	for (dp = domains; dp; dp = dp->dom_next)
 		if (dp->dom_family == family)
 			goto found;
-	return (0);
+	return (NULL);
 found:
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 		if (pr->pr_type && pr->pr_type == type)
 			return (pr);
-	return (0);
+	return (NULL);
 }
 
 struct protosw *
@@ -159,14 +159,14 @@ pffindproto(family, protocol, type)
 {
 	register struct domain *dp;
 	register struct protosw *pr;
-	struct protosw *maybe = 0;
+	struct protosw *maybe = NULL;
 
 	if (family == 0)
-		return (0);
+		return (NULL);
 	for (dp = domains; dp; dp = dp->dom_next)
 		if (dp->dom_family == family)
 			goto found;
-	return (0);
+	return (NULL);
 found:
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
 		if ((pr->pr_protocol == protocol) && (pr->pr_type == type))

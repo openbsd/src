@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.25 2004/01/06 04:18:18 tedu Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.26 2004/04/01 23:56:05 tedu Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ uipc_usrreq(so, req, m, nam, control)
 		error = EOPNOTSUPP;
 		goto release;
 	}
-	if (unp == 0 && req != PRU_ATTACH) {
+	if (unp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
@@ -100,7 +100,7 @@ uipc_usrreq(so, req, m, nam, control)
 		break;
 
 	case PRU_LISTEN:
-		if (unp->unp_vnode == 0)
+		if (unp->unp_vnode == NULL)
 			error = EINVAL;
 		break;
 
@@ -147,7 +147,7 @@ uipc_usrreq(so, req, m, nam, control)
 		case SOCK_STREAM:
 #define	rcv (&so->so_rcv)
 #define snd (&so2->so_snd)
-			if (unp->unp_conn == 0)
+			if (unp->unp_conn == NULL)
 				break;
 			so2 = unp->unp_conn->unp_socket;
 			/*
@@ -185,7 +185,7 @@ uipc_usrreq(so, req, m, nam, control)
 				if (error)
 					break;
 			} else {
-				if (unp->unp_conn == 0) {
+				if (unp->unp_conn == NULL) {
 					error = ENOTCONN;
 					break;
 				}
@@ -197,8 +197,8 @@ uipc_usrreq(so, req, m, nam, control)
 				from = &sun_noname;
 			if (sbappendaddr(&so2->so_rcv, from, m, control)) {
 				sorwakeup(so2);
-				m = 0;
-				control = 0;
+				m = NULL;
+				control = NULL;
 			} else
 				error = ENOBUFS;
 			if (nam)
@@ -213,7 +213,7 @@ uipc_usrreq(so, req, m, nam, control)
 				error = EPIPE;
 				break;
 			}
-			if (unp->unp_conn == 0)
+			if (unp->unp_conn == NULL)
 				panic("uipc 3");
 			so2 = unp->unp_conn->unp_socket;
 			/*
@@ -223,7 +223,7 @@ uipc_usrreq(so, req, m, nam, control)
 			 */
 			if (control) {
 				if (sbappendcontrol(rcv, m, control))
-					control = 0;
+					control = NULL;
 			} else
 				sbappend(rcv, m);
 			snd->sb_mbmax -=
@@ -232,7 +232,7 @@ uipc_usrreq(so, req, m, nam, control)
 			snd->sb_hiwat -= rcv->sb_cc - unp->unp_conn->unp_cc;
 			unp->unp_conn->unp_cc = rcv->sb_cc;
 			sorwakeup(so2);
-			m = 0;
+			m = NULL;
 #undef snd
 #undef rcv
 			break;
@@ -248,7 +248,7 @@ uipc_usrreq(so, req, m, nam, control)
 
 	case PRU_SENSE:
 		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
-		if (so->so_type == SOCK_STREAM && unp->unp_conn != 0) {
+		if (so->so_type == SOCK_STREAM && unp->unp_conn != NULL) {
 			so2 = unp->unp_conn->unp_socket;
 			((struct stat *) m)->st_blksize += so2->so_rcv.sb_cc;
 		}
@@ -367,16 +367,16 @@ unp_detach(unp)
 {
 	
 	if (unp->unp_vnode) {
-		unp->unp_vnode->v_socket = 0;
+		unp->unp_vnode->v_socket = NULL;
 		vrele(unp->unp_vnode);
-		unp->unp_vnode = 0;
+		unp->unp_vnode = NULL;
 	}
 	if (unp->unp_conn)
 		unp_disconnect(unp);
 	while (unp->unp_refs)
 		unp_drop(unp->unp_refs, ECONNRESET);
 	soisdisconnected(unp->unp_socket);
-	unp->unp_socket->so_pcb = 0;
+	unp->unp_socket->so_pcb = NULL;
 	m_freem(unp->unp_addr);
 	if (unp_rights) {
 		/*
@@ -471,7 +471,7 @@ unp_connect(so, nam, p)
 	if ((error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p)) != 0)
 		goto bad;
 	so2 = vp->v_socket;
-	if (so2 == 0) {
+	if (so2 == NULL) {
 		error = ECONNREFUSED;
 		goto bad;
 	}
@@ -539,9 +539,9 @@ unp_disconnect(unp)
 {
 	register struct unpcb *unp2 = unp->unp_conn;
 
-	if (unp2 == 0)
+	if (unp2 == NULL)
 		return;
-	unp->unp_conn = 0;
+	unp->unp_conn = NULL;
 	switch (unp->unp_socket->so_type) {
 
 	case SOCK_DGRAM:
@@ -550,7 +550,7 @@ unp_disconnect(unp)
 		else {
 			unp2 = unp2->unp_refs;
 			for (;;) {
-				if (unp2 == 0)
+				if (unp2 == NULL)
 					panic("unp_disconnect");
 				if (unp2->unp_nextref == unp)
 					break;
@@ -558,13 +558,13 @@ unp_disconnect(unp)
 			}
 			unp2->unp_nextref = unp->unp_nextref;
 		}
-		unp->unp_nextref = 0;
+		unp->unp_nextref = NULL;
 		unp->unp_socket->so_state &= ~SS_ISCONNECTED;
 		break;
 
 	case SOCK_STREAM:
 		soisdisconnected(unp->unp_socket);
-		unp2->unp_conn = 0;
+		unp2->unp_conn = NULL;
 		soisdisconnected(unp2->unp_socket);
 		break;
 	}
@@ -600,7 +600,7 @@ unp_drop(unp, errno)
 	so->so_error = errno;
 	unp_disconnect(unp);
 	if (so->so_head) {
-		so->so_pcb = 0;
+		so->so_pcb = NULL;
 		sofree(so);
 		m_freem(unp->unp_addr);
 		free(unp, M_PCB);
@@ -665,7 +665,7 @@ restart:
 			 * zero the pointer before calling unp_discard,
 			 * since it may end up in unp_gc()..
 			 */
-			*rp++ = 0;
+			*rp++ = NULL;
 			unp_discard(fp);
 		}
 		goto out;
@@ -840,7 +840,7 @@ unp_gc()
 			fp->f_flag |= FMARK;
 
 			if (fp->f_type != DTYPE_SOCKET ||
-			    (so = (struct socket *)fp->f_data) == 0)
+			    (so = (struct socket *)fp->f_data) == NULL)
 				continue;
 			if (so->so_proto->pr_domain != &unixdomain ||
 			    (so->so_proto->pr_flags&PR_RIGHTS) == 0)
@@ -904,8 +904,8 @@ unp_gc()
 	 * 91/09/19, bsy@cs.cmu.edu
 	 */
 	extra_ref = malloc(nfiles * sizeof(struct file *), M_FILE, M_WAITOK);
-	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
-	    fp = nextfp) {
+	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref;
+	    fp != NULL; fp = nextfp) {
 		nextfp = LIST_NEXT(fp, f_list);
 		if (fp->f_count == 0)
 			continue;
