@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.1 1999/01/11 01:37:13 niklas Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.2 1999/01/11 15:34:16 niklas Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -166,10 +166,10 @@ kthread_create_deferred(func, arg)
 {
 	struct kthread_q *kq;
 
-	kq = malloc(sizeof(*kq), M_TEMP, M_NOWAIT);
+	kq = malloc(sizeof *kq, M_TEMP, M_NOWAIT);
 	if (kq == NULL)
 		panic("unable to allocate kthread_q");
-	memset(kq, 0, sizeof(*kq));
+	bzero(kq, sizeof *kq);
 
 	kq->kq_func = func;
 	kq->kq_arg = arg;
