@@ -336,3 +336,7 @@ clean:
 
 clobber:	clean
 
+_SUBDIRUSE:
+
+.include <bsd.obj.mk>
+.include <bsd.own.mk>
