@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ipv6.c,v 1.18 2000/06/13 11:47:23 itojun Exp $	*/
+/*	$OpenBSD: raw_ipv6.c,v 1.19 2000/06/18 18:41:36 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -44,7 +44,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.18 2000/06/13 11:47:23 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.19 2000/06/18 18:41:36 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -209,17 +209,14 @@ rip6_input(mp, offp, proto)
   int foundone = 0;
   struct mbuf *m2 = NULL, *opts = NULL;
   struct sockaddr_in6 srcsa;
-#ifdef IPSEC
-  struct sockaddr_in6 dstsa;
-#endif /* IPSEC */
   int extra = *offp;
 
-	/* Be proactive about malicious use of IPv4 mapped address */
-	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
-	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
-		/* XXX stat */
-		goto ret;
-	}
+  /* Be proactive about malicious use of IPv4 mapped address */
+  if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
+      IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+    /* XXX stat */
+    goto ret;
+  }
 
   bzero(&srcsa, sizeof(struct sockaddr_in6));
   srcsa.sin6_family = AF_INET6;
@@ -227,24 +224,8 @@ rip6_input(mp, offp, proto)
 #if 0 /*XXX inbound flowinfo */
   srcsa.sin6_flowinfo = ip6->ip6_flow & IPV6_FLOWINFO_MASK;
 #endif
-  srcsa.sin6_addr = ip6->ip6_src;
-
-	if (IN6_IS_SCOPE_LINKLOCAL(&srcsa.sin6_addr))
-		srcsa.sin6_addr.s6_addr16[1] = 0;
-	if (m->m_pkthdr.rcvif) {
-		if (IN6_IS_SCOPE_LINKLOCAL(&srcsa.sin6_addr))
-			srcsa.sin6_scope_id = m->m_pkthdr.rcvif->if_index;
-		else
-			srcsa.sin6_scope_id = 0;
-	} else
-		srcsa.sin6_scope_id = 0;
-
-#if IPSEC
-  bzero(&dstsa, sizeof(struct sockaddr_in6));
-  dstsa.sin6_family = AF_INET6;
-  dstsa.sin6_len = sizeof(struct sockaddr_in6);
-  dstsa.sin6_addr = ip6->ip6_dst;
-#endif /* IPSEC */
+  /* KAME hack: recover scopeid */
+  (void)in6_recoverscope(&srcsa, &ip6->ip6_src, m->m_pkthdr.rcvif);
 
 #if 0
   /* Will be done already by the previous input functions */
@@ -286,6 +267,7 @@ rip6_input(mp, offp, proto)
     if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6) && 
 	!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, &ip6->ip6_src))
       continue;
+    /* inp_icmp6filt must not be NULL, but we add a check for safety */
     if (icmp6type >= 0 && inp->inp_icmp6filt && 
 	ICMP6_FILTER_WILLBLOCK(icmp6type, inp->inp_icmp6filt))
       continue;
@@ -308,7 +290,6 @@ rip6_input(mp, offp, proto)
        enough to require an immediate fix. - cmetz */
     if ((m2 = m_copym(m, 0, (int)M_COPYALL, M_DONTWAIT))) {
       m_adj(m2, extra);
-
       if (inp->inp_flags & IN6P_CONTROLOPTS)
 	ip6_savecontrol(inp, &opts, ip6, m);
       else
@@ -417,11 +398,13 @@ int rip6_output(struct mbuf *m, ...)
 #endif
   struct ip6_pktopts opt, *optp = NULL;
   struct ifnet *oifp = NULL;
-
   va_list ap;
   struct socket *so;
   struct sockaddr_in6 *dst;
   struct mbuf *control;
+  struct in6_addr *in6a;
+  u_int8_t type, code;
+  int plen = m->m_pkthdr.len;
 
   va_start(ap, m);
   so = va_arg(ap, struct socket *);
@@ -440,102 +423,88 @@ int rip6_output(struct mbuf *m, ...)
   } else
     optp = NULL;
 
-#if 0
-  if (inp->inp_flags & INP_HDRINCL)
-    {
-      flags |= IPV6_RAWOUTPUT;
-      ipv6stat.ips_rawout++;
-      /* Maybe m_pullup() ipv6 header here for ipv6_output(), which
-	 expects it to be contiguous. */
+  /*
+   * For an ICMPv6 packet, we should know its type and code
+   * to update statistics.
+   */
+  if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
+    struct icmp6_hdr *icmp6;
+    if (m->m_len < sizeof(struct icmp6_hdr) &&
+	(m = m_pullup(m, sizeof(struct icmp6_hdr))) == NULL) {
+      error = ENOBUFS;
+      goto bad;
     }
-  else
-#endif
-    {
-      struct in6_addr *in6a;
+    icmp6 = mtod(m, struct icmp6_hdr *);
+    type = icmp6->icmp6_type;
+    code = icmp6->icmp6_code;
+  }
 
-      in6a = in6_selectsrc(dst, optp, inp->inp_moptions6,
-		&inp->inp_route6, &inp->inp_laddr6, &error);
-      if (in6a == NULL) {
-	if (error == 0)
-	  error = EADDRNOTAVAIL;
-	goto bad;
-      }
+  M_PREPEND(m, sizeof(struct ip6_hdr), M_WAIT);
+  ip6 = mtod(m, struct ip6_hdr *);
+  ip6->ip6_flow = dst->sin6_flowinfo & IPV6_FLOWINFO_MASK;
+  ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+  ip6->ip6_vfc |= IPV6_VERSION;
+  ip6->ip6_nxt = inp->inp_ipv6.ip6_nxt;
+  /* ip6_src will be filled in later */
 
-      M_PREPEND(m, sizeof(struct ip6_hdr), M_WAIT);
-      ip6 = mtod(m, struct ip6_hdr *);
-      ip6->ip6_flow = 0;  /* Or possibly user flow label, in host order. */
-      ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
-      ip6->ip6_vfc |= IPV6_VERSION;
-      ip6->ip6_nxt = inp->inp_ipv6.ip6_nxt;
-      bcopy(in6a, &ip6->ip6_src, sizeof(*in6a));
-      ip6->ip6_dst = dst->sin6_addr;
-      /*
-       * Question:  How do I handle options?
-       *
-       * Answer:  I put them in here, but how?
-       */
+  /* KAME hack: embed scopeid */
+  if (in6_embedscope(&ip6->ip6_dst, dst, inp, &oifp) != 0) {
+    error = EINVAL;
+    goto bad;
+  }
+
+  /* source address selection */
+  if ((in6a = in6_selectsrc(dst, optp, inp->inp_moptions6,
+			     &inp->inp_route6, &inp->inp_laddr6,
+			    &error)) == 0) {
+    if (error == 0)
+      error = EADDRNOTAVAIL;
+    goto bad;
+  }
+  ip6->ip6_src = *in6a;
+  if (inp->inp_route6.ro_rt)	/* what if oifp contradicts ? */
+    oifp = ifindex2ifnet[inp->inp_route6.ro_rt->rt_ifp->if_index];
+
+  ip6->ip6_hlim = in6_selecthlim(inp, oifp);
+
+  if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
+      inp->inp_csumoffset != -1) {
+    struct mbuf *n;
+    int off;
+    u_int16_t *p;
+
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
+    /* compute checksum */
+    if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
+      off = offsetof(struct icmp6_hdr, icmp6_cksum);
+    else
+      off = inp->inp_csumoffset;
+    if (plen < off + 1) {
+      error = EINVAL;
+      goto bad;
     }
+    off += sizeof(struct ip6_hdr);
 
-	/*
-	 * If the scope of the destination is link-local, embed the interface
-	 * index in the address.
-	 *
-	 * XXX advanced-api value overrides sin6_scope_id 
-	 */
-	if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&ip6->ip6_dst)) {
-		struct in6_pktinfo *pi;
+    n = m;
+    while (n && n->m_len <= off) {
+      off -= n->m_len;
+      n = n->m_next;
+    }
+    if (!n)
+      goto bad;
+    p = (u_int16_t *)(mtod(n, caddr_t) + off);
+    *p = 0;
+    *p = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
+  }
 
-		/*
-		 * XXX Boundary check is assumed to be already done in
-		 * ip6_setpktoptions().
-		 */
-		if (optp && (pi = optp->ip6po_pktinfo) && pi->ipi6_ifindex) {
-			ip6->ip6_dst.s6_addr16[1] = htons(pi->ipi6_ifindex);
-			oifp = ifindex2ifnet[pi->ipi6_ifindex];
-		}
-		else if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) &&
-			 inp->inp_moptions6 &&
-			 inp->inp_moptions6->im6o_multicast_ifp) {
-			oifp = inp->inp_moptions6->im6o_multicast_ifp;
-			ip6->ip6_dst.s6_addr16[1] = htons(oifp->if_index);
-		} else if (dst->sin6_scope_id) {
-			/* boundary check */
-			if (dst->sin6_scope_id < 0 
-			 || if_index < dst->sin6_scope_id) {
-				error = ENXIO;  /* XXX EINVAL? */
-				goto bad;
-			}
-			ip6->ip6_dst.s6_addr16[1]
-				= htons(dst->sin6_scope_id & 0xffff);/*XXX*/
-		}
-	}
+  error = ip6_output(m, optp, &inp->inp_route6, flags,
+		     inp->inp_moptions6, &oifp);
+  if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
+    if (oifp)
+      icmp6_ifoutstat_inc(oifp, type, code);
+    icmp6stat.icp6s_outhist[type]++;
+  }
 
-	ip6->ip6_hlim = in6_selecthlim(inp, oifp);
-
-  {
-    int payload = sizeof(struct ip6_hdr);
-    int nexthdr = mtod(m, struct ip6_hdr *)->ip6_nxt;
-#if 0
-    int error;
-#endif
-
-    if (inp->inp_csumoffset >= 0) {
-      uint16_t *csum;
-
-      if (!(m = m_pullup2(m, payload + inp->inp_csumoffset))) {
-	error = ENOBUFS;
-	goto freectl;
-      };
-
-      csum = (uint16_t *)(mtod(m, uint8_t *) + payload + inp->inp_csumoffset);
-
-      *csum = 0;
-      *csum = in6_cksum(m, nexthdr, payload, m->m_pkthdr.len - payload);
-    };
-  };
-
-  ip6_output(m, optp, &inp->inp_route6, flags, inp->inp_moptions6, &oifp);
   goto freectl;
 
 bad:
@@ -692,9 +661,19 @@ MAYBESTATIC MAYBEINLINE int rip6_usrreq_bind(struct socket *so,
 
    /* 'ifnet' is declared in one of the net/ header files. */
    if ((ifnet.tqh_first == 0) ||
-       (addr->sin6_family != AF_INET6) ||    /* I only allow AF_INET6 */
-       (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&
-        ifa_ifwithaddr((struct sockaddr *)addr) == 0 ) )
+       (addr->sin6_family != AF_INET6)) {    /* I only allow AF_INET6 */
+	  return EADDRNOTAVAIL;
+   }
+
+   /*
+    * Currently, ifa_ifwithaddr tends to fail for a link-local
+    * address, since it implicitly expects that the link identifier
+    * for the address is embedded in the sin6_addr part.
+    * For now, we'd rather keep this "as is". We'll eventually fix
+    * this in a more natural way.
+    */
+   if (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&
+        ifa_ifwithaddr((struct sockaddr *)addr) == 0)
 
           return EADDRNOTAVAIL;
 
