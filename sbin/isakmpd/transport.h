@@ -1,5 +1,5 @@
-/*	$OpenBSD: transport.h,v 1.6 1999/04/19 19:52:59 niklas Exp $	*/
-/*	$EOM: transport.h,v 1.15 1999/04/11 15:07:36 ho Exp $	*/
+/*	$OpenBSD: transport.h,v 1.7 2000/08/03 07:23:55 niklas Exp $	*/
+/*	$EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -93,6 +93,11 @@ struct transport_vtbl {
    * address info.  XXX Why not size_t * instead of int *?
    */
   void (*get_src) (struct transport *, struct sockaddr **, int *);
+
+  /*
+   * Return a string with decoded src and dst information
+   */
+  char *(*decode_ids) (struct transport *);
 };
 
 struct transport {

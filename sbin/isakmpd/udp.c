@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.21 2000/04/07 22:04:58 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.49 2000/03/14 19:42:32 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.22 2000/08/03 07:23:55 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.50 2000/07/17 18:57:59 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -92,6 +92,7 @@ static struct transport *udp_make (struct sockaddr_in *);
 static int udp_send_message (struct message *);
 static void udp_get_dst (struct transport *, struct sockaddr **, int *);
 static void udp_get_src (struct transport *, struct sockaddr **, int *);
+static char *udp_decode_ids (struct transport *);
 
 static struct transport_vtbl udp_transport_vtbl = {
   { 0 }, "udp",
@@ -103,7 +104,8 @@ static struct transport_vtbl udp_transport_vtbl = {
   udp_handle_message,
   udp_send_message,
   udp_get_dst,
-  udp_get_src
+  udp_get_src,
+  udp_decode_ids
 };
 
 /* A list of UDP transports we listen for messages on.  */
@@ -593,6 +595,31 @@ udp_get_src (struct transport *t, struct sockaddr **src, int *src_len)
   *src_len = sizeof ((struct udp_transport *)t)->src;
 }
 
+static char *
+udp_decode_ids (struct transport *t)
+{
+  static char result[1024];
+  char idsrc[256], iddst[256];
+
+  if (getnameinfo ((struct sockaddr *)&((struct udp_transport *)t)->src,
+		   sizeof ((struct udp_transport *)t)->src,
+		  idsrc, sizeof(idsrc), NULL, 0, NI_NUMERICHOST) != 0)
+    {
+      log_error ("ipsec_ipv4toa: getnameinfo() failed");
+      strcpy (idsrc, "<error>");
+    }
+
+  if (getnameinfo ((struct sockaddr *)&((struct udp_transport *)t)->dst,
+		   sizeof ((struct udp_transport *)t)->dst,
+		  iddst, sizeof(iddst), NULL, 0, NI_NUMERICHOST) != 0)
+    {
+      log_error ("ipsec_ipv4toa: getnameinfo() failed");
+      strcpy (iddst, "<error>");
+    }
+  sprintf (result, "src: %s dst: %s", idsrc, iddst);
+
+  return result;
+}
 /*
  * Take a string containing an ext representation of port and return a
  * binary port number.  Return zero if anything goes wrong.
