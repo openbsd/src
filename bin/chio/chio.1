@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.9 1998/12/15 01:20:17 aaron Exp $
+.\"	$OpenBSD: chio.1,v 1.10 1999/03/03 01:14:56 aaron Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -87,44 +87,53 @@ and the EU would be
 .Pp
 .Sh SUPPORTED COMMANDS
 .Cm chio move
-.Ar <from ET> <from EU> <to ET> <to EU>
+.Aq Ar from ET
+.Aq Ar from EU
+.Aq Ar to ET
+.Aq Ar to EU
 .Op Ar inv
 .Pp
 Moves the media unit from
-.Pa <from ET/EU>
+.Aq Ar from ET/EU
 to
-.Pa <to ET/EU> .
+.Aq Ar to ET/EU .
 If the optional modifier
 .Pa inv
 is specified, the media unit will be inverted before insertion.
 .Pp
 .Cm chio exchange
-.Ar <src ET> <src EU> <dst1 ET> <dst1 EU>
-.Op Ar <dst2 ET> <dst2 ET>
+.Aq Ar src ET
+.Aq Ar src EU
+.Aq Ar dst1 ET
+.Aq Ar dst1 EU
+.Oo
+.Aq Ar dst2\& ET
+.Aq Ar dst2\& EU
+.Oc
 .Op Ar inv1
 .Op Ar inv2
 .Pp
 Performs a media unit exchange operation.  The media unit in
-.Pa <src ET/EU>
+.Aq Ar src ET/EU
 is moved to
-.Pa <dst1 ET/EU>
+.Aq Ar dst1 ET/EU
 and the media unit previously in
-.Pa <dst1 ET/EU>
+.Aq Ar dst1 ET/EU
 is moved to
-.Pa <dst2 ET/EU> .
+.Aq Ar dst2 ET/EU .
 In the case of a simple exchange,
-.Pa <dst2 ET/EU>
+.Aq Ar dst2 ET/EU
 is omitted and the values
-.Pa <src ET/EU>
+.Aq Ar src ET/EU
 are used in their place.
 The optional modifiers
-.Pa inv1
+.Ar inv1
 and
-.Pa inv2
+.Ar inv2
 specify whether the media units are to be inverted before insertion into
-.Pa <dst1 ET/EU>
+.Aq Ar dst1 ET/EU
 and
-.Pa <dst2 ET/EU>
+.Aq Ar dst2 ET/EU
 respectively.
 .Pp
 Note that not all medium changers support the
@@ -133,13 +142,14 @@ operation; the changer must have multiple free pickers or emulate
 multiple free pickers with transient storage.
 .Pp
 .Cm chio position
-.Ar <to ET> <to EU>
+.Aq Ar to ET
+.Aq Ar to EU
 .Op Ar inv
 .Pp
 Position the picker in front of the element described by
-.Pa <to ET/EU> .
+.Aq Ar to ET/EU .
 If the optional modifier
-.Pa inv
+.Ar inv
 is specified, the media unit will be inverted before insertion.
 .Pp
 Note that not all changers behave as expected when issued this command.
@@ -154,18 +164,18 @@ and which picker unit the changer is currently configured to use.
 Report which picker unit the changer is currently configured to use.
 .Pp
 .Cm chio setpicker
-.Ar <unit>
+.Aq Ar unit
 .Pp
 Configure the changer to use picker
-.Pa <unit> .
+.Aq Ar unit .
 .Pp
 .Cm chio status
-.Op Ar <type>
+.Op Aq Ar type
 .Pp
 Report the status of all elements in the changer.  If
-.Pa <type>
+.Aq Ar type
 is specified, report the status of all elements of type
-.Pa <type> .
+.Aq Ar type .
 .Pp
 The status bits are defined as follows:
 .Bl -tag -width indent
