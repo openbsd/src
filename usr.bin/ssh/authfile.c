@@ -15,7 +15,7 @@ for reading the passphrase from the user.
 */
 
 #include "includes.h"
-RCSID("$Id: authfile.c,v 1.6 1999/09/30 18:28:35 provos Exp $");
+RCSID("$Id: authfile.c,v 1.7 1999/10/11 20:00:35 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -211,11 +211,25 @@ load_private_key(const char *filename, const char *passphrase,
   CipherContext cipher;
   BN_CTX *ctx;
   BIGNUM *aux;
+  struct stat st;
 
   /* Read the file into the buffer. */
   f = open(filename, O_RDONLY);
   if (f < 0)
     return 0;
+
+  /* We assume we are called under uid of the owner of the file */
+  if (fstat(f, &st) < 0 ||
+      (st.st_uid != 0 && st.st_uid != getuid()) ||
+      (st.st_mode & 077) != 0) {
+    error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    error("@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @");
+    error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    error("Bad ownership or mode(0%3.3o) for '%s'.",
+	   st.st_mode & 0777, filename);
+    error("It is recommended that your private key files are NOT accessible by others.");
+    return 0;
+  }
 
   len = lseek(f, (off_t)0, SEEK_END);
   lseek(f, (off_t)0, SEEK_SET);

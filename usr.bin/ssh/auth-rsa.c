@@ -16,7 +16,7 @@ validity of the host key.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.3 1999/09/30 17:08:51 deraadt Exp $");
+RCSID("$Id: auth-rsa.c,v 1.4 1999/10/11 20:00:35 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -127,7 +127,7 @@ auth_rsa_challenge_dialog(unsigned int bits, BIGNUM *e, BIGNUM *n)
    successful.  This may exit if there is a serious protocol violation. */
 
 int
-auth_rsa(struct passwd *pw, BIGNUM *client_n)
+auth_rsa(struct passwd *pw, BIGNUM *client_n, int strict_modes)
 {
   char line[8192];
   int authenticated;
@@ -137,18 +137,22 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
   struct stat st;
   BIGNUM *e, *n;
 
-  /* Open the file containing the authorized keys. */
+  /* Temporarily use the user's uid. */
+  temporarily_use_uid(pw->pw_uid);
+
+  /* The authorized keys. */
   snprintf(line, sizeof line, "%.500s/%.100s", pw->pw_dir,
     SSH_USER_PERMITTED_KEYS);
   
-  /* Temporarily use the user's uid. */
-  temporarily_use_uid(pw->pw_uid);
+  /* Fail quietly if file does not exist */
   if (stat(line, &st) < 0)
     {
       /* Restore the privileged uid. */
       restore_uid();
       return 0;
     }
+
+  /* Open the file containing the authorized keys. */
   f = fopen(line, "r");
   if (!f)
     {
@@ -158,6 +162,42 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
       packet_send_debug("If your home is on an NFS volume, it may need to be world-readable.");
       return 0;
     }
+
+  if (strict_modes) {
+    int fail=0;
+    char buf[1024];
+    /* Check open file in order to avoid open/stat races */
+    if (fstat(fileno(f), &st) < 0 ||
+        (st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
+        (st.st_mode & 022) != 0) {
+      snprintf(buf, sizeof buf, "RSA authentication refused for %.100s: "
+               "bad ownership or modes for '%s'.", pw->pw_name, line);
+      fail=1;
+    }else{
+      /* Check path to SSH_USER_PERMITTED_KEYS */
+      int i;
+      static const char *check[] = {
+            "", SSH_USER_DIR, NULL
+      };
+      for (i=0; check[i]; i++) {
+        snprintf(line, sizeof line, "%.500s/%.100s", pw->pw_dir, check[i]);
+        if (stat(line, &st) < 0 ||
+            (st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
+            (st.st_mode & 022) != 0) {
+          snprintf(buf, sizeof buf, "RSA authentication refused for %.100s: "
+                   "bad ownership or modes for '%s'.", pw->pw_name, line);
+          fail=1;
+          break;
+        }
+      }
+    }
+    if (fail) {
+      log(buf);
+      packet_send_debug(buf);
+      restore_uid();
+      return 0;
+    }
+  } 
 
   /* Flag indicating whether authentication has succeeded. */
   authenticated = 0;
