@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.24 1998/01/07 00:48:10 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.25 1998/01/09 14:36:11 niklas Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -222,6 +222,7 @@ getccdbuf()
 	struct ccdbuf *cbp;
 
 	cbp = malloc(sizeof (struct ccdbuf), M_DEVBUF, M_WAITOK);
+	bzero(cbp, sizeof (struct ccdbuf));
 	cbp->cb_sg = malloc(sizeof (struct ccdseg) * MAXBSIZE / CLBYTES,
 	    M_DEVBUF, M_WAITOK);
 	return (cbp);
