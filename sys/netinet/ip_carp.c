@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.59 2004/06/10 16:55:37 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.60 2004/06/10 17:00:06 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1321,7 +1321,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 			goto cleanup;
 		}
 
-		bzero(cif, sizeof(cif));
+		bzero(cif, sizeof(*cif));
 		cif->vhif_ifp = ifp;
 		TAILQ_INIT(&cif->vhif_vrs);
 		ifp->if_carp = (caddr_t)cif;
@@ -1492,7 +1492,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 			goto cleanup;
 		}
 
-		bzero(cif, sizeof(cif));
+		bzero(cif, sizeof(*cif));
 		cif->vhif_ifp = ifp;
 		TAILQ_INIT(&cif->vhif_vrs);
 		ifp->if_carp = (caddr_t)cif;
