@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.53 2002/11/27 21:40:32 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.54 2003/01/14 02:27:16 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.53 2002/11/27 21:40:32 tdeval Exp 
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <errno.h>
 
 #include "thread_private.h"
@@ -376,12 +377,19 @@ malloc_exit()
  */
 static void *
 map_pages(pages)
-    int pages;
+    size_t pages;
 {
     caddr_t result, tail;
 
     result = (caddr_t)pageround((u_long)sbrk(0));
-    tail = result + (pages << malloc_pageshift);
+    pages <<= malloc_pageshift;
+    if (pages > SIZE_T_MAX - (size_t)result) {
+#ifdef MALLOC_EXTRA_SANITY
+	wrterror("(ES): overflow in map_pages fails\n");
+#endif /* MALLOC_EXTRA_SANITY */
+	return 0;
+    }
+    tail = result + pages;
 
     if (brk(tail)) {
 #ifdef MALLOC_EXTRA_SANITY
