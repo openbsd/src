@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 1999/09/03 18:00:42 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2001/04/06 23:54:47 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1997/06/10 18:52:23 veego Exp $	*/
 
 /* 
@@ -101,6 +101,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 
 #include <machine/pte.h>
@@ -284,6 +285,8 @@ char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
+struct pool	pmap_pmap_pool;	/* pool that pmap structs are allocated from */
+
 #ifdef M68K_MMU_HP
 int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #endif
@@ -345,6 +348,10 @@ pmap_bootstrap_alloc(size)
 	avail_start += size;
 
 	bzero ((caddr_t) val, size);
+
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+		0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+
 	return ((void *) val);
 }
 
@@ -682,12 +689,7 @@ pmap_create(size)
 	if (size)
 		return (NULL);
 
-	/* XXX: is it ok to wait here? */
-	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
-#ifdef notifwewait
-	if (pmap == NULL)
-		panic("pmap_create: cannot allocate a pmap");
-#endif
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
 	pmap_pinit(pmap);
 	return (pmap);
@@ -748,7 +750,7 @@ pmap_destroy(pmap)
 	simple_unlock(&pmap->pm_lock);
 	if (count == 0) {
 		pmap_release(pmap);
-		free((caddr_t)pmap, M_VMPMAP);
+		pool_put(&pmap_pmap_pool, pmap);
 	}
 }
 
