@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.48 2005/01/06 21:37:53 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.49 2005/03/16 19:50:59 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -112,6 +112,7 @@ aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 #udav*	at uhub?		# Davicom DM9601 based Ethernet
 #url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
+#ral	at uhub?		# Ralink
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
@@ -236,7 +237,7 @@ ne*	at isapnp?			# NE[12]000 PnP ethernet
 #el0	at isa? port 0x300 irq 9	# 3C501 ethernet
 ep0	at isa?				# 3C509 ethernet
 ep*	at isa?				# 3C509 ethernet
-ef*	at isapnp?			# 3C515 PnP ethernet
+#ef*	at isapnp?			# 3C515 PnP ethernet
 #ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 #ie1	at isa? port 0x300 irq 10	# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6	# IsoLan, NE2100, and DEPCA
@@ -256,7 +257,7 @@ ne*	at pci?				# NE2000-compat ethernet
 ne*	at pcmcia?			# PCMCIA based NE2000
 ep*	at pcmcia?			# PCMCIA based 3C5xx
 #sm*	at pcmcia?			# PCMCIA based sm
-xe*	at pcmcia?			# Xircom ethernet
+#xe*	at pcmcia?			# Xircom ethernet
 #fpa*	at pci?				# DEC DEFPA FDDI
 xl*	at pci?				# 3C9xx ethernet
 xl*	at cardbus?			# 3C575 ethernet
@@ -265,7 +266,7 @@ rl*	at cardbus?			# RealTek 81[23]9 ethernet
 #tx*	at pci?				# SMC 83C170 EPIC ethernet
 #tl*	at pci?				# Compaq Thunderlan ethernet
 #vr*	at pci?				# VIA Rhine ethernet
-wb*	at pci?				# Winbond W89C840F ethernet
+#wb*	at pci?				# Winbond W89C840F ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet
 dc*	at cardbus?			# 21143, "tulip" clone ethernet
 #ti*	at pci?				# Alteon Tigon 1Gb ethernet
@@ -283,12 +284,18 @@ re*	at pci?				# Realtek 8169/8169S/8110S
 vge*	at pci? 			# VIA VT612x
 
 # Wireless network cards
+#ath*	at pci?				# Atheros AR5k (802.11a/b/g)
+#ath*	at cardbus?			# Atheros AR5k (802.11a/b/g)
 wi*	at pci?				# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia?			# Bay Networks IEEE 802.11FH
-an*	at pcmcia?			# Aironet IEEE 802.11DS
+#an*	at pcmcia?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?			# Xircom Netwave
-ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
+#ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
+ral*	at pci?				# Ralink RT2500
+ral*	at cardbus?			# Ralink RT2500
+rtw*	at pci?				# Realtek 8180
+rtw*	at cardbus?			# Realtek 8180
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
