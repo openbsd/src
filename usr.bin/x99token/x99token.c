@@ -20,7 +20,7 @@
 #define	HEXDIGITS	"0123456789abcdef"
 #define	DECDIGITS	"0123456789012345"
 
-void predict(des_key_schedule, char *, int);
+void predict(des_key_schedule, const char *, int);
 
 char *digits = HEXDIGITS;
 extern char *__progname;
@@ -92,11 +92,10 @@ main(int argc, char **argv)
 		char *b = buf;
 		/* Assume octal input */
 		for (i = 0; i < 8; ++i) {
-			if (!*b) {
+			if (!*b)
 				fprintf(stderr, "%s: invalid key\n", buf);
-			}
 			while (isdigit(*b))
-				key[i] = key[i] << 3 | *b++ - '0';
+				key[i] = key[i] << 3 | (*b++ - '0');
 			while (*b && !isdigit(*b))
 				++b;
 		}
@@ -167,14 +166,15 @@ main(int argc, char **argv)
 }
 
 void
-predict(des_key_schedule ks, char *chal, int cnt)
+predict(des_key_schedule ks, const char *chal, int cnt)
 {
 	int i;
 	des_cblock cb;
 
+	memcpy(&cb, chal, sizeof(cb));
 	while (cnt-- > 0) {
-		printf("%.8s: ", chal);
-		des_ecb_encrypt((des_cblock *)chal, &cb, ks, DES_ENCRYPT);
+		printf("%.8s: ", (char *)cb);
+		des_ecb_encrypt(&cb, &cb, ks, DES_ENCRYPT);
 		for (i = 0; i < 4; ++i) {
 			printf("%c", digits[(cb[i]>>4) & 0xf]);
 			printf("%c", digits[(cb[i]>>0) & 0xf]);
