@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.9 2003/06/25 03:42:16 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.10 2003/06/25 03:46:45 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -383,7 +383,7 @@ splice(char *dir, char *file)
 		fprintf(stderr, "diff: can't specify - with other arg directory\n");
 		done(0);
 	}
-	tail = rindex(file, '/');
+	tail = strrchr(file, '/');
 	if (tail == 0)
 		tail = file;
 	else
