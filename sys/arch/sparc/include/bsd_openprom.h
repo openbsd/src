@@ -251,6 +251,13 @@ struct promvec {
 	 * easily.
 	 */
 	void	(*pv_setctxt)(int ctxt, caddr_t va, int pmeg);
+
+	/* OpenPROM V3 SMP cpu-control directives. */
+	int     (*pv_cpustart)(int cpu_node, caddr_t ctxttbl_paddr,
+			       int ctxt, caddr_t pc);
+	int     (*pv_cpustop)(int cpu_node);
+	int     (*pv_cpuidle)(int cpu_node);
+	int     (*pv_cpuresume)(int cpu_node);
 };
 
 /*
