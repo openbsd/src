@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.5 2004/02/12 04:33:54 drahn Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.6 2004/02/13 21:32:02 drahn Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -930,13 +930,15 @@ again:
 
 	if (*args != 0)
 		*args++ = 0;
-	if (0 == strcmp(boot_file, "setargs")) {
-		boot_file = args;
-		goto again;
-	}
-
 	while (*args == ' ')
 		++args;
+	if (*args != '-') {
+		if (0 == strcmp(boot_file, "setargs")) {
+			boot_file = args;
+			goto again;
+		}
+	}
+
 	boot_args = args;
 
 	if (*args == '-') {
