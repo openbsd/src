@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.14 1997/03/02 09:52:50 millert Exp $	*/
+/*	$OpenBSD: mount.h,v 1.15 1997/03/09 19:26:05 millert Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -133,7 +133,6 @@ struct mount {
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
 #define	MNT_UNION	0x00000020	/* union with underlying filesystem */
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
-#define MNT_NOATIME	0x00008000	/* don't update atime on files */
 
 /*
  * exported mount flags.
@@ -150,6 +149,11 @@ struct mount {
 #define	MNT_LOCAL	0x00001000	/* filesystem is stored locally */
 #define	MNT_QUOTA	0x00002000	/* quotas are enabled on filesystem */
 #define	MNT_ROOTFS	0x00004000	/* identifies the root filesystem */
+
+/*
+ * Extra post 4.4BSD-lite2 mount flags.
+ */
+#define MNT_NOATIME	0x00008000	/* don't update access times on fs */
 
 /*
  * Mask of flags that are visible to statfs()
