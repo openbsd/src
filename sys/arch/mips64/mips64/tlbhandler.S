@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.6 2004/09/10 09:32:13 pefo Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.7 2004/09/10 10:39:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -207,7 +207,7 @@ e_xtlb_miss_tramp:
  *	space. This happens when we have a TLB match but an invalid
  *	entry. Try to reload.
  */
-NLEAF(k_tlb_inv)
+NLEAF(k_tlb_inv, 0)
 	.set	noat
 	LA	k1, (VM_MIN_KERNEL_ADDRESS)	# compute index
 	dmfc0	k0, COP_0_BAD_VADDR	# get the fault address
@@ -283,7 +283,7 @@ END(k_tlb_inv)
  *	Load up the correct entry contents from the kernel map.
  *	k0 has bad address.
  */
-NLEAF(k_tlb_miss)
+NLEAF(k_tlb_miss, 0)
 	.set	noat
 	mfc0	k1, COP_0_STATUS_REG
 	andi	k1, SR_KSU_USER
