@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.17 2003/05/17 14:02:06 grange Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.18 2003/06/03 12:05:25 art Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -10,10 +10,7 @@
  *
  * 1. Redistributions of source code must retain the above copyright 
  *    notice, this list of conditions and the following disclaimer. 
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
- * 3. The name of the author may not be used to endorse or promote products
+ * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission. 
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
