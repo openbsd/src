@@ -1,5 +1,5 @@
-/*	$OpenBSD: pdq.c,v 1.3 1996/05/26 00:27:02 deraadt Exp $	*/
-/*	$NetBSD: pdq.c,v 1.5 1996/05/20 00:26:15 thorpej Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.4 1996/06/18 10:22:28 deraadt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.5.4.1 1996/06/08 00:17:44 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: pdq.c,v 1.26 1996/05/17 01:15:18 thomas Exp
+ * Id: pdq.c,v 1.27 1996/06/07 20:02:25 thomas Exp
  *
  */
 
@@ -157,6 +157,9 @@ static const char * const * const pdq_pmd_types[] = {
 static const char * const pdq_descriptions[] = {
     "DEFPA PCI",
     "DEFEA EISA",
+    "DEFTA TC",
+    "DEFAA Futurebus",
+    "DEFQA Q-bus",
 };
 
 static void
@@ -557,8 +560,6 @@ pdq_process_command_responses(
     pdq_command_info_t * const ci = &pdq->pdq_command_info;
     volatile const pdq_consumer_block_t * const cbp = pdq->pdq_cbp;
     pdq_descriptor_block_t * const dbp = pdq->pdq_dbp;
-    pdq_txdesc_t *txd;
-    pdq_rxdesc_t *rxd;
     const pdq_response_generic_t *rspgen;
 
     /*
@@ -570,15 +571,13 @@ pdq_process_command_responses(
     if (cbp->pdqcb_command_response == ci->ci_response_completion)
 	return;
 
-    PDQ_ASSERT (cbp->pdqcb_command_request != ci->ci_request_completion);
-
-    txd = &dbp->pdqdb_command_requests[ci->ci_request_completion];
-    rxd = &dbp->pdqdb_command_responses[ci->ci_response_completion];
+    PDQ_ASSERT(cbp->pdqcb_command_request != ci->ci_request_completion);
 
     rspgen = (const pdq_response_generic_t *) ci->ci_bufstart;
     PDQ_ASSERT(rspgen->generic_status == PDQR_SUCCESS);
-    PDQ_PRINTF(("PDQ Process Command Response: %s completed\n",
-		pdq_cmd_info[rspgen->generic_op].cmd_name));
+    PDQ_PRINTF(("PDQ Process Command Response: %s completed (status=%d)\n",
+		pdq_cmd_info[rspgen->generic_op].cmd_name,
+		rspgen->generic_status));
 
     if (rspgen->generic_op == PDQC_STATUS_CHARS_GET && (pdq->pdq_flags & PDQ_PRINTCHARS)) {
 	pdq->pdq_flags &= ~PDQ_PRINTCHARS;
@@ -782,7 +781,7 @@ pdq_process_received_data(
 	    }
 	    rxd->rxd_pa_hi = 0;
 	    rxd->rxd_seg_len_hi = PDQ_OS_DATABUF_SIZE / 16;
-	    rxd->rxd_pa_lo = PDQ_OS_VA_TO_PA(PDQ_OS_DATABUF_PTR(buffers[rx->rx_producer]));
+	    rxd->rxd_pa_lo = PDQ_OS_VA_TO_PA(pdq, PDQ_OS_DATABUF_PTR(buffers[rx->rx_producer]));
 	    PDQ_ADVANCE(rx->rx_producer, 1, ring_mask);	
 	    PDQ_ADVANCE(producer, 1, ring_mask);	
 	    PDQ_ADVANCE(completion, 1, ring_mask);
@@ -812,7 +811,7 @@ pdq_process_received_data(
 	    }
 	    rxd->rxd_pa_hi = 0;
 	    rxd->rxd_seg_len_hi = PDQ_OS_DATABUF_SIZE / 16;
-	    rxd->rxd_pa_lo = PDQ_OS_VA_TO_PA(PDQ_OS_DATABUF_PTR(pdu));
+	    rxd->rxd_pa_lo = PDQ_OS_VA_TO_PA(pdq, PDQ_OS_DATABUF_PTR(pdu));
 	}
 	if (idx < PDQ_RX_SEGCNT) {
 	    /*
@@ -863,7 +862,7 @@ pdq_queue_transmit_data(
 	     */
 	    eop = &dbp->pdqdb_transmits[producer];
 	    eop->txd_seg_len = seglen;
-	    eop->txd_pa_lo = PDQ_OS_VA_TO_PA(dataptr);
+	    eop->txd_pa_lo = PDQ_OS_VA_TO_PA(pdq, dataptr);
 	    eop->txd_sop = eop->txd_eop = eop->txd_pa_hi = 0;
 
 	    datalen -= seglen;
@@ -1122,12 +1121,12 @@ pdq_stop(
     pdq_do_port_control(csrs, PDQ_PCTL_SUB_CMD);
 
     PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
-    PDQ_CSR_WRITE(csrs, csr_port_data_a, PDQ_OS_VA_TO_PA(pdq->pdq_cbp));
+    PDQ_CSR_WRITE(csrs, csr_port_data_a, PDQ_OS_VA_TO_PA(pdq, pdq->pdq_cbp));
     pdq_do_port_control(csrs, PDQ_PCTL_CONSUMER_BLOCK);
 
     PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
     PDQ_CSR_WRITE(csrs, csr_port_data_a,
-		  PDQ_OS_VA_TO_PA(pdq->pdq_dbp) | PDQ_DMA_INIT_LW_BSWAP_DATA);
+		  PDQ_OS_VA_TO_PA(pdq, pdq->pdq_dbp) | PDQ_DMA_INIT_LW_BSWAP_DATA);
     pdq_do_port_control(csrs, PDQ_PCTL_DMA_INIT);
 
     for (cnt = 0; cnt < 1000; cnt++) {
@@ -1381,14 +1380,14 @@ pdq_initialize(
      */
     p = (pdq_uint8_t *) PDQ_OS_MEMALLOC_CONTIG(contig_bytes);
     if (p != NULL) {
-	pdq_physaddr_t physaddr = PDQ_OS_VA_TO_PA(p);
+	pdq_physaddr_t physaddr = PDQ_OS_VA_TO_PA(pdq, p);
 	/*
 	 * Assert that we really got contiguous memory.  This isn't really
 	 * needed on systems that actually have physical contiguous allocation
 	 * routines, but on those systems that don't ...
 	 */
 	for (idx = PDQ_OS_PAGESIZE; idx < 0x2000; idx += PDQ_OS_PAGESIZE) {
-	    if (PDQ_OS_VA_TO_PA(p + idx) - physaddr != idx)
+	    if (PDQ_OS_VA_TO_PA(pdq, p + idx) - physaddr != idx)
 		goto cleanup_and_return;
 	}
 	physaddr &= 0x1FFF;
@@ -1427,13 +1426,13 @@ pdq_initialize(
 
     pdq->pdq_host_smt_info.rx_buffers = (void *) pdq->pdq_dbp->pdqdb_host_smt_buffers;
 
-    PDQ_PRINTF(("PDQ Descriptor Block = %x\n", pdq->pdq_dbp));
-    PDQ_PRINTF(("    Recieve Queue          = %x\n", pdq->pdq_dbp->pdqdb_receives));
-    PDQ_PRINTF(("    Transmit Queue         = %x\n", pdq->pdq_dbp->pdqdb_transmits));
-    PDQ_PRINTF(("    Host SMT Queue         = %x\n", pdq->pdq_dbp->pdqdb_host_smt));
-    PDQ_PRINTF(("    Command Response Queue = %x\n", pdq->pdq_dbp->pdqdb_command_responses));
-    PDQ_PRINTF(("    Command Request Queue  = %x\n", pdq->pdq_dbp->pdqdb_command_requests));
-    PDQ_PRINTF(("PDQ Consumer Block = %x\n", pdq->pdq_cbp));
+    PDQ_PRINTF(("\nPDQ Descriptor Block = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp));
+    PDQ_PRINTF(("    Recieve Queue          = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_receives));
+    PDQ_PRINTF(("    Transmit Queue         = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_transmits));
+    PDQ_PRINTF(("    Host SMT Queue         = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_host_smt));
+    PDQ_PRINTF(("    Command Response Queue = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_command_responses));
+    PDQ_PRINTF(("    Command Request Queue  = " PDQ_OS_PTR_FMT "\n", pdq->pdq_dbp->pdqdb_command_requests));
+    PDQ_PRINTF(("PDQ Consumer Block = " PDQ_OS_PTR_FMT "\n", pdq->pdq_cbp));
 
     /*
      * Zero out the descriptor block.  Not really required but
@@ -1451,38 +1450,38 @@ pdq_initialize(
     if (pdq->pdq_type == PDQ_DEFPA)
 	pdq_init_pci_csrs(&pdq->pdq_pci_csrs, bus, csr_base, 1);
 
-    PDQ_PRINTF(("PDQ CSRs: BASE = %x\n", pdq->pdq_csrs.csr_base));
-    PDQ_PRINTF(("    Port Reset                = %x [0x%08x]\n",
+    PDQ_PRINTF(("PDQ CSRs: BASE = " PDQ_OS_PTR_FMT "\n", pdq->pdq_csrs.csr_base));
+    PDQ_PRINTF(("    Port Reset                = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_port_reset, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_reset)));
-    PDQ_PRINTF(("    Host Data                 = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Host Data                 = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_host_data, PDQ_CSR_READ(&pdq->pdq_csrs, csr_host_data)));
-    PDQ_PRINTF(("    Port Control              = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Port Control              = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_port_control, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_control)));
-    PDQ_PRINTF(("    Port Data A               = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Port Data A               = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_port_data_a, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_data_a)));
-    PDQ_PRINTF(("    Port Data B               = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Port Data B               = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_port_data_b, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_data_b)));
-    PDQ_PRINTF(("    Port Status               = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Port Status               = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_port_status, PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_status)));
-    PDQ_PRINTF(("    Host Int Type 0           = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Host Int Type 0           = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_host_int_type_0, PDQ_CSR_READ(&pdq->pdq_csrs, csr_host_int_type_0)));
-    PDQ_PRINTF(("    Host Int Enable           = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Host Int Enable           = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_host_int_enable, PDQ_CSR_READ(&pdq->pdq_csrs, csr_host_int_enable)));
-    PDQ_PRINTF(("    Type 2 Producer           = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Type 2 Producer           = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_type_2_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_type_2_producer)));
-    PDQ_PRINTF(("    Command Response Producer = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Command Response Producer = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_cmd_response_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_cmd_response_producer)));
-    PDQ_PRINTF(("    Command Request Producer  = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Command Request Producer  = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_cmd_request_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_cmd_request_producer)));
-    PDQ_PRINTF(("    Host SMT Producer         = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Host SMT Producer         = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_host_smt_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_host_smt_producer)));
-    PDQ_PRINTF(("    Unsolicited Producer      = %x [0x%08x]\n",
+    PDQ_PRINTF(("    Unsolicited Producer      = " PDQ_OS_PTR_FMT " [0x%08x]\n",
 	   pdq->pdq_csrs.csr_unsolicited_producer, PDQ_CSR_READ(&pdq->pdq_csrs, csr_unsolicited_producer)));
 
     /*
      * Initialize the command information block
      */
-    pdq->pdq_command_info.ci_pa_bufstart = PDQ_OS_VA_TO_PA(pdq->pdq_command_info.ci_bufstart);
+    pdq->pdq_command_info.ci_pa_bufstart = PDQ_OS_VA_TO_PA(pdq, pdq->pdq_command_info.ci_bufstart);
     for (idx = 0; idx < sizeof(pdq->pdq_dbp->pdqdb_command_requests)/sizeof(pdq->pdq_dbp->pdqdb_command_requests[0]); idx++) {
 	pdq_txdesc_t *txd = &pdq->pdq_dbp->pdqdb_command_requests[idx];
 
@@ -1503,7 +1502,7 @@ pdq_initialize(
      * Initialize the unsolicited event information block
      */
     pdq->pdq_unsolicited_info.ui_free = PDQ_NUM_UNSOLICITED_EVENTS;
-    pdq->pdq_unsolicited_info.ui_pa_bufstart = PDQ_OS_VA_TO_PA(pdq->pdq_unsolicited_info.ui_events);
+    pdq->pdq_unsolicited_info.ui_pa_bufstart = PDQ_OS_VA_TO_PA(pdq, pdq->pdq_unsolicited_info.ui_events);
     for (idx = 0; idx < sizeof(pdq->pdq_dbp->pdqdb_unsolicited_events)/sizeof(pdq->pdq_dbp->pdqdb_unsolicited_events[0]); idx++) {
 	pdq_rxdesc_t *rxd = &pdq->pdq_dbp->pdqdb_unsolicited_events[idx];
 	pdq_unsolicited_event_t *event = &pdq->pdq_unsolicited_info.ui_events[idx & (PDQ_NUM_UNSOLICITED_EVENTS-1)];
@@ -1533,7 +1532,7 @@ pdq_initialize(
     pdq->pdq_tx_info.tx_free = PDQ_RING_MASK(pdq->pdq_dbp->pdqdb_transmits);
     pdq->pdq_tx_info.tx_hdrdesc.txd_seg_len = sizeof(pdq->pdq_tx_hdr);
     pdq->pdq_tx_info.tx_hdrdesc.txd_sop = 1;
-    pdq->pdq_tx_info.tx_hdrdesc.txd_pa_lo = PDQ_OS_VA_TO_PA(pdq->pdq_tx_hdr);
+    pdq->pdq_tx_info.tx_hdrdesc.txd_pa_lo = PDQ_OS_VA_TO_PA(pdq, pdq->pdq_tx_hdr);
 
     state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_status));
     PDQ_PRINTF(("PDQ Adapter State = %s\n", pdq_adapter_states[state]));

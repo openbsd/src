@@ -1,5 +1,5 @@
-/*	$OpenBSD: pdqvar.h,v 1.4 1996/05/26 00:27:05 deraadt Exp $	*/
-/*	$NetBSD: pdqvar.h,v 1.6 1996/05/20 00:26:26 thorpej Exp $	*/
+/*	$OpenBSD: pdqvar.h,v 1.5 1996/06/18 10:22:29 deraadt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.6.4.1 1996/06/08 00:17:49 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: pdqvar.h,v 1.17 1996/05/17 01:15:18 thomas Exp
+ * Id: pdqvar.h,v 1.18 1996/06/07 20:02:25 thomas Exp
  *
  */
 
@@ -84,9 +84,9 @@ enum _pdq_type_t {
 #define	PDQ_OS_USEC_DELAY(n)		DELAY(n)
 #define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
 #if defined(__NetBSD__) && defined(__alpha__)
-#define	PDQ_OS_VA_TO_PA(p)		(vtophys(p) | 0x40000000)
+#define	PDQ_OS_VA_TO_PA(pdq, p)		(vtophys(p) | (pdq->pdq_type == PDQ_DEFTA ? 0 : 0x40000000))
 #else
-#define	PDQ_OS_VA_TO_PA(p)		vtophys(p)
+#define	PDQ_OS_VA_TO_PA(pdq, p)		vtophys(p)
 #endif
 #define	PDQ_OS_MEMALLOC(n)		malloc(n, M_DEVBUF, M_NOWAIT)
 #define	PDQ_OS_MEMFREE(p, n)		free((void *) p, M_DEVBUF)
@@ -128,6 +128,7 @@ typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 #elif defined(__NetBSD__)
 #include <machine/bus.h>
 #include <machine/intr.h>
+#define	PDQ_OS_PTR_FMT		"%p"
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
 typedef	bus_chipset_tag_t pdq_bus_t;
@@ -163,6 +164,10 @@ typedef pdq_uint32_t pdq_bus_memoffset_t;
 
 #if !defined(PDQ_BPFATTACH)
 #define	PDQ_BPFATTACH(sc, t, s)	bpfattach(&(sc)->sc_bpf, &(sc)->sc_if, t, s)
+#endif
+
+#if !defined(PDQ_OS_PTR_FMT)
+#define	PDQ_OS_PTR_FMT	"0x%x"
 #endif
 
 #if !defined(PDQ_OS_IOMEM)
@@ -239,7 +244,7 @@ extern void pdq_ifattach(pdq_softc_t *sc, ifnet_ret_t (*ifwatchdog)(int unit));
 #define	PDQ_OS_PAGESIZE			PAGESIZE
 #define	PDQ_OS_USEC_DELAY(n)		drv_usecwait(n)
 #define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
-#define	PDQ_OS_VA_TO_PA(p)		vtop((caddr_t)p, NULL)
+#define	PDQ_OS_VA_TO_PA(pdq, p)		vtop((caddr_t)p, NULL)
 #define	PDQ_OS_MEMALLOC(n)		kmem_zalloc(n, KM_NOSLEEP)
 #define	PDQ_OS_MEMFREE(p, n)		kmem_free((caddr_t) p, n)
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	kmem_zalloc_physreq(n, decfddiphysreq_db, KM_NOSLEEP)
