@@ -297,7 +297,7 @@ getbootdev(howto)
 {
 	static char namebuf[100]; /* don't allocate on stack! */
 	char c, *ptr = namebuf;
-	printf("Boot: [[[%s(%d,%c)]%s][-adrs]] : ",
+	printf("Boot: [[[%s(%d,%c)]%s][-abcdrs]] : ",
 	    devs[maj], unit, 'a'+part, name);
 #ifdef CHECKSUM
 	cflag = 0;
@@ -314,8 +314,10 @@ getbootdev(howto)
 						*howto |= RB_ASKNAME;
 					else if (c == 'b')
 						*howto |= RB_HALT;
-#ifdef CHECKSUM
 					else if (c == 'c')
+						*howto |= RB_CONFIG;
+#ifdef CHECKSUM
+					else if (c == 'C')
 						cflag = 1;
 #endif
 					else if (c == 'd')
