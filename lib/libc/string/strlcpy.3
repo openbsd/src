@@ -1,4 +1,4 @@
-.\" $OpenBSD: strlcpy.3,v 1.5 1999/06/06 15:17:32 aaron Exp $
+.\" $OpenBSD: strlcpy.3,v 1.6 1999/09/04 02:22:46 pjanzen Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -101,7 +101,7 @@ The following code fragment illustrates the simple case:
 .Bd -literal -offset indent
 char *s, *p, buf[BUFSIZ];
 
-.Li ...
+\&...
 
 (void)strlcpy(buf, s, sizeof(buf));
 (void)strlcat(buf, p, sizeof(buf));
@@ -112,7 +112,7 @@ like the following might be used:
 .Bd -literal -offset indent
 char *dir, *file, pname[MAXPATHNAMELEN];
 
-.Li ...
+\&...
 
 if (strlcpy(pname, dir, sizeof(pname)) >= sizeof(pname))
 	goto toolong;
@@ -126,7 +126,7 @@ speed things up a bit by using a copy instead on an append:
 char *dir, *file, pname[MAXPATHNAMELEN];
 size_t n;
 
-.Li ...
+\&...
 
 n = strlcpy(pname, dir, sizeof(pname));
 if (n >= sizeof(pname))
