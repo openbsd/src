@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_ssp.c,v 1.2 2005/01/28 17:14:31 drahn Exp $	*/
+/*	$OpenBSD: zaurus_ssp.c,v 1.3 2005/01/31 02:22:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -160,7 +160,7 @@ pxa2x0_ssp_read_val(u_int32_t cmd)
 	u_int32_t val;
 
 	if (zssp_cd.cd_ndevs < 1 || zssp_cd.cd_devs[0] == NULL) {
-		printf("zssp_read_max1111: not configured\n");
+		printf("pxa2x0_ssp_read_val: not configured\n");
 		return 0;
 	}
 	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
@@ -197,4 +197,71 @@ pxa2x0_ssp_read_val(u_int32_t cmd)
 	splx(s);
 
 	return val;
+}
+
+void
+zssp_write_lz9jg18(u_int32_t data)
+{
+	int s;
+	int i;
+	int ssp_sclk;
+	int ssp_sfrm;
+	int ssp_txd;
+	int ssp_rxd;
+
+	/* XXX this creates a DAC command from a backlight duty value. */
+	data = 0x40 | (data & 0x1f);
+
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
+		/* C3000 */
+		ssp_sclk = 19;
+		ssp_sfrm = 14;
+		ssp_txd = 87;
+		ssp_rxd = 86;
+	} else {
+		ssp_sclk = 23;
+		ssp_sfrm = 24;
+		ssp_txd = 25;
+		ssp_rxd = 26;
+	}
+
+	s = splhigh();
+
+	pxa2x0_gpio_set_function(ssp_sfrm, GPIO_OUT | GPIO_SET);
+	pxa2x0_gpio_set_function(ssp_sclk, GPIO_OUT | GPIO_CLR);
+	pxa2x0_gpio_set_function(ssp_txd, GPIO_OUT | GPIO_CLR);
+	pxa2x0_gpio_set_function(ssp_rxd, GPIO_IN);
+
+	pxa2x0_gpio_set_bit(GPIO_MAX1111_CS_C3000);
+	pxa2x0_gpio_set_bit(GPIO_ADS7846_CS_C3000);
+	pxa2x0_gpio_clear_bit(GPIO_TG_CS_C3000);
+
+	delay(10);
+	
+	for (i = 0; i < 8; i++) {
+		if (data & 0x80)
+			pxa2x0_gpio_set_bit(ssp_txd);
+		else
+			pxa2x0_gpio_clear_bit(ssp_txd);
+		delay(10);
+		pxa2x0_gpio_set_bit(ssp_sclk);
+		delay(10);
+		pxa2x0_gpio_clear_bit(ssp_sclk);
+		delay(10);
+		data <<= 1;
+	}
+
+	pxa2x0_gpio_clear_bit(ssp_txd);
+	pxa2x0_gpio_set_bit(GPIO_TG_CS_C3000);
+
+	/* XXX SFRM and RXD alternate functions are not restored here. */
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
+		pxa2x0_gpio_set_function(ssp_sclk, GPIO_ALT_FN_1_OUT);
+		pxa2x0_gpio_set_function(ssp_txd, GPIO_ALT_FN_1_OUT);
+	} else {
+		pxa2x0_gpio_set_function(ssp_sclk, GPIO_ALT_FN_2_OUT);
+		pxa2x0_gpio_set_function(ssp_txd, GPIO_ALT_FN_2_OUT);
+	}
+
+	splx(s);
 }

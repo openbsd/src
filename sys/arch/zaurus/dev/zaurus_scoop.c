@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.4 2005/01/26 06:34:54 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.5 2005/01/31 02:22:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/gpio.h>
 
 #include <machine/bus.h>
 
@@ -46,6 +47,7 @@ struct cfdriver scoop_cd = {
 
 int	scoop_gpio_pin_read(struct scoop_softc *sc, int);
 void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
+void	scoop_gpio_pin_ctl(struct scoop_softc *sc, int, int);
 
 
 int
@@ -93,32 +95,58 @@ scoopattach(struct device *parent, struct device *self, void *aux)
 int
 scoop_gpio_pin_read(struct scoop_softc *sc, int pin)
 {
-	unsigned short rv;
-	unsigned short bit = (1 << pin);
+	u_int16_t rv;
+	u_int16_t bit = (1 << pin);
 
 	rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR);
 	return (rv & bit) != 0 ? 1 : 0;
 }
 
 void
-scoop_gpio_pin_write(struct scoop_softc *sc, int pin, int value)
+scoop_gpio_pin_write(struct scoop_softc *sc, int pin, int level)
 {
-	unsigned short rv;
-	unsigned short bit = (1 << pin);
+	u_int16_t rv;
+	u_int16_t bit = (1 << pin);
 
 	rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPWR,
-	    value != 0 ? (rv | bit) : (rv & ~bit));
+	    level == GPIO_PIN_LOW ? (rv & ~bit) : (rv | bit));
 }
 
 void
-scoop_backlight_set(int on)
+scoop_gpio_pin_ctl(struct scoop_softc *sc, int pin, int flags)
+{
+	u_int16_t rv;
+	u_int16_t bit = (1 << pin);
+
+	rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPCR);
+	switch (flags & (GPIO_PIN_INPUT|GPIO_PIN_OUTPUT)) {
+	case GPIO_PIN_INPUT:
+		rv &= ~bit;
+		break;
+	case GPIO_PIN_OUTPUT:
+		rv |= bit;
+		break;
+	}
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPCR, rv);
+}
+
+void
+scoop_set_backlight(int on, int cont)
 {
 
-#if 0	/* XXX no effect. maybe the pin is incorrectly configured? */
-	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL)
+	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL) {
+		/* C3000 */
+		scoop_gpio_pin_write(scoop_cd.cd_devs[1],
+		    SCOOP1_BACKLIGHT_CONT, !cont);
 		scoop_gpio_pin_write(scoop_cd.cd_devs[1],
 		    SCOOP1_BACKLIGHT_ON, on);
+	}
+#if 0
+	else if (scoop_cd.cd_ndevs > 0 && scoop_cd.cd_devs[0] != NULL) {
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0],
+		    SCOOP0_BACKLIGHT_CONT, cont);
+	}
 #endif
 }
 
@@ -130,7 +158,7 @@ scoop_led_set(int led, int on)
 		switch(led) {
 		case SCOOP_LED_GREEN:
 			scoop_gpio_pin_write(scoop_cd.cd_devs[0],
-			    SCOOP0_LED_GREEN_C3000, on);
+			    SCOOP0_LED_GREEN, on);
 			break;
 		case SCOOP_LED_ORANGE:
 			scoop_gpio_pin_write(scoop_cd.cd_devs[0],

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.11 2005/01/21 16:22:34 miod Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.12 2005/01/31 02:22:17 uwe Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -60,6 +60,9 @@
 #include <machine/zaurus_reg.h>
 #include <machine/zaurus_var.h>
 
+#include <zaurus/dev/zaurus_scoopvar.h>
+#include <zaurus/dev/zaurus_sspvar.h>
+
 void	lcd_attach(struct device *, struct device *, void *);
 int	lcd_match(struct device *, void *, void *);
 int	lcd_cnattach(void (*)(u_int, int));
@@ -83,12 +86,16 @@ const struct wsscreen_list lcd_screen_list = {
 	sizeof lcd_scr_descr / sizeof lcd_scr_descr[0], lcd_scr_descr
 };
 
+int	lcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	lcd_burner(void *, u_int, u_int);
 int	lcd_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
 
+int	lcd_param(struct pxa2x0_lcd_softc *, u_long,
+    struct wsdisplay_param *);
+
 const struct wsdisplay_accessops lcd_accessops = {
-	pxa2x0_lcd_ioctl,
+	lcd_ioctl,
 	pxa2x0_lcd_mmap,
 	pxa2x0_lcd_alloc_screen,
 	pxa2x0_lcd_free_screen,
@@ -128,6 +135,32 @@ const struct lcd_panel_geometry sharp_zaurus_C3000 =
 	0,			/* EFW */
 };
 
+struct sharp_lcd_backlight {
+	int	duty;
+	int	vr;
+	int	on;
+};
+
+#define CURRENT_BACKLIGHT sharp_zaurus_C3000_bl
+
+const struct sharp_lcd_backlight sharp_zaurus_C3000_bl[] = {
+	{ 0x00, 0, 0 },		/* Light Off */
+	{ 0x00, 0, 1 },
+	{ 0x01, 0, 1 },
+	{ 0x07, 0, 1 },
+	{ 0x01, 1, 1 },
+	{ 0x07, 1, 1 },
+	{ 0x11, 1, 1 },
+	{ -1, -1, -1 }		/* End of table */
+};
+
+int	lcd_max_brightness(void);
+int	lcd_get_brightness(void);
+void	lcd_set_brightness(int);
+
+void	lcd_blank(int);
+void	lcd_powerhook(int, void *);
+
 int
 lcd_match(struct device *parent, void *cf, void *aux)
 {
@@ -154,6 +187,10 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	aa.accesscookie = sc;
 
 	(void)config_found(self, &aa, wsemuldisplaydevprint);
+
+	lcd_set_brightness(1);
+
+	(void)powerhook_establish(lcd_powerhook, sc);
 }
 
 int
@@ -167,23 +204,33 @@ lcd_cnattach(void (*clkman)(u_int, int))
  * wsdisplay accessops overrides
  */
 
+int
+lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct pxa2x0_lcd_softc *sc = v;
+	int res = EINVAL;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GETPARAM:
+	case WSDISPLAYIO_SETPARAM:
+		res = lcd_param(sc, cmd, (struct wsdisplay_param *)data);
+		break;
+	}
+
+	if (res == EINVAL)
+		res = pxa2x0_lcd_ioctl(v, cmd, data, flag, p);
+
+	return res;
+}
+
 void
 lcd_burner(void *v, u_int on, u_int flags)
 {
-#if 0
-	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
-	uint16_t reg;
 
-	reg = bus_space_read_2(osc->sc_iot, osc->sc_obioreg_ioh,
-	    LUBBOCK_MISCWR);
-	if (on)
-		reg |= MISCWR_LCDDISP;
-	else
-		reg &= ~MISCWR_LCDDISP;
-	bus_space_write_2(osc->sc_iot, osc->sc_obioreg_ioh,
-	    LUBBOCK_MISCWR, reg);
-#endif
+	if (on && lcd_get_brightness() == 0)
+		lcd_set_brightness(1);
+	else if (!on && lcd_get_brightness() > 0)
+		lcd_set_brightness(0);
 }
 
 int
@@ -199,4 +246,134 @@ lcd_show_screen(void *v, void *cookie, int waitok,
 	lcd_burner(v, 1, 0);
 
 	return (0);
+}
+
+/*
+ * wsdisplay I/O controls
+ */
+
+int
+lcd_param(struct pxa2x0_lcd_softc *sc, u_long cmd,
+    struct wsdisplay_param *dp)
+{
+	int res = EINVAL;
+
+	switch (dp->param) {
+	case WSDISPLAYIO_PARAM_BACKLIGHT:
+	case WSDISPLAYIO_PARAM_CONTRAST:
+		/* unsupported */
+		res = ENOTTY;
+		break;
+
+	case WSDISPLAYIO_PARAM_BRIGHTNESS:
+		if (cmd == WSDISPLAYIO_GETPARAM) {
+			dp->min = 0; /* XXX or 1? */
+			dp->max = lcd_max_brightness();
+			dp->curval = lcd_get_brightness();
+			res = 0;
+		} else if (cmd == WSDISPLAYIO_SETPARAM) {
+			lcd_set_brightness(dp->curval);
+			res = 0;
+		}
+		break;
+	}
+
+	return res;
+}
+
+/*
+ * LCD backlight
+ */
+
+static	int lcdbrightnesscurval = 1;
+static	int lcdbrightnessaltval = 1;
+static	int lcdisblank = 0;
+
+int
+lcd_max_brightness(void)
+{
+	int i;
+
+	for (i = 0; CURRENT_BACKLIGHT[i].duty != -1; i++);
+	return i - 1;
+}
+
+int
+lcd_get_brightness(void)
+{
+
+	if (lcdisblank)
+		return lcdbrightnessaltval;
+	else
+		return lcdbrightnesscurval;
+}
+
+void
+lcd_set_brightness(int newval)
+{
+	int max;
+	int i;
+
+	if (lcdisblank) {
+		lcdbrightnessaltval = newval;
+		return;
+	}
+
+	max = lcd_max_brightness();
+	if (newval < 0)
+		newval = 0;
+	else if (newval > max)
+		newval = max;
+
+	/*
+	 * It appears that the C3000 backlight can draw too much power if we
+	 * switch it from a low to a high brightness.  Increasing brightness
+	 * in steps avoids this issue.
+	 */
+	if (newval > lcdbrightnesscurval) {
+		for (i = lcdbrightnesscurval + 1; i <= newval; i++) {
+			zssp_write_lz9jg18(CURRENT_BACKLIGHT[i].duty);
+			scoop_set_backlight(CURRENT_BACKLIGHT[i].on,
+			    CURRENT_BACKLIGHT[i].vr);
+			delay(5000);
+		}
+	} else {
+		zssp_write_lz9jg18(CURRENT_BACKLIGHT[newval].duty);
+		scoop_set_backlight(CURRENT_BACKLIGHT[newval].on,
+		    CURRENT_BACKLIGHT[newval].vr);
+	}
+
+	lcdbrightnesscurval = newval;
+}
+
+void
+lcd_blank(int blank)
+{
+
+	if (blank && !lcdisblank) {
+		lcdbrightnessaltval = lcdbrightnesscurval;
+		lcd_set_brightness(0);
+		lcdisblank = 1;
+	} else if (!blank && lcdisblank) {
+		lcdisblank = 0;
+		lcd_set_brightness(lcdbrightnessaltval);
+	}
+}
+
+void
+lcd_powerhook(int why, void *v)
+{
+	static int lcdwasblank = 0;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		lcdwasblank = lcdisblank;
+		lcd_blank(1);
+		break;
+
+	case PWR_RESUME:
+		lcd_blank(lcdwasblank);
+		break;
+	}
 }

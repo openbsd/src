@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoopreg.h,v 1.4 2005/01/26 06:34:54 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoopreg.h,v 1.5 2005/01/31 02:22:16 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -17,7 +17,7 @@
  */
 
 #define SCOOP0_BASE	0x10800000
-#define SCOOP1_BASE	0x14800000
+#define SCOOP1_BASE	0x08800040
 #define SCOOP_SIZE	0x2c
 
 #define SCOOP_MCR	0x00
@@ -33,11 +33,28 @@
 #define SCOOP_GPWR	0x24
 #define SCOOP_GPRR	0x28
 
-/* GPIO bit assignments for the Zaurus C3000. */
-#define SCOOP0_LED_GREEN_C3000		1
+/* GPIO bits */
+
+#define SCOOP0_LED_GREEN		1
 #define SCOOP0_JK_B_C3000		2
 #define SCOOP0_CHARGE_OFF_C3000		3
+#define SCOOP0_MUTE_L			4
+#define SCOOP0_MUTE_R			5
+#define SCOOP0_AKIN_PULLUP		6
+#define SCOOP0_CF_POWER_C3000		6
+#define SCOOP0_APM_ON			7
 #define SCOOP0_LED_ORANGE_C3000		7
+#define SCOOP0_BACKLIGHT_CONT		8
 #define SCOOP0_JK_A_C3000		8
+#define SCOOP0_MIC_BIAS			9
 #define SCOOP0_ADC_TEMP_ON_C3000	9
-#define SCOOP1_BACKLIGHT_ON_C3000	8
+
+#define SCOOP1_IR_ON			1
+#define SCOOP1_AKIN_PULLUP		2
+#define SCOOP1_RESERVED_3		3
+#define SCOOP1_RESERVED_4		4
+#define SCOOP1_RESERVED_5		5
+#define SCOOP1_RESERVED_6		6
+#define SCOOP1_BACKLIGHT_CONT		7
+#define SCOOP1_BACKLIGHT_ON		8
+#define SCOOP1_MIC_BIAS			9

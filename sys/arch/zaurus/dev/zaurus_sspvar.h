@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_sspvar.h,v 1.1 2005/01/26 06:34:54 uwe Exp $	*/
+/*	$OpenBSD: zaurus_sspvar.h,v 1.2 2005/01/31 02:22:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -17,3 +17,4 @@
  */
 
 int	zssp_read_max1111(u_int32_t);
+void	zssp_write_lz9jg18(u_int32_t);
