@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.48 2002/07/09 14:44:29 nate Exp $
+$OpenBSD: usbdevs,v 1.49 2002/07/11 17:28:31 nate Exp $
 /* $NetBSD: usbdevs,v 1.257 2002/06/20 09:20:36 augustss Exp $ */
 
 /*
@@ -527,7 +527,9 @@ product CHICONY KB8933		0x0001	KB-8933 keyboard
 
 /* CH Products */
 product CHPRODUCTS PROTHROTTLE	0x00f1	Pro Throttle
+product CHPRODUCTS PROPEDALS	0x00f2	Pro Pedals
 product CHPRODUCTS FIGHTERSTICK	0x00f3	Fighterstick
+product CHPRODUCTS FLIGHTYOKE	0x00ff	Flight Sim Yoke
 
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
