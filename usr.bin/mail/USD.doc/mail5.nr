@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail5.nr,v 1.2 1996/06/11 12:54:21 deraadt Exp $
+.\"	$OpenBSD: mail5.nr,v 1.3 1997/07/13 23:35:50 millert Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)mail5.nr	8.1 (Berkeley) 6/8/93
+.\"	@(#)mail5.nr	8.2 (Berkeley) 5/16/94
 .\"
-.bp
 .sh 1 "Additional features"
 .pp
 This section describes some additional commands useful for

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail9.nr,v 1.2 1996/06/11 12:54:24 deraadt Exp $
+.\"	$OpenBSD: mail9.nr,v 1.3 1997/07/13 23:35:51 millert Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)mail9.nr	8.1 (Berkeley) 6/8/93
+.\"	@(#)mail9.nr	8.2 (Berkeley) 5/16/94
 .\"
-.bp
 .sh 1 "Summary of commands, options, and escapes"
 .pp
 This section gives a quick summary of the
@@ -101,7 +100,6 @@ write	Append messages to a file, don't include headers
 xit	Same as \fBexit\fP
 z	Scroll to next/previous screenful of headers
 .TE
-.bp
 .(b
 .pp
 The following table describes the options.  Each option is
