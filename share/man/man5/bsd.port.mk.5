@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.6 2000/07/04 16:08:58 aaron Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.7 2000/07/04 16:28:33 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -47,7 +47,7 @@ documented.
 .Bl -tag -width do-configure
 .It Ar build , Ar all
 Default target. Build the port. Essentially invoke
-.Bd -litteral -offset indent
+.Bd -literal -offset indent
     env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} -f ${MAKE_FILE} ${ALL_TARGET}
 .Ed
 .It Ar configure
@@ -141,7 +141,7 @@ dependencies.
 .It Ev COMMENT
 File used as a comment for the package, and in the INDEX. Set to
 ${PKGDIR}/COMMENT by default (with corrections for multi-packages and flavors).
-If COMMENT starts with a dash, this is a litteral string instead. This can
+If COMMENT starts with a dash, this is a literal string instead. This can
 be used to leave a stub Makefile for removed ports and have a complete
 INDEX entry without needing more files.
 .It Ev CONFIGURE_SCRIPT
@@ -644,7 +644,7 @@ be taken care of by the package itself (for instance, ldconfig, or
 texinfo's install-info).
 .Pp
 If no do-install override is present, the port is installed using
-.Bd -litteral -indent offset
+.Bd -literal -indent offset
     env -i ${MAKE_ENV} 
     PREFIX=${WRKINST}${PREFIX} DESTDIR=${WRKINST} TRUEPREFIX=${PREFIX} 
     ${MAKE_PROGRAM} ${FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
