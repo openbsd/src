@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 2001/08/20 20:23:53 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 2001/08/23 17:40:05 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -452,7 +452,11 @@ userret(p, pc, oticks)
 	if (p->p_flag & P_PROFIL)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks));
 
+#ifdef notyet
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+#else
+	curpriority = p->p_priority;
+#endif
 }
 
 /*
