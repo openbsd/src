@@ -25,7 +25,8 @@ AS?=	as
 CC?=	cc
 CPP?=	cpp
 LD?=	ld
-STRIP?=	strip -d
+MKDEP?=	mkdep
+STRIP?=	strip
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
@@ -40,6 +41,11 @@ CFLAGS=		${DEBUG} -O2 ${GCCWFLAGS}
 CFLAGS+=	-mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext F8004000 -e start
+STRIPFLAGS=	-d
+
+HOSTCC?=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -64,6 +70,8 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
@@ -95,7 +103,7 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} $@; ${STRIP} $@
+		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
 LINKFLAGS+=	-x
 .endif
@@ -106,10 +114,10 @@ assym.h: genassym
 	./genassym >assym.h
 
 genassym: genassym.o
-	${CC} -o $@ genassym.o
+	${HOSTCC} -o $@ genassym.o
 
 genassym.o: ${SPARC}/sparc/genassym.c
-	${NORMAL_C_C:S/^-pg$//:S/^-p$//}
+	${HOSTED_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -151,10 +159,11 @@ SRCS=	${SPARC}/sparc/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${SPARC}/sparc/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${PARAM} \
+		 ${SPARC}/sparc/genassym.c
 
 
 # depend on root or device configuration
