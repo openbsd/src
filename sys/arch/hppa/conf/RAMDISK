@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.32 2004/04/30 20:30:30 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.33 2004/08/06 20:29:47 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -66,6 +66,17 @@ option	PCIVERBOSE
 #pckbc0	at dino? irq 9
 com1	at dino? irq 11
 
+ppb*	at pci? dev ? function ?
+pci*	at ppb?
+
+# CardBus bus support
+cbb*		at pci? dev ? function ?
+cardslot*	at cbb?
+option		CARDBUS_DEBUG,CARDSLOT_DEBUG,CARDBUS_MAP_DEBUG
+cardbus*	at cardslot?
+option		PCMCIADEBUG,PCMCIAVERBOSE
+pcmcia*		at cardslot?
+
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*
 sti1	at mainbus0 irq 12
@@ -103,6 +114,7 @@ com1	at gsc0 offset 0x22000 irq 6
 com2	at gsc0 offset 0x0 irq 13	# only on asp0 w/o audio (off ?)
 com2	at gsc0 offset 0x4040 irq 13	# gecko's fax/voice/modems
 com3	at gsc0 offset 0x4060 irq 13
+#com*	at pcmcia? function ?		# PCMCIA modems
 
 lpt0	at gsc? irq 7			# both com and lpt are on WD16C552
 ie0	at gsc0 irq 8			# 82C596DX/CA ether
@@ -137,23 +149,28 @@ gsckbd*	at gsckbc?			# PS/2 keyboard
 #bha*	at pci? dev ? function ?
 #scsibus* at bha?
 
-ppb*	at pci? dev ? function ?
-pci*	at ppb?
-
 #siop*	at mainbus? irq 3		# NCR 53C720 (Fast/Wide Diff)
 siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers(new)
 scsibus* at siop?
 
-#fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
-dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
-#xl*	at pci? dev ? function ?	# 3C9xx ethernet
 #em*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 #ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
-fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
 #txp*	at pci? dev ? function ?	# 3com 3CR990
+#fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
+dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
+#dc*	at cardbus? dev ? function ?
+#ep*	at pci? dev ? function ?	# 3c59x
+#ep*	at cardbus? dev ? function ?
+#xl*	at pci? dev ? function ?	# 3C9xx ethernet
+#xl*	at cardbus? dev ? function ?
+fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
+#fxp*	at cardbus? dev ? function ?
 #ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+ne*	at pcmcia? function ?
 #an*	at pci? dev ? function ?	# Cisco/Aironet 802.11DS
+an*	at pcmcia? function ?
 #wi*	at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
+wi*	at pcmcia? function ?
 
 dcphy*		at mii? phy ?		# Digital Clone PHYs
 amphy*		at mii? phy ?		# AMD 79C873 PHYs
@@ -163,14 +180,14 @@ inphy*		at mii? phy ?		# Intel 82555 PHYs
 icsphy*		at mii? phy ?		# ICS1890 PHYs
 lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs
-#nsphyter*	at mii? phy ?		# NS83843 PHYs
+nsphyter*	at mii? phy ?		# NS83843 PHYs
 #mtdphy*	at mii? phy ?		# Myson MTD972 PHYs
 #qsphy*		at mii? phy ?		# Quality Semi QS6612 PHYs
 #sqphy*		at mii? phy ?		# Seeq 8022[013] PHYs
 #tlphy*		at mii? phy ?		# ThunderLAN PHYs
 #tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
 #brgphy*	at mii? phy ?		# Broadcom 10/100/1000 PHYs
-#bmtphy*	at mii? phy ?		# Broadcom 10/100 PHYs
+bmtphy*		at mii? phy ?		# Broadcom 10/100 PHYs
 #eephy*		at mii? phy ?		# Marvell 88E1000 Gigabit PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
@@ -190,6 +207,7 @@ wskbd*		at hilkbd? # mux 1
 #pciide*	at pci ? dev ? function ? flags 0x0000
 #wdc0	at isa? port 0x1f0 irq 14
 #wdc1	at isa? port 0x170 irq 15
+#wdc*	at pcmcia? fucntion ?
 #wd*	at wdc? channel ? drive ? flags 0x0000
 #wd*	at pciide? channel ? drive ? flags 0x0000
 #atapiscsi* at pciide? channel ?

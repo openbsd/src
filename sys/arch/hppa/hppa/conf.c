@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.31 2004/06/17 11:27:48 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.32 2004/08/06 20:29:47 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -50,6 +50,9 @@
 #include "ss.h"
 #include "ses.h"
 #include "uk.h"
+#include "wd.h"
+bdev_decl(wd);
+cdev_decl(wd);
 #if 0
 #include "fd.h"
 #else
@@ -68,7 +71,8 @@ struct bdevsw   bdevsw[] =
 	bdev_tape_init(NST,st),		/*  5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/*  6: SCSI CD-ROM */
 	bdev_disk_init(NFD,fd),		/*  7: floppy drive */
-					/*  8: */
+	bdev_disk_init(NWD,wd),		/*  8: ST506 drive */
+					/*  9: */
 	bdev_lkm_dummy(),
 	bdev_lkm_dummy(),
 	bdev_lkm_dummy(),
@@ -158,7 +162,7 @@ struct cdevsw   cdevsw[] =
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 32: xfs communication device */
 #else
-	cdev_notdef(),			/* 32 */
+	cdev_notdef(),
 #endif
 	cdev_notdef(),			/* 33: ALTQ (deprecated) */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 34: system call tracing */
@@ -166,6 +170,7 @@ struct cdevsw   cdevsw[] =
 	cdev_crypto_init(NCRYPTO,crypto), /* 36: /dev/crypto */
 	cdev_ses_init(NSES,ses),	/* 37: SCSI SES/SAF-TE */
 	cdev_ptm_init(NPTY,ptm),	/* 38: pseudo-tty ptm device */
+	cdev_disk_init(NWD,wd),		/* 39: ST506 disk */
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
@@ -215,9 +220,22 @@ int chrtoblktbl[] = {
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
 	/* 23 */	NODEV,
-	/* 24 */	NODEV,
-	/* 25 */	7,
-	/* 25 */	8,
+	/* 24 */	7,
+	/* 25 */	NODEV,
+	/* 26 */	NODEV,
+	/* 27 */	NODEV,
+	/* 28 */	NODEV,
+	/* 29 */	NODEV,
+	/* 30 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	NODEV,
+	/* 33 */	NODEV,
+	/* 34 */	NODEV,
+	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
 };
 int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
 

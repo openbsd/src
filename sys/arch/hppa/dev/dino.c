@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.10 2004/07/24 15:04:35 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.11 2004/08/06 20:29:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -104,7 +104,6 @@ struct dino_softc {
 	u_int32_t sc_imr;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
-	bus_space_handle_t sc_memh;
 	bus_dma_tag_t sc_dmat;
 	volatile struct dino_regs *sc_regs;
 
@@ -290,7 +289,7 @@ dino_alloc_parent(struct device *self, struct pci_attach_args *pa, int io)
 		return (NULL);
 
 	extent_free(ex, start, size, EX_NOWAIT);
-	return rbus_new_root_share(tag, ex, start, size, start);
+	return rbus_new_root_share(tag, ex, start, size, 0);
 }
 #endif
 
@@ -301,8 +300,7 @@ dino_iomap(void *v, bus_addr_t bpa, bus_size_t size,
 	struct dino_softc *sc = v;
 	int error;
 
-	if (!(flags & BUS_SPACE_MAP_NOEXTENT) &&
-	    (error = extent_alloc_region(sc->sc_ioex, bpa, size, EX_NOWAIT)))
+	if ((error = extent_alloc_region(sc->sc_ioex, bpa, size, EX_NOWAIT)))
 		return (error);
 
 	if (bshp)
@@ -382,8 +380,23 @@ dino_memalloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
     bus_size_t align, bus_size_t boundary, int flags, bus_addr_t *addrp,
     bus_space_handle_t *bshp)
 {
-	/* TODO dino_memalloc */
-	return (-1);
+	struct dino_softc *sc = v;
+	volatile struct dino_regs *r = sc->sc_regs;
+	u_int32_t reg;
+
+	if (bus_space_alloc(sc->sc_bt, rstart, rend, size,
+	    align, boundary, flags, addrp, bshp))
+		return (ENOMEM);
+
+	reg = r->io_addr_en;
+	reg |= 1 << ((*addrp >> 23) & 0x1f);
+#ifdef DEBUG
+	if (reg & 0x80000001)
+		panic("mapping outside the mem extent range");
+#endif
+	r->io_addr_en = reg;
+
+	return (0);
 }
 
 void
@@ -401,7 +414,6 @@ dino_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 	} else
 		ex = sc->sc_ioex;
 
-	/* XXX gotta follow the BUS_SPACE_MAP_NOEXTENT flag */
 	if (extent_free(ex, bpa, size, EX_NOWAIT))
 		printf("dino_unmap: ps 0x%lx, size 0x%lx\n"
 		    "dino_unmap: can't free region\n", bpa, size);
@@ -1458,6 +1470,7 @@ dinoattach(parent, self, aux)
 	struct confargs *ca = (struct confargs *)aux;
 	struct pcibus_attach_args pba;
 	volatile struct dino_regs *r;
+	bus_space_handle_t memh;
 	bus_addr_t mem_start;
 	const char *p;
 	u_int data;
@@ -1475,6 +1488,9 @@ dinoattach(parent, self, aux)
 	r->pciwor = 0;
 	r->io_addr_en = 0;
 	r->gmask &= ~1;	/* allow GSC bus req */
+printf("feat %08x ", r->brdg_feat);
+	r->brdg_feat &= ~0xf00;
+	r->brdg_feat |= 3;
 #ifdef notyet_card_mode
 	r->io_control = 0x80;
 	r->pamr = 0;
@@ -1501,13 +1517,13 @@ dinoattach(parent, self, aux)
 
 	/* TODO reserve dino's pci space ? */
 
-	/* XXX assuming that dino attaches the last */
-	if (bus_space_alloc(sc->sc_bt, 0xf0800000, 0xff7fffff, DINO_MEM_WINDOW,
-	    DINO_MEM_CHUNK, EX_NOBOUNDARY, 0, &mem_start, &sc->sc_memh)) {
+	if (dino_memalloc(sc, 0xf0800000, 0xff7fffff, DINO_MEM_WINDOW,
+	    DINO_MEM_WINDOW, EX_NOBOUNDARY, 0, &mem_start, &memh)) {
 		printf(": cannot allocate memory window\n");
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, PAGE_SIZE);
 		return;
 	}
+
 	snprintf(sc->sc_memexname, sizeof(sc->sc_memexname),
 	    "%s_mem", sc->sc_dv.dv_xname);
 	if ((sc->sc_memex = extent_create(sc->sc_memexname, mem_start,
@@ -1516,7 +1532,7 @@ dinoattach(parent, self, aux)
 		printf(": cannot allocate MEM extent map\n");
 		extent_destroy(sc->sc_ioex);
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, PAGE_SIZE);
-		bus_space_unmap(sc->sc_bt, sc->sc_memh, DINO_MEM_WINDOW);
+		bus_space_free(sc->sc_bt, memh, DINO_MEM_WINDOW);
 		return;
 	}
 
