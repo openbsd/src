@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.24 2000/12/04 09:56:06 hugh Exp $
+#	$OpenBSD: MAKEDEV,v 1.25 2000/12/05 07:27:36 hugh Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -64,6 +64,7 @@
 #	*random	Random number generator
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
+set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v
 umask 77
 for i
 do
@@ -378,9 +379,12 @@ dz*)
 	[0-7])
 		i=0
 		while [ $i -lt 8 ]; do
-		  no=$(($unit * 8 + $i))
-		  `printf "mknod tty%02d c 1 %d\n" $no $no`
-		  i=$(($i + 1))
+			no=$(($unit * 8 + $i))
+			if [ $no -lt 10 ]; then
+				no="0${no}"
+			fi
+			mknod tty${no} c 1 $no
+			i=$(($i + 1))
 		done
 		;;
 	*)
@@ -427,9 +431,13 @@ dhu*|dh*|dmf*|dmz*|vt*)
 	esac
 	i=0
 	while [ $i -lt $count ]; do
-	  `printf "mknod tty%s%x c %d %d\n" \
-	     $ch $i $major $(($unit * $count + $i))`
-	  i=$(($i + 1))
+		let=${cnvtbl[$i]}
+		if [ -n "$let" ] ;then
+			mknod tty${ch}${let} c $major $(($unit * $count + $i))
+		else
+			echo bad count for ${name}: $unit, $count, $i
+		fi
+		i=$(($i + 1))
 	done
 
 	;;
@@ -437,7 +445,12 @@ dhu*|dh*|dmf*|dmz*|vt*)
 dl*)
 	unit=${i#dl}
 	major=66
-	`printf "mknod ttyJ%x c %d %d\n" $unit $major $unit`
+	let=${cnvtbl[$unit]}
+	if [ -n "$let" ] ;then
+		mknod ttyJ${let} c $major $unit
+	else
+		echo bad number for ${name}: $unit
+	fi
 	;;
 
 lp*|va*|vp*)
@@ -513,8 +526,12 @@ np*)
 	0|1|2)
 	i=0
 	while [ $i -lt 4 ]; do
-	  `printf "mknod np%02d c 39 %d\n" $(($offset + $i)) $(($offset + $i))`
-	  i=$(($i + 1))
+		no=$(($offset + $i))
+		if [ $no -lt 10 ]; then
+			no="0${no}"
+		fi
+		mknod np${no} c 39 $no
+		i=$(($i + 1))
 	done
 	esac
 	;;
