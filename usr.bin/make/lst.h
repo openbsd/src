@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.10 1999/12/18 21:58:07 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.11 1999/12/19 00:04:25 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 
 typedef	struct	Lst	*Lst;
 typedef	struct	LstNode	*LstNode;
+typedef int (*FindProc)__P((ClientData, ClientData));
 
 /*
  * NOFREE can be used as the freeProc to Lst_Destroy when the elements are
@@ -117,12 +118,12 @@ ClientData	Lst_Datum __P((LstNode));
 /*
  * Functions for entire lists
  */
+
 /* Find an element in a list */
-LstNode		Lst_Find __P((Lst, ClientData,
-			      int (*)(ClientData, ClientData)));
+#define Lst_Find(l, cProc, d)	Lst_FindFrom(Lst_First(l), cProc, d)
+
 /* Find an element starting from somewhere */
-LstNode		Lst_FindFrom __P((Lst, LstNode, ClientData,
-				  int (*cProc)(ClientData, ClientData)));
+LstNode		Lst_FindFrom __P((LstNode, FindProc, ClientData));
 /*
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum

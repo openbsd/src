@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.27 1999/12/18 21:58:08 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.28 1999/12/19 00:04:25 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.27 1999/12/18 21:58:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.28 1999/12/19 00:04:25 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -320,16 +320,16 @@ VarFind (name, ctxt, flags)
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    var = Lst_Find(ctxt->context, (ClientData)name, VarCmp);
+    var = Lst_Find(ctxt->context, VarCmp, (ClientData)name);
 
     if ((var == NULL) && (flags & FIND_CMD) && (ctxt != VAR_CMD))
-	var = Lst_Find (VAR_CMD->context, (ClientData)name, VarCmp);
+	var = Lst_Find(VAR_CMD->context, VarCmp, (ClientData)name);
     if (!checkEnvFirst && (var == NULL) && (flags & FIND_GLOBAL) &&
 	(ctxt != VAR_GLOBAL)) {
-	var = Lst_Find (VAR_GLOBAL->context, (ClientData)name, VarCmp);
+	var = Lst_Find(VAR_GLOBAL->context, VarCmp, (ClientData)name);
     }
     if ((var == NULL) && (flags & FIND_ENV)) {
-    	var = Lst_Find(VAR_ENV->context, (ClientData)name, VarCmp);
+    	var = Lst_Find(VAR_ENV->context, VarCmp, (ClientData)name);
 	if (var == NULL) {
 	    char *env;
 
@@ -339,7 +339,7 @@ VarFind (name, ctxt, flags)
     }
     if (var == NULL && checkEnvFirst && (flags & FIND_GLOBAL) &&
 		   (ctxt != VAR_GLOBAL)) 
-	    var = Lst_Find(VAR_GLOBAL->context, (ClientData)name, VarCmp);
+	    var = Lst_Find(VAR_GLOBAL->context, VarCmp, (ClientData)name);
     if (var == NULL)
 	return NULL;
     else 
@@ -435,7 +435,7 @@ Var_Delete(name, ctxt)
     if (DEBUG(VAR)) {
 	printf("%s:delete %s\n", ctxt->name, name);
     }
-    ln = Lst_Find(ctxt->context, (ClientData)name, VarCmp);
+    ln = Lst_Find(ctxt->context, VarCmp, (ClientData)name);
     if (ln != NULL) {
 	register Var 	  *v;
 

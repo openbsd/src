@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.20 1999/12/18 21:58:07 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.21 1999/12/19 00:04:25 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.20 1999/12/18 21:58:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.21 1999/12/19 00:04:25 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2253,11 +2253,11 @@ Job_CatchChildren(block)
 	}
 
 
-	jnode = Lst_Find(jobs, (ClientData)&pid, JobCmpPid);
+	jnode = Lst_Find(jobs, JobCmpPid, (ClientData)&pid);
 
 	if (jnode == NULL) {
 	    if (WIFSIGNALED(status) && (WTERMSIG(status) == SIGCONT)) {
-		jnode = Lst_Find(stoppedJobs, (ClientData) &pid, JobCmpPid);
+		jnode = Lst_Find(stoppedJobs, JobCmpPid, (ClientData)&pid);
 		if (jnode == NULL) {
 		    Error("Resumed child (%d) not in table", pid);
 		    continue;
@@ -3103,10 +3103,10 @@ JobFlagForMigration(hostID)
 	(void) fprintf(stdout, "JobFlagForMigration(%d) called.\n", hostID);
 	(void) fflush(stdout);
     }
-    jnode = Lst_Find(jobs, (ClientData)hostID, JobCmpRmtID);
+    jnode = Lst_Find(jobs, JobCmpRmtID, (ClientData)hostID);
 
     if (jnode == NULL) {
-	jnode = Lst_Find(stoppedJobs, (ClientData)hostID, JobCmpRmtID);
+	jnode = Lst_Find(stoppedJobs, JobCmpRmtID, (ClientData)hostID);
 		if (jnode == NULL) {
 		    if (DEBUG(JOB)) {
 			Error("Evicting host(%d) not in table", hostID);

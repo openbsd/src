@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.13 1999/12/18 21:58:07 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.14 1999/12/19 00:04:25 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.13 1999/12/18 21:58:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.14 1999/12/19 00:04:25 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1062,7 +1062,7 @@ Dir_AddDir (path, name)
     DIR     	  *d;	      /* for reading directory */
     register struct dirent *dp; /* entry in directory */
 
-    ln = Lst_Find (openDirectories, (ClientData)name, DirFindName);
+    ln = Lst_Find(openDirectories, DirFindName, (ClientData)name);
     if (ln != NULL) {
 	p = (Path *)Lst_Datum (ln);
 	if (Lst_Member(path, (ClientData)p) == NULL) {
