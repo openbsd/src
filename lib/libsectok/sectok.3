@@ -1,0 +1,141 @@
+.\"	$OpenBSD: sectok.3,v 1.1 2001/08/03 18:29:14 rees Exp $
+.\"
+.\" Jim Rees <rees@umich.edu>
+.\" CITI Smartcard development <smartcards@umich.edu>
+.\"
+.Dd August 3, 2001
+.Dt SECTOK 3
+.Os
+.Sh NAME
+.Nm sectok
+.Nd library for communicating with ISO 7816 smartcards
+.Sh SYNOPSIS
+.Fd #include \&"sectok.h\&"
+.Ft int
+.Fn sectok_open "int rn" "int flags" "int *swp"
+.Ft int
+.Fn sectok_friendly_open "const char *rn" "int flags" "int *swp"
+.Ft int
+.Fn sectok_xopen "int rn" "int flags" "char *config_path" "char *driver_path" "int *swp"
+.Ft int
+.Fn sectok_reset "int fd" "int flags" "unsigned char *atr" "int *swp"
+.Ft int
+.Fo sectok_apdu
+.Fa int fd
+.Fa int cla
+.Fa int ins
+.Fa int p1
+.Fa int p2
+.Fa int ilen
+.Fa unsigned char *ibuf
+.Fa int olen
+.Fa unsigned char *obuf
+.Fa int *swp
+.Fc
+.Ft int
+.Fn sectok_cardpresent "int fd"
+.Ft int
+.Fn sectok_close "int fd"
+.Ft int
+.Fn sectok_selectfile "int fd" "int cla" "unsigned char *fid" "int *swp"
+.Ft void
+.Fn sectok_fmt_fid "char *fname" "unsigned char *fid"
+.Ft int
+.Fn sectok_parse_atr "int fd" "int flags" "unsigned char *atr" "int len" "struct scparam *param"
+.Ft void
+.Fn sectok_parse_fname "char *buf" "unsigned char *fid"
+.Ft int
+.Fn sectok_parse_input "char *ibuf" "unsigned char *obuf" "int olen"
+.Ft int
+.Fn sectok_get_input "FILE *f" "unsigned char *obuf" "int omin" "int olen"
+.Ft int
+.Fn sectok_fdump_reply "FILE *f" "unsigned char *p" "int n" "int sw"
+.Ft int
+.Fn sectok_dump_reply "unsigned char *p" "int n" "int sw"
+.Ft void
+.Fn sectok_print_sw "int sw"
+.Ft "char *"
+.Fn sectok_get_sw "int sw"
+.Ft "char *"
+.Fn sectok_get_ins "int ins"
+.Ft int
+.Fn sectok_swOK "int sw"
+.Sh DESCRIPTION
+.Nm
+provides initialization, input, output, and other basic routines for ISO
+7816 smart cards.
+Many of the routines return a status word.
+This will either be an error code as given in the include file,
+or a SW1/SW2 pair as specified in ISO 7816.
+.Pp
+.Fn sectok_scopen
+opens a connection to a smart card via serial port number
+.Fa ttyn .
+Ports are
+numbered from 0, which corresponds to /dev/tty00 on UNIX.
+If there is no card in the reader,
+.Fn sectok_scopen
+will either wait for card insertion, or if flag
+.Dv STONOWAIT
+is given, it will return immediately with error
+.Dv STENOCARD .
+.Fa swp
+points to a status word that will be set on return.
+.Pp
+.Fn sectok_reset
+resets the card and returns the ATR in the buffer pointed to by
+.Fa atr
+if it is not
+.Dv NULL .
+If the
+.Dv STRFORCE
+flag is given, a connection to the card will be established
+using default protocol parameters even if the card ATR is illegal.
+.Pp
+.Fn sectok_apdu
+sends an APDU to the card with optional IN and OUT data.
+.Bd -literal -offset xx
+cla - application class
+ins - instruction code
+p1, p2 - per ISO 7816-3 or application dependent
+ilen - length of IN data
+ibuf - pointer to IN data
+olen - length of OUT data
+obuf - pointer to OUT data
+swp - pointer to return status word
+.Ed
+.Pp
+.Fn sectok_cardpresent
+returns whether a card is present in the reader.
+.Pp
+.Fn sectok_close
+closes a connection to a smart card.
+.Pp
+.Fn sectok_selectfile
+selects a file given its FID by sending a "select" apdu to the card.
+.Pp
+.Fn sectok_fmt_fid
+returns a printable name for a FID.
+.Pp
+.Fn sectok_parse_atr
+parses a card ATR and returns the protocol parameters.
+If the
+.Dv STRV
+flag is given it will print the parameters to standard out.
+.Pp
+.Fn sectok_parse_fname
+translates a printable name to a FID.
+.Pp
+.Fn sectok_print_sw
+looks up the error message string affiliated with a status word
+and writes it to standard out.
+.Pp
+.Fn sectok_swOK
+returns 1 if
+.Dv sw
+indicates success, or 0 if it indicates failure.
+.Sh SEE ALSO
+.Xr sectok 1
+.Sh AUTHORS
+Jim Rees
+.Aq rees@umich.edu
