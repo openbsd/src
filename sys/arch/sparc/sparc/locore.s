@@ -1340,6 +1340,8 @@ fp_exception:
 	 EMPTY
 	sethi	%hi(savefpcont), %l4	! yes, "return" to the special code
 	or	%lo(savefpcont), %l4, %l4
+	wr	%l0, 0x0, %psr
+	nop; nop; nop;
 	jmp	%l4
 	 rett	%l4 + 4
 
