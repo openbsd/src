@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.55 2003/04/12 16:44:19 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.56 2003/04/12 19:05:57 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -658,15 +658,21 @@ eval_pfqueue_hfsc(struct pfctl *pf, struct pf_altq *pa)
 	struct hfsc_opts	*opts;
 	struct service_curve	 sc;
 
+	opts = &pa->pq_u.hfsc_opts;
+
 	if (pa->parent[0] == 0) {
-		/* this is for dummy root */
+		/* root queue */
 		pa->qid = HFSC_ROOTCLASS_HANDLE;
-		pa->pq_u.hfsc_opts.lssc_m2 = pa->ifbandwidth;
+		opts->rtsc_m1 = pa->ifbandwidth;
+		opts->rtsc_m2 = pa->ifbandwidth;
+		opts->rtsc_d = 0;
+		opts->lssc_m1 = pa->ifbandwidth;
+		opts->lssc_m2 = pa->ifbandwidth;
+		opts->lssc_d = 0;
 		return (0);
 	} else if (pa->qid == 0)
 		pa->qid = ++max_qid;
 
-	opts = &pa->pq_u.hfsc_opts;
 	LIST_INIT(&rtsc);
 	LIST_INIT(&lssc);
 
