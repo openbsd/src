@@ -34,7 +34,7 @@
 ./usr/lib/libasn1.so.13.0
 ./usr/lib/libc.so.30.3
 ./usr/lib/libcom_err.so.13.0
-./usr/lib/libcrypto.so.10.3
+./usr/lib/libcrypto.so.10.4
 ./usr/lib/libcurses++.so.2.0
 ./usr/lib/libcurses.so.9.0
 ./usr/lib/libdes.so.8.0
