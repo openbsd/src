@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.5 1996/06/11 10:15:43 deraadt Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.6 1997/03/31 00:23:58 downsj Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _MVME68K_AUTOCONF_H_
+#define _MVME68K_AUTOCONF_H_
 
 struct confargs {
 	int	ca_bustype;
@@ -65,3 +68,5 @@ struct	device *bootdv; /* boot device */
 
 void	*mapiodev __P((void *pa, int size));
 void	unmapiodev __P((void *kva, int size));
+
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 1997/02/10 17:49:09 deraadt Exp $ */
+/*	$OpenBSD: cpu.h,v 1.6 1997/03/31 00:23:59 downsj Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -70,6 +70,9 @@
  *
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
+
+#ifndef _MVME68K_CPU_H_
+#define _MVME68K_CPU_H_
 
 /*
  * Exported definitions unique to mvme68k/68k cpu support.
@@ -280,3 +283,4 @@ struct haltvec {
 	void	(*hv_fn) __P((void));
 	int	hv_pri;
 };
+#endif

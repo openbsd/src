@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 1996/06/11 10:15:58 deraadt Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.8 1997/03/31 00:24:17 downsj Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,8 +76,6 @@ cpu_fork(p1, p2)
 	extern struct pcb *curpcb;
 	extern void proc_trampoline(), child_return();
 
-	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
-
 	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
 	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
@@ -145,18 +143,6 @@ cpu_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-
-#ifdef COMPAT_HPUX
-	extern struct emul emul_hpux;
-
-	/*
-	 * If we loaded from an HP-UX format binary file we dump enough
-	 * of an HP-UX style user struct so that the HP-UX debuggers can
-	 * grok it.
-	 */
-	if (p->p_emul == &emul_hpux)
-		return (hpux_dumpu(vp, cred));
-#endif
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, USPACE,
 	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
 	    p));

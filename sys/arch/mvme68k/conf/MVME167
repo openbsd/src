@@ -1,11 +1,10 @@
-#	$OpenBSD: MVME167,v 1.9 1996/09/20 06:45:15 deraadt Exp $
+#	$OpenBSD: MVME167,v 1.10 1997/03/31 00:23:54 downsj Exp $
 
 machine		mvme68k m68k
 
 option		"M68040"	# support for 040
 option		FPSP		# MC68040 floating point support
 #option		"M68030"	# support for 030
-#option		FPCOPROC	# Support for MC6888[12] (Required)
 
 #option		MVME147		# (requires M68030)
 #option		MVME162		# (requires M68040)

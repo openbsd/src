@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.h,v 1.3 1996/04/28 10:56:23 deraadt Exp $ */
+/*	$OpenBSD: nvram.h,v 1.4 1997/03/31 00:24:03 downsj Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_MVME68K_NVRAM_H_
+#define	_MVME68K_NVRAM_H_
 
 struct nvram_147 {
 	u_char	user[0x400];
@@ -77,3 +80,5 @@ struct nvram_16x {
 	} conf;
 	/*struct clockreg cl; */
 };
+
+#endif

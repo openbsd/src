@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 1996/04/28 10:55:42 deraadt Exp $ */
+/*	$OpenBSD: param.h,v 1.5 1997/03/31 00:24:04 downsj Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -180,4 +180,18 @@
 
 #ifdef _KERNEL
 #define DELAY(n)	delay(n)
+#endif
+
+#ifdef COMPAT_HPUX
+/*
+ * Constants/macros for HPUX multiple mapping of user address space.
+ * Pages in the first 256Mb are mapped in at every 256Mb segment.
+ */
+#define HPMMMASK	0xF0000000
+#define ISHPMMADDR(v) \
+	((curproc->p_md.md_flags & MDP_HPUXMMAP) && \
+	 ((unsigned)(v) & HPMMMASK) && \
+	 ((unsigned)(v) & HPMMMASK) != HPMMMASK)
+#define HPMMBASEADDR(v) \
+	((unsigned)(v) & ~HPMMMASK)
 #endif

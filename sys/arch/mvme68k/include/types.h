@@ -1,10 +1,5 @@
-/*	$OpenBSD: types.h,v 1.3 1996/04/28 10:56:35 deraadt Exp $ */
-
-#ifndef _MACHINE_TYPES_H_
-#define _MACHINE_TYPES_H_
+/*	$OpenBSD: types.h,v 1.4 1997/03/31 00:24:08 downsj Exp $ */
 
 #include <m68k/types.h>
 
 #define	__BDEVSW_DUMP_OLD_TYPE
-
-#endif

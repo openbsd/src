@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.8 1996/12/20 08:26:26 deraadt Exp $
+#	$OpenBSD: files.mvme68k,v 1.9 1997/03/31 00:23:56 downsj Exp $
 
 # config file for mvme68k
 
@@ -126,7 +126,6 @@ file arch/mvme68k/mvme68k/pmap_bootstrap.c
 file arch/mvme68k/mvme68k/sys_machdep.c
 file arch/mvme68k/mvme68k/trap.c
 file arch/mvme68k/mvme68k/vm_machdep.c
-file arch/m68k/m68k/copy.s
 file dev/cons.c
 file dev/cninit.c
 
@@ -134,8 +133,12 @@ file arch/m68k/m68k/db_memrw.c			ddb
 
 # Compatibility modules
 
+# HP-UX binary compatibility
+include	"compat/hpux/files.hpux"
+file	arch/mvme68k/mvme68k/hpux_machdep.c	compat_hpux
+
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include	"../../../compat/sunos/files.sunos"
+include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
 
 device wl: tty

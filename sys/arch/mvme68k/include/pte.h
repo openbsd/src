@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.3 1996/04/28 10:56:29 deraadt Exp $ */
+/*	$OpenBSD: pte.h,v 1.4 1997/03/31 00:24:07 downsj Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,8 +42,8 @@
  *	@(#)pte.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_MACHINE_PTE_H_
-#define	_MACHINE_PTE_H_
+#ifndef	_MVME68K_PTE_H_
+#define	_MVME68K_PTE_H_
 
 /*
  * m68k hardware segment/page table entries
@@ -149,4 +149,4 @@ typedef int	pt_entry_t;	/* Mach page table entry */
 #define	kvtophys(va) \
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
 
-#endif /* !_MACHINE_PTE_H_ */
+#endif /* !_MVME68K_PTE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.3 1996/04/28 10:56:25 deraadt Exp $ */
+/*	$OpenBSD: pmap.h,v 1.4 1997/03/31 00:24:05 downsj Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -40,8 +40,8 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_MACHINE_PMAP_H_
-#define	_MACHINE_PMAP_H_
+#ifndef	_MVME68K_PMAP_H_
+#define	_MVME68K_PMAP_H_
 
 #include <machine/pte.h>
 
@@ -155,4 +155,4 @@ extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
 #endif /* _KERNEL */
 
-#endif /* !_MACHINE_PMAP_H_ */
+#endif /* !_MVME68K_PMAP_H_ */

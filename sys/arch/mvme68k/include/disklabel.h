@@ -1,3 +1,5 @@
+/*	$OpenBSD: disklabel.h,v 1.5 1997/03/31 00:24:00 downsj Exp $	*/
+
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1995 Dale Rahn.
@@ -29,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */  
 
-#ifndef _MACHINE_DISKLABEL_H_
-#define _MACHINE_DISKLABEL_H_
+#ifndef _MVME68K_DISKLABEL_H_
+#define _MVME68K_DISKLABEL_H_
 
 /* number of boot pieces , ie xxboot bootxx */
 #define NUMBOOT		2
@@ -149,4 +151,4 @@ struct cpu_disklabel {
 	u_long		magic2;
 	u_char		cfg_4[192];
 };
-#endif _MACHINE_DISKLABEL_H_
+#endif	/* _MVME68K_DISKLABEL_H_ */
