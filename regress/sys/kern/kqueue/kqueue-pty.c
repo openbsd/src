@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-pty.c,v 1.1 2003/06/12 05:06:47 mickey Exp $	*/
+/*	$OpenBSD: kqueue-pty.c,v 1.2 2003/06/12 05:08:51 mickey Exp $	*/
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -9,8 +9,6 @@
 #include <termios.h>
 #include <fcntl.h>
 #include <err.h>
-
-#define	EVDUMP(ev)	printf("%d %d %d %d %d", ev->ident, ev->filter, ev->flags, ev->fflags, ev->data)
 
 int
 pty_check(int kq, struct kevent *ev, int n, int rm, int rs, int wm, int ws)
@@ -26,28 +24,20 @@ pty_check(int kq, struct kevent *ev, int n, int rm, int rs, int wm, int ws)
 	if (n == 0)
 		return (1);
 
-	printf("%d:\n", n);
 	for (i = 0; i < n; i++, ev++) {
-		EVDUMP(ev);
 		if (ev->filter == EVFILT_READ) {
-			if (rm < 0 && ev->ident == -rm) {
-				printf(" bad");
-			}
-			if (rs < 0 && ev->ident == -rs) {
-				printf(" bad");
-			}
+			if (rm < 0 && ev->ident == -rm)
+				return (1);
+			if (rs < 0 && ev->ident == -rs)
+				return (1);
 		} else if (ev->filter == EVFILT_WRITE) {
-			if (wm < 0 && ev->ident == -wm) {
-				printf(" bad");
-			}
-			if (ws < 0 && ev->ident == -ws) {
-				printf(" bad");
-			}
+			if (wm < 0 && ev->ident == -wm)
+				return (1);
+			if (ws < 0 && ev->ident == -ws)
+				return (1);
 		} else
 			errx(1, "unknown event");
-		printf("\n");
 	}
-	printf("\n");
 
 	return (0);
 }
