@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.100 2002/11/07 22:03:22 mickey Exp $
+#	$OpenBSD: files.i386,v 1.101 2003/01/21 17:02:29 markus Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -104,6 +104,11 @@ file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 device	pchb:	pcibus
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
+
+# AMD Elan SC520 System Controller (PCI-Host bridge)
+device	elansc
+attach	elansc at pci
+file	arch/i386/pci/elan520.c		elansc
 
 # PCI-ISA bridge chipsets
 device	pcib:	isabus
