@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.15 1998/01/11 20:39:10 provos Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.16 1998/02/23 20:10:39 niklas Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1664,17 +1664,18 @@ msdosfs_readdir(v)
 			if (dentp->deAttributes & ATTR_DIRECTORY) {
 				fileno = getushort(dentp->deStartCluster);
 				if (FAT32(pmp))
-				        fileno |= getushort(dentp->deHighClust) << 16;
+				        fileno |=
+					    getushort(dentp->deHighClust) <<
+					    16;
 				/* if this is the root directory */
 				if (fileno == MSDOSFSROOT)
-				        if (FAT32(pmp))
-					        fileno = cntobn(pmp,
-								pmp->pm_rootdirblk)
-						         * dirsperblk;
-					else
-					        fileno = 1;
+				        fileno = FAT32(pmp) ?
+					    cntobn(pmp, pmp->pm_rootdirblk) *
+					    dirsperblk :
+					    1;
 				else
-				        fileno = cntobn(pmp, fileno) * dirsperblk;
+				        fileno = cntobn(pmp, fileno) *
+					    dirsperblk;
 				dirbuf.d_fileno = fileno;
 				dirbuf.d_type = DT_DIR;
 			} else {
@@ -1685,7 +1686,8 @@ msdosfs_readdir(v)
 			        fileno = cntobn(pmp, cn) * dirsperblk;
 				if (cn == MSDOSFSROOT)
 				        fileno = roottobn(pmp, 0) * dirsperblk;
-				fileno += dentp - (struct direntry *)bp->b_data;
+				fileno +=
+				    dentp - (struct direntry *)bp->b_data;
 				dirbuf.d_fileno = fileno;
 				dirbuf.d_type = DT_REG;
 			}
