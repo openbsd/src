@@ -908,6 +908,7 @@
 ./usr/share/man/cat5/ipf.0
 ./usr/share/man/cat5/ipnat.0
 ./usr/share/man/cat5/ipsend.0
+./usr/share/man/cat5/isakmpd.conf.0
 ./usr/share/man/cat5/krb.conf.0
 ./usr/share/man/cat5/krb.realms.0
 ./usr/share/man/cat5/lastlog.0
@@ -1057,6 +1058,7 @@
 ./usr/share/man/cat8/iostat.0
 ./usr/share/man/cat8/ipfstat.0
 ./usr/share/man/cat8/ipmon.0
+./usr/share/man/cat8/isakmpd.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kbd.0
