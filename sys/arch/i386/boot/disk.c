@@ -122,7 +122,7 @@ devopen()
 				dkbbnum *= lp->d_secsize / DEV_BSIZE;
 			do_bad144 = 0;
 			for (i = 5; i; i--) {
-				/* XXX: what if the "DOS sector" < 512 bytes ??? */
+			/* XXX: what if the "DOS sector" < 512 bytes ??? */
 				Bread(dkbbnum, iobuf);
 				dkbptr = (struct dkbad *)&iobuf[0];
 /* XXX why is this not in <sys/dkbad.h> ??? */
@@ -171,21 +171,21 @@ Bread(sector, addr)
 	int sector;
 	void *addr;
 {
-      extern int ourseg;
-      int dmalimit = ((((ourseg<<4)+(int)ra_buf)+65536) & ~65535)
-        - ((ourseg<<4)+ (int)ra_buf);
-      if (dmalimit<RA_SECTORS*BPS) {
-        if (dmalimit*2<RA_SECTORS*BPS) {
-          ra_sectors = (RA_SECTORS*BPS-dmalimit)/BPS;
-          ra_skip = RA_SECTORS - ra_sectors;
-          } else {
-            ra_sectors = dmalimit/BPS;
-            ra_skip = 0;
-          }
-      } else {
-        ra_sectors = RA_SECTORS;
-        ra_skip=0;
-      }
+	extern int ourseg;
+	int dmalimit = ((((ourseg<<4)+(int)ra_buf)+65536) & ~65535)
+		- ((ourseg<<4)+ (int)ra_buf);
+	if (dmalimit<RA_SECTORS*BPS) {
+		if (dmalimit*2<RA_SECTORS*BPS) {
+			ra_sectors = (RA_SECTORS*BPS-dmalimit)/BPS;
+			ra_skip = RA_SECTORS - ra_sectors;
+		} else {
+			ra_sectors = dmalimit/BPS;
+			ra_skip = 0;
+		}
+	} else {
+		ra_sectors = RA_SECTORS;
+		ra_skip=0;
+	}
 
 	if (dosdev != ra_dev || sector < ra_first || sector >= ra_end) {
 		int cyl, head, sec, nsec;
@@ -194,10 +194,11 @@ Bread(sector, addr)
 		head = (sector % spc) / spt;
 		sec = sector % spt;
 		nsec = spt - sec;
-              if (nsec > ra_sectors)
-                nsec = ra_sectors;
+		if (nsec > ra_sectors)
+			nsec = ra_sectors;
 		twiddle();
-              while (biosread(dosdev, cyl, head, sec, nsec, ra_buf+ra_skip*BPS)) {
+		while (biosread(dosdev, cyl, head, sec, nsec,
+				ra_buf+ra_skip*BPS)) {
 			printf("Error: C:%d H:%d S:%d\n", cyl, head, sec);
 			nsec = 1;
 			twiddle();
@@ -206,7 +207,7 @@ Bread(sector, addr)
 		ra_first = sector;
 		ra_end = sector + nsec;
 	}
-      bcopy(ra_buf + (sector - ra_first+ra_skip) * BPS, addr, BPS);
+	bcopy(ra_buf + (sector - ra_first+ra_skip) * BPS, addr, BPS);
 }
 
 badsect(sector)
