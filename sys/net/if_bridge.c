@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.106 2002/12/09 22:32:01 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.107 2003/01/03 15:57:56 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1237,7 +1237,7 @@ bridge_input(ifp, eh, m)
 {
 	struct bridge_softc *sc;
 	int s;
-	struct bridge_iflist *ifl;
+	struct bridge_iflist *ifl, *srcifl;
 	struct arpcom *ac;
 	struct mbuf *mc;
 
@@ -1333,12 +1333,13 @@ bridge_input(ifp, eh, m)
 	/*
 	 * Unicast, make sure it's not for us.
 	 */
+	srcifl = ifl;
 	LIST_FOREACH(ifl, &sc->sc_iflist, next) {
 		if (ifl->ifp->if_type != IFT_ETHER)
 			continue;
 		ac = (struct arpcom *)ifl->ifp;
 		if (bcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) == 0) {
-			if (ifl->bif_flags & IFBIF_LEARNING)
+			if (srcifl->bif_flags & IFBIF_LEARNING)
 				bridge_rtupdate(sc,
 				    (struct ether_addr *)&eh->ether_shost,
 				    ifp, 0, IFBAF_DYNAMIC);
