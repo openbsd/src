@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ssl.8,v 1.34 2001/08/17 11:13:58 mpech Exp $
+.\"	$OpenBSD: ssl.8,v 1.35 2001/09/19 19:42:00 millert Exp $
 .\"
-.Dd March 15, 1999
+.Dd September 19, 2001
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -181,6 +181,21 @@ using the new certificate by replacing the self-signed
 with the certificate signed by your Certifying Authority, and then
 restarting 
 .Xr httpd 8
+.Sh USING SSL/TLS WITH SENDMAIL
+By default,
+.Xr sendmail 8
+expects both the keys and certificates to reside in
+.Pa /etc/mail/certs ,
+not in the
+.Pa /etc/ssl
+directory.
+The default paths may be overridden in the sendmail.cf file.
+See
+.Xr starttls 8
+for information on configuring
+.Xr sendmail 8
+to use
+.Ar SSL/TLS .
 .Sh BUGS
 The world needs more
 .Ar DSA
@@ -190,15 +205,17 @@ and
 .Ar SSH
 services.
 .Sh SEE ALSO
-.Xr httpd 8 ,
-.Xr ssh 1 ,
-.Xr sshd 8 ,
-.Xr isakmpd 8 ,
 .Xr pkg_add 1 ,
 .Xr openssl 1 ,
-.Xr arandom 4 ,
+.Xr ssh 1 ,
 .Xr ssl 3 ,
-.Xr rc 8
+.Xr arandom 4 ,
+.Xr httpd 8 ,
+.Xr isakmpd 8 ,
+.Xr rc 8 ,
+.Xr sendmail 8 ,
+.Xr sshd 8 ,
+.Xr starttls 8
 .Sh HISTORY
 Prior to Sept 21, 2000
 there were problems shipping fully functional implementations of these
