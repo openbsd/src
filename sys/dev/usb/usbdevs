@@ -1,5 +1,5 @@
-	$OpenBSD: usbdevs,v 1.2 1999/08/27 08:57:54 fgsch Exp $
-/* $NetBSD: usbdevs,v 1.36 1999/08/23 16:53:32 augustss Exp $ */
+	$OpenBSD: usbdevs,v 1.3 1999/08/27 09:08:03 fgsch Exp $
+/*	$NetBSD: usbdevs,v 1.39 1999/08/25 23:23:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,8 +77,10 @@ vendor IOMEGA		0x059b	Iomega Corporation
 vendor BELKIN		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
 vendor EIZONANAO	0x05e7	EIZO Nanao
+vendor PIENGINEERING	0x05f3  P.I. Engineering
 vendor CHIC		0x05fe	Chic Technology
 vendor MACALLY		0x0618	Macally
+vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
 vendor PLX		0x10b5	PLX
 vendor INSIDEOUT	0x1608	Inside Out Networks
@@ -138,7 +140,7 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 /* Acer products */
 product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 
-/* Cypress Semiconduuctor products */
+/* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
 
 /* Epson products */
@@ -195,11 +197,17 @@ product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
 product LOGITECH USBPS2		0xc001	USB-PS/2 mouse
 
+/* P.I. Engineering products */
+product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
+
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
 
 /* Macally products */
 product MACALLY MOUSE1		0x0101	mouse
+
+/* MultiTech products */
+product MULTITECH MT5634ZBA	0xf101	MT5634ZBA
 
 /* ADS products */
 product ADS ENET		0x0008	Ethernet adapter
