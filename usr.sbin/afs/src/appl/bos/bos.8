@@ -60,7 +60,7 @@ performing automatic tasks.
 .Ed
 .Pp
 .Nm
-have several subcommands:
+has several subcommands:
 .Pp
 .Ic addhost
 .Fl server Ar server
@@ -69,11 +69,11 @@ have several subcommands:
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-add a new
+Add a new
 .Ar host
 to the CellServDB on the
 .Ar server Ns .
-This make the database server consider
+This makes the database server consider
 .Ar host
 as a peer and will use when they synchronize their databases (the
 database servers) need to be restarted.
@@ -82,12 +82,12 @@ database servers) need to be restarted.
 .Ic addkey
 .Fl server Ar server
 .Op Fl key Ar key
-.Op kvno Ar keyversionnumber
+.Op Fl kvno Ar keyversionnumber
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-add a new afs-key to the KeyFile.
+Add a new afs-key to the KeyFile.
 Add the ticket specified in
 .Ar key
 with
@@ -103,7 +103,7 @@ to the
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-add a new user the the SuperUser file on the fileserver
+Add a new user the the SuperUser file on the fileserver
 .Ar server ,
 thus giving that user the right to manage volumes and bosserver.
 .Ed
@@ -136,7 +136,7 @@ command.
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-delete the
+Delete the
 .Ar instance
 from the
 .Ar server .
@@ -149,7 +149,7 @@ from the
 .Op Fl cell Ar cellname
 .Op Fl noauth
 .Op Fl localauth
-Will execute
+Execute
 .Ar command
 on the server
 .Ar server .
@@ -163,7 +163,7 @@ on the server
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-get dates for
+Get dates for
 .Ar checkfiles
 in server-root directory (that can be specified with
 .Ar dir
@@ -191,7 +191,7 @@ that resides on the
 .Op Fl noauth
 .Op Fl localauth
 .Bd -filled -offset indent -compact
-Thet the restart time from
+Get the restart time from
 .Ar server.
 .Ed
 .Pp
