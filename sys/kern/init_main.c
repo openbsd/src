@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.21 1997/03/27 05:35:28 millert Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.22 1997/04/19 18:40:02 pefo Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -370,7 +370,7 @@ main(framep)
 		 */
 		initframep = framep;
 		start_init(curproc);
-		return;
+		return 0;
 	}
 #else
 	cpu_set_kpc(pfind(1), start_init);
