@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.42 2000/06/09 16:37:54 espie Exp $	*/
+/*	$OpenBSD: options.c,v 1.43 2000/11/09 03:36:10 provos Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.42 2000/06/09 16:37:54 espie Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.43 2000/11/09 03:36:10 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1408,7 +1408,7 @@ opt_add(str)
  *	4) A positive decimal number followed by a m (mult by 512).
  *	5) A positive decimal number followed by a w (mult by sizeof int)
  *	6) Two or more positive decimal numbers (with/without k,b or w).
- *	   seperated by x (also * for backwards compatibility), specifying
+ *	   separated by x (also * for backwards compatibility), specifying
  *	   the product of the indicated values.
  * Return:
  *	0 for an error, a positive value o.w.
