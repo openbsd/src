@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.40 2003/08/02 18:37:06 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.41 2003/08/14 18:34:15 fgsch Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -268,8 +268,8 @@
 161	STD		{ int linux_sys_sched_rr_get_interval(void); }
 162	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
 				struct timespec *rmtp); }
-163	STD		{ int linux_sys_mremap(void *old_address, size_t old_size, \
-			    size_t new_size, long flags); }
+163	STD		{ int linux_sys_mremap(void *old_address, \
+			    size_t old_size, size_t new_size, long flags); }
 164	STD		{ int linux_sys_setresuid16(u_int16_t ruid, \
 			    u_int16_t euid, u_int16_t suid); }
 165	STD		{ int linux_sys_getresuid16(u_int16_t *ruid, \
@@ -320,8 +320,7 @@
 192	STD		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
 			   size_t len, int prot, int flags, int fd, \
 			   linux_off_t offset); }
-193	STD        	{ int linux_sys_truncate64(char *path, \
-			    off_t length); }
+193	STD		{ int linux_sys_truncate64(char *path, off_t length); }
 194	STD		{ int linux_sys_ftruncate64(int fd, off_t length); }
 195	STD        	{ int linux_sys_stat64(char *path, \
 			    struct linux_stat64 *sp); }
@@ -357,4 +356,51 @@
 219	NOARGS		{ int linux_sys_madvise(void); }
 220	STD		{ int linux_sys_getdents64(int fd, void *dirent, \
 			    unsigned count); }
-221	STD		{ int linux_sys_fcntl64(u_int fd, u_int cmd, void *arg); }
+221	STD		{ int linux_sys_fcntl64(u_int fd, u_int cmd, \
+			    void *arg); }
+222	UNIMPL
+223	UNIMPL
+224	UNIMPL		linux_sys_gettid
+225	UNIMPL		linux_sys_readahead
+226	UNIMPL		linux_sys_setxattr
+227	UNIMPL		linux_sys_lsetxattr
+228	UNIMPL		linux_sys_fsetxattr
+229	UNIMPL		linux_sys_getxattr
+230	UNIMPL		linux_sys_lgetxattr
+231	UNIMPL		linux_sys_fgetxattr
+232	UNIMPL		linux_sys_listxattr
+233	UNIMPL		linux_sys_llistxattr
+234	UNIMPL		linux_sys_flistxattr
+235	UNIMPL		linux_sys_removexattr
+236	UNIMPL		linux_sys_lremovexattr
+237	UNIMPL		linux_sys_fremovexattr
+238	UNIMPL		linux_sys_tkill
+239	UNIMPL		linux_sys_sendfile64
+240	UNIMPL		linux_sys_futex
+241	UNIMPL		linux_sys_sched_setaffinity
+242	UNIMPL		linux_sys_sched_getaffinity
+243	UNIMPL		linux_sys_set_thread_area
+244	UNIMPL		linux_sys_get_thread_area
+245	UNIMPL		linux_sys_io_setup
+246	UNIMPL		linux_sys_io_destroy
+247	UNIMPL		linux_sys_io_getevents
+248	UNIMPL		linux_sys_io_submit
+249	UNIMPL		linux_sys_io_cancel
+250	UNIMPL		linux_sys_fadvise64
+251	UNIMPL		
+252	NOARGS		{ int sys_exit(int rval); }
+253	UNIMPL		linux_sys_lookup_dcookie
+254	UNIMPL		linux_sys_epoll_create
+255	UNIMPL		linux_sys_epoll_ctl
+256	UNIMPL		linux_sys_epoll_wait
+257	UNIMPL		linux_sys_remap_file_pages
+258	UNIMPL		linux_sys_set_tid_address
+259	UNIMPL		linux_sys_timer_create
+260	UNIMPL		linux_sys_timer_settime
+261	UNIMPL		linux_sys_timer_gettime
+262	UNIMPL		linux_sys_timer_getoverrun
+263	UNIMPL		linux_sys_timer_delete
+264	UNIMPL		linux_sys_clock_settime
+265	UNIMPL		linux_sys_clock_gettime
+266	UNIMPL		linux_sys_clock_getres
+267	UNIMPL		linux_sys_clock_nanosleep
