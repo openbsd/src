@@ -13,6 +13,7 @@
 # To process hostname gethostbyname is called. If the hostname has multiple
 # ip-addresses all will be added (I hope). ip-address is processed by
 # inet_aton.
+allow host localhost
 deny host jodie
 
 #############################################################################

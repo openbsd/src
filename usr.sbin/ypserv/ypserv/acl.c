@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.c,v 1.4 1996/06/30 19:46:04 maja Exp $ */
+/*	$OpenBSD: acl.c,v 1.5 1997/08/05 09:26:55 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: acl.c,v 1.4 1996/06/30 19:46:04 maja Exp $";
+static char rcsid[] = "$OpenBSD: acl.c,v 1.5 1997/08/05 09:26:55 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -470,6 +470,13 @@ char *file;
   if (file != NULL) {
     data_file = fopen(file,"r");
   };
+
+  /* Always add a localhost allow first, to be compatable with sun */
+  
+  addr.s_addr = htonl(0x7f000001);
+  mask.s_addr = htonl(0xffffffff);
+  allow = TRUE;
+  acl_add_net(allow,&addr,&mask);
 
   while ((data_file != NULL) &&
 	 (acl_read_line(data_file,data_line,sizeof(data_line)))) {
