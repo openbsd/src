@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 1997/02/05 04:55:19 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 1997/02/18 18:04:31 kstailey Exp $	*/
 /*	$NetBSD: main.c,v 1.17 1997/02/01 10:45:07 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.20 1997/02/05 04:55:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.21 1997/02/18 18:04:31 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ main(argc, argv)
 	progress = 0;
 	mark = HASHBYTES;
 	marg_sl = sl_init();
+	use_editline = 1;	/* use editline if possible */
 
 	cp = strrchr(argv[0], '/');
 	cp = (cp == NULL) ? argv[0] : cp + 1;
@@ -104,7 +105,7 @@ main(argc, argv)
 	if (fromatty)
 		verbose = 1;		/* verbose if from a tty */
 
-	while ((ch = getopt(argc, argv, "adginpPr:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "adeginpPr:tvV")) != -1) {
 		switch (ch) {
 		case 'a':
 			anonftp = 1;
@@ -113,6 +114,10 @@ main(argc, argv)
 		case 'd':
 			options |= SO_DEBUG;
 			debug++;
+			break;
+
+		case 'e':
+			use_editline = 0;
 			break;
 
 		case 'g':
@@ -185,7 +190,7 @@ main(argc, argv)
 
 #ifndef SMALLFTP
 	editing = 0;			/* command line editing off */
-	if (fromatty) {
+	if (fromatty && use_editline) {
 		editing = 1;		/* editing mode on if a tty */
 		el = el_init(__progname, stdin, stdout); /* init editline */
 

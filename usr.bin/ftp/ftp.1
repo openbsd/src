@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.7 1997/02/03 01:05:38 millert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.8 1997/02/18 18:04:28 kstailey Exp $
 .\" 	$NetBSD: ftp.1,v 1.17 1997/02/01 10:45:01 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -46,6 +46,7 @@ file transfer program
 .Nm
 .Op Fl a
 .Op Fl d
+.Op Fl e
 .Op Fl g
 .Op Fl i
 .Op Fl n
@@ -83,6 +84,8 @@ Causes
 to bypass normal login procedure, and use an anonymous login instead.
 .It Fl d
 Enables debugging.
+.It Fl e
+Suppress the use of editline(3).  Useful for Emacs ange-ftp.
 .It Fl g
 Disables file name globbing.
 .It Fl i
