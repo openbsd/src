@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.57 2004/02/19 21:37:01 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.58 2004/02/26 11:57:19 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -156,7 +156,6 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		RVTEST(pfr_clr_tables(&table, &ndel, flags));
 		xprintf(opts, "%d tables deleted", ndel);
 	} else if (!strcmp(command, "-s")) {
-		int i = 0;
 		b.pfrb_type = (opts & PF_OPT_VERBOSE2) ?
 		    PFRB_TSTATS : PFRB_TABLES;
 		if (argc || file != NULL)
@@ -172,10 +171,9 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 				    b.pfrb_caddr, &b.pfrb_size, flags));
 			if (b.pfrb_size <= b.pfrb_msize)
 				break;
-			i++;
 		}
 
-		if (opts & PF_OPT_SHOWALL && i > 0)
+		if (opts & PF_OPT_SHOWALL && b.pfrb_size > 0)
 			pfctl_print_title("TABLES:");
 
 		PFRB_FOREACH(p, &b)
