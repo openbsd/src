@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.19 1996/09/04 15:40:27 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.20 1996/09/22 09:49:58 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
+#include <vis.h>
 #include <unistd.h>
 #include <utmp.h>
 
@@ -1988,21 +1989,39 @@ logxfer(name, size, start)
 	off_t size;
 	time_t start;
 {
-	char buf[1024];
+	char buf[2048];
 	char path[MAXPATHLEN];
+	char vremotehost[MAXHOSTNAMELEN*4], vpath[MAXPATHLEN*4];
+	char *vname, *vpw;
 	time_t now;
 
 	if ((statfd >= 0) && (getcwd(path, sizeof(path)) != NULL)) {
 		time(&now);
 
+		vname = (char *)malloc(strlen(name)*4+1);
+		if (vname == NULL)
+			return;
+		vpw = (char *)malloc(strlen((guest) ? guestpw : pw->pw_name)*4+1);
+		if (vpw == NULL) {
+			free(vname);
+			return;
+		}
+
+		strvis(vremotehost, remotehost, VIS_SAFE|VIS_NOSLASH);
+		strvis(vpath, path, VIS_SAFE|VIS_NOSLASH);
+		strvis(vname, name, VIS_SAFE|VIS_NOSLASH);
+		strvis(vpw, (guest) ? guestpw : pw->pw_name, VIS_SAFE|VIS_NOSLASH);
+
 		snprintf(buf, sizeof(buf),
 			 "%.24s %d %s %qd %s/%s %c %s %c %c %s ftp %d %s %s\n",
 			 ctime(&now), now - start + (now == start),
-			 remotehost, size, path, name,
+			 vremotehost, size, vpath, vname,
 			 ((type == TYPE_A) ? 'a' : 'b'), "*" /* none yet */,
 			 'o', ((guest) ? 'a' : 'r'),
-			 ((guest) ? guestpw : pw->pw_name), 0 /* none yet */,
+			 vpw, 0 /* none yet */,
 			 ((guest) ? "*" : pw->pw_name), dhostname);
 		write(statfd, buf, strlen(buf));
+		free(vname);
+		free(vpw);
 	}
 }
