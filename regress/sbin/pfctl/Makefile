@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.114 2003/03/11 12:00:07 henning Exp $
+# $OpenBSD: Makefile,v 1.115 2003/03/11 15:05:53 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -181,15 +181,19 @@ PFALTQ_TARGETS+=pfaltq${n}
 PFALTQ_UPDATES+=pfaltq${n}-update
 
 pfaltq${n}:
-	${SUDO} pfctl -Fq -f - < ${.CURDIR}/pfaltq${n}.in
-	${SUDO} pfctl -gsq | \
+	${SUDO} pfctl -Fa >/dev/null 2>&1
+	${SUDO} pfctl -f - < ${.CURDIR}/pfaltq${n}.in
+	( ${SUDO} pfctl -gsq; \
+	${SUDO} pfctl -gsr ) | \
 	    diff -u ${.CURDIR}/pfaltq${n}.ok /dev/stdin
-	${SUDO} pfctl -Fq >/dev/null 2>&1
+	${SUDO} pfctl -Fa >/dev/null 2>&1
 
 pfaltq${n}-update:
-	${SUDO} pfctl -Fq -f - < ${.CURDIR}/pfaltq${n}.in
-	${SUDO} pfctl -gsq > ${.CURDIR}/pfaltq${n}.ok
-	${SUDO} pfctl -Fq >/dev/null 2>&1
+	${SUDO} pfctl -Fa >/dev/null 2>&1
+	${SUDO} pfctl -f - < ${.CURDIR}/pfaltq${n}.in
+	( ${SUDO} pfctl -gsq; \
+	${SUDO} pfctl -gsr ) > ${.CURDIR}/pfaltq${n}.ok
+	${SUDO} pfctl -Fa >/dev/null 2>&1
 
 .endfor
 
