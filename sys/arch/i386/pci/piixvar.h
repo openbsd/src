@@ -1,4 +1,4 @@
-*/	$OpenBSD: piixvar.h,v 1.2 2000/03/27 08:35:22 brad Exp $	*/
+/*	$OpenBSD: piixvar.h,v 1.3 2000/03/27 15:56:45 jason Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
