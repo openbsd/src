@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_signal.c,v 1.3 1996/08/02 20:35:09 niklas Exp $	*/
+/*	$OpenBSD: ibcs2_signal.c,v 1.4 1997/06/02 09:42:08 deraadt Exp $	*/
 /*	$NetBSD: ibcs2_signal.c,v 1.8 1996/05/03 17:05:27 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ ibcs2_to_bsd_sigaction(isa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = isa->sa_handler;
+	bsa->sa_handler = isa->sa__handler;
 	ibcs2_to_bsd_sigset(&isa->sa_mask, &bsa->sa_mask);
 	bsa->sa_flags = 0;
 	if ((isa->sa_flags & IBCS2_SA_NOCLDSTOP) != 0)
@@ -185,7 +185,7 @@ bsd_to_ibcs2_sigaction(bsa, isa)
 	struct ibcs2_sigaction *isa;
 {
 
-	isa->sa_handler = bsa->sa_handler;
+	isa->sa__handler = bsa->sa_handler;
 	bsd_to_ibcs2_sigset(&bsa->sa_mask, &isa->sa_mask);
 	isa->sa_flags = 0;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)

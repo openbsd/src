@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_signal.c,v 1.5 1997/02/13 19:45:21 niklas Exp $	 */
+/*	$OpenBSD: svr4_signal.c,v 1.6 1997/06/02 09:42:15 deraadt Exp $	 */
 /*	$NetBSD: svr4_signal.c,v 1.24 1996/12/06 03:21:53 christos Exp $	 */
 
 /*
@@ -189,7 +189,7 @@ svr4_to_bsd_sigaction(ssa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = (sig_t) ssa->sa_handler;
+	bsa->sa_handler = (sig_t) ssa->sa__handler;
 	svr4_to_bsd_sigset(&ssa->sa_mask, &bsa->sa_mask);
 	bsa->sa_flags = 0;
 	if ((ssa->sa_flags & SVR4_SA_ONSTACK) != 0)
@@ -210,7 +210,7 @@ bsd_to_svr4_sigaction(bsa, ssa)
 	struct svr4_sigaction *ssa;
 {
 
-	ssa->sa_handler = (svr4_sig_t) bsa->sa_handler;
+	ssa->sa__handler = (svr4_sig_t) bsa->sa_handler;
 	bsd_to_svr4_sigset(&bsa->sa_mask, &ssa->sa_mask);
 	ssa->sa_flags = 0;
 	if ((bsa->sa_flags & SA_ONSTACK) != 0)

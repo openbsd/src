@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.c,v 1.2 1996/04/17 05:23:59 mickey Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.3 1997/06/02 09:42:12 deraadt Exp $	*/
 /*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ linux_to_bsd_sigaction(lsa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = lsa->sa_handler;
+	bsa->sa_handler = lsa->sa__handler;
 	linux_to_bsd_sigset(&lsa->sa_mask, &bsa->sa_mask);
 	bsa->sa_flags = 0;
 	if ((lsa->sa_flags & LINUX_SA_ONSTACK) != 0)
@@ -208,7 +208,7 @@ bsd_to_linux_sigaction(bsa, lsa)
 	struct linux_sigaction *lsa;
 {
 
-	lsa->sa_handler = bsa->sa_handler;
+	lsa->sa__handler = bsa->sa_handler;
 	bsd_to_linux_sigset(&bsa->sa_mask, &lsa->sa_mask);
 	lsa->sa_flags = 0;
 	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)

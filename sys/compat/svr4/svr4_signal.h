@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_signal.h,v 1.3 1996/08/02 20:35:41 niklas Exp $	 */
+/*	$OpenBSD: svr4_signal.h,v 1.4 1997/06/02 09:42:17 deraadt Exp $	 */
 /*	$NetBSD: svr4_signal.h,v 1.14 1995/10/14 20:24:41 christos Exp $	 */
 
 /*
@@ -96,7 +96,7 @@ typedef struct {
 
 struct svr4_sigaction {
 	int		sa_flags;
-	svr4_sig_t	sa_handler;
+	svr4_sig_t	sa__handler;
 	svr4_sigset_t	sa_mask;
 	int 		sa_reserved[2];
 };

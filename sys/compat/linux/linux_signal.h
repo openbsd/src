@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.h,v 1.2 1996/04/17 05:24:00 mickey Exp $	*/
+/*	$OpenBSD: linux_signal.h,v 1.3 1997/06/02 09:42:13 deraadt Exp $	*/
 /* 	$NetBSD: linux_signal.h,v 1.4 1995/08/27 20:51:51 fvdl Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ typedef u_long	linux_sigset_t;
 typedef void	(*linux_handler_t) __P((int));
 
 struct linux_sigaction {
-	linux_handler_t	sa_handler;
+	linux_handler_t	sa__handler;
 	linux_sigset_t	sa_mask;
 	u_long		sa_flags;
 	void		(*sa_restorer) __P((void));
