@@ -7,8 +7,6 @@ machine		sparc
 maxusers	2
 # force default minimum number of buffers and dependents
 option		NBUF=16
-# this should only waste 64K vs. 512K, but hopefully enough for ftp et.al.
-option		NMBCLUSTERS=32
 
 # the size for MINIROOTSIZE must insure: 16384+size(bsd) < RELOC(boot,bootxx)
 option		RAMDISK_HOOKS
