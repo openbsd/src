@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_freebsd.8,v 1.6 1999/07/09 13:35:36 aaron Exp $
+.\"	$OpenBSD: compat_freebsd.8,v 1.7 2001/08/09 05:35:44 jsyn Exp $
 .\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -67,12 +67,24 @@ imported FreeBSD binaries without any extra work.
 
 .Ss Setting up shared libraries
 How to get to know which shared libraries FreeBSD binaries need, and where
-to get them? Basically, there are 2 possibilities (when following
+to get them? Basically, there are 3 possibilities (when following
 these instructions: you will need to be root on your OpenBSD system to
 do the necessary installation steps).
 
 .Bl -tag -width 123 -compact
 .It 1.
+You have access to the OpenBSD
+.Xr ports 7
+system.  Install the port named
+.Nm freebsd_lib
+in the
+.Nm emulators
+category.  The
+.Nm freebsd_lib
+port contains the shared libraries, binaries, and other related files
+necessary to run FreeBSD applications. 
+.Pp
+.It 2.
 You have access to a FreeBSD system. In this case you can
 temporarily install the binary there, see what shared libraries
 it needs, and copy them to your OpenBSD system. Example: you have
@@ -138,11 +150,13 @@ files from the FreeBSD system to their appropriate place on your
 OpenBSD system (in the /emul/freebsd tree):
 .Pp
 .nf
+usr/libexec/ld-elf.so.1
 usr/libexec/ld.so
+var/run/ld-elf.so.hints
 var/run/ld.so.hints
 .fi
 .Pp
-.It 2.
+.It 3.
 You don't have access to a FreeBSD system. In that case, you
 should get the extra files you need from various ftp sites.
 Information on where to look for the various files is appended
@@ -156,6 +170,7 @@ any version mismatches), and install them under /emul/freebsd
 sbin/ldconfig
 usr/bin/ldd
 usr/lib/libc.so.x.y.z
+usr/libexec/ld-elf.so.1
 usr/libexec/ld.so
 .fi
 .Pp
@@ -171,6 +186,7 @@ which the FreeBSD runtime linker should look for shared libs.
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It me@openbsd% mkdir -p /emul/freebsd/var/run
+.It me@openbsd% touch /emul/freebsd/var/run/ld-elf.so.hints
 .It me@openbsd% touch /emul/freebsd/var/run/ld.so.hints
 .It me@openbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
 .El
