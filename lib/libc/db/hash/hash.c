@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.9 2001/01/03 15:24:09 millert Exp $	*/
+/*	$OpenBSD: hash.c,v 1.10 2001/08/04 21:11:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-static char rcsid[] = "$OpenBSD: hash.c,v 1.9 2001/01/03 15:24:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.10 2001/08/04 21:11:10 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,13 +108,12 @@ __hash_open(file, flags, mode, info, dflags)
 	HTAB *hashp;
 	struct stat statbuf;
 	DB *dbp;
-	int bpages, hdrsize, new_table, nsegs, save_errno, rv;
+	int bpages, hdrsize, new_table, nsegs, save_errno;
 
 	if ((flags & O_ACCMODE) == O_WRONLY) {
 		errno = EINVAL;
 		return (NULL);
 	}
-
 	if (!(hashp = (HTAB *)calloc(1, sizeof(HTAB))))
 		return (NULL);
 	hashp->fp = -1;
@@ -127,19 +126,15 @@ __hash_open(file, flags, mode, info, dflags)
 	 */
 	hashp->flags = flags;
 
-	new_table = 0;
-	if (!file || (flags & O_TRUNC) ||
-	    ((rv = stat(file, &statbuf)) && errno == ENOENT) ||
-	    (rv == 0 && !statbuf.st_size && (flags & O_ACCMODE) != O_RDONLY)) {
-		if (errno == ENOENT)
-			errno = 0; /* Just in case someone looks at errno */
-		new_table = 1;
-	}
 	if (file) {
 		if ((hashp->fp = open(file, flags, mode)) == -1)
 			RETURN_ERROR(errno, error0);
 		(void)fcntl(hashp->fp, F_SETFD, 1);
-	}
+		new_table = fstat(hashp->fp, &statbuf) == 0 &&
+		    statbuf.st_size == 0 && (flags & O_ACCMODE) != O_RDONLY;
+	} else
+		new_table = 1;
+
 	if (new_table) {
 		if (!(hashp = init_hash(hashp, file, (HASHINFO *)info)))
 			RETURN_ERROR(errno, error1);
