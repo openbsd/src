@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.9 2002/08/31 04:58:25 drahn Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.10 2002/10/04 03:01:42 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -180,9 +180,13 @@ reswitch:
 			break;
 		case 'X':
 		{
-			int l = 28;
+			int l;
 
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			if (lflag)
+				l = (sizeof(ulong) * 8) - 4;
+			else 
+				l = (sizeof(u_int) * 8) - 4;
 			while (l >= 0) {
 				put("0123456789abcdef"[(ul >> l) & 0xf], fd);
 				l -= 4;

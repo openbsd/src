@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.20 2002/08/31 04:58:25 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.21 2002/10/04 03:01:42 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -249,6 +249,7 @@ _dl_show_objects()
 	elf_object_t *object;
 	char *objtypename;
 	int outputfd;
+	char *pad;
 
 	object = _dl_objects;
 	if (_dl_traceld)
@@ -256,7 +257,12 @@ _dl_show_objects()
 	else 
 		outputfd = STDERR_FILENO;
 
-	_dl_fdprintf(outputfd, "\tStart    End     Type Ref Name\n");
+	if (sizeof(long) == 8)
+		pad = "        ";
+	else
+		pad = "";
+	_dl_fdprintf(outputfd, "\tStart   %s End     %s Type Ref Name\n",
+	    pad, pad);
 
 	while (object) {
 		switch (object->obj_type) {
@@ -276,8 +282,9 @@ _dl_show_objects()
 			objtypename = "????";
 			break;
 		}
-		_dl_fdprintf(outputfd, "\t%X %X %s  %d  %s\n",
-		    object->load_addr, object->load_addr + object->load_size,
+		_dl_fdprintf(outputfd, "\t%lX %lX %s  %d  %s\n",
+		    (void *)object->load_addr,
+		    (void *)(object->load_addr + object->load_size),
 		    objtypename, object->refcount, object->load_name);
 		object = object->next;
 	}
