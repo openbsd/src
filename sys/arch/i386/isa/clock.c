@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.21 2000/01/29 04:27:48 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.22 2001/02/13 17:19:12 ho Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -89,11 +89,13 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * Primitive clock interrupt routines.
  */
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -141,6 +143,7 @@ void	rtcput __P((mc_todregs *));
 int 	hexdectodec __P((int));
 int	dectohexdec __P((int));
 int	rtcintr __P((void *));
+void	rtcdrain __P((void *));
 
 __inline u_int mc146818_read __P((void *, u_int));
 __inline void mc146818_write __P((void *, u_int, u_int));
@@ -157,9 +160,16 @@ mc146818_read(sc, reg)
 	void *sc;					/* XXX use it? */
 	u_int reg;
 {
+	int s;
+	u_char v;
 
+	s = splhigh();
 	outb(IO_RTC, reg);
-	return (inb(IO_RTC+1));
+	DELAY(1);
+	v = inb(IO_RTC+1);
+	DELAY(1);
+	splx(s);
+	return (v);
 }
 
 __inline void
@@ -167,9 +177,14 @@ mc146818_write(sc, reg, datum)
 	void *sc;					/* XXX use it? */
 	u_int reg, datum;
 {
+	int s;
 
+	s = splhigh();
 	outb(IO_RTC, reg);
+	DELAY(1);
 	outb(IO_RTC+1, datum);
+	DELAY(1);
+	splx(s);
 }
 
 void
@@ -185,6 +200,21 @@ startrtclock()
 	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0)	/* XXX softc */
 		printf("RTC BIOS diagnostic error %b\n", (unsigned int) s, 
 		    NVRAM_DIAG_BITS);
+}
+
+void
+rtcdrain(void *v)
+{
+	struct timeout *to = (struct timeout *)v;
+
+	timeout_del(to);
+
+	/* 
+	 * Drain any un-acknowledged RTC interrupts. 
+	 * See comment in cpu_initclocks(). 
+	 */
+  	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF)
+		; /* Nothing. */
 }
 
 void
@@ -205,7 +235,7 @@ clockintr(arg)
 	struct clockframe *frame = arg;		/* not strictly necessary */
 
 	hardclock(frame);
-	return 1;
+	return (1);
 }
 
 int
@@ -213,14 +243,17 @@ rtcintr(arg)
 	void *arg;
 {
 	struct clockframe *frame = arg;		/* not strictly neccecary */
-	u_int stat;
+	u_int stat = 0;
 
-	stat = mc146818_read(NULL, MC_REGC);
-	if (stat & MC_REGC_PF) {
+	/* 
+	 * If rtcintr is 'late', next intr may happen immediately. 
+	 * Get them all. (Also, see comment in cpu_initclocks().)
+	 */
+	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF) {
 		statclock(frame);
-		return 1;
+		stat = 1;
 	}
-	return 0;
+	return (stat);
 }
 
 int
@@ -381,6 +414,7 @@ calibrate_cyclecounter()
 void
 cpu_initclocks()
 {
+	static struct timeout rtcdrain_timeout;
 	stathz = 128;
 	profhz = 1024;
 
@@ -395,6 +429,18 @@ cpu_initclocks()
 
 	mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);
 	mc146818_write(NULL, MC_REGB, MC_REGB_24HR | MC_REGB_PIE);
+
+	/*
+	 * On a number of i386 systems, the rtc will fail to start when booting
+	 * the system. This is due to us missing to acknowledge an interrupt
+	 * during early stages of the boot process. If we do not acknowledge
+	 * the interrupt, the rtc clock will not generate further interrupts.
+	 * To solve this, once interrupts are enabled, use a timeout (once)
+	 * to drain any un-acknowledged rtc interrupt(s).
+	 */
+
+	timeout_set(&rtcdrain_timeout, rtcdrain, (void *)&rtcdrain_timeout);
+	timeout_add(&rtcdrain_timeout, 1);
 }
 
 int
@@ -436,8 +482,8 @@ static int timeset;
  * check whether the CMOS layout is "standard"-like (ie, not PS/2-like),
  * to be called at splclock()
  */
-static int cmoscheck __P((void));
-static int
+int cmoscheck __P((void));
+int
 cmoscheck()
 {
 	int i;
@@ -463,8 +509,8 @@ int rtc_update_century = 0;
  * into full width.
  * Being here, deal with the CMOS century byte.
  */
-static int clock_expandyear __P((int));
-static int
+int clock_expandyear __P((int));
+int
 clock_expandyear(clockyear)
 	int clockyear;
 {
