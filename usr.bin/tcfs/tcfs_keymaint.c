@@ -117,6 +117,7 @@ tcfs_encrypt_key (char *u, char *pw, unsigned char *key, unsigned char *ek,
 	}
 	
 	blf_key(&ctx, pass, strlen(pass));
+	memset(iv, 0, sizeof(iv));
 	blf_cbc_encrypt(&ctx, iv, key, keysize);
 
 	memset(&ctx, 0, sizeof(ctx));
