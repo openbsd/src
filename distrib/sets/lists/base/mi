@@ -2108,6 +2108,8 @@
 ./usr/share/nls/ru/libc.cat
 ./usr/share/nls/sv
 ./usr/share/nls/sv/libc.cat
+./usr/share/pf
+./usr/share/pf/queue1
 ./usr/share/sendmail
 ./usr/share/sendmail/README
 ./usr/share/sendmail/cf
