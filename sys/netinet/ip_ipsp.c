@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.35 1999/02/25 22:37:29 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.36 1999/03/04 20:30:36 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -669,7 +669,6 @@ tdb_delete(struct tdb *tdbp, int delchain)
 {
     u_int8_t *ptr = (u_int8_t *) &tdbp->tdb_dst;
     struct tdb *tdbpp;
-    struct flow *flow;
     u_int32_t hashval = tdbp->tdb_sproto + tdbp->tdb_spi, i;
 
     for (i = 0; i < SA_LEN(&tdbp->tdb_dst.sa); i++)
@@ -711,9 +710,9 @@ tdb_delete(struct tdb *tdbp, int delchain)
     if (tdbp->tdb_xform)
       (*(tdbp->tdb_xform->xf_zeroize))(tdbp);
 
-    for (flow = tdbp->tdb_flow; flow; flow = tdbp->tdb_flow)
+    while (tdbp->tdb_flow)
     {
-	delete_flow(flow, tdbp);
+	delete_flow(tdbp->tdb_flow, tdbp);
 	ipsec_in_use--;
     }
 

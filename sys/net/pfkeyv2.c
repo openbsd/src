@@ -1301,7 +1301,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	for (tdb3 = tdb2; tdb3; tdb3 = tdb3->tdb_onext)
 	  if (tdb3 == tdb1)
 	  {
-	      rval = EINVAL;
+	      rval = ESRCH;
 	      goto ret;
 	  }
 
@@ -1309,6 +1309,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	if ((tdb1->tdb_onext) &&
 	    (tdb1->tdb_onext->tdb_inext == tdb1))
 	  tdb1->tdb_onext->tdb_inext = NULL;
+
+	if ((tdb2->tdb_inext) &&
+	    (tdb2->tdb_inext->tdb_onext == tdb2))
+	  tdb2->tdb_inext->tdb_onext = NULL;
 
 	/* Link them */
 	tdb1->tdb_onext = tdb2;
