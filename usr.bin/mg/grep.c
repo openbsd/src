@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.5 2002/03/18 01:22:31 vincent Exp $	*/
+/*	$OpenBSD: grep.c,v 1.6 2002/07/01 14:33:44 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -77,11 +77,11 @@ grep(int f, int n)
 	BUFFER *bp;
 	MGWIN *wp;
 
-	strlcpy(prompt, "grep -n ", sizeof prompt);
+	(void)strlcpy(prompt, "grep -n ", sizeof prompt);
 	if (eread("Run grep: ", prompt, NFILEN, EFDEF|EFNEW|EFCR) == ABORT)
 		return ABORT;
 
-	snprintf(command, sizeof command, "%s /dev/null", prompt);
+	(void)snprintf(command, sizeof command, "%s /dev/null", prompt);
 
 	if ((bp = compile_mode("*grep*", command)) == NULL)
 		return FALSE;
@@ -100,11 +100,11 @@ compile(int f, int n)
 	BUFFER *bp;
 	MGWIN *wp;
 
-	strlcpy(prompt, "make ", sizeof prompt);
+	(void)strlcpy(prompt, "make ", sizeof prompt);
 	if (eread("Compile command: ", prompt, NFILEN, EFDEF|EFNEW|EFCR) == ABORT)
 		return ABORT;
 
-	snprintf(command, sizeof command, "%s 2>&1", prompt);
+	(void)snprintf(command, sizeof command, "%s 2>&1", prompt);
 
 	if ((bp = compile_mode("*compile*", command)) == NULL)
 		return FALSE;
@@ -127,7 +127,7 @@ gid(int f, int n)
 	if (eread("Run gid (with args): ", prompt, NFILEN, EFNEW|EFCR) == ABORT)
 		return ABORT;
 
-	snprintf(command, sizeof command, "gid %s", prompt);
+	(void)snprintf(command, sizeof command, "gid %s", prompt);
 
 	if ((bp = compile_mode("*gid*", command)) == NULL)
 		return FALSE;
@@ -199,7 +199,7 @@ retry:
 	if ((line = malloc(len + 1)) == NULL)
 		return FALSE;
 
-	memcpy(line, curwp->w_dotp->l_text, len);
+	(void)memcpy(line, curwp->w_dotp->l_text, len);
 	line[len] = '\0';
 
 	lp = line;

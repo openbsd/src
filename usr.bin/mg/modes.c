@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.7 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: modes.c,v 1.8 2002/07/01 14:33:44 vincent Exp $	*/
 
 /*
  * Commands to toggle modes.   Without an argument, these functions will
@@ -16,9 +16,7 @@ MAPS	*defb_modes[PBMODES] = { &fundamental_mode };
 int	 defb_flag = 0;
 
 static int
-changemode(f, n, mode)
-	int   f, n;
-	char *mode;
+changemode(int f, int n, char *mode)
 {
 	int	 i;
 	MAPS	*m;
@@ -60,15 +58,13 @@ changemode(f, n, mode)
 }
 
 int
-indentmode(f, n)
-	int f, n;
+indentmode(int f, int n)
 {
 	return changemode(f, n, "indent");
 }
 
 int
-fillmode(f, n)
-	int f, n;
+fillmode(int f, int n)
 {
 	return changemode(f, n, "fill");
 }
@@ -77,16 +73,14 @@ fillmode(f, n)
  * Fake the GNU "blink-matching-paren" variable.
  */
 int
-blinkparen(f, n)
-	int f, n;
+blinkparen(int f, int n)
 {
 	return changemode(f, n, "blink");
 }
 
 #ifdef NOTAB
 int
-notabmode(f, n)
-	int f, n;
+notabmode(int f, int n)
 {
 	if (changemode(f, n, "notab") == FALSE)
 		return FALSE;
@@ -102,8 +96,7 @@ notabmode(f, n)
 #endif	/* NOTAB */
 
 int
-overwrite(f, n)
-	int f, n;
+overwrite(int f, int n)
 {
 	if (changemode(f, n, "overwrite") == FALSE)
 		return FALSE;
@@ -118,8 +111,7 @@ overwrite(f, n)
 }
 
 int
-set_default_mode(f, n)
-	int f, n;
+set_default_mode(int f, int n)
 {
 	int	 i;
 	MAPS	*m;

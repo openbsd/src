@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.42 2002/06/21 00:54:55 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.43 2002/07/01 14:33:44 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -200,11 +200,11 @@ typedef struct MGWIN {
  * Because commands set bits in the "w_flag", update will see
  * all change flags, and do the most general one.
  */
-#define WFFORCE 0x01		/* Force reframe.		 */
-#define WFMOVE	0x02		/* Movement from line to line.	 */
-#define WFEDIT	0x04		/* Editing within a line.	 */
-#define WFHARD	0x08		/* Better to a full display.	 */
-#define WFMODE	0x10		/* Update mode line.		 */
+#define WFFORCE 0x01			/* Force reframe.		 */
+#define WFMOVE	0x02			/* Movement from line to line.	 */
+#define WFEDIT	0x04			/* Editing within a line.	 */
+#define WFHARD	0x08			/* Better to a full display.	 */
+#define WFMODE	0x10			/* Update mode line.		 */
 
 struct undo_rec;
 
@@ -252,13 +252,13 @@ typedef struct BUFFER {
 #define b_bufp	b_list.l_p.x_bp
 #define b_bname b_list.l_name
 
-#define BFCHG	0x01		/* Changed.			 */
-#define BFBAK	0x02		/* Need to make a backup.	 */
+#define BFCHG	0x01			/* Changed.			 */
+#define BFBAK	0x02			/* Need to make a backup.	 */
 #ifdef	NOTAB
-#define BFNOTAB 0x04		/* no tab mode			 */
+#define BFNOTAB 0x04			/* no tab mode			 */
 #endif
-#define BFOVERWRITE 0x08	/* overwrite mode		 */
-#define BFREADONLY  0x10	/* read only mode */
+#define BFOVERWRITE 0x08		/* overwrite mode		 */
+#define BFREADONLY  0x10		/* read only mode */
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cinfo.c,v 1.9 2002/05/06 19:22:38 deraadt Exp $	*/
+/*	$OpenBSD: cinfo.c,v 1.10 2002/07/01 14:33:44 vincent Exp $	*/
 
 /*
  *		Character class tables.
@@ -18,67 +18,67 @@
  * standard "ctype" macros cannot ask.
  */
 const char cinfo[256] = {
-	_MG_C, _MG_C, _MG_C, _MG_C,		/* 0x0X */
+	_MG_C, _MG_C, _MG_C, _MG_C,				      /* 0x0X */
 	_MG_C, _MG_C, _MG_C, _MG_C,
 	_MG_C, _MG_C, _MG_C, _MG_C,
 	_MG_C, _MG_C, _MG_C, _MG_C,
-	_MG_C, _MG_C, _MG_C, _MG_C,		/* 0x1X */
+	_MG_C, _MG_C, _MG_C, _MG_C,				      /* 0x1X */
 	_MG_C, _MG_C, _MG_C, _MG_C,
 	_MG_C, _MG_C, _MG_C, _MG_C,
 	_MG_C, _MG_C, _MG_C, _MG_C,
-	0, _MG_P, 0, 0,		/* 0x2X */
+	0, _MG_P, 0, 0,						      /* 0x2X */
 	_MG_W, _MG_W, 0, _MG_W,
 	0, 0, 0, 0,
 	0, 0, _MG_P, 0,
-	_MG_D | _MG_W, _MG_D | _MG_W, _MG_D | _MG_W, _MG_D | _MG_W,	/* 0x3X */
+	_MG_D | _MG_W, _MG_D | _MG_W, _MG_D | _MG_W, _MG_D | _MG_W,   /* 0x3X */
 	_MG_D | _MG_W, _MG_D | _MG_W, _MG_D | _MG_W, _MG_D | _MG_W,
 	_MG_D | _MG_W, _MG_D | _MG_W, 0, 0,
 	0, 0, 0, _MG_P,
-	0, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,	/* 0x4X */
+	0, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,		      /* 0x4X */
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,
-	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,	/* 0x5X */
+	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,   /* 0x5X */
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, 0,
 	0, 0, 0, 0,
-	0, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,	/* 0x6X */
+	0, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,		      /* 0x6X */
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,
-	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,	/* 0x7X */
+	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,   /* 0x7X */
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, 0,
 	0, 0, 0, _MG_C,
-	0, 0, 0, 0,		/* 0x8X */
+	0, 0, 0, 0,						      /* 0x8X */
 	0, 0, 0, 0,
 	0, 0, 0, 0,
 	0, 0, 0, 0,
-	0, 0, 0, 0,		/* 0x9X */
+	0, 0, 0, 0,						      /* 0x9X */
 	0, 0, 0, 0,
 	0, 0, 0, 0,
 	0, 0, 0, 0,
-	0, 0, 0, 0,		/* 0xAX */
+	0, 0, 0, 0,						      /* 0xAX */
 	0, 0, 0, 0,
 	0, 0, 0, 0,
 	0, 0, 0, 0,
-	0, 0, 0, 0,		/* 0xBX */
+	0, 0, 0, 0,						      /* 0xBX */
 	0, 0, 0, 0,
 	0, 0, 0, 0,
 	0, 0, 0, 0,
-	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,	/* 0xCX */
+	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,   /* 0xCX */
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,
-	0, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,	/* 0xDX */
+	0, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,		      /* 0xDX */
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,
 	_MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W, _MG_U | _MG_W,
 	_MG_U | _MG_W, _MG_U | _MG_W, 0, _MG_W,
-	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,	/* 0xEX */
+	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,   /* 0xEX */
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,
-	0, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,	/* 0xFX */
+	0, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,		      /* 0xFX */
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,
 	_MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W, _MG_L | _MG_W,
 	_MG_L | _MG_W, _MG_L | _MG_W, 0, 0
@@ -87,7 +87,7 @@ const char cinfo[256] = {
 /*
  * Find the name of a keystroke.  Needs to be changed to handle 8-bit printing
  * characters and function keys better.	 Returns a pointer to the terminating
- * '\0'.
+ * '\0'.  Returns NULL on failure.
  */
 char *
 keyname(char *cp, size_t len, int k)
@@ -132,8 +132,7 @@ keyname(char *cp, size_t len, int k)
 			*cp++ = (k & 7) + '0';
 			*cp = '\0';
 			return cp;
-		}
-		if (k < ' ') {
+		} else if (k < ' ') {
 			*cp++ = 'C';
 			*cp++ = '-';
 			k = CCHR(k);

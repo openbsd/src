@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.13 2002/02/21 15:27:29 deraadt Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.14 2002/07/01 14:33:44 vincent Exp $	*/
 
 /*
  *	Terminal independent keyboard handling.
@@ -34,8 +34,7 @@ MAP_ELEMENT	*ele;
  * Toggle the value of use_metakey
  */
 int
-do_meta(f, n)
-	int f, n;
+do_meta(int f, int n)
 {
 	if (f & FFARG)
 		use_metakey = n > 0;
@@ -52,8 +51,7 @@ static int	 bs_map = BSMAP;
  * Toggle backspace mapping
  */
 int
-bsmap(f, n)
-	int f, n;
+bsmap(int f, int n)
 {
 	if (f & FFARG)
 		bs_map = n > 0;
@@ -65,8 +63,7 @@ bsmap(f, n)
 #endif /* BSMAP */
 
 void
-ungetkey(c)
-	int	c;
+ungetkey(int c)
 {
 #ifdef DO_METAKEY
 	if (use_metakey && pushed && c == CCHR('['))
@@ -78,8 +75,7 @@ ungetkey(c)
 }
 
 int
-getkey(flag)
-	int flag;
+getkey(int flag)
 {
 	int	 c;
 
@@ -132,10 +128,7 @@ getkey(flag)
  * keymap element the keyboard was found in as a side effect.
  */
 PF
-doscan(map, c, newmap)
-	KEYMAP	*map;
-	int	c;
-	KEYMAP	**newmap;
+doscan(KEYMAP *map, int c, KEYMAP **newmap)
 {
 	MAP_ELEMENT	*elec = &map->map_element[0];
 	MAP_ELEMENT	*last = &map->map_element[map->map_num];
@@ -157,7 +150,7 @@ doscan(map, c, newmap)
 }
 
 int
-doin()
+doin(void)
 {
 	KEYMAP	*curmap;
 	PF	 funct;
@@ -178,8 +171,7 @@ doin()
 }
 
 int
-rescan(f, n)
-	int f, n;
+rescan(int f, int n)
 {
 	int	 c;
 	KEYMAP	*curmap;
@@ -237,8 +229,7 @@ rescan(f, n)
 }
 
 int
-universal_argument(f, n)
-	int f, n;
+universal_argument(int f, int n)
 {
 	KEYMAP	*curmap;
 	PF	 funct;
@@ -275,8 +266,7 @@ universal_argument(f, n)
 
 /* ARGSUSED */
 int
-digit_argument(f, n)
-	int f, n;
+digit_argument(int f, int n)
 {
 	KEYMAP	*curmap;
 	PF	 funct;
@@ -310,8 +300,7 @@ digit_argument(f, n)
 }
 
 int
-negative_argument(f, n)
-	int f, n;
+negative_argument(int f, int n)
 {
 	KEYMAP	*curmap;
 	PF	 funct;
@@ -353,8 +342,7 @@ negative_argument(f, n)
  * all inserted characters.
  */
 int
-selfinsert(f, n)
-	int f, n;
+selfinsert(int f, int n)
 {
 #ifndef NO_MACRO
 	LINE	*lp;
@@ -422,8 +410,7 @@ selfinsert(f, n)
  * This could be implemented as a keymap with everthing defined as self-insert.
  */
 int
-quote(f, n)
-	int f, n;
+quote(int f, int n)
 {
 	int	 c;
 

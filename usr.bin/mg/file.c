@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.19 2002/06/19 22:02:08 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.20 2002/07/01 14:33:44 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -103,7 +103,7 @@ findbuffer(char *fname)
 {
 	BUFFER		*bp;
 	char		 bname[NBUFN];
-	unsigned int count, remain, i;
+	unsigned int	 count, remain, i;
 
 	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
 		if (strcmp(bp->b_fname, fname) == 0)
@@ -128,7 +128,7 @@ readin(char *fname)
 {
 	MGWIN	*wp;
 	int	 status, i;
-	PF	 *ael;
+	PF	*ael;
 
 	/* might be old */
 	if (bclear(curbp) != TRUE)
@@ -184,9 +184,7 @@ static char	*line = NULL;
 static int	linesize = 0;
 
 int
-insertfile(fname, newname, needinfo)
-	char *fname, *newname;
-	int   needinfo;
+insertfile(char *fname, char *newname, int needinfo)
 {
 	BUFFER	*bp;
 	LINE	*lp1, *lp2;
@@ -220,7 +218,7 @@ insertfile(fname, newname, needinfo)
 	opos = curwp->w_doto;
 
 	/* open a new line, at point, and start inserting after it */
-	lnewline();
+	(void)lnewline();
 	olp = lback(curwp->w_dotp);
 	if (olp == curbp->b_linep) {
 		/* if at end of buffer, create a line to insert before */
@@ -352,8 +350,7 @@ out:		lp2 = NULL;
  */
 /* ARGSUSED */
 int
-filewrite(f, n)
-	int f, n;
+filewrite(int f, int n)
 {
 	int	 s;
 	char	 fname[NFILEN];
@@ -389,8 +386,7 @@ static int	makebackup = MAKEBACKUP;
 
 /* ARGSUSED */
 int
-filesave(f, n)
-	int f, n;
+filesave(int f, int n)
 {
 	return buffsave(curbp);
 }
@@ -404,8 +400,7 @@ filesave(f, n)
  * the value of makebackup.
  */
 int
-buffsave(bp)
-	BUFFER *bp;
+buffsave(BUFFER *bp)
 {
 	int	 s;
 
@@ -454,8 +449,7 @@ buffsave(bp)
  */
 /* ARGSUSED */
 int
-makebkfile(f, n)
-	int f, n;
+makebkfile(int f, int n)
 {
 	if (f & FFARG)
 		makebackup = n > 0;
@@ -481,9 +475,7 @@ makebkfile(f, n)
  * "fileio.c" package. Most of the grief is checking of some sort.
  */
 int
-writeout(bp, fn)
-	BUFFER *bp;
-	char   *fn;
+writeout(BUFFER *bp, char *fn)
 {
 	int	 s;
 
@@ -507,8 +499,7 @@ writeout(bp, fn)
  * mode line updated.
  */
 void
-upmodes(bp)
-	BUFFER *bp;
+upmodes(BUFFER *bp)
 {
 	MGWIN	*wp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.c,v 1.5 2001/05/24 03:05:24 mickey Exp $	*/
+/*	$OpenBSD: macro.c,v 1.6 2002/07/01 14:33:44 vincent Exp $	*/
 
 /*
  *	Keyboard macros.
@@ -13,8 +13,7 @@
 
 /* ARGSUSED */
 int
-definemacro(f, n)
-	int	f, n;
+definemacro(int f, int n)
 {
 	LINE	*lp1, *lp2;
 
@@ -44,8 +43,7 @@ definemacro(f, n)
 
 /* ARGSUSED */
 int
-finishmacro(f, n)
-	int	f, n;
+finishmacro(int f, int n)
 {
 	macrodef = FALSE;
 	ewprintf("End Keyboard Macro Definition");
@@ -54,8 +52,7 @@ finishmacro(f, n)
 
 /* ARGSUSED */
 int
-executemacro(f, n)
-	int f, n;
+executemacro(int f, int n)
 {
 	int	 i, j, flag, num;
 	PF	 funct;
