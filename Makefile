@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.106 2004/10/21 20:47:29 grange Exp $
+#	$OpenBSD: Makefile,v 1.107 2004/10/26 05:01:02 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -128,7 +128,7 @@ cross-env:	.PHONY
 ${CROSSDIRS}:
 	@-mkdir -p ${CROSSDIR}
 	@case ${TARGET} in \
-		alpha|hppa|i386|m68k|m88k|powerpc|sparc|sparc64|vax|amd64) \
+		alpha|amd64|hppa|hppa64|i386|m68k|m88k|powerpc|sparc|sparc64|vax) \
 			echo ${TARGET} ;;\
 		amiga|hp300|mac68k|mvme68k) \
 			echo m68k ;;\
@@ -174,15 +174,14 @@ ${CROSSINCLUDES}:	${CROSSOBJ}
 	    ${MAKE} DESTDIR=${CROSSDIR} includes)
 	@touch ${CROSSINCLUDES}
 
-.if ${TARGET} == "alpha" || ${TARGET} == "amd64" || ${TARGET} == "hppa" || \
-    ${TARGET} == "i386" || ${TARGET} == "macppc" || ${TARGET} == "mvmeppc" || \
-    ${TARGET} == "sparc" || ${TARGET} == "sparc64" || ${TARGET} == "sgi"
+.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
+    ${MACHINE_ARCH} == "vax"
+BINUTILS=	ar as ld nm ranlib objcopy objdump strings strip
+NEW_BINUTILS?=	No
+.else
 BINUTILS=	ar as gasp ld nm objcopy objdump ranlib readelf size \
 		strings strip
 NEW_BINUTILS?=	Yes
-.else
-BINUTILS=	ar as ld nm ranlib objcopy objdump strings strip
-NEW_BINUTILS?=	No
 .endif
 
 ${CROSSBINUTILS}:	${CROSSINCLUDES}
