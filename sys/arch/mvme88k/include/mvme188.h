@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.11 2001/12/22 07:35:43 smurph Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.12 2002/01/14 21:34:41 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -199,17 +199,17 @@
 #define ISR_SOFTINT_EXCEPT_MASK(cpu)	(ISR_LOW_SOFTINT_MASK(cpu) | ISR_HIGH_SOFTINT_MASK(cpu) | 0xf0fffff0)
 #define ISR_CLOCKINT_MASK		(1<<IEN_CIOI_LOG)
 
-#define ISR_RESET_NMI			*(volatile int *)MVME188_CLRINT = 1<<CLRINT_CLRABRTI_LOG
-#define ISR_RESET_SYSFAIL		*(volatile int *)MVME188_CLRINT = 1<<CLRINT_CLRSFI_LOG
-#define ISR_RESET_ACFAIL		*(volatile int *)MVME188_CLRINT = 1<<CLRINT_CLRACFI_LOG
+#define ISR_RESET_NMI			*(int *volatile)MVME188_CLRINT = 1<<CLRINT_CLRABRTI_LOG
+#define ISR_RESET_SYSFAIL		*(int *volatile)MVME188_CLRINT = 1<<CLRINT_CLRSFI_LOG
+#define ISR_RESET_ACFAIL		*(int *volatile)MVME188_CLRINT = 1<<CLRINT_CLRACFI_LOG
 #define ISR_RESET_LOW_SOFTINT(cpu)	*(int *)MVME188_CLRSWI = ISR_LOW_SOFTINT_MASK(cpu)
 #define ISR_RESET_HIGH_SOFTINT(cpu)	*(int *)MVME188_CLRSWI = (1<<(cpu + MAX_CPUS))
-#define ISR_DETERMINE_LOW_SOFTINT(cpu)	*(volatile unsigned int *)MVME188_IST & ISR_LOW_SOFTINT_MASK(cpu)
-#define ISR_DETERMINE_HIGH_SOFTINT(cpu)	*(volatile unsigned int *)MVME188_IST & ISR_HIGH_SOFTINT_MASK(cpu)
-#define ISR_GENERATE_LOW_SOFTINT(cpu)	*((volatile unsigned int *)MVME188_SETSWI) = ISR_LOW_SOFTINT_MASK(cpu)
-#define ISR_GENERATE_HIGH_SOFTINT(cpu)	*((volatile unsigned int *)MVME188_SETSWI) = (1<<(cpu + MAX_CPUS))
-#define ISR_RESET_MACHINE		*((volatile unsigned *) MVME188_GLBRES) = 1
-#define ISR_GET_CURRENT_MASK(cpu)	*int_mask_reg[cpu] & *(volatile int *)MVME188_IST
+#define ISR_DETERMINE_LOW_SOFTINT(cpu)	*(unsigned int *volatile)MVME188_IST & ISR_LOW_SOFTINT_MASK(cpu)
+#define ISR_DETERMINE_HIGH_SOFTINT(cpu)	*(unsigned int *volatile)MVME188_IST & ISR_HIGH_SOFTINT_MASK(cpu)
+#define ISR_GENERATE_LOW_SOFTINT(cpu)	*((unsigned int *volatile)MVME188_SETSWI) = ISR_LOW_SOFTINT_MASK(cpu)
+#define ISR_GENERATE_HIGH_SOFTINT(cpu)	*((unsigned int *volatile)MVME188_SETSWI) = (1<<(cpu + MAX_CPUS))
+#define ISR_RESET_MACHINE		*((unsigned *volatile) MVME188_GLBRES) = 1
+#define ISR_GET_CURRENT_MASK(cpu)	*int_mask_reg[cpu] & *(int *volatile)MVME188_IST
 
 #define IST_STRING "\20\40ABRT\37ACF\36ARBTO\35DTI\34SWI7\33SWI6\32SWI5\31SWI4\30IRQ7\27res\26CIOI\25SF\24IRQ6\23res\22DI\21SIGHPI\20res\17IRQ5\16res\15IRQ4\14res\13IRQ3\12res\11LWI\10SIGLPI\7IRQ2\6res\5IRQ1\4SWI3\3SWI2\2SWI1\1SWI0"
 
@@ -386,7 +386,7 @@
 extern unsigned int m188_curspl[MAX_CPUS];
 extern unsigned int int_mask_val[INT_LEVEL];
 extern unsigned int int_mask_shadow[MAX_CPUS];
-extern volatile unsigned int *int_mask_reg[MAX_CPUS];
+extern unsigned int *volatile int_mask_reg[MAX_CPUS];
 
 #endif 
 

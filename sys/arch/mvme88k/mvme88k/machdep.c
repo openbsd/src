@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.84 2002/01/10 21:45:33 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.85 2002/01/14 21:34:41 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -144,7 +144,7 @@ void m187_ext_int __P((u_int v, struct m88100_saved_state *eframe));
 void m188_ext_int __P((u_int v, struct m88100_saved_state *eframe));
 void m197_ext_int __P((u_int v, struct m88100_saved_state *eframe));
 
-volatile unsigned char *ivec[] = {
+unsigned char *volatile ivec[] = {
 	(unsigned char *)0xFFFE0003, /* not used, no such thing as int 0 */
 	(unsigned char *)0xFFFE0007,
 	(unsigned char *)0xFFFE000B,
@@ -161,11 +161,11 @@ volatile unsigned char *ivec[] = {
  * *int_mask_reg[CPU]
  * Points to the hardware interrupt status register for each CPU.
  */
-volatile unsigned int *int_mask_reg[MAX_CPUS] = {
-	(volatile unsigned int *)IEN0_REG,
-	(volatile unsigned int *)IEN1_REG,
-	(volatile unsigned int *)IEN2_REG,
-	(volatile unsigned int *)IEN3_REG
+unsigned int *volatile int_mask_reg[MAX_CPUS] = {
+	(unsigned int *)IEN0_REG,
+	(unsigned int *)IEN1_REG,
+	(unsigned int *)IEN2_REG,
+	(unsigned int *)IEN3_REG
 };
 #endif 
 
@@ -314,7 +314,7 @@ consinit()
 vm_offset_t
 size_memory()
 {
-	volatile unsigned int *look;
+	unsigned int *volatile look;
 	unsigned int *max;
 	extern char *end;
 #define PATTERN   0x5a5a5a5a
@@ -2300,7 +2300,7 @@ regdump(struct trapframe *f)
 	if (brdtyp == BRD_188 ) {
 		unsigned int istr, cur_mask;
 
-		istr = *(volatile int *)IST_REG;
+		istr = *(int *volatile)IST_REG;
 		cur_mask = GET_MASK(0, istr);
 		printf("emask = 0x%b\n", f->mask, IST_STRING);
 		printf("istr  = 0x%b\n", istr, IST_STRING);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.45 2001/12/24 04:07:26 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.46 2002/01/14 21:34:41 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -439,13 +439,13 @@ badvaddr(vm_offset_t va, int size)
 
 	switch (size) {
 	case 1:
-		x = *(volatile unsigned char *)va;
+		x = *(unsigned char *volatile)va;
 		break;
 	case 2:
-		x = *(volatile unsigned short *)va;
+		x = *(unsigned short *volatile)va;
 		break;
 	case 4:
-		x = *(volatile unsigned long *)va;
+		x = *(unsigned long *volatile)va;
 		break;
 	default:
                 return -1;

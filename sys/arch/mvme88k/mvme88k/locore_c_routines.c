@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.22 2002/01/10 21:45:33 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.23 2002/01/14 21:34:41 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -69,7 +69,7 @@ typedef struct {
    word_two;
 } m88k_exception_vector_area;
 
-extern volatile unsigned int * int_mask_reg[MAX_CPUS]; /* in machdep.c */
+extern unsigned int *volatile int_mask_reg[MAX_CPUS]; /* in machdep.c */
 extern unsigned master_cpu;      /* in cmmu.c */
 
 /* FORWARDS */
@@ -635,14 +635,14 @@ db_setipl(unsigned level)
 #include <sys/simplelock.h>
 void
 simple_lock_init(lkp)
-	__volatile struct simplelock *lkp;
+	struct simplelock *volatile lkp;
 {
 	lkp->lock_data = 0;
 }
 
 int 
 test_and_set(lock)
-	__volatile int *lock;
+	int *volatile lock;
 {   
 #if 0
 	int oldlock = *lock;

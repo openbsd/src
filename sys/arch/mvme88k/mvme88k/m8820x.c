@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.11 2001/12/24 17:18:39 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.12 2002/01/14 21:34:41 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -343,7 +343,7 @@ struct cpu_cmmu {
 void 
 m8820x_setup_board_config()
 {
-	volatile unsigned long *whoami;
+	unsigned long *volatile whoami;
 
 	master_cpu = 0;	/* temp to get things going */
 	switch (brdtyp) {
@@ -366,7 +366,7 @@ m8820x_setup_board_config()
 #endif /* MVME187 */
 #ifdef MVME188
 	case BRD_188:
-		whoami = (volatile unsigned long *)MVME188_WHOAMI;
+		whoami = (unsigned long *volatile)MVME188_WHOAMI;
 		vme188_config = (*whoami & 0xf0) >> 4;
 		dprintf(DB_CMMU,("m8820x_setup_board_config: WHOAMI @ 0x%08x holds value 0x%08x vme188_config = %d\n",
 				 whoami, *whoami, vme188_config));
@@ -406,8 +406,8 @@ m8820x_setup_cmmu_config()
 	register int num, cmmu_num;
 #ifdef MVME188
 	register int val1, val2;
-	volatile unsigned long *pcnfa;
-	volatile unsigned long *pcnfb;
+	unsigned long *volatile pcnfa;
+	unsigned long *volatile pcnfb;
 #endif 
 
 	dprintf(DB_CMMU,("m8820x_setup_cmmu_config: initializing with %d CPU(s) and %d CMMU(s)\n",
@@ -484,8 +484,8 @@ m8820x_setup_cmmu_config()
 	 * Configure CPU/CMMU strategy into PCNFA and PCNFB board registers.
 	 */
 	case CONFIG_1:
-		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
-		pcnfb = (volatile unsigned long *)MVME188_PCNFB;
+		pcnfa = (unsigned long *volatile)MVME188_PCNFA;
+		pcnfb = (unsigned long *volatile)MVME188_PCNFB;
 		val1 = (cpu_cmmu_strategy[0].inst << 2) | cpu_cmmu_strategy[0].data;
 		val2 = (cpu_cmmu_strategy[1].inst << 2) | cpu_cmmu_strategy[1].data;
 		*pcnfa = val1;
@@ -493,8 +493,8 @@ m8820x_setup_cmmu_config()
 		dprintf(DB_CMMU,("m8820x_setup_cmmu_config: 2P128: PCNFA = 0x%x, PCNFB = 0x%x\n", val1, val2));
 		break;
 	case CONFIG_2:
-		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
-		pcnfb = (volatile unsigned long *)MVME188_PCNFB;
+		pcnfa = (unsigned long *volatile)MVME188_PCNFA;
+		pcnfb = (unsigned long *volatile)MVME188_PCNFB;
 		val1 = (cpu_cmmu_strategy[0].inst << 2) | cpu_cmmu_strategy[0].inst;
 		val2 = (cpu_cmmu_strategy[0].data << 2) | cpu_cmmu_strategy[0].data;
 		*pcnfa = val1;
@@ -502,7 +502,7 @@ m8820x_setup_cmmu_config()
 		dprintf(DB_CMMU,("m8820x_setup_cmmu_config: 1P128: PCNFA = 0x%x, PCNFB = 0x%x\n", val1, val2));
 		break;
 	case CONFIG_6:
-		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
+		pcnfa = (unsigned long *volatile)MVME188_PCNFA;
 		val1 = (cpu_cmmu_strategy[0].inst << 2) | cpu_cmmu_strategy[0].data;
 		*pcnfa = val1;
 		dprintf(DB_CMMU,("m8820x_setup_cmmu_config: 1P64: PCNFA = 0x%x\n", val1));
@@ -622,8 +622,8 @@ void
 m8820x_cmmu_dump_config()
 {
 #ifdef MVME188
-	volatile unsigned long *pcnfa;
-	volatile unsigned long *pcnfb;
+	unsigned long *volatile pcnfa;
+	unsigned long *volatile pcnfb;
 	register int cmmu_num;
 #endif /* MVME188 */
 
@@ -636,8 +636,8 @@ m8820x_cmmu_dump_config()
 #endif /* MVME187 */
 #ifdef MVME188
 	case BRD_188:
-		pcnfa = (volatile unsigned long *)MVME188_PCNFA;
-		pcnfb = (volatile unsigned long *)MVME188_PCNFB;
+		pcnfa = (unsigned long *volatile)MVME188_PCNFA;
+		pcnfb = (unsigned long *volatile)MVME188_PCNFB;
 		DEBUG_MSG("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n", *pcnfa & 0xf, *pcnfb & 0xf);
 		for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
 			DEBUG_MSG("CMMU #%d: %s CMMU for CPU %d:\n Strategy: %s\n %s access addr 0x%08x mask 0x%08x match %s\n",
@@ -664,7 +664,7 @@ m8820x_cmmu_store(mmu, reg, val)
 	int mmu, reg;
 	unsigned val;
 {
-	*(volatile unsigned *)(reg + (char*)(m8820x_cmmu[mmu].cmmu_regs)) = val;
+	*(unsigned *volatile)(reg + (char*)(m8820x_cmmu[mmu].cmmu_regs)) = val;
 }
 
 int 
@@ -678,7 +678,7 @@ unsigned
 m8820x_cmmu_get(mmu, reg)
 	int mmu, reg;
 {
-	return *(volatile unsigned *)(reg + (char*)(m8820x_cmmu[mmu].cmmu_regs));
+	return *(unsigned *volatile)(reg + (char*)(m8820x_cmmu[mmu].cmmu_regs));
 }
 
 /*
@@ -1080,7 +1080,7 @@ m8820x_cmmu_cpu_number()
 void
 m8820x_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 {
-	*(volatile unsigned *)(r + (char*)&REGS(cpu,data)) = x;
+	*(unsigned *volatile)(r + (char*)&REGS(cpu,data)) = x;
 }
 
 /*
@@ -1090,7 +1090,7 @@ m8820x_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 unsigned
 m8820x_cmmu_remote_get(unsigned cpu, unsigned r, unsigned data)
 {
-	return (*(volatile unsigned *)(r + (char*)&REGS(cpu,data)));
+	return (*(unsigned *volatile)(r + (char*)&REGS(cpu,data)));
 }
 #endif 
 

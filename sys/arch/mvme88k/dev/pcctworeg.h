@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctworeg.h,v 1.5 2001/12/22 19:17:51 smurph Exp $ */
+/*	$OpenBSD: pcctworeg.h,v 1.6 2002/01/14 21:34:39 miod Exp $ */
 
 /*
  * Memory map for PCC2 chip found in mvme1x7 boards.
@@ -97,8 +97,8 @@ struct pcctworeg {
 /*
  * Vaddrs for interrupt mask and pri registers
  */
-extern volatile u_char *pcc2intr_mask;
-extern volatile u_char *pcc2intr_ipl;
+extern u_char *volatile pcc2intr_mask;
+extern u_char *volatile pcc2intr_ipl;
 
 /*
  * points to system's PCCTWO. This is not active until the pcctwo0

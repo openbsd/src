@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.19 2001/12/22 18:45:35 smurph Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.20 2002/01/14 21:34:38 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 Steve Murphree, Jr. 
@@ -192,9 +192,9 @@ struct ie_softc {
 	 * pointers to the 3 major control structures
 	 */
 
-	volatile struct ie_sys_conf_ptr *scp;
-	volatile struct ie_int_sys_conf_ptr *iscp;
-	volatile struct ie_sys_ctl_block *scb;
+	struct ie_sys_conf_ptr *volatile scp;
+	struct ie_int_sys_conf_ptr *volatile iscp;
+	struct ie_sys_ctl_block *volatile scb;
 
 	/*
 	 * pointer and size of a block of KVA where the buffers 
@@ -208,13 +208,13 @@ struct ie_softc {
 	 * the actual buffers (recv and xmit)
 	 */
 
-	volatile struct ie_recv_frame_desc *rframes[MXFRAMES];
-	volatile struct ie_recv_buf_desc *rbuffs[MXRXBUF];
-	volatile char *cbuffs[MXRXBUF];
+	struct ie_recv_frame_desc *volatile rframes[MXFRAMES];
+	struct ie_recv_buf_desc *volatile rbuffs[MXRXBUF];
+	char *volatile cbuffs[MXRXBUF];
 	int rfhead, rftail, rbhead, rbtail;
 
-	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
-	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
+	struct ie_xmit_cmd *volatile xmit_cmds[NTXBUF];
+	struct ie_xmit_buf *volatile xmit_buffs[NTXBUF];
 	u_char *xmit_cbuffs[NTXBUF];
 	int xmit_busy;
 	int xmit_free;
@@ -262,7 +262,7 @@ int mc_setup __P((struct ie_softc *, void *));
 void mc_reset __P((struct ie_softc *));
 static __inline int ether_equal __P((u_char *, u_char *));
 static __inline void ie_ack __P((struct ie_softc *, u_int));
-static __inline void ie_setup_config __P((volatile struct ie_config_cmd *,
+static __inline void ie_setup_config __P((struct ie_config_cmd *volatile,
                                           int, int));
 static __inline int check_eh __P((struct ie_softc *, struct ether_header *,
                                   int *));
@@ -276,7 +276,7 @@ void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
 void iestop __P((struct ie_softc *));
 
 #ifdef IEDEBUG
-void print_rbd __P((volatile struct ie_recv_buf_desc *));
+void print_rbd __P((struct ie_recv_buf_desc *volatile));
 
 int in_ierint = 0;
 int in_ietint = 0;
@@ -316,7 +316,7 @@ struct cfdriver ie_cd = {
  */
 static inline void
 ie_setup_config(cmd, promiscuous, manchester)
-	volatile struct ie_config_cmd *cmd;
+	struct ie_config_cmd *volatile cmd;
 	int promiscuous, manchester;
 {
 
@@ -341,7 +341,7 @@ ie_ack(sc, mask)
 	struct ie_softc *sc;
 	u_int mask;
 {
-	volatile struct ie_sys_ctl_block *scb = sc->scb;
+	struct ie_sys_ctl_block *volatile scb = sc->scb;
 
 	command_and_wait(sc, scb->ie_status & mask, 0, 0);
 }
@@ -366,7 +366,7 @@ void
 ie_obreset(sc)
 	struct ie_softc *sc;
 {
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
+	struct ieob *volatile ieo = (struct ieob *) sc->sc_reg;
 	volatile int t;
 	u_long	a;
 
@@ -388,7 +388,7 @@ void
 ie_obattend(sc)
 	struct ie_softc *sc;
 {
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
+	struct ieob *volatile ieo = (struct ieob *) sc->sc_reg;
 
 	ieo->attn = 1;
 }
@@ -412,7 +412,7 @@ ieattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
 	int     pri = ca->ca_ipl;
-	volatile struct ieob *ieo;
+	struct ieob *volatile ieo;
 	vm_offset_t pa;
 
 	sc->reset_596 = ie_obreset;
@@ -422,7 +422,7 @@ ieattach(parent, self, aux)
 	sc->memzero = bzero;
 	sc->sc_msize = etherlen;
 	sc->sc_reg = ca->ca_vaddr;
-	ieo = (volatile struct ieob *) sc->sc_reg;
+	ieo = (struct ieob *volatile) sc->sc_reg;
 
         /* Are we the boot device? */
         if (ca->ca_paddr == bootaddr)
@@ -438,9 +438,9 @@ ieattach(parent, self, aux)
 	/*printf("maddrP %x iobaseV %x\n", sc->sc_maddr, sc->sc_iobase);*/
 
 	(sc->memzero)(sc->sc_maddr, sc->sc_msize);
-	sc->iscp = (volatile struct ie_int_sys_conf_ptr *)
+	sc->iscp = (struct ie_int_sys_conf_ptr *volatile)
 	    sc->sc_maddr; /* @@ location zero */
-	sc->scb = (volatile struct ie_sys_ctl_block *)
+	sc->scb = (struct ie_sys_ctl_block *volatile)
 	    roundup((int)sc->iscp + sizeof(struct ie_int_sys_conf_ptr), 16);
 	sc->scp = (struct ie_sys_conf_ptr *)
 	    roundup((int)sc->scb + sizeof(struct ie_sys_ctl_block), 16);
@@ -595,7 +595,7 @@ void
 ierint(sc)
 	struct ie_softc *sc;
 {
-	volatile struct ie_sys_ctl_block *scb = sc->scb;
+	struct ie_sys_ctl_block *volatile scb = sc->scb;
 	int i, status;
 	static int timesthru = 1024;
 
@@ -1286,8 +1286,8 @@ int
 ie_setupram(sc)
 	struct ie_softc *sc;
 {
-	volatile struct ie_int_sys_conf_ptr *iscp;
-	volatile struct ie_sys_ctl_block *scb;
+	struct ie_int_sys_conf_ptr *volatile iscp;
+	struct ie_sys_ctl_block *volatile scb;
 	int     s;
 
 	s = splnet();
@@ -1372,18 +1372,18 @@ chan_attn_timeout(rock)
  * is null, then pretend that the command is not an action command.
  * If the command pointer is not null, and the command is an action
  * command, wait for 
- * ((volatile struct ie_cmd_common *)pcmd)->ie_cmd_status & MASK 
+ * ((struct ie_cmd_common *volatile)pcmd)->ie_cmd_status & MASK 
  * to become true.  
  */
 int
 command_and_wait(sc, cmd, pcmd, mask)
 	struct ie_softc *sc;
 	int cmd;
-	volatile void *pcmd;
+	void *volatile pcmd;
 	int mask;
 {
-	volatile struct ie_cmd_common *cc = pcmd;
-	volatile struct ie_sys_ctl_block *scb = sc->scb;
+	struct ie_cmd_common *volatile cc = pcmd;
+	struct ie_sys_ctl_block *volatile scb = sc->scb;
 	volatile int timedout = 0;
 #if 0
 	struct timeout chan_tmo;
@@ -1552,12 +1552,12 @@ setup_bufs(sc)
 	 *  step 1a: lay out and zero frame data structures for transmit and recv
 	 */
 	for (n = 0; n < NTXBUF; n++) {
-		sc->xmit_cmds[n] = (volatile struct ie_xmit_cmd *) ptr;
+		sc->xmit_cmds[n] = (struct ie_xmit_cmd *volatile)ptr;
 		ptr = Align(ptr + sizeof(struct ie_xmit_cmd));
 	}
 
 	for (n = 0; n < sc->nframes; n++) {
-		sc->rframes[n] = (volatile struct ie_recv_frame_desc *) ptr;
+		sc->rframes[n] = (struct ie_recv_frame_desc *volatile)ptr;
 		ptr = Align(ptr + sizeof(struct ie_recv_frame_desc));
 	}
 
@@ -1576,12 +1576,12 @@ setup_bufs(sc)
 	 * step 2a: lay out and zero frame buffer structures for xmit and recv
 	 */
 	for (n = 0; n < NTXBUF; n++) {
-		sc->xmit_buffs[n] = (volatile struct ie_xmit_buf *) ptr;
+		sc->xmit_buffs[n] = (struct ie_xmit_buf *volatile)ptr;
 		ptr = Align(ptr + sizeof(struct ie_xmit_buf));
 	}
 
 	for (n = 0; n < sc->nrxbuf; n++) {
-		sc->rbuffs[n] = (volatile struct ie_recv_buf_desc *) ptr;
+		sc->rbuffs[n] = (struct ie_recv_buf_desc *volatile)ptr;
 		ptr = Align(ptr + sizeof(struct ie_recv_buf_desc));
 	}
 
@@ -1645,7 +1645,7 @@ mc_setup(sc, ptr)
 	struct ie_softc *sc;
 	void *ptr;
 {
-	volatile struct ie_mcast_cmd *cmd = ptr;
+	struct ie_mcast_cmd *volatile cmd = ptr;
 
 	cmd->com.ie_cmd_status = 0;
 	cmd->com.ie_cmd_cmd = IE_CMD_MCAST | IE_CMD_LAST;
@@ -1678,7 +1678,7 @@ int
 ieinit(sc)
 	struct ie_softc *sc;
 {
-	volatile struct ie_sys_ctl_block *scb = sc->scb;
+	struct ie_sys_ctl_block *volatile scb = sc->scb;
 	void *ptr;
 
 	ptr = sc->buf_area;
@@ -1700,7 +1700,7 @@ ieinit(sc)
 	 */
 
 	{
-		volatile struct ie_config_cmd *cmd = ptr;
+		struct ie_config_cmd *volatile cmd = ptr;
 
 		scb->ie_command_list = ASWAP(cmd);
 		cmd->com.ie_cmd_status = 0;
@@ -1721,7 +1721,7 @@ ieinit(sc)
 	 * Now send the Individual Address Setup command.
 	 */
 	{
-		volatile struct ie_iasetup_cmd *cmd = ptr;
+		struct ie_iasetup_cmd *volatile cmd = ptr;
 
 		scb->ie_command_list = ASWAP(cmd);
 		cmd->com.ie_cmd_status = 0;
@@ -1898,7 +1898,7 @@ setflag:
 #ifdef IEDEBUG
 void
 print_rbd(rbd)
-	volatile struct ie_recv_buf_desc *rbd;
+	struct ie_recv_buf_desc *volatile rbd;
 {
 
 	printf("RBD at %08lx:\nactual %04x, next %04x, buffer %08x\n"

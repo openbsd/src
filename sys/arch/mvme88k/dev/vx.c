@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.16 2001/12/22 18:45:35 smurph Exp $ */
+/*	$OpenBSD: vx.c,v 1.17 2002/01/14 21:34:39 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -595,7 +595,7 @@ read_wakeup(sc, port)
 	int port;
 {
 	struct read_wakeup_packet rwp;
-	volatile struct vx_info *vxt;
+	struct vx_info *volatile vxt;
 	vxt = &sc->sc_info[port];
 	/* 
 	 * If we already have a read_wakeup paket 
@@ -633,8 +633,8 @@ vxread (dev, uio, flag)
 {
 	int unit, port;
 	struct tty *tp;
-	volatile struct vx_info *vxt;
-	volatile struct vxsoftc *sc;
+	struct vx_info *volatile vxt;
+	struct vxsoftc *volatile sc;
 
 	unit = VX_UNIT(dev);
 	if (unit >= vx_cd.cd_ndevs || 

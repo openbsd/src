@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 2001/12/20 06:07:28 smurph Exp $ */
+/*	$OpenBSD: cpu.h,v 1.17 2002/01/14 21:34:41 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -191,9 +191,9 @@ struct md_p {
 	void (*delayclock_init_func) __P((void)); /* delay clock init function */
 	void (*delay_func) __P((void));           /* delay clock function */
 	void (*interrupt_func) __P((u_int, struct m88100_saved_state *));       /* interrupt func */
-	volatile u_char *intr_mask;
-	volatile u_char *intr_ipl;
-	volatile u_char *intr_src;
+	u_char *volatile intr_mask;
+	u_char *volatile intr_ipl;
+	u_char *volatile intr_src;
 };
 
 extern struct md_p md;

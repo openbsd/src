@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.17 2001/12/22 09:49:39 smurph Exp $ */
+/*	$OpenBSD: clock.c,v 1.18 2002/01/14 21:34:38 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -287,9 +287,9 @@ m188_clockintr(eframe)
 	void *eframe;
 {
 	volatile int tmp;
-	volatile int *dti_stop = (volatile int *)DART_STOPC;
-	volatile int *dti_start = (volatile int *)DART_STARTC;
-        volatile int *ist = (volatile int *)MVME188_IST;
+	int *volatile dti_stop = (int *volatile)DART_STOPC;
+	int *volatile dti_start = (int *volatile)DART_STARTC;
+        int *volatile ist = (int *volatile)MVME188_IST;
 #ifdef DEBUG
 	register unsigned long sp;
 #endif
@@ -315,17 +315,17 @@ m188_clockintr(eframe)
 	
 #if 0
 	/* clear the counter/timer output OP3 while we program the DART */
-	*((volatile int *) DART_OPCR) = 0x00;
+	*((int *volatile) DART_OPCR) = 0x00;
 
 	/* do the stop counter/timer command */
-	tmp = *((volatile int *) DART_STOPC);
+	tmp = *((int *volatile) DART_STOPC);
 
 	/* set counter/timer to counter mode, clock/16 */
-	*((volatile int *) DART_ACR) = 0x30;
+	*((int *volatile) DART_ACR) = 0x30;
 
-	*((volatile int *) DART_CTUR) = counter / 256;	     /* set counter MSB */
-	*((volatile int *) DART_CTLR) = counter % 256;	     /* set counter LSB */
-	*((volatile int *) DART_IVR) = SYSCV_TIMER1;	  /* set interrupt vec */
+	*((int *volatile) DART_CTUR) = counter / 256;	     /* set counter MSB */
+	*((int *volatile) DART_CTLR) = counter % 256;	     /* set counter LSB */
+	*((int *volatile) DART_IVR) = SYSCV_TIMER1;	  /* set interrupt vec */
 #endif 
 	hardclock(eframe);
 #if NBUGTTY > 0
@@ -334,7 +334,7 @@ m188_clockintr(eframe)
 	/* give the start counter/timer command */
 	tmp = *dti_start;
 #if 0
-	*((volatile int *) DART_OPCR) = 0x04;
+	*((int *volatile) DART_OPCR) = 0x04;
 #endif 
 	if (*ist & DTI_BIT) {
 		printf("DTI not clearing!\n");
@@ -374,24 +374,24 @@ m188_timer_init(unsigned period)
 	printf("timer will interrupt every %d usec\n", (int) (counter * 4.34));
 #endif
 	/* clear the counter/timer output OP3 while we program the DART */
-	*((volatile int *) DART_OPCR) = 0x00;
+	*((int *volatile) DART_OPCR) = 0x00;
 
 	/* do the stop counter/timer command */
-	imr = *((volatile int *) DART_STOPC);
+	imr = *((int *volatile) DART_STOPC);
 
 	/* set counter/timer to counter mode, clock/16 */
-	*((volatile int *) DART_ACR) = 0x30;
+	*((int *volatile) DART_ACR) = 0x30;
 
-	*((volatile int *) DART_CTUR) = counter / 256;	    /* set counter MSB */
-	*((volatile int *) DART_CTLR) = counter % 256;	    /* set counter LSB */
-	*((volatile int *) DART_IVR) = SYSCV_TIMER1;	  /* set interrupt vec */
+	*((int *volatile) DART_CTUR) = counter / 256;	    /* set counter MSB */
+	*((int *volatile) DART_CTLR) = counter % 256;	    /* set counter LSB */
+	*((int *volatile) DART_IVR) = SYSCV_TIMER1;	  /* set interrupt vec */
 	
 	/* give the start counter/timer command */
 	/* (yes, this is supposed to be a read) */
-	imr = *((volatile int *) DART_STARTC);
+	imr = *((int *volatile) DART_STARTC);
 
 	/* set the counter/timer output OP3 */
-	*((volatile int *) DART_OPCR) = 0x04;
+	*((int *volatile) DART_OPCR) = 0x04;
 }
 #endif /* NSYSCON */
 
