@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.36 1998/11/24 22:44:17 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.37 1998/11/26 20:58:30 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -405,7 +405,7 @@ sb	CTL0042	#SB AWE64 Value
 sb	CTL0043	#Creative ViBRA16X PnP
 sb	CTL0044	#SB AWE64 Gold
 sb	CTL0045	#SB AWE64 Value
-sb	ESS1868	#
+sb	ESS1868	#ESS ES1868 Plug and Play AudioD
 sb	ESS1869	#ESS ES1869 Plug and Play AudioD
 sb	OPT9310	#OPTi Audio 16 (possibly a wss instead of sb)
 ym	@@@1001 #ALS100+
