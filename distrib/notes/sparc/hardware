@@ -64,13 +64,13 @@ Supported devices {:-include-:}:
 		[note: VME/IPI disks are not supported]
 
 	Audio:
+		sun4c/Classic AMD audio.
 		sun4m (ss4/ss5) CS4231 audio.
-		Sun SBus Expansion Subsystem (SUNW,xbox)
 
 	Miscellaneous devices:
 		Sun floppy disk drive on sun4c machines.
 		Sun keyboard and mouse.
-		sun4c/Classic AMD audio.
+		Sun SBus Expansion Subsystem (SUNW,xbox)
 		Tadpole microcontroller (tctrl)
 		Force FGA5000 SBus/VME bridge
 		Force system configuration registers
