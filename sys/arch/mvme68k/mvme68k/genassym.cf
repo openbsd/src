@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.8 2001/06/27 04:19:17 art Exp $
+#	$OpenBSD: genassym.cf,v 1.9 2001/08/21 00:26:28 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -66,12 +66,16 @@
 
 include <sys/param.h>
 include <sys/buf.h>
-include <sys/map.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
+include <sys/types.h>
 include <sys/user.h>
+
+include <vm/vm.h>
+
+include <uvm/uvm_extern.h>
 
 include <machine/cpu.h>
 include <machine/trap.h>
@@ -81,33 +85,8 @@ include <machine/reg.h>
 include <machine/autoconf.h>
 include <machine/prom.h>
 include <machine/pte.h>
-include <vm/vm.h>
-
-include <uvm/uvm_extern.h>
-
-define	__XXX_BUG_FODDER	0
-
-# CPU options
-ifdef M68020
-define	M68020			1
-endif
-ifdef M68030
-define	M68030			1
-endif
-ifdef M68040
-define	M68040			1
-endif
-ifdef M68060
-define	M68060			1
-endif
-
-# MMU options
-ifdef M68K_MMU_MOTOROLA
-define	M68K_MMU_MOTOROLA	1
-endif
 
 # general constants
-define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	NBPG			NBPG
 define	PGSHIFT			PGSHIFT
@@ -116,16 +95,13 @@ define	USRSTACK		USRSTACK
 # proc fields and values
 define	P_FORW			offsetof(struct proc, p_forw)
 define	P_BACK			offsetof(struct proc, p_back)
-define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	P_ADDR			offsetof(struct proc, p_addr)
 define	P_PRIORITY		offsetof(struct proc, p_priority)
 define	P_STAT			offsetof(struct proc, p_stat)
 define	P_WCHAN			offsetof(struct proc, p_wchan)
-define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 
-define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # interrupt/fault metering
@@ -157,38 +133,20 @@ define	PSL_LOWIPL		PSL_LOWIPL
 define	PSL_HIGHIPL		PSL_HIGHIPL
 define	PSL_USER		PSL_USER
 define	SPL1			PSL_S | PSL_IPL1
-define	SPL2			PSL_S | PSL_IPL2
-define	SPL3			PSL_S | PSL_IPL3
-define	SPL4			PSL_S | PSL_IPL4
-define	SPL5			PSL_S | PSL_IPL5
-define	SPL6			PSL_S | PSL_IPL6
 
 # magic
 define	FC_USERD		FC_USERD
-define	EIOMAPSIZE		EIOMAPSIZE
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR
 define	IC_CLEAR		IC_CLEAR
 define	DC_CLEAR		DC_CLEAR
 define	CACHE60_ON		CACHE60_ON
-define	CACHE60_OFF		CACHE60_OFF
 define	IC60_CUBC		IC60_CUBC
 define	IC60_CABC		IC60_CABC
 
 # pte/ste bits
-define	PG_V			PG_V
-define	PG_NV			PG_NV
-define	PG_RO			PG_RO
-define	PG_RW			PG_RW
-define	PG_CI			PG_CI
-define	PG_PROT			PG_PROT
 define	PG_FRAME		PG_FRAME
-define	SG_V			SG_V
-define	SG_NV			SG_NV
-define	SG_RW			SG_RW
-define	SG_FRAME		SG_FRAME
-define	SG_ISHIFT		SG_ISHIFT
 
 # pcb fields
 define	PCB_PS			offsetof(struct pcb, pcb_ps)
@@ -197,7 +155,6 @@ define	PCB_REGS		offsetof(struct pcb, pcb_regs)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB		sizeof(struct pcb)
-define	SIZEOF_TRAPFRAME	sizeof(struct trapframe)
 
 # exception frame offset/sizes
 define	FR_SP			offsetof(struct frame, f_regs[15])
@@ -206,8 +163,6 @@ define	FR_ADJ			offsetof(struct frame, f_stackadj)
 define	FR_SIZE			sizeof(struct trapframe)
 
 # system calls
-define	SYS_exit		SYS_exit
-define	SYS_execve		SYS_execve
 define	SYS_sigreturn		SYS_sigreturn
 
 # errno
@@ -219,8 +174,6 @@ define	MVMEPROM_BRDID_MODEL	offsetof(struct mvmeprom_brdid, model)
 
 define	NVRAM_147_ETHER		offsetof(struct nvram_147, ether)
 define	NVRAM_147_EMEM		offsetof(struct nvram_147, emem)
-
-define	NVRAM_16X_ETHER		offsetof(struct nvram_16x, conf.ether)
 
 define	INTIOBASE_147		INTIOBASE_147
 define	INTIOBASE_162		INTIOBASE_162
@@ -234,18 +187,15 @@ define	CPU_167			CPU_167
 define	CPU_172			CPU_172
 define	CPU_177			CPU_177
 
-define	MMU_68851		MMU_68851
 define	MMU_68030		MMU_68030
 define	MMU_68040		MMU_68040
 define	MMU_68060		MMU_68060
 
-define	CPU_68020		CPU_68020
 define	CPU_68030		CPU_68030
 define	CPU_68040		CPU_68040
 define	CPU_68060		CPU_68060
 
 define	FPU_68881		FPU_68881
-define	FPU_68882		FPU_68882
 define	FPU_68040		FPU_68040
 define	FPU_68060		FPU_68060
 
