@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.5 1997/07/06 08:02:08 downsj Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.6 1998/03/07 12:41:33 deraadt Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /* 
@@ -448,11 +448,12 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Determine VA aliasing distance if any
 	 */
-	if (RELOC(ectype, int) == EC_VIRT)
+	if (RELOC(ectype, int) == EC_VIRT) {
 		if (RELOC(machineid, int) == HP_320)
 			RELOC(pmap_aliasmask, int) = 0x3fff;	/* 16k */
 		else if (RELOC(machineid, int) == HP_350)
 			RELOC(pmap_aliasmask, int) = 0x7fff;	/* 32k */
+	}
 #endif
 
 	/*

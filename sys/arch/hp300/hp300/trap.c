@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1997/07/13 09:48:01 downsj Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1998/03/07 12:41:34 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.55 1997/07/08 16:56:36 kleink Exp $	*/
 
 /*
@@ -214,6 +214,7 @@ userret(p, fp, oticks, faultaddr, fromtrap)
 	int fromtrap;
 {
 	int sig, s;
+	union sigval sv;
 #ifdef M68040
 	int beenhere = 0;
 
@@ -271,8 +272,8 @@ again:
 		} else if ((sig = writeback(fp, fromtrap))) {
 			beenhere = 1;
 			oticks = p->p_sticks;
-			trapsignal(p, sig, T_MMUFLT, SEGV_MAPERR,
-			    (caddr_t)faultaddr);
+			sv.sival_ptr = (caddr_t)faultaddr;
+			trapsignal(p, sig, T_MMUFLT, SEGV_MAPERR, sv);
 			goto again;
 		}
 	}
@@ -299,6 +300,7 @@ trap(type, code, v, frame)
 	u_int ucode;
 	u_quad_t sticks = 0 /* XXX initializer works around compiler bug */;
 	int typ = 0;
+	union sigval sv;
 
 	cnt.v_trap++;
 	p = curproc;
@@ -714,7 +716,8 @@ trap(type, code, v, frame)
 		break;
 	    }
 	}
-	trapsignal(p, i, ucode, typ, (caddr_t)v);
+	sv.sival_ptr = (caddr_t)v;
+	trapsignal(p, i, ucode, typ, sv);
 	if ((type & T_USER) == 0)
 		return;
 out:
