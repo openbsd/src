@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.199 2002/03/30 06:21:00 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.200 2002/03/31 13:02:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2590,7 +2590,7 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af)
 		/* Finish the IP header */
 		h2->ip_v = 4;
 		h2->ip_hl = sizeof(*h2) >> 2;
-		h2->ip_ttl = 128;
+		h2->ip_ttl = ip_defttl;
 		h2->ip_sum = 0;
 		h2->ip_len = len;
 		h2->ip_off = 0;
