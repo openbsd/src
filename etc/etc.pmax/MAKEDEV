@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.21 1998/01/26 04:19:48 dgregor Exp $
+#	$OpenBSD: MAKEDEV,v 1.22 1998/01/29 15:50:24 graichen Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -54,6 +54,7 @@ case $i in
 
 all)
 	sh MAKEDEV std rz0 rz1 rz2 rz3 rz4 rz5 rz6 tz0 tz1
+	sh MAKEDEV std rz8 rz9 rz10 rz11 rz12 rz13 rz14 tz2 tz3
 	sh MAKEDEV pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 #	sh MAKEDEV tun0 tun1 tun2 tun3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
@@ -142,7 +143,7 @@ rz*|ccd*)
 	ccd*) name=ccd; blk=24; chr=87;;
 	esac
 	case $unit in
-	0|1|2|3|4|5|6)
+	0|1|2|3|4|5|6|8|9|10|11|12|13|14)
 		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
 		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
 		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
