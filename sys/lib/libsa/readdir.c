@@ -1,4 +1,4 @@
-/*	$OpenBSD: readdir.c,v 1.3 1997/07/21 15:37:08 mickey Exp $	*/
+/*	$OpenBSD: readdir.c,v 1.4 1997/07/21 15:43:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -83,7 +83,7 @@ readdir(fd, dest)
 	}
 
 	if (f->f_flags & F_RAW) {
-		errno = EINVAL;
+		errno = EOPNOTSUPP;
 		return (-1);
 	}
 	if ((errno = (f->f_ops->readdir)(f, dest)))
