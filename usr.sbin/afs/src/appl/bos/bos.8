@@ -77,8 +77,9 @@ have several subcommands:
 .Bd -filled -offset indent -compact
 add a new
 .Ar host
-to the CellServDB file that is managled by the
-.Ar server. This make the database server consider
+to the CellServDB on the
+.Ar server Ns .
+This make the database server consider
 .Ar host
 as a peer and will use when they synchronize their databases (the
 database servers) need to be restarted.
@@ -319,9 +320,9 @@ Thet the restart time from
 .Pp
 
 .Sh SEE ALSO
-.Xr arlad 8 ,
-.Xr vos 8 ,
+.Xr fs 1 ,
 .Xr pts 1 ,
-.Xr fs 1
+.Xr vos 8 ,
+.Xr arlad 8
 .Sh BUGS
 Quite a lot of commands are not implemented yet.
