@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.21 2000/10/23 16:33:20 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.22 2000/10/23 19:04:19 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -327,7 +327,7 @@ pchbattach(parent, self, aux)
 					if (tv1.tv_sec)
 						tv1.tv_usec +=
 						    1000000 * tv1.tv_sec;
-					printf(": rng active, %dK/sec",
+					printf(": rng active, %dKb/sec",
 					    8 * 1000000 / tv1.tv_usec);
 
 					timeout_set(&sc->sc_tmo, pchb_rnd, sc);
