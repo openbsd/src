@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.4 1997/01/15 23:40:28 millert Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.5 1997/06/29 07:33:08 denny Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.4 1997/01/15 23:40:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.5 1997/06/29 07:33:08 denny Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ static char rcsid[] = "$OpenBSD: sleep.c,v 1.4 1997/01/15 23:40:28 millert Exp $
 #include <stdlib.h>
 #include <unistd.h>
 #include <locale.h>
+#include <string.h>
+#include <time.h>
 
 void usage __P((void));
 
@@ -60,7 +62,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, secs;
+	int ch;
+	int secs = 0;
+	unsigned char *fp;
+	long nsecs = 0;
+	struct timespec rqtp;
 
 	setlocale(LC_ALL, "");
 
@@ -75,8 +81,25 @@ main(argc, argv)
 	if (argc != 1)
 		usage();
 
-	if ((secs = atoi(*argv)) > 0)
-		(void)sleep(secs);
+	/* Handle fractions of a second */
+	fp = strchr(*argv, '.');
+	if (fp != NULL) {
+		int i;
+
+		*fp++ = '\0';
+		for (i = 100000000; i > 0; i /= 10) {
+			if (*fp == '\0') break;
+			nsecs += (*fp++ - '0') * i;
+		}
+	}
+
+	secs = atoi(*argv);
+
+	rqtp.tv_sec = (time_t) secs;
+	rqtp.tv_nsec = nsecs;
+
+	if ((secs > 0) || (nsecs > 0))
+		(void)nanosleep(&rqtp, NULL);
 	exit(0);
 }
 
