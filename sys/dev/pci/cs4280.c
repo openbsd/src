@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.9 2001/06/12 15:40:30 niklas Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.10 2001/06/18 19:27:17 deraadt Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ int cs4280debug = 0;
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/cs4280reg.h>
-#include <dev/pci/cs4280_image.h>
+#include <dev/microcode/cirruslogic/cs4280_image.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>

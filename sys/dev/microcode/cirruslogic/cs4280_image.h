@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280_image.h,v 1.2 2001/01/26 22:37:49 mickey Exp $	*/
+/*	$OpenBSD: cs4280_image.h,v 1.1 2001/06/18 19:27:19 deraadt Exp $	*/
 /*	$NetBSD: cs4280_image.h,v 1.1 1999/12/13 20:19:24 augustss Exp $	*/
 
 /* This source is based on cwcimage.h in cwcealdr1.zip, the
