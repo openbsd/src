@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi_quirks.c,v 1.5 2003/05/19 00:36:52 nate Exp $	*/
+/*	$OpenBSD: umidi_quirks.c,v 1.6 2004/06/27 19:44:48 deraadt Exp $	*/
 /*	$NetBSD: umidi_quirks.c,v 1.4 2002/06/19 13:55:30 tshiozak Exp $	*/
 
 /*
@@ -166,6 +166,185 @@ UMQ_DEF(ROLAND, ROLAND_UM880N, 0) = {
 	UMQ_TERMINATOR
 };
 
+/*
+ * ROLAND UA-100
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA100, 2, 1, 1) = {
+	/* out */
+	{ 0, 3 },
+	/* in */
+	{ 1, 3 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UA100, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA100, 2),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND UM-4
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM4, 2, 1, 1) = {
+	/* out */
+	{ 0, 4 },
+	/* in */
+	{ 1, 4 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UM4, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM4, 2),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND U-8
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_U8, 2, 1, 1) = {
+	/* out */
+	{ 0, 2 },
+	/* in */
+	{ 1, 2 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_U8, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_U8, 2),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND UM-2
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM2, 2, 1, 1) = {
+	/* out */
+	{ 0, 2 },
+	/* in */
+	{ 1, 2 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UM2, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM2, 2),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND SC-8820
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SC8820, 2, 1, 1) = {
+	/* out */
+	{ 0, 5 }, /* cables 0, 1, 4 only */
+	/* in */
+	{ 1, 5 } /* do. */
+};
+
+UMQ_DEF(ROLAND, ROLAND_SC8820, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SC8820, 2),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND PC-300
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_PC300, 2, 1, 1) = {
+	/* out */
+	{ 0, 1 },
+	/* in */
+	{ 1, 1 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_PC300, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_PC300, 2),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND SK-500
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SK500, 2, 1, 1) = {
+	/* out */
+	{ 0, 5 }, /* cables 0, 1, 4 only */
+	/* in */
+	{ 1, 5 } /* do. */
+};
+
+UMQ_DEF(ROLAND, ROLAND_SK500, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SK500, 2),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND SC-D70
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SCD70, 2, 1, 1) = {
+	/* out */
+	{ 0, 3 },
+	/* in */
+	{ 1, 3 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_SCD70, 2) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SCD70, 2),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND UM-550
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM550, 0, 1, 1) = {
+	/* out */
+	{ 0, 6 },
+	/* in */
+	{ 1, 6 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UM550, 0) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM550, 0),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND SD-20
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SD20, 0, 1, 1) = {
+	/* out */
+	{ 0, 2 },
+	/* in */
+	{ 1, 3 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_SD20, 0) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SD20, 0),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND SD-80
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SD80, 0, 1, 1) = {
+	/* out */
+	{ 0, 4 },
+	/* in */
+	{ 1, 4 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_SD80, 0) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SD80, 0),
+	UMQ_TERMINATOR
+};
+
+/*
+ * ROLAND UA-700
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA700, 3, 1, 1) = {
+	/* out */
+	{ 0, 2 },
+	/* in */
+	{ 1, 2 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UA700, 3) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA700, 3),
+	UMQ_TERMINATOR
+};
 
 
 /*
@@ -178,6 +357,18 @@ struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(ROLAND, ROLAND_SC8850, 2),
 	UMQ_REG(ROLAND, ROLAND_SD90, 2),
 	UMQ_REG(ROLAND, ROLAND_UM880N, 0),
+	UMQ_REG(ROLAND, ROLAND_UA100, 2),
+	UMQ_REG(ROLAND, ROLAND_UM4, 2),
+	UMQ_REG(ROLAND, ROLAND_U8, 2),
+	UMQ_REG(ROLAND, ROLAND_UM2, 2),
+	UMQ_REG(ROLAND, ROLAND_SC8820, 2),
+	UMQ_REG(ROLAND, ROLAND_PC300, 2),
+	UMQ_REG(ROLAND, ROLAND_SK500, 2),
+	UMQ_REG(ROLAND, ROLAND_SCD70, 2),
+	UMQ_REG(ROLAND, ROLAND_UM550, 0),
+	UMQ_REG(ROLAND, ROLAND_SD20, 0),
+	UMQ_REG(ROLAND, ROLAND_SD80, 0),
+	UMQ_REG(ROLAND, ROLAND_UA700, 3),
 	UMQ_TERMINATOR
 };
 

@@ -1,11 +1,10 @@
-/*	$OpenBSD: umidireg.h,v 1.3 2002/06/11 07:49:57 nate Exp $	*/
-/*	$NetBSD: umidireg.h,v 1.2 2001/05/28 20:52:06 tshiozak Exp $	*/
+/*	$NetBSD: umidireg.h,v 1.3 2003/12/04 13:57:31 keihan Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI (tshiozak@netbsd.org).
+ * by Takuya SHIOZAKI (tshiozak@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

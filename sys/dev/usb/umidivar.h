@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidivar.h,v 1.7 2002/11/11 02:32:32 nate Exp $ */
+/*	$OpenBSD: umidivar.h,v 1.8 2004/06/27 19:44:48 deraadt Exp $ */
 /*	$NetBSD: umidivar.h,v 1.5 2002/09/12 21:00:42 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,22 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* pending MUX-MIDI packet */
-typedef enum {
-	PS_EXCL_0=-2,	/* put, and next state is PS_EXCL_0 */
-	PS_END=-1,	/* put, and next state is PS_INITIAL */
-	PS_INITIAL=0,	/* 0>= : not put, and state is keeped */
-	PS_NORMAL_1OF3=1,
-	PS_NORMAL_2OF3=2,
-	PS_NORMAL_1OF2=3,
-	PS_EXCL_1=4,
-	PS_EXCL_2=5
-} packet_state_t;
-
 #define UMIDI_PACKET_SIZE 4
 struct umidi_packet {
-	char		buffer[UMIDI_PACKET_SIZE];
-	packet_state_t	state;
+	unsigned	status;
+	unsigned	index;
+	unsigned char	buffer[UMIDI_PACKET_SIZE];
 };
 
 /*
@@ -88,7 +77,7 @@ struct umidi_jack {
 	union {
 		struct {
 			void			(*intr)(void *);
-			LIST_ENTRY(umidi_jack)	queue_entry;
+			TAILQ_ENTRY(umidi_jack)	queue_entry;
 		} out;
 		struct {
 			void			(*intr)(void *, int);
@@ -104,12 +93,12 @@ struct umidi_endpoint {
 	int			addr;
 	usbd_pipe_handle	pipe;
 	usbd_xfer_handle	xfer;
-	char			*buffer;
+	unsigned char		*buffer;
+	unsigned		packetsize;
 	int			num_open;
 	int			num_jacks;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
-	LIST_HEAD(, umidi_jack)	queue_head;
-	struct umidi_jack	*queue_tail;
+	TAILQ_HEAD(, umidi_jack) queue_head;
 };
 
 /* software context */
