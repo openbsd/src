@@ -1,8 +1,9 @@
-/*	$OpenBSD: dhclient.c,v 1.11 2004/02/24 11:35:39 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.12 2004/02/24 12:34:26 henning Exp $	*/
 
 /* DHCP Client. */
 
 /*
+ * Copyright 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
  * The Internet Software Consortium.    All rights reserved.
  *
@@ -103,7 +104,7 @@ int save_scripts;
 int onetry = 0;
 int unknown_ok = 1;
 
-static void usage(char *);
+void	usage(void);
 
 static int check_option(struct client_lease *l, int option);
 
@@ -217,65 +218,52 @@ die:
 int
 main(int argc, char *argv[])
 {
-	int i, fd;
-	struct servent *ent;
-	struct interface_info *ip = NULL;
-	int seed;
-	int quiet = 0;
-	char *s;
-
-	s = strrchr(argv[0], '/');
-	if (!s)
-		s = argv[0];
-	else
-		s++;
+	extern char		*__progname;
+	struct servent		*ent;
+	struct interface_info	*ip = NULL;
+	int			 ch, fd, seed, quiet = 0;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
-	openlog(s, LOG_NDELAY, DHCPD_LOG_FACILITY);
+	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "-p")) {
-			if (++i == argc)
-				usage(s);
-			local_port = htons(atoi(argv[i]));
-			debug("binding to user-specified port %d",
-			    ntohs(local_port));
-		} else if (!strcmp(argv[i], "-d")) {
+	while ((ch = getopt(argc, argv, "c:dDl:qu")) != -1)
+		switch (ch) {
+		case 'c':
+			path_dhclient_conf = optarg;
+			break;
+		case 'd':
 			no_daemon = 1;
-		} else if (!strcmp(argv[i], "-D")) {
+			break;
+		case 'D':
 			save_scripts = 1;
-		} else if (!strcmp(argv[i], "-cf")) {
-			if (++i == argc)
-				usage(s);
-			path_dhclient_conf = argv[i];
-		} else if (!strcmp(argv[i], "-pf")) {
-			if (++i == argc)
-				usage(s);
-			path_dhclient_pid = argv[i];
-		} else if (!strcmp(argv[i], "-lf")) {
-			if (++i == argc)
-				usage(s);
-			path_dhclient_db = argv[i];
-		} else if (!strcmp(argv[i], "-q")) {
+			break;
+		case 'l':
+			path_dhclient_db = optarg;
+			break;
+		case 'q':
 			quiet = 1;
 			quiet_interface_discovery = 1;
-		} else if (!strcmp(argv[i], "-u")) {
+			break;
+		case 'u':
 			unknown_ok = 0;
-		} else if (!strcmp(argv[i], "-1")) {
-			onetry = 1;
-		} else if (argv[i][0] == '-') {
-			usage(s);
-		} else {
-			if ((ip = calloc(1, sizeof(struct interface_info))) ==
-			    NULL)
-				error("calloc");
-			strlcpy(ip->name, argv[i], IFNAMSIZ);
-			ip->flags = INTERFACE_REQUESTED;
-			interfaces_requested = 1;
-			interfaces = ip;
+			break;
+		default:
+			usage();
 		}
-	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
+
+	if ((ip = calloc(1, sizeof(struct interface_info))) == NULL)
+		error("calloc");
+	strlcpy(ip->name, argv[0], IFNAMSIZ);
+	ip->flags = INTERFACE_REQUESTED;
+	interfaces_requested = 1;
+	interfaces = ip;
 
 	if (quiet)
 		log_perror = 0;
@@ -365,11 +353,14 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-static void
-usage(char *appname)
+void
+usage(void)
 {
-	warn("Usage: %s [-c1u] [-p <port>] [-lf lease-file]", appname);
-	error("       [-pf pidfile] [interface]");
+	extern char	*__progname;
+
+	fprintf(stderr, "usage: %s [-dDqu] ", __progname);
+	fprintf(stderr, "[-c conffile] [-l leasefile] interface\n");
+	exit(1);
 }
 
 void
