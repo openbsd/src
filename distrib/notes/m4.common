@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.24 2001/10/10 22:15:03 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.25 2001/10/10 23:58:27 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -84,10 +84,10 @@ dnl are available.
 dnl
 define({:-OpenBSDcomp-:},
 {:-	comp{:--:}OSrev	 The OpenBSD/MACHINE Compiler tools.  All of the tools
-		 relating to C, C++, and FORTRAN (yes, there are two!) are
-		 supported.  This set includes the system {:-include-:} files
-		 (/usr/{:-include-:}), the linker, the compiler tool chain,
-		 and the various system libraries{:--:}ifelse(X$3,Xshared,{:- (except the shared
+		 relating to C, C++, and fortran are supported. This set
+		 includes the system {:-include-:} files (/usr/{:-include-:}), the
+		 linker, the compiler tool chain, and the various system
+		libraries{:--:}ifelse(X$3,Xshared,{:- (except the shared
 		 libraries, which are included as part of the base set).-:},.)
 		 This set also includes the manual pages for all
 		 of the utilities it contains, as well as the system
