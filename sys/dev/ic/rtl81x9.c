@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.32 2004/09/30 17:41:58 jason Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.33 2004/09/30 17:59:23 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -256,7 +256,7 @@ void rl_read_eeprom(sc, dest, off, addr_len, cnt, swap)
 		rl_eeprom_getword(sc, off + i, addr_len, &word);
 		ptr = (u_int16_t *)(dest + (i * 2));
 		if (swap)
-			*ptr = ntohs(word);
+			*ptr = letoh16(word);
 		else
 			*ptr = word;
 	}
@@ -1224,7 +1224,7 @@ rl_attach(sc)
 	 * Get station address.
 	 */
 	rl_read_eeprom(sc, (caddr_t)sc->sc_arpcom.ac_enaddr, RL_EE_EADDR,
-	    addr_len, 3, 0);
+	    addr_len, 3, 1);
 
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
