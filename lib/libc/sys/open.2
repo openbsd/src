@@ -246,11 +246,15 @@ and
 were specified and the file exists.
 .It Bq Er EOPNOTSUPP
 An attempt was made to open a socket (not currently implemented).
+.It Bq Er EAGAIN
+O_NONBLOCK and either O_EXLOCK or O_SHLOCK are set and the file
+is already locked.
 .El
 .Sh SEE ALSO
 .Xr chmod 2 ,
 .Xr close 2 ,
 .Xr dup 2 ,
+.Xr flock 2 ,
 .Xr getdtablesize 2 ,
 .Xr lseek 2 ,
 .Xr read 2 ,
