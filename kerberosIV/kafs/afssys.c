@@ -1,4 +1,4 @@
-/*	$OpenBSD: afssys.c,v 1.7 1998/09/23 21:25:39 art Exp $	*/
+/*	$OpenBSD: afssys.c,v 1.8 1999/02/15 02:57:04 art Exp $	*/
 /*	$KTH: afssys.c,v 1.57 1998/05/09 17:19:03 joda Exp $	*/
 
 /*
@@ -85,5 +85,9 @@ k_setpag(void)
 int
 k_hasafs(void)
 {
-    return xfspioctl(AFSCALL_PROBE, NULL, 0, NULL, 0) == 0;
+    struct ViceIoctl parms;
+
+    bzero(&parms, sizeof(struct ViceIoctl));
+
+    return k_pioctl(NULL, VIOCSETTOK, &parms, 0);
 }
