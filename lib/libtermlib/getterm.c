@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.2 1996/06/18 20:29:40 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.2 1996/06/18 20:29:40 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -43,6 +43,7 @@ static char rcsid[] = "$OpenBSD: getterm.c,v 1.1.1.1 1996/05/31 05:40:02 tholo E
 #include "pathnames.h"
 
 #define	PVECSIZ	32
+#define	MAXSIZE	256	/* Maximum allowed size of a terminal name field */
 
 TERMINAL *cur_term;
 char *_ti_buf;
@@ -50,6 +51,7 @@ char *UP;
 char *BC;
 char PC;
 int LINES, COLS, TABSIZE;
+char ttytype[MAXSIZE];
 
 static int _ti_use_env = TRUE;
 
@@ -139,9 +141,15 @@ _ti_getterm(name)
     if (i == 0) {
 	char *s;
 
-	if ((s = home = strchr(dummy, ':')) == NULL)
+	if ((s = home = strchr(dummy, ':')) == NULL) {
 	    cur_term->name = strdup(name);
+	    strncpy(ttytype, name, MAXSIZE - 1);
+	    ttytype[MAXSIZE - 1] = '\0';
+	}
 	else {
+	    strncpy(ttytype, dummy + (dummy[2] == '|' ? 2 : 0),
+		    MIN(MAXSIZE - 1, s - dummy));
+	    ttytype[MAXSIZE - 1] = '\0';
 	    *home = '\0';
 	    while (s > dummy && *s != '|')
 		s--;

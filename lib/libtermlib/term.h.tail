@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: term.h.tail,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: term.h.tail,v 1.2 1996/06/18 20:29:41 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -48,6 +48,7 @@ extern int	 LINES;
 extern int	 COLS;
 extern int	 TABSIZE;
 extern TERMINAL	*cur_term;
+extern char	 ttytype[];
 
 int	 def_prog_mode __P((void));
 int	 def_shell_mode __P((void));
