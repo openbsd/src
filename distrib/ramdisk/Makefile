@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2001/09/04 22:25:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2001/10/08 00:18:14 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -23,6 +23,7 @@ CRUNCHGENOPTS?=
 KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../miniroot
 STRIP?=		strip
+RDSETROOT?=	rdsetroot
 
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 MTREE=		${.CURDIR}/mtree.conf
@@ -79,16 +80,16 @@ bsd:
 #	    make depend && make clean && make
 	cp ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/bsd bsd
 
-bsd.rd:	bsd ${IMAGE} rdsetroot
+bsd.rd:	bsd ${IMAGE} ${RDSETROOT}
 	cp bsd bsd.rd
-	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
+	${.OBJDIR}/${RDSETROOT} bsd.rd < ${IMAGE}
 	${STRIP} bsd.rd
 
 bsd.gz:	bsd.rd
 	${GZIP} ${GZIPFLAGS} < bsd.rd > bsd.gz
 
-rdsetroot: ${.CURDIR}/../common/rdsetroot.c
-	${HOSTCC} ${HOSTCCFLAGS} -o rdsetroot ${.CURDIR}/../common/rdsetroot.c
+${RDSETROOT}: ${.CURDIR}/../common/${RDSETROOT}.c
+	${HOSTCC} ${HOSTCCFLAGS} -o ${RDSETROOT} ${.CURDIR}/../common/$(RDSETROOT}.c
 
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
