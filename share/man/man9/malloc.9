@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.30 2004/01/14 19:34:05 grange Exp $
+.\"	$OpenBSD: malloc.9,v 1.31 2005/03/30 23:25:59 pedro Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -291,6 +291,12 @@ NTFS resident data.
 NTFS decompression temporary storage.
 .It Dv M_NTFSRUN
 NTFS vrun storage.
+.It Dv M_UDFMOUNT
+UDF mount structures.
+.It Dv M_UDFFENTRY
+UDF file entries.
+.It Dv M_UDFFID
+UDF file ids.
 .El
 .Pp
 Statistics based on the
