@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.23 2001/11/22 11:10:45 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.24 2001/12/03 16:17:17 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -89,8 +89,7 @@ ui_init (void)
       if (mkfifo (ui_fifo, 0600) == -1)
 	log_fatal ("ui_init: mkfifo (\"%s\", 0600) failed", ui_fifo);
 
-      /* XXX Is O_RDWR needed on some OSes?  Photurisd seems to imply that.  */
-      ui_socket = open (ui_fifo, O_RDONLY | O_NONBLOCK, 0);
+      ui_socket = open (ui_fifo, O_RDWR | O_NONBLOCK, 0);
       if (ui_socket == -1)
 	log_fatal ("ui_init: open (\"%s\", O_RDONLY | O_NONBLOCK, 0) failed",
 		   ui_fifo);
