@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1997/01/15 23:43:17 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1997/06/16 19:10:15 kstailey Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1997/01/15 23:43:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 1997/06/16 19:10:15 kstailey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,7 +68,7 @@ static struct nlist namelist[] = {
 	{ "_stathz" },
 	{ "" }
 };
-static int     dellave;
+static double     dellave;
 
 kvm_t *kd;
 char	*memf = NULL;
@@ -239,7 +239,7 @@ display(signo)
 			c = '>';
 			dellave = -dellave;
 		}
-		if (dellave < 0.1)
+		if (dellave < 0.05)
 			c = '|';
 		dellave = avenrun[0];
 		wmove(wload, 0, 0); wclrtoeol(wload);
