@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.7 2004/12/15 01:07:10 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.8 2004/12/21 02:12:51 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -114,11 +114,10 @@ sub new
 {
 	my ($class, $pkgname) = @_;
 	my $f = installed_info($pkgname).$class->filename();
-	if (exists $cache->{$f}) {
-		return $cache->{$f};
-	} else {
-		return bless { filename => $f }, $class;
+	if (!exists $cache->{$f}) {
+		return $cache->{$f} = bless { filename => $f }, $class;
 	}
+	return $cache->{$f};
 }
 
 package OpenBSD::RequiredBy;
