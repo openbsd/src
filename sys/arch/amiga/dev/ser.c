@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.27 1995/04/23 18:24:40 chopps Exp $	*/
+/*	$NetBSD: ser.c,v 1.27.2.1 1995/10/20 11:01:14 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -67,9 +67,14 @@
 void serattach __P((struct device *, struct device *, void *));
 int sermatch __P((struct device *, struct cfdata *, void *));
 
+struct ser_softc {
+	struct device dev;
+	struct tty *ser_tty;
+};
+
 struct cfdriver sercd = {
 	NULL, "ser", (cfmatch_t)sermatch, serattach, DV_TTY,
-	sizeof(struct device), NULL, 0 };
+	sizeof(struct ser_softc), NULL, 0 };
 
 #ifndef SEROBUF_SIZE
 #define SEROBUF_SIZE 32
@@ -248,7 +253,8 @@ seropen(dev, flag, mode, p)
 	if (ser_tty[unit]) 
 		tp = ser_tty[unit];
 	else
-		tp = ser_tty[unit] = ttymalloc();
+		tp = ((struct ser_softc *)sercd.cd_devs[unit])->ser_tty =
+		    ser_tty[unit] =  ttymalloc();
 
 	tp->t_oproc = (void (*) (struct tty *)) serstart;
 	tp->t_param = serparam;

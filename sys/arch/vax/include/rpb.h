@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.1 1995/06/05 17:17:59 ragge Exp $ */
+/*	$NetBSD: rpb.h,v 1.2 1995/10/20 13:47:27 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -97,4 +97,6 @@ struct rpb {		/* size		description */
 	long	vmb_revision;	/* 4  VMB revision label */
 };
 
+#ifdef _KERNEL
 extern struct rpb rpb;
+#endif

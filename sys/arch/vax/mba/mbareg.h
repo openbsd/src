@@ -1,4 +1,4 @@
-/*	$NetBSD: mbareg.h,v 1.1 1995/02/13 00:44:03 ragge Exp $ */
+/*	$NetBSD: mbareg.h,v 1.2 1995/10/20 13:43:44 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -30,7 +30,14 @@
  */
 
 /* mbareg.h - 940320/ragge */
-#include "vax/mba/hpreg.h"
+
+struct mba_device {
+	u_int	pad1;
+	u_int	md_ds;		/* unit status */
+	u_int	pad2[4];
+	u_int	md_dt;		/* unit type */
+	u_int	pad3[25];
+};
 
 struct mba_regs {
 	u_int	mba_csr;
@@ -42,7 +49,7 @@ struct mba_regs {
 	u_int	mba_smr;
 	u_int	mba_car;
 	u_int	utrymme[248];
-	struct	hp_drv hp_drv[8];
+	struct	mba_device mba_md[8];	/* unit specific regs */
 	u_int	mba_map[256];
 };
 
@@ -78,3 +85,17 @@ struct mba_regs {
 #define MBASR_ERR_STAT	0x8		/* Error status */
 #define	MBASR_NRSTAT	0x2		/* No Response status */
 
+/* Definitions in mba_device md_ds */
+#define	MBADS_DPR	0x100		/* Unit present */
+
+/* Definitions in mba_device md_dt */
+#define	MBADT_RP04	0x10
+#define MBADT_RP05	0x11
+#define MBADT_RP06	0x12
+#define MBADT_RP07	0x22
+#define MBADT_RM02	0x15
+#define MBADT_RM03	0x14
+#define MBADT_RM05	0x17
+#define MBADT_RM80	0x16
+#define	MBADT_DRQ	0x800		/* Dual ported */
+#define	MBADT_MOH	0x2000		/* Moving head device */

@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.4 1995/07/05 08:22:21 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.5 1995/10/20 12:55:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -32,7 +32,8 @@
 
  /* All bugs are subject to removal without further notice */
 
-#if !defined(_VAX_MACROS_H_)&&!defined(ASSEMBLER)&&defined(_VAX_INLINE_)
+#if !defined(_VAX_MACROS_H_) && (defined(STANDALONE) || \
+	(!defined(ASSEMBLER) && defined(_VAX_INLINE_)))
 #define	_VAX_MACROS_H_
 
 /* Here general macros are supposed to be stored */

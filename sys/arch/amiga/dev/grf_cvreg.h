@@ -1,3 +1,5 @@
+/*	$NetBSD: grf_cvreg.h,v 1.1.2.1 1995/10/21 15:15:44 chopps Exp $	*/
+
 /*
  * Copyright (c) 1995 Michael Teske
  * All rights reserved.

@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.7.2.1 1995/10/17 00:19:13 phil Exp $
+#	$NetBSD: Makefile,v 1.7.2.2 1995/10/24 19:23:09 phil Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
 #DESTDIR=
 STANDDIR=${DESTDIR}/stand
-# load at 0x400000 - 18 * 1024 - 0x10000
+# load at 0x400000 - 30 * 1024 - 0x10000
 # that way the boot code will be at the correct
 # address if the floppy image is started from memory
 # NOTE: alloc() function takes memory after _end
-RELOC=	3EB800
+RELOC=	3E8800
 
 CONS= -DSCNCONSOLE
 DEFS= -DSTANDALONE ${CONS}

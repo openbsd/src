@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.26 1995/09/19 23:34:06 thorpej Exp $
+#	$NetBSD: Makefile.hp300,v 1.26.2.2 1995/10/22 03:41:15 thorpej Exp $
 
 #	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
@@ -36,7 +36,7 @@ HP300=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dhp300 -DFPCOPROC
-CFLAGS=	-O6 -Werror -fno-builtin ${COPTS}
+CFLAGS=	-O6 -Werror ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -138,7 +138,7 @@ assym.s: Makefile
 assym.s: genassym
 	./genassym >assym.s
 
-genassym: ${HP300}/hp300/genassym.c
+genassym: ${HP300}/hp300/genassym.c Makefile
 	${CC} ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Dhp300 -o genassym \
 	    ${HP300}/hp300/genassym.c
 

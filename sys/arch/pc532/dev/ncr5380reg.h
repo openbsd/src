@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.3 1995/09/26 20:16:13 phil Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.3.2.1 1995/10/19 01:33:11 phil Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -234,7 +234,7 @@ static int  wait_req_false __P((void));
 static int  scsi_select __P((SC_REQ *, int));
 static int  handle_message __P((SC_REQ *, u_int));
 static void ack_message __P((void));
-static void nack_message __P((SC_REQ *));
+static void nack_message __P((SC_REQ *, u_char));
 static int  information_transfer __P((void));
 static void reselect __P((struct ncr_softc *));
 static int  dma_ready __P((void));

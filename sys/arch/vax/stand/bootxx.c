@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.3 1995/09/16 13:01:06 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.4 1995/10/20 13:35:43 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -48,6 +48,7 @@
 #include "../include/sid.h"
 #include "../include/mtpr.h"
 #include "../include/reg.h"
+#include "../include/rpb.h"
 
 #define NRSP 0 /* Kludge */
 #define NCMD 0 /* Kludge */
@@ -93,7 +94,7 @@ main()
                 is_mvax = 1;
                 cpu_sie = *((int *) 0x20040004) >> 24;
                 cpu_type |= cpu_sie;
-		rpb = bootregs[11];
+		rpb = (struct rpb *)bootregs[11];
 		bootdev = rpb->devtyp;
 
                 break;
@@ -275,7 +276,7 @@ devopen(f, fname, file)
 	 * but it doesn't hurt to always get it.
 	 */
 	if (!is_tmscp) {
-		msg = getdisklabel(LABELOFFSET + RELOC, &lp);
+		msg = getdisklabel((void *)LABELOFFSET + RELOC, &lp);
 		if (msg) {
 			printf("getdisklabel: %s\n", msg);
 		}
@@ -321,7 +322,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 		case 17: /* MSCP */
 			uda.uda_cmd.mscp_seq.seq_lbn = dblk;
 			uda.uda_cmd.mscp_seq.seq_bytecount = size;
-			uda.uda_cmd.mscp_seq.seq_buffer = buf;
+			uda.uda_cmd.mscp_seq.seq_buffer = (int)buf;
 			uda.uda_cmd.mscp_unit = rpb->unit;
 			command(M_OP_READ, 0);
 			break;
@@ -340,7 +341,8 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 			for (i = 0 ; i < size/512 ; i++) {
 				uda.uda_cmd.mscp_seq.seq_lbn = 1;
 				uda.uda_cmd.mscp_seq.seq_bytecount = 512;
-				uda.uda_cmd.mscp_seq.seq_buffer = buf + i * 512;
+				uda.uda_cmd.mscp_seq.seq_buffer =
+				    (int)buf + i * 512;
 				uda.uda_cmd.mscp_unit = rpb->unit;
 				command(M_OP_READ, 0);
 			}

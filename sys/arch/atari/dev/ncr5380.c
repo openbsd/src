@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.11 1995/10/08 13:34:23 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.11.2.1 1995/10/19 09:46:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -1189,6 +1189,7 @@ struct ncr_softc *sc;
 	SET_5380_REG(NCR5380_ICOM, SC_A_BSY);
 	len = 1000;
 	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) && (len > 0)) {
+#ifdef notyet /* LWP: Should be looked after */
 		if(!GET_5380_REG(NCR5380_DATA)) {
 			/*
 			 * We stepped into the reselection timeout....
@@ -1196,6 +1197,7 @@ struct ncr_softc *sc;
 			SET_5380_REG(NCR5380_ICOM, 0);
 			return;
 		}
+#endif /* notyet */
 		delay(1);
 		len--;
 	}

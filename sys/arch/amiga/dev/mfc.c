@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.8 1995/10/09 15:20:33 chopps Exp $ */
+/*	$NetBSD: mfc.c,v 1.8.2.1 1995/10/20 11:01:12 chopps Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -155,12 +155,14 @@ struct mfcs_softc {
 	struct	duart_regs *sc_duart;
 	struct	mfc_regs *sc_regs;
 	struct	mfc_softc *sc_mfc;
+	int	swflags;
 	long	flags;			/* XXX */
 #define CT_USED	1			/* CT in use */
 	u_short	*rptr, *wptr, incnt, ovfl;
 	u_short	inbuf[SERIBUF_SIZE];
 	char	*ptr, *end;
 	char	outbuf[SEROBUF_SIZE];
+	struct vbl_node vbl_node;
 };
 #endif
 
@@ -208,10 +210,7 @@ struct cfdriver mfcpcd = {
 int	mfcsstart(), mfcsparam(), mfcshwiflow();
 int	mfcs_active;
 int	mfcsdefaultrate = 38400 /*TTYDEF_SPEED*/;
-int	mfcsswflags[NMFCS];
-#define SWFLAGS(dev) (mfcsswflags[dev & 31] | (((dev) & 0x80) == 0 ? TIOCFLAG_SOFTCAR : 0))
-
-struct	vbl_node mfcs_vbl_node[NMFCS];
+#define SWFLAGS(dev) (sc->swflags | (((dev) & 0x80) == 0 ? TIOCFLAG_SOFTCAR : 0))
 
 #ifdef notyet
 /*
@@ -425,9 +424,9 @@ mfcsattach(pdp, dp, auxp)
 	/*
 	 * should have only one vbl routine to handle all ports?
 	 */
-	mfcs_vbl_node[unit].function = (void (*) (void *)) mfcsmint;
-	mfcs_vbl_node[unit].data = (void *) unit;
-	add_vbl_function(&mfcs_vbl_node[unit], 1, (void *) unit);
+	sc->vbl_node.function = (void (*) (void *)) mfcsmint;
+	sc->vbl_node.data = (void *) unit;
+	add_vbl_function(&sc->vbl_node, 1, (void *) unit);
 }
 
 /*
@@ -488,11 +487,11 @@ mfcsopen(dev, flag, mode, p)
 		/*
 		 * do these all the time
 		 */
-		if (mfcsswflags[unit] & TIOCFLAG_CLOCAL)
+		if (sc->swflags & TIOCFLAG_CLOCAL)
 			tp->t_cflag |= CLOCAL;
-		if (mfcsswflags[unit] & TIOCFLAG_CRTSCTS)
+		if (sc->swflags & TIOCFLAG_CRTSCTS)
 			tp->t_cflag |= CRTSCTS;
-		if (mfcsswflags[unit] & TIOCFLAG_MDMBUF)
+		if (sc->swflags & TIOCFLAG_MDMBUF)
 			tp->t_cflag |= MDMBUF;
 		mfcsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
@@ -579,7 +578,7 @@ mfcsclose(dev, flag, mode, p)
 	ttyclose(tp);
 #if not_yet
 	if (tp != &mfcs_cons) {
-		remove_vbl_function(&mfcs_vbl_node[unit]);
+		remove_vbl_function(&sc->vbl_node);
 		ttyfree(tp);
 		sc->sc_tty = (struct tty *) NULL;
 	}
@@ -686,8 +685,8 @@ mfcsioctl(dev, cmd, data, flag, p)
 		if (error != 0)
 			return(EPERM);
 
-		mfcsswflags[unit] = *(int *)data;
-                mfcsswflags[unit] &= /* only allow valid flags */
+		sc->swflags = *(int *)data;
+                sc->swflags &= /* only allow valid flags */
                   (TIOCFLAG_SOFTCAR | TIOCFLAG_CLOCAL | TIOCFLAG_CRTSCTS);
 		/* XXXX need to change duart parameters? */
 		break;

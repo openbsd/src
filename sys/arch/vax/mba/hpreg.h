@@ -1,4 +1,4 @@
-/*	$NetBSD: hpreg.h,v 1.2 1995/06/16 15:20:11 ragge Exp $ */
+/*	$NetBSD: hpreg.h,v 1.3 1995/10/20 13:43:43 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -55,10 +55,24 @@ struct hp_regs {
 
 #define	hp_drv	hp_regs
 
-#define	HPCS_PA		0x13	/* Pack acknowledge */
-#define	HPCS_SEEK	0x5
-#define	HPCS_READ	0x39
-#define HPCS_DVA       0x800   /* Drive avail, in dual-port config */
+#define HPCS_DVA	4000	/* Drive avail, in dual-port config */
+#define HPCS_WRITE	061	/* Write data */
+#define HPCS_WCHECK	051	/* Write check data */
+#define HPCS_WHEAD	063	/* Write header and data */
+#define HPCS_WCHEAD	053	/* Write check header and data */
+#define	HPCS_READ	071	/* Read data */
+#define HPCS_RHEAD	073	/* Read header and data */
+#define	HPCS_SEEK	005	/* Just seek */
+#define HPCS_RECAL	007	/* Recalibrate */
+#define HPCS_RTC	017	/* Return to centerline */
+#define HPCS_OFFSET	015	/* Offset */
+#define HPCS_SEARCH	031	/* Search */
+#define HPCS_UNLOAD	003	/* Unload pack (removable) */
+#define HPCS_RELEASE	013	/* Release massbuss port */
+#define HPCS_RPS	021	/* Read-in preset */
+#define	HPCS_PA		023	/* Pack acknowledge */
+#define HPCS_DC		011	/* Drive clear */
+
 
 #define HPDS_VV         0x40    /* Volume valid, not changed */
 #define HPDS_DRY        0x80    /* Drive ready to accept commands */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.7 1995/09/23 20:22:01 leo Exp $
+#	$NetBSD: Makefile.atari,v 1.7.2.1 1995/10/22 21:12:22 leo Exp $
 #
 # Makefile for NetBSD Atari-TT
 #
@@ -33,7 +33,7 @@ ATARI=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys 
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Datari
-CFLAGS=	-O2 -Werror -fno-builtin -mc68020 -msoft-float ${COPTS}
+CFLAGS=	-O2 -Werror -mc68020 -msoft-float ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"

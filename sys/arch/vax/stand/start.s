@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.4 1995/09/16 16:20:21 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.5 1995/10/20 13:35:41 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,7 +43,6 @@
 #define ASSEMBLER
 #include "../include/mtpr.h"
 #include "../include/asm.h"		
-#include "bootdefs.h"
 
 _start:	.globl _start		# this is the symbolic name for the start
 				# of code to be relocated. We can use this

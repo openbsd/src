@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.7.2.1 1995/10/12 08:20:14 leo Exp $
+#	$NetBSD: GENERIC,v 1.7.2.2 1995/10/22 21:17:59 leo Exp $
 #
 # Generic atari
 #
@@ -83,7 +83,7 @@ options		GENERIC			# Mini-root boot support
 # Atari specific options
 #
 #options	KFONT_8x8		# Use 8x8 font instead of 8x16
-#options	FPU_EMULATE		# Floating point emulation
+options		FPU_EMULATE		# Floating point emulation
 options		"ST_POOL_SIZE=22"	# smallest that allows TT-HIGH
 options		TT_SCSI			# SCSI-support for TT
 options		FALCON_SCSI		# SCSI-support for Falcon
@@ -95,15 +95,16 @@ options		FALCON_VIDEO		# Graphics support for FALCON
 #
 config		netbsd swap on generic
 
-pseudo-device	mouse	1	# mouse
-pseudo-device	view	2	# View (graphics mapping)
+pseudo-device	mouse	 1	# mouse
+pseudo-device	view	 2	# View (graphics mapping)
 pseudo-device	sl		# Slip
 pseudo-device	ppp		# ppp
-pseudo-device	pty	16	# Pseudo-tty support
+pseudo-device	pty	 16	# Pseudo-tty support
 pseudo-device	loop		# Loopback network
-pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
+pseudo-device	vnd	 3	# 3 pseudo disks (see vnconfig)
 pseudo-device	bpfilter 2	# berkeley packet filters
-pseudo-device	tun	2	# network tunnel
+pseudo-device	tun	 2	# network tunnel
+pseudo-device	ccd	 4	# concatenating disk driver
 
 #
 #The following sections describe various hardware options.

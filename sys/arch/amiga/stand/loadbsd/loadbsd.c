@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.16 1995/02/12 19:19:41 chopps Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.16.2.1 1995/10/20 11:01:16 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -97,8 +97,9 @@ void warnx __P((const char *, ...));
  *		type detection.
  *		Add -n flag & option for non-contiguous memory.
  *		01/28/95 - Corrected -n on usage & help messages.
+ *	2.11	03/12/95 - Check kernel size against chip memory size.
  */
-static const char _version[] = "$VER: LoadBSD 2.10 (28.1.95)";
+static const char _version[] = "$VER: LoadBSD 2.11 (12.3.95)";
 
 /*
  * Kernel parameter passing version
@@ -259,6 +260,8 @@ main(argc, argv)
 		ksize += e.a_syms + 4 + stringsz;
 	}
 
+	if (ksize >= cmemsz)
+		err(20, "Insufficient Chip Memory for kernel");
 	kp = (u_char *)malloc(ksize);
 	if (t_flag) {
 		for (i = 0; i < memlist.m_nseg; ++i) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.11 1995/08/20 15:22:46 chopps Exp $	*/
+/*	$NetBSD: itevar.h,v 1.11.2.2 1995/10/20 11:01:11 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -50,9 +50,9 @@ enum ite_attr {
 
 struct ite_softc {
 	struct	device device;
+	struct	tty *tp;
 	char	argbuf[MAX_ARGSIZE];
 	struct  grf_softc *grf;		/* XXX */
-	struct	tty *tp;
 	void	*priv;
 	char	*ap;
 	u_char	*tabs;
@@ -206,7 +206,7 @@ void	itestart __P((struct tty *));
 
 /* ite functions */
 int	ite_on __P((dev_t, int));
-int	ite_off __P((dev_t, int));
+void	ite_off __P((dev_t, int));
 void	ite_reinit __P((dev_t));
 int	ite_param __P((struct tty *, struct termios *));
 void	ite_reset __P((struct ite_softc *));

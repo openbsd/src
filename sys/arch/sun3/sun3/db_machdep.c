@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.5 1995/06/27 14:44:49 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.5.2.1 1995/10/23 21:53:16 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -44,6 +44,12 @@
 
 #include <machine/pte.h>
 
+#undef	DEBUG
+
+#ifdef	DEBUG
+int db_machdep_debug;
+#endif
+
 /*
  * Interface to the debugger for virtual memory read/write.
  *
@@ -52,6 +58,10 @@
  * For writes outside the text segment, and all reads,
  * just do the access -- if it causes a fault, the debugger
  * will recover with a longjmp to an appropriate place.
+ *
+ * ALERT!  If you want to access device registers with a
+ * specific size, then the read/write functions have to
+ * make sure to do the correct sized pointer access.
  */
 
 /*
@@ -66,10 +76,28 @@ db_read_bytes(addr, size, data)
 	register char	*data;
 {
 	register char	*src;
+	register char	incr;
+
+#ifdef	DEBUG
+	if (db_machdep_debug)
+		printf("db_read_bytes: addr=0x%x, size=%d\n", addr, size);
+#endif
+
+	if (size == 4) {
+		*((int*)data) = *((int*)addr);
+		return;
+	}
+
+	if (size == 2) {
+		*((short*)data) = *((short*)addr);
+		return;
+	}
 
 	src = (char *)addr;
-	while (--size >= 0)
+	while (size > 0) {
+		--size;
 		*data++ = *src++;
+	}
 }
 
 /*
@@ -117,15 +145,46 @@ db_write_bytes(addr, size, data)
 	char	*data;
 {
 	extern char	kernel_text[], etext[] ;
-	char	*dst;
+	register char	*dst = (char *)addr;
 
-	dst = (char *)addr;
-	while (--size >= 0) {
-		if ((dst >= kernel_text) && (dst < etext))
+#ifdef	DEBUG
+	if (db_machdep_debug)
+		printf("db_write_bytes: addr=0x%x, size=%d ", addr, size);
+#endif
+
+	/* If any part is in kernel text, use db_write_text() */
+	if ((dst < etext) && ((dst + size) > kernel_text)) {
+		/* This is slow, but is only used for breakpoints. */
+#ifdef	DEBUG
+		if (db_machdep_debug)
+			printf("(in text)\n");
+#endif
+		while (size > 0) {
+			--size;
 			db_write_text(dst, *data);
-		else
-			*dst = *data;
-		dst++; data++;
+			dst++; data++;
+		}
+		return;
+	}
+
+#ifdef	DEBUG
+		if (db_machdep_debug)
+			printf("(in data)\n");
+#endif
+
+	if (size == 4) {
+		*((int*)addr) = *((int*)data);
+		return;
+	}
+
+	if (size == 2) {
+		*((short*)addr) = *((short*)data);
+		return;
+	}
+
+	while (size > 0) {
+		--size;
+		*dst++ = *data++;
 	}
 }
 

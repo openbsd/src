@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.1.1.1 1995/10/13 21:27:30 gwr Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.2 1995/10/17 22:58:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -50,20 +50,54 @@
 #include "promdev.h"
 /* #include "dev_tape.h" XXX - needs stdarg.h */
 
+extern int debug;
+
 struct saioreq tape_ioreq;
 
+/*
+ * This is a special version of devopen() for tape boot.
+ * In this version, the file name is a numeric string of
+ * one digit, which is passed to the device open so it
+ * can open the appropriate tape segment.
+ */
 int
-tape_open(f, devname)
+devopen(f, fname, file)
 	struct open_file *f;
-	char *devname;		/* Device part of file name (or NULL). */
+	const char *fname;		/* normally "1" */
+	char **file;
+{
+	struct devsw *dp;
+	int error;
+
+	*file = (char*)fname;
+	dp = &devsw[0];
+	f->f_dev = dp;
+
+	/* The following will call tape_open() */
+	return (dp->dv_open(f, fname));
+}
+
+int
+tape_open(f, fname)
+	struct open_file *f;
+	char *fname;		/* partition number, i.e. "1" */
 {
 	struct bootparam *bp;
 	struct saioreq *si;
-	int	error;
+	int	error, part;
 
-#ifdef DEBUG_PROM
-	printf("tape_open: %s\n", devname);
+#ifdef DEBUG
+	printf("tape_open: part=%s\n", fname);
 #endif
+
+	/*
+	 * Set the tape segment number to the one indicated
+	 * by the single digit fname passed in above.
+	 */
+	if ((fname[0] < '0') && (fname[0] > '9')) {
+		return ENOENT;
+	}
+	part = fname[0] - '0';
 
 	/*
 	 * Setup our part of the saioreq.
@@ -71,18 +105,23 @@ tape_open(f, devname)
 	 */
 	si = &tape_ioreq;
 	bzero((caddr_t)si, sizeof(*si));
-	bp = *romp->bootParam;
 
+	bp = *romp->bootParam;
 	si->si_boottab = bp->bootDevice;
 	si->si_ctlr = bp->ctlrNum;
 	si->si_unit = bp->unitNum;
-	si->si_boff = bp->partNum;
+	si->si_boff = part; 	/* default = bp->partNum + 1; */
 
-	if ((error = prom_iopen(si)) != 0)
-		return (error);
+	error = prom_iopen(si);
 
-	f->f_devdata = si;
-	return 0;
+#ifdef DEBUG
+	printf("tape_open: prom_iopen returned 0x%x\n", error);
+#endif
+
+	if (!error)
+		f->f_devdata = si;
+
+	return (error);
 }
 
 int
@@ -90,6 +129,10 @@ tape_close(f)
 	struct open_file *f;
 {
 	struct saioreq *si;
+
+#ifdef DEBUG
+	printf("tape_close: calling prom_iclose\n");
+#endif
 
 	si = f->f_devdata;
 	prom_iclose(si);
@@ -114,10 +157,9 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	si = devdata;
 	ops = si->si_boottab;
 
-#ifdef DEBUG_PROM
-	printf("tape_strategy: size=%d dblk=%d\n", size, dblk);
-#else
-	twiddle();
+#ifdef DEBUG
+	if (debug > 1)
+		printf("tape_strategy: size=%d dblk=%d\n", size, dblk);
 #endif
 
 	dmabuf = dvma_mapin(buf, size);
@@ -130,8 +172,9 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	xcnt = (*ops->b_strategy)(si, si_flag);
 	dvma_mapout(dmabuf, size);
 
-#ifdef DEBUG_PROM
-	printf("tape_strategy: xcnt = %x\n", xcnt);
+#ifdef DEBUG
+	if (debug > 1)
+		printf("tape_strategy: xcnt = %x\n", xcnt);
 #endif
 
 	/* At end of tape, xcnt == 0 (not an error) */

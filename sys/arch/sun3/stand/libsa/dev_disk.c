@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_disk.c,v 1.2 1995/10/13 21:45:15 gwr Exp $ */
+/*	$NetBSD: dev_disk.c,v 1.3 1995/10/17 23:07:19 gwr Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -115,8 +115,6 @@ disk_strategy(devdata, flag, dblk, size, buf, rsize)
 
 #ifdef DEBUG_PROM
 	printf("disk_strategy: size=%d dblk=%d\n", size, dblk);
-#else
-	twiddle();
 #endif
 
 	dmabuf = dvma_mapin(buf, size);

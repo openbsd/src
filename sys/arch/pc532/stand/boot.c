@@ -74,7 +74,7 @@ main()
 	cninit();
 	scsiinit();
 
-	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.1.1.1 $]\n");
+	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.2 $]\n");
 
 	bdev  = B_TYPE(bootdev);
 	bctlr = B_CONTROLLER(bootdev);

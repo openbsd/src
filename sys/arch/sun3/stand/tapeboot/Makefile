@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1995/10/13 21:27:30 gwr Exp $
+#	$NetBSD: Makefile,v 1.2 1995/10/17 22:58:10 gwr Exp $
 
 SA_PROG= tapeboot
-SRCS=   boot.c conf.c dev_tape.c version.c
+SRCS=   boot.c conf.c rawfs.c dev_tape.c version.c
+
+# DEFS= -DDEBUG
 
 all:	${SA_PROG}.bin
 

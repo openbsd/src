@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9.2.1 1995/10/13 21:04:18 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.9.2.3 1995/10/23 07:50:11 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -559,6 +559,10 @@ trap(type, code, v, frame)
 #ifdef FPU_EMULATE
 		i = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
 		/* XXX -- deal with tracing? (frame.f_sr & PSL_T) */
+		if (i == 0) {
+			userret(p, frame.f_pc, sticks); 
+			return;
+		}
 #else
 		uprintf("pid %d killed: no floating point support.\n",
 			p->p_pid);

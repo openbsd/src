@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9.2.1 1995/10/12 08:15:56 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.9.2.2 1995/10/21 13:04:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -800,10 +800,13 @@ Lstartnot040:
 	movl	a2,a1@(PCB_USP)		| and save it
 	movl	a1,_curpcb		| proc0 is running
 	clrw	a1@(PCB_FLAGS)		| clear flags
-	clrl	a1@(PCB_FPCTX)		|  ensure null FP context
-	pea	a1@(PCB_FPCTX)
-	jbsr	_m68881_restore		|  restore it (does not kill a1)
-	addql	#4,sp
+| LWP: The next part can be savely ommitted I think. The fpu probing
+|      code resets the m6888? fpu. How about a 68040 fpu?
+|
+|	clrl	a1@(PCB_FPCTX)		|  ensure null FP context
+|	pea	a1@(PCB_FPCTX)
+|	jbsr	_m68881_restore		|  restore it (does not kill a1)
+|	addql	#4,sp
 
 	/* flush TLB and turn on caches */
 	jbsr	_TBIA			|  invalidate TLB
@@ -1288,7 +1291,7 @@ Lres5:
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			|  and USP
 	tstl	_fputype		|  do we have an FPU?
-	jeq	Lresfprest		|  no, don't attempt to restore
+	jeq	Lnofprest		|  no, don't attempt to restore
 	lea	a1@(PCB_FPCTX),a0	|  pointer to FP save area
 	tstb	a0@			|  null state frame?
 	jeq	Lresfprest		|  yes, easy
@@ -1296,6 +1299,8 @@ Lres5:
 	fmovem	a0@(216),fp0-fp7	|  restore FP general registers
 Lresfprest:
 	frestore a0@			|  restore state
+
+Lnofprest:
 	movw	a1@(PCB_PS),sr		|  no, restore PS
 	moveq	#1,d0			|  return 1 (for alternate returns)
 	rts

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1995/08/05 20:24:16 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3.2.1 1995/10/21 21:34:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -85,6 +85,11 @@ int			wlabel;
 
 	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
 	if (bp->b_flags & B_RAW) {
+		if (bp->b_bcount & (DEV_BSIZE - 1)) {
+			bp->b_error = EINVAL;
+			bp->b_flags |= B_ERROR;
+			return (-1);
+		}
 		maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
 		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.20 1995/09/26 20:16:08 phil Exp $ */
+/*	$NetBSD: ncr.c,v 1.20.2.1 1995/10/19 01:33:08 phil Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ncr.c,v 1.1.1.1 1995/10/18 08:51:17 deraadt Exp $
+ *	$Id: ncr.c,v 1.2 1995/10/26 01:11:45 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -127,9 +127,7 @@ static void
 ncr_intr(softint)
 	void *softint;
 {
-	int ctrlr;
-
-	ctrlr = scsi_select_ctlr(DP8490);
+	int ctrlr = scsi_select_ctlr(DP8490);
 	if (NCR5380->ncr_dmstat & SC_IRQ_SET) {
 		intr_disable(IR_SCSI1);
 		softintr((int)softint);
@@ -143,6 +141,7 @@ ncr_soft_intr(sc)
 {
 	int ctrlr = scsi_select_ctlr(DP8490);
 	ncr_ctrl_intr(sc);
+	intr_enable(IR_SCSI1);
 	scsi_select_ctlr(ctrlr);
 }
 
@@ -175,11 +174,11 @@ ncr_soft_intr(sc)
 
 #define TIMEOUT	1000000
 #define READY(dataout) do { \
-		for (i = TIMEOUT; i > 0; i --) { \
+		for (i = TIMEOUT; i > 0; i--) { \
 			/*if (!(NCR5380->ncr_dmstat & SC_PHS_MTCH)) {*/ \
 			if (NCR5380->ncr_dmstat & SC_IRQ_SET) { \
 				if (dataout) NCR5380->ncr_icom &= ~SC_ADTB; \
-				NCR5380->ncr_mode &= ~SC_M_DMA; \
+				NCR5380->ncr_mode = IMODE_BASE; \
 				*count = len; \
 				if ((idstat = NCR5380->ncr_idstat) & SC_S_REQ) \
 					*phase = (idstat >> 2) & 7; \
@@ -213,7 +212,6 @@ transfer_pdma(phase, data, count)
 	register int len = *count, i, idstat;
 
 	if (len < 256) {
-		__asm volatile ("lmr ivar0,%0" : : "g" (data));
 		transfer_pio(phase, data, count, 0);
 		return(1);
 	}
@@ -221,11 +219,9 @@ transfer_pdma(phase, data, count)
 	scsi_clr_ipend();
 	if (PH_IN(*phase)) {
 		NCR5380->ncr_icom = 0;
-		NCR5380->ncr_mode = IMODE_BASE | SC_M_DMA;
+		NCR5380->ncr_mode = IMODE_BASE | SC_M_DMA | SC_MON_BSY;
 		NCR5380->ncr_ircv = 0;
 		while (len >= 256) {
-			if (!((u_long) data & 0xfff))
-				__asm volatile ("lmr ivar0,%0" : : "g" (data));
 			READY(0);
 			di();
 			movsd((u_char *)pdma, data, 64);
@@ -243,7 +239,7 @@ transfer_pdma(phase, data, count)
 			ei();
 		}
 	} else {
-		NCR5380->ncr_mode = IMODE_BASE | SC_M_DMA;
+		NCR5380->ncr_mode = IMODE_BASE | SC_M_DMA | SC_MON_BSY;
 		NCR5380->ncr_icom = SC_ADTB;
 		NCR5380->ncr_dmstat = SC_S_SEND;
 		while (len >= 256) {
@@ -282,7 +278,7 @@ transfer_pdma(phase, data, count)
 	}
 
 ncr_timeout_error:
-	NCR5380->ncr_mode &= ~SC_M_DMA;
+	NCR5380->ncr_mode = IMODE_BASE;
 	if((idstat = NCR5380->ncr_idstat) & SC_S_REQ)
 		*phase = (idstat >> 2) & 7;
 	else

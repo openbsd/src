@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1995/09/16 13:18:27 ragge Exp $
+#	$NetBSD: Makefile,v 1.5 1995/10/20 13:35:44 ragge Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
@@ -16,7 +16,7 @@ DEVS=	autoconf.o hp.o ra.o tmscp.o
 LIBKERN=        ${KERNLIB}
 
 .include "$S/lib/libsa/Makefile.inc"
-LIBSA=		${SA_LIB}
+LIBSA=		${SALIB}
 
 all:	xxboot boot copy edlabel
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.47 1995/09/26 04:02:27 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.48 1995/10/17 23:16:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -204,6 +204,14 @@ void Debugger()
 }
 #endif	/* DDB */
 
+/*
+ * Duplicate all mappings in the current context into
+ * every other context.  We have to let the PROM do the
+ * actual segmap manipulation because we can only switch
+ * the MMU context after we are sure that the kernel text
+ * is identically mapped in all contexts.  The PROM can
+ * do the job using hardware-dependent tricks...
+ */
 void sun3_context_equiv()
 {
 	unsigned int i, sme;
