@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.16 2002/08/09 08:42:30 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.17 2002/08/09 09:54:30 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bs.c,v 1.16 2002/08/09 08:42:30 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: bs.c,v 1.17 2002/08/09 09:54:30 pjanzen Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* ( random() ) */
@@ -634,8 +634,8 @@ static int getcoord(int atcpu)
 
 		getmouse(&myevent);
 		if (atcpu
-			&& myevent.y >= CY(0) && myevent.y <= CY(BDEPTH)
-			&& myevent.x >= CX(0) && myevent.x <= CX(BDEPTH))
+			&& myevent.y >= CY(0) && myevent.y < CY(BDEPTH)
+			&& myevent.x >= CX(0) && myevent.x < CX(BWIDTH))
 		{
 		    curx = CXINV(myevent.x);
 		    cury = CYINV(myevent.y);
