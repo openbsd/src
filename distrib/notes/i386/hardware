@@ -216,15 +216,19 @@ SCSI tapes	st0	first SCSI tape (by SCSI id)
 SCSI CD-ROMs	cd0	first SCSI CD-ROM (by SCSI id)
 		cd1	second SCSI CD-ROM (by SCSI id)
 
-SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards, 3c503,
+SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
+		we0	0x280	9
+		we1	0x300	10
+
 Novell NE1000, or NE2000 Ethernet boards
-		ed0	0x280	9		iomem 0xd0000
-		ed1	0x250	9		iomem 0xd8000
-		ed2	0x300	10		iomem 0xcc000 [X SEE BELOW]
-		ed3	0x240   9		iomem 0xd8000
+		ne0	0x240	9		iomem 0xd8000
+		ne1	0x300	10
 
 3COM 3c501 Ethernet boards
 		el0	0x300	9
+
+3COM 3c503 Ethernet boards
+		ec0	0x250	9		iomem 0xd8000
 
 3COM 3c505/Etherlink+ Ethernet boards
 		eg0	0x310	5
@@ -267,7 +271,7 @@ sensitive to how its I/O port is treated.  Mistreating it can cause
 a number of effects -- everything from the card not responding when the
 kernel probes, or the soft configuration being corrupted or wiped completely.
 
-By default, the kernel ships with device ed2 configured for the 'default'
+By default, the kernel ships with device we1 configured for the 'default'
 Elite Ultra locations, comprising of port 0x300, irq 10, and memory location
 0xcc000.  This matches a hard coded jumper on the board as well a common
 soft config setting.
@@ -298,14 +302,14 @@ pressing return.
 If, for some reason, your Elite Ultra is not configured at the 'default'
 location the kernel is expecting it, you may also use the 'change' command
 in the UKC system to modify where the kernel will look for it.  Typing
-'change ed2' will allow you to modify those settings.  Note that running the
+'change we1' will allow you to modify those settings.  Note that running the
 card at an i/o port of anything other then 0x300 at this point is not
 recommended, and is beyond the scope of this document-- by doing so you
 risk other device probes wreaking the havoc we are trying to avoid.
 
 When all three extra devices are disabled and any changes made, the
 'quit' command will exit the UKC.  The kernel should then boot, and find
-your Elite Ultra on device ed2.
+your Elite Ultra on device we1.
 
 SPECIAL CARE FOR NEWER NOTEBOOK COMPUTERS AND PCMCIA
 
