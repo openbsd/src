@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.33 2001/09/30 05:29:37 frantzen Exp $
+.\" $OpenBSD: pfctl.8,v 1.34 2001/10/11 00:53:21 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -53,7 +53,7 @@ your host; packets can be specified in a variety of ways including
 by protocol, by port number, and by address.
 Network Address Translation lets you map a series of internal
 host IP numbers to a single external address.
-The NAT code also has provision for redirecting a
+The NAT code also has provisions for redirecting a
 range of connections to a different host and/or port number.
 Taken together this provides a powerful basic firewall mechanism.
 .Pp
@@ -132,13 +132,13 @@ legitimate connections at the expense of greater memory utilization (possibly
 much greater on a busy network) and slightly increased processor utilization.
 .El
 Currently the optimizations only encompass the state table timeouts but much
-more is planned in future revisions of the FSMs.
+more is planned in future revisions of the finite state machines (FSMs).
 .It Fl q
 Only print errors and warnings.
 .It Fl R Ar file
 Load a filter rules file into the filter.
 .It Fl s Ar modifier
-Show filter parameters. Modifier names may be abbreviated.
+Show filter parameters. Modifier names may be abbreviated:
 .Bl -tag -width "s rules " -compact
 .It Fl s Ar nat
 Show the currently loaded NAT rules.
@@ -160,7 +160,7 @@ Show all of the above.
 .It Fl t Ar modifier
 Get a timeout or interval value.  Any of the modifiers may be set,
 with the exception of
-.Em all,
+.Em all ,
 by appending =<seconds> to the modifier without any whitespace seperating
 the modifier, the equals and the number of seconds.
 .Bl -tag -width "t interval " -compact
