@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.4 2004/05/05 04:33:56 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.5 2004/07/15 21:44:16 tom Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -338,7 +338,7 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	daddr_t		blk, *ap;
 	struct ufs1_dinode	*ip;
 	int		ndb;
-	int		mib[4];
+	int		mib[3];
 	size_t		size;
 	dev_t		dev;
 
