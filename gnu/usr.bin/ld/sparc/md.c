@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.1.1.1 1995/10/18 08:40:58 deraadt Exp $
+ *	$Id: md.c,v 1.2 1995/12/14 03:40:55 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -88,6 +88,14 @@ static int reloc_target_bitsize[] = {
 	32, 0, 22	/* _GLOB_DAT, JMP_SLOT, _RELATIVE */
 };
 
+static __inline void
+iflush(sp)
+	jmpslot_t		*sp;
+{
+	__asm __volatile("iflush %0+0" : : "r" (sp));
+	__asm __volatile("iflush %0+4" : : "r" (sp));
+	__asm __volatile("iflush %0+8" : : "r" (sp));
+}
 
 /*
  * Get relocation addend corresponding to relocation record RP
@@ -219,6 +227,7 @@ long			index;
 	/* The following is a RELOC_WDISP30 relocation */
 	sp->opcode2 = CALL | ((fudge >> 2) & 0x3fffffff);
 	sp->reloc_index = NOP | index;
+	iflush(sp);
 }
 
 /*
@@ -246,6 +255,7 @@ u_long		addr;
 	sp->opcode1 = SETHI | ((addr >> 10) & 0x003fffff);
 	sp->opcode2 = JMP | (addr & 0x000003ff);
 	sp->reloc_index = NOP;
+	iflush(sp);
 }
 
 /*
