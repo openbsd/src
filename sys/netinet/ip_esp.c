@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.78 2003/02/12 14:41:07 jason Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.79 2003/02/21 20:50:58 tedu Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -457,9 +457,7 @@ esp_input_cb(void *op)
 	u_int8_t lastthree[3], aalg[AH_HMAC_HASHLEN];
 	int hlen, roff, skip, protoff, error;
 	struct mbuf *m1, *mo, *m;
-	struct cryptodesc *crd;
 	struct auth_hash *esph;
-	struct enc_xform *espx;
 	struct tdb_crypto *tc;
 	struct cryptop *crp;
 	struct m_tag *mtag;
@@ -469,7 +467,6 @@ esp_input_cb(void *op)
 	caddr_t ptr;
 
 	crp = (struct cryptop *) op;
-	crd = crp->crp_desc;
 
 	tc = (struct tdb_crypto *) crp->crp_opaque;
 	skip = tc->tc_skip;
@@ -488,7 +485,6 @@ esp_input_cb(void *op)
 	}
 
 	esph = (struct auth_hash *) tdb->tdb_authalgxform;
-	espx = (struct enc_xform *) tdb->tdb_encalgxform;
 
 	/* Check for crypto errors */
 	if (crp->crp_etype) {
@@ -695,7 +691,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 {
 	struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
 	struct auth_hash *esph = (struct auth_hash *) tdb->tdb_authalgxform;
-	int ilen, hlen, rlen, plen, padding, blks, alen;
+	int ilen, hlen, rlen, padding, blks, alen;
 	struct mbuf *mi, *mo = (struct mbuf *) NULL;
 	struct tdb_crypto *tc;
 	unsigned char *pad;
@@ -742,7 +738,6 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		blks = 4; /* If no encryption, we have to be 4-byte aligned. */
 
 	padding = ((blks - ((rlen + 2) % blks)) % blks) + 2;
-	plen = rlen + padding; /* Padded payload length. */
 
 	if (esph)
 		alen = AH_HMAC_HASHLEN;
