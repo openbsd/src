@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.35 2003/09/24 06:24:42 jason Exp $
+dnl	$OpenBSD: hardware,v 1.36 2003/12/17 16:59:43 jason Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -426,7 +426,20 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Farallon PN9000SX
 			Netgear GA620 and GA620T
 			SGI Tigon
-		SysKonnect SK-984x (9841/9842/9843/9844) based adapters (sk)
+		SysKonnect and Marvell based adapters (sk), including:
+			SysKonnect SK-9821 (1000baseT)
+			SysKonnect SK-9822 (dual 1000baseT)
+			SysKonnect SK-9841 (1000baseLX)
+			SysKonnect SK-9842 (dual 1000baseLX)
+			SysKonnect SK-9843 (1000baseSX)
+			SysKonnect SK-9844 (dual 1000baseSX)
+			SysKonnect SK-9521 v2.0 (1000baseT 32-bit)
+			SysKonnect SK-9821 v2.0 (1000baseT)
+			SysKonnect SK-9843 v2.0 (1000baseSX)
+			3Com 3c940 (1000baseT)
+			D-Link DGE-530T (1000baseT)
+			Linksys EG1032v2 (1000baseT)
+			Linksys EG1064v2 (1000baseT)
 	ATM Adapters [*]
 		Efficient Networks EN-155 and Adaptec ANA-590x ATM interfaces
 		  (en)
