@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.8 2004/09/27 19:20:49 pefo Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.9 2004/10/08 07:14:57 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -55,6 +55,10 @@
 #include <mips64/db_machdep.h>
 #include <ddb/db_sym.h>
 #endif
+
+#include "atm.h"
+#include "bridge.h"
+#include "ppp.h"
 
 static struct evcount soft_count;
 static int soft_irq = 0;
@@ -200,6 +204,9 @@ printf("Unhandled interrupt %x:%x\n", cause, pending);
 		clr_ipending(SINT_CLOCKMASK);
 		softclock();
 	}
+#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(IMP) || \
+    defined(IPX) || defined(NS) || defined(CCITT) || NATM > 0 || \
+    NPPP > 0 || NBRIDGE > 0
 	if ((ipending & SINT_NETMASK) & ~xcpl) {
 		extern int netisr;
 		int isr = netisr;
@@ -208,6 +215,7 @@ printf("Unhandled interrupt %x:%x\n", cause, pending);
 #define DONETISR(b,f)   if (isr & (1 << (b)))   f();
 #include <net/netisr_dispatch.h>
 	}
+#endif
 
 #ifdef NOTYET
 	if ((ipending & SINT_TTYMASK) & ~xcpl) {
@@ -516,6 +524,9 @@ generic_do_pending_int(int newcpl)
 		clr_ipending(SINT_CLOCKMASK);
 		softclock();
 	}
+#if defined(INET) || defined(INET6) || defined(NETATALK) || defined(IMP) || \
+    defined(IPX) || defined(NS) || defined(CCITT) || NATM > 0 || \
+    NPPP > 0 || NBRIDGE > 0
 	if ((ipending & SINT_NETMASK) & ~newcpl) {
 		int isr = netisr;
 		netisr = 0;
@@ -523,6 +534,7 @@ generic_do_pending_int(int newcpl)
 #define	DONETISR(b,f)	if (isr & (1 << (b)))   f();
 #include <net/netisr_dispatch.h>
 	}
+#endif
 
 #ifdef NOTYET
 	if ((ipending & SINT_TTYMASK) & ~newcpl) {
