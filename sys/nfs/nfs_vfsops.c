@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.26 1999/05/31 17:34:52 millert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.27 1999/06/10 05:55:16 millert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -420,9 +420,10 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 }
 
 void
-nfs_decode_args(nmp, argp)
+nfs_decode_args(nmp, argp, nargp)
 	struct nfsmount *nmp;
 	struct nfs_args *argp;
+	struct nfs_args *nargp;
 {
 	int s;
 	int adjsock = 0;
@@ -558,6 +559,21 @@ nfs_decode_args(nmp, argp)
 					      PSOCK, "nfscon", 0);
 			}
 	}
+
+	/* Update nargp based on nmp */
+	nargp->wsize = nmp->nm_wsize;
+	nargp->rsize = nmp->nm_rsize;
+	nargp->readdirsize = nmp->nm_readdirsize;
+	nargp->timeo = nmp->nm_timeo;
+	nargp->retrans = nmp->nm_retry;
+	nargp->maxgrouplist = nmp->nm_numgrps;
+	nargp->readahead = nmp->nm_readahead;
+	nargp->leaseterm = nmp->nm_leaseterm;
+	nargp->deadthresh = nmp->nm_deadthresh;
+	nargp->acregmin = nmp->nm_acregmin;
+	nargp->acregmax = nmp->nm_acregmax;
+	nargp->acdirmin = nmp->nm_acdirmin;
+	nargp->acdirmax = nmp->nm_acdirmax;
 }
 
 /*
@@ -613,7 +629,7 @@ nfs_mount(mp, path, data, ndp, p)
 		 */
 		args.flags = (args.flags & ~(NFSMNT_NFSV3|NFSMNT_NQNFS)) |
 		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_NQNFS));
-		nfs_decode_args(nmp, &args);
+		nfs_decode_args(nmp, &args, &mp->mnt_stat.mount_info.nfs_args);
 		return (0);
 	}
 	error = copyin((caddr_t)args.fh, (caddr_t)nfh, args.fhsize);
@@ -697,7 +713,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
 	bcopy(argp, &mp->mnt_stat.mount_info.nfs_args, sizeof(*argp));
 	nmp->nm_nam = nam;
-	nfs_decode_args(nmp, argp);
+	nfs_decode_args(nmp, argp, &mp->mnt_stat.mount_info.nfs_args);
 
 	/* Set up the sockets and per-host congestion */
 	nmp->nm_sotype = argp->sotype;
