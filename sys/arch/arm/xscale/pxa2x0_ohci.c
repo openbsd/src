@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.5 2005/01/09 07:11:32 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.6 2005/01/26 21:29:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -58,13 +58,12 @@ pxaohci_match(struct device *parent, void *match, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
 
-	/* XXX if pxa revision != 270 return 0 */
-
-	if ((pxa->pxa_addr != PXA2X0_USBHC_BASE) ||
+	if (((cputype & ~CPU_ID_XSCALE_COREREV_MASK) != CPU_ID_PXA27X) ||
+	    (pxa->pxa_addr != PXA2X0_USBHC_BASE) ||
 	    (pxa->pxa_intr != PXA2X0_INT_USBH1))
 		return (0);
 
-	pxa->pxa_size = PXA2X0_USBHC_SIZE; /* XXX wtf? */
+	pxa->pxa_size = PXA2X0_USBHC_SIZE;
 
 	return (1);
 }
