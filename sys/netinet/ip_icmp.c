@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.58 2003/05/03 21:16:30 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.59 2003/05/14 05:58:36 dhartmei Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -233,7 +233,6 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest,
 	HTONS(oip->ip_len);
 	icp->icmp_code = code;
 	m_copydata(n, 0, icmplen, (caddr_t)&icp->icmp_ip);
-	nip = &icp->icmp_ip;
 
 	/*
 	 * Now, copy old ip header (without options)
