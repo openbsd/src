@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.4 2002/10/14 14:48:13 millert Exp $
+.\" $OpenBSD: starttls.8,v 1.5 2002/10/21 16:29:14 millert Exp $
 .Dd January 11, 2002
 .Dt STARTTLS 8
 .Sh NAME
@@ -38,9 +38,14 @@ The client then begins the TLS portion of the ESMTP session by issuing
 the command
 .Dq STARTTLS .
 The remaining portion of the ESMTP session occurs over a TLS channel.
-.Ss Creating a certificate for sendmail
+.Ss Creating a private key and certificate for sendmail
 This example assumes you are creating your own self-signed certificates
 for use with sendmail and STARTTLS.
+If you have an existing private key and you simply wish to generate
+a new certificate (for example, if your old certificate has expired),
+see the section entitled
+.Sx "Creating a certificate with an existing private key" .
+.Pp
 For the purposes of this example the certificates will be stored in
 .Pa /etc/mail/certs ,
 though it is possible to use a different directory if needed.
@@ -69,9 +74,13 @@ Once you have the
 parameters generated, you can generate a certificate
 and unencrypted private key using the command:
 .Bd -literal -offset indent -width Ds
-# openssl req -x509 -nodes -newkey dsa:dsa1024.pem \\
+# openssl req -x509 -nodes -days 365 -newkey dsa:dsa1024.pem \\
   -out /etc/mail/certs/mycert.pem -keyout /etc/mail/certs/mykey.pem
 .Ed
+.Pp
+You may adjust the lifetime of the certificate via the
+.Fl days
+parameter (one year in this example).
 .Pp
 Make sure to leave the private key files unencrypted, using the
 .Fl nodes 
@@ -79,6 +88,12 @@ option.
 Otherwise,
 .Xr sendmail 8
 will be unable to initiate TLS server functions.
+.Pp
+You can verify that the newly-generated certificate has correct information
+with the following command:
+.Bd -literal -offset indent -width Ds
+# openssl x509 -in /etc/mail/certs/mycert.pem -text
+.Ed
 .Pp
 If don't intend to use TLS for authentication (and if you are using
 self-signed certificates you probably don't) you can simply link
@@ -108,6 +123,19 @@ A simple way to ensure this is to run the following:
 .Bd -literal -offset indent -width Ds
 # chmod -R go-rwx /etc/mail/certs
 .Ed
+.Ss Creating a certificate with an existing private key
+This example assumes you already have an existing private key,
+.Pa /etc/mail/certs/mykey.pem .
+You can generate a new certificate based on this key using the command:
+.Bd -literal -offset indent -width Ds
+# openssl req -x509 -new -days 365 -key /etc/mail/certs/mykey.pem \\
+  -out /etc/mail/certs/mycert.pem
+# chmod 600 /etc/mail/certs/mycert.pem
+.Ed
+.Pp
+You may adjust the lifetime of the certificate via the
+.Fl days
+parameter (one year in this example).
 .Ss Configuring sendmail to utilize TLS
 The global sendmail configuration files,
 .Pa /etc/mail/sendmail.cf
