@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.34 2000/01/30 05:17:49 itojun Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.35 2000/02/18 04:12:20 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -90,6 +90,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	pid_t pid;
 	int s, lport, timo;
 	char c, *p;
+	int refused;
 
 	/* call rcmdsh() with specified remote shell if appropriate. */
 	if (!issetugid() && (p = getenv("RSH"))) {
@@ -130,6 +131,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 		; /*XXX*/
 
 	r = res;
+	refused = 0;
 	oldmask = sigblock(sigmask(SIGURG));
 	for (timo = 1, lport = IPPORT_RESERVED - 1;;) {
 		s = rresvport_af(&lport, r->ai_family);
@@ -157,11 +159,8 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 			lport--;
 			continue;
 		}
-		if (errno == ECONNREFUSED && timo <= 16) {
-			(void)sleep(timo);
-			timo *= 2;
-			continue;
-		}
+		if (errno == ECONNREFUSED)
+			refused++;
 		if (r->ai_next) {
 			int oerrno = errno;
 			char hbuf[NI_MAXHOST];
@@ -184,6 +183,13 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 			    hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
 				strcpy(hbuf, "(invalid)");
 			(void)fprintf(stderr, "Trying %s...\n", hbuf);
+			continue;
+		}
+		if (refused && timo <= 16) {
+			(void)sleep(timo);
+			timo *= 2;
+			r = res;
+			refused = 0;
 			continue;
 		}
 		(void)fprintf(stderr, "%s: %s\n", res->ai_canonname,
