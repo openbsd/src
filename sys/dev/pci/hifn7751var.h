@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.48 2003/02/24 20:36:02 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.49 2003/05/13 18:55:23 jmc Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -76,7 +76,7 @@
  */
 struct hifn_dma {
 	/*
-	 *  Descriptor rings.  We add +1 to the size to accomidate the
+	 *  Descriptor rings.  We add +1 to the size to accommodate the
 	 *  jump descriptor.
 	 */
 	struct hifn_desc	cmdr[HIFN_D_CMD_RSIZE+1];
@@ -198,7 +198,7 @@ struct hifn_softc {
  *
  *	HIFN_CRYPT_3DES or HIFN_CRYPT_DES
  *
- *  To use authentication is used, a single MAC algorithm must be included:
+ *  To use authentication, a single MAC algorithm must be included:
  *
  *	HIFN_MAC_MD5 or HIFN_MAC_SHA1
  *
