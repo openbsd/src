@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.14 2003/12/08 15:26:22 henning Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.15 2004/04/09 16:54:35 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -138,8 +138,12 @@ USB_MATCH(uftdi)
 	if (uaa->vendor == USB_VENDOR_FTDI &&
 	    (uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX ||
 	     uaa->product == USB_PRODUCT_FTDI_SERIAL_8U232AM ||
-	     uaa->product == USB_PRODUCT_FTDI_LCD_MX200_USB))
-		return (UMATCH_VENDOR_PRODUCT);
+	     uaa->product == USB_PRODUCT_FTDI_LCD_MX200_USB ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA631_USB ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA632_USB ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA633_USB ||
+	     uaa->product == USB_PRODUCT_FTDI_LCD_CFA634_USB))
+	    return (UMATCH_VENDOR_PRODUCT);
 
 	return (UMATCH_NONE);
 }
@@ -192,6 +196,10 @@ USB_ATTACH(uftdi)
 	case USB_PRODUCT_FTDI_SERIAL_8U232AM:
 	case USB_PRODUCT_FTDI_LCD_LK202_24_USB:
 	case USB_PRODUCT_FTDI_LCD_MX200_USB:
+	case USB_PRODUCT_FTDI_LCD_CFA631_USB:
+	case USB_PRODUCT_FTDI_LCD_CFA632_USB:
+	case USB_PRODUCT_FTDI_LCD_CFA633_USB:
+	case USB_PRODUCT_FTDI_LCD_CFA634_USB:
 		sc->sc_type = UFTDI_TYPE_8U232AM;
 		sc->sc_hdrlen = 0;
 		break;

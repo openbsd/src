@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.77 2004/02/27 17:29:33 henning Exp $
+$OpenBSD: usbdevs,v 1.78 2004/04/09 16:54:35 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -720,6 +720,10 @@ product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial converter
 product	FTDI LCD_MX200_USB	0xfa01	Matrix Orbital MX200 Series LCD
 product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK202-24 USB LCD
+product FTDI LCD_CFA631_USB     0xfc0c  Crystalfontz CFA-631 USB LCD
+product FTDI LCD_CFA632_USB	0xfc08  Crystalfontz CFA-632 USB LCD
+product FTDI LCD_CFA633_USB	0xfc0b  Crystalfontz CFA-633 USB LCD
+product FTDI LCD_CFA634_USB	0xfc09  Crystalfontz CFA-634 USB LCD
 
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
