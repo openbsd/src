@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.27 2000/12/15 20:32:32 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.28 2001/01/22 06:14:09 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -57,7 +57,8 @@ MANALL=	ssl.cat3 SSL_get_error.cat3 \
 	blowfish.cat3 DH_size.cat3 bn.cat3 DSA_SIG_new.cat3 bn_internal.cat3 \
 	DSA_do_sign.cat3 DSA_dup_DH.cat3 crypto.cat3 DSA_generate_key.cat3 \
 	DSA_generate_parameters.cat3 d2i_DHparams.cat3 d2i_RSAPublicKey.cat3 \
-	DSA_get_ex_new_index.cat3 des_modes.cat7 DSA_new.cat3 dh.cat3 \
+	DSA_get_ex_new_index.cat3 des_random_key.cat3 des_modes.cat7 \
+	DSA_new.cat3 dh.cat3 \
 	DSA_set_method.cat3 dsa.cat3 DSA_sign.cat3 DSA_size.cat3 HMAC.cat3 \
 	ERR_GET_LIB.cat3 lh_stats.cat3 ERR_clear_error.cat3 lhash.cat3 \
 	ERR_error_string.cat3 MD5.cat3 ERR_get_error.cat3 MDC2.cat3 \
@@ -196,6 +197,27 @@ HMAC.ps3: hmac.pod
 	  HMAC.pm ) | nroff -Tps -man > ${.TARGET}
 .endif
 
+# des.pod -> des_random_key, des_set_key, des_key_sched, des_set_key_checked,
+# des_set_key_unchecked, des_set_odd_parity, des_is_weak_key, des_ecb_encrypt,
+# des_ecb2_encrypt, des_ecb3_encrypt, des_ncbc_encrypt, des_cfb_encrypt,
+# des_ofb_encrypt, des_pcbc_encrypt, des_cfb64_encrypt, des_ofb64_encrypt,
+# des_xcbc_encrypt, des_ede2_cbc_encrypt, des_ede2_cfb64_encrypt,
+# des_ede2_ofb64_encrypt, des_ede3_cbc_encrypt, des_ede3_cbcm_encrypt,
+# des_ede3_cfb64_encrypt, des_ede3_ofb64_encrypt, des_read_password,
+# des_read_2passwords, des_read_pw_string, des_cbc_cksum, des_quad_cksum,
+# des_string_to_key, des_string_to_2keys, des_fcrypt, des_crypt,
+# des_enc_read, des_enc_write
+des_random_key.cat3: des.pod
+	( cp ${.ALLSRC} des_random_key.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  des_random_key.pm ) | nroff -Tascii -man > ${.TARGET}
+.if MANPS
+des_random_key.ps3: des.pod
+	( cp ${.ALLSRC} des_random_key.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  des_random_key.pm ) | nroff -Tps -man > ${.TARGET}
+.endif
+
 MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	BN_CTX_start.3 BN_CTX_get.3 BN_CTX_start.3 BN_CTX_end.3 \
 	BN_add.3 BN_sub.3 BN_add.3 BN_mul.3 BN_add.3 BN_div.3 \
@@ -308,6 +330,28 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	blowfish.3 BF_ofb64_encrypt.3 blowfish.3 BF_options.3 \
 	blowfish.3 BF_ecb_encrypt.3 blowfish.3 BF_cbc_encrypt.3 \
 	des_crypt.3 des_string_to_2keys.3 \
+	des_random_key.3 des_set_key.3 des_random_key.3 des_key_sched.3 \
+	des_random_key.3 des_set_key_checked.3 \
+	des_random_key.3 des_set_key_unchecked.3 \
+	des_random_key.3 des_set_odd_parity.3 des_random_key.3 des_is_weak_key.3 \
+	des_random_key.3 des_ecb_encrypt.3 des_random_key.3 des_ecb2_encrypt.3 \
+	des_random_key.3 des_ecb3_encrypt.3 des_random_key.3 des_ncbc_encrypt.3 \
+	des_random_key.3 des_cfb_encrypt.3 des_random_key.3 des_ofb_encrypt.3 \
+	des_random_key.3 des_pcbc_encrypt.3 des_random_key.3 des_cfb64_encrypt.3 \
+	des_random_key.3 des_ofb64_encrypt.3 des_random_key.3 des_xcbc_encrypt.3 \
+	des_random_key.3 des_ede2_cbc_encrypt.3 \
+	des_random_key.3 des_ede2_cfb64_encrypt.3 \
+	des_random_key.3 des_ede2_ofb64_encrypt.3 \
+	des_random_key.3 des_ede3_cbc_encrypt.3 \
+	des_random_key.3 des_ede3_cbcm_encrypt.3 \
+	des_random_key.3 des_ede3_cfb64_encrypt.3 \
+	des_random_key.3 des_ede3_ofb64_encrypt.3 \
+	des_random_key.3 des_read_password.3 \
+	des_random_key.3 des_read_2passwords.3 des_random_key.3 des_read_pw_string.3 \
+	des_random_key.3 des_cbc_cksum.3 des_random_key.3 des_quad_cksum.3 \
+	des_random_key.3 des_string_to_key.3 des_random_key.3 des_string_to_2keys.3 \
+	des_random_key.3 des_fcrypt.3 des_random_key.3 des_crypt.3 \
+	des_random_key.3 des_enc_read.3 des_random_key.3 des_enc_write.3 \
 	MD5.3 MD2.3 MD5.3 MD2_Init.3 MD5.3 MD2_Update.3 \
 	MD5.3 MD2_Final.3 MD5.3 MD5_Init.3 \
 	MD5.3 MD5_Update.3 MD5.3 MD5_Final.3 \
