@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.22 2004/04/11 18:04:36 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.23 2004/07/09 08:55:41 niklas Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ ptydevname(int minor, struct pt_softc *pti)
 /*
  * Allocate and zero array of nelem elements.
  */
-static struct pt_softc **
+struct pt_softc **
 ptyarralloc(int nelem)
 {
 	struct pt_softc **pt;
@@ -162,7 +162,7 @@ ptyarralloc(int nelem)
  * Check if the minor is correct and ensure necessary structures
  * are properly allocated.
  */
-static int
+int
 check_pty(int minor)
 {
 	struct pt_softc *pti;
