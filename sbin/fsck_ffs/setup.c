@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.22 1995/07/12 01:49:23 cgd Exp $	*/
+/*	$NetBSD: setup.c,v 1.25 1996/05/21 17:36:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.22 1995/07/12 01:49:23 cgd Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.25 1996/05/21 17:36:21 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ setup(dev)
 	struct stat statb;
 	struct fs proto;
 	int doskipclean;
+	u_int64_t maxfilesize;
 
 	havesb = 0;
 	fswritefd = -1;
@@ -135,10 +136,10 @@ setup(dev)
 			printf("%s %s\n%s %s\n%s %s\n",
 				"SEARCH FOR ALTERNATE SUPER-BLOCK",
 				"FAILED. YOU MUST USE THE",
-				"-b OPTION TO FSCK TO SPECIFY THE",
+				"-b OPTION TO FSCK_FFS TO SPECIFY THE",
 				"LOCATION OF AN ALTERNATE",
 				"SUPER-BLOCK TO SUPPLY NEEDED",
-				"INFORMATION; SEE fsck(8).");
+				"INFORMATION; SEE fsck_ffs(8).");
 			return(0);
 		}
 		doskipclean = 0;
@@ -157,6 +158,12 @@ setup(dev)
 	}
 	maxfsblock = sblock.fs_size;
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
+	sizepb = sblock.fs_bsize;
+	maxfilesize = sblock.fs_bsize * NDADDR - 1;
+	for (i = 0; i < NIADDR; i++) {
+		sizepb *= NINDIR(&sblock);
+		maxfilesize += sizepb;
+	}
 	/*
 	 * Check and potentially fix certain fields in the super block.
 	 */
@@ -199,7 +206,73 @@ setup(dev)
 			dirty(&asblk);
 		}
 	}
+	if (sblock.fs_bmask != ~(sblock.fs_bsize - 1)) {
+		pwarn("INCORRECT BMASK=%x IN SUPERBLOCK",
+			sblock.fs_bmask);
+		sblock.fs_bmask = ~(sblock.fs_bsize - 1);
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
+	if (sblock.fs_fmask != ~(sblock.fs_fsize - 1)) {
+		pwarn("INCORRECT FMASK=%x IN SUPERBLOCK",
+			sblock.fs_fmask);
+		sblock.fs_fmask = ~(sblock.fs_fsize - 1);
+		if (preen)
+			printf(" (FIXED)\n");
+		if (preen || reply("FIX") == 1) {
+			sbdirty();
+			dirty(&asblk);
+		}
+	}
 	if (sblock.fs_inodefmt >= FS_44INODEFMT) {
+		if (sblock.fs_maxfilesize != maxfilesize) {
+			pwarn("INCORRECT MAXFILESIZE=%qd IN SUPERBLOCK",
+				sblock.fs_maxfilesize);
+			sblock.fs_maxfilesize = maxfilesize;
+			if (preen)
+				printf(" (FIXED)\n");
+			if (preen || reply("FIX") == 1) {
+				sbdirty();
+				dirty(&asblk);
+			}
+		}
+		if (sblock.fs_maxsymlinklen != MAXSYMLINKLEN) {
+			pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK",
+				sblock.fs_maxsymlinklen);
+			sblock.fs_maxsymlinklen = MAXSYMLINKLEN;
+			if (preen)
+				printf(" (FIXED)\n");
+			if (preen || reply("FIX") == 1) {
+				sbdirty();
+				dirty(&asblk);
+			}
+		}
+		if (sblock.fs_qbmask != ~sblock.fs_bmask) {
+			pwarn("INCORRECT QBMASK=%qx IN SUPERBLOCK",
+				sblock.fs_qbmask);
+			sblock.fs_qbmask = ~sblock.fs_bmask;
+			if (preen)
+				printf(" (FIXED)\n");
+			if (preen || reply("FIX") == 1) {
+				sbdirty();
+				dirty(&asblk);
+			}
+		}
+		if (sblock.fs_qfmask != ~sblock.fs_fmask) {
+			pwarn("INCORRECT QFMASK=%qx IN SUPERBLOCK",
+				sblock.fs_qfmask);
+			sblock.fs_qfmask = ~sblock.fs_fmask;
+			if (preen)
+				printf(" (FIXED)\n");
+			if (preen || reply("FIX") == 1) {
+				sbdirty();
+				dirty(&asblk);
+			}
+		}
 		newinofmt = 1;
 	} else {
 		sblock.fs_qbmask = ~sblock.fs_bmask;
@@ -216,12 +289,7 @@ setup(dev)
 			return(0);
 		doinglevel2++;
 		sblock.fs_inodefmt = FS_44INODEFMT;
-		sizepb = sblock.fs_bsize;
-		sblock.fs_maxfilesize = sblock.fs_bsize * NDADDR - 1;
-		for (i = 0; i < NIADDR; i++) {
-			sizepb *= NINDIR(&sblock);
-			sblock.fs_maxfilesize += sizepb;
-		}
+		sblock.fs_maxfilesize = maxfilesize;
 		sblock.fs_maxsymlinklen = MAXSYMLINKLEN;
 		sblock.fs_qbmask = ~sblock.fs_bmask;
 		sblock.fs_qfmask = ~sblock.fs_fmask;

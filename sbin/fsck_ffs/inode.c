@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.17 1995/12/17 06:03:36 thorpej Exp $	*/
+/*	$NetBSD: inode.c,v 1.18 1996/05/21 16:58:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$NetBSD: inode.c,v 1.17 1995/12/17 06:03:36 thorpej Exp $";
+static char rcsid[] = "$NetBSD: inode.c,v 1.18 1996/05/21 16:58:12 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,9 +140,10 @@ iblock(idesc, ilevel, isize)
 	ilevel--;
 	for (sizepb = sblock.fs_bsize, i = 0; i < ilevel; i++)
 		sizepb *= NINDIR(&sblock);
-	nif = howmany(isize , sizepb);
-	if (nif > NINDIR(&sblock))
+	if (isize > sizepb * NINDIR(&sblock))
 		nif = NINDIR(&sblock);
+	else
+		nif = howmany(isize, sizepb);
 	if (idesc->id_func == pass1check && nif < NINDIR(&sblock)) {
 		aplim = &bp->b_un.b_indir[NINDIR(&sblock)];
 		for (ap = &bp->b_un.b_indir[nif]; ap < aplim; ap++) {

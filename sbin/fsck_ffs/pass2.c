@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.12 1995/03/18 14:55:52 cgd Exp $	*/
+/*	$NetBSD: pass2.c,v 1.14 1996/05/21 15:32:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: pass2.c,v 1.12 1995/03/18 14:55:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: pass2.c,v 1.14 1996/05/21 15:32:16 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,6 @@ pass2()
 	memset(&curino, 0, sizeof(struct inodesc));
 	curino.id_type = DATA;
 	curino.id_func = pass2check;
-	dp = &dino;
 	inpend = &inpsort[inplast];
 	for (inpp = inpsort; inpp < inpend; inpp++) {
 		inp = *inpp;
@@ -140,7 +139,6 @@ pass2()
 				dp = ginode(inp->i_number);
 				dp->di_size = inp->i_isize;
 				inodirty();
-				dp = &dino;
 			}
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
@@ -151,18 +149,17 @@ pass2()
 			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
 			if (preen || reply("ADJUST") == 1) {
 				dp = ginode(inp->i_number);
-				dp->di_size = roundup(inp->i_isize, DIRBLKSIZ);
+				dp->di_size = inp->i_isize;
 				inodirty();
-				dp = &dino;
 			}
 		}
 		memset(&dino, 0, sizeof(struct dinode));
 		dino.di_mode = IFDIR;
-		dp->di_size = inp->i_isize;
-		memcpy(&dp->di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
+		dino.di_size = inp->i_isize;
+		memcpy(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
 		curino.id_number = inp->i_number;
 		curino.id_parent = inp->i_parent;
-		(void)ckinode(dp, &curino);
+		(void)ckinode(&dino, &curino);
 	}
 	/*
 	 * Now that the parents of all directories have been found,
