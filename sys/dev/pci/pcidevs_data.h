@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.731 2004/05/06 17:21:18 peter Exp 
+ *	OpenBSD: pcidevs,v 1.732 2004/05/10 10:42:19 peter Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3343,6 +3343,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801EB/ER AC97 Audio",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_MODEM,
+	    "82801EB/ER AC97 Modem",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_3,
 	    "82801EB/ER USB",
 	},
@@ -4377,6 +4381,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PKUG,
 	    "I/O",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_uPD72874,
+	    "Firewire",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB2,
