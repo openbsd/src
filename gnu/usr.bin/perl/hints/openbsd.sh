@@ -26,8 +26,8 @@ d_setruid=$undef
 #
 # Not all platforms support dynamic loading...
 #
-case `arch -s` in
-alpha|mips|powerpc|vax)
+case "`arch -s`-${osvers}" in
+alpha-*|mips-*|vax-*|powerpc-2.[0-7])
 	usedl=$undef
 	;;
 *)
