@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.53 1999/09/29 00:01:49 angelos Exp $
+#	$OpenBSD: GENERIC,v 1.54 1999/09/29 14:13:33 art Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -14,6 +14,8 @@ option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	PROF="-pg"	# build profiled kernel
+#option		GPROF		# kernel profiling, kgmon(8)
 option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
 option		KMEMSTATS	# collect malloc(9) statistics
