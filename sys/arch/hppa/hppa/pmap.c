@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 1999/04/20 20:50:08 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 1999/06/11 15:51:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -158,8 +158,11 @@
 #define	PDB_STEAL	0x00010000
 int pmapdebug = 0
 	| PDB_FOLLOW
-/*	| PDB_INIT */
+/*	| PDB_VA */
+/*	| PDB_PV */
+/* 	| PDB_INIT */
 /*	| PDB_ENTER */
+/*	| PDB_REMOVE */
 /*	| PDB_STEAL */
 	;
 #endif
@@ -268,11 +271,11 @@ pmap_remove_va(pv)
 {
 	register struct hpt_entry *hpt =
 		&hpt_table[pmap_hash(pv->pv_space, pv->pv_va)];
-	register struct pv_entry **pvp = hpt->hpt_entry;
+	register struct pv_entry **pvp = (struct pv_entry **)&hpt->hpt_entry;
 
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW && pmapdebug & PDB_VA)
-		printf("pmap_remove_va(%p)\n", pv);
+		printf("pmap_remove_va(%p), hpt=%p, pvp=%p\n", pv, hpt, pvp);
 #endif
 
 	while(*pvp && *pvp != pv)
@@ -628,7 +631,6 @@ pmap_bootstrap(vstart, vend)
 	vm_size_t size;
 	struct pv_page *pvp;
 	int i;
-
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_bootstrap(%p, %p)\n", vstart, vend);
@@ -679,7 +681,6 @@ pmap_bootstrap(vstart, vend)
 	 */
 	addr = *vstart;
 	virtual_end = *vend;
-
 	pvp = (struct pv_page *)cache_align(addr);
 
 	size = sizeof(struct hpt_entry) * hpt_hashsize;
@@ -816,6 +817,15 @@ pmap_init(void)
 
 	TAILQ_INIT(&pmap_freelist);
 	pid_counter = HPPA_PID_KERNEL + 2;
+
+        /*
+	 * map SysCall gateways page once for everybody
+	 * NB: we'll have to remap the phys memory
+	 *     if we have one at SYSCALLGATE address (;
+	 */
+	pmap_enter_pv(pmap_kernel(), SYSCALLGATE, TLB_GATE_PROT,
+	tlbbtop((paddr_t)&gateway_page),
+	pmap_find_va(HPPA_SID_KERNEL, SYSCALLGATE));
 
 	pmap_initialized = TRUE;
 }
@@ -1089,7 +1099,13 @@ pmap_remove(pmap, sva, eva)
 	space = pmap_sid(pmap, sva);
 
 	while (pmap->pmap_stats.resident_count && ((sva < eva))) {
-		if ((pv = pmap_find_va(space, sva))) {
+		pv = pmap_find_va(space, sva);
+#ifdef PMAPDEBUG
+		if (pmapdebug & PDB_REMOVE)
+			printf ("pmap_remove: removing %p for 0x%x:0x%x\n",
+				pv, space, sva);
+#endif
+		if (pv) {
 			pmap_remove_pv(pmap, sva, pv);
 			pmap->pmap_stats.resident_count--;
 		}
