@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 1997/03/21 00:16:32 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 1997/04/02 22:08:07 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -155,6 +155,24 @@ struct alpha_bus_space {
 			    bus_space_handle_t, bus_size_t, bus_size_t));
 	void		(*abs_c_8) __P((void *, bus_space_handle_t, bus_size_t,
 			    bus_space_handle_t, bus_size_t, bus_size_t));
+
+	/* OpenBSD extensions follows */
+
+	/* read multiple raw */
+	void		(*abs_rrm_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t *, bus_size_t));
+	void		(*abs_rrm_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t *, bus_size_t));
+	void		(*abs_rrm_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t *, bus_size_t));
+
+	/* write multiple raw */
+	void		(*abs_wrm_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t));
+	void		(*abs_wrm_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t));
+	void		(*abs_wrm_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t));
 };
 
 
@@ -168,11 +186,14 @@ struct alpha_bus_space {
 	(*(t)->__abs_opname(r,sz))((t)->abs_cookie, h, o)
 #define	__abs_ws(sz, t, h, o, v)					\
 	(*(t)->__abs_opname(w,sz))((t)->abs_cookie, h, o, v)
-#ifndef DEBUG
 #define	__abs_nonsingle(type, sz, t, h, o, a, c)			\
 	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c)
+#ifndef DEBUG
+#define	__abs_aligned_nonsingle(type, sz, t, h, o, a, c)		\
+	__abs_nonsingle((type), (sz), (t), (h), (o), (a), (c))
+
 #else
-#define	__abs_nonsingle(type, sz, t, h, o, a, c)			\
+#define	__abs_aligend_nonsingle(type, sz, t, h, o, a, c)		\
     do {								\
 	if (((unsigned long)a & (sz - 1)) != 0)				\
 		panic("bus non-single %d-byte unaligned (to %p) at %s:%d", \
@@ -184,7 +205,6 @@ struct alpha_bus_space {
 	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, v, c)
 #define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
 	(*(t)->__abs_opname(c,sz))((t)->abs_cookie, h1, o1, h2, o2, cnt)
-
 
 /*
  * Mapping and unmapping operations.
@@ -232,11 +252,11 @@ struct alpha_bus_space {
 #define	bus_space_read_multi_1(t, h, o, a, c)				\
 	__abs_nonsingle(rm,1,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_2(t, h, o, a, c)				\
-	__abs_nonsingle(rm,2,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(rm,2,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_4(t, h, o, a, c)				\
-	__abs_nonsingle(rm,4,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(rm,4,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_8(t, h, o, a, c)				\
-	__abs_nonsingle(rm,8,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(rm,8,(t),(h),(o),(a),(c))
 
 
 /*
@@ -250,12 +270,12 @@ struct alpha_bus_space {
  * possible byte-swapping should be done by these functions.
  */
 
-#define	bus_space_read_raw_multi_2(t, h, o, a, c) \
-    bus_space_read_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
-#define	bus_space_read_raw_multi_4(t, h, o, a, c) \
-    bus_space_read_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
-#define	bus_space_read_raw_multi_8(t, h, o, a, c) \
-    bus_space_read_multi_8((t), (h), (o), (u_int64_t *)(a), (c) >> 4)
+#define	bus_space_read_raw_multi_2(t, h, o, a, c)			\
+	__abs_nonsingle(rrm,2,(t),(h),(o),(a),(c))
+#define	bus_space_read_raw_multi_4(t, h, o, a, c)			\
+	__abs_nonsingle(rrm,4,(t),(h),(o),(a),(c))
+#define	bus_space_read_raw_multi_8(t, h, o, a, c)			\
+	__abs_nonsingle(rrm,8,(t),(h),(o),(a),(c))
 
 /*
  * Bus read region operations.
@@ -263,11 +283,11 @@ struct alpha_bus_space {
 #define	bus_space_read_region_1(t, h, o, a, c)				\
 	__abs_nonsingle(rr,1,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_2(t, h, o, a, c)				\
-	__abs_nonsingle(rr,2,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(rr,2,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_4(t, h, o, a, c)				\
-	__abs_nonsingle(rr,4,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(rr,4,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_8(t, h, o, a, c)				\
-	__abs_nonsingle(rr,8,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(rr,8,(t),(h),(o),(a),(c))
 
 
 /*
@@ -285,11 +305,11 @@ struct alpha_bus_space {
 #define	bus_space_write_multi_1(t, h, o, a, c)				\
 	__abs_nonsingle(wm,1,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_2(t, h, o, a, c)				\
-	__abs_nonsingle(wm,2,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(wm,2,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_4(t, h, o, a, c)				\
-	__abs_nonsingle(wm,4,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(wm,4,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-	__abs_nonsingle(wm,8,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(wm,8,(t),(h),(o),(a),(c))
 
 /*
  *	void bus_space_write_raw_multi_N __P((bus_space_tag_t tag,
@@ -302,12 +322,12 @@ struct alpha_bus_space {
  * possible byte-swapping should be done by these functions.
  */
 
-#define	bus_space_write_raw_multi_2(t, h, o, a, c) \
-    bus_space_write_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
-#define	bus_space_write_raw_multi_4(t, h, o, a, c) \
-    bus_space_write_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
-#define	bus_space_write_raw_multi_8(t, h, o, a, c) \
-    bus_space_write_multi_8((t), (h), (o), (u_int64_t *)(a), (c) >> 4)
+#define	bus_space_write_raw_multi_2(t, h, o, a, c)			\
+	__abs_nonsingle(wrm,2,(t),(h),(o),(a),(c))
+#define	bus_space_write_raw_multi_4(t, h, o, a, c)			\
+	__abs_nonsingle(wrm,4,(t),(h),(o),(a),(c))
+#define	bus_space_write_raw_multi_8(t, h, o, a, c)			\
+	__abs_nonsingle(wrm,8,(t),(h),(o),(a),(c))
 
 /*
  * Bus write region operations.
@@ -315,11 +335,11 @@ struct alpha_bus_space {
 #define	bus_space_write_region_1(t, h, o, a, c)				\
 	__abs_nonsingle(wr,1,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_2(t, h, o, a, c)				\
-	__abs_nonsingle(wr,2,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(wr,2,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_4(t, h, o, a, c)				\
-	__abs_nonsingle(wr,4,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(wr,4,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_8(t, h, o, a, c)				\
-	__abs_nonsingle(wr,8,(t),(h),(o),(a),(c))
+	__abs_aligned_nonsingle(wr,8,(t),(h),(o),(a),(c))
 
 
 /*

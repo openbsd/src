@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_bus_mem.c,v 1.6 1997/01/24 19:58:19 niklas Exp $	*/
+/*	$OpenBSD: tc_bus_mem.c,v 1.7 1997/04/02 22:08:10 niklas Exp $	*/
 /*	$NetBSD: tc_bus_mem.c,v 1.13 1996/12/02 22:19:34 cgd Exp $	*/
 
 /*
@@ -145,6 +145,22 @@ void		tc_mem_copy_4 __P((void *, bus_space_handle_t,
 void		tc_mem_copy_8 __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
+/* read multiple raw */
+void		tc_mem_read_raw_multi_2 __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t));
+void		tc_mem_read_raw_multi_4 __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t));
+void		tc_mem_read_raw_multi_8 __P((void *, bus_space_handle_t,
+		    bus_size_t, u_int8_t *, bus_size_t));
+
+/* write multiple raw */
+void		tc_mem_write_raw_multi_2 __P((void *, bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t));
+void		tc_mem_write_raw_multi_4 __P((void *, bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t));
+void		tc_mem_write_raw_multi_8 __P((void *, bus_space_handle_t,
+		    bus_size_t, const u_int8_t *, bus_size_t));
+
 static struct alpha_bus_space tc_mem_space = {
 	/* cookie */
 	NULL,
@@ -214,6 +230,16 @@ static struct alpha_bus_space tc_mem_space = {
 	tc_mem_copy_2,
 	tc_mem_copy_4,
 	tc_mem_copy_8,
+
+	/* write multiple raw */
+	tc_mem_read_raw_multi_2,
+	tc_mem_read_raw_multi_4,
+	tc_mem_read_raw_multi_8,
+	
+	/* write multiple raw*/
+	tc_mem_write_raw_multi_2,
+	tc_mem_write_raw_multi_4,
+	tc_mem_write_raw_multi_8,
 };
 
 bus_space_tag_t
@@ -612,3 +638,55 @@ tc_mem_copy_N(1)
 tc_mem_copy_N(2)
 tc_mem_copy_N(4)
 tc_mem_copy_N(8)
+
+#define tc_mem_read_raw_multi_N(BYTES,TYPE)				\
+void									\
+__C(tc_mem_read_raw_multi_,BYTES)(v, h, o, a, c)			\
+	void *v;							\
+	bus_space_handle_t h;						\
+	bus_size_t o, c;						\
+	u_int8_t *a;							\
+{									\
+	TYPE temp;							\
+	int i;								\
+									\
+	while (c > 0) {							\
+		tc_mem_barrier(v, h, o, BYTES, BUS_BARRIER_READ);	\
+		temp = __C(tc_mem_read_,BYTES)(v, h, o);		\
+		for (i = 0; i < BYTES; i++) {				\
+			*a++ = temp & 0xff;				\
+			temp >>= 8;					\
+		}							\
+		c -= BYTES;						\
+	}								\
+}
+tc_mem_read_raw_multi_N(2,u_int16_t)
+tc_mem_read_raw_multi_N(4,u_int32_t)
+tc_mem_read_raw_multi_N(8,u_int64_t)
+
+#define tc_mem_write_raw_multi_N(BYTES,TYPE)				\
+void									\
+__C(tc_mem_write_raw_multi_,BYTES)(v, h, o, a, c)		\
+	void *v;							\
+	bus_space_handle_t h;						\
+	bus_size_t o, c;						\
+	const u_int8_t *a;						\
+{									\
+	TYPE temp;							\
+	int i;								\
+									\
+	while (c > 0) {							\
+		temp = 0;						\
+		for (i = BYTES - 1; i >= 0; i--) {			\
+			temp <<= 8;					\
+			temp |= *(a + i);				\
+		}							\
+		__C(tc_mem_write_,BYTES)(v, h, o, temp);		\
+		tc_mem_barrier(v, h, o, BYTES, BUS_BARRIER_WRITE);	\
+		c -= BYTES;						\
+		a += BYTES;						\
+	}								\
+}
+tc_mem_write_raw_multi_N(2,u_int16_t)
+tc_mem_write_raw_multi_N(4,u_int32_t)
+tc_mem_write_raw_multi_N(8,u_int64_t)
