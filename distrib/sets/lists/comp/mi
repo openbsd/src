@@ -952,6 +952,7 @@
 ./usr/include/ufs/ext2fs/ext2fs_dinode.h
 ./usr/include/ufs/ext2fs/ext2fs_dir.h
 ./usr/include/ufs/ext2fs/ext2fs_extern.h
+./usr/include/ufs/ffs/softdep.h
 ./usr/include/ufs/ffs/ffs_extern.h
 ./usr/include/ufs/ffs/fs.h
 ./usr/include/ufs/lfs/lfs.h
