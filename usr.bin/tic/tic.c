@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.1 1998/07/24 19:37:35 millert Exp $	*/
+/*	$OpenBSD: tic.c,v 1.2 1998/11/03 21:59:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,14 +44,30 @@
 #include <dump_entry.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: tic.c,v 1.30 1998/03/28 20:04:11 tom Exp $")
+MODULE_ID("$From: tic.c,v 1.38 1998/10/18 00:27:14 tom Exp $")
 
 const char *_nc_progname = "tic";
 
 static	FILE	*log_fp;
+static	FILE	*tmp_fp;
 static	bool	showsummary = FALSE;
+static	const char *to_remove;
 
 static	const	char usage_string[] = "[-h] [-v[n]] [-e names] [-CILNRTcfrsw1] source-file\n";
+
+static void cleanup(void)
+{
+	fclose(tmp_fp);
+	if (to_remove != 0)
+		remove(to_remove);
+}
+
+static void failed(const char *msg)
+{
+	perror(msg);
+	cleanup();
+	exit(EXIT_FAILURE);
+}
 
 static void usage(void)
 {
@@ -66,6 +82,7 @@ static void usage(void)
 	"  -T         remove size-restrictions on compiled description",
 	"  -c         check only, validate input without compiling or translating",
 	"  -f         format complex strings for readability",
+	"  -g         format %'char' to %{number}",
 	"  -e<names>  translate/compile only entries named by comma-separated list",
 	"  -o<dir>    set output directory for compiled entry writes",
 	"  -r         force resolution of all use entries in source translation",
@@ -82,6 +99,59 @@ static void usage(void)
 	for (j = 0; j < sizeof(tbl)/sizeof(tbl[0]); j++)
 		puts(tbl[j]);
 	exit(EXIT_FAILURE);
+}
+
+#define L_BRACE '{'
+#define R_BRACE '}'
+#define S_QUOTE '\'';
+
+static void write_it(ENTRY *ep)
+{
+	unsigned n;
+	int ch;
+	char *s, *d, *t;
+	char result[MAX_ENTRY_SIZE];
+
+	/*
+	 * Look for strings that contain %{number}, convert them to %'char',
+	 * which is shorter and runs a little faster.
+	 */
+	for (n = 0; n < STRCOUNT; n++) {
+		s = ep->tterm.Strings[n];
+		if (VALID_STRING(s)
+		 && strchr(s, L_BRACE) != 0) {
+			d = result;
+			t = s;
+			while ((ch = *t++) != 0) {
+				*d++ = ch;
+				if (ch == '\\') {
+					*d++ = *t++;
+				} else if ((ch == '%')
+				 && (*t == L_BRACE)) {
+					char *v = 0;
+					long value = strtol(t+1, &v, 0);
+					if (v != 0
+					 && *v == R_BRACE
+					 && value > 0
+					 && value != '\\'	/* FIXME */
+					 && value < 127
+					 && isprint((int)value)) {
+						*d++ = S_QUOTE;
+						*d++ = (int)value;
+						*d++ = S_QUOTE;
+						t = (v + 1);
+					}
+				}
+			}
+			*d = 0;
+			if (strlen(result) < strlen(s))
+				strcpy(s, result);
+		}
+	}
+
+	_nc_set_type(_nc_first_name(ep->tterm.term_names));
+	_nc_curr_line = ep->startline;
+	_nc_write_entry(&ep->tterm);
 }
 
 static bool immedhook(ENTRY *ep)
@@ -125,9 +195,7 @@ static bool immedhook(ENTRY *ep)
     {
 	int	oldline = _nc_curr_line;
 
-	_nc_set_type(_nc_first_name(ep->tterm.term_names));
-	_nc_curr_line = ep->startline;
-	_nc_write_entry(&ep->tterm);
+	write_it(ep);
 	_nc_curr_line = oldline;
 	free(ep->tterm.str_table);
 	return(TRUE);
@@ -220,15 +288,16 @@ static const char **make_namelist(char *src)
 	const char **dst = 0;
 
 	char *s, *base;
-	size_t pass, n, nn;
+	unsigned pass, n, nn;
 	char buffer[BUFSIZ];
 
-	if (strchr(src, '/') != 0) {	/* a filename */
+	if (src == 0) {
+		/* EMPTY */;
+	} else if (strchr(src, '/') != 0) {	/* a filename */
 		FILE *fp = fopen(src, "r");
-		if (fp == 0) {
-			perror(src);
-			exit(EXIT_FAILURE);
-		}
+		if (fp == 0)
+			failed(src);
+
 		for (pass = 1; pass <= 2; pass++) {
 			nn = 0;
 			while (fgets(buffer, sizeof(buffer), fp) != 0) {
@@ -297,6 +366,7 @@ static bool matches(const char **needle, const char *haystack)
 
 int main (int argc, char *argv[])
 {
+char	my_tmpname[PATH_MAX];
 int	v_opt = -1, debug_level;
 int	smart_defaults = TRUE;
 char    *termcap;
@@ -307,8 +377,10 @@ int	this_opt, last_opt = '?';
 int	outform = F_TERMINFO;	/* output format */
 int	sortmode = S_TERMINFO;	/* sort_mode */
 
+int	fd;
 int	width = 60;
 bool	formatted = FALSE;	/* reformat complex strings? */
+bool	numbers = TRUE;		/* format "%'char'" to "%{number}" */
 bool	infodump = FALSE;	/* running as captoinfo? */
 bool	capdump = FALSE;	/* running as infotocap? */
 bool	forceresolve = FALSE;	/* force resolution */
@@ -334,7 +406,7 @@ bool	check_only = FALSE;
 	 * design decision to allow the numeric values for -w, -v options to
 	 * be optional.
 	 */
-	while ((this_opt = getopt(argc, argv, "0123456789CILNR:TVce:fo:rsvw")) != EOF) {
+	while ((this_opt = getopt(argc, argv, "0123456789CILNR:TVce:fgo:rsvw")) != EOF) {
 		if (isdigit(this_opt)) {
 			switch (last_opt) {
 			case 'v':
@@ -388,6 +460,9 @@ bool	check_only = FALSE;
 		case 'f':
 			formatted = TRUE;
 			break;
+		case 'g':
+			numbers = FALSE;
+			break;
 		case 'o':
 			outdir = optarg;
 			break;
@@ -425,11 +500,22 @@ bool	check_only = FALSE;
 	} else {
 		if (infodump == TRUE) {
 			/* captoinfo's no-argument case */
-			source_file = "/etc/termcap";
-			if ((termcap = getenv("TERMCAP")) != NULL) {
+			source_file = "/usr/share/misc/termcap";
+			if ((termcap = getenv("TERMCAP")) != 0
+			 && (namelst = make_namelist(getenv("TERM"))) != 0) {
 				if (access(termcap, F_OK) == 0) {
 					/* file exists */
 					source_file = termcap;
+				} else
+				if (strcpy(my_tmpname, "/tmp/tic.XXXXXXXX")
+				 && (fd = mkstemp(my_tmpname)) != -1
+				 && (tmp_fp = fdopen(fd, "w")) != 0) {
+					fprintf(tmp_fp, "%s\n", termcap);
+					fclose(tmp_fp);
+					tmp_fp = fopen(source_file, "r");
+					to_remove = source_file;
+				} else {
+					failed("mkstemp");
 				}
 			}
 		} else {
@@ -439,11 +525,13 @@ bool	check_only = FALSE;
 				_nc_progname,
 				_nc_progname,
 				usage_string);
+			cleanup();
 			return EXIT_FAILURE;
 		}
 	}
 
-	if (freopen(source_file, "r", stdin) == NULL) {
+	if (tmp_fp == 0
+	 && (tmp_fp = fopen(source_file, "r")) == 0) {
 		fprintf (stderr, "%s: Can't open %s\n", _nc_progname, source_file);
 		return EXIT_FAILURE;
 	}
@@ -465,14 +553,17 @@ bool	check_only = FALSE;
 	if (!(check_only || infodump || capdump))
 	    _nc_set_writedir(outdir);
 #endif /* HAVE_BIG_CORE */
-	_nc_read_entry_source(stdin, (char *)NULL,
+	_nc_read_entry_source(tmp_fp, (char *)NULL,
 			      !smart_defaults, FALSE,
 			      (check_only || infodump || capdump) ? NULLHOOK : immedhook);
 
 	/* do use resolution */
-	if (check_only || (!infodump && !capdump) || forceresolve)
-	    if (!_nc_resolve_uses() && !check_only)
+	if (check_only || (!infodump && !capdump) || forceresolve) {
+	    if (!_nc_resolve_uses() && !check_only) {
+		cleanup();
 		return EXIT_FAILURE;
+	    }
+	}
 
 #ifndef HAVE_BIG_CORE
 	/*
@@ -489,6 +580,7 @@ bool	check_only = FALSE;
 	{
 	    (void) fprintf(stderr,
 			   "Sorry, -e can't be used without -I or -C\n");
+	    cleanup();
 	    return EXIT_FAILURE;
 	}
 #endif /* HAVE_BIG_CORE */
@@ -500,7 +592,7 @@ bool	check_only = FALSE;
 	    {
 		if (matches(namelst, qp->tterm.term_names))
 		{
-		    int	len = fmt_entry(&qp->tterm, NULL, TRUE, infodump);
+		    int	len = fmt_entry(&qp->tterm, NULL, TRUE, infodump, numbers);
 
 		    if (len>(infodump?MAX_TERMINFO_LENGTH:MAX_TERMCAP_LENGTH))
 			    (void) fprintf(stderr,
@@ -519,11 +611,7 @@ bool	check_only = FALSE;
 		_nc_set_writedir(outdir);
 		for_entry_list(qp)
 		    if (matches(namelst, qp->tterm.term_names))
-		    {
-			_nc_set_type(_nc_first_name(qp->tterm.term_names));
-			_nc_curr_line = qp->startline;
-			_nc_write_entry(&qp->tterm);
-		    }
+			write_it(qp);
 	    }
 	    else
 	    {
@@ -539,14 +627,14 @@ bool	check_only = FALSE;
 			/* this is in case infotocap() generates warnings */
 			_nc_set_type(_nc_first_name(qp->tterm.term_names));
 
-			(void) fseek(stdin, qp->cstart, SEEK_SET);
+			(void) fseek(tmp_fp, qp->cstart, SEEK_SET);
 			while (j-- )
 			    if (infodump)
-				(void) putchar(getchar());
+				(void) putchar(fgetc(tmp_fp));
 			    else
-				put_translate(getchar());
+				put_translate(fgetc(tmp_fp));
 
-			len = dump_entry(&qp->tterm, limited, NULL);
+			len = dump_entry(&qp->tterm, limited, numbers, NULL);
 			for (j = 0; j < qp->nuses; j++)
 			    len += dump_uses((char *)(qp->uses[j].parent), infodump);
 			(void) putchar('\n');
@@ -559,8 +647,8 @@ bool	check_only = FALSE;
 		    bool in_comment = FALSE;
 		    bool trailing_comment = FALSE;
 
-		    (void) fseek(stdin, _nc_tail->cend, SEEK_SET);
-		    while ((c = getchar()) != EOF)
+		    (void) fseek(tmp_fp, _nc_tail->cend, SEEK_SET);
+		    while ((c = fgetc(tmp_fp)) != EOF)
 		    {
 			if (oldc == '\n') {
 			    if (c == '#') {
@@ -592,5 +680,6 @@ bool	check_only = FALSE;
 		else
 			fprintf(log_fp, "No entries written\n");
 	}
+	cleanup();
 	return(EXIT_SUCCESS);
 }

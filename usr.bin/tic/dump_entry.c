@@ -1,3 +1,5 @@
+/*	$OpenBSD: dump_entry.c,v 1.2 1998/11/03 21:59:53 millert Exp $	*/
+
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
  *                                                                          *
@@ -38,9 +40,11 @@
 #include <termsort.c>		/* this C file is generated */
 #include <parametrized.h>	/* so is this */
 
-MODULE_ID("$Id: dump_entry.c,v 1.1 1998/07/27 03:26:10 millert Exp $")
+MODULE_ID("$From: dump_entry.c,v 1.29 1998/09/26 13:15:00 tom Exp $")
 
 #define INDENT			8
+
+#define DISCARD(string) string = ABSENT_STRING
 
 static int tversion;		/* terminfo version */
 static int outform;		/* output format to use */
@@ -451,7 +455,8 @@ static char * fmt_complex(char *dst, char *src, int level)
 int fmt_entry(TERMTYPE *tterm,
 			   int (*pred)(int type, int idx),
 			   bool suppress_untranslatable,
-			   bool infodump)
+			   bool infodump,
+			   bool numbers)
 {
 int	i, j;
 char    buffer[MAX_TERMINFO_LENGTH];
@@ -557,6 +562,7 @@ bool	outcount = 0;
 	 * them to be output as defined and empty.
 	 */
 	if (outform==F_TERMCAP)
+	{
 #undef CUR
 #define CUR tterm->
 	    if (insert_character || parm_ich)
@@ -576,6 +582,17 @@ bool	outcount = 0;
 		}
 	    }
 
+	    if (init_3string != 0
+	     && termcap_reset != 0
+	     && !strcmp(init_3string, termcap_reset))
+		DISCARD(init_3string);
+
+	    if (reset_2string != 0
+	     && termcap_reset != 0
+	     && !strcmp(reset_2string, termcap_reset))
+		DISCARD(reset_2string);
+	}
+
 	predval = pred(STRING, i);
 	buffer[0] = '\0';
 	if (predval != FAIL) {
@@ -586,7 +603,7 @@ bool	outcount = 0;
 		sprintf(buffer, "%s@", str_names[i]);
 	    else if (outform == F_TERMCAP || outform == F_TCONVERR)
 	    {
-		char *srccap = _nc_tic_expand(tterm->Strings[i], FALSE);
+		char *srccap = _nc_tic_expand(tterm->Strings[i], FALSE, numbers);
 		char *cv = _nc_infotocap(str_names[i], srccap, parametrized[i]);
 
 		if (cv == 0)
@@ -604,7 +621,7 @@ bool	outcount = 0;
 	    }
 	    else
 	    {
-		char *src = _nc_tic_expand(tterm->Strings[i], outform==F_TERMINFO);
+		char *src = _nc_tic_expand(tterm->Strings[i], outform==F_TERMINFO, numbers);
 		sprintf(buffer, "%s=", str_names[i]);
 		if (pretty && outform==F_TERMINFO)
 		    fmt_complex(buffer + strlen(buffer), src, 1);
@@ -663,7 +680,7 @@ bool	outcount = 0;
 	    if (box_ok)
 	    {
 		(void) strcpy(buffer, "box1=");
-		(void) strcat(buffer, _nc_tic_expand(boxchars, outform==F_TERMINFO));
+		(void) strcat(buffer, _nc_tic_expand(boxchars, outform==F_TERMINFO, numbers));
 		WRAP_CONCAT;
 	    }
 	}
@@ -708,7 +725,7 @@ bool	outcount = 0;
     return(infodump ? len : termcap_length(outbuf));
 }
 
-int dump_entry(TERMTYPE *tterm, bool limited, int (*pred)(int type, int idx))
+int dump_entry(TERMTYPE *tterm, bool limited, bool numbers, int (*pred)(int type, int idx))
 /* dump a single entry */
 {
     int	len, critlen;
@@ -729,11 +746,11 @@ int dump_entry(TERMTYPE *tterm, bool limited, int (*pred)(int type, int idx))
 	infodump = TRUE;
     }
 
-    if (((len = fmt_entry(tterm, pred, FALSE, infodump)) > critlen) && limited)
+    if (((len = fmt_entry(tterm, pred, FALSE, infodump, numbers)) > critlen) && limited)
     {
 	(void) printf("# (untranslatable capabilities removed to fit entry within %d bytes)\n",
 		      critlen);
-	if ((len = fmt_entry(tterm, pred, TRUE, infodump)) > critlen)
+	if ((len = fmt_entry(tterm, pred, TRUE, infodump, numbers)) > critlen)
 	{
 	    /*
 	     * We pick on sgr because it's a nice long string capability that
@@ -743,7 +760,7 @@ int dump_entry(TERMTYPE *tterm, bool limited, int (*pred)(int type, int idx))
 	    set_attributes = ABSENT_STRING; 
 	    (void) printf("# (sgr removed to fit entry within %d bytes)\n",
 			  critlen);
-	    if ((len = fmt_entry(tterm, pred, TRUE, infodump)) > critlen)
+	    if ((len = fmt_entry(tterm, pred, TRUE, infodump, numbers)) > critlen)
 	    {
 		int oldversion = tversion;
 
@@ -751,7 +768,7 @@ int dump_entry(TERMTYPE *tterm, bool limited, int (*pred)(int type, int idx))
 		(void) printf("# (terminfo-only capabilities suppressed to fit entry within %d bytes)\n",
 			      critlen);
 
-		if ((len = fmt_entry(tterm, pred, TRUE, infodump)) > critlen)
+		if ((len = fmt_entry(tterm, pred, TRUE, infodump, numbers)) > critlen)
 		{
 		    (void) fprintf(stderr,
 			       "warning: %s entry is %d bytes long\n",

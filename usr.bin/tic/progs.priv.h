@@ -1,4 +1,4 @@
-/*	$OpenBSD: progs.priv.h,v 1.1 1998/07/27 03:26:11 millert Exp $	*/
+/*	$OpenBSD: progs.priv.h,v 1.2 1998/11/03 21:59:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
