@@ -2,10 +2,8 @@
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
-APMDIR=	${I386}/apm_init
-
-APMDST=	lib/apm_init
-APMREL?=	../../
+APMDIR!=	cd ${I386}/apm_init; pwd
+APMDST=		lib/apm_init
 APMINC?=	${APMDST}/apm_init.inc
 
 APMDEPS= \
@@ -21,18 +19,16 @@ APMDEPS= \
 
 ${APMINC}:	${APMDEPS} ${APMDST}
 	@echo making sure the apm grappling hook is up to date...
-	@(cd ${APMDST} && ${MAKE} -f ${APMREL}${APMDIR}/Makefile \
+	@(cd ${APMDST} && ${MAKE} -f ${APMDIR}/Makefile \
 	  APMCC="${CC}" \
 	  APMCFLAGS="${CFLAGS}" \
-	  APMREL="${APMREL}" \
 	  APMDIR="${APMDIR}" apm_init.inc)
 
 clean:: 		.NOTMAIN __always_make_apmlib
 	@echo cleaning the apm grappling hook objects
-	@(cd ${APMDST} && ${MAKE} -f ${APMREL}${APMDIR}/Makefile \
+	@(cd ${APMDST} && ${MAKE} -f ${APMDIR}/Makefile \
 	  APMCC="${CC}" \
 	  APMCFLAGS="${CFLAGS}" \
-	  APMREL="${APMREL}" \
 	  APMDIR="${APMDIR}" clean)
 
 ${APMDST} __always_make_apmlib:	.NOTMAIN

@@ -15,17 +15,15 @@
 # Dec., 1995	NetBSD 1.1 kernel build retrofit, jtk@netbsd.org
 #
 
-DIR=${APMREL}${APMDIR}
-
-.if exists (${DIR}/arch/${MACHINE_ARCH}/Makefile.inc)
-.PATH:	${DIR}/arch/${MACHINE_ARCH}
-.include "${DIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+.if exists (${APMDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
+.PATH:	${APMDIR}/arch/${MACHINE_ARCH}
+.include "${APMDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
 .endif
 
-.PATH: ${DIR}
+.PATH: ${APMDIR}
 
 CC = ${APMCC}
-CFLAGS += -DINITIALIZER	-I${DIR} -DKERNEL \
+CFLAGS += -DINITIALIZER	-I${APMDIR} -DKERNEL \
 	${APMCFLAGS:S@-I.@-I${KERNREL}.@g}
 
 OBJS = apm_init.o real_prot.o table.o
@@ -39,13 +37,13 @@ OBJS = apm_init.o real_prot.o table.o
 	$(CC)  $(CFLAGS) $(INC) -c $<
 
 apm_init.inc: apm_init
-	sh ${DIR}/bin2asm.sh apm_init > apm_init.inc
+	sh ${APMDIR}/bin2asm.sh apm_init > apm_init.inc
 
 apm_init: $(OBJS)
 	$(LD) -Bstatic -N -T 0 -o apm_init $(OBJS)
 	cp apm_init apm_init.sym
 	@strip apm_init
-	@sh ${DIR}/rmaouthdr apm_init apm_init.tmp
+	@sh ${APMDIR}/rmaouthdr apm_init apm_init.tmp
 	@mv -f apm_init.tmp apm_init
 
 #allclean: clean
