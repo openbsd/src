@@ -40,11 +40,11 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm syslogd
-.Op Fl d
+.Op Fl du
 .Op Fl f Ar config_file
 .Op Fl m Ar mark_interval
+.Op Fl a Ar path
 .Op Fl p Ar log_socket
-.Op Fl u
 .Sh DESCRIPTION
 .Nm Syslogd
 reads and logs messages to the system console, log files, other
@@ -54,11 +54,11 @@ The options are as follows:
 .It Fl d
 Enable debugging to the standard output,
 and do not disassociate from the controlling terminal.
-.It Fl f
+.It Fl f Ar config_file
 Specify the pathname of an alternate configuration file;
 the default is
 .Pa /etc/syslog.conf .
-.It Fl m
+.It Fl m Ar mark_interval
 Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
 .It Fl u
@@ -66,10 +66,18 @@ Select the historical ``insecure'' mode, in which syslogd will
 accept input from the UDP port.
 Some software wants this, but you can be subjected to a variety of
 attacks over the network, including attackers remotely filling logs.
-.It Fl p
-Specify the pathname of an alternate log socket;
+.It Fl p Ar log_socket
+Specify the pathname of an alternate log socket to be used instead;
 the default is
 .Pa /dev/log .
+.It Fl a Pa path
+Specify a location where
+.Nm syslogd
+should place an additional log socket.
+Up to about 20 additional logging sockets can be specified.
+The primary use for this is to place additional log sockets in
+.Pa /dev/log
+of various chroot filespaces.
 .El
 .Pp
 .Nm Syslogd

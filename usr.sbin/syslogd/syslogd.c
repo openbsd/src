@@ -101,12 +101,9 @@ static char rcsid[] = "$NetBSD: syslogd.c,v 1.5 1996/01/02 17:48:41 perry Exp $"
 #define SYSLOG_NAMES
 #include <sys/syslog.h>
 
-char	*LogName = _PATH_LOG;
 char	*ConfFile = _PATH_LOGCONF;
 char	*PidFile = _PATH_LOGPID;
 char	ctty[] = _PATH_CONSOLE;
-
-#define FDMASK(fd)	(1 << (fd))
 
 #define	dprintf		if (Debug) printf
 
@@ -206,18 +203,24 @@ char   *ttymsg __P((struct iovec *, int, char *, int));
 void	usage __P((void));
 void	wallmsg __P((struct filed *, struct iovec *));
 
+#define MAXFUNIX	20
+
+int nfunix = 1;
+char *funixn[MAXFUNIX] = { _PATH_LOG };
+int funix[MAXFUNIX];
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, funix, i, inetm = 0, fklog, klogm, len;
+	int ch, i, fklog, len;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
 	FILE *fp;
 	char *p, line[MSG_BSIZE + 1];
 
-	while ((ch = getopt(argc, argv, "duf:m:p:")) != -1)
+	while ((ch = getopt(argc, argv, "duf:m:p:a:")) != -1)
 		switch (ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -229,10 +232,18 @@ main(argc, argv)
 			MarkInterval = atoi(optarg) * 60;
 			break;
 		case 'p':		/* path */
-			LogName = optarg;
+			funixn[0] = optarg;
 			break;
 		case 'u':		/* allow udp input port */
 			SecureMode = 0;
+			break;
+		case 'a':
+			if (nfunix < MAXFUNIX)
+				funixn[nfunix++] = optarg;
+			else
+				fprintf(stderr,
+				    "syslogd: out of descriptors, ignoring %s\n",
+				    optarg);
 			break;
 		case '?':
 		default:
@@ -260,22 +271,27 @@ main(argc, argv)
 	(void)signal(SIGCHLD, reapchild);
 	(void)signal(SIGALRM, domark);
 	(void)alarm(TIMERINTVL);
-	(void)unlink(LogName);
 
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
-	memset(&sunx, 0, sizeof(sunx));
-	sunx.sun_family = AF_UNIX;
-	(void)strncpy(sunx.sun_path, LogName, sizeof(sunx.sun_path));
-	funix = socket(AF_UNIX, SOCK_DGRAM, 0);
-	if (funix < 0 ||
-	    bind(funix, (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
-	    chmod(LogName, 0666) < 0) {
-		(void) snprintf(line, sizeof line, "cannot create %s", LogName);
-		logerror(line);
-		dprintf("cannot create %s (%d)\n", LogName, errno);
-		die(0);
+	for (i = 0; i < nfunix; i++) {
+		(void)unlink(funixn[i]);
+
+		memset(&sunx, 0, sizeof(sunx));
+		sunx.sun_family = AF_UNIX;
+		(void)strncpy(sunx.sun_path, funixn[i], sizeof(sunx.sun_path));
+		funix[i] = socket(AF_UNIX, SOCK_DGRAM, 0);
+		if (funix[i] < 0 ||
+		    bind(funix[i], (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
+		    chmod(funixn[i], 0666) < 0) {
+			(void) snprintf(line, sizeof line, "cannot create %s",
+			    funixn[i]);
+			logerror(line);
+			dprintf("cannot create %s (%d)\n", funixn[i], errno);
+			if (i == 0)
+				die(0);
+		}
 	}
 	finet = socket(AF_INET, SOCK_DGRAM, 0);
 	if (finet >= 0) {
@@ -296,16 +312,11 @@ main(argc, argv)
 			if (!Debug)
 				die(0);
 		} else {
-			inetm = FDMASK(finet);
 			InetInuse = 1;
 		}
 	}
-	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) >= 0)
-		klogm = FDMASK(fklog);
-	else {
+	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0)
 		dprintf("can't open %s (%d)\n", _PATH_KLOG, errno);
-		klogm = 0;
-	}
 
 	/* tuck my process id away */
 	if (!Debug) {
@@ -322,10 +333,30 @@ main(argc, argv)
 	(void)signal(SIGHUP, init);
 
 	for (;;) {
-		int nfds, readfds = FDMASK(funix) | inetm | klogm;
+		fd_set readfds;
+		int nfds = 0;
 
-		dprintf("readfds = %#x\n", readfds);
-		nfds = select(20, (fd_set *)&readfds, (fd_set *)NULL,
+		FD_ZERO(&readfds);
+		if (fklog != -1) {
+			FD_SET(fklog, &readfds);
+			if (fklog > nfds)
+				nfds = fklog;
+		}
+		if (finet != -1) {
+			FD_SET(finet, &readfds);
+			if (finet > nfds)
+				nfds = finet;
+		}
+		for (i = 0; i < nfunix; i++) {
+			if (funix[i] != -1) {
+				FD_SET(funix[i], &readfds);
+				if (funix[i] > nfds)
+					nfds = funix[i];
+			}
+		}
+
+		/*dprintf("readfds = %#x\n", readfds);*/
+		nfds = select(nfds, &readfds, (fd_set *)NULL,
 		    (fd_set *)NULL, (struct timeval *)NULL);
 		if (nfds == 0)
 			continue;
@@ -334,8 +365,8 @@ main(argc, argv)
 				logerror("select");
 			continue;
 		}
-		dprintf("got a message (%d, %#x)\n", nfds, readfds);
-		if (readfds & klogm) {
+		/*dprintf("got a message (%d, %#x)\n", nfds, readfds);*/
+		if (fklog != -1 && FD_ISSET(fklog, &readfds)) {
 			i = read(fklog, line, sizeof(line) - 1);
 			if (i > 0) {
 				line[i] = '\0';
@@ -343,20 +374,9 @@ main(argc, argv)
 			} else if (i < 0 && errno != EINTR) {
 				logerror("klog");
 				fklog = -1;
-				klogm = 0;
 			}
 		}
-		if (readfds & FDMASK(funix)) {
-			len = sizeof(fromunix);
-			i = recvfrom(funix, line, MAXLINE, 0,
-			    (struct sockaddr *)&fromunix, &len);
-			if (i > 0) {
-				line[i] = '\0';
-				printline(LocalHostName, line);
-			} else if (i < 0 && errno != EINTR)
-				logerror("recvfrom unix");
-		}
-		if (readfds & inetm) {
+		if (finet != -1 && FD_ISSET(finet, &readfds)) {
 			len = sizeof(frominet);
 			i = recvfrom(finet, line, MAXLINE, 0,
 			    (struct sockaddr *)&frominet, &len);
@@ -370,6 +390,18 @@ main(argc, argv)
 					logerror("recvfrom inet");
 			}
 		} 
+		for (i = 0; i < nfunix; i++) {
+			if (funix[i] != -1 && FD_ISSET(funix[i], &readfds)) {
+				len = sizeof(fromunix);
+				i = recvfrom(funix[i], line, MAXLINE, 0,
+				    (struct sockaddr *)&fromunix, &len);
+				if (i > 0) {
+					line[i] = '\0';
+					printline(LocalHostName, line);
+				} else if (i < 0 && errno != EINTR)
+					logerror("recvfrom unix");
+			}
+		}
 	}
 }
 
@@ -378,7 +410,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-u] [-f conffile] [-m markinterval] [-p logpath]\n");
+	    "usage: syslogd [-u] [-f conffile] [-m markinterval] [-p logpath] [-a logpath]\n");
 	exit(1);
 }
 
@@ -874,6 +906,7 @@ die(signo)
 	struct filed *f;
 	int was_initialized = Initialized;
 	char buf[100];
+	int i;
 
 	Initialized = 0;		/* Don't log SIGCHLDs */
 	for (f = Files; f != NULL; f = f->f_next) {
@@ -888,7 +921,9 @@ die(signo)
 		errno = 0;
 		logerror(buf);
 	}
-	(void)unlink(LogName);
+	for (i = 0; i < nfunix; i++)
+		if (funixn[i] && funix[i] != -1)
+			(void)unlink(funixn[i]);
 	exit(0);
 }
 
