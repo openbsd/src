@@ -1,0 +1,934 @@
+.rn '' }`
+''' $RCSfile: sudoers.5,v $$Revision: 1.1.1.1 $$Date: 1999/11/18 16:29:01 $
+'''
+''' $Log: sudoers.5,v $
+''' Revision 1.1.1.1  1999/11/18 16:29:01  millert
+''' sudo 1.6, now with a BSD license
+'''
+''' Revision 1.15  1999/11/16 05:23:41  millert
+''' Add warning about using ALL in a command context.
+'''
+'''
+.de Sh
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp
+.if t .sp .5v
+.if n .sp
+..
+.de Ip
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.de Vb
+.ft CW
+.nf
+.ne \\$1
+..
+.de Ve
+.ft R
+
+.fi
+..
+'''
+'''
+'''     Set up \*(-- to give an unbreakable dash;
+'''     string Tr holds user defined translation string.
+'''     Bell System Logo is used as a dummy character.
+'''
+.tr \(*W-|\(bv\*(Tr
+.ie n \{\
+.ds -- \(*W-
+.ds PI pi
+.if (\n(.H=4u)&(1m=24u) .ds -- \(*W\h'-12u'\(*W\h'-12u'-\" diablo 10 pitch
+.if (\n(.H=4u)&(1m=20u) .ds -- \(*W\h'-12u'\(*W\h'-8u'-\" diablo 12 pitch
+.ds L" ""
+.ds R" ""
+'''   \*(M", \*(S", \*(N" and \*(T" are the equivalent of
+'''   \*(L" and \*(R", except that they are used on ".xx" lines,
+'''   such as .IP and .SH, which do another additional levels of
+'''   double-quote interpretation
+.ds M" """
+.ds S" """
+.ds N" """""
+.ds T" """""
+.ds L' '
+.ds R' '
+.ds M' '
+.ds S' '
+.ds N' '
+.ds T' '
+'br\}
+.el\{\
+.ds -- \(em\|
+.tr \*(Tr
+.ds L" ``
+.ds R" ''
+.ds M" ``
+.ds S" ''
+.ds N" ``
+.ds T" ''
+.ds L' `
+.ds R' '
+.ds M' `
+.ds S' '
+.ds N' `
+.ds T' '
+.ds PI \(*p
+'br\}
+.\"	If the F register is turned on, we'll generate
+.\"	index entries out stderr for the following things:
+.\"		TH	Title 
+.\"		SH	Header
+.\"		Sh	Subsection 
+.\"		Ip	Item
+.\"		X<>	Xref  (embedded
+.\"	Of course, you have to process the output yourself
+.\"	in some meaninful fashion.
+.if \nF \{
+.de IX
+.tm Index:\\$1\t\\n%\t"\\$2"
+..
+.nr % 0
+.rr F
+.\}
+.TH sudoers 5 "1.6" "15/Nov/1999" "FILE FORMATS"
+.UC
+.if n .hy 0
+.if n .na
+.ds C+ C\v'-.1v'\h'-1p'\s-2+\h'-1p'+\s0\v'.1v'\h'-1p'
+.de CQ          \" put $1 in typewriter font
+.ft CW
+'if n "\c
+'if t \\&\\$1\c
+'if n \\&\\$1\c
+'if n \&"
+\\&\\$2 \\$3 \\$4 \\$5 \\$6 \\$7
+'.ft R
+..
+.\" @(#)ms.acc 1.5 88/02/08 SMI; from UCB 4.2
+.	\" AM - accent mark definitions
+.bd B 3
+.	\" fudge factors for nroff and troff
+.if n \{\
+.	ds #H 0
+.	ds #V .8m
+.	ds #F .3m
+.	ds #[ \f1
+.	ds #] \fP
+.\}
+.if t \{\
+.	ds #H ((1u-(\\\\n(.fu%2u))*.13m)
+.	ds #V .6m
+.	ds #F 0
+.	ds #[ \&
+.	ds #] \&
+.\}
+.	\" simple accents for nroff and troff
+.if n \{\
+.	ds ' \&
+.	ds ` \&
+.	ds ^ \&
+.	ds , \&
+.	ds ~ ~
+.	ds ? ?
+.	ds ! !
+.	ds /
+.	ds q
+.\}
+.if t \{\
+.	ds ' \\k:\h'-(\\n(.wu*8/10-\*(#H)'\'\h"|\\n:u"
+.	ds ` \\k:\h'-(\\n(.wu*8/10-\*(#H)'\`\h'|\\n:u'
+.	ds ^ \\k:\h'-(\\n(.wu*10/11-\*(#H)'^\h'|\\n:u'
+.	ds , \\k:\h'-(\\n(.wu*8/10)',\h'|\\n:u'
+.	ds ~ \\k:\h'-(\\n(.wu-\*(#H-.1m)'~\h'|\\n:u'
+.	ds ? \s-2c\h'-\w'c'u*7/10'\u\h'\*(#H'\zi\d\s+2\h'\w'c'u*8/10'
+.	ds ! \s-2\(or\s+2\h'-\w'\(or'u'\v'-.8m'.\v'.8m'
+.	ds / \\k:\h'-(\\n(.wu*8/10-\*(#H)'\z\(sl\h'|\\n:u'
+.	ds q o\h'-\w'o'u*8/10'\s-4\v'.4m'\z\(*i\v'-.4m'\s+4\h'\w'o'u*8/10'
+.\}
+.	\" troff and (daisy-wheel) nroff accents
+.ds : \\k:\h'-(\\n(.wu*8/10-\*(#H+.1m+\*(#F)'\v'-\*(#V'\z.\h'.2m+\*(#F'.\h'|\\n:u'\v'\*(#V'
+.ds 8 \h'\*(#H'\(*b\h'-\*(#H'
+.ds v \\k:\h'-(\\n(.wu*9/10-\*(#H)'\v'-\*(#V'\*(#[\s-4v\s0\v'\*(#V'\h'|\\n:u'\*(#]
+.ds _ \\k:\h'-(\\n(.wu*9/10-\*(#H+(\*(#F*2/3))'\v'-.4m'\z\(hy\v'.4m'\h'|\\n:u'
+.ds . \\k:\h'-(\\n(.wu*8/10)'\v'\*(#V*4/10'\z.\v'-\*(#V*4/10'\h'|\\n:u'
+.ds 3 \*(#[\v'.2m'\s-2\&3\s0\v'-.2m'\*(#]
+.ds o \\k:\h'-(\\n(.wu+\w'\(de'u-\*(#H)/2u'\v'-.3n'\*(#[\z\(de\v'.3n'\h'|\\n:u'\*(#]
+.ds d- \h'\*(#H'\(pd\h'-\w'~'u'\v'-.25m'\f2\(hy\fP\v'.25m'\h'-\*(#H'
+.ds D- D\\k:\h'-\w'D'u'\v'-.11m'\z\(hy\v'.11m'\h'|\\n:u'
+.ds th \*(#[\v'.3m'\s+1I\s-1\v'-.3m'\h'-(\w'I'u*2/3)'\s-1o\s+1\*(#]
+.ds Th \*(#[\s+2I\s-2\h'-\w'I'u*3/5'\v'-.3m'o\v'.3m'\*(#]
+.ds ae a\h'-(\w'a'u*4/10)'e
+.ds Ae A\h'-(\w'A'u*4/10)'E
+.ds oe o\h'-(\w'o'u*4/10)'e
+.ds Oe O\h'-(\w'O'u*4/10)'E
+.	\" corrections for vroff
+.if v .ds ~ \\k:\h'-(\\n(.wu*9/10-\*(#H)'\s-2\u~\d\s+2\h'|\\n:u'
+.if v .ds ^ \\k:\h'-(\\n(.wu*10/11-\*(#H)'\v'-.4m'^\v'.4m'\h'|\\n:u'
+.	\" for low resolution devices (crt and lpr)
+.if \n(.H>23 .if \n(.V>19 \
+\{\
+.	ds : e
+.	ds 8 ss
+.	ds v \h'-1'\o'\(aa\(ga'
+.	ds _ \h'-1'^
+.	ds . \h'-1'.
+.	ds 3 3
+.	ds o a
+.	ds d- d\h'-1'\(ga
+.	ds D- D\h'-1'\(hy
+.	ds th \o'bp'
+.	ds Th \o'LP'
+.	ds ae ae
+.	ds Ae AE
+.	ds oe oe
+.	ds Oe OE
+.\}
+.rm #[ #] #H #V #F C
+.SH "NAME"
+sudoers \- list of which users may execute what
+.SH "DESCRIPTION"
+The \fIsudoers\fR file is composed two types of entries:
+aliases (basically variables) and user specifications
+(which specify who may run what).  The grammar of \fIsudoers\fR
+will be described below in Extended Backus-Naur Form (EBNF).
+Don't despair if you don't know what EBNF is, it is fairly
+simple and the definitions below are annotated.
+.Sh "Quick guide to \s-1EBNF\s0"
+\s-1EBNF\s0 is a concise and exact way of describing the grammar of a language.
+Each \s-1EBNF\s0 definition is made up of \fIproduction rules\fR.  Eg.
+.PP
+.Vb 1
+\& symbol ::= definition | alternate1 | alternate2 ...
+.Ve
+Each \fIproduction rule\fR references others and thus makes up a
+grammar for the language.  \s-1EBNF\s0 also contains the following
+operators, which many readers will recognize from regular
+expressions.  Do not, however, confuse them with \*(L"wildcard\*(R"
+characters, which have different meanings.
+.Ip "\f(CW?\fR" 8
+Means that the preceding symbol (or group of symbols) is optional.
+That is, it may appear once or not at all.
+.Ip "\f(CW*\fR" 8
+Means that the preceding symbol (or group of symbols) may appear
+zero or more times.
+.Ip "\f(CW+\fR" 8
+Means that the preceding symbol (or group of symbols) may appear
+one or more times.
+.PP
+Parentheses may be used to group symbols together.  For clarity,
+we will use single quotes ('') to designate what is a verbatim character
+string (as opposed to a symbol name).
+.Sh "Aliases"
+There are four kinds of aliases: the \f(CWUser_Alias\fR, \f(CWRunas_Alias\fR,
+\f(CWHost_Alias\fR and \f(CWCmnd_Alias\fR.
+.PP
+.Vb 4
+\& Alias ::= 'User_Alias' = User_Alias (':' User_Alias)* |
+\&           'Runas_Alias' (':' Runas_Alias)* |
+\&           'Host_Alias' (':' Host_Alias)* |
+\&           'Cmnd_Alias' (':' Cmnd_Alias)*
+.Ve
+.Vb 1
+\& User_Alias ::= NAME '=' User_List
+.Ve
+.Vb 1
+\& Runas_Alias ::= NAME '=' Runas_User_List
+.Ve
+.Vb 1
+\& Host_Alias ::= NAME '=' Host_List
+.Ve
+.Vb 1
+\& Cmnd_Alias ::= NAME '=' Cmnd_List
+.Ve
+.Vb 1
+\& NAME ::= [A-Z]([A-Z][0-9]_)*
+.Ve
+Each \fIalias\fR definition is of the form
+.PP
+.Vb 1
+\& Alias_Type NAME = item1, item2, ...
+.Ve
+where \fIAlias_Type\fR is one of \f(CWUser_Alias\fR, \f(CWRunas_Alias\fR, \f(CWHost_Alias\fR,
+or \f(CWCmnd_Alias\fR.  A \f(CWNAME\fR is a string of upper case letters, numbers,
+and the underscore characters ('_').  A \f(CWNAME\fR \fBmust\fR start with an
+upper case letter.  It is possible to put several alias definitions
+of the same type on a single line, joined by a semicolon (':').  Eg.
+.PP
+.Vb 1
+\& Alias_Type NAME = item1, item2, item3 : NAME = item4, item5
+.Ve
+The definitions of what constitutes a valid \fIalias\fR member follow.
+.PP
+.Vb 2
+\& User_List ::= User |
+\&               User ',' User_List
+.Ve
+.Vb 5
+\& User ::= '!'* username |
+\&          '!'* '#'uid |
+\&          '!'* '%'group |
+\&          '!'* '+'netgroup |
+\&          '!'* User_Alias
+.Ve
+A \f(CWUser_List\fR is made up of one or more usernames, uids
+(prefixed with \*(L'#'), System groups (prefixed with \*(L'%'),
+netgroups (prefixed with \*(L'+') and other aliases.  Each list
+item may be prefixed with one or more \*(L'!\*(R' operators.  An odd number
+of \*(L'!\*(R' operators negates the value of the item; an even number
+just cancel each other out.
+.PP
+.Vb 2
+\& Runas_List ::= Runas_User |
+\&                Runas_User ',' Runas_List
+.Ve
+.Vb 5
+\& Runas_User ::= '!'* username |
+\&                '!'* '#'uid |
+\&                '!'* '%'group |
+\&                '!'* +netgroup |
+\&                '!'* Runas_Alias
+.Ve
+Likewise, a \f(CWRunas_List\fR has the same possible elements
+as a \f(CWUser_List\fR, except that it can include a \f(CWRunas_Alias\fR,
+instead of a \f(CWUser_Alias\fR.
+.PP
+.Vb 2
+\& Host_List ::= Host |
+\&               Host ',' Host_List
+.Ve
+.Vb 5
+\& Host ::= '!'* hostname |
+\&          '!'* ip_addr |
+\&          '!'* network(/netmask)? |
+\&          '!'* '+'netgroup |
+\&          '!'* Host_Alias
+.Ve
+A \f(CWHost_List\fR is made up of one or more hostnames, \s-1IP\s0 addresses,
+network numbers, netgroups (prefixed with \*(L'+') and other aliases.
+Again, the value of an item may be negated with the \*(L'!\*(R' operator.
+If you do not specify a netmask with a network number, the netmask
+of the host's ethernet \fIinterface\fR\|(s) will be used when matching.
+The netmask may be specified either in dotted quad notation (eg.
+255.255.255.0) or \s-1CIDR\s0 notation (number of bits, eg. 24).
+.PP
+.Vb 2
+\& Cmnd_List ::= Cmnd |
+\&               Cmnd ',' Cmnd_List
+.Ve
+.Vb 3
+\& commandname ::= filename |
+\&                 filename args |
+\&                 filename '""'
+.Ve
+.Vb 3
+\& Cmnd ::= '!'* commandname |
+\&          '!'* directory |
+\&          '!'* Cmnd_Alias
+.Ve
+A \f(CWCmnd_List\fR is a list of one or more commandnames, directories, and other
+aliases.  A commandname is a fully-qualified filename which may include
+shell-style wildcards (see `Wildcards\*(R' section below).  A simple
+filename allows the user to run the command with any arguments he/she
+wishes.  However, you may also command line arguments (including wildcards).
+Alternately, you can specify \f(CW""\fR to indicate that the command
+may only be run \fBwithout\fR command line arguments.  A directory is a
+fully qualified pathname ending in a \*(L'/\*(R'.  When you specify a directory
+in a \f(CWCmnd_List\fR, the user will be able to run any file within that directory
+(but not in any subdirectories therein).
+.PP
+If a \f(CWCmnd\fR has associated command line arguments, then the arguments
+in the \f(CWCmnd\fR must match exactly those given by the user on the command line
+(or match the wildcards if there are any).  Note that the following
+characters must be escaped with a \*(L'\e\*(R' if they are used in command
+arguments: \*(L',\*(R', \*(L':\*(R', \*(L'=\*(R', \*(L'\e\*(R'.
+.Sh "Defaults"
+Certain configuration options may be changed from their default
+values at runtime via one or more \f(CWDefault_Entry\fR lines.  These
+may affect all users on any host, all users on a specific host,
+or just a specific user.  When multiple entries match, they are
+applied in order.  Where there are conflicting values, the last
+value on a matching line takes effect.
+.PP
+.Vb 3
+\& Default_Type ::= 'Defaults' ||
+\&                  'Defaults' ':' User ||
+\&                  'Defaults' '@' Host
+.Ve
+.Vb 1
+\& Default_Entry ::= Default_Type Parameter_List
+.Ve
+.Vb 2
+\& Parameter ::= Parameter '=' Value ||
+\&               '!'* Parameter ||
+.Ve
+Parameters may be \fBflags\fR, \fBinteger\fR values, or \fBstrings\fR.  Flags
+are implicitly boolean and can be turned off via the \*(L'!\*(R' operator.
+Some integer and string parameters may also be used in a boolean
+context to disable them.  Values may be enclosed in double quotes
+(\f(CW"\fR) when they contain multiple words.  Special characters may
+be escaped with a backslash (\f(CW\e\fR).
+.PP
+\fBFlags\fR:
+.Ip "long_otp_prompt" 12
+Put \s-1OTP\s0 prompt on its own line
+.Ip "ignore_dot" 12
+Ignore \*(L'.\*(R' in \f(CW$PATH\fR
+.Ip "mail_always" 12
+Always send mail when sudo is run
+.Ip "mail_no_user" 12
+Send mail if the user is not in sudoers
+.Ip "mail_no_host" 12
+Send mail if the user is not in sudoers for this host
+.Ip "mail_no_perms" 12
+Send mail if the user is not allowed to run a command
+.Ip "tty_tickets" 12
+Use a separate timestamp for each user/tty combo
+.Ip "lecture" 12
+Lecture user the first time they run sudo
+.Ip "authenticate" 12
+Require users to authenticate by default
+.Ip "root_sudo" 12
+Root may run sudo
+.Ip "log_host" 12
+Log the hostname in the (non-syslog) log file
+.Ip "log_year" 12
+Log the year in the (non-syslog) log file
+.Ip "shell_noargs" 12
+If sudo is invoked with no arguments, start a shell
+.Ip "set_home" 12
+Set \f(CW$HOME\fR to the target user when starting a shell with \f(CW-s\fR
+.Ip "path_info" 12
+Allow some information gathering to give useful error messages
+.Ip "fqdn" 12
+Require fully-qualified hostnames in the sudoers file
+.Ip "insults" 12
+Insult the user when they enter an incorrect password
+.Ip "requiretty" 12
+Only allow the user to run sudo if they have a tty
+.PP
+\fBIntegers\fR:
+.Ip "passwd_tries" 12
+Number of tries to enter a password
+.PP
+\fBIntegers that can be used in a boolean context\fR:
+.Ip "loglinelen" 12
+Length at which to wrap log file lines (use 0 or negate for no wrap)
+.Ip "timestamp_timeout" 12
+Authentication timestamp timeout
+.Ip "passwd_timeout" 12
+Password prompt timeout
+.Ip "umask" 12
+Umask to use or 0777 to use user's
+.PP
+\fBStrings\fR:
+.Ip "mailsub" 12
+Subject line for mail messages
+.Ip "badpass_message" 12
+Incorrect password message
+.Ip "timestampdir" 12
+Path to authentication timestamp dir
+.Ip "passprompt" 12
+Default password prompt
+.Ip "runas_default" 12
+Default user to run commands as
+.Ip "syslog_goodpri" 12
+Syslog priority to use when user authenticates successfully
+.Ip "syslog_badpri" 12
+Syslog priority to use when user authenticates unsuccessfully
+.PP
+\fBStrings that can be used in a boolean context\fR:
+.Ip "syslog" 12
+Syslog facility if syslog is being used for logging (negate to disable syslog)
+.Ip "mailerpath" 12
+Path to mail program
+.Ip "mailerflags" 12
+Flags for mail program
+.Ip "mailto" 12
+Address to send mail to
+.Ip "exempt_group" 12
+Users in this group are exempt from password and \s-1PATH\s0 requirements
+.Ip "secure_path" 12
+Value to override user's \f(CW$PATH\fR with
+.PP
+When logging via \fIsyslog\fR\|(3), sudo accepts the following values for the syslog
+facility (the value of the \fBsyslog\fR Parameter): \fBauthpriv\fR (if your \s-1OS\s0
+supports it), \fBauth\fR, \fBdaemon\fR, \fBuser\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR,
+\fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR, and \fBlocal7\fR.  The following
+syslog priorities are supported: \fBalert\fR, \fBcrit\fR, \fBdebug\fR, \fBemerg\fR,
+\fBerr\fR, \fBinfo\fR, \fBnotice\fR, and \fBwarning\fR.
+.Sh "User Specification"
+.PP
+.Vb 1
+\& Runas_Spec ::= '(' Runas_List ')'
+.Ve
+.Vb 1
+\& Cmnd_Spec ::= Runas_Spec? ('NOPASSWD:' | 'PASSWD:')? Cmnd
+.Ve
+.Vb 2
+\& Cmnd_Spec_List ::= Cmnd_Spec |
+\&                    Cmnd_Spec ',' Cmnd_Spec_List
+.Ve
+.Vb 1
+\& User_Spec ::= User_list Cmnd_Spec_List (':' User_Spec)*
+.Ve
+A \fBuser specification\fR determines which commands a user may run
+(and as what user) on specified hosts.  By default, commands are
+run as \fBroot\fR but this can be changed on a per-command basis.
+.PP
+Let's break that down into its constituent parts:
+.Sh "Runas_Spec"
+A \f(CWRunas_Spec\fR is simply a \f(CWRunas_List\fR (as defined above)
+enclosed in a set of parentheses.  If you do not specify a
+\f(CWRunas_Spec\fR in the user specification, a default \f(CWRunas_Spec\fR
+of \fBroot\fR will be used.  A \f(CWRunas_Spec\fR sets the default for
+commands that follow it.  What this means is that for the entry:
+.PP
+.Vb 1
+\& dgb    boulder = (operator) /bin/ls, /bin/kill, /usr/bin/who
+.Ve
+The user \fBdgb\fR may run \fI/bin/ls\fR, \fI/bin/kill\fR, and
+\fI/usr/bin/lprm\fR -- but only as \fBoperator\fR.  Eg.
+.PP
+.Vb 1
+\&    sudo -u operator /bin/ls.
+.Ve
+It is also possible to override a \f(CWRunas_Spec\fR later on in an
+entry.  If we modify the entry like so:
+.PP
+.Vb 1
+\& dgb    boulder = (operator) /bin/ls, (root) /bin/kill, /usr/bin/lprm
+.Ve
+Then user \fBdgb\fR is now allowed to run \fI/bin/ls\fR as \fBoperator\fR,
+but  \fI/bin/kill\fR and \fI/usr/bin/lprm\fR as \fBroot\fR.
+.Sh "\s-1NOPASSWD\s0 and \s-1PASSWD\s0"
+By default, \fBsudo\fR requires that a user authenticate him or herself
+before running a command.  This behavior can be modified via the
+\f(CWNOPASSWD\fR tag.  Like a \f(CWRunas_Spec\fR, the \f(CWNOPASSWD\fR tag sets
+a default for the commands that follow it in the \f(CWCmnd_Spec_List\fR.
+Conversely, the \f(CWPASSWD\fR tag can be used to reverse things.
+For example:
+.PP
+.Vb 1
+\& ray    rushmore = NOPASSWD: /bin/kill, /bin/ls, /usr/bin/lprm
+.Ve
+would allow the user \fBray\fR to run \fI/bin/kill\fR, \fI/bin/ls\fR, and
+\fI/usr/bin/lprm\fR as root on the machine rushmore as \fBroot\fR without
+authenticating himself.  If we only want \fBray\fR to be able to
+run \fI/bin/kill\fR without a password the entry would be:
+.PP
+.Vb 1
+\& ray    rushmore = NOPASSWD: /bin/kill, PASSWD: /bin/ls, /usr/bin/lprm
+.Ve
+.Sh "Wildcards (aka meta characters):"
+\fBsudo\fR allows shell-style \fIwildcards\fR to be used in pathnames
+as well as command line arguments in the \fIsudoers\fR file.  Wildcard
+matching is done via the \fB\s-1POSIX\s0\fR \f(CWfnmatch(3)\fR routine.  Note that
+these are \fInot\fR regular expressions.
+.Ip "\f(CW*\fR" 8
+Matches any set of zero or more characters.
+.Ip "\f(CW?\fR" 8
+Matches any single character.
+.Ip "\f(CW[...]\fR" 8
+Matches any character in the specified range.
+.Ip "\f(CW[!...]\fR" 8
+Matches any character \fBnot\fR in the specified range.
+.Ip "\f(CW\ex\fR" 8
+For any character \*(L"x\*(R", evaluates to \*(L"x\*(R".  This is used to
+escape special characters such as: \*(L"*\*(R", \*(L"?\*(R", \*(L"[\*(R", and \*(L"}\*(R".
+.PP
+Note that a forward slash ('/') will \fBnot\fR be matched by
+wildcards used in the pathname.  When matching the command
+line arguments, however, as slash \fBdoes\fR get matched by
+wildcards.  This is to make a path like:
+.PP
+.Vb 1
+\&    /usr/bin/*
+.Ve
+match \f(CW/usr/bin/who\fR but not \f(CW/usr/bin/X11/xterm\fR.
+.Sh "Exceptions to wildcard rules:"
+The following exceptions apply to the above rules:
+.Ip \f(CW""\fR 8
+If the empty string \f(CW""\fR is the only command line argument in the
+\fIsudoers\fR entry it means that command is not allowed to be run
+with \fBany\fR arguments.
+.Sh "Other special characters and reserved words:"
+The pound sign ('#') is used to indicate a comment (unless it
+occurs in the context of a user name and is followed by one or
+more digits, in which case it is treated as a uid).  Both the
+comment character and any text after it, up to the end of the line,
+are ignored.
+.PP
+The reserved word \fB\s-1ALL\s0\fR is a a built in \fIalias\fR that always causes
+a match to succeed.  It can be used wherever one might otherwise
+use a \f(CWCmnd_Alias\fR, \f(CWUser_Alias\fR, \f(CWRunas_Alias\fR, or \f(CWHost_Alias\fR.
+You should not try to define your own \fIalias\fR called \fB\s-1ALL\s0\fR as the
+built in alias will be used in preference to your own.  Please note
+that using \fB\s-1ALL\s0\fR can be dangerous since in a command context, it
+allows the user to run \fBany\fR command on the system.
+.PP
+An exclamation point (\*(R'!') can be used as a logical \fInot\fR operator
+both in an \fIalias\fR and in front of a \f(CWCmnd\fR.  This allows one to
+exclude certain values.  Note, however, that using a \f(CW!\fR in
+conjunction with the built in \f(CWALL\fR alias to allow a user to
+run \*(L"all but a few\*(R" commands rarely works as intended (see \s-1SECURITY\s0
+\s-1NOTES\s0 below).
+.PP
+Long lines can be continued with a backslash (\*(R'\e') as the last
+character on the line.
+.PP
+Whitespace between elements in a list as well as specicial syntactic
+characters in a \fIUser Specification\fR ('=\*(R', \*(L':\*(R', \*(L'(\*(R', \*(L')') is optional.
+.PP
+The following characters must be escaped with a backslash (\*(R'\e') when
+used as part of a word (eg. a username or hostname):
+\&'@\*(R', \*(L'!\*(R', \*(L'=\*(R', \*(L':\*(R', \*(L',\*(R', \*(L'(\*(R', \*(L')\*(R', \*(L'\e\*(R'.
+.SH "EXAMPLES"
+Below are example \fIsudoers\fR entries.  Admittedly, some of
+these are a bit contrived.  First, we define our \fIaliases\fR:
+.PP
+.Vb 4
+\& # User alias specification
+\& User_Alias     FULLTIMERS = millert, mikef, dowdy
+\& User_Alias     PARTTIMERS = bostley, jwfox, crawl
+\& User_Alias     WEBMASTERS = will, wendy, wim
+.Ve
+.Vb 3
+\& # Runas alias specification
+\& Runas_Alias    OP = root, operator
+\& Runas_Alias    DB = oracle, sybase
+.Ve
+.Vb 9
+\& # Host alias specification
+\& Host_Alias     SPARC = bigtime, eclipse, moet, anchor :\e
+\&                SGI = grolsch, dandelion, black :\e
+\&                ALPHA = widget, thalamus, foobar :\e
+\&                HPPA = boa, nag, python
+\& Host_Alias     CUNETS = 128.138.0.0/255.255.0.0
+\& Host_Alias     CSNETS = 128.138.243.0, 128.138.204.0/24, 128.138.242.0
+\& Host_Alias     SERVERS = master, mail, www, ns
+\& Host_Alias     CDROM = orion, perseus, hercules
+.Ve
+.Vb 12
+\& # Cmnd alias specification
+\& Cmnd_Alias     DUMPS = /usr/bin/mt, /usr/sbin/dump, /usr/sbin/rdump,\e
+\&                        /usr/sbin/restore, /usr/sbin/rrestore
+\& Cmnd_Alias     KILL = /usr/bin/kill
+\& Cmnd_Alias     PRINTING = /usr/sbin/lpc, /usr/bin/lprm
+\& Cmnd_Alias     SHUTDOWN = /usr/sbin/shutdown
+\& Cmnd_Alias     HALT = /usr/sbin/halt, /usr/sbin/fasthalt
+\& Cmnd_Alias     REBOOT = /usr/sbin/reboot, /usr/sbin/fastboot
+\& Cmnd_Alias     SHELLS = /usr/bin/sh, /usr/bin/csh, /usr/bin/ksh, \e
+\&                         /usr/local/bin/tcsh, /usr/bin/rsh, \e
+\&                         /usr/local/bin/zsh
+\& Cmnd_Alias     SU = /usr/bin/su
+.Ve
+Here we override some of the compiled in default values.  We want
+sudo to log via \fIsyslog\fR\|(3) using the \fIauth\fR facility in all cases.
+We don't want to subject the full time staff to the \fBsudo\fR lecture,
+and user \fBmillert\fR need not give a password.  In addition, on the
+machines in the \fISERVERS\fR \f(CWHost_Alias\fR, we keep an additional
+local log file and make sure we log the year in each log line since
+the log entries will be kept around for several years.
+.PP
+.Vb 5
+\& # Override builtin defaults
+\& Defaults               syslog=auth
+\& Defaults:FULLTIMERS    !lecture
+\& Defaults:millert       !authenticate
+\& Defaults@SERVERS       log_year, logfile=/var/log/sudo.log
+.Ve
+The \fIUser specification\fR is the part that actually determines who may
+run what.
+.PP
+.Vb 2
+\& root           ALL = (ALL) ALL
+\& %wheel         ALL = (ALL) ALL
+.Ve
+We let \fBroot\fR and any user in group \fBwheel\fR run any command on any
+host as any user.
+.PP
+.Vb 1
+\& FULLTIMERS     ALL = NOPASSWD: ALL
+.Ve
+Full time sysadmins (\fBmillert\fR, \fBmikef\fR, and \fBdowdy\fR) may run any
+command on any host without authenticating themselves.
+.PP
+.Vb 1
+\& PARTTIMERS     ALL = ALL
+.Ve
+Part time sysadmins (\fBbostley\fR, \fBjwfox\fR, and \fBcrawl\fR) may run any
+command on any host but they must authenticate themselves first
+(since the entry lacks the \f(CWNOPASSWD\fR tag).
+.PP
+.Vb 1
+\& jack           CSNETS = ALL
+.Ve
+The user \fBjack\fR may run any command on the machines in the \fICSNETS\fR alias
+(the networks \f(CW128.138.243.0\fR, \f(CW128.138.204.0\fR, and \f(CW128.138.242.0\fR).
+Of those networks, only <128.138.204.0> has an explicit netmask (in
+CIDR notation) indicating it is a class C network.  For the other
+networks in \fICSNETS\fR, the local machine's netmask will be used
+during matching.
+.PP
+.Vb 1
+\& lisa           CUNETS = ALL
+.Ve
+The user \fBlisa\fR may run any command on any host in the \fICUNETS\fR alias
+(the class B network \f(CW128.138.0.0\fR).
+.PP
+.Vb 2
+\& operator       ALL = DUMPS, KILL, PRINTING, SHUTDOWN, HALT, REBOOT,\e
+\&                /usr/oper/bin/
+.Ve
+The \fBoperator\fR user may run commands limited to simple maintenance.
+Here, those are commands related to backups, killing processes, the
+printing system, shutting down the system, and any commands in the
+directory \fI/usr/oper/bin/\fR.
+.PP
+.Vb 1
+\& joe            ALL = /usr/bin/su operator
+.Ve
+The user \fBjoe\fR may only \fIsu\fR\|(1) to operator.
+.PP
+.Vb 1
+\& pete           HPPA = /usr/bin/passwd [A-z]*, !/usr/bin/passwd root
+.Ve
+The user \fBpete\fR is allowed to change anyone's password except for
+root on the \fIHPPA\fR machines.  Note that this assumes \fIpasswd\fR\|(1)
+does not take multiple usernames on the command line.
+.PP
+.Vb 1
+\& bob            SPARC = (OP) ALL : SGI = (OP) ALL
+.Ve
+The user \fBbob\fR may run anything on the \fISPARC\fR and \fISGI\fR machines
+as any user listed in the \fIOP\fR \f(CWRunas_Alias\fR (\fBroot\fR and \fBoperator\fR).
+.PP
+.Vb 1
+\& jim            +biglab = ALL
+.Ve
+The user \fBjim\fR may run any command on machines in the \fIbiglab\fR netgroup.
+\fBSudo\fR knows that \*(L"biglab\*(R" is a netgroup due to the \*(L'+\*(R' prefix.
+.PP
+.Vb 1
+\& +secretaries   ALL = PRINTING, /usr/bin/adduser, /usr/bin/rmuser
+.Ve
+Users in the \fBsecretaries\fR netgroup need to help manage the printers
+as well as add and remove users, so they are allowed to run those
+commands on all machines.
+.PP
+.Vb 1
+\& fred           ALL = (DB) NOPASSWD: ALL
+.Ve
+The user \fBfred\fR can run commands as any user in the \fIDB\fR \f(CWRunas_Alias\fR
+(\fBoracle\fR or \fBsybase\fR) without giving a password.
+.PP
+.Vb 1
+\& john           ALPHA = /usr/bin/su [!-]*, !/usr/bin/su *root*
+.Ve
+On the \fIALPHA\fR machines, user \fBjohn\fR may su to anyone except root
+but he is not allowed to give \fIsu\fR\|(1) any flags.
+.PP
+.Vb 1
+\& jen            ALL, !SERVERS = ALL
+.Ve
+The user \fBjen\fR may run any command on any machine except for those
+in the \fISERVERS\fR \f(CWHost_Alias\fR (master, mail, www and ns).
+.PP
+.Vb 1
+\& jill           SERVERS = /usr/bin/, !SU, !SHELLS
+.Ve
+For any machine in the \fISERVERS\fR \f(CWHost_Alias\fR, \fBjill\fR may run
+any commands in the directory /usr/bin/ except for those commands
+belonging to the \fISU\fR and \fISHELLS\fR \f(CWCmnd_Aliases\fR.
+.PP
+.Vb 1
+\& steve          CSNETS = (operator) /usr/local/op_commands/
+.Ve
+The user \fBsteve\fR may run any command in the directory /usr/local/op_commands/
+but only as user operator.
+.PP
+.Vb 1
+\& matt           valkyrie = KILL
+.Ve
+On his personal workstation, valkyrie, \fBmatt\fR needs to be able to
+kill hung processes.
+.PP
+.Vb 1
+\& WEBMASTERS     www = (www) ALL, (root) /usr/bin/su www
+.Ve
+On the host www, any user in the \fIWEBMASTERS\fR \f(CWUser_Alias\fR (will,
+wendy, and wim), may run any command as user www (which owns the
+web pages) or simply \fIsu\fR\|(1) to www.
+.PP
+.Vb 2
+\& ALL            CDROM = NOPASSWD: /sbin/umount /CDROM,\e
+\&                /sbin/mount -o nosuid\e,nodev /dev/cd0a /CDROM
+.Ve
+Any user may mount or unmount a CD\-ROM on the machines in the CDROM
+\f(CWHost_Alias\fR (orion, perseus, hercules) without entering a password.
+This is a bit tedious for users to type, so it is a prime candiate
+for encapsulating in a shell script.
+.SH "SECURITY NOTES"
+It is generally not effective to \*(L"subtract\*(R" commands from \f(CWALL\fR
+using the \*(L'!\*(R' operator.  A user can trivially circumvent this
+by copying the desired command to a different name and then
+executing that.  For example:
+.PP
+.Vb 1
+\&    bill        ALL = ALL, !SU, !SHELLS
+.Ve
+Doesn't really prevent \fBbill\fR from running the commands listed in
+\fISU\fR or \fISHELLS\fR since he can simply copy those commands to a
+different name, or use a shell escape from an editor or other
+program.  Therefore, these kind of restrictions should be considered
+advisory at best (and reinforced by policy).
+.SH "CAVEATS"
+The \fIsudoers\fR file should \fBalways\fR be edited by the \fBvisudo\fR
+command which locks the file and does grammatical checking. It is
+imperative that \fIsudoers\fR be free of syntax errors since \fBsudo\fR
+will not run with a syntactically incorrect \fIsudoers\fR file.
+.SH "FILES"
+.PP
+.Vb 3
+\& /etc/sudoers           List of who can run what
+\& /etc/group             Local groups file
+\& /etc/netgroup          List of network groups
+.Ve
+.SH "SEE ALSO"
+\fIsudo\fR\|(8), \fIvisudo\fR\|(8), \fIsu\fR\|(1), \fIfnmatch\fR\|(3).
+
+.rn }` ''
+.IX Title "sudoers 5"
+.IX Name "sudoers - list of which users may execute what"
+
+.IX Header "NAME"
+
+.IX Header "DESCRIPTION"
+
+.IX Subsection "Quick guide to \s-1EBNF\s0"
+
+.IX Item "\f(CW?\fR"
+
+.IX Item "\f(CW*\fR"
+
+.IX Item "\f(CW+\fR"
+
+.IX Subsection "Aliases"
+
+.IX Subsection "Defaults"
+
+.IX Item "long_otp_prompt"
+
+.IX Item "ignore_dot"
+
+.IX Item "mail_always"
+
+.IX Item "mail_no_user"
+
+.IX Item "mail_no_host"
+
+.IX Item "mail_no_perms"
+
+.IX Item "tty_tickets"
+
+.IX Item "lecture"
+
+.IX Item "authenticate"
+
+.IX Item "root_sudo"
+
+.IX Item "log_host"
+
+.IX Item "log_year"
+
+.IX Item "shell_noargs"
+
+.IX Item "set_home"
+
+.IX Item "path_info"
+
+.IX Item "fqdn"
+
+.IX Item "insults"
+
+.IX Item "requiretty"
+
+.IX Item "passwd_tries"
+
+.IX Item "loglinelen"
+
+.IX Item "timestamp_timeout"
+
+.IX Item "passwd_timeout"
+
+.IX Item "umask"
+
+.IX Item "mailsub"
+
+.IX Item "badpass_message"
+
+.IX Item "timestampdir"
+
+.IX Item "passprompt"
+
+.IX Item "runas_default"
+
+.IX Item "syslog_goodpri"
+
+.IX Item "syslog_badpri"
+
+.IX Item "syslog"
+
+.IX Item "mailerpath"
+
+.IX Item "mailerflags"
+
+.IX Item "mailto"
+
+.IX Item "exempt_group"
+
+.IX Item "secure_path"
+
+.IX Subsection "User Specification"
+
+.IX Subsection "Runas_Spec"
+
+.IX Subsection "\s-1NOPASSWD\s0 and \s-1PASSWD\s0"
+
+.IX Subsection "Wildcards (aka meta characters):"
+
+.IX Item "\f(CW*\fR"
+
+.IX Item "\f(CW?\fR"
+
+.IX Item "\f(CW[...]\fR"
+
+.IX Item "\f(CW[!...]\fR"
+
+.IX Item "\f(CW\ex\fR"
+
+.IX Subsection "Exceptions to wildcard rules:"
+
+.IX Item "\f(CW""\fR"
+
+.IX Subsection "Other special characters and reserved words:"
+
+.IX Header "EXAMPLES"
+
+.IX Header "SECURITY NOTES"
+
+.IX Header "CAVEATS"
+
+.IX Header "FILES"
+
+.IX Header "SEE ALSO"
+

@@ -1,0 +1,1186 @@
+CHANGES since sudo 1.2
+
+01) sudo now works under hpux, aix, sunos, bsd43, ultrix, linux, osf and irix.
+
+02) Files w/o the executable bit will be ignored if they are in your PATH.
+
+03) If execv() fails, perror is called (which prints out an error based on
+	errno) and sudo exits with -1.
+
+04) Included in this shar should also be a version of getpass() derived from
+	the bsd net-2 source which works on bsd, ultrix, hpux, aix, and irix
+	at least.  The latter three unixes have what i consider to be a broken
+	getpass() in that if /dev/tty can't be opened it doesn't just use stdin
+	like bsd getpass().  This means you cannot do: rsh host "sudo command"
+	and have it work if your ticket has expired.
+
+05) The Makefile has changed significantly.  It now has defines for all
+	supported architectures.
+
+06) Changed MAXCOMMANDLENGTH from 48 bytes to MAXPATHLEN and included
+	sys/param.h where appropriate.
+
+07) Rewrote the code that expands links & paths.  It now works correctly.
+	(rewrote find_path.c)
+
+08) Added a define NEED_STRDUP so we don't conflict with the system's strdup(3)
+
+09) Now does *not* pass LD_* environmental vars on to programs that get
+	exec'd.  Also removes SHLIB_PATH for hpux and _RLD_* for dec osf.
+
+10) Now searches current dir last if '.' or '' are in PATH.  Misses braindeath
+    like './' but if that's in your path you deserve all the trojans you get.
+
+11) Added in linux patches from drew + flex support.
+
+12) Added insults back in from original sudo(8) (define USE_INSULTS).
+
+13) visudo now uses EDITOR envar (from John_Rouillard@dl5000.bc.edu)
+
+14) you can now specify a dir containing commands that a sudoer can do.
+    (from John_Rouillard@dl5000.bc.edu)
+
+15) Ported to Solaris 2.x (based on a port of sudo 1.1 done by UnixOps).
+
+16) Took out setuid(0); setruid(uid); pairs that bracketed calls to
+    update_timestamp() since they are unnecessary and setruid() is
+    broken on systems without a setreuid(2) or setresuid(2) system call.
+    (Ie: AIX and Solaris 2.x).
+
+17) The bulk of sudo now runs with the caller's real uid.  Grep for
+    be_root() to find the exceptions.
+
+CHANGES from sudo 1.3
+
+18) Added SECURE_PATH as suggested by russells@ccu1.auckland.ac.nz.
+
+19) Reworked clean_envp() to modify environ (not envp) so we can use
+    execvp() safely.
+
+20) Now use execvp() instead of execve() so sudo /bin/kill works under
+    broken solaris.  This also fixed sudo /etc/fastboot under stock
+    4.3 BSD.  Basically, this means that any executable shell script that
+    lacks a '#!/bin/sh' magic number will now work with sudo.  Personally
+    I think that the broken scripts should be fixed rather than changing
+    sudo, but vendors will be broken.  Sigh.
+
+21) Added USE_EXECV define so you can make sudo use execv() if you
+    want.  Using execvp() shouldn't be a problem since it is always
+    handed a non-relative path that begins with '/' but some people
+    may not trust execvp().
+
+22) Log file lines will no longer get truncated.  Syslog entries that
+    would overrun the syslog(3) line limit are continued on another entry.
+
+23) When logging to a log file, long entries are indented to improve
+    readability.
+
+24) Whenever the umask is changed, it is changed back to what it was
+    before.
+
+25) Log file is written as mode 600 instead of 644
+
+26) Umask that sudo runs with may now be specified.
+
+27) There is now a "configure" script.
+
+28) Sudo will use ultra fast crypt (ufc) if it finds it for systems w/o
+    a real crypt(3) (non-US ConvexOS/Secure for instance).
+
+29) _BSD_COMPAT is now defined for Irix.
+
+30) The global variable uid is now initialized to -2 because I'm paranoid.
+
+31) Native Solaris 2 port from Matthew.Stier@aisg.com
+
+32) Now use sysconf(2) instead of getdtablesize(2) if it is available
+    (see change #31).  Because of the the getdtablesize() emulation for
+    hpux is no longer necessary.
+
+33) Now only do a getcwd(3) or getwd(3) once and do it as the real user.
+    Sudo should no longer complain that it can't get the cwd unless
+    there is a real problem.
+
+34) Changed some malloc'd globals of fixed length to be allocated from
+    the stack instead as there was no win in allocating them from the
+    heap.
+
+35) Fixed AIX STATIC_FLAGS as per the AIX faq.
+
+36) Added -V flag to sudo and visudo (for version)
+
+37) Now treat EACCESS like EPERM when doing stat(2) in find_path.c
+
+38) Added prototypes for sudo functions (via __P macro)
+
+39) configure now uses uname(1) if it exists
+
+40) gethostbyname(3) is now only called if you define FQDN.  There's really
+    no reason to not trust gethostname(2) and this way if name service is
+    hosed sudo isn't...
+
+41) added -v (validate) flag to sudo to update a timestamp w/o running
+    a command
+
+42) now use tgetpass() (getpass with a timeout)
+
+43) find_path() now uses realpath(3)
+
+44) wrote versions of realpath(3) and getcwd(3) for those without
+
+45) wrote tgetpass()--a getpass() that times out via select(2)
+
+46) sudo now uses posix signals if available
+
+47) Finally added ConvexOS C2 security support from
+    "Peter A. Nikitser, Systems Software Support, QUT" <P.NIKITSER@qut.edu.au>
+
+48) You can now #undef MAILER if you don't run sendmail or the equivalent.
+
+49) AFS support from adamh@austin.ibm.com
+
+50) If you define BOTH_LOGS in sudo.h you can log both via syslog(3) *ans*
+    to a log file.
+
+51) Added ultrix /etc/auth (enhanced security) support.
+
+52) Sudo now will work with a 4.2BSD syslog (SunOS < 4 && ultrix).
+    Personally, I'd say you are better off logging to a file if
+    your syslog is this ancient.
+
+53) Changed realpath(3) to sudo_realpath() since we need to do the
+    chdir(2) with the invoking uid.  sudo_realpath() should be
+    faster than vendor-supplied realpath(3)'s anyway...
+
+54) No longer create a static binary on AIX since it reportedly
+    causes problem on newer versions on AIX 3.x.
+
+55) If sudo_realpath cannot chdir() back to cwd sudo will print
+    and error and exit.  Previously it would either fail silently
+    or print an incorrect error message.
+
+56) Moved code to send error mail to be after the log message.
+    From rouilj@cs.umb.edu.
+
+57) Added SUDO_USER and SUDO_UID envars.  Suggested by John P. Rouillard
+   (<rouilj@cs.umb.edu).
+
+58) Added -k and -h options and rearranged some of the code to be
+    more modular and less braindamaged.  This introduces the concept
+    of "run modes" to sudo.
+
+59) Fixed visudo and flex.  visudo now calls yyrestart() if you are using
+    flex instead of lex.  From bostley@cs.colorado.edu.
+
+60) Added a "cat page" for systems w/o nroff.
+
+61) Fixed a bug whereby only the last directory specified in a Cmnd_Alias
+    was checked.  Reported by "James R. Hendrick" <hendrick@ctron.com>.
+
+62) All .{c,lex,yacc} files now include both sys/types.h and unistd.h so
+    we are sure to get the typedef of uid_t.
+
+CHANGES from sudo 1.3.1
+
+63) Added preliminary support for DEC OSF/1 protected passwords
+    (shadow passwords).
+
+CHANGES from sudo 1.3.1pl1
+
+64) More support for DEC OSF/1 protected passwords (shadow passwords).
+
+CHANGES from sudo 1.3.1pl2
+
+65) Fixed mail logging to include the username as it should have.
+
+66) Added hostname to log message in error mail.
+
+67) Added -l flag to sudo to list the allowed/forbidden commands.
+    Suggested by matthew@gateway.bsis.com (Matthew Stier)
+
+68) Fixed bison warnings for parse.yacc and visudo.yacc.
+    Pointed out by alfie@dcs.warwick.ac.uk (Nick Holloway).
+
+CHANGES from sudo 1.3.1pl3
+
+69) Sudo will now exit with an error if the command to be run is > MAXPATHLEN.
+
+70) Test in configure for termios support was insufficient.  It thought
+    Nextstep 3.2 had termios just because it as termios.h (need to link
+    with -posix for termios on NeXT's)
+
+CHANGES from sudo 1.3.1pl4
+
+71) First stab at Skey support.
+
+72) Sudo now sets IFS to be SPACE, TAB, NEWLINE.
+
+73) Sudo now sets the real and effective gid to root's group
+    (based on passwd file).
+
+74) Sudo now checks that the sudoers file is owned by a certain user
+    and not readable or writable by anyone else.
+    (based on a suggestion by Joerg Schumacher <schuma@ips.cs.tu-bs.de>)
+
+75) Visudo now sets the owner on the new sudoers file based on #74
+
+76) Sudo and visudo will now compile with byacc (Berkeley yacc).
+
+77) If the rename(2) of stmp -> sudoers fails /bin/mv is executed before
+    bailing.  Based on code from Case Larsen <clarsen@mh1.lbl.gov>.
+
+78) User-level configuration is now done in options.h.
+
+79) Moved all compatibility #defines to compat.h
+
+80) Incorporated new parsing code from Chris Jepeway <jepeway@cs.utk.edu>.
+    This is much better than the previous parser.
+
+81) Rewrote visudo.c and tickled parse.yacc to work with it.  Visudo
+    now gives you options if a parse error occurs rather than blindly
+    dumping you back in the editor.
+
+82) Took out all references to realpath since we are now checking based
+    in inode and device (with Chris' new parser).  The upshot of this
+    is that path matches are done safely and the symlink problem has
+    gone away.
+
+83) Fixed bison warnings from new parse.yacc.
+
+84) Added a default case to parse.lex to error on unmatched tokens as Chris
+    suggested.
+
+85) Converted configure.in and acsite.m4 to autoconf 2.1.
+
+86) Added lsearch.c and search.h for os's w/o lsearch()/lfind().
+
+87) Sudo now checks to see that the file it is executing is a regular file
+    (was just checking the execute bit so dirs slipped through).
+    Pointed out by Barb Dijker <barb@labyrinth.com>.
+
+88) Fixed a problem on HP-UX trusted systems with getpwuid() returning "*"
+    unless the real uid is 0.  Reported by Brian Cunnie (cunnie@nyc.hp.com).
+
+89) configure now checks for size_t and ssize_t in unistd.h as well
+    as sys/types.h.
+
+90) configure now checks for egrep before actually using it.
+
+91) configure now checks for a working void implementation (ie: void * as
+    a generic pointer) and sets VOID to void or char accordingly.
+
+92) Added support for SunOS 4.x C2 security (shadow passwords) from
+    Kendall Libby (fubar@shore.net)
+
+93) Changed all occurrences of bzero() to memset() and bcopy() to
+    memmove().
+
+94) Fixed a bug in sudo.c.  If a user has no passwd entry sudo would
+    dump core (writing to a garbage pointer).  Pointed out by
+    Stephen Schaefer <sps@gateway.bsis.com>.
+
+95) Worked around a bug in AIX's lex in parse.c.  AIX lex doesn't seem
+    to handle {x,y} range notation correctly.  Bleah.
+
+96) Sudo would not report a failed attempt if the user entered <return>
+    at the 2nd password: prompt so someone trying to guess a password
+    could just invoked sudo multiple times and try one passwd at a time.
+    Reported by Jonathan Adams <jonathan@smada.com>.
+
+97) Added User_Alias facility.
+
+98) Rewrote most of the ip address / network support.  Now works on all
+    systems sudo has currently been tested on.
+
+99) Sudo now sets SUDO_COMMAND and SUDO_GID envariables in addition to
+    SUDO_USER and SUDO_UID.
+
+100) Added changes to configure.in for UnixWare.
+     (from John Warburton <jwarb@SACBH.com.au>)
+
+101) Merged in changes for Interactive Unix and RISCos.
+     (from Andy Smith <abs@maunsell.co.uk>)
+
+102) Added testsudoers (from Chris Jepeway <jepeway@cs.utk.edu>).
+
+103) Added fix for parse.yacc to avoid the kludge I was doing.
+     (from Chris Jepeway <jepeway@cs.utk.edu>)
+
+104) Now remove the IFS envar if set instead of setting it to a "safe"
+     value to avoid problems with make and others.
+
+105) Added FAST_MATCH option to check basenames of sudo command and
+     paths listed in sudoers file.  If the basename doesn't match
+     then it is not a match.  If the basename matches, then do
+     a stat to make sure it is a valid match.
+
+106) Now only stat(2) cmnd once in path_matches() (in parse.c).  Sudo
+     was stating cmnd for *every* attempted match.  Now the stat struct
+     is cached (ie: the var is a static).
+
+107) Signal handlers in visudo are now only installed after the stmp
+     file is opened.  Previously, it was possible to erase an open
+     stmp file by sending visudo a signal within a small window.
+
+108) Added Goon Show insults from  Russell Street <r.street@auckland.ac.nz>.
+
+109) Broke out the insults into separate include files (insults.h
+     is the master and includes the appropriate one).
+
+110) Now use getwd() instead of getcwd() and provide emulation for
+     OS's w/o it.  This was done since some OS's with getwd()
+     implement getcwd() via a pipe to pwd(1).  By emulating getwd()
+     by calling getcwd() on OS's w/o getwd() we lose nothing since
+     the compiler should optimize away the extra function call.
+
+111) Added crypt() for DEC OSF/1 3.x enhanced security.
+     From "Richard L Jackson Jr" <rjackson@osf1.gmu.edu>.
+
+112) Added an option to run the command in the background (-b) as
+     suggested by Jonathan Adams <jonathan@smada.com>
+
+113) First stab at kerberos support.  I'm not really sure it is
+     possible to do this in a sane manor.  Sigh.
+
+114) Better kerberos support.  Had to use setreuid(2) but falls
+     back on a kludge if that does not exist or is broken.
+
+115) Added -p (password prompt) support.
+     Suggested by "David W. Cooley" <dwcooley@COLBY.EDU>
+
+116) Added partial implementation of -l (list) flag.
+     This is probably as good as it will get until sudo:tng.
+
+117) Added anti-spoofing code to tighten up a race condition
+     where a user could run sudo some_link and then change
+     where the link pointed after the old link had been
+     validated but before the exec().
+
+118) Now update timestamp file via utime() (and emulate via utimes()
+     if necessary) to eliminate a small race.  Works with
+     both POSIX utime() as well as old utime() in BSD <= 4.3.
+
+119) Kerberos ticket file now lives in same dirs as sudo timestamp
+     files (to avoid trouncing on normal ticket file) and is removed
+     after validation.
+
+120) Now log tty user is on as well as pwd in sudo logs.
+
+CHANGES from sudo 1.3.2 BETA
+
+121) Fixed a bug in the anti-spoofing check.
+
+122) Fixed up ISC support so that it works and looks like non-streams
+     stuff in interfaces.c.
+
+123) Now deal correctly with ip implementations that has an sa_len
+     field in struct sockaddr.
+
+124) Check ownership and permissions on timestamp dir and ignore if
+     not owned by root and mode 0700.  Problem pointed out by Larry Auton
+     <lda@research.AT&T.com> and Navjot Singh <singh@research.AT&T.com>.
+
+125) Ignore timestamp files with preposterous dates to keep people from
+     faking out sudo on OS's that allow you to give away files to root.
+     Problem pointed out by Larry Auton <lda@research.AT&T.com> and
+     Navjot Singh <singh@research.AT&T.com>.
+
+126) A timeout of 0 will now cause a password to be entered every
+     time.  Based on a suggestion by Larry Auton <lda@research.AT&T.com>
+     and Navjot Singh <singh@research.AT&T.com>.
+
+CHANGES from sudo 1.3.3 BETA
+
+127) Cleaned up interfaces.c so that it is more readable.
+
+128) Added support for syslog()'s that don't guarantee delivery
+     of a message.  HP-UX is the only known offender.
+
+129) No longer use memmove() since memcpy() does what we need and
+     configure doesn't always catch memmove() even when it is
+     there (may be a library problem).
+
+130) Updated man page to reflect two more security issues.
+
+131) Cleaned up shadow password support in check.c.  It should now
+     be readable.
+
+132) Added SCO support.
+
+133) Added check to configure to find the max length of a uid_t
+     in characters.
+
+134) Removed uid2str() since we now know how big a uid_t/gid_t
+     can be.  This elminates a few malloc()'s.
+
+135) Added support for multiple insult types.  Based on code and
+     a suggestion from Dieter Dworkin Muller <dworkin@village.org>.
+
+136) Replaced clean_env() and rmenv() with a rewritten clean_env()
+     that should be a little faster.  This also makes it easier to
+     add to the list of "dangerous" envariables.
+
+137) Added netgroup support.  Netgroups must start with a leading
+     "+" to that sudo knows it is a netgroup.
+
+138) Split out sudoers file format into its own man page.
+     As suggested by Andy Smith <abs@maunsell.co.uk>.
+
+139) Updated testsudoers.c to grok netgroups.
+
+CHANGES from sudo 1.3.4 BETA
+
+140) Added SecurID support from Giles Todd <giles@gt.demon.co.uk>.
+
+141) Added -s flag to start a root shell and -- to signify end of args.
+
+142) Sped up logging routines by replacing strncpy()'s with strcat()'s.
+     This is safe because we dyanically allocate logline to be big enough.
+
+143) Now support command line arguments in the sudoers file.
+
+144) Sped up the loading on command line arguments.  This fixes the
+     "commands with large argc's take forever to run" bug.
+
+145) Expanded MAXCOMMANDLEN to 8K since we now have to deal with
+     command line arguments.  Added bounds checking in fill() and
+     append() so we don't drop core.
+     XXX - 8k makes sudo *SLOW*
+
+146) Added support in the lexer for "termination characters" to be
+     escaped.  Ie: you can now use [\,:=] in command line args
+     as long as you escape with a \.
+
+147) Testsudoers can now deal with commands that have arguments.
+
+148) If a file is not executable or not a regular file sudo will
+     now give the appropriate error message instead of just
+     "command not found" which is misleading.
+
+149) Fixed a bug where if FQDN is set, load_interfaces() was never
+     called.
+
+150) tty is now a global so it can be used in the ticket file
+     at a later date.
+
+151) Strings in the parser are now allocated dynamically.  This results
+     in a large speedup as compared to a 1K array on the stack. I
+     have freed the strings in the parser where appropriate but that
+     may not catch all instances.  Even so, the average sudo now
+     takes up less memory than the 1K array version.
+
+152) Fixed a bug in tgetpass() and configure that broke termio/termios
+     support for some OS's.
+
+153) Added cheapo implementation of tty-based timestamps.  The correct
+     way is to have username be a directory with the tty tickets
+     inside.  However, the current code does not take to that very
+     well, and it does not allow the two systems to coexist. Therefore,
+     instead of timestampdir/user/tty it is timestampdir/user.tty.
+
+154) Added support for building in other than the source directory.
+     Based on changes from "Simon J. Gerraty" <sjg@frodo.dn.itg.telecom.com.au>
+
+155) options.h and pathnames.h are now included via angle brackets
+     (<>) so as to use the -I include path.  This way, those using
+     a shadow build tree may have local copies of these headers
+     w/o clobbering the distribution ones.
+
+156) EXEMPTGROUP is now a string (group name) and user_is_exempt()
+     is now less of a hack.  It uses getgrnam(EXEMPTGROUP) to
+     get a list of users in the exempted group.
+
+157) --prefix and --exe_prefix are now honored in the Makefile.
+
+158) Sudo will now behave reasonably in the case where the sudoers
+     file location is mounted via NFS and the client does not
+     have "root" NFS privs.
+
+159) _PATH_SUDO_SUDOERS, _PATH_SUDO_STMP, and SUDOERS_OWNER are
+     now set via the Makefile since that appears to be what
+     most people expect...
+
+160) Now include a pre-generated version of parse.lex since so many
+     versions of lex are brain damaged.  If parse.lex is changed
+     a new lex.yy.c will be generated.  The distribution copy is
+     sudo-lex.yy.c.
+
+161) Upgraded to GNU autoconf version 1.5.  There are now even
+     *more* options.
+
+CHANGES from sudo 1.3.5 BETA
+
+162) Fixed S/Key support.
+
+163) Cleaned up shadow password support further by moving much of
+     it to getspwuid.c.
+
+164) First cut at DCE support. [needs work to be functional]
+
+165) New Digital UNIX C2 support based on code from
+     "Randy M. Hayman" <haymanr@icefog.sois.alaska.edu>
+
+166) S/key support now works with the generic bellcore s/key
+     as well as the s/key from Wietse Venema's logdaemon.
+     (Previously only worked with the logdaemon s/key).
+     As an added bonus the s/key challenge is now embedded
+     in the password prompt for a cleaner look.
+
+167) lsearch.c will now compile on a strict ANSI C compiler.
+     ANSI doesn't allow pointer arithmetic on a "void *"
+     but gcc does.
+
+168) Bought back latest HP-UX DCE support from Jeff Earickson
+     <jaearick@colby.edu>.
+
+169) configure now comletely groks $SUDO_LIBS and $VISUDO_LIBS.
+     Plain old $LIBS is no longer used.  LDFLAGS has also been
+     split up into $SUDO_LDFLAGS and $VISUDO_LDFLAGS.
+     The reason for this is that sudo often needs extra libs
+     for alternate authentication schemes but visudo rarely does.
+
+170) The code to copy command arguments flaied for large values of
+     argc due to realloc() lossage.  We now cheat and treat argv[]
+     as a flat string (since that's what it is) and use pointer
+     arithmetic to compute the length.  Kind of sneaky but it
+     works (and is relatively fast).
+
+CHANGES from sudo 1.3.6 BETA
+
+171) Added support for UN*X groups in sudoers based on code from
+     Dougal Scott <dwagon@aaii.oz.au>.
+
+172) interfaces.c should work on ISC UN*X again.
+
+173) All source files are <= 14 characters for old SYSV filesystems.
+
+CHANGES from sudo 1.3.7 GAMMA
+
+174) Minor configure[.in] fixes.
+
+175) tgetpass.c now compiles on OS's that put the definition of
+     fd_set in <sys/bsdtypes.h>
+
+CHANGES from sudo 1.4
+
+176) Command args in sudoers are now stored in an argument vector
+     instead of a flat string to make wildcard matching simpler.
+
+177) Added NewArgv and NewArgc that describe the command to be
+     executed.  The copy of args in cmnd_args is no longer necessary
+     and has been removed.
+
+178) Using strcmp(3) for argument matching in command_matches()
+     (was path_matches()) is no longer sufficient since we don't
+     have a flat string.  compare_args() is used instead which
+     calls either strcmp(3) or wildmat(3l) depending on whether
+     there are shell-style meta chars (wildcards) present.
+
+179) Shell-style wildcard matches are now available in the sudoers
+     file.  Matches are done via Rich $alz's wildmat(3).
+     This required the tweaks described in #176-178 as well as
+     other, more minor, changes.
+
+180) Commented out rule to build lex.yy.c from parse.lex since
+     we ship with a pre-flex'd parser and can't rely on file
+     dates being set correctly.
+
+181) Fixed visudo and testsudoers to deal with new argument
+     vector handling.
+
+182) A null string ("") as shell in passwd file (or $SHELL) is
+     now treated as the bourne shell.
+
+183) Converted *.man to pod format for easy conversion to man,
+     html, latex, and just plain text.  Tried to make the
+     sudoers manual easier to read in the process.
+
+184) Updated sample.sudoers and sudoers.pod to include info
+     on wildcards.
+
+CHANGES from sudo 1.4.1
+
+185) compat.h now defines _PASSWD_LEN based on PASS_MAX if it
+     is defined (from limits.h on SYSV).
+
+186) Both short and long hostnames may now be used in the sudoers
+     file if FQDN is defined.  From patches submitted by
+     Michael Meskes <meskes@Informatik.RWTH-Aachen.DE>.
+
+187) Now use skeylookup() instead of skeychallenge().  Hopefully
+     this will work around a problem some people have reported
+     on Solaris 2.5 with sudo and logdaemon 5.0's skey.
+
+188) Now uses /var/run to hold timestamp files if it exists.  This
+     is more secure.
+
+189) configure now puts the timestamp dir in /var/run if it exists.
+     Sugestion by Michael Meskes <meskes@Informatik.RWTH-Aachen.DE>.
+
+190) Both short and long hostnames now exist even if FQDN is not set.
+     This allows machines with fully qualified hostnames set via
+     hostname(1) to use them in the sudoers file.
+
+191) sudo was not honoring "." in $PATH due to a bug in find_path().
+
+192) Added IGNORE_DOT_PATH option to ignore "." in $PATH.
+
+193) tgetpass() now uses raw read(2) and write(2) instead of stdio.
+     This should make it work on more OS's.  Previously, it used
+     stdio (buffered) fgets(3) and fputs(3) with select(2) which
+     may not be legal.  Also got rid of the nasty goto's and
+     generally simplified the code.
+
+194) Parser now supports hostnames like UPPERCASE.foo.com.  Previously,
+     `UPPERCASE' was interpreted as an Alias.  This means that
+     the `fqdn' stuff has been moved to the lexer (FQHOST is used
+     to avoid collision with FQDN option).
+
+195) Reworked --with-FOO in configure.in to support --without-FOO.
+     Made shadow passwords the default for appropriate OS's.  They
+     can be turned off with --without-C2.
+
+196) Added NO_PASSWD option for those who don't want to be bothered
+     by a password prompt from sudo.  This is really just a hack.
+
+197) Added support for double quotes to mean "treat these words as one
+     argument".  This is similar to what most shells do.
+
+198) Added mkinstalldirs to make install destination dirs if
+     they do not already exist.
+
+CHANGES from sudo 1.4.2
+
+199) Added support for --with-CC (which C compiler to use).
+
+200) Added support for NOPASSWD token and running commands a
+     specified users (sudo -u) from Keith Garry Boyce
+     <garp@opustel.com>
+
+201) Only link with -lshadow for Linux if libc lacks getspnam().  Problem
+     pointed out by Michael Meskes <meskes@Informatik.RWTH-Aachen.DE>.
+
+202) Replaced SUDOERS_OWNER with SUDOERS_UID and SUDOERS_GID.  Added
+     SUDOERS_MODE and changed the default to 0440 (from 0400).
+     It is now possible to NFS-mount sudoers without doing anything fancy.
+
+202) If a runas list is specified, a user may only run commands as
+     "root" if "root" is a member of the runas list.  The old behavior
+     was to always allow commands to be run as root, even if a runas
+     list was specified.  Now you can give someone "sudo -u operator"
+     and not have the equivalent of "sudo -u root" as well.
+
+203) Added "USER=%s" to logging functions.
+
+204) configure will now add -lPW to (VI)?SUDO_LIBS if using bison
+     or DCE and alloca(3) is not in libc (or provided by gcc) but
+     is in libPW.a.
+
+205) sudo would give an incorrect error message if the sudoers file
+     didn't exist due to close() stomping errno if the open() failed.
+
+206) Fixed "shell" mode (sudo -s).  When building NewArgv sudo was
+     not allocating space for the NULL.
+
+207) Added support for wildcards in the pathname.  Ie: /bin/*.
+
+208) 'command ""' in sudoers now means no args allowed.
+
+209) Added command line args to SUDO_COMMAND envariable.
+
+210) HP-UX 10.x with C2 now uses bigcrypt().
+     Changes from david_dill@Merck.Com (David Dill).
+
+211) lsearch.c will now compile w/o compiler warnings.
+     (Updated from NetBSD lsearch.c)
+
+212) Now uses POSIX fnmatch(3) (which uses ! instead of ^ in ranges)
+
+CHANGES from sudo 1.4.3
+
+213) Now allows network/netmask in sudoers to override per-interface
+     netmask.
+
+214) Fixed -u support with multiple user lists on a line.
+
+215) Fixed a core dump problem when built with -DSHELL_IF_NO_ARGS.
+
+216) Fixed 2 typos in parse.yacc and removed some unnecessary if's.
+
+217) Now always use install-sh since SunOS install can't do uid/gid's.
+     Other BSD installs are probably similarly afflicted.
+
+218) Fixed NFS-mounted sudoers file under solaris both uid *and* gid
+     were being set to -2.  Now set uid to 1 to avoid group being
+     remapped.
+
+219) Now includes alloca.c (from gcc) for those w/o it.  Linking
+     against -lPW breaks visudo on HP-UX and probably others.
+
+220) Added --with-libpath, --with-libraries, --with-incpath options
+     to configure.
+
+221) configure now uses shicc instead of gcc on BSD/OS >= 2.0 to
+     generate binaries linked with shared libs.
+
+222) The parser was setting no_passwd even if there wasn't a
+     runas match.  I reordered some things in parse.yacc
+     to fix this.
+
+223) `sudo -v' (validate) wasn't paying attention to NOPASSWD.
+     Now it does.
+
+224) testsudoers now groks "-u user".
+
+225) Updated AFS support based on what tcsh 6.06 does.
+
+226) Fixed a typo/thinko that broke BSD > 4.3reno wrt interfaces.c.
+
+227) HPUX 10.X shadow password stuff now uses SecureWare routines.
+
+228) SecureWare passwd checking now uses bigcrypt() if available.
+     Now uses AUTH_MAX_PASSWD_LENGTH if defined.
+
+229) configure now makes sure you don't have a config.cache file
+     from another OS.
+
+230) Added better shadow password detection.
+     BSD >= 4.3reno -> /etc/master.passwd
+     hpux9: getspwnam() -> /.secure/etc/passwd
+     hpux10: getspnam() or getprpwnam() -> /tcb/files/auth/*/* (link with -lsec)
+     SVR4: getspnam() -> /etc/shadow
+     solaris: getspnam() -> /etc/shadow
+     irix[56].x: getspnam() -> /etc/shadow
+     sunos 4.x: getpwanam() -> /etc/security/passwd.adjunct
+     DUNIX: getprpwnam() -> /tcb/files/auth/*/* (link with -lsecurity)
+     SecureWare: getprpwnam() -> /tcb/files/auth/*/*
+     ultrix 4.x: getauthuid() -> /etc/auth.{pag,dir}
+
+231) '(' in command args no longer are a syntax error.
+
+232) '!command' now works in the presence of a runas or NOPASSWD token.
+     Simplified parse rules wrt runas and NOPASSWD (more consistent).
+
+233) Command args and now compared as a flat string again.  This makes
+     wildcard matches more consistent.
+
+234) DUNIX C2 support now groks AUTH_CRYPT_OLDCRYPT and AUTH_CRYPT_C1CRYPT.
+
+235) configure now uses config.{sub,guess} to guess OS type.
+     Sudo should work out of the box on more OS's now.
+
+236) Got rid of HAVE_C2_SECURITY, now just use SHADOW_TYPE.
+
+237) Fixed race in tgetpass() where echo can be turned off and
+     left off if sudo is used in a pipeline and a password is
+     required.
+
+CHANGES from sudo 1.4.4
+
+238) `sudo -l' output now includes runas and NOPASSWD info and
+     asks for a password unless NOPASSWD for ALL is set.
+
+239) Sudo can now deal with all-caps user and host names.
+
+240) Sudo will now remove the "ENV" and "BASH_ENV" envariables.
+     From Michael Meskes <meskes@Informatik.RWTH-Aachen.DE>.
+
+241) `sudo -l' will now expand Cmnd_Alias's (could be prettier).
+
+242) `sudo -s' will now set $HOME to root's homedir (or that of
+     the user specified -u) so dot files get sourced.
+
+CHANGES from sudo 1.4.5
+
+243) $HOME was always being set, not just with `-s'.
+
+244) In visudo, the owner and group of the sudoers file were
+     being set too early; an editor could change them and change
+     the owner/group of the resulting sudoers file.
+
+CHANGES from sudo 1.5
+
+245) Added SHELL_SETS_HOME option.
+
+246) Added NO_MESSAGE option.
+
+247) Added %u and %h escapes in PASSPROMPT to expand to user's name
+     and host.
+
+248) Added "SUDO_PROMPT" envariable.
+
+249) Usernames may now begin with a digit.  Gross, but people do it.
+
+Sudo 1.5.1 released.
+
+250) Added `opie' support.
+
+251) Added check to make sure fnmatch() really works.
+
+252) Now use the prompt S/Key gives us instead of rolling our own.
+
+253) Added -H flag from Danny Barron <dcbarro@nppd.com>.
+
+254) Add SUDO_PS1 envariable support.
+
+255) Attempt at sequent support.
+
+Sudo 1.5.2 released.
+
+256) visudo acts sanely when there is no sudoers file.
+
+257) Added Runas_Alias support.
+
+258) Sudo will now work with SUDOERS_MODE == 400 and SUDO_UID = 0.
+
+259) Alias's in a runas list are now expanded.
+
+260) Fixed bug with > 32 saved aliases.  Reported by BHH@capgroup.com.
+
+261) Code that uses sprintf() is now more paranoid about buffer
+     overflows.
+
+262) Whitespace is now allowed after a line continuation character before
+     a newline in sudoers.
+
+263) %h in MAILSUBJECT expands to local hostname.
+
+Sudo 1.5.3 released.
+
+264) Don't pass getdtablesize() as first arg to select(2).  No need
+     to do this since we only select on one fd--use (fd+1) as nfds
+     and the old way caused problems on some systems (arguably
+     a bug in those OS's).  From Marc Slemko marcs@znep.com.
+
+265) Fixed coredump when passwd file is missing or unavailable.
+     Reported by Jason Downs <downsj@teeny.org> and
+     Klee Dienes <klee@mit.edu> (via a Debian Linux bug report).
+
+266) Fixed bug wrt exclusion lists and relative pathnames.
+     Reported by osiris@COURIER.CB.LUCENT.COM.
+
+267) exit(1) if user doesn't enter a passwd.
+     Noted by Alex Parchkov <alexp@ind.tansu.com.au>.
+
+Sudo 1.5.4 released.
+
+268) Newer versions of Irix use _RLDN32_* envariables for 32-bit binaries
+     so ignore _RLD* instead of _RLD_*.  From tarrall@bamboo.Colorado.EDU.
+
+269) Only open sudoers file once as opposed to once for sanity checks and
+     once for the parser.  Also try to open ten times if we get EAGAIN.
+
+Sudo 1.5.5 released.
+
+270) Initialize group vector if we are becoming a user other than root.
+     For root, it is often more useful to hang on to our existing group
+     vector.
+
+271) Fix usage of select(2) to deal correctly with a high-numbered fd.
+
+272) Fixed a bug where sudo sometime didn't give the user a chance to
+     enter a password at the prompt.
+
+273) Use a dynamically sized buffer when reading ether interfaces.
+
+274) Fixed configure problems with identification of HP-UX > 10.x and
+     with cc being identified as a cross compiler on some platforms.
+
+275) Fixed a problem with HP-UX 10.x and alloca.  Bison does not
+     include alloca.h on HP-UX 10.x even though it uses alloca()
+     (and thus needs the #define of alloca(x) to __builtin_alloca(x)).
+     To fix this we include alloca.h ourselves if using bison and not gcc.
+
+276) Included support for the AIX 4.x authenticate() function from
+     Matt Richards <v2matt@btv.ibm.com>.
+
+277) Fixed an off by one error in the parser.  Found by
+     Piete Brooks <Piete.Brooks@cl.cam.ac.uk>
+
+278) Change NewArgv size computation to work on UNICOS.
+     From Mike Kienenberger <mkienenb@arsc.edu>
+
+279) Added --with-logfile and --with-timedir configure options.
+
+280) Use getcwd(3), not getwd(3) to avoid possible buffer overflow.
+     Use BSD getcwd(3) if system lacks one or is SunOS 4.x.
+
+281) Fix 'fprintf' argument mismatches in 'visudo.c'.
+     From ariel@oz.engr.sgi.com (Ariel Faigon)
+
+282) Use waitpid or wait3 to reap children in logging.c.
+     Pointed out by Theo de Raadt <deraadt@theos.com>
+
+283) Sudo should prompt for a password before telling the user that
+     a command could not be found.  Noted by rhodie@NAC.NET.
+
+284) Fix OTP_ONLY for opie; "Deven T. Corzine" <deven@fuse.net>.
+
+285) Include pre-yacc'd parse.yacc as sudo.tab.[ch] since more and
+     more vendors are charging for yacc (bad vendor, no cookie).
+
+286) Use MAX*, not MAX*+1
+
+287) Add support for Hitachi SR2201, from b-edgington@hpcc.hitachi-eu.co.uk
+
+288) Added RUNAS_DEFAULT option to allow one to compile sudo with a
+     default runas user other than root.
+
+289) Add options to log the hostname in the file-based log and to not
+     do word wrap in file-based log.  From Theo Van Dinter <tvd@chrysalis.com>
+
+290) RedHat Linux pam support, from Gary Calvin <GCalvin@kenwoodusa.com>.
+     pam.sudo goes in /etc/pam.d/sudo on RedHat 5.0 and above.
+
+291) With sudo -s, set command the full path of the shell, not the basename.
+     Noted by Peter W. Osel <pwo@guug.de>
+
+Sudo 1.5.6 released.
+
+292) Pam auth now runs as root; necessary for shadow passwords.
+
+293) Shadow password support is now compiled in by default.  You can disable
+     it via --disable-shadow.
+
+294) We now remove a timestamp file with a bogus date when it is detected.
+     From Steve Fobes <sfobes@uswest.com>.
+
+295) In tgetpass(), restart select if it is interrupted.  This really fixes a
+     problem where a user sometimes is not given a change to enter a password.
+
+296) All options have moved from options.h -> configure.
+
+297) visudo is now installed in /usr/local/sbin where it belongs.
+
+298) Lots of configure changes.  Instead of checking for the existence
+     of -lsocket, -lnsl, or -linet, we instead check them for the
+     functions we need only if they are not already in libc.
+
+299) Added DUNIX SIA (Security Integration Architecture) support from
+     Spider Boardman <spider@Orb.Nashua.NH.US>.
+
+300) Added test for broken Digital UNIX 4.0 prot.h.
+
+301) Better support for C2 security on Digital UNIX.
+
+302) Hacked autoconf so that you have have single quotes in
+     --with-passprompt.
+
+303) For SecureWare-style shadow passwords use getprpwnam() instead
+     of getprpwuid() since getprpwuid is broken in HP-UX 10.20 at
+     least (it sleeps for 2 minutes if the shadow files don't exist).
+
+304) We can't really trust UID_MAX or MAXUID since they may only exist for
+     backwards compatibility; spider-both@Orb.Nashua.NH.US
+
+305) Make %groups work as RunAs specifiers; Ray Bellis <rpb@community.net.uk>.
+
+306) Set USER environment variable to target user.
+     Suggested by Ray Bellis <rpb@community.net.uk>.
+
+307) Go back to printing "command not found" unless --disable-path-info
+     specified.  Also, tell user when we ignore '.' in their path and it
+     would have been used but for --with-ignore-dot.
+
+308) When using tty tickets make it user:tty not user.tty as a username
+     could have a '.' in it.
+
+309) Define BSD_COMP for svr4 to get BSD ioctl defs.  Also, if we have
+     sys/sockio.h but SIOCGIFCONF is not defined by including sys/ioctl.h
+     include sys/sockio.h directly.
+
+310) Fixed a bug that could cause "sudo -l" to segfault or complain
+     about non-existent syntax errors.
+
+Sudo 1.5.7 released.
+
+311) Fixed square bracket quoting in configure and moved check for -lnsl
+     to be before -lsocket.
+
+312) In load_interfaces(), close sock after bwe are done with it.  Leak
+     noticed by Mike Kienenberger <mkienenb@arsc.edu>.
+
+313) Missing pieces from change #308; from Mike Kienenberger.
+
+314) Real Kerberos 5 support from Frank Cusack <fcusack@iconnet.net>.
+
+315) FWTK 'authsrv' support from Kevin Kadow <kadow@MSG.NET>.
+
+316) Fixed handling and documentation of -with-umask.
+
+317) If the check for socket() or inet_addr() fails, retry, this time
+     linking with both -lsocket and -lnsl for those systems that
+     have interlibrary dependencies.
+
+Sudo 1.5.8 released.
+
+318) Add dirfd() macro for systems without it.
+
+319) Better check for socket() in -lsocket -lnsl in configure.
+
+320) Minor configure fixes.
+
+Sudo 1.5.8p1 released.
+
+321) Fixed a bug wrt quoting characters in command args.
+
+322) Make --without-sendmail work.
+
+Sudo 1.5.8p2 released.
+
+323) Fixed a segv if HOST_IN_LOG defined and gethostbyname() fails.
+     Reported by Gero Treuner <gero@faveve.uni-stuttgart.de>.
+
+324) Fixed a parse bug wrt the ! operator and runas specs.  Noted by
+     David A Beck <BKD@payserv.telekurs.com>.
+
+325) Use new emalloc/erealloc/estrdup functions (catch errors and exit).
+
+326) New PAM code that should work on both Solaris and Linux.
+
+327) Make sudo's usage info better when mutually exclusive args are given
+     and don't rely on argument order to detect this.  From Nick Andrew.
+
+328) In visudo, shift return value of system() by 8 to get the real exit value.
+
+Sudo 1.5.9 released.
+
+329) The runas user and NOPASSWD tags are now persistent across entries
+     in a command list (ie: cmnd1,cmnd2,cmnd3).  A PASSWD tag has been
+     added to reverse NOPASSWD.  The runas user and *PASSWD tags can be
+     overridden on a per-command basis at which point they become the
+     new default for the rest of the list.
+
+330) It is now possible to use the '!' operator in a runas list as
+     well as in a Cmnd_Alias, Host_Alias and User_Alias.
+
+331) In estrdup(), do the malloc ourselves so we don't need to rely on the
+     system strdup(3) which may or may not exist.  There is now no need to
+     provide strdup() for those w/o it.
+
+332) You can now specify a host list instead of just a host or alias
+     in a privilege list.  Ie: user=host1,host2,ALIAS,!host3 /bin/ls
+
+333) Stash the "safe" path to the command instead of stashing the struct
+     stat.  Should be safer.
+
+334) Now set $LOGNAME in addition to $USER.
+
+335) No longer use stdio in tgetpass()
+
+336) Don't use _PASSWD_LEN or PASS_MAX as we can't rely on them corresponding
+     to anything real.  Instead, we just use a max password size of 256
+     everywhere.
+
+337) Block keyboard-generated signals during startup and restore signal
+     mask before exec'ing the program.  We don't want the user to be
+     able to simply kill us and avoid logging.
+
+338) Rewrote timestamp handling.  For the default case, a directory is used
+     instead of a file.  For the tty-based case, the timestamp is just a
+     file in that directory (eg. /var/run/sudo/username/tty).  You now only
+     get the lecture once, even in the tty case.  The goal here is to allow
+     the tty and non-tty schemes to coexist, though it is worth noting that
+     when you update a tty file, the mtime of the dir gets updated too.
+
+339) The meaning of -k has changed to mean "invalidate the timestamp".
+     There is a new -K option to really remove the timestamp file/dir.
+
+340) New modular authentication API.  This fixes the rat's nest of
+     #ifdefs that was the old auth code.
+
+341) New logging functions.  log_error() now takes a variable number of
+     args ala printf() and log_auth() reacts to the return value of validate().
+
+342) If a user is not in the sudoers file they are still asked for a password.
+     This keeps someone who finds a user logged in to a terminal from being
+     able to tell whether or not the user is allowed to use sudo.
+
+343) New PAM code again, this time it should be correct.
+
+344) tgetpass() now has a flag to specify whether or not to turn
+     off echo while reading the password.  Used by the new PAM and
+     fwtk code.
+
+345) Fixed shadow password dectection on SCO.
+
+346) Sudo is now available under a BSD/Apache style license.  This is
+     possible because it no longer contains any of the original 1.1 code.
+
+347) Added configuration info when sudo is run with the -V flag by root.
+
+348) Change visudo tmp file from /etc/stmp -> /etc/sudoers.tmp since
+     Solaris uses stmp for shadow temp file.  Also rename _PATH_SUDO_SUDOERS
+     to _PATH_SUDOERS and _PATH_SUDO_STMP to _PATH_SUDOERS_TMP.
+
+349) Added configure option to set syslog priorities.
+
+350) Sudo now locks its log file to prevent mangled entries.
+
+351) Visudo now locks the sudoers temp file instead of bailing when
+     the temp file already exists.  This fixes the problem of stale
+     temp files but it does *require* that you not try to put the
+     temp file in a world-writable directory.  This shoud not be
+     an issue as the temp file should live in the same dir as sudoers.
+
+352) Fixed crypt() check in libufc.
+
+353) It is now possible to put a list of users as the first thing in a
+     user specification.  I don't suggest this but it makes the grammar
+     more uniform.
+
+354) Visudo will now warn about what it thinks are undefined aliases.
+     Since it can't be 100% sure these are just warnings, not errors.
+
+355) Add a --without-passwd option to configure that turns off
+     passwd/shadow file authentication.  Only usable with an alternate
+     authentication scheme.
+
+356) Add a --disable-authentication option to configure that causes sudo
+     to not require authentication by default.  The PASSWD tag can be
+     used to require authentication for an entry.
+
+357) Add a --with-devel option to add -Wall and uncomment yacc/lex
+     generation in Makefile.
+
+358) Zero out plaintext password after use (should do encrypted as well).
+
+359) Added real dependencies in Makefile.
+
+360) Deprecated --with-otp-only in favor of --without-passwd.
+
+361) Add --with-mail-if-no-host to send mail if a user tries to run sudo on
+     a host for which he/she is not authorized.
+
+362) Most of sudo now runs as root instead of the invoking user to
+     minimize the possibility of user control via signals or tracing.
+
+363) Now Support CIDR-style netmasks (ie: 128.138.0.0/16).
+
+364) In "sudo -l" mode, the type of the stored (expanded) alias was not
+     stored with the contents.  This could lead to incorrect output
+     if the sudoers file had different alias types with the same name.
+     Normal parsing (ie: not in '-l' mode) is unaffected.
+
+365) Now include strcasecmp() for those without it.
+
+366) Most compile-time options are now changable at runtime via
+     the 'Defaults' specification in the sudoers file.
+
+367) Added a -L flag to printout all the possible 'Defaults' parameters.
+
+368) It is now possible to escape "special" characters in usernames, hostnames,
+     etc with a backslash.
+
+369) Sudo will now accept a hostname/username/netgroupname that contains
+     almost any character in it.  It seems many people want to use '.'
+     and other non-alphanumerics in usernames.
+
+370) Fixed the root_sudo option.  Sudo was always complaining that root
+     was not allowed to run sudo if the root_sudo flag was turned off.
+
+371) tgetpass() now uses a function to read up until the end of line.
+     Fixes problems in a pipeline when a program sets the tty mode
+     to be character at a time.
+
+372) sudo now turns off core dumps via setrlimit (probably paranoia).

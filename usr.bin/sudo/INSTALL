@@ -1,0 +1,563 @@
+Installation instructions for Sudo 1.6
+======================================
+
+Sudo uses a `configure' script to probe the capabilities and type
+of the system in question.  In this release, `configure' takes many
+more options than it did before.  Please read this document fully
+before configuring and building sudo.  You may also wish to read the
+file INSTALL.configure which explains more about the `configure' script.
+
+Simple sudo installation
+========================
+
+For most systems and configurations it is possible simply to:
+
+    0) If you are upgrading from a previous version of sudo
+       please read the info in the UPGRADE file before proceeding.
+
+    1) If you previously ran `configure' on a different host
+       you will probably want to do a `make distclean' to remove
+       the old `config.cache' file.  Otherwise, `configure'
+       will complain and refuse to run.  Alternately, one can
+       simply `rm config.cache'.
+
+    2) Read the `OS dependent notes' section for any particular
+       "gotchas" relating to your operating system.
+
+    3) `cd' to the source or build directory and type `./configure'
+       to generate a Makefile and config.h file suitable for
+       building sudo.  Before you actually run configure you
+       should read the `Available configure options' section
+       to see if there are any special options you may want
+       or need.  Also of interest may be the section on
+       `Mixing password authentication schemes'.
+
+    4) Edit the configure-generated Makefile if you wish to
+       change any of the default paths (alternately you could
+       have changed the paths via options to `configure'.
+
+    5) Type `make' to compile sudo.  If you are building sudo
+       in a separate build tree (apart from the sudo source)
+       GNU make will probably be required.  If `configure' did
+       its job properly (and you have a supported configuration)
+       there won't be any problems.  If this doesn't work, take
+       a look at the files TROUBLESHOOTING and PORTING for tips
+       on what might have gone wrong.  Please mail us if you have a
+       fix or if you are unable to come up with a fix (address at EOF).
+
+    6) Type `make install' (as root) to install sudo, visudo, the
+       man pages, and a skeleton sudoers file.  Note that the install
+       will not overwrite an existing sudoers file.  You can also
+       install various pieces the package via the install-binaries,
+       install-man, and install-sudoers make targets.
+
+    7) Edit the sudoers file with `visudo' as necessary for your
+       site.  You will probably want to refer the sample.sudoers
+       file and sudoers man page included with the sudo package.
+
+    8) If you want to use syslogd(8) to do the logging, you'll need
+       to update your /etc/syslog.conf file.  See the sample.syslog.conf
+       file included in the distribution for an example.
+
+Available configure options
+===========================
+
+This section describes flags accepted by the sudo's `configure' script.
+Defaults are listed in brackets after the description.
+
+Configuration:
+  --cache-file=FILE
+	Cache test results in FILE
+
+  --help
+	Print the usage/help info
+
+  --no-create
+	Do not create output files
+
+  --quiet, --silent
+	Do not print `checking...' messages
+
+Directory and file names:
+  --prefix=PREFIX
+	Install architecture-independent files in PREFIX This really only
+	applies to man pages.  [/usr/local]
+
+  --exec-prefix=EPREFIX
+	Install architecture-dependent files in EPREFIX This includes the
+	sudo and visudo executables.  [same as prefix]
+
+  --bindir=DIR
+	Install `sudo' in DIR [EPREFIX/bin]
+
+  --sbindir=DIR
+	Install `visudo' in DIR [EPREFIX/sbin]
+
+  --sysconfdir=DIR
+	Install `sudoers' file in DIR [/etc]
+
+  --mandir=DIR
+	Install man pages in DIR [PREFIX/man]
+
+  --srcdir=DIR
+	Find the sources in DIR [configure dir or ..]
+
+Special features/options:
+  --with-CC=path
+	Specifies path to C compiler you wish to use.
+
+  --with-incpath
+	Adds the specified directories to CPPFLAGS so configure and the
+	compiler will look there for include files.  Multiple directories
+	may be specified as long as they are space separated.
+	Eg: --with-incpath="/usr/local/include /opt/include"
+
+  --with-libpath
+	Adds the specified directories to SUDO_LDFLAGS and VISUDO_LDFLAGS so
+	configure and the compiler will look there for libraries.  Multiple
+	directories may be specified as with --with-incpath.
+
+  --with-libraries
+	Adds the specified libaries to SUDO_LIBS and and VISUDO_LIBS so sudo
+	will link against them.  If the library doesn't start with `-l' or end
+	in `.a' or `.o' a `-l' will be prepended to it.  Multiple libraries may
+	be specified as long as they are space separated.
+
+  --with-csops
+	Add CSOps standard options.  You probably aren't interested in this.
+
+  --with-skey
+	Enable S/Key OTP (One Time Password) support.
+
+  --with-opie
+	Enable NRL OPIE OTP (One Time Password) support.
+
+  --with-SecurID=DIR
+	Enable SecurID support.  If specified, DIR is directory containing
+	sdiclient.a, sdi_athd.h, sdconf.h, and sdacmvls.h.
+
+  --with-fwtk=DIR
+	Enable TIS Firewall Toolkit (FWTK) 'authsrv' support. If specified,
+	DIR is the base directory containing the compiled FWTK package
+	(or at least the library and header files).
+
+  --with-kerb4
+	Enable kerberos v4 support.  Tested only with the Cygnus Network
+	Security package (CNS).  This uses kerberos passphrases for
+	authentication but does not use the kerberos cookie scheme.
+
+  --with-kerb5
+	Enable kerberos v5 support.  Tested against MIT Kerberos V,
+	release 1.1, although also expected to work against CNS.  This
+	This uses kerberos passphrases for authentication but does not
+	use the kerberos cookie scheme.  Will not work for Kerberos V
+	older than version 1.1.
+
+  --with-authenticate
+	Enable support for the AIX 4.x general authentication function.
+	This will use the authentication scheme specified for the user
+	on the machine.
+
+  --with-pam
+	Enable PAM support.  Tested on Redhat Linux 5.x and Solaris 2.6.
+
+  --with-AFS
+	Enable AFS support with kerberos authentication.  Should work under
+	AFS 3.3.  If your AFS doesn't have -laudit you should be able to
+	link without it.
+
+  --with-DCE
+	Enable DCE support.  Known to work on HP-UX 9.X and 10.0.  Other
+	platforms may require source code and/or `configure' changes.
+
+  --disable-sia
+	Disable SIA support.  This is the "Security Integration Architecture"
+	on Digital UNIX. If you disable SIA sudo will use its own
+	authentication routines.
+
+  --disable-shadow
+	Disable shadow password support.  Normally, sudo will compile in shadow
+	password support and use a shadow password if it exists.
+
+  --with-sudoers-mode=mode
+	File mode for the sudoers file (octal).  Note that if you wish to
+	NFS-mount the sudoers file this must be group readable.  Also note
+	that this is actually set in the Makefile.  The default mode is 0440.
+
+  --with-sudoers-uid
+	User id that "owns" the sudoers file.  Note that this is the numeric
+	id, *not* the symbolic name.  Also note that this is actually set in
+	the Makefile.  The default is 0.
+
+  --with-sudoers-gid
+	Group id that "owns" the sudoers file.  Note that this is the numeric
+	id, *not* the symbolic name.  Also note that this is actually set in
+	the Makefile.  The default is 0.
+
+  --with-execv
+	Use execv() to exec the command instead of execvp().  I can't think of
+	a reason to actually do this since execvp() is passed a fully qualified
+	pathname but someone might thoroughly distrust execvp().  Note that if
+	you define this you lose the ability to exec scripts that are missing
+	the '#!/bin/sh' cookie (like /bin/kill on SunOS and /etc/fastboot on
+	4.3BSD).  This is off by default.
+
+  --without-interfaces
+	This option keeps sudo from trying to glean the ip address from each
+	attached ethernet interface.  It is only useful on a machine where
+	sudo's interface reading support does not work, which may be the case
+	on some SysV-based OS's using STREAMS.
+
+  --without-passwd
+	This option authentication via the passwd (or shadow) file.
+	It should only be used when another, alternate, authentication
+	scheme is in use.
+
+  --with-editor=path
+	Specify the default editor used by visudo (and the only editor used
+	unless --with-env-editor is specified).  The default is the path
+	to vi on your system.
+
+  --with-env-editor
+	Makes visudo consult the EDITOR and VISUAL environment variables before
+	falling back on the default editor.  Note that this may create a
+	security hole as most editors allow a user to get a shell (which would
+	be a root shell and hence, no logging).
+
+The following options are also configurable at runtime:
+
+  --with-otp-only
+	This option is now just an alias for --without-passwd.
+
+  --with-long-otp-prompt
+	When validating with a One Time Password scheme (S/Key or OPIE), a
+	two-line prompt is used to make it easier to cut and paste the
+	challenge to a local window.  It's not as pretty as the default but
+	some people find it more convenient.
+
+  --with-logging=TYPE
+	How you want to do your logging.  You may choose "syslog", "file",
+	or "both".  Setting this to "syslog" is nice because you can keep all
+	of your sudo logs in one place (see the FAQ).  The default is "syslog".
+
+  --with-logfac=FACILITY
+	Determines which syslog facility to log to.  This requires a 4.3BSD
+	or later version of syslog.  You can still set this for ancient
+	syslogs but it will have no effect.  The following facilities are
+	supported: authpriv (if your OS supports it), auth, daemon, user,
+	local0, local1, local2, local3, local4, local5, local6, and local7.
+
+  --with-goodpri=PRIORITY
+	Determines which syslog priority to log successfully authenticated
+	commands.  The following priorities are supported: alert, crit,
+	debug, emerg, err, info, notice, and warning.
+
+  --with-badpri=PRIORITY
+	Determines which syslog priority to log unauthenticated commands
+	and errors.  The following priorities are supported: alert, crit,
+	debug, emerg, err, info, notice, and warning.
+
+  --with-logpath=path
+	Override the default location of the sudo log file and use "path"
+	instead.  By default will use /var/log/sudo.log if there is a /var/log
+	dir, falling back to /var/adm/sudo.log or /usr/adm/sudo.log if not.
+
+  --with-loglen
+	Number of characters per line for the file log.  This is only used if
+	you are to "file" or "both".  This value is used to decide when to wrap
+	lines for nicer log files.  The default is 80.  Setting this to 0
+	will disable the wrapping.
+
+  --with-ignore-dot
+	If set, sudo will ignore '.' or '' (current dir) in $PATH.
+	The $PATH itself is not modified.
+
+  --with-mailto
+	User that mail from sudo is sent to.  This should go to a sysadmin at
+	your site.  The default is "root".
+
+  --with-mailsubject
+	Subject of the mail sent to the "mailto" user. The token "%h"
+	will expand to the hostname of the machine.
+	Default is "*** SECURITY information for %h ***".
+
+  --without-mail-if-no-user
+	Normally, sudo will mail to the "alermail" user if the user invoking
+	sudo is not in the sudoers file.  This option disables that behavior.
+
+  --with-mail-if-no-host
+	Send mail to the "alermail" user if the user exists in the sudoers
+	file, but is not allowed to run commands on the current host.
+
+  --with-mail-if-noperms
+	Send mail to the "alermail" user if the user is allowed to use sudo but
+	the command they are trying is not listed in their sudoers file entry.
+
+  --with-passprompt
+	Default prompt to use when asking for a password; can be overridden
+	via the -p option and the SUDO_PROMPT environment variable. Supports
+	two escapes: "%u" expands to the user's login name and "%h" expands
+	to the local hostname.  Default is "Password:".
+
+  --with-badpass-message
+	Message that is displayed if a user enters an incorrect password.
+	The default is "Sorry, try again." unless insults are turned on.
+
+  --with-fqdn
+        Define this if you want to put fully qualified hostnames in the sudoers
+	file.  Ie: instead of myhost you would use myhost.mydomain.edu.  You may
+	still use the short form if you wish (and even mix the two).  Beware
+	that turning FQDN on requires sudo to make DNS lookups which may make
+	sudo unusable if your DNS is totally hosed.  Also note that you must
+	use the host's official name as DNS knows it.  That is, you may not use
+	a host alias (CNAME entry) due to performance issues and the fact that
+	there is no way to get all aliases from DNS.
+
+  --with-timedir=path
+	Override the default location of the sudo timestamp directory and
+	use "path" instead.
+
+  --with-sendmail=path
+	Override configure's guess as to the location of sendmail.
+
+  --without-sendmail
+	Do not use sendmail to mail messages to the "mailto" user.
+	Use only if don't run sendmail or the equivalent.
+
+  --with-umask
+	Umask to use when running the root command.  The default is 0022.
+
+  --without-umask
+	Preserves the umask of the user invoking sudo.
+
+  --with-runas-default=user
+	The default user to run commands as if the -u flag is not specified
+	on the command line.  This defaults to "root".
+
+  --with-exempt=group
+	Users in the specified group don't need to enter a password when
+	running sudo.  This may be useful for sites that don't want their
+	"core" sysadmins to have to enter a password but where Jr. sysadmins
+	need to.  You should probably use NOPASSWD in sudoers instead.
+
+  --with-passwd-tries=tries
+	Number of tries a user gets to enter his/her password before sudo logs
+	the failure and exits.  The default is 3.
+
+  --with-timeout=minutes
+	Number of minutes that can elapse before sudo will ask for a passwd
+	again.  The default is 5, set this to 0 to always prompt for a password.
+
+  --with-password-timeout=minutes
+	Number of minutes before the sudo password prompt times out.
+	The default is 5, set this to 0 for no password timeout.
+
+  --with-tty-tickets
+	This makes sudo use a different ticket file for each tty (per user).
+	Ie: instead of the ticket file being "username" it is "username:tty".
+	This is useful for "shared" accounts like "operator".  Note that this
+	means that there will be more files in the timestamp dir.  This is not
+	a problem if your system has a cron job to remove of files from /tmp
+	(or wherever you specified the timestamp dir to be).
+
+  --with-insults
+	Define this if you want to be insulted for typing an incorrect password
+	just like the original sudo(8).  This is off by default.
+
+  --with-all-insults
+	Include all the insult sets listed below.
+
+  --with-classic-insults
+	Uses insults from sudo "classic."  If you just specify --with-insults
+	you will get the classic and CSOps insults.  This is on by default if
+	--with-insults is given.
+
+  --with-csops-insults
+	Insults the user with an extra set of insults (some quotes, some
+	original) from a sysadmin group at CU (CSOps).  You must specify
+	--with-insults as well for this to have any effect.  This is on by
+	default if --with-insults is given.
+
+  --with-hal-insults
+	Uses 2001-like insults when an incorrect password is entered.
+	You must specify --with-insults as well for this to have any effect.
+
+  --with-goons-insults
+	Insults the user with lines from the "Goon Show" when an incorrect
+	password is entered.  You must specify --with-insults as well for
+	this to have any effect.
+
+  --with-secure-path[=path]
+	Path used for every command run from sudo(8).  If you don't trust the
+	people running sudo to have a sane PATH environment variable you may
+	want to use this.  Another use is if you want to have the "root path"
+	be separate from the "user path."  You will need to customize the path
+	for your site.  NOTE: this is not applied to users in the group
+	specified by --with-exemptgroup.  If you do not specify a path,
+	"/bin:/usr/ucb:/usr/bin:/usr/sbin:/sbin:/usr/etc:/etc" is used.
+
+  --without-lecture
+	Don't print the lecture the first time a user runs sudo.
+
+  --disable-authentication
+        By default, sudo requires the user to authenticate via a
+        password or similar means.  This options causes sudo to
+        *not* require authentication.  It is possible to turn
+        authentication back on in sudoers via the PASSWD attribute.
+
+  --disable-root-sudo
+	Don't let root run sudo.  This can be used to prevent people from
+	"chaining" sudo commands to get a root shell by doing something
+	like "sudo sudo /bin/sh".
+
+  --enable-log-host
+	Log the hostname in the log file.
+
+  --enable-noargs-shell
+	If sudo is invoked with no arguments it acts as if the "-s" flag had
+	been given.  That is, it runs a shell as root (the shell is determined
+	by the SHELL environment variable, falling back on the shell listed
+	in the invoking user's /etc/passwd entry).
+
+  --enable-shell-sets-home
+	If sudo is invoked with the "-s" flag the HOME environment variable
+	will be set to the home directory of the target user (which is root
+	unless the "-u" option is used).  This option effectively makes the
+	"-s" flag imply "-H".
+
+  --disable-path-info
+	Normally, sudo will tell the user when a command could not be found
+	in their $PATH.  Some sites may wish to disable this as it could
+	be used to gather information on the location of executables that
+	the normal user does not have access to.  The disadvantage is that
+	if the executable is simply not in the user's path, sudo will tell
+	the user that they are not allowed to run it, which can be confusing.
+
+Shadow password and C2 support
+==============================
+
+Shadow passwords (also included with most C2 security packages) are
+supported on most major platforms for which they exist.  The
+`configure' script will attempt to determine if your system can use
+shadow passwords and include support for them if so.  Shadow password
+support is now compiled in by default (it doesn't hurt anything if you
+don't have them configured).  To disable the shadow password support,
+use the --disable-shadow option to configure.
+
+Shadow passwords are known to work on the following platforms:
+
+    SunOS 4.x
+    Solaris 2.x
+    HP-UX >= 9.x
+    Ultrix 4.x
+    Digital UNIX
+    IRIX >= 5.x
+    AIX >= 3.2.x
+    ConvexOS with C2 security (not tested recently)
+    Linux
+    SCO >= 3.2.2
+    Pyramid DC/OSx
+    UnixWare
+    SVR4 (and variants using standard SVR4 shadow passwords)
+    4.4BSD based systems (including OpenBSD, NetBSD, FreeBSD, and BSD/OS)
+    OS's using SecureWare's C2 security.
+
+OS dependent notes
+==================
+
+OpenBSD < 2.2 and NetBSD < 1.2.1:
+    The fdesc filesystem has a bug wrt /dev/tty handling that
+    causes sudo to hang at the password prompt.  The workaround
+    is to run configure with --with-password-timeout=0
+
+Solaris 2.x:
+    You need to have a C compiler in order to build sudo.
+    Since Solaris 2.x does not come with one by default this
+    means that you either need to have purchased the unbundled Sun
+    C compiler or have a copy of the GNU C compiler (gcc).
+    The SunSoft Catalyst CD should contain gcc binaries for
+    Solaris.  You can also get them from various places on the
+    net, including http://www.sunfreeware.com/
+    NOTE: sudo will *not* build with the sun C compiler in BSD
+          compatibility mode (/usr/ucb/cc).  Sudo is designed to
+          compile with the standard C compiler (or gcc) and will
+          not build correctly with /usr/ucb/cc.  You can use the
+          `--with-CC' option to point `configure' to the non-ucb
+          compiler if it is not the first cc in your path.  Some
+          sites link /usr/ucb/cc to gcc; configure will not notice
+          this an still refuse to use /usr/ucb/cc, so make sure gcc
+          is also in your path if your site is setup this way.
+    Also: Many versions of Solaris come with a broken syslogd.
+	  If you have having problems with sudo logging you should
+	  make sure you have the latest syslogd patch installed.
+	  This is a problem for Solaris 2.4 and 2.5 at least.
+
+AIX 3.2.x:
+    I've had various problems with the AIX C compiler producing
+    incorrect code when the -O flag was used.  When optimization
+    is not used, the problems go away.  Gcc does not appear
+    to have this problem.
+
+    Also, the AIX 3.2.x lex will not work with sudo's parse.lex.
+    This should not be a problem as sudo comes shipped with
+    a pre-generated lex.yy.c (created by flex).  If you want
+    to modify the lex tokenizer, make sure you grab a copy of
+    flex from ftp.ee.lbl.gov (also available on most GNU mirrors)
+    and sudo will use that instead.
+
+Ultrix 4.x:
+    Ultrix still ships with the 4.2BSD syslog(3) which does not
+    allow things like logging different facilities to different
+    files, redirecting logs to a single loghost and other niceties.
+    You may want to just grab and install:
+	ftp://gatekeeper.dec.com/pub/DEC/jtkohl-syslog-complete.tar.Z
+    (available via anonymous ftp) which is a port if the 4.3BSD
+    syslog/syslogd that is backwards compatible with the Ultrix version.
+    I recommend it highly.  If you do not do this you probably want
+    to run configure with --with-logging=file
+
+Digital UNIX:
+    By default, sudo will use SIA (Security Integration Architecture)
+    to validate a user.  If you want to use an alternate authentication
+    method that does not go through SIA, you need to use the
+    --disable-sia option to configure.  If you use gcc to compile
+    you will get warnings when building interfaces.c.  These are
+    harmless but if they really bug you, you can edit
+    /usr/include/net/if.h around line 123, right after the comment:
+	/* forward decls for C++ */
+    change the line:
+	#ifdef __cplusplus
+    to:
+	#if defined(__cplusplus) || defined(__GNUC__)
+    If you don't like the idea of editing the system header file
+    you can just make a copy in gcc's private include tree and
+    edit that.
+
+Linux:
+    NOTE: Reportedly, Linux's execvp(3) doesn't always execute
+	  scripts that lack the "#!/some/shell" header correctly.
+	  The workaround is to give all your scripts a proper
+	  header.
+    Versions of glibc 2.x previous to 2.0.7 have a broken lsearch().
+    You will need to either upgrade to glibc-2.0.7 or use sudo's
+    version of lsearch().  To use sudo's lsearch(), comment out
+    the "#define HAVE_LSEARCH 1" line in config.h and add lsearch.o
+    to the LIBOBJS line in the Makefile.
+
+    It is not possible to access the sudoers file via NFS on Linux.
+    This is due to a bug in the Linux client-side NFS implementation.
+    It has been fixed in the developement kernel but, as of Aug 27, 1999,
+    the fixes have not made it into the mainstream kernel.
+
+Mac OS X:
+    It has been reported that for sudo to work on Mac OS X it must
+    either be built with the --with-password-timeout=0 option or the
+    password timeout must be disabled in the Defaults line in the
+    sudoers file.  If sudo just hangs when you try to enter a password,
+    you need to disable the password timeout (Note: this is not a bug
+    in sudo).
+
+SCO ODT:
+    You'll probably need libcrypt_i.a available via anonymous ftp
+    from sosco.sco.com.  The necessary files are /SLS/lng225b.Z
+    and /SLS/lng225b.ltr.Z.

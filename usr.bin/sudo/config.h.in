@@ -1,0 +1,521 @@
+/*
+ * Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * 4. Products derived from this software may not be called "Sudo" nor
+ *    may "Sudo" appear in their names without specific prior written
+ *    permission from the author.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+ * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * $Sudo: config.h.in,v 1.139 1999/11/04 19:01:08 millert Exp $
+ */
+
+/*
+ * config.h -- You shouldn't edit this by hand unless you are
+ *             NOT using configure.
+ */
+
+#ifndef _SUDO_CONFIG_H
+#define _SUDO_CONFIG_H
+
+/* New ANSI-style OS defs.  */
+#if defined(hpux) && !defined(__hpux)
+#  define __hpux	1
+#endif /* hpux */
+
+#if defined(convex) && !defined(__convex__)
+#  define __convex__	1
+#endif /* convex */
+
+/* Define if on AIX 3.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _ALL_SOURCE
+#undef _ALL_SOURCE
+#endif
+
+/* Define if on ConvexOs.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _CONVEX_SOURCE
+#undef _CONVEX_SOURCE
+#endif
+
+/* Define if needed to get POSIX functionality.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _POSIX_SOURCE
+#undef _POSIX_SOURCE
+#endif
+
+/* Define if needed to get GNU extensions on Linux.
+   System headers sometimes define this.
+   We just want to avoid a redefinition error message.  */
+#ifndef _GNU_SOURCE
+#undef _GNU_SOURCE
+#endif
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef uid_t
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef gid_t
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef mode_t
+
+/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+#undef size_t
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef ssize_t
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef dev_t
+
+/* Define to `unsigned int' if <sys/types.h> doesn't define.  */
+#undef ino_t
+
+/* Define to be nil if C compiler doesn't support "const."  */
+#undef const
+
+/* Define if your compiler supports the "long long" type.  */
+#undef HAVE_LONG_LONG
+
+/* Define if sizeof(long) == sizeof(long long).  */
+#undef LONG_IS_QUAD
+
+/* Solaris doesn't use const qualifiers in PAM. */
+#ifdef sun
+#define PAM_CONST
+#else
+#define PAM_CONST	const
+#endif
+
+/* Define as the return type of signal handlers (int or void).  */
+#undef RETSIGTYPE
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if you want to use execv() instead of execvp().  */
+#undef USE_EXECV
+
+/* Define if you have POSIX signals.  */
+#undef HAVE_SIGACTION
+#ifdef HAVE_SIGACTION
+#  define POSIX_SIGNALS
+#endif /* HAVE_SIGACTION */
+
+/* Define if you have tzset(3).  */
+#undef HAVE_TZSET
+
+/* Define if you have getcwd(3).  */
+#undef HAVE_GETCWD
+
+/* Define if you have fnmatch(3).  */
+#undef HAVE_FNMATCH
+
+/* Define if you have lsearch(3).  */
+#undef HAVE_LSEARCH
+
+/* Define if you have strchr(3).  */
+#undef HAVE_STRCHR
+#if !defined(HAVE_STRCHR) && !defined(strchr)
+#  define strchr	index
+#endif
+
+/* Define if you have strrchr(3).  */
+#undef HAVE_STRRCHR
+#if !defined(HAVE_STRRCHR) && !defined(strrchr)
+#  define strrchr	rindex
+#endif
+
+/* Define if you have memchr(3).  */
+#undef HAVE_MEMCHR
+
+/* Define if you have memcpy(3).  */
+#undef HAVE_MEMCPY
+#if !defined(HAVE_MEMCPY) && !defined(memcpy)
+#  define memcpy(D, S, L)	(bcopy(S, D, L))
+#endif
+
+/* Define if you have memset(3).  */
+#undef HAVE_MEMSET
+#if !defined(HAVE_MEMSET) && !defined(memset)
+#  define memset(S, X, N)	(bzero(S, N))
+#endif
+
+/* Define if you have sysconf(3c).  */
+#undef HAVE_SYSCONF
+
+/* Define if you have putenv(3).  */
+#undef HAVE_PUTENV
+
+/* Define if you have setenv(3).  */
+#undef HAVE_SETENV
+
+/* Define if you have strcasecmp(3).  */
+#undef HAVE_STRCASECMP
+
+/* Define if you have tcgetattr(3).  */
+#undef HAVE_TCGETATTR
+
+/* Define if you have innetgr(3).  */
+#undef HAVE_INNETGR
+
+/* Define if you have getdomainname(2).  */
+#undef HAVE_GETDOMAINNAME
+
+/* Define if you have utime(2).  */
+#undef HAVE_UTIME
+
+/* Define if you have a POSIX utime() (uses struct utimbuf) */
+#undef HAVE_UTIME_POSIX
+
+/* Define if you have bigcrypt(3).  */
+#undef HAVE_BIGCRYPT
+
+/* Define if you have set_auth_parameters(3).  */
+#undef HAVE_SET_AUTH_PARAMETERS
+
+/* Define if you have initprivs(3).  */
+#undef HAVE_INITPRIVS
+
+/* Define if you have dispcrypt(3).  */
+#undef HAVE_DISPCRYPT
+
+/* Define if you have getspnam(3).  [SVR4-style shadow passwords] */
+#undef HAVE_GETSPNAM
+
+/* Define if you have getprpwnam(3).  [SecureWare-style shadow passwords] */
+#undef HAVE_GETPRPWNAM
+
+/* Define if you have iscomsec(3).  [HP-UX >= 10.x check for shadow enabled] */
+#undef HAVE_ISCOMSEC
+
+/* Define if you have getspwuid(3).  [HP-UX <= 9.X shadow passwords] */
+#undef HAVE_GETSPWUID
+
+/* Define if you have getpwanam(3).  [SunOS 4.x shadow passwords] */
+#undef HAVE_GETPWANAM
+
+/* Define if you have issecure(3).  [SunOS 4.x check for shadow enabled] */
+#undef HAVE_ISSECURE
+
+/* Define if you have getauthuid(3).  [ULTRIX 4.x shadow passwords] */
+#undef HAVE_GETAUTHUID
+
+/* Define if you have seteuid(3).  */
+#undef HAVE_SETEUID
+
+/* Define if you have waitpid(2).  */
+#undef HAVE_WAITPID
+
+/* Define if you have wait3(2).  */
+#undef HAVE_WAIT3
+
+/* Define if you have strerror(3).  */
+#undef HAVE_STRERROR
+
+/* Define if you have lockf(3).  */
+#undef HAVE_LOCKF
+
+/* Define if you have flock(2).  */
+#undef HAVE_FLOCK
+
+/* Define if you have ftruncate(2).  */
+#undef HAVE_FTRUNCATE
+
+/* Define if you have setrlimit(2).  */
+#undef HAVE_SETRLIMIT
+
+/* Define if you have strftime(2).  */
+#undef HAVE_STRFTIME
+
+/* Define if you have snprintf(3).  */
+#undef HAVE_SNPRINTF
+
+/* Define if you have vsnprintf(3).  */
+#undef HAVE_VSNPRINTF
+
+/* Define if you have asprintf(3).  */
+#undef HAVE_ASPRINTF
+
+/* Define if you have vasprintf(3).  */
+#undef HAVE_VASPRINTF
+
+/* Define if you have the <malloc.h> header file.  */
+#undef HAVE_MALLOC_H
+
+/* Define if you have the <alloca.h> header file.  */
+#undef HAVE_ALLOCA_H
+
+/* Define if you have the <paths.h> header file.  */
+#undef HAVE_PATHS_H
+
+/* Define if you have the <string.h> header file.  */
+#undef HAVE_STRING_H
+
+/* Define if you have the <strings.h> header file but no <string.h>.  */
+#ifndef HAVE_STRING_H
+#undef HAVE_STRINGS_H
+#endif /* !HAVE_STRING_H */
+
+/* Define your flavor of dir entry header file.  */
+#undef HAVE_DIRENT_H
+#undef HAVE_SYS_NDIR_H
+#undef HAVE_SYS_DIR_H
+#undef HAVE_NDIR_H
+
+/* Define if you have the <utime.h> header file.  */
+#undef HAVE_UTIME_H
+
+/* Define if you have the <unistd.h> header file.  */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the <fnmatch.h> header file.  */
+#undef HAVE_FNMATCH_H
+
+/* Define if you have the <netgroup.h> header file.  */
+#undef HAVE_NETGROUP_H
+
+/* Define if you have the <termio.h> header file.  */
+#undef HAVE_TERMIO_H
+
+/* Define if you have the <termios.h> header file and tcgetattr(3).  */
+#ifdef HAVE_TCGETATTR
+#undef HAVE_TERMIOS_H
+#endif /* HAVE_TCGETATTR */
+
+/* Define if you have the <sys/sockio.h> header file.  */
+#undef HAVE_SYS_SOCKIO_H
+
+/* Define if you have the <sys/bsdtypes.h> header file.  */
+#undef HAVE_SYS_BSDTYPES_H
+
+/* Define if you have the <sys/select.h> header file.  */
+#undef HAVE_SYS_SELECT_H
+
+/* Define if your struct sockadr has an sa_len field.  */
+#undef HAVE_SA_LEN
+
+/* Define if you want visudo to honor EDITOR and VISUAL env variables.  */
+#undef ENV_EDITOR
+
+/* Define to avoid using the passwd/shadow file for authentication.  */
+#undef WITHOUT_PASSWD
+
+/* Define to void if your C compiler fully groks void, else char */
+#undef VOID
+
+/* Define to the max length of a uid_t in string context (excluding the NUL) */
+#undef MAX_UID_T_LEN
+
+/* Define if your syslog(3) does not guarantee the message will be logged */
+/* and syslog(3) returns non-zero to denote failure */
+#undef BROKEN_SYSLOG
+
+/* Define if the code in interfaces.c does not compile for you.  */
+#undef STUB_LOAD_INTERFACES
+
+/*
+ * Defaults for options.  These may be overridden via a "Defaults" line
+ * in the sudoers file.
+ */
+
+/* Define if you a different ticket file for each tty.  */
+#undef USE_TTY_TICKETS
+
+/* Define if you want to insult the user for entering an incorrect password.  */
+#undef USE_INSULTS
+
+/* Define if you want the insults from the "classic" version sudo.  */
+#undef CLASSIC_INSULTS
+
+/* Define if you want 2001-like insults.  */
+#undef HAL_INSULTS
+
+/* Define if you want insults from the "Goon Show" */
+#undef GOONS_INSULTS
+
+/* Define if you want insults culled from the twisted minds of CSOps.  */
+#undef CSOPS_INSULTS
+
+/* Define to override the user's path with a builtin one.  */
+#undef SECURE_PATH
+
+/* Define if you want a two line OTP (skey/opie) prompt.  */
+#undef LONG_OTP_PROMPT
+
+/* The umask that the root-run prog should use */
+#undef SUDO_UMASK
+
+/* Define if you want the hostname to be entered into the log file */
+#undef HOST_IN_LOG
+
+/* Define to be the number of minutes before sudo asks for passwd again.  */
+#undef TIMEOUT
+
+/* Define to be the passwd prompt timeout (in minutes).  */
+#undef PASSWORD_TIMEOUT
+
+/* Define to be the number of tries the user gets to enter the passwd.  */
+#undef TRIES_FOR_PASSWORD
+
+/* Define to be the user sudo should run commands as by default.  */
+#undef RUNAS_DEFAULT
+
+/* Define if you want to require fully qualified hosts in sudoers.  */
+#undef FQDN
+
+/* If defined, users in this group need not enter a passwd (ie "sudo").  */
+#undef EXEMPTGROUP
+
+/* Define to the path of the editor visudo should use. */
+#undef EDITOR
+
+/* Define if root should not be allowed to use sudo.  */
+#undef NO_ROOT_SUDO
+
+/* Define to be the user that gets sudo mail.  */
+#undef MAILTO
+
+/* Define to be the subject of the mail sent to MAILTO by sudo.  */
+#undef MAILSUBJECT
+
+/* Define to be the message given for a bad password.  */
+#undef INCORRECT_PASSWORD
+
+/* Define to be the password prompt.  */
+#undef PASSPROMPT
+
+/* Define to SLOG_SYSLOG, SLOG_FILE, or SLOG_BOTH */
+#undef LOGGING
+
+/* Define to be the syslog facility to use.  */
+#undef LOGFAC
+
+/* Define to be the syslog priority to use for successful attemps.  */
+#undef PRI_SUCCESS
+
+/* Define to be the syslog priority to use for unsuccessful attemps/errors.  */
+#undef PRI_FAILURE
+
+/* Define to be the max chars per log line (for line wrapping).  */
+#undef MAXLOGFILELEN
+
+/* Define if you want to ignore '.' and '' in $PATH */
+#undef IGNORE_DOT_PATH
+
+/* Define if you want "command not allowed" instead of "command not found" */
+#undef DONT_LEAK_PATH_INFO
+
+/* Define if you don't want users to get the lecture the first they user sudo */
+#undef NO_LECTURE
+
+/* Define SEND_MAIL_WHEN_NO_USER to send mail when user not in sudoers file */
+#undef SEND_MAIL_WHEN_NO_USER
+
+/* Define SEND_MAIL_WHEN_NO_HOST to send mail when not allowed on this host */
+#undef SEND_MAIL_WHEN_NO_HOST
+
+/* Define SEND_MAIL_WHEN_NOT_OK to send mail when not allowed to run command */
+#undef SEND_MAIL_WHEN_NOT_OK
+
+/* Define if you want sudo to start a shell if given no arguments.  */
+#undef SHELL_IF_NO_ARGS
+
+/* Define if you want sudo to set $HOME in shell mode.  */
+#undef SHELL_SETS_HOME
+
+/* Define if you don't want sudo to prompt for a password by default.  */
+#undef NO_AUTHENTICATION
+
+
+/*
+ * Authentication methods.
+ */
+
+/* Define if you use S/Key.  */
+#undef HAVE_SKEY
+
+/* Define if you use NRL OPIE.  */
+#undef HAVE_OPIE
+
+/* Define if you use SecurID.  */
+#undef HAVE_SECURID
+
+/* Define if you use AIX general authentication.  */
+#undef HAVE_AUTHENTICATE
+
+/* Define if you use Kerberos IV or Kerberos V < 1.1.  */
+#undef HAVE_KERB4
+  
+/* Define if you use Kerberos V version 1.1 or higher.  */
+#undef HAVE_KERB5
+
+/* Define if you use SIA.  */
+#undef HAVE_SIA
+
+/* Define if you use PAM.  */
+#undef HAVE_PAM
+
+/* Define if you use AFS.  */
+#undef HAVE_AFS
+
+/* Define if you use OSF DCE.  */
+#undef HAVE_DCE
+
+/* Define if you use the FWTK authsrv daemon.  */
+#undef HAVE_FWTK
+
+
+/**********  You probably don't want to modify anything below here  ***********/
+
+/*
+ * Emulate a subset of waitpid() if we don't have it.
+ */
+#ifdef HAVE_WAITPID
+#  define sudo_waitpid(p, s, o)		waitpid(p, s, o)
+#else
+#  ifdef HAVE_WAIT3
+#    define sudo_waitpid(p, s, o)	wait3(s, o, NULL)
+#  endif
+#endif
+
+#ifdef USE_EXECV
+#  define EXEC	execv
+#else
+#  define EXEC	execvp
+#endif /* USE_EXECV */
+
+#ifdef __svr4__
+#  define BSD_COMP
+#endif /* __svr4__ */
+
+#endif /* _SUDO_CONFIG_H */

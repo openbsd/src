@@ -1,0 +1,332 @@
+#
+# Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission
+#    from the author.
+#
+# 4. Products derived from this software may not be called "Sudo" nor
+#    may "Sudo" appear in their names without specific prior written
+#    permission from the author.
+#
+# THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+# THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# @configure_input@
+#
+# $Sudo: Makefile.in,v 1.185 1999/09/08 08:06:03 millert Exp $
+#
+
+#### Start of system configuration section. ####
+
+srcdir = @srcdir@
+authdir = $(srcdir)/auth
+VPATH = @srcdir@
+
+# Compiler & tools to use
+CC = @CC@
+LEX = flex
+YACC = @YACC@
+NROFF = nroff
+
+# Which install program?
+INSTALL = $(srcdir)/install-sh -c
+
+# Libraries
+LIBS = @LIBS@
+NET_LIBS = @NET_LIBS@
+SUDO_LIBS = @SUDO_LIBS@ @AFS_LIBS@ $(LIBS) $(NET_LIBS)
+
+# C preprocessor flags
+CPPFLAGS = -I. -I$(srcdir) @CPPFLAGS@
+
+# Usually -O and/or -g
+CFLAGS = @CFLAGS@
+
+# Flags to pass to the link stage
+LDFLAGS = @LDFLAGS@
+SUDO_LDFLAGS = @SUDO_LDFLAGS@ $(LDFLAGS)
+
+# Where to install things...
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sbindir = @sbindir@
+sysconfdir = @sysconfdir@
+mandir = @mandir@
+
+# Directory in which to install sudo.
+sudodir = $(bindir)
+
+# Directory in which to install visudo
+visudodir = $(sbindir)
+
+# Directory in which to install the sudoers file
+sudoersdir = $(sysconfdir)
+
+# Directory in which to install the man page
+# set mansect5 to 4 on sysV machines.
+mantype = @MANTYPE@
+mansect8 = 8
+mansect5 = 5
+mandir8 = $(mandir)/$(mantype)$(mansect8)
+mandir5 = $(mandir)/$(mantype)$(mansect5)
+
+# User and group ids the installed files should be "owned" by
+install_uid = 0
+install_gid = 0
+
+# User, group, and mode the sudoers file should be "owned" by (configure)
+sudoers_uid = @SUDOERS_UID@
+sudoers_gid = @SUDOERS_GID@
+sudoers_mode = @SUDOERS_MODE@
+
+# Pass in paths and uid/gid + OS dependent defined
+DEFS = @OSDEFS@ -D_PATH_SUDOERS=\"$(sudoersdir)/sudoers\" -D_PATH_SUDOERS_TMP=\"$(sudoersdir)/sudoers.tmp\" -DSUDOERS_UID=$(sudoers_uid) -DSUDOERS_GID=$(sudoers_gid) -DSUDOERS_MODE=$(sudoers_mode)
+
+#### End of system configuration section. ####
+
+SHELL = /bin/sh
+
+PROGS = @PROGS@
+
+SRCS = alloc.c alloca.c check.c defaults.c fileops.c find_path.c fnmatch.c \
+       getcwd.c getspwuid.c goodpath.c interfaces.c lex.yy.c lsearch.c \
+       logging.c parse.c parse.lex parse.yacc putenv.c snprintf.c strcasecmp.c \
+       strerror.c sudo.c sudo.tab.c sudo_setenv.c testsudoers.c tgetpass.c \
+       utime.c visudo.c $(AUTH_SRCS)
+
+AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/dce.c auth/fwtk.c auth/kerb4.c \
+	    auth/kerb5.c auth/pam.c auth/passwd.c auth/rfc1938.c \
+	    auth/secureware.c auth/securid.c auth/sia.c auth/sudo_auth.c
+
+HDRS = compat.h defaults.h ins_2001.h ins_classic.h ins_csops.h ins_goons.h \
+       insults.h interfaces.h logging.h parse.h sudo.h sudo.tab.h version.h \
+       auth/sudo_auth.h emul/fnmatch.h emul/search.h emul/utime.h
+
+AUTH_OBJS = sudo_auth.o @AUTH_OBJS@
+
+PARSEOBJS = sudo.tab.o lex.yy.o alloc.o defaults.o
+
+SUDOBJS = check.o getspwuid.o goodpath.o fileops.o find_path.o interfaces.o \
+	  logging.o parse.o sudo.o sudo_setenv.o tgetpass.o \
+	  $(AUTH_OBJS) $(PARSEOBJS)
+
+VISUDOBJS = visudo.o fileops.o $(PARSEOBJS)
+
+TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
+
+LIBOBJS = @LIBOBJS@ @ALLOCA@
+
+VERSION = 1.6
+
+DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES FAQ HISTORY INSTALL INSTALL.configure \
+	    LICENSE Makefile.in PORTING README RUNSON TODO TROUBLESHOOTING \
+	    UPGRADE acsite.m4 aixcrypt.exp config.guess config.h.in config.sub \
+	    configure configure.in fnmatch.3 indent.pro install-sh \
+	    mkinstalldirs pathnames.h.in sample.pam sample.sudoers sudo.cat \
+	    sudo.man sudo.pod sudoers sudoers.cat sudoers.man sudoers.pod \
+	    visudo.cat visudo.man visudo.pod auth/API
+
+SUDODEP = $(srcdir)/sudo.h $(srcdir)/compat.h $(srcdir)/defaults.h \
+	  $(srcdir)/logging.h config.h pathnames.h
+
+AUTHDEP = $(SUDODEP) $(authdir)/sudo_auth.h
+
+INSDEP = $(srcdir)/ins_2001.h $(srcdir)/ins_classic.h $(srcdir)/ins_csops.h \
+	 $(srcdir)/ins_goons.h $(srcdir)/insults.h
+
+all: $(PROGS)
+
+.SUFFIXES: .o .c .h .lex .yacc .man .cat
+
+.c.o:
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $<
+
+.man.cat:
+	@rm -f $(srcdir)/$@
+	$(NROFF) -man $< > $(srcdir)/$@
+
+sudo: $(SUDOBJS) $(LIBOBJS)
+	$(CC) -o $@ $(SUDOBJS) $(LIBOBJS) $(SUDO_LDFLAGS) $(SUDO_LIBS)
+
+visudo: $(VISUDOBJS) $(LIBOBJS)
+	$(CC) -o $@ $(VISUDOBJS) $(LIBOBJS) $(LDFLAGS) $(LIBS)
+
+testsudoers: $(TESTOBJS) $(LIBOBJS)
+	$(CC) -o $@ $(TESTOBJS) $(LIBOBJS) $(LDFLAGS) $(LIBS) $(NET_LIBS)
+
+# Uncomment the following if you want "make clean" to clean the parser
+@DEV@PARSESRCS = sudo.tab.h sudo.tab.c lex.yy.c
+
+# Uncomment the following if you intend to modify parse.yacc
+@DEV@sudo.tab.c sudo.tab.h: parse.yacc
+@DEV@	rm -f sudo.tab.h sudo.tab.c
+@DEV@	$(YACC) -d -b sudo $(srcdir)/parse.yacc
+
+# Uncomment the following if you intend to modify parse.lex
+@DEV@lex.yy.c: parse.lex
+@DEV@	rm -f lex.yy.c
+@DEV@	$(LEX) $(srcdir)/parse.lex
+
+# Dependencies (not counting auth functions)
+alloc.o: alloc.c $(SUDODEP)
+check.o: check.c $(SUDODEP)
+fileops.o: fileops.c $(SUDODEP)
+find_path.o: find_path.c $(SUDODEP)
+getspwuid.o: getspwuid.c $(SUDODEP)
+goodpath.o: goodpath.c $(SUDODEP)
+logging.o: logging.c $(SUDODEP)
+sudo_setenv.o: sudo_setenv.c $(SUDODEP)
+tgetpass.o: tgetpass.c $(SUDODEP)
+visudo.o: visudo.c $(SUDODEP) version.h
+sudo.o: sudo.c $(SUDODEP) interfaces.h version.h
+interfaces.o: interfaces.c $(SUDODEP) interfaces.h
+testsudoers.o: testsudoers.c $(SUDODEP) parse.h interfaces.h
+parse.o: parse.c $(SUDODEP) parse.h interfaces.h
+lex.yy.o: lex.yy.c $(SUDODEP) parse.h sudo.tab.h
+sudo.tab.o: sudo.tab.c $(SUDODEP) parse.h
+defaults.o: defaults.c $(SUDODEP) auth/sudo_auth.h
+fnmatch.o: fnmatch.c config.h compat.h emul/fnmatch.h
+getcwd.o: getcwd.c config.h compat.h
+lsearch.o: lsearch.c config.h compat.h emul/search.h
+putenv.o: putenv.c config.h compat.h
+snprintf.o: snprintf.c config.h compat.h
+strcasecmp.o: strcasecmp.c config.h
+strerror.o: strerror.c config.h
+utime.o: utime.c config.h pathnames.h compat.h emul/utime.h
+
+# Authentication functions live in "auth" dir and so need extra care
+sudo_auth.o: $(authdir)/sudo_auth.c $(AUTHDEP) $(INSDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/sudo_auth.c
+afs.o: $(authdir)/afs.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/afs.c
+aix_auth.o: $(authdir)/aix_auth.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/aix_auth.c
+dce.o: $(authdir)/dce.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/dce.c
+fwtk.o: $(authdir)/fwtk.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/fwtk.c
+kerb4.o: $(authdir)/kerb4.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/kerb4.c
+kerb5.o: $(authdir)/kerb5.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/kerb5.c
+pam.o: $(authdir)/pam.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/pam.c
+passwd.o: $(authdir)/passwd.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/passwd.c
+rfc1938.o: $(authdir)/rfc1938.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/rfc1938.c
+secureware.o: $(authdir)/secureware.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/secureware.c
+securid.o: $(authdir)/securid.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/securid.c
+sia.o: $(authdir)/sia.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/sia.c
+
+sudo.html: $(srcdir)/sudo.pod
+	@rm -f $(srcdir)/$@
+	(cd $(srcdir); pod2html --title="Sudo Manual" --infile=sudo.pod --outfile=$(srcdir)/$@)
+
+sudo.man: $(srcdir)/sudo.pod
+	@rm -f $(srcdir)/$@
+	(cd $(srcdir); pod2man --section=$(mansect8) --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudo.pod > $(srcdir)/$@)
+
+sudo.cat: sudo.man
+
+visudo.html: $(srcdir)/visudo.pod
+	@rm -f $(srcdir)/$@
+	(cd $(srcdir); pod2html --title="Visudo Manual" --infile=visudo.pod --outfile=$(srcdir)/$@)
+
+visudo.man: $(srcdir)/visudo.pod
+	@rm -f $(srcdir)/$@
+	(cd $(srcdir); pod2man --section=$(mansect8) --release=$(VERSION) --center="MAINTENANCE COMMANDS" visudo.pod > $(srcdir)/$@)
+
+visudo.cat: visudo.man
+
+sudoers.html: $(srcdir)/sudoers.pod
+	@rm -f $(srcdir)/$@
+	(cd $(srcdir); pod2html --title="Sudoers Manual" --infile=sudoers.pod --outfile=$(srcdir)/$@)
+
+sudoers.man: $(srcdir)/sudoers.pod
+	@rm -f $(srcdir)/$@
+	(cd $(srcdir); pod2man --section=$(mansect5) --release=$(VERSION) --center="FILE FORMATS" sudoers.pod > $(srcdir)/$@)
+
+sudoers.cat: sudoers.man
+
+install: install-dirs install-binaries install-sudoers install-man
+
+install-dirs:
+	$(srcdir)/mkinstalldirs $(sudodir) $(visudodir) $(sudoersdir) $(mandir8) $(mandir5)
+
+install-binaries: $(PROGS)
+	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 4111 -s sudo $(sudodir)/sudo
+	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0111 -s visudo $(visudodir)/visudo
+
+install-sudoers:
+	@ if [ -f $(sudoersdir)/sudoers ]; then  \
+	    echo "Setting user/group and mode on existing $(sudoersdir)/sudoers file."; \
+	    chown $(sudoers_uid) $(sudoersdir)/sudoers; \
+	    chgrp $(sudoers_gid) $(sudoersdir)/sudoers; \
+	    chmod $(sudoers_mode) $(sudoersdir)/sudoers; \
+	else \
+	    $(INSTALL) -o $(sudoers_uid) -g $(sudoers_gid) -m $(sudoers_mode) \
+		$(srcdir)/sudoers $(sudoersdir)/sudoers; \
+	fi
+
+install-man:
+	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 $(srcdir)/sudo.$(mantype) $(mandir8)/sudo.$(mansect8)
+	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 $(srcdir)/visudo.$(mantype) $(mandir8)/visudo.$(mansect8)
+	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 $(srcdir)/sudoers.$(mantype) $(mandir5)/sudoers.$(mansect5)
+@MAN_POSTINSTALL@
+
+tags: $(SRCS)
+	ctags $(SRCS)
+
+TAGS: $(SRCS)
+	etags $(SRCS)
+
+clean:
+	-rm -f *.o $(PROGS) testsudoers core sudo.core visudo.core \
+	       testsudoers.core
+
+mostlyclean: clean
+
+distclean: clean
+	-rm -f Makefile pathnames.h config.h config.status config.cache \
+	       config.log pod2html-dircache pod2html-itemcache $(PARSESRCS)
+
+clobber: distclean
+
+realclean: distclean
+	rm -f TAGS tags
+
+cleandir: realclean
+
+dist: $(DISTFILES)
+	rm -f ../sudo-$(VERSION).tar.gz
+	( cd .. ; TF="/tmp/sudo.dist$$$$" ; rm -f $$TF ; for i in $(DISTFILES) ; \
+	  do echo sudo-$(VERSION)/$$i >> $$TF ; done ; \
+	  tar Ocf sudo-$(VERSION).tar \
+	  `cat $$TF` && gzip --best sudo-$(VERSION).tar && rm -f $$TF)
+	ls -l ../sudo-$(VERSION).tar.gz

@@ -1,0 +1,17 @@
+Known bugs in sudo version 1.6
+==============================
+
+1) "make install-man" should substitute correct paths into the
+    man pages themselves.
+
+2) Sudo should log when removing "dangerous" envariables.
+
+3) configure variables that have been cached cannot be overridden
+   in subsequent configure runs, even if other --with-* options are
+   given.  This is a flaw in GNU autoconf.
+
+4) On DUNIX in sia mode, hitting return at the prompt does not quit.
+
+5) In parse.lex, '@" should not need to be a special character.
+   For some reason, if it is not excluded from WORD, Defaults@ doesn't
+   match.

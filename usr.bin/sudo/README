@@ -1,0 +1,94 @@
+This is Sudo version 1.6
+
+The sudo philosophy
+===================
+Sudo is a program designed to allow a sysadmin to give limited root privileges
+to users and log root activity.  The basic philosophy is to give as few
+privileges as possible but still allow people to get their work done.
+
+Where to find sudo
+==================
+Before you try and build sudo, *please* make sure you have the current
+version.  The latest sudo may always be gotten via anonymous ftp
+from ftp.courtesan.com in the directory /pub/sudo/.
+The distribution is sudo-M.m.tar.gz where `M' is the major
+version number and `m' is the minor version number.
+BETA versions of sudo may also be available.  If you join
+the `sudo-workers' mailing list you will get the BETA announcements
+(see the `Mailing lists' section below).
+
+What's new
+==========
+For a history of sudo please see the HISTORY file that came with this
+release.
+
+For a complete list of changes, see the CHANGES file.  For a summary,
+see the web page, http://www.courtesan.com/sudo/.
+
+If you are upgrading from an earlier version of Sudo, please see
+the UPGRADE file.
+
+NOTE: Starting with sudo 1.5.7 the configuration method has changed
+      significantly as compared to previous versions.  All options
+      are now set via the configure script.  See the `INSTALL' file
+      for a list of all the configure options.
+
+System requirements
+===================
+Sudo requires a machine running UN*X (most flavors of BSD, SYSV,
+or POSIX will do), a working C compiler, and the make utility.
+
+If you wish to modify the parser then you will need flex version
+2.5.2 or later and either bison or byacc (sudo comes with a
+pre-flex'd tokenizer and pre-yacc'd grammar parser).  You'll also
+have to uncomment a few lines from the Makefile.  You can get flex
+via anonymous ftp from ftp://ftp.ee.lbl.gov/pub/flex* as well as
+any GNU mirror.  You can get GNU bison from
+ftp://prep.ai.mit.edu/pub/gnu/bison* or any GNU mirror.
+
+Building the release
+====================
+Please read the installation guide in the `INSTALL' file before
+trying to build sudo.  The `RUNSON' file contains a list of of
+platforms that this version of sudo is known to work on.  If you
+can add to this list, please send mail to sudo@courtesan.com.
+If something goes wrong you may want to refer to the `TROUBLESHOOTING'
+file.
+
+Copyright
+=========
+Sudo is distributed under a BSD-style license.
+Please refer to the `LICENSE' file included with the release for details.
+
+Mailing lists
+=============
+sudo-announce	This list receives announcements whenever a new version
+		of sudo is released.
+
+sudo-users	This list is for questions and general discussion about sudo.
+
+sudo-workers	This list is for people working on and porting sudo.
+
+To subscribe to a list, send a mail message to "majordomo@cs.colorado.edu"
+with a line in the message body (_not_ the subject) of "subscribe listname"
+where "listname" is one of sudo-announce, sudo-users, or sudo-workers.
+
+Currently all the lists are fairly low-volume so there hasn't been a
+need for digest versions.
+
+Web page
+========
+There is a sudo `web page' at http://www.courtesan.com/sudo/
+that contains an overview of sudo as well as pointers to BETA versions
+and other useful info.
+
+Bug reports
+===========
+A list of known bugs may be found in the `BUGS' file.  If you have
+found what you believe to be a bug, you can file a bug report with
+the sudo bug database, on at web at http://www.courtesan.com/sudo/bugs/.
+
+Please read over the `TROUBLESHOOTING' file *before* submitting a
+bug report.  When reporting bugs, please be sure to include the
+version of sudo you are using as well as the platform you are running
+it on.

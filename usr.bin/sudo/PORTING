@@ -1,0 +1,53 @@
+Sudo porting hints
+==================
+
+Before trying to port sudo to a new architecture, please join the
+sudo-workers mailing list (see the README file) and ask if anyone
+has a port working or in-progress.  Sudo should be fairly easy to
+port.  Since it uses a configure script, most of the work should
+be done for you.
+
+If your OS is an SVR4 derivative (or some approximation thereof), it may
+be sufficient to tell configure you are runnng SVR4, something like:
+    configure foo-bar-sysv4
+where foo is the hardware architecture and bar is the vendor.
+
+A possible pitfall is getdtablesize(2) which is used to get the
+maximum number of open files the process can have.  If an OS has
+the POSIX sysconf(2) it will be used instead of getdtablesize(2).
+ulimit(2) or getrlimit(2) can also be used on some OS's.  If all
+else fails you can use the value of NOFILE in <sys/param.h>.
+
+Sudo tries to clear the environment of dangerous envariables like
+LD_* to prevent shared library spoofing.  If you are porting sudo
+to a new OS that has shared libraries you'll want to mask out the
+variables that allow one to change the shared library path.  See
+badenv_table() in sudo.c to see how this is done for various OS's.
+
+It is possible that on a really weird system, tgetpass() may not
+compile.  (The most common cause for this is that the "fd_set" type
+is not defined in a place that sudo expects it to be.  If you can
+find the header file where "fd_set" is typedef'd, have tgetpass.c
+include it and send in a bug report.)
+Alternately, tgetpass.c may compile but not work (nothing happens
+at the Password: prompt).  It is possible that your C library
+contains a broken or unusable crypt() function--try linking with
+-lcrypt if that exists.  Another possibility is that select() is
+not fully functional; running configure with --with-password-timeout=0
+will disable the use of select().
+
+If you are trying to port to a system without standard Berkeley
+networking you may find that interfaces.c will not compile.  This
+is most likely on OS's with STREAMS-based networking.  It should be
+possible to make it work by modifying the ISC streams support
+(see the _ISC #ifdef's).  However, if you don't care about ip address
+and network address support, you can just run configure with the
+--without-interfaces flag to get a do-nothing load_interfaces() stub function.
+
+If you port sudo to a new architecture, please send the output of
+"configure", the config.log file and your changes to:
+    sudo@courtesan.com
+
+If you are unable to get sudo working, and you are willing to
+give me an account on a machine, send mail to sudo@courtesan.com.
+Note, however, that I can't make any promises.

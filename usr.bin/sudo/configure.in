@@ -1,0 +1,1638 @@
+dnl
+dnl Process this file with GNU autoconf to produce a configure script.
+dnl $Sudo: configure.in,v 1.291 1999/11/08 22:45:42 millert Exp $
+dnl
+dnl Copyright (c) 1994-1996,1998-1999 Todd C. Miller <Todd.Miller@courtesan.com>
+dnl
+AC_INIT(sudo.h)
+AC_CONFIG_HEADER(config.h pathnames.h)
+dnl
+dnl This won't work before AC_INIT()
+dnl
+echo "Configuring Sudo version 1.6"
+dnl
+dnl Variables that get substituted in the Makefile
+dnl
+AC_SUBST(CFLAGS)dnl must not initialize CFLAGS, it is magic
+PROGS="sudo visudo"
+AC_SUBST(PROGS)dnl
+CPPFLAGS=""
+AC_SUBST(CPPFLAGS)dnl
+LDFLAGS=""
+AC_SUBST(LDFLAGS)dnl
+SUDO_LDFLAGS=""
+AC_SUBST(SUDO_LDFLAGS)dnl
+LIBS=""
+AC_SUBST(LIBS)dnl
+SUDO_LIBS=""
+AC_SUBST(SUDO_LIBS)dnl
+NET_LIBS=""
+AC_SUBST(NET_LIBS)dnl
+AFS_LIBS=""
+AC_SUBST(AFS_LIBS)dnl
+OSDEFS=""
+AC_SUBST(OSDEFS)dnl
+AUTH_OBJS=""
+AC_SUBST(AUTH_OBJS)dnl
+LIBOBJS=""
+AC_SUBST(LIBOBJS)dnl
+MANTYPE="man"
+AC_SUBST(MANTYPE)dnl
+MAN_POSTINSTALL=""
+AC_SUBST(MAN_POSTINSTALL)dnl
+SUDOERS_MODE=0440
+AC_SUBST(SUDOERS_MODE)dnl
+SUDOERS_UID=0
+AC_SUBST(SUDOERS_UID)dnl
+SUDOERS_GID=0
+AC_SUBST(SUDOERS_GID)dnl
+DEV="#"
+AC_SUBST(DEV)
+CHECKSHADOW=true
+CHECKSIA=true
+
+dnl
+dnl Override default configure dirs...
+dnl
+test "$mandir" = '${prefix}/man' && mandir='$(prefix)/man'
+test "$bindir" = '${exec_prefix}/bin' && bindir='$(exec_prefix)/bin'
+test "$sbindir" = '${exec_prefix}/sbin' && sbindir='$(exec_prefix)/sbin'
+test "$sysconfdir" = '${prefix}/etc' && sysconfdir='/etc'
+
+dnl
+dnl Deprecated --with options (these all warn or generate an error)
+dnl
+
+AC_ARG_WITH(otp-only, [  --with-otp-only         deprecated],
+[case $with_otp_only in
+    yes)	with_passwd=no
+		AC_DEFINE(WITHOUT_PASSWD)
+		AC_MSG_WARN([--with-otp-only option deprecated, treating as --without-passwd])
+		;;
+esac])
+
+AC_ARG_WITH(alertmail, [  --with-alertmail        deprecated],
+[case $with_alertmail in
+    *)		with_mailto="$with_alertmail"
+		AC_DEFINE(WITHOUT_PASSWD)
+		AC_MSG_WARN([--with-alertmail option deprecated, treating as --mailto])
+		;;
+esac])
+
+dnl
+dnl Options for --with
+dnl
+
+AC_ARG_WITH(CC, [  --with-CC               C compiler to use],
+[case $with_CC in
+    yes)	AC_MSG_ERROR(["must give --with-CC an argument."])
+		;;
+    no)		AC_MSG_ERROR(["illegal argument: --without-CC."])
+		;;
+    *)		CC=$with_CC
+		;;
+esac])
+
+AC_ARG_WITH(incpath, [  --with-incpath          additional places to look for include files],
+[case $with_incpath in  
+    yes)	AC_MSG_ERROR(["must give --with-incpath an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-incpath not supported."])
+		;;
+    *)		echo "Adding ${with_incpath} to CPPFLAGS"
+		for i in ${with_incpath}; do
+		    CPPFLAGS="${CPPFLAGS} -I${i}"
+		done
+		;;
+esac])
+
+AC_ARG_WITH(libpath, [  --with-libpath          additional places to look for libraries],
+[case $with_libpath in  
+    yes)	AC_MSG_ERROR(["must give --with-libpath an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-libpath not supported."])
+		;;
+    *)		echo "Adding ${with_libpath} to LDFLAGS"
+		for i in ${with_libpath}; do
+		    LDFLAGS="${LDFLAGS} -L${i}"
+		done
+		;;
+esac])
+
+AC_ARG_WITH(libraries, [  --with-libraries        additional libraries to link with],
+[case $with_libraries in  
+    yes)	AC_MSG_ERROR(["must give --with-libraries an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-libraries not supported."])
+		;;
+    *)		echo "Adding ${with_libraries} to LIBS"
+		for i in ${with_libraries}; do
+		    case $i in
+			-l*)	;;
+			*.a)	;;
+			*.o)	;;
+			*)	i="-l${i}";;
+		    esac
+		    LIBS="${LIBS} ${i}"
+		done
+		;;
+esac])
+
+AC_ARG_WITH(devel, [  --with-devel            add developement options],
+[case $with_devel in  
+    yes)	echo 'Setting up for developement: -Wall, flex, yacc'
+		PROGS="${PROGS} testsudoers"
+		OSDEFS="${OSDEFS} -DSUDO_DEVEL"
+		DEV=""
+		;;
+    no)		;;
+    *)		echo "Ignoring unknown argument to --with-devel: $with_csops"
+		;;
+esac])
+
+AC_ARG_WITH(csops, [  --with-csops            add CSOps standard options],
+[case $with_csops in  
+    yes)	echo 'Adding CSOps standard options'
+		CHECKSIA=false
+		with_ignore_dot=yes
+		with_insults=yes
+		with_classic_insults=yes
+		with_csops_insults=yes
+		with_env_editor=yes
+		;;
+    no)		;;
+    *)		echo "Ignoring unknown argument to --with-csops: $with_csops"
+		;;
+esac])
+
+AC_ARG_WITH(passwd, [  --without-passwd        don't use passwd/shadow file for authentication],
+[case $with_passwd in
+    yes)	;;
+    no)		AC_DEFINE(WITHOUT_PASSWD)
+		AC_MSG_CHECKING(whether to use shadow/passwd file authentication)
+		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["Sorry, --with-passwd does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(skey, [  --with-skey             enable S/Key support ],
+[case $with_skey in
+    yes)	if test -n "$with_opie"; then
+		    AC_MSG_ERROR(["cannot use both S/Key and OPIE"])
+		fi
+    		AC_DEFINE(HAVE_SKEY)
+		AC_MSG_CHECKING(whether to try S/Key authentication)
+		AC_MSG_RESULT(yes)
+		AUTH_OBJS="${AUTH_OBJS} rfc1938.o"
+		;;
+    no)		;;
+    *)		echo "Ignoring unknown argument to --with-skey: $with_skey"
+		;;
+esac])
+
+AC_ARG_WITH(opie, [  --with-opie             enable OPIE support ],
+[case $with_opie in
+    yes)	if test -n "$with_skey"; then
+		    AC_MSG_ERROR(["cannot use both S/Key and OPIE"])
+		fi
+		AC_DEFINE(HAVE_OPIE)
+		AC_MSG_CHECKING(whether to try NRL OPIE authentication)
+		AC_MSG_RESULT(yes)
+		AUTH_OBJS="${AUTH_OBJS} rfc1938.o"
+		;;
+    no)		;;
+    *)		echo "Ignoring unknown argument to --with-opie: $with_opie"
+		;;
+esac])
+
+AC_ARG_WITH(long-otp-prompt, [  --with-long-otp-prompt  use a two line OTP (skey/opie) prompt],
+[case $with_long_otp_prompt in
+    yes)	AC_DEFINE(LONG_OTP_PROMPT)
+		AC_MSG_CHECKING(whether to use a two line prompt for OTP authentication)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-long-otp-prompt does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(SecurID, [  --with-SecurID          enable SecurID support],
+[case $with_SecurID in
+    no)		;;
+    *)		AC_DEFINE(HAVE_SECURID)
+		AC_MSG_CHECKING(whether to use SecurID for authentication)
+		AC_MSG_RESULT(yes)
+		with_passwd=no
+		AUTH_OBJS="securid.o"
+		;;
+esac])
+
+AC_ARG_WITH(fwtk, [  --with-fwtk             enable FWTK AuthSRV support],
+[case $with_fwtk in
+    yes)	AC_DEFINE(HAVE_FWTK)
+		AC_MSG_CHECKING(whether to use FWTK AuthSRV for authentication)
+		AC_MSG_RESULT(yes)
+		with_passwd=no
+		AUTH_OBJS="fwtk.o"
+		;;
+    no)		;;
+    *)		AC_DEFINE(HAVE_FWTK)
+		AC_MSG_CHECKING(whether to use FWTK AuthSRV for authentication)
+		AC_MSG_RESULT(yes)
+		SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${with_fwtk}"
+    		CPPFLAGS="${CPPFLAGS} -I${with_fwtk}"
+		with_passwd=no
+		AUTH_OBJS="fwtk.o"
+		with_fwtk=yes
+		;;
+esac])
+
+AC_ARG_WITH(kerb4, [  --with-kerb4            enable kerberos v4 support],
+[case $with_kerb4 in
+    yes)	AC_MSG_CHECKING(whether to try Kerberos 4 authentication)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-kerb4 does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(kerb5, [  --with-kerb5            enable kerberos v5 support],
+[case $with_kerb5 in
+    yes)	AC_MSG_CHECKING(whether to try Kerberos 5 authentication)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-kerb5 does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(authenticate, [  --with-authenticate     enable AIX general authentication support],
+[case $with_authenticate in
+    yes)	AC_DEFINE(HAVE_AUTHENTICATE)
+		AC_MSG_CHECKING(whether to use AIX general authentication)
+		AC_MSG_RESULT(yes)
+		with_passwd=no
+		AUTH_OBJS="aix_auth.o"
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-authenticate does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(pam, [  --with-pam              enable PAM support],
+[case $with_pam in
+    yes)	AC_DEFINE(HAVE_PAM)
+		AC_MSG_CHECKING(whether to use PAM authentication)
+		AC_MSG_RESULT(yes)
+		with_passwd=no
+		AUTH_OBJS="pam.o"
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-pam does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(AFS, [  --with-AFS              enable AFS support],
+[case $with_AFS in
+    yes)	AC_DEFINE(HAVE_AFS)
+		AC_MSG_CHECKING(whether to try AFS (kerberos) authentication)
+		AC_MSG_RESULT(yes)
+		AUTH_OBJS="${AUTH_OBJS} afs.o"
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-AFS does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(DCE, [  --with-DCE              enable DCE support],
+[case $with_DCE in
+    yes)	AC_DEFINE(HAVE_DCE)
+		AC_MSG_CHECKING(whether to try DCE (kerberos) authentication)
+		AC_MSG_RESULT(yes)
+		AUTH_OBJS="${AUTH_OBJS} dce.o"
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-DCE does not take an argument."])
+		;;
+esac])
+
+AC_MSG_CHECKING(whether to lecture users the first time they run sudo)
+AC_ARG_WITH(lecture, [  --without-lecture       don't print lecture for first-time sudoer],
+[case $with_lecture in  
+    yes|short)	AC_MSG_RESULT(yes)
+		;;
+    no|none)	AC_DEFINE(NO_LECTURE)
+		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["unknown argument to --with-lecture: $with_lecture"])
+		;;
+esac], [AC_MSG_RESULT(yes)])
+
+AC_MSG_CHECKING(whether sudo should log via syslog or to a file by default)
+AC_ARG_WITH(logging, [  --with-logging          log via syslog, file, or both],
+[case $with_logging in  
+    yes)	AC_MSG_ERROR(["must give --with-logging an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-logging not supported."])
+		;;
+    syslog)	AC_DEFINE(LOGGING, SLOG_SYSLOG)
+		AC_MSG_RESULT(syslog)
+		;;
+    file)	AC_DEFINE(LOGGING, SLOG_FILE)
+		AC_MSG_RESULT(file)
+		;;
+    both)	AC_DEFINE(LOGGING, SLOG_BOTH)
+		AC_MSG_RESULT(both)
+		;;
+    *)		AC_MSG_ERROR(["unknown argument to --with-logging: $with_logging"])
+		;;
+esac], [AC_DEFINE(LOGGING, SLOG_SYSLOG) AC_MSG_RESULT(syslog)])
+
+AC_MSG_CHECKING(which syslog facility sudo should log with)
+AC_ARG_WITH(logfac, [  --with-logfac           syslog facility to log with (default is local2)],
+[case $with_logfac in  
+    yes)	AC_MSG_ERROR(["must give --with-logfac an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-logfac not supported."])
+		;;
+    authpriv|auth|daemon|user|local0|local1|local2|local3|local4|local5|local6|local7)		AC_DEFINE_UNQUOTED(LOGFAC, "$with_logfac")
+		AC_MSG_RESULT([$with_logfac])
+		;;
+    *)		AC_MSG_ERROR(["$with_logfac is not a supported syslog facility."])
+		;;
+esac], [AC_DEFINE_UNQUOTED(LOGFAC, "local2") AC_MSG_RESULT("local2")])
+
+AC_MSG_CHECKING(at which syslog priority to log commands)
+AC_ARG_WITH(goodpri, [  --with-goodpri          syslog priority for commands (def is notice)],
+[case $with_goodpri in  
+    yes)	AC_MSG_ERROR(["must give --with-goodpri an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-goodpri not supported."])
+		;;
+    alert|crit|debug|emerg|err|info|notice|warning)		AC_DEFINE_UNQUOTED(PRI_SUCCESS, "$with_goodpri")
+		AC_MSG_RESULT([$with_goodpri])
+		;;
+    *)		AC_MSG_ERROR(["$with_goodpri is not a supported syslog priority."])
+		;;
+esac], [AC_DEFINE_UNQUOTED(PRI_SUCCESS, "notice") AC_MSG_RESULT("notice")])
+
+AC_MSG_CHECKING(at which syslog priority to log failures)
+AC_ARG_WITH(badpri, [  --with-badpri           syslog priority for failures (def is LOG_ALERT)],
+[case $with_badpri in  
+    yes)	AC_MSG_ERROR(["must give --with-badpri an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-badpri not supported."])
+		;;
+    alert|crit|debug|emerg|err|info|notice|warning)		AC_DEFINE_UNQUOTED(PRI_FAILURE, "$with_badpri")
+		AC_MSG_RESULT([$with_badpri])
+		;;
+    *)		AC_MSG_ERROR([$with_badpri is not a supported syslog priority.])
+		;;
+esac], [AC_DEFINE_UNQUOTED(PRI_FAILURE, "alert") AC_MSG_RESULT("alert")])
+
+AC_ARG_WITH(logpath, [  --with-logpath          path to the sudo log file],
+[case $with_logpath in  
+    yes)	AC_MSG_ERROR(["must give --with-logpath an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-logpath not supported."])
+		;;
+esac])
+
+AC_MSG_CHECKING(how long a line in the log file should be)
+AC_ARG_WITH(loglen, [  --with-loglen           maximum length of a log file line (default is 80)],
+[case $with_loglen in  
+    yes)	AC_MSG_ERROR(["must give --with-loglen an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-loglen not supported."])
+		;;
+    [[0-9]]*)	AC_DEFINE_UNQUOTED(MAXLOGFILELEN, $with_loglen)
+		AC_MSG_RESULT([$with_loglen])
+		;;
+    *)		AC_MSG_ERROR(["you must enter a number, not $with_loglen"])
+		;;
+esac], [AC_DEFINE(MAXLOGFILELEN, 80) AC_MSG_RESULT(80)])
+
+AC_MSG_CHECKING(whether sudo should ignore '.' or '' in \$PATH)
+AC_ARG_WITH(ignore-dot, [  --with-ignore-dot       ignore '.' in the PATH],
+[case $with_ignore_dot in  
+    yes)	AC_DEFINE(IGNORE_DOT_PATH)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["--with-ignore-dot does not take an argument."])
+		;;
+esac], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(who should get the mail that sudo sends)
+AC_ARG_WITH(mailto, [  --with-mailto           who should get sudo mail (default is "root")],
+[case $with_mailto in  
+    yes)	AC_MSG_ERROR(["must give --with-mailto an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-mailto not supported."])
+		;;
+    *)		AC_DEFINE_UNQUOTED(MAILTO, "$with_mailto")
+		AC_MSG_RESULT([$with_mailto])
+		;;
+esac], [AC_DEFINE(MAILTO, "root") AC_MSG_RESULT(root)])
+
+AC_ARG_WITH(mailsubject, [  --with-mailsubject      subject of sudo mail],
+[case $with_mailsubject in  
+    yes)	AC_MSG_ERROR(["must give --with-mailsubject an argument."])
+		;;
+    no)		echo "Sorry, --without-mailsubject not supported."
+		;;
+    *)		AC_DEFINE_UNQUOTED(MAILSUBJECT, "$with_mailsubject")
+		AC_MSG_CHECKING(sudo mail subject)
+		AC_MSG_RESULT([Using alert mail subject: $with_mailsubject])
+		;;
+esac], AC_DEFINE(MAILSUBJECT, "*** SECURITY information for %h ***"))
+
+AC_MSG_CHECKING(whether to send mail when a user is not in sudoers)
+AC_ARG_WITH(mail-if-no-user, [  --without-mail-if-no-user do not send mail if user not in sudoers],
+[case $with_mail_if_no_user in  
+    yes)	AC_DEFINE(SEND_MAIL_WHEN_NO_USER)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["unknown argument to --with-mail-if-no-user: $with_mail_if_no_user"])
+		;;
+esac], [AC_DEFINE(SEND_MAIL_WHEN_NO_USER) AC_MSG_RESULT(yes)])
+
+AC_MSG_CHECKING(whether to send mail when user listed but not for this host)
+AC_ARG_WITH(mail-if-no-host, [  --with-mail-if-no-host  send mail if user in sudoers but not for this host],
+[case $with_mail_if_no_host in  
+    yes)	AC_DEFINE(SEND_MAIL_WHEN_NO_HOST)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["unknown argument to --with-mail-if-no-host: $with_mail_if_no_host"])
+		;;
+esac], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(whether to send mail when a user tries a disallowed command)
+AC_ARG_WITH(mail-if-noperms, [  --with-mail-if-noperms  send mail if user not allowed to run command],
+[case $with_mail_if_noperms in  
+    yes)	AC_DEFINE(SEND_MAIL_WHEN_NOT_OK)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["unknown argument to --with-mail-if-noperms: $with_mail_if_noperms"])
+		;;
+esac], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(for bad password prompt)
+AC_ARG_WITH(passprompt, [  --with-passprompt       default password prompt],
+[case $with_passprompt in  
+    yes)	AC_MSG_ERROR(["must give --with-passprompt an argument."])
+		;;
+    no)		echo "Sorry, --without-passprompt not supported."
+		;;
+    *)		AC_DEFINE_UNQUOTED(PASSPROMPT, "$with_passprompt")
+		AC_MSG_RESULT([$with_passprompt])
+		;;
+esac], [AC_DEFINE(PASSPROMPT, "Password:") AC_MSG_RESULT(Password:)])
+
+AC_MSG_CHECKING(for bad password message)
+AC_ARG_WITH(badpass-message, [  --with-badpass-message  message the user sees when the password is wrong],
+[case $with_badpass_message in  
+    yes)	AC_MSG_ERROR(["Must give --with-badpass-message an argument."])
+		;;
+    no)		echo "Sorry, --without-badpass-message not supported."
+		;;
+    *)		AC_DEFINE_UNQUOTED(INCORRECT_PASSWORD, "$with_badpass_message")
+		AC_MSG_RESULT([$with_badpass_message])
+		;;
+esac], [AC_DEFINE(INCORRECT_PASSWORD, ["Sorry, try again."]) AC_MSG_RESULT([Sorry, try again.])])
+
+AC_MSG_CHECKING(whether to expect fully qualified hosts in sudoers)
+AC_ARG_WITH(fqdn, [  --with-fqdn             expect fully qualified hosts in sudoers],
+[case $with_fqdn in  
+    yes)	AC_DEFINE(FQDN)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["--with-fqdn does not take an argument."])
+		;;
+esac], AC_MSG_RESULT(no))
+
+AC_ARG_WITH(timedir, [  --with-timedir          path to the sudo timestamp dir],
+[case $with_timedir in  
+    yes)	AC_MSG_ERROR(["must give --with-timedir an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-timedir not supported."])
+		;;
+esac])
+
+AC_ARG_WITH(sendmail, [  --with-sendmail=path    set path to sendmail
+  --without-sendmail      do not send mail at all],
+[case $with_sendmail in  
+    yes)	with_sendmail=""
+		;;
+    no)		;;
+    *)		AC_DEFINE_UNQUOTED(_PATH_SENDMAIL, "$with_sendmail")
+		;;
+esac])
+
+AC_ARG_WITH(sudoers-mode, [  --with-sudoers-mode     mode of sudoers file (defaults to 0440)],
+[case $with_sudoers_mode in  
+    yes)	AC_MSG_ERROR(["must give --with-sudoers-mode an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-sudoers-mode not supported."])
+		;;
+    [[1-9]]*)	SUDOERS_MODE=0${with_sudoers_mode}
+		;;
+    0*)		SUDOERS_MODE=$with_sudoers_mode
+		;;
+    *)		AC_MSG_ERROR(["you must use a numeric uid, not a name."])
+		;;
+esac])
+
+AC_ARG_WITH(sudoers-uid, [  --with-sudoers-uid      uid that owns sudoers file (defaults to 0)],
+[case $with_sudoers_uid in  
+    yes)	AC_MSG_ERROR(["must give --with-sudoers-uid an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-sudoers-uid not supported."])
+		;;
+    [[0-9]]*)	SUDOERS_UID=$with_sudoers_uid
+		;;
+    *)		AC_MSG_ERROR(["you must use a numeric uid, not a name."])
+		;;
+esac])
+
+AC_ARG_WITH(sudoers-gid, [  --with-sudoers-gid      gid that owns sudoers file (defaults to 0)],
+[case $with_sudoers_gid in  
+    yes)	AC_MSG_ERROR(["must give --with-sudoers-gid an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-sudoers-gid not supported."])
+		;;
+    [[0-9]]*)	SUDOERS_GID=$with_sudoers_gid
+		;;
+    *)		AC_MSG_ERROR(["you must use a numeric gid, not a name."])
+		;;
+esac])
+
+AC_MSG_CHECKING(for umask programs should be run with)
+AC_ARG_WITH(umask, [  --with-umask            umask with which the prog should run (default is 0022)
+  --without-umask         Preserves the umask of the user invoking sudo.],
+[case $with_umask in  
+    yes)	AC_MSG_ERROR(["must give --with-umask an argument."])
+		;;
+    no)		AC_MSG_RESULT(user)
+		;;
+    [[0-9]]*)	AC_DEFINE_UNQUOTED(SUDO_UMASK, $with_umask)
+		AC_MSG_RESULT([$with_umask])
+		;;
+    *)		AC_MSG_ERROR(["you must enter a numeric mask."])
+		;;
+esac], [AC_DEFINE(SUDO_UMASK, 0022) AC_MSG_RESULT(0022)])
+
+AC_MSG_CHECKING(for default user to run commands as)
+AC_ARG_WITH(runas-default, [  --with-runas-default    User to run commands as (default is "root"],
+[case $with_runas_default in  
+    yes)	AC_MSG_ERROR(["must give --with-runas-default an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-runas-default not supported."])
+		;;
+    *)		AC_DEFINE_UNQUOTED(RUNAS_DEFAULT, "$with_runas_default")
+		AC_MSG_RESULT([$with_runas_default])
+		;;
+esac], [AC_DEFINE(RUNAS_DEFAULT, "root") AC_MSG_RESULT(root)])
+
+AC_ARG_WITH(exempt, [  --with-exempt=group     no passwd needed for users in this group],
+[case $with_exempt in  
+    yes)	AC_MSG_ERROR(["must give --with-exempt an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-exempt not supported."])
+		;;
+    *)		AC_DEFINE_UNQUOTED(EXEMPTGROUP, "$with_exempt")
+		AC_MSG_CHECKING(for group to be exempt from password)
+		AC_MSG_RESULT([$with_exempt])
+		;;
+esac])
+
+AC_MSG_CHECKING(for editor that visudo should use)
+AC_ARG_WITH(editor, [  --with-editor=path      Default editor for visudo (defaults to vi)],
+[case $with_editor in  
+    yes)	AC_MSG_ERROR(["must give --with-editor an argument."])
+		;;
+    no)		AC_MSG_ERROR(["--without-editor not supported."])
+		;;
+    *)		AC_DEFINE_UNQUOTED(EDITOR, "$with_editor")
+		AC_MSG_RESULT([$with_editor])
+		;;
+esac], [AC_DEFINE(EDITOR, _PATH_VI) AC_MSG_RESULT(vi)])
+
+AC_MSG_CHECKING(whether to obey EDITOR and VISUAL environment variables)
+AC_ARG_WITH(env-editor, [  --with-env-editor       Use the environment variable EDITOR for visudo],
+[case $with_env_editor in  
+    yes)	AC_DEFINE(ENV_EDITOR)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["--with-env-editor does not take an argument."])
+		;;
+esac], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(number of tries a user gets to enter their password)
+AC_ARG_WITH(passwd-tries, [  --with-passwd-tries     number of tries to enter password (default is 3)],
+[case $with_passwd_tries in  
+    yes)	AC_DEFINE(TRIES_FOR_PASSWORD, 3)
+		AC_MSG_RESULT(3)
+		;;
+    no)		AC_MSG_ERROR(["--without-editor not supported."])
+		;;
+    [[1-9]]*)	AC_DEFINE_UNQUOTED(TRIES_FOR_PASSWORD, $with_passwd_tries)
+		AC_MSG_RESULT([$with_passwd_tries])
+		;;
+    *)		AC_MSG_ERROR(["you must enter the numer of tries, > 0"])
+		;;
+esac], [AC_DEFINE(TRIES_FOR_PASSWORD, 3) AC_MSG_RESULT(3)])
+
+AC_MSG_CHECKING(time in minutes after which sudo will ask for a password again)
+AC_ARG_WITH(timeout, [  --with-timeout          minutes before sudo asks for passwd again (def is 5)],
+[echo $with_timeout; case $with_timeout in  
+    yes)	AC_DEFINE(TIMEOUT, 5)
+		AC_MSG_RESULT(5)
+		;;
+    no)		AC_DEFINE(TIMEOUT, 0)
+		AC_MSG_RESULT([no timeout])
+		;;
+    [[0-9]]*)	AC_DEFINE_UNQUOTED(TIMEOUT, $with_timeout)
+		AC_MSG_RESULT([$with_timeout])
+		;;
+    *)		AC_MSG_ERROR(["you must enter the numer of minutes."])
+		;;
+esac], [AC_DEFINE(TIMEOUT, 5) AC_MSG_RESULT(5)])
+
+AC_MSG_CHECKING(time in minutes after the password prompt will time out)
+AC_ARG_WITH(password-timeout, [  --with-password-timeout passwd prompt timeout in minutes (default is 5)],
+[case $with_password_timeout in  
+    yes)	AC_DEFINE(PASSWORD_TIMEOUT, 5)
+		AC_MSG_RESULT(5)
+		;;
+    no)		AC_DEFINE(PASSWORD_TIMEOUT, 0)
+		AC_MSG_RESULT([no timeout])
+		;;
+    [[0-9]]*)	AC_DEFINE_UNQUOTED(PASSWORD_TIMEOUT, $with_password_timeout)
+		AC_MSG_RESULT([$with_password_timeout])
+		;;
+    *)		AC_MSG_ERROR(["you must enter the numer of minutes."])
+		;;
+esac], [AC_DEFINE(PASSWORD_TIMEOUT, 5) AC_MSG_RESULT(5)])
+
+AC_MSG_CHECKING(whether to use execvp or execv)
+AC_ARG_WITH(execv, [  --with-execv            use execv() instead of execvp()],
+[case $with_execv in  
+    yes)	AC_DEFINE(USE_EXECV)
+		AC_MSG_RESULT(execv)
+		;;
+    no)		AC_MSG_RESULT(execvp)
+		;;
+    *)		AC_MSG_ERROR(["--with-execv does not take an argument."])
+		;;
+esac], AC_MSG_RESULT(execvp))
+
+AC_MSG_CHECKING(whether to use per-tty ticket files)
+AC_ARG_WITH(tty-tickets, [  --with-tty-tickets      use a different ticket file for each tty],
+[case $with_tty_tickets in  
+    yes)	AC_DEFINE(USE_TTY_TICKETS)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["--with-tty-tickets does not take an argument."])
+		;;
+esac], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(whether to include insults)
+AC_ARG_WITH(insults, [  --with-insults          insult the user for entering an incorrect password],
+[case $with_insults in  
+    yes)	AC_DEFINE(USE_INSULTS)
+		AC_MSG_RESULT(yes)
+		with_classic_insults=yes
+		with_csops_insults=yes
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["--with-insults does not take an argument."])
+		;;
+esac], AC_MSG_RESULT(no))
+
+AC_ARG_WITH(all-insults, [  --with-all-insults      include all the sudo insult sets],
+[case $with_all_insults in  
+    yes)	with_classic_insults=yes
+		with_csops_insults=yes
+		with_hal_insults=yes
+		with_goons_insults=yes
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-all-insults does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(classic-insults, [  --with-classic-insults  include the insults from the "classic" sudo],
+[case $with_classic_insults in  
+    yes)	AC_DEFINE(CLASSIC_INSULTS)
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-classic-insults does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(csops-insults, [  --with-csops-insults    include CSOps insults],
+[case $with_csops_insults in  
+    yes)	AC_DEFINE(CSOPS_INSULTS)
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-csops-insults does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(hal-insults, [  --with-hal-insults      include 2001-like insults],
+[case $with_hal_insults in  
+    yes)	AC_DEFINE(HAL_INSULTS)
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-hal-insults does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(goons-insults, [  --with-goons-insults    include the insults from the \"Goon Show\"],
+[case $with_goons_insults in  
+    yes)	AC_DEFINE(GOONS_INSULTS)
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-goons-insults does not take an argument."])
+		;;
+esac])
+
+dnl include all insult sets on one line
+if test "$with_insults" = "yes"; then
+    AC_MSG_CHECKING(which insult sets to include)
+    i=""
+    test "$with_goons_insults" = "yes" && i="goons ${i}"
+    test "$with_hal_insults" = "yes" && i="hal ${i}"
+    test "$with_csops_insults" = "yes" && i="csops ${i}"
+    test "$with_classic_insults" = "yes" && i="classic ${i}"
+    AC_MSG_RESULT([$i])
+fi
+
+AC_MSG_CHECKING(whether to override the user's path)
+AC_ARG_WITH(secure-path, [  --with-secure-path      override the user's path with a builtin one],
+[case $with_secure_path in  
+    yes)	AC_DEFINE_UNQUOTED(SECURE_PATH, "/bin:/usr/ucb:/usr/bin:/usr/sbin:/sbin:/usr/etc:/etc")
+		AC_MSG_RESULT([:/usr/ucb:/usr/bin:/usr/sbin:/sbin:/usr/etc:/etc])
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_DEFINE_UNQUOTED(SECURE_PATH, "$with_secure_path")
+		AC_MSG_RESULT([$with_secure_path])
+		;;
+esac], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(whether to get ip addresses from the network interfaces)
+AC_ARG_WITH(interfaces, [  --without-interfaces    don't try to read the ip addr of ether interfaces],
+[case $with_interfaces in  
+    yes)	AC_MSG_RESULT(yes)
+		;;
+    no)		AC_DEFINE(STUB_LOAD_INTERFACES)
+		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["--with-interfaces does not take an argument."])
+		;;
+esac], AC_MSG_RESULT(yes))
+
+dnl
+dnl Options for --enable
+dnl
+
+AC_MSG_CHECKING(whether to do user authentication by default)
+AC_ARG_ENABLE(authentication,
+[  --disable-authentication
+                          Do not require authentication by default],
+[ case "$enableval" in
+    yes)	AC_MSG_RESULT(yes)
+		;;
+    no)		AC_MSG_RESULT(no)
+		AC_DEFINE(NO_AUTHENTICATION)
+		;;
+    *)		AC_MSG_RESULT(no)
+    		echo "Ignoring unknown argument to --enable-authentication: $enableval"
+		;;
+  esac
+], AC_MSG_RESULT(yes))
+
+AC_MSG_CHECKING(whether to disable shadow password support)
+AC_ARG_ENABLE(shadow,
+[  --disable-shadow        Never use shadow passwords],
+[ case "$enableval" in
+    yes)	AC_MSG_RESULT(no)
+		;;
+    no)		AC_MSG_RESULT(yes)
+		CHECKSHADOW="false"
+		;;
+    *)		AC_MSG_RESULT(no)
+    		echo "Ignoring unknown argument to --enable-shadow: $enableval"
+		;;
+  esac
+], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(whether root should be allowed to use sudo)
+AC_ARG_ENABLE(root-sudo,
+[  --disable-root-sudo     don't allow root to run sudo],
+[ case "$enableval" in  
+    yes)	AC_MSG_RESULT(yes)
+		;;
+    no)		AC_DEFINE(NO_ROOT_SUDO)
+		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_ERROR(["--enable-root-sudo does not take an argument."])
+		;;
+  esac
+], AC_MSG_RESULT(yes))
+
+AC_MSG_CHECKING(whether to log the hostname in the log file)
+AC_ARG_ENABLE(log-host,
+[  --enable-log-host       Log the hostname in the log file],
+[ case "$enableval" in
+    yes)	AC_MSG_RESULT(yes)
+		AC_DEFINE(HOST_IN_LOG)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_RESULT(no)
+    		echo "Ignoring unknown argument to --enable-log-host: $enableval"
+		;;
+  esac
+], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(whether to invoke a shell if sudo is given no arguments)
+AC_ARG_ENABLE(noargs-shell,
+[  --enable-noargs-shell   If sudo is given no arguments run a shell],
+[ case "$enableval" in
+    yes)	AC_MSG_RESULT(yes)
+		AC_DEFINE(SHELL_IF_NO_ARGS)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_RESULT(no)
+    		echo "Ignoring unknown argument to --enable-noargs-shell: $enableval"
+		;;
+  esac
+], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(whether to set \$HOME to target user in shell mode)
+AC_ARG_ENABLE(shell-sets-home,
+[  --enable-shell-sets-home
+                          set \$HOME to target user in shell mode],
+[ case "$enableval" in
+    yes)	AC_MSG_RESULT(yes)
+		AC_DEFINE(SHELL_SETS_HOME)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_RESULT(no)
+    		echo "Ignoring unknown argument to --enable-shell-sets-home: $enableval"
+		;;
+  esac
+], AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(whether to disable 'command not found' messages)
+AC_ARG_ENABLE(path_info,
+[  --disable-path-info     Print 'command not allowed' not 'command not found'],
+[ case "$enableval" in
+    yes)	AC_MSG_RESULT(no)
+		;;
+    no)		AC_MSG_RESULT(yes)
+		AC_DEFINE(DONT_LEAK_PATH_INFO)
+		;;
+    *)		AC_MSG_RESULT(no)
+		echo "Ignoring unknown argument to --enable-path-info: $enableval"
+		;;
+  esac
+], AC_MSG_RESULT(no))
+
+dnl
+dnl If we don't have egrep we can't do anything...
+dnl
+AC_CHECK_PROG(EGREPPROG, egrep, egrep, )
+if test -z "$EGREPPROG"; then
+    echo "Sorry, configure requires egrep to run."
+    exit
+fi
+
+dnl
+dnl C compiler checks
+dnl XXX - the cross-compiler check gets false positives so we override it
+dnl
+ac_cv_prog_cc_cross="no"
+cross_compiling="no"
+AC_PROG_CC
+ac_cv_prog_cc_cross="no"
+cross_compiling="no"
+AC_PROG_CPP
+AC_ISC_POSIX
+
+dnl
+dnl It is now safe to modify CFLAGS and CPPFLAGS
+dnl
+if test "$with_devel" = "yes" -a -n "$GCC"; then
+    CFLAGS="${CFLAGS} -Wall"
+fi
+
+dnl
+dnl Find programs we use
+dnl
+AC_CHECK_PROG(UNAMEPROG, uname, uname, )
+AC_CHECK_PROG(TRPROG, tr, tr, )
+AC_CHECK_PROG(SEDPROG, sed, sed, )
+AC_CHECK_PROG(NROFFPROG, nroff, nroff, )
+if test -z "$NROFFPROG"; then
+    MANTYPE="cat"
+fi
+
+dnl
+dnl What kind of beastie are we being run on?
+dnl Barf if config.cache was generated on another host.
+dnl
+AC_CANONICAL_HOST
+if test -n "$sudo_cv_prev_host"; then
+    if test "$sudo_cv_prev_host" != "$host"; then
+	echo ""
+	echo "Fatal Error: config.cache exists from another platform!"
+	echo "Please remove it and re-run configure."
+	echo ""
+	exit 1
+    else
+	AC_MSG_CHECKING(previous host type)
+	AC_CACHE_VAL(sudo_cv_prev_host, sudo_cv_prev_host="$host")
+	echo $sudo_cv_prev_host
+    fi
+else
+    # this will produce no output since there is no cached value
+    AC_CACHE_VAL(sudo_cv_prev_host, sudo_cv_prev_host="$host")
+fi
+
+dnl
+dnl We want to be able to differentiate between different rev's
+dnl
+if test -n "$host_os"; then
+    OS=`echo $host_os | sed 's/[[0-9]].*//'`
+    OSREV=`echo $host_os | sed 's/^[[^0-9]]*\([[0-9]][[0-9]]*\).*$/\1/'`
+else
+    OS="unknown"
+    OSREV=0
+fi
+
+case "$host" in
+    *-*-sunos4*)
+		# getcwd(3) opens a pipe to getpwd(1)!?!
+		BROKEN_GETCWD=1
+
+		# system headers lack prototypes but gcc helps...
+		if test -n "$GCC"; then
+		    CPPFLAGS="${CPPFLAGS} -D__USE_FIXED_PROTOTYPES__"
+		fi
+
+		# check for password adjunct functions (shadow passwords)
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_FUNC(getpwanam, AC_DEFINE(HAVE_GETPWANAM) AC_CHECK_FUNCS(issecure))
+		    CHECKSHADOW="false"
+		fi
+		;;
+    *-*-solaris2*)
+		# To get the crypt(3) prototype (so we pass -Wall)
+		CPPFLAGS="${CPPFLAGS} -D__EXTENSIONS__"
+		# AFS support needs -lucb
+		if test "$with_AFS" = "yes"; then
+		    AFS_LIBS="-lc -lucb"
+		fi
+		;;
+    *-*-aix*)
+		# To get all prototypes (so we pass -Wall)
+		CPPFLAGS="${CPPFLAGS} -D_XOPEN_EXTENDED_SOURCE"
+		AC_DEFINE(_ALL_SOURCE)
+		SUDO_LDFLAGS="${SUDO_LDFLAGS} -Wl,-bI:\$(srcdir)/aixcrypt.exp"
+		;;
+    *-*-hiuxmpp*)
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"; SECUREWARE=1], AC_CHECK_LIB(security, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lsecurity"; LIBS="${LIBS} -lsecurity"; SECUREWARE=1]))
+		    CHECKSHADOW="false"
+		fi
+		;;
+    *-*-hpux1[[0-9]]*)
+		# uncomment this for a statically linked sudo
+		# (XXX - should be an option to configure)
+		#STATIC_SUDO=true
+
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) AC_CHECK_LIB(sec, iscomsec, AC_DEFINE(HAVE_ISCOMSEC)) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"; SECUREWARE=1])
+		    CHECKSHADOW="false"
+		fi
+
+		if test -n "$STATIC_SUDO"; then
+		    if test -n "$GCC"; then
+			SUDO_LDFLAGS="${SUDO_LDFLAGS} -static"
+		    else
+			SUDO_LDFLAGS="${SUDO_LDFLAGS} -Wl,-a,archive"
+		    fi
+		fi
+
+		# DCE support (requires ANSI C compiler)
+		if test "$with_DCE" = "yes"; then
+		    if test -n "$GCC"; then
+			CPPFLAGS="${CPPFLAGS} -D_HPUX_SOURCE"
+		    else
+			CPPFLAGS="${CPPFLAGS} -Aa -D_HPUX_SOURCE"
+		    fi
+		fi
+
+		# AFS support needs -lBSD
+		if test "$with_AFS" = "yes"; then
+		    AFS_LIBS="-lc -lBSD"
+		fi
+		;;
+    *-*-hpux9*)
+		# uncomment this for a statically linked sudo
+		# (XXX - should be an option to configure)
+		#STATIC_SUDO=true
+
+		AC_DEFINE(BROKEN_SYSLOG)
+
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_FUNCS(getspwuid)
+		    CHECKSHADOW="false"
+		fi
+
+		if test -n "$STATIC_SUDO"; then
+		    if test -n "$GCC"; then
+			SUDO_LDFLAGS="${SUDO_LDFLAGS} -static"
+		    else
+			SUDO_LDFLAGS="${SUDO_LDFLAGS} -Wl,-a,archive"
+		    fi
+		fi
+
+		# DCE support (requires ANSI C compiler)
+		if test "$with_DCE" = "yes"; then
+		    # order of libs in 9.X is important. -lc_r must be last
+		    SUDO_LIBS="${SUDO_LIBS} -ldce -lM -lc_r"
+		    LIBS="${LIBS} -ldce -lM -lc_r"
+
+		    if test -n "$GCC"; then
+			CPPFLAGS="${CPPFLAGS} -D_HPUX_SOURCE -D_REENTRANT -I/usr/include/reentrant"
+		    else
+			CPPFLAGS="${CPPFLAGS} -Aa -D_HPUX_SOURCE -D_REENTRANT -I/usr/include/reentrant"
+		    fi
+		fi
+
+		# AFS support needs -lBSD
+		if test "$with_AFS" = "yes"; then
+		    AFS_LIBS="-lc -lBSD"
+		fi
+		;;
+    *-*-hpux*)
+
+		AC_DEFINE(BROKEN_SYSLOG)
+
+		# Not sure if setuid binaries are safe in < 9.x
+		if test -n "$GCC"; then
+		    SUDO_LDFLAGS="${SUDO_LDFLAGS} -static"
+		else
+		    SUDO_LDFLAGS="${SUDO_LDFLAGS} -Wl,-a,archive"
+		fi
+
+		# AFS support needs -lBSD
+		if test "$with_AFS" = "yes"; then
+		    AFS_LIBS="-lc -lBSD"
+		fi
+		;;
+    *-dec-osf*)
+		# ignore envariables wrt dynamic lib path
+		SUDO_LDFLAGS="${SUDO_LDFLAGS} -Wl,-no_library_replacement"
+
+		AC_MSG_CHECKING(whether to disable sia support on Digital UNIX)
+		AC_ARG_ENABLE(sia,
+		[  --disable-sia           Never use SIA on Digital UNIX],
+		[ case "$enableval" in
+		    yes)	AC_MSG_RESULT(no)
+				;;
+		    no)		AC_MSG_RESULT(yes)
+				CHECKSIA=false
+				;;
+		    *)		AC_MSG_RESULT(no)
+				echo "Ignoring unknown argument to --enable-sia: $enableval"
+				;;
+		  esac
+		], AC_MSG_RESULT(no))
+
+		# use SIA by default, if we have it, else SecureWare
+		# unless overridden on the command line
+		if test "$CHECKSIA" = "true"; then
+		    AC_CHECK_FUNC(sia_ses_init, AC_DEFINE(HAVE_SIA) [
+		    if test -n "$with_skey" -o -n "$with_opie" -o -n "$with_otp_only" -o -n "$with_long_otp_prompt" -o -n "$with_SecurID" -o -n "$with_fwtk" -o -n "$with_kerb4" -o -n "$with_kerb5" -o -n "$with_pam" -o -n "$with_AFS" -o -n "$with_DCE"; then
+			AC_MSG_ERROR(["you cannot mix SIA and other authentication schemes.  You can turn off SIA support via the --disable-sia option"])
+		    fi]; CHECKSHADOW=false)
+		fi
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_LIB(security, getprpwnam, SECUREWARE=1)
+		    CHECKSHADOW="false"
+		fi
+
+		if test -n "$SECUREWARE"; then
+		    AC_DEFINE(HAVE_GETPRPWNAM)
+		    # -ldb includes bogus versions of snprintf/vsnprintf
+		    AC_CHECK_FUNC(snprintf, AC_DEFINE(HAVE_SNPRINTF), NEED_SNPRINTF=1)
+		    AC_CHECK_FUNC(vsnprintf, AC_DEFINE(HAVE_VSNPRINTF), NEED_SNPRINTF=1)
+		    # 4.x and higher need -ldb too...
+		    AC_CHECK_LIB(db, dbopen, [SUDO_LIBS="${SUDO_LIBS} -lsecurity -ldb -laud -lm"; LIBS="${LIBS} -lsecurity -ldb -laud -lm"], [SUDO_LIBS="${SUDO_LIBS} -lsecurity -ldb -laud -lm"; LIBS="${LIBS} -lsecurity -ldb -laud -lm"])
+		    AC_CHECK_FUNCS(dispcrypt)
+		    AC_MSG_CHECKING([for broken /usr/include/prot.h])
+		    AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/security.h>
+#include <prot.h>
+		    ], [exit(0);], AC_MSG_RESULT(no),
+		    [AC_MSG_RESULT([yes, fixing locally])
+		    sed 's:<acl.h>:<sys/acl.h>:g' < /usr/include/prot.h > prot.h
+		    ])
+		else
+		    with_passwd=no
+		    AUTH_OBJS="sia.o"
+		fi
+		;;
+    *-*-irix*)
+		# configure may not think irix has stdc headers
+		# but it's good enough for sudo
+		AC_DEFINE(STDC_HEADERS)
+		CPPFLAGS="${CPPFLAGS} -D_BSD_TYPES"
+		if test -z "$NROFFPROG"; then
+		    MAN_POSTINSTALL='	/bin/rm -f $(mandir8)/sudo.$(mansect8).z $(mandir8)/visudo.$(mansect8).z $(mandir5)/sudoers.$(mansect5).z ; /usr/bin/pack $(mandir8)/sudo.$(mansect8) $(mandir8)/visudo.$(mansect8) $(mandir5)/sudoers.$(mansect5)'
+		    if test "$prefix" = "/usr/local" -a "$mandir" = '$(prefix)/man'; then
+			if test -d /usr/share/catman/local; then
+			    mandir="/usr/share/catman/local"
+			else
+			    mandir="/usr/catman/local"
+			fi
+		    fi
+		else
+		    if test "$prefix" = "/usr/local" -a "$mandir" = '$(prefix)/man'; then
+			if test -d "/usr/share/man/local"; then
+			    mandir="/usr/share/man/local"
+			else
+			    mandir="/usr/man/local"
+			fi
+		    fi
+		fi
+		# IRIX <= 4 needs -lsun
+		if test "$OSREV" -le 4; then
+		    AC_CHECK_LIB(sun, getpwnam, [LIBS="${LIBS} -lsun"])
+		fi
+		;;
+    *-*-linux*)
+		# To get crypt(3) and vasprintf() prototypes (so we pass -Wall)
+		AC_DEFINE(_GNU_SOURCE)
+
+		# Some Linux versions need to link with -lshadow
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_FUNC(getspnam, AC_DEFINE(HAVE_GETSPNAM), AC_CHECK_LIB(shadow, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lshadow"; LIBS="${LIBS} -lshadow"]))
+		    CHECKSHADOW="false"
+		fi
+		;;
+    *-convex-bsd*)
+		AC_DEFINE(_CONVEX_SOURCE)
+		if test -z "$GCC"; then
+		    CFLAGS="${CFLAGS} -D__STDC__"
+		fi
+
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lprot"; LIBS="${LIBS} -lprot"; OSDEFS="${OSDEFS} -D_AUDIT -D_ACL -DSecureWare"; SECUREWARE=1])
+		    CHECKSHADOW="false"
+		fi
+		;;
+    *-*-ultrix*)
+		OS="ultrix"
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_LIB(auth, getauthuid, AC_DEFINE(HAVE_GETAUTHUID) [SUDO_LIBS="${SUDO_LIBS} -lauth"; LIBS="${LIBS} -lauth"])
+		    CHECKSHADOW="false"
+		fi
+		;;
+    *-*-riscos*)
+		LIBS="${LIBS} -lsun -lbsd"
+		CPPFLAGS="${CPPFLAGS} -I/usr/include -I/usr/include/bsd"
+		OSDEFS="${OSDEFS} -D_MIPS"
+		;;
+    *-*-isc*)
+		OSDEFS="${OSDEFS} -D_ISC"
+		LIB_CRYPT=1
+		SUDO_LIBS="${SUDO_LIBS} -lcrypt"
+		LIBS="${LIBS} -lcrypt"
+
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_LIB(sec, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"])
+		    CHECKSHADOW="false"
+		fi
+		;;
+    *-*-sco*)
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_LIB(prot, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lprot -lx"; LIBS="${LIBS} -lprot -lx"; SECUREWARE=1], , -lx)
+		    AC_CHECK_LIB(gen, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lgen"; LIBS="${LIBS} -lgen"])
+		    CHECKSHADOW="false"
+		fi
+		;;
+    *-sequent-sysv*)
+		if test "$CHECKSHADOW" = "true"; then
+		    AC_CHECK_LIB(sec, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"])
+		    CHECKSHADOW="false"
+		fi
+		;;
+    *-ccur-sysv4|*-ccur-sysvr4)
+		LIBS="${LIBS} -lgen"
+		SUDO_LIBS="${SUDO_LIBS} -lgen"
+		;;
+    *-*-bsdi*)
+		# Use shlicc for BSD/OS 2.x unless asked to do otherwise
+		if test "$OSREV" -ge 2 -a "${with_CC+set}" != set -a \
+			"$ac_cv_prog_CC" = "gcc"; then
+		    echo 'using shlicc as CC'
+		    ac_cv_prog_CC=shlicc
+		    CC="$ac_cv_prog_CC"
+		fi
+		;;
+    *-*-*bsd*)
+		if test "$CHECKSHADOW" = "true"; then
+		    CHECKSHADOW="false"
+		fi
+		;;
+esac
+
+dnl
+dnl Check for shadow password routines if we have not already done so.
+dnl We check for SVR4-style first and then SecureWare-style.
+dnl
+if test "$CHECKSHADOW" = "true"; then
+    AC_CHECK_FUNC(getspnam, AC_DEFINE(HAVE_GETSPNAM) [CHECKSHADOW="false"])
+fi
+if test "$CHECKSHADOW" = "true"; then
+    AC_CHECK_FUNC(getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1], AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"], AC_CHECK_LIB(security, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lsecurity"; LIBS="${LIBS} -lsecurity"], AC_CHECK_LIB(prot, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [CHECKSHADOW="false"; SECUREWARE=1; SUDO_LIBS="${SUDO_LIBS} -lprot"; LIBS="${LIBS} -lprot"]))))
+fi
+
+dnl
+dnl C compiler checks (to be done after os checks)
+dnl
+AC_PROG_GCC_TRADITIONAL
+AC_C_CONST
+dnl
+dnl Program checks
+dnl
+AC_PROG_YACC
+if test -z "$with_sendmail"; then
+    SUDO_PROG_SENDMAIL
+fi
+SUDO_PROG_MV
+SUDO_PROG_BSHELL
+SUDO_PROG_VI
+dnl
+dnl Header file checks
+dnl
+AC_HEADER_STDC
+AC_HEADER_DIRENT
+AC_CHECK_HEADERS(string.h strings.h unistd.h malloc.h paths.h utime.h fnmatch.h netgroup.h sys/sockio.h sys/bsdtypes.h sys/select.h)
+dnl ultrix termio/termios are broken
+if test "$OS" != "ultrix"; then
+    AC_CHECK_HEADERS(termio.h)
+    AC_CHECK_HEADERS(termios.h, AC_CHECK_FUNCS(tcgetattr))
+fi
+dnl
+dnl typedef checks
+dnl
+AC_TYPE_MODE_T
+AC_TYPE_UID_T
+SUDO_TYPE_SIZE_T
+SUDO_TYPE_SSIZE_T
+SUDO_TYPE_DEV_T
+SUDO_TYPE_INO_T
+SUDO_FULL_VOID
+SUDO_UID_T_LEN
+SUDO_LONG_LONG
+SUDO_SOCK_SA_LEN
+dnl
+dnl only set RETSIGTYPE if it is not set already
+dnl
+case "$DEFS" in
+    *"RETSIGTYPE"*)	;;
+    *)			AC_TYPE_SIGNAL;;
+esac
+dnl
+dnl Function checks
+dnl
+AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf sigaction tzset seteuid ftruncate strftime setrlimit)
+if test -n "$SECUREWARE"; then
+    AC_CHECK_FUNCS(bigcrypt)
+    AC_CHECK_FUNCS(set_auth_parameters)
+    AC_CHECK_FUNCS(initprivs)
+fi
+if test -z "$BROKEN_GETCWD"; then
+    AC_CHECK_FUNC(getcwd, AC_DEFINE(HAVE_GETCWD), LIBOBJS="$LIBOBJS getcwd.o")
+fi
+AC_CHECK_FUNC(lockf, AC_DEFINE(HAVE_LOCKF), AC_CHECK_FUNCS(flock))
+AC_CHECK_FUNC(waitpid, AC_DEFINE(HAVE_WAITPID), AC_CHECK_FUNCS(wait3))
+AC_CHECK_FUNC(innetgr, AC_DEFINE(HAVE_INNETGR) AC_CHECK_FUNCS(getdomainname))
+AC_CHECK_FUNC(lsearch, AC_DEFINE(HAVE_LSEARCH), AC_CHECK_LIB(compat, lsearch, AC_CHECK_HEADER(search.h, AC_DEFINE(HAVE_LSEARCH) [LIBS="${LIBS} -lcompat"], LIBOBJS="$LIBOBJS lsearch.o"), LIBOBJS="$LIBOBJS lsearch.o"))
+AC_CHECK_FUNC(setenv, AC_DEFINE(HAVE_SETENV), AC_FUNC_CHECK(putenv, AC_DEFINE(HAVE_PUTENV), LIBOBJS="$LIBOBJS putenv.o"))
+AC_CHECK_FUNC(utime, AC_DEFINE(HAVE_UTIME)
+SUDO_FUNC_UTIME_POSIX, LIBOBJS="$LIBOBJS utime.o")
+SUDO_FUNC_FNMATCH(AC_DEFINE(HAVE_FNMATCH), LIBOBJS="$LIBOBJS fnmatch.o")
+AC_REPLACE_FUNCS(strerror strcasecmp)
+AC_CHECK_FUNC(snprintf, AC_DEFINE(HAVE_SNPRINTF), NEED_SNPRINTF=1)
+AC_CHECK_FUNC(vsnprintf, AC_DEFINE(HAVE_VSNPRINTF), NEED_SNPRINTF=1)
+AC_CHECK_FUNC(asprintf, AC_DEFINE(HAVE_ASPRINTF), NEED_SNPRINTF=1)
+AC_CHECK_FUNC(vasprintf, AC_DEFINE(HAVE_VASPRINTF), NEED_SNPRINTF=1)
+dnl
+dnl If NEED_SNPRINTF is set, add snprintf.c to LIBOBJS
+dnl (it contains snprintf, vsnprintf, asprintf, and vasprintf)
+dnl
+if test -n "$NEED_SNPRINTF"; then
+    LIBOBJS="$LIBOBJS snprintf.o"
+fi
+dnl
+dnl if crypt(3) not in libc, look elsewhere
+dnl
+if test -z "$LIB_CRYPT"; then
+    AC_CHECK_FUNC(crypt, ,AC_CHECK_LIB(crypt, crypt, [SUDO_LIBS="${SUDO_LIBS} -lcrypt"; LIBS="${LIBS} -lcrypt"], AC_CHECK_LIB(crypt_d, crypt, [SUDO_LIBS="${SUDO_LIBS} -lcrypt_d"; LIBS="${LIBS} -lcrypt_d"], AC_CHECK_LIB(ufc, crypt, [SUDO_LIBS="${SUDO_LIBS} -lufc"; LIBS="${LIBS} -lufc"]))))
+fi
+dnl
+dnl If socket(2) not in libc, check -lsocket and -linet
+dnl May need to link with *both* -lnsl and -lsocket due to unresolved symbols
+dnl In this case we look for main(), not socket() to avoid using a cached value
+dnl
+AC_CHECK_FUNC(socket, ,AC_CHECK_LIB(socket, socket, [NET_LIBS="${NET_LIBS} -lsocket"; LIBS="${LIBS} -lsocket"], AC_CHECK_LIB(inet, socket, [NET_LIBS="${NET_LIBS} -linet"; LIBS="${LIBS} -linet"], AC_MSG_WARN(unable to find socket() trying -lsocket -lnsl)
+AC_CHECK_LIB(socket, socket, [NET_LIBS="${NET_LIBS} -lsocket -lnsl"; LIBS="${LIBS} -lsocket -lnsl"], , -lnsl))))
+dnl
+dnl If inet_addr(3) not in libc, check -lnsl and -linet
+dnl May need to link with *both* -lnsl and -lsocket due to unresolved symbols
+dnl
+AC_CHECK_FUNC(inet_addr, ,AC_CHECK_LIB(nsl, inet_addr, [NET_LIBS="${NET_LIBS} -lnsl"; LIBS="${LIBS} -lnsl"], AC_CHECK_LIB(inet, inet_addr, [NET_LIBS="${NET_LIBS} -linet"; LIBS="${LIBS} -linet"], AC_MSG_WARN(unable to find socket() trying -lsocket -lnsl)
+AC_CHECK_LIB(socket, inet_addr, [NET_LIBS="${NET_LIBS} -lsocket -lnsl"; LIBS="${LIBS} -lsocket -lnsl"], , -lnsl))))
+dnl
+dnl If syslog(3) not in libc, check -lsocket, -lnsl and -linet
+dnl
+AC_CHECK_FUNC(syslog, ,AC_CHECK_LIB(socket, syslog, [NET_LIBS="${NET_LIBS} -lsocket"; LIBS="${LIBS} -lsocket"], AC_CHECK_LIB(nsl, syslog, [NET_LIBS="${NET_LIBS} -lnsl"; LIBS="${LIBS} -lnsl"], AC_CHECK_LIB(inet, syslog, [NET_LIBS="${NET_LIBS} -linet"; LIBS="${LIBS} -linet"]))))
+dnl
+dnl Bison and DCE use alloca(3), if not in libc, use the sudo one (from gcc)
+dnl (gcc includes its own alloca(3) but other compilers may not)
+dnl
+if test "$with_DCE" = "yes" -o "$ac_cv_prog_YACC" = "bison -y"; then
+    AC_FUNC_ALLOCA
+fi
+
+dnl
+dnl Kerberos 5
+dnl
+if test "$with_kerb5" = "yes"; then
+    AC_DEFINE(HAVE_KERB5)
+    if test -f "/usr/local/include/krb5.h"; then
+	CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+    elif test -f "/usr/local/kerberos/include/krb5.h"; then
+	CPPFLAGS="$CPPFLAGS -I/usr/local/kerberos/include"
+    elif test -f "/usr/local/krb5/include/krb5.h"; then
+	CPPFLAGS="$CPPFLAGS -I/usr/local/krb5/include"
+    else
+	echo 'Unable to locate kerberos 5 include files, you will have to edit the Makefile and add -I/path/to/krb/includes to CPPFLAGS'
+    fi
+
+    if test -f "/usr/local/lib/libkrb5.a"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/lib"
+    elif test -f "/usr/local/kerberos/lib/libkrb5.a"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/kerberos/lib"
+    elif test -f "/usr/local/krb5/lib/libkrb5.a"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/krb5/lib"
+    else
+	echo 'Unable to locate kerberos 5 libraries, you will have to edit the Makefile and add -L/path/to/krb/libs to SUDO_LDFLAGS'
+    fi
+
+    SUDO_LIBS="${SUDO_LIBS} -lkrb5 -lk5crypto -lcom_err"
+    AUTH_OBJS="${AUTH_OBJS} kerb5.o"
+fi
+
+dnl
+dnl Find kerberos 4 includes and libs or complain
+dnl
+if test "$with_kerb4" = "yes"; then
+    AC_DEFINE(HAVE_KERB4)
+    if test -f "/usr/include/kerberosIV/krb.h"; then
+	CPPFLAGS="${CPPFLAGS} -I/usr/include/kerberosIV"
+    elif test -f "/usr/local/include/kerberosIV/krb.h"; then
+	CPPFLAGS="${CPPFLAGS} -I/usr/local/include/kerberosIV"
+    elif test -f "/usr/kerberos/include/krb.h"; then
+	CPPFLAGS="${CPPFLAGS} -I/usr/kerberos/include"
+    elif test -f "/usr/local/kerberos/include/krb.h"; then
+	CPPFLAGS="${CPPFLAGS} -I/usr/local/kerberos/include"
+    else
+	echo 'Unable to locate kerberos 4 include files, you will have to edit the Makefile and add -I/path/to/krb/includes to CPPFLAGS'
+    fi
+
+    if test -d "/usr/kerberos/lib"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/kerberos/lib"
+    elif test -d "/usr/lib/kerberos"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/lib/kerberos"
+    elif test -f "/usr/local/lib/libkrb.a"; then
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/lib"
+    elif test ! -f "/usr/lib/libkrb.a"; then
+	echo 'Unable to locate kerberos 4 libraries, you will have to edit the Makefile and add -L/path/to/krb/libs to SUDO_LDFLAGS'
+    fi
+
+    AC_HAVE_LIBRARY(des, SUDO_LIBS="${SUDO_LIBS} -lkrb -ldes", SUDO_LIBS="${SUDO_LIBS} -lkrb")
+    AUTH_OBJS="${AUTH_OBJS} kerb4.o"
+fi
+
+dnl
+dnl PAM libs
+dnl
+if test "$with_pam" = "yes"; then
+    SUDO_LIBS="${SUDO_LIBS} -ldl -lpam"
+fi
+
+dnl
+dnl extra AFS libs and includes
+dnl
+if test "$with_AFS" = "yes"; then
+
+    # looks like the "standard" place for AFS libs is /usr/afsws/lib
+    AFSLIBDIRS="/usr/lib/afs /usr/afsws/lib /usr/afsws/lib/afs"
+    for i in $AFSLIBDIRS; do
+	if test -d ${i}; then
+	    SUDO_LDFLAGS="${SUDO_LDFLAGS} -L${i}"
+	    FOUND_AFSLIBDIR=true
+	fi
+    done
+    if test -z "$FOUND_AFSLIBDIR"; then
+	echo 'Unable to locate AFS libraries, you will have to edit the Makefile and add -L/path/to/afs/libs to SUDO_LDFLAGS or rerun configure with the --with-libpath options.'
+    fi
+
+    # Order is important here.  Note that we build AFS_LIBS from right to left
+    # since AFS_LIBS may be initialized with BSD compat libs that must go last
+    AFS_LIBS="-laudit ${AFS_LIBS}"
+    for i in $AFSLIBDIRS; do
+	if test -f ${i}/util.a; then
+	    AFS_LIBS="${i}/util.a ${AFS_LIBS}"
+	    FOUND_UTIL_A=true
+	    break;
+	fi
+    done
+    if test -z "$FOUND_UTIL_A"; then
+	AFS_LIBS="-lutil ${AFS_LIBS}"
+    fi
+    AFS_LIBS="-lkauth -lprot -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcom_err ${AFS_LIBS}"
+
+    # AFS includes may live in /usr/include on some machines...
+    for i in /usr/afsws/include; do
+	if test -d ${i}; then
+	    CPPFLAGS="${CPPFLAGS} -I${i}"
+	    FOUND_AFSINCDIR=true
+	fi
+    done
+
+    if test -z "$FOUND_AFSLIBDIR"; then
+	echo 'Unable to locate AFS include dir, you may have to edit the Makefile and add -I/path/to/afs/includes to CPPFLAGS or rerun configure with the --with-incpath options.'
+    fi
+fi
+
+dnl
+dnl extra DCE obj + lib
+dnl Order of libs in HP-UX 10.x is important, -ldce must be last.
+dnl
+if test "$with_DCE" = "yes"; then
+    DCE_OBJS="${DCE_OBJS} dce_pwent.o"
+    SUDO_LIBS="${SUDO_LIBS} -ldce"
+fi
+
+dnl
+dnl extra S/Key lib and includes
+dnl
+if test "$with_skey" = "yes"; then
+    SUDO_LIBS="${SUDO_LIBS} -lskey"
+    if test -f /usr/include/skey.h -a -f /usr/lib/libskey.a; then
+	:
+    elif test -f /usr/local/include/skey.h; then
+	CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/lib"
+    elif test "$with_csops" = "yes" -a -f /tools/cs/skey/include/skey.h -a -f /tools/cs/skey/lib/libskey.a; then
+	CPPFLAGS="${CPPFLAGS} -I/tools/cs/skey/include"
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/tools/cs/skey/lib"
+    else
+	echo 'Unable to locate libskey.a and/or skey.h, you will have to edit the Makefile and add -L/path/to/skey/lib to SUDO_LDFLAGS and/or -I/path/to/skey.h to CPPFLAGS'
+    fi
+fi
+
+dnl
+dnl extra OPIE lib and includes
+dnl
+if test "$with_opie" = "yes"; then
+    SUDO_LIBS="${SUDO_LIBS} -lopie"
+    if test -f /usr/include/opie.h -a -f /usr/lib/libopie.a; then
+	:
+    elif test -f /usr/local/include/opie.h; then
+	CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
+	SUDO_LDFLAGS="${SUDO_LDFLAGS} -L/usr/local/lib"
+    else
+	echo 'Unable to locate libopie.a and/or opie.h, you will have to edit the Makefile and add -L/path/to/opie/lib to SUDO_LDFLAGS and/or -I/path/to/opie.h to CPPFLAGS'
+    fi
+fi
+
+dnl
+dnl extra SecurID lib + includes
+dnl
+if test -n "$with_SecurID" -a "$with_SecurID" != "no"; then
+    if test "$with_SecurID" != "yes"; then
+	SUDO_LIBS="${SUDO_LIBS} ${with_SecurID}/sdiclient.a"
+	CPPFLAGS="${CPPFLAGS} -I${with_SecurID}"
+    elif test -f /usr/ace/examples/sdiclient.a; then
+	SUDO_LIBS="${SUDO_LIBS} /usr/ace/examples/sdiclient.a"
+	CPPFLAGS="${CPPFLAGS} -I/usr/ace/examples"
+    else
+	SUDO_LIBS="${SUDO_LIBS} /usr/ace/sdiclient.a"
+	CPPFLAGS="${CPPFLAGS} -I/usr/ace"
+    fi
+fi
+
+dnl
+dnl extra FWTK libs + includes
+dnl
+if test "$with_fwtk" = "yes"; then
+    SUDO_LIBS="${SUDO_LIBS} -lauth -lfwall"
+fi
+
+dnl
+dnl extra 'authenticate' lib (AIX only?)
+dnl
+if test "$with_authenticate" = "yes"; then
+    SUDO_LIBS="${SUDO_LIBS} -ls"
+fi
+
+dnl
+dnl Check for log file and timestamp locations
+dnl
+SUDO_LOGFILE
+SUDO_TIMEDIR
+
+dnl
+dnl Use passwd (and secureware) auth modules?
+dnl
+if test "$with_passwd" = "no"; then
+    AC_DEFINE(WITHOUT_PASSWD)
+    if test -z "$AUTH_OBJS"; then
+	AC_MSG_ERROR([no authentication methods defined.])
+    fi
+else
+    if test -n "$SECUREWARE"; then
+	AUTH_OBJS="${AUTH_OBJS} passwd.o secureware.o"
+    else
+	AUTH_OBJS="${AUTH_OBJS} passwd.o"
+    fi
+fi
+
+dnl
+dnl LIBS may contain duplicates from SUDO_LIBS or NET_LIBS so prune it.
+dnl
+if test -n "$LIBS"; then
+    L="$LIBS"
+    LIBS=
+    for l in ${L}; do
+	dupe=0
+	for sl in ${SUDO_LIBS} ${NET_LIBS}; do
+	    test $l = $sl && dupe=1
+	done
+	test $dupe = 0 && LIBS="${LIBS} $l"
+    done
+fi
+
+dnl
+dnl Set exec_prefix
+dnl
+test "$exec_prefix" = "NONE" && exec_prefix='$(prefix)'
+
+dnl
+dnl Substitute into the Makefiles
+dnl
+AC_OUTPUT(Makefile)
+
+dnl
+dnl Spew any text the user needs to know about
+dnl
+if test "$with_pam" = "yes"; then
+    echo ""
+    case $host in
+	*-*-linux*)
+	    echo "You will need to customize sample.pam and install it as /etc/pam.d/sudo"
+	    ;;
+    esac
+    echo ""
+fi

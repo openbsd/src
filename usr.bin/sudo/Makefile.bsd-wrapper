@@ -1,0 +1,73 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1.1.1 1999/11/18 16:29:01 millert Exp $
+
+MAN=	sudo.8 sudoers.5 visudo.8
+XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
+CONFIGURE_OPTS=	--prefix=/usr --with-devel --with-insults \
+		--with-env-editor --with-logfac=authpriv
+
+.include <bsd.own.mk>
+
+.if (${SKEY} == "yes")
+CONFIGURE_OPTS+=--with-skey
+LDADD+= -lskey
+DPADD+= ${LIBSKEY}
+.endif
+
+.if (${KERBEROS} == "yes")
+CONFIGURE_OPTS+=--with-kerb4
+LDADD+= -lkrb -ldes -lkafs
+DPADD+= ${LIBKRB} ${LIBDES} ${LIBKAFS}
+.endif
+
+all:	config.status
+	${MAKE}
+
+.FORCE: .IGNORE
+
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
+config: .FORCE
+.ifndef GLOBAL_AUTOCONF_CACHE
+	-rm -f config.cache
+.endif
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	${XCFLAGS} \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	sh ${.CURDIR}/configure ${CONFIGURE_OPTS} ${CF}
+
+config.status:
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	${XCFLAGS} \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	sh ${.CURDIR}/configure ${CONFIGURE_OPTS} ${CF}
+
+.ifdef NOMAN
+maninstall:
+        @echo NOMAN is set
+.endif
+
+install: maninstall
+	${MAKE} ${XCFLAGS} prefix=${DESTDIR}/usr sysconfdir=${DESTDIR}/etc \
+		bindir=${DESTDIR}/usr/bin install-binaries install-sudoers
+
+clean cleandir:
+	 -@test -e Makefile && ${MAKE} distclean
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.ifndef NOMAN
+.include <bsd.man.mk>
+.endif

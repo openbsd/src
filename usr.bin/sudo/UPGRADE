@@ -1,0 +1,60 @@
+Notes on upgrading from an older release
+========================================
+
+o Upgrading from a version prior to 1.6:
+
+    As of sudo 1.6, parsing of runas entries and the NOPASSWD tag
+    has changed.  Prior to 1.6, a runas specifier applied only to
+    a single command directly following it.  Likewise, the NOPASSWD
+    tag only allowed the command directly following it to be run
+    without a password.  Starting with sudo 1.6, both the runas
+    specifier and the NOPASSWD tag are "sticky" for an entire
+    command list.  So, given the following line in sudo < 1.6
+
+	millert ALL=(daemon) NOPASSWD:/usr/bin/whoami,/bin/ls
+
+    millert would be able to run /usr/bin/whoami as user daemon
+    without a password and /bin/ls as root with a password.
+
+    As of sudo 1.6, the same line now means that millert is able
+    to run run both /usr/bin/whoami and /bin/ls as user daemon
+    without a password.  To expand on this, take the following
+    example:
+
+	millert ALL=(daemon) NOPASSWD:/usr/bin/whoami, (root) /bin/ls, \
+	    /sbin/dump
+
+    millert can run /usr/bin/whoami as daemon and /bin/ls and
+    /sbin/dump as root.  No password need be given for either
+    command.  In other words, the "(root)" sets the default runas
+    user to root for the rest of the list.  If we wanted to require
+    a password for /bin/ls and /sbin/dump the line could be written
+    thusly:
+
+	millert ALL=(daemon) NOPASSWD:/usr/bin/whoami, \
+	    (root) PASSWD:/bin/ls, /sbin/dump
+
+    Additionally, sudo now uses a per-user timestamp directory
+    instead of a timestamp file.  This allows tty timestamps to
+    simply be files within the user's timestamp dir.  For the
+    default, non-tty case, the timestamp on the directory itself
+    is used.
+
+    Also, the temporary file used by visudo is now /etc/sudoers.tmp
+    since some versions of vipw on systems with shadow passwords use
+    /etc/stmp for the temporary shadow file.
+
+o Upgrading from a version prior to 1.5:
+
+    By default, sudo expects the sudoers file to be mode 0440 and
+    to be owned by user and group 0.  This differs from version 1.4
+    and below which expected the sudoers file to be mode 0400 and
+    to be owned by root.  Doing a `make install' will set the sudoers
+    file to the new mode and group.  If sudo encounters a sudoers
+    file with the old permissions it will attempt to update it to
+    the new scheme.  You cannot, however, use a sudoers file with
+    the new permissions with an old sudo binary.  It is suggested
+    that if have a means of distributing sudo you distribute the
+    new binaries first, then the new sudoers file (or you can leave
+    sudoers as is and sudo will fix the permissions itself as long
+    as sudoers is on a local filesystem).

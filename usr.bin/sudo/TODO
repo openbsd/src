@@ -1,0 +1,84 @@
+TODO list (most will be addressed in sudo 2.0)
+
+01) Redo parsing to be more like op(8) with true command aliases where
+    can specify uid, gid(s) and part/all of the environment.
+
+02) Add default options to sudoers file (umask, def uid, def gids, dir, PATH).
+    Defaults = option1, option2, ...
+    Defaults@host = option1, option2, ...
+    Defaults!user = option1, option2, ...
+    Defaults%group = option1, option2, ...
+    Defaults+netgroup = option1, option2, ...
+
+03) Add a SHELLS reserved word that checks against /etc/shells.
+
+04) Make the sudoers file accessible via NIS, Hesiod, and maybe NetInfo.
+
+05) Add a -h (?) flag to sudo for a history mechanism.
+
+06) Add an option to hard-code LD_LIBRARY_PATH?
+
+07) Add Prog_Alias facility (Prog_Alias VI = /usr/secure/bin/vi +args).
+
+08) check for <net/errno.h> in configure and include it in sudo.c if it exists.
+
+09) Add generic STREAMS support for getting interfaces and netmasks.
+
+10) Add support for "safe scripts" by checking for shell script
+    cookie (first two bytes are "#!") and execing the shell outselves
+    after doing the stat to guard against spoofing.  This should avoid
+    the race condition caused by going through namei() twice...
+
+11) Overhaul testsudoers to use things from parse.o so we don't reimplement
+    things.
+
+12) Make runas_user a struct "runas" with user and group components.
+    (maybe uid and gid too???)
+
+13) Add -g group/gid option.
+
+14) Should be able to mix Cmnd_Alias's and command args.  Ie:
+	pete   ALL=PASSWD [A-z]*,!PASSWD root
+    where PASSWD was defined to be /usr/bin/passwd.
+    This requires the arg parsing to happen in the yacc grammer.
+    At the very least, commands and args have to become separate
+    tokens in the lexer.
+
+15) Add a per-tty restriction?  Ie: only can run foo from /dev/console.
+
+16) Add test for how to read ether interfaces in configure script
+
+17) Add configure check for $(CC) -R and use it in addition to -L
+
+18) An option to make "sudo -s" use the target user's shell might be nice
+    (and more like su).
+
+19) Use getrlimit() in preference to getconf()/getdtablesize().
+
+20) Add configure option to enable old behavior of visudo (O_EXCL)?
+    --without-sudoers-lock?
+
+21) Profile sudo again (is the yacc grammar optimal?)
+
+22) Zero out encrypted passwords after use.  Use an Exit function or
+    some such (have to hook in to emalloc() and friends).
+    Hard (impossible?) to be thorough w/ atexit/on_exit.
+
+23) Make 'sudo -l user' if run as root do a "sudo -l" output for the specified
+    user.
+
+24) Use strtol() and strtoul(), not atoi()
+
+25) In parse.yacc get rid on unneeded '{ ; }'
+
+26) Look into %e, %p, %k in parse.lex
+
+27) Document Defaults stuff in sudoers.pod
+
+28) Make syslog stuff work on vanilla ultrix
+
+29) Implement date_format and log_format options.
+
+30) Add support for: Default:user@host
+
+31) Add -S flag to force password read from stdin
