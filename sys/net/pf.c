@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.136 2001/08/22 00:26:10 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.137 2001/08/22 03:02:25 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2087,11 +2087,11 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			}
 		}
 		s->src.seqlo = ntohl(th->th_seq) + len;
-		if (th->th_flags & TH_SYN)
-			s->src.seqlo++;
-		if (th->th_flags & TH_FIN)
-			s->src.seqlo++;
 		s->src.seqhi = s->src.seqlo + 1;
+		if (th->th_flags & TH_SYN)
+			s->src.seqhi++;
+		if (th->th_flags & TH_FIN)
+			s->src.seqhi++;
 		s->src.max_win = MAX(ntohs(th->th_win), 1);
 
 		s->dst.seqlo = 0;	/* Haven't seen these yet */
@@ -2512,9 +2512,13 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	if ((th->th_flags & TH_ACK) == 0) {
 		/* Let it pass through the ack skew check */
 		ack = dst->seqlo;
-	} else if (ack == 0 &&
-	    (th->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)) {
-		/* broken tcp stacks do not set ack */
+	} else if ((ack == 0 &&
+	    (th->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)) ||
+	    /* broken tcp stacks do not set ack */
+	    (dst->state < TCPS_SYN_SENT)) {
+	    /* Many stacks (ours included) will set the ACK number in an
+	     * FIN|ACK if the SYN times out -- no sequence to ACK.
+	     */
 		ack = dst->seqlo;
 	}
 
@@ -2649,8 +2653,11 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			printf("pf: BAD state: ");
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
-			printf(" seq=%lu ack=%lu len=%u ackskew=%d pkts=%d\n",
-			    seq, ack, len, ackskew, (*state)->packets++);
+			printf(" seq=%lu ack=%lu len=%u ackskew=%d pkts=%d "
+			    "dir=%s,%s\n", seq, ack, len, ackskew,
+			    ++(*state)->packets,
+			    direction == PF_IN ? "in" : "out",
+			    direction == (*state)->direction ? "fwd" : "rev");
 			printf("pf: State failure on: %c %c %c %c | %c %c\n",
 			    SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
 			    SEQ_GEQ(seq, src->seqlo - dst->max_win) ? ' ': '2',
