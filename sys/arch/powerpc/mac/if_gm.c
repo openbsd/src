@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.3 2000/04/01 15:38:21 rahnds Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.4 2000/07/07 13:32:46 rahnds Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -259,7 +259,7 @@ gmac_attach(parent, self, aux)
 	* pci info? pa_intrline returns 60, not 1 like the hardware expects
 	* on uni-north G4 system.
 	*/
-	if (pci_intr_establish(pa->pa_pc, 0x1, IPL_NET,
+	if (pci_intr_establish(pa->pa_pc, pa->pa_intrline, IPL_NET,
 		gmac_intr, sc, "gmac") == NULL)
 	{
 		printf(": unable to establish interrupt");
@@ -455,7 +455,7 @@ gmac_intr(v)
 	if (status & GMAC_INT_RXDONE)
 		gmac_rint(sc);
 
-	if (status & GMAC_INT_TXDONE)
+	if (status & GMAC_INT_TXEMPTY)
 		gmac_tint(sc);
 
 	return 1;
@@ -466,17 +466,9 @@ gmac_tint(sc)
 	struct gmac_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	volatile struct gmac_dma *dp;
-	int i;
-
-	i = gmac_read_reg(sc, GMAC_TXDMACOMPLETE);
-	dp = &sc->sc_txlist[i];
-	dp->cmd = 0;				/* to be safe */
-	__asm __volatile ("sync");
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
-	ifp->if_opackets++;
 	gmac_start(ifp);
 }
 
@@ -613,8 +605,6 @@ gmac_start(ifp)
 		if (m == 0)
 			break;
 
-		ifp->if_flags |= IFF_OACTIVE;
-
 		/* 5 seconds to watch for failing to transmit */
 		ifp->if_timer = 5;
 		ifp->if_opackets++;		/* # of pkts */
@@ -644,6 +634,14 @@ gmac_start(ifp)
 		if (ifp->if_bpf)
 			bpf_tap(ifp->if_bpf, buff, tlen);
 #endif
+		i++;
+		if (i == NTXBUF) {
+			i = 0;
+		}
+		if (i == gmac_read_reg(sc, GMAC_TXDMACOMPLETE)) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 	}
 }
 
@@ -788,6 +786,18 @@ gmac_init_mac(sc)
 	gmac_write_reg(sc, GMAC_TXMACCONFIG, 0);
 	gmac_write_reg(sc, GMAC_XIFCONFIG, 5);
 	gmac_write_reg(sc, GMAC_MACCTRLCONFIG, 0);
+	if (IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) {
+		gmac_write_reg(sc, GMAC_TXMACCONFIG, 6);
+		gmac_write_reg(sc, GMAC_XIFCONFIG, 1);
+	} else {
+		gmac_write_reg(sc, GMAC_TXMACCONFIG, 0);
+		gmac_write_reg(sc, GMAC_XIFCONFIG, 5);
+	}
+	if (0) { /* g-bit? */ 
+		gmac_write_reg(sc, GMAC_MACCTRLCONFIG, 3);
+	} else {
+		gmac_write_reg(sc, GMAC_MACCTRLCONFIG, 0);
+	}
 }
 
 void
@@ -813,7 +823,7 @@ gmac_init(sc)
 	gmac_start_txdma(sc);
 	gmac_start_rxdma(sc);
 
-	gmac_write_reg(sc, GMAC_INTMASK, ~(GMAC_INT_TXDONE | GMAC_INT_RXDONE));
+	gmac_write_reg(sc, GMAC_INTMASK, ~(GMAC_INT_TXEMPTY | GMAC_INT_RXDONE));
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;

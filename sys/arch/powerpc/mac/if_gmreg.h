@@ -37,8 +37,9 @@ struct gmac_dma {
 #define GMAC_SOP	0x40000000	/* start of packet? */
 #define GMAC_LEN_MASK	0x00003fff
 
-#define GMAC_INT_TXDONE	0x04
-#define GMAC_INT_RXDONE	0x10
+#define GMAC_INT_TXEMPTY	0x02 /* TX ring empty */
+#define GMAC_INT_TXDONE		0x04
+#define GMAC_INT_RXDONE		0x10
 
 #define GMAC_RXMAC_PR	0x08
 
