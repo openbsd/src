@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.408 2001/06/20 21:58:11 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.409 2001/06/21 09:24:26 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -321,7 +321,7 @@ vendor DUPONT		0x1115	DuPont Pixel Systems
 vendor DATATRANSLATION	0x1116	Data Translation
 vendor DATACUBE		0x1117	Datacube
 vendor BERG		0x1118	Berg Electronics
-vendor VORTEX		0x1119	Vortex Computer Systems
+vendor VORTEX		0x1119	Vortex
 vendor EFFICIENTNETS	0x111a	Efficent Networks
 vendor TELEDYNE		0x111b	Teledyne
 vendor TRICORD		0x111c	Tricord Systems
