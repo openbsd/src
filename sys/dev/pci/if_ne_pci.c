@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.3 1998/11/06 06:32:15 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.4 1999/01/11 01:28:03 millert Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -210,10 +210,8 @@ ne_pci_attach(parent, self, aux)
 	int *media, nmedia, defmedia;
 
 	npp = ne_pci_lookup(pa);
-	if (npp == NULL) {
-		printf("\n");
-		panic("ne_pci_attach: impossible");
-	}
+	if (npp == NULL)
+		panic("\nne_pci_attach: impossible");
 
 	printf(": %s Ethernet\n", npp->npp_name);
 
