@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.36 2001/05/20 05:53:10 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.37 2001/06/05 23:07:50 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1259,18 +1259,23 @@ boot(howto)
 		 */
 		resettodr();
 	}
-	splhigh();	  /* extreme priority */
+
+	/* Disable interrupts. */
+	splhigh();
+
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
-		bugreturn();
 	} else {
+		/* If rebooting and a dump is requested, do it. */
 		if (howto & RB_DUMP)
 			dumpsys();
-		doboot();
-		/*NOTREACHED*/
+
+		/* Run any shutdown hooks. */
+		doshutdownhooks();
 	}
+	doboot();
 	/*NOTREACHED*/
-	while (1);  /* to keep compiler happy, and me from going crazy */
+	for (;;);  /* to keep compiler happy, and me from going crazy */
 }
 
 #ifdef MVME188
