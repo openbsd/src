@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.43 1999/05/20 12:52:35 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.44 1999/05/23 09:04:46 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -83,6 +83,7 @@
 int		ipsp_kern __P((int, char **, int));
 u_int8_t       	get_sa_require  __P((struct inpcb *));
 int		check_ipsec_policy  __P((struct inpcb *, u_int32_t));
+void		tdb_rehash __P((void));
 
 extern int	ipsec_auth_default_level;
 extern int	ipsec_esp_trans_default_level;
@@ -143,6 +144,10 @@ struct xformsw xformsw[] = {
 struct xformsw *xformswNXFORMSW = &xformsw[sizeof(xformsw)/sizeof(xformsw[0])];
 
 unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */ 
+
+#define TDB_HASHSIZE_INIT 32
+static struct tdb **tdbh;
+static u_int tdb_hashmask = TDB_HASHSIZE_INIT - 1;
 
 /*
  * Check which transformationes are required
@@ -410,13 +415,16 @@ gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
     struct tdb *tdbp;
     int i, s;
 
+    if (tdbh == NULL)
+      return (struct tdb *) NULL;
+
     for (i = 0; i < SA_LEN(&dst->sa); i++)
       hashval += ptr[i];
     
-    hashval %= TDB_HASHMOD;
+    hashval &= tdb_hashmask;
 
     s = spltdb();
-    for (tdbp = tdbh[hashval]; tdbp; tdbp = tdbp->tdb_hnext)
+    for (tdbp = tdbh[hashval]; tdbp != NULL; tdbp = tdbp->tdb_hnext)
       if ((tdbp->tdb_spi == spi) && 
 	  !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)) &&
 	  (tdbp->tdb_sproto == proto))
@@ -707,9 +715,12 @@ find_global_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
     struct tdb *tdb;
     int i;
 
-    for (i = 0; i < TDB_HASHMOD; i++)
+    if (tdbh == NULL)
+      return (struct flow *) NULL;
+
+    for (i = 0; i <= tdb_hashmask; i++)
     {
-	for (tdb = tdbh[i]; tdb; tdb = tdb->tdb_hnext)
+	for (tdb = tdbh[i]; tdb != NULL; tdb = tdb->tdb_hnext)
 	  if ((flow = find_flow(src, srcmask, dst, dstmask, proto, tdb)) !=
 	      (struct flow *) NULL)
 	    return flow;
@@ -717,18 +728,59 @@ find_global_flow(union sockaddr_union *src, union sockaddr_union *srcmask,
     return (struct flow *) NULL;
 }
 
+/*
+ * Caller is responsible for spltdb().
+ */
+
+void
+tdb_rehash(void)
+{
+    struct tdb **new_tdbh, *tdbp, *tdbnp;
+    u_int i, j, new_hashmask = (tdb_hashmask << 1) | 1;
+    u_int8_t *ptr;
+    u_int32_t hashval;
+
+    MALLOC(new_tdbh, struct tdb **, sizeof(struct tdb *) * (new_hashmask + 1),
+	   M_TDB, M_WAITOK);
+    bzero(new_tdbh, sizeof(struct tdbh *) * (new_hashmask + 1));
+    for (i = 0; i <= tdb_hashmask; i++)
+      for (tdbp = tdbh[i]; tdbp != NULL; tdbp = tdbnp) {
+	  tdbnp = tdbp->tdb_hnext;
+      	  hashval = tdbp->tdb_sproto + tdbp->tdb_spi;
+	  ptr = (u_int8_t *) &tdbp->tdb_dst;
+	  for (j = 0; j < SA_LEN(&tdbp->tdb_dst.sa); j++)
+	    hashval += ptr[j];
+	  hashval &= new_hashmask;
+	  tdbp->tdb_hnext = new_tdbh[hashval];
+	  new_tdbh[hashval] = tdbp;
+      }
+    FREE(tdbh, M_TDB);
+    tdb_hashmask = new_hashmask;
+    tdbh = new_tdbh;
+}
+
 void
 puttdb(struct tdb *tdbp)
 {
     u_int8_t *ptr = (u_int8_t *) &tdbp->tdb_dst;
-    u_int32_t hashval = tdbp->tdb_sproto + tdbp->tdb_spi, i;
-    int s;
+    u_int32_t hashsum = tdbp->tdb_sproto + tdbp->tdb_spi, hashval, i;
+    int s = spltdb();
+
+    if (tdbh == NULL) {
+	MALLOC(tdbh, struct tdb **, sizeof(struct tdb *) * (tdb_hashmask + 1),
+	       M_TDB, M_WAITOK);
+	bzero(tdbh, sizeof(struct tdb *) * (tdb_hashmask + 1));
+    }
 
     for (i = 0; i < SA_LEN(&tdbp->tdb_dst.sa); i++)
-      hashval += ptr[i];
+      hashsum += ptr[i];
     
-    hashval %= TDB_HASHMOD;
-    s = spltdb();
+    hashval = hashsum & tdb_hashmask;
+    /* Rehash if this tdb would cause a bucket to have more than two items. */
+    if (tdbh[hashval] != NULL && tdbh[hashval]->tdb_hnext != NULL) {
+	tdb_rehash();
+	hashval = hashsum & tdb_hashmask;
+    }
     tdbp->tdb_hnext = tdbh[hashval];
     tdbh[hashval] = tdbp;
     splx(s);
@@ -790,7 +842,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
     for (i = 0; i < SA_LEN(&tdbp->tdb_dst.sa); i++)
       hashval += ptr[i];
 
-    hashval %= TDB_HASHMOD;
+    hashval &= tdb_hashmask;
 
     s = spltdb();
     if (tdbh[hashval] == tdbp)
@@ -910,14 +962,14 @@ ipsp_kern(int off, char **bufp, int len)
     if (off == 0)
       kernfs_epoch++;
     
-    if (bufp == NULL)
+    if (bufp == NULL || tdbh == NULL)
       return 0;
 
     bzero(buffer, IPSEC_KERNFS_BUFSIZE);
 
     *bufp = buffer;
     
-    for (i = 0; i < TDB_HASHMOD; i++)
+    for (i = 0; i <= tdb_hashmask; i++)
     {
         s = spltdb();
 	for (tdb = tdbh[i]; tdb; tdb = tdb->tdb_hnext)

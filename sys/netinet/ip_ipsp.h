@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.33 1999/05/20 12:52:35 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.34 1999/05/23 09:04:46 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -287,8 +287,6 @@ struct tdb				/* tunnel descriptor block */
     TAILQ_HEAD(tdb_inp_head, inpcb) tdb_inp;
 };
 
-#define TDB_HASHMOD	257
-
 struct tdb_ident {
     u_int32_t spi;
     union sockaddr_union dst;
@@ -388,7 +386,6 @@ extern int ipsec_in_use;
 extern u_int8_t hmac_ipad_buffer[64];
 extern u_int8_t hmac_opad_buffer[64];
 
-struct tdb *tdbh[TDB_HASHMOD];
 extern TAILQ_HEAD(expclusterlist_head, tdb) expclusterlist;
 extern TAILQ_HEAD(explist_head, tdb) explist;
 extern struct xformsw xformsw[], *xformswNXFORMSW;
