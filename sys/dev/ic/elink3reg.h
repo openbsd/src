@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epreg.h,v 1.14 1995/11/10 19:39:25 christos Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.1 1996/04/25 02:17:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@novatel.ca>
@@ -336,13 +336,3 @@
 #define IS_PCI_AUI 			(1<<5)
 #define IS_PCI_BNC 			(1<<4)
 #define IS_PCI_UTP 			(1<<3)
-
-/*
- * EISA registers (offset from slot base)
- */
-#define	EISA_VENDOR		0x0c80	/* vendor ID (2 ports) */
-#define	EISA_MODEL		0x0c82	/* model number (2 ports) */
-#define	EISA_CONTROL		0x0c84
-#define	 EISA_RESET		0x04
-#define	 EISA_ERROR		0x02
-#define	 EISA_ENABLE		0x01

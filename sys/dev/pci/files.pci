@@ -1,5 +1,5 @@
-#	$OpenBSD: files.pci,v 1.4 1996/04/21 22:25:06 deraadt Exp $
-#	$NetBSD: files.pci,v 1.13 1996/03/17 00:55:24 thorpej Exp $
+#	$OpenBSD: files.pci,v 1.5 1996/05/02 13:38:15 deraadt Exp $
+#	$NetBSD: files.pci,v 1.14 1996/04/25 02:17:05 thorpej Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -34,3 +34,8 @@ file	dev/pci/ncr.c			ncr
 device	ppb: pcibus
 attach	ppb at pci
 file	dev/pci/ppb.c			ppb
+
+# 3Com 3c590 and 3c595 Ethernet controllers
+# device declaration in sys/conf/files
+attach	ep at pci with ep_pci
+file	dev/pci/if_ep_pci.c		ep_pci

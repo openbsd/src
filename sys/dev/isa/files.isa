@@ -1,5 +1,5 @@
-#	$OpenBSD: files.isa,v 1.12 1996/05/02 07:43:07 niklas Exp $
-#	$NetBSD: files.isa,v 1.17 1996/03/29 20:53:30 mycroft Exp $
+#	$OpenBSD: files.isa,v 1.13 1996/05/02 13:38:09 deraadt Exp $
+#	$NetBSD: files.isa,v 1.18 1996/04/25 02:15:42 thorpej Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -162,12 +162,9 @@ device	el: ether, ifnet
 attach	el at isa
 file	dev/isa/if_el.c			el
 
-# 3Com 3C5x9, 3c59x (EtherLink III) family
-device	ep: ether, ifnet, elink
-attach	ep at isa with ep_isa
-attach	ep at pci with ep_pci
-attach	ep at pcmcia with ep_pcmcia
-file	dev/isa/if_ep.c			ep & (ep_isa | ep_pci | ep_pcmcia) needs-flag
+# 3Com 3C509 Ethernet controller
+attach	ep at isa with ep_isa: elink
+file	dev/isa/if_ep_isa.c		ep_isa
 
 # Fujitsu MB8696[05]-based boards
 # (Allied Telesis AT1700)
