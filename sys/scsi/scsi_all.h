@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.18 2004/12/18 18:23:53 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.19 2005/04/06 00:00:09 marco Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -161,10 +161,12 @@ struct scsi_prevent {
 #define REQUEST_SENSE		0x03
 #define INQUIRY			0x12
 #define MODE_SELECT		0x15
-#define MODE_SENSE		0x1a
-#define START_STOP		0x1b
 #define RESERVE			0x16
 #define RELEASE			0x17
+#define MODE_SENSE		0x1a
+#define START_STOP		0x1b
+#define RECEIVE_DIAGNOSTIC	0x1c
+#define SEND_DIAGNOSTIC		0x1d
 #define PREVENT_ALLOW		0x1e
 #define POSITION_TO_ELEMENT	0x2b
 #define	CHANGE_DEFINITION	0x40
