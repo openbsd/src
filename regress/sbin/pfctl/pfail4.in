@@ -1,0 +1,1 @@
+block return-icmp6 in inet proto icmp all

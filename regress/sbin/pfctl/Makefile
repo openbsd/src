@@ -1,12 +1,19 @@
-# $OpenBSD: Makefile,v 1.8 2001/09/06 18:45:13 jasoni Exp $
+# $OpenBSD: Makefile,v 1.9 2001/09/15 23:25:23 wilfried Exp $
 
 NOMAN=
 NOPROG=
-PFTESTS=1 2 3 4 5 6 7 8 9
+PFTESTS=1 2 3 4 5 6 7 8 9 10 11
+PFFAIL=1 2 3 4 5 6 7
 
-pfail1:
-	@pfctl -nv -R - < ${.CURDIR}/pfail1.in > /dev/null 2>&1 || \
-	    echo 'test pfail1 fails as expected'
+.for n in ${PFFAIL}
+regress: pfail${n}
+
+pfail${n}:
+	@pfctl -nv -R - < ${.CURDIR}/pfail${n}.in > /dev/null 2>&1 && \
+	    echo 'test pfail${n} does not fail as expected' || true
+
+.PHONY: pfail${n} regress
+.endfor
 
 .for n in ${PFTESTS}
 regress: pf${n}
@@ -30,7 +37,7 @@ binat1.out:
 
 CLEANFILES+=binat1.out
 
-regress: pfail1 binat1
+regress: binat1
 
-.PHONY: regress pfail1
+.PHONY: regress
 .include <bsd.prog.mk>

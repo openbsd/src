@@ -2,8 +2,8 @@
 @0 block in log on kue0 all 
 @0 block return-rst out log on kue0 proto tcp all 
 @0 block return-rst in log on kue0 proto tcp all 
-@0 block return-icmp(3,3) out log on kue0 proto udp all 
-@0 block return-icmp(3,3) in log on kue0 proto udp all 
+@0 block return-icmp out log on kue0 proto udp all 
+@0 block return-icmp in log on kue0 proto udp all 
 @0 block out log quick on kue0 inet from ! 157.161.48.183/32 to any 
 @0 block in quick on kue0 inet from any to 255.255.255.255/32 
 @0 block in log quick on kue0 inet from 10.0.0.0/8 to any 
