@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/09/17 10:46:22 downsj Exp $
+#	$OpenBSD: Makefile,v 1.2 1999/12/10 10:40:47 deraadt Exp $
 
 LIB=	kern
 
@@ -19,8 +19,8 @@ AFLAGS=	-x assembler-with-cpp -traditional-cpp -I${.CURDIR}/../include \
 SRCS=	__main.c ashrdi3.c bzero.S divdi3.c qdivrem.c strlen.S strcat.c \
 	strcmp.c strcpy.c strncmp.c umoddi3.c
 
-SRCS+=	umul.S mul.S rem.S sdiv.S udiv.S umul.S urem.S
-SRCS+=	mul.S saveregs.S umul.S
+SRCS+=	umul.S mul.S rem.S sdiv.S udiv.S urem.S
+SRCS+=	saveregs.S
 
 ${OBJS}:	${.CURDIR}/../Makefile.inc
 
