@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.35 2002/12/30 02:24:35 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.36 2002/12/31 00:00:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -108,6 +108,9 @@ pfattach(int num)
 	    "pfr_ktable", NULL);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfr_kentry", NULL);
+
+	pool_sethardlimit(&pf_state_pl, pf_pool_limits[PF_LIMIT_STATES].limit,
+	    NULL, 0);
 
 	TAILQ_INIT(&pf_anchors);
 	pf_init_ruleset(&pf_main_ruleset);
