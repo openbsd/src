@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.20 2002/04/03 15:33:07 jason Exp $	*/
+/*	$OpenBSD: gem.c,v 1.21 2002/05/07 20:44:41 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -122,8 +122,6 @@ int		gem_eint(struct gem_softc *, u_int);
 int		gem_rint(struct gem_softc *);
 int		gem_tint(struct gem_softc *, u_int32_t);
 void		gem_power(int, void *);
-
-static int	ether_cmp(u_char *, u_char *);
 
 #ifdef GEM_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_arpcom.ac_if.if_flags & IFF_DEBUG) \
@@ -799,22 +797,6 @@ gem_init(struct ifnet *ifp)
 	return (0);
 }
 
-/*
- * Compare two Ether/802 addresses for equality, inlined and unrolled for
- * speed.
- */
-static __inline__ int
-ether_cmp(a, b)
-	u_char *a, *b;
-{       
-        
-	if (a[5] != b[5] || a[4] != b[4] || a[3] != b[3] ||
-	    a[2] != b[2] || a[1] != b[1] || a[0] != b[0])
-		return (0);
-	return (1);
-}
-
-
 void
 gem_init_regs(struct gem_softc *sc)
 {
@@ -1399,7 +1381,7 @@ gem_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			gem_setladrf(sc);
+			gem_init(ifp);
 			error = 0;
 		}
 		break;
@@ -1442,14 +1424,12 @@ gem_setladrf(sc)
 	struct arpcom *ac = &sc->sc_arpcom;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h;
-	u_char *cp;
-	u_int32_t crc;
-	u_int32_t hash[16];
-	u_int32_t v;
-	int len;
+	u_int32_t crc, hash[16], v;
+	int i;
 
 	/* Clear hash table */
-	memset(hash, 0, sizeof(hash));
+	for (i = 0; i < 16; i++)
+		hash[i] = 0;
 
 	/* Get current RX configuration */
 	v = bus_space_read_4(t, h, GEM_MAC_RX_CONFIG);
@@ -1476,7 +1456,7 @@ gem_setladrf(sc)
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (ether_cmp(enm->enm_addrlo, enm->enm_addrhi)) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -1485,29 +1465,15 @@ gem_setladrf(sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
+			for (i = 0; i < 16; i++)
+				hash[i] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
 			goto chipit;
 		}
 
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			int octet = *cp++;
-			int i;
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 
-#define MC_POLY_LE	0xedb88320UL	/* mcast crc, little endian */
-			for (i = 0; i < 8; i++) {
-				if ((crc & 1) ^ (octet & 1)) {
-					crc >>= 1;
-					crc ^= MC_POLY_LE;
-				} else {
-					crc >>= 1;
-				}
-				octet >>= 1;
-			}
-		}
-		/* Just want the 8 most significant bits. */
+		/* Just want the 8 most sigificant bits. */
 		crc >>= 24;
 
 		/* Set the corresponding bit in the filter. */
@@ -1520,22 +1486,8 @@ gem_setladrf(sc)
 
 chipit:
 	/* Now load the hash table into the chip */
-	bus_space_write_4(t, h, GEM_MAC_HASH0, hash[0]);
-	bus_space_write_4(t, h, GEM_MAC_HASH1, hash[1]);
-	bus_space_write_4(t, h, GEM_MAC_HASH2, hash[2]);
-	bus_space_write_4(t, h, GEM_MAC_HASH3, hash[3]);
-	bus_space_write_4(t, h, GEM_MAC_HASH4, hash[4]);
-	bus_space_write_4(t, h, GEM_MAC_HASH5, hash[5]);
-	bus_space_write_4(t, h, GEM_MAC_HASH6, hash[6]);
-	bus_space_write_4(t, h, GEM_MAC_HASH7, hash[7]);
-	bus_space_write_4(t, h, GEM_MAC_HASH8, hash[8]);
-	bus_space_write_4(t, h, GEM_MAC_HASH9, hash[9]);
-	bus_space_write_4(t, h, GEM_MAC_HASH10, hash[10]);
-	bus_space_write_4(t, h, GEM_MAC_HASH11, hash[11]);
-	bus_space_write_4(t, h, GEM_MAC_HASH12, hash[12]);
-	bus_space_write_4(t, h, GEM_MAC_HASH13, hash[13]);
-	bus_space_write_4(t, h, GEM_MAC_HASH14, hash[14]);
-	bus_space_write_4(t, h, GEM_MAC_HASH15, hash[15]);
+	for (i = 0; i < 16; i++)
+		bus_space_write_4(t, h, GEM_MAC_HASH0 + (i * 4), hash[i]);
 
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, v);
 }
