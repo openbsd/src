@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.26 1999/04/02 01:08:16 millert Exp $
+#	$OpenBSD: install.md,v 1.27 1999/04/02 05:17:37 millert Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -226,9 +226,9 @@ echo Welcome to the OpenBSD/sparc ${VERSION} upgrade program.
 This program is designed to help you upgrade your OpenBSD system in a
 simple and rational way.
 
-As a reminder, installing the `etc' binary set is NOT recommended.
+As a reminder, installing the 'etc' binary set is NOT recommended.
 Once the rest of your system has been upgraded, you should manually
-merge any changes to files in the `etc' set into those files which
+merge any changes to files in the 'etc' set into those files which
 already exist on your system.
 
 __EOT
@@ -252,7 +252,7 @@ __EOT
 md_not_going_to_install() {
 	cat << __EOT
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the
 machine has halted, power-cycle the system to load new boot code.
 
 __EOT

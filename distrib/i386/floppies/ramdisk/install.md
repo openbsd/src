@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.46 1999/04/02 00:56:20 millert Exp $
+#	$OpenBSD: install.md,v 1.47 1999/04/02 05:17:38 millert Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -229,9 +229,9 @@ __EOT
 Welcome to the OpenBSD/i386 ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
 
 This program is designed to help you upgrade your OpenBSD system in a simple
-and rational way.  As a reminder, installing the `etc' binary set is NOT
+and rational way.  As a reminder, installing the 'etc' binary set is NOT
 recommended.  Once the rest of your system has been upgraded, you should
-manually merge any changes to files in the `etc' set into those files which
+manually merge any changes to files in the 'etc' set into those files which
 already exist on your system.
 
 __EOT
@@ -256,7 +256,7 @@ __EOT
 md_not_going_to_install() {
 	cat << __EOT
 
-OK, then.  Enter `halt' at the prompt to halt the machine.  Once the machine
+OK, then.  Enter 'halt' at the prompt to halt the machine.  Once the machine
 has halted, power-cycle the system to load new boot code.
 
 __EOT
