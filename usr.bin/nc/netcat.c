@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.17 2000/09/26 18:53:13 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.18 2000/12/01 02:25:58 ericj Exp $ */
 
 /* Netcat 1.10 RELEASE 960320
  *
@@ -37,6 +37,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <arpa/nameser.h>
 #include <netdb.h>		/* hostent, gethostby*, getservby* */
 #include <stdio.h>
 #include <string.h>
@@ -45,6 +46,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <resolv.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -686,6 +688,7 @@ dol_err:
  * trick for getting the RTT.  [I got that idea from pluvius, and warped it.]
  * Return either the original fd, or clean up and return -1. 
  */
+int
 udptest(fd, where)
 	int     fd;
 	struct in_addr     *where;
@@ -1335,6 +1338,7 @@ main(argc, argv)
  */
 void
 nlog(doexit, fmt)
+	int doexit;
 	char *fmt;
 {
 	va_list args;
@@ -1359,6 +1363,7 @@ nlog(doexit, fmt)
 
 void
 usage(doexit)
+	int doexit;
 {
 	fprintf(stderr, "netcat - [v1.10]\n");
 	fprintf(stderr, "nc [-lnrtuvz] [-e command] [-g intermediates]\n");
