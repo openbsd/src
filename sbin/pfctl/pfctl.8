@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.101 2003/08/29 21:47:36 cedric Exp $
+.\" $OpenBSD: pfctl.8,v 1.102 2003/09/18 09:18:51 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -163,6 +163,7 @@ order.
 Flush the filter parameters specified by
 .Ar modifier
 (may be abbreviated):
+.Pp
 .Bl -tag -width xxxxxxxxxxxx -compact
 .It Fl F Ar nat
 Flush the NAT rules.
@@ -227,6 +228,7 @@ Other rules and options are ignored.
 Show the filter parameters specified by
 .Ar modifier
 (may be abbreviated):
+.Pp
 .Bl -tag -width xxxxxxxxxxxx -compact
 .It Fl s Ar nat
 Show the currently loaded NAT rules.
@@ -287,6 +289,7 @@ Specify the
 .Ar command
 (may be abbreviated) to apply to the table.
 Commands include:
+.Pp
 .Bl -tag -width xxxxxxxxxxxx -compact
 .It Fl T Ar kill
 Kill a table.
@@ -466,6 +469,7 @@ See previous section for its effect on table commands.
 Set the debug
 .Ar level
 (may be abbreviated) to one of the following:
+.Pp
 .Bl -tag -width xxxxxxxxxxxx -compact
 .It Fl x Ar none
 Don't generate debug messages.
