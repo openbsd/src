@@ -871,6 +871,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/wscons/wsmuxvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dirent.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/disktab.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/elf_abi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/err.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/errno.ph
@@ -1026,6 +1027,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/langinfo.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/libgen.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/limits.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/malloc.ph
@@ -1220,6 +1222,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netiso/tp_user.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netiso/tp_var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netiso/tuba_table.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/netnatm
+./usr/libdata/perl5/site_perl/powerpc-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netns
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netns/idp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netns/idp_var.ph
@@ -1717,5 +1721,3 @@
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
 ./usr/share/info/ld.info-4
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netnatm
-./usr/libdata/perl5/site_perl/powerpc-openbsd/netnatm/natm.ph

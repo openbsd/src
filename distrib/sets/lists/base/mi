@@ -98,6 +98,7 @@
 ./sbin/ipsecadm
 ./sbin/isakmpd
 ./sbin/kbd
+./sbin/lmccontrol
 ./sbin/mkfifo
 ./sbin/mknod
 ./sbin/modload
