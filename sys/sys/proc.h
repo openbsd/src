@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.40 2001/04/02 21:43:12 niklas Exp $	*/
+/*	$OpenBSD: proc.h,v 1.41 2001/06/18 13:18:36 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -392,5 +392,7 @@ int	groupmember __P((gid_t, struct ucred *));
 void	cpu_switch __P((struct proc *));
 void	cpu_wait __P((struct proc *));
 void	cpu_exit __P((struct proc *));
+
+int	proc_cansugid __P((struct proc *));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */
