@@ -1,5 +1,5 @@
 /*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
-/*	$OpenBSD: db_disasm.c,v 1.4 2001/09/09 21:48:51 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2001/09/09 21:55:41 drahn Exp $	*/
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -768,10 +768,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 		}
 		break;
 	case Opf_OE:
-		*pstr++ = 'o';
+		if (instr & (1 << (31-21))) {
+			*pstr++ = 'o';
+		}
 		break;
 	case Opf_RC:
-		*pstr++  = '.';
+		if (instr & 0x1) {
+			*pstr++  = '.';
+		}
 		break;
 	case Opf_S:
 	case Opf_D:
