@@ -2068,7 +2068,7 @@ extern struct rtx_def *sparc_builtin_saveregs ();
    that holds the dynamic chain--the previous frame's address.
    ??? -mflat support? */
 #define DYNAMIC_CHAIN_ADDRESS(frame) \
-  gen_rtx_PLUS (Pmode, frame, GEN_INT (14 * UNITS_PER_WORD))
+  plus_constant (frame, 14 * UNITS_PER_WORD + SPARC_STACK_BIAS)
 
 /* The return address isn't on the stack, it is in a register, so we can't
    access it from the current frame pointer.  We can access it from the
@@ -2089,7 +2089,9 @@ extern struct rtx_def *sparc_builtin_saveregs ();
   ((count == -1)				\
    ? gen_rtx_REG (Pmode, 31)			\
    : gen_rtx_MEM (Pmode,			\
-	      memory_address (Pmode, plus_constant (frame, 15 * UNITS_PER_WORD))))
+		  memory_address (Pmode, plus_constant (frame, \
+							15 * UNITS_PER_WORD \
+							+ SPARC_STACK_BIAS))))
 
 /* Before the prologue, the return address is %o7 + 8.  OK, sometimes it's
    +12, but always using +8 is close enough for frame unwind purposes.
