@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.27 2003/06/25 09:09:53 henning Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.28 2003/06/27 10:04:53 henning Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -946,19 +946,101 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	/* Sunix 4065A : 8-port */
-	{   /* "Sunix 4065A : 8-port" */
-	    {   PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_4065A,	0, 0	},
-	    {	0xffff,	0xffff,					0, 0	},
+	/*
+	 * SUNIX 40XX series of serial/parallel combo cards.
+	 * Tested with 4055A and 4065A.
+	 */
+	{   /* SUNIX 400X 1P */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4000 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x1A, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	{   /* SUNIX 401X 2P */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4010 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	{   /* SUNIX 402X 1S */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4020 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+	    },
+	},
+
+	{   /* SUNIX 403X 2S */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4030 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+	    },
+	},
+
+	{   /* SUNIX 405X 4S */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4050 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ},
+	    },
+	},
+
+	{   /* SUNIX 406X 8S */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4060 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x24, 0x00, COM_FREQ},
+	    },
+	},
+
+	{   /* SUNIX 407X 2S/1P */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4070 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	{   /* SUNIX 408X 2S/2P */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4080 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
+	    },
+	},
+
+	{   /* SUNIX 409X 4S/2P */
+	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4090 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x14, 0x08, COM_FREQ},
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x20, 0x00, 0x00 },
 	    },
 	},
 
