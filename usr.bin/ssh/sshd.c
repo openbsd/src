@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.34 1999/10/16 23:11:29 markus Exp $");
+RCSID("$Id: sshd.c,v 1.35 1999/10/17 20:39:11 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -35,8 +35,6 @@ RCSID("$Id: sshd.c,v 1.34 1999/10/16 23:11:29 markus Exp $");
 #ifdef LIBWRAP
 #include <tcpd.h>
 #include <syslog.h>
-#include <sys/syslog.h>
-#include <sys/stat.h>
 int allow_severity = LOG_INFO;
 int deny_severity = LOG_WARNING;
 #endif /* LIBWRAP */

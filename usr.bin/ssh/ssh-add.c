@@ -14,7 +14,7 @@ Adds an identity to the authentication server, or removes an identity.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-add.c,v 1.5 1999/10/11 20:24:54 markus Exp $");
+RCSID("$Id: ssh-add.c,v 1.6 1999/10/17 20:39:11 dugsong Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
@@ -100,9 +100,6 @@ add_file(const char *filename)
   first = 1;
   while (!load_private_key(filename, pass, key, &comment))
     {
-      char buf[1024];
-      FILE *f;
-      
       /* Free the old passphrase. */
       memset(pass, 0, strlen(pass));
       xfree(pass);
