@@ -472,6 +472,7 @@
 ./usr/include/dev/pci/pciide_cmd_reg.h
 ./usr/include/dev/pci/pciide_cy693_reg.h
 ./usr/include/dev/pci/pciide_hpt_reg.h
+./usr/include/dev/pci/pciide_i31244_reg.h
 ./usr/include/dev/pci/pciide_natsemi_reg.h
 ./usr/include/dev/pci/pciide_nforce_reg.h
 ./usr/include/dev/pci/pciide_opti_reg.h

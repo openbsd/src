@@ -515,6 +515,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/pciide_cmd_reg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/pciide_cy693_reg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/pciide_hpt_reg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/pciide_i31244_reg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/pciide_natsemi_reg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/pciide_nforce_reg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/pci/pciide_opti_reg.ph
