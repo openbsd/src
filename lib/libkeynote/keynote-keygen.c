@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.16 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.17 2001/09/13 17:55:10 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -181,11 +181,7 @@ keynote_keygen(int argc, char *argv[])
 	(ienc == INTERNAL_ENC_ASN1) &&
 	((enc == ENCODING_HEX) || (enc == ENCODING_BASE64)))
     {
-        if (RAND_bytes(seed, SEED_LEN) == 0)
-        {
-            fprintf(stderr, "Failed to acquire %d random bytes\n", SEED_LEN);
-            exit(1);
-        }
+        RAND_bytes(seed, SEED_LEN);
 
 	dsa = DSA_generate_parameters(len, seed, SEED_LEN, &counter, &h, NULL
 #if SSLEAY_VERSION_NUMBER >= 0x0900
