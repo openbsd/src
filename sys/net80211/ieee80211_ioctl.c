@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.2 2004/06/28 02:51:18 millert Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -106,10 +106,8 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef WICACHE
 	struct wi_sigcache wsc;
 #endif /* WICACHE */
-#if 0 /* TBD */
 	struct wi_scan_p2_hdr *p2;
 	struct wi_scan_res *res;
-#endif
 
 	error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 	if (error)
@@ -120,7 +118,6 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_STA_IDENTITY:
 	case WI_RID_CARD_ID:
 	case WI_RID_PROCFRAME:
-	case WI_RID_PRISM2:
 	case WI_RID_SYMBOL_DIVERSITY:
 	case WI_RID_ENH_SECURITY:
 	case WI_RID_AUTH_STATION:
@@ -346,7 +343,6 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		memcpy(wreq.wi_val, &i, sizeof(i));
 		wreq.wi_len = (sizeof(int) + sizeof(*ap) * i) / 2;
 		break;
-#if 0
 	case WI_RID_PRISM2:
 		wreq.wi_val[0] = 1;	/* XXX lie so SCAN_RES can give rates */
 		wreq.wi_len = sizeof(u_int16_t) / 2;
@@ -386,7 +382,6 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		p2->wi_reason = i;
 		wreq.wi_len = (sizeof(*p2) + sizeof(*res) * i) / 2;
 		break;
-#endif /* 0 */
 #ifdef WICACHE
 	case WI_RID_READ_CACHE:
 		i = 0;
