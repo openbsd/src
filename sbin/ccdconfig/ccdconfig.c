@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.4 1996/05/22 11:34:48 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.5 1996/05/30 09:11:20 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -163,6 +163,13 @@ main(argc, argv)
 
 	if (options > 1)
 		usage();
+
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (core != NULL || kernel != NULL)
+		setgid(getgid());
 
 	switch (action) {
 		case CCD_CONFIG:

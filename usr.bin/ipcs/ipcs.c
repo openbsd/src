@@ -181,6 +181,12 @@ main(argc, argv)
 		default:
 			usage();
 		}
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (namelist != NULL || core != NULL)
+		setgid(getgid());
 	if ((kd = kvm_open(namelist, core, NULL, O_RDONLY, "ipcs")) == NULL)
 		exit(1);
 

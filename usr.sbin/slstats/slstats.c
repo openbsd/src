@@ -23,8 +23,8 @@
 
 #ifndef lint
 /*static char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/slstats/Attic/slstats.c,v 1.1.1.1 1995/10/18 08:48:21 deraadt Exp $ (LBL)";*/
-static char rcsid[] = "$Id: slstats.c,v 1.1.1.1 1995/10/18 08:48:21 deraadt Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/slstats/Attic/slstats.c,v 1.2 1996/05/30 09:11:17 deraadt Exp $ (LBL)";*/
+static char rcsid[] = "$Id: slstats.c,v 1.2 1996/05/30 09:11:17 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -104,6 +104,13 @@ main(argc, argv)
 			kflag++;
 		}
 	}
+        /*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (system != _PATH_UNIX || kmemf != _PATH_KMEM)
+		setgid(getgid());
+
 	if (kopen(system, kmemf, "slstats") < 0)
 		exit(1);
 	if (knlist(system, nl, "slstats") < 0)
