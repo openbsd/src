@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.12 1998/07/05 09:24:25 deraadt Exp $	*/
+/*	$OpenBSD: dma.c,v 1.13 1998/11/11 00:50:31 jason Exp $	*/
 /*	$NetBSD: dma.c,v 1.46 1997/08/27 11:24:16 bouyer Exp $ */
 
 /*
@@ -64,6 +64,7 @@ void dmaattach		__P((struct device *, struct device *, void *));
 int dmamatch		__P((struct device *, void *, void *));
 void dma_reset		__P((struct dma_softc *, int));
 void espdma_reset	__P((struct dma_softc *));
+int ledmamatch		__P((struct device *, void *, void *));
 void ledma_reset	__P((struct dma_softc *));
 void dma_enintr		__P((struct dma_softc *));
 int dma_isintr		__P((struct dma_softc *));
@@ -82,7 +83,7 @@ struct cfdriver dma_cd = {
 };
 
 struct cfattach ledma_ca = {
-	sizeof(struct dma_softc), matchbyname, dmaattach
+	sizeof(struct dma_softc), ledmamatch, dmaattach
 };
 
 struct cfdriver ledma_cd = {
@@ -114,8 +115,11 @@ dmamatch(parent, vcf, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
 	    strcmp("espdma", ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_SBUS)
+	if (ca->ca_bustype == BUS_SBUS) {
+		if (!sbus_testdma((struct sbus_softc *)parent, ca))
+			return (0);
 		return (1);
+	}
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 4) != -1);
 }
@@ -365,6 +369,22 @@ espdma_reset(sc)
 	struct dma_softc *sc;
 {
 	dma_reset(sc, 0);
+}
+
+int
+ledmamatch(parent, vcf, aux)
+	struct device *parent;
+	void *vcf, *aux;
+{
+	register struct cfdata *cf = vcf;
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
+
+        if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
+	if (!sbus_testdma((struct sbus_softc *)parent, ca))
+		return(0);
+	return (1);
 }
 
 void

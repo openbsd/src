@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.12 1998/09/28 05:15:57 jason Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.13 1998/11/11 00:50:31 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -186,7 +186,6 @@ lesetutp(sc)
 		if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP)
 			return;
 	}
-	printf("Setting utp: bit won't stick\n");
 }
 
 void
@@ -205,7 +204,6 @@ lesetaui(sc)
 		if ((lesc->sc_dma->sc_regs->csr & DE_AUI_TP) == 0)
 			return;
 	}
-	printf("Setting aui: bit won't stick\n");
 }
 #endif
 
@@ -393,8 +391,11 @@ lematch(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_SBUS)
+	if (ca->ca_bustype == BUS_SBUS) {
+		if (!sbus_testdma((struct sbus_softc *)parent, ca))
+			return (0);
 		return (1);
+	}
 
 	return (probeget(ra->ra_vaddr, 2) != -1);
 }

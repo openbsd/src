@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.2 1997/09/17 06:47:10 downsj Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.3 1998/11/11 00:50:31 jason Exp $	*/
 /*	$NetBSD: isp_sbus.c,v 1.8 1997/08/27 11:24:19 bouyer Exp $	*/
 
 /*
@@ -105,15 +105,18 @@ isp_match(parent, vcf, aux)
         struct confargs *ca = aux;
         register struct romaux *ra = &ca->ca_ra;
 
-        if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name) &&
 	    strcmp("SUNW,isp", ra->ra_name) &&
 	    strcmp("QLGC,isp", ra->ra_name)) {
-                return (0);
+		return (0);
 	}
-        if (ca->ca_bustype == BUS_SBUS)
-                return (1);
-        ra->ra_len = NBPG;
-        return (probeget(ra->ra_vaddr, 1) != -1);
+	if (ca->ca_bustype == BUS_SBUS) {
+		if (!sbus_testdma((struct sbus_softc *)parent, ca))
+			return (0);
+		return (1);
+	}
+	ra->ra_len = NBPG;
+	return (probeget(ra->ra_vaddr, 1) != -1);
 }
 
 static void    
