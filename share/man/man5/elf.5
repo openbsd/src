@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.12 2003/10/27 20:23:58 jmc Exp $
+.\"	$OpenBSD: elf.5,v 1.13 2004/10/08 19:53:49 kettenis Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -402,13 +402,13 @@ is an undefined symbol.
 .It Dv SHN_LORESERVE
 This value specifies the lower bound of the range of reserved indices.
 .It Dv SHN_LOPROC
-Values greater than or equal to
+This value up to and including
 .Sy SHN_HIPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHN_HIPROC
-Values less than or equal to
+This value down to and including
 .Sy SHN_LOPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHN_ABS
 This value specifies absolute values for the corresponding reference.
 For
@@ -529,13 +529,13 @@ only occur if the program header table is part of the memory image of the
 program.
 If it is present, it must precede any loadable segment entry.
 .It Dv PT_LOPROC
-Values greater than or equal to
+This value up to and including
 .Sy PT_HIPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv PT_HIPROC
-Values less than or equal to
+This value down to and including
 .Sy PT_LOPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .El
 .Pp
 .It Dv p_offset
@@ -619,16 +619,21 @@ these special indices:
 .It Dv SHN_UNDEF
 This value marks an undefined, missing, irrelevant or otherwise meaningless
 section reference.
+For example, a symbol
+.Dq defined
+relative to section number
+.Sy SHN_UNDEF
+is an undefined symbol.
 .It Dv SHN_LORESERVE
 This value specifies the lower bound of the range of reserved indices.
 .It Dv SHN_LOPROC
-Values greater than or equal to
+This value up to and including
 .Sy SHN_HIPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHN_HIPROC
-Values less than or equal to
+This value down to and including
 .Sy SHN_LOPROC
-are reserved for processor-specific semantics.
+is reserved for processor-specific semantics.
 .It Dv SHN_ABS
 This value specifies the absolute value for the corresponding reference.
 For
