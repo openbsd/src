@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.14 1999/09/06 13:24:59 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.15 1999/09/14 08:21:36 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.14 1999/09/06 13:24:59 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.15 1999/09/14 08:21:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -576,7 +576,7 @@ char *ifile;
 {
 	if (ilevel + 1 == MAXINP)
 		errx(1, "too many include files.");
-	if ((infile[ilevel + 1] = fopen(ifile, "r")) != NULL) {
+	if ((infile[ilevel + 1] = fopen_trypath(ifile)) != NULL) {
 		ilevel++;
 		bbase[ilevel] = bufbase = bp;
 		return (1);

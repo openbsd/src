@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 1999/09/06 13:29:32 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 1999/09/14 08:21:36 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -93,3 +93,7 @@ extern char *m4wraps;		/* m4wrap string default. */
 extern char *null;		/* as it says.. just a null. */
 extern char rquote[];		/* right quote character (') */
 extern char scommt[];		/* start character for comment */
+
+/* gnum4.c */
+extern FILE *fopen_trypath __P((const char *filename));
+extern void addtoincludepath __P((const char *dirname));

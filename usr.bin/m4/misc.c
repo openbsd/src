@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 1999/09/09 22:18:19 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.11 1999/09/14 08:21:37 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.10 1999/09/09 22:18:19 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.11 1999/09/14 08:21:37 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -290,7 +290,7 @@ const char *s;
 void
 usage()
 {
-	fprintf(stderr, "usage: m4 [-Dname[=val]] [-Uname]\n");
+	fprintf(stderr, "usage: m4 [-Dname[=val]] [-Uname] [-I dirname...]\n");
 	exit(1);
 }
 

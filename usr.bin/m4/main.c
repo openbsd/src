@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 1999/09/06 13:29:32 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 1999/09/14 08:21:37 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 1999/09/06 13:29:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 1999/09/14 08:21:37 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ main(argc,argv)
 			p = *argv;
 			if (p[0] == '-' && p[1] == EOS)
 				ifp = stdin;
-			else if ((ifp = fopen(p, "r")) == NULL)
+			else if ((ifp = fopen_trypath(p)) == NULL)
 				err(1, "%s", p);
 			sp = -1;
 			fp = 0; 
