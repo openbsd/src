@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.7 1996/12/04 08:52:18 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.8 1996/12/04 10:26:36 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.7 1996/12/04 08:52:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.8 1996/12/04 10:26:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -350,18 +350,19 @@ main(argc, argv)
 
 	special = argv[0];
 	if (!mfs) {
-		char name[MAXPATHLEN];
+		char execname[MAXPATHLEN], name[MAXPATHLEN];
 
 		if (fstype == NULL)
 			fstype = readlabelfs(special);
 		if (fstype == NULL || strcmp(fstype, "ffs")) {
-			snprintf(name, sizeof name, "%s/newfs_%s", _PATH_SBIN,
-			    fstype);
+			snprintf(name, sizeof name, "newfs_%s", fstype);
 			saveargv[0] = name;
-			(void)execv(name, saveargv);
-			snprintf(name, sizeof name, "%s/newfs_%s", _PATH_USRSBIN,
-			    fstype);
-			(void)execv(name, saveargv);
+			snprintf(execname, sizeof execname, "%s/newfs_%s",
+			    _PATH_SBIN, fstype);
+			(void)execv(execname, saveargv);
+			snprintf(execname, sizeof execname, "%s/newfs_%s",
+			    _PATH_USRSBIN, fstype);
+			(void)execv(execname, saveargv);
 			err(1, "%s not found", name);
 		}
 	}
