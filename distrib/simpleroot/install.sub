@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.9 1999/12/05 20:13:40 mickey Exp $
+#	$OpenBSD: install.sub,v 1.10 2000/07/10 13:07:18 maja Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -604,7 +604,7 @@ __install_ftp_1
 	cat << __install_ftp_2
 
 You will now be asked for files to extract.  If you specify just a setname,
-it will be treated as setname${VERSION}.tar.gz or you can specify the
+it will be treated as setname${VERSION}.tgz or you can specify the
 explict name.  You can also enter 'all' to install all the standard sets,
 or 'list' to list the files avilable at ${_ftp_server_ip}:${_ftp_server_dir}.
 When you are done entering files, enter 'done'.
@@ -647,7 +647,7 @@ __install_ftp_2
 			else
 				echo -n "get " >> /tmp/ftp-script.sh
 				echo -n "${_ftp_file}" | \
-				    sed "/\./!s/\$/${VERSION}.tar.gz/" >> \
+				    sed "/\./!s/\$/${VERSION}.tgz/" >> \
 					/tmp/ftp-script.sh
 				if [ "X${SIMPLEROOT}" != X"simpleroot" ]; then
 					echo " |\"tar -zxvpf - \"" >> \
