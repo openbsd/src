@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.84 2003/06/13 20:27:50 brad Exp $
+#	$OpenBSD: GENERIC,v 1.85 2003/07/15 03:51:12 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -61,6 +61,10 @@ ubsec*		at pci? dev ? function ?	# Broadcom 580[125]/582[012]
 autri*		at pci? dev ? function ? flags 0x0000	# Trident 4D WAVE
 eap*		at pci? dev ? function ?	# Ensoniq AudioPCI S5016
 eso*		at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+
+#puc*		at pci?				# PCI "universial" comm device
+#com*		at puc? port ?
+#lpt*		at puc? port ?
 
 # Sound support
 audio*		at audioce?
