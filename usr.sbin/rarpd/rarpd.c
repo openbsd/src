@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.8 1997/02/05 13:41:04 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.9 1997/03/29 04:01:58 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.8 1997/02/05 13:41:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.9 1997/03/29 04:01:58 deraadt Exp $";
 #endif
 
 
@@ -71,8 +71,8 @@ struct if_info {
 	int     ii_fd;			/* BPF file descriptor */
 	char	ii_name[IFNAMSIZ];	/* if name, e.g. "en0" */
 	u_char  ii_eaddr[6];		/* Ethernet address of this interface */
-	u_long  ii_ipaddr;		/* IP address of this interface */
-	u_long  ii_netmask;		/* subnet or net mask */
+	u_int32_t ii_ipaddr;		/* IP address of this interface */
+	u_int32_t ii_netmask;		/* subnet or net mask */
 	struct if_info *ii_next;
 };
 /*
@@ -86,17 +86,17 @@ void   init_one      __P((char *));
 void   init_all      __P((void));
 void   rarp_loop     __P((void));
 void   lookup_eaddr  __P((char *, u_char *));
-void   lookup_ipaddr __P((char *, u_long *, u_long *));
+void   lookup_ipaddr __P((char *, u_int32_t *, u_int32_t *));
 void   usage         __P((void));
 void   rarp_process  __P((struct if_info *, u_char *));
-void   rarp_reply    __P((struct if_info *, struct ether_header *, u_long));
-void   update_arptab __P((u_char *, u_long));
+void   rarp_reply    __P((struct if_info *, struct ether_header *, u_int32_t));
+void   update_arptab __P((u_char *, u_int32_t));
 void   err           __P((int, const char *,...));
 void   debug         __P((const char *,...));
-u_long ipaddrtonetmask __P((u_long));
+u_int32_t ipaddrtonetmask __P((u_int32_t));
 
 #ifdef REQUIRE_TFTPBOOT
-int    rarp_bootable __P((u_long));
+int    rarp_bootable __P((u_int32_t));
 #endif
 
 int     aflag = 0;		/* listen on "all" interfaces  */
@@ -502,7 +502,7 @@ rarp_loop()
  */
 int
 rarp_bootable(addr)
-	u_long  addr;
+	u_int32_t  addr;
 {
 	register struct dirent *dent;
 	register DIR *d;
@@ -537,11 +537,11 @@ rarp_bootable(addr)
  * is on network 'net'; 'netmask' is a mask indicating the network portion
  * of the address.
  */
-u_long
+u_int32_t
 choose_ipaddr(alist, net, netmask)
-	u_long **alist;
-	u_long  net;
-	u_long  netmask;
+	u_int32_t **alist;
+	u_int32_t  net;
+	u_int32_t  netmask;
 {
 	for (; *alist; ++alist) {
 		if ((**alist & netmask) == net)
@@ -560,7 +560,7 @@ rarp_process(ii, pkt)
 {
 	struct ether_header *ep;
 	struct hostent *hp;
-	u_long  target_ipaddr;
+	u_int32_t  target_ipaddr;
 	char    ename[256];
 	struct	in_addr in;
 
@@ -575,7 +575,7 @@ rarp_process(ii, pkt)
 		err(FATAL, "cannot handle non IP addresses");
 		/* NOTREACHED */
 	}
-	target_ipaddr = choose_ipaddr((u_long **) hp->h_addr_list,
+	target_ipaddr = choose_ipaddr((u_int32_t **) hp->h_addr_list,
 	    ii->ii_ipaddr & ii->ii_netmask, ii->ii_netmask);
 
 	if (target_ipaddr == 0) {
@@ -648,8 +648,8 @@ lookup_eaddr(ifname, eaddr)
 void
 lookup_ipaddr(ifname, addrp, netmaskp)
 	char   *ifname;
-	u_long *addrp;
-	u_long *netmaskp;
+	u_int32_t *addrp;
+	u_int32_t *netmaskp;
 {
 	int     fd;
 	struct ifreq ifr;
@@ -678,7 +678,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
 	(void) close(fd);
 }
 
-int arptab_set __P((u_char *eaddr, u_long host));
+int arptab_set __P((u_char *eaddr, u_int32_t host));
 
 /*
  * Poke the kernel arp tables with the ethernet/ip address combinataion
@@ -689,7 +689,7 @@ int arptab_set __P((u_char *eaddr, u_long host));
 void
 update_arptab(ep, ipaddr)
 	u_char *ep;
-	u_long  ipaddr;
+	u_int32_t  ipaddr;
 {
 #ifdef SIOCSARP
 	int     s;
@@ -697,7 +697,7 @@ update_arptab(ep, ipaddr)
 	struct sockaddr_in *sin;
 
 	u_char *eaddr;
-	u_long host;
+	u_int32_t host;
 
 	request.arp_flags = 0;
 	sin = (struct sockaddr_in *) & request.arp_pa;
@@ -757,7 +757,7 @@ void
 rarp_reply(ii, ep, ipaddr)
 	struct if_info *ii;
 	struct ether_header *ep;
-	u_long  ipaddr;
+	u_int32_t  ipaddr;
 {
 	int     n;
 	struct ether_arp *ap = (struct ether_arp *) (ep + 1);
@@ -789,9 +789,9 @@ rarp_reply(ii, ep, ipaddr)
  * Get the netmask of an IP address.  This routine is used if
  * SIOCGIFNETMASK doesn't work.
  */
-u_long
+u_int32_t
 ipaddrtonetmask(addr)
-	u_long  addr;
+	u_int32_t  addr;
 {
 	if (IN_CLASSA(addr))
 		return IN_CLASSA_NET;
