@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.41 2004/08/20 07:12:00 otto Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.42 2004/09/15 07:10:32 miod Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ const struct mntopt mopts[] = {
 	{ "tcp", ALTF_TCP, 0 },
 	{ "port", ALTF_PORT, MFLAG_INTVAL },
 	{ "nfsv2", ALTF_NFSV2, 0 },
-	{ "ac", ALTF_NOAC, 0 },
+	{ "ac", ALTF_NOAC, MFLAG_INVERSE },
 	{ "acregmin", ALTF_ACREGMIN, MFLAG_INTVAL },
 	{ "acregmax", ALTF_ACREGMAX, MFLAG_INTVAL },
 	{ "acdirmin", ALTF_ACDIRMIN, MFLAG_INTVAL },
