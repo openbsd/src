@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvsd.conf.5,v 1.2 2004/08/03 14:47:30 jfb Exp $
+.\"	$OpenBSD: cvsd.conf.5,v 1.3 2004/12/02 22:38:30 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\"
@@ -42,15 +42,17 @@ server restart.
 It is a human-readable text file consisting of one-line directives that
 the server handles to modify its configuration and Access Control List rules
 to control operations on the repository.
-Comments can be inserted anywhere in the file by putting a '#' character
-before them and span to the end of the line.
-.Pp
+Comments can be inserted anywhere in the file by putting a
+.Sq #
+character before them and span to the end of the line.
 .Sh MACROS
 To simplify maintenance of the configuration, the format allows for the
 definition of variables that can later be used for interpolation throughout
-the configuration file by preceding them with the '$' character.
+the configuration file by preceding them with the
+.Sq $
+character.
 These variables are refered to as macros throughout the rest of the document.
-A macro name must start with a letter and can be composed of letters, digits
+A macro name must start with a letter and can be composed of letters, digits,
 and underscores.
 .Pp
 Here is an example of macro usage:
@@ -77,11 +79,11 @@ to the list of addresses on which the server will listen for incoming
 connections.
 This is currently parsed but ignored, as the CVS daemon doesn't support
 direct TCP connections yet.
-.It Sy minchild Ar num
-Set the server's minimum number of child processes to
-.Ar num .
 .It Sy maxchild Ar num
 Set the server's maximum number of child processes to
+.Ar num .
+.It Sy minchild Ar num
+Set the server's minimum number of child processes to
 .Ar num .
 .It Sy reqsock Ar path
 Set the server's local socket path to
@@ -109,8 +111,20 @@ Here is the BNF syntax for
 .Nm
 rules:
 .Bl -tag -width "this is a test"
+.It Ic action
+::= allow | deny
 .It Ic line
 ::=
+.It Ic op
+::= add | commit | tag | update
+.It Ic option
+::= quick | log
+.It Ic optlist
+::=
+.Ic option
+|
+.Ic optlist ,
+.Ic option
 .It Ic rule
 ::=
 .Ic action
@@ -125,26 +139,13 @@ rules:
 [ from
 .Ic userlist
 ]
-.It Ic action
-::= allow | deny
-.It Ic option
-::= quick | log
-.It Ic optlist
-::=
-.Ic option
-|
-.Ic optlist ,
-.Ic option
-.It Ic op
-::= add | commit | tag | update
 .It Ic userlist
 ::=
 .El
-.Pp
 .Sh EXAMPLES
 The following rule denies all operations:
-.Bd -literal
-	deny quick any
+.Bd -literal -offset indent
+deny quick any
 .Ed
 .Sh FILES
 .Bl -tag -width /etc/cvsd.conf -compact
