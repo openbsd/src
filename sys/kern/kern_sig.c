@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.30 1998/06/07 20:17:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.31 1999/02/17 23:27:38 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -362,6 +362,7 @@ sys_sigprocmask(p, v, retval)
 		break;
 	
 	default:
+		(void) spl0();
 		error = EINVAL;
 		break;
 	}
