@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.54 2003/08/09 08:45:58 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.55 2003/08/20 12:25:02 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -323,6 +323,14 @@ For a FQDN certificate, do
 	-CAcreateserial \e
 	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_FQDN \e
 	-out somehost.somedomain.crt
+.Ed
+.Pp
+or with
+.Xr certpatch 8
+.Bd -literal
+# certpatch -t fqdn -i somehost.somedomain \e
+	-k /etc/ssl/private/ca.key \e
+	somehost.somedomain.crt somehost.somedomain.crt
 .Ed
 .Pp
 (This assumes the previous steps were used to create a request for
