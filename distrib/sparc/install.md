@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.13 1997/05/29 08:38:57 grr Exp $
+#	$OpenBSD: install.md,v 1.14 1997/09/30 17:52:49 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -217,7 +217,7 @@ __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	disklabel -W ${_disk}
-	disklabel -e ${_disk}
+	disklabel -E ${_disk}
 }
 
 md_copy_kernel() {

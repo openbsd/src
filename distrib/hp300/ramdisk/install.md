@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.5 1997/05/14 21:39:12 millert Exp $
+#	$OpenBSD: install.md,v 1.6 1997/09/30 17:52:41 deraadt Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -279,7 +279,7 @@ __scsi_label_1
 	getresp ""
 
 	disklabel -W ${1}
-	if ! disklabel -r -e /dev/r${1}a; then
+	if ! disklabel -r -E /dev/r${1}a; then
 		echo ""
 		echo "ERROR: can't fixup geometry!"
 		rval="1"
@@ -375,7 +375,7 @@ md_labeldisk() {
 		0)
 			# Go ahead and just edit the disklabel.
 			disklabel -W $1
-			disklabel -r -e $1
+			disklabel -r -E $1
 			;;
 
 		*)
@@ -410,7 +410,7 @@ md_labeldisk() {
 			# We have some defaults installed.  Pop into
 			# the disklabel editor.
 			disklabel -W $1
-			if ! disklabel -r -e $1; then
+			if ! disklabel -r -E $1; then
 				echo ""
 				echo "ERROR: couldn't set partition map for $1"
 				echo ""
@@ -471,7 +471,7 @@ __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	disklabel -W ${_disk}
-	disklabel -r -e ${_disk}
+	disklabel -r -E ${_disk}
 }
 
 md_copy_kernel() {

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.5 1996/06/29 05:54:26 tholo Exp $
+#	$OpenBSD: install.sh,v 1.6 1997/09/30 17:52:51 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5 1996/02/28 00:52:38 thorpej Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ md_checkfordisklabel() {
 
 md_labeldisk() {
 	# $1 is the disk to label
-	disklabel -e $1
+	disklabel -E $1
 }
 
 # Note, while they might not seem machine-dependent, the
@@ -777,7 +777,7 @@ echo -n	"Do you wish to edit the root disklabel? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		disklabel -e ${ROOTDISK}
+		disklabel -E ${ROOTDISK}
 		;;
 
 	*)

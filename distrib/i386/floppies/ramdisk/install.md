@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 1997/09/26 19:51:12 deraadt Exp $
+#	$OpenBSD: install.md,v 1.16 1997/09/30 17:52:42 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ __md_prep_fdisk_1
 		echo -n "Press [Enter] to continue "
 		getresp ""
 
-		fdisk -u ${_disk}
+		fdisk -e ${_disk}
 
 		echo
 		echo "The new partition information is:"
@@ -232,7 +232,7 @@ __md_prep_disklabel_1
 	disklabel ${_disk} >/tmp/label.$$
 	disklabel -r -R ${_disk} /tmp/label.$$
 	rm -f /tmp/label.$$
-	disklabel -e ${_disk}
+	disklabel -E ${_disk}
 }
 
 md_copy_kernel() {

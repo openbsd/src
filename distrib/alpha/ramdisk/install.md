@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.10 1997/07/31 17:10:14 millert Exp $
+#       $OpenBSD: install.md,v 1.11 1997/09/30 17:52:35 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -202,7 +202,7 @@ __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	disklabel -W ${_disk}
-	disklabel -e ${_disk}
+	disklabel -E ${_disk}
 }
 
 md_welcome_banner() {
