@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.51 1999/07/17 00:41:52 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.52 1999/08/05 21:58:15 ho Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -517,6 +517,29 @@ tdb_hashstats()
 }
 #endif	/* DDB */
 
+/*
+ * Caller is responsible for setting at least spltdb().
+ */
+
+int
+tdb_walk(int (*walker)(struct tdb *, void *), void *arg)
+{
+    int i, rval = 0;
+    struct tdb *tdbp, *next;
+
+    if (tdbh == NULL)
+        return ENOENT;
+
+    for (i = 0; i <= tdb_hashmask; i++)
+	for (tdbp = tdbh[i]; rval == 0 && tdbp != NULL; tdbp = next)
+	{
+	    next = tdbp->tdb_hnext;
+	    rval = walker(tdbp, (void *)arg);
+	}
+
+    return rval;
+}
+
 struct flow *
 get_flow(void)
 {
@@ -979,7 +1002,44 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
       (*(tdbp->tdb_xform->xf_zeroize))(tdbp);
 
     while (tdbp->tdb_flow)
-	delete_flow(tdbp->tdb_flow, tdbp);
+    {
+        /* Delete the flow and the routing entry that goes with it. */ 
+        struct sockaddr_encap encapdst, encapnetmask;
+
+        bzero(&encapdst, sizeof(struct sockaddr_encap));
+        bzero(&encapnetmask, sizeof(struct sockaddr_encap));
+
+        encapdst.sen_len = SENT_IP4_LEN;
+        encapdst.sen_family = PF_KEY;
+        encapdst.sen_type = SENT_IP4;
+        encapdst.sen_ip_src = tdbp->tdb_flow->flow_src.sin.sin_addr;
+        encapdst.sen_ip_dst = tdbp->tdb_flow->flow_dst.sin.sin_addr;
+        encapdst.sen_proto = tdbp->tdb_flow->flow_proto;
+        encapdst.sen_sport = tdbp->tdb_flow->flow_src.sin.sin_port;
+        encapdst.sen_dport = tdbp->tdb_flow->flow_dst.sin.sin_port;
+
+        encapnetmask.sen_len = SENT_IP4_LEN;
+        encapnetmask.sen_family = PF_KEY;
+        encapnetmask.sen_type = SENT_IP4;
+        encapnetmask.sen_ip_src = tdbp->tdb_flow->flow_srcmask.sin.sin_addr;
+        encapnetmask.sen_ip_dst = tdbp->tdb_flow->flow_dstmask.sin.sin_addr;
+
+        if (tdbp->tdb_flow->flow_proto)
+        {
+            encapnetmask.sen_proto = 0xff;
+            if (tdbp->tdb_flow->flow_src.sin.sin_port)
+              encapnetmask.sen_sport = 0xffff;
+            if (tdbp->tdb_flow->flow_dst.sin.sin_port)
+              encapnetmask.sen_dport = 0xffff;
+        }
+
+        rtrequest(RTM_DELETE, (struct sockaddr *) &encapdst,
+                  (struct sockaddr *) 0,
+                  (struct sockaddr *) &encapnetmask,
+                  0, (struct rtentry **) 0);
+
+        delete_flow(tdbp->tdb_flow, tdbp);
+    }
 
     /* Cleanup SA-Bindings */
     for (tdbpp = TAILQ_FIRST(&tdbp->tdb_bind_in); tdbpp;
