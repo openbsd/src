@@ -1,4 +1,4 @@
-/* *	$OpenBSD: md.c,v 1.6 1998/03/26 19:47:33 niklas Exp $*/
+/* *	$OpenBSD: md.c,v 1.7 1999/05/10 16:20:47 espie Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -92,9 +92,12 @@ static __inline void
 iflush(sp)
 	jmpslot_t		*sp;
 {
+/* for a CROSS_LINKER, no rtld, so iflush is a nop, which is fortunate */
+#ifndef CROSS_LINKER
 	__asm __volatile("iflush %0+0" : : "r" (sp));
 	__asm __volatile("iflush %0+4" : : "r" (sp));
 	__asm __volatile("iflush %0+8" : : "r" (sp));
+#endif
 }
 
 /*
@@ -347,3 +350,83 @@ md_midcompat(hp)
 #endif
 }
 #endif /* RTLD */
+
+#ifdef NEED_SWAP
+/*
+ * Byte swap routines for cross-linking.
+ */
+
+void
+md_swapin_exec_hdr(h)
+struct exec *h;
+{
+	int skip = 0;
+
+	if (!N_BADMAG(*h))
+		skip = 1;
+
+	swap_longs((long *)h + skip, sizeof(*h)/sizeof(long) - skip);
+}
+
+void
+md_swapout_exec_hdr(h)
+struct exec *h;
+{
+	/* NetBSD/OpenBSD: Always leave magic alone */
+	int skip = 1;
+#if 0
+	if (N_GETMAGIC(*h) == OMAGIC)
+		skip = 0;
+#endif
+
+	swap_longs((long *)h + skip, sizeof(*h)/sizeof(long) - skip);
+}
+
+void 
+md_swapin_reloc(r, n)
+struct relocation_info *r;
+int n;
+{
+	int bits;
+
+	for (; n; n--, r++) {
+		r->r_address = md_swap_long(r->r_address);
+		bits = md_swap_long(((int *)r)[1]);
+		r->r_symbolnum = (bits>>8) & 0x00ffffff ;
+		r->r_extern = (bits>> 7) & 1;
+		r->r_type = bits & 31;
+		r->r_addend = md_swap_long(r->r_addend);
+	}
+}
+
+void 
+md_swapout_reloc(r, n)
+struct relocation_info *r;
+int n;
+{
+	int bits;
+
+	for (; n; n--, r++) {
+		r->r_address = md_swap_long(r->r_address);
+		bits = (r->r_symbolnum & 0x00ffffff) << 8;
+		bits |= (r->r_extern & 1)<< 7;
+		bits |= (r->r_type & 31);
+		((int *)r)[1] = md_swap_long(bits);
+		r->r_addend = md_swap_long(r->r_addend);
+	}
+}
+
+void
+md_swapout_jmpslot(j, n)
+jmpslot_t	*j;
+int		n;
+{
+	for (; n; n--, j++) {
+		j->opcode1 = md_swap_long(j->opcode1);
+		j->opcode2 = md_swap_long(j->opcode2);
+		j->reloc_index = md_swap_long(j->reloc_index);
+	}
+}
+
+#endif
+
