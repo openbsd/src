@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.20 2002/06/11 22:53:09 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.21 2002/06/11 22:56:37 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -44,6 +44,7 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
+#include <sys/pciio.h>
 
 #include <uvm/uvm_extern.h>
 
