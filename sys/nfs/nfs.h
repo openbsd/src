@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.7 1998/05/25 09:12:26 deraadt Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.8 2000/05/19 16:36:03 mickey Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -237,11 +237,13 @@ struct nfsstats {
 /*
  * fs.nfs sysctl(3) identifiers
  */
-#define NFS_NFSSTATS	1		/* struct: struct nfsstats */
+#define	NFS_NFSSTATS	1	/* struct: struct nfsstats */
+#define	NFS_NIOTHREADS	2	/* number of i/o threads */
 
 #define FS_NFS_NAMES { \
-		       { 0, 0 }, \
-		       { "nfsstats", CTLTYPE_STRUCT }, \
+			{ 0, 0 }, \
+			{ "nfsstats", CTLTYPE_STRUCT }, \
+			{ "niothreads", CTLTYPE_INT } \
 }
 
 /*
@@ -253,6 +255,7 @@ struct nfsstats {
  * by them and break.
  */
 #ifdef _KERNEL
+extern int nfs_niothreads;
 
 struct uio; struct buf; struct vattr; struct nameidata;	/* XXX */
 
@@ -468,5 +471,4 @@ int nfsd_head_flag;
 		sizeof (struct ucred)))
 
 #endif	/* _KERNEL */
-
 #endif /* _NFS_NFS_H */

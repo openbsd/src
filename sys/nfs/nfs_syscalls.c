@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.13 2000/02/07 04:47:53 assar Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.14 2000/05/19 16:36:03 mickey Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -58,6 +58,8 @@
 #include <sys/namei.h>
 #include <sys/syslog.h>
 #include <sys/filedesc.h>
+#include <sys/signalvar.h>
+#include <sys/kthread.h>
 
 #include <sys/syscallargs.h>
 
@@ -105,7 +107,8 @@ static struct nfsdrt nfsdrt;
 #define	FALSE	0
 
 #ifdef NFSCLIENT
-static int nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+struct proc *nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+int nfs_niothreads = -1;
 #endif
 
 #ifdef NFSSERVER
@@ -839,7 +842,7 @@ nfsd_rt(sotype, nd, cacherep)
 
 #ifdef NFSCLIENT
 /*
- * Asynchronous I/O daemons for client nfs.
+ * Asynchronous I/O threads for client nfs.
  * They do read-ahead and write-behind operations on the block I/O cache.
  * Never returns unless it fails or gets killed.
  */
@@ -857,14 +860,15 @@ nfssvc_iod(p)
 	 */
 	myiod = -1;
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		if (nfs_asyncdaemon[i] == 0) {
-			nfs_asyncdaemon[i]++;
+		if (nfs_asyncdaemon[i] == NULL) {
 			myiod = i;
 			break;
 		}
 	if (myiod == -1)
 		return (EBUSY);
+	nfs_asyncdaemon[myiod] = p;
 	nfs_numasync++;
+	p->p_holdcnt++;
 	/*
 	 * Just loop around doin our stuff until SIGKILL
 	 */
@@ -912,13 +916,53 @@ nfssvc_iod(p)
 		} while ((bp = nbp) != NULL);
 	    }
 	    if (error) {
-		nfs_asyncdaemon[myiod] = 0;
+		nfs_asyncdaemon[myiod] = NULL;
 		nfs_numasync--;
 		return (error);
 	    }
 	}
 }
 
+void
+start_nfsio(arg)
+	void *arg;
+{
+	nfssvc_iod(curproc);
+	
+	kthread_exit(0);
+}
+
+void
+nfs_getset_niothreads(set)
+	int set;
+{
+	int i, have, start;
+	
+	for (have = 0, i = 0; i < NFS_MAXASYNCDAEMON; i++)
+		if (nfs_asyncdaemon[i] != NULL)
+			have++;
+
+	if (set) {
+		/* clamp to sane range */
+		nfs_niothreads = max(0, min(nfs_niothreads, NFS_MAXASYNCDAEMON));
+
+		start = nfs_niothreads - have;
+
+		while (start > 0) {
+			kthread_create(start_nfsio, NULL, NULL, "nfsio");
+			start--;
+		}
+
+		for (i = 0; (start < 0) && (i < NFS_MAXASYNCDAEMON); i++)
+			if (nfs_asyncdaemon[i] != NULL) {
+				psignal(nfs_asyncdaemon[i], SIGKILL);
+				start++;
+			}
+	} else {
+		if (nfs_niothreads >= 0)
+			nfs_niothreads = have;
+	}
+}
 
 /*
  * Get an authorization string for the uid by having the mount_nfs sitting

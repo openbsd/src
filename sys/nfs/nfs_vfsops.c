@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.30 2000/02/07 04:57:17 assar Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.31 2000/05/19 16:36:04 mickey Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -628,6 +629,12 @@ nfs_mount(mp, path, data, ndp, p)
 		return (EPROGMISMATCH);
 	if (error)
 		return (error);
+
+	if (nfs_niothreads < 0) {
+		nfs_niothreads = 4;
+		nfs_getset_niothreads(TRUE);
+	}
+
 	if (mp->mnt_flag & MNT_UPDATE) {
 		register struct nfsmount *nmp = VFSTONFS(mp);
 
@@ -960,6 +967,15 @@ nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		}
 		return 0;
 
+	case NFS_NIOTHREADS:
+		nfs_getset_niothreads(0);
+
+		rv = sysctl_int(oldp, oldlenp, newp, newlen, &nfs_niothreads);
+		if (newp)
+			nfs_getset_niothreads(1);
+
+		return rv;
+
 	default:
 		return EOPNOTSUPP;
 	}
@@ -1036,3 +1052,4 @@ nfs_checkexp(mp, nam, exflagsp, credanonp)
 {
 	return (EOPNOTSUPP);
 }
+
