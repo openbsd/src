@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.1 2001/06/26 21:57:38 smurph Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.2 2001/07/06 00:38:19 smurph Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -40,7 +40,7 @@ PPC=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
-		-Dpowerpc -Dmvmeppc
+		-Dpowerpc -D__mvmeppc__
 CWARNFLAGS=	-Werror -Wreturn-type
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
 AFLAGS=		-D_LOCORE
@@ -113,6 +113,9 @@ SYSTEM_LD_TAIL+=; \
 LINKFLAGS+=	-S
 .endif
 
+bsd.rd: bsd
+	echo cp $@ $@.rd; ./rdsetroot bsd.rd < mr.fs;
+	
 %LOAD
 
 assym.h: $S/kern/genassym.sh ${PPC}/mvmeppc/genassym.cf
