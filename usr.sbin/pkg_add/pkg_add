@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.148 2004/12/18 13:34:36 espie Exp $
+# $OpenBSD: pkg_add,v 1.149 2004/12/18 14:37:30 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -150,6 +150,9 @@ sub pre_add($$)
 	
 	my $handle = OpenBSD::PackageLocator->find($pkg);
 	if (!$handle) {
+		if (defined $state->{deptree}->{$pkg}) {
+			print $state->{deptree}->{$pkg}, ":";
+		}
 		print "Can't find $pkg\n";
 		$errors++;
 		return undef;
