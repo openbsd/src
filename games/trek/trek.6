@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trek.6,v 1.11 2003/06/03 03:01:42 millert Exp $
+.\"	$OpenBSD: trek.6,v 1.12 2004/08/21 23:11:57 jmc Exp $
 .\"	$NetBSD: trek.6,v 1.4 1995/04/22 10:59:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@
 is a game of space glory and war.
 Below is a summary of commands.
 For complete documentation, see
-.Em Trek
+.Em Star Trek
 by Eric Allman.
 .Pp
 The game will ask you what length game you would like.
@@ -63,7 +63,7 @@ You will then be prompted for the skill, to which you must respond
 .Dq commodore ,
 or
 .Dq impossible .
-You should normally start out with a novice and work up.
+You should normally start out with novice and work up.
 .Pp
 In general, throughout the game, if you forget what is appropriate
 the game will tell you what it expects if you just type in a question mark.
@@ -102,10 +102,6 @@ amount
 .Ic p Ns hasers Ic m Ns anual
 amt1 course1 spread1 ...
 .It
-.Ic t Ns orpedo course
-.Op Ic y Ns es
-.No angle/ Ns Ic n Ns o
-.It
 .Ic ram No course distance
 .It
 .Ic r Ns est time
@@ -114,11 +110,19 @@ amt1 course1 spread1 ...
 .Ic u Ns p/ Ns Ic d Ns own
 .It
 .Ic s Ns rscan
-.Op Ic y Ns es/ Ic n Ns o
+.Sm off
+.Op Ic y No es/ Ic n No o
+.Sm on
 .It
 .Ic st Ns atus
 .It
 .Ic terminate y Ns es/ Ns Ic n Ns o
+.It
+.Ic t Ns orpedo course
+.Sm off
+.Op Ic y No es/ Ic n No o
+.Sm on
+.Op burst angle
 .It
 .Ic u Ns ndock
 .It
@@ -127,6 +131,7 @@ amt1 course1 spread1 ...
 .Ic w Ns arp warp_factor
 .El
 .Sh SEE ALSO
-.Pa /usr/share/doc/usd/31.trek/trek.me
+"Star Trek",
+.Pa /usr/share/doc/usd/31.trek/ .
 .Sh AUTHORS
 Eric Allman
