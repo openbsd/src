@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.86 1998/09/17 01:25:16 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.87 1998/09/17 23:24:32 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -510,14 +510,16 @@ __configurenetwork_1
 			;;
 		*)
 			_ifs=$resp
+			_ouranswer="done"
 			if isin $_ifs $_IFS ; then
 				if configure_ifs $_ifs ; then
 					_ifsdone="$_ifs $_ifsdone"
+				else
+				_ouranswer=""
 				fi
 			else
 				echo "Invalid response: \"$resp\" is not in list"
 			fi
-			_ouranswer="done"
 			_reprompt=1
 			;;
 		esac
@@ -610,7 +612,23 @@ configure_ifs() {
 	# succeeds, add it to the permanent
 	# network configuration info.
 	if [ "$_interface_ip" = "dhcp" ]; then
-		if dhclient ${_interface_name} ; then
+		dhclient ${_interface_name}
+
+		set -- `ifconfig $_interface_name | sed -n '
+			1s/.*<UP,.*$/UP/p
+			1s/.*<.*>*$/DOWN/p
+			/media:/s/^.*$//
+			/status:/s/^.*$//
+			/inet/s/--> [0-9.][0-9.]*//
+			/inet/s/netmask//
+			/inet/s/broadcast//
+			/inet/s/inet// p'`
+
+		if [ $1 = "UP" -a $2 = "0.0.0.0" ]; then
+			echo "DHCP configuration of $_interface_name failed."
+			ifconfig $_interface_name delete down
+			return 1
+		else
 			echo "DHCP configuration of $_interface_name successful."
 			addifconfig \
 				${_interface_name} \
