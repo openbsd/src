@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -41,503 +36,12 @@
  */
 
 #include "arla_local.h"
-#include <sl.h>
 #include <parse_units.h>
 #include <getarg.h>
 
-#include <arla-version.h>
-
-RCSID("$Id: arla.c,v 1.3 2000/09/11 14:40:39 art Exp $") ;
+RCSID("$KTH: arla.c,v 1.135.2.2 2001/09/14 13:26:31 lha Exp $") ;
 
 enum connected_mode connected_mode = CONNECTED;
-
-/* creds used for all the interactive usage */
-
-static CredCacheEntry *ce;
-
-static VenusFid cwd;
-static VenusFid rootcwd;
-
-static int arla_chdir(int, char **);
-static int arla_ls(int, char **);
-static int arla_cat(int, char **);
-static int arla_cp(int, char **);
-static int arla_wc(int, char **);
-static int help(int, char **);
-static int arla_quit(int, char **);
-static int arla_checkserver(int, char **);
-static int arla_conn_status(int, char **);
-static int arla_vol_status(int, char **);
-static int arla_cred_status(int, char **);
-static int arla_fcache_status(int, char **);
-static int arla_sysname(int, char**);
-#ifdef RXDEBUG
-static int arla_rx_status(int argc, char **argv);
-#endif
-static int arla_flushfid(int argc, char **argv);
-
-static SL_cmd cmds[] = {
-    {"chdir", arla_chdir, "chdir directory"},
-    {"cd"},
-    {"ls",    arla_ls, "ls"},
-    {"cat",   arla_cat, "cat file"},
-    {"cp",    arla_cp, "copy file"},
-    {"wc",    arla_wc, "wc file"},
-    {"help",  help, "help"},
-    {"?"},
-    {"checkservers", arla_checkserver, "poll servers are down"},
-    {"conn-status", arla_conn_status, "connection status"},
-    {"vol-status", arla_vol_status, "volume cache status"},
-    {"cred-status", arla_cred_status, "credentials status"},
-    {"fcache-status", arla_fcache_status, "file cache status"},
-#ifdef RXDEBUG
-    {"rx-status", arla_rx_status, "rx connection status"},
-#endif
-    {"flushfid", arla_flushfid, "flush a fid from the cache"},
-    {"quit", arla_quit, "quit"},
-    {"exit"},
-    {"sysname", arla_sysname, "sysname"},
-    { NULL }
-};
-
-/* An emulation of kernel lookup, convert (startdir, fname) into
- * (startdir).  Strips away leading /afs, removes duobles slashes,
- * and resolves symlinks.
- * Return 0 for success, otherwise -1.
- */
-
-static int
-walk (VenusFid *startdir, char *fname)
-{
-     VenusFid cwd = *startdir;
-     char *base;
-     VenusFid file;
-     Result ret;
-     FCacheEntry *entry;
-     int error;
-     char symlink[MAXPATHLEN];
-     char store_name[MAXPATHLEN];
-
-     strlcpy(store_name, fname, sizeof(store_name));
-     fname = store_name;
-
-     do {
-        /* set things up so that fname points to the remainder of the path,
-         * whereas base points to the whatever preceeds the first /
-         */
-        base = fname;
-        fname = strchr(fname, '/');
-        if (fname) {
-            /* deal with repeated adjacent / chars by eliminating the
-             * duplicates. 
-             */
-            while (*fname == '/') {
-                *fname = '\0';
-                fname++;
-            }
-        }
- 
-        /* deal with absolute pathnames first. */
-        if (*base == '\0') {
-            cwd = rootcwd;
-            if (fname) {
-                if (strncmp("afs",fname,3) == 0) {
-                    fname += 3;
-                }
-                continue;
-            } else {
-                break;
-            }
-	 }
-	 ret = cm_lookup (&cwd, base, &file, &ce, TRUE);
-	 if (ret.res) {
-	     arla_warn (ADEBWARN, ret.error, "lookup(%s)", base);
-	     return -1;
-	 }
-	 error = fcache_get_data (&entry, &file, &ce);
-	 if (error) {
-	     arla_warn (ADEBWARN, error, "fcache_get");
-	     return -1;
-	 }
-
-	 /* handle symlinks here */
-	 if (entry->status.FileType == TYPE_LINK) {
-	     int len;
-	     int fd;
-
-	     fd = fcache_open_file (entry, O_RDONLY);
-	     /* read the symlink and null-terminate it */
-	     if (fd < 0) {
-		 fcache_release(entry);
-		 arla_warn (ADEBWARN, errno, "fcache_open_file");
-		 return -1;
-	     }
-	     len = read (fd, symlink, sizeof(symlink));
-	     close (fd);
-	     if (len <= 0) {
-		 fcache_release(entry);
-		 arla_warnx (ADEBWARN, "cannot read symlink");
-		 return -1;
-	     }
-	     symlink[len] = '\0';
-	     /* if we're not at the end (i.e. fname is not null), take
-	      * the expansion of the symlink and append fname to it.
-	      */
-	     if (fname != NULL) {
-		 strcat (symlink, "/");
-		 strcat (symlink, fname);
-	     }
-	     strlcpy(store_name, symlink, sizeof(store_name));
-	     fname = store_name;
-	 } else {
-	     /* if not a symlink, just update cwd */
-	     cwd = file;
-	 }
-	 fcache_release(entry);
-
-	 /* the *fname condition below deals with a trailing / in a
-	  * path-name */
-     } while (fname != NULL && *fname);
-     *startdir = cwd;
-     return 0;
-}
-
-static int
-arla_quit (int argc, char **argv)
-{
-    printf("Thank you for using arla\n");
-    return 1;
-}
-
-static int
-arla_flushfid(int argc, char **argv)
-{
-    AFSCallBack broken_callback = {0, 0, CBDROPPED};
-    VenusFid fid;
-    
-    if (argc != 2) {
-	fprintf(stderr, "flushfid fid\n");
-	return 0;
-    }
-    
-    if ((sscanf(argv[1], "%d.%d.%d.%d", &fid.Cell, &fid.fid.Volume, 
-		&fid.fid.Vnode, &fid.fid.Unique)) == 4) {
-	;
-    } else if ((sscanf(argv[1], "%d.%d.%d", &fid.fid.Volume, 
-		       &fid.fid.Vnode, &fid.fid.Unique)) == 3) {
-	fid.Cell = cwd.Cell;
-    } else {
-	fprintf(stderr, "flushfid fid\n");
-	return 0;
-    }
-    
-    fcache_stale_entry(fid, broken_callback);
-    
-    return 0;
-}
-
-
-static int
-arla_chdir (int argc, char **argv)
-{
-    if (argc != 2) {
-	printf ("usage: %s dir\n", argv[0]);
-	return 0;
-    }
-
-    if(walk (&cwd, argv[1]))
-	printf ("walk %s failed\n", argv[1]);
-    return 0;
-}
-
-static void
-print_dir (VenusFid *fid, const char *name, void *v)
-{
-     printf("(%d, %d, %d, %d): %s\n", fid->Cell,
-	    fid->fid.Volume,
-	    fid->fid.Vnode,
-	    fid->fid.Unique, name);
-}
-
-struct ls_context {
-    VenusFid *dir_fid;
-    CredCacheEntry *ce;
-};
-
-static void
-print_dir_long (VenusFid *fid, const char *name, void *v)
-{
-    Result res;
-    int ret;
-    AFSFetchStatus status;
-    VenusFid realfid;
-    AccessEntry *ae;
-    struct ls_context *context = (struct ls_context *)v;
-    char type;
-    CredCacheEntry *ce = context->ce;
-    VenusFid *dir_fid  = context->dir_fid;
-    char timestr[20];
-    struct tm *t;
-    time_t ti;
-
-    if (VenusFid_cmp(fid, dir_fid) == 0)
-	return;
-
-    ret = followmountpoint (fid, dir_fid, &ce);
-    if (ret) {
-	printf ("follow %s: %d\n", name, ret);
-	return;
-    }
-
-    res = cm_getattr (*fid, &status, &realfid, context->ce, &ae);
-    if (res.res) {
-	printf ("%s: %d\n", name, res.res);
-	return;
-    }
-
-    switch (status.FileType) {
-    case TYPE_FILE :
-	type = '-';
-	break;
-    case TYPE_DIR :
-	type = 'd';
-	break;
-    case TYPE_LINK :
-	type = 'l';
-	break;
-    default :
-	abort ();
-    }
-
-    printf("(%4d, %8d, %8d, %8d): ",
-	   fid->Cell,
-	   fid->fid.Volume,
-	   fid->fid.Vnode,
-	   fid->fid.Unique);
-
-    ti = status.ClientModTime;
-    t = localtime (&ti);
-    strftime (timestr, sizeof(timestr), "%Y-%m-%d", t);
-    printf ("%c%c%c%c%c%c%c%c%c%c %2d %6d %6d %8d %s ",
-	    type,
-	    status.UnixModeBits & 0x100 ? 'w' : '-',
-	    status.UnixModeBits & 0x080 ? 'r' : '-',
-	    status.UnixModeBits & 0x040 ? 'x' : '-',
-	    status.UnixModeBits & 0x020 ? 'w' : '-',
-	    status.UnixModeBits & 0x010 ? 'r' : '-',
-	    status.UnixModeBits & 0x008 ? 'x' : '-',
-	    status.UnixModeBits & 0x004 ? 'w' : '-',
-	    status.UnixModeBits & 0x002 ? 'r' : '-',
-	    status.UnixModeBits & 0x001 ? 'x' : '-',
-	    status.LinkCount,
-	    status.Owner,
-	    status.Group,
-	    status.Length,
-	    timestr);
-
-    printf ("v %d ", status.DataVersion);
-
-    printf ("%s\n", name);
-}
-
-static int
-arla_ls (int argc, char **argv)
-{
-    struct getargs args[] = {
-	{NULL, 'l', arg_flag, NULL},
-	{NULL, 0,   arg_end,  NULL}
-    };
-    int l_flag = 0;
-    int error;
-    int optind = 0;
-    struct ls_context context;
-
-    args[0].value = &l_flag;
-
-    if (getarg (args, argc, argv, &optind, ARG_SHORTARG)) {
-	arg_printusage (args, "ls", NULL, ARG_SHORTARG);
-	return 0;
-    }
-    context.dir_fid = &cwd;
-    context.ce      = ce;
-    error = adir_readdir (&cwd, l_flag ? print_dir_long : print_dir,
-			  &context, &ce);
-    if (error)
-	printf ("adir_readdir failed: %s\n", koerr_gettext(error));
-    return 0;
-}
-
-static int
-arla_sysname (int argc, char **argv)
-{
-    switch (argc) {
-    case 1:
-	printf("sysname: %s\n", arlasysname);
-	break;
-    case 2:
-	strlcpy(arlasysname, argv[1], SYSNAMEMAXLEN);
-	printf("setting sysname to: %s\n", arlasysname);
-	break;
-    default:
-	printf("syntax: sysname <sysname>\n");
-	break;
-    }
-    return 0;
-}
-
-
-static int
-arla_cat_et_wc (int argc, char **argv, int do_cat, int out_fd)
-{
-    VenusFid fid;
-    int fd;
-    char buf[8192];
-    int ret;
-    FCacheEntry *e;
-    size_t size = 0;
-    
-    if (argc != 2) {
-	printf ("usage: %s file\n", argv[0]);
-	return 0;
-    }
-    fid = cwd;
-    if(walk (&fid, argv[1]) == 0) {
-
-	ret = fcache_get_data (&e, &fid, &ce);
-	if (ret) {
-	    printf ("fcache_get_data failed: %d\n", ret);
-	    return 0;
-	}
-
-	fd = fcache_open_file (e, O_RDONLY);
-
-	if (fd < 0) {
-	    fcache_release(e);
-	    printf ("fcache_open_file failed: %d\n", errno);
-	    return 0;
-	}
-	while ((ret = read (fd, buf, sizeof(buf))) > 0) {
-	    if(do_cat)
-		write (out_fd, buf, ret);
-	    else
-		size += ret;
-	}
-	if(!do_cat)
-	    printf("%lu %s\n", (unsigned long)size, argv[1]);
-	close (fd);
-	fcache_release(e);
-    }
-    return 0;
-}
-
-static int
-arla_cat (int argc, char **argv)
-{
-    return arla_cat_et_wc(argc, argv, 1, STDOUT_FILENO);
-}
-
-static int
-arla_cp (int argc, char **argv)
-{
-    char *nargv[3];
-    int fd, ret;
-
-    if (argc != 3) {
-	printf ("usage: %s from-file to-file\n", argv[0]);
-	return 0;
-    }
-    
-    fd = open (argv[2], O_CREAT|O_WRONLY|O_TRUNC, 0600);
-    if (fd < 0) {
-	warn ("open");
-	return 0;
-    }	
-
-    nargv[0] = argv[0];
-    nargv[1] = argv[1];
-    nargv[2] = NULL;
-
-    ret = arla_cat_et_wc(argc-1, nargv, 1, fd);
-    close (fd);
-    return ret;
-	
-}
-
-static int
-arla_wc (int argc, char **argv)
-{
-    return arla_cat_et_wc(argc, argv, 0, -1);
-}
-
-
-static int
-help (int argc, char **argv)
-{
-    sl_help(cmds, argc, argv);
-    return 0;
-}
-
-static int
-arla_checkserver (int argc, char **argv)
-{
-    u_int32_t hosts[12];
-    int num = sizeof(hosts)/sizeof(hosts[0]);
-
-    conn_downhosts(cwd.Cell, hosts, &num, 0);
-    if (num < 0 || num > sizeof(hosts)/sizeof(hosts[0])) {
-	fprintf (stderr, "conn_downhosts returned bogus num: %d\n", num);
-	return 0;
-    }
-    if (num == 0) {
-	printf ("no servers down in %s\n", cell_num2name(cwd.Cell));
-    } else {
-	while (num) {
-	    struct in_addr in;
-	    in.s_addr = hosts[num];
-	    printf ("down: %s\n", inet_ntoa(in));
-	    num--;
-	}
-    }
-    
-    return 0;
-}
-
-static int
-arla_conn_status (int argc, char **argv)
-{
-    conn_status ();
-    return 0;
-}
-
-static int
-arla_vol_status (int argc, char **argv)
-{
-    volcache_status ();
-    return 0;
-}
-
-static int
-arla_cred_status (int argc, char **argv)
-{
-    cred_status ();
-    return 0;
-}
-
-static int
-arla_fcache_status (int argc, char **argv)
-{
-    fcache_status ();
-    return 0;
-}
-
-#ifdef RXDEBUG
-static int
-arla_rx_status(int argc, char **argv)
-{
-    rx_PrintStats(stderr);
-    return 0;
-}
-#endif
 
 static void
 initrx (int port)
@@ -549,111 +53,14 @@ initrx (int port)
 	  arla_err (1, ADEBERROR, error, "rx_init");
 }
 
-#ifdef KERBEROS
 
-static int
-get_cred(const char *princ, const char *inst, const char *krealm, 
-         CREDENTIALS *c)
-{
-  KTEXT_ST foo;
-  int k_errno;
-
-  k_errno = krb_get_cred((char*)princ, (char*)inst, (char*)krealm, c);
-
-  if(k_errno != KSUCCESS) {
-    k_errno = krb_mk_req(&foo, (char*)princ, (char*)inst, (char*)krealm, 0);
-    if (k_errno == KSUCCESS)
-      k_errno = krb_get_cred((char*)princ, (char*)inst, (char*)krealm, c);
-  }
-  return k_errno;
-}
-
-
-#endif /* KERBEROS */
-
-#define KERNEL_STACKSIZE (16*1024)
-
-/*
- *
- */
-
-static void
+void
 store_state (void)
 {
     arla_warnx (ADEBMISC, "storing state");
     fcache_store_state ();
     volcache_store_state ();
     cm_store_state ();
-}
-
-char *pid_filename;
-
-static void
-write_pid_file (const char *progname)
-{
-    FILE *fp;
-
-    asprintf (&pid_filename, "/var/run/%s.pid", progname);
-    if (pid_filename == NULL)
-	return;
-    fp = fopen (pid_filename, "w");
-    if (fp == NULL)
-	return;
-    fprintf (fp, "%u", (unsigned)getpid());
-    fclose (fp);
-}
-
-static void
-delete_pid_file (void)
-{
-    if (pid_filename != NULL) {
-	unlink (pid_filename);
-	free (pid_filename);
-	pid_filename = NULL;
-    }
-}
-
-/*
- * signal handlers...
- */
-
-static void
-sigint (int foo)
-{
-    arla_warnx (ADEBMISC, "fatal signal received");
-    store_state ();
-    delete_pid_file ();
-    exit (0);
-}
-
-static void
-sighup (int foo)
-{
-    store_state ();
-    delete_pid_file ();
-}
-
-static void
-daemonify (void)
-{
-    pid_t pid;
-    int fd;
-
-    pid = fork ();
-    if (pid < 0)
-	arla_err (1, ADEBERROR, errno, "fork");
-    else if (pid > 0)
-	exit(0);
-    if (setsid() == -1)
-	arla_err (1, ADEBERROR, errno, "setsid");
-    fd = open(_PATH_DEVNULL, O_RDWR, 0);
-    if (fd < 0)
-	arla_err (1, ADEBERROR, errno, "open " _PATH_DEVNULL);
-    dup2 (fd, STDIN_FILENO);
-    dup2 (fd, STDOUT_FILENO);
-    dup2 (fd, STDERR_FILENO);
-    if (fd > 2)
-	    close (fd);
 }
 
 struct conf_param {
@@ -783,71 +190,40 @@ static struct conf_param conf_params[] = {
     {"dynroot",                 &dynrootlevel,   DYNROOT_DEFAULT},
     {NULL,			NULL,		 0}};
 
-static int test_flag;
-static char *conf_file = ARLACONFFILE;
-static char *log_file  = NULL;
-static char *device_file = "/dev/xfs0";
-static char *debug_levels = NULL;
-static char *connected_mode_string = NULL;
+char *conf_file = ARLACONFFILE;
+char *log_file  = NULL;
+char *debug_levels = NULL;
+char *connected_mode_string = NULL;
 #ifdef KERBEROS
-static char *rxkad_level_string = "auth";
+char *rxkad_level_string = "auth";
 #endif
-static const char *temp_sysname = NULL;
-static char *root_volume;
-static char *cache_dir;
-static int version_flag;
-static int help_flag;
-static int fork_flag = 1;
-static int client_port = 4711;
-static int recover = 0;
-static int dynroot_enable = 0;
-static int num_workers = 16;
-static int usedbytes_consistency = 0;
+const char *temp_sysname = NULL;
+char *root_volume;
+int cpu_usage;
+int version_flag;
+int help_flag;
+int recover = 0;
+int dynroot_enable = 0;
+int cm_consistency = 0;
 
+/*
+ * These are exported to other modules
+ */
+
+int num_workers = 16;
+char *cache_dir;
 int fake_mp;
+int fork_flag = 1;
 
-static struct getargs args[] = {
-    {"test",	't',	arg_flag,	&test_flag,
-     "run in test mode", NULL},
-    {"conffile", 'c',	arg_string,	&conf_file,
-     "path to configuration file", "file"},
-    {"usedbytes-consistency", 'b', arg_flag, &usedbytes_consistency,
-     "if we want extra paranoid usedbytes consistency check", NULL },
-    {"log",	'l',	arg_string,	&log_file,
-     "where to write log (stderr (default), syslog, or path to file)", NULL},
-    {"debug",	0,	arg_string,	&debug_levels,
-     "what to write in the log", NULL},
-    {"device",	'd',	arg_string,	&device_file,
-     "the XFS device to use [/dev/xfs0]", "path"},
-    {"connected-mode", 0, arg_string,	&connected_mode_string,
-     "initial connected mode [conncted|fetch-only|disconnected]", NULL},
-    {"dynroot", 'D', arg_flag,	&dynroot_enable,
-     "if dynroot is enabled", NULL},
-    {"fork",	'n',	arg_negative_flag,	&fork_flag,
-     "don't fork and demonize", NULL},
-#ifdef KERBEROS
-    {"rxkad-level", 'r', arg_string,	&rxkad_level_string,
-     "the rxkad level to use (clear, auth or crypt)", NULL},
-#endif
-    {"sysname",	 's',	arg_string,	&temp_sysname,
-     "set the sysname of this system", NULL},
-    {"root-volume",0,   arg_string,     &root_volume},
-    {"port",	0,	arg_integer,	&client_port,
-     "port number to use",	"number"},
-    {"recover",	'z',	arg_negative_flag, &recover,
-     "don't recover state",	NULL},
-    {"cache-dir", 0,	arg_string,	&cache_dir,
-     "cache directory",	"directory"},
-    {"workers",	  0,	arg_integer,	&num_workers,
-     "number of worker threads", NULL},
-    {"fake-mp",	  0,	arg_flag,	&fake_mp,
-     "enable fake mountpoints", NULL},
-    {"version",	0,	arg_flag,	&version_flag,
-     NULL, NULL},
-    {"help",	0,	arg_flag,	&help_flag,
-     NULL, NULL},
-    {NULL,      0,      arg_end,        NULL, NULL, NULL}
-};
+/*
+ * Global AFS variables, se arla_local.h for comment
+ */
+
+int afs_BusyWaitPeriod = 15;
+
+/*
+ *
+ */
 
 static int
 parse_string_list (const char *s, const char **units)
@@ -898,49 +274,15 @@ set_connected_mode (const char *s)
     return parse_string_list (s, connected_levels);
 }
 
-static void
-usage (int ret)
-{
-    arg_printusage (args, NULL, "[device]", ARG_GNUSTYLE);
-    exit (ret);
-}
-
-
 /*
  *
  */
 
 int
-main (int argc, char **argv)
+arla_init (int argc, char **argv)
 {
-    PROCESS kernelpid;
-    int error;
-    int optind = 0;
-    char *default_log_file;
+    log_flags log_flags;
     char fpriofile[MAXPATHLEN];
-
-    set_progname (argv[0]);
-
-    if (getarg (args, argc, argv, &optind, ARG_GNUSTYLE))
-	usage (1);
-
-    argc -= optind;
-    argv += optind;
-
-    if (help_flag)
-	usage (0);
-
-    if (version_flag)
-	errx (1, "%s", arla_version);
-    
-    if (argc > 0) {
-	device_file = *argv;
-	argc--;
-	argv++;
-    }
-
-    if (argc != 0)
-	usage (1);
 
     if (temp_sysname == NULL)
 	temp_sysname = arla_getsysname ();
@@ -954,21 +296,13 @@ main (int argc, char **argv)
 	errx (1, "bad rxkad level `%s'", rxkad_level_string);
 #endif
 
-    signal (SIGINT, sigint);
-    signal (SIGTERM, sigint);
-    signal (SIGHUP, sighup);
-    umask (S_IRWXG|S_IRWXO); /* 077 */
-
-    if (!test_flag && fork_flag) {
-	default_log_file = "syslog";
-    } else {
-	default_log_file = "/dev/stderr";
-    }
-
     if (log_file == NULL)
 	log_file = default_log_file;
 
-    arla_loginit(log_file);
+    log_flags = 0;
+    if (cpu_usage)
+	log_flags |= LOG_CPU_USAGE;
+    arla_loginit(log_file, log_flags);
      
     if (debug_levels != NULL) {
 	if (arla_log_set_level (debug_levels) < 0) {
@@ -989,7 +323,7 @@ main (int argc, char **argv)
     read_conffile(conf_file, conf_params);
 
     if (cache_dir == NULL)
-	cache_dir = ARLACACHEDIR;
+	cache_dir = get_default_cache_dir();
 
     if (mkdir (cache_dir, 0777) < 0 && errno != EEXIST)
 	arla_err (1, ADEBERROR, errno, "mkdir %s", cache_dir);
@@ -1016,7 +350,7 @@ main (int argc, char **argv)
     arla_warnx (ADEBINIT, "conn_init numconns = %u", numconns);
     conn_init (numconns);
     arla_warnx (ADEBINIT, "cellcache");
-    cell_init (0);
+    cell_init (0, arla_log_method);
     arla_warnx (ADEBINIT, "fprio");
     fprio_init(fpriofile);
     arla_warnx (ADEBINIT, "volcache numvols = %u", numvols);
@@ -1048,81 +382,12 @@ main (int argc, char **argv)
     arla_warnx(ADEBINIT, "cm");
     cm_init ();
 
-    if (usedbytes_consistency) {
-	arla_warnx(ADEBINIT, "turning on usedbytes consistency test");
-	cm_turn_on_usedbytes_consistency();
+    if (cm_consistency) {
+	arla_warnx(ADEBINIT, "turning on consistency test");
+	cm_turn_on_consistency_check();
     }
 
     arla_warnx(ADEBINIT, "arla init done.");
-
-    if (test_flag) {
-#ifdef KERBEROS
-	{
-	    krbstruct krbdata;
-	    int ret;
-	    char *realm;
-	    const char *this_cell = cell_getthiscell ();
-	    const char *db_server = cell_findnamedbbyname (this_cell);
-
-	    if (db_server == NULL)
-		arla_errx (1, ADEBERROR,
-			   "no db server for cell %s", this_cell);
-	    realm = krb_realmofhost (db_server);
-	    
-	    ret = get_cred("afs", this_cell, realm, &krbdata.c);
-	    if (ret)
-		ret = get_cred("afs", "", realm, &krbdata.c);
-
-	    if (ret) {
-		arla_warnx (ADEBWARN,
-			    "getting ticket for %s: %s",
-			    this_cell,
-			    krb_get_err_text (ret));
-	    } else if (cred_add_krb4(getuid(), getuid(), &krbdata.c) == NULL) {
-		arla_warnx (ADEBWARN, "Could not insert tokens to arla");
-	    }
-	}
-#endif
-
-	ce = cred_get (cell_name2num(cell_getthiscell()), getuid(), CRED_ANY);
-	 
-	xfs_message_init ();
-	kernel_opendevice ("null");
-
-	arla_warnx (ADEBINIT, "Getting root...");
-	error = getroot (&rootcwd, ce);
-	if (error)
-	    arla_err (1, ADEBERROR, error, "getroot");
-	cwd = rootcwd;
-	arla_warnx(ADEBINIT, "arla loop started");
-	sl_loop(cmds, "arla> ");
-	store_state ();
-    } else {
-	struct kernel_args kernel_args;
-
-	xfs_message_init ();
-	kernel_opendevice (device_file);
-
-	kernel_args.num_workers = num_workers;
-
-	if (LWP_CreateProcess (kernel_interface, KERNEL_STACKSIZE, 1,
-			       (char *)&kernel_args,
-			       "Kernel-interface", &kernelpid))
-	    arla_errx (1, ADEBERROR,
-		       "Cannot create kernel-interface process");
-	if (fork_flag) {
-	    daemonify ();
-	    clock_ReInit ();
-	}
-
-	write_pid_file ("arlad");
-
-	if (chroot (cache_dir) < 0)
-	    arla_err (1, ADEBERROR, errno, "chroot %s", cache_dir);
-
-	LWP_WaitProcess ((char *)main);
-	abort ();
-    }
 
     return 0;
 }

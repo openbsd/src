@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -42,7 +37,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$Id: fcache.c,v 1.3 2000/09/11 14:40:42 art Exp $") ;
+RCSID("$KTH: fcache.c,v 1.311.2.20 2001/12/20 16:36:24 mattiasa Exp $") ;
 
 /*
  * Prototypes
@@ -153,6 +148,12 @@ fcache_usedbytes(void)
 }
 
 u_long
+fcache_lowbytes(void)
+{
+    return lowbytes;
+}
+
+u_long
 fcache_highvnodes(void)
 {
     return highvnodes;
@@ -162,6 +163,266 @@ u_long
 fcache_usedvnodes(void)
 {
     return usedvnodes;
+}
+
+u_long
+fcache_lowvnodes(void)
+{
+    return lowvnodes;
+}
+
+#define HISTOGRAM_SLOTS 32
+#define STATHASHSIZE 997
+
+/* Struct with collected statistics */
+struct collect_stat{
+    int64_t starttime;
+};
+
+struct time_statistics {
+    u_int32_t measure_type;
+    u_int32_t host;
+    u_int32_t partition;
+    u_int32_t measure_items; /* normed by get_histgram_slots */
+    u_int32_t count[HISTOGRAM_SLOTS];    
+    int64_t measure_items_total[HISTOGRAM_SLOTS];
+    int64_t elapsed_time[HISTOGRAM_SLOTS];
+};
+
+static unsigned
+statistics_hash (void *p)
+{
+    struct time_statistics *stats = (struct time_statistics*)p;
+
+    return stats->measure_type + stats->host +
+	stats->partition * 32 * 32 + stats->measure_items * 32;
+}
+
+/*
+ * Compare two entries. Return 0 if and only if the same.
+ */
+
+static int
+statistics_cmp (void *a, void *b)
+{
+    struct time_statistics *f1 = (struct time_statistics*)a;
+    struct time_statistics *f2 = (struct time_statistics*)b;
+
+    return f1->measure_type  != f2->measure_type
+	|| f1->host          != f2->host
+	|| f1->partition     != f2->partition
+	|| f1->measure_items != f2->measure_items;
+}
+
+static Hashtab *statistics;
+
+static int
+get_histogram_slot(u_int32_t value)
+{
+    int i;
+
+    for (i = HISTOGRAM_SLOTS - 1; i > 0; i--) {
+	if (value >> i)
+	    return i;
+    }
+    return 0;
+}
+
+static void
+add_time_statistics(u_int32_t measure_type, u_int32_t host,
+		    u_int32_t partition, u_int32_t measure_items,
+		    int64_t elapsed_time)
+{
+    u_int32_t time_slot;
+    struct time_statistics *ts;
+    struct time_statistics *ts2;
+
+    ts = malloc(sizeof(*ts));
+
+    time_slot = get_histogram_slot(elapsed_time);
+    ts->measure_type = measure_type;
+    ts->measure_items = get_histogram_slot(measure_items);
+    ts->host = host;
+    ts->partition = partition;
+    ts2 = hashtabsearch (statistics, (void*)(ts));
+    if (ts2) {
+	ts2->count[time_slot]++;
+	ts2->elapsed_time[time_slot] += elapsed_time;
+	ts2->measure_items_total[time_slot] += measure_items;
+	free(ts);
+    } else {
+	memset(ts->count, 0, sizeof(ts->count));
+	memset(ts->measure_items_total, 0, sizeof(ts->measure_items_total));
+	memset(ts->elapsed_time, 0, sizeof(ts->elapsed_time));
+	ts->count[time_slot]++;
+	ts->elapsed_time[time_slot] += elapsed_time;
+	ts->measure_items_total[time_slot] += measure_items;
+	hashtabadd(statistics, ts);
+    }
+
+    time_slot = get_histogram_slot(elapsed_time);
+}
+
+static void
+collectstats_init (void)
+{
+    statistics = hashtabnew (STATHASHSIZE, statistics_cmp, statistics_hash);
+
+    if (statistics == NULL)
+	arla_err(1, ADEBINIT, errno, "collectstats_init: cannot malloc");
+}
+
+static void
+collectstats_start (struct collect_stat *p)
+{
+    struct timeval starttime;
+
+    gettimeofday(&starttime, NULL);
+    p->starttime = starttime.tv_sec * 1000000LL + starttime.tv_usec;
+}
+
+static void
+collectstats_stop (struct collect_stat *p,
+		   FCacheEntry *entry,
+		   ConnCacheEntry *conn,
+		   int measure_type, int measure_items)
+{
+    u_int32_t host = conn->host;
+    long partition = -1;
+    int volumetype;
+    struct nvldbentry vldbentry;
+    struct timeval stoptime;
+    int64_t elapsed_time;
+    int i;
+
+    gettimeofday(&stoptime, NULL);
+
+    volumetype = volcache_volid2bit (entry->volume, entry->fid.fid.Volume);
+    vldbentry = entry->volume->entry;
+
+    for (i = 0; i < min(NMAXNSERVERS, vldbentry.nServers); ++i) {
+	if (host == htonl(vldbentry.serverNumber[i]) &&
+	    vldbentry.serverFlags[i] & volumetype) {
+	    partition = vldbentry.serverPartition[i];
+	}
+    }
+    assert(partition != -1);
+    elapsed_time = stoptime.tv_sec * 1000000LL + stoptime.tv_usec;
+    elapsed_time -= p->starttime;
+    add_time_statistics(measure_type, host, partition,
+			measure_items, elapsed_time);
+}
+
+struct hostpart {
+    u_int32_t host;
+    u_int32_t part;
+};
+
+static unsigned
+hostpart_hash (void *p)
+{
+    struct hostpart *h = (struct hostpart*)p;
+
+    return h->host * 256 + h->part;
+}
+
+static int
+hostpart_cmp (void *a, void *b)
+{
+    struct hostpart *h1 = (struct hostpart*)a;
+    struct hostpart *h2 = (struct hostpart*)b;
+
+    return h1->host != h2->host ||
+	h1->part != h2->part;
+}
+
+static Bool
+hostpart_addhash (void *ptr, void *arg)
+{
+    Hashtab *hostparthash = (Hashtab *) arg;
+    struct time_statistics *s = (struct time_statistics *) ptr;
+    struct hostpart *h;
+    
+    h = malloc(sizeof(*h));
+    h->host = s->host;
+    h->part = s->partition;
+
+    hashtabadd(hostparthash, h);
+    return FALSE;
+}
+
+struct hostpart_collect_args {
+    u_int32_t *host;
+    u_int32_t *part;
+    int *i;
+    int max;
+};
+
+static Bool
+hostpart_collect (void *ptr, void *arg)
+{
+    struct hostpart_collect_args *collect_args =
+	(struct hostpart_collect_args *) arg;
+    struct hostpart *h = (struct hostpart *) ptr;
+
+    if (*collect_args->i >= collect_args->max)
+	return TRUE;
+
+    collect_args->host[*collect_args->i] = h->host;
+    collect_args->part[*collect_args->i] = h->part;
+    (*collect_args->i)++;
+
+    return FALSE;
+}
+
+int
+collectstats_hostpart(u_int32_t *host, u_int32_t *part, int *n)
+{
+    Hashtab *hostparthash;
+    int i;
+    struct hostpart_collect_args collect_args;
+
+    hostparthash = hashtabnew (100, hostpart_cmp, hostpart_hash);
+
+    hashtabforeach(statistics, hostpart_addhash, hostparthash);
+
+    i = 0;
+    collect_args.host = host;
+    collect_args.part = part;
+    collect_args.i = &i;
+    collect_args.max = *n;
+    hashtabforeach(hostparthash, hostpart_collect, &collect_args);
+    *n = i;
+
+    hashtabrelease(hostparthash);
+
+    return 0;
+}
+
+int
+collectstats_getentry(u_int32_t host, u_int32_t part, u_int32_t type,
+		      u_int32_t items_slot, u_int32_t *count,
+		      int64_t *items_total, int64_t *total_time)
+{
+    struct time_statistics ts;
+    struct time_statistics *ts2;
+
+    ts.measure_type = type;
+    ts.measure_items = items_slot;
+    ts.host = host;
+    ts.partition = part;
+    ts2 = hashtabsearch (statistics, (void*)(&ts));
+    if (ts2 == NULL) {
+	memset(count, 0, 4 * 32);
+	memset(items_total, 0, 8 * 32);
+	memset(total_time, 0, 8 * 32);
+    } else {
+	memcpy(count, ts2->count, 4 * 32);
+	memcpy(items_total, ts2->measure_items_total, 8 * 32);
+	memcpy(total_time, ts2->elapsed_time, 8 * 32);
+    }
+
+    return 0;
 }
 
 /*
@@ -297,14 +558,19 @@ static int fhopen_working;
  */
 
 static int
-fcache_fhopen (xfs_cache_handle *handle, int flags)
+fcache_fhopen (fcache_cache_handle *handle, int flags)
 {
+    if (!handle->valid) {
+	errno = EINVAL;
+	return -1;
+    }
+
 #if defined(HAVE_GETFH) && defined(HAVE_FHOPEN)
     {
 	int ret;
 	fhandle_t fh;
 
-	memcpy (&fh, handle, sizeof(fh));
+	memcpy (&fh, &handle->xfs_handle, sizeof(fh));
 	ret = fhopen (&fh, flags);
 	if (ret >= 0)
 	    return ret;
@@ -315,8 +581,8 @@ fcache_fhopen (xfs_cache_handle *handle, int flags)
     {
 	struct ViceIoctl vice_ioctl;
 	
-	vice_ioctl.in      = (caddr_t)handle;
-	vice_ioctl.in_size = sizeof(*handle);
+	vice_ioctl.in      = (caddr_t)&handle->xfs_handle;
+	vice_ioctl.in_size = sizeof(handle->xfs_handle);
 	
 	vice_ioctl.out      = NULL;
 	vice_ioctl.out_size = 0;
@@ -334,16 +600,19 @@ fcache_fhopen (xfs_cache_handle *handle, int flags)
  */
 
 int
-fcache_fhget (char *filename, xfs_cache_handle *handle)
+fcache_fhget (char *filename, fcache_cache_handle *handle)
 {
+    handle->valid = 0;
 #if defined(HAVE_GETFH) && defined(HAVE_FHOPEN)
     {
 	int ret;
 	fhandle_t fh;
 
 	ret = getfh (filename, &fh);
-	if (ret == 0)
-	    memcpy (handle, &fh, sizeof(fh));
+	if (ret == 0) {
+	    memcpy (&handle->xfs_handle, &fh, sizeof(fh));
+	    handle->valid = 1;
+	}
 
 	return ret;
     }
@@ -351,6 +620,7 @@ fcache_fhget (char *filename, xfs_cache_handle *handle)
 #ifdef KERBEROS
     {
 	struct ViceIoctl vice_ioctl;
+	int ret;
 	
 	if (!fhopen_working)
 	    return 0;
@@ -358,10 +628,14 @@ fcache_fhget (char *filename, xfs_cache_handle *handle)
 	vice_ioctl.in      = NULL;
 	vice_ioctl.in_size = 0;
 	
-	vice_ioctl.out      = (caddr_t)handle;
-	vice_ioctl.out_size = sizeof(*handle);
+	vice_ioctl.out      = (caddr_t)&handle->xfs_handle;
+	vice_ioctl.out_size = sizeof(handle->xfs_handle);
 	
-	return k_pioctl (filename, VIOC_FHGET, &vice_ioctl, 0);
+	ret = k_pioctl (filename, VIOC_FHGET, &vice_ioctl, 0);
+	if (ret == 0)
+	    handle->valid = 1;
+
+	return ret;
     }
 #else
     errno = EINVAL;
@@ -453,8 +727,8 @@ throw_data (FCacheEntry *entry)
     int fd;
     struct stat sb;
 
-    assert (entry->flags.datap && entry->flags.usedp
-	    && CheckLock(&entry->lock) == -1);
+    assert (entry->flags.datap && entry->flags.usedp);
+    AssertExclLocked(&entry->lock);
 
     fd = fcache_open_file (entry, O_WRONLY);
     if (fd < 0) {
@@ -488,7 +762,7 @@ throw_data (FCacheEntry *entry)
     entry->flags.extradirp = FALSE;
 
  out:
-    cm_check_usedbytes_consistency();
+    cm_check_consistency();
 }
 
 /*
@@ -516,8 +790,8 @@ throw_entry (FCacheEntry *entry)
     AFSCBs cbs;
     int ret;
 
-    assert (entry->flags.usedp
-	    && CheckLock(&entry->lock) == -1);
+    assert (entry->flags.usedp);
+    AssertExclLocked(&entry->lock);
 
     hashtabdel (hashtab, entry);
 
@@ -582,7 +856,7 @@ create_nodes (char *arg)
     while (1) {
        	unsigned int n, i, j;
 
-	if (highvnodes <= current_vnodes)
+	while (highvnodes <= current_vnodes)
 	    LWP_WaitProcess (create_nodes);
 
 	n = highvnodes - current_vnodes;
@@ -693,11 +967,13 @@ cleaner (char *arg)
 		    && CheckLock(&entry->lock) == 0) 
 		{
 		    if (!entry->flags.datausedp
+			&& CheckLock(&entry->lock) == 0
 			/* && this_is_a_good_node_to_gc(entry,state) */) {
-			listdel (lrulist, item);
 			ObtainWriteLock (&entry->lock);
+			listdel (lrulist, item);
 			throw_entry (entry);
 			entry->lru_le = listaddtail (lrulist, entry);
+			assert(entry->lru_le);
 			ReleaseWriteLock (&entry->lock);
 			break;
 		    }
@@ -759,7 +1035,7 @@ cleaner (char *arg)
 		   usedbytes, lowbytes, highbytes,
 		   needbytes);
 	
-	cm_check_usedbytes_consistency();
+	cm_check_consistency();
 	if (needbytes)
 	    LWP_NoYieldSignal (fcache_need_bytes);
 	cleaner_working = FALSE;
@@ -935,7 +1211,7 @@ find_free_entry (void)
     if (entry == NULL)
 	arla_warnx (ADEBWARN, "All vnode entries in use");
     else {
-	assert (CheckLock(&entry->lock) == -1);
+	AssertExclLocked(&entry->lock);
 	++usedvnodes;
     }
     return entry;
@@ -952,6 +1228,11 @@ fcache_store_state (void)
     int fd;
     unsigned n;
     u_int32_t u1, u2;
+
+    if (lrulist == NULL) {
+	arla_warnx (ADEBFCACHE, "store_state: lrulist is NULL");
+	return 0;
+    }
 
     fd = open ("fcache.new", O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
     if (fd < 0)
@@ -1084,6 +1365,7 @@ fcache_recover_state (void)
 	e->hits = 0;
 	e->cleanergen = 0;
 	e->lru_le = listaddhead (lrulist, e);
+	assert(e->lru_le);
 	e->volume = vol;
 	hashtabadd (hashtab, e);
 	if (e->flags.datap)
@@ -1177,6 +1459,8 @@ find_first_fs (FCacheEntry *e,
     int cell = e->fid.Cell;
     int ret;
 
+    memset(context, 0, sizeof(*context));
+
     if (ve == NULL) {
 	int type;
 
@@ -1204,7 +1488,8 @@ find_first_fs (FCacheEntry *e,
 	u_long addr = htonl(ve->entry.serverNumber[i]);
 
 	if (ve->entry.serverFlags[i] & bit
-	    && addr != 0) {
+	    && addr != 0
+	    && (ve->entry.serverFlags[i] & VLSF_DONTUSE) == 0) {
 	    ConnCacheEntry *conn;
 
 	    conn = conn_get (cell, addr, afsport,
@@ -1248,6 +1533,7 @@ fcache_init (u_long alowvnodes,
 #else
     fhopen_working = 0;
 #endif
+    collectstats_init ();
 
     node_count     = 1;		/* XXX */
     lowvnodes      = alowvnodes;
@@ -1289,7 +1575,9 @@ fcache_init (u_long alowvnodes,
 }
 
 /*
- *
+ * set new values for those of lowvnodes, highvnodes, lowbytes, highbytes
+ * that are not zero.
+ * return 0 or an error code
  */
 
 int
@@ -1299,16 +1587,13 @@ fcache_reinit(u_long alowvnodes,
 	      u_long ahighbytes)
 {
     arla_warnx (ADEBFCACHE, "fcache_reinit");
-
-    if (ahighvnodes < highvnodes)
-	return EINVAL;
     
-    if (ahighvnodes > highvnodes) {
-	return EINVAL;
-	highvnodes = ahighvnodes;
-	LWP_NoYieldSignal (create_nodes);
-
-	abort(); /* XXX resize heap */
+    if (ahighvnodes != 0) {
+	if (ahighvnodes > highvnodes) {
+	    highvnodes = ahighvnodes;
+	    LWP_NoYieldSignal (create_nodes);
+	} else
+	    highvnodes = ahighvnodes;
     }
 
     if (alowvnodes != 0)
@@ -1342,6 +1627,7 @@ find_entry_nolock (VenusFid fid)
     if (e != NULL) {
 	listdel (lrulist, e->lru_le);
 	e->lru_le = listaddhead (lrulist, e);
+	assert(e->lru_le);
     }
     return e;
 }
@@ -1382,15 +1668,6 @@ stale (FCacheEntry *e, AFSCallBack callback)
 	e->tokens   = 0;
 	if (e->flags.kernelp)
 	    break_callback (e);
-#if 0
-	if (e->flags.datap)
-	    throw_data (e);
-#endif
-#if 0
-	e->flags.attrp     = FALSE;
-#endif
-	e->flags.attrusedp = FALSE;
-	e->flags.datausedp = FALSE;
 	ReleaseWriteLock (&e->lock);
     }
 }
@@ -1472,7 +1749,7 @@ purge_cred (void *ptr, void *arg)
 		ae[i].cred = ARLA_NO_AUTH_CRED;
 		ae[i].access = ANONE;
 		if (e->flags.kernelp)
-		    install_attr (e);
+		    install_attr (e, FCACHE2XFSNODE_RIGHT);
 		break;
 	    }
     }
@@ -1601,6 +1878,22 @@ mountpointp (FCacheEntry *entry)
 }
 
 /*
+ * Mark `entry' as mountpoint or a fake mountpoint depending on
+ * fake_mp is used or not.
+ */
+
+void
+fcache_mark_as_mountpoint (FCacheEntry *entry)
+{
+    if (fake_mp) {
+	entry->flags.fake_mp = TRUE;
+	fake_mp_status (entry);
+    } else {
+	entry->flags.mountp = TRUE;
+    }
+}
+
+/*
  * Update all the relevant parts of `entry' after having received new
  * data from the file server.
  */
@@ -1640,14 +1933,8 @@ update_entry (FCacheEntry *entry,
     findaccess (cred, entry->acccache, &ae);
     ae->cred   = cred;
     ae->access = status->CallerAccess;
-    if (!entry->flags.mountp && mountpointp (entry)) {
-	if (fake_mp) {
-	    entry->flags.fake_mp = TRUE;
-	    fake_mp_status (entry);
-	} else {
-	    entry->flags.mountp = TRUE;
-	}
-    }
+    if (!entry->flags.mountp && mountpointp (entry))
+	fcache_mark_as_mountpoint (entry);
 }
 
 /*
@@ -1789,44 +2076,31 @@ fcache_reobtain_callbacks (void)
  */
 
 static Bool
-try_next_fs (int error)
+try_next_fs (int error, const VenusFid *fid)
 {
     switch (error) {
-    case RX_CALL_DEAD :
+    case RXKADUNKNOWNKEY:
+    case ARLA_CALL_DEAD :
+    case ARLA_INVALID_OPERATION :
+    case ARLA_CALL_TIMEOUT :
+    case ARLA_EOF :
+    case ARLA_PROTOCOL_ERROR :
+    case ARLA_USER_ABORT :
+    case ARLA_ADDRINUSE :
+    case ARLA_MSGSIZE :
     case ARLA_VSALVAGE :
     case ARLA_VNOSERVICE :
     case ARLA_VOFFLINE :
     case ARLA_VBUSY :
     case ARLA_VIO :
-    case ARLA_VNOVOL :
 	return TRUE;
+    case ARLA_VNOVOL :
     case ARLA_VMOVED :
+	if (fid && !volcache_reliable (fid->fid.Volume, fid->Cell))
+	    volcache_invalidate (fid->fid.Volume, fid->Cell);
+	return TRUE;
     case 0 :
 	return FALSE;
-    default :
-	return FALSE;
-    }
-}
-
-
-/*
- * Return true iff this error means we should mark the fs as down
- */
-
-static Bool
-fs_downp (int error)
-{
-    switch (error) {
-    case RX_CALL_DEAD :
-    case RXGEN_CC_MARSHAL :
-    case RXGEN_CC_UNMARSHAL :
-    case RXGEN_SS_MARSHAL :
-    case RXGEN_SS_UNMARSHAL :
-    case RXGEN_DECODE :
-    case RXGEN_OPCODE :
-    case RXGEN_SS_XDRFREE :
-    case RXGEN_CC_XDRFREE :
-	return TRUE;
     default :
 	return FALSE;
     }
@@ -1849,13 +2123,14 @@ do_read_attr (FCacheEntry *entry,
 	      ConnCacheEntry **ret_conn,
 	      fs_server_context *ret_context)
 {
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     ConnCacheEntry *conn;
     AFSFetchStatus status;
     AFSCallBack callback;
     AFSVolSync volsync;
+    struct collect_stat collectstat;
 
-    assert (CheckLock(&entry->lock) == -1);
+    AssertExclLocked(&entry->lock);
 
     *ret_conn = NULL;
 
@@ -1868,19 +2143,22 @@ do_read_attr (FCacheEntry *entry,
 
     for (conn = find_first_fs (entry, ce, ret_context);
 	 conn != NULL;
-	 conn = find_next_fs (ret_context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (ret_context, conn, host_downp (ret))) {
 
+	collectstats_start(&collectstat);
 	ret = RXAFS_FetchStatus (conn->connection,
 				 &entry->fid.fid,
 				 &status,
 				 &callback,
 				 &volsync);
-
-	if (!try_next_fs (ret))
+	collectstats_stop(&collectstat, entry, conn,
+			  STATISTICS_REQTYPE_FETCHSTATUS, 1);
+	arla_warnx (ADEBFCACHE, "trying to fetch status: %d", ret);
+	if (!try_next_fs (ret, &entry->fid))
 	    break;
     }
     if (ret) {
-	if (ret == RX_CALL_DEAD)
+	if (host_downp(ret))
 	    ret = ENETDOWN;
 	arla_warn (ADEBFCACHE, ret, "fetch-status");
 	free_fs_server_context (ret_context);
@@ -1893,7 +2171,7 @@ do_read_attr (FCacheEntry *entry,
 		       rx_HostOf (rx_PeerOf (conn->connection)),
 		       ce->cred);
     
-    assert (CheckLock(&entry->lock) == -1);
+    AssertExclLocked(&entry->lock);
 
     *ret_conn = conn;
     return 0;
@@ -1912,7 +2190,7 @@ read_attr (FCacheEntry *entry, CredCacheEntry *ce)
     ConnCacheEntry *conn;
     fs_server_context context;
 
-    assert (CheckLock(&entry->lock) == -1);
+    AssertExclLocked(&entry->lock);
 
     init_fs_server_context (&context);
     ret = do_read_attr (entry, ce, &conn, &context);
@@ -1936,10 +2214,11 @@ read_data (FCacheEntry *entry, ConnCacheEntry *conn, CredCacheEntry *ce)
     AFSFetchStatus status;
     AFSCallBack callback;
     AFSVolSync volsync;
+    struct collect_stat collectstat;
 
     arla_warnx (ADEBMISC, "read_data");
 
-    assert (CheckLock(&entry->lock) == -1);
+    AssertExclLocked(&entry->lock);
 
     if (connected_mode == DISCONNECTED) {
 	ret = ENETDOWN;
@@ -1966,6 +2245,7 @@ read_data (FCacheEntry *entry, ConnCacheEntry *conn, CredCacheEntry *ce)
 	goto out;
     }
 
+    collectstats_start(&collectstat);
     ret = StartRXAFS_FetchData (call, &entry->fid.fid, 
 				0, entry->status.Length);
     if(ret) {
@@ -1981,8 +2261,6 @@ read_data (FCacheEntry *entry, ConnCacheEntry *conn, CredCacheEntry *ce)
 	goto out;
     }
     sizefs = ntohl (sizefs);
-
-    assert (sizefs == entry->status.Length);
 
     fd = fcache_open_file (entry, O_RDWR);
     if (fd < 0) {
@@ -2016,6 +2294,8 @@ read_data (FCacheEntry *entry, ConnCacheEntry *conn, CredCacheEntry *ce)
 	arla_warn (ADEBFCACHE, ret, "rx_EndCall");
 	goto out;
     }
+    collectstats_stop(&collectstat, entry, conn,
+		      STATISTICS_REQTYPE_FETCHDATA, sizefs);
 
     fcache_counter.fetch_data++;
     
@@ -2029,7 +2309,7 @@ read_data (FCacheEntry *entry, ConnCacheEntry *conn, CredCacheEntry *ce)
     entry->tokens |= XFS_DATA_R | XFS_DATA_W | XFS_OPEN_NR | XFS_OPEN_NW;
 
 out:
-    assert (CheckLock(&entry->lock) == -1);
+    AssertExclLocked(&entry->lock);
 
     return ret;
 }
@@ -2044,7 +2324,7 @@ write_data (FCacheEntry *entry, AFSStoreStatus *storestatus,
 {
      ConnCacheEntry *conn;
      struct rx_call *call;
-     int ret = RX_CALL_DEAD;
+     int ret = ARLA_CALL_DEAD;
      u_int32_t sizefs;
      int fd;
      struct stat statinfo;
@@ -2052,7 +2332,7 @@ write_data (FCacheEntry *entry, AFSStoreStatus *storestatus,
      AFSVolSync volsync;
      fs_server_context context;
 
-     assert (CheckLock(&entry->lock) == -1);
+     AssertExclLocked(&entry->lock);
 
      /* Don't write data to deleted files */
      if (entry->flags.silly)
@@ -2084,7 +2364,7 @@ write_data (FCacheEntry *entry, AFSStoreStatus *storestatus,
 
      for (conn = find_first_fs (entry, ce, &context);
 	  conn != NULL;
-	  conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	  conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	 call = rx_NewCall (conn->connection);
 	 if (call == NULL) {
@@ -2098,7 +2378,7 @@ write_data (FCacheEntry *entry, AFSStoreStatus *storestatus,
 				     0,
 				     sizefs,
 				     sizefs);
-	 if (ret == RX_CALL_DEAD) {
+	 if (host_downp(ret)) {
 	     rx_EndCall(call, ret);
 	     continue;
 	 } else if (ret) {
@@ -2144,10 +2424,10 @@ write_data (FCacheEntry *entry, AFSStoreStatus *storestatus,
 	     entry->flags.datap = FALSE;
 	 }
      }
-     if (ret == RX_CALL_DEAD)
+     if (host_downp(ret))
 	 ret = ENETDOWN;
      free_fs_server_context (&context);
-     assert (CheckLock(&entry->lock) == -1);
+     AssertExclLocked(&entry->lock);
      close (fd);
      return ret;
 }
@@ -2161,15 +2441,14 @@ truncate_file (FCacheEntry *entry, off_t size, CredCacheEntry *ce)
 {
     ConnCacheEntry *conn;
     struct rx_call *call;
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     AFSStoreStatus storestatus;
-    u_int32_t sizefs;
     int fd;
     AFSFetchStatus status;
     AFSVolSync volsync;
     fs_server_context context;
 
-    assert (CheckLock(&entry->lock) == -1);
+    AssertExclLocked(&entry->lock);
 
     fd = fcache_open_file (entry, O_RDWR);
     if (fd < 0) {
@@ -2196,9 +2475,10 @@ truncate_file (FCacheEntry *entry, off_t size, CredCacheEntry *ce)
     if (connected_mode != CONNECTED)
 	return 0;
 
+    ret = ENETDOWN;
     for (conn = find_first_fs (entry, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	call = rx_NewCall (conn->connection);
 	if (call == NULL) {
@@ -2214,7 +2494,7 @@ truncate_file (FCacheEntry *entry, off_t size, CredCacheEntry *ce)
 				    size,
 				    0,
 				    size);
-	if (ret == RX_CALL_DEAD) {
+	if (host_downp(ret)) {
 	    rx_EndCall(call, ret);
 	    continue;
 	} else if(ret) {
@@ -2223,28 +2503,21 @@ truncate_file (FCacheEntry *entry, off_t size, CredCacheEntry *ce)
 	    break;
 	}
 
-	sizefs = htonl (0);
-	if (rx_Write (call, &sizefs, sizeof(sizefs)) != sizeof(sizefs)) {
-	    ret = conv_to_arla_errno(rx_Error(call));
-	    arla_warn (ADEBFCACHE, ret, "writing length");
-	    rx_EndCall(call, 0);
-	    break;
-	}
 
 	ret = EndRXAFS_StoreData (call,
 				  &status,
 				  &volsync);
-	 if (ret) {
-	     rx_EndCall (call, ret);
-	     arla_warnx (ADEBFCACHE, "EndRXAFS_StoreData");
-	     break;
-	 }
+	if (ret) {
+	    rx_EndCall (call, ret);
+	    arla_warnx (ADEBFCACHE, "EndRXAFS_StoreData");
+	    break;
+	}
 
-	 ret = rx_EndCall (call, 0);
-	 if (ret) {
-	     arla_warn (ADEBFCACHE, ret, "rx_EndCall");
-	 }
-	 break;
+	ret = rx_EndCall (call, 0);
+	if (ret) {
+	    arla_warn (ADEBFCACHE, ret, "rx_EndCall");
+	}
+	break;
     }
 
     if (ret == 0) {
@@ -2252,13 +2525,11 @@ truncate_file (FCacheEntry *entry, off_t size, CredCacheEntry *ce)
 	update_entry (entry, &status, NULL, &volsync,
 		      rx_HostOf(rx_PeerOf(conn->connection)),
 		      ce->cred);
-
-	assert (entry->status.Length == size);
     }
-    if (ret == RX_CALL_DEAD)
+    if (host_downp(ret))
 	ret = ENETDOWN;
     free_fs_server_context (&context);
-    assert (CheckLock(&entry->lock) == -1);
+    AssertExclLocked(&entry->lock);
     return ret;
 }
 
@@ -2271,11 +2542,11 @@ write_attr (FCacheEntry *entry,
 	    const AFSStoreStatus *store_status,
 	    CredCacheEntry *ce)
 {
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     AFSFetchStatus status;
     AFSVolSync volsync;
 
-    assert (CheckLock(&entry->lock) == -1);
+    AssertExclLocked(&entry->lock);
 
     /* Don't write attributes to deleted files */
     if (entry->flags.silly)
@@ -2288,7 +2559,7 @@ write_attr (FCacheEntry *entry,
 
 	for (conn = find_first_fs (entry, ce, &context);
 	     conn != NULL;
-	     conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	     conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	    host = rx_HostOf (rx_PeerOf (conn->connection));
 
@@ -2297,7 +2568,7 @@ write_attr (FCacheEntry *entry,
 				     store_status,
 				     &status,
 				     &volsync);
-	    if (ret == RX_CALL_DEAD) {
+	    if (host_downp(ret)) {
 		continue;
 	    } else if (ret) {
 		arla_warn (ADEBFCACHE, ret, "store-status");
@@ -2308,7 +2579,7 @@ write_attr (FCacheEntry *entry,
 	}
 	free_fs_server_context (&context);
 
-	if (ret == RX_CALL_DEAD) {
+	if (host_downp(ret)) {
 	    ret = ENETDOWN;
 	    goto out;
 	}
@@ -2331,7 +2602,7 @@ write_attr (FCacheEntry *entry,
     }
 
 out:
-    assert (CheckLock(&entry->lock) == -1);
+    AssertExclLocked(&entry->lock);
 
     return ret;
 }
@@ -2346,7 +2617,7 @@ create_file (FCacheEntry *dir_entry,
 	     VenusFid *child_fid, AFSFetchStatus *fetch_attr,
 	     CredCacheEntry *ce)
 {
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     AFSFid OutFid;
     FCacheEntry *child_entry;
     AFSFetchStatus status;
@@ -2355,7 +2626,7 @@ create_file (FCacheEntry *dir_entry,
     int fd;
     u_int32_t host;
 
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
 
     if (connected_mode == CONNECTED) {
 	ConnCacheEntry *conn;
@@ -2363,7 +2634,7 @@ create_file (FCacheEntry *dir_entry,
 
 	for (conn = find_first_fs (dir_entry, ce, &context);
 	     conn != NULL;
-	     conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	     conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	    host = rx_HostOf (rx_PeerOf (conn->connection));
 
@@ -2376,7 +2647,7 @@ create_file (FCacheEntry *dir_entry,
 				    &status,
 				    &callback,
 				    &volsync);
-	    if (ret == RX_CALL_DEAD) {
+	    if (host_downp(ret)) {
 		continue;
 	    } else if (ret) {
 		free_fs_server_context (&context);
@@ -2387,7 +2658,7 @@ create_file (FCacheEntry *dir_entry,
 	}
 	free_fs_server_context (&context);
 
-	if (ret == RX_CALL_DEAD) {
+	if (host_downp(ret)) {
 	    ret = ENETDOWN;
 	    goto out;
 	}
@@ -2467,7 +2738,7 @@ create_file (FCacheEntry *dir_entry,
     fcache_release(child_entry);
 
 out:
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
 
     return ret;
 }
@@ -2482,7 +2753,7 @@ create_directory (FCacheEntry *dir_entry,
 		  VenusFid *child_fid, AFSFetchStatus *fetch_attr,
 		  CredCacheEntry *ce)
 {
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     AFSFid OutFid;
     FCacheEntry *child_entry;
     AFSFetchStatus status;
@@ -2490,7 +2761,7 @@ create_directory (FCacheEntry *dir_entry,
     AFSVolSync volsync;
     u_int32_t host;
 
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
 
     if (connected_mode == CONNECTED) {
 	ConnCacheEntry *conn;
@@ -2498,7 +2769,7 @@ create_directory (FCacheEntry *dir_entry,
 
 	for (conn = find_first_fs (dir_entry, ce, &context);
 	     conn != NULL;
-	     conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	     conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	    host = rx_HostOf(rx_PeerOf(conn->connection));
 
@@ -2512,7 +2783,7 @@ create_directory (FCacheEntry *dir_entry,
 				 &callback,
 				 &volsync);
 
-	    if (ret == RX_CALL_DEAD) {
+	    if (host_downp(ret)) {
 		continue;
 	    } else if (ret) {
 		free_fs_server_context (&context);
@@ -2523,7 +2794,7 @@ create_directory (FCacheEntry *dir_entry,
 	}
 	free_fs_server_context (&context);
 
-	if (ret == RX_CALL_DEAD) {
+	if (host_downp(ret)) {
 	    ret = ENETDOWN;
 	    goto out;
 	}
@@ -2594,7 +2865,7 @@ create_directory (FCacheEntry *dir_entry,
     fcache_release(child_entry);
 
 out:
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
     return ret;
 }
 
@@ -2612,7 +2883,7 @@ create_symlink (FCacheEntry *dir_entry,
 		const char *contents,
 		CredCacheEntry *ce)
 {
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     ConnCacheEntry *conn;
     AFSFid OutFid;
     FCacheEntry *child_entry;
@@ -2621,14 +2892,14 @@ create_symlink (FCacheEntry *dir_entry,
     u_int32_t host;
     fs_server_context context;
 
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
 
     if (connected_mode != CONNECTED)
 	return EINVAL;
 
     for (conn = find_first_fs (dir_entry, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	host = rx_HostOf(rx_PeerOf(conn->connection));
 
@@ -2641,7 +2912,7 @@ create_symlink (FCacheEntry *dir_entry,
 			     fetch_attr,
 			     &new_status,
 			     &volsync);
-	if (ret == RX_CALL_DEAD) {
+	if (host_downp(ret)) {
 	    continue;
 	} else if (ret) {
 	    arla_warn (ADEBFCACHE, ret, "Symlink");
@@ -2652,7 +2923,7 @@ create_symlink (FCacheEntry *dir_entry,
     }
     free_fs_server_context (&context);
 
-    if (ret == RX_CALL_DEAD) {
+    if (host_downp(ret)) {
 	ret = ENETDOWN;
 	goto out;
     }
@@ -2684,7 +2955,7 @@ create_symlink (FCacheEntry *dir_entry,
     fcache_release(child_entry);
 
 out:
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
     return ret;
 }
 
@@ -2706,14 +2977,14 @@ create_link (FCacheEntry *dir_entry,
     u_int32_t host;
     fs_server_context context;
 
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
 
     if (connected_mode != CONNECTED)
 	return EINVAL;
 
     for (conn = find_first_fs (dir_entry, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	host = rx_HostOf(rx_PeerOf(conn->connection));
 
@@ -2724,7 +2995,7 @@ create_link (FCacheEntry *dir_entry,
 			  &new_status,
 			  &status,
 			  &volsync);
-	if (ret == RX_CALL_DEAD) {
+	if (host_downp(ret)) {
 	    continue;
 	} else if (ret) {
 	    free_fs_server_context (&context);
@@ -2735,7 +3006,7 @@ create_link (FCacheEntry *dir_entry,
     }
     free_fs_server_context (&context);
 
-    if (ret == RX_CALL_DEAD) {
+    if (host_downp(ret)) {
 	ret = ENETDOWN;
 	goto out;
     }
@@ -2747,7 +3018,7 @@ create_link (FCacheEntry *dir_entry,
 		  host, ce->cred);
 
 out:
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
     return ret;
 }
 
@@ -2758,21 +3029,21 @@ out:
 int
 remove_file (FCacheEntry *dir_entry, const char *name, CredCacheEntry *ce)
 {
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     ConnCacheEntry *conn;
     AFSFetchStatus status;
     AFSVolSync volsync;
     u_int32_t host;
     fs_server_context context;
 
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
 
     if (connected_mode != CONNECTED)
 	return EINVAL;
 
     for (conn = find_first_fs (dir_entry, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	host = rx_HostOf(rx_PeerOf(conn->connection));
 
@@ -2781,7 +3052,7 @@ remove_file (FCacheEntry *dir_entry, const char *name, CredCacheEntry *ce)
 				name,
 				&status,
 				&volsync);
-	if (ret == RX_CALL_DEAD) {
+	if (host_downp(ret)) {
 	    continue;
 	} else if (ret) {
 	    free_fs_server_context (&context);
@@ -2792,7 +3063,7 @@ remove_file (FCacheEntry *dir_entry, const char *name, CredCacheEntry *ce)
     }
     free_fs_server_context (&context);
 
-    if (ret == RX_CALL_DEAD) {
+    if (host_downp(ret)) {
 	ret = ENETDOWN;
 	goto out;
     }
@@ -2801,7 +3072,7 @@ remove_file (FCacheEntry *dir_entry, const char *name, CredCacheEntry *ce)
 		  host, ce->cred);
 
 out:
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
     return ret;
 }
 
@@ -2814,21 +3085,21 @@ remove_directory (FCacheEntry *dir_entry,
 		  const char *name,
 		  CredCacheEntry *ce)
 {
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     ConnCacheEntry *conn;
     AFSFetchStatus status;
     AFSVolSync volsync;
     u_int32_t host;
     fs_server_context context;
 
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
 
     if (connected_mode != CONNECTED)
 	return EINVAL;
 
     for (conn = find_first_fs (dir_entry, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	host = rx_HostOf(rx_PeerOf(conn->connection));
 
@@ -2837,7 +3108,7 @@ remove_directory (FCacheEntry *dir_entry,
 			       name,
 			       &status,
 			       &volsync);
-	if (ret == RX_CALL_DEAD) {
+	if (host_downp(ret)) {
 	    continue;
 	} else if (ret) {
 	    free_fs_server_context (&context);
@@ -2848,7 +3119,7 @@ remove_directory (FCacheEntry *dir_entry,
     }
     free_fs_server_context (&context);
 
-    if (ret == RX_CALL_DEAD) {
+    if (host_downp(ret)) {
 	ret = ENETDOWN;
 	goto out;
     }
@@ -2857,7 +3128,7 @@ remove_directory (FCacheEntry *dir_entry,
 		  host, ce->cred);
 
 out:
-    assert (CheckLock(&dir_entry->lock) == -1);
+    AssertExclLocked(&dir_entry->lock);
     return ret;
 }
 
@@ -2872,22 +3143,22 @@ rename_file (FCacheEntry *old_dir,
 	     const char *new_name,
 	     CredCacheEntry *ce)
 {
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     ConnCacheEntry *conn;
     AFSFetchStatus orig_status, new_status;
     AFSVolSync volsync;
     u_int32_t host;
     fs_server_context context;
 
-    assert (CheckLock(&old_dir->lock) == -1
-	    && CheckLock(&new_dir->lock) == -1);
+    AssertExclLocked(&old_dir->lock);
+    AssertExclLocked(&new_dir->lock);
 
     if (connected_mode != CONNECTED)
 	return EINVAL;
 
     for (conn = find_first_fs (old_dir, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	host = rx_HostOf(rx_PeerOf(conn->connection));
 
@@ -2899,7 +3170,7 @@ rename_file (FCacheEntry *old_dir,
 			    &orig_status,
 			    &new_status,
 			    &volsync);
-	if (ret == RX_CALL_DEAD) {
+	if (host_downp(ret)) {
 	    continue;
 	} else if (ret) {
 	    free_fs_server_context (&context);
@@ -2910,7 +3181,7 @@ rename_file (FCacheEntry *old_dir,
     }
     free_fs_server_context (&context);
 
-    if (ret == RX_CALL_DEAD) {
+    if (host_downp(ret)) {
 	ret = ENETDOWN;
 	goto out;
     }
@@ -2922,8 +3193,8 @@ rename_file (FCacheEntry *old_dir,
 		  host, ce->cred);
 
 out:
-    assert (CheckLock(&old_dir->lock) == -1
-	    && CheckLock(&new_dir->lock) == -1);
+    AssertExclLocked(&old_dir->lock);
+    AssertExclLocked(&new_dir->lock);
     return ret;
 }
 
@@ -3029,7 +3300,7 @@ fcache_get (FCacheEntry **res, VenusFid fid, CredCacheEntry *ce)
 {
     FCacheEntry *old;
     FCacheEntry *e;
-    int type;
+    int type, i;
     int error;
 
     *res = NULL;
@@ -3046,10 +3317,11 @@ fcache_get (FCacheEntry **res, VenusFid fid, CredCacheEntry *ce)
 
     old = find_entry (fid);
     if (old) {
-	assert (CheckLock(&e->lock) == -1);
+	AssertExclLocked(&e->lock);
 	ReleaseWriteLock (&e->lock);
 
 	e->lru_le = listaddtail (lrulist, e);
+	assert(e->lru_le);
 
 	assert (old->flags.usedp);
 	*res = old;
@@ -3063,7 +3335,10 @@ fcache_get (FCacheEntry **res, VenusFid fid, CredCacheEntry *ce)
     memset (&e->status,   0, sizeof(e->status));
     memset (&e->callback, 0, sizeof(e->callback));
     memset (&e->volsync,  0, sizeof(e->volsync));
-    memset (e->acccache,  0, sizeof(e->acccache));
+    for (i = 0; i < NACCESS; i++) {
+	e->acccache[i].cred = ARLA_NO_AUTH_CRED;
+	e->acccache[i].access = 0;
+    }
     e->anonaccess      = 0;
     e->flags.usedp     = TRUE;
     e->flags.datap     = FALSE;
@@ -3080,6 +3355,7 @@ fcache_get (FCacheEntry **res, VenusFid fid, CredCacheEntry *ce)
     e->tokens          = 0;
     memset (&e->parent, 0, sizeof(e->parent));
     e->lru_le = listaddhead (lrulist, e);
+    assert(e->lru_le);
     e->invalid_ptr     = -1;
     e->volume          = NULL;
     e->priority	       = fprio_get(fid);
@@ -3112,7 +3388,7 @@ fcache_get (FCacheEntry **res, VenusFid fid, CredCacheEntry *ce)
 void
 fcache_release (FCacheEntry *e)
 {
-    assert (CheckLock (&e->lock) == -1);
+    AssertExclLocked(&e->lock);
 
     ReleaseWriteLock (&e->lock);
 
@@ -3263,12 +3539,18 @@ get_attr_bulk (FCacheEntry *parent_entry,
     AFSCBs cbs;
     int i;
     int len;
+    u_int32_t host;
 
     arla_warnx (ADEBFCACHE, "get_attr_bulk");
 
     if (fcache_enable_bulkstatus == 0)
 	return -1;
 
+    if (!parent_entry->flags.datap) {
+	arla_warnx (ADEBFCACHE, "get_attr_bulk: parent doesn't have data");
+	return -1;
+    }
+    
     fids.val = bs.fids;
 
     memset (bs.names, 0, sizeof(bs.names));
@@ -3341,11 +3623,11 @@ get_attr_bulk (FCacheEntry *parent_entry,
 	goto out_names;
     }
     
-    ret = RX_CALL_DEAD;
+    ret = ARLA_CALL_DEAD;
 
     for (conn = find_first_fs (parent_entry, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 
 	stats.val = NULL;
 	cbs.val   = NULL;
@@ -3356,10 +3638,12 @@ get_attr_bulk (FCacheEntry *parent_entry,
 	    free (stats.val);
 	    free (cbs.val);
 	}
-	if (!try_next_fs (ret))
+	if (!try_next_fs (ret, &parent_entry->fid))
 	    break;	
     }
 
+    if (conn != NULL)
+	host = rx_HostOf (rx_PeerOf (conn->connection));
     free_fs_server_context (&context);
 
     if (ret) {
@@ -3377,28 +3661,34 @@ get_attr_bulk (FCacheEntry *parent_entry,
 
     if (ret == 0) {
 	FCacheEntry *e;
-	VenusFid fid;
 
 	fcache_counter.fetch_attr_bulk += len;
 
-	fid.Cell = parent_entry->fid.Cell;
 	for (i = 0; i < len && ret == 0; i++) {
 	    if (prefered_entry && i == 0) {
 		e = prefered_entry;
-		ret = 0;
 	    } else {
+		VenusFid fid;
+
+		fid.Cell = parent_entry->fid.Cell;
+		fid.fid = fids.val[i];
+
+		e = find_entry_nolock (fid);
+		if (e != NULL && CheckLock(&e->lock) != 0)
+		    continue;
+
 		ret = fcache_get (&e, fid, ce);
+		if (ret)
+		    break;
 	    }
-	    if (ret)
-		break;
 	    update_attr_entry (e,
 			       &stats.val[i],
 			       &cbs.val[i],
 			       &sync,
-			       rx_HostOf (rx_PeerOf (conn->connection)),
+			       host,
 			       ce->cred);
 	    e->parent		= parent_entry->fid;
-	    if (!(prefered_entry && i == 0)) {
+	    if (prefered_entry != e) {
 		fcache_release(e);
 	    }
 	}
@@ -3425,6 +3715,10 @@ get_attr_bulk (FCacheEntry *parent_entry,
 		e = prefered_entry;
 		ret = 0;
 	    } else {
+		e = find_entry_nolock (fid);
+		if (e != NULL && CheckLock(&e->lock) != 0)
+		    continue;
+
 		ret = fcache_get (&e, fid, ce);
 	    }
 	    if (ret == 0) {
@@ -3469,7 +3763,8 @@ get_attr_bulk (FCacheEntry *parent_entry,
 					 &e->fid,
 					 &stats.val[i],
 					 node, 
-					 parent_entry->acccache);
+					 parent_entry->acccache,
+					 FCACHE2XFSNODE_ALL);
 
 		    if (parent)
 			*parent = *(struct xfs_handle*) &parent_entry->fid;
@@ -3528,7 +3823,7 @@ fcache_verify_attr (FCacheEntry *entry, FCacheEntry *parent_entry,
     int error;
 
     if (dynroot_is_dynrootp (entry))
-	return dynroot_get_attr (entry);
+	return dynroot_get_attr (entry, ce);
 
     if (entry->flags.usedp
 	&& entry->flags.attrp
@@ -3617,7 +3912,7 @@ fcache_verify_attr (FCacheEntry *entry, FCacheEntry *parent_entry,
 static int
 do_read_data (FCacheEntry *e, CredCacheEntry *ce)
 {
-    int ret = RX_CALL_DEAD;
+    int ret = ARLA_CALL_DEAD;
     fs_server_context context;
     ConnCacheEntry *conn;
 
@@ -3626,14 +3921,14 @@ do_read_data (FCacheEntry *e, CredCacheEntry *ce)
 
     for (conn = find_first_fs (e, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 	ret = read_data (e, conn, ce);
-	if (!try_next_fs (ret))
+	if (!try_next_fs (ret, &e->fid))
 	    break;
     }
     free_fs_server_context (&context);
 
-    if (ret == RX_CALL_DEAD)
+    if (host_downp(ret))
 	ret = ENETDOWN;
     return ret;
 }
@@ -3650,10 +3945,10 @@ fcache_verify_data (FCacheEntry *e, CredCacheEntry *ce)
     fs_server_context context;
 
     assert (e->flags.usedp);
-    assert (CheckLock(&e->lock) == -1);
+    AssertExclLocked(&e->lock);
 
     if (dynroot_is_dynrootp (e))
-	return dynroot_get_data (e);
+	return dynroot_get_data (e, ce);
 
     /* Don't get data for deleted files */
     if (e->flags.silly)
@@ -3722,7 +4017,7 @@ fcache_get_data (FCacheEntry **res, VenusFid *fid, CredCacheEntry **ce)
 	fcache_release (e);
 	*fid = new_fid;
 	e  = new_root;
-	install_attr (e);
+	install_attr (e, FCACHE2XFSNODE_ALL);
     }
 
     ret = fcache_verify_data (e, *ce);
@@ -3838,7 +4133,9 @@ find_volume (const char *volname, int32_t cell,
 /*
  * Set `fid' to point to the root of the volume pointed to by the
  * mount-point in (buf, len).
- * If succesful, `
+ *
+ * If succesful, `fid' will be update to the root of the volume, and
+ * `ce' will point to a cred in the new cell.
  */
 
 static int
@@ -3870,9 +4167,7 @@ get_root_of_volume (VenusFid *fid, const VenusFid *parent,
     if ((*ce)->cell != cell) {
 	CredCacheEntry *new_ce;
 
-	new_ce = cred_get (cell, (*ce)->cred, (*ce)->type);
-	if (new_ce == NULL)
-	    new_ce = cred_get(cell, (*ce)->cred, CRED_ANY);
+	new_ce = cred_get(cell, (*ce)->cred, CRED_ANY);
 	if (new_ce == NULL)
 	    return ENOMEM;
 	cred_free (*ce);
@@ -3896,6 +4191,15 @@ get_root_of_volume (VenusFid *fid, const VenusFid *parent,
     fid->fid.Volume = volid;
     fid->fid.Vnode = fid->fid.Unique = 1;
 
+    /*
+     * Check if we are looking up ourself, if we are, just return.
+     */
+
+    if (VenusFid_cmp(fid, parent) == 0) {
+	volcache_free (ve);
+	return 0;
+    }
+
     res = fcache_get (&e, *fid, *ce);
     if (res) {
 	volcache_free (ve);
@@ -3908,10 +4212,12 @@ get_root_of_volume (VenusFid *fid, const VenusFid *parent,
      * properly.
      */
 
-    e->flags.vol_root = TRUE;
-    e->parent         = *parent;
-    ve->parent_fid    = *parent;
-    ve->mp_fid        = oldfid;
+    e->flags.vol_root  = TRUE;
+    e->parent          = *parent;
+    if (ve->parent == NULL) {
+	ve->parent_fid = *parent;
+	ve->mp_fid     = oldfid;
+    }
     volcache_volref (ve, volume);
     fcache_release (e);
     volcache_free (ve);
@@ -3933,7 +4239,8 @@ get_root_of_volume (VenusFid *fid, const VenusFid *parent,
  */
 
 int
-followmountpoint (VenusFid *fid, const VenusFid *parent, CredCacheEntry **ce)
+followmountpoint (VenusFid *fid, const VenusFid *parent, FCacheEntry *parent_e,
+		  CredCacheEntry **ce)
 {
      FCacheEntry *e;
      int ret;
@@ -3948,7 +4255,7 @@ followmountpoint (VenusFid *fid, const VenusFid *parent, CredCacheEntry **ce)
      if (ret)
 	 return ret;
 
-     ret = fcache_verify_attr (e, NULL, NULL, *ce);
+     ret = fcache_verify_attr (e, parent_e, NULL, *ce);
      if (ret) {
 	 fcache_release(e);
 	 return ret;
@@ -3977,7 +4284,7 @@ resolve_mp (FCacheEntry *e, VenusFid *ret_fid, CredCacheEntry **ce)
     u_int32_t length;
 
     assert (e->flags.fake_mp || e->flags.mountp);
-    assert (CheckLock(&e->lock) == -1);
+    AssertExclLocked(&e->lock);
 
     ret = fcache_verify_data (e, *ce);
     if (ret)
@@ -4057,20 +4364,9 @@ fcache_status (void)
 void
 fcache_update_length (FCacheEntry *e, size_t len)
 {
-    int fd;
-    struct stat sb;
+    AssertExclLocked(&e->lock);
 
-    fd = fcache_open_file (e, O_RDONLY);
-    if (fd < 0)
-	arla_err (1, ADEBERROR, errno, "fcache_open_file");
-
-    if (fstat (fd, &sb) < 0)
-	arla_err (1, ADEBERROR, errno, "fstat");
-    close(fd);
-
-    assert (len == sb.st_size);
-
-    assert (usedbytes + len >= e->length);
+    assert (len >= e->length || e->length - len <= usedbytes);
 
     usedbytes = usedbytes - e->length + len;
     e->length = len;
@@ -4092,6 +4388,9 @@ getacl(VenusFid fid,
     int ret;
     fs_server_context context;
   
+    opaque->val = NULL;
+    opaque->len = 0;
+
     if (connected_mode != CONNECTED)
 	return EINVAL;
 
@@ -4101,14 +4400,21 @@ getacl(VenusFid fid,
 	return ret;
     }
 
-    ret = RX_CALL_DEAD;
+    ret = ARLA_CALL_DEAD;
 
     for (conn = find_first_fs (dire, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
+
 	ret = RXAFS_FetchACL (conn->connection, &fid.fid,
 			      opaque, &status, &volsync);
-	if (!try_next_fs (ret))
+	if (ret) {
+	    free(opaque->val);
+	    opaque->val = NULL;
+	    opaque->len = 0;
+	}
+
+	if (!try_next_fs (ret, &fid))
 	    break;
     }
     if (ret)
@@ -4118,7 +4424,7 @@ getacl(VenusFid fid,
 	update_entry (dire, &status, NULL, &volsync,
 		      rx_HostOf(rx_PeerOf(conn->connection)),
 		      ce->cred);
-    else if (ret == RX_CALL_DEAD)
+    else if (host_downp(ret))
 	ret = ENETDOWN;
 
     free_fs_server_context (&context);
@@ -4155,14 +4461,14 @@ setacl(VenusFid fid,
 	return EINVAL;
     }
 
-    ret = RX_CALL_DEAD;
+    ret = ARLA_CALL_DEAD;
 
     for (conn = find_first_fs (dire, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 	ret = RXAFS_StoreACL (conn->connection, &fid.fid,
 			      opaque, &status, &volsync);
-	if (!try_next_fs (ret))
+	if (!try_next_fs (ret, &fid))
 	    break;
     }
     if (ret)
@@ -4172,7 +4478,7 @@ setacl(VenusFid fid,
 	update_entry (dire, &status, NULL, &volsync,
 		      rx_HostOf(rx_PeerOf(conn->connection)),
 		      ce->cred);
-    else if (ret == RX_CALL_DEAD)
+    else if (host_downp(ret))
 	ret = ENETDOWN;
 
     free_fs_server_context (&context);
@@ -4211,27 +4517,25 @@ getvolstat(VenusFid fid, CredCacheEntry *ce,
 	return EINVAL;
     }
 
-    ret = RX_CALL_DEAD;
+    ret = ARLA_CALL_DEAD;
 
     for (conn = find_first_fs (dire, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 	ret = RXAFS_GetVolumeStatus (conn->connection, fid.fid.Volume,
 				     volstat, volumename, offlinemsg,
 				     motd);
-	if (!try_next_fs (ret))
+	if (!try_next_fs (ret, &fid))
 	    break;
     }
     if (ret)
 	arla_warn (ADEBFCACHE, ret, "GetVolumeStatus");
     free_fs_server_context (&context);
-    if (ret == RX_CALL_DEAD)
+    if (host_downp(ret))
 	ret = ENETDOWN;
-    if (ret == 0 && volumename[0] == '\0') {
-	const char *tmp = volcache_getname (fid.fid.Volume, fid.Cell);
-	if (tmp != NULL)
-	    strlcpy (volumename, tmp, AFSNAMEMAX);
-    }
+    if (ret == 0 && volumename[0] == '\0')
+	volcache_getname (fid.fid.Volume, fid.Cell,
+			  volumename, sizeof(volumename));
 
     fcache_release (dire);
     return ret;
@@ -4262,19 +4566,19 @@ setvolstat(VenusFid fid, CredCacheEntry *ce,
 	return EINVAL;
     }
 
-    ret = RX_CALL_DEAD;
+    ret = ARLA_CALL_DEAD;
 
     for (conn = find_first_fs (dire, ce, &context);
 	 conn != NULL;
-	 conn = find_next_fs (&context, conn, fs_downp (ret))) {
+	 conn = find_next_fs (&context, conn, host_downp (ret))) {
 	ret = RXAFS_SetVolumeStatus (conn->connection, fid.fid.Volume,
 				     volstat, volumename, offlinemsg,
 				     motd);
-	if (!try_next_fs (ret))
+	if (!try_next_fs (ret, &fid))
 	    break;
     }
     if (ret) {
-	if (ret == RX_CALL_DEAD)
+	if (host_downp(ret))
 	    ret = ENETDOWN;
 	arla_warn (ADEBFCACHE, ret, "SetVolumeStatus");
     }
@@ -4299,7 +4603,7 @@ fcache_get_fbuf (FCacheEntry *centry, int *fd, fbuf *fbuf,
     unsigned len;
     struct stat sb;
 
-    assert (CheckLock (&centry->lock) == -1);
+    AssertExclLocked(&centry->lock);
 
     *fd = fcache_open_file (centry, open_flags);
     if (*fd < 0)

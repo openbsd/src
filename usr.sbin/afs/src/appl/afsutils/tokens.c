@@ -24,7 +24,7 @@
 
 #include "appl_locl.h"
 
-RCSID("$Id: tokens.c,v 1.1 2000/09/11 14:40:34 art Exp $");
+RCSID("$KTH: tokens.c,v 1.9 2000/09/02 12:55:56 lha Exp $");
 
 #include "tokens.h"
 
@@ -52,22 +52,22 @@ static int got_tokens = 0;
 static int got_anything = 0;
 
 
-/* arguments for getarg() */
+/* arguments for agetarg() */
 
-struct getargs args[] = {
-    { "athena", 0, arg_flag, &arg_athena,
+struct agetargs args[] = {
+    { "athena", 0, aarg_flag, &arg_athena,
       "generate 'klist' style output instead of AFS style",
-      NULL, arg_optional},
-    { "verbose", 'v', arg_flag, &arg_verbose,
+      NULL, aarg_optional},
+    { "verbose", 'v', aarg_flag, &arg_verbose,
       "generate verbose output",
-      NULL, arg_optional},
-    { "help", 0, arg_flag, &arg_help,
+      NULL, aarg_optional},
+    { "help", 0, aarg_flag, &arg_help,
       "display this message",
-      NULL, arg_optional},
-    { "version", 0, arg_flag, &arg_version,
+      NULL, aarg_optional},
+    { "version", 0, aarg_flag, &arg_version,
       "print version",
-      NULL, arg_optional},
-    { NULL, 0, arg_end, NULL, NULL }
+      NULL, aarg_optional},
+    { NULL, 0, aarg_end, NULL, NULL }
 };
 
 /*
@@ -80,7 +80,7 @@ struct getargs args[] = {
 static void
 do_help(int exitval)
 {
-    arg_printusage(args, NULL, NULL, ARG_AFSSTYLE);
+    aarg_printusage(args, NULL, NULL, AARG_AFSSTYLE);
     exit(exitval);
 }
 
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
     errx (1, "kerberos support isn't compiled in");
 #endif
 
-     if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+     if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	 warnx ("Bad argument: %s", argv[optind]);
 	 do_help(1);
      }

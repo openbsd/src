@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +32,7 @@
  */
 
 /*
- * $Id: dynroot.h,v 1.1 2000/09/11 14:40:41 art Exp $
+ * $KTH: dynroot.h,v 1.2.2.1 2001/05/28 15:19:20 map Exp $
  */
 
 #define DYNROOT_DEFAULT 0
@@ -46,9 +41,9 @@ int dynroot_fetch_vldbN (nvldbentry *entry);
 
 Bool dynroot_isvolumep (int cell, const char *volume);
 
-int dynroot_get_attr (FCacheEntry *entry);
+int dynroot_get_attr (FCacheEntry *entry, CredCacheEntry *ce);
 
-int dynroot_get_data (FCacheEntry *entry);
+int dynroot_get_data (FCacheEntry *entry, CredCacheEntry *ce);
 
 Bool dynroot_is_dynrootp (FCacheEntry *entry);
 

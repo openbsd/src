@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:30 art Exp $
+# $KTH: Makefile.in,v 1.63.2.1 2001/10/23 23:30:31 ahltorp Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 SHELL		= /bin/sh

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +34,7 @@
 #include "appl_locl.h"
 #include <kafs.h>
 
-RCSID("$Id: fs_lib.c,v 1.1 2000/09/11 14:40:36 art Exp $");
+RCSID("$KTH: fs_lib.c,v 1.31.2.3 2001/10/02 16:13:02 jimmy Exp $");
 
 enum { PIOCTL_MAXSIZE = 2000 };
 
@@ -50,7 +45,7 @@ enum { PIOCTL_MAXSIZE = 2000 };
 const char *
 fslib_version(void)
 {
-    return "$Id: fs_lib.c,v 1.1 2000/09/11 14:40:36 art Exp $";
+    return "$KTH: fs_lib.c,v 1.31.2.3 2001/10/02 16:13:02 jimmy Exp $";
 }
 
 /*
@@ -578,6 +573,26 @@ fs_checkservers(char *cell, int32_t flags, u_int32_t *hosts, int numhosts)
 }
 
 /*
+ * check validity of cached volume information
+ */
+
+int
+fs_checkvolumes (void)
+{
+    struct ViceIoctl a_params;
+
+    a_params.in       = NULL;
+    a_params.in_size  = 0;
+    a_params.out      = NULL;
+    a_params.out_size = 0;
+
+    if (k_pioctl (NULL, VIOCCKBACK, &a_params, 0) < 0)
+	return errno;
+    else
+	return 0;
+}
+
+/*
  * return current sysname in `sys' (of max length `sys_sz')
  */
 
@@ -747,7 +762,7 @@ fs_newcell (const char *cell, int nservers, char **servers)
     struct ViceIoctl a_params;
     int len;
     char *buf;
-    int i;
+    int i, ret;
     u_int32_t *hp;
 
     nservers = min (nservers, 8);
@@ -761,13 +776,20 @@ fs_newcell (const char *cell, int nservers, char **servers)
     strcpy (buf + 8 * sizeof(u_int32_t), cell);
     hp = (u_int32_t *)buf;
     for (i = 0; i < nservers; ++i) {
-	struct in_addr addr;
-
-	if (str2inaddr (servers[i], &addr) == NULL) {
+	struct addrinfo hints, *res;
+	
+	memset (&hints, 0, sizeof(hints));
+	hints.ai_family = PF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	
+	ret = getaddrinfo(servers[i], NULL, &hints, &res);
+	if (ret < 0) {
 	    free (buf);
 	    return EINVAL;
 	}
-	hp[i] = addr.s_addr;
+	assert (res->ai_family == PF_INET);
+	hp[i] = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+	freeaddrinfo(res);
     }
 
     a_params.in_size  = len;
@@ -775,10 +797,11 @@ fs_newcell (const char *cell, int nservers, char **servers)
     a_params.in       = (caddr_t)buf;
     a_params.out      = NULL;
 
-    if (k_pioctl (NULL, VIOCNEWCELL, &a_params, 0) < 0)
+    ret = k_pioctl (NULL, VIOCNEWCELL, &a_params, 0);
+    free (buf);
+    if (ret < 0)
 	return errno;
-    else
-	return 0;
+    return 0;
 }
 
 /*
@@ -918,4 +941,133 @@ int
 fs_rmmount (const char *path)
 {
     return internal_mp (path, VIOC_AFS_DELETE_MT_PT, NULL);
+}
+
+int
+fs_incompat_renumber (int *ret)
+{
+    struct ViceIoctl a_params;
+    unsigned char buf[1024];
+
+    a_params.in_size  = 0;
+    a_params.out_size = sizeof(buf);
+    a_params.in       = 0;
+    a_params.out      = (caddr_t) buf;
+
+    /* getcrypt or getinitparams */
+    if (k_pioctl (NULL, _VICEIOCTL(49), &a_params, 0) < 0) {
+	if (errno == EINVAL) {
+
+	    /* not openafs or old openafs */
+
+	    a_params.in_size  = 0;
+	    a_params.out_size = 4;
+	    a_params.in       = 0;
+	    a_params.out      = (caddr_t) buf;
+	    
+	    if (k_pioctl (NULL, _VICEIOCTL(49), &a_params, 0) < 0) {
+		if (errno == EINVAL) {
+		    
+		    a_params.in_size  = 0;
+		    a_params.out_size = 4;
+		    a_params.in       = 0;
+		    a_params.out      = (caddr_t) buf;
+		    
+		    /* might be new interface */
+
+		    if (k_pioctl (NULL, _VICEIOCTL(55), &a_params, 0) < 0)
+			return errno; /* dunno */
+		    
+		    *ret = 1;
+		    return 0;
+		} else {
+		    return errno;
+		}
+	    }
+	    *ret = 0;
+	    return 0;
+	} else
+	    return errno;
+    }
+    *ret = 1;
+    return 0;
+}
+
+
+/*
+ *
+ */
+
+int
+fs_statistics_list(u_int32_t *host, u_int32_t *part, int *n)
+{
+    u_int32_t data[512];
+    u_int32_t indata;
+    struct ViceIoctl a_params;
+    int i;
+
+    indata = STATISTICS_OPCODE_LIST;
+
+    a_params.in_size  = sizeof(indata);
+    a_params.out_size = sizeof(data);
+    a_params.in       = (char *) &indata;
+    a_params.out      = (char *) data;
+
+    memset (data, 0, sizeof(data));
+
+    if (k_pioctl (NULL, AIOC_STATISTICS , &a_params, 0) == -1)
+	return errno;
+
+    if (data[0] < *n)
+	*n = data[0];
+
+    for (i = 0; i < *n; i++) {
+	host[i] = data[2 * i + 1];
+	part[i] = data[2 * i + 2];
+    }
+
+    return 0;
+}
+
+int
+fs_statistics_entry(u_int32_t host, u_int32_t part, u_int32_t type,
+		    u_int32_t items_slot, u_int32_t *count,
+		    int64_t *items_total, int64_t *total_time)
+{
+    u_int32_t data[160];
+    u_int32_t indata[5];
+    struct ViceIoctl a_params;
+    int i;
+    int j;
+
+    indata[0] = STATISTICS_OPCODE_GETENTRY;
+    indata[1] = host;
+    indata[2] = part;
+    indata[3] = type;
+    indata[4] = items_slot;
+
+    a_params.in_size  = sizeof(indata);
+    a_params.out_size = sizeof(data);
+    a_params.in       = (char *) indata;
+    a_params.out      = (char *) data;
+
+    memset (data, 0, sizeof(data));
+
+    if (k_pioctl (NULL, AIOC_STATISTICS , &a_params, 0) == -1)
+	return errno;
+
+    j = 0;
+    for (i = 0; i < 32; i++) {
+	count[i] = data[j++];
+    }
+    for (i = 0; i < 32; i++) {
+	memcpy(&items_total[i], &data[j], 8);
+	j+=2;
+    }
+    for (i = 0; i < 32; i++) {
+	memcpy(&total_time[i], &data[j], 8);
+	j+=2;
+    }
+
+    return 0;
 }

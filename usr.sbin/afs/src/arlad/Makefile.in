@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:39 art Exp $
+# $KTH: Makefile.in,v 1.83.2.3 2001/05/28 23:22:46 mattiasa Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -15,15 +16,18 @@ exec_prefix 	= @exec_prefix@
 libdir 		= @libdir@
 libexecdir 	= @libexecdir@
 bindir 		= @bindir@
+sbindir		= @sbindir@
 sysconfdir	= @sysconfdir@
 mandir		= @mandir@
 transform	= @program_transform_name@
 ARLACACHEDIR	= @ARLACACHEDIR@
 ARLACONFFILE	= @ARLACONFFILE@
 
-ARLA_BIN	= arlad
+ARLA_SBIN	= arla-cli
+ARLA_LIBEXEC	= arlad
 
-MANPAGES	= CellServDB.5 ThisCell.5 SuidCells.5 arlad.1
+MANPAGES	= CellServDB.5 DynRootDB.5 ThisCell.5 \
+		  SuidCells.5 arlad.8 arla-cli.8
 
 DEFS		= @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)\" \
 		  -DARLACACHEDIR=\"$(ARLACACHEDIR)\" \
@@ -44,6 +48,7 @@ INCLUDES	= -I$(srcdir)/.. \
 		  -I$(srcdir)/../include \
 		  -I$(srcdir)/../xfs/include \
 		  -I../rxdef \
+		  @INC_roken@ \
 		  $(RXKADINC)
 DEFINES		= -DDEBUG
 REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS) \
@@ -51,23 +56,37 @@ REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS) \
 RXKADLIB	= @RXKAD_LIBS@
 KAFS_LIBS	= @AIX_EXTRA_KAFS@ @KAFS_LIBS@
 LIB_tgetent	= @LIB_tgetent@
-LIBS		= -L../lib/bufdir -lbufdir \
+LIBS_common	= -L../lib/bufdir -lbufdir \
 		  -L../rxdef -lrxdefclient -L../rx -lrx -L../lwp \
-		  -llwp @PLWP_LIB_FLAGS@ \
+		  -llwp @PLWP_LIB_FLAGS@
+
+LIBS_common_post= -L../lib/ko -lko -L../util -lutil\
+		   @LIB_roken@ $(RXKADLIB) $(KAFS_LIBS) @LIBS@
+
+LIBS_arla-cli	= $(LIBS_common) \
 		  -L../lib/sl -lsl @LIB_readline@ \
-		  -L../lib/ko -lko -L../util -lutil\
-		  -L../lib/roken -lroken $(RXKADLIB) $(KAFS_LIBS) @LIBS@
+		  $(LIBS_common_post)
+
+LIBS_arlad	= $(LIBS_common) \
+		  $(LIBS_common_post)
+
+LIBS_afsdir_check= $(LIBS_common) \
+		  $(LIBS_common_post)
+
 LIBDEPENDS	= ../rxdef/librxdefclient.a ../rx/librx.a ../lwp/liblwp.a \
-		  ../util/libutil.a ../lib/sl/libsl.a ../lib/roken/libroken.a \
-		  ../lib/ko/libko.a
+		  ../util/libutil.a ../lib/sl/libsl.a \
+		  ../lib/ko/libko.a ../lib/bufdir/libbufdir.a
 KERNEL_SRCS	= @KERNEL_SRCS@
-PROGS		= arlad afsdir_check
+PROGS		= $(ARLA_SBIN) $(ARLA_LIBEXEC) afsdir_check
+
 SRCS		=				\
 		adir.c				\
 		afsdir_check.c			\
 		arla.c				\
+		arlad.c				\
+		arla-cli.c			\
 		arladeb.c			\
-		arladeb2.c			\
+		arladebu.c			\
 		cmcb.c				\
 		conn.c				\
 		cred.c				\
@@ -108,11 +127,11 @@ HDRS		=				\
 		xfs.h				\
 		volcache.h		
 
-arlad_OBJS	=				\
+common_OBJS	=				\
 		adir.o				\
 		arla.o				\
 		arladeb.o			\
-		arladeb2.o			\
+		arladebu.o			\
 		cmcb.o				\
 		conn.o				\
 		cred.o				\
@@ -130,9 +149,13 @@ arlad_OBJS	=				\
 		xfs.o				\
 		$(KERNEL_SRCS:.c=.o)
 
-afsdir_check_OBJS =				\
-		arladeb.o			\
-		afsdir_check.o
+arlad_OBJS	= $(common_OBJS)		\
+		arlad.o
+
+arla-cli_OBJS	= $(common_OBJS)		\
+		arla-cli.o
+
+afsdir_check_OBJS = afsdir_check.o
 
 .PHONY: all install uninstall depend tags clean
 
@@ -142,10 +165,15 @@ all:		$(PROGS)
 		$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
 
 install: all
-		$(MKINSTALLDIRS) $(DESTDIR)$(bindir)
-		PROG_BIN='$(ARLA_BIN)'; for x in $$PROG_BIN; do \
+		$(MKINSTALLDIRS) $(DESTDIR)$(sbindir)
+		PROG_SBIN='$(ARLA_SBIN)'; for x in $$PROG_SBIN; do \
 			f=`echo $$x | sed '$(transform)'`; \
-			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(bindir)/$$f; \
+			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(sbindir)/$$f; \
+		done ; \
+		$(MKINSTALLDIRS) $(DESTDIR)$(libexecdir) ; \
+		PROG_LIBEXEC='$(ARLA_LIBEXEC)'; for x in $$PROG_LIBEXEC; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(libexecdir)/$$f; \
 		done ; \
 		$(MKINSTALLDIRS) $(DESTDIR)$(mandir) ; \
 		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
@@ -153,7 +181,7 @@ install: all
 			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
 			f=`echo $$n | sed '$(transform)'`; \
 			$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$$e ; \
-			$(INSTALL_PROGRAM) $(srcdir)/$$x \
+			$(INSTALL_DATA) $(srcdir)/$$x \
 				$(DESTDIR)$(mandir)/man$$e/$$f.$$e; \
 		done
 
@@ -161,6 +189,10 @@ uninstall:
 		PROG_BIN='$(ARLA_BIN)'; for x in $$PROG_BIN; do \
 			f=`echo $$x | sed '$(transform)'`; \
 			rm -f $(DESTDIR)$(bindir)/$$f; \
+		done ; \
+		PROG_LIBEXEC='$(ARLA_LIBEXEC)'; for x in $$PROG_LIBEXEC; do \
+			f=`echo $$x | sed '$(transform)'`; \
+			rm -f $(DESTDIR)$(libexecdir)/$$f; \
 		done ; \
 		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
 			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
@@ -170,10 +202,13 @@ uninstall:
 		done
 
 arlad:		$(arlad_OBJS) $(LIBDEPENDS)
-		$(CC) $(LDFLAGS) -o $@ $(arlad_OBJS) $(LIBS)
+		$(CC) $(LDFLAGS) -o $@ $(arlad_OBJS) $(LIBS_arlad)
+
+arla-cli:	$(arla-cli_OBJS) $(LIBDEPENDS)
+		$(CC) $(LDFLAGS) -o $@ $(arla-cli_OBJS) $(LIBS_arla-cli)
 
 afsdir_check:	$(afsdir_check_OBJS)
-		$(CC) $(LDFLAGS) -o $@ $(afsdir_check_OBJS) $(LIBS)
+		$(CC) $(LDFLAGS) -o $@ $(afsdir_check_OBJS) $(LIBS_afsdir_check)
 
 Makefile:	Makefile.in ../config.status
 		cd ..; CONFIG_FILES=arlad/Makefile CONFIG_HEADERS= $(SHELL) config.status

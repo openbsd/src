@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +34,7 @@
 #include "appl_locl.h"
 #include "vos_local.h"
 
-RCSID("$Id: vos_endtrans.c,v 1.1 2000/09/11 14:40:38 art Exp $");
+RCSID("$KTH: vos_endtrans.c,v 1.5 2000/10/03 00:08:46 lha Exp $");
 
 /*
  * end a transaction on `host' with transaction id `trans'
@@ -97,22 +92,22 @@ static int localauth;
 static int helpflag;
 static int verbose;
 
-static struct getargs args[] = {
-    {"server",	0, arg_string,  &server,  
-     "server", NULL, arg_mandatory},
-    {"trans",	0, arg_integer,  &transid,  
-     "trans", NULL, arg_mandatory},
-    {"cell",	0, arg_string,  &cell, 
+static struct agetargs args[] = {
+    {"server",	0, aarg_string,  &server,  
+     "server", NULL, aarg_mandatory},
+    {"trans",	0, aarg_integer,  &transid,  
+     "trans", NULL, aarg_mandatory},
+    {"cell",	0, aarg_string,  &cell, 
      "cell", NULL},
-    {"noauth",	0, arg_flag,    &noauth, 
+    {"noauth",	0, aarg_flag,    &noauth, 
      "do not authenticate", NULL},
-    {"localauth",	0, arg_flag,    &localauth, 
+    {"localauth",	0, aarg_flag,    &localauth, 
      "use local authentication", NULL},
-    {"verbose",	0, arg_flag,    &verbose, 
+    {"verbose",	0, aarg_flag,    &verbose, 
      "verbose output", NULL},
-    {"help",	0, arg_flag,    &helpflag,
+    {"help",	0, aarg_flag,    &helpflag,
      NULL, NULL},
-    {NULL,      0, arg_end, NULL}
+    {NULL,      0, aarg_end, NULL}
 };
 
 /*
@@ -122,7 +117,7 @@ static struct getargs args[] = {
 static void
 usage(void)
 {
-    arg_printusage (args, "vos endtransaction", "", ARG_AFSSTYLE);
+    aarg_printusage (args, "vos endtransaction", "", AARG_AFSSTYLE);
 }
 
 /*
@@ -138,7 +133,7 @@ vos_endtrans(int argc, char **argv)
     server = cell = NULL;
     noauth = localauth = helpflag = 0;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage();
 	return 0;
     }

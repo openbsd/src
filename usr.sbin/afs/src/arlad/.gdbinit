@@ -1,5 +1,5 @@
 #
-# $Id: .gdbinit,v 1.1 2000/09/11 14:40:39 art Exp $
+# $KTH: .gdbinit,v 1.5 2000/11/02 12:41:46 lha Exp $
 #
 
 
@@ -106,4 +106,88 @@ end
 
 document lwp_ps
 Print all processes, running or blocked
+end
+
+define list_count
+   set $count = 0
+   set $current = ((List *)$arg0)->head
+   while $current != 0
+     set $count = $count + 1
+     set $current = $current->next
+   end
+   printf "List contains %d entries\n", $count
+end
+
+document list_count
+Count number of elements on util LIST.
+end
+
+define volume_print
+   set $current = 'volcache.c'::lrulist->head
+   while $current != 0
+     set $entry = (VolCacheEntry *)$current->data
+     if $entry->refcount != 0
+        printf "%p - %s ref: %d\n", $entry, $entry->entry->name, $entry->refcount
+     end
+     set $current = $current->next
+   end
+end
+
+document volume_print
+Print the volume in the volcache
+end
+
+define volume_count
+   set $cnt = 0
+   set $vol_refs = 0
+   set $total_cnt = 0
+   set $current = 'volcache.c'::lrulist->head
+   while $current != 0
+     set $entry = (VolCacheEntry *)$current->data
+     if $entry->refcount != 0
+	set $cnt = $cnt + 1
+        set $total_cnt = $total_cnt + $entry->refcount
+     end
+     set $vol_refs = $vol_refs + $entry->vol_refs
+     set $current = $current->next
+   end
+   printf "Used volcache: counted: %d count: %d max: %d\n", $cnt, nactive_volcacheentries, nvolcacheentries
+   printf "Refcount total: %d, used fcache nodes are: %d\n", $total_cnt, 'fcache.c'::usedvnodes
+   printf "Volrefs total to %d\n", $vol_refs
+end
+
+document volume_count
+Print the number of active entries in volcache, by counting 
+them and printing the accounting variables
+end
+
+define volume_check
+   set $current = 'volcache.c'::lrulist->head
+   while $current != 0
+     set $entry = (VolCacheEntry *)$current->data
+     printf "checking %s\n", $entry->entry->name
+
+     if $entry->refcount != 0
+        set $cnt = 0
+        printf "  checking fcache\n"
+        set $fcur = 'fcache.c'::lrulist->head
+        while $fcur != 0
+           if ((FCacheEntry *)$fcur->data)->volume == $entry
+              set $cnt = $cnt + 1
+           end
+           set $fcur = $fcur->next
+        end
+        if $cnt != $entry->refcount
+           printf " failed %d fcache entries used, while entry was accounted for %d\n", $cnt, $entry->refcount
+        else	   
+           printf " ok\n"	   
+        end	   
+     end
+
+     set $current = $current->next
+   end
+end
+
+document volume_check
+Check volcache consistency WRT fcache usage, too slow to use !
 end

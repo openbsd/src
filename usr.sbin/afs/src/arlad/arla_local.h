@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 /*
  *  Include file for whole arlad
- *  $Id: arla_local.h,v 1.3 2000/09/11 14:40:40 art Exp $
+ *  $KTH: arla_local.h,v 1.61.2.3 2001/09/14 13:25:45 lha Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -55,9 +50,7 @@
 #include <errno.h>
 #include <sys/time.h>
 #if defined(HAVE_DIRENT_H)
-#define _KERNEL
 #include <dirent.h>
-#undef _KERNEL
 #if DIRENT_AND_SYS_DIR_H
 #include <sys/dir.h>
 #endif
@@ -84,6 +77,9 @@
 #endif
 #ifdef HAVE_SYS_MOUNT_H
 #include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_PRCTL_H
+#include <sys/prctl.h>
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -173,6 +169,48 @@ extern char arlasysname[SYSNAMEMAXLEN];
  * This should be a not used uid in the system, 
  * XFS_ANONYMOUSID may be good
  */
+
 #define ARLA_NO_AUTH_CRED 4
 
 extern int fake_mp;
+extern char *default_log_file;
+extern char *default_arla_cachedir;
+
+extern int fork_flag;		/* if the program should fork */
+extern int num_workers;		/* number of workers program should use */
+extern int client_port;		/* what port the client is using */
+extern int afs_BusyWaitPeriod;	/* number of sec to wait on fs when VBUSY */
+
+void
+store_state (void);
+
+void
+arla_start (char *device_file, const char *cache_dir);
+
+int
+arla_init (int argc, char **argv);
+
+char *
+get_default_cache_dir (void);
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
+extern char *conf_file;
+extern char *log_file;
+extern char *debug_levels;
+extern char *connected_mode_string;
+#ifdef KERBEROS
+extern char *rxkad_level_string;
+#endif
+extern const char *temp_sysname;
+extern char *root_volume;
+extern int cpu_usage;
+extern int version_flag;
+extern int help_flag;
+extern int recover;
+extern int dynroot_enable;
+extern int cm_consistency;
+
+extern char *cache_dir;

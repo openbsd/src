@@ -1,5 +1,5 @@
-.\"     $OpenBSD: CellServDB.5,v 1.1 2000/09/11 14:40:39 art Exp $
-.\"	$Id: CellServDB.5,v 1.1 2000/09/11 14:40:39 art Exp $
+.\"     $OpenBSD: CellServDB.5,v 1.2 2002/06/07 04:28:57 hin Exp $
+.\"	$KTH: CellServDB.5,v 1.3 2000/09/25 07:24:18 lha Exp $
 .Dd April 19, 2000
 .Dt CellServDB 5
 .Os
@@ -26,10 +26,20 @@ is read when
 .Nm arlad
 is started, normally when the system boots.
 .Pp
-The text after the # is NOT a comment, it the hostname of the db-server.
+The text after the # is NOT a comment, it the hostname of the
+db-server, and it's used to lookup the address. The address is only
+used when the hostname doesn't resolve.
 .Pp
 Entires in the file are searched and expanded by many programs
+.Pp
+There is better way to distribute database-server location then
+CellServDB and that is via a DNS resource record called AFSDB.  This
+is better since there will be no more obsolete CellServDB files laying
+around with no longer valid information.
+.Pp
+When useing AFSDB-rr, entries entries should still be listed, but
+without listing any hosts. This is needed for dynroot to work.
 .Sh FILES
-.Pa CellServDB
+.Pa /usr/arla/etc/CellServDB
 .Sh SEE ALSO
-.Xr arlad 1
+.Xr arlad 8

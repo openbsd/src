@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -43,7 +38,7 @@
 #include <bos.cs.h>
 
 
-RCSID("$Id: bos_status.c,v 1.1 2000/09/11 14:40:35 art Exp $");
+RCSID("$KTH: bos_status.c,v 1.11 2000/10/03 00:07:28 lha Exp $");
 
 /*
  *
@@ -93,8 +88,8 @@ printstatus(const char *cell,
     struct rx_connection *conn;
     unsigned int i;
     int error;
-    char *instance_name;
     int getstatus_int;
+    char instance_name[BOZO_BSSIZE];
     char getstatus_str[BOZO_BSSIZE];
     
     conn = arlalib_getconnbyname(cell,
@@ -108,7 +103,7 @@ printstatus(const char *cell,
     
     i = 0;
     do {
-	error = BOZO_EnumerateInstance(conn, i, &instance_name);
+	error = BOZO_EnumerateInstance(conn, i, instance_name);
 	if (error == 0) {
 	    error = BOZO_GetStatus(conn, instance_name,
 				   &getstatus_int, getstatus_str);
@@ -148,14 +143,14 @@ static int noauth;
 static int localauth;
 static int verbose;
 
-static struct getargs args[] = {
-  {"server",	0, arg_string,	&server,	"server", NULL, arg_mandatory},
-  {"cell",	0, arg_string,	&cell,		"cell",	  NULL},
-  {"noauth",	0, arg_flag,	&noauth,	"do not authenticate", NULL},
-  {"local",	0, arg_flag,	&localauth,	"localauth"},
-  {"verbose",	0, arg_flag,	&verbose,	"be verbose"},
-  {"help",	0, arg_flag,	&helpflag,	NULL, NULL},
-  {NULL,	0, arg_end,	NULL,		NULL, NULL}
+static struct agetargs args[] = {
+  {"server",	0, aarg_string,	&server,	"server", NULL, aarg_mandatory},
+  {"cell",	0, aarg_string,	&cell,		"cell",	  NULL},
+  {"noauth",	0, aarg_flag,	&noauth,	"do not authenticate", NULL},
+  {"local",	0, aarg_flag,	&localauth,	"localauth"},
+  {"verbose",	0, aarg_flag,	&verbose,	"be verbose"},
+  {"help",	0, aarg_flag,	&helpflag,	NULL, NULL},
+  {NULL,	0, aarg_end,	NULL,		NULL, NULL}
 };
 
 /*
@@ -165,7 +160,7 @@ static struct getargs args[] = {
 static int
 usage (int exit_code)
 {
-    arg_printusage (args, "bos status", "", ARG_AFSSTYLE);
+    aarg_printusage (args, "bos status", "", AARG_AFSSTYLE);
     return exit_code;
 }
 
@@ -178,7 +173,7 @@ bos_status(int argc, char **argv)
 {
     int optind = 0;
     
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE))
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE))
 	return usage (0);
     
     if (helpflag)

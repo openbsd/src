@@ -31,9 +31,11 @@
  * Do merging of the files that changed with we was in disconnected mode
  */
 
+#if 0
+
 #include "arla_local.h"
 
-RCSID("$Id: reconnect.c,v 1.2 2000/09/11 14:40:43 art Exp $");
+RCSID("$KTH: reconnect.c,v 1.30.2.1 2001/06/04 22:16:39 ahltorp Exp $");
 
 static int reconnect_nonmute(struct vcache *, int, struct timeval);
 static int reconnect_putattr(struct vcache *, struct xfs_attr *);
@@ -797,7 +799,7 @@ int reconnect_remove(struct vcache *vcp, FCacheEntry *childentry, char *name)
     AFSFetchStatus status;
     AFSVolSync volsync; 
     char tmp[2 * sizeof(int) + 2];
-    xfs_cache_handle cache_handle;
+    fcache_cache_handle cache_handle;
 
     fid = &(vcp->fid); /* points to the VenusFid structure */
     fid = fid_translate(fid);
@@ -822,7 +824,7 @@ int reconnect_remove(struct vcache *vcp, FCacheEntry *childentry, char *name)
   
 	if (isupdate)
 	{
-	    xfs_cache_handle cache_handle;
+	    fcache_cache_handle cache_handle;
 
 	    arla_log(ADEBDISCONN, 
 		     "reconnect_remove: can't remove because file modified!");
@@ -838,7 +840,7 @@ int reconnect_remove(struct vcache *vcp, FCacheEntry *childentry, char *name)
 
     res.res = 0;
 
-    assert (CheckLock(&fce->lock) == -1);
+    AssertExclLocked(&fce->lock);
 
     conn = find_first_fs (fce, ce, &context);
     if (conn == NULL) {
@@ -915,7 +917,7 @@ reconnect_rmdir(struct vcache *vcp, FCacheEntry *childEntry, char *name)
     char tmp[2 * sizeof(int) + 2];
     int ret = 0; 
     Result tempres; 
-    xfs_cache_handle cache_handle;
+    fcache_cache_handle cache_handle;
   
     ConnCacheEntry *conn;
     fs_server_context context;
@@ -931,7 +933,7 @@ reconnect_rmdir(struct vcache *vcp, FCacheEntry *childEntry, char *name)
     ce = cred_get (fid->Cell, vcp->cred.pag, CRED_ANY);
     assert (ce != NULL);
 
-    assert (CheckLock(&fce->lock) == -1);
+    AssertExclLocked(&fce->lock);
 
     conn = find_first_fs (fce, ce, &context);
     if (conn == NULL) {
@@ -1001,7 +1003,7 @@ reconnect_mut_chk(FCacheEntry *fce, CredCacheEntry *ce, int version)
     AFSCallBack callback;                                                    
     AFSVolSync volsync;      
 
-    assert (CheckLock (&fetched.lock) == -1);
+    AssertExclLocked(&fetched.lock);
 
 /*SWW Aug 01: >= is changed into > */
     conn = find_first_fs (&fetched, ce, &context);
@@ -1105,7 +1107,7 @@ reconnect_mut_newfile(FCacheEntry **fcep, xfs_pag_t cred,VenusFid *new_fid)
     VenusFid newfid;
     int ret;
     int from, to;
-    xfs_cache_handle cache_handle;
+    fcache_cache_handle cache_handle;
 
     ret = fcache_find (&parent_fce, (*fcep)->parent);
     assert (ret == 0);
@@ -1376,7 +1378,7 @@ reconnect_putdata(struct vcache *vcp)
 #endif
 
     /* code taken from write_data XXX join */ 
-    assert (CheckLock(&fce->lock) == -1);
+    AssertExclLocked(&fce->lock);
 
     conn = find_first_fs (fce, ce, &context);
     if (conn == NULL) {
@@ -1477,7 +1479,7 @@ int reconnect_rename(struct vcache *vcp_old, struct vcache *vcp_new,
     fs_server_context context;
     AFSFetchStatus orig_status, new_status;
     AFSVolSync volsync;
-    xfs_cache_handle cache_handle;
+    fcache_cache_handle cache_handle;
 
     fid_old = &vcp_old->fid;
     fid_old = fid_translate(fid_old);
@@ -1528,8 +1530,8 @@ int reconnect_rename(struct vcache *vcp_old, struct vcache *vcp_new,
     ce = cred_get (vcp_old->fid.Cell, vcp_old->cred.pag, CRED_ANY);
     assert (ce != NULL);
 
-    assert (CheckLock(&fce_old->lock) == -1
-            && CheckLock(&fce_new->lock) == -1);
+    AssertExclLocked(&fce_old->lock);
+    AssertExclLocked(&fce_new->lock);
 
     conn = find_first_fs (fce_old, ce, &context);
     if (conn == NULL) {
@@ -1698,7 +1700,7 @@ int reconnect_create(struct vcache *parent, struct vcache *child, char *name)
     AFSVolSync volsync;
     int ret; 
     char tmp[2 * sizeof(int) + 2];
-    xfs_cache_handle cache_handle;
+    fcache_cache_handle cache_handle;
     int32_t type;
 
     parent_fid = &(parent->fid); /* points to the VenusFid structure */
@@ -1914,7 +1916,7 @@ int reconnect_mkdir(struct vcache *parent, struct vcache *curdir,
     AFSFetchStatus status;
     AFSCallBack  callback;
     AFSVolSync   volsync;
-    xfs_cache_handle cache_handle;
+    fcache_cache_handle cache_handle;
     int32_t type;
 
     parent_fid = &(parent->fid); /* points to the VenusFid structure */
@@ -2050,7 +2052,7 @@ int reconnect_link(struct vcache *parent, struct vcache *existing,
     AFSFetchStatus new_status;
     AFSFetchStatus status;
     AFSVolSync volsync;
-    xfs_cache_handle cache_handle;
+    fcache_cache_handle cache_handle;
 
 
     parent_fid = &(parent->fid);
@@ -2124,7 +2126,7 @@ int reconnect_symlink(struct vcache *parent, struct vcache *child,
 
     AFSFetchStatus fetch_attr, new_status;
     AFSVolSync volsync;
-    xfs_cache_handle cache_handle;
+    fcache_cache_handle cache_handle;
     int32_t type;
 
     parent_fid = &(parent->fid);
@@ -2204,3 +2206,4 @@ int reconnect_symlink(struct vcache *parent, struct vcache *child,
     return ret;
 }
 
+#endif

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -42,7 +37,7 @@
 #include <ka.cs.h>
 #include <err.h>
 
-RCSID("$Id: asrvutil.c,v 1.1 2000/09/11 14:40:34 art Exp $");
+RCSID("$KTH: asrvutil.c,v 1.7 2000/10/03 00:06:52 lha Exp $");
 
 static int help_cmd (int argc, char **argv);
 
@@ -173,7 +168,7 @@ get_cmd (int argc, char **argv)
     char *cell = (char *) cell_getthiscell();
     int noauth = 0;
 
-    static struct getargs get_args[] = {
+    static struct agetargs get_args[] = {
 	{"name",   0, arg_string,  NULL, "what name to use",
 	 NULL},
 	{"instance",   0, arg_string,  NULL, "what instance to use",
@@ -192,7 +187,7 @@ get_cmd (int argc, char **argv)
     arg->value = &cell;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (get_args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (getarg (get_args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	get_usage();
 	return 0;
     }
@@ -318,8 +313,13 @@ main (int argc, char **argv)
 {
     int ret;
 
+    set_progname(argv[0]);
+
+    method = log_open (get_progname(), "/dev/stderr:notime");
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
     ports_init();
-    cell_init(0); /* XXX */
 
     if(argc > 1) {
 	ret = sl_command(cmds, argc - 1, argv + 1);

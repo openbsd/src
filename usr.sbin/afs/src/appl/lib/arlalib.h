@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: arlalib.h,v 1.1 2000/09/11 14:40:36 art Exp $ */
+/* $KTH: arlalib.h,v 1.37.2.3 2001/10/02 16:13:01 jimmy Exp $ */
 
 #ifndef ARLALIB_H
 #define ARLALIB_H 1
@@ -81,6 +76,22 @@ int arlalib_getsyncsite(const char *cell, const char *host, int32_t port,
 
 
 /*
+ * Token managment
+ */
+
+struct ClearToken;
+
+typedef int (*arlalib_token_iter_func) (const char *secret, size_t secret_sz,
+					const struct ClearToken *ct,
+					const char *cell,
+					void *arg);
+
+int
+arlalib_token_iter (const char *cell, 
+		    arlalib_token_iter_func func, void *arg);
+
+
+/*
  * Wrappers around pioctl calls
  */
 
@@ -117,6 +128,8 @@ int fs_getaviatorstats(u_int32_t *max_workers,
 
 int fs_checkservers(char *cell, int32_t flags,
 		    u_int32_t *hosts, int numhosts);
+
+int fs_checkvolumes (void);
 
 int
 fs_set_sysname (const char *sys);
@@ -157,6 +170,17 @@ fs_lsmount (const char *path);
 
 int
 fs_rmmount (const char *path);
+
+int
+fs_incompat_renumber (int *ret);
+
+int
+fs_statistics_list(u_int32_t *host, u_int32_t *part, int *n);
+
+int
+fs_statistics_entry(u_int32_t host, u_int32_t part, u_int32_t type,
+		    u_int32_t items_slot, u_int32_t *count,
+		    int64_t *items_total, int64_t *total_time);
 
 int
 arlalib_get_viceid (const char *username, const char *cellname,

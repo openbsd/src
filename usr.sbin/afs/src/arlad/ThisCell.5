@@ -1,5 +1,5 @@
-.\"     $OpenBSD: ThisCell.5,v 1.1 2000/09/11 14:40:39 art Exp $
-.\"     $Id: ThisCell.5,v 1.1 2000/09/11 14:40:39 art Exp $
+.\"     $OpenBSD: ThisCell.5,v 1.2 2002/06/07 04:28:57 hin Exp $
+.\"     $KTH: ThisCell.5,v 1.4 2000/09/26 22:36:29 lha Exp $
 .Dd April 19, 2000
 .Dt ThisCell 5
 .Os
@@ -17,13 +17,13 @@ default cell to use for commands such as
 .Xr kauth 1 ,
 .Xr kinit 1 ,
 .Xr afslog 1 ,
-but other cells can still be used.
+but other cells can still be used (often by giving a -cell argument).
 .Pp
 It also affects where the cache manager reads the root of afs, so
 having good connectivity to the default cell is very important. This
 can be avoided by using the dynroot feature of arlad.
 .Pp
 .Sh SEE ALSO
-.Xr arlad 1 ,
+.Xr arlad 8 ,
 .Xr SuidCells 5 ,
 .Xr CellServDB 5

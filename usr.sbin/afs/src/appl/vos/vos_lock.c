@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos_lock.c,v 1.1 2000/09/11 14:40:38 art Exp $");
+RCSID("$KTH: vos_lock.c,v 1.4.2.1 2001/11/16 16:56:39 mattiasa Exp $");
 
 /*
  * lock a volume
@@ -53,20 +48,20 @@ static int localauth;
 static int helpflag;
 static int verbose;
 
-static struct getargs args[] = {
-    {"id",      0, arg_string, &vol,
-     "id or name of volume",   NULL, arg_mandatory},
-    {"cell",    0, arg_string,  &cell, 
+static struct agetargs args[] = {
+    {"id",      0, aarg_string, &vol,
+     "id or name of volume",   NULL, aarg_mandatory},
+    {"cell",    0, aarg_string,  &cell, 
      "cell", NULL},
-    {"noauth",  0, arg_flag,    &noauth, 
+    {"noauth",  0, aarg_flag,    &noauth, 
      "do not authenticate", NULL},
-    {"localauth",       0, arg_flag,    &localauth, 
+    {"localauth",       0, aarg_flag,    &localauth, 
      "use local authentication", NULL},
-    {"verbose", 0, arg_flag,    &verbose, 
+    {"verbose", 0, aarg_flag,    &verbose, 
      "verbose output", NULL},
-    {"help",    0, arg_flag,    &helpflag,
+    {"help",    0, aarg_flag,    &helpflag,
      NULL, NULL},
-    {NULL,      0, arg_end, NULL}
+    {NULL,      0, aarg_end, NULL}
 };
 
 static int
@@ -76,6 +71,7 @@ vos_lock_volume(char *volname)
     const char *host = NULL;
     arlalib_authflags_t auth;
     int error;
+    int32_t dbhost;
     vldbentry vol;
 
     find_db_cell_and_host((const char **)&cell, &host);
@@ -90,10 +86,18 @@ vos_lock_volume(char *volname)
 
     auth = arlalib_getauthflag(noauth, localauth, 0, 0);
 
-    connvldb = arlalib_getconnbyname(cell, host,
-			  afsvldbport,
-			  VLDB_SERVICE_ID,
-			  auth);
+    error = arlalib_getsyncsite(cell, NULL, afsvldbport, 
+				&dbhost, auth);
+    if (error) {
+	fprintf (stderr, "vos_createvolume: arla_getsyncsite: %s\n", 
+	       koerr_gettext(error));
+	return -1;
+    }
+    
+    connvldb = arlalib_getconnbyaddr(cell, dbhost, NULL,
+				     afsvldbport,
+				     VLDB_SERVICE_ID,
+				     auth);
 
     if(connvldb == NULL) {
 	fprintf(stderr, "can't connect to vldb server %s in cell %s\n",
@@ -126,7 +130,7 @@ vos_lock_volume(char *volname)
 static void
 usage(void)
 {
-    arg_printusage(args, "vos dump", "", ARG_AFSSTYLE);
+    aarg_printusage(args, "vos dump", "", AARG_AFSSTYLE);
 }
 
 int
@@ -137,7 +141,7 @@ vos_lock(int argc, char **argv)
     cell = vol = NULL;
     noauth = localauth = helpflag = verbose = 0;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage ();
 	return 0;
     }

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -47,7 +42,7 @@
 
 #include "appl_locl.h"
 
-RCSID("$Id: unlog.c,v 1.1 2000/09/11 14:40:34 art Exp $");
+RCSID("$KTH: unlog.c,v 1.9 2000/10/03 00:06:36 lha Exp $");
 
 #include "unlog.h"
 
@@ -67,7 +62,7 @@ static int lost_tokens = 0;
 
 static int   unlog_version = 0;
 static int   unlog_help = 0;
-static getarg_strings unlog_cells, unlog_cells_no_argument;
+static agetarg_strings unlog_cells, unlog_cells_no_argument;
 
 /*
  * Various helper functions that we call
@@ -158,18 +153,18 @@ void restoretoken(struct token *tok)
  * options to program
  */
 
-struct getargs args[] = {
-    { "cell", 0, arg_strings, &unlog_cells,
+struct agetargs args[] = {
+    { "cell", 0, aarg_strings, &unlog_cells,
       "only remove tokens for this cell or cells", 
-      "AFS cell name(s)", arg_optional},
-    { NULL, 0, arg_generic_string, &unlog_cells_no_argument,
+      "AFS cell name(s)", aarg_optional},
+    { NULL, 0, aarg_generic_string, &unlog_cells_no_argument,
       "only remove tokens for this cell or cells",
-      "AFS cell name(s)", arg_optional},
-    { "help", 0, arg_flag, &unlog_help, "help",
-      NULL, arg_optional},
-    { "version", 0, arg_flag, &unlog_version, "print version",
-      NULL, arg_optional},
-    { NULL, 0, arg_end, NULL, NULL }
+      "AFS cell name(s)", aarg_optional},
+    { "help", 0, aarg_flag, &unlog_help, "help",
+      NULL, aarg_optional},
+    { "version", 0, aarg_flag, &unlog_version, "print version",
+      NULL, aarg_optional},
+    { NULL, 0, aarg_end, NULL, NULL }
 };
 
 /*
@@ -179,7 +174,7 @@ struct getargs args[] = {
 static void
 do_help(int exitval)
 {
-    arg_printusage(args, NULL, NULL, ARG_AFSSTYLE);
+    aarg_printusage(args, NULL, NULL, AARG_AFSSTYLE);
     exit(exitval);
 }
 
@@ -192,7 +187,7 @@ main(int argc, char **argv)
 {
     int i, j, optind = 0;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
         warnx("Bad argument: %s", argv[optind]);
 	do_help(1);
     }

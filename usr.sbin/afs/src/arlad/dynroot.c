@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -44,7 +39,7 @@
 
 #include <arla_local.h>
 
-RCSID("$Id: dynroot.c,v 1.2 2002/04/25 22:55:40 espie Exp $");
+RCSID("$KTH: dynroot.c,v 1.13.2.2 2001/05/28 15:19:20 map Exp $");
 
 struct create_entry {
     fbuf *thedir;	/* pointer to the fbuf that contains the dir */
@@ -86,6 +81,9 @@ create_entry_func (const cell_entry *cell, void *arg)
 {
     struct create_entry *entry = (struct create_entry *) arg;
     int ret;
+
+    if (!cell_dynroot(cell))
+	return 0;
 
     entry->fid.Vnode = cellnum2afs (cell->id);
 
@@ -167,7 +165,7 @@ Bool
 dynroot_isvolumep (int cell, const char *volume)
 {
     assert (volume);
-
+    
     if (cell == 0 && strcmp (volume, "1") == 0)
 	return TRUE;
 
@@ -197,9 +195,11 @@ dynroot_fetch_vldbN (nvldbentry *entry)
  */
 
 static void
-dynroot_update_entry (FCacheEntry *entry, int32_t filetype)
+dynroot_update_entry (FCacheEntry *entry, int32_t filetype,
+		      xfs_pag_t cred)
 {
     struct timeval tv;
+    AccessEntry *ae;
 
     assert (entry);
     entry->status.InterfaceVersion = 1;
@@ -209,10 +209,16 @@ dynroot_update_entry (FCacheEntry *entry, int32_t filetype)
     entry->status.Owner		= 0;
     entry->status.CallerAccess 	= ALIST | AREAD;
     entry->status.AnonymousAccess = ALIST | AREAD;
-    entry->status.UnixModeBits	= 
-	S_IRUSR|S_IXUSR|
-	S_IRGRP|S_IXGRP|
-	S_IROTH|S_IXOTH;
+    switch (filetype) {
+    case TYPE_DIR: 
+	entry->status.UnixModeBits = 0755;
+	break;
+    case TYPE_LINK:
+	entry->status.UnixModeBits = 0644;
+	break;
+    default:
+	abort();
+    }
     entry->status.ParentVnode	= DYNROOT_ROOTDIR;
     entry->status.ParentUnique	= DYNROOT_UNIQUE;
     entry->status.SegSize	= 64*1024;
@@ -235,7 +241,9 @@ dynroot_update_entry (FCacheEntry *entry, int32_t filetype)
 
     entry->anonaccess = entry->status.AnonymousAccess;
 
-    /* XXX CallerAccess */
+    findaccess(cred, entry->acccache, &ae);
+    ae->cred = cred;
+    ae->access = entry->status.CallerAccess;
 }
 
 /*
@@ -243,7 +251,7 @@ dynroot_update_entry (FCacheEntry *entry, int32_t filetype)
  */
 
 static int
-dynroot_get_node (FCacheEntry *entry)
+dynroot_get_node (FCacheEntry *entry, CredCacheEntry *ce)
 {
     int ret, fd, rootnode;
     size_t len;
@@ -272,6 +280,7 @@ dynroot_get_node (FCacheEntry *entry)
     } else {
 	ret = dynroot_create_symlink (&dir, entry->fid.fid.Vnode);
 	entry->status.LinkCount = 1;
+	fcache_mark_as_mountpoint (entry);
     }
 
     if (ret) {
@@ -288,7 +297,8 @@ dynroot_get_node (FCacheEntry *entry)
     if (ret)
 	return ret;
 
-    dynroot_update_entry (entry, rootnode ? TYPE_DIR : TYPE_LINK);
+    dynroot_update_entry (entry, rootnode ? TYPE_DIR : TYPE_LINK,
+			  ce->cred);
 
     entry->flags.attrp = TRUE;
     entry->flags.datap = TRUE;
@@ -303,9 +313,9 @@ dynroot_get_node (FCacheEntry *entry)
  */
 
 int
-dynroot_get_attr (FCacheEntry *entry)
+dynroot_get_attr (FCacheEntry *entry, CredCacheEntry *ce)
 {
-    return dynroot_get_node (entry);
+    return dynroot_get_node (entry, ce);
 }
 
 
@@ -314,9 +324,9 @@ dynroot_get_attr (FCacheEntry *entry)
  */
 
 int
-dynroot_get_data (FCacheEntry *entry)
+dynroot_get_data (FCacheEntry *entry, CredCacheEntry *ce)
 {
-    return dynroot_get_node (entry);
+    return dynroot_get_node (entry, ce);
 }
 
 /*

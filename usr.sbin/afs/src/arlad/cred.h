@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
  * Header for credetial cache
  */
 
-/* $Id: cred.h,v 1.3 2000/09/11 14:40:41 art Exp $ */
+/* $KTH: cred.h,v 1.26 2000/10/02 22:31:15 lha Exp $ */
 
 #ifndef _CRED_H_
 #define _CRED_H_

@@ -1,5 +1,5 @@
-.\"     $OpenBSD: SuidCells.5,v 1.1 2000/09/11 14:40:39 art Exp $
-.\"     $Id: SuidCells.5,v 1.1 2000/09/11 14:40:39 art Exp $
+.\"     $OpenBSD: SuidCells.5,v 1.2 2002/06/07 04:28:57 hin Exp $
+.\"     $KTH: SuidCells.5,v 1.3 2000/09/25 07:25:59 lha Exp $
 .Dd April 19, 2000
 .Dt SuidCells 5
 .Os
@@ -9,8 +9,12 @@
 .Sh DESCRIPTION
 The setuid bit on binaries executed from within AFS are ignored
 for the cells that are not listed in
+.Nm .
+.Pp
+The
 .Nm
+file contain a list of cells separated by newline. The cells need to
+exist in CellServDB or in DNS (with AFSDB resource records).
 .Sh SEE ALSO
-.Xr arlad 1 ,
+.Xr arlad 8 ,
 .Xr CellServDB 5
-

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos_dump.c,v 1.1 2000/09/11 14:40:38 art Exp $");
+RCSID("$KTH: vos_dump.c,v 1.7 2000/10/03 00:08:40 lha Exp $");
 
 static void
 dump_volume (const char *volume,
@@ -166,24 +161,24 @@ static int localauth;
 static int verbose;
 static int helpflag;
 
-static struct getargs args[] = {
-    {"id",	0, arg_string,  &vol,  "id of volume", "volume",
-     arg_mandatory},
-    {"server",	0, arg_string,  &server, "what server to use", NULL},
-    {"partition",0, arg_string, &part, "what partition to use", NULL},
-    {"cell",	0, arg_string,  &cell, "what cell to use", NULL},
-    {"file",	0, arg_string,	&file, "file to dump to", NULL},
-    {"noauth",	0, arg_flag,    &noauth, "do not authenticate", NULL},
-    {"localauth",0,arg_flag,    &localauth, "localauth", NULL},
-    {"verbose", 0, arg_flag,	&verbose, "be verbose", NULL},
-    {"help",	0, arg_flag,    &helpflag, NULL, NULL},
-    {NULL,      0, arg_end,	NULL}
+static struct agetargs args[] = {
+    {"id",	0, aarg_string,  &vol,  "id of volume", "volume",
+     aarg_mandatory},
+    {"server",	0, aarg_string,  &server, "what server to use", NULL},
+    {"partition",0, aarg_string, &part, "what partition to use", NULL},
+    {"cell",	0, aarg_string,  &cell, "what cell to use", NULL},
+    {"file",	0, aarg_string,	&file, "file to dump to", NULL},
+    {"noauth",	0, aarg_flag,    &noauth, "do not authenticate", NULL},
+    {"localauth",0,aarg_flag,    &localauth, "localauth", NULL},
+    {"verbose", 0, aarg_flag,	&verbose, "be verbose", NULL},
+    {"help",	0, aarg_flag,    &helpflag, NULL, NULL},
+    {NULL,      0, aarg_end,	NULL}
 };
 
 static void
 usage(void)
 {
-    arg_printusage(args, "vos dump", "", ARG_AFSSTYLE);
+    aarg_printusage(args, "vos dump", "", AARG_AFSSTYLE);
 }
 
 int
@@ -194,7 +189,7 @@ vos_dump(int argc, char **argv)
     noauth = localauth = verbose = 0;
     file = cell = server = part = vol = NULL;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage ();
 	return 0;
     }

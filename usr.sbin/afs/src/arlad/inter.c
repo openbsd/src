@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -41,11 +36,11 @@
  */
 
 #include "arla_local.h"
-RCSID("$Id: inter.c,v 1.3 2000/09/11 14:40:42 art Exp $") ;
+RCSID("$KTH: inter.c,v 1.110.2.3 2001/06/05 01:27:05 ahltorp Exp $") ;
 
 #include <xfs/xfs_message.h>
 
-Bool usedbytes_consistencyp = FALSE;
+Bool cm_consistencyp = FALSE;
 
 /*
  * Return the rights for user cred and entry e.
@@ -128,7 +123,7 @@ log_operation (const char *fmt, ...)
     va_list args;
     struct timeval now;
 
-    if(connected_mode == CONNECTED && usedbytes_consistencyp == FALSE)
+    if(connected_mode == CONNECTED && cm_consistencyp == FALSE)
 	return;
 
     va_start (args, fmt);
@@ -150,9 +145,9 @@ log_operation (const char *fmt, ...)
  */
 
 void
-cm_turn_on_usedbytes_consistency(void)
+cm_turn_on_consistency_check(void)
 {
-    usedbytes_consistencyp = TRUE;
+    cm_consistencyp = TRUE;
 }
 
 /*
@@ -161,7 +156,7 @@ cm_turn_on_usedbytes_consistency(void)
  */
 
 void
-cm_check_usedbytes_consistency (void)
+cm_check_consistency (void)
 {
     static unsigned int log_times = 0;
     static unsigned int file_times = 0;
@@ -169,21 +164,21 @@ cm_check_usedbytes_consistency (void)
     u_long real_size;
     char newname[MAXPATHLEN];
 
-    if (usedbytes_consistencyp == FALSE)
+    if (cm_consistencyp == FALSE)
 	return;
     
     calc_size = fcache_calculate_usage();
     real_size = fcache_usedbytes ();
 
     if (calc_size != real_size) {
-	    log_operation ("usedbytes consistency not guaranteed "
+	    log_operation ("consistency check not guaranteed "
 			   "(calc: %d, real: %d), aborting\n", 
 			   (int) calc_size, (int) real_size);
 	    cm_store_state ();
 	    abort();
     }
     if (log_times % 100000 == 0) {
-	log_operation ("usedbytes consistency ok, rotating logs\n");
+	log_operation ("consistency check ok, rotating logs\n");
 	cm_store_state ();
 	snprintf (newname, sizeof(newname), "log.%d", file_times++);
 	rename ("log", newname);
@@ -210,7 +205,7 @@ Result
 cm_open (VenusFid *fid,
 	 CredCacheEntry **ce,
 	 u_int tokens,
-	 xfs_cache_handle *cache_handle,
+	 fcache_cache_handle *cache_handle,
 	 char *cache_name,
 	 size_t cache_name_sz)
 {
@@ -246,6 +241,9 @@ cm_open (VenusFid *fid,
      }
 
      if (checkright (entry, mask, *ce)) {
+#if 0
+	  assert(entry->flags.attrusedp);
+#endif
 	  entry->flags.datausedp = TRUE;
 	  entry->tokens |= tokens;
 	  ret.res    = 0;
@@ -265,7 +263,7 @@ cm_open (VenusFid *fid,
      }
      fcache_release(entry);
 
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
  
      return ret;
 }
@@ -311,7 +309,7 @@ cm_close (VenusFid fid, int flag, AFSStoreStatus *status, CredCacheEntry* ce)
     ret.res   = 0;
     ret.error = 0;
 
-    cm_check_usedbytes_consistency();
+    cm_check_consistency();
 
     return ret;
 }
@@ -342,7 +340,7 @@ cm_getattr (VenusFid fid,
 	 return ret;
      }
      
-     assert (CheckLock (&entry->lock) == -1);
+     AssertExclLocked(&entry->lock);
 
      error = fcache_verify_attr (entry, NULL, NULL, ce);
      if (error) {
@@ -355,7 +353,7 @@ cm_getattr (VenusFid fid,
      arla_warnx (ADEBCM, "cm_getattr: done get attr");
 
      if (checkright (entry,
-		     entry->status.FileType == TYPE_FILE ? AREAD : ALIST,
+		     entry->status.FileType == TYPE_FILE ? AREAD : 0,
 		     ce)) {
 	 *attr = entry->status;
 	 ret.res   = 0;
@@ -375,13 +373,13 @@ cm_getattr (VenusFid fid,
      *realfid = *fcache_realfid (entry);
      ret.tokens = entry->tokens;
      if (!entry->flags.datausedp)
-	 ret.tokens &= ~XFS_DATA_MASK;
+	 ret.tokens &= ~(XFS_DATA_MASK | XFS_OPEN_MASK);
      fcache_release(entry);
      
      arla_warnx (ADEBCM, "cm_getattr: return: %d.%d", ret.res, ret.error);
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
 
-     assert (CheckLock (&entry->lock) != -1);
+     AssertNotExclLocked(&entry->lock);
 
      return ret;
 }
@@ -425,7 +423,7 @@ cm_setattr (VenusFid fid, AFSStoreStatus *attr, CredCacheEntry* ce)
 	  ret.error = EACCES;
      }
      fcache_release(entry);
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
      return ret;
 }
 
@@ -477,7 +475,7 @@ cm_ftruncate (VenusFid fid, off_t size, CredCacheEntry* ce)
 	  ret.error = EACCES;
      }
      fcache_release(entry);
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
      return ret;
 }
 
@@ -519,7 +517,7 @@ cm_access (VenusFid fid, int mode, CredCacheEntry* ce)
 	      fid.Cell, fid.fid.Volume, fid.fid.Vnode, fid.fid.Unique);
 
      fcache_release(entry);
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
      return ret;
 }
 
@@ -593,60 +591,74 @@ cm_lookup (VenusFid *dir_fid,
 	 name = tmp_name;
      }
 
-     error = adir_lookup (dir_fid, name, res, &entry, ce);
+     error = fcache_get_data(&entry, dir_fid, ce);
      if (error) {
 	 ret.res   = -1;
 	 ret.error = error;
 	 return ret;
      }
-     fcache_release (entry);
 
-     if (follow_mount_point &&
-	 ((error = followmountpoint (res, dir_fid, ce)) != 0)) {
+     error = adir_lookup (entry, name, res);
+     if (error) {
+	 fcache_release(entry);
 	 ret.res   = -1;
 	 ret.error = error;
-     } else {
-	 ret.res    = 0;
-	 ret.tokens = 0;
-	 ret.error  = 0;
+	 return ret;
      }
 
-     /* Assume that this means a bad .. */
-     if ( strcmp("..", name) == 0 
-	  && VenusFid_cmp(dir_fid, res) == 0) {
-	  FCacheEntry *e;
-	  int error;
+     ret.res    = 0;
+     ret.error  = 0; 
+     ret.tokens = 0;
 
-	  error = fcache_get (&e, *dir_fid, *ce);
-	  if (error) {
-	      ret.res   = -1;
-	      ret.error = error;
-	      return ret;
-	  }
+     /* 
+      * The ".." at the top of a volume just points to the volume root,
+      * so get the real ".." from the volume cache instead.
+      *
+      * Or if we are looking up "." we don't want to follow the
+      * mountpoint
+      */
 
-	  error = fcache_verify_attr (e, NULL, NULL, *ce);
-	  if (error) {
-	      fcache_release(e);
-	      ret.res   = -1;
-	      ret.error = error;
-	      return ret;
-	  }
+     if (strcmp(".", name) == 0) {
 
-	  *res = e->volume->parent_fid; /* e->parent */
-	  ret.res    = 0;
-	  ret.error  = 0;
-	  ret.tokens = e->tokens;
-	  fcache_release(e);
+	 error = fcache_verify_attr (entry, NULL, NULL, *ce);
+	 if (error) {
+	     ret.res   = -1;
+	     ret.error = error;
+	     goto out;
+	 }
+
+	 *res = *dir_fid;
+	 ret.tokens = entry->tokens;
+     } else if ((strcmp("..", name) == 0 && VenusFid_cmp(dir_fid, res) == 0)) {
+
+	 error = fcache_verify_attr (entry, NULL, NULL, *ce);
+	 if (error) {
+	     ret.res   = -1;
+	     ret.error = error;
+	     goto out;
+	 }
+
+	 *res = entry->volume->parent_fid; /* entry->parent */
+	 ret.tokens = entry->tokens;
+     } else if (follow_mount_point) {
+	 error = followmountpoint (res, dir_fid, entry, ce);
+	 if (error) {
+	     ret.res   = -1;
+	     ret.error = error;
+	     goto out;
+	 }
      }
-     
+out:
+     fcache_release(entry);
+
      log_operation ("lookup (%ld,%lu,%lu,%lu) %s\n",
 		    dir_fid->Cell,
 		    dir_fid->fid.Volume,
 		    dir_fid->fid.Vnode,
 		    dir_fid->fid.Unique,
-	      name);
+		    name);
 
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
      return ret;
 }
 
@@ -696,7 +708,7 @@ cm_create (VenusFid *dir_fid, const char *name, AFSStoreStatus *store_attr,
 	      name);
 
      fcache_release(dire);
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
      return ret;
 }
 
@@ -750,7 +762,7 @@ cm_mkdir (VenusFid *dir_fid, const char *name,
 	      name);
 
      ReleaseWriteLock (&dire->lock);
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
      return ret;
 }
 
@@ -808,36 +820,49 @@ cm_symlink (VenusFid *dir_fid,
 	 goto out;
      }
 
-     error = followmountpoint(res, dir_fid, ce);
+     error = followmountpoint(res, dir_fid, NULL, ce);
      if (error) {
 	 ret.res   = -1;
 	 ret.error = error;
 	 goto out;
      }
      
-     error = fcache_get (&symlink_entry, *res, *ce);
-     if (error) {
-	 ret.res   = -1;
-	 ret.error = error;
-	 goto out;
-     }
+     /*
+      * If the new symlink is a mountpoint and it points
+      * to dir_fid we will deadlock if we look it up.
+      */
 
-     error = fcache_verify_attr (symlink_entry, NULL, NULL, *ce);
-     if (error) {
+     if (VenusFid_cmp (res, dir_fid) != 0) {
+
+	 error = fcache_get (&symlink_entry, *res, *ce);
+	 if (error) {
+	     ret.res   = -1;
+	     ret.error = error;
+	     goto out;
+	 }
+	 
+	 error = fcache_verify_attr (symlink_entry, NULL, NULL, *ce);
+	 if (error) {
+	     fcache_release (symlink_entry);
+	     ret.res   = -1;
+	     ret.error = error;
+	     goto out;
+	 }
+	 
+	 symlink_entry->flags.kernelp = TRUE;
+
+	 *fetch_attr = symlink_entry->status;
+	 *realfid = *fcache_realfid (symlink_entry);
+
 	 fcache_release (symlink_entry);
-	 ret.res   = -1;
-	 ret.error = error;
-	 goto out;
+     } else {
+	 *fetch_attr = dire->status;
+	 *realfid = *fcache_realfid (dire);
      }
-
-     symlink_entry->flags.kernelp = TRUE;
      
-     *fetch_attr = symlink_entry->status;
-     *realfid = *fcache_realfid (symlink_entry);
-     fcache_release (symlink_entry);
      ret.res   = 0;
      ret.error = 0;
-
+     
      log_operation ("symlink (%ld,%lu,%lu,%lu) %s %s\n",
 		    dir_fid->Cell,
 		    dir_fid->fid.Volume,
@@ -845,10 +870,10 @@ cm_symlink (VenusFid *dir_fid,
 		    dir_fid->fid.Unique,
 		    name,
 		    contents);
-
-out:
+     
+ out:
      fcache_release(dire);
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
      return ret;
 }
 
@@ -921,7 +946,7 @@ cm_link (VenusFid *dir_fid,
 out:
      fcache_release(dire);
      fcache_release(file);
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
      return ret;
 }
 
@@ -975,7 +1000,7 @@ sub_remove (VenusFid *dir_fid, const char *name, CredCacheEntry **ce,
 		    name);
 
      fcache_release(dire);
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
      return ret;
 }
 
@@ -1007,53 +1032,43 @@ cm_rmdir(VenusFid *dir_fid,
  */
 
 static int
-potential_update_dir(const VenusFid *child_fid,
+potential_update_dir(FCacheEntry *child_entry,
 		     const VenusFid *new_parent_fid,
+		     FCacheEntry *parent_entry,
 		     int *update_child,
 		     CredCacheEntry *ce)
 {
-    FCacheEntry *fe;
     int error;
 
-    error = fcache_get (&fe, *child_fid, ce);
-    if (error)
+    error = fcache_verify_attr (child_entry, parent_entry, NULL, ce);
+    if (error) 
 	return error;
-
-    error = fcache_verify_attr (fe, NULL, NULL, ce);
-    if (error) {
-	fcache_release (fe);
-	return error;
-    }
 
     /*
      * if we're moving a directory.
      */
 
-    if (fe->status.FileType == TYPE_DIR) {
+    if (child_entry->status.FileType == TYPE_DIR) {
 	int fd;
 	fbuf the_fbuf;
 
-	error = fcache_verify_data (fe, ce); /* XXX - check fake_mp */
-	if (error) {
-	    fcache_release (fe);
+	error = fcache_verify_data (child_entry, ce); /* XXX - check fake_mp */
+	if (error)
 	    return error;
-	}
-	error = fcache_get_fbuf (fe, &fd, &the_fbuf, O_RDWR,
+
+	error = fcache_get_fbuf (child_entry, &fd, &the_fbuf, O_RDWR,
 				 FBUF_READ|FBUF_WRITE|FBUF_SHARED);
-	if (error) {
-	    fcache_release (fe);
+	if (error)
 	    return error;
-	}
+
 	error = fdir_changefid (&the_fbuf, "..", new_parent_fid);
 	fbuf_end (&the_fbuf);
 	close (fd);
-	if (error) {
-	    fcache_release (fe);
+	if (error)
 	    return error;
-	}
+
 	*update_child = 1;
     }
-    fcache_release (fe);
     return 0;
 }
 
@@ -1105,87 +1120,95 @@ cm_rename(VenusFid *old_parent_fid, const char *old_name,
 
     if (checkright (old_dir, ADELETE, *ce)
 	&& checkright (new_dir, AINSERT, *ce)) {
-
+	
 	error = rename_file (old_dir, old_name, new_dir, new_name, *ce);
 	if (error) {
 	    ret.res   = -1;
 	    ret.error = error;
 	} else {
 	    VenusFid new_fid, old_fid;
-
-	      /*
-	       * Lookup the old name (to get the fid of the new name)
-	       */
-
-	    error = adir_lookup_fcacheentry (old_dir,
-					     *old_parent_fid,
-					     old_name, &new_fid, *ce);
-
+	    
+	    /*
+	     * Lookup the old name (to get the fid of the new name)
+	     */
+	    
+	    error = adir_lookup (old_dir, old_name, &new_fid);
+	    
 	    if (error) {
 		ret.res   = -1;
 		ret.error = error;
 		goto out;
 	    }
-
+	    
 	    *child_fid = new_fid;
-
+	    
 	    if (diff_dir) {
-		error = potential_update_dir (child_fid, new_parent_fid,
-					      update_child, *ce);
+		FCacheEntry *child_entry;
+		
+		error = fcache_get (&child_entry, *child_fid, *ce);
+		if (error) {
+		    ret.res   = -1;
+		    ret.error = error;
+		    goto out;
+		}
+		
+		child_entry->parent = *new_parent_fid;
+
+		error = potential_update_dir (child_entry, new_parent_fid,
+					      new_dir, update_child, *ce);
+		fcache_release (child_entry);
 		if (error) {
 		    ret.res   = -1;
 		    ret.error = error;
 		    goto out;
 		}
 	    }
-
-	      /*
-	       * Lookup the new name, if it exists we need to clear it out.
-	       * XXX Should we check the lnkcount and clear it from fcache ?
-	       */
-
-	      error = adir_lookup_fcacheentry (new_dir,
-					       *new_parent_fid,
-					       new_name, &old_fid, *ce);
-	      if (error == 0)
-		  adir_remove (new_dir, new_name);
-
-	      /*
-	       * Now do the rename, ie create the new name and remove
-	       * the old name.
-	       */
-
-	      error = adir_creat (new_dir, new_name,  new_fid.fid)
-		  || adir_remove (old_dir, old_name);
-
-	      if (error) {
-		  ret.res   = -1;
-		  ret.error = error;
-	      } else {
-		  ret.res   = 0;
-		  ret.error = 0;
-	      }
-	  }
-     } else {
-	  ret.res   = -1;
-	  ret.error = EACCES;
-     }
-
-     log_operation ("rename (%ld,%lu,%lu,%lu) (%ld,%lu,%lu,%lu) %s %s\n",
-	      old_parent_fid->Cell,
-	      old_parent_fid->fid.Volume,
-	      old_parent_fid->fid.Vnode,
-	      old_parent_fid->fid.Unique,
-	      new_parent_fid->Cell,
-	      new_parent_fid->fid.Volume,
-	      new_parent_fid->fid.Vnode,
-	      new_parent_fid->fid.Unique,
-	      old_name, new_name);
-
-out:
-     fcache_release(old_dir);
-     if (diff_dir)
-	 fcache_release(new_dir);
-     cm_check_usedbytes_consistency();
-     return ret;
+	    
+	    /*
+	     * Lookup the new name, if it exists we need to clear it out.
+	     * XXX Should we check the lnkcount and clear it from fcache ?
+	     */
+	    
+	    error = adir_lookup (new_dir, new_name, &old_fid);
+	    if (error == 0)
+		adir_remove (new_dir, new_name);
+	    
+	    /*
+	     * Now do the rename, ie create the new name and remove
+	     * the old name.
+	     */
+	    
+	    error = adir_creat (new_dir, new_name,  new_fid.fid)
+		|| adir_remove (old_dir, old_name);
+	    
+	    if (error) {
+		ret.res   = -1;
+		ret.error = error;
+	    } else {
+		ret.res   = 0;
+		ret.error = 0;
+	    }
+	}
+    } else {
+	ret.res   = -1;
+	ret.error = EACCES;
+    }
+    
+    log_operation ("rename (%ld,%lu,%lu,%lu) (%ld,%lu,%lu,%lu) %s %s\n",
+		   old_parent_fid->Cell,
+		   old_parent_fid->fid.Volume,
+		   old_parent_fid->fid.Vnode,
+		   old_parent_fid->fid.Unique,
+		   new_parent_fid->Cell,
+		   new_parent_fid->fid.Volume,
+		   new_parent_fid->fid.Vnode,
+		   new_parent_fid->fid.Unique,
+		   old_name, new_name);
+    
+ out:
+    fcache_release(old_dir);
+    if (diff_dir)
+	fcache_release(new_dir);
+    cm_check_consistency();
+    return ret;
 }

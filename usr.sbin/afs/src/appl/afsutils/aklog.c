@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -41,7 +41,7 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: aklog.c,v 1.1 2000/09/11 14:40:33 art Exp $");
+RCSID("$KTH: aklog.c,v 1.6.2.2 2001/10/03 22:52:44 assar Exp $");
 
 #include "appl_locl.h"
 #include "kafs.h"
@@ -61,7 +61,62 @@ main(int argc, char **argv)
 static int
 krb_afslog_uid (const char *cell, const char *realm, uid_t afsid)
 {
-    return k_afslog_uid(cell, realm, afsid);
+    return k_afsklog_uid(cell, realm, afsid);
+}
+#endif
+
+#ifndef HAVE_KRB_GET_DEFAULT_PRINCIPAL
+
+/* stolen from krb4's lib/krb/get_default_principal.c */
+
+static int
+krb_get_default_principal(char *name, char *instance, char *realm)
+{
+  char *file;
+  int ret;
+  char *p;
+
+  file = tkt_string ();
+  
+  ret = krb_get_tf_fullname(file, name, instance, realm);
+  if(ret == KSUCCESS)
+      return 0;
+
+  p = getenv("KRB4PRINCIPAL");
+  if(p && kname_parse(name, instance, realm, p) == KSUCCESS)
+      return 1;
+
+#ifdef HAVE_PWD_H
+  {
+    struct passwd *pw;
+    pw = getpwuid(getuid());
+    if(pw == NULL){
+      return -1;
+    }
+
+    strlcpy (name, pw->pw_name, ANAME_SZ);
+    strlcpy (instance, "", INST_SZ);
+    krb_get_lrealm(realm, 1);
+
+    if(strcmp(name, "root") == 0) {
+      p = NULL;
+#if defined(HAVE_GETLOGIN) && !defined(POSIX_GETLOGIN)
+      p = getlogin();
+#endif
+      if(p == NULL)
+	p = getenv("USER");
+      if(p == NULL)
+	p = getenv("LOGNAME");
+      if(p){
+	  strlcpy (name, p, ANAME_SZ);
+	  strlcpy (instance, "root", INST_SZ);
+      }
+    }
+    return 1;
+  }
+#else
+  return -1;
+#endif
 }
 #endif
 
@@ -182,38 +237,38 @@ get_tokens (const char **cells,
 }
 
 
-struct getargs args[] = {
-    {"cell", 0, arg_string, &arg_cell,
-     "cell to authenticate to", "cell name", arg_optional},
-    {"createuser", 0, arg_flag, &arg_createuser,
-     "create PTS user in remote cell", NULL, arg_optional},
-    {"debug", 0, arg_flag, &arg_debug,
-     "print debugging information", NULL, arg_optional},
-    {"help", 0, arg_flag, &arg_help,
-     "print help", NULL, arg_optional},
-    {"hosts", 0, arg_flag, &arg_hosts,
-     "print host address information (unimplemented)", NULL, arg_optional},
-    {"krbrealm", 0, arg_string, &arg_realm,
-     "kerberos realm for cell", "kerberos realm", arg_optional},
-    {"noprdb", 0, arg_flag, &arg_noprdb,
-     "don't try to determine AFS ID", NULL, arg_optional},
-    {"path", 0, arg_string, &arg_path,
-     "AFS path to authenticate to", "path", arg_optional},
-    {"quiet", 0, arg_flag, &arg_quiet,
-     "fail silently if no ticket cache", NULL, arg_optional},
-    {"unlog", 0, arg_flag, &arg_unlog,
-     "discard tokens", NULL, arg_optional},
-    {"version", 0, arg_flag, &arg_version,
-     "print version", NULL, arg_optional},
-    {"zsubs", 0, arg_flag, &arg_zsubs,
+struct agetargs args[] = {
+    {"cell", 0, aarg_string, &arg_cell,
+     "cell to authenticate to", "cell name", aarg_optional},
+    {"createuser", 0, aarg_flag, &arg_createuser,
+     "create PTS user in remote cell", NULL, aarg_optional},
+    {"debug", 0, aarg_flag, &arg_debug,
+     "print debugging information", NULL, aarg_optional},
+    {"help", 0, aarg_flag, &arg_help,
+     "print help", NULL, aarg_optional},
+    {"hosts", 0, aarg_flag, &arg_hosts,
+     "print host address information (unimplemented)", NULL, aarg_optional},
+    {"krbrealm", 0, aarg_string, &arg_realm,
+     "kerberos realm for cell", "kerberos realm", aarg_optional},
+    {"noprdb", 0, aarg_flag, &arg_noprdb,
+     "don't try to determine AFS ID", NULL, aarg_optional},
+    {"path", 0, aarg_string, &arg_path,
+     "AFS path to authenticate to", "path", aarg_optional},
+    {"quiet", 0, aarg_flag, &arg_quiet,
+     "fail silently if no ticket cache", NULL, aarg_optional},
+    {"unlog", 0, aarg_flag, &arg_unlog,
+     "discard tokens", NULL, aarg_optional},
+    {"version", 0, aarg_flag, &arg_version,
+     "print version", NULL, aarg_optional},
+    {"zsubs", 0, aarg_flag, &arg_zsubs,
      "update zephyr subscriptions (unimplemented)"},
-    {NULL, 0, arg_end, NULL, NULL},
+    {NULL, 0, aarg_end, NULL, NULL},
 };
 
 static void
 usage (int exit_code)
 {
-    arg_printusage (args, NULL, "<cell or path>", ARG_AFSSTYLE|ARG_USEFIRST);
+    aarg_printusage (args, NULL, "<cell or path>", AARG_AFSSTYLE|AARG_USEFIRST);
     exit (exit_code);
 }
 
@@ -227,10 +282,20 @@ main (int argc, char **argv)
     const char *cell = NULL;
     char cellbuf[64];
     const char *localcell;
+    Log_method *method;
     int optind = 0;
     int rc;
 
-    rc = getarg(args, argc, argv, &optind, ARG_AFSSTYLE|ARG_USEFIRST);
+    set_progname(argv[0]);
+
+    ports_init();
+    method = log_open (get_progname(), "/dev/stderr:notime");
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
+    localcell = cell_getthiscell();
+
+    rc = agetarg(args, argc, argv, &optind, AARG_AFSSTYLE|AARG_USEFIRST);
     if(rc && *argv[optind] == '-') {
 	warnx ("Bad argument: %s", argv[optind]);
 	usage (1);
@@ -248,15 +313,11 @@ main (int argc, char **argv)
     if(!k_hasafs())
 	errx (1, "AFS support is not loaded.");
 
-    ports_init();
-    cell_init(0);
-    localcell = cell_getthiscell();
-
     /*
      * get the realm and name of the user
      */
 
-    if (krb_get_default_principal(krb_name, krb_instance, krb_realm)) {
+    if (krb_get_default_principal(krb_name, krb_instance, krb_realm) < 0) {
 	if (!arg_quiet)
 	    warnx ("Could not even figure out who you are");
 	exit (1);

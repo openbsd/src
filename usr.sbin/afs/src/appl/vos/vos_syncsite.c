@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,22 +35,22 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos_syncsite.c,v 1.1 2000/09/11 14:40:38 art Exp $");
+RCSID("$KTH: vos_syncsite.c,v 1.12.2.1 2001/03/04 04:16:21 lha Exp $");
 
 static int helpflag;
 static char *cell;
 static int resolvep = 1;
 
-static struct getargs args[] = {
-    {"cell",	'c',  arg_string,	    &cell, "cell", NULL},
-    {"help",	'h',  arg_flag,             &helpflag, NULL, NULL},
-    {"resolve", 'n',  arg_negative_flag,    &resolvep, NULL, NULL}
+static struct agetargs args[] = {
+    {"cell",	'c',  aarg_string,	    &cell, "cell", NULL},
+    {"help",	'h',  aarg_flag,             &helpflag, NULL, NULL},
+    {"resolve", 'n',  aarg_negative_flag,    &resolvep, NULL, NULL}
 };
 
 static void
 usage(void)
 {
-    arg_printusage(args, "vos syncsite", "", ARG_AFSSTYLE);
+    aarg_printusage(args, "vos syncsite", "", AARG_AFSSTYLE);
 }
 
 int 
@@ -68,7 +63,7 @@ vos_syncsite (int argc, char **argv)
     helpflag = 0;
     cell = NULL;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage ();
 	return 0;
     }
@@ -90,11 +85,13 @@ vos_syncsite (int argc, char **argv)
     if (!resolvep)
 	printf("%s's vldb syncsite is %s.\n", cell, inet_ntoa(saddr));
     else {
-	char name[256];
+	char server_name[256];
 
-	inaddr2str (saddr, name, sizeof(name));
-	printf("%s's vldb syncsite is %s (%s).\n", cell, name,
+	get_servername (saddr.s_addr, server_name, sizeof(server_name));
+	
+	printf("%s's vldb syncsite is %s (%s).\n", cell, server_name,
 	       inet_ntoa(saddr));
+
     }
     return 0;
 }

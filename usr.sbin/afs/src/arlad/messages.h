@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
  *
  */
 
-/* $Id: messages.h,v 1.3 2000/09/11 14:40:43 art Exp $ */
+/* $KTH: messages.h,v 1.17 2001/01/07 18:32:49 lha Exp $ */
 
 #ifndef _MESSAGES_H_
 #define _MESSAGES_H_
@@ -48,7 +43,7 @@
 void xfs_message_init (void);
 int xfs_message_receive (int fd, struct xfs_message_header *h, u_int size);
 void break_callback (FCacheEntry *e);
-void install_attr (FCacheEntry *e);
+void install_attr (FCacheEntry *e, int flags);
 
 long afsfid2inode(const VenusFid *fid);
 
@@ -60,12 +55,18 @@ void
 update_fid(VenusFid oldfid, FCacheEntry *old_entry,
 	   VenusFid newfid, FCacheEntry *new_entry);
 
+enum { FCACHE2XFSNODE_ATTR = 1,
+       FCACHE2XFSNODE_RIGHT = 2 } ;
+
+#define FCACHE2XFSNODE_ALL (FCACHE2XFSNODE_ATTR|FCACHE2XFSNODE_RIGHT)
+
 void
 fcacheentry2xfsnode (const VenusFid *fid,
 		     const VenusFid *statfid, 
 		     AFSFetchStatus *status,
 		     struct xfs_msg_node *node,
-                     AccessEntry *ae);
+                     AccessEntry *ae,
+		     int flags);
 
 int
 VenusFid_cmp (const VenusFid *fid1, const VenusFid *fid2);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -46,13 +41,14 @@
 #include "fs_local.h"
 #include <arladeb.h>
 
-RCSID("$Id: fs.c,v 1.1 2000/09/11 14:40:35 art Exp $");
+RCSID("$KTH: fs.c,v 1.92.2.4 2001/10/02 16:12:37 jimmy Exp $");
 
 static int empty_cmd (int argc, char **argv);
 static int apropos_cmd (int argc, char **argv);
 static int arladebug_cmd (int argc, char **argv);
 static int calculate_cmd (int argc, char **argv);
 static int checkservers_cmd (int argc, char **argv);
+static int checkvolumes_cmd (int argc, char **argv);
 static int copyacl_cmd (int argc, char **argv);
 static int diskfree_cmd (int argc, char **argv);
 static int examine_cmd (int argc, char **argv);
@@ -63,10 +59,12 @@ static int getcache_cmd (int argc, char **argv);
 static int getcrypt_cmd (int argc, char **argv);
 static int getcellstatus_cmd (int argc, char **argv);
 static int getfid_cmd (int argc, char **argv);
+static int getstatistics_cmd (int argc, char **argv);
 static int getprio_cmd (int argc, char **argv);
 static int getmaxprio_cmd (int argc, char **argv);
 static int help_cmd (int argc, char **argv);
 static int invalidate_cmd (int argc, char **argv);
+static int incompat_cmd (int argc, char **argv);
 static int listacl_cmd (int argc, char **argv);
 static int listcells_cmd (int argc, char **argv);
 static int suidcells_cmd (int argc, char **argv);
@@ -101,10 +99,11 @@ static SL_cmd cmds[] = {
     {"arladebug",      arladebug_cmd,	"tweek arla-debugging flags"},
     {"calculate cache", calculate_cmd,  "calculate the usege of cache"},
     {"checkservers",   checkservers_cmd,"check if servers is up"},
-    {"checkvolumes",   empty_cmd,	"lookup mappings between volume-Id's and names"},
+    {"checkvolumes",   checkvolumes_cmd, "lookup mappings between volume-Id's and names"},
     {"cleanacl",       empty_cmd,	"clear out numeric acl-entries"},
     {"copyacl",        copyacl_cmd,	"copy acl"},
     {"diskfree",       diskfree_cmd,	"show free partition space"},
+    {"df"},
     {"examine",        examine_cmd,	"examine volume status"},
     {"flush",          flush_cmd,	"remove file from cache"},
     {"flushvolume",    flushvolume_cmd,	"remove volumedata (and files in volume) from cache"},
@@ -114,11 +113,13 @@ static SL_cmd cmds[] = {
     {"getcellstatus",  getcellstatus_cmd, "get suid cell status"},
     {"getfid",         getfid_cmd,      "get fid"},
     {"getserverprefs", empty_cmd,	"show server rank"},
+    {"getstatistics",  getstatistics_cmd, "get statistics"},
     {"getpriority",    getprio_cmd,     "get priority of a file/dir"},
     {"gp"},
     {"getmaxpriority", getmaxprio_cmd,  "get max priority for file gc"},
     {"gmp"},
     {"help",           help_cmd,	"help for commands"},
+    {"incompat",       incompat_cmd,	"using old interface"},
     {"invalidate",     invalidate_cmd,	"invalidate (callback) path"},
     {"listacl",        listacl_cmd,	"show acl"},
     {"la"},
@@ -203,13 +204,6 @@ nop_cmd(int argc, char **argv)
 }
 
 static int
-connect_usage(void)
-{
-    printf("connect [connected|fetch|disconnected]\n");
-    return 0;
-}
-
-static int 
 checkservers_cmd (int argc, char **argv)
 {
     char *cell = NULL;
@@ -220,19 +214,19 @@ checkservers_cmd (int argc, char **argv)
     int ret;
     int i;
 
-    struct getargs cksargs[] = {
-	{"cell",	0, arg_string,  NULL, "cell", NULL},
-	{"nopoll",	0, arg_flag,    NULL, "dont ping each server, "
+    struct agetargs cksargs[] = {
+	{"cell",	0, aarg_string,  NULL, "cell", NULL},
+	{"nopoll",	0, aarg_flag,    NULL, "dont ping each server, "
 	                                       "use internal info", NULL},
-	{NULL,      0, arg_end, NULL}}, 
+	{NULL,      0, aarg_end, NULL}}, 
 					 *arg;
 
     arg = cksargs;
     arg->value = &cell;   arg++;
     arg->value = &nopoll;   arg++;
 
-    if (getarg (cksargs, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(cksargs, "checkservers", NULL, ARG_AFSSTYLE);
+    if (agetarg (cksargs, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(cksargs, "checkservers", NULL, AARG_AFSSTYLE);
 	return 0;
     }
 
@@ -272,6 +266,24 @@ checkservers_cmd (int argc, char **argv)
 	}
     }
     printf("\n");
+    return 0;
+}
+
+static int 
+checkvolumes_cmd (int argc, char **argv)
+{
+    int ret;
+
+    ret = fs_checkvolumes();
+    if (ret)
+	fserr (PROGNAME, ret, NULL);
+    return 0;
+}
+
+static int
+connect_usage(void)
+{
+    printf("connect [connected|fetch|disconnected]\n");
     return 0;
 }
 
@@ -627,30 +639,76 @@ static int
 mkmount_cmd (int argc, char **argv)
 {
     char  buf[MAXSIZE];
+    char prefix;
+    char *dirname = NULL;
+    char *volname = NULL;
+    char *cell = NULL;
+    int rwflag = 0;
+    int helpflag = 0;
+    int optind = 0;
 
-    argc--;
-    argv++;
+    struct agetargs mkmargs[] = {
+	{"dir",     0, aarg_string, NULL, "mount point directory name",
+	 "directory", aarg_mandatory},
+	{"vol",     0, aarg_string, NULL, "volume to mount",
+	 "volume",    aarg_mandatory},
+	{"cell",    0, aarg_string, NULL, "cell of volume",
+	 "cell",      aarg_optional_swless},
+	{"rw",      0, aarg_flag, NULL, "mount read-write", NULL},
+	{"help",    0, aarg_flag, NULL, NULL, NULL},
+	{NULL,      0, aarg_end,  NULL}}, *arg;
+    
+    arg = mkmargs;
+    arg->value = &dirname; arg++;
+    arg->value = &volname; arg++;
+    arg->value = &cell; arg++;
+    arg->value = &rwflag; arg++;
+    arg->value = &helpflag; arg++;
 
-    if (argc == 0) {
-	printf ("fs: Required parameter '-dir' missing\n");
+    if (agetarg (mkmargs, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(mkmargs, "fs mkmount", "", AARG_AFSSTYLE);
+ 	return 0;
+    }
+
+    argc -= optind;
+    argv += optind;
+
+    if (argc) {
+	printf("unknown option %s\n", *argv);
 	return 0;
     }
-    else if (argc == 1) {
-	printf ("fs: Required parameter '-vol' missing\n");
+
+    if (rwflag)
+	prefix = '%';
+    else
+	prefix = '#';
+    if (cell)
+	snprintf(buf, sizeof(buf), "%c%s:%s.", prefix, cell, volname);
+    else
+	snprintf(buf, sizeof(buf), "%c%s.", prefix, volname);
+
+    if (symlink (buf, dirname) == -1) {
+	perror ("fs");
 	return 0;
     }
-    else {
-	if (argc > 2)
-	    snprintf(buf, sizeof(buf), "#%s:%s.", argv[2], argv[1]);
+
+    return 0;
+}
+
+static int
+incompat_cmd (int argc, char **argv)
+{
+    int status, ret;
+
+    ret = fs_incompat_renumber(&status);
+    if (ret) {
+	fserr(PROGNAME, ret, NULL);
+    } else {
+	if (status)
+	    printf ("new interface\n");
 	else
-	    snprintf(buf, sizeof(buf), "#%s.", argv[1]);
-	
-	if (symlink (buf, argv[0]) == -1) {
-	    perror ("fs");
-	    return 0;
-	}
+	    printf ("old interface\n");
     }
-
     return 0;
 }
 
@@ -702,14 +760,14 @@ listcells_cmd (int argc, char **argv)
     int printsuid = 0;
     int optind = 0;
 
-    struct getargs lcargs[] = {
-	{"servers", 's', arg_negative_flag,  
+    struct agetargs lcargs[] = {
+	{"servers", 's', aarg_negative_flag,  
 	 NULL,"do not print servers in cell", NULL},
-	{"resolve",	 'r', arg_negative_flag,   
+	{"resolve",	 'r', aarg_negative_flag,   
 	 NULL,"do not resolve hostnames", NULL},
-        {"suid",	 'p', arg_flag,   
+        {"suid",	 'p', aarg_flag,   
 	 NULL,"print if cell is suid", NULL },
-        {NULL,      0, arg_end, NULL}}, 
+        {NULL,      0, aarg_end, NULL}}, 
 				  *arg;
 
     arg = lcargs;
@@ -717,8 +775,8 @@ listcells_cmd (int argc, char **argv)
     arg->value = &resolve;     arg++;
     arg->value = &printsuid;   arg++;
 
-    if (getarg (lcargs, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(lcargs, "listcells", NULL, ARG_AFSSTYLE);
+    if (agetarg (lcargs, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(lcargs, "listcells", NULL, AARG_AFSSTYLE);
 	return 0;
     }
 
@@ -763,18 +821,18 @@ static int
 newcell_cmd (int argc, char **argv)
 {
     char *cell = NULL;
-    getarg_strings servers = { 0, NULL };
+    agetarg_strings servers = { 0, NULL };
     int ret, help = 0;
     int optind = 0;
 
-    struct getargs ncargs[] = {
-	{"cell", 'c', arg_string,  
-	 NULL, "new cell", NULL},
-	{"servers", 's', arg_strings,
+    struct agetargs ncargs[] = {
+	{"cell", 'c', aarg_string,  
+	 NULL, "new cell", NULL, aarg_mandatory},
+	{"servers", 's', aarg_strings,
 	 NULL, "server in cell", "one server"},
-	{"help", 'h', arg_flag,
+	{"help", 'h', aarg_flag,
 	 NULL, "get help", NULL},
-        {NULL,      0, arg_end, NULL}}, 
+        {NULL,      0, aarg_end, NULL}}, 
 				  *arg;
 			       
     arg = ncargs;
@@ -782,18 +840,13 @@ newcell_cmd (int argc, char **argv)
     arg->value = &servers; arg++;
     arg->value = &help; arg++;
 
-    if (getarg (ncargs, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(ncargs, "newcell", NULL, ARG_AFSSTYLE);
+    if (agetarg (ncargs, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(ncargs, "newcell", NULL, AARG_AFSSTYLE);
 	return 0;
     }
 
     if (help) {
-	arg_printusage(ncargs, "newcell", NULL, ARG_AFSSTYLE);
-	goto out;
-    }
-
-    if (cell == NULL) {
-	fprintf (stderr, "You have to give a cell\n");
+	aarg_printusage(ncargs, "newcell", NULL, AARG_AFSSTYLE);
 	goto out;
     }
 
@@ -837,6 +890,211 @@ static int
 getprio_usage(void)
 {
     fprintf(stderr, "usage getprio file ...\n");
+    return 0;
+}
+
+static void
+printtimeslot(u_int32_t slot)
+{
+    int v;
+
+    v = 1 << slot;
+
+    if (v < 1000) {
+	printf("%3d us ", v);
+	return;
+    }
+    if (v < 1000000) {
+	printf("%3d ms ", v / 1000);
+	return;
+    }
+    printf("%3d s  ", v / 1000000);
+}
+
+static void
+printsizeslot(u_int32_t slot)
+{
+    int v;
+
+    v = 1 << slot;
+
+    if (v < 1024) {
+	printf("%3d   ", v);
+	return;
+    }
+    if (v < 1000000) {
+	printf("%3d K ", v / 1000);
+	return;
+    }
+    printf("%3d M ", v / 1000000);
+}
+
+static void
+print_stat_header(char *server, char *part,
+		  int type, int time, int size, int *once)
+{
+    if (*once)
+	return;
+    *once = 1;
+    printf("%30s %10s\n", server, part);
+
+    if (time)
+	printf("%6s ", "tmrng");
+
+    if (size)
+	printf("%5s ", "szrng");
+    
+    printf("%6s ", "#req");
+
+    printf("%8s ", "tot B");
+    printf("%8s ", "tot us");
+    printf("%8s ", "avg us");
+    printf("%8s\n", "KB/s");
+}
+
+static void
+print_statistics(int64_t count, int64_t items_total, int64_t total_time,
+		 int timeslot, int sizeslot, int time, int size)
+{
+    if (time)
+	printtimeslot(timeslot);
+    if (size)
+	printsizeslot(sizeslot);
+
+    printf("%6lld %8lld %8lld %8lld %8lld\n",
+	   count, items_total,
+	   total_time,
+	   total_time/count,
+	   items_total*1000LL/total_time);
+}
+
+static int
+getstatistics_cmd (int argc, char **argv)
+{
+    u_int32_t host[100];
+    u_int32_t part[100];
+    int n = 100;
+    int i;
+    int j;
+    int k;
+    char server_name[100];
+    char partition_name[100];
+    u_int32_t count[32];
+    int64_t items_total[32];
+    int64_t total_time[32];
+    int64_t tot_total_time;
+    int64_t tot_count;
+    int64_t tot_items_total;
+    int error;
+    int type;
+    char *reqtype = NULL;
+    char *filter_host = NULL;
+    int time = 0, size = 0, help = 0;
+    int optind = 0;
+    int printed_header = 0;
+
+    struct agetargs statargs[] = {
+	{"type", 0, aarg_string,  
+	 NULL, "request type", "type", aarg_mandatory},
+	{"host", 0, aarg_string,  
+	 NULL, "host", "type", aarg_optional},
+	{"time", 0, aarg_flag,
+	 NULL, "time statistics", NULL},
+	{"size", 0, aarg_flag,
+	 NULL, "size statistics", NULL},
+	{"help", 0, aarg_flag,
+	 NULL, "get help", NULL},
+        {NULL,      0, aarg_end, NULL}},
+	*arg;
+
+    arg = statargs;
+    arg->value = &reqtype; arg++;
+    arg->value = &filter_host; arg++;
+    arg->value = &time; arg++;
+    arg->value = &size; arg++;
+    arg->value = &help; arg++;
+
+
+    if (agetarg (statargs, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(statargs, "getstatistics", NULL, AARG_AFSSTYLE);
+	return 0;
+    }
+
+    if (help) {
+	aarg_printusage(statargs, "getstatistics", NULL, AARG_AFSSTYLE);
+	return 0;
+    }
+
+
+    if (strcmp(reqtype, "fetchstatus") == 0) {
+	type = STATISTICS_REQTYPE_FETCHSTATUS;
+    } else if (strcmp(reqtype, "fetchdata") == 0) {
+	type = STATISTICS_REQTYPE_FETCHDATA;
+    } else if (strcmp(reqtype, "bulkstatus") == 0) {
+	type = STATISTICS_REQTYPE_BULKSTATUS;
+    } else {
+	fprintf(stderr, "type must be fetchstatus, fetchdata or bulkstatus\n");
+	return 0;
+    }
+
+    error = fs_statistics_list(host, part, &n);
+    if (error) {
+	fserr(PROGNAME, error, NULL);
+	return 0;
+    }
+    
+    for (i = 0; i < n; i++) {
+	printed_header = 0;
+	arlalib_host_to_name(host[i], server_name, 100);
+	if (filter_host && strcmp(filter_host, server_name) != 0)
+	    continue;
+	partition_num2name(part[i], partition_name, 100);
+
+	tot_total_time = 0;
+	tot_count = 0;
+	tot_items_total = 0;
+	for (j = 0; j < 32; j++) {
+	    error = fs_statistics_entry(host[i], part[i], type,
+					j, count, items_total, total_time);
+	    if (error) {
+		fserr(PROGNAME, error, NULL);
+		return 0;
+	    }
+	    if (size) {
+		tot_total_time = 0;
+		tot_count = 0;
+		tot_items_total = 0;
+	    }
+	    for (k = 0; k < 32; k++) {
+		if (count[k]) {
+		    if (time && size) {
+			print_stat_header(server_name, partition_name,
+					  type, time, size, &printed_header);
+			print_statistics(count[k], items_total[k],
+					 total_time[k], k, j,
+					 time, size);
+		    }
+		    tot_total_time += total_time[k];
+		    tot_count += count[k];
+		    tot_items_total += items_total[k];
+		}
+	    }
+	    if (!time && size && tot_count) {
+		print_stat_header(server_name, partition_name,
+				  type, time, size, &printed_header);
+		print_statistics(tot_count, tot_items_total,
+				 tot_total_time, 0, j,
+				 time, size);
+	    }
+	}
+	if (!time && !size && tot_count) {
+	    print_stat_header(server_name, partition_name,
+			      type, time, size, &printed_header);
+	    print_statistics(tot_count, tot_items_total,
+			     tot_total_time, 0, 0,
+			     time, size);
+	}
+    }
     return 0;
 }
 
@@ -903,15 +1161,46 @@ getmaxprio_cmd (int argc, char **argv)
 static int
 setquota_cmd (int argc, char **argv)
 {
-    if(argc!=3) {
-      printf("Usage: fs sq <path> <max quota in kbytes>\n");
-      return 0;
+    char *path = NULL;
+    int quota = 0;
+    int helpflag = 0;
+    int optind = 0;
+    
+    struct agetargs sqargs[] = {
+	{"path", 0, aarg_string,  NULL,  "pathname to file/directory",
+	 "pathname", aarg_mandatory},
+	{"max",  0, aarg_integer, NULL, "max quota in kbytes",
+	 "kbytes",   aarg_mandatory},
+	{"help",    0, aarg_flag, NULL },
+        {NULL,      0, aarg_end, NULL}}, *arg;
+
+    arg = sqargs;
+    arg->value = &path; arg++;
+    arg->value = &quota; arg++;
+    arg->value = &helpflag; arg++;
+
+    if (agetarg (sqargs, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(sqargs, "fs setquota", NULL, AARG_AFSSTYLE);
+	return 0;
     }
 
-    afs_setmaxquota(argv[1],(int32_t) atoi(argv[2]));
+    if (helpflag) {
+	aarg_printusage(sqargs, "fs setquota", NULL, AARG_AFSSTYLE);
+	return 0;
+    }
+    argc -= optind;
+    argv += optind;
 
+    if (argc) {
+	printf("unknown option %s\n", *argv);
+	return 0;
+    }
+ 
+    afs_setmaxquota(path, quota);
+ 
     return 0;
 }
+
 
 static int
 lsmount_cmd (int argc, char **argv)
@@ -1142,11 +1431,11 @@ venuslog_cmd (int argc, char **argv)
 static int
 fsversion_cmd(int argc, char **argv)
 {
-    if (argc != 0)
+    if (argc != 1)
 	printf ("version: extraneous arguments ignored\n");
 
     printf("fs: %s\nfs_lib: %s\n",
-	   "$Id: fs.c,v 1.1 2000/09/11 14:40:35 art Exp $",
+	   "$KTH: fs.c,v 1.92.2.4 2001/10/02 16:12:37 jimmy Exp $",
 	   fslib_version());
     return 0;
 }
@@ -1456,8 +1745,13 @@ afs_listacl(char *path)
     struct AclEntry *position;
     int i;
 
-    if((acl=afs_getacl(path))==NULL)
-	exit(1);
+    acl = afs_getacl(path);
+    if (acl == NULL) {
+	if (errno == EACCES)
+	    return;
+	else
+	    exit(1);
+    }
 
     printf("Access list for %s is\n", path);
     if(acl->NumPositiveEntries) {
@@ -2119,25 +2413,25 @@ getcache_cmd (int argc, char **argv)
     u_int32_t max_bytes, used_bytes, max_vnodes, used_vnodes;
     int optind = 0, bytes_flag = 0;
 
-    struct getargs ncargs[] = {
-	{"byte", 'b', arg_flag,  
+    struct agetargs ncargs[] = {
+	{"byte", 'b', aarg_flag,  
 	 NULL, "show result in byte instead of kbyte", NULL},
-	{"help", 'h', arg_flag,
+	{"help", 'h', aarg_flag,
 	 NULL, "get help", NULL},
-        {NULL,      0, arg_end, NULL}}, 
+        {NULL,      0, aarg_end, NULL}}, 
 				  *arg;
 			       
     arg = ncargs;
     arg->value = &bytes_flag; arg++;
     arg->value = &help; arg++;
 
-    if (getarg (ncargs, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(ncargs, "getcacheparams", NULL, ARG_AFSSTYLE);
+    if (agetarg (ncargs, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(ncargs, "getcacheparams", NULL, AARG_AFSSTYLE);
 	return 0;
     }
 
     if (help) {
-	arg_printusage(ncargs, "getcacheparams", NULL, ARG_AFSSTYLE);
+	aarg_printusage(ncargs, "getcacheparams", NULL, AARG_AFSSTYLE);
 	return 0;
     }
 

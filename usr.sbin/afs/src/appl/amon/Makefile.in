@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:34 art Exp $
+# $KTH: Makefile.in,v 1.8.2.1 2001/05/28 11:31:55 mattiasa Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ../..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -44,7 +45,7 @@ INCLUDES	= -I$(srcdir)/../lib \
 
 DEFINES		=
 REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS) \
-		  $(X_CFLAGS) @PLWP_INC_FLAGS@
+		  $(X_CFLAGS) @PLWP_INC_FLAGS@ @INC_roken@
 RXKAD_LIBS	= @MILKO_RXKAD_LIBS@
 KERNEL_INCLUDE  = @KERNEL_INCLUDE@
 KAFS_LIBS	= @AIX_EXTRA_KAFS@ @KAFS_LIBS@
@@ -56,18 +57,17 @@ LIBS		= -L../lib -larlalib \
 		  -L../../lib/ko -lko -L../../util -lutil \
 		  -L../../lib/sl -lsl \
 		  @LIB_readline@ \
-		  -L../../lib/roken \
 		  $(RXKAD_LIBS) \
 		  $(KAFS_LIBS) \
 		  $(RXKAD_LIBS) \
-		  -lroken @LIBS@
+		  @LIB_roken@ @LIBS@
 
 AMON_LIBS	= @X_LIBS@  \
 		  -lXaw -lXt -lXmu -lXext @X_PRE_LIBS@ -lX11 @X_EXTRA_LIBS@
 
 LIBDEPENDS	= ../../rxdef/librxdefclient.a ../../rx/librx.a ../../lwp/liblwp.a \
-		  ../../util/libutil.a ../../lib/sl/libsl.a ../../lib/roken/libroken.a \
-		  ../../lib/ko/libko.a
+		  ../../util/libutil.a ../../lib/sl/libsl.a \
+		  ../../lib/ko/libko.a ../lib/libarlalib.a
 
 X_PROGS_BIN	= amon
 PROGS		= @MAKE_X_PROGS_BIN@
@@ -87,7 +87,7 @@ install: all
 		PROG_BIN='$(APPL_BIN)'; for x in $$PROG_BIN; do \
 			f=`echo $$x | sed '$(transform)'`; \
 			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(bindir)/$$f; \
-		done ;\
+		done ;
 
 uninstall:
 		PROG_BIN='$(APPL_BIN)'; for x in $$PROG_BIN; do \
@@ -115,7 +115,7 @@ clean		:
 mostlyclean:	clean
 
 distclean:	clean
-		rm -f Makefile config.status
+		rm -f Makefile
 
 realclean:	distclean
 		rm -f TAGS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos_vldbexamine.c,v 1.1 2000/09/11 14:40:38 art Exp $");
+RCSID("$KTH: vos_vldbexamine.c,v 1.11.2.1 2001/03/04 04:16:23 lha Exp $");
 
 static void
 print_volume (const nvldbentry *nvlentry, const char *server_name)
@@ -77,7 +72,6 @@ printvolstat(const char *volname, const char *cell, const char *host,
     int error;
     int i;
     nvldbentry nvlentry;
-    struct in_addr server_addr;
     char server_name[MAXHOSTNAMELEN];
     char part_name[17];
 
@@ -109,9 +103,8 @@ printvolstat(const char *volname, const char *cell, const char *host,
     if (verbose)
 	fprintf (stderr, "done\n");
 
-    server_addr.s_addr = htonl(nvlentry.serverNumber[0]);
-    inaddr2str (server_addr, server_name, sizeof(server_name));
-
+    get_servername (htonl(nvlentry.serverNumber[0]),
+		    server_name, sizeof(server_name));
     print_volume (&nvlentry, server_name);
 
     printf("    ");
@@ -124,8 +117,8 @@ printvolstat(const char *volname, const char *cell, const char *host,
      for (i = 0; i < nvlentry.nServers; i++) {
 	 printf("       ");
 	 
-	 server_addr.s_addr = htonl(nvlentry.serverNumber[i]);
-	 inaddr2str (server_addr, server_name, sizeof(server_name));
+	 get_servername (htonl(nvlentry.serverNumber[i]),
+			 server_name, sizeof(server_name));
 
 	 partition_num2name (nvlentry.serverPartition[i],
 			     part_name, sizeof(part_name));
@@ -145,22 +138,22 @@ static int noauth;
 static int localauth;
 static int verbose;
 
-static struct getargs args[] = {
-    {"id",	0, arg_string,  &vol,  "id of volume", "volume",
-     arg_mandatory},
-    {"host",	0, arg_string,  &host, "what host to use", NULL},
-    {"cell",	0, arg_string,  &cell, "what cell to use", NULL},
-    {"noauth",	0, arg_flag,    &noauth, "do not authenticate", NULL},
-    {"localauth",0,arg_flag,    &localauth, "localauth", NULL},
-    {"verbose", 0, arg_flag,	&verbose, "be verbose", NULL},
-    {"help",	0, arg_flag,    &helpflag, NULL, NULL},
-    {NULL,      0, arg_end,	NULL}
+static struct agetargs args[] = {
+    {"id",	0, aarg_string,  &vol,  "id of volume", "volume",
+     aarg_mandatory},
+    {"host",	0, aarg_string,  &host, "what host to use", NULL},
+    {"cell",	0, aarg_string,  &cell, "what cell to use", NULL},
+    {"noauth",	0, aarg_flag,    &noauth, "do not authenticate", NULL},
+    {"localauth",0,aarg_flag,    &localauth, "localauth", NULL},
+    {"verbose", 0, aarg_flag,	&verbose, "be verbose", NULL},
+    {"help",	0, aarg_flag,    &helpflag, NULL, NULL},
+    {NULL,      0, aarg_end,	NULL}
 };
 
 static void
 usage(void)
 {
-    arg_printusage(args, "vos vldbexamine", "", ARG_AFSSTYLE);
+    aarg_printusage(args, "vos vldbexamine", "", AARG_AFSSTYLE);
 }
 
 int
@@ -171,7 +164,7 @@ vos_vldbexamine(int argc, char **argv)
     helpflag = noauth = localauth = verbose = 0;
     host = cell = vol = NULL;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage ();
 	return 0;
     }

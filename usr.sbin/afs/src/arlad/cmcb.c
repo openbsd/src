@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -41,7 +36,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$Id: cmcb.c,v 1.3 2000/09/11 14:40:40 art Exp $") ;
+RCSID("$KTH: cmcb.c,v 1.29 2000/11/28 01:50:44 lha Exp $") ;
 
 #include "cb.ss.h"
 
@@ -93,13 +88,13 @@ RXAFSCB_InitCallBackState (struct rx_call *a_rxCallP)
      u_long host = rx_HostOf (rx_PeerOf (rx_ConnectionOf (a_rxCallP)));
      struct in_addr in_addr;
 
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
 
      in_addr.s_addr = host;
      arla_warnx (ADEBCALLBACK, "InitCallBackState (%s)", inet_ntoa(in_addr));
      fcache_purge_host (host);
 
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
 
      return 0;
 }
@@ -150,7 +145,7 @@ RXAFSCB_CallBack (struct rx_call *a_rxCallP,
 	  else
 	      fcache_stale_entry (fid, broken_callback);
      }
-     cm_check_usedbytes_consistency();
+     cm_check_consistency();
 
      return 0;
 }

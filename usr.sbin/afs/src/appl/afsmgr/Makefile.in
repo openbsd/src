@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:33 art Exp $
+# $KTH: Makefile.in,v 1.3 2000/10/25 07:16:13 lha Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ../..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -91,7 +92,7 @@ clean		:
 mostlyclean:	clean
 
 distclean:	clean
-		rm -f Makefile config.status
+		rm -f Makefile
 
 realclean:	distclean
 		rm -f TAGS

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +32,7 @@
  */
 
 #include "appl_locl.h"
-RCSID("$Id: udebug.c,v 1.1 2000/09/11 14:40:36 art Exp $");
+RCSID("$KTH: udebug.c,v 1.18 2000/10/10 17:30:04 lha Exp $");
 
 static int verbose = 0;
 
@@ -45,7 +40,7 @@ static void
 usage(void)
 {
     fprintf(stderr,  
-	    "udebug: Version $Id: udebug.c,v 1.1 2000/09/11 14:40:36 art Exp $\n"
+	    "udebug: Version $KTH: udebug.c,v 1.18 2000/10/10 17:30:04 lha Exp $\n"
 	    "usage: udebug -servers server ... -port port -noauth -long\n");
     exit(1);
 }
@@ -54,16 +49,23 @@ usage(void)
 static void
 newhost(u_int32_t **hosts, int *len, char *host)
 {
-    struct in_addr server;
+    struct addrinfo hints, *res;
     u_int32_t *ptr;
+    int ret;
 
     if (host == NULL)
 	return;
-
-    if (str2inaddr (host, &server) == NULL) {
+    
+    memset (&hints, 0, sizeof(hints));
+    hints.ai_family = PF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+    
+    ret = getaddrinfo(host, NULL, &hints, &res);
+    if (ret < 0) {
 	warnx("cant find addr for '%s'.", host);
 	return;
     }
+    assert (res->ai_family == PF_INET);
     
     ptr = realloc(*hosts, sizeof(u_int32_t) * ++*len);
     if (ptr == NULL)
@@ -71,14 +73,17 @@ newhost(u_int32_t **hosts, int *len, char *host)
     
     *hosts = ptr;
     
-    ptr[*len-1] = server.s_addr;
+    ptr[*len-1] = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+
+    freeaddrinfo(res);
 }
 
 static const char *
-myctime(const time_t *time, char *datestr, size_t sz)
+myctime(time_t time, char *datestr, size_t sz)
 {
     struct tm tm;
-    strftime (datestr, sz, "%c", localtime_r(time, &tm));
+    strftime (datestr, sz, "%Y-%m-%d %H:%M:%S",
+	      localtime_r(&time, &tm));
     return datestr;
 }
 
@@ -122,18 +127,18 @@ ProbeHost(u_int32_t host, u_int16_t port, arlalib_authflags_t auth)
 
 	printf("Host %s time is %s\n", 
 	       inet_ntoa(server), 
-	       myctime(&db.now, datestring, sizeof(datestring)));
+	       myctime(db.now, datestring, sizeof(datestring)));
 	printf("Localtime is %s, differ %d seconds\n", 
-	       myctime(&tv.tv_sec, datestring, sizeof(datestring)),
+	       myctime(tv.tv_sec, datestring, sizeof(datestring)),
 	       abs(db.now - tv.tv_sec));
 	server.s_addr = htonl(db.syncHost);
 	printf("Last yes vote for %s secs was %d ago (at %s)\n",
 	       inet_ntoa(server),
 	       ABS_COMP_DB(db,lastYesTime),
-	       myctime(&db.lastYesTime, datestring, sizeof(datestring)));
+	       myctime(db.lastYesTime, datestring, sizeof(datestring)));
 	printf("Last vote started %d secs ago (at %s)\n", 
 	       ABS_COMP_DB(db,syncTime),
-	       myctime(&db.lastYesTime, datestring, sizeof(datestring)));
+	       myctime(db.lastYesTime, datestring, sizeof(datestring)));
 	printf("Local db version is %u.%u\n", 
 	       db.localVersion.epoch, 
 	       db.localVersion.counter);
@@ -147,7 +152,7 @@ ProbeHost(u_int32_t host, u_int16_t port, arlalib_authflags_t auth)
 
 	    printf("I'm the synchost for %d seconds more (%s)\n",
 		   db.syncSiteUntil - db.now, 
-		   myctime(&db.syncSiteUntil, datestring, sizeof(datestring)));
+		   myctime(db.syncSiteUntil, datestring, sizeof(datestring)));
 	} else {
 	    server.s_addr = htonl(db.syncHost);
 	    printf("I'm not the synchost, but %s is.\n",
@@ -180,7 +185,7 @@ ProbeHost(u_int32_t host, u_int16_t port, arlalib_authflags_t auth)
 	    printf("Last time a new db version was laballed was:\n"
 		   "\t\t%d secs ago (at %s)\n\n",
 		   ABS_COMP_DB(db,epochTime),
-		   myctime(&db.epochTime, datestring, sizeof(datestring)));
+		   myctime(db.epochTime, datestring, sizeof(datestring)));
 
 	    for (i = 0; i < db.nServers - 1; i++) {
 		
@@ -197,11 +202,11 @@ ProbeHost(u_int32_t host, u_int16_t port, arlalib_authflags_t auth)
 		       sdb.remoteVersion.counter);
 		printf("\tlast vote recived %d secs ago (at %s)\n", 
 		       ABS_COMP_DB(sdb,lastVoteTime),
-		       myctime(&sdb.lastVoteTime, 
+		       myctime(sdb.lastVoteTime, 
 			       datestring, sizeof(datestring)));
 		printf("\tlast beacon sent %d secs ago (at %s)\n",
 		       ABS_COMP_DB(sdb,lastBeaconSent),
-		       myctime(&sdb.lastBeaconSent, 
+		       myctime(sdb.lastBeaconSent, 
 			       datestring, sizeof(datestring)));
 		printf("\tdbcurrent=%d, up=%d, beaconSince=%u\n",
 		       sdb.currentDB,

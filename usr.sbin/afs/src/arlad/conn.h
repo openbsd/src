@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
  * Header for connection cache
  */
 
-/* $Id: conn.h,v 1.3 2000/09/11 14:40:41 art Exp $ */
+/* $KTH: conn.h,v 1.24.2.2 2001/09/28 00:59:11 mattiasa Exp $ */
 
 #ifndef _CONN_H_
 #define _CONN_H_
@@ -72,6 +67,14 @@ struct conncacheentry {
 };
 
 typedef struct conncacheentry ConnCacheEntry;
+
+typedef enum { CONN_CS_NONE = 0,
+	       CONN_CS_CELL = 1, 
+	       CONN_CS_CRED = 2, 
+	       CONN_CS_SECIDX = 4,
+	       CONN_CS_ALL = 0xffff
+	       
+} clear_state_mask;
 
 extern int conn_rxkad_level;
 
@@ -105,7 +108,8 @@ void
 conn_status (void);
 
 void
-conn_clearcred (int32_t cell, xfs_pag_t cred, int securityindex);
+conn_clearcred (clear_state_mask mask,
+		int32_t cell, xfs_pag_t cred, int securityindex);
 
 void
 conn_downhosts(int32_t cell, u_int32_t *hosts, int *num, int flags);
@@ -113,11 +117,14 @@ conn_downhosts(int32_t cell, u_int32_t *hosts, int *num, int flags);
 int
 conn_rtt_cmp (const void *v1, const void *v2);
 
+Bool
+host_downp (int error);
+
 /*
  * Random factor to add to rtts when comparing them.
- * This is in milliseconds/8
+ * This is in microseconds/8
  */
 
-static const int RTT_FUZZ = 400;
+static const int RTT_FUZZ = 400000;
 
 #endif /* _CONN_H_ */

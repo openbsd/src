@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -41,7 +36,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$Id: cred.c,v 1.3 2000/09/11 14:40:41 art Exp $");
+RCSID("$KTH: cred.c,v 1.33.2.2 2001/04/21 14:55:34 lha Exp $");
 
 #define CREDCACHESIZE 101
 
@@ -163,7 +158,8 @@ cred_get (long cell, xfs_pag_t cred, int type)
 static void
 recycle_entry (CredCacheEntry *ce)
 {
-    hashtabdel (credhtab, ce);
+    if (!ce->flags.killme)
+	hashtabdel (credhtab, ce);
     if (ce->cred_data != NULL)
 	free (ce->cred_data);
     memset (ce, 0, sizeof(*ce));
@@ -266,9 +262,10 @@ cred_add_krb4 (xfs_pag_t cred, uid_t uid, CREDENTIALS *c)
 void
 cred_delete (CredCacheEntry *ce)
 {
-    if (ce->refcount > 0)
+    if (ce->refcount > 0) {
 	ce->flags.killme = 1;
-    else
+	hashtabdel (credhtab, ce);
+    } else
 	recycle_entry (ce);
 }
 
@@ -280,22 +277,15 @@ void
 cred_expire (CredCacheEntry *ce)
 {
     const char *cell_name = cell_num2name (ce->cell);
-    struct passwd *pwd = getpwuid (ce->uid);
-    const char *user_name;
-
-    if (pwd != NULL)
-	user_name = pwd->pw_name;
-    else
-	user_name = "<who-are-you?>";
 
     if (cell_name != NULL)
 	arla_warnx (ADEBWARN,
-		    "Credentials for %s (%u) in cell %s has expired",
-		    user_name, (unsigned)ce->uid, cell_name);
+		    "Credentials for UID %u in cell %s has expired",
+		    (unsigned)ce->uid, cell_name);
     else
 	arla_warnx (ADEBWARN,
-		    "Credentials for %s (%u) in cell unknown %ld has expired",
-		    user_name, (unsigned)ce->uid, ce->cell);
+		    "Credentials for UID %u in cell unknown %ld has expired",
+		    (unsigned)ce->uid, ce->cell);
 
     cred_delete (ce);
 }

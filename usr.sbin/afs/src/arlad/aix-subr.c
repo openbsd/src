@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,8 +31,10 @@
  * SUCH DAMAGE.
  */
 
+#define _KERNEL
+
 #include "arla_local.h"
-RCSID("$Id: aix-subr.c,v 1.1 2000/09/11 14:40:39 art Exp $");
+RCSID("$KTH: aix-subr.c,v 1.14 2000/10/14 19:58:04 map Exp $");
 
 static long blocksize = 1024;
 
@@ -85,7 +82,7 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
 
 Result
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
-	  xfs_cache_handle *cache_handle,
+	  fcache_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)
 {
     return conv_dir_sub (e, ce, tokens, cache_handle, cache_name,
@@ -98,7 +95,7 @@ conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 
 int
 dir_remove_name (FCacheEntry *e, const char *filename,
-		 xfs_cache_handle *cache_handle,
+		 fcache_cache_handle *cache_handle,
 		 char *cache_name, size_t cache_name_sz)
 {
     int ret;

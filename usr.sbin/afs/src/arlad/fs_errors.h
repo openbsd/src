@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,10 +31,12 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: fs_errors.h,v 1.2 2000/09/11 14:40:42 art Exp $ */
+/* $KTH: fs_errors.h,v 1.10 2000/11/26 21:54:19 lha Exp $ */
 
 #ifndef _FS_ERRORS_H_
 #define _FS_ERRORS_H_ 1
+
+#include <rx/rx.h>
 
 #define VICE_SPECIAL_ERRORS	101
 
@@ -61,8 +58,9 @@
 
 #define VRESTARTING		-100
 
-#define ARLA_SPECIAL_ERROR_ADD	4000
-#define ARLA_SPECIAL2_ERROR_ADD	4600
+#define ARLA_SPECIAL_ERROR_ADD	  4000
+#define ARLA_SPECIAL2_ERROR_ADD	  4600
+#define ARLA_SPECIAL_RX_ERROR_ADD 4800 /* ->4899 */
 
 #define ARLA_VSALVAGE		(ARLA_SPECIAL_ERROR_ADD+VSALVAGE)
 #define ARLA_VNOVNODE		(ARLA_SPECIAL_ERROR_ADD+VNOVNODE)
@@ -76,7 +74,17 @@
 #define ARLA_VBUSY		(ARLA_SPECIAL_ERROR_ADD+VBUSY)
 #define ARLA_VMOVED		(ARLA_SPECIAL_ERROR_ADD+VMOVED)
 #define ARLA_VIO		(ARLA_SPECIAL_ERROR_ADD+VIO)
+
 #define ARLA_VRESTARTING	(ARLA_SPECIAL2_ERROR_ADD+VRESTARTING)
+
+#define ARLA_CALL_DEAD		(ARLA_SPECIAL_RX_ERROR_ADD-RX_CALL_DEAD)
+#define ARLA_INVALID_OPERATION	(ARLA_SPECIAL_RX_ERROR_ADD-RX_INVALID_OPERATION)
+#define ARLA_CALL_TIMEOUT	(ARLA_SPECIAL_RX_ERROR_ADD-RX_CALL_TIMEOUT)
+#define ARLA_EOF		(ARLA_SPECIAL_RX_ERROR_ADD-RX_EOF)
+#define ARLA_PROTOCOL_ERROR	(ARLA_SPECIAL_RX_ERROR_ADD-RX_PROTOCOL_ERROR)
+#define ARLA_USER_ABORT		(ARLA_SPECIAL_RX_ERROR_ADD-RX_USER_ABORT)
+#define ARLA_ADDRINUSE		(ARLA_SPECIAL_RX_ERROR_ADD-RX_ADDRINUSE)
+#define ARLA_MSGSIZE		(ARLA_SPECIAL_RX_ERROR_ADD-RX_MSGSIZE)
 
 static inline int __attribute__ ((unused))
 conv_to_arla_errno(int error)
@@ -86,6 +94,8 @@ conv_to_arla_errno(int error)
 	return error + ARLA_SPECIAL_ERROR_ADD;
     else if (error == VRESTARTING)
 	return ARLA_VRESTARTING;
+    else if (error <= RX_MIN_ERROR && error >= RX_MAX_ERROR)
+	return ARLA_SPECIAL_RX_ERROR_ADD - error;    /* RX code are negative */
     else
 	return error;
 }

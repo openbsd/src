@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
  * Interface to directory handling routines
  */
 
-/* $Id: adir.h,v 1.3 2000/09/11 14:40:39 art Exp $ */
+/* $KTH: adir.h,v 1.14.2.1 2001/06/04 22:16:35 ahltorp Exp $ */
 
 #ifndef _ADIR_H_
 #define _ADIR_H_
@@ -50,13 +45,8 @@
 #include "fcache.h"
 #include "fdir.h"
 
-int adir_lookup (VenusFid *dir, const char *name, VenusFid *file,
-		 FCacheEntry **dentry, CredCacheEntry **ce);
-
 int
-adir_lookup_fcacheentry (FCacheEntry *centry, VenusFid dir,
-			 const char *name,
-			 VenusFid *file, CredCacheEntry *ce);
+adir_lookup (FCacheEntry *centry, const char *name, VenusFid *file);
 
 int
 adir_changefid (VenusFid *dir,

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include "appl_locl.h"
 #include <kafs.h>
 
-RCSID("$Id: up.c,v 1.1 2000/09/11 14:40:34 art Exp $");
+RCSID("$KTH: up.c,v 1.6 2000/10/03 00:06:41 lha Exp $");
 
 static void do_help (int exitval);
 static int  copyacl (char *from, char *to);
@@ -52,28 +47,28 @@ static int arg_force = 0;
 static int arg_backup = 0;
 static int arg_savedate = 0;
 
-struct getargs args[] = {
-    { NULL , 'h', arg_flag, &arg_help,
-      "verbose", NULL, arg_optional},
-    { NULL , 'v', arg_flag, &arg_verbose,
-      "verbose", NULL, arg_optional},
-    { NULL , '1', arg_flag, &arg_one,
-      "top level only", NULL, arg_optional},
-    { NULL , 'f', arg_flag, &arg_force,
-      "force", NULL, arg_optional},
-    { NULL , 'r', arg_flag, &arg_backup,
-      "verbose", NULL, arg_optional},
-    { NULL , 'x', arg_flag, &arg_savedate,
-      "verbose", NULL, arg_optional},
-    { NULL, 0, arg_end, NULL, NULL }
+struct agetargs args[] = {
+    { NULL , 'h', aarg_flag, &arg_help,
+      "verbose", NULL, aarg_optional},
+    { NULL , 'v', aarg_flag, &arg_verbose,
+      "verbose", NULL, aarg_optional},
+    { NULL , '1', aarg_flag, &arg_one,
+      "top level only", NULL, aarg_optional},
+    { NULL , 'f', aarg_flag, &arg_force,
+      "force", NULL, aarg_optional},
+    { NULL , 'r', aarg_flag, &arg_backup,
+      "verbose", NULL, aarg_optional},
+    { NULL , 'x', aarg_flag, &arg_savedate,
+      "verbose", NULL, aarg_optional},
+    { NULL, 0, aarg_end, NULL, NULL }
 };
 
 static void
 do_help (int exitval)
 {
-    arg_printusage(args, NULL,
-		   "<from-directory> <to-directory>",
-		   ARG_SHORTARG);
+    aarg_printusage(args, NULL,
+		    "<from-directory> <to-directory>",
+		    AARG_SHORTARG);
     exit(exitval);
 }
 
@@ -138,7 +133,7 @@ main(int argc, char **argv)
     char *todir;
     int ret;
 
-    if (getarg (args, argc, argv, &optind, ARG_SHORTARG))
+    if (agetarg (args, argc, argv, &optind, AARG_SHORTARG))
 	do_help(1);
     
     if (arg_help)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +32,7 @@
  */
 
 /*
- * RCSID("$Id: vos_local.h,v 1.1 2000/09/11 14:40:38 art Exp $");
+ * RCSID("$KTH: vos_local.h,v 1.12.2.2 2001/09/17 23:59:02 mattiasa Exp $");
  */
 
 #define LISTVOL_PART      0x1
@@ -66,8 +61,11 @@ int vos_syncsite (int, char **);
 int vos_dump (int, char **);
 int vos_create(int argc, char **argv);
 int vos_endtrans(int argc, char **argv);
+int vos_backup(int argc, char **argv);
+int vos_backupsys(int argc, char **argv);
 
-int vos_listvldb_iter (const char *host, const char *cell,
+int vos_listvldb_iter (const char *host, const char *cell, const char *volname,
+		       const char *fileserver, const char *part,
 		       arlalib_authflags_t auth, 
 		       int (*proc)(void *data, struct vldbentry *),
 		       void *data);
@@ -92,3 +90,4 @@ int vos_endtransaction (const char *cell, const char *host,
 			int32_t trans, arlalib_authflags_t auth, int verbose);
 
 void find_db_cell_and_host (const char **cell, const char **host);
+void get_servername (u_int32_t addr, char *str, size_t str_sz);

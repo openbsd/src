@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +32,7 @@
  */
 
 #include "arla_local.h"
-RCSID("$Id: kernel.c,v 1.3 2000/09/11 14:40:42 art Exp $");
+RCSID("$KTH: kernel.c,v 1.27.2.1 2001/03/12 12:22:41 lha Exp $");
 
 /*
  * The fd we use to talk with the kernel on.
@@ -99,6 +94,10 @@ process_message (int msg_length, char *msg)
      return 0;
 }
 
+/* no threads available to handle messages */
+
+static int overload = FALSE;
+
 /*
  * The work threads.
  */
@@ -126,6 +125,8 @@ sub_thread (void *v_myself)
 	arla_warnx (ADEBKERNEL, "worker %d: done", self->number);
 	--workers_used;
 	self->busyp = 0;
+	overload = FALSE;
+	LWP_NoYieldSignal(&overload);
     }
 }
 
@@ -332,6 +333,8 @@ kernel_opendevice (const char *dev)
     if (fd < 0)
 	arla_err (1, ADEBERROR, errno, "kern_open %s", dev);
     kernel_fd = fd;
+    if (kernel_fd >= FD_SETSIZE)
+	arla_errx (1, ADEBERROR, "kernel fd too large");
 }
 
 
@@ -400,8 +403,12 @@ kernel_interface (struct kernel_args *args)
 		      break;
 		  }
 	      }
-	      if (i == args->num_workers)
-		  arla_warnx (ADEBWARN, "kernel: all workers busy");
+	      if (i == args->num_workers) {
+		  arla_warnx (ADEBWARN, "kernel: all %u workers busy",
+			      args->num_workers);
+		  overload = TRUE;
+		  LWP_WaitProcess(&overload);
+	      }
 	  }
      }
 }

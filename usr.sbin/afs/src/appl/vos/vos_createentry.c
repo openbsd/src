@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos_createentry.c,v 1.1 2000/09/11 14:40:37 art Exp $");
+RCSID("$KTH: vos_createentry.c,v 1.10 2000/10/03 00:08:30 lha Exp $");
 
 static int helpflag;
 static char *vol;
@@ -54,25 +49,25 @@ static int rw_number;
 static int ro_number;
 static int bk_number;
 
-static struct getargs args[] = {
-    {"id",	0, arg_string,  &vol,  "id of volume", NULL, arg_mandatory},
-    {"host",	0, arg_string,  &host, "what host to use", NULL, arg_mandatory},
-    {"fsserver",0, arg_string,  &fsserver, "fsserver where the volume resides", NULL, arg_mandatory},
-    {"partition",0, arg_string,  &partition, "partition where the volume resides", NULL, arg_mandatory},
-    {"rw", 0, arg_integer, &rw_number, "volume RW number", NULL},
-    {"ro", 0, arg_integer, &ro_number, "volume RO number", NULL},
-    {"bk", 0, arg_integer, &bk_number, "volume BK number", NULL},
-    {"cell",	0, arg_string,    &cell, "what cell to use", NULL},
-    {"noauth",	0, arg_flag,    &noauth, "if to use authentication", NULL},
-    {"localauth",0,arg_flag,    &localauth, "localauth", NULL},
-    {"help",	0, arg_flag,    &helpflag, NULL, NULL},
-    {NULL,      0, arg_end, NULL}
+static struct agetargs args[] = {
+    {"id",	0, aarg_string,  &vol,  "id of volume", NULL, aarg_mandatory},
+    {"host",	0, aarg_string,  &host, "what host to use", NULL, aarg_mandatory},
+    {"fsserver",0, aarg_string,  &fsserver, "fsserver where the volume resides", NULL, aarg_mandatory},
+    {"partition",0, aarg_string,  &partition, "partition where the volume resides", NULL, aarg_mandatory},
+    {"rw", 0, aarg_integer, &rw_number, "volume RW number", NULL},
+    {"ro", 0, aarg_integer, &ro_number, "volume RO number", NULL},
+    {"bk", 0, aarg_integer, &bk_number, "volume BK number", NULL},
+    {"cell",	0, aarg_string,    &cell, "what cell to use", NULL},
+    {"noauth",	0, aarg_flag,    &noauth, "if to use authentication", NULL},
+    {"localauth",0,aarg_flag,    &localauth, "localauth", NULL},
+    {"help",	0, aarg_flag,    &helpflag, NULL, NULL},
+    {NULL,      0, aarg_end, NULL}
 };
 
 static void
 usage(void)
 {
-    arg_printusage(args, "vos createentry", "", ARG_AFSSTYLE);
+    aarg_printusage(args, "vos createentry", "", AARG_AFSSTYLE);
 }
 
 int
@@ -96,7 +91,7 @@ vos_createentry(int argc, char **argv)
     bk_number = 0;
     cell = NULL;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage ();
     }
 

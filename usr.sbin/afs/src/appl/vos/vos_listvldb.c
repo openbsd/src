@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,59 +35,96 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos_listvldb.c,v 1.1 2000/09/11 14:40:38 art Exp $");
+RCSID("$KTH: vos_listvldb.c,v 1.9.2.2 2001/11/16 15:02:30 mattiasa Exp $");
 
 /*
  * listvldb iteration over all entries in the DB
  */
 
 int
-vos_listvldb_iter (const char *host, const char *cell,
+vos_listvldb_iter (const char *db_host, const char *cell, const char *volname,
+		   const char *fileserver, const char *part,
 		   arlalib_authflags_t auth,
 		   int (*proc)(void *data, struct vldbentry *), void *data)
 {
     struct rx_connection *connvldb = NULL;
-    struct vldbentry entry;
-    int error;
-    int32_t num, count;
+    struct vldbentry *entry;
+    struct vldbentry vol;
+    int error,i;
+    int32_t num;
+    bulkentries bulkent;
+    struct VldbListByAttributes attr;
+    struct hostent *he;
 
-    find_db_cell_and_host (&cell, &host);
+    memset(&attr, '\0', sizeof(struct VldbListByAttributes));
+
+    find_db_cell_and_host (&cell, &db_host);
 
     if (cell == NULL) {
-	fprintf (stderr, "Unable to find cell of host '%s'\n", host);
+	fprintf (stderr, "Unable to find cell of host '%s'\n", db_host);
 	return -1;
     }
 
-    if (host == NULL) {
+    if (db_host == NULL) {
 	fprintf (stderr, "Unable to find DB server in cell '%s'\n", cell);
 	return -1;
     }
 	
-    connvldb = arlalib_getconnbyname(cell, host,
+    connvldb = arlalib_getconnbyname(cell, db_host,
 				     afsvldbport,
 				     VLDB_SERVICE_ID,
 				     auth);
-    num = 0;
-    do { 
-	error = VL_ListEntry (connvldb, 
-			      num, 
-			      &count,
-			      &num, 
-			      &entry);
+
+    if(volname != NULL) {
+
+	error = VL_GetEntryByName(connvldb, volname, &vol);
+	if (error) {
+	    fprintf(stderr, "vos_listvldb: error %s (%d)\n",
+		    koerr_gettext(error), error);
+	    return -1;
+	}
+
+	attr.volumeid = vol.volumeId[vol.volumeType]; 
+	attr.Mask |= VLLIST_VOLUMEID;
+
+    }
+
+    if(fileserver != NULL) {
+	he = gethostbyname(fileserver);
+	if (he == NULL) {
+	    warnx("listvldb: unknown host: %s\n", fileserver);
+	    return -1;
+	}
+	memcpy (&attr.server, he->h_addr_list[0], 4);
+	attr.server = ntohl(attr.server);
+	attr.Mask |= VLLIST_SERVER;
+    }
+
+    if(part != NULL) {
+	attr.partition = partition_name2num(part);
+	attr.Mask |= VLLIST_PARTITION;
+    }
+
+    error = VL_ListAttributes (connvldb, 
+			       &attr,
+			       &num,
+			       &bulkent);
+    if(error) {
+        warnx ("listvldb: VL_ListAttributes: %s", koerr_gettext(error));
+    }
+
+
+    for(i=0; i<num ; i++) {
+
+	entry = &bulkent.val[i];
+	error = proc (data, entry);
 	if (error)
 	    break;
-
-	entry.name[VLDB_MAXNAMELEN-1] = '\0';
-
-	error = proc (data, &entry);
-	if (error)
-	    break;
-
-    } while (num != -1);
-
-    if (error) {
-	warnx ("listvldb: VL_ListEntry: %s", koerr_gettext(error));
-	return -1;
+	
+	if (error) {
+	    warnx ("listvldb: VL_ListEntry: %s", koerr_gettext(error));
+	    return -1;
+	}
     }
 
     arlalib_destroyconn(connvldb);
@@ -108,19 +140,28 @@ listvldb_print (void *data, struct vldbentry *e)
 {
     int i;
     char *hostname;
+    char part_name[30];
 
     assert (e);
 
     printf ("%s\n", e->name);
+    if(e->flags & VLF_RWEXISTS)
+	printf ("    RWrite: %d", e->volumeId[RWVOL]);
+    if(e->flags & VLF_ROEXISTS)
+	printf ("    ROnly: %d", e->volumeId[ROVOL]);
+    if(e->flags & VLF_BACKEXISTS)
+	printf ("    Backup: %d", e->volumeId[BACKVOL]);
+    printf("\n");
     printf ("    Number of sites -> %d\n", e->nServers);
     for (i = 0 ; i < e->nServers ; i++) {
 	if (e->serverNumber[i] == 0)
 	    continue;
 	if (arlalib_getservername(htonl(e->serverNumber[i]), &hostname))
 	    continue;
-	printf ("       server %s partition /vicep%c Site %s\n",
+	partition_num2name (e->serverPartition[i], part_name, sizeof(part_name));
+	printf ("       server %s partition %s Site %s\n",
 		hostname,
-		'a' + e->serverPartition[i],
+		part_name,
 		getvolumetype (e->serverFlags[i]));
 	free (hostname);
     }
@@ -135,30 +176,39 @@ listvldb_print (void *data, struct vldbentry *e)
  * list vldb
  */
 
-char *server;
-char *cell;
-int noauth;
-int localauth;
-int helpflag;
+static char *volume;
+static char *fileserver;
+static char *partition;
+static char *cell;
+static char *dbserver;
+static int noauth;
+static int localauth;
+static int helpflag;
 
-static struct getargs args[] = {
-    {"server",	0, arg_string,  &server,  
-     "server", NULL, arg_mandatory},
-    {"cell",	0, arg_string,  &cell, 
+static struct agetargs args[] = {
+    {"name",           0, aarg_string, &volume,
+     "Volume to list", NULL, aarg_optional_swless},
+    {"fileserver",	0, aarg_string,  &fileserver,  
+     "fileserver to list", NULL, aarg_optional_swless},
+    {"partition",	0, aarg_string,  &partition,  
+     "partition", NULL, aarg_optional_swless},
+    {"cell",	0, aarg_string,  &cell, 
      "cell", NULL},
-    {"noauth",	0, arg_flag,    &noauth, 
+    {"dbserver",	0, aarg_string,  &dbserver,  
+     "dbserver", NULL},
+    {"noauth",	0, aarg_flag,    &noauth, 
      "do not authenticate", NULL},
-    {"localauth",	0, arg_flag,    &localauth, 
+    {"localauth",	0, aarg_flag,    &localauth, 
      "use local authentication", NULL},
-    {"help",	0, arg_flag,    &helpflag,
+    {"help",	0, aarg_flag,    &helpflag,
      NULL, NULL},
-    {NULL,      0, arg_end, NULL}
+    {NULL,      0, aarg_end, NULL}
 };
 
 static void
 usage(void)
 {
-    arg_printusage (args, "vos listvldb", "", ARG_AFSSTYLE);
+    aarg_printusage (args, "vos listvldb", "", AARG_AFSSTYLE);
 }
 
 int
@@ -166,10 +216,10 @@ vos_listvldb(int argc, char **argv)
 {
     int optind = 0;
 
-    server = cell = NULL;
+    volume = fileserver = dbserver = cell = NULL;
     noauth = localauth = helpflag = 0;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage();
 	return 0;
     }
@@ -183,7 +233,8 @@ vos_listvldb(int argc, char **argv)
     argv += optind;
 
 
-    vos_listvldb_iter (server, cell, 
+    vos_listvldb_iter (dbserver, cell, volume,
+		       fileserver, partition,
 		       arlalib_getauthflag (noauth, localauth, 0, 0),
 		       listvldb_print, NULL);
     

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos_common.c,v 1.1 2000/09/11 14:40:37 art Exp $");
+RCSID("$KTH: vos_common.c,v 1.10.2.2 2001/09/18 00:15:32 mattiasa Exp $");
 
 /*
  * Print the first of RW, RO, or BACKUP that there's a clone of
@@ -262,10 +257,22 @@ get_vlentry (const char *cell, const char *host, const char *volname,
 	     arlalib_authflags_t auth, nvldbentry *nvldbentry)
 {
     struct rx_connection *conn;
+    struct db_server_context *conn_context = NULL;
     int error;
 
-    conn = arlalib_getconnbyname(cell, host, afsvldbport, VLDB_SERVICE_ID,
-				 auth);
+    if(host == NULL) {
+	conn_context = malloc(sizeof(struct db_server_context));
+	memset(conn_context, sizeof(struct db_server_context), 0);
+	for (conn = arlalib_first_db(conn_context,
+				     cell, host, afsvldbport, VLDB_SERVICE_ID, 
+				     auth);
+	     conn != NULL && arlalib_try_next_db(error);
+	     conn = arlalib_next_db(conn_context));
+    } else {
+	conn = arlalib_getconnbyname(cell, host, afsvldbport, VLDB_SERVICE_ID,
+				     auth);
+    }
+
     if (conn == NULL)
 	return -1;
 
@@ -278,7 +285,14 @@ get_vlentry (const char *cell, const char *host, const char *volname,
 	if (error == 0)
 	    vldb2vldbN (&vlentry, nvldbentry);
     }
+
     arlalib_destroyconn(conn);
+
+    if(conn_context != NULL) {
+	free_db_server_context(conn_context);
+	free(conn_context);
+    }
+
     return error;
 }
 
@@ -349,4 +363,28 @@ find_db_cell_and_host (const char **cell, const char **host)
     if (*host == NULL) {
 	*host = cell_findnamedbbyname (*cell);
     }
+}
+
+/*
+ * give a name for the server `addr'
+ */
+
+void
+get_servername (u_int32_t addr, char *str, size_t str_sz)
+{
+    struct sockaddr_in sock;
+    int error;
+
+    memset (&sock, 0, sizeof(sock));
+#if HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
+    sock.sin_len = sizeof(sock);
+#endif
+    sock.sin_family = AF_INET;
+    sock.sin_port = 0;
+    sock.sin_addr.s_addr = addr;
+
+    error = getnameinfo((struct sockaddr *)&sock, sizeof(sock),
+			str, str_sz, NULL, 0, 0);
+    if (error)
+	strlcpy (str, "<unknown>", str_sz);
 }

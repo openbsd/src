@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -43,7 +38,7 @@
 
 #include "arla_local.h"
 #ifdef RCSID
-RCSID("$Id: conn.c,v 1.3 2000/09/11 14:40:41 art Exp $") ;
+RCSID("$KTH: conn.c,v 1.61.2.3 2001/09/03 22:12:07 ahltorp Exp $") ;
 #endif
 
 #define CONNCACHESIZE 101
@@ -111,7 +106,10 @@ re_probe (ConnCacheEntry *e)
 	listdel (connprobelist, e->probe_le);
 
     gettimeofday (&tv, NULL);
-    e->probe_next = tv.tv_sec + (1 << e->ntries);
+    if (e->probe_le)
+	e->probe_next = min(tv.tv_sec + (1 << e->ntries), e->probe_next);
+    else
+	e->probe_next = tv.tv_sec + (1 << e->ntries);
     ++e->ntries;
 
     for (item = listhead (connprobelist);
@@ -284,7 +282,8 @@ recycle_conn (ConnCacheEntry *e)
 	listdel (connprobelist, e->probe_le);
 	e->probe_le = NULL;
     }
-    hashtabdel (connhtab, e);
+    if (!e->flags.killme)
+	hashtabdel (connhtab, e);
     rx_DestroyConnection (e->connection);
     memset (e, 0, sizeof(*e));
     listaddhead (connfreelist, e);
@@ -700,6 +699,7 @@ conn_status (void)
 }
 
 struct clear_state {
+    clear_state_mask mask;
     int32_t cell;
     xfs_pag_t cred;
     int securityindex;
@@ -711,26 +711,33 @@ clear_cred (void *ptr, void *arg)
     ConnCacheEntry *e = (ConnCacheEntry *)ptr;
     struct clear_state *s = (struct clear_state *)arg;
 
-    if (e->cred == s->cred
-	&& (s->cell == 0 || e->cell == s->cell)
-	&& e->securityindex == s->securityindex) {
-	if (e->refcount > 0)
-	    e->flags.killme = 1;
-	else
-	    recycle_conn (e);
-    }
+    if ((s->mask & CONN_CS_CRED) && s->cred != e->cred)
+	return FALSE;
+    if ((s->mask & CONN_CS_CELL) && s->cell != e->cell)
+	return FALSE;
+    if ((s->mask & CONN_CS_SECIDX) && s->securityindex != e->securityindex)
+	return FALSE;
+    
+    if (e->refcount > 0) {
+	e->flags.killme = 1;
+	hashtabdel (connhtab, e);	
+    } else
+	recycle_conn (e);
+
     return FALSE;
 }
 
 /*
- * Remove all connections matching (cell, cred, securityindex).
+ * Remove all connections matching mask + (cell, cred, securityindex).
  */
 
 void
-conn_clearcred(int32_t cell, xfs_pag_t cred, int securityindex)
+conn_clearcred(clear_state_mask mask,
+	       int32_t cell, xfs_pag_t cred, int securityindex)
 {
     struct clear_state s;
 
+    s.mask	    = mask;
     s.cell          = cell;
     s.cred          = cred;
     s.securityindex = securityindex;
@@ -820,3 +827,35 @@ conn_rtt_cmp (const void *v1, const void *v2)
     
     return (*e1)->rtt - (*e2)->rtt;
 }
+
+/*
+ * Return true iff this error means we should mark the host as down
+ * due to network errors
+ */
+
+Bool
+host_downp (int error)
+{
+    switch (error) {
+    case ARLA_CALL_DEAD :
+    case ARLA_INVALID_OPERATION :
+    case ARLA_CALL_TIMEOUT :
+    case ARLA_EOF :
+    case ARLA_PROTOCOL_ERROR :
+    case ARLA_USER_ABORT :
+    case ARLA_ADDRINUSE :
+    case ARLA_MSGSIZE :
+    case RXGEN_CC_MARSHAL :
+    case RXGEN_CC_UNMARSHAL :
+    case RXGEN_SS_MARSHAL :
+    case RXGEN_SS_UNMARSHAL :
+    case RXGEN_DECODE :
+    case RXGEN_OPCODE :
+    case RXGEN_SS_XDRFREE :
+    case RXGEN_CC_XDRFREE :
+	return TRUE;
+    default :
+	return FALSE;
+    }
+}
+

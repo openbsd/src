@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:37 art Exp $
+# $KTH: Makefile.in,v 1.12.2.3 2001/10/23 23:52:40 ahltorp Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ../..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -29,6 +30,7 @@ SHELL		= /bin/sh
 
 CFLAGS		= @CFLAGS@
 X_CFLAGS	= @X_CFLAGS@
+LDFLAGS		= @LDFLAGS@
 
 ETAGS		= etags
 MAKEDEPEND	= makedepend
@@ -42,6 +44,7 @@ INCLUDES	= -I$(srcdir)/../.. \
 		  $(KERNEL_INCLUDE) \
 		  -I$(srcdir)/../../xfs/include \
 		  -I$(srcdir)/../../arlad \
+		  @INC_roken@ \
 		  $(RXKADINC) 
 
 DEFINES		=
@@ -58,29 +61,28 @@ LIBS		= -L../lib -larlalib \
 		  -L../../lwp -llwp @PLWP_LIB_FLAGS@ \
 		  -L../../lib/ko -lko -L../../util -lutil \
 		  -L../../lib/sl -lsl \
-		  -L../../lib/roken \
 		  $(READLINE_lib) \
+		  @LIB_roken@ \
 		  $(RXKAD_LIBS) \
 		  $(KAFS_LIBS) \
-		  $(RXKAD_LIBS) \
-		  -lroken @LIBS@
+		  $(RXKAD_LIBS) @LIBS@
 
 LIBDEPENDS	= ../../rxdef/librxdefclient.a ../../rx/librx.a ../../lwp/liblwp.a \
-		  ../../util/libutil.a ../../lib/sl/libsl.a ../../lib/roken/libroken.a \
-		  ../../lib/ko/libko.a
+		  ../../util/libutil.a ../../lib/sl/libsl.a \
+		  ../../lib/ko/libko.a ../lib/libarlalib.a
 
 PROGS		= vos
 VOS_SRCS	= vos.c vos_common.c vos_examine.c vos_listvol.c \
 		  vos_partinfo.c vos_status.c vos_createentry.c \
 		  vos_listpart.c vos_syncsite.c vos_listvldb.c vos_dump.c \
 		  vos_createvolume.c vos_endtrans.c vos_vldbexamine.c \
-		  vos_lock.c vos_unlock.c
+		  vos_lock.c vos_unlock.c vos_backup.c
 SRCS		= $(VOS_SRCS)
 VOS_OBJS	= vos.o vos_common.o vos_examine.o vos_listvol.o \
 		  vos_partinfo.o vos_status.o vos_createentry.o \
 		  vos_listpart.o vos_syncsite.o vos_listvldb.o vos_dump.o \
 		  vos_createvolume.o vos_endtrans.o vos_vldbexamine.o \
-		  vos_lock.o vos_unlock.o
+		  vos_lock.o vos_unlock.o vos_backup.o
 HDRS		= 
 
 all:		$(PROGS)
@@ -102,7 +104,7 @@ install: all
 			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
 			f=`echo $$n | sed '$(transform)'`; \
 			$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$$e ; \
-			$(INSTALL_PROGRAM) $(srcdir)/$$x \
+			$(INSTALL_DATA) $(srcdir)/$$x \
 				$(DESTDIR)$(mandir)/man$$e/$$f.$$e; \
 		done
 
@@ -138,7 +140,7 @@ clean		:
 mostlyclean:	clean
 
 distclean:	clean
-		rm -f Makefile config.status
+		rm -f Makefile
 
 realclean:	distclean
 		rm -f TAGS

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -42,7 +37,7 @@
 
 #include "arla_local.h"
 
-RCSID("$Id: adir.c,v 1.3 2000/09/11 14:40:39 art Exp $") ;
+RCSID("$KTH: adir.c,v 1.66.2.1 2001/06/04 22:16:34 ahltorp Exp $") ;
 
 /*
  *
@@ -81,11 +76,7 @@ get_fbuf_from_fid (VenusFid *fid, CredCacheEntry **ce,
  */
 
 int
-adir_lookup_fcacheentry (FCacheEntry *centry,
-			 VenusFid dir,
-			 const char *name,
-			 VenusFid *file,
-			 CredCacheEntry *ce)
+adir_lookup (FCacheEntry *centry, const char *name, VenusFid *file)
 {
      int ret;
      int fd;
@@ -96,50 +87,10 @@ adir_lookup_fcacheentry (FCacheEntry *centry,
      if (ret)
 	 return ret;
 
-     ret = fdir_lookup (&the_fbuf, &dir, name, file);
+     ret = fdir_lookup (&the_fbuf, &centry->fid, name, file);
      fbuf_end (&the_fbuf);
      close (fd);
      return ret;
-}
-
-/*
- * Lookup ``name'' in the AFS directory identified by ``dir'' and
- * return the Fid in ``file''.  All operations are done as ``cred''
- * and return value is 0 or error code. If ``dentry'' is set, its the
- * entry of the ``dir'' if returnvalue is 0.
- */
-
-int
-adir_lookup (VenusFid *dir,
-	     const char *name,
-	     VenusFid *file,
-	     FCacheEntry **dentry, 
-	     CredCacheEntry **ce)
-{
-    int fd;
-    fbuf the_fbuf;
-    FCacheEntry *centry;
-    int ret;
-
-    ret = get_fbuf_from_fid (dir, ce, &fd, &the_fbuf, &centry, O_RDONLY, 
-			     FBUF_READ|FBUF_PRIVATE);
-    if (ret)
-	return ret;
-
-    ret = fdir_lookup (&the_fbuf, dir, name, file);
-    fbuf_end (&the_fbuf);
-    close (fd);
-    if (dentry) {
-	if (ret) {
-	    *dentry = NULL;
-	    fcache_release (centry);
-	} else {
-	    *dentry = centry;
-	}
-    } else {
-	fcache_release (centry);
-    }
-    return ret;
 }
 
 /*
@@ -236,7 +187,7 @@ adir_mkdir (FCacheEntry *dir,
     fbuf the_fbuf;
     int ret;
 
-    assert (CheckLock(&dir->lock) == -1);
+    AssertExclLocked(&dir->lock);
 
     ret = fcache_get_fbuf (dir, &fd, &the_fbuf, O_RDWR,
 			   FBUF_READ|FBUF_WRITE|FBUF_SHARED);

@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:35 art Exp $
+# $KTH: Makefile.in,v 1.10.2.2 2001/10/23 23:49:18 ahltorp Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ../..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -16,10 +17,13 @@ exec_prefix 	= @exec_prefix@
 libdir 		= @libdir@
 libexecdir 	= @libexecdir@
 bindir 		= @bindir@
+mandir		= @mandir@
+
 transform	= @program_transform_name@
 EXECSUFFIX	= @EXECSUFFIX@
 
 APPL_BIN	= bos
+MANPAGES	= bos.8
 
 DEFS		= @DEFS@
 
@@ -27,6 +31,7 @@ SHELL		= /bin/sh
 
 CFLAGS		= @CFLAGS@
 X_CFLAGS	= @X_CFLAGS@
+LDFLAGS		= @LDFLAGS@
 
 ETAGS		= etags
 MAKEDEPEND	= makedepend
@@ -40,7 +45,8 @@ INCLUDES	= -I$(srcdir)/../.. \
 		  $(KERNEL_INCLUDE) \
 		  -I$(srcdir)/../../xfs/include \
 		  -I$(srcdir)/../../arlad \
-		  $(RXKADINC) 
+		  $(RXKADINC) \
+		  @INC_roken@
 
 DEFINES		=
 REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS) \
@@ -56,16 +62,15 @@ LIBS		= -L../lib -larlalib \
 		  -L../../lwp -llwp @PLWP_LIB_FLAGS@ \
 		  -L../../lib/ko -lko -L../../util -lutil \
 		  -L../../lib/sl -lsl \
-		  -L../../lib/roken \
 		  $(READLINE_lib) \
+		  @LIB_roken@ \
 		  $(RXKAD_LIBS) \
 		  $(KAFS_LIBS) \
-		  $(RXKAD_LIBS) \
-		  -lroken @LIBS@
+		  $(RXKAD_LIBS) @LIBS@
 
 LIBDEPENDS	= ../../rxdef/librxdefclient.a ../../rx/librx.a ../../lwp/liblwp.a \
-		  ../../util/libutil.a ../../lib/sl/libsl.a ../../lib/roken/libroken.a \
-		  ../../lib/ko/libko.a
+		  ../../util/libutil.a ../../lib/sl/libsl.a \
+		  ../../lib/ko/libko.a ../lib/libarlalib.a
 
 PROGS		= bos
 BOS_SRCS	= bos.c bos_status.c bos_adduser.c bos_getrestart.c bos_listhosts.c bos_listusers.c
@@ -86,11 +91,25 @@ install: all
 			f=`echo $$x | sed '$(transform)'`; \
 			$(INSTALL_PROGRAM) $$x $(DESTDIR)$(bindir)/$$f; \
 		done ;\
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$$e ; \
+			$(INSTALL_DATA) $(srcdir)/$$x \
+				$(DESTDIR)$(mandir)/man$$e/$$f.$$e; \
+		done
 
 uninstall:
 		PROG_BIN='$(APPL_BIN)'; for x in $$PROG_BIN; do \
 			f=`echo $$x | sed '$(transform)'`; \
 			rm -f $(DESTDIR)$(bindir)/$$f; \
+		done ;\
+		MANPAGES='$(MANPAGES)'; for x in $$MANPAGES; do \
+			n=`echo $$x | sed 's/\(.*\)\.[1-9a-zA-Z]*$$/\1/'`; \
+			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
+			f=`echo $$n | sed '$(transform)'`; \
+			rm -rf $(DESTDIR)$(mandir)/$$f.$$e; \
 		done
 
 bos:		$(BOS_OBJS) $(LIBDEPENDS)
@@ -113,7 +132,7 @@ clean		:
 mostlyclean:	clean
 
 distclean:	clean
-		rm -f Makefile config.status
+		rm -f Makefile
 
 realclean:	distclean
 		rm -f TAGS

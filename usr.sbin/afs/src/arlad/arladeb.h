@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -37,7 +32,7 @@
  */
 
 /*
- * $Id: arladeb.h,v 1.3 2000/09/11 14:40:40 art Exp $
+ * $KTH: arladeb.h,v 1.24.2.1 2001/04/30 00:02:15 lha Exp $
  */
 
 #ifndef _arladeb_h
@@ -51,6 +46,7 @@
 
 extern Log_method* arla_log_method;
 extern Log_unit* arla_log_unit;
+extern struct units arla_deb_units[];
 
 /* masks */
 #define ADEBANY		0xffffffff
@@ -70,10 +66,12 @@ extern Log_unit* arla_log_unit;
 #define ADEBERROR	0x10000000      /* don't ignore error */
 #define ADEBVLOG	0x20000000	/* venuslog output */
 
+#define ARLA_DEFAULT_LOG (ADEBWARN | ADEBERROR)
+
 extern struct units arla_deb_units[];
 
 void arla_log(unsigned level, char *fmt, ...);
-void arla_loginit(char *log);
+void arla_loginit(char *log, log_flags flags);
 int arla_log_set_level (const char *s);
 void arla_log_set_level_num (unsigned level);
 void arla_log_get_level (char *s, size_t len);

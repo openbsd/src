@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
  * The interface for the file-cache.
  */
 
-/* $Id: fcache.h,v 1.3 2000/09/11 14:40:42 art Exp $ */
+/* $KTH: fcache.h,v 1.72.2.2 2001/10/02 16:13:07 jimmy Exp $ */
 
 #ifndef _FCACHE_H_
 #define _FCACHE_H_
@@ -74,6 +69,11 @@ enum Access { ANONE   = 0x0,
 	      AADMIN  = 0x40 };
 
 typedef struct {
+    Bool valid;
+    xfs_cache_handle xfs_handle;
+} fcache_cache_handle;
+
+typedef struct {
     struct Lock lock;		/* locking information for this entry */
     VenusFid fid;		/* The fid of the file for this entry */
     unsigned refcount;		/* reference count */
@@ -85,7 +85,7 @@ typedef struct {
     AccessEntry acccache[NACCESS]; /* cache for the access rights */
     u_int32_t anonaccess;	/* the access mask for system:anyuser */
     unsigned index;		/* this is V%u */
-    xfs_cache_handle handle;	/* handle */
+    fcache_cache_handle handle;	/* handle */
     struct {
 	unsigned usedp : 1;	/* Is this entry used? */
 	unsigned attrp : 1;	/* Are the attributes in status valid? */
@@ -186,7 +186,7 @@ int
 fcache_open_extra_dir (FCacheEntry *entry, int flag, mode_t mode);
 
 int
-fcache_fhget (char *filename, xfs_cache_handle *handle);
+fcache_fhget (char *filename, fcache_cache_handle *handle);
 
 int
 write_data (FCacheEntry *entry, AFSStoreStatus *status, CredCacheEntry *ce);
@@ -259,7 +259,8 @@ int
 fcache_verify_data (FCacheEntry *e, CredCacheEntry *ce);
 
 int
-followmountpoint (VenusFid *fid, const VenusFid *parent, CredCacheEntry **ce);
+followmountpoint (VenusFid *fid, const VenusFid *parent, FCacheEntry *parent_e,
+		  CredCacheEntry **ce);
 
 void
 fcache_status (void);
@@ -296,10 +297,16 @@ u_long
 fcache_usedbytes(void);
 
 u_long
+fcache_lowbytes(void);
+
+u_long
 fcache_highvnodes(void);
 
 u_long
 fcache_usedvnodes(void);
+
+u_long
+fcache_lowvnodes(void);
 
 int
 fcache_need_bytes(u_long needed);
@@ -354,5 +361,16 @@ fcache_calculate_usage (void);
 
 const VenusFid *
 fcache_realfid (const FCacheEntry *entry);
+
+void
+fcache_mark_as_mountpoint (FCacheEntry *entry);
+
+int
+collectstats_hostpart(u_int32_t *host, u_int32_t *part, int *n);
+
+int
+collectstats_getentry(u_int32_t host, u_int32_t part, u_int32_t type,
+		      u_int32_t items_slot, u_int32_t *count,
+		      int64_t *items_total, int64_t *total_time);
 
 #endif /* _FCACHE_H_ */

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos_examine.c,v 1.1 2000/09/11 14:40:38 art Exp $");
+RCSID("$KTH: vos_examine.c,v 1.17.2.3 2001/09/19 10:03:36 mattiasa Exp $");
 
 static void
 print_extended_stats (const xvolintInfo *v)
@@ -98,9 +93,9 @@ print_volume (const nvldbentry *nvlentry, const xvolintInfo *v,
     char timestr[30];
 
     printf("%s\t\t\t%10u %s ",
-	   nvlentry->name, 
-	   nvlentry->volumeId[0], 
-	   getvolumetype(nvlentry->serverFlags[0]));
+	   v->name,
+	   v->volid,
+	   getvolumetype2(v->type));
 
     if (v != NULL)
 	printf("%8d K  %s\n", v->size, v->status == VOK ? "On-line" : "Busy");
@@ -108,6 +103,8 @@ print_volume (const nvldbentry *nvlentry, const xvolintInfo *v,
 	printf("unknown  K\n");
     
     if (v != NULL && v->status == VOK) {
+	struct tm tm;
+	
 	partition_num2name (nvlentry->serverPartition[0],
 			    part_name, sizeof(part_name));
 
@@ -125,16 +122,14 @@ print_volume (const nvldbentry *nvlentry, const xvolintInfo *v,
 
 	printf("\n    MaxQuota %10d K\n", v->maxquota);
 	
-	/* Get and format date */
-	strlcpy(timestr, 
-		ctime( (time_t*) &v->creationDate),
-		sizeof(timestr));
+	memset (&tm, 0, sizeof(tm));
+	strftime (timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z",
+		  localtime_r((time_t*) &v->creationDate, &tm));
 	printf("    Creation    %s\n", timestr);
 	
-	/* Get and format date */
-	strlcpy(timestr, 
-	       ctime((time_t *) &v->updateDate),
-	       sizeof(timestr));
+	memset (&tm, 0, sizeof(tm));
+	strftime (timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z",
+		  localtime_r((time_t*) &v->updateDate, &tm));
 	printf("    Last Update %s\n", timestr);
 
 	printf("    %d accesses in the past day (i.e., vnode references)\n\n",
@@ -146,7 +141,7 @@ print_volume (const nvldbentry *nvlentry, const xvolintInfo *v,
 }
 
 static int
-printvolstat(const char *volname, const char *cell, const char *host,
+printvolstat(const char *vol, const char *cell, const char *host,
 	     arlalib_authflags_t auth, int verbose, int extended)
 {
     struct rx_connection *connvolser;
@@ -154,10 +149,15 @@ printvolstat(const char *volname, const char *cell, const char *host,
     int i;
     xvolEntries xvolint;
     nvldbentry nvlentry;
-    struct in_addr server_addr;
     char server_name[MAXHOSTNAMELEN];
     char part_name[17];
     int was_xvol = 1;
+    char volname[VLDB_MAXNAMELEN];
+    int type;
+    u_int32_t server;
+    int part;
+    int bit;
+    int xvolintp = 0;
 
     find_db_cell_and_host (&cell, &host);
 
@@ -171,6 +171,9 @@ printvolstat(const char *volname, const char *cell, const char *host,
 	return -1;
     }
 	
+    strlcpy (volname, vol, sizeof(volname));
+    type = volname_canonicalize (volname);
+
     if (verbose)
 	fprintf (stderr,
 		 "Getting volume `%s' from the VLDB at `%s'...",
@@ -187,11 +190,38 @@ printvolstat(const char *volname, const char *cell, const char *host,
     if (verbose)
 	fprintf (stderr, "done\n");
 
-    server_addr.s_addr = htonl(nvlentry.serverNumber[0]);
-    inaddr2str (server_addr, server_name, sizeof(server_name));
+    switch (type) {
+    case RWVOL :
+	bit = VLSF_RWVOL;
+	break;
+    case ROVOL :
+	bit = VLSF_ROVOL;
+	break;
+    case BACKVOL :
+	bit = (VLSF_BACKVOL|VLSF_RWVOL);
+	break;
+    default :
+	abort ();
+    }
+
+    for (i = 0; i < nvlentry.nServers; ++i)
+	if (nvlentry.serverFlags[i] & bit) {
+	    server = nvlentry.serverNumber[i];
+	    part   = nvlentry.serverPartition[i];
+	    break;
+	}
+
+    if (i == nvlentry.nServers) {
+	fprintf (stderr, "Volume %s does not have a %s clone\n",
+		 volname, getvolumetype2(type));
+	return -1;
+    }
+
+    get_servername (htonl(server),
+		    server_name, sizeof(server_name));
 
     connvolser = arlalib_getconnbyaddr(cell,
-				       server_addr.s_addr,
+				       htonl(server),
 				       NULL,
 				       afsvolport,
 				       VOLSERVICE_ID,
@@ -201,13 +231,13 @@ printvolstat(const char *volname, const char *cell, const char *host,
     
     if (verbose) {
 	fprintf (stderr, "getting information on `%s' from %s\n",
-		 volname, server_name);
+		 vol, server_name);
     }
 
     xvolint.val = NULL;
     error = VOLSER_AFSVolXListOneVolume(connvolser,
-					nvlentry.serverPartition[0],
-					nvlentry.volumeId[0],
+					part,
+					nvlentry.volumeId[type],
 					&xvolint);
 
     if (error == RXGEN_OPCODE) {
@@ -216,8 +246,8 @@ printvolstat(const char *volname, const char *cell, const char *host,
 	was_xvol   = 0;
 	volint.val = NULL;
 	error = VOLSER_AFSVolListOneVolume(connvolser,
-					   nvlentry.serverPartition[0],
-					   nvlentry.volumeId[0],
+					   part,
+					   nvlentry.volumeId[type],
 					   &volint);
 	if (error == 0) {
 	    xvolint.val = emalloc (sizeof (*xvolint.val));
@@ -225,34 +255,50 @@ printvolstat(const char *volname, const char *cell, const char *host,
 	}
     }
 
-    if (error != 0)
+    if (error != 0) {
 	printf("ListOneVolume of %s from %s failed with: %s (%d)\n", 
-	       volname, server_name,
+	       vol, server_name,
 	       koerr_gettext(error), error);
+    } else {
+	xvolintp = 1;
+	if (verbose)
+	    fprintf (stderr, "done\n");
+    }
 
-    if (verbose)
-	fprintf (stderr, "done\n");
-    
-    print_volume (&nvlentry, xvolint.val, server_name, was_xvol && extended);
+
+    if(xvolintp)
+	print_volume (&nvlentry, xvolint.val, server_name, was_xvol && extended);
+    else {
+	printf("\nDump only information from VLDB\n\n");
+	printf("%s\n", nvlentry.name);
+    }
 
     printf("    ");
-    printf("RWrite: %u\t", nvlentry.flags & VLF_RWEXISTS ? nvlentry.volumeId[RWVOL] : 0);
-    printf("ROnly: %u\t", nvlentry.flags & VLF_ROEXISTS ? nvlentry.volumeId[ROVOL] : 0);
-    printf("Backup: %u\t", nvlentry.flags & VLF_BACKEXISTS ? nvlentry.volumeId[BACKVOL] : 0);
+    if(nvlentry.flags & VLF_RWEXISTS)
+	printf("RWrite: %u\t", nvlentry.volumeId[RWVOL]);
+    if(nvlentry.flags & VLF_ROEXISTS)
+	printf("ROnly: %u\t", nvlentry.volumeId[ROVOL]);
+    if(nvlentry.flags & VLF_BACKEXISTS)
+	printf("Backup: %u\t", nvlentry.volumeId[BACKVOL]);
 
     printf("\n    number of sites -> %d\n", nvlentry.nServers );
     
      for (i = 0; i < nvlentry.nServers; i++) {
 	 printf("       ");
 	 
-	 server_addr.s_addr = htonl(nvlentry.serverNumber[i]);
-	 inaddr2str (server_addr, server_name, sizeof(server_name));
+	 get_servername (htonl(nvlentry.serverNumber[i]),
+			 server_name, sizeof(server_name));
 
 	 partition_num2name (nvlentry.serverPartition[i],
 			     part_name, sizeof(part_name));
-	 printf("server %s partition %s %s Site\n",
+	 printf("server %s partition %s %s Site",
 		server_name, part_name,
 		getvolumetype(nvlentry.serverFlags[i]));
+
+	 if (nvlentry.serverFlags[i] & VLSF_DONTUSE)
+	     printf(" -- not replicated yet");
+
+	 printf("\n");
      }
      
      free(xvolint.val);
@@ -269,23 +315,23 @@ static int localauth;
 static int verbose;
 static int extended;
 
-static struct getargs args[] = {
-    {"id",	0, arg_string,  &vol,  "id of volume", "volume",
-     arg_mandatory},
-    {"host",	0, arg_string,  &host, "what host to use", NULL},
-    {"cell",	0, arg_string,  &cell, "what cell to use", NULL},
-    {"noauth",	0, arg_flag,    &noauth, "do not authenticate", NULL},
-    {"localauth",0,arg_flag,    &localauth, "localauth", NULL},
-    {"verbose", 0, arg_flag,	&verbose, "be verbose", NULL},
-    {"extended",0, arg_flag,	&extended, "more output", NULL},
-    {"help",	0, arg_flag,    &helpflag, NULL, NULL},
-    {NULL,      0, arg_end,	NULL}
+static struct agetargs args[] = {
+    {"id",	0, aarg_string,  &vol,  "id of volume", "volume",
+     aarg_mandatory},
+    {"host",	0, aarg_string,  &host, "what host to use", NULL},
+    {"cell",	0, aarg_string,  &cell, "what cell to use", NULL},
+    {"noauth",	0, aarg_flag,    &noauth, "do not authenticate", NULL},
+    {"localauth",0,aarg_flag,    &localauth, "localauth", NULL},
+    {"verbose", 0, aarg_flag,	&verbose, "be verbose", NULL},
+    {"extended",0, aarg_flag,	&extended, "more output", NULL},
+    {"help",	0, aarg_flag,    &helpflag, NULL, NULL},
+    {NULL,      0, aarg_end,	NULL}
 };
 
 static void
 usage(void)
 {
-    arg_printusage(args, "vos examine", "", ARG_AFSSTYLE);
+    aarg_printusage(args, "vos examine", "", AARG_AFSSTYLE);
 }
 
 int
@@ -296,7 +342,7 @@ vos_examine(int argc, char **argv)
     helpflag = noauth = localauth = verbose = extended = 0;
     host = cell = vol = NULL;
 
-    if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage ();
 	return 0;
     }

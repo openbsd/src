@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:35 art Exp $
+# $KTH: Makefile.in,v 1.11.2.2 2001/10/23 23:50:43 ahltorp Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ../..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -29,6 +30,7 @@ SHELL		= /bin/sh
 
 CFLAGS		= @CFLAGS@
 X_CFLAGS	= @X_CFLAGS@
+LDFLAGS		= @LDFLAGS@
 
 ETAGS		= etags
 MAKEDEPEND	= makedepend
@@ -42,6 +44,7 @@ INCLUDES	= -I$(srcdir)/../.. \
 		  $(KERNEL_INCLUDE) \
 		  -I$(srcdir)/../../xfs/include \
 		  -I$(srcdir)/../../arlad \
+		  @INC_roken@ \
 		  $(RXKADINC) 
 
 DEFINES		=
@@ -58,26 +61,28 @@ LIBS		= -L../lib -larlalib \
 		  -L../../lwp -llwp @PLWP_LIB_FLAGS@ \
 		  -L../../lib/ko -lko -L../../util -lutil \
 		  -L../../lib/sl -lsl \
-		  -L../../lib/roken \
 		  $(READLINE_lib) \
 		  $(RXKAD_LIBS) \
 		  $(KAFS_LIBS) \
 		  $(RXKAD_LIBS) \
-		  -lroken @LIBS@
+		  @LIB_roken@ @LIBS@
 
 LIBDEPENDS	= ../../rxdef/librxdefclient.a ../../rx/librx.a ../../lwp/liblwp.a \
-		  ../../util/libutil.a ../../lib/sl/libsl.a ../../lib/roken/libroken.a \
-		  ../../lib/ko/libko.a
+		  ../../util/libutil.a ../../lib/sl/libsl.a \
+		  ../../lib/ko/libko.a ../lib/libarlalib.a
 
 PROGS		= fs
-FS_SRCS		= fs.c
+FS_SRCS		= fs.c arladebu.c
 SRCS		= $(FS_SRCS)
-FS_OBJS		= fs.o
+FS_OBJS		= fs.o arladebu.o
 HDRS		= 
 
 all:		$(PROGS)
 
 .PHONY: all install uninstall depend tags clean
+
+arladebu.c: $(srcdir)/../../arlad/arladebu.c
+	test -f arladebu.c || $(LN_S) $(srcdir)/../../arlad/arladebu.c arladebu.c
 
 .c.o:
 		$(CC) -c $(CPPFLAGS) $(DEFS) -I$(srcdir) -I. $(REALCFLAGS) $<
@@ -94,7 +99,7 @@ install: all
 			e=`echo $$x | sed 's/.*\.\([1-9a-zA-Z]*\)$$/\1/'`; \
 			f=`echo $$n | sed '$(transform)'`; \
 			$(MKINSTALLDIRS) $(DESTDIR)$(mandir)/man$$e ; \
-			$(INSTALL_PROGRAM) $(srcdir)/$$x \
+			$(INSTALL_DATA) $(srcdir)/$$x \
 				$(DESTDIR)$(mandir)/man$$e/$$f.$$e; \
 		done
 
@@ -125,12 +130,12 @@ TAGS:		$(SRCS) $(HDRS)
 		$(ETAGS) -t $(SRCS) $(HDRS)
 
 clean		:
-		rm -f $(PROGS) $(OBJS) *~ *.o core
+		rm -f $(PROGS) $(OBJS) *~ *.o core arladebu.c
 
 mostlyclean:	clean
 
 distclean:	clean
-		rm -f Makefile config.status
+		rm -f Makefile
 
 realclean:	distclean
 		rm -f TAGS

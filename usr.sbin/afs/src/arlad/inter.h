@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
  * The interface to the cache manager.
  */
 
-/* $Id: inter.h,v 1.3 2000/09/11 14:40:42 art Exp $ */
+/* $KTH: inter.h,v 1.24 2000/11/28 01:42:15 lha Exp $ */
 
 #ifndef _INTER_H_
 #define _INTER_H_
@@ -66,7 +61,7 @@ cm_store_state (void);
 
 Result
 cm_open (VenusFid *fid, CredCacheEntry **ce, u_int tokens,
-	 xfs_cache_handle *, char *, size_t);
+	 fcache_cache_handle *, char *, size_t);
 
 Result
 cm_close (VenusFid fid, int flag, AFSStoreStatus *, CredCacheEntry *ce);
@@ -127,9 +122,9 @@ cm_rename(VenusFid *old_parent_fid, const char *old_name,
 	  CredCacheEntry **ce);
 
 void
-cm_check_usedbytes_consistency (void);
+cm_check_consistency (void);
 
 void
-cm_turn_on_usedbytes_consistency(void);
+cm_turn_on_consistency_check(void);
 
 #endif /* _INTER_H_ */

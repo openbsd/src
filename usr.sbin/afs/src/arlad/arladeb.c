@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -36,54 +31,11 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-#include <assert.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <err.h>
-#include <parse_units.h>
-#include <roken.h>
-#include "volcache.h"
-#include "ko.h"
-
-#include "arladeb.h"
-
-RCSID("$Id: arladeb.c,v 1.3 2000/09/11 14:40:40 art Exp $");
+#include <arla_local.h>
+RCSID("$KTH: arladeb.c,v 1.24.2.2 2001/04/30 00:01:59 lha Exp $");
 
 Log_method* arla_log_method = NULL;
 Log_unit* arla_log_unit = NULL;
-
-#define all (ADEBERROR | ADEBWARN | ADEBDISCONN | ADEBFBUF |		\
-	     ADEBMSG | ADEBKERNEL | ADEBCLEANER | ADEBCALLBACK |	\
-	     ADEBCM | ADEBVOLCACHE | ADEBFCACHE | ADEBINIT |		\
-	     ADEBCONN | ADEBMISC | ADEBVLOG)
-
-#define DEFAULT_LOG (ADEBWARN | ADEBERROR)
-
-struct units arla_deb_units[] = {
-    { "all",		all},
-    { "almost-all",	all & ~ADEBCLEANER},
-    { "errors",		ADEBERROR },
-    { "warnings",	ADEBWARN },
-    { "disconn",	ADEBDISCONN },
-    { "fbuf",		ADEBFBUF },
-    { "messages",	ADEBMSG },
-    { "kernel",		ADEBKERNEL },
-    { "cleaner",	ADEBCLEANER },
-    { "callbacks",	ADEBCALLBACK },
-    { "cache-manager",	ADEBCM },
-    { "volume-cache",	ADEBVOLCACHE },
-    { "file-cache",	ADEBFCACHE },
-    { "initialization",	ADEBINIT },
-    { "connection",	ADEBCONN },
-    { "miscellaneous",	ADEBMISC },
-    { "venuslog",	ADEBVLOG },
-    { "default",	DEFAULT_LOG },
-    { "none",		0 },
-    { NULL }
-};
 
 void
 arla_log(unsigned level, char *fmt, ...)
@@ -97,8 +49,9 @@ arla_log(unsigned level, char *fmt, ...)
     va_end(args);
 }
 
+
 void
-arla_loginit(char *log)
+arla_loginit(char *log, log_flags flags)
 {
     assert (log);
     
@@ -106,9 +59,10 @@ arla_loginit(char *log)
     if (arla_log_method == NULL)
 	errx (1, "arla_loginit: log_opened failed with log `%s'", log);
     arla_log_unit = log_unit_init (arla_log_method, "arla", arla_deb_units,
-				   DEFAULT_LOG);
+				   ARLA_DEFAULT_LOG);
     if (arla_log_unit == NULL)
 	errx (1, "arla_loginit: log_unit_init failed");
+    log_setflags (arla_log_method, flags);
 }
 
 int
@@ -134,12 +88,6 @@ unsigned
 arla_log_get_level_num (void)
 {
     return log_get_mask (arla_log_unit);
-}
-
-void
-arla_log_print_levels (FILE *f)
-{
-    print_flags_table (arla_deb_units, f);
 }
 
 /*
@@ -228,4 +176,42 @@ void
 arla_vwarnx (unsigned level, const char *fmt, va_list args)
 {
     log_vlog (arla_log_unit, level, fmt, args);
+}
+
+void
+arla_warnx_with_fid (unsigned level, const VenusFid *fid, const char *fmt, ...)
+{
+    va_list args;
+
+    va_start (args, fmt);
+    arla_vwarnx_with_fid (level, fid, fmt, args);
+    va_end(args);
+}
+
+void
+arla_vwarnx_with_fid (unsigned level, const VenusFid *fid, const char *fmt,
+		      va_list args)
+{
+    char *s;
+    const char *cellname;
+    char volname[VLDB_MAXNAMELEN];
+
+    cellname = cell_num2name (fid->Cell);
+    if (cellname == NULL)
+	cellname = "<unknown>";
+    if (volcache_getname (fid->fid.Volume, fid->Cell,
+			  volname, sizeof(volname)) != 0)
+	strlcpy(volname, "<unknown>", sizeof(volname));
+
+    vasprintf (&s, fmt, args);
+    if (s == NULL) {
+	log_log (arla_log_unit, level,
+		 "Sorry, no memory to print `%s'...", fmt);
+	return;
+    }
+    log_log (arla_log_unit, level,
+	     "volume %s (%ld) in cell %s (%ld): %s",
+	     volname, (unsigned long)fid->fid.Volume, cellname,
+	     (long)fid->Cell, s);
+    free (s);
 }

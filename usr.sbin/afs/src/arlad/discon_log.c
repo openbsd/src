@@ -34,7 +34,7 @@
 
 #include "arla_local.h"
 
-RCSID("$Id: discon_log.c,v 1.2 2000/09/11 14:40:41 art Exp $");
+RCSID("$KTH: discon_log.c,v 1.8.40.1 2001/06/04 22:16:35 ahltorp Exp $");
 
 extern int dlog_mod;
 extern long current_op_no;
@@ -50,6 +50,7 @@ int DARLA_Read(DARLA_file *Dfp, char *cp, int len);
 int DARLA_Write(DARLA_file *Dfp, char *cp, int len);
 int DARLA_Seek(DARLA_file *Dfp, int offset, int whence);
 
+#if 0
 /*
  * read an entry from the log file described by tfile.  The result is
  * put into the log_ent data.  This return 0 if successful, 1 if
@@ -75,7 +76,6 @@ read_log_ent(DARLA_file * tfile, log_ent_t *in_log)
     return 0;
 }
 
-#if 0
 void
 update_log_ent(offset, flags)
 long offset;
@@ -113,7 +113,7 @@ int flags;
 
 
 /* write the log entries to disk */
-long
+static long
 write_log_ent(int len, log_ent_t *log)
 {
 
@@ -244,6 +244,7 @@ log_dis_create(struct vcache *parent, struct vcache *child, char *name)
     return op_no;
 }
 
+#if 0
 long
 log_dis_remove(struct vcache *avc, FCacheEntry *childentry, char *name)
 {
@@ -389,7 +390,7 @@ log_dis_symlink(struct vcache *pvc, struct vcache *cvc,
     free(slink);
     return op_no;
 }
-
+#endif
 
 /* Log a setattr operation */
 long
@@ -426,6 +427,7 @@ log_dis_setattr(struct vcache *tvc, struct xfs_attr *attrs)
     return op_no;
 }
 
+#if 0
 long
 log_dis_nonmutating(struct vcache *tvc, log_ops_t op)
 {
@@ -477,3 +479,4 @@ log_dis_fsync(struct vcache *tvc)
     /* treat an fsync as a store */
     return log_dis_nonmutating(tvc, DIS_FSYNC);
 }
+#endif

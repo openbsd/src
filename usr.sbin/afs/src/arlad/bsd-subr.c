@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,14 +35,16 @@
 #ifdef __osf__
 #define _OSF_SOURCE
 #define _BSD
+/* Might want to define _KERNEL for osf and use KDIRSIZ */
 #endif
+
 #include "arla_local.h"
-RCSID("$Id: bsd-subr.c,v 1.3 2000/09/11 14:40:40 art Exp $");
+RCSID("$KTH: bsd-subr.c,v 1.55.2.1 2001/01/29 02:02:17 lha Exp $");
 
 #ifdef __linux__
 #include <xfs/xfs_dirent.h>
 #else
-#define XFS_DIRENT_BLOCKSIZE 1024
+#define XFS_DIRENT_BLOCKSIZE 512
 #define xfs_dirent dirent
 #endif
 
@@ -101,7 +98,7 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
 #endif
      
      real->d_fileno = dentry2ino (name, fid, args->e);
-     strcpy (real->d_name, name);
+     strlcpy (real->d_name, name, sizeof(real->d_name));
      args->ptr += real->d_reclen;
      args->off += real->d_reclen;
      args->last = real;
@@ -109,7 +106,7 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
 
 Result
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
-	  xfs_cache_handle *cache_handle,
+	  fcache_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)
 {
     return conv_dir_sub (e, ce, tokens, cache_handle, cache_name,
@@ -126,7 +123,7 @@ conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 
 int
 dir_remove_name (FCacheEntry *e, const char *filename,
-		 xfs_cache_handle *cache_handle,
+		 fcache_cache_handle *cache_handle,
 		 char *cache_name, size_t cache_name_sz)
 {
     int ret;

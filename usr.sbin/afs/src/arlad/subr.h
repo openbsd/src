@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
  * Header with prototypes for OS-specific functions.
  */
 
-/* $Id: subr.h,v 1.3 2000/09/11 14:40:43 art Exp $ */
+/* $KTH: subr.h,v 1.11 2000/10/14 19:58:13 map Exp $ */
 
 #ifndef _SUBR_H_
 #define _SUBR_H_
@@ -66,11 +61,11 @@ dentry2ino (const char *name, const VenusFid *fid, const FCacheEntry *parent);
 
 Result
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
-	  xfs_cache_handle *, char *, size_t);
+	  fcache_cache_handle *, char *, size_t);
 
 Result
 conv_dir_sub (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
-	      xfs_cache_handle *cache_handle,
+	      fcache_cache_handle *cache_handle,
 	      char *cache_name, size_t cache_name_sz,
 	      fdir_readdir_func func,
 	      void (*flush_func)(void *),
@@ -78,7 +73,7 @@ conv_dir_sub (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 
 int
 dir_remove_name (FCacheEntry *e, const char *filename,
-		 xfs_cache_handle *cache_handle,
+		 fcache_cache_handle *cache_handle,
 		 char *cache_name, size_t cache_name_sz);
 
 #endif /* _SUBR_H_ */

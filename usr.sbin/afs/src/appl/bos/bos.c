@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <sl.h>
 #include "bos_local.h"
 
-RCSID("$Id: bos.c,v 1.1 2000/09/11 14:40:35 art Exp $");
+RCSID("$KTH: bos.c,v 1.7 2000/10/03 00:06:57 lha Exp $");
 
 int bos_interactive = 0;
 
@@ -55,38 +50,39 @@ static int apropos_cmd(int argc, char **argv);
  */
 
 static SL_cmd cmds[] = {
-  {"addhost",	empty_cmd,	"not yet implemented"},
-  {"addkey",	empty_cmd,	"not yet implemented"},
-  {"adduser",	bos_adduser,	"add users to super-user list"},
-  {"apropos",    apropos_cmd,     "apropos help"},
-  {"create",	empty_cmd,	"not yet implemented"},
-  {"delete",	empty_cmd,	"not yet implemented"},
-  {"exec",	empty_cmd,	"not yet implemented"},
-  {"exit",      quit_cmd,        "exit interactive mode"},
-  {"getdate",	empty_cmd,	"not yet implemented"},
-  {"getlog",	empty_cmd,	"not yet implemented"},
-  {"getrestart",bos_getrestart,	"get restart times"},
-  {"help",        help_cmd,       "print help"},
-  {"install",	empty_cmd,	"not yet implemented"},
-  {"listhosts",	bos_listhosts,	"list VLDB-servers"},
-  {"listkeys",	empty_cmd,	"not yet implemented"},
-  {"listusers",	bos_listusers,	"list super-users"},
-  {"prune",	empty_cmd,	"not yet implemented"},
-  {"removehost",	empty_cmd,	"not yet implemented"},
-  {"removekey",	empty_cmd,	"not yet implemented"},
-  {"removeuser",	empty_cmd,	"not yet implemented"},
-  {"restart",	empty_cmd,	"not yet implemented"},
-  {"salvage",	empty_cmd,	"not yet implemented"},
-  {"setauth",	empty_cmd,	"not yet implemented"},
-  {"setcellname",	empty_cmd,	"not yet implemented"},
-  {"setrestart",	empty_cmd,	"not yet implemented"},
-  {"shutdown",	empty_cmd,	"not yet implemented"},
-  {"start",	empty_cmd,	"not yet implemented"},
-  {"status",      bos_status,     "Show volume server transactions"},
-  {"stop",	empty_cmd,	"not yet implemented"},
-  {"uninstall",	empty_cmd,	"not yet implemented"},
-  {"quit",       quit_cmd,        "exit interactive mode"},
-  {NULL}
+    {"addhost",		empty_cmd,	"not yet implemented"},
+    {"addkey",		empty_cmd,	"not yet implemented"},
+    {"adduser",		bos_adduser,	"add users to super-user list"},
+    {"apropos",		apropos_cmd,	"apropos help"},
+    {"create",		empty_cmd,	"not yet implemented"},
+    {"delete",		empty_cmd,	"not yet implemented"},
+    {"exec",		empty_cmd,	"not yet implemented"},
+    {"exit",		quit_cmd,    	"exit interactive mode"},
+    {"getdate",		empty_cmd,	"not yet implemented"},
+    {"getlog",		empty_cmd,	"not yet implemented"},
+    {"getrestart",	bos_getrestart,	"get restart times"},
+    {"help",		help_cmd,	"print help"},
+    {"install",		empty_cmd,	"not yet implemented"},
+    {"listhosts",	bos_listhosts,	"list VLDB-servers"},
+    {"listkeys",	empty_cmd,	"not yet implemented"},
+    {"listusers",	bos_listusers,	"list super-users"},
+    {"prune",		empty_cmd,	"not yet implemented"},
+    {"removehost",	empty_cmd,	"not yet implemented"},
+    {"removekey",	empty_cmd,	"not yet implemented"},
+    {"removeuser",	empty_cmd,	"not yet implemented"},
+    {"restart",		empty_cmd,	"not yet implemented"},
+    {"salvage",		empty_cmd,	"not yet implemented"},
+    {"setauth",		empty_cmd,	"not yet implemented"},
+    {"setcellname",	empty_cmd,	"not yet implemented"},
+    {"setrestart",	empty_cmd,	"not yet implemented"},
+    {"shutdown",	empty_cmd,	"not yet implemented"},
+    {"start",		empty_cmd,	"not yet implemented"},
+    {"status",		bos_status,
+     "Show volume server transactions"},
+    {"stop",		empty_cmd,	"not yet implemented"},
+    {"uninstall",	empty_cmd,	"not yet implemented"},
+    {"quit",		quit_cmd,	"exit interactive mode"},
+    {NULL}
 };
 
 /*
@@ -96,8 +92,8 @@ static SL_cmd cmds[] = {
 static int
 empty_cmd(int argc, char **argv)
 {
-  printf("%s%s has not been implemented yet!\n", PROGNAME, argv[0]);
-  return 0;
+    printf("%s%s has not been implemented yet!\n", PROGNAME, argv[0]);
+    return 0;
 }
 
 /*
@@ -107,8 +103,8 @@ empty_cmd(int argc, char **argv)
 static int
 quit_cmd(int argc, char **argv)
 {
-  printf("exiting\n");
-  return 1;
+    printf("exiting\n");
+    return 1;
 }
 
 /*
@@ -118,8 +114,8 @@ quit_cmd(int argc, char **argv)
 static int
 help_cmd(int argc, char **argv)
 {
-  sl_help(cmds, argc, argv);
-  return 0;
+    sl_help(cmds, argc, argv);
+    return 0;
 }
 
 /*
@@ -129,13 +125,13 @@ help_cmd(int argc, char **argv)
 static int
 apropos_cmd(int argc, char **argv)
 {
-  if (argc == 0) {
-    fprintf (stderr, "apropos: missing topic");
+    if (argc == 0) {
+	fprintf (stderr, "apropos: missing topic");
+	return 0;
+    }
+    
+    sl_apropos(cmds, argv[1]);
     return 0;
-  }
-
-  sl_apropos(cmds, argv[1]);
-  return 0;
 }
 
 
@@ -146,18 +142,24 @@ apropos_cmd(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-  int ret = 0;
+    Log_method *method;
+    int ret = 0;
     
-  cell_init(0);
-  ports_init();
+    set_progname(argv[0]);
 
-  if (argc > 1)
-    ret = sl_command(cmds, argc - 1, argv + 1);
-  else {
-    bos_interactive = 1;
-    printf("bos - an arla tool for administrating AFS-servers.\n");
-    printf("Type \"help\" to get a list of commands.\n");
-    ret = sl_loop(cmds, __progname": ");
-  }
-  return ret;
+    method = log_open (get_progname(), "/dev/stderr:notime");
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
+    ports_init();
+    
+    if (argc > 1)
+	ret = sl_command(cmds, argc - 1, argv + 1);
+    else {
+	bos_interactive = 1;
+	printf("bos - an arla tool for administrating AFS-servers.\n");
+	printf("Type \"help\" to get a list of commands.\n");
+	ret = sl_loop(cmds, __progname": ");
+    }
+    return ret;
 }

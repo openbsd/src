@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,26 +35,10 @@
  * Check a directory in afs format.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-#include <stdio.h>
-#include <assert.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <atypes.h>
-#include <sys/stat.h>
-#include <err.h>
-#include <roken.h>
-
+#include "arla_local.h"
 #include <getarg.h>
 
-#include "ko.h"
-#include "fbuf.h"
-#include "arladeb.h"
-#include "afs_dir.h"
-
-RCSID("$Id: afsdir_check.c,v 1.3 2000/09/11 14:40:39 art Exp $");
+RCSID("$KTH: afsdir_check.c,v 1.21.2.1 2001/10/03 23:36:00 assar Exp $");
 
 static int help_flag;
 static int verbose = 0;
@@ -101,7 +80,7 @@ getentry (DirPage0 *page0,
 }
 
 static int
-check (const char *filename)
+check_dir (const char *filename)
 {
     struct stat statbuf;
     int fd;
@@ -319,13 +298,12 @@ static struct getargs args[] = {
      "run in test mode", NULL},
     {"help",	0,	arg_flag,	&help_flag,
      NULL, NULL},
-    {NULL,      0,      arg_end,        NULL, NULL, NULL}
 };
 
 static void
 usage (int ret)
 {
-    arg_printusage (args, NULL, "[file]", ARG_GNUSTYLE);
+    arg_printusage (args, sizeof(args)/sizeof(*args), NULL, "[file]");
     exit (ret);
 }
 
@@ -334,7 +312,7 @@ main(int argc, char **argv)
 {
     int optind = 0;
     
-    if (getarg (args, argc, argv, &optind, ARG_GNUSTYLE))
+    if (getarg (args, sizeof(args)/sizeof(*args), argc, argv, &optind))
 	usage (1);
 
     argc -= optind;
@@ -346,8 +324,5 @@ main(int argc, char **argv)
     if (argc != 1)
 	usage (1);
 
-    arla_loginit ("/dev/stderr");
-    arla_log_set_level ("all");
-
-    return check (argv[0]);
+    return check_dir (argv[0]);
 }

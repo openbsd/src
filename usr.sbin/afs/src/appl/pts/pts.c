@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -14,12 +14,9 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
  *      Höskolan and its contributors.
  * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,7 +36,7 @@
 #include <sl.h>
 #include "appl_locl.h"
 
-RCSID("$Id: pts.c,v 1.1 2000/09/11 14:40:36 art Exp $");
+RCSID("$KTH: pts.c,v 1.50.2.2 2001/07/06 01:40:11 lha Exp $");
 
 static int help_cmd (int argc, char **argv);
 
@@ -53,60 +50,36 @@ empty_cmd (int argc, char **argv)
     return 0;
 }
 
-static void
-dump_usage (void)
-{
-    printf("Usage: pts dump <vldb server>+ [-cell <cell>]\n");
-}
+/*
+ * Dump the pts database
+ */
 
 static int
-dump_cmd (int argc, char **argv)
+dump_1 (struct rx_connection  *connptdb)
 {
-    struct rx_connection  *connptdb = NULL;
     struct prdebugentry    entry;
     struct prheader        header;
-    const char            *host;
-    int                    noauth = 0;
+
     unsigned int           pos;
     int                    error;
 
-    argc--;
-    argv++;
-
-    if (argc < 1) {
-	dump_usage ();
-	return -1;
-    }
-
-    host = argv[0];
-
-    connptdb = arlalib_getconnbyname(cell_getcellbyhost(host),
-				     host,
-				     afsprport,
-				     PR_SERVICE_ID,
-				     arlalib_getauthflag (noauth, 0, 0, 0));
-
-    if (connptdb == NULL)
-	return 0;
-
     error = PR_DumpEntry(connptdb, 0, (struct prdebugentry *) &header);
-
     if (error) {
 	printf("dump_cmd: DumpEntry failed with: %s (%d)\n",
 	       koerr_gettext(error),
 	       error);
 	return 0;
     }
-
-    for (pos = header.headerSize; pos < header.eofPtr; pos += sizeof (struct prdebugentry)) {
+    
+    for (pos = header.headerSize; 
+	 pos < header.eofPtr; 
+	 pos += sizeof (struct prdebugentry)) {
 	error = PR_DumpEntry(connptdb, pos, &entry);
 	if (error) {
 	    printf("dump_cmd: DumpEntry failed with: %s (%d)\n",
 		   koerr_gettext(error),
 		   error);
-/*	    return -1;*/
-	}
-	else {
+	} else {
 	    printf("-----\n");
 	    printf("Name: %s, id: %d, owner: %d, creator: %d,\n",
 		   entry.name, entry.id, entry.owner, entry.creator);
@@ -129,13 +102,57 @@ dump_cmd (int argc, char **argv)
 		printf (" PRACCESS");
 	    if ((entry.flags & PRQUOTA) == PRQUOTA)
 		printf (" PRQUOTA");
-
+	    
 	    printf (" , group quota: %d.\n",
 		    entry.ngroups);
 	}
     }
+    return 0;
+}
 
-    arlalib_destroyconn(connptdb);
+/*
+ * Dump the pts database, should be replaced with 'pts liste'
+ */
+
+static int
+dump_cmd (int argc, char **argv)
+{
+    struct rx_connection *conn;
+    struct db_server_context conn_context;
+    const char *host = NULL;
+    const char *cell = (char *) cell_getthiscell();
+    int noauth = 0;
+    int optind = 0;
+    int error = ENETDOWN;
+    
+    struct agetargs args[] = {
+	{"host",	0, aarg_string,  NULL, NULL, NULL, aarg_mandatory},
+	{"cell",	0, aarg_string,  NULL, "what cell to use", NULL},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate", NULL},
+	{NULL,      0, aarg_end, NULL}}, 
+					 *arg;
+    arg = args;
+    arg->value = &host;   arg++;
+    arg->value = &cell;   arg++;
+    arg->value = &noauth; arg++;
+
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(args, "pts dump", NULL, AARG_AFSSTYLE);
+	return 0;
+    }
+    
+    cell = cell_expand_cell (cell);
+
+    for (conn = arlalib_first_db(&conn_context,
+				 cell, host, afsprport, PR_SERVICE_ID, 
+				 arlalib_getauthflag (noauth, 0, 0, 0));
+	 conn != NULL && arlalib_try_next_db(error);
+	 conn = arlalib_next_db(&conn_context)) {
+	error = dump_1 (conn);
+    }
+    free_db_server_context(&conn_context);
+    return error;
+
     return 0;
 }
 
@@ -662,7 +679,10 @@ pts_name_to_id(struct rx_connection *conn, const char *name, int32_t *id)
 	errx(1, "Out of memory");
     strlcpy(nlist.val[0], name, sizeof(prname));
     res = PR_NameToID(conn, &nlist, &ilist);
-    *id = ilist.val[0];
+    if (res == 0)
+	*id = ilist.val[0];
+    if (*id == PR_ANONYMOUSID)
+	res = PRNOENT;
     free(ilist.val);
     free(nlist.val);
     return res;
@@ -678,8 +698,6 @@ listowned_1 (struct rx_connection *conn, const char *user)
     prlist pr;
     int i;
 
-    printf("%s\n", user);
-
     error = pts_name_to_id (conn, user, &id);
     if(error != 0)
         return error;
@@ -689,13 +707,9 @@ listowned_1 (struct rx_connection *conn, const char *user)
     if(pr.val == NULL)
 	errx(1, "Out of memory");
 
-    printf("%d\n", id);
     error = PR_ListOwned(conn, id, &pr, &over);
     if(error != 0)
 	return error;
-
-    printf("id = %d\n", id);
-    printf("pr.len = %d\n", pr.len);
 
     i = 0;
     name = malloc(PR_MAXNAMELEN);
@@ -747,14 +761,14 @@ create_cmd(int argc, char **argv, int groupp, const char *cmd_name)
     int error;
     int optind = 0;
     
-    struct getargs createuserarg[] = {
-	{"name",	0, arg_string,  NULL, NULL, NULL, arg_mandatory},
-	{"owner",	0, arg_string,	NULL, "owner of the group"},
-	{"id",		0, arg_integer, NULL, "id of user", NULL},
-	{"cell",	0, arg_string,  NULL, "what cell to use", NULL},
-	{"host",	0, arg_string,	NULL, "specified db", NULL},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate", NULL},
-	{NULL,      0, arg_end, NULL}}, 
+    struct agetargs createuserarg[] = {
+	{"name",	0, aarg_string,  NULL, NULL, NULL, aarg_mandatory},
+	{"owner",	0, aarg_string,	NULL, "owner of the group"},
+	{"id",		0, aarg_integer, NULL, "id of user", NULL},
+	{"cell",	0, aarg_string,  NULL, "what cell to use", NULL},
+	{"host",	0, aarg_string,	NULL, "specified db", NULL},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate", NULL},
+	{NULL,      0, aarg_end, NULL}}, 
 					 *arg;
 
     arg = createuserarg;
@@ -773,11 +787,13 @@ create_cmd(int argc, char **argv, int groupp, const char *cmd_name)
 	memmove (&createuserarg[1], &createuserarg[2],
 		 6 * sizeof(createuserarg[0]));
 	
-    if (getarg (createuserarg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(createuserarg, cmd_name, NULL, ARG_AFSSTYLE);
+    if (agetarg (createuserarg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(createuserarg, cmd_name, NULL, AARG_AFSSTYLE);
 	return 0;
     }
     
+    cell = cell_expand_cell (cell);
+
     error = pr_create(cell, host, name, owner, &id, groupp, 
 		      arlalib_getauthflag (noauth, 0, 0, 0));
     if (error) {
@@ -825,13 +841,13 @@ adduser_cmd(int argc, char **argv)
     int error;
     int optind = 0;
     
-    struct getargs addarg[] = {
-	{"name",	0, arg_string,  NULL, "username", NULL, arg_mandatory},
-	{"group",	0, arg_string,  NULL, "groupname",NULL, arg_mandatory},
-	{"cell",	0, arg_string,  NULL, "what cell to use", NULL},
-	{"host",	0, arg_string,	NULL, "specified db", NULL},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate", NULL},
-	{NULL,      0, arg_end, NULL}}, 
+    struct agetargs addarg[] = {
+	{"name",	0, aarg_string,  NULL, "username", NULL, aarg_mandatory},
+	{"group",	0, aarg_string,  NULL, "groupname",NULL, aarg_mandatory},
+	{"cell",	0, aarg_string,  NULL, "what cell to use", NULL},
+	{"host",	0, aarg_string,	NULL, "specified db", NULL},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate", NULL},
+	{NULL,      0, aarg_end, NULL}}, 
 					 *arg;
 
     arg = addarg;
@@ -841,11 +857,13 @@ adduser_cmd(int argc, char **argv)
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (addarg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(addarg, "pts adduser", NULL, ARG_AFSSTYLE);
+    if (agetarg (addarg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(addarg, "pts adduser", NULL, AARG_AFSSTYLE);
 	return 0;
     }
     
+    cell = cell_expand_cell (cell);
+
     error = pr_adduser(cell, host, user, group, 
 		       arlalib_getauthflag (noauth, 0, 0, 0));
     if (error) {
@@ -863,19 +881,19 @@ adduser_cmd(int argc, char **argv)
 static int
 delete_cmd(int argc, char **argv)
 {
-    const char *user;
+    const char *user = NULL;
     const char *cell = cell_getthiscell();
     const char *host = NULL;
     int noauth = 0;
     int error;
     int optind = 0;
     
-    struct getargs deletearg[] = {
-	{"name",	0, arg_string,  NULL, "username", NULL, arg_mandatory},
-	{"cell",	0, arg_string,  NULL, "what cell to use", NULL},
-	{"host",	0, arg_string,	NULL, "specified db", NULL},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate", NULL},
-	{NULL,      0, arg_end, NULL}}, 
+    struct agetargs deletearg[] = {
+	{"name",	0, aarg_string,  NULL, "username", NULL, aarg_mandatory},
+	{"cell",	0, aarg_string,  NULL, "what cell to use", NULL},
+	{"host",	0, aarg_string,	NULL, "specified db", NULL},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate", NULL},
+	{NULL,      0, aarg_end, NULL}}, 
 					 *arg;
 
     arg = deletearg;
@@ -884,11 +902,13 @@ delete_cmd(int argc, char **argv)
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (deletearg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(deletearg, "pts delete", NULL, ARG_AFSSTYLE);
+    if (agetarg (deletearg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(deletearg, "pts delete", NULL, AARG_AFSSTYLE);
 	return 0;
     }
     
+    cell = cell_expand_cell (cell);
+
     error = pr_delete(cell, host, user, 
 		      arlalib_getauthflag (noauth, 0, 0, 0));
     if (error) {
@@ -908,21 +928,21 @@ delete_cmd(int argc, char **argv)
 static int
 removeuser_cmd(int argc, char **argv)
 {
-    const char *user;
-    const char *group;
+    const char *user = NULL;
+    const char *group = NULL;
     const char *cell = cell_getthiscell();
     const char *host = NULL;
     int noauth = 0;
     int error;
     int optind = 0;
     
-    struct getargs removearg[] = {
-	{"user",	0, arg_string,  NULL, "username", NULL, arg_mandatory},
-	{"group",	0, arg_string,  NULL, "group", NULL, arg_mandatory},
-	{"cell",	0, arg_string,  NULL, "what cell to use", NULL},
-	{"host",	0, arg_string,	NULL, "specified db", NULL},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate", NULL},
-	{NULL,      0, arg_end, NULL}}, 
+    struct agetargs removearg[] = {
+	{"user",	0, aarg_string,  NULL, "username", NULL, aarg_mandatory},
+	{"group",	0, aarg_string,  NULL, "group", NULL, aarg_mandatory},
+	{"cell",	0, aarg_string,  NULL, "what cell to use", NULL},
+	{"host",	0, aarg_string,	NULL, "specified db", NULL},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate", NULL},
+	{NULL,      0, aarg_end, NULL}}, 
 					 *arg;
 
     arg = removearg;
@@ -932,11 +952,13 @@ removeuser_cmd(int argc, char **argv)
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (removearg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(removearg, "pts remove", NULL, ARG_AFSSTYLE);
+    if (agetarg (removearg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(removearg, "pts remove", NULL, AARG_AFSSTYLE);
 	return 0;
     }
     
+    cell = cell_expand_cell (cell);
+
     error = pr_removeuser(cell, host, user, group, 
 			  arlalib_getauthflag (noauth, 0, 0, 0));
     if (error) {
@@ -956,21 +978,21 @@ removeuser_cmd(int argc, char **argv)
 static int
 rename_cmd(int argc, char **argv)
 {
-    const char *fromname;
-    const char *toname;
+    const char *fromname = NULL;
+    const char *toname = NULL;
     const char *cell = cell_getthiscell();
     const char *host = NULL;
     int noauth = 0;
     int error;
     int optind = 0;
     
-    struct getargs renamearg[] = {
-	{"from",	0, arg_string,  NULL, "from name",NULL, arg_mandatory},
-	{"to", 	  	0, arg_string,  NULL, "to name", NULL, arg_mandatory},
-	{"cell",	0, arg_string,  NULL, "what cell to use", NULL},
-	{"host",	0, arg_string,	NULL, "specified db", NULL},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate", NULL},
-	{NULL,      0, arg_end, NULL}}, 
+    struct agetargs renamearg[] = {
+	{"from",	0, aarg_string,  NULL, "from name",NULL, aarg_mandatory},
+	{"to", 	  	0, aarg_string,  NULL, "to name", NULL, aarg_mandatory},
+	{"cell",	0, aarg_string,  NULL, "what cell to use", NULL},
+	{"host",	0, aarg_string,	NULL, "specified db", NULL},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate", NULL},
+	{NULL,      0, aarg_end, NULL}}, 
 					 *arg;
 
     arg = renamearg;
@@ -980,11 +1002,13 @@ rename_cmd(int argc, char **argv)
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (renamearg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(renamearg, "pts rename", NULL, ARG_AFSSTYLE);
+    if (agetarg (renamearg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(renamearg, "pts rename", NULL, AARG_AFSSTYLE);
 	return 0;
     }
     
+    cell = cell_expand_cell (cell);
+
     error = pr_rename(cell, host, fromname, toname, 
 		      arlalib_getauthflag (noauth, 0, 0, 0));
     if (error) {
@@ -1016,7 +1040,7 @@ setfields_error(void)
 static int
 setfields_cmd(int argc, char **argv)
 {
-    const char *name;
+    const char *name = NULL;
     const char *strflags = NULL;
     int flags = -1;
     int gquota = -1;
@@ -1027,15 +1051,15 @@ setfields_cmd(int argc, char **argv)
     int error;
     int optind = 0;
     
-    struct getargs setfieldarg[] = {
-	{"name",	0, arg_string,  NULL, "name of user/group",
-	 NULL, arg_mandatory},
-	{"flags", 	0, arg_string,  NULL, "flags", NULL},
-	{"groupquota", 	0, arg_integer, NULL, "groupquota",NULL},
-	{"cell",	0, arg_string,  NULL, "what cell to use", NULL},
-	{"host",	0, arg_string,	NULL, "specified db", NULL},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate", NULL},
-	{NULL,      0, arg_end, NULL}}, 
+    struct agetargs setfieldarg[] = {
+	{"name",	0, aarg_string,  NULL, "name of user/group",
+	 NULL, aarg_mandatory},
+	{"flags", 	0, aarg_string,  NULL, "flags", NULL},
+	{"groupquota", 	0, aarg_integer, NULL, "groupquota",NULL},
+	{"cell",	0, aarg_string,  NULL, "what cell to use", NULL},
+	{"host",	0, aarg_string,	NULL, "specified db", NULL},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate", NULL},
+	{NULL,      0, aarg_end, NULL}}, 
 					 *arg;
 
     arg = setfieldarg;
@@ -1046,8 +1070,8 @@ setfields_cmd(int argc, char **argv)
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (setfieldarg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(setfieldarg, "pts setfields", NULL, ARG_AFSSTYLE);
+    if (agetarg (setfieldarg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(setfieldarg, "pts setfields", NULL, AARG_AFSSTYLE);
 	return 0;
     }
 
@@ -1089,6 +1113,8 @@ setfields_cmd(int argc, char **argv)
 	    return setfields_error();
     }
     
+    cell = cell_expand_cell (cell);
+
     error = pr_setfields(cell, host, name, flags, gquota, uquota, 
 			 arlalib_getauthflag (noauth, 0, 0, 0));
     if (error) {
@@ -1108,23 +1134,23 @@ setfields_cmd(int argc, char **argv)
 static int
 chown_cmd(int argc, char **argv)
 {
-    const char *name;
-    const char *owner;
+    const char *name = NULL;
+    const char *owner = NULL;
     const char *cell = cell_getthiscell();
-    const char *host;
+    const char *host = NULL;
     int noauth = 0;
     int error;
     int optind = 0;
     
-    struct getargs chownarg[] = {
-	{"name",	0, arg_string,  NULL, "user or group name",
-	 NULL, arg_mandatory},
-	{"owner", 	  	0, arg_string,  NULL, "new owner", 
-	 NULL, arg_mandatory},
-	{"host",	0, arg_string,	NULL, "specified db", NULL},
-	{"cell",	0, arg_string,  NULL, "what cell to use", NULL},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate", NULL},
-	{NULL,      0, arg_end, NULL}}, 
+    struct agetargs chownarg[] = {
+	{"name",	0, aarg_string,  NULL, "user or group name",
+	 NULL, aarg_mandatory},
+	{"owner", 	  	0, aarg_string,  NULL, "new owner", 
+	 NULL, aarg_mandatory},
+	{"host",	0, aarg_string,	NULL, "specified db", NULL},
+	{"cell",	0, aarg_string,  NULL, "what cell to use", NULL},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate", NULL},
+	{NULL,      0, aarg_end, NULL}}, 
 				    *arg;
     
     arg = chownarg;
@@ -1134,11 +1160,13 @@ chown_cmd(int argc, char **argv)
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (chownarg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(chownarg, "pts chown", NULL, ARG_AFSSTYLE);
+    if (agetarg (chownarg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(chownarg, "pts chown", NULL, AARG_AFSSTYLE);
 	return 0;
     }
     
+    cell = cell_expand_cell (cell);
+
     error = pr_chown(cell, host, name, owner, 
 		     arlalib_getauthflag (noauth, 0, 0, 0));
     if (error) {
@@ -1156,7 +1184,7 @@ chown_cmd(int argc, char **argv)
  */
 
 static int
-examine1 (struct rx_connection *conn, getarg_strings *users)
+examine1 (struct rx_connection *conn, agetarg_strings *users)
 {
     namelist nlist;
     idlist ilist;
@@ -1212,20 +1240,20 @@ examine_cmd (int argc, char **argv)
     struct rx_connection *connptdb = NULL;
     struct db_server_context conn_context;
     int noauth = 1;
-    getarg_strings users = {0 , NULL };
+    agetarg_strings users = {0 , NULL };
     int optind = 0;
     int error = -1;
     
-    struct getargs examinearg[] = {
-	{"nameorid",	0, arg_strings,  NULL, "user or group name",
-	 NULL, arg_mandatory},
-	{"cell",	0, arg_string,  NULL, "what cell to use",
-	 NULL, arg_optional},
-	{"host",	0, arg_string,	NULL, "specified db",
-	 NULL, arg_optional},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate",
-	 NULL, arg_optional},
-	{NULL,      0, arg_end, NULL}}, *arg;
+    struct agetargs examinearg[] = {
+	{"nameorid",	0, aarg_strings,  NULL, "user or group name",
+	 NULL, aarg_mandatory},
+	{"cell",	0, aarg_string,  NULL, "what cell to use",
+	 NULL, aarg_optional},
+	{"host",	0, aarg_string,	NULL, "specified db",
+	 NULL, aarg_optional},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate",
+	 NULL, aarg_optional},
+	{NULL,      0, aarg_end, NULL}}, *arg;
     
     arg = examinearg;
     arg->value = &users;  arg++;
@@ -1233,10 +1261,12 @@ examine_cmd (int argc, char **argv)
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (examinearg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(examinearg, "pts examine", NULL, ARG_AFSSTYLE);
+    if (agetarg (examinearg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(examinearg, "pts examine", NULL, AARG_AFSSTYLE);
 	return 0;
     }
+
+    cell = cell_expand_cell (cell);
 
     error = ENETDOWN;
     for (connptdb = arlalib_first_db(&conn_context, cell, host, afsprport,
@@ -1263,24 +1293,26 @@ listmax_cmd (int argc, char **argv)
     int optind = 0;
     int noauth = 0;
 
-    struct getargs examinearg[] = {
-	{"cell",	0, arg_string,  NULL, "what cell to use",
-	 NULL, arg_optional},
-	{"host",	0, arg_string,	NULL, "specified db",
-	 NULL, arg_optional},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate",
-	 NULL, arg_optional},
-	{NULL,      0, arg_end, NULL}}, *arg;
+    struct agetargs examinearg[] = {
+	{"cell",	0, aarg_string,  NULL, "what cell to use",
+	 NULL, aarg_optional},
+	{"host",	0, aarg_string,	NULL, "specified db",
+	 NULL, aarg_optional},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate",
+	 NULL, aarg_optional},
+	{NULL,      0, aarg_end, NULL}}, *arg;
     
     arg = examinearg;
     arg->value = &cell;   arg++;
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (examinearg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(examinearg, "pts listmax", NULL, ARG_AFSSTYLE);
+    if (agetarg (examinearg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(examinearg, "pts listmax", NULL, AARG_AFSSTYLE);
 	return 0;
     }
+
+    cell = cell_expand_cell (cell);
 
     error = ENETDOWN;
     for (connptdb = arlalib_first_db(&conn_context, cell, host, afsprport,
@@ -1303,41 +1335,35 @@ listmembershipbyname(struct rx_connection *conn, const char *name)
 {
     int32_t res = 0;
     int32_t id = 0;
+    int32_t over;
+    int i;
+    prlist elist;
 
     res = pts_name_to_id(conn, name, &id);
-    if(res) {
-	fprintf(stderr, "membership: error %s (%d)\n",
-		koerr_gettext(res), res);
+    if(res)
         return res;
-    } else {
-	int32_t over;
-	int i;
-	prlist elist;
-	elist.len = PR_MAXGROUPS; /* XXX this will allocate 5000 ints, should
-				  check how many groups first. That will take
-				  a lot of code though. */
-	elist.val = malloc(sizeof(int32_t) * elist.len);
-	if(elist.val == NULL)
-	    errx(1, "Out of memory");
-	res = PR_ListElements(conn, id, &elist, &over);
-	if(res != 0) {
-	    fprintf(stderr, "membership: error %s (%d)\n",
-		    koerr_gettext(res), res);
-	    return res;
-	} else {
-	    if(id>=0)
-		printf("Groups %s (id: %d) is a member of:\n", name, id);
-	    else
-		printf("Members of %s (id: %d) are:\n", name, id);
-	    for(i = 0; i < elist.len; i++) {
-		prname pr;
-		res = pts_id_to_name(conn, elist.val[i], &pr);
-		printf("  %s\n", (char *)&pr);
-	    }
-	    free(elist.val);
-	    return 0;
-	}
+
+    elist.len = PR_MAXGROUPS; /* XXX this will allocate 5000 ints, should
+				 check how many groups first. That will take
+				 a lot of code though. */
+    elist.val = malloc(sizeof(int32_t) * elist.len);
+    if(elist.val == NULL)
+	errx(1, "Out of memory");
+    res = PR_ListElements(conn, id, &elist, &over);
+    if(res != 0)
+	return res;
+    
+    if(id>=0)
+	printf("Groups %s (id: %d) is a member of:\n", name, id);
+    else
+	printf("Members of %s (id: %d) are:\n", name, id);
+    for(i = 0; i < elist.len; i++) {
+	prname pr;
+	res = pts_id_to_name(conn, elist.val[i], &pr);
+	printf("  %s\n", (char *)&pr);
     }
+    free(elist.val);
+    return 0;
 }
 
 static int
@@ -1351,17 +1377,17 @@ member_cmd (int argc, char **argv)
     int32_t noauth = 0;
     int i = 0;
     int optind = 0;
-    getarg_strings users = {0 , NULL };
+    agetarg_strings users = {0 , NULL };
 
-    struct getargs memarg[] = {
-	{"nameorid",	0, arg_strings,  NULL, "user or group name",
-	 NULL, arg_mandatory},
-	{"cell",	0, arg_string,  NULL, "what cell to use",
-	 NULL, arg_optional},
-	{"host",	0, arg_string,	NULL, "specified db", NULL},
-	{"noauth",	0, arg_flag,    NULL, "don't authenticate",
-	 NULL, arg_optional},
-	{NULL,      0, arg_end, NULL}}, *arg;
+    struct agetargs memarg[] = {
+	{"nameorid",	0, aarg_strings,  NULL, "user or group name",
+	 NULL, aarg_mandatory},
+	{"cell",	0, aarg_string,  NULL, "what cell to use",
+	 NULL, aarg_optional},
+	{"host",	0, aarg_string,	NULL, "specified db", NULL},
+	{"noauth",	0, aarg_flag,    NULL, "don't authenticate",
+	 NULL, aarg_optional},
+	{NULL,      0, aarg_end, NULL}}, *arg;
     
     arg = memarg;
     arg->value = &users;  arg++;
@@ -1369,14 +1395,15 @@ member_cmd (int argc, char **argv)
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
     
-    if (getarg (memarg, argc, argv, &optind, ARG_AFSSTYLE)) {
-	arg_printusage(memarg, "pts membership", NULL, ARG_AFSSTYLE);
+    if (agetarg (memarg, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage(memarg, "pts membership", NULL, AARG_AFSSTYLE);
 	return 0;
     }
 
-    for(i=0;i<users.num_strings;i++)
-	printf("%s\n", users.strings[i]);
-    
+    cell = cell_expand_cell (cell);
+
+    memset(&conn_context, '\0', sizeof(struct db_server_context));
+
     error = ENETDOWN;
     for (connptdb = arlalib_first_db(&conn_context, cell, host, afsprport,
 				     PR_SERVICE_ID,
@@ -1390,14 +1417,11 @@ member_cmd (int argc, char **argv)
 		error = tmp;
 	}
     }
+    if (error)
+	fprintf(stderr, "membership: %s (%d)\n",
+		koerr_gettext(error), error);
     free_db_server_context(&conn_context);
     return 0;
-}
-
-static void
-listowned_usage(void)
-{
-    printf("Usage: pts [-id] <user or group> [-cell <cell>] [-noauth] [-help]\n");
 }
 
 static int
@@ -1410,14 +1434,14 @@ listowned_cmd(int argc, char **argv)
     const char *host = NULL;
     int noauth = 0;
     
-    static struct getargs listowned_args[] = {
-	{"id",	   0, arg_string,  NULL,  "id of user/group",
-	 NULL, arg_mandatory},
-	{"cell",   0, arg_string,  NULL, "what cell to use",
+    static struct agetargs listowned_args[] = {
+	{"id",	   0, aarg_string,  NULL,  "id of user/group",
+	 NULL, aarg_mandatory},
+	{"cell",   0, aarg_string,  NULL, "what cell to use",
 	 NULL},
-	{"host",	0, arg_string,	NULL, "specified db", NULL},
-	{"noauth", 0,   arg_flag,    NULL, "don't authenticate", NULL},
-	{NULL,     0,    arg_end,   NULL}}, *arg;
+	{"host",	0, aarg_string,	NULL, "specified db", NULL},
+	{"noauth", 0,   aarg_flag,    NULL, "don't authenticate", NULL},
+	{NULL,     0,    aarg_end,   NULL}}, *arg;
 
     arg = listowned_args;
     arg->value = &user;   arg++;
@@ -1425,10 +1449,12 @@ listowned_cmd(int argc, char **argv)
     arg->value = &host;   arg++;
     arg->value = &noauth; arg++;
 
-    if (getarg (listowned_args, argc, argv, &optind, ARG_AFSSTYLE)) {
-	listowned_usage();
+    if (agetarg (listowned_args, argc, argv, &optind, AARG_AFSSTYLE)) {
+	aarg_printusage (listowned_args, "pts listowned", NULL, AARG_AFSSTYLE);
 	return 0;
     }
+
+    cell = cell_expand_cell (cell);
 
     error = pr_listowned (cell, host, user,
 			  arlalib_getauthflag (noauth, 0, 0, 0));
@@ -1494,12 +1520,19 @@ int
 main(int argc, char **argv)
 {
     int ret = 0;
+    Log_method *method;
     char **myargv;
     int pos = 0;
     int i;
 
+    set_progname(argv[0]);
+    tzset();
+
+    method = log_open (get_progname(), "/dev/stderr:notime");
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
     ports_init();
-    cell_init(0); /* XXX */
 
     myargv = malloc((argc + 1) * sizeof(char *));
     if (myargv == NULL)

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -43,100 +38,139 @@
 #include <bos.cs.h>
 
 
-RCSID("$Id: bos_listhosts.c,v 1.1 2000/09/11 14:40:35 art Exp $");
+RCSID("$KTH: bos_listhosts.c,v 1.7 2000/10/03 00:07:13 lha Exp $");
 
 static int
 printhosts(const char *cell, const char *host,
-	    int noauth, int localauth, int verbose)
+	   int noauth, int localauth, int verbose, int cellservdb,
+	   const char *comment_text)
 {
-  struct rx_connection *connvolser = NULL;
-  unsigned int i;
-  int error;
-  char *server_name;
-  char *cell_name;
+    struct rx_connection *conn = NULL;
+    unsigned int nservers, i;
+    int error;
+    char **server_names = NULL;
+    char cell_name[BOZO_BSSIZE];
 
-  connvolser = arlalib_getconnbyname(cell,
-				     host,
-				     afsbosport,
-				     BOS_SERVICE_ID,
-				     arlalib_getauthflag(noauth,
-							 localauth,0,0));
-
-  if (connvolser == NULL)
-    return -1;
-
-  /* which cell is this anyway ? */
-  if (( error = BOZO_GetCellName(connvolser, &cell_name)) == 0) {
-    printf("Cell name is %s\n",cell_name);
-  }
-  else {
-    printf ("bos %s: %s\n", host, koerr_gettext (error));
-  }
+    if (comment_text == NULL)
+	comment_text = "";
+    
+    conn = arlalib_getconnbyname(cell,
+				 host,
+				 afsbosport,
+				 BOS_SERVICE_ID,
+				 arlalib_getauthflag(noauth, localauth,0,0));
+    
+    if (conn == NULL)
+	return -1;
+    
+    /* which cell is this anyway ? */
+    error = BOZO_GetCellName(conn, cell_name);
+    if (error) {
+	printf ("bos GetCellName %s: %s\n", host, koerr_gettext (error));
+	return 0;
+    }
   
-  /* Who are the VLDB-servers ? */
-  i = 0;
-  while ((error = BOZO_GetCellHost(connvolser, i,
-				   &server_name)) == 0) {
-    printf("\t Host %d is %s\n",i+1,server_name);
-    i++;
-  }
+    /* Who are the DB-servers ? */
+    nservers = 0;
+    while (1) {
+	server_names = erealloc (server_names,
+				 (nservers + 1) * sizeof(*server_names));
+	server_names[nservers] = emalloc (BOZO_BSSIZE);
+	error =  BOZO_GetCellHost(conn, nservers,  server_names[nservers]);
+	if (error)
+	    break;
+	nservers++;
+    }
+    
+    if (error != BZDOM) {
+	printf ("bos listhosts: %s\n", koerr_gettext (error));
+    } else {
+	if (!cellservdb) {
+	    printf("Cell name is %s\n", cell_name);
+	    for (i = 0; i < nservers; i++)
+		printf ("\t%s\n", server_names[i]);
+	} else {
+	    printf (">%s		#%s\n", cell_name, comment_text);
+	    for (i = 0; i < nservers; i++) {
+		struct hostent *he;
+		char *addr;
+		struct in_addr inaddr;
 
-  if (error != BZDOM)
-    printf ("bos %s: %s\n", host, koerr_gettext (error));
-  arlalib_destroyconn(connvolser);
-  return 0;
+		he = gethostbyname(server_names[i]);
+		if (he == NULL)
+		    addr = "not-in-dns";
+		else {
+		    memcpy(&inaddr, he->h_addr, sizeof(inaddr));
+		    addr = inet_ntoa(inaddr);
+		}
+		printf ("%s		#%s\n", addr, server_names[i]);
+	    }
+	}
+    }
+    for (i = 0; i < nservers; i++)
+	free (server_names[i]);
+    free (server_names);
+
+    arlalib_destroyconn(conn);
+    return 0;
 }
 
 
 static int helpflag;
+static int dbflag;
+static const char *comment_text; 
 static const char *server;
 static const char *cell;
 static int noauth;
 static int localauth;
 static int verbose;
 
-static struct getargs args[] = {
-  {"server",	0, arg_string,	&server,	"server", NULL, arg_mandatory},
-  {"cell",	0, arg_string,	&cell,		"cell",	  NULL},
-  {"noauth",	0, arg_flag,	&noauth,	"do not authenticate", NULL},
-  {"local",	0, arg_flag,	&localauth,	"localauth"},
-  {"verbose",	0, arg_flag,	&verbose,	"be verbose", NULL},
-  {"help",	0, arg_flag,	&helpflag,	NULL, NULL},
-  {NULL,	0, arg_end,	NULL,		NULL, NULL}
+static struct agetargs args[] = {
+    {"server",	0, aarg_string,	&server,	"server", NULL, aarg_mandatory},
+    {"db", 0, aarg_flag,	&dbflag,	"print in CellServDB format", NULL},
+    {"comment",	0, aarg_string,	&comment_text,	
+     "comment text when CellServDB format is used",	  NULL},
+    {"cell",	0, aarg_string,	&cell,		"cell",	  NULL},
+    {"noauth",	0, aarg_flag,	&noauth,	"do not authenticate", NULL},
+    {"local",	0, aarg_flag,	&localauth,	"localauth"},
+    {"verbose",	0, aarg_flag,	&verbose,	"be verbose", NULL},
+    {"help",	0, aarg_flag,	&helpflag,	NULL, NULL},
+    {NULL,	0, aarg_end,	NULL,		NULL, NULL}
 };
 
 static void
 usage (void)
 {
-  arg_printusage (args, "bos listhosts", "", ARG_AFSSTYLE);
+    aarg_printusage (args, "bos listhosts", "", AARG_AFSSTYLE);
 }
 
 int
 bos_listhosts(int argc, char **argv)
 {
-  int optind = 0;
-
-  if (getarg (args, argc, argv, &optind, ARG_AFSSTYLE)) {
-    usage ();
+    int optind = 0;
+    
+    if (agetarg (args, argc, argv, &optind, AARG_AFSSTYLE)) {
+	usage ();
+	return 0;
+    }
+    
+    if (helpflag) {
+	usage ();
+	return 0;
+    }
+    
+    argc -= optind;
+    argv += optind;
+    
+    if (server == NULL) {
+	printf ("bos listhosts: missing -server\n");
+	return 0;
+    }
+    
+    if (cell == NULL)
+	cell = cell_getcellbyhost (server);
+    
+    printhosts (cell, server, noauth, localauth, verbose, dbflag,
+		comment_text);
     return 0;
-  }
-
-  if (helpflag) {
-    usage ();
-    return 0;
-  }
-
-  argc -= optind;
-  argv += optind;
-
-  if (server == NULL) {
-    printf ("bos listhosts: missing -server\n");
-    return 0;
-  }
-
-  if (cell == NULL)
-    cell = cell_getcellbyhost (server);
-
-  printhosts (cell, server, noauth, localauth, verbose);
-  return 0;
 }

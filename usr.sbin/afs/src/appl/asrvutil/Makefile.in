@@ -1,6 +1,7 @@
-# $Id: Makefile.in,v 1.1 2000/09/11 14:40:34 art Exp $
+# $KTH: Makefile.in,v 1.6.2.1 2001/05/28 11:32:00 mattiasa Exp $
 
 srcdir		= @srcdir@
+top_builddir	= ../..
 VPATH		= @srcdir@
 
 CC		= @CC@
@@ -40,7 +41,8 @@ INCLUDES	= -I$(srcdir)/../.. \
 		  $(KERNEL_INCLUDE) \
 		  -I$(srcdir)/../../xfs/include \
 		  -I$(srcdir)/../../arlad \
-		  $(RXKADINC) 
+		  @INC_roken@ \
+		  $(RXKADINC)
 
 DEFINES		=
 REALCFLAGS	= $(INCLUDES) @KRB4_INC_FLAGS@ $(DEFINES) $(CFLAGS) \
@@ -56,16 +58,15 @@ LIBS		= -L../lib -larlalib \
 		  -L../../lwp -llwp @PLWP_LIB_FLAGS@ \
 		  -L../../lib/ko -lko -L../../util -lutil \
 		  -L../../lib/sl -lsl \
-		  -L../../lib/roken \
 		  $(READLINE_lib) \
 		  $(RXKAD_LIBS) \
 		  $(KAFS_LIBS) \
 		  $(RXKAD_LIBS) \
-		  -lroken @LIBS@
+		  @ROKEN@ @LIBS@
 
 LIBDEPENDS	= ../../rxdef/librxdefclient.a ../../rx/librx.a ../../lwp/liblwp.a \
 		  ../../util/libutil.a ../../lib/sl/libsl.a ../../lib/roken/libroken.a \
-		  ../../lib/ko/libko.a
+		  ../../lib/ko/libko.a ../lib/libarlalib.a
 
 PROGS		= asrvutil
 ASRVUTIL_SRCS	= asrvutil.c
@@ -113,7 +114,7 @@ clean		:
 mostlyclean:	clean
 
 distclean:	clean
-		rm -f Makefile config.status
+		rm -f Makefile
 
 realclean:	distclean
 		rm -f TAGS

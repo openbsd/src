@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -42,9 +37,9 @@
    Written by Chris Wing - wingc@engin.umich.edu
    based on examples of AFS code: pts.c (Arla) and kauth.c (KTH-KRB)
 
-   Hacked to use getarg by Love Hörnquist-Åstrand <lha@stacken.kth.se>
+   Hacked to use agetarg by Love Hörnquist-Åstrand <lha@stacken.kth.se>
 
-   Hacked to use getarg and still work properly by Chris Wing
+   Hacked to use agetarg and still work properly by Chris Wing
 
    This is a reimplementation of klog from AFS. The following new features
    have been added:
@@ -56,7 +51,7 @@
 #include <config.h>
 #endif
 
-RCSID("$Id: klog.c,v 1.2 2001/07/09 07:04:59 deraadt Exp $");
+RCSID("$KTH: klog.c,v 1.29.2.1 2001/10/03 22:52:01 assar Exp $");
 
 #include "appl_locl.h"
 #include "klog.h"
@@ -77,7 +72,7 @@ static char *arg_principal = NULL;
 static char *arg_cell = NULL;
 static char *arg_realm = NULL;
 static char *arg_password = NULL;
-static getarg_strings arg_servers;
+static agetarg_strings arg_servers;
 static char *arg_lifetime = NULL;
 static int  arg_timeout = 0;
 static int  arg_pipe = 0;
@@ -247,7 +242,7 @@ int get_afs_token(void)
 #ifdef HAVE_KRB_AFSLOG_UID
 	rc = krb_afslog_uid(arg_cell, arg_realm, afsid);
 #else
-	rc = k_afslog_uid(arg_cell, arg_realm, afsid);
+	rc = k_afsklog_uid(arg_cell, arg_realm, afsid);
 #endif
 	if(rc)
 	    warnx("Unable to get an AFS token: %s", krb_get_err_text(rc));
@@ -304,6 +299,9 @@ do_timeout (int (*function)(void) )
 	ssize_t len;
 
 	close(writer);
+
+	if (reader >= FD_SETSIZE)
+	    diet (1, "do_timeout(): fd too large");
 
 	/* this is how you set up a select call */
 	FD_ZERO(&readfds);
@@ -401,47 +399,47 @@ randfilename(void)
     dietx (1, "could not create ticket file");
 }
 
-struct getargs args[] = {
-    { "principal", 0, arg_string, &arg_principal,
+struct agetargs args[] = {
+    { "principal", 0, aarg_string, &arg_principal,
       "principal to obtain token for",
-      "user name", arg_optional},
-    { "password", 0, arg_string, &arg_password,
+      "user name", aarg_optional},
+    { "password", 0, aarg_string, &arg_password,
       "password to use (NOT RECOMENDED TO USE)",
-      "AFS password", arg_optional},
-    { "servers", 0, arg_strings, &arg_servers,
+      "AFS password", aarg_optional},
+    { "servers", 0, aarg_strings, &arg_servers,
       "list of servers to contact",
-      "AFS dbservers", arg_optional},
-    { "lifetime", 0, arg_string, &arg_lifetime,
+      "AFS dbservers", aarg_optional},
+    { "lifetime", 0, aarg_string, &arg_lifetime,
       "lifetime given in hh[:mm[:ss]]",
-      "hh:mm:ss", arg_optional},
-    { "pipe", 0, arg_flag, &arg_pipe,
+      "hh:mm:ss", aarg_optional},
+    { "pipe", 0, aarg_flag, &arg_pipe,
       "read password from stdin and close stdout", 
-      NULL, arg_optional},
-    { "timeout", 0, arg_integer, &arg_timeout,
+      NULL, aarg_optional},
+    { "timeout", 0, aarg_integer, &arg_timeout,
       "network timeout given in seconds (default is forever)", 
-      "seconds", arg_optional},
-    { "setpag", 0, arg_flag, &arg_setpag,
+      "seconds", aarg_optional},
+    { "setpag", 0, aarg_flag, &arg_setpag,
       "store token in new PAG and spawn a shell", 
-      NULL, arg_optional},
-    { "silent", 0, arg_flag, &arg_silent,
+      NULL, aarg_optional},
+    { "silent", 0, aarg_flag, &arg_silent,
       "close stderr", 
-      NULL, arg_optional},
-    { "tmp", 0, arg_flag, &arg_getkrbtgt,
+      NULL, aarg_optional},
+    { "tmp", 0, aarg_flag, &arg_getkrbtgt,
       "get a Kerberos TGT (possibly overwriting any current one)", 
-      NULL, arg_optional},
-    { "cell", 0, arg_string, &arg_cell,
+      NULL, aarg_optional},
+    { "cell", 0, aarg_string, &arg_cell,
       "cell where to obtain token", 
-      "cell name", arg_optional},
-    { "realm", 0, arg_string, &arg_realm,
+      "cell name", aarg_optional},
+    { "realm", 0, aarg_string, &arg_realm,
       "Kerberos realm to get TGT in (default same as AFS cell)",
-      "Kerberos realm", arg_optional},
-    { "help", 0, arg_flag, &arg_help, "help",
-      NULL, arg_optional},
-    { "version", 0, arg_flag, &arg_version, "print version",
-      NULL, arg_optional},
-    { NULL, 0, arg_generic_string, &arg_kname, "Kerberos identity",
-      "user@cell", arg_optional},
-    { NULL, 0, arg_end, NULL, NULL }
+      "Kerberos realm", aarg_optional},
+    { "help", 0, aarg_flag, &arg_help, "help",
+      NULL, aarg_optional},
+    { "version", 0, aarg_flag, &arg_version, "print version",
+      NULL, aarg_optional},
+    { NULL, 0, aarg_generic_string, &arg_kname, "Kerberos identity",
+      "user@cell", aarg_optional},
+    { NULL, 0, aarg_end, NULL, NULL }
 };
 
 /*
@@ -451,7 +449,7 @@ struct getargs args[] = {
 static void
 do_help (int exitval)
 {
-    arg_printusage(args, NULL, NULL, ARG_AFSSTYLE);
+    aarg_printusage(args, NULL, NULL, AARG_AFSSTYLE);
     exit(exitval);
 }
 
@@ -479,14 +477,19 @@ main(int argc, char **argv)
     char prompt[PW_PROMPT_MAX];
     int rc;
     int optind = 0;
+    Log_method *method;
 
     char pwbuf[PASSWD_MAX];
 
-    /* for Rx - Arlalib stuff */
-    ports_init();
-    cell_init(0); /* XXX */
+    set_progname (argv[0]);
 
-     rc = getarg(args, argc, argv, &optind, ARG_AFSSTYLE);
+    method = log_open (get_progname(), "/dev/stderr:notime");
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
+    ports_init();
+
+     rc = agetarg(args, argc, argv, &optind, AARG_AFSSTYLE);
      if(rc) {
 	 warnx ("Bad argument: %s", argv[optind]);
 	 do_help(1);
@@ -658,7 +661,7 @@ main(int argc, char **argv)
             /*
 	     * FIXME: we should also erase the copy in argv[].
 	     * Is it safe to overwrite bits of argv, and is there
-	     * any nice way to do this from the getarg()
+	     * any nice way to do this from the agetarg()
 	     * framework?
 	     */
             int pwlen;
@@ -787,7 +790,7 @@ main(int argc, char **argv)
 	    shell = pwd->pw_shell;
 	}
 
-	execl(shell, shell, (char *)NULL);
+	execl(shell, shell, NULL);
 
 	/* the AFS token is useless if the shell exec fails, because it
 	   is in a PAG that will soon go away. */

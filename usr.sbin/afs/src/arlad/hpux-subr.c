@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -39,9 +34,10 @@
 /* If this isn't defined, we get a constant for DIRSIZ */
 
 #define DIRSIZ_MACRO
+#define _INCLUDE_HPUX_SOURCE
 
 #include "arla_local.h"
-RCSID("$Id: hpux-subr.c,v 1.1 2000/09/11 14:40:42 art Exp $");
+RCSID("$KTH: hpux-subr.c,v 1.26 2000/10/14 19:58:07 map Exp $");
 
 static long blocksize = 1024;	/* XXX */
 
@@ -83,7 +79,7 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
 /*     real->d_namlen = dirent.d_namlen;*/
      real->d_reclen = dirent.d_reclen;
      real->d_ino = dentry2ino (name, fid, args->e);
-     strcpy (real->d_name, name);
+     strlcpy (real->d_name, name, sizeof(real->d_name));
      args->ptr += real->d_reclen;
      args->off += real->d_reclen;
 #if 0
@@ -94,7 +90,7 @@ write_dirent(VenusFid *fid, const char *name, void *arg)
 
 Result
 conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
-	  xfs_cache_handle *cache_handle,
+	  fcache_cache_handle *cache_handle,
 	  char *cache_name, size_t cache_name_sz)
 {
     return conv_dir_sub (e, ce, tokens, cache_handle, cache_name,
@@ -106,7 +102,7 @@ conv_dir (FCacheEntry *e, CredCacheEntry *ce, u_int tokens,
 
 int
 dir_remove_name (FCacheEntry *e, const char *filename,
-		 xfs_cache_handle *cache_handle,
+		 fcache_cache_handle *cache_handle,
 		 char *cache_name, size_t cache_name_sz)
 {
     int ret;

@@ -29,7 +29,7 @@
 
 #include "arla_local.h"
 
-RCSID("$Id: darla.c,v 1.2 2000/09/11 14:40:41 art Exp $");
+RCSID("$KTH: darla.c,v 1.6 2000/02/12 19:23:54 assar Exp $");
 
 int DARLA_Open(DARLA_file *Dfp, char *fname, int oflag)
 {

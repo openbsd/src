@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos_listpart.c,v 1.1 2000/09/11 14:40:38 art Exp $");
+RCSID("$KTH: vos_listpart.c,v 1.5.2.1 2001/09/25 22:06:15 mattiasa Exp $");
 
 static int
 printlistparts(const char *cell, const char *server, 
@@ -77,19 +72,20 @@ static int noauth;
 static int localauth;
 static int verbose;
 
-static struct getargs listp_args[] = {
-    {"server",	0, arg_string,  &server, "server", NULL, arg_mandatory},
-    {"cell",	0, arg_string,	&cell,	 "cell", NULL},
-    {"noauth",	0, arg_flag,    &noauth, "no authentication", NULL},
-    {"localauth",0, arg_flag,   &localauth, "local authentication", NULL},
-    {"verbose", 0, arg_flag,	&verbose, "be verbose", NULL},
-    {"help",	0, arg_flag,    &helpflag, NULL, NULL}
+static struct agetargs listp_args[] = {
+    {"server",	0, aarg_string,  &server, "server", NULL, aarg_mandatory},
+    {"cell",	0, aarg_string,	&cell,	 "cell", NULL},
+    {"noauth",	0, aarg_flag,    &noauth, "no authentication", NULL},
+    {"localauth",0, aarg_flag,   &localauth, "local authentication", NULL},
+    {"verbose", 0, aarg_flag,	&verbose, "be verbose", NULL},
+    {"help",	0, aarg_flag,    &helpflag, NULL, NULL},
+    {NULL}
 };
 
 static void
 usage(void)
 {
-    arg_printusage(listp_args, "vos listpart", "", ARG_AFSSTYLE);
+    aarg_printusage(listp_args, "vos listpart", "", AARG_AFSSTYLE);
 }
 
 int
@@ -100,7 +96,7 @@ vos_listpart(int argc, char **argv)
     helpflag = noauth = localauth = verbose = 0;
     server = cell = NULL;
 
-    if (getarg (listp_args,argc, argv, &optind, ARG_AFSSTYLE)) {
+    if (agetarg (listp_args,argc, argv, &optind, AARG_AFSSTYLE)) {
 	usage ();
 	return 0;
     }

@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -40,7 +35,7 @@
 #include <sl.h>
 #include "vos_local.h"
 
-RCSID("$Id: vos.c,v 1.2 2002/01/28 19:33:21 fgsch Exp $");
+RCSID("$KTH: vos.c,v 1.61.2.2 2001/09/18 00:24:17 mattiasa Exp $");
 
 int vos_interactive = 0;
 
@@ -57,8 +52,8 @@ static int apropos_cmd(int argc, char **argv);
 static SL_cmd cmds[] = {
     {"addsite",    empty_cmd,       "not yet implemented"},
     {"apropos",    apropos_cmd,     "apropos"},
-    {"backup",     empty_cmd,       "not yet implemented"},
-    {"backupsys",  empty_cmd,       "not yet implemented"},
+    {"backup",     vos_backup,      "Make a backup copy of a volume"},
+    {"backupsys",  vos_backupsys,   "Make backup copies of multiple volumes"},
     {"changeaddr", empty_cmd,       "not yet implemented"},
     {"create",     vos_create,      "create a volume"},
     {"createentry",vos_createentry, "create a vldb entry"},
@@ -149,9 +144,16 @@ apropos_cmd(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    Log_method *method;
     int ret = 0;
     
-    cell_init(0);
+    set_progname(argv[0]);
+    tzset();
+
+    method = log_open (get_progname(), "/dev/stderr:notime");
+    if (method == NULL)
+	errx (1, "log_open failed");
+    cell_init(0, method);
     ports_init();
 
     if (argc > 1)

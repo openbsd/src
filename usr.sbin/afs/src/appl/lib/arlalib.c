@@ -14,12 +14,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the Kungliga Tekniska
- *      Högskolan and its contributors.
- * 
- * 4. Neither the name of the Institute nor the names of its contributors
+ * 3. Neither the name of the Institute nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -38,7 +33,7 @@
 
 #include "appl_locl.h"
 
-RCSID("$Id: arlalib.c,v 1.1 2000/09/11 14:40:36 art Exp $");
+RCSID("$KTH: arlalib.c,v 1.41.2.2 2001/10/02 16:13:00 jimmy Exp $");
 
 
 static struct rx_securityClass *secureobj = NULL ; 
@@ -64,8 +59,8 @@ get_cred(const char *princ, const char *inst, const char *krealm,
 }
 
 static int
-arlalib_get_cred(const char *cell, const char *host, CREDENTIALS *c,
-		 arlalib_authflags_t auth)
+arlalib_get_cred_krb (const char *cell, const char *host, CREDENTIALS *c,
+		      arlalib_authflags_t auth)
 {
     char krealm[REALM_SZ];
     char *rrealm;
@@ -80,18 +75,46 @@ arlalib_get_cred(const char *cell, const char *host, CREDENTIALS *c,
 	if (k_errno != KSUCCESS)
 	    k_errno = get_cred("afs", "", krealm, c);
 	
-	if (k_errno != KSUCCESS) {
-	    fprintf(stderr,
-		    "Can't get a ticket for realm %s: %s\n",
-		    krealm, krb_get_err_text(k_errno));
+	if (k_errno != KSUCCESS)
 	    return -1;
-	} 
 	ret = k_errno;
     } else
 	ret = EOPNOTSUPP;
 
     return ret;
 }
+
+static int
+find_token (const char *secret, size_t secret_sz, 
+	    const struct ClearToken *ct, 
+	    const char *cell, void *arg)
+{
+    CREDENTIALS *c = (CREDENTIALS *)arg;
+
+    memcpy(c->ticket_st.dat, secret, secret_sz) ;
+    c->ticket_st.length = secret_sz;
+
+    strlcpy (c->realm, cell, sizeof(c->realm));
+    strupr(c->realm);
+
+    c->kvno = ct->AuthHandle;
+    memcpy (c->session, ct->HandShakeKey, sizeof(c->session));
+    c->issue_date = ct->BeginTimestamp - 1;
+
+    return 0;
+}
+
+static int
+arlalib_get_cred_afs (const char *cell, CREDENTIALS *c, 
+		      arlalib_authflags_t auth)
+{
+    if (cell == NULL)
+	cell = cell_getthiscell();
+
+    return arlalib_token_iter (cell, find_token, c);
+}
+
+
 #endif /* KERBEROS */
 
 int
@@ -121,31 +144,39 @@ arlalib_getsecurecontext(const char *cell, const char *host,
 #ifdef KERBEROS
     CREDENTIALS c;
 #endif /* KERBEROS */
-    struct rx_securityClass* sec;
+    struct rx_securityClass* sec = NULL;
 
     if (secureobj != NULL) 
 	return secureobj;
     
 #ifdef KERBEROS
-    
-    if (auth  && 
-	arlalib_get_cred(cell, host, &c, auth) == KSUCCESS) {
+    if (auth) {
+	int ret;
 
-	sec = rxkad_NewClientSecurityObject(rxkad_auth,
-					    &c.session,
-					    c.kvno,
-					    c.ticket_st.length,
-					    c.ticket_st.dat);
-	secureindex = 2;
-    } else {
-#endif /* KERBEROS */
-	
-	sec = rxnull_NewClientSecurityObject();
-	secureindex = 0;
-
-#ifdef KERBEROS
+	ret = arlalib_get_cred_krb (cell, host, &c, auth);
+	if (ret == KSUCCESS) {
+	    ret = 0;
+	} else {
+	    ret = arlalib_get_cred_afs (cell, &c, auth);
+	}
+	if (ret == 0) {
+	    sec = rxkad_NewClientSecurityObject(rxkad_auth,
+						&c.session,
+						c.kvno,
+						c.ticket_st.length,
+						c.ticket_st.dat);
+	    secureindex = 2;
+	} else {
+	    fprintf(stderr, "Can't get a token for cell %s\n",
+		    cell ? cell : cell_getthiscell());
+	}
     }
 #endif /* KERBEROS */
+
+    if (sec == NULL) {
+	sec = rxnull_NewClientSecurityObject();
+	secureindex = 0;
+    }
     
     secureobj = sec;
 
@@ -194,15 +225,25 @@ arlalib_getconnbyname(const char *cell, const char *host,
 		      int32_t port, int32_t servid, 
 		      arlalib_authflags_t auth)
 {
-    struct in_addr server;
+    struct addrinfo hints, *res;
+    int error;
+    int32_t addr;
 
-    if (str2inaddr (host, &server) == NULL ) {
+    memset (&hints, 0, sizeof(hints));
+    hints.ai_family = PF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    error = getaddrinfo(host, NULL, &hints, &res);
+    if (error) {
 	fprintf (stderr, "Cannot find host %s\n", host);
 	return  NULL;
     }
 
-    return arlalib_getconnbyaddr(cell, server.s_addr, host, port, servid,
-				 auth);
+    assert (res->ai_family == PF_INET);
+    addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr;
+    freeaddrinfo(res);
+
+    return arlalib_getconnbyaddr(cell, addr, host, port, servid, auth);
 }
 
 int
@@ -552,6 +593,7 @@ int
 arlalib_try_next_db (int error)
 {
     switch (error) {
+    case ARLA_CALL_DEAD:
     case UNOTSYNC :
     case ENETDOWN :
 	return TRUE;
@@ -578,3 +620,26 @@ free_db_server_context(struct db_server_context *context)
   free(context->conn);
 }   
 
+/*
+ * give a name for the server `addr'
+ */
+
+void
+arlalib_host_to_name (u_int32_t addr, char *str, size_t str_sz)
+{
+    struct sockaddr_in sock;
+    int error;
+
+    memset (&sock, 0, sizeof(sock));
+#if HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
+    sock.sin_len = sizeof(sock);
+#endif
+    sock.sin_family = AF_INET;
+    sock.sin_port = 0;
+    sock.sin_addr.s_addr = addr;
+
+    error = getnameinfo((struct sockaddr *)&sock, sizeof(sock),
+			str, str_sz, NULL, 0, 0);
+    if (error)
+	strlcpy (str, "<unknown>", str_sz);
+}
