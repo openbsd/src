@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.13 1995/11/29 15:08:36 ws Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.3 1996/02/21 07:41:05 mickey Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -207,8 +207,10 @@ dos2unixtime(dd, dt, tsp)
 		 */
 		month = (dd & DD_MONTH_MASK) >> DD_MONTH_SHIFT;
 		if (month == 0) {
+#if 0
 			printf("dos2unixtime(): month value out of range (%ld)\n",
 			       month);
+#endif
 			month = 1;
 		}
 		for (m = 0; m < month - 1; m++)
