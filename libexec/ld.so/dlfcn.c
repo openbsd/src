@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.40 2004/08/13 16:45:41 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.41 2004/10/14 10:02:28 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -384,6 +384,33 @@ _dl_thread_kern_go(void)
 {
 	if (_dl_thread_fnc != NULL)
 		(*_dl_thread_fnc)(1);
+}
+
+int
+dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *data),
+	void *data)
+{
+	elf_object_t *object;
+	Elf_Ehdr *ehdr;
+	struct dl_phdr_info info;
+	int retval = -1;
+
+	for (object = _dl_objects; object != NULL; object = object->next) {
+		ehdr = (Elf_Ehdr *)object->load_addr;
+		if (ehdr == NULL)
+			continue;
+
+		info.dlpi_addr = object->load_addr;
+		info.dlpi_name = object->load_name;
+		info.dlpi_phdr =
+		    (Elf_Phdr *)((char *)object->load_addr + ehdr->e_phoff);
+		info.dlpi_phnum = ehdr->e_phnum;
+		retval = callback(&info, sizeof (struct dl_phdr_info), data);
+		if (retval)
+			break;
+	}
+
+	return retval;
 }
 
 static elf_object_t *
