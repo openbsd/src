@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.40 2004/07/09 19:33:08 jmc Exp $
+.\"	$OpenBSD: date.1,v 1.41 2004/07/21 08:59:30 jmc Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -174,24 +174,26 @@ record of date resets and time changes
 record of the user setting the time
 .El
 .Sh EXAMPLES
-.Li $ date \&"+DATE: %Y-%m-%d%nTIME: %H:%M:%S\&"
+The following command:
 .Pp
-Displays
+.Dl $ date \&"+DATE: %Y-%m-%d%nTIME: %H:%M:%S\&"
+.Pp
+displays:
 .Bd -literal -offset indent
 DATE: 1987-11-21
 TIME: 13:36:16
 .Ed
 .Pp
-.Li # date 8506131627
+Set the date to
+June 13, 1985, 4:27 PM:
 .Pp
-Sets the date to
-.Dq Li "June 13, 1985, 4:27 PM" .
+.Dl # date 8506131627
 .Pp
-.Li # date 1432
+Set the time to
+2:32 PM,
+without modifying the date:
 .Pp
-Sets the time to
-.Li "2:32 PM" ,
-without modifying the date.
+.Dl # date 1432
 .Sh DIAGNOSTICS
 Exit status is 0 on success, 1 if unable to set the date, and 2
 if able to set the local date, but unable to set it globally.
