@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.19 1998/05/25 19:20:47 mickey Exp $
+#	$OpenBSD: Makefile,v 1.20 1998/05/27 13:33:36 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 PROG=	boot
-LD=ld
+LD?=	ld
 SIZE?=	size
 LDFLAGS+=-nostdlib -Bstatic
 CLEANFILES+=	i386 machine
