@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.1.1.1 1996/09/05 13:59:00 mickey Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.2 1996/09/22 20:48:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993

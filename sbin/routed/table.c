@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.1.1.1 1996/09/05 13:58:58 mickey Exp $	*/
+/*	$OpenBSD: table.c,v 1.2 1996/09/22 20:48:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
