@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.24 2002/02/20 20:16:23 provos Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.25 2002/02/28 16:32:03 provos Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -938,7 +938,7 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
 
 	stopslot = curslot + slotlen;
 	ppref = amap->am_ppref;
- 	prevlcv = -1;
+ 	prevlcv = 0;
 
 	/*
  	 * first advance to the correct place in the ppref array,
@@ -954,8 +954,7 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
 		}
 		prevlcv = lcv;
 	}
-	if (prevlcv >= 0)
-		pp_getreflen(ppref, prevlcv, &prevref, &prevlen);
+	pp_getreflen(ppref, prevlcv, &prevref, &prevlen);
 
 	/*
 	 * now adjust reference counts in range.  merge the first
@@ -976,8 +975,7 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
 		ref += adjval;
 		if (ref < 0)
 			panic("amap_pp_adjref: negative reference count");
-		if (prevlcv >= 0 && lcv == prevlcv + prevlen &&
-		    ref == prevref) {
+		if (lcv == prevlcv + prevlen && ref == prevref) {
 			pp_setreflen(ppref, prevlcv, ref, prevlen + len);
 		} else {
 			pp_setreflen(ppref, lcv, ref, len);
