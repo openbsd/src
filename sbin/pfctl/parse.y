@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.71 2002/06/01 04:06:47 hugh Exp $	*/
+/*	$OpenBSD: parse.y,v 1.72 2002/06/07 18:24:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -75,6 +75,7 @@ struct node_host {
 	u_int8_t		 not;
 	u_int8_t		 noroute;
 	struct node_host	*next;
+	u_int32_t		 ifindex;
 };
 
 struct node_port {
@@ -366,7 +367,7 @@ if_item_not	: '!' if_item			{ $$ = $2; $$->not = 1; }
 		| if_item			{ $$ = $1; }
 
 if_item		: STRING			{
-			if (ifa0_lookup($1) == NULL) {
+			if (ifa0_lookup($1) == 0) {
 				yyerror("unknown interface %s", $1);
 				YYERROR;
 			}
@@ -571,12 +572,17 @@ address		: '(' STRING ')'		{
 						    res->ai_addr)
 						    ->sin_addr.s_addr,
 						sizeof(struct in_addr));
-					else
+					else {
 						memcpy(&n->addr.addr,
 						&((struct sockaddr_in6 *)
 						    res->ai_addr)
 						    ->sin6_addr.s6_addr,
 						sizeof(struct in6_addr));
+						n->ifindex =
+						    ((struct sockaddr_in6 *)
+						    res->ai_addr)
+						    ->sin6_scope_id;
+					}
 					n->next = h;
 					h = n;
 				}
@@ -1596,6 +1602,7 @@ expand_rule(struct pf_rule *r,
     struct node_icmp *icmp_types)
 {
 	int af = r->af, nomatch = 0, added = 0;
+	char ifname[IF_NAMESIZE];
 
 	CHECK_ROOT(struct node_if, interfaces);
 	CHECK_ROOT(struct node_proto, protos);
@@ -1621,14 +1628,21 @@ expand_rule(struct pf_rule *r,
 		if ((r->af && src_host->af && r->af != src_host->af) ||
 		    (r->af && dst_host->af && r->af != dst_host->af) ||
 		    (src_host->af && dst_host->af &&
-		    src_host->af != dst_host->af))
+		    src_host->af != dst_host->af) ||
+		    (src_host->ifindex && dst_host->ifindex &&
+		     src_host->ifindex != dst_host->ifindex) ||
+		    (src_host->ifindex && if_nametoindex(interface->ifname) &&
+		     src_host->ifindex != if_nametoindex(interface->ifname)))
 			continue;
 		if (!r->af && src_host->af)
 			r->af = src_host->af;
 		else if (!r->af && dst_host->af)
 			r->af = dst_host->af;
 
-		memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
+		if (if_indextoname(src_host->ifindex, ifname) == 0)
+			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
+		else
+			memcpy(r->ifname, ifname, sizeof(r->ifname));
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
 		r->src.mask = src_host->mask;
@@ -1679,7 +1693,7 @@ expand_rule(struct pf_rule *r,
 	FREE_LIST(struct node_icmp, icmp_types);
 
 	if (!added)
-		yyerror("rule expands to no valid address family combination");
+		yyerror("rule expands to no valid combination");
 }
 
 #undef FREE_LIST
@@ -1944,30 +1958,38 @@ top:
 		struct node_host *node = NULL;
 		u_int32_t addr[4];
 		char lookahead[46];
-		int i = 0, notv6addr = 0;
+		int i = 0;
+		struct addrinfo hints, *res;
 
 		lookahead[i] = c;
 
 		while (i < sizeof(lookahead) &&
-		    (isxdigit(c) || c == ':' || c == '.')) {
+		    (isalnum(c) || c == ':' || c == '.' || c == '%')) {
 			lookahead[++i] = c = lgetc(fin);
 		}
 
 		/* quick check avoids calling inet_pton too often */
-		if (isalnum(c))
-			notv6addr++;
 		lungetc(lookahead[i], fin);
 		lookahead[i] = '\0';
 
-		if (!notv6addr && inet_pton(AF_INET6, lookahead, &addr) == 1) {
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_INET6;
+		hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+		hints.ai_flags = AI_NUMERICHOST;
+		if (getaddrinfo(lookahead, "0", &hints, &res) == 0) {
 			node = calloc(1, sizeof(struct node_host));
 			if (node == NULL)
 				err(1, "yylex: calloc");
 			node->af = AF_INET6;
 			node->addr.addr_dyn = NULL;
-			memcpy(&node->addr.addr, &addr, sizeof(addr));
+			memcpy(&node->addr.addr,
+			    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
+			    sizeof(addr));
+			node->ifindex = ((struct sockaddr_in6 *)res->ai_addr)
+			    ->sin6_scope_id;
 			yylval.v.host = node;
 			return IPV6ADDR;
+			freeaddrinfo(res);
 		} else {
 			free(node);
 			while (i > 1)
