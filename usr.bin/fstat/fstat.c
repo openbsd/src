@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.36 2002/03/14 06:51:41 mpech Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.37 2002/05/18 17:54:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.36 2002/03/14 06:51:41 mpech Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.37 2002/05/18 17:54:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,10 +54,13 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.36 2002/03/14 06:51:41 mpech Exp $";
 #include <sys/socketvar.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/event.h>
+#include <sys/eventvar.h>
 #include <sys/unpcb.h>
 #include <sys/sysctl.h>
 #include <sys/filedesc.h>
 #include <sys/mount.h>
+#include <crypto/cryptodev.h>
 #define	_KERNEL
 #include <sys/file.h>
 #include <ufs/ufs/quota.h>
@@ -159,6 +162,9 @@ void usage(void);
 void vtrans(struct vnode *, int, int, off_t);
 int getfname(char *);
 void pipetrans(struct pipe *, int);
+void kqueuetrans(struct kqueue *, int);
+void cryptotrans(void *, int i);
+void systracetrans(void *, int i);
 
 int
 main(argc, argv)
@@ -376,6 +382,15 @@ dofiles(kp)
 		} else if (file.f_type == DTYPE_PIPE) {
 			if (checkfile == 0)
 				pipetrans((struct pipe *)file.f_data, i);
+		} else if (file.f_type == DTYPE_KQUEUE) {
+			if (checkfile == 0)
+				kqueuetrans((struct kqueue *)file.f_data, i);
+		} else if (file.f_type == DTYPE_CRYPTO) {
+			if (checkfile == 0)
+				cryptotrans(file.f_data, i);
+		} else if (file.f_type == DTYPE_SYSTRACE) {
+			if (checkfile == 0)
+				systracetrans((void *)file.f_data, i);
 		} else {
 			dprintf("unknown file type %d for file %d of pid %d",
 				file.f_type, i, Pid);
@@ -767,6 +782,67 @@ pipetrans(pipe, i)
 	    (pi.pipe_state & PIPE_WANTR) ? "R" : "",
 	    (pi.pipe_state & PIPE_WANTW) ? "W" : "",
 	    (pi.pipe_state & PIPE_EOF) ? "E" : "");
+
+	printf("\n");
+	return;
+bad:
+	printf("* error\n");
+}
+
+void
+kqueuetrans(kq, i)
+	struct kqueue *kq;
+	int i;
+{
+	struct kqueue kqi;
+
+	PREFIX(i);
+
+	printf(" ");
+
+	/* fill it in */
+	if (!KVM_READ(kq, &kqi, sizeof(struct kqueue))) {
+		dprintf("can't read kqueue at %p", kq);
+		goto bad;
+	}
+
+	printf("kqueue %p %d state: %s%s", kq, kqi.kq_count,
+	    (kqi.kq_state & KQ_SEL) ? "S" : "",
+	    (kqi.kq_state & KQ_SLEEP) ? "W" : "");
+
+	printf("\n");
+	return;
+bad:
+	printf("* error\n");
+}
+
+void
+cryptotrans(f, i)
+	void *f;
+	int i;
+{
+	PREFIX(i);
+
+	printf(" ");
+
+	printf("crypto %p", f);
+
+	printf("\n");
+	return;
+bad:
+	printf("* error\n");
+}
+
+void
+systracetrans(f, i)
+	void *f;
+	int i;
+{
+	PREFIX(i);
+
+	printf(" ");
+
+	printf("systrace %p", f);
 
 	printf("\n");
 	return;
