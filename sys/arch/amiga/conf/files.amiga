@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.36 2000/04/12 16:10:22 aaron Exp $
+#	$OpenBSD: files.amiga,v 1.37 2000/06/05 16:37:17 art Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -405,3 +405,8 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp
 # Machine-independent PCMCIA drivers
 #
 include "dev/pcmcia/files.pcmcia"
+
+#
+# Media Indepedent Interface (mii)
+#
+include "../../../dev/mii/files.mii"
