@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.22 1998/08/30 23:34:36 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.23 1998/10/13 16:42:01 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -768,11 +768,9 @@ vput(vp)
 		panic("vput: ref cnt");
 	}
 #endif
+	vputonfreelist(vp);
+
 	VOP_INACTIVE(vp, p);
-
-	if (vp->v_usecount == 0)
-		vputonfreelist(vp);
-
 	simple_unlock(&vp->v_interlock);
 }
 
@@ -802,11 +800,10 @@ vrele(vp)
 		panic("vrele: ref cnt");
 	}
 #endif
+	vputonfreelist(vp);
+
 	if (vn_lock(vp, LK_EXCLUSIVE |LK_INTERLOCK, p) == 0)
 		VOP_INACTIVE(vp, p);
-
-	if (vp->v_usecount == 0)
-		vputonfreelist(vp);
 
 	simple_unlock(&vp->v_interlock);
 }
