@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.132 2002/12/14 21:40:52 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.133 2003/03/13 22:09:20 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3724,6 +3724,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 	int nleft, pmeg;
 	struct regmap *rp;
 	struct segmap *sp;
+	int s;
 
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
@@ -3772,7 +3773,9 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 			pv = pvhead(tpte & PG_PFNUM);
 			if (pv) {
 				pv->pv_flags |= MR4_4C(tpte);
+				s = splvm();
 				pv_unlink4_4c(pv, pm, va);
+				splx(s);
 			}
 		}
 		nleft--;
@@ -3916,6 +3919,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	int nleft, pmeg;
 	struct regmap *rp;
 	struct segmap *sp;
+	int s;
 
 	rp = &pm->pm_regmap[vr];
 	if (rp->rg_nsegmap == 0)
@@ -3949,8 +3953,11 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 				struct pvlist *pv;
 
 				pv = pvhead(tpte & PG_PFNUM);
-				if (pv)
+				if (pv) {
+					s = splvm();
 					pv_unlink4_4c(pv, pm, va);
+					splx(s);
+				}
 			}
 			nleft--;
 			*pte = 0;
@@ -4011,7 +4018,9 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 			pv = pvhead(tpte & PG_PFNUM);
 			if (pv) {
 				pv->pv_flags |= MR4_4C(tpte);
+				s = splvm();
 				pv_unlink4_4c(pv, pm, va);
+				splx(s);
 			}
 		}
 		nleft--;
