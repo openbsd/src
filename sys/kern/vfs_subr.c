@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.102 2004/08/04 03:05:25 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.103 2004/08/04 20:36:27 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ int vfs_hang_addrlist(struct mount *, struct netexport *,
 				  struct export_args *);
 int vfs_free_netcred(struct radix_node *, void *);
 void vfs_free_addrlist(struct netexport *);
-static __inline__ void vputonfreelist(struct vnode *);
+void vputonfreelist(struct vnode *);
 
 int vflush_vnode(struct vnode *, void *);
 
@@ -731,9 +731,8 @@ vref(vp)
 }
 #endif /* DIAGNOSTIC */
 
-static __inline__ void
-vputonfreelist(vp)
-	struct vnode *vp;
+void
+vputonfreelist(struct vnode *vp)
 {
 	int s;
 	struct freelst *lst;
