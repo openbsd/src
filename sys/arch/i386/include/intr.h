@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.16 2002/06/11 05:03:13 art Exp $	*/
+/*	$OpenBSD: intr.h,v 1.17 2002/07/19 16:23:29 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -77,7 +77,8 @@
 #define	IPL_NET		MAKEIPL(3)	/* network */
 #define	IPL_SOFTTTY	MAKEIPL(4)	/* delayed terminal handling */
 #define	IPL_TTY		MAKEIPL(5)	/* terminal */
-#define	IPL_IMP		MAKEIPL(6)	/* memory allocation */
+#define	IPL_VM		MAKEIPL(6)	/* memory allocation */
+#define IPL_IMP		IPL_VM		/* XXX - should not be here. */
 #define	IPL_AUDIO	MAKEIPL(7)	/* audio */
 #define	IPL_CLOCK	MAKEIPL(8)	/* clock */
 #define	IPL_STATCLOCK	MAKEIPL(9)	/* statclock */
@@ -211,8 +212,8 @@ spllower(ncpl)
 /*
  * Miscellaneous
  */
-#define	splimp()	splraise(IPL_IMP)
-#define	splvm()		splraise(IPL_IMP)
+#define	splvm()		splraise(IPL_VM)
+#define splimp()	splvm()
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
 
