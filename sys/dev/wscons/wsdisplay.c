@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.8 2000/11/15 21:23:48 aaron Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.9 2000/11/23 16:13:42 aaron Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -1179,6 +1179,9 @@ wsdisplaystart(tp)
 		splx(s);
 		return;
 	}
+	if (tp->t_outq.c_cc == 0 && tp->t_wsel.si_selpid == 0)
+		goto low;
+
 	sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(tp->t_dev)];
 	scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)];
 	if (scr->scr_hold_screen) {
@@ -1204,29 +1207,29 @@ wsdisplaystart(tp)
 	if (!(scr->scr_flags & SCR_GRAPHICS)) {
 		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
 		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
-						  buf, n, 0);
+		    buf, n, 0);
 	}
 	ndflush(&tp->t_outq, n);
 
 	if ((n = ndqb(&tp->t_outq, 0)) > 0) {
 		buf = tp->t_outq.c_cf;
 
-	if (!(scr->scr_flags & SCR_GRAPHICS)) {
-		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
-		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
-		    buf, n, 0);
-	}
+		if (!(scr->scr_flags & SCR_GRAPHICS)) {
+			KASSERT(WSSCREEN_HAS_EMULATOR(scr));
+			(*scr->scr_dconf->wsemul->output)
+			    (scr->scr_dconf->wsemulcookie, buf, n, 0);
+		}
 		ndflush(&tp->t_outq, n);
 	}
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	/* Come back if there's more to do */
-	if (tp->t_outq.c_cc) {
-		tp->t_state |= TS_TIMEOUT;
-		timeout_add(&tp->t_rstrt_to, (hz > 128) ? (hz / 128) : 1);
-	}
+
+	tp->t_state |= TS_TIMEOUT;
+	timeout_add(&tp->t_rstrt_to, (hz > 128) ? (hz / 128) : 1);
+
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
+low:
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)&tp->t_outq);
