@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_espdesmd5.c,v 1.7 1997/06/21 00:09:18 deraadt Exp $	*/
+/*	$OpenBSD: ip_espdesmd5.c,v 1.8 1997/06/24 12:15:24 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -492,6 +492,11 @@ espdesmd5_input(struct mbuf *m, struct tdb *tdb)
     *ip = ipo;
     ip->ip_sum = in_cksum(m, sizeof (struct ip));
 
+    /* Update the counters */
+    tdb->tdb_packets++;
+    tdb->tdb_bytes += NTOHS(ip->ip_len) - (ip->ip_hl << 2) + padsize +
+		      2 + ESPDESMD5_ALEN;
+
     return m;
 }
 
@@ -505,9 +510,10 @@ espdesmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
     u_int32_t spi;
     struct mbuf *mi, *mo, *ms;
     u_char *pad, *idat, *odat;
-    u_char iv[ESPDESMD5_IVS], blk[8], auth[ESPDESMD5_ALEN];
+    u_char iv[ESPDESMD5_IVS], blk[8], auth[ESPDESMD5_ALEN], opts[40];
     MD5_CTX ctx;
-
+    int iphlen;
+    
     espstat.esps_output++;
     m = m_pullup(m, sizeof (struct ip));   /* Get IP header in one mbuf */
     if (m == NULL)
@@ -515,7 +521,25 @@ espdesmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 
     ip = mtod(m, struct ip *);
     spi = tdb->tdb_spi;
-	
+    iphlen = ip->ip_hl << 2;
+    
+    /*
+     * If options are present, pullup the IP header, the options
+     * and one DES block (8 bytes) of data.
+     */
+    if (iphlen != sizeof(struct ip))
+    {
+	m = m_pullup(m, iphlen + 8);
+	if (m == NULL)
+	  return ENOBUFS;
+
+	ip = mtod(m, struct ip *);
+
+	/* Keep the options */
+	bcopy(mtod(m, u_char *) + sizeof(struct ip), opts,
+	      iphlen - sizeof(struct ip));
+    }
+
     xd = (struct espdesmd5_xdata *)tdb->tdb_xdata;
     ilen = ntohs(ip->ip_len);    /* Size of the packet */
     ohlen = sizeof (u_int32_t) + xd->edx_ivlen; /* size of plaintext ESP */
@@ -539,7 +563,7 @@ espdesmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 #endif
 
     /* Raw payload length */
-    rlen = ESPDESMD5_RPLENGTH + ilen - sizeof (struct ip); 
+    rlen = ESPDESMD5_RPLENGTH + ilen - iphlen; 
 
     padding = ((8 - ((rlen + 2) % 8)) % 8) + 2;
 
@@ -582,8 +606,8 @@ espdesmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 	  printf("espdesmd5_output: MD5'ing %d bytes\n", mi->m_len);
 #endif
 	if (mi == m)
-	  MD5Update(&ctx, (u_char *)mi->m_data + sizeof(struct ip),
-		    mi->m_len - sizeof(struct ip));
+	  MD5Update(&ctx, (u_char *)mi->m_data + iphlen,
+		    mi->m_len - iphlen);
 	else
 	  MD5Update(&ctx, (u_char *)mi->m_data, mi->m_len);
 	mi = mi->m_next;
@@ -599,35 +623,33 @@ espdesmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
      * here we construct the whole packet before starting encrypting.
      */
 
-    m = m_pullup(m, sizeof(struct ip) + ESPDESMD5_RPLENGTH + 
+    m = m_pullup(m, iphlen + ESPDESMD5_RPLENGTH + 
 		 sizeof(u_int32_t) + xd->edx_ivlen);
     if (m == NULL)
       return ENOBUFS;
 
     /* Copy data if necessary */
-    if (m->m_len - sizeof(struct ip))
+    if (m->m_len - iphlen)
     {
 #ifdef ENCDEBUG
 	if (encdebug)
 	  printf("espdesmd5_output: pushing data\n");
 #endif
-	ms = m_copym(m, sizeof(struct ip), m->m_len - sizeof(struct ip),
-		     M_DONTWAIT);
+	ms = m_copym(m, iphlen, m->m_len - iphlen, M_DONTWAIT);
 	if (ms == NULL)
 	  return ENOBUFS;
 	
 	ms->m_next = m->m_next;
 	m->m_next = ms;
-	m->m_len = sizeof(struct ip);
+	m->m_len = iphlen;
     }
 	
     /* Copy SPI, IV (or not) and replay counter */
-    bcopy((caddr_t)&spi, mtod(m, caddr_t) + sizeof (struct ip), 
-	  sizeof (u_int32_t));
-    bcopy((caddr_t)iv,  mtod(m, caddr_t) + sizeof (struct ip) + 
-	  sizeof (u_int32_t), xd->edx_ivlen);
-    bcopy((caddr_t)&rplc, mtod(m, caddr_t) + sizeof(struct ip) + 
-	  sizeof(u_int32_t) + xd->edx_ivlen, ESPDESMD5_RPLENGTH);
+    bcopy((caddr_t)&spi, mtod(m, caddr_t) + iphlen, sizeof (u_int32_t));
+    bcopy((caddr_t)iv,  mtod(m, caddr_t) + iphlen + sizeof (u_int32_t),
+	  xd->edx_ivlen);
+    bcopy((caddr_t)&rplc, mtod(m, caddr_t) + iphlen + sizeof(u_int32_t) +
+	  xd->edx_ivlen, ESPDESMD5_RPLENGTH);
 
 #ifdef ENCDEBUG
     if (encdebug)
@@ -661,10 +683,9 @@ espdesmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 	     m->m_pkthdr.len);
 #endif
 
-    ilen = olen = m->m_len - sizeof (struct ip) - sizeof(u_int32_t) - 
-	   xd->edx_ivlen;
-    idat = odat = mtod(m, u_char *) + sizeof (struct ip) +
-	   sizeof(u_int32_t) + xd->edx_ivlen;
+    ilen = olen = m->m_len - iphlen - sizeof(u_int32_t) - xd->edx_ivlen;
+    idat = odat = mtod(m, u_char *) + iphlen + sizeof(u_int32_t) 
+	   + xd->edx_ivlen;
     i = 0;
     mi = mo = m;
 
@@ -693,7 +714,7 @@ espdesmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 	if (i == 8)   /* We have full block */
 	{
 	    des_ecb_encrypt(blk, blk, (caddr_t)(xd->edx_eks), 1);
-	    for (i=0; i<8; i++)
+	    for (i = 0; i < 8; i++)
 	    {
 		while (olen == 0)
 		{
@@ -718,15 +739,24 @@ espdesmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
       printf("espdesmd5_output: almost done now\n");
 #endif
 
-    if (xd->edx_ivlen)
+    if (xd->edx_ivlen != 0)
       bcopy(iv, xd->edx_iv, ESPDESMD5_IVS); /* New IV */
 
     /* Fix the length and the next protocol, copy back and off we go */
-    ipo.ip_len = htons(sizeof (struct ip) + ohlen + rlen + padding +
+    ipo.ip_len = htons(iphlen + ohlen + rlen + padding +
 		       ESPDESMD5_ALEN);
     ipo.ip_p = IPPROTO_ESP;
     bcopy((caddr_t)&ipo, mtod(m, caddr_t), sizeof(struct ip));
 	
+    /* Copy back the options, if existing */
+    if (iphlen != sizeof(struct ip))
+      bcopy(opts, mtod(m, caddr_t) + sizeof(struct ip),
+	    iphlen - sizeof(struct ip));
+    
+    /* Update the counters */
+    tdb->tdb_packets++;
+    tdb->tdb_bytes += rlen + padding;
+
     *mp = m;
     return 0;
 }	

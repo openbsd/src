@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.7 1997/06/24 02:20:23 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.8 1997/06/24 12:15:25 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -196,14 +196,21 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct m
     ipo->ip_src = gw->sen_ipsp_src;
     ipo->ip_dst = gw->sen_ipsp_dst;
 	
-/*	printf("ip4_output: [%x->%x](l=%d, p=%d)", 
-	ntohl(ipi->ip_src.s_addr), ntohl(ipi->ip_dst.s_addr),
-	ilen, ipi->ip_p);
-	printf(" through [%x->%x](l=%d, p=%d)\n", 
-	ntohl(ipo->ip_src.s_addr), ntohl(ipo->ip_dst.s_addr),
-	ipo->ip_len, ipo->ip_p);*/
+/* 
+ *  printf("ip4_output: [%x->%x](l=%d, p=%d)", 
+ *  	   ntohl(ipi->ip_src.s_addr), ntohl(ipi->ip_dst.s_addr),
+ *	   ilen, ipi->ip_p);
+ *  printf(" through [%x->%x](l=%d, p=%d)\n", 
+ *	   ntohl(ipo->ip_src.s_addr), ntohl(ipo->ip_dst.s_addr),
+ *	   ipo->ip_len, ipo->ip_p);
+ */
 
     *mp = m;
+
+    /* Update the counters */
+    tdb->tdb_packets++;
+    tdb->tdb_bytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
+
     return 0;
 
 /*	return ip_output(m, NULL, NULL, IP_ENCAPSULATED, NULL);*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahsha1.c,v 1.1 1997/06/20 05:41:49 provos Exp $	*/
+/*	$OpenBSD: ip_ahsha1.c,v 1.2 1997/06/24 12:15:21 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -132,7 +132,8 @@ ahsha1_input(struct mbuf *m, struct tdb *tdb)
     int ohlen, len, count, off;
     struct mbuf *m0;
     SHA1_CTX ctx; 
-	
+    u_int8_t optval;
+    
     xd = (struct ahsha1_xdata *)tdb->tdb_xdata;
     ohlen = sizeof (struct ip) + AH_FLENGTH + xd->amx_alen;
 
@@ -156,7 +157,21 @@ ahsha1_input(struct mbuf *m, struct tdb *tdb)
     }
 
     ip = mtod(m, struct ip *);
-    ah = (struct ah *)(ip + 1);
+
+    if ((ip->ip_hl << 2) > sizeof(struct ip))
+    {
+	if ((m = m_pullup(m, ohlen - sizeof (struct ip) +
+			  (ip->ip_hl << 2))) == NULL)
+	{
+	    ahstat.ahs_hdrops++;
+	    return NULL;
+	}
+	
+	ip = mtod(m, struct ip *);
+	ah = (struct ah *)((u_int8_t *)ip + (ip->ip_hl << 2));
+    }
+    else
+      ah = (struct ah *)(ip + 1);
 
     ipo = *ip;
     ipo.ip_tos = 0;
@@ -170,6 +185,36 @@ ahsha1_input(struct mbuf *m, struct tdb *tdb)
     SHA1Init(&ctx);
     SHA1Update(&ctx, (unsigned char *)xd->amx_key, xd->amx_klen);
     SHA1Final(NULL, &ctx);		/* non-std usage of SHA1Final! */
+
+    /* Options */
+    if ((ip->ip_hl << 2 > sizeof(struct ip)))
+      for (off = sizeof(struct ip); off < (ip->ip_hl << 2);)
+      {
+	  optval = ((u_int8_t *)ip)[off];
+	  SHA1Update(&ctx, &optval, 1);
+	  switch (IPOPT_NUMBER(optval))
+	  {
+	      case IPOPT_EOL:
+	      case IPOPT_NOP:
+		  off++;
+		  continue;
+		  
+	      case IPOPT_SECURITY:
+	      case 133:
+	      case 134:
+		  optval = ((u_int8_t *)ip)[off + 1];
+		  SHA1Update(&ctx, (u_int8_t *)ip + off + 1, optval - 1);
+		  off += optval;
+		  continue;
+		  
+	      default:
+		  SHA1Update(&ctx, &optval, 1);
+		  SHA1Update(&ctx, ipseczeroes, optval - 2);
+		  off += optval;
+		  continue;
+	  }
+      }
+    
     SHA1Update(&ctx, (unsigned char *)&ipo, sizeof (struct ip));
     SHA1Update(&ctx, (unsigned char *)ah, AH_FLENGTH);
     SHA1Update(&ctx, ipseczeroes, xd->amx_alen);
@@ -232,6 +277,10 @@ ahsha1_input(struct mbuf *m, struct tdb *tdb)
     HTONS(ip->ip_off);
     ip->ip_sum = 0;
     ip->ip_sum = in_cksum(m, sizeof (struct ip));
+
+    /* Update the counters */
+    tdb->tdb_packets++;
+    tdb->tdb_bytes += NTOHS(ip->ip_len) - (ip->ip_hl << 2);
 
     return m;
 }
@@ -352,5 +401,10 @@ ahsha1_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
 
     *mp = m;
 	
+    /* Update the counters */
+    tdb->tdb_packets++;
+    tdb->tdb_bytes += ip->ip_len - (ip->ip_hl << 2) - AH_FLENGTH -
+		      xd->amx_alen;
+
     return 0;
 }

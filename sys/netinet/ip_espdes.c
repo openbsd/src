@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_espdes.c,v 1.5 1997/06/21 00:09:18 deraadt Exp $	*/
+/*	$OpenBSD: ip_espdes.c,v 1.6 1997/06/24 12:15:23 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -286,6 +286,10 @@ espdes_input(struct mbuf *m, struct tdb *tdb)
     *ip = ipo;
     ip->ip_sum = in_cksum(m, sizeof (struct ip));
 
+    /* Update the counters */
+    tdb->tdb_packets++;
+    tdb->tdb_bytes += NTOHS(ip->ip_len) - (ip->ip_hl << 2) + blk[6] + 2;
+
     return m;
 }
 
@@ -298,7 +302,8 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
     u_int32_t spi;
     struct mbuf *mi, *mo;
     u_char *pad, *idat, *odat;
-    u_char iv[8], blk[8];
+    u_char iv[8], blk[8], opts[40];
+    int iphlen;
 
     espstat.esps_output++;
     m = m_pullup(m, sizeof (struct ip));
@@ -307,7 +312,25 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
 
     ip = mtod(m, struct ip *);
     spi = tdb->tdb_spi;
-	
+    iphlen = ip->ip_hl << 2;
+
+    /*
+     * If options are present, pullup the IP header, the options
+     * and one DES block (8 bytes) of data.
+     */
+    if (iphlen != sizeof(struct ip))
+    {
+	m = m_pullup(m, iphlen + 8);
+	if (m == NULL)
+	  return ENOBUFS;
+
+	ip = mtod(m, struct ip *);
+
+	/* Keep the options */
+	bcopy(mtod(m, u_char *) + sizeof(struct ip), opts,
+	      iphlen - sizeof(struct ip));
+    }
+    
     xd = (struct espdes_xdata *)tdb->tdb_xdata;
     ilen = ntohs(ip->ip_len);
     ohlen = sizeof (u_int32_t) + xd->edx_ivlen;
@@ -315,7 +338,7 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
     ipo = *ip;
     nh = ipo.ip_p;
 
-    rlen = ilen - sizeof (struct ip); /* raw payload length  */
+    rlen = ilen - iphlen; /* raw payload length  */
     padding = ((8 - ((rlen + 2) % 8)) % 8) + 2;
 
     pad = (u_char *)m_pad(m, padding);
@@ -327,8 +350,8 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
 
     plen = rlen + padding;
     mi = mo = m;
-    ilen = olen = m->m_len - sizeof (struct ip);
-    idat = odat = mtod(m, u_char *) + sizeof (struct ip);
+    ilen = olen = m->m_len - iphlen;
+    idat = odat = mtod(m, u_char *) + iphlen;
     i = 0;
 
     /*
@@ -375,7 +398,7 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
 	if (i == 8)
 	{
 	    des_ecb_encrypt(blk, blk, (caddr_t)(xd->edx_eks), 1);
-	    for (i=0; i<8; i++)
+	    for (i = 0; i < 8; i++)
 	    {
 		while (olen == 0)
 		{
@@ -404,11 +427,11 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
     if (m == NULL)
       return ENOBUFS;
 
-    m = m_pullup(m, sizeof(struct ip) + xd->edx_ivlen + sizeof(u_int32_t));
+    m = m_pullup(m, iphlen + ohlen);
     if (m == NULL)
       return ENOBUFS;
 
-    ipo.ip_len = htons(sizeof (struct ip) + ohlen + rlen + padding);
+    ipo.ip_len = htons(iphlen + ohlen + rlen + padding);
     ipo.ip_p = IPPROTO_ESP;
 
     iv[0] = xd->edx_iv[0];
@@ -423,12 +446,23 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
 	iv[7] = xd->edx_iv[7];
     }
 
-    bcopy((caddr_t)&ipo, mtod(m, caddr_t), sizeof (struct ip));
-    bcopy((caddr_t)&spi, mtod(m, caddr_t) + sizeof (struct ip), sizeof (u_int32_t));
-    bcopy((caddr_t)iv,  mtod(m, caddr_t) + sizeof (struct ip) +
-	sizeof (u_int32_t), xd->edx_ivlen);
+    bcopy((caddr_t)&ipo, mtod(m, caddr_t), sizeof(struct ip));
+
+    /* Copy options, if existing */
+    if (iphlen != sizeof(struct ip))
+      bcopy(opts, mtod(m, caddr_t) + sizeof(struct ip),
+	    iphlen - sizeof(struct ip));
+
+    bcopy((caddr_t)&spi, mtod(m, caddr_t) + iphlen, sizeof(u_int32_t));
+    bcopy((caddr_t)iv,  mtod(m, caddr_t) + iphlen +
+	  sizeof (u_int32_t), xd->edx_ivlen);
 	
     *mp = m;
+
+    /* Update the counters */
+    tdb->tdb_packets++;
+    tdb->tdb_bytes += rlen + padding;
+
     return 0;
 }	
 	

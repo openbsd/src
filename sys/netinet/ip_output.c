@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.12 1997/06/16 06:32:51 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.13 1997/06/24 12:15:27 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -240,11 +240,6 @@ ip_output(m0, va_alist)
 			ip->ip_src = sinp->sin_addr;
 		}
 
-		if (hlen > sizeof (struct ip)) {	/* XXX IPOPT */
-			ip_stripoptions(m, (struct mbuf *)0);
-			hlen = sizeof (struct ip);
-		}
-
 #ifdef ENCDEBUG
 		if (encdebug)
 			printf("ip_output: encapsulating %x->%x through %x->%x\n",
@@ -254,7 +249,6 @@ ip_output(m0, va_alist)
 		ip->ip_len = htons((u_short)ip->ip_len);
 		ip->ip_off = htons((u_short)ip->ip_off);
 		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, hlen);
 
 		/*
 		 * At this point we have an IPSP "gateway" (tunnel) spec.
@@ -265,6 +259,23 @@ ip_output(m0, va_alist)
 		 */
 
 		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, gw->sen_ipsp_dst);
+
+		/* 
+		 * If we're doing IP-in-IP first, let the options be.
+		 * Otherwise, get rid of them.
+  		 * XXX This means we don't send packets with IP options
+		 * XXX unless they're encapsulated (and, presumably,
+		 * XXX subsequently authenticated).
+		 */
+		if (tdb && tdb->tdb_xform)
+		  if (tdb->tdb_xform->xf_type != XF_IP4)
+ 		    if (hlen > sizeof (struct ip)) {	/* XXX IPOPT */
+ 			ip_stripoptions(m, (struct mbuf *)0);
+ 			hlen = sizeof (struct ip);
+ 		    }
+
+		/* Now fix the checksum */
+		ip->ip_sum = in_cksum(m, hlen);
 
 #ifdef ENCDEBUG
 		if (encdebug)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.4 1997/06/20 05:41:46 provos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.5 1997/06/24 12:15:19 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -76,6 +76,7 @@ ah_input(register struct mbuf *m, int iphlen)
 	
     ahstat.ahs_input++;
 
+#if 0	/* We need them to verify the packet */
     /*
      * Strip IP options, if any.
      */
@@ -85,6 +86,7 @@ ah_input(register struct mbuf *m, int iphlen)
 	ip_stripoptions(m, (struct mbuf *)0);
 	iphlen = sizeof (struct ip);
     }
+#endif
 	
     /*
      * Make sure that at least the fixed part of the AH header is

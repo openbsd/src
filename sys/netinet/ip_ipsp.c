@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.8 1997/06/21 00:09:19 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.9 1997/06/24 12:15:25 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -90,10 +90,10 @@ struct xformsw xformsw[] = {
     { XF_AHHMACSHA1,	XFT_AUTH,	"HMAC SHA1 Authentication",
       ahhmacsha1_attach,	ahhmacsha1_init, ahhmacsha1_zeroize,
       ahhmacsha1_input,	ahhmacsha1_output, },
-    { XF_ESPDESMD5,		XFT_CONF,     "DES-CBC Encryption + MD5 Authentication",
+    { XF_ESPDESMD5,		XFT_CONF|XFT_AUTH,     "DES-CBC Encryption + MD5 Authentication",
       espdesmd5_attach,	espdesmd5_init,	espdesmd5_zeroize,
       espdesmd5_input,	espdesmd5_output, },
-    { XF_ESP3DESMD5,	XFT_CONF,     "3DES-CBC Encryption + MD5 Authentication",
+    { XF_ESP3DESMD5,	XFT_CONF|XFT_AUTH,     "3DES-CBC Encryption + MD5 Authentication",
       esp3desmd5_attach,	esp3desmd5_init,	esp3desmd5_zeroize,
       esp3desmd5_input,	esp3desmd5_output, },
 };

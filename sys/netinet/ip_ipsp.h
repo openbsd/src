@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.6 1997/06/21 00:09:19 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.7 1997/06/24 12:15:26 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -36,11 +36,17 @@ struct tdb				/* tunnel descriptor block */
     u_int32_t	    tdb_flags;  	/* Flags related to this TDB */
 #define TDBF_UNIQUE	0x0001		/* This should not be used by others */
 #define TDBF_TIMER      0x0002		/* Check the timers */
-#define TDBF_BYTES      0x0004		/* Update the byte counters */
+#define TDBF_BYTES      0x0004		/* Check the byte counters */
+#define TDBF_PACKETS    0x0008		/* Check the packet counters */
+#define TDBF_INVALID    0x0010          /* This SPI is no longer valid */
+    u_int64_t       tdb_packets;	/* Expire after so many packets s|r */
+    u_int64_t       tdb_soft_packets;	/* Expiration warning */ 
+    u_int64_t       tdb_cur_packets;    /* Current number of packets s|r'ed */
     u_int64_t       tdb_bytes;		/* Expire after so many bytes passed */
+    u_int64_t       tdb_soft_bytes;	/* Expiration warning */
     u_int64_t       tdb_cur_bytes;	/* Current count of bytes */
+    u_int64_t       tdb_timeout;	/* When does the SPI expire */
     u_int64_t       tdb_soft_timeout;	/* Send a soft-expire warning */
-    u_int64_t       tdb_hard_timeout;	/* When does the SPI expire */
     u_int64_t       tdb_established;	/* When was the SPI established */
     struct in_addr  tdb_dst;	        /* dest address for this SPI */
     struct ifnet   *tdb_rcvif;	        /* related rcv encap interface */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahhmacmd5.c,v 1.8 1997/06/20 05:41:47 provos Exp $	*/
+/*	$OpenBSD: ip_ahhmacmd5.c,v 1.9 1997/06/24 12:15:20 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -158,7 +158,8 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
     u_int64_t btsx;
     struct mbuf *m0;
     MD5_CTX ctx; 
-	
+    u_int8_t optval;
+    
     xd = (struct ahhmacmd5_xdata *)tdb->tdb_xdata;
     ohlen = sizeof (struct ip) + AH_FLENGTH + xd->amx_alen;
     if (xd->amx_wnd >= 0)
@@ -184,7 +185,22 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
     }
 
     ip = mtod(m, struct ip *);
-    ah = (struct ah *)(ip + 1);
+
+    if ((ip->ip_hl << 2) > sizeof(struct ip))
+    {
+	if ((m = m_pullup(m, ohlen - sizeof (struct ip) +
+			  (ip->ip_hl << 2))) == NULL)
+	{
+	    ahstat.ahs_hdrops++;
+	    return NULL;
+	}
+	
+	ip = mtod(m, struct ip *);
+	ah = (struct ah *)((u_int8_t *)ip + (ip->ip_hl << 2));
+    }
+    else
+      ah = (struct ah *)(ip + 1);
+
     ahp = (struct ahhmacmd5 *)ah;
 
     if (xd->amx_wnd >= 0)
@@ -205,7 +221,7 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
 
     ipo = *ip;
     ipo.ip_tos = 0;
-    ipo.ip_len += sizeof (struct ip);	/* adjusted in ip_intr() */
+    ipo.ip_len += sizeof(struct ip);	/* adjusted in ip_intr() */
     HTONS(ipo.ip_len);
     HTONS(ipo.ip_id);
     ipo.ip_off = htons(ipo.ip_off & IP_DF);	/* XXX -- and the C bit? */
@@ -213,7 +229,37 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
     ipo.ip_sum = 0;
 
     ctx = xd->amx_ictx;
-    MD5Update(&ctx, (unsigned char *)&ipo, sizeof (struct ip));
+    MD5Update(&ctx, (unsigned char *)&ipo, sizeof(struct ip));
+
+    /* Options */
+    if ((ip->ip_hl << 2 > sizeof(struct ip)))
+      for (off = sizeof(struct ip); off < (ip->ip_hl << 2);)
+      {
+	  optval = ((u_int8_t *)ip)[off];
+	  MD5Update(&ctx, &optval, 1);
+	  switch (IPOPT_NUMBER(optval))
+	  {
+	      case IPOPT_EOL:
+	      case IPOPT_NOP:
+		  off++;
+		  continue;
+		  
+	      case IPOPT_SECURITY:
+	      case 133:
+	      case 134:
+		  optval = ((u_int8_t *)ip)[off + 1];
+		  MD5Update(&ctx, (u_int8_t *)ip + off + 1, optval - 1);
+		  off += optval;
+		  continue;
+		  
+	      default:
+		  MD5Update(&ctx, &optval, 1);
+		  MD5Update(&ctx, ipseczeroes, optval - 2);
+		  off += optval;
+		  continue;
+	  }
+      }
+
     if (xd->amx_wnd >= 0)
       MD5Update(&ctx, (unsigned char *)ahp, AH_FLENGTH + HMACMD5_RPLENGTH);
     else
@@ -312,6 +358,10 @@ ahhmacmd5_input(struct mbuf *m, struct tdb *tdb)
     HTONS(ip->ip_off);
     ip->ip_sum = 0;
     ip->ip_sum = in_cksum(m, sizeof (struct ip));
+
+    /* Update the counters */
+    tdb->tdb_packets++;
+    tdb->tdb_bytes += NTOHS(ip->ip_len) - (ip->ip_hl << 2);
 
     return m;
 }
@@ -460,5 +510,12 @@ ahhmacmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, str
 
     *mp = m;
 	
+    /* Update the counters */
+    tdb->tdb_packets++;
+    tdb->tdb_bytes += ip->ip_len - (ip->ip_hl << 2) - AH_FLENGTH -
+		      xd->amx_alen;
+    if (xd->amx_wnd >= 0)
+      tdb->tdb_bytes -= HMACMD5_RPLENGTH;
+
     return 0;
 }
