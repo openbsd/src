@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_beep.c,v 1.3 1997/12/03 05:21:12 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -23,14 +25,14 @@
 /*
  *	beep.c
  *
- *	Routines beep() and flash()
+ *	The routine beep().
  *
  */
 
 #include <curses.priv.h>
 #include <term.h>	/* beep, flash */
 
-MODULE_ID("Id: lib_beep.c,v 1.3 1997/02/02 00:27:01 tom Exp $")
+MODULE_ID("Id: lib_beep.c,v 1.4 1997/10/08 09:38:17 jtc Exp $")
 
 /*
  *	beep()
@@ -51,30 +53,6 @@ int beep(void)
 	} else if (flash_screen) {
 		TPUTS_TRACE("flash_screen");
 		return(putp(flash_screen));
-	}
-	else
-		returnCode(ERR);
-}
-
-/*
- *	flash()
- *
- *	Flash the current terminal's screen if possible.   If not,
- *	sound the audible bell if one exists.
- *
- */
-
-int flash(void)
-{
-	T((T_CALLED("flash()")));
-
-	/* FIXME: should make sure that we are not in altchar mode */
-	if (flash_screen) {
-		TPUTS_TRACE("flash_screen");
-		returnCode(putp(flash_screen));
-	} else if (bell) {
-		TPUTS_TRACE("bell");
-		returnCode(putp(bell));
 	}
 	else
 		returnCode(ERR);

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_baudrate.c,v 1.2 1997/12/03 05:21:11 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -28,7 +30,7 @@
 #include <curses.priv.h>
 #include <term.h>	/* cur_term, pad_char */
 
-MODULE_ID("Id: lib_baudrate.c,v 1.7 1997/04/26 17:41:48 tom Exp $")
+MODULE_ID("Id: lib_baudrate.c,v 1.9 1997/10/25 23:34:13 tom Exp $")
 
 /*
  *	int
@@ -58,36 +60,31 @@ static struct speed const speeds[] = {
 	{B2400, 2400},
 	{B4800, 4800},
 	{B9600, 9600},
-#define MAX_BAUD	B9600
 #ifdef B19200
-#undef MAX_BAUD
-#define MAX_BAUD	B19200
 	{B19200, 19200},
 #else
 #ifdef EXTA
-#define MAX_BAUD	EXTA
 	{EXTA, 19200},
 #endif
 #endif
 #ifdef B38400
-#undef MAX_BAUD
-#define MAX_BAUD	B38400
 	{B38400, 38400},
 #else
 #ifdef EXTB
-#define MAX_BAUD	EXTB
 	{EXTB, 38400},
 #endif
 #endif
 #ifdef B57600
-#undef MAX_BAUD
-#define MAX_BAUD        B57600
 	{B57600, 57600},
 #endif
 #ifdef B115200
-#undef MAX_BAUD
-#define MAX_BAUD        B115200
 	{B115200, 115200},
+#endif
+#ifdef B230400
+	{B230400, 230400},
+#endif
+#ifdef B460800
+	{B460800, 460800},
 #endif
 };
 
@@ -122,10 +119,10 @@ char *debug_rate;
 #else
 	ret = cur_term->Nttyb.sg_ospeed;
 #endif
-	if(ret < 0 || ret > MAX_BAUD)
+	if(ret < 0 || (speed_t)ret > speeds[SIZEOF(speeds)-1].s)
 		returnCode(ERR);
 	SP->_baudrate = ERR;
-	for (i = 0; i < (sizeof(speeds) / sizeof(struct speed)); i++)
+	for (i = 0; i < SIZEOF(speeds); i++)
 		if (speeds[i].s == (speed_t)ret)
 		{
 			SP->_baudrate = speeds[i].sp;

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_erase.c,v 1.3 1997/12/03 05:21:17 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -29,40 +31,33 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_erase.c,v 1.7 1997/02/01 23:18:18 tom Exp $")
+MODULE_ID("Id: lib_erase.c,v 1.10 1997/09/20 15:02:34 juergen Exp $")
 
 int  werase(WINDOW	*win)
 {
+int     code = ERR;
 int	y;
-chtype	*sp, *end, *start, *maxx = NULL;
-short	minx;
+chtype	blank;
+chtype	*sp, *end, *start;
 
 	T((T_CALLED("werase(%p)"), win));
 
-	for (y = 0; y <= win->_maxy; y++) {
-		minx = _NOCHANGE;
-		start = win->_line[y].text;
-		end = &start[win->_maxx];
-
-		maxx = start;
-		for (sp = start; sp <= end; sp++) {
-			maxx = sp;
-			if (minx == _NOCHANGE)
-					minx = sp - start;
-			*sp = _nc_background(win);
-		}
-
-		if (minx != _NOCHANGE) {
-			if (win->_line[y].firstchar > minx ||
-			    win->_line[y].firstchar == _NOCHANGE)
-				win->_line[y].firstchar = minx;
-
-			if (win->_line[y].lastchar < maxx - win->_line[y].text)
-			    win->_line[y].lastchar = maxx - win->_line[y].text;
-		}
+	if (win) {
+	  blank = _nc_background(win);
+	  for (y = 0; y <= win->_maxy; y++) {
+	    start = win->_line[y].text;
+	    end = &start[win->_maxx];
+	    
+	    for (sp = start; sp <= end; sp++)
+	      *sp = blank;
+	    
+	    win->_line[y].firstchar = 0;
+	    win->_line[y].lastchar = win->_maxx;
+	  }
+	  win->_curx = win->_cury = 0;
+	  win->_flags &= ~_WRAPPED;
+	  _nc_synchook(win);
+	  code = OK;
 	}
-	win->_curx = win->_cury = 0;
-	win->_flags &= ~_WRAPPED;
-	_nc_synchook(win);
-	returnCode(OK);
+	returnCode(code);
 }

@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 ################################################################################
 # Copyright 1997 by Thomas E. Dickey <dickey@clark.net>                        #
 # All Rights Reserved.                                                         #
@@ -18,7 +18,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR    #
 # PERFORMANCE OF THIS SOFTWARE.                                                #
 ################################################################################
-# Id: MKexpanded.sh,v 1.4 1997/05/10 20:21:58 tom Exp $
+# Id: MKexpanded.sh,v 1.5 1997/08/31 01:59:30 tom Exp $
 #
 # Script to generate 'expanded.c', a dummy source that contains functions
 # corresponding to complex macros used in this library.  By making functions,
@@ -57,10 +57,6 @@ cat >$TMP <<EOF
 #undef FALSE
 /* this is a marker */
 IGNORE
-chtype _nc_ch_or_attr(chtype ch, attr_t at)
-{
-	return ch_or_attr(ch,at);
-}
 void _nc_toggle_attr_on(attr_t *S, attr_t at)
 {
 	toggle_attr_on(*S,at);

@@ -1,3 +1,5 @@
+/*	$OpenBSD: hashmap.c,v 1.2 1997/12/03 05:21:09 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -35,11 +37,8 @@ vertical-motion optimizer portion of the update logic (see hardscroll.c).
 
    Line pairs are recognized by applying a modified Heckel's algorithm,
 sped up by hashing.  If a line hash is unique in both screens, those
-lines must be a pair.  If the hashes of the two lines immediately following
-lines known to be a pair are the same, the following lines are also a pair.
-We apply these rules repeatedly until no more pairs are found.  The
-modifications stem from the fact that there may already be oldindex info
-associated with the virtual screen, which has to be respected.
+lines must be a pair. Then if the lines just before or after the pair
+are the same or similar, they are a pair too.
 
    We don't worry about false pairs produced by hash collisions, on the
 assumption that such cases are rare and will only make the latter stages
@@ -59,13 +58,12 @@ AUTHOR
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: hashmap.c,v 1.12 1997/05/03 20:30:06 tom Exp $")
+MODULE_ID("Id: hashmap.c,v 1.23 1997/10/18 17:25:02 tom Exp $")
 
 #ifdef HASHDEBUG
-#define LINES	24
 #define TEXTWIDTH	1
-int oldnums[LINES], reallines[LINES];
-static chtype oldtext[LINES][TEXTWIDTH], newtext[LINES][TEXTWIDTH];
+int oldnums[MAXLINES], reallines[MAXLINES];
+static chtype oldtext[MAXLINES][TEXTWIDTH], newtext[MAXLINES][TEXTWIDTH];
 #define OLDNUM(n)	oldnums[n]
 #define REAL(m)		reallines[m]
 #define OLDTEXT(n)	oldtext[n]
@@ -84,67 +82,216 @@ static chtype oldtext[LINES][TEXTWIDTH], newtext[LINES][TEXTWIDTH];
 #endif /* _NEWINDEX */
 #endif /* HASHDEBUG */
 
-/* Chris Torek's hash function (from his DB package). */
-static inline unsigned long hash4(const void *key, size_t len)
-{
-    register long h, loop;
-    register unsigned const char *k;
-
-#define HASH4a   h = (h << 5) - h + *k++;
-#define HASH4b   h = (h << 5) + h + *k++;
-#define HASH4 HASH4b
-    h = 0;
-    k = (unsigned const char *)key;
-    if (len > 0) {
-	loop = (len + 8 - 1) >> 3;
-	switch (len & (8 - 1)) {
-	case 0:
-	    do {	/* All fall throughs */
-		HASH4;
-	    case 7:
-		HASH4;
-	    case 6:
-		HASH4;
-	    case 5:
-		HASH4;
-	    case 4:
-		HASH4;
-	    case 3:
-		HASH4;
-	    case 2:
-		HASH4;
-	    case 1:
-		HASH4;
-	    } while (--loop);
-	}
-    }
-    return ((unsigned long)h);
-}
-
 static inline unsigned long hash(chtype *text)
 {
-    return(hash4(text, TEXTWIDTH*sizeof(*text)));
+    int i;
+    chtype ch;
+    unsigned long result = 0;
+    for (i = TEXTWIDTH; i>0; i--)
+    {
+	ch = *text++;
+	result += (result<<5) + ch + (ch>>16);
+    }
+    return result;
+}
+
+/* approximate update cost */
+static int update_cost(chtype *from,chtype *to)
+{
+    int cost=0;
+    int i;
+
+    for (i=TEXTWIDTH; i>0; i--)
+        if (*from++ != *to++)
+	    cost++;
+
+    return cost;
+}
+static int update_cost_from_blank(chtype *to)
+{
+    int cost=0;
+    int i;
+
+    /* FIXME: ClrBlank should be used */
+    for (i=TEXTWIDTH; i>0; i--)
+        if (BLANK != *to++)
+	    cost++;
+
+    return cost;
+}
+
+/*
+ * Returns true when moving line 'from' to line 'to' seems to be cost
+ * effective. 'blank' indicates whether the line 'to' would become blank.
+ */
+static inline bool cost_effective(const int from, const int to, const bool blank)
+{
+    int new_from;
+
+    if (from == to)
+	return FALSE;
+
+    new_from = OLDNUM(from);
+    if (new_from == _NEWINDEX)
+	new_from = from;
+
+    /* 
+     * On the left side of >= is the cost before moving;
+     * on the right side -- cost after moving.
+     */
+    return (((blank ? update_cost_from_blank(NEWTEXT(to))
+		    : update_cost(OLDTEXT(to),NEWTEXT(to)))
+	     + update_cost(OLDTEXT(new_from),NEWTEXT(from)))
+	 >= ((new_from==from ? update_cost_from_blank(NEWTEXT(from))
+			     : update_cost(OLDTEXT(new_from),NEWTEXT(from)))
+	     + update_cost(OLDTEXT(from),NEWTEXT(to)))) ? TRUE : FALSE;
+}
+
+
+typedef struct
+{
+    unsigned long	hashval;
+    int		oldcount, newcount;
+    int		oldindex, newindex;
+}
+    sym;
+
+static sym *hashtab=0;
+static int lines_alloc=0; 
+static long *oldhash=0;
+static long *newhash=0;
+
+static void grow_hunks(void)
+{
+    int start, end, shift;
+    int back_limit, forward_limit;	    /* limits for cells to fill */
+    int back_ref_limit, forward_ref_limit;  /* limits for refrences */
+    int i;
+    int next_hunk;
+
+    /*
+     * This is tricky part.  We have unique pairs to use as anchors.
+     * Use these to deduce the presence of spans of identical lines.
+     */
+    back_limit = 0;
+    back_ref_limit = 0;
+
+    i = 0;
+    while (i < screen_lines && OLDNUM(i) == _NEWINDEX)
+	i++;
+    for ( ; i < screen_lines; i=next_hunk)
+    {
+	start = i;
+	shift = OLDNUM(i) - i;
+	
+	/* get forward limit */
+	i = start+1;
+	while (i < screen_lines && OLDNUM(i) != _NEWINDEX && OLDNUM(i) - i == shift)
+	    i++;
+	end = i;
+	while (i < screen_lines && OLDNUM(i) == _NEWINDEX)
+	    i++;
+	next_hunk = i;
+	forward_limit = i;
+	if (i >= screen_lines || OLDNUM(i) >= i)
+	    forward_ref_limit = i;
+	else
+	    forward_ref_limit = OLDNUM(i);
+
+	i = start-1;
+	/* grow back */
+	if (shift < 0)
+	    back_limit = back_ref_limit + (-shift);
+	while (i >= back_limit)
+	{
+	    if(newhash[i] == oldhash[i+shift]
+	    || cost_effective(i+shift, i, shift<0))
+	    {
+		OLDNUM(i) = i+shift;
+		TR(TRACE_UPDATE | TRACE_MOVE,
+		   ("connected new line %d to old line %d (backward continuation)",
+		    i, i+shift));
+	    }
+	    else
+	    {
+		TR(TRACE_UPDATE | TRACE_MOVE,
+		   ("not connecting new line %d to old line %d (backward continuation)",
+		    i, i+shift));
+		break;
+	    }
+	    i--;
+	}
+	
+	i = end;
+	/* grow forward */
+	if (shift > 0)
+	    forward_limit = forward_ref_limit - shift;
+	while (i < forward_limit)
+	{
+	    if(newhash[i] == oldhash[i+shift]
+	    || cost_effective(i+shift, i, shift>0))
+	    {
+		OLDNUM(i) = i+shift;
+		TR(TRACE_UPDATE | TRACE_MOVE,
+		   ("connected new line %d to old line %d (forward continuation)",
+		    i, i+shift));
+	    }
+	    else
+	    {
+		TR(TRACE_UPDATE | TRACE_MOVE,
+		   ("not connecting new line %d to old line %d (forward continuation)",
+		    i, i+shift));
+		break;
+	    }
+	    i++;
+	}
+	
+	back_ref_limit = back_limit = i;
+	if (shift > 0)
+	    back_ref_limit += shift;
+    }
 }
 
 void _nc_hash_map(void)
 {
-    typedef struct
-    {
-	unsigned long	hashval;
-	int		oldcount, newcount;
-	int		oldindex, newindex;
-    }
-    sym;
-    sym hashtab[MAXLINES*2], *sp;
+    sym *sp;
     register int i;
-    long oldhash[MAXLINES], newhash[MAXLINES];
-    bool keepgoing;
+    int start, shift, size;
+
+
+    if (screen_lines > lines_alloc)
+    {
+	if (hashtab)
+	    free (hashtab);
+	hashtab = malloc (sizeof(*hashtab)*(screen_lines+1)*2);
+	if (!hashtab)
+	{
+	    if (oldhash)
+		FreeAndNull(oldhash);
+	    lines_alloc = 0;
+	    return;
+	}
+  
+	if (oldhash)
+	    free (oldhash);
+	oldhash = malloc (sizeof(*oldhash)*screen_lines*2);
+	if (!oldhash)
+	{
+	    if (hashtab)
+		FreeAndNull(hashtab);
+	    lines_alloc = 0;
+	    return;
+	}
+	
+	lines_alloc = screen_lines;
+    }
+    newhash = oldhash + screen_lines;	/* two arrays in the same memory block */
 
     /*
      * Set up and count line-hash values.
      */
-    memset(hashtab, '\0', sizeof(sym) * MAXLINES);
-    for (i = 0; i < LINES; i++)
+    memset(hashtab, '\0', sizeof(*hashtab)*(screen_lines+1)*2);
+    for (i = 0; i < screen_lines; i++)
     {
 	unsigned long hashval = hash(OLDTEXT(i));
 
@@ -156,7 +303,7 @@ void _nc_hash_map(void)
 	sp->oldcount++;
 	sp->oldindex = i;
     }
-    for (i = 0; i < LINES; i++)
+    for (i = 0; i < screen_lines; i++)
     {
 	unsigned long hashval = hash(NEWTEXT(i));
 
@@ -173,13 +320,14 @@ void _nc_hash_map(void)
 
     /*
      * Mark line pairs corresponding to unique hash pairs.
-     * Note: we only do this where the new line doesn't
-     * already have a valid oldindex -- this way we preserve the
-     * information left in place by the software scrolling functions.
+     * 
+     * We don't mark lines with offset 0, because it can make fail
+     * extending hunks by cost_effective. Otherwise, it does not
+     * have any side effects.
      */
     for (sp = hashtab; sp->hashval; sp++)
 	if (sp->oldcount == 1 && sp->newcount == 1
-	    && OLDNUM(sp->newindex) == _NEWINDEX)
+	    && sp->oldindex != sp->newindex)
 	{
 	    TR(TRACE_UPDATE | TRACE_MOVE,
 	       ("new line %d is hash-identical to old line %d (unique)",
@@ -187,42 +335,44 @@ void _nc_hash_map(void)
 	    OLDNUM(sp->newindex) = sp->oldindex;
 	}
 
+    grow_hunks();
+
     /*
-     * Now for the tricky part.  We have unique pairs to use as anchors.
-     * Use these to deduce the presence of spans of identical lines.
+     * Eliminate bad or impossible shifts -- this includes removing
+     * those hunks which could not grow because of conflicts, as well
+     * those which are to be moved too far, they are likely to destroy
+     * more than carry.
      */
-    do {
-	keepgoing = FALSE;
-
-	for (i = 0; i < LINES-1; i++)
-	    if (OLDNUM(i) != _NEWINDEX && OLDNUM(i+1) == _NEWINDEX)
+    for (i = 0; i < screen_lines; )
+    {
+	while (i < screen_lines && OLDNUM(i) == _NEWINDEX)
+	    i++;
+	if (i >= screen_lines)
+	    break;
+	start = i;
+	shift = OLDNUM(i) - i;
+	i++;
+	while (i < screen_lines && OLDNUM(i) != _NEWINDEX && OLDNUM(i) - i == shift)
+	    i++;
+	size = i - start;
+	if (size <= abs(shift))
+	{
+	    while (start < i)
 	    {
-		if (OLDNUM(i) + 1 < LINES
-			    && newhash[i+1] == oldhash[OLDNUM(i) + 1])
-		{
-		    OLDNUM(i+1) = OLDNUM(i) + 1;
-		    TR(TRACE_UPDATE | TRACE_MOVE,
-		       ("new line %d is hash-identical to old line %d (forward continuation)",
-			i+1, OLDNUM(i) + 1));
-		    keepgoing = TRUE;
-		}
+		OLDNUM(start) = _NEWINDEX;
+		start++;
 	    }
+	}
+    }
+    
+    /* After clearing invalid hunks, try grow the rest. */
+    grow_hunks();
 
-	for (i = 0; i < LINES-1; i++)
-	    if (OLDNUM(i) != _NEWINDEX && OLDNUM(i-1) == _NEWINDEX)
-	    {
-		if (OLDNUM(i) - 1 >= 0
-			    && newhash[i-1] == oldhash[OLDNUM(i) - 1])
-		{
-		    OLDNUM(i-1) = OLDNUM(i) - 1;
-		    TR(TRACE_UPDATE | TRACE_MOVE,
-		       ("new line %d is hash-identical to old line %d (backward continuation)",
-			i-1, OLDNUM(i) - 1));
-		    keepgoing = TRUE;
-		}
-	    }
-    } while
-	(keepgoing);
+#if NO_LEAKS
+    FreeAndNull(hashtab);
+    FreeAndNull(oldhash);
+    lines_alloc = 0;
+#endif
 }
 
 #ifdef HASHDEBUG
@@ -230,18 +380,19 @@ void _nc_hash_map(void)
 int
 main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 {
-    extern void	_nc_linedump(void);
     char	line[BUFSIZ], *st;
     int		n;
 
-    for (n = 0; n < LINES; n++)
+    for (n = 0; n < screen_lines; n++)
     {
 	reallines[n] = n;
 	oldnums[n] = _NEWINDEX;
 	oldtext[n][0] = newtext[n][0] = '.';
     }
 
+#ifdef TRACE
     _nc_tracing = TRACE_MOVE;
+#endif
     for (;;)
     {
 	/* grab a test command */
@@ -255,7 +406,7 @@ main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 	    break;
 
 	case 'l':	/* get initial line number vector */
-	    for (n = 0; n < LINES; n++)
+	    for (n = 0; n < screen_lines; n++)
 	    {
 		reallines[n] = n;
 		oldnums[n] = _NEWINDEX;
@@ -269,9 +420,9 @@ main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 	    break;
 
 	case 'n':	/* use following letters as text of new lines */
-	    for (n = 0; n < LINES; n++)
+	    for (n = 0; n < screen_lines; n++)
 		newtext[n][0] = '.';
-	    for (n = 0; n < LINES; n++)
+	    for (n = 0; n < screen_lines; n++)
 		if (line[n+1] == '\n')
 		    break;
 		else
@@ -279,9 +430,9 @@ main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 	    break;
 
 	case 'o':	/* use following letters as text of old lines */
-	    for (n = 0; n < LINES; n++)
+	    for (n = 0; n < screen_lines; n++)
 		oldtext[n][0] = '.';
-	    for (n = 0; n < LINES; n++)
+	    for (n = 0; n < screen_lines; n++)
 		if (line[n+1] == '\n')
 		    break;
 		else
@@ -289,14 +440,16 @@ main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 	    break;
 
 	case 'd':	/* dump state of test arrays */
+#ifdef TRACE
 	    _nc_linedump();
+#endif
 	    (void) fputs("Old lines: [", stdout);
-	    for (n = 0; n < LINES; n++)
+	    for (n = 0; n < screen_lines; n++)
 		putchar(oldtext[n][0]);
 	    putchar(']');
 	    putchar('\n');
 	    (void) fputs("New lines: [", stdout);
-	    for (n = 0; n < LINES; n++)
+	    for (n = 0; n < screen_lines; n++)
 		putchar(newtext[n][0]);
 	    putchar(']');
 	    putchar('\n');
@@ -305,7 +458,9 @@ main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 	case 'h':	/* apply hash mapper and see scroll optimization */
 	    _nc_hash_map();
 	    (void) fputs("Result:\n", stderr);
+#ifdef TRACE
 	    _nc_linedump();
+#endif
 	    _nc_scroll_optimize();
 	    (void) fputs("Done.\n", stderr);
 	    break;

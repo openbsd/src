@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_overlay.c,v 1.3 1997/12/03 05:21:26 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -29,7 +31,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_overlay.c,v 1.8 1997/04/24 10:34:38 tom Exp $")
+MODULE_ID("Id: lib_overlay.c,v 1.9 1997/09/20 15:02:34 juergen Exp $")
 
 static int overlap(const WINDOW *const s, WINDOW *const d, int const flag)
 {
@@ -92,6 +94,9 @@ bool touched;
 
 	T((T_CALLED("copywin(%p, %p, %d, %d, %d, %d, %d, %d, %d)"),
 		src, dst, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, over));
+
+	if (!src || !dst)
+	  returnCode(ERR);
 
 	/* make sure rectangle exists in source */
 	if ((sminrow + dmaxrow - dminrow) > (src->_maxy + 1) ||

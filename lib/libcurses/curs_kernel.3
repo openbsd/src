@@ -1,3 +1,4 @@
+.\" $OpenBSD: curs_kernel.3,v 1.3 1997/12/03 05:20:58 millert Exp $
 .TH curs_kernel 3X ""
 .SH NAME
 \fBdef_prog_mode\fR, \fBdef_shell_mode\fR,
@@ -70,7 +71,7 @@ at the beginning, do its manipulation of its own windows, do a
 \fBdoupdate\fR.
 
 The \fBripoffline\fR routine provides access to the same facility that
-\fBslk_init\fR [see curs_slk(3X)] uses to reduce the size of the
+\fBslk_init\fR [see curs_slk(3)] uses to reduce the size of the
 screen.  \fBripoffline\fR must be called before \fBinitscr\fR or
 \fBnewterm\fR is called.  If \fIline\fR is positive, a line is removed
 from the top of \fBstdscr\fR; if \fIline\fR is negative, a line is
@@ -113,8 +114,8 @@ The SVr4 documentation describes \fBsetsyx\fR and \fBgetsyx\fR as having return
 type int. This is misleading, as they are macros with no documented semantics
 for the return value.
 .SH SEE ALSO
-\fBcurses\fR(3X), \fBcurs_initscr\fR(3X), \fBcurs_outopts\fR(3X), \fBcurs_refresh\fR(3X),
-\fBcurs_scr_dump\fR(3X), \fBcurs_slk\fR(3X)
+\fBcurses\fR(3), \fBcurs_initscr\fR(3), \fBcurs_outopts\fR(3), \fBcurs_refresh\fR(3),
+\fBcurs_scr_dump\fR(3), \fBcurs_slk\fR(3)
 .\"#
 .\"# The following sets edit modes for GNU EMACS
 .\"# Local Variables:

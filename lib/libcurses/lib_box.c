@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_box.c,v 1.3 1997/12/03 05:21:12 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -24,16 +26,13 @@
 /*
 **	lib_box.c
 **
-**	line drawing routines:
-**	wborder()
-**	whline()
-**	wvline()
+**	The routine wborder().
 **
 */
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_box.c,v 1.7 1997/04/12 17:51:49 tom Exp $")
+MODULE_ID("Id: lib_box.c,v 1.9 1997/10/08 09:38:17 jtc Exp $")
 
 int wborder(WINDOW *win, chtype ls, chtype rs, chtype ts,
 	chtype bs, chtype tl, chtype tr, chtype bl, chtype br)
@@ -51,6 +50,9 @@ short endx, endy;
 	_tracechtype2(6,tr),
 	_tracechtype2(7,bl),
 	_tracechtype2(8,br)));
+
+        if (!win)
+          returnCode(ERR);
 
 	if (ls == 0) ls = ACS_VLINE;
 	if (rs == 0) rs = ACS_VLINE;
@@ -96,65 +98,3 @@ short endx, endy;
 	_nc_synchook(win);
 	returnCode(OK);
 }
-
-int whline(WINDOW *win, chtype ch, int n)
-{
-short line;
-short start;
-short end;
-
-	T((T_CALLED("whline(%p,%s,%d)"), win, _tracechtype(ch), n));
-
-	line = win->_cury;
-	start = win->_curx;
-	end = start + n - 1;
-	if (end > win->_maxx)
-		end = win->_maxx;
-
-	if (win->_line[line].firstchar == _NOCHANGE || win->_line[line].firstchar > start)
-		win->_line[line].firstchar = start;
-	if (win->_line[line].lastchar == _NOCHANGE || win->_line[line].lastchar < start)
-		win->_line[line].lastchar = end;
-
-	if (ch == 0)
-		ch = ACS_HLINE;
-	ch = _nc_render(win, ch);
-
-	while ( end >= start) {
-		win->_line[line].text[end] = ch;
-		end--;
-	}
-
-	returnCode(OK);
-}
-
-int wvline(WINDOW *win, chtype ch, int n)
-{
-short row, col;
-short end;
-
-	T((T_CALLED("wvline(%p,%s,%d)"), win, _tracechtype(ch), n));
-
-	row = win->_cury;
-	col = win->_curx;
-	end = row + n - 1;
-	if (end > win->_maxy)
-		end = win->_maxy;
-
-	if (ch == 0)
-		ch = ACS_VLINE;
-	ch = _nc_render(win, ch);
-
-	while(end >= row) {
-		win->_line[end].text[col] = ch;
-		if (win->_line[end].firstchar == _NOCHANGE || win->_line[end].firstchar > col)
-			win->_line[end].firstchar = col;
-		if (win->_line[end].lastchar == _NOCHANGE || win->_line[end].lastchar < col)
-			win->_line[end].lastchar = col;
-		end--;
-	}
-
-	_nc_synchook(win);
-	returnCode(OK);
-}
-

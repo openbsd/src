@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_getstr.c,v 1.3 1997/12/03 05:21:19 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -30,7 +32,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("Id: lib_getstr.c,v 1.11 1997/02/01 23:22:54 tom Exp $")
+MODULE_ID("Id: lib_getstr.c,v 1.18 1997/09/20 15:02:34 juergen Exp $")
 
 /*
  * This wipes out the last character, no matter whether it was a tab, control
@@ -60,7 +62,7 @@ static char *WipeOut(WINDOW *win, int y, int x, char *first, char *last, bool ec
 int wgetnstr(WINDOW *win, char *str, int maxlen)
 {
 TTY	buf;
-bool	oldnl, oldecho, oldraw, oldcbreak, oldkeypad;
+bool	oldnl, oldecho, oldraw, oldcbreak;
 char	erasec;
 char	killc;
 char	*oldstr;
@@ -69,18 +71,19 @@ int	y, x;
 
 	T((T_CALLED("wgetnstr(%p,%p, %d)"), win, str, maxlen));
 
-	GET_TTY(cur_term->Filedes, &buf);
+	if (!win)
+	  returnCode(ERR);
+
+	_nc_get_curterm(&buf);
 
 	oldnl = SP->_nl;
 	oldecho = SP->_echo;
 	oldraw = SP->_raw;
 	oldcbreak = SP->_cbreak;
-	oldkeypad = win->_use_keypad;
 	nl();
 	noecho();
 	noraw();
 	cbreak();
-	keypad(win, TRUE);
 
 	erasec = erasechar();
 	killc = killchar();
@@ -101,8 +104,13 @@ int	y, x;
 		if (ch == '\n'
 		 || ch == '\r'
 		 || ch == KEY_DOWN
-		 || ch == KEY_ENTER)
+		 || ch == KEY_ENTER) {
+			if (oldecho == TRUE
+			 && win->_cury == win->_maxy
+			 && win->_scroll)
+				wechochar(win, '\n');
 			break;
+		}
 		if (ch == erasec || ch == KEY_LEFT || ch == KEY_BACKSPACE) {
 			if (str > oldstr) {
 				str = WipeOut(win, y, x, oldstr, str, oldecho);
@@ -117,6 +125,7 @@ int	y, x;
 		} else {
 			*str++ = ch;
 			if (oldecho == TRUE) {
+				int oldy = win->_cury;
 				if (waddch(win, ch) == ERR) {
 					/*
 					 * We can't really use the lower-right
@@ -127,6 +136,20 @@ int	y, x;
 					waddch(win, ' ');
 					str = WipeOut(win, y, x, oldstr, str, oldecho);
 					continue;
+				} else if (win->_flags & _WRAPPED) {
+					/*
+					 * If the last waddch forced a wrap &
+					 * scroll, adjust our reference point
+					 * for erasures.
+					 */
+					if (win->_scroll
+					 && oldy == win->_maxy
+					 && win->_cury == win->_maxy) {
+						if (--y <= 0) {
+							y = 0;
+						}
+					}
+					win->_flags &= ~_WRAPPED;
 				}
 				wrefresh(win);
 			}
@@ -147,10 +170,7 @@ int	y, x;
 	SP->_raw = oldraw;
 	SP->_cbreak = oldcbreak;
 
-	SET_TTY(cur_term->Filedes, &buf);
-
-	if (oldkeypad == FALSE)
-		keypad(win, FALSE);
+	_nc_set_curterm(&buf);
 
 	*str = '\0';
 	if (ch == ERR)

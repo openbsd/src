@@ -1,1 +1,1 @@
-{printf "\tadd_to_try(%s, %s);\n", $1, $2;}
+/^[^#]/ { if ($1 != "" && $2 != "" ) { printf "\tadd_to_try(%s, %s);\n", $2, $1;} }

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_newterm.c,v 1.3 1997/12/03 05:21:25 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -30,15 +32,48 @@
 
 #include <curses.priv.h>
 
-#ifdef SVR4_TERMIO
+#if defined(SVR4_TERMIO) && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
 #endif
 
 #include <term.h>	/* clear_screen, cup & friends, cur_term */
 
-MODULE_ID("Id: lib_newterm.c,v 1.23 1997/03/30 01:42:01 tom Exp $")
+MODULE_ID("Id: lib_newterm.c,v 1.30 1997/11/08 17:32:31 tom Exp $")
 
-/* This should be moved to TERMINAL */
+#ifndef ONLCR		/* Allows compilation under the QNX 4.2 OS */
+#define ONLCR 0
+#endif
+
+/*
+ * SVr4/XSI Curses specify that hardware echo is turned off in initscr, and not
+ * restored during the curses session.  The library simulates echo in software.
+ * (The behavior is unspecified if the application enables hardware echo).
+ *
+ * The newterm function also initializes terminal settings, and since initscr
+ * is supposed to behave as if it calls newterm, we do it here.
+ */
+static inline int _nc_initscr(void)
+{
+	/* for extended XPG4 conformance requires cbreak() at this point */
+	/* (SVr4 curses does this anyway) */
+	cbreak();
+
+#ifdef TERMIOS
+	cur_term->Nttyb.c_lflag &= ~(ECHO|ECHONL);
+	cur_term->Nttyb.c_iflag &= ~(ICRNL|INLCR|IGNCR);
+	cur_term->Nttyb.c_oflag &= ~(ONLCR);
+#else
+	cur_term->Nttyb.sg_flags &= ~(ECHO|CRMOD);
+#endif
+	return _nc_set_curterm(&cur_term->Nttyb);
+}
+
+/*
+ * filter() has to be called before either initscr() or newterm(), so there is
+ * apparently no way to make this flag apply to some terminals and not others,
+ * aside from possibly delaying a filter() call until some terminals have been
+ * initialized.
+ */
 static int filter_mode = FALSE;
 
 void filter(void)
@@ -49,6 +84,7 @@ void filter(void)
 SCREEN * newterm(const char *term, FILE *ofp, FILE *ifp)
 {
 int	errret;
+SCREEN* current;
 #ifdef TRACE
 char *t = getenv("NCURSES_TRACE");
 
@@ -60,12 +96,12 @@ char *t = getenv("NCURSES_TRACE");
 
 	/* this loads the capability entry, then sets LINES and COLS */
 	if (setupterm(term, fileno(ofp), &errret) == ERR)
-		return NULL;
+		return 0;
 
 	/*
 	 * Check for mismatched graphic-rendition capabilities.  Most SVr4
-	 * terminfo tree contain entries that have rmul or rmso equated to sgr0
-	 * (Solaris curses copes with those entries).  We do this only for
+	 * terminfo trees contain entries that have rmul or rmso equated to
+	 * sgr0 (Solaris curses copes with those entries).  We do this only for
 	 * curses, since many termcap applications assume that smso/rmso and
 	 * smul/rmul are paired, and will not function properly if we remove
 	 * rmso or rmul.  Curses applications shouldn't be looking at this
@@ -92,12 +128,12 @@ char *t = getenv("NCURSES_TRACE");
 		T(("TABSIZE = %d", TABSIZE));
 
 #ifdef clear_screen
-		clear_screen = (char *)NULL;
-		cursor_down = parm_down_cursor = (char *)NULL;
-		cursor_address = (char *)NULL;
-		cursor_up = parm_up_cursor = (char *)NULL;
-		row_address = (char *)NULL;
-		
+		clear_screen = 0;
+		cursor_down = parm_down_cursor = 0;
+		cursor_address = 0;
+		cursor_up = parm_up_cursor = 0;
+		row_address = 0;
+
 		cursor_home = carriage_return;
 #endif /* clear_screen */
 	}
@@ -112,13 +148,17 @@ char *t = getenv("NCURSES_TRACE");
 	    if (_nc_slk_format)
 	      {
 		if (ERR==_nc_ripoffline(-SLK_LINES, _nc_slk_initialize))
-		  return NULL;
+		  return 0;
 	      }
 	/* this actually allocates the screen structure, and saves the
 	 * original terminal settings.
 	 */
-	if (_nc_setupscreen(LINES, COLS, ofp) == ERR)
-		return NULL;
+	current = SP;
+	_nc_set_screen(0);
+	if (_nc_setupscreen(LINES, COLS, ofp) == ERR) {
+	        _nc_set_screen(current);
+		return 0;
+	}
 
 #ifdef num_labels
 	/* if the terminal type has real soft labels, set those up */
@@ -144,8 +184,8 @@ char *t = getenv("NCURSES_TRACE");
 
 	_nc_signal_handler(TRUE);
 
-	/* open a connection to the screen's associated mouse, if any */
-	_nc_mouse_init(SP);
+	/* initialize terminal to a sane state */
+	_nc_screen_init();
 
 	/* Initialize the terminal line settings. */
 	_nc_initscr();

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_clear.c,v 1.3 1997/12/03 05:21:13 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -28,15 +30,16 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_clear.c,v 1.3 1997/02/01 23:18:18 tom Exp $")
+MODULE_ID("Id: lib_clear.c,v 1.4 1997/09/20 15:02:34 juergen Exp $")
 
 int wclear(WINDOW *win)
 {
+int code = ERR;
+
 	T((T_CALLED("wclear(%p)"), win));
 
-	werase(win);
-
-	win->_clear = TRUE;
-
-	returnCode(OK);
+	if ((code = werase(win))!=ERR)
+	  win->_clear = TRUE;
+	
+	returnCode(code);
 }

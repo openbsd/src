@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_newwin.c,v 1.3 1997/12/03 05:21:25 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -30,7 +32,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_newwin.c,v 1.17 1997/02/15 21:46:05 tom Exp $")
+MODULE_ID("Id: lib_newwin.c,v 1.18 1997/08/09 17:21:49 tom Exp $")
 
 void _nc_freewin(WINDOW *win)
 {
@@ -236,7 +238,7 @@ bool    is_pad = (flags & _ISPAD);
 	    win->_line[i].firstchar = 0;
 	    win->_line[i].lastchar = num_columns-1;
 
-	    win->_line[i].oldindex = i;
+	    if_USE_SCROLL_HINTS(win->_line[i].oldindex = i);
 	}
 
 	if (!is_pad && (begx + num_columns == screen_columns)) {

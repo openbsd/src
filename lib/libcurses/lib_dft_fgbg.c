@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_dft_fgbg.c,v 1.2 1997/12/03 05:21:16 millert Exp $	*/
+
 /******************************************************************************
  * Copyright 1997 by Thomas E. Dickey <dickey@clark.net>                      *
  * All Rights Reserved.                                                       *

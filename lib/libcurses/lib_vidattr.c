@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_vidattr.c,v 1.3 1997/12/03 05:21:39 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -52,7 +54,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("Id: lib_vidattr.c,v 1.14 1997/05/06 16:02:43 tom Exp $")
+MODULE_ID("Id: lib_vidattr.c,v 1.17 1997/09/28 00:23:21 tom Exp $")
 
 #define doPut(mode) TPUTS_TRACE(#mode); tputs(mode, 1, outc)
 
@@ -76,6 +78,10 @@ int pair, current_pair;
 
 	T(("previous attribute was %s", _traceattr(previous_attr)));
 
+#if !USE_XMC_SUPPORT
+	if (magic_cookie_glitch > 0)
+		newmode &= ~(SP->_xmc_suppress);
+#endif
 	if (newmode == previous_attr)
 		returnCode(OK);
 
@@ -180,9 +186,9 @@ int vidattr(attr_t newmode)
 	returnCode(vidputs(newmode, _nc_outch));
 }
 
-attr_t termattrs(void)
+chtype termattrs(void)
 {
-	int attrs = A_NORMAL;
+	chtype attrs = A_NORMAL;
 
 	if (enter_alt_charset_mode)
 		attrs |= A_ALTCHARSET;

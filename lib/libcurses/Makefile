@@ -1,27 +1,34 @@
-#	$OpenBSD: Makefile,v 1.17 1997/11/28 23:05:05 millert Exp $
+#	$OpenBSD: Makefile,v 1.18 1997/12/03 05:20:48 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
 
 LIB=    curses
-SRCS=	hardscroll.c hashmap.c lib_acs.c lib_addch.c lib_addstr.c \
-	lib_baudrate.c lib_beep.c lib_bkgd.c lib_box.c lib_clear.c \
-	lib_clrbot.c lib_clreol.c lib_color.c lib_data.c lib_delch.c \
-	lib_delwin.c lib_dft_fgbg.c lib_doupdate.c lib_endwin.c lib_erase.c \
-	lib_getch.c lib_getstr.c lib_inchstr.c lib_initscr.c lib_insch.c \
-	lib_insdel.c lib_insstr.c lib_instr.c lib_isendwin.c lib_kernel.c \
-	lib_longname.c lib_mouse.c lib_move.c lib_mvcur.c lib_mvwin.c \
-	lib_newterm.c lib_newwin.c lib_options.c lib_overlay.c lib_pad.c \
-	lib_print.c lib_printw.c lib_raw.c lib_refresh.c lib_scanw.c \
-	lib_screen.c lib_scroll.c lib_scrreg.c lib_set_term.c lib_slk.c \
-	lib_touch.c lib_tstp.c lib_twait.c lib_vidattr.c lib_window.c \
-	resizeterm.c unctrl.c wresize.c
+SRCS=	define_key.c hardscroll.c hashmap.c keyok.c lib_acs.c lib_addch.c \
+	lib_addstr.c lib_baudrate.c lib_beep.c lib_bkgd.c lib_box.c \
+	lib_clear.c lib_clrbot.c lib_clreol.c lib_color.c lib_data.c \
+	lib_delch.c lib_delwin.c lib_dft_fgbg.c lib_doupdate.c lib_endwin.c \
+	lib_erase.c lib_flash.c lib_getch.c lib_getstr.c lib_hline.c \
+	lib_inchstr.c lib_initscr.c lib_insch.c lib_insdel.c lib_insstr.c \
+	lib_instr.c lib_isendwin.c lib_kernel.c lib_longname.c lib_mouse.c \
+	lib_move.c lib_mvcur.c lib_mvwin.c lib_newterm.c lib_newwin.c \
+	lib_options.c lib_overlay.c lib_pad.c lib_print.c lib_printw.c \
+	lib_raw.c lib_redrawln.c lib_refresh.c lib_scanw.c lib_screen.c \
+	lib_scroll.c lib_scrreg.c lib_set_term.c lib_slk.c lib_slkatrof.c \
+	lib_slkatron.c lib_slkatrset.c lib_slkattr.c lib_slkclear.c \
+	lib_slkinit.c lib_slklab.c lib_slkrefr.c lib_slkset.c lib_slktouch.c \
+	lib_touch.c lib_tstp.c lib_twait.c lib_ungetch.c lib_vidattr.c \
+	lib_vline.c lib_wattroff.c lib_wattron.c lib_window.c nc_panel.c \
+	resizeterm.c safe_sprintf.c softscroll.c tries.c unctrl.c \
+	wresize.c
 SRCS+=	expanded.c lib_gen.c lib_keyname.c
 .if defined(${CURSESTRACE})
-SRCS+=	lib_trace.c lib_traceatr.c lib_tracechr.c lib_tracedmp.c lib_tracemse.c
+SRCS+=	lib_trace.c lib_traceatr.c lib_tracechr.c lib_tracedmp.c \
+	lib_tracemse.c trace_buf.c
 .endif
 CFLAGS+= -I. -I${.CURDIR} -DTERMIOS -DEXTERN_TERMINFO ${CURSESTRACE}
 LDADD+=  -ltermlib
+# XXX - add new man pages
 MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_bkgd.3 curs_border.3 curs_clear.3 curs_color.3 curs_delch.3 \
 	curs_deleteln.3 curs_getch.3 curs_getstr.3 curs_getyx.3 curs_inch.3 \

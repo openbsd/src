@@ -1,3 +1,5 @@
+/*	$OpenBSD: resizeterm.c,v 1.2 1997/12/03 05:21:43 millert Exp $	*/
+
 /******************************************************************************
  * Copyright 1996,1997 by Thomas E. Dickey <dickey@clark.net>                 *
  * All Rights Reserved.                                                       *
@@ -29,7 +31,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("Id: resizeterm.c,v 1.3 1997/02/02 01:03:06 tom Exp $")
+MODULE_ID("Id: resizeterm.c,v 1.5 1997/09/07 03:20:59 tom Exp $")
 
 /*
  * This function reallocates NCURSES window structures.  It is invoked in
@@ -49,9 +51,16 @@ resizeterm(int ToLines, int ToCols)
 		ToLines, ToCols,
 		screen_lines, screen_columns));
 
+	SP->_sig_winch = FALSE;
+
 	if (ToLines != screen_lines
 	 || ToCols  != screen_columns) {
 		WINDOWLIST *wp;
+
+#if USE_SIGWINCH
+		ungetch(KEY_RESIZE);	/* so application can know this */
+		clearok(curscr, TRUE);	/* screen contents is unknown */
+#endif
 
 		for (wp = _nc_windows; wp != 0; wp = wp->next) {
 			WINDOW *win = wp->win;

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_insstr.c,v 1.3 1997/12/03 05:21:21 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -31,33 +33,38 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("Id: lib_insstr.c,v 1.9 1997/02/15 16:09:53 tom Exp $")
+MODULE_ID("Id: lib_insstr.c,v 1.10 1997/09/20 15:02:34 juergen Exp $")
 
 int winsnstr(WINDOW *win, const char *str, int n)
 {
-short	oy = win->_cury;
-short	ox = win->_curx;
+int     code = ERR;
+short	oy;
+short	ox ;
 const char *cp;
 
-	T((T_CALLED("winsstr(%p,%s,%d)"), win, _nc_visbuf(str), n));
+        T((T_CALLED("winsstr(%p,%s,%d)"), win, _nc_visbuf(str), n));
 
-	for (cp = str; *cp && (n <= 0 || (cp - str) < n); cp++) {
-		if (*cp == '\n' || *cp == '\r' || *cp == '\t' || *cp == '\b')
-			_nc_waddch_nosync(win, (chtype)(*cp));
-		else if (is7bits(*cp) && iscntrl(*cp)) {
-			winsch(win, ' ' + (chtype)(*cp));
-			winsch(win, '^');
-			win->_curx += 2;
-		} else {
-			winsch(win, (chtype)(*cp));
-			win->_curx++;
-		}
-		if (win->_curx > win->_maxx)
-			win->_curx = win->_maxx;
+	if (win && str) {
+	  oy = win->_cury; ox = win->_curx;
+	  for (cp = str; *cp && (n <= 0 || (cp - str) < n); cp++) {
+	    if (*cp == '\n' || *cp == '\r' || *cp == '\t' || *cp == '\b')
+	      _nc_waddch_nosync(win, (chtype)(*cp));
+	    else if (is7bits(*cp) && iscntrl(*cp)) {
+	      winsch(win, ' ' + (chtype)(*cp));
+	      winsch(win, '^');
+	      win->_curx += 2;
+	    } else {
+	      winsch(win, (chtype)(*cp));
+	      win->_curx++;
+	    }
+	    if (win->_curx > win->_maxx)
+	      win->_curx = win->_maxx;
+	  }
+	  
+	  win->_curx = ox;
+	  win->_cury = oy;
+	  _nc_synchook(win);
+	  code = OK;
 	}
-
-	win->_curx = ox;
-	win->_cury = oy;
-	_nc_synchook(win);
-	returnCode(OK);
+	returnCode(code);
 }

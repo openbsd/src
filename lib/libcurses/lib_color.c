@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_color.c,v 1.4 1997/12/03 05:21:14 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -29,7 +31,13 @@
 
 #include <term.h>
 
-MODULE_ID("Id: lib_color.c,v 1.17 1997/05/03 19:16:05 tom Exp $")
+MODULE_ID("Id: lib_color.c,v 1.21 1997/11/30 00:19:33 tom Exp $")
+
+/*
+ * Only 8 ANSI colors are defined; the ISO 6429 control sequences work only
+ * for 8 values (0-7).
+ */
+#define MAX_ANSI_COLOR 8
 
 /*
  * These should be screen structure members.  They need to be globals for
@@ -39,17 +47,24 @@ MODULE_ID("Id: lib_color.c,v 1.17 1997/05/03 19:16:05 tom Exp $")
 int COLOR_PAIRS;
 int COLORS;
 
+/*
+ * Given a RGB range of 0..1000, we'll normally set the individual values
+ * to about 2/3 of the maximum, leaving full-range for bold/bright colors.
+ */
+#define RGB_ON  680
+#define RGB_OFF 0
+
 static const color_t cga_palette[] =
 {
-    /*  R	G	B */
-	{0,	0,	0},	/* COLOR_BLACK */
-	{1000,	0,	0},	/* COLOR_RED */
-	{0,	1000,	0},	/* COLOR_GREEN */
-	{1000,	1000,	0},	/* COLOR_YELLOW */
-	{0,	0,	1000},	/* COLOR_BLUE */
-	{1000,	0,	1000},	/* COLOR_MAGENTA */
-	{0,	1000,	1000},	/* COLOR_CYAN */
-	{1000,	1000,	1000},	/* COLOR_WHITE */
+    /*  R		G		B */
+	{RGB_OFF,	RGB_OFF,	RGB_OFF},	/* COLOR_BLACK */
+	{RGB_ON,	RGB_OFF,	RGB_OFF},	/* COLOR_RED */
+	{RGB_OFF,	RGB_ON,		RGB_OFF},	/* COLOR_GREEN */
+	{RGB_ON,	RGB_ON,		RGB_OFF},	/* COLOR_YELLOW */
+	{RGB_OFF,	RGB_OFF,	RGB_ON},	/* COLOR_BLUE */
+	{RGB_ON,	RGB_OFF,	RGB_ON},	/* COLOR_MAGENTA */
+	{RGB_OFF,	RGB_ON,		RGB_ON},	/* COLOR_CYAN */
+	{RGB_ON,	RGB_ON,		RGB_ON},	/* COLOR_WHITE */
 };
 static const color_t hls_palette[] =
 {
@@ -121,11 +136,12 @@ int start_color(void)
 }
 
 #ifdef hue_lightness_saturation
+/* This function was originally written by Daniel Weaver <danw@znyx.com> */
 static void rgb2hls(short r, short g, short b, short *h, short *l, short *s)
 /* convert RGB to HLS system */
 {
     short min, max, t;
-
+    
     if ((min = g < r ? g : r) > b) min = b;
     if ((max = g > r ? g : r) < b) max = b;
 
@@ -223,14 +239,8 @@ int init_color(short color, short r, short g, short b)
 
 	if (color < 0 || color >= COLORS)
 		returnCode(ERR);
-#ifdef hue_lightness_saturation
-	if (hue_lightness_saturation == TRUE)
-		if (r < 0 || r > 360 || g < 0 || g > 100 || b < 0 || b > 100)
-			returnCode(ERR);
-	if (hue_lightness_saturation == FALSE)
-#endif /* hue_lightness_saturation */
-		if (r < 0 || r > 1000 || g < 0 ||  g > 1000 || b < 0 || b > 1000)
-			returnCode(ERR);
+	if (r < 0 || r > 1000 || g < 0 ||  g > 1000 || b < 0 || b > 1000)
+		returnCode(ERR);
 
 #ifdef hue_lightness_saturation
 	if (hue_lightness_saturation)
@@ -259,19 +269,19 @@ int init_color(short color, short r, short g, short b)
 bool can_change_color(void)
 {
 	T((T_CALLED("can_change_color()")));
-	returnCode(can_change != 0);
+	returnCode ((can_change != 0) ? TRUE : FALSE);
 }
 
 bool has_colors(void)
 {
 	T((T_CALLED("has_colors()")));
-	returnCode((orig_pair != NULL || orig_colors != NULL)
-		&& (max_colors != -1) && (max_pairs != -1)
-		&&
-		(((set_foreground != NULL) && (set_background != NULL))
-		|| ((set_a_foreground != NULL) && (set_a_background != NULL))
-		|| set_color_pair)
-		);
+	returnCode (((orig_pair != NULL || orig_colors != NULL)
+		     && (max_colors != -1) && (max_pairs != -1)
+		     && (((set_foreground != NULL)
+			  && (set_background != NULL))
+			 || ((set_a_foreground != NULL)
+			     && (set_a_background != NULL))
+			 || set_color_pair)) ? TRUE : FALSE);
 }
 
 int color_content(short color, short *r, short *g, short *b)
@@ -280,9 +290,9 @@ int color_content(short color, short *r, short *g, short *b)
     if (color < 0 || color > COLORS)
 	returnCode(ERR);
 
-    *r = SP->_color_table[color].red;
-    *g = SP->_color_table[color].green;
-    *b = SP->_color_table[color].blue;
+    if (r) *r = SP->_color_table[color].red;
+    if (g) *g = SP->_color_table[color].green;
+    if (b) *b = SP->_color_table[color].blue;
     returnCode(OK);
 }
 
@@ -292,8 +302,8 @@ int pair_content(short pair, short *f, short *b)
 
 	if ((pair < 0) || (pair > COLOR_PAIRS))
 		returnCode(ERR);
-	*f = ((SP->_color_pairs[pair] >> C_SHIFT) & C_MASK);
-	*b =  (SP->_color_pairs[pair] & C_MASK);
+	if (f) *f = ((SP->_color_pairs[pair] >> C_SHIFT) & C_MASK);
+	if (b) *b =  (SP->_color_pairs[pair] & C_MASK);
 
 	returnCode(OK);
 }
@@ -354,7 +364,7 @@ void _nc_do_color(int pair, int  (*outc)(int))
 	    }
 	    if (fg != C_MASK)
 	    {
-		if (set_a_foreground)
+		if (set_a_foreground && fg <= MAX_ANSI_COLOR)
 		{
 		    TPUTS_TRACE("set_a_foreground");
 		    tputs(tparm(set_a_foreground, fg), 1, outc);
@@ -367,7 +377,7 @@ void _nc_do_color(int pair, int  (*outc)(int))
 	    }
 	    if (bg != C_MASK)
 	    {
-		if (set_a_background)
+		if (set_a_background && bg <= MAX_ANSI_COLOR)
 		{
 		    TPUTS_TRACE("set_a_background");
 		    tputs(tparm(set_a_background, bg), 1, outc);

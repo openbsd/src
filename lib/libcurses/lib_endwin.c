@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_endwin.c,v 1.4 1997/12/03 05:21:16 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -30,39 +32,19 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("Id: lib_endwin.c,v 1.10 1997/02/02 00:36:41 tom Exp $")
+MODULE_ID("Id: lib_endwin.c,v 1.13 1997/10/11 22:05:27 tom Exp $")
 
 int
 endwin(void)
 {
 	T((T_CALLED("endwin()")));
 
-	SP->_endwin = TRUE;
-
-	_nc_mouse_wrap(SP);
-
-	/* SP->_curs{row,col} may be used later in _nc_mvcur_wrap,save_curs */
-	mvcur(-1, -1, SP->_cursrow = screen_lines - 1, SP->_curscol = 0);
-
-	curs_set(1);	/* set cursor to normal mode */
-
-	if (SP->_coloron == TRUE && orig_pair)
-		putp(orig_pair);
-
-	_nc_mvcur_wrap();	/* wrap up cursor addressing */
-
-	if (SP  &&  (SP->_current_attr != A_NORMAL))
-	    vidattr(A_NORMAL);
-
-	/*
-	 * Reset terminal's tab counter.  There's a long-time bug that
-	 * if you exit a "curses" program such as vi or more, tab
-	 * forward, and then backspace, the cursor doesn't go to the
-	 * right place.  The problem is that the kernel counts the
-	 * escape sequences that reset things as column positions.
-	 * Utter a \r to reset this invisibly.
-	 */
-	_nc_outch('\r');
+	if (SP) {
+	  SP->_endwin = TRUE;
+	  SP->_mouse_wrap(SP);
+	  _nc_screen_wrap();
+	  _nc_mvcur_wrap();	/* wrap up cursor addressing */
+	}
 
 	returnCode(reset_shell_mode());
 }

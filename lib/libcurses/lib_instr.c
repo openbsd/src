@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_instr.c,v 1.3 1997/12/03 05:21:21 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -29,28 +31,33 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_instr.c,v 1.6 1997/05/03 10:51:07 juergen Exp $")
+MODULE_ID("Id: lib_instr.c,v 1.7 1997/09/20 15:02:34 juergen Exp $")
 
 int winnstr(WINDOW *win, char *str, int n)
 {
-	int	i, row, col;
+	int	i=0, row, col;
 
 	T((T_CALLED("winnstr(%p,%p,%d)"), win, str, n));
 
-	getyx(win, row, col);
+	if (!str)
+	  returnCode(0);
+	
+	if (win) {
+	  getyx(win, row, col);
 
-	if (n < 0)
-		n = win->_maxx - win->_curx + 1;
+	  if (n < 0)
+	    n = win->_maxx - win->_curx + 1;
 
-	for (i = 0; i < n;) {
-		str[i++] = TextOf(win->_line[row].text[col]);
-		if (++col > win->_maxx) {
-			col = 0;
-			if (++row > win->_maxy)
-				break;
-		}
+	  for (; i < n;) {
+	    str[i++] = TextOf(win->_line[row].text[col]);
+	    if (++col > win->_maxx) {
+	      col = 0;
+	      if (++row > win->_maxy)
+		break;
+	    }
+	  }
 	}
 	str[i] = '\0';	/* SVr4 does not seem to count the null */
-
 	returnCode(i);
 }
+

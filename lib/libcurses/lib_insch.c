@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_insch.c,v 1.3 1997/12/03 05:21:20 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -30,27 +32,31 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_insch.c,v 1.7 1997/04/12 17:43:02 tom Exp $")
+MODULE_ID("Id: lib_insch.c,v 1.8 1997/09/20 15:02:34 juergen Exp $")
 
 int  winsch(WINDOW *win, chtype c)
 {
+int code = ERR;
 chtype	*temp1, *temp2;
 chtype	*end;
 
 	T((T_CALLED("winsch(%p, %s)"), win, _tracechtype(c)));
 
-	end = &win->_line[win->_cury].text[win->_curx];
-	temp1 = &win->_line[win->_cury].text[win->_maxx];
-	temp2 = temp1 - 1;
+	if (win) {
+	  end = &win->_line[win->_cury].text[win->_curx];
+	  temp1 = &win->_line[win->_cury].text[win->_maxx];
+	  temp2 = temp1 - 1;
 
-	while (temp1 > end)
+	  while (temp1 > end)
 	    *temp1-- = *temp2--;
-
-	*temp1 = _nc_render(win, c);
-
-	win->_line[win->_cury].lastchar = win->_maxx;
-	if (win->_line[win->_cury].firstchar == _NOCHANGE
-	    			||  win->_line[win->_cury].firstchar > win->_curx)
+	  
+	  *temp1 = _nc_render(win, c);
+	  
+	  win->_line[win->_cury].lastchar = win->_maxx;
+	  if (win->_line[win->_cury].firstchar == _NOCHANGE
+	      ||  win->_line[win->_cury].firstchar > win->_curx)
 	    win->_line[win->_cury].firstchar = win->_curx;
-	returnCode(OK);
+	  code = OK;
+	}
+	returnCode(code);
 }

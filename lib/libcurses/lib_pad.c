@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_pad.c,v 1.3 1997/12/03 05:21:26 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -29,7 +31,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_pad.c,v 1.18 1997/04/12 17:42:52 tom Exp $")
+MODULE_ID("Id: lib_pad.c,v 1.24 1997/09/20 15:02:34 juergen Exp $")
 
 WINDOW *newpad(int l, int c)
 {
@@ -46,7 +48,7 @@ int i;
 		returnWin(0);
 
 	for (i = 0; i < l; i++) {
-	    win->_line[i].oldindex = _NEWINDEX;
+	    if_USE_SCROLL_HINTS(win->_line[i].oldindex = _NEWINDEX);
 	    if ((win->_line[i].text = typeCalloc(chtype, ((size_t)c))) == 0) {
 		_nc_freewin(win);
 		returnWin(0);
@@ -60,13 +62,14 @@ int i;
 
 WINDOW *subpad(WINDOW *orig, int l, int c, int begy, int begx)
 {
-WINDOW	*win;
+WINDOW	*win = (WINDOW *)0;
 
 	T((T_CALLED("subpad(%d, %d)"), l, c));
 
-	if (!(orig->_flags & _ISPAD) || ((win = derwin(orig, l, c, begy, begx)) == NULL))
+	if (orig) {
+	  if (!(orig->_flags & _ISPAD) || ((win = derwin(orig, l, c, begy, begx)) == NULL))
 	    returnWin(0);
-
+	}
 	returnWin(win);
 }
 
@@ -84,6 +87,7 @@ int prefresh(WINDOW *win, int pminrow, int pmincol,
 int pnoutrefresh(WINDOW *win, int pminrow, int pmincol,
 	int sminrow, int smincol, int smaxrow, int smaxcol)
 {
+const	int my_len = 2;	/* parameterize the threshold for hardscroll */
 short	i, j;
 short	m, n;
 short	pmaxrow;
@@ -153,7 +157,7 @@ bool	wide;
 	 * windows).  Note that changing this formula will not break any code,
 	 * merely change the costs of various update cases.
 	 */
-	wide = (sminrow <= 1 && win->_maxx >= (newscr->_maxx - 1));
+	wide = (smincol < my_len && smaxcol > (newscr->_maxx - my_len));
 
 	for (i = pminrow, m = sminrow + win->_yoffset;
 		i <= pmaxrow && m <= newscr->_maxy;
@@ -174,17 +178,30 @@ bool	wide;
 			}
 		}
 
+#if USE_SCROLL_HINTS
 		if (wide) {
 		    int nind = m + displaced;
 		    if (oline->oldindex < 0
 		     || nind < sminrow
-		     || nind > smaxrow)
+		     || nind > smaxrow) {
 			nind = _NEWINDEX;
+		    } else if (displaced) {
+			register struct ldat *pline = &curscr->_line[nind];
+			for (j = 0; j <= my_len; j++) {
+			    int k = newscr->_maxx - j;
+			    if (pline->text[j] != nline->text[j]
+			     || pline->text[k] != nline->text[k]) {
+				nind = _NEWINDEX;
+				break;
+			    }
+			}
+		    }
 
 		    nline->oldindex = nind;
 		}
+#endif /* USE_SCROLL_HINTS */
 		oline->firstchar = oline->lastchar = _NOCHANGE;
-		oline->oldindex = i;
+		if_USE_SCROLL_HINTS(oline->oldindex = i);
 	}
 
 	/*
@@ -193,10 +210,12 @@ bool	wide;
 	 * procedure.  The only rows that should have an index value are those
 	 * that are displayed during this cycle.
 	 */
+#if USE_SCROLL_HINTS
 	for (i = pminrow-1; (i >= 0) && (win->_line[i].oldindex >= 0); i--)
 		win->_line[i].oldindex = _NEWINDEX;
 	for (i = pmaxrow+1; (i <= win->_maxy) && (win->_line[i].oldindex >= 0); i++)
 		win->_line[i].oldindex = _NEWINDEX;
+#endif
 
 	win->_begx = smincol;
 	win->_begy = sminrow;
@@ -235,14 +254,23 @@ bool	wide;
 	returnCode(OK);
 }
 
-int pechochar(WINDOW *pad, chtype ch)
+int pechochar(WINDOW *pad, const chtype ch)
 {
 	T((T_CALLED("pechochar(%p, %s)"), pad, _tracechtype(ch)));
 
-	if (pad->_flags & _ISPAD)
-		returnCode(ERR);
+	if (pad == 0)
+	  returnCode(ERR);
 
-	waddch(curscr, ch);
-	doupdate();
+	if (!(pad->_flags & _ISPAD))
+		returnCode(wechochar(pad,ch));
+
+	waddch(pad, ch);
+	prefresh(pad, pad->_pad._pad_y,
+		      pad->_pad._pad_x,
+		      pad->_pad._pad_top,
+		      pad->_pad._pad_left,
+		      pad->_pad._pad_bottom,
+		      pad->_pad._pad_right);
+	
 	returnCode(OK);
 }

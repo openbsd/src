@@ -1,3 +1,5 @@
+/*	$OpenBSD: curses.h,v 1.5 1997/12/03 05:21:07 millert Exp $	*/
+
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
 ****************************************************************************
@@ -18,17 +20,24 @@
 *                                                                          *
 ***************************************************************************/
 
-/* Id: curses.h.in,v 1.44 1997/04/20 01:32:08 tom Exp $ */
+/* Id: curses.h.in,v 1.59 1997/11/15 22:02:42 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
+
 #define CURSES 1
 #define CURSES_H 1
+
+/* This should be defined for the enhanced functionality to be visible.
+ * However, none of the wide-character (enhanced) functionality is implemented.
+ * So we do not define it (yet).
+#define _XOPEN_CURSES 1
+ */
 
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 4
 #define NCURSES_VERSION_MINOR 1
-#define NCURSES_VERSION_PATCH 970515
+#define NCURSES_VERSION_PATCH 971129
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -52,9 +61,7 @@
 typedef _CHTYPE_T_	chtype;
 #endif
 #else
-#ifndef _UNCTRL_H
-typedef unsigned long  chtype;
-#endif
+typedef unsigned long chtype;
 #endif
 
 #include <stdio.h>
@@ -93,26 +100,25 @@ extern "C" {
 
 /*
  * XSI attributes.  In the ncurses implementation, they are identical to the
- * A_ attributes because attr_t is just an int.  The XSI Curses attr_* and
- * wattr_* entry points are all mapped to attr* and wattr* entry points.
+ * A_ attributes.
  */
-#define WA_ATTRIBUTES	0xffffff00
-#define WA_NORMAL	0x00000000
-#define WA_STANDOUT	0x00010000
-#define WA_UNDERLINE	0x00020000
-#define WA_REVERSE	0x00040000
-#define WA_BLINK	0x00080000
-#define WA_DIM		0x00100000
-#define WA_BOLD		0x00200000
-#define WA_ALTCHARSET	0x00400000
-#define WA_INVIS	0x00800000
-#define WA_PROTECT	0x01000000
-#define WA_HORIZONTAL	0x02000000	/* XSI Curses attr -- not yet used */
-#define WA_LEFT		0x04000000	/* XSI Curses attr -- not yet used */
-#define WA_LOW		0x08000000	/* XSI Curses attr -- not yet used */
-#define WA_RIGHT	0x10000000	/* XSI Curses attr -- not yet used */
-#define WA_TOP		0x20000000	/* XSI Curses attr -- not yet used */
-#define WA_VERTICAL	0x40000000	/* XSI Curses attr -- not yet used */
+#define WA_ATTRIBUTES	A_ATTRIBUTES
+#define WA_NORMAL	A_NORMAL
+#define WA_STANDOUT	A_STANDOUT
+#define WA_UNDERLINE	A_UNDERLINE
+#define WA_REVERSE	A_REVERSE
+#define WA_BLINK	A_BLINK
+#define WA_DIM		A_DIM
+#define WA_BOLD		A_BOLD
+#define WA_ALTCHARSET	A_ALTCHARSET
+#define WA_INVIS	A_INVIS
+#define WA_PROTECT	A_PROTECT
+#define WA_HORIZONTAL	A_HORIZONTAL
+#define WA_LEFT		A_LEFT
+#define WA_LOW		A_LOW
+#define WA_RIGHT	A_RIGHT
+#define WA_TOP		A_TOP
+#define WA_VERTICAL	A_VERTICAL
 
 /* colors */
 extern int COLORS;
@@ -156,7 +162,7 @@ extern	chtype acs_map[];
 #define ACS_DARROW	(acs_map['.'])	/* arrow pointing down */
 #define ACS_UARROW	(acs_map['-'])	/* arrow pointing up */
 #define ACS_BOARD	(acs_map['h'])	/* board of squares */
-#define ACS_LANTERN	(acs_map['I'])	/* lantern symbol */
+#define ACS_LANTERN	(acs_map['i'])	/* lantern symbol */
 #define ACS_BLOCK	(acs_map['0'])	/* solid square block */
 /*
  * These aren't documented, but a lot of System Vs have them anyway
@@ -240,7 +246,16 @@ typedef struct
 cchar_t;
 #endif /* _XOPEN_SOURCE_EXTENDED */
 
-struct _win_st {
+struct ldat
+{
+	chtype  *text;		/* text of the line */
+	short   firstchar;	/* first changed character in the line */
+	short   lastchar;	/* last changed character in the line */
+	short   oldindex;	/* index of the line at last update */
+};
+
+struct _win_st
+{
 	short   _cury, _curx;	/* current cursor position */
 
 	/* window location and size */
@@ -265,15 +280,7 @@ struct _win_st {
 	bool    _use_keypad;    /* process function keys into KEY_ symbols? */
 	int	_delay;		/* 0 = nodelay, <0 = blocking, >0 = delay */
 
-	/* the actual line data */
-	struct ldat
-	{
-	    chtype  *text;	/* text of the line */
-	    short   firstchar;  /* first changed character in the line */
-	    short   lastchar;   /* last changed character in the line */
-	    short   oldindex;	/* index of the line at last update */
-	}
-	*_line;
+	struct ldat *_line;	/* the actual line data */
 
 	/* global screen state */
 	short	_regtop;	/* top line of scrolling region */
@@ -295,9 +302,13 @@ struct _win_st {
 	short   _yoffset;	/* real begy is _begy + _yoffset */
 };
 
-extern WINDOW   *stdscr, *curscr, *newscr;
+extern WINDOW   *stdscr;
+extern WINDOW   *curscr;
+extern WINDOW   *newscr;
 
-extern int	LINES, COLS, TABSIZE;
+extern int	LINES;
+extern int	COLS;
+extern int	TABSIZE;
 
 /*
  * This global was an undocumented feature under AIX curses.
@@ -305,9 +316,11 @@ extern int	LINES, COLS, TABSIZE;
 extern int ESCDELAY;	/* ESC expire time in milliseconds */
 
 /* non-XSI extensions (dickey@clark.net) */
+extern int define_key (char *, int);
+extern int keyok (int, bool);
 extern int resizeterm (int, int);
-extern int wresize (WINDOW *, int, int);
 extern int use_default_colors (void);
+extern int wresize (WINDOW *, int, int);
 
 extern char ttytype[];		/* needed for backward compatibility */
 
@@ -315,8 +328,9 @@ extern char ttytype[];		/* needed for backward compatibility */
  * GCC (and some other compilers) define '__attribute__'; we're using this
  * macro to alert the compiler to flag inconsistencies in printf/scanf-like
  * function calls.  Just in case '__attribute__' isn't defined, make a dummy.
+ * G++ doesn't accept it anyway.
  */
-#if !defined(__GNUC__) && !defined(__attribute__)
+#if defined(__cplusplus) || (!defined(__GNUC__) && !defined(__attribute__))
 #define __attribute__(p) /* nothing */
 #endif
 
@@ -394,6 +408,7 @@ extern int clearok(WINDOW *,bool);			/* implemented */
 extern int clrtobot(void);				/* generated */
 extern int clrtoeol(void);				/* generated */
 extern int color_content(short,short*,short*,short*);	/* implemented */
+extern int color_set(short,void*);			/* missing */
 extern int COLOR_PAIR(int);				/* generated */
 extern int copywin(const WINDOW*,WINDOW*,int,int,int,int,int,int,int);	/* implemented */
 extern int curs_set(int);				/* implemented */
@@ -411,6 +426,7 @@ extern int echo(void);					/* implemented */
 extern int echochar(const chtype);			/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int echo_wchar(const cchar_t *);			/* missing */
+extern int erasewchar(wchar_t*);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int endwin(void);				/* implemented */
 extern char erasechar(void);				/* implemented */
@@ -434,7 +450,7 @@ extern int getstr(char *);				/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int get_wch(wint_t *);				/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern WINDOW *getwin(FILE *);				/* not in XPG4 */
+extern WINDOW *getwin(FILE *);				/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int get_wstr(wint_t *);				/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
@@ -628,7 +644,7 @@ extern int overlay(const WINDOW*,WINDOW *);		/* implemented */
 extern int overwrite(const WINDOW*,WINDOW *);		/* implemented */
 extern int pair_content(short,short*,short*);		/* implemented */
 extern int PAIR_NUMBER(int);				/* generated */
-extern int pechochar(WINDOW *, chtype);			/* implemented */
+extern int pechochar(WINDOW *, const chtype);		/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int pecho_wchar(WINDOW *, const cchar_t *);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
@@ -664,18 +680,12 @@ extern int setcchar(cchar_t *, wchar_t *, attr_t, short, const void *);	/* missi
 extern int setscrreg(int,int);				/* generated */
 extern SCREEN *set_term(SCREEN *);			/* implemented */
 extern int slk_attroff(const attr_t);			/* implemented */
-#ifdef _XOPEN_SOURCE_EXTENDED
-extern int slk_attr_off(attr_t);			/* missing */
-#endif /* _XOPEN_SOURCE_EXTENDED */
+extern int slk_attr_off(attr_t);			/* generated:WIDEC */
 extern int slk_attron(const attr_t);			/* implemented */
-#ifdef _XOPEN_SOURCE_EXTENDED
-extern int slk_attr_on(attr_t);				/* missing */
-#endif /* _XOPEN_SOURCE_EXTENDED */
+extern int slk_attr_on(attr_t);				/* generated:WIDEC */
 extern int slk_attrset(const attr_t);			/* implemented */
 extern attr_t slk_attr(void);                           /* implemented */
-#ifdef _XOPEN_SOURCE_EXTENDED
-extern int slk_attr_set(attr_t);			/* missing */
-#endif /* _XOPEN_SOURCE_EXTENDED */
+extern int slk_attr_set(attr_t);			/* generated:WIDEC */
 extern int slk_clear(void);				/* implemented */
 extern int slk_init(int);				/* implemented */
 extern char *slk_label(int);				/* implemented */
@@ -693,7 +703,8 @@ extern int start_color(void);				/* implemented */
 extern WINDOW *subpad(WINDOW *, int, int, int, int);	/* implemented */
 extern WINDOW *subwin(WINDOW *,int,int,int,int);	/* implemented */
 extern int syncok(WINDOW *, bool);			/* implemented */
-extern attr_t termattrs(void);				/* implemented */
+extern chtype termattrs(void);				/* implemented */
+extern attr_t term_attrs(void);				/* missing */
 extern char *termname(void);				/* implemented */
 extern int tigetflag(const char *);			/* implemented */
 extern int tigetnum(const char *);			/* implemented */
@@ -708,9 +719,7 @@ extern int untouchwin(WINDOW *);			/* generated */
 #ifndef EXTERN_TERMINFO
 extern int vidattr(chtype);				/* implemented */
 #endif
-#ifdef _XOPEN_SOURCE_EXTENDED
-extern int vid_attr(attr_t);				/* missing */
-#endif /* _XOPEN_SOURCE_EXTENDED */
+extern int vid_attr(attr_t);				/* generated:WIDEC */
 extern int vidputs(chtype, int (*)(int));		/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int vid_puts(attr_t, int (*)(int));		/* missing */
@@ -742,7 +751,7 @@ extern int wattr_on(WINDOW *, const attr_t);		/* implemented */
 extern int wattr_off(WINDOW *, const attr_t);		/* implemented */
 extern int wattr_set(WINDOW *, attr_t);			/* generated */
 extern int wbkgd(WINDOW *,const chtype);		/* implemented */
-extern void wbkgdset(WINDOW *,chtype);			/* generated */
+extern void wbkgdset(WINDOW *,chtype);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int wbkgrndset(WINDOW *,const cchar_t *);	/* missing */
 extern int wbkgrnd(WINDOW *,const cchar_t *);		/* missing */
@@ -755,6 +764,7 @@ extern int wchgat(WINDOW *, int, attr_t, short, const void *);/* implemented */
 extern int wclear(WINDOW *);				/* implemented */
 extern int wclrtobot(WINDOW *);				/* implemented */
 extern int wclrtoeol(WINDOW *);				/* implemented */
+extern int wcolor_set(WINDOW*,short,void*);		/* missing */
 extern void wcursyncup(WINDOW *);			/* implemented */
 extern int wdelch(WINDOW *);				/* implemented */
 extern int wdeleteln(WINDOW *);				/* generated */
@@ -827,26 +837,44 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 
 /* attributes */
-#define A_ATTRIBUTES	0xffffff00
-#define A_NORMAL	0x00000000
-#define A_STANDOUT	0x00010000
-#define A_UNDERLINE	0x00020000
-#define A_REVERSE	0x00040000
-#define A_BLINK		0x00080000
-#define A_DIM		0x00100000
-#define A_BOLD		0x00200000
-#define A_ALTCHARSET	0x00400000
-#define A_INVIS		0x00800000
-#define A_PROTECT	0x01000000
-#define A_HORIZONTAL	0x02000000	/* XSI Curses attr -- not yet used */
-#define A_LEFT		0x04000000	/* XSI Curses attr -- not yet used */
-#define A_LOW		0x08000000	/* XSI Curses attr -- not yet used */
-#define A_RIGHT		0x10000000	/* XSI Curses attr -- not yet used */
-#define A_TOP		0x20000000	/* XSI Curses attr -- not yet used */
-#define A_VERTICAL	0x40000000	/* XSI Curses attr -- not yet used */
-#define A_CHARTEXT	0x000000ff
-#define A_COLOR		0x0000ff00
-#define COLOR_PAIR(n)	((n) << 8)
+
+#define NCURSES_BITS(mask,shift) ((mask) << ((shift) + 8))
+
+#define A_NORMAL	0L
+#define A_ATTRIBUTES	NCURSES_BITS(~(1UL - 1UL),0)
+#define A_CHARTEXT	(NCURSES_BITS(1UL,0) - 1UL)
+#define A_COLOR		NCURSES_BITS(((1UL) << 8) - 1UL,0)
+#define A_STANDOUT	NCURSES_BITS(1UL,8)
+#define A_UNDERLINE	NCURSES_BITS(1UL,9)
+#define A_REVERSE	NCURSES_BITS(1UL,10)
+#define A_BLINK		NCURSES_BITS(1UL,11)
+#define A_DIM		NCURSES_BITS(1UL,12)
+#define A_BOLD		NCURSES_BITS(1UL,13)
+#define A_ALTCHARSET	NCURSES_BITS(1UL,14)
+#define A_INVIS		NCURSES_BITS(1UL,15)
+
+/* Tradeoff on 32-bit machines ('protect' vs widec).  The others (e.g., left
+ * highlight are not implemented in any terminal descriptions, anyway.
+ */
+#if ((16 + 8) < 32)
+#define A_PROTECT	NCURSES_BITS(1UL,16)
+#define A_HORIZONTAL	NCURSES_BITS(1UL,17)
+#define A_LEFT		NCURSES_BITS(1UL,18)
+#define A_LOW		NCURSES_BITS(1UL,19)
+#define A_RIGHT		NCURSES_BITS(1UL,20)
+#define A_TOP		NCURSES_BITS(1UL,21)
+#define A_VERTICAL	NCURSES_BITS(1UL,22)
+#else
+#define A_PROTECT	0L
+#define A_HORIZONTAL	0L
+#define A_LEFT		0L
+#define A_LOW		0L
+#define A_RIGHT		0L
+#define A_TOP		0L
+#define A_VERTICAL	0L
+#endif
+
+#define COLOR_PAIR(n)	NCURSES_BITS(n, 0)
 #define PAIR_NUMBER(a)	(((a) & A_COLOR) >> 8)
 
 /*
@@ -864,27 +892,28 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define nocrmode()		nocbreak()
 #define gettmode()
 
-#define getyx(win,y,x)   	(y = (win)->_cury, x = (win)->_curx)
-#define getbegyx(win,y,x)	(y = (win)->_begy, x = (win)->_begx)
-#define getmaxyx(win,y,x)	(y = (win)->_maxy + 1, x = (win)->_maxx + 1)
-#define getparyx(win,y,x)	(y = (win)->_pary, x = (win)->_parx)
+#define getyx(win,y,x)   	(y = (win)?(win)->_cury:ERR, x = (win)?(win)->_curx:ERR)
+#define getbegyx(win,y,x)	(y = (win)?(win)->_begy:ERR, x = (win)?(win)->_begx:ERR)
+#define getmaxyx(win,y,x)	(y = (win)?((win)->_maxy + 1):ERR, x = (win)?((win)->_maxx + 1):ERR)
+#define getparyx(win,y,x)	(y = (win)?(win)->_pary:ERR, x = (win)?(win)->_parx:ERR)
 #define getsyx(y,x)		getyx(stdscr, y, x)
 #define setsyx(y,x)		(stdscr->_cury = y, stdscr->_curx = x)
 
-#define	wbkgdset(win, ch) \
-	(((win)->_attrs = (((win)->_attrs & ~((win)->_bkgd & A_ATTRIBUTES)) | \
-	    ((ch) & A_ATTRIBUTES))), \
-	    ((win)->_bkgd = (ch)))
-
 /* It seems older SYSV curses versions define these */
-#define getattrs(win)		((win)->_attrs)
-#define getmaxx(win)		((win)->_maxx + 1)
-#define getmaxy(win)		((win)->_maxy + 1)
+#define getattrs(win)		((win)?(win)->_attrs:A_NORMAL)
+#define getcurx(win)		((win)?(win)->_curx:ERR)
+#define getcury(win)		((win)?(win)->_cury:ERR)
+#define getbegx(win)		((win)?(win)->_begx:ERR)
+#define getbegy(win)		((win)?(win)->_begy:ERR)
+#define getmaxx(win)		((win)?((win)->_maxx + 1):ERR)
+#define getmaxy(win)		((win)?((win)->_maxy + 1):ERR)
+#define getparx(win)		((win)?(win)->_parx:ERR)
+#define getpary(win)		((win)?(win)->_pary:ERR)
 
-#define winch(win)       	((win)->_line[(win)->_cury].text[(win)->_curx])
+#define winch(win)       	((win)?(win)->_line[(win)->_cury].text[(win)->_curx]:0)
 #define wstandout(win)      	(wattr_set(win,A_STANDOUT))
 #define wstandend(win)      	(wattr_set(win,A_NORMAL))
-#define wattr_set(win,at)    	((win)->_attrs = (at))
+#define wattr_set(win,at)    	((win)?((win)->_attrs = (at)):0)
 
 #define wattron(win,at)		wattr_on(win, at)
 #define wattroff(win,at)	wattr_off(win, at)
@@ -892,9 +921,9 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 
 #define scroll(win)		wscrl(win,1)
 
-#define touchwin(win)		wtouchln((win), 0, (win)->_maxy + 1, 1)
+#define touchwin(win)		wtouchln((win), 0, getmaxy(win), 1)
 #define touchline(win, s, c)	wtouchln((win), s, c, 1)
-#define untouchwin(win)		wtouchln((win), 0, (win)->_maxy + 1, 0)
+#define untouchwin(win)		wtouchln((win), 0, getmaxy(win), 0)
 
 #define box(win, v, h)		wborder(win, v, v, h, h, 0, 0, 0, 0)
 #define border(ls, rs, ts, bs, tl, tr, bl, br)	wborder(stdscr, ls, rs, ts, bs, tl, tr, bl, br)
@@ -1064,6 +1093,10 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define mvwinwstr(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : winnwstr(stdscr,c,-1))
 #define mvwvline_set(win,y,x,c,n)	(wmove(win,y,x) == ERR ? ERR : wvline_set(win,c,n))
 
+#define slk_attr_off(a)			slk_attroff(a)
+#define slk_attr_on(a)			slk_attron(a)
+#define slk_attr_set(a)			slk_attrset(a)
+#define vid_attr(a)			vidattr(a)
 #define vline_set(c,n)			vhline_set(stdscr,c,n)
 #define waddwstr(win,wstr,n)		waddnwstr(win,wstr,-1)
 #define wattr_get(win)			((win)->_attrs)
@@ -1186,6 +1219,7 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define KEY_SUSPEND	0627		/* Suspend */
 #define KEY_UNDO	0630		/* Undo */
 #define KEY_MOUSE	0631		/* Mouse event has occurred */
+#define KEY_RESIZE	0632		/* Terminal resize event */
 #define KEY_MAX		0777		/* Maximum key value */
 
 /* mouse interface */
@@ -1243,7 +1277,7 @@ MEVENT;
 extern int getmouse(MEVENT *);
 extern int ungetmouse(MEVENT *);
 extern mmask_t mousemask(mmask_t, mmask_t *);
-extern bool wenclose(WINDOW *, int, int);
+extern bool wenclose(const WINDOW *, int, int);
 extern int mouseinterval(int);
 
 /* other non-XSI functions */
@@ -1282,6 +1316,7 @@ extern void trace(const unsigned int);
 
 #if defined(TRACE) || defined(NCURSES_TEST)
 extern int _nc_optimize_enable;		/* enable optimizations */
+extern const char *_nc_visbuf(const char *);
 #define OPTIMIZE_MVCUR		0x01	/* cursor movement optimization */
 #define OPTIMIZE_HASHMAP	0x02	/* diff hashing to detect scrolls */
 #define OPTIMIZE_SCROLL		0x04	/* scroll optimization */

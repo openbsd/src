@@ -1,3 +1,5 @@
+/*	$OpenBSD: curses.priv.h,v 1.3 1997/12/03 05:21:07 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -21,7 +23,7 @@
 
 
 /*
- * Id: curses.priv.h,v 1.61 1997/04/26 20:54:54 tom Exp $
+ * Id: curses.priv.h,v 1.93 1997/11/01 23:01:54 tom Exp $
  *
  *	curses.priv.h
  *
@@ -33,9 +35,13 @@
 #ifndef CURSES_PRIV_H
 #define CURSES_PRIV_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <ncurses_cfg.h>
 
-#ifdef USE_RCS_IDS
+#if USE_RCS_IDS
 #define MODULE_ID(id) static const char Ident[] = id;
 #else
 #define MODULE_ID(id) /*nothing*/
@@ -74,9 +80,11 @@
 
 #include <errno.h>
 
-#if !HAVE_EXTERN_ERRNO
+#if DECL_ERRNO
 extern int errno;
 #endif
+
+#include <nc_panel.h>
 
 /* Some systems have a broken 'select()', but workable 'poll()'.  Use that */
 #if HAVE_POLL && HAVE_SYS_STROPTS_H && HAVE_POLL_H
@@ -92,18 +100,31 @@ extern int errno;
 #define USE_GPM_SUPPORT 0
 #endif
 
-/*
- * ht/cbt expansion flakes out randomly under Linux 1.1.47, but only when
- * we're throwing control codes at the screen at high volume.  To see this,
- * re-enable TABS_OK and run worm for a while.  Other systems probably don't
- * want to define this either due to uncertainties about tab delays and
- * expansion in raw mode.
- */
-#undef TABS_OK	/* OK to use tab/backtab for local motions? */
+#define DEFAULT_MAXCLICK 166
 
 /*
- * The internal types (e.g., struct screen) must precede <curses.h>, otherwise
- * we cannot construct lint-libraries (structures must be fully-defined).
+ * As currently coded, hashmap relies on the scroll-hints logic.
+ */
+#if !USE_SCROLL_HINTS
+#if USE_HASHMAP
+#define USE_SCROLL_HINTS 1
+#else
+#define USE_SCROLL_HINTS 0
+#endif
+#endif
+
+#if USE_SCROLL_HINTS
+#define if_USE_SCROLL_HINTS(stmt) stmt
+#else
+#define if_USE_SCROLL_HINTS(stmt) /*nothing*/
+#endif
+
+/*
+ * Note:  ht/cbt expansion flakes out randomly under Linux 1.1.47, but only
+ * when we're throwing control codes at the screen at high volume.  To see
+ * this, re-enable USE_HARD_TABS and run worm for a while.  Other systems
+ * probably don't want to define this either due to uncertainties about tab
+ * delays and expansion in raw mode.
  */
 
 struct tries {
@@ -112,30 +133,6 @@ struct tries {
 	unsigned char    ch;        /* character at this node               */
 	unsigned short   value;     /* code of string so far.  0 if none.   */
 };
-
-/*
- * Structure for soft labels.
- */
-
-typedef struct
-{
-	char *text;             /* text for the label */
-	char *form_text;        /* formatted text (left/center/...) */
-	int x;                  /* x coordinate of this field */
-	char dirty;             /* this label has changed */
-	char visible;           /* field is visible */
-} slk_ent;
-
-typedef struct {
-	char dirty;             /* all labels have changed */
-	char hidden;            /* soft labels are hidden */
-	struct _win_st *win;
-	slk_ent *ent;
-	char *buffer;           /* buffer for labels */
-	short maxlab;           /* number of available labels */
-	short labcnt;           /* number of allocated labels */
-	short maxlen;           /* length of labels */
-} SLK;
 
 /*
  * Definitions for color pairs
@@ -157,7 +154,38 @@ color_t;
 
 #define MAXCOLUMNS    135
 #define MAXLINES      66
-#define FIFO_SIZE     MAXLINES
+#define FIFO_SIZE     MAXCOLUMNS+2  /* for nocbreak mode input */
+
+#define ACS_LEN       128
+
+#define WINDOWLIST struct _win_list
+
+#include <curses.h>	/* we'll use -Ipath directive to get the right one! */
+
+/*
+ * Structure for soft labels.
+ */
+
+typedef struct
+{
+	char *text;             /* text for the label */
+	char *form_text;        /* formatted text (left/center/...) */
+	int x;                  /* x coordinate of this field */
+	char dirty;             /* this label has changed */
+	char visible;           /* field is visible */
+} slk_ent;
+
+typedef struct {
+	char dirty;             /* all labels have changed */
+	char hidden;            /* soft labels are hidden */
+	struct _win_st *win;
+	slk_ent *ent;
+	char*  buffer;           /* buffer for labels */
+	short  maxlab;           /* number of available labels */
+	short  labcnt;           /* number of allocated labels */
+	short  maxlen;           /* length of labels */
+        chtype attr;             /* soft label attribute */
+} SLK;
 
 struct screen {
 	int             _ifd;           /* input file ptr for screen        */
@@ -173,14 +201,20 @@ struct screen {
 	short           _columns;       /* screen columns                   */
 	short           _lines_avail;   /* lines available for stdscr       */
 	short           _topstolen;     /* lines stolen from top            */
-	struct _win_st  *_curscr;       /* current screen                   */
-	struct _win_st  *_newscr;       /* virtual screen to be updated to  */
-	struct _win_st  *_stdscr;       /* screen's full-window context     */
+
+	WINDOW          *_curscr;       /* current screen                   */
+	WINDOW          *_newscr;       /* virtual screen to be updated to  */
+	WINDOW          *_stdscr;       /* screen's full-window context     */
+
 	struct tries    *_keytry;       /* "Try" for use with keypad mode   */
+	struct tries    *_key_ok;       /* Disabled keys via keyok(,FALSE)  */
+
 	unsigned int    _fifo[FIFO_SIZE];       /* input push-back buffer   */
-	signed char     _fifohead,      /* head of fifo queue               */
+	short           _fifohead,      /* head of fifo queue               */
 	                _fifotail,      /* tail of fifo queue               */
-	                _fifopeek;      /* where to peek for next char      */
+	                _fifopeek,      /* where to peek for next char      */
+	                _fifohold;      /* set if breakout marked           */
+
 	int             _endwin;        /* are we out of window mode?       */
 	unsigned long   _current_attr;  /* terminal attribute current set   */
 	int             _coloron;       /* is color enabled?                */
@@ -194,7 +228,7 @@ struct screen {
 	int             _echo;          /* True if echo on                  */
 	int             _use_meta;      /* use the meta key?                */
 	SLK             *_slk;          /* ptr to soft key struct / NULL    */
-	int             _baudrate;      /* used to compute padding          */
+	int		_baudrate;	/* used to compute padding          */
 
 	/* cursor movement costs; units are 10ths of milliseconds */
 	int             _char_padding;  /* cost of character put            */
@@ -202,10 +236,10 @@ struct screen {
 	int             _cup_cost;      /* cost of (cursor_address)         */
 	int             _home_cost;     /* cost of (cursor_home)            */
 	int             _ll_cost;       /* cost of (cursor_to_ll)           */
-#ifdef TABS_OK
+#if USE_HARD_TABS
 	int             _ht_cost;       /* cost of (tab)                    */
 	int             _cbt_cost;      /* cost of (backtab)                */
-#endif /* TABS_OK */
+#endif /* USE_HARD_TABS */
 	int             _cub1_cost;     /* cost of (cursor_left)            */
 	int             _cuf1_cost;     /* cost of (cursor_right)           */
 	int             _cud1_cost;     /* cost of (cursor_down)            */
@@ -233,22 +267,67 @@ struct screen {
 	int             _carriage_return_length;
 	int             _cursor_home_length;
 	int             _cursor_to_ll_length;
+
 	/* used in lib_color.c */
 	color_t         *_color_table;  /* screen's color palette            */
 	int             _color_count;   /* count of colors in palette        */
 	unsigned short  *_color_pairs;  /* screen's color pair list          */
 	int             _pair_count;    /* count of color pairs              */
 	int             _default_color; /* use default colors                */
+	chtype          _xmc_suppress;  /* attributes to suppress if xmc     */
+	chtype          _xmc_triggers;  /* attributes to process if xmc      */
+	chtype          _acs_map[ACS_LEN];
+
+	/*
+	 * These data correspond to the state of the idcok() and idlok()
+	 * functions.  A caveat is in order here:  the XSI and SVr4
+	 * documentation specify that these functions apply to the window which
+	 * is given as an argument.  However, ncurses implements this logic
+	 * only for the newscr/curscr update process, _not_ per-window.
+	 */
+	bool            _nc_sp_idlok;
+	bool            _nc_sp_idcok;
+#define _nc_idlok SP->_nc_sp_idlok
+#define _nc_idcok SP->_nc_sp_idcok
+
+	/*
+	 * These are the data that support the mouse interface.
+	 */
+	int             _maxclick;
+	bool            (*_mouse_event) (SCREEN *);
+	bool            (*_mouse_inline)(SCREEN *);
+	bool            (*_mouse_parse) (int);
+	void            (*_mouse_resume)(SCREEN *);
+	void            (*_mouse_wrap)  (SCREEN *);
+	int             _mouse_fd;      /* file-descriptor, if any */
+
+	/*
+	 * This supports automatic resizing
+	 */
+	int		(*_resize)(int,int);
+
+        /*
+	 * These are data that support the proper handling of the panel stack on an
+	 * per screen basis.
+	 */
+        struct panelhook _panelHook;
+	/*
+	 * Linked-list of all windows, to support '_nc_resizeall()' and
+	 * '_nc_freeall()'
+	 */
+	WINDOWLIST      *_nc_sp_windows;
+#define _nc_windows SP->_nc_sp_windows
+
+	bool            _sig_winch;
+	SCREEN          *_next_screen;
 };
 
-/* Ncurses' public interface follows the internal types */
-#include <curses.h>	/* we'll use -Ipath directive to get the right one! */
+extern SCREEN *_nc_screen_chain;
 
 #ifdef NCURSES_NOMACROS
 #include <nomacros.h>
 #endif
 
-#define WINDOWLIST struct _win_list
 	WINDOWLIST {
 	WINDOWLIST *next;
 	WINDOW	*win;
@@ -308,6 +387,7 @@ typedef	struct {
 
 #define CHANGED     -1
 
+#define SIZEOF(v) (sizeof(v)/sizeof(v[0]))
 #define typeCalloc(type,elts) (type *)calloc(elts,sizeof(type))
 #define FreeIfNeeded(p)  if(p != 0) free(p)
 #define FreeAndNull(p)   free(p); p = 0
@@ -328,38 +408,38 @@ typedef	struct {
 #define T(a)		TR(TRACE_CALLS, a)
 #define TPUTS_TRACE(s)	_nc_tputs_trace = s;
 #define TRACE_RETURN(value,type) return _nc_retrace_##type(value)
-#define returnWin(code)  TRACE_RETURN(code,win)
-#define returnPtr(code)  TRACE_RETURN(code,ptr)
+#define returnAttr(code) TRACE_RETURN(code,attr_t)
 #define returnCode(code) TRACE_RETURN(code,int)
+#define returnPtr(code)  TRACE_RETURN(code,ptr)
 #define returnVoid       T((T_RETURN(""))); return
+#define returnWin(code)  TRACE_RETURN(code,win)
 extern unsigned _nc_tracing;
 extern WINDOW * _nc_retrace_win(WINDOW *);
+extern attr_t _nc_retrace_attr_t(attr_t);
 extern char *_nc_retrace_ptr(char *);
 extern const char *_nc_tputs_trace;
 extern const char *_nc_visbuf(const char *);
 extern const char *_nc_visbuf2(int, const char *);
 extern int _nc_retrace_int(int);
 extern long _nc_outchars;
+extern void _nc_fifo_dump(void);
 #else
 #define T(a)
 #define TR(n, a)
 #define TPUTS_TRACE(s)
-#define returnWin(code)  return code
+#define returnAttr(code) return code
 #define returnCode(code) return code
+#define returnPtr(code)  return code
 #define returnVoid       return
+#define returnWin(code)  return code
 #endif
 
 #define _trace_key(ch) ((ch > KEY_MIN) ? keyname(ch) : _tracechar((unsigned char)ch))
 
 #define ALL_BUT_COLOR ((chtype)~(A_COLOR))
 #define IGNORE_COLOR_OFF FALSE
-
-
-/* Macro to put together character and attribute info and return it.
-   If colors are in the attribute, they have precedence. */
-#define ch_or_attr(ch,at) \
-    ((PAIR_NUMBER(at) > 0) ? \
-     ((((chtype)ch) & ALL_BUT_COLOR) | (at)) : ((((chtype)ch) | (at))))
+#define NONBLANK_ATTR (A_BOLD|A_DIM|A_BLINK)
+#define XMC_CHANGES(c) ((c) & SP->_xmc_suppress)
 
 
 #define toggle_attr_on(S,at) \
@@ -398,8 +478,23 @@ extern long _nc_outchars;
 			? (SP->_ich1_cost * count) \
 			: INFINITY))
 
+#if USE_XMC_SUPPORT
+#define UpdateAttrs(c)	if (SP->_current_attr != AttrOf(c)) { \
+				attr_t chg = SP->_current_attr; \
+				vidattr(AttrOf(c)); \
+				if (magic_cookie_glitch > 0 \
+				 && XMC_CHANGES((chg ^ SP->_current_attr))) { \
+					T(("%s @%d before glitch %d,%d", \
+						__FILE__, __LINE__, \
+						SP->_cursrow, \
+						SP->_curscol)); \
+					_nc_do_xmc_glitch(chg); \
+				} \
+			}
+#else
 #define UpdateAttrs(c)	if (SP->_current_attr != AttrOf(c)) \
 				vidattr(AttrOf(c));
+#endif
 
 /*
  * Check whether the given character can be output by clearing commands.  This
@@ -407,15 +502,10 @@ extern long _nc_outchars;
  * as A_REVERSE.  All attribute flags which don't affect appearance of a space
  * or can be output by clearing (A_COLOR in case of bce-terminal) are excluded.
  */
-#define NONBLANK_ATTR (A_BOLD|A_DIM|A_BLINK)
 #define can_clear_with(ch) \
 	((ch & ~(NONBLANK_ATTR|(back_color_erase ? A_COLOR:0))) == BLANK)
 
 #ifdef NCURSES_EXPANDED
-
-#undef  ch_or_attr
-#define ch_or_attr(ch,at) _nc_ch_or_attr(ch,at)
-extern chtype _nc_ch_or_attr(chtype, attr_t);
 
 #undef  toggle_attr_on
 #define toggle_attr_on(S,at) _nc_toggle_attr_on(&(S), at)
@@ -447,8 +537,27 @@ extern void _nc_expanded(void);
 
 #endif
 
+/* comp_scan.c */
+extern char _nc_trans_string(char *); /* used by 'tack' program */
+
+/* doupdate.c */
+#if USE_XMC_SUPPORT
+extern void _nc_do_xmc_glitch(attr_t);
+#endif
+
+/* hardscroll.c */
+#if defined(TRACE) || defined(SCROLLDEBUG)
+extern void _nc_linedump(void);
+#endif
+
+/* hardscroll.c */
+#if defined(TRACE) || defined(SCROLLDEBUG)
+extern void _nc_linedump(void);
+#endif
+
 /* lib_acs.c */
 extern void init_acs(void);	/* no prefix, this name is traditional */
+extern int _nc_msec_cost(const char *const, int);  /* used by 'tack' program */
 
 /* lib_mvcur.c */
 #define INFINITY	1000000	/* cost: too high to use */
@@ -456,24 +565,33 @@ extern void init_acs(void);	/* no prefix, this name is traditional */
 extern void _nc_mvcur_init(void);
 extern void _nc_mvcur_resume(void);
 extern void _nc_mvcur_wrap(void);
-extern int _nc_mvcur_scrolln(int, int, int, int);
+
+extern int _nc_scrolln(int, int, int, int);
+
+extern void _nc_screen_init(void);
+extern void _nc_screen_resume(void);
+extern void _nc_screen_wrap(void);
 
 /* lib_mouse.c */
-extern void _nc_mouse_init(SCREEN *);
-extern bool _nc_mouse_event(SCREEN *);
-extern bool _nc_mouse_inline(SCREEN *);
-extern bool _nc_mouse_parse(int);
-extern void _nc_mouse_wrap(SCREEN *);
-extern void _nc_mouse_resume(SCREEN *);
-extern int _nc_max_click_interval;
-extern int _nc_mouse_fd(void);
+extern int _nc_has_mouse(void);
+
+/* safe_sprintf.c */
+extern char * _nc_printf_string(const char *fmt, va_list ap);
+
+/* softscroll.c */
+extern void _nc_setup_scroll(void);
+extern void _nc_perform_scroll(void);
+
+/* tries.c */
+extern void _nc_add_to_try(struct tries **tree, char *str, unsigned short code);
+extern char *_nc_expand_try(struct tries *tree, unsigned short code, size_t len);
+extern int _nc_remove_key(struct tries **tree, unsigned short code);
 
 /* elsewhere ... */
 extern WINDOW *_nc_makenew(int, int, int, int, int);
+extern char *_nc_trace_buf(int, size_t);
 extern chtype _nc_background(WINDOW *);
 extern chtype _nc_render(WINDOW *, chtype);
-extern char *_nc_trace_buf(int, size_t);
-extern int _nc_initscr(void);
 extern int _nc_keypad(bool);
 #ifdef EXTERN_TERMINFO                                                      
 #define	_nc_outch _ti_outc                                                  
@@ -482,19 +600,18 @@ extern int _nc_outch(int);
 extern int _nc_setupscreen(short, short const, FILE *);
 extern int _nc_timed_wait(int, int, int *);
 extern int _nc_waddch_nosync(WINDOW *, const chtype);
-extern void _nc_backspace(WINDOW *win);
 extern void _nc_do_color(int, int (*)(int));
-extern void _nc_freeall(void);
 extern void _nc_free_and_exit(int);
+extern void _nc_freeall(void);
 extern void _nc_freewin(WINDOW *win);
-extern void _nc_get_screensize(void);
 extern void _nc_hash_map(void);
 extern void _nc_outstr(const char *str);
 extern void _nc_scroll_optimize(void);
-extern void _nc_scroll_window(WINDOW *, int const, short const, short const);
+extern void _nc_scroll_window(WINDOW *, int const, short const, short const, chtype);
 extern void _nc_set_buffer(FILE *ofp, bool buffered);
 extern void _nc_signal_handler(bool);
 extern void _nc_synchook(WINDOW *win);
+extern void _nc_update_screensize(void);
 
 /*
  * On systems with a broken linker, define 'SP' as a function to force the
@@ -510,6 +627,7 @@ extern SCREEN *_nc_screen(void);
 extern int _nc_alloc_screen(void);
 extern void _nc_set_screen(SCREEN *);
 #else
+/* current screen is private data; avoid possible linking conflicts too */
 extern SCREEN *SP;
 #define _nc_alloc_screen() ((SP = typeCalloc(SCREEN, 1)) != 0)
 #define _nc_set_screen(sp) SP = sp
@@ -521,12 +639,12 @@ extern int _nc_usleep(unsigned int);
 #endif
 
 /*
- * ncurses' term.h defines this but since we use our own terminfo
- * we need to define it here.
+ * ncurses' terminfo defines these but since we use our own terminfo
+ * we need to fake it here.
  */
 #ifdef EXTERN_TERMINFO                                                      
-#define	GET_TTY(fd, buf) tcgetattr(fd, buf)
-#define	SET_TTY(fd, buf) tcsetattr(fd, TCSADRAIN, buf)
+#define	_nc_get_curterm(buf) tcgetattr(cur_term->Filedes, buf)
+#define	_nc_set_curterm(buf) tcsetattr(cur_term->Filedes, TCSADRAIN, buf)
 #endif                                                                      
 
 /*
@@ -541,6 +659,17 @@ extern int _nc_usleep(unsigned int);
 extern int _nc_slk_format;  /* != 0 if slk_init() called */
 extern int _nc_slk_initialize(WINDOW *, int);
 
+/* 
+ * Some constants related to SLK's 
+ */
+#define MAX_SKEY_OLD	   8	/* count of soft keys */
+#define MAX_SKEY_LEN_OLD   8	/* max length of soft key text */
+#define MAX_SKEY_PC       12    /* This is what most PC's have */
+#define MAX_SKEY_LEN_PC    5
+
+#define MAX_SKEY          (SLK_STDFMT ? MAX_SKEY_OLD : MAX_SKEY_PC)
+#define MAX_SKEY_LEN      (SLK_STDFMT ? MAX_SKEY_LEN_OLD : MAX_SKEY_LEN_PC)
+
 /* Macro to check whether or not we use a standard format */
 #define SLK_STDFMT (_nc_slk_format < 3)
 /* Macro to determine height of label window */
@@ -550,8 +679,8 @@ extern int _nc_ripoffline(int line, int (*init)(WINDOW *,int));
 
 #define UNINITIALISED ((struct tries * ) -1)
 
-extern bool _nc_idlok, _nc_idcok;
-
-extern WINDOWLIST *_nc_windows;
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CURSES_PRIV_H */

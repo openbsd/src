@@ -1,3 +1,5 @@
+/*	$OpenBSD: hardscroll.c,v 1.6 1997/12/03 05:21:08 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -92,59 +94,9 @@ be moved out of order.
 
 			THE ALGORITHM
 
-First, mark each line on the real screen that is *not* carried over to the
-virtual screen discarded (that is, with a -1 oldnum index).
-
-Second, optionally run through each virtual line with a non -1 oldnum.  If the
-line is sufficiently changed, mark it -1 (we don't want to move it).  The exact
-test for "sufficiently changed" is not relevant to the control flow of this
-algorithm.  Cases the test should detect are those in which rewriting
-the line from whatever might be on the real screen would be cheaper than the
-move.  Blank lines on a terminal with clear-to-eol probably meet this test.
-
-Here is pseudo-code for the remainder of the algorithm:
-
-  repeat
-1:    first = 0;
-2:    no_hunk_moved = TRUE;
-
-      # on each pass, try to find a movable hunk
-3:    while (first < screen_depth)
-
-          # scan for start of hunk
-4:        while (oldnum field of first == -1)
-              first++
-
-          # if we have no hunk, quit this pass
-5:        if (first >= screen_depth)
-              break;
-
-          # we found a hunk
-6:        last = (end of longest continues oldnum range starting here)
-
-7:        ofirst = (first line's oldnum, where it was on real screen)
-8:        olast = (last line's oldnum, where it was on real screen)
-
-          # figure the hunk's displacement
-9:        disp = first - (first virtual line's oldnum field)
-
-          # does the hunk want to move?
-10:       if (disp != 0)
-              # is the hunk movable without destroying info?
-11:           if (real [ofirst+disp, olast+disp] are all in range or DISCARDED)
-12:               if (disp > 0)
-13:                   scroll real [ofirst, olast+disp] down by disp
-                      (mark [ofirst, olast+disp] DISCARDED)
-14:               else if (disp < 0)
-15:                   scroll real [ofirst+disp, olast] up by disp
-                      (mark [ofirst+disp, olast] DISCARDED)
-16:               no_hunk_moved = FALSE
-
-          # done trying to move this hunk
-17:       first = last + 1;
-       end while
-    until
-18:    no_hunk_moved;    # quit when a complete pass finds no movable hunks
+The scrolling is done in two passes. The first pass is from top to bottom
+scroling hunks UP. The second one is from bottom to top scrolling hunks DOWN.
+Obviously enough, no lines to be scrolled will be destroyed. (lav)
 
 HOW TO TEST THIS:
 
@@ -178,203 +130,115 @@ a representative sample of cases:
 
 AUTHOR
     Eric S. Raymond <esr@snark.thyrsus.com>, November 1994
+    New algorithm by Alexander V. Lukyanov <lav@yars.free.net>, Aug 1997
 
 *****************************************************************************/
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: hardscroll.c,v 1.17 1997/02/15 22:33:12 tom Exp $")
-
-#if defined(TRACE) || defined(SCROLLDEBUG)
-void _nc_linedump(void);
-#endif /* defined(TRACE) || defined(SCROLLDEBUG) */
-
-/* if only this number of lines is carried over, nuke the screen and redraw */
-#define CLEAR_THRESHOLD		3
+MODULE_ID("Id: hardscroll.c,v 1.28 1997/10/26 21:56:41 tom Exp $")
 
 #if defined(SCROLLDEBUG) || defined(HASHDEBUG)
-#define LINES	24
-int oldnums[LINES], reallines[LINES];
+int oldnums[MAXLINES];
 #define OLDNUM(n)	oldnums[n]
-#define REAL(m)		reallines[m]
 #undef T
 #define T(x)		(void) printf x ; (void) putchar('\n');
 #else
 #include <curses.h>
 #define OLDNUM(n)	newscr->_line[n].oldindex
-#define REAL(m)		curscr->_line[m].oldindex
 #ifndef _NEWINDEX
 #define _NEWINDEX	-1
 #endif /* _NEWINDEX */
 #endif /* defined(SCROLLDEBUG) || defined(HASHDEBUG) */
 
-static bool all_discarded(int const top, int const bottom, int const disp)
-/* has the given range of real lines been marked discarded? */
-{
-    int		n;
-
-    for (n = top + disp; n <= bottom + disp; n++)
-	if (REAL(n) != _NEWINDEX && !(REAL(n) <= bottom && REAL(n) >= top))
-	    return(FALSE);
-
-    return(TRUE);
-}
 
 void _nc_scroll_optimize(void)
 /* scroll optimization to transform curscr to newscr */
 {
-    bool no_hunk_moved;		/* no hunk moved on this pass? */
-    int	n, new_lines;
-#if defined(TRACE) || defined(SCROLLDEBUG)
-    int	pass = 0;
-#endif /* defined(TRACE) || defined(SCROLLDEBUG) */
+    int i;
+    int start, end, shift;
 
     TR(TRACE_ICALLS, ("_nc_scroll_optimize() begins"));
 
-    /* mark any line not carried over with _NEWINDEX */
-    for (n = 0; n < LINES; n++)
-	REAL(n) += (MAXLINES + 1);
-    for (n = 0; n < LINES; n++)
-	if (OLDNUM(n) != _NEWINDEX
-	 && REAL(OLDNUM(n)) >= MAXLINES)
-	    REAL(OLDNUM(n)) -= (MAXLINES + 1);
-    for (n = new_lines = 0; n < LINES; n++)
-	if (REAL(n) > MAXLINES)
-	{
-	    REAL(n) = _NEWINDEX;
-	    new_lines++;
-	}
-
-    /*
-     * ^F in vi (which scrolls forward by LINES-2 in the file) exposes
-     * a weakness in this design.  Ideally, vertical motion
-     * optimization should cost its actions and then force a
-     * ClrUpdate() and complete redraw if that would be faster than
-     * the scroll.  Unfortunately, this would be a serious pain to
-     * arrange; hence, this hack.  If there are few enough lines
-     * carried over, don't bother with the scrolling, we just nuke the
-     * screen and redraw the whole thing.  Keith Bostic argues that
-     * this will be a win on strictly visual grounds even if the
-     * resulting update is theoretically sub-optimal.  Experience
-     * with vi says he's probably right.
-     */
-    if (LINES - new_lines <= CLEAR_THRESHOLD)
-    {
-	T(("too few lines carried over, nuking screen"));
-#if !defined(SCROLLDEBUG) && !defined(HASHDEBUG)
-	clearok(stdscr, TRUE);
-#endif /* !defined(SCROLLDEBUG) && !defined(HASHDEBUG) */
-	return;
-    }
-
 #ifdef TRACE
-    TR(TRACE_UPDATE | TRACE_MOVE, ("After real line marking:"));
     if (_nc_tracing & (TRACE_UPDATE | TRACE_MOVE))
 	_nc_linedump();
 #endif /* TRACE */
 
-    /* time to shuffle lines to do scroll optimization */
-    do {
-	int	first;		/* first line of current hunk */
-	int	last;		/* last line of current hunk */
-	int	ofirst;		/* oldnum index of first line */
-	int	olast;		/* oldnum index of last line */
-	int	disp;		/* hunk displacement */
+    /* pass 1 - from top to bottom scrolling up */
+    for (i = 0; i < screen_lines; )
+    {
+	while (i < screen_lines && (OLDNUM(i) == _NEWINDEX || OLDNUM(i) <= i))
+	    i++;
+	if (i >= screen_lines)
+	    break;
+	    
+	shift = OLDNUM(i) - i; /* shift > 0 */
+	start = i;
+	
+	i++;
+	while (i < screen_lines && OLDNUM(i) != _NEWINDEX && OLDNUM(i) - i == shift)
+	    i++;
+	end = i-1 + shift;
 
-	TR(TRACE_UPDATE | TRACE_MOVE, ("Pass %d:", pass++));
-
-	first = 0;		/* start scan at top line */
-	no_hunk_moved = TRUE;
-
-	while (first < LINES)
+	TR(TRACE_UPDATE | TRACE_MOVE, ("scroll [%d, %d] by %d", start, end, shift));
+#if !defined(SCROLLDEBUG) && !defined(HASHDEBUG)
+	if (_nc_scrolln(shift, start, end, screen_lines - 1) == ERR)
 	{
-	    /* find the beginning of a hunk */
-	    while (first < LINES && OLDNUM(first) == _NEWINDEX)
-		first++;
-	    if (first >= LINES)
-		break;
-
-	    /* find the end of the hunk */
-	    for (last = first; last < LINES; last++)
-		if (last == LINES - 1 || OLDNUM(last + 1) != OLDNUM(last) + 1)
-		    break;
-
-	    /* find the corresponding range on the old screen */
-	    ofirst = OLDNUM(first);
-	    olast = OLDNUM(last);
-
-	    /* compute the hunk's displacement */
-	    disp = first - OLDNUM(first);
-
-	    TR(TRACE_UPDATE | TRACE_MOVE, ("found hunk: first = %2d, last = %2d, ofirst = %2d, olast = %2d, disp = %2d",
-			   first, last, ofirst, olast, disp));
-
-	    /* OK, time to try to move the hunk? */
-	    if (disp != 0)
-		if (all_discarded(ofirst, olast, disp))
-		{
-		    int	m;
-
-		    if (disp > 0)
-			olast += disp;
-		    else /* (disp < 0) */
-			ofirst += disp;
-
-		    TR(TRACE_UPDATE | TRACE_MOVE, ("scroll [%d, %d] by %d", ofirst, olast, -disp));
-#if !defined(SCROLLDEBUG) && !defined(HASHDEBUG)
-		    if (_nc_mvcur_scrolln(-disp, ofirst, olast, LINES - 1) == ERR)
-		    	break;
-		    _nc_scroll_window(curscr, -disp, ofirst, olast);
-#endif /* !defined(SCROLLDEBUG) && !defined(HASHDEBUG) */
-
-		    for (m = ofirst; m <= olast; m++)
-		    {
-			REAL(m) = _NEWINDEX;
-#if !defined(SCROLLDEBUG) && !defined(HASHDEBUG)
-			/*
-			 * This will tell the second stage of the optimizer
-			 * that every line in the hunk on the real screen has
-			 * been changed.
-			 */
-			curscr->_line[m].firstchar = 0;
-			curscr->_line[m].lastchar = curscr->_maxx;
-#endif /* !defined(SCROLLDEBUG) && !defined(HASHDEBUG) */
-		    }
-		    for (m = first; m <= last; m++)
-			OLDNUM(m) = _NEWINDEX;
-
-		    no_hunk_moved = FALSE;
-		}
-
-	    /* OK, done with this hunk */
-	    first = last + 1;
+	    TR(TRACE_UPDATE | TRACE_MOVE, ("unable to scroll"));
+	    continue;
 	}
-    } while
-	(!no_hunk_moved);
+#endif /* !defined(SCROLLDEBUG) && !defined(HASHDEBUG) */
+    }
+
+    /* pass 2 - from bottom to top scrolling down */
+    for (i = screen_lines-1; i >= 0; )
+    {
+	while (i >= 0 && (OLDNUM(i) == _NEWINDEX || OLDNUM(i) >= i))
+	    i--;
+	if (i < 0)
+	    break;
+	    
+	shift = OLDNUM(i) - i; /* shift < 0 */
+	end = i;
+	
+	i--;
+	while (i >= 0 && OLDNUM(i) != _NEWINDEX && OLDNUM(i) - i == shift)
+	    i--;
+	start = i+1 - (-shift);
+
+	TR(TRACE_UPDATE | TRACE_MOVE, ("scroll [%d, %d] by %d", start, end, shift));
+#if !defined(SCROLLDEBUG) && !defined(HASHDEBUG)
+	if (_nc_scrolln(shift, start, end, screen_lines - 1) == ERR)
+	{
+	    TR(TRACE_UPDATE | TRACE_MOVE, ("unable to scroll"));
+	    continue;
+	}
+#endif /* !defined(SCROLLDEBUG) && !defined(HASHDEBUG) */
+    }
 }
 
 #if defined(TRACE) || defined(SCROLLDEBUG)
 void _nc_linedump(void)
 /* dump the state of the real and virtual oldnum fields */
 {
-    int	n;
-    char *buf;
+    static size_t have;
+    static char *buf;
 
-    /* We assume an int is at most 32 bits in size. */
-    if ((buf = malloc((LINES * 12) + 5)) == NULL) {
-	errno = ENOMEM;
-	returnCode(ERR);
-    }
-    (void) strcpy(buf, "real");
-    for (n = 0; n < LINES; n++)
-	(void) sprintf(buf + strlen(buf), " %02d", REAL(n));
-    TR(TRACE_UPDATE | TRACE_MOVE, (buf));
+    int	n;
+    size_t	want = (screen_lines + 1) * 4;
+
+    if (have < want)
+	buf = malloc(have = want);
 
     (void) strcpy(buf, "virt");
-    for (n = 0; n < LINES; n++)
+    for (n = 0; n < screen_lines; n++)
 	(void) sprintf(buf + strlen(buf), " %02d", OLDNUM(n));
     TR(TRACE_UPDATE | TRACE_MOVE, (buf));
+#if NO_LEAKS
     free(buf);
+    have = 0;
+#endif
 }
 #endif /* defined(TRACE) || defined(SCROLLDEBUG) */
 
@@ -387,16 +251,13 @@ main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 
 #ifdef TRACE
     _nc_tracing = TRACE_MOVE;
-#endif /* TRACE */
+#endif
     for (;;)
     {
 	int	n;
 
-	for (n = 0; n < LINES; n++)
-	{
-	    reallines[n] = n;
+	for (n = 0; n < screen_lines; n++)
 	    oldnums[n] = _NEWINDEX;
-	}
 
 	/* grab the test vector */
 	if (fgets(line, sizeof(line), stdin) == (char *)NULL)

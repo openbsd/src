@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_window.c,v 1.3 1997/12/03 05:21:41 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -27,7 +29,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_window.c,v 1.8 1997/02/02 01:14:43 tom Exp $")
+MODULE_ID("Id: lib_window.c,v 1.10 1997/09/20 15:02:34 juergen Exp $")
 
 void _nc_synchook(WINDOW *win)
 /* hook to be called after each window change */
@@ -39,12 +41,12 @@ void _nc_synchook(WINDOW *win)
 int mvderwin(WINDOW *win, int y, int x)
 /* move a derived window */
 {
-   WINDOW *orig = win->_parent;
+   WINDOW *orig;
    int i;
 
    T((T_CALLED("mvderwin(%p,%d,%d)"), win, y, x));
 
-   if (orig)
+   if (win && (orig = win->_parent))
    {
       if (win->_parx==x && win->_pary==y)
 	returnCode(OK);
@@ -182,9 +184,10 @@ int i;
 
 	T((T_CALLED("dupwin(%p)"), win));
 
-	if ((nwin = newwin(win->_maxy + 1, win->_maxx + 1, win->_begy, win->_begx)) == NULL)
-		returnWin(0);
-
+	if ((win==NULL) ||
+	    ((nwin = newwin(win->_maxy + 1, win->_maxx + 1, win->_begy, win->_begx)) == NULL))
+	  returnWin(0);
+	
 	nwin->_curx        = win->_curx;
 	nwin->_cury        = win->_cury;
 	nwin->_maxy        = win->_maxy;
@@ -193,7 +196,11 @@ int i;
 	nwin->_begx        = win->_begx;
 	nwin->_yoffset     = win->_yoffset;
 
-	nwin->_flags       = win->_flags;
+	nwin->_flags       = win->_flags & ~_SUBWIN;
+	/* Due to the use of newwin(), the clone is not a subwindow.
+	 * The text is really copied into the clone.
+	 */
+
 	nwin->_attrs       = win->_attrs;
 	nwin->_bkgd        = win->_bkgd;
 
@@ -204,9 +211,11 @@ int i;
 	nwin->_delay       = win->_delay;
 	nwin->_immed       = win->_immed;
 	nwin->_sync        = win->_sync;
-	nwin->_parx        = win->_parx;
-	nwin->_pary        = win->_pary;
-	nwin->_parent      = win->_parent;
+
+	nwin->_parx        = 0;
+	nwin->_pary        = 0;
+	nwin->_parent      = (WINDOW*)0; 
+	/* See above: the clone isn't a subwindow! */
 
 	nwin->_regtop      = win->_regtop;
 	nwin->_regbottom   = win->_regbottom;

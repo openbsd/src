@@ -1,3 +1,5 @@
+/*	$OpenBSD: wresize.c,v 1.3 1997/12/03 05:21:46 millert Exp $	*/
+
 /******************************************************************************
  * Copyright 1996,1997 by Thomas E. Dickey <dickey@clark.net>                 *
  * All Rights Reserved.                                                       *
@@ -21,7 +23,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("Id: wresize.c,v 1.5 1997/02/01 23:22:54 tom Exp $")
+MODULE_ID("Id: wresize.c,v 1.8 1997/09/20 15:03:39 juergen Exp $")
 
 /*
  * Reallocate a curses WINDOW struct to either shrink or grow to the specified
@@ -47,21 +49,24 @@ static void *doalloc(void *p, size_t n)
 int
 wresize(WINDOW *win, int ToLines, int ToCols)
 {
-	register int	row;
-	int	size_x, size_y;
-	struct ldat *pline = (win->_flags & _SUBWIN) ? win->_parent->_line : 0;
+	register int row;
+	int size_x, size_y;
+	struct ldat *pline;
+	chtype blank;
 
 #ifdef TRACE
 	T((T_CALLED("wresize(%p,%d,%d)"), win, ToLines, ToCols));
-	TR(TRACE_UPDATE, ("...beg (%d, %d), max(%d,%d), reg(%d,%d)",
-		win->_begy, win->_begx,
-		win->_maxy, win->_maxx,
-		win->_regtop, win->_regbottom));
-	if (_nc_tracing & TRACE_UPDATE)
-		_tracedump("...before", win);
+	if (win) {
+	  TR(TRACE_UPDATE, ("...beg (%d, %d), max(%d,%d), reg(%d,%d)",
+			    win->_begy, win->_begx,
+			    win->_maxy, win->_maxx,
+			    win->_regtop, win->_regbottom));
+	  if (_nc_tracing & TRACE_UPDATE)
+	    _tracedump("...before", win);
+	}
 #endif
 
-	if (--ToLines < 0 || --ToCols < 0)
+	if (!win || --ToLines < 0 || --ToCols < 0)
 		returnCode(ERR);
 
 	size_x = win->_maxx;
@@ -70,6 +75,8 @@ wresize(WINDOW *win, int ToLines, int ToCols)
 	if (ToLines == size_y
 	 && ToCols  == size_x)
 		returnCode(OK);
+
+	pline  = (win->_flags & _SUBWIN) ? win->_parent->_line : 0;
 
 	/*
 	 * If the number of lines has changed, adjust the size of the overall
@@ -99,13 +106,13 @@ wresize(WINDOW *win, int ToLines, int ToCols)
 	/*
 	 * Adjust the width of the columns:
 	 */
+	blank = _nc_background(win);
 	for (row = 0; row <= ToLines; row++) {
 		chtype	*s	= win->_line[row].text;
 		int	begin	= (s == 0) ? 0 : size_x + 1;
 		int	end	= ToCols;
-		chtype	blank	= _nc_background(win);
 
-		win->_line[row].oldindex = row;
+		if_USE_SCROLL_HINTS(win->_line[row].oldindex = row);
 
 		if (ToCols != size_x || s == 0) {
 			if (! (win->_flags & _SUBWIN)) {

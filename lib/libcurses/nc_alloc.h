@@ -1,3 +1,5 @@
+/*	$OpenBSD: nc_alloc.h,v 1.2 1997/12/03 05:21:41 millert Exp $	*/
+
 /******************************************************************************
  * Copyright 1996,1997 by Thomas E. Dickey <dickey@clark.net>                 *
  * All Rights Reserved.                                                       *

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_hline.c,v 1.1 1997/12/03 05:21:19 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -21,27 +23,49 @@
 
 
 
-#include <unctrl.h>
+/*
+**	lib_hline.c
+**
+**	The routine whline().
+**
+*/
 
-char *unctrl(register chtype uch)
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_hline.c,v 1.1 1997/10/08 05:59:50 jtc Exp $")
+
+int whline(WINDOW *win, chtype ch, int n)
 {
-    static char buffer[3] = "^x";
+int   code = ERR;
+short line;
+short start;
+short end;
 
-    if ((uch & 0x60) != 0 && uch != 0x7F) {
-	/*
-	 * Printable character. Simply return the character as a one-character
-	 * string.
-	 */
-	buffer[1] = uch;
-	return &buffer[1];
-    }
-    /*
-     * It is a control character. DEL is handled specially (^?). All others
-     * use ^x notation, where x is the character code for the control character
-     * with 0x40 ORed in. (Control-A becomes ^A etc.).
-     */
-    buffer[1] = (uch == 0x7F ? '?' : (uch | 0x40));
+	T((T_CALLED("whline(%p,%s,%d)"), win, _tracechtype(ch), n));
 
-    return buffer;
+	if (win) {
+		line  = win->_cury;
+		start = win->_curx;
+		end   = start + n - 1;
+		if (end > win->_maxx)
+			end   = win->_maxx;
 
+		if (win->_line[line].firstchar == _NOCHANGE
+		 || win->_line[line].firstchar > start)
+			win->_line[line].firstchar = start;
+		if (win->_line[line].lastchar == _NOCHANGE
+		 || win->_line[line].lastchar < start)
+			win->_line[line].lastchar = end;
+
+		if (ch == 0)
+			ch = ACS_HLINE;
+		ch = _nc_render(win, ch);
+
+		while ( end >= start) {
+			win->_line[line].text[end] = ch;
+			end--;
+		}
+		code = OK;
+	}
+	returnCode(code);
 }

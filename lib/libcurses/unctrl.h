@@ -1,3 +1,5 @@
+/*	$OpenBSD: unctrl.h,v 1.3 1997/12/03 05:21:45 millert Exp $	*/
+
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
 ****************************************************************************
@@ -24,14 +26,9 @@
  * Display a printable version of a control character.
  * Control characters are displayed in caret notation (^x), DELETE is displayed
  * as ^?. Printable characters are displayed as is.
- *
- * The returned pointer points to a static buffer which gets overwritten by
- * each call. Therefore, you must copy the resulting string to a safe place
- * before calling unctrl() again.
- *
  */
 
-/* Id: unctrl.h.in,v 1.5 1997/04/26 23:04:09 tom Exp $ */
+/* Id: unctrl.h.in,v 1.7 1997/09/13 23:19:40 tom Exp $ */
 
 #ifndef _UNCTRL_H
 #define _UNCTRL_H	1
@@ -45,6 +42,7 @@ extern "C" {
 
 #include <curses.h>
 
+#undef unctrl
 extern NCURSES_CONST char *unctrl(chtype);
 
 #ifdef __cplusplus

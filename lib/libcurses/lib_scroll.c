@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_scroll.c,v 1.3 1997/12/03 05:21:30 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -32,12 +34,11 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_scroll.c,v 1.11 1997/02/01 23:22:54 tom Exp $")
+MODULE_ID("Id: lib_scroll.c,v 1.15 1997/09/20 15:02:34 juergen Exp $")
 
-void _nc_scroll_window(WINDOW *win, int const n, short const top, short const bottom)
+void _nc_scroll_window(WINDOW *win, int const n, short const top, short const bottom, chtype blank)
 {
 int	line, j;
-chtype	blank = _nc_background(win);
 size_t	to_copy = (size_t)(sizeof(chtype) * (win->_maxx + 1));
 
 	TR(TRACE_MOVE, ("_nc_scroll_window(%p, %d, %d, %d)", win, n, top,bottom)); 
@@ -59,14 +60,12 @@ size_t	to_copy = (size_t)(sizeof(chtype) * (win->_maxx + 1));
 		    	memcpy(win->_line[line].text,
 			       win->_line[line+n].text,
 			       to_copy);
-			win->_line[line].oldindex = win->_line[line+n].oldindex;
+			if_USE_SCROLL_HINTS(win->_line[line].oldindex = win->_line[line+n].oldindex);
 		}
 		for (line = top; line < top-n; line++) {
 			for (j = 0; j <= win->_maxx; j ++)
 				win->_line[line].text[j] = blank;
-			win->_line[line].oldindex = _NEWINDEX;
-			win->_line[line].firstchar = 0;
-			win->_line[line].lastchar = win->_maxx;
+			if_USE_SCROLL_HINTS(win->_line[line].oldindex = _NEWINDEX);
 		}
     	}
 
@@ -76,16 +75,15 @@ size_t	to_copy = (size_t)(sizeof(chtype) * (win->_maxx + 1));
 		    	memcpy(win->_line[line].text,
 			       win->_line[line+n].text,
 			       to_copy);
-			win->_line[line].oldindex = win->_line[line+n].oldindex;
+			if_USE_SCROLL_HINTS(win->_line[line].oldindex = win->_line[line+n].oldindex);
 		}
 		for (line = bottom; line > bottom-n; line--) {
 			for (j = 0; j <= win->_maxx; j ++)
 				win->_line[line].text[j] = blank;
-			win->_line[line].oldindex = _NEWINDEX;
-			win->_line[line].firstchar = 0;
-			win->_line[line].lastchar = win->_maxx;
+			if_USE_SCROLL_HINTS(win->_line[line].oldindex = _NEWINDEX);
 		}
 	}
+	touchline(win, top, bottom-top+1);
 }
 
 int
@@ -93,7 +91,7 @@ wscrl(WINDOW *win, int n)
 {
 	T((T_CALLED("wscrl(%p,%d)"), win, n));
 
-	if (! win->_scroll)
+	if (!win || !win->_scroll)
 		returnCode(ERR);
 
 	if (n == 0)
@@ -103,8 +101,7 @@ wscrl(WINDOW *win, int n)
 	    (-n > (win->_regbottom - win->_regtop)))
 	    returnCode(ERR);
 
-	_nc_scroll_window(win, n, win->_regtop, win->_regbottom);
-	touchline(win, win->_regtop, (int)(win->_regbottom - win->_regtop + 1));
+	_nc_scroll_window(win, n, win->_regtop, win->_regbottom, _nc_background(win));
 
 	_nc_synchook(win);
     	returnCode(OK);

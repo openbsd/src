@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_twait.c,v 1.3 1997/12/03 05:21:38 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -24,6 +26,8 @@
 **
 **	The routine _nc_timed_wait().
 **
+**	(This file was originally written by Eric Raymond; however except for
+**	comments, none of the original code remains - T.Dickey).
 */
 
 #include <curses.priv.h>
@@ -35,8 +39,7 @@
 #include <sys/time.h>
 #endif
 #elif HAVE_SELECT
-/* on SCO, <sys/time.h> conflicts with <sys/select.h> */
-#if HAVE_SYS_TIME_H && ! SYSTEM_LOOKS_LIKE_SCO
+#if HAVE_SYS_TIME_H && HAVE_SYS_TIME_SELECT
 #include <sys/time.h>
 #endif
 #if HAVE_SYS_SELECT_H
@@ -44,7 +47,7 @@
 #endif
 #endif
 
-MODULE_ID("Id: lib_twait.c,v 1.18 1997/02/15 18:27:51 tom Exp $")
+MODULE_ID("Id: lib_twait.c,v 1.26 1997/11/30 01:09:23 tom Exp $")
 
 /*
  * We want to define GOOD_SELECT if the last argument of select(2) is
@@ -65,7 +68,7 @@ MODULE_ID("Id: lib_twait.c,v 1.18 1997/02/15 18:27:51 tom Exp $")
 static void _nc_gettime(struct timeval *tp)
 {
 	gettimeofday(tp, (struct timezone *)0);
-	T(("time: %ld.%06ld", tp->tv_sec, tp->tv_usec));
+	T(("time: %ld.%06ld", (long) tp->tv_sec, (long) tp->tv_usec));
 }
 #endif
 #endif
@@ -98,13 +101,14 @@ struct timeval tval;
 #endif /* !HAVE_USLEEP */
 
 /*
- * Wait a specified number of milliseconds, returning true if the timer
+ * Wait a specified number of milliseconds, returning nonzero if the timer
  * didn't expire before there is activity on the specified file descriptors.
  * The file-descriptors are specified by the mode:
  *	0 - none (absolute time)
  *	1 - ncurses' normal input-descriptor
  *	2 - mouse descriptor, if any
  *	3 - either input or mouse.
+ * We return a mask that corresponds to the mode (e.g., 2 for mouse activity).
  *
  * If the milliseconds given are -1, the wait blocks until activity on the
  * descriptors.
@@ -142,11 +146,16 @@ long delta;
 
 	T(("start twait: %lu.%06lu secs", (long) ntimeout.tv_sec, (long) ntimeout.tv_usec));
 
+#ifdef HIDE_EINTR
 	/*
 	 * The do loop tries to make it look like we have restarting signals,
 	 * even if we don't.
 	 */
 	do {
+#endif /* HIDE_EINTR */
+#if !GOOD_SELECT && HAVE_GETTIMEOFDAY
+	retry:
+#endif
 		count = 0;
 #if USE_FUNC_POLL
 
@@ -156,12 +165,11 @@ long delta;
 			count++;
 		}
 		if ((mode & 2)
-		 && (fd = _nc_mouse_fd()) >= 0) {
+		 && (fd = SP->_mouse_fd) >= 0) {
 			fds[count].fd     = fd;
 			fds[count].events = POLLIN;
 			count++;
 		}
-
 		result = poll(fds, count, milliseconds);
 #elif HAVE_SELECT
 		/*
@@ -175,7 +183,7 @@ long delta;
 			count = SP->_ifd + 1;
 		}
 		if ((mode & 2)
-		 && (fd = _nc_mouse_fd()) >= 0) {
+		 && (fd = SP->_mouse_fd) >= 0) {
 			FD_SET(fd, &set);
 			count = max(fd, count) + 1;
 		}
@@ -219,17 +227,20 @@ long delta;
 		if (result == 0
 		 && (ntimeout.tv_sec != 0 || ntimeout.tv_usec > 100000)) {
 			napms(100);
-			continue;
+			goto retry;
 		}
 #endif
+#ifdef HIDE_EINTR
 	} while (result == -1 && errno == EINTR);
+#endif
 
 	/* return approximate time left on the ntimeout, in milliseconds */
 	if (timeleft)
 		*timeleft = (ntimeout.tv_sec * 1000) + (ntimeout.tv_usec / 1000);
 
-	T(("end twait: returned %d, remaining time %lu.%06lu secs (%d msec)",
-		result, (long) ntimeout.tv_sec, (long) ntimeout.tv_usec,
+	T(("end twait: returned %d (%d), remaining time %lu.%06lu secs (%d msec)",
+		result, errno,
+		(long) ntimeout.tv_sec, (long) ntimeout.tv_usec,
 		timeleft ? *timeleft : -1));
 
 	/*
@@ -251,7 +262,7 @@ long delta;
 			}
 #elif HAVE_SELECT
 			if ((mode & 2)
-			 && (fd = _nc_mouse_fd()) >= 0
+			 && (fd = SP->_mouse_fd) >= 0
 			 && FD_ISSET(fd, &set))
 				result |= 2;
 			if ((mode & 1)

@@ -1,3 +1,4 @@
+.\" $OpenBSD: curs_inopts.3,v 1.2 1997/12/03 05:20:56 millert Exp $
 .TH curs_inopts 3X ""
 .SH NAME
 \fBcbreak\fR, \fBnocbreak\fR, \fBecho\fR,
@@ -53,7 +54,7 @@ mode.
 Initially the terminal may or may not be in \fBcbreak\fR mode, as the mode is
 inherited; therefore, a program should call \fBcbreak\fR or \fBnocbreak\fR
 explicitly.  Most interactive programs using \fBcurses\fR set the \fBcbreak\fR
-mode.  Note that \fBcbreak\fR overrides \fBraw\fR.  [See curs_getch(3X) for a
+mode.  Note that \fBcbreak\fR overrides \fBraw\fR.  [See curs_getch(3) for a
 discussion of how these routines interact with \fBecho\fR and \fBnoecho\fR.]
 
 The \fBecho\fR and \fBnoecho\fR routines control whether characters typed by
@@ -61,7 +62,7 @@ the user are echoed by \fBgetch\fR as they are typed.  Echoing by the tty
 driver is always disabled, but initially \fBgetch\fR is in echo mode, so
 characters typed are echoed.  Authors of most interactive programs prefer to do
 their own echoing in a controlled area of the screen, or not to echo at all, so
-they disable echoing by calling \fBnoecho\fR.  [See curs_getch(3X) for a
+they disable echoing by calling \fBnoecho\fR.  [See curs_getch(3) for a
 discussion of how these routines interact with \fBcbreak\fR and
 \fBnocbreak\fR.]
 
@@ -174,7 +175,7 @@ they attempt to restore to normal (`cooked') mode from raw and cbreak modes
 respectively.  Mixing raw/noraw and cbreak/nocbreak calls leads to tty driver
 control states that are hard to predict or understand; it is not recommended.
 .SH SEE ALSO
-\fBcurses\fR(3X), \fBcurs_getch\fR(3X), \fBcurs_initscr\fR(3X), \fBtermio\fR(7)
+\fBcurses\fR(3), \fBcurs_getch\fR(3), \fBcurs_initscr\fR(3), \fBtermio\fR(7)
 .\"#
 .\"# The following sets edit modes for GNU EMACS
 .\"# Local Variables:

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_screen.c,v 1.3 1997/12/03 05:21:29 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -26,22 +28,22 @@
 #include <time.h>
 #include <term.h>	/* exit_ca_mode, non_rev_rmcup */
 
-MODULE_ID("Id: lib_screen.c,v 1.7 1997/02/02 00:41:10 tom Exp $")
+MODULE_ID("Id: lib_screen.c,v 1.9 1997/10/18 19:22:52 tom Exp $")
 
 static time_t	dumptime;
 
 WINDOW *getwin(FILE *filep)
 {
-	WINDOW	try, *nwin;
+	WINDOW	tmp, *nwin;
 	int	n;
 
 	T((T_CALLED("getwin(%p)"), filep));
 
-	(void) fread(&try, sizeof(WINDOW), 1, filep);
+	(void) fread(&tmp, sizeof(WINDOW), 1, filep);
 	if (ferror(filep))
 		returnWin(0);
 
-	if ((nwin = newwin(try._maxy+1, try._maxx+1, 0, 0)) == 0)
+	if ((nwin = newwin(tmp._maxy+1, tmp._maxx+1, 0, 0)) == 0)
 		returnWin(0);
 
 	/*
@@ -49,28 +51,28 @@ WINDOW *getwin(FILE *filep)
 	 * fields, because the window hierarchy within which they
 	 * made sense is probably gone.
 	 */
-	nwin->_curx       = try._curx;
-	nwin->_cury       = try._cury;
-	nwin->_maxy       = try._maxy;
-	nwin->_maxx       = try._maxx;
-	nwin->_begy       = try._begy;
-	nwin->_begx       = try._begx;
-	nwin->_yoffset    = try._yoffset;
-	nwin->_flags      = try._flags & ~(_SUBWIN|_ISPAD);
+	nwin->_curx       = tmp._curx;
+	nwin->_cury       = tmp._cury;
+	nwin->_maxy       = tmp._maxy;
+	nwin->_maxx       = tmp._maxx;
+	nwin->_begy       = tmp._begy;
+	nwin->_begx       = tmp._begx;
+	nwin->_yoffset    = tmp._yoffset;
+	nwin->_flags      = tmp._flags & ~(_SUBWIN|_ISPAD);
 
-	nwin->_attrs      = try._attrs;
-	nwin->_bkgd       = try._bkgd;
+	nwin->_attrs      = tmp._attrs;
+	nwin->_bkgd       = tmp._bkgd;
 
-	nwin->_clear      = try._clear;
-	nwin->_scroll     = try._scroll;
-	nwin->_leaveok    = try._leaveok;
-	nwin->_use_keypad = try._use_keypad;
-	nwin->_delay      = try._delay;
-	nwin->_immed      = try._immed;
-	nwin->_sync       = try._sync;
+	nwin->_clear      = tmp._clear;
+	nwin->_scroll     = tmp._scroll;
+	nwin->_leaveok    = tmp._leaveok;
+	nwin->_use_keypad = tmp._use_keypad;
+	nwin->_delay      = tmp._delay;
+	nwin->_immed      = tmp._immed;
+	nwin->_sync       = tmp._sync;
 
-	nwin->_regtop     = try._regtop;
-	nwin->_regbottom  = try._regbottom;
+	nwin->_regtop     = tmp._regtop;
+	nwin->_regbottom  = tmp._regbottom;
 
 	for (n = 0; n < nwin->_maxy + 1; n++)
 	{
@@ -89,23 +91,26 @@ WINDOW *getwin(FILE *filep)
 
 int putwin(WINDOW *win, FILE *filep)
 {
-	int	n;
+        int code = ERR; 
+	int n;
 
 	T((T_CALLED("putwin(%p,%p)"), win, filep));
 
-	(void) fwrite(win, sizeof(WINDOW), 1, filep);
-	if (ferror(filep))
-		returnCode(ERR);
+	if (win) {
+	  (void) fwrite(win, sizeof(WINDOW), 1, filep);
+	  if (ferror(filep))
+	    returnCode(code);
 
-	for (n = 0; n < win->_maxy + 1; n++)
-	{
-		(void) fwrite(win->_line[n].text,
-			      sizeof(chtype), (size_t)(win->_maxx + 1), filep);
-		if (ferror(filep))
-			returnCode(ERR);
+	  for (n = 0; n < win->_maxy + 1; n++)
+	    {
+	      (void) fwrite(win->_line[n].text,
+			    sizeof(chtype), (size_t)(win->_maxx + 1), filep);
+	      if (ferror(filep))
+		returnCode(code);
+	    }
+	  code = OK;
 	}
-
-	returnCode(OK);
+	returnCode(code);
 }
 
 int scr_restore(const char *file)

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_acs.c,v 1.3 1997/12/03 05:21:10 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -24,9 +26,9 @@
 #include <curses.priv.h>
 #include <term.h>	/* ena_acs, acs_chars */
 
-MODULE_ID("Id: lib_acs.c,v 1.8 1997/04/24 11:04:07 tom Exp $")
+MODULE_ID("Id: lib_acs.c,v 1.11 1997/08/15 21:44:16 Alexander.V.Lukyanov Exp $")
 
-chtype acs_map[128];
+chtype acs_map[ACS_LEN];
 
 void init_acs(void)
 {
@@ -92,7 +94,7 @@ void init_acs(void)
 			case 'q':case 'x':case 'n':case 'o':
 			case 's':case '`':case 'a':case 'f':
 			case 'g':case '~':case ',':case '+':
-			case '.':case '-':case 'h':case 'I':
+			case '.':case '-':case 'h':case 'i':
 			case '0':case 'p':case 'r':case 'y':
 			case 'z':case '{':case '|':case '}':
 				acs_map[(unsigned int)acs_chars[i]] =
@@ -105,7 +107,6 @@ void init_acs(void)
 			}
 	}
 #ifdef TRACE
-#define SIZEOF(v) (sizeof(v)/sizeof(v[0]))
 	/* Show the equivalent mapping, noting if it does not match the
 	 * given attribute, whether by re-ordering or duplication.
 	 */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lib_tstp.c,v 1.5 1997/12/03 05:21:38 millert Exp $	*/
+
 
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
@@ -31,21 +33,21 @@
 
 #include <signal.h>
 
-#if HAVE_SIGACTION
-#if !HAVE_TYPE_SIGACTION
+#if !HAVE_SIGACTION
+#include <SigAction.h>
+#elif !HAVE_TYPE_SIGACTION
 typedef struct sigaction sigaction_t;
 #endif
-#else	/* !HAVE_SIGACTION */
-#if HAVE_SIGVEC
-#include <SigAction.h>
-#endif
-#endif
 
-#ifdef SVR4_ACTION
+#if defined(SVR4_ACTION) && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
 #endif
 
-MODULE_ID("Id: lib_tstp.c,v 1.8 1996/11/17 00:11:41 tom Exp $")
+#ifndef SIGWINCH
+#undef USE_SIGWINCH	/* FIXME: configure should resolve this */
+#endif
+
+MODULE_ID("Id: lib_tstp.c,v 1.13 1997/11/01 19:05:13 tom Exp $")
 
 /*
  * Note: This code is fragile!  Its problem is that different OSs
@@ -110,7 +112,7 @@ static void tstp(int dummy GCC_UNUSED)
 	 */
 	(void)sigemptyset(&mask);
 	(void)sigaddset(&mask, SIGALRM);
-#ifdef SIGWINCH
+#if USE_SIGWINCH
 	(void)sigaddset(&mask, SIGWINCH);
 #endif
 	(void)sigprocmask(SIG_BLOCK, &mask, &omask);
@@ -173,17 +175,35 @@ static void cleanup(int sig)
 		sigemptyset(&act.sa_mask);
 		act.sa_flags = 0;
 		act.sa_handler = SIG_IGN;
-		if (sigaction(sig, &act, (sigaction_t *)0) == 0) {
-			endwin();
-		}
+		if (sigaction(sig, &act, (sigaction_t *)0) == 0)
 #else
-		if (signal(sig, SIG_IGN) != SIG_ERR) {
-			endwin();
-		}
+		if (signal(sig, SIG_IGN) != SIG_ERR)
 #endif
+		{
+		    SCREEN *scan = _nc_screen_chain;
+		    while(scan)
+		    {
+			set_term(scan);
+			endwin();
+			SP->_endwin = FALSE; /* in case we have an atexit! */
+			scan = scan->_next_screen;
+		    }
+		}
 	}
 	exit(EXIT_FAILURE);
 }
+
+#if USE_SIGWINCH
+static void sigwinch(int sig GCC_UNUSED)
+{
+    SCREEN *scan = _nc_screen_chain;
+    while(scan)
+    {
+	scan->_sig_winch = TRUE;
+	scan = scan->_next_screen;
+    }
+}
+#endif /* USE_SIGWINCH */
 
 /*
  * If the given signal is still in its default state, set it to the given
@@ -194,11 +214,12 @@ static int CatchIfDefault(int sig, sigaction_t *act)
 {
 	sigaction_t old_act;
 
-#ifdef SA_RESTART
-	act->sa_flags |= SA_RESTART;
-#endif /* SA_RESTART */
 	if (sigaction(sig, (sigaction_t *)0, &old_act) == 0
-	 && old_act.sa_handler == SIG_DFL) {
+	 && (old_act.sa_handler == SIG_DFL
+#if USE_SIGWINCH
+	    || (sig == SIGWINCH && old_act.sa_handler == SIG_IGN)
+#endif
+	    )) {
 		(void)sigaction(sig, act, (sigaction_t *)0);
 		return TRUE;
 	}
@@ -210,7 +231,11 @@ static int CatchIfDefault(int sig, RETSIGTYPE (*handler)())
 	void	(*ohandler)();
 
 	ohandler = signal(sig, SIG_IGN);
-	if (ohandler == SIG_DFL) {
+	if (ohandler == SIG_DFL
+#if USE_SIGWINCH
+	    || (sig == SIGWINCH && ohandler == SIG_IGN)
+#endif
+	) {
 		signal(sig, handler);
 		return TRUE;
 	} else {
@@ -252,10 +277,14 @@ static int ignore;
 		{
 			sigemptyset(&act.sa_mask);
 			act.sa_flags = 0;
+#if USE_SIGWINCH
+			act.sa_handler = sigwinch;
+			CatchIfDefault(SIGWINCH, &act);
+#endif
+
 #ifdef SA_RESTART
 			act.sa_flags |= SA_RESTART;
 #endif /* SA_RESTART */
-
 			act.sa_handler = cleanup;
 			CatchIfDefault(SIGINT,  &act);
 			CatchIfDefault(SIGTERM, &act);
@@ -265,18 +294,31 @@ static int ignore;
 				ignore = TRUE;
 		}
 	}
-#else
+#else /* !SIGTSTP */
 	if (enable)
 	{
 #if HAVE_SIGACTION || HAVE_SIGVEC
 		static sigaction_t act;
+		sigemptyset(&act.sa_mask);
+#if USE_SIGWINCH
+		act.sa_handler = sigwinch;
+		CatchIfDefault(SIGWINCH, &act);
+#endif
+#ifdef SA_RESTART
+		act.sa_flags |= SA_RESTART;
+#endif /* SA_RESTART */
 		act.sa_handler = cleanup;
 		CatchIfDefault(SIGINT,  &act);
 		CatchIfDefault(SIGTERM, &act);
-#else
+
+#else /* !(HAVE_SIGACTION || HAVE_SIGVEC) */
+
 		CatchIfDefault(SIGINT,  cleanup);
 		CatchIfDefault(SIGTERM, cleanup);
+#if USE_SIGWINCH
+		CatchIfDefault(SIGWINCH, sigwinch);
 #endif
+#endif /* !(HAVE_SIGACTION || HAVE_SIGVEC) */
 	}
-#endif
+#endif /* !SIGTSTP */
 }
