@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.19 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.20 2003/04/14 21:28:10 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.19 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.20 2003/04/14 21:28:10 pvalchev Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -635,7 +635,7 @@ static struct tok skt2str[] = {
 static const char *
 ddpskt_string(register int skt)
 {
-	static char buf[10];
+	static char buf[12];
 
 	if (nflag) {
 		(void)snprintf(buf, sizeof buf, "%d", skt);
