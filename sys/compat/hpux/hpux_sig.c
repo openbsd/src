@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_sig.c,v 1.4 1997/04/16 09:18:09 downsj Exp $	*/
+/*	$OpenBSD: hpux_sig.c,v 1.5 1997/07/27 09:10:39 deraadt Exp $	*/
 /*	$NetBSD: hpux_sig.c,v 1.16 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ hpux_sys_sigaction(p, v, retval)
 
 	sa = &action;
 	if (SCARG(uap, osa)) {
-		sa->sa_handler = ps->ps_sigact[sig];
+		sa->sa__handler = ps->ps_sigact[sig];
 		bzero((caddr_t)&sa->sa_mask, sizeof(sa->sa_mask));
 		sa->sa_mask.sigset[0] = bsdtohpuxmask(ps->ps_catchmask[sig]);
 		bit = sigmask(sig);
@@ -329,12 +329,12 @@ hpux_sys_sigaction(p, v, retval)
 		if (copyin((caddr_t)SCARG(uap, nsa), (caddr_t)sa,
 		    sizeof (action)))
 			return (EFAULT);
-		if (sig == SIGCONT && sa->sa_handler == SIG_IGN)
+		if (sig == SIGCONT && sa->sa__handler == SIG_IGN)
 			return (EINVAL);
 		/*
 		 * Create a sigaction struct for setsigvec
 		 */
-		act.sa_handler = sa->sa_handler;
+		act.sa_handler = sa->sa__handler;
 		act.sa_mask = hpuxtobsdmask(sa->sa_mask.sigset[0]);
 		act.sa_flags = SA_RESTART;
 		if (sa->sa_flags & HPUXSA_ONSTACK)

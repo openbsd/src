@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux.h,v 1.4 1997/04/16 09:17:59 downsj Exp $	*/
+/*	$OpenBSD: hpux.h,v 1.5 1997/07/27 09:10:38 deraadt Exp $	*/
 /*	$NetBSD: hpux.h,v 1.11 1997/04/01 19:58:58 scottr Exp $	*/
 
 /*
@@ -282,7 +282,7 @@ struct hpux_shmid_ds {
 /* HP-UX POSIX signal stuff implementation */
 typedef struct __hpux_sigset_t { long sigset[8]; } hpux_sigset_t;
 struct hpux_sigaction {
-	void		(*sa_handler) __P((int));
+	void		(*sa__handler) __P((int));
 	hpux_sigset_t	sa_mask;
 	int		sa_flags;
 };
