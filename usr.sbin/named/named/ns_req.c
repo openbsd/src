@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_req.c,v 1.5 1998/05/22 00:47:44 millert Exp $	*/
+/*	$OpenBSD: ns_req.c,v 1.6 1998/05/22 07:09:18 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
-static char rcsid[] = "$From: ns_req.c,v 8.28 1997/06/01 20:34:34 vixie Exp $";
+static char rcsid[] = "$From: ns_req.c,v 8.30 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_req.c,v 1.5 1998/05/22 00:47:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_req.c,v 1.6 1998/05/22 07:09:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -334,6 +334,11 @@ req_notify(hp, cpp, eom, msg, from)
 		hp->rcode = FORMERR;
 		return (Finish);
 	}
+	if (*cpp + 2 * INT16SZ > eom) {
+		dprintf(1, (ddt, "FORMERR notify too short"));
+		hp->rcode = FORMERR;
+		return (Finish);
+	}
 	*cpp += n;
 	GETSHORT(type, *cpp);
 	GETSHORT(class, *cpp);
@@ -467,13 +472,13 @@ req_query(hp, cpp, eom, qsp, buflenp, msglenp, msg, dfd, from)
 		return (Finish);
 	}
 	*cpp += n;
-	GETSHORT(type, *cpp);
-	GETSHORT(class, *cpp);
-	if (*cpp > eom) {
+	if (*cpp + 2 * INT16SZ > eom) {
 		dprintf(1, (ddt, "FORMERR Query message length short\n"));
 		hp->rcode = FORMERR;
 		return (Finish);
 	}
+	GETSHORT(type, *cpp);
+	GETSHORT(class, *cpp);
 	if (*cpp < eom) {
 		dprintf(6, (ddt,"message length > received message\n"));
 		*msglenp = *cpp - msg;
@@ -998,6 +1003,11 @@ req_iquery(hp, cpp, eom, buflenp, msg, from)
 		return (Finish);
 	}
 	*cpp += n;
+	if (*cpp + 3 * INT16SZ + INT32SZ > eom) {
+		dprintf(1, (ddt, "FORMERR IQuery message too short"));
+		hp->rcode = FORMERR;
+		return (Finish);
+	}
 	GETSHORT(type, *cpp);
 	GETSHORT(class, *cpp);
 	*cpp += INT32SZ;	/* ttl */
@@ -1079,6 +1089,11 @@ req_iquery(hp, cpp, eom, buflenp, msg, from)
 					return (Finish);
 				}
 				*cpp += n;
+				if (*cpp + 2 * INT16SZ > 
+				    (u_char *)dnbuf + *buflenp) {
+					hp->tc = 1;
+					return (Finish);
+				}
 				PUTSHORT((u_int16_t)dp->d_type, *cpp);
 				PUTSHORT((u_int16_t)dp->d_class, *cpp);
 				*buflenp -= n;
@@ -1267,6 +1282,8 @@ make_rr(name, dp, buf, buflen, doadd)
 	}
 
 	buflen -= RRFIXEDSZ;
+	if (buflen < 0)
+		return (-1);
 #if defined(RETURNSOA) && defined(NCACHE)
 	if (dp->d_rcode) {
 		name = (char *)dp->d_data;
@@ -1280,6 +1297,8 @@ make_rr(name, dp, buf, buflen, doadd)
 		return (-1);
 	cp = buf + n;
 	buflen -= n;
+	if (buflen < 0)
+		return (-1);
 	PUTSHORT((u_int16_t)type, cp);
 	PUTSHORT((u_int16_t)dp->d_class, cp);
 	PUTLONG(ttl, cp);
@@ -1319,6 +1338,8 @@ make_rr(name, dp, buf, buflen, doadd)
 			return (-1);
 		cp += n;
 		buflen -= type == T_SOA ? n + 5 * INT32SZ : n;
+		if (buflen < 0)
+			return (-1);
 		cp1 += strlen((char *)cp1) + 1;
 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
 		if (n < 0)
@@ -1337,10 +1358,10 @@ make_rr(name, dp, buf, buflen, doadd)
 		/* cp1 == our data/ cp == data of RR */
 		cp1 = dp->d_data;
 
- 		if ((buflen -= INT16SZ) < 0)
-			return (-1);
-
  		/* copy order */
+		buflen -= INT16SZ;
+		if (buflen < 0)
+			return (-1);
  		bcopy(cp1, cp, INT16SZ);
  		cp += INT16SZ;
  		cp1 += INT16SZ;
@@ -1348,6 +1369,9 @@ make_rr(name, dp, buf, buflen, doadd)
 		dprintf(1, (ddt, "current size n = %u\n", n));
 
 		/* copy preference */
+		buflen -= INT16SZ;
+		if (buflen < 0)
+			return (-1);
 		bcopy(cp1, cp, INT16SZ);
 		cp += INT16SZ;
 		cp1 += INT16SZ;
@@ -1356,6 +1380,9 @@ make_rr(name, dp, buf, buflen, doadd)
 
 		/* Flags */
 		n = *cp1++;
+		buflen -= n + 1;
+		if (buflen < 0)
+			return (-1);
 		dprintf(1, (ddt, "size of n at flags = %d\n", n));
 		*cp++ = n;
 		bcopy(cp1,cp,n);
@@ -1366,6 +1393,9 @@ make_rr(name, dp, buf, buflen, doadd)
 		
 		/* Service */
 		n = *cp1++;
+		buflen -= n + 1;
+		if (buflen < 0)
+			return (-1);
 		*cp++ = n;
 		bcopy(cp1,cp,n);
 		cp += n;
@@ -1375,6 +1405,9 @@ make_rr(name, dp, buf, buflen, doadd)
 
 		/* Regexp */
 		n = *cp1++;
+		buflen -= n + 1;
+		if (buflen < 0)
+			return (-1);
 		*cp++ = n;
 		bcopy(cp1,cp,n);
 		cp += n;
@@ -1413,6 +1446,9 @@ make_rr(name, dp, buf, buflen, doadd)
  		cp1 += INT16SZ;
 
 		if (type == T_SRV) {
+			buflen -= INT16SZ*2;
+			if (buflen < 0)
+				return (-1);
 			bcopy(cp1, cp, INT16SZ*2);
 			cp += INT16SZ*2;
 			cp1 += INT16SZ*2;

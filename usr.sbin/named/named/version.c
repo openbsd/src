@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.3 1998/05/22 00:47:50 millert Exp $	*/
+/*	$OpenBSD: version.c,v 1.4 1998/05/22 07:09:22 millert Exp $	*/
 
 /*
  *	@(#)Version.c	4.9 (Berkeley) 7/21/90
@@ -7,15 +7,15 @@
 
 #ifndef lint
 #if 0
-char sccsid[] = "@(#)named 4.9.6-REL Thu May 21 18:38:36 1998 root@localhost:/usr/src/usr.sbin/named/named/obj";
+char sccsid[] = "@(#)named 4.9.7-REL Thu May 21 19:27:54 1998 root@localhost:/usr/src/usr.sbin/named/named/obj";
 char rcsid[] = "$From: Version.c,v 8.2 1997/06/01 20:34:34 vixie Exp $";
 #else
-char rcsid[] = "$OpenBSD: version.c,v 1.3 1998/05/22 00:47:50 millert Exp $";
+char rcsid[] = "$OpenBSD: version.c,v 1.4 1998/05/22 07:09:22 millert Exp $";
 #endif
 #endif /* not lint */
 
-char Version[] = "named 4.9.6-REL Thu May 21 18:38:36 1998\n\troot@localhost:/usr/src/usr.sbin/named/named/obj";
-char ShortVersion[] = "4.9.6-REL";
+char Version[] = "named 4.9.7-REL Thu May 21 19:27:54 1998\n\troot@localhost:/usr/src/usr.sbin/named/named/obj";
+char ShortVersion[] = "4.9.7-REL";
 
 #ifdef COMMENT
 

@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.11 1998/05/22 00:47:41 millert Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.12 1998/05/22 07:09:16 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
-static char rcsid[] = "$From: ns_main.c,v 8.25 1997/06/01 20:34:34 vixie Exp $";
+static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.11 1998/05/22 00:47:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.12 1998/05/22 07:09:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,9 @@ char copyright[] =
 #include <stdio.h>
 #include <syslog.h>
 #include <errno.h>
+#include <libgen.h>
+#include <pwd.h>
+#include <grp.h>
 #include <signal.h>
 #include <netdb.h>
 #include <resolv.h>
@@ -136,6 +139,7 @@ static	char			**Argv = NULL;
 static	char			*LastArg = NULL;	/* end of argv */
 
 static	struct qstream		*sqadd __P((void));
+static	int			only_digits(const char *);
 static	void			sq_query __P((struct qstream *)),
 				opensocket __P((struct qdatagram *)),
 #ifdef DEBUG
@@ -163,7 +167,8 @@ static void
 usage()
 {
 	fprintf(stderr,
-"Usage: named [-d #] [-q] [-r] [-p port[/localport]] [[-b] bootfile]\n");
+"Usage: named [-d #] [-q] [-r] [-p port[/localport]] [[-b] bootfile]\n"
+"             [-t directory] [-u (username|uid)] [-g (groupname|gid)]\n");
 	exit(1);
 }
 
@@ -190,6 +195,13 @@ main(argc, argv, envp)
 	struct timeval t, *tp;
 	struct qstream *candidate = QSTREAM_NULL;
 	char **argp;
+	char *chroot_dir = NULL;
+	char *user_name = NULL;
+	char *group_name = NULL;
+	uid_t user_id;
+	gid_t group_id;
+	struct group *gr;
+	struct passwd *pw;
 #ifdef PID_FIX
 	char oldpid[10];
 #endif
@@ -202,6 +214,9 @@ main(argc, argv, envp)
 #ifdef	RLIMIT_NOFILE
 	struct rlimit rl;
 #endif
+
+	user_id = getuid();
+	group_id = getgid();
 
 	local_ns_port = ns_port = htons(NAMESERVER_PORT);
 
@@ -287,12 +302,69 @@ main(argc, argv, envp)
 					NoRecurse = 1;
 					break;
 
+				case 't':
+					if (--argc <= 0)
+						usage();
+					chroot_dir = savestr(*++argv);
+					break;
+
+				case 'u':
+					if (--argc <= 0)
+						usage();
+					user_name = *++argv;
+					if ((pw = getpwnam(user_name))) {
+						user_name = savestr(pw->pw_name);
+						user_id = pw->pw_uid;
+						group_id = pw->pw_gid;
+						if ((gr = getgrgid(pw->pw_gid)))
+							group_name =
+							   savestr(gr->gr_name);
+						else {
+							char name[256];
+
+							sprintf(name, "%lu",
+							    (u_long)pw->pw_gid);
+							group_name = savestr(name);
+						}
+					} else if (only_digits(user_name)) {
+						user_name = savestr(user_name);
+						user_id = atoi(user_name);
+					} else {
+						fprintf(stderr,
+						    "user \"%s\" unknown\n",
+						    user_name);
+						exit(1);
+					}
+					break;
+
+				case 'g':
+					if (--argc <= 0)
+						usage();
+					if (group_name != NULL)
+						free(group_name);
+					group_name = *++argv;
+					if ((gr = getgrnam(group_name))) {
+						group_name = savestr(gr->gr_name);
+						group_id = gr->gr_gid;
+					} else if (only_digits(group_name)) {
+						group_name = savestr(group_name);
+						group_id = atoi(group_name);
+					} else {
+						fprintf(stderr,
+						    "group \"%s\" unknown\n",
+						    group_name);
+						exit(1);
+					}
+					break;
+
 				default:
 					usage();
 				}
 		} else
 			bootfile = savestr(*argv);
 	}
+	endgrent();
+	endpwent();
 
 #ifdef DEBUG
 	if (!debug)
@@ -306,6 +378,25 @@ main(argc, argv, envp)
 		fprintf(ddt, "bootfile = %s\n", bootfile);
 	}		
 #endif
+
+	/*
+	 * Chroot if desired.
+	 */
+	if (chroot_dir != NULL) {
+		struct stat sb;
+		char *p;
+
+		if (chroot(chroot_dir) < 0) {
+			fprintf(stderr, "chroot %s failed: %s\n", chroot_dir,
+				strerror(errno));
+			exit(1);
+		}
+		if (chdir("/") < 0) {
+			fprintf(stderr, "chdir(\"/\") failed: %s\n",
+				strerror(errno));
+			exit(1);
+		}
+	}
 
 	n = 0;
 #if defined(DEBUG) && defined(LOG_PERROR)
@@ -349,6 +440,8 @@ main(argc, argv, envp)
 #endif /*WANT_PIDFILE*/
 
 	syslog(LOG_NOTICE, "starting.  %s", Version);
+	if (chroot_dir != NULL)
+		syslog(LOG_NOTICE, "chrooted to %s", chroot_dir);
 
 	_res.options &= ~(RES_DEFNAMES | RES_DNSRCH | RES_RECURSE);
 
@@ -580,6 +673,30 @@ main(argc, argv, envp)
 		(void) my_fclose(fp);
 	}
 #endif
+	/*
+	 * Set user if desired.
+	 */
+	if (group_name != NULL) {
+		if (setgid(group_id) < 0) {
+			syslog(LOG_ERR, "setgid(%s): %m", group_name);
+			exit(1);
+		}
+		if (user_name == NULL)
+			syslog(LOG_NOTICE, "group = %s", group_name);
+	}
+	if (user_name != NULL) {
+		if (getuid() == 0 && initgroups(user_name, group_id) < 0) {
+			syslog(LOG_ERR, "initgroups(%s, %d): %m", user_name,
+			       (int)group_id);
+			exit(1);
+		}
+		if (setuid(user_id) < 0) {
+			syslog(LOG_ERR, "setuid(%s): %m", user_name);
+			exit(1);
+		}
+		syslog(LOG_NOTICE, "user = %s, group = %s", user_name,
+		       group_name);
+	}
 
 	syslog(LOG_NOTICE, "Ready to answer queries.\n");
 	prime_cache();
@@ -1518,7 +1635,6 @@ sigprof()
 	dprintf(1, (ddt, "sigprof()\n"));
 	if (fork() == 0)
 	{
-		(void) chdir(_PATH_TMPDIR);
 		exit(1);
 	}
 	errno = save_errno;
@@ -1739,6 +1855,18 @@ nsid_next()
 {
 	nsid_state = res_randomid();
 	return (nsid_state);
+}
+
+static int
+only_digits(const char *s) {
+	if (*s == '\0')
+		return (0);
+	while (*s != '\0') {
+		if (!isdigit(*s))
+			return (0);
+		s++;
+	}
+	return (1);
 }
 
 #if defined(BSD43_BSD43_NFS)

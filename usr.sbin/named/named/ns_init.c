@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_init.c,v 1.5 1998/05/22 00:47:40 millert Exp $	*/
+/*	$OpenBSD: ns_init.c,v 1.6 1998/05/22 07:09:15 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
-static char rcsid[] = "$From: ns_init.c,v 8.25 1997/06/01 20:34:34 vixie Exp $";
+static char rcsid[] = "$From: ns_init.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_init.c,v 1.5 1998/05/22 00:47:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_init.c,v 1.6 1998/05/22 07:09:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -564,11 +564,10 @@ boot_read(filename, includefile)
 			if (!source) {
 				/*
 				 * We will always transfer this zone again
-				 * after a reload.  Note that _PATH_TMPDIR
-				 * is not writable by normal users on OpenBSD.
+				 * after a reload.  Note that this file
+				 * is now created in named's "homedir".
 				 */
-				sprintf(buf, "%s/NsTmpXXXXXXXXXX",
-					_PATH_TMPDIR);
+				sprintf(buf, "NsTmpXXXXXXXXXX");
 				(void) mktemp(buf);
 				source = savestr(buf);
 				zp->z_flags |= Z_TMP_FILE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethnamaddr.c,v 1.2 1998/05/22 00:47:18 millert Exp $	*/
+/*	$OpenBSD: gethnamaddr.c,v 1.3 1998/05/22 07:09:07 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -58,9 +58,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$From: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp $";
+static char rcsid[] = "$From: gethnamaddr.c,v 8.23 1998/04/07 04:59:46 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: gethnamaddr.c,v 1.2 1998/05/22 00:47:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: gethnamaddr.c,v 1.3 1998/05/22 07:09:07 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -158,6 +158,23 @@ dprintf(msg, num)
 # define dprintf(msg, num) /*nada*/
 #endif
 
+#define BOUNDED_INCR(x) \
+	do { \
+		cp += x; \
+		if (cp > eom) { \
+			h_errno = NO_RECOVERY; \
+			return (NULL); \
+		} \
+	} while (0)
+
+#define BOUNDS_CHECK(ptr, count) \
+	do { \
+		if ((ptr) + (count) > eom) { \
+			h_errno = NO_RECOVERY; \
+			return (NULL); \
+		} \
+	} while (0)
+
 static struct hostent *
 getanswer(answer, anslen, qname, qtype)
 	const querybuf *answer;
@@ -168,7 +185,7 @@ getanswer(answer, anslen, qname, qtype)
 	register const HEADER *hp;
 	register const u_char *cp;
 	register int n;
-	const u_char *eom;
+	const u_char *eom, *erdata;
 	char *bp, **ap, **hap;
 	int type, class, buflen, ancount, qdcount;
 	int haveanswer, had_error;
@@ -199,7 +216,8 @@ getanswer(answer, anslen, qname, qtype)
 	qdcount = ntohs(hp->qdcount);
 	bp = hostbuf;
 	buflen = sizeof hostbuf;
-	cp = answer->buf + HFIXEDSZ;
+	cp = answer->buf;
+	BOUNDED_INCR(HFIXEDSZ);
 	if (qdcount != 1) {
 		h_errno = NO_RECOVERY;
 		return (NULL);
@@ -209,7 +227,7 @@ getanswer(answer, anslen, qname, qtype)
 		h_errno = NO_RECOVERY;
 		return (NULL);
 	}
-	cp += n + QFIXEDSZ;
+	BOUNDED_INCR(n + QFIXEDSZ);
 	if (qtype == T_A || qtype == T_AAAA) {
 		/* res_send() has already verified that the query name is the
 		 * same as the one we sent; this just gets the expanded name
@@ -241,12 +259,15 @@ getanswer(answer, anslen, qname, qtype)
 			continue;
 		}
 		cp += n;			/* name */
+		BOUNDS_CHECK(cp, 3 * INT16SZ + INT32SZ);
 		type = _getshort(cp);
  		cp += INT16SZ;			/* type */
 		class = _getshort(cp);
  		cp += INT16SZ + INT32SZ;	/* class, TTL */
 		n = _getshort(cp);
 		cp += INT16SZ;			/* len */
+		BOUNDS_CHECK(cp, n);
+		erdata = cp + n;
 		if (class != C_IN) {
 			/* XXX - debug? syslog? */
 			cp += n;
@@ -261,6 +282,10 @@ getanswer(answer, anslen, qname, qtype)
 				continue;
 			}
 			cp += n;
+			if (cp != erdata) {
+				h_errno = NO_RECOVERY;
+				return (NULL);
+			}
 			/* Store alias. */
 			*ap++ = bp;
 			n = strlen(bp) + 1;	/* for the \0 */
@@ -289,6 +314,10 @@ getanswer(answer, anslen, qname, qtype)
 				continue;
 			}
 			cp += n;
+			if (cp != erdata) {
+				h_errno = NO_RECOVERY;
+				return (NULL);
+			}
 			/* Get canonical name. */
 			n = strlen(tbuf) + 1;	/* for the \0 */
 			if (n > buflen || n >= MAXHOSTNAMELEN) {
@@ -324,6 +353,10 @@ getanswer(answer, anslen, qname, qtype)
 			}
 #if MULTI_PTRS_ARE_ALIASES
 			cp += n;
+			if (cp != erdata) {
+				h_errno = NO_RECOVERY;
+				return (NULL);
+			}
 			if (!haveanswer)
 				host.h_name = bp;
 			else if (ap < &host_aliases[MAXALIASES-1])
@@ -394,6 +427,10 @@ getanswer(answer, anslen, qname, qtype)
 			bp += n;
 			buflen -= n;
 			cp += n;
+			if (cp != erdata) {
+				h_errno = NO_RECOVERY;
+				return (NULL);
+			}
 			break;
 		default:
 			abort();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_mkquery.c,v 1.2 1997/03/14 03:40:33 downsj Exp $	*/
+/*	$OpenBSD: res_mkquery.c,v 1.3 1998/05/22 07:09:09 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.2 1997/03/14 03:40:33 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.3 1998/05/22 07:09:09 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,7 +86,6 @@ static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.2 1997/03/14 03:40:33 downsj 
  * Form all types of queries.
  * Returns the size of the result or -1.
  */
-/* ARGSUSED */
 int
 res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	int op;			/* opcode of query */

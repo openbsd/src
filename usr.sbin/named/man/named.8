@@ -1,4 +1,4 @@
-.\"	$OpenBSD: named.8,v 1.3 1997/06/10 20:04:32 deraadt Exp $
+.\"	$OpenBSD: named.8,v 1.4 1998/05/22 07:09:12 millert Exp $
 .\" ++Copyright++ 1985
 .\" -
 .\" Copyright (c) 1985
@@ -72,6 +72,15 @@ named \- Internet domain name server
 .B \-q
 ] [
 .B \-r
+] [
+.B \-u
+.I user
+] [
+.B \-g
+.I group
+] [
+.B \-t
+.I chroot_dir
 ]
 .SH DESCRIPTION
 .I Named
@@ -113,6 +122,22 @@ Turns recursion off in the server.  Answers can come only from local
 (primary or secondary) zones.  This can be used on root servers.
 \fINOTE:\fP this option is deprecated in favour
 of the boot file directive ``options no-recursion''.
+.TP
+.B \-u
+Specifies the user the server should run as after it initializes.  The value
+specified may be either a username or a numeric user id.  If the
+.B \-g
+flag is not specified, then the group id used will be the primary group of
+the user specified (initgroups() is called, so all of the user's groups will
+be available to the server).
+.TP
+.B \-g
+Specifies the group the server should run as after it initializes.  The value
+specified may be either a groupname or a numeric group id.
+.TP
+.B \-t
+Specifies the directory the server should chroot() into as soon as it is
+finshed processing command line arguments.
 .PP
 Any additional argument is taken as the name of the boot file.
 If multiple boot files are specified, only the last is used.

@@ -1,11 +1,11 @@
-/*	$OpenBSD: db_load.c,v 1.4 1998/05/22 00:47:33 millert Exp $	*/
+/*	$OpenBSD: db_load.c,v 1.5 1998/05/22 07:09:13 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";
-static char rcsid[] = "$From: db_load.c,v 8.32 1997/06/01 20:34:34 vixie Exp $";
+static char rcsid[] = "$From: db_load.c,v 8.33 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: db_load.c,v 1.4 1998/05/22 00:47:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: db_load.c,v 1.5 1998/05/22 07:09:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1376,6 +1376,7 @@ db_load(filename, in_origin, zp, def_domain)
 			continue;
 
 		case ERROR:
+			SETERR("parser error");
 			break;
 		}
  err:
