@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.12 2005/01/02 19:50:30 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.13 2005/01/25 19:59:48 kettenis Exp $
 #
 
 machine		sgi mips64
@@ -47,7 +47,7 @@ macebus0	at mainbus0	# MACE controller localbus.
 # Localbus devices
 clock0		at macebus0
 mec0		at macebus0 sys 0x18 base 0x00280000 irq 4
-#mavb0		at macebus0 sys 0x18 base 0x00300000 irq 7
+mavb0		at macebus0 sys 0x18 base 0x00300000 irq 7
 com0		at macebus0 sys 0x18 base 0x00390000 irq 5
 com1		at macebus0 sys 0x18 base 0x00398000 irq 5
 
@@ -97,7 +97,7 @@ rgephy*		at mii?		# Realtek 8169S/8110S PHY
 ukphy*		at mii?		# "unknown" PHYs
 
 #### Audio
-#audio*		at mavb?
+audio*		at mavb?
 
 #### WS console
 #wsdisplay*	at vga?
