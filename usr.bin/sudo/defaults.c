@@ -345,13 +345,10 @@ set_default(var, val, op)
 	    }
 	    break;
 	case T_TUPLE:
-	    if (!val) {
-		/* Check for bogus boolean usage or lack of a value. */
-		if (!ISSET(cur->type, T_BOOL) || op != FALSE) {
-		    warnx("no value specified for `%s' on line %d",
-			var, sudolineno);
-		    return(FALSE);
-		}
+	    if (!val && !ISSET(cur->type, T_BOOL)) {
+		warnx("no value specified for `%s' on line %d",
+		    var, sudolineno);
+		return(FALSE);
 	    }
 	    if (!store_tuple(val, cur, op)) {
 		warnx("value `%s' is invalid for option `%s'", val, var);
@@ -564,16 +561,16 @@ store_tuple(val, def, op)
      * This does assume that the first entry in the tuple enum will
      * be the equivalent to a boolean "false".
      */
-    if (op == FALSE) {
-	def->sd_un.ival = 0;
+    if (!val) {
+	def->sd_un.ival = (op == FALSE) ? 0 : 1;
     } else {
-	for (v = def->values; v != NULL; v++) {
+	for (v = def->values; v->sval != NULL; v++) {
 	    if (strcmp(v->sval, val) == 0) {
 		def->sd_un.ival = v->ival;
 		break;
 	    }
 	}
-	if (v == NULL)
+	if (v->sval == NULL)
 	    return(FALSE);
     }
     if (def->callback)

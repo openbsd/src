@@ -149,7 +149,7 @@
 .\" ========================================================================
 .\"
 .IX Title "SUDOERS 5"
-.TH SUDOERS 5 "November 17, 2004" "1.6.8p4" "MAINTENANCE COMMANDS"
+.TH SUDOERS 5 "November 28, 2004" "1.6.8p5" "MAINTENANCE COMMANDS"
 .SH "NAME"
 sudoers \- list of which users may execute what
 .SH "DESCRIPTION"
@@ -728,6 +728,8 @@ Always lecture the user.
 .RE
 .RS 12
 .Sp
+If no value is specified, a value of \fIonce\fR is implied.
+Negating the option results in a value of \fInever\fR being used.
 The default value is \fIonce\fR.
 .RE
 .IP "lecture_file" 12
@@ -780,7 +782,9 @@ The user must always enter a password to use the \fB\-v\fR flag.
 .RE
 .RS 12
 .Sp
-The default value is `all'.
+If no value is specified, a value of \fIall\fR is implied.
+Negating the option results in a value of \fInever\fR being used.
+The default value is \fIall\fR.
 .RE
 .IP "listpw" 12
 .IX Item "listpw"
@@ -804,7 +808,9 @@ The user must always enter a password to use the \fB\-l\fR flag.
 .RE
 .RS 12
 .Sp
-The default value is `any'.
+If no value is specified, a value of \fIany\fR is implied.
+Negating the option results in a value of \fInever\fR being used.
+The default value is \fIany\fR.
 .RE
 .PP
 \&\fBLists that can be used in a boolean context\fR:

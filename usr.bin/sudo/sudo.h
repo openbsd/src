@@ -161,6 +161,10 @@ struct sudo_user {
 #define TGP_ECHO	0x01		/* leave echo on when reading passwd */
 #define TGP_STDIN	0x02		/* read from stdin, not /dev/tty */
 
+struct passwd;
+struct timespec;
+struct timeval;
+
 /*
  * Function prototypes
  */

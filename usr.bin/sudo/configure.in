@@ -1683,7 +1683,7 @@ dnl
 dnl Function checks
 dnl
 AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf tzset \
-	       strftime setrlimit initgroups fstat)
+	       strftime setrlimit initgroups fstat gettimeofday)
 AC_CHECK_FUNCS(seteuid, , [AC_DEFINE(NO_SAVED_IDS)])
 if test -z "$SKIP_SETRESUID"; then
     AC_CHECK_FUNCS(setresuid, [SKIP_SETREUID=yes])
@@ -1709,7 +1709,19 @@ SUDO_FUNC_FNMATCH(AC_DEFINE(HAVE_FNMATCH), AC_LIBOBJ(fnmatch))
 SUDO_FUNC_ISBLANK
 AC_REPLACE_FUNCS(strerror strcasecmp sigaction strlcpy strlcat closefrom)
 AC_CHECK_FUNCS(snprintf vsnprintf asprintf vasprintf, , [NEED_SNPRINTF=1])
-AC_CHECK_FUNCS(getttimeofday, [AC_CHECK_MEMBER([struct stat.st_mtim], AC_DEFINE(HAVE_ST_MTIM), [AC_CHECK_MEMBER([struct stat.st_mtimespec], AC_DEFINE([HAVE_ST_MTIMESPEC]))])])
+if test X"$ac_cv_type_struct_timespec" != X"no"; then
+    AC_CHECK_MEMBER([struct stat.st_mtim], AC_DEFINE(HAVE_ST_MTIM), [AC_CHECK_MEMBER([struct stat.st_mtimespec], AC_DEFINE([HAVE_ST_MTIMESPEC]))])
+    AC_MSG_CHECKING([for two-parameter timespecsub])
+    AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/time.h>], [struct timespec ts1, ts2;
+ts1.tv_sec = 1; ts1.tv_nsec = 0; ts2.tv_sec = 0; ts2.tv_nsec = 0;
+#ifndef timespecsub
+#error missing timespecsub
+#endif
+timespecsub(&ts1, &ts2);],
+	[AC_DEFINE(HAVE_TIMESPECSUB2)
+	AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no)])
+fi
 dnl
 dnl Check for the dirfd function/macro.  If not found, look for dd_fd in DIR.
 dnl
@@ -2257,6 +2269,7 @@ AH_TEMPLATE(HAVE_ST_MTIM, [Define to 1 if your struct stat has an st_mtim member
 AH_TEMPLATE(HAVE_ST_MTIMESPEC, [Define to 1 if your struct stat has an st_mtimespec member])
 AH_TEMPLATE(HAVE_TERMIOS_H, [Define to 1 if you have the <termios.h> header file and the `tcgetattr' function.])
 AH_TEMPLATE(HAVE_TIMESPEC, [Define to 1 if you have struct timespec in sys/time.h])
+AH_TEMPLATE(HAVE_TIMESPECSUB2, [Define to 1 if you have a timespecsub macro or function that takes two arguments (not three)])
 AH_TEMPLATE(HAVE___PROGNAME, [Define to 1 if your crt0.o defines the __progname symbol for you.])
 AH_TEMPLATE(HOST_IN_LOG, [Define to 1 if you want the hostname to be entered into the log file.])
 AH_TEMPLATE(IGNORE_DOT_PATH, [Define to 1 if you want to ignore '.' and empty PATH elements])

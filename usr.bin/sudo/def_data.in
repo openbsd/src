@@ -166,7 +166,7 @@ listpw
 verifypw
 	T_TUPLE|T_BOOL
 	"When to require a password for 'verify' pseudocommand: %s"
-	never any all always
+	never all any always
 noexec
 	T_FLAG
 	"Preload the dummy exec functions contained in 'noexec_file'"

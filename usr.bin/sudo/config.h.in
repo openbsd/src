@@ -144,8 +144,8 @@
    passwords) */
 #undef HAVE_GETSPWUID
 
-/* Define to 1 if you have the `getttimeofday' function. */
-#undef HAVE_GETTTIMEOFDAY
+/* Define to 1 if you have the `gettimeofday' function. */
+#undef HAVE_GETTIMEOFDAY
 
 /* Define to 1 if your Kerberos is Heimdal. */
 #undef HAVE_HEIMDAL
@@ -352,6 +352,10 @@
 
 /* Define to 1 if you have struct timespec in sys/time.h */
 #undef HAVE_TIMESPEC
+
+/* Define to 1 if you have a timespecsub macro or function that takes
+   two arguments (not three) */
+#undef HAVE_TIMESPECSUB2
 
 /* Define to 1 if you have the `tzset' function. */
 #undef HAVE_TZSET

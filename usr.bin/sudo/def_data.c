@@ -15,8 +15,8 @@ static struct def_values def_data_listpw[] = {
 
 static struct def_values def_data_verifypw[] = {
     { "never", never },
-    { "any", any },
     { "all", all },
+    { "any", any },
     { "always", always },
     { NULL, 0 },
 };

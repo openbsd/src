@@ -1751,3 +1751,16 @@ Sudo 1.6.8p3 released.
      execution for password lookups that use GSSAPI.
 
 Sudo 1.6.8p4 released.
+
+553) Added a configure check for systems with a 2-argument version of
+     timespecsub (like BSD/OS).
+
+554) Added stub struct defintions to sudo.h to quiet compiler warnings
+     on some systems.
+
+555) In sudoers Defaults lines, tuples like "lecture" may now be used
+     without a value, restoring their old boolean-like nature.
+
+556) Invalid values for a tuple are now handled correctly.
+
+Sudo 1.6.8p5 released.
