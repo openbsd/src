@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbp2reg.h,v 1.1 2002/12/13 02:57:56 tdeval Exp $	*/
+/*	$OpenBSD: sbp2reg.h,v 1.2 2002/12/30 11:48:34 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -81,14 +81,27 @@
 #define	SBP2_ORB_RECONNECT			3
 #define	SBP2_ORB_LOGOUT				7
 
-#define	SBP2_NULL_ORB_PTR			0x8000000000000000
+#define	SBP2_NULL_ORB_PTR			0x8000000000000000UL
 
-#define	SBP2_LOGIN_ORB				0x0000400000000000
-#define	SBP2_LOGIN_RESP				0x0000400000000020
-#define	SBP2_LOGIN_STATUS			0x0000400000000030
+#define	SBP2_MGMT_ORB				0x400000000000UL
+#define	SBP2_CMD_ORB				0x440000000000UL
 
-#define	SBP2_CMD_ORB				0x0000440000000000
-#define	SBP2_CMD_DATA				0x0000450000000000
+#define	SBP2_RESP_BLOCK				0x480000000000UL
+#define	SBP2_STATUS_BLOCK			0x4C0000000000UL
+#define	SBP2_DATA_BLOCK				0x500000000000UL
+
+#define	SBP2_DATA_MASK				0x03FFFFFFFFFFUL
+#define	SBP2_DATA_LEN				42
+#define	SBP2_DATA_SHIFT				10	/* With 32 bits hash. */
+
+/*
+ * Some convention to separate addresses between nodes and luns.
+ */
+#define	SBP2_NODE_MASK				0x03F000000000UL
+#define	SBP2_NODE_SHIFT				36
+#define	SBP2_LUN_MASK				0x000FFFF00000UL
+#define	SBP2_LUN_SHIFT				20
+#define	SBP2_RECONNECT_OFFSET			0x70	/* Transient status. */
 
 #define	SBP2_AGENT_STATE			0x00
 #define	SBP2_AGENT_RESET			0x04

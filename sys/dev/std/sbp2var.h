@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbp2var.h,v 1.1 2002/12/13 02:57:56 tdeval Exp $	*/
+/*	$OpenBSD: sbp2var.h,v 1.2 2002/12/30 11:48:34 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -92,6 +92,14 @@ typedef struct sbp2_login_response {
 	u_int16_t	reconnect_hold;
 } sbp2_login_response;
 
+typedef struct sbp2_reconnect_orb {
+	u_int32_t	reserved[4];
+	u_int16_t	options;
+	u_int16_t	login_id;
+	u_int32_t	reserved2;
+	sbp2_addr_t	status_fifo;
+} sbp2_reconnect_orb;
+
 typedef struct sbp2_query_logins_orb {
 	u_int32_t	reserved[2];
 	sbp2_addr_t	query_response;
@@ -169,12 +177,14 @@ typedef struct sbp2_status_notification {
 
 
 int  sbp2_match(struct device *, void *, void *);
+void sbp2_print_dir(struct p1212_dir *);
+void sbp2_print_data(struct p1212_data *);
 int  sbp2_init(struct fwnode_softc *, struct p1212_dir *);
 void sbp2_clean(struct fwnode_softc *, struct p1212_dir *, int);
 void sbp2_login(struct fwnode_softc *, struct sbp2_login_orb *,
     void (*)(void *, struct sbp2_status_notification *), void *);
 void sbp2_query_logins(struct fwnode_softc *, struct sbp2_query_logins_orb *,
-    void (*)(struct sbp2_status_notification *));
+    void (*)(void *, struct sbp2_status_notification *), void *);
 void sbp2_command_add(struct fwnode_softc *, int, struct sbp2_command_orb *,
     int, void *, void (*)(void *, struct sbp2_status_notification *), void *);
 void sbp2_command_del(struct fwnode_softc *, int, struct sbp2_command_orb *);
@@ -183,6 +193,6 @@ void sbp2_agent_tickle(struct fwnode_softc *, int);
 int  sbp2_agent_state(struct fwnode_softc *, int);
 void sbp2_task_management(struct fwnode_softc *,
     struct sbp2_task_management_orb *,
-    void (*)(struct sbp2_status_notification *));
+    void (*)(void *, struct sbp2_status_notification *), void *);
 
 #endif	/* _DEV_STD_SBP2VAR_H_ */
