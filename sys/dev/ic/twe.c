@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.7 2001/02/19 20:47:02 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.8 2001/03/09 17:06:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
@@ -833,6 +833,7 @@ twe_scsi_cmd(xs)
 		}
 
 		if ((ccb = twe_get_ccb(sc)) == NULL) {
+			TWE_UNLOCK_TWE(sc, lock);
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 			return (COMPLETE);
