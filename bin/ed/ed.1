@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.9 1998/01/02 04:31:16 deraadt Exp $
+.\"	$OpenBSD: ed.1,v 1.10 1998/07/21 08:10:22 deraadt Exp $
 .\"
 .Dd May 2 1993
 .Dt ED 1
@@ -136,7 +136,7 @@ only if it is not prefixed with a bang.
 An address represents the number of a line in the buffer.
 .Nm
 maintains a
-.I current address
+.Em current address
 which is
 typically supplied to commands as the default address when none is specified.
 When a file is first read, the current address is set to the last line
@@ -214,17 +214,12 @@ next line.
 This is equivalent to
 .Em +1
 and may be repeated with cumulative effect.
-.It Em +n No or whitespace Ns Em n
+.It Em +n
 The
 .Em n No th
 next line, where
 .Em n
 is a non-negative number.
-Whitespace
-followed by a number
-.Em n
-is interpreted as
-.Em +n No .
 .It Em \&, No or Em %
 The first through last lines in the buffer.  This is equivalent to
 the address range
