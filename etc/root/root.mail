@@ -20,7 +20,7 @@ If you have installed the X11 packages during the install process, you can find
 further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are available
-for most architetures.  If you installed from a CD-ROM the packages
+for most architectures.  If you installed from a CD-ROM the packages
 are on the same CD-ROM you installed from in the directory 2.6/packages.
 
 CD-ROM Space permitted us to include the following packages for the most common
