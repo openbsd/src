@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 1997/05/29 18:23:49 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.22 1997/05/29 18:27:53 kstailey Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -111,9 +111,8 @@ clean cleandir:
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs rdsetroot
 .else
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN}-nokrb ${CBIN}-nokrb.mk \
-	    ${CBIN}-nokrb.cache *.o *.lo *.c \
-	    bsd bsd.rd bsd.gz bsd.strip floppy*.fs rdsetroot
+	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}-nokrb.mk ${CBIN}-nokrb.cache \
+	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs rdsetroot
 .endif
 
 .include <bsd.obj.mk>
