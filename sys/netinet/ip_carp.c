@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.29 2003/11/16 17:51:50 markus Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.30 2003/12/03 14:57:09 markus Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -124,8 +124,8 @@ struct carp_softc {
 	struct timeout sc_md_tmo;	/* master down timeout */
 	struct timeout sc_md6_tmo;	/* master down timeout */
 
-} *carp_softc;
-int carp_number;
+};
+
 int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 1, 0 };	/* XXX for now */
 struct carpstats carpstats;
 
@@ -165,6 +165,10 @@ void	carp_send_na(struct carp_softc *);
 int	carp_set_addr6(struct carp_softc *, struct sockaddr_in6 *);
 int	carp_del_addr6(struct carp_softc *, struct sockaddr_in6 *);
 #endif
+int     carp_clone_create(struct if_clone *, int);
+
+struct if_clone carp_cloner =
+    IF_CLONE_INITIALIZER("carp", carp_clone_create, NULL);
 
 static __inline u_int16_t
 carp_cksum(struct mbuf *m, int len)
@@ -552,59 +556,62 @@ carp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	return sysctl_int(oldp, oldlenp, newp, newlen, &carp_opts[name[0]]);
 }
 
-
 /*
  * Interface side of the CARP implementation.
  */
+
+/* ARGSUSED */
 void
-carpattach(int number)
+carpattach(int n)
+{
+	if_clone_attach(&carp_cloner);
+}
+
+int
+carp_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
 {
 	extern int ifqmaxlen;
-	int i;
 	struct carp_softc *sc;
 	struct ifnet *ifp;
 
-	carp_softc = malloc(number * sizeof(*carp_softc), M_DEVBUF, M_NOWAIT);
-	if (!carp_softc) {
-		printf("cannot alloc CARP data\n");
-		return;
-	}
-	bzero(carp_softc, number * sizeof(*carp_softc));
-	carp_number = number;
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	if (!sc)
+		return (ENOMEM);
+	bzero(sc, sizeof(*sc));
 
-	for (i = 0; i < number; i++) {
-
-		sc = &carp_softc[i];
-		sc->sc_advbase = CARP_DFLTINTV;
-		sc->sc_vhid = -1;	/* required setting */
-		sc->sc_advskew = 0;
-		sc->sc_init_counter = 1;
-		sc->sc_naddrs = sc->sc_naddrs6 = 0;
+	sc->sc_advbase = CARP_DFLTINTV;
+	sc->sc_vhid = -1;	/* required setting */
+	sc->sc_advskew = 0;
+	sc->sc_init_counter = 1;
+	sc->sc_naddrs = sc->sc_naddrs6 = 0;
 #ifdef INET6
-		sc->sc_im6o.im6o_multicast_hlim = CARP_DFLTTL;
+	sc->sc_im6o.im6o_multicast_hlim = CARP_DFLTTL;
 #endif /* INET6 */
 
-		timeout_set(&sc->sc_ad_tmo, carp_send_ad, sc);
-		timeout_set(&sc->sc_md_tmo, carp_master_down, sc);
-		timeout_set(&sc->sc_md6_tmo, carp_master_down, sc);
+	timeout_set(&sc->sc_ad_tmo, carp_send_ad, sc);
+	timeout_set(&sc->sc_md_tmo, carp_master_down, sc);
+	timeout_set(&sc->sc_md6_tmo, carp_master_down, sc);
 
-		ifp = &sc->sc_ac.ac_if;
-		ifp->if_softc = sc;
-		snprintf(ifp->if_xname, sizeof(ifp->if_xname), "carp%d", i);
-		ifp->if_mtu = ETHERMTU;
-		ifp->if_flags = 0;
-		ifp->if_ioctl = carp_ioctl;
-		ifp->if_output = looutput;
-		ifp->if_start = carp_start;
-		ifp->if_type = IFT_PROPVIRTUAL;
-		ifp->if_snd.ifq_maxlen = ifqmaxlen;
-		ifp->if_hdrlen = 0;
-		if_attach(ifp);
-		if_alloc_sadl(ifp);
+	ifp = &sc->sc_ac.ac_if;
+	ifp->if_softc = sc;
+	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name, 
+	    unit);
+	ifp->if_mtu = ETHERMTU;
+	ifp->if_flags = 0;
+	ifp->if_ioctl = carp_ioctl;
+	ifp->if_output = looutput;
+	ifp->if_start = carp_start;
+	ifp->if_type = IFT_PROPVIRTUAL;
+	ifp->if_snd.ifq_maxlen = ifqmaxlen;
+	ifp->if_hdrlen = 0;
+	if_attach(ifp);
+	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-		bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
+	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
-	}
+	return (0);
 }
 
 void
