@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.17 2003/11/04 02:52:40 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.18 2003/11/04 03:19:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -29,7 +29,6 @@
 /*
  * TODO:
  *	- iface reconfigure
- *	- find a way to schednetisr() packet earlier than through inetsw[];
  *	- track iface ip address changes;
  *	- support for hardware checksum calculations;
  *
