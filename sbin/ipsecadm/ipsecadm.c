@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.16 1999/03/29 04:52:53 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.17 1999/04/18 15:06:58 provos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -761,7 +761,7 @@ main(int argc, char **argv)
 	}
 	
 	if (!strcmp(argv[i] + 1, "proto2") && 
-	    iscmd(mode, GRP_SPI) && (i + 1 < argc))
+	    (iscmd(mode, BINDSA) || iscmd(mode, GRP_SPI)) && (i + 1 < argc))
 	{
 	    if (isalpha(argv[i + 1][0]))
 	    {
