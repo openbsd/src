@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.30 2000/08/13 08:37:07 niklas Exp $	*/
+/*	$OpenBSD: commands.c,v 1.31 2000/08/13 19:39:01 itojun Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2284,9 +2284,14 @@ tn(argc, argv)
     char *srp = 0;
     int srlen;
 #endif
-    int retry;
     char *cmd, *hostp = 0, *portp = 0, *user = 0, *aliasp = 0;
     int family, port;
+    int retry;
+#ifdef NI_WITHSCOPEID
+    const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+    const int niflags = NI_NUMERICHOST;
+#endif
 
     /* clear the socket address prior to use */
     memset((char *)&sin, 0, sizeof(sin));
@@ -2394,15 +2399,12 @@ tn(argc, argv)
     retry = 0;
     for (res = res0; res; res = res->ai_next) {
 	if (1 /* retry */) {
-	    char hbuf[MAXHOSTNAMELEN];
-#ifdef NI_WITHSCOPEID
-	    const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
-	    const int niflags = NI_NUMERICHOST;
-#endif
+	    char hbuf[NI_MAXHOST];
 
-	    getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
-		NULL, 0, niflags);
+	    if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
+		    NULL, 0, niflags) != 0) {
+		strcpy(hbuf, "(invalid)");
+	    }
 	    printf("Trying %s...\r\n", hbuf);
 	}
 	net = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -2423,9 +2425,9 @@ tn(argc, argv)
 		freeaddrinfo(ares);
 		continue;
 	    }
-	    if (bind(net, ares->ai_addr, ares->ai_addrlen) < 0) {
-                perror(aliasp);
-                (void) close(net);   /* dump descriptor */
+	    if (bind(net, res->ai_addr, res->ai_addrlen) < 0) {
+		perror(aliasp);
+		(void) close(net);   /* dump descriptor */
 		freeaddrinfo(ares);
 		continue;
             }
@@ -2458,10 +2460,12 @@ tn(argc, argv)
 	}
 
 	if (connect(net, res->ai_addr, res->ai_addrlen) < 0) {
-	    char hbuf[MAXHOSTNAMELEN];
+	    char hbuf[NI_MAXHOST];
 
-	    getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
-		NULL, 0, NI_NUMERICHOST);
+	    if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),
+		    NULL, 0, niflags) != 0) {
+		strcpy(hbuf, "(invalid)");
+	    }
 	    fprintf(stderr, "telnet: connect to address %s: %s\n", hbuf,
 		strerror(errno));
 
