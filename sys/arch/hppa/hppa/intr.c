@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.2 2002/03/19 14:57:16 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.3 2002/09/23 06:11:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -100,10 +100,14 @@ cpu_intr(frame)
 			mtctl(1 << bit, CR_EIRR);
 			eirr &= ~(1 << bit);
 			/* ((struct iomod *)cpu_gethpa(0))->io_eir = 0; */
+			if (bit != 31) {
 #ifdef INTRDEBUG
-			if (bit != 31)
 				db_printf ("cpu_intr: 0x%08x\n", (1 << bit));
 #endif
+				frame->tf_flags |= TFF_INTR;
+			} else
+				frame->tf_flags &= ~TFF_INTR;
+
 			iv = &cpu_intr_vectors[bit];
 			if (iv->handler) {
 				register int s, r;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.11 2002/07/31 02:32:25 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.12 2002/09/23 06:11:50 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -523,12 +523,6 @@ i82596_intr(v)
 	register u_int status;
 	register int off;
 
-        /*
-         * Implementation dependent interrupt handling.
-         */
-	if (sc->intrhook)
-		(sc->intrhook)(sc, IE_INTR_ENTER);
-
 	off = IE_SCB_STATUS(sc->scb);
 	PURGE(sc->bh + off, 2);
 	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_READ);
@@ -548,13 +542,21 @@ loop:
 #endif
 	i82596_start_cmd(sc, status & IE_ST_WHENCE, 0, 0, 1);
 
-	if (status & (IE_ST_FR | IE_ST_RNR))
+	if (status & (IE_ST_FR | IE_ST_RNR)) {
+		if (sc->intrhook)
+			(sc->intrhook)(sc, IE_INTR_ENRCV);
+
 		if (i82596_rint(sc, status) != 0)
 			goto reset;
+	}
 
-	if (status & IE_ST_CX)
+	if (status & IE_ST_CX) {
+		if (sc->intrhook)
+			(sc->intrhook)(sc, IE_INTR_ENSND);
+
 		if (i82596_tint(sc, status) != 0)
 			goto reset;
+	}
 
 #ifdef I82596_DEBUG
 	if ((status & IE_ST_CNA) && (sc->sc_debug & IED_CNA))

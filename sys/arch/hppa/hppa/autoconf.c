@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 2002/06/06 23:53:53 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 2002/09/23 06:11:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -75,6 +75,8 @@ register_t	kpsw = PSW_Q | PSW_P | PSW_C | PSW_D;
  * LED blinking thing
  */
 #ifdef USELEDS
+#include <sys/dkstat.h>
+
 struct timeout heartbeat_tmo;
 void heartbeat(void *);
 extern int hz;
@@ -122,8 +124,18 @@ void
 heartbeat(v)
 	void *v;
 {
-	static u_int hbcnt = 0;
+	static u_int hbcnt = 0, ocp_total, ocp_idle;
+	int toggle, cp_mask, cp_total;
 
+	cp_total = cp_time[CP_USER] + cp_time[CP_NICE] + cp_time[CP_SYS] +
+	     cp_time[CP_INTR] + cp_time[CP_IDLE];
+	if (!cp_total)
+		cp_total = 1;
+	cp_mask = 0xf0 >> (cp_time[CP_IDLE] - ocp_idle) * 4 /
+	    (cp_total - ocp_total);
+	cp_mask &= 0xf0;
+	ocp_total = cp_total;
+	ocp_idle = cp_time[CP_IDLE];
 	/*
 	 * do this:
 	 *
@@ -131,14 +143,11 @@ heartbeat(v)
 	 *  _| |_| |_,_,_,_
 	 *   0 1 2 3 4 6 7
 	 */
-	if (hbcnt < 4) {
-		ledctl(0, 0, PALED_HEARTBEAT);
-		hbcnt++;
-		timeout_add(&heartbeat_tmo, hz / 8);
-	} else {
-		hbcnt = 0;
-		timeout_add(&heartbeat_tmo, hz / 2);
-	}
+	if (hbcnt++ < 4)
+		toggle = PALED_HEARTBEAT;
+	timeout_add(&heartbeat_tmo, hz / 8);
+	hbcnt &= 7;
+	ledctl(cp_mask, (~cp_mask & 0xf0)|PALED_NETRCV|PALED_NETSND, toggle);
 }
 #endif
 

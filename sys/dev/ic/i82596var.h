@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596var.h,v 1.7 2002/03/14 03:16:04 millert Exp $	*/
+/*	$OpenBSD: i82596var.h,v 1.8 2002/09/23 06:11:50 mickey Exp $	*/
 /*	$NetBSD: i82586var.h,v 1.10 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -120,9 +120,10 @@
 #define IE_MAXMCAST	(IE_TBUF_SIZE/6)/* must fit in transmit buffer */
 
 
-#define	IE_INTR_ENTER	0		/* intr hook called on ISR entry */
-#define	IE_INTR_EXIT	1		/* intr hook called on ISR exit */
-#define	IE_INTR_LOOP	2		/* intr hook called on ISR loop */
+#define	IE_INTR_ENRCV	1		/* receive pkt interrupt */
+#define	IE_INTR_ENSND	2		/* send pkt interrupt */
+#define	IE_INTR_LOOP	3		/* a loop for next one*/
+#define	IE_INTR_EXIT	4		/* done w/ interrupts */
 
 #define	IE_CHIP_PROBE	0		/* reset called from chip probe */
 #define	IE_CARD_RESET	1		/* reset called from card reset */
