@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.4 2004/05/04 16:59:31 grange Exp $ */
+/*	$OpenBSD: cardslot.c,v 1.5 2004/07/15 18:04:16 brad Exp $ */
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -114,8 +113,6 @@ cardslotattach(parent, self, aux)
   struct cardbus_softc *csc;
   struct pcmcia_softc *psc;
 
-  int card_attach_now;
-
   sc->sc_slot = sc->sc_dev.dv_unit;
   sc->sc_cb_softc = NULL;
   sc->sc_16_softc = NULL;
@@ -147,35 +144,16 @@ cardslotattach(parent, self, aux)
   if (csc != NULL || psc != NULL)
     kthread_create_deferred(create_slot_manager, (void *)sc);
 
-  card_attach_now = sc->sc_dev.dv_cfdata->cf_flags & 0x01;
-
   if (csc && (csc->sc_cf->cardbus_ctrl)(csc->sc_cc, CARDBUS_CD)) {
     DPRINTF(("cardslotattach: CardBus card found\n"));
-    if (card_attach_now) {
-      if (cardbus_attach_card(sc->sc_cb_softc) > 0) {
-	/* at least one function works */
-	CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_WORKING);
-      } else {
-	/* no functions work or this card is not known */
-	CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);
-      }
-      CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_CB);
-    } else {
-      /* attach deferred */
-      cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_CB);
-    }
+    /* attach deferred */
+    cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_CB);
   }
 
   if (psc && (psc->pct->card_detect)(psc->pch)) {
     DPRINTF(("cardbusattach: 16-bit card found\n"));
-    if (card_attach_now) {
-      /* attach now */
-      pcmcia_card_attach((struct device *)sc->sc_16_softc);
-      CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_16);
-    } else {
-      /* attach deferred */
-      cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_16);
-    }
+    /* attach deferred */
+    cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_16);
   }
 }
 
@@ -347,7 +325,7 @@ cardslot_event_thread(arg)
       if ((CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_CB)
 	  || (CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_16)) {
 	if (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING) {
-	  /* A card has already been inserted and work. */
+	  /* A card has already been inserted and works. */
 	  break;
 	}
       }
@@ -371,7 +349,7 @@ cardslot_event_thread(arg)
       if ((CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_CB)
 	  || (CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_16)) {
 	if (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING) {
-	  /* A card has already been inserted and work. */
+	  /* A card has already been inserted and works. */
 	  break;
 	}
       }
@@ -432,7 +410,7 @@ cardslot_event_thread(arg)
 
   sc->sc_event_thread = NULL;
 
-  /* In case parent is waiting for us to exit. */
+  /* In case the parent device is waiting for us to exit. */
   wakeup(sc);
 
   kthread_exit(0);
