@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.3,v 1.6 2002/05/24 21:32:40 deraadt Exp $
+.\" $OpenBSD: skey.3,v 1.7 2003/03/19 00:33:54 millert Exp $
 .\"
 .\" Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -134,7 +134,8 @@ The
 function converts the 8-byte binary array
 .Fa in
 to a 16-byte string of hex digits stored in
-.Fa out .
+.Fa out ;
+the caller must supply enough space (17 bytes including the final NUL).
 The
 .Fn btoa8
 function returns 0 on success and -1 if an error occurred.
