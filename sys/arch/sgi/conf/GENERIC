@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1 2004/08/06 21:12:18 pefo Exp $
+#	$OpenBSD: GENERIC,v 1.2 2004/08/09 10:19:50 miod Exp $
 #
 
 machine		sgi mips64
@@ -21,7 +21,6 @@ option		NATIVE_ELF	# Systems uses ELF as native format
 
 #option		WSDISPLAY_COMPAT_RAWKBD
 
-option		UVM
 #option		UVMHIST		# enable uvm history logging
 
 #option		DEBUG
