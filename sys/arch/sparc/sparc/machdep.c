@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2001/11/22 09:23:51 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.70 2001/11/22 09:49:43 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -937,7 +937,7 @@ mapdev(phys, virt, offset, size)
 	struct rom_reg *phys;
 	int offset, virt, size;
 {
-	vaddr_t v;
+	vaddr_t va;
 	paddr_t pa;
 	void *ret;
 	static vaddr_t iobase;
@@ -951,23 +951,23 @@ mapdev(phys, virt, offset, size)
 		panic("mapdev: zero size");
 
 	if (virt)
-		v = trunc_page(virt);
+		va = trunc_page(virt);
 	else {
-		v = iobase;
+		va = iobase;
 		iobase += size;
 		if (iobase > IODEV_END)	/* unlikely */
 			panic("mapiodev");
 	}
-	ret = (void *)(v | (((u_long)phys->rr_paddr + offset) & PGOFSET));
+	ret = (void *)(va | (((u_long)phys->rr_paddr + offset) & PGOFSET));
 			/* note: preserve page offset */
 
 	pa = trunc_page((vaddr_t)phys->rr_paddr + offset);
 	pmtype = PMAP_IOENC(phys->rr_iospace);
 
 	do {
-		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
-		v += PAGE_SIZE;
+		pmap_kenter_pa(va, pa | pmtype | PMAP_NC,
+		    VM_PROT_READ | VM_PROT_WRITE);
+		va += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
 	return (ret);
