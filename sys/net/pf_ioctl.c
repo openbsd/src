@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.121 2004/05/19 17:50:52 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.122 2004/05/21 08:03:29 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -86,6 +86,8 @@ int			 pf_get_ruleset_number(u_int8_t);
 void			 pf_init_ruleset(struct pf_ruleset *);
 int			 pf_anchor_setup(struct pf_rule *,
 			    const struct pf_ruleset *, const char *);
+int			 pf_anchor_copyout(const struct pf_ruleset *,
+			    const struct pf_rule *, struct pfioc_rule *);
 void			 pf_anchor_remove(struct pf_rule *);
 
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
@@ -444,6 +446,7 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 		strlcpy(path, name + 1, sizeof(path));
 	else {
 		/* relative path */
+		r->anchor_relative = 1;
 		if (s->anchor == NULL || !s->anchor->path[0])
 			path[0] = 0;
 		else
@@ -475,6 +478,45 @@ pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
 	}
 	r->anchor = ruleset->anchor;
 	r->anchor->refcnt++;
+	return (0);
+}
+
+int
+pf_anchor_copyout(const struct pf_ruleset *rs, const struct pf_rule *r,
+    struct pfioc_rule *pr)
+{
+	pr->anchor_call[0] = 0;
+	if (r->anchor == NULL)
+		return (0);
+	if (!r->anchor_relative) {
+		strlcpy(pr->anchor_call, ":", sizeof(pr->anchor_call));
+		strlcat(pr->anchor_call, r->anchor->path,
+		    sizeof(pr->anchor_call));
+	} else {
+		char a[MAXPATHLEN], b[MAXPATHLEN], *p;
+		int i;
+
+		if (rs->anchor == NULL)
+			a[0] = 0;
+		else
+			strlcpy(a, rs->anchor->path, sizeof(a));
+		strlcpy(b, r->anchor->path, sizeof(b));
+		for (i = 1; i < r->anchor_relative; ++i) {
+			if ((p = strrchr(a, ':')) == NULL)
+				p = a;
+			*p = 0;
+			strlcat(pr->anchor_call, "..:",
+			    sizeof(pr->anchor_call));
+		}
+		if (strncmp(a, b, strlen(a))) {
+			printf("pf_anchor_copyout: '%s' '%s'\n", a, b);
+			return (1);
+		}
+		strlcat(pr->anchor_call, b + (a[0] ? strlen(a) + 1 : 0),
+		    sizeof(pr->anchor_call));
+	}
+	if (r->anchor_wildcard)
+		strlcat(pr->anchor_call, ":*", sizeof(pr->anchor_call));
 	return (0);
 }
 
@@ -1228,16 +1270,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
-		if (rule->anchor == NULL)
-			pr->anchor_call[0] = 0;
-		else {
-			/* XXX relative paths */
-			strlcpy(pr->anchor_call, ":", sizeof(pr->anchor_call));
-			strlcat(pr->anchor_call, rule->anchor->path,
-			    sizeof(pr->anchor_call));
-			if (rule->anchor_wildcard)
-				strlcat(pr->anchor_call, ":*",
-				    sizeof(pr->anchor_call));
+		if (pf_anchor_copyout(ruleset, rule, pr)) {
+			error = EBUSY;
+			splx(s);
+			break;
 		}
 		pfi_dynaddr_copyout(&pr->rule.src.addr);
 		pfi_dynaddr_copyout(&pr->rule.dst.addr);
