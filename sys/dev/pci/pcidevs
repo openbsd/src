@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.307 2000/09/01 06:50:19 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.308 2000/09/01 09:04:42 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -870,7 +870,7 @@ product COMPAQ QVISION_1280P	0x3033	QVision 1280/p
 product COMPAQ QVISION_V2	0x3034	QVision
 product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI
 product COMPAQ USB		0x7020	USB
-product COMPAQ FXP		0xa0f0	Netelligent FXP
+product COMPAQ FXP		0xa0f0	Netelligent ASMC
 product COMPAQ PCI_ISA_BRIDGE1	0xa0f3	PCI-ISA
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
 product COMPAQ IDE		0xae33	Netelligent IDE
@@ -1352,7 +1352,7 @@ product RCC CNB20HE		0x0008	CNB20HE Host
 product RCC CNB20LE		0x0009	CNB20LE Host
 product RCC CIOB30		0x0010	CIOB30
 product RCC CMIC_HE		0x0011	CMIC_HE Host
-/* product RCC UNKNOWN		0x0211	IDE */
+product RCC IDE			0x0211	IDE
 /* product RCC UNKNOWN		0x0220	USB */
 
 /* Picopower */
