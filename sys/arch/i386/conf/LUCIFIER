@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.14 1998/07/11 15:31:23 todd Exp $
+#	$OpenBSD: LUCIFIER,v 1.15 1998/09/11 11:26:23 fgsch Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -106,14 +106,12 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 pci*	at pchb? bus ?
 
-pcicmaster0     at isa? port 0x3E0 size 2
-pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
-pcic1	at pcicmaster0 irq 12 iomem 0xd5000 iosiz 4096
-pcicmaster1 at isa? port 0x3E2 size 2
-pcic2	at pcicmaster1 irq 11 iomem 0xd6000 iosiz 4096
-pcic3	at pcicmaster1 irq 12 iomem 0xd7000 iosiz 4096
+# ISA PCMCIA controllers
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 
-pcmcia* at pcic?
+# PCMCIA bus support
+pcmcia*	at pcic? controller ? socket ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
@@ -133,7 +131,7 @@ pccom2	at isa? port 0x3e8 irq 5
 #com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
-pccom3	at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
+pccom*	at pcmcia? function ?		# PCMCIA modem cards
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines

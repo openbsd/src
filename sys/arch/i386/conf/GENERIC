@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.77 1998/09/10 21:21:38 jason Exp $
+#	$OpenBSD: GENERIC,v 1.78 1998/09/11 11:26:23 fgsch Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -53,14 +53,12 @@ pci*	at ppb? bus ?
 pci*	at pchb? bus ?
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges (do nothing)
 
-pcicmaster0	at isa? port 0x3E0 size 2
-pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
-pcic1	at pcicmaster0 irq 12 iomem 0xd5000 iosiz 4096
-pcicmaster1	at isa? port 0x3E2 size 2
-pcic2	at pcicmaster1 irq 11 iomem 0xd6000 iosiz 4096
-pcic3	at pcicmaster1 irq 12 iomem 0xd7000 iosiz 4096
+# ISA PCMCIA controllers
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 
-pcmcia* at pcic?
+# PCMCIA bus support
+pcmcia*	at pcic? controller ? socket ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
@@ -80,7 +78,7 @@ pccom*	at ast? slave ?
 #pccom*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #pccom*	at rtfps? slave ?
-pccom3	at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
+pccom*	at pcmcia? function ?		# PCMCIA modem cards
 pccom*	at isapnp?
 
 # option for using CD1400 handshaking for incoming data
@@ -115,6 +113,7 @@ scsibus* at ahc?
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
+aic*	at pcmcia? function ?		# PCMCIA based aic cards
 scsibus* at aic?
 ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
@@ -173,8 +172,9 @@ fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
 ed*	at pci? dev ? function ?		# NE2000-compat ethernet cards
 ep0	at pci? dev ? function ?		# 3C590 ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
-ed*	at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
-ep*	at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
+#ed*	at pcmcia? function ?			# PCMCIA based ed cards
+ep*	at pcmcia? function ?			# PCMCIA based ep cards
+sm*	at pcmcia? function ?			# PCMCIA based sm cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 xl*	at pci? dev ? function ?		# 3c900/3c905 Ethernet
 
