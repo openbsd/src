@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.6 2004/01/26 22:57:20 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.7 2004/01/29 21:28:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,10 +39,9 @@ struct mainbus_softc {
 	struct	bushook sc_bus;
 };
 
-/* Definition of the mainbus driver. */
-static int	mbmatch(struct device *, void *, void *);
-static void	mbattach(struct device *, struct device *, void *);
-static int	mbprint(void *, const char *);
+void	mbattach(struct device *, struct device *, void *);
+int	mbmatch(struct device *, void *, void *);
+int	mbprint(void *, const char *);
 
 struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
@@ -51,106 +50,76 @@ struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
 };
 
-void	mb_intr_establish(struct confargs *, int (*)(void *), void *);
-void	mb_intr_disestablish(struct confargs *);
-caddr_t	mb_cvtaddr(struct confargs *);
-int	mb_matchname(struct confargs *, char *);
-
-static int attached = 0;
-
-static int
-mbmatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+int
+mbmatch(struct device *parent, void *cfdata, void *aux)
 {
-	/*
-	 * That one mainbus is always here.
-	 */
-   if (!attached) {
-      return(1);
-   } else {
-      return(0);
-   }
+	return (1);
 }
 
-static void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+void
+mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
+	u_int8_t systype;
+	extern vaddr_t isaspace_va;
 
+	/* Pretty print the system type */
+	switch ((systype = *(u_int8_t *)(isaspace_va + MVME_STATUS_REG))) {
+	default:
+		printf("unknown system type %x", systype);
+		break;
+	case MVMETYPE_RESERVED:
+		/* if you ever have this one, please contact me -- miod */
+		printf("Dahu MVME");
+		break;
+	case MVMETYPE_2600_712:
+		printf("MVME2600 or MVME2700 (712-compatible)");
+		break;
+	case MVMETYPE_2600_761:
+		printf("MVME2600 or MVME2700 (761-compatible)");
+		break;
+	case MVMETYPE_3600_712:
+		printf("MVME3600 or MVME4600 (712-compatible)");
+		break;
+	case MVMETYPE_3600_761:
+		printf("MVME3600 or MVME4600 (761-compatible)");
+		break;
+	case MVMETYPE_1600:
+		printf("MVME1600");
+		break;
+	}
 	printf("\n");
-
-   attached = 1;
 
 	sc->sc_bus.bh_dv = (struct device *)sc;
 	sc->sc_bus.bh_type = BUS_MAIN;
-	sc->sc_bus.bh_intr_establish = mb_intr_establish;
-	sc->sc_bus.bh_intr_disestablish = mb_intr_disestablish;
-	sc->sc_bus.bh_matchname = mb_matchname;
+	sc->sc_bus.bh_intr_establish = NULL;
+	sc->sc_bus.bh_intr_disestablish = NULL;
+	sc->sc_bus.bh_matchname = NULL;
 
 	/*
 	 * Try to find and attach all of the CPUs in the machine.
-	 * ( Right now only one CPU so code is simple )
+	 * Right now only one CPU is supported, so this is simple.
+	 * Need to change for real MVME4600 support.
 	 */
 
 	nca.ca_name = "cpu";
 	nca.ca_bus = &sc->sc_bus;
 	config_found(self, &nca, mbprint);
 
-	/* The following machines have an ISA bus */
-	/* Do ISA first so the interrupt controller is set up! */
-	nca.ca_name = "isabr";
-	nca.ca_bus = &sc->sc_bus;
-	config_found(self, &nca, mbprint);
-
+	/*
+	 * Find and attach the PCI Northbridge. It will find and attach
+	 * everything.
+	 */
 	nca.ca_name = "mpcpcibr";
 	nca.ca_bus = &sc->sc_bus;
 	config_found(self, &nca, mbprint);
 }
 
-static int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+int
+mbprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		return (QUIET);
 	return (UNCONF);
-}
-
-void
-mb_intr_establish(ca, handler, val)
-	struct confargs *ca;
-	int (*handler)(void *);
-	void *val;
-{
-	panic("can never mb_intr_establish");
-}
-
-void
-mb_intr_disestablish(ca)
-	struct confargs *ca;
-{
-	panic("can never mb_intr_disestablish");
-}
-
-caddr_t
-mb_cvtaddr(ca)
-	struct confargs *ca;
-{
-
-	return (NULL);
-}
-
-int
-mb_matchname(ca, name)
-	struct confargs *ca;
-	char *name;
-{
-	return (strcmp(name, ca->ca_name) == 0);
 }
