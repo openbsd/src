@@ -1,4 +1,4 @@
-/*	$OpenBSD: osta.c,v 1.1 2005/03/29 17:24:52 pedro Exp $	*/
+/*	$OpenBSD: osta.c,v 1.2 2005/03/30 01:06:49 pedro Exp $	*/
 
 /*
  * Various routines from the OSTA 2.01 specs.  Copyrights are included with
@@ -41,39 +41,36 @@ udf_UncompressUnicode(
 	unicode_t *unicode)	/* (Output) uncompressed unicode characters. */
 {
 	unsigned int compID;
-	int returnValue, unicodeIndex, byteIndex;
+	int unicodeIndex, byteIndex;
 
 	/* Use UDFCompressed to store current byte being read. */
 	compID = UDFCompressed[0];
 
 	/* First check for valid compID. */
-	if (compID != 8 && compID != 16) {
-		returnValue = -1;
-	} else {
-		unicodeIndex = 0;
-		byteIndex = 1;
+	if (compID != 8 && compID != 16)
+		return (-1);
 
-		/* Loop through all the bytes. */
-		while (byteIndex < numberOfBytes) {
-			if (compID == 16) {
-				/* Move the first byte to the high bits of the
-				 * unicode char.
-				 */
-				unicode[unicodeIndex] =
-				    UDFCompressed[byteIndex++] << 8;
-			} else {
-				unicode[unicodeIndex] = 0;
-			}
-			if (byteIndex < numberOfBytes) {
-				/*Then the next byte to the low bits. */
-				unicode[unicodeIndex] |=
-				    UDFCompressed[byteIndex++];
-			}
-			unicodeIndex++;
+	unicodeIndex = 0;
+	byteIndex = 1;
+
+	/* Loop through all the bytes. */
+	while (byteIndex < numberOfBytes) {
+		if (compID == 16) {
+			/*
+			 * Move the first byte to the high
+			 * bits of the unicode char.
+			 */
+			unicode[unicodeIndex] = UDFCompressed[byteIndex++] << 8;
+		} else {
+			unicode[unicodeIndex] = 0;
 		}
-		returnValue = unicodeIndex;
+		if (byteIndex < numberOfBytes) {
+			/* Then the next byte to the low bits. */
+			unicode[unicodeIndex] |= UDFCompressed[byteIndex++];
+		}
+		unicodeIndex++;
 	}
-	return(returnValue);
+	return (unicodeIndex);
 }
 
 /*
@@ -87,38 +84,35 @@ udf_UncompressUnicodeByte(
 	byte *unicode)		/* (Output) uncompressed unicode characters. */
 {
 	unsigned int compID;
-	int returnValue, unicodeIndex, byteIndex;
+	int unicodeIndex, byteIndex;
 
 	/* Use UDFCompressed to store current byte being read. */
 	compID = UDFCompressed[0];
 
 	/* First check for valid compID. */
-	if (compID != 8 && compID != 16) {
-		returnValue = -1;
-	} else {
-		unicodeIndex = 0;
-		byteIndex = 1;
+	if (compID != 8 && compID != 16)
+		return (-1);
 
-		/* Loop through all the bytes. */
-		while (byteIndex < numberOfBytes) {
-			if (compID == 16) {
-				/* Move the first byte to the high bits of the
-				 * unicode char.
-				 */
-				unicode[unicodeIndex++] =
-				    UDFCompressed[byteIndex++];
-			} else {
-				unicode[unicodeIndex++] = 0;
-			}
-			if (byteIndex < numberOfBytes) {
-				/*Then the next byte to the low bits. */
-				unicode[unicodeIndex++] =
-				    UDFCompressed[byteIndex++];
-			}
+	unicodeIndex = 0;
+	byteIndex = 1;
+
+	/* Loop through all the bytes. */
+	while (byteIndex < numberOfBytes) {
+		if (compID == 16) {
+			/*
+			 * Move the first byte to the high
+			 * bits of the unicode char.
+			 */
+			unicode[unicodeIndex++] = UDFCompressed[byteIndex++];
+		} else {
+			unicode[unicodeIndex++] = 0;
 		}
-		returnValue = unicodeIndex;
+		if (byteIndex < numberOfBytes) {
+			/* Then the next byte to the low bits. */
+			unicode[unicodeIndex++] = UDFCompressed[byteIndex++];
+		}
 	}
-	return(returnValue);
+	return (unicodeIndex);
 }
 
 /***********************************************************************
@@ -148,27 +142,27 @@ udf_CompressUnicode(
 {
 	int byteIndex, unicodeIndex;
 
-	if (compID != 8 && compID != 16) {
-		byteIndex = -1; /* Unsupported compression ID ! */
-	} else {
-		/* Place compression code in first byte. */
-		UDFCompressed[0] = compID;
+	if (compID != 8 && compID != 16)
+		return (-1); /* Unsupported compression ID ! */
 
-		byteIndex = 1;
-		unicodeIndex = 0;
-		while (unicodeIndex < numberOfChars) {
-			if (compID == 16) {
-				/* First, place the high bits of the char
-				 * into the byte stream.
-				 */
-				UDFCompressed[byteIndex++] =
-				    (unicode[unicodeIndex] & 0xFF00) >> 8;
-			}
-			/*Then place the low bits into the stream. */
+	/* Place compression code in first byte. */
+	UDFCompressed[0] = compID;
+
+	byteIndex = 1;
+	unicodeIndex = 0;
+
+	while (unicodeIndex < numberOfChars) {
+		if (compID == 16) {
+			/*
+			 * First, place the high bits of
+			 * the char into the byte stream.
+			 */
 			UDFCompressed[byteIndex++] =
-			    unicode[unicodeIndex] & 0x00FF;
-			unicodeIndex++;
+			    (unicode[unicodeIndex] & 0xFF00) >> 8;
 		}
+		/* Then place the low bits into the stream. */
+		UDFCompressed[byteIndex++] = unicode[unicodeIndex] & 0x00FF;
+		unicodeIndex++;
 	}
 	return(byteIndex);
 }
