@@ -2,8 +2,7 @@
  * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
- * This code is derived from software contributed by Chris Jepeway
- * <jepeway@cs.utk.edu>.
+ * This code is derived from software contributed by Chris Jepeway.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -83,7 +82,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: testsudoers.c,v 1.75 2001/12/15 02:27:17 millert Exp $";
+static const char rcsid[] = "$Sudo: testsudoers.c,v 1.76 2002/03/16 00:44:48 millert Exp $";
 #endif /* lint */
 
 

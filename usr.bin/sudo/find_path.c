@@ -61,7 +61,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: find_path.c,v 1.99 2001/12/14 19:52:47 millert Exp $";
+static const char rcsid[] = "$Sudo: find_path.c,v 1.98 2001/12/14 06:40:03 millert Exp $";
 #endif /* lint */
 
 /*

@@ -1519,3 +1519,13 @@ Sudo 1.6.5p1 released.
      BSD authentication, FWTK or PAM was in use.
 
 Sudo 1.6.5p2 released.
+
+474) Fixed compilation problem on HP-UX 9.x.
+
+475) Moved call to endpwent() and added a call to endgrent().
+
+476) Fixed a warning conflicting declaration of VOID with AFS.
+
+477) Fixed a security hole in prompt rewriting found by Global InterSec.
+
+Sudo 1.6.6 released.

@@ -1,4 +1,4 @@
-Installation instructions for Sudo 1.6.5
+Installation instructions for Sudo 1.6.6
 ========================================
 
 Sudo uses a `configure' script to probe the capabilities and type
@@ -105,25 +105,28 @@ Directory and file names:
 	Find the sources in DIR [configure dir or ..]
 
 Special features/options:
-  --with-CC=path
+  --with-CC=PATH
 	Specifies path to C compiler you wish to use.
 
-  --with-incpath
-	Adds the specified directories to CPPFLAGS so configure and the
-	compiler will look there for include files.  Multiple directories
-	may be specified as long as they are space separated.
+  --with-incpath=DIR
+        Adds the specified directory (or directories) to CPPFLAGS
+        so configure and the compiler will look there for include
+        files.  Multiple directories may be specified as long as
+        they are space separated.
 	Eg: --with-incpath="/usr/local/include /opt/include"
 
-  --with-libpath
-	Adds the specified directories to SUDO_LDFLAGS and VISUDO_LDFLAGS so
-	configure and the compiler will look there for libraries.  Multiple
-	directories may be specified as with --with-incpath.
+  --with-libpath=DIR
+        Adds the specified directory (or directories_ to SUDO_LDFLAGS
+        and VISUDO_LDFLAGS so configure and the compiler will look
+        there for libraries.  Multiple directories may be specified
+        as with --with-incpath.
 
-  --with-libraries
-	Adds the specified libaries to SUDO_LIBS and and VISUDO_LIBS so sudo
-	will link against them.  If the library doesn't start with `-l' or end
-	in `.a' or `.o' a `-l' will be prepended to it.  Multiple libraries may
-	be specified as long as they are space separated.
+  --with-libraries=LIBRARY
+        Adds the specified library (or libaries) to SUDO_LIBS and
+        and VISUDO_LIBS so sudo will link against them.  If the
+        library doesn't start with `-l' or end in `.a' or `.o' a
+        `-l' will be prepended to it.  Multiple libraries may be
+        specified as long as they are space separated.
 
   --with-csops
 	Add CSOps standard options.  You probably aren't interested in this.
@@ -134,11 +137,11 @@ Special features/options:
   --with-opie
 	Enable NRL OPIE OTP (One Time Password) support.
 
-  --with-SecurID=DIR
+  --with-SecurID[=DIR]
 	Enable SecurID support.  If specified, DIR is directory containing
 	sdiclient.a, sdi_athd.h, sdconf.h, and sdacmvls.h.
 
-  --with-fwtk=DIR
+  --with-fwtk[=DIR]
 	Enable TIS Firewall Toolkit (FWTK) 'authsrv' support. If specified,
 	DIR is the base directory containing the compiled FWTK package
 	(or at least the library and header files).
@@ -197,12 +200,11 @@ Special features/options:
 
   --with-bsdauth
         Enable support for BSD authentication on BSD/OS and OpenBSD.
-        This option assumes --with-logincap as well.  It is not
-        possible to mix BSD authentication with other authentication
-        methods (and there really should be no need to do so).  Note
-        that only the newer BSD authentication API is supported.
-        If you don't have /usr/include/bsd_auth.h then you cannot
-        use this.
+        This option implies --with-logincap.  It is not possible
+        to mix BSD authentication with other authentication methods
+        (and there really should be no need to do so).  Note that
+        only the newer BSD authentication API is supported.  If you
+        don't have /usr/include/bsd_auth.h then you cannot use this.
 
   --disable-root-mailer
         By default sudo will run the mailer as root when tattling
@@ -211,37 +213,40 @@ Special features/options:
         user which some people consider to be safer.
 
   --disable-saved-ids
-	Disable use of POSIX saved IDs.  Normally, sudo will try to
-	use POSIX saved IDs if they are supported.  However, some
-	implementations are broken.
+        Disable use of POSIX saved IDs.  Normally, sudo will try
+        to use POSIX saved IDs if they are supported.  However,
+        some implementations are broken.
 
   --disable-setreuid
-	Disable use of the setreuid() function for operating systems
-	where it is broken.  4.4BSD has setreuid() but it doesn't really work.
+        Disable use of the setreuid() function for operating systems
+        where it is broken.  4.4BSD has setreuid() but it doesn't
+        really work.
 
   --disable-sia
-	Disable SIA support.  This is the "Security Integration Architecture"
-	on Digital UNIX. If you disable SIA sudo will use its own
-	authentication routines.
+        Disable SIA support.  This is the "Security Integration
+        Architecture" on Digital UNIX. If you disable SIA sudo will
+        use its own authentication routines.
 
   --disable-shadow
-	Disable shadow password support.  Normally, sudo will compile in shadow
-	password support and use a shadow password if it exists.
+        Disable shadow password support.  Normally, sudo will compile
+        in shadow password support and use a shadow password if it
+        exists.
 
-  --with-sudoers-mode=mode
-	File mode for the sudoers file (octal).  Note that if you wish to
-	NFS-mount the sudoers file this must be group readable.  Also note
-	that this is actually set in the Makefile.  The default mode is 0440.
+  --with-sudoers-mode=MODE
+        File mode for the sudoers file (octal).  Note that if you
+        wish to NFS-mount the sudoers file this must be group
+        readable.  Also note that this is actually set in the
+        Makefile.  The default mode is 0440.
 
-  --with-sudoers-uid
-	User id that "owns" the sudoers file.  Note that this is the numeric
-	id, *not* the symbolic name.  Also note that this is actually set in
-	the Makefile.  The default is 0.
+  --with-sudoers-uid=UID
+        User id that "owns" the sudoers file.  Note that this is
+        the numeric id, *not* the symbolic name.  Also note that
+        this is actually set in the Makefile.  The default is 0.
 
-  --with-sudoers-gid
-	Group id that "owns" the sudoers file.  Note that this is the numeric
-	id, *not* the symbolic name.  Also note that this is actually set in
-	the Makefile.  The default is 0.
+  --with-sudoers-gid=GID
+        Group id that "owns" the sudoers file.  Note that this is
+        the numeric id, *not* the symbolic name.  Also note that
+        this is actually set in the Makefile.  The default is 0.
 
   --with-execv
 	Use execv() to exec the command instead of execvp().  I can't think of
@@ -252,56 +257,60 @@ Special features/options:
 	4.3BSD).  This is off by default.
 
   --without-interfaces
-	This option keeps sudo from trying to glean the ip address from each
-	attached ethernet interface.  It is only useful on a machine where
-	sudo's interface reading support does not work, which may be the case
-	on some SysV-based OS's using STREAMS.
+        This option keeps sudo from trying to glean the ip address
+        from each attached ethernet interface.  It is only useful
+        on a machine where sudo's interface reading support does
+        not work, which may be the case on some SysV-based OS's
+        using STREAMS.
 
   --without-passwd
-	This option excludes authentication via the passwd (or shadow) file.
-	It should only be used when another, alternate, authentication
-	scheme is in use.
+        This option excludes authentication via the passwd (or
+        shadow) file.  It should only be used when another, alternate,
+        authentication scheme is in use.
 
   --with-otp-only
-	This option is now just an alias for --without-passwd.
+        This option is now just an alias for --without-passwd.
 
 The following options are also configurable at runtime:
 
   --with-long-otp-prompt
-	When validating with a One Time Password scheme (S/Key or OPIE), a
-	two-line prompt is used to make it easier to cut and paste the
-	challenge to a local window.  It's not as pretty as the default but
-	some people find it more convenient.
+        When validating with a One Time Password scheme (S/Key or
+        OPIE), a two-line prompt is used to make it easier to cut
+        and paste the challenge to a local window.  It's not as
+        pretty as the default but some people find it more convenient.
 
   --with-logging=TYPE
-	How you want to do your logging.  You may choose "syslog", "file",
-	or "both".  Setting this to "syslog" is nice because you can keep all
-	of your sudo logs in one place (see the sample.syslog.conf file).
-	The default is "syslog".
+        How you want to do your logging.  You may choose "syslog",
+        "file", or "both".  Setting this to "syslog" is nice because
+        you can keep all of your sudo logs in one place (see the
+        sample.syslog.conf file).  The default is "syslog".
 
   --with-logfac=FACILITY
-	Determines which syslog facility to log to.  This requires a 4.3BSD
-	or later version of syslog.  You can still set this for ancient
-	syslogs but it will have no effect.  The following facilities are
-	supported: authpriv (if your OS supports it), auth, daemon, user,
-	local0, local1, local2, local3, local4, local5, local6, and local7.
+        Determines which syslog facility to log to.  This requires
+        a 4.3BSD or later version of syslog.  You can still set
+        this for ancient syslogs but it will have no effect.  The
+        following facilities are supported: authpriv (if your OS
+        supports it), auth, daemon, user, local0, local1, local2,
+        local3, local4, local5, local6, and local7.
 
   --with-goodpri=PRIORITY
-	Determines which syslog priority to log successfully authenticated
-	commands.  The following priorities are supported: alert, crit,
-	debug, emerg, err, info, notice, and warning.
+        Determines which syslog priority to log successfully
+        authenticated commands.  The following priorities are
+        supported: alert, crit, debug, emerg, err, info, notice,
+        and warning.
 
   --with-badpri=PRIORITY
-	Determines which syslog priority to log unauthenticated commands
-	and errors.  The following priorities are supported: alert, crit,
-	debug, emerg, err, info, notice, and warning.
+        Determines which syslog priority to log unauthenticated
+        commands and errors.  The following priorities are supported:
+        alert, crit, debug, emerg, err, info, notice, and warning.
 
-  --with-logpath=path
-	Override the default location of the sudo log file and use "path"
-	instead.  By default will use /var/log/sudo.log if there is a /var/log
-	dir, falling back to /var/adm/sudo.log or /usr/adm/sudo.log if not.
+  --with-logpath=PATH
+        Override the default location of the sudo log file and use
+        "path" instead.  By default will use /var/log/sudo.log if
+        there is a /var/log dir, falling back to /var/adm/sudo.log
+        or /usr/adm/sudo.log if not.
 
-  --with-loglen
+  --with-loglen=NUMBER
 	Number of characters per line for the file log.  This is only used if
 	you are to "file" or "both".  This value is used to decide when to wrap
 	lines for nicer log files.  The default is 80.  Setting this to 0
@@ -311,11 +320,11 @@ The following options are also configurable at runtime:
 	If set, sudo will ignore '.' or '' (current dir) in $PATH.
 	The $PATH itself is not modified.
 
-  --with-mailto
-	User that mail from sudo is sent to.  This should go to a sysadmin at
-	your site.  The default is "root".
+  --with-mailto=USER|MAIL_ALIAS
+	User (or mail alias) that mail from sudo is sent to.
+	This should go to a sysadmin at your site.  The default is "root".
 
-  --with-mailsubject
+  --with-mailsubject="SUBJECT OF MAIL"
 	Subject of the mail sent to the "mailto" user. The token "%h"
 	will expand to the hostname of the machine.
 	Default is "*** SECURITY information for %h ***".
@@ -332,13 +341,13 @@ The following options are also configurable at runtime:
 	Send mail to the "alermail" user if the user is allowed to use sudo but
 	the command they are trying is not listed in their sudoers file entry.
 
-  --with-passprompt
+  --with-passprompt="PASSWORD PROMPT"
 	Default prompt to use when asking for a password; can be overridden
 	via the -p option and the SUDO_PROMPT environment variable. Supports
 	two escapes: "%u" expands to the user's login name and "%h" expands
 	to the local hostname.  Default is "Password:".
 
-  --with-badpass-message
+  --with-badpass-message="BAD PASSWORD MESSAGE"
 	Message that is displayed if a user enters an incorrect password.
 	The default is "Sorry, try again." unless insults are turned on.
 
@@ -352,42 +361,42 @@ The following options are also configurable at runtime:
 	a host alias (CNAME entry) due to performance issues and the fact that
 	there is no way to get all aliases from DNS.
 
-  --with-timedir=path
+  --with-timedir=PATH
 	Override the default location of the sudo timestamp directory and
 	use "path" instead.
 
-  --with-sendmail=path
+  --with-sendmail=PATH
 	Override configure's guess as to the location of sendmail.
 
   --without-sendmail
 	Do not use sendmail to mail messages to the "mailto" user.
 	Use only if don't run sendmail or the equivalent.
 
-  --with-umask
+  --with-umask=MASK
 	Umask to use when running the root command.  The default is 0022.
 
   --without-umask
 	Preserves the umask of the user invoking sudo.
 
-  --with-runas-default=user
+  --with-runas-default=USER
 	The default user to run commands as if the -u flag is not specified
 	on the command line.  This defaults to "root".
 
-  --with-exempt=group
+  --with-exempt=GROUP
 	Users in the specified group don't need to enter a password when
 	running sudo.  This may be useful for sites that don't want their
 	"core" sysadmins to have to enter a password but where Jr. sysadmins
 	need to.  You should probably use NOPASSWD in sudoers instead.
 
-  --with-passwd-tries=tries
+  --with-passwd-tries=NUMBER
 	Number of tries a user gets to enter his/her password before sudo logs
 	the failure and exits.  The default is 3.
 
-  --with-timeout=minutes
+  --with-timeout=NUMBER
 	Number of minutes that can elapse before sudo will ask for a passwd
 	again.  The default is 5, set this to 0 to always prompt for a password.
 
-  --with-password-timeout=minutes
+  --with-password-timeout=NUMBER
 	Number of minutes before the sudo password prompt times out.
 	The default is 5, set this to 0 for no password timeout.
 
@@ -429,7 +438,7 @@ The following options are also configurable at runtime:
 	password is entered.  You must either specify --with-insults or
 	enable insults in the sudoers file for this to have any effect.
 
-  --with-secure-path[=path]
+  --with-secure-path[=PATH]
 	Path used for every command run from sudo(8).  If you don't trust the
 	people running sudo to have a sane PATH environment variable you may
 	want to use this.  Another use is if you want to have the "root path"
@@ -441,7 +450,7 @@ The following options are also configurable at runtime:
   --without-lecture
 	Don't print the lecture the first time a user runs sudo.
 
-  --with-editor=path
+  --with-editor=PATH
 	Specify the default editor path for use by visudo.  This may be
 	a single pathname or a colon-separated list of editors.  In
 	the latter case, visudo will choose the editor that matches

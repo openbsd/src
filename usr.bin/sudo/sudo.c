@@ -370,9 +370,6 @@ main(argc, argv, envp)
 	(void) sigaction(SIGQUIT, &sa, NULL);
 	(void) sigaction(SIGTSTP, &sa, NULL);
 
-	/* Close the password file */
-	endpwent();
-
 	/* Override user's umask if configured to do so. */
 	if (def_ival(I_UMASK) != 0777)
 	    (void) umask(def_mode(I_UMASK));
@@ -384,6 +381,10 @@ main(argc, argv, envp)
 
 	/* Become specified user or root. */
 	set_perms(PERM_RUNAS, sudo_mode);
+
+	/* Close the password and group files */
+	endpwent();
+	endgrent();
 
 	/* Install the new environment. */
 	environ = new_environ;

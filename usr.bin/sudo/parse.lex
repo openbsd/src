@@ -3,8 +3,7 @@
  * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
- * This code is derived from software contributed by Chris Jepeway
- * <jepeway@cs.utk.edu>
+ * This code is derived from software contributed by Chris Jepeway.
  *
  * This code is derived from software contributed by Chris Jepeway
  * Redistribution and use in source and binary forms, with or without
@@ -69,7 +68,7 @@
 #include <sudo.tab.h>
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.lex,v 1.118 2002/01/15 18:16:31 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.lex,v 1.119 2002/03/16 00:44:47 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */

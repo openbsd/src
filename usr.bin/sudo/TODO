@@ -83,7 +83,9 @@ TODO list (most will be addressed in sudo 2.0)
     to go with it.  (See MINUS_I.patch)
 
 32) Some people want to be able to specify a special password in sudoers
-    in addition or instead of the normal one.
+    in addition or instead of the normal one.  The best argument for
+    this so far is to be able to use separate passwords for the
+    target users that are not the passwd file ones.
 
 33) Add support for trusted users.  E.g. allow user to run a certain
     command regardless of what dir it is in if it is owned by the

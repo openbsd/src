@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: compat.h,v 1.62 2002/01/08 15:00:18 millert Exp $
+ * $Sudo: compat.h,v 1.63 2002/01/25 18:38:22 millert Exp $
  */
 
 #ifndef _SUDO_COMPAT_H
@@ -243,6 +243,14 @@ typedef struct sigaction sigaction_t;
 # ifndef SA_RESTART 
 #  define SA_RESTART	0
 # endif
+#endif
+
+/*
+ * HP-UX 9.x has RLIMIT_* but no RLIM_INFINITY.
+ * Using -1 works because we only check for RLIM_INFINITY and do not set it.
+ */
+#ifndef RLIM_INFINITY
+# define RLIM_INFINITY	(-1)
 #endif
 
 #endif /* _SUDO_COMPAT_H */

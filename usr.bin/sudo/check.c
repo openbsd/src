@@ -67,7 +67,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: check.c,v 1.202 2001/12/14 19:52:47 millert Exp $";
+static const char rcsid[] = "$Sudo: check.c,v 1.203 2002/04/25 15:30:12 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -196,9 +196,9 @@ expand_prompt(old_prompt, user, host)
 
     if (subst) {
 	new_prompt = (char *) emalloc(len + 1);
-	for (p = old_prompt, np = new_prompt; *p; p++) {
+	for (p = old_prompt, np = new_prompt, lastchar = '\0'; *p; p++) {
 	    if (lastchar == '%' && (*p == 'h' || *p == 'u' || *p == '%')) {
-		/* substiture user/host name */
+		/* substitute user/host name */
 		if (*p == 'h') {
 		    np--;
 		    strcpy(np, user_shost);

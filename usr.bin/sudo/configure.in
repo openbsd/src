@@ -1,15 +1,15 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.348 2002/01/22 02:01:09 millert Exp $
+dnl $Sudo: configure.in,v 1.349 2002/04/18 15:41:30 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
-AC_INIT(sudo, 1.6.5)
+AC_INIT(sudo, 1.6.6)
 AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-echo "Configuring Sudo version 1.6.5"
+echo "Configuring Sudo version 1.6.6"
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl

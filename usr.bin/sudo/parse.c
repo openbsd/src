@@ -2,8 +2,7 @@
  * Copyright (c) 1996, 1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
- * This code is derived from software contributed by Chris Jepeway
- * <jepeway@cs.utk.edu>.
+ * This code is derived from software contributed by Chris Jepeway.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -97,7 +96,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.136 2002/01/08 15:00:18 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.c,v 1.137 2002/03/16 00:44:47 millert Exp $";
 #endif /* lint */
 
 /*
