@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.22 1999/11/06 20:45:26 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.23 1999/11/06 20:46:31 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.22 1999/11/06 20:45:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.23 1999/11/06 20:46:31 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -198,7 +198,7 @@ void do_entry(ent)
 			(ent->flags & CE_COMPACT) ? "Z" : "");
         size = sizefile(ent->log);
 	if (age_old_log(ent->log, &modtime) == -1)
-		modtime = -1;
+		modtime = 0;
         if (size < 0) {
                 if (verbose)
                         printf("does not exist.\n");
