@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.15 2000/04/28 17:45:33 mickey Exp $
+$OpenBSD: cpudevs,v 1.16 2000/06/13 17:58:49 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -55,10 +55,10 @@ type	fpu	0x82	FPU chips
 type	bus	0x83	Main Busses
 
 
-board	HP840		0x004	840/930 (Indigo)		/* blah */
+board	HP840		0x004	840/930 (Indigo)
 board	HP825		0x008	825/925 (FireFox)
-board	HP835		0x00a	83[45]/935 (TopGun)
-board	HP845		0x00b	845/945 (Technical ShoGun)
+board	HP835		0x00a	83[45]/[69]35 (TopGun)
+board	HP845		0x00b	845/645 (Technical ShoGun)
 board	HP850		0x00C	850/950 (Cheetah)
 board	HP949		0x00f	949 (Commercial ShoGun)
 
@@ -73,13 +73,13 @@ board	HP832		0x102	832/932 (SilverFox High)
 board	HP808		0x103	808/815/920 (Lego, SilverLite)
 board	HP842		0x104	842/948 (SilverBullet Low)
 board	HP852		0x105	852/958 (SilverBullet High)
-#board	HP		0x106	(Oboe)
+board	HPOBOE		0x106	(Oboe)
 
-#board	HP		0x180	(Dragon)
+board	HPDRAGON	0x180	(Dragon)
 board	HP890		0x181	890/990/992 (Chimera)
 board	HP891		0x182	891/T500 (TNT 100)
 board	HP892		0x183	892/T520 (TNT 120)
-board	HP893_T540	0x184	893/T540 (Jade 180)
+board	HP893_T540	0x184	893/T540 (Jade 180 U)
 
 board	HPHXPROC	0x1ff	Hitachi X Processor
 
@@ -89,8 +89,8 @@ board	HP730_66	0x202	730/66 (King Cobra)
 board	HP735_99	0x203	735/99 (Hardball)
 board	HP755_99	0x204	755/99 (Coral II)
 board	HP755_125	0x205	755/125 (Coral II)
-board	HP755_125E	0x205	755/125 (Snake Eagle, opt 91)
-board	HP735_125	0x206	735/125 (Snake Cheetah)
+#board	HP755_125E	0x205	755/125 (Snake Eagle, opt 91)
+board	HP735_130	0x206	735/130 (Snake Cheetah)
 
 board	HP817		0x280	817/827/957/957LX/FH20 (Nova Low)
 board	HP837		0x281	837/847/857/967/967LX/FGHI30 (Nova High)
@@ -112,7 +112,7 @@ board	HP715S_33	0x313	715S/33 (Spider-33)
 board	HP715T_50	0x314	715T/50 (Trailways-50)
 board	HP715T_33	0x315	715T/33 (Trailways-33)
 board	HP715_75	0x316	715/75 (Scorpio Sr.)
-board	HP715_100	0x317	715/100 (Scorpio 100)
+board	HP715_99	0x317	715/99 (Scorpio 100)
 board	HP725_50	0x318	725/50 (Spectra)
 board	HP725_75	0x319	725/75 (Spectra)
 
@@ -209,8 +209,8 @@ board	HP899		0x5b1	899/K570 (BraveHawk 200 DC3)
 #board	HP		0x5b6	(DragonHawk U+ 240 DC3)
 #board	HP		0x5b7	(DragonHawk U+ 240 DC3-)
 #board			0x5b8	SPP2250 240MHz processor
-#board	HP		0x5b9	350/550 (UltraLight 1-way U+/240)
-#board	HP		0x5ba	350/550 (UltraLight 2-way U+/240)
+board	HP350_1		0x5b9	350/550 (UltraLight 1-way U+/240)
+board	HP350_2		0x5ba	350/550 (UltraLight 2-way U+/240)
 #board			0x5bb	(AllegroHigh W)
 #board			0x5bc	(AllegroLow W)
 #board			0x5bd	(Forte W 2-way)
@@ -229,7 +229,7 @@ board	HP899		0x5b1	899/K570 (BraveHawk 200 DC3)
 #board			0x5ca	(Rhapsody DC- 360)
 #board			0x5cb	(Crescendo 440)
 
-#board			0x5ff	(Hitachi W)
+board	HITACHIW	0x5ff	(Hitachi W)
 
 board	HP712_60	0x600	712/60 (Gecko)
 board	HP712_80	0x601	712/80 (King Gecko)
@@ -242,8 +242,8 @@ board	HP712_120	0x605	712/120 (King Gecko)
 #board	HP		0x608	(Gila 120)
 board	HP715_80	0x609	715/80 (Scorpio-L)
 board	HP715_64	0x60A	715/64 (Mirage Jr.)
-board	HP715_99	0x60B	715/100 (Mirage Sr.)
-board	HP725_99P	0x60C	715/100+ (Mirage Sr.)
+board	HP715_100	0x60B	715/100 (Mirage Sr.)
+board	HP715_100XC	0x60C	715/100XC (Mirage Sr.)
 board	HP725_100	0x60D	725/100 (Electra)
 board	HP725_120	0x60E	725/120 (Electra)
 board	HP715_100L	0x610	715/100L (Scorpio-L)
