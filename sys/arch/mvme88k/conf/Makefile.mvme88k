@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.mvme88k,v 1.1.1.1 1997/03/03 19:31:53 rahnds Exp $
+#	$Id: Makefile.mvme88k,v 1.2 1997/05/24 03:02:28 rahnds Exp $
 #
 # Makefile for NetBSD
 #
@@ -110,7 +110,6 @@ SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
 
 assym.s: genassym
 	./genassym >assym.s
-	cp assym.s ${.CURDIR}/../../include
 
 genassym:
 	${HOSTCC} -static ${INCLUDES} ${IDENT} ${PARAM} -Dmvme88k -Dm88k \

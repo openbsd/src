@@ -214,6 +214,7 @@
 #define ASSEMBLER
 #endif
 
+#include "assym.s"
 #include <machine/trap.h>        	/* for T_ defines */
 #include <machine/asm.h>
 

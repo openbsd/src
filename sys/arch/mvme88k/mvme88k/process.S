@@ -32,6 +32,7 @@
 #define ASSEMBLER
 #endif
 
+#include "assym.s"
 #include "machine/asm.h"
 #include "machine/psl.h"
 

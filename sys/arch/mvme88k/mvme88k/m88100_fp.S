@@ -31,6 +31,7 @@
 
 #define ASSEMBLER
 
+#include "assym.s"
 #include <machine/trap.h>
 #include <machine/asm.h>
 

@@ -280,7 +280,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	/* beyond partition? */
 	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
 		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
-		if (bp->b_blkno == maxsz) {
+		if (sz == 0) {
 			/* if exactly at end of disk, return an EOF */
 			bp->b_resid = bp->b_bcount;
 			return(0);

@@ -38,6 +38,7 @@
 # define ASSEMBLER
 #endif
 
+#include "assym.s"
 #include <machine/trap.h>
 #include <machine/board.h>
 #include <machine/asm.h>

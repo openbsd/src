@@ -59,9 +59,10 @@
 #define ASSEMBLER
 #endif
 
+#include "assym.s"
 #include "machine/asm.h"
-#include "machine/m88100.h"
 #include "machine/trap.h"
+#include "machine/m88100.h"
 #include "machine/psl.h"
 #include "machine/vmparam.h"      /* INTSTACK_SIZE */
 
@@ -82,6 +83,7 @@
 	text
 
 LABEL(_kernelstart)
+LABEL(_kernel_text)
 LABEL(_start)
 LABEL(start)
 	br	_start_text
@@ -294,7 +296,7 @@ _msgsw:
 	global	_intstack
 	global	_intstack_end
 _intstack:
-	space	4 * NBPG	/* 16K */
+	space	(4 * NBPG)	/* 16K */
 _intstack_end:
 
 /*
