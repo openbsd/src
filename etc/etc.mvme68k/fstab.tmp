@@ -1,0 +1,2 @@
+/dev/sd0a / ffs rw 1 1
+/dev/sd0g /usr ffs rw 1 2 
