@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.13 1999/05/02 19:20:31 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.30 1999/05/02 12:48:56 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.14 1999/07/07 22:04:08 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.31 1999/06/10 13:29:02 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -387,12 +387,12 @@ rsa_sig_decode_hash (struct message *msg)
   if (!found)
     {
 #ifdef notyet
-    rawkey = ike_auth_get_key (exchange->name, &keylen);
-    if (!rawkey)
-      {
-	log_print ("rsa_sig_decode_hash: no public key found");
-	return -1;
-      }
+      rawkey = ike_auth_get_key (exchange->name, &keylen);
+      if (!rawkey)
+	{
+	  log_print ("rsa_sig_decode_hash: no public key found");
+	  return -1;
+	}
 #else
       log_print ("rsa_sig_decode_hash: no public key found");
       return -1;
