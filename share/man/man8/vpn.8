@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.69 2003/09/05 09:32:18 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.70 2003/09/08 14:01:13 fgsch Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -159,7 +159,7 @@ must be defined on each end of the VPN, e.g.:
 # ipsecadm new esp -spi $SPI_BA -src $GATEWAY_B \e
     -dst $GATEWAY_A -forcetunnel -enc 3des -auth sha1 \e
     -keyfile $ENCRYPTION_KEY_FILE \e
-    -authkeyfile$ AUTHENTICATION_KEY_FILE
+    -authkeyfile $AUTHENTICATION_KEY_FILE
 .Ed
 .Pp
 Note that the
