@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2003/07/14 18:56:12 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2003/07/29 12:13:32 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -371,10 +371,6 @@ calc_delayconst(void)
 			ns_per_tick = 1000000000 / ticks_per_sec;
 			ticks_per_intr = ticks_per_sec / hz;
 			ppc_intr_enable(s);
-			printf("clock error tick %x tick/sec %x hz %x err %x\n",
-				ticks_per_intr, ticks_per_sec, hz,
-				ticks_per_sec - ticks_per_intr * hz);
-			
 			break;
 		}
 		if ((phandle = OF_child(qhandle)))
