@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.97 2002/04/07 19:29:55 millert Exp $
+.\"	$OpenBSD: options.4,v 1.98 2002/05/03 15:49:16 brad Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -112,7 +112,7 @@ On those architectures that support it, this enables binary
 compatibility with
 .Em SunOS 4.x
 applications built for the same architecture.
-This option is supported on the sparc and most m68k platforms.
+This option is supported on sparc and most m68k architectures.
 See
 .Xr compat_sunos 8 .
 .It Cd option COMPAT_ULTRIX
@@ -120,8 +120,8 @@ On those architectures that support it, this enables binary
 compatibility with
 .Tn Ultrix
 applications built for the same architecture.
-This option is available on the little-endian MIPS platforms like the
-pmax and arc.
+This option is available on the little-endian MIPS architectures like
+arc and pmax.
 See
 .Xr compat_ultrix 8 .
 .It Cd option COMPAT_FREEBSD
@@ -656,7 +656,7 @@ for details.
 .It Cd option GATEWAY
 Enables
 .Em IPFORWARDING
-and (on most ports) increases the size of
+and (on most architectures) increases the size of
 .Em NMBCLUSTERS .
 In general,
 .Em GATEWAY
@@ -946,7 +946,7 @@ Sets the maximum number of
 style shared memory pages that are available through the
 .Xr shmget 2
 system call.
-Default value is 1024 on most ports.
+Default value is 1024 on most architectures.
 See
 .Pa /usr/include/machine/vmparam.h
 for the default.
@@ -977,8 +977,10 @@ Default value is 10.
 Size of kernel mbuf cluster map,
 .Em mb_map ,
 in CLBYTES-sized logical pages.
-Default on most ports is 256 (512 with
-.Dq option GATEWAY ) .
+Defaults to 2048 on i386, to 1024 on powerc and sparc64, and to 512 on
+other architectures (doubled when using
+.Dq option GATEWAY
+except on i386).
 See
 .Pa /usr/include/machine/param.h
 for exact default information.
