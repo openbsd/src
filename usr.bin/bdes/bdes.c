@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.8 2002/07/03 23:13:02 deraadt Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.9 2003/03/31 20:46:03 rohee Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.8 2002/07/03 23:13:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bdes.c,v 1.9 2003/03/31 20:46:03 rohee Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ main(ac, av)
 	int i;				/* counter in a for loop */
 	char *p;			/* used to obtain the key */
 	Desbuf msgbuf;			/* I/O buffer */
-	int kflag;			/* command-line encryptiooon key */
+	int kflag;			/* command-line encryption key */
 	int argc;			/* the real arg count */
 	char **argv;			/* the real argument vector */
 
@@ -213,7 +213,7 @@ main(ac, av)
 	}
 	argv[argc] = NULL;
 
-	/* initialize the initialization vctor */
+	/* initialize the initialization vector */
 	MEMZERO(ivec, 8);
 
 	/* process the argument list */
@@ -404,7 +404,7 @@ cvtkey(obuf, ibuf)
 	 * just switch on the key base
 	 */
 	switch(keybase) {
-	case KEY_ASCII:			/* ascii to integer */
+	case KEY_ASCII:			/* ASCII to integer */
 		(void)strncpy(obuf, ibuf, 8);
 		return;
 	case KEY_DEFAULT:		/* tell from context */
