@@ -1,4 +1,4 @@
-.\"	$OpenBSD: reboot.8,v 1.30 2003/09/02 21:34:48 miod Exp $
+.\"	$OpenBSD: reboot.8,v 1.31 2004/04/21 18:31:33 miod Exp $
 .\"	$NetBSD: reboot.8,v 1.3 1995/10/05 05:36:21 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -75,7 +75,8 @@ This option should probably not be used.
 .It Fl p
 Causes the system to power down, if it is being halted, and the
 hardware supports automatic power down.
-(Currently supported on some i386, mac68k, macppc, sparc and sparc64 platforms.)
+(Currently supported on some i386, luna88k, mac68k, macppc,
+sparc and sparc64 platforms.)
 .El
 .Pp
 Normally, the
@@ -92,9 +93,11 @@ script which is run at shutdown time
 .Xr utmp 5 ,
 .\" .Xr boot 8 ,
 .Xr boot_alpha 8 ,
+.Xr boot_amd64 8 ,
 .Xr boot_hp300 8 ,
 .Xr boot_hppa 8 ,
 .Xr boot_i386 8 ,
+.\" .Xr boot_luna88k 8 ,
 .Xr boot_mac68k 8 ,
 .Xr boot_macppc 8 ,
 .Xr boot_mvme68k 8 ,
