@@ -1,3 +1,4 @@
+/*	$OpenBSD: icu.s,v 1.3 1996/04/30 21:54:40 mickey Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -150,6 +151,9 @@ IDTVEC(softnet)
 #endif
 #ifdef IMP
 	DONET(NETISR_IMP, _impintr)
+#endif
+#ifdef IPX
+	DONET(NETISR_IPX, _ipxintr)
 #endif
 #ifdef NS
 	DONET(NETISR_NS, _nsintr)
