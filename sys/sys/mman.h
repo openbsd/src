@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.2 1996/03/03 12:12:01 niklas Exp $	*/
+/*	$OpenBSD: mman.h,v 1.3 1996/03/24 17:01:33 tholo Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -90,6 +90,7 @@ int	msync __P((caddr_t, size_t));
 int	mlock __P((caddr_t, size_t));
 int	munlock __P((caddr_t, size_t));
 int	madvise __P((caddr_t, size_t, int));
+int	mincore __P((caddr_t, size_t, char *));
 __END_DECLS
 
 #endif /* !_KERNEL */
