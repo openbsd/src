@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.c,v 1.11 1999/04/05 21:02:48 niklas Exp $	*/
-/*	$EOM: pf_encap.c,v 1.60 1999/04/05 08:07:55 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.12 1999/04/19 21:07:42 niklas Exp $	*/
+/*	$EOM: pf_encap.c,v 1.63 1999/04/15 19:03:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -71,7 +71,6 @@
   ((a) > 0 ? (1 + (((a) - 1) | (sizeof (long) - 1))) : sizeof (long))
 
 static void pf_encap_deregister_on_demand_connection (char *);
-static char *pf_encap_on_demand_connection (in_addr_t);
 static int pf_encap_register_on_demand_connection (in_addr_t, char *);
 static void pf_encap_request_sa (struct encap_msghdr *);
 
@@ -121,7 +120,7 @@ pf_encap_expire (struct encap_msghdr *emsg)
   log_debug (LOG_SYSDEP, 20,
 	     "pf_encap_expire: NOTIFY_%s_EXPIRE dst %s spi %x sproto %d",
 	     emsg->em_not_type == NOTIFY_SOFT_EXPIRE ? "SOFT" : "HARD",
-	     inet_ntoa (emsg->em_not_dst), emsg->em_not_spi,
+	     inet_ntoa (emsg->em_not_dst), htonl (emsg->em_not_spi),
 	     emsg->em_not_sproto);
 
   /*
@@ -149,11 +148,7 @@ pf_encap_expire (struct encap_msghdr *emsg)
    */
   if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
       == SA_FLAG_STAYALIVE)
-    {
-      /* If we are already renegotiating, don't start over.  */
-      if (!exchange_lookup_by_name (sa->name, 2))
-	exchange_establish (sa->name, 0, 0);
-    }
+    exchange_establish (sa->name, 0, 0);
 
   if (emsg->em_not_type == NOTIFY_HARD_EXPIRE)
     {
@@ -188,7 +183,6 @@ pf_encap_notify (struct encap_msghdr *emsg)
     case NOTIFY_SOFT_EXPIRE:
     case NOTIFY_HARD_EXPIRE:
       pf_encap_expire (emsg);
-      free (emsg);
       break;
 
     case NOTIFY_REQUEST_SA:
@@ -198,9 +192,9 @@ pf_encap_notify (struct encap_msghdr *emsg)
     default:
       log_print ("pf_encap_notify: unknown notify message type (%d)",
 		 emsg->em_not_type);
-      free (emsg);
       break;
     }
+  free (emsg);
 }
 
 void
@@ -290,15 +284,6 @@ pf_encap_write (struct encap_msghdr *em)
   return 0;
 }
 
-static void
-pf_encap_finalize_request_sa (void *v_emsg, int fail)
-{
-  struct encap_msghdr *emsg = v_emsg;
-
-  pf_encap_write (emsg);
-  free (emsg);
-}
-
 /*
  * We are asked to setup an SA that can protect packets like the one described
  * in EMSG.  We are supposed to deallocate EMSG too.
@@ -306,31 +291,25 @@ pf_encap_finalize_request_sa (void *v_emsg, int fail)
 static void
 pf_encap_request_sa (struct encap_msghdr *emsg)
 {
-  char *conn;
+  struct on_demand_connection *node;
 
   log_debug (LOG_SYSDEP, 10,
 	     "pf_encap_request_sa: SA requested for %s type %d",
 	     inet_ntoa (emsg->em_not_dst), emsg->em_not_satype);
 
-  /* XXX pf_encap_on_demand_connection should return a list of connections.  */
-  conn = pf_encap_on_demand_connection (emsg->em_not_dst.s_addr);
-  if (!conn)
-    /* Not ours.  */
-    goto bail_out;
-
   /*
-   * If a connection or an SA for this connections already exists, drop it.
-   * XXX Perhaps this test is better to have in exchange_establish.
-   * XXX We are leaking emsg here.
-   */
-  if (exchange_lookup_by_name (conn, 2) || sa_lookup_by_name (conn, 2))
-    goto bail_out;
-
-  exchange_establish (conn, pf_encap_finalize_request_sa, emsg);
-  return;
-
- bail_out:
-  free (emsg);
+   * In my mind this is rediculous, PF_ENCAP is just broken.  Well, to
+   * describe how it is broken it suffices to say that REQUEST_SA messages
+   * does not tell which of all connections using a specific security
+   * gateway needs to be brought up.  So we have to bring them all up.
+   * I won't bother replying to the PF_ENCAP socket because the kernel
+   * does not require it when this request is due to a SPI 1 route.
+   */  
+  for (node = LIST_FIRST (&on_demand_connections); node;
+       node = LIST_NEXT (node, link))
+    if (emsg->em_not_dst.s_addr == node->dst
+	&& !sa_lookup_by_name (node->conn, 2))
+      exchange_establish (node->conn, 0, 0);
 }
 
 /*
@@ -722,7 +701,7 @@ pf_encap_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   return -1;
 }
 
-/* Enable a flow given a SA.  */
+/* Enable a flow given an SA.  */
 int
 pf_encap_enable_sa (struct sa *sa)
 {
@@ -1026,20 +1005,4 @@ pf_encap_deregister_on_demand_connection (char *conn)
 	free (node);
 	break;
       }
-}
-
-/*
- * Return a phase 2 connection name given a security gateway's IP-address.
- * XXX Does only handle 1-1 mappings so far.
- */
-static char *
-pf_encap_on_demand_connection (in_addr_t dst)
-{
-  struct on_demand_connection *node;
-
-  for (node = LIST_FIRST (&on_demand_connections); node;
-       node = LIST_NEXT (node, link))
-    if (dst == node->dst)
-      return node->conn;
-  return 0;
 }
