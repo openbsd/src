@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.5 2000/10/20 15:18:27 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.6 2000/11/05 22:16:03 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -70,6 +70,7 @@ cpumatch(parent, cfdata, aux)
 
 	return (1);
 }
+void config_l2cr();
 
 static void
 cpuattach(parent, dev, aux)
@@ -147,8 +148,121 @@ cpuattach(parent, dev, aux)
 		printf(": %d Mhz", clock_freq);
 
 	}
+	/* if processor is G3 org G4, configure l2 cache */ 
+	if  ( (cpu == 8) || (cpu == 12) ) {
+		config_l2cr();
+	}
 	printf("\n");
 
 
+}
+
+#define L2CR 1017
+
+#define L2CR_L2E        0x80000000 /* 0: L2 enable */
+#define L2CR_L2PE       0x40000000 /* 1: L2 data parity enable */
+#define L2CR_L2SIZ      0x30000000 /* 2-3: L2 size */
+#define  L2SIZ_RESERVED         0x00000000
+#define  L2SIZ_256K             0x10000000
+#define  L2SIZ_512K             0x20000000
+#define  L2SIZ_1M       0x30000000
+#define L2CR_L2CLK      0x0e000000 /* 4-6: L2 clock ratio */
+#define  L2CLK_DIS              0x00000000 /* disable L2 clock */
+#define  L2CLK_10               0x02000000 /* core clock / 1   */
+#define  L2CLK_15               0x04000000 /*            / 1.5 */
+#define  L2CLK_20               0x08000000 /*            / 2   */
+#define  L2CLK_25               0x0a000000 /*            / 2.5 */
+#define  L2CLK_30               0x0c000000 /*            / 3   */
+#define L2CR_L2RAM      0x01800000 /* 7-8: L2 RAM type */
+#define  L2RAM_FLOWTHRU_BURST   0x00000000
+#define  L2RAM_PIPELINE_BURST   0x01000000
+#define  L2RAM_PIPELINE_LATE    0x01800000
+#define L2CR_L2DO       0x00400000 /* 9: L2 data-only.
+                                      Setting this bit disables instruction
+                                      caching. */
+#define L2CR_L2I        0x00200000 /* 10: L2 global invalidate. */
+#define L2CR_L2CTL      0x00100000 /* 11: L2 RAM control (ZZ enable).
+                                      Enables automatic operation of the
+                                      L2ZZ (low-power mode) signal. */
+#define L2CR_L2WT       0x00080000 /* 12: L2 write-through. */
+#define L2CR_L2TS       0x00040000 /* 13: L2 test support. */
+#define L2CR_L2OH       0x00030000 /* 14-15: L2 output hold. */
+#define L2CR_L2SL       0x00008000 /* 16: L2 DLL slow. */
+#define L2CR_L2DF       0x00004000 /* 17: L2 differential clock. */
+#define L2CR_L2BYP      0x00002000 /* 18: L2 DLL bypass. */
+#define L2CR_L2IP       0x00000001 /* 31: L2 global invalidate in progress
+                                      (read only). */
+#ifdef L2CR_CONFIG
+u_int l2cr_config = L2CR_CONFIG;
+#else
+u_int l2cr_config = 0;
+#endif
+
+void
+config_l2cr()
+{
+	u_int l2cr, x;
+
+	__asm __volatile ("mfspr %0, 1017" : "=r"(l2cr));
+
+	/*
+	 * Configure L2 cache if not enabled.
+	 */
+	if ((l2cr & L2CR_L2E) == 0 && l2cr_config != 0) {
+		l2cr = l2cr_config;
+		asm volatile ("mtspr 1017,%0" :: "r"(l2cr));
+
+		/* Wait for L2 clock to be stable (640 L2 clocks). */
+		delay(100);
+
+		/* Invalidate all L2 contents. */
+		l2cr |= L2CR_L2I;
+		asm volatile ("mtspr 1017,%0" :: "r"(l2cr));
+		do {
+			asm volatile ("mfspr %0, 1017" : "=r"(x));
+		} while (x & L2CR_L2IP);
+				      
+		/* Enable L2 cache. */
+		l2cr &= ~L2CR_L2I;
+		l2cr |= L2CR_L2E;
+		asm volatile ("mtspr 1017,%0" :: "r"(l2cr));
+	}
+
+	if (l2cr & L2CR_L2E) {
+		switch (l2cr & L2CR_L2SIZ) {
+		case L2SIZ_256K:
+			printf(": 256KB");
+			break;
+		case L2SIZ_512K:
+			printf(": 512KB");
+			break;
+		case L2SIZ_1M:  
+			printf(": 1MB");
+			break;
+		default:
+			printf(": unknown size");
+		}
+#if 0
+		switch (l2cr & L2CR_L2RAM) {
+		case L2RAM_FLOWTHRU_BURST:
+			printf(" Flow-through synchronous burst SRAM");
+			break;
+		case L2RAM_PIPELINE_BURST:
+			printf(" Pipelined synchronous burst SRAM");
+			break;
+		case L2RAM_PIPELINE_LATE:
+			printf(" Pipelined synchronous late-write SRAM");
+			break;
+		default:
+			printf(" unknown type");
+		}
+		
+		if (l2cr & L2CR_L2PE)
+			printf(" with parity");  
+#endif
+		printf(" backside cache");
+	} else
+		printf(": L2 cache not enabled");
+		
 }
 
