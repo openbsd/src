@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.c,v 1.2 2000/09/30 16:06:34 aaron Exp $ */
+/*	$OpenBSD: exec_aout.c,v 1.3 2001/12/05 10:11:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.2 2000/09/30 16:06:34 aaron Exp $";
+static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.3 2001/12/05 10:11:23 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -45,11 +45,11 @@ static char rcsid[] = "$OpenBSD: exec_aout.c,v 1.2 2000/09/30 16:06:34 aaron Exp
 
 #include "ukc.h"
 
-caddr_t		aout_p,aout_r;
+caddr_t		aout_p, aout_r;
 int		aout_psz = 0, aout_rsz = 0;
 struct exec	aout_ex;
 
-caddr_t 
+caddr_t
 aout_adjust(x)
 	caddr_t x;
 {
@@ -95,23 +95,23 @@ aout_loadkernel(file)
 	char *file;
 {
 	int fd;
-	off_t cur,end;
+	off_t cur, end;
 
 	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
 		err(1, "%s", file);
-	  
+
 	if (read(fd, (char *)&aout_ex, sizeof(aout_ex)) != sizeof(aout_ex))
 		errx(1, "can't read a.out header");
-	
+
 	if (N_BADMAG(aout_ex))
 		errx(1, "bad a.out magic\n");
-	
+
 	(void)lseek(fd, (off_t)0, SEEK_SET);
 
 	aout_psz = (int)(aout_ex.a_text+aout_ex.a_data);
-	
+
 	aout_p = malloc(aout_psz);
-	
+
 	if (read(fd, aout_p, aout_psz) != aout_psz)
 		errx(1, "can't read a.out text and data");
 
@@ -125,7 +125,7 @@ aout_loadkernel(file)
 
 	if (read(fd, aout_r, aout_rsz) != aout_rsz)
 		errx(1, "can't read rest of file %s", file);
-	
+
 	close(fd);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.3 2001/01/25 05:42:12 art Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.4 2001/12/05 10:11:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.3 2001/01/25 05:42:12 art Exp $";
+static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.4 2001/12/05 10:11:23 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -46,7 +46,7 @@ static char rcsid[] = "$OpenBSD: exec_elf.c,v 1.3 2001/01/25 05:42:12 art Exp $"
 
 #include "ukc.h"
 
-caddr_t		ptr,rest,pre;
+caddr_t		ptr, rest, pre;
 Elf_Ehdr	elf_ex;
 Elf_Phdr	*elf_phdr;
 Elf_Shdr	*elf_shdr;
@@ -54,14 +54,14 @@ char		*elf_total;
 char		*elf_shstrtab;
 off_t		elf_size;
 
-caddr_t 
+caddr_t
 elf_adjust(x)
 	caddr_t x;
 {
 	int i;
 	Elf_Shdr *s;
 	unsigned long y = 0;
-	
+
 	s = elf_shdr;
 
 	for (i = 0; i < elf_ex.e_shnum; i++) {
@@ -70,8 +70,7 @@ elf_adjust(x)
 		if (((unsigned long)x >= s[i].sh_addr) &&
 		    ((unsigned long)x < (s[i].sh_addr+s[i].sh_size))) {
 			y = (unsigned long)&elf_total[(unsigned long)x -
-						     s[i].sh_addr +
-						     s[i].sh_offset]; 
+			    s[i].sh_addr + s[i].sh_offset];
 			break;
 		}
 	}
@@ -104,11 +103,11 @@ int
 elf_check(file)
 	char *file;
 {
-	int fd,ret = 1;
+	int fd, ret = 1;
 
 	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
 		return (0);
-	  
+
 	if (read(fd, (char *)&elf_ex, sizeof(elf_ex)) != sizeof(elf_ex))
 		ret = 0;
 
@@ -131,13 +130,13 @@ elf_loadkernel(file)
 
 	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
 		err(1, "%s", file);
-	  
+
 	if (read(fd, (char *)&elf_ex, sizeof(elf_ex)) != sizeof(elf_ex))
 		errx(1, "can't read elf header");
-	
+
 	if (!IS_ELF(elf_ex))
 		errx(1, "bad elf magic\n");
-	
+
 	elf_size = lseek(fd, 0L, SEEK_END);
 	(void)lseek(fd, 0L, SEEK_SET);
 	elf_total = malloc(elf_size);
@@ -150,9 +149,9 @@ elf_loadkernel(file)
 
 	p = elf_phdr;
 	s = elf_shdr;
-	
+
 	elf_shstrtab = &elf_total[elf_shdr[elf_ex.e_shstrndx].sh_offset];
-	
+
 	close(fd);
 }
 

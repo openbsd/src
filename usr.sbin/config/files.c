@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.7 1997/11/13 08:21:53 deraadt Exp $	*/
+/*	$OpenBSD: files.c,v 1.8 2001/12/05 10:11:23 deraadt Exp $	*/
 /*	$NetBSD: files.c,v 1.6 1996/03/17 13:18:17 cgd Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ addobject(path, optx, flags)
 		error("duplicate file %s", path);
 		xerror(oi->oi_srcfile, oi->oi_srcline,
 		    "here is the original definition");
-	} 
+	}
 	oi->oi_next = NULL;
 	oi->oi_srcfile = yyfile;
 	oi->oi_srcline = currentline();
@@ -187,7 +187,7 @@ addobject(path, optx, flags)
 	oi->oi_optf = NULL;
 	*nextobject = oi;
 	nextobject = &oi->oi_next;
-}     
+}
 
 /*
  * We have finished reading some "files" file, either ../../conf/files
@@ -290,16 +290,16 @@ fixfiles()
 	return (err);
 }
 
-/*    
+/*
  * We have finished reading everything.  Tack the objects down: calculate
  * selection.
- */   
-int    
+ */
+int
 fixobjects()
-{     
+{
 	struct objects *oi;
 	struct nvlist *flathead, **flatp;
-	int err, sel; 
+	int err, sel;
 
 	err = 0;
 	for (oi = allobjects; oi != NULL; oi = oi->oi_next) {
@@ -316,10 +316,10 @@ fixobjects()
 				continue;
 		}
 
-		oi->oi_flags |= OI_SEL;  
+		oi->oi_flags |= OI_SEL;
 	}
 	return (err);
-}     
+}
 
 /*
  * Called when evaluating a needs-count expression.  Make sure the

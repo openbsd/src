@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.14 2000/01/04 14:23:43 angelos Exp $	*/
+/*	$OpenBSD: config.h,v 1.15 2001/12/05 10:11:23 deraadt Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #if defined(__STDC__) || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
 #else /* ...STDC */
-#define	__P(protos)	()		/* traditional C preprocessor */    
+#define	__P(protos)	()		/* traditional C preprocessor */
 #endif /* ...STDC */
 #endif /* ...BSD */
 
@@ -222,11 +222,11 @@ struct devi {
  * Files.  Each file is either standard (always included) or optional,
  * depending on whether it has names on which to *be* optional.  The
  * options field (fi_optx) is actually an expression tree, with nodes
- * for OR, AND, and NOT, as well as atoms (words) representing some   
+ * for OR, AND, and NOT, as well as atoms (words) representing some
  * particular option.  The node type is stored in the nv_int field.
  * Subexpressions appear in the `next' field; for the binary operators
  * AND and OR, the left subexpression is first stored in the nv_ptr field.
- * 
+ *
  * For any file marked as needs-count or needs-flag, fixfiles() will
  * build fi_optf, a `flat list' of the options with nv_int fields that
  * contain counts or `need' flags; this is used in mkheaders().

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.5 2001/02/04 20:42:12 maja Exp $ */
+/*	$OpenBSD: cmd.c,v 1.6 2001/12/05 10:11:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.5 2001/02/04 20:42:12 maja Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.6 2001/12/05 10:11:23 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -85,8 +85,8 @@ int
 Xadd(cmd)
 	cmd_t *cmd;
 {
-	int a;
 	short unit, state;
+	int a;
 
 	if (strlen(cmd->args) == 0)
 		printf("Dev expected\n");
@@ -113,7 +113,6 @@ Xbase(cmd)
 		}
 	} else
 		printf("Unknown argument\n");
-
 	return (CMD_CONT);
 }
 
@@ -121,8 +120,8 @@ int
 Xchange(cmd)
 	cmd_t *cmd;
 {
-	int a;
 	short unit, state;
+	int a;
 
 	if (strlen(cmd->args) == 0)
 		printf("DevNo or Dev expected\n");
@@ -132,7 +131,6 @@ Xchange(cmd)
 		common_dev(cmd->args, a, unit, state, UC_CHANGE);
 	else
 		printf("Unknown argument\n");
-	
 	return (CMD_CONT);
 }
 
@@ -140,8 +138,8 @@ int
 Xdisable(cmd)
 	cmd_t *cmd;
 {
-	int a;
 	short unit, state;
+	int a;
 
 	if (strlen(cmd->args) == 0)
 		printf("Attr, DevNo or Dev expected\n");
@@ -153,7 +151,6 @@ Xdisable(cmd)
 		common_dev(cmd->args, a, unit, state, UC_DISABLE);
 	else
 		printf("Unknown argument\n");
-
 	return (CMD_CONT);
 }
 
@@ -161,8 +158,8 @@ int
 Xenable(cmd)
 	cmd_t *cmd;
 {
-	int a;
 	short unit, state;
+	int a;
 
 	if (strlen(cmd->args) == 0)
 		printf("Attr, DevNo or Dev expected\n");
@@ -174,7 +171,6 @@ Xenable(cmd)
 		common_dev(cmd->args, a, unit, state, UC_ENABLE);
 	else
 		printf("Unknown argument\n");
-
 	return (CMD_CONT);
 }
 
@@ -182,8 +178,8 @@ int
 Xfind(cmd)
 	cmd_t *cmd;
 {
-	int a;
 	short unit, state;
+	int a;
 
 	if (strlen(cmd->args) == 0)
 		printf("DevNo or Dev expected\n");
@@ -193,7 +189,6 @@ Xfind(cmd)
 		common_dev(cmd->args, a, unit, state, UC_FIND);
 	else
 		printf("Unknown argument\n");
-
 	return (CMD_CONT);
 }
 
@@ -216,30 +211,27 @@ int
 Xlist(cmd)
 	cmd_t *cmd;
 {
-	int	i = 0;
 	struct cfdata *cd;
+	int	i = 0;
 
 	cnt = 0;
-
 	cd = get_cfdata(0);
 
-	while(cd->cf_attach != 0) {
+	while (cd->cf_attach != 0) {
 		if (more())
 			break;
-		pdev(i++);	  
+		pdev(i++);
 		cd++;
 	}
 
 	if (nopdev == 0) {
-		while(i <= (totdev+maxpseudo)) {
+		while (i <= (totdev+maxpseudo)) {
 			if (more())
 				break;
 			pdev(i++);
 		}
 	}
-
 	cnt = -1;
-
 	return (CMD_CONT);
 }
 
@@ -251,7 +243,6 @@ Xshow(cmd)
 		show();
 	else
 		show_attr(&cmd->args[0]);
-
 	return (CMD_CONT);
 }
 
@@ -280,27 +271,25 @@ Xtimezone(cmd)
 	char	*c;
 
 	ukc_mod_kernel = 1;
-
 	tz = (struct timezone *)adjust((caddr_t)(nl[TZ_TZ].n_value));
 
 	if (strlen(cmd->args) == 0) {
-		printf("timezone = %d, dst = %d\n", 
+		printf("timezone = %d, dst = %d\n",
 		    tz->tz_minuteswest, tz->tz_dsttime);
 	} else {
 		if (number(cmd->args, &num) == 0) {
 			tz->tz_minuteswest = num;
-			c = cmd->args; 
+			c = cmd->args;
 			while ((*c != '\0') && !isspace(*c))
 				c++;
 			while ((*c != '\0') && isspace(*c))
 				c++;
 			if (strlen(c) != 0 && number(c, &num) == 0)
 				tz->tz_dsttime = num;
-			printf("timezone = %d, dst = %d\n", 
+			printf("timezone = %d, dst = %d\n",
 			    tz->tz_minuteswest, tz->tz_dsttime);
-		} else 
+		} else
 			printf("Unknown argument\n");
 	}
-
 	return (CMD_CONT);
 }

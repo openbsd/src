@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.8 2001/01/05 02:55:24 angelos Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.9 2001/12/05 10:11:23 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -58,8 +58,8 @@
  * Make the Makefile.
  */
 
-static const char *srcpath __P((struct files *)); 
-                        
+static const char *srcpath __P((struct files *));
+
 static int emitdefs __P((FILE *));
 static int emitfiles __P((FILE *, int));
 

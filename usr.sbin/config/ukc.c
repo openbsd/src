@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.5 2001/02/04 20:42:12 maja Exp $ */
+/*	$OpenBSD: ukc.c,v 1.6 2001/12/05 10:11:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukc.c,v 1.5 2001/02/04 20:42:12 maja Exp $";
+static char rcsid[] = "$OpenBSD: ukc.c,v 1.6 2001/12/05 10:11:23 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -69,95 +69,91 @@ ukc(file, outfile, uflag, force)
 	char errbuf[_POSIX2_LINE_MAX];
 	int histlen = 0, ok = 1;
 	char history[1024], kversion[1024];
-	
+
 	if (file == NULL) {
 		fprintf(stderr, "%s: no file specified\n", __progname);
 		usage();
 	}
 
 	loadkernel(file);
-	
+
 	ret = nlist(file, nl);
-	
+
 	if (uflag) {
-		
 		if ((kd = kvm_openfiles(NULL,NULL,NULL,O_RDONLY, errbuf)) == 0)
 			errx(1, "kvm_openfiles: %s", errbuf);
-	  
+
 		if ((ret = kvm_nlist(kd, knl)) == -1)
 			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
-		
+
 		i = 0;
 		while (i < NLENTRIES) {
-			if ((nl[i].n_type != knl[i].n_type) ||
-			    (nl[i].n_desc != knl[i].n_desc) ||
-			    (nl[i].n_value != knl[i].n_value))
+			if (nl[i].n_type != knl[i].n_type ||
+			    nl[i].n_desc != knl[i].n_desc ||
+			    nl[i].n_value != knl[i].n_value)
 				ok = 0;
 			i++;
 		}
 
-		if ((knl[I_HISTLEN].n_type != 0) && ok) {
+		if (knl[I_HISTLEN].n_type != 0 && ok) {
 			if (kvm_read(kd, knl[I_HISTLEN].n_value, &histlen,
-				     sizeof(histlen)) != sizeof(histlen))
+			    sizeof(histlen)) != sizeof(histlen))
 				warnx("cannot read %s: %s",
-				      knl[I_HISTLEN].n_name,
-				      kvm_geterr(kd));
+				    knl[I_HISTLEN].n_name,
+				    kvm_geterr(kd));
 		}
-		if ((knl[CA_HISTORY].n_type != 0) && ok) {
+		if (knl[CA_HISTORY].n_type != 0 && ok) {
 			if (kvm_read(kd, knl[CA_HISTORY].n_value, history,
-				     sizeof(history)) != sizeof(history))
+			    sizeof(history)) != sizeof(history))
 				warnx("cannot read %s: %s",
-				      knl[CA_HISTORY].n_name,
-				      kvm_geterr(kd));
+				    knl[CA_HISTORY].n_name,
+				    kvm_geterr(kd));
 		}
-		if ((knl[P_VERSION].n_type != 0) && ok) {
+		if (knl[P_VERSION].n_type != 0 && ok) {
 			if (kvm_read(kd, knl[P_VERSION].n_value, kversion,
-				     sizeof(kversion)) != sizeof(kversion))
+			    sizeof(kversion)) != sizeof(kversion))
 				warnx("cannot read %s: %s",
-				      knl[P_VERSION].n_name,
-				      kvm_geterr(kd));
+				    knl[P_VERSION].n_name,
+				    kvm_geterr(kd));
 		}
-	}	
+	}
 
 	printf("%s", adjust((caddr_t)nl[P_VERSION].n_value));
 
 	if (force == 0 && outfile == NULL)
 		printf("warning: no output file specified\n");
 
-	if ((nl[IA_EXTRALOC].n_type == 0) ||
-	    (nl[I_NEXTRALOC].n_type == 0) ||
-	    (nl[I_UEXTRALOC].n_type == 0) ||
-	    (nl[I_HISTLEN].n_type == 0) ||
-	    (nl[CA_HISTORY].n_type == 0)) {
+	if (nl[IA_EXTRALOC].n_type == 0 || nl[I_NEXTRALOC].n_type == 0 ||
+	    nl[I_UEXTRALOC].n_type == 0 || nl[I_HISTLEN].n_type == 0 ||
+	    nl[CA_HISTORY].n_type == 0) {
 		printf("\
 WARNING this kernel doesn't contain all information needed!\n\
 WARNING the commands add and change might not work.\n");
 		oldkernel = 1;
 	}
-	
-	if ((nl[P_PDEVNAMES].n_type == 0) ||
-	    (nl[I_PDEVSIZE].n_type == 0) ||
-	    (nl[S_PDEVINIT].n_type == 0)) {
+
+	if (nl[P_PDEVNAMES].n_type == 0 ||
+	    nl[I_PDEVSIZE].n_type == 0 ||
+	    nl[S_PDEVINIT].n_type == 0) {
 		printf("\
 WARNING this kernel doesn't support pseudo devices.\n");
 		nopdev = 1;
 	}
 
 	init();
-	
+
 	if (uflag) {
 		if (ok) {
 			if (strcmp(adjust((caddr_t)nl[P_VERSION].n_value),
-				   kversion) != 0)
+			    kversion) != 0)
 				ok = 1;
 		}
 		if (!ok) {
 			printf("WARNING kernel mismatch. -u ignored.\n");
 			printf("WARNING the running kernel version:\n");
-			printf("%s",kversion);
-		} else {
-			process_history(histlen,history);
-		}
+			printf("%s", kversion);
+		} else
+			process_history(histlen, history);
 	}
 
 	if (config()) {
@@ -175,14 +171,13 @@ WARNING this kernel doesn't support pseudo devices.\n");
 			savekernel(outfile);
 		}
 	}
-
 	return(0);
 }
 
 void
 init()
 {
-	int i = 0,fd;
+	int i = 0, fd;
 	struct cfdata *cd;
 	short	*ln;
 	int	*p;
@@ -191,8 +186,7 @@ init()
 #endif
 
 	cd = get_cfdata(0);			/* get first item */
-
-	while(cd->cf_attach != 0) {
+	while (cd->cf_attach != 0) {
 		maxdev = i;
 		totdev = i;
 
@@ -206,7 +200,7 @@ init()
 		cd++;
 	}
 
-	while(cd->cf_attach == 0) {
+	while (cd->cf_attach == 0) {
 		totdev = i;
 		i++;
 		cd++;
@@ -223,9 +217,8 @@ init()
 		fd = 2;
 
 #ifdef NOTDEF
-	if (ioctl(fd, TIOCGWINSZ, &w) == 0) {
-		printf("row %d col %d\n",w.ws_row,w.ws_col);
-	}
+	if (ioctl(fd, TIOCGWINSZ, &w) == 0)
+		printf("row %d col %d\n", w.ws_row, w.ws_col);
 
 	if ((s = getenv("LINES")) != NULL)
 		sc_height = atoi(s);

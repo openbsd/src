@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.21 2001/01/24 20:13:00 art Exp $	*/
+/*	$OpenBSD: sem.c,v 1.22 2001/12/05 10:11:23 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -846,7 +846,7 @@ adddev(name, at, loclist, flags, disable)
 		 *
 		 * (1) If we're attached to an attribute, then we don't need
 		 *     look at the parent base device to see what attributes
-		 *     it has, and make sure that we can attach to them.    
+		 *     it has, and make sure that we can attach to them.
 		 *
 		 * (2) If we're attached to a real device (i.e. named in
 		 *     the config file), we want to remember that so that

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.5 2001/08/12 12:03:03 heko Exp $ */
+/*	$OpenBSD: ukc.h,v 1.6 2001/12/05 10:11:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -121,7 +121,7 @@ struct cfdata   *get_cfdata __P((int));
 short	        *get_locnamp __P((int));
 caddr_t	        *get_locnames __P((int));
 int	        *get_extraloc __P((int));
-caddr_t	        *get_pdevnames __P((int));
+char	        *get_pdevnames __P((int));
 struct pdevinit *get_pdevinit __P((int));
 
 int	more __P(());

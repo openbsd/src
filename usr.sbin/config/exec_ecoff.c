@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.4 2000/10/29 00:30:33 aaron Exp $ */
+/*	$OpenBSD: exec_ecoff.c,v 1.5 2001/12/05 10:11:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.4 2000/10/29 00:30:33 aaron Exp $";
+static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.5 2001/12/05 10:11:23 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -46,11 +46,11 @@ static char rcsid[] = "$OpenBSD: exec_ecoff.c,v 1.4 2000/10/29 00:30:33 aaron Ex
 
 #include "ukc.h"
 
-caddr_t		ecoff_p,ecoff_r,ecoff_b;
+caddr_t		ecoff_p, ecoff_r, ecoff_b;
 int		ecoff_psz = 0, ecoff_rsz = 0, ecoff_bsz = 0;
 struct ecoff_exechdr	ecoff_ex;
 
-caddr_t 
+caddr_t
 ecoff_adjust(x)
 	caddr_t x;
 {
@@ -76,11 +76,11 @@ int
 ecoff_check(file)
 	char *file;
 {
-	int fd,ret = 1;
+	int fd, ret = 1;
 
 	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
 		return (0);
-	  
+
 	if (read(fd,(char *)&ecoff_ex, sizeof(ecoff_ex)) != sizeof(ecoff_ex))
 		ret = 0;
 
@@ -98,25 +98,25 @@ ecoff_loadkernel(file)
 	char *file;
 {
 	int fd;
-	off_t beg,cur,end;
+	off_t beg, cur, end;
 
 	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
 		err(1, "%s", file);
-	  
+
 	if (read(fd, (char *)&ecoff_ex, sizeof(ecoff_ex)) != sizeof(ecoff_ex))
 		errx(1, "can't read ecoff header");
-	
+
 	if (ECOFF_BADMAG(&ecoff_ex))
 		errx(1, "bad ecoff magic\n");
-	
+
 	ecoff_psz = ecoff_ex.a.tsize + ecoff_ex.a.dsize;
 	beg = lseek(fd, ECOFF_TXTOFF(&ecoff_ex), SEEK_SET);
-  
+
 	ecoff_bsz = (int)beg;
 	ecoff_b = malloc(ecoff_bsz);
 
 	ecoff_p = malloc(ecoff_psz);
-	
+
 	if (read(fd, ecoff_p, ecoff_psz) != ecoff_psz)
 		errx(1, "can't read ecoff text and data");
 
@@ -133,7 +133,7 @@ ecoff_loadkernel(file)
 
 	if (read(fd, ecoff_r, ecoff_rsz) != ecoff_rsz)
 		errx(1, "can't read rest of file %s", file);
-	
+
 	close(fd);
 }
 
