@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.4 1997/06/18 03:01:42 denny Exp $
+.\"	$Id: inetd.8,v 1.5 1997/06/26 06:27:27 denny Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -107,9 +107,16 @@ address specifier prefixed to it, separated from the service name by a
 colon.  If this is done, the string before the colon in the first field
 indiciates what local address
 .Nm
-should use when listening for that service, or the single character
+should use when listening for that service. Multiple local addresses
+can be specified on the same line, separated by commas. Numeric IP
+addresses in dotted-quad notation can be used as well as symbolic
+hostnames. Symbolic hostnames are looked up using gethostbyname().
+If a hostname has multiple address mappings, inetd creates a socket
+to listen on each address.
+.Pp
+The single character
 .Dq \&*
-to indicate
+indicates
 .Dv INADDR_ANY ,
 meaning
 .Sq all local addresses .
