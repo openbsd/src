@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.19 2000/03/22 02:48:47 smurph Exp $
+ * $OpenBSD: aic7xxx.c,v 1.20 2000/04/04 03:48:47 smurph Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -323,6 +323,10 @@ STATIC void	ahc_set_width __P((struct ahc_softc *ahc,
 			      u_int width, u_int type, int paused, int done));
 STATIC void	ahc_set_tags __P((struct ahc_softc *ahc,
 				  struct ahc_devinfo *devinfo,int enable));
+STATIC int      ahc_istagged_device __P((struct ahc_softc *ahc,
+					 struct scsi_xfer *xs));
+STATIC void     ahc_check_tags __P((struct ahc_softc *ahc,
+				    struct scsi_xfer *xs));
 STATIC void	ahc_construct_sdtr __P((struct ahc_softc *ahc,
 				   u_int period, u_int offset));
 STATIC void	ahc_construct_wdtr __P((struct ahc_softc *ahc, u_int bus_width));
@@ -619,6 +623,12 @@ ahcfreescb(ahc, scb)
 	int opri;
 
 	hscb = scb->hscb;
+
+#ifdef AHC_DEBUG
+	if (ahc_debug & AHC_SHOWSCBALLOC)
+		printf("%s: free SCB tag %x\n", ahc_name(ahc), hscb->tag);
+#endif
+
 	opri = splbio();
 
 	if ((ahc->flags & AHC_RESOURCE_SHORTAGE) != 0 ||
@@ -633,6 +643,7 @@ ahcfreescb(ahc, scb)
 	hscb->status = 0;
 
 	SLIST_INSERT_HEAD(&ahc->scb_data->free_scbs, scb, links);
+
 	splx(opri);
 }
 
@@ -675,7 +686,7 @@ ahc_createdmamem(ahc, size, mapp, vaddr, baddr, seg, nseg, what)
 	int *nseg;
 	const char *what;
 {
-	int error, rseg, level = 0;
+	int error, level = 0;
 	int dma_flags = BUS_DMA_NOWAIT;
 	bus_dma_tag_t tag = ahc->sc_dmat;
 	const char *myname = ahc_name(ahc);
@@ -713,12 +724,7 @@ ahc_createdmamem(ahc, size, mapp, vaddr, baddr, seg, nseg, what)
 		goto out;
         }
 
-	*baddr = seg[0].ds_addr;
-
-	if (bootverbose)
-		printf("%s: dmamem for %s at phys %lx virt %lx nseg %d size %d\n",
-		       myname, what, (unsigned long)*baddr,
-		       (unsigned long)*vaddr, *nseg, size);
+	*baddr = (*mapp)->dm_segs[0].ds_addr;
 	return 0;
 out:
 	switch (level) {
@@ -729,7 +735,7 @@ out:
 		bus_dmamem_unmap(tag, *vaddr, size);
 		/* FALLTHROUGH */
 	case 1:
-		bus_dmamem_free(tag, seg, rseg);
+		bus_dmamem_free(tag, seg, *nseg);
 		break;
 	default:
 		break;
@@ -821,8 +827,8 @@ static const int num_phases = (sizeof(phase_table)/sizeof(phase_table[0])) - 1;
  */
 #define AHC_SYNCRATE_DT		0
 #define AHC_SYNCRATE_ULTRA2	1
-#define AHC_SYNCRATE_ULTRA	2
-#define AHC_SYNCRATE_FAST	5
+#define AHC_SYNCRATE_ULTRA	3
+#define AHC_SYNCRATE_FAST	6
 static struct ahc_syncrate ahc_syncrates[] = {
       /* ultra2    fast/ultra  period     rate */
 	{ 0x42,      0x000,      9,      "80.0" },
@@ -1505,7 +1511,7 @@ ahc_attach(ahc)
 			ahc->sc_link.adapter_buswidth = 16;
 	}
 
-/*
+	/*
 	 * ask the adapter what subunits are present
 	 */
 	if ((ahc->flags & AHC_CHANNEL_B_PRIMARY) == 0) {
@@ -2026,12 +2032,12 @@ ahc_handle_seqint(ahc, intstat)
 					/* XXX Ever executed??? */
 					ahc_setup_target_msgin(ahc, &devinfo);
 			}
-			}
+		}
 
 		/* Pass a NULL path so that handlers generate their own */
 		ahc_handle_message_phase(ahc, /*path*/NULL);
 		break;
-		}
+	}
 	case PERR_DETECTED:
 	{
 		/*
@@ -2352,6 +2358,7 @@ ahc_handle_scsiint(ahc, intstat)
 					       SCB_LUN(scb), tag,
 					       ROLE_INITIATOR,
 					       XS_DRIVER_STUFFUP);
+				sc_print_addr(scb->xs->sc_link);
 			} else {
 				/*
 				 * We had not fully identified this connection,
@@ -3415,7 +3422,7 @@ ahc_done(ahc, scb)
 	target = sc_link->target;
 	
 	if (xs->datalen) {
-		int op;
+		bus_dmasync_op_t op;
 	
 		if ((xs->flags & SCSI_DATA_IN) != 0)
 			op = BUS_DMASYNC_POSTREAD;
@@ -3510,6 +3517,7 @@ ahc_done(ahc, scb)
 		splx(s);
 	} else {
 		xs->flags |= ITSDONE;
+		ahc_check_tags(ahc, xs);
 		scsi_done(xs);
 	}
 
@@ -3639,6 +3647,9 @@ ahc_init(ahc)
 	for (i = 0; i < 256; i++)
 		ahc->qoutfifo[i] = SCB_LIST_NULL;
 
+	bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap,
+			BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	
 	/*
 	 * Allocate a tstate to house information for our
 	 * initiator presence on the bus as well as the user
@@ -4080,6 +4091,9 @@ ahc_scsi_cmd(xs)
 		goto get_scb;
 	}
 
+	/* determine safety of software queueing */
+	dontqueue = xs->flags & SCSI_POLL;
+	
 	/*
 	 * If no new requests are accepted, just insert into the
 	 * private queue to wait for our turn.
@@ -4088,7 +4102,8 @@ ahc_scsi_cmd(xs)
 
 	if (ahc->queue_blocked ||
 	    ahc->devqueue_blocked[xs->sc_link->target] ||
-	    ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL) {
+	    (!ahc_istagged_device(ahc, xs) &&
+	     ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)) {
 		if (dontqueue) {
 			splx(s);
 			xs->error = XS_DRIVER_STUFFUP;
@@ -4171,7 +4186,10 @@ get_scb:
 	hscb = scb->hscb;
 	hscb->tcl = tcl;
 
-	ahc_busy_tcl(ahc, scb);
+	if (ahc_istagged_device(ahc, xs))
+		scb->hscb->control |= MSG_SIMPLE_Q_TAG;
+	else
+		ahc_busy_tcl(ahc, scb);
 
 	splx(s);
  
@@ -4271,7 +4289,8 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 	 * be aborted.
 	 */
 	if (xs->flags & ITSDONE) {
-		ahc_index_busy_tcl(ahc, scb->hscb->tcl, TRUE);
+		if (!ahc_istagged_device(ahc, xs))
+			ahc_index_busy_tcl(ahc, scb->hscb->tcl, TRUE);
 		if (nsegments != 0)
 			bus_dmamap_unload(ahc->sc_dmat, scb->dmamap);
 		ahcfreescb(ahc, scb);
@@ -4322,6 +4341,7 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWCMDS) {
+		sc_print_addr(xs->sc_link);
 		printf("opcode %d tag %x len %d flags %x control %x fpos %u"
 		    " rate %x\n",
 		    xs->cmdstore.opcode, scb->hscb->tag, scb->hscb->datalen,
@@ -4395,7 +4415,8 @@ ahc_setup_data(ahc, xs, scb)
 			    (xs->flags & SCSI_NOSLEEP) ?
 			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		if (error) {
-			ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);
+			if (!ahc_istagged_device(ahc, xs))
+				ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);
 			return (TRY_AGAIN_LATER);	/* XXX fvdl */
 		}
 		error = ahc_execute_scb(scb,
@@ -4923,6 +4944,7 @@ bus_reset:
 			printf("BDR message in message buffer\n");
 			active_scb->flags |=  SCB_DEVICE_RESET;
 			    timeout(ahc_timeout, (caddr_t)active_scb, 2 * hz);
+			unpause_sequencer(ahc);
 		} else {
 			int	 disconnected;
 
@@ -4998,6 +5020,11 @@ bus_reset:
 				printf("Queuing a BDR SCB\n");
 				ahc->qinfifo[ahc->qinfifonext++] =
 				    scb->hscb->tag;
+
+				bus_dmamap_sync(ahc->sc_dmat,
+				    ahc->shared_data_dmamap,
+				    BUS_DMASYNC_PREWRITE);
+
 				if ((ahc->features & AHC_QUEUE_REGS) != 0) {
 					ahc_outb(ahc, HNSCB_QOFF,
 						 ahc->qinfifonext);
@@ -5739,4 +5766,74 @@ ahc_shutdown(void *arg)
 
 	for (i = TARG_SCSIRATE; i < HA_274_BIOSCTRL; i++)
 		ahc_outb(ahc, i, 0);
+}
+
+STATIC void
+ahc_check_tags(ahc, xs)
+struct ahc_softc *ahc;
+struct scsi_xfer *xs;
+{
+	struct scsi_inquiry_data *inq;
+	struct ahc_devinfo devinfo;
+	int target_id, our_id;
+
+	if (xs->cmd->opcode != INQUIRY || xs->error != XS_NOERROR)
+		return;
+
+	target_id = xs->sc_link->target;
+	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
+
+	/*
+	 * Sneak a look at the results of the SCSI Inquiry
+	 * command and see if we can do Tagged queing.  This
+	 * should really be done by the higher level drivers.
+	 */
+	inq = (struct scsi_inquiry_data *)xs->data;
+	if ((inq->flags & SID_CmdQue) && !(ahc_istagged_device(ahc, xs))) {
+#ifdef AHC_DEBUG 
+		printf("%s: target %d using tagged queuing\n",
+			ahc_name(ahc), xs->sc_link->target);
+#endif 
+		ahc_compile_devinfo(&devinfo,
+		    our_id, target_id, xs->sc_link->lun,	
+		    SIM_CHANNEL(ahc, xs->sc_link), ROLE_INITIATOR);
+		ahc_set_tags(ahc, &devinfo, TRUE);
+
+		if (ahc->scb_data->maxhscbs >= 16 ||
+		    (ahc->flags & AHC_PAGESCBS)) {
+			/* Default to 16 tags */
+			xs->sc_link->openings += 14;
+		} else {
+			/*
+			 * Default to 4 tags on whimpy
+			 * cards that don't have much SCB
+			 * space and can't page.  This prevents
+			 * a single device from hogging all
+			 * slots.  We should really have a better
+			 * way of providing fairness.
+			 */
+			xs->sc_link->openings += 2;
+		}
+	}
+}
+
+STATIC int
+ahc_istagged_device(ahc, xs)
+struct ahc_softc *ahc;
+struct scsi_xfer *xs;
+{
+	char channel;
+	u_int our_id, target;
+	struct tmode_tstate *tstate;
+	struct ahc_devinfo devinfo;
+
+	channel = SIM_CHANNEL(ahc, xs->sc_link);
+	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
+	target = xs->sc_link->target;
+	(void)ahc_fetch_transinfo(ahc, channel, our_id, target, &tstate);
+
+	ahc_compile_devinfo(&devinfo, our_id, target,
+	    xs->sc_link->lun, channel, ROLE_INITIATOR);
+
+	return (tstate->tagenable & devinfo.target_mask);
 }

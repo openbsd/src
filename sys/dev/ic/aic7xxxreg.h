@@ -399,6 +399,8 @@
 
 #define	HS_MAILBOX      		0x86
 #define		HOST_MAILBOX    	0xf0
+#define		HOST_TQINPOS    	0x80
+#define		HOST_REQ_INT    	0x10
 #define		SEQ_MAILBOX     	0x0f
 
 #define	DSPCISTATUS     		0x86
