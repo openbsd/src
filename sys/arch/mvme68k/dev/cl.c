@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.35 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.36 2004/07/02 18:01:15 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -191,7 +191,6 @@ void cl_appendbufn(struct clsoftc *sc, u_char channel, u_char *buf, u_short cnt)
 struct tty *cltty(dev_t);
 int cl_instat(struct clsoftc *);
 void clcnpollc(dev_t, int);
-void cl_chkinput(void);
 void cl_break(struct clsoftc *, int);
 void cl_appendbuf(struct clsoftc *, u_char, u_char);
 
@@ -204,8 +203,6 @@ struct cfdriver cl_cd = {
 };
 
 #define CLCDBUF 80
-
-int dopoll = 1;
 
 #define CL_UNIT(x) (minor(x) >> 2)
 #define CL_CHANNEL(x) (minor(x) & 3)
@@ -1147,48 +1144,6 @@ if (unit == 0) {
 #endif
 	return;
 }
-
-/*
-#ifdef CLCD_DO_POLLED_INPUT
-*/
-#if 1
-void
-cl_chkinput()
-{
-	struct tty *tp;
-	int unit;
-	struct clsoftc *sc;
-	int channel;
-
-	if (dopoll == 0)
-		return;
-	for (unit = 0; unit < cl_cd.cd_ndevs; unit++) {
-		if (unit >= cl_cd.cd_ndevs || 
-			(sc = (struct clsoftc *) cl_cd.cd_devs[unit]) == NULL) {
-			continue;
-		}
-		if (cl_instat(sc)) {
-			while (cl_instat(sc)){
-				int ch;
-				u_char c;
-				/*
-				*(pinchar++) = clcngetc();
-				*/
-				ch = clgetc(sc,&channel) & 0xff;
-				c = ch;
-
-				tp = sc->sc_cl[channel].tty;
-				if (NULL != tp) {
-					(*linesw[tp->t_line].l_rint)(c,tp);
-				}
-			}
-			/*
-			wakeup(tp);
-			*/
-		}
-	}
-}
-#endif
 
 u_char 
 clgetc(sc, channel)
