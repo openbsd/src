@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.30 1998/04/18 07:39:38 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.31 1998/04/20 07:25:15 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -458,6 +458,7 @@ loadblocknums(boot, devfd, dl)
 	if (verbose)
 		fprintf(stderr, "Using disk geometry of %u sectors and %u heads.\n",
 			dl->d_nsectors, dl->d_secpercyl/dl->d_nsectors);
+
 	/*
 	 * Get the block numbers; we don't handle fragments
 	 */
@@ -512,6 +513,7 @@ record_block(bt, blk, bs, dl)
 	static u_int ss = 0, l = 0, i = 0; /* start and len of group */
 	int ret = 0;
 
+	/* printf("%u, %u\n", blk, bs); */
 	if (ss == 0) { /* very beginning */
 		ss = blk;
 		l = bs;
@@ -538,18 +540,20 @@ record_block(bt, blk, bs, dl)
 		if (verbose)
 			fprintf(stderr, "%2d: %2d @(%d %d %d) (%d-%d)\n",
 				i, bt[3], c, bt[2], s, ss, ss + bt[3] - 1);
+		i++;
 
-		if ((ss % dl->d_nsectors + l) >= dl->d_nsectors) {
-			ss += bt[3];
-			l -= bt[3];
-			l += bs;
-		} else {
+		ss += bt[3];
+		l -= bt[3];
+		if ((ss + l) != blk) {
+			/* printf ("l=%u\n", l); */
+		 	if (l)
+				ret += record_block(bt + 4, 0, 0, dl);
 			ss = blk;
 			l = bs;
-		}
+		} else
+			l += bs;
 
-		i++;
-		ret = 4;
+		ret += 4;
 	} else {
 		l += bs;
 	}
