@@ -111,6 +111,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
+/* open, close, ioctl, select -- XXX should be a generic device */
+#define cdev_ocis_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,select), \
+        (dev_type_mmap((*))) enodev, 0 }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -146,6 +153,8 @@ cdev_decl(ch);
 dev_decl(fd,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
+#include "pcmciabus.h"
+cdev_decl(pcmciabus);
 #include "speaker.h"
 cdev_decl(spkr);
 #ifdef LKM
@@ -214,7 +223,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
 	cdev_notdef(),			/* 25 */
-	cdev_notdef(),			/* 26 */
+	cdev_ocis_init(NPCMCIABUS,pcmciabus), /* 26: PCMCIA Bus */
 	cdev_spkr_init(NSPEAKER,spkr),	/* 27: PC speaker */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	cdev_lkm_dummy(),		/* 29 */
