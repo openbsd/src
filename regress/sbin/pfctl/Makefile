@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.42 2002/11/25 16:16:07 henning Exp $
+# $OpenBSD: Makefile,v 1.43 2002/11/25 18:27:51 mickey Exp $
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34
 PFFAIL=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
 PFSIMPLE=1 2
+PFSETUP=1
 
 .for n in ${PFFAIL}
 REGRESS_TARGETS+=pfail${n}
@@ -44,6 +45,19 @@ pfsimple${n}:
 	pfctl -nf - < ${.CURDIR}/pfsimple${n}.in
 
 .endfor
+
+.ifdef DO_PFSETUP
+.for n in ${PFSETUP}
+REGRESS_TARGETS+=pfsetup${n}
+
+pfsetup${n}:
+	${SHELL} ${.CURDIR}/pfsetup${n}.setup
+	pfctl -nv -f - < ${.CURDIR}/pfsetup${n}.in | \
+	    diff -u ${.CURDIR}/pfsetup${n}.ok /dev/stdin
+	${SHELL} ${.CURDIR}/pfsetup${n}.clean
+
+.endfor
+.endif
 
 .PHONY: ${REGRESS_TARGETS}
 
