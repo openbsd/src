@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.35 1999/06/18 07:24:04 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.36 1999/10/06 22:27:57 jason Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -451,7 +451,8 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     mi = m;
     while (mi != NULL && 
 	   (!(mi->m_flags & M_EXT) || 
-	    mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1))
+	    (mi->m_ext.ext_ref == NULL &&
+	    mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1)))
     {
         mo = mi;
         mi = mi->m_next;
