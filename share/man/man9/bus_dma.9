@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.9 2001/09/03 09:29:18 art Exp $ 
+.\"	$OpenBSD: bus_dma.9,v 1.10 2002/03/07 18:09:24 jason Exp $ 
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -307,7 +307,7 @@ Otherwise, the buffer is assumed to be in process
 address space.
 .It Fa flags
 are defined as follows:
-.Bl -tag -width "BUS_DMA_BUS[1-4]" -compact
+.Bl -tag -width "BUS_DMA_STREAMING" -compact
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
@@ -315,6 +315,38 @@ It is not safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_BUS[1-4]
 These flags are placeholders, and may be used by busses to provide
 bus-dependent functionality.
+.It Dv BUS_DMA_STREAMING
+By default, the
+.Nm
+API assumes that there is coherency between memory and the device
+performing the DMA transaction.  Some platforms, however, have
+special hardware, such as an
+.Dq I/O cache ,
+which may improve performance
+of some types of DMA transactions, but which break the assumption
+that there is coherency between memory and the device performing
+the DMA transaction.
+This flag allows the use of this special hardware, provided that
+the device is doing sequential, unidirectional transfers which
+conform to certain alignment and size constraints defined by the
+platform.  If the platform does not support the feature, or if
+the buffer being loaded into the DMA map does not conform to the
+constraints required for use of the feature, then this flag will
+be silently ignored.  Also refer to the use of this flag with the
+.Fn bus_dmamem_alloc
+function.
+.It Dv BUS_DMA_READ
+This is a hint to the machine-dependent back-end that indicates the  
+mapping will be used only for a
+.Em "device -\*[Gt] memory"
+transaction.  The back-end may perform optimizations based on this
+information.
+.It Dv BUS_DMA_WRITE
+This is a hint to the machine-dependent back-end that indicates the
+mapping will be used only for a
+.Em "memory -\*[Gt] device"
+transaction.  The back-end may perform optimizations based on this
+information.
 .El
 .El
 .Pp
@@ -548,11 +580,24 @@ contain.
 Used to return the actual number of segments the memory contains.
 .It Fa flags
 Flags are defined as follows:
-.Bl -tag -width BUS_DMA_BUS[1-4] -compact
+.Bl -tag -width BUS_DMA_STREAMING -compact
 .It Dv BUS_DMA_WAITOK
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
 It is not safe to wait (sleep) for resources during this call.
+.It Dv BUS_DMA_STREAMING
+Adjusts, if necessary, the size, alignment, and boundary constrains
+to conform to the platform-dependent requirements for the use of the
+.Dv BUS_DMA_STREAMING
+flag with the
+.Fn bus_dmamap_load
+function.  If the platform does not support the  
+.Dv BUS_DMA_STREAMING
+feature, or if the size, alignment, and boundary constraints
+would already satisfy the platform's requirements, this flag
+is silently ignored.  The
+.Dv BUS_DMA_STREAMING
+flag will never relax the constraints specified in the call.
 .It Dv BUS_DMA_BUS[1-4]
 These flags are placeholders, and may be used by busses to provide
 bus-dependent functionality.
