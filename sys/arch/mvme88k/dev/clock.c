@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.40 2004/08/25 08:01:40 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.41 2004/08/25 20:18:46 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -342,13 +342,12 @@ sbc_statintr(void *eframe)
 int
 m188_clockintr(void *eframe)
 {
-	volatile int tmp;
+	volatile u_int32_t tmp;
 
+	tmp = *(volatile u_int32_t *)DART_STOPC;
 	/* acknowledge the timer interrupt */
-	tmp = *(int *volatile)DART_ISR;
-
-	/* stop the timer while the interrupt is being serviced */
-	tmp = *(int *volatile)DART_STOPC;
+	tmp = *(volatile u_int32_t *)DART_ISR;
+	tmp = *(volatile u_int32_t *)DART_STARTC;
 
 	intrcnt[M88K_CLK_IRQ]++;
 
@@ -356,14 +355,6 @@ m188_clockintr(void *eframe)
 #if NBUGTTY > 0
 	bugtty_chkinput();
 #endif /* NBUGTTY */
-
-	tmp = *(int *volatile)DART_STARTC;
-
-#ifdef CLOCK_DEBUG
-	if (*(int *volatile)MVME188_IST & DTI_BIT) {
-		printf("DTI not clearing!\n");
-	}
-#endif
 
 	return (1);
 }
@@ -393,25 +384,19 @@ m188_initclock(void)
 	printf("tick == %d, counter == %d\n", tick, counter);
 #endif
 	/* clear the counter/timer output OP3 while we program the DART */
-	*((int *volatile)DART_OPCR) = 0x00;
-
-	/* do the stop counter/timer command */
-	imr = *((int *volatile)DART_STOPC);
-
-	/* set counter/timer to counter mode, clock/16 */
-	*((int *volatile)DART_ACR) = 0x30;
-
-	*((int *volatile)DART_CTUR) = (counter >> 8);
-	*((int *volatile)DART_CTLR) = (counter & 0xff);
+	*(volatile u_int32_t *)DART_OPCR = 0x00;
 	/* set interrupt vec */
-	*((int *volatile)DART_IVR) = SYSCON_VECT + SYSCV_TIMER1;
-
-	/* give the start counter/timer command */
-	/* (yes, this is supposed to be a read) */
-	imr = *((int *volatile)DART_STARTC);
-
+	*(volatile u_int32_t *)DART_IVR = SYSCON_VECT + SYSCV_TIMER1;
+	/* do the stop counter/timer command */
+	imr = *(volatile u_int32_t *)DART_STOPC;
+	/* set counter/timer to counter mode, clock/16 */
+	*(volatile u_int32_t *)DART_ACR = 0x30;
+	*(volatile u_int32_t *)DART_CTUR = (counter >> 8);
+	*(volatile u_int32_t *)DART_CTLR = (counter & 0xff);
 	/* set the counter/timer output OP3 */
-	*((int *volatile)DART_OPCR) = 0x04;
+	*(volatile u_int32_t *)DART_OPCR = 0x04;
+	/* give the start counter/timer command */
+	imr = *(volatile u_int32_t *)DART_STARTC;
 }
 
 int
@@ -439,8 +424,8 @@ m188_statintr(void *eframe)
 
 	/* Load time constant CTC #1 */
 	newint <<= 1;	/* CT1 runs at PCLK/2, hence 2MHz */
-	write_cio(CIO_CT1MSB, (newint & 0xff00) >> 8);
-	write_cio(CIO_CT1LSB, newint & 0xff);
+	write_cio(CIO_CT1MSB, newint >> 8);
+	write_cio(CIO_CT1LSB, newint);
 
 	/* Start CTC #1 running */
 	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
@@ -480,7 +465,7 @@ write_cio(int reg, u_int val)
 {
 	int s;
 	volatile int i;
-	int *volatile cio_ctrl = (int *volatile)CIO_CTRL;
+	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
 
 	s = splclock();
 	CIO_LOCK;
@@ -502,7 +487,7 @@ read_cio(int reg)
 {
 	int c, s;
 	volatile int i;
-	int *volatile cio_ctrl = (int *volatile)CIO_CTRL;
+	volatile u_int32_t * cio_ctrl = (volatile u_int32_t *)CIO_CTRL;
 
 	s = splclock();
 	CIO_LOCK;
@@ -555,8 +540,8 @@ m188_cio_init(unsigned period)
 
 	/* Load time constant CTC #1 */
 	period <<= 1;	/* CT1 runs at PCLK/2, hence 2MHz */
-	write_cio(CIO_CT1MSB, (period & 0xff00) >> 8);
-	write_cio(CIO_CT1LSB, period & 0xff);
+	write_cio(CIO_CT1MSB, period >> 8);
+	write_cio(CIO_CT1LSB, period);
 
 	/* enable counter 1 */
 	write_cio(CIO_MCCR, CIO_MCCR_CT1E | CIO_MCCR_PBE);
