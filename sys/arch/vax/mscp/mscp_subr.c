@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscp_subr.c,v 1.3 2000/04/27 03:14:46 bjc Exp $	*/
-/*	$NetBSD: mscp_subr.c,v 1.12 1999/06/06 19:16:18 ragge Exp $	*/
+/*	$OpenBSD: mscp_subr.c,v 1.4 2001/12/05 03:04:38 hugh Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.18 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,6 +43,8 @@
  * MSCP generic driver routines
  */
 
+#include <sys/cdefs.h>
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/buf.h>
@@ -61,10 +63,6 @@
 
 #define b_forw	b_hash.le_next
 
-#ifndef offsetof
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif	
-
 int	mscp_match __P((struct device *, struct cfdata *, void *));
 void	mscp_attach __P((struct device *, struct device *, void *));
 void	mscp_start __P((struct	mscp_softc *));
@@ -76,7 +74,7 @@ struct	cfattach mscpbus_ca = {
 	sizeof(struct mscp_softc), (cfmatch_t)mscp_match, mscp_attach
 };
 
-struct	cfdriver mscpbus_cd = {
+struct cfdriver mscpbus_cd = {
 	NULL, "mscpbus", DV_DULL
 };
 
@@ -178,7 +176,7 @@ mscp_attach(parent, self, aux)
 	}
 	for (i = 0; i < NCMD; i++) {
 		mi->mi_mxiuse |= (1 << i);
-		if (bus_dmamap_create(mi->mi_dmat, (64*1024), 1, (64*1024),
+		if (bus_dmamap_create(mi->mi_dmat, (64*1024), 16, (64*1024),
 		    0, BUS_DMA_NOWAIT, &mi->mi_xi[i].mxi_dmam)) {
 			printf("Couldn't alloc dmamap %d\n", i);
 			return;
@@ -350,7 +348,6 @@ mscp_init(mi)
 	}
 
 	/* step3 */
-	
 	WRITE_SW((mi->mi_dmam->dm_segs[0].ds_addr >> 16));
 	status = mscp_waitstep(mi, STEP3MASK, STEP3GOOD);
 	if (status == 0) { 
@@ -577,10 +574,10 @@ mscp_dgo(mi, mxi)
  */
 void
 mscp_hexdump(mp)
-	register struct mscp *mp;
+	struct mscp *mp;
 {
-	register long *p = (long *) mp;
-	register int i = mp->mscp_msglen;
+	long *p = (long *) mp;
+	int i = mp->mscp_msglen;
 
 	if (i > 256)		/* sanity */
 		i = 256;
@@ -772,8 +769,8 @@ void
 mscp_printevent(mp)
 	struct mscp *mp;
 {
-	register int event = mp->mscp_event;
-	register struct code_decode *cdc;
+	int event = mp->mscp_event;
+	struct code_decode *cdc;
 	int c, sc;
 	char *cm, *scm;
 
@@ -813,7 +810,7 @@ static char *codemsg[16] = {
 int
 mscp_decodeerror(name, mp, mi)
 	char *name;
-	register struct mscp *mp;
+	struct mscp *mp;
 	struct mscp_softc *mi;
 {
 	int issoft;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscp_tape.c,v 1.5 2001/07/04 05:12:58 csapuntz Exp $ */
-/*	$NetBSD: mscp_tape.c,v 1.14 1999/06/06 19:16:18 ragge Exp $ */
+/*	$OpenBSD: mscp_tape.c,v 1.6 2001/12/05 03:04:38 hugh Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.16 2001/11/13 07:38:28 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,8 @@
  * TODO
  *	Write status handling code.
  */
+
+#include <sys/cdefs.h>
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -115,7 +117,7 @@ struct	cfattach mt_ca = {
 	sizeof(struct mt_softc), (cfmatch_t)mtmatch, mtattach
 };
 
-struct	cfdriver mt_cd = {
+struct cfdriver mt_cd = {
 	NULL, "mt", DV_TAPE
 };
 
@@ -197,7 +199,7 @@ mtopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct	proc *p;
 {
-	register struct mt_softc *mt;
+	struct mt_softc *mt;
 	int unit;
 
 	/*
@@ -251,16 +253,16 @@ mtclose(dev, flags, fmt, p)
 
 void
 mtstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit;
-	register struct mt_softc *mt;
+	int unit;
+	struct mt_softc *mt;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
 	unit = mtunit(bp->b_dev);
-	if (unit >= mt_cd.cd_ndevs || (mt = mt_cd.cd_devs[unit]) == NULL) {
+	if (unit > mt_cd.cd_ndevs || (mt = mt_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}
@@ -344,7 +346,7 @@ mtonline(usc, mp)
 	struct device *usc;
 	struct mscp *mp;
 {
-	register struct mt_softc *mt = (void *)usc;
+	struct mt_softc *mt = (void *)usc;
 
 	wakeup((caddr_t)&mt->mt_state);
 	if ((mp->mscp_status & M_ST_MASK) == M_ST_SUCCESS) 
@@ -358,8 +360,8 @@ mtonline(usc, mp)
  */
 int
 mtgotstatus(usc, mp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 {
 	return (MSCP_DONE);
 }
@@ -390,8 +392,8 @@ static char *mt_ioerrs[] = {
 /*ARGSUSED*/
 int
 mtioerror(usc, mp, bp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 	struct buf *bp;
 {
 	struct mt_softc *mt = (void *)usc;
@@ -425,8 +427,8 @@ mtioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register int unit = mtunit(dev);
-	register struct mt_softc *mt = mt_cd.cd_devs[unit];
+	int unit = mtunit(dev);
+	struct mt_softc *mt = mt_cd.cd_devs[unit];
 	struct	mtop *mtop;
 	struct	mtget *mtget;
 	int error = 0, count;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscp_disk.c,v 1.8 2001/07/04 05:12:57 csapuntz Exp $	*/
-/*	$NetBSD: mscp_disk.c,v 1.21 1999/06/06 19:16:18 ragge Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.9 2001/12/05 03:04:38 hugh Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,6 +49,8 @@
  *	write bad block forwarding code
  */
 
+#include <sys/cdefs.h>
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/device.h>
@@ -66,7 +68,6 @@
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/rpb.h>
 
 #include <arch/vax/mscp/mscp.h>
 #include <arch/vax/mscp/mscpreg.h>
@@ -118,7 +119,7 @@ int	rasize __P((dev_t));
 int	ra_putonline __P((struct ra_softc *));
 
 struct	cfattach ra_ca = {
-	sizeof(struct ra_softc), (cfmatch_t)ramatch, raattach
+	sizeof(struct ra_softc), (cfmatch_t)ramatch, rxattach
 };
 
 /*
@@ -137,7 +138,7 @@ ramatch(parent, cf, aux)
 	if ((da->da_typ & MSCPBUS_DISK) == 0)
 		return 0;
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != mp->mscp_unit)
-	   	return 0;
+		return 0;
 	/*
 	 * Check if this disk is a floppy; then don't configure it.
 	 * Seems to be a safe way to test it per Chris Torek.
@@ -145,29 +146,6 @@ ramatch(parent, cf, aux)
 	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) == 'X' - '@')
 		return 0;
 	return 1;
-}
-
-/*
- * The attach routine only checks and prints drive type.
- * Bringing the disk online is done when the disk is accessed
- * the first time. 
- */
-void
-raattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux; 
-{
-	struct	ra_softc *ra = (void *)self;
-	struct	mscp_softc *mi = (void *)parent;
-
-	rxattach(parent, self, aux);
-	/*
-	 * Find out if we booted from this disk.
-	 */
-	if ((B_TYPE(bootdev) == BDEV_UDA) && (ra->ra_hwunit == B_UNIT(bootdev))
-	    && (mi->mi_ctlrnr == B_CONTROLLER(bootdev))
-	    && (mi->mi_adapnr == B_ADAPTOR(bootdev)))
-		booted_from = self;
 }
 
 /* 
@@ -211,7 +189,7 @@ raopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct	proc *p;
 {
-	register struct ra_softc *ra;
+	struct ra_softc *ra;
 	int part, unit, mask;
 	/*
 	 * Make sure this is a reasonable open request.
@@ -272,8 +250,8 @@ raclose(dev, flags, fmt, p)
 	int flags, fmt;
 	struct	proc *p;
 {
-	register int unit = DISKUNIT(dev);
-	register struct ra_softc *ra = ra_cd.cd_devs[unit];
+	int unit = DISKUNIT(dev);
+	struct ra_softc *ra = ra_cd.cd_devs[unit];
 	int mask = (1 << DISKPART(dev));
 
 	switch (fmt) {
@@ -293,9 +271,10 @@ raclose(dev, flags, fmt, p)
 	 */
 #if notyet
 	if (ra->ra_openpart == 0) {
-		s = splimp();
-		while (udautab[unit].b_actf)
-			sleep((caddr_t)&udautab[unit], PZERO - 1);
+		s = spluba();
+		while (BUFQ_FIRST(&udautab[unit]) != NULL)
+			(void) tsleep(&udautab[unit], PZERO - 1,
+			    "raclose", 0);
 		splx(s);
 		ra->ra_state = CLOSED;
 		ra->ra_wlabel = 0;
@@ -309,15 +288,15 @@ raclose(dev, flags, fmt, p)
  */
 void
 rastrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit;
-	register struct ra_softc *ra;
+	int unit;
+	struct ra_softc *ra;
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
 	unit = DISKUNIT(bp->b_dev);
-	if (unit >= ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
+	if (unit > ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -385,10 +364,13 @@ raioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register int unit = DISKUNIT(dev);
-	register struct disklabel *lp, *tp;
-	register struct ra_softc *ra = ra_cd.cd_devs[unit];
+	int unit = DISKUNIT(dev);
+	struct disklabel *lp, *tp;
+	struct ra_softc *ra = ra_cd.cd_devs[unit];
 	int error = 0;
+#ifdef __HAVE_OLD_DISKLABEL
+	struct disklabel newlabel;
+#endif
 
 	lp = ra->ra_disk.dk_label;
 
@@ -397,6 +379,14 @@ raioctl(dev, cmd, data, flag, p)
 	case DIOCGDINFO:
 		bcopy(lp, data, sizeof (struct disklabel));
 		break;
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDINFO:
+		bcopy(lp, &newlabel, sizeof disklabel);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			return ENOTTY;
+		bcopy(&newlabel, data, sizeof (struct olddisklabel));
+		break;
+#endif
 
 	case DIOCGPART:
 		((struct partinfo *)data)->disklab = lp;
@@ -406,11 +396,27 @@ raioctl(dev, cmd, data, flag, p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+	case ODIOCSDINFO:
+		if (cmd == ODIOCSDINFO || xfer == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, data, sizeof (struct olddisklabel));
+			tp = &newlabel;
+		} else
+#endif
+		tp = (struct disklabel *)data;
+
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else {
-			error = setdisklabel(lp, (struct disklabel *)data,0,0);
-			if ((error == 0) && (cmd == DIOCWDINFO)) {
+			error = setdisklabel(lp, tp, 0, 0);
+			if ((error == 0) && (cmd == DIOCWDINFO
+#ifdef __HAVE_OLD_DISKLABEL
+			    || cmd == ODIOCWDINFO
+#else
+			    )) {
+#endif
 				ra->ra_wlabel = 1;
 				error = writedisklabel(dev, rastrategy, lp,0);
 				ra->ra_wlabel = 0;
@@ -427,8 +433,15 @@ raioctl(dev, cmd, data, flag, p)
 
 #ifdef __NetBSD__
 	case DIOCGDEFLABEL:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDEFLABEL:
+		if (cmd == ODIOCGDEFLABEL)
+			tp = &newlabel;
+		else
+#else
 		tp = (struct disklabel *)data;
-		bzero(data, sizeof(struct disklabel));
+#endif
+		bzero(tp, sizeof(struct disklabel));
 		tp->d_secsize = lp->d_secsize;
 		tp->d_nsectors = lp->d_nsectors;
 		tp->d_ntracks = lp->d_ntracks;
@@ -438,8 +451,15 @@ raioctl(dev, cmd, data, flag, p)
 		tp->d_type = DTYPE_MSCP;
 		tp->d_rpm = 3600;
 		rrmakelabel(tp, ra->ra_mediaid);
-		break;
+#ifdef __HAVE_OLD_DISKLABEL
+		if (cmd == ODIOCGDEFLABEL) {
+			if (tp->d_npartitions > OLDMAXPARTITIONS)
+				return ENOTTY;
+			memcpy(data, tp, sizeof (struct olddisklabel));
+		}
 #endif
+		break;
+#endif /* __NetBSD__ */
 
 	default:
 		error = ENOTTY;
@@ -466,7 +486,7 @@ int
 rasize(dev)
 	dev_t dev;
 {
-	register int unit = DISKUNIT(dev);
+	int unit = DISKUNIT(dev);
 	struct ra_softc *ra;
 
 	if (unit >= ra_cd.cd_ndevs || ra_cd.cd_devs[unit] == 0)
@@ -482,8 +502,7 @@ rasize(dev)
 	    (ra->ra_disk.dk_label->d_secsize / DEV_BSIZE);
 }
 
-int
-ra_getdev(adaptor, controller, unit, uname)
+int ra_getdev(adaptor, controller, unit, uname)
     int adaptor, controller, unit;
     char **uname;
 {
@@ -539,7 +558,7 @@ rxmatch(parent, cf, aux)
 	if ((da->da_typ & MSCPBUS_DISK) == 0)
 		return 0;
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != mp->mscp_unit)
-   		return 0;
+		return 0;
 	/*
 	 * Check if this disk is a floppy; then configure it.
 	 * Seems to be a safe way to test it per Chris Torek.
@@ -633,7 +652,7 @@ rxopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct	proc *p;
 {
-	register struct rx_softc *rx;
+	struct rx_softc *rx;
 	int unit;
 
 	/*
@@ -676,16 +695,16 @@ rxclose(dev, flags, fmt, p)
  */
 void
 rxstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit;
-	register struct rx_softc *rx;
+	int unit;
+	struct rx_softc *rx;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
 	unit = DISKUNIT(bp->b_dev);
-	if (unit >= rx_cd.cd_ndevs || (rx = rx_cd.cd_devs[unit]) == NULL) {
+	if (unit > rx_cd.cd_ndevs || (rx = rx_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
@@ -747,9 +766,9 @@ rxioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register int unit = DISKUNIT(dev);
-	register struct disklabel *lp;
-	register struct rx_softc *rx = rx_cd.cd_devs[unit];
+	int unit = DISKUNIT(dev);
+	struct disklabel *lp;
+	struct rx_softc *rx = rx_cd.cd_devs[unit];
 	int error = 0;
 
 	lp = rx->ra_disk.dk_label;
@@ -932,8 +951,8 @@ rrmakelabel(dl, type)
  */
 int
 rrgotstatus(usc, mp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 {	
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		printf("%s: attempt to get status failed: ", usc->dv_xname);
@@ -967,8 +986,8 @@ rrreplace(usc, mp)
 /*ARGSUSED*/
 int 
 rrioerror(usc, mp, bp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 	struct buf *bp;
 {
 	struct ra_softc *ra = (void *)usc;

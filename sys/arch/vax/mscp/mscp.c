@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscp.c,v 1.5 2001/06/25 00:43:18 mickey Exp $	*/
-/*	$NetBSD: mscp.c,v 1.11 1999/06/06 19:16:18 ragge Exp $	*/
+/*	$OpenBSD: mscp.c,v 1.6 2001/12/05 03:04:38 hugh Exp $	*/
+/*	$NetBSD: mscp.c,v 1.16 2001/11/13 07:38:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -44,6 +44,8 @@
  * MSCP generic driver routines
  */
 
+#include <sys/cdefs.h>
+
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
@@ -66,12 +68,12 @@
  */
 struct mscp *
 mscp_getcp(mi, canwait)
-	register struct mscp_softc *mi;
+	struct mscp_softc *mi;
 	int canwait;
 {
 #define mri	(&mi->mi_cmd)
-	register struct mscp *mp;
-	register int i;
+	struct mscp *mp;
+	int i;
 	int s = splimp();
 
 again:
@@ -85,7 +87,7 @@ again:
 			return (NULL);
 		}
 		mi->mi_wantcredits = 1;
-		sleep((caddr_t) &mi->mi_wantcredits, PCMD);
+		(void) tsleep(&mi->mi_wantcredits, PCMD, "mscpwcrd", 0);
 		goto again;
 	}
 	i = mri->mri_next;
@@ -95,7 +97,7 @@ again:
 			return (NULL);
 		}
 		mi->mi_wantcmd = 1;
-		sleep((caddr_t) &mi->mi_wantcmd, PCMD);
+		(void) tsleep(&mi->mi_wantcmd, PCMD, "mscpwcmd", 0);
 		goto again;
 	}
 	mi->mi_credits--;
@@ -130,7 +132,7 @@ int	mscp_aeb_xor = 0x8000bb80;
  */
 void
 mscp_dorsp(mi)
-	register struct mscp_softc *mi;
+	struct mscp_softc *mi;
 {
 	struct device *drive;
 	struct mscp_device *me = mi->mi_me;
@@ -140,6 +142,7 @@ mscp_dorsp(mi)
 	struct mscp_xi *mxi;
 	int nextrsp;
 	int st, error;
+	extern int cold;
 	extern struct mscp slavereply;
 
 	nextrsp = mi->mi_rsp.mri_next;
