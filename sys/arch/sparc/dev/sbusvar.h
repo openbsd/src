@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.4 1997/08/08 08:25:28 downsj Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.5 1998/11/11 00:26:01 jason Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.4 1996/04/22 02:35:05 abrown Exp $ */
 
 /*
@@ -76,3 +76,4 @@ struct sbus_softc {
 int	sbusdev_match __P((struct cfdata *, void *));
 void	sbus_establish __P((struct sbusdev *, struct device *));
 void	sbus_translate __P((struct device *, struct confargs *));
+int	sbus_testdma __P((struct sbus_softc *, struct confargs *));

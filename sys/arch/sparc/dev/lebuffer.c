@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.3 1998/07/05 09:24:23 deraadt Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.4 1998/11/11 00:26:00 jason Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.3 1997/05/24 20:16:28 pk Exp $ */
 
 /*
@@ -50,10 +50,11 @@
 #include <sparc/dev/dmareg.h>/*XXX*/
 
 int	lebufprint __P((void *, const char *));
+int	lebufmatch __P((struct device *, void *, void *));
 void	lebufattach __P((struct device *, struct device *, void *));
 
 struct cfattach lebuffer_ca = {
-	sizeof(struct lebuf_softc), matchbyname, lebufattach
+	sizeof(struct lebuf_softc), lebufmatch, lebufattach
 };
 
 struct cfdriver lebuffer_cd = {
@@ -71,6 +72,27 @@ lebufprint(aux, name)
 		printf("[%s at %s]", ca->ca_ra.ra_name, name);
 	printf(" offset 0x%x", ca->ca_offset);
 	return (UNCONF);
+}
+
+/*
+ * Match a lebuffer card in a slot capable of dma.
+ */
+int
+lebufmatch(parent, vcf, aux)
+	struct device *parent;
+	void *vcf, *aux;
+{
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
+
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return(0);
+
+	if (!sbus_testdma((struct sbus_softc *)parent, ca))
+		return(0);
+
+	return (1);
 }
 
 /*

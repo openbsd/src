@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.12 1998/10/02 17:42:24 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.13 1998/11/11 00:26:00 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -146,6 +146,8 @@ hmematch(parent, vcf, aux)
 	    strcmp("SUNW,hme", ra->ra_name)) {
 		return (0);
 	}
+	if (!sbus_testdma((struct sbus_softc *)parent, ca))
+		return(0);
 	return (1);
 }
 

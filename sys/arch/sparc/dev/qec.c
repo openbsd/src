@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.8 1998/11/02 05:50:59 jason Exp $	*/
+/*	$OpenBSD: qec.c,v 1.9 1998/11/11 00:26:00 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -48,12 +48,13 @@
 #include <sparc/dev/qecvar.h>
 
 int	qecprint	__P((void *, const char *));
+int	qecmatch	__P((struct device *, void *, void *));
 void	qecattach	__P((struct device *, struct device *, void *));
 void	qec_fix_range	__P((struct qec_softc *, struct sbus_softc *));
 void	qec_translate	__P((struct qec_softc *, struct confargs *));
 
 struct cfattach qec_ca = {
-	sizeof(struct qec_softc), matchbyname, qecattach
+	sizeof(struct qec_softc), qecmatch, qecattach
 };
 
 struct cfdriver qec_cd = {
@@ -71,6 +72,27 @@ qecprint(aux, name)
 		printf("%s at %s", ca->ca_ra.ra_name, name);
 	printf(" offset 0x%x", ca->ca_offset);
 	return (UNCONF);
+}
+
+/*
+ * match a QEC device in a slot capable of DMA
+ */
+int
+qecmatch(parent, vcf, aux)
+	struct device *parent;
+	void *vcf, *aux;
+{
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
+
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
+
+	if (!sbus_testdma((struct sbus_softc *)parent, ca))
+		return (0);
+
+	return (1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.5 1997/08/08 08:25:27 downsj Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.6 1998/11/11 00:26:00 jason Exp $	*/
 /*	$NetBSD: sbus.c,v 1.17 1997/06/01 22:10:39 pk Exp $ */
 
 /*
@@ -87,9 +87,13 @@ sbus_print(args, sbus)
 	const char *sbus;
 {
 	register struct confargs *ca = args;
+	static char *sl = "slave-only";
 
 	if (sbus)
 		printf("%s at %s", ca->ca_ra.ra_name, sbus);
+	/* Check root node for 'slave-only' property */
+	if (getpropint(0, sl, 0) & (1 << ca->ca_slot))
+		printf(" %s", sl);
 	printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
 	return (UNCONF);
 }
@@ -286,4 +290,27 @@ sbusreset(sbus)
 			printf(" %s", dev->dv_xname);
 		}
 	}
+}
+
+/*
+ * Returns true if this sbus slot is capable of dma
+ */
+int
+sbus_testdma(sc, ca)
+	struct sbus_softc *sc;
+	struct confargs *ca;
+{
+        struct romaux *ra = &ca->ca_ra;
+
+	/*
+	 * XXX how to handle more then one sbus?
+	 */
+
+	if (getpropint(0, "slave-only", 0) & (1 << ca->ca_slot)) {
+		printf("%s: dma card found in non-dma sbus slot %d"
+			": not supported\n", ra->ra_name, ca->ca_slot);
+		return (0);
+	}
+
+	return (1);
 }
