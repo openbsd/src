@@ -12,7 +12,7 @@ Created: Wed Jul 12 01:07:36 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: tildexpand.c,v 1.1 1999/09/26 20:53:38 deraadt Exp $");
+RCSID("$Id: tildexpand.c,v 1.2 1999/09/30 16:48:48 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -32,8 +32,7 @@ char *tilde_expand_filename(const char *filename, uid_t my_uid)
   if (filename[0] != '~')
     return xstrdup(filename);
 
-
-  /* Skiop the tilde. */
+  /* Skip the tilde. */
   filename++;
 
   /* Find where the username ends. */
