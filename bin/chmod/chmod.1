@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.8 1998/12/15 01:20:18 aaron Exp $
+.\"	$OpenBSD: chmod.1,v 1.9 1999/03/03 02:38:36 aaron Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -50,30 +50,30 @@
 .Op Fl H | Fl L | Fl P
 .Oc
 .Ar mode
-.Ar file Op Ar ...
+.Op Ar
 .Sh DESCRIPTION
 The
 .Nm
 utility modifies the file mode bits of the listed files
 as specified by the
 .Ar mode
-operand.
+operand. The mode of a file dictates its permissions, among other attributes.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl H
 If the
 .Fl R
-option is specified, symbolic links on the command line are followed.
+option is also specified, symbolic links on the command-line are followed.
 (Symbolic links encountered in the tree traversal are not followed.)
 .It Fl L
 If the
 .Fl R
-option is specified, all symbolic links are followed.
+option is also specified, all symbolic links are followed.
 .It Fl P
 If the
 .Fl R
-option is specified, no symbolic links are followed.
+option is also specified, no symbolic links are followed.
 .It Fl R
 Change the modes of the file hierarchies rooted in the files
 instead of just the files themselves.
@@ -105,8 +105,7 @@ The
 utility exits 0 on success or >0 if an error occurred.
 .Sh MODES
 Modes may be absolute or symbolic.
-An absolute mode is an octal number constructed by
-.Ar or-ing
+An absolute mode is an octal number constructed by ORing
 the following values:
 .Pp
 .Bl -tag -width 6n -compact -offset indent
@@ -116,13 +115,15 @@ set-user-ID on execution
 set-group-ID on execution
 .It Li 1000
 sticky bit, see
+.Xr sticky 8
+and
 .Xr chmod 2
 .It Li 0400
 read by owner
 .It Li 0200
 write by owner
 .It Li 0100
-execute (or search for directories) by owner
+execute (or search in directories) by owner
 .It Li 0070
 read, write, execute/search by group
 .It Li 0007
@@ -130,7 +131,20 @@ read, write, execute/search by others
 .El
 .Pp
 The read, write, and execute/search values for group and others
-are encoded as described for owner.
+are encoded as described for owner. The execute bit for a directory is often
+referred to as the
+.Dq search
+bit. In order to access a file, a user must have execute permission in each
+directory leading up to it in the filesystem hierarchy. For example, to access
+the file
+.Pa /bin/ls ,
+execute permission is needed on
+.Pa / ,
+.Pa /bin ,
+and, of course, the
+.Pa ls
+binary itself.
+
 .Pp
 The symbolic mode is described by the following grammar:
 .Bd -literal -offset indent
@@ -151,13 +165,19 @@ symbols
 and
 .Dq o
 specify the user, group, and other parts
-of the mode bits, respectively.
-The
+of the mode bits, respectively. The
 .Ar who
 symbol
 .Dq a
 is equivalent to
 .Dq ugo .
+Do not confuse the
+.Dq o
+symbol with
+.Dq owner .
+It is the user bit,
+.Dq u ,
+that refers to the owner of the file.
 .Pp
 .ne 1i
 The
@@ -168,7 +188,7 @@ symbols represent the portions of the mode bits as follows:
 .It r
 The read bits.
 .It s
-The set-user-ID-on-execution and set-group-ID-on-execution bits.
+The set-user-ID- and set-group-ID-on-execution bits.
 .It t
 The sticky bit.
 .It w
@@ -238,7 +258,7 @@ The mode bits specified by the
 .Ar who
 value are cleared, or, if no
 .Ar who
-value is specified, the owner, group
+value is specified, the user, group
 and other mode bits are cleared.
 Then, if no value is supplied for
 .Ar who ,
@@ -268,6 +288,15 @@ symbols
 or
 .Dq t ,
 are ignored.
+.Pp
+Care must be taken when granting elevated privileges to a program through the
+set-user-ID (suid) and set-group-ID (sgid) bits. Do not apply
+.Dq s
+bits to executables you do not trust. Indeed, the source code which makes up
+the suid/sgid binaries shipped with
+.Bx Open
+has been heavily audited by talented developers. Beware of suid/sgid binaries
+from third-party sources and practice safe programming.
 .Sh EXAMPLES
 .Bl -tag -width "u=rwx,go=u-w" -compact
 .It Li 644
@@ -295,17 +324,15 @@ Clear all mode bits for group and others.
 .It Li g=u-w
 Set the group bits equal to the user bits, but clear the group write bit.
 .El
-.Sh BUGS
-There's no
-.Ar perm
-option for the naughty bits.
 .Sh SEE ALSO
+.Xr chgrp 1 ,
 .Xr install 1 ,
 .Xr chmod 2 ,
 .Xr stat 2 ,
 .Xr umask 2 ,
 .Xr fts 3 ,
 .Xr setmode 3 ,
+.Xr sticky 8 ,
 .Xr symlink 7 ,
 .Xr chown 8
 .Sh STANDARDS
@@ -320,3 +347,7 @@ symbols
 and
 .Dq X
 which are not included in that standard.
+.Sh BUGS
+There's no
+.Ar perm
+option for the naughty bits.
