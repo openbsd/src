@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2001/10/06 10:59:11 espie Exp $
+#	$OpenBSD: Makefile,v 1.12 2001/10/10 11:16:28 espie Exp $
 #	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:33 lukem Exp $
 
 NOMAN=
@@ -11,7 +11,8 @@ M4=m4
 CLEANFILES+= ff_after_dnl.m4 strangequotes.m4 fibo.out
 
 ALL_TESTS= test-ff_after_dnl test-m4wrap test-m4wrap2 test-fibo \
-    test-patterns trip test-strangequotes test-redef test-quotes
+    test-patterns trip test-strangequotes test-redef test-quotes \
+    test-weird
 
 regress: ${ALL_TESTS}
 
@@ -50,6 +51,9 @@ test-strangequotes: strangequotes.m4
 
 test-redef:
 	${M4} ${.CURDIR}/redef.m4 | diff - ${.CURDIR}/redef.out
+
+test-weird:
+	test `${M4} ${.CURDIR}/weird,name.m4 | wc -c` == 0
 
 .PHONY:	${ALL_TESTS}
 
