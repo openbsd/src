@@ -1,4 +1,4 @@
-/*	$OpenBSD: ramdisk.c,v 1.18 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: ramdisk.c,v 1.19 2002/05/23 22:47:16 art Exp $	*/
 /*	$NetBSD: ramdisk.c,v 1.8 1996/04/12 08:30:09 leo Exp $	*/
 
 /*
@@ -325,6 +325,7 @@ rdstrategy(bp)
 	struct rd_softc *sc;
 	caddr_t addr;
 	size_t  off, xfer;
+	int s;
 
 	unit = DISKUNIT(bp->b_dev);
 	sc = ramdisk_devs[unit];
@@ -372,7 +373,9 @@ rdstrategy(bp)
 		bp->b_flags |= B_ERROR;
 		break;
 	}
+	s = splbio();
 	biodone(bp);
+	splx(s);
 }
 
 int
@@ -587,6 +590,7 @@ rd_server_loop(sc)
 	size_t  off;	/* offset into "device" */
 	size_t  xfer;	/* amount to transfer */
 	int error;
+	int s;
 
 	for (;;) {
 		/* Wait for some work to arrive. */
@@ -627,7 +631,9 @@ rd_server_loop(sc)
 			bp->b_error = error;
 			bp->b_flags |= B_ERROR;
 		}
+		s = splbio();
 		biodone(bp);
+		splx(s);
 	}
 }
 
