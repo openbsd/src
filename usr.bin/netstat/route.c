@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.18 1997/07/23 04:38:34 denny Exp $	*/
+/*	$OpenBSD: route.c,v 1.19 1997/07/25 04:29:00 mickey Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.18 1997/07/23 04:38:34 denny Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.19 1997/07/25 04:29:00 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ pr_family(af)
 }
 
 /* column widths; each followed by one space */
-#define	WID_DST		16	/* width of destination column */
+#define	WID_DST		18	/* width of destination column */
 #define	WID_GW		18	/* width of gateway column */
 
 /*
