@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2003/12/27 14:42:59 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.23 2003/12/27 17:34:10 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -167,7 +167,7 @@ conf_main	: AS number		{
 			conf->listen_addr.sin_addr.s_addr = $3.s_addr;
 		}
 		| FIBUPDATE yesno		{
-			if ($2 == 1)
+			if ($2 == 0)
 				conf->flags |= BGPD_FLAG_NO_FIB_UPDATE;
 			else
 				conf->flags &= ~BGPD_FLAG_NO_FIB_UPDATE;
