@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.369 2003/04/30 12:30:27 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.370 2003/05/01 16:16:08 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -171,6 +171,10 @@ struct filter_opts {
 	struct node_qassign	 queues;
 } filter_opts;
 
+struct antispoof_opts {
+	char			*label;
+} antispoof_opts;
+
 struct scrub_opts {
 	int			marker;
 #define SOM_MINTTL	0x01
@@ -314,6 +318,7 @@ typedef struct {
 		struct node_queue_bw	 queue_bwspec;
 		struct node_qassign	 qassign;
 		struct filter_opts	 filter_opts;
+		struct antispoof_opts	 antispoof_opts;
 		struct queue_opts	 queue_opts;
 		struct scrub_opts	 scrub_opts;
 		struct table_opts	 table_opts;
@@ -386,6 +391,7 @@ typedef struct {
 %type	<v.hfsc_opts>		hfscopts_list hfscopts_item hfsc_opts
 %type	<v.queue_bwspec>	bandwidth
 %type	<v.filter_opts>		filter_opts filter_opt filter_opts_l
+%type	<v.antispoof_opts>	antispoof_opts antispoof_opt antispoof_opts_l
 %type	<v.queue_opts>		queue_opts queue_opt queue_opts_l
 %type	<v.scrub_opts>		scrub_opts scrub_opt scrub_opts_l
 %type	<v.table_opts>		table_opts table_opt table_opts_l
@@ -682,7 +688,7 @@ fragcache	: FRAGMENT FRAGNORM	{ $$ = 0; /* default */ }
 		| FRAGMENT FRAGDROP	{ $$ = PFRULE_FRAGDROP; }
 		;
 
-antispoof	: ANTISPOOF logquick antispoof_ifspc af {
+antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 			struct pf_rule		 r;
 			struct node_host	*h = NULL;
 			struct node_if		*i, *j;
@@ -691,13 +697,24 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af {
 				YYERROR;
 
 			for (i = $3; i; i = i->next) {
-				memset(&r, 0, sizeof(r));
+				bzero(&r, sizeof(r));
 
 				r.action = PF_DROP;
 				r.direction = PF_IN;
 				r.log = $2.log;
 				r.quick = $2.quick;
 				r.af = $4;
+				if ($5.label) {
+					if (strlcpy(r.label, $5.label,
+					    sizeof(r.label)) >=
+					    sizeof(r.label)) {
+						yyerror("rule label too long "
+						    "(max %d chars)",
+						    sizeof(r.label)-1);
+						YYERROR;
+					}
+					free($5.label);
+				}
 
 				j = calloc(1, sizeof(struct node_if));
 				if (j == NULL)
@@ -715,17 +732,27 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af {
 				    NULL, NULL, NULL, NULL);
 
 				if ((i->ifa_flags & IFF_LOOPBACK) == 0) {
-					memset(&r, 0, sizeof(r));
+					bzero(&r, sizeof(r));
 
 					r.action = PF_DROP;
 					r.direction = PF_IN;
 					r.log = $2.log;
 					r.quick = $2.quick;
 					r.af = $4;
-
+					if ($5.label) {
+						if (strlcpy(r.label, $5.label,
+						    sizeof(r.label)) >=
+						    sizeof(r.label)) {
+							yyerror("rule label too"
+							    " long (max %d"
+							    " chars)",
+							    sizeof(r.label)-1);
+							YYERROR;
+						}
+						free($5.label);
+					}
 					h = ifa_lookup(i->ifname,
 					    PFCTL_IFLOOKUP_HOST);
-
 					expand_rule(&r, NULL, NULL, NULL, h,
 					    NULL, NULL, NULL, NULL, NULL, NULL);
 				}
@@ -742,6 +769,28 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
+		}
+		;
+
+antispoof_opts	:	{ bzero(&antispoof_opts, sizeof antispoof_opts); }
+		  antispoof_opts_l
+			{ $$ = antispoof_opts; }
+		| /* empty */	{
+			bzero(&antispoof_opts, sizeof antispoof_opts);
+			$$ = antispoof_opts;
+		}
+		;
+
+antispoof_opts_l	: antispoof_opts_l antispoof_opt
+			| antispoof_opt
+			;
+
+antispoof_opt	: label	{
+			if (antispoof_opts.label) {
+				yyerror("label cannot be redefined");
+				YYERROR;
+			}
+			antispoof_opts.label = $1;
 		}
 		;
 
