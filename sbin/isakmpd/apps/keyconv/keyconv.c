@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyconv.c,v 1.2 2001/08/22 15:25:32 ho Exp $	*/
+/*	$OpenBSD: keyconv.c,v 1.3 2002/01/23 18:13:50 ho Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Hakan Olsson.  All rights reserved.
@@ -606,6 +606,7 @@ convert_openssl_to_dns (char *file_in, char *file_out)
   DH *dh;
   enum DNS_TAGS tag;
   char *pubname;
+  int len;
 
   rsa = NULL;
   dsa = NULL;
@@ -645,8 +646,15 @@ convert_openssl_to_dns (char *file_in, char *file_out)
       return 1;
     }
 
-  pubname = strdup (file_out);
-  sprintf (pubname + strlen (pubname), ".pubkey");
+  len = strlen (file_out) + sizeof ".pubkey" + 1;
+  pubname = malloc (len);
+  if (!pubname)
+    {
+      perror ("malloc");
+      return 1;
+    }
+  strlcpy (pubname, file_out, len);
+  strlcat (pubname, ".pubkey", len);
 
   fprintf (stderr, "Writing output file \"%s\".\n", file_out);
   fprintf (oo, "%s v%d.%d\n", dns_tags[TAG_VERSION], MAJOR_VERSION,
