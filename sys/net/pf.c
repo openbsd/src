@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.189 2002/02/14 19:46:49 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.190 2002/02/15 15:42:52 art Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -122,11 +122,9 @@ struct pf_binatqueue	*pf_binats_inactive;
 struct pf_rdrqueue	*pf_rdrs_active;
 struct pf_rdrqueue	*pf_rdrs_inactive;
 struct pf_tree_node	*tree_lan_ext, *tree_ext_gwy;
-struct timeval		 pftv;
 struct pf_status	 pf_status;
 struct ifnet		*status_ifp;
 
-u_int32_t		 pf_last_purge;
 u_int32_t		 ticket_rules_active;
 u_int32_t		 ticket_rules_inactive;
 u_int32_t		 ticket_nats_active;
@@ -160,6 +158,7 @@ int			 pftm_other_multiple = 60;	/* Bidirectional */
 int			 pftm_frag = 30;		/* Fragment expire */
 
 int			 pftm_interval = 10;		/* expire interval */
+struct timeout		 pf_expire_to;			/* expire timeout */
 
 int			*pftm_timeouts[PFTM_MAX] = { &pftm_tcp_first_packet,
 				&pftm_tcp_opening, &pftm_tcp_established,
@@ -192,6 +191,7 @@ struct pf_tree_node	*pf_tree_search(struct pf_tree_node *,
 			    struct pf_tree_key *);
 void			 pf_insert_state(struct pf_state *);
 void			 pf_purge_expired_states(void);
+void			 pf_purge_timeout(void *);
 
 void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
 void			 pf_print_state(struct pf_state *);
@@ -790,6 +790,20 @@ pf_insert_state(struct pf_state *state)
 }
 
 void
+pf_purge_timeout(void *arg)
+{
+	struct timeout *to = arg;
+	int s;
+
+	s = splsoftnet();
+	pf_purge_expired_states();
+	pf_purge_expired_fragments();
+	splx(s);
+
+	timeout_add(to, pftm_interval * hz);
+}
+
+void
 pf_purge_expired_states(void)
 {
 	struct pf_tree_node *cur, *next;
@@ -797,7 +811,7 @@ pf_purge_expired_states(void)
 
 	cur = pf_tree_first(tree_ext_gwy);
 	while (cur != NULL) {
-		if (cur->state->expire <= pftv.tv_sec) {
+		if (cur->state->expire <= time.tv_sec) {
 			key.af = cur->state->af;
 			key.proto = cur->state->proto;
 			PF_ACPY(&key.addr[0], &cur->state->lan.addr,
@@ -988,6 +1002,9 @@ pfattach(int num)
 	LIST_INIT(&pf_tcp_ports);
 	LIST_INIT(&pf_udp_ports);
 
+	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
+	timeout_add(&pf_expire_to, pftm_interval * hz);
+
 	pf_normalize_init();
 }
 
@@ -1067,8 +1084,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			bzero(&pf_status, sizeof(struct pf_status));
 			pf_status.running = 1;
 			pf_status.states = states;
-			microtime(&pftv);
-			pf_status.since = pftv.tv_sec;
+			pf_status.since = time.tv_sec;
 			DPFPRINTF(PF_DEBUG_MISC, ("pf: started\n"));
 		}
 		break;
@@ -1944,11 +1960,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		s = splsoftnet();
-		microtime(&pftv);
 		bcopy(&ps->state, state, sizeof(struct pf_state));
 		state->rule = NULL;
-		state->creation = pftv.tv_sec;
-		state->expire += pftv.tv_sec;
+		state->creation = time.tv_sec;
+		state->expire += state->creation;
 		state->packets = 0;
 		state->bytes = 0;
 		pf_insert_state(state);
@@ -1959,6 +1974,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_state *ps = (struct pfioc_state *)addr;
 		struct pf_tree_node *n;
 		u_int32_t nr;
+		int secs;
 
 		nr = 0;
 		s = splsoftnet();
@@ -1974,12 +1990,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		bcopy(n->state, &ps->state, sizeof(struct pf_state));
 		splx(s);
-		microtime(&pftv);
-		ps->state.creation = pftv.tv_sec - ps->state.creation;
-		if (ps->state.expire <= pftv.tv_sec)
+		secs = time.tv_sec;
+		ps->state.creation = secs - ps->state.creation;
+		if (ps->state.expire <= secs)
 			ps->state.expire = 0;
 		else
-			ps->state.expire -= pftv.tv_sec;
+			ps->state.expire -= secs;
 		break;
 	}
 
@@ -2002,17 +2018,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			return (0);
 		}
 
-		microtime(&pftv);
 		s = splsoftnet();
 		p = ps->ps_states;
 		n = pf_tree_first(tree_ext_gwy);
 		while (n && (nr + 1) * sizeof(*p) <= ps->ps_len) {
+			int secs = time.tv_sec;
+
 			bcopy(n->state, &pstore, sizeof(pstore));
-			pstore.creation = pftv.tv_sec - pstore.creation;
-			if (pstore.expire <= pftv.tv_sec)
+			pstore.creation = secs - pstore.creation;
+			if (pstore.expire <= secs)
 				pstore.expire = 0;
 			else
-				pstore.expire -= pftv.tv_sec;
+				pstore.expire -= secs;
 			error = copyout(&pstore, p, sizeof(*p));
 			if (error) {
 				splx(s);
@@ -3012,8 +3029,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->dst.seqdiff = 0;	/* Defer random generation */
 		s->src.state = TCPS_SYN_SENT;
 		s->dst.state = TCPS_CLOSED;
-		s->creation = pftv.tv_sec;
-		s->expire = pftv.tv_sec + pftm_tcp_first_packet;
+		s->creation = time.tv_sec;
+		s->expire = s->creation + pftm_tcp_first_packet;
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		pf_insert_state(s);
@@ -3214,8 +3231,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->dst.seqdiff = 0;
 		s->dst.max_win = 0;
 		s->dst.state = 0;
-		s->creation = pftv.tv_sec;
-		s->expire = pftv.tv_sec + pftm_udp_first_packet;
+		s->creation = time.tv_sec;
+		s->expire = s->creation + pftm_udp_first_packet;
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		pf_insert_state(s);
@@ -3439,8 +3456,8 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->dst.seqdiff = 0;
 		s->dst.max_win = 0;
 		s->dst.state = 0;
-		s->creation = pftv.tv_sec;
-		s->expire = pftv.tv_sec + pftm_icmp_first_packet;
+		s->creation = time.tv_sec;
+		s->expire = s->creation + pftm_icmp_first_packet;
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		pf_insert_state(s);
@@ -3631,8 +3648,8 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->dst.seqdiff = 0;
 		s->dst.max_win = 0;
 		s->dst.state = 0;
-		s->creation = pftv.tv_sec;
-		s->expire = pftv.tv_sec + pftm_other_first_packet;
+		s->creation = time.tv_sec;
+		s->expire = s->creation + pftm_other_first_packet;
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		pf_insert_state(s);
@@ -3795,18 +3812,18 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		/* update expire time */
 		if (src->state >= TCPS_FIN_WAIT_2 &&
 		    dst->state >= TCPS_FIN_WAIT_2)
-			(*state)->expire = pftv.tv_sec + pftm_tcp_closed;
+			(*state)->expire = time.tv_sec + pftm_tcp_closed;
 		else if (src->state >= TCPS_FIN_WAIT_2 ||
 		    dst->state >= TCPS_FIN_WAIT_2)
-			(*state)->expire = pftv.tv_sec + pftm_tcp_fin_wait;
+			(*state)->expire = time.tv_sec + pftm_tcp_fin_wait;
 		else if (src->state >= TCPS_CLOSING ||
 		    dst->state >= TCPS_CLOSING)
-			(*state)->expire = pftv.tv_sec + pftm_tcp_closing;
+			(*state)->expire = time.tv_sec + pftm_tcp_closing;
 		else if (src->state < TCPS_ESTABLISHED ||
 		    dst->state < TCPS_ESTABLISHED)
-			(*state)->expire = pftv.tv_sec + pftm_tcp_opening;
+			(*state)->expire = time.tv_sec + pftm_tcp_opening;
 		else
-			(*state)->expire = pftv.tv_sec + pftm_tcp_established;
+			(*state)->expire = time.tv_sec + pftm_tcp_established;
 
 		/* Fall through to PASS packet */
 
@@ -3960,9 +3977,9 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	/* update expire time */
 	if (src->state == 2 && dst->state == 2)
-		(*state)->expire = pftv.tv_sec + pftm_udp_multiple;
+		(*state)->expire = time.tv_sec + pftm_udp_multiple;
 	else
-		(*state)->expire = pftv.tv_sec + pftm_udp_single;
+		(*state)->expire = time.tv_sec + pftm_udp_single;
 
 	/* translate source/destination address, if necessary */
 	if (STATE_TRANSLATE(*state)) {
@@ -4047,7 +4064,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 		(*state)->packets++;
 		(*state)->bytes += pd->tot_len;
-		(*state)->expire = pftv.tv_sec + pftm_icmp_error_reply;
+		(*state)->expire = time.tv_sec + pftm_icmp_error_reply;
 
 		/* translate source/destination address, if needed */
 		if (PF_ANEQ(&(*state)->lan.addr, &(*state)->gwy.addr, pd->af)) {
@@ -4497,9 +4514,9 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 
 	/* update expire time */
 	if (src->state == 2 && dst->state == 2)
-		(*state)->expire = pftv.tv_sec + pftm_other_multiple;
+		(*state)->expire = time.tv_sec + pftm_other_multiple;
 	else
-		(*state)->expire = pftv.tv_sec + pftm_other_single;
+		(*state)->expire = time.tv_sec + pftm_other_single;
 
 	/* translate source/destination address, if necessary */
 	if (STATE_TRANSLATE(*state)) {
@@ -4880,14 +4897,6 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif
 
-	/* purge expire states */
-	microtime(&pftv);
-	if (pftv.tv_sec - pf_last_purge >= pftm_interval) {
-		pf_purge_expired_states();
-		pf_purge_expired_fragments();
-		pf_last_purge = pftv.tv_sec;
-	}
-
 	if (m->m_pkthdr.len < sizeof(*h)) {
 		action = PF_DROP;
 		REASON_SET(&reason, PFRES_SHORT);
@@ -5046,14 +5055,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("non-M_PKTHDR is passed to pf_test");
 #endif
-
-	/* purge expire states */
-	microtime(&pftv);
-	if (pftv.tv_sec - pf_last_purge >= pftm_interval) {
-		pf_purge_expired_states();
-		pf_purge_expired_fragments();
-		pf_last_purge = pftv.tv_sec;
-	}
 
 	if (m->m_pkthdr.len < sizeof(*h)) {
 		action = PF_DROP;
