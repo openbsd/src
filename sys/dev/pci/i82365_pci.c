@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.1 2000/08/01 07:55:39 aaron Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.2 2000/08/03 14:06:39 aaron Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -120,7 +120,6 @@ pcic_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_space_tag_t memt = pa->pa_memt;
 	bus_space_handle_t memh;
-	char *model;
 	int irq, i;
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
@@ -157,17 +156,6 @@ pcic_pci_attach(parent, self, aux)
 
 	sc->memt = memt;
 	sc->memh = memh;
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_CIRRUS_CL_PD6729:
-		model = "Cirrus Logic PD6729 PCMCIA controller";
-		break;
-	default:
-		model = "Model unknown";
-		break;
-	}
-
-	printf(": %s\n", model);
 
 	/* Enable the card. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
