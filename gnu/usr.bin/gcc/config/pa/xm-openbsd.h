@@ -18,6 +18,7 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+#include <xm-openbsd.h>
 /* It is simpler to grab correct defines directly... */
 /* #defines that need visibility everywhere.  */
 #define FALSE 0
