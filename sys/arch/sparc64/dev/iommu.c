@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.25 2003/02/21 00:01:17 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.26 2003/02/21 00:47:56 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -500,10 +500,8 @@ iommu_strbuf_flush_done(struct iommu_state *is)
 	if (flush[0] == 0 || flush[1] == 0) {
 		printf("iommu_strbuf_flush_done: flush timeout %p/%llx, "
 		    "%p/%llx\n",
-		    present[0] ? ldxa(sb[0]->sb_flushpa, ASI_PHYS_CACHED) : 1,
-		    flush[0],
-		    present[1] ? ldxa(sb[1]->sb_flushpa, ASI_PHYS_CACHED) : 1,
-		    flush[1]);
+		    present[0] ? sb[0]->sb_flushpa : 0, flush[0],
+		    present[1] ? sb[1]->sb_flushpa : 0, flush[1]);
 		/* panic? */
 #ifdef DDB
 #if 0
