@@ -941,14 +941,21 @@ yylex()
 				dologout(0);
 			}
 			(void) alarm(0);
-#ifdef HASSETPROCTITLE
-			if (strncasecmp(cbuf, "PASS", 4) != NULL)
-				setproctitle("%s: %s", proctitle, cbuf);
-#endif /* HASSETPROCTITLE */
 			if ((cp = strchr(cbuf, '\r'))) {
 				*cp++ = '\n';
 				*cp = '\0';
 			}
+#ifdef HASSETPROCTITLE
+			if (strncasecmp(cbuf, "PASS", 4) != NULL) {
+				if ((cp = strpbrk(cbuf, "\n"))) {
+					c = *cp;
+					*cp = '\0';
+					setproctitle("%s: %s", proctitle, cbuf);
+					*cp = c;
+				}
+			} else
+				setproctitle("%s: %s", proctitle, cbuf);
+#endif /* HASSETPROCTITLE */
 			if ((cp = strpbrk(cbuf, " \n")))
 				cpos = cp - cbuf;
 			if (cpos == 0)
