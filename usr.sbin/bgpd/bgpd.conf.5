@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.25 2004/05/17 12:39:32 djm Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.26 2004/05/21 15:36:40 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -356,6 +356,9 @@ statement defines the maximum hops the neighbor may be away.
 Do not attempt to actively open a TCP connection to the neighbor system.
 .It Ar remote-as
 Set the AS number of the remote system.
+.It Ar route-reflector
+Act as a RFC 2796 route-reflector for this neighbor.
+An optional cluster id can be specified else the own bgp id will be used.
 .It Ar set
 Set the
 .Em AS path attributes

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.36 2004/05/04 21:22:39 deraadt Exp $ */
+/*	$OpenBSD: config.c,v 1.37 2004/05/21 15:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -56,6 +56,9 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	if (!conf->bgpid)
 		conf->bgpid = get_bgpid();
 
+	if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
+		conf->clusterid = conf->bgpid;
+
 	for (p = peer_l; p != NULL; p = p->next) {
 		p->conf.ebgp = (p->conf.remote_as != conf->as);
 		if (p->conf.announce_type == ANNOUNCE_UNDEF)
@@ -64,6 +67,12 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 		if (p->conf.enforce_as == ENFORCE_AS_UNDEF)
 			p->conf.enforce_as = p->conf.ebgp == 0 ?
 			    ENFORCE_AS_OFF : ENFORCE_AS_ON;
+		if (p->conf.reflector_client && p->conf.ebgp) {
+			log_peer_warnx(&p->conf, "configuration error: "
+			    "EBGP neighbors are not allowed in route "
+			    "reflector clusters");
+			return (1);
+		}
 	}
 
 	memcpy(xconf, conf, sizeof(struct bgpd_config));

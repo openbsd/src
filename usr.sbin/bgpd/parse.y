@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.111 2004/05/17 12:39:32 djm Exp $ */
+/*	$OpenBSD: parse.y,v 1.112 2004/05/21 15:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,7 +113,7 @@ typedef struct {
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
-%token	ENFORCE NEIGHBORAS CAPABILITIES
+%token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR
 %token	DUMP TABLE IN OUT
 %token	LOG ROUTECOLL
 %token	TCP MD5SIG PASSWORD KEY
@@ -646,6 +646,32 @@ peeropts	: REMOTEAS asnumber	{
 			    sizeof(curpeer->conf.attrset));
 		}
 		| mrtdump
+		| REFLECTOR		{
+			if ((conf->flags & BGPD_FLAG_REFLECTOR) &&
+			    conf->clusterid != 0) {
+				yyerror("only one route reflector "
+				    "cluster allowed");
+				YYERROR;
+			}
+			conf->flags |= BGPD_FLAG_REFLECTOR;
+			curpeer->conf.reflector_client = 1;
+		}
+		| REFLECTOR address	{
+			if ($2.af != AF_INET) {
+				yyerror("route reflector cluster-id must be "
+				    "an IPv4 address");
+				YYERROR;
+			}
+			if ((conf->flags & BGPD_FLAG_REFLECTOR) &&
+			    conf->clusterid != $2.v4.s_addr) {
+				yyerror("only one route reflector "
+				    "cluster allowed");
+				YYERROR;
+			}
+			conf->flags |= BGPD_FLAG_REFLECTOR;
+			curpeer->conf.reflector_client = 1;
+			conf->clusterid = $2.v4.s_addr;
+		}
 		;
 
 espah		: ESP		{ $$ = 1; }
@@ -1028,6 +1054,7 @@ lookup(char *s)
 		{ "quick",		QUICK},
 		{ "remote-as",		REMOTEAS},
 		{ "route-collector",	ROUTECOLL},
+		{ "route-reflector",	REFLECTOR},
 		{ "router-id",		ROUTERID},
 		{ "set",		SET},
 		{ "source-AS",		SOURCEAS},

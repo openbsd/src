@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.124 2004/05/21 11:48:56 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.125 2004/05/21 15:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,6 +50,7 @@
 
 #define	BGPD_FLAG_NO_FIB_UPDATE		0x0001
 #define	BGPD_FLAG_NO_EVALUATE		0x0002
+#define	BGPD_FLAG_REFLECTOR		0x0004
 
 #define BGPD_LOG_UPDATES		0x0001
 
@@ -111,6 +112,7 @@ struct bgpd_config {
 	int			 opts;
 	u_int16_t		 as;
 	u_int32_t		 bgpid;
+	u_int32_t		 clusterid;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
 	int			 flags;
@@ -203,6 +205,7 @@ struct peer_config {
 	enum enforce_as		 enforce_as;
 	struct peer_auth	 auth;
 	u_int8_t		 capabilities;
+	u_int8_t		 reflector_client;
 	enum reconf_action	 reconf_action;
 };
 

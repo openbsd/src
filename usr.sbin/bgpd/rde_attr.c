@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.30 2004/05/17 12:39:32 djm Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.31 2004/05/21 15:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -176,6 +176,18 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 		    ATTR_PARTIAL))
 			return (-1);
 		goto optattr;
+	case ATTR_ORIGINATOR_ID:
+		if (attr_len != 4)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, ATTR_PARTIAL))
+			return (-1);
+		goto optattr;
+	case ATTR_CLUSTER_LIST:
+		if ((attr_len & 0x3) != 0)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, ATTR_PARTIAL))
+			return (-1);
+		goto optattr;
 	default:
 optattr:
 		if (attr_optadd(a, flags, type, p, attr_len) == -1)
@@ -295,8 +307,17 @@ attr_error(u_char *p, u_int16_t len, struct attr_flags *attr,
 	case ATTR_COMMUNITIES:
 		if ((attr_len & 0x3) != 0)
 			return (p);
-		/* FALLTHROUGH */
+		goto optattr;
+	case ATTR_ORIGINATOR_ID:
+		if (attr_len != 4)
+			return (p);
+		goto optattr;
+	case ATTR_CLUSTER_LIST:
+		if ((attr_len & 0x3) != 0)
+			return (p);
+		goto optattr;
 	default:
+optattr:
 		if ((flags & ATTR_OPTIONAL) == 0) {
 			*suberr = ERR_UPD_UNKNWN_WK_ATTR;
 			return (p);
@@ -461,20 +482,11 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 
 int
 attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
-    u_char *data, u_int16_t len)
+    void *data, u_int16_t len)
 {
 	struct attr	*a, *p;
 
-	/* we need validate known optional attributes */
-
-	if (flags & ATTR_OPTIONAL && ! flags & ATTR_TRANSITIVE)
-		/*
-		 * We already know that we're not interested in this attribute.
-		 * Currently only the MED is optional and non-transitive but
-		 * MED is directly stored in struct attr_flags.
-		 */
-		return (0);
-
+	/* known optional attributes were validated previously */
 	a = calloc(1, sizeof(struct attr));
 	if (a == NULL)
 		fatal("attr_optadd");

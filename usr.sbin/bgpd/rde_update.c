@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.17 2004/04/30 05:47:50 deraadt Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.18 2004/05/21 15:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -211,6 +211,7 @@ up_generate_updates(struct rde_peer *peer,
 {
 	struct update_attr		*a;
 	struct update_prefix		*p;
+	struct attr			*atr;
 	struct attr_flags		 attrs;
 
 	ENSURE(peer->state == PEER_UP);
@@ -240,10 +241,22 @@ up_generate_updates(struct rde_peer *peer,
 			 */
 			return;
 
-		if (peer->conf.ebgp == 0 && old->aspath->peer->conf.ebgp == 0 &&
-		    (old->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) == 0)
-			/* Do not redistribute updates to ibgp peers */
-			return;
+		if (old->aspath->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
+			/*
+			 * redistribution rules:
+			 * 1. if annouce is set			-> announce
+			 * 2. old non-client, new non-client	-> no 
+			 * 3. old client, new non-client	-> yes
+			 * 4. old non-client, new client	-> yes
+			 * 5. old client, new client		-> yes
+			 */
+			if (old->aspath->peer->conf.reflector_client == 0 &&
+			    peer->conf.reflector_client == 0 &&
+			    (old->aspath->nexthop->flags &
+			    NEXTHOP_ANNOUNCE) == 0)
+				/* Do not redistribute updates to ibgp peers */
+				return;
+		}
 
 		/* announce type handling */
 		switch (peer->conf.announce_type) {
@@ -273,6 +286,19 @@ up_generate_updates(struct rde_peer *peer,
 		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPSUBCONFED))
 			return;
 
+		/*
+		 * don't send messages back to originator 
+		 * XXX this is not specified in the RFC but seems logical.
+		 */
+		if ((atr = attr_optget(&old->aspath->flags,
+		    ATTR_ORIGINATOR_ID)) != NULL) {
+			ENSURE(atr->len == 4);
+			if (memcmp(atr->data, &peer->remote_bgpid,
+			    sizeof(peer->remote_bgpid)) == 0)
+				/* would cause loop don't send */
+				return;
+		}
+
 		/* copy attributes for output filter */
 		attr_copy(&attrs, &old->aspath->flags);
 
@@ -281,7 +307,6 @@ up_generate_updates(struct rde_peer *peer,
 			attr_free(&attrs);
 			return;
 		}
-
 		attr_free(&attrs);
 
 		/* withdraw prefix */
@@ -311,11 +336,23 @@ up_generate_updates(struct rde_peer *peer,
 			return;
 		}
 
-		if (peer->conf.ebgp == 0 && new->aspath->peer->conf.ebgp == 0 &&
-		    (new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) == 0) {
-			/* Do not redistribute updates to ibgp peers */
-			up_generate_updates(peer, NULL, old);
-			return;
+		if (new->aspath->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
+			/*
+			 * redistribution rules:
+			 * 1. if annouce is set			-> announce
+			 * 2. old non-client, new non-client	-> no 
+			 * 3. old client, new non-client	-> yes
+			 * 4. old non-client, new client	-> yes
+			 * 5. old client, new client		-> yes
+			 */
+			if (new->aspath->peer->conf.reflector_client == 0 &&
+			    peer->conf.reflector_client == 0 &&
+			    (new->aspath->nexthop->flags &
+			    NEXTHOP_ANNOUNCE) == 0) {
+				/* Do not redistribute updates to ibgp peers */
+				up_generate_updates(peer, NULL, old);
+				return;
+			}
 		}
 
 		/* announce type handling */
@@ -363,6 +400,21 @@ up_generate_updates(struct rde_peer *peer,
 			attr_free(&attrs);
 			up_generate_updates(peer, NULL, old);
 			return;
+		}
+
+		/*
+		 * don't send messages back to originator 
+		 * XXX this is not specified in the RFC but seems logical.
+		 */
+		if ((atr = attr_optget(&new->aspath->flags,
+		    ATTR_ORIGINATOR_ID)) != NULL) {
+			ENSURE(atr->len == 4);
+			if (memcmp(atr->data, &peer->remote_bgpid,
+			    sizeof(peer->remote_bgpid)) == 0) {
+				/* would cause loop don't send */
+				attr_free(&attrs);
+				return;
+			}
 		}
 
 		/* generate update */
@@ -485,7 +537,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	 * dump all other path attributes. Following rules apply:
 	 *  1. well-known attrs: ATTR_ATOMIC_AGGREGATE and ATTR_AGGREGATOR
 	 *     pass unmodified (enforce flags to correct values)
-	 *  2. non-transitive attrs: don't re-announce
+	 *  2. non-transitive attrs: don't re-announce to ebgp peers
 	 *  3. transitive known attrs: announce unmodified
 	 *  4. transitive unknown attrs: set partial bit and re-announce
 	 */
@@ -498,20 +550,30 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 				return (-1);
 			break;
 		case ATTR_AGGREGATOR:
-			if ((r = attr_write(up_attr_buf + wlen, len,
-			    oa->flags, oa->type, oa->data, oa->len)) == -1)
-				return (-1);
-			break;
 		case ATTR_COMMUNITIES:
+		case ATTR_ORIGINATOR_ID:
+		case ATTR_CLUSTER_LIST:
+			if ((!(oa->flags & ATTR_TRANSITIVE)) &&
+			    peer->conf.ebgp != 0) {
+				r = 0;
+				break;
+			}
 			if ((r = attr_write(up_attr_buf + wlen, len,
 			    oa->flags, oa->type, oa->data, oa->len)) == -1)
 				return (-1);
 			break;
 		default:
 			/* unknown attribute */
-			if (!(oa->flags & ATTR_TRANSITIVE))
-				/* somehow a non-transitive slipped through */
+			if (!(oa->flags & ATTR_TRANSITIVE)) {
+				/*
+				 * RFC 1771:
+				 * Unrecognized non-transitive optional
+				 * attributes must be quietly ignored and
+				 * not passed along to other BGP peers.
+				 */
+				r = 0;
 				break;
+			}
 			if ((r = attr_write(up_attr_buf + wlen, len,
 			    oa->flags | ATTR_PARTIAL, oa->type,
 			    oa->data, oa->len)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.114 2004/05/21 12:10:22 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.115 2004/05/21 15:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,15 +45,16 @@ int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
 		     void *, u_int16_t);
+void		 rde_update_log(const char *,
+		     const struct rde_peer *, const struct attr_flags *,
+		     const struct bgpd_addr *, u_int8_t);
+int		 rde_reflector(struct rde_peer *, struct attr_flags *);
 void		 rde_dump_rib_as(struct prefix *, pid_t);
 void		 rde_dump_rib_prefix(struct prefix *, pid_t);
 void		 rde_dump_upcall(struct pt_entry *, void *);
 void		 rde_dump_as(struct as_filter *, pid_t);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_prefix *, pid_t);
-void		 rde_update_log(const char *,
-		     const struct rde_peer *, const struct attr_flags *,
-		     const struct bgpd_addr *, u_int8_t);
 void		 rde_update_queue_runner(void);
 
 void		 peer_init(u_int32_t);
@@ -437,13 +438,57 @@ rde_update_dispatch(struct imsg *imsg)
 	p = imsg->data;
 
 	memcpy(&len, p, 2);
-	withdrawn_len = len = ntohs(len);
+	withdrawn_len = ntohs(len);
 	p += 2;
 	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2 + withdrawn_len + 2) {
 		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
 		return (-1);
 	}
 
+	p += withdrawn_len;
+	memcpy(&len, p, 2);
+	attrpath_len = len = ntohs(len);
+	p += 2;
+	if (imsg->hdr.len <
+	    IMSG_HEADER_SIZE + 2 + withdrawn_len + 2 + attrpath_len) {
+		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
+		return (-1);
+	}
+	if (attrpath_len != 0) { /* 0 = no NLRI information in this message */
+		/* parse path attributes */
+		attr_init(&attrs);
+		while (len > 0) {
+			if ((pos = attr_parse(p, len, &attrs,
+			    peer->conf.ebgp, peer->conf.enforce_as,
+			    peer->conf.remote_as)) < 0) {
+				emsg = attr_error(p, len, &attrs,
+				    &subtype, &size);
+				rde_update_err(peer, ERR_UPDATE, subtype,
+				    emsg, size);
+				attr_free(&attrs);
+				return (-1);
+			}
+			p += pos;
+			len -= pos;
+		}
+
+		/* check for missing but necessary attributes */
+		if ((subtype = attr_missing(&attrs, peer->conf.ebgp)) != 0) {
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_MISSNG_WK_ATTR,
+			    &subtype, sizeof(u_int8_t));
+			attr_free(&attrs);
+			return (-1);
+		}
+
+		if (rde_reflector(peer, &attrs) != 1) {
+			attr_free(&attrs);
+			return (0);
+		}
+	}
+
+	p = imsg->data;
+	len = withdrawn_len;
+	p += 2;
 	/* withdraw prefix */
 	while (len > 0) {
 		if ((pos = rde_update_get_prefix(p, len, &prefix,
@@ -455,12 +500,16 @@ rde_update_dispatch(struct imsg *imsg)
 			log_peer_warnx(&peer->conf, "bad withdraw prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
+			if (attrpath_len != 0)
+				attr_free(&attrs);
 			return (-1);
 		}
 		if (prefixlen > 32) {
 			log_peer_warnx(&peer->conf, "bad withdraw prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
+			if (attrpath_len != 0)
+				attr_free(&attrs);
 			return (-1);
 		}
 
@@ -476,41 +525,14 @@ rde_update_dispatch(struct imsg *imsg)
 		prefix_remove(peer, &prefix, prefixlen);
 	}
 
-	memcpy(&len, p, 2);
-	attrpath_len = ntohs(len);
-	p += 2;
-	if (imsg->hdr.len <
-	    IMSG_HEADER_SIZE + 2 + withdrawn_len + 2 + attrpath_len) {
-		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
-		return (-1);
-	}
-	nlri_len =
-	    imsg->hdr.len - IMSG_HEADER_SIZE - 4 - withdrawn_len - attrpath_len;
 	if (attrpath_len == 0) /* 0 = no NLRI information in this message */
 		return (0);
 
-	/* parse path attributes */
-	attr_init(&attrs);
-	while (attrpath_len > 0) {
-		if ((pos = attr_parse(p, attrpath_len, &attrs, peer->conf.ebgp,
-		    peer->conf.enforce_as, peer->conf.remote_as)) < 0) {
-			emsg = attr_error(p, attrpath_len, &attrs,
-			    &subtype, &size);
-			rde_update_err(peer, ERR_UPDATE, subtype, emsg, size);
-			attr_free(&attrs);
-			return (-1);
-		}
-		p += pos;
-		attrpath_len -= pos;
-	}
+	/* shift to NLRI information */
+	p += 2 + attrpath_len;
+	nlri_len =
+	    imsg->hdr.len - IMSG_HEADER_SIZE - 4 - withdrawn_len - attrpath_len;
 
-	/* check for missing but necessary attributes */
-	if ((subtype = attr_missing(&attrs, peer->conf.ebgp)) != 0) {
-		rde_update_err(peer, ERR_UPDATE, ERR_UPD_MISSNG_WK_ATTR,
-		    &subtype, sizeof(u_int8_t));
-		attr_free(&attrs);
-		return (-1);
-	}
 
 	/* aspath needs to be loop free nota bene this is not a hard error */
 	if (peer->conf.ebgp && !aspath_loopfree(attrs.aspath, conf->as)) {
@@ -518,8 +540,7 @@ rde_update_dispatch(struct imsg *imsg)
 		aspath_asprint(&s, attrs.aspath->data, attrs.aspath->hdr.len);
 		log_peer_warnx(&peer->conf, "AS path loop: %s", s);
 		free(s);
-		aspath_destroy(attrs.aspath);
-		attr_optfree(&attrs);
+		attr_free(&attrs);
 		return (0);
 	}
 
@@ -652,6 +673,50 @@ rde_update_log(const char *message,
 	    nexthop ? nexthop : "");
 
 	free(nexthop);
+}
+
+int
+rde_reflector(struct rde_peer *peer, struct attr_flags *attrs)
+{
+	struct attr	*a;
+	u_int16_t	 len;
+
+	/* check for originator id if eq router_id drop */
+	if ((a = attr_optget(attrs, ATTR_ORIGINATOR_ID)) != NULL) {
+		ENSURE(a->len == 4);
+		if (memcmp(&conf->bgpid, a->data, sizeof(conf->bgpid)) == 0)
+			/* this is comming from myself */
+			return (0);
+	} else if ((conf->flags & BGPD_FLAG_REFLECTOR) &&
+	    attr_optadd(attrs, ATTR_OPTIONAL, ATTR_ORIGINATOR_ID,
+	    peer->conf.ebgp == 0 ? &peer->remote_bgpid : &conf->bgpid,
+	    sizeof(u_int32_t)) == -1)
+		fatalx("attr_optadd failed but impossible");
+
+	/* check for own id in the cluster list */
+	if (conf->flags & BGPD_FLAG_REFLECTOR) {
+		if ((a = attr_optget(attrs, ATTR_CLUSTER_LIST)) != NULL) {
+			for (len = 0; len < a->len;
+			    len += sizeof(conf->clusterid))
+				/* check if comming from my cluster */
+				if (memcmp(&conf->clusterid, a->data + len,
+				    sizeof(conf->clusterid)) == 0)
+					return (0);
+
+			/* prepend own clusterid */
+			if ((a->data = realloc(a->data, a->len +
+			    sizeof(conf->clusterid))) == NULL)
+				fatal("rde_reflector");
+			memmove(a->data + sizeof(conf->clusterid),
+			    a->data, a->len);
+			a->len += sizeof(conf->clusterid);
+			memcpy(a->data, &conf->clusterid,
+			    sizeof(conf->clusterid));
+		} else if (attr_optadd(attrs, ATTR_OPTIONAL, ATTR_CLUSTER_LIST,
+		    &conf->clusterid, sizeof(conf->clusterid)) == -1)
+			fatalx("attr_optadd failed but impossible");
+	}
+	return (1);
 }
 
 /*
