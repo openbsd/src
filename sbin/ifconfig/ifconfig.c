@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.46 2001/03/01 08:34:37 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.47 2001/05/02 06:44:23 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.46 2001/03/01 08:34:37 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.47 2001/05/02 06:44:23 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,8 @@ void 	setsnpaoffset __P((char *));
 void	setipxframetype __P((char *, int));
 void    setatrange __P((char *, int));
 void    setatphase __P((char *, int));  
-void    gifsettunnel __P((char *, char *));
+void    settunnel __P((char *, char *));
+void    deletetunnel __P((void));
 #ifdef INET6
 void 	setia6flags __P((char *, int));
 void	setia6pltime __P((char *, int));
@@ -268,7 +269,10 @@ const struct	cmd {
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
 	{ "-vlandev",	1,		0,		unsetvlandev },
 #endif	/* INET_ONLY */
-	{ "giftunnel",  NEXTARG2,       0,              gifsettunnel } ,
+	/* giftunnel is for backward compat */
+	{ "giftunnel",  NEXTARG2,       0,              settunnel } ,
+	{ "tunnel",  	NEXTARG2,       0,              settunnel } ,
+	{ "tunneldelete",  0,       	0,              deletetunnel } ,
 	{ "link0",	IFF_LINK0,	0,		setifflags } ,
 	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
 	{ "link1",	IFF_LINK1,	0,		setifflags } ,
@@ -757,7 +761,7 @@ setifaddr(addr, param)
 }
 
 void
-gifsettunnel(src, dst)
+settunnel(src, dst)
 	char *src;
 	char *dst;
 {
@@ -795,6 +799,14 @@ gifsettunnel(src, dst)
 	freeaddrinfo(srcres);
 	freeaddrinfo(dstres);
 }
+
+void
+deletetunnel()
+{
+        if (ioctl(s, SIOCDIFPHYADDR, &ifr) < 0)
+                warn("SIOCDIFPHYADDR");
+}
+
 
 void
 setifnetmask(addr)
@@ -2242,7 +2254,8 @@ usage()
 		"\t[ metric n ]\n"
 		"\t[ mtu n ]\n"
 		"\t[ nwid netword_id ]\n"
-		"\t[ giftunnel srcaddress dstaddress ]\n"
+		"\t[ tunnel srcaddress dstaddress ]\n"
+		"\t[ deletetunnel ]\n"
 		"\t[ vlan n vlandev interface ]\n"
 		"\t[ arp | -arp ]\n"
 		"\t[ -802.2 | -802.3 | -802.2tr | -snap | -EtherII ]\n"
