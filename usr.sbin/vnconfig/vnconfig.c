@@ -164,7 +164,7 @@ usage()
 {
 
 	(void)fprintf(stderr, "%s%s",
-	    "usage: vnconfig -c [-vk] rawdev regular-file\n",
+	    "usage: vnconfig [-c] [-vk] rawdev regular-file\n",
 	    "       vnconfig -u [-v] rawdev\n");
 	exit(1);
 }

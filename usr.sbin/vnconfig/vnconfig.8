@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.15 2000/11/09 17:53:26 aaron Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.16 2001/11/08 11:20:47 mpech Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -45,7 +45,8 @@
 .Nm vnconfig
 .Nd "configure vnode disks for file swapping or pseudo file systems"
 .Sh SYNOPSIS
-.Nm vnconfig Fl c
+.Nm vnconfig
+.Op Fl c
 .Op Fl vk
 .Ar rawdev
 .Ar regular_file
@@ -56,7 +57,7 @@
 The
 .Nm
 command configures vnode pseudo disk devices.
-It will associate the special file
+It will associate (or disassociate) the special file
 .Ar rawdev
 with the regular file
 .Ar regular_file
@@ -87,15 +88,16 @@ If successful, references to
 .Ar rawdev
 will access the contents of
 .Ar regular_file .
+This is the default operation.
+.It Fl k
+Associate an encryption key with the device.
+All data will be encrypted before it is written to the disk.
+Encryption only works with 
+.Pa svnd .
 .It Fl u
 Unconfigures the device.
 .It Fl v
 Print messages to stdout describing actions taken.
-.It Fl k
-Associate an encryption key with the device.  All data will be 
-encrypted before it is written to the disk.  Encryption only
-works with 
-.Pa svnd .
 .El
 .Pp
 If no action option is given,
