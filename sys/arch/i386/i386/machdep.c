@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.253 2003/12/14 23:11:28 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.254 2003/12/18 23:46:19 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -277,7 +277,8 @@ int	bus_mem_add_mapping(bus_addr_t, bus_size_t,
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
     bus_size_t, struct proc *, int, paddr_t *, int *, int);
 
-int	longrun_sysctl(void *, size_t *, void *, size_t);
+extern int (*cpu_cpuspeed)(void *, size_t *, void *, size_t);
+extern int (*cpu_setperf)(void *, size_t *, void *, size_t);
 
 #ifdef KGDB
 #ifndef KGDB_DEVNAME
@@ -1626,7 +1627,7 @@ intel686_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
 {
-	extern int cpu_feature, cpuid_level;
+	extern int cpu_feature, cpu_ecxfeature, cpuid_level;
 	u_quad_t msr119;
 
 	/*
@@ -1654,6 +1655,15 @@ intel686_cpu_setup(cpu_device, model, step)
 		cpu_feature &= ~CPUID_SER;
 		cpuid_level = 2;
 	}
+#if !defined(SMALL_KERNEL) && defined (I686_CPU)
+	if (cpu_ecxfeature & CPUIDECX_EST) {
+		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
+			est_init(cpu_device);
+		else
+			 printf("%s: Enhanced SpeedStep disabled by BIOS\n",
+			     cpu_device);
+	}
+#endif
 }
 
 void
@@ -1661,10 +1671,9 @@ tm86_cpu_setup(cpu_device, model, step)
 	const char *cpu_device;
 	int model, step;
 {
-#ifndef SMALL_KERNEL
-	extern int longrun_enabled;
-
-	longrun_enabled = 1;
+#if !defined(SMALL_KERNEL) && defined (I586_CPU)
+	cpu_cpuspeed = longrun_cpuspeed;
+	cpu_setperf = longrun_setperf;
 #endif
 }
 
@@ -1912,10 +1921,6 @@ identifycpu()
 		    ((*token) ? "\" " : ""), classnames[class]);
 	}
 
-	/* configure the CPU if needed */
-	if (cpu_setup != NULL)
-		cpu_setup(cpu_device, model, step);
-
 	printf("%s: %s", cpu_device, cpu_model);
 
 #if defined(I586_CPU) || defined(I686_CPU)
@@ -1961,6 +1966,10 @@ identifycpu()
 		}
 		printf("\n");
 	}
+
+	/* configure the CPU if needed */
+	if (cpu_setup != NULL)
+		cpu_setup(cpu_device, model, step);
 
 	cpu_class = class;
 
@@ -3135,10 +3144,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_USERLDT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &user_ldt_enable));
-#endif
-#ifndef SMALL_KERNEL
-	case CPU_LONGRUN:
-		return (longrun_sysctl(oldp, oldlenp, newp, newlen));
 #endif
 	default:
 		return (EOPNOTSUPP);

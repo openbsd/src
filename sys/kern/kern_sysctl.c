@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.92 2003/11/23 20:17:14 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.93 2003/12/18 23:46:20 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -93,6 +93,9 @@ int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
+
+int (*cpu_cpuspeed)(void *, size_t *, void *, size_t);
+int (*cpu_setperf)(void *, size_t *, void *, size_t);
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -548,6 +551,14 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case HW_SENSORS:
 		return (sysctl_sensors(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+	case HW_CPUSPEED:
+		if (!cpu_cpuspeed)
+			return (EOPNOTSUPP);
+		return (cpu_cpuspeed(oldp, oldlenp, newp, newlen));
+	case HW_SETPERF:
+		if (!cpu_setperf)
+			return (EOPNOTSUPP);
+		return (cpu_setperf(oldp, oldlenp, newp, newlen));
 	default:
 		return (EOPNOTSUPP);
 	}

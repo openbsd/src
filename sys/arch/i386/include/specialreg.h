@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.16 2003/07/25 21:42:02 mickey Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.17 2003/12/18 23:46:20 tedu Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -168,6 +168,13 @@
 #define MSR_MCG_CTL		0x17b
 #define P6MSR_CTRSEL0		0x186
 #define P6MSR_CTRSEL1		0x187
+#define MSR_PERF_STATUS		0x198	/* Pentium M */
+#define MSR_PERF_CTL		0x199	/* Pentium M */
+#define MSR_THERM_CONTROL	0x19a
+#define MSR_THERM_INTERRUPT	0x19b
+#define MSR_THERM_STATUS	0x19c
+#define MSR_THERM2_CTL		0x19d	/* Pentium M */
+#define MSR_MISC_ENABLE		0x1a0
 #define MSR_DEBUGCTLMSR		0x1d9
 #define MSR_LASTBRANCHFROMIP	0x1db
 #define MSR_LASTBRANCHTOIP	0x1dc

@@ -1,4 +1,4 @@
-/* $OpenBSD: longrun.c,v 1.5 2003/10/24 09:03:20 grange Exp $ */
+/* $OpenBSD: longrun.c,v 1.6 2003/12/18 23:46:19 tedu Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * Copyright (c) 2001 Tamotsu Hattori
@@ -30,15 +30,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <machine/cpufunc.h>
-
-#include <machine/longrun.h>
-
-static void	longrun_getmode(u_int32_t *, u_int32_t *, u_int32_t *);
-static void	longrun_setmode(u_int32_t, u_int32_t, u_int32_t);
-int		longrun_sysctl(void *, size_t *, void *, size_t);
-
-int longrun_enabled;
 
 union msrinfo {
 	u_int64_t msr;
@@ -55,62 +48,27 @@ union msrinfo {
 #define LONGRUN_MODE_RESERVED(x) ((x) & 0xffffff80)
 #define LONGRUN_MODE_WRITE(x, y) (LONGRUN_MODE_RESERVED(x) | LONGRUN_MODE_MASK(y))
 
-/* 
- * sysctl handler and entry point.  Just call the right function
- */
-int longrun_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
-{
-	struct longrun oinfo;
-	struct longrun ninfo;
-	int error;
-
-	if (!longrun_enabled)
-		return (EINVAL);
-
-	if (oldp && *oldlenp < sizeof(oinfo))
-		return (ENOMEM);
-	*oldlenp = sizeof(oinfo);
-
-	if (newp != NULL) {
-		error = copyin(newp, &ninfo, sizeof(ninfo));
-		if (error)
-			return (error);
-		longrun_setmode(ninfo.low, ninfo.high, ninfo.mode);
-	}
-	
-	if (oldp != NULL) {
-		memset(&oinfo, 0, sizeof(oinfo));
-		longrun_getmode(&oinfo.freq, &oinfo.voltage, &oinfo.percent);
-		error = copyout(&oinfo, oldp, sizeof(oinfo));
-	}
-
-	return (error);
-
-}
-
 /*
  * These are the instantaneous values used by the CPU.
- * Frequency is self-evident.
- * Voltage is returned in millivolts.
- * Percent is amount of performance window being used, not percentage
- * of top megahertz.  (0 values are typical.)
+ * regs[0] = Frequency is self-evident.
+ * regs[1] = Voltage is returned in millivolts.
+ * regs[2] = Percent is amount of performance window being used, not
+ * percentage of top megahertz.  (0 values are typical.)
  */
-static void
-longrun_getmode(u_int32_t *freq, u_int32_t *voltage, u_int32_t *percent)
+int
+longrun_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
-	u_long eflags;
-	u_int32_t regs[4];
+	uint32_t eflags, freq, regs[4];
 
 	eflags = read_eflags();
 	disable_intr();
-
 	cpuid(0x80860007, regs);
-	*freq = regs[0];
-	*voltage = regs[1];
-	*percent = regs[2];
-
 	enable_intr();
 	write_eflags(eflags);
+
+	freq = regs[0];
+
+	return (sysctl_rdint(oldp, oldlenp, newp, freq));
 }
 
 /*
@@ -121,21 +79,32 @@ longrun_getmode(u_int32_t *freq, u_int32_t *voltage, u_int32_t *percent)
  * limits it handles.  Typically, there are about 5 performance
  * levels selectable.
  */
-static void 
-longrun_setmode(u_int32_t low, u_int32_t high, u_int32_t mode)
+int
+longrun_setperf(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
- 	u_long		eflags;
- 	union msrinfo	msrinfo;
+	int error;
+	uint32_t eflags, mode;
+ 	union msrinfo msrinfo;
+	static uint32_t high = 100;
 
-	if (low > 100 || high > 100 || low > high)
-		return;
-	if (mode != 0 && mode != 1)
-		return;
+	if (newp == NULL)
+		return (EINVAL);
+	if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &high)))
+		return (error);
+
+	if (high > 100)
+		high = 100;
+
+	if (high >= 50)
+		mode = 1;	/* power */
+	else
+		mode = 0;	/* battery */
 
 	eflags = read_eflags();
 	disable_intr();
+
 	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
-	msrinfo.regs[0] = LONGRUN_MODE_WRITE(msrinfo.regs[0], low);
+	msrinfo.regs[0] = LONGRUN_MODE_WRITE(msrinfo.regs[0], 0); /* low */
 	msrinfo.regs[1] = LONGRUN_MODE_WRITE(msrinfo.regs[1], high);
 	wrmsr(MSR_TMx86_LONGRUN, msrinfo.msr);
 
@@ -145,5 +114,7 @@ longrun_setmode(u_int32_t low, u_int32_t high, u_int32_t mode)
 
 	enable_intr();
 	write_eflags(eflags);
+
+	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.65 2003/08/21 18:56:07 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.66 2003/12/18 23:46:20 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -384,7 +384,9 @@ struct kinfo_proc {
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
 #define	HW_DISKCOUNT	10		/* int: number of disks */
 #define	HW_SENSORS	11		/* node: hardware monitors */
-#define	HW_MAXID	12		/* number of valid hw ids */
+#define	HW_CPUSPEED	12		/* get CPU frequency */
+#define	HW_SETPERF	13		/* set CPU performance % */
+#define	HW_MAXID	14		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -399,6 +401,8 @@ struct kinfo_proc {
 	{ "diskstats", CTLTYPE_STRUCT }, \
 	{ "diskcount", CTLTYPE_INT }, \
 	{ "sensors", CTLTYPE_NODE}, \
+	{ "cpuspeed", CTLTYPE_INT }, \
+	{ "setperf", CTLTYPE_INT }, \
 }
 
 /*

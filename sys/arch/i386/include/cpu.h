@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.51 2003/07/28 21:15:28 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.52 2003/12/18 23:46:19 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -183,6 +183,19 @@ void	initrtclock(void);
 void	startrtclock(void);
 void	rtcdrain(void *);
 
+/* est.c */
+#if !defined(SMALL_KERNEL) && defined(I686_CPU)
+void	est_init(const char *);
+int     est_cpuspeed(void *, size_t *, void *, size_t);
+int     est_setperf(void *, size_t *, void *, size_t);
+#endif
+
+/* longrun.c */
+#if !defined(SMALL_KERNEL) && defined(I586_CPU)
+int	longrun_cpuspeed(void *, size_t *, void *, size_t);
+int	longrun_setperf(void *, size_t *, void *, size_t);
+#endif
+
 /* npx.c */
 void	npxdrop(void);
 void	npxsave(void);
@@ -237,8 +250,7 @@ void	setconf(void);
 #define CPU_KBDRESET		10	/* keyboard reset under pcvt */
 #define CPU_APMHALT		11	/* halt -p hack */
 #define CPU_USERLDT		12
-#define	CPU_LONGRUN		13	/* LongRun status */
-#define	CPU_MAXID		14	/* number of valid machdep ids */
+#define	CPU_MAXID		13	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -254,7 +266,6 @@ void	setconf(void);
 	{ "kbdreset", CTLTYPE_INT }, \
 	{ "apmhalt", CTLTYPE_INT }, \
 	{ "userldt", CTLTYPE_INT }, \
-	{ "longrun", CTLTYPE_STRUCT }, \
 }
 
 #endif /* !_I386_CPU_H_ */

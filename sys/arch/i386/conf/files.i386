@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.109 2003/11/03 03:35:40 tedu Exp $
+#	$OpenBSD: files.i386,v 1.110 2003/12/18 23:46:19 tedu Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -19,12 +19,13 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/db_magic.s	ddb
 file	arch/i386/i386/disksubr.c	disk
+file	arch/i386/i386/est.c		!small_kernel & i686_cpu
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.s	inet
 file	arch/i386/i386/ipx_cksum.c	ipx
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/kgdb_machdep.c	kgdb
-file	arch/i386/i386/longrun.c	!small_kernel
+file	arch/i386/i386/longrun.c	!small_kernel & i586_cpu
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/i686_mem.c	mtrr
 file	arch/i386/i386/k6_mem.c		mtrr
