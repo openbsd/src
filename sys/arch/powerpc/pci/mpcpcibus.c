@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.19 2000/07/28 13:06:15 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.20 2000/08/08 17:11:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -216,7 +216,7 @@ mpcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
 
-		printf(": MPC106, Revision %x.\n", 0);
+		printf(": MPC106, Revision 0x%x\n", 0);
 #if 0
 				mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
 		mpc_cfg_write_2(lcp, MPC106_PCI_STAT, 0xff80); /* Reset status */
@@ -314,7 +314,7 @@ mpcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
 
 
-		printf(": %s, Revision %x. ", bridge, 
+		printf(": %s, Revision 0x%x, ", bridge, 
 			mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
 		if (map == 1) {
 			printf("Using Map A\n");
@@ -492,7 +492,7 @@ mpcpcibrattach(parent, self, aux)
 			lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 			lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
 
-			printf(": %s, Revision %x. ", compat, 
+			printf(": %s, Revision 0x%x\n", compat, 
 				mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
 		}
 		break;

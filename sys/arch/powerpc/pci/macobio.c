@@ -105,8 +105,6 @@ obio_attach(parent, self, aux)
 	char name[32];
 	int need_interrupt_controller = 0;
 
-	printf("obio ver %x", (PCI_PRODUCT(pa->pa_id)));
-
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
 	/* XXX should not use name */
@@ -140,7 +138,7 @@ obio_attach(parent, self, aux)
 
 		break;
 	default:
-		printf("obio_attach: unknown obio controller\n");
+		printf(": unknown obio controller\n");
 		return;
 	}
 	sc->sc_node = node;
