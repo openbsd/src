@@ -1,4 +1,4 @@
-/*	$OpenBSD: scaffold.c,v 1.4 2000/10/14 00:56:14 itojun Exp $	*/
+/*	$OpenBSD: scaffold.c,v 1.5 2002/05/07 23:01:07 deraadt Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -10,7 +10,7 @@
 #if 0
 static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
 #else
-static char rcsid[] = "$OpenBSD: scaffold.c,v 1.4 2000/10/14 00:56:14 itojun Exp $";
+static char rcsid[] = "$OpenBSD: scaffold.c,v 1.5 2002/05/07 23:01:07 deraadt Exp $";
 #endif
 #endif
 
@@ -180,7 +180,7 @@ char   *host;
     switch (hp->h_addrtype) {
     case AF_INET:
 	ap = (char *)&((struct sockaddr_in *)&sin)->sin_addr;
-	alen = sizeof(struct in6_addr);
+	alen = sizeof(struct in_addr);
 	break;
 #ifdef INET6
     case AF_INET6:
