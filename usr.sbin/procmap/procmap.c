@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.1 2004/02/16 08:54:34 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.2 2004/02/16 08:57:58 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -620,6 +620,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		case VT_AFS:
 		case VT_UNION:
 		case VT_ADOSFS:
+		default:
 			break;
 		}
 	}
