@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: catopen.c,v 1.6 1996/08/26 00:17:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: catopen.c,v 1.7 1996/09/05 12:32:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -88,12 +88,12 @@ _catopen(name, oflag)
 				switch (*(++s)) {
 				case 'L':	/* locale */
 					u = lang;
-					while (*u && t < tmppath + PATH_MAX)
+					while (*u && t < tmppath + PATH_MAX-1)
 						*t++ = *u++;
 					break;
 				case 'N':	/* name */
 					u = name;
-					while (*u && t < tmppath + PATH_MAX)
+					while (*u && t < tmppath + PATH_MAX-1)
 						*t++ = *u++;
 					break;
 				case 'l':	/* lang */
@@ -101,11 +101,11 @@ _catopen(name, oflag)
 				case 'c':	/* codeset */
 					break;
 				default:
-					if (t < tmppath + PATH_MAX)
+					if (t < tmppath + PATH_MAX-1)
 						*t++ = *s;
 				}
 			} else {
-				if (t < tmppath + PATH_MAX)
+				if (t < tmppath + PATH_MAX-1)
 					*t++ = *s;
 			}
 			s++;
