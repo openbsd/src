@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.62 2003/10/14 17:58:23 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.63 2003/10/15 02:01:04 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -468,7 +468,7 @@ __devitem(dcm, dcm*, HP200/300 4 port serial mux interface)dnl
 __devitem(apci, apci*, HP400 4 port serial mux interface)dnl
 __devitem({-com-}, {-tty[0-7][0-9a-f]-}, NS16x50 serial ports)dnl
 _mkdev(com, {-tty[0-7][0-9a-f]-}, {-U=${i#tty*}
-	o=$(hextod $U)
+	o=$(h2d $U)
 	M tty$U c major_com_c $o 660 dialer uucp
 	M cua$U c major_com_c Add($o, 128) 660 dialer uucp-})dnl
 __devitem(ttyc, ttyc*, Cyclades serial ports)dnl
