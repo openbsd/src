@@ -93,9 +93,9 @@
 #define SLOT_R		(SLOT_L+SLOT_X-1)
 
 #ifdef SIGTSTP
-#define SCREENTEST()	(initscr() != ERR && signal(SIGTSTP, SIG_DFL) != SIG_ERR && STAT_R < COLS && SCROLL_Y > 0)
+#define SCREENTEST()	(initscr() != NULL && signal(SIGTSTP, SIG_DFL) != SIG_ERR && STAT_R < COLS && SCROLL_Y > 0)
 #else
-#define SCREENTEST()	(initscr() != ERR && STAT_R < COLS && SCROLL_Y > 0)
+#define SCREENTEST()	(initscr() != NULL && STAT_R < COLS && SCROLL_Y > 0)
 #endif
 
 WINDOW *view_w;
