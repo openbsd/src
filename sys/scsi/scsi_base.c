@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.37 2002/09/04 23:11:10 tdeval Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.38 2002/11/30 18:46:56 nate Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -309,6 +309,9 @@ scsi_prevent(sc_link, type, flags)
 	int type, flags;
 {
 	struct scsi_prevent scsi_cmd;
+
+	if (sc_link->quirks & ADEV_NODOORLOCK)
+		return 0;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = PREVENT_ALLOW;
