@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.39 2003/02/06 09:29:18 markus Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.40 2003/03/05 22:33:43 markus Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -152,7 +152,7 @@ handle_new(int use, char *name, int fd, DIR *dirp)
 			handles[i].use = use;
 			handles[i].dirp = dirp;
 			handles[i].fd = fd;
-			handles[i].name = name;
+			handles[i].name = xstrdup(name);
 			return i;
 		}
 	}
@@ -224,9 +224,11 @@ handle_close(int handle)
 	if (handle_is_ok(handle, HANDLE_FILE)) {
 		ret = close(handles[handle].fd);
 		handles[handle].use = HANDLE_UNUSED;
+		xfree(handles[handle].name);
 	} else if (handle_is_ok(handle, HANDLE_DIR)) {
 		ret = closedir(handles[handle].dirp);
 		handles[handle].use = HANDLE_UNUSED;
+		xfree(handles[handle].name);
 	} else {
 		errno = ENOENT;
 	}
@@ -390,7 +392,7 @@ process_open(void)
 	if (fd < 0) {
 		status = errno_to_portable(errno);
 	} else {
-		handle = handle_new(HANDLE_FILE, xstrdup(name), fd, NULL);
+		handle = handle_new(HANDLE_FILE, name, fd, NULL);
 		if (handle < 0) {
 			close(fd);
 		} else {
@@ -661,7 +663,7 @@ process_opendir(void)
 	if (dirp == NULL) {
 		status = errno_to_portable(errno);
 	} else {
-		handle = handle_new(HANDLE_DIR, xstrdup(path), 0, dirp);
+		handle = handle_new(HANDLE_DIR, path, 0, dirp);
 		if (handle < 0) {
 			closedir(dirp);
 		} else {
