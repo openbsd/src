@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.27 1998/06/11 18:29:53 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.28 1998/06/12 08:31:11 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -491,9 +491,15 @@
 254	STD		{ int sys_lchown(const char *path, uid_t uid, gid_t gid); }
 255	STD		{ int sys_getsid(pid_t pid); }
 256	STD		{ int sys_msync(void *addr, size_t len, int flags); }
+#ifdef SYSVSEM
 257	STD		{ int sys___semctl(int semid, int semnum, int cmd, \
 			    union semun *arg); }
+#endif
+#ifdef SYSVSHM
 258	STD		{ int sys_shmctl(int shmid, int cmd, \
 			    struct shmid_ds *buf); }
+#endif
+#ifdef SYSVMSG
 259	STD		{ int sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
+#endif
