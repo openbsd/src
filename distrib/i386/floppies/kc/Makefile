@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1996/05/31 23:00:23 mickey Exp $
+#	$Id: Makefile,v 1.4 1996/06/02 11:41:40 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -10,6 +10,8 @@ VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE?=		xxx-${REV}.fs
+PID!=		echo $$$$
+REALIMAGE!=	echo /tmp/image.${PID}
 MDEC=		${DESTDIR}/usr/mdec
 
 LIST=		${.CURDIR}/list
@@ -21,13 +23,13 @@ all: ${CBIN}
 .else
 .endif
 .ifndef FLOPPY3
-	dd if=/dev/zero of=${IMAGE} bs=10k count=120
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
+	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
+	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
 	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy5
 	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy5
 .else
-	dd if=/dev/zero of=${IMAGE} bs=10k count=144
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
+	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
+	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
 	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${VND} floppy3
 	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy3
 .endif
@@ -41,6 +43,7 @@ all: ${CBIN}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
 	cat /*bin/* > /dev/null
+	cp ${REALIMAGE} ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.3 1996/05/31 22:52:31 mickey Exp $
+#	$Id: Makefile.inc,v 1.4 1996/06/02 11:41:36 deraadt Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -10,6 +10,8 @@ VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE?=		xxx${REV}.fs
+PID!=		echo $$$$
+REALIMAGE=	/tmp/image.${PID}
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
@@ -18,12 +20,12 @@ MTREE=		${COMMONDIR}/mtree.conf
 
 all: ${CBIN}
 .ifndef FLOPPY3
-	dd if=/dev/zero of=${IMAGE} bs=10k count=120
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
+	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
+	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
 	newfs -O -m 0 -o space -i 5120 -c 80 ${VND_RDEV} floppy5
 .else
-	dd if=/dev/zero of=${IMAGE} bs=10k count=144
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
+	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
+	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
 	newfs -O -m 0 -o space -i 5120 -c 80 ${VND_RDEV} floppy3
 .endif
 	mount ${VND_DEV} ${MOUNT_POINT}
@@ -36,6 +38,7 @@ all: ${CBIN}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
 	cat /*bin/* > /dev/null
+	cp ${REALIMAGE} ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
