@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.5 1997/09/02 08:48:32 downsj Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.6 1999/04/22 20:02:41 art Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -43,7 +43,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>

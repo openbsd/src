@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.10 1998/02/10 12:00:46 angelos Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.11 1999/04/22 20:02:43 art Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -102,7 +102,6 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.8 1997/09/05 04:27:01 millert Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.9 1999/04/22 20:02:43 art Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

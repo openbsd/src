@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.24 1998/08/02 07:17:43 brian Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.25 1999/04/22 20:02:44 art Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -25,7 +25,6 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
