@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_net.c,v 1.8 2002/03/14 01:26:49 millert Exp $	*/
+/*	$OpenBSD: hpux_net.c,v 1.9 2002/08/23 22:21:43 art Exp $	*/
 /*	$NetBSD: hpux_net.c,v 1.14 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -214,16 +214,16 @@ hpux_sys_setsockopt(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
-	if (SCARG(uap, valsize) > MLEN)
-		return (EINVAL);
-	FREF(fp);
+	if (SCARG(uap, valsize) > MLEN) {
+		error = EINVAL;
+		goto bad;
+	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize)))) {
-			FRELE(fp);
 			(void) m_free(m);
-			return (error);
+			goto bad;
 		}
 		if (SCARG(uap, name) == SO_LINGER) {
 			tmp = *mtod(m, int *);
@@ -240,6 +240,7 @@ hpux_sys_setsockopt(p, v, retval)
 	}
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
+bad:
 	FRELE(fp);
 	return (error);
 }
@@ -258,21 +259,22 @@ hpux_sys_setsockopt2(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
-	if (SCARG(uap, valsize) > MLEN)
-		return (EINVAL);
-	FREF(fp);
+	if (SCARG(uap, valsize) > MLEN) {
+		error = EINVAL;
+		goto bad;
+	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize)))) {
-			FRELE(fp);
-			(void) m_free(m);
-			return (error);
+			m_free(m);
+			goto bad;
 		}
 		socksetsize(SCARG(uap, valsize), m);
 	}
 	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m);
+bad:
 	FRELE(fp);
 	return (error);
 }
@@ -290,12 +292,10 @@ hpux_sys_getsockopt(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
-	FREF(fp);
 	if (SCARG(uap, val)) {
 		if ((error = copyin((caddr_t)SCARG(uap, avalsize),
 		    (caddr_t)&valsize, sizeof (valsize)))) {
-			FRELE(fp);
-			return (error);
+			goto bad;
 		}
 	} else
 		valsize = 0;
@@ -321,6 +321,6 @@ hpux_sys_getsockopt(p, v, retval)
 bad:
 	FRELE(fp);
 	if (m != NULL)
-		(void) m_free(m);
+		m_free(m);
 	return (error);
 }

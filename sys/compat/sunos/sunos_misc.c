@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.40 2002/08/23 15:39:31 art Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.41 2002/08/23 22:21:44 art Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -531,7 +531,6 @@ sunos_sys_setsockopt(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	FREF(fp);
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (SCARG(uap, name) == SO_DONTLINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);

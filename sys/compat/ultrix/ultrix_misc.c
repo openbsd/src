@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.27 2002/08/23 01:13:09 pvalchev Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.28 2002/08/23 22:21:44 art Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -353,7 +353,6 @@ ultrix_sys_setsockopt(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp))  != 0)
 		return (error);
-	FREF(fp);
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (SCARG(uap, name) == SO_DONTLINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
