@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.80 2004/07/28 17:15:12 tholo Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.81 2004/08/04 23:33:32 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ struct ctlname {
 #define	KERN_MAXCLUSTERS	67	/* number of mclusters */
 #define KERN_EVCOUNT		68	/* node: event counters */
 #define	KERN_TIMECOUNTER	69	/* node: timecounter */
-#define	KERN_MAXID		69	/* number of valid kern ids */
+#define	KERN_MAXID		70	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
