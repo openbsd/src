@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.190 2004/01/12 22:31:34 todd Exp $
+#	$OpenBSD: Makefile,v 1.191 2004/01/12 23:32:24 todd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -335,6 +335,7 @@ MAKEDEVARCHS+= macppc
 MAKEDEVARCHS+= mvme68k
 MAKEDEVARCHS+= mvme88k
 #MAKEDEVARCHS+= mvmeppc
+MAKEDEVARCHS+= pegasos
 MAKEDEVARCHS+= sparc
 MAKEDEVARCHS+= sparc64
 #MAKEDEVARCHS+= vax
