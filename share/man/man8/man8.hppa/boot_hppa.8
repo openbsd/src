@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hppa.8,v 1.8 2004/03/17 03:18:50 mickey Exp $
+.\"	$OpenBSD: boot_hppa.8,v 1.9 2004/03/17 10:18:38 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -164,7 +164,7 @@ the highest ID numbers being preferred.
 Network
 .Em rboot
 server (see also
-.Xr rbootd 8 ).
+.Xr rbootd 8 ) .
 .It
 Other
 .Tn SCSI
@@ -207,7 +207,7 @@ will list the various path settings.
 .\"
 .Ss Modern PDC operation
 Machines equipped with 7100LC, 7200 or 7300LC CPU types are
-usually blessed with a diffrent kind of PDC.
+usually blessed with a different kind of PDC.
 There is only one interactive mode, with a
 .Em BOOT_ADMIN>
 prompt, which provides both boot settings and commands.
@@ -249,7 +249,7 @@ Network
 server (see also
 .Xr bootpd 8
 and
-.Xr dhcpd 8 ).
+.Xr dhcpd 8 ) .
 .It
 Other
 .Tn SCSI
@@ -291,7 +291,7 @@ path for rescue purposes.
 For example, to define the primary boot path to the
 .Tn SCSI
 disk with ID 5 connected to the built-in controller, one would enter
-.Ic path pri Ar scsi.5
+.Ic path pri Ar scsi.5 .
 .Pp
 When invoked without parameters,
 .Ic path
