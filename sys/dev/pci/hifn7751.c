@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.117 2002/04/29 15:41:21 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.118 2002/04/30 16:03:19 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -822,10 +822,6 @@ hifn_ramtype(sc)
 	return (0);
 }
 
-/*
- * For sram boards, just write/read memory until it fails, also check for
- * banking.
- */
 #define	HIFN_SRAM_MAX		(32 << 20)
 #define	HIFN_SRAM_STEP_SIZE	16384
 #define	HIFN_SRAM_GRANULARITY	(HIFN_SRAM_MAX / HIFN_SRAM_STEP_SIZE)
@@ -837,23 +833,20 @@ hifn_sramsize(sc)
 	u_int32_t a;
 	u_int8_t data[8];
 	u_int8_t dataexpect[sizeof(data)];
-	int i;
+	int32_t i;
 
 	for (i = 0; i < sizeof(data); i++)
 		data[i] = dataexpect[i] = i ^ 0x5a;
 
-	for (a = 0; a < sizeof(data); a++)
-		data[a] = dataexpect[a] = 0x5a;
-
 	for (i = HIFN_SRAM_GRANULARITY - 1; i >= 0; i--) {
 		a = i * HIFN_SRAM_STEP_SIZE;
-		data[0] = i;
+		bcopy(&i, data, sizeof(i));
 		hifn_writeramaddr(sc, a, data);
 	}
 
 	for (i = 0; i < HIFN_SRAM_GRANULARITY; i++) {
 		a = i * HIFN_SRAM_STEP_SIZE;
-		dataexpect[0] = i;
+		bcopy(&i, dataexpect, sizeof(i));
 		if (hifn_readramaddr(sc, a, data) < 0)
 			return (0);
 		if (bcmp(data, dataexpect, sizeof(data)) != 0)
