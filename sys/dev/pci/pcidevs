@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.172 1999/08/12 11:30:49 deraadt Exp $
+$OpenBSD: pcidevs,v 1.173 1999/08/14 17:29:45 aaron Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -665,6 +665,7 @@ product ARC 2000MI		0xa0a9	2000MI
 
 /* ASIX Electronics products */
 product ASIX AX88140A		0x1400	AX88140A 10/100
+product ASIX AX88141		0x1400	AX88141 10/100
 
 /* ATI products */
 product ATI MACH32		0x4158	Mach32
