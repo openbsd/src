@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.7 2002/04/01 21:05:38 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.8 2002/04/01 22:00:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -974,6 +974,7 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("wihap_data_input: no TODS src=%s\n",
 			    ether_sprintf(rxfrm->wi_addr2));
+		m_freem(m);
 		return(1);
 	}
 
@@ -982,6 +983,7 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("wihap_data_input: incorrect bss: %s\n",
 			    ether_sprintf(rxfrm->wi_addr1));
+		m_freem(m);
 		return(1);
 	}
 
@@ -996,6 +998,7 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 			printf("wihap_data_input: dropping unassoc src %s\n",
 			    ether_sprintf(rxfrm->wi_addr2));
 		splx(s);
+		m_freem(m);
 		return(1);
 	}
 
