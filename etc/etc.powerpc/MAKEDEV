@@ -324,6 +324,7 @@ tun*)
 rd*)
 	blk=17; chr=17;
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	rm -f rd${unit}a rd${unit}c rrd${unit}a rrd${unit}c
 	mknod rd${unit}a b ${blk} `expr $unit '*' 16 + 0`
 	mknod rd${unit}c b ${blk} `expr $unit '*' 16 + 2`
 	mknod rrd${unit}a c ${chr} `expr $unit '*' 16 + 0`
