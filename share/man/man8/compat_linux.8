@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.13 2000/12/22 16:54:37 avsm Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.14 2001/01/27 18:11:12 espie Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -77,6 +77,19 @@ do the necessary installation steps).
 
 .Bl -tag -width 123 -compact
 .It 1.
+You have access to the OpenBSD
+.Xr ports 7
+system.  Install the port named
+.Nm linux_lib
+in the
+.Nm emulators
+category.  The
+.Nm linux_lib
+port contains the shared libraries, binaries, and other related files
+necessary to run Linux applications.  Access to a Linux system is not
+needed.
+.Pp
+.It 2.
 You have access to a Linux system. In this case you can
 temporarily install the binary there, see what shared libraries
 it needs, and copy them to your OpenBSD system. Example: you have
@@ -155,7 +168,7 @@ OpenBSD system (in the /emul/linux tree):
 /etc/ld.so.config
 .fi
 .Pp
-.It 2.
+.It 3.
 You don't have access to a Linux system. In that case, you
 should get the extra files you need from various ftp sites.
 Information on where to look for the various files is appended
@@ -225,19 +238,6 @@ and install it on your system. The XXXX (name) and <N> (major
 revision number) should match; the minor number(s) <mm> are
 less important, though it is advised to take the most
 recent version.
-.Pp
-.It 3.
-You have access to the OpenBSD
-.Xr ports 7
-system.  Install the port named
-.Nm linux_lib
-in the
-.Nm emulators
-category.  The
-.Nm linux_lib
-port contains the shared libraries, binaries, and other related files
-necessary to run Linux applications.  Access to a Linux system is not
-needed.
 .El
 
 .Ss Finding the necessary files.
