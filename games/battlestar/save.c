@@ -53,8 +53,13 @@ restore()
 	register FILE *fp;
 
 	home = getenv("HOME");
-	strcpy(home1, home);
-	strcat(home1, "/Bstar");
+	if (strlen(home) + 6 < sizeof(home1)) {
+		strcpy(home1, home);
+		strcat(home1, "/Bstar");
+	} else {
+		fprintf(stderr, "%s/Bstar: %s\n", home, strerror(ENAMETOOLONG));
+		return;
+	}
 	if ((fp = fopen(home1, "r")) == 0) {
 		perror(home1);
 		return;
@@ -106,8 +111,13 @@ save()
 	FILE *fp;
 
 	home = getenv("HOME");
-	strcpy(home1, home);
-	strcat(home1, "/Bstar");
+	if (strlen(home) + 6 < sizeof(home1)) {
+		strcpy(home1, home);
+		strcat(home1, "/Bstar");
+	} else {
+		fprintf(stderr, "%s/Bstar: %s\n", home, strerror(ENAMETOOLONG));
+		return;
+	}
 	if ((fp = fopen(home1, "w")) == 0) {
 		perror(home1);
 		return;

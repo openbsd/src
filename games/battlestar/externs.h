@@ -35,6 +35,7 @@
  *	@(#)externs.h	8.1 (Berkeley) 5/31/93
  */
 
+#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
