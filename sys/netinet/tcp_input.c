@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.152 2004/01/31 19:40:09 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.153 2004/02/05 04:23:13 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3001,7 +3001,16 @@ tcp_mss(tp, offer)
 		 * One may wish to lower MSS to take into account options,
 		 * especially security-related options.
 		 */
-		mss = rt->rt_rmx.rmx_mtu - iphlen - sizeof(struct tcphdr);
+		if (tp->pf == AF_INET6 && rt->rt_rmx.rmx_mtu < IPV6_MMTU) {
+			/*
+			 * RFC2460 section 5, last paragraph: if path MTU is
+			 * smaller than 1280, use 1280 as packet size and
+			 * attach fragment header.
+			 */
+			mss = IPV6_MMTU - iphlen - sizeof(struct ip6_frag) -
+			    sizeof(struct tcphdr);
+		} else
+			mss = rt->rt_rmx.rmx_mtu - iphlen - sizeof(struct tcphdr);
 	} else
 #endif /* RTV_MTU */
 	if (!ifp)
@@ -3034,11 +3043,11 @@ tcp_mss(tp, offer)
 #ifndef INET6
 		mssopt = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 #else
-		if (tp->pf == AF_INET)
-			mssopt = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
-		else
+		if (tp->pf == AF_INET6)
 			mssopt = IN6_LINKMTU(ifp) - iphlen -
 			    sizeof(struct tcphdr);
+		else
+			mssopt = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 #endif
 
 		mssopt = max(tcp_mssdflt, mssopt);
