@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.5 2002/05/30 19:09:05 deraadt Exp $ */
+/* $OpenBSD: memconfig.c,v 1.6 2002/10/14 21:01:01 matthieu Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/usr.sbin/memcontrol/memcontrol.c,v 1.3 1999/08/28 01:17:00 peter Exp $
+ * $FreeBSD: /home/ncvs/src/usr.sbin/memcontrol/memcontrol.c,v 1.8 2002/09/15 15:07:55 dwmalone Exp $
  */
 
 #include <sys/types.h>
@@ -50,6 +50,8 @@ struct
 	{"write-through",	MDF_WRITETHROUGH,	MDF_SETTABLE},
 	{"write-back",		MDF_WRITEBACK,		MDF_SETTABLE},
 	{"write-protect",	MDF_WRITEPROTECT,	MDF_SETTABLE},
+	{"force",		MDF_FORCE,		MDF_SETTABLE},
+	{"unknown",		MDF_UNKNOWN,		0},
 	{"fixed-base",		MDF_FIXBASE,		0},
 	{"fixed-length",	MDF_FIXLEN,		0},
 	{"set-by-firmware",	MDF_FIRMWARE,		0},

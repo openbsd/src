@@ -1,4 +1,4 @@
-/* $OpenBSD: memrange.h,v 1.3 2002/03/14 01:27:14 millert Exp $ */
+/* $OpenBSD: memrange.h,v 1.4 2002/10/14 21:01:01 matthieu Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #define MDF_WRITETHROUGH	(1<<2)	/* write-through cached */
 #define MDF_WRITEBACK		(1<<3)	/* write-back cached */
 #define MDF_WRITEPROTECT	(1<<4)	/* read-only region */
+#define MDF_UNKNOWN		(1<<5)	/* any state we don't understand */
 #define MDF_ATTRMASK		(0x00ffffff)
 
 #define MDF_FIXBASE		(1<<24)	/* fixed base */
@@ -43,6 +44,7 @@
 #define MDF_BOGUS		(1<<28)	/* we don't like it */
 #define MDF_FIXACTIVE		(1<<29)	/* can't be turned off */
 #define MDF_BUSY		(1<<30)	/* range is in use */
+#define MDF_FORCE		(1<<31)	/* force risky changes */
 
 struct mem_range_desc
 {

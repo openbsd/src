@@ -1,4 +1,4 @@
-.\" $OpenBSD: memconfig.8,v 1.6 2001/08/17 11:13:58 mpech Exp $
+.\" $OpenBSD: memconfig.8,v 1.7 2002/10/14 21:01:01 matthieu Exp $
 .\"
 .\" Copyright (c) 1999 Chris Costello
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/usr.sbin/memcontrol/memcontrol.8,v 1.2 1999/10/09 16:37:37 chris Exp $
+.\" $FreeBSD: /home/ncvs/src/usr.sbin/memcontrol/memcontrol.8,v 1.9 2002/09/15 15:07:55 dwmalone Exp $
 .\"
 .Dd November 14, 1999
 .Dt MEMCONFIG 8
@@ -83,7 +83,8 @@ Length of memory range in bytes, power of 2.
 .It Fl o Ar owner
 Text identifier for this setting (7 char max).
 .It Ar attribute
-Attributes applied to this range; one of
+Attributes applied to this range; combinations of
+.Ar force ,
 .Ar uncacheable ,
 .Ar write-combine ,
 .Ar write-through ,
