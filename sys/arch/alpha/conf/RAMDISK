@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.47 2001/09/28 22:58:56 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.48 2001/09/29 01:18:13 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -78,10 +78,10 @@ sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
 
 isp*	at	pci? dev ? function ?		# Qlogic ISP [12]0x0 SCSI/FibreChannel
-#define ISP_COMPILE_FW
-#define ISP_COMPILE_1040_FW 1
-#define ISP_COMPILE_1080_FW 1
-#define ISP_COMPILE_12160_FW 1
+#option ISP_COMPILE_FW=1
+#option ISP_COMPILE_1040_FW=1
+#option ISP_COMPILE_1080_FW=1
+#option ISP_COMPILE_12160_FW=1
 
 # Media Independent Interface (mii) drivers
 #exphy*	at mii? phy ?				# 3Com internal PHYs
