@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.c,v 1.10 2001/04/29 21:52:15 millert Exp $	*/
+/*	$OpenBSD: scan.c,v 1.11 2001/04/29 22:23:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -860,7 +860,7 @@ char *scanfile;
 		if (*p == 'X') {
 			if (notwanted)  continue;
 			if (t == NULL)
-				goaway ("scanfile format inconsistant");
+				goaway ("scanfile format inconsistent");
 			(void) Tinsert (&t->Texec,++p,FALSE);
 			continue;
 		}
@@ -874,17 +874,17 @@ char *scanfile;
 			ts.Tflags |= FNOACCT;
 		}
 		if ((q = strchr (p,' ')) == NULL)
-			goaway ("scanfile format inconsistant");
+			goaway ("scanfile format inconsistent");
 		*q++ = '\0';
 		ts.Tmode = atoo (p);
 		p = q;
 		if ((q = strchr (p,' ')) == NULL)
-			goaway ("scanfile format inconsistant");
+			goaway ("scanfile format inconsistent");
 		*q++ = '\0';
 		ts.Tctime = atoi (p);
 		p = q;
 		if ((q = strchr (p,' ')) == NULL)
-			goaway ("scanfile format inconsistant");
+			goaway ("scanfile format inconsistent");
 		*q++ = 0;
 		ts.Tmtime = atoi (p);
 		(void) strunvis(fname, q);
