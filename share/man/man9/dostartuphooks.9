@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dostartuphooks.9,v 1.1 2001/07/27 09:55:07 niklas Exp $
+.\"	$OpenBSD: dostartuphooks.9,v 1.2 2001/07/28 00:09:24 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Niklas Hallqvist.
 .\" All rights reserved.
@@ -47,9 +47,10 @@ This function is called from
 .Fn main
 with interrupts turned on.
 It is called immediately before the system configures its root and swap
-devices, but fully after all normal autoconfiguration.  This can be used
-to let device subsystems needing delayed configuration (e.g., due to very long
-initialization times) still provide the root device.  The
+devices, but fully after all normal autoconfiguration.
+This can be used to let device subsystems needing delayed configuration (e.g.,
+due to very long initialization times) still provide the root device.
+The
 I2O system, implemented by the
 .Xr iop 4
 and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hook_establish.9,v 1.1 2001/07/27 09:55:07 niklas Exp $
+.\"	$OpenBSD: hook_establish.9,v 1.2 2001/07/28 00:09:24 mpech Exp $
 .\"
 .\" Copyright (c) 2001 Niklas Hallqvist.
 .\" All rights reserved.
@@ -50,7 +50,8 @@ If
 is non-zero, the hook is added to the tail of the list
 denoted by the TAILQ_HEAD pointer
 .Fa head ,
-otherwise to the front.  The
+otherwise to the front.
+The
 .Xr dohooks 9
 function will at its invocation call each hook from the front of this
 list.
