@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.76 2004/02/09 01:56:18 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.77 2004/02/16 12:53:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,10 +41,8 @@ void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 int		 rde_update_dispatch(struct imsg *);
 int		 rde_update_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
-void		 init_attr_flags(struct attr_flags *);
-int		 rde_update_get_attr(struct rde_peer *, u_char *, u_int16_t,
-		     struct attr_flags *);
-void		 rde_update_err(struct rde_peer *, enum suberr_update);
+void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
+		     void *, u_int16_t);
 void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct attr_flags *,
 		     const struct bgpd_addr *, u_int8_t);
@@ -351,8 +349,8 @@ rde_update_dispatch(struct imsg *imsg)
 	u_int16_t		 len;
 	u_int16_t		 withdrawn_len;
 	u_int16_t		 attrpath_len;
-	u_int16_t		 nlri_len;
-	u_int8_t		 prefixlen;
+	u_int16_t		 nlri_len, size;
+	u_int8_t		 prefixlen, subtype;
 	struct bgpd_addr	 prefix;
 	struct attr_flags	 attrs;
 
@@ -373,14 +371,19 @@ rde_update_dispatch(struct imsg *imsg)
 	withdrawn_len = ntohs(len);
 	p += 2;
 	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2 + withdrawn_len + 2) {
-		rde_update_err(peer, ERR_UPD_ATTRLIST);
+		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
 		return (-1);
 	}
 
 	while (withdrawn_len > 0) {
 		if ((pos = rde_update_get_prefix(p, withdrawn_len, &prefix,
 		    &prefixlen)) == -1) {
-			rde_update_err(peer, ERR_UPD_ATTRLIST);
+			/*
+			 * the rfc does not mention what we should do in
+			 * this case. Let's do the same as in the NLRI case.
+			 */
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
+			    NULL, 0);
 			return (-1);
 		}
 		p += pos;
@@ -394,7 +397,7 @@ rde_update_dispatch(struct imsg *imsg)
 	p += 2;
 	if (imsg->hdr.len <
 	    IMSG_HEADER_SIZE + 2 + withdrawn_len + 2 + attrpath_len) {
-		rde_update_err(peer, ERR_UPD_ATTRLIST);
+		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
 		return (-1);
 	}
 	nlri_len =
@@ -402,11 +405,14 @@ rde_update_dispatch(struct imsg *imsg)
 	if (attrpath_len == 0) /* 0 = no NLRI information in this message */
 		return (0);
 
-	init_attr_flags(&attrs);
+	attr_init(&attrs);
 	while (attrpath_len > 0) {
-		if ((pos = rde_update_get_attr(peer, p, attrpath_len,
-		    &attrs)) < 0) {
-			rde_update_err(peer, ERR_UPD_ATTRLIST);
+		if ((pos = attr_parse(p, attrpath_len, &attrs,
+		    peer->conf.ebgp, conf->as)) < 0) {
+			rde_update_err(peer, ERR_UPDATE, subtype,
+			    attr_error(p, attrpath_len, &subtype, &size), size);
+			aspath_destroy(attrs.aspath);
+			attr_optfree(&attrs);
 			return (-1);
 		}
 		p += pos;
@@ -416,7 +422,10 @@ rde_update_dispatch(struct imsg *imsg)
 	while (nlri_len > 0) {
 		if ((pos = rde_update_get_prefix(p, nlri_len, &prefix,
 		    &prefixlen)) == -1) {
-			rde_update_err(peer, ERR_UPD_ATTRLIST);
+			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
+			    NULL, 0);
+			aspath_destroy(attrs.aspath);
+			attr_optfree(&attrs);
 			return (-1);
 		}
 		p += pos;
@@ -425,8 +434,11 @@ rde_update_dispatch(struct imsg *imsg)
 		if (peer->conf.max_prefix &&
 		    peer->prefix_cnt >= peer->conf.max_prefix) {
 			log_peer_warnx(&peer->conf, "prefix limit reached");
-			rde_update_err(peer, ERR_UPD_UNSPECIFIC);
-			break;
+			rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX,
+			    NULL, 0);
+			aspath_destroy(attrs.aspath);
+			attr_optfree(&attrs);
+			return (-1);
 		}
 		path_update(peer, &attrs, &prefix, prefixlen);
 	}
@@ -473,112 +485,19 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	return (plen);
 }
 
-#define UPD_READ(t, p, plen, n) \
-	do { \
-		memcpy(t, p, n); \
-		p += n; \
-		plen += n; \
-	} while (0)
-
 void
-init_attr_flags(struct attr_flags *a)
+rde_update_err(struct rde_peer *peer, u_int8_t error, u_int8_t suberr,
+    void *data, u_int16_t size)
 {
-	bzero(a, sizeof(struct attr_flags));
-	a->origin = ORIGIN_INCOMPLETE;
-	TAILQ_INIT(&a->others);
-}
+	u_char	buf[1024];
 
-int
-rde_update_get_attr(struct rde_peer *peer, u_char *p, u_int16_t len,
-    struct attr_flags *a)
-{
-	u_int32_t	 tmp32;
-	u_int16_t	 attr_len;
-	u_int16_t	 plen = 0;
-	u_int8_t	 flags;
-	u_int8_t	 type;
-	u_int8_t	 tmp8;
-	int		 r; /* XXX */
-
-	if (len < 3)
-		return (-1);
-
-	UPD_READ(&flags, p, plen, 1);
-	UPD_READ(&type, p, plen, 1);
-
-	if (flags & ATTR_EXTLEN) {
-		if (len - plen < 2)
-			return (-1);
-		UPD_READ(&attr_len, p, plen, 2);
-	} else {
-		UPD_READ(&tmp8, p, plen, 1);
-		attr_len = tmp8;
-	}
-
-	if (len - plen < attr_len)
-		return (-1);
-
-	switch (type) {
-	case ATTR_UNDEF:
-		/* error! */
-		return (-1);
-	case ATTR_ORIGIN:
-		if (attr_len != 1)
-			return (-1);
-		UPD_READ(&a->origin, p, plen, 1);
-		break;
-	case ATTR_ASPATH:
-		if ((r = aspath_verify(p, attr_len, conf->as)) != 0) {
-			/* XXX could also be a aspath loop but this
-			 * check should be moved to the filtering. */
-			log_warnx("XXX aspath_verify failed: error %i", r);
-			return (-1);
-		}
-		a->aspath = aspath_create(p, attr_len);
-		plen += attr_len;
-		break;
-	case ATTR_NEXTHOP:
-		if (attr_len != 4)
-			return (-1);
-		UPD_READ(&a->nexthop, p, plen, 4);	/* network byte order */
-		break;
-	case ATTR_MED:
-		if (attr_len != 4)
-			return (-1);
-		UPD_READ(&tmp32, p, plen, 4);
-		a->med = ntohl(tmp32);
-		break;
-	case ATTR_LOCALPREF:
-		if (attr_len != 4)
-			return (-1);
-		if (peer->conf.ebgp) {
-			/* ignore local-pref attr for non ibgp peers */
-			a->lpref = 0;	/* set a default value */
-			break;
-		}
-		UPD_READ(&tmp32, p, plen, 4);
-		a->lpref = ntohl(tmp32);
-		break;
-	case ATTR_ATOMIC_AGGREGATE:
-	case ATTR_AGGREGATOR:
-	default:
-		attr_optadd(a, flags, type, p, attr_len);
-		plen += attr_len;
-		break;
-	}
-
-	return (plen);
-
-}
-
-void
-rde_update_err(struct rde_peer *peer, enum suberr_update errorcode)
-{
-	u_int8_t	errcode;
-
-	errcode = errorcode;
+	buf[0] = error;
+	buf[1] = suberr;
+	if (size > sizeof(buf) - 2)
+		size = sizeof(buf) - 2;
+	memcpy(buf + 2, data, size);
 	if (imsg_compose(&ibuf_se, IMSG_UPDATE_ERR, peer->conf.id,
-	    &errcode, sizeof(errcode)) == -1)
+	    buf, size + 2) == -1)
 		fatal("imsg_compose error");
 	peer->state = PEER_ERR;
 }

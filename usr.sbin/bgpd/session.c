@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.108 2004/02/02 23:15:00 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.109 2004/02/16 12:53:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1431,9 +1431,10 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	struct mrt_config	 mrt;
 	struct peer_config	*pconf;
 	struct peer		*p, *next;
+	u_char			*data;
 	enum reconf_action	 reconf;
 	int			 n;
-	u_int8_t		 suberr;
+	u_int8_t		 errcode, subcode;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("session_dispatch_imsg: imsg_read error");
@@ -1542,18 +1543,24 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		case IMSG_UPDATE_ERR:
 			if (idx != PFD_PIPE_ROUTE)
 				fatalx("update request not from RDE");
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(suberr)) {
+			if (imsg.hdr.len < IMSG_HEADER_SIZE + 2) {
 				log_warnx("RDE sent invalid notification");
 				break;
 			}
-			if ((p = getpeerbyid(imsg.hdr.peerid)) == NULL)
+			if ((p = getpeerbyid(imsg.hdr.peerid)) == NULL) {
 				log_warnx("no such peer: id=%u",
 				    imsg.hdr.peerid);
-			else {
-				memcpy(&suberr, imsg.data, sizeof(suberr));
-				session_notification(p, ERR_UPDATE, suberr,
-				    NULL, 0);
+				break;
 			}
+			data = imsg.data;
+			errcode = *data++;
+			subcode = *data++;
+			
+			if (imsg.hdr.len == IMSG_HEADER_SIZE + 2)
+				data = NULL;
+
+			session_notification(p, errcode, subcode,
+			    data, imsg.hdr.len - IMSG_HEADER_SIZE - 2);
 			break;
 		default:
 			break;

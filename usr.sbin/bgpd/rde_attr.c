@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.2 2004/02/09 01:56:18 henning Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.3 2004/02/16 12:53:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -27,6 +27,230 @@
 #include "rde.h"
 
 /* attribute specific functions */
+#define UPD_READ(t, p, plen, n) \
+	do { \
+		memcpy(t, p, n); \
+		p += n; \
+		plen += n; \
+	} while (0)
+
+#define CHECK_FLAGS(s, t)	\
+	(((s) & ~ATTR_EXTLEN) == (t))
+
+void
+attr_init(struct attr_flags *a)
+{
+	bzero(a, sizeof(struct attr_flags));
+	a->origin = ORIGIN_INCOMPLETE;
+	TAILQ_INIT(&a->others);
+}
+
+int
+attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
+    u_int16_t as)
+{
+	u_int32_t	 tmp32;
+	u_int16_t	 attr_len;
+	u_int16_t	 plen = 0;
+	u_int8_t	 flags;
+	u_int8_t	 type;
+	u_int8_t	 tmp8;
+	int		 r; /* XXX */
+
+	if (len < 3)
+		return (-1);
+
+	UPD_READ(&flags, p, plen, 1);
+	UPD_READ(&type, p, plen, 1);
+
+	if (flags & ATTR_EXTLEN) {
+		if (len - plen < 2)
+			return (-1);
+		UPD_READ(&attr_len, p, plen, 2);
+	} else {
+		UPD_READ(&tmp8, p, plen, 1);
+		attr_len = tmp8;
+	}
+
+	if (len - plen < attr_len)
+		return (-1);
+
+	switch (type) {
+	case ATTR_UNDEF:
+		/* error! */
+		return (-1);
+	case ATTR_ORIGIN:
+		if (attr_len != 1)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+			return (-1);
+		UPD_READ(&a->origin, p, plen, 1);
+		if (a->origin > ORIGIN_INCOMPLETE)
+			return (-1);
+		break;
+	case ATTR_ASPATH:
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+			return (-1);
+		if ((r = aspath_verify(p, attr_len, as)) != 0) {
+			/* XXX could also be a aspath loop but this
+			 * check should be moved to the filtering. */
+			/* XXX loop detection should be done afterwards
+			 * because this is not an error */
+			log_warnx("XXX aspath_verify failed: error %i", r);
+			return (-1);
+		}
+		a->aspath = aspath_create(p, attr_len);
+		/* XXX enforce remote-as == left most AS if not disabled */
+		plen += attr_len;
+		break;
+	case ATTR_NEXTHOP:
+		if (attr_len != 4)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+			return (-1);
+		UPD_READ(&a->nexthop, p, plen, 4);	/* network byte order */
+		/* XXX check if the nexthop is a valid IP address */
+		break;
+	case ATTR_MED:
+		if (attr_len != 4)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL))
+			return (-1);
+		UPD_READ(&tmp32, p, plen, 4);
+		a->med = ntohl(tmp32);
+		break;
+	case ATTR_LOCALPREF:
+		if (attr_len != 4)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+			return (-1);
+		if (ebgp) {
+			/* ignore local-pref attr for non ibgp peers */
+			a->lpref = 0;	/* set a default value */
+			break;
+		}
+		UPD_READ(&tmp32, p, plen, 4);
+		a->lpref = ntohl(tmp32);
+		break;
+	case ATTR_ATOMIC_AGGREGATE:
+		if (attr_len != 0)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN))
+			return (-1);
+		goto optattr;
+	case ATTR_AGGREGATOR:
+		if (attr_len != 6)
+			return (-1);
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE))
+			return (-1);
+		goto optattr;
+	default:
+optattr:
+		/* XXX error checking */
+		attr_optadd(a, flags, type, p, attr_len);
+		plen += attr_len;
+		break;
+	}
+
+	return (plen);
+}
+
+u_char *
+attr_error(u_char *p, u_int16_t len, u_int8_t *suberr, u_int16_t *size)
+{
+	u_int16_t	 attr_len;
+	u_int16_t	 plen = 0;
+	u_int8_t	 flags;
+	u_int8_t	 type;
+	u_int8_t	 tmp8;
+
+	*suberr = ERR_UPD_ATTRLEN;
+	*size = len;
+	if (len < 3)
+		return (p);
+
+	UPD_READ(&flags, p, plen, 1);
+	UPD_READ(&type, p, plen, 1);
+
+	if (flags & ATTR_EXTLEN) {
+		if (len - plen < 2)
+			return (p);
+		UPD_READ(&attr_len, p, plen, 2);
+	} else {
+		UPD_READ(&tmp8, p, plen, 1);
+		attr_len = tmp8;
+	}
+
+	if (len - plen < attr_len)
+		return (p);
+	*size = attr_len;
+
+	switch (type) {
+	case ATTR_UNDEF:
+		/* error! */
+		*suberr = ERR_UPD_UNSPECIFIC;
+		*size = 0;
+		return (NULL);
+	case ATTR_ORIGIN:
+		if (attr_len != 1)
+			return (p);
+		UPD_READ(&tmp8, p, plen, 1);
+		if (tmp8 > ORIGIN_INCOMPLETE) {
+			*suberr = ERR_UPD_ORIGIN;
+			return (p);
+		}
+		break;
+	case ATTR_ASPATH:
+		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN)) {
+			/* malformed aspath detected by exclusion method */
+			*size = 0;
+			*suberr = ERR_UPD_ASPATH;
+			return (NULL);
+		}
+		break;
+	case ATTR_NEXTHOP:
+		if (attr_len != 4)
+			return (p);
+		if (CHECK_FLAGS(flags, ATTR_WELL_KNOWN)) {
+			/* malformed nexthop detected by exclusion method */
+			*suberr = ERR_UPD_NETWORK;
+			return (p);
+		}
+		break;
+	case ATTR_MED:
+		if (attr_len != 4)
+			return (p);
+		break;
+	case ATTR_LOCALPREF:
+		if (attr_len != 4)
+			return (p);
+		break;
+	case ATTR_ATOMIC_AGGREGATE:
+		if (attr_len != 0)
+			return (p);
+		break;
+	case ATTR_AGGREGATOR:
+		if (attr_len != 6)
+			return (p);
+		break;
+	default:
+		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN)) {
+			*suberr = ERR_UPD_UNKNWN_WK_ATTR;
+			return (p);
+		}
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL)) {
+			*suberr = ERR_UPD_ATTRFLAGS;
+			return (p);
+		}
+		*suberr = ERR_UPD_OPTATTR;
+		return (p);
+	}
+	/* can only be a attribute flag error */
+	*suberr = ERR_UPD_ATTRFLAGS;
+	return (p);
+}
+#undef UPD_READ
+
 int
 attr_compare(struct attr_flags *a, struct attr_flags *b)
 {
@@ -125,19 +349,20 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 	return (tot_len);
 }
 
-void
+int
 attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
     u_char *data, u_int16_t len)
 {
 	struct attr	*a, *p;
 
+	/* XXX we need to do some basic checks (flags, len if known,...) */
 	if (flags & ATTR_OPTIONAL && ! flags & ATTR_TRANSITIVE)
 		/*
 		 * We already know that we're not intrested in this attribute.
 		 * Currently only the MED is optional and non-transitive but
 		 * MED is directly stored in struct attr_flags.
 		 */
-		return;
+		return (0);
 
 	a = calloc(1, sizeof(struct attr));
 	if (a == NULL)
@@ -150,15 +375,19 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 		if (a->data == NULL)
 			fatal("attr_optadd");
 		memcpy(a->data, data, len);
-	}
+	} else
+		a->data = NULL;
+
 	/* keep a sorted list */
 	TAILQ_FOREACH_REVERSE(p, &attr->others, attr_l, attr_list) {
 		if (type > p->type) {
 			TAILQ_INSERT_AFTER(&attr->others, p, a, attr_l);
-			return;
+			return (0);
 		}
 		ENSURE(type != p->type);
 	}
+	TAILQ_INSERT_HEAD(&attr->others, a, attr_l);
+	return (0);
 }
 
 void
@@ -166,9 +395,8 @@ attr_optfree(struct attr_flags *attr)
 {
 	struct attr	*a, *xa;
 
-	for (a = TAILQ_FIRST(&attr->others); a != TAILQ_END(&attr->others);
-	    a = xa) {
-		xa = TAILQ_NEXT(a, attr_l);
+	while ((a = TAILQ_FIRST(&attr->others)) != NULL) {
+		TAILQ_REMOVE(&attr->others, a, attr_l);
 		free(a->data);
 		free(a);
 	}
@@ -207,6 +435,7 @@ int
 aspath_verify(void *data, u_int16_t len, u_int16_t myAS)
 {
 	u_int8_t	*seg = data;
+	int		 error = 0;
 	u_int16_t	 seg_size;
 	u_int8_t	 i, seg_len, seg_type;
 
@@ -225,12 +454,13 @@ aspath_verify(void *data, u_int16_t len, u_int16_t myAS)
 			/* empty aspath segment are not allowed */
 			return AS_ERR_BAD;
 
+		/* XXX not needed */
 		for (i = 0; i < seg_len; i++) {
 			if (myAS == aspath_extract(seg, i))
-				return AS_ERR_LOOP;
+				error = AS_ERR_LOOP;
 		}
 	}
-	return 0;	/* all OK */
+	return (error);	/* aspath is valid but probably not loop free */
 }
 
 struct aspath *

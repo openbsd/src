@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.94 2004/02/10 23:10:23 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.95 2004/02/16 12:53:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -214,7 +214,16 @@ struct imsg {
 /* needed for session.h parse prototype */
 LIST_HEAD(mrt_head, mrt);
 
-/* error subcode for UPDATE; needed in SE and RDE */
+/* error codes and subcodes needed in SE and RDE */
+enum err_codes {
+	ERR_HEADER = 1,
+	ERR_OPEN,
+	ERR_UPDATE,
+	ERR_HOLDTIMEREXPIRED,
+	ERR_FSM,
+	ERR_CEASE
+};
+
 enum suberr_update {
 	ERR_UPD_UNSPECIFIC,
 	ERR_UPD_ATTRLIST,
@@ -228,6 +237,17 @@ enum suberr_update {
 	ERR_UPD_OPTATTR,
 	ERR_UPD_NETWORK,
 	ERR_UPD_ASPATH
+};
+
+enum suberr_cease {
+	ERR_CEASE_MAX_PREFIX = 1,
+	ERR_CEASE_ADMIN_DOWN,
+	ERR_CEASE_PEER_UNCONF,
+	ERR_CEASE_ADMIN_RESET,
+	ERR_CEASE_CONN_REJECT,
+	ERR_CEASE_OTHER_CHANGE,
+	ERR_CEASE_COLLISION,
+	ERR_CEASE_RSRC_EXHAUST
 };
 
 struct kroute {

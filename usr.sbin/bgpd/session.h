@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.29 2004/02/09 23:16:46 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.30 2004/02/16 12:53:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -70,15 +70,6 @@ enum msg_type {
 	UPDATE,
 	NOTIFICATION,
 	KEEPALIVE
-};
-
-enum err_codes {
-	ERR_HEADER = 1,
-	ERR_OPEN,
-	ERR_UPDATE,
-	ERR_HOLDTIMEREXPIRED,
-	ERR_FSM,
-	ERR_CEASE
 };
 
 enum suberr_header {
