@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.81 2003/10/17 21:04:57 mcbride Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.82 2003/10/19 05:43:35 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.81 2003/10/17 21:04:57 mcbride Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.82 2003/10/19 05:43:35 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -606,8 +606,6 @@ printif(struct ifreq *ifrm, int ifaliases)
 
 	namep = NULL;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-//printf("printif: %s\n", ifa->ifa_name);
-
 		if (ifrm && strncmp(ifrm->ifr_name, ifa->ifa_name,
 		    sizeof(ifrm->ifr_name)))
 			continue;
