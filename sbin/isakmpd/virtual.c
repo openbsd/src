@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.2 2004/06/21 13:09:01 ho Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.3 2004/06/21 18:40:01 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -614,13 +614,10 @@ virtual_send_message(struct message *msg, struct transport *t)
 {
 	struct virtual_transport *v =
 	    (struct virtual_transport *)msg->transport;
-
-	/* XXX Debug */
-	if (t)
-		log_print("virtual_send_message: called with "
-		    "transport %p != NULL", t);
-
 #if defined (USE_NAT_TRAVERSAL)
+	struct sockaddr *sa;
+	in_port_t port;
+	
 	/*
 	 * Activate NAT-T Encapsulation if
 	 *   - the exchange says we can, and
@@ -635,8 +632,16 @@ virtual_send_message(struct message *msg, struct transport *t)
 		LOG_DBG((LOG_MESSAGE, 10, "virtual_send_message: "
 		    "enabling NAT-T encapsulation for this exchange"));
 		v->encap_is_active++;
+
+		/* Copy destination port if it is translated (NAT).  */
+		v->main->vtbl->get_dst(v->main, &sa);
+		port = ntohs(sockaddr_port(sa));
+		if (port != UDP_DEFAULT_PORT) {
+			v->main->vtbl->get_dst(v->encap, &sa);
+			sockaddr_set_port(sa, port);
+		}
 	}
-#endif
+#endif /* USE_NAT_TRAVERSAL */
 
 	if (v->encap_is_active)
 		return v->encap->vtbl->send_message(msg, v->encap);
