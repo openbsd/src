@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.1 2001/09/21 23:12:00 deraadt Exp $	*/
+/*	$OpenBSD: grep.c,v 1.2 2003/02/16 03:46:04 cloder Exp $	*/
 
 /*-
  * Copyright (c) 2000 Carson Harding. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: grep.c,v 1.1 2001/09/21 23:12:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: grep.c,v 1.2 2003/02/16 03:46:04 cloder Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -367,7 +367,7 @@ load_patt(char *fname)
 
 	fr = fopen(fname, "r");
 	if (!fr)
-		err(2, fname);
+		err(2, "%s", fname);
 	while ((buf = fgetln(fr, &len)) != NULL) {
 		if (buf[len-1] == '\n')
 			buf[--len] = '\0';
