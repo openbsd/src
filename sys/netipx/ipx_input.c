@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.6 2000/01/11 19:31:55 fgsch Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.7 2000/01/11 20:30:13 fgsch Exp $	*/
 
 /*-
  *
@@ -84,9 +84,6 @@ union ipx_host	ipx_broadhost;
 struct ipxstat ipxstat;
 struct sockaddr_ipx ipx_netmask, ipx_hostmask;
 
-int ipxintr_getpck = 0;
-int ipxintr_swtch = 0;
-
 static u_int16_t	allones[] = {0xffff, 0xffff, 0xffff};
 
 #ifndef	IPXCBHASHSIZE
@@ -136,7 +133,6 @@ ipxintr()
 	register struct mbuf *m;
 	register struct ipxpcb *ipxp;
 	struct ipx_ifaddr *ia;
-	register int i;
 	int len, s;
 
 next:
@@ -147,30 +143,15 @@ next:
 	s = splimp();
 	IF_DEQUEUE(&ipxintrq, m);
 	splx(s);
-	ipxintr_getpck++;
-	if (m == 0) {
+	if (m == NULL) {
 		return;
 	}
-#ifdef	DIAGNOSTIC
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("ipxintr: no hdr");
-#endif
-#ifdef	IPXDEBUG
-	if (0) {
-	u_int8_t *p = (u_int8_t *)mtod(m, struct ipx *), i;
 
-	printf("ipx: ");
-	for (i = sizeof(struct ipx); i--; p++)
-		printf("%x ", *p);
-	printf("\n");
-	}
-#endif
+	ipxstat.ipxs_total++;
+
 	if ((m->m_flags & M_EXT || m->m_len < sizeof (struct ipx)) &&
 	    (m = m_pullup(m, sizeof (struct ipx))) == 0) {
 		ipxstat.ipxs_toosmall++;
-#ifdef	IPXDEBUG
-		printf("ipxintr: too small [%u]\n", m->m_len);
-#endif
 		goto next;
 	}
 
@@ -186,6 +167,7 @@ next:
 	}
 
 	ipx = mtod(m, struct ipx *);
+	len = ntohs(ipx->ipx_len);
 	/*
 	 * Check that the amount of data in the buffers
 	 * is as at least much as the IPX header would have us expect.
@@ -194,9 +176,6 @@ next:
 	 */
 	if (m->m_pkthdr.len < len) {
 		ipxstat.ipxs_tooshort++;
-#ifdef	IPXDEBUG
-		printf("ipxintr: too short [%u]\n", m->m_pkthdr.len);
-#endif
 		goto bad;
 	}
 	if (m->m_pkthdr.len > len) {
@@ -206,16 +185,13 @@ next:
 		} else
 			m_adj(m, len - m->m_pkthdr.len);
 	}
-	if (ipxcksum && ((i = ipx->ipx_sum)!=0xffff)) {
-		ipx->ipx_sum = 0;
-		if (i != (ipx->ipx_sum = ipx_cksum(m, len))) {
+	if (ipxcksum && ipx->ipx_sum != 0xffff) {
+		if (ipx->ipx_sum != ipx_cksum(m, len)) {
 			ipxstat.ipxs_badsum++;
-#ifdef	IPXDEBUG
-			printf("ipxintr: bad sum [%u]\n", i);
-#endif
 			goto bad;
 		}
 	}
+
 	/*
 	 * Is this a directed broadcast?
 	 */
@@ -224,6 +200,17 @@ next:
 		    (!ipx_neteqnn(ipx->ipx_dna.ipx_net, ipx_broadnet)) &&
 		    (!ipx_neteqnn(ipx->ipx_sna.ipx_net, ipx_zeronet)) &&
 		    (!ipx_neteqnn(ipx->ipx_dna.ipx_net, ipx_zeronet)) ) {
+			/*
+			 * If it is a broadcast to the net where it was
+			 * received from, treat it as ours.
+			 */
+			for (ia = ipx_ifaddr.tqh_first; ia;
+			    ia = ia->ia_list.tqe_next)
+				if((ia->ia_ifa.ifa_ifp == m->m_pkthdr.rcvif) &&
+				    ipx_neteq(ia->ia_addr.sipx_addr, 
+				    ipx->ipx_dna))
+                                       goto ours;
+
 			/*
 			 * Look to see if I need to eat this packet.
 			 * Algorithm is to forward all young packets
@@ -235,9 +222,6 @@ next:
 			 * Suggestion of Bill Nesheim, Cornell U.
 			 */
 			if (ipx->ipx_tc < IPX_MAXHOPS) {
-#ifdef	IPXDEBUG
-				printf("ipxintr: forwarding bcast\n");
-#endif
 				ipx_forward(m);
 				goto next;
 			}
@@ -253,14 +237,11 @@ next:
 				break;
 
 		if (ia == NULL) {
-#ifdef	IPXDEBUG
-			printf("ipxintr: forwarding to %s\n",
-			    ipx_ntoa(ipx->ipx_dna));
-#endif
 			ipx_forward(m);
 			goto next;
 		}
 	}
+ours:
 	/*
 	 * Locate pcb for datagram.
 	 */
@@ -269,22 +250,15 @@ next:
 	/*
 	 * Switch out to protocol's input routine.
 	 */
-	ipxintr_swtch++;
 	if (ipxp) {
-		if ((ipxp->ipxp_flags & IPXP_ALL_PACKETS)==0)
+		ipxstat.ipxs_delivered++;
+		if ((ipxp->ipxp_flags & IPXP_ALL_PACKETS) == 0)
 			switch (ipx->ipx_pt) {
 
 			    case IPXPROTO_SPX:
-#ifdef	IPXDEBUG
-				    printf("ipxintr: spx packet\n");
-#endif
 				    spx_input(m, ipxp);
 				    goto next;
-
 			}
-#ifdef	IPXDEBUG
-		printf("ipxintr: ipx packet\n");
-#endif
 		ipx_input(m, ipxp);
 	} else
 		goto bad;
