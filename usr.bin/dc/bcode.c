@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.13 2003/11/04 08:10:06 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.14 2003/11/06 19:48:13 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.13 2003/11/04 08:10:06 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.14 2003/11/06 19:48:13 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -66,7 +66,8 @@ static __inline struct number	*pop_number(void);
 static __inline char	*pop_string(void);
 static __inline void	clear_stack(void);
 static __inline void	print_tos(void);
-static __inline void	pop_print(void);
+static void		pop_print(void);
+static void		pop_printn(void);
 static __inline void	print_stack();
 static __inline void	dup(void);
 static void		swap(void);
@@ -81,8 +82,9 @@ static void		stackdepth(void);
 static void		push_scale(void);
 static u_int		count_digits(const struct number *);
 static void		num_digits(void);
-
+static void		to_ascii(void);
 static void		push_line(void);
+static void		comment(void);
 static void		bexec(char *);
 static void		badd(void);
 static void		bsub(void);
@@ -129,6 +131,15 @@ struct jump_entry {
 static opcode_function jump_table[UCHAR_MAX];
 
 static const struct jump_entry jump_table_data[] = {
+	{ ' ',	nop		},
+	{ '!',	not_compare	},
+	{ '#',	comment		},
+	{ '%',	bmod		},
+	{ '*',	bmul		},
+	{ '+',	badd		},
+	{ '-',	bsub		},
+	{ '.',	parse_number	},
+	{ '/',	bdiv		},
 	{ '0',	parse_number	},
 	{ '1',	parse_number	},
 	{ '2',	parse_number	},
@@ -139,59 +150,55 @@ static const struct jump_entry jump_table_data[] = {
 	{ '7',	parse_number	},
 	{ '8',	parse_number	},
 	{ '9',	parse_number	},
+	{ ':',	store_array	},
+	{ ';',	load_array	},
+	{ '<',	less		},
+	{ '=',	equal		},
+	{ '>',	greater		},
+	{ '?',	eval_line	},
 	{ 'A',	parse_number	},
 	{ 'B',	parse_number	},
 	{ 'C',	parse_number	},
 	{ 'D',	parse_number	},
 	{ 'E',	parse_number	},
 	{ 'F',	parse_number	},
-	{ '_',	parse_number	},
-	{ '.',	parse_number	},
-	{ '+',	badd		},
-	{ '-',	bsub		},
-	{ '*',	bmul		},
-	{ '/',	bdiv		},
-	{ '%',	bmod		},
-	{ '~',	bdivmod		},
-	{ '^',	bexp		},
-	{ 's',	store		},
-	{ 'S',	store_stack	},
-	{ 'l',	load		},
+	{ 'I',	get_ibase	},
+	{ 'J',	skipN		},
+	{ 'K',	get_scale	},
 	{ 'L',	load_stack	},
+	{ 'M',	nop		},
+	{ 'O',	get_obase	},
 	{ 'd',	dup		},
 	{ 'r',	swap		},
 	{ 'p',	print_tos	},
 	{ 'P',	pop_print	},
-	{ 'f',	print_stack	},
-	{ 'x',	eval_tos	},
-	{ 'X',	push_scale	},
-	{ '[',	push_line	},
-	{ 'q',	quit		},
 	{ 'Q',	quitN		},
-	{ 'J',	skipN		},
-	{ 'M',	nop		},
-	{ '<',	less		},
-	{ '>',	greater		},
-	{ '=',	equal		},
-	{ '!',	not_compare	},
-	{ 'v',	bsqrt		},
-	{ 'c',	clear_stack	},
-	{ 'i',	set_ibase	},
-	{ 'I',	get_ibase	},
-	{ 'o',	set_obase	},
-	{ 'O',	get_obase	},
-	{ 'k',	set_scale	},
-	{ 'K',	get_scale	},
-	{ 'z',	stackdepth	},
+	{ 'S',	store_stack	},
+	{ 'X',	push_scale	},
 	{ 'Z',	num_digits	},
-	{ '?',	eval_line	},
-	{ ';',	load_array	},
-	{ ':',	store_array	},
-	{ ' ',	nop		},
-	{ '\t',	nop		},
-	{ '\n',	nop		},
+	{ '[',	push_line	},
 	{ '\f',	nop		},
-	{ '\r',	nop		}
+	{ '\n',	nop		},
+	{ '\r',	nop		},
+	{ '\t',	nop		},
+	{ '^',	bexp		},
+	{ '_',	parse_number	},
+	{ 'a',	to_ascii	},
+	{ 'c',	clear_stack	},
+	{ 'd',	dup		},
+	{ 'f',	print_stack	},
+	{ 'i',	set_ibase	},
+	{ 'k',	set_scale	},
+	{ 'l',	load		},
+	{ 'n',	pop_printn	},
+	{ 'o',	set_obase	},
+	{ 'p',	print_tos	},
+	{ 'q',	quit		},
+	{ 's',	store		},
+	{ 'v',	bsqrt		},
+	{ 'x',	eval_tos	},
+	{ 'z',	stackdepth	},
+	{ '~',	bdivmod		}
 };
 
 #define JUMP_TABLE_DATA_SIZE \
@@ -452,10 +459,11 @@ print_tos(void)
 		warnx("stack empty");
 }
 
-static __inline void
+static void
 pop_print(void)
 {
 	struct value *value = pop();
+
 	if (value != NULL) {
 		switch (value->type) {
 		case BCODE_NONE:
@@ -470,6 +478,17 @@ pop_print(void)
 			fflush(stdout);
 			break;
 		}
+		stack_free_value(value);
+	}
+}
+
+static void
+pop_printn(void)
+{
+	struct value *value = pop();
+
+	if (value != NULL) {
+		print_value(stdout, value, "", bmachine.obase);
 		stack_free_value(value);
 	}
 }
@@ -639,30 +658,55 @@ num_digits(void)
 {
 	struct value	*value;
 	u_int		digits;
-	struct number	*n;
+	struct number	*n = NULL;
 
 	value = pop();
 	if (value != NULL) {
 		switch (value->type) {
 		case BCODE_NONE:
-			break;
+			return;
 		case BCODE_NUMBER:
 			digits = count_digits(value->u.num);
 			n = new_number();
 			bn_check(BN_set_word(n->number, digits));
-			/* free first, then reassign */
-			BN_free(value->u.num->number);
-			push_number(n);
 			break;
 		case BCODE_STRING:
 			digits = strlen(value->u.string);
 			n = new_number();
 			bn_check(BN_set_word(n->number, digits));
-			/* free first, then reassign */
-			free(value->u.string);
-			push_number(n);
 			break;
 		}
+		stack_free_value(value);
+		push_number(n);
+	}
+}
+
+static void
+to_ascii(void)
+{
+	char		str[2];
+	struct value	*value;
+	struct number	*n;
+
+	value = pop();
+	if (value != NULL) {
+		str[1] = '\0';
+		switch (value->type) {
+		case BCODE_NONE:
+			return;
+		case BCODE_NUMBER:
+			n = value->u.num;
+			normalize(n, 0);
+			if (BN_num_bits(n->number) > 8)
+				bn_check(BN_mask_bits(n->number, 8));
+			str[0] = BN_get_word(n->number);
+			break;
+		case BCODE_STRING:
+			str[0] = value->u.string[0];
+			break;
+		}
+		stack_free_value(value);
+		push_string(bstrdup(str));
 	}
 }
 
@@ -816,6 +860,12 @@ static void
 push_line(void)
 {
 	push_string(read_string(&bmachine.readstack[bmachine.readsp]));
+}
+
+static void
+comment(void)
+{
+	free(readline());
 }
 
 static void
