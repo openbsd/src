@@ -1,4 +1,4 @@
-/*	$OpenBSD: promcons.c,v 1.5 1997/01/24 19:56:43 niklas Exp $	*/
+/*	$OpenBSD: promcons.c,v 1.6 2001/02/03 12:10:40 art Exp $	*/
 /*	$NetBSD: promcons.c,v 1.5 1996/11/13 22:20:55 cgd Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <dev/cons.h>
 
@@ -49,6 +50,7 @@
 #include <machine/prom.h>
 
 static struct  tty *prom_tty[1];
+static struct  timeout prom_to;
 
 void promstart __P((struct tty *));
 void promtimeout __P((void *));
@@ -100,8 +102,10 @@ promopen(dev, flag, mode, p)
 	splx(s);
 
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
-	if (error == 0 && setuptimeout)
-		timeout(promtimeout, tp, 1);
+	if (error == 0 && setuptimeout) {
+		timeout_set(&prom_to, promtimeout, tp);
+		timeout_add(&prom_to, 1);
+	}
 	return error;
 }
  
@@ -114,7 +118,7 @@ promclose(dev, flag, mode, p)
 	int unit = minor(dev);
 	struct tty *tp = prom_tty[unit];
 
-	untimeout(promtimeout, tp);
+	timeout_del(&prom_to);
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	return 0;
@@ -226,7 +230,7 @@ promtimeout(v)
 		if (tp->t_state & TS_ISOPEN)
 			(*linesw[tp->t_line].l_rint)(c, tp);
 	}
-	timeout(promtimeout, tp, 1);
+	timeout_add(&prom_to, 1);
 }
 
 struct tty *
