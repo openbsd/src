@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.198 2002/04/05 02:51:59 krw Exp $
+#	$OpenBSD: install.sub,v 1.199 2002/04/05 23:44:54 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -819,14 +819,14 @@ enable_network() {
 # Print the selector and get a response
 # The list of sets is passed in as $1, sets $resp
 get_selection() {
-	local _next= _f _sets=$1
+	local _next=done _f _sets=$1
 
 	for _f in $_sets ; do
 		if isin $_f $_setsdone ; then
 			echo -n "	[X] "
 		else
 			echo -n "	[ ] "
-			if [ -z "$_next" ]; then
+			if [ "X$_next" = "Xdone" ]; then
 				_next=$_f
 			fi
 		fi
@@ -836,6 +836,11 @@ get_selection() {
 	# Get the name of the file.
 	echo -n "File name? [$_next] "
 	getresp "$_next"
+
+	# Ignore a bare '-' or '+'
+	case $resp in
+	+|-)	resp=
+	esac
 }
 
 # Do globbing on the selection and parse +/-, sets _get_files and _setsdone
