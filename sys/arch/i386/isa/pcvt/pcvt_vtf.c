@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.5 1997/05/30 01:43:07 mickey Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.6 1998/11/16 23:47:57 weingart Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -141,6 +141,8 @@ vt_sgr(struct video_state *svsp)
 	u_short setcolor = 0;
 	char colortouched = 0;
 
+	setcolor = svsp->c_attr;
+
 	do
 	{
 		switch(svsp->parms[i++])
@@ -192,6 +194,7 @@ vt_sgr(struct video_state *svsp)
 				if(color)
 				{
 				 colortouched = 1;
+				 setcolor &= ~(FG_MASK<<8);
 				 setcolor |= ((fgansitopc[(svsp->parms[i-1]-30) & 7]) << 8);
 				}
 				break;
@@ -207,6 +210,7 @@ vt_sgr(struct video_state *svsp)
 				if(color)
 				{
 				 colortouched = 1;
+				 setcolor &= ~(BG_MASK<<8);
 				 setcolor |= ((bgansitopc[(svsp->parms[i-1]-40) & 7]) << 8);
 				}
 				break;
