@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.14 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.15 2001/11/05 19:47:03 art Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -826,7 +826,7 @@ hpux_sys_ioctl(p, v, retval)
 	if (com == HPUXTIOCGETP || com == HPUXTIOCSETP)
 		return (getsettty(p, SCARG(uap, fd), com, SCARG(uap, data)));
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd)) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
 		return (EBADF);
