@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.45 1998/02/24 20:21:32 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.46 1998/03/12 00:19:16 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.45 1998/02/24 20:21:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.46 1998/03/12 00:19:16 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -300,7 +300,7 @@ main(argc, argv, envp)
 	register struct passwd *pwd;
 	register struct group *grp = NULL;
 	register int tmpint;
-	struct sigvec sv;
+	struct sigaction sa, sapipe;
 	int ch, dofork;
 	pid_t pid;
 	char buf[50];
@@ -381,21 +381,21 @@ main(argc, argv, envp)
 	}
 #endif
 
-	memset((char *)&sv, 0, sizeof(sv));
-	sv.sv_mask = SIGBLOCK;
-	sv.sv_handler = retry;
-	sigvec(SIGALRM, &sv, NULL);
+	memset((char *)&sa, 0, sizeof(sa));
+	sa.sa_mask = SIGBLOCK;
+	sa.sa_handler = retry;
+	sigaction(SIGALRM, &sa, NULL);
 	config(0);
-	sv.sv_handler = config;
-	sigvec(SIGHUP, &sv, NULL);
-	sv.sv_handler = reapchild;
-	sigvec(SIGCHLD, &sv, NULL);
-	sv.sv_handler = goaway;
-	sigvec(SIGTERM, &sv, NULL);
-	sv.sv_handler = goaway;
-	sigvec(SIGINT, &sv, NULL);
-	sv.sv_handler = SIG_IGN;
-	sigvec(SIGPIPE, &sv, NULL);
+	sa.sa_handler = config;
+	sigaction(SIGHUP, &sa, NULL);
+	sa.sa_handler = reapchild;
+	sigaction(SIGCHLD, &sa, NULL);
+	sa.sa_handler = goaway;
+	sigaction(SIGTERM, &sa, NULL);
+	sa.sa_handler = goaway;
+	sigaction(SIGINT, &sa, NULL);
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGPIPE, &sa, &sapipe);
 
 	{
 		/* space for daemons to overwrite environment for ps */
@@ -585,6 +585,7 @@ main(argc, argv, envp)
 				closelog();
 				for (tmpint = rlim_ofile_cur-1; --tmpint > 2; )
 					(void)close(tmpint);
+				sigaction(SIGPIPE, &sapipe, NULL);
 				execv(sep->se_server, sep->se_argv);
 				if (sep->se_socktype != SOCK_STREAM)
 					recv(0, buf, sizeof (buf), 0);
