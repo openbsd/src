@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.8 2003/01/26 21:59:17 jason Exp $
+.\"	$OpenBSD: gsc.4,v 1.9 2003/01/31 23:03:12 miod Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -71,6 +71,8 @@ drivers, sorted by driver name:
 .Bl -tag -width pcdisplay -offset indent
 .It Xr com 4
 RS-232 ports.
+.It Xr gsckbc 4
+PC-style keyboard controller.
 .It Xr harmony 4
 CS4215/AD1849 audio.
 .It Xr hil 4
@@ -81,8 +83,6 @@ Intel i82596 DX/CA 32-bit LAN coprocessor.
 Centronics printer port.
 .It Xr osiop 4
 SCSI I/O processor.
-.It Xr pckbc 4
-PC-style keyboard controller.
 .El
 .Pp
 Some of these 
