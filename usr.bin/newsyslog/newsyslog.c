@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.69 2003/06/09 20:29:10 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.70 2003/06/09 20:43:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -68,7 +68,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.69 2003/06/09 20:29:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.70 2003/06/09 20:43:44 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -471,7 +471,7 @@ parse_file(int *nentries)
 	FILE *f;
 	char line[BUFSIZ], *parse, *q, *errline, *group, *tmp, *ep;
 	int lineno;
-	unsigned long ul;
+	long l;
 	struct conf_entry *first = NULL;
 	struct conf_entry *working = NULL;
 	struct passwd *pwd;
@@ -567,11 +567,11 @@ parse_file(int *nentries)
 		working->flags = 0;
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
-		ul = strtoul(q, &ep, 10);
-		if (ul > INT_MAX)
+		l = strtol(q, &ep, 10);
+		if (l <= 0 || l >= INT_MAX)
 			errx(1, "%s:%d: interval out of range: %s", conf,
 			    lineno, q);
-		working->hours = (int)ul;
+		working->hours = (int)l;
 		switch (*ep) {
 		case '\0':
 			break;
@@ -767,7 +767,7 @@ dotrim(struct conf_entry *ent)
 	while (numdays--) {
 		/*
 		 * If both the compressed archive and the non-compressed archive
-		 * exist, we decide which to rotate based on the CE_COMPACT flag.
+		 * exist, we decide which to rotate based on the CE_COMPACT flag
 		 */
 		(void)snprintf(file1, sizeof(file1), "%s.%d", oldlog, numdays);
 		suffix = lstat_log(file1, sizeof(file1), ent->flags);
@@ -803,7 +803,7 @@ dotrim(struct conf_entry *ent)
 			err(1, "can't start '%s' log", file2);
 		if (ent->uid != (uid_t)-1 || ent->gid != (gid_t)-1)
 			if (fchown(fd, ent->uid, ent->gid))
-			    err(1, "can't chown '%s' log file", file2);
+				err(1, "can't chown '%s' log file", file2);
 		if (fchmod(fd, ent->permissions))
 			err(1, "can't chmod '%s' log file", file2);
 		(void)close(fd);
@@ -986,7 +986,7 @@ domonitor(struct conf_entry *ent)
 		goto cleanup;
 	}
 #ifdef QUAD_OFF_T
-	if (fscanf(fp, "%qd\n", &osize) != 1) {
+	if (fscanf(fp, "%lld\n", &osize) != 1) {
 #else
 	if (fscanf(fp, "%ld\n", &osize) != 1) {
 #endif	/* QUAD_OFF_T */
@@ -1043,9 +1043,9 @@ update:
 		goto cleanup;
 	}
 #ifdef QUAD_OFF_T
-	fprintf(fp, "%qd\n", sb.st_size);
+	fprintf(fp, "%lld\n", (long long)sb.st_size);
 #else
-	fprintf(fp, "%ld\n", sb.st_size);
+	fprintf(fp, "%ld\n", (long)sb.st_size);
 #endif	/* QUAD_OFF_T */
 	fclose(fp);
 
@@ -1130,15 +1130,15 @@ parse8601(char *s)
 {
 	char *t;
 	struct tm tm, *tmp;
-	unsigned long ul;
+	long l;
 
 	tmp = localtime(&timenow);
 	tm = *tmp;
 
 	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
 
-	ul = strtoul(s, &t, 10);
-	if (*t != '\0' && *t != 'T')
+	l = strtol(s, &t, 10);
+	if (l < 0 || l >= INT_MAX || (*t != '\0' && *t != 'T'))
 		return (-1);
 
 	/*
@@ -1148,17 +1148,17 @@ parse8601(char *s)
 	 */
 	switch (t - s) {
 	case 8:
-		tm.tm_year = ((ul / 1000000) - 19) * 100;
-		ul = ul % 1000000;
+		tm.tm_year = ((l / 1000000) - 19) * 100;
+		l = l % 1000000;
 	case 6:
 		tm.tm_year -= tm.tm_year % 100;
-		tm.tm_year += ul / 10000;
-		ul = ul % 10000;
+		tm.tm_year += l / 10000;
+		l = l % 10000;
 	case 4:
-		tm.tm_mon = (ul / 100) - 1;
-		ul = ul % 100;
+		tm.tm_mon = (l / 100) - 1;
+		l = l % 100;
 	case 2:
-		tm.tm_mday = ul;
+		tm.tm_mday = l;
 	case 0:
 		break;
 	default:
@@ -1172,19 +1172,19 @@ parse8601(char *s)
 
 	if (*t != '\0') {
 		s = ++t;
-		ul = strtoul(s, &t, 10);
-		if (*t != '\0' && !isspace(*t))
+		l = strtol(s, &t, 10);
+		if (l < 0 || l >= INT_MAX || (*t != '\0' && !isspace(*t)))
 			return (-1);
 
 		switch (t - s) {
 		case 6:
-			tm.tm_sec = ul % 100;
-			ul /= 100;
+			tm.tm_sec = l % 100;
+			l /= 100;
 		case 4:
-			tm.tm_min = ul % 100;
-			ul /= 100;
+			tm.tm_min = l % 100;
+			l /= 100;
 		case 2:
-			tm.tm_hour = ul;
+			tm.tm_hour = l;
 		case 0:
 			break;
 		default:
