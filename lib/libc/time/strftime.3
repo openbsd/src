@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
-.\"     $OpenBSD: strftime.3,v 1.5 1998/07/06 18:57:12 millert Exp $
+.\"     $OpenBSD: strftime.3,v 1.6 1999/01/04 20:00:10 millert Exp $
 .\"
 .Dd Jan 18, 1998
 .Dt STRFTIME 3
@@ -202,6 +202,17 @@ The
 and
 .Ql \&%l
 conversion specifications are extensions.
+.Pp
+Use of the ISO 8601 conversions may produce non-intuitive results.
+Week 01 of a year is per definition the first week which has the
+Thursday in this year, which is equivalent to the week which contains
+the fourth day of January. In other words, the first week of a new
+year is the week which has the majority of its days in the new year.
+Week 01 might also contain days from the previous year and the week
+before week 01 of a year is the last week (52 or 53) of the previous
+year even if it contains days from the new year. A week starts with
+Monday (day 1) and ends with Sunday (day 7).  For example, the first
+week of the year 1997 lasts from 1996-12-30 to 1997-01-05.
 .Sh BUGS
 There is no conversion specification for the phase of the moon.
 .Pp
