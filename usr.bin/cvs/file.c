@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.58 2005/03/26 08:09:54 tedu Exp $	*/
+/*	$OpenBSD: file.c,v 1.59 2005/03/29 17:37:37 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -380,7 +380,10 @@ cvs_file_getspec(char **fspec, int fsn, int flags)
 					return (NULL);
 				}
 
-				cvs_file_attach(cf, nf);
+				if (cvs_file_attach(cf, nf) < 0) {
+					cvs_file_free(base);
+					return (NULL);
+				}
 			}
 
 			if (np != NULL) {
