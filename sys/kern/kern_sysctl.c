@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.101 2004/02/15 11:14:45 markus Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.102 2004/02/27 21:15:45 grange Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
 
 int (*cpu_cpuspeed)(int *);
 int (*cpu_setperf)(int);
+int setperf_prio = 0;		/* for concurrent handlers */
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory

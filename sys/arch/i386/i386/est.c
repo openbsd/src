@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.5 2004/02/14 15:09:22 grange Exp $ */
+/*	$OpenBSD: est.c,v 1.6 2004/02/27 21:15:45 grange Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -201,6 +201,9 @@ est_init(const char *cpu_device)
 	const struct fqlist *fql;
 	extern char cpu_brandstr[];
 
+	if (setperf_prio > 3)
+		return;
+
 	if ((cpu_ecxfeature & CPUIDECX_EST) == 0)
 		return;
 
@@ -256,6 +259,7 @@ est_init(const char *cpu_device)
 
 	cpu_setperf = est_setperf;
 	cpu_cpuspeed = est_cpuspeed;
+	setperf_prio = 3;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.12 2004/02/19 21:38:44 grange Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.13 2004/02/27 21:15:45 grange Exp $	*/
 /*	$NetBSD: pcib.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
@@ -125,7 +125,8 @@ pcibattach(parent, self, aux)
 	/*
 	 * Detect and activate SpeedStep on ICHx-M chipsets.
 	 */
-	if (ichss_match(aux) && ichss_attach(self, aux) == 0)
+	if (setperf_prio < 2 && ichss_match(aux) &&
+	    ichss_attach(self, aux) == 0)
 		printf(": SpeedStep");
 #endif
 
@@ -226,6 +227,7 @@ ichss_attach(struct device *self, void *aux)
 	/* Hook into hw.setperf sysctl */
 	ichss_cookie = sc;
 	cpu_setperf = ichss_setperf;
+	setperf_prio = 2;
 
 	return (0);
 }

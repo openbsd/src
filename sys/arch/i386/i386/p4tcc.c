@@ -1,4 +1,4 @@
-/*	$OpenBSD: p4tcc.c,v 1.2 2004/02/14 15:09:22 grange Exp $ */
+/*	$OpenBSD: p4tcc.c,v 1.3 2004/02/27 21:15:45 grange Exp $ */
 /*
  * Copyright (c) 2003 Ted Unangst
  * All rights reserved.
@@ -62,6 +62,8 @@ static struct {
 void
 p4tcc_init(int model, int step)
 {
+	if (setperf_prio > 1)
+		return;
 
 	switch (step) {
 	case 0x22:	/* errata O50 P44 and Z21 */
@@ -85,7 +87,7 @@ p4tcc_init(int model, int step)
 	}
 
 	cpu_setperf = p4tcc_setperf;
-
+	setperf_prio = 1;
 }
 
 #if 0
