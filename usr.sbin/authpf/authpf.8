@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.36 2004/08/15 10:40:50 canacar Exp $
+.\" $OpenBSD: authpf.8,v 1.37 2004/09/15 23:24:13 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -231,9 +231,15 @@ it becomes unresponsive, or if arp or address spoofing is used to
 hijack the session.
 Note that TCP keepalives are not sufficient for
 this, since they are not secure.
+Also note that
+.Ar AllowTcpForwarding
+should be disabled for
+.Nm
+users to prevent them from circumventing restrictions imposed by the
+packet filter ruleset.
 .Pp
 .Nm
-will remove statetable entries that were created during a user's
+will remove state table entries that were created during a user's
 session.
 This ensures that there will be no unauthenticated traffic
 allowed to pass after the controlling
