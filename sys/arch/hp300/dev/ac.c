@@ -1,7 +1,8 @@
-/*	$OpenBSD: ac.c,v 1.4 1997/01/12 15:12:17 downsj Exp $
-/*	$NetBSD: ac.c,v 1.6 1996/10/13 03:14:05 christos Exp $	*/
+/*	$OpenBSD: ac.c,v 1.5 1997/02/03 04:47:11 downsj Exp $
+/*	$NetBSD: ac.c,v 1.7 1997/01/30 09:14:10 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,42 +53,34 @@
  * never uses it.
  */
 
-#include "ac.h"
-#if NAC > 0
-
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 
-#include <hp300/dev/device.h>
 #include <hp300/dev/scsireg.h>
+#include <hp300/dev/scsivar.h>
+
 #include <hp300/dev/acioctl.h>
 #include <hp300/dev/acvar.h>
 
-extern int scsi_test_unit_rdy();
-extern int scsi_request_sense();
-extern int scsiustart();
-extern int scsigo();
-extern void scsifree();
-extern void scsireset();
-extern void scsi_delay();
-extern void scsi_str __P((char *, char *, size_t));
+int	acmatch __P((struct device *, void *, void *));
+void	acattach __P((struct device *, struct device *, void *));
 
-extern int scsi_immed_command();
-
-int	acmatch(), acstart(), acgo(), acintr();
-void	acattach();
-
-struct	driver acdriver = {
-	acmatch, acattach, "ac", acstart, acgo, acintr,
+struct cfattach ac_ca = {
+	sizeof(struct ac_softc), acmatch, acattach
 };
 
-struct	ac_softc ac_softc[NAC];
-static	struct buf acbuf[NAC];
-static	struct scsi_fmt_cdb accmd[NAC];
+struct cfdriver ac_cd = {
+	NULL, "ac", DV_DULL
+};
+
+void	acstart __P((void *));
+void	acgo __P((void *));
+void	acintr __P((void *, int));
 
 #ifdef DEBUG
 int ac_debug = 0x0000;
@@ -96,108 +89,51 @@ int ac_debug = 0x0000;
 #endif
 
 int
-acmatch(hd)
-	register struct hp_device *hd;
+acmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	int unit = hd->hp_unit;
-	register struct ac_softc *sc = &ac_softc[unit];
+	struct oscsi_attach_args *osa = aux;
 
-	sc->sc_hd = hd;
-	sc->sc_punit = hd->hp_flags & 7;
-	if (acident(sc, hd, 0) < 0)
+	if (osa->osa_inqbuf->type != 8 || osa->osa_inqbuf->qual != 0x80 ||
+	    osa->osa_inqbuf->version != 2)
 		return (0);
 
 	return (1);
 }
 
 void
-acattach(hd)
-	register struct hp_device *hd;
+acattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	int unit = hd->hp_unit;
-	register struct ac_softc *sc = &ac_softc[unit];
+	struct ac_softc *sc = (struct ac_softc *)self;
+	struct oscsi_attach_args *osa = aux;
 
-	(void)acident(sc, hd, 1);	/* XXX Ick. */
+	printf("\n");
 
-	sc->sc_dq.dq_softc = sc;
-	sc->sc_dq.dq_unit = unit;
-	sc->sc_dq.dq_ctlr = hd->hp_ctlr;
-	sc->sc_dq.dq_slave = hd->hp_slave;
-	sc->sc_dq.dq_driver = &acdriver;
-	sc->sc_bp = &acbuf[unit];
-	sc->sc_cmd = &accmd[unit];
-	sc->sc_flags = ACF_ALIVE;
-}
+	sc->sc_target = osa->osa_target;
+	sc->sc_lun = osa->osa_lun;
 
-acident(sc, hd, verbose)
-	register struct ac_softc *sc;
-	register struct hp_device *hd;
-	int verbose;
-{
-	int unit;
-	register int ctlr, slave;
-	int i, stat;
-	int tries = 5;
-	struct scsi_inquiry inqbuf;
-	char vendor[9], product[17], revision[5];
-	static struct scsi_fmt_cdb inq = {
-		6,
-		CMD_INQUIRY, 0, 0, 0, sizeof(inqbuf), 0
-	};
+	/* Initialize SCSI queue entry. */
+	sc->sc_sq.sq_softc = sc;
+	sc->sc_sq.sq_target = sc->sc_target;
+	sc->sc_sq.sq_lun = sc->sc_lun;
+	sc->sc_sq.sq_start = acstart;
+	sc->sc_sq.sq_go = acgo;
+	sc->sc_sq.sq_intr = acintr;
 
-	ctlr = hd->hp_ctlr;
-	slave = hd->hp_slave;
-	unit = sc->sc_punit;
-	scsi_delay(-1);
+	sc->sc_bp = (struct buf *)malloc(sizeof(struct buf),
+	    M_DEVBUF, M_NOWAIT);
+	sc->sc_cmd = (struct scsi_fmt_cdb *)malloc(sizeof(struct scsi_fmt_cdb),
+	    M_DEVBUF, M_NOWAIT);
 
-	/*
-	 * See if device is ready
-	 */
-	while ((i = scsi_test_unit_rdy(ctlr, slave, unit)) != 0) {
-		if (i == -1 || --tries < 0)
-			/* doesn't exist or not a CCS device */
-			goto failed;
-		if (i == STS_CHECKCOND) {
-			u_char sensebuf[128];
-			struct scsi_xsense *sp;
-
-			scsi_request_sense(ctlr, slave, unit,
-					   sensebuf, sizeof(sensebuf));
-			sp = (struct scsi_xsense *) sensebuf;
-			if (sp->class == 7 && sp->key == 6)
-				/* drive doing an RTZ -- give it a while */
-				DELAY(1000000);
-		}
-		DELAY(1000);
+	if (sc->sc_bp == NULL || sc->sc_cmd == NULL) {
+		printf("%s: memory allocation failed\n", sc->sc_dev.dv_xname);
+		return;
 	}
-	/*
-	 * Find out if it is an autochanger
-	 */
-	if (scsi_immed_command(ctlr, slave, unit, &inq,
-			       (u_char *)&inqbuf, sizeof(inqbuf), B_READ))
-		goto failed;
 
-	if (inqbuf.type != 8 || inqbuf.qual != 0x80 || inqbuf.version != 2)
-		goto failed;
-
-	/*
-	 * Get a usable id string
-	 */
-	bzero(vendor, sizeof(vendor));
-	bzero(product, sizeof(product));
-	bzero(revision, sizeof(revision));
-	scsi_str(inqbuf.vendor_id, vendor, sizeof(inqbuf.vendor_id));
-	scsi_str(inqbuf.product_id, product, sizeof(inqbuf.product_id));
-	scsi_str(inqbuf.rev, revision, sizeof(inqbuf.rev));
-
-	if (verbose)
-		printf(": <%s, %s, %s>\n", vendor, product, revision);
-
-	scsi_delay(0);
-	return(inqbuf.type);
-failed:
-	scsi_delay(0);
-	return(-1);
+	sc->sc_flags = ACF_ALIVE;
 }
 
 /*ARGSUSED*/
@@ -207,13 +143,17 @@ acopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	register int unit = minor(dev);
-	register struct ac_softc *sc = &ac_softc[unit];
+	struct ac_softc *sc;
 	int error = 0;
 
-	if (unit >= NAC || (sc->sc_flags & ACF_ALIVE) == 0)
-		return(ENXIO);
+	if (unit >= ac_cd.cd_ndevs ||
+	    (sc = ac_cd.cd_devs[unit]) == NULL ||
+	    (sc->sc_flags & ACF_ALIVE) == 0)
+		return (ENXIO);
+
 	if (sc->sc_flags & ACF_OPEN)
-		return(EBUSY);
+		return (EBUSY);
+
 	/*
 	 * Since acgeteinfo can block we mark the changer open now.
 	 */
@@ -222,7 +162,7 @@ acopen(dev, flag, mode, p)
 		sc->sc_flags &= ~ACF_OPEN;
 		return(EIO);
 	}
-	return(0);
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -231,9 +171,10 @@ acclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct ac_softc *sc = &ac_softc[minor(dev)];
+	struct ac_softc *sc = ac_cd.cd_devs[minor(dev)];
 
 	sc->sc_flags &= ~ACF_OPEN;
+	return (0);
 }
 
 #define ACRESLEN(ep)	\
@@ -247,7 +188,7 @@ acioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct ac_softc *sc = &ac_softc[minor(dev)];
+	struct ac_softc *sc = ac_cd.cd_devs[minor(dev)];
 	char *dp;
 	int dlen, error = 0;
 
@@ -324,7 +265,7 @@ accommand(dev, command, bufp, buflen)
 	int buflen;
 {
 	int unit = minor(dev);
-	register struct ac_softc *sc = &ac_softc[unit];
+	struct ac_softc *sc = ac_cd.cd_devs[unit];
 	register struct buf *bp = sc->sc_bp;
 	register struct scsi_fmt_cdb *cmd = sc->sc_cmd;
 	int error;
@@ -380,38 +321,41 @@ accommand(dev, command, bufp, buflen)
 	bp->b_resid = 0;
 	bp->b_blkno = 0;
 	bp->b_error = 0;
-	if (scsireq(&sc->sc_dq))
-		acstart(unit);
+	if (scsireq(sc->sc_dev.dv_parent, &sc->sc_sq))
+		acstart(sc);
 	error = biowait(bp);
 	sc->sc_flags &= ~ACF_ACTIVE;
 	return (error);
 }
 
-acstart(unit)
-	int unit;
+void
+acstart(arg)
+	void *arg;
 {
+	struct ac_softc *sc = arg;
+
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
 		printf("acstart(unit=%x)\n", unit);
 #endif
-	if (scsiustart(ac_softc[unit].sc_hd->hp_ctlr))
-		acgo(unit);
+	if (scsiustart(sc->sc_dev.dv_parent->dv_unit))
+		acgo(arg);
 }
 
-acgo(unit)
-	int unit;
+void
+acgo(arg)
+	void *arg;
 {
-	register struct ac_softc *sc = &ac_softc[unit];
+	struct ac_softc *sc = arg;
 	register struct buf *bp = sc->sc_bp;
-	struct hp_device *hp = sc->sc_hd;
 	int stat;
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
 		printf("acgo(unit=%x): ", unit);
 #endif
-	stat = scsigo(hp->hp_ctlr, hp->hp_slave, sc->sc_punit,
-		      bp, sc->sc_cmd, 0);
+	stat = scsigo(sc->sc_dev.dv_parent->dv_unit, sc->sc_target,
+	    sc->sc_lun, bp, sc->sc_cmd, 0);
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
 		printf("scsigo returns %x\n", stat);
@@ -420,10 +364,11 @@ acgo(unit)
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		(void) biodone(bp);
-		scsifree(&sc->sc_dq);
+		scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
 	}
 }
 
+void
 acintr(arg, stat)
 	void *arg;
 	int stat;
@@ -432,7 +377,7 @@ acintr(arg, stat)
 	register struct buf *bp = sc->sc_bp;
 	u_char sensebuf[78];
 	struct scsi_xsense *sp;
-	int unit = sc->sc_hd->hp_unit;
+	int unit = sc->sc_dev.dv_unit;
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)
@@ -443,27 +388,27 @@ acintr(arg, stat)
 		bp->b_resid = 0;
 		break;
 	case STS_CHECKCOND:
-		scsi_request_sense(sc->sc_hd->hp_ctlr, sc->sc_hd->hp_slave,
-				   sc->sc_punit, sensebuf, sizeof sensebuf);
+		scsi_request_sense(sc->sc_dev.dv_parent->dv_unit,
+		    sc->sc_target, sc->sc_lun, sensebuf, sizeof sensebuf);
 		sp = (struct scsi_xsense *)sensebuf;
 		printf("%s: acintr sense key=%x, ac=%x, acq=%x\n",
-		       sc->sc_hd->hp_xname, sp->key, sp->info4, sp->len);
+		       sc->sc_dev.dv_xname, sp->key, sp->info4, sp->len);
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		break;
 	default:
-		printf("%s: acintr unknown status 0x%x\n", sc->sc_hd->hp_xname,
+		printf("%s: acintr unknown status 0x%x\n", sc->sc_dev.dv_xname,
 		    stat);
 		break;
 	}
 	(void) biodone(sc->sc_bp);
-	scsifree(&sc->sc_dq);
+	scsifree(sc->sc_dev.dv_parent, &sc->sc_sq);
 }
 
 acgeteinfo(dev)
 	dev_t dev;
 {
-	register struct ac_softc *sc = &ac_softc[minor(dev)];
+	struct ac_softc *sc = ac_cd.cd_devs[minor(dev)];
 	register char *bp;
 	char msbuf[48];
 	int error;
@@ -551,4 +496,3 @@ acconvert(sbuf, dbuf, ne)
 #endif
 	}
 }
-#endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rdvar.h,v 1.5 1997/01/12 15:13:00 downsj Exp $	*/
-/*	$NetBSD: rdvar.h,v 1.5 1996/06/06 16:17:42 thorpej Exp $	*/
+/*	$OpenBSD: rdvar.h,v 1.6 1997/02/03 04:47:43 downsj Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.6 1997/01/30 09:14:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,23 +53,33 @@ struct	rdidentinfo {
 	int	ri_nblocks;		/* DEV_BSIZE blocks on disk */
 };
 
+struct rdstats {
+	long	rdretries;
+	long	rdresets;
+	long	rdtimeouts;
+	long	rdpolltries;
+	long	rdpollwaits;
+};
+
 struct	rd_softc {
-	struct	hp_device *sc_hd;
+	struct	device sc_dev;
 	struct	disk sc_dkdev;
-	char	sc_xname[8];
+	int	sc_slave;		/* HP-IB slave */
+	int	sc_punit;		/* physical unit on slave */
 	int	sc_flags;
 	short	sc_type;
-	short	sc_punit;
 	char	*sc_addr;
 	int	sc_resid;
 	struct	rd_describe sc_rddesc;
-	struct	devqueue sc_dq;
+	struct	hpibqueue sc_hq;	/* hpib job queue entry */
 	struct	rd_iocmd sc_ioc;
 	struct	rd_rscmd sc_rsc;
 	struct	rd_stat sc_stat;
 	struct	rd_ssmcmd sc_ssmc;
 	struct	rd_srcmd sc_src;
 	struct	rd_clearcmd sc_clear;
+	struct	buf sc_tab;		/* buffer queue */
+	struct	rdstats sc_stats;
 };
 
 /* sc_flags values */
@@ -80,14 +90,6 @@ struct	rd_softc {
 #define RDF_CLOSING	0x10
 #define RDF_WANTED	0x20
 #define RDF_WLABEL	0x40
-
-struct rdstats {
-	long	rdretries;
-	long	rdresets;
-	long	rdtimeouts;
-	long	rdpolltries;
-	long	rdpollwaits;
-};
 
 #define	rdunit(x)	(minor(x) >> 3)
 #define rdpart(x)	(minor(x) & 0x7)
@@ -101,5 +103,4 @@ struct rdstats {
 
 #ifdef _KERNEL
 extern	struct rdidentinfo rdidentinfo[];
-extern	struct rd_softc rd_softc[];
 #endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rd_compat.c,v 1.4 1997/01/12 15:12:59 downsj Exp $	*/
-/*	$NetBSD: rd_compat.c,v 1.5 1996/01/07 22:02:14 thorpej Exp $	*/
+/*	$OpenBSD: rd_compat.c,v 1.5 1997/02/03 04:47:43 downsj Exp $	*/
+/*	$NetBSD: rd_compat.c,v 1.6 1997/01/30 09:14:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,13 +46,15 @@
 /*
  * Compatibility for CS80 disks without disklabels.
  */
-#include "rd.h"
-#if NRD > 0
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <hp300/dev/device.h>
+#include <sys/device.h>
+#include <sys/buf.h>		/* XXX */
+
+#include <hp300/dev/hpibvar.h>
+
 #include <hp300/dev/rdreg.h>
 #include <hp300/dev/rdvar.h>
 
@@ -258,7 +260,8 @@ rdmakedisklabel(unit, lp)
 	int unit;
 	struct disklabel *lp;
 {
-	register struct rd_softc *rs = &rd_softc[unit];
+	extern struct cfdriver rd_cd;
+	register struct rd_softc *rs = rd_cd.cd_devs[unit];
 	register struct rdcompatinfo *ci = &rdcompatinfo[rs->sc_type];
 	struct rdidentinfo *ri = &rdidentinfo[rs->sc_type];
 	register struct partition *pi;
@@ -288,4 +291,3 @@ rdmakedisklabel(unit, lp)
 		pi++;
 	}
 }
-#endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.9 1997/01/18 06:43:05 downsj Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.29 1996/12/17 08:41:19 thorpej Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 1997/02/03 04:47:54 downsj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 1997/01/31 01:49:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -75,6 +75,7 @@
 #include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/mount.h>
 #include <sys/queue.h>
 
 #include <dev/cons.h>
@@ -90,9 +91,11 @@
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 
-#include <hp300/dev/device.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/dev/hilreg.h>
+
+#include <hp300/dev/hpibvar.h>
+#include <hp300/dev/scsivar.h>
 
 /*
  * The following several variables are related to
@@ -161,38 +164,6 @@ ddlist_t	dev_data_list;	  	/* all dev_datas */
 ddlist_t	dev_data_list_hpib;	/* hpib controller dev_datas */
 ddlist_t	dev_data_list_scsi;	/* scsi controller dev_datas */
 
-#if 1			/* XXX for now */
-struct scsi_link {
-	int	target;
-	int	lun;
-};
-
-struct scsibus_attach_args {
-	struct	scsi_link *sa_scsi_link;
-};
-
-struct hpib_attach_args {
-	int	ha_slave;
-	int	ha_punit;
-};
-#endif /* XXX */
-
-#ifndef NEWCONFIG	/* XXX */
-struct	hp_hw sc_table[MAXCTLRS];
-
-#ifdef DEBUG
-int	acdebug = 0;
-#endif
-
-struct	devicelist alldevs;
-struct	evcntlist allevents;
-
-struct	dio_attach_args hp300_dio_attach_args;
-struct	scsi_link hp300_scsi_link;
-struct	scsibus_attach_args hp300_scsibus_attach_args;
-struct	hpib_attach_args hp300_hpib_attach_args;
-#endif /* ! NEWCONFIG */
-
 void	setroot __P((void));
 void	swapconf __P((void));
 void	findbootdev __P((void));
@@ -210,10 +181,9 @@ static	int findblkmajor __P((struct device *dv));
 static	char *findblkname __P((int));
 static	int getstr __P((char *cp, int size));  
 
-#ifdef NEWCONFIG
-int	mainbusmatch __P((struct device *, struct cfdata *, void *));
+int	mainbusmatch __P((struct device *, void *, void *));
 void	mainbusattach __P((struct device *, struct device *, void *));
-int	mainbussearch __P((struct device *, struct cfdata *, void *));
+int	mainbussearch __P((struct device *, void *, void *));
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbusmatch, mainbusattach
@@ -226,8 +196,7 @@ struct cfdriver mainbus_cd = {
 int
 mainbusmatch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+	void *match, *aux;
 {
 	static int mainbus_matched = 0;
 
@@ -252,17 +221,16 @@ mainbusattach(parent, self, aux)
 }
 
 int
-mainbussearch(parent, cf, aux)
+mainbussearch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *match, *aux;
 {
+	struct cfdata *cf = match;
 
 	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 	return (0);
 }
-#endif /* NEWCONFIG */
 
 /*
  * Determine the device configuration for the running system.
@@ -270,9 +238,6 @@ mainbussearch(parent, cf, aux)
 void
 configure()
 {
-	register struct hp_hw *hw;
-	int found;
-
 	/*
 	 * Initialize the dev_data_lists.
 	 */
@@ -296,48 +261,10 @@ configure()
 	hilinit(0, HILADDR);
 	dmainit();
 
-#ifdef NEWCONFIG
 	(void)splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
-#else
-	/*
-	 * Find out what hardware is attached to the machine.
-	 */
-	find_devs();
-
-	/*
-	 * Look over each hardware device actually found and attempt
-	 * to match it with an ioconf.c table entry.
-	 */
-	for (hw = sc_table; hw->hw_type; hw++) {
-		if (HW_ISCTLR(hw))
-			found = find_controller(hw);
-		else
-			found = find_device(hw);
-
-		if (!found) {
-			extern char *dio_devinfo __P((struct dio_attach_args *,
-			    char *, size_t));
-			int sc = hw->hw_sc;
-			char descbuf[80];
-
-			bzero(&hp300_dio_attach_args,
-			    sizeof(hp300_dio_attach_args));
-			hp300_dio_attach_args.da_scode = sc;
-			hp300_dio_attach_args.da_id = hw->hw_id;
-			hp300_dio_attach_args.da_secid = hw->hw_secid;
-			printf("%s", dio_devinfo(&hp300_dio_attach_args,
-			    descbuf, sizeof(descbuf)));
-			if (sc >= 0 && sc < 256)
-				printf(" at scode %d", sc);
-			else
-				printf(" csr at 0x%lx", (u_long)hw->hw_pa);
-			printf(" not configured\n");
-		}
-	}
-#endif /* NEWCONFIG */
 
 	isrprintlevels();
 
@@ -419,8 +346,9 @@ device_register(dev, aux)
 		goto linkup;
 	}
 
-	if (bcmp(dev->dv_xname, "hpib", 4) == 0 ||
-	    bcmp(dev->dv_xname, "scsi", 4) == 0) {
+	if (bcmp(dev->dv_xname, "fhpib", 5) == 0 ||
+	    bcmp(dev->dv_xname, "nhpib", 5) == 0 ||
+	    bcmp(dev->dv_xname, "oscsi", 5) == 0) {
 		struct dio_attach_args *da = aux;
 
 		dd->dd_scode = da->da_scode;
@@ -428,7 +356,7 @@ device_register(dev, aux)
 	}
 
 	if (bcmp(dev->dv_xname, "rd", 2) == 0) {
-		struct hpib_attach_args *ha = aux;
+		struct hpibbus_attach_args *ha = aux;
 
 		dd->dd_slave = ha->ha_slave;
 		dd->dd_punit = ha->ha_punit;
@@ -436,10 +364,10 @@ device_register(dev, aux)
 	}
 
 	if (bcmp(dev->dv_xname, "sd", 2) == 0) {
-		struct scsibus_attach_args *sa = aux;
+		struct oscsi_attach_args *osa = aux;
 
-		dd->dd_slave = sa->sa_scsi_link->target;
-		dd->dd_punit = sa->sa_scsi_link->lun;
+		dd->dd_slave = osa->osa_target;
+		dd->dd_punit = osa->osa_lun;
 		goto linkup;
 	}
 
@@ -452,12 +380,13 @@ device_register(dev, aux)
  linkup:
 	LIST_INSERT_HEAD(&dev_data_list, dd, dd_list);
 
-	if (bcmp(dev->dv_xname, "hpib", 4) == 0) {
+	if (bcmp(dev->dv_xname, "fhpib", 5) == 0 ||
+	    bcmp(dev->dv_xname, "nhpib", 5) == 0) {
 		dev_data_insert(dd, &dev_data_list_hpib);
 		return;
 	}
 
-	if (bcmp(dev->dv_xname, "scsi", 4) == 0) {
+	if (bcmp(dev->dv_xname, "oscsi", 5) == 0) {
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
@@ -1008,8 +937,26 @@ findbootdev_slave(ddlist, ctlr, slave, punit)
 	 */
 	for (dd = dev_data_list.lh_first; dd != NULL;
 	    dd = dd->dd_list.le_next) {
-		if (dd->dd_dev->dv_parent == cdd->dd_dev &&
-		    dd->dd_slave == slave &&
+		/*
+		 * XXX We don't yet have the extra bus indirection
+		 * XXX for SCSI, so we have to do a little bit of
+		 * XXX extra work.
+		 */
+		if (bcmp(dd->dd_dev->dv_xname, "sd", 2) == 0) {
+			/*
+			 * "sd" -> "oscsi"
+			 */
+			if (dd->dd_dev->dv_parent != cdd->dd_dev)
+				continue;
+		} else {
+			/*
+			 * "rd" -> "hpibbus" -> "fhpib"
+			 */
+			if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
+				continue;
+		}
+
+		if (dd->dd_slave == slave &&
 		    dd->dd_punit == punit) {
 			/*
 			 * Found it!
@@ -1074,9 +1021,12 @@ setbootdev()
 	cdd = dev_data_lookup(root_device->dv_parent);
 	switch (type) {
 	case 2:
+		/*
+		 * "rd" -> "hpibbus" -> "fhpib"
+		 */
 		for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
 		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
-			if (cdd->dd_dev == root_device->dv_parent) {
+			if (cdd->dd_dev == root_device->dv_parent->dv_parent) {
 				/*
 				 * Found it!
 				 */
@@ -1089,6 +1039,9 @@ setbootdev()
 		break;
 
 	case 4:
+		/*
+		 * "sd" -> "oscsi"
+		 */
 		for (cdd = dev_data_list_scsi.lh_first, ctlr = 0;
 		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) { 
 			if (cdd->dd_dev == root_device->dv_parent) {
@@ -1329,795 +1282,3 @@ iounmap(kva, size)
 	ix = btoc(kva - extiobase) + 1;
 	rmfree(extiomap, btoc(size), ix);
 }
-
-/**********************************************************************
- * Old-style device configuration code
- **********************************************************************/
-
-#ifndef NEWCONFIG
-
-/*
- * Duplicate of the same in subr_autoconf.c
- */
-void
-config_init()
-{
-
-	TAILQ_INIT(&alldevs);
-	TAILQ_INIT(&allevents);
-}
-
-#define dr_type(d, s)	\
-	(strcmp((d)->d_name, (s)) == 0)
-
-#define same_hw_ctlr(hw, hc) \
-	(HW_ISHPIB(hw) && dr_type((hc)->hp_driver, "hpib") || \
-	 HW_ISSCSI(hw) && dr_type((hc)->hp_driver, "scsi"))
-
-find_controller(hw)
-	register struct hp_hw *hw;
-{
-	register struct hp_ctlr *hc;
-	struct hp_ctlr *match_c;
-	caddr_t oaddr;
-	int sc;
-
-#ifdef DEBUG
-	if (acdebug)
-		printf("find_controller: hw: id%x at sc%d (%x), type %x...",
-		       hw->hw_id, hw->hw_sc, hw->hw_kva, hw->hw_type);
-#endif
-	sc = hw->hw_sc;
-	match_c = NULL;
-	for (hc = hp_cinit; hc->hp_driver; hc++) {
-		if (hc->hp_alive)
-			continue;
-		/*
-		 * Make sure we are looking at the right
-		 * controller type.
-		 */
-		if (!same_hw_ctlr(hw, hc))
-			continue;
-		/*
-		 * Exact match; all done
-		 */
-		if ((int)hc->hp_addr == sc) {
-			match_c = hc;
-			break;
-		}
-		/*
-		 * Wildcard; possible match so remember first instance
-		 * but continue looking for exact match.
-		 */
-		if (hc->hp_addr == NULL && match_c == NULL)
-			match_c = hc;
-	}
-#ifdef DEBUG
-	if (acdebug) {
-		if (match_c)
-			printf("found %s%d\n",
-			       match_c->hp_driver->d_name,
-			       match_c->hp_unit);
-		else
-			printf("not found\n");
-	}
-#endif
-	/*
-	 * Didn't find an ioconf entry for this piece of hardware,
-	 * just ignore it.
-	 */
-	if (match_c == NULL)
-		return(0);
-	/*
-	 * Found a configuration match, now let's see if the hardware
-	 * agrees with us.  If it does, attach it.
-	 */
-	hc = match_c;
-	oaddr = hc->hp_addr;
-	hc->hp_addr = hw->hw_kva;
-	hc->hp_args = hw;
-	if ((*hc->hp_driver->d_match)(hc)) {
-		hc->hp_alive = 1;
-
-		/*
-		 * Fill in fake device structure.
-		 */
-		bzero(&hc->hp_dev, sizeof(hc->hp_dev));
-		hc->hp_dev.dv_unit = hc->hp_unit;
-		sprintf(hc->hp_dev.dv_xname, "%s%d", hc->hp_driver->d_name,
-		    hc->hp_unit);
-		hc->hp_dev.dv_class = DV_DULL;	/* all controllers are dull */
-		TAILQ_INSERT_TAIL(&alldevs, &hc->hp_dev, dv_list);
-
-		/* Print what we've found. */
-		printf("%s at ", hc->hp_xname);
-		sc = hw->hw_sc;
-		if (sc >= 0 && sc < 256)
-			printf("scode %d", sc);
-		else
-			printf("addr 0x%lx,", (u_long)hw->hw_pa);
-		printf(" ipl %d", hc->hp_ipl);
-		if (hc->hp_flags)
-			printf(" flags 0x%x", hc->hp_flags);
-
-		/*
-		 * Call device "attach" routine.  It will print the
-		 * newline for us.
-		 */
-		(*hc->hp_driver->d_attach)(hc);
-
-		/*
-		 * Register device.  Do this after attach because
-		 * we need dv_class.
-		 */
-		hp300_dio_attach_args.da_scode = sc;
-		device_register(&hc->hp_dev, &hp300_dio_attach_args);
-
-		find_slaves(hc);	/* XXX do this in attach? */
-	} else
-		hc->hp_addr = oaddr;
-	return(1);
-}
-
-find_device(hw)
-	register struct hp_hw *hw;
-{
-	register struct hp_device *hd;
-	struct hp_device *match_d;
-	caddr_t oaddr;
-	int sc;
-
-#ifdef DEBUG
-	if (acdebug)
-		printf("find_device: hw: id%x at sc%d (%x), type %x...",
-		       hw->hw_id, hw->hw_sc, hw->hw_kva, hw->hw_type);
-#endif
-	match_d = NULL;
-	for (hd = hp_dinit; hd->hp_driver; hd++) {
-		if (hd->hp_alive)
-			continue;
-		/* Must not be a slave */
-		if (hd->hp_cdriver)
-			continue;
-		/*
-		 * XXX: A graphics device that was found as part of the
-		 * console init will have the hp_addr field already set
-		 * (i.e. no longer the select code).  Gotta perform a
-		 * slightly different check for an exact match.
-		 */
-		if (HW_ISDEV(hw, D_BITMAP) && hd->hp_addr >= intiobase) {
-			/* must be an exact match */
-			if (hd->hp_addr == hw->hw_kva) {
-				match_d = hd;
-				break;
-			}
-			continue;
-		}
-		sc = (int) hd->hp_addr;
-		/*
-		 * Exact match; all done.
-		 */
-		if (sc > 0 && sc == hw->hw_sc) {
-			match_d = hd;
-			break;
-		}
-		/*
-		 * Wildcard; possible match so remember first instance
-		 * but continue looking for exact match.
-		 */
-		if (sc == 0 && same_hw_device(hw, hd) && match_d == NULL)
-			match_d = hd;
-	}
-#ifdef DEBUG
-	if (acdebug) {
-		if (match_d)
-			printf("found %s%d\n",
-			       match_d->hp_driver->d_name,
-			       match_d->hp_unit);
-		else
-			printf("not found\n");
-	}
-#endif
-	/*
-	 * Didn't find an ioconf entry for this piece
-	 * of hardware, just ignore it.
-	 */
-	if (match_d == NULL)
-		return(0);
-	/*
-	 * Found a configuration match, now let's see if the hardware
-	 * agrees with us.  If it does, attach it.
-	 */
-	hd = match_d;
-	oaddr = hd->hp_addr;
-	hd->hp_addr = hw->hw_kva;
-	hd->hp_args = hw;
-	if ((*hd->hp_driver->d_match)(hd)) {
-		hd->hp_alive = 1;
-
-		/*
-		 * Fill in fake device structure.
-		 */
-		bzero(&hd->hp_dev, sizeof(sizeof hd->hp_dev));
-		hd->hp_dev.dv_unit = hd->hp_unit;
-		sprintf(hd->hp_dev.dv_xname, "%s%d", hd->hp_driver->d_name,
-		    hd->hp_unit);
-		/*
-		 * Default to dull, driver attach will override if
-		 * necessary.
-		 */
-		hd->hp_dev.dv_class = DV_DULL;
-		TAILQ_INSERT_TAIL(&alldevs, &hd->hp_dev, dv_list);
-
-		/* Print what we've found. */
-		printf("%s at ", hd->hp_xname);
-		sc = hw->hw_sc;
-		if (sc >= 0 && sc < 256)
-			printf("scode %d", sc);
-		else
-			printf("addr 0x%lx", (u_long)hw->hw_pa);
-		if (hd->hp_ipl)
-			printf(" ipl %d", hd->hp_ipl);
-		if (hd->hp_flags)
-			printf(" flags 0x%x", hd->hp_flags);
-
-		/*
-		 * Call device "attach" routine.  It will print the
-		 * newline for us.
-		 */
-		(*hd->hp_driver->d_attach)(hd);
-
-		/*
-		 * Register device.  Do this after attach because we
-		 * need dv_class.
-		 */
-		hp300_dio_attach_args.da_scode = sc;
-		device_register(&hd->hp_dev, &hp300_dio_attach_args);
-	} else
-		hd->hp_addr = oaddr;
-	return(1);
-}
-
-find_slaves(hc)
-	struct hp_ctlr *hc;
-{
-	/*
-	 * The SCSI bus is structured very much like the HP-IB 
-	 * except that the host adaptor is slave 7 so we only want
-	 * to look at the first 6 slaves.
-	 */
-	if (dr_type(hc->hp_driver, "hpib"))
-		find_busslaves(hc, 0, MAXSLAVES-1);
-	else if (dr_type(hc->hp_driver, "scsi"))
-#ifdef SCSI_REVPRI
-		/*
-		 * Later releases of the HP boot ROM start searching for
-		 * boot devices starting with slave 6 and working down.
-		 * This is apparently the order in which priority is given
-		 * to slaves on the host adaptor.
-		 */
-		find_busslaves(hc, MAXSLAVES-2, 0);
-#else
-		find_busslaves(hc, 0, MAXSLAVES-2);
-#endif
-}
-
-/*
- * Search each BUS controller found for slaves attached to it.
- * The bad news is that we don't know how to uniquely identify all slaves
- * (e.g. PPI devices on HP-IB).  The good news is that we can at least
- * differentiate those from slaves we can identify.  At worst (a totally
- * wildcarded entry) this will cause us to locate such a slave at the first
- * unused position instead of where it really is.  To save grief, non-
- * identifing devices should always be fully qualified.
- */
-find_busslaves(hc, startslave, endslave)
-	register struct hp_ctlr *hc;
-	int startslave, endslave;
-{
-	register int s;
-	register struct hp_device *hd;
-	struct hp_device *match_s;
-	int new_s, new_c, old_s, old_c;
-	int rescan;
-	
-#define NEXTSLAVE(s) (startslave < endslave ? (s)++ : (s)--)
-#define LASTSLAVE(s) (startslave < endslave ? (s)-- : (s)++)
-#ifdef DEBUG
-	if (acdebug)
-		printf("find_busslaves: for %s\n", hc->hp_xname);
-#endif
-	NEXTSLAVE(endslave);
-	for (s = startslave; s != endslave; NEXTSLAVE(s)) {
-		rescan = 1;
-		match_s = NULL;
-		for (hd = hp_dinit; hd->hp_driver; hd++) {
-			/*
-			 * Rule out the easy ones:
-			 * 1. slave already assigned or not a slave
-			 * 2. not of the proper type
-			 * 3. controller specified but not this one
-			 * 4. slave specified but not this one
-			 */
-			if (hd->hp_alive || hd->hp_cdriver == NULL)
-				continue;
-			if (!dr_type(hc->hp_driver, hd->hp_cdriver->d_name))
-				continue;
-			if (hd->hp_ctlr >= 0 && hd->hp_ctlr != hc->hp_unit)
-				continue;
-			if (hd->hp_slave >= 0 && hd->hp_slave != s)
-				continue;
-			/*
-			 * Case 0: first possible match.
-			 * Remember it and keep looking for better.
-			 */
-			if (match_s == NULL) {
-				match_s = hd;
-				new_c = hc->hp_unit;
-				new_s = s;
-				continue;
-			}
-			/*
-			 * Case 1: exact match.
-			 * All done.  Note that we do not attempt any other
-			 * matches if this one fails.  This allows us to
-			 * "reserve" locations for dynamic addition of
-			 * disk/tape drives by fully qualifing the location.
-			 */
-			if (hd->hp_slave == s && hd->hp_ctlr == hc->hp_unit) {
-				match_s = hd;
-				rescan = 0;
-				break;
-			}
-			/*
-			 * Case 2: right controller, wildcarded slave.
-			 * Remember first and keep looking for an exact match.
-			 */
-			if (hd->hp_ctlr == hc->hp_unit &&
-			    match_s->hp_ctlr < 0) {
-				match_s = hd;
-				new_s = s;
-				continue;
-			}
-			/*
-			 * Case 3: right slave, wildcarded controller.
-			 * Remember and keep looking for a better match.
-			 */
-			if (hd->hp_slave == s &&
-			    match_s->hp_ctlr < 0 && match_s->hp_slave < 0) {
-				match_s = hd;
-				new_c = hc->hp_unit;
-				continue;
-			}
-			/*
-			 * OW: we had a totally wildcarded spec.
-			 * If we got this far, we have found a possible
-			 * match already (match_s != NULL) so there is no
-			 * reason to remember this one.
-			 */
-			continue;
-		}
-		/*
-		 * Found a match.  We need to set hp_ctlr/hp_slave properly
-		 * for the init routines but we also need to remember all
-		 * the old values in case this doesn't pan out.
-		 */
-		if (match_s) {
-			hd = match_s;
-			old_c = hd->hp_ctlr;
-			old_s = hd->hp_slave;
-			if (hd->hp_ctlr < 0)
-				hd->hp_ctlr = new_c;
-			if (hd->hp_slave < 0)
-				hd->hp_slave = new_s;
-#ifdef DEBUG
-			if (acdebug)
-				printf("looking for %s%d at slave %d...",
-				       hd->hp_driver->d_name,
-				       hd->hp_unit, hd->hp_slave);
-#endif
-
-			if ((*hd->hp_driver->d_match)(hd)) {
-#ifdef DEBUG
-				if (acdebug)
-					printf("found\n");
-#endif
-				/*
-				 * Fill in fake device strcuture.
-				 */
-				bzero(&hd->hp_dev, sizeof(hd->hp_dev));
-				hd->hp_dev.dv_unit = hd->hp_unit;
-				sprintf(hd->hp_dev.dv_xname, "%s%d",
-				    hd->hp_driver->d_name,
-				    hd->hp_unit);
-				/*
-				 * Default to dull, driver attach will
-				 * override if necessary.
-				 */
-				hd->hp_dev.dv_class = DV_DULL;
-				hd->hp_dev.dv_parent = &hc->hp_dev;
-				TAILQ_INSERT_TAIL(&alldevs, &hd->hp_dev,
-				    dv_list);
-
-				/*
-				 * Print what we've found.  Note that
-				 * for `slave' devices, the flags are
-				 * overloaded with the phys. unit
-				 * locator.  They aren't used for anything
-				 * else, so we always treat them as
-				 * such.  This is a hack to make things
-				 * a little more clear to folks configuring
-				 * kernels and reading boot messages.
-				 */
-				printf("%s at %s slave %d punit %d",
-				       hd->hp_xname, hc->hp_xname,
-				       hd->hp_slave, hd->hp_flags);
-				hd->hp_alive = 1;
-				rescan = 1;
-
-				/*
-				 * Call the device "attach" routine.
-				 * It will print the newline for us.
-				 */
-				 (*hd->hp_driver->d_attach)(hd);
-
-				/*
-				 * Register device.  Do this after attach
-				 * because we need dv_class.
-				 */
-				if (dr_type(hc->hp_driver, "scsi")) {
-					hp300_scsi_link.target = hd->hp_slave;
-					hp300_scsi_link.lun = hd->hp_flags;
-					hp300_scsibus_attach_args.sa_scsi_link=
-					    &hp300_scsi_link;
-					device_register(&hd->hp_dev,
-					    &hp300_scsibus_attach_args);
-				} else {
-					hp300_hpib_attach_args.ha_slave =
-					    hd->hp_slave;
-					hp300_hpib_attach_args.ha_punit =
-					    hd->hp_flags;
-					device_register(&hd->hp_dev,
-					    &hp300_hpib_attach_args);
-				}
-			} else {
-#ifdef DEBUG
-				if (acdebug)
-					printf("not found\n");
-#endif
-				hd->hp_ctlr = old_c;
-				hd->hp_slave = old_s;
-			}
-			/*
-			 * XXX: This should be handled better.
-			 * Re-scan a slave.  There are two reasons to do this.
-			 * 1. It is possible to have both a tape and disk
-			 *    (e.g. 7946) or two disks (e.g. 9122) at the
-			 *    same slave address.  Here we need to rescan
-			 *    looking only at entries with a different
-			 *    physical unit number (hp_flags).
-			 * 2. It is possible that an init failed because the
-			 *    slave was there but of the wrong type.  In this
-			 *    case it may still be possible to match the slave
-			 *    to another ioconf entry of a different type.
-			 *    Here we need to rescan looking only at entries
-			 *    of different types.
-			 * In both cases we avoid looking at undesirable
-			 * ioconf entries of the same type by setting their
-			 * alive fields to -1.
-			 */
-			if (rescan) {
-				for (hd = hp_dinit; hd->hp_driver; hd++) {
-					if (hd->hp_alive)
-						continue;
-					if (match_s->hp_alive == 1) {	/* 1 */
-						if (hd->hp_flags == match_s->hp_flags)
-							hd->hp_alive = -1;
-					} else {			/* 2 */
-						if (hd->hp_driver == match_s->hp_driver)
-							hd->hp_alive = -1;
-					}
-				}
-				LASTSLAVE(s);
-				continue;
-			}
-		}
-		/*
-		 * Reset bogon alive fields prior to attempting next slave
-		 */
-		for (hd = hp_dinit; hd->hp_driver; hd++)
-			if (hd->hp_alive == -1)
-				hd->hp_alive = 0;
-	}
-#undef NEXTSLAVE
-#undef LASTSLAVE
-}
-
-same_hw_device(hw, hd)
-	struct hp_hw *hw;
-	struct hp_device *hd;
-{
-	int found = 0;
-
-	switch (hw->hw_type & ~B_MASK) {
-	case C_HPIB:
-		found = dr_type(hd->hp_driver, "hpib");
-		break;
-	case C_SCSI:
-		found = dr_type(hd->hp_driver, "scsi");
-		break;
-	case D_BITMAP:
-		found = dr_type(hd->hp_driver, "grf");
-		break;
-	case D_LAN:
-		found = dr_type(hd->hp_driver, "le");
-		break;
-	case D_COMMDCA:
-		found = dr_type(hd->hp_driver, "dca");
-		break;
-	case D_COMMDCL:
-		found = dr_type(hd->hp_driver, "dcl");
-		break;
-	case D_COMMDCM:
-		found = dr_type(hd->hp_driver, "dcm");
-		break;
-	default:
-		break;
-	}
-	return(found);
-}
-
-char notmappedmsg[] = "WARNING: no space to map IO card, ignored\n";
-
-/*
- * Scan the IO space looking for devices.
- */
-find_devs()
-{
-	short sc;
-	u_char *id_reg;
-	register caddr_t addr;
-	register struct hp_hw *hw = sc_table;
-	int didmap, sctop;
-
-	/*
-	 * Probe all select codes + internal display addr
-	 */
-	sctop = DIO_SCMAX(machineid);
-	for (sc = -1; sc < sctop; sc++) {
-		/*
-		 * Invalid select codes
-		 */
-		if (sc >= 32 && sc < 132)
-			continue;
-
-		if (sc == -1) {
-			hw->hw_pa = (caddr_t) GRFIADDR;
-			addr = (caddr_t) IIOV(hw->hw_pa);
-			didmap = 0;
-		} else if (sc == 7 && internalhpib) {
-			hw->hw_pa = (caddr_t)DIO_IHPIBADDR;
-			addr = internalhpib = (caddr_t) IIOV(hw->hw_pa);
-			didmap = 0;
-		} else if (sc == conscode) {
-			/*
-			 * If this is the console, it's already been
-			 * mapped, and the address is known.
-			 */
-			hw->hw_pa = dio_scodetopa(sc);
-			addr = conaddr;
-			didmap = 0;
-		} else {
-			hw->hw_pa = dio_scodetopa(sc);
-			addr = iomap(hw->hw_pa, NBPG);
-			if (addr == 0) {
-				printf(notmappedmsg);
-				continue;
-			}
-			didmap = 1;
-		}
-		if (badaddr(addr)) {
-			if (didmap)
-				iounmap(addr, NBPG);
-			continue;
-		}
-
-		hw->hw_size = DIO_SIZE(sc, addr);
-		hw->hw_kva = addr;
-		hw->hw_id = DIO_ID(addr);
-		if (DIO_ISFRAMEBUFFER(hw->hw_id))
-			hw->hw_secid = DIO_SECID(addr);
-		hw->hw_sc = sc;
-
-		/*
-		 * Internal HP-IB on some machines (345/375) doesn't return
-		 * consistant id info so we use the info gleaned from the
-		 * boot ROMs SYSFLAG.
-		 */
-		if (sc == 7 && internalhpib) {
-			hw->hw_type = C_HPIB;
-			hw++;
-			continue;
-		}
-		/*
-		 * XXX: the following could be in a big static table
-		 */
-		switch (hw->hw_id) {
-		/* Null device? */
-		case 0:
-			break;
-		/* 98644A */
-		case 2:
-		case 2+128:
-			hw->hw_type = D_COMMDCA;
-			break;
-		/* 98622A */
-		case 3:
-			hw->hw_type = D_MISC;
-			break;
-		/* 98623A */
-		case 4:
-			hw->hw_type = D_MISC;
-			break;
-		/* 98642A */
-		case 5:
-		case 5+128:
-			hw->hw_type = D_COMMDCM;
-			break;
-		/* 345/375 builtin parallel port */
-		case 6:
-			hw->hw_type = D_PPORT;
-			break;
-		/* 98625A */
-		case 7:
-		case 7+32:
-		case 7+64:
-		case 7+96:
-			hw->hw_type = C_SCSI;
-			break;
-		/* 98625B */
-		case 8:
-			hw->hw_type = C_HPIB;
-			break;
-		/* 98287A */
-		case 9:
-			hw->hw_type = D_KEYBOARD;
-			break;
-		/* 98635A */
-		case 10:
-			hw->hw_type = D_FPA;
-			break;
-		/* timer */
-		case 11:
-			hw->hw_type = D_MISC;
-			break;
-		/* 98640A */
-		case 18:
-			hw->hw_type = D_MISC;
-			break;
-		/* 98643A */
-		case 21:
-			hw->hw_type = D_LAN;
-			break;
-		/* 98659A */
-		case 22:
-			hw->hw_type = D_MISC;
-			break;
-		/* 237 display */
-		case 25:
-			hw->hw_type = D_BITMAP;
-			break;
-		/* quad-wide card */
-		case 26:
-			hw->hw_type = D_MISC;
-			hw->hw_size *= 4;
-			sc += 3;
-			break;
-		/* 98253A */
-		case 27:
-			hw->hw_type = D_MISC;
-			break;
-		/* 98627A */
-		case 28:
-			hw->hw_type = D_BITMAP;
-			break;
-		/* 98633A */
-		case 29:
-			hw->hw_type = D_BITMAP;
-			break;
-		/* 98259A */
-		case 30:
-			hw->hw_type = D_MISC;
-			break;
-		/* 8741 */
-		case 31:
-			hw->hw_type = D_MISC;
-			break;
-		/* 98577A */
-		case 49:
-			hw->hw_type = C_VME;
-			if (sc < 132) {
-				hw->hw_size *= 2;
-				sc++;
-			}
-			break;
-		/* 98628A */
-		case 52:
-		case 52+128:
-			hw->hw_type = D_COMMDCL;
-			break;
-		/* bitmap display */
-		case 57:
-			hw->hw_type = D_BITMAP;
-			hw->hw_secid = id_reg[0x15];
-			switch (hw->hw_secid) {
-			/* 98700/98710 */
-			case 1:
-				break;
-			/* 98544-547 topcat */
-			case 2:
-				break;
-			/* 98720/721 renassiance */
-			case 4:
-				if (sc < 132) {
-					hw->hw_size *= 2;
-					sc++;
-				}
-				break;
-			/* 98548-98556 catseye */
-			case 5:
-			case 6:
-			case 7:
-			case 9:
-				break;
-			/* 98730/731 davinci */
-			case 8:
-				if (sc < 132) {
-					hw->hw_size *= 2;
-					sc++;
-				}
-				break;
-			/* A1096A hyperion */
-			case 14:
-				break;
-			/* 987xx */
-			default:
-				break;
-			}
-			break;
-		/* 98644A */
-		case 66:
-		case 66+128:
-			hw->hw_type = D_COMMDCA;
-			break;
-		/* 98624A */
-		case 128:
-			hw->hw_type = C_HPIB;
-			break;
-		default:
-			hw->hw_type = D_MISC;
-			break;
-		}
-		/*
-		 * Re-map to proper size
-		 */
-		if (didmap) {
-			iounmap(addr, NBPG);
-			addr = iomap(hw->hw_pa, hw->hw_size);
-			if (addr == 0) {
-				printf(notmappedmsg);
-				continue;
-			}
-			hw->hw_kva = addr;
-		}
-		/*
-		 * Encode bus type
-		 */
-		if (sc >= 132)
-			hw->hw_type |= B_DIOII;
-		else
-			hw->hw_type |= B_DIO;
-		hw++;
-	}
-}
-#endif /* ! NEWCONFIG */

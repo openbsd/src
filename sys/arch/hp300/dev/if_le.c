@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_le.c,v 1.6 1997/01/12 15:12:46 downsj Exp $	*/
-/*	$NetBSD: if_le.c,v 1.36 1996/12/17 08:41:13 thorpej Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.7 1997/02/03 04:47:35 downsj Exp $	*/
+/*	$NetBSD: if_le.c,v 1.37 1997/01/30 09:18:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -66,10 +66,6 @@
 #include <hp300/hp300/led.h>
 #endif
 
-#ifndef NEWCONFIG
-#include <hp300/dev/device.h>
-#endif
-
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
@@ -79,24 +75,12 @@
 #include <hp300/dev/if_lereg.h>
 #include <hp300/dev/if_levar.h>
 
-#ifdef NEWCONFIG
-int	lematch __P((struct device *, struct cfdata *, void *));
+int	lematch __P((struct device *, void *, void *));
 void	leattach __P((struct device *, struct device *, void *));
 
 struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
-#else /* ! NEWCONFIG */
-#include "le.h"
-struct	le_softc le_softc[NLE];
-
-int	lematch __P((struct hp_device *));
-void	leattach __P((struct hp_device *));
-
-struct	driver ledriver = {
-	lematch, leattach, "le",
-};
-#endif /* NEWCONFIG */
 
 int	leintr __P((void *));
 
@@ -140,12 +124,10 @@ lerdcsr(sc, port)
 	return (val);
 }
 
-#ifdef NEWCONFIG
 int
 lematch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+	void *match, *aux;
 {
 	struct dio_attach_args *da = aux;
 
@@ -153,76 +135,38 @@ lematch(parent, match, aux)
 		return (1);
 	return (0);
 }
-#else /* ! NEWCONFIG */
-int
-lematch(hd)
-	struct hp_device *hd;
-{
-	register struct lereg0 *ler0;
-	struct le_softc *lesc = &le_softc[hd->hp_unit];
-
-	ler0 = (struct lereg0 *)(lestd[0] + (int)hd->hp_addr);
-	if (ler0->ler0_id != LEID)
-		return (0);
-
-	hd->hp_ipl = LE_IPL(ler0->ler0_status);
-	lesc->sc_hd = hd;
-
-	return (1);
-}
-#endif /* NEWCONFIG */
 
 /*
  * Interface exists: make available by filling in network interface
  * record.  System will initialize the interface when it is ready
  * to accept packets.
  */
-#ifdef NEWCONFIG
 void
 leattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
-#else /* ! NEWCONFIG */
-void
-leattach(hd)
-	struct hp_device *hd;
-#endif /* NEWCONFIG */
 {
 	register struct lereg0 *ler0;
-#ifdef NEWCONFIG
 	struct dio_attach_args *da = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
 	caddr_t addr;
-#else
-	struct le_softc *lesc = &le_softc[hd->hp_unit];
-	caddr_t addr = hd->hp_addr;
-#endif /* NEWCONFIG */
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	char *cp;
 	int i, ipl;
 
-#ifdef NEWCONFIG
 	addr = iomap(dio_scodetopa(da->da_scode), da->da_size);
 	if (addr == 0) {
 		printf("\n%s: can't map LANCE registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-#endif /* NEWCONFIG */
 
 	ler0 = lesc->sc_r0 = (struct lereg0 *)(lestd[0] + (int)addr);
 	ler0->ler0_id = 0xFF;
 	DELAY(100);
 
-#ifdef NEWCONFIG
 	ipl = DIO_IPL(addr);
 	printf(" ipl %d", ipl);
-#else /* ! NEWCONFIG */
-	/* XXXX kluge for now */
-	hd->hp_dev.dv_class = DV_IFNET;
-	bcopy(&hd->hp_dev, &sc->sc_dev, sizeof(struct device));
-	ipl = hd->hp_ipl;
-#endif /* NEWCONFIG */
 
 	lesc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)addr);
 	sc->sc_mem = (void *)(lestd[2] + (int)addr);

@@ -1,7 +1,7 @@
 #! /usr/bin/awk -f
 #
-#	$OpenBSD: devlist2h.awk,v 1.1 1997/01/12 15:12:24 downsj Exp $
-#	$NetBSD: devlist2h.awk,v 1.1 1996/12/17 08:41:02 thorpej Exp $
+#	$OpenBSD: devlist2h.awk,v 1.2 1997/02/03 04:47:16 downsj Exp $
+#	$NetBSD: devlist2h.awk,v 1.2 1997/01/30 09:18:36 thorpej Exp $
 #
 # Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
 # Copyright (c) 1995, 1996 Christopher G. Demetriou

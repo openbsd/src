@@ -1,5 +1,5 @@
-/*	$OpenBSD: intiovar.h,v 1.1 1997/01/12 15:12:48 downsj Exp $	*/
-/*	$NetBSD: intiovar.h,v 1.1 1996/12/17 08:41:15 thorpej Exp $	*/
+/*	$OpenBSD: intiovar.h,v 1.2 1997/02/03 04:47:37 downsj Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.2 1997/01/30 09:18:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

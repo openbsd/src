@@ -1,5 +1,5 @@
-/*	$OpenBSD: acvar.h,v 1.2 1997/01/12 15:12:19 downsj Exp $	*/
-/*	$NetBSD: acvar.h,v 1.2 1994/10/26 07:23:27 cgd Exp $	*/
+/*	$OpenBSD: acvar.h,v 1.3 1997/02/03 04:47:11 downsj Exp $	*/
+/*	$NetBSD: acvar.h,v 1.3 1997/01/30 09:14:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -44,14 +44,15 @@
  */
 
 struct	ac_softc {
-	struct	hp_device *sc_hd;
+	struct	device sc_dev;
+	int	sc_target;
+	int	sc_lun;
 	int	sc_flags;
 	struct	buf *sc_bp;
 	struct	scsi_fmt_cdb *sc_cmd;
 	struct	acinfo sc_einfo;
-	short	sc_punit;
 	short	sc_picker;
-	struct	devqueue sc_dq;
+	struct	scsiqueue sc_sq;
 };
 
 #define	ACF_ALIVE	0x01

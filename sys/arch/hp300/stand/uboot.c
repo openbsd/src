@@ -1,4 +1,4 @@
-/*	$OpenBSD: uboot.c,v 1.1 1997/01/17 08:36:53 downsj Exp $	*/
+/*	$OpenBSD: uboot.c,v 1.2 1997/02/03 04:48:08 downsj Exp $	*/
 /*	$NetBSD: uboot.c,v 1.2 1996/10/14 07:33:45 thorpej Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ main()
 
 	printf("\n>> OpenBSD UNIFIED BOOT HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $OpenBSD: uboot.c,v 1.1 1997/01/17 08:36:53 downsj Exp $\n");
+	printf(">> $OpenBSD: uboot.c,v 1.2 1997/02/03 04:48:08 downsj Exp $\n");
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);
@@ -101,7 +101,7 @@ getbootdev(howto)
 {
 	char c, *ptr = line;
 
-	printf("Boot: [[[%s%d%c:]%s][-s][-a][-d]] :- ",
+	printf("Boot: [[[%s%d%c:]%s][-acds]] :- ",
 	    devsw[bdev].dv_name, bctlr + (8 * badapt), 'a' + bpart, name);
 
 	if (tgets(line)) {
@@ -121,14 +121,17 @@ getbootdev(howto)
 					case 'a':
 						*howto |= RB_ASKNAME;
 						continue;
-					case 's':
-						*howto |= RB_SINGLE;
+					case 'b':
+						*howto |= RB_HALT;
+						continue;
+					case 'c':
+						*howto |= RB_CONFIG;
 						continue;
 					case 'd':
 						*howto |= RB_KDB;
 						continue;
-					case 'b':
-						*howto |= RB_HALT;
+					case 's':
+						*howto |= RB_SINGLE;
 						continue;
 					}
 			else {

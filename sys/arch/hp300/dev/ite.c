@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.6 1997/01/12 15:12:49 downsj Exp $	*/
-/*	$NetBSD: ite.c,v 1.34 1996/12/17 08:41:16 thorpej Exp $	*/
+/*	$OpenBSD: ite.c,v 1.7 1997/02/03 04:47:38 downsj Exp $	*/
+/*	$NetBSD: ite.c,v 1.35 1997/01/30 09:18:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -88,8 +88,7 @@ int	iteburst = 64;
 
 struct  ite_data *kbd_ite = NULL;
 
-#ifdef NEWCONFIG
-int	itematch __P((struct device *, struct cfdata *, void *));
+int	itematch __P((struct device *, void *, void *));
 void	iteattach __P((struct device *, struct device *, void *));
 
 struct cfattach ite_ca = {
@@ -99,10 +98,6 @@ struct cfattach ite_ca = {
 struct cfdriver ite_cd = {
 	NULL, "ite", DV_TTY
 };
-#else /* ! NEWCONFIG */
-#include "grf.h"
-struct  ite_softc ite_softc[NGRF];
-#endif /* NEWCONFIG */
 
 /*
  * Terminal emulator state information, statically allocated
@@ -141,12 +136,10 @@ u_char  ite_console_attributes[0x2200];
 		(*(sp)->ite_cursor)((ip), MOVE_CURSOR); \
 }
 
-#ifdef NEWCONFIG
 int
 itematch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+	void *match, *aux;
 {
 
 	return (1);
@@ -191,59 +184,6 @@ iteattach(parent, self, aux)
 
 	printf("\n");
 }
-#else /* ! NEWCONFIG */
-/*
- * Dummy for pseudo-device config.
- */
-/*ARGSUSED*/
-void
-iteattach(n)
-	int n;
-{
-}
-
-/*
- * Allocate storage for ite data structures.
- * XXX This is a kludge and will go away with new config.
- */
-void
-ite_attach_grf(unit, isconsole)
-	int unit, isconsole;
-{
-	struct ite_softc *ite = &ite_softc[unit];
-	struct grf_softc *grf = &grf_softc[unit];
-
-	/*
-	 * Check to see if our structure is pre-allocated.
-	 */
-	if (isconsole) {
-		ite->sc_data = &ite_cn;
-
-		/*
-		 * We didn't know which unit this would be during
-		 * the console probe, so we have to fixup cn_dev here.
-		 */
-		cn_tab->cn_dev = makedev(ite_major(), unit);
-	} else {
-		ite->sc_data =
-		    (struct ite_data *)malloc(sizeof(struct ite_data),
-		    M_DEVBUF, M_NOWAIT);
-		if (ite->sc_data == NULL) {
-			printf("ite_attach_grf: malloc for ite_data failed\n");
-			return;
-		}
-		bzero(ite->sc_data, sizeof(struct ite_data));
-	}
-	
-	/*
-	 * Cross-reference the ite and the grf.
-	 */
-	ite->sc_grf = grf;
-	grf->sc_ite = ite;
-
-	printf("ite%d at grf%d: attached\n", unit, unit);
-}
-#endif /* NEWCONFIG */
 
 /*
  * Perform functions necessary to setup device as a terminal emulator.
@@ -357,15 +297,9 @@ iteopen(dev, mode, devtype, p)
 	int error;
 	int first = 0;
 
-#ifdef NEWCONFIG
 	if (unit >= ite_cd.cd_ndevs ||
 	    (sc = ite_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
-#else
-	if (unit >= NGRF)
-		return (ENXIO);
-	sc = &ite_softc[unit];
-#endif
 	ip = sc->sc_data;
 
 	if (ip->tty == NULL) {
@@ -411,11 +345,7 @@ iteclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-#ifdef NEWCONFIG
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
-#else
-	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
-#endif
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 
@@ -436,11 +366,7 @@ iteread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-#ifdef NEWCONFIG
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
-#else
-	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
-#endif
 	struct tty *tp = sc->sc_data->tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -452,11 +378,7 @@ itewrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-#ifdef NEWCONFIG
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
-#else
-	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
-#endif
 	struct tty *tp = sc->sc_data->tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -466,11 +388,7 @@ struct tty *
 itetty(dev)
 	dev_t dev;
 {
-#ifdef NEWCONFIG
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
-#else
-	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
-#endif
 
 	return (sc->sc_data->tty);
 }
@@ -483,11 +401,7 @@ iteioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-#ifdef NEWCONFIG
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
-#else
-	struct ite_softc *sc = &ite_softc[ITEUNIT(dev)];
-#endif
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 	int error;
@@ -510,11 +424,7 @@ itestart(tp)
 	struct ite_softc *sc;
 	struct ite_data *ip;
 
-#ifdef NEWCONFIG
 	sc = ite_cd.cd_devs[ITEUNIT(tp->t_dev)];
-#else
-	sc = &ite_softc[ITEUNIT(tp->t_dev)];
-#endif
 	ip = sc->sc_data;
 
 	/*

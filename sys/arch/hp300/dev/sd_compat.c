@@ -1,5 +1,5 @@
-/*	$OpenBSD: sd_compat.c,v 1.3 1997/01/12 15:13:04 downsj Exp $	*/
-/*	$NetBSD: sd_compat.c,v 1.4 1996/01/07 22:02:20 thorpej Exp $	*/
+/*	$OpenBSD: sd_compat.c,v 1.4 1997/02/03 04:47:47 downsj Exp $	*/
+/*	$NetBSD: sd_compat.c,v 1.5 1997/01/30 09:14:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,13 +42,15 @@
 /*
  * Compatibility for SCSI disks without labels.
  */
-#include "sd.h"
-#if NSD > 0
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <hp300/dev/device.h>
+#include <sys/device.h>
+#include <sys/buf.h>		/* XXX */
+
+#include <hp300/dev/scsireg.h>	/* XXX */
+#include <hp300/dev/scsivar.h>
 #include <hp300/dev/sdvar.h>
 
 /*
@@ -77,13 +79,12 @@ struct partition sddefaultpart[] = {
 };
 int sdnumdefaultpart = sizeof(sddefaultpart)/sizeof(sddefaultpart[0]);
 
-extern struct sd_softc sd_softc[];
-
 sdmakedisklabel(unit, lp)
 	int unit;
 	register struct disklabel *lp;
 {
-	register struct sd_softc *sc = &sd_softc[unit];
+	extern struct cfdriver sd_cd;
+	struct sd_softc *sc = sd_cd.cd_devs[unit];
 	register struct partition *pi, *dpi;
 	register int dcount;
 	
@@ -124,4 +125,3 @@ sdmakedisklabel(unit, lp)
 		pi[5].p_offset = pi[5].p_size = 0;
 	}
 }
-#endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_dv.c,v 1.3 1997/01/12 15:12:32 downsj Exp $	*/
-/*	$NetBSD: grf_dv.c,v 1.9 1996/12/17 08:41:07 thorpej Exp $	*/
+/*	$OpenBSD: grf_dv.c,v 1.4 1997/02/03 04:47:26 downsj Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.10 1997/01/30 09:18:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -79,11 +79,10 @@ int	dv_init __P((struct grf_data *, int, caddr_t));
 int	dv_mode __P((struct grf_data *, int, caddr_t));
 void	dv_reset __P((struct dvboxfb *));
 
-#ifdef NEWCONFIG
-int	dvbox_intio_match __P((struct device *, struct cfdata *, void *));
+int	dvbox_intio_match __P((struct device *, void *, void *));
 void	dvbox_intio_attach __P((struct device *, struct device *, void *));
 
-int	dvbox_dio_match __P((struct device *, struct cfdata *, void *));
+int	dvbox_dio_match __P((struct device *, void *, void *));
 void	dvbox_dio_attach __P((struct device *, struct device *, void *));
 
 struct cfattach dvbox_intio_ca = {
@@ -97,7 +96,6 @@ struct cfattach dvbox_dio_ca = {
 struct cfdriver dvbox_cd = {
 	NULL, "dvbox", DV_DULL
 };
-#endif /* NEWCONFIG */
 
 /* DaVinci grf switch */
 struct grfsw dvbox_grfsw = {
@@ -121,12 +119,10 @@ struct itesw dvbox_itesw = {
 };
 #endif /* NITE > 0 */
 
-#ifdef NEWCONFIG
 int
 dvbox_intio_match(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+	void *match, *aux;
 {
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
@@ -161,8 +157,7 @@ dvbox_intio_attach(parent, self, aux)
 int
 dvbox_dio_match(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+	void *match, *aux;
 {
 	struct dio_attach_args *da = aux;
 
@@ -196,7 +191,6 @@ dvbox_dio_attach(parent, self, aux)
 
 	grfdev_attach(sc, dv_init, grf, &dvbox_grfsw);
 }
-#endif /* NEWCONFIG */
 
 /*
  * Initialize hardware.

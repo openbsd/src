@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpib.c,v 1.2 1997/01/17 08:32:45 downsj Exp $	*/
-/*	$NetBSD: hpib.c,v 1.4 1994/10/26 07:27:21 cgd Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.3 1997/02/03 04:48:04 downsj Exp $	*/
+/*	$NetBSD: hpib.c,v 1.5 1997/01/30 10:32:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -41,9 +41,9 @@
  */
 #include <sys/param.h>
 #include <sys/reboot.h>
-#include <hp300/dev/device.h>
 
-#include "hpibvar.h"
+#include <hp300/stand/device.h>
+#include <hp300/stand/hpibvar.h>
 
 #include "stand.h"
 #include "samachdep.h"

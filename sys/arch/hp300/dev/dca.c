@@ -1,5 +1,5 @@
-/*	$OpenBSD: dca.c,v 1.6 1997/01/12 15:12:21 downsj Exp $	*/
-/*	$NetBSD: dca.c,v 1.31 1996/12/17 08:41:00 thorpej Exp $	*/
+/*	$OpenBSD: dca.c,v 1.7 1997/02/03 04:47:13 downsj Exp $	*/
+/*	$NetBSD: dca.c,v 1.32 1997/01/30 09:18:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -66,10 +66,6 @@
 
 #include <dev/cons.h>
 
-#ifndef NEWCONFIG
-#include <hp300/dev/device.h>
-#endif
-
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
@@ -78,9 +74,6 @@
 
 struct	dca_softc {
 	struct device		sc_dev;		/* generic device glue */
-#ifndef NEWCONFIG
-	struct hp_device	*sc_hd;		/* device info */
-#endif
 	struct dcadevice	*sc_dca;	/* pointer to hardware */
 	struct tty		*sc_tty;	/* our tty instance */
 	int			sc_oflows;	/* overflow counter */
@@ -96,8 +89,7 @@ struct	dca_softc {
 
 };
 
-#ifdef NEWCONFIG
-int	dcamatch __P((struct device *, struct cfdata *, void *));
+int	dcamatch __P((struct device *, void *, void *));
 void	dcaattach __P((struct device *, struct device *, void *));
 
 struct cfattach dca_ca = {
@@ -107,16 +99,6 @@ struct cfattach dca_ca = {
 struct cfdriver dca_cd = {
 	NULL, "dca", DV_TTY
 };
-#else /* ! NEWCONFIG */
-int	dcamatch();
-void	dcaattach();
-struct	driver dcadriver = {
-	dcamatch, dcaattach, "dca",
-};
-
-#include "dca.h"
-struct dca_softc dca_softc[NDCA];
-#endif /* NEWCONFIG */
 
 void	dcastart();
 int	dcaparam();
@@ -169,12 +151,10 @@ long	dcamintcount[16];
 
 void	dcainit __P((struct dcadevice *, int));
 
-#ifdef NEWCONFIG
 int
 dcamatch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+	void *match, *aux;
 {
 	struct dio_attach_args *da = aux;
 
@@ -188,28 +168,7 @@ dcamatch(parent, match, aux)
 
 	return (0);
 }
-#else /* ! NEWCONFIG */
-int
-dcamatch(hd)
-	register struct hp_device *hd;
-{
-	struct dcadevice *dca = (struct dcadevice *)hd->hp_addr;
-	struct dca_softc *sc = &dca_softc[hd->hp_unit];
 
-	if (dca->dca_id != DCAID0 &&
-	    dca->dca_id != DCAREMID0 &&
-	    dca->dca_id != DCAID1 &&
-	    dca->dca_id != DCAREMID1)
-		return (0);
-
-	hd->hp_ipl = DCAIPL(dca->dca_ic);
-	sc->sc_hd = hd;
-
-	return (1);
-}
-#endif /* NEWCONFIG */
-
-#ifdef NEWCONFIG
 void
 dcaattach(parent, self, aux)
 	struct device *parent, *self;
@@ -221,17 +180,6 @@ dcaattach(parent, self, aux)
 	int unit = self->dv_unit;
 	int scode = da->da_scode;
 	int ipl;
-#else /* ! NEWCONFIG */
-void
-dcaattach(hd)
-	register struct hp_device *hd;
-{
-	int unit = hd->hp_unit;
-	struct dcadevice *dca = (struct dcadevice *)hd->hp_addr;
-	struct dca_softc *sc = &dca_softc[unit];
-	int scode = hd->hp_args->hw_sc;
-	int ipl = hd->hp_ipl;
-#endif /* NEWCONFIG */
 
 	if (scode == conscode) {
 		dca = (struct dcadevice *)conaddr;
@@ -244,7 +192,6 @@ dcaattach(hd)
 		 */
 		cn_tab->cn_dev = makedev(dcamajor, unit);
 	} else {
-#ifdef NEWCONFIG
 		dca = (struct dcadevice *)iomap(dio_scodetopa(da->da_scode),
 		    da->da_size);
 		if (dca == NULL) {
@@ -252,19 +199,12 @@ dcaattach(hd)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-#endif /* NEWCONFIG */
 	}
 
 	sc->sc_dca = dca;
 
-#ifdef NEWCONFIG
 	ipl = DIO_IPL(dca);
 	printf(" ipl %d", ipl);
-#else /* ! NEWCONFIG */
-	/* XXX Set the device class. */
-	hd->hp_dev.dv_class = DV_TTY;
-	bcopy(&hd->hp_dev, &sc->sc_dev, sizeof(struct device));
-#endif /* NEWCONFIG */
 
 	dca->dca_reset = 0xFF;
 	DELAY(100);
@@ -280,11 +220,7 @@ dcaattach(hd)
 	    (sc->sc_flags & DCA_HASFIFO) ? ISRPRI_TTY : ISRPRI_TTYNOBUF);
 
 	sc->sc_flags |= DCA_ACTIVE;
-#ifdef NEWCONFIG
 	if (self->dv_cfdata->cf_flags)
-#else
-	if (hd->hp_flags)
-#endif
 		sc->sc_flags |= DCA_SOFTCAR;
 
 	/* Enable interrupts. */
@@ -342,15 +278,9 @@ dcaopen(dev, flag, mode, p)
 	u_char code;
 	int s, error = 0;
  
-#ifdef NEWCONFIG
 	if (unit >= dca_cd.cd_ndevs ||
 	    (sc = dca_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
-#else
-	if (unit >= NDCA)
-		return (ENXIO);
-	sc = &dca_softc[unit];
-#endif /* NEWCONFIG */
 
 	if ((sc->sc_flags & DCA_ACTIVE) == 0)
 		return (ENXIO);
@@ -445,11 +375,7 @@ dcaclose(dev, flag, mode, p)
  
 	unit = DCAUNIT(dev);
 
-#ifdef NEWCONFIG
 	sc = dca_cd.cd_devs[unit];
-#else
-	sc = &dca_softc[unit];
-#endif
 
 	dca = sc->sc_dca;
 	tp = sc->sc_tty;
@@ -489,11 +415,7 @@ dcaread(dev, uio, flag)
 	struct tty *tp;
 	int error, of;
 
-#ifdef NEWCONFIG
 	sc = dca_cd.cd_devs[unit];
-#else
-	sc = &dca_softc[unit];
-#endif
  
 	tp = sc->sc_tty;
 	of = sc->sc_oflows;
@@ -513,12 +435,8 @@ dcawrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-#ifdef NEWCONFIG
 	struct dca_softc *sc = dca_cd.cd_devs[DCAUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
-#else
-	struct tty *tp = dca_softc[DCAUNIT(dev)].sc_tty;
-#endif
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -527,11 +445,7 @@ struct tty *
 dcatty(dev)
 	dev_t dev;
 {
-#ifdef NEWCONFIG
 	struct dca_softc *sc = dca_cd.cd_devs[DCAUNIT(dev)];
-#else
-	struct dca_softc *sc = &dca_softc[DCAUNIT(dev)];
-#endif
 
 	return (sc->sc_tty);
 }
@@ -703,11 +617,7 @@ dcaioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = DCAUNIT(dev);
-#ifdef NEWCONFIG
 	struct dca_softc *sc = dca_cd.cd_devs[unit];
-#else
-	struct dca_softc *sc = &dca_softc[unit];
-#endif
 	struct tty *tp = sc->sc_tty;
 	struct dcadevice *dca = sc->sc_dca;
 	int error;
@@ -796,11 +706,7 @@ dcaparam(tp, t)
 	register struct termios *t;
 {
 	int unit = DCAUNIT(tp->t_dev);
-#ifdef NEWCONFIG
 	struct dca_softc *sc = dca_cd.cd_devs[unit];
-#else
-	struct dca_softc *sc = &dca_softc[unit];
-#endif
 	struct dcadevice *dca = sc->sc_dca;
 	int cfcr, cflag = t->c_cflag;
 	int ospeed = ttspeedtab(t->c_ospeed, dcaspeedtab);
@@ -876,11 +782,7 @@ dcastart(tp)
 	register struct tty *tp;
 {
 	int s, c, unit = DCAUNIT(tp->t_dev);
-#ifdef NEWCONFIG
 	struct dca_softc *sc = dca_cd.cd_devs[unit];
-#else
-	struct dca_softc *sc = &dca_softc[unit];
-#endif
 	struct dcadevice *dca = sc->sc_dca;
  
 	s = spltty();

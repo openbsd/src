@@ -1,7 +1,8 @@
-/*	$OpenBSD: mt.c,v 1.4 1997/01/12 15:12:54 downsj Exp $	*/
-/*	$NetBSD: mt.c,v 1.6 1996/10/14 07:14:18 thorpej Exp $	*/
+/*	$OpenBSD: mt.c,v 1.5 1997/02/03 04:47:39 downsj Exp $	*/
+/*	$NetBSD: mt.c,v 1.7 1997/01/30 09:14:14 thorpej Exp $	*/
 
 /* 
+ * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1992, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -30,8 +31,6 @@
  * Modified for 4.4BSD by Mark Davies and Andrew Vignaux, Department of
  * Computer Science, Victoria University of Wellington
  */
-#include "mt.h"
-#if NMT > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,11 +44,12 @@
 #include <sys/tty.h>
 #include <sys/kernel.h>
 #include <sys/tprintf.h>
+#include <sys/device.h>
+#include <sys/conf.h>
 
-#include <hp300/dev/device.h>
 #include <hp300/dev/hpibvar.h>
-#include <hp300/dev/mtreg.h>
 
+#include <hp300/dev/mtreg.h>
 
 struct	mtinfo {
 	u_short	hwid;
@@ -63,9 +63,9 @@ struct	mtinfo {
 int	nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
 
 struct	mt_softc {
-	struct	hp_device *sc_hd;
-	short	sc_hpibno;	/* logical HPIB this slave it attached to */
-	short	sc_slave;	/* HPIB slave address (0-6) */
+	struct	device sc_dev;
+	int	sc_hpibno;	/* logical HPIB this slave it attached to */
+	int	sc_slave;	/* HPIB slave address (0-6) */
 	short	sc_flags;	/* see below */
 	u_char	sc_lastdsj;	/* place for DSJ in mtreaddsj() */
 	u_char	sc_lastecmd;	/* place for End Command in mtreaddsj() */
@@ -74,11 +74,11 @@ struct	mt_softc {
 	struct	mt_stat sc_stat;/* status bytes last read from device */
 	short	sc_density;	/* current density of tape (mtio.h format) */
 	short	sc_type;	/* tape drive model (hardware IDs) */
-	struct	devqueue sc_dq;	/* HPIB device queue member */
+	struct	hpibqueue sc_hq; /* HPIB device queue member */
 	tpr_t	sc_ttyp;
-} mt_softc[NMT];
-struct	buf mttab[NMT];
-struct  buf mtbuf[NMT];
+	struct buf sc_tab;	/* buf queue */
+	struct buf sc_bufstore;	/* XXX buffer storage */
+};
 
 #ifdef DEBUG
 int	mtdebug = 0;
@@ -92,67 +92,90 @@ int	mtdebug = 0;
 #define B_CMD		B_XXX		/* command buf instead of data */
 #define	b_cmd		b_blkno		/* blkno holds cmd when B_CMD */
 
-int	mtmatch(), mtintr();
-void	mtattach(), mtustart(), mtstart(), mtgo(), mtstrategy();
-struct	driver mtdriver = {
-	mtmatch, mtattach, "mt", (int (*)()) mtstart, (int (*)()) mtgo, mtintr,
+int	mtmatch __P((struct device *, void *, void *));
+void	mtattach __P((struct device *, struct device *, void *));
+
+struct cfattach mt_ca = {
+	sizeof(struct mt_softc), mtmatch, mtattach
 };
 
+struct cfdriver mt_cd = {
+	NULL, "mt", DV_TAPE
+};
+
+int	mtident __P((struct mt_softc *, struct hpibbus_attach_args *));
+void	mtustart __P((struct mt_softc *));
+int	mtreaddsj __P((struct mt_softc *, int));
+int	mtcommand __P((dev_t, int, int));
+void	spl_mtintr __P((void *));
+void	spl_mtstart __P((void *));
+
+void	mtstart __P((void *));
+void	mtgo __P((void *));
+void	mtintr __P((void *));
+
+bdev_decl(mt);
+cdev_decl(mt);
+
 int
-mtmatch(hd)
-	register struct hp_device *hd;
+mtmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	register int unit;
-	register int hpibno = hd->hp_ctlr;
-	register int slave = hd->hp_slave;
-	register struct mt_softc *sc = &mt_softc[hd->hp_unit];
-	register int id;
-	register struct buf *bp;
+	struct hpibbus_attach_args *ha = aux;
 
-	sc->sc_hd = hd;
-
-	for (bp = mttab; bp < &mttab[NMT]; bp++)
-		bp->b_actb = &bp->b_actf;
-	unit = hpibid(hpibno, slave);
-	for (id = 0; id < nmtinfo; id++)
-		if (unit == mtinfo[id].hwid)
-			return (1);
-	return (0);			/* not a known HP magtape */
+	return (mtident(NULL, ha));
 }
 
 void
-mtattach(hd)
-	register struct hp_device *hd;
+mtattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	register int unit;
-	register int hpibno = hd->hp_ctlr;
-	register int slave = hd->hp_slave;
-	register struct mt_softc *sc;
-	register int id;
-	register struct buf *bp;
+	struct mt_softc *sc = (struct mt_softc *)self;
+	struct hpibbus_attach_args *ha = aux;
+	int unit, hpibno, slave;
 
-	/* XXX Ick. */
-	unit = hpibid(hpibno, slave);
-	for (id = 0; id < nmtinfo; id++)
-		if (unit == mtinfo[id].hwid)
-			break;
+	if (mtident(sc, ha) == 0) {
+		printf("\n%s: impossible!\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
-	unit = hd->hp_unit;
-	sc = &mt_softc[unit];
-	sc->sc_type = mtinfo[id].hwid;
-	printf(": %s tape\n", mtinfo[id].desc);
+	unit = self->dv_unit;
+	hpibno = parent->dv_unit;
+	slave = ha->ha_slave;
+
+	sc->sc_tab.b_actb = &sc->sc_tab.b_actf;
 
 	sc->sc_hpibno = hpibno;
 	sc->sc_slave = slave;
 	sc->sc_flags = MTF_EXISTS;
-	sc->sc_dq.dq_softc = sc;
-	sc->sc_dq.dq_ctlr = hpibno;
-	sc->sc_dq.dq_unit = unit;
-	sc->sc_dq.dq_slave = slave;
-	sc->sc_dq.dq_driver = &mtdriver;
 
-	/* XXX Set device class. */
-	hd->hp_dev.dv_class = DV_TAPE;
+	/* Initialize hpib job queue entry. */
+	sc->sc_hq.hq_softc = sc;
+	sc->sc_hq.hq_slave = sc->sc_slave;
+	sc->sc_hq.hq_start = mtstart;
+	sc->sc_hq.hq_go = mtgo;
+	sc->sc_hq.hq_intr = mtintr;
+}
+
+int
+mtident(sc, ha)
+	struct mt_softc *sc;
+	struct hpibbus_attach_args *ha;
+{
+	int i;
+
+	for (i = 0; i < nmtinfo; i++) {
+		if (ha->ha_id == mtinfo[i].hwid) {
+			if (sc != NULL) {
+				sc->sc_type = mtinfo[i].hwid;
+				printf(": %s tape\n", mtinfo[i].desc);
+			}
+			return (1);
+		}
+	}
+	return (0);
 }
 
 /*
@@ -161,21 +184,22 @@ mtattach(hd)
  * performed, unless "ecmd" is zero.  Returns DSJ value, -1 on failure
  * and -2 on "temporary" failure.
  */
-mtreaddsj(unit, ecmd)
-	register int unit;
+int
+mtreaddsj(sc, ecmd)
+	struct mt_softc *sc;
 	int ecmd;
 {
-	register struct mt_softc *sc = &mt_softc[unit];
 	int retval;
 
 	if (sc->sc_flags & MTF_STATTIMEO)
 		goto getstats;
 	retval = hpibrecv(sc->sc_hpibno,
-			  (sc->sc_flags & MTF_DSJTIMEO) ? -1 : sc->sc_slave,
-			  MTT_DSJ, &(sc->sc_lastdsj), 1);
+	    (sc->sc_flags & MTF_DSJTIMEO) ? -1 : sc->sc_slave,
+	    MTT_DSJ, &(sc->sc_lastdsj), 1);
 	sc->sc_flags &= ~MTF_DSJTIMEO;
 	if (retval != 1) {
-		dlog(LOG_DEBUG, "mt%d can't hpibrecv DSJ\n", unit);
+		dlog(LOG_DEBUG, "%s can't hpibrecv DSJ",
+		    sc->sc_dev.dv_xname);
 		if (sc->sc_recvtimeo == 0)
 			sc->sc_recvtimeo = hz;
 		if (--sc->sc_recvtimeo == 0)
@@ -186,7 +210,8 @@ mtreaddsj(unit, ecmd)
 	}
 	sc->sc_recvtimeo = 0;
 	sc->sc_statindex = 0;
-	dlog(LOG_DEBUG, "mt%d readdsj: 0x%x\n", unit, sc->sc_lastdsj);
+	dlog(LOG_DEBUG, "%s readdsj: 0x%x", sc->sc_dev.dv_xname,
+	    sc->sc_lastdsj);
 	sc->sc_lastecmd = ecmd;
 	switch (sc->sc_lastdsj) {
 	    case 0:
@@ -200,14 +225,15 @@ mtreaddsj(unit, ecmd)
 		break;
 
 	    default:
-		log(LOG_ERR, "mt%d readdsj: DSJ 0x%x\n", unit, sc->sc_lastdsj);
+		log(LOG_ERR, "%s readdsj: DSJ 0x%x\n", sc->sc_dev.dv_xname,
+		    sc->sc_lastdsj);
 		return (-1);
 	}
     getstats:
 	retval = hpibrecv(sc->sc_hpibno,
-			  (sc->sc_flags & MTF_STATCONT) ? -1 : sc->sc_slave,
-			  MTT_STAT, ((char *)&(sc->sc_stat)) + sc->sc_statindex,
-			  sizeof(sc->sc_stat) - sc->sc_statindex);
+	    (sc->sc_flags & MTF_STATCONT) ? -1 : sc->sc_slave,
+	    MTT_STAT, ((char *)&(sc->sc_stat)) + sc->sc_statindex,
+	    sizeof(sc->sc_stat) - sc->sc_statindex);
 	sc->sc_flags &= ~(MTF_STATTIMEO | MTF_STATCONT);
 	if (retval != sizeof(sc->sc_stat) - sc->sc_statindex) {
 		if (sc->sc_recvtimeo == 0)
@@ -220,33 +246,40 @@ mtreaddsj(unit, ecmd)
 			sc->sc_flags |= MTF_STATTIMEO;
 			return (-2);
 		}
-		log(LOG_ERR, "mt%d readdsj: can't read status\n", unit);
+		log(LOG_ERR, "%s readdsj: can't read status",
+		    sc->sc_dev.dv_xname);
 		return (-1);
 	}
 	sc->sc_recvtimeo = 0;
 	sc->sc_statindex = 0;
-	dlog(LOG_DEBUG, "mt%d readdsj: status is %x %x %x %x %x %x\n", unit,
-		sc->sc_stat1, sc->sc_stat2, sc->sc_stat3,
-		sc->sc_stat4, sc->sc_stat5, sc->sc_stat6);
+	dlog(LOG_DEBUG, "%s readdsj: status is %x %x %x %x %x %x",
+	    sc->sc_dev.dv_xname,
+	    sc->sc_stat1, sc->sc_stat2, sc->sc_stat3,
+	    sc->sc_stat4, sc->sc_stat5, sc->sc_stat6);
 	if (sc->sc_lastecmd)
 		(void) hpibsend(sc->sc_hpibno, sc->sc_slave,
-				MTL_ECMD, &(sc->sc_lastecmd), 1);
+		    MTL_ECMD, &(sc->sc_lastecmd), 1);
 	return ((int) sc->sc_lastdsj);
 }
 
+int
 mtopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
 	register int unit = UNIT(dev);
-	register struct mt_softc *sc = &mt_softc[unit];
+	struct mt_softc *sc;
 	register int req_den;
 	int error;
 
-	dlog(LOG_DEBUG, "mt%d open: flags 0x%x\n", unit, sc->sc_flags);
-	if (unit >= NMT || (sc->sc_flags & MTF_EXISTS) == 0)
+	if (unit >= mt_cd.cd_ndevs ||
+	    (sc = mt_cd.cd_devs[unit]) == NULL ||
+	    (sc->sc_flags & MTF_EXISTS) == 0)
 		return (ENXIO);
+
+	dlog(LOG_DEBUG, "%s open: flags 0x%x", sc->sc_dev.dv_xname,
+	    sc->sc_flags);
 	if (sc->sc_flags & MTF_OPEN)
 		return (EBUSY);
 	sc->sc_flags |= MTF_OPEN;
@@ -263,7 +296,8 @@ mtopen(dev, flag, mode, p)
 			goto errout;
 		if (!(sc->sc_flags & MTF_REW))
 			break;
-		if (tsleep((caddr_t) &lbolt, PCATCH | (PZERO + 1), "mt", 0) != 0) {
+		if (tsleep((caddr_t) &lbolt, PCATCH | (PZERO + 1),
+		    "mt", 0) != 0) {
 			error = EINTR;
 			goto errout;
 		}
@@ -273,7 +307,7 @@ mtopen(dev, flag, mode, p)
 		goto errout;
 	}
 	if (!(sc->sc_stat1 & SR1_ONLINE)) {
-		uprintf("%s: not online\n", sc->sc_hd->hp_xname);
+		uprintf("%s: not online\n", sc->sc_dev.dv_xname);
 		error = EIO;
 		goto errout;
 	}
@@ -311,7 +345,7 @@ mtopen(dev, flag, mode, p)
 		if (!(sc->sc_stat1 & SR1_BOT)) {
 			if (sc->sc_density != req_den) {
 				uprintf("%s: can't change density mid-tape\n",
-				    sc->sc_hd->hp_xname);
+				    sc->sc_dev.dv_xname);
 				error = EIO;
 				goto errout;
 			}
@@ -334,11 +368,13 @@ errout:
 	return (error);
 }
 
-mtclose(dev, flag)
+int
+mtclose(dev, flag, fmt, p)
 	dev_t dev;
-	int flag;
+	int flag, fmt;
+	struct proc *p;
 {
-	register struct mt_softc *sc = &mt_softc[UNIT(dev)];
+	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
 
 	if (sc->sc_flags & MTF_WRT) {
 		(void) mtcommand(dev, MTWEOF, 2);
@@ -351,12 +387,14 @@ mtclose(dev, flag)
 	return (0);
 }
 
+int
 mtcommand(dev, cmd, cnt)
 	dev_t dev;
 	int cmd;
 	int cnt;
 {
-	register struct buf *bp = &mtbuf[UNIT(dev)];
+	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+	struct buf *bp = &sc->sc_bufstore;
 	int error = 0;
 
 #if 1
@@ -395,15 +433,15 @@ mtstrategy(bp)
 	register int s;
 
 	unit = UNIT(bp->b_dev);
-	sc = &mt_softc[unit];
-	dlog(LOG_DEBUG, "mt%d strategy\n", unit);
+	sc = mt_cd.cd_devs[unit];
+	dlog(LOG_DEBUG, "%s strategy", sc->sc_dev.dv_xname);
 	if ((bp->b_flags & (B_CMD | B_READ)) == 0) {
 #define WRITE_BITS_IGNORED	8
 #if 0
 		if (bp->b_bcount & ((1 << WRITE_BITS_IGNORED) - 1)) {
 			tprintf(sc->sc_ttyp,
 				"%s: write record must be multiple of %d\n",
-				sc->sc_hd->hp_xname, 1 << WRITE_BITS_IGNORED);
+				sc->sc_dev.dv_xname, 1 << WRITE_BITS_IGNORED);
 			goto error;
 		}
 #endif
@@ -423,7 +461,7 @@ mtstrategy(bp)
 		if (bp->b_bcount > s) {
 			tprintf(sc->sc_ttyp,
 				"%s: write record (%d) too big: limit (%d)\n",
-				sc->sc_hd->hp_xname, bp->b_bcount, s);
+				sc->sc_dev.dv_xname, bp->b_bcount, s);
 	    error:
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
@@ -431,7 +469,7 @@ mtstrategy(bp)
 			return;
 		}
 	}
-	dp = &mttab[unit];
+	dp = &sc->sc_tab;
 	bp->b_actf = NULL;
 	s = splbio();
 	bp->b_actb = dp->b_actb;
@@ -439,23 +477,20 @@ mtstrategy(bp)
 	dp->b_actb = &bp->b_actf;
 	if (dp->b_active == 0) {
 		dp->b_active = 1;
-		mtustart(unit);
+		mtustart(sc);
 	}
 	splx(s);
 }
 
 void
-mtustart(unit)
-	register int unit;
+mtustart(sc)
+	struct mt_softc *sc;
 {
 
-	dlog(LOG_DEBUG, "mt%d ustart\n", unit);
-	if (hpibreq(&(mt_softc[unit].sc_dq)))
-		mtstart(unit);
+	dlog(LOG_DEBUG, "%s ustart", sc->sc_dev.dv_xname);
+	if (hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq))
+		mtstart(sc);
 }
-
-#define hpibppclear(unit) \
-        { hpib_softc[unit].sc_flags &= ~HPIBF_PPOLL; }
 
 void
 spl_mtintr(arg)
@@ -470,27 +505,27 @@ spl_mtintr(arg)
 }
 
 void
-spl_mtstart(unit)
-	int unit;
+spl_mtstart(arg)
+	void *arg;
 {
 	int s = splbio();
 
-	mtstart(unit);
+	mtstart(arg);
 	(void) splx(s);
 }
 
 void
-mtstart(unit)
-	register int unit;
+mtstart(arg)
+	void *arg;
 {
-	register struct mt_softc *sc = &mt_softc[unit];
+	struct mt_softc *sc = arg;
 	register struct buf *bp, *dp;
 	short	cmdcount = 1;
 	u_char	cmdbuf[2];
 
-	dlog(LOG_DEBUG, "mt%d start\n", unit);
+	dlog(LOG_DEBUG, "%s start", sc->sc_dev.dv_xname);
 	sc->sc_flags &= ~MTF_WRT;
-	bp = mttab[unit].b_actf;
+	bp = sc->sc_tab.b_actf;
 	if ((sc->sc_flags & MTF_ALIVE) == 0 &&
 	    ((bp->b_flags & B_CMD) == 0 || bp->b_cmd != MTRESET))
 		goto fatalerror;
@@ -498,7 +533,7 @@ mtstart(unit)
 	if (sc->sc_flags & MTF_REW) {
 		if (!hpibpptest(sc->sc_hpibno, sc->sc_slave))
 			goto stillrew;
-		switch (mtreaddsj(unit, MTE_DSJ_FORCE|MTE_COMPLETE|MTE_IDLE)) {
+		switch (mtreaddsj(sc, MTE_DSJ_FORCE|MTE_COMPLETE|MTE_IDLE)) {
 		    case 0:
 		    case 1:
 		stillrew:
@@ -514,7 +549,7 @@ mtstart(unit)
 			 * but not otherwise.
 			 */
 			if (sc->sc_flags & (MTF_DSJTIMEO | MTF_STATTIMEO)) {
-				timeout(spl_mtstart, (void *)unit, hz >> 5);
+				timeout(spl_mtstart, sc, hz >> 5);
 				return;
 			}
 		    case 2:
@@ -585,8 +620,8 @@ mtstart(unit)
 			 * NOP is supposed to set status bits.
 			 * Force readdsj to do it.
 			 */
-			switch (mtreaddsj(unit,
-				    MTE_DSJ_FORCE | MTE_COMPLETE | MTE_IDLE)) {
+			switch (mtreaddsj(sc,
+			  MTE_DSJ_FORCE | MTE_COMPLETE | MTE_IDLE)) {
 			    default:
 				goto done;
 
@@ -600,7 +635,7 @@ mtstart(unit)
 				break;
 
 			    case -2:
-				timeout(spl_mtstart, (void *)unit, hz >> 5);
+				timeout(spl_mtstart, sc, hz >> 5);
 				return;
 			}
 
@@ -611,10 +646,11 @@ mtstart(unit)
 			 * 3) interrupt will read DSJ (and END COMPLETE-IDLE)
 			 */
 			if (hpibsend(sc->sc_hpibno, sc->sc_slave, -2, NULL, 0)){
-				log(LOG_ERR, "mt%d can't reset\n", unit);
+				log(LOG_ERR, "%s can't reset",
+				    sc->sc_dev.dv_xname);
 				goto fatalerror;
 			}
-			timeout(spl_mtintr, (void *)sc, 4 * hz);
+			timeout(spl_mtintr, sc, 4 * hz);
 			hpibawait(sc->sc_hpibno, sc->sc_slave);
 			return;
 
@@ -672,13 +708,13 @@ done:
 	if (dp = bp->b_actf)
 		dp->b_actb = bp->b_actb;
 	else
-		mttab[unit].b_actb = bp->b_actb;
+		sc->sc_tab.b_actb = bp->b_actb;
 	*bp->b_actb = dp;
-	hpibfree(&(sc->sc_dq));
+	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
 	if ((bp = dp) == NULL)
-		mttab[unit].b_active = 0;
+		sc->sc_tab.b_active = 0;
 	else
-		mtustart(unit);
+		mtustart(sc);
 }
 
 /*
@@ -687,36 +723,37 @@ done:
  *   -- ajv@comp.vuw.ac.nz
  */
 void
-mtgo(unit)
-	register int unit;
+mtgo(arg)
+	void *arg;
 {
-	register struct mt_softc *sc = &mt_softc[unit];
-	register struct buf *bp;
+	struct mt_softc *sc = arg;
+	struct buf *bp;
 	int rw;
 
-	dlog(LOG_DEBUG, "mt%d go\n", unit);
-	bp = mttab[unit].b_actf;
+	dlog(LOG_DEBUG, "%s go", sc->sc_dev.dv_xname);
+	bp = sc->sc_tab.b_actf;
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_hpibno, sc->sc_slave, rw ? MTT_READ : MTL_WRITE,
-	       bp->b_un.b_addr, bp->b_bcount, rw, rw != 0);
+	    bp->b_un.b_addr, bp->b_bcount, rw, rw != 0);
 }
 
-int
+void
 mtintr(arg)
 	void *arg;
 {
-	register struct mt_softc *sc = arg;
-	register struct buf *bp, *dp;
-	register int i;
-	int unit = sc->sc_hd->hp_unit;
-	u_char	cmdbuf[4];
+	struct mt_softc *sc = arg;
+	struct buf *bp, *dp;
+	int i;
+	u_char cmdbuf[4];
 
-	bp = mttab[unit].b_actf;
+	bp = sc->sc_tab.b_actf;
 	if (bp == NULL) {
-		log(LOG_ERR, "mt%d intr: bp == NULL\n", unit);
+		log(LOG_ERR, "%s intr: bp == NULL", sc->sc_dev.dv_xname);
 		return;
 	}
-	dlog(LOG_DEBUG, "mt%d intr\n", unit);
+
+	dlog(LOG_DEBUG, "%s intr", sc->sc_dev.dv_xname);
+
 	/*
 	 * Some operation completed.  Read status bytes and report errors.
 	 * Clear EOF flags here `cause they're set once on specific conditions
@@ -730,7 +767,7 @@ mtintr(arg)
 		cmdbuf[0] = MTE_STOP;
 		(void) hpibsend(sc->sc_hpibno, sc->sc_slave, MTL_ECMD,cmdbuf,1);
 	}
-	switch (mtreaddsj(unit, 0)) {
+	switch (mtreaddsj(sc, 0)) {
 	    case 0:
 		break;
 
@@ -752,24 +789,25 @@ mtintr(arg)
 		 * to the request for DSJ.  It's probably just "busy" figuring
 		 * it out and will know in a little bit...
 		 */
-		timeout(spl_mtintr, (void *)sc, hz >> 5);
+		timeout(spl_mtintr, sc, hz >> 5);
 		return;
 
 	    default:
-		log(LOG_ERR, "mt%d intr: can't get drive stat\n", unit);
+		log(LOG_ERR, "%s intr: can't get drive stat",
+		    sc->sc_dev.dv_xname);
 		goto error;
 	}
 	if (sc->sc_stat1 & (SR1_ERR | SR1_REJECT)) {
 		i = sc->sc_stat4 & SR4_ERCLMASK;
-		log(LOG_ERR, "%s: %s error, retry %d, SR2/3 %x/%x, code %d\n",
-			sc->sc_hd->hp_xname, i == SR4_DEVICE ? "device" :
+		log(LOG_ERR, "%s: %s error, retry %d, SR2/3 %x/%x, code %d",
+			sc->sc_dev.dv_xname, i == SR4_DEVICE ? "device" :
 			(i == SR4_PROTOCOL ? "protocol" :
 			(i == SR4_SELFTEST ? "selftest" : "unknown")),
 			sc->sc_stat4 & SR4_RETRYMASK, sc->sc_stat2,
 			sc->sc_stat3, sc->sc_stat5);
 
 		if ((bp->b_flags & B_CMD) && bp->b_cmd == MTRESET)
-			untimeout(spl_mtintr, (void *)sc);
+			untimeout(spl_mtintr, sc);
 		if (sc->sc_stat3 & SR3_POWERUP)
 			sc->sc_flags &= MTF_OPEN | MTF_EXISTS;
 		goto error;
@@ -779,7 +817,7 @@ mtintr(arg)
 	 */
 	if (sc->sc_stat1 & SR1_SOFTERR) {
 		log(LOG_WARNING, "%s: soft error, retry %d\n",
-			sc->sc_hd->hp_xname, sc->sc_stat4 & SR4_RETRYMASK);
+			sc->sc_dev.dv_xname, sc->sc_stat4 & SR4_RETRYMASK);
 		sc->sc_stat1 &= ~SR1_SOFTERR;
 	}
 	/*
@@ -789,7 +827,7 @@ mtintr(arg)
 	if (sc->sc_flags & MTF_IO) {
 		sc->sc_flags &= ~MTF_IO;
 		if (hpibustart(sc->sc_hpibno))
-			mtgo(unit);
+			mtgo(sc);
 		return;
 	}
 	/*
@@ -821,7 +859,7 @@ mtintr(arg)
 				sc->sc_flags |= MTF_HITBOF;
 		}
 		if (bp->b_cmd == MTRESET) {
-			untimeout(spl_mtintr, (void *)sc);
+			untimeout(spl_mtintr, sc);
 			sc->sc_flags |= MTF_ALIVE;
 		}
 	} else {
@@ -835,12 +873,12 @@ mtintr(arg)
 			if (i == 0)
 				sc->sc_flags |= MTF_HITEOF;
 			bp->b_resid = bp->b_bcount - i;
-			dlog(LOG_DEBUG, "mt%d intr: bcount %d, resid %d\n",
-				unit, bp->b_bcount, bp->b_resid);
+			dlog(LOG_DEBUG, "%s intr: bcount %d, resid %d",
+			    sc->sc_dev.dv_xname, bp->b_bcount, bp->b_resid);
 		} else {
 			tprintf(sc->sc_ttyp,
 				"%s: record (%d) larger than wanted (%d)\n",
-				sc->sc_hd->hp_xname, i, bp->b_bcount);
+				sc->sc_dev.dv_xname, i, bp->b_bcount);
     error:
 			sc->sc_flags &= ~MTF_IO;
 			bp->b_error = EIO;
@@ -858,38 +896,50 @@ mtintr(arg)
 	if (dp = bp->b_actf)
 		dp->b_actb = bp->b_actb;
 	else
-		mttab[unit].b_actb = bp->b_actb;
+		sc->sc_tab.b_actb = bp->b_actb;
 	*bp->b_actb = dp;
-	hpibfree(&(sc->sc_dq));
+	hpibfree(sc->sc_dev.dv_parent, &sc->sc_hq);
 #if 0
-	if (bp /*mttab[unit].b_actf*/ == NULL)
+	if (bp /*sc->sc_tab.b_actf*/ == NULL)
 #else
-	if (mttab[unit].b_actf == NULL)
+	if (sc->sc_tab.b_actf == NULL)
 #endif
-		mttab[unit].b_active = 0;
+		sc->sc_tab.b_active = 0;
 	else
-		mtustart(unit);
+		mtustart(sc);
 }
 
-mtread(dev, uio)
+int
+mtread(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
-	return(physio(mtstrategy, &mtbuf[UNIT(dev)], dev, B_READ, minphys, uio));
+	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+
+	return(physio(mtstrategy, &sc->sc_bufstore,
+	    dev, B_READ, minphys, uio));
 }
 
-mtwrite(dev, uio)
+int
+mtwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
-	return(physio(mtstrategy, &mtbuf[UNIT(dev)], dev, B_WRITE, minphys, uio));
+	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+
+	return(physio(mtstrategy, &sc->sc_bufstore,
+	    dev, B_WRITE, minphys, uio));
 }
 
-mtioctl(dev, cmd, data, flag)
+int
+mtioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	register struct mtop *op;
 	int cnt;
@@ -927,10 +977,12 @@ mtioctl(dev, cmd, data, flag)
 }
 
 /*ARGSUSED*/
-mtdump(dev)
+int
+mtdump(dev, blkno, va, size)
 	dev_t dev;
+	daddr_t blkno;
+	caddr_t va;
+	size_t size;
 {
-	return(ENXIO);
+	return (ENODEV);
 }
-
-#endif /* NMT > 0 */

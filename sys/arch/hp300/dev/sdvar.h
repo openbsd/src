@@ -1,5 +1,5 @@
-/*	$OpenBSD: sdvar.h,v 1.5 1997/01/12 15:13:04 downsj Exp $	*/
-/*	$NetBSD: sdvar.h,v 1.5 1996/06/06 16:17:45 thorpej Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.6 1997/02/03 04:47:48 downsj Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.6 1997/01/30 09:14:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -39,20 +39,30 @@
  *	@(#)sdvar.h	8.1 (Berkeley) 6/10/93
  */
 
+struct sdstats {
+	long	sdresets;
+	long	sdtransfers;
+	long	sdpartials;
+};
+
 struct	sd_softc {
-	struct	hp_device *sc_hd;
+	struct	device sc_dev;
 	struct	disk sc_dkdev;
-	char	sc_xname[8];
-	struct	devqueue sc_dq;
+	struct	scsiqueue sc_sq;
 	int	sc_format_pid;	/* process using "format" mode */
 	short	sc_flags;
 	short	sc_type;	/* drive type */
-	short	sc_punit;	/* physical unit (scsi lun) */
+	int	sc_target;	/* SCSI target */
+	int	sc_lun;		/* SCSI lun */
 	u_short	sc_bshift;	/* convert device blocks to DEV_BSIZE blks */
 	u_int	sc_blks;	/* number of blocks on device */
 	int	sc_blksize;	/* device block size in bytes */
 	u_int	sc_heads;	/* number of heads (tracks) */
 	u_int	sc_cyls;	/* number of cylinders */
+	struct buf sc_tab;	/* buffer queue */
+	struct sdstats sc_stats; /* debugging stats */
+	struct scsi_fmt_cdb sc_cmdstore;
+	struct scsi_fmt_sense sc_sensestore;
 };
 
 /* sc_flags values */
@@ -63,12 +73,6 @@ struct	sd_softc {
 #define SDF_WLABEL	0x10
 #define SDF_RMEDIA	0x20
 #define SDF_ERROR	0x40
-
-struct sdstats {
-	long	sdresets;
-	long	sdtransfers;
-	long	sdpartials;
-};
 
 #define	sdunit(x)	(minor(x) >> 3)
 #define sdpart(x)	(minor(x) & 0x7)

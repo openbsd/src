@@ -1,5 +1,5 @@
-/*	$OpenBSD: hil.c,v 1.2 1997/01/17 08:32:44 downsj Exp $	*/
-/*	$NetBSD: hil.c,v 1.5 1994/10/26 07:27:19 cgd Exp $	*/
+/*	$OpenBSD: hil.c,v 1.3 1997/02/03 04:48:03 downsj Exp $	*/
+/*	$NetBSD: hil.c,v 1.6 1997/01/30 10:32:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,11 +46,13 @@
 /*
  * Keyboard routines for the standalone ITE.
  */
+
 #include "samachdep.h"
 
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
+#include <sys/device.h>			/* XXX */
 #include <hp300/dev/hilreg.h>
 #include <hp300/dev/kbdmap.h>
 #include <hp300/dev/itevar.h>

@@ -1,5 +1,5 @@
-/*	$OpenBSD: diovar.h,v 1.1 1997/01/12 15:12:27 downsj Exp $	*/
-/*	$NetBSD: diovar.h,v 1.1 1996/12/17 08:41:05 thorpej Exp $	*/
+/*	$OpenBSD: diovar.h,v 1.2 1997/02/03 04:47:21 downsj Exp $	*/
+/*	$NetBSD: diovar.h,v 1.2 1997/01/30 09:18:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

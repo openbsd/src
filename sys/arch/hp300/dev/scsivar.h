@@ -1,7 +1,8 @@
-/*	$OpenBSD: scsivar.h,v 1.3 1997/01/12 15:13:02 downsj Exp $	*/
-/*	$NetBSD: scsivar.h,v 1.5 1995/12/02 18:22:14 thorpej Exp $	*/
+/*	$OpenBSD: scsivar.h,v 1.4 1997/02/03 04:47:45 downsj Exp $	*/
+/*	$NetBSD: scsivar.h,v 1.6 1997/01/30 09:08:56 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -39,23 +40,48 @@
  *	@(#)scsivar.h	8.1 (Berkeley) 6/10/93
  */
 
-struct	scsi_softc {
-	struct	hp_ctlr *sc_hc;
-	struct	devqueue sc_dq;
-	struct	devqueue sc_sq;
-	u_char	sc_flags;
-	u_char	sc_sync;
-	u_char	sc_scsi_addr;
-	u_char	sc_scsiid;	/* XXX unencoded copy of sc_scsi_addr */
-	u_char	sc_stat[2];
-	u_char	sc_msg[7];
+#include <sys/queue.h>
+
+/*
+ * A SCSI job queue entry.  Target drivers each have of of these,
+ * used to queue requests with the initiator.
+ */
+struct scsiqueue {
+	TAILQ_ENTRY(scsiqueue) sq_list;	/* entry on queue */
+	void	*sq_softc;		/* target's softc */
+	int	sq_target;		/* target on bus */
+	int	sq_lun;			/* lun on target */
+
+	/*
+	 * Callbacks used to start and stop the target driver.
+	 */
+	void	(*sq_start) __P((void *));
+	void	(*sq_go) __P((void *));
+	void	(*sq_intr) __P((void *, int));
 };
 
-/* sc_flags */
-#define	SCSI_IO		0x80	/* DMA I/O in progress */
-#define	SCSI_DMA32	0x40	/* 32-bit DMA should be used */
-#define	SCSI_HAVEDMA	0x04	/* controller has DMA channel */
-#ifdef DEBUG
-#define	SCSI_PAD	0x02	/* 'padded' transfer in progress */
-#endif
-#define	SCSI_ALIVE	0x01	/* controller initialized */
+struct scsi_inquiry;
+struct scsi_fmt_cdb;
+
+struct oscsi_attach_args {
+	int	osa_target;	/* target */
+	int	osa_lun;	/* logical unit */
+				/* inquiry data */
+	struct	scsi_inquiry *osa_inqbuf;
+};
+
+int	scsi_probe_device __P((int, int, int, struct scsi_inquiry *, int));
+int	scsi_print __P((void *, const char *));
+
+void	scsireset __P((int));
+int	scsireq __P((struct device *, struct scsiqueue *));
+void	scsifree __P((struct device *, struct scsiqueue *));
+int	scsigo __P((int, int, int, struct buf *, struct scsi_fmt_cdb *, int));
+int	scsi_request_sense __P((int, int, int, u_char *, u_int));
+int	scsiustart __P((int));
+int	scsi_tt_write __P((int, int, int, u_char *, u_int, daddr_t, int));
+int	scsi_tt_oddio __P((int, int, int, u_char *, u_int, int, int));
+int	scsi_immed_command __P((int, int, int, struct scsi_fmt_cdb *,
+	    u_char *, u_int, int));
+void	scsi_str __P((char *, char *, size_t));
+int	scsi_test_unit_rdy __P((int, int, int));

@@ -1,7 +1,36 @@
-/*	$OpenBSD: machdep.c,v 1.11 1997/01/16 20:43:33 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 1997/02/03 04:47:58 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/12/11 16:49:23 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1997 Theo de Raadt
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed under OpenBSD by
+ *	Theo de Raadt.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -341,6 +370,13 @@ cpu_startup()
 	/*
 	 * Configure the system.
 	 */
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 	configure();
 }
 
@@ -695,9 +731,11 @@ struct sigframe {
 	int	sf_signum;		/* signo for handler */
 	int	sf_code;		/* additional info for handler */
 	struct	sigcontext *sf_scp;	/* context ptr for handler */
+	siginfo_t *sf_sip;
 	sig_t	sf_handler;		/* handler addr for u_sigc */
 	struct	sigstate sf_state;	/* state of the hardware */
 	struct	sigcontext sf_sc;	/* actual context */
+	siginfo_t sf_si;
 };
 
 #ifdef COMPAT_HPUX
@@ -725,6 +763,7 @@ struct hpuxsigframe {
 	int	hsf_signum;
 	int	hsf_code;
 	struct	sigcontext *hsf_scp;
+	int	hsf_nothing;
 	struct	hpuxsigcontext hsf_sc;
 	int	hsf_regs[15];
 };
@@ -742,10 +781,12 @@ int sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
+sendsig(catcher, sig, mask, code, type, val)
 	sig_t catcher;
 	int sig, mask;
 	u_long code;
+	int type;
+	union sigval val;
 {
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
@@ -811,6 +852,8 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_code = code;
 	kfp->sf_scp = &fp->sf_sc;
 	kfp->sf_handler = catcher;
+	kfp->sf_sip = NULL;
+
 	/*
 	 * Save necessary hardware state.  Currently this includes:
 	 *	- general registers
@@ -868,6 +911,12 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
+
+	if (psp->ps_siginfo & sigmask(sig)) {
+		kfp->sf_sip = &kfp->sf_si;
+		initsiginfo(kfp->sf_sip, sig, code, type, val);
+	}
+
 #ifdef COMPAT_HPUX
 	/*
 	 * Create an HP-UX style sigcontext structure and associated goo
@@ -1153,9 +1202,8 @@ boot(howto)
 
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {
-		printf("System halted.\n\n");
-		asm("	stop	#0x2700");
-		/* NOTREACHED */
+		printf("System halted.  Hit any key to reboot.\n\n");
+		(void)cngetc();
 	}
 
 	printf("rebooting...\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.2 1997/01/12 15:13:31 downsj Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.3 1997/02/03 04:48:00 downsj Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.3 1996/03/03 16:49:17 thorpej Exp $	*/
 
 /*-
@@ -48,4 +48,7 @@ void	hp300_cninit __P((void));
 void	console_scan __P((int (*)(int, caddr_t, void *), void *));
 caddr_t	iomap __P((caddr_t, int));
 void	iounmap __P((caddr_t, int));
+
+struct device;
+void	device_register __P((struct device *, void *));
 #endif /* _KERNEL */

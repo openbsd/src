@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.3 1997/01/17 08:32:48 downsj Exp $	*/
-/*	$NetBSD: ite.c,v 1.11 1996/03/03 04:23:33 thorpej Exp $	*/
+/*	$OpenBSD: ite.c,v 1.4 1997/02/03 04:48:06 downsj Exp $	*/
+/*	$NetBSD: ite.c,v 1.12 1997/01/30 10:32:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,9 +51,11 @@
 
 #include <sys/param.h>
 #include <dev/cons.h>
-#include <hp300/dev/device.h>
-#include <hp300/stand/itevar.h>
+
 #include <hp300/dev/grfreg.h>
+
+#include <hp300/stand/device.h>
+#include <hp300/stand/itevar.h>
 #include <hp300/stand/consdefs.h>
 #include <hp300/stand/samachdep.h>
 

@@ -1,8 +1,9 @@
-/*	$OpenBSD: dma.c,v 1.4 1997/01/12 15:12:28 downsj Exp $	*/
-/*	$NetBSD: dma.c,v 1.10 1996/12/09 03:09:51 thorpej Exp $	*/
+/*	$OpenBSD: dma.c,v 1.5 1997/02/03 04:47:22 downsj Exp $	*/
+/*	$NetBSD: dma.c,v 1.11 1997/01/30 09:04:33 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1997
+ *	Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -46,17 +47,15 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 
-#include <hp300/dev/device.h>
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>
 
 #include <hp300/hp300/isr.h>
 
-extern void _insque();
-extern void _remque();
 extern u_int kvtop();
 extern void PCIA();
 
@@ -74,13 +73,14 @@ struct	dma_chain {
 };
 
 struct	dma_channel {
+	struct	dmaqueue *dm_job;		/* current job */
 	struct	dma_softc *dm_softc;		/* pointer back to softc */
 	struct	dmadevice *dm_hwaddr;		/* registers if DMA_C */
 	struct	dmaBdevice *dm_Bhwaddr;		/* registers if not DMA_C */
 	char	dm_flags;			/* misc. flags */
 	u_short	dm_cmd;				/* DMA controller command */
-	struct	dma_chain *dm_cur;		/* current segment */
-	struct	dma_chain *dm_last;		/* last segment */
+	int	dm_cur;				/* current segment */
+	int	dm_last;			/* last segment */
 	struct	dma_chain dm_chain[DMAMAXIO];	/* all segments */
 };
 
@@ -88,6 +88,7 @@ struct	dma_softc {
 	char	*sc_xname;			/* XXX external name */
 	struct	dmareg *sc_dmareg;		/* pointer to our hardware */
 	struct	dma_channel sc_chan[NDMACHAN];	/* 2 channels */
+	TAILQ_HEAD(, dmaqueue) sc_queue;	/* job queue */
 	char	sc_type;			/* A, B, or C */
 	int	sc_ipl;				/* our interrupt level */
 	void	*sc_ih;				/* interrupt cookie */
@@ -102,7 +103,6 @@ struct	dma_softc {
 #define DMAF_VCFLUSH	0x02
 #define DMAF_NOINTR	0x04
 
-struct	devqueue dmachan[NDMACHAN + 1];
 int	dmaintr __P((void *));
 
 #ifdef DEBUG
@@ -154,9 +154,12 @@ dmainit()
 
 	sc->sc_type = (rev == 'B') ? DMA_B : DMA_C;
 
+	TAILQ_INIT(&sc->sc_queue);
+
 	for (i = 0; i < NDMACHAN; i++) {
 		dc = &sc->sc_chan[i];
 		dc->dm_softc = sc;
+		dc->dm_job = NULL;
 		switch (i) {
 		case 0:
 			dc->dm_hwaddr = &dma->dma_chan0;
@@ -172,9 +175,8 @@ dmainit()
 			panic("dmainit: more than 2 channels?");
 			/* NOTREACHED */
 		}
-		dmachan[i].dq_forw = dmachan[i].dq_back = &dmachan[i];
 	}
-	dmachan[i].dq_forw = dmachan[i].dq_back = &dmachan[i];
+
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
 	timeout(dmatimeout, sc, 30 * hz);
@@ -212,43 +214,68 @@ dmacomputeipl()
 
 int
 dmareq(dq)
-	register struct devqueue *dq;
+	struct dmaqueue *dq;
 {
-	register int i;
-	register int chan;
-	register int s = splbio();
+	struct dma_softc *sc = &Dma_softc;
+	int i, chan, s;
 
-	chan = dq->dq_ctlr;
-	i = NDMACHAN;
-	while (--i >= 0) {
+#if 1
+	s = splhigh();	/* XXXthorpej */
+#else
+	s = splbio();
+#endif
+
+	chan = dq->dq_chan;
+	for (i = NDMACHAN - 1; i >= 0; i--) {
+		/*
+		 * Can we use this channel?
+		 */
 		if ((chan & (1 << i)) == 0)
 			continue;
-		if (dmachan[i].dq_forw != &dmachan[i])
+
+		/*
+		 * We can use it; is it busy?
+		 */
+		if (sc->sc_chan[i].dm_job != NULL)
 			continue;
-		insque(dq, &dmachan[i]);
-		dq->dq_ctlr = i;
+
+		/*
+		 * Not busy; give the caller this channel.
+		 */
+		sc->sc_chan[i].dm_job = dq;
+		dq->dq_chan = i;
 		splx(s);
-		return(1);
+		return (1);
 	}
-	insque(dq, dmachan[NDMACHAN].dq_back);
+
+	/*
+	 * Couldn't get a channel now; put this in the queue.
+	 */
+	TAILQ_INSERT_TAIL(&sc->sc_queue, dq, dq_list);
 	splx(s);
-	return(0);
+	return (0);
 }
 
 void
 dmafree(dq)
-	register struct devqueue *dq;
+	struct dmaqueue *dq;
 {
-	int unit = dq->dq_ctlr;
+	int unit = dq->dq_chan;
 	struct dma_softc *sc = &Dma_softc;
-	register struct dma_channel *dc = &sc->sc_chan[unit];
-	register struct devqueue *dn;
-	register int chan, s;
+	struct dma_channel *dc = &sc->sc_chan[unit];
+	struct dmaqueue *dn;
+	int chan, s;
 
+#if 1
+	s = splhigh();	/* XXXthorpej */
+#else
 	s = splbio();
+#endif
+
 #ifdef DEBUG
 	dmatimo[unit] = 0;
 #endif
+
 	DMA_CLEAR(dc);
 #if defined(HP360) || defined(HP370) || defined(HP380)
 	/*
@@ -274,16 +301,23 @@ dmafree(dq)
 		dc->dm_flags &= ~DMAF_VCFLUSH;
 	}
 #endif
-	remque(dq);
+	/*
+	 * Channel is now free.  Look for another job to run on this
+	 * channel.
+	 */
+	dc->dm_job = NULL;
 	chan = 1 << unit;
-	for (dn = dmachan[NDMACHAN].dq_forw;
-	     dn != &dmachan[NDMACHAN]; dn = dn->dq_forw) {
-		if (dn->dq_ctlr & chan) {
-			remque((caddr_t)dn);
-			insque((caddr_t)dn, (caddr_t)dq->dq_back);
+	for (dn = sc->sc_queue.tqh_first; dn != NULL;
+	    dn = dn->dq_list.tqe_next) {
+		if (dn->dq_chan & chan) {
+			/* Found one... */
+			TAILQ_REMOVE(&sc->sc_queue, dn, dq_list);
+			dc->dm_job = dn;
+			dn->dq_chan = dq->dq_chan;
 			splx(s);
-			dn->dq_ctlr = dq->dq_ctlr;
-			(dn->dq_driver->d_start)(dn->dq_unit);
+
+			/* Start the initiator. */
+			(*dn->dq_start)(dn->dq_softc);
 			return;
 		}
 	}
@@ -299,9 +333,8 @@ dmago(unit, addr, count, flags)
 {
 	struct dma_softc *sc = &Dma_softc;
 	register struct dma_channel *dc = &sc->sc_chan[unit];
-	register struct dma_chain *dcp;
 	register char *dmaend = NULL;
-	register int tcount;
+	register int seg, tcount;
 
 	if (count > MAXPHYS)
 		panic("dmago: count > MAXPHYS");
@@ -323,46 +356,52 @@ dmago(unit, addr, count, flags)
 	/*
 	 * Build the DMA chain
 	 */
-	for (dcp = dc->dm_chain; count > 0; dcp++) {
-		dcp->dc_addr = (char *) kvtop(addr);
+	for (seg = 0; count > 0; seg++) {
+		dc->dm_chain[seg].dc_addr = (char *) kvtop(addr);
 #if defined(HP380)
 		/*
 		 * Push back dirty cache lines
 		 */
 		if (mmutype == MMU_68040)
-			DCFP(dcp->dc_addr);
+			DCFP(dc->dm_chain[seg].dc_addr);
 #endif
 		if (count < (tcount = NBPG - ((int)addr & PGOFSET)))
 			tcount = count;
-		dcp->dc_count = tcount;
+		dc->dm_chain[seg].dc_count = tcount;
 		addr += tcount;
 		count -= tcount;
 		if (flags & DMAGO_LWORD)
 			tcount >>= 2;
 		else if (flags & DMAGO_WORD)
 			tcount >>= 1;
-		if (dcp->dc_addr == dmaend
+
+		/*
+		 * Try to compact the DMA transfer if the pages are adjacent.
+		 * Note: this will never happen on the first iteration.
+		 */
+		if (dc->dm_chain[seg].dc_addr == dmaend
 #if defined(HP320)
 		    /* only 16-bit count on 98620B */
 		    && (sc->sc_type != DMA_B ||
-			(dcp-1)->dc_count + tcount <= 65536)
+			dc->dm_chain[seg - 1].dc_count + tcount <= 65536)
 #endif
 		) {
 #ifdef DEBUG
 			dmahits[unit]++;
 #endif
-			dmaend += dcp->dc_count;
-			(--dcp)->dc_count += tcount;
+			dmaend += dc->dm_chain[seg].dc_count;
+			dc->dm_chain[--seg].dc_count += tcount;
 		} else {
 #ifdef DEBUG
 			dmamisses[unit]++;
 #endif
-			dmaend = dcp->dc_addr + dcp->dc_count;
-			dcp->dc_count = tcount;
+			dmaend = dc->dm_chain[seg].dc_addr +
+			    dc->dm_chain[seg].dc_count;
+			dc->dm_chain[seg].dc_count = tcount;
 		}
 	}
-	dc->dm_cur = dc->dm_chain;
-	dc->dm_last = --dcp;
+	dc->dm_cur = 0;
+	dc->dm_last = --seg;
 	dc->dm_flags = 0;
 	/*
 	 * Set up the command word based on flags
@@ -410,15 +449,17 @@ dmago(unit, addr, count, flags)
 			dc->dm_flags |= DMAF_NOINTR;
 	}
 #ifdef DEBUG
-	if (dmadebug & DDB_IO)
+	if (dmadebug & DDB_IO) {
 		if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
 		    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD)) {
 			printf("dmago: cmd %x, flags %x\n",
 			       dc->dm_cmd, dc->dm_flags);
-			for (dcp = dc->dm_chain; dcp <= dc->dm_last; dcp++)
-				printf("  %d: %d@%x\n", dcp-dc->dm_chain,
-				       dcp->dc_count, dcp->dc_addr);
+			for (seg = 0; seg <= dc->dm_last; seg++)
+				printf("  %d: %d@%x\n", seg,
+				    dc->dm_chain[seg].dc_count,
+				    dc->dm_chain[seg].dc_addr);
 		}
+	}
 	dmatimo[unit] = 1;
 #endif
 	DMA_ARM(dc);
@@ -430,7 +471,7 @@ dmastop(unit)
 {
 	struct dma_softc *sc = &Dma_softc;
 	register struct dma_channel *dc = &sc->sc_chan[unit];
-	register struct devqueue *dq;
+	struct dmaqueue *dq;
 
 #ifdef DEBUG
 	if (dmadebug & DDB_FOLLOW)
@@ -464,9 +505,8 @@ dmastop(unit)
 	 * has freed the dma channel.  So, ignore the intr if there's
 	 * nothing on the queue.
 	 */
-	dq = dmachan[unit].dq_forw;
-	if (dq != &dmachan[unit])
-		(dq->dq_driver->d_done)(dq->dq_unit);
+	if (dc->dm_job != NULL)
+		(*dc->dm_job->dq_done)(dc->dm_job->dq_softc);
 }
 
 int
@@ -492,19 +532,24 @@ dmaintr(arg)
 		if (dmadebug & DDB_IO) {
 			if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
 			    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD))
-				printf("dmaintr: unit %d stat %x next %d\n",
-				       i, stat, (dc->dm_cur-dc->dm_chain)+1);
+			  printf("dmaintr: flags %x unit %d stat %x next %d\n",
+			   dc->dm_flags, i, stat, dc->dm_cur + 1);
 		}
 		if (stat & DMA_ARMED)
 			printf("%s, chan %d: intr when armed\n",
 			    sc->sc_xname, i);
 #endif
-		if (++dc->dm_cur <= dc->dm_last) {
+		/*
+		 * Load the next segemnt, or finish up if we're done.
+		 */
+		dc->dm_cur++;
+		if (dc->dm_cur <= dc->dm_last) {
 #ifdef DEBUG
 			dmatimo[i] = 1;
 #endif
 			/*
-			 * Last chain segment, disable DMA interrupt.
+			 * If we're the last segment, disable the
+			 * completion interrupt, if necessary.
 			 */
 			if (dc->dm_cur == dc->dm_last &&
 			    (dc->dm_flags & DMAF_NOINTR))
@@ -529,8 +574,8 @@ dmatimeout(arg)
 		s = splbio();
 		if (dmatimo[i]) {
 			if (dmatimo[i] > 1)
-				printf("%s: timeout #%d\n", sc->sc_xname,
-				       i, dmatimo[i]-1);
+				printf("%s: chan %d timeout #%d\n",
+				    sc->sc_xname, i, dmatimo[i]-1);
 			dmatimo[i]++;
 		}
 		splx(s);

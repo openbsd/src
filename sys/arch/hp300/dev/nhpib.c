@@ -1,7 +1,8 @@
-/*	$OpenBSD: nhpib.c,v 1.5 1997/01/12 15:12:56 downsj Exp $	*/
-/*	$NetBSD: nhpib.c,v 1.13 1996/10/13 03:14:19 christos Exp $	*/
+/*	$OpenBSD: nhpib.c,v 1.6 1997/02/03 04:47:40 downsj Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.14 1997/01/30 09:06:54 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -39,18 +40,25 @@
 /*
  * Internal/98624 HPIB driver
  */
-#include "hpib.h"
-#if NHPIB > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 
-#include <hp300/dev/device.h>
+#include <machine/autoconf.h>
+
+#include <hp300/hp300/isr.h>
+
+#include <hp300/dev/dioreg.h>
+#include <hp300/dev/diovar.h>
+#include <hp300/dev/diodevs.h>
+
+#include <hp300/dev/dmavar.h>
+
 #include <hp300/dev/nhpibreg.h>
 #include <hp300/dev/hpibvar.h>
-#include <hp300/dev/dmavar.h>
 
 /*
  * ODD parity table for listen and talk addresses and secondary commands.
@@ -75,13 +83,17 @@ static u_char sec_par[] = {
 	0370,0171,0172,0373,0174,0375,0376,0177
 };
 
-void	nhpibreset __P((int)); 
-int	nhpibsend __P((int, int, int, void *, int));
-int	nhpibrecv __P((int, int, int, void *, int));
-int	nhpibppoll __P((int));
+void	nhpibifc __P((struct nhpibdevice *));
+void	nhpibreadtimo __P((void *));
+int	nhpibwait __P((struct nhpibdevice *, int));
+
+void	nhpibreset __P((struct hpibbus_softc *)); 
+int	nhpibsend __P((struct hpibbus_softc *, int, int, void *, int));
+int	nhpibrecv __P((struct hpibbus_softc *, int, int, void *, int));
+int	nhpibppoll __P((struct hpibbus_softc *));
 void	nhpibppwatch __P((void *));
-void	nhpibgo __P((int, int, int, void *, int, int, int));
-void	nhpibdone __P((int));
+void	nhpibgo __P((struct hpibbus_softc *, int, int, void *, int, int, int));
+void	nhpibdone __P((struct hpibbus_softc *));
 int	nhpibintr __P((void *));
 
 /*
@@ -98,60 +110,92 @@ struct	hpib_controller nhpib_controller = {
 	nhpibintr
 };
 
+struct nhpib_softc {
+	struct device sc_dev;		/* generic device glue */
+	struct nhpibdevice *sc_regs;	/* device registers */
+	struct hpibbus_softc *sc_hpibbus; /* XXX */
+};
+
+int	nhpibmatch __P((struct device *, void *, void *));
+void	nhpibattach __P((struct device *, struct device *, void *));
+
+struct cfattach nhpib_ca = {
+	sizeof(struct nhpib_softc), nhpibmatch, nhpibattach
+};
+
+struct cfdriver nhpib_cd = {
+	NULL, "nhpib", DV_DULL
+};
+
 int
-nhpibtype(hc)
-	register struct hp_ctlr *hc;
+nhpibmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	register struct hpib_softc *hs = &hpib_softc[hc->hp_unit];
-	register struct nhpibdevice *hd = (struct nhpibdevice *)hc->hp_addr;
+	struct dio_attach_args *da = aux;
 
-	if (hc->hp_addr == internalhpib) {
-		hs->sc_type = HPIBA;
-		hc->hp_ipl = HPIBA_IPL;
+	/*
+	 * Internal HP-IB doesn't always return a device ID,
+	 * so we rely on the sysflags.
+	 */
+	if (da->da_scode == 7 && internalhpib)
 		return (1);
-	} else if (hd->hpib_cid == HPIBB) {
-		hs->sc_type = HPIBB;
-		hc->hp_ipl = HPIB_IPL(hd->hpib_ids);
-		return (1);
-	}
 
-	return(0);
+	if (da->da_id == DIO_DEVICE_ID_NHPIB)
+		return (1);
+
+	return (0);
 }
 
 void
-nhpibattach(hc)
-	register struct hp_ctlr *hc;
+nhpibattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct hpib_softc *hs = &hpib_softc[hc->hp_unit];
-	register struct nhpibdevice *hd = (struct nhpibdevice *)hc->hp_addr;
+	struct nhpib_softc *sc = (struct nhpib_softc *)self;
+	struct dio_attach_args *da = aux;
+	struct hpibdev_attach_args ha; 
+	const char *desc;
+	int ipl, type = HPIBA;
 
-	switch (hs->sc_type) {
-	case HPIBA:
-		hs->sc_ba = HPIBA_BA;
-		hs->sc_descrip = "Internal HP-IB";
-		break;
-
-	case HPIBB:
-		hs->sc_ba = hd->hpib_csa & CSA_BA;
-		hs->sc_descrip = "98624 HP-IB";
-		break;
-
-	default:
-		panic("nhpibattach: unknown type 0x%x", hs->sc_type);
-		/* NOTREACHED */
+	sc->sc_regs = (struct nhpibdevice *)iomap(dio_scodetopa(da->da_scode),
+	    da->da_size);
+	if (sc->sc_regs == NULL) {
+		printf("\n%s: can't map registers\n", self->dv_xname);
+		return;
 	}
 
-	hs->sc_controller = &nhpib_controller;
+	ipl = DIO_IPL(sc->sc_regs);
+
+	if (da->da_scode == 7 && internalhpib)
+		desc = DIO_DEVICE_DESC_IHPIB;
+	else if (da->da_id == DIO_DEVICE_ID_NHPIB) {
+		type = HPIBB;
+		desc = DIO_DEVICE_DESC_NHPIB;
+	} else
+		desc = "unknown HP-IB!";
+
+	printf(" ipl %d: %s\n", ipl, desc);
+
+	/* Establish the interrupt handler. */
+	(void) isrlink(nhpibintr, sc, ipl, ISRPRI_BIO);
+	dmacomputeipl();
+
+	ha.ha_ops = &nhpib_controller;
+	ha.ha_type = type;			/* XXX */
+	ha.ha_ba = (type == HPIBA) ? HPIBA_BA :
+	    (sc->sc_regs->hpib_csa & CSA_BA);
+	ha.ha_softcpp = &sc->sc_hpibbus;	/* XXX */
+	(void)config_found(self, &ha, hpibdevprint);
 }
 
 void
-nhpibreset(unit)
-	int unit;
+nhpibreset(hs)
+	struct hpibbus_softc *hs;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct nhpibdevice *hd;
+	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpibdevice *hd = sc->sc_regs;
 
-	hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 	hd->hpib_acr = AUX_SSWRST;
 	hd->hpib_ar = hs->sc_ba;
 	hd->hpib_lim = LIS_ERR;
@@ -171,6 +215,7 @@ nhpibreset(unit)
 	DELAY(100000);
 }
 
+void
 nhpibifc(hd)
 	register struct nhpibdevice *hd;
 {
@@ -183,16 +228,16 @@ nhpibifc(hd)
 }
 
 int
-nhpibsend(unit, slave, sec, ptr, origcnt)
-	int unit, slave, sec, origcnt;
+nhpibsend(hs, slave, sec, ptr, origcnt)
+	struct hpibbus_softc *hs;
+	int slave, sec, origcnt;
 	void *ptr;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct nhpibdevice *hd;
-	register int cnt = origcnt;
+	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpibdevice *hd = sc->sc_regs;
+	int cnt = origcnt;
 	char *addr = ptr;
 
-	hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 	hd->hpib_acr = AUX_TCA;
 	hd->hpib_data = C_UNL_P;
 	if (nhpibwait(hd, MIS_BO))
@@ -241,16 +286,16 @@ senderror:
 }
 
 int
-nhpibrecv(unit, slave, sec, ptr, origcnt)
-	int unit, slave, sec, origcnt;
+nhpibrecv(hs, slave, sec, ptr, origcnt)
+	struct hpibbus_softc *hs;
+	int slave, sec, origcnt;
 	void *ptr;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct nhpibdevice *hd;
-	register int cnt = origcnt;
+	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpibdevice *hd = sc->sc_regs;
+	int cnt = origcnt;
 	char *addr = ptr;
 
-	hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 	/*
 	 * Slave < 0 implies continuation of a previous receive
 	 * that probably timed out.
@@ -294,15 +339,15 @@ recvbyteserror:
 }
 
 void
-nhpibgo(unit, slave, sec, ptr, count, rw, timo)
-	int unit, slave, sec, count, rw, timo;
+nhpibgo(hs, slave, sec, ptr, count, rw, timo)
+	struct hpibbus_softc *hs;
+	int slave, sec, count, rw, timo;
 	void *ptr;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct nhpibdevice *hd;
+	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpibdevice *hd = sc->sc_regs;
 	char *addr = ptr;
 
-	hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 	hs->sc_flags |= HPIBF_IO;
 	if (timo)
 		hs->sc_flags |= HPIBF_TIMO;
@@ -318,22 +363,22 @@ nhpibgo(unit, slave, sec, ptr, count, rw, timo)
 	hs->sc_addr = addr;
 	if (hs->sc_flags & HPIBF_READ) {
 		hs->sc_curcnt = count;
-		dmago(hs->sc_dq.dq_ctlr, addr, count, DMAGO_BYTE|DMAGO_READ);
-		nhpibrecv(unit, slave, sec, 0, 0);
+		dmago(hs->sc_dq->dq_chan, addr, count, DMAGO_BYTE|DMAGO_READ);
+		nhpibrecv(hs, slave, sec, 0, 0);
 		hd->hpib_mim = MIS_END;
 	} else {
 		hd->hpib_mim = 0;
 		if (count < hpibdmathresh) {
 			hs->sc_curcnt = count;
-			nhpibsend(unit, slave, sec, addr, count);
-			nhpibdone(unit);
+			nhpibsend(hs, slave, sec, addr, count);
+			nhpibdone(hs);
 			return;
 		}
 		hs->sc_curcnt = --count;
-		dmago(hs->sc_dq.dq_ctlr, addr, count, DMAGO_BYTE);
-		nhpibsend(unit, slave, sec, 0, 0);
+		dmago(hs->sc_dq->dq_chan, addr, count, DMAGO_BYTE);
+		nhpibsend(hs, slave, sec, 0, 0);
 	}
-	hd->hpib_ie = IDS_IE | IDS_DMA(hs->sc_dq.dq_ctlr);
+	hd->hpib_ie = IDS_IE | IDS_DMA(hs->sc_dq->dq_chan);
 }
 
 /*
@@ -347,36 +392,33 @@ void
 nhpibreadtimo(arg)
 	void *arg;
 {
-	int unit;
-	register struct hpib_softc *hs;
+	struct hpibbus_softc *hs = arg;
+	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
 	int s = splbio();
 
-	unit = (int)arg;
-	hs = &hpib_softc[unit];
 	if (hs->sc_flags & HPIBF_IO) {
-		register struct nhpibdevice *hd;
-		register struct devqueue *dq;
+		register struct nhpibdevice *hd = sc->sc_regs;
+		register struct hpibqueue *hq;
 
-		hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 		hd->hpib_mim = 0;
 		hd->hpib_acr = AUX_TCA;
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
-		dmafree(&hs->sc_dq);
-		dq = hs->sc_sq.dq_forw;
-		(dq->dq_driver->d_intr)(dq->dq_softc);
+		dmafree(hs->sc_dq);
+
+		hq = hs->sc_queue.tqh_first;
+		(hq->hq_intr)(hq->hq_softc);
 	}
-	(void) splx(s);
+	splx(s);
 }
 
 void
-nhpibdone(unit)
-	register int unit;
+nhpibdone(hs)
+	struct hpibbus_softc *hs;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
-	register struct nhpibdevice *hd;
-	register int cnt;
+	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpibdevice *hd = sc->sc_regs;
+	int cnt;
 
-	hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 	cnt = hs->sc_curcnt;
 	hs->sc_addr += cnt;
 	hs->sc_count -= cnt;
@@ -385,7 +427,7 @@ nhpibdone(unit)
 	if (hs->sc_flags & HPIBF_READ) {
 		if ((hs->sc_flags & HPIBF_TIMO) &&
 		    (hd->hpib_ids & IDS_IR) == 0)
-			timeout(nhpibreadtimo, (void *)unit, hz >> 2);
+			timeout(nhpibreadtimo, hs, hz >> 2);
 	} else {
 		if (hs->sc_count == 1) {
 			(void) nhpibwait(hd, MIS_BO);
@@ -404,56 +446,59 @@ int
 nhpibintr(arg)
 	void *arg;
 {
-	register struct hpib_softc *hs = arg;
-	register struct nhpibdevice *hd;
-	register struct devqueue *dq;
-	register int stat0;
-	int stat1, unit = hs->sc_hc->hp_unit;
+	struct nhpib_softc *sc = arg;
+	struct hpibbus_softc *hs = sc->sc_hpibbus;
+	struct nhpibdevice *hd = sc->sc_regs;
+	struct hpibqueue *hq;
+	int stat0;
+	int stat1;
 
 #ifdef lint
 	if (stat1 = unit) return(1);
 #endif
-	hd = (struct nhpibdevice *)hs->sc_hc->hp_addr;
 	if ((hd->hpib_ids & IDS_IR) == 0)
 		return(0);
 	stat0 = hd->hpib_mis;
 	stat1 = hd->hpib_lis;
-	dq = hs->sc_sq.dq_forw;
+
+	hq = hs->sc_queue.tqh_first;
+
 	if (hs->sc_flags & HPIBF_IO) {
 		hd->hpib_mim = 0;
 		if ((hs->sc_flags & HPIBF_DONE) == 0) {
 			hs->sc_flags &= ~HPIBF_TIMO;
-			dmastop(hs->sc_dq.dq_ctlr);
+			dmastop(hs->sc_dq->dq_chan);
 		} else if (hs->sc_flags & HPIBF_TIMO)
-			untimeout(nhpibreadtimo, (void *)unit);
+			untimeout(nhpibreadtimo, hs);
 		hd->hpib_acr = AUX_TCA;
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
-		dmafree(&hs->sc_dq);
-		(dq->dq_driver->d_intr)(dq->dq_softc);
+
+		dmafree(hs->sc_dq);
+		(hq->hq_intr)(hq->hq_softc);
 	} else if (hs->sc_flags & HPIBF_PPOLL) {
 		hd->hpib_mim = 0;
-		stat0 = nhpibppoll(unit);
-		if (stat0 & (0x80 >> dq->dq_slave)) {
+		stat0 = nhpibppoll(hs);
+		if (stat0 & (0x80 >> hq->hq_slave)) {
 			hs->sc_flags &= ~HPIBF_PPOLL;
-			(dq->dq_driver->d_intr)(dq->dq_softc);
+			(hq->hq_intr)(hq->hq_softc);
 		}
 #ifdef DEBUG
 		else
 			printf("%s: PPOLL intr bad status %x\n",
-			       hs->sc_hc->hp_xname, stat0);
+			       hs->sc_dev.dv_xname, stat0);
 #endif
 	}
 	return(1);
 }
 
 int
-nhpibppoll(unit)
-	int unit;
+nhpibppoll(hs)
+	struct hpibbus_softc *hs;
 {
-	register struct nhpibdevice *hd;
-	register int ppoll;
+	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
+	struct nhpibdevice *hd = sc->sc_regs;
+	int ppoll;
 
-	hd = (struct nhpibdevice *)hpib_softc[unit].sc_hc->hp_addr;
 	hd->hpib_acr = AUX_SPP;
 	DELAY(25);
 	ppoll = hd->hpib_cpt;
@@ -488,21 +533,18 @@ void
 nhpibppwatch(arg)
 	void *arg;
 {
-	register struct hpib_softc *hs;
-	register int unit;
+	struct hpibbus_softc *hs = arg;
+	struct nhpib_softc *sc = (struct nhpib_softc *)hs->sc_dev.dv_parent;
 	extern int cold;
 
-	unit = (int)arg;
-	hs = &hpib_softc[unit];
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;
 again:
-	if (nhpibppoll(unit) & (0x80 >> hs->sc_sq.dq_forw->dq_slave))
-       		((struct nhpibdevice *)hs->sc_hc->hp_addr)->hpib_mim = MIS_BO;
+	if (nhpibppoll(hs) & (0x80 >> hs->sc_queue.tqh_first->hq_slave))
+       		sc->sc_regs->hpib_mim = MIS_BO;
 	else if (cold)
 		/* timeouts not working yet */
 		goto again;
 	else
-		timeout(nhpibppwatch, (void *)unit, 1);
+		timeout(nhpibppwatch, hs, 1);
 }
-#endif /* NHPIB > 0 */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsi.c,v 1.2 1997/01/17 08:32:58 downsj Exp $	*/
-/*	$NetBSD: scsi.c,v 1.6 1996/12/17 09:21:42 thorpej Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.3 1997/02/03 04:48:07 downsj Exp $	*/
+/*	$NetBSD: scsi.c,v 1.7 1997/01/30 10:32:57 thorpej Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -55,10 +55,12 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
-#include <hp300/dev/device.h>
+
 #define _IOCTL_
 #include <hp300/dev/scsireg.h>
-#include "scsivar.h"
+
+#include <hp300/stand/device.h>
+#include <hp300/stand/scsivar.h>
 
 #include "stand.h"
 #include "samachdep.h"

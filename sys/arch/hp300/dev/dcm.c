@@ -1,5 +1,5 @@
-/*	$OpenBSD: dcm.c,v 1.6 1997/01/12 15:12:22 downsj Exp $	*/
-/*	$NetBSD: dcm.c,v 1.34 1996/12/17 08:41:01 thorpej Exp $	*/
+/*	$OpenBSD: dcm.c,v 1.7 1997/02/03 04:47:15 downsj Exp $	*/
+/*	$NetBSD: dcm.c,v 1.35 1997/01/30 09:11:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -70,10 +70,6 @@
 #include <machine/cpu.h>
 
 #include <dev/cons.h>
-
-#ifndef NEWCONFIG
-#include <hp300/dev/device.h>
-#endif
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
@@ -224,9 +220,6 @@ static char iconv[16] = {
 
 struct	dcm_softc {
 	struct	device sc_dev;		/* generic device glue */
-#ifndef NEWCONFIG
-	struct	hp_device *sc_hd;	/* device info */
-#endif
 	struct	dcmdevice *sc_dcm;	/* pointer to hardware */
 	struct	tty *sc_tty[NDCMPORT];	/* our tty instances */
 	struct	modemreg *sc_modem[NDCMPORT]; /* modem control */
@@ -254,8 +247,7 @@ struct	dcm_softc {
 #endif
 };
 
-#ifdef NEWCONFIG
-int	dcmmatch __P((struct device *, struct cfdata *, void *));
+int	dcmmatch __P((struct device *, void *, void *));
 void	dcmattach __P((struct device *, struct device *, void *));
 
 struct cfattach dcm_ca = {
@@ -265,17 +257,6 @@ struct cfattach dcm_ca = {
 struct cfdriver dcm_cd = {
 	NULL, "dcm", DV_TTY
 };
-#else /* ! NEWCONFIG */
-int dcmmatch();
-void dcmattach();
-
-struct	driver dcmdriver = {
-	dcmmatch, dcmattach, "dcm",
-};
-
-#include "dcm.h"
-struct dcm_softc dcm_softc[NDCM];
-#endif /* NEWCONFIG */
 
 int	dcmparam();
 void	dcmstart();
@@ -285,12 +266,10 @@ int	dcmintr __P((void *));
 
 int	dcmselftest __P((struct dcm_softc *));
 
-#ifdef NEWCONFIG
 int
 dcmmatch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+	void *match, *aux;
 {
 	struct dio_attach_args *da = aux;
 
@@ -302,23 +281,7 @@ dcmmatch(parent, match, aux)
 
 	return (0);
 }
-#else /* ! NEWCONFIG */
-int
-dcmmatch(hd)
-	register struct hp_device *hd;
-{
-	struct dcm_softc *sc = &dcm_softc[hd->hp_unit];
-	struct dcmdevice *dcm = (struct dcmdevice *)hd->hp_addr;
 
-	if ((dcm->dcm_rsid & 0x1f) != DCMID)
-		return (0);
-
-	sc->sc_hd = hd;
-	hd->hp_ipl = DCMIPL(dcm->dcm_ic);
-}
-#endif /* NEWCONFIG */
-
-#ifdef NEWCONFIG
 void
 dcmattach(parent, self, aux)
 	struct device *parent, *self;
@@ -330,17 +293,6 @@ dcmattach(parent, self, aux)
 	int brd = self->dv_unit;
 	int scode = da->da_scode;
 	int i, mbits, ipl;
-#else /* ! NEWCONFIG */
-void
-dcmattach(hd)
-	register struct hp_device *hd;
-{
-	struct dcm_softc *sc = &dcm_softc[hd->hp_unit];
-	struct dcmdevice *dcm = (struct dcmdevice *)hd->hp_addr;
-	int brd = hd->hp_unit;
-	int scode = hd->hp_args->hw_sc;
-	int i, mbits, ipl = hd->hp_ipl;
-#endif /* NEWCONFIG */
 
 	if (scode == conscode) {
 		dcm = (struct dcmdevice *)conaddr;
@@ -353,7 +305,6 @@ dcmattach(hd)
 		 */
 		cn_tab->cn_dev = makedev(dcmmajor, (brd << 2) | DCMCONSPORT);
 	} else {
-#ifdef NEWCONFIG
 		dcm = (struct dcmdevice *)iomap(dio_scodetopa(da->da_scode),
 		    da->da_size);
 		if (dcm == NULL) {
@@ -361,19 +312,12 @@ dcmattach(hd)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-#endif
 	}
 
 	sc->sc_dcm = dcm;
 
-#ifdef NEWCONFIG
 	ipl = DIO_IPL(dcm);
 	printf(" ipl %d", ipl);
-#else /* ! NEWCONFIG */
-	/* XXX Set the device class. */
-	hd->hp_dev.dv_class = DV_TTY;
-	bcopy(&hd->hp_dev, &sc->sc_dev, sizeof(struct device));
-#endif /* NEWCONFIG */
 
 	if (dcmselftest(sc)) {
 		printf("\n%s: self-test failed\n", sc->sc_dev.dv_xname);
@@ -381,13 +325,8 @@ dcmattach(hd)
 	}
 
 	/* Extract configuration info from flags. */
-#ifdef NEWCONFIG
 	sc->sc_softCAR = self->dv_cfdata->cf_flags & DCM_SOFTCAR;
 	sc->sc_flags = self->dv_cfdata->cf_flags & DCM_FLAGMASK;
-#else
-	sc->sc_softCAR = (hd->hp_flags & DCM_SOFTCAR);
-	sc->sc_flags = (hd->hp_flags & DCM_FLAGMASK);
-#endif /* NEWCONFIG */
 
 	/* Mark our unit as configured. */
 	sc->sc_flags |= DCM_ACTIVE;
@@ -472,15 +411,9 @@ dcmopen(dev, flag, mode, p)
 	brd = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-#ifdef NEWCONFIG
 	if (brd >= dcm_cd.cd_ndevs || port >= NDCMPORT ||
 	    (sc = dcm_cd.cd_devs[brd]) == NULL)
 		return (ENXIO);
-#else /* ! NEWCONFIG */
-	if ((brd >= NDCM) || (port >= NDCMPORT))
-		return (ENXIO);
-	sc = &dcm_softc[brd];
-#endif /* NEWCONFIG */
 
 	if ((sc->sc_flags & DCM_ACTIVE) == 0)
 		return (ENXIO);
@@ -580,11 +513,7 @@ dcmclose(dev, flag, mode, p)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-#ifdef NEWCONFIG
 	sc = dcm_cd.cd_devs[board];
-#else
-	sc = &dcm_softc[board];
-#endif
 	tp = sc->sc_tty[port];
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
@@ -623,11 +552,7 @@ dcmread(dev, uio, flag)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-#ifdef NEWCONFIG
 	sc = dcm_cd.cd_devs[board];
-#else
-	sc = &dcm_softc[board];
-#endif
 	tp = sc->sc_tty[port];
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -647,11 +572,7 @@ dcmwrite(dev, uio, flag)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-#ifdef NEWCONFIG
 	sc = dcm_cd.cd_devs[board];
-#else
-	sc = &dcm_softc[board];
-#endif
 	tp = sc->sc_tty[port];
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -668,11 +589,7 @@ dcmtty(dev)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-#ifdef NEWCONFIG
 	sc = dcm_cd.cd_devs[board];
-#else
-	sc = &dcm_softc[board];
-#endif
 
 	return (sc->sc_tty[port]);
 }
@@ -965,11 +882,7 @@ dcmioctl(dev, cmd, data, flag, p)
 	port = DCMPORT(unit);
 	board = DCMBOARD(unit);
 
-#ifdef NEWCONFIG
 	sc = dcm_cd.cd_devs[board];
-#else
-	sc = &dcm_softc[board];
-#endif
 	dcm = sc->sc_dcm;
 	tp = sc->sc_tty[port];
  
@@ -1084,11 +997,7 @@ dcmparam(tp, t)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-#ifdef NEWCONFIG
 	sc = dcm_cd.cd_devs[board];
-#else
-	sc = &dcm_softc[board];
-#endif
 	dcm = sc->sc_dcm;
 
 	/* check requested parameters */
@@ -1175,11 +1084,7 @@ dcmstart(tp)
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-#ifdef NEWCONFIG
 	sc = dcm_cd.cd_devs[board];
-#else
-	sc = &dcm_softc[board];
-#endif
 	dcm = sc->sc_dcm;
 
 	s = spltty();
@@ -1318,11 +1223,7 @@ dcmmctl(dev, bits, how)
 	brd = DCMBOARD(unit);
 	port = DCMPORT(unit);
 
-#ifdef NEWCONFIG
 	sc = dcm_cd.cd_devs[brd];
-#else
-	sc = &dcm_softc[brd];
-#endif
 	dcm = sc->sc_dcm;
 
 #ifdef DEBUG
@@ -1372,11 +1273,7 @@ dcmmctl(dev, bits, how)
 dcmsetischeme(brd, flags)
 	int brd, flags;
 {
-#ifdef NEWCONFIG
 	struct dcm_softc *sc = dcm_cd.cd_devs[brd];
-#else
-	struct dcm_softc *sc = &dcm_softc[brd];
-#endif
 	struct dcmdevice *dcm = sc->sc_dcm;
 	struct dcmischeme *dis = &sc->sc_scheme;
 	int i;
@@ -1481,21 +1378,27 @@ dcmselftest(sc)
 {
 	struct dcmdevice *dcm = sc->sc_dcm;
 	int i, timo = 0;
-	int s, brd, mbits;
+	int s, brd, mbits, rv;
 
-	s = spltty();
+	rv = 1;
+
+	s = splhigh();
 	dcm->dcm_rsid = DCMRS;
 	DELAY(50000);	/* 5000 is not long enough */
 	dcm->dcm_rsid = 0; 
 	dcm->dcm_ic = IC_IE;
 	dcm->dcm_cr = CR_SELFT;
-	while ((dcm->dcm_ic & IC_IR) == 0)
+	while ((dcm->dcm_ic & IC_IR) == 0) {
 		if (++timo == 20000)
-			return (1);
+			goto out;
+		DELAY(1);
+	}
 	DELAY(50000);	/* XXX why is this needed ???? */
-	while ((dcm->dcm_iir & IIR_SELFT) == 0)
+	while ((dcm->dcm_iir & IIR_SELFT) == 0) {
 		if (++timo == 400000)
-			return (1);
+			goto out;
+		DELAY(1);
+	}
 	DELAY(50000);	/* XXX why is this needed ???? */
 	if (dcm->dcm_stcon != ST_OK) {
 #if 0
@@ -1503,12 +1406,14 @@ dcmselftest(sc)
 			printf("dcm%d: self test failed: %x\n",
 			       brd, dcm->dcm_stcon);
 #endif
-		return (1);
+		goto out;
 	}
 	dcm->dcm_ic = IC_ID;
-	splx(s);
+	rv = 0;
 
-	return (0);
+ out:
+	splx(s);
+	return (rv);
 }
 
 /*

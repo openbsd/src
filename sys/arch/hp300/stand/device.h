@@ -1,5 +1,5 @@
-/*	$OpenBSD: device.h,v 1.4 1997/01/12 15:12:24 downsj Exp $	*/
-/*	$NetBSD: device.h,v 1.9 1996/10/20 23:47:40 thorpej Exp $	*/
+/*	$OpenBSD: device.h,v 1.1 1997/02/03 04:48:03 downsj Exp $	*/
+/*	$NetBSD: device.h,v 1.1 1997/01/30 10:31:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -36,18 +36,6 @@
  *	@(#)device.h	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/device.h>
-
-struct driver {
-	int	(*d_match)();
-	void	(*d_attach)();
-	char	*d_name;
-	int	(*d_start)();
-	int	(*d_go)();
-	int	(*d_intr)();
-	int	(*d_done)();
-};
-
 struct hp_hw {
 	caddr_t	hw_pa;		/* physical address of control space */
 	int	hw_size;	/* size of control space */
@@ -56,47 +44,6 @@ struct hp_hw {
 	short	hw_secid;	/* secondary HW id (displays) */
 	short	hw_type;	/* type (defined below) */
 	short	hw_sc;		/* select code (if applicable) */
-};
-
-struct hp_ctlr {
-	struct driver	*hp_driver;
-	int		hp_unit;
-	int		hp_alive;
-	char		*hp_addr;
-	int		hp_flags;
-	int		hp_ipl;
-	struct hp_hw	*hp_args;
-	char		hp_xname[8];
-	struct device	hp_dev;
-};
-
-struct hp_device {
-	struct driver	*hp_driver;
-	struct driver	*hp_cdriver;
-	int		hp_unit;
-	int		hp_ctlr;
-	int		hp_slave;
-	char		*hp_addr;
-	int		hp_dk;
-	int		hp_flags;
-	int		hp_alive;
-	int		hp_ipl;
-	struct hp_hw	*hp_args;
-	struct device	hp_dev;
-};
-
-/* XXX until the code is cleaed up */
-#define	hp_xname	hp_dev.dv_xname
-
-/* XXX This needs to die. */
-struct	devqueue {
-	struct	devqueue *dq_forw;
-	struct	devqueue *dq_back;
-	int	dq_ctlr;
-	int	dq_unit;
-	int	dq_slave;
-	void	*dq_softc;
-	struct	driver *dq_driver;
 };
 
 #define	MAXCTLRS	16	/* Size of HW table (arbitrary) */
@@ -130,12 +77,3 @@ struct	devqueue {
 #define HW_ISHPIB(hw)	(((hw)->hw_type & C_MASK) == C_HPIB)
 #define HW_ISSCSI(hw)	(((hw)->hw_type & C_MASK) == C_SCSI)
 #define HW_ISDEV(hw,d)	(((hw)->hw_type & D_MASK) == (d))
-
-#ifdef _KERNEL
-#ifdef hp300
-extern struct hp_hw sc_table[];
-extern struct hp_ctlr hp_cinit[];
-extern struct hp_device hp_dinit[];
-extern caddr_t sctopa(), iomap();
-#endif
-#endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: intio.c,v 1.1 1997/01/12 15:12:47 downsj Exp $	*/
-/*	$NetBSD: intio.c,v 1.1 1996/12/17 08:41:15 thorpej Exp $	*/
+/*	$OpenBSD: intio.c,v 1.2 1997/02/03 04:47:36 downsj Exp $	*/
+/*	$NetBSD: intio.c,v 1.2 1997/01/30 09:18:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,10 +47,10 @@
  
 #include <hp300/dev/intiovar.h>
 
-int	intiomatch __P((struct device *, struct cfdata *, void *));
+int	intiomatch __P((struct device *, void *, void *));
 void	intioattach __P((struct device *, struct device *, void *));
 int	intioprint __P((void *, const char *));
-int	intiosearch __P((struct device *, struct cfdata *, void *));
+int	intiosearch __P((struct device *, void *, void *));
 
 struct cfattach intio_ca = {
 	sizeof(struct device), intiomatch, intioattach
@@ -63,8 +63,7 @@ struct cfdriver intio_cd = {
 int
 intiomatch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+	void *match, *aux;
 {
 	static int intio_matched = 0;
 
@@ -101,11 +100,11 @@ intioprint(aux, pnp)
 }
 
 int
-intiosearch(parent, cf, aux)
+intiosearch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *match, *aux;
 {
+	struct cfdata *cf = match;
 	struct intio_attach_args ia;
 
 	bzero(&ia, sizeof(ia));
