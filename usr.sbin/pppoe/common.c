@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.6 2002/02/16 21:28:07 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.7 2002/09/06 19:57:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -279,7 +279,7 @@ cookie_bake()
 	x = arc4random();
 	MD5Init(&ctx);
 	MD5Update(&ctx, (unsigned char *)&x, sizeof(x));
-	MD5Final(buf, &ctx);
+	MD5Final((unsigned char *)buf, &ctx);
 	bcopy(buf, &y, sizeof(y));
 	x = x ^ y;
 	bcopy(buf + 4, &y, sizeof(y));
