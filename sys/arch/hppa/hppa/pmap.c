@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.109 2004/04/21 22:14:34 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.110 2004/04/21 22:17:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -405,14 +405,12 @@ pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, struct pmap *pm,
 	pve->pv_pmap	= pm;
 	pve->pv_va	= va;
 	pve->pv_ptp	= pdep;
-	simple_lock(&pg->mdpage.pvh_lock);	/* lock pv_head */
 	pve->pv_next = pg->mdpage.pvh_list;
 	pg->mdpage.pvh_list = pve;
 #ifdef PMAPDEBUG
 	if (pmap_check_alias(pve, va, 0))
 		Debugger();
 #endif
-	simple_unlock(&pg->mdpage.pvh_lock);	/* unlock, done! */
 }
 
 static __inline struct pv_entry *
@@ -625,6 +623,7 @@ pmap_create()
 	pa_space_t space;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_create()\n"));
+
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
 	simple_lock_init(&pmap->pm_obj.vmobjlock);
@@ -758,8 +757,10 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 	if (!(pde = pmap_pde_get(pmap->pm_pdir, va)) &&
 	    !(pde = pmap_pde_alloc(pmap, va, &ptp))) {
-		if (flags & PMAP_CANFAIL)
+		if (flags & PMAP_CANFAIL) {
+			simple_unlock(&pmap->pm_obj.vmobjlock);
 			return (KERN_RESOURCE_SHORTAGE);
+		}
 
 		panic("pmap_enter: cannot allocate pde");
 	}
@@ -798,12 +799,13 @@ pmap_enter(pmap, va, pa, prot, flags)
 			pmap->pm_stats.wired_count++;
 		if (ptp)
 			ptp->wire_count++;
+		simple_lock(&pg->mdpage.pvh_lock);
 	}
-
 
 	if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pa)))) {
 		if (!pve && !(pve = pmap_pv_alloc())) {
 			if (flags & PMAP_CANFAIL) {
+				simple_unlock(&pg->mdpage.pvh_lock);
 				simple_unlock(&pmap->pm_obj.vmobjlock);
 				return (KERN_RESOURCE_SHORTAGE);
 			}
@@ -812,6 +814,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pmap_pv_enter(pg, pve, pmap, va, ptp);
 	} else if (pve)
 		pmap_pv_free(pve);
+	simple_unlock(&pg->mdpage.pvh_lock);
 
 enter:
 	/* preserve old ref & mod */
@@ -1187,8 +1190,6 @@ pmap_kenter_pa(va, pa, prot)
 		pte |= PTE_PROT(TLB_UNCACHABLE);
 	pmap_pte_set(pde, va, pte);
 
-	simple_unlock(&pmap->pm_obj.vmobjlock);
-
 #ifdef PMAPDEBUG
 	{
 		struct vm_page *pg;
@@ -1202,6 +1203,8 @@ pmap_kenter_pa(va, pa, prot)
 		}
 	}
 #endif
+	simple_unlock(&pmap->pm_obj.vmobjlock);
+
 	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_kenter_pa: leaving\n"));
 }
 
