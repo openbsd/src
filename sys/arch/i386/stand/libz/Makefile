@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 1997/03/31 03:12:18 weingart Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/03/31 23:06:33 mickey Exp $
 
+CFLAGS	+=$(SACFLAGS)
 .include "../Makefile.inc"
-
-CFLAGS+=-Wall
 
 S	= ${.CURDIR}/../../../..
 ZDST=${.OBJDIR}
@@ -11,7 +10,6 @@ ZDST=${.OBJDIR}
 all: ${ZLIB}
 
 .include <bsd.obj.mk>
-.include <bsd.dep.mk>
 .include <bsd.subdir.mk>
 .include <bsd.sys.mk>
 

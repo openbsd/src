@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.2 1997/03/31 03:12:01 weingart Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.3 1997/03/31 23:06:19 mickey Exp $	*/
 
 	.file	"bootbios.S"
 
@@ -17,9 +17,8 @@
 #define	BLKCNT	48
 #endif
 
-#define BIOSSEG		0x07c0	/* boot loaded here */
-#define BOOTSEG		0x1000	/* /boot placement */
-#define BOOTSTACK	0xfffc	/* /boot stack */
+#define BOOTSEG		0x07c0	/* boot loaded here */
+#define BOOTSTACK	0xfffc	/* stack starts here */
 #define ZMAGIC		0x0b01	/* ZMAGIC */
 
 #ifdef DEBUG
@@ -27,8 +26,8 @@
 	movb    $msg, %al;	\
 	data32;			\
 	call    chr
-#define CHAR_M	'M'	/* magic check */
-#define CHAR_P	'P'	/* switch to protected mode */
+#define GO_RELOC	'R'	/* running relocated code */
+#define REAL2PROT	'P'	/* switch to protected mode */
 #else /* !DEBUG */
 #define DBGMSG(msg)
 #endif /* !DEBUG */
@@ -37,33 +36,55 @@
 
 	.globl	start
 start:
-	/* adjust %cs */
-	data32
-	ljmp $BIOSSEG, $2f
-1:	.asciz	"loading /boot"
-
-2:	/* set up stack (%ss:%esp) */
+	/* set up stack (%ss:%esp) */
 	cli			/* disable interrupts w/o stack */
-	data32
-	movl	$BOOTSEG, %ax
+	# movw	$BOOTREL, %ax
+	.byte	0xb8
+	.word	BOOTREL
 	movl	%ax, %ss
+	movl	%ax, %es	/* relocate there */
 	data32
 	movl	$BOOTSTACK, %esp
 	sti			/* we have stack, do ints */
 
-	/* set up %es, (where we will load /boot to) */
-	movl	%ax, %es
+	# movw	$BOOTSEG, %ax	/* we are here */
+	.byte	0xb8
+	.word	BOOTSEG
+	movl	%ax, %ds
+	xorl	%si, %si
+	xorl	%di, %di
+	# movw	$0x100, %cx	/* 512 bytes to move */
+	.byte	0xb9
+	.word	0x100
+	cld
+	rep;	movsl
+
+	/* jump to relocated code */
+	data32
+	ljmp $BOOTREL, $2f
+1:	.asciz	"loading /boot"
+
+2:	DBGMSG(GO_RELOC)
 
 	/* set up %ds */
 	pushl	%cs
 	popl	%ds
 
+	/* set up %es, (where we will load /boot to) */
+	# movw	$(START >> 4), %ax
+	.byte	0xb8
+	.word	START >> 4
+	movl	%ax, %es
+
 #ifdef SERIAL
 	# Initialize the serial port to 9600 baud, 8N1.
 	pushl	%dx
-	movl	$0x00e3, %ax
-	data32
-	movl	SERIAL, %edx
+	# movw	$0x00e3, %ax
+	.byte	0xb8
+	.word	0x00e3
+	# movw	SERIAL, %dx
+	.byte	0xba
+	.word	SERIAL
 	int	$0x14
 	popl	%dx
 #endif
@@ -78,11 +99,12 @@ start:
 	addr32
 	movb	_block_count, %cl	/* how many to read */
 	movzbl	%cl, %ecx
-	data32
-	movl	$_block_table, %esi
+	# movw	$_block_table, %si
+	.byte	0xbe
+	.word	_block_table
 
 1:
-	pushl	%ecx
+	pushl	%cx
 	cld
 	lodsl	/* word */	/* cylinder/sector */
 	movl	%ax, %cx
@@ -106,11 +128,10 @@ start:
 	call	chr		/* show progress indicator */
 
 	popl	%ax
-	data32
-	movzbl	%al, %eax
+	movzbl	%al, %ax
 	shll	$9, %ax		/* 512 bytes sectors */
 	addl	%ax, %bx
-	popl	%ecx
+	popl	%cx
 	loop	1b
 
 	data32
@@ -118,11 +139,7 @@ start:
 	data32
 	call	message
 
-#if 0
-	DBGMSG(CHAR_M)
-#endif
-
-	xorl	%esi, %esi
+	xorl	%si, %si
 	cld
 	/* check /boot magic */
 	es;lodsl;es;lodsl	/* no need for high word */
@@ -147,16 +164,10 @@ halt:
 	data32;es;lodsl	/* bss  size */
 	data32;es;lodsl	/* syms size */
 #endif
-#if 0
-	data32;addr32
-	addl	16(%esi), %edi	/* entry */
 	data32
-	subl	$REL, %edi
-#endif
+	addl	16(%esi), %edi	/* entry */
 
-#if 0
-	DBGMSG(CHAR_P)
-#endif
+	DBGMSG(REAL2PROT)
 
 	/* change to protected mode */
 	/* guarantee that interrupts are disabled when in prot mode */
@@ -178,50 +189,28 @@ halt:
 	 * reload CS register
 	 */
 	data32
-	ljmp	$8, $1f+(BIOSSEG << 4)
+	ljmp	$8, $1f+(BOOTREL << 4)
 
 1:	/*
 	 * 32bit mode
 	 * set up %ds, %ss, %es
 	 */
-	movl	$0x10, %eax
+	movw	$0x10, %eax
 	movl	%ax, %ds
 	movl	%ax, %ss
-	movl	%ax, %es
-	movl	%ax, %fs
-	movl	%ax, %gs
 	movl	$BOOTSTACK, %esp
 
-#if 0
 #ifdef	DEBUG
-	movl	$0xb8000, %ebx
+	movl	$0xb8004, %ebx
 	movl	$0x074f0747, (%ebx)
-#endif
 #endif
 
 	movzbl	%dl, %eax	/* drive number is in the lowest byte */
 	pushl	%eax
-
-#if 0
-#ifdef DEBUG
-	movl	$0x10000, %ebx
-	movl	(%ebx), %ecx
-	/* cmpw $ZMAGIC, %ax */
-	.byte	0x3d
-	.word	ZMAGIC
-je	1f
-	movl	$0xb8004, %ebx
-	movl	$0x07500748, (%ebx)
-	jne	2f
-1:
-	movl	$0xb8004, %ebx
-	movl	$0x074f0747, (%ebx)
-2:
-#endif
-#endif
+	pushl	$BOOTMAGIC	/* use some magic */
 
 	/* jmp	/boot */
-	ljmp	$0x8, $(REL << 4) + 0x20
+	ljmp	$8, $(START + 0x20)
 	/* not reached */
 
 #
@@ -275,11 +264,8 @@ message:
 	data32
 	ret
 
-	.align	2
-Gdtr:	.word	3 * 8 - 1
-	.long	(BIOSSEG << 4) + 2f
 	.align	3
-2:		/* 0x00 : null */
+gdt:		/* 0x00 : null */
 	.long	0, 0
 		/* 0x08 : flat code */
 	.word	0xFFFF			# lolimit
@@ -295,6 +281,8 @@ Gdtr:	.word	3 * 8 - 1
 	.byte	SDT_MEMRWA | 0 | 0x80	# RWA, dpl = 0, present
 	.byte	0xf | 0 | 0x40 | 0x80	# hilimit, xx, 32bit, 4k granularity
 	.byte	0			# hibase
+Gdtr:	.word	. - gdt
+	.long	(BOOTREL << 4) + gdt
 
 	.globl	_block_table
 _block_table:

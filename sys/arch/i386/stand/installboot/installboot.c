@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.2 1997/03/31 03:12:07 weingart Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.3 1997/03/31 23:06:24 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -144,7 +144,7 @@ main(argc, argv)
 	if (protosize > SBSIZE - DEV_BSIZE)
 		errx(1, "proto bootblocks too big");
 
-	if ((devfd = open(dev, O_RDWR, 0)) < 0)
+	if ((devfd = open(dev, (nowrite? O_RDONLY:O_RDWR), 0)) < 0)
 		err(1, "open: %s", dev);
 
 	/* Sync filesystems (to clean in-memory superblock?) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdisk.S,v 1.2 1997/03/31 03:12:11 weingart Exp $	*/
+/*	$OpenBSD: biosdisk.S,v 1.3 1997/03/31 23:06:27 mickey Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -70,10 +70,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ENTRY(biosread)
 	pushl	%ebp
 	movl	%esp, %ebp
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
-	push	%es
+	pushal
 
 	movb	8(%ebp), %dl	# device
 	movw	12(%ebp), %cx
@@ -87,44 +84,30 @@ ENTRY(biosread)
 	movb	24(%ebp), %al	# number of sectors
 	movl	%eax, %esi	# save this against mode switch
 	movl	28(%ebp), %ebx	# offset
-
-
-	# prot_to_real will set %es to BOOTSEG
-	# Which means %cs == %es.
-	# XXX - This hoses things severly.  Better
-	# recoup %es to point to the base of the given
-	# buffer, and let %bx be the index into it,
-	# that way we can read a max of 64K give or
-	# take 15 bytes anyways.
-
-	# Save %es in %edi
-	movl	%ebx, %eax
-	shrl	$4, %eax
-	movl	%eax, %edi
-	andl	$0xF, %ebx
+	movl	%ebx, %edi	# spilt off for seg:off pair
+	shrl	$4, %edi
+	andl	$0xf, %ebx	# atomic read for up to 64k
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
-	# Restore %es
 	movl	%di, %es
-
-	# Restore %ax
 	movl	%si, %ax
-
 	int	$0x13
-	setc	%bl
-
+	movb	$0, %cl
+	jnc	1f
+	movb	%ah, %cl
+1:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
 
-	movzbl	%bl, %eax	# return value in %ax
+	movzbl	%cl, %eax	# return value in %ax
+	movl	%eax, 1f
 
-	pop		%es
-	popl	%edi
-	popl	%esi
-	popl	%ebx
+	popal
+	movl	1f, %eax
 	popl	%ebp
 	ret
+1:	.long	0
 
 ENTRY(bioswrite)
 
@@ -142,8 +125,8 @@ ENTRY(biosdinfo)
 	pushl	%ebp
 	movl	%esp, %ebp
 	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
+	pushl	%ecx
+	pushl	%edx
 
 	movb	8(%ebp), %dl		# diskinfo(drive #)
 
@@ -179,8 +162,8 @@ ok:
 	andb	$0x3f, %cl		# mask of cylinder gunk
 	movb	%cl, %al		# max sector (and # sectors)
 
-	popl	%edi
-	popl	%esi
+	popl	%edx
+	popl	%ecx
 	popl	%ebx
 	popl	%ebp
 	ret

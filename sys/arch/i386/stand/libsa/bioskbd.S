@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioskbd.S,v 1.2 1997/03/31 03:12:11 weingart Exp $	*/
+/*	$OpenBSD: bioskbd.S,v 1.3 1997/03/31 23:06:28 mickey Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -61,7 +61,75 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
 ENTRY(kbd_probe)
-	
+#if 0
+#include <machine/console.h>
+#include <machine/cpufunc.h>
+#include "boot.h"
+
+int
+probe_keyboard(void)
+{
+	int i, retries = 5;
+	unsigned char val;
+
+	/* flush any noise in the buffer */
+	while (inb(KB_STAT) & KB_BUF_FULL) {
+		delay1ms();
+		(void) inb(KB_DATA);
+	}
+
+	/* Try to reset keyboard hardware */
+  again:
+	while (--retries) {
+#ifdef DEBUG
+		printf("%d ", retries);
+#endif
+		while ((inb(KB_STAT) & KB_READY) == KB_READY) delay1ms();
+		outb(KB_DATA, KB_RESET);
+		for (i=0; i<1000; i++) {
+			delay1ms();
+			val = inb(KB_DATA);
+			if (val == KB_ACK || val == KB_ECHO)
+				goto gotack;
+			if (val == KB_RESEND)
+				break;
+		}
+	}
+gotres:
+#ifdef DEBUG
+	printf("gotres\n");
+#endif
+	if (!retries) {
+#ifdef DEBUG
+		printf("gave up\n");
+#endif
+		return(1);
+	}
+gotack:
+	delay1ms();
+	while ((inb(KB_STAT) & KB_BUF_FULL) == 0) delay1ms();
+	delay1ms();
+#ifdef DEBUG
+	printf("ACK ");
+#endif
+	val = inb(KB_DATA);
+	if (val == KB_ACK)
+		goto gotack;
+	if (val == KB_RESEND)
+		goto again;
+	if (val != KB_RESET_DONE) {
+#ifdef DEBUG
+		printf("stray val %d\n", val);
+#endif
+		return(0);
+	}
+#ifdef DEBUG
+	printf("ok\n");
+#endif
+	return(0);
+}
+
+#endif
 	movl	1, %eax		/* present (: */
 	ret
 
@@ -75,9 +143,7 @@ ENTRY(kbd_probe)
 ENTRY(kbd_putc)
 	pushl	%ebp
 	movl	%esp, %ebp
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
+	pushal
 
 	movb	8(%ebp), %cl
 
@@ -86,16 +152,14 @@ ENTRY(kbd_putc)
 	movb	%cl, %al
 
 	movb	$0x0e, %ah
-	xorl	%ebx, %ebx
-	incl	%ebx
+	xorl	%bx, %bx
+	incl	%bx
 	int	$0x10		# display a byte
 
 	data32
 	call	_C_LABEL(real_to_prot)
 
-	popl	%edi
-	popl	%esi
-	popl	%ebx
+	popal
 	popl	%ebp
 	ret
 
@@ -144,11 +208,7 @@ ENTRY(kbd_getc)
 #			ZF  = set
 */
 ENTRY(kbd_ischar)
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%ebx
-	pushl	%esi
-	pushl	%edi
+	pushal
 
 	call	_C_LABEL(prot_to_real)
 
@@ -162,9 +222,10 @@ ENTRY(kbd_ischar)
 	call	_C_LABEL(real_to_prot)
 
 	movzbl	%bl, %eax
+	movl	%eax, 1f
 
-	popl	%edi
-	popl	%esi
-	popl	%ebx
-	popl	%ebp
+	popal
+	movl	1f, %eax
 	ret
+1:	.long	0
+

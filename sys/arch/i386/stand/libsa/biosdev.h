@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.2 1997/03/31 03:12:10 weingart Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.3 1997/03/31 23:06:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -59,6 +59,9 @@ int	com_probe __P((void));
 void	com_putc __P((int c));
 int	com_getc __P((void));
 int	com_ischar __P((void));
+
+/* biosmem.S */
+u_int	biosmem __P((int));
 
 /* biostime.S */
 void	usleep __P((u_long));

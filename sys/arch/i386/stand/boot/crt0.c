@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.1 1997/03/31 03:12:04 weingart Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.2 1997/03/31 23:06:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -61,15 +61,9 @@ domap()
 {
 	extern char end[];
 	register caddr_t p = (caddr_t)(((u_long)end + PGOFSET) & ~PGOFSET);
-	register size_t sz = 0x10000 - (u_long)p - NBPG;
-
-#ifdef DEBUG
-	/* we are low on memory w/ the DEBUG defined ); */
-	sz = 40 * NBPG;
-#endif
 
 	/* map heap */
-	if ( (p = ummap(p, sz, PROT_READ|PROT_WRITE,
+	if ( (p = ummap(p, 32*NBPG, PROT_READ|PROT_WRITE,
 		   MAP_FIXED|MAP_ANON, -1, 0)) == (caddr_t)-1) {
 		printf("mmap failed: %d\n", errno);
 		uexit(1);

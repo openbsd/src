@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.1 1997/03/31 03:12:03 weingart Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.2 1997/03/31 23:06:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -36,8 +36,13 @@
 #include <string.h>
 #include <libsa.h>
 #include "cmd.h"
+#ifndef _TEST
+#include <biosdev.h>
+#endif
 
-static struct cmd_table {
+extern int debug;
+
+const struct cmd_table {
 	char *cmd_name;
 	int cmd_id;
 } cmd_table[] = {
@@ -45,6 +50,9 @@ static struct cmd_table {
 	{"boot",   CMD_BOOT},
 	{"cd",     CMD_CD},
 	{"device", CMD_DEVICE},
+#ifdef DEBUG	
+	{"debug",  CMD_DEBUG},
+#endif
 	{"help",   CMD_HELP},
 	{"image",  CMD_IMAGE},
 	{"ls",     CMD_LS},
@@ -54,103 +62,130 @@ static struct cmd_table {
 	{NULL, 0},
 };
 
-extern char version[];
-void ls __P((char *, register struct stat *));
-char skipblnk __P((void));
+extern const char version[];
+static void ls __P((char *, register struct stat *));
+static char *skipblnk __P((register char *));
+static int readline __P((register char *, int));
 
-char cmd_buf[133];
+char *cmd_buf = NULL;
 
 int
 getcmd(cmd)
-	register struct cmd_state *cmd;
+	struct cmd_state *cmd;
 {
-	register struct cmd_table *ct = cmd_table;
-	register char *p = cmd_buf; /* input */
-	register char ch;
-	int len;
+	register const struct cmd_table *ct = cmd_table;
+	register char *p = cmd_buf, *q; /* input */
+
+	if (cmd_buf == NULL)
+		p = cmd_buf = alloc(133);
 
 	cmd->rc = 0;
 	cmd->argc = 1;
 
-	for (len = cmd->timeout; len-- && !ischar(); );
-
-	if (len < 0) {
+	if (!readline(cmd_buf, cmd->timeout)) {
 		cmd->cmd = CMD_BOOT;
 		cmd->argv[0] = cmd_table[CMD_BOOT].cmd_name;
 		cmd->argv[1] = NULL;
 		return 0;
 	}
 
-	ch = skipblnk();
+	p = skipblnk(cmd_buf);
 
-	for (len = 0; ch != '\n' &&
-		     ch != ' ' && ch != '\t'; len++, ch = getchar())
-		*p++ = ch;
+	/* command */
+	for ( q = p; *p != '\0' && *p != ' ' && *p != '\t'; p++);
 	*p = '\0';
 
-	if (len == 0 && ch == '\n') {
-		cmd->cmd = CMD_NOPE;
-		return 0;
-	}
-
-	while (ct->cmd_name != NULL &&
-	       strncmp(cmd_buf, ct->cmd_name, len))
+	while (ct->cmd_name != NULL && strncmp(q, ct->cmd_name, (p - q)))
 		ct++;
 
 	if (ct->cmd_name == NULL) {
-		cmd->cmd = CMD_ERROR;
-		cmd->argv[0] = ct->cmd_name;
+		cmd->cmd = CMD_BOOT;
+		cmd->argv[0] = cmd_table[CMD_BOOT].cmd_name;
+		cmd->argv[1] = skipblnk(cmd_buf);
+		cmd->argv[2] = NULL;
+		cmd->argc++;
 		return 0;
 	}
 
 	cmd->cmd = ct->cmd_id;
 	cmd->argv[0] = ct->cmd_name;
-	if (ct->cmd_name != NULL) {
-		while (ch != '\n') {
-
-			ch = skipblnk();
-
-			if (ch != '\n') {
-				cmd->argv[cmd->argc] = p;
-				*p++ = ch;
-				for (len = 0; (ch = getchar()) != '\n' &&
-					     ch != ' ' && ch != '\t'; len++)
-					*p++ = ch;
-				*p++ = '\0';
-				if (len != 0)
-					cmd->argc++;
-			}
-		}
-		cmd->argv[cmd->argc] = NULL;
+	for (p++; *(p = skipblnk(p)) != '\0'; *p++ = '\0') {
+		cmd->argv[cmd->argc++] = q = p;
+		for (; *p && *p != '\t' && *p != ' '; p++);
 	}
+	cmd->argv[cmd->argc] = NULL;
 
 	return cmd->rc;
 }
 
-char
-skipblnk()
+static int
+readline(p, to)
+	register char *p;
+	int	to;
 {
-	register char ch;
+	char *buf = p, ch;
+	int i;
 
+	for (i = to; i-- && !ischar(); )
+#ifndef _TEST
+		usleep(100000);
+#else
+		;
+#endif
+	if (i < 0)
+		return 0;
+
+	while (1) {
+		switch (ch = getchar()) {
+		case '\n':
+			p[1] = *p = '\0';
+			break;
+		case '\b':
+			if (p > buf) {
+				putchar('\b');
+				putchar(' ');
+				putchar('\b');
+				p--;
+			}
+			continue;
+		default:
+			*p++ = ch;
+			continue;
+		}
+		break;
+	}
+	return p - buf;
+}
+
+char *
+skipblnk(p)
+	register char *p;
+{
 	/* skip blanks */
-	while ((ch = getchar()) != '\n' &&
-	       (ch == ' ' || ch == '\t'));
+	while (*p == '\t' || *p == ' ')
+		p++;
 
-	return ch;
+	return p;
 }
 
 int
 execmd(cmd)
-	register struct cmd_state *cmd;
+	struct cmd_state *cmd;
 {
 	struct stat sb;
 	int fd;
 	register char *p, *q;
-	register struct cmd_table *ct;
+	register const struct cmd_table *ct;
 
 	cmd->rc = 0;
-
 	switch (cmd->cmd) {
+
+#ifdef DEBUG
+	case CMD_DEBUG:
+		debug = !debug;
+		printf("debug is %s\n", debug? "on": "off");
+		break;
+#endif
 
 	case CMD_HELP:
 		printf("commands: ");
@@ -198,9 +233,12 @@ execmd(cmd)
 
 	case CMD_LS:
 		{
-			q = cmd->argv[1] == NULL? "." : cmd->argv[1];
-			sprintf(cmd->path, "%s%s%s",
-				cmd->bootdev, cmd->cwd, q);
+			if (cmd->argv[1] != NULL)
+				strncpy (cmd->path, cmd->argv[1],
+					 sizeof(cmd->path));
+			else
+				sprintf(cmd->path, "%s%s/.",
+					cmd->bootdev, cmd->cwd);
 
 			if (stat(cmd->path, &sb) < 0) {
 				printf("stat(%s): %d\n", cmd->path, errno);
@@ -208,7 +246,7 @@ execmd(cmd)
 			}
 
 			if ((sb.st_mode & S_IFMT) != S_IFDIR)
-				ls(q, &sb);
+				ls(cmd->path, &sb);
 			else {
 				if ((fd = opendir(cmd->path)) < 0) {
 					printf ("opendir(%s): %d\n",
@@ -216,18 +254,18 @@ execmd(cmd)
 					break;
 				}
 
-				p = cmd->path + strlen(cmd->path);
+				/* no strlen in lib !!! */
+				for (p = cmd->path; *p; p++);
 				*p++ = '/';
 				*p = '\0';
 
-				while(readdir(fd, p) >= 0 && *p != '\0') {
+				while(readdir(fd, p) >= 0) {
 
-					if (stat(cmd->path, &sb) < 0) {
+					if (stat(cmd->path, &sb) < 0)
 						printf("stat(%s): %d\n",
 						       cmd->path, errno);
-						break;
-					}
-					ls(p, &sb);
+					else
+						ls(p, &sb);
 				}
 
 				closedir (fd);
@@ -276,22 +314,31 @@ execmd(cmd)
 		break;
 
 	case CMD_SET:
-		printf("OpenBSD boot version %s\n"
+		printf("OpenBSD/i386 boot version %s(debug is %s)\n"
 		       "device:\t%s\n"
 		       "cwd:\t%s\n"
 		       "image:\t%s\n"
 		       "load at:\t%p\n"
 		       "timeout:\t%d\n",
-		       version, cmd->bootdev, cmd->cwd, cmd->image,
+		       version,
+#ifdef DEBUG
+		       (debug? "on": "off"),
+#endif
+		       cmd->bootdev, cmd->cwd, cmd->image,
 		       cmd->addr, cmd->timeout);
 		break;
 
 	case CMD_REBOOT:
-		exit(1);
+		cmd->rc = -1;
 		break;
 
 	case CMD_BOOT:
-		return 1;
+		if (cmd->argc > 1)
+			strncpy(cmd->path, cmd->argv[1], sizeof(cmd->path));
+		else
+			sprintf(cmd->path, "%s%s%s", cmd->bootdev,
+				cmd->cwd, cmd->image);
+		cmd->rc = 1;
 		break;
 
 	case CMD_ERROR:
@@ -319,7 +366,7 @@ ls(name, sb)
 	lsrwx(sb->st_mode >> 3, (sb->st_mode & S_ISUID? "sS" : "x-"));
 	lsrwx(sb->st_mode     , (sb->st_mode & S_ISTXT? "tT" : "x-"));
 
-	printf (" %s\tuid=%u\tgid=%u\t%lu\n", name, sb->st_uid, sb->st_gid,
-		(u_long)sb->st_size);
+	printf (" %u,%u\t%lu\t%s\n", sb->st_uid, sb->st_gid,
+		(u_long)sb->st_size, name);
 }
 

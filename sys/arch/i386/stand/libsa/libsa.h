@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.2 1997/03/31 03:12:14 weingart Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.3 1997/03/31 23:06:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,12 +34,10 @@
 
 #include <stand.h>
 
-void startprog __P((char *addr, int argv[]));
-void gateA20 __P((int on));
-int memsize __P((int which));
-int memprobe __P((void));
+void gateA20 __P((int));
+void memprobe __P((void));
 
-extern dev_t	bootdev, maj, unit, part;
-extern u_long	cyloffset;
-extern u_long	ourseg, esym;
+extern u_long	codeseg;
 extern int	boothowto;
+extern u_int	cnvmem, extmem;
+extern const char bdevs[19][4];

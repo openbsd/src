@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscom.S,v 1.2 1997/03/31 03:12:09 weingart Exp $	*/
+/*	$OpenBSD: bioscom.S,v 1.3 1997/03/31 23:06:26 mickey Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,7 +26,7 @@
  * the rights to redistribute these changes.
  *
  *	from: Mach, Revision 2.2  92/04/04  11:34:26  rpd
- *	$Id: bioscom.S,v 1.2 1997/03/31 03:12:09 weingart Exp $
+ *	$Id: bioscom.S,v 1.3 1997/03/31 23:06:26 mickey Exp $
  */
 
 /*
@@ -71,8 +71,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <machine/asm.h>
 
+	.data
 port:
-	.long	0x3f8
+	.long	0x2f8
 
 	.text
 
@@ -94,8 +95,9 @@ port:
  *	probe com[0-3] ports and store first found in 'port' variable
  */
 ENTRY(com_probe)
-	push	%ebp
-	mov	%esp, %ebp
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%edx
 
 	/*
 	 * void init_serial(void)
@@ -132,9 +134,10 @@ ENTRY(com_probe)
 	addb	$5, %dl
 	jmp	1b
 2:
+	popl	%edx
+	popl	%ebp
 	xorl	%eax, %eax	# is present (:
 	incl	%eax
-	popl	%ebp
 	ret
 
 /*
@@ -146,6 +149,7 @@ ENTRY(com_probe)
 ENTRY(com_putc)
 	pushl	%ebp
 	movl	%esp, %ebp
+	pushl	%ebx
 
 	movl	$port, %edx	# line status reg
 	add	5, %edx
@@ -158,6 +162,7 @@ ENTRY(com_putc)
 	sub	$5, %edx	# TX output reg
 	outb	%al, %dx	# send this one
 
+	popl	%edx
 	popl	%ebp
 	ret
 
@@ -167,8 +172,7 @@ ENTRY(com_putc)
  */
 
 ENTRY(com_getc)
-	push	%ebp
-	movl	%esp, %ebp
+	pushl	%edx
 
 	movl	$port, %edx	# line status reg
 	addl	5, %edx
@@ -186,7 +190,7 @@ ENTRY(com_getc)
 	jne	2f
 	movb	$0x08, %eax	# look like BS
 2:
-	popl	%ebp
+	popl	%edx
 	ret
 
 /*
@@ -194,8 +198,7 @@ ENTRY(com_getc)
  *       if there is a character pending, return true; otherwise return 0
  */
 ENTRY(com_ischar)
-	push	%ebp
-	mov	%esp, %ebp
+	pushl	%edx
 
 	xorl	%eax, %eax
 	movl	$port, %edx	# line status reg
@@ -203,6 +206,6 @@ ENTRY(com_ischar)
 	inb	%dx, %al
 	andb	$0x01, %al		# RX char available?
 
-	pop	%ebp
+	pop	%edx
 	ret
 

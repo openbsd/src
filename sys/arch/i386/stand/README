@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.1 1997/03/31 03:11:59 weingart Exp $
+$OpenBSD: README,v 1.2 1997/03/31 23:06:04 mickey Exp $
 
 
 Ok, just a couple quick pointers to people hacking on this stuff.  These
@@ -19,10 +19,10 @@ The basics of the /boot system is the following:
 biosboot: 512 bytes of the first sector on the disk/partition.  This loads
 /boot (or whatever you did with installboot) into ram.
 
-boot: relocates itself, and starts protected mode.  There is some magic here
-in terms of the placement and size of the various segments, as this piece of
-code has to switch between real and protected mode many times to load the
-next piece of the puzzle, /bsd.gz.
+boot: starts protected mode, and process simple command line.
+There is some magic here in terms of the placement and size of the various
+segments, as this piece of code has to switch between real and protected
+mode many times to load the next piece of the puzzle, /bsd.gz.
 
 bsd: The kernel itself, can be gzipped if ya want.
 

@@ -1,4 +1,5 @@
-/*	$OpenBSD: boot.c,v 1.2 1997/03/31 03:12:03 weingart Exp $	*/
+/*	$OpenBSD: boot.c,v 1.3 1997/03/31 23:06:20 mickey Exp $	*/
+
 /*
  * Copyright (c) 1997 Michael Shalayeff
  * All rights reserved.
@@ -34,90 +35,106 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/stat.h>
-#include <a.out.h>
-#include <sys/disklabel.h>
 #include <libsa.h>
 #include "cmd.h"
 
-/*
- * Boot program, loaded by boot block from remaing 7.5K of boot area.
- * Sifts through disklabel and attempts to load an program image of
- * a standalone program off the disk. If keyboard is hit during load,
- * or if an error is encounter, try alternate files.
- */
+char *kernels[] = { "bsd",     "bsd.gz",
+		    "obsd",    "obsd.gz",
+		    "bsd.old", "bsd.old.gz",
+		  NULL };
 
-char *kernels[] = {
-	"bsd", "bsd.gz",
-	"obsd", "obsd.gz",
-	"bsd.old", "bsd.old.gz",
-	NULL
-};
+extern	const char version[];
+int	boothowto;
+u_int	cnvmem, extmem;
 
-int	retry = 0;
-extern	char version[];
-extern dev_t bootdev;
-extern int boothowto;
-int	cnvmem, extmem, probemem;
+void	devboot __P((dev_t, char *));
 
-void	boot ();
-struct cmd_state cmd;
-
-/*
- * Boot program... loads /boot out of filesystem indicated by arguements.
- * We assume an autoboot unless we detect a misconfiguration.
- */
 void
-boot()
+boot(bootdev)
+	dev_t	bootdev;
 {
 	register char *bootfile = kernels[0];
+	register struct cmd_state *cmd;
 	register int i;
 
-
-	/* Get memory size */
-	cnvmem = memsize(0);
-	extmem = memsize(1);
+#ifdef DEBUG
+	*(u_int16_t*)0xb8148 = 0x4730;
+#endif
 	gateA20(1);
-	probemem = memprobe();
+#ifndef _TEST
+	memprobe();
+#endif
+#ifdef DEBUG
+	*(u_int16_t*)0xb8148 = 0x4f31;
+#endif
+	cons_probe();
 
+	printf("\n>> OpenBSD BOOT: %u/%u k [%s]\n", cnvmem, extmem, version);
 
 	/* XXX init cmd here to cut on .data !!! */
-	strncpy(cmd.bootdev,
-#ifdef _TEST
-		"/dev/rfd0a",
-#else
-		"fd(0,a)",
-#endif
-		sizeof(cmd.bootdev));
-	cmd.image[0] = '\0';
-	cmd.cwd[0] = '/';
-	cmd.cwd[1] = '\0';
-	cmd.addr = (void *)0x100000;
-	cmd.timeout = 50000;
-
-	printf("\n>> OpenBSD BOOT: %d/%d (%d) k [%s]\n",
-		cnvmem, extmem, probemem, version);
+	cmd = (struct cmd_state *)alloc(sizeof(*cmd));
+	devboot(bootdev, cmd->bootdev);
+	cmd->image[0] = '\0';
+	cmd->cwd[0] = '/';
+	cmd->cwd[1] = '\0';
+	cmd->addr = (void *)0x100000;
+	cmd->timeout = 50;
 
 	for (i = 0;;) {
 
-		strncpy(cmd.image, bootfile, sizeof(cmd.image));
+		strncpy(cmd->image, bootfile, sizeof(cmd->image));
 
 		do {
 			printf("boot> ");
-		} while(!getcmd(&cmd) && !execmd(&cmd));
+		} while(!getcmd(cmd) && !execmd(cmd));
 
-		sprintf(cmd.path, "%s%s%s", cmd.bootdev, cmd.cwd, bootfile);
-		printf("\nbooting %s: ", cmd.path);
-		exec (cmd.path, cmd.addr, boothowto);
+		if (cmd->rc < 0)
+			break;
+
+		printf("\nbooting %s: ", cmd->path);
+		exec (cmd->path, cmd->addr, boothowto);
 
 		if(kernels[++i] == NULL)
 			bootfile = kernels[i=0];
 		else
 			bootfile = kernels[i];
 
-		cmd.timeout += 20;
+		cmd->timeout += 20;
 
 		printf(" failed(%d)\nwill try %s\n", errno, bootfile);
 	}
+}
+
+void
+devboot(bootdev, p)
+	dev_t bootdev;
+	char *p;
+{
+#ifdef _TEST
+	*p++ = '/';
+	*p++ = 'd';
+	*p++ = 'e';
+	*p++ = 'v';
+	*p++ = '/';
+	*p++ = 'r';
+#endif
+	if (bootdev & 0x80)
+		*p++ = 'h';
+	else
+		*p++ = 'f';
+	*p++ = 'd';
+#ifndef _TEST
+	*p++ = '(';
+#endif
+	*p++ = '0' + (bootdev & 0x7f);
+#ifndef _TEST
+	*p++ = ',';
+#endif
+	*p++ = 'a';
+#ifndef _TEST
+	*p++ = ')';
+#endif
+	*p = '\0';
 }
 
 #ifdef _TEST

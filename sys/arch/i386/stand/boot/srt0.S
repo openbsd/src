@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.1 1997/03/31 03:12:05 weingart Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.2 1997/03/31 23:06:23 mickey Exp $	*/
 /*	$NetBSD: srt0.c,v 1.3 1994/10/27 04:21:59 cgd Exp $	*/
 
 /*-
@@ -39,13 +39,6 @@
  *	@(#)srt0.c	5.3 (Berkeley) 4/28/91
  */
 
-/*
- * Startup code for standalone system
- * Non-relocating version -- for programs which are loaded by boot
- * Relocating version for boot
- * Small relocating version for "micro" boot
- */
-
 #include <machine/psl.h>
 #define _LOCORE
 #include <machine/segments.h>
@@ -55,14 +48,69 @@
 	.globl	_edata
 	.globl	_boot
 	.globl	__rtt
+	.globl	_Gdtr
+#ifndef NO_IDTR
+	.globl	_Idtr_prot
+#endif
+	.globl	_codeseg
+
+	.text
+	.globl	start_boot
+start_boot:
+#ifdef DEBUG
+	movl	$0xb80a0, %ebx
+	movl	$0x07420742, (%ebx)
+#endif
+
+	lgdt	_Gdtr
+	ljmp	$8, $1f
+1:	
+	movw	$0x10, %ax
+	movl	%ax, %ds
+	movl	%ax, %ss
+	movl	%ax, %es
+	movl	%ax, %fs
+	movl	%ax, %gs
+
+#ifdef DEBUG
+	movl	$0xb80a4, %ebx
+	movl	$0x07520752, (%ebx)
+#endif
+
+	popl	%eax
+	cmpl	$BOOTMAGIC, %eax
+	je	1f
+#ifdef DEBUG
+	movl	$0xb80a8, %ebx
+	movl	$0x4741474d, (%ebx)
+#endif
+1:
+	/* zero .bss */
+	xorl	%eax, %eax
+	movl	$_end, %ecx
+	subl	$_edata,%ecx
+	movl	$_edata, %edi
+	cld
+	rep;	stosb
+
+	call	_boot
+
+__rtt:
+#ifdef DEBUG
+	movl	$0xb8000, %ebx
+	movl	$0x4f514f51, (%ebx)
+	hlt
+#endif
+	movl	$-7, %eax
+	movw	$0x1234, %ax
+	movw	%ax, 0x472	# warm boot
+	movl	$0, %esp	# segment violation
+	ret
 
 	.data
-	.globl	_Gdtr
-	.align	2
-_Gdtr:	.word	4 * 8 - 1
-	.long	2f
+
 	.align	3
-2:		/* 0x00 : null */
+gdt:		/* 0x00 : null */
 	.long	0, 0
 		/* 0x08 : flat code */
 	.word	0xFFFF			# lolimit
@@ -82,177 +130,11 @@ _Gdtr:	.word	4 * 8 - 1
 	.word	0xFFFF			# lolimit
 	.word	0			# lobase
 	.byte	0			# midbase
-	.byte	SDT_MEMERC | 0 | 0x80	# RWXAC, dpl = 0, present
-	.byte	0x0 | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
+	.byte	SDT_MEMERAC | 0 | 0x80	# RWXAC, dpl = 0, present
+	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
 	.byte	0			# hibase
+_Gdtr:	.word	. - gdt
+	.long	gdt
+	.word	0
 
-	.globl	_codeseg
-	.globl	_bootdev
-	.globl	_boothowto
-	.globl	_cyloffset
 _codeseg:	.long	0
-_bootdev:	.long	0
-_boothowto:	.long	0
-_cyloffset:	.long	0
-_esym:		.long	0
-
-	.text
-text_start:
-
-#define	NOP	inb $0x84,%al ; inb $0x84,%al
-
-	.globl	start_boot
-
-start_boot:
-	pushl	%ebp
-	movl	%esp, %ebp
-
-#ifdef	REL
-	/* relocate code+data */
-	call	1f
-1:	popl	%esi
-	subl	$1b, %esi
-	addl	$text_start, %esi	/* %esi = %eip - (1b - text_start) */
-	subl	$0x20, %esi			/* XXX - Fudge factor for header */
-	movl	$REL, %edi
-	movl	$_edata, %ecx
-	subl	$text_start, %ecx
-	shrl	$2, %ecx
-	incl	%ecx
-	cld
-	rep
-	movsl
-#endif /* REL */
-
-	lgdt	_Gdtr
-
-	/* The following should *not* be moved before the lgdt.
-	 * Trust me, bad things will happen!
-	 * Start executing from relocated code
-	 */
-	movl	$0x10, %eax
-	movl	%eax, %ds
-	movl	%eax, %es
-	movl	%eax, %fs
-	movl	%eax, %gs
-	movl	%eax, %ss
-	ljmp	$0x8,$docs
-docs:
-	nop
-
-	/* XXX - I don't know if the following is right */
-	movl    8(%ebp), %eax
-	movl	%eax, _boothowto
-	movl    12(%ebp),%eax
-	movl    %eax, _bootdev
-	movl    16(%ebp),%eax
-	movl    %eax, _cyloffset
-	movl    20(%ebp),%eax
-	movl    %eax, _esym
-
-	/* save old stack state */
-	movl	%esp,savearea
-	movl	%ebp,savearea+4
-
-	/* setup stack pointer */
-#ifdef	REL
-	movl	$0xfffc, %esp
-#else	
-	movl	$_end, %eax
-	addl	$10000, %eax
-	movl	%eax, %esp
-#endif
-
-	/* clear memory as needed */
-	movl	%esp,%esi
-	movl	$_end, %eax
-	subl	$_edata,%eax
-	pushl	%eax
-	pushl	$0
-	pushl	$_edata
-	call	_memset
-	#call	_kbdreset	/* resets keyboard and gatea20 brain damage */
-	movl	%esi,%esp
-
-	pushl	__rtt
-	ljmp	$0x8, $_boot	/* Jmp to boot code */
-
-	.data
-
-savearea:	.long	0,0	# sp & bp to return to
-
-	.text
-
-__rtt:
-	movl	$-7,%eax
-#ifdef	REL
-	movw	$0x1234,%ax
-	movw	%ax,0x472	# warm boot
-	movl	$0,%esp		# segment violation
-	ret
-#else
-	movl	savearea,%esp
-	movl	savearea+4,%ebp
-	ret
-#endif
-
-	.globl	_inb
-_inb:	movl	4(%esp),%edx
-	subl	%eax,%eax	# clr eax
-	NOP
-	inb	%dx,%al
-	ret
-
-	.globl	_outb
-_outb:	movl	4(%esp),%edx
-	NOP
-	movl	8(%esp),%eax
-	outb	%al,%dx
-	ret
-
-	.globl ___udivsi3
-___udivsi3:
-	movl 4(%esp),%eax
-	xorl %edx,%edx
-	divl 8(%esp)
-	ret
-
-	.globl ___divsi3
-___divsi3:
-	movl 4(%esp),%eax
-	xorl %edx,%edx
-	cltd
-	idivl 8(%esp)
-	ret
-
-	.globl	_insw
-_insw:
-	pushl	%edi
-	movw	8(%esp),%dx
-	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
-	NOP
-	cld
-	nop
-	.byte 0x66,0xf2,0x6d	# rep insw
-	nop
-	movl	%edi,%eax
-	popl	%edi
-	ret
-
-	# outsw(port,addr,cnt)
-	.globl	_outsw
-_outsw:
-	pushl	%esi
-	movw	8(%esp),%dx
-	movl	12(%esp),%esi
-	movl	16(%esp),%ecx
-	NOP
-	cld
-	nop
-	.byte 0x66,0xf2,0x6f	# rep outsw
-	nop
-	movl	%esi,%eax
-	popl	%esi
-	ret
-

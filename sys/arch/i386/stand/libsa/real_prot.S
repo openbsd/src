@@ -1,4 +1,4 @@
-/*	$OpenBSD: real_prot.S,v 1.2 1997/03/31 03:12:16 weingart Exp $	*/
+/*	$OpenBSD: real_prot.S,v 1.3 1997/03/31 23:06:31 mickey Exp $	*/
 
 /*
  * Mach Operating System
@@ -26,7 +26,6 @@
  * the rights to redistribute these changes.
  *
  *	from: Mach, Revision 2.2  92/04/04  11:34:13  rpd
- *	$Id: real_prot.S,v 1.2 1997/03/31 03:12:16 weingart Exp $
  */
 
 
@@ -77,9 +76,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 	transfer from real mode to protected mode.
  */
 
-.align 4,0x90
 ENTRY(real_to_prot)
-	/* guarantee that interrupt is disabled when in prot mode */
+	/* guarantee that interrupts are disabled when in prot mode */
 	cli
 
 	/* load the gdtr */
@@ -108,6 +106,8 @@ ENTRY(real_to_prot)
 	movl	%ax, %ds
 	movl	%ax, %ss
 	movl	%ax, %es
+	movl	%ax, %fs
+	movl	%ax, %gs
 
 #ifndef NO_IDTR
 	/* load idtr so we can debug */
@@ -122,44 +122,33 @@ ENTRY(real_to_prot)
  * 
  */
 
-.align 4,0x90
 ENTRY(prot_to_real)
 
-	/*
-	 * This is self-modifying code, but we need a writable
-	 * code segment, and an intersegment return does not give us that.
-	 */
-	movw 	_codeseg, %ax
-	pushw	%ax
-	movw	$2f, %ax
-	pushw	%ax
+	movl 	_codeseg, %eax
+	# movw	%ax, 2f
 
 	/* Change to use16 mode. */
 	ljmp	$0x18, $1f
-
-1:	/* clear the PE bit of CR0 */
+1:
+	/* clear the PE bit of CR0 */
 	movl	%cr0, %eax
 	data32
 	andl 	$~CR0_PE, %eax
 	movl	%eax, %cr0
 
-	/*
-	 * make intersegment jmp to flush the processor pipeline
-	 * using the fake stack frame set up earlier
-	 * and reload CS register
-	 */
-#if 0
-	hlt
-#endif
-	lret
-2:	/*
-	 * we are in real mode now
-	 * set up the real mode segment registers : DS, SS, ES
-	 */
+	data32
+	# ljmp	_codeseg, $2f
+	.byte	0xea
+	.long	3f
+2:	.word	0
+3:	
+	/* setup: %ds, %es, %ss */
 	movl	%cs, %ax
 	movl	%ax, %ds
 	movl	%ax, %ss
 	movl	%ax, %es
+	movl	%ax, %fs
+	movl	%ax, %gs
 #ifndef	NO_IDTR
 	/* load idtr so we can debug */
 	addr32

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.2 1997/03/31 03:12:12 weingart Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.3 1997/03/31 23:06:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,20 +35,25 @@
 #include <libsa.h>
 #include "biosdev.h"
 
+const char bdevs[19][4] = {
+	"wd", "", "fd", "wt", "sd", "st", "cd", "mcd",
+	"", "", "", "", "", "", "", "scd", "", "", "acd"
+};
+
 /* pass dev_t to the open routines */
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
 	struct devsw *dp = devsw;
-	register int i, rc = 0;
+	register int i, rc = 1;
 
 	*file = (char *)fname;
 
-	for (i = 0; i < ndevs ; dp++, i++)
-		if ((rc = (*dp->dv_open)(f, file))== 0) {
+	for (i = 0; i < ndevs && rc != 0; dp++, i++)
+		if ((rc = (*dp->dv_open)(f, file)) == 0) {
 			f->f_dev = dp;
 			return 0;
-		}
+	}
 
 	if ((f->f_flags & F_NODEV) == 0)
 		f->f_dev = dp;
@@ -60,9 +65,24 @@ void
 putchar(c)
 	int	c;
 {
-	putc(c);
-	if (c == '\n')
+	static int pos = 0;
+
+	switch(c) {
+	case '\t':
+		while(++pos % 8)
+			putc(' ');
+		break;
+	case '\n':
 		putc('\r');
+	case '\r':
+		putc(c);
+		pos=0;
+		break;
+	default:
+		putc(c);
+		pos++;
+		break;
+	}
 }
 
 int
@@ -80,3 +100,4 @@ getchar()
 
 	return(c);
 }
+
