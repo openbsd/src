@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsdb.8,v 1.13 2000/03/18 22:55:57 aaron Exp $
+.\"	$OpenBSD: fsdb.8,v 1.14 2002/12/15 22:52:57 fgsch Exp $
 .\"	$NetBSD: fsdb.8,v 1.5 1997/01/11 05:51:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,8 +90,9 @@ as the new current inode.
 .It Cm back
 Revert to the previously current inode.
 .Pp
-.It Cm clri
-Clear the current inode.
+.It Cm clri Ar i-number
+Clear the inode
+.Ar i-number .
 .Pp
 .It Cm lookup Ar name , Cm cd Ar name
 Find
