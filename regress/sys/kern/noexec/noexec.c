@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.7 2003/07/31 21:48:09 deraadt Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.8 2003/09/25 23:35:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -182,67 +182,72 @@ main(int argc, char *argv[])
 	p = NULL;
 	func = &noexec;
 	size = TESTSZ;
-	while ((ch = getopt(argc, argv, "TDBHSmps")) != -1)
+	while ((ch = getopt(argc, argv, "TDBHSmps")) != -1) {
+		if (p == NULL) {
+			switch (ch) {
+			case 'T':
+				p = &testfly;
+				(void) strlcat(label, "text", sizeof(label));
+				continue;
+			case 'D':
+				p = &data[(PAD + page_size) / 8];
+				p = (void *)((long)p & ~(page_size - 1));
+				(void) strlcat(label, "data", sizeof(label));
+				continue;
+			case 'B':
+				p = &bss[(PAD + page_size) / 8];
+				p = (void *)((long)p & ~(page_size - 1));
+				(void) strlcat(label, "bss", sizeof(label));
+				continue;
+			case 'H':
+				p = malloc(size + 2 * page_size);
+				if (p == NULL)
+					err(2, "malloc");
+				p += page_size;
+				p = (void *)((long)p & ~(page_size - 1));
+				(void) strlcat(label, "heap", sizeof(label));
+				continue;
+			case 'S':
+				p = getaddr(&stack);
+				(void) strlcat(label, "stack", sizeof(label));
+				continue;
+			case 's':	/* only valid for heap and size */
+				size = strtoul(optarg, &ep, 0);
+				if (size > ULONG_MAX)
+					errno = ERANGE;
+				if (errno)
+					err(1, "invalid size: %s", optarg);
+				if (*ep)
+					errx(1, "invalid size: %s", optarg);
+				continue;
+			}
+		}
 		switch (ch) {
-		case 'T':
-			p = &testfly;
-			strcat(label, "text");
-			break;
-		case 'D':
-			p = &data[(PAD + page_size) / 8];
-			p = (void *)((long)p & ~(page_size - 1));
-			strcat(label, "data");
-			break;
-		case 'B':
-			p = &bss[(PAD + page_size) / 8];
-			p = (void *)((long)p & ~(page_size - 1));
-			strcat(label, "bss");
-			break;
-		case 'H':
-			p = malloc(size + 2 * page_size);
-			if (p == NULL)
-				err(2, "malloc");
-			p += page_size;
-			p = (void *)((long)p & ~(page_size - 1));
-			strcat(label, "heap");
-			break;
-		case 'S':
-			p = getaddr(&stack);
-			strcat(label, "stack");
-			break;
-		case 's':	/* only valid for heap and size */
-			size = strtoul(optarg, &ep, 0);
-			if (size > ULONG_MAX)
-				errno = ERANGE;
-			if (errno)
-				err(1, "invalid size: %s", optarg);
-			if (*ep)
-				errx(1, "invalid size: %s", optarg);
-			break;
 		case 'm':
 			if (p) {
 				if ((ptr = mmap(p, size + 2 * page_size,
 				    PROT_READ|PROT_WRITE,
 				    MAP_ANON|MAP_FIXED, -1, 0)) == MAP_FAILED)
 					err(1, "mmap");
-				strcat(label, "-mmap");
+				(void) strlcat(label, "-mmap", sizeof(label));
 			} else {
 				if ((ptr = mmap(p, size + 2 * page_size,
 				    PROT_READ|PROT_WRITE|PROT_EXEC,
 				    MAP_ANON, -1, 0)) == MAP_FAILED)
 					err(1, "mmap");
 				func = &noexec_mmap;
-				strcat(label, "mmap");
+				(void) strlcat(label, "mmap", sizeof(label));
 			}
 			p = ptr;
 			break;
 		case 'p':
 			func = &noexec_mprotect;
-			strcat(label, "-mprotect");
+			(void) strlcat(label, "-mprotect", sizeof(label));
 			break;
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
