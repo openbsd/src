@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.2 1998/03/16 09:03:06 pefo Exp $ */
+/*	$OpenBSD: frame.h,v 1.3 1998/09/15 10:50:12 pefo Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -35,7 +35,80 @@
 #define	_MACHINE_FRAME_H_
 
 struct trap_frame {
-	int	reg[NUMSAVEREGS];
+	register_t	zero;
+	register_t	ast;
+	register_t	v0;
+	register_t	v1;
+	register_t	a0;
+	register_t	a1;
+	register_t	a2;
+	register_t	a3;
+	register_t	t0;
+	register_t	t1;
+	register_t	t2;
+	register_t	t3;
+	register_t	t4;
+	register_t	t5;
+	register_t	t6;
+	register_t	t7;
+	register_t	s0;
+	register_t	s1;
+	register_t	s2;
+	register_t	s3;
+	register_t	s4;
+	register_t	s5;
+	register_t	s6;
+	register_t	s7;
+	register_t	t8;
+	register_t	t9;
+	register_t	k0;
+	register_t	k1;
+	register_t	gp;
+	register_t	sp;
+	register_t	s8;
+	register_t	ra;
+	register_t	sr;
+	register_t	mullo;
+	register_t	mulhi;
+	register_t	badvaddr;
+	register_t	cause;
+	register_t	pc;
+
+/* From here and on, only saved user processes. */
+
+	f_register_t	f0;
+	f_register_t	f1;
+	f_register_t	f2;
+	f_register_t	f3;
+	f_register_t	f4;
+	f_register_t	f5;
+	f_register_t	f6;
+	f_register_t	f7;
+	f_register_t	f8;
+	f_register_t	f9;
+	f_register_t	f10;
+	f_register_t	f11;
+	f_register_t	f12;
+	f_register_t	f13;
+	f_register_t	f14;
+	f_register_t	f15;
+	f_register_t	f16;
+	f_register_t	f17;
+	f_register_t	f18;
+	f_register_t	f19;
+	f_register_t	f20;
+	f_register_t	f21;
+	f_register_t	f22;
+	f_register_t	f23;
+	f_register_t	f24;
+	f_register_t	f25;
+	f_register_t	f26;
+	f_register_t	f27;
+	f_register_t	f28;
+	f_register_t	f29;
+	f_register_t	f30;
+	f_register_t	f31;
+	register_t	fsr;
 };
 
 #endif	/*_MACHINE_FRAME_H_*/

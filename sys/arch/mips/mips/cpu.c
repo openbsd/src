@@ -1,7 +1,7 @@
-/*	$OpenBSD: cpu.c,v 1.3 1998/07/11 21:41:15 imp Exp $ */
+/*	$OpenBSD: cpu.c,v 1.4 1998/09/15 10:50:12 pefo Exp $ */
 
 /*
- * Copyright (c) 1997 Per Fogelstrom
+ * Copyright (c) 1997, 1998 Per Fogelstrom, Opsycon AB
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,7 +14,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed under OpenBSD by
- *	Per Fogelstrom.
+ *	Per Fogelstrom, Opsycon AB, Sweden.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -193,16 +193,17 @@ cpuattach(parent, dev, aux)
 	printf(" Rev. %d.%d", fpu_id.cpu.cp_majrev, fpu_id.cpu.cp_minrev);
 	printf("\n");
 
-	printf("Primary cache size: %dkb Instruction, %dkb Data.",
+	printf("\tL1 Cache I size %dkb(%d line),",
 		CpuPrimaryInstCacheSize / 1024,
-		CpuPrimaryDataCacheSize / 1024);
+		CpuPrimaryInstCacheLSize);
+	printf(" D size %dkb(%d line), ",
+		CpuPrimaryDataCacheSize / 1024,
+		CpuPrimaryDataCacheLSize);
 	if(CpuTwoWayCache)
-		printf(" Two way set associative.\n");
+		printf("two way.\n");
 	else
-		printf(" Direct mapped.\n");
+		printf("direct mapped.\n");
 
-	if(l2cache_is_snooping)
-		printf("Missing L2 cache or Snooping L2 cache.\n");
-	else
-		printf("No Snooping L2 cache!\n");
+	printf("\t%s snoop uncached cpu accesses.\n", l2cache_is_snooping ?
+		"No L2 cache or L2 cache" : "L2 cache doesn't");
 }

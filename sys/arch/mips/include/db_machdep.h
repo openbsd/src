@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.1 1998/03/16 09:03:05 pefo Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.2 1998/09/15 10:50:12 pefo Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -35,7 +35,6 @@
 #ifndef	_MACHINE_DB_MACHDEP_H_
 #define	_MACHINE_DB_MACHDEP_H_
 
-#include <machine/regnum.h>
 #include <machine/frame.h>
 #include <machine/trap.h>
 #include <vm/vm_param.h>
@@ -58,7 +57,7 @@ db_addr_t	next_instr_address __P((db_addr_t, boolean_t));
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAK)
 #define IS_WATCHPOINT_TRAP(type, code)	(0)	/* XXX mips3 watchpoint */
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->reg[PC])
+#define	PC_REGS(regs)	((db_addr_t)(regs)->pc)
 #define DDB_REGS	(&ddb_regs)
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archtype.h,v 1.3 1998/06/06 06:33:31 mickey Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.4 1998/09/15 10:50:12 pefo Exp $	*/
 /*
  * Copyright (c) 1997 Per Fogelstrom
  * 
@@ -58,6 +58,9 @@
 #define	ALGOR_CLASS		0x20	/* Algorithmics Class */
 #define	ALGOR_P4032		0x21	/* ALGORITHMICS P-4032 */
 #define	ALGOR_P5064		0x22	/* ALGORITHMICS P-5064 */
+
+#define	GALILEO_CLASS		0x30	/* Galileo PCI based Class */
+#define	GALILEO_G9		0x31	/* Galileo GT-64011 Eval board */
 
 extern int system_type;		/* Global system type indicator */
 

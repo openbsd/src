@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.1 1998/01/28 11:14:51 pefo Exp $	*/
+/*	$OpenBSD: proc.h,v 1.2 1998/09/15 10:50:12 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  * Machine-dependent part of the proc structure.
  */
 struct mdproc {
-	int	*md_regs;		/* registers on current frame */
+	struct trap_frame *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_upte[UPAGES];	/* ptes for mapping u page */
 	int	md_ss_addr;		/* single step address for ptrace */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.1 1998/01/28 12:12:09 pefo Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.2 1998/09/15 10:50:13 pefo Exp $	*/
 /*
  * Copyright (c) 1994 Adam Glass   
  * Copyright (c) 1993 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.1 1998/01/28 12:12:09 pefo Exp $
+ *	$Id: process_machdep.c,v 1.2 1998/09/15 10:50:13 pefo Exp $
  */
 
 /*
@@ -74,7 +74,9 @@
 #include <sys/ptrace.h>
 #include <machine/pte.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
+#include <machine/frame.h>
+
+#define	REGSIZE sizeof(struct trap_frame)
 
 extern void cpu_singlestep __P((struct proc *));
 int
@@ -82,7 +84,7 @@ process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	bcopy((caddr_t)p->p_md.md_regs, (caddr_t)regs, sizeof(struct reg));
+	bcopy((caddr_t)p->p_md.md_regs, (caddr_t)regs, REGSIZE);
 	return (0);
 }
 
@@ -91,7 +93,7 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
-	bcopy((caddr_t)regs, (caddr_t)p->p_md.md_regs, sizeof(struct reg));
+	bcopy((caddr_t)regs, (caddr_t)p->p_md.md_regs, REGSIZE);
 /*XXX Clear to user set bits!! */
 	return (0);
 }
@@ -110,7 +112,7 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-	p->p_md.md_regs[PC] = (int)addr;
+	p->p_md.md_regs->pc = (int)addr;
 	return (0);
 }
 

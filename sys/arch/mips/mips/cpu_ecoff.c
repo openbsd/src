@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu_ecoff.c,v 1.1 1998/01/28 12:12:07 pefo Exp $	*/
+/*	$OpenBSD: cpu_ecoff.c,v 1.2 1998/09/15 10:50:12 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
 #include <sys/resourcevar.h>
 #include <vm/vm.h>
 
-#include <machine/reg.h>
+#include <machine/frame.h>
 
 #if defined(_KERN_DO_ECOFF)
 #include <sys/exec_ecoff.h>
@@ -66,7 +66,7 @@ cpu_exec_ecoff_setregs(p, pack, stack, retval)
 	setregs(p, pack, stack, retval);
 	eap = (struct ecoff_aouthdr *)
 	    ((caddr_t)pack->ep_hdr + sizeof(struct ecoff_filehdr));
-	p->p_md.md_regs[GP] = eap->ea_gp_value;
+	p->p_md.md_regs->gp = eap->ea_gp_value;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 1998/07/11 21:40:59 imp Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.4 1998/09/15 10:50:12 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -281,7 +281,6 @@
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
 #define	cpu_wait(p)		/* nothing */
-#define cpu_set_init_frame(p, fp) /* nothing */
 #define cpu_swapout(p)		panic("cpu_swapout: can't get here");
 
 #ifndef _LOCORE
@@ -422,7 +421,9 @@ void	R4K_SetCOMPARE __P((u_int));
 void	R4K_FlushCache __P((void));
 void	R4K_FlushDCache __P((vm_offset_t, int));
 void	R4K_HitFlushDCache __P((vm_offset_t, int));
+void	R4K_InvalidateDCache __P((vm_offset_t, int));
 void	R4K_FlushICache __P((vm_offset_t, int));
+void	R4K_InvalidateICache __P((vm_offset_t, int));
 void	R4K_TLBFlush __P((int));
 void	R4K_TLBFlushAddr __P((vm_offset_t));
 void	R4K_TLBWriteIndexed __P((int, struct tlb *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.1 1998/01/28 11:14:58 pefo Exp $	*/
+/*	$OpenBSD: types.h,v 1.2 1998/09/15 10:50:12 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,8 +73,8 @@ typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
 
 typedef int32_t			register_t;
+typedef int32_t			f_register_t;
 
 #define	__SWAP_BROKEN
-#define __FORK_BRAINDAMAGE
 
 #endif	/* _MACHINE_TYPES_H_ */

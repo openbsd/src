@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.1 1998/03/16 09:03:25 pefo Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.2 1998/09/15 10:50:13 pefo Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -46,8 +46,8 @@
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>
 
-u_int MipsEmulateBranch __P((int *, int, int, u_int));
-void  stacktrace_subr __P((int *, int (*)(const char*, ...)));
+u_int MipsEmulateBranch __P((db_regs_t *, int, int, u_int));
+void  stacktrace_subr __P((db_regs_t *, int (*)(const char*, ...)));
 
 int   kdbpeek __P((int));
 void  kdbpoke __P((int, int));
@@ -57,43 +57,43 @@ int   db_active = 0;
 db_regs_t ddb_regs;
 
 struct db_variable db_regs[] = {
-    { "at",  (long *)&ddb_regs.reg[AST],     FCN_NULL },
-    { "v0",  (long *)&ddb_regs.reg[V0],      FCN_NULL },
-    { "v1",  (long *)&ddb_regs.reg[V1],      FCN_NULL },
-    { "a0",  (long *)&ddb_regs.reg[A0],      FCN_NULL },
-    { "a1",  (long *)&ddb_regs.reg[A1],      FCN_NULL },
-    { "a2",  (long *)&ddb_regs.reg[A2],      FCN_NULL },
-    { "a3",  (long *)&ddb_regs.reg[A3],      FCN_NULL },
-    { "t0",  (long *)&ddb_regs.reg[T0],      FCN_NULL },
-    { "t1",  (long *)&ddb_regs.reg[T1],      FCN_NULL },
-    { "t2",  (long *)&ddb_regs.reg[T2],      FCN_NULL },
-    { "t3",  (long *)&ddb_regs.reg[T3],      FCN_NULL },
-    { "t4",  (long *)&ddb_regs.reg[T4],      FCN_NULL },
-    { "t5",  (long *)&ddb_regs.reg[T5],      FCN_NULL },
-    { "t6",  (long *)&ddb_regs.reg[T6],      FCN_NULL },
-    { "t7",  (long *)&ddb_regs.reg[T7],      FCN_NULL },
-    { "s0",  (long *)&ddb_regs.reg[S0],      FCN_NULL },
-    { "s1",  (long *)&ddb_regs.reg[S1],      FCN_NULL },
-    { "s2",  (long *)&ddb_regs.reg[S2],      FCN_NULL },
-    { "s3",  (long *)&ddb_regs.reg[S3],      FCN_NULL },
-    { "s4",  (long *)&ddb_regs.reg[S4],      FCN_NULL },
-    { "s5",  (long *)&ddb_regs.reg[S5],      FCN_NULL },
-    { "s6",  (long *)&ddb_regs.reg[S6],      FCN_NULL },
-    { "s7",  (long *)&ddb_regs.reg[S7],      FCN_NULL },
-    { "t8",  (long *)&ddb_regs.reg[T8],      FCN_NULL },
-    { "t9",  (long *)&ddb_regs.reg[T9],      FCN_NULL },
-    { "k0",  (long *)&ddb_regs.reg[K0],      FCN_NULL },
-    { "k1",  (long *)&ddb_regs.reg[K1],      FCN_NULL },
-    { "gp",  (long *)&ddb_regs.reg[GP],      FCN_NULL },
-    { "sp",  (long *)&ddb_regs.reg[SP],      FCN_NULL },
-    { "s8",  (long *)&ddb_regs.reg[S8],      FCN_NULL },
-    { "ra",  (long *)&ddb_regs.reg[RA],      FCN_NULL },
-    { "sr",  (long *)&ddb_regs.reg[SR],      FCN_NULL },
-    { "lo",  (long *)&ddb_regs.reg[MULLO],   FCN_NULL },
-    { "hi",  (long *)&ddb_regs.reg[MULHI],   FCN_NULL },
-    { "bad", (long *)&ddb_regs.reg[BADVADDR],FCN_NULL },
-    { "cs",  (long *)&ddb_regs.reg[CAUSE],   FCN_NULL },
-    { "pc",  (long *)&ddb_regs.reg[PC],      FCN_NULL },
+    { "at",  (long *)&ddb_regs.ast,     FCN_NULL },
+    { "v0",  (long *)&ddb_regs.v0,      FCN_NULL },
+    { "v1",  (long *)&ddb_regs.v1,      FCN_NULL },
+    { "a0",  (long *)&ddb_regs.a0,      FCN_NULL },
+    { "a1",  (long *)&ddb_regs.a1,      FCN_NULL },
+    { "a2",  (long *)&ddb_regs.a2,      FCN_NULL },
+    { "a3",  (long *)&ddb_regs.a3,      FCN_NULL },
+    { "t0",  (long *)&ddb_regs.t0,      FCN_NULL },
+    { "t1",  (long *)&ddb_regs.t1,      FCN_NULL },
+    { "t2",  (long *)&ddb_regs.t2,      FCN_NULL },
+    { "t3",  (long *)&ddb_regs.t3,      FCN_NULL },
+    { "t4",  (long *)&ddb_regs.t4,      FCN_NULL },
+    { "t5",  (long *)&ddb_regs.t5,      FCN_NULL },
+    { "t6",  (long *)&ddb_regs.t6,      FCN_NULL },
+    { "t7",  (long *)&ddb_regs.t7,      FCN_NULL },
+    { "s0",  (long *)&ddb_regs.s0,      FCN_NULL },
+    { "s1",  (long *)&ddb_regs.s1,      FCN_NULL },
+    { "s2",  (long *)&ddb_regs.s2,      FCN_NULL },
+    { "s3",  (long *)&ddb_regs.s3,      FCN_NULL },
+    { "s4",  (long *)&ddb_regs.s4,      FCN_NULL },
+    { "s5",  (long *)&ddb_regs.s5,      FCN_NULL },
+    { "s6",  (long *)&ddb_regs.s6,      FCN_NULL },
+    { "s7",  (long *)&ddb_regs.s7,      FCN_NULL },
+    { "t8",  (long *)&ddb_regs.t8,      FCN_NULL },
+    { "t9",  (long *)&ddb_regs.t9,      FCN_NULL },
+    { "k0",  (long *)&ddb_regs.k0,      FCN_NULL },
+    { "k1",  (long *)&ddb_regs.k1,      FCN_NULL },
+    { "gp",  (long *)&ddb_regs.gp,      FCN_NULL },
+    { "sp",  (long *)&ddb_regs.sp,      FCN_NULL },
+    { "s8",  (long *)&ddb_regs.s8,      FCN_NULL },
+    { "ra",  (long *)&ddb_regs.ra,      FCN_NULL },
+    { "sr",  (long *)&ddb_regs.sr,      FCN_NULL },
+    { "lo",  (long *)&ddb_regs.mullo,   FCN_NULL },
+    { "hi",  (long *)&ddb_regs.mulhi,   FCN_NULL },
+    { "bad", (long *)&ddb_regs.badvaddr,FCN_NULL },
+    { "cs",  (long *)&ddb_regs.cause,   FCN_NULL },
+    { "pc",  (long *)&ddb_regs.pc,      FCN_NULL },
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
@@ -105,8 +105,8 @@ kdb_trap(type, t_frame)
 {
 	switch(type) {
 	case T_BREAK:		/* breakpoint */
-		if(db_get_value((t_frame)->reg[PC], sizeof(int), FALSE) == BREAK_SOVER) {
-                	(t_frame)->reg[PC] += BKPT_SIZE;        
+		if(db_get_value((t_frame)->pc, sizeof(int), FALSE) == BREAK_SOVER) {
+                	(t_frame)->pc += BKPT_SIZE;        
 		}
 		break;
 	case -1:
@@ -191,7 +191,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char		*modif;
 {
-	stacktrace_subr(ddb_regs.reg, db_printf);
+	stacktrace_subr(&ddb_regs, db_printf);
 }
 
 /*
@@ -207,7 +207,7 @@ next_instr_address(db_addr_t pc, boolean_t bd)
 {
 	db_addr_t next;
 
-	next = (db_addr_t)MipsEmulateBranch(ddb_regs.reg, pc, 0, 0);
+	next = (db_addr_t)MipsEmulateBranch(&ddb_regs, pc, 0, 0);
 	return(next);
 }
 

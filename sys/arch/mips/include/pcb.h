@@ -1,4 +1,4 @@
-/*      $OpenBSD: pcb.h,v 1.2 1998/05/08 16:32:10 millert Exp $	*/
+/*      $OpenBSD: pcb.h,v 1.3 1998/09/15 10:50:12 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,15 +41,17 @@
  *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <machine/frame.h>
+
 /*
  * MIPS process control block
  */
 struct pcb
 {
-	int	pcb_regs[71];	/* saved CPU and floating point registers */
-	label_t	pcb_context;	/* kernel context for resume */
-	int	pcb_onfault;	/* for copyin/copyout faults */
-	void	*pcb_segtab;	/* copy of pmap pm_segtab */
+	struct trap_frame pcb_regs;	/* saved CPU and registers */
+	label_t	pcb_context;		/* kernel context for resume */
+	int	pcb_onfault;		/* for copyin/copyout faults */
+	void	*pcb_segtab;		/* copy of pmap pm_segtab */
 };
 
 /*

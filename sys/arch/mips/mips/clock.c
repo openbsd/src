@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 1998/03/25 11:53:26 pefo Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 1998/09/15 10:50:12 pefo Exp $	*/
 /*
  * Copyright (c) 1997 Per Fogelstrom.
  * Copyright (c) 1988 University of Utah.
@@ -40,7 +40,7 @@
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.4 1998/03/25 11:53:26 pefo Exp $
+ *      $Id: clock.c,v 1.5 1998/09/15 10:50:12 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -91,6 +91,12 @@ struct cfattach clock_indy_ca = {
 };
 #endif
 
+#ifdef galileo
+struct cfattach clock_ca = {
+	sizeof(struct clock_softc), clockmatch, clockattach
+};
+#endif
+
 void	md_clk_attach __P((struct device *, struct device *, void *));
 int	clockintr __P((void *));
 
@@ -136,6 +142,12 @@ clockmatch(parent, cfdata, aux)
 	case SGI_INDY:
 		break;
 #endif
+
+#ifdef galileo
+	case GALILEO_G9:
+		break;
+#endif
+
 	default:
 		panic("clockmatch unknown CPU");
 	}
@@ -181,6 +193,11 @@ clockattach(parent, self, aux)
 	case SGI_INDY:
 		BUS_INTR_ESTABLISH((struct confargs *)aux,
 			(intr_handler_t)hardclock, self);
+		break;
+#endif
+
+#ifdef galileo
+	case GALILEO_G9:
 		break;
 #endif
 
@@ -287,7 +304,14 @@ inittodr(base)
 		badbase = 0;
 
 	/* Read RTC chip registers */ 
-	(*csc->sc_get)(csc, base, &c);
+	if(csc->sc_get) {
+		(*csc->sc_get)(csc, base, &c);
+	}
+	else {
+		time.tv_sec = base;
+		printf("WARNING: No TOD clock, beliving file system.\n");
+		goto bad;
+	}
 
 	csc->sc_initted = 1;
 
@@ -378,5 +402,7 @@ resettodr()
 	c.min = t / 60;
 	c.sec = t % 60;
 
-	(*csc->sc_set)(csc, &c);
+	if(csc->sc_set) {
+		(*csc->sc_set)(csc, &c);
+	}
 }
