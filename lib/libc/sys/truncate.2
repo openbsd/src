@@ -96,6 +96,9 @@ An I/O error occurred updating the inode.
 .It Bq Er EFAULT
 .Fa Path
 points outside the process's allocated address space.
+.It Bq Er EPERM
+The effective user ID does not match the owner of the file and
+the effective user ID is not the super-user.
 .El
 .Pp
 .Fn Ftruncate
