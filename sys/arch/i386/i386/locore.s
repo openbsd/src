@@ -169,7 +169,7 @@ _apm_current_gdt_pdesc:
 _bootstrap_gdt:	
 	.space SIZEOF_GDTE * BOOTSTRAP_GDT_NUM
 #endif
-_cpu:		.long	0	# are we 386, 386sx, or 486
+_cpu:		.long	0	# are we 386, 386sx, 486, 586 or 686
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
 _esym:		.long	0	# ptr to end of syms
@@ -188,6 +188,8 @@ tmpstk:
 
 	.text
 	.globl	start
+	.globl	_kernel_text
+	_kernel_text = start
 start:	movw	$0x1234,0x472			# warm boot
 
 	/*
