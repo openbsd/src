@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.3 2004/08/10 08:07:35 mickey Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -488,55 +488,8 @@ static volatile int processing;
 		int isr = netisr;
 		netisr = 0;
 		ipending &= ~SINT_NETMASK;
-#ifdef  INET
-#include "ether.h"
-		if (NETHER > 0 && isr & (1 << NETISR_ARP)) {
-			arpintr();
-		}
-
-		if (isr & (1 << NETISR_IP)) {
-			ipintr();
-		}
-#endif
-#ifdef INET6
-		if (isr & (1 << NETISR_IPV6)) {
-			ip6intr();
-		}
-#endif
-#ifdef NETATALK
-		if (isr & (1 << NETISR_ATALK)) {
-			atintr();
-		}
-#endif
-#ifdef  IMP
-		if (isr & (1 << NETISR_IMP)) {
-			impintr();
-		}
-#endif
-#ifdef  NS
-		if (isr & (1 << NETISR_NS)) {
-			nsintr();
-		}
-#endif
-#ifdef  ISO
-		if (isr & (1 << NETISR_ISO)) {
-			clnlintr();
-		}
-#endif
-#ifdef  CCITT
-		if (isr & (1 << NETISR_CCITT)) {
-			ccittintr();
-		}
-#endif
-#include "ppp.h"
-		if (NPPP > 0 && isr & (1 << NETISR_PPP)) {
-			pppintr();
-		}
-
-#include "bridge.h"
-		if (NBRIDGE > 0 && isr & (1 << NETISR_BRIDGE)) {
-			bridgeintr();
-		}
+#define	DONETISR(b,f)	if (isr & (1 << (b)))   f();
+#include <net/netisr_dispatch.h>
 	}
 
 #ifdef NOTYET
