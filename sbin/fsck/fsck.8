@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.24 2005/01/27 19:06:24 jmc Exp $
+.\"	$OpenBSD: fsck.8,v 1.25 2005/01/27 19:20:18 jmc Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -41,7 +41,7 @@
 .Op Fl l Ar maxparallel
 .Oo Xo
 .Fl T
-.Ar fstype Ns : Ns Ar fsoptions
+.Ar fstype : Ns Ar fsoptions
 .Oc
 .Xc
 .Op Fl t Ar fstype
@@ -95,10 +95,7 @@ Any major problems will cause
 to exit with a non-zero exit code,
 so as to alert any invoking program or script
 that human intervention is required.
-.It Xo
-.Fl T
-.Ar fstype Ns : Ns Ar fsoptions
-.Xc
+.It Fl T Ar fstype : Ns Ar fsoptions
 List of comma separated filesystem specific options for the specified
 filesystem type, in the same format as
 .Xr mount 8 .
