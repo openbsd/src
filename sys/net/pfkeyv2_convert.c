@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.5 2001/07/05 16:48:04 jjbg Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.6 2001/12/06 22:52:10 angelos Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -242,8 +242,13 @@ export_sa(void **p, struct tdb *tdb)
 void
 import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 {
+	struct timeval tv;
+
 	if (!sadb_lifetime)
 		return;
+
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
 
 	switch (type) {
 	case PFKEYV2_LIFETIME_HARD:
@@ -262,17 +267,16 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 		if ((tdb->tdb_exp_timeout =
 		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
 			tdb->tdb_flags |= TDBF_TIMER;
+			tv.tv_sec = tdb->tdb_exp_timeout;
 			timeout_add(&tdb->tdb_timer_tmo,
-			    hz * tdb->tdb_exp_timeout);
+			    hzto(&tv));
 		} else
 			tdb->tdb_flags &= ~TDBF_TIMER;
 
 		if ((tdb->tdb_exp_first_use =
-		    sadb_lifetime->sadb_lifetime_usetime) != 0)	{
+		    sadb_lifetime->sadb_lifetime_usetime) != 0)
 			tdb->tdb_flags |= TDBF_FIRSTUSE;
-			timeout_add(&tdb->tdb_first_tmo,
-			    hz * tdb->tdb_exp_first_use);
-		} else
+		else
 			tdb->tdb_flags &= ~TDBF_FIRSTUSE;
 		break;
 
@@ -292,17 +296,15 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 		if ((tdb->tdb_soft_timeout =
 		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
 			tdb->tdb_flags |= TDBF_SOFT_TIMER;
+			tv.tv_sec = tdb->tdb_soft_timeout;
 			timeout_add(&tdb->tdb_stimer_tmo,
-			    hz * tdb->tdb_soft_timeout);
+			    hzto(&tv));
 		} else
 			tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
 
 		if ((tdb->tdb_soft_first_use =
-		    sadb_lifetime->sadb_lifetime_usetime) != 0)	{
+		    sadb_lifetime->sadb_lifetime_usetime) != 0)
 			tdb->tdb_flags |= TDBF_SOFT_FIRSTUSE;
-			timeout_add(&tdb->tdb_sfirst_tmo, hz *
-			    tdb->tdb_soft_first_use);
-		}
 		else
 			tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
 		break;
