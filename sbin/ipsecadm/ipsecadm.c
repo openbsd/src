@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.20 1999/07/02 23:37:32 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.21 1999/07/15 14:56:26 niklas Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -206,7 +206,7 @@ main(int argc, char **argv)
     int auth = 0, enc = 0, klen = 0, alen = 0, mode = ESP_NEW, i = 0;
     int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
     int dport = -1, sport = -1, tproto = -1;
-    u_int32_t spi = 0, spi2 = 0;
+    u_int32_t spi = SPI_RESERVED_MIN, spi2 = SPI_RESERVED_MIN;
     union sockaddr_union src, dst, dst2, osrc, odst, osmask, odmask, proxy;
     int srcset = 0, dstset = 0, dst2set = 0;
     u_char *keyp = NULL, *authp = NULL;
@@ -469,9 +469,11 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "spi") && spi == 0 && (i + 1 < argc))
+	if (!strcmp(argv[i] + 1, "spi") && spi == SPI_RESERVED_MIN &&
+	    (i + 1 < argc))
 	{
-	    if ((spi = htonl(strtoul(argv[i + 1], NULL, 16))) == 0)
+	    spi = htonl(strtoul(argv[i + 1], NULL, 16));
+	    if (spi >= SPI_RESERVED_MIN && spi <= SPI_RESERVED_MAX)
 	    {
 		fprintf(stderr, "%s: invalid spi %s\n", argv[0], argv[i + 1]);
 		exit(1);
@@ -482,10 +484,12 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	if (!strcmp(argv[i] + 1, "spi2") && spi2 == 0 && 
+	if (!strcmp(argv[i] + 1, "spi2") && spi2 == SPI_RESERVED_MIN && 
 	    (iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) && (i + 1 < argc))
 	{
-	    if ((spi2 = htonl(strtoul(argv[i + 1], NULL, 16))) == 0)
+	    spi2 = htonl(strtoul(argv[i + 1], NULL, 16));
+	    if (spi2 == SPI_LOCAL_USE ||
+		(spi2 >= SPI_RESERVED_MIN && spi2 <= SPI_RESERVED_MAX))
 	    {
 		fprintf(stderr, "%s: invalid spi2 %s\n", argv[0], argv[i + 1]);
 		exit(1);
@@ -885,13 +889,14 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (spi == 0)
+    if (spi == SPI_RESERVED_MIN)
     {
 	fprintf(stderr, "%s: no SPI specified\n", argv[0]);
 	exit(1);
     }
 
-    if ((iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) && spi2 == 0)
+    if ((iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) &&
+	spi2 == SPI_RESERVED_MIN)
     {
 	fprintf(stderr, "%s: no SPI2 specified\n", argv[0]);
 	exit(1);
