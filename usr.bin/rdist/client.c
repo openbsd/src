@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.8 1999/02/04 23:18:57 millert Exp $	*/
+/*	$OpenBSD: client.c,v 1.9 1999/02/06 01:52:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: client.c,v 6.80 1996/02/28 20:34:27 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.8 1999/02/04 23:18:57 millert Exp $";
+"$OpenBSD: client.c,v 1.9 1999/02/06 01:52:23 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)client.c";
@@ -346,8 +346,6 @@ static struct linkbuf *linkinfo(statp)
 		lp->target = xstrdup(Tdest);
 	else
 		lp->target = NULL;
-	if (!lp->pathname || !lp->src || !(Tdest && lp->target))
-		fatalerr("Cannot malloc memory in linkinfo.");
 
 	return(NULL);
 }
