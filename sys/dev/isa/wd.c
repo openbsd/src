@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.35 1998/08/06 09:57:09 downsj Exp $	*/
+/*	$OpenBSD: wd.c,v 1.36 1998/10/01 04:23:54 millert Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -545,15 +545,18 @@ wdgetdisklabel(dev, wd)
 	lp->d_ncylinders = d_link->sc_params.wdp_cylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-#if 0
-	strncpy(lp->d_typename, "ST506 disk", 16);
-	lp->d_type = DTYPE_ST506;
-#endif
+	if (d_link->sc_params.wdp_config == WD_CFG_FIXED) {
+		strncpy(lp->d_typename, "ST506/MFM/RLL disk", 16);
+		lp->d_type = DTYPE_ST506;
+	} else {
+		strncpy(lp->d_typename, "ESDI/IDE disk", 16);
+		lp->d_type = DTYPE_ESDI;
+	}
 	strncpy(lp->d_packname, d_link->sc_params.wdp_model, 16);
-	if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA)) {
-	  lp->d_secperunit = d_link->sc_params.wdp_lbacapacity;
-	} else 
-	  lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+	if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA))
+		lp->d_secperunit = d_link->sc_params.wdp_lbacapacity;
+	else 
+		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
