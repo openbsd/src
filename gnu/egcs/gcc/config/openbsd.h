@@ -83,7 +83,7 @@ Boston, MA 02111-1307, USA.  */
 /* LIB_SPEC appropriate for OpenBSD.  Select the appropriate libc, 
    depending on profiling and threads.  Basically, 
    -lc(_r)?(_p)?, select _r for threads, and _p for p or pg.  */
-#define OBSD_LIB_SPEC "-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}"
+#define OBSD_LIB_SPEC "%{!shared:-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}}"
 
 #ifndef OBSD_HAS_CORRECT_SPECS
 
