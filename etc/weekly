@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.6 1997/01/04 01:36:52 millert Exp $
+#	$OpenBSD: weekly,v 1.7 1997/09/15 09:54:40 deraadt Exp $
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
@@ -15,46 +15,11 @@ if [ -f /etc/weekly.local ];then
 	. /etc/weekly.local
 fi
 
-
-#echo ""
-#echo "Removing old .o files:"
-#find /usr/src -name '*.o' -atime +21 -print -a -exec rm -f {} \;
-
-# see if /usr/src exists and is local
-# before looking there for checked-out files
-
-#if [ -d /usr/src -a \
-#  X"`find -f /usr/src ! -fstype local -prune -or -type d -print -prune`" != X ];
-#then
-#	echo "looking for checked out files:"
-#	TDIR=/tmp/_checkout$$
-#
-#	if ! mkdir $TDIR ; then
-#		echo "temp dir $TDIR already exists!  Probable spoof attempt."
-#		ls -alF $TDIR
-#	else
-#		for file in `find -f /usr/src ! -fstype local -prune -or \
-#		    -name 'p.*' -print | egrep 'SCCS/p\.'`; do
-#			owner=`awk '{ print $3 }' $file`
-#			echo "$owner	$file"
-#			echo $file >> $TDIR/$owner
-#		done | sed -e 's,SCCS/p.,,'
-#		for file in $TDIR/*; do
-#			sed -e 's,SCCS/p.,,' $file | \
-#			    Mail -s 'checked out files' `basename $file`
-#		done
-#		rm -rf $TDIR
-#	fi
-#fi
-
 if [ -f /usr/lib/uucp/clean.weekly ]; then
 	echo ""
 	echo "Cleaning up UUCP:"
 	echo /usr/lib/uucp/clean.weekly | su daemon
 fi
-echo ""
-
-# Rotation of message log now handled automatically by cron and 'newsyslog'
 
 echo ""
 if [ -f /var/db/locate.database ]; then
@@ -62,7 +27,8 @@ if [ -f /var/db/locate.database ]; then
 	if [ $? -eq 0 ]; then
 		trap 'rm -f $TMP' 0 1 15
 		echo "Rebuilding locate database:"
-		echo "/usr/libexec/locate.updatedb --fcodes=-" | nice -5 su -m nobody 2>/dev/null 1>$TMP
+		echo "/usr/libexec/locate.updatedb --fcodes=-" | \
+		    nice -5 su -m nobody 2>/dev/null 1>$TMP
 		if [ -s "$TMP" ]; then
 			chmod 444 $TMP
 			chown root.wheel $TMP
