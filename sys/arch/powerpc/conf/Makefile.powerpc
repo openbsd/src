@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc,v 1.6 1997/10/13 13:49:56 pefo Exp $
+#	$OpenBSD: Makefile.powerpc,v 1.7 1998/04/06 17:29:25 pefo Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -44,7 +44,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
 CWARNFLAGS=	-Werror -Wreturn-type
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
 AFLAGS=		-D_LOCORE
-LINKFLAGS=	-N -Ttext 100000 -e start
+LINKFLAGS=	-N -Ttext 100074 -e start
 STRIPFLAGS=	-d
 
 HOSTCC?=	${CC}

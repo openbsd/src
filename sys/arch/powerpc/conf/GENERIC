@@ -1,3 +1,4 @@
+#	$OpenBSD: GENERIC,v 1.6 1998/04/06 17:29:24 pefo Exp $
 #
 # PPC GENERIC config file
 #
@@ -17,26 +18,29 @@ option		KTRACE		# system call tracing support
 option		DEBUG		# extra kernel debugging support
 
 option		FIREPOWERBUGS	# FirePower problem workaround...
+option		PPC_MPC106_BUG	# MPC106 PCI IFC chip bug workaround...
 
 #option		IPKDBUSERHACK
-#option		DDB
+option		DDB
 
 # System V options                 
 option		SYSVMSG         # System V-like message queues
 option		SYSVSEM         # System V-like semaphores
 option		SYSVSHM         # System V-like memory sharing       
-option		SHMMAXPGS=1024  # 1024 pages is the default
+#option		SHMMAXPGS=1024  # 1024 pages is the default
 
 # Filesystem options
-option		CD9660		# ISO 9660 + Rock Ridge file system
-option		FDESC		# user file descriptor filesystem (/dev/fd)
-option		FIFO		# POSIX fifo support (in all filesystems)
 option		FFS,QUOTA	# fast filesystem with user and group quotas
-option		KERNFS		# kernel data-structure filesystem
 option		MFS		# memory-based filesystem
-option		MSDOSFS		# Ability to read write MS-Dos filsystem
+
 option		NFSCLIENT	# Sun NFS-compatible filesystem (client)
 option		NFSSERVER	# Sun NFS-compatible filesystem (server)
+
+option		CD9660		# ISO 9660 + Rock Ridge file system
+option		MSDOSFS		# Ability to read write MS-Dos filsystem
+option		FDESC		# user file descriptor filesystem (/dev/fd)
+option		FIFO		# POSIX fifo support (in all filesystems)
+option		KERNFS		# kernel data-structure filesystem
 option		NULLFS		# null layer filesystem
 option		PORTAL		# portal filesystem (still experimental)
 option		PROCFS		# /proc
@@ -49,11 +53,14 @@ option		INET            # Internet protocols
 option		IPSEC           # IP Security
 #option		NS              # XNS
 #option		IPX             # IPX+SPX
+#option		IPXIP		# IPX tunneling over IP
 #option		ISO,TPIP        # OSI networking
 #option		EON             # OSI tunneling over IP
 #option		CCITT,LLC,HDLC  # X.25
 option		IPFILTER        # IP packet filter for security
-option		IPFILTER_LOG    # use /dev/ipl to log IPF
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
+option		PPP_BSDCOMP	# PPP BSD compression
+option		PPP_DEFLATE
 
 #option		TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 #option		MULTICAST       # Multicast support
@@ -101,11 +108,13 @@ uk*		at scsibus? target ? lun ?
 
 #### PSEUDO Devices
 
-pseudo-device	loop		 1	# network loopback
+pseudo-device	loop		 2	# network loopback
 pseudo-device	bpfilter	 8	# packet filter ports
-#pseudo-device	sl		 2	# serial-line IP ports
-#pseudo-device	ppp		 2	# serial-line PPP ports
+pseudo-device	sl		 2	# serial-line IP ports
+pseudo-device	ppp		 2	# serial-line PPP ports
 pseudo-device	tun		 2	# network tunneling over tty
+pseudo-device	enc		 1	# encryption device
+#pseudo-device	strip		 1	# Starmode Radio IP interface  
 
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	random		 1

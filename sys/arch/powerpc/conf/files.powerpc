@@ -74,3 +74,6 @@ define	pcmcia {}			# XXX dummy decl...
 include	"../../../dev/pci/files.pci"
 include	"../../../dev/isa/files.isa"
 major	{ wd = 4 }
+
+include "../../../dev/isa/files.isapnp"
+file    arch/arc/isa/isapnp_machdep.c   isapnp   
