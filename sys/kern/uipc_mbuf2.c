@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.10 2001/05/24 18:47:21 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.11 2001/05/24 19:04:51 angelos Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -339,17 +339,20 @@ m_tag_delete_chain(m, t)
 {
 	struct m_tag *p;
 
-	/* Be a bit paranoid */
+#ifdef DIAGNOSTIC
+	if ((m->m_flags & M_PKTHDR) == 0)
+		printf("m_tag_delete_chain: non packet header mbuf %p give to us\n", m);
+
 	if (m->m_pkthdr.tags.tqh_last == NULL ||
 	    (m->m_pkthdr.tags.tqh_first == NULL &&
 	    m->m_pkthdr.tags.tqh_last != &m->m_pkthdr.tags.tqh_first)) {
-#ifdef DIAGNOSTIC
 		printf("m_tag_delete_chain: uninitialized tags on mbuf %p\n",
 		       m);
-#endif
 		TAILQ_INIT(&m->m_pkthdr.tags);
 		return;
 	}
+#endif
+
 	while ((p = TAILQ_LAST(&m->m_pkthdr.tags, packet_tags)) != NULL) {
 		m_tag_delete(m, p);
 		if (t != NULL && p == t)
