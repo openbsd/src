@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.75 2004/11/28 02:10:59 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.76 2004/12/02 02:28:35 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1453,20 +1453,37 @@ dc_decode_leaf_sia(sc, l)
 	if (m == NULL)
 		return;
 	bzero(m, sizeof(struct dc_mediainfo));
-	if (l->dc_sia_code == DC_SIA_CODE_10BT)
+	switch (l->dc_sia_code & ~DC_SIA_CODE_EXT) {
+	case DC_SIA_CODE_10BT:
 		m->dc_media = IFM_10_T;
-
-	if (l->dc_sia_code == DC_SIA_CODE_10BT_FDX)
+		break;
+	case DC_SIA_CODE_10BT_FDX:
 		m->dc_media = IFM_10_T|IFM_FDX;
-
-	if (l->dc_sia_code == DC_SIA_CODE_10B2)
+		break;
+	case DC_SIA_CODE_10B2:
 		m->dc_media = IFM_10_2;
-
-	if (l->dc_sia_code == DC_SIA_CODE_10B5)
+		break;
+	case DC_SIA_CODE_10B5:
 		m->dc_media = IFM_10_5;
+		break;
+	default:
+		break;
+	}
 
-	m->dc_gp_len = 2;
-	m->dc_gp_ptr = (u_int8_t *)&l->dc_sia_gpio_ctl;
+	/*
+	 * We need to ignore CSR13, CSR14, CSR15 for SIA mode.
+	 * Things apparently already work for cards that do
+	 * supply Media Specific Data.
+	 */
+	if (l->dc_sia_code & DC_SIA_CODE_EXT) {
+		m->dc_gp_len = 2;
+		m->dc_gp_ptr =
+		(u_int8_t *)&l->dc_un.dc_sia_ext.dc_sia_gpio_ctl;
+	} else {
+		m->dc_gp_len = 2;
+		m->dc_gp_ptr =
+		(u_int8_t *)&l->dc_un.dc_sia_noext.dc_sia_gpio_ctl;
+	}
 
 	m->dc_next = sc->dc_mi;
 	sc->dc_mi = m;
@@ -1550,10 +1567,30 @@ dc_parse_21143_srom(sc)
 	struct dc_eblock_hdr *hdr;
 	int i, loff;
 	char *ptr;
+	int have_mii;
 
+	have_mii = 0;
 	loff = sc->dc_srom[27];
 	lhdr = (struct dc_leaf_hdr *)&(sc->dc_srom[loff]);
 
+	ptr = (char *)lhdr;
+	ptr += sizeof(struct dc_leaf_hdr) - 1;
+	/*
+	 * Look if we got a MII media block.
+	 */
+	for (i = 0; i < lhdr->dc_mcnt; i++) {
+		hdr = (struct dc_eblock_hdr *)ptr;
+		if (hdr->dc_type == DC_EBLOCK_MII)
+		    have_mii++;
+
+		ptr += (hdr->dc_len & 0x7F);
+		ptr++;
+	}
+
+	/*
+	 * Do the same thing again. Only use SIA and SYM media
+	 * blocks if no MII media block is available.
+	 */
 	ptr = (char *)lhdr;
 	ptr += sizeof(struct dc_leaf_hdr) - 1;
 	for (i = 0; i < lhdr->dc_mcnt; i++) {
@@ -1563,10 +1600,14 @@ dc_parse_21143_srom(sc)
 			dc_decode_leaf_mii(sc, (struct dc_eblock_mii *)hdr);
 			break;
 		case DC_EBLOCK_SIA:
-			dc_decode_leaf_sia(sc, (struct dc_eblock_sia *)hdr);
+			if (! have_mii)
+			    dc_decode_leaf_sia(sc,
+				(struct dc_eblock_sia *)hdr);
 			break;
 		case DC_EBLOCK_SYM:
-			dc_decode_leaf_sym(sc, (struct dc_eblock_sym *)hdr);
+			if (! have_mii)
+			    dc_decode_leaf_sym(sc,
+				(struct dc_eblock_sym *)hdr);
 			break;
 		default:
 			/* Don't care. Yet. */
