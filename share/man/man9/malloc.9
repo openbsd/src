@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.14 2001/03/01 16:11:25 aaron Exp $
+.\"	$OpenBSD: malloc.9,v 1.15 2001/04/14 22:55:12 art Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,6 +75,10 @@ macro variant is equivalent to
 .Bd -literal -offset indent
 free((caddr_t)(addr), type)
 .Ed
+.Pp
+These macros should only be used when the
+.Fa size
+argument is a constant.
 .Pp
 Unlike its standard C library counterpart
 .Pq Xr malloc 3 ,
