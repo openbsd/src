@@ -114,6 +114,7 @@ extern void bootp_print();
  * the receiver loop is started.  Die when interrupted.
  */
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
