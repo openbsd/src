@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.4 2000/01/02 04:52:26 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.5 2000/01/08 13:54:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1773,84 +1773,6 @@ fail:
 		m_freem(m);
 	if (m0)
 		m_freem(m0);
-}
-
-/*
- * ICMPv6 socket option processing.
- */
-int
-icmp6_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
-{
-	int error = 0;
-	int optlen;
-	register struct inpcb *inp = sotoinpcb(so);
-	register struct mbuf *m = *mp;
-
-	optlen = m ? m->m_len : 0;
-
-	if (level != IPPROTO_ICMPV6) {
-		if (op == PRCO_SETOPT && m)
-			(void)m_free(m);
-		return EINVAL;
-	}
-
-	switch(op) {
-	case PRCO_SETOPT:
-		switch (optname) {
-		case ICMP6_FILTER:
-		    {
-			struct icmp6_filter *p;
-
-			if (optlen != sizeof(*p)) {
-				error = EMSGSIZE;
-				break;
-			}
-			p = mtod(m, struct icmp6_filter *);
-			if (!p || !inp->inp_icmp6filt) {
-				error = EINVAL;
-				break;
-			}
-			bcopy(p, inp->inp_icmp6filt,
-				sizeof(struct icmp6_filter));
-			error = 0;
-			break;
-		    }
-
-		default:
-			error = ENOPROTOOPT;
-			break;
-		}
-		break;
-
-	case PRCO_GETOPT:
-		switch (optname) {
-		case ICMP6_FILTER:
-		    {
-			struct icmp6_filter *p;
-
-			p = mtod(m, struct icmp6_filter *);
-			if (!p || !inp->inp_icmp6filt) {
-				error = EINVAL;
-				break;
-			}
-			bcopy(inp->inp_icmp6filt, p,
-				sizeof(struct icmp6_filter));
-			error = 0;
-			break;
-		    }
-
-		default:
-			error = ENOPROTOOPT;
-			break;
-		}
-		break;
-	}
-
-	return(error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.2 1999/12/10 10:04:28 angelos Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.3 2000/01/08 13:54:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -212,8 +212,6 @@ extern int ip6_auto_flowlabel;
 
 struct in6pcb;
 struct inpcb;
-
-int	icmp6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 
 void	ip6_init __P((void));
 void	ip6intr __P((void));
