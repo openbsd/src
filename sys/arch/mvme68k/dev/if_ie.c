@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.6 1996/05/10 12:42:23 deraadt Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.7 1996/05/29 17:54:11 chuck Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -449,6 +449,10 @@ ieattach(parent, self, aux)
 	sc->sc_msize = etherlen;
 	sc->sc_reg = ca->ca_vaddr;
 	ieo = (volatile struct ieob *) sc->sc_reg;
+
+        /* Are we the boot device? */
+        if (ca->ca_paddr == bootaddr)
+                bootdv = self;
 
 	sc->sc_maddr = etherbuf;	/* maddr = vaddr */
 	pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.2 1996/05/06 21:54:00 deraadt Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.3 1996/05/29 17:54:13 chuck Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -116,6 +116,7 @@ wdscattach(pdp, dp, auxp)
     struct confargs *ca = auxp;
     struct pccreg *pcc = (struct pccreg *)ca->ca_master;
     int                 ipl;
+    int tmp;
 
     sc->sc_enintr  = wdsc_enintr;
     sc->sc_dmago   = wdsc_dmago;
@@ -173,9 +174,14 @@ wdscattach(pdp, dp, auxp)
     pcc->pcc_sbicirq = ca->ca_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
 
     /*
-     * Attach all scsi units on us
+     * Attach all scsi units on us, watching for boot device
+     * (see dk_establish).
      */
+    tmp = bootpart;
+    if (ca->ca_paddr != bootaddr) 
+	bootpart = -1;		/* invalid flag to dk_establish */
     config_found(dp, &sc->sc_link, wdscprint);
+    bootpart = tmp;		/* restore old value */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopdma.c,v 1.3 1996/04/28 11:06:20 deraadt Exp $ */
+/*	$OpenBSD: siopdma.c,v 1.4 1996/05/29 17:54:12 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -105,6 +105,7 @@ afscattach(parent, self, auxp)
 	struct siop_softc *sc = (struct siop_softc *)self;
 	struct confargs *ca = auxp;
 	siop_regmap_p rp;
+	int tmp;
 	extern int cpuspeed;
 
 	sc->sc_siopp = rp = ca->ca_vaddr;
@@ -170,9 +171,15 @@ afscattach(parent, self, auxp)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	/*
-	 * attach all scsi units on us
+	 * attach all scsi units on us, watching for boot device
+	 * (see dk_establish).
 	 */
+	tmp = bootpart;
+	if (ca->ca_paddr != bootaddr) 
+		bootpart = -1;          /* invalid flag to dk_establish */
 	config_found(self, &sc->sc_link, afscprint);
+	bootpart = tmp;             /* restore old value */
+
 }
 
 /*

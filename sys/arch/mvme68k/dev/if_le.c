@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.7 1996/05/10 12:42:24 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.8 1996/05/29 17:54:12 chuck Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -137,6 +137,10 @@ leattach(parent, self, aux)
 	extern void myetheraddr(u_char *);
 
 	printf(" pri %d", pri);
+
+	/* Are we the boot device? */
+	if (ca->ca_paddr == bootaddr)
+		bootdv = self;
 
 	/* connect the interrupt */
 	lesc->sc_ih.ih_fn = am7990_intr;
