@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.2 2004/08/04 12:41:58 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.3 2004/08/04 13:03:52 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -58,6 +58,7 @@ extern int   cvs_readonly;
 static int  cvs_req_root       (int, char *);
 static int  cvs_req_directory  (int, char *);
 static int  cvs_req_argument   (int, char *);
+static int  cvs_req_globalopt  (int, char *);
 static int  cvs_req_version    (int, char *);
 
 
@@ -86,7 +87,7 @@ struct cvs_reqhdlr {
 	{ NULL               },
 	{ cvs_req_argument   },	/* 20 */
 	{ cvs_req_argument   },
-	{ NULL               },
+	{ cvs_req_globalopt  },
 	{ NULL               },
 	{ NULL               },
 	{ NULL               },
@@ -233,6 +234,43 @@ cvs_req_argument(int reqid, char *line)
 			free(cvs_req_args[cvs_req_nargs - 1]);
 			cvs_req_args[cvs_req_nargs - 1] = nap;
 		}
+	}
+
+	return (0);
+}
+
+
+static int
+cvs_req_globalopt(int reqid, char *line)
+{
+	if ((*line != '-') || (*(line + 2) != '\0')) {
+		cvs_log(LP_ERR,
+		    "invalid `Global_option' request format");
+		return (-1);
+	}
+
+	switch (*(line + 1)) {
+	case 'l':
+		cvs_nolog = 1;
+		break;
+	case 'n':
+		break;
+	case 'Q':
+		verbosity = 0;
+		break;
+	case 'q':
+		if (verbosity > 1)
+			verbosity = 1;
+		break;
+	case 'r':
+		cvs_readonly = 1;
+		break;
+	case 't':
+		cvs_trace = 1;
+		break;
+	default:
+		cvs_log(LP_ERR, "unknown global option `%s'", line);
+		return (-1);
 	}
 
 	return (0);
