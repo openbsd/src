@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.2 1995/08/19 04:35:29 cgd Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.3 1995/12/24 03:32:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -116,8 +116,6 @@ extern struct ifqueue pkintrq;
 /*
  * FDDI output routine.
  * Encapsulate a packet of type family for the local net.
- * Use trailer local net encapsulation if enough data in first
- * packet leaves a multiple of 512 bytes of data in remainder.
  * Assumes that ifp is actually pointer to arpcom structure.
  */
 int
@@ -127,7 +125,7 @@ fddi_output(ifp, m0, dst, rt0)
 	struct sockaddr *dst;
 	struct rtentry *rt0;
 {
-	short type;
+	u_int16_t type;
 	int s, error = 0;
  	u_char edst[6];
 	register struct mbuf *m = m0;
@@ -261,8 +259,8 @@ fddi_output(ifp, m0, dst, rt0)
 			for (i=0; i<6; i++)
 				printf("%x ", edst[i] & 0xff);
 			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
-			       type & 0xff, l->llc_dsap & 0xff, l->llc_ssap &0xff,
-			       l->llc_control & 0xff);
+			    m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
+			    l->llc_control & 0xff);
 
 		}
 #endif /* LLC_DEBUG */
@@ -321,9 +319,9 @@ fddi_output(ifp, m0, dst, rt0)
 		senderr(EAFNOSUPPORT);
 	}
 
-
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
+
 	if (type != 0) {
 		register struct llc *l;
 		M_PREPEND(m, sizeof (struct llc), M_DONTWAIT);
@@ -409,14 +407,14 @@ fddi_input(ifp, fh, m)
 #if defined(INET) || defined(NS) || defined(DECNET)
 	case LLC_SNAP_LSAP:
 	{
-		unsigned fddi_type;
+		u_int16_t etype;
 		if (l->llc_control != LLC_UI || l->llc_ssap != LLC_SNAP_LSAP)
 			goto dropanyway;
 		if (l->llc_snap.org_code[0] != 0 || l->llc_snap.org_code[1] != 0|| l->llc_snap.org_code[2] != 0)
 			goto dropanyway;
-		fddi_type = ntohs(l->llc_snap.ether_type);
+		etype = ntohs(l->llc_snap.ether_type);
 		m_adj(m, 8);
-		switch (fddi_type) {
+		switch (etype) {
 #ifdef INET
 		case ETHERTYPE_IP:
 			schednetisr(NETISR_IP);
@@ -441,7 +439,7 @@ fddi_input(ifp, fh, m)
 			break;
 #endif
 		default:
-			/* printf("fddi_input: unknown protocol 0x%x\n", fddi_type); */
+			/* printf("fddi_input: unknown protocol 0x%x\n", etype); */
 			ifp->if_noproto++;
 			goto dropanyway;
 		}
@@ -563,6 +561,7 @@ fddi_ifattach(ifp)
 	ifp->if_addrlen = 6;
 	ifp->if_hdrlen = 21;
 	ifp->if_mtu = FDDIMTU;
+	ifp->if_output = fddi_output;
 #ifdef __NetBSD__
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	    ifa = ifa->ifa_list.tqe_next)
