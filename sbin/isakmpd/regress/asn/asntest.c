@@ -1,4 +1,5 @@
-/*	$Id: asntest.c,v 1.4 1999/02/26 04:03:55 niklas Exp $	*/
+/*	$OpenBSD: asntest.c,v 1.5 1999/03/02 15:27:35 niklas Exp $	*/
+/*	$EOM: asntest.c,v 1.6 1998/10/07 16:40:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
