@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.3 2001/08/21 21:42:30 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.4 2002/01/15 22:00:12 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -299,6 +299,14 @@ zs_attach(zsc, zsd, pri)
 		extern struct cfdriver zstty_cd; /* in ioconf.c */
 #endif
 
+		zsc_args.type = "serial";
+		if (getproplen(zsc->zsc_node, "keyboard") == 0) {
+			if (channel == 0)
+				zsc_args.type = "keyboard";
+			if (channel == 1)
+				zsc_args.type = "mouse";
+		}
+
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
@@ -387,7 +395,7 @@ zs_attach(zsc, zsd, pri)
 			kma.kmta_tp = tp = zst->zst_tty;
 			kma.kmta_dev = tp->t_dev;
 			kma.kmta_consdev = zsc_args.consdev;
-			
+
 			/* Attach 'em if we got 'em. */
 #if (NKBD > 0)
 			if (channel == 0) {

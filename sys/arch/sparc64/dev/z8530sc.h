@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.h,v 1.1 2001/08/21 21:42:30 jason Exp $	*/
+/*	$OpenBSD: z8530sc.h,v 1.2 2002/01/15 22:00:12 jason Exp $	*/
 /*	$NetBSD: z8530sc.h,v 1.15 2001/05/11 01:40:48 thorpej Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ struct zs_chanstate {
 
 struct consdev;
 struct zsc_attach_args {
+	char *type;		/* type name 'serial', 'keyboard', 'mouse' */
 	int channel;		/* two serial channels per zsc */
 	int hwflags;		/* see definitions below */
 	/* `consdev' is only valid if ZS_HWFLAG_USE_CONSDEV is set */
