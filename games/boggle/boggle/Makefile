@@ -3,7 +3,7 @@
 
 PROG=	boggle
 SRCS=	bog.c help.c mach.c prtable.c timer.c word.c
-DPADD=	${LIBCURSES} ${LIBTERM}
+DPADD=	${LIBCURSES} ${LIBTERMLIB}
 LDADD=	-lcurses -ltermlib
 HIDEGAME=hidegame
 MAN=	boggle.6
