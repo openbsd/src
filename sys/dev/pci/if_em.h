@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.h,v 1.24 2003/11/14 18:02:24 pdeuskar Exp $*/
-/* $OpenBSD: if_em.h,v 1.4 2004/04/26 07:27:52 deraadt Exp $ */
+/* $OpenBSD: if_em.h,v 1.5 2004/04/26 17:17:15 deraadt Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -51,7 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *   descriptor is 16 bytes.
  */
 #define EM_MIN_TXD                      12
-#define EM_MAX_TXD                      512
+#define EM_MAX_TXD                      256
 
 /*
  * EM_MAX_RXD - Maximum number of receive Descriptors
@@ -65,7 +65,7 @@ POSSIBILITY OF SUCH DAMAGE.
  *
  */
 #define EM_MIN_RXD                      12
-#define EM_MAX_RXD                      512
+#define EM_MAX_RXD                      256
 
 /*
  * EM_TIDV - Transmit Interrupt Delay Value
