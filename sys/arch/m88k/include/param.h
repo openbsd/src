@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.2 2004/08/06 22:31:31 mickey Exp $ */
+/*	$OpenBSD: param.h,v 1.3 2004/08/09 20:53:04 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -80,7 +80,7 @@
 #define SSIZE		1		/* initial stack size/NBPG */
 #define SINCR		1		/* increment of stack/NBPG */
 
-#define UPAGES		3		/* pages of u-area */
+#define UPAGES		2		/* pages of u-area */
 #define USPACE		(UPAGES * NBPG)
 #define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
