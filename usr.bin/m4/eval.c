@@ -1,4 +1,4 @@
-/*      $OpenBSD: eval.c,v 1.4 1996/06/26 05:36:11 deraadt Exp $      */
+/*      $OpenBSD: eval.c,v 1.5 1996/07/01 20:40:27 deraadt Exp $      */
 /*      $NetBSD: eval.c,v 1.5 1996/01/13 23:25:23 pk Exp $      */
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.4 1996/06/26 05:36:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.5 1996/07/01 20:40:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.4 1996/06/26 05:36:11 deraadt Exp $"
  */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -665,18 +664,12 @@ void
 dodiv(n)
 register int n;
 {
-	int fd;
-
 	if (n < 0 || n >= MAXOUT)
 		n = 0;		       /* bitbucket */
 	if (outfile[n] == NULL) {
 		m4temp[UNIQUE] = n + '0';
-		if ((fd = open(m4temp, O_RDWR|O_EXCL|O_CREAT, 0666)) == -1 ||
-		    (outfile[n] = fdopen(fd, "w")) == NULL) {
-			if (fd != -1)
-				close(fd);
+		if ((outfile[n] = fopen(m4temp, "w")) == NULL)
 			oops("%s: cannot divert.", m4temp);
-		}
 	}
 	oindex = n;
 	active = outfile[n];

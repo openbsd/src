@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1996/06/26 05:36:15 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1996/07/01 20:40:28 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,12 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1996/06/26 05:36:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1996/07/01 20:40:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -155,20 +154,15 @@ int n;
 {
 	register int c;
 	register FILE *dfil;
-	int fd;
 
 	if (active == outfile[n])
 		oops("%s: diversion still active.", "undivert");
 	(void) fclose(outfile[n]);
 	outfile[n] = NULL;
 	m4temp[UNIQUE] = n + '0';
-
-	if ((fd = open(m4temp, O_RDWR|O_EXCL|O_CREAT, 0666)) == -1 ||
-	    (dfil = fdopen(fd, "r")) == NULL) {
-		if (fd != -1)
-			close(fd);
+	if ((dfil = fopen(m4temp, "r")) == NULL)
 		oops("%s: cannot undivert.", m4temp);
-	} else
+	else
 		while ((c = getc(dfil)) != EOF)
 			putc(c, active);
 	(void) fclose(dfil);
