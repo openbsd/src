@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 2/19/91
-#	$Id: Makefile,v 1.3 1996/01/16 07:22:13 deraadt Exp $
+#	$Id: Makefile,v 1.4 1996/02/13 07:22:17 dm Exp $
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c pw_copy.c pw_util.c getpwent.c
@@ -22,6 +22,7 @@ LDADD+=	-lkrb -ldes
 .endif
 
 BINMODE=4555
+BINOWN=	root
 
 .include <bsd.prog.mk>
 
