@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_entry.c,v 1.10 2001/02/22 04:37:56 millert Exp $	*/
+/*	$OpenBSD: parse_entry.c,v 1.11 2003/03/10 04:02:49 david Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -190,7 +190,7 @@ _nc_extend_names(ENTRY * entryp, char *name, int token_type)
  *	if the token was not a name in column 1, complain and die
  *	save names in entry's string table
  *	while (get_token() is not EOF and not NAMES)
- *	        check for existance and type-correctness
+ *	        check for existence and type-correctness
  *	        enter cap into structure
  *	        if STRING
  *	            save string in entry's string table

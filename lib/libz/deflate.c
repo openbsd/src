@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.c,v 1.5 2002/03/12 00:25:57 millert Exp $	*/
+/*	$OpenBSD: deflate.c,v 1.6 2003/03/10 04:02:50 david Exp $	*/
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -149,7 +149,7 @@ struct static_tree_desc_s {int dummy;}; /* for buggy compilers */
 
 /* ===========================================================================
  * Update a hash value with the given input byte
- * IN  assertion: all calls to to UPDATE_HASH are made with consecutive
+ * IN  assertion: all calls to UPDATE_HASH are made with consecutive
  *    input characters, so that a running hash key can be computed from the
  *    previous key instead of complete recalculation each time.
  */
@@ -162,7 +162,7 @@ struct static_tree_desc_s {int dummy;}; /* for buggy compilers */
  * the previous length of the hash chain.
  * If this file is compiled with -DFASTEST, the compression level is forced
  * to 1, and no hash chains are maintained.
- * IN  assertion: all calls to to INSERT_STRING are made with consecutive
+ * IN  assertion: all calls to INSERT_STRING are made with consecutive
  *    input characters and the first MIN_MATCH bytes of str are valid
  *    (except for the last MIN_MATCH-1 bytes of the input file).
  */

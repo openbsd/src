@@ -33,11 +33,11 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: index.S,v 1.2 1996/08/19 08:18:49 tholo Exp $"
+	.asciz "$OpenBSD: index.S,v 1.3 2003/03/10 04:02:49 david Exp $"
 #endif /* LIBC_SCCS */
 
 /*
- * Find the first occurence of c in the string cp.
+ * Find the first occurrence of c in the string cp.
  * Return pointer to match or null pointer.
  *
  * char *

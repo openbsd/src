@@ -1,4 +1,4 @@
-/*	$OpenBSD: time-test.c,v 1.2 2002/06/25 15:50:16 mickey Exp $	*/
+/*	$OpenBSD: time-test.c,v 1.3 2003/03/10 04:02:50 david Exp $	*/
 
 /*
  * Compile with:
@@ -42,10 +42,10 @@ main (int argc, char **argv)
 	struct event timeout;
 	struct timeval tv;
  
-	/* Initalize the event library */
+	/* Initialize the event library */
 	event_init();
 
-	/* Initalize one event */
+	/* Initialize one event */
 	timeout_set(&timeout, timeout_cb, &timeout);
 
 	timerclear(&tv);

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.42 2002/06/11 06:39:47 art Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.43 2003/03/10 04:02:49 david Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -284,7 +284,7 @@ __elf_is_okay__(ehdr)
 	 * We need to check magic, class size, endianess,
 	 * and version before we look at the rest of the
 	 * Elf_Ehdr structure.  These few elements are
-	 * represented in a machine independant fashion.
+	 * represented in a machine independent fashion.
 	 */
 	if ((IS_ELF(*ehdr) || IS_OLF(*ehdr)) &&
 	    ehdr->e_ident[EI_CLASS] == ELF_TARG_CLASS &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.2 2003/02/28 18:05:51 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.3 2003/03/10 04:02:49 david Exp $	*/
 
 /*   
  *   Mach Operating System
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.2 2003/02/28 18:05:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.3 2003/03/10 04:02:49 david Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* 
@@ -69,7 +69,7 @@ static char rcsid[] = "$OpenBSD: crt0.c,v 1.2 2003/02/28 18:05:51 deraadt Exp $"
  *    | 0x00000000	  | <- end-of-ENVP-list marker (not redundant!).
  *    +-------------------+
  *
- * We use 'start:' to grab r31 and and call real_start(argc, argv, envp).
+ * We use 'start:' to grab r31 and call real_start(argc, argv, envp).
  * We must do this since the function prologue makes finding the initial
  * r31 difficult in C.
  */

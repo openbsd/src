@@ -1,4 +1,4 @@
-/*	$OpenBSD: modf.c,v 1.3 1996/11/13 21:20:21 niklas Exp $	*/
+/*	$OpenBSD: modf.c,v 1.4 2003/03/10 04:02:49 david Exp $	*/
 /*	$NetBSD: modf.c,v 1.1 1995/02/10 17:50:25 cgd Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: modf.c,v 1.3 1996/11/13 21:20:21 niklas Exp $";
+static char *rcsid = "$OpenBSD: modf.c,v 1.4 2003/03/10 04:02:49 david Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ modf(val, iptr)
 	 * If you look at the math involved for a few seconds, it's
 	 * plain to see that the integral part is the input, with the
 	 * low (DBL_FRACBITS - (exponent - DBL_EXP_BIAS)) bits zeroed,
-	 * the the fractional part is the part with the rest of the
+	 * the fractional part is the part with the rest of the
 	 * bits zeroed.  Just zeroing the high bits to get the
 	 * fractional part would yield a fraction in need of
 	 * normalization.  Therefore, we take the easy way out, and
