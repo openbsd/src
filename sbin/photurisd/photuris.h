@@ -1,4 +1,4 @@
-/* $OpenBSD: photuris.h,v 1.3 2001/01/28 22:45:13 niklas Exp $ */
+/* $OpenBSD: photuris.h,v 1.4 2001/11/30 20:31:49 provos Exp $ */
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -46,7 +46,6 @@
 #endif
 
 #define PHOTURIS_DIR         "/etc/photuris"
-#define PHOTURIS_FIFO        "photuris.pipe"
 #define PHOTURIS_STARTUP     "photuris.startup"
 #define PHOTURIS_CONFIG      "photuris.conf"
 #define PHOTURIS_SECRET      "secrets.conf"

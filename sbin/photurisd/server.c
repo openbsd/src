@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.10 2001/11/17 19:54:57 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.11 2001/11/30 20:31:49 provos Exp $	*/
 
 /*
  * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: server.c,v 1.10 2001/11/17 19:54:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: server.c,v 1.11 2001/11/30 20:31:49 provos Exp $";
 #endif
 
 #define _SERVER_C_
@@ -128,36 +128,13 @@ init_server(void)
 	  log_fatal("bind() in init_server()"); 
  
      /* Save interfaces addresses here */
-     addresses = (char **) calloc(1+1, sizeof(char *)); 
-     if (addresses == (char **) NULL) 
-	  log_fatal("calloc() in init_server()"); 
-     addresses[1] = (char *) NULL; 
- 
-     sockets = (int *) calloc(1+1, sizeof(int)); 
-     if (sockets == (int *) NULL) 
-	  log_fatal("calloc() in init_server()"); 
-     sockets[1] = -1;
- 
-     if (lstat(PHOTURIS_FIFO, &sb) == -1) {
-	  if (errno != ENOENT)
-	       log_fatal("stat() in init_server()");
-	  if (mkfifo(PHOTURIS_FIFO, 0660) == -1)
-	       log_fatal("mkfifo() in init_server()");
-     } else if (!(sb.st_mode & S_IFIFO))
-	  log_print("%s is not a FIFO in init_server()", PHOTURIS_FIFO);
-
-     /* We listen on a named pipe */
-#if defined(linux) || defined(_AIX)
-     if ((sockets[0] = open(PHOTURIS_FIFO, O_RDWR| O_NONBLOCK, 0)) == -1)
-#else
-     if ((sockets[0] = open(PHOTURIS_FIFO, O_RDONLY | O_NONBLOCK, 0)) == -1)
-#endif
-	  log_fatal("open() in init_server()");
-     i = 1;                  /* One interface already */
+     addresses = NULL;
+     sockets = NULL;
+     i = 0;
 
 #ifdef IPSEC
      /* We also listen on pfkeyv2 for notify messages */
-     newbuf = realloc(addresses, (i + 2) * sizeof(char *)); 
+     newbuf = realloc(addresses, (i + 1) * sizeof(char *)); 
      if (newbuf == NULL) {
 	  if (addresses != NULL)
 	       free (addresses);
@@ -167,7 +144,7 @@ init_server(void)
      
      addresses[i + 1] = (char *) NULL; 
 
-     newbuf = realloc(sockets, (i + 2)* sizeof(int));
+     newbuf = realloc(sockets, (i + 1) * sizeof(int));
      if (newbuf == NULL) {
 	  if (sockets != NULL)
 	       free (sockets);
@@ -176,7 +153,6 @@ init_server(void)
      sockets = (int *) newbuf;
 
      sockets[i] = kernel_get_socket();
-     sockets[i+1] = -1;
 
      i++;                    /* Next interface */
 #endif
@@ -195,7 +171,7 @@ init_server(void)
 	       continue; 
 	  } 
  
-	  newbuf =  realloc(addresses, (i + 2) * sizeof(char *)); 
+	  newbuf =  realloc(addresses, (i + 1) * sizeof(char *)); 
 	  if (newbuf == NULL) {
 	       if (addresses != NULL)
 		    free (addresses);
@@ -206,17 +182,14 @@ init_server(void)
 	  addresses[i] = strdup(inet_ntoa(sin2->sin_addr)); 
 	  if (addresses[i] == (char *) NULL) 
 	       log_fatal("strdup() in init_server()"); 
-	  addresses[i + 1] = (char *) NULL; 
 
-	  newbuf = realloc(sockets, (i + 2)* sizeof(int));
+	  newbuf = realloc(sockets, (i + 1)* sizeof(int));
 	  if (newbuf == NULL) {
 	       if (sockets != NULL)
 		    free (sockets);
 	       log_fatal("realloc() in init_server()");
 	  }
 	  sockets = (int *) newbuf;
-
-	  sockets[i+1] = -1;
 
 	  if ((sock = socket(PF_INET, SOCK_DGRAM, proto->p_proto)) < 0)
 	       log_fatal("socket() in init_server()"); 
@@ -306,27 +279,23 @@ server(void)
 #ifdef IPSEC
 		    if (i == 1)       /* PF_ENCAP NOTIFIES */
 			 kernel_handle_notify(sockets[i]);
-		    else
+		    else {
 #endif
-			 if (addresses[i] == NULL)
-				 process_api(sockets[i], global_socket); 
-			 else {
-				 d = sizeof(struct sockaddr_in);
-				 if (recvfrom(sockets[i], 
+			    d = sizeof(struct sockaddr_in);
+			    if (recvfrom(sockets[i], 
 #ifdef BROKEN_RECVFROM
-					      (char *) buffer, 1,
+				    (char *) buffer, 1,
 #else
-					      (char *) NULL, 0, 
+				    (char *) NULL, 0, 
 #endif
-					      MSG_PEEK,
-					      (struct sockaddr *)&sin,
-					      &d) == -1) {
-					 log_error("recvfrom() in server()"); 
-					 return -1;
-				 }
-				 handle_packet(sockets[i], addresses[i]);
+				    MSG_PEEK,
+				    (struct sockaddr *)&sin, &d) == -1) {
+				    log_error("recvfrom() in server()"); 
+				    return -1;
+			    }
+			    handle_packet(sockets[i], addresses[i]);
  		    }
-	       } 
+	       }
 	  }
 
 #ifdef IPSEC
