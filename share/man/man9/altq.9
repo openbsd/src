@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.7 2002/05/31 09:52:58 kjc Exp $
+.\"	$OpenBSD: altq.9,v 1.8 2002/11/25 13:18:08 henning Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -581,9 +581,8 @@ Queueing disciplines also need to guarantee the same mbuf is returned if
 is called immediately after
 .Fn IFQ_POLL .
 .Sh SEE ALSO
-.Xr altq.conf 5 ,
-.Xr altqd 8 ,
-.Xr tbrconfig 8
+.Xr pfctl 8 ,
+.Xr pf.conf 5
 .Sh HISTORY
 The
 .Nm
