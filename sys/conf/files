@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.190 2001/03/11 02:48:19 aaron Exp $
+#	$OpenBSD: files,v 1.191 2001/03/18 04:34:56 nate Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -25,6 +25,16 @@ device	audio
 attach	audio at audio
 device	midi
 attach	midi at midibus
+
+# raster operations attributes
+define  rasops1
+define  rasops2
+define  rasops4
+define  rasops8
+define  rasops15
+define  rasops16
+define  rasops24
+define  rasops32
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # and fddi.
