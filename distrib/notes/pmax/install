@@ -28,7 +28,7 @@ onto the pmax which allows you to write to the raw disk - i.e. on all
 UN*X like operating systems it should work using "dd". On OpenBSD
 as well as SunOS you use a command like:
 
-	# dd if=simpleroot23.fs of=/dev/rsd0c bs=20b conv=sync
+	# dd if=simpleroot23.fs of=/dev/rsd0c bs=20b
 
 Especially on OpenBSD/pmax you'll have to use /dev/rrz0c or something
 like that instead of /dev/rsd0c.
@@ -44,9 +44,9 @@ Then boot the simpleroot by typing the appropriate command at the PROM:
 
 	>> boot rz(0,0,0)/bsd		# for Decstation 2100/3100
 
-or
+	>> boot 5/rz0a/bsd		# for Decstation 5000/2xx
 
-	>> boot 5/rz0a/bsd		# for Decstation 5000's
+	>> boot 3/rz0a/bsd		# for Decstation 5000/1xx
 
 If you've loaded the simpleroot onto some other disk than `rz0' adapt
 the boot specifier accordingly.
@@ -56,6 +56,12 @@ After the initial probe messages you'll asked to choose a shell with
 sh as default. Simply type Return here and you are in single user
 mode. For further instructions please read on in the "Continuing the
 installation from single user mode" below.
+
+If the boot hangs without loading the kernel on a Decstation 5000,
+the SCSI controller may be in a strange state.  This can happen if
+you interrupt the self-test during boot or after hitting the reset
+button.  To fix this, hit ^C to get back to the ROM monitor and
+enter "init".  You should now be able to boot as described above.
 
 Note: if booting the kernel in the miniroot should not work - there are
       two kernels part of the distribution - look at the place you got
