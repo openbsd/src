@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd.h,v 1.8 1998/03/18 04:51:23 marc Exp $	*/
+/*	$OpenBSD: openbsd.h,v 1.9 1998/05/06 14:25:35 csapuntz Exp $	*/
 
 /* OPENBSD_NATIVE is defined when gcc is integrated into the OpenBSD
    source tree so it can be configured appropriately when using the
@@ -74,6 +74,10 @@
 /* Implicit library calls should use memcpy, not bcopy, etc.  */
 
 #define TARGET_MEM_FUNCTIONS
+
+/* Handle #pragma weak and #pragma pack.  */
+
+#define HANDLE_SYSV_PRAGMA
 
 /*
  * Some imports from svr4.h in support of shared libraries.
