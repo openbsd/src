@@ -1,5 +1,5 @@
-/*	$OpenBSD: isa_machdep.c,v 1.6 1997/11/10 15:53:10 niklas Exp $	*/
-/*	$NetBSD: isa_machdep.c,v 1.5 1996/11/23 06:38:49 cgd Exp $	*/
+/* $OpenBSD: isa_machdep.c,v 1.7 2000/11/16 04:33:47 ericj Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.12 1998/08/07 10:26:39 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -38,34 +38,77 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
 #include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/isa/isavar.h>
 
 #include "vga_isa.h"
 #if NVGA_ISA
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
 #include <dev/isa/vga_isavar.h>
 #endif
 
-struct {
-	int	(*probe) __P((bus_space_tag_t, bus_space_tag_t));
-	void	(*console) __P((bus_space_tag_t, bus_space_tag_t));
-} isa_display_console_devices[] = {
-#if NVGA_ISA
-	{ vga_isa_console_match, vga_isa_console_attach },
-#endif
-	{ },
+#include "pcppi.h"
+#if (NPCPPI > 0)
+#include <dev/isa/pcppivar.h>
+
+int isabeepmatch __P((struct device *, struct cfdata *, void *));
+void isabeepattach __P((struct device *, struct device *, void *));
+
+struct cfattach isabeep_ca = {
+	sizeof(struct device), isabeepmatch, isabeepattach
 };
 
-void
+static int ppi_attached;
+static pcppi_tag_t ppicookie;
+#endif /* PCPPI */
+
+int
 isa_display_console(iot, memt)
 	bus_space_tag_t iot, memt;
 {
-	int i = 0;
-
-	while (isa_display_console_devices[i].probe != NULL)
-		if ((*isa_display_console_devices[i].probe)(iot, memt)) {
-			(*isa_display_console_devices[i].console)(iot, memt);
-			break;
-		}
+	int res = ENXIO;
+#if NVGA_ISA
+	res = vga_isa_cnattach(iot, memt);
+	if (!res)
+		return(0);
+#endif
+	return(res);
 }
+
+#if (NPCPPI > 0)
+int
+isabeepmatch(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	return (!ppi_attached);
+}
+
+void
+isabeepattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	printf("\n");
+
+	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
+	ppi_attached = 1;
+}
+#endif
+
+#if 0
+void
+isabeep(pitch, period)
+	int pitch, period;
+{
+#if (NPCPPI > 0)
+	if (ppi_attached)
+		pcppi_bell(ppicookie, pitch, period, 0);
+#endif
+}
+#endif
