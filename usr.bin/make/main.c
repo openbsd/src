@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.50 2001/05/29 17:00:54 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.51 2001/05/31 13:38:48 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -811,7 +811,8 @@ ReadMakefile(p, q)
 			goto found;
 		/* if we've chdir'd, rebuild the path name */
 		if (curdir != objdir && *fname != '/') {
-			(void)sprintf(path, "%s/%s", curdir, fname);
+			(void)snprintf(path, sizeof path, "%s/%s", curdir, 
+			    fname);
 			if ((stream = fopen(path, "r")) != NULL) {
 				fname = estrdup(path);
 				goto found;
