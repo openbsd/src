@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.37 2004/07/10 08:43:36 tom Exp $	*/
+/*	$OpenBSD: part.c,v 1.38 2004/07/13 06:00:33 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -174,7 +174,7 @@ PRT_ascii_id(int id)
 
 void
 PRT_parse(disk_t *disk, void *prt, off_t offset, off_t reloff,
-    prt_t *partn, int pn)
+    prt_t *partn)
 {
 	unsigned char *p = prt;
 	off_t off;
@@ -200,7 +200,7 @@ PRT_parse(disk_t *disk, void *prt, off_t offset, off_t reloff,
 	partn->bs = getlong(p) + off;
 	partn->ns = getlong(p+4);
 
-	PRT_fix_CHS(disk, partn, pn);
+	PRT_fix_CHS(disk, partn);
 }
 
 int
@@ -330,7 +330,7 @@ PRT_fix_BN(disk_t *disk, prt_t *part, int pn)
 }
 
 void
-PRT_fix_CHS(disk_t *disk, prt_t *part, int pn)
+PRT_fix_CHS(disk_t *disk, prt_t *part)
 {
 	int spt, tpc, spc;
 	int start, end, size;

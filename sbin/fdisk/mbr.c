@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.19 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.20 2004/07/13 06:00:33 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -75,7 +75,7 @@ MBR_init(disk_t *disk, mbr_t *mbr)
 	mbr->part[3].ns += mbr->part[3].bs;
 	mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
 	mbr->part[3].ns -= mbr->part[3].bs;
-	PRT_fix_CHS(disk, &mbr->part[3], 3);
+	PRT_fix_CHS(disk, &mbr->part[3]);
 	if ((mbr->part[3].shead != 1) || (mbr->part[3].ssect != 1)) {
 		/* align the partition on a cylinder boundary */
 		mbr->part[3].shead = 0;
@@ -99,7 +99,7 @@ MBR_parse(disk_t *disk, char *mbr_buf, off_t offset, off_t reloff, mbr_t *mbr)
 
 	for (i = 0; i < NDOSPART; i++)
 		PRT_parse(disk, &mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i],
-		    offset, reloff, &mbr->part[i], i);
+		    offset, reloff, &mbr->part[i]);
 }
 
 void
@@ -182,7 +182,7 @@ MBR_pcopy(disk_t *disk, mbr_t *mbr)
 	for (i = 0; i < NDOSPART; i++) {
 		PRT_parse(disk, &mbr_disk[MBR_PART_OFF +
 					 MBR_PART_SIZE * i],
-			  offset, reloff, &mbr->part[i], i);
+			  offset, reloff, &mbr->part[i]);
 		PRT_print(i, &mbr->part[i], NULL);
 	}
 }
