@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa.c,v 1.9 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: eisa.c,v 1.10 2003/03/29 00:17:44 mickey Exp $	*/
 /*	$NetBSD: eisa.c,v 1.15 1996/10/21 22:31:01 thorpej Exp $	*/
 
 /*
@@ -222,7 +222,8 @@ eisaattach(parent, self, aux)
  */
 struct eisa_knowndev {
 	int	flags;
-	const char *id, *name;
+	char	id[8];
+	const char *name;
 };
 #define EISA_KNOWNDEV_NOPROD	0x01		/* match on vendor only */
 
@@ -250,7 +251,7 @@ eisa_devinfo(id, cp)
 #ifdef EISAVERBOSE
 	/* find the device in the table, if possible. */
 	edp = eisa_knowndevs;
-	while (edp->id != NULL) {
+	while (edp->name != NULL) {
 		/* check this entry for a match */
 		if ((edp->flags & EISA_KNOWNDEV_NOPROD) != 0)
 			match = !strncmp(edp->id, id, 3);
