@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.11 1998/08/06 19:34:58 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.12 1998/08/21 23:16:39 csapuntz Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -107,13 +107,14 @@ nfs_nget(mntp, fhp, fhsize, npp)
 	struct nfsnode **npp;
 {
 	struct proc *p = curproc;	/* XXX */
-	register struct nfsnode *np;
+	register struct nfsnode *np, *np2;
 	struct nfsnodehashhead *nhpp;
 	register struct vnode *vp;
 	extern int (**nfsv2_vnodeop_p)__P((void *));
 	struct vnode *nvp;
 	int error;
 
+retry:
 	nhpp = NFSNOHASH(nfs_hash(fhp, fhsize));
 loop:
 	for (np = nhpp->lh_first; np != 0; np = np->n_hash.le_next) {
@@ -139,6 +140,16 @@ loop:
 	/*
 	 * Insert the nfsnode in the hash queue for its new file handle
 	 */
+	for (np2 = nhpp->lh_first; np2 != 0; np2 = np2->n_hash.le_next) {
+		if (vp->v_mount != NFSTOV(np2)->v_mount || 
+		    fhsize != np2->n_fhsize ||
+		    bcmp((caddr_t)fhp, (caddr_t)np2->n_fhp, fhsize))
+			continue;
+		
+		vrele(vp);
+		goto retry;
+	}
+	
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	if (fhsize > NFS_SMALLFH) {
 		MALLOC(np->n_fhp, nfsfh_t *, fhsize, M_NFSBIGFH, M_WAITOK);
@@ -207,7 +218,8 @@ nfs_reclaim(v)
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
 
-	LIST_REMOVE(np, n_hash);
+	if (np->n_hash.le_prev != NULL)
+		LIST_REMOVE(np, n_hash);
 
 	/*
 	 * For nqnfs, take it off the timer queue as required.
