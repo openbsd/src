@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.25 2001/08/08 06:46:09 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.26 2001/08/08 07:02:42 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -202,7 +202,7 @@ parse(fd, laddr, faddr)
 
 	if (debug_flag && syslog_flag)
 		syslog(LOG_DEBUG, "In function parse(), from %s to %s", 
-		       gethost(faddr), gethost(laddr));
+		       gethost4_addr(faddr), gethost4_addr(laddr));
 
 	if (debug_flag && syslog_flag)
 		syslog(LOG_DEBUG, "  Before read from remote host");
@@ -215,11 +215,11 @@ parse(fd, laddr, faddr)
 		if (syslog_flag)
 			syslog(LOG_NOTICE,
 			    n ? "read from %s: %m" : "read from %s: EOF",
-			    gethost(faddr));
+			    gethost4_addr(faddr));
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
-			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
 		}
 		return 0;
@@ -240,18 +240,18 @@ parse(fd, laddr, faddr)
 		if (syslog_flag)
 			syslog(LOG_NOTICE,
 			    "scanf: invalid-port(s): %d , %d from %s",
-			    lport, fport, gethost(faddr));
+			    lport, fport, gethost4_addr(faddr));
 		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
 		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "INVALID-PORT");
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
-			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
 		}
 		return 0;
 	}
 	if (syslog_flag && verbose_flag)
 		syslog(LOG_NOTICE, "request for (%d,%d) from %s",
-		    lport, fport, gethost(faddr));
+		    lport, fport, gethost4_addr(faddr));
 
 	if (debug_flag && syslog_flag)
 		syslog(LOG_DEBUG, "  After fscanf(), before k_getuid()");
@@ -268,7 +268,7 @@ parse(fd, laddr, faddr)
 		n = snprintf(buf, sizeof(buf), "%d , %d : ERROR : %s\r\n",
 		    lport, fport, unknown_flag ? "UNKNOWN-ERROR" : "NO-USER");
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
-			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
 		}
 		return 0;
@@ -286,7 +286,7 @@ parse(fd, laddr, faddr)
 		    "%d , %d : USERID : %s%s%s :%d\r\n",
 		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
-			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
 		}
 		return 0;
@@ -300,11 +300,11 @@ parse(fd, laddr, faddr)
 		if (syslog_flag && verbose_flag)
 			syslog(LOG_NOTICE,
 			    "user %s requested HIDDEN-USER for host %s: %d, %d",
-			    pw->pw_name, gethost(faddr), lport, fport);
+			    pw->pw_name, gethost4_addr(faddr), lport, fport);
 		n = snprintf(buf, sizeof(buf),
 		    "%d , %d : ERROR : HIDDEN-USER\r\n", lport, fport);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
-			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
 		}
 		return 0;
@@ -317,7 +317,7 @@ parse(fd, laddr, faddr)
 		    "%d , %d : USERID : %s%s%s :%s\r\n",
 		    lport, fport, opsys_name, charset_sep, charset_name, token);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
-			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
 		}
 		return 0;
@@ -331,7 +331,7 @@ parse(fd, laddr, faddr)
 		    "%d , %d : USERID : %s%s%s :%s\r\n",
 		    lport, fport, opsys_name, charset_sep, charset_name, token);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
-			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
 		}
 		return 0;
@@ -342,7 +342,7 @@ parse(fd, laddr, faddr)
 		    "%d , %d : USERID : %s%s%s :%d\r\n",
 		    lport, fport, opsys_name, charset_sep, charset_name, uid);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
-			syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+			syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 			return 1;
 		}
 		return 0;
@@ -350,7 +350,7 @@ parse(fd, laddr, faddr)
 	n = snprintf(buf, sizeof(buf), "%d , %d : USERID : %s%s%s :%s\r\n",
 	    lport, fport, opsys_name, charset_sep, charset_name, pw->pw_name);
 	if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
-		syslog(LOG_NOTICE, "write to %s: %m", gethost(faddr));
+		syslog(LOG_NOTICE, "write to %s: %m", gethost4_addr(faddr));
 		return 1;
 	}
 	return 0;
