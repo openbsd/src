@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.19 1998/11/20 02:42:19 millert Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.20 1998/11/27 22:52:42 art Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -900,8 +900,7 @@ loop:
 			continue;
 		}
 		simple_unlock(&mntvnode_slock);
-		error =
-		  vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, p);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, p);
 		if (error) {
 			simple_lock(&mntvnode_slock);
 			if (error == ENOENT)
