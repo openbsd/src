@@ -1,3 +1,4 @@
+dnl	$OpenBSD: install,v 1.17 2002/02/06 00:58:07 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 The file `HP-IB.geometry' has geometry information for several HP-IB
@@ -74,7 +75,7 @@ run into problems you may wish to run `rpc.bootparamd' with the `-d'
 flag on your server to get extra debugging information.
 
 You are now ready to load SYS_UBOOT.  During the client's self-test cycle,
-press the space bar.  Shortly, you should see a menu of possible boot
+press the space bar.  Shortly after, you should see a menu of possible boot
 options appear.  Select the option corresponding to SYS_UBOOT.
 SYS_UBOOT will then load and prompt you for a kernel name.  NFS file
 names should not have a leading '/' prepended to them, simply use `bsd.rd'.
@@ -146,14 +147,13 @@ OpenBSDBootMsgs
 	also be 4096 and 512 or even 16384 and 2048 bytes.
 
 	The install program will now label your disk and ask which file
-	systems should be created on which partitions.  It will auto-
-	matically select the 'a' partition to be the root file system.
-	Next it will ask for which disk and partition you want a file
-	system created on.  This will be the same as the disk name (e.g.
-	"hd0") with the letter identifying the partition (e.g. "d")
-	appended (e.g. "hd0d").  Then it will ask where this partition is
-	to be mounted, e.g. /usr.  This process will be repeated until
-	you enter "done".
+	systems should be created on which partitions.  It will
+	automatically select the 'a' partition to be the root file system.
+	Next it will ask for which disk and partition you want a file system
+	created on.  This will be the same as the disk name (e.g. "hd0")
+	with the letter identifying the partition (e.g. "d") appended (e.g.
+	"hd0d").  Then it will ask where this partition is to be mounted,
+	e.g. /usr.  This process will be repeated until you enter "done".
 
 	At this point you will be asked to confirm that the file system
 	information you have entered is correct, and given an opportunity
@@ -178,8 +178,8 @@ OpenBSDBootMsgs
 	the netmask to use and any interface-specific flags to set.  No
 	interface-specific flags should be required.
 
-	After all network interfaces has been configured the install pro-
-	gram will ask for a default route and IP address of the primary
+	After all network interfaces have been configured the install
+	program will ask for a default route and IP address of the primary
 	name server to use.  You will also be presented with an opportunity
 	to edit the host table.
 
