@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.3 1996/06/16 23:53:15 downsj Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.4 1996/07/02 20:18:49 deraadt Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.7 1996/03/19 03:06:10 mycroft Exp $	*/
 
 /*
@@ -293,5 +293,6 @@ struct scsi_mode_header_big {
 #define	SCSI_CHECK	0x02
 #define	SCSI_BUSY	0x08	
 #define SCSI_INTERM	0x10
+#define SCSI_QUEUE_FULL	0x28
 
 #endif /* _SCSI_SCSI_ALL_H */

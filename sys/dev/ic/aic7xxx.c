@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: aic7xxx.c,v 1.7 1996/06/27 21:15:47 shawn Exp $
+ *      $Id: aic7xxx.c,v 1.8 1996/07/02 20:18:51 deraadt Exp $
  */
 /*
  * TODO:
@@ -1499,7 +1499,6 @@ pagein_done:
 				sc_print_addr(xs->sc_link);
 				printf("Target Busy\n");
 				break;
-#ifdef __FreeBSD__
 			    case SCSI_QUEUE_FULL:
 				/*
 				 * The upper level SCSI code will someday
@@ -1511,7 +1510,6 @@ pagein_done:
 				STAILQ_INSERT_TAIL(&ahc->assigned_scbs,
 						   scb, links);
 				break;
-#endif
 			    default:
 				sc_print_addr(xs->sc_link);
 				printf("unexpected targ_status: %x\n",
