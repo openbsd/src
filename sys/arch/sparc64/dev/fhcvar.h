@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhcvar.h,v 1.6 2004/09/27 21:12:40 jason Exp $	*/
+/*	$OpenBSD: fhcvar.h,v 1.7 2004/09/28 18:37:43 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -63,13 +63,15 @@ void fhc_attach(struct fhc_softc *);
 int fhc_get_string(int, char *, char **);
 
 struct fhc_attach_args {
+	bus_space_tag_t fa_bustag;
 	char *fa_name;
+	int *fa_intr;
+	struct fhc_reg *fa_reg;
+	u_int32_t *fa_promvaddrs;
 	int fa_node;
 	int fa_nreg;
 	int fa_nintr;
-	int *fa_intr;
-	struct fhc_reg *fa_reg;
-	bus_space_tag_t fa_bustag;
+	int fa_npromvaddrs;
 };
 
 #define	fhc_bus_map(t, slot, offset, sz, flags, hp)		\

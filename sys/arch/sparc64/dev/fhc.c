@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.10 2004/09/28 02:01:49 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.11 2004/09/28 18:37:43 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -114,6 +114,8 @@ fhc_attach(struct fhc_softc *sc)
 		    &fa.fa_nreg, (void **)&fa.fa_reg);
 		getprop(node, "interrupts", sizeof(int),
 		    &fa.fa_nintr, (void **)&fa.fa_intr);
+		getprop(node, "address", sizeof(*fa.fa_promvaddrs),
+		    &fa.fa_npromvaddrs, (void **)&fa.fa_promvaddrs);
 
 		(void)config_found(&sc->sc_dv, (void *)&fa, fhc_print);
 
@@ -123,6 +125,8 @@ fhc_attach(struct fhc_softc *sc)
 			free(fa.fa_reg, M_DEVBUF);
 		if (fa.fa_nintr != NULL)
 			free(fa.fa_intr, M_DEVBUF);
+		if (fa.fa_promvaddrs != NULL)
+			free(fa.fa_promvaddrs, M_DEVBUF);
 	}
 
 	if (sparc_led_blink)

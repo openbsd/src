@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.15 2004/09/24 20:53:12 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.16 2004/09/28 18:37:43 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -290,7 +290,7 @@ zs_attach_fhc(parent, self, aux)
 	int zs_unit = zsc->zsc_dev.dv_unit;
 	bus_space_handle_t kvaddr;
 
-	if (fa->fa_nreg < 1) {
+	if (fa->fa_nreg < 1 && fa->fa_npromvaddrs < 1) {
 		printf(": no registers\n");
 		return;
 	}
@@ -300,14 +300,32 @@ zs_attach_fhc(parent, self, aux)
 		return;
 	}
 
-	if (fhc_bus_map(fa->fa_bustag, fa->fa_reg[0].fbr_slot,
-	    fa->fa_reg[0].fbr_offset, fa->fa_reg[0].fbr_size,
-	    BUS_SPACE_MAP_LINEAR, &kvaddr) != 0) {
-		printf("%s @ fhc: cannot map registers\n", self->dv_xname);
-		return;
+	if (zsaddr[zs_unit] == NULL) {
+		if (fa->fa_npromvaddrs) {
+			/*
+			 * We're converting from a 32-bit pointer to a 64-bit
+			 * pointer.  Since the 32-bit entity is negative, but
+			 * the kernel is still mapped into the lower 4GB
+			 * range, this needs to be zero-extended.
+			 *
+			 * XXXXX If we map the kernel and devices into the
+			 * high 4GB range, this needs to be changed to
+			 * sign-extend the address.
+			 */
+			zsaddr[zs_unit] = (struct zsdevice *)
+			    (unsigned long int)fa->fa_promvaddrs[0];
+		} else {
+			if (fhc_bus_map(fa->fa_bustag, fa->fa_reg[0].fbr_slot,
+			    fa->fa_reg[0].fbr_offset, fa->fa_reg[0].fbr_size,
+			    BUS_SPACE_MAP_LINEAR, &kvaddr) != 0) {
+				printf("%s @ fhc: cannot map registers\n",
+				    self->dv_xname);
+				return;
+			}
+			zsaddr[zs_unit] = (struct zsdevice *)
+			    bus_space_vaddr(fa->fa_bustag, kvaddr);
+		}
 	}
-	zsaddr[zs_unit] =
-	    (struct zsdevice *) bus_space_vaddr(fa->fa_bustag, kvaddr);
 
 	zsc->zsc_bustag = fa->fa_bustag;
 	zsc->zsc_dmatag = NULL;
