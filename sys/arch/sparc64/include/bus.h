@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 2001/08/22 20:11:09 art Exp $	*/
 /*	$NetBSD: bus.h,v 1.28 2001/07/19 15:32:19 thorpej Exp $	*/
 
 /*-
@@ -1368,6 +1368,16 @@ bus_space_copy_region_stream_8(t, h1, o1, h2, o2, c)
 	    bus_space_write_stream_8(t, h1, o1, bus_space_read_8(t, h2, o2));
 }
 
+/* OpenBSD "raw" wrappers around the NetBSD "stream" methods. */
+/* XXXART - I'm lazy so I'll only implement the ones I need. */
+#define bus_space_read_raw_multi_2(t, h, o, a, c) \
+	bus_space_read_multi_stream_2(t, h, o, (u_int8_t *)(a), c)
+#define bus_space_write_raw_multi_2(t, h, o, a, c) \
+	bus_space_write_multi_stream_2(t, h, o, (u_int8_t *)(a), c)
+#define bus_space_read_raw_multi_4(t, h, o, a, c) \
+	bus_space_read_multi_stream_4(t, h, o, (u_int8_t *)(a), c)
+#define bus_space_write_raw_multi_4(t, h, o, a, c) \
+	bus_space_write_multi_stream_4(t, h, o, (u_int8_t *)(a), c)
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
@@ -1402,6 +1412,8 @@ struct uio;
 #define	BUS_DMASYNC_POSTREAD	0x02	/* post-read synchronization */
 #define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
 #define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
+
+#define __HAVE_NEW_BUS_DMAMAP_SYNC
 
 typedef struct sparc_bus_dma_tag	*bus_dma_tag_t;
 typedef struct sparc_bus_dmamap		*bus_dmamap_t;
