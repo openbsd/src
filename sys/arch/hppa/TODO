@@ -27,6 +27,11 @@ boots (sys/arch/hppa/stand/*):				mickey@ miod@
 * almost could be considered working/done, fixes and such (;
 
 kernel (sys/arch/hppa/*):				mickey@
+* arc4random() gets initialized from the same unticking prom clock value
+  might be that either the inittodr() is broken or nfs boot pinches it
+  too early before anything happens
+* mount_nfs, stty do wrong things (perhaps same issue)
+* reboot garbages the console
 * clkf_intr() is not accurate, but we can mark any
   inner frame by looking at the top-level one in tlabel(all)
 * several harware problems (ie disfunctional/untested drivers)
@@ -52,7 +57,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.19 2002/06/25 06:36:17 mickey Exp $
+$OpenBSD: TODO,v 1.20 2002/07/25 04:53:24 mickey Exp $
 
 --
 	paranoic mickey
