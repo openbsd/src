@@ -1,4 +1,4 @@
-/*	$OpenBSD: dio.c,v 1.11 2005/01/15 22:02:00 miod Exp $	*/
+/*	$OpenBSD: dio.c,v 1.12 2005/01/15 23:37:45 miod Exp $	*/
 /*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
 
 /*-
@@ -254,7 +254,7 @@ dio_scodesize(da)
 		return (1);
 
 	/*
-	 * Find the dio_devdata matchind the primary id.
+	 * Find the dio_devdata matching the primary id.
 	 * If we're a framebuffer, we also check the secondary id.
 	 */
 	for (i = 0; i < DIO_NDEVICES; i++) {
