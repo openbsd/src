@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp_var.h,v 1.2 1996/03/03 22:30:27 niklas Exp $	*/
+/*	$OpenBSD: igmp_var.h,v 1.3 1997/02/05 15:48:22 deraadt Exp $	*/
 /*	$NetBSD: igmp_var.h,v 1.9 1996/02/13 23:41:31 christos Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ struct igmpstat igmpstat;
  * DELAY * countdown frequency).  We assume that the routine random()
  * is defined somewhere (and that it returns a positive number).
  */
-#define	IGMP_RANDOM_DELAY(X)	(random() % (X) + 1)
+#define	IGMP_RANDOM_DELAY(X)	(arc4random() % (X) + 1)
 
 void	igmp_init __P((void));
 void	igmp_input __P((struct mbuf *, ...));

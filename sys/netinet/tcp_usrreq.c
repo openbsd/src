@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.7 1996/09/20 22:53:12 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.8 1997/02/05 15:48:27 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
+#include <dev/rndvar.h>
 
 /*
  * TCP protocol interface to socket abstraction.
@@ -215,7 +216,7 @@ tcp_usrreq(so, req, m, nam, control)
 #ifdef TCP_COMPAT_42
 		tcp_iss += TCP_ISSINCR/2;
 #else /* TCP_COMPAT_42 */
-		tcp_iss += random() % (TCP_ISSINCR / 2) + 1;
+		tcp_iss += arc4random() % (TCP_ISSINCR / 2) + 1;
 #endif /* !TCP_COMPAT_42 */
 		tcp_sendseqinit(tp);
 		error = tcp_output(tp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.6 1996/09/12 06:19:57 tholo Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.7 1997/02/05 15:48:26 deraadt Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
+#include <dev/rndvar.h>
 
 int	tcp_keepidle = TCPTV_KEEP_IDLE;
 int	tcp_keepintvl = TCPTV_KEEPINTVL;
@@ -143,7 +144,7 @@ tpgone:
 	if ((int)tcp_iss < 0)
 		tcp_iss = 0;				/* XXX */
 #else /* TCP_COMPAT_42 */
-	tcp_iss += random() % (TCP_ISSINCR / PR_SLOWHZ) + 1; /* increment iss */
+	tcp_iss += arc4random() % (TCP_ISSINCR / PR_SLOWHZ) + 1; /* increment iss */
 #endif /* !TCP_COMPAT_42 */
 	tcp_now++;					/* for timestamps */
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.7 1996/07/29 22:01:50 niklas Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.8 1997/02/05 15:48:25 deraadt Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
+#include <dev/rndvar.h>
 
 /* patchable/settable parameters for tcp */
 int 	tcp_mssdflt = TCP_MSS;
@@ -94,7 +95,7 @@ tcp_init()
 #ifdef TCP_COMPAT_42
 	tcp_iss = 1;		/* wrong */
 #else /* TCP_COMPAT_42 */
-	tcp_iss = random() + 1;
+	tcp_iss = arc4random() + 1;
 #endif /* !TCP_COMPAT_42 */
 	in_pcbinit(&tcbtable, tcbhashsize);
 	if (max_protohdr < sizeof(struct tcpiphdr))

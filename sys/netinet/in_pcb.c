@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.13 1997/01/15 03:27:14 kstailey Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.14 1997/02/05 15:48:23 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <dev/rndvar.h>
 
 struct	in_addr zeroin_addr;
 
@@ -217,7 +218,7 @@ portloop:
 			 */
 			if (loopcount == 0) {	/* only do this once. */
 				old = first;
-				first -= (random() % (first - last));
+				first -= (arc4random() % (first - last));
 			}
 			count = first - last;
 
@@ -243,7 +244,7 @@ portloop:
 			 */
 			if (loopcount == 0) {	/* only do this once. */
 				old = first;
-				first += (random() % (last - first));
+				first += (arc4random() % (last - first));
 			}
 			count = last - first;
 
