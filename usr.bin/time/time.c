@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.10 2001/11/19 19:02:16 mpech Exp $	*/
+/*	$OpenBSD: time.c,v 1.11 2001/11/22 10:42:39 mpech Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: time.c,v 1.10 2001/11/19 19:02:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.11 2001/11/22 10:42:39 mpech Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,46 +52,51 @@ static char rcsid[] = "$OpenBSD: time.c,v 1.10 2001/11/19 19:02:16 mpech Exp $";
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <sys/sysctl.h>
+
+#include <err.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <err.h>
 #include <unistd.h>
-#include <errno.h>
 
 int lflag;
 int portableflag;
+
+__dead void usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	int pid;
 	int ch, status;
 	struct timeval before, after;
 	struct rusage ru;
 	int exitonsig = 0;
 
-	lflag = 0;
-	while ((ch = getopt(argc, argv, "lp")) != -1)
-		switch((char)ch) {
-		case 'p':
-			portableflag = 1;
-			break;
+
+	while ((ch = getopt(argc, argv, "lp")) != -1) {
+		switch(ch) {
 		case 'l':
 			lflag = 1;
 			break;
+		case 'p':
+			portableflag = 1;
+			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: time [-lp] command.\n");
-			exit(1);
+			usage();
+			/* NOTREACHED */
 		}
+	}
 
-	if (!(argc -= optind))
-		exit(0);
+	argc -= optind;
 	argv += optind;
+	
+	if (argc < 1) 
+		usage();
 
 	gettimeofday(&before, (struct timezone *)NULL);
 	switch(pid = vfork()) {
@@ -190,4 +195,13 @@ main(argc, argv)
 			kill(getpid(), exitonsig);
 	}
 	exit(WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
+}
+
+__dead void 
+usage()
+{
+	extern char *__progname;   
+
+	(void)fprintf(stderr, "usage: %s [-lp] command\n", __progname);
+	exit(1);
 }
