@@ -105,11 +105,14 @@ memregattach(parent, self, aux)
  * Should kill the process that got its bits clobbered,
  * and take the page out of the page pool, but for now...
  */
+
+extern void sun4c_sun4_storebuf_flush(void);
+
 void
 memerr(issync, ser, sva, aer, ava)
 	int issync, ser, sva, aer, ava;
 {
-
+	sun4c_sun4_storebuf_flush(); /* prevent loops... */
 	if (cputyp == CPU_SUN4) {
 		if (par_err_reg) {
 			printf("mem err: ser=%b sva=%x\n", ser, SER_BITS, sva);

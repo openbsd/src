@@ -3458,6 +3458,25 @@ Lcopyfault:
 	jmp	%g7 + 8
 	 mov	EFAULT, %o0
 
+/* Force the cpu to complete all pending store operations
+ * and flush it's on chip write buffers.  This is the sun4c/sun4
+ * version and will only be called when servicing a memory
+ * error so that we do not loop indefinately.
+ */
+ENTRY(sun4c_sun4_storebuf_flush)
+	set	AC_CONTEXT, %o1
+	lduba	[%o1] ASI_CONTROL, %o0	! load context reg
+	stba	%o0, [%o1] ASI_CONTROL	! store same value, flush begins
+	nop
+	nop
+	nop
+	/* Pipeline is now clear */
+	nop
+	nop
+	nop
+	/* Store buffer is empty, safe to return now. */
+	retl
+	 nop
 
 /*
  * Write all user windows presently in the CPU back to the user's stack.
