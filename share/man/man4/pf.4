@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.44 2003/12/31 14:03:01 jmc Exp $
+.\"	$OpenBSD: pf.4,v 1.45 2004/01/24 18:54:40 deraadt Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -72,7 +72,7 @@ Stops the packet filter.
 Starts the ALTQ bandwidth control system.
 .It Dv DIOCSTOPALTQ
 Stops the ALTQ bandwidth control system.
-.It Dv DIOCBEGINADDRS  Fa "pfioc_pool_addr"
+.It Dv DIOCBEGINADDRS  Fa "struct pfioc_pooladdr"
 .Bd -literal
 struct pfioc_pooladdr {
 	u_int32_t		action;
