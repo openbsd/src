@@ -141,6 +141,7 @@
 ./usr/bin/atq
 ./usr/bin/atrm
 ./usr/bin/aucat
+./usr/bin/audioctl
 ./usr/bin/awk
 ./usr/bin/banner
 ./usr/bin/basename
@@ -260,6 +261,7 @@
 ./usr/bin/man
 ./usr/bin/merge
 ./usr/bin/mesg
+./usr/bin/mixerctl
 ./usr/bin/mk_cmds
 ./usr/bin/mkdep
 ./usr/bin/mkfifo
@@ -1786,6 +1788,7 @@
 ./var/log/wtmp
 ./var/log/xferlog
 ./var/mail
+./var/mail/root
 ./var/msgs
 ./var/preserve
 ./var/quotas
@@ -1998,6 +2001,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./var/mail/root
-./usr/bin/audioctl
-./usr/bin/mixerctl

@@ -2,6 +2,7 @@
 ./sbin/ldconfig
 ./usr/bin/ldd
 ./usr/include/m68k
+./usr/include/readline
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.8.1
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.8.1/include
@@ -22,6 +23,7 @@
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libocurses.so.2.1
+./usr/lib/libossaudio.so.0.0
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
@@ -281,4 +283,3 @@
 ./usr/lib/perl5/m68k-openbsd/5.00404/pod/perldiag.pod
 ./usr/lib/perl5/site_perl/m68k-openbsd
 ./usr/libexec/ld.so
-./usr/include/readline

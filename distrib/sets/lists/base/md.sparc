@@ -3,6 +3,7 @@
 ./sbin/edlabel
 ./sbin/ldconfig
 ./usr/bin/ldd
+./usr/include/readline
 ./usr/include/sparc
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.3
 ./usr/lib/libacl.so.4.1
@@ -21,6 +22,7 @@
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libocurses.so.2.1
+./usr/lib/libossaudio.so.0.0
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
@@ -287,4 +289,3 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
-./usr/include/readline

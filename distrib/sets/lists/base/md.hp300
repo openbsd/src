@@ -1,6 +1,7 @@
 ./sbin/ldconfig
 ./usr/bin/ldd
 ./usr/include/m68k
+./usr/include/readline
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.18.0
@@ -18,12 +19,13 @@
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libocurses.so.2.1
+./usr/lib/libossaudio.so.0.0
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
+./usr/lib/librx.so.0.1
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libss.so.4.0
-./usr/lib/librx.so.0.1
 ./usr/lib/libstdc++.so.28.0
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.3.0
@@ -291,4 +293,3 @@
 ./usr/mdec/uboot.raw
 ./usr/sbin/grfinfo
 ./usr/sbin/hilinfo
-./usr/include/readline
