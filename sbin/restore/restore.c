@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.c,v 1.4 1997/07/05 20:51:24 millert Exp $	*/
+/*	$OpenBSD: restore.c,v 1.5 1997/07/05 23:10:21 deraadt Exp $	*/
 /*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: restore.c,v 1.4 1997/07/05 20:51:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: restore.c,v 1.5 1997/07/05 23:10:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -475,7 +475,7 @@ nodeupdates(name, ino, type)
 	 * for it, we discard the name knowing that it will be on the
 	 * next incremental tape.
 	 */
-	case NULL:
+	case 0:
 		fprintf(stderr, "%s: (inode %d) not found on tape\n",
 			name, ino);
 		break;
@@ -825,7 +825,7 @@ checkrestore()
 			ep->e_flags &= ~KEEP;
 			if (ep->e_type == NODE)
 				ep->e_flags &= ~(NEW|EXISTED);
-			if (ep->e_flags != NULL)
+			if (ep->e_flags != 0)
 				badentry(ep, "incomplete operations");
 		}
 	}
