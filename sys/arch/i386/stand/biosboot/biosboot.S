@@ -1,11 +1,8 @@
-/*	$OpenBSD: biosboot.S,v 1.12 1997/07/30 19:40:45 flipk Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.13 1997/07/31 20:04:40 mickey Exp $	*/
 
 	.file	"bootbios.S"
 
 #include <machine/asm.h>
-#define _LOCORE
-#include <machine/segments.h>
-#undef _LOCORE
 #include <assym.h>
 
 #define addr32  .byte 0x67
@@ -24,18 +21,18 @@
 /*
  * Partition table values
  */
-BOOTABLE=	0x80	# value of boot_ind, means bootable partition
-OPENBSDPART=	0xA6	# OpenBSD partition type
+#define BOOTABLE	0x80	/* flag of boot_ind, means bootable partition */
+#define OPENBSDPART	0xA6	/* OpenBSD partition type */
 
 #ifdef DEBUG
 #define DBGMSG(msg)		\
 	movb    $msg, %al;	\
 	.byte	0xe8;		\
-	.word	Lchr
+	.word	Lchr - . - 2
 #define GO_RELOC	'R'	/* running relocated code */
 #define REAL2PROT	'P'	/* switch to protected mode */
 #else /* !DEBUG */
-#define DBGMSG(msg)
+#define DBGMSG(msg)	/* */
 #endif /* !DEBUG */
 
 	.text
@@ -102,6 +99,7 @@ ebpb:	.long	16		/* hidden sectors */
 
 2:	DBGMSG(GO_RELOC)
 
+	nop
 	/* set up %ds */
 	pushl	%cs
 	popl	%ds
@@ -129,7 +127,7 @@ ebpb:	.long	16		/* hidden sectors */
 	movl	$1b, %esi
 	# call	Lmessage
 	.byte	0xe8
-	.word	Lmessage - .
+	.word	Lmessage - . - 2
 
 	data32
 	xorl	%ebx, %ebx		/* put it at %es:0 */
@@ -156,14 +154,14 @@ ebpb:	.long	16		/* hidden sectors */
 	/* read error */
        	data32
 	movl    $2f, %esi
-	jmp	halt
+	jmp	5f
 2:	.asciz	"\r\nRead error\r\n"
 
 3:	/* read next block */
 	movb	$'.', %al
 	# call	Lchr		/* show progress indicator */
 	.byte	0xe8
-	.word	Lchr
+	.word	Lchr - . - 2
 
 	popl	%ax
 	movzbl	%al, %ax
@@ -176,7 +174,7 @@ ebpb:	.long	16		/* hidden sectors */
 	movl    $2f, %esi	/* new line */
 	# call	Lmessage
 	.byte	0xe8
-	.word	Lmessage - .
+	.word	Lmessage - . - 2
 
 	xorl	%si, %si
 	cld
@@ -189,10 +187,10 @@ ebpb:	.long	16		/* hidden sectors */
 
 	data32
 	movl	$1f, %esi
-halt:
+5:
 	# call	Lmessage
 	.byte	0xe8
-	.word	Lmessage - .
+	.word	Lmessage - . - 2
 	cli
 	hlt
 1:	.ascii	"Bad magic"
@@ -253,6 +251,22 @@ halt:
 	ljmp	$8, $(START + 0x20)
 	/* not reached */
 
+/*
+ * Display string
+ */
+Lmessage:
+	data32
+	pushl	%eax
+	cld
+1:
+	lodsb			# load a byte into %al
+	testb	%al, %al
+	jz	1f
+	# call	Lchr
+	.byte	0xe8
+	.word	Lchr - . - 2
+	jmp	1b
+
 #
 #	Lchr: write the character in %al to console
 #
@@ -279,34 +293,13 @@ Lchr:
 	data32
 	popl	%edx
 #endif
-	data32
-	popl	%eax
-	data32
-	ret
-
-/*
- * Display string
- */
-Lmessage:
-	data32
-	pushl	%eax
-	cld
-1:
-	lodsb			# load a byte into %al
-	testb	%al, %al
-	jz	1f
-	# call	Lchr
-	.byte	0xe8
-	.word	Lchr - .
-	jmp	1b
 1:
 	data32
 	popl	%eax
-	data32
 	ret
 
 	.align	3
-gdt:		/* 0x00 : null */
+1:		/* 0x00 : null */
 	.long	0, 0
 		/* 0x08 : flat code */
 	.word	0xFFFF			# lolimit
@@ -322,8 +315,8 @@ gdt:		/* 0x00 : null */
 	.byte	SDT_MEMRWA | 0 | 0x80	# RWA, dpl = 0, present
 	.byte	0xf | 0 | 0x40 | 0x80	# hilimit, xx, 32bit, 4k granularity
 	.byte	0			# hibase
-Gdtr:	.word	. - gdt
-	.long	(BOOTREL << 4) + gdt
+Gdtr:	.word	. - 1b
+	.long	(BOOTREL << 4) + 1b
 
 	.globl	_block_table
 _block_table:
