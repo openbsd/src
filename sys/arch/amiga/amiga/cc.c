@@ -461,7 +461,7 @@ play_sample(len, data, period, volume, channels, count)
 	 * turn on interrupts and enable dma for channels and
 	 */
 	custom.intena = INTF_SETCLR | (dmabits << 7);
-	custom.dmacon = DMAF_SETCLR | dmabits;
+	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | dmabits;
 }
 
 /*
