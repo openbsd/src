@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.13 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.14 2003/10/27 17:20:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -616,32 +616,33 @@ readliflabel (bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	if (osdep->u._hppa.lifvol.vol_id != LIF_VOL_ID) {
 		fsoff = 0;
 	} else {
-		register struct lifdir *p;
+		struct lifdir *p;
+		struct buf *dbp;
 		dev_t dev;
 
 		dev = bp->b_dev;
-		bp = geteblk(LIF_DIRSIZE);
-		bp->b_dev = dev;
+		dbp = geteblk(LIF_DIRSIZE);
+		dbp->b_dev = dev;
 
 		/* read LIF directory */
-		bp->b_blkno = btodb(LIF_DIRSTART);
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = (LIF_DIRSTART) / lp->d_secpercyl;
-		(*strat)(bp);
+		dbp->b_blkno = btodb(LIF_DIRSTART);
+		dbp->b_bcount = lp->d_secsize;
+		dbp->b_flags = B_BUSY | B_READ;
+		dbp->b_cylin = (LIF_DIRSTART) / lp->d_secpercyl;
+		(*strat)(dbp);
 
-		if (biowait(bp)) {
+		if (biowait(dbp)) {
 			if (partoffp)
 				*partoffp = -1;
 
-			bp->b_flags |= B_INVAL;
-			brelse(bp);
+			dbp->b_flags |= B_INVAL;
+			brelse(dbp);
 			return ("LIF directory I/O error");
 		}
 
-		bcopy(bp->b_data, osdep->u._hppa.lifdir, LIF_DIRSIZE);
-		bp->b_flags |= B_INVAL;
-		brelse(bp);
+		bcopy(dbp->b_data, osdep->u._hppa.lifdir, LIF_DIRSIZE);
+		dbp->b_flags |= B_INVAL;
+		brelse(dbp);
 
 		/* scan for LIF_DIR_FS dir entry */
 		for (fsoff = -1,  p = &osdep->u._hppa.lifdir[0];
