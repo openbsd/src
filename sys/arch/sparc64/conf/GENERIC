@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.90 2004/04/14 20:44:29 naddy Exp $
+#	$OpenBSD: GENERIC,v 1.91 2004/04/18 02:26:43 pvalchev Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -91,6 +91,7 @@ uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
 usb*	at ohci? flags 0x1
 usb*	at uhci? flags 0x1
 
+# USB devices
 uhub*	at usb?				# USB Hubs
 uhub*	at uhub? port ? configuration ?	# USB Hubs
 umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
@@ -108,29 +109,32 @@ ucom*	at uplcom? portno ?
 umct*	at uhub? port ?			# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
 uaudio* at uhub? port ? configuration ?	# USB Audio
-umidi* at uhub? port ? configuration ?
+audio*	at uaudio?
+umidi*	at uhub? port ? configuration ?	# USB MIDI
+midi*	at umidi?
 ulpt*	at uhub? port ? configuration ? # USB Printers
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus* at umass?
-uhidev*	at uhub? port ? configuration ? interface ?
-ums*	at uhidev? reportid ?
+uhidev*	at uhub? port ? configuration ? interface ?	# Human Interface Devices
+ums*	at uhidev? reportid ?		# USB mouse
 wsmouse* at ums? mux 0
-ukbd*	at uhidev? reportid ?
+ukbd*	at uhidev? reportid ?		# USB keyboard
 wskbd*	at ukbd? console ? mux 1
-uhid*	at uhidev? reportid ?
+uhid*	at uhidev? reportid ?		# USB generic HID support
 aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
 axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
 kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
 upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
 url*	at uhub? port ?			# Realtek RTL8150L based adapters
+wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
 urio*	at uhub? port ?			# Diamond Multimedia Rio 500
 uscanner* at uhub? port ?		# USB Scanners
 usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
 scsibus* at usscanner?
 uyap*	at uhub? port ?			# Y@P firmware loader
 udsbr*	at uhub? port ?			# D-Link DSB-R100 radio
-radio*	at udsbr?
+radio*	at udsbr?			# USB radio
 ugen*	at uhub? port ? configuration ? # USB Generic driver
 
 #### Standard system devices -- all required for a given architecture
