@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.36 2001/07/31 01:07:47 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.37 2001/07/31 06:59:37 krw Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -260,6 +260,7 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	BN_num_bytes.3 BN_num_bits.3 \
 	BN_num_bytes.3 BN_num_bits_word.3 \
 	BN_rand.3 BN_pseudo_rand.3 \
+	BN_rand.3 BN_rand_range.3 \
 	BN_set_bit.3 BN_clear_bit.3 BN_set_bit.3 BN_is_bit_set.3 \
 	BN_set_bit.3 BN_mask_bits.3 BN_set_bit.3 BN_lshift.3 \
 	BN_set_bit.3 BN_lshift1.3 BN_set_bit.3 BN_rshift.3 \
@@ -447,6 +448,8 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_CTX_cipher.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_param_to_asn1.3 \
 	EVP_EncryptInit.3 EVP_CIPHER_asn1_to_param.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_ctrl.3 \
+	EVP_EncryptInit.3 EVP_CIPHER_CTX_set_key_length.3 \
 	EVP_OpenInit.3 EVP_OpenUpdate.3 \
 	EVP_OpenInit.3 EVP_OpenFinal.3 \
 	EVP_SealInit.3 EVP_SealUpdate.3 \
@@ -503,6 +506,18 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	RAND_set_rand_method.3 RAND_SSLeay.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_set_id_callback.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_num_locks.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_set_dynlock_create_callback.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_set_dynlock_lock_callback.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_set_dynlock_destroy_callback.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_get_new_dynlockid.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_destroy_dynlockid.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_lock.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_w_lock.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_w_unlock.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_r_lock.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_r_unlock.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_add.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_add_lock.3 \
 	RIPEMD160.3 RIPEMD160_Init.3 RIPEMD160.3 RIPEMD160_Update.3 \
 	RIPEMD160.3 RIPEMD160_Final.3 \
 
