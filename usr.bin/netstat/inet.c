@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.43 2000/01/05 00:07:08 itojun Exp $	*/
+/*	$OpenBSD: inet.c,v 1.44 2000/01/09 23:44:03 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.43 2000/01/05 00:07:08 itojun Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.44 2000/01/09 23:44:03 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -667,6 +667,7 @@ ah_stats(off, name)
 
 	p1(ahs_input, "\t%u input AH packets\n");
 	p1(ahs_output, "\t%u output AH packets\n");
+        p(ahs_nopf, "\t%u packet%s from unsupported protocol families\n");
         p(ahs_hdrops, "\t%u packet%s shorter than header shows\n");
         p(ahs_pdrops, "\t%u packet%s dropped due to policy\n");
         p(ahs_notdb, "\t%u packet%s for which no TDB was found\n");
@@ -739,6 +740,7 @@ esp_stats(off, name)
 
 	p(esps_input, "\t%u input ESP packet%s\n");
 	p(esps_output, "\t%u output ESP packet%s\n");
+        p(esps_nopf, "\t%u packet%s from unsupported protocol families\n");
         p(esps_hdrops, "\t%u packet%s shorter than header shows\n");
         p(esps_pdrops, "\t%u packet%s dropped due to policy\n");
         p(esps_notdb, "\t%u packet%s for which no TDB was found\n");
