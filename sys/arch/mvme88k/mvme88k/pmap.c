@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2001/12/24 04:12:40 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.61 2001/12/27 22:33:46 miod Exp $	*/
 /*
  * Copyright (c) 2001 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1791,11 +1791,6 @@ pmap_remove_range(pmap, s, e)
 
 		if (opte & PG_M) {
 			if (PMAP_MANAGED(pa)) {
-				struct vm_page *pg;
-
-				pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
-				pg->flags &= ~PG_CLEAN;
-
 				/* keep track ourselves too */
 				*pa_to_attribute(pa) = TRUE;
 			}
@@ -1976,10 +1971,6 @@ remove_all_Retry:
 		flush_atc_entry(users, va, kflush);
 
 		if (opte & PG_M) {
-			struct vm_page *pg;
-
-			pg = PHYS_TO_VM_PAGE(phys);
-			pg->flags &= ~PG_CLEAN;
 			/* keep track ourselves too */
 			*pa_to_attribute(phys) = TRUE;
 		}
