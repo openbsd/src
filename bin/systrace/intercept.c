@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.26 2002/08/05 19:10:22 jason Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.27 2002/08/07 21:27:15 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -109,6 +109,7 @@ SPLAY_PROTOTYPE(pidtree, intercept_pid, next, pidcompare);
 SPLAY_GENERATE(pidtree, intercept_pid, next, pidcompare);
 
 extern struct intercept_system intercept;
+int ic_abort;
 
 int
 intercept_init(void)
@@ -493,6 +494,9 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 	do {
 		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
 			&name[off], stride) == -1) {
+			/* Did the current system call get interrupted? */
+			if (errno == EBUSY)
+				return (NULL);
 			if (errno != EINVAL || stride == 4) {
 				warn("%s: ioctl", __func__);
 				return (NULL);
@@ -526,11 +530,14 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
-		err(1, "%s: getstring", __func__);
+		goto abort;
 
 	if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL)
-		if (name[0] != '/')
+		if (name[0] != '/') {
+			if (errno == EBUSY)
+				goto abort;
 			err(1, "%s: getcwd", __func__);
+		}
 
 	if (name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
@@ -614,6 +621,10 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 
 	return (name);
 
+ abort:
+	ic_abort = 1;
+	return (NULL);
+
  error:
 	errx(1, "%s: filename too long", __func__);
 }
@@ -633,6 +644,7 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	if (!strcmp(name, "execve")) {
 		struct intercept_pid *icpid;
 		void *addr;
+		char *argname;
 
 		if ((icpid = intercept_getpid(pid)) == NULL)
 			err(1, "intercept_getpid");
@@ -644,7 +656,11 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 			free(icpid->newname);
 
 		intercept.getarg(0, args, argsize, &addr);
-		icpid->newname = strdup(intercept_filename(fd, pid, addr, 0));
+		argname = intercept_filename(fd, pid, addr, 0);
+		if (argname == NULL)
+			err(1, "%s:%d: intercept_filename",
+			    __func__, __LINE__);
+		icpid->newname = strdup(argname);
 		if (icpid->newname == NULL)
 			err(1, "%s:%d: strdup", __func__, __LINE__);
 
@@ -658,14 +674,18 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	if (sc != NULL) {
 		struct intercept_translate *tl;
 
+		ic_abort = 0;
 		TAILQ_FOREACH(tl, &sc->tls, next) {
 			if (intercept_translate(tl, fd, pid, tl->off,
 				args, argsize) == -1)
 				break;
 		}
 
-		action = (*sc->cb)(fd, pid, policynr, name, code, emulation,
-		    args, argsize, &sc->tls, sc->cb_arg);
+		if (!ic_abort)
+			action = (*sc->cb)(fd, pid, policynr, name, code,
+			    emulation, args, argsize, &sc->tls, sc->cb_arg);
+		else
+			action = ICPOLICY_NEVER;
 	} else if (intercept_gencb != NULL)
 		action = (*intercept_gencb)(fd, pid, policynr, name, code,
 		    emulation, args, argsize, intercept_gencbarg);

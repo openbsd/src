@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.10 2002/07/30 09:16:19 itojun Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.11 2002/08/07 21:27:15 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -80,6 +80,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include <err.h>
 
 #include "intercept.h"
@@ -447,8 +448,9 @@ obsd_replace(int fd, pid_t pid, struct intercept_replace *repl)
 	}
 
 	ret = ioctl(fd, STRIOCREPLACE, &replace);
-	if (ret == -1)
+	if (ret == -1 && errno != EBUSY) {
 		warn("%s: ioctl", __func__);
+	}
 
 	free(replace.strr_base);
 	
@@ -459,6 +461,7 @@ static int
 obsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 {
 	struct systrace_io io;
+	extern int ic_abort;
 
 	memset(&io, 0, sizeof(io));
 	io.strio_pid = pid;
@@ -466,8 +469,11 @@ obsd_io(int fd, pid_t pid, int op, void *addr, u_char *buf, size_t size)
 	io.strio_len = size;
 	io.strio_offs = addr;
 	io.strio_op = (op == INTERCEPT_READ ? SYSTR_READ : SYSTR_WRITE);
-	if (ioctl(fd, STRIOCIO, &io) == -1)
+	if (ioctl(fd, STRIOCIO, &io) == -1) {
+		if (errno == EBUSY)
+			ic_abort = 1;
 		return (-1);
+	}
 
 	return (0);
 }
