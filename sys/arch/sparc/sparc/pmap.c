@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.115 2001/12/09 04:44:20 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.116 2001/12/09 04:51:35 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -788,8 +788,7 @@ pmap_pa_exists(paddr_t pa)
  */
 #if defined(SUN4) || defined(SUN4C)
 void
-mmu_reservemon4_4c(nrp, nsp)
-	int *nrp, *nsp;
+mmu_reservemon4_4c(int *nrp, int *nsp)
 {
 	u_int va = 0, eva = 0;
 	int mmuseg, i, nr, ns, vr, lastvr;
@@ -887,14 +886,11 @@ mmu_reservemon4_4c(nrp, nsp)
  * NOTE: This also revokes all user-mode access to the mapped regions.
  */
 void
-mmu_reservemon4m(kpmap)
-	struct pmap *kpmap;
+mmu_reservemon4m(struct pmap *kpmap)
 {
 	unsigned int rom_ctxtbl;
 	int te;
 	unsigned int mmupcrsave;
-
-/*XXX-GCC!*/mmupcrsave = 0;
 
 	/*
 	 * XXX: although the Sun4M can handle 36 bits of physical
@@ -946,9 +942,7 @@ mmu_reservemon4m(kpmap)
 }
 
 void
-mmu_setup4m_L1(regtblptd, kpmap)
-	int regtblptd;		/* PTD for region table to be remapped */
-	struct pmap *kpmap;
+mmu_setup4m_L1(int regtblptd, struct pmap *kpmap)
 {
 	unsigned int regtblrover;
 	int i;
@@ -1019,9 +1013,7 @@ mmu_setup4m_L1(regtblptd, kpmap)
 }
 
 void
-mmu_setup4m_L2(segtblptd, rp)
-	int segtblptd;
-	struct regmap *rp;
+mmu_setup4m_L2(int segtblptd, struct regmap *rp)
 {
 	unsigned int segtblrover;
 	int i, k;
