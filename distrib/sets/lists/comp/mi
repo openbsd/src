@@ -474,6 +474,7 @@
 ./usr/include/dev/pci/pciide_opti_reg.h
 ./usr/include/dev/pci/pciide_pdc202xx_reg.h
 ./usr/include/dev/pci/pciide_piix_reg.h
+./usr/include/dev/pci/pciide_sii3112_reg.h
 ./usr/include/dev/pci/pciide_sis_reg.h
 ./usr/include/dev/pci/pciidereg.h
 ./usr/include/dev/pci/pciidevar.h
