@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_opti_reg.h,v 1.1 2000/06/13 03:56:42 chris Exp $	*/
+/*	$OpenBSD: pciide_opti_reg.h,v 1.2 2004/01/31 19:43:43 grange Exp $	*/
 /*	$NetBSD: pciide_opti_reg.h,v 1.2 2000/06/07 20:42:53 scw Exp $	*/
 
 /*-
@@ -108,21 +108,21 @@
  * supported by the OPTi chip. The first index of the two-dimensional
  * arrays is used for a 33MHz PCIbus, the second for a 25MHz PCIbus.
  */
-static u_int8_t opti_tim_cp[2][8] = {		/* Command Pulse */
+const static u_int8_t opti_tim_cp[2][8] = {		/* Command Pulse */
 	{5, 4, 3, 2, 2, 7, 2, 2},
 	{4, 3, 2, 2, 1, 5, 2, 1}
 };
 
-static u_int8_t opti_tim_rt[2][8] = {		/* Recovery Time */
+const static u_int8_t opti_tim_rt[2][8] = {		/* Recovery Time */
 	{9, 4, 0, 0, 0, 6, 0, 0},
 	{6, 2, 0, 0, 0, 4, 0, 0}
 };
 
-static u_int8_t opti_tim_as[2][8] = {		/* Address Setup */
+const static u_int8_t opti_tim_as[2][8] = {		/* Address Setup */
 	{2, 1, 1, 1, 0, 0, 0, 0},
 	{1, 1, 0, 0, 0, 0, 0, 0}
 };
 
-static u_int8_t opti_tim_em[8] = {		/* Enhanced Mode */
+const static u_int8_t opti_tim_em[8] = {		/* Enhanced Mode */
 	0, 0, 0, 1, 2, 0, 1 ,2
 };
