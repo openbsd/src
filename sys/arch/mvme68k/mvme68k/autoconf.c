@@ -1,4 +1,4 @@
-/*	$Id: autoconf.c,v 1.4 1995/12/30 09:24:29 deraadt Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.5 1996/04/28 10:58:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -109,9 +109,12 @@ extern	char *extiobase;
 void mainbus_attach __P((struct device *, struct device *, void *));
 int  mainbus_match __P((struct device *, void *, void *));
 
-struct cfdriver mainbuscd = {
-	NULL, "mainbus", mainbus_match, mainbus_attach,
-	DV_DULL, sizeof(struct device), 0
+struct cfattach mainbus_ca = {
+	sizeof(struct device), mainbus_match, mainbus_attach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL, 0
 };
 
 int
@@ -149,7 +152,7 @@ mainbus_scan(parent, child, args)
 	oca.ca_ipl = -1;
 	oca.ca_bustype = BUS_MAIN;
 	oca.ca_name = cf->cf_driver->cd_name;
-	if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0)
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
 	config_attach(parent, cf, &oca, mainbus_print);
 	return (1);
@@ -180,7 +183,7 @@ configure()
 
 	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
 
-	if (!config_rootfound("mainbus", NULL))
+	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
 
 	setroot();
