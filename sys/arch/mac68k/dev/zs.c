@@ -1,5 +1,5 @@
-/*	$OpenBSD: zs.c,v 1.3 1996/06/08 16:21:13 briggs Exp $	*/
-/*	$NetBSD: zs.c,v 1.4 1996/06/07 10:41:35 briggs Exp $	*/
+/*	$OpenBSD: zs.c,v 1.4 1996/06/09 03:17:48 briggs Exp $	*/
+/*	$NetBSD: zs.c,v 1.5 1996/06/09 04:27:59 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -57,6 +57,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/viareg.h>
 
 /*
  * XXX: Hard code this to make console init easier...
