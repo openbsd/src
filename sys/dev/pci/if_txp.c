@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.24 2001/05/08 03:52:43 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.25 2001/05/08 05:22:01 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1143,7 +1143,7 @@ txp_start(ifp)
 	struct txp_tx_ring *r = &sc->sc_txhir;
 	struct txp_tx_desc *txd;
 	struct txp_frag_desc *fxd;
-	struct mbuf *m;
+	struct mbuf *mhead, *m;
 	u_int32_t firstprod, firstcnt, prod, cnt;
 #if NVLAN > 0
 	struct ifvlan		*ifv;
@@ -1159,6 +1159,7 @@ txp_start(ifp)
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+		mhead = m;
 
 		if ((TX_ENTRIES - cnt) < 4) {
 			ifp->if_flags |= IFF_OACTIVE;
@@ -1221,6 +1222,12 @@ txp_start(ifp)
 		}
 
 		ifp->if_timer = 5;
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, mhead);
+#endif
+
 		WRITE_REG(sc, r->r_reg, TXP_IDX2OFFSET(prod));
 	}
 
