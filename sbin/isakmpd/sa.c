@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.38 2001/02/24 04:42:48 angelos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.39 2001/03/06 22:18:48 angelos Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -748,7 +748,8 @@ sa_flag (char *attr)
 void
 sa_mark_replaced (struct sa *sa)
 {
-  LOG_DBG ((LOG_SA, 60, "sa_mark_replaced: SA %p marked as replaced", sa));
+  LOG_DBG ((LOG_SA, 60, "sa_mark_replaced: SA %p (%s) marked as replaced",
+	    sa, sa->name ? sa->name : "unnamed"));
   sa->flags |= SA_FLAG_REPLACED;
 }
 
