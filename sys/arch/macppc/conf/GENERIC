@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 2001/12/12 19:19:46 jason Exp $
+#	$OpenBSD: GENERIC,v 1.10 2001/12/14 14:58:03 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -55,6 +55,8 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 pciide*		at pci? dev ? function ?
 macobio0	at pci? dev ? function ?
 gm*		at pci? dev ? function ?	# GMAC ethernet
+gem*		at pci? disable dev ? function ?	# GMAC ethernet
+hme*		at pci? dev ? function ?	# HME ethernet
 dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
 an*		at pci? dev ? function ?	# Cisco/Aironet
 iop*		at pci? dev ? function ?	# I2O processor
