@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.5 2003/06/25 19:21:19 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.6 2003/06/25 21:46:25 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -335,7 +335,7 @@ tslot_reset(struct tslot_data *td, u_int32_t iosize)
 	ctl &= ~TS102_CARD_CTL_PCMBE;
 	/* disable read ahead and address increment */
 	ctl &= ~TS102_CARD_CTL_RAHD;
-	ctl &= ~TS102_CARD_CTL_INCDIS;
+	ctl |= TS102_CARD_CTL_INCDIS;
 	/* power on */
 	ctl &= ~TS102_CARD_CTL_PWRD;
 	TSLOT_WRITE(td, TS102_REG_CARD_A_CTL, ctl);
