@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.17 1997/02/13 20:17:16 kstailey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.18 1997/02/22 17:20:30 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -843,18 +843,32 @@ domem()
 	struct kmembuckets buckets[MINBUCKET + 16];
 
 	kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
-	(void)printf("Memory statistics by bucket size\n");
-	(void)printf(
-	    "    Size   In Use   Free   Requests  HighWater  Couldfree\n");
-	for (i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16; i++, kp++) {
+	for (first = 1, i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16;
+	     i++, kp++) {
 		if (kp->kb_calls == 0)
 			continue;
+		if (first) {
+			(void)printf("Memory statistics by bucket size\n");
+			(void)printf(
+	    	"    Size   In Use   Free   Requests  HighWater  Couldfree\n");
+			first = 0;
+		}
 		size = 1 << i;
 		(void)printf("%8d %8ld %6ld %10ld %7ld %10ld\n", size, 
 			kp->kb_total - kp->kb_totalfree,
 			kp->kb_totalfree, kp->kb_calls,
 			kp->kb_highwat, kp->kb_couldfree);
 		totfree += size * kp->kb_totalfree;
+	}
+
+	/*
+	 * If kmem statistics are not being gathered by the kernel,
+	 * first will still be 1.
+	 */
+	if (first) {
+		printf(
+		    "Kmem statistics are not being gathered by the kernel.\n");
+		return;
 	}
 
 	kread(X_KMEMSTAT, kmemstats, sizeof(kmemstats));
