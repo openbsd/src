@@ -1,11 +1,11 @@
-dnl	$OpenBSD: hardware,v 1.1 2004/02/08 00:35:14 drahn Exp $
+dnl	$OpenBSD: hardware,v 1.2 2004/02/15 23:23:29 miod Exp $
 OpenBSD/MACHINE runs on the Chalice/Simtec StrongARM 110 Evaluation Board.
 
 Supported devices {:-include-:}:
 	IDE hard disk controllers
 		Onboard controllers
 
-	AGP/SVGA/VGA Display Adapters
+	SVGA/VGA Display Adapters
 
 	Serial ports
 		onboard serial (fcom) port.
