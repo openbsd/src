@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.h,v 1.4 2002/02/16 21:28:04 millert Exp $ */
+/*	$OpenBSD: put.h,v 1.5 2002/06/10 21:05:25 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,23 +28,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: put.h,v 1.4 2002/02/16 21:28:04 millert Exp $
+ *	$OpenBSD: put.h,v 1.5 2002/06/10 21:05:25 maja Exp $
  *
  */
 
 #ifndef _PUT_H_
 #define _PUT_H_
 
-#ifdef NO__P
-void	mopPutChar   (/* u_char *, int *, u_char */);
-void	mopPutShort  (/* u_char *, int *, u_short */);
-void	mopPutLong   (/* u_char *, int *, u_long */);
-void	mopPutMulti  (/* u_char *, int *, u_char *, int */);
-void	mopPutTime   (/* u_char *, int *, time_t */);
-void	mopPutHeader (/* u_char *, int *, u_char *, u_char *, u_short, int */);
-void	mopPutLength (/* u_char *, int, u_short */);
-#else
-__BEGIN_DECLS
 void	mopPutChar(u_char *, int *, u_char);
 void	mopPutShort(u_char *, int *, u_short);
 void	mopPutLong(u_char *, int *, u_long);
@@ -52,7 +42,5 @@ void	mopPutMulti(u_char *, int *, u_char *, int);
 void	mopPutTime(u_char *, int *, time_t);
 void	mopPutHeader(u_char *, int *, u_char *, u_char *, u_short, int);
 void	mopPutLength(u_char *, int, u_short);
-__END_DECLS
-#endif
 
 #endif /* _PUT_H_ */

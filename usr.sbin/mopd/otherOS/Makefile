@@ -1,7 +1,7 @@
 #  Copyright (c) 1993-1994 Mats O Jansson, Stockholm, Sweden
 #  All rights reserved.
 #
-# @(#) $OpenBSD: Makefile,v 1.3 1999/03/27 14:31:22 maja Exp $
+# @(#) $OpenBSD: Makefile,v 1.4 2002/06/10 21:05:25 maja Exp $
 
 # Script (or program) that returns the machine and os types,
 # or jsut edit in the name yourself.
@@ -11,7 +11,7 @@ REL=`cat ../common/VERSION`
 
 CCOPT = -O
 INCLUDES = -I..
-#rs6000-aix3#DEFINES = -D_AIX -D_BSD -DNO__P
+#rs6000-aix3#DEFINES = -D_AIX -D_BSD
 
 #mopchk#SPEC_FLAGS=	-DINFO -DNODL -DNOAOUT
 #mopd#SPEC_FLAGS=	-DNOAOUT
@@ -22,9 +22,9 @@ INCLUDES = -I..
 STANDARD_CFLAGS = $(CCOPT) $(SPEC_FLAGS) $(DEFINES) $(INCLUDES)
 
 # CFLAGS definitions per machine vs. os
-#sun3-sunos4#CFLAGS = $(STANDARD_CFLAGS) -DNO__P
-#sun4-sunos4#CFLAGS = $(STANDARD_CFLAGS) -DNO__P
-#sun4-sunos5#CFLAGS = $(STANDARD_CFLAGS) -DNO__P -DDLPIPF
+#sun3-sunos4#CFLAGS = $(STANDARD_CFLAGS)
+#sun4-sunos4#CFLAGS = $(STANDARD_CFLAGS)
+#sun4-sunos5#CFLAGS = $(STANDARD_CFLAGS) -DDLPIPF
 #rs6000-aix3#CFLAGS = $(STANDARD_CFLAGS)
 #alpha-linux2#CFLAGS = $(STANDARD_CFLAGS)
 #i386-linux2#CFLAGS = $(STANDARD_CFLAGS)

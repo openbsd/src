@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.5 2002/02/17 19:42:36 millert Exp $ */
+/*	$OpenBSD: file.h,v 1.6 2002/06/10 21:05:25 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,28 +28,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: file.h,v 1.5 2002/02/17 19:42:36 millert Exp $
+ *	$OpenBSD: file.h,v 1.6 2002/06/10 21:05:25 maja Exp $
  *
  */
 
 #ifndef _FILE_H_
 #define _FILE_H_
 
-#ifdef NO__P
-void	mopFilePutLX   (/* u_char *, int, u_long, int */);
-void	mopFilePutBX   (/* u_char *, int, u_long, int */);
-u_long	mopFileGetLX   (/* u_char *, int, int */);
-u_long	mopFileGetBX   (/* u_char *, int, int */);
-void	mopFileSwapX   (/* u_char *, int, int */);
-int	CheckMopFile   (/* int */);
-int	GetMopFileInfo (/* int, u_long *, u_long * */);
-int	CheckAOutFile  (/* int */);
-int	GetAOutFileInfo(/* int, u_long *, u_long *, u_long *, u_long *,
-			   u_long *, u_long *, u_long *, u_long * */);
-int	GetFileInfo    (/* int, u_long *, u_long *, int *, u_long *, u_long *,
-			   u_long *, u_long *, u_long *, u_long * */);
-#else
-__BEGIN_DECLS
 void	mopFilePutLX(u_char *, int, u_long, int);
 void	mopFilePutBX(u_char *, int, u_long, int);
 u_long	mopFileGetLX(u_char *, int, int);
@@ -62,7 +47,5 @@ int	GetAOutFileInfo(int, u_long *, u_long *, u_long *, u_long *,
 			u_long *, u_long *, u_long *, u_long *, int *);
 int	GetFileInfo(int, u_long *, u_long *, int *, u_long *, u_long *,
 		    u_long *, u_long *, u_long *, u_long *);
-__END_DECLS
-#endif
 
 #endif /* _FILE_H_ */

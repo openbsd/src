@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopd.c,v 1.6 2002/05/26 09:25:21 deraadt Exp $ */
+/*	$OpenBSD: mopd.c,v 1.7 2002/06/10 21:05:25 maja Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mopd.c,v 1.6 2002/05/26 09:25:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mopd.c,v 1.7 2002/06/10 21:05:25 maja Exp $";
 #endif
 
 /*
@@ -58,15 +58,9 @@ static char rcsid[] = "$OpenBSD: mopd.c,v 1.6 2002/05/26 09:25:21 deraadt Exp $"
  */
 struct if_info *iflist;
 
-#ifdef NO__P
-void   Loop	     (/* void */);
-void   Usage         (/* void */);
-void   mopProcess    (/* struct if_info *, u_char * */);
-#else
 void   Loop(void);
 void   Usage(void);
 void   mopProcess(struct if_info *, u_char *);
-#endif
 
 int     AllFlag = 0;		/* listen on "all" interfaces */
 int     DebugFlag = 0;		/* print debugging messages   */

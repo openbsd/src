@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.c,v 1.4 2000/02/20 17:45:33 bitblt Exp $ */
+/*	$OpenBSD: device.c,v 1.5 2002/06/10 21:05:25 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: device.c,v 1.4 2000/02/20 17:45:33 bitblt Exp $";
+static char rcsid[] = "$OpenBSD: device.c,v 1.5 2002/06/10 21:05:25 maja Exp $";
 #endif
 
 #include "os.h"
@@ -41,16 +41,11 @@ struct	if_info *iflist;		/* Interface List		*/
 
 void mopReadDL();
 void mopReadRC();
-#ifdef NO__P
-int  mopOpenDL(/* struct if_info *, int */);
-int  mopOpenRC(/* struct if_info *, int */);
-#else
 int  mopOpenDL(struct if_info *, int);
 int  mopOpenRC(struct if_info *, int);
-#endif
-int pfTrans();
-int pfInit();
-int pfWrite();
+int  pfTrans();
+int  pfInit();
+int  pfWrite();
 
 #ifdef	DEV_NEW_CONF
 /*

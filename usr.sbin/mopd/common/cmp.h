@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmp.h,v 1.4 2002/02/16 21:28:04 millert Exp $ */
+/*	$OpenBSD: cmp.h,v 1.5 2002/06/10 21:05:25 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,19 +28,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: cmp.h,v 1.4 2002/02/16 21:28:04 millert Exp $
+ *	$OpenBSD: cmp.h,v 1.5 2002/06/10 21:05:25 maja Exp $
  *
  */
 
 #ifndef _CMP_H_
 #define _CMP_H_
 
-#ifdef NO__P
-int	mopCmpEAddr (/* u_char *,u_char * */);
-#else
-__BEGIN_DECLS
 int	mopCmpEAddr(u_char *,u_char *);
-__END_DECLS
-#endif
 
 #endif /* _CMP_H_ */
