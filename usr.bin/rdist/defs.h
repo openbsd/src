@@ -34,7 +34,7 @@
  */
 
 /*
- * $Id: defs.h,v 1.3 1996/03/05 03:16:01 dm Exp $
+ * $Id: defs.h,v 1.4 1996/04/28 22:10:12 etheisen Exp $
  * @(#)defs.h      5.2 (Berkeley) 3/20/86
  */
 
@@ -402,7 +402,7 @@ extern void			debugmsg(int, char *, ...);
 extern void			error(char *, ...);
 extern void			fatalerr(char *, ...);
 extern void			message(int, char *, ...);
-extern void			setproctitle(char *fmt, ...);
+/*extern void			setproctitle(char *fmt, ...); /* Not for OpenBSD*/
 #else
 extern void			debugmsg();
 extern void			error();
