@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.2 2005/01/31 16:49:28 jfb Exp $	*/
+/*	$OpenBSD: remove.c,v 1.3 2005/03/09 15:24:36 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -46,6 +46,7 @@ extern char *__progname;
 
 int  cvs_remove_file (CVSFILE *, void *);
 
+int	force_remove = 0;	/* -f option */
 
 /*
  * cvs_remove()
@@ -62,6 +63,7 @@ cvs_remove(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "flR")) != -1) {
 		switch (ch) {
 		case 'f':
+			force_remove = 1;
 			break;
 		case 'l':
 			break;
@@ -151,6 +153,15 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 		if (ent != NULL)
 			ret = cvs_sendentry(root, ent);
 	} else {
+		/* if -f option is used, physically remove the file */
+		if (force_remove == 1) {
+			if((unlink(fpath) == -1) && (errno != ENOENT)) {
+				cvs_log(LP_ERRNO, "failed to unlink `%s'",
+				    fpath);
+				return (-1);
+			}
+		}
+
 		cvs_log(LP_INFO, "scheduling file `%s' for removal",
 		    CVS_FILE_NAME(cf));
 		cvs_log(LP_INFO,
