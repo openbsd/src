@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.8 2002/03/08 06:17:09 mickey Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.9 2002/05/20 08:31:35 mickey Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -248,6 +248,7 @@ LEAF_ENTRY(spcopy)
 	ldil	L%copy_on_fault, t2
 	ldw	P_ADDR(r31), r31
 	ldo	R%copy_on_fault(t2), t2
+	ldw	PCB_ONFAULT+U_PCB(r31), r1
 	stw	t2, PCB_ONFAULT+U_PCB(r31)
 '
 	mfsp	sr2, ret0	/* XXX need this?, sr1 is scratchable */
@@ -258,7 +259,7 @@ LEAF_ENTRY(spcopy)
 	hppa_copy(spcopy, sr1, arg1, sr2, arg3, ret1, `+')
 
 	/* reset fault handler */
-	stw	r0, PCB_ONFAULT+U_PCB(r31)
+	stw	r1, PCB_ONFAULT+U_PCB(r31)
 	mtsp	ret0, sr2
 L(spcopy, ret)
 	bv	0(rp)
