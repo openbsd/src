@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.84 2001/04/04 05:42:57 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.85 2001/05/01 01:13:05 aaron Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2894,7 +2894,7 @@ tcp_mss(tp, offer)
  * We are passed the TCPCB for the actual connection.  If we
  * are the server, we are called by the compressed state engine
  * when the 3-way handshake is complete.  If we are the client,
- * we are called when we recieve the SYN,ACK from the server.
+ * we are called when we receive the SYN,ACK from the server.
  *
  * NOTE: The t_maxseg value must be initialized in the TCPCB
  * before this routine is called!
