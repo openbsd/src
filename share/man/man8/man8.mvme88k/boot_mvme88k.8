@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_mvme88k.8,v 1.1 2003/09/02 21:33:16 miod Exp $
+.\"	$OpenBSD: boot_mvme88k.8,v 1.2 2004/02/24 10:09:23 miod Exp $
 .\"
 .\" Copyright (c) 2003, Miodrag Vallat.
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 2, 2003
+.Dd February 24, 2004
 .Dt BOOT_MVME88K 8 mvme88k
 .Os
 .Sh NAME
@@ -112,14 +112,16 @@ secondary bootstrap code for SCSI disks (usually also installed as
 SCSI tape bootstrap code
 .It Pa /usr/mdec/netboot
 network bootstrap code
-.It Pa /usr/mdec/sboot
-network bootstrap code in S-Records, for older
-.Tn BUG
-firmware lacking the
-.Li NBO
-command.
-.It Pa /usr/mdec/rboot
-network bootstrap code in S-Records, suitable for user eeprom burning.
+.\" .It Pa /usr/mdec/sboot
+.\" network bootstrap code in S-Records, for older
+.\" .Tn BUG
+.\" firmware lacking the
+.\" .Li NBO
+.\" command.
+.\" .It Pa /usr/mdec/rboot
+.\" network bootstrap code in S-Records, suitable for user eeprom burning.
+.It Pa /usr/mdec/tftpboot
+tftp-only network bootstrap code
 .It Pa /usr/mdec/stboot
 .Tn Motorola
 VID block put as first file on bootable SCSI tapes
