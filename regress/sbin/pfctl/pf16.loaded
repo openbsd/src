@@ -1,25 +1,20 @@
 @0 nat on lo0 inet from 192.168.1.1 to any -> 10.0.0.1
-[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
-[ queue: qname= qid=0 pqname= pqid=0 ]
-[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @0 rdr on lo0 inet proto tcp from any to 1.2.3.4 port = 2222 -> 10.0.0.10 port 22
-[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
-[ queue: qname= qid=0 pqname= pqid=0 ]
-[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @0 binat on lo0 inet from 192.168.1.1 to any -> 10.0.0.1
-[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
-[ queue: qname= qid=0 pqname= pqid=0 ]
-[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @0 scrub in on lo0 all fragment reassemble 
-[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
-[ queue: qname= qid=0 pqname= pqid=0 ]
-[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @0 pass in on lo1 all 
-[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
-[ queue: qname= qid=0 pqname= pqid=0 ]
-[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

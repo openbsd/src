@@ -1,10 +1,8 @@
 @0 pass in inet from any to 127.0.0.1 
-[ Skip steps: i=end d=end p=end sa=end sp=end dp=end ]
-[ queue: qname= qid=0 pqname= pqid=0 ]
-[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-
+  [ Skip steps: i=end d=end p=end sa=end sp=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 @1 pass in inet6 from any to 2000::1 
-[ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
-[ queue: qname= qid=0 pqname= pqid=0 ]
-[ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-
+  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
