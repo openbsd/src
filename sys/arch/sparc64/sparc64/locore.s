@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.40 2003/07/09 02:18:09 jason Exp $	*/
+/*	$OpenBSD: locore.s,v 1.41 2003/07/09 15:52:53 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -712,7 +712,9 @@ _C_LABEL(trapbase):
 	TRAP T_LDDF_ALIGN		! 035 = LDDF address alignment error -- we could fix it inline...
 	TRAP T_STDF_ALIGN		! 036 = STDF address alignment error -- we could fix it inline...
 	TRAP T_PRIVACT			! 037 = privileged action
-	UTRAP 0x038; UTRAP 0x039; UTRAP 0x03a; UTRAP 0x03b; UTRAP 0x03c;
+	TRAP T_LDQF_ALIGN		! 038 = LDDF address alignment error
+	TRAP T_STQF_ALIGN		! 039 = STQF address alignment error
+	UTRAP 0x03a; UTRAP 0x03b; UTRAP 0x03c;
 	UTRAP 0x03d; UTRAP 0x03e; UTRAP 0x03f;
 	VTRAP T_ASYNC_ERROR, winfault	! 040 = data fetch fault
 	SOFTINT4U 1, IE_L1		! 041 = level 1 interrupt

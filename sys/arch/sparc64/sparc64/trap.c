@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2003/07/09 15:52:53 jason Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -543,11 +543,14 @@ badtrap:
 		break;	/* the work is all in userret() */
 
 	case T_ILLINST:
+		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
+		break;
 	case T_INST_EXCEPT:
+		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
+		break;
 	case T_TEXTFAULT:
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
 		break;
-
 	case T_PRIVINST:
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
 		break;
@@ -597,6 +600,13 @@ badtrap:
 		tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 		break;
 	}
+
+	case T_LDQF_ALIGN:
+		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
+		break;
+	case T_STQF_ALIGN:
+		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
+		break;
 
 	case T_ALIGN:
 	case T_LDDF_ALIGN:
