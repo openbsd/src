@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.24 1998/01/09 16:33:48 csapuntz Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.25 1998/01/09 16:41:09 csapuntz Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1103,7 +1103,7 @@ sigexit(p, signum)
 	/* NOTREACHED */
 }
 
-int nosuidcoredump = 0;
+int nosuidcoredump = 1;
 
 /*
  * Dump core, into a file named "progname.core", unless the process was
