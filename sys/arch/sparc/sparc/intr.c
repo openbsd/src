@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.20 2002/05/15 23:17:54 art Exp $ */
+/*	$OpenBSD: intr.c,v 1.21 2002/05/22 01:01:19 art Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -366,6 +366,7 @@ intr_fasttrap(level, vec)
 	splx(s);
 }
 
+#ifdef DIAGNOSTIC
 void
 splassert_check(int wantipl, const char *func)
 {
@@ -380,3 +381,5 @@ splassert_check(int wantipl, const char *func)
 		setpsr((getpsr() & ~PSR_PIL) | wantipl << 8);
 	}
 }
+#endif
+
