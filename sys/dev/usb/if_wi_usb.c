@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.6 2003/12/23 21:52:52 drahn Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.7 2004/01/13 16:53:36 fgsch Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -74,7 +74,6 @@
 #include <dev/ic/if_wi_ieee.h>
 #include <dev/ic/if_wivar.h>
 
-#include <wi_usb.h>
 #include <dev/usb/if_wi_usb.h>
 
 int wi_usb_do_transmit_sync(struct wi_usb_softc *wsc, struct wi_usb_chain *c, 
