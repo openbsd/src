@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.7 1997/02/01 00:09:31 niklas Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.8 1997/09/27 06:56:18 niklas Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -332,6 +332,7 @@ cluster_rbuild(vp, filesize, bp, lbn, blkno, size, run, flags)
 		if (incore(vp, lbn + i))
 			break;
 		tbp = getblk(vp, lbn + i, 0, 0, 0);
+
 		/*
 		 * getblk may return some memory in the buffer if there were
 		 * no empty buffers to shed it to.  If there is currently
