@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_stat.h,v 1.3 1994/10/29 00:43:27 christos Exp $	 */
+/*	$OpenBSD: svr4_stat.h,v 1.2 1996/02/26 23:32:02 niklas Exp $	 */
+/*	$NetBSD: svr4_stat.h,v 1.4 1996/02/10 17:12:38 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -67,5 +68,18 @@ struct svr4_xstat {
 	char			st_fstype[16];
 	long			st_pad4[8];
 };
+
+#define	SVR4_PC_LINK_MAX		1
+#define	SVR4_PC_MAX_CANON		2
+#define	SVR4_PC_MAX_INPUT		3
+#define	SVR4_PC_NAME_MAX		4
+#define	SVR4_PC_PATH_MAX		5
+#define	SVR4_PC_PIPE_BUF		6
+#define	SVR4_PC_NO_TRUNC		7
+#define	SVR4_PC_VDISABLE		8
+#define	SVR4_PC_CHOWN_RESTRICTED	9
+#define	SVR4_PC_ASYNC_IO		10
+#define	SVR4_PC_PRIO_IO			11
+#define	SVR4_PC_SYNC_IO			12
 
 #endif /* !_SVR4_STAT_H_ */

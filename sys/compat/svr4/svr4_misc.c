@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_misc.c,v 1.29 1995/10/14 20:24:35 christos Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.3 1996/02/26 23:31:57 niklas Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.35 1996/02/10 17:12:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -91,6 +92,9 @@ static int svr4_hrtcntl	__P((struct proc *, struct svr4_hrtcntl_args *,
 static void bsd_statfs_to_svr4_statvfs __P((const struct statfs *,
 					    struct svr4_statvfs *));
 static struct proc *svr4_pfind __P((pid_t pid));
+
+static int svr4_mknod __P((struct proc *, register_t *, char *,
+			   svr4_mode_t, svr4_dev_t));
 
 int
 svr4_sys_wait(p, v, retval)
@@ -363,6 +367,32 @@ svr4_sys_fchroot(p, v, retval)
 	return 0;
 }
 
+static int
+svr4_mknod(p, retval, path, mode, dev)
+	struct proc *p;
+	register_t *retval;
+	char *path;
+	svr4_mode_t mode;
+	svr4_dev_t dev;
+{
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	SVR4_CHECK_ALT_EXIST(p, &sg, path);
+
+	if (S_ISFIFO(mode)) {
+		struct sys_mkfifo_args ap;
+		SCARG(&ap, path) = path;
+		SCARG(&ap, mode) = mode;
+		return sys_mkfifo(p, &ap, retval);
+	} else {
+		struct sys_mknod_args ap;
+		SCARG(&ap, path) = path;
+		SCARG(&ap, mode) = mode;
+		SCARG(&ap, dev) = dev;
+		return sys_mknod(p, &ap, retval);
+	}
+}
+
 
 int
 svr4_sys_mknod(p, v, retval)
@@ -371,22 +401,22 @@ svr4_sys_mknod(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_mknod_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
-	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-
-	if (S_ISFIFO(SCARG(uap, mode))) {
-		struct sys_mkfifo_args ap;
-		SCARG(&ap, path) = SCARG(uap, path);
-		SCARG(&ap, mode) = SCARG(uap, mode);
-		return sys_mkfifo(p, &ap, retval);
-	} else {
-		struct sys_mknod_args ap;
-		SCARG(&ap, path) = SCARG(uap, path);
-		SCARG(&ap, mode) = SCARG(uap, mode);
-		SCARG(&ap, dev) = SCARG(uap, dev);
-		return sys_mknod(p, &ap, retval);
-	}
+	return svr4_mknod(p, retval,
+			  SCARG(uap, path), SCARG(uap, mode), SCARG(uap, dev));
 }
+
+
+int
+svr4_sys_xmknod(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_xmknod_args *uap = v;
+	return svr4_mknod(p, retval,
+			  SCARG(uap, path), SCARG(uap, mode), SCARG(uap, dev));
+}
+
 
 int
 svr4_sys_vhangup(p, v, retval)
@@ -842,8 +872,6 @@ svr4_sys_hrtsys(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_hrtsys_args *uap = v;
-	int error;
-	struct timeval tv;
 
 	switch (SCARG(uap, cmd)) {
 	case SVR4_HRT_CNTL:
@@ -942,10 +970,9 @@ svr4_sys_waitsys(p, v, retval)
 		return EINVAL;
 	}
 
-	DPRINTF(("waitsys(%d, %d, %x, %x)\n", 
+	DPRINTF(("waitsys(%d, %d, %p, %x)\n", 
 	         SCARG(uap, grp), SCARG(uap, id),
-		 (unsigned int) SCARG(uap, info),
-	         SCARG(uap, options)));
+		 SCARG(uap, info), SCARG(uap, options)));
 
 loop:
 	nfound = 0;
@@ -1030,8 +1057,6 @@ loop:
 			DPRINTF(("jobcontrol %d\n", q->p_pid));
 		        if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
 				q->p_flag |= P_WAITED;
-			else
-				DPRINTF(("Don't wait\n"));
 			*retval = 0;
 			return svr4_setinfo(q, W_STOPCODE(q->p_xstat),
 					    SCARG(uap, info));

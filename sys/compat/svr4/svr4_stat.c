@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_stat.c,v 1.16 1995/12/19 18:27:02 christos Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.6 1996/02/26 23:32:01 niklas Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.19 1996/02/10 17:12:36 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -38,6 +39,7 @@
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/unistd.h>
 
 #include <sys/time.h>
 #include <sys/ucred.h>
@@ -66,6 +68,8 @@
 #endif
 
 static void bsd_to_svr4_xstat __P((struct stat *, struct svr4_xstat *));
+int svr4_ustat __P((struct proc *, void *, register_t *));
+static int svr4_to_bsd_pathconf __P((int));
 
 
 #ifndef SVR4_NO_OSTAT
@@ -85,9 +89,9 @@ bsd_to_svr4_stat(st, st4)
 	st4->st_gid = st->st_gid;
 	st4->st_rdev = st->st_rdev;
 	st4->st_size = st->st_size;
-	st4->st_atim = st->st_atimespec.ts_sec;
-	st4->st_mtim = st->st_mtimespec.ts_sec;
-	st4->st_ctim = st->st_ctimespec.ts_sec;
+	st4->st_atim = st->st_atimespec.tv_sec;
+	st4->st_mtim = st->st_mtimespec.tv_sec;
+	st4->st_ctim = st->st_ctimespec.tv_sec;
 }
 #endif
 
@@ -341,14 +345,15 @@ struct svr4_ustat_args {
 };
 
 int
-svr4_ustat(p, uap, retval)
+svr4_ustat(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct svr4_ustat_args /* {
 		syscallarg(svr4_dev_t)		dev;
 		syscallarg(struct svr4_ustat *) name;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct svr4_ustat	us;
 	int			error;
 
@@ -533,7 +538,8 @@ svr4_sys_utime(p, v, retval)
 		tbuf[1].tv_sec = ub.modtime;
 		tbuf[1].tv_usec = 0;
 		SCARG(&ap, tptr) = stackgap_alloc(&sg, sizeof(tbuf));
-		if (error = copyout(tbuf, SCARG(&ap, tptr), sizeof(tbuf)) != 0)
+		error = copyout(tbuf, SCARG(&ap, tptr), sizeof(tbuf));
+		if (error)
 			return error;
 	}
 	else
@@ -552,4 +558,97 @@ svr4_sys_utimes(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_utimes(p, uap, retval);
+}
+
+
+static int
+svr4_to_bsd_pathconf(name)
+	int name;
+{
+	switch (name) {
+	case SVR4_PC_LINK_MAX:
+	    	return _PC_LINK_MAX;
+
+	case SVR4_PC_MAX_CANON:
+		return _PC_MAX_CANON;
+
+	case SVR4_PC_MAX_INPUT:
+		return _PC_MAX_INPUT;
+
+	case SVR4_PC_NAME_MAX:
+		return _PC_NAME_MAX;
+
+	case SVR4_PC_PATH_MAX:
+		return _PC_PATH_MAX;
+
+	case SVR4_PC_PIPE_BUF:
+		return _PC_PIPE_BUF;
+
+	case SVR4_PC_NO_TRUNC:
+		return _PC_NO_TRUNC;
+
+	case SVR4_PC_VDISABLE:
+		return _PC_VDISABLE;
+
+	case SVR4_PC_CHOWN_RESTRICTED:
+		return _PC_CHOWN_RESTRICTED;
+
+	case SVR4_PC_ASYNC_IO:
+	case SVR4_PC_PRIO_IO:
+	case SVR4_PC_SYNC_IO:
+		/* Not supported */
+		return 0;
+
+	default:
+		/* Invalid */
+		return -1;
+	}
+}
+
+
+int
+svr4_sys_pathconf(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_pathconf_args *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(uap, name) = svr4_to_bsd_pathconf(SCARG(uap, name));
+
+	switch (SCARG(uap, name)) {
+	case -1:
+		*retval = -1;
+		return EINVAL;
+	case 0:
+		*retval = 0;
+		return 0;
+	default:
+		return sys_pathconf(p, uap, retval);
+	}
+}
+
+int
+svr4_sys_fpathconf(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct svr4_sys_fpathconf_args *uap = v;
+
+	SCARG(uap, name) = svr4_to_bsd_pathconf(SCARG(uap, name));
+
+	switch (SCARG(uap, name)) {
+	case -1:
+		*retval = -1;
+		return EINVAL;
+	case 0:
+		*retval = 0;
+		return 0;
+	default:
+		return sys_fpathconf(p, uap, retval);
+	}
 }

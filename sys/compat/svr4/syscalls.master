@@ -1,4 +1,5 @@
-	$NetBSD: syscalls.master,v 1.15 1995/12/19 07:13:27 christos Exp $
+	$OpenBSD: syscalls.master,v 1.4 1996/02/26 23:32:08 niklas Exp $
+	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -190,14 +191,14 @@
 110	UNIMPL		acancel
 111	UNIMPL		async
 112	UNIMPL		priocntlsys
-113	UNIMPL		pathconf
+113	STD		{ int svr4_sys_pathconf(char *path, int name); }
 114	UNIMPL		mincore
 115	STD		{ int svr4_sys_mmap(svr4_caddr_t addr, \
 			    svr4_size_t len, int prot, int flags, int fd, \
 			    svr4_off_t pos); }
 116	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
 117	NOARGS		{ int sys_munmap(caddr_t addr, int len); }
-118	NOARGS		{ int sys_fpathconf(int fd, int name); }
+118	STD		{ int svr4_sys_fpathconf(int fd, int name); }
 119	NOARGS		{ int sys_vfork(void); }
 120	NOARGS		{ int sys_fchdir(int fd); }
 121	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, u_int iovcnt); }
@@ -209,7 +210,8 @@
 			    struct svr4_xstat *ub); }
 125	STD		{ int svr4_sys_fxstat(int two, int fd, \
 			    struct svr4_xstat *sb); }
-126	UNIMPL		xmknod
+126	STD		{ int svr4_sys_xmknod(int two, char *path, \
+			    svr4_mode_t mode, svr4_dev_t dev); }
 127	UNIMPL		clocal
 128	STD		{ int svr4_sys_setrlimit(int which, \
 			    struct ogetrlimit *rlp); }
@@ -232,11 +234,11 @@
 141	NOARGS		{ int sys_seteuid(uid_t euid); }
 142	UNIMPL		vtrace
 143	UNIMPL		fork1
-144	UNIMPL		sigwait
+144	UNIMPL		sigtimedwait
 145	UNIMPL		lwp_info
 146	UNIMPL		yield
-147	UNIMPL		lwp_sema_p
-148	UNIMPL		lwp_sema_v
+147	UNIMPL		lwp_sema_wait
+148	UNIMPL		lwp_sema_post
 149	UNIMPL
 150	UNIMPL
 151	UNIMPL
@@ -269,12 +271,38 @@
 175	UNIMPL		llseek
 176	UNIMPL		inst_sync
 177	UNIMPL
-178	UNIMPL
+178	UNIMPL		kaio
 179	UNIMPL
 180	UNIMPL
 181	UNIMPL
 182	UNIMPL
 183	UNIMPL
-184	UNIMPL
-185	UNIMPL
+184	UNIMPL		tsolsys
+185	UNIMPL		acl
 186	UNIMPL		auditsys
+187	UNIMPL		processor_bind
+188	UNIMPL		processor_info
+189	UNIMPL		p_online
+190	UNIMPL		sigqueue
+191	UNIMPL		clock_gettime
+192	UNIMPL		clock_settime
+193	UNIMPL		clock_getres
+194	UNIMPL		timer_create
+195	UNIMPL		timer_delete
+196	UNIMPL		timer_settime
+197	UNIMPL		timer_gettime
+198	UNIMPL		timer_getoverrun
+199	UNIMPL		nanosleep
+200	UNIMPL		facl
+201	UNIMPL		door
+202	UNIMPL		setreuid
+203	UNIMPL		setregid
+204	UNIMPL
+205	UNIMPL
+206	UNIMPL
+207	UNIMPL
+208	UNIMPL
+209	UNIMPL
+210	UNIMPL		signotifywait
+211	UNIMPL		lwp_sigredirect
+212	UNIMPL		lwp_alarm

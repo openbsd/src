@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_sockio.c,v 1.5 1995/10/07 06:27:48 mycroft Exp $	 */
+/*	$OpenBSD: svr4_sockio.c,v 1.2 1996/02/26 23:32:00 niklas Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.6 1996/02/09 23:12:20 christos Exp $	 */
 
 /*
  * Copyright (c) 1995 Christos Zoulas
@@ -83,11 +84,7 @@ svr4_sockioctl(fp, cmd, data, p, retval)
 	struct proc *p;
 	register_t *retval;
 {
-	struct filedesc *fdp = p->p_fd;
-	caddr_t sg = stackgap_init(p->p_emul);
 	int error;
-	int fd;
-	int num;
 	int (*ctl) __P((struct file *, u_long,  caddr_t, struct proc *)) =
 			fp->f_ops->fo_ioctl;
 

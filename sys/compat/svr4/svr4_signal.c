@@ -1,5 +1,5 @@
-/*	$NetBSD: svr4_signal.c,v 1.20 1996/01/04 22:23:06 jtc Exp $	 */
-
+/*	$OpenBSD: svr4_signal.c,v 1.3 1996/02/26 23:31:59 niklas Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.21 1996/02/09 23:12:18 christos Exp $	 */
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -57,7 +57,13 @@
 #define	svr4_sigismember(s, n)	((s)->bits[svr4_sigword(n)] & svr4_sigmask(n))
 #define	svr4_sigaddset(s, n)	((s)->bits[svr4_sigword(n)] |= svr4_sigmask(n))
 
-static inline int
+static __inline int svr4_sigfillset __P((svr4_sigset_t *));
+void svr4_to_bsd_sigaction __P((const struct svr4_sigaction *,
+				struct sigaction *));
+void bsd_to_svr4_sigaction __P((const struct sigaction *,
+				struct svr4_sigaction *));
+
+static __inline int
 svr4_sigfillset(s)
 	svr4_sigset_t *s;
 {
@@ -182,7 +188,7 @@ svr4_to_bsd_sigaction(ssa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = ssa->sa_handler;
+	bsa->sa_handler = (sig_t) ssa->sa_handler;
 	svr4_to_bsd_sigset(&ssa->sa_mask, &bsa->sa_mask);
 	bsa->sa_flags = 0;
 	if ((ssa->sa_flags & SVR4_SA_ONSTACK) != 0)
@@ -203,7 +209,7 @@ bsd_to_svr4_sigaction(bsa, ssa)
 	struct svr4_sigaction *ssa;
 {
 
-	ssa->sa_handler = bsa->sa_handler;
+	ssa->sa_handler = (svr4_sig_t) bsa->sa_handler;
 	bsd_to_svr4_sigset(&bsa->sa_mask, &ssa->sa_mask);
 	ssa->sa_flags = 0;
 	if ((bsa->sa_flags & SA_ONSTACK) != 0)
@@ -407,7 +413,7 @@ svr4_sys_signal(p, v, retval)
 			SCARG(&sa_args, nsa) = nbsa;
 			SCARG(&sa_args, osa) = obsa;
 
-			sa.sa_handler = SCARG(uap, handler);
+			sa.sa_handler = (sig_t) SCARG(uap, handler);
 			sigemptyset(&sa.sa_mask);
 			sa.sa_flags = 0;
 #if 0

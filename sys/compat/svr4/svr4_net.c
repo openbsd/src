@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_net.c,v 1.5 1995/10/14 20:24:38 christos Exp $	 */
+/*	$OpenBSD: svr4_net.c,v 1.3 1996/02/26 23:31:59 niklas Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.6 1996/02/04 02:01:07 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -153,7 +154,7 @@ svr4_netopen(dev, flag, mode, p)
 
 	st = malloc(sizeof(struct svr4_strm), M_NETADDR, M_WAITOK);
 	/* XXX: This is unused; ask for a field and make this legal */
-	so->so_tpcb = (caddr_t) st;
+	so->so_internal = st;
 	st->s_cmd = ~0;
 	fp->f_data = (caddr_t)so;
 	DPRINTF(("ok);\n"));
@@ -168,6 +169,6 @@ svr4_netclose(fp, p)
 	struct proc *p;
 {
 	struct socket *so = (struct socket *) fp->f_data;
-	free((char *) so->so_tpcb, M_NETADDR);
+	free(so->so_internal, M_NETADDR);
 	return soo_close(fp, p);
 }
