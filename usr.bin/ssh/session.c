@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.54 2001/02/08 17:11:23 stevesk Exp $");
+RCSID("$OpenBSD: session.c,v 1.55 2001/02/08 19:30:52 itojun Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -56,6 +56,7 @@ RCSID("$OpenBSD: session.c,v 1.54 2001/02/08 17:11:23 stevesk Exp $");
 #include "login.h"
 #include "serverloop.h"
 #include "canohost.h"
+#include "session.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>

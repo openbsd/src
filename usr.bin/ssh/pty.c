@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: pty.c,v 1.21 2001/02/04 15:32:24 stevesk Exp $");
+RCSID("$OpenBSD: pty.c,v 1.22 2001/02/08 19:30:52 itojun Exp $");
 
 #include <util.h>
 #include "pty.h"
@@ -190,7 +190,7 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 
 	/* First disconnect from the old controlling tty. */
 #ifdef TIOCNOTTY
-	fd = open("/dev/tty", O_RDWR | O_NOCTTY);
+	fd = open(_PATH_TTY, O_RDWR | O_NOCTTY);
 	if (fd >= 0) {
 		(void) ioctl(fd, TIOCNOTTY, NULL);
 		close(fd);
@@ -203,7 +203,7 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 	 * Verify that we are successfully disconnected from the controlling
 	 * tty.
 	 */
-	fd = open("/dev/tty", O_RDWR | O_NOCTTY);
+	fd = open(_PATH_TTY, O_RDWR | O_NOCTTY);
 	if (fd >= 0) {
 		error("Failed to disconnect from controlling tty.");
 		close(fd);
@@ -221,7 +221,7 @@ pty_make_controlling_tty(int *ttyfd, const char *ttyname)
 		close(fd);
 
 	/* Verify that we now have a controlling tty. */
-	fd = open("/dev/tty", O_WRONLY);
+	fd = open(_PATH_TTY, O_WRONLY);
 	if (fd < 0)
 		error("open /dev/tty failed - could not set controlling tty: %.100s",
 		      strerror(errno));

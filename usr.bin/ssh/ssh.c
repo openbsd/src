@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.92 2001/02/06 23:06:21 jakob Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.93 2001/02/08 19:30:52 itojun Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -138,12 +138,12 @@ int subsystem_flag = 0;
 /* Prints a help message to the user.  This function never returns. */
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr, "Usage: %s [options] host [command]\n", __progname);
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -l user     Log in using this user name.\n");
-	fprintf(stderr, "  -n          Redirect input from /dev/null.\n");
+	fprintf(stderr, "  -n          Redirect input from " _PATH_DEVNULL ".\n");
 	fprintf(stderr, "  -A          Enable authentication agent forwarding.\n");
 	fprintf(stderr, "  -a          Disable authentication agent forwarding.\n");
 #ifdef AFS
@@ -700,7 +700,7 @@ x11_get_proto(char *proto, int proto_len, char *data, int data_len)
 
 	if (options.xauth_location) {
 		/* Try to get Xauthority information for the display. */
-		snprintf(line, sizeof line, "%.100s list %.200s 2>/dev/null",
+		snprintf(line, sizeof line, "%.100s list %.200s 2>" _PATH_DEVNULL,
 		    options.xauth_location, getenv("DISPLAY"));
 		f = popen(line, "r");
 		if (f && fgets(line, sizeof(line), f) &&
@@ -1013,7 +1013,7 @@ ssh_session2(void)
 	int in, out, err;
 
 	if (stdin_null_flag) {
-		in = open("/dev/null", O_RDONLY);
+		in = open(_PATH_DEVNULL, O_RDONLY);
 	} else {
 		in = dup(STDIN_FILENO);
 	}
