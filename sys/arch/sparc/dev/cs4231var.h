@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231var.h,v 1.1 1999/06/06 04:48:24 jason Exp $	*/
+/*	$OpenBSD: cs4231var.h,v 1.2 1999/06/07 20:58:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -67,7 +67,7 @@ struct cs4231_softc {
 	void	(*sc_pintr)(void*);	/* output completion intr handler */
 	void *	sc_parg;		/* arg for sc_pintr() */
 
-	char	mute[9];		/* which devs are muted */
+	char		sc_mute[9];	/* which devs are muted */
 	u_int8_t	sc_out_port;	/* output port */
 	struct	cs_volume sc_volume[9];	/* software volume */
 

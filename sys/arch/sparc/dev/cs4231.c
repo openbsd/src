@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.1 1999/06/06 04:48:24 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.2 1999/06/07 20:58:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -107,6 +107,7 @@ int	cs4231_hwintr	__P((void *));
 void	cs4231_wait		__P((struct cs4231_softc *));
 int	cs4231_set_speed	__P((struct cs4231_softc *, u_long *));
 void	cs4231_mute_monitor	__P((struct cs4231_softc *, int));
+void	cs4231_setup_output	__P((struct cs4231_softc *sc));
 
 /* Audio interface */
 int	cs4231_open		__P((void *, int));
@@ -234,7 +235,9 @@ cs4231_attach(parent, self, aux)
 
 	audio_attach_mi(&cs4231_sa_hw_if, sc, &sc->sc_dev);
 
+	/* Default to speaker, unmuted, reasonable volume */
 	sc->sc_out_port = CSPORT_SPEAKER;
+	sc->sc_mute[CSPORT_SPEAKER] = 1;
 	sc->sc_volume[CSPORT_SPEAKER].left = 192;
 	sc->sc_volume[CSPORT_SPEAKER].right = 192;
 }
@@ -498,6 +501,16 @@ cs4231_open(addr, flags)
 	regs->iar = ~(CS_IAR_MCE);
 	cs4231_wait(sc);
 
+	cs4231_setup_output(sc);
+	return (0);
+}
+
+void
+cs4231_setup_output(sc)
+	struct cs4231_softc *sc;
+{
+	struct cs4231_regs *regs = sc->sc_regs;
+
 	regs->iar = CS_IAR_PC;
 	regs->idr |= CS_PC_HDPHMUTE | CS_PC_LINEMUTE;
 	regs->iar = CS_IAR_MONO;
@@ -505,19 +518,19 @@ cs4231_open(addr, flags)
 
 	switch (sc->sc_out_port) {
 	case CSPORT_HEADPHONE:
-		if (sc->mute[CSPORT_SPEAKER] == 0) {
+		if (sc->sc_mute[CSPORT_SPEAKER]) {
 			regs->iar = CS_IAR_PC;
 			regs->idr &= ~CS_PC_HDPHMUTE;
 		}
 		break;
 	case CSPORT_SPEAKER:
-		if (sc->mute[CSPORT_SPEAKER] == 0) {
+		if (sc->sc_mute[CSPORT_SPEAKER]) {
 			regs->iar = CS_IAR_MONO;
 			regs->idr &= ~CS_MONO_MOM;
 		}
 		break;
 	case CSPORT_LINEOUT:
-		if (sc->mute[CSPORT_SPEAKER] == 0) {
+		if (sc->sc_mute[CSPORT_SPEAKER]) {
 			regs->iar = CS_IAR_PC;
 			regs->idr &= ~CS_PC_LINEMUTE;
 		}
@@ -532,8 +545,6 @@ cs4231_open(addr, flags)
 	regs->idr &= ~CS_RDACOUT_RDA_MASK;
 	regs->idr |= (~(sc->sc_volume[CSPORT_SPEAKER].right >> 2)) &
 	    CS_RDACOUT_RDA_MASK;
-
-	return (0);
 }
 
 void
@@ -905,7 +916,6 @@ cs4231_set_port(addr, cp)
 			break;
 		error = 0;
 		break;
-
 	case CSAUDIO_OUTPUT_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
@@ -924,68 +934,59 @@ cs4231_set_port(addr, cp)
 		else
 			break;
 
-		sc->sc_regs->iar = CS_IAR_LDACOUT;
-		sc->sc_regs->idr &= ~CS_LDACOUT_LDA_MASK;
-		sc->sc_regs->idr |=
-		    (~(sc->sc_volume[CSPORT_SPEAKER].left >> 2)) &
-		    CS_LDACOUT_LDA_MASK;
-		sc->sc_regs->iar = CS_IAR_RDACOUT;
-		sc->sc_regs->idr &= ~CS_RDACOUT_RDA_MASK;
-		sc->sc_regs->idr |=
-		    (~(sc->sc_volume[CSPORT_SPEAKER].right >> 2)) &
-		    CS_RDACOUT_RDA_MASK;
+		cs4231_setup_output(sc);
 		error = 0;
 		break;
-
 	case CSAUDIO_OUTPUT:
 		if (cp->un.ord != CSPORT_LINEOUT &&
 		    cp->un.ord != CSPORT_SPEAKER &&
 		    cp->un.ord != CSPORT_HEADPHONE)
 			return (EINVAL);
 		sc->sc_out_port = cp->un.ord;
+		cs4231_setup_output(sc);
 		error = 0;
 		break;
 	case CSAUDIO_LINE_IN_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		sc->mute[CSPORT_LINEIN] = cp->un.ord ? 1 : 0;
+		sc->sc_mute[CSPORT_LINEIN] = cp->un.ord ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_DAC_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		sc->mute[CSPORT_AUX1] = cp->un.ord ? 1 : 0;
+		sc->sc_mute[CSPORT_AUX1] = cp->un.ord ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_CD_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		sc->mute[CSPORT_AUX2] = cp->un.ord ? 1 : 0;
+		sc->sc_mute[CSPORT_AUX2] = cp->un.ord ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_MONO_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		sc->mute[CSPORT_MONO] = cp->un.ord ? 1 : 0;
+		sc->sc_mute[CSPORT_MONO] = cp->un.ord ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_MONITOR_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		sc->mute[CSPORT_MONITOR] = cp->un.ord ? 1 : 0;
+		sc->sc_mute[CSPORT_MONITOR] = cp->un.ord ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_OUTPUT_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		sc->mute[CSPORT_SPEAKER] = cp->un.ord ? 1 : 0;
+		sc->sc_mute[CSPORT_SPEAKER] = cp->un.ord ? 1 : 0;
+		cs4231_setup_output(sc);
 		error = 0;
 		break;
 	case CSAUDIO_REC_LVL:
 		if (cp->type != AUDIO_MIXER_VALUE)
 			break;
 		break;
-
 	case CSAUDIO_RECORD_SOURCE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
@@ -1109,37 +1110,37 @@ cs4231_get_port(addr, cp)
 	case CSAUDIO_LINE_IN_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		cp->un.ord = sc->mute[CSPORT_LINEIN] ? 1 : 0;
+		cp->un.ord = sc->sc_mute[CSPORT_LINEIN] ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_DAC_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		cp->un.ord = sc->mute[CSPORT_AUX1] ? 1 : 0;
+		cp->un.ord = sc->sc_mute[CSPORT_AUX1] ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_CD_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		cp->un.ord = sc->mute[CSPORT_AUX2] ? 1 : 0;
+		cp->un.ord = sc->sc_mute[CSPORT_AUX2] ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_MONO_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		cp->un.ord = sc->mute[CSPORT_MONO] ? 1 : 0;
+		cp->un.ord = sc->sc_mute[CSPORT_MONO] ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_MONITOR_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		cp->un.ord = sc->mute[CSPORT_MONITOR] ? 1 : 0;
+		cp->un.ord = sc->sc_mute[CSPORT_MONITOR] ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_OUTPUT_MUTE:
 		if (cp->type != AUDIO_MIXER_ENUM)
 			break;
-		cp->un.ord = sc->mute[CSPORT_SPEAKER] ? 1 : 0;
+		cp->un.ord = sc->sc_mute[CSPORT_SPEAKER] ? 1 : 0;
 		error = 0;
 		break;
 	case CSAUDIO_REC_LVL:
@@ -1301,7 +1302,7 @@ cs4231_query_devinfo(addr, dip)
 		strcpy(dip->un.e.member[0].label.name, AudioNoff);
 		dip->un.e.member[0].ord = 0;
 		strcpy(dip->un.e.member[1].label.name, AudioNon);
-		dip->un.e.member[0].ord = 1;
+		dip->un.e.member[1].ord = 1;
 		break;
 
 	case CSAUDIO_REC_LVL:		/* record level */
