@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.21 2004/04/09 21:52:17 henning Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.22 2004/06/06 17:56:36 mcbride Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -115,7 +115,6 @@ int ste_eeprom_wait(struct ste_softc *);
 int ste_read_eeprom(struct ste_softc *, caddr_t, int,
 							int, int);
 void ste_wait(struct ste_softc *);
-u_int8_t ste_calchash(caddr_t);
 void ste_setmulti(struct ste_softc *);
 int ste_init_rx_list(struct ste_softc *);
 void ste_init_tx_list(struct ste_softc *);
@@ -491,32 +490,6 @@ int ste_read_eeprom(sc, dest, off, cnt, swap)
 	return(err ? 1 : 0);
 }
 
-u_int8_t ste_calchash(addr)
-	caddr_t			addr;
-{
-
-	u_int32_t		crc, carry;
-	int			i, j;
-	u_int8_t		c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* return the filter bit position */
-	return(crc & 0x0000003F);
-}
-
 void ste_setmulti(sc)
 	struct ste_softc	*sc;
 {
@@ -528,6 +501,7 @@ void ste_setmulti(sc)
 	u_int32_t		hashes[2] = { 0, 0 };
 
 	ifp = &sc->arpcom.ac_if;
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		STE_SETBIT1(sc, STE_RX_MODE, STE_RXMODE_ALLMULTI);
 		STE_CLRBIT1(sc, STE_RX_MODE, STE_RXMODE_MULTIHASH);
@@ -541,7 +515,12 @@ void ste_setmulti(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = ste_calchash(enm->enm_addrlo);
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
+		    0x0000003F;
 		if (h < 32)
 			hashes[0] |= (1 << h);
 		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.22 2003/08/19 14:01:35 mpech Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.23 2004/06/06 17:56:37 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -521,37 +521,6 @@ wb_miibus_statchg(dev)
 	wb_setcfg(sc, sc->sc_mii.mii_media_active);
 }
 
-u_int8_t wb_calchash(addr)
-	caddr_t			addr;
-{
-	u_int32_t		crc, carry;
-	int			i, j;
-	u_int8_t		c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/*
-	 * return the filter bit position
-	 * Note: I arrived at the following nonsense
-	 * through experimentation. It's not the usual way to
-	 * generate the bit position but it's the only thing
-	 * I could come up with that works.
-	 */
-	return(~(crc >> 26) & 0x0000003F);
-}
-
 /*
  * Program the 64-bit multicast hash filter.
  */
@@ -571,6 +540,7 @@ void wb_setmulti(sc)
 
 	rxfilt = CSR_READ_4(sc, WB_NETCFG);
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		rxfilt |= WB_NETCFG_RX_MULTI;
 		CSR_WRITE_4(sc, WB_NETCFG, rxfilt);
@@ -586,7 +556,11 @@ void wb_setmulti(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = wb_calchash(enm->enm_addrlo);
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
+		h = ~(ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26);
 		if (h < 32)
 			hashes[0] |= (1 << h);
 		else

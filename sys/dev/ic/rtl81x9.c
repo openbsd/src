@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.25 2004/05/19 11:36:59 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.26 2004/06/06 17:56:36 mcbride Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -160,7 +160,6 @@ int rl_miibus_readreg(struct device *, int, int);
 void rl_miibus_writereg(struct device *, int, int, int);
 void rl_miibus_statchg(struct device *);
 
-u_int8_t rl_calchash(caddr_t);
 void rl_setmulti(struct rl_softc *);
 void rl_reset(struct rl_softc *);
 int rl_list_tx_init(struct rl_softc *);
@@ -461,34 +460,6 @@ int rl_mii_writereg(sc, frame)
 }
 
 /*
- * Calculate CRC of a multicast group address, return the upper 6 bits.
- */
-u_int8_t rl_calchash(addr)
-	caddr_t			addr;
-{
-	u_int32_t		crc, carry;
-	int			i, j;
-	u_int8_t		c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* return the filter bit position */
-	return(crc >> 26);
-}
-
-/*
  * Program the 64-bit multicast hash filter.
  */
 void rl_setmulti(sc)
@@ -507,6 +478,7 @@ void rl_setmulti(sc)
 
 	rxfilt = CSR_READ_4(sc, RL_RXCFG);
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		rxfilt |= RL_RXCFG_RX_MULTI;
 		CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
@@ -522,8 +494,12 @@ void rl_setmulti(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
 		mcnt++;
-		h = rl_calchash(enm->enm_addrlo);
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 		if (h < 32)
 			hashes[0] |= (1 << h);
 		else

@@ -189,7 +189,6 @@ Static void axe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 Static void axe_reset(struct axe_softc *sc);
 
 Static void axe_setmulti(struct axe_softc *);
-Static u_int32_t axe_mchash(caddr_t);
 Static void axe_lock_mii(struct axe_softc *sc);
 Static void axe_unlock_mii(struct axe_softc *sc);
 
@@ -346,29 +345,6 @@ axe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
         ifmr->ifm_status = mii->mii_media_status;
 }
 
-Static u_int32_t
-axe_mchash(caddr_t addr)
-{
-	u_int32_t	crc, carry;
-	int		idx, bit;
-	u_int8_t	data;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (idx = 0; idx < 6; idx++) {
-		for (data = *addr++, bit = 0; bit < 8; bit++, data >>= 1) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (data & 0x01);
-			crc <<= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* return the filter bit position */
-	return((crc >> 26) & 0x0000003F);
-}
-
 Static void
 axe_setmulti(struct axe_softc *sc)
 {
@@ -401,7 +377,7 @@ axe_setmulti(struct axe_softc *sc)
 			   ETHER_ADDR_LEN) != 0)
 			goto allmulti;
 
-		h = axe_mchash(enm->enm_addrlo);
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 		hashtbl[h / 8] |= 1 << (h % 8);
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -1256,8 +1232,17 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		axe_setmulti(sc);
-		error = 0;
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->arpcom) :
+		    ether_delmulti(ifr, &sc->arpcom);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware
+			 * filter accordingly.
+			 */
+			axe_setmulti(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:

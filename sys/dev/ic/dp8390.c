@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.25 2004/05/12 06:35:10 tedu Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.26 2004/06/06 17:56:36 mcbride Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -972,9 +972,8 @@ dp8390_getmcaf(ec, af)
 {
 	struct ifnet *ifp = &ec->ac_if;
 	struct ether_multi *enm;
-	u_int8_t *cp, c;
 	u_int32_t crc;
-	int i, len;
+	int i;
 	struct ether_multistep step;
 
 	/*
@@ -1010,21 +1009,8 @@ dp8390_getmcaf(ec, af)
 				af[i] = 0xff;
 			return;
 		}
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			c = *cp++;
-			for (i = 8; --i >= 0;) {
-				if (((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01)) {
-					crc <<= 1;
-					crc ^= 0x04c11db6 | 1;
-				} else
-					crc <<= 1;
-				c >>= 1;
-			}
-		}
 		/* Just want the 6 most significant bits. */
-		crc >>= 26;
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 
 		/* Turn on the corresponding bit in the filter. */
 		af[crc >> 3] |= 1 << (crc & 0x7);

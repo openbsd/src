@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.42 2004/04/14 04:48:56 deraadt Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.43 2004/06/06 17:56:36 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -136,7 +136,6 @@ void vr_miibus_writereg(struct device *, int, int, int);
 void vr_miibus_statchg(struct device *);
 
 void vr_setcfg(struct vr_softc *, int);
-u_int8_t vr_calchash(u_int8_t *);
 void vr_setmulti(struct vr_softc *);
 void vr_reset(struct vr_softc *);
 int vr_list_rx_init(struct vr_softc *);
@@ -491,35 +490,6 @@ vr_miibus_statchg(dev)
 }
 
 /*
- * Calculate CRC of a multicast group address, return the lower 6 bits.
- */
-u_int8_t
-vr_calchash(addr)
-	u_int8_t		*addr;
-{
-	u_int32_t		crc, carry;
-	int			i, j;
-	u_int8_t		c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* return the filter bit position */
-	return((crc >> 26) & 0x0000003F);
-}
-
-/*
  * Program the 64-bit multicast hash filter.
  */
 void
@@ -539,6 +509,7 @@ vr_setmulti(sc)
 
 	rxfilt = CSR_READ_1(sc, VR_RXCFG);
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		rxfilt |= VR_RXCFG_RX_MULTI;
 		CSR_WRITE_1(sc, VR_RXCFG, rxfilt);
@@ -554,7 +525,11 @@ vr_setmulti(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = vr_calchash(enm->enm_addrlo);
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 		if (h < 32)
 			hashes[0] |= (1 << h);
 		else

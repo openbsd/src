@@ -1860,33 +1860,6 @@ stge_add_rxbuf(struct stge_softc *sc, int idx)
 	return (0);
 }
 
-u_int8_t stge_calchash(caddr_t);
-
-u_int8_t stge_calchash(addr)
-        caddr_t                 addr;
-{
-        u_int32_t               crc, carry;
-        int                     i, j;
-        u_int8_t                c;
-	
-        /* Compute CRC for the address value. */
-        crc = 0xFFFFFFFF; /* initial value */
-	
-        for (i = 0; i < 6; i++) {
-                c = *(addr + i);
-                for (j = 0; j < 8; j++) {
-                        carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-                        crc <<= 1;
-                        c >>= 1;
-                        if (carry)
-                                crc = (crc ^ 0x04c11db6) | carry;
-                }
-        }
-	
-        /* return the filter bit position */
-        return(crc & 0x0000003F);
-}
-
 /*
  * stge_set_filter:
  *
@@ -1923,7 +1896,10 @@ stge_set_filter(struct stge_softc *sc)
 		goto done;
 
 	while (enm != NULL) {
-                h = stge_calchash(enm->enm_addrlo);
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
+			goto allmulti;
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) & 
+		    0x0000003F;
                 if (h < 32)
                         mchash[0] |= (1 << h);
                 else
