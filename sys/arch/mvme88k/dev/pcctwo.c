@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.22 2004/04/14 13:42:54 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.23 2004/04/16 23:36:48 miod Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 /*
- * VME18x PCC2 chip
+ * VME1x7 PCC2 chip
  */
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -206,9 +206,10 @@ pcctwointr_establish(vec, ih)
 	int vec;
 	struct intrhand *ih;
 {
-	if (vec >= PCC2_NVEC) {
-		printf("pcctwo: illegal vector: 0x%x\n", vec);
-		panic("pcctwointr_establish");
-	}
-	return (intr_establish(PCC2_VECBASE+vec, ih));
+#ifdef DIAGNOSTIC
+	if (vec < 0 || vec >= PCC2_NVEC)
+		panic("pcctwo_establish: illegal vector 0x%x\n", vec);
+#endif
+
+	return (intr_establish(PCC2_VECBASE + vec, ih));
 }

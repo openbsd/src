@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.17 2004/04/14 23:27:11 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.18 2004/04/16 23:36:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -201,9 +201,9 @@ sysconattach(parent, self, args)
 	sc->sc_m188ih.ih_wantframe = 1;
 	sc->sc_m188ih.ih_ipl = IPL_ABORT;
 
-	intr_establish(SYSCV_ABRT, &sc->sc_abih);
-	intr_establish(SYSCV_ACF, &sc->sc_acih);
-	intr_establish(SYSCV_SYSF, &sc->sc_sfih);
+	sysconintr_establish(SYSCV_ABRT, &sc->sc_abih);
+	sysconintr_establish(SYSCV_ACF, &sc->sc_acih);
+	sysconintr_establish(SYSCV_SYSF, &sc->sc_sfih);
 	intr_establish(M188_IVEC, &sc->sc_m188ih);
 
 	config_search(syscon_scan, self, args);
@@ -214,6 +214,11 @@ sysconintr_establish(vec, ih)
 	int vec;
 	struct intrhand *ih;
 {
+#ifdef DIAGNOSTIC
+	if (vec < SYSCON_VECT || vec >= SYSCON_VECT + SYSCON_NVEC)
+		panic("sysconintr_establish: illegal vector 0x%x\n", vec);
+#endif
+
 	return (intr_establish(vec, ih));
 }
 

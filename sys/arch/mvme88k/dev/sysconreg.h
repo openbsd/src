@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconreg.h,v 1.4 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: sysconreg.h,v 1.5 2004/04/16 23:36:48 miod Exp $ */
 
 /*
  * Memory map for SYSCON found in mvme188 board set.
@@ -47,8 +47,11 @@ struct sysconreg {
 extern struct sysconreg *sys_syscon;
 
 /*
- * Vectors we use
+ * Map syscon interrupts a la PCC2
  */
+#define	SYSCON_VECT	0x50
+#define	SYSCON_NVEC	0x10
+
 #define SYSCV_ABRT	0x52
 #define SYSCV_SYSF	0x53
 #define SYSCV_ACF 	0x54
@@ -57,5 +60,3 @@ extern struct sysconreg *sys_syscon;
 #define SYSCV_TIMER3    0x57
 #define SYSCV_TIMER2    0x58
 #define SYSCV_TIMER1    0x59
-
-
