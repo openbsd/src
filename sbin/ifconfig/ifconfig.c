@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.126 2004/12/25 17:52:45 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.127 2004/12/29 19:32:34 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.126 2004/12/25 17:52:45 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.127 2004/12/29 19:32:34 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -326,6 +326,7 @@ const struct	cmd {
 	{ "-pppoesvc",	1,		0,		setpppoe_svc },
 	{ "pppoeac",	NEXTARG,	0,		setpppoe_ac },
 	{ "-pppoeac",	1,		0,		setpppoe_ac },
+	{ "timeslot",	NEXTARG,	0,		settimeslot },
 #endif /* SMALL */
 #if 0
 	/* XXX `create' special-cased below */
@@ -346,7 +347,6 @@ const struct	cmd {
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "description", NEXTARG,	0,		setifdesc },
 	{ "descr",	NEXTARG,	0,		setifdesc },
-	{ "timeslot",	NEXTARG,	0,		settimeslot },
 	{ NULL, /*src*/	0,		0,		setifaddr },
 	{ NULL, /*dst*/	0,		0,		setifdstaddr },
 	{ NULL, /*illegal*/0,		0,		NULL },
@@ -1640,6 +1640,7 @@ setmediainst(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
+#ifndef SMALL
 /* ARGSUSED */
 void
 settimeslot(const char *val, int d)
@@ -1700,6 +1701,7 @@ get_ts_map(int ts_flag, int ts_start, int ts_stop)
 	}
 	return map;
 }
+#endif /* SMALL */
 
 const struct ifmedia_description ifm_type_descriptions[] =
     IFM_TYPE_DESCRIPTIONS;
