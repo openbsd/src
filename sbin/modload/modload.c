@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.27 2001/09/17 11:45:20 assar Exp $	*/
+/*	$OpenBSD: modload.c,v 1.28 2002/01/07 19:38:28 ericj Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ linkcmd(kernel, entry, outfile, address, object)
 		errx(1, "%s: return code %d", _PATH_LD, WEXITSTATUS(status));
 }
 
-void
+static void
 usage()
 {
 
@@ -182,8 +182,8 @@ main(argc, argv)
 	char *entry = NULL, *post = NULL, *out = NULL, *modobj, *p;
 	struct exec info_buf;
 	struct stat stb;
-	u_int modsize;	/* XXX */
-	u_int modentry;	/* XXX */
+	u_int modsize;		/* XXX */
+	u_long modentry;	/* XXX */
 	int strtablen, c;
 	struct lmc_loadbuf ldbuf;
 	int sz, bytesleft, old = 0;
@@ -218,11 +218,8 @@ main(argc, argv)
 		case 's':
 			symtab = 0;
 			break;
-		case '?':
-			usage();
 		default:
-			printf("default!\n");
-			break;
+			usage();
 		}
 	}
 	argc -= optind;
