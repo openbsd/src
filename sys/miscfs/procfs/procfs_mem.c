@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.11 2001/05/24 07:32:43 aaron Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.12 2001/06/27 04:58:43 art Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -57,156 +57,9 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #define	ISSET(t, f)	((t) & (f))
-
-#if !defined(UVM)
-int
-procfs_rwmem(p, uio)
-	struct proc *p;
-	struct uio *uio;
-{
-	int error;
-	int writing;
-
-	writing = uio->uio_rw == UIO_WRITE;
-
-	/*
-	 * Only map in one page at a time.  We don't have to, but it
-	 * makes things easier.  This way is trivial - right?
-	 */
-	do {
-		vm_map_t map, tmap;
-		vm_object_t object;
-		vm_offset_t kva;
-		vm_offset_t uva;
-		int page_offset;		/* offset into page */
-		vm_offset_t pageno;		/* page number */
-		vm_map_entry_t out_entry;
-		vm_prot_t out_prot;
-		vm_page_t m;
-		boolean_t wired, single_use;
-		vm_offset_t off;
-		u_int len;
-		int fix_prot;
-
-		uva = (vm_offset_t) uio->uio_offset;
-		if (uva > VM_MAXUSER_ADDRESS) {
-			error = 0;
-			break;
-		}
-
-		/*
-		 * Get the page number of this segment.
-		 */
-		pageno = trunc_page(uva);
-		page_offset = uva - pageno;
-
-		/*
-		 * How many bytes to copy
-		 */
-		len = min(PAGE_SIZE - page_offset, uio->uio_resid);
-
-		/*
-		 * The map we want...
-		 */
-		map = &p->p_vmspace->vm_map;
-
-		/*
-		 * Check the permissions for the area we're interested
-		 * in.
-		 */
-		fix_prot = 0;
-		if (writing)
-			fix_prot = !vm_map_check_protection(map, pageno,
-					pageno + PAGE_SIZE, VM_PROT_WRITE);
-
-		if (fix_prot) {
-			/*
-			 * If the page is not writable, we make it so.
-			 * XXX It is possible that a page may *not* be
-			 * read/executable, if a process changes that!
-			 * We will assume, for now, that a page is either
-			 * VM_PROT_ALL, or VM_PROT_READ|VM_PROT_EXECUTE.
-			 */
-			error = vm_map_protect(map, pageno,
-					pageno + PAGE_SIZE, VM_PROT_ALL, 0);
-			if (error)
-				break;
-		}
-
-		/*
-		 * Now we need to get the page.  out_entry, out_prot, wired,
-		 * and single_use aren't used.  One would think the vm code
-		 * would be a *bit* nicer...  We use tmap because
-		 * vm_map_lookup() can change the map argument.
-		 */
-		tmap = map;
-		error = vm_map_lookup(&tmap, pageno,
-				      writing ? VM_PROT_WRITE : VM_PROT_READ,
-				      &out_entry, &object, &off, &out_prot,
-				      &wired, &single_use);
-		/*
-		 * We're done with tmap now.
-		 */
-		if (!error)
-			vm_map_lookup_done(tmap, out_entry);
-
-		/*
-		 * Fault the page in...
-		 */
-		if (!error && writing && object->shadow) {
-			m = vm_page_lookup(object, off);
-			if (m == 0 || (m->flags & PG_COPYONWRITE)) {
-#ifdef __i386__
-				pmap_prefault(map, uva, 4);
-#endif
-				error = vm_fault(map, pageno,
-							VM_PROT_WRITE, FALSE);
-				}
-		}
-
-		/* Find space in kernel_map for the page we're interested in */
-		if (!error) {
-			kva = VM_MIN_KERNEL_ADDRESS;
-			error = vm_map_find(kernel_map, object, off, &kva,
-					PAGE_SIZE, 1);
-		}
-
-		if (!error) {
-			/*
-			 * Neither vm_map_lookup() nor vm_map_find() appear
-			 * to add a reference count to the object, so we do
-			 * that here and now.
-			 */
-			vm_object_reference(object);
-
-			/*
-			 * Mark the page we just found as pageable.
-			 */
-			error = vm_map_pageable(kernel_map, kva,
-				kva + PAGE_SIZE, 0);
-
-			/*
-			 * Now do the i/o move.
-			 */
-			if (!error)
-				error = uiomove((caddr_t) (kva + page_offset),
-						len, uio);
-
-			vm_map_remove(kernel_map, kva, kva + PAGE_SIZE);
-		}
-		if (fix_prot)
-			vm_map_protect(map, pageno, pageno + PAGE_SIZE,
-					VM_PROT_READ|VM_PROT_EXECUTE, 0);
-	} while (error == 0 && uio->uio_resid > 0);
-
-	return (error);
-}
-#endif
 
 /*
  * Copy data in and out of the target process.
@@ -228,7 +81,6 @@ procfs_domem(curp, p, pfs, uio)
 
 	if ((error = procfs_checkioperm(curp, p)) != 0)
 		return (error);
-#if defined(UVM)
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) 
 		return(EFAULT);
@@ -237,11 +89,6 @@ procfs_domem(curp, p, pfs, uio)
 	error = uvm_io(&p->p_vmspace->vm_map, uio);
 	PRELE(p);
 	uvmspace_free(p->p_vmspace);
-#else
-	PHOLD(p);
-	error = procfs_rwmem(p, uio);
-	PRELE(p);
-#endif
 
 	return error;
 }

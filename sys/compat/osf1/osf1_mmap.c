@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_mmap.c,v 1.2 2000/11/08 20:32:50 art Exp $ */
+/* $OpenBSD: osf1_mmap.c,v 1.3 2001/06/27 04:58:41 art Exp $ */
 /* $NetBSD: osf1_mmap.c,v 1.5 2000/04/11 05:26:27 chs Exp $ */
 
 /*
@@ -116,7 +116,6 @@ osf1_sys_mmap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if defined(UVM)
 	struct osf1_sys_mmap_args *uap = v;
 	struct sys_mmap_args a;
 	unsigned long leftovers;
@@ -206,58 +205,6 @@ done:
 	}
 
 	return sys_mmap(p, &a, retval);
-#else
-        struct osf1_sys_mmap_args /* {
-                syscallarg(caddr_t) addr;
-                syscallarg(size_t) len;
-                syscallarg(int) prot;
-                syscallarg(int) flags;
-                syscallarg(int) fd;
-                syscallarg(off_t) pos;  
-        } */ *uap = v;
-        struct sys_mmap_args /* {
-                syscallarg(caddr_t) addr;
-                syscallarg(size_t) len;
-                syscallarg(int) prot;
-                syscallarg(int) flags;
-                syscallarg(int) fd;
-                syscallarg(long) pad;
-                syscallarg(off_t) pos;
-        } */ a;
-
-        SCARG(&a, addr) = SCARG(uap, addr);
-        SCARG(&a, len) = SCARG(uap, len);
-        SCARG(&a, prot) = SCARG(uap, prot);
-        SCARG(&a, fd) = SCARG(uap, fd);
-        SCARG(&a, pad) = 0;
-        SCARG(&a, pos) = SCARG(uap, pos);
-
-        SCARG(&a, flags) = 0;
-        if (SCARG(uap, flags) & OSF1_MAP_SHARED)
-                SCARG(&a, flags) |= MAP_SHARED;
-        if (SCARG(uap, flags) & OSF1_MAP_PRIVATE)
-                SCARG(&a, flags) |= MAP_PRIVATE;
-        switch (SCARG(uap, flags) & OSF1_MAP_TYPE) {
-        case OSF1_MAP_ANON:
-                SCARG(&a, flags) |= MAP_ANON;
-                break;
-        case OSF1_MAP_FILE:
-                SCARG(&a, flags) |= MAP_FILE;
-                break;
-        default:
-                return (EINVAL);
-        }
-        if (SCARG(uap, flags) & OSF1_MAP_FIXED)
-                SCARG(&a, flags) |= MAP_FIXED;
-        if (SCARG(uap, flags) & OSF1_MAP_HASSEMAPHORE)
-                SCARG(&a, flags) |= MAP_HASSEMAPHORE;
-        if (SCARG(uap, flags) & OSF1_MAP_INHERIT)
-                SCARG(&a, flags) |= MAP_INHERIT;
-        if (SCARG(uap, flags) & OSF1_MAP_UNALIGNED)
-                return (EINVAL);
-
-        return sys_mmap(p, &a, retval);
-#endif
 }
 
 int

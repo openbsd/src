@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_linux.c,v 1.2 2001/04/13 01:41:37 miod Exp $	*/
+/*	$OpenBSD: procfs_linux.c,v 1.3 2001/06/27 04:58:43 art Exp $	*/
 /*      $NetBSD: procfs_linux.c,v 1.2.4.1 2001/03/30 21:48:11 he Exp $      */
 
 /*
@@ -46,9 +46,7 @@
 #include <miscfs/procfs/procfs.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #define PGTOB(p)	((unsigned long)(p) << PAGE_SHIFT)
 #define PGTOKB(p)	((unsigned long)(p) << (PAGE_SHIFT - 10))
@@ -75,41 +73,22 @@ procfs_domeminfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		"Cached:    %8lu kB\n"
 		"SwapTotal: %8lu kB\n" 
 		"SwapFree:  %8lu kB\n",
-#if defined(UVM)
 		PGTOB(uvmexp.npages),
 		PGTOB(uvmexp.npages - uvmexp.free),
 		PGTOB(uvmexp.free),
-#else
 		0L,
 		0L,
 		0L,
-#endif
-		0L,
-		0L,
-		0L,
-#if defined(UVM)
 		PGTOB(uvmexp.swpages),
 		PGTOB(uvmexp.swpginuse),
 		PGTOB(uvmexp.swpages - uvmexp.swpginuse),
 		PGTOKB(uvmexp.npages),
 		PGTOKB(uvmexp.free),
-#else
 		0L,
 		0L,
 		0L,
-		0L,
-		0L,
-#endif
-		0L,
-		0L,
-		0L,
-#if defined(UVM)
 		PGTOKB(uvmexp.swpages),
 		PGTOKB(uvmexp.swpages - uvmexp.swpginuse));
-#else
-		0L,
-		0L);
-#endif
 
 	if (len == 0)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.17 2001/06/23 02:15:24 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.18 2001/06/27 04:58:45 art Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -408,11 +408,7 @@ detrunc(dep, length, flags, cred, p)
 		return (EINVAL);
 	}
 
-#if defined(UVM)
 	uvm_vnp_setsize(DETOV(dep), length);
-#else
-	vnode_pager_setsize(DETOV(dep), length);
-#endif
 
 	if (dep->de_FileSize < length)
 		return (deextend(dep, length, cred));
@@ -465,11 +461,7 @@ detrunc(dep, length, flags, cred, p)
 #endif
 			return (error);
 		}
-#if defined(UVM)
 		uvm_vnp_uncache(DETOV(dep));
-#else
-		vnode_pager_uncache(DETOV(dep));	/* what's this for? */
-#endif
 		/*
 		 * is this the right place for it?
 		 */

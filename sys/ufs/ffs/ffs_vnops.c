@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.17 2001/06/23 02:07:55 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.18 2001/06/27 04:58:48 art Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -53,9 +53,7 @@
 
 #include <vm/vm.h>
 
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>

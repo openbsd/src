@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.7 2001/06/23 02:07:51 csapuntz Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.8 2001/06/27 04:58:47 art Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.1 1997/06/11 09:34:01 bouyer Exp $	*/
 
 /*-
@@ -255,17 +255,9 @@ ext2fs_write(v)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_e2fs_size) {
 			ip->i_e2fs_size = uio->uio_offset + xfersize;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, ip->i_e2fs_size);
-#else
-			vnode_pager_setsize(vp, (u_long)ip->i_e2fs_size);
-#endif
 		}
-#if defined(UVM)
 		uvm_vnp_uncache(vp);
-#else
-		(void)vnode_pager_uncache(vp);
-#endif
 
 		size = fs->e2fs_bsize - bp->b_resid;
 		if (size < xfersize)

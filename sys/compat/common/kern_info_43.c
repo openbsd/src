@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_info_43.c,v 1.9 1999/02/26 04:09:47 art Exp $	*/
+/*	$OpenBSD: kern_info_43.c,v 1.10 2001/06/27 04:58:41 art Exp $	*/
 /*	$NetBSD: kern_info_43.c,v 1.5 1996/02/04 02:02:22 christos Exp $	*/
 
 /*
@@ -246,21 +246,13 @@ compat_43_sys_getkerninfo(p, v, retval)
 	case KINFO_METER:
 		name[0] = VM_METER;
 		error =
-#if defined(UVM)
 		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
-#else		    
-		    vm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
-#endif
 		break;
 
 	case KINFO_LOADAVG:
 		name[0] = VM_LOADAVG;
 		error =
-#if defined(UVM)
 		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
-#else
-		    vm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
-#endif
 		break;
 
 	case KINFO_CLOCKRATE:

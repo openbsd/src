@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.21 2001/06/25 05:27:54 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.22 2001/06/27 04:58:46 art Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -346,11 +346,7 @@ nfs_write(v)
 		/*
 		 * XXX make sure we aren't cached in the VM page cache
 		 */
-#if defined(UVM)
 		uvm_vnp_uncache(vp);
-#else
-		(void)vnode_pager_uncache(vp);
-#endif
 
 		nfsstats.biocache_writes++;
 		lbn = uio->uio_offset / biosize;
@@ -368,11 +364,7 @@ again:
 		np->n_flag |= NMODIFIED;
 		if (uio->uio_offset + n > np->n_size) {
 			np->n_size = uio->uio_offset + n;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, (u_long)np->n_size);
-#else
-			vnode_pager_setsize(vp, (u_long)np->n_size);
-#endif
 		}
 
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_subr.c,v 1.8 1999/02/26 03:32:22 art Exp $	*/
+/*	$OpenBSD: union_subr.c,v 1.9 2001/06/27 04:58:44 art Exp $	*/
 /*	$NetBSD: union_subr.c,v 1.18 1996/02/09 22:41:10 christos Exp $	*/
 
 /*
@@ -302,11 +302,7 @@ union_newsize(vp, uppersz, lowersz)
 		printf("union: %s size now %ld\n",
 			uppersz != VNOVAL ? "upper" : "lower", (long) sz);
 #endif
-#if defined(UVM)
 		uvm_vnp_setsize(vp, sz);
-#else
-		vnode_pager_setsize(vp, sz);
-#endif
 	}
 }
 

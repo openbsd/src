@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.20 2001/06/23 02:14:25 csapuntz Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.21 2001/06/27 04:58:42 art Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -60,12 +60,8 @@
 #include <sys/msgbuf.h>
 #include <miscfs/kernfs/kernfs.h>
 
-#if defined(UVM)
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>
-#else
-#include <sys/vmmeter.h>
-#endif
 
 #define KSTRING	256		/* Largest I/O available via this filesystem */
 #define	UIO_MX 32
@@ -105,11 +101,7 @@ struct kern_target kern_targets[] = {
      { DT_REG, N("ostype"),    &ostype,      KTT_STRING,   VREG, READ_MODE  },
      { DT_REG, N("osrelease"), &osrelease,   KTT_STRING,   VREG, READ_MODE  },
      { DT_REG, N("osrev"),     &osrev,       KTT_INT,      VREG, READ_MODE  },
-#if defined(UVM)
      { DT_REG, N("pagesize"),  &uvmexp.pagesize, KTT_INT,  VREG, READ_MODE  },
-#else
-     { DT_REG, N("pagesize"),  &cnt.v_page_size, KTT_INT,  VREG, READ_MODE  },
-#endif
      { DT_REG, N("physmem"),   &physmem,     KTT_INT,      VREG, READ_MODE  },
      { DT_REG, N("posix"),     &posix,       KTT_INT,      VREG, READ_MODE  },
 #if 0
@@ -313,11 +305,7 @@ kernfs_xread(kt, off, bufp, len)
 		break;
 
 	case KTT_USERMEM:
-#if defined(UVM)
 		sprintf(*bufp, "%u\n", physmem - uvmexp.wired);
-#else
-		sprintf(*bufp, "%u\n", physmem - cnt.v_wire_count);
-#endif
 		break;
 #ifdef IPSEC
 	case KTT_IPSECSPI:

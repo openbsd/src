@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.11 2001/06/23 02:07:51 csapuntz Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.12 2001/06/27 04:58:47 art Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.1 1997/06/11 09:33:56 bouyer Exp $	*/
 
 /*
@@ -224,13 +224,8 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		if (error)
 			return (error);
 		oip->i_e2fs_size = length;
-#if defined(UVM)
 		uvm_vnp_setsize(ovp, length);
 		uvm_vnp_uncache(ovp);
-#else
-		vnode_pager_setsize(ovp, (u_long)length);
-		(void) vnode_pager_uncache(ovp);
-#endif
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
@@ -259,13 +254,8 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 			return (error);
 		oip->i_e2fs_size = length;
 		size = fs->e2fs_bsize;
-#if defined(UVM)
 		uvm_vnp_setsize(ovp, length);
 		uvm_vnp_uncache(ovp);
-#else
-		vnode_pager_setsize(ovp, (u_long)length);
-		(void) vnode_pager_uncache(ovp);
-#endif
 		bzero((char *)bp->b_data + offset, (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.24 2001/06/23 02:15:24 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.25 2001/06/27 04:58:45 art Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -638,17 +638,9 @@ msdosfs_write(v)
 		n = min(uio->uio_resid, pmp->pm_bpcluster - croffset);
 		if (uio->uio_offset + n > dep->de_FileSize) {
 			dep->de_FileSize = uio->uio_offset + n;
-#if defined(UVM)
 			uvm_vnp_setsize(vp, dep->de_FileSize);
-#else
-			vnode_pager_setsize(vp, dep->de_FileSize);	/* why? */
-#endif
 		}
-#if defined(UVM)
 		uvm_vnp_uncache(vp);
-#else
-		(void) vnode_pager_uncache(vp);	/* why not? */
-#endif
 		/*
 		 * Should these vnode_pager_* functions be done on dir
 		 * files?

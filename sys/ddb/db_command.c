@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.20 2001/04/18 23:17:25 art Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.21 2001/06/27 04:58:42 art Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -52,10 +52,8 @@
 
 #include <vm/vm.h>
 
-#ifdef UVM
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
-#endif
 
 /*
  * Exported global variables
@@ -295,11 +293,7 @@ db_map_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-#if defined(UVM)
         uvm_map_printit((vm_map_t) addr, full, db_printf);
-#else
-        _vm_map_print((vm_map_t) addr, full, db_printf);
-#endif
 }
 /*ARGSUSED*/
 void
@@ -334,11 +328,7 @@ db_object_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-#if defined(UVM)
 	uvm_object_printit((struct uvm_object *) addr, full, db_printf);
-#else
-        _vm_object_print((vm_object_t) addr, full, db_printf);
-#endif
 }
 
 /*ARGSUSED*/

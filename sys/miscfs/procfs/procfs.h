@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.12 2001/05/24 07:32:42 aaron Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.13 2001/06/27 04:58:43 art Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -138,10 +138,6 @@ int procfs_docpuinfo __P((struct proc *, struct proc *, struct pfsnode *pfsp, st
 int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio, int));
 int procfs_freevp __P((struct vnode *));
 int procfs_getcpuinfstr __P((char *, int *));
-
-#if !defined(UVM)
-int procfs_rwmem __P((struct proc *, struct uio *));
-#endif
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile __P((struct proc *, struct mount *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.14 2001/02/20 01:50:09 assar Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.15 2001/06/27 04:58:42 art Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -53,12 +53,8 @@
 #include <sys/namei.h>
 #include <sys/malloc.h>
 
-#if defined(UVM)
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>	/* for uvmexp */
-#else
-#include <sys/vmmeter.h>	/* for cnt */
-#endif
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
@@ -251,15 +247,9 @@ kernfs_statfs(mp, sbp, p)
 #endif
 
 	sbp->f_flags = 0;
-#if defined(UVM)
 	sbp->f_bsize = uvmexp.pagesize;
 	sbp->f_iosize = uvmexp.pagesize;
 	sbp->f_bfree = physmem - uvmexp.wired;
-#else
-	sbp->f_bsize = cnt.v_page_size;
-	sbp->f_iosize = cnt.v_page_size;
-	sbp->f_bfree = physmem - cnt.v_wire_count;
-#endif
 	sbp->f_blocks = physmem;
 	sbp->f_bavail = 0;
 	sbp->f_files = desiredvnodes;
