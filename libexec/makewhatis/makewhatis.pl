@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.13 2000/11/22 20:32:57 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.14 2000/12/08 13:46:11 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -158,15 +158,15 @@ sub add_unformated_subject
     }
 	# other dashes
     s/\\-/-/g;
-	# sequence of spaces
-    s/\s+$//;
-    s/^\s+//;
-    s/\s+/ /g;
 	# escaped characters
     s/\\\&(.)/$1/g;
     s/\\\|/|/g;
 	# gremlins...
     s/\\c//g;
+	# sequence of spaces
+    s/\s+$//;
+    s/^\s+//;
+    s/\s+/ /g;
     push(@$subjects, $_);
     verify_subject($_, $filename) if $picky;
 }
