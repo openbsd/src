@@ -94,6 +94,7 @@ int icmp_echorequest (addr)
 	if (!icmp_protocol_initialized)
 		error ("attempt to use ICMP protocol before initialization.");
 
+	memset(&to, 0, sizeof to);
 	to.sin_len = sizeof to;
 	to.sin_family = AF_INET;
 	to.sin_port = 0; /* unused. */

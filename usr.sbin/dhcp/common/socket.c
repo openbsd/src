@@ -51,6 +51,7 @@ int if_register_socket (info)
 	int flag;
 
 	/* Set up the address we're going to bind to. */
+	memset(&name, 0, sizeof name);
 	name.sin_family = AF_INET;
 	name.sin_port = local_port;
 	name.sin_addr.s_addr = INADDR_ANY;
