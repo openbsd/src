@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.2 2001/03/07 17:51:29 aaron Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -270,10 +270,12 @@ wsemul_sun_output_normal(edp, c, kernel)
 		break;
 
 	case ASCII_ESC:		/* "Escape (ESC)" */
-#ifdef DIAGNOSTIC
-		if (kernel)
-			panic("ESC in kernel output");
-#endif
+		if (kernel) {
+			printf("wsemul_sun_output_normal: ESC in kernel "
+			    "output ignored\n");
+			break;	/* ignore the ESC */
+		}
+
 		if (edp->state == SUN_EMUL_STATE_NORMAL) {
 			newstate = SUN_EMUL_STATE_HAVEESC;
 			break;

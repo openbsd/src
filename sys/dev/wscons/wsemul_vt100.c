@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.4 2001/02/20 05:40:23 deraadt Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.5 2001/03/07 17:51:29 aaron Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -396,10 +396,12 @@ wsemul_vt100_output_c0c1(edp, c, kernel)
 		edp->chartab0 = 0;
 		break;
 	    case ASCII_ESC:
-#ifdef DIAGNOSTIC
-		if (kernel)
-			panic("ESC in kernel output");
-#endif
+		if (kernel) {
+			printf("wsemul_vt100_output_c0c1: ESC in kernel "
+			    "output ignored\n");
+			break;	/* ignore the ESC */
+		}
+
 		if (edp->state == VT100_EMUL_STATE_STRING) {
 			/* might be a string end */
 			edp->state = VT100_EMUL_STATE_STRING_ESC;
