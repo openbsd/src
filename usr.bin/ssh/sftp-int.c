@@ -17,7 +17,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.68 2004/02/17 05:39:51 djm Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.69 2004/02/17 07:17:29 djm Exp $");
 
 #include <glob.h>
 
@@ -28,9 +28,10 @@ RCSID("$OpenBSD: sftp-int.c,v 1.68 2004/02/17 05:39:51 djm Exp $");
 
 #include "sftp.h"
 #include "sftp-common.h"
-#include "sftp-glob.h"
 #include "sftp-client.h"
-#include "sftp-int.h"
+
+int remote_glob(struct sftp_conn *, const char *, int,
+    int (*)(const char *, int), glob_t *); /* sftp-glob.c */
 
 /* File to read commands from */
 extern FILE *infile;
@@ -119,6 +120,8 @@ static const struct CMD cmds[] = {
 	{ "?",		I_HELP },
 	{ NULL,			-1}
 };
+
+int interactive_loop(int fd_in, int fd_out, char *file1, char *file2);
 
 static void
 help(void)
