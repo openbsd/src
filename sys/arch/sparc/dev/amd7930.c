@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.25 2003/06/28 18:22:14 jason Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.26 2003/06/28 20:53:02 deraadt Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/mulaw.h>
 
 #include <dev/ic/am7930reg.h>
 #include <sparc/dev/amd7930var.h>
@@ -388,33 +387,12 @@ amd7930_set_params(addr, setmode, usemode, p, r)
 	struct audio_params *p, *r;
 {
 	if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
-	    p->precision != 8 || p->channels != 1) 
+	    p->encoding != AUDIO_ENCODING_ULAW ||
+	    p->precision != 8 ||
+	    p->channels != 1) 
 		return (EINVAL);
-
-	switch (p->encoding) {
-	case AUDIO_ENCODING_ULAW:
-		break;
-	case AUDIO_ENCODING_SLINEAR:
-	case AUDIO_ENCODING_SLINEAR_BE:
-	case AUDIO_ENCODING_SLINEAR_LE:
-		p->sw_code = slinear8_to_mulaw;
-		r->sw_code = mulaw_to_slinear8;
-		break;
-	case AUDIO_ENCODING_ULINEAR:
-	case AUDIO_ENCODING_ULINEAR_BE:
-	case AUDIO_ENCODING_ULINEAR_LE:
-		p->sw_code = ulinear8_to_mulaw;
-		r->sw_code = mulaw_to_ulinear8;
-		break;
-	case AUDIO_ENCODING_ALAW:
-		p->sw_code = alaw_to_mulaw;
-		r->sw_code = mulaw_to_alaw;
-		break;
-	default:
-		return (EINVAL);
-	}
-
 	p->sample_rate = 8000;	/* no other rates supported by amd chip */     
+
 	return (0);
 }  
 
@@ -429,24 +407,6 @@ amd7930_query_encoding(addr, fp)
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = 0;
-		break;
-	case 1:
-		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_SLINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ULINEAR;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
-		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
 		return (EINVAL);
