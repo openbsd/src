@@ -70,7 +70,11 @@
 //
 const char * kFreeType	= "Apple_Free";
 const char * kMapType	= "Apple_partition_map";
+#ifdef __m68k__
+const char * kUnixType  = "Apple_UNIX_SVR2";
+#else
 const char * kUnixType	= "OpenBSD";
+#endif
 const char * kHFSType	= "Apple_HFS";
 const char * kPatchType	= "Apple_Patches";
 
