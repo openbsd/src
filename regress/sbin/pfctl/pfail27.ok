@@ -1,0 +1,4 @@
+stdin:3: source port parameter not supported in rdr-anchor
+stdin:4: destination port list expansion not supported in rdr-anchor
+stdin:5: destination port operators not supported in rdr-anchor
+pfctl: Syntax error in file: pf rules not loaded
