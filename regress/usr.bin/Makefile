@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 2002/02/23 01:25:11 art Exp $
+#	$OpenBSD: Makefile,v 1.8 2003/07/02 07:08:20 pvalchev Exp $
 #	$NetBSD: Makefile,v 1.1 1997/12/30 23:27:11 cgd Exp $
 
-SUBDIR+= m4 make sort ssh tsort
+SUBDIR+= grep m4 make sort ssh tsort
 
 .include <bsd.subdir.mk>
