@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.194 1999/11/09 00:24:59 chris Exp 
+ *	OpenBSD: pcidevs,v 1.195 1999/11/09 16:10:29 provos Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2233,6 +2233,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Neomagic",
 	    "Magicgraph NM2360",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_MM256AV,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256AV",
 	},
 	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
