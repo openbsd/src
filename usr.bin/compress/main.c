@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1998/02/13 16:36:24 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1998/03/10 16:34:03 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/02/13 16:36:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1998/03/10 16:34:03 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/02/13 16:36:24 millert Exp $"
 
 #define min(a,b) ((a) < (b)? (a) : (b))
 
-int force = 0, verbose = 0, testmode = 0, list = 0, nosave = 0;
+int pipin = 0, force = 0, verbose = 0, testmode = 0, list = 0, nosave = 0;
 extern char *__progname;
 
 struct compressor {
@@ -245,8 +245,10 @@ main(argc, argv)
 					}
 				}
 			}			
-		} else
+		} else {
 			infile = "/dev/stdin";
+			pipin++;
+		}
 
 		if (testmode)
 			strcpy(outfile, _PATH_DEVNULL);
@@ -410,7 +412,6 @@ decompress(in, out, method, bits)
 	int error;
 
 	error = 0;
-	method = NULL;
 	cookie = NULL;
 
 	if ((ifd = open(in, O_RDONLY)) < 0) {
@@ -427,7 +428,7 @@ decompress(in, out, method, bits)
 		return -1;
 	}
 
-	if ((method = check_method(ifd, out)) == NULL) {
+	if (!pipin && (method = check_method(ifd, out)) == NULL) {
 		if (verbose >= 0)
 			warnx("%s: unrecognized file format", in);
 		return -1;
