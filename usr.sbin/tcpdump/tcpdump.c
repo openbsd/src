@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.37 2004/05/21 05:48:50 brad Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.38 2004/06/20 17:51:55 avsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.37 2004/05/21 05:48:50 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.38 2004/06/20 17:51:55 avsm Exp $ (LBL)";
 #endif
 
 /*
@@ -92,7 +92,7 @@ extern int esp_init(char *);
 
 /* Forwards */
 RETSIGTYPE cleanup(int);
-extern __dead void usage(void) __attribute__((volatile));
+extern __dead void usage(void);
 
 /* Length of saved portion of packet. */
 int snaplen = DEFAULT_SNAPLEN;

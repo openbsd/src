@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.22 2004/04/13 17:56:54 hshoexer Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.23 2004/06/20 17:51:55 avsm Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.22 2004/04/13 17:56:54 hshoexer Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.23 2004/06/20 17:51:55 avsm Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -712,7 +712,7 @@ ike_cfg_attribute_print (u_int8_t *buf, int attr_type, int maxlen)
 	u_int16_t len = af ? 2 : buf[2] << 8 | buf[3], p;
 	u_int8_t *val = af ? buf + 2 : buf + 4;
 
-	printf("\n\t\%sattribute %s = ", ike_tab_offset(),
+	printf("\n\t%sattribute %s = ", ike_tab_offset(),
 	    type < (sizeof attrs / sizeof attrs[0]) ? attrs[type] :
 	    "<unknown>");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.45 2004/05/21 05:48:50 brad Exp $	*/
+/*	$OpenBSD: interface.h,v 1.46 2004/06/20 17:51:55 avsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.45 2004/05/21 05:48:50 brad Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.46 2004/06/20 17:51:55 avsm Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -162,8 +162,9 @@ extern void safeputchar(int);
 extern void wrapup(int);
 
 extern __dead void error(const char *, ...)
-    __attribute__((volatile, format (printf, 1, 2)));
-extern void warning(const char *, ...) __attribute__ ((format (printf, 1, 2)));
+    __attribute__((__format__ (printf, 1, 2)));
+extern void warning(const char *, ...)
+    __attribute__ ((__format__ (printf, 1, 2)));
 
 extern char *read_infile(char *);
 extern char *copy_argv(char * const *);
