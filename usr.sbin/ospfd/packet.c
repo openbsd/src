@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.3 2005/02/04 07:40:54 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.4 2005/02/07 05:51:00 david Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -240,7 +240,7 @@ ospf_hdr_sanity_check(const struct ip *ip_hdr, struct ospf_hdr *ospf_hdr,
 	}
 
 	if (ospf_hdr->area_id != iface->area->id.s_addr) {
-		/* TODO backbone area is allowed for virtual links */ 
+		/* TODO backbone area is allowed for virtual links */
 		addr.s_addr = ospf_hdr->area_id;
 		log_debug("recv_packet: invalid area ID %s, interface %s",
 		    inet_ntoa(addr), iface->name);

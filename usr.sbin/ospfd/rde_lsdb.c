@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.4 2005/02/04 07:38:04 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.5 2005/02/07 05:51:00 david Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -476,7 +476,7 @@ lsa_refresh(struct vertex *v)
 	u_int32_t	 seqnum;
 	u_int16_t	 len;
 
-	/* refresh LSA by increasing sequnce number by one */
+	/* refresh LSA by increasing sequence number by one */
 	v->lsa->hdr.age = ntohs(DEFAULT_AGE);
 	seqnum = ntohl(v->lsa->hdr.seq_num);
 	if (seqnum++ == MAX_SEQ_NUM)

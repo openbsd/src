@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.3 2005/02/02 18:52:32 henning Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.4 2005/02/07 05:51:00 david Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 	if ((conf = parse_config(conffile, OSPFD_OPT_VERBOSE)) == NULL )
 		exit(1);
 
-	/* check for root priviledges */
+	/* check for root privileges  */
 	if (geteuid())
 		errx(1, "need root privileges");
 

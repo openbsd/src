@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: hello.c,v 1.3 2005/02/07 05:50:59 david Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -209,7 +209,7 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 
 	if (len == 0) {
 		nbr_fsm(nbr, NBR_EVT_1_WAY_RCVD);
-		/* set neighbor parameters */ 
+		/* set neighbor parameters */
 		nbr->dr.s_addr = hello.d_rtr;
 		nbr->bdr.s_addr = hello.bd_rtr;
 		nbr->priority = hello.rtr_priority;
@@ -244,7 +244,7 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 
 	if (twoway) {
 		/*
-		 * event 2 way recieved needs to be delayed after the
+		 * event 2 way received needs to be delayed after the
 		 * interface neighbor change check else the DR and BDR
 		 * may not be set correctly.
 		 */

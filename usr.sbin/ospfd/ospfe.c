@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.3 2005/02/02 19:15:07 henning Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.4 2005/02/07 05:51:00 david Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -335,7 +335,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			    "neighbor id %s, len %d", inet_ntoa(nbr->id),
 			    imsg.hdr.len - IMSG_HEADER_SIZE);
 
-			/* put these on my ls_req_list for retrival */
+			/* put these on my ls_req_list for retrieval */
 			lhp = lsa_hdr_new();
 			memcpy(lhp, imsg.data, sizeof(*lhp));
 			ls_req_list_add(nbr, lhp);
@@ -402,7 +402,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				}
 			} else {
 				/*
-				 * flood on all area interfaces on 
+				 * flood on all area interfaces on
 				 * area 0.0.0.0 include also virtual links.
 				 */
 				area = nbr->iface->area;
