@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.8 2002/10/16 15:48:31 todd Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.9 2002/11/08 19:06:45 mickey Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.52 2002/10/16 15:48:31 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
@@ -85,6 +85,9 @@
 #	usbs	make USB devices
 #	pci	PCI bus device
 #	systrace*	system call tracing device
+#	bktr*	video capturing
+#	tuner*	tuner device
+#	radio*	FM tuner device
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -222,6 +225,19 @@ ttyE*)
 	E)	major=25; minor=$unit ;;
 	esac
 	M tty$type$unit c $major $minor 660
+	;;
+
+radio*)
+	M radio$U     c 76 $U
+	MKlist="$MKlist;[ -e radio ] || ln -s radio$U radio"
+	;;
+
+tuner*)
+	M tuner$U c 75 $(($(($U*2))+16)) 644
+	;;
+
+bktr*)
+	M bktr$U c 75 $U 644
 	;;
 
 systrace)
@@ -446,9 +462,10 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0
-	R local wscons pci iop0 iop1 usbs audio0 uk0 random lkm tty00
-	R tty01 tty02 tty03 apm crypto pf altq systrace wd0 wd1 wd2
-	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R local wscons pci iop0 iop1 usbs tuner0 radio0 audio0 uk0
+	R random lkm tty00 tty01 tty02 tty03 apm crypto pf altq
+	R systrace wd0 wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1
+	R fd
 	;;
 
 wd*|sd*|raid*|ccd*)
