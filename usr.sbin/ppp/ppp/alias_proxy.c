@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_proxy.c,v 1.12 2003/04/04 20:25:06 deraadt Exp $
+ * $OpenBSD: alias_proxy.c,v 1.13 2003/04/04 20:28:57 deraadt Exp $
  */
 
 /* file: alias_proxy.c
@@ -306,11 +306,11 @@ ProxyEncodeTcpStream(struct alias_link *link,
     switch (slen % 2)
     {
     case 0:
-        strcat(buffer, " \n");
+        strlcat(buffer, " \n", sizeof(buffer));
 	slen += 2;
         break;
     case 1:
-        strcat(buffer, "\n");
+        strlcat(buffer, "\n", sizeof(buffer));
 	slen += 1;
     }
 

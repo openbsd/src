@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.c,v 1.77 2002/06/15 08:02:00 brian Exp $
+ * $OpenBSD: command.c,v 1.78 2003/04/04 20:28:57 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -1160,7 +1160,7 @@ command_Run(struct bundle *bundle, int argc, char const *const *argv,
       if (label) {
         strncpy(buf, label, sizeof buf - 3);
         buf[sizeof buf - 3] = '\0';
-        strcat(buf, ": ");
+        strlcat(buf, ": ", sizeof buf);
         n = strlen(buf);
       } else {
         *buf = '\0';

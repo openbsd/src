@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.10 2003/04/04 20:25:06 deraadt Exp $
+ *	$Id: pppctl.c,v 1.11 2003/04/04 20:28:57 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -452,7 +452,7 @@ main(int argc, char **argv)
                         *next = '\0';
                     strlcpy(Buffer, start, sizeof Buffer);
                     Buffer[sizeof(Buffer)-2] = '\0';
-                    strcat(Buffer, "\n");
+                    strlcat(Buffer, "\n", sizeof Buffer);
                     if (verbose)
                         write(1, Buffer, strlen(Buffer));
                     write(fd, Buffer, strlen(Buffer));
