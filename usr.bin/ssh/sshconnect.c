@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.66 2000/04/12 09:39:10 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.67 2000/04/14 10:09:16 markus Exp $");
 
 #include <openssl/bn.h>
 #include "xmalloc.h"
@@ -1400,6 +1400,7 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	debug("first kex follow == %d", i);
 	i = packet_get_int();
 	debug("reserved == %d", i);
+	packet_done();
 
 	debug("done read kexinit");
 	kex = kex_choose_conf(cprop, sprop, 0);
@@ -1455,6 +1456,7 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 
 	/* signed H */
 	signature = packet_get_string(&slen);
+	packet_done();
 
 	if (!dh_pub_is_valid(dh, dh_server_pub))
 		packet_disconnect("bad server public DH value");
@@ -1507,6 +1509,7 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 
 	debug("Wait SSH2_MSG_NEWKEYS.");
 	packet_read_expect(&payload_len, SSH2_MSG_NEWKEYS);
+	packet_done();
 	debug("GOT SSH2_MSG_NEWKEYS.");
 
 	debug("send SSH2_MSG_NEWKEYS.");
@@ -1540,7 +1543,7 @@ ssh_userauth2(int host_key_valid, RSA *own_host_key,
 	char *server_user, *local_user;
 	char *auths;
 	char *password;
-	char *service = "ssh-connection";		// service name
+	char *service = "ssh-connection";		/* service name */
 
 	debug("send SSH2_MSG_SERVICE_REQUEST");
 	packet_start(SSH2_MSG_SERVICE_REQUEST);
@@ -1552,8 +1555,15 @@ ssh_userauth2(int host_key_valid, RSA *own_host_key,
 	if (type != SSH2_MSG_SERVICE_ACCEPT) {
 		fatal("denied SSH2_MSG_SERVICE_ACCEPT: %d", type);
 	}
-	/* payload empty for ssh-2.0.13 ?? */
-	/* reply = packet_get_string(&payload_len); */
+	if (packet_remaining() > 0) {
+		char *reply = packet_get_string(&plen);
+		debug("service_accept: %s", reply);
+		xfree(reply);
+	} else {
+		/* payload empty for ssh-2.0.13 ?? */
+		log("buggy server: service_accept w/o service");
+	}
+	packet_done();
 	debug("got SSH2_MSG_SERVICE_ACCEPT");
 
 	/*XX COMMONCODE: */
@@ -1582,6 +1592,7 @@ ssh_userauth2(int host_key_valid, RSA *own_host_key,
 		auths = packet_get_string(&dlen);
 		debug("authentications that can continue: %s", auths);
 		partial = packet_get_char();
+		packet_done();
 		if (partial)
 			debug("partial success");
 		if (strstr(auths, "password") == NULL)
@@ -1602,6 +1613,7 @@ ssh_userauth2(int host_key_valid, RSA *own_host_key,
 		packet_send();
 		packet_write_wait();
 	}
+	packet_done();
 	debug("ssh-userauth2 successfull");
 }
 

@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.47 2000/04/10 15:19:43 markus Exp $");
+RCSID("$Id: channels.c,v 1.48 2000/04/14 10:09:14 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -540,8 +540,10 @@ channel_post_port_listener(Channel *c, fd_set * readset, fd_set * writeset)
 			packet_put_int(newch);
 			packet_put_int(c->local_window_max);
 			packet_put_int(c->local_maxpacket);
+			/* target host and port */
 			packet_put_string(c->path, strlen(c->path));
 			packet_put_int(c->host_port);
+			/* originator host and port */
 			packet_put_cstring(remote_hostname);
 			packet_put_int(remote_port);
 			packet_send();
@@ -934,6 +936,7 @@ channel_input_data(int type, int plen)
 
 	/* Get the data. */
 	data = packet_get_string(&data_len);
+	packet_done();
 
 	if (compat20){
 		if (data_len > c->local_maxpacket) {
@@ -980,6 +983,7 @@ channel_input_extended_data(int type, int plen)
 		return;
 	}
 	data = packet_get_string(&data_len);
+	packet_done();
 	if (data_len > c->local_window) {
 		log("channel %d: rcvd too much extended_data %d, win %d",
 		    c->self, data_len, c->local_window);
@@ -1093,6 +1097,7 @@ channel_input_close_confirmation(int type, int plen)
 	int id = packet_get_int();
 	Channel *c = channel_lookup(id);
 
+	packet_done();
 	if (c == NULL)
 		packet_disconnect("Received close confirmation for "
 		    "out-of-range channel %d.", id);
@@ -1125,6 +1130,7 @@ channel_input_open_confirmation(int type, int plen)
 	if (compat20) {
 		c->remote_window = packet_get_int();
 		c->remote_maxpacket = packet_get_int();
+		packet_done();
 		if (c->cb_fn != NULL && c->cb_event == type) {
 			debug("callback start");
 			c->cb_fn(c->self, c->cb_arg);
@@ -1153,8 +1159,11 @@ channel_input_open_failure(int type, int plen)
 	if (compat20) {
 		int reason = packet_get_int();
 		char *msg  = packet_get_string(NULL);
+		char *lang  = packet_get_string(NULL);
 		log("channel_open_failure: %d: reason %d: %s", id, reason, msg);
+		packet_done();
 		xfree(msg);
+		xfree(lang);
 	}
 	/* Free the channel.  This will also close the socket. */
 	channel_free(id);
@@ -1204,6 +1213,7 @@ channel_input_window_adjust(int type, int plen)
 		return;
 	}
 	adjust = packet_get_int();
+	packet_done();
 	debug("channel %d: rcvd adjust %d", id, adjust);
 	c->remote_window += adjust;
 }

@@ -684,16 +684,17 @@ int
 input_direct_tcpip(void)
 {
 	int sock;
-	char *host, *originator;
-	int host_port, originator_port;
+	char *target, *originator;
+	int target_port, originator_port;
 
-	host = packet_get_string(NULL);
-	host_port = packet_get_int();
+	target = packet_get_string(NULL);
+	target_port = packet_get_int();
 	originator = packet_get_string(NULL);
 	originator_port = packet_get_int();
+	packet_done();
 	/* XXX check permission */
-	sock = channel_connect_to(host, host_port);
-	xfree(host);
+	sock = channel_connect_to(target, target_port);
+	xfree(target);
 	xfree(originator);
 	if (sock < 0)
 		return -1;
@@ -722,6 +723,7 @@ server_input_channel_open(int type, int plen)
 
 	if (strcmp(ctype, "session") == 0) {
 		debug("open session");
+		packet_done();
 		/*
 		 * A server session has no fd to read or write
 		 * until a CHANNEL_REQUEST for a shell is made,

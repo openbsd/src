@@ -5,7 +5,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.2 2000/04/06 08:55:22 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.3 2000/04/14 10:09:14 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -630,6 +630,7 @@ input_service_request(int type, int plen)
 	unsigned int len;
 	int accept = 0;
 	char *service = packet_get_string(&len);
+	packet_done();
 
 	if (strcmp(service, "ssh-userauth") == 0) {
 		if (!userauth_success) {
@@ -672,6 +673,7 @@ input_userauth_request(int type, int plen)
 	pw = auth_set_user(user, service);
 	if (pw && strcmp(service, "ssh-connection")==0) {
 		if (strcmp(method, "none") == 0 && try == 1) {
+			packet_done();
 			authenticated = auth_password(pw, "");
 		} else if (strcmp(method, "password") == 0) {
 			char *password;
@@ -679,16 +681,25 @@ input_userauth_request(int type, int plen)
 			if (c)
 				debug("password change not supported");
 			password = packet_get_string(&len);
+			packet_done();
 			authenticated = auth_password(pw, password);
 			memset(password, 0, len);
 			xfree(password);
 		} else if (strcmp(method, "publickey") == 0) {
 			/* XXX TODO */
-			char *pkalg;
-			char *pkblob;
-			c = packet_get_char();
+			char *pkalg, *pkblob, *sig;
+			int have_sig = packet_get_char();
 			pkalg = packet_get_string(&len);
 			pkblob = packet_get_string(&len);
+			if (have_sig) {
+				sig = packet_get_string(&len);
+				/* test for correct signature */
+				packet_done();
+				xfree(sig);
+			} else {
+				packet_done();
+				/* test whether pkalg/pkblob are acceptable */
+			}
 			xfree(pkalg);
 			xfree(pkblob);
 		}
@@ -697,7 +708,6 @@ input_userauth_request(int type, int plen)
 	if (authenticated) {
 		/* turn off userauth */
 		dispatch_set(SSH2_MSG_USERAUTH_REQUEST, &protocol_error);
-		/* success! */
 		packet_start(SSH2_MSG_USERAUTH_SUCCESS);
 		packet_send();
 		packet_write_wait();

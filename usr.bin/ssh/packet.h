@@ -13,7 +13,7 @@
  * 
  */
 
-/* RCSID("$Id: packet.h,v 1.13 2000/04/12 09:39:10 markus Exp $"); */
+/* RCSID("$Id: packet.h,v 1.14 2000/04/14 10:09:15 markus Exp $"); */
 
 #ifndef PACKET_H
 #define PACKET_H
@@ -196,11 +196,24 @@ do { \
   } \
 } while (0)
 
+#define packet_done() \
+do { \
+	int _len = packet_remaining(); \
+	if (_len > 0) { \
+		log("Packet integrity error (%d bytes remaining) at %s:%d", \
+		    _len ,__FILE__, __LINE__); \
+		packet_disconnect("Packet integrity error."); \
+	} \
+} while (0)
+
 /* remote host is connected via a socket/ipv4 */
 int	packet_connection_is_on_socket(void);
 int	packet_connection_is_ipv4(void);
 
 /* enable SSH2 packet format */
 void	packet_set_ssh2_format(void);
+
+/* returns remaining payload bytes */
+int	packet_remaining(void);
 
 #endif				/* PACKET_H */

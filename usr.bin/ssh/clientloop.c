@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: clientloop.c,v 1.18 2000/04/12 06:37:02 markus Exp $");
+RCSID("$Id: clientloop.c,v 1.19 2000/04/14 10:09:15 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1027,6 +1027,7 @@ client_input_channel_req(int id, void *arg)
 	} else if (strcmp(rtype, "exit-status") == 0) {
 		success = 1;
 		exit_status = packet_get_int();
+		packet_done();
 	}
 	if (reply) {
 		packet_start(success ?

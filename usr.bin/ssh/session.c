@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.2 2000/04/06 08:55:22 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.3 2000/04/14 10:09:16 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1134,6 +1134,7 @@ session_window_change_req(Session *s)
 	s->row = packet_get_int();
 	s->xpixel = packet_get_int();
 	s->ypixel = packet_get_int();
+	packet_done();
 	pty_change_window_size(s->ptyfd, s->row, s->col, s->xpixel, s->ypixel);
 	return 1;
 }
@@ -1142,14 +1143,17 @@ int
 session_pty_req(Session *s)
 {
 	unsigned int len;
+	char *term_modes;	/* encoded terminal modes */
 
 	if (s->ttyfd != -1)
-		return -1;
+		return 0;
 	s->term = packet_get_string(&len);
 	s->col = packet_get_int();
 	s->row = packet_get_int();
 	s->xpixel = packet_get_int();
 	s->ypixel = packet_get_int();
+	term_modes = packet_get_string(&len);
+	packet_done();
 
 	if (strcmp(s->term, "") == 0) {
 		xfree(s->term);
@@ -1162,7 +1166,8 @@ session_pty_req(Session *s)
 		s->ptyfd = -1;
 		s->ttyfd = -1;
 		error("session_pty_req: session %d alloc failed", s->self);
-		return -1;
+		xfree(term_modes);
+		return 0;
 	}
 	debug("session_pty_req: session %d alloc %s", s->self, s->tty);
 	/*
@@ -1174,6 +1179,8 @@ session_pty_req(Session *s)
 	/* Get window size from the packet. */
 	pty_change_window_size(s->ptyfd, s->row, s->col, s->xpixel, s->ypixel);
 
+	/* XXX parse and set terminal modes */
+	xfree(term_modes);
 	return 1;
 }
 
@@ -1206,6 +1213,7 @@ session_input_channel_req(int id, void *arg)
 	 */
 	if (c->type == SSH_CHANNEL_LARVAL) {
 		if (strcmp(rtype, "shell") == 0) {
+			packet_done();
 			if (s->ttyfd == -1)
 				do_exec_no_pty(s, NULL, s->pw);
 			else
@@ -1213,6 +1221,7 @@ session_input_channel_req(int id, void *arg)
 			success = 1;
 		} else if (strcmp(rtype, "exec") == 0) {
 			char *command = packet_get_string(&len);
+			packet_done();
 			if (s->ttyfd == -1)
 				do_exec_no_pty(s, command, s->pw);
 			else
@@ -1220,8 +1229,7 @@ session_input_channel_req(int id, void *arg)
 			xfree(command);
 			success = 1;
 		} else if (strcmp(rtype, "pty-req") == 0) {
-			if (session_pty_req(s) > 0)
-				success = 1;
+			success =  session_pty_req(s);
 		}
 	}
 	if (strcmp(rtype, "window-change") == 0) {
