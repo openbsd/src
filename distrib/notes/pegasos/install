@@ -1,9 +1,8 @@
-dnl	$OpenBSD: install,v 1.5 2004/01/20 17:33:20 miod Exp $
+dnl	$OpenBSD: install,v 1.6 2004/02/07 14:28:32 miod Exp $
 OpenBSDInstallShortPrelude
 
-dnl XXX sync with reality!
 Currently only MBR partitioning is supported, RDB support may be added
-later.
+later, although RDB partitions are recognized.
 
 
 OpenBSDInstallPart2

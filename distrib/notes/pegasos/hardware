@@ -1,5 +1,6 @@
-dnl	$OpenBSD: hardware,v 1.3 2003/11/03 14:05:15 miod Exp $
-OpenBSD/MACHINE OSREV runs on Pegasos PowerPC motherboard based machines.
+dnl	$OpenBSD: hardware,v 1.4 2004/02/07 14:28:32 miod Exp $
+OpenBSD/MACHINE OSREV runs on Pegasos and Pegasos II PowerPC motherboard
+based machines.
 
 Supported devices {:-include-:}:
 
