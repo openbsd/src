@@ -1,8 +1,8 @@
-/*	$OpenBSD: libcrypto.h,v 1.7 2000/04/07 22:06:20 niklas Exp $	*/
-/*	$EOM: libcrypto.h,v 1.14 2000/03/31 15:29:03 ho Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.8 2000/10/07 06:59:16 niklas Exp $	*/
+/*	$EOM: libcrypto.h,v 1.16 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
- * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,20 +42,12 @@
 
 #include <stdio.h>
 
-#ifdef KAME
-#  include <openssl/ssl.h>
-#  include <openssl/bio.h>
-#  include <openssl/pem.h>
-#  include <openssl/x509_vfy.h>
-#  include <openssl/x509.h>
-#else
 /* XXX I want #include <ssl/cryptall.h> but we appear to not install meth.h  */
-#  include <ssl/ssl.h>
-#  include <ssl/bio.h>
-#  include <ssl/pem.h>
-#  include <ssl/x509_vfy.h>
-#  include <ssl/x509.h>
-#endif /* KAME */
+#include <openssl/ssl.h>
+#include <openssl/bio.h>
+#include <openssl/pem.h>
+#include <openssl/x509_vfy.h>
+#include <openssl/x509.h>
 
 extern void *libcrypto;
 
@@ -139,6 +131,7 @@ extern X509 *(*lc_d2i_X509) (X509 **, unsigned char **, long);
 extern int (*lc_i2d_RSAPublicKey) (RSA *, unsigned char **);
 extern int (*lc_i2d_RSAPrivateKey) (RSA *, unsigned char **);
 extern int (*lc_i2d_X509) (X509 *, unsigned char **);
+extern int (*lc_i2d_X509_NAME) (X509_NAME *, unsigned char **);
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
 extern void (*lc_sk_X509_free) (STACK_OF (X509) *);
 extern STACK_OF (X509) *(*lc_sk_X509_new_null) (void);
