@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.7 1996/06/14 06:36:24 deraadt Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.8 1996/06/26 19:44:59 tholo Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -403,27 +403,6 @@ bdwrite(bp)
 		SET(bp->b_flags, B_DELWRI);
 		curproc->p_stats->p_ru.ru_oublock++;	/* XXX */
 		reassignbuf(bp, bp->b_vp);
-	}
-	else {
-		/*
-		 * The buffer has been rewritten.  Move it to the
-		 * end of the dirty block list, and if it was the
-		 * first entry before being moved, reschedule the
-		 * timeout
-		 */
-		if (bdirties.tqh_first == bp) {
-			untimeout((void (*)__P((void *)))wakeup,
-				  &bdirties);
-			setit = 1;
-		}
-		else
-			setit = 0;
-		TAILQ_REMOVE(&bdirties, bp, b_synclist);
-		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
-		if (setit && bdirties.tqh_first != bp)
-                        timeout((void (*)__P((void *)))wakeup,
-				&bdirties,
-				(bdirties.tqh_first->b_synctime - time.tv_sec) * hz);
 	}
 
 	/* If this is a tape block, write the block now. */
