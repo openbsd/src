@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_bsd.c,v 1.2 1996/06/26 05:41:00 deraadt Exp $	*/
+/*	$OpenBSD: api_bsd.c,v 1.3 1996/11/04 00:07:35 bitblt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)api_bsd.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: api_bsd.c,v 1.2 1996/06/26 05:41:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: api_bsd.c,v 1.3 1996/11/04 00:07:35 bitblt Exp $";
 #endif /* not lint */
 
 #if	defined(unix)
@@ -75,7 +75,7 @@ char	*string;		/* if non-zero, where to connect to */
 #if	!defined(htons)
     extern unsigned short htons();
 #endif	/* !defined(htons) */
-    char thehostname[100];
+    char thehostname[MAXHOSTNAMELEN];
     char keyname[100];
     char inkey[100];
     FILE *keyfile;
