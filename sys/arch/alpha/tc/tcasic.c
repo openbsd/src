@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcasic.c,v 1.6 1996/12/08 00:21:00 niklas Exp $	*/
-/*	$NetBSD: tcasic.c,v 1.12 1996/10/23 04:12:38 cgd Exp $	*/
+/*	$OpenBSD: tcasic.c,v 1.7 1997/01/24 19:58:21 niklas Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.14 1996/12/05 01:39:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -39,7 +39,11 @@
 #include <alpha/tc/tc_conf.h>
 
 /* Definition of the driver for autoconfig. */
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	tcasicmatch(struct device *, void *, void *);
+#else
+int	tcasicmatch(struct device *, struct cfdata *, void *);
+#endif
 void	tcasicattach(struct device *, struct device *, void *);
 
 struct cfattach tcasic_ca = {
@@ -60,7 +64,11 @@ int	tcasicfound;
 int
 tcasicmatch(parent, cfdata, aux)
 	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *cfdata;
+#else
+	struct cfdata *cfdata;
+#endif
 	void *aux;
 {
 	struct confargs *ca = aux;
@@ -103,8 +111,13 @@ tcasicattach(parent, self, aux)
 		tba.tba_speed = TC_SPEED_25_MHZ;
 		tba.tba_nslots = tc_3000_500_nslots;
 		tba.tba_slots = tc_3000_500_slots;
-		tba.tba_nbuiltins = tc_3000_500_nbuiltins;
-		tba.tba_builtins = tc_3000_500_builtins;
+		if (hwrpb->rpb_variation & SV_GRAPHICS) {
+			tba.tba_nbuiltins = tc_3000_500_graphics_nbuiltins;
+			tba.tba_builtins = tc_3000_500_graphics_builtins;
+		} else {
+			tba.tba_nbuiltins = tc_3000_500_nographics_nbuiltins;
+			tba.tba_builtins = tc_3000_500_nographics_builtins;
+		}
 		tba.tba_intr_establish = tc_3000_500_intr_establish;
 		tba.tba_intr_disestablish = tc_3000_500_intr_disestablish;
 		break;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: wscons_emul.c,v 1.3 1996/10/30 22:41:47 niklas Exp $	*/
-/*	$NetBSD: wscons_emul.c,v 1.4 1996/10/13 03:00:47 christos Exp $	*/
+/*	$OpenBSD: wscons_emul.c,v 1.4 1997/01/24 19:58:31 niklas Exp $	*/
+/*	$NetBSD: wscons_emul.c,v 1.7 1996/11/19 05:23:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <alpha/wscons/wsconsvar.h>
 #include <alpha/wscons/wscons_emul.h>
 #include <alpha/wscons/kbd.h>
@@ -48,6 +49,11 @@ static __inline void wscons_emul_docontrol
 static __inline int wscons_emul_input_control
     __P((struct wscons_emul_data *, char));
 
+static int wscons_emul_input_normal __P((struct wscons_emul_data *, char));
+static int wscons_emul_input_haveesc __P((struct wscons_emul_data *, char));
+static void wscons_emul_docontrol __P((struct wscons_emul_data *, char));
+static int wscons_emul_input_control __P((struct wscons_emul_data *, char));
+
 void
 wscons_emul_attach(we, wo)
 	struct wscons_emul_data *we;
@@ -58,19 +64,20 @@ wscons_emul_attach(we, wo)
 #ifdef DIAGNOSTIC
 	if (we == NULL || wo == NULL)
 		panic("wscons_emul_attach: bogus args");
-	if (wo->wo_ef == NULL)
+	if (wo->wo_emulfuncs == NULL)
 		panic("wscons_emul_attach: bogus emul functions");
 #endif
-	if (wo->wo_nrows < 0 || wo->wo_ncols < 0)
-		panic("wscons_emul_attach: bogus size");
+	if (wo->wo_nrows <= 0 || wo->wo_ncols <= 0)
+		panic("wscons_emul_attach: bogus size (%d/%d)",
+		    wo->wo_nrows, wo->wo_ncols);
 	if (wo->wo_crow < 0 || wo->wo_ccol < 0 ||
 	    wo->wo_crow >= wo->wo_nrows || wo->wo_ccol >= wo->wo_ncols)
 		panic("wscons_emul_attach: bogus location (n: %d/%d, c: %d/%d",
 		    wo->wo_nrows, wo->wo_ncols, wo->wo_crow, wo->wo_ccol);
 
 	we->ac_state = ANSICONS_STATE_NORMAL;
-	we->ac_ef = wo->wo_ef;
-	we->ac_efa = wo->wo_efa;
+	we->ac_ef = wo->wo_emulfuncs;
+	we->ac_efa = wo->wo_emulfuncs_cookie;
 
 	we->ac_nrow = wo->wo_nrows;
 	we->ac_ncol = wo->wo_ncols;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: dec_axppci_33.c,v 1.5 1996/12/08 00:20:16 niklas Exp $	*/
-/*	$NetBSD: dec_axppci_33.c,v 1.13 1996/10/23 04:12:14 cgd Exp $	*/
+/*	$OpenBSD: dec_axppci_33.c,v 1.6 1997/01/24 19:56:27 niklas Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.16 1996/11/25 03:59:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/ic/comreg.h>
@@ -46,13 +47,13 @@
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
 
-#include <alpha/alpha/dec_axppci_33.h>
-
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-char *
-dec_axppci_33_modelname()
+cpu_decl(dec_axppci_33);
+
+const char *
+dec_axppci_33_model_name()
 {
 
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
@@ -67,14 +68,14 @@ dec_axppci_33_modelname()
 }
 
 void
-dec_axppci_33_consinit()
+dec_axppci_33_cons_init()
 {
 	struct ctb *ctb;
 	struct lca_config *lcp;
 	extern struct lca_config lca_configuration;
 
 	lcp = &lca_configuration;
-	lca_init(lcp);
+	lca_init(lcp, 0);
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
@@ -106,9 +107,12 @@ dec_axppci_33_consinit()
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(lcp->lc_iot, lcp->lc_memt, &lcp->lc_pc,
-		    (ctb->ctb_turboslot >> 8) & 0xff,
-		    ctb->ctb_turboslot & 0xff, 0);
+		if (ctb->ctb_turboslot == 0)
+			isa_display_console(lcp->lc_iot, lcp->lc_memt);
+		else
+			pci_display_console(lcp->lc_iot, lcp->lc_memt,
+			    &lcp->lc_pc, (ctb->ctb_turboslot >> 8) & 0xff,
+			    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
@@ -118,6 +122,13 @@ dec_axppci_33_consinit()
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
+}
+
+const char *
+dec_axppci_33_iobus_name()
+{
+
+	return ("lca");
 }
 
 void

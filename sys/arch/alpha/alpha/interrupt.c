@@ -1,8 +1,8 @@
-/*	$OpenBSD: interrupt.c,v 1.5 1996/10/30 22:38:12 niklas Exp $	*/
-/*	$NetBSD: interrupt.c,v 1.12 1996/10/13 19:57:49 cgd Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.6 1997/01/24 19:56:34 niklas Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.14 1996/11/13 22:20:54 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Authors: Keith Bostic, Chris G. Demetriou
@@ -50,10 +50,10 @@ struct logout {
 	/* Unspecified. */
 };
 
-void		interrupt __P((u_long, u_long, u_long, struct trapframe *));
-void		machine_check __P((struct trapframe *, u_long, u_long));
-void		real_clockintr __P((void *, u_long));
-void		nullintr __P((void *, u_long));
+void	interrupt __P((u_long, u_long, u_long, struct trapframe *));
+void	machine_check __P((struct trapframe *, u_long, u_long));
+void	nullintr __P((void *, u_long));
+void	real_clockintr __P((void *, u_long));
 
 static void	(*iointr) __P((void *, u_long)) = nullintr;
 static void	(*clockintr) __P((void *, u_long)) = nullintr;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: disksubr.c,v 1.5 1996/10/30 22:38:10 niklas Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.8 1996/10/13 02:59:35 christos Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 1997/01/24 19:56:32 niklas Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9 1996/11/13 21:13:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -77,7 +77,7 @@ dk_establish(dk, dev)
 char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat) __P ((struct buf *));
+	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {

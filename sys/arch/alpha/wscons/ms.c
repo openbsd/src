@@ -1,5 +1,5 @@
-/*	$OpenBSD: ms.c,v 1.3 1996/10/30 22:41:43 niklas Exp $ */
-/*	$NetBSD: ms.c,v 1.2 1996/09/15 17:15:29 cgd Exp $ */
+/*	$OpenBSD: ms.c,v 1.4 1997/01/24 19:58:27 niklas Exp $ */
+/*	$NetBSD: ms.c,v 1.3 1996/11/13 21:13:40 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,5 +1,5 @@
-#	$OpenBSD: files.alpha,v 1.7 1996/12/08 00:20:22 niklas Exp $
-#	$NetBSD: files.alpha,v 1.27 1996/10/22 21:15:45 cgd Exp $
+#	$OpenBSD: files.alpha,v 1.8 1997/01/24 19:57:03 niklas Exp $
+#	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -8,15 +8,26 @@ maxpartitions 8
 
 maxusers 2 8 64
 
+# a wscons output device; used later, but needs to be near the top for
+# common file (e.g. vga) definitions.
+define  wsconsdev {[console = -1]}
+
+# this loses, but there's no way to define attributes which have attributes
+define	alpha_shared_intr
+file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
+					dec_kn20aa
+
+device	vga: wsconsdev
+file	arch/alpha/common/vga.c		vga
 
 #
 # Bus-independent devices
 #
 
-device	mainbus { }	              # no locators (yet?)
+device	mainbus { }			# no locators (yet?)
 attach	mainbus at root
 
-device	cpu { }				# not really optional; can be a 'bus'
+device	cpu { }				# not really optional
 attach	cpu at mainbus
 file	arch/alpha/alpha/cpu.c		cpu
 
@@ -49,7 +60,6 @@ file	arch/alpha/wscons/wscons_rops.c		raster
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & kbd.
 #
-define  wsconsdev {[console = -1]}
 device	wscons
 attach	wscons at wsconsdev
 file	arch/alpha/wscons/wscons.c	wscons		needs-flag
@@ -58,7 +68,6 @@ file	arch/alpha/wscons/wscons_emul.c	wscons
 file	arch/alpha/wscons/event.c	wscons
 file	arch/alpha/wscons/kbd.c		wscons
 file	arch/alpha/wscons/ms.c		wscons
-
 
 #
 # TurboChannel Devices
@@ -137,13 +146,22 @@ include "dev/isa/files.isa"
 #device	jcombo at ibus: isabus
 #device	jeisa at ibus: eisabus
 
-device  pckbd
-attach  pckbd at isa
-file    arch/alpha/isa/pckbd.c           pckbd needs-flag
-device  pms
-attach  pms at isa
-file    arch/alpha/isa/pms.c             pms needs-flag
+file	arch/alpha/isa/isa_machdep.c	isa
 
+device	pcppi { }
+attach	pcppi at isa
+file	arch/alpha/isa/pcppi.c		pcppi
+
+device	pckbd
+attach	pckbd at pcppi
+file	arch/alpha/isa/pckbd.c		pckbd
+
+device	pms
+attach	pms at pcppi
+file	arch/alpha/isa/pms.c		pms
+
+attach	vga at isa with vga_isa
+file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
 
 #
 # EISA Bus support
@@ -161,15 +179,16 @@ include "dev/eisa/files.eisa"
 device	apecs: pcibus
 attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
+file	arch/alpha/pci/apecs_bus_io.c	apecs
+file	arch/alpha/pci/apecs_bus_mem.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
 
 device	lca: pcibus
 attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
+file	arch/alpha/pci/lca_bus_io.c	lca
+file	arch/alpha/pci/lca_bus_mem.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
-
-file	arch/alpha/pci/apecs_lca_bus_io.c	apecs | lca
-file	arch/alpha/pci/apecs_lca_bus_mem.c	apecs | lca
 
 device	cia: pcibus
 attach	cia at mainbus
@@ -179,8 +198,10 @@ file	arch/alpha/pci/cia_bus_mem.c	cia
 file	arch/alpha/pci/cia_pci.c	cia
 
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
-file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
+file	arch/alpha/pci/pci_eb164.c	dec_eb164
+file	arch/alpha/pci/pci_eb164_intr.s	dec_eb164
+file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 
 
 #
@@ -189,7 +210,7 @@ file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
 
 file	arch/alpha/pci/pci_machdep.c	pci
 
-device	sio: isabus
+device	sio: isabus, alpha_shared_intr
 attach	sio at pci
 device	pceb: isabus, eisabus
 attach	pceb at pci
@@ -204,9 +225,8 @@ file	arch/alpha/pci/tga_bt463.c	tga
 file	arch/alpha/pci/tga_bt485.c	tga
 
 
-device	pcivga: wsconsdev
-attach	pcivga at pci
-file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
+attach	vga at pci with vga_pci
+file	arch/alpha/pci/vga_pci.c	vga_pci		needs-flag
 
 
 #
@@ -255,12 +275,14 @@ file	netns/ns_cksum.c			ns
 file	arch/alpha/alpha/promcons.c
 
 # XXX
-file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500
-file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300
-file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50
-file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa
-file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33
-file	arch/alpha/alpha/dec_21000.c		dec_21000
+file	arch/alpha/alpha/cpuconf.c
+file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
+file	arch/alpha/alpha/dec_21000.c		dec_21000	needs-flag
+file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
+file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
+file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
+file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
+file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"

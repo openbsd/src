@@ -1,5 +1,5 @@
-/*	$OpenBSD: mem.c,v 1.5 1996/10/30 22:38:17 niklas Exp $	*/
-/*	$NetBSD: mem.c,v 1.9 1996/08/20 23:00:25 cgd Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 1997/01/24 19:56:39 niklas Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 1996/11/13 21:13:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,13 +56,12 @@
 
 #include <vm/vm.h>
 
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
+
 caddr_t zeropage;
 extern int firstusablepage, lastusablepage;
-
-int mmopen __P((dev_t, int, int, struct proc *));
-int mmclose __P((dev_t, int, int, struct proc *));
-int mmrw __P((dev_t, struct uio *, int));
-int mmmmap __P((dev_t, vm_offset_t, int));
 
 /*ARGSUSED*/
 int
@@ -190,7 +189,7 @@ kmemphys:
 int
 mmmmap(dev, off, prot)
 	dev_t dev;
-	vm_offset_t off;
+	int off;			/* XXX */
 	int prot;
 {
 	/*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: lcavar.h,v 1.5 1996/12/08 00:20:38 niklas Exp $	*/
-/*	$NetBSD: lcavar.h,v 1.4 1996/10/23 04:12:26 cgd Exp $	*/
+/*	$OpenBSD: lcavar.h,v 1.6 1997/01/24 19:57:46 niklas Exp $	*/
+/*	$NetBSD: lcavar.h,v 1.5 1996/11/25 03:49:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -38,8 +38,15 @@
  * do their dirty work (and more!).
  */
 struct lca_config {
+	int	lc_initted;
+
 	bus_space_tag_t lc_iot, lc_memt;
 	struct alpha_pci_chipset lc_pc;
+
+	bus_addr_t lc_s_mem_w2_masked_base;
+
+	struct extent *lc_io_ex, *lc_d_mem_ex, *lc_s_mem_ex;
+	int	lc_mallocsafe;
 };
 
 struct lca_softc {
@@ -48,8 +55,8 @@ struct lca_softc {
 	struct	lca_config *sc_lcp;
 };
 
-void	lca_init __P((struct lca_config *));
+void	lca_init __P((struct lca_config *, int));
 void	lca_pci_init __P((pci_chipset_tag_t, void *));
 
-bus_space_tag_t apecs_lca_bus_io_init __P((void *));
-bus_space_tag_t apecs_lca_bus_mem_init __P((void *));
+bus_space_tag_t lca_bus_io_init __P((void *));
+bus_space_tag_t lca_bus_mem_init __P((void *));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: lca_pci.c,v 1.4 1996/10/30 22:40:00 niklas Exp $	*/
-/*	$NetBSD: lca_pci.c,v 1.6 1996/10/13 03:00:08 christos Exp $	*/
+/*	$OpenBSD: lca_pci.c,v 1.5 1997/01/24 19:57:44 niklas Exp $	*/
+/*	$NetBSD: lca_pci.c,v 1.7 1996/11/13 21:13:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -118,6 +118,10 @@ lca_conf_read(cpv, tag, offset)
 	pcireg_t *datap, data;
 	int s, secondary, device, ba;
 
+#ifdef DIAGNOSTIC
+	s = 0;					/* XXX gcc -Wuninitialized */
+#endif
+
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);
 	if (secondary) {
@@ -169,6 +173,10 @@ lca_conf_write(cpv, tag, offset, data)
 	struct lca_config *lcp = cpv;
 	pcireg_t *datap;
 	int s, secondary, device;
+
+#ifdef DIAGNOSTIC
+	s = 0;					/* XXX gcc -Wuninitialized */
+#endif
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&lcp->lc_pc, tag, &secondary, &device, 0);

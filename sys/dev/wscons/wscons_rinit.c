@@ -1,5 +1,5 @@
-/*	$OpenBSD: wscons_rinit.c,v 1.3 1996/10/30 22:41:54 niklas Exp $ */
-/*	$NetBSD: wscons_rinit.c,v 1.2 1996/07/09 00:55:50 cgd Exp $ */
+/*	$OpenBSD: wscons_rinit.c,v 1.4 1997/01/24 19:58:32 niklas Exp $ */
+/*	$NetBSD: wscons_rinit.c,v 1.3 1996/11/13 21:13:42 cgd Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -53,6 +53,8 @@
 #include <alpha/wscons/wscons_raster.h>
 
 #include <alpha/wscons/wscons_rfont.h>
+
+void	rcons_initfont __P((struct rcons *, struct raster_font *));
 
 void	rcons_initfont __P((struct rcons *, struct raster_font *));
 

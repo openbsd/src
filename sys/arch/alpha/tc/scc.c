@@ -1,5 +1,5 @@
-/*	$OpenBSD: scc.c,v 1.6 1996/10/30 22:41:11 niklas Exp $	*/
-/*	$NetBSD: scc.c,v 1.26 1996/10/16 05:07:57 jonathan Exp $	*/
+/*	$OpenBSD: scc.c,v 1.7 1997/01/24 19:58:15 niklas Exp $	*/
+/*	$NetBSD: scc.c,v 1.28 1996/12/05 01:39:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -108,8 +108,6 @@
 #include <alpha/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 
-extern void ttrstrt	__P((void *));
-
 #undef	SCCDEV
 #define	SCCDEV		15			/* XXX */
 
@@ -197,10 +195,13 @@ struct speedtab sccspeedtab[] = {
 #endif
 
 /* Definition of the driver for autoconfig. */
-static int	sccmatch  __P((struct device * parent, void *cfdata,
-		    void *aux));
-static void	sccattach __P((struct device *parent, struct device *self,
-		    void *aux));
+#ifdef __BROKEN_INDIRECT_CONFIG
+int	sccmatch  __P((struct device *, void *, void *));
+#else
+int	sccmatch  __P((struct device *, struct cfdata *, void *));
+#endif
+void	sccattach __P((struct device *, struct device *, void *));
+
 struct cfattach scc_ca = {
 	sizeof (struct scc_softc), sccmatch, sccattach,
 };
@@ -209,31 +210,23 @@ struct cfdriver scc_cd = {
 	NULL, "scc", DV_TTY,
 };
 
-int		sccopen __P((dev_t, int, int, struct proc *));
-int		sccclose __P((dev_t, int, int, struct proc *));
-int		sccread __P((dev_t, struct uio *, int));
-int		sccwrite __P((dev_t, struct uio *, int));
-struct tty	*scctty __P((dev_t));
-int		sccioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-void		sccstop __P((struct tty *, int));
-int		sccGetc __P((dev_t));
-void		sccPutc __P((dev_t, int));
-void		sccPollc __P((dev_t, int));
-int		sccparam __P((struct tty *, struct termios *));
-void		sccstart __P((struct tty *));
-int		sccmctl __P((dev_t, int, int));
-static int	cold_sccparam __P((struct tty *, struct termios *,
+cdev_decl(scc);
+
+int	cold_sccparam __P((struct tty *, struct termios *,
 		    struct scc_softc *sc));
-
-#ifdef SCC_DEBUG
-static void	rr __P((char *, scc_regmap_t *));
-#endif
-static void	scc_modem_intr __P((dev_t));
-static void	sccreset __P((struct scc_softc *));
-
+int	sccGetc __P((dev_t));
+void	sccPollc __P((dev_t, int));
+void	sccPutc __P((dev_t, int));
 int	sccintr __P((void *));
+int	sccmctl __P((dev_t, int, int));
+int	sccparam __P((struct tty *, struct termios *));
+void	sccreset __P((struct scc_softc *));
+void	sccstart __P((struct tty *));
 void	scc_alphaintr __P((int));
-
+void	scc_modem_intr __P((dev_t));
+#ifdef SCC_DEBUG
+void	scc_rr __P((char *, scc_regmap_t *));
+#endif
 
 /*
  * console variables, for using serial console while still cold and
@@ -245,8 +238,8 @@ static struct scc_softc coldcons_softc;
 static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 };
-void		scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
-void		scc_oconsinit __P((struct scc_softc *, dev_t));
+void	scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
+void	scc_oconsinit __P((struct scc_softc *, dev_t));
 
 
 /*
@@ -300,6 +293,7 @@ scc_consinit(dev, sccaddr)
 	splx(s);
 }
 
+#ifndef alpha
 void
 scc_oconsinit(sc, dev)
 	struct scc_softc *sc;
@@ -321,18 +315,29 @@ scc_oconsinit(sc, dev)
 	DELAY(1000);
 	splx(s);
 }
+#endif
 
 /*
  * Test to see if device is present.
  * Return true if found.
  */
 int
+#ifdef __BROKEN_INDIRECT_CONFIG
 sccmatch(parent, cfdata, aux)
+#else
+sccmatch(parent, cf, aux)
+#endif
 	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *cfdata;
+#else
+	struct cfdata *cf;
+#endif
 	void *aux;
 {
+#ifdef __BROKEN_INDIRECT_CONFIG
 	struct cfdata *cf = cfdata;
+#endif
 	struct ioasicdev_attach_args *d = aux;
 	void *sccaddr;
 
@@ -526,7 +531,7 @@ sccattach(parent, self, aux)
 /*
  * Reset the chip.
  */
-static void
+void
 sccreset(sc)
 	register struct scc_softc *sc;
 {
@@ -805,7 +810,7 @@ sccparam(tp, t)
 /*
  * Do what sccparam() (t_param entry point) does, but callable when cold.
  */
-static int
+int
 cold_sccparam(tp, t, sc)
 	register struct tty *tp;
 	register struct termios *t;
@@ -993,7 +998,7 @@ sccintr(xxxsc)
 	    if (rr2 == 6) {	/* strange, distinguished value */
 		SCC_READ_REG(regs, SCC_CHANNEL_A, ZSRR_IPEND, rr3);
 		if (rr3 == 0)
-			return 0;	/* XXX */
+			return 1;
 	    }
 
 	    SCC_WRITE_REG(regs, SCC_CHANNEL_A, SCC_RR0, ZSWR0_CLR_INTR);
@@ -1191,7 +1196,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-void
+int
 sccstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -1209,6 +1214,7 @@ sccstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
+	return 0;
 }
 
 int
@@ -1275,7 +1281,7 @@ sccmctl(dev, bits, how)
 /*
  * Check for carrier transition.
  */
-static void
+void
 scc_modem_intr(dev)
 	dev_t dev;
 {
@@ -1425,8 +1431,8 @@ sccPollc(dev, on)
 }
 
 #ifdef	SCC_DEBUG
-static void
-rr(msg, regs)
+void
+scc_rr(msg, regs)
 	char *msg;
 	scc_regmap_t *regs;
 {

@@ -1,8 +1,8 @@
-/*	$OpenBSD: pcb.h,v 1.3 1996/10/30 22:39:14 niklas Exp $	*/
-/*	$NetBSD: pcb.h,v 1.4 1996/10/07 23:57:21 cgd Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.4 1997/01/24 19:57:15 niklas Exp $	*/
+/*	$NetBSD: pcb.h,v 1.5 1996/11/13 22:21:00 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

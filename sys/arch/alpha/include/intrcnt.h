@@ -1,5 +1,5 @@
-/*	$OpenBSD: intrcnt.h,v 1.4 1996/10/30 22:39:10 niklas Exp $	*/
-/*	$NetBSD: intrcnt.h,v 1.6 1996/06/05 03:38:02 cgd Exp $	*/
+/*	$OpenBSD: intrcnt.h,v 1.5 1997/01/24 19:57:13 niklas Exp $	*/
+/*	$NetBSD: intrcnt.h,v 1.7 1996/11/16 23:11:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -97,14 +97,39 @@
 		ASCIZ "ioasic le";					\
 		ASCIZ "ioasic scc 0";					\
 		ASCIZ "ioasic scc 1";					\
-		ASCIZ "ioasic am79c30";
+		ASCIZ "ioasic am79c30";					\
+		ASCIZ "eb164 irq 0";					\
+		ASCIZ "eb164 irq 1";					\
+		ASCIZ "eb164 irq 2";					\
+		ASCIZ "eb164 irq 3";					\
+		ASCIZ "eb164 irq 4";					\
+		ASCIZ "eb164 irq 5";					\
+		ASCIZ "eb164 irq 6";					\
+		ASCIZ "eb164 irq 7";					\
+		ASCIZ "eb164 irq 8";					\
+		ASCIZ "eb164 irq 9";					\
+		ASCIZ "eb164 irq 10";					\
+/* 0x50 */	ASCIZ "eb164 irq 11";					\
+		ASCIZ "eb164 irq 12";					\
+		ASCIZ "eb164 irq 13";					\
+		ASCIZ "eb164 irq 14";					\
+		ASCIZ "eb164 irq 15";					\
+		ASCIZ "eb164 irq 16";					\
+		ASCIZ "eb164 irq 17";					\
+		ASCIZ "eb164 irq 18";					\
+		ASCIZ "eb164 irq 19";					\
+		ASCIZ "eb164 irq 20";					\
+		ASCIZ "eb164 irq 21";					\
+		ASCIZ "eb164 irq 22";					\
+		ASCIZ "eb164 irq 23";
 
 #define INTRCNT_DEFINITION						\
 /* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x10 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x20 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x30 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x40 */	.quad 0, 0, 0, 0, 0;
+/* 0x40 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x50 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
 #define	INTRCNT_CLOCK		0
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
@@ -119,6 +144,8 @@
 #define	INTRCNT_TCDS_LEN	2
 #define	INTRCNT_IOASIC		(INTRCNT_TCDS + INTRCNT_TCDS_LEN)
 #define	INTRCNT_IOASIC_LEN	4
+#define	INTRCNT_EB164_IRQ	(INTRCNT_IOASIC + INTRCNT_IOASIC_LEN)
+#define	INTRCNT_EB164_IRQ_LEN	24
 
 #ifndef _LOCORE
 extern volatile long intrcnt[];

@@ -1,8 +1,8 @@
-/*	$OpenBSD: support.c,v 1.4 1996/10/30 22:38:27 niklas Exp $	*/
-/*	$NetBSD: support.c,v 1.2 1995/11/23 02:34:32 cgd Exp $	*/
+/*	$OpenBSD: support.c,v 1.5 1997/01/24 19:56:44 niklas Exp $	*/
+/*	$NetBSD: support.c,v 1.4 1996/11/13 22:20:56 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -32,6 +32,7 @@
  * Some C support functions that aren't (yet) in libkern or assembly.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/errno.h>
 
 struct qelem {

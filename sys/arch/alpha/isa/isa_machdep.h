@@ -1,5 +1,5 @@
-/*	$OpenBSD: isa_machdep.h,v 1.3 1996/10/30 22:39:37 niklas Exp $	*/
-/*	$NetBSD: isa_machdep.h,v 1.2 1996/04/12 05:39:02 cgd Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.4 1997/01/24 19:57:24 niklas Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.3 1996/11/19 04:53:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -52,3 +52,9 @@ struct alpha_isa_chipset {
     (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a), (nm))
 #define	isa_intr_disestablish(c, h)					\
     (*(c)->ic_intr_disestablish)((c)->ic_v, (h))
+
+/*
+ * alpha-specific ISA functions.
+ * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
+ */ 
+void    isa_display_console __P((bus_space_tag_t, bus_space_tag_t));

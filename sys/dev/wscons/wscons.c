@@ -1,5 +1,5 @@
-/*	$OpenBSD: wscons.c,v 1.3 1996/10/30 22:41:46 niklas Exp $	*/
-/*	$NetBSD: wscons.c,v 1.7 1996/10/13 03:00:45 christos Exp $	*/
+/*	$OpenBSD: wscons.c,v 1.4 1997/01/24 19:58:30 niklas Exp $	*/
+/*	$NetBSD: wscons.c,v 1.10 1996/12/05 01:39:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -61,11 +61,16 @@ struct wscons_softc {
 	struct wscons_emul_data *sc_emul_data;
 	struct tty		*sc_tty;
 
+	void			*sc_fn_cookie;
 	wscons_ioctl_t		sc_ioctl;
 	wscons_mmap_t		sc_mmap;
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	wsconsmatch __P((struct device *, void *, void *));
+#else
+int	wsconsmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	wsconsattach __P((struct device *, struct device *, void *));
 
 struct cfattach wscons_ca = {
@@ -110,13 +115,23 @@ int	wsconsparam __P((struct tty *, struct termios *));
  */
 
 int
+#ifdef __BROKEN_INDIRECT_CONFIG
 wsconsmatch(parent, cfdata, aux)
+#else
+wsconsmatch(parent, cf, aux)
+#endif
 	struct device *parent;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	void *cfdata;
+#else
+	struct cfdata *cf;
+#endif
 	void *aux;
 {
 	struct wscons_attach_args *waa = aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
 	struct cfdata *cf = cfdata;
+#endif
 
 	if (waa->waa_isconsole && wscons_console_unit != -1)
 		panic("wsconsmatch: multiple consoles?");
@@ -182,6 +197,7 @@ wsconsattach(parent, self, aux)
 	/*
 	 * Record other relevant information: ioctl and mmap functions.
 	 */
+	sc->sc_fn_cookie = waa->waa_odev_spec.wo_miscfuncs_cookie;
 	sc->sc_ioctl = waa->waa_odev_spec.wo_ioctl;
 	sc->sc_mmap = waa->waa_odev_spec.wo_mmap;
 
@@ -347,7 +363,7 @@ wsconsioctl(dev, cmd, data, flag, p)
 
 	/* then the underlying frame buffer device ioctls */
 	if (sc->sc_ioctl != NULL)
-		error = (*sc->sc_ioctl)(sc->sc_dev.dv_parent, cmd, data,
+		error = (*sc->sc_ioctl)(sc->sc_fn_cookie, cmd, data,
 		    flag, p);
 	if (error >= 0)
 		return error;

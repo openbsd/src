@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.old.h,v 1.1 1996/10/30 22:39:18 niklas Exp $	*/
-/*	$NetBSD: pmap.old.h,v 1.5 1996/07/09 00:39:24 cgd Exp $	*/
+/*	$OpenBSD: pmap.old.h,v 1.2 1997/01/24 19:57:16 niklas Exp $	*/
+/*	$NetBSD: pmap.old.h,v 1.6 1996/11/13 21:13:19 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -123,9 +123,9 @@ extern	char *vmmap;			/* map for mem, dumps, etc. */
 
 /* Machine-specific functions. */
 void	pmap_activate __P((pmap_t));
-void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
-		int user, int write));
+void	pmap_emulate_reference __P((struct proc *, vm_offset_t, int, int));
 void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
+void	pmap_unmap_prom __P((void));
 #endif /* _KERNEL */
 
 #endif /* _PMAP_MACHINE_ */

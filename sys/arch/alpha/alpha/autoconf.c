@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.5 1996/11/06 02:01:19 deraadt Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.14 1996/10/13 02:59:23 christos Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 1997/01/24 19:56:18 niklas Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,7 @@
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
 #include <machine/prom.h>
+#include <machine/cpuconf.h>
 
 #include <dev/cons.h>
 
@@ -86,7 +87,6 @@ static int getstr __P((char *cp, int size));
 void
 configure()
 {
-	extern int cold;
 
 	parse_prom_bootdev();
 
@@ -310,7 +310,7 @@ setroot()
 				buf[--len] = '\0';
 				dv = getdisk(buf, len, 1, &nrootdev);
 				if (dv != NULL) {
-					rootdv = dv;
+					rootdv = swapdv = dv;
 					nswapdev = nrootdev;
 					goto gotswap;
 				}
@@ -596,7 +596,7 @@ device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	extern void (*cpu_device_register) __P((struct device *dev, void *aux));
+	extern const struct cpusw *cpu_fn_switch;
 
 	if (bootdev_data == NULL) {
 		/*
@@ -606,5 +606,5 @@ device_register(dev, aux)
 		return;
 	}
 
-	(*cpu_device_register)(dev, aux);
+	(*cpu_fn_switch->device_register)(dev, aux);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.9 1996/12/08 00:20:39 niklas Exp $	*/
-/*	$NetBSD: pci_2100_a50.c,v 1.11 1996/10/23 04:12:26 cgd Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.10 1997/01/24 19:57:47 niklas Exp $	*/
+/*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -109,7 +109,8 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
                 return 1;
         }
         if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
+                printf("dec_2100_a50_intr_map: bad interrupt pin %d\n",
+		    buspin);
                 return 1;
         }
 
@@ -133,6 +134,11 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 1;
 			break;
+#ifdef DIAGNOSTIC
+		default:			/* XXX gcc -Wuninitialized */
+			panic("dec_2100_a50_intr_map bogus PCI pin %d\n",
+			    buspin);
+#endif
 		};
 		break;
 
@@ -148,6 +154,11 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 2;
 			break;
+#ifdef DIAGNOSTIC
+		default:			/* XXX gcc -Wuninitialized */
+			panic("dec_2100_a50_intr_map bogus PCI pin %d\n",
+			    buspin);
+#endif
 		};
 		break;
 
@@ -163,8 +174,18 @@ dec_2100_a50_intr_map(acv, bustag, buspin, line, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 0;
 			break;
+#ifdef DIAGNOSTIC
+		default:			/* XXX gcc -Wuninitialized */
+			panic("dec_2100_a50_intr_map bogus PCI pin %d\n",
+			    buspin);
+#endif
 		};
 		break;
+
+	default:
+                printf("dec_2100_a50_intr_map: weird device number %d\n",
+		    device);
+                return 1;
 	}
 
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, APECS_SIO_DEVICE, 0),

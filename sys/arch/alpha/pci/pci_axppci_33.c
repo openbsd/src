@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.8 1996/12/08 00:20:40 niklas Exp $	*/
-/*	$NetBSD: pci_axppci_33.c,v 1.9 1996/10/23 04:12:27 cgd Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.9 1997/01/24 19:57:48 niklas Exp $	*/
+/*	$NetBSD: pci_axppci_33.c,v 1.10 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -133,6 +133,11 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 1;
 			break;
+#ifdef DIAGNOSTIC
+		default:			/* XXX gcc -Wuninitialized */
+			panic("dec_axppci_33_intr_map bogus PCI pin %d\n",
+			    buspin);
+#endif
 		};
 		break;
 
@@ -148,6 +153,11 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 2;
 			break;
+#ifdef DIAGNOSTIC
+		default:			/* XXX gcc -Wuninitialized */
+			panic("dec_axppci_33_intr_map bogus PCI pin %d\n",
+			    buspin);
+#endif
 		};
 		break;
 
@@ -163,12 +173,18 @@ dec_axppci_33_intr_map(lcv, bustag, buspin, line, ihp)
 		case PCI_INTERRUPT_PIN_C:
 			pirq = 0;
 			break;
+#ifdef DIAGNOSTIC
+		default:			/* XXX gcc -Wuninitialized */
+			panic("dec_axppci_33_intr_map bogus PCI pin %d\n",
+			    buspin);
+#endif
 		};
 		break;
+
 	default:
-		printf("dec_axppci_33_pci_map_int: unknown device %d\n",
-			device);
-		panic("dec_axppci_33_pci_map_int: bad device number");
+                printf("dec_axppci_33_intr_map: weird device number %d\n",
+		    device);
+                return 1;
 	}
 
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, LCA_SIO_DEVICE, 0),

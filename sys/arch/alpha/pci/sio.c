@@ -1,5 +1,5 @@
-/*	$OpenBSD: sio.c,v 1.8 1996/12/08 00:20:48 niklas Exp $	*/
-/*	$NetBSD: sio.c,v 1.12 1996/10/23 04:12:33 cgd Exp $	*/
+/*	$OpenBSD: sio.c,v 1.9 1997/01/24 19:57:57 niklas Exp $	*/
+/*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -45,18 +45,33 @@
 
 #include <alpha/pci/siovar.h>
 
+struct sio_softc {
+	struct device	sc_dv;
+
+	bus_space_tag_t sc_iot, sc_memt;
+	int		sc_haseisa;
+};
+
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	siomatch __P((struct device *, void *, void *));
+#else
+int	siomatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	sioattach __P((struct device *, struct device *, void *));
 
 struct cfattach sio_ca = {
-	sizeof(struct device), siomatch, sioattach,
+	sizeof(struct sio_softc), siomatch, sioattach,
 };
 
 struct cfdriver sio_cd = {
 	NULL, "sio", DV_DULL,
 };
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	pcebmatch __P((struct device *, void *, void *));
+#else
+int	pcebmatch __P((struct device *, struct cfdata *, void *));
+#endif
 
 struct cfattach pceb_ca = {
 	sizeof(struct device), pcebmatch, sioattach,
@@ -80,10 +95,17 @@ void	sio_eisa_attach_hook __P((struct device *, struct device *,
 int	sio_eisa_maxslots __P((void *));
 int	sio_eisa_intr_map __P((void *, u_int, eisa_intr_handle_t *));
 
+void	sio_bridge_callback __P((void *));
+
 int
 siomatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 
@@ -97,7 +119,12 @@ siomatch(parent, match, aux)
 int
 pcebmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 
@@ -113,35 +140,35 @@ sioattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct sio_softc *sc = (struct sio_softc *)self;
 	struct pci_attach_args *pa = aux;
-	struct alpha_isa_chipset ic;
-	struct alpha_eisa_chipset ec;
-	union sio_attach_args sa;
-	int sio, haseisa;
 	char devinfo[256];
-
-	sio = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_SIO);
-	haseisa = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
-	if (sio) {
-		pci_revision_t rev;
-
-		rev = PCI_REVISION(pa->pa_class);
-		
-		if (rev < 3)
-			printf("%s: WARNING: SIO I SUPPORT UNTESTED\n",
-			    self->dv_xname);
-	}
+	sc->sc_iot = pa->pa_iot;
+	sc->sc_memt = pa->pa_memt;
+	sc->sc_haseisa = (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 
 #ifdef EVCNT_COUNTERS
-	evcnt_attach(self, "intr", &sio_intr_evcnt);
+	evcnt_attach(&sc->sc_dv, "intr", &sio_intr_evcnt);
 #endif
 
-	if (haseisa) {
+	set_pci_isa_bridge_callback(sio_bridge_callback, sc);
+}
+
+void
+sio_bridge_callback(v)
+	void *v;
+{
+	struct sio_softc *sc = v;
+	struct alpha_eisa_chipset ec;
+	struct alpha_isa_chipset ic;
+	union sio_attach_args sa;
+
+	if (sc->sc_haseisa) {
 		ec.ec_v = NULL;
 		ec.ec_attach_hook = sio_eisa_attach_hook;
 		ec.ec_maxslots = sio_eisa_maxslots;
@@ -151,10 +178,10 @@ sioattach(parent, self, aux)
 		ec.ec_intr_disestablish = sio_intr_disestablish;
 
 		sa.sa_eba.eba_busname = "eisa";
-		sa.sa_eba.eba_iot = pa->pa_iot;
-		sa.sa_eba.eba_memt = pa->pa_memt;
+		sa.sa_eba.eba_iot = sc->sc_iot;
+		sa.sa_eba.eba_memt = sc->sc_memt;
 		sa.sa_eba.eba_ec = &ec;
-		config_found(self, &sa.sa_eba, sioprint);
+		config_found(&sc->sc_dv, &sa.sa_eba, sioprint);
 	}
 
 	ic.ic_v = NULL;
@@ -163,10 +190,10 @@ sioattach(parent, self, aux)
 	ic.ic_intr_disestablish = sio_intr_disestablish;
 
 	sa.sa_iba.iba_busname = "isa";
-	sa.sa_iba.iba_iot = pa->pa_iot;
-	sa.sa_iba.iba_memt = pa->pa_memt;
+	sa.sa_iba.iba_iot = sc->sc_iot;
+	sa.sa_iba.iba_memt = sc->sc_memt;
 	sa.sa_iba.iba_ic = &ic;
-	config_found(self, &sa.sa_iba, sioprint);
+	config_found(&sc->sc_dv, &sa.sa_iba, sioprint);
 }
 
 int

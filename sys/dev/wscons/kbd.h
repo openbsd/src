@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.1 1996/10/30 22:41:41 niklas Exp $ */
+/*	$OpenBSD: kbd.h,v 1.2 1997/01/24 19:58:26 niklas Exp $ */
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist
@@ -32,18 +32,10 @@
  */
 
 extern void kbdattach __P((struct device *, struct wscons_idev_spec *));
-extern void kbd_repeat __P((void *));
 extern void kbd_input __P((int));
-extern int kbdopen __P((dev_t, int, int, struct proc *));
-extern int kbdclose __P((dev_t, int, int, struct proc *p));
-extern int kbdread __P((dev_t, struct uio *, int));
-extern int kbdwrite __P((dev_t, struct uio *, int));
-extern int kbdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-#ifdef notyet
-extern int kbdpoll __P((dev_t, int, struct proc *));
-#else
-extern int kbdselect __P((dev_t, int, struct proc *));
-#endif
+
+cdev_decl(kbd);
+
 extern int kbd_cngetc __P((dev_t));
 extern void kbd_cnpollc __P((dev_t, int));
 extern void wscons_kbd_bell __P((void));

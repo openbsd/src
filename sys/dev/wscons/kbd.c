@@ -1,5 +1,5 @@
-/*	$OpenBSD: kbd.c,v 1.3 1996/10/30 22:41:39 niklas Exp $ */
-/*	$NetBSD: kbd.c,v 1.2 1996/09/15 17:15:28 cgd Exp $ */
+/*	$OpenBSD: kbd.c,v 1.4 1997/01/24 19:58:25 niklas Exp $ */
+/*	$NetBSD: kbd.c,v 1.3 1996/11/13 21:13:39 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/signalvar.h>
 
 #include <machine/autoconf.h>
 
@@ -70,6 +71,8 @@
 #include <alpha/wscons/event_var.h>
 #include <alpha/wscons/wsconsvar.h>
 #include <alpha/wscons/kbd.h>
+
+void	kbd_repeat __P((void *));
 
 struct kbd_softc {
 	struct device *k_idev;		/* the input device */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: apecs.c,v 1.7 1996/12/08 00:20:30 niklas Exp $	*/
-/*	$NetBSD: apecs.c,v 1.13 1996/10/23 04:12:22 cgd Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.8 1997/01/24 19:57:32 niklas Exp $	*/
+/*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -49,7 +49,11 @@
 #include <alpha/pci/pci_2100_a50.h>
 #endif
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	apecsmatch __P((struct device *, void *, void *));
+#else
+int	apecsmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	apecsattach __P((struct device *, struct device *, void *));
 
 struct cfattach apecs_ca = {
@@ -69,7 +73,12 @@ struct apecs_config apecs_configuration;
 int
 apecsmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct confargs *ca = aux;
 
@@ -87,10 +96,10 @@ apecsmatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-apecs_init(acp)
+apecs_init(acp, mallocsafe)
 	struct apecs_config *acp;
+	int mallocsafe;
 {
-
 	acp->ac_comanche_pass2 =
 	    (REGVAL(COMANCHE_ED) & COMANCHE_ED_PASS2) != 0;
 	acp->ac_memwidth =
@@ -98,12 +107,21 @@ apecs_init(acp)
 	acp->ac_epic_pass2 =
 	    (REGVAL(EPIC_DCSR) & EPIC_DCSR_PASS2) != 0;
 
+	acp->ac_haxr1 = REGVAL(EPIC_HAXR1);
+	acp->ac_haxr2 = REGVAL(EPIC_HAXR2);
+
 	/*
 	 * Can't set up SGMAP data here; can be called before malloc().
+	 * XXX THIS COMMENT NO LONGER MAKES SENSE.
 	 */
 
-	acp->ac_iot = apecs_lca_bus_io_init(acp);
-	acp->ac_memt = apecs_lca_bus_mem_init(acp);
+	if (!acp->ac_initted) {
+		/* don't do these twice since they set up extents */
+		acp->ac_iot = apecs_bus_io_init(acp);
+		acp->ac_memt = apecs_bus_mem_init(acp);
+	}
+	acp->ac_mallocsafe = mallocsafe;
+
 	apecs_pci_init(&acp->ac_pc, acp);
 
 	/* Turn off DMA window enables in PCI Base Reg 1. */
@@ -118,6 +136,8 @@ apecs_init(acp)
 		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
 	}							/* XXX */
 	/* XXX XXX END XXX XXX */
+
+	acp->ac_initted = 1;
 }
 
 void
@@ -137,7 +157,7 @@ apecsattach(parent, self, aux)
 	 * (maybe), but doesn't hurt to do twice.
 	 */
 	acp = sc->sc_acp = &apecs_configuration;
-	apecs_init(acp);
+	apecs_init(acp, 1);
 
 	/* XXX SGMAP FOO */
 
@@ -158,6 +178,7 @@ apecsattach(parent, self, aux)
 		pci_2100_a50_pickintr(acp);
 		break;
 #endif
+
 	default:
 		panic("apecsattach: shouldn't be here, really...");
 	}
@@ -175,7 +196,7 @@ apecsprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-        register struct pcibus_attach_args *pba = aux;
+	register struct pcibus_attach_args *pba = aux;
 
 	/* only PCIs can attach to APECSes; easy. */
 	if (pnp)

@@ -1,5 +1,5 @@
-#	$OpenBSD: ALPHA,v 1.8 1996/10/30 22:38:37 niklas Exp $
-#	$NetBSD: ALPHA,v 1.24 1996/09/27 17:08:32 cgd Exp $
+#	$OpenBSD: ALPHA,v 1.9 1997/01/24 19:56:53 niklas Exp $
+#	$NetBSD: ALPHA,v 1.30 1996/12/03 17:25:27 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -13,6 +13,7 @@ options		DEC_3000_300	# Pelican etc:	3000/300*
 options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 options		DEC_KN20AA	# KN20AA:	AlphaStation 600
 options		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
+options		DEC_EB164	# EB164:	AlphaPC 164
 #options	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 
 # needs to be set per system
@@ -20,7 +21,6 @@ options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-options		SWAPPAGER, DEVPAGER	# Paging (mandatory)
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 
@@ -83,6 +83,7 @@ options		LKM
 
 # Misc. options
 options		EISAVERBOSE		# recognize "unknown" EISA devices
+#options	EXTENT_DEBUG		# extent alloc/dealloc code debugging
 options		FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 options		PCIVERBOSE		# recognize "unknown" PCI devices
 options		TCVERBOSE		# recognize "unknown" TC devices
@@ -102,8 +103,8 @@ tcasic*	at	mainbus0
 tc*	at	tcasic?
 
 # TurboChannel devices
-ioasic0	at	tc? slot ? offset ?
-mcclock0 at	ioasic? offset ?
+ioasic*	at	tc? slot ? offset ?
+mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
@@ -135,7 +136,7 @@ fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
-pcivga*	at	pci? dev ? function ?		# PCI VGA graphics
+vga*	at	pci? dev ? function ?		# PCI VGA graphics
 ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
@@ -146,13 +147,15 @@ eisa*	at	pceb?
 isa*	at	sio?
 
 # ISA devices
-mcclock0 at	isa? port 0x70
-pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
-pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
-com0	at	isa? port 0x3f8 irq 4		# standard serial ports
-com1	at	isa? port 0x2f8 irq 3
-lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
-#wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+mcclock* at	isa? port 0x70
+pcppi*	at	isa?				# PC prog. periph. interface
+pckbd*	at	pcppi?				# PC keyboard (kbd port)
+pms*	at	pcppi?				# PS/2-style mouse (aux port)
+com*	at	isa? port 0x3f8 irq 4		# standard serial ports
+com*	at	isa? port 0x2f8 irq 3
+lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
+vga*	at	isa?				# ISA (EISA: XXX) VGA
+#wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 
 # EISA devices
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
@@ -162,13 +165,16 @@ scsibus* at	esp?
 scsibus* at	ncr?
 
 # SCSI devices
-sd*	at	scsibus? target ? lun ?
-st*	at	scsibus? target ? lun ?
-cd*	at	scsibus? target ? lun ?
+cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
+ch*	at	scsibus? target ? lun ?		# SCSI autochangers
+sd*	at	scsibus? target ? lun ?		# SCSI disk drives
+ss*	at	scsibus? target ? lun ?		# SCSI scanners
+st*	at	scsibus? target ? lun ?		# SCSI tape drives
+uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
 # Workstation Console attachments
 wscons*	at	cfb?
-wscons*	at	pcivga?
+wscons*	at	vga?
 wscons*	at	sfb?
 wscons*	at	tga?
 
@@ -176,8 +182,8 @@ pseudo-device	bpfilter	16
 pseudo-device	loop
 pseudo-device	ppp		4
 pseudo-device	pty		64
+pseudo-device	rd		1
 pseudo-device	sl		4
 pseudo-device	strip		4
 pseudo-device	tun		4
 pseudo-device	vnd		4
-pseudo-device	rd		1

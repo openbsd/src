@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.3 1996/10/30 22:39:19 niklas Exp $	*/
+/*	$OpenBSD: proc.h,v 1.4 1997/01/24 19:57:16 niklas Exp $	*/
 /*	$NetBSD: proc.h,v 1.2 1995/03/24 15:01:36 cgd Exp $	*/
 
 /*
@@ -42,5 +42,4 @@ struct mdproc {
 
 #ifdef _KERNEL
 void switch_exit __P((struct proc *));
-void switch_trampoline __P((void (*) __P((struct proc *)), void *));
 #endif

@@ -1,8 +1,8 @@
-/*	$OpenBSD: rpb.h,v 1.5 1996/10/30 22:39:26 niklas Exp $	*/
-/*	$NetBSD: rpb.h,v 1.7 1996/04/29 16:23:11 cgd Exp $	*/
+/*	$OpenBSD: rpb.h,v 1.6 1997/01/24 19:57:20 niklas Exp $	*/
+/*	$NetBSD: rpb.h,v 1.11 1996/11/13 22:26:41 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
@@ -58,12 +58,20 @@ struct rpb {
 #define	ST_DEC_3000_300		7		/* "Pelican" (TC) */
 #define	ST_DEC_2100_A500	9		/* "Sable" (?) */
 #define	ST_DEC_APXVME_64	10		/* "AXPvme" (VME?) */
-#define	ST_DEC_AXPPCI_33	11		/* "NoName" (PCI/ISA?) */
+#define	ST_DEC_AXPPCI_33	11		/* "NoName" (PCI/ISA) */
 #define	ST_DEC_21000		12		/* "TurboLaser" (?) */
 #define	ST_DEC_2100_A50		13		/* "Avanti" (PCI/ISA) */
 #define	ST_DEC_MUSTANG		14		/* "Mustang" (?) */
 #define	ST_DEC_KN20AA		15		/* kn20aa (PCI/EISA) */
 #define	ST_DEC_1000		17		/* "Mikasa" (PCI/ISA?) */
+#define	ST_EB66			19		/* EB66 (PCI/ISA?) */
+#define	ST_EB64P		20		/* EB64+ (PCI/ISA?) */
+#define	ST_DEC_4100		22		/* "Rawhide" (?) */
+#define	ST_DEC_EV45_PBP		23		/* "Lego" (?) */
+#define	ST_DEC_2100A_A500	24		/* "Lynx" (?) */
+#define	ST_EB164		26		/* EB164 (PCI/ISA) */
+#define	ST_DEC_1000A		27		/* "Noritake" (?) */
+#define	ST_DEC_ALPHAVME_224	28		/* "Cortex" (?) */
 
 	u_int64_t	rpb_type;		/*  50: */
 
@@ -136,16 +144,12 @@ struct rpb {
 	vm_offset_t	rpb_memdat_off;		/*  C8: memory data offset */
 	vm_offset_t	rpb_condat_off;		/*  D0: config data offset */
 	vm_offset_t	rpb_fru_off;		/*  D8: FRU table offset */
-	/* XXX Are the protos below correct?  */
-	long		(*rpb_save_term) __P((long));
-  						/*  E0: terminal save */
-	long		rpb_save_term_val;	/*  E8: */
-	long		(*rpb_rest_term) __P((long));
-						/*  F0: terminal restore */
-	long		rpb_rest_term_val;	/*  F8: */
-	long		(*rpb_restart) __P((long));
-						/* 100: restart */
-	long		rpb_restart_val;	/* 108: */
+	u_int64_t	rpb_save_term;		/*  E0: terminal save */
+	u_int64_t	rpb_save_term_val;	/*  E8: */
+	u_int64_t	rpb_rest_term;		/*  F0: terminal restore */
+	u_int64_t	rpb_rest_term_val;	/*  F8: */
+	u_int64_t	rpb_restart;		/* 100: restart */
+	u_int64_t	rpb_restart_val;	/* 108: */
 	u_int64_t	rpb_reserve_os;		/* 110: */
 	u_int64_t	rpb_reserve_hw;		/* 118: */
 	u_int64_t	rpb_checksum;		/* 120: HWRPB checksum */
@@ -154,10 +158,6 @@ struct rpb {
 	vm_offset_t	rpb_dsrdb_off;		/* 138: HWRPB + DSRDB offset */
 	u_int64_t	rpb_tbhint[8];		/* 149: TB hint block */
 };
-
-#ifdef _KERNEL
-extern struct rpb *hwrpb;
-#endif
 
 /*
  * PCS: Per-CPU information.
@@ -213,19 +213,21 @@ struct pcs {
 
 #define	PCS_PROC_MAJOR		0x00000000ffffffff
 #define	PCS_PROC_MAJORSHIFT	0
+
 #define	PCS_PROC_EV3		1			/* EV3 */
 #define	PCS_PROC_EV4		2			/* EV4: 21064 */
-#define	PCS_PROC_SIMULATOR	3			/* simulation */
+#define	PCS_PROC_SIMULATION	3			/* Simulation */
 #define	PCS_PROC_LCA4		4			/* LCA4: 2106[68] */
 #define	PCS_PROC_EV5		5			/* EV5: 21164 */
 #define	PCS_PROC_EV45		6			/* EV45: 21064A */
+#define	PCS_PROC_EV56		7			/* EV56: 21164A */
+#define	PCS_PROC_EV6		8			/* EV6: 21264 */
+#define	PCS_PROC_PCA56		9			/* PCA256: 21164PC */
 
 #define	PCS_PROC_MINOR		0xffffffff00000000
 #define	PCS_PROC_MINORSHIFT	32
-#define	PCS_PROC_PASS2		0			/* pass 2 or 2.1 */
-#define	PCS_PROC_PASS3		1			/* pass 3 */
-				/* 4 == ev4s?  or 1 == ... ? */
-	/* minor on the LCA appears to be pass number */
+
+	/* Minor number interpretation is processor specific.  See cpu.c. */
 
 	u_int64_t	pcs_proc_var;		/* B8: processor variation. */
 
@@ -316,8 +318,8 @@ struct ctb {
  * CRD: Console Routine Descriptor
  */
 struct crd {
-	int64_t	descriptor;
-	int	(*code) __P((struct crd *));
+	int64_t		descriptor;
+	int		(*entry_va) __P((struct crd *));
 };
 
 /*

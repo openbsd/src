@@ -1,5 +1,5 @@
-/*	$OpenBSD: pms.c,v 1.4 1996/12/08 00:20:29 niklas Exp $	*/
-/*	$NetBSD: pms.c,v 1.4 1996/10/23 04:12:21 cgd Exp $	*/
+/*	$OpenBSD: pms.c,v 1.5 1997/01/24 19:57:28 niklas Exp $	*/
+/*	$NetBSD: pms.c,v 1.7 1996/12/05 01:39:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -32,15 +32,11 @@
  * may result in dropped characters and/or corrupted mouse events.
  */
 
-#include "pms.h"
-#if NPMS > 1
-#error Only one PS/2 style mouse may be configured into your system.
-#endif
-
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -54,10 +50,11 @@
 #include <dev/isa/isavar.h>
 #include <alpha/wscons/wsconsvar.h>
 #include <alpha/wscons/ms.h>
+#include <alpha/isa/pcppivar.h>
 
-#define	PMS_DATA	0x60	/* offset for data port, read-write */
-#define	PMS_CNTRL	0x64	/* offset for control port, write-only */
-#define	PMS_STATUS	0x64	/* offset for status port, read-only */
+#define	PMS_DATA	0x0	/* offset for data port, read-write */
+#define	PMS_CNTRL	0x4	/* offset for control port, write-only */
+#define	PMS_STATUS	0x4	/* offset for status port, read-only */
 #define	PMS_NPORTS	8
 
 /* status bits */
@@ -100,12 +97,14 @@ struct pms_softc {		/* driver status information */
 };
 
 bus_space_tag_t pms_iot;
+bus_space_handle_t pms_ioh;
 isa_chipset_tag_t pms_ic;
-bus_space_handle_t pms_cntrl_ioh;
-#define	pms_status_ioh	pms_cntrl_ioh
-bus_space_handle_t pms_data_ioh;
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int pmsprobe __P((struct device *, void *, void *));
+#else
+int pmsprobe __P((struct device *, struct cfdata *, void *));
+#endif
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
 
@@ -137,12 +136,13 @@ pms_flush()
 {
 	u_char c;
 
-	while ((c = bus_space_read_1(pms_iot, pms_status_ioh, 0) & 0x03) != 0)
+	while ((c = bus_space_read_1(pms_iot, pms_ioh, PMS_STATUS) & 0x03) !=
+	    0)
 		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
 			delay(6);
-			(void) bus_space_read_1(pms_iot, pms_data_ioh, 0);
+			(void) bus_space_read_1(pms_iot, pms_ioh, PMS_DATA);
 		}
 }
 
@@ -152,9 +152,9 @@ pms_dev_cmd(value)
 {
 
 	pms_flush();
-	bus_space_write_1(pms_iot, pms_cntrl_ioh, 0, 0xd4);
+	bus_space_write_1(pms_iot, pms_ioh, PMS_CNTRL, 0xd4);
 	pms_flush();
-	bus_space_write_1(pms_iot, pms_data_ioh, 0, value);
+	bus_space_write_1(pms_iot, pms_ioh, PMS_DATA, value);
 }
 
 static __inline void
@@ -163,7 +163,7 @@ pms_aux_cmd(value)
 {
 
 	pms_flush();
-	bus_space_write_1(pms_iot, pms_cntrl_ioh, 0, value);
+	bus_space_write_1(pms_iot, pms_ioh, PMS_CNTRL, value);
 }
 
 static __inline void
@@ -172,38 +172,38 @@ pms_pit_cmd(value)
 {
 
 	pms_flush();
-	bus_space_write_1(pms_iot, pms_cntrl_ioh, 0, 0x60);
+	bus_space_write_1(pms_iot, pms_ioh, PMS_CNTRL, 0x60);
 	pms_flush();
-	bus_space_write_1(pms_iot, pms_data_ioh, 0, value);
+	bus_space_write_1(pms_iot, pms_ioh, PMS_DATA, value);
 }
 
 int
 pmsprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
-	struct isa_attach_args *ia = aux;
+	struct pcppi_attach_args *pa = aux;
 	u_char x;
 
-	pms_iot = ia->ia_iot;
-
-	if (ia->ia_iobase != 0x60)
+	if (pa->pa_slot != PCPPI_AUX_SLOT)
 		return 0;
 
-	if (bus_space_map(pms_iot, PMS_DATA, 1, 0, &pms_data_ioh) ||
-	    bus_space_map(pms_iot, PMS_CNTRL, 1, 0, &pms_cntrl_ioh))
-		return 0;
+	pms_iot = pa->pa_iot;
+	pms_ioh = pa->pa_ioh;
 
 	pms_dev_cmd(PMS_RESET);
 	pms_aux_cmd(PMS_AUX_TEST);
 	delay(1000);
-	x = bus_space_read_1(pms_iot, pms_data_ioh, 0);
+	x = bus_space_read_1(pms_iot, pms_ioh, PMS_DATA);
 	pms_pit_cmd(PMS_INT_DISABLE);
 	if (x & 0x04)
 		return 0;
 
-	ia->ia_iosize = PMS_NPORTS;
-	ia->ia_msize = 0;
 	return 1;
 }
 
@@ -213,16 +213,11 @@ pmsattach(parent, self, aux)
 	void *aux;
 {
 	struct pms_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
+	struct pcppi_attach_args *pa = aux;
 
-	pms_iot = ia->ia_iot;
-	pms_ic = ia->ia_ic;
-
-	if (bus_space_map(pms_iot, PMS_DATA, 1, 0, &pms_data_ioh) ||
-	    bus_space_map(pms_iot, PMS_CNTRL, 1, 0, &pms_cntrl_ioh)) {
-		printf(": can't map I/O ports!\n");
-		return;
-	}
+	pms_iot = pa->pa_iot;
+	pms_ioh = pa->pa_ioh;
+	pms_ic = pa->pa_ic;
 
 	msattach(self, &pms_mdev_spec);
 
@@ -231,8 +226,8 @@ pmsattach(parent, self, aux)
 	/* Other initialization was done by pmsprobe. */
 	sc->sc_state = 0;
 
-	sc->sc_ih = isa_intr_establish(pms_ic, ia->ia_irq, IST_EDGE, IPL_TTY,
-	    pmsintr, sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = isa_intr_establish(pms_ic, 12, IST_EDGE, IPL_TTY, pmsintr,
+	    sc, sc->sc_dev.dv_xname);
 }
 
 int
@@ -304,20 +299,20 @@ pmsintr(arg)
 	switch (state) {
 
 	case 0:
-		buttons = bus_space_read_1(pms_iot, pms_data_ioh, 0);
+		buttons = bus_space_read_1(pms_iot, pms_ioh, PMS_DATA);
 		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
 
 	case 1:
-		dx = bus_space_read_1(pms_iot, pms_data_ioh, 0);
+		dx = bus_space_read_1(pms_iot, pms_ioh, PMS_DATA);
 		/* Bounding at -127 avoids a bug in XFree86. */
 		dx = (dx == -128) ? -127 : dx;
 		++state;
 		break;
 
 	case 2:
-		dy = bus_space_read_1(pms_iot, pms_data_ioh, 0);
+		dy = bus_space_read_1(pms_iot, pms_ioh, PMS_DATA);
 		dy = (dy == -128) ? -127 : dy;
 		state = 0;
 

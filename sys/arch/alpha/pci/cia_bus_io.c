@@ -1,5 +1,5 @@
-/*	$OpenBSD: cia_bus_io.c,v 1.5 1996/12/08 00:20:35 niklas Exp $	*/
-/*	$NetBSD: cia_bus_io.c,v 1.5 1996/08/27 16:29:25 cgd Exp $	*/
+/*	$OpenBSD: cia_bus_io.c,v 1.6 1997/01/24 19:57:37 niklas Exp $	*/
+/*	$NetBSD: cia_bus_io.c,v 1.6 1996/11/25 03:46:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -42,24 +42,27 @@
 
 #define	CHIP		cia
 
+#define	CHIP_EX_MALLOC_SAFE(v)	(((struct cia_config *)(v))->cc_mallocsafe)
+#define	CHIP_IO_EXTENT(v)	(((struct cia_config *)(v))->cc_io_ex)
+
 /* IO region 1 */
-#define CHIP_IO_W1_START(v)						\
+#define CHIP_IO_W1_BUS_START(v)						\
 	    HAE_IO_REG1_START(((struct cia_config *)(v))->cc_hae_io)
-#define CHIP_IO_W1_END(v)						\
-	    (CHIP_IO_W1_START(v) + HAE_IO_REG1_MASK)
-#define CHIP_IO_W1_BASE(v)						\
+#define CHIP_IO_W1_BUS_END(v)						\
+	    (CHIP_IO_W1_BUS_START(v) + HAE_IO_REG1_MASK)
+#define CHIP_IO_W1_SYS_START(v)						\
 	    CIA_PCI_SIO1
-#define CHIP_IO_W1_MASK(v)						\
-	    HAE_IO_REG1_MASK
+#define CHIP_IO_W1_SYS_END(v)						\
+	    (CIA_PCI_SIO1 + ((HAE_IO_REG1_MASK + 1) << 5) - 1)
 
 /* IO region 2 */
-#define CHIP_IO_W2_START(v)						\
+#define CHIP_IO_W2_BUS_START(v)						\
 	    HAE_IO_REG2_START(((struct cia_config *)(v))->cc_hae_io)
-#define CHIP_IO_W2_END(v)						\
-	    (CHIP_IO_W2_START(v) + HAE_IO_REG2_MASK)
-#define CHIP_IO_W2_BASE(v)						\
+#define CHIP_IO_W2_BUS_END(v)						\
+	    (CHIP_IO_W2_BUS_START(v) + HAE_IO_REG2_MASK)
+#define CHIP_IO_W2_SYS_START(v)						\
 	    CIA_PCI_SIO2
-#define CHIP_IO_W2_MASK(v)						\
-	    HAE_IO_REG2_MASK
+#define CHIP_IO_W2_SYS_END(v)						\
+	    (CIA_PCI_SIO2 + ((HAE_IO_REG2_MASK + 1) << 5) - 1)
 
 #include "pcs_bus_io_common.c"

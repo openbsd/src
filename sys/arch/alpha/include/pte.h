@@ -1,8 +1,8 @@
-/*	$OpenBSD: pte.h,v 1.5 1996/10/30 22:39:23 niklas Exp $	*/
-/*	$NetBSD: pte.h,v 1.7 1996/10/01 20:21:05 cgd Exp $	*/
+/*	$OpenBSD: pte.h,v 1.6 1997/01/24 19:57:19 niklas Exp $	*/
+/*	$NetBSD: pte.h,v 1.8 1996/11/13 22:21:04 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.6 1996/11/14 13:17:06 niklas Exp $	*/
-/*	$NetBSD: locore.s,v 1.26 1996/10/17 02:50:38 cgd Exp $	*/
+/*	$OpenBSD: locore.s,v 1.7 1997/01/24 19:56:35 niklas Exp $	*/
+/*	$NetBSD: locore.s,v 1.27 1996/12/03 19:54:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -184,9 +184,7 @@ Ler1:	LDGP(pv)
 	beq	t1, Lchkast			/* no, try an AST*/
 
 	/* We've got a SIR. */
-	ldiq	a0, ALPHA_PSL_IPL_SOFT		/* yes, lower IPL to soft */
-	call_pal PAL_OSF1_swpipl
-	CALL(do_sir)				/* do the SIR */
+	CALL(do_sir)				/* do the SIR; lowers IPL */
 
 Lchkast:
 	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero*/
@@ -276,9 +274,7 @@ LEAF(exception_restore_regs, 0)
 	ldq	t10,(FRAME_T10*8)(sp)
 	ldq	t11,(FRAME_T11*8)(sp)
 	ldq	t12,(FRAME_T12*8)(sp)
-#ifndef __OpenBSD__
 	RET
-#endif
 	END(exception_restore_regs)
 
 /**************************************************************************/

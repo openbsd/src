@@ -1,4 +1,4 @@
-#	$OpenBSD: OPAL,v 1.4 1996/10/30 22:38:43 niklas Exp $
+#	$OpenBSD: OPAL,v 1.5 1997/01/24 19:57:00 niklas Exp $
 #
 # OPAL, kernel for a DEC Multia at Applitron
 
@@ -14,10 +14,10 @@ option		TIMEZONE="-1*60"	# Minutes west of GMT (for param.c)
 option		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
-option		SWAPPAGER, DEVPAGER	# Paging (mandatory)
 option		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 option		KTRACE			# System call tracing support
 #option		DDB			# Kernel debugger (not yet supported)
+option		BOOTKEY			# Wait for key press before reboot/halt
 
 # File system options
 option		FIFO		# POSIX fifo support (in all file systems)
@@ -102,7 +102,7 @@ de*	at	pci?
 le*	at	pci?
 ncr*	at	pci?
 pceb*	at	pci?
-pcivga*	at	pci?
+vga*	at	pci?
 ppb*	at	pci?
 sio*	at	pci?
 tga*	at	pci?
@@ -116,8 +116,9 @@ isa*	at	sio?
 # ISA devices
 #isadma0	at	isa?
 mcclock0 at	isa? port 0x70
-pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
-pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
+pcppi*  at      isa?                            # PC prog. periph. interface
+pckbd*  at      pcppi?                          # PC keyboard (kbd port)
+pms*    at      pcppi?                          # PS/2-style mouse (aux port)
 com0	at	isa? port 0x3f8 irq 4		# standard serial ports
 com1	at	isa? port 0x2f8 irq 3
 lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
@@ -143,7 +144,7 @@ uk*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
 wscons*	at	cfb?
-wscons*	at	pcivga?
+wscons*	at	vga?
 wscons*	at	sfb?
 wscons*	at	tga?
 

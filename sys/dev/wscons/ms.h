@@ -1,4 +1,4 @@
-/*	$OpenBSD: ms.h,v 1.1 1996/10/30 22:41:44 niklas Exp $ */
+/*	$OpenBSD: ms.h,v 1.2 1997/01/24 19:58:28 niklas Exp $ */
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist
@@ -33,13 +33,5 @@
 
 extern void msattach __P((struct device *, struct wscons_mdev_spec *));
 extern void ms_event __P((char,	int, int));
-extern int msopen __P((dev_t, int, int, struct proc *));
-extern int msclose __P((dev_t, int, int, struct proc *));
-extern int msread __P((dev_t, struct uio *, int));
-extern int mswrite __P((dev_t, struct uio *, int));
-extern int msioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-#ifdef notyet
-extern int mspoll __P((dev_t, int, struct proc *));
-#else
-extern int msselect __P((dev_t, int, struct proc *));
-#endif
+
+cdev_decl(ms);

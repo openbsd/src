@@ -1,5 +1,5 @@
-/*	$OpenBSD: wsconsvar.h,v 1.3 1996/10/30 22:41:56 niklas Exp $	*/
-/*	$NetBSD: wsconsvar.h,v 1.2 1996/04/12 06:10:36 cgd Exp $	*/
+/*	$OpenBSD: wsconsvar.h,v 1.4 1997/01/24 19:58:33 niklas Exp $	*/
+/*	$NetBSD: wsconsvar.h,v 1.4 1996/11/19 05:17:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,9 +33,9 @@
 
 struct device;
 
-typedef int (*wscons_ioctl_t)	__P((struct device *dev, u_long cmd,
+typedef int (*wscons_ioctl_t)	__P((void *v, u_long cmd,
 				    caddr_t data, int flag, struct proc *p));
-typedef int (*wscons_mmap_t)	__P((struct device *dev, off_t off,
+typedef int (*wscons_mmap_t)	__P((void *v, off_t off,
 				    int prot));
 
 struct wscons_emulfuncs {
@@ -54,14 +54,15 @@ struct wscons_emulfuncs {
 };
 
 struct wscons_odev_spec {
-	const struct wscons_emulfuncs *wo_ef;	/* emulation functions */
-	void *wo_efa;				/* emulation function cookie */
-
-	int	wo_nrows, wo_ncols;		/* number of rows & cols */
-	int	wo_crow, wo_ccol;		/* current row & col */
+	const struct wscons_emulfuncs *wo_emulfuncs; /* emulation functions */
+	void *wo_emulfuncs_cookie;
 
 	wscons_ioctl_t wo_ioctl;
 	wscons_mmap_t wo_mmap;
+	void *wo_miscfuncs_cookie;
+
+	int	wo_nrows, wo_ncols;		/* number of rows & cols */
+	int	wo_crow, wo_ccol;		/* current row & col */
 };
 
 struct wsconsio_bell_data;
@@ -108,5 +109,16 @@ void	wscons_attach_input __P((struct device *,
  * then need length.)
  */
 void	wscons_input __P((char *));
+
+void	msattach __P((struct device *, struct wscons_mdev_spec *));
+void	ms_event __P((char, int, int));
+
+void	kbdattach __P((struct device *, struct wscons_idev_spec *));
+void	kbd_input __P((int));
+void	wscons_kbd_bell __P((void));
+int	kbd_cngetc __P((dev_t));
+void	kbd_cnpollc __P((dev_t, int));
+int	kbdioctl __P((dev_t dev, u_long cmd, register caddr_t data,
+	    int flag, struct proc *p));
 
 #endif /* _ALPHA_WSCONS_WSCONSVAR_H_ */

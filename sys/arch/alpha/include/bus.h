@@ -1,5 +1,5 @@
-/*	$OpenBSD: bus.h,v 1.4 1996/11/12 22:46:26 niklas Exp $	*/
-/*	$NetBSD: bus.h,v 1.6 1996/10/22 21:23:49 cgd Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 1997/01/24 19:57:09 niklas Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -62,6 +62,10 @@ struct alpha_bus_space {
 	void		(*abs_free) __P((void *, bus_space_handle_t,
 			    bus_size_t));
 
+	/* barrier */
+	void		(*abs_barrier) __P((void *, bus_space_handle_t,
+			    bus_size_t, bus_size_t, int));
+
 	/* read (single) */
 	u_int8_t	(*abs_r_1) __P((void *, bus_space_handle_t,
 			    bus_size_t));
@@ -72,7 +76,7 @@ struct alpha_bus_space {
 	u_int64_t	(*abs_r_8) __P((void *, bus_space_handle_t,
 			    bus_size_t));
 
-	/* read multi */
+	/* read multiple */
 	void		(*abs_rm_1) __P((void *, bus_space_handle_t,
 			    bus_size_t, u_int8_t *, bus_size_t));
 	void		(*abs_rm_2) __P((void *, bus_space_handle_t,
@@ -102,7 +106,7 @@ struct alpha_bus_space {
 	void		(*abs_w_8) __P((void *, bus_space_handle_t,
 			    bus_size_t, u_int64_t));
 
-	/* write multi */
+	/* write multiple */
 	void		(*abs_wm_1) __P((void *, bus_space_handle_t,
 			    bus_size_t, const u_int8_t *, bus_size_t));
 	void		(*abs_wm_2) __P((void *, bus_space_handle_t,
@@ -122,18 +126,35 @@ struct alpha_bus_space {
 	void		(*abs_wr_8) __P((void *, bus_space_handle_t,
 			    bus_size_t, const u_int64_t *, bus_size_t));
 
-	/* set multi */
-	/* XXX IMPLEMENT */
+	/* set multiple */
+	void		(*abs_sm_1) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t, bus_size_t));
+	void		(*abs_sm_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t, bus_size_t));
+	void		(*abs_sm_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t, bus_size_t));
+	void		(*abs_sm_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t, bus_size_t));
 
 	/* set region */
-	/* XXX IMPLEMENT */
+	void		(*abs_sr_1) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t, bus_size_t));
+	void		(*abs_sr_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t, bus_size_t));
+	void		(*abs_sr_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t, bus_size_t));
+	void		(*abs_sr_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t, bus_size_t));
 
 	/* copy */
-	/* XXX IMPLEMENT */
-
-	/* barrier */
-	void		(*abs_barrier) __P((void *, bus_space_handle_t,
-			    bus_size_t, bus_size_t, int));
+	void		(*abs_c_1) __P((void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t));
+	void		(*abs_c_2) __P((void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t));
+	void		(*abs_c_4) __P((void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t));
+	void		(*abs_c_8) __P((void *, bus_space_handle_t, bus_size_t,
+			    bus_space_handle_t, bus_size_t, bus_size_t));
 };
 
 
@@ -147,8 +168,22 @@ struct alpha_bus_space {
 	(*(t)->__abs_opname(r,sz))((t)->abs_cookie, h, o)
 #define	__abs_ws(sz, t, h, o, v)					\
 	(*(t)->__abs_opname(w,sz))((t)->abs_cookie, h, o, v)
+#ifndef DEBUG
 #define	__abs_nonsingle(type, sz, t, h, o, a, c)			\
 	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c)
+#else
+#define	__abs_nonsingle(type, sz, t, h, o, a, c)			\
+    do {								\
+	if (((unsigned long)a & (sz - 1)) != 0)				\
+		panic("bus non-single %d-byte unaligned (to %p) at %s:%d", \
+		    sz, a, __FILE__, __LINE__);				\
+	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c);	\
+    } while (0)
+#endif
+#define	__abs_set(type, sz, t, h, o, v, c)				\
+	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, v, c)
+#define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
+	(*(t)->__abs_opname(c,sz))((t)->abs_cookie, h1, o1, h2, o2, cnt)
 
 
 /*
@@ -170,6 +205,16 @@ struct alpha_bus_space {
 	    (c), (ap), (hp))
 #define	bus_space_free(t, h, s)						\
 	(*(t)->abs_free)((t)->abs_cookie, (h), (s))
+
+
+/*
+ * Bus barrier operations.
+ */
+#define	bus_space_barrier(t, h, o, l, f)				\
+	(*(t)->abs_barrier)((t)->abs_cookie, (h), (o), (l), (f))
+
+#define	BUS_BARRIER_READ	0x01
+#define	BUS_BARRIER_WRITE	0x02
 
 
 /*
@@ -245,28 +290,39 @@ struct alpha_bus_space {
 /*
  * Set multiple operations.
  */
-/* XXX IMPLEMENT */
+#define	bus_space_set_multi_1(t, h, o, v, c)				\
+	__abs_set(sm,1,(t),(h),(o),(v),(c))
+#define	bus_space_set_multi_2(t, h, o, v, c)				\
+	__abs_set(sm,2,(t),(h),(o),(v),(c))
+#define	bus_space_set_multi_4(t, h, o, v, c)				\
+	__abs_set(sm,4,(t),(h),(o),(v),(c))
+#define	bus_space_set_multi_8(t, h, o, v, c)				\
+	__abs_set(sm,8,(t),(h),(o),(v),(c))
 
 
 /*
  * Set region operations.
  */
-/* XXX IMPLEMENT */
+#define	bus_space_set_region_1(t, h, o, v, c)				\
+	__abs_set(sr,1,(t),(h),(o),(v),(c))
+#define	bus_space_set_region_2(t, h, o, v, c)				\
+	__abs_set(sr,2,(t),(h),(o),(v),(c))
+#define	bus_space_set_region_4(t, h, o, v, c)				\
+	__abs_set(sr,4,(t),(h),(o),(v),(c))
+#define	bus_space_set_region_8(t, h, o, v, c)				\
+	__abs_set(sr,8,(t),(h),(o),(v),(c))
 
 
 /*
  * Copy operations.
  */
-/* XXX IMPLEMENT */
-
-
-/*
- * Bus barrier operations.
- */
-#define	bus_space_barrier(t, h, o, l, f)				\
-	(*(t)->abs_barrier)((t)->abs_cookie, (h), (o), (l), (f))
-
-#define	BUS_BARRIER_READ	0x01
-#define	BUS_BARRIER_WRITE	0x02
+#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
+	__abs_copy(1, t, h1, o1, h2, o2, c)
+#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
+	__abs_copy(2, t, h1, o1, h2, o2, c)
+#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
+	__abs_copy(4, t, h1, o1, h2, o2, c)
+#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
+	__abs_copy(8, t, h1, o1, h2, o2, c)
 
 #endif /* _ALPHA_BUS_H_ */

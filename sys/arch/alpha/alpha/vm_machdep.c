@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 1996/10/30 22:38:30 niklas Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.20 1996/10/13 02:59:50 christos Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.6 1997/01/24 19:56:47 niklas Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 1996/11/13 21:13:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.

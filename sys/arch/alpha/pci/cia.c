@@ -1,5 +1,5 @@
-/*	$OpenBSD: cia.c,v 1.6 1996/12/08 00:20:34 niklas Exp $	*/
-/*	$NetBSD: cia.c,v 1.12 1996/10/23 04:12:24 cgd Exp $	*/
+/*	$OpenBSD: cia.c,v 1.7 1997/01/24 19:57:36 niklas Exp $	*/
+/*	$NetBSD: cia.c,v 1.15 1996/12/05 01:39:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -48,8 +48,15 @@
 #if defined(DEC_KN20AA)
 #include <alpha/pci/pci_kn20aa.h>
 #endif
+#if defined(DEC_EB164)
+#include <alpha/pci/pci_eb164.h>
+#endif
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	ciamatch __P((struct device *, void *, void *));
+#else
+int	ciamatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	ciaattach __P((struct device *, struct device *, void *));
 
 struct cfattach cia_ca = {
@@ -69,7 +76,12 @@ struct cia_config cia_configuration;
 int
 ciamatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct confargs *ca = aux;
 
@@ -87,20 +99,27 @@ ciamatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-cia_init(ccp)
+cia_init(ccp, mallocsafe)
 	struct cia_config *ccp;
+	int mallocsafe;
 {
 
 	/*
 	 * Can't set up SGMAP data here; can be called before malloc().
+	 * XXX THIS COMMENT NO LONGER MAKES SENSE.
 	 */
-
-        ccp->cc_iot = cia_bus_io_init(ccp);
-        ccp->cc_memt = cia_bus_mem_init(ccp);
-        cia_pci_init(&ccp->cc_pc, ccp);
 
 	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
 	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
+
+	if (!ccp->cc_initted) {
+		/* don't do these twice since they set up extents */
+		ccp->cc_iot = cia_bus_io_init(ccp);
+		ccp->cc_memt = cia_bus_mem_init(ccp);
+	}
+	ccp->cc_mallocsafe = mallocsafe;
+
+	cia_pci_init(&ccp->cc_pc, ccp);
 
 	/* XXX XXX BEGIN XXX XXX */
 	{							/* XXX */
@@ -108,6 +127,8 @@ cia_init(ccp)
 		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
 	}							/* XXX */
 	/* XXX XXX END XXX XXX */
+
+	ccp->cc_initted = 1;
 }
 
 void
@@ -127,7 +148,7 @@ ciaattach(parent, self, aux)
 	 * (maybe), but doesn't hurt to do twice.
 	 */
 	ccp = sc->sc_ccp = &cia_configuration;
-	cia_init(ccp);
+	cia_init(ccp, 1);
 
 	/* XXX print chipset information */
 	printf("\n");
@@ -141,6 +162,16 @@ ciaattach(parent, self, aux)
 #endif
 		break;
 #endif
+
+#if defined(DEC_EB164)
+	case ST_EB164:
+		pci_eb164_pickintr(ccp);
+#ifdef EVCNT_COUNTERS
+		evcnt_attach(self, "intr", &eb164_intr_evcnt);
+#endif
+		break;
+#endif
+
 	default:
 		panic("ciaattach: shouldn't be here, really...");
 	}

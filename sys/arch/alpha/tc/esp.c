@@ -1,5 +1,5 @@
-/*	$OpenBSD: esp.c,v 1.7 1996/11/23 21:44:59 kstailey Exp $	*/
-/*	$NetBSD: esp.c,v 1.22 1996/10/15 21:30:19 mycroft Exp $	*/
+/*	$OpenBSD: esp.c,v 1.8 1997/01/24 19:58:10 niklas Exp $	*/
+/*	$NetBSD: esp.c,v 1.26 1996/12/05 01:39:40 cgd Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -108,9 +108,15 @@
 
 int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
-/*static*/ void	espattach	__P((struct device *, struct device *, void *));
+/*static*/ void	espattach	__P((struct device *, struct device *,
+				    void *));
 /*static*/ int	espprint	__P((void *, const char *));
+#ifdef __BROKEN_INDIRECT_CONFIG
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
+#else
+/*static*/ int	espmatch	__P((struct device *, struct cfdata *,
+				    void *));
+#endif
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ void	esp_select	__P((struct esp_softc *, struct esp_ecb *));
@@ -119,7 +125,8 @@ int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 /*static*/ void	esp_reset	__P((struct esp_softc *));
 /*static*/ void	esp_init	__P((struct esp_softc *, int));
 /*static*/ int	esp_scsi_cmd	__P((struct scsi_xfer *));
-/*static*/ int	esp_poll	__P((struct esp_softc *, struct scsi_xfer *, int));
+/*static*/ int	esp_poll	__P((struct esp_softc *, struct scsi_xfer *,
+				    int));
 /*static*/ void	esp_sched	__P((struct esp_softc *));
 /*static*/ void	esp_done	__P((struct esp_softc *, struct esp_ecb *));
 /*static*/ void	esp_msgin	__P((struct esp_softc *));
@@ -172,12 +179,23 @@ espprint(aux, name)
 }
 
 int
+#ifdef __BROKEN_INDIRECT_CONFIG
 espmatch(parent, vcf, aux)
+#else
+espmatch(parent, cf, aux)
+#endif
 	struct device *parent;
-	void *vcf, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *vcf;
+#else
+	struct cfdata *cf;
+#endif
+	void *aux;
 {
 #ifdef SPARC_DRIVER
+#ifdef __BROKEN_INDIRECT_CONFIG
 	struct cfdata *cf = vcf;
+#endif
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
@@ -243,7 +261,7 @@ espattach(parent, self, aux)
 	sc->sc_cookie = tcdsdev->tcdsda_cookie;
 	sc->sc_dma = tcdsdev->tcdsda_sc;
 
-	printf(": address %x", sc->sc_reg);
+	printf(": address %p", sc->sc_reg);
 	tcds_intr_establish(parent, sc->sc_cookie, TC_IPL_BIO,
 	    (int (*)(void *))espintr, sc);
 #endif
@@ -1134,7 +1152,7 @@ esp_msgin(sc)
 {
 	register int v;
 
-	ESP_TRACE(("[esp_msgin(curmsglen:%d)] ", sc->sc_imlen));
+	ESP_TRACE(("[esp_msgin(curmsglen:%ld)] ", (long)sc->sc_imlen));
 
 	if ((ESP_READ_REG(sc, ESP_FFLAG) & ESPFIFO_FF) == 0) {
 		printf("%s: msgin: no msg byte available\n",
@@ -1214,7 +1232,6 @@ gotit:
 	 */
 	switch (sc->sc_state) {
 		struct esp_ecb *ecb;
-		struct scsi_link *sc_link;
 		struct esp_tinfo *ti;
 
 	case ESP_CONNECTED:
@@ -1225,9 +1242,9 @@ gotit:
 		case MSG_CMDCOMPLETE:
 			ESP_MSGS(("cmdcomplete "));
 			if (sc->sc_dleft < 0) {
-				sc_link = ecb->xs->sc_link;
-				printf("%s: %d extra bytes from %d:%d\n",
-				    sc->sc_dev.dv_xname, -sc->sc_dleft,
+				struct scsi_link *sc_link = ecb->xs->sc_link;
+				printf("%s: %ld extra bytes from %d:%d\n",
+				    sc->sc_dev.dv_xname, -(long)sc->sc_dleft,
 				    sc_link->target, sc_link->lun);
 				sc->sc_dleft = 0;
 			}
@@ -1626,7 +1643,12 @@ espintr(sc)
 		 * change is expected.
 		 */
 		if (DMA_ISACTIVE(sc->sc_dma)) {
-			DMA_INTR(sc->sc_dma);
+			int r = DMA_INTR(sc->sc_dma);
+			if (r == -1) {
+				printf("%s: DMA error; resetting\n",
+					sc->sc_dev.dv_xname);
+				esp_init(sc, 1);
+			}
 			/* If DMA active here, then go back to work... */
 			if (DMA_ISACTIVE(sc->sc_dma))
 				return 1;
@@ -2011,7 +2033,7 @@ if (sc->sc_flags & ESP_ICCS) printf("[[esp: BUMMER]]");
 			}
 			break;
 		case DATA_OUT_PHASE:
-			ESP_PHASE(("DATA_OUT_PHASE [%d] ",  sc->sc_dleft));
+			ESP_PHASE(("DATA_OUT_PHASE [%ld] ",(long)sc->sc_dleft));
 			ESPCMD(sc, ESPCMD_FLUSH);
 			size = min(sc->sc_dleft, sc->sc_maxxfer);
 			DMA_SETUP(sc->sc_dma, &sc->sc_dp, &sc->sc_dleft,
@@ -2098,6 +2120,13 @@ esp_abort(sc, ecb)
 		 */
 		if (sc->sc_state == ESP_CONNECTED)
 			esp_sched_msgout(SEND_ABORT);
+
+		/*
+		 * Reschedule timeout. First, cancel a queued timeout (if any)
+		 * in case someone decides to call esp_abort() from elsewhere.
+		 */
+		untimeout(esp_timeout, ecb);
+		timeout(esp_timeout, ecb, (ecb->timeout * hz) / 1000);
 	} else {
 		esp_dequeue(sc, ecb);
 		TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
@@ -2118,11 +2147,11 @@ esp_timeout(arg)
 
 	sc_print_addr(sc_link);
 	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
-	       "<state %d, nexus %p, phase(c %x, p %x), resid %x, msg(q %x,o %x) %s>",
+	       "<state %d, nexus %p, phase(c %x, p %x), resid %lx, msg(q %x,o %x) %s>",
 		sc->sc_dev.dv_xname,
 		ecb, ecb->flags, ecb->dleft, ecb->stat,
 		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
-		sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
+		(long)sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
 		DMA_ISACTIVE(sc->sc_dma) ? "DMA active" : "");
 #if ESP_DEBUG > 0
 	printf("TRACE: %s.", ecb->trace);

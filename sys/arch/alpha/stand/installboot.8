@@ -1,0 +1,144 @@
+.\"	$NetBSD: installboot.8,v 1.1 1996/11/06 23:07:55 cgd Exp $
+.\"
+.\" Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
+.\" Copyright (c) 1995 Paul Kranenburg
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Paul Kranenburg.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 6, 1996
+.Dt INSTALLBOOT 8
+.Os 
+.Sh NAME
+.Nm installboot
+.Nd install bootstrap software on an FFS partition
+.Sh SYNOPSIS
+.Nm installboot
+.Op Fl nv
+.Ar boot
+.Ar bootxx
+.Ar device
+.Sh DESCRIPTION
+The
+.Nm installboot
+utility prepares an FFS partition for bootstrapping.
+.Pp
+The NetBSD/alpha disk bootstrap software is split into two parts:
+a small first-stage boot program that is written into the disklabel
+area of a disk
+.Po
+and hence is limited in size to 7680 bytes
+.Pc ,
+and a second-stage boot program that resides in the filesystem proper
+.Po
+typically with the name 
+.Pa /boot
+.Pc .
+The first-stage boot program is loaded into memory by the SRM console
+software.  After receiving control of the system, it loads the
+second-stage boot program from a set of filesystem block numbers that
+have been
+hard-coded into it by
+.Nm installboot .
+The second-stage boot program locates and loads the kernel.
+.Pp
+The second-stage boot program and the prototype code for the
+first-stage boot program can be found in
+.Pa /usr/mdec/boot
+and
+.Pa /usr/mdec/bootxx ,
+respectively.
+.Pa /usr/mdec/boot
+may be installed simply by copying it to the root directory of the
+partition you wish to boot from, but after it is installed
+.Nm installboot
+.Em must
+be run.
+.Pp
+The options recognized by
+.Nm installboot
+are as follows:
+.Bl -tag -width flag
+.It Fl n
+Do not actually write anything on the disk.
+.It Fl v
+Verbose mode.
+.El
+.Pp
+The arguments are:
+.Bl -tag -width bootxx
+.It Ar boot
+The name of the second-stage boot program in the file system
+where the first-stage boot program is to be installed.
+.It Ar bootxx
+The name of the prototype file for the first-stage boot program.
+.It Ar device
+The name of the raw device in which the first-stage boot program
+is to be installed.  
+This should be the raw device containing the file system
+which holds
+.Ar boot .
+.El
+.Sh EXAMPLES
+The following command will install the first-stage boot program in the
+root filesystem
+.Pq assumed to be mounted from Dq sd0a
+using the file
+.Pa /boot
+as the second-stage boot program:
+.Bd -literal -offset indent
+installboot /boot /usr/mdec/bootxx /dev/rsd0a
+.Ed
+.Sh BUGS
+NetBSD/alpha systems are only capable of booting off of disks'
+.Dq a
+partitions, and bootable partitions must start at the beginning
+of the disk.
+.Pp
+.Nm Installboot
+requires simultaneous access to the mounted file system and
+the raw device.
+That is not allowed with the kernel
+.Dv securelevel
+variable
+.Po
+see
+.Xr sysctl 8
+.Pc
+set to a value greater than zero, so
+.Nm installboot
+only works when the system is in
+an insecure mode (e.g. single-user mode; see
+.Xr init 8 ).
+.Sh "SEE ALSO"
+.Xr disklabel 8 ,
+.Xr init 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The NetBSD/alpha
+.Nm
+command first appeared in
+.Nx 1.2 .

@@ -1,5 +1,5 @@
-/*	$OpenBSD: dec_3000_300.c,v 1.4 1996/10/30 22:38:03 niklas Exp $	*/
-/*	$NetBSD: dec_3000_300.c,v 1.9 1996/10/13 02:59:30 christos Exp $	*/
+/*	$OpenBSD: dec_3000_300.c,v 1.5 1997/01/24 19:56:24 niklas Exp $	*/
+/*	$NetBSD: dec_3000_300.c,v 1.10 1996/11/12 05:14:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,6 +34,7 @@
 #include <machine/rpb.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/tc/tcvar.h>
 
@@ -43,11 +44,14 @@
 #include <scsi/scsiconf.h>
 
 char *dec_3000_300_modelname __P((void));
-void dec_3000_300_consinit __P((void));
+void dec_3000_300_cons_init __P((void));
+const char *dec_3000_300_iobus_name __P((void));
 void dec_3000_300_device_register __P((struct device *, void *));
 
-char *
-dec_3000_300_modelname()
+cpu_decl(dec_3000_300);
+
+const char *
+dec_3000_300_model_name()
 {
 
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
@@ -71,8 +75,14 @@ dec_3000_300_modelname()
 }
 
 void
-dec_3000_300_consinit()
+dec_3000_300_cons_init()
 {
+}
+
+const char *
+dec_3000_300_iobus_name()
+{
+	return ("tcasic");
 }
 
 void

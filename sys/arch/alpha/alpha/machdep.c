@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.14 1997/01/17 05:53:37 kstailey Exp $	*/
-/*	$NetBSD: machdep.c,v 1.52 1996/11/06 20:19:19 cgd Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 1997/01/24 19:56:37 niklas Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -78,25 +78,7 @@
 #include <machine/reg.h>
 #include <machine/rpb.h>
 #include <machine/prom.h>
-
-#ifdef DEC_3000_500
-#include <alpha/alpha/dec_3000_500.h>
-#endif
-#ifdef DEC_3000_300
-#include <alpha/alpha/dec_3000_300.h>
-#endif
-#ifdef DEC_2100_A50
-#include <alpha/alpha/dec_2100_a50.h>
-#endif
-#ifdef DEC_KN20AA
-#include <alpha/alpha/dec_kn20aa.h>
-#endif
-#ifdef DEC_AXPPCI_33
-#include <alpha/alpha/dec_axppci_33.h>
-#endif
-#ifdef DEC_21000
-#include <alpha/alpha/dec_21000.h>
-#endif
+#include <machine/cpuconf.h>
 
 #include <net/netisr.h>
 #include <net/if.h>
@@ -113,6 +95,14 @@
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
 #endif
+#ifdef CCITT
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
+#endif
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif
 #include "ppp.h"
 #if NPPP > 0
 #include <net/ppp_defs.h>
@@ -123,13 +113,15 @@
 
 vm_map_t buffer_map;
 
-void dumpsys __P((void));
-int cpu_dumpsize __P((void));
-int cpu_dump __P((void));
-void printregs __P((struct reg *));
-void regdump __P((struct trapframe *framep));
-void netintr __P((void));
-void do_sir __P((void));
+void	alpha_init __P((u_long, u_long));
+int	cpu_dump __P((void));
+int	cpu_dumpsize __P((void));
+void	do_sir __P((void));
+void	dumpsys __P((void));
+void	identifycpu __P((void));
+void	netintr __P((void));
+void	regdump __P((struct trapframe *framep));
+void	printregs __P((struct reg *));
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -167,27 +159,7 @@ u_int32_t no_optimize;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = "alpha";
 char	cpu_model[128];
-char	*model_names[] = {
-	"UNKNOWN (0)",
-	"Alpha Demonstration Unit",
-	"DEC 4000 (\"Cobra\")",
-	"DEC 7000 (\"Ruby\")",
-	"DEC 3000/500 (\"Flamingo\") family",
-	"UNKNOWN (5)",
-	"DEC 2000/300 (\"Jensen\")",
-	"DEC 3000/300 (\"Pelican\")",
-	"UNKNOWN (8)",
-	"DEC 2100/A500 (\"Sable\")",
-	"AXPvme 64",
-	"AXPpci 33 (\"NoName\")",
-	"DEC 21000 (\"TurboLaser\")",
-	"DEC 2100/A50 (\"Avanti\") family",
-	"Mustang",
-	"DEC KN20AA",
-	"UNKNOWN (16)",
-	"DEC 1000 (\"Mikasa\")",
-};
-int	nmodel_names = sizeof model_names/sizeof model_names[0];
+const struct cpusw *cpu_fn_switch;		/* function switch */
 
 struct	user *proc0paddr;
 
@@ -197,20 +169,11 @@ u_int64_t	cycles_per_usec;
 /* some memory areas for device DMA.  "ick." */
 caddr_t		le_iomem;		/* XXX iomem for LANCE DMA */
 
-/* Interrupt vectors (in locore) */
-extern int XentInt __P((void)), XentArith __P((void)), XentMM __P((void)),
-    XentIF __P((void)), XentUna __P((void)), XentSys __P((void));
-
 /* number of cpus in the box.  really! */
 int		ncpus;
 
-/* various CPU-specific functions. */
-char		*(*cpu_modelname) __P((void));
-void		(*cpu_consinit) __P((void));
-void		(*cpu_device_register) __P((struct device *dev, void *aux));
-char		*cpu_iobus;
-
 char boot_flags[64];
+char booted_kernel[64];
 
 /* for cpu_sysctl() */
 char	root_device[17];
@@ -218,10 +181,7 @@ int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
 
-void	identifycpu __P((void));
-int	alpha_init __P((u_long, u_long));
-
-int
+void
 alpha_init(pfn, ptb)
 	u_long pfn;		/* first free PFN number */
 	u_long ptb;		/* PFN of current level 1 page table */
@@ -403,84 +363,42 @@ alpha_init(pfn, ptb)
 	 * Find out what hardware we're on, and remember its type name.
 	 */
 	cputype = hwrpb->rpb_type;
-	switch (cputype) {
-#ifdef DEC_3000_500				/* and 400, [6-9]00 */
-	case ST_DEC_3000_500:
-		cpu_modelname = dec_3000_500_modelname;
-		cpu_consinit = dec_3000_500_consinit;
-		cpu_device_register = dec_3000_500_device_register;
-		cpu_iobus = "tcasic";
-		break;
-#endif
-
-#ifdef DEC_3000_300
-	case ST_DEC_3000_300:
-		cpu_modelname = dec_3000_300_modelname;
-		cpu_consinit = dec_3000_300_consinit;
-		cpu_device_register = dec_3000_300_device_register;
-		cpu_iobus = "tcasic";
-		break;
-#endif
-
-#ifdef DEC_2100_A50
-	case ST_DEC_2100_A50:
-		cpu_modelname = dec_2100_a50_modelname;
-		cpu_consinit = dec_2100_a50_consinit;
-		cpu_device_register = dec_2100_a50_device_register;
-		cpu_iobus = "apecs";
-		break;
-#endif
-
-#ifdef DEC_KN20AA
-	case ST_DEC_KN20AA:
-		cpu_modelname = dec_kn20aa_modelname;
-		cpu_consinit = dec_kn20aa_consinit;
-		cpu_device_register = dec_kn20aa_device_register;
-		cpu_iobus = "cia";
-		break;
-#endif
-
-#ifdef DEC_AXPPCI_33
-	case ST_DEC_AXPPCI_33:
-		cpu_modelname = dec_axppci_33_modelname;
-		cpu_consinit = dec_axppci_33_consinit;
-		cpu_device_register = dec_axppci_33_device_register;
-		cpu_iobus = "lca";
-		break;
-#endif
-
-#ifdef DEC_2000_300
-	case ST_DEC_2000_300:
-		cpu_modelname = dec_2000_300_modelname;
-		cpu_consinit = dec_2000_300_consinit;
-		cpu_device_register = dec_2000_300_device_register;
-		cpu_iobus = "ibus";
-	XXX DEC 2000/300 NOT SUPPORTED
-		break;
-#endif
-
-#ifdef DEC_21000
-	case ST_DEC_21000:
-		cpu_modelname = dec_21000_modelname;
-		cpu_consinit = dec_21000_consinit;
-		cpu_device_register = dec_21000_device_register;
-		cpu_iobus = "tlsb";
-	XXX DEC 21000 NOT SUPPORTED
-		break;
-#endif
-
-	default:
-		if (cputype > nmodel_names)
-			panic("Unknown system type %d", cputype);
-		else
-			panic("Support for %s system type not in kernel.",
-			    model_names[cputype]);
+	if (cputype < 0 || cputype > ncpusw) {
+unknown_cputype:
+		printf("\n");
+		printf("Unknown system type %d.\n", cputype);
+		printf("\n");
+		panic("unknown system type");
+	}
+	cpu_fn_switch = &cpusw[cputype];
+	if (cpu_fn_switch->family == NULL)
+		goto unknown_cputype;
+	if (cpu_fn_switch->option == NULL) {
+		printf("\n");
+		printf("NetBSD does not currently support system type %d\n",
+		    cputype);
+		printf("(%s family).\n", cpu_fn_switch->family);
+		printf("\n");
+		panic("unsupported system type");
+	}
+	if (!cpu_fn_switch->present) {
+		printf("\n");
+		printf("Support for system type %d (%s family) is\n", cputype,
+		    cpu_fn_switch->family);
+		printf("not present in this kernel.  Build a kernel with \"options %s\"\n",
+		    cpu_fn_switch->option);
+		printf("to include support for this system type.\n");
+		printf("\n");
+		panic("support for system not present");
 	}
 
-	if ((*cpu_modelname)() != NULL)
-		strncpy(cpu_model, (*cpu_modelname)(), sizeof cpu_model - 1);
-	else
-		strncpy(cpu_model, model_names[cputype], sizeof cpu_model - 1);
+	if ((*cpu_fn_switch->model_name)() != NULL)
+		strncpy(cpu_model, (*cpu_fn_switch->model_name)(),
+		    sizeof cpu_model - 1);
+	else {
+		strncpy(cpu_model, cpu_fn_switch->family, sizeof cpu_model - 1);
+		strcat(cpu_model, " family");		/* XXX */
+	}
 	cpu_model[sizeof cpu_model - 1] = '\0';
 
 #if NLE_IOASIC > 0
@@ -603,10 +521,16 @@ alpha_init(pfn, ptb)
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
+	 * Also, get kernel name so it can be used in user-land.
 	 */
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
 #if 0
 	printf("boot flags = \"%s\"\n", boot_flags);
+#endif
+	prom_getenv(PROM_E_BOOTED_FILE, booted_kernel,
+	    sizeof(booted_kernel));
+#if 0
+	printf("booted kernel = \"%s\"\n", booted_kernel);
 #endif
 
 	boothowto = RB_SINGLE;
@@ -668,15 +592,13 @@ alpha_init(pfn, ptb)
 		if ((pcsp->pcs_flags & PCS_PP) != 0)
 			ncpus++;
 	}
-
-	return (0);
 }
 
 void
 consinit()
 {
 
-	(*cpu_consinit)();
+	(*cpu_fn_switch->cons_init)();
 	pmap_unmap_prom();
 }
 
@@ -795,7 +717,7 @@ cpu_startup()
 	 * Note that bootstrapping is finished, and set the HWRPB up
 	 * to do restarts.
 	 */
-	hwrbp_restart_setup();
+	hwrpb_restart_setup();
 }
 
 void
@@ -1449,6 +1371,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &alpha_unaligned_sigbus));
 
+	case CPU_BOOTED_KERNEL:
+		return (sysctl_rdstring(oldp, oldlenp, newp, booted_kernel));
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1466,8 +1391,10 @@ setregs(p, pack, stack, retval)
 	register_t *retval;
 {
 	struct trapframe *tfp = p->p_md.md_tf;
-	int i;
 	extern struct proc *fpcurproc;
+#ifdef DEBUG
+	int i;
+#endif
 
 #ifdef DEBUG
 	/*
@@ -1543,27 +1470,35 @@ netintr()
 void
 do_sir()
 {
+	u_int64_t n;
 
-	if (ssir & SIR_NET) {
-		siroff(SIR_NET);
-		cnt.v_soft++;
-		netintr();
-	}
-	if (ssir & SIR_CLOCK) {
-		siroff(SIR_CLOCK);
-		cnt.v_soft++;
-		softclock();
-	}
+	do {
+		(void)splhigh();
+		n = ssir;
+		ssir = 0;
+		splsoft();		/* don't recurse through spl0() */
+	
+#define	DO_SIR(bit, fn)							\
+		do {							\
+			if (n & (bit)) {				\
+				cnt.v_soft++;				\
+				fn;					\
+			}						\
+		} while (0)
+
+		DO_SIR(SIR_NET, netintr());
+		DO_SIR(SIR_CLOCK, softclock());
+
+#undef DO_SIR
+	} while (ssir != 0);
 }
 
 int
 spl0()
 {
 
-	if (ssir) {
-		splsoft();
-		do_sir();
-	}
+	if (ssir)
+		do_sir();		/* it lowers the IPL itself */
 
 	return (alpha_pal_swpipl(ALPHA_PSL_IPL_0));
 }
@@ -1669,6 +1604,9 @@ delay(n)
 }
 
 #if defined(COMPAT_OSF1) || 1		/* XXX */
+void	cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
+	    u_long, register_t *));
+
 void
 cpu_exec_ecoff_setregs(p, epp, stack, retval)
 	struct proc *p;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tga_bt485.c,v 1.3 1996/10/30 22:40:21 niklas Exp $	*/
-/*	$NetBSD: tga_bt485.c,v 1.3 1996/07/09 00:55:05 cgd Exp $	*/
+/*	$OpenBSD: tga_bt485.c,v 1.4 1997/01/24 19:58:01 niklas Exp $	*/
+/*	$NetBSD: tga_bt485.c,v 1.4 1996/11/13 21:13:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

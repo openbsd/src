@@ -1,5 +1,5 @@
-/*	$OpenBSD: intr.h,v 1.3 1996/10/30 22:39:09 niklas Exp $	*/
-/*	$NetBSD: intr.h,v 1.2 1996/07/09 00:33:25 cgd Exp $	*/
+/*	$OpenBSD: intr.h,v 1.4 1997/01/24 19:57:12 niklas Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1996/12/03 17:34:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -31,6 +31,8 @@
 #ifndef _ALPHA_INTR_H_
 #define _ALPHA_INTR_H_
 
+#include <sys/queue.h>
+
 #define	IPL_NONE	0	/* disable only this interrupt */
 #define	IPL_BIO		1	/* disable block I/O interrupts */
 #define	IPL_NET		2	/* disable network interrupts */
@@ -38,6 +40,7 @@
 #define	IPL_CLOCK	4	/* disable clock interrupts */
 #define	IPL_HIGH	5	/* disable all interrupts */
 
+#define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
@@ -64,8 +67,44 @@ extern u_int64_t ssir;
 #define	SIR_NET		0x1
 #define	SIR_CLOCK	0x2
 
-#define	siroff(x)	ssir &= ~(x)
 #define	setsoftnet()	ssir |= SIR_NET
 #define	setsoftclock()	ssir |= SIR_CLOCK
+
+/*
+ * Alpha shared-interrupt-line common code.
+ */
+
+struct alpha_shared_intrhand {
+	TAILQ_ENTRY(alpha_shared_intrhand)
+		ih_q;
+	int	(*ih_fn) __P((void *));
+	void	*ih_arg;
+	int	ih_level;
+};
+
+struct alpha_shared_intr {
+	TAILQ_HEAD(,alpha_shared_intrhand)
+		intr_q;
+	int	intr_sharetype;
+	int	intr_dfltsharetype;
+	int	intr_nstrays;
+	int	intr_maxstrays;
+};
+
+struct alpha_shared_intr *alpha_shared_intr_alloc __P((unsigned int));
+int	alpha_shared_intr_dispatch __P((struct alpha_shared_intr *,
+	    unsigned int));
+void	*alpha_shared_intr_establish __P((struct alpha_shared_intr *,
+	    unsigned int, int, int, int (*)(void *), void *, const char *));
+int	alpha_shared_intr_get_sharetype __P((struct alpha_shared_intr *,
+	    unsigned int));
+int	alpha_shared_intr_isactive __P((struct alpha_shared_intr *,
+	    unsigned int));
+void	alpha_shared_intr_set_dfltsharetype __P((struct alpha_shared_intr *,
+	    unsigned int, int));
+void	alpha_shared_intr_set_maxstrays __P((struct alpha_shared_intr *,
+	    unsigned int, int));
+void	alpha_shared_intr_stray __P((struct alpha_shared_intr *, unsigned int,
+	    const char *));
 
 #endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_machdep.h,v 1.6 1996/12/08 00:20:43 niklas Exp $	*/
-/*	$NetBSD: pci_machdep.h,v 1.4 1996/04/12 06:08:52 cgd Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.7 1997/01/24 19:57:53 niklas Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -86,6 +86,13 @@ struct alpha_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
+
+/*
+ * alpha-specific PCI functions.
+ * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
+ */
+void	pci_display_console __P((bus_space_tag_t, bus_space_tag_t,
+	    pci_chipset_tag_t, int, int, int));
 
 #ifdef _KERNEL
 void pci_display_console

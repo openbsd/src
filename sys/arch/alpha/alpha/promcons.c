@@ -1,8 +1,8 @@
-/*	$OpenBSD: promcons.c,v 1.4 1996/10/30 22:38:25 niklas Exp $	*/
-/*	$NetBSD: promcons.c,v 1.3 1996/05/30 18:44:30 cgd Exp $	*/
+/*	$OpenBSD: promcons.c,v 1.5 1997/01/24 19:56:43 niklas Exp $	*/
+/*	$NetBSD: promcons.c,v 1.5 1996/11/13 22:20:55 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

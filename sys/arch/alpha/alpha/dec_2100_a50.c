@@ -1,5 +1,5 @@
-/*	$OpenBSD: dec_2100_a50.c,v 1.6 1996/12/08 00:20:14 niklas Exp $	*/
-/*	$NetBSD: dec_2100_a50.c,v 1.15 1996/10/23 04:12:13 cgd Exp $	*/
+/*	$OpenBSD: dec_2100_a50.c,v 1.7 1997/01/24 19:56:22 niklas Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.18 1996/11/25 03:59:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/ic/comreg.h>
@@ -46,13 +47,13 @@
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
 
-#include <alpha/alpha/dec_2100_a50.h>
-
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-char *
-dec_2100_a50_modelname()
+cpu_decl(dec_2100_a50);
+
+const char *
+dec_2100_a50_model_name()
 {
 	static char s[80];
 
@@ -84,14 +85,14 @@ dec_2100_a50_modelname()
 }
 
 void
-dec_2100_a50_consinit()
+dec_2100_a50_cons_init()
 {
 	struct ctb *ctb;
 	struct apecs_config *acp;
 	extern struct apecs_config apecs_configuration;
 
 	acp = &apecs_configuration;
-	apecs_init(acp);
+	apecs_init(acp, 0);
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
@@ -123,9 +124,12 @@ dec_2100_a50_consinit()
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(acp->ac_iot, acp->ac_memt, &acp->ac_pc,
-		    (ctb->ctb_turboslot >> 8) & 0xff,
-		    ctb->ctb_turboslot & 0xff, 0);
+		if (ctb->ctb_turboslot == 0)
+			isa_display_console(acp->ac_iot, acp->ac_memt);
+		else
+			pci_display_console(acp->ac_iot, acp->ac_memt,
+			    &acp->ac_pc, (ctb->ctb_turboslot >> 8) & 0xff,
+			    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
@@ -135,6 +139,13 @@ dec_2100_a50_consinit()
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
+}
+
+const char *
+dec_2100_a50_iobus_name()
+{
+
+	return ("apecs");
 }
 
 void

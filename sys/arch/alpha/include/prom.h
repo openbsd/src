@@ -1,8 +1,8 @@
-/*	$OpenBSD: prom.h,v 1.5 1996/11/28 20:09:29 niklas Exp $	*/
-/*	$NetBSD: prom.h,v 1.4 1996/10/15 23:52:49 cgd Exp $	*/
+/*	$OpenBSD: prom.h,v 1.6 1997/01/24 19:57:18 niklas Exp $	*/
+/*	$NetBSD: prom.h,v 1.6 1996/11/13 22:21:03 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
@@ -58,8 +58,6 @@ int	prom_getenv __P((int, char *, int));
 
 void	init_prom_interface __P((void));
 void	hwrbp_restart_setup __P((void));
-int	prom_dispatch __P((int, ...));
-int	promcnlookc __P((dev_t, char *));
 #endif
 
 /* Prom operation values. */
@@ -83,8 +81,26 @@ int	promcnlookc __P((dev_t, char *));
  * either don't need to copy anything, or don't need the copy because it's
  * already being done elsewhere, are defined here.
  */
-#define	prom_close(chan)	prom_dispatch(PROM_R_CLOSE, chan)
-#define	prom_read(chan, len, buf, blkno) \
-	prom_dispatch(PROM_R_READ, chan, len, buf, blkno)
-#define	prom_write(chan, len, buf, blkno) \
-	prom_dispatch(PROM_R_WRITE, chan, len, buf, blkno)
+#define	prom_close(chan)						\
+	prom_dispatch(PROM_R_CLOSE, chan, 0, 0, 0)
+#define	prom_read(chan, len, buf, blkno)				\
+	prom_dispatch(PROM_R_READ, chan, len, (u_int64_t)buf, blkno)
+#define	prom_write(chan, len, buf, blkno)				\
+	prom_dispatch(PROM_R_WRITE, chan, len, (u_int64_t)buf, blkno)
+#define	prom_putstr(chan, str, len)					\
+	prom_dispatch(PROM_R_PUTS, chan, (u_int64_t)str, len, 0)
+#define	prom_getc(chan)							\
+	prom_dispatch(PROM_R_GETC, chan, 0, 0, 0)
+#define prom_getenv_disp(id, buf, len)					\
+	prom_dispatch(PROM_R_GETENV, id, (u_int64_t)buf, len, 0)
+
+#ifndef ASSEMBLER
+#ifdef _KERNEL
+void	promcnputc __P((dev_t, int));
+int	promcngetc __P((dev_t));
+int	promcnlookc __P((dev_t, char *));
+
+u_int64_t	prom_dispatch __P((u_int64_t, u_int64_t, u_int64_t, u_int64_t,
+		    u_int64_t));
+#endif /* _KERNEL */
+#endif /* ASSEMBLER */

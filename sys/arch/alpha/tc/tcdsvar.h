@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcdsvar.h,v 1.4 1996/10/30 22:41:31 niklas Exp $	*/
-/*	$NetBSD: tcdsvar.h,v 1.4 1996/09/09 18:10:39 cgd Exp $	*/
+/*	$OpenBSD: tcdsvar.h,v 1.5 1997/01/24 19:58:24 niklas Exp $	*/
+/*	$NetBSD: tcdsvar.h,v 1.5 1996/11/13 21:13:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -89,6 +89,7 @@ void	tcds_intr_establish __P((struct device *, void *, tc_intrlevel_t,
 void	tcds_intr_disestablish __P((struct device *, void *));
 void	tcds_dma_enable __P((struct tcds_slotconfig *, int));
 void	tcds_scsi_enable __P((struct tcds_slotconfig *, int));
+int	tcds_scsi_iserr __P((struct tcds_slotconfig *));
 int	tcds_scsi_isintr __P((struct tcds_slotconfig *, int));
 void	tcds_scsi_reset __P((struct tcds_slotconfig *));
 int	tcds_scsi_iserr __P((struct tcds_slotconfig *));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_machdep.c,v 1.6 1996/12/08 00:20:42 niklas Exp $	*/
-/*	$NetBSD: pci_machdep.c,v 1.6 1996/10/23 04:12:29 cgd Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.7 1997/01/24 19:57:52 niklas Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 1996/11/19 04:57:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -45,9 +45,9 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include "pcivga.h"
-#if NPCIVGA
-#include <alpha/pci/pcivgavar.h>
+#include "vga_pci.h"
+#if NVGA_PCI
+#include <alpha/pci/vga_pcivar.h>
 #endif
 
 #include "tga.h"
@@ -77,11 +77,11 @@ pci_display_console(iot, memt, pc, bus, device, function)
 	match = 0;
 	fn = NULL;
 
-#if NPCIVGA
-	nmatch = DEVICE_IS_PCIVGA(class, id);
+#if NVGA_PCI
+	nmatch = DEVICE_IS_VGA_PCI(class, id);
 	if (nmatch > match) {
 		match = nmatch;
-		fn = pcivga_console;
+		fn = vga_pci_console;
 	}
 #endif
 #if NTGA

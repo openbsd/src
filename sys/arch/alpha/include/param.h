@@ -1,5 +1,5 @@
-/*	$OpenBSD: param.h,v 1.8 1996/12/11 11:12:51 deraadt Exp $	*/
-/*	$NetBSD: param.h,v 1.14 1996/10/25 20:48:59 cgd Exp $	*/
+/*	$OpenBSD: param.h,v 1.9 1997/01/24 19:57:14 niklas Exp $	*/
+/*	$NetBSD: param.h,v 1.15 1996/11/13 21:13:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,7 @@
 #define	MID_MACHINE	MID_ALPHA
 
 #include <machine/alpha_cpu.h>
+#include <machine/cpu.h>
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.5 1996/10/30 22:38:58 niklas Exp $	*/
-/*	$NetBSD: cpu.h,v 1.12 1996/07/14 04:15:10 cgd Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 1997/01/24 19:57:10 niklas Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 1996/12/07 01:54:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,7 +110,8 @@ u_int64_t want_resched;		/* resched() was called */
 #define	CPU_UNALIGNED_PRINT	3	/* int: print unaligned accesses */
 #define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
 #define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
-#define	CPU_MAXID		6	/* 5 valid machdep IDs */
+#define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
+#define	CPU_MAXID		7	/* 6 valid machdep IDs */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -119,6 +120,55 @@ u_int64_t want_resched;		/* resched() was called */
 	{ "unaligned_print", CTLTYPE_INT }, \
 	{ "unaligned_fix", CTLTYPE_INT }, \
 	{ "unaligned_sigbus", CTLTYPE_INT }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
 }
+
+#ifdef _KERNEL
+
+struct pcb;
+struct proc;
+struct reg;
+struct rpb;
+struct trapframe;
+
+extern int cold;
+extern struct proc *fpcurproc;
+extern struct rpb *hwrpb;
+
+void	XentArith __P((u_int64_t, u_int64_t, u_int64_t));	/* MAGIC */
+void	XentIF __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
+void	XentInt __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
+void	XentMM __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
+void	XentRestart __P((void));				/* MAGIC */
+void	XentSys __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
+void	XentUna __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
+void	alpha_init __P((u_long, u_long));
+void	ast __P((struct trapframe *));
+int	badaddr	__P((void *, size_t));
+void	child_return __P((struct proc *p));
+void	configure __P((void));
+u_int64_t console_restart __P((u_int64_t, u_int64_t, u_int64_t));
+void	do_sir __P((void));
+void	dumpconf __P((void));
+void	exception_return __P((void));				/* MAGIC */
+void	frametoreg __P((struct trapframe *, struct reg *));
+long	fswintrberr __P((void));				/* MAGIC */
+void	init_prom_interface __P((void));
+void	interrupt __P((unsigned long, unsigned long, unsigned long,
+	    struct trapframe *));
+u_int64_t hwrpb_checksum __P((void));
+void	hwrpb_restart_setup __P((void));
+void	regdump __P((struct trapframe *));
+void	regtoframe __P((struct reg *, struct trapframe *));
+void	savectx __P((struct pcb *));
+void	set_clockintr __P((void));
+void	set_iointr __P((void (*)(void *, unsigned long)));
+void    switch_exit __P((struct proc *));			/* MAGIC */
+void	switch_trampoline __P((void));				/* MAGIC */
+void	syscall __P((u_int64_t, struct trapframe *));
+void	trap __P((unsigned long, unsigned long, unsigned long, unsigned long,
+	    struct trapframe *));
+
+#endif /* _KERNEL */
 
 #endif /* _ALPHA_CPU_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: lcareg.h,v 1.4 1996/10/30 22:40:00 niklas Exp $	*/
-/*	$NetBSD: lcareg.h,v 1.3 1996/07/09 00:54:51 cgd Exp $	*/
+/*	$OpenBSD: lcareg.h,v 1.5 1997/01/24 19:57:45 niklas Exp $	*/
+/*	$NetBSD: lcareg.h,v 1.4 1996/11/23 06:41:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -33,6 +33,7 @@
  */
 
 #define REGVAL(r)	(*(int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define REGVAL64(r)	(*(int64_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * Base addresses
@@ -43,7 +44,9 @@
 #define LCA_PCI_SPARSE	0x200000000L		/* PCI Sparse Space */
 #define LCA_PCI_DENSE	0x300000000L		/* PCI Dense Space */
 
-#define LCA_IOC_HAE	LCA_IOC_BASE		/* Host Address Extension */
+#define LCA_IOC_HAE	LCA_IOC_BASE		/* Host Address Ext. (64) */
+#define	IOC_HAE_ADDREXT	0x00000000f8000000UL
+#define	IOC_HAE_RSVSD	0xffffffff07ffffffUL
 
 #define LCA_IOC_CONF	(LCA_IOC_BASE + 0x020)	/* Configuration Cycle Type */
 #define LCA_IOC_STAT0	(LCA_IOC_BASE + 0x040)	/* Status 0 */

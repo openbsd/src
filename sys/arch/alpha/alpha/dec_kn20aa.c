@@ -1,5 +1,5 @@
-/*	$OpenBSD: dec_kn20aa.c,v 1.5 1996/12/08 00:20:17 niklas Exp $	*/
-/*	$NetBSD: dec_kn20aa.c,v 1.13 1996/10/23 04:12:15 cgd Exp $	*/
+/*	$OpenBSD: dec_kn20aa.c,v 1.6 1997/01/24 19:56:30 niklas Exp $	*/
+/*	$NetBSD: dec_kn20aa.c,v 1.16 1996/11/25 03:59:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/ic/comreg.h>
@@ -46,13 +47,13 @@
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
 
-#include <alpha/alpha/dec_kn20aa.h>
-
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-char *
-dec_kn20aa_modelname()
+cpu_decl(dec_kn20aa);
+
+const char *
+dec_kn20aa_model_name()
 {
 
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
@@ -67,14 +68,14 @@ dec_kn20aa_modelname()
 }
 
 void
-dec_kn20aa_consinit()
+dec_kn20aa_cons_init()
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
 	extern struct cia_config cia_configuration;
 
 	ccp = &cia_configuration;
-	cia_init(ccp);
+	cia_init(ccp, 0);
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
@@ -106,9 +107,12 @@ dec_kn20aa_consinit()
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(ccp->cc_iot, ccp->cc_memt, &ccp->cc_pc,
-		    (ctb->ctb_turboslot >> 8) & 0xff,
-		    ctb->ctb_turboslot & 0xff, 0);
+		if (ctb->ctb_turboslot == 0)
+			isa_display_console(ccp->cc_iot, ccp->cc_memt);
+		else
+			pci_display_console(ccp->cc_iot, ccp->cc_memt,
+			    &ccp->cc_pc, (ctb->ctb_turboslot >> 8) & 0xff,
+			    ctb->ctb_turboslot & 0xff, 0);
 		break;
 
 	default:
@@ -118,6 +122,13 @@ dec_kn20aa_consinit()
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
 	}
+}
+
+const char *
+dec_kn20aa_iobus_name()
+{
+
+	return ("cia");
 }
 
 void

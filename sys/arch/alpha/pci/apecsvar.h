@@ -1,5 +1,5 @@
-/*	$OpenBSD: apecsvar.h,v 1.5 1996/12/08 00:20:34 niklas Exp $	*/
-/*	$NetBSD: apecsvar.h,v 1.4 1996/10/23 04:12:23 cgd Exp $	*/
+/*	$OpenBSD: apecsvar.h,v 1.6 1997/01/24 19:57:35 niklas Exp $	*/
+/*	$NetBSD: apecsvar.h,v 1.5 1996/11/25 03:49:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -38,12 +38,19 @@
  * do their dirty work (and more!).
  */
 struct apecs_config {
+	int	ac_initted;
+
 	int	ac_comanche_pass2;
 	int	ac_epic_pass2;
 	int	ac_memwidth;
 
 	bus_space_tag_t ac_iot, ac_memt;
 	struct alpha_pci_chipset ac_pc;
+
+	u_int32_t ac_haxr1, ac_haxr2;
+
+	struct extent *ac_io_ex, *ac_d_mem_ex, *ac_s_mem_ex;
+	int	ac_mallocsafe;
 };
 
 struct apecs_softc {
@@ -52,8 +59,8 @@ struct apecs_softc {
 	struct	apecs_config *sc_acp;
 };
 
-void	apecs_init __P((struct apecs_config *));
+void	apecs_init __P((struct apecs_config *, int));
 void	apecs_pci_init __P((pci_chipset_tag_t, void *));
 
-bus_space_tag_t apecs_lca_bus_io_init __P((void *iov));
-bus_space_tag_t apecs_lca_bus_mem_init __P((void *memv));
+bus_space_tag_t apecs_bus_io_init __P((void *));
+bus_space_tag_t apecs_bus_mem_init __P((void *));
