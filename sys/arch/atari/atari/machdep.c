@@ -90,6 +90,7 @@
 
 #include "ether.h"
 #include "ppp.h"
+#include "bridge.h"
 
 static void call_sicallbacks __P((void));
 static void alloc_sicallback __P((void));
@@ -1137,6 +1138,12 @@ netintr()
 	if (netisr & (1 << NETISR_PPP)) {
 		netisr &= ~(1 << NETISR_PPP);
 		pppintr();
+	}
+#endif
+#if NBRIDGE > 0
+	if (netisr & (1 << NETISR_BRIDGE)) {
+		netisr &= ~(1 << NETISR_BRIDGE);
+		bridgeintr();
 	}
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.10 1999/01/07 23:15:58 deraadt Exp $	*/
+/*	$OpenBSD: icu.s,v 1.11 1999/05/24 23:09:01 jason Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -184,6 +184,10 @@ IDTVEC(softnet)
 #include "ppp.h"
 #if NPPP > 0
 	DONET(NETISR_PPP, _pppintr)
+#endif
+#include "bridge.h"
+#if NBRIDGE > 0
+	DONET(NETISR_BRIDGE, _bridgeintr)
 #endif
 	movl	%ebx,_cpl
 	jmp	%esi

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.12 1999/01/07 23:15:49 deraadt Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.13 1999/05/24 23:09:11 jason Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #define	NETISR_ISDN	26		/* same as AF_E164 */
 #define	NETISR_NATM	27		/* same as AF_ATM */
 #define	NETISR_PPP	28		/* for PPP processing */
+#define	NETISR_BRIDGE	29		/* for bridge processing */
 
 #ifndef _LOCORE
 #ifdef _KERNEL
@@ -80,6 +81,7 @@ void	clnlintr __P((void));
 void	natmintr __P((void));
 void	pppintr __P((void));
 void	ccittintr __P((void));
+void	bridgeintr __P((void));
 
 #include <dev/rndvar.h>
 #define	schednetisr(anisr)	\

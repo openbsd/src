@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.4 1999/01/11 05:11:20 millert Exp $	*/
+/*	$OpenBSD: intr.c,v 1.5 1999/05/24 23:09:00 jason Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1997/05/01 16:24:26 thorpej Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 
 #include <net/netisr.h>
 #include "ppp.h"
+#include "bridge.h"
 
 void	netintr __P((void));
 
@@ -327,6 +328,12 @@ netintr()
 	if (netisr & (1 << NETISR_PPP)) {
 		netisr &= ~(1 << NETISR_PPP);
 		pppintr();
+	}
+#endif
+#if NBRIDGE > 0
+	if (netisr & (1 << NETISR_BRIDGE)) {
+		netisr &= ~(1 << NETISR_BRIDGE);
+		bridgeintr();
 	}
 #endif
 }

@@ -67,6 +67,7 @@
 #include <netinet/ip_var.h>
 #endif
 #include "ppp.h"
+#include "bridge.h"
 
 void	strayintr __P((struct clockframe *));
 int	soft01intr __P((void *));
@@ -155,6 +156,10 @@ soft01intr(fp)
 #if NPPP > 0
 			if (n & (1 << NETISR_PPP))
 				pppintr();
+#endif
+#if NBRIDGE > 0
+			if (n & (1 << NETISR_BRIDGE))
+				bridgeintr();
 #endif
 		}
 		if (sir.sir_which[SIR_CLOCK]) {

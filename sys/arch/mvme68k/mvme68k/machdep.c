@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 1999/05/22 21:22:26 weingart Exp $ */
+/*	$OpenBSD: machdep.c,v 1.27 1999/05/24 23:09:04 jason Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -902,6 +902,13 @@ netintr()
 	if (netisr & (1 << NETISR_PPP)) {
 		netisr &= ~(1 << NETISR_PPP);
 		pppintr();
+	}
+#endif
+#include "bridge.h"
+#if NBRIDGE > 0
+	if (netisr & (1 << NETISR_BRIDGE)) {
+		netisr &= ~(1 << NETISR_BRIDGE);
+		bridgeintr();
 	}
 #endif
 }

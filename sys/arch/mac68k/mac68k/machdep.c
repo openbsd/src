@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 1999/05/23 06:55:06 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 1999/05/24 23:09:03 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -1062,6 +1062,13 @@ netintr()
 	if (netisr & (1 << NETISR_PPP)) {
 		netisr &= ~(1 << NETISR_PPP);
 		pppintr();
+	}
+#endif
+#include "bridge.h"
+#if NBRIDGE > 0
+	if (netisr & (1 << NETISR_BRIDGE)) {
+		netisr &= ~(1 << NETISR_BRIDGE);
+		bridgeintr();
 	}
 #endif
 }

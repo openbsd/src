@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 1999/05/22 10:01:09 maja Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 1999/05/24 23:09:06 jason Exp $	*/
 /*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #include <miscfs/procfs/procfs.h>
 
 #include "ppp.h"
+#include "bridge.h"
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
@@ -1082,6 +1083,12 @@ interrupt(statusReg, causeReg, pc /* XXX what, args */ )
 		if (netisr & (1 << NETISR_PPP)) {
 			netisr &= ~(1 << NETISR_PPP);
 			pppintr();
+		}
+#endif
+#if NBRIDGE > 0
+		if (netisr & (1 << NETISR_BRIDGE)) {
+			netisr &= ~(1 << NETISR_BRIDGE);
+			bridgeintr();
 		}
 #endif
 	}

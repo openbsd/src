@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.8 1999/03/19 22:47:33 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.9 1999/05/24 23:09:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -48,6 +48,7 @@
 #include <net/if_types.h>
 #include <net/if_llc.h>
 #include <net/route.h>
+#include <net/netisr.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -118,7 +119,7 @@ struct bridge_softc {
 	struct				ifnet sc_if;	/* the interface */
 	u_int32_t			sc_brtmax;	/* max # addresses */
 	u_int32_t			sc_brtcnt;	/* current # addrs */
-	u_int32_t			sc_brttimeout;	/* current # addrs */
+	u_int32_t			sc_brttimeout;	/* timeout ticks */
 	LIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
 	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
 };
@@ -180,7 +181,7 @@ bridgeattach(unused)
 		ifp->if_ioctl = bridge_ioctl;
 		ifp->if_output = bridge_output;
 		ifp->if_start = bridge_start;
-		ifp->if_type  = IFT_PROPVIRTUAL;
+		ifp->if_type = IFT_PROPVIRTUAL;
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 		ifp->if_hdrlen = sizeof(struct ether_header);
 		if_attach(ifp);
@@ -190,7 +191,7 @@ bridgeattach(unused)
 int
 bridge_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	u_long	cmd;
+	u_long cmd;
 	caddr_t	data;
 {
 	struct proc *prc = curproc;		/* XXX */
@@ -207,7 +208,7 @@ bridge_ioctl(ifp, cmd, data)
 	struct bridge_iflist *p;
 
 	s = splimp();
-	switch(cmd) {
+	switch (cmd) {
 	case SIOCBRDGADD:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 			break;
@@ -217,17 +218,14 @@ bridge_ioctl(ifp, cmd, data)
 			error = ENOENT;
 			break;
 		}
-
 		if (ifs->if_bridge == (caddr_t)sc) {
 			error = EEXIST;
 			break;
 		}
-
 		if (ifs->if_bridge != NULL) {
 			error = EBUSY;
 			break;
 		}
-
 		if (ifs->if_type != IFT_ETHER) {
 			error = EINVAL;
 			break;
@@ -252,7 +250,6 @@ bridge_ioctl(ifp, cmd, data)
 			if (error != 0)
 				break;
 
-
 			strncpy(ifreq.ifr_name, req->ifbr_ifsname,
 			    sizeof(ifreq.ifr_name) - 1);
 			ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
@@ -264,8 +261,7 @@ bridge_ioctl(ifp, cmd, data)
 				ifpromisc(ifs, 0);
 				break;
 			}
-		}
-		else {
+		} else {
 			error = ifpromisc(ifs, 1);
 			if (error != 0)
 				break;
@@ -460,11 +456,11 @@ bridge_bifconf(sc, bifc)
 	i = 0;
 	while (p != NULL && bifc->ifbic_len > sizeof(breq)) {
 		strncpy(breq.ifbr_name, sc->sc_if.if_xname,
-		    sizeof (breq.ifbr_name));
-		breq.ifbr_name[sizeof(breq.ifbr_name)-1] = '\0';
+		    sizeof(breq.ifbr_name));
+		breq.ifbr_name[sizeof(breq.ifbr_name) - 1] = '\0';
 		strncpy(breq.ifbr_ifsname, p->ifp->if_xname,
-		    sizeof (breq.ifbr_ifsname));
-		breq.ifbr_ifsname[sizeof(breq.ifbr_ifsname)-1] = '\0';
+		    sizeof(breq.ifbr_ifsname));
+		breq.ifbr_ifsname[sizeof(breq.ifbr_ifsname) - 1] = '\0';
 		breq.ifbr_ifsflags = p->bif_flags;
 		error = copyout((caddr_t)&breq,
 		    (caddr_t)(bifc->ifbic_req + i), sizeof(breq));
@@ -485,8 +481,7 @@ bridge_init(sc)
 	struct bridge_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	int i;
-	int s;
+	int i, s;
 
 	if ((ifp->if_flags & IFF_RUNNING) == IFF_RUNNING)
 		return;
@@ -500,7 +495,6 @@ bridge_init(sc)
 			splx(s);
 			return;
 		}
-
 		for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 			LIST_INIT(&sc->sc_rts[i]);
 		}
@@ -673,6 +667,162 @@ bridge_start(ifp)
 }
 
 /*
+ * Loop through each bridge interface and process their input queues.
+ */
+void
+bridgeintr(void)
+{
+	int i, s;
+	struct bridge_softc *sc;
+	struct ifnet *bifp, *src_if, *dst_if;
+	struct bridge_iflist *ifl;
+	struct ether_addr *dst, *src;
+	struct ether_header *eh;
+	struct mbuf *m;
+
+	for (i = 0; i < NBRIDGE; i++) {
+		sc = &bridgectl[i];
+		bifp = &sc->sc_if;
+		for (;;) {
+			s = splimp();
+			IF_DEQUEUE(&bifp->if_snd, m);
+			splx(s);
+			if (m == NULL)
+				break;
+
+			src_if = m->m_pkthdr.rcvif;
+			if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
+				m_freem(m);
+				continue;
+			}
+
+			sc->sc_if.if_lastchange = time;
+			sc->sc_if.if_ipackets++;
+			sc->sc_if.if_ibytes += m->m_pkthdr.len;
+
+			ifl = LIST_FIRST(&sc->sc_iflist);
+			while (ifl != NULL && ifl->ifp != src_if) {
+				ifl = LIST_NEXT(ifl, next);
+			}
+			if (ifl == NULL) {
+				m_freem(m);
+				continue;
+			}
+
+			if (m->m_len < sizeof(*eh)) {
+				m = m_pullup(m, sizeof(*eh));
+				if (m == NULL)
+					continue;
+			}
+			eh = mtod(m, struct ether_header *);
+			dst = (struct ether_addr *)&eh->ether_dhost[0];
+			src = (struct ether_addr *)&eh->ether_shost[0];
+
+			/*
+			 * If interface is learning, and if source address
+			 * is not broadcast or multicast, record it's address.
+	 		 */
+			if ((ifl->bif_flags & IFBIF_LEARNING) &&
+			    (eh->ether_shost[0] & 1) == 0 &&
+			    !(eh->ether_shost[0] == 0 &&
+			      eh->ether_shost[1] == 0 &&
+			      eh->ether_shost[2] == 0 &&
+			      eh->ether_shost[3] == 0 &&
+			      eh->ether_shost[4] == 0 &&
+			      eh->ether_shost[5] == 0))
+				bridge_rtupdate(sc, src, src_if, 0, IFBAF_DYNAMIC);
+
+			/*
+			 * If packet is unicast, destined for someone on "this"
+			 * side of the bridge, drop it.
+			 */
+			dst_if = bridge_rtlookup(sc, dst);
+			if ((m->m_flags & (M_BCAST | M_MCAST)) == 0 &&
+			    dst_if == src_if) {
+				m_freem(m);
+				continue;
+			}
+
+			/*
+			 * Multicast packets get handled a little differently:
+			 * If interface is:
+			 *	-link0,-link1	(default) Forward all multicast
+			 *			as broadcast.
+			 *	-link0,link1	Drop non-IP multicast, forward
+			 *			as broadcast IP multicast.
+			 *	link0,-link1	Drop IP multicast, forward as
+			 *			broadcast non-IP multicast.
+			 *	link0,link1	Drop all multicast.
+			 */
+			if (m->m_flags & M_MCAST) {
+				if ((sc->sc_if.if_flags &
+				    (IFF_LINK0 | IFF_LINK1)) ==
+				    (IFF_LINK0 | IFF_LINK1)) {
+					m_freem(m);
+					continue;
+				}
+				if (sc->sc_if.if_flags & IFF_LINK0 &&
+				    ETHERADDR_IS_IP_MCAST(dst)) {
+					m_freem(m);
+					continue;
+				}
+				if (sc->sc_if.if_flags & IFF_LINK1 &&
+				    !ETHERADDR_IS_IP_MCAST(dst)) {
+					m_freem(m);
+					continue;
+				}
+			}
+
+#if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
+			if (bridge_filter(sc, src_if, eh, &m) ==
+			    BRIDGE_FILTER_DROP) {
+				if (m != NULL)
+					m_freem(m);
+				continue;
+			}
+#endif
+			/*
+			 * If the packet is a multicast or broadcast, then
+			 * forward it and pass it up to our higher layers.
+			 */
+			if (m->m_flags & (M_BCAST | M_MCAST)) {
+				bifp->if_imcasts++;
+				m = bridge_broadcast(sc, src_if, eh, m);
+				if (m != NULL)
+					m_freem(m);
+				continue;
+			}
+
+			if (dst_if != NULL) {
+				if ((dst_if->if_flags & IFF_RUNNING) == 0) {
+					m_freem(m);
+					continue;
+				}
+				s = splimp();
+				if (IF_QFULL(&dst_if->if_snd)) {
+					sc->sc_if.if_oerrors++;
+					m_freem(m);
+					splx(s);
+					continue;
+				}
+				sc->sc_if.if_opackets++;
+				sc->sc_if.if_obytes += m->m_pkthdr.len;
+				IF_ENQUEUE(&dst_if->if_snd, m);
+				if ((dst_if->if_flags & IFF_OACTIVE) == 0)
+					(*dst_if->if_start)(dst_if);
+				splx(s);
+				continue;
+			}
+
+			m = bridge_broadcast(sc, src_if, eh, m);
+			dst_if = NULL;
+			if (m != NULL)
+				m_freem(m);
+		}
+	}
+}
+
+/*
  * Receive input from an interface.  Rebroadcast if necessary to other
  * bridge members.
  */
@@ -683,11 +833,11 @@ bridge_input(ifp, eh, m)
 	struct mbuf *m;
 {
 	struct bridge_softc *sc;
-	struct arpcom *ac;
-	struct ether_addr *dst, *src;
-	struct ifnet *dst_if;
-	struct bridge_iflist *ifl;
 	int s;
+	struct bridge_iflist *ifl;
+	struct arpcom *ac;
+	struct ether_header *neh;
+	struct mbuf *mc;
 
 	/*
 	 * Make sure this interface is a bridge member.
@@ -696,167 +846,59 @@ bridge_input(ifp, eh, m)
 		return (m);
 
 	sc = (struct bridge_softc *)ifp->if_bridge;
-
-	s = splimp();
-
-	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
-		splx(s);
+	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (m);
-	}
 
-	sc->sc_if.if_lastchange = time;
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_ibytes += m->m_pkthdr.len;
-
-	/*
-	 * See if the destination of this frame matches the interface
-	 * it came in on.  If so, we don't need to do anything.
-	 */
-	ac = (struct arpcom *)ifp;
-	if (bcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) == 0) {
-		splx(s);
-		return (m);
-	}
-
-	dst = (struct ether_addr *)&eh->ether_dhost[0];
-	src = (struct ether_addr *)&eh->ether_shost[0];
-
-	ifl = LIST_FIRST(&sc->sc_iflist);
-	while (ifl != NULL && ifl->ifp != ifp) {
-		ifl = LIST_NEXT(ifl, next);
-	}
-	if (ifl == NULL) {
-		splx(s);
-		return (m);
-	}
-
-	/*
-	 * If interface is learning, and if source address is not broadcast
-	 * or multicast, record it's address.
-	 */
-	if ((ifl->bif_flags & IFBIF_LEARNING) &&
-	    (eh->ether_shost[0] & 1) == 0 &&
-	    !(eh->ether_shost[0] == 0 && eh->ether_shost[1] == 0 &&
-	      eh->ether_shost[2] == 0 && eh->ether_shost[3] == 0 &&
-	      eh->ether_shost[4] == 0 && eh->ether_shost[5] == 0))
-		bridge_rtupdate(sc, src, ifp, 0, IFBAF_DYNAMIC);
-
-	/*
-	 * If packet is unicast, destined for someone on "this"
-	 * side of the bridge, drop it.
-	 */
-	dst_if = bridge_rtlookup(sc, dst);
-	if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 && dst_if == ifp) {
-		m_freem(m);
-		splx(s);
-		return (NULL);
-	}
-
-	/*
-	 * Multicast packets get handled a little differently:
-	 * If interface is:
-	 *	-link0,-link1	(default) Forward all multicast as broadcast.
-	 *	-link0,link1	Drop non-IP multicast, forward as broadcast
-	 *				IP multicast.
-	 *	link0,-link1	Drop IP multicast, forward as broadcast
-	 *				non-IP multicast.
-	 *	link0,link1	Drop all multicast.
-	 */
-	if (m->m_flags & M_MCAST) {
-		if ((sc->sc_if.if_flags & (IFF_LINK0|IFF_LINK1)) ==
-		    (IFF_LINK0|IFF_LINK1)) {
+	if (m->m_flags & (M_BCAST | M_MCAST)) {
+		/* make a copy of 'm' with 'eh' tacked on to the
+		 * beginning.  Return 'm' for local processing
+		 * and enqueue the copy.  Schedule netisr.
+		 */
+		mc = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
+		if (mc == NULL)
+			return (m);
+		M_PREPEND(mc, sizeof(*eh), M_DONTWAIT);
+		if (mc == NULL)
+			return (m);
+		neh = mtod(mc, struct ether_header *);
+		bcopy(eh, neh, sizeof(struct ether_header));
+		s = splimp();
+		if (IF_QFULL(&sc->sc_if.if_snd)) {
+			m_freem(mc);
 			splx(s);
 			return (m);
 		}
-		if (sc->sc_if.if_flags & IFF_LINK0 &&
-		    ETHERADDR_IS_IP_MCAST(dst)) {
-			splx(s);
-			return (m);
-		}
-		if (sc->sc_if.if_flags & IFF_LINK1 &&
-		    !ETHERADDR_IS_IP_MCAST(dst)) {
-			splx(s);
-			return (m);
-		}
-	}
-
-#if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
-	/*
-	 * Pass the packet to the ip filtering code and drop
-	 * here if necessary.
-	 */
-	if (bridge_filter(sc, ifp, eh, &m) == BRIDGE_FILTER_DROP) {
-		if (m == NULL || m->m_flags & (M_BCAST|M_MCAST)) {
-			/*
-			 * Broadcasts should be passed down if filtered
-			 * by the bridge, so that they can be filtered
-			 * by the interface itself.
-			 */
-			 splx(s);
-			 return (m);
-		}
-		m_freem(m);
+		IF_ENQUEUE(&sc->sc_if.if_snd, mc);
 		splx(s);
-		return (NULL);
-	}
-	if (m == NULL) {
-		splx(s);
-		return (NULL);
-	}
-#endif
-
-	/*
-	 * If the packet is a multicast or broadcast, then forward it
-	 * and pass it up to our higher layers.
-	 */
-	if (m->m_flags & (M_BCAST|M_MCAST)) {
-		ifp->if_imcasts++;
-		m = bridge_broadcast(sc, ifp, eh, m);
-		splx(s);
+		schednetisr(NETISR_BRIDGE);
 		return (m);
 	}
-
-	/*
-	 * If sucessful lookup, forward packet to that interface only.
-	 */
-	if (dst_if != NULL) {
-		if ((dst_if->if_flags & IFF_RUNNING) == 0) {
-			m_freem(m);
-			splx(s);
-			return (NULL);
+	else {
+		ifl = LIST_FIRST(&sc->sc_iflist);
+		while (ifl != NULL) {
+			ac = (struct arpcom *)ifl->ifp;
+			if (bcmp(ac->ac_enaddr, eh->ether_dhost,
+			    ETHER_ADDR_LEN) == 0) {
+				return (m);
+			}
+			ifl = LIST_NEXT(ifl, next);
 		}
-
-		if (IF_QFULL(&dst_if->if_snd)) {
-			sc->sc_if.if_oerrors++;
-			m_freem(m);
-			splx(s);
-			return (NULL);
-		}
-
 		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
-		if (m == NULL) {
-			sc->sc_if.if_oerrors++;
+		if (m == NULL)
+			return (NULL);
+		neh = mtod(m, struct ether_header *);
+		bcopy(eh, neh, sizeof(struct ether_header));
+		s = splimp();
+		if (IF_QFULL(&sc->sc_if.if_snd)) {
+			m_freem(m);
+			splx(s);
 			return (NULL);
 		}
-		*mtod(m, struct ether_header *) = *eh;
-
-		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += m->m_pkthdr.len;
-
-		IF_ENQUEUE(&dst_if->if_snd, m);
-       		if ((dst_if->if_flags & IFF_OACTIVE) == 0)
-			(*dst_if->if_start)(dst_if);
-
+		IF_ENQUEUE(&sc->sc_if.if_snd, m);
 		splx(s);
+		schednetisr(NETISR_BRIDGE);
 		return (NULL);
 	}
-
-	/*
-	 * Packet must be forwarded to all interfaces.
-	 */
-	m = bridge_broadcast(sc, ifp, eh, m);
-	splx(s);
-	return (m);
 }
 
 /*
@@ -872,15 +914,7 @@ bridge_broadcast(sc, ifp, eh, m)
 	struct mbuf *m;
 {
 	struct bridge_iflist *p;
-	struct mbuf *mc;
-
-	/*
-	 * Tack on ethernet header
-	 */
-	M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
-	if (m == NULL)
-		return (NULL);
-	*mtod(m, struct ether_header *) = *eh;
+	struct mbuf *mc, *ret;
 
 	for (p = LIST_FIRST(&sc->sc_iflist); p; p = LIST_NEXT(p, next)) {
 		/*
@@ -891,7 +925,7 @@ bridge_broadcast(sc, ifp, eh, m)
 			continue;
 
 		if ((p->bif_flags & IFBIF_DISCOVER) == 0 &&
-		    (m->m_flags & (M_BCAST|M_MCAST)) == 0)
+		    (m->m_flags & (M_BCAST | M_MCAST)) == 0)
 			continue;
 
 		if ((p->ifp->if_flags & IFF_RUNNING) == 0)
@@ -902,10 +936,18 @@ bridge_broadcast(sc, ifp, eh, m)
 			continue;
 		}
 
-		mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
-		if (mc == NULL) {
-			sc->sc_if.if_oerrors++;
-			continue;
+		/* If last one, reuse the passed-in mbuf */
+		if (LIST_NEXT(p, next) == NULL) {
+			mc = m;
+			ret = NULL;
+		}
+		else {
+			ret = m;
+			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+			if (mc == NULL) {
+				sc->sc_if.if_oerrors++;
+				continue;
+			}
 		}
 
 		sc->sc_if.if_opackets++;
@@ -918,8 +960,7 @@ bridge_broadcast(sc, ifp, eh, m)
 			(*p->ifp->if_start)(p->ifp);
 	}
 
-	m_adj(m, sizeof(struct ether_header));
-	return (m);
+	return (ret);
 }
 
 struct ifnet *
@@ -1245,8 +1286,7 @@ bridge_rtflush(sc)
 				sc->sc_brtcnt--;
 				free(n, M_DEVBUF);
 				n = p;
-			}
-			else
+			} else
 				n = LIST_NEXT(n, brt_next);
 		}
 	}
@@ -1317,8 +1357,7 @@ bridge_rtdelete(sc, ifp)
 				sc->sc_brtcnt--;
 				free(n, M_DEVBUF);
 				n = p;
-			}
-			else
+			} else
 				n = LIST_NEXT(n, brt_next);
 		}
 	}
@@ -1363,7 +1402,7 @@ bridge_rtfind(sc, baconf)
 				return (0);
 			}
 			bcopy(sc->sc_if.if_xname, bareq.ifba_name,
-				sizeof(bareq.ifba_name));
+			    sizeof(bareq.ifba_name));
 			bcopy(n->brt_if->if_xname, bareq.ifba_ifsname,
 			    sizeof(bareq.ifba_ifsname));
 			bcopy(&n->brt_addr, &bareq.ifba_dst,
@@ -1389,6 +1428,12 @@ bridge_rtfind(sc, baconf)
 }
 
 #if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))
+
+struct ehllc {
+	struct ether_header eh;
+	struct llc llc;
+};
+
 /*
  * Filter IP packets by peeking into the ethernet frame.  This violates
  * the ISO model, but allows us to act as a IP filter at the data link
@@ -1403,46 +1448,47 @@ bridge_filter(sc, ifp, eh, np)
 	struct mbuf **np;
 {
 	struct mbuf *m = *np;
-	struct llc *llc;
+	struct ehllc *ehllc;
 	struct ip *ip;
 	u_int16_t etype;
-	int hlen, r, off = 0;
+	int hlen, r, off = sizeof(struct ether_header);
 
 	if (fr_checkp == NULL)
 		return (BRIDGE_FILTER_PASS);
 
-	etype = ntohs(eh->ether_type);
+	if (m->m_len < sizeof(struct ehllc)) {
+		m = m_pullup(m, sizeof(struct ehllc));
+		*np = m;
+		if (m == NULL)
+			return (BRIDGE_FILTER_DROP);
+	}
+
+	ehllc = mtod(m, struct ehllc *);
+	etype = ntohs(ehllc->eh.ether_type);
 	if (etype != ETHERTYPE_IP) {
 		if (etype > ETHERMTU)	/* Can't be SNAP */
 			return (BRIDGE_FILTER_PASS);
 
-		m = *np;
-		if (m->m_len < 8) {
-			m = m_pullup(m, 8);
-			*np = m;
-			if (m == NULL)
-				return (BRIDGE_FILTER_DROP);
-		}
-		llc = mtod(m, struct llc *);
-		if (llc->llc_control != LLC_UI ||
-		    llc->llc_dsap != LLC_SNAP_LSAP ||
-		    llc->llc_ssap != LLC_SNAP_LSAP ||
-		    llc->llc_snap.org_code[0] != 0 ||
-		    llc->llc_snap.org_code[1] != 0 ||
-		    llc->llc_snap.org_code[2] != 0 ||
-		    ntohs(llc->llc_snap.ether_type) != ETHERTYPE_IP)
+		if (ehllc->llc.llc_control != LLC_UI ||
+		    ehllc->llc.llc_dsap != LLC_SNAP_LSAP ||
+		    ehllc->llc.llc_ssap != LLC_SNAP_LSAP ||
+		    ehllc->llc.llc_snap.org_code[0] != 0 ||
+		    ehllc->llc.llc_snap.org_code[1] != 0 ||
+		    ehllc->llc.llc_snap.org_code[2] != 0 ||
+		    ntohs(ehllc->llc.llc_snap.ether_type) != ETHERTYPE_IP)
 			return (BRIDGE_FILTER_PASS);
-		off = 8;
+		off += 8;
 	}
-
 
 	/*
 	 * We need a full copy because we're going to be destructive
 	 * to the packet before we pass it to the ip filter code.
 	 * XXX This needs to be turned into a munge -> check ->
 	 * XXX unmunge section, for now, we copy.
+	 * XXX Copy at offset 0 so that the mbuf header is copied, too.
 	 */
-	m = m_copym2(m, off, M_COPYALL, M_NOWAIT);
+	m = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
+	m_adj(m, off);
 	if (m == NULL)
 		return (BRIDGE_FILTER_DROP);
 
@@ -1463,12 +1509,12 @@ bridge_filter(sc, ifp, eh, np)
 		r = BRIDGE_FILTER_DROP;
 		goto out;
 	}
+
 	hlen = ip->ip_hl << 2;		/* get whole header length */
 	if (hlen < sizeof(struct ip)) {
 		r = BRIDGE_FILTER_DROP;
 		goto out;
 	}
-
 	if (hlen > m->m_len) {		/* pull up whole header */
 		if ((m = m_pullup(m, hlen)) == 0) {
 			r = BRIDGE_FILTER_DROP;
@@ -1497,18 +1543,12 @@ bridge_filter(sc, ifp, eh, np)
 		if (m->m_len == m->m_pkthdr.len) {
 			m->m_len = ip->ip_len;
 			m->m_pkthdr.len = ip->ip_len;
-		}
-		else
+		} else
 			m_adj(m, ip->ip_len - m->m_pkthdr.len);
 	}
 
-	/*
-	 * Finally, we get to filter the packet!  Pass through
-	 * once with the bridge as the rcvif, and again with the
-	 * real receiving interface as rcvif.
-	 */
-	m->m_pkthdr.rcvif = ifp;
-	if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m))
+	/* Finally, we get to filter the packet! */
+	if (fr_checkp && (*fr_checkp)(ip, hlen, ifp, 0, &m))
 		return (BRIDGE_FILTER_DROP);
 
 	r = BRIDGE_FILTER_PASS;

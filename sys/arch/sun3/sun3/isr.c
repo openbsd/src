@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.8 1999/01/11 05:12:06 millert Exp $	*/
+/*	$OpenBSD: isr.c,v 1.9 1999/05/24 23:09:08 jason Exp $	*/
 /*	$NetBSD: isr.c,v 1.25 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
@@ -60,6 +60,7 @@
 
 #include "ether.h"	/* for NETHER */
 #include "ppp.h"	/* for NPPP */
+#include "bridge.h"	/* for NBRIDGE */
 
 extern int intrcnt[];	/* statistics */
 
@@ -105,6 +106,7 @@ void nsintr __P((void));
 void clnlintr __P((void));
 void ccittintr __P((void));
 void pppintr __P((void));
+void bridgeintr __P((void));
 
 void
 netintr()
@@ -144,6 +146,11 @@ netintr()
 #if NPPP > 0
 	if (n & (1 << NETISR_PPP)) {
 		pppintr();
+	}
+#endif
+#if NBRIDGE > 0
+	if (n & (1 << NETISR_BRIDGE)) {
+		bridgeintr();
 	}
 #endif
 }

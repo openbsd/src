@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 1999/05/22 21:22:29 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 1999/05/24 23:09:07 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -714,6 +714,11 @@ softnet(isr)
 #if NPPP > 0
 	if (isr & (1 << NETISR_PPP))
 		pppintr();
+#endif
+#include "bridge.h"
+#if NBRIDGE > 0
+	if (isr & (1 << NETISR_BRIDGE))
+		bridgeintr();
 #endif
 }
 

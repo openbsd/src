@@ -45,6 +45,7 @@
  */
 
 #include "ppp.h"
+#include "bridge.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +163,9 @@ netintr()
 #endif
 #if NPPP > 1
 	DONETISR(NETISR_PPP, pppintr());
+#endif
+#if NBRIDGE > 1
+	DONETISR(NETISR_BRIDGE, bridgeintr());
 #endif
 
 #undef DONETISR
