@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.41 1998/03/28 18:30:25 deraadt Exp $
+$OpenBSD: pcidevs,v 1.42 1998/03/28 18:36:41 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -518,75 +518,75 @@ vendor BAD		0xffff	ILLEGITIMATE VENDOR ID
  */
 
 /* 3COM Products */
-product 3COM 3C590	0x5900	3c590 10Mbps
-product 3COM 3C595TX	0x5950	3c595 100Base-TX
-product 3COM 3C595T4	0x5951	3c595 100Base-T4
-product 3COM 3C595MII	0x5952	3c595 10Mbps-MII
-product	3COM 3C900TPO	0x9000	3c900 10Base-T
-product	3COM 3C900COMBO	0x9001	3c900 10Mbps-Combo
-product	3COM 3C905TX	0x9050	3c905 100Base-TX
-product	3COM 3C905T4	0x9051	3c905 100Base-T4
+product 3COM 3C590		0x5900	3c590 10Mbps
+product 3COM 3C595TX		0x5950	3c595 100Base-TX
+product 3COM 3C595T4		0x5951	3c595 100Base-T4
+product 3COM 3C595MII		0x5952	3c595 10Mbps-MII
+product	3COM 3C900TPO		0x9000	3c900 10Base-T
+product	3COM 3C900COMBO		0x9001	3c900 10Mbps-Combo
+product	3COM 3C905TX		0x9050	3c905 100Base-TX
+product	3COM 3C905T4		0x9051	3c905 100Base-T4
 
 /* 3D Labs products */
-product 3DLABS 300SX	0x0001	300SX (Glint)
-product 3DLABS 500TX	0x0002	GLINT 500TX
-product 3DLABS DELTA	0x0003	GLINT DELTA
-product 3DLABS 500MX	0x0006	GLINT 500MX
+product 3DLABS 300SX		0x0001	300SX (Glint)
+product 3DLABS 500TX		0x0002	GLINT 500TX
+product 3DLABS DELTA		0x0003	GLINT DELTA
+product 3DLABS 500MX		0x0006	GLINT 500MX
 
 /* ACC Products */
-product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
+product ACC 2188		0x0000	ACCM 2188 VL-PCI Bridge
 
 /* Acer products */
-product ACER M1435	0x1435	M1435 VL-PCI Bridge
+product ACER M1435		0x1435	M1435 VL-PCI Bridge
 
 /* Acer Labs products */
-product	ALI M1445	0x1445	M1445 VL-PCI Bridge
-product	ALI M1449	0x1449	M1449 PCI-ISA Bridge
-product ALI M1451	0x1451	M1451 Host-PCI Bridge
-product ALI M1461	0x1461	M1461 Host-PCI Bridge
-product ALI M4803	0x5215	M4803
+product	ALI M1445		0x1445	M1445 VL-PCI Bridge
+product	ALI M1449		0x1449	M1449 PCI-ISA Bridge
+product ALI M1451		0x1451	M1451 Host-PCI Bridge
+product ALI M1461		0x1461	M1461 Host-PCI Bridge
+product ALI M4803		0x5215	M4803
 
 /* Adaptec products */
-product ADP AIC7810	0x1078	AIC-7810
-product ADP AIC7850	0x5078	AIC-7850
-product ADP AIC7855	0x5578	AIC-7855
-product ADP AIC5900	0x5900	AIC-5900 ATM
-product ADP AIC5905	0x5905	AIC-5905 ATM
-product ADP AIC7860	0x6078	AIC-7860
-product ADP 2940AU	0x6178	AHA-2940A Ultra
-product ADP AIC7870	0x7078	AIC-7870
-product ADP 2940	0x7178	AHA-2940
-product ADP 3940	0x7278	AHA-3940
-product ADP 3985	0x7378	AHA-3985
-product ADP 2944	0x7478	AHA-2944
-product ADP AIC7880	0x8078	AIC-7880 Ultra
-product ADP 2940U	0x8178	AHA-2940 Ultra
-product ADP 3940U	0x8278	AHA-3940 Ultra
-product ADP 398XU	0x8378	AHA-398X Ultra
-product ADP 2944U	0x8478	AHA-2944 Ultra
+product ADP AIC7810		0x1078	AIC-7810
+product ADP AIC7850		0x5078	AIC-7850
+product ADP AIC7855		0x5578	AIC-7855
+product ADP AIC5900		0x5900	AIC-5900 ATM
+product ADP AIC5905		0x5905	AIC-5905 ATM
+product ADP AIC7860		0x6078	AIC-7860
+product ADP 2940AU		0x6178	AHA-2940A Ultra
+product ADP AIC7870		0x7078	AIC-7870
+product ADP 2940		0x7178	AHA-2940
+product ADP 3940		0x7278	AHA-3940
+product ADP 3985		0x7378	AHA-3985
+product ADP 2944		0x7478	AHA-2944
+product ADP AIC7880		0x8078	AIC-7880 Ultra
+product ADP 2940U		0x8178	AHA-2940 Ultra
+product ADP 3940U		0x8278	AHA-3940 Ultra
+product ADP 398XU		0x8378	AHA-398X Ultra
+product ADP 2944U		0x8478	AHA-2944 Ultra
 
 /* Alliance products */
-product	ALLIANCE AT24	0x6424	AT24
+product	ALLIANCE AT24		0x6424	AT24
 
 /* AMD products */
-product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
-product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
-product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
+product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE Ethernet
+product AMD PCSCSI_PCI		0x2020	53c974 PCscsi-PCI SCSI
+product AMD PCNETS_PCI		0x2040	79C974 PCnet-PCI Ethernet & SCSI
 
 /* ARC Logic products */
-product ARC 1000PV	0xa091	1000PV
-product ARC 2000PV	0xa099	2000PV
-product ARC 2000MT	0xa0a1	2000MT
-product ARC 2000MI	0xa0a9	2000MI
+product ARC 1000PV		0xa091	1000PV
+product ARC 2000PV		0xa099	2000PV
+product ARC 2000MT		0xa0a1	2000MT
+product ARC 2000MI		0xa0a9	2000MI
 
 /* ATI products */
-product ATI MACH32	0x4158	Mach32
-product ATI MACH64_CT	0x4354	Mach64 CT
-product ATI MACH64_CX	0x4358	Mach64 CX
-product ATI MACH64_ET	0x4554	Mach64 ET
-product ATI MACH64_VT	0x4654	Mach64 VT
-product ATI MACH64_GT	0x4754	Mach64 GT
-product ATI MACH64_GX	0x4758	Mach64 GX
+product ATI MACH32		0x4158	Mach32
+product ATI MACH64_CT		0x4354	Mach64 CT
+product ATI MACH64_CX		0x4358	Mach64 CX
+product ATI MACH64_ET		0x4554	Mach64 ET
+product ATI MACH64_VT		0x4654	Mach64 VT
+product ATI MACH64_GT		0x4754	Mach64 GT
+product ATI MACH64_GX		0x4758	Mach64 GX
 
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
@@ -596,10 +596,10 @@ product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
 product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
 
 /* Avance Logic products */
-product AVANCE AVL2301	0x2301	AVL2301
-product AVANCE AVG2302	0x2302	AVG2302
-product AVANCE2 ALG2301	0x2301	ALG2301
-product AVANCE2 ALG2302	0x2302	ALG2302
+product AVANCE AVL2301		0x2301	AVL2301
+product AVANCE AVG2302		0x2302	AVG2302
+product AVANCE2 ALG2301		0x2301	ALG2301
+product AVANCE2 ALG2302		0x2302	ALG2302
 
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
@@ -688,36 +688,36 @@ product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
 
 /* DEC products */
-product DEC 21050	0x0001	DECchip 21050 PCI-PCI Bridge
-product DEC 21040	0x0002	DECchip 21040 (Tulip)
-product DEC 21030	0x0004	DECchip 21030 (TGA)
-product DEC NVRAM	0x0007	Zephyr NV-RAM
-product DEC KZPSA	0x0008	KZPSA
-product DEC 21140	0x0009	DECchip 21140 (FasterNet)
-product DEC PBXGB	0x000d	TGA2
-product DEC DEFPA	0x000f	DEFPA
-/* product DEC ???	0x0010	??? VME Interface */
-product DEC 21041	0x0014	DECchip 21041 (Tulip Pass 3)
-product DEC DGLPB	0x0016	DGLPB (OPPO)
-product DEC 21142	0x0019	DECchip 21142/3
-product DEC 21052	0x0021	DECchip 21052 PCI-PCI Bridge
-product DEC 21150	0x0022	DECchip 21150 PCI-PCI Bridge
-product DEC 21152	0x0024	DECchip 21152 PCI-PCI Bridge
-product DEC 21153	0x0025	DECchip 21153 PCI-PCI Bridge
-product DEC 21154	0x0026	DECchip 21154 PCI-PCI Bridge
+product DEC 21050		0x0001	DECchip 21050 PCI-PCI Bridge
+product DEC 21040		0x0002	DECchip 21040 (Tulip)
+product DEC 21030		0x0004	DECchip 21030 (TGA)
+product DEC NVRAM		0x0007	Zephyr NV-RAM
+product DEC KZPSA		0x0008	KZPSA
+product DEC 21140		0x0009	DECchip 21140 (FasterNet)
+product DEC PBXGB		0x000d	TGA2
+product DEC DEFPA		0x000f	DEFPA
+/* product DEC ???		0x0010	??? VME Interface */
+product DEC 21041		0x0014	DECchip 21041 (Tulip Pass 3)
+product DEC DGLPB		0x0016	DGLPB (OPPO)
+product DEC 21142		0x0019	DECchip 21142/3
+product DEC 21052		0x0021	DECchip 21052 PCI-PCI Bridge
+product DEC 21150		0x0022	DECchip 21150 PCI-PCI Bridge
+product DEC 21152		0x0024	DECchip 21152 PCI-PCI Bridge
+product DEC 21153		0x0025	DECchip 21153 PCI-PCI Bridge
+product DEC 21154		0x0026	DECchip 21154 PCI-PCI Bridge
 
 /* Diamond products */
-product DIAMOND VIPER	0x9001	Viper/PCI
-product DIAMOND MONSTER	0x0001	Monster
+product DIAMOND VIPER		0x9001	Viper/PCI
+product DIAMOND MONSTER		0x0001	Monster
 
 /* Distributed Processing Technology products */
-product DPT SC_RAID	0xa400	SmartCache/Raid
+product DPT SC_RAID		0xa400	SmartCache/Raid
 
 /* Dolphin products */
-product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
+product DOLPHIN PCISCI		0x0658	PCI-SCI Bridge
 
 /* Emulex products */
-product EMULEX LPPFC	0x10df	Light Pulse FibreChannel adapter
+product EMULEX LPPFC		0x10df	Light Pulse FibreChannel adapter
 
 /* Ensoniq products */
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
@@ -727,11 +727,11 @@ product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
 /* Evans & Sutherland products */
-product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
+product ES FREEDOM		0x0001	Freedom PCI-GBus Interface
 
 /* FORE products */
-product FORE PCA200	0x0210	ATM PCA-200
-product FORE PCA200E	0x0300	ATM PCA-200e
+product FORE PCA200		0x0210	ATM PCA-200
+product FORE PCA200E		0x0300	ATM PCA-200e
 
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
@@ -741,68 +741,68 @@ product EFFICIENTNETS ENI155PF	0x0000	155P-MF1 ATM (FPGA)
 product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
 
 /* Hewlett-Packard products */
-product HP J2585A	0x1030	J2585A
+product HP J2585A		0x1030	J2585A
 
 /* IBM products */
-product IBM 0x0002 	0x0002	MCA Bridge
-product IBM 0x0005 	0x0005	CPU Bridge - Alta Lite
-product IBM 0x0007 	0x0007	CPU Bridge - Alta MP
-product IBM 0x000a 	0x000a	ISA Bridge w/PnP
-product IBM 0x0017 	0x0017	CPU Bridge
-product IBM 0x0018 	0x0018	Auto LANStreamer
-product IBM GXT150P	0x001B	GXT-150P 2D Accelerator
-product IBM 0x0020	0x0020	MCA Bridge
-product IBM 82351	0x0022	82351 PCI-PCI Bridge
-product IBM 0x0036	0x0036	Miami/PCI
+product IBM 0x0002 		0x0002	MCA Bridge
+product IBM 0x0005 		0x0005	CPU Bridge - Alta Lite
+product IBM 0x0007 		0x0007	CPU Bridge - Alta MP
+product IBM 0x000a 		0x000a	ISA Bridge w/PnP
+product IBM 0x0017 		0x0017	CPU Bridge
+product IBM 0x0018 		0x0018	Auto LANStreamer
+product IBM GXT150P		0x001B	GXT-150P 2D Accelerator
+product IBM 0x0020		0x0020	MCA Bridge
+product IBM 82351		0x0022	82351 PCI-PCI Bridge
+product IBM 0x0036		0x0036	Miami/PCI
 
 /* Integrated Micro Solutions products */
-product IMS 8849	0x8849	8849
+product IMS 8849		0x8849	8849
 
 /* Intel products */
-product INTEL PCEB	0x0482	82375EB PCI-EISA Bridge
-product INTEL CDC	0x0483	82424ZX (Saturn) Cache and DRAM controller
-product INTEL SIO	0x0484	82378IB PCI-ISA Bridge (System I/O)
-product INTEL 82426EX	0x0486	82426EX PCI-to-ISA Bridge (PCIB)
-product INTEL PCMC	0x04a3	82434LX/NX (Mercury/Neptune) PCI, Cache, and DRAM Controller
-product INTEL 82092AA	0x1222	82092AA IDE controller
-product INTEL SAA7116	0x1223	SAA7116
-product INTEL 82596	0x1226	82596 LAN Controller
-product INTEL EEPRO100	0x1227	EE Pro 100 10/100 Fast Ethernet
-product INTEL EEPRO100S	0x1228	EE Pro 100 Smart 10/100 Fast Ethernet
-product INTEL 82557	0x1229	82557 Fast Ethernet LAN Controller
-product INTEL 82437FX	0x122d	82437FX (Triton) PCI, Cache, and DRAM Controller
-product INTEL 82371	0x122e	82371FB (Triton) PCI-ISA Bridge
-product INTEL 82438	0x1230	82438 (Triton) IDE controller
-product INTEL 82371MX	0x1234	82371 (Triton MX) PCI-ISA Bridge and IDE Controller
-product INTEL 82437MX	0x1235	82437 (Triton MX) PCI, Cache, and DRAM Controller
-product INTEL 82441FX	0x1237	82441FX PCI and Memory Controller (PMC)
-product INTEL 82380AB	0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
-product INTEL 82380FB	0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
-product INTEL 82439HX	0x1250	82439HX (Triton II) TXC Host Bridge
-product INTEL 82371SB	0x7000	82371SB (Triton II) PCI-ISA Bridge
-product INTEL 82371IDE	0x7010	82371SB (Triton II) IDE controller
-product INTEL 82371USB	0x7020	82371SB (Triton II) USB Interface
-product INTEL 82437VX	0x7030	82437VX System Controller (TVX)
-product INTEL 82439TX	0x7100	82439TX System Controller (MTXC)
-product INTEL 82439TX	0x7100	82439TX System Controller (MTXC)
-product INTEL 82371AB	0x7110	82371AB PIIX4 ISA Bridge
+product INTEL PCEB		0x0482	82375EB PCI-EISA Bridge
+product INTEL CDC		0x0483	82424ZX (Saturn) Cache and DRAM controller
+product INTEL SIO		0x0484	82378IB PCI-ISA Bridge (System I/O)
+product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
+product INTEL PCMC		0x04a3	82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM Controller
+product INTEL 82092AA		0x1222	82092AA IDE controller
+product INTEL SAA7116		0x1223	SAA7116
+product INTEL 82596		0x1226	82596 LAN Controller
+product INTEL EEPRO100		0x1227	EE Pro 100 10/100 Fast Ethernet
+product INTEL EEPRO100S		0x1228	EE Pro 100 Smart 10/100 Fast Ethernet
+product INTEL 82557		0x1229	82557 Fast Ethernet LAN Controller
+product INTEL 82437FX		0x122d	82437FX (Triton) PCI, Cache, and DRAM Controller
+product INTEL 82371		0x122e	82371FB (Triton) PCI-ISA Bridge
+product INTEL 82438		0x1230	82438 (Triton) IDE controller
+product INTEL 82371MX		0x1234	82371 (Triton MX) PCI-ISA and IDE
+product INTEL 82437MX		0x1235	82437 (Triton MX) PCI/CACHECOMP/DRAM Controller
+product INTEL 82441FX		0x1237	82441FX PCI and Memory Controller (PMC)
+product INTEL 82380AB		0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
+product INTEL 82380FB		0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
+product INTEL 82439HX		0x1250	82439HX (Triton II) TXC Host Bridge
+product INTEL 82371SB		0x7000	82371SB (Triton II) PCI-ISA Bridge
+product INTEL 82371IDE		0x7010	82371SB (Triton II) IDE controller
+product INTEL 82371USB		0x7020	82371SB (Triton II) USB Interface
+product INTEL 82437VX		0x7030	82437VX System Controller (TVX)
+product INTEL 82439TX		0x7100	82439TX System Controller (MTXC)
+product INTEL 82439TX		0x7100	82439TX System Controller (MTXC)
+product INTEL 82371AB		0x7110	82371AB PIIX4 ISA Bridge
 product INTEL 82371AB_IDE	0x7111	82371AB IDE controller (PIIX4)
 product INTEL 82371AB_USB	0x7112	82371AB USB Host Controller (PIIX4)
 product INTEL 82371AB_PMC	0x7113	82371AB Power Management Controller (PIIX4)
-product INTEL 82443LX	0x7180	82443LX PCI AGP Controller (PAC)
+product INTEL 82443LX		0x7180	82443LX PCI AGP Controller (PAC)
 product INTEL 82443LX_AGP	0x7181	82443LX AGP Device (PAC)
-product INTEL PCI450_PB	0x84c4	450 PCIset (Orion) Host-PCI bridge
-product INTEL PCI450_MC	0x84c5	450 PCIset (Orion) Memory Controller
+product INTEL PCI450_PB		0x84c4	450 PCIset (Orion) Host-PCI bridge
+product INTEL PCI450_MC		0x84c5	450 PCIset (Orion) Memory Controller
 
 /* I. T. T. products */
-product ITT AGX016	0x0001	AGX016
-product ITT ITT3204	0x0002	ITT3204 MPEG Decoder
+product ITT AGX016		0x0001	AGX016
+product ITT ITT3204		0x0002	ITT3204 MPEG Decoder
 
 /* KTI */
-product KTI KTIE	0x3000	KTI Ethernet
+product KTI KTIE		0x3000	KTI Ethernet
 
 /* LeadTek Research */
-product LEADTEK S3_805	0x0000	S3 805
+product LEADTEK S3_805		0x0000	S3 805
 
 /* Macronix */
 product MACRONIX MX98713	0x0512	PMAC 100/10base PCI MAC controller
@@ -817,141 +817,141 @@ product MATROX ATLAS		0x0518	MGA PX2085 (Atlas)
 product MATROX MILLENIUM	0x0519	MGA Millenium 2064W (Storm)
 product MATROX MYSTIQUE_220	0x051A	MGA 1064SG 220MHz
 product MATROX MILLENNIUM_II	0x051B	MGA Millennium II 2164W
-product MATROX MILLENNIUM_II_AGP	0x051F	MGA Millennium II 2164WA-B AGP
+product MATROX MILLENNIUM_IIAGP	0x051F	MGA Millennium II 2164WA-B AGP
 product MATROX MYSTIQUE		0x102B	MGA 1064SG
 
 /* Mylex products */
-product MYLEX 960P	0x0001	DAC960P RAID controller
+product MYLEX 960P		0x0001	DAC960P RAID controller
 
 /* Mutech products */
-product MUTECH MV1000	0x0001	MV1000
+product MUTECH MV1000		0x0001	MV1000
 
 /* National Semiconductor products */
-product NS DP83810	0x0001	DP83810 10/100 Ethernet
-product NS NS87410	0xd001	NS87410
+product NS DP83810		0x0001	DP83810 10/100 Ethernet
+product NS NS87410		0xd001	NS87410
 
 /* NeoMagic */
-product NEOMAGIC NM3160	0x0004	NM3160
+product NEOMAGIC NM3160		0x0004	NM3160
 
 /* NetVin */
-product NETVIN NV5000	0x5000	NetVin 5000
+product NETVIN NV5000		0x5000	NetVin 5000
 
 /* NCR/Symbios Logic products */
-product SYMBIOS 810	0x0001	53c810
-product SYMBIOS 820	0x0002	53c820
-product SYMBIOS 825	0x0003	53c825
-product SYMBIOS 815	0x0004	53c815
-product SYMBIOS 810AP	0x0005	53c810AP
-product SYMBIOS 860	0x0006	53c860
-product SYMBIOS 875	0x000f	53c875
-product	SYMBIOS	875J	0x008f	53c875J
-product	SYMBIOS	885	0x000d	53c885
-product	SYMBIOS	895	0x000c	53c895
-product	SYMBIOS	896	0x000b	53c896
+product SYMBIOS 810		0x0001	53c810
+product SYMBIOS 820		0x0002	53c820
+product SYMBIOS 825		0x0003	53c825
+product SYMBIOS 815		0x0004	53c815
+product SYMBIOS 810AP		0x0005	53c810AP
+product SYMBIOS 860		0x0006	53c860
+product SYMBIOS 875		0x000f	53c875
+product	SYMBIOS	875J		0x008f	53c875J
+product	SYMBIOS	885		0x000d	53c885
+product	SYMBIOS	895		0x000c	53c895
+product	SYMBIOS	896		0x000b	53c896
 
 /* Packet Engines products */
-product	SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
+product	SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC Ethernet
 
 /* NexGen products */
-product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
+product NEXGEN NX82C501		0x4e78	NX82C501 Host-PCI Bridge
 
 /* NKK products */
-product NKK NDR4600	0xA001	NDR4600 Host-PCI Bridge
+product NKK NDR4600		0xA001	NDR4600 Host-PCI Bridge
 
 /* Number Nine products */
-product NUMBER9 I128	0x2309	Imagine-128
-product NUMBER9 I128_2	0x2339	Imagine-128 II
+product NUMBER9 I128		0x2309	Imagine-128
+product NUMBER9 I128_2		0x2339	Imagine-128 II
 
 /* Oak Technologies products */
-product OAKTECH OTI1007	0x0107	OTI107
+product OAKTECH OTI1007		0x0107	OTI107
 
 /* Opti products */
-product OPTI 82C557	0xc557	82C557
-product OPTI 82C558	0xc558	82C558
-product OPTI 82C621	0xc621	82C621
-product OPTI 82C822	0xc822	82C822
+product OPTI 82C557		0xc557	82C557
+product OPTI 82C558		0xc558	82C558
+product OPTI 82C621		0xc621	82C621
+product OPTI 82C822		0xc822	82C822
 
 /* PC Tech products */
-product PCTECH RZ1000	0x1000	RZ1000
+product PCTECH RZ1000		0x1000	RZ1000
 
 /* Promise products */
-product PROMISE DC5030	0x5300	DC5030
+product PROMISE DC5030		0x5300	DC5030
 
 /* QLogic products */
-product QLOGIC ISP1020	0x1020	ISP1020
-product QLOGIC ISP1022	0x1022	ISP1022
-product QLOGIC ISP2100	0x2100	ISP2100
+product QLOGIC ISP1020		0x1020	ISP1020
+product QLOGIC ISP1022		0x1022	ISP1022
+product QLOGIC ISP2100		0x2100	ISP2100
 
 /* Quantum Designs products */
 product QUANTUMDESIGNS 8500	0x0001	8500
 product QUANTUMDESIGNS 8580	0x0002	8580
 
 /* Realtek (Creative Labs?) products */
-product	REALTEK	RT8029	0x8029	Ethernet
+product	REALTEK	RT8029		0x8029	Ethernet
 
 /* S3 products */
-product S3 VIRGE	0x5631	ViRGE
-product S3 TRIO32	0x8810	Trio32
-product S3 TRIO64	0x8811	Trio32/64
-product S3 AURORA64P	0x8812	Aurora64V+
-product S3 TRIO64UVP	0x8814	Trio64UV+
-product S3 868		0x8880	868
-product S3 VIRGE_VX	0x883d	ViRGE VX
-product S3 928		0x88b0	86C928
-product S3 864_0	0x88c0	86C864-0 (Vision864)
-product S3 864_1	0x88c1	86C864-1 (Vision864)
-product S3 864_2	0x88c2	86C864-2 (Vision864)
-product S3 864_3	0x88c3	86C864-3 (Vision864)
-product S3 964_0	0x88d0	86C964-0 (Vision964)
-product S3 964_1	0x88d1	86C964-1 (Vision964)
-product S3 964_2	0x88d2	86C964-2 (Vision964)
-product S3 964_3	0x88d1	86C964-3 (Vision964)
-product S3 968_0	0x88f0	86C968-0 (Vision968)
-product S3 968_1	0x88f1	86C968-1 (Vision968)
-product S3 968_2	0x88f2	86C968-2 (Vision968)
-product S3 968_3	0x88f3	86C968-3 (Vision968)
-product S3 TRIO64V2_DX	0x8901	Trio64V2/DX
-product S3 PLATO	0x8902	Plato
-product S3 VIRGE_DX_GX	0x8a01	ViRGE DX/GX
+product S3 VIRGE		0x5631	ViRGE
+product S3 TRIO32		0x8810	Trio32
+product S3 TRIO64		0x8811	Trio32/64
+product S3 AURORA64P		0x8812	Aurora64V+
+product S3 TRIO64UVP		0x8814	Trio64UV+
+product S3 868			0x8880	868
+product S3 VIRGE_VX		0x883d	ViRGE VX
+product S3 928			0x88b0	86C928
+product S3 864_0		0x88c0	86C864-0 (Vision864)
+product S3 864_1		0x88c1	86C864-1 (Vision864)
+product S3 864_2		0x88c2	86C864-2 (Vision864)
+product S3 864_3		0x88c3	86C864-3 (Vision864)
+product S3 964_0		0x88d0	86C964-0 (Vision964)
+product S3 964_1		0x88d1	86C964-1 (Vision964)
+product S3 964_2		0x88d2	86C964-2 (Vision964)
+product S3 964_3		0x88d1	86C964-3 (Vision964)
+product S3 968_0		0x88f0	86C968-0 (Vision968)
+product S3 968_1		0x88f1	86C968-1 (Vision968)
+product S3 968_2		0x88f2	86C968-2 (Vision968)
+product S3 968_3		0x88f3	86C968-3 (Vision968)
+product S3 TRIO64V2_DX		0x8901	Trio64V2/DX
+product S3 PLATO		0x8902	Plato
+product S3 VIRGE_DX_GX		0x8a01	ViRGE DX/GX
 
 /* SGS Thomson products */
-product SGSTHOMSON 2000	0x0008	STG 2000X
-product SGSTHOMSON 1764	0x1746	STG 1764X
+product SGSTHOMSON 2000		0x0008	STG 2000X
+product SGSTHOMSON 1764		0x1746	STG 1764X
 
 /* Sigma Designs */
-product SIGMA 64GX	0x6401	64GX
+product SIGMA 64GX		0x6401	64GX
 
 /* Silicon Integrated System products */
-product SIS 86C201	0x0001	86C201
-product SIS 86C202	0x0002	86C202
-product SIS 86C205	0x0005	86C205
-product SIS 85C503	0x0008	85C503
-product SIS 85C501	0x0406	85C501
-product SIS 85C496	0x0496	85C496
-product SIS 85C601	0x0601	85C601
+product SIS 86C201		0x0001	86C201
+product SIS 86C202		0x0002	86C202
+product SIS 86C205		0x0005	86C205
+product SIS 85C503		0x0008	85C503
+product SIS 85C501		0x0406	85C501
+product SIS 85C496		0x0496	85C496
+product SIS 85C601		0x0601	85C601
 
 /* SMC products */
-product SMC 37C665	0x1000	FDC 37C665
-product SMC 37C922	0x1001	FDC 37C922
-product SMC 83C170	0x0005	83C170 (\"EPIC/100\") Fast Ethernet
+product SMC 37C665		0x1000	FDC 37C665
+product SMC 37C922		0x1001	FDC 37C922
+product SMC 83C170		0x0005	83C170 (\"EPIC/100\") Fast Ethernet
 
 /* STB products */
-product STB2 RIVA128	0x0018 Velocity128
+product STB2 RIVA128		0x0018 Velocity128
 
 /* Surecom products */
-product SURECOM NE34	0x0e34 Surecom NE-34
+product SURECOM NE34		0x0e34 Surecom NE-34
 
 /* Symphony Labs products */
-product SYMPHONY 82C101	0x0001	82C101
-product SYMPHONY 82C103	0x0103	82C103
-product SYMPHONY 82C105	0x0105	82C105
+product SYMPHONY 82C101		0x0001	82C101
+product SYMPHONY 82C103		0x0103	82C103
+product SYMPHONY 82C105		0x0105	82C105
 product SYMPHONY2 82C101	0x0001	82C101
 
 /* Tekram Technology products (1st PCI Vendor ID)*/
-product TEKRAM 	DC290	0xdc29	DC-290(M)
+product TEKRAM 	DC290		0xdc29	DC-290(M)
 
 /* Tekram Technology products (2nd PCI Vendor ID) */
-product TEKRAM2	DC690C 0x690c	DC-690C
+product TEKRAM2	DC690C		0x690c	DC-690C
 
 /* Texas Instruments products */
 product	TI	TLAN		0x0500	TLAN
@@ -960,7 +960,7 @@ product TI	PCI1131		0xac15	PCI1131
 product TI	PCI2030		0xac20	PCI2030
 
 /* Toshiba products */
-product TOSHIBA R4X00	0x102f	R4x00 Host-PCI Bridge
+product TOSHIBA R4X00		0x102f	R4x00 Host-PCI Bridge
 
 /* Trident products */
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
@@ -980,30 +980,30 @@ product TSENG ET4000_W32P_D	0x3207	ET4000w32p rev D
 product TSENG ET6000		0x3208	ET6000
 
 /* UMC products */
-product UMC UM82C881	0x0001	UM82C881 486 Chipset
-product UMC UM82C886	0x0002	UM82C886 ISA Bridge
-product UMC UM8673F	0x0101	UM8673F EIDE Controller
-product UMC UM8881	0x0881	UM8881 HB4 486 PCI Chipset
-product UMC UM82C891	0x0891	UM82C891
-product UMC UM886A	0x1001	UM886A
-product UMC UM8886BF	0x673a	UM8886BF
-product UMC UM8710	0x8710	UM8710
-product UMC UM8886	0x886a	UM8886
-product UMC UM8881F	0x8881	UM8881F PCI-Host bridge
-product UMC UM8886F	0x8886	UM8886F PCI-ISA bridge
-product UMC UM8886A	0x888a	UM8886A
-product UMC UM8891A	0x8891	UM8891A
-product UMC UM9017F	0x9017	UM9017F
-product UMC UM8886N	0xe88a	UM8886N
-product UMC UM8891N	0xe891	UM8891N
+product UMC UM82C881		0x0001	UM82C881 486 Chipset
+product UMC UM82C886		0x0002	UM82C886 ISA Bridge
+product UMC UM8673F		0x0101	UM8673F EIDE Controller
+product UMC UM8881		0x0881	UM8881 HB4 486 PCI Chipset
+product UMC UM82C891		0x0891	UM82C891
+product UMC UM886A		0x1001	UM886A
+product UMC UM8886BF		0x673a	UM8886BF
+product UMC UM8710		0x8710	UM8710
+product UMC UM8886		0x886a	UM8886
+product UMC UM8881F		0x8881	UM8881F PCI-Host bridge
+product UMC UM8886F		0x8886	UM8886F PCI-ISA bridge
+product UMC UM8886A		0x888a	UM8886A
+product UMC UM8891A		0x8891	UM8891A
+product UMC UM9017F		0x9017	UM9017F
+product UMC UM8886N		0xe88a	UM8886N
+product UMC UM8891N		0xe891	UM8891N
 
 /* ULSI Systems products */
-product ULSI US201	0x0201	US201
+product ULSI US201		0x0201	US201
 
 /* V3 Semiconductor products */
-product V3 V292PBC	0x0292	V292PBC AMD290x0 Host-PCI Bridge
-product V3 V960PBC	0x0960	V960PBC	i960 Host-PCI Bridge
-product V3 V96DPC	0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
+product V3 V292PBC		0x0292	V292PBC AMD290x0 Host-PCI Bridge
+product V3 V960PBC		0x0960	V960PBC	i960 Host-PCI Bridge
+product V3 V96DPC		0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products */
 product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
@@ -1021,42 +1021,42 @@ product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VORTEX GDT_6000B	0x0001	GDT 6000b
 
 /* VLSI products */
-product VLSI 82C592	0x0005	82C592 CPU Bridge
-product VLSI 82C593	0x0006	82C593 ISA Bridge
-product VLSI 82C594	0x0007	82C594 Wildcat System Controller
-product VLSI 82C596597	0x0008	82C596/597 Wildcat ISA Bridge
-product VLSI 82C541	0x000c	82C541
-product VLSI 82C543	0x000d	82C543
-product VLSI 82C532	0x0101	82C532
-product VLSI 82C534	0x0102	82C534
-product VLSI 82C535	0x0104	82C535
-product VLSI 82C147	0x0105	82C147
-product VLSI 82C975	0x0200	82C975
-product VLSI 82C925	0x0280	82C925
+product VLSI 82C592		0x0005	82C592 CPU Bridge
+product VLSI 82C593		0x0006	82C593 ISA Bridge
+product VLSI 82C594		0x0007	82C594 Wildcat System Controller
+product VLSI 82C596597		0x0008	82C596/597 Wildcat ISA Bridge
+product VLSI 82C541		0x000c	82C541
+product VLSI 82C543		0x000d	82C543
+product VLSI 82C532		0x0101	82C532
+product VLSI 82C534		0x0102	82C534
+product VLSI 82C535		0x0104	82C535
+product VLSI 82C147		0x0105	82C147
+product VLSI 82C975		0x0200	82C975
+product VLSI 82C925		0x0280	82C925
 
 /* Weitek products */
-product WEITEK P9000	0x9001	P9000
-product WEITEK P9100	0x9100	P9100
+product WEITEK P9000		0x9001	P9000
+product WEITEK P9100		0x9100	P9100
 
 /* Western Digital products */
-product	WD WD33C193A	0x0193	WD33C193A
-product WD WD33C196A	0x0196	WD33C196A
-product WD WD33C197A	0x0197	WD33C197A
-product WD WD7193	0x3193	WD7193
-product WD WD7197	0x3197	WD7197
-product WD WD33C296A	0x3296	WD33C296A
-product WD WD34C296	0x4296	WD34C296
-product WD 90C		0xC24A	90C
+product	WD WD33C193A		0x0193	WD33C193A
+product WD WD33C196A		0x0196	WD33C196A
+product WD WD33C197A		0x0197	WD33C197A
+product WD WD7193		0x3193	WD7193
+product WD WD7197		0x3197	WD7197
+product WD WD33C296A		0x3296	WD33C296A
+product WD WD34C296		0x4296	WD34C296
+product WD 90C			0xC24A	90C
 
 /* Winbond Electronics products */
-product WINBOND W83769F	0x0001	W83769F
-product WINBOND W89C940F 0x0940	Linksys EtherPCI LAN Card II
+product WINBOND W83769F		0x0001	W83769F
+product WINBOND W89C940F	0x0940	Linksys EtherPCI LAN Card II
 
 /* Winbond Electronics products (PCI products set 2) */
-product WINBOND2 W89C940 0x1980	Linksys EtherPCI LAN Card
+product WINBOND2 W89C940	0x1980	Linksys EtherPCI LAN Card
 
 /* Zeinet products */
-product ZEINET 1221	0x0001	1221
+product ZEINET 1221		0x0001	1221
 
 /* Ziatech products */
-product ZIATECH ZT8905	0x8905 PCI-ST32 Bridge
+product ZIATECH ZT8905		0x8905 PCI-ST32 Bridge
