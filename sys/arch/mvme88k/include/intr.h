@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2003/01/03 23:17:42 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.11 2003/01/04 02:14:45 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -87,7 +87,6 @@ unsigned setipl(unsigned level);
 unsigned db_setipl(unsigned level);
 #endif 
 int spl0(void);
-#endif /* _LOCORE */
 
 /* needs major cleanup - XXX nivas */
 
@@ -108,6 +107,8 @@ void splassert_check(int, const char *);
 #else
 #define	splassert(wantipl)	do { /* nothing */ } while (0)
 #endif
+
+#endif /* _LOCORE */
 
 #if 0
 spl0 is a function by itself. I really am serious about the clean up
