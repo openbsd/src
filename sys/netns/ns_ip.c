@@ -1,5 +1,5 @@
-/*	$OpenBSD: ns_ip.c,v 1.5 1996/05/12 03:18:34 mickey Exp $	*/
-/*	$NetBSD: ns_ip.c,v 1.15 1996/05/07 02:48:08 thorpej Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.6 1996/05/22 12:02:43 deraadt Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.16 1996/05/09 22:29:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -50,6 +50,8 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/protosw.h>
+
+#include <machine/cpu.h>	/* XXX for setsoftnet().  This must die. */
 
 #include <net/if.h>
 #include <net/netisr.h>

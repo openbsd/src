@@ -326,6 +326,18 @@ struct linux_sys_msync_args {
 	syscallarg(int) fl;
 };
 
+struct linux_sys_getsid_args {
+	syscallarg(int) pid;
+};
+
+struct linux_sys_fdatasync_args {
+	syscallarg(int) fd;
+};
+
+struct linux_sys___sysctl_args {
+	syscallarg(struct linux___sysctl *) lsp;
+};
+
 /*
  * System call prototypes.
  */
@@ -454,3 +466,8 @@ int	sys_flock	__P((struct proc *, void *, register_t *));
 int	linux_sys_msync	__P((struct proc *, void *, register_t *));
 int	sys_readv	__P((struct proc *, void *, register_t *));
 int	sys_writev	__P((struct proc *, void *, register_t *));
+int	linux_sys_getsid	__P((struct proc *, void *, register_t *));
+int	linux_sys_fdatasync	__P((struct proc *, void *, register_t *));
+int	linux_sys___sysctl	__P((struct proc *, void *, register_t *));
+int	sys_mlock	__P((struct proc *, void *, register_t *));
+int	sys_munlock	__P((struct proc *, void *, register_t *));

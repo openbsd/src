@@ -1,5 +1,5 @@
-/*	$OpenBSD: linux_file.c,v 1.2 1996/04/17 05:23:49 mickey Exp $	*/
-/*	$NetBSD: linux_file.c,v 1.14 1996/04/05 00:01:21 christos Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.3 1996/05/22 12:01:48 deraadt Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -805,4 +805,19 @@ linux_sys_truncate(p, v, retval)
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return compat_43_sys_truncate(p, uap, retval);
+}
+
+/*
+ * This is just fsync() for now (just as it is in the Linux kernel)
+ */
+int
+linux_sys_fdatasync(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_fdatasync_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	return sys_fsync(p, v, retval);
 }

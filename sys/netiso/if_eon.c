@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_eon.c,v 1.4 1996/05/10 12:31:22 deraadt Exp $	*/
-/*	$NetBSD: if_eon.c,v 1.14 1996/05/07 02:45:10 thorpej Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.5 1996/05/22 12:02:42 deraadt Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -84,6 +84,8 @@ SOFTWARE.
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/types.h>
+
+#include <machine/cpu.h>	/* XXX for setsoftnet().  This must die. */
 
 #include <net/if.h>
 #include <net/if_types.h>

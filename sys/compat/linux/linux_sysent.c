@@ -327,5 +327,39 @@ struct sysent linux_sysent[] = {
 	    sys_readv },			/* 145 = readv */
 	{ 3, s(struct sys_writev_args),
 	    sys_writev },			/* 146 = writev */
+	{ 1, s(struct linux_sys_getsid_args),
+	    linux_sys_getsid },			/* 147 = getsid */
+	{ 1, s(struct linux_sys_fdatasync_args),
+	    linux_sys_fdatasync },		/* 148 = fdatasync */
+	{ 1, s(struct linux_sys___sysctl_args),
+	    linux_sys___sysctl },		/* 149 = __sysctl */
+	{ 2, s(struct sys_mlock_args),
+	    sys_mlock },			/* 150 = mlock */
+	{ 2, s(struct sys_munlock_args),
+	    sys_munlock },			/* 151 = munlock */
+	{ 0, 0,
+	    sys_nosys },			/* 152 = unimplemented mlockall */
+	{ 0, 0,
+	    sys_nosys },			/* 153 = unimplemented munlockall */
+	{ 0, 0,
+	    sys_nosys },			/* 154 = unimplemented sched_setparam */
+	{ 0, 0,
+	    sys_nosys },			/* 155 = unimplemented sched_getparam */
+	{ 0, 0,
+	    sys_nosys },			/* 156 = unimplemented sched_setscheduler */
+	{ 0, 0,
+	    sys_nosys },			/* 157 = unimplemented sched_getscheduler */
+	{ 0, 0,
+	    sys_nosys },			/* 158 = unimplemented sched_yield */
+	{ 0, 0,
+	    sys_nosys },			/* 159 = unimplemented sched_get_priority_max */
+	{ 0, 0,
+	    sys_nosys },			/* 160 = unimplemented sched_get_priority_min */
+	{ 0, 0,
+	    sys_nosys },			/* 161 = unimplemented sched_rr_get_interval */
+	{ 0, 0,
+	    sys_nosys },			/* 162 = unimplemented nanosleep */
+	{ 0, 0,
+	    sys_nosys },			/* 163 = unimplemented mremap */
 };
 

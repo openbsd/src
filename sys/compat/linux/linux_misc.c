@@ -1,5 +1,5 @@
-/*	$OpenBSD: linux_misc.c,v 1.4 1996/04/17 05:23:54 mickey Exp $	*/
-/*	$NetBSD: linux_misc.c,v 1.26 1996/04/04 23:56:01 christos Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.5 1996/05/22 12:01:48 deraadt Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -1110,4 +1110,56 @@ linux_sys_setregid(p, v, retval)
 		(uid_t)-1 : SCARG(uap, egid);
 
 	return compat_43_sys_setregid(p, &bsa, retval);
+}
+
+int
+linux_sys_getsid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getsid_args /* {
+		syscallarg(int) pid;
+	} */ *uap = v;
+	struct proc *p1;
+	pid_t pid;
+
+	pid = (pid_t)SCARG(uap, pid);
+
+	if (pid == 0) {
+		retval[0] = (int)p->p_session;	/* XXX Oh well */
+		return 0;
+	}
+
+	p1 = pfind((int)pid);
+	if (p1 == NULL)
+		return ESRCH;
+
+	retval[0] = (int)p1->p_session;
+	return 0;
+}
+
+int
+linux_sys___sysctl(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys___sysctl_args /* {
+		syscallarg(struct linux___sysctl *) lsp;
+	} */ *uap = v;
+	struct linux___sysctl ls;
+	struct sys___sysctl_args bsa;
+	int error;
+
+	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof ls)))
+		return error;
+	SCARG(&bsa, name) = ls.name;
+	SCARG(&bsa, namelen) = ls.namelen;
+	SCARG(&bsa, old) = ls.old;
+	SCARG(&bsa, oldlenp) = ls.oldlenp;
+	SCARG(&bsa, new) = ls.new;
+	SCARG(&bsa, newlen) = ls.newlen;
+
+	return sys___sysctl(p, &bsa, retval);
 }

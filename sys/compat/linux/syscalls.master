@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.6 1996/04/28 07:53:18 etheisen Exp $
+	$OpenBSD: syscalls.master,v 1.7 1996/05/22 12:01:51 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -240,3 +240,20 @@
 				u_int iovcnt); }
 146	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
 				u_int iovcnt); }
+147	STD		{ int linux_sys_getsid(int pid); }
+148	STD		{ int linux_sys_fdatasync(int fd); }
+149	STD		{ int linux_sys___sysctl(struct linux___sysctl *lsp); }
+150	NOARGS		{ int sys_mlock(caddr_t addr, size_t len); }
+151	NOARGS		{ int sys_munlock(caddr_t addr, size_t len); }
+152	UNIMPL		mlockall
+153	UNIMPL		munlockall
+154	UNIMPL		sched_setparam
+155	UNIMPL		sched_getparam
+156	UNIMPL		sched_setscheduler
+157	UNIMPL		sched_getscheduler
+158	UNIMPL		sched_yield
+159	UNIMPL		sched_get_priority_max
+160	UNIMPL		sched_get_priority_min
+161	UNIMPL		sched_rr_get_interval
+162	UNIMPL		nanosleep
+163	UNIMPL		mremap

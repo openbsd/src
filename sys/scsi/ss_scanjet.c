@@ -1,5 +1,5 @@
-/*	$OpenBSD: ss_scanjet.c,v 1.5 1996/05/10 12:31:41 deraadt Exp $	*/
-/*	$NetBSD: ss_scanjet.c,v 1.4 1996/05/05 19:52:58 christos Exp $	*/
+/*	$OpenBSD: ss_scanjet.c,v 1.6 1996/05/22 11:58:41 deraadt Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.6 1996/05/18 22:58:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -61,9 +61,14 @@ int scanjet_trigger_scanner __P((struct ss_softc *));
 int scanjet_read __P((struct ss_softc *, struct buf *));
 
 /* only used internally */
-int scanjet_write __P((struct ss_softc *ss, char *buf, u_int size, int flags));
-int scanjet_set_window __P((struct ss_softc *ss));
-void scanjet_compute_sizes __P((struct ss_softc *));
+int scanjet_ctl_write __P((struct ss_softc *, char *, u_int, int));
+int scanjet_ctl_read __P((struct ss_softc *, char *, u_int, int));
+int scanjet_set_window __P((struct ss_softc *));
+int scanjet_compute_sizes __P((struct ss_softc *));
+/* Maybe move to libkern? */
+__inline static int atoi __P((const char *));
+__inline static char *strchr __P((const char *, char));
+
 
 /*
  * structure for the special handlers
@@ -90,6 +95,7 @@ scanjet_attach(ss, sa)
 #ifdef SCSIDEBUG
 	struct scsi_link *sc_link = sa->sa_sc_link;
 #endif
+	int error;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
@@ -100,11 +106,11 @@ scanjet_attach(ss, sa)
 
 	if (!bcmp(sa->sa_inqbuf->product, "C1750A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
-		printf("HP ScanJet IIc\n");
+		printf("HP ScanJet IIc");
 	}
 	if (!bcmp(sa->sa_inqbuf->product, "C2500A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
-		printf("HP ScanJet IIcx\n");
+		printf("HP ScanJet IIcx");
 	}
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: scanner_type = %d\n",
@@ -127,7 +133,18 @@ scanjet_attach(ss, sa)
 	ss->sio.scan_quality		= 100;
 	ss->sio.scan_image_mode		= SIM_GRAYSCALE;
 
-	scanjet_compute_sizes(ss);
+	error = scanjet_set_window(ss);
+	if (error) {
+		printf(" set_window failed\n");
+		return;
+	}
+	error = scanjet_compute_sizes(ss);
+	if (error) {
+		printf(" compute_sizes failed\n");
+		return;
+	}
+
+	printf("\n");
 }
 
 int
@@ -148,9 +165,9 @@ scanjet_set_params(ss, sio)
 	struct ss_softc *ss;
 	struct scan_io *sio;
 {
-#if 0
 	int error;
 
+#if 0
 	/*
 	 * if the scanner is triggered, then rewind it
 	 */
@@ -189,7 +206,16 @@ scanjet_set_params(ss, sio)
 	sio->scan_scanner_type = ss->sio.scan_scanner_type;
 	bcopy(sio, &ss->sio, sizeof(struct scan_io));
 
-	scanjet_compute_sizes(ss);
+	error = scanjet_set_window(ss);
+	if (error) {
+		uprintf("%s: set_window failed\n", ss->sc_dev.dv_xname);
+		return (error);
+	}
+	error = scanjet_compute_sizes(ss);
+	if (error) {
+		uprintf("%s: compute_sizes failed\n", ss->sc_dev.dv_xname);
+		return (error);
+	}
 
 	return (0);
 }
@@ -206,20 +232,22 @@ scanjet_trigger_scanner(ss)
 	char escape_codes[20];
 	int error;
 
-	scanjet_compute_sizes(ss);
-
-	/* send parameters */
 	error = scanjet_set_window(ss);
 	if (error) {
-		uprintf("set window failed\n");
+		uprintf("%s: set_window failed\n", ss->sc_dev.dv_xname);
+		return (error);
+	}
+	error = scanjet_compute_sizes(ss);
+	if (error) {
+		uprintf("%s: compute_sizes failed\n", ss->sc_dev.dv_xname);
 		return (error);
 	}
 
 	/* send "trigger" operation */
 	strcpy(escape_codes, "\033*f0S");
-	error = scanjet_write(ss, escape_codes, strlen(escape_codes), 0);
+	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes), 0);
 	if (error) {
-		uprintf("trigger failed\n");
+		uprintf("%s: trigger_scanner failed\n", ss->sc_dev.dv_xname);
 		return (error);
 	}
 	
@@ -267,7 +295,7 @@ scanjet_read(ss, bp)
  * Do a synchronous write.  Used to send control messages.
  */
 int 
-scanjet_write(ss, buf, size, flags)
+scanjet_ctl_write(ss, buf, size, flags)
 	struct ss_softc *ss;
 	char *buf;
 	u_int size;
@@ -275,11 +303,6 @@ scanjet_write(ss, buf, size, flags)
 {
 	struct scsi_rw_scanner cmd;
 
-	/*
-	 * If it's a null transfer, return immediatly
-	 */
-	if (size == 0)
-		return (0);
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
@@ -287,6 +310,28 @@ scanjet_write(ss, buf, size, flags)
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_OUT));
 }
+
+
+/*
+ * Do a synchronous read.  Used to read responses to control messages.
+ */
+int
+scanjet_ctl_read(ss, buf, size, flags)
+	struct ss_softc *ss;
+	char *buf;
+	u_int size;
+	int flags;
+{
+	struct scsi_rw_scanner cmd;
+
+	bzero(&cmd, sizeof(cmd));
+	cmd.opcode = READ;
+	_lto3b(size, cmd.len);
+	return (scsi_scsi_cmd(ss->sc_link, (struct scsi_generic *) &cmd,
+	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
+	    flags | SCSI_DATA_IN));
+}
+
 
 #ifdef SCANJETDEBUG
 static void show_es(char *es)
@@ -329,6 +374,7 @@ scanjet_set_window(ss)
      
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
+		ss->sio.scan_bits_per_pixel = 1;
 		/* use "line art" mode */
 		strcpy(p, "\033*a0T");
 		p += strlen(p);
@@ -337,6 +383,7 @@ scanjet_set_window(ss)
 		p += strlen(p);
 		break;
 	case SIM_DITHERED_MONOCHROME:
+		ss->sio.scan_bits_per_pixel = 1;
 		/* use dithered mode */
 		strcpy(p, "\033*a3T");
 		p += strlen(p);
@@ -345,6 +392,7 @@ scanjet_set_window(ss)
 		p += strlen(p);
 		break;
 	case SIM_GRAYSCALE:
+		ss->sio.scan_bits_per_pixel = 8;
 		/* use grayscale mode */
 		strcpy(p, "\033*a4T");
 		p += strlen(p);
@@ -353,6 +401,7 @@ scanjet_set_window(ss)
 		p += strlen(p);
 		break;
 	case SIM_COLOR:
+		ss->sio.scan_bits_per_pixel = 24;
 		/* use RGB color mode */
 		strcpy(p, "\033*a5T");
 		p += strlen(p);
@@ -362,6 +411,7 @@ scanjet_set_window(ss)
 		/* use pass-through matrix (disable NTSC) */
 		strcpy(p, "\033*u2T");
 		p += strlen(p);
+		break;
 	}
 
 	sprintf(p, "\033*a%dG", ss->sio.scan_bits_per_pixel);
@@ -371,14 +421,44 @@ scanjet_set_window(ss)
 	sprintf(p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
 	p += strlen(p);
 
-	return (scanjet_write(ss, escape_codes, p - escape_codes, 0));
+	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes, 0));
 }
 
-void
+/* atoi() and strchr() are from /sys/arch/amiga/dev/ite.c
+   and are only used in scanjet_compute_sizes */
+
+__inline static int
+atoi(cp)
+	const char *cp;
+{
+	int n;
+
+	for (n = 0; *cp && *cp >= '0' && *cp <= '9'; cp++)
+		n = n * 10 + *cp - '0';
+
+	return (n);
+}
+
+__inline static char *
+strchr(cp, ch)
+	const char *cp;
+	char ch;
+{
+	while (*cp && *cp != ch) cp++;
+	return (*cp ? (char *)cp : 0);
+}
+
+int
 scanjet_compute_sizes(ss)
 	struct ss_softc *ss;
 {
-	int r = 0;		/* round up by r 1/1200" */
+	int error;
+	static char *wfail = "%s: interrogate write failed\n";
+	static char *rfail = "%s: interrogate read failed\n";
+	static char *dfail = "%s: bad data returned\n";
+	char escape_codes[20];
+	char response[20];
+	char *p;
 
 	/*
 	 * Deal with the fact that the HP ScanJet IIc uses 1/300" not 1/1200"
@@ -391,27 +471,52 @@ scanjet_compute_sizes(ss)
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
 	case SIM_DITHERED_MONOCHROME:
-		ss->sio.scan_bits_per_pixel = 1;
+		strcpy(escape_codes, "\033*s1025E"); /* bytes wide */
 		break;
 	case SIM_GRAYSCALE:
-		r = 600;
-		ss->sio.scan_bits_per_pixel = 8;
-		break;
 	case SIM_COLOR:
-		r = 600;
-		ss->sio.scan_bits_per_pixel = 24;
+		strcpy(escape_codes, "\033*s1024E"); /* pixels wide */
 		break;
 	}
+	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes), 0);
+	if (error) {
+		uprintf(wfail, ss->sc_dev.dv_xname);
+		return (error);
+	}
+	error = scanjet_ctl_read(ss, response, 20, 0);
+	if (error) {
+		uprintf(rfail, ss->sc_dev.dv_xname);
+		return (error);
+	}
+	p = strchr(response, 'd');
+	if (p == 0) {
+		uprintf(dfail, ss->sc_dev.dv_xname);
+		return (EIO);
+	}
+	ss->sio.scan_pixels_per_line = atoi(p + 1);
+	if (ss->sio.scan_image_mode < SIM_GRAYSCALE)
+		ss->sio.scan_pixels_per_line *= 8;
 
-	ss->sio.scan_pixels_per_line =
-		(ss->sio.scan_width * ss->sio.scan_x_resolution + r) / 1200;
-	if (ss->sio.scan_bits_per_pixel == 1)
-		/* pad to byte boundary: */
-		ss->sio.scan_pixels_per_line =
-		    (ss->sio.scan_pixels_per_line + 7) & 0xfffffff8;
+	strcpy(escape_codes, "\033*s1026E"); /* pixels high */
+	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes), 0);
+	if (error) {
+		uprintf(wfail, ss->sc_dev.dv_xname);
+		return (error);
+	}
+	error = scanjet_ctl_read(ss, response, 20, 0);
+	if (error) {
+		uprintf(rfail, ss->sc_dev.dv_xname);
+		return (error);
+	}
+	p = strchr(response, 'd');
+	if (p == 0) {
+		uprintf(dfail, ss->sc_dev.dv_xname);
+		return (EIO);
+	}
+	ss->sio.scan_lines = atoi(p + 1);
 
-	ss->sio.scan_lines =
-	    (ss->sio.scan_height * ss->sio.scan_y_resolution + r) / 1200;
 	ss->sio.scan_window_size = ss->sio.scan_lines *
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
+
+	return (0);
 }

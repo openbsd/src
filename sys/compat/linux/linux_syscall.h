@@ -122,4 +122,9 @@
 #define	LINUX_SYS_msync	144
 #define	LINUX_SYS_readv	145
 #define	LINUX_SYS_writev	146
-#define	LINUX_SYS_MAXSYSCALL	147
+#define	LINUX_SYS_getsid	147
+#define	LINUX_SYS_fdatasync	148
+#define	LINUX_SYS___sysctl	149
+#define	LINUX_SYS_mlock	150
+#define	LINUX_SYS_munlock	151
+#define	LINUX_SYS_MAXSYSCALL	164
