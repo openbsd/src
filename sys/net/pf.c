@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.159 2001/09/27 17:49:12 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.160 2001/09/30 03:49:18 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -135,12 +135,12 @@ struct pf_port_list	 pf_tcp_ports;
 struct pf_port_list	 pf_udp_ports;
 
 /* Timeouts */
-int			 pftm_tcp_first_packet = 60;	/* First TCP packet */
+int			 pftm_tcp_first_packet = 120;	/* First TCP packet */
 int			 pftm_tcp_opening = 30;		/* No response yet */
 int			 pftm_tcp_established = 24*60*60;  /* established  */
-int			 pftm_tcp_closing = 60 * 60;	/* Half closed */
-int			 pftm_tcp_fin_wait = 2 * 60;	/* Got both FINs */
-int			 pftm_tcp_closed = 1 * 60;	/* Got a RST */
+int			 pftm_tcp_closing = 15 * 60;	/* Half closed */
+int			 pftm_tcp_fin_wait = 45;	/* Got both FINs */
+int			 pftm_tcp_closed = 90;		/* Got a RST */
 
 int			 pftm_udp_first_packet = 60;	/* First UDP packet */
 int			 pftm_udp_single = 30;		/* Unidirectional */
