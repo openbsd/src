@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 1996/05/07 10:12:22 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 1996/08/23 18:38:48 niklas Exp $	*/
 /*	$NetBSD: conf.h,v 1.1 1996/04/21 21:13:16 veego Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+bdev_decl(acd);
+cdev_decl(acd);
+
 cdev_decl(com);
 
 cdev_decl(ctty);
@@ -59,12 +62,22 @@ cdev_decl(msc);
 
 cdev_decl(par);
 
+bdev_decl(rd);
+/* no cdev for rd */
+
+cdev_decl(rnd);
+
 cdev_decl(ser);
 
 bdev_decl(sw);
 cdev_decl(sw);
 
+cdev_decl(uk);
+
 cdev_decl(view);
+
+bdev_decl(wd);
+cdev_decl(wd);
 
 /* open, close, ioctl, select, mmap -- XXX should be a map device */
 #define	cdev_grf_init(c,n) { \
