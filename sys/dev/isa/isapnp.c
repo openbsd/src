@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.1 1996/08/14 14:36:15 shawn Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.2 1996/08/15 05:31:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Shawn Hsiao <shawn@alpha.secc.fju.edu.tw>
@@ -160,25 +160,17 @@ isapnpattach(parent, self, aux)
 	    bus_io_map(sc->bc, 0x0200, 0x200, &(sc->rdh)))
 		panic("isapnpattach: io mapping failed");
 
-	printf("\n%s: Checking for ISA Plug-n-Play devices... ",
-	       sc->sc_dev.dv_xname);
-
 	/* Try various READ_DATA ports from 0x203-0x3ff */
 	for (sc->rd_port = 0x80; (sc->rd_port < 0xff); sc->rd_port += 0x10) {
 		num_pnp_devs = isolation_protocol(sc);
 		if (num_pnp_devs) {
-			printf("\n%s: Plug-n-Play Read_Port at 0x%x, ",
-			       sc->sc_dev.dv_xname,
-			       (sc->rd_port << 2) | 0x3);
-			printf("%d devices were found\n", num_pnp_devs);
+			printf(": readport 0x%x, %d devices",
+			    sc->sc_dev.dv_xname, (sc->rd_port << 2) | 0x3);
+			    num_pnp_devs);
 			break;
 		}
 	}
-	if (!num_pnp_devs) {
-		printf("\n%s: No Plug-n-Play devices were found\n",
-		       sc->sc_dev.dv_xname);
-		return;
-	}
+	printf("\n");
 }
 
 void
@@ -193,13 +185,12 @@ postisapnpattach(parent, self, aux)
 	struct devinfo *dev;
 
 	for (card = sc->q_card.tqh_first; card;
-	     card = card->card_link.tqe_next) {
-		for (dev = card->q_dev.tqh_first;
-		     dev;
-		     dev = dev->dev_link.tqe_next) {
+	    card = card->card_link.tqe_next) {
+		for (dev = card->q_dev.tqh_first; dev;
+		    dev = dev->dev_link.tqe_next) {
 			struct isa_attach_args ia;
 
-			memset(&ia, 0, sizeof(ia));
+			bzero(&ia, sizeof(ia));
 			ia.ia_bc = iba->iba_bc;
 			ia.ia_ic = iba->iba_ic;
 			ia.id = dev->id;
@@ -207,7 +198,7 @@ postisapnpattach(parent, self, aux)
 			ia.ldn = dev->ldn;
 			isapnpquery(sc, ia.id, &ia);
 			if (!config_found_sm(self, &ia, isapnpprint,
-					     isapnpsubmatch)) {
+			    isapnpsubmatch)) {
 				/*
 				 * supplied configuration fails,
 				 * disable the device.
@@ -282,7 +273,7 @@ isapnpsubmatch(parent, match, aux)
 
 	if (cf->cf_pnpid == ia->id) {
 		ret = (*cf->cf_attach->ca_match)(parent, match, aux);
-		return(ret);
+		return (ret);
 	}
 
 	return(0);
@@ -311,7 +302,7 @@ isapnpquery(sc, dev_id, ipa)
 	    if (dev_id == dev->id ||
 		dev_id == dev->comp_id) {
 	      tmp = malloc(sizeof(struct isa_attach_args), M_DEVBUF, M_WAITOK);
-	      memset(tmp, 0, sizeof(struct isa_attach_args));
+	      bzero(tmp, sizeof(struct isa_attach_args));
 	      SEND(WAKE, card->csn);
 	      SEND(SET_LDN, dev->ldn);
 
@@ -589,7 +580,7 @@ handle_small_res(resinfo, item, len, card)
 
 	switch (item) {
 	case PNP_VERSION:
-		memcpy(card->pnp_version, resinfo, 2);
+		bcopy(resinfo, card->pnp_version, 2);
 		break;
 	case LOG_DEVICE_ID:
 		card->dev = malloc(sizeof(struct devinfo), M_DEVBUF, M_WAITOK);
@@ -846,7 +837,7 @@ isolation_protocol(sc)
 				      M_DEVBUF, M_WAITOK);
 			bzero(card, sizeof(struct cardinfo));
 			TAILQ_INSERT_TAIL(&sc->q_card, card, card_link);
-			memcpy(card->serial, data, 9);
+			bcopy(data, card->serial, 9);
 			card->csn = csn;
 			TAILQ_INIT(&card->q_dev);
 			/*
@@ -875,7 +866,7 @@ config_device(sc, data)
 	}
 
 #if 0
-	printf ("%s:    Configuring CSN %x (Logical Device %x)\n",
+	printf ("%s: configuring CSN %x (logical device %x)\n",
 		sc->sc_dev.dv_xname,
 		data->csn,
 		data->ldn != -1 ? data->ldn : 0);
