@@ -378,6 +378,8 @@ __ivaliduser(hostf, raddrl, luser, ruser)
 				;
 			continue;
 		}
+		if (*p == '#')
+			continue;
 		while (*p != '\n' && *p != ' ' && *p != '\t' && *p != '\0') {
 			*p = isupper(*p) ? tolower(*p) : *p;
 			p++;
