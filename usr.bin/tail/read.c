@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.2 1996/06/26 05:40:16 deraadt Exp $	*/
+/*	$OpenBSD: read.c,v 1.3 1997/01/12 23:43:06 millert Exp $	*/
 /*	$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $	*/
 
 /*-
@@ -41,17 +41,20 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: read.c,v 1.2 1996/06/26 05:40:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.3 1997/01/12 23:43:06 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 /*
@@ -75,7 +78,7 @@ bytes(fp, off)
 	char *sp;
 
 	if ((sp = p = malloc(off)) == NULL)
-		err(1, "%s", strerror(errno));
+		err(1, NULL);
 
 	for (wrap = 0, ep = p + off; (ch = getc(fp)) != EOF;) {
 		*p = ch;
@@ -116,7 +119,7 @@ bytes(fp, off)
 	} else {
 		if (wrap && (len = ep - p))
 			WR(p, len);
-		if (len = p - sp)
+		if ((len = p - sp))
 			WR(sp, len);
 	}
 }
@@ -142,20 +145,19 @@ lines(fp, off)
 		char *l;
 	} *lines;
 	register int ch;
-	register char *p;
+	register char *p = NULL;
 	int blen, cnt, recno, wrap;
-	char *sp;
+	char *sp = NULL;
 
-	if ((lines = malloc(off * sizeof(*lines))) == NULL)
-		err(1, "%s", strerror(errno));
+	if ((lines = calloc(off, sizeof(*lines))) == NULL)
+		err(1, NULL);
 
-	sp = NULL;
 	blen = cnt = recno = wrap = 0;
 
 	while ((ch = getc(fp)) != EOF) {
 		if (++cnt > blen) {
 			if ((sp = realloc(sp, blen += 1024)) == NULL)
-				err(1, "%s", strerror(errno));
+				err(1, NULL);
 			p = sp + cnt - 1;
 		}
 		*p++ = ch;
@@ -164,9 +166,9 @@ lines(fp, off)
 				lines[recno].blen = cnt + 256;
 				if ((lines[recno].l = realloc(lines[recno].l,
 				    lines[recno].blen)) == NULL)
-					err(1, "%s", strerror(errno));
+					err(1, NULL);
 			}
-			bcopy(sp, lines[recno].l, lines[recno].len = cnt);
+			memcpy(lines[recno].l, sp, (lines[recno].len = cnt));
 			cnt = 0;
 			p = sp;
 			if (++recno == off) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.2 1996/06/26 05:40:17 deraadt Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.3 1997/01/12 23:43:06 millert Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -41,19 +41,21 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.2 1996/06/26 05:40:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.3 1997/01/12 23:43:06 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include <limits.h>
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 static void r_buf __P((FILE *));
@@ -124,13 +126,13 @@ r_reg(fp, style, off, sbp)
 		return;
 
 	if (size > SIZE_T_MAX) {
-		err(0, "%s: %s", fname, strerror(EFBIG));
+		errx(0, "%s: %s", fname, strerror(EFBIG));
 		return;
 	}
 
 	if ((start = mmap(NULL, (size_t)size,
 	    PROT_READ, 0, fileno(fp), (off_t)0)) == (caddr_t)-1) {
-		err(0, "%s: %s", fname, strerror(EFBIG));
+		errx(0, "%s: %s", fname, strerror(EFBIG));
 		return;
 	}
 	p = start + size - 1;
@@ -151,7 +153,7 @@ r_reg(fp, style, off, sbp)
 	if (llen)
 		WR(p, llen);
 	if (munmap(start, (size_t)sbp->st_size))
-		err(0, "%s: %s", fname, strerror(errno));
+		err(0, fname);
 }
 
 typedef struct bf {
@@ -175,7 +177,7 @@ static void
 r_buf(fp)
 	FILE *fp;
 {
-	register BF *mark, *tl, *tr;
+	register BF *mark, *tr, *tl = NULL;
 	register int ch, len, llen;
 	register char *p;
 	off_t enomem;
@@ -190,7 +192,7 @@ r_buf(fp)
 		if (enomem || (tl = malloc(sizeof(BF))) == NULL ||
 		    (tl->l = malloc(BSZ)) == NULL) {
 			if (!mark)
-				err(1, "%s", strerror(errno));
+				err(1, NULL);
 			tl = enomem ? tl->next : mark;
 			enomem += tl->len;
 		} else if (mark) {
@@ -224,7 +226,7 @@ r_buf(fp)
 
 	if (enomem) {
 		(void)fprintf(stderr,
-		    "tail: warning: %ld bytes discarded\n", enomem);
+		    "tail: warning: %qd bytes discarded\n", enomem);
 		rval = 1;
 	}
 

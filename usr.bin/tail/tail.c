@@ -1,4 +1,4 @@
-/*	$OpenBSD: tail.c,v 1.2 1996/06/26 05:40:18 deraadt Exp $	*/
+/*	$OpenBSD: tail.c,v 1.3 1997/01/12 23:43:07 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,16 +46,19 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tail.c,v 1.2 1996/06/26 05:40:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tail.c,v 1.3 1997/01/12 23:43:07 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 int fflag, rflag, rval;
@@ -71,7 +74,7 @@ main(argc, argv)
 {
 	struct stat sb;
 	FILE *fp;
-	long off;
+	long off = 0;
 	enum STYLE style;
 	int ch, first;
 	char *p;
@@ -93,7 +96,7 @@ main(argc, argv)
 		usage();						\
 	off = strtol(optarg, &p, 10) * (units);				\
 	if (*p)								\
-		err(1, "illegal offset -- %s", optarg);			\
+		errx(1, "illegal offset -- %s", optarg);		\
 	switch(optarg[0]) {						\
 	case '+':							\
 		if (off)						\
@@ -136,7 +139,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (fflag && argc > 1)
-		err(1, "-f option only appropriate for a single file");
+		errx(1, "-f option only appropriate for a single file");
 
 	/*
 	 * If displaying in reverse, don't permit follow option, and convert
@@ -165,7 +168,7 @@ main(argc, argv)
 		}
 
 	if (*argv)
-		for (first = 1; fname = *argv++;) {
+		for (first = 1; (fname = *argv++);) {
 			if ((fp = fopen(fname, "r")) == NULL ||
 			    fstat(fileno(fp), &sb)) {
 				ierr();
@@ -223,7 +226,7 @@ obsolete(argv)
 	int len;
 	char *start;
 
-	while (ap = *++argv) {
+	while ((ap = *++argv)) {
 		/* Return if "--" or not an option of any form. */
 		if (ap[0] != '-') {
 			if (ap[0] != '+')
@@ -239,7 +242,7 @@ obsolete(argv)
 			/* Malloc space for dash, new option and argument. */
 			len = strlen(*argv);
 			if ((start = p = malloc(len + 3)) == NULL)
-				err(1, "%s", strerror(errno));
+				err(1, NULL);
 			*p++ = '-';
 
 			/*
@@ -269,7 +272,7 @@ obsolete(argv)
 				*p++ = 'n';
 				break;
 			default:
-				err(1, "illegal option -- %s", *argv);
+				errx(1, "illegal option -- %s", *argv);
 			}
 			*p++ = *argv[0];
 			(void)strcpy(p, ap);

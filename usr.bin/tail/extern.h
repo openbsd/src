@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1996/06/26 05:40:14 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 1997/01/12 23:43:04 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1994/11/23 07:42:00 jtc Exp $	*/
 
 /*-
@@ -36,6 +36,9 @@
  *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
+#define ierr()	(err(0, fname))
+#define oerr()	(err(1, "stdout"))
+
 #define	WR(p, size) \
 	if (write(STDOUT_FILENO, p, size) != size) \
 		oerr();
@@ -47,10 +50,6 @@ void reverse __P((FILE *, enum STYLE, long, struct stat *));
 
 void bytes __P((FILE *, off_t));
 void lines __P((FILE *, off_t));
-
-void err __P((int fatal, const char *fmt, ...));
-void ierr __P((void));
-void oerr __P((void));
 
 extern int fflag, rflag, rval;
 extern char *fname;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.3 1996/06/26 05:40:15 deraadt Exp $	*/
+/*	$OpenBSD: forward.c,v 1.4 1997/01/12 23:43:05 millert Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.3 1996/06/26 05:40:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.4 1997/01/12 23:43:05 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,13 +49,15 @@ static char rcsid[] = "$OpenBSD: forward.c,v 1.3 1996/06/26 05:40:15 deraadt Exp
 #include <sys/time.h>
 #include <sys/mman.h>
 
-#include <limits.h>
-#include <fcntl.h>
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 static void rlines __P((FILE *, long, struct stat *));
@@ -182,7 +184,7 @@ forward(fp, style, off, sbp)
 		second.tv_sec = 1;
 		second.tv_usec = 0;
 		if (select(0, NULL, NULL, NULL, &second) == -1)
-			err(1, "select: %s", strerror(errno));
+			err(1, "select");
 		clearerr(fp);
 	}
 }
@@ -204,13 +206,13 @@ rlines(fp, off, sbp)
 		return;
 
 	if (size > SIZE_T_MAX) {
-		err(0, "%s: %s", fname, strerror(EFBIG));
+		errx(0, "%s: %s", fname, strerror(EFBIG));
 		return;
 	}
 
 	if ((start = mmap(NULL, (size_t)size,
 	    PROT_READ, 0, fileno(fp), (off_t)0)) == (caddr_t)-1) {
-		err(0, "%s: %s", fname, strerror(EFBIG));
+		errx(0, "%s: %s", fname, strerror(EFBIG));
 		return;
 	}
 
@@ -229,7 +231,7 @@ rlines(fp, off, sbp)
 		return;
 	}
 	if (munmap(start, (size_t)sbp->st_size)) {
-		err(0, "%s: %s", fname, strerror(errno));
+		err(0, fname);
 		return;
 	}
 }
