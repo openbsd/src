@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.103 2005/02/18 08:58:56 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.104 2005/03/02 11:59:18 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -245,20 +245,15 @@ you will have to kill it by running
 .Ic kill `cat /var/run/dhclient.pid`
 after you flush the routes.
 .Pp
-If you wish to route packets between interfaces, add the directive
+If you wish to route packets between interfaces, add one or both
+of the following directives (depending on whether IPv4 or IPv6 routing
+is required) to
+.Pa /etc/sysctl.conf :
 .Pp
 .Dl net.inet.ip.forwarding=1
-or
 .Dl net.inet6.ip6.forwarding=1
 .Pp
-to
-.Pa /etc/sysctl.conf .
 Packets are not forwarded by default, due to RFC requirements.
-.Pp
-You can add new
-.Dq virtual interfaces
-by adding the required entries to
-.Pa /etc/hostname.if .
 .Ss BIND Name Server (DNS)
 If you are using the BIND Name Server, check the
 .Pa /etc/resolv.conf
