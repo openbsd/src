@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.104 1999/01/11 01:43:50 niklas Exp $
+#	$OpenBSD: files,v 1.105 1999/01/11 14:28:55 niklas Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -136,6 +136,7 @@ define	tcbus { }			# TurboChannel attachment
 # legitimate pseudo-devices
 pseudo-device vnd: disk
 pseudo-device ccd: disk
+pseudo-device raid: disk
 
 pseudo-device pty: tty
 pseudo-device tb: tty
@@ -195,6 +196,68 @@ file dev/mulaw.c			mulaw
 file dev/sequencer.c			sequencer		needs-flag
 file dev/vnd.c				vnd			needs-flag
 file dev/rnd.c
+file dev/raidframe/rf_acctrace.c        raid                    needs-flag
+file dev/raidframe/rf_alloclist.c       raid                    needs-flag
+file dev/raidframe/rf_aselect.c         raid                    needs-flag
+file dev/raidframe/rf_callback.c        raid                    needs-flag
+file dev/raidframe/rf_chaindecluster.c  raid                    needs-flag
+file dev/raidframe/rf_copyback.c        raid                    needs-flag
+file dev/raidframe/rf_cpuutil.c         raid                    needs-flag
+file dev/raidframe/rf_cvscan.c          raid                    needs-flag
+file dev/raidframe/rf_dagdegrd.c        raid                    needs-flag
+file dev/raidframe/rf_dagdegwr.c        raid                    needs-flag
+file dev/raidframe/rf_dagffrd.c         raid                    needs-flag
+file dev/raidframe/rf_dagffwr.c         raid                    needs-flag
+file dev/raidframe/rf_dagfuncs.c        raid                    needs-flag
+file dev/raidframe/rf_dagutils.c        raid                    needs-flag
+file dev/raidframe/rf_debugMem.c        raid                    needs-flag
+file dev/raidframe/rf_debugprint.c      raid                    needs-flag
+file dev/raidframe/rf_decluster.c       raid                    needs-flag
+file dev/raidframe/rf_declusterPQ.c	raid			needs-flag
+file dev/raidframe/rf_diskqueue.c	raid			needs-flag
+file dev/raidframe/rf_disks.c		raid			needs-flag
+file dev/raidframe/rf_driver.c		raid			needs-flag
+file dev/raidframe/rf_engine.c		raid			needs-flag
+file dev/raidframe/rf_evenodd.c		raid			needs-flag
+file dev/raidframe/rf_evenodd_dagfuncs.c raid			needs-flag
+file dev/raidframe/rf_evenodd_dags.c	raid			needs-flag
+file dev/raidframe/rf_fifo.c		raid			needs-flag
+file dev/raidframe/rf_interdecluster.c	raid			needs-flag
+file dev/raidframe/rf_invertq.c		raid			needs-flag
+file dev/raidframe/rf_openbsdkintf.c	raid			needs-flag
+file dev/raidframe/rf_layout.c		raid			needs-flag
+file dev/raidframe/rf_map.c		raid			needs-flag
+file dev/raidframe/rf_mcpair.c		raid			needs-flag
+file dev/raidframe/rf_memchunk.c	raid			needs-flag
+file dev/raidframe/rf_nwayxor.c		raid			needs-flag
+file dev/raidframe/rf_options.c		raid			needs-flag
+file dev/raidframe/rf_paritylog.c	raid			needs-flag
+file dev/raidframe/rf_paritylogDiskMgr.c raid			needs-flag
+file dev/raidframe/rf_paritylogging.c	raid			needs-flag
+file dev/raidframe/rf_parityloggingdags.c raid			needs-flag
+file dev/raidframe/rf_parityscan.c	raid			needs-flag
+file dev/raidframe/rf_pq.c		raid			needs-flag
+file dev/raidframe/rf_pqdeg.c		raid			needs-flag
+file dev/raidframe/rf_pqdegdags.c	raid			needs-flag
+file dev/raidframe/rf_psstatus.c	raid			needs-flag
+file dev/raidframe/rf_raid0.c		raid			needs-flag
+file dev/raidframe/rf_raid1.c		raid			needs-flag
+file dev/raidframe/rf_raid4.c		raid			needs-flag
+file dev/raidframe/rf_raid5.c		raid			needs-flag
+file dev/raidframe/rf_raid5_rotatedspare.c raid			needs-flag
+file dev/raidframe/rf_reconbuffer.c	raid			needs-flag
+file dev/raidframe/rf_reconmap.c	raid			needs-flag
+file dev/raidframe/rf_reconstruct.c	raid			needs-flag
+file dev/raidframe/rf_reconutil.c	raid			needs-flag
+file dev/raidframe/rf_revent.c		raid			needs-flag
+file dev/raidframe/rf_shutdown.c	raid			needs-flag
+file dev/raidframe/rf_sstf.c		raid			needs-flag
+file dev/raidframe/rf_states.c		raid			needs-flag
+file dev/raidframe/rf_stripelocks.c	raid			needs-flag
+file dev/raidframe/rf_strutils.c        raid                    needs-flag
+file dev/raidframe/rf_sys.c             raid                    needs-flag
+file dev/raidframe/rf_threadstuff.c     raid                    needs-flag
+file dev/raidframe/rf_utils.c           raid                    needs-flag
 file isofs/cd9660/cd9660_bmap.c		cd9660
 file isofs/cd9660/cd9660_lookup.c	cd9660
 file isofs/cd9660/cd9660_node.c		cd9660

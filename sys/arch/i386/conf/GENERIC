@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.101 1999/01/11 13:09:01 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.102 1999/01/11 14:28:57 niklas Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -80,7 +80,7 @@ ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 pccom*	at ast? slave ?
 #boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
 #pccom*	at boca? slave ?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cars
+#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #pccom*	at rtfps? slave ?
 pccom*	at pcmcia? function ?		# PCMCIA modems/serial ports
 pccom*	at isapnp?
@@ -251,5 +251,6 @@ joy*	at isapnp?
 
 pseudo-device	pctr		1
 pseudo-device	sequencer	1
+#pseudo-device	raid		4	# RAIDframe disk driver
 
 #option DEBUG_ISAPNP

@@ -1,0 +1,286 @@
+/*	$OpenBSD: rf_pqdeg.c,v 1.1 1999/01/11 14:29:39 niklas Exp $	*/
+/*	$NetBSD: rf_pqdeg.c,v 1.1 1998/11/13 04:20:32 oster Exp $	*/
+/*
+ * Copyright (c) 1995 Carnegie-Mellon University.
+ * All rights reserved.
+ *
+ * Author: Daniel Stodolsky
+ *
+ * Permission to use, copy, modify and distribute this software and
+ * its documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
+ * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ */
+
+/*
+ * Log: rf_pqdeg.c,v 
+ * Revision 1.19  1996/11/05 21:10:40  jimz
+ * failed pda generalization
+ *
+ * Revision 1.18  1996/07/31  16:30:01  jimz
+ * asm/asmap fix
+ *
+ * Revision 1.17  1996/07/31  15:35:09  jimz
+ * evenodd changes; bugfixes for double-degraded archs, generalize
+ * some formerly PQ-only functions
+ *
+ * Revision 1.16  1996/07/27  23:36:08  jimz
+ * Solaris port of simulator
+ *
+ * Revision 1.15  1996/07/22  19:52:16  jimz
+ * switched node params to RF_DagParam_t, a union of
+ * a 64-bit int and a void *, for better portability
+ * attempted hpux port, but failed partway through for
+ * lack of a single C compiler capable of compiling all
+ * source files
+ *
+ * Revision 1.14  1996/06/02  17:31:48  jimz
+ * Moved a lot of global stuff into array structure, where it belongs.
+ * Fixed up paritylogging, pss modules in this manner. Some general
+ * code cleanup. Removed lots of dead code, some dead files.
+ *
+ * Revision 1.13  1996/05/31  22:26:54  jimz
+ * fix a lot of mapping problems, memory allocation problems
+ * found some weird lock issues, fixed 'em
+ * more code cleanup
+ *
+ * Revision 1.12  1996/05/27  18:56:37  jimz
+ * more code cleanup
+ * better typing
+ * compiles in all 3 environments
+ *
+ * Revision 1.11  1996/05/24  22:17:04  jimz
+ * continue code + namespace cleanup
+ * typed a bunch of flags
+ *
+ * Revision 1.10  1996/05/24  04:28:55  jimz
+ * release cleanup ckpt
+ *
+ * Revision 1.9  1996/05/18  19:51:34  jimz
+ * major code cleanup- fix syntax, make some types consistent,
+ * add prototypes, clean out dead code, et cetera
+ *
+ * Revision 1.8  1996/05/03  19:41:07  wvcii
+ * added includes for dag library
+ *
+ * Revision 1.7  1995/11/30  16:19:36  wvcii
+ * added copyright info
+ *
+ * Revision 1.6  1995/11/07  16:15:08  wvcii
+ * updated/added prototyping for dag creation
+ *
+ * Revision 1.5  1995/03/01  20:25:48  holland
+ * kernelization changes
+ *
+ * Revision 1.4  1995/02/03  22:31:36  holland
+ * many changes related to kernelization
+ *
+ * Revision 1.3  1995/02/01  15:13:05  holland
+ * moved #include of general.h out of raid.h and into each file
+ *
+ * Revision 1.2  1994/12/05  04:50:26  danner
+ * additional pq support
+ *
+ * Revision 1.1  1994/11/29  20:36:02  danner
+ * Initial revision
+ *
+ */
+
+#include "rf_archs.h"
+
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
+
+#include "rf_types.h"
+#include "rf_raid.h"
+#include "rf_dag.h"
+#include "rf_dagutils.h"
+#include "rf_dagfuncs.h"
+#include "rf_dagffrd.h"
+#include "rf_dagffwr.h"
+#include "rf_dagdegrd.h"
+#include "rf_dagdegwr.h"
+#include "rf_threadid.h"
+#include "rf_etimer.h"
+#include "rf_pqdeg.h"
+#include "rf_general.h"
+#include "rf_pqdegdags.h"
+#include "rf_pq.h"
+
+/*
+   Degraded mode dag functions for P+Q calculations.
+
+   The following nomenclature is used. 
+
+   PQ_<D><P><Q>_Create{Large,Small}<Write|Read>DAG
+
+   where <D><P><Q> are single digits representing the number of failed
+   data units <D> (0,1,2), parity units <P> (0,1), and Q units <Q>, effecting
+   the I/O. The reads have only  PQ_<D><P><Q>_CreateReadDAG variants, while
+   the single fault writes have both large and small write versions. (Single fault
+   PQ is equivalent to normal mode raid 5 in many aspects. 
+
+   Some versions degenerate into the same case, and are grouped together below.
+*/
+
+/* Reads, single failure 
+
+   we have parity, so we can do a raid 5
+   reconstruct read.
+*/
+
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_100_CreateReadDAG)
+{
+  rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_pRecoveryFuncs);
+}
+
+/* Reads double failure  */
+
+/*
+   Q is lost, but not parity
+   so we can a raid 5 reconstruct read.
+*/
+
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_101_CreateReadDAG)
+{
+  rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_pRecoveryFuncs);
+}
+
+/*
+  parity is lost, so we need to
+  do a reconstruct read and recompute
+  the data with Q.
+*/
+
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_110_CreateReadDAG)
+{
+  RF_PhysDiskAddr_t *temp;
+  /* swap P and Q pointers to fake out the DegradedReadDAG code */
+  temp = asmap->parityInfo; asmap->parityInfo = asmap->qInfo; asmap->qInfo = temp;
+  rf_CreateDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_qRecoveryFuncs);
+}
+
+/*
+  Two data units are dead in this stripe, so we will need read
+  both P and Q to reconstruct the data. Note that only 
+  one data unit we are reading may actually be missing. 
+*/
+RF_CREATE_DAG_FUNC_DECL(rf_CreateDoubleDegradedReadDAG)
+{
+  rf_PQ_DoubleDegRead(raidPtr, asmap, dag_h, bp, flags, allocList);
+}
+
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_200_CreateReadDAG)
+{
+  rf_CreateDoubleDegradedReadDAG(raidPtr, asmap, dag_h, bp, flags, allocList);
+}
+
+/* Writes, single failure */
+
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_100_CreateWriteDAG)
+{
+  if (asmap->numStripeUnitsAccessed != 1 && 
+      asmap->failedPDAs[0]->numSector != raidPtr->Layout.sectorsPerStripeUnit) 
+    RF_PANIC();
+  rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
+    allocList, 2, (int (*)())rf_Degraded_100_PQFunc, RF_FALSE);
+}
+
+/* Dead  P - act like a RAID 5 small write with parity = Q */
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_010_CreateSmallWriteDAG)
+{
+  RF_PhysDiskAddr_t *temp;
+  /* swap P and Q pointers to fake out the DegradedReadDAG code */
+  temp = asmap->parityInfo; asmap->parityInfo = asmap->qInfo; asmap->qInfo = temp;
+  rf_CommonCreateSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_qFuncs, NULL);
+}
+
+/* Dead Q - act like a RAID 5 small write */
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_001_CreateSmallWriteDAG)
+{
+  rf_CommonCreateSmallWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, &rf_pFuncs, NULL);
+}
+
+/* Dead P - act like a RAID 5 large write but for Q */
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_010_CreateLargeWriteDAG)
+{
+  RF_PhysDiskAddr_t *temp;
+  /* swap P and Q pointers to fake out the code */
+  temp = asmap->parityInfo; asmap->parityInfo = asmap->qInfo; asmap->qInfo = temp;
+  rf_CommonCreateLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, 1, rf_RegularQFunc, RF_FALSE);
+}
+
+/* Dead Q - act like a RAID 5 large write */
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_001_CreateLargeWriteDAG)
+{
+  rf_CommonCreateLargeWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList, 1, rf_RegularPFunc, RF_FALSE);
+}
+
+
+/*
+ * writes, double failure
+ */
+
+/*
+ * Lost P & Q - do a nonredundant write 
+ */
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_011_CreateWriteDAG)
+{
+  rf_CreateNonRedundantWriteDAG(raidPtr, asmap, dag_h, bp, flags, allocList,
+    RF_IO_TYPE_WRITE);
+}
+
+/*
+   In the two cases below,
+   A nasty case arises when the write a (strict) portion of a failed stripe unit
+   and parts of another su. For now, we do not support this.
+*/
+
+/*
+  Lost Data and  P - do a Q write.
+*/
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_110_CreateWriteDAG)
+{
+  RF_PhysDiskAddr_t *temp;
+
+  if (asmap->numStripeUnitsAccessed != 1 && 
+      asmap->failedPDAs[0]->numSector != raidPtr->Layout.sectorsPerStripeUnit)
+  {
+    RF_PANIC();
+  }
+  /* swap P and Q to fake out parity code */
+  temp = asmap->parityInfo;
+  asmap->parityInfo = asmap->qInfo;
+  asmap->qInfo = temp;
+  rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
+    allocList,1, (int (*)())rf_PQ_DegradedWriteQFunc, RF_FALSE); 
+  /* is the regular Q func the right one to call? */
+}
+
+/*
+   Lost Data and Q - do degraded mode P write
+*/
+RF_CREATE_DAG_FUNC_DECL(rf_PQ_101_CreateWriteDAG)
+{
+  if (asmap->numStripeUnitsAccessed != 1 && 
+      asmap->failedPDAs[0]->numSector != raidPtr->Layout.sectorsPerStripeUnit)
+    RF_PANIC();
+  rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
+    allocList,1, rf_RecoveryXorFunc, RF_FALSE);
+}
+
+#endif /* (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) */
