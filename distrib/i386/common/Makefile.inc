@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2002/05/19 08:55:12 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2002/07/03 03:36:53 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -34,9 +34,10 @@ ${FS}:	bsd.gz
 	disklabel -w -r ${VND} ${FLOPPYTYPE}
 	newfs -m 0 -o space -i 524288 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${BOOT} ${MOUNT_POINT}/
-	strip ${MOUNT_POINT}/boot
-	cp bsd.gz ${MOUNT_POINT}/bsd
+	cp ${BOOT} ${.OBJDIR}/boot
+	strip ${.OBJDIR}/boot
+	dd if=${.OBJDIR}/boot of=${MOUNT_POINT}/boot bs=512
+	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
 	/usr/mdec/installboot -v -s ${FLOPPYSECS} -h 2 ${MOUNT_POINT}/boot \
 	    ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
 	@echo ""
