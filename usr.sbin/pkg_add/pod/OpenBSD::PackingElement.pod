@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::PackingElement.pod,v 1.1 2005/02/28 13:08:41 espie Exp $
+$OpenBSD: OpenBSD::PackingElement.pod,v 1.2 2005/03/04 11:24:35 espie Exp $
 
 =head1 NAME
 
@@ -27,12 +27,14 @@ OpenBSD::PackingElement - C<pkg_add(1)> packing-elements object hierarchy
 =head1 DESCRIPTION
 
 C<OpenBSD::PackingElement> is the base class for all elements in a 
-packing-list (see L<OpenBSD::PackingList>).
+packing-list (see L<OpenBSD::PackingList> and C<pkg_create(1)>).
 
 Manipulation of packing-lists mostly occurs through visitor patterns
 such as C<OpenBSD::PackingList::visit>: client code defines a method for
 each relevant class in the hierarchy and calls C<$plist-E<gt>visit('method')>
 to perform the processing.
+
+Most actual objects have one property: their C<name>.
 
 =over 4
 
@@ -48,11 +50,40 @@ meta information with uniqueness properties.
 
 =over 4
 
+=item ::Arch
+
+architecture requirements.
+
 =item ::ExtraInfo
+
+some unique properties, like C<PKGPATH> and ftp status.
 
 =item ::Name
 
+the package name.
+
+=item ::LocalBase
+
+the local base for the package.
+
+=item ::NoDefaultConflict
+
+special annotation that package should not have any C<stem-*> conflict marker.
+
 =back
+
+=item ::Option
+
+factory for C<@option>
+
+=item ::Comment
+
+comments in the packing-lists. The constructor is actually a factory,
+since some comments evolve to some other class.
+
+=item ::CVSTag
+
+special class of comments that get reordered to the front of packing-lists.
 
 =item ::Depend
 
@@ -74,35 +105,75 @@ deprecated
 
 =item ::Wantlib
 
+shared library needed for the package.
+
 =item ::Dependency
+
+package needed.
 
 =back
 
 =item ::Conflict
+
+conflict information.
 
 =over 4
 
 =item ::PkgConflict
 
-deprecated
-
-=item ::Conflict
-
-=back
+deprecated.
 
 =back
 
 =item ::Annotation
 
+stuff that doesn't really exist as objects, but is used to add
+properties to objects.
+
+=over 4
+
+=item ::Ignore
+
+mark next object as ignored.
+
+=item ::md5
+
+mark last file with a checksum.
+
+=item ::size
+
+mark last file with a size.
+
+=item ::symlink
+
+mark last file as a symlink.
+
+=item ::hardlink
+
+mark last file as a hardlink.
+
+=item ::temp
+
+mark last file with a temporary name. Used during extraction of
+packages for replacement.
+
+=back
+
 =item ::Object
 
 somewhat concrete elements in packing-lists.
+This is the base class for objects with a location in the filesystem.
+It defineds method C<fullname>, to access the complete name of the object.
 
 =over 4
 
 =item ::FileObject
 
-objects with a filename.
+abstract class corresponding to files and directories.
+Default constructor depends on a C<dirclass> property, that may
+create objects from another class if their name ends with a C</>.
+The full object name is normally computed relative to the current 
+working directory as set in C<::State>.
 
 =over 4
 
@@ -110,9 +181,59 @@ objects with a filename.
 
 abstract class for files.
 
+=over 4
+
+=item ::File
+
+actual file objects present in the packing-list.
+
+=item ::InfoFile
+
+GNU info file objects.
+
+=item ::Shell
+
+files with shell properties.
+
+=item ::Manpage
+
+man pages.
+
+=item ::Lib
+
+shared library files.
+
+=item ::Sample
+
+file objects not present in the packing-list.
+
+=back
+
 =item ::DirlikeObject
 
 abstract class for directories.
+
+=over 4
+
+=item ::DirRm
+
+=item ::DirBase
+
+=over 4
+
+=item ::Dir
+
+=over 4
+
+=item ::Infodir
+
+=item ::Fontdir
+
+=item ::Mandir
+
+=back
+
+=back
 
 =back
 
@@ -120,10 +241,54 @@ abstract class for directories.
 
 stuff that performs some action during addition/removal of package.
 
+=over 4
+
+=item ::NewUser
+
+user that needs to be created for the package to work.
+
+=item ::NewGroup
+
+group that needs to be created for the package to work.
+
+=item ::Sysctl
+
+C<sysctl(8)> property needed for the package to work.
+
+=item ::ExeclikeAction
+
+escape mechanism for extra code that needs to be run.
+
+=over 4
+
+=item ::Exec
+
+=item ::Unexec
+
+=item ::Extraunexec
+
+=back
+
+=back
+
 =item ::State
 
 annotation-like stuff that can't be easily moved around because it influences
 surrounding objects.
+
+=over 4
+
+=item ::Cwd
+
+=item ::EndFake
+
+=item ::Owner
+
+=item ::Group
+
+=item ::Mode
+
+=back
 
 =back
 
