@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 2002/09/11 16:01:37 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.80 2002/09/17 03:51:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1156,7 +1156,7 @@ setregs(p, pack, stack, retval)
 	register_t *retval;
 {
 	register struct trapframe *tf = p->p_md.md_regs;
-	/* register struct pcb *pcb = &p->p_addr->u_pcb; */
+	register struct pcb *pcb = &p->p_addr->u_pcb;
 #ifdef DEBUG
 	/*extern int pmapdebug;*/
 	/*pmapdebug = 13;
@@ -1171,6 +1171,12 @@ setregs(p, pack, stack, retval)
 	tf->tf_rp = 0;
 	tf->tf_arg0 = (u_long)PS_STRINGS;
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
+
+	/* reset any of the pending FPU exceptions */
+	pcb->pcb_fpregs[0] = HPPA_FPU_INIT;
+	pcb->pcb_fpregs[1] = 0;
+	pcb->pcb_fpregs[2] = 0;
+	pcb->pcb_fpregs[3] = 0;
 
 	/* setup terminal stack frame */
 	stack = hppa_round_page(stack);

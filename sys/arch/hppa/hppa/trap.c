@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2002/09/12 04:36:19 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2002/09/17 03:51:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -131,7 +131,6 @@ trap(type, frame)
 {
 	extern u_int32_t sir;
 	struct proc *p = curproc;
-	struct pcb *pcbp;
 	vaddr_t va;
 	struct vm_map *map;
 	struct vmspace *vm;
@@ -211,7 +210,7 @@ trap(type, frame)
 	case T_PRIV_REG:
 		/* these just can't make it to the trap() ever */
 	case T_HPMC:      case T_HPMC | T_USER:
-	case T_EMULATION: case T_EMULATION | T_USER:
+	case T_EMULATION:
 #endif
 	case T_IBREAK:
 	case T_DATALIGN:
@@ -239,7 +238,48 @@ trap(type, frame)
 		/* pass to user debugger */
 		break;
 
-	case T_EXCEPTION | T_USER:	/* co-proc assist trap */
+	case T_EXCEPTION | T_USER: {
+		extern u_int32_t fpu_enable;	/* from machdep */
+		extern paddr_t fpu_curpcb;
+		u_int32_t stat, *pex;
+		int i, flt;
+
+#ifdef DIAGNOSTIC
+		if (fpu_curpcb != frame->tf_cr30)
+			panic("trap: FPU is not owned");
+#endif
+		mfctl(CR_CCR, stat);
+		if (stat & fpu_enable)	/* net quite there yet */
+			fpu_save((vaddr_t)p->p_addr->u_pcb.pcb_fpregs);
+		/* nobody owns it anymore */
+		fpu_curpcb = 0;
+		mtctl(stat & ~fpu_enable, CR_CCR);
+
+		/* get the exceptions and mask by the enabled mask */
+		pex = (u_int32_t *)&p->p_addr->u_pcb.pcb_fpregs[0];
+		for (i = 0, pex++; i < 7 && !*pex; i++, pex++);
+		stat = HPPA_FPU_OP(*pex);
+		if (stat & HPPA_FPU_V)
+			flt = FPE_FLTINV;
+		else if (stat & HPPA_FPU_Z)
+			flt = FPE_FLTDIV;
+		else if (stat & HPPA_FPU_O)
+			flt = FPE_FLTOVF;
+		else if (stat & HPPA_FPU_U)
+			flt = FPE_FLTUND;
+		else if (stat & HPPA_FPU_I)
+			flt = FPE_FLTRES;
+		else
+			flt = 0;
+		/* still left: under/over-flow and inexact */
+		*pex = 0;
+
+		sv.sival_int = va;
+		trapsignal(p, SIGFPE, type &~ T_USER, flt, sv);
+		}
+		break;
+
+	case T_EMULATION | T_USER:	/* co-proc assist trap */
 		sv.sival_int = va;
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTINV, sv);
 		break;
@@ -362,10 +402,9 @@ if (kdb_trap (type, va, frame))
 if (kdb_trap (type, va, frame))
 	return;
 #endif
-					pcbp = &p->p_addr->u_pcb;
 					frame->tf_iioq_tail = 4 +
 					    (frame->tf_iioq_head =
-						pcbp->pcb_onfault);
+						p->p_addr->u_pcb.pcb_onfault);
 #ifdef DDB
 					frame->tf_iir = 0;
 #endif
