@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.55 2004/01/03 18:30:39 millert Exp $ */
+/* $OpenBSD: user.c,v 1.56 2004/02/26 21:18:18 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1111,24 +1111,19 @@ static int
 rm_user_from_groups(char *login_name)
 {
 	struct stat	st;
-	regmatch_t	matchv[10];
-	regex_t		r;
+	size_t		login_len;
 	FILE		*from;
 	FILE		*to;
-	char		line[LINE_MAX];
 	char		buf[LINE_MAX];
 	char		f[MaxFileNameLen];
+	char		*cp, *ep;
 	int		fd;
 	int		cc;
-	int		sc;
 
-	(void) snprintf(line, sizeof(line), "(:|,)(%s)(,|$)", login_name);
-	if (regcomp(&r, line, REG_EXTENDED|REG_NEWLINE) != 0) {
-		warn("can't compile regular expression `%s'", line);
-		return 0;
-	}
+	login_len = strlen(login_name);
 	if ((from = fopen(_PATH_GROUP, "r")) == NULL) {
-		warn("can't remove gid for `%s': can't open `%s'", login_name, _PATH_GROUP);
+		warn("can't remove gid for `%s': can't open `%s'",
+		    login_name, _PATH_GROUP);
 		return 0;
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
@@ -1138,14 +1133,15 @@ rm_user_from_groups(char *login_name)
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
 	if ((fd = mkstemp(f)) < 0) {
 		(void) fclose(from);
-		warn("can't create gid: mkstemp failed");
+		warn("can't remove gid for `%s': mkstemp failed", login_name);
 		return 0;
 	}
 	if ((to = fdopen(fd, "w")) == NULL) {
 		(void) fclose(from);
 		(void) close(fd);
 		(void) unlink(f);
-		warn("can't create gid: fdopen `%s' failed", f);
+		warn("can't remove gid for `%s': fdopen `%s' failed",
+		    login_name, f);
 		return 0;
 	}
 	while (fgets(buf, sizeof(buf), from) > 0) {
@@ -1157,37 +1153,50 @@ rm_user_from_groups(char *login_name)
 			    _PATH_GROUP, buf, cc);
 			continue;
 		}
-		if (regexec(&r, buf, 10, matchv, 0) == 0) {
-			if (buf[(int)matchv[1].rm_so] == ',')
-				matchv[2].rm_so = matchv[1].rm_so;
-			else if (matchv[2].rm_eo != matchv[3].rm_eo)
-				matchv[2].rm_eo = matchv[3].rm_eo;
-			cc -= (int) matchv[2].rm_eo;
-			sc = (int) matchv[2].rm_so;
-			if (fwrite(buf, sc, 1, to) != 1 ||
-			    fwrite(&buf[(int)matchv[2].rm_eo], cc, 1, to) != 1) {
-				(void) fclose(from);
-				(void) close(fd);
-				(void) unlink(f);
-				warn("can't create gid: short write to `%s'", f);
-				return 0;
+
+		/* Break out the group list. */
+		for (cp = buf, cc = 0; *cp != '\0' && cc < 3; cp++) {
+			if (*cp == ':')
+				cc++;
+		}
+		if (cc != 3) {
+			warnx("Malformed entry `%.*s'. Skipping",
+			    (int)strlen(buf) - 1, buf);
+			continue;
+		}
+		while ((cp = strstr(cp, login_name)) != NULL) {
+			if ((cp[-1] == ':' || cp[-1] == ',') &&
+			    (cp[login_len] == ',' || cp[login_len] == '\n')) {
+				ep = cp + login_len;
+				if (cp[login_len] == ',')
+					ep++;
+				else if (cp[-1] == ',')
+					cp--;
+				memmove(cp, ep, strlen(ep) + 1);
+			} else {
+				if ((cp = strchr(cp, ',')) == NULL)
+					break;
+				cp++;
 			}
-		} else if (fwrite(buf, cc, 1, to) != 1) {
+		}
+		if (fwrite(buf, strlen(buf), 1, to) != 1) {
 			(void) fclose(from);
-			(void) close(fd);
+			(void) fclose(to);
 			(void) unlink(f);
-			warn("can't create gid: short write to `%s'", f);
+			warn("can't remove gid for `%s': short write to `%s'",
+			    login_name, f);
 			return 0;
 		}
 	}
+	(void) fchmod(fileno(to), st.st_mode & 07777);
 	(void) fclose(from);
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
 		(void) unlink(f);
-		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
+		warn("can't remove gid for `%s': can't rename `%s' to `%s'",
+		    login_name, f, _PATH_GROUP);
 		return 0;
 	}
-	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
 	return 1;
 }
 
