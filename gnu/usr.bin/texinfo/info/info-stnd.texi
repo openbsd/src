@@ -9,6 +9,12 @@
 @synindex fn cp
 @synindex ky cp
 @comment %**end of header
+@comment $Id: info-stnd.texi,v 1.1.1.2 1996/12/15 21:38:46 downsj Exp $
+
+@dircategory Texinfo documentation system
+@direntry
+* info program: (info-stnd).    Standalone Info-reading program.
+@end direntry
 
 @ifinfo
 This file documents GNU Info, a program for viewing the on-line formatted
@@ -17,7 +23,7 @@ documentation for the Info reader that is part of GNU Emacs.  If you do
 not know how to use Info, but have a working Info reader, you should
 read that documentation first.
 
-Copyright @copyright{} 1992, 1993 Free Software Foundation, Inc.
+Copyright @copyright{} 1992, 93, 96 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are

@@ -1,3 +1,625 @@
+Fri Oct  4 07:49:49 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* Version 3.9.
+
+	* Makefile.in (install): Say to install texinfo.tex manually.
+
+	* util/texi2dvi,
+	* util/texindex.c,
+	* makeinfo/makeinfo.c,
+	* info/info.c: Include only the current year in the copyright message.
+
+	* util/texi2dvi: Exit successfully.
+	From: Andreas Schwab <schwab@issan.informatik.uni-dortmund.de>.
+
+Thu Oct  3 12:58:32 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* Rename install.sh to the preferred install-sh.
+
+	* Makefile.in (VERSION),
+	* util/texi2dvi,
+	* util/texindex.c,
+	* util/install-info.c,
+	* makeinfo/makeinfo.c (minor_version, print_version_info),
+     	* info/info.c: Update version number.
+
+	* util/texi2dvi: Only show diff if verbose.
+
+	* util/install-info.c (main): Check for a missing dir file as well
+ 	as a missing info files.
+	(main): At start of a node, completely initialize the newly-malloced
+	node structure.
+
+	* texinfo.texi: Fix incorrect uses of @key,
+	insert missing newline in Installing Dir Entries' @menu item,
+	document install-info invocation.
+
+	* Makefile.in (DISTFILES): Do not put .gdbinit's in distribution.
+	(dist): Use || instead of && (and invert sense) so make doesn't think
+	the command failed.
+	(dist): Exclude more junk.
+
+	* makeinfo/makeinfo.c (cm_xref): Back out patch from Tom T., since
+        we generate a good-enough error message that is suppressible
+        without it.
+
+	* util/gen-dir-node: The recommended name for the top-level info
+ 	file is dir, not dir.info.
+
+	* util/install-info.c (main): At `Mark the end of the Top node',
+        make sure the node name is non-NULL before comparing it. From
+        lvirden@cas.org.
+
+	* configure.in (AC_REPLACE_FUNCS): Use this for memcpy, memmove,
+	and strdup.
+        (AC_CHECK_FUNCS): Instead of this.
+	Because both bcopy and memmove are missing on the 3b2, as reported by
+	Gaylen Miller <gaylen@proaxis.com>, hence we must provide our own.
+	* libtxi/Makefile.in (LIBOBJS): New variable.
+	(OBJS): Include it.
+	* libtxi/memcpy.c, libtxi/memmove.c, libtxi/strdup.c: New files,
+	taken from fileutils 3.13.
+	* makeinfo/makeinfo.c,
+	* info/clib.c (strdup): Move to libtxi.
+
+Wed Oct  2 18:23:30 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* info/info-utils.h (memcpy) [!HAVE_MEMCPY],
+	* info/termdep.h (memcpy) [!HAVE_MEMCPY],
+	* makeinfo/makeinfo.c (memmove) [!HAVE_MEMMOVE]: Remove this
+        #ifdef, as we now include it in libtxi if missing.
+
+Tue Oct  1 17:41:52 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/Makefile.in (install),
+	* info/Makefile.in (install),
+	* Makefile.in (install): Use new option name --info-dir instead of
+ 	--infodir.
+
+	* makeinfo/multi.c (out_char): New fn.  Replace all calls to
+	putc/fprintf with calls to this.
+
+	* util/install-info.c: Rename --infodir to info-dir.
+
+Mon Sep 30 10:07:21 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* Version 3.8.
+
+	* texinfo.tex: Untabify.
+
+	* texinfo.tex (\ptexl, \ptexL): Do not save, we have our own
+	commands now.
+	(\onepageout): Reformat for readability, and call \indexdummies
+	to avoid expansion of Texinfo commands (e.g., accents) in \write's.
+	(\,, \dotaccent, \ringaccent, \tieaccent, \ubaraccent, udotaccent,
+	\questiondown, \exclamdown, \dotless): New macros.
+	(\l): Let plain TeX definition remain, instead of switching
+	to ``lisp'' font.
+	(\multitable): Ensure space between the columns,
+	insert struts to make interline spacing constant,
+	use real strut instead of a box containing `Xy'.
+	(\indexdummies): Do not define \rm, \char, but
+	do define \@, \{, \}, \dotless, and \,.  And \t should generate
+	\t, not \r.
+	(\indexnofonts): Define \, and \dotless as \indexdummyfont,
+	and let \@ be @.
+	(\doind): Reformat for readability, and use temp control sequence
+	names that actually make sense.
+	(\doublecolumnout, \pagesofar, \enddoublecolumns): Restore
+	Knuth's original code to avoid spurious overfull vbox messages.
+	(No boxes are actually overfull).
+	(\shortcontents): Do not allow hyphenations.
+	(\dochapentry, \tocentry): Make glue above and below flexible, to allow
+	better page breaks.
+	(\tex): Reset \, to its plain TeX meaning,
+	and do not reset \l.
+	
+	* COPYING: Update for new FSF address (from gcc dist).
+
+	* libtxi/Makefile.in: Various simplifications.
+
+Sun Sep 29 12:58:44 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* util/texi2dvi: Use $progname instead of $0 for --version.
+
+	* util/install-info.c (xmalloc, xrealloc): Declare malloc and
+	realloc as returning void *,
+	to avoid ptr/int problems on Digital Unix.
+
+	* info/tilde.c (tilde_expand_word): Declare getenv as returning char *,
+	to avoid warning on Digital Unix.
+
+	* makeinfo/multi.c (multitable_active): Declare extern here to
+ 	avoid ld warning on rs6000.
+
+	* util/texindex.c (usage): Avoid ??' trigraph.
+
+	* util/install-info.c: Include <sys/fcntl.h> or <fnctl.h>,
+	according to HAVE_SYS_FCNTL_H,
+	and only include <sys/file.h> if HAVE_SYS_FILE_H.
+	(readlines): Oops, had NULL's and 0's reversed for ptr/int members.
+
+	* info/terminal.c (terminal_goto_xy): Remove spurious extra ;.
+
+	* util/install-info.c: Untabify.	(input_sections): Initialize.
+	(find_lines): Initialize the terminating element of the array.
+	(print_help): Document --infodir.
+	(main): Compare the basename of infile sans .info to the dir entry,
+	not infile itself.
+	* util/Makefile.in (clean): Remove the install-info binary.
+
+	* info/Makefile.in (distclean): Remove *.info* files.
+
+	* Makefile.in (install),
+	* info/Makefile.in (install),
+	* makeinfo/Makefile.in (install): Use --infodir instead of --info-file.
+
+	* info/info.c,
+	* makeinfo/makeinfo.c: Avoid newlines in string constants for the
+ 		sake of SunOS cc.
+
+	* makeinfo/multi.c: Do not assume ANSI C.
+
+	* info/info.texi: Oops, need @end vtable for a @vtable.
+
+Sat Sep 28 16:31:28 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* Makefile.in (texinfo): Do not depend on sub-all, as then
+        makeinfo is always run.  Instead, depend on texinfo.texi.
+
+	* makeinfo/Makefile.in (info, dvi): New targets.
+	makeinfo.info, makeinfo.dvi: Do not depend on macro.texi for now.
+
+	* info/Makefile.in (install): Must call install-info twice.
+
+	* info/info-stnd.texi,
+	* info/info.texi,
+	* makeinfo/makeinfo.texi: Include direntry.
+
+	* emacs/Makefile.in: Use && after cd, etc.
+
+	* texinfo.texi: Kludges so makeinfo -E will not create spurious
+        differences.  Add new direntries.
+
+	* util/install-info.c,
+	* util/texindex.c,
+	* makeinfo/makeinfo.c,
+	* info/info.c: Standardize --version output.
+
+	* makeinfo/makeinfo.c (defun_internal): Don't insert index command
+ 	if expanding macros.
+	(cm_footnotestyle): Don't change the footnote style if it was set
+	on the command line.
+
+	* util/texi2dvi: Recompute original index files each time through loop.
+	Make indentation uniform.
+	Use same basename for the temp input files.
+	Standardize --version output.
+
+	* info/Makefile.in (install),
+	* makeinfo/Makefile.in (install): Insert $(POST_INSTALL).
+
+Fri Sep 27 13:27:30 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.texi (Format with texi2dvi): Rewrite now that the script
+ 	runs in a loop.
+
+	* info/Makefile.in (MAKEINFO): Simplify to ../makeinfo/makeinfo.
+
+Fri Sep 27 00:26:03 1996  Miles Bader  <miles@gnu.ai.mit.edu>
+
+	* info/terminal.c [HAVE_TERMIOS_H] (terminal_prep_terminal,
+	terminal_unprep_terminal): Add code for termios.
+	[HAVE_TERMIOS_H] (original_termios, ttybuff): New variables.
+	* info/termdep.h: [HAVE_TERMIOS_H]: Add include of <termios.h>.
+	* configure.in: Add check for <termios.h>.
+
+Thu Sep 26 10:46:34 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* emacs/texnfo-upd.el,
+	* emacs/texinfo.el,
+	* emacs/texinfmt.el: Update from bob for new Texinfo commands, etc.
+	
+	* emacs/info.el, emacs/informat.el, emacs/makeinfo.el,
+	emacs/texnfo-tex.el: Update from Emacs 19.34 dist.
+	
+	* emacs/elisp-comp: Use TMPDIR if set.
+
+	* util/Makefile.in (libdir): Remove.
+
+	* makeinfo/Makefile.in (install),
+	* Makefile.in (install),
+	* info/Makefile.in (install): Run install-info.
+	(libdir): Remove.
+
+	* texinfo.texi: Various fixes as I make this go through TeX.
+
+	* util/install-info.c: Quote newlines in help message.
+
+	* util/texi2dvi (texi2dvi): Run TeX until the aux/index files
+        stabilize, instead of just twice.  From: David Shaw
+        <daves@gsms01.alcatel.com.au>.
+
+Tue Sep 24 14:43:03 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* dir: Blank dir file for installation on new systems.
+
+Mon Sep 23 12:18:43 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (args_from_string): Do not back up at a };
+ 		that leads to an infinite loop.
+
+Sat Sep 21 17:48:04 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (cm_xref): Do not seg fault if outside of
+ 	any node.  From: Tom Tromey <tromey@creche.cygnus.com>.
+	(cm_ctrl): Make obsolete.
+
+Tue Sep 17 13:30:08 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.tex (\inforef): Move to more appropriate place.
+	(\pounds): Remove spurious extra $.
+	(\email): Typeset argument in angle brackets.
+	(\macro): Use \doignore for robustness, instead of just letting TeX
+	parse the argument.
+	(\unmacro): Define.
+
+Sat Sep 14 16:17:35 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.texi: Document multitables, new ISBN number.
+
+Wed Sep 11 18:01:24 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/multi.c (struct env): Remove unused output_position
+        field; this needs to be global.
+        (setup_multitable_parameters): Implement template-defined multitables.
+	(output_multitable_row): Remove trailing whitespace.
+
+	* makeinfo/makeinfo.c (_READ_BUFFER_GROWTH, struct _defines):
+	Remove leading underscore for POSIX/ANSI pedants.
+	(init_conversion): Initialize output_position here.
+	(init_paragraph): Instead of here, where it loses with the
+	multitable calls, eventually resulting in negative counts to the
+	write call when the output file is split.
+
+	* texinfo.texi: First cut at macro documentation.
+	Change accent doc to use tables.
+	Remove whitespace experiments, they are now the default.
+
+Mon Sep  9 14:16:24 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c: Use putc instead of fprintf where possible.
+        (cm_accent): Put _ from @ubaraccent after argument.
+
+	* util/texindex.c (strerror) [!strerror]: Conditionalize
+ 		declaration.
+
+Sat Sep  7 14:13:24 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (commandTable): Obsolete @setchapterstyle.
+
+Thu Sep  5 15:45:11 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (convert_from_loaded_file): Oops, fix
+ 		wording of initial output comment.
+
+	* makeinfo/makeinfo.c (cm_angle_brackets): Rename from cm_key.
+        (commandTable): @email should produce angle brackets.
+	@key: Change name.
+
+Tue Sep  3 14:52:17 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.tex (\hsize): Decrease.
+        (\hoffset): Increase.
+	(\setleading): Decrease dramatically.
+	This change affects 8.5x11 format only.
+
+	* texinfo.texi: Document accent commands.
+
+Mon Sep  2 11:10:49 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (commandTable): Deprecate @ichapter and
+	@titlespec.
+	Move all the deprecated @i<section> commands to the end of the list.
+
+	* texinfo.texi: Document @pounds{} and @centerchap{}.
+
+	* texinfo.tex (\centerchfplain): Rewrite to use \chfplain, and to
+ 	actually center.
+	(\unnchfplain): Just call \chfplain.
+	(\chfplain): Rewrite to be generally callable.
+	(\centerparametersmaybe): Hook, a no-op except with @centerchap.
+
+Sun Sep  1 15:01:49 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.texi: Document @<whitespace>, rearrange spacing section.
+
+	* makeinfo.c (commandTable): Make @. @? @! insert themselves,
+ 	not be sentence-non-enders.  They are sentence *enders*.  Also,
+ 	make @\t and @\n insert a normal space character, not themselves.
+  	Also, define @hyphenation.
+	(insert_space): New function.
+	(cm_ignore_sentence_ender): Remove this.
+	(flush_output): Check only for META-SPC, not META-<sentence-ender>.
+
+Fri Aug 30 18:55:30 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.texi: Document @- and @hyphenation{}.
+	Miscellanous fixes.
+
+	* makeinfo/makeinfo.c (commandTable): Define @- as cm_no_op, since
+ 	makeinfo doesn't do hyphenation.
+
+Thu Aug 29 13:05:38 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.tex (\key): Do not uppercase the argument; key names
+	can be mixed case, e.g., `Control'.
+
+	* makeinfo/makeinfo.c: @infotop, @infounnumbered,
+	@infounnumberedsec, @infounnumberedsubsec,
+	@infounnumberedsubsubsec, @infoappendix, @infoappendixsec,
+	@infoappendixsubsec, @infoappendixsubsubsec, @infochapter,
+	@infosection, @infosubsection, @infosubsubsection:
+	  Remove these long-since obsolete commands.
+	@iappendix, @iappendixsection, @iappendixsec, @iappendixsubsec,
+	@iappendixsubsubsec, @ichapter, @isection, @isubsection,
+	@isubsubsection, @iunnumbered, @iunnumberedsec, @iunnumberedsubsec,
+	@iunnumberedsubsubsec:
+ 	  Deprecate these.
+	@infoinclude:
+	  Obsolete this.
+	@,: Have to take an argument, since have to do @,{c} not c@,; can't
+	feasibly implement the latter in TeX.
+
+	* makeinfo/makeinfo.c: Rename @d to @udotaccent, since this is
+ 		relatively infrequently used.
+
+Tue Aug 27 14:58:56 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* info/info.c (print_short_help),
+	* util/install-info.c (print_help),
+	* util/texi2dvi,
+	* makeinfo/makeinfo.c (usage) Include bug reporting address.
+
+Mon Aug 26 15:27:17 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (commandTable): Remove @input, @medbreak,
+ 		@smallbreak, @overfullrule, @br.
+
+Sun Aug 25 17:25:48 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (commandTable): Unify commands that perform
+        the same operation, such as cm_file, cm_samp, cm_email,
+        etc., which all do cm_code.
+
+	* texinfo.texi: Document @ifhtml ... @end ifhtml.  Change
+	`PlainTeX' to `plain TeX'.
+
+Fri Aug 23 16:03:16 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.tex (\pounds): New Texinfo command @pounds{}.
+	(\parskip): New smaller value.
+	(\chapheadingskip, \secheadingskip, \subsecheadingskip): New smaller
+	values, both for 8.5x11 and @smallbook formats. From Bob.
+
+	* makeinfo/makeinfo.c (cm_special_char): @pounds{} prints a #.
+	(commandTable): Add new command @pounds.
+
+Tue Aug 20 13:47:20 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (CommandTable): Restore "!", accidentally
+        removed previously.
+
+	* texinfo.tex (\key): Typeset a lozenge around the argument (from
+	gildea@intouchsys.com).
+	* makeinfo/makeinfo.c (cm_key): Surround arg with <...> to match
+        new lozenge style in TeX.
+
+Wed Aug 14 16:59:23 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.texi: Propagate change from rms.
+
+Tue Aug 13 11:33:27 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.texi: Propagate change from rms.
+
+	* texinfo.texi: Document other @headings options.
+
+Sun Aug 11 13:19:42 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (cm_accent, cm_special_char, cm_dotless):
+	New functions.
+	(CommandTable): Add new commands for all of plain.tex's
+	accents and non-English characters.
+
+Fri Aug  9 14:12:07 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (convert_from_loaded_file): Say we're making
+ 	``text'' file if no_headers.  Also, use `input_filename' instead
+ 	of just `name' for clarity.
+	(suffixes): Check for no suffix last, i.e., prefer `foo.texi' as an
+	input file to `foo'.  (The latter is probably a binary.)
+
+Mon Aug  5 13:52:39 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.tex (\heading, \subheading, \subsubheading): Can no
+ 	longer call the nonexistent \*secheadingi series. Instead, call
+ 	\plain*secheading.
+	(\plainsubsecheading, \plainsubsubsecheading): New macros, by analogy
+	with \plainsecheading.
+	(\unnumberedsubseczzz, \unnumberedsubsubseczzz): Call them.
+
+Sun Aug  4 16:46:10 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* makeinfo/makeinfo.c (flush_output): Mask out eighth bit, that we
+ 	turned on in non-sentence enders.
+
+Sat Aug  3 14:03:10 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.tex (\HEADINGSdouble, \HEADINGSsingle,
+ 	HEADINGSdoubleafter, \HEADINGSsingleafter, \CHAPPAGoff,
+ 	\CHAPPAGon, \CHAPPAGodd): Set \contentsalignmacro, analogous to
+ 	\pagealignmacro.
+	(\startcontents): Call \contentsalignmacro instead of \pagealignmacro.
+
+Mon Jul 29 14:44:33 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.tex (\indexfonts): Make leading be 12pt. Otherwise, it's
+ 	too crammed.
+	(\smalllispx): Remove \setleading{10pt}. That was too small.
+	(\doprintindex): Do not call \tex ... \Etex.  Index files are Texinfo
+	source, not TeX source, except for using \ instead of @ as the
+ 	escape character (for now).
+
+Sun Jul 28 13:37:05 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.tex (paragraphindent): Move to more reasonable place in
+        the source file.	
+        (chapfonts, secfonts, subsecfonts, indexfonts): Call \setleading. 
+	(\chfplain, \secheading, \plainsecheading, \subsecheading,
+	 \subsubheading): Rewrite to properly \hangindent the title.
+     	(\sectionheading): New generic macro to print section titles.
+
+	* texinfo.texi: Update the `Obtaining TeX' node.
+
+Fri Jul 26 14:11:48 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* util/texi2dvi: Do macro expansion with makeinfo before running TeX.
+	Various expansion safety measures added for test; avoid use of -o.
+
+	* makeinfo/makeinfo.c (usage): More usage message tweaks.
+
+Fri Jul 26 11:55:37 1996  Karl Berry  <karl@laurie>
+
+	* util/texi2dvi: Format usage message to conform to the other *utils.
+
+Thu Jul 25 17:05:47 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* emacs/Makefile.in: Do not compile the Elisp by default.  We
+	don't install it, so it confuses people to compile it.
+
+Sun Jul 21 07:20:09 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* util/Makefile.in (install-info): Dependency should be
+ 	  install-info.o, not install-info. Also, update copyright years.
+
+	* makeinfo/makeinfo.c (cm_printindex): Don't call execute_string
+        to print index entries, we've already done the expansion now.
+
+	* makeinfo/makeinfo.h: Add copyright.  Finish merge of rms changes.
+	* makeinfo/makeinfo.c: Finish merge, add my expansion changes again.
+	* makeinfo/multi.c: Add copyright message.
+
+Fri Jul 19 10:35:22 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* info/info.c: Update copyright date.
+
+	* info/info.texi,
+	* util/install-info.c,
+	* emacs/Makefile.in,
+	* emacs/texnfo-tex.el,
+	* emacs/Makefile.in: Change FSF address.
+
+	* Merged changes from bfox -- below, plus multitable changes, plus
+	lots more.
+
+	    Sun Apr 14 08:49:50 1996  Brian J. Fox  <bfox@nirvana.samsara.com>
+
+		    * makeinfo/makeinfo.c (remember_node_reference): Numerous commands
+		    call remember_node_reference.  If a node has not yet been defined,
+		    use the empty string as the current node for those cases.
+
+	    Mon Feb 12 17:35:38 1996  Brian J. Fox  <bfox@nirvana.samsara.com>
+
+		    * makeinfo/makeinfo.c (push_node_filename): Clean up calls to
+		    xmalloc and xrealloc.  Only have to call xrealloc.
+
+	    Fri Jan 26 08:00:38 1996  Brian J. Fox  <bfox@nirvana.samsara.com>
+
+		    * info/session.c (info_input_buffer_space_available): Fix typo
+		    which forced the limitation of the sizeof (int) instead of sizeof
+		    (buffer).
+
+		    * Makefile.in (PACKVER): now at 3.8.  Add TERMIOS support to
+		    Info.  Minor bugs fixed in Makeinfo.
+
+Sat Jul 13 11:58:57 1996  Karl Berry  <karl@cs.umb.edu>
+
+	* texinfo.texi (ftable vtable): Mention example.
+
+Sun Jun 30 14:59:51 1996  Karl Berry  <karl@goldman.gnu.ai.mit.edu>
+
+        * makeinfo/makeinfo.c (cm_email): New function for new @email command.
+	* texinfo.texi (email): New node documenting it.
+
+Wed Apr 17 18:07:34 1996  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
+
+	* makeinfo/makeinfo.c (cm_kbd): Do nothing if in @example or @code.
+	(struct brace_element): New field in_fixed_with_font.
+	(remember_brace_1): Save in_fixed_with_font.
+	(pop_and_call_brace): Restore in_fixed_with_font.
+	(cm_code): Don't decrement in_fixed_with_font at end of construct.
+	(struct istack_elt): New field in_fixed_with_font.
+	(push_insertion, pop_insertion): Save and restore in_fixed_with_font.
+	(end_insertion): Don't decrement in_fixed_with_font here.
+	(not_fixed_width): New function.
+	(cm_sc, cm_var, cm_italic, cm_roman, cm_titlefont):
+	Use not_fixed_width.
+
+Sat Apr 13 23:22:05 1996  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
+
+	* util/install-info.c (main): Fatal error if no input file spec'd.
+	Look for START-INFO-DIR-ENTRY, not BEGIN-INFO-DIR-ENTRY.
+
+Thu Apr 11 18:21:50 1996  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
+
+	* makeinfo/makeinfo.c (cm_enddots): New function.
+	(self_delimiting): Accept -, ^ and ".
+	(CommandTable): Add commands -, ^, ", enddots, centerchap.
+
+Sun Mar 24 12:18:32 1996  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
+
+	* makeinfo/makeinfo.c (enum insertion_type): Add `direntry'.
+	(insertion_type_names): Add "direntry".
+	(cm_dircategory): New function.
+	(cm_direntry): New function.
+	(CommandTable): Add "dircategory" and "direntry".
+	(insert_string): New function.
+	(end_insertion): Handle direntry.
+	(begin_insertion): Handle direntry.
+
+Sun Mar 24 11:10:05 1996  Karl Berry  <karl@spiff.gnu.ai.mit.edu>
+
+        * makeinfo/makeinfo.c (cm_url): New function for new @url command.
+
+Fri Feb 23 21:14:40 1996  Richard Stallman  <rms@mole.gnu.ai.mit.edu>
+
+	* info/Makefile.in (install, uninstall): Use manprefix.
+
+Fri Feb 23 19:50:18 1996  Richard Stallman  <rms@whiz-bang.gnu.ai.mit.edu>
+
+	* util/Makefile.in (install-info, install-info.o): New targets.
+	(all): Depend on install-info.
+	(install, uninstall): Operate on install-info.
+
+	* install-info.c: New file.
+
+Wed Jan  3 10:01:45 1996  Brian J. Fox  <bfox@nirvana.datawave.net>
+
+        * makeinfo/makeinfo.c (make_index_entries_unique): Be a little bit
+	stricter about what makes two index entries identical. 
+
+Fri Dec 29 13:00:24 1995  Brian J. Fox  <bfox@wizard.datawave.net>
+
+	* makeinfo/makeinfo.c (Whole File): Add @detailmenu for allowing
+	detailed menu listings to appear while still defaulting nodes.
+
+Wed Dec 27 13:54:30 1995  Brian Fox  <bfox@albert.gnu.ai.mit.edu>
+
+	* makeinfo/makeinfo.c (cm_code): Always notice that we are in
+	fixed_width_font, even if other formatting changes are not to take
+	place.
+
 Sat Dec 23 11:48:43 1995  Brian J. Fox  <bfox@wizard.datawave.net>
 
 	* info/man.c: (clean_manpage) Remove ^L's from page.

@@ -1,33 +1,26 @@
 /* Makeinfo -- convert texinfo format files into info files.
+   $Id: makeinfo.c,v 1.1.1.3 1996/12/15 21:39:24 downsj Exp $
 
-   Copyright (C) 1987, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 
-   This file is part of GNU Info.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
 
-   Makeinfo is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY.  No author or distributor accepts
-   responsibility to anyone for the consequences of using it or for
-   whether it serves any particular purpose or works at all, unless he
-   says so in writing.  Refer to the GNU Emacs General Public License
-   for full details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-   Everyone is granted permission to copy, modify and redistribute
-   Makeinfo, but only under the conditions described in the GNU Emacs
-   General Public License.   A copy of this license is supposed to
-   have been given to you along with GNU Emacs so you can know your
-   rights and responsibilities.  It should be in a file named COPYING.
-   Among other things, the copyright notice and this notice must be
-   preserved on all copies.  */
-
-/* This is Makeinfo version 1.64.  If you change the version number of
-   Makeinfo, please change it here and at the lines reading:
-
-    int major_version = 1;
-    int minor_version = 64;
-
-   in the code below.
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
    Makeinfo is authored by Brian Fox (bfox@ai.mit.edu). */
+
+int major_version = 1;
+int minor_version = 67;
 
 /* You can change some of the behaviour of Makeinfo by changing the
    following defines: */
@@ -56,15 +49,10 @@
    newlines in the input file (i.e., one or more blank lines). */
 #define DEFAULT_PARAGRAPH_SPACING 1
 
-/* Define HAVE_MACROS to enable the macro facility of TeXinfo.  Using this
+/* Define HAVE_MACROS to enable the macro facility of Texinfo.  Using this
    facility, users can create their own command procedures with arguments. */
 #define HAVE_MACROS
 
-/* **************************************************************** */
-/*								    */
-/*			Include File Declarations       	    */
-/*								    */
-/* **************************************************************** */
 
 /* Indent #pragma so that older Cpp's don't try to parse it. */
 #if defined (_AIX)
@@ -135,9 +123,8 @@ int array_len ();
 void free_array ();
 static void isolate_nodename ();
 
-#if !defined (HAVE_MEMMOVE)
-#  define memmove(dst, src, len) bcopy (src, dst, len)
-#endif
+#define COMPILING_MAKEINFO
+#include "makeinfo.h"
 
 /* Non-zero means that we are currently hacking the insides of an
    insertion which would use a fixed width font. */
@@ -180,69 +167,6 @@ void maybe_write_itext (), me_execute_string ();
 
 /* Some systems don't declare this function in pwd.h. */
 struct passwd *getpwnam ();
-
-
-/* **************************************************************** */
-/*								    */
-/*			      Global Defines  			    */
-/*								    */
-/* **************************************************************** */
-
-/* Error levels */
-#define NO_ERROR 0
-#define SYNTAX	 2
-#define FATAL	 4
-
-/* C's standard macros don't check to make sure that the characters being
-   changed are within range.  So I have to check explicitly. */
-
-/* GNU Library doesn't have toupper().  Until GNU gets this fixed, I will
-   have to do it. */
-#ifndef toupper
-#define toupper(c) ((c) - 32)
-#endif
-
-#define coerce_to_upper(c) ((islower(c) ? toupper(c) : (c)))
-#define coerce_to_lower(c) ((isupper(c) ? tolower(c) : (c)))
-
-#define control_character_bit 0x40 /* %01000000, must be off. */
-#define meta_character_bit 0x080/* %10000000, must be on.  */
-#define CTL(c) ((c) & (~control_character_bit))
-#define UNCTL(c) coerce_to_upper(((c)|control_character_bit))
-#define META(c) ((c) | (meta_character_bit))
-#define UNMETA(c) ((c) & (~meta_character_bit))
-
-#define whitespace(c) (((c) == '\t') || ((c) == ' '))
-#define sentence_ender(c) ((c) == '.' || (c) == '?' || (c) == '!')
-#define cr_or_whitespace(c) (((c) == '\t') || ((c) == ' ') || ((c) == '\n'))
-
-#ifndef isletter
-#define isletter(c) (((c) >= 'A' && (c) <= 'Z') || ((c) >= 'a' && (c) <= 'z'))
-#endif
-
-#ifndef isupper
-#define isupper(c) ((c) >= 'A' && (c) <= 'Z')
-#endif
-
-#ifndef isdigit
-#define isdigit(c)  ((c) >= '0' && (c) <= '9')
-#endif
-
-#ifndef digit_value
-#define digit_value(c) ((c) - '0')
-#endif
-
-#define member(c, s) (strchr (s, c) != NULL)
-
-#define COMMAND_PREFIX '@'
-
-/* Stuff for splitting large files. */
-#define SPLIT_SIZE_THRESHOLD 70000  /* What's good enough for Stallman... */
-#define DEFAULT_SPLIT_SIZE 50000    /* Is probably good enough for me. */
-int splitting = 1;		    /* Always true for now. */
-
-typedef void COMMAND_FUNCTION (); /* So I can say COMMAND_FUNCTION *foo; */
-
 
 /* **************************************************************** */
 /*								    */
@@ -252,37 +176,6 @@ typedef void COMMAND_FUNCTION (); /* So I can say COMMAND_FUNCTION *foo; */
 
 /* Global pointer to argv[0]. */
 char *progname;
-
-/* The current input file state. */
-char *input_filename;
-char *input_text;
-int size_of_input_text;
-int input_text_offset;
-int line_number;
-
-#define curchar() input_text[input_text_offset]
-
-#define command_char(c) ((!whitespace(c)) && \
-			 ((c) != '\n') && \
-			 ((c) != '{') && \
-			 ((c) != '}') && \
-			 ((c) != '='))
-
-#define skip_whitespace() while (input_text_offset != size_of_input_text \
-				 && whitespace(curchar()))\
-  input_text_offset++
-
-#define skip_whitespace_and_newlines() \
-  do { \
-   while (input_text_offset != size_of_input_text \
-	  && (whitespace (curchar ()) \
-	      || (curchar () == '\n'))) \
-      { \
-	 if (curchar () == '\n') \
-	   line_number++; \
-	 input_text_offset++; \
-      } \
-   } while (0)
 
 /* Return non-zero if STRING is the text at input_text + input_text_offset,
    else zero. */
@@ -309,18 +202,6 @@ FILE *output_stream;
 /* Position in the output file. */
 int output_position;
 
-/* Output paragraph buffer. */
-unsigned char *output_paragraph;
-
-/* Offset into OUTPUT_PARAGRAPH. */
-int output_paragraph_offset;
-
-/* The output paragraph "cursor" horizontal position. */
-int output_column = 0;
-
-/* Non-zero means output_paragraph contains text. */
-int paragraph_is_open = 0;
-
 #define INITIAL_PARAGRAPH_SPACE 5000
 int paragraph_buffer_len = INITIAL_PARAGRAPH_SPACE;
 
@@ -334,12 +215,6 @@ int non_splitting_words = 0;
 
 /* Non-zero indicates that filling a line also indents the new line. */
 int indented_fill = 0;
-
-/* The column at which long lines are broken. */
-int fill_column = 72;
-
-/* The amount of indentation to apply at the start of each line. */
-int current_indent = 0;
 
 /* The amount of indentation to add at the starts of paragraphs.
    0 means don't change existing indentation at paragraph starts.
@@ -500,6 +375,9 @@ NODE_REF *node_references = (NODE_REF *) NULL;
 /* Flag which tells us whether to examine menu lines or not. */
 int in_menu = 0;
 
+/* Flag which tells us how to examine menu lines. */
+int in_detailmenu = 0;
+
 /* Non-zero means that we have seen "@top" once already. */
 int top_node_seen = 0;
 
@@ -548,6 +426,7 @@ typedef struct brace_element
   struct brace_element *next;
   COMMAND_FUNCTION *proc;
   int pos, line;
+  int in_fixed_width_font;
 } BRACE_ELEMENT;
 
 BRACE_ELEMENT *brace_stack = (BRACE_ELEMENT *) NULL;
@@ -556,6 +435,8 @@ BRACE_ELEMENT *brace_stack = (BRACE_ELEMENT *) NULL;
 #if !defined (HAVE_STRDUP)
 extern char *strdup ();
 #endif /* HAVE_STRDUP */
+
+extern void do_multitable ();
 
 void print_version_info ();
 void usage ();
@@ -578,20 +459,22 @@ void reader_loop (), read_command ();
 void remember_brace (), remember_brace_1 ();
 void pop_and_call_brace (), discard_braces ();
 void add_word_args (), add_word (), add_char (), insert (), flush_output ();
+void insert_string ();
 void close_paragraph_with_lines (), close_paragraph ();
 void ignore_blank_line ();
 void do_flush_right_indentation ();
 void start_paragraph (), indent ();
-
-void insert_self (), cm_ignore_line ();
+
+void insert_self (), insert_space (), cm_ignore_line ();
 
 void
-  cm_asterisk (), cm_dots (), cm_bullet (), cm_TeX (),
-  cm_copyright (), cm_code (), cm_samp (), cm_file (), cm_kbd (),
-  cm_key (), cm_ctrl (), cm_var (), cm_dfn (), cm_emph (), cm_strong (),
-  cm_cite (), cm_italic (), cm_bold (), cm_roman (), cm_title (), cm_w (),
-  cm_refill (), cm_titlefont ();
+  cm_TeX (), cm_asterisk (), cm_bullet (), cm_cite (),
+  cm_code (), cm_copyright (), cm_ctrl (), cm_dfn (), cm_dircategory (),
+  cm_direntry (), cm_dots (), cm_emph (), cm_enddots (),
+  cm_kbd (), cm_angle_brackets (), cm_no_op (), cm_not_fixed_width (),
+  cm_strong (), cm_var (), cm_w ();
 
+/* Sectioning.  */
 void
   cm_chapter (), cm_unnumbered (), cm_appendix (), cm_top (),
   cm_section (), cm_unnumberedsec (), cm_appendixsec (),
@@ -600,23 +483,24 @@ void
   cm_heading (), cm_chapheading (), cm_subheading (), cm_subsubheading (),
   cm_majorheading (), cm_raisesections (), cm_lowersections ();
 
-/* All @defxxx commands map to cm_defun (). */
-void cm_defun ();
+/* All @defxxx commands map to cm_defun, most accent commands map to
+   cm_accent, most non-English letters map to cm_special_char.  */
+void cm_defun (), cm_accent (), cm_special_char (), cm_dotless ();
 
 void
   cm_node (), cm_menu (), cm_xref (), cm_ftable (), cm_vtable (), cm_pxref (),
   cm_inforef (), cm_quotation (), cm_display (), cm_itemize (),
-  cm_enumerate (), cm_table (), cm_itemx (), cm_noindent (), cm_setfilename (),
-  cm_br (), cm_sp (), cm_page (), cm_group (), cm_center (), cm_include (),
-  cm_bye (), cm_item (), cm_end (), cm_infoinclude (), cm_ifinfo (),
-  cm_kindex (), cm_cindex (), cm_findex (), cm_pindex (), cm_vindex (),
-  cm_tindex (), cm_asis (), cm_synindex (), cm_printindex (), cm_minus (),
-  cm_footnote (), cm_force_abbreviated_whitespace (), cm_example (),
-  cm_smallexample (), cm_lisp (), cm_format (), cm_exdent (), cm_defindex (),
-  cm_defcodeindex (), cm_sc (), cm_result (), cm_expansion (), cm_equiv (),
-  cm_print (), cm_error (), cm_point (), cm_today (), cm_flushleft (),
-  cm_flushright (), cm_smalllisp (), cm_finalout (), cm_math (),
-  cm_cartouche (), cm_ignore_sentence_ender ();
+  cm_enumerate (), cm_tab (), cm_table (), cm_itemx (), cm_noindent (),
+  cm_setfilename (), cm_br (), cm_sp (), cm_page (), cm_group (),
+  cm_center (), cm_include (), cm_bye (), cm_item (), cm_end (),
+  cm_ifinfo (), cm_kindex (), cm_cindex (),
+  cm_findex (), cm_pindex (), cm_vindex (), cm_tindex (),
+  cm_synindex (), cm_printindex (), cm_minus (), cm_footnote (),
+  cm_example (), cm_smallexample (), cm_lisp (), cm_format (), cm_exdent (),
+  cm_defindex (), cm_defcodeindex (), cm_sc (), cm_result (), cm_expansion (),
+  cm_equiv (), cm_print (), cm_error (), cm_point (), cm_today (),
+  cm_flushleft (), cm_flushright (), cm_smalllisp (), cm_finalout (),
+  cm_cartouche (), cm_detailmenu (), cm_multitable ();
 
 /* Conditionals. */
 void cm_set (), cm_clear (), cm_ifset (), cm_ifclear ();
@@ -631,8 +515,8 @@ void cm_macro (), cm_unmacro ();
 void cm_paragraphindent (), cm_footnotestyle ();
 
 /* Internals. */
-void do_nothing (), command_name_condition ();
-void misplaced_brace (), cm_obsolete ();
+void command_name_condition (), misplaced_brace (), cm_obsolete (),
+     cm_ideprecated ();
 
 typedef struct
 {
@@ -649,31 +533,48 @@ int user_command_array_len = 0;
 #define BRACE_ARGS 1
 
 static COMMAND CommandTable[] = {
-  { "!", cm_ignore_sentence_ender, NO_BRACE_ARGS },
+  { "\t", insert_space, NO_BRACE_ARGS },
+  { "\n", insert_space, NO_BRACE_ARGS },
+  { " ", insert_self, NO_BRACE_ARGS },
+  { "!", insert_self, NO_BRACE_ARGS },
+  { "\"", insert_self, NO_BRACE_ARGS },
   { "'", insert_self, NO_BRACE_ARGS },
   { "*", cm_asterisk, NO_BRACE_ARGS },
-  { ".", cm_ignore_sentence_ender, NO_BRACE_ARGS },
-  { ":", cm_force_abbreviated_whitespace, NO_BRACE_ARGS },
-  { "?", cm_ignore_sentence_ender, NO_BRACE_ARGS },
-  { "|", do_nothing, NO_BRACE_ARGS },
+  { ",", cm_accent, BRACE_ARGS },
+  { "-", cm_no_op, NO_BRACE_ARGS },
+  { ".", insert_self, NO_BRACE_ARGS },
+  { ":", cm_no_op, NO_BRACE_ARGS },
+  { "=", insert_self, NO_BRACE_ARGS },
+  { "?", insert_self, NO_BRACE_ARGS },
   { "@", insert_self, NO_BRACE_ARGS },
-  { " ", insert_self, NO_BRACE_ARGS },
-  { "\n", insert_self, NO_BRACE_ARGS },
-  { "TeX", cm_TeX, BRACE_ARGS },
+  { "^", insert_self, NO_BRACE_ARGS },
   { "`", insert_self, NO_BRACE_ARGS },
+  { "{", insert_self, NO_BRACE_ARGS },
+  { "|", cm_no_op, NO_BRACE_ARGS },
+  { "}", insert_self, NO_BRACE_ARGS },
+  { "~", insert_self, NO_BRACE_ARGS },
+  { "AA", insert_self, BRACE_ARGS },
+  { "AE", insert_self, BRACE_ARGS },
+  { "H", cm_accent, BRACE_ARGS },
+  { "L", cm_special_char, BRACE_ARGS },
+  { "O", cm_special_char, BRACE_ARGS },
+  { "OE", insert_self, BRACE_ARGS },
+  { "TeX", cm_TeX, BRACE_ARGS },
+  { "aa", insert_self, BRACE_ARGS },
+  { "ae", insert_self, BRACE_ARGS },
   { "appendix", cm_appendix, NO_BRACE_ARGS },
   { "appendixsection", cm_appendixsec, NO_BRACE_ARGS },
   { "appendixsec", cm_appendixsec, NO_BRACE_ARGS },
   { "appendixsubsec", cm_appendixsubsec, NO_BRACE_ARGS },
   { "appendixsubsubsec", cm_appendixsubsubsec, NO_BRACE_ARGS },
-  { "asis", cm_asis, BRACE_ARGS },
-  { "b", cm_bold, BRACE_ARGS },
-  { "br", cm_br, NO_BRACE_ARGS },
+  { "asis", cm_no_op, BRACE_ARGS },
+  { "b", cm_not_fixed_width, BRACE_ARGS },
   { "bullet", cm_bullet, BRACE_ARGS },
   { "bye", cm_bye, NO_BRACE_ARGS },
   { "c", cm_ignore_line, NO_BRACE_ARGS },
   { "cartouche", cm_cartouche, NO_BRACE_ARGS },
   { "center", cm_center, NO_BRACE_ARGS },
+  { "centerchap", cm_unnumbered, NO_BRACE_ARGS },
   { "chapheading", cm_chapheading, NO_BRACE_ARGS },
   { "chapter", cm_chapter, NO_BRACE_ARGS },
   { "cindex", cm_cindex, NO_BRACE_ARGS },
@@ -681,78 +582,81 @@ static COMMAND CommandTable[] = {
   { "clear", cm_clear, NO_BRACE_ARGS },
   { "code", cm_code, BRACE_ARGS },
   { "comment", cm_ignore_line, NO_BRACE_ARGS },
-  { "contents", do_nothing, NO_BRACE_ARGS },
+  { "contents", cm_no_op, NO_BRACE_ARGS },
   { "copyright", cm_copyright, BRACE_ARGS },
-  { "ctrl", cm_ctrl, BRACE_ARGS },
+  { "ctrl", cm_obsolete, BRACE_ARGS },
   { "defcodeindex", cm_defcodeindex, NO_BRACE_ARGS },
   { "defindex", cm_defindex, NO_BRACE_ARGS },
-  { "dfn", cm_dfn, BRACE_ARGS },
-
 /* The `def' commands. */
+  { "defcv", cm_defun, NO_BRACE_ARGS },
+  { "defcvx", cm_defun, NO_BRACE_ARGS },
   { "deffn", cm_defun, NO_BRACE_ARGS },
   { "deffnx", cm_defun, NO_BRACE_ARGS },
-  { "defun", cm_defun, NO_BRACE_ARGS },
-  { "defunx", cm_defun, NO_BRACE_ARGS },
+  { "defivar", cm_defun, NO_BRACE_ARGS },
+  { "defivarx", cm_defun, NO_BRACE_ARGS },
   { "defmac", cm_defun, NO_BRACE_ARGS },
   { "defmacx", cm_defun, NO_BRACE_ARGS },
-  { "defspec", cm_defun, NO_BRACE_ARGS },
-  { "defspecx", cm_defun, NO_BRACE_ARGS },
-  { "defvr", cm_defun, NO_BRACE_ARGS },
-  { "defvrx", cm_defun, NO_BRACE_ARGS },
-  { "defvar", cm_defun, NO_BRACE_ARGS },
-  { "defvarx", cm_defun, NO_BRACE_ARGS },
+  { "defmethod", cm_defun, NO_BRACE_ARGS },
+  { "defmethodx", cm_defun, NO_BRACE_ARGS },
+  { "defop", cm_defun, NO_BRACE_ARGS },
   { "defopt", cm_defun, NO_BRACE_ARGS },
   { "defoptx", cm_defun, NO_BRACE_ARGS },
+  { "defopx", cm_defun, NO_BRACE_ARGS },
+  { "defspec", cm_defun, NO_BRACE_ARGS },
+  { "defspecx", cm_defun, NO_BRACE_ARGS },
+  { "deftp", cm_defun, NO_BRACE_ARGS },
+  { "deftpx", cm_defun, NO_BRACE_ARGS },
   { "deftypefn", cm_defun, NO_BRACE_ARGS },
   { "deftypefnx", cm_defun, NO_BRACE_ARGS },
   { "deftypefun", cm_defun, NO_BRACE_ARGS },
   { "deftypefunx", cm_defun, NO_BRACE_ARGS },
-  { "deftypevr", cm_defun, NO_BRACE_ARGS },
-  { "deftypevrx", cm_defun, NO_BRACE_ARGS },
-  { "deftypevar", cm_defun, NO_BRACE_ARGS },
-  { "deftypevarx", cm_defun, NO_BRACE_ARGS },
-  { "defcv", cm_defun, NO_BRACE_ARGS },
-  { "defcvx", cm_defun, NO_BRACE_ARGS },
-  { "defivar", cm_defun, NO_BRACE_ARGS },
-  { "defivarx", cm_defun, NO_BRACE_ARGS },
-  { "defop", cm_defun, NO_BRACE_ARGS },
-  { "defopx", cm_defun, NO_BRACE_ARGS },
-  { "defmethod", cm_defun, NO_BRACE_ARGS },
-  { "defmethodx", cm_defun, NO_BRACE_ARGS },
   { "deftypemethod", cm_defun, NO_BRACE_ARGS },
   { "deftypemethodx", cm_defun, NO_BRACE_ARGS },
-  { "deftp", cm_defun, NO_BRACE_ARGS },
-  { "deftpx", cm_defun, NO_BRACE_ARGS },
+  { "deftypevar", cm_defun, NO_BRACE_ARGS },
+  { "deftypevarx", cm_defun, NO_BRACE_ARGS },
+  { "deftypevr", cm_defun, NO_BRACE_ARGS },
+  { "deftypevrx", cm_defun, NO_BRACE_ARGS },
+  { "defun", cm_defun, NO_BRACE_ARGS },
+  { "defunx", cm_defun, NO_BRACE_ARGS },
+  { "defvar", cm_defun, NO_BRACE_ARGS },
+  { "defvarx", cm_defun, NO_BRACE_ARGS },
+  { "defvr", cm_defun, NO_BRACE_ARGS },
+  { "defvrx", cm_defun, NO_BRACE_ARGS },
 /* The end of the `def' commands. */
-
+  { "detailmenu", cm_detailmenu, NO_BRACE_ARGS },
+  { "dfn", cm_dfn, BRACE_ARGS },
+  { "dircategory", cm_dircategory, NO_BRACE_ARGS },
+  { "direntry", cm_direntry, NO_BRACE_ARGS },
   { "display", cm_display, NO_BRACE_ARGS },
+  { "dmn", cm_no_op, BRACE_ARGS },
+  { "dotaccent", cm_accent, BRACE_ARGS },
+  { "dotless", cm_dotless, BRACE_ARGS },
   { "dots", cm_dots, BRACE_ARGS },
-  { "dmn", do_nothing, BRACE_ARGS },
+  { "email", cm_angle_brackets, BRACE_ARGS },
   { "emph", cm_emph, BRACE_ARGS },
   { "end", cm_end, NO_BRACE_ARGS },
+  { "enddots", cm_enddots, BRACE_ARGS },
   { "enumerate", cm_enumerate, NO_BRACE_ARGS },
   { "equiv", cm_equiv, BRACE_ARGS },
   { "error", cm_error, BRACE_ARGS },
   { "example", cm_example, NO_BRACE_ARGS },
+  { "exclamdown", cm_special_char, BRACE_ARGS },
   { "exdent", cm_exdent, NO_BRACE_ARGS },
   { "expansion", cm_expansion, BRACE_ARGS },
-  { "file", cm_file, BRACE_ARGS },
+  { "file", cm_code, BRACE_ARGS },
+  { "finalout", cm_no_op, NO_BRACE_ARGS },
   { "findex", cm_findex, NO_BRACE_ARGS },
-  { "finalout", do_nothing, NO_BRACE_ARGS },
   { "flushleft", cm_flushleft, NO_BRACE_ARGS },
   { "flushright", cm_flushright, NO_BRACE_ARGS },
+  { "footnote", cm_footnote, NO_BRACE_ARGS}, /* self-arg eater */
+  { "footnotestyle", cm_footnotestyle, NO_BRACE_ARGS },
   { "format", cm_format, NO_BRACE_ARGS },
   { "ftable", cm_ftable, NO_BRACE_ARGS },
   { "group", cm_group, NO_BRACE_ARGS },
   { "heading", cm_heading, NO_BRACE_ARGS },
   { "headings", cm_ignore_line, NO_BRACE_ARGS },
-  { "i", cm_italic, BRACE_ARGS },
-  { "iappendix", cm_appendix, NO_BRACE_ARGS },
-  { "iappendixsection", cm_appendixsec, NO_BRACE_ARGS },
-  { "iappendixsec", cm_appendixsec, NO_BRACE_ARGS },
-  { "iappendixsubsec", cm_appendixsubsec, NO_BRACE_ARGS },
-  { "iappendixsubsubsec", cm_appendixsubsubsec, NO_BRACE_ARGS },
-  { "ichapter", cm_chapter, NO_BRACE_ARGS },
+  { "hyphenation", cm_no_op, BRACE_ARGS },
+  { "i", cm_not_fixed_width, BRACE_ARGS },
   { "ifclear", cm_ifclear, NO_BRACE_ARGS },
   { "ifeq", cm_ifeq, NO_BRACE_ARGS },
   { "ifhtml", command_name_condition, NO_BRACE_ARGS },
@@ -762,79 +666,81 @@ static COMMAND CommandTable[] = {
   { "ignore", command_name_condition, NO_BRACE_ARGS },
   { "include", cm_include, NO_BRACE_ARGS },
   { "inforef", cm_inforef, BRACE_ARGS },
-  { "input", cm_include, NO_BRACE_ARGS },
-  { "isection", cm_section, NO_BRACE_ARGS },
-  { "isubsection", cm_subsection, NO_BRACE_ARGS },
-  { "isubsubsection", cm_subsubsection, NO_BRACE_ARGS },
   { "item", cm_item, NO_BRACE_ARGS },
   { "itemize", cm_itemize, NO_BRACE_ARGS },
   { "itemx", cm_itemx, NO_BRACE_ARGS },
-  { "iunnumbered", cm_unnumbered, NO_BRACE_ARGS },
-  { "iunnumberedsec", cm_unnumberedsec, NO_BRACE_ARGS },
-  { "iunnumberedsubsec", cm_unnumberedsubsec, NO_BRACE_ARGS },
-  { "iunnumberedsubsubsec", cm_unnumberedsubsubsec, NO_BRACE_ARGS },
   { "kbd", cm_kbd, BRACE_ARGS },
-  { "key", cm_key, BRACE_ARGS },
+  { "key", cm_angle_brackets, BRACE_ARGS },
   { "kindex", cm_kindex, NO_BRACE_ARGS },
-  { "lowersections", cm_lowersections, NO_BRACE_ARGS },
+  { "l", cm_special_char, BRACE_ARGS },
   { "lisp", cm_lisp, NO_BRACE_ARGS },
+  { "lowersections", cm_lowersections, NO_BRACE_ARGS },
 #if defined (HAVE_MACROS)
   { "macro", cm_macro, NO_BRACE_ARGS },
 #endif
   { "majorheading", cm_majorheading, NO_BRACE_ARGS },
-  { "math", cm_math, BRACE_ARGS },
-  { "medbreak", cm_br, NO_BRACE_ARGS },
+  { "math", cm_no_op, BRACE_ARGS },
   { "menu", cm_menu, NO_BRACE_ARGS },
   { "minus", cm_minus, BRACE_ARGS },
+  { "multitable", cm_multitable, NO_BRACE_ARGS },
   { "need", cm_ignore_line, NO_BRACE_ARGS },
   { "node", cm_node, NO_BRACE_ARGS },
   { "noindent", cm_noindent, NO_BRACE_ARGS },
   { "nwnode", cm_node, NO_BRACE_ARGS },
-  { "overfullrule", cm_ignore_line, NO_BRACE_ARGS },
-  { "page", do_nothing, NO_BRACE_ARGS },
+  { "o", cm_special_char, BRACE_ARGS },
+  { "oe", insert_self, BRACE_ARGS },
+  { "page", cm_no_op, NO_BRACE_ARGS },
+  { "paragraphindent", cm_paragraphindent, NO_BRACE_ARGS },
   { "pindex", cm_pindex, NO_BRACE_ARGS },
   { "point", cm_point, BRACE_ARGS },
+  { "pounds", cm_special_char, BRACE_ARGS },
   { "print", cm_print, BRACE_ARGS },
   { "printindex", cm_printindex, NO_BRACE_ARGS },
   { "pxref", cm_pxref, BRACE_ARGS },
+  { "questiondown", cm_special_char, BRACE_ARGS },
   { "quotation", cm_quotation, NO_BRACE_ARGS },
-  { "r", cm_roman, BRACE_ARGS },
+  { "r", cm_not_fixed_width, BRACE_ARGS },
   { "raisesections", cm_raisesections, NO_BRACE_ARGS },
   { "ref", cm_xref, BRACE_ARGS },
-  { "refill", cm_refill, NO_BRACE_ARGS },
+  { "refill", cm_no_op, NO_BRACE_ARGS },
   { "result", cm_result, BRACE_ARGS },
-  { "samp", cm_samp, BRACE_ARGS },
+  { "ringaccent", cm_accent, BRACE_ARGS },
+  { "samp", cm_code, BRACE_ARGS },
   { "sc", cm_sc, BRACE_ARGS },
   { "section", cm_section, NO_BRACE_ARGS },
   { "set", cm_set, NO_BRACE_ARGS },
   { "setchapternewpage", cm_ignore_line, NO_BRACE_ARGS },
-  { "setchapterstyle", cm_ignore_line, NO_BRACE_ARGS },
+  { "setchapterstyle", cm_obsolete, NO_BRACE_ARGS },
   { "setfilename", cm_setfilename, NO_BRACE_ARGS },
   { "settitle", cm_ignore_line, NO_BRACE_ARGS },
-  { "shortcontents", do_nothing, NO_BRACE_ARGS },
+  { "shortcontents", cm_no_op, NO_BRACE_ARGS },
   { "shorttitlepage", cm_ignore_line, NO_BRACE_ARGS },
   { "smallbook", cm_ignore_line, NO_BRACE_ARGS },
-  { "smallbreak", cm_br, NO_BRACE_ARGS },
   { "smallexample", cm_smallexample, NO_BRACE_ARGS },
   { "smalllisp", cm_smalllisp, NO_BRACE_ARGS },
   { "sp", cm_sp, NO_BRACE_ARGS },
+  { "ss", insert_self, BRACE_ARGS },
   { "strong", cm_strong, BRACE_ARGS },
   { "subheading", cm_subheading, NO_BRACE_ARGS },
   { "subsection", cm_subsection, NO_BRACE_ARGS },
   { "subsubheading", cm_subsubheading, NO_BRACE_ARGS },
   { "subsubsection", cm_subsubsection, NO_BRACE_ARGS },
-  { "summarycontents", do_nothing, NO_BRACE_ARGS },
+  { "summarycontents", cm_no_op, NO_BRACE_ARGS },
   { "syncodeindex", cm_synindex, NO_BRACE_ARGS },
   { "synindex", cm_synindex, NO_BRACE_ARGS },
-  { "t", cm_title, BRACE_ARGS },
+  { "t", cm_no_op, BRACE_ARGS },
+  { "tab", cm_tab, NO_BRACE_ARGS },
   { "table", cm_table, NO_BRACE_ARGS },
   { "tex", command_name_condition, NO_BRACE_ARGS },
+  { "tieaccent", cm_accent, BRACE_ARGS },
   { "tindex", cm_tindex, NO_BRACE_ARGS },
-  { "titlefont", cm_titlefont, BRACE_ARGS },
+  { "titlefont", cm_not_fixed_width, BRACE_ARGS },
   { "titlepage", command_name_condition, NO_BRACE_ARGS },
-  { "titlespec", command_name_condition, NO_BRACE_ARGS },
   { "today", cm_today, BRACE_ARGS },
   { "top", cm_top, NO_BRACE_ARGS  },
+  { "u", cm_accent, BRACE_ARGS },
+  { "ubaraccent", cm_accent, BRACE_ARGS },
+  { "udotaccent", cm_accent, BRACE_ARGS },
 #if defined (HAVE_MACROS)
   { "unmacro", cm_unmacro, NO_BRACE_ARGS },
 #endif
@@ -842,40 +748,35 @@ static COMMAND CommandTable[] = {
   { "unnumberedsec", cm_unnumberedsec, NO_BRACE_ARGS },
   { "unnumberedsubsec", cm_unnumberedsubsec, NO_BRACE_ARGS },
   { "unnumberedsubsubsec", cm_unnumberedsubsubsec, NO_BRACE_ARGS },
+  { "url", cm_code, BRACE_ARGS },
+  { "v", cm_accent, BRACE_ARGS },
   { "value", cm_value, BRACE_ARGS },
   { "var", cm_var, BRACE_ARGS },
   { "vindex", cm_vindex, NO_BRACE_ARGS },
   { "vtable", cm_vtable, NO_BRACE_ARGS },
   { "w", cm_w, BRACE_ARGS },
   { "xref", cm_xref, BRACE_ARGS },
-  { "{", insert_self, NO_BRACE_ARGS },
-  { "}", insert_self, NO_BRACE_ARGS },
 
-  /* Some obsoleted commands. */
-  { "infotop", cm_obsolete, NO_BRACE_ARGS },
-  { "infounnumbered", cm_obsolete, NO_BRACE_ARGS },
-  { "infounnumberedsec", cm_obsolete, NO_BRACE_ARGS },
-  { "infounnumberedsubsec", cm_obsolete, NO_BRACE_ARGS },
-  { "infounnumberedsubsubsec", cm_obsolete, NO_BRACE_ARGS },
-  { "infoappendix", cm_obsolete, NO_BRACE_ARGS },
-  { "infoappendixsec", cm_obsolete, NO_BRACE_ARGS },
-  { "infoappendixsubsec", cm_obsolete, NO_BRACE_ARGS },
-  { "infoappendixsubsubsec", cm_obsolete, NO_BRACE_ARGS },
-  { "infochapter", cm_obsolete, NO_BRACE_ARGS },
-  { "infosection", cm_obsolete, NO_BRACE_ARGS },
-  { "infosubsection", cm_obsolete, NO_BRACE_ARGS },
-  { "infosubsubsection", cm_obsolete, NO_BRACE_ARGS },
+  /* Deprecated commands.  These used to be for italics.  */
+  { "iappendix", cm_ideprecated, NO_BRACE_ARGS },
+  { "iappendixsec", cm_ideprecated, NO_BRACE_ARGS },
+  { "iappendixsection", cm_ideprecated, NO_BRACE_ARGS },
+  { "iappendixsubsec", cm_ideprecated, NO_BRACE_ARGS },
+  { "iappendixsubsubsec", cm_ideprecated, NO_BRACE_ARGS },
+  { "ichapter", cm_ideprecated, NO_BRACE_ARGS },
+  { "isection", cm_ideprecated, NO_BRACE_ARGS },
+  { "isubsection", cm_ideprecated, NO_BRACE_ARGS },
+  { "isubsubsection", cm_ideprecated, NO_BRACE_ARGS },
+  { "iunnumbered", cm_ideprecated, NO_BRACE_ARGS },
+  { "iunnumberedsec", cm_ideprecated, NO_BRACE_ARGS },
+  { "iunnumberedsubsec", cm_ideprecated, NO_BRACE_ARGS },
+  { "iunnumberedsubsubsec", cm_ideprecated, NO_BRACE_ARGS },
 
   /* Now @include does what this was supposed to. */
-  { "infoinclude", cm_infoinclude, NO_BRACE_ARGS },
-  { "footnote", cm_footnote, NO_BRACE_ARGS}, /* self-arg eater */
-  { "footnotestyle", cm_footnotestyle, NO_BRACE_ARGS },
-  { "paragraphindent", cm_paragraphindent, NO_BRACE_ARGS },
+  { "infoinclude", cm_obsolete, NO_BRACE_ARGS },
+  { "titlespec", cm_obsolete, NO_BRACE_ARGS },
 
   {(char *) NULL, (COMMAND_FUNCTION *) NULL}, NO_BRACE_ARGS};
-
-int major_version = 1;
-int minor_version = 64;
 
 struct option long_options[] =
 {
@@ -900,7 +801,7 @@ struct option long_options[] =
   { "version", 0, 0, 'V' },
   {NULL, 0, NULL, 0}
 };
-
+
 /* Values for calling handle_variable_internal (). */
 #define SET	1
 #define CLEAR	2
@@ -914,7 +815,7 @@ struct option long_options[] =
 /* **************************************************************** */
 
 /* For each file mentioned in the command line, process it, turning
-   texinfo commands into wonderfully formatted output text. */
+   Texinfo commands into wonderfully formatted output text. */
 int
 main (argc, argv)
      int argc;
@@ -979,7 +880,12 @@ main (argc, argv)
 	  /* User specified fill_column? */
 	case 'f':
 	  if (sscanf (optarg, "%d", &fill_column) != 1)
-	    usage (stderr, FATAL);
+	    {
+	      fprintf (stderr,
+                       "%s: --fill-column arg must be numeric, not `%s'.\n", 
+                       progname, optarg);
+	      usage (FATAL);
+	    }
 	  break;
 
 	  /* User specified output file? */
@@ -990,40 +896,64 @@ main (argc, argv)
 	  /* User specified paragraph indent (paragraph_start_index)? */
 	case 'p':
 	  if (set_paragraph_indent (optarg) < 0)
-	    usage (stderr, FATAL);
+	    {
+	      fprintf (stderr,
+          "%s: --paragraph-indent arg must be numeric/none/asis, not `%s'.\n", 
+                       progname, optarg);
+	      usage (FATAL);
+	    }
 	  break;
 
 	  /* User specified error level? */
 	case 'e':
 	  if (sscanf (optarg, "%d", &max_error_level) != 1)
+	    {
+	      fprintf (stderr,
+                       "%s: --error-limit arg must be numeric, not `%s'.\n", 
+                       progname, optarg);
+	    }
 	    usage (stderr, FATAL);
 	  break;
 
 	  /* User specified reference warning limit? */
 	case 'r':
 	  if (sscanf (optarg, "%d", &reference_warning_limit) != 1)
-	    usage (stderr, FATAL);
+	    {
+	      fprintf (stderr,
+                     "%s: --reference-limit arg must be numeric, not `%s'.\n", 
+                       progname, optarg);
+	      usage (FATAL);
+	    }
 	  break;
 
 	  /* User specified footnote style? */
 	case 's':
 	  if (set_footnote_style (optarg) < 0)
-	    usage (stderr, FATAL);
+	    {
+	      fprintf (stderr,
+          "%s: --footnote-style arg must be `separate' or `end', not `%s'.\n", 
+                       progname, optarg);
+	      usage (FATAL);
+	    }
 	  footnote_style_preset = 1;
 	  break;
 
 	case 'h':
-	  usage (stdout, NO_ERROR);
+	  usage (NO_ERROR);
 	  break;
 
 	  /* User requested version info? */
 	case 'V':
 	  print_version_info ();
+          puts ("Copyright (C) 1996 Free Software Foundation, Inc.\n\
+There is NO warranty.  You may redistribute this software\n\
+under the terms of the GNU General Public License.\n\
+For more information about these matters, see the files named COPYING.");
 	  exit (NO_ERROR);
 	  break;
 
 	case '?':
-	  usage (stderr, FATAL);
+	  usage (FATAL);
 	  break;
 	}
     }
@@ -1034,7 +964,10 @@ main (argc, argv)
       if (!isatty (fileno (stdin)))
 	reading_from_stdin = 1;
       else
-	usage (stderr, FATAL);
+        {
+          fprintf (stderr, "%s: missing file argument.\n", progname);
+	  usage (FATAL);
+        }
     }
 
   /* If the user has specified --no-headers, this should imply --no-split.
@@ -1074,29 +1007,14 @@ main (argc, argv)
 void
 print_version_info ()
 {
-  printf ("This is GNU Makeinfo version %d.%d, from texinfo-3.7.\n",
-	  major_version, minor_version);
+  printf ("GNU Makeinfo (Texinfo 3.9) %d.%d\n", major_version, minor_version);
 }
-
+
 /* **************************************************************** */
 /*								    */
 /*			Generic Utilities			    */
 /*								    */
 /* **************************************************************** */
-
-#if !defined (HAVE_STRDUP)
-char *
-strdup (string)
-     char *string;
-{
-  char *result;
-
-  result = (char *)xmalloc (1 + strlen (string));
-  strcpy (result, string);
-
-  return (result);
-}
-#endif /* !HAVE_STRDUP */
 
 static void
 memory_error (callers_name, bytes_wanted)
@@ -1145,56 +1063,51 @@ xrealloc (pointer, nbytes)
   return (temp);
 }
 
-/* Tell the user how to use this program.
-   Print the message to STREAM, and then exit with EXIT_VALUE. */
+/* If EXIT_VALUE is zero, print the full usage message to stdout.
+   Otherwise, just say to use --help for more info.
+   Then exit with EXIT_VALUE. */
 void
-usage (stream, exit_value)
-     FILE *stream;
+usage (exit_value)
      int exit_value;
 {
-  fprintf (stream, "Usage: %s [options] texinfo-file...\n\
+  if (exit_value != 0)
+    fprintf (stderr, "Try `%s --help' for more information.\n", progname);
+  else
+    printf ("Usage: %s [OPTION]... TEXINFO-FILE...\n\
 \n\
-This program accepts as input files of texinfo commands and text\n\
-and outputs a file suitable for reading with GNU Info.\n\
+Translate Texinfo source documentation to a format suitable for reading\n\
+with GNU Info.\n\
 \n\
 Options:\n\
-`-I DIR'              add DIR to the directory search list for including\n\
-                      files with the `@include' command.\n\
--D VAR                define a variable, as with `@set'.\n\
--U VAR                undefine a variable, as with `@clear'.\n\
--E MACRO-OFILE	    process macros, and output texinfo source code for TeX.\n\
---no-validate         suppress node cross reference validation.\n\
---no-warn             suppress warning messages (errors are still output).\n\
---no-split            suppress the splitting of large files.\n\
---no-headers          suppress the output of Node: Foo headers.\n\
---verbose             print information about what is being done.\n\
---version             print the version number of Makeinfo.\n\
---output FILE or -o FILE\n\
-                      specify the output file.  When you specify the\n\
-                      output file in this way, any `@setfilename' in the\n\
-                      input file is ignored.\n\
---paragraph-indent NUM\n\
-                      set the paragraph indent to NUM (default %d).\n\
---fill-column NUM     set the filling column to NUM (default %d).\n\
---error-limit NUM     set the error limit to NUM (default %d).\n\
---reference-limit NUM\n\
-                      set the reference warning limit to NUM (default %d).\n\
---footnote-style STYLE\n\
-                      set the footnote style to STYLE.  STYLE should\n\
-                      either be `separate' to place footnotes in their own\n\
-                      node, or `end', to place the footnotes at the end of\n\
-                      the node in which they are defined (the default).\n\
---help                print this message and exit.\n\n",
+-D VAR                 define a variable, as with @set.\n\
+-E MACRO-OFILE	       process macros only, output texinfo source.\n\
+-I DIR                 add DIR to the directory search list for @include.\n\
+-U VAR                 undefine a variable, as with @clear.\n\
+--error-limit NUM      quit after NUM errors (default %d).\n\
+--fill-column NUM      break lines at NUM characters (default %d).\n\
+--footnote-style STYLE output footnotes according to STYLE:\n\
+                         `separate' to place footnotes in their own node,\n\
+                         `end' to place the footnotes at the end of\n\
+                         the node in which they are defined (the default).\n\
+--help                 display this help and exit.\n\
+--no-validate          suppress node cross-reference validation.\n\
+--no-warn              suppress warnings (but not errors).\n\
+--no-split             suppress splitting of large files.\n\
+--no-headers           suppress node separators and Node: Foo headers.\n\
+--output FILE, -o FILE output to FILE, and ignore any @setfilename.\n\
+--paragraph-indent NUM indent paragraphs with NUM spaces (default %d).\n\
+--reference-limit NUM  complain about at most NUM references (default %d).\n\
+--verbose              report about what is being done.\n\
+--version              display version information and exit.\n\
+\n\
+Email bug reports to bug-texinfo@prep.ai.mit.edu.\n\
+",
 	   progname, paragraph_start_indent,
 	   fill_column, max_error_level, reference_warning_limit);
   exit (exit_value);
 }
-
-/* **************************************************************** */
-/*								    */
-/*			Manipulating Lists      		    */
-/*					        		    */
-/* **************************************************************** */
+
+/* Manipulating Lists */
 
 typedef struct generic_list {
   struct generic_list *next;
@@ -1219,13 +1132,8 @@ reverse_list (list)
     }
   return (prev);
 }
-
-
-/* **************************************************************** */
-/*								    */
-/*			Pushing and Popping Files       	    */
-/*								    */
-/* **************************************************************** */
+
+/* Pushing and Popping Files */
 
 /* Find and load the file named FILENAME.  Return a pointer to
    the loaded file, or NULL if it can't be loaded. */
@@ -1370,17 +1278,8 @@ void
 push_node_filename ()
 {
   if (node_filename_stack_index + 1 > node_filename_stack_size)
-    {
-      if (!node_filename_stack)
-	node_filename_stack =
-	  (char **)xmalloc ((node_filename_stack_size += 10)
-			    * sizeof (char *));
-      else
-	node_filename_stack =
-	  (char **)xrealloc (node_filename_stack,
-			     (node_filename_stack_size + 10)
-			     * sizeof (char *));
-    }
+    node_filename_stack = (char **)xrealloc
+    (node_filename_stack, (node_filename_stack_size += 10) * sizeof (char *));
 
   node_filename_stack[node_filename_stack_index] = node_filename;
   node_filename_stack_index++;
@@ -1617,7 +1516,7 @@ output_name_from_input_name (name)
 {
   return (expand_filename ((char *)NULL, name));
 }
-
+
 /* **************************************************************** */
 /*								    */
 /*			Error Handling				    */
@@ -1652,7 +1551,7 @@ error (va_alist)
   format = va_arg (args, char *);
   vfprintf (stderr, format, args);
   va_end (args);
-  fprintf (stderr, "\n");
+  putc ('\n', stderr);
 }
 
 /* Just like error (), but print the line number as well. */
@@ -1700,7 +1599,7 @@ error (format, arg1, arg2, arg3, arg4, arg5)
 {
   remember_error ();
   fprintf (stderr, format, arg1, arg2, arg3, arg4, arg5);
-  fprintf (stderr, "\n");
+  putc ('\n', stderr);
   return ((int) 0);
 }
 
@@ -1754,8 +1653,7 @@ remember_error ()
 /*								    */
 /* **************************************************************** */
 
-/* Return the next token as a string pointer.  We cons the
-   string. */
+/* Return the next token as a string pointer.  We cons the string. */
 char *
 read_token ()
 {
@@ -1792,7 +1690,9 @@ int
 self_delimiting (character)
      int character;
 {
-  return (member (character, "{}:.@*'`,!?; \n\t"));
+  /* @; and @\ are not Texinfo commands, but they are listed here
+     anyway.  I don't know why.  --karl, 10aug96.  */
+  return member (character, "~{|}`^\\@?=;:.-,*\'\" !\n\t");
 }
 
 /* Clear whitespace from the front and end of string. */
@@ -1998,7 +1898,7 @@ get_until_in_braces (match, string)
   input_text_offset = i;
   *string = temp;
 }
-
+
 /* **************************************************************** */
 /*								    */
 /*			Converting the File     		    */
@@ -2008,10 +1908,10 @@ get_until_in_braces (match, string)
 /* Convert the file named by NAME.  The output is saved on the file
    named as the argument to the @setfilename command. */
 static char *suffixes[] = {
-  "",
   ".texinfo",
   ".texi",
   ".txinfo",
+  "",
   (char *)NULL
 };
 
@@ -2022,11 +1922,17 @@ initialize_conversion ()
   init_indices ();
   init_internals ();
   init_paragraph ();
+
+  /* This is used for splitting the output file and for doing section
+     headings.  It was previously initialized in `init_paragraph', but its
+     use there loses with the `init_paragraph' calls done by the
+     multitable code; the tag indices get reset to zero.  */
+  output_position = 0;
 }
 
-  /* We read in multiples of 4k, simply because it is a typical pipe size
-     on unix systems. */
-#define _READ_BUFFER_GROWTH (4 * 4096)
+/* We read in multiples of 4k, simply because it is a typical pipe size
+   on unix systems. */
+#define READ_BUFFER_GROWTH (4 * 4096)
 
 /* Convert the texinfo file coming from the open stream STREAM.  Assume the
    source of the stream is named NAME. */
@@ -2047,11 +1953,11 @@ convert_from_stream (stream, name)
     {
       int count;
 
-      if (buffer_offset + (_READ_BUFFER_GROWTH + 1) >= buffer_size)
+      if (buffer_offset + (READ_BUFFER_GROWTH + 1) >= buffer_size)
 	buffer = (char *)
-	  xrealloc (buffer, (buffer_size += _READ_BUFFER_GROWTH));
+	  xrealloc (buffer, (buffer_size += READ_BUFFER_GROWTH));
 
-      count = fread (buffer + buffer_offset, 1, _READ_BUFFER_GROWTH, stream);
+      count = fread (buffer + buffer_offset, 1, READ_BUFFER_GROWTH, stream);
 
       if (count < 0)
 	{
@@ -2089,8 +1995,9 @@ convert_from_file (name)
 
   initialize_conversion ();
 
-  /* Try to load the file specified by NAME.  If the file isn't found, and
-     there is no suffix in NAME, then try NAME.texinfo, and NAME.texi. */
+  /* Try to load the file specified by NAME, concatenated with our
+     various suffixes.  Prefer files like `makeinfo.texi' to
+     `makeinfo'.  */
   for (i = 0; suffixes[i]; i++)
     {
       strcpy (filename, name);
@@ -2214,7 +2121,8 @@ convert_from_loaded_file (name)
     }
 
   if (output_stream != stdout)
-    printf ("Making info file `%s' from `%s'.\n", output_filename, name);
+    printf ("Making %s file `%s' from `%s'.\n",
+            no_headers ? "text" : "info", output_filename, input_filename);
 
   if (output_stream == NULL)
     {
@@ -2243,9 +2151,9 @@ convert_from_loaded_file (name)
 
   if (!no_headers)
     {
-      add_word_args ("This is Info file %s, produced by Makeinfo-%d.%d from ",
+     add_word_args ("This is Info file %s, produced by Makeinfo version %d.%d",
 		     output_filename, major_version, minor_version);
-      add_word_args ("the input file %s.\n", input_filename);
+     add_word_args (" from the input file %s.\n", input_filename);
     }
 
   close_paragraph ();
@@ -2310,6 +2218,7 @@ init_internals ()
   init_brace_stack ();
   command_index = 0;
   in_menu = 0;
+  in_detailmenu = 0;
   top_node_seen = 0;
   non_top_node_seen = 0;
 }
@@ -2319,7 +2228,6 @@ init_paragraph ()
 {
   free_and_clear (&output_paragraph);
   output_paragraph = (unsigned char *)xmalloc (paragraph_buffer_len);
-  output_position = 0;
   output_paragraph[0] = '\0';
   output_paragraph_offset = 0;
   output_column = 0;
@@ -2392,7 +2300,7 @@ reader_loop ()
 	  line_number++;
 
 	  /* Check for a menu entry here, since the "escape sequence"
-	     that begins menu entrys is "\n* ". */
+	     that begins menu entries is "\n* ". */
 	  if (in_menu && input_text_offset + 1 < size_of_input_text)
 	    {
 	      char *glean_node_from_menu (), *tem;
@@ -2400,7 +2308,8 @@ reader_loop ()
 	      /* Note that the value of TEM is discarded, since it is
 		 gauranteed to be NULL when glean_node_from_menu () is
 		 called with a non-zero argument. */
-	      tem = glean_node_from_menu (1);
+	      if (!in_detailmenu)
+		tem = glean_node_from_menu (1);
 	    }
 	}
 
@@ -2505,7 +2414,7 @@ read_command ()
 
   if (entry == (COMMAND *)-1)
     {
-      line_error ("Unknown info command `%s'", command);
+      line_error ("Unknown command `%s'", command);
       return;
     }
 
@@ -2557,6 +2466,7 @@ remember_brace_1 (proc, position)
   new->proc = proc;
   new->pos = position;
   new->line = line_number;
+  new->in_fixed_width_font = in_fixed_width_font;
   brace_stack = new;
 }
 
@@ -2571,12 +2481,13 @@ pop_and_call_brace ()
 
   if (brace_stack == (BRACE_ELEMENT *) NULL)
     {
-      line_error ("Unmatched close brace");
+      line_error ("Unmatched }");
       return;
     }
 
   pos = brace_stack->pos;
   proc = brace_stack->proc;
+  in_fixed_width_font = brace_stack->in_fixed_width_font;
   temp = brace_stack->next;
   free (brace_stack);
   brace_stack = temp;
@@ -2727,7 +2638,7 @@ add_char (character)
 {
   /* If we are avoiding outputting headers, and we are currently
      in a menu, then simply return. */
-  if (no_headers && in_menu)
+  if (no_headers && (in_menu || in_detailmenu))
     return;
 
   /* If we are adding a character now, then we don't have to
@@ -2918,7 +2829,7 @@ add_char (character)
     }
 }
 
-/* Insert CHARACTER into OUTPUT_PARAGRAPH. */
+/* Insert CHARACTER into `output_paragraph'. */
 void
 insert (character)
      int character;
@@ -2929,6 +2840,15 @@ insert (character)
       output_paragraph =
 	xrealloc (output_paragraph, (paragraph_buffer_len += 100));
     }
+}
+
+/* Insert the null-terminated string STRING into `output_paragraph'.  */
+void
+insert_string (string)
+     char *string;
+{
+  while (*string)
+    insert (*string++);
 }
 
 /* Remove upto COUNT characters of whitespace from the
@@ -2987,8 +2907,14 @@ flush_output ()
 
   for (i = 0; i < output_paragraph_offset; i++)
     {
-      if (output_paragraph[i] == (unsigned char)(' ' | 0x80))
-	output_paragraph[i] &= 0x7f;
+      /* If we turned on the 8th bit for a space
+         inside @w, turn it back off for output.  */
+      if (output_paragraph[i] & meta_character_bit)
+        {
+          int temp = UNMETA (output_paragraph[i]);
+          if (temp == ' ')
+  	    output_paragraph[i] &= 0x7f;
+        }
     }
 
   fwrite (output_paragraph, 1, output_paragraph_offset, output_stream);
@@ -3272,37 +3198,6 @@ strcasecmp (string1, string2)
 }
 #endif /* !HAVE_STRCASECMP */
 
-enum insertion_type { menu, quotation, lisp, smalllisp, example,
-  smallexample, display, itemize, format, enumerate, cartouche, table,
-  ftable, vtable, group, ifinfo, flushleft, flushright, ifset, ifclear, deffn,
-  defun, defmac, defspec, defvr, defvar, defopt, deftypefn,
-  deftypefun, deftypevr, deftypevar, defcv, defivar, defop, defmethod,
-  deftypemethod, deftp, bad_type };
-
-char *insertion_type_names[] = { "menu", "quotation", "lisp",
-  "smalllisp", "example", "smallexample", "display", "itemize",
-  "format", "enumerate", "cartouche", "table", "ftable", "vtable", "group",
-  "ifinfo", "flushleft", "flushright", "ifset", "ifclear", "deffn",
-  "defun", "defmac", "defspec", "defvr", "defvar", "defopt",
-  "deftypefn", "deftypefun", "deftypevr", "deftypevar", "defcv",
-  "defivar", "defop", "defmethod", "deftypemethod", "deftp",
-  "bad_type" };
-
-int insertion_level = 0;
-typedef struct istack_elt
-{
-  struct istack_elt *next;
-  char *item_function;
-  char *filename;
-  int line_number;
-  int filling_enabled;
-  int indented_fill;
-  enum insertion_type insertion;
-  int inhibited;
-} INSERTION_ELT;
-
-INSERTION_ELT *insertion_stack = (INSERTION_ELT *) NULL;
-
 void
 init_insertion_stack ()
 {
@@ -3380,6 +3275,7 @@ push_insertion (type, item_function)
   new->line_number = line_number;
   new->filename = strdup (input_filename);
   new->inhibited = inhibit_paragraph_indentation;
+  new->in_fixed_width_font = in_fixed_width_font;
   new->next = insertion_stack;
   insertion_stack = new;
   insertion_level++;
@@ -3395,6 +3291,7 @@ pop_insertion ()
   if (temp == (INSERTION_ELT *) NULL)
     return;
 
+  in_fixed_width_font = temp->in_fixed_width_font;
   inhibit_paragraph_indentation = temp->inhibited;
   filling_enabled = temp->filling_enabled;
   indented_fill = temp->indented_fill;
@@ -3431,11 +3328,6 @@ find_type_from_name (name)
       index++;
     }
   return (bad_type);
-}
-
-void
-do_nothing ()
-{
 }
 
 int
@@ -3562,8 +3454,31 @@ begin_insertion (type)
       no_discard++;
       break;
 
+    case detailmenu:
+
+      if (!in_menu)
+	{
+	  if (!no_headers)
+	    close_paragraph ();
+
+	  filling_enabled = no_indent = 0;
+	  inhibit_paragraph_indentation = 1;
+
+	  no_discard++;
+	}
+
+      in_detailmenu++;
+      break;
+
+    case direntry:
+      close_single_paragraph ();
+      filling_enabled = no_indent = 0;
+      inhibit_paragraph_indentation = 1;
+      insert_string ("START-INFO-DIR-ENTRY\n");
+      break;
+
       /* I think @quotation is meant to do filling.
-	 If you don't want filling, then use @example. */
+	 If you don't want filling, then use @display. */
     case quotation:
       close_single_paragraph ();
       last_char_was_newline = no_indent = 0;
@@ -3589,6 +3504,10 @@ begin_insertion (type)
       if (type != format)
 	current_indent += default_indentation_increment;
 
+      break;
+
+    case multitable:
+      do_multitable ();
       break;
 
     case table:
@@ -3735,10 +3654,28 @@ end_insertion (type)
     case ifclear:
       break;
 
+    case direntry:
+      insert_string ("END-INFO-DIR-ENTRY\n\n");
+      close_insertion_paragraph ();
+      break;
+
+    case detailmenu:
+      in_detailmenu--;		/* No longer hacking menus. */
+      if (!in_menu)
+	{
+	  if (!no_headers)
+	    close_insertion_paragraph ();
+	}
+      break;
+
     case menu:
       in_menu--;		/* No longer hacking menus. */
       if (!no_headers)
 	close_insertion_paragraph ();
+      break;
+
+    case multitable:
+      end_multitable ();
       break;
 
     case enumerate:
@@ -3760,11 +3697,6 @@ end_insertion (type)
     case lisp:
     case smalllisp:
     case quotation:
-
-      /* @quotation is the only one of the above without a fixed width
-	 font. */
-      if (type != quotation)
-	in_fixed_width_font--;
 
       /* @format is the only fixed_width insertion without a change
 	 in indentation. */
@@ -3827,14 +3759,24 @@ discard_insertions ()
     }
   line_number = real_line_number;
 }
+
+/* The Texinfo commands. */
 
-/* The actual commands themselves. */
-
-/* Commands which insert themselves. */
+/* Commands which insert their own names. */
 void
-insert_self ()
+insert_self (arg)
+    int arg;
 {
-  add_word (command);
+  if (arg == START)
+    add_word (command);
+}
+
+void
+insert_space (arg)
+    int arg;
+{
+  if (arg == START)
+    add_char (' ');
 }
 
 /* Force a line break in the output. */
@@ -3854,6 +3796,15 @@ cm_dots (arg)
 {
   if (arg == START)
     add_word ("...");
+}
+
+/* Insert ellipsis for sentence end. */
+void
+cm_enddots (arg)
+     int arg;
+{
+  if (arg == START)
+    add_word ("....");
 }
 
 void
@@ -3881,12 +3832,90 @@ cm_TeX (arg)
     add_word ("TeX");
 }
 
+/* Copyright symbol.  */
 void
 cm_copyright (arg)
-     int arg;
+    int arg;
 {
   if (arg == START)
     add_word ("(C)");
+}
+
+/* Accent commands that take explicit arguments.  */
+void
+cm_accent (arg)
+    int arg;
+{
+  if (arg == START)
+    {
+      if (strcmp (command, "dotaccent") == 0)  /* overdot */
+        add_char ('.');
+      else if (strcmp (command, "H") == 0)     /* Hungarian umlaut */
+        add_word ("''");
+      else if (strcmp (command, "ringaccent") == 0)
+        add_char ('*');
+      else if (strcmp (command, "tieaccent") == 0)
+        add_char ('[');
+      else if (strcmp (command, "u") == 0)     /* breve */
+        add_char ('(');
+      else if (strcmp (command, "v") == 0)     /* hacek/check */
+        add_char ('<');
+    }
+  else if (arg == END)
+    {
+      if (strcmp (command, "ubaraccent") == 0) /* underbar */
+        add_char ('_');
+      else if (strcmp (command, "udotaccent") == 0) /* underdot */
+        add_word ("-.");
+      else if (strcmp (command, ",") == 0)     /* cedilla */
+        add_word (",");
+    }
+} 
+
+/* Non-English letters/characters that don't insert themselves.  */
+void
+cm_special_char (arg)
+{
+  if (arg == START)
+    {
+      if ((*command == 'L' || *command == 'l'
+           || *command == 'O' || *command == 'o')
+          && command[1] == 0)
+        {
+          /* Lslash lslash Oslash oslash */
+          add_char (*command);
+          add_char ('/');
+        }
+      else if (strcmp (command, "exclamdown") == 0)
+        add_char ('!');
+      else if (strcmp (command, "pounds") == 0)
+        add_char ('#');
+      else if (strcmp (command, "questiondown") == 0)
+        add_char ('?');
+      else
+        fprintf (stderr, "How did @%s end up in cm_special_char?\n", command);
+    }
+}
+
+/* Dotless i or j.  */
+void
+cm_dotless (arg, start, end)
+    int arg, start, end;
+{
+  if (arg == END)
+    {
+      if (output_paragraph[start] != 'i' && output_paragraph[start] != 'j')
+        /* This error message isn't perfect if the argument is multiple
+           characters, but it doesn't seem worth getting right.  */
+        line_error ("%c%s expects `i' or `j' as argument, not `%c'",
+                    COMMAND_PREFIX, command, output_paragraph[start]);
+
+      else if (end - start != 1)
+        line_error ("%c%s expects a single character `i' or `j' as argument",
+		    COMMAND_PREFIX, command);
+
+      /* We've already inserted the `i' or `j', so nothing to do.  */
+    }
 }
 
 #if defined (__osf__)
@@ -3920,49 +3949,38 @@ cm_code (arg)
 {
   extern int printing_index;
 
-  if (printing_index)
-    return;
-
   if (arg == START)
     {
       in_fixed_width_font++;
-      add_char ('`');
+
+      if (!printing_index)
+	add_char ('`');
     }
   else
     {
-      add_word ("'");
-      in_fixed_width_font--;
+      if (!printing_index)
+	add_char ('\'');
     }
-}
-
-void
-cm_samp (arg)
-     int arg;
-{
-  cm_code (arg);
-}
-
-void
-cm_file (arg)
-     int arg;
-{
-  cm_code (arg);
 }
 
 void
 cm_kbd (arg)
      int arg;
 {
-  cm_code (arg);
+  /* People use @kbd in an example to get the "user input" font.
+     We don't want quotes in that case.  */
+  if (!in_fixed_width_font)
+    cm_code (arg);
 }
 
 void
-cm_key (arg)
+cm_angle_brackets (arg)
      int arg;
 {
+  add_char (arg == START ? '<' : '>');
 }
 
-/* Convert the character at position into CTL. */
+/* Convert the character at position into a true control character. */
 void
 cm_ctrl (arg, start, end)
      int arg, start, end;
@@ -3987,11 +4005,22 @@ cm_ctrl (arg, start, end)
     }
 }
 
-/* Small Caps in makeinfo just does all caps. */
+/* Handle a command that switches to a non-fixed-width font.  */
+void
+not_fixed_width (arg)
+     int arg;
+{
+  if (arg == START)
+    in_fixed_width_font = 0;
+}
+
+/* Small caps in makeinfo has to do just all caps. */
 void
 cm_sc (arg, start_pos, end_pos)
      int arg, start_pos, end_pos;
 {
+  not_fixed_width (arg);
+
   if (arg == END)
     {
       while (start_pos < end_pos)
@@ -4008,6 +4037,8 @@ void
 cm_var (arg, start_pos, end_pos)
      int arg, start_pos, end_pos;
 {
+  not_fixed_width (arg);
+
   if (arg == END)
     {
       while (start_pos < end_pos)
@@ -4050,46 +4081,17 @@ cm_cite (arg, position)
     add_word ("'");
 }
 
-/* Current text is italicized. */
+/* No highlighting, but argument switches fonts.  */
 void
-cm_italic (arg, start, end)
+cm_not_fixed_width (arg, start, end)
      int arg, start, end;
 {
+  not_fixed_width (arg);
 }
 
-/* Current text is highlighted. */
+/* Various commands are NOP's. */
 void
-cm_bold (arg, start, end)
-     int arg, start, end;
-{
-  cm_italic (arg);
-}
-
-/* Current text is in roman font. */
-void
-cm_roman (arg, start, end)
-     int arg, start, end;
-{
-}
-
-/* Current text is in roman font. */
-void
-cm_titlefont (arg, start, end)
-     int arg, start, end;
-{
-}
-
-/* Italicize titles. */
-void
-cm_title (arg, start, end)
-     int arg, start, end;
-{
-  cm_italic (arg);
-}
-
-/* @refill is a NOP. */
-void
-cm_refill ()
+cm_no_op ()
 {
 }
 
@@ -4387,6 +4389,16 @@ sectioning_underscore (command)
   insert_and_underscore (character);
 }
 
+/* The command still works, but prints a warning message in addition. */
+void
+cm_ideprecated (arg, start, end)
+     int arg, start, end;
+{
+  warning ("The command `%c%s' is obsolete; use `%c%s' instead",
+	   COMMAND_PREFIX, command, COMMAND_PREFIX, command + 1);
+  sectioning_underscore (command + 1);
+}
+
 /* The remainder of the text on this line is a chapter heading. */
 void
 cm_chapter ()
@@ -4504,8 +4516,7 @@ cm_subsubheading ()
 {
   cm_subsubsection ();
 }
-
-
+
 /* **************************************************************** */
 /*								    */
 /*		   Adding nodes, and making tags		    */
@@ -4978,7 +4989,7 @@ cm_node ()
 }
 
 /* Validation of an info file.
-   Scan through the list of tag entrys touching the Prev, Next, and Up
+   Scan through the list of tag entries touching the Prev, Next, and Up
    elements of each.  It is an error not to be able to touch one of them,
    except in the case of external node references, such as "(DIR)".
 
@@ -5447,7 +5458,7 @@ remember_node_reference (node, line, type)
   temp->line_no = line;
   temp->section = current_section;
   temp->type = type;
-  temp->containing_node = strdup (current_node);
+  temp->containing_node = strdup (current_node ? current_node : "");
   temp->filename = node_filename;
 
   node_references = temp;
@@ -5625,6 +5636,18 @@ cm_menu ()
   begin_insertion (menu);
 }
 
+void
+cm_detailmenu ()
+{
+  if (current_node == (char *)NULL)
+    {
+      warning ("%cmenu seen before a node has been defined", COMMAND_PREFIX);
+      warning ("Creating `TOP' node.");
+      execute_string ("@node Top");
+    }
+  begin_insertion (detailmenu);
+}
+
 /* **************************************************************** */
 /*								    */
 /*			Cross Reference Hacking			    */
@@ -5769,7 +5792,7 @@ cm_inforef (arg)
       execute_string ("*note %s: (%s)%s", pname, file, node);
     }
 }
-
+
 /* **************************************************************** */
 /*								    */
 /*			Insertion Command Stubs			    */
@@ -5827,6 +5850,15 @@ cm_display ()
 }
 
 void
+cm_direntry ()
+{
+  if (no_headers)
+    command_name_condition ();
+  else
+    begin_insertion (direntry);
+}
+
+void
 cm_itemize ()
 {
   begin_insertion (itemize);
@@ -5876,6 +5908,12 @@ cm_table ()
 }
 
 void
+cm_multitable ()
+{
+  begin_insertion (multitable);	/* @@ */
+}
+
+void
 cm_ftable ()
 {
   begin_insertion (ftable);
@@ -5913,8 +5951,7 @@ cm_flushright ()
 {
   begin_insertion (flushright);
 }
-
-
+
 /* **************************************************************** */
 /*								    */
 /*			  Conditional Handling			    */
@@ -5922,8 +5959,8 @@ cm_flushright ()
 /* **************************************************************** */
 
 /* A structure which contains `defined' variables. */
-typedef struct _defines {
-  struct _defines *next;
+typedef struct defines {
+  struct defines *next;
   char *name;
   char *value;
 } DEFINE;
@@ -6041,7 +6078,7 @@ cm_ifclear ()
 /* This command takes braces, but we parse the contents specially, so we
    don't use the standard brace popping code.
 
-   The syntax @ifeq{arg1, arg2, texinfo commands} performs texinfo commands
+   The syntax @ifeq{arg1, arg2, texinfo-commands} performs texinfo-commands
    if ARG1 and ARG2 caselessly string compare to the same string, otherwise,
    it produces no output. */
 void
@@ -6252,13 +6289,8 @@ handle_variable_internal (action, name)
 	}
     }
 }
-
-
-/* **************************************************************** */
-/*								    */
-/*		    Execution of Random Text not in file	    */
-/*								    */
-/* **************************************************************** */
+
+/* Execution of random text not in file. */
 
 typedef struct {
   char *string;			/* The string buffer. */
@@ -6369,11 +6401,40 @@ execute_string (format, arg1, arg2, arg3, arg4, arg5)
   es->in_use = 0;
 }
 
-/* **************************************************************** */
-/*								    */
-/*			@itemx, @item				    */
-/*								    */
-/* **************************************************************** */
+
+/* Return what would be output for STR, i.e., expand Texinfo commands.
+   If IMPLICIT_CODE is set, expand @code{STR}.  */
+
+char *
+expansion (str, implicit_code)
+    char *str;
+    int implicit_code;
+{
+  int length;
+  char *result;
+
+  /* Inhibit any real output.  */
+  int start = output_paragraph_offset;
+  int saved_paragraph_is_open = paragraph_is_open;
+
+  inhibit_output_flushing ();
+  execute_string (implicit_code ? "@code{%s}" : "%s", str);
+  uninhibit_output_flushing ();
+
+  /* Copy the expansion from the buffer.  */
+  length = output_paragraph_offset - start;
+  result = xmalloc (1 + length);
+  memcpy (result, (char *) (output_paragraph + start), length);
+  result[length] = 0;
+  
+  /* Pretend it never happened.  */
+  output_paragraph_offset = start;
+  paragraph_is_open = saved_paragraph_is_open;
+
+  return result;
+}
+
+/* @itemx, @item. */
 
 static int itemx_flag = 0;
 
@@ -6409,6 +6470,19 @@ cm_item ()
     switch_top:
       switch (stack->insertion)
 	{
+	case multitable:
+	  multitable_item ();
+	  /* Ultra special hack.  It appears that some people incorrectly
+	     place text directly after the @item, instead of on a new line
+	     by itself.  This happens to work in TeX, so I make it work
+	     here. */
+	  if (*rest_of_line)
+	    {
+	      line_number--;
+	      input_text_offset = original_input_text_offset;
+	    }
+	  break;
+
 	case ifinfo:
 	case ifset:
 	case ifclear:
@@ -6549,7 +6623,6 @@ cm_item ()
 		  COMMAND_PREFIX, command);
     }
 }
-
 
 /* **************************************************************** */
 /*								    */
@@ -6737,15 +6810,17 @@ args_from_string (string)
 
 	      c = *scan_string++;
 
-	      if (!c ||
-		  (whitespace (c) || DEFUN_SELF_DELIMITING (c) ||
-		   c == '{' || c == '}'))
+              /* Do not back up if we're looking at a }; since the only
+                 valid }'s are those matched with {'s, we want to give
+                 an error.  If we back up, we go into an infinite loop.  */
+	      if (!c || whitespace (c) || DEFUN_SELF_DELIMITING (c)
+	          || c == '{')
 		{
 		  scan_string--;
 		  break;
 		}
 
-	      /* If we encounter a command imbedded within a token,
+	      /* If we encounter a command embedded within a token,
 		 then end the token. */
 	      if (c == COMMAND_PREFIX)
 		{
@@ -6972,27 +7047,29 @@ defun_internal (type, x_p)
   current_indent -= default_indentation_increment;
   close_single_paragraph ();
 
-  /* Make an entry in the appropriate index. */
-  switch (base_type)
-    {
-    case deffn:
-    case deftypefn:
-      execute_string ("%cfindex %s\n", COMMAND_PREFIX, defined_name);
-      break;
-    case defvr:
-    case deftypevr:
-    case defcv:
-      execute_string ("%cvindex %s\n", COMMAND_PREFIX, defined_name);
-      break;
-    case defop:
-    case deftypemethod:
-      execute_string ("%cfindex %s on %s\n",
-		      COMMAND_PREFIX, defined_name, type_name);
-      break;
-    case deftp:
-      execute_string ("%ctindex %s\n", COMMAND_PREFIX, defined_name);
-      break;
-    }
+  if (!macro_expansion_output_stream)
+    /* Make an entry in the appropriate index unless we are just
+       expanding macros. */
+    switch (base_type)
+      {
+      case deffn:
+      case deftypefn:
+        execute_string ("%cfindex %s\n", COMMAND_PREFIX, defined_name);
+        break;
+      case defvr:
+      case deftypevr:
+      case defcv:
+        execute_string ("%cvindex %s\n", COMMAND_PREFIX, defined_name);
+        break;
+      case defop:
+      case deftypemethod:
+        execute_string ("%cfindex %s on %s\n",
+                        COMMAND_PREFIX, defined_name, type_name);
+        break;
+      case deftp:
+        execute_string ("%ctindex %s\n", COMMAND_PREFIX, defined_name);
+        break;
+      }
 
   /* Deallocate the token list. */
   scan_args = defun_args;
@@ -7067,7 +7144,6 @@ cm_end ()
   end_insertion (type);
   free (temp);
 }
-
 
 /* **************************************************************** */
 /*								    */
@@ -7142,6 +7218,26 @@ cm_sp ()
       while (lines--)
 	add_char ('\n');
     }
+  free (line);
+}
+
+/* @dircategory LINE  outputs  INFO-DIR-SECTION LINE,
+   but not if --no-headers.  */
+
+void
+cm_dircategory ()
+{
+  char *line, *p;
+
+  get_rest_of_line (&line);;
+
+  if (! no_headers)
+    {
+      insert_string ("INFO-DIR-SECTION ");
+      insert_string (line);
+      insert ('\n');
+    }
+
   free (line);
 }
 
@@ -7267,12 +7363,6 @@ cm_exdent ()
   close_single_paragraph ();
 }
 
-void
-cm_include ()
-{
-  cm_infoinclude ();
-}
-
 #if !defined (HAVE_STRERROR)
 extern char *sys_errlist[];
 extern int sys_nerr;
@@ -7290,7 +7380,7 @@ strerror (num)
 
 /* Remember this file, and move onto the next. */
 void
-cm_infoinclude ()
+cm_include ()
 {
   char *filename;
 
@@ -7357,39 +7447,13 @@ misplaced_brace ()
   line_error ("Misplaced `}'");
 }
 
-/* Don't let the filling algorithm insert extra whitespace here. */
-void
-cm_force_abbreviated_whitespace ()
-{
-}
-
-/* Do not let this character signify the end of a sentence, though
-   if it was seen without the command prefix it normally would.  We
-   do this by turning on the 8th bit of the character. */
-void
-cm_ignore_sentence_ender ()
-{
-  add_char (META ((*command)));
-}
-
 /* Signals end of processing.  Easy to make this happen. */
 void
 cm_bye ()
 {
   input_text_offset = size_of_input_text;
 }
-
-void
-cm_asis ()
-{
-}
-
-void
-cm_math ()
-{
-}
-
-
+
 /* **************************************************************** */
 /*								    */
 /*			Indexing Stuff				    */
@@ -7817,7 +7881,6 @@ int
 index_element_compare (element1, element2)
      INDEX_ELT **element1, **element2;
 {
-  /* This needs to ignore leading non-text characters. */
   return (strcasecmp ((*element1)->entry, (*element2)->entry));
 }
 
@@ -7837,7 +7900,7 @@ make_index_entries_unique (array, count)
     {
       if ((i == (count - 1)) ||
 	  (array[i]->node != array[i + 1]->node) ||
-	  (strcasecmp (array[i]->entry, array[i + 1]->entry) != 0))
+	  (strcmp (array[i]->entry, array[i + 1]->entry) != 0))
 	copy[j++] = array[i];
       else
 	{
@@ -7906,6 +7969,14 @@ sort_index (index)
   while (temp != (INDEX_ELT *) NULL)
     {
       array[count++] = temp;
+
+      /* Maybe should set line number to the defining_line?  Any errors
+         have already been given, though, I think.  */
+
+      /* If this particular entry should be printed as a "code" index,
+	 then wrap the entry with "@code{...}". */
+      array[count - 1]->entry = expansion (temp->entry, index->code);
+      
       temp = temp->next;
     }
   array[count] = (INDEX_ELT *) NULL;	/* terminate the array. */
@@ -7928,8 +7999,10 @@ cm_printindex ()
   INDEX_ELT *index;
   INDEX_ELT **array;
   char *index_name;
-  int old_inhibitions = inhibit_paragraph_indentation;
-  int previous_filling_enabled_value = filling_enabled;
+  unsigned line_length;
+  char *line;
+  int saved_inhibit_paragraph_indentation = inhibit_paragraph_indentation;
+  int saved_filling_enabled = filling_enabled;
 
   close_paragraph ();
   get_rest_of_line (&index_name);
@@ -7944,62 +8017,63 @@ cm_printindex ()
   else
     free (index_name);
 
-  array = sort_index (index);
-
+  /* Do this before sorting, so execute_string in index_element_compare
+     will give the same results as when we actually print.  */
+  printing_index = 1;
   filling_enabled = 0;
   inhibit_paragraph_indentation = 1;
+  array = sort_index (index);
+
   close_paragraph ();
   add_word ("* Menu:\n\n");
-
-  printing_index = 1;
 
 #if defined (HAVE_MACROS)
   me_inhibit_expansion++;
 #endif /* HAVE_MACROS */
 
+  /* This will probably be enough.  */
+  line_length = 100;
+  line = xmalloc (line_length);
+  
   for (item = 0; (index = array[item]); item++)
     {
-      int real_line_number = line_number;
+      /* A pathological document might have an index entry outside of any
+         node.  Don't crash.  Perhaps should warn.  */
+      char *index_node = index->node ? index->node : "(none)";
+      unsigned new_length = strlen (index->entry) + strlen (index_node);
+      
+      if (new_length > line_length)
+        {
+          line_length = new_length + 6; /* * : .\0 */
+          line = xrealloc (line, line_length);
+        }
 
-      /* Let errors generated while making the index entry point back
-	 at the line which contains the entry. */
-      line_number = index->defining_line;
+      /* Print the entry, nicely formatted.  We've already expanded any
+         commands, including any implicit @code.  Thus, can't call
+         execute_string, since @@ has turned into @.  */
+      sprintf (line, "* %-37s  %s.\n", index->entry, index_node);
+      line[2 + strlen (index->entry)] = ':';
+      insert_string (line);
 
-      /* If this particular entry should be printed as a "code" index,
-	 then wrap the entry with "@code{...}". */
-      if (index->code)
-	execute_string ("* %ccode{%s}: ", COMMAND_PREFIX, index->entry);
-      else
-	execute_string ("* %s: ", index->entry);
-
-      /* Pad the front of the destination nodename so that
-	 the output looks nice. */
-      if (fill_column > 40 && output_column < 40)
-	indent (40 - output_column);
-
-      execute_string ("%s.\n", index->node);
-
-      line_number = real_line_number;
+      /* Previous `output_paragraph' from growing to the size of the
+         whole index.  */
       flush_output ();
     }
 
+  free (line);
+  
 #if defined (HAVE_MACROS)
-      me_inhibit_expansion--;
+  me_inhibit_expansion--;
 #endif /* HAVE_MACROS */
 
   printing_index = 0;
   free (array);
   close_single_paragraph ();
-  filling_enabled = previous_filling_enabled_value;
-  inhibit_paragraph_indentation = old_inhibitions;
+  filling_enabled = saved_filling_enabled;
+  inhibit_paragraph_indentation = saved_inhibit_paragraph_indentation;
 }
-
 
-/* **************************************************************** */
-/*								    */
-/*		    Making User Defined Commands		    */
-/*								    */
-/* **************************************************************** */
+/* User-defined commands. */
 
 void
 define_user_command (name, proc, needs_braces_p)
@@ -8021,13 +8095,6 @@ define_user_command (name, proc, needs_braces_p)
   user_command_array[slot]->name = strdup (name);
   user_command_array[slot]->proc = proc;
   user_command_array[slot]->argument_in_braces = needs_braces_p;
-}
-
-/* Make ALIAS run the named FUNCTION.  Copies properties from FUNCTION. */
-void
-define_alias (alias, function)
-     char *alias, *function;
-{
 }
 
 /* Set the paragraph indentation variable to the value specified in STRING.
@@ -8114,7 +8181,8 @@ cm_footnotestyle ()
 
   get_rest_of_line (&arg);
 
-  if (set_footnote_style (arg) != 0)
+  /* If set on command line, do not change the footnote style.  */
+  if (!footnote_style_preset && set_footnote_style (arg) != 0)
     line_error ("Bad argument to %c%s", COMMAND_PREFIX, command);
 
   free (arg);
@@ -8285,7 +8353,6 @@ output_pending_notes ()
 
   switch (footnote_style)
     {
-
     case SeparateNode:
       {
 	char *old_current_node = current_node;
@@ -8340,8 +8407,7 @@ output_pending_notes ()
     free (array);
   }
 }
-
-
+
 /* **************************************************************** */
 /*                                                                  */
 /*              User definable Macros (text substitution)	    */
@@ -9175,7 +9241,7 @@ get_brace_args (quote_single)
     }
   return (arglist);
 }
-
+
 /* **************************************************************** */
 /*                                                                  */
 /*                  Looking For Include Files                       */

@@ -1,325 +1,93 @@
-Please report bugs you find to bug-texinfo@prep.ai.mit.edu
+This file records noteworthy changes.
 
-Changes between Texinfo 3.0 and 3.2:
+3.9 (4 October 1996)
+* makeinfo:
+  - Give a suppressible (with --no-validate) error for references
+    outside of any node.
+  - Keep track of multitable output correctly for split files; this
+    caused nodes after the first multitable to be ``undefined''.
+* install-info:
+  - Rename --infodir option to --info-dir.
+  - More robust error checking to avoid various crashes.
+* configure: Include replacements for memcpy and memmove functions in
+  the distribution, in case they are missing.
 
-Many bug fixes, and a few functional additions.  Note that standalone
-Info can now read Un*x man pages.
+3.8 (30 September 1996)
+* Define and/or document new and/or previously existing commands:
+  Accents: @" @' @, @" @= @^ @` @~ @H @d @dotaccent @dotless @ringaccent
+    @tieaccent @u @ubaraccent @v
+  Special characters: @AA @AE @L @O @OE @aa @ae @exclamdown @l @o @oe
+    @pounds @questiondown @ss
+  Special punctuation: @! @? @enddots
+  dir file maintenance: @dircategory @direntry; also new program, install-info
+  HTML support: @email @url @ifhtml...@end ifhtml
+  Macros: @macro @unmacro
+  Tables: @multitable @tab
+  Hyphenation: @- @hyphenation
+  Spacing: @  @<TAB> @<NEWLINE>
+  Sectioning:
+    @headings singleafter/doubleafter (change heading style after current page)
+    @centerchap
+    @setchapterstyle
+  Other:
+    @shorttitlepage (simple title pages)
+    @detailmenu...@end detailmenu (help makeinfo parse master menus)
+* Makeinfo prefers an input file named `foo.texinfo' or `foo.texi' or
+  `foo.txinfo' to just `foo' (the latter most likely being an executable).
+* Makeinfo implements @. @! @? correctly, as end-of-sentence punctuation.
+* @key marks its argument with a lozenge in TeX and <...> in Info.
+* TeX output has substantially decreased interline spacing and other
+  formatting changes.
+* Remove these obsolete and never-documented commands:
+    @infotop
+    @infoappendix @infoappendixsec @infoappendixsubsec @infoappendixsubsubsec
+    @infochapter @infosection @infosubsection @infosubsubsection
+    @infounnumbered @infounnumberedsec @infounnumberedsubsec
+      @infounnumberedsubsubsec
+    @input
+    @smallbreak @medbreak
+    @overfullrule
+    @br
+* Deprecate these obsolete commands, to be removed in the next release:
+    @ctrl
+    @infoinclude
+    @iappendix @iappendixsection @iappendixsec @iappendixsubsec
+      @iappendixsubsubsec
+    @ichapter @isection @isubsection @isubsubsection 
+    @iunnumbered @iunnumberedsec @iunnumberedsubsec @iunnumberedsubsubsec
+    @setchapterstyle
+    @titlespec
 
-Changes between Texinfo 3.0 and 3.1:
+3.7 (24 December 1995)
+* Have --version print texinfo release number as well as the individual
+  program version.
+* Better man page cleaning.
+* Update Elisp files from current Emacs release.
 
+3.6 (21 June 1995)
+* Unmatched brace error reporting improved.
+* Missing comment terminator prevented compilation.
+
+3.5 (20 June 1995)
+* Autoconf update.
+* Support for parallel makes.
+* make install does not install Elisp files.
+
+3.4 (19 June 1995)
+* Handle @ifhtml in Elisp.
+* Update FSF address.
+
+3.3 (15 June 1995)
+* Portability changes.
+* Compile Elisp files.
+* Don't distribute .info* files.
+
+3.2 (9 June 1995)
+* Standalone Info can read Unix man pages.
+* New commands: @! @? @^ @" @enddots.
+* makeinfo -E does macro expansion (and nothing else).
+
+3.1 (23 May 1993)
 Just bug fixes, see ChangeLog for full details. 
 
-
-
-Texinfo 2
-*********
-
-The second edition of the Texinfo manual is now released in a package
-with the second version of the various Texinfo support files,
-including `texinfo.el', `texnfo-upd.el', and `makeinfo.c'.  The new
-manual is considerably larger than the previous one.
-
-Here is a brief description of the new Texinfo mode commands 
-and the newly described @-commands:
-
-New Texinfo Mode Commands
-=========================
-
-Texinfo mode provides commands and features especially designed for
-working with Texinfo files.  More than 20 new commands have been
-added, including commands for automatically creating and updating both
-nodes and menus.  This is a tedious task when done by hand.
-
-The keybindings are intended to be somewhat mnemonic.
-
-Update everything
------------------
-
-The `texinfo-master-menu' command is the primary command:
-
-     C-c C-u m       Create or update a master menu.
-                     With an argument, first create or
-                     update all nodes and regular menus.
-
-Update Pointers
----------------
-
-Create or update `Next', `Previous', and `Up' node pointers.
-
-     C-c C-u C-n     Update a node.
-     C-c C-u C-e     Update every node in the buffer.
-
-Update Menus
-------------
-
-Create or update menus.
-
-     C-c C-u C-m     Make or update a menu.
-
-     C-c C-u C-a     Make or update all the menus
-                     in a buffer; with an argument, 
-                     first update all the nodes.
-
-Insert Title as Description
----------------------------
-
-Insert a node's chapter or section title in the space for the
-description in a menu entry line; position point so you can edit the
-insert.  (This command works somewhat differently than the other
-insertion commands, which insert only a predefined string.)
-
-     C-c C-c C-d     Insert title.
-
-Format for Info
----------------
-
-Provide keybindings both for the Info formatting commands that are
-written in Emacs Lisp and for `makeinfo' which is written in C.
-
-Use the Emacs lisp `texinfo-format...' commands:
-
-     C-c C-e C-r     Format the region.
-     C-c C-e C-b     Format the buffer.
-
-Use `makeinfo':
-
-     C-c C-m C-r     Format the region.
-     C-c C-m C-b     Format the buffer.
-     C-c C-m C-l     Recenter the `makeinfo' output buffer.
-     C-c C-m C-k     Kill the `makeinfo' formatting job.
-
-Typeset and Print
------------------
-
-Typeset and print Texinfo documents from within Emacs.
-
-     C-c C-t C-r     Run TeX on the region.
-     C-c C-t C-b     Run TeX on the buffer.
-     C-c C-t C-i     Run `texindex'.
-     C-c C-t C-p     Print the DVI file.
-     C-c C-t C-q     Show the print queue.
-     C-c C-t C-d     Delete a job from the print queue.
-     C-c C-t C-k     Kill the current TeX formatting job.
-     C-c C-t C-x     Quit a currently stopped TeX formatting job.
-     C-c C-t C-l     Recenter the output buffer.
-
-Other Updating Commands
------------------------
-
-The `other updating commands' do not have standard keybindings because
-they are less frequently used.
-
-     M-x texinfo-insert-node-lines
-                     Insert missing node lines using 
-                     section titles as node names.
-
-     M-x texinfo-multiple-files-update
-                     Update a multi-file document.
-
-     M-x texinfo-indent-menu-description
-                     Indent descriptions in menus.
-
-     M-x texinfo-sequential-update-node
-                     Insert node pointers in strict sequence.
-
-Newly Described Texinfo @-Commands
-==================================
-
-The second edition of the Texinfo manual describes more than 50
-commands that were not described in the first edition.  A third or so
-of these commands existed in Texinfo but were not documented in the
-manual; the others are new.  Here is a listing, with brief
-descriptions of them:
-
-
-Commands for creating your own index and for merging two indices:
-
-`@defindex INDEX-NAME'
-     Define a new index and its indexing command.  Print entries in a
-     roman font.  Also, the `@defcodeindex' command, which prints
-     entries in an `@code' font.
-
-`@synindex FROM-INDEX INTO-INDEX'
-     Merge the index named in the first argument into the index named
-     in the second argument.  Sets FROM-INDEX in the same (roman) font
-     as INTO-INDEX.  Also, the `@syncodeindex' command, which prints
-     the entries from the first index in `@code' font.
-
-
-Many commands to help you describe functions, variables, macros,
-commands, user options, special forms and other such artifacts in a
-uniform format.
-
-`@deffn CATEGORY NAME ARGUMENTS...'
-     Format a description for functions, interactive commands, and
-     similar entities that may take arguments.  Takes as arguments the
-     category of entity being described, the name of this particular
-     entity, and its arguments, if any.
-
-`@defvr, @defop, ...'
-     15 other related commands.
-
-
-Special symbols to indicate the results of evaluation or an expansion,
-printed output, an error message, equivalence of expressions, and the
-location of point.
-
-`@equiv{}'
-     Indicate the exact equivalence of two forms; special glyph: `=='.
-
-`@error{}'
-     Indicate that the following text is an error message: `error-->'.
-
-`@expansion{}'
-     Indicate the result of a macro expansion; special glyph: `==>'.
-
-`@point{}'
-     Indicate the position of point; special glyph: `-!-'.
-
-`@print{}'
-     Indicate printed output; special glyph: `-|'.
-
-`@result{}'
-     Indicate the result of an expression; special glyph: `=>'.
-
-
-Commands to customize headings:
-
-`@headings ON-OFF-SINGLE-DOUBLE'
-     Turn headings on or off, or specify single-sided or double-sided
-     headings for printing.
-
-`@evenfooting [LEFT] @| [CENTER] @| [RIGHT]'
-     Specify footings for even-numbered (left-hand) pages.  Not
-     relevant to Info.
-
-`@evenheading, @everyheading, @oddheading, ...'
-     Five other related commands.
-
-`@thischapter'
-     In a heading or footing, stands for the number and name of the
-     current chapter, in the format `Chapter 1: First Chapter'.
-
-`@thischaptername, @thisfile, @thistitle, @thispage'
-     Related commands.
-
-
-Commands for formatting text:
-
-`@cartouche'   
-     Draw rounded box surrounding text (not in Info).
-
-`@enumerate OPTIONAL-ARG'
-     Enumerate a list with letters or numbers.
-
-`@exdent LINE-OF-TEXT'
-     Remove any indentation a line might have.
-
-`@flushleft'
-     Left justify every line but leave the right end ragged.  Leave
-     font as is.
-
-`@flushright'
-     Right justify every line but leave the left end ragged.  Leave
-     font as is.
-
-`@format'
-     Like `@example' or `@display', but do not narrow the margins or
-     select the fixed-width font.
-
-`@ftable FORMATTING-COMMAND'
-`@vtable FORMATTING-COMMAND'
-     Begin a two-column table, using `@item' for each entry.
-     `@ftable' automatically enters each of the items in the 
-     first column into the index of functions and `@vtable'
-     enters them into the index of variables.  The commands
-     are the same as `@table', except for indexing.
-
-`@lisp'
-     Indent text, do not fill, select fixed-width font.
-
-`@smallexample'
-     Indent text, do not fill, select fixed-width font.  In
-     `@smallbook' format, print text in a smaller font than with the
-     `@example' environment.  Also, the `@smalllisp' command.
-
-Commands for formatting if a flag is set or cleared:
-
-`@set FLAG [STRING]'
-     Set FLAG, causing the Texinfo formatting commands to format text
-     between subsequent pairs of `@ifset FLAG' and `@end ifset'
-     commands.  Optionally, set value of FLAG to STRING.
-
-`@value{FLAG}'
-     Replace with value to which FLAG is set.
-
-`@ifset FLAG ... @end ifset'
-     If FLAG is set, the Texinfo formatting commands format text
-     between `@ifset FLAG' and the following `@end ifset' command.
-
-`@clear FLAG'
-     Unset FLAG, preventing the Texinfo formatting commands from
-     formatting text between subsequent pairs of `@ifset FLAG' and
-     `@end ifset' commands.
-
-`@ifclear FLAG ... @end ifclear'
-     If FLAG is unset, the Texinfo formatting commands format text
-     between `@ifclear FLAG' and the following `@end ifclear' command.
-
-Produce unnumbered headings that do not appear in a table of contents:
-
-`@heading TITLE'
-     Print an unnumbered section-like heading in the text, but not in
-     the table of contents of a printed manual.
-
-`@chapheading, @majorheading'
-`@subheading, @subsubheading'
-     Related commands.
-
-
-Font commands:
-
-`@r{TEXT}'
-     Print TEXT in roman font.  No effect in Info.
-
-`@sc{TEXT}'
-     Set TEXT in the printed output in THE SMALL CAPS FONT and set
-     text in the Info file in uppercase letters.
-
-
-Miscellaneous:
-
-`@author AUTHOR'
-     Typeset author's name flushleft and underline it.
-
-`@finalout'
-     Prevent TeX from printing large black warning rectangles beside
-     over-wide lines.
-
-`@footnotestyle STYLE'
-     Specify footnote style, end or separate.
-
-`@dmn{DIMENSION}'
-     Format a dimension.
-
-`@minus{}'
-     Generate a minus sign.
-
-`@paragraphindent INDENT'
-     Specify paragraph indentation, asis or a number.
-
-`@ref{NODE-NAME, [ENTRY], [TOPIC], [INFO-FILE], [MANUAL]}'
-     Make a reference.  In the printed manual, the reference does not
-     start with a `See'.
-
-`@title TITLE'
-     Alternative format for a title page.  In the printed manual, set
-     a title flush to the left-hand side of the page in a larger than
-     normal font and underline it with a black rule.  Also,
-     `@subtitle' command.
-               
-`@subtitle SUBTITLE'
-     Subtitle in the alternative title page format.
-
-`@today{}'
-     Insert the current date.
+texinfo-3.0: first release of Texinfo version 2, with many new commands.

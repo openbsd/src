@@ -18,12 +18,13 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
-;;; Note that nowadays we expect info files to be made using makeinfo.
+;; Note that nowadays we expect info files to be made using makeinfo.
 
 ;;; Code:
 
@@ -38,9 +39,10 @@ However, we recommend that you not do this.
 It is better to write a Texinfo file and generate the Info file from that,
 because that gives you a printed manual as well.")
 
-(defvar Info-enable-active-nodes t
+(defvar Info-enable-active-nodes nil
   "Non-nil allows Info to execute Lisp code associated with nodes.
 The Lisp code is executed when the node is selected.")
+(put 'Info-enable-active-nodes 'risky-local-variable t)
 
 (defvar Info-fontify t
   "*Non-nil enables highlighting and fonts in Info nodes.")
@@ -158,9 +160,10 @@ be last in the list.")
 	   (ext-len (max 0 (- (length filename) (length sans-exts) 1)))
 	   ext-left)
       ;; SUFFIX starts with a dot.  If FILENAME already has one,
-      ;; get rid of the one in SUFFIX.
+      ;; get rid of the one in SUFFIX (unless suffix is empty).
       (or (and (<= ext-len 0)
 	       (not (eq (aref filename (1- (length filename))) ?.)))
+	  (= (length suffix) 0)
 	  (setq suffix (substring suffix 1)))
       ;; How many chars of that extension should we keep?
       (setq ext-left (min ext-len (max 0 (- 3 (length suffix)))))
@@ -217,7 +220,11 @@ Optional argument FILE specifies the file to examine;
 the default is the top-level directory of Info.
 
 In interactive use, a prefix argument directs this command
-to read a file name from the minibuffer."
+to read a file name from the minibuffer.
+
+The search path for Info files is in the variable `Info-directory-list'.
+The top-level Info directory is made by combining all the files named `dir' 
+in all the directories in that path."
   (interactive (if current-prefix-arg
 		   (list (read-file-name "Info file name: " nil nil t))))
   (if file
@@ -253,7 +260,7 @@ In standalone mode, \\<Info-mode-map>\\[Info-exit] exits Emacs itself."
   (if filename
       (let (temp temp-downcase found)
 	(setq filename (substitute-in-file-name filename))
-	(if (string= (downcase (file-name-nondirectory filename)) "dir")
+	(if (string= (downcase filename) "dir")
 	    (setq found t)
 	  (let ((dirs (if (string-match "^\\./" filename)
 			  ;; If specified name starts with `./'
@@ -369,7 +376,7 @@ In standalone mode, \\<Info-mode-map>\\[Info-exit] exits Emacs itself."
 			(if (not (eq (current-buffer) (get-buffer "*info*")))
 			    (setq guesspos
 				  (Info-read-subfile guesspos))))
-		    (error "No such node: \"%s\"" nodename))))
+		    (error "No such node: %s" nodename))))
 	    (goto-char (max (point-min) (- guesspos 1000)))
 	    ;; Now search from our advised position (or from beg of buffer)
 	    ;; to find the actual node.
@@ -457,23 +464,21 @@ In standalone mode, \\<Info-mode-map>\\[Info-exit] exits Emacs itself."
 			    Info-dir-file-attributes
 			    (cons (cons file attrs)
 				  Info-dir-file-attributes))))))
+	  (or (cdr dirs) (setq Info-dir-contents-directory (car dirs)))
 	  (setq dirs (cdr dirs))))
       
       (or buffers
-	  (error "Can't find the info directory node"))
+	  (error "Can't find the Info directory node"))
       ;; Distinguish the dir file that comes with Emacs from all the
       ;; others.  Yes, that is really what this is supposed to do.
       ;; If it doesn't work, fix it.
       (setq buffer (car buffers)
 	    others (cdr buffers))
 
-      ;; Insert the entire original dir file as a start; use its
-      ;; default directory as the default directory for the whole
-      ;; concatenation.
+      ;; Insert the entire original dir file as a start; note that we've
+      ;; already saved its default directory to use as the default
+      ;; directory for the whole concatenation.
       (insert-buffer buffer)
-      (setq Info-dir-contents-directory (save-excursion
-					  (set-buffer buffer)
-					  default-directory))
 
       ;; Look at each of the other buffers one by one.
       (while others
@@ -791,7 +796,7 @@ In standalone mode, \\<Info-mode-map>\\[Info-exit] exits Emacs itself."
 	 (Info-following-node-name))
      (if (eq errorname t)
 	 nil
-       (error (concat "Node has no " (capitalize (or errorname name))))))))
+       (error "Node has no %s" (capitalize (or errorname name)))))))
 
 ;; Return the node name in the buffer following point.
 ;; ALLOWEDCHARS, if non-nil, goes within [...] to make a regexp
@@ -1179,7 +1184,10 @@ N is the digit argument used to invoke this command."
 	((Info-no-error (Info-up))
 	 ;; Since we have already gone thru all the items in this menu,
 	 ;; go up to the end of this node.
-	 (goto-char (point-max)))
+	 (goto-char (point-max))
+	 ;; Since logically we are done with the node with that menu,
+	 ;; move on from it.
+	 (Info-next-preorder))
 	(t
 	 (error "No more nodes"))))
 
@@ -1191,9 +1199,20 @@ N is the digit argument used to invoke this command."
 	  ;; If we go down a menu item, go to the end of the node
 	  ;; so we can scroll back through it.
 	  (goto-char (point-max)))
+	 ;; Keep going down, as long as there are nested menu nodes.
+	 (while (Info-no-error
+		 (Info-last-menu-item)
+		 ;; If we go down a menu item, go to the end of the node
+		 ;; so we can scroll back through it.
+		 (goto-char (point-max))))
 	 (recenter -1))
 	((Info-no-error (Info-prev))
 	 (goto-char (point-max))
+	 (while (Info-no-error
+		 (Info-last-menu-item)
+		 ;; If we go down a menu item, go to the end of the node
+		 ;; so we can scroll back through it.
+		 (goto-char (point-max))))
 	 (recenter -1))
 	((Info-no-error (Info-up))
 	 (goto-char (point-min))
@@ -1229,14 +1248,19 @@ previous node or back up to the parent node."
   (if (or (< (window-start) (point-min))
 	  (> (window-start) (point-max)))
       (set-window-start (selected-window) (point)))
-  (let ((virtual-end (save-excursion
-		       (goto-char (point-min))
-		       (search-forward "\n* Menu:" nil t))))
+  (let* ((current-point (point))
+	 (virtual-end (save-excursion
+			(beginning-of-line)
+			(setq current-point (point))
+			(goto-char (point-min))
+			(search-forward "\n* Menu:"
+					current-point
+					t))))
     (if (or virtual-end (pos-visible-in-window-p (point-min)))
 	(Info-last-preorder)
       (scroll-down))))
 
-(defun Info-next-reference ()
+(defun Info-next-reference (&optional recur)
   "Move cursor to the next cross-reference or menu item in the node."
   (interactive)
   (let ((pat "\\*note[ \n\t]*\\([^:]*\\):\\|^\\* .*:")
@@ -1251,9 +1275,11 @@ previous node or back up to the parent node."
 		(error "No cross references in this node")))))
     (goto-char (match-beginning 0))
     (if (looking-at "\\* Menu:")
-	(Info-next-reference))))
+	(if recur
+	    (error "No cross references in this node")
+	  (Info-next-reference t)))))
 
-(defun Info-prev-reference ()
+(defun Info-prev-reference (&optional recur)
   "Move cursor to the previous cross-reference or menu item in the node."
   (interactive)
   (let ((pat "\\*note[ \n\t]*\\([^:]*\\):\\|^\\* .*:")
@@ -1267,7 +1293,9 @@ previous node or back up to the parent node."
 		(error "No cross references in this node")))))
     (goto-char (match-beginning 0))
     (if (looking-at "\\* Menu:")
-	(Info-prev-reference))))
+	(if recur
+	    (error "No cross references in this node")
+	  (Info-prev-reference t)))))
 
 (defun Info-index (topic)
   "Look up a string in the index for this file.
@@ -1322,8 +1350,8 @@ Give a blank topic name to go to the Index node itself."
 	    (Info-goto-node node))
 	  (or matches
 	      (progn
-		(Info-last)
-		(error "No \"%s\" in index" topic)))
+		(Info-goto-node orignode)
+		(error "No `%s' in index" topic)))
 	  ;; Here it is a feature that assoc is case-sensitive.
 	  (while (setq found (assoc topic matches))
 	    (setq exact (cons found exact)
@@ -1348,23 +1376,27 @@ Give a blank topic name to go to the Index node itself."
       (forward-line (nth 3 (car Info-index-alternatives)))
     (forward-line 3)  ; don't search in headers
     (let ((name (car (car Info-index-alternatives))))
-      (if (or (re-search-forward (format
-				  "\\(Function\\|Command\\): %s\\( \\|$\\)"
-				  (regexp-quote name)) nil t)
-	      (search-forward (format "`%s'" name) nil t)
-	      (and (string-match "\\`.*\\( (.*)\\)\\'" name)
-		   (search-forward
-		    (format "`%s'" (substring name 0 (match-beginning 1)))
-		    nil t))
-	      (search-forward name nil t))
-	  (beginning-of-line)
-	(goto-char (point-min)))))
-  (message "Found \"%s\" in %s.  %s"
+      (Info-find-index-name name)))
+  (message "Found `%s' in %s.  %s"
 	   (car (car Info-index-alternatives))
 	   (nth 2 (car Info-index-alternatives))
 	   (if (cdr Info-index-alternatives)
 	       "(Press `,' for more)"
 	     "(Only match)")))
+
+(defun Info-find-index-name (name)
+  "Move point to the place within the current node where NAME is defined."
+  (if (or (re-search-forward (format
+			      "[a-zA-Z]+: %s\\( \\|$\\)"
+			      (regexp-quote name)) nil t)
+	  (search-forward (format "`%s'" name) nil t)
+	  (and (string-match "\\`.*\\( (.*)\\)\\'" name)
+	       (search-forward
+		(format "`%s'" (substring name 0 (match-beginning 1)))
+		nil t))
+	  (search-forward name nil t))
+      (beginning-of-line)
+    (goto-char (point-min))))
 
 (defun Info-undefined ()
   "Make command be undefined in Info."
@@ -1405,7 +1437,7 @@ POS must be somewhere inside the token
 START is a regular expression which will match the
     beginning of the tokens delimited string
 ALL is a regular expression with a single
-    parenthized subpattern which is the token to be
+    parenthesized subpattern which is the token to be
     returned. E.g. '{\(.*\)}' would return any string
     enclosed in braces around POS.
 SIG optional fourth argument, controls action on no match
@@ -1631,7 +1663,7 @@ Allowed only if variable `Info-enable-edit' is non-nil."
   (or Info-enable-edit
       (error "Editing info nodes is not enabled"))
   (Info-edit-mode)
-  (message (substitute-command-keys
+  (message "%s" (substitute-command-keys
 	    "Editing: Type \\<Info-edit-map>\\[Info-cease-edit] to return to info")))
 
 (defun Info-cease-edit ()
@@ -1729,12 +1761,12 @@ the variable `Info-file-list-for-emacs'."
 		;; Info-history.  Put the other nodes that were found on
 		;; the history.
 		(setq Info-history (nconc (cdr where) Info-history))
-		(message (substitute-command-keys
-			  "Found %d other entr%s.  Use \\[Info-last] to see %s.")
+		(message "Found %d other entr%s.  Use %s to see %s."
 			 (1- num-matches)
 			 (if (> num-matches 2) "ies" "y")
+			 (substitute-command-keys "\\[Info-last]")
 			 (if (> num-matches 2) "them" "it")))))
-      (error "Couldn't find documentation for %s." command))))
+      (error "Couldn't find documentation for %s" command))))
 
 ;;;###autoload
 (defun Info-goto-emacs-key-command-node (key)

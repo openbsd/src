@@ -6,8 +6,7 @@
    This file has appeared in prior works by the Free Software Foundation;
    thus it carries copyright dates from 1988 through 1993.
 
-   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993 Free Software
-   Foundation, Inc.
+   Copyright (C) 1988, 89, 90, 91, 92, 93, 96 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -166,7 +165,10 @@ int terminal_use_visible_bell_p = 0;
 int terminal_can_scroll = 0;
 
 /* The key sequences output by the arrow keys, if this terminal has any. */
-char *term_ku, *term_kd, *term_kr, *term_kl;
+char *term_ku = (char *)NULL;
+char *term_kd = (char *)NULL;
+char *term_kr = (char *)NULL;
+char *term_kl = (char *)NULL;
 
 /* Move the cursor to the terminal location of X and Y. */
 void
@@ -595,15 +597,19 @@ struct tchars original_tchars;
 struct ltchars original_ltchars;
 #endif
 
-#if defined (HAVE_TERMIO_H)
+#if defined (HAVE_TERMIOS_H)
+struct termios original_termios, ttybuff;
+#else
+#  if defined (HAVE_TERMIO_H)
 /* A buffer containing the terminal mode flags upon entry to info. */
 struct termio original_termio, ttybuff;
-#else /* !HAVE_TERMIO_H */
+#  else /* !HAVE_TERMIO_H */
 /* Buffers containing the terminal mode flags upon entry to info. */
 int original_tty_flags = 0;
 int original_lmode;
 struct sgttyb ttybuff;
-#endif /* !HAVE_TERMIO_H */
+#  endif /* !HAVE_TERMIO_H */
+#endif /* !HAVE_TERMIOS_H */
 
 /* Prepare to start using the terminal to read characters singly. */
 void
@@ -619,9 +625,17 @@ terminal_prep_terminal ()
 
   tty = fileno (stdin);
 
-#if defined (HAVE_TERMIO_H)
+#if defined (HAVE_TERMIOS_H)
+  tcgetattr (tty, &original_termios);
+  tcgetattr (tty, &ttybuff);
+#else
+#  if defined (HAVE_TERMIO_H)
   ioctl (tty, TCGETA, &original_termio);
   ioctl (tty, TCGETA, &ttybuff);
+#  endif
+#endif
+
+#if defined (HAVE_TERMIOS_H) || defined (HAVE_TERMIO_H)
   ttybuff.c_iflag &= (~ISTRIP & ~INLCR & ~IGNCR & ~ICRNL & ~IXON);
   ttybuff.c_oflag &= (~ONLCR & ~OCRNL);
   ttybuff.c_lflag &= (~ICANON & ~ECHO);
@@ -634,22 +648,28 @@ terminal_prep_terminal ()
 
   if (ttybuff.c_cc[VQUIT] == '\177')
     ttybuff.c_cc[VQUIT] = -1;
+#endif
 
+#if defined (HAVE_TERMIOS_H)
+  tcsetattr (tty, TCSANOW, &ttybuff);
+#else
+#  if defined (HAVE_TERMIO_H)
   ioctl (tty, TCSETA, &ttybuff);
+#  endif
+#endif
 
-#else /* !HAVE_TERMIO_H */
-
+#if !defined (HAVE_TERMIOS_H) && !defined (HAVE_TERMIO_H)
   ioctl (tty, TIOCGETP, &ttybuff);
 
   if (!original_tty_flags)
     original_tty_flags = ttybuff.sg_flags;
 
   /* Make this terminal pass 8 bits around while we are using it. */
-#if defined (PASS8)
+#  if defined (PASS8)
   ttybuff.sg_flags |= PASS8;
-#endif /* PASS8 */
+#  endif /* PASS8 */
 
-#if defined (TIOCLGET) && defined (LPASS8)
+#  if defined (TIOCLGET) && defined (LPASS8)
   {
     int flags;
     ioctl (tty, TIOCLGET, &flags);
@@ -657,9 +677,9 @@ terminal_prep_terminal ()
     flags |= LPASS8;
     ioctl (tty, TIOCLSET, &flags);
   }
-#endif /* TIOCLGET && LPASS8 */
+#  endif /* TIOCLGET && LPASS8 */
 
-#if defined (TIOCGETC)
+#  if defined (TIOCGETC)
   {
     struct tchars temp;
 
@@ -682,9 +702,9 @@ terminal_prep_terminal ()
 
     ioctl (tty, TIOCSETC, &temp);
   }
-#endif /* TIOCGETC */
+#  endif /* TIOCGETC */
 
-#if defined (TIOCGLTC)
+#  if defined (TIOCGLTC)
   {
     struct ltchars temp;
 
@@ -697,12 +717,12 @@ terminal_prep_terminal ()
     temp.t_flushc = -1;		/* C-o. */
     ioctl (tty, TIOCSLTC, &temp);
   }
-#endif /* TIOCGLTC */
+#  endif /* TIOCGLTC */
 
   ttybuff.sg_flags &= ~ECHO;
   ttybuff.sg_flags |= CBREAK;
   ioctl (tty, TIOCSETN, &ttybuff);
-#endif /* !HAVE_TERMIO_H */
+#endif /* !HAVE_TERMIOS_H && !HAVE_TERMIO_H */
 }
 
 /* Restore the tty settings back to what they were before we started using
@@ -720,26 +740,30 @@ terminal_unprep_terminal ()
 
   tty = fileno (stdin);
 
-#if defined (HAVE_TERMIO_H)
+#if defined (HAVE_TERMIOS_H)
+  tcsetattr (tty, TCSANOW, &original_termios);
+#else
+#  if defined (HAVE_TERMIO_H)
   ioctl (tty, TCSETA, &original_termio);
-#else /* !HAVE_TERMIO_H */
+#  else /* !HAVE_TERMIO_H */
   ioctl (tty, TIOCGETP, &ttybuff);
   ttybuff.sg_flags = original_tty_flags;
   ioctl (tty, TIOCSETN, &ttybuff);
 
-#if defined (TIOCGETC)
+#  if defined (TIOCGETC)
   ioctl (tty, TIOCSETC, &original_tchars);
-#endif /* TIOCGETC */
+#  endif /* TIOCGETC */
 
-#if defined (TIOCGLTC)
+#  if defined (TIOCGLTC)
   ioctl (tty, TIOCSLTC, &original_ltchars);
-#endif /* TIOCGLTC */
+#  endif /* TIOCGLTC */
 
-#if defined (TIOCLGET) && defined (LPASS8)
+#  if defined (TIOCLGET) && defined (LPASS8)
   ioctl (tty, TIOCLSET, &original_lmode);
-#endif /* TIOCLGET && LPASS8 */
+#  endif /* TIOCLGET && LPASS8 */
 
-#endif /* !HAVE_TERMIO_H */
+#  endif /* !HAVE_TERMIO_H */
+#endif /* !HAVE_TERMIOS_H */
   terminal_end_using_terminal ();
 }
 

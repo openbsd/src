@@ -3,7 +3,7 @@
 /* This file is part of GNU Info, a program for reading online documentation
    stored in Info format.
 
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 96 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@
 
 /* The version numbers of this version of Info. */
 int info_major_version = 2;
-int info_minor_version = 14;
-int info_patch_level = 1;
+int info_minor_version = 16;
+int info_patch_level = 0;
 
 /* Non-zero means search all indices for APROPOS_SEARCH_STRING. */
 static int apropos_p = 0;
@@ -198,7 +198,11 @@ main (argc, argv)
   /* If the user specified --version, then show the version and exit. */
   if (print_version_p)
     {
-      printf ("GNU Info, Version %s, from texinfo-3.7.\n", version_string ());
+      printf ("GNU Info (Texinfo 3.9) %s\n", version_string ());
+      puts ("Copyright (C) 1996 Free Software Foundation, Inc.\n\
+There is NO warranty.  You may redistribute this software\n\
+under the terms of the GNU General Public License.\n\
+For more information about these matters, see the files named COPYING.");
       exit (0);
     }
 
@@ -536,15 +540,15 @@ usage ()
 static void
 info_short_help ()
 {
-  printf ("%s", "\
+  puts ("\
 Here is a quick description of Info's options.  For a more complete\n\
 description of how to use Info, type `info info options'.\n\
 \n\
    --directory DIR		Add DIR to INFOPATH.\n\
+   --dribble FILENAME		Remember user keystrokes in FILENAME.\n\
    --file FILENAME		Specify Info file to visit.\n\
    --node NODENAME		Specify nodes in first visited Info file.\n\
    --output FILENAME		Output selected nodes to FILENAME.\n\
-   --dribble FILENAME		Remember user keystrokes in FILENAME.\n\
    --restore FILENAME		Read initial keystrokes from FILENAME.\n\
    --subnodes			Recursively output menu items.\n\
    --help			Get this help message.\n\
@@ -553,7 +557,9 @@ description of how to use Info, type `info info options'.\n\
 Remaining arguments to Info are treated as the names of menu\n\
 items in the initial node visited.  You can easily move to the\n\
 node of your choice by specifying the menu names which describe\n\
-the path to that node.  For example, `info emacs buffers'.\n");
+the path to that node.  For example, `info emacs buffers'.\n\
+\n\
+Email bug reports to bug-texinfo@prep.ai.mit.edu.");
 
   exit (0);
 }

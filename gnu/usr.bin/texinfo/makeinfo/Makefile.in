@@ -1,5 +1,7 @@
-# Makefile for GNU makeinfo.  -*- Indented-Text -*-
-# Copyright (C) 1993 Free Software Foundation, Inc.
+# Makefile for GNU makeinfo.
+# $Id: Makefile.in,v 1.1.1.3 1996/12/15 21:39:21 downsj Exp $
+# 
+# Copyright (C) 1993, 96 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,9 +31,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 LN	= ln
 RM	= rm -f
-TAR	= tar
 MKDIR	= mkdir
-COMPRESS= compress
 
 DEFS = @DEFS@
 LIBS = -L../libtxi -ltxi @LIBS@
@@ -47,17 +47,12 @@ exec_prefix = @exec_prefix@
 bindir = $(exec_prefix)/bin
 # Prefix for each installed program, normally empty or `g'.
 binprefix = 
-libdir = $(prefix)/lib
-# Prefix for each installed man page, normally empty or `g'.
-manprefix = 
-mandir = $(prefix)/man/man1
-manext = 1
 infodir = $(prefix)/info
 
 #### End of system configuration section. ####
 
-SRCS =  makeinfo.c
-OBJS =  makeinfo.o
+SRCS =  makeinfo.c multi.c
+OBJS =  makeinfo.o multi.o
 
 PROGS = makeinfo
 
@@ -71,24 +66,27 @@ makeinfo: $(OBJS) ../libtxi/libtxi.a
 	$(CC) $(LDFLAGS) -o makeinfo $(OBJS) $(LOADLIBES)
 
 ../libtxi/libtxi.a:
-	(cd ../libtxi; $(MAKE) $(MFLAGS) libtxi.a)
+	(cd ../libtxi && $(MAKE) $(MFLAGS) libtxi.a)
 
 makeinfo.o: makeinfo.c $(common)/getopt.h
 
-makeinfo.info: ./makeinfo makeinfo.texi macro.texi
+$(OBJS): makeinfo.h
+
+info makeinfo.info: ./makeinfo makeinfo.texi #macro.texi
 	./makeinfo --no-split -I$(srcdir) makeinfo.texi
 
 # makeinfo.texi: ./makeinfo makeinfo.mki
 # 	./makeinfo -E makeinfo.texi -I$(srcdir) makeinfo.mki
 
-makeinfo.dvi: ./makeinfo makeinfo.texi macro.texi
-	./makeinfo -E makeinfo.txi -I$(srcdir) makeinfo.texi
+dvi makeinfo.dvi: ./makeinfo makeinfo.texi #macro.texi
 	$(srcdir)/../util/texi2dvi makeinfo.txi
 
 install: all
-	for f in $(PROGS); do $(INSTALL_PROGRAM) $$f $(bindir)/$(binprefix)$$f; done
+	$(INSTALL_PROGRAM) makeinfo $(bindir)/$(binprefix)makeinfo
 	-d=$(srcdir); test -f ./makeinfo.info && d=.; $(INSTALL_DATA) $$d/makeinfo.info $(infodir)/makeinfo.info
-
+	$(POST_INSTALL)
+	../util/install-info --info-dir=$(infodir) $(infodir)/makeinfo.info
+	
 uninstall:
 	for f in $(PROGS); do rm -f $(bindir)/$(binprefix)$$f; done
 	rm -f $(infodir)/makeinfo.info
@@ -105,11 +103,10 @@ distclean: clean
 	rm -f TAGS Makefile config.status *.info */*.info
 
 realclean: distclean
+maintainer-clean: distclean
 
 Makefile: Makefile.in ../config.status
-	cd ..; sh config.status
+	cd .. && sh config.status
 
 # Prevent GNU make v3 from overflowing arg limit on SysV.
 .NOEXPORT:
-
-# eof

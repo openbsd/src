@@ -1,4 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
+dnl $Id: configure.in,v 1.1.1.3 1996/12/15 21:37:55 downsj Exp $
 AC_INIT(texinfo.texi)
 
 dnl Checks for programs.
@@ -22,7 +23,7 @@ AC_SUBST(TERMLIBS)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(unistd.h termio.h string.h varargs.h \
+AC_CHECK_HEADERS(unistd.h termios.h termio.h strings.h string.h varargs.h \
   sys/time.h sys/fcntl.h sys/ttold.h sys/ptem.h sys/file.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -33,8 +34,9 @@ AC_STRUCT_TM
 dnl Checks for library functions.
 AC_FUNC_ALLOCA
 AC_FUNC_SETVBUF_REVERSED
-AC_CHECK_FUNCS(setvbuf getcwd bzero bcopy  memset memcpy memmove strchr \
-	       strcasecmp strdup vfprintf vsprintf strerror sigprocmask \
-	       sigsetmask)
+AC_CHECK_FUNCS(setvbuf getcwd memset bzero strchr strcasecmp \
+  vfprintf vsprintf strerror sigprocmask sigsetmask)
+dnl strcasecmp, strerror, xmalloc, xrealloc, probably others should be added.
+AC_REPLACE_FUNCS(memcpy memmove strdup)
 
 AC_OUTPUT(Makefile libtxi/Makefile makeinfo/Makefile info/Makefile util/Makefile emacs/Makefile)

@@ -3,7 +3,7 @@
 /* This file is part of GNU Info, a program for reading online documentation
    stored in Info format.
 
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 96 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -122,5 +122,8 @@ extern VFunction *terminal_scroll_terminal_hook;
    terminal_use_visible_bell_p is non-zero. */
 extern void terminal_ring_bell ();
 extern VFunction *terminal_ring_bell_hook;
+
+/* The key sequences output by the arrow keys, if this terminal has any. */
+extern char *term_ku, *term_kd, *term_kr, *term_kl;
 
 #endif /* !_TERMINAL_H_ */

@@ -1,9 +1,10 @@
-/* info-utils.h -- Exported functions and variables from info-util.c. */
+/* info-utils.h -- Exported functions and variables from info-util.c.
+   $Id: info-utils.h,v 1.1.1.2 1996/12/15 21:38:50 downsj Exp $   
 
-/* This file is part of GNU Info, a program for reading online documentation
+   This file is part of GNU Info, a program for reading online documentation
    stored in Info format.
 
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 96 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,11 +31,6 @@
 #  define strchr index
 #  define strrchr rindex
 #endif /* !HAVE_STRCHR */
-
-#if !defined (HAVE_MEMCPY)
-#  undef memcpy
-#  define memcpy(dest, source, count) bcopy(source, dest, count)
-#endif /* !HAVE_MEMCPY */
 
 #include "nodes.h"
 #include "window.h"

@@ -1,8 +1,7 @@
 /* Prepare TeX index dribble output into an actual index.
+   $Id: texindex.c,v 1.1.1.2 1996/12/15 21:39:35 downsj Exp $
 
-   Version 1.45
-
-   Copyright (C) 1987, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91, 92, 96 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,14 +16,13 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307. */
-
 
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
 #include "getopt.h"
 
-#define TEXINDEX_VERSION_STRING "GNU Texindex 2.0 for Texinfo release 3.4"
+#define TEXINDEX_VERSION_STRING "GNU Texindex (Texinfo 3.9) 2.1"
 
 #if defined (emacs)
 #  include "../src/config.h"
@@ -91,10 +89,12 @@ char *mktemp ();
 #  define SEEK_END 2
 #endif /* !SEEK_SET */
 
-#if !defined (errno)
+#ifndef errno
 extern int errno;
 #endif
-char *strerror ();
+#ifndef strerror
+extern char *strerror ();
+#endif
 
 /* When sorting in core, this structure describes one line
    and the position and length of its first keyfield.  */
@@ -282,14 +282,15 @@ typedef struct
 
 TEXINDEX_OPTION texindex_options[] = {
   { "--keep", "-k", &keep_tempfiles, 1, (char *)NULL,
-      "Keep temporary files around after processing" },
+      "keep temporary files around after processing" },
   { "--no-keep", 0, &keep_tempfiles, 0, (char *)NULL,
-      "Do not keep temporary files around after processing (default)" },
+      "do not keep temporary files around after processing (default)" },
   { "--output", "-o", (int *)NULL, 0, "FILE",
-      "Send output to FILE" },
+      "send output to FILE" },
   { "--version", (char *)NULL, (int *)NULL, 0, (char *)NULL,
-      "Show version information" },
-  { "--help", "-h", (int *)NULL, 0, (char *)NULL, "Produce this listing" },
+      "display version information and exit" },
+  { "--help", "-h", (int *)NULL, 0, (char *)NULL,
+      "display this help and exit" },
   { (char *)NULL, (char *)NULL, (int *)NULL, 0, (char *)NULL }
 };
 
@@ -298,26 +299,28 @@ usage (result_value)
      int result_value;
 {
   register int i;
+  FILE *f = result_value ? stderr : stdout;
 
-  fprintf (stderr, "Usage: %s [OPTIONS] FILE...\n", program_name);
-  fprintf (stderr, "  Generate a permuted index for the TeX files given.\n");
-  fprintf (stderr, "  Usually FILE... is `foo.??' for the source file `foo.tex'.\n");
-  fprintf (stderr, "  The OPTIONS are:\n");
+  fprintf (f, "Usage: %s [OPTION]... FILE...\n", program_name);
+  fprintf (f, "Generate a sorted index for each TeX output FILE.\n");
+  /* Avoid trigraph nonsense.  */
+  fprintf (f, "Usually FILE... is `foo.??\' for a document `foo.texi'.\n");
+  fprintf (f, "\nOptions:\n");
 
   for (i = 0; texindex_options[i].long_name; i++)
     {
-      fprintf (stderr, "    %s %s",
-	       texindex_options[i].long_name,
-	       texindex_options[i].arg_name ?
-	       texindex_options[i].arg_name : "");
-
       if (texindex_options[i].short_name)
-	fprintf (stderr, " \n    or %s %s",
-		 texindex_options[i].short_name,
-		 texindex_options[i].arg_name ?
-		 texindex_options[i].arg_name : "");
-      fprintf (stderr, "\t%s\n", texindex_options[i].doc_string);
+	fprintf (f, "%s, ", texindex_options[i].short_name);
+
+      fprintf (f, "%s %s",
+	       texindex_options[i].long_name,
+	       texindex_options[i].arg_name
+               ? texindex_options[i].arg_name : "");
+
+      fprintf (f, "\t%s\n", texindex_options[i].doc_string);
     }
+  puts ("\nEmail bug reports to bug-texinfo@prep.ai.mit.edu.");
+
   exit (result_value);
 }
 
@@ -364,7 +367,11 @@ decode_command (argc, argv)
 	{
 	  if (strcmp (arg, "--version") == 0)
 	    {
-	      fprintf (stderr, "%s\n", TEXINDEX_VERSION_STRING);
+	      puts (TEXINDEX_VERSION_STRING);
+puts ("Copyright (C) 1996 Free Software Foundation, Inc.\n\
+There is NO warranty.  You may redistribute this software\n\
+under the terms of the GNU General Public License.\n\
+For more information about these matters, see the files named COPYING.");
 	      exit (0);
 	    }
 	  else if ((strcmp (arg, "--keep") == 0) ||
@@ -1102,7 +1109,8 @@ sort_in_core (infile, total, outfile)
 	    lp->key.number = find_value (lp->key.text, lp->keylen);
 	}
 
-      qsort (lineinfo, nextline - linearray, sizeof (struct lineinfo), compare_prepared);
+      qsort (lineinfo, nextline - linearray, sizeof (struct lineinfo),
+             compare_prepared);
 
       for (lp = lineinfo, p = linearray; p != nextline; lp++, p++)
 	*p = lp->text;

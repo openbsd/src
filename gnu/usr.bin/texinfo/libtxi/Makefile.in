@@ -1,5 +1,7 @@
 # Makefile for GNU texinfo/libtxi.  -*- Indented-Text -*-
-# Copyright (C) 1993 Free Software Foundation, Inc.
+# $Id: Makefile.in,v 1.1.1.2 1996/12/15 21:39:15 downsj Exp $
+
+# Copyright (C) 1993, 96 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,53 +17,30 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-#### Start of system configuration section. ####
-
+SHELL = /bin/sh
 srcdir = @srcdir@
 VPATH = $(srcdir)
 
 CC = @CC@
-INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_DATA = @INSTALL_DATA@
-
-LN	= ln
-RM	= rm -f
-TAR	= tar
-MKDIR	= mkdir
-COMPRESS= compress
-
+AR = ar
 RANLIB = @RANLIB@
 
 DEFS = @DEFS@
 LIBS = @LIBS@
 LOADLIBES = $(LIBS)
 
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+
 # This is normally inherited from parent make, but if someone wants to
 # build libtxi.a alone, this variable will still be properly defined.
 ALLOCA = @ALLOCA@
 
-SHELL = /bin/sh
+# Standard functions that may be missing.
+LIBOBJS = @LIBOBJS@
 
-CFLAGS = @CFLAGS@
-LDFLAGS = @LDFLAGS@
-
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-bindir = $(exec_prefix)/bin
-# Prefix for each installed program, normally empty or `g'.
-binprefix = 
-libdir = $(prefix)/lib
-# Prefix for each installed man page, normally empty or `g'.
-manprefix = 
-mandir = $(prefix)/man/man1
-manext = 1
-infodir = $(prefix)/info
-
-#### End of system configuration section. ####
-
-SRCS =  getopt.c getopt.h getopt1.c bzero.c
-OBJS =  getopt.o getopt1.o bzero.o $(ALLOCA)
+SRCS =  getopt.c getopt1.c bzero.c getopt.h 
+OBJS =  getopt.o getopt1.o bzero.o $(ALLOCA) $(LIBOBJS)
 
 PROGS = libtxi.a
 
@@ -72,8 +51,9 @@ sub-all: all
 	$(CC) -c $(CPPFLAGS) -I. -I$(srcdir) $(DEFS) $(CFLAGS) $<
 
 libtxi.a: $(OBJS)
-	ar qcv libtxi.a $(OBJS)
-	$(RANLIB) libtxi.a
+	rm -f $@
+	$(AR) cq $@ $(OBJS)
+	$(RANLIB) $@
 
 getopt.o: getopt.c getopt.h
 getopt1.o: getopt1.c getopt.h
@@ -91,15 +71,12 @@ clean:
 mostlyclean: clean
 
 distclean: clean
-	rm -f Makefile config.status
+	rm -f Makefile config.status TAGS ID
 
 realclean: distclean
-	rm -f TAGS
 
 Makefile: Makefile.in ../config.status
-	cd ..; sh config.status
+	cd .. && sh config.status
 
 # Prevent GNU make v3 from overflowing arg limit on SysV.
 .NOEXPORT:
-
-# eof

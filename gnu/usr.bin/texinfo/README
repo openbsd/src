@@ -3,11 +3,10 @@ Texinfo, Version 3
 
 This is the README file for version 3 of the Texinfo distribution.
 Files within this distribution have their own version and edition
-numbers.  When you refer to a file, please mention its own number.
+numbers.  When you refer to a file, please mention its own number, as
+well as the version number of the Texinfo distribution.
 
 PLEASE REPORT BUGS TO: bug-texinfo@prep.ai.mit.edu
-
-23 March 1993
 
 Texinfo is a documentation system that uses a single source file to
 produce both on-line information and printed output.  This means that
@@ -18,18 +17,21 @@ is revised, you need revise only one document.  You can read the
 on-line information, known as an "Info file", with an Info
 documentation-reading program.  By convention, Texinfo source file
 names end with a `.texi' or `.texinfo' extension.  Texinfo is
-described in the Texinfo Manual.
+described in the Texinfo manual (the file ./texinfo.texi).
 
-You can write and format Texinfo files into Info files within GNU
-Emacs, and read them using the Emacs Info reader.  If you do not have
-Emacs, you can format Texinfo files into Info files using `makeinfo'
-and read them using `info'.  Use TeX, which is not included in this
-package, to typeset Texinfo files for printing.
+You can write and format Texinfo files into Info files within GNU Emacs,
+and read them using the Emacs Info reader.  If you do not have Emacs,
+you can format Texinfo files into Info files using `makeinfo' and read
+them using `info'.  Use TeX, which is not included in this package (see
+`How to Obtain TeX' in the Texinfo manual for information), to typeset
+Texinfo files for printing.
 
-For instructions on installing info, makeinfo, texi2dvi, and texindex,
-please read the file `INSTALL'.  The Emacs Lisp files are not
-installed by default; to install them, use `make install' in the
-`emacs' subdirectory.
+For instructions on compiling and installing info, makeinfo, texi2dvi,
+and texindex, please read the file `INSTALL'.  The Emacs Lisp files are
+not installed by default; to install them, use `make install' in the
+`emacs' subdirectory.  The Info tree uses a file `dir' as its root node;
+a sample `dir' file is included in the distribution, but not installed
+anywhere. Use it or not as you like.
 
 This distribution includes (but is not limited to) the following files:
 
@@ -83,7 +85,8 @@ Printing related files:
 
     texi2dvi                    This is a shell script for
                                 producing an indexed DVI file using
-                                TeX and texindex.
+                                TeX and texindex. Must be used if the
+                                source document uses Texinfo @macros.
 
 
 GNU Emacs related files:
@@ -158,4 +161,3 @@ Other files:
     tex3patch                   This handles a bug for version
                                 3.0 of TeX that does not occur in
                                 more recent versions.
-

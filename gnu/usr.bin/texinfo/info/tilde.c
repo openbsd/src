@@ -1,13 +1,10 @@
-/* tilde.c -- Tilde expansion code (~/foo := $HOME/foo). */
+/* tilde.c -- Tilde expansion code (~/foo := $HOME/foo).
+   $Id: tilde.c,v 1.1.1.2 1996/12/15 21:39:09 downsj Exp $
 
-/* This file is part of GNU Info, a program for reading online documentation
+   This file is part of GNU Info, a program for reading online documentation
    stored in Info format.
 
-   This file has appeared in prior works by the Free Software Foundation;
-   thus it carries copyright dates from 1988 through 1993.
-
-   Copyright (C) 1988, 1989, 1990, 1991, 1992, 1993 Free Software
-   Foundation, Inc.
+   Copyright (C) 1988, 89, 90, 91, 92, 93, 96 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -225,7 +222,8 @@ tilde_expand_word (filename)
       if (!dirname[1] || dirname[1] == '/')
 	{
 	  /* Prepend $HOME to the rest of the string. */
-	  char *temp_home = (char *)getenv ("HOME");
+	  extern char *getenv ();
+	  char *temp_home = getenv ("HOME");
 
 	  /* If there is no HOME variable, look up the directory in
 	     the password database. */

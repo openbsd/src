@@ -1,6 +1,7 @@
-/* clib.c: Functions which we normally expect to find in the C library. */
+/* clib.c: Functions which we normally expect to find in the C library.
+   $Id: clib.c,v 1.1.1.2 1996/12/15 21:38:29 downsj Exp $
 
-/* This file is part of GNU Info, a program for reading online documentation
+   This file is part of GNU Info, a program for reading online documentation
    stored in Info format.
 
    Copyright (C) 1995 Free Software Foundation, Inc.
@@ -43,19 +44,6 @@ extern void *xmalloc (), *xrealloc ();
 #if !defined (errno)
 extern int errno;
 #endif
-
-#if !defined (HAVE_STRDUP)
-char *
-strdup (string)
-     char *string;
-{
-  char *result;
-
-  result = (char *)xmalloc (1 + strlen (string));
-  strcpy (result, string);
-  return (result);
-}
-#endif /* !HAVE_STRDUP */
 
 #if !defined (HAVE_STRERROR)
 extern char *sys_errlist[];

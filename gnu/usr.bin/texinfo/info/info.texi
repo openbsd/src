@@ -3,16 +3,18 @@
 @setfilename info.info
 @settitle Info 1.0
 @comment %**end of header 
+@comment $Id: info.texi,v 1.1.1.2 1996/12/15 21:38:53 downsj Exp $
 
-@iftex
-@finalout
-@end iftex
+@dircategory Texinfo documentation system
+@direntry
+* Info: (info).                 Documentation browsing system.
+@end direntry
 
 @ifinfo
 This file describes how to use Info, 
 the on-line, menu-driven GNU documentation system.
 
-Copyright (C) 1989, 1992 Free Software Foundation, Inc.
+Copyright (C) 1989, 92, 96 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -36,7 +38,6 @@ except that this permission notice may be stated in a translation approved
 by the Free Software Foundation.
 @end ifinfo
 
-@setchapternewpage odd
 @titlepage
 @sp 11
 @center @titlefont{Info}
@@ -53,8 +54,8 @@ Copyright @copyright{} 1989, 1992, 1993 Free Software Foundation, Inc.
 @sp 2
 
 Published by the Free Software Foundation @*
-675 Massachusetts Avenue, @*
-Cambridge, MA 02139 USA @*
+59 Temple Place - Suite 330 @*
+Boston, MA 02111-1307, USA.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -879,7 +880,7 @@ in your @file{~/.emacs} init file.  @xref{Examining, Examining and Setting
 Variables, Examining and Setting Variables, emacs, The GNU Emacs
 Manual}.
 
-@table @code
+@vtable @code
 @item Info-enable-edit
 Set to @code{nil}, disables the @samp{e} (@code{Info-edit}) command.  A
 non-@code{nil} value enables it.  @xref{Add, Edit}.
@@ -896,7 +897,7 @@ string (directory name) or @code{nil} (try default directory).
 @item Info-directory
 The standard directory for Info documentation files.  Only used when the
 function @code{Info-directory} is called.
-@end table
+@end vtable
 
 @node Create an Info File,  , Advanced Info, Top
 @comment  node-name,  next,  previous,  up

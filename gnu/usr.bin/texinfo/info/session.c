@@ -3,7 +3,7 @@
 /* This file is part of GNU Info, a program for reading online documentation
    stored in Info format.
 
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 96 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -278,6 +278,7 @@ initialize_info_session (node)
       info_error (TERM_TOO_DUMB, term_name);
       exit (1);
     }
+
   terminal_clear_screen ();
   initialize_info_keymaps ();
   window_initialize_windows (screenwidth, screenheight);
@@ -4118,7 +4119,7 @@ info_input_buffer_space_available ()
   if (pop_index > push_index)
     return (pop_index - push_index);
   else
-    return (sizeof (info_input_buffer - (push_index - pop_index)));
+    return (sizeof (info_input_buffer) - (push_index - pop_index));
 }
 
 /* Get a key from the buffer of characters to be read.
@@ -4168,6 +4169,7 @@ info_replace_key_to_typeahead (key)
 void
 info_gather_typeahead ()
 {
+  register int i = 0;
   int tty, space_avail;
   long chars_avail;
   unsigned char input[MAX_INFO_INPUT_BUFFERING];
@@ -4205,13 +4207,11 @@ info_gather_typeahead ()
 #  endif /* O_NDELAY */
 #endif /* !FIONREAD */
 
-  /* Store the input characters just read into our input buffer. */
-  {
-    register int i;
-
-    for (i = 0; i < chars_avail; i++)
+  while (i < chars_avail)
+    {
       info_push_typeahead (input[i]);
-  }
+      i++;
+    }
 }
 
 /* How to read a single character. */

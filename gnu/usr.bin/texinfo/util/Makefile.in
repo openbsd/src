@@ -1,5 +1,7 @@
-# Makefile for GNU Texindex.
-# Copyright (C) 1990, 1991, 1992 Free Software Foundation, Inc.
+# Makefile for GNU Texindex and other utilities.
+# $Id: Makefile.in,v 1.1.1.2 1996/12/15 21:39:29 downsj Exp $
+# 
+# Copyright (C) 1990, 91, 92, 96 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +31,6 @@ INSTALL_DATA = @INSTALL_DATA@
 
 LN	= ln
 RM	= rm -f
-TAR	= tar
 MKDIR	= mkdir
 
 DEFS = @DEFS@
@@ -46,7 +47,6 @@ exec_prefix = @exec_prefix@
 bindir = $(exec_prefix)/bin
 # Prefix for each installed program, normally empty or `g'.
 binprefix = 
-libdir = $(prefix)/lib
 # Prefix for each installed man page, normally empty or `g'.
 manprefix = 
 mandir = $(prefix)/man/man1
@@ -55,7 +55,7 @@ infodir = $(prefix)/info
 
 #### End of system configuration section. ####
 
-all: texindex
+all: texindex install-info
 sub-all: all
 
 .c.o:
@@ -65,9 +65,10 @@ sub-all: all
 install: all
 	$(INSTALL_PROGRAM) texindex $(bindir)/texindex
 	$(INSTALL_PROGRAM) $(srcdir)/texi2dvi $(bindir)/texi2dvi
+	$(INSTALL_PROGRAM) install-info $(bindir)/install-info
 
 uninstall:
-	rm -f $(bindir)/texindex $(bindir)/texi2dvi
+	rm -f $(bindir)/texindex $(bindir)/texi2dvi $(bindir)/install-info
 
 Makefile: Makefile.in ../config.status
 	cd ..; sh config.status
@@ -76,7 +77,7 @@ TAGS:
 	etags *.c *.h $(common)/getopt*.c $(common)/getopt.h
 
 clean:
-	rm -f *.o a.out core core.* texindex
+	rm -f *.o a.out core core.* texindex install-info
 
 mostlyclean: clean
 
@@ -90,6 +91,11 @@ texindex: texindex.o ../libtxi/libtxi.a
 	$(CC) $(LDFLAGS) -o texindex texindex.o $(LOADLIBES)
 
 texindex.o: texindex.c $(common)/getopt.h
+
+install-info: install-info.o
+	$(CC) $(LDFLAGS) -o install-info install-info.o $(LOADLIBES)
+
+install-info.o: install-info.c $(common)/getopt.h
 
 # Prevent GNU make v3 from overflowing arg limit on SysV.
 .NOEXPORT:

@@ -4,13 +4,19 @@
 @set VERSION 1.61
 @paragraphindent none
 @comment %**start of header
+@comment $Id: makeinfo.texi,v 1.1.1.2 1996/12/15 21:39:28 downsj Exp $
+
+@dircategory Texinfo documentation system
+@direntry
+* makeinfo: (makeinfo).         Convert Texinfo source to Info or plain ASCII.
+@end direntry
 
 @ifinfo
 This file is an extract from the @cite{Texinfo} manual.@*
-It documents @code{makeinfo}, a program that converts Texinfo
+It documents Makeinfo, a program that converts Texinfo
 files into Info files.  
 
-Copyright (C) 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
+Copyright (C) 1992, 93, 94, 95, 96 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -57,27 +63,27 @@ except that this permission notice may be stated in a translation approved
 by the Free Software Foundation.
 @end titlepage
 
-@node Top, ,(dir), (dir)
+@node Top
 @chapter What is @code{makeinfo}?
 
 @iftex
 This file documents the use of the @code{makeinfo} program, versions
-@value{VERSION} and later.  It is an extract from the @cite{TeXinfo} manual.
+@value{VERSION} and later.  It is an extract from the @cite{Texinfo} manual.
 @end iftex
 
-@code{makeinfo} is a program for converting @dfn{TeXinfo} files into @dfn{Info}
-files.  TeXinfo is a documentation system that uses a single source file to
+@code{makeinfo} is a program for converting @dfn{Texinfo} files into @dfn{Info}
+files.  Texinfo is a documentation system that uses a single source file to
 produce both on-line information and printed output.
 
 You can read the on-line information using Info; type @code{info} to
 learn about Info.
 @ifinfo
-@xref{Top, Texinfo, Overview of Texinfo, texinfo, Texinfo},
+@xref{Top, Texinfo, Overview of Texinfo, Texinfo, Texinfo},
 @end ifinfo
 @iftex
-See the @cite{TeXinfo} manual,
+See the @cite{Texinfo} manual,
 @end iftex
-to learn about the TeXinfo documentation system.
+to learn about the Texinfo documentation system.
 
 @menu
 * Formatting Control::          Controlling the width of lines, paragraph
@@ -89,10 +95,11 @@ to learn about the TeXinfo documentation system.
 * Pointer Validation::          How Makeinfo can help you to track node
                                 references through complex Texinfo files.
 
-* The Macro Facility::          Makeinfo allows the use of @dfn{macros}.
-
 * Index::                       Index of Concepts.
 @end menu
+
+@c Removed this for 3.8 until it's time to rewrite it.
+@c * The Macro Facility::          Makeinfo allows the use of @dfn{macros}.
 
 @node Formatting Control
 @section Controlling Paragraph Formats
@@ -281,9 +288,10 @@ This rule allows the last node in a section to point to the first node
 of the next chapter.@refill
 @end enumerate
 
-@lowersections
-@include macro.texi
-@raisesections
+@c We don't want to advertise redefining commands.
+@c lowersections
+@c include macro.texi
+@c raisesections
 
 @lowersections
 @node Index

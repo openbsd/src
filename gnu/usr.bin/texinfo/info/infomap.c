@@ -266,4 +266,9 @@ initialize_info_keymaps ()
   map['w'].function = info_toggle_wrap;
 }
 
-  
+/* Strings which represent the sequence of characters that the arrow keys
+   produce.  If these keys begin with ESC, and the second character of the
+   sequence does not conflict with an existing binding in the Meta keymap,
+   then bind the keys to do what C-p, C-n, C-f, and C-b do. */
+extern char *term_ku, *term_kd, *term_kr, *term_kl;
+
