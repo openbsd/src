@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.6 2001/06/30 02:12:57 mickey Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.7 2001/09/08 15:36:01 heko Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,10 +159,14 @@ mouse control device
 display control device
 .It Pa /usr/include/dev/wscons/wsconsio.h
 keyboard/mouse/display definitions
+.It Pa /etc/wsconsctl.conf
+a list of parameters that get set at system startup time from
+.Xr rc 8
 .El
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,
+.Xr wsconsctl.conf 5 ,
 .Xr kbd 8 ,
 .Xr wsconscfg 8 ,
 .Xr wsfontload 8
