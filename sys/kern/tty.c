@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.33 1997/11/13 09:10:57 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.34 1998/02/03 19:06:26 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1307,7 +1307,7 @@ ttypend(tp)
 	register struct tty *tp;
 {
 	struct clist tq;
-	register c;
+	register int c;
 
 	CLR(tp->t_lflag, PENDIN);
 	SET(tp->t_state, TS_TYPEN);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.12 1998/01/21 18:43:34 provos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.13 1998/02/03 19:06:29 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -69,7 +69,7 @@ extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
 extern void des_set_key(caddr_t, caddr_t);
 
-extern encap_sendnotify(int, struct tdb *);
+extern int encap_sendnotify(int, struct tdb *);
 
 static void des1_encrypt(void *, u_int8_t *);
 static void des3_encrypt(void *, u_int8_t *);

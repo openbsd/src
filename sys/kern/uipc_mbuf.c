@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.6 1997/08/20 05:42:26 millert Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.7 1998/02/03 19:06:27 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ m_adj(mp, req_len)
 {
 	register int len = req_len;
 	register struct mbuf *m;
-	register count;
+	register int count;
 
 	if ((m = mp) == NULL)
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.11 1997/11/06 05:58:19 csapuntz Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.12 1998/02/03 19:06:25 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -291,7 +291,7 @@ tsleep(ident, priority, wmesg, timo)
 {
 	register struct proc *p = curproc;
 	register struct slpque *qp;
-	register s;
+	register int s;
 	int sig, catch = priority & PCATCH;
 	extern int cold;
 	void endtsleep __P((void *));
@@ -424,7 +424,7 @@ sleep(ident, priority)
 {
 	register struct proc *p = curproc;
 	register struct slpque *qp;
-	register s;
+	register int s;
 	extern int cold;
 
 #ifdef DIAGNOSTIC

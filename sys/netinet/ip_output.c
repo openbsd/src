@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.24 1997/10/02 02:31:07 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.25 1998/02/03 19:06:30 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1041,7 +1041,7 @@ ip_pcbopts(pcbopt, m)
 	struct mbuf **pcbopt;
 	register struct mbuf *m;
 {
-	register cnt, optlen;
+	register int cnt, optlen;
 	register u_char *cp;
 	u_char opt;
 
