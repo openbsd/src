@@ -73,6 +73,17 @@ pcibmatch(parent, match, aux)
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA)
 		return (1);
 
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_INTEL:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_SIO:
+		case PCI_PRODUCT_INTEL_82371MX:
+		case PCI_PRODUCT_INTEL_82371AB:
+			/* The above bridges mis-identify themselves */
+			return (1);
+		}
+	}
+
 	return (0);
 }
 
