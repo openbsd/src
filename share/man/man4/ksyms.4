@@ -1,4 +1,4 @@
-.\" $OpenBSD: ksyms.4,v 1.10 2003/06/17 21:56:24 millert Exp $
+.\" $OpenBSD: ksyms.4,v 1.11 2004/03/21 17:05:33 miod Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -21,14 +21,20 @@
 .Nm ksyms
 .Nd kernel symbol table device
 .Sh SYNOPSIS
-.Sy pseudo-device Nm ksyms 1
+.Cd "pseudo-device ksyms" Op Ar count
 .Sh DESCRIPTION
 The
 .Pa /dev/ksyms
 device masquerades as an
+.Ox
+native executable
+.Po
 .Em a.out
-executable with the symbols from the running kernel as its
-symbol segment.
+or
+.Em ELF ,
+depending on the platform
+.Pc
+with the symbols from the running kernel as its symbol segment.
 Use of
 .Pa /dev/ksyms
 requires that the boot loader preserve the kernel symbols and place
@@ -68,7 +74,10 @@ An open was attempted with write permissions.
 .It Bq Er ENXIO
 No kernel symbols were saved by the boot loader (usually because
 they were removed with
-.Xr strip 1 ) .
+.Xr strip 1 ) ,
+or the kernel has been compiled without a
+.Dq pseudo-device ksyms
+line.
 .El
 .Sh SEE ALSO
 .Xr kvm 3 ,
