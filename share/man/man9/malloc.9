@@ -41,6 +41,7 @@
 .Nm malloc
 .Nd kernel memory allocator
 .Sh SYNOPSIS
+.Fd #include <sys/malloc.h>
 .Ft void *
 .Fn malloc "unsigned long size" "int type" "int flags"
 .Fn MALLOC "space" "cast" "unsigned long size" "int type" "int flags"
@@ -254,17 +255,81 @@ IP packet queue entry.
 Andrew File System.
 .It Dv M_ADOSFSBITMAP
 Adosfs bitmap.
+.It Dv M_EXT2FSNODE
+EXT2FS vnode private part.
+.It Dv M_PFIL
+Packer filter.
+.It Dv M_PFKEY
+Pfkey data.
+.It Dv M_TDB
+Transforms database.
+.It Dv M_XDATA
+IPsec data.
+.It Dv M_VFS
+VFS file systems.
+.It Dv M_PAGEDEP
+File page dependencies.
+.It Dv M_INODEDEP
+Inode dependencies.
+.It Dv M_NEWBLK
+New block allocation.
+.It Dv M_BMSAFEMAP
+Block or frag allocated from cyl group map.
+.It Dv M_ALLOCDIRECT
+Block or frag dependency for an inode.
+.It Dv M_INDIRDEP
+Indirect block dependencies.
+.It Dv M_ALLOCINDIR
+Block dependency for an indirect block.
+.It Dv M_FREEFRAG
+Previously used frag for an inode.
+.It Dv M_FREEBLKS
+Blocks freed from an inode.
+.It Dv M_FREEFILE
+Inode deallocated.
+.It Dv M_DIRADD
+New directory entry.
+.It Dv M_MKDIR
+New directory.
+.It Dv M_DIRREM
+Directory entry deleted.
+.It Dv M_VMPBUCKET
+VM page buckets.
+.It Dv M_VMSWAP
+VM swap structures.
+.It Dv M_DISCQ
+IPv6 discq.
+.It Dv M_FRAGQ
+IPv6 fragq.
+.It Dv M_SECA
+Sec Assoc.
+.It Dv M_I6IFP
+IPv6 if info.
+.It Dv M_RAIDFRAME
+Raidframe data.
+.It Dv M_UVMAMAP
+UVM amap and realted.
+.It Dv M_UVMAOBJ
+UVM aobj and realted.
+.It Dv M_POOL
+Pool memory.
+.It Dv M_USB
+USB general.
+.It Dv M_USBDEV
+USB device driver.
+.It Dv M_USBHC
+USB host controller.
 .It Dv M_TEMP
 Misc temporary data buffers.
 .El
 .Pp
 Statistics based on the
 .Fa type
-argument is maintained only if the kernel option
+argument are maintained only if the kernel option
 .Dv KMEMSTATS
 is used when compiling the kernel
-.Po the default in current
-.Nx
+.Po the default in current\ \&
+.Ox
 kernels
 .Pc
 and can be examined by using
@@ -278,7 +343,7 @@ any type of object.
 .Sh DIAGNOSTICS
 A kernel compiled with the
 .Dv DIAGNOSTIC
-configuration option attempts to detect detect memory corruption caused by
+configuration option attempts to detect memory corruption caused by
 such things as writing outside the allocated area and imbalanced calls to the
 .Fn malloc
 and
@@ -313,7 +378,7 @@ panic:
 .Dq free: multiple frees
 .It
 panic:
-.Dq init: minbucket too small/struct freelist too big
+.Dq kmeminit: minbucket too small/struct freelist too big
 .It
 .Dq multiply freed item Aq addr
 .It
