@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.12 1999/01/11 05:11:35 millert Exp $	*/
+/*	$OpenBSD: zs.c,v 1.13 1999/11/15 06:12:49 d Exp $	*/
 /*	$NetBSD: zs.c,v 1.12 1996/12/18 05:04:22 scottr Exp $	*/
 
 /*
@@ -58,6 +58,8 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/viareg.h>
+
+#include <ddb/db_var.h>
 
 /*
  * XXX: Hard code this to make console init easier...
@@ -804,6 +806,7 @@ zs_abort(zst)
 	/* If we time out, turn off the abort ability! */
 	}
 #ifdef DDB
-	Debugger();
+	if (db_console)
+		Debugger();
 #endif
 }
