@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.7 2005/02/09 20:40:23 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.8 2005/02/09 20:44:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -168,13 +168,13 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 	/* invalid ages */
 	if ((ntohs(lsa->hdr.age) < 1 && !nbr->self) ||
 	    ntohs(lsa->hdr.age) > MAX_AGE) {
-		log_debug("lsa_check: bad age");
+		log_warnx("lsa_check: bad age");
 		return (0);
 	}
 
 	/* invalid sequence number */
 	if (ntohl(lsa->hdr.seq_num) == RESV_SEQ_NUM) {
-		log_debug("ls_check: bad seq num");
+		log_warnx("ls_check: bad seq num");
 		return (0);
 	}
 
