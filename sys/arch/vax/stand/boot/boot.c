@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.2 2000/05/01 00:12:01 bjc Exp $ */
+/*	$OpenBSD: boot.c,v 1.3 2000/06/01 00:03:17 bjc Exp $ */
 /*	$NetBSD: boot.c,v 1.4 1999/10/23 14:42:22 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -217,9 +217,9 @@ load:	exec(fn, 0, 0);
 
 #define	extzv(one, two, three,four)	\
 ({			\
-	asm __volatile (" extzv %0,%3,(%1),(%2)+"	\
+	asm __volatile (" extzv %0,%3,%1,(%2)+"	\
 			:			\
-			: "g"(one),"g"(two),"g"(three),"g"(four));	\
+			: "g"(one),"g"(two),"r"(three),"g"(four));	\
 })
 
 
