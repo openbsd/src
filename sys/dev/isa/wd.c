@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.10 1996/04/21 22:24:40 deraadt Exp $	*/
+/*	$OpenBSD: wd.c,v 1.11 1996/04/29 14:17:00 hvozda Exp $	*/
 /*	$NetBSD: wd.c,v 1.148 1996/04/11 22:30:31 cgd Exp $	*/
 
 /*
@@ -57,7 +57,8 @@
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/wdreg.h>
 
-#define	WAITTIME	(4 * hz)	/* time to wait for a completion */
+#define	WAITTIME	(8 * hz)	/* time to wait for a completion
+					   (long enough for disk spin-ups) */
 #define	RECOVERYTIME	(hz / 2)	/* time to recover from an error */
 
 #define WDCDELAY	100
@@ -67,7 +68,7 @@
 #define WDCNDELAY_DEBUG	10
 #endif
 
-#define	WDIORETRIES	5		/* number of retries before giving up */
+#define	WDIORETRIES	3		/* number of retries before giving up */
 
 #define	WDUNIT(dev)			DISKUNIT(dev)
 #define	WDPART(dev)			DISKPART(dev)
@@ -587,7 +588,7 @@ loop:
 		wd->sc_blkno = blkno / (lp->d_secsize / DEV_BSIZE);
 	} else {
 #ifdef WDDEBUG
-		printf(" %d)%x", wd->sc_skip, inb(wd->sc_iobase+wd_altsts));
+		printf(" %d)%x", wd->sc_skip, inb(wdc->sc_iobase+wd_altsts));
 #endif
 	}
 
@@ -696,7 +697,7 @@ loop:
 
 #ifdef WDDEBUG
 		printf("sector %d cylin %d head %d addr %x sts %x\n", sector,
-		    cylin, head, bp->b_data, inb(wd->sc_iobase+wd_altsts));
+		    cylin, head, bp->b_data, inb(wdc->sc_iobase+wd_altsts));
 #endif
 	} else if (wd->sc_nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
@@ -743,11 +744,9 @@ wdcintr(arg)
 	struct wd_softc *wd;
 	struct buf *bp;
 
-	if ((wdc->sc_flags & WDCF_ACTIVE) == 0) {
-		/* Clear the pending interrupt and abort. */
-		(void) inb(wdc->sc_iobase+wd_status);
+	if ((wdc->sc_flags & WDCF_ACTIVE) == 0)
+		/* leave it alone if we didn't ask for this interrupt */
 		return 0;
-	}
 
 	wdc->sc_flags &= ~WDCF_ACTIVE;
 	untimeout(wdctimeout, wdc);
@@ -756,7 +755,7 @@ wdcintr(arg)
 	bp = wd->sc_q.b_actf;
 
 #ifdef WDDEBUG
-	printf("I%d ", ctrlr);
+	printf("I%s ", wdc->sc_dev.dv_xname);
 #endif
 
 	if (wait_for_unbusy(wdc) < 0) {
@@ -781,7 +780,6 @@ wdcintr(arg)
 
 	/* Have we an error? */
 	if (wdc->sc_status & WDCS_ERR) {
-	lose:
 #ifdef WDDEBUG
 		wderror(wd, NULL, "wdcintr");
 #endif
@@ -795,8 +793,9 @@ wdcintr(arg)
 			goto bad;
 #endif
 	
-		if (++wdc->sc_errors < WDIORETRIES)
-			goto restart;
+		wdcunwedge(wdc);
+		if (wdc->sc_errors < WDIORETRIES)
+			return 1;
 		wderror(wd, bp, "hard error");
 
 	bad:

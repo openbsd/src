@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.4 1996/04/21 22:31:38 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.5 1996/04/29 14:17:53 hvozda Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -122,7 +122,8 @@ struct cfattach {
 	size_t	  ca_devsize;		/* size of dev data (for malloc) */
 	cfmatch_t ca_match;		/* returns a match level */
 	void	(*ca_attach) __P((struct device *, struct device *, void *));
-	/* XXX should have detach */
+	int	(*ca_detach) __P((struct device*));
+	int	(*ca_reprobe) __P((struct device*, struct cfdata*));
 };
 
 struct cfdriver {
@@ -153,6 +154,11 @@ struct pdevinit {
 };
 
 #ifdef _KERNEL
+struct cftable {
+	struct cfdata *tab;
+	TAILQ_ENTRY(cftable) list;
+};
+TAILQ_HEAD(cftable_head, cftable);
 
 extern struct devicelist alldevs;	/* list of all devices */
 extern struct evcntlist allevents;	/* list of all event counters */
@@ -169,6 +175,12 @@ void evcnt_attach __P((struct device *, const char *, struct evcnt *));
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
+extern int attach_loadable __P((char *, int, struct cftable *));
+extern int detach_loadable __P((struct cftable *));
+typedef void (*config_detach_callback_t) __P((struct device *, void *));
+extern int config_detach __P((struct cfdata *, config_detach_callback_t,
+			      void *));
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.11 1996/04/27 22:19:59 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.12 1996/04/29 14:16:31 hvozda Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.93 1996/04/11 22:28:55 cgd Exp $	*/
 
 /*
@@ -19,6 +19,7 @@
  */
 
 #include "bpfilter.h"
+#include "ed.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +155,11 @@ void ed_pio_readmem __P((struct ed_softc *, u_short, caddr_t, u_short));
 void ed_pio_writemem __P((struct ed_softc *, caddr_t, u_short, u_short));
 u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
 
-struct cfattach ed_ca = {
+#if NED_ISA > 0
+struct cfattach ed_isa_ca = {
 	sizeof(struct ed_softc), edprobe, edattach
 };
+#endif
 
 struct cfdriver ed_cd = {
 	NULL, "ed", DV_IFNET
@@ -166,17 +169,19 @@ struct cfdriver ed_cd = {
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-#define	NIC_PUT(bc, ioh, nic, reg, val)	\
-	bus_io_write_1((bc), (ioh), ((nic) + (reg)), (val))
-#define	NIC_GET(bc, ioh, nic, reg)	\
-	bus_io_read_1((bc), (ioh), ((nic) + (reg)))
+#if NED_PCMCIA > 0 
+#include <dev/pcmcia/pcmciavar.h>
 
-/*#include "pcmciabus.h"*/
-#if NPCMCIABUS > 0 
+int ed_pcmcia_match __P((struct device *, void *, void *));
+void ed_pcmcia_attach __P((struct device *, struct device *, void *));
+int ed_pcmcia_detach __P((struct device *));
 
-#include <dev/pcmcia/pcmciabus.h>
-static int ed_probe_pcmcia_ne __P((struct device *, void *,
-				   void *, struct pcmcia_link *));
+struct cfattach ed_pcmcia_ca = {
+	sizeof(struct ed_softc), ed_pcmcia_match, edattach, ed_pcmcia_detach
+};
+
+static int ed_pcmcia_isa_attach __P((struct device *, void *,
+				     void *, struct pcmcia_link *));
 
 static int edmod __P((struct pcmcia_link *, struct device *,
 		      struct pcmcia_conf *, struct cfdata *cf));
@@ -185,7 +190,7 @@ static int ed_remove __P((struct pcmcia_link *, struct device *));
 
 /* additional setup needed for pcmcia devices */
 static int
-ed_probe_pcmcia_ne(parent, match, aux, pc_link)
+ed_pcmcia_isa_attach(parent, match, aux, pc_link)
 	struct device *parent;
 	void *match;
 	void *aux;
@@ -199,17 +204,18 @@ ed_probe_pcmcia_ne(parent, match, aux, pc_link)
 	extern int ifqmaxlen;
 	u_char enaddr[ETHER_ADDR_LEN];
 
-	if ((int)dev->param >= 0)
+	if ((int)dev->param != -1)
 		err = pcmcia_read_cis(pc_link, enaddr, 
 				      (int) dev->param, ETHER_ADDR_LEN);
 	else
 		err = 0;
 	if (err)
-		printf("Cannot read cis info %d\n", err);
+		printf("%s: attaching ed: cannot read cis info %d\n",
+		       parent->dv_xname, err);
 
-	if (ed_probe_Novell(sc, cf, ia)) {
+	if (ed_find_Novell(sc, cf, ia)) {
 		delay(100);
-		if ((int)dev->param >= 0) {
+		if ((int)dev->param != -1) {
 		    err = pcmcia_read_cis(pc_link, sc->sc_arpcom.ac_enaddr,
 				      (int) dev->param, ETHER_ADDR_LEN);
 		    if (err) {
@@ -229,8 +235,8 @@ ed_probe_pcmcia_ne(parent, match, aux, pc_link)
 		sc->type_str = dev->model;
 		sc->sc_arpcom.ac_if.if_snd.ifq_maxlen=ifqmaxlen;
 		return 1;
-	}
-	return 0;
+	} else
+	    return 0;
 }
 
 /* modify config entry */
@@ -242,16 +248,20 @@ edmod(pc_link, self, pc_cf, cf)
 	struct cfdata *cf;
 {
 	int err;
-	struct pcmciadevs *dev=pc_link->device;
-	struct ed_softc *sc = (void *)self;
-	int svec_card = strcmp(dev->manufacturer, "SVEC") == 0;
+/*	struct pcmciadevs *dev=pc_link->device;*/
+/*	struct ed_softc *sc = (void *)self;*/
+	int svec_card =  pc_cf->memwin  == 5;
 	int de650_0 = (pc_cf->memwin != 0) && !svec_card;
-	err = pc_link->adapter->bus_link->bus_config(pc_link, self, pc_cf, cf);
+	err = PCMCIA_BUS_CONFIG(pc_link->adapter, pc_link, self, pc_cf, cf);
 	if (err)
 		return err;
 
 	if (svec_card) {
 		pc_cf->memwin = 0;
+#if 0
+		pc_cf->cfgid = 32;  /* Try this if it still doesn't work */
+		pc_cf->cfgid |= 32;  /* or Try this if it still doesn't work */
+#endif
 	}
 	if (de650_0) {
 		pc_cf->io[0].flags =
@@ -281,13 +291,15 @@ ed_remove(pc_link,self)
 	shutdownhook_disestablish(sc->sc_sh);
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_UP);
 	sc->spec_flags |= ED_NOTPRESENT;
-	return pc_link->adapter->bus_link->bus_unconfig(pc_link); 
+	isa_intr_disestablish(sc->sc_bc, sc->sc_ih);
+	return PCMCIA_BUS_UNCONFIG(pc_link->adapter, pc_link);
 }
 
 static struct pcmcia_dlink {
 	struct pcmcia_device pcd;
-} pcmcia_dlink= {
-	"PCMCIA Novell compatible", edmod, ed_probe_pcmcia_ne, NULL, ed_remove
+} pcmcia_dlink = {
+	{"PCMCIA Novell compatible", edmod, ed_pcmcia_isa_attach,
+	 NULL, ed_remove}
 };
 
 struct pcmciadevs pcmcia_ed_devs[]={
@@ -303,16 +315,61 @@ struct pcmciadevs pcmcia_ed_devs[]={
 	"Socket EA PCMCIA LAN Adapter Revision D", "Ethernet ID 000000000000",
 	NULL, (void *) -1,
 	(void *)&pcmcia_dlink },
-	/* probably not right for ethernet address--card does not seem to
-	   have it anywhere. */
+      /* something screwed up in ports requested */
       { "ed", 0, "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL,
-	(void *)0xb4, (void *)&pcmcia_dlink },
-      { "ed", 0, "PMX   ", "PE-200", "ETHERNET", "R01", (void *) 0x110,
-        (void *)&pcmcia_dlink }, /* 0x110 is a guess */
+	(void *)-1, (void *)&pcmcia_dlink },
+#if 0
+      /* not quite right for ethernet adress */
+      { "ed", 0, "PMX   ", "PE-200", "ETHERNET", "R01", (void *)-1,
+        (void *)&pcmcia_dlink },
+#endif
       { NULL }
 };
+
+#define ned_pcmcia_devs sizeof(pcmcia_ed_devs)/sizeof(pcmcia_ed_devs[0])
+
+int
+ed_pcmcia_match(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	return pcmcia_slave_match(parent, match, aux, pcmcia_ed_devs,
+				  ned_pcmcia_devs);
+}
+
+void
+ed_pcmcia_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pcmcia_attach_args *paa = aux;
+	
+	printf("ed_pcmcia_attach %p %p %p\n", parent, self, aux);
+	delay(2000000);
+	if (!pcmcia_configure(parent, self, paa->paa_link)) {
+		struct ed_softc *sc = (void *)self;
+		sc->spec_flags |= ED_NOTPRESENT;
+		printf(": not attached\n");
+	}
+}
+
+/*
+ * No detach; network devices are too well linked into the rest of the
+ * kernel.
+ */
+int
+ed_pcmcia_detach(self)
+	struct device *self;
+{
+	return EBUSY;
+}
+
 #endif
 
+#define	NIC_PUT(bc, ioh, nic, reg, val)	\
+	bus_io_write_1((bc), (ioh), ((nic) + (reg)), (val))
+#define	NIC_GET(bc, ioh, nic, reg)	\
+	bus_io_read_1((bc), (ioh), ((nic) + (reg)))
 
 /*
  * Determine if the device is present.
@@ -1499,7 +1556,6 @@ edinit(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	int i;
-	u_char command;
 	u_long mcaf[2];
 
 	/*
@@ -2412,7 +2468,6 @@ ed_pio_write_mbufs(sc, m, dst)
 	bus_io_handle_t ioh = sc->sc_ioh;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	u_short len;
-	struct mbuf *mp;
 	int maxwait = 100; /* about 120us */
 
 	len = m->m_pkthdr.len;

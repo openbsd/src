@@ -217,7 +217,10 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	GLDT_SEL	3	/* Default LDT descriptor */
 #define	GUCODE_SEL	4	/* User code descriptor */
 #define	GUDATA_SEL	5	/* User data descriptor */
-#define	NGDT 		6
+#define	GAPM32CODE_SEL	6
+#define	GAPM16CODE_SEL	7
+#define	GAPMDATA_SEL	8
+#define	NGDT		9
 
 /*
  * Entries in the Local Descriptor Table (LDT)

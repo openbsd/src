@@ -1,3 +1,4 @@
+/*	$Id: pcmcia_ioctl.h,v 1.2 1996/04/29 14:17:25 hvozda Exp $	*/
 /*
  * Copyright (c) 1993, 1994 Stefan Grefen.  All rights reserved.
  *
@@ -52,8 +53,7 @@ struct pcmcia_regs {
 #define PCMCIASIO_POWER_AUTO	    0x7
 #define PCMCIASIO_POWER_OFF	    0x0
 #define PCMCIAIO_CONFIGURE	   _IOW('s', 140, struct pcmcia_conf)
-#define PCMCIAIO_UNMAP		   _IOW('s', 141, int)
-#define PCMCIAIO_UNCONFIGURE	   _IOW('s', 142, int)
+#define PCMCIAIO_UNMAP		   _IO('s', 141)
+#define PCMCIAIO_UNCONFIGURE	   _IO('s', 142)
 #define PCMCIAIO_READ_COR	   _IOR('s', 143, struct pcmcia_info)
 #define PCMCIAIO_READ_REGS	   _IOWR('s', 160, struct pcmcia_regs)
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep.c,v 1.11 1996/04/21 22:23:52 deraadt Exp $       */
+/*	$OpenBSD: if_ep.c,v 1.12 1996/04/29 14:16:41 hvozda Exp $       */
 /*	$NetBSD: if_ep.c,v 1.90 1996/04/11 22:29:15 cgd Exp $	*/
 
 /*
@@ -31,8 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*#include "pcmciabus.h"*/
+#include "pcmcia.h"
 #include "bpfilter.h"
+#include "ep.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -42,6 +43,7 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -114,26 +116,34 @@ struct ep_softc {
 #define EP_BUS_PCI	  	0x3
 
 #define EP_IS_BUS_32(a)	((a) & 0x2)
+
+	u_char	pcmcia_flags;
+#define EP_REATTACH		0x01
+#define EP_ABSENT		0x02
 };
 
 static int epprobe __P((struct device *, void *, void *));
 static void epattach __P((struct device *, struct device *, void *));
 
 /* XXX the following two structs should be different. */
+#if NEP_ISA > 0
 struct cfattach ep_isa_ca = {
 	sizeof(struct ep_softc), epprobe, epattach
 };
+#endif
 
+#if NEP_PCI > 0
 struct cfattach ep_pci_ca = {
 	sizeof(struct ep_softc), epprobe, epattach
 };
+#endif
+
 
 struct cfdriver ep_cd = {
 	NULL, "ep", DV_IFNET
 };
 
 int epintr __P((void *));
-static void epxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
 void epinit __P((struct ep_softc *));
 int epioctl __P((struct ifnet *, u_long, caddr_t));
@@ -142,7 +152,7 @@ void epwatchdog __P((int));
 void epreset __P((struct ep_softc *));
 void epread __P((struct ep_softc *));
 struct mbuf *epget __P((struct ep_softc *, int));
-void epmbuffill __P((struct ep_softc *));
+void epmbuffill __P((void *));
 void epmbufempty __P((struct ep_softc *));
 void epstop __P((struct ep_softc *));
 void epsetfilter __P((struct ep_softc *));
@@ -177,31 +187,39 @@ epaddcard(iobase, irq, bustype)
 	epcards[nepcards].bustype = bustype;
 	nepcards++;
 }
+	
+#if NEP_PCMCIA > 0
+#include <dev/pcmcia/pcmciavar.h>
 
-#if NPCMCIABUS > 0
-#include <dev/pcmcia/pcmciabus.h>
-static int ep_probe_pcmcia __P((struct device *, void *,
+int ep_pcmcia_match __P((struct device *, void *, void *));
+void ep_pcmcia_attach __P((struct device *, struct device *, void *));
+int ep_pcmcia_detach __P((struct device *));
+
+static int ep_pcmcia_isa_attach __P((struct device *, void *,
 				void *, struct pcmcia_link *));
 static int epmod __P((struct pcmcia_link *, struct device *,
 		      struct pcmcia_conf *, struct cfdata * cf));
 static int ep_remove __P((struct pcmcia_link *, struct device *));
 
+struct cfattach ep_pcmcia_ca = {
+	sizeof(struct ep_softc), ep_pcmcia_match, epattach, ep_pcmcia_detach
+};
+
 /* additional setup needed for pcmcia devices */
 static int
-ep_probe_pcmcia(parent, match, aux, pc_link)
+ep_pcmcia_isa_attach(parent, match, aux, pc_link)
 	struct device	*parent;
 	void		*match;
 	void		*aux;
 	struct pcmcia_link *pc_link;
 {
 	struct ep_softc *sc = (void *) match;
-	struct cfdata  *cf = sc->sc_dev.dv_cfdata;
+/*	struct cfdata  *cf = sc->sc_dev.dv_cfdata;*/
 	struct isa_attach_args *ia = aux;
-	struct pcmciadevs *dev = pc_link->device;
+/*	struct pcmciadevs *dev = pc_link->device;*/
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int             i;
 	extern int      ifqmaxlen;
-	short		addr[3];
 
 	outw(ia->ia_iobase + EP_COMMAND, WINDOW_SELECT | 0);
 	outw(ia->ia_iobase + EP_W0_CONFIG_CTRL, ENABLE_DRQ_IRQ);
@@ -211,16 +229,15 @@ ep_probe_pcmcia(parent, match, aux, pc_link)
 	 * ok til here. Now try to figure out which link we have.
 	 * try coax first...
 	 */
-	sc->bustype = EP_BUS_PCMCIA;
 #ifdef EP_COAX_DEFAULT
 	outw(ia->ia_iobase + EP_W0_ADDRESS_CFG, 0xC000);
 #else
-	/* COAX as default is reportet to be a problem */
+	/* COAX as default is reported to be a problem */
 	outw(ia->ia_iobase + EP_W0_ADDRESS_CFG, 0x0000);
 #endif
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
 
-	epaddcard(ia->ia_iobase, ia->ia_irq, 0);
+	epaddcard(ia->ia_iobase, ia->ia_irq, EP_BUS_PCMCIA);
 
 	for (i = 0; i < nepcards; i++) {
 		if (epcards[i].available == 0)
@@ -243,9 +260,10 @@ good:
 	ia->ia_iosize = 0x10;
 	ia->ia_msize = 0;
 
+ 	sc->bustype = epcards[i].bustype;
+	sc->pcmcia_flags = (pc_link->flags & PCMCIA_REATTACH) ? EP_REATTACH:0;
 	return 1;
 }
-
 
 /* modify config entry */
 static int
@@ -256,11 +274,11 @@ epmod(pc_link, self, pc_cf, cf)
 	struct cfdata  *cf;
 {
 	int             err;
-	struct pcmciadevs *dev = pc_link->device;
-	struct ep_softc *sc = (void *) self;
+/*	struct pcmciadevs *dev = pc_link->device;*/
+/*	struct ep_softc *sc = (void *) self;*/
 
-	if ((err = pc_link->adapter->bus_link->bus_config(pc_link, self,
-							  pc_cf, cf)) != 0) {
+	if ((err = PCMCIA_BUS_CONFIG(pc_link->adapter, pc_link, self,
+				     pc_cf, cf)) != 0) {
 		printf("bus_config failed %d\n", err);
 		return err;
 	}
@@ -285,13 +303,14 @@ ep_remove(pc_link, self)
 	if_down(ifp);
 	epstop(sc);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_UP);
-	return pc_link->adapter->bus_link->bus_unconfig(pc_link);
+	sc->pcmcia_flags = EP_ABSENT;
+	return PCMCIA_BUS_UNCONFIG(pc_link->adapter, pc_link);
 }
 
 static struct pcmcia_3com {
 	struct pcmcia_device pcd;
 } pcmcia_3com = {
-	"PCMCIA 3COM 3C589", epmod, ep_probe_pcmcia, NULL, ep_remove
+	{"PCMCIA 3COM 3C589", epmod, ep_pcmcia_isa_attach, NULL, ep_remove}
 };
 
 struct pcmciadevs pcmcia_ep_devs[] = {
@@ -312,7 +331,46 @@ struct pcmciadevs pcmcia_ep_devs[] = {
 #endif
 	{ NULL }
 };
+#define nep_pcmcia_devs sizeof(pcmcia_ep_devs)/sizeof(pcmcia_ep_devs[0])
+
+int
+ep_pcmcia_match(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	return pcmcia_slave_match(parent, match, aux, pcmcia_ep_devs,
+				  nep_pcmcia_devs);
+}
+
+void
+ep_pcmcia_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pcmcia_attach_args *paa = aux;
+	
+	printf("ep_pcmcia_attach %p %p %p\n", parent, self, aux);
+	delay(2000000);
+	if (!pcmcia_configure(parent, self, paa->paa_link)) {
+		struct ep_softc *sc = (void *)self;
+		sc->pcmcia_flags |= EP_ABSENT;
+		printf(": not attached\n");
+	}
+}
+
+/*
+ * No detach; network devices are too well linked into the rest of the
+ * kernel.
+ */
+int
+ep_pcmcia_detach(self)
+	struct device *self;
+{
+	return EBUSY;
+}
+
 #endif
+
 
 /*
  * 3c579 cards on the EISA bus are probed by their slot number. 3c509
@@ -513,14 +571,15 @@ epconfig(sc, conn)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
-	if_attach(ifp);
-	ether_ifattach(ifp);
+	if ((sc->pcmcia_flags & EP_REATTACH) == 0) {
+		if_attach(ifp);
+		ether_ifattach(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
+		bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
+			  sizeof(struct ether_header));
 #endif
-
+	}
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 }
 
@@ -1219,6 +1278,13 @@ epioctl(ifp, cmd, data)
 	int s, error = 0;
 
 	s = splnet();
+	if (sc->bustype == EP_BUS_PCMCIA &&
+	    (sc->pcmcia_flags & EP_ABSENT)) {
+	    if_down(ifp);
+	    printf("%s: device offline\n", sc->sc_dev.dv_xname);
+	    splx(s);
+	    return ENXIO;
+	}
 
 	switch (cmd) {
 
@@ -1412,9 +1478,10 @@ epbusyeeprom(sc)
 }
 
 void
-epmbuffill(sc)
-	struct ep_softc *sc;
+epmbuffill(arg)
+	void *arg;
 {
+	struct ep_softc *sc = arg;
 	int s, i;
 
 	s = splnet();

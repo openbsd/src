@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.8 1996/04/24 12:05:17 mickey Exp $
+#	$OpenBSD: Makefile.i386,v 1.9 1996/04/29 14:12:10 hvozda Exp $
 #	$NetBSD: Makefile.i386,v 1.66 1996/02/29 20:56:16 cgd Exp $
 
 # Makefile for OpenBSD
@@ -145,10 +145,14 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
+# depend on APM
+.include "${I386}/apm_init/Makefile.inc"
+locore.o: ${APMINC}
+
 SRCS=	${I386}/i386/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
-.depend: ${SRCS} assym.h param.c
+.depend: ${SRCS} assym.h param.c ${APMINC}
 	mkdep ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}

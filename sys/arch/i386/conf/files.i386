@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.13 1996/04/28 17:02:01 mickey Exp $
+#	$OpenBSD: files.i386,v 1.14 1996/04/29 14:12:16 hvozda Exp $
 #	$NetBSD: files.i386,v 1.72 1996/04/09 22:59:03 cgd Exp $
 #
 # new style config file for i386 architecture
@@ -52,7 +52,8 @@ major	{rd = 17}
 # System bus types
 #
 
-device	mainbus: isabus, eisabus, pcibus
+define mainbus { }
+device	mainbus: isabus, eisabus, pcibus, mainbus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -69,6 +70,12 @@ file	arch/i386/pci/pci_machdep.c	pci
 file	arch/i386/pci/pci_compat.c	pci	# XXX compatibility
 
 #
+# Pcmcia, before ISA (to define device stuff)
+#
+
+include "../../../dev/pcmcia/files.pcmcia"
+
+#
 # ISA and mixed ISA+EISA or ISA+PCI or ISA+PCMCIA drivers
 #
 
@@ -76,10 +83,6 @@ major	{mcd = 7}
 #major	{scd = 15}
 major	{wd = 0}
 major	{wt = 3}
-
-#define pcic here until config issues are resolved
-#device pcic at isa: pcmciabus
-#file	dev/isa/pcmcia_pcic.c		pcic
 
 include "../../../dev/isa/files.isa"
 file	arch/i386/isa/isa_machdep.c	isabus
@@ -138,9 +141,9 @@ file	arch/i386/isa/spkr.c		spkr needs-flag
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
 # XXX conflicts with other ports; can't be in files.isa
-device	ed: ether, ifnet
-attach	ed at isa
-file	dev/isa/if_ed.c			ed
+#device	ed: ether, ifnet
+#attach	ed at isa
+#file	dev/isa/if_ed.c			ed
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
@@ -183,3 +186,7 @@ file	arch/i386/i386/linux_machdep.c		compat_linux
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include "../../../compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
+
+device apm
+attach apm at mainbus
+file	arch/i386/i386/apm.c		apm needs-count

@@ -1,14 +1,21 @@
-#	$OpenBSD: files.pcmcia,v 1.3 1996/04/21 22:25:58 deraadt Exp $
+#	$OpenBSD: files.pcmcia,v 1.4 1996/04/29 14:17:10 hvozda Exp $
+#	$Id: files.pcmcia,v 1.4 1996/04/29 14:17:10 hvozda Exp $
 #
-# Config file and device description for machine-independent PCMCIA code.
+# Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
 
 # XXX Does this comment hold?
 # ports should define their own "device pcmcia" line (like the one below,
 # but with the correct bus attachment).
 
-device pcmcia: isa
-attach pcmcia at pcicbus
+#
+# needs all the parameters available on isa, so devices can attach here.
+#
 
-file	dev/pcmcia/pcmcia.c		pcmcia needs-count
+device pcmcia  {[port = -1], [size = 0],
+		[iomem = -1], [iosiz = 0],
+		[irq = -1], [drq = -1], [slot = -1]}
+attach pcmcia at pcmciabus
+
+file	dev/pcmcia/pcmcia.c		pcmcia	needs-flag
 file	dev/pcmcia/pcmcia_conf.c	pcmcia

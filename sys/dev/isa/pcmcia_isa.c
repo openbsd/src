@@ -1,4 +1,6 @@
+/*	$Id: pcmcia_isa.c,v 1.2 1996/04/29 14:16:47 hvozda Exp $	*/
 /*
+ * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: pcmcia_isa.c,v 1.1 1996/01/16 20:13:01 hvozda Exp $
  */
 
 /* TODO add modload support and loadable lists of devices */
@@ -36,9 +37,10 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <vm/vm.h>
 
-#include <dev/pcmcia/pcmcia.h>
-#include <dev/pcmcia/pcmciabus.h>
+#include <dev/pcmcia/pcmciavar.h>
+#include <dev/pcmcia/pcmciareg.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -49,14 +51,20 @@
 #define PCMCIA_ISA_DEBUG
 #endif
 
-static int pcmcia_isa_init __P((struct device *, struct cfdata *,
+#ifdef PCMCIA_ISA_DEBUG
+#define STATIC
+#else
+#define STATIC static
+#endif
+
+STATIC int pcmcia_isa_init __P((struct device *, struct cfdata *,
 				void *, struct pcmcia_adapter *, int));
-static int pcmcia_isa_search __P((struct device *, void *, cfprint_t));
-static int pcmcia_isa_probe __P((struct device *, void *,
+STATIC int pcmcia_isa_search __P((struct device *, void *, cfprint_t));
+STATIC int pcmcia_isa_probe __P((struct device *, void *,
 				 void *, struct pcmcia_link *));
-static int pcmcia_isa_config __P((struct pcmcia_link *, struct device *,
+STATIC int pcmcia_isa_config __P((struct pcmcia_link *, struct device *,
 				  struct pcmcia_conf *, struct cfdata *));
-static int pcmcia_isa_unconfig __P((struct pcmcia_link *));
+STATIC int pcmcia_isa_unconfig __P((struct pcmcia_link *));
 
 struct pcmciabus_link pcmcia_isa_link = {
 	pcmcia_isa_config,
@@ -67,7 +75,7 @@ struct pcmciabus_link pcmcia_isa_link = {
 };
 
 /* copy out the addr and length from machine specific attach struct */
-static int
+STATIC int
 pcmcia_isa_init(parent, cf, aux, pca, flag)
 	struct device  *parent;
 	struct cfdata  *cf;
@@ -75,22 +83,34 @@ pcmcia_isa_init(parent, cf, aux, pca, flag)
 	struct pcmcia_adapter *pca;
 	int             flag;
 {
-	struct isa_attach_args *ia = aux;
+	struct pcmciabus_attach_args *pa = aux;
+	bus_mem_handle_t memh;
+	vm_offset_t physaddr;
 
 #ifdef PCMCIA_ISA_DEBUG
 	if (parent != NULL)
 		printf("PARENT %s\n", parent->dv_xname);
 #endif
-	if (flag) {		/* attach */
-		pca->scratch_mem = (caddr_t) ISA_HOLE_VADDR(ia->ia_maddr);
-		pca->scratch_memsiz = ia->ia_msize;
+	if (flag == 0) {		/* match */
+		if (bus_mem_map(pa->pba_bc, pa->pba_maddr, pa->pba_msize, 0,
+				&memh))
+			return 0;
+		pca->scratch_memsiz = pa->pba_msize;
+		pca->scratch_memh = memh;
+		pca->pa_bc = pa->pba_bc;
+#ifdef PCMCIA_ISA_DEBUG
+		printf("pbaaddr %p maddr %x msize %x\n",
+		       pa, pa->pba_maddr, pa->pba_msize);
+		printf("PCA %p mem %p size %d chip %x memh %x\n",
+		       pca, pca->scratch_mem, pca->scratch_memsiz,
+		       pca->scratch_chipset, pca->scratch_memh);
+#endif
 	}
-	ia->ia_iosize = 0;
 	return 1;
 }
 
 /* probe and attach a device, the has to be configured already */
-static int
+STATIC int
 pcmcia_isa_probe(parent, match, aux, pc_link)
 	struct device  *parent;
 	void	       *match;
@@ -103,23 +123,39 @@ pcmcia_isa_probe(parent, match, aux, pc_link)
 	struct pcmciadevs *pcs = pc_link->device;
 	int (*probe) () = (pcs != NULL) ? pcs->dev->pcmcia_probe : NULL;
 
+	if (cf->cf_loc[6] != -1 && cf->cf_loc[6] != pc_link->slot) {
+#ifdef PCMCIA_ISA_DEBUG
+	    printf("- isa probe slot mismatch: cf %d <> link %d\n",
+		   cf->cf_loc[6], pc_link->slot);
+#endif
+	    return 0;
+	}
+#if 0
+	if (pcs == NULL || pcs->dev->pcmcia_probe == NULL) {
+#ifdef PCMCIA_ISA_DEBUG
+		printf("- isa probe null proberoutine %p\n", pcs);
+#endif
+		return 0;
+	}
+#endif
 	ia.ia_iobase = cf->cf_loc[0];
-	ia.ia_iosize = 0x666;
+	ia.ia_iosize = cf->cf_loc[1] == -1 ? 0x666 : cf->cf_loc[1];
 	ia.ia_maddr = cf->cf_loc[2];
 	ia.ia_msize = cf->cf_loc[3];
-	ia.ia_irq = cf->cf_loc[4];
+	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4] ;
 	ia.ia_drq = cf->cf_loc[5];
+	ia.ia_bc = pc_link->bus->sc_bc;
 	if (probe == NULL)
-		probe = cf->cf_driver->cd_match;
+		probe = cf->cf_attach->ca_match;
 
 #ifdef PCMCIA_ISA_DEBUG
-	printf("pcmcia probe %x %x %x\n", ia.ia_iobase, ia.ia_irq, probe);
+	printf("pcmcia probe %x %x %p\n", ia.ia_iobase, ia.ia_irq, probe);
 	printf("parentname = %s\n", parent->dv_xname);
 	printf("devname = %s\n", dev->dv_xname);
 	printf("driver name = %s\n", cf->cf_driver->cd_name);
 #endif
 	if ((*probe) (parent, dev, &ia, pc_link) > 0) {
-		extern          isaprint();
+		extern isaprint();
 		config_attach(parent, dev, &ia, isaprint);
 #ifdef PCMCIA_ISA_DEBUG
 		printf("biomask %x netmask %x ttymask %x\n",
@@ -128,7 +164,7 @@ pcmcia_isa_probe(parent, match, aux, pc_link)
 #endif
 		return 1;
 	}
-	else
+	else if (parent->dv_cfdata->cf_driver->cd_indirect == 0)
 		free(dev, M_DEVBUF);
 	return 0;
 }
@@ -140,7 +176,7 @@ pcmcia_isa_probe(parent, match, aux, pc_link)
  * contiguous windows and shift according to the offset for the first not
  * fixed window
  */
-static int
+STATIC int
 pcmcia_isa_config(pc_link, self, pc_cf, cf)
 	struct pcmcia_link *pc_link;
 	struct device  *self;
@@ -148,6 +184,7 @@ pcmcia_isa_config(pc_link, self, pc_cf, cf)
 	struct cfdata  *cf;
 {
 	struct isa_attach_args ia;
+	struct pcmciadevs *pcs = pc_link->device;
 
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
@@ -156,10 +193,18 @@ pcmcia_isa_config(pc_link, self, pc_cf, cf)
 	ia.ia_irq = cf->cf_loc[4];
 	ia.ia_drq = cf->cf_loc[5];
 #ifdef PCMCIA_ISA_DEBUG
-	printf("pcmcia_isa_config iobase=%x maddr=%x msize=%x irq=%x drq=%x\n",
+	printf("pcmcia_isa_config iobase=%x maddr=%x msize=%x irq=%d drq=%d slot=%d\n",
 	       ia.ia_iobase, ISA_HOLE_VADDR(ia.ia_maddr), ia.ia_msize,
-	       ia.ia_irq, ia.ia_drq);
+	       ia.ia_irq, ia.ia_drq, cf->cf_loc[6]);
 #endif
+
+	if (pcs && strcmp(pcs->devname, self->dv_cfdata->cf_driver->cd_name)) {
+#ifdef PCMCIA_ISA_DEBUG
+		printf("- wrong driver %s vs %s\n", pcs->devname,
+		       self->dv_cfdata->cf_driver->cd_name);
+#endif
+		return ENODEV;
+	}
 
 	if (ia.ia_irq != IRQUNK) {
 		int             irq = 1 << ia.ia_irq;
@@ -177,7 +222,10 @@ pcmcia_isa_config(pc_link, self, pc_cf, cf)
 			if (irq == (1 << 9) || irq == (1 << 2))
 				irq = (1 << 9) | (1 << 2);
 			if ((irq & pc_cf->irq_mask) == 0) {
-				printf("irq %d mask %x\n", ia.ia_irq,
+				printf("%s: slot %d requested irq %d, avail_mask %x\n",
+				       self->dv_parent->dv_xname,
+				       pc_link->slot,
+				       ia.ia_irq,
 				       pc_cf->irq_mask);
 				return ENODEV;
 			}
@@ -247,24 +295,27 @@ pcmcia_isa_config(pc_link, self, pc_cf, cf)
 }
 
 
-static int
+STATIC int
 pcmcia_isa_unconfig(pc_link)
 	struct pcmcia_link *pc_link;
 {
+#if 0
 	if (pc_link && pc_link->intr > 0) {
 		/* THIS IS A GUESS ... TODO check all possible drivers */
 		struct softc {
 			struct device   sc_dev;
 			void *sc_ih;
+			bus_chipset_tag_t sc_bc;
 		} *sc = pc_link->devp;
 		if (sc)
-			isa_intr_disestablish(sc->sc_ih);
+			isa_intr_disestablish(sc->sc_bc, sc->sc_ih);
 	}
+#endif
 	return 0;
 }
 
 /* Searches for for configured devices on the pcmciabus */
-static int
+STATIC int
 pcmcia_isa_search(parent, aux, print)
 	struct device  *parent;
 	void           *aux;

@@ -51,6 +51,11 @@
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
 
+#include "apm.h"
+#if NAPM > 0
+#include <machine/apmvar.h>
+#endif
+
 #ifdef COMPAT_SVR4
 #include <compat/svr4/svr4_ucontext.h>
 #endif
@@ -149,6 +154,21 @@ main()
 	off("IH_ARG", struct intrhand, ih_arg);
 	off("IH_COUNT", struct intrhand, ih_count);
 	off("IH_NEXT", struct intrhand, ih_next);
+#endif
+#if NAPM > 0
+	off("APM_CODE32", struct apm_connect_info, apm_code32_seg_base);
+	off("APM_CODE16", struct apm_connect_info, apm_code16_seg_base);
+	off("APM_DATA", struct apm_connect_info, apm_data_seg_base);
+	off("APM_CODE32_LEN", struct apm_connect_info, apm_code32_seg_len);
+	off("APM_DATA_LEN", struct apm_connect_info, apm_data_seg_len);
+	off("APM_ENTRY", struct apm_connect_info, apm_entrypt);
+	off("APM_DETAIL", struct apm_connect_info, apm_detail);
+	off("APM_CALL", struct apm_connect_info, apm_entrypt);
+	def("APM_SIZE", sizeof(struct apm_connect_info));
+	off("APMREG_AX", struct apmregs, ax);
+	off("APMREG_BX", struct apmregs, bx);
+	off("APMREG_CX", struct apmregs, cx);
+	off("APMREG_DX", struct apmregs, dx);
 #endif
 
 	exit(0);

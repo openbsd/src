@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.10 1996/04/27 18:39:07 niklas Exp $
+#	$OpenBSD: files.isa,v 1.11 1996/04/29 14:16:22 hvozda Exp $
 #	$NetBSD: files.isa,v 1.17 1996/03/29 20:53:30 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -18,27 +18,6 @@ file	dev/isa/isa.c			isa needs-flag
 # ISA DMA controller
 define	isadma
 file	dev/isa/isadma.c		isadma needs-flag
-
-# PCMCIA
-# XXX What is this?
-#config problems
-#device pcic at isa
-#file dev/isa/pcmcia_pcic.c  pcic pcmciabus
-
-define	pcicbus {[iomem = -1], [iosiz = 0]}
-
-device	pcic: pcicbus
-attach	pcic at isa
-file	dev/isa/pcmcia_pcic.c		pcic
-
-file	dev/isa/pcmcia_isa.c		pcmcia
-
-#
-# PCMCIA-only drivers
-#
-
-include "../../../dev/pcmcia/files.pcmcia"
-
 
 #
 # 8250/16[45]50-based multi-port serial boards
@@ -69,7 +48,8 @@ file	dev/isa/rtfps.c			rtfps
 device	com: tty
 attach	com at isa with com_isa
 attach	com at commulti with com_commulti
-file	dev/isa/com.c			com & (com_isa | com_commulti) needs-flag
+attach	com at pcmcia with com_pcmcia
+file	dev/isa/com.c			com & (com_isa | com_commulti | com_pcmcia) needs-flag
 
 # Cyclades Cyclom multiport serial cards
 # XXX currently broken
@@ -167,9 +147,10 @@ file	dev/isa/elink.c			elink
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
 # XXX conflicts with amiga if_ed.c
-#device	ed: ether, ifnet
-#attach	ed at isa
-#file	dev/isa/if_ed.c			ed needs-flag
+device	ed: ether, ifnet
+attach	ed at isa with ed_isa
+attach	ed at pcmcia with ed_pcmcia
+file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
 
 # 3Com 3C505
 device	eg: ether, ifnet
@@ -185,7 +166,8 @@ file	dev/isa/if_el.c			el
 device	ep: ether, ifnet, elink
 attach	ep at isa with ep_isa
 attach	ep at pci with ep_pci
-file	dev/isa/if_ep.c			ep needs-flag
+attach	ep at pcmcia with ep_pcmcia
+file	dev/isa/if_ep.c			ep & (ep_isa | ep_pci | ep_pcmcia) needs-flag
 
 # Fujitsu MB8696[05]-based boards
 # (Allied Telesis AT1700)
@@ -265,3 +247,14 @@ file	dev/isa/wss.c			wss needs-flag
 device	gus: audio, isadma, ics2101, ad1848, mulaw
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
+
+#
+# PCMCIA PCIC (i82365SL and compatibles):
+#
+device pcicmaster { [irq = -1], [iomem = -1], [iosiz = 0] }
+attach pcicmaster at isa
+device pcic: pcmciabus
+attach pcic at pcicmaster
+file dev/isa/pcmcia_pcic.c  pcic | pcicmaster
+
+file dev/isa/pcmcia_isa.c  pcmcia

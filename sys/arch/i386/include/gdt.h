@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.h,v 1.2 1996/04/18 19:21:37 niklas Exp $	*/
+/*	$OpenBSD: gdt.h,v 1.3 1996/04/29 14:13:48 hvozda Exp $	*/
 /*	$NetBSD: gdt.h,v 1.3 1996/02/27 22:32:11 jtc Exp $	*/
 
 /*-
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define	MAXGDTSIZ	8192		/* max # entries in an i386 GDT */
+extern union descriptor *dynamic_gdt;
 
 void tss_alloc __P((struct pcb *));
 void tss_free __P((struct pcb *));

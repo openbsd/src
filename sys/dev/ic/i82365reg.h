@@ -8,7 +8,7 @@
  * Support is included for Intel 82365SL PCIC controllers and clones
  * thereof.
  *
- * $Id: i82365reg.h,v 1.1 1996/01/15 00:08:50 hvozda Exp $
+ * $Id: i82365reg.h,v 1.2 1996/04/29 14:15:58 hvozda Exp $
  ***********************************************************************/
 
 /*
@@ -30,6 +30,7 @@
  */
 
 #define PCIC_BASE 0x03e0	/* base adddress of pcic register set */
+#define PCIC_NPORTS 2		/* pcic takes 2 ports */
 
 /* First, all the registers */
 #define PCIC_ID_REV	0x00	/* Identification and Revision */
@@ -107,6 +108,8 @@
 #define PCIC_INTEL1	0x83	/* Intel 82365SL Rev. 1; Both Memory and I/O */
 #define PCIC_IBM1	0x88	/* IBM PCIC clone; Both Memory and I/O */
 #define PCIC_IBM2	0x89	/* IBM PCIC clone; Both Memory and I/O */
+#define PCIC_146FC6	0x84	/* VL82C146FC6; Both Memory and I/O */
+#define PCIC_146FC7	0x85	/* VL82C146FC7; Both Memory and I/O */
 
 /* For Interface Status register (PCIC_STATUS) */
 #define PCIC_VPPV	0x80	/* Vpp_valid */
@@ -128,7 +131,7 @@
 /* For the Interrupt and General Control register (PCIC_INT_GEN) */
 #define PCIC_INT_MASK  	0x0f
 #define PCIC_INT_FLAGMASK  	0x0f
-#define PCIC_INTR_ENA	0x10	
+#define PCIC_INTR_ENA	0x10	/* clr bit means CSC interrupt goes via IRQ */
 #define PCIC_CARDTYPE	0x20	/* Card Type 0 = memory, 1 = I/O */
 #define		PCIC_IOCARD	0x20
 #define		PCIC_MEMCARD	0x00
@@ -136,11 +139,19 @@
 #define PCIC_RINGIND	0x80	
 
 /* For the Card Status Change register (PCIC_STAT_CHG) */
+#define PCIC_GPICH	0x10	/* General Purpose Input (GPI) Change */
 #define PCIC_CDTCH	0x08	/* Card Detect Change */
 #define PCIC_RDYCH	0x04	/* Ready Change */
 #define PCIC_BATWRN	0x02	/* Battery Warning */
 #define PCIC_BATDED	0x01	/* Battery Dead */
 #define PCIC_STCH	0x01	/* Status Change */
+
+/* For the Card Status Change interrupt config register (PCIC_STAT_INT) */
+#define PCIC_CDT_ENA	0x08	/* Card Detect Enable */
+#define PCIC_RDY_ENA	0x04	/* Ready Enable */
+#define PCIC_BATWRN_ENA	0x02	/* Battery Warning */
+#define PCIC_BATDED_ENA	0x01	/* Battery Dead */
+#define PCIC_ST_ENA	0x01	/* Status Change */
 
 /* For the Address Window Enable Register (PCIC_ADDRWINE) */
 #define PCIC_SM0_EN	0x01	/* Memory Window 0 Enable */
@@ -194,7 +205,7 @@
 /* For Card Detect and General Control register (PCIC_CDGC) */
 #define PCIC_16_DL_INH	0x01	/* 16-bit memory delay inhibit */
 #define PCIC_CNFG_RST_EN 0x02	/* configuration reset enable */
-#define PCIC_GPI_EN	0x04	/* GPI Enable */
+#define PCIC_GPI_EN	0x04	/* General Purpose Input (GPI) Enable */
 #define PCIC_GPI_TRANS	0x08	/* GPI Transition Control */
 #define PCIC_CDRES_EN	0x10	/* card detect resume enable */
 #define PCIC_SW_CD_INT	0x20	/* s/w card detect interrupt */
@@ -206,12 +217,16 @@ struct pcic_register {
 };
 struct pcic_regs {
     u_short chip_vers;
-#define PCMICA_CHIP_82365_0   1
-#define PCMICA_CHIP_82365_1   2
-#define PCMICA_CHIP_IBM_1     3
-#define PCMICA_CHIP_IBM_2     4
+#define PCMICA_CHIP_82365_0	1
+#define PCMICA_CHIP_82365_1	2
+#define PCMICA_CHIP_IBM_1	3
+#define PCMICA_CHIP_IBM_2	4
+#define PCMICA_CHIP_146FC6	5
+#define PCMICA_CHIP_146FC7	6
     u_short cnt;
     struct pcic_register reg[128];
 };
 /* DON'T ADD ANYTHING AFTER THIS #endif */
 #endif /* __82365_H__ */
+#ifndef __82365_H__
+#define __82365_H__

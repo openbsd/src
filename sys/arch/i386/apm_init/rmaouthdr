@@ -1,0 +1,6 @@
+#!/bin/csh -f
+#
+#	from: Mach, Revision 2.2  92/04/04  11:36:01  rpd
+#	$Id: rmaouthdr,v 1.1 1996/04/29 14:15:35 hvozda Exp $ 
+#
+dd if=$1 of=$2 ibs=32 skip=1 obs=1024b

@@ -1,4 +1,6 @@
+/*	$Id: pcmciavar.h,v 1.1 1996/04/29 14:17:39 hvozda Exp $	*/
 /*
+ * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1993, 1994 Stefan Grefen.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,16 +28,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pcmciabus.h,v 1.1 1996/01/15 00:05:13 hvozda Exp $
  */
  /* derived from scsicconf.[ch] writenn by Julian Elischer et al */
 
-#ifndef	_PCMCIA_PCMCIABUS_H_
-#define _PCMCIA_PCMCIABUS_H_ 1
+#ifndef	_PCMCIA_PCMCIAVAR_H_
+#define _PCMCIA_PCMCIAVAR_H_ 1
 
 #include <sys/queue.h>
 #include <sys/select.h>
 #include <machine/cpu.h>
+#include <machine/bus.h>
 
 /*
  * The following documentation tries to describe the relationship between the
@@ -80,11 +82,11 @@ struct pcmcia_funcs {
 /* 4 map io range */
 	int (*pcmcia_map_io) __P((struct pcmcia_link *, u_int, u_int, int));
 /* 8 map memory window */
-	int (*pcmcia_map_mem) __P((struct pcmcia_link *, caddr_t,
-				   u_int, u_int, int));
+	int (*pcmcia_map_mem) __P((struct pcmcia_link *, bus_chipset_tag_t,
+				   caddr_t, u_int, u_int, int));
 /*12 map interrupt */
 	int (*pcmcia_map_intr) __P((struct pcmcia_link *, int, int));
-/*26 power on/off etc */
+/*16 power on/off etc */
 	int (*pcmcia_service) __P((struct pcmcia_link *, int, void *, int));
 };
 
@@ -94,22 +96,41 @@ struct pcmciabus_link {			/* Link back to the bus we are on */
 			       struct pcmcia_conf *, struct cfdata *));
 	/* Bus specific unconfigure  */
 	int (*bus_unconfig) __P((struct pcmcia_link *));
-	/* Bus specific probe        */
+	/* Bus specific probe */
 	int (*bus_probe) __P((struct device *, void *,
-			      void *, struct pcmcia_link *));
+			       void *, struct pcmcia_link *));
 	/* Bus specific search	     */
 	int (*bus_search) __P((struct device *, void *, cfprint_t));
 	/* initialize scratch        */
 	int (*bus_init) __P((struct device *, struct cfdata *,
 			     void *, struct pcmcia_adapter *, int));
 };
+#define PCMCIA_BUS_INIT(a,b,c,d,e,f) \
+	((*(a)->bus_link->bus_init)((b),(c),(d),(e),(f)))
+#define PCMCIA_BUS_SEARCH(a,b,c,d) \
+	((*(a)->bus_link->bus_search)((b),(c),(d)))
+#define PCMCIA_BUS_PROBE(a,b,c,d,e) \
+	((*(a)->bus_link->bus_probe)((b),(c),(d),(e)))
+#define PCMCIA_BUS_CONFIG(a,b,c,d,e) \
+	((*(a)->bus_link->bus_config)((b),(c),(d),(e)))
+#define PCMCIA_BUS_UNCONFIG(a,b) \
+	((*(a)->bus_link->bus_unconfig)((b)))
+
+
+/*
+ * One of these goes at the front of each chip controller's softc, right
+ * after the struct device.
+ */
 struct pcmcia_adapter {
 	struct pcmcia_funcs *chip_link;
 	struct pcmciabus_link *bus_link;
+	bus_chipset_tag_t pa_bc;	/* bus chipset */
         void *          adapter_softc;
 	caddr_t scratch_mem;		/* pointer to scratch window */
 	int scratch_memsiz;		/* size of scratch window    */
+	bus_mem_handle_t scratch_memh;	/* bus memory handle */
 	int scratch_inuse;		/* window in use             */
+	int nslots;			/* # of slots controlled */
 };
 
 #define PCMCIA_MAP_ATTR		0x0100 /* for memory only */
@@ -151,9 +172,9 @@ struct pcmcia_adapter {
  * as well.
  */
 struct pcmcia_link {
-       	char	pcmciabus;		/* the Nth pcmciabus */
-       	char	slot;			/* slot of this dev */
-       	char	flags;			
+       	u_char	pcmciabus;		/* the Nth pcmciabus */
+       	u_char	slot;			/* slot of this dev */
+       	u_char	flags;			
 #define CARD_IS_MAPPED         0x01
 #define PCMCIA_ATTACH          0x02
 #define PCMCIA_REATTACH        0x04
@@ -161,17 +182,17 @@ struct pcmcia_link {
 #define PCMCIA_ATTACH_TYPE     (PCMCIA_ATTACH|PCMCIA_REATTACH)
 #define PCMCIA_SLOT_EVENT	0x80
 #define PCMCIA_SLOT_OPEN	0x40
-        char	opennings;
+        u_char	opennings;
 
-	char    iowin;
-	char    memwin;
-	char    intr;
-	char    dummy;
+	u_char    iowin;
+	u_char    memwin;
+	u_char    intr;
+	u_char    dummy;
        	struct	pcmcia_adapter *adapter;	/* adapter entry points etc. */
        	struct	pcmciadevs *device;	/* device entry points etc. */
-	void    *devp;	    	    	/* pointer to configured device */
+	struct pcmciabus_softc *bus;	/* parent pcmcia bus */
+	struct device *devp;		/* pointer to configured device */
        	void	*fordriver;		/* for private use by the driver */
-	void	*shuthook;		/* shutdown hook handle */
 	struct selinfo	pcmcialink_sel;	/* for select users */
 };
 
@@ -184,7 +205,9 @@ struct pcmcia_link {
  */
 struct pcmciabus_softc {
 	struct device sc_dev;
-	struct pcmcia_link *sc_link[8];
+	bus_chipset_tag_t sc_bc;
+	struct pcmcia_link *sc_link[4];	/* up to 4 slots per bus */
+	struct pcmcia_adapter *sc_driver;
 };
 
 struct pcmcia_conf {
@@ -233,6 +256,15 @@ struct pcmcia_device {
     int	(*pcmcia_remove) __P((struct pcmcia_link *, struct device *));
 };
 
+#define MAX_CIS_NAMELEN	64		/* version info string len */
+
+struct pcmcia_cardinfo {
+    char manufacturer[MAX_CIS_NAMELEN];
+    char model[MAX_CIS_NAMELEN];
+    char add_info1[MAX_CIS_NAMELEN];
+    char add_info2[MAX_CIS_NAMELEN];
+};
+
 struct pcmciadevs {
         char *devname;
         int flags;              /* 1 show my comparisons during boot(debug) */
@@ -245,6 +277,24 @@ struct pcmciadevs {
         struct pcmcia_device *dev;
 };
 
+/*
+ * PCMCIA driver attach arguments
+ */
+struct pcmcia_attach_args {
+	struct pcmcia_cardinfo *paa_cardinfo; /* card that we're looking at */
+	struct pcmcia_link *paa_link;	/* this nexus */
+	int paa_bestmatch;		/* best match so far */
+	int paa_matchonly;		/* only do matches, don't attach */
+	void	*paa_aux;		/* driver specific */
+};
+
+struct pcmciabus_attach_args {
+	bus_chipset_tag_t pba_bc;
+	int	pba_maddr;
+	int	pba_msize;
+	void	*pba_aux;		/* driver specific */
+};
+
 #ifdef _KERNEL
 extern int pcmcia_add_device __P((struct pcmciadevs *));
 extern int pcmcia_get_cf __P((struct pcmcia_link *, u_char *, int, int,
@@ -255,8 +305,23 @@ extern int pcmcia_targmatch __P((struct device *, struct cfdata *, void *));
 /* in pcmcia_conf.c, available for user space too: */
 extern int pcmcia_get_cisver1 __P((struct pcmcia_link *, u_char *, int,
 				   char *, char *, char *, char *));
-int      parse_cfent  __P((u_char *, int, int, struct pcmcia_conf *));
-int      read_cfg_info __P((u_char *, int, struct pcmcia_conf *));
-void 	pcmcia_getstr __P((char *buf, u_char **, u_char *));
-
-#endif /* _PCMCIA_PCMCIABUS_H_ */
+void parse_cfent  __P((u_char *, int, int, struct pcmcia_conf *));
+void read_cfg_info __P((u_char *, int, struct pcmcia_conf *));
+void pcmcia_getstr __P((char *buf, u_char **, u_char *));
+extern int   pcmcia_configure __P((struct device *, void *, void *));
+extern int   pcmcia_register __P((void *, struct pcmciabus_link *,
+				  struct pcmcia_funcs *, int));
+extern int pcmcia_read_cis __P((struct pcmcia_link *, u_char *, int, int));
+extern int pcmcia_strcmp __P((const char *, const char *, int, const char *));
+extern int pcmcia_matchvalue __P((const struct pcmcia_cardinfo *,
+				  struct pcmciadevs *));
+extern int pcmcia_bestvalue __P((struct pcmcia_cardinfo *,
+				 struct pcmciadevs *,
+				 int,
+				 struct pcmciadevs **));
+extern int pcmcia_slave_match __P((struct device *,
+				   void *,
+				   void *aux,
+				   struct pcmciadevs *,
+				   int));
+#endif /* _PCMCIA_PCMCIAVAR_H_ */

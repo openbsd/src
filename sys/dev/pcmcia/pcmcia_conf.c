@@ -1,11 +1,50 @@
+/*	$Id: pcmcia_conf.c,v 1.2 1996/04/29 14:17:21 hvozda Exp $	*/
+/*
+ * Copyright (c) 1996 John T. Kohl.  All rights reserved.
+ * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Charles Hannum.
+ *	This product includes software developed by Stefan Grefen.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/*
+ * This file is shared between user and kernel space, so be careful with the
+ * coding conventions.
+ */
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
+#include <sys/time.h>
+#include <sys/systm.h>
 
-#include <dev/pcmcia/pcmcia.h>
-#include <dev/pcmcia/pcmciabus.h>
+#include <dev/pcmcia/pcmciavar.h>
+#include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmcia_ioctl.h>
 
 #ifdef CFG_DEBUG
@@ -68,7 +107,7 @@ pcmcia_get_cf(pc_link, data, dlen, idx, pc_cf)
 }
 
 
-int
+void
 read_cfg_info(tbuf, len, pc_cf)
 	u_char         *tbuf;
 	int             len;
@@ -110,14 +149,15 @@ read_cfg_info(tbuf, len, pc_cf)
 	}
 }
 
-int
+void
 parse_cfent(tbuf, len, slotid, pc_cf)
 	u_char         *tbuf;
 	int             len;
 	int             slotid;
 	struct pcmcia_conf *pc_cf;
 {
-	int i, idx, defp, iop, io_16, ios, ftrs, intface, k;
+	volatile int i, idx, defp, intface, k;
+	int ios, ftrs;
 	int host_addr_p, addr_size, len_size;
 
 #ifdef CFG_DEBUG
@@ -164,7 +204,6 @@ parse_cfent(tbuf, len, slotid, pc_cf)
 			int io_16, io_block_len, io_block_size, io_lines;
 			int io_range;
 
-			iop = 1;
 			io_lines = tbuf[i] & TPCE_FS_IO_LINES;
 			io_16 = tbuf[i] & TPCE_FS_IO_BUS16;
 			io_range = tbuf[i] &TPCE_FS_IO_RANGE;
@@ -178,6 +217,8 @@ parse_cfent(tbuf, len, slotid, pc_cf)
 						TPCE_FS_IO_SIZE_SHIFT;
 				ios = (tbuf[i] & TPCE_FS_IO_NUM) + 1;
 				i++;
+				elen=io_block_len+(io_block_len==3?1:0)+
+					io_block_size+(io_block_size==3?1:0);
 				if ((ftrs & TPCE_FS_IRQ) != 0) {
 					iptr=(ios * elen) + i;
 #define IRQTYPE (TPCE_FS_IRQ_PULSE|TPCE_FS_IRQ_LEVEL)
@@ -249,7 +290,6 @@ parse_cfent(tbuf, len, slotid, pc_cf)
 			}
 		}
 		if (ftrs & TPCE_FS_IRQ) {
-			int             irq_mask, irqp, irq;
 			pc_cf->irq_level = (tbuf[i] & TPCE_FS_IRQ_LEVEL) != 0;
 			pc_cf->irq_pulse = (tbuf[i] & TPCE_FS_IRQ_PULSE) != 0;
 			pc_cf->irq_share = (tbuf[i] & TPCE_FS_IRQ_SHARE) != 0;
@@ -339,6 +379,10 @@ parse_cfent(tbuf, len, slotid, pc_cf)
 					mem_haddrs[j] <<= 8;
 
 				}
+				break;
+			default:
+				mems = 0;
+				break;
 			}
 			for (j = 0; j < mems; j++) {
 				pc_cf->mem[j].len = mem_lens[j];
@@ -384,7 +428,7 @@ parse_cfent(tbuf, len, slotid, pc_cf)
 			        pc_cf->mem[i].start!=tmp_cf.mem[i].start)
 				    return;
 
-			/* *pc_cf = tmp_cf;/**/
+			/* *pc_cf = tmp_cf; */
 			pc_cf->cfgid = idx;
 		}
 		return;
@@ -472,6 +516,134 @@ pcmcia_get_cisver1(pc_link, data, len, manu, model, add_inf1, add_inf2)
 		}
 		p += clen + 2;
 	}
-	printf("%x %x\n", p, end);
+#ifdef CFG_DEBUG
+	printf("get_cisver1 failed, buffer [%p,%p)\n", p, end);
+#endif
 	return ENODEV;
+}
+
+#define NULLCP (void *)0
+
+/* pcmcia template string match. A '*' matches any number of characters.
+   A NULL template matches all strings.
+   return-value 
+    0 nomatch 
+    1 wildcard match 
+    2 excact match
+ */
+int
+pcmcia_strcmp(templ, val, flags, msg)
+	const char *templ;
+	const char *val;
+	int flags;
+	const char *msg;
+{
+	const char *ltempl = NULLCP;
+	const char *lval = NULLCP;
+
+	if (flags & PC_SHOWME)
+		printf("%s = `%s'-`%s'\n", msg, templ ? templ : "X", val);
+
+	if (templ == NULLCP) {
+	    return 1;
+	}
+	while (*val) {
+		while (*templ == '*') {
+			ltempl = ++templ;
+			lval = val;
+		}
+		if (*templ == *val) {
+			templ++;
+			val++;
+		} else {
+			if (ltempl == NULLCP)
+				return 0;
+			val = ++lval;
+			templ = ltempl;
+		}
+	}
+	if (*templ != 0 && *templ != '*')
+		return 0;
+	return (ltempl ? 1 : 2);
+}
+
+/*
+ * Return a match value to estimate how good a match the specified driver
+ * is for this particular card.
+ */
+ 
+int
+pcmcia_matchvalue(card, dentry)
+	const struct pcmcia_cardinfo *card;
+	struct pcmciadevs *dentry;
+{
+	int match;
+
+#ifdef PCMCIA_DEBUG
+	dentry->flags |= PC_SHOWME;
+#endif
+	match = pcmcia_strcmp(dentry->manufacturer,
+			     card->manufacturer,
+			     dentry->flags, "manufacturer")<<6;
+	match |= pcmcia_strcmp(dentry->model,
+			       card->model, dentry->flags, "model")<<4;
+	match |= pcmcia_strcmp(dentry->add_inf1,
+			       card->add_info1, dentry->flags, "info1")<<2;
+	match |= pcmcia_strcmp(dentry->add_inf2,
+			       card->add_info2, dentry->flags, "info2");
+#ifdef PCMCIA_DEBUG
+	printf("match == %d\n", match);
+#endif
+	return match;
+}
+
+int
+pcmcia_bestvalue(card, dentries, nentries, rmatch)
+	struct pcmcia_cardinfo *card;
+	struct pcmciadevs *dentries;
+	int nentries;
+	struct pcmciadevs **rmatch;
+{
+	int bestmatch, thismatch;
+	register int i;
+	for (i = 0, bestmatch = 0; i < nentries; i++) {
+		if ((thismatch = pcmcia_matchvalue(card, &dentries[i])) >
+		    bestmatch) {
+			bestmatch = thismatch;
+			*rmatch = &dentries[i];
+		}
+	}
+	return bestmatch;
+}
+
+int
+pcmcia_slave_match(parent, match, aux, devs, ndevs)
+	struct device *parent;
+	void *match, *aux;
+	struct pcmciadevs *devs;
+	int ndevs;
+{
+	struct pcmcia_attach_args *paa = aux;
+	struct device *self = match;
+	struct pcmciadevs *devmatch;
+	int value;
+
+	if (paa->paa_link->fordriver &&
+	    strcmp(paa->paa_link->fordriver,
+		   self->dv_cfdata->cf_driver->cd_name))
+	    return 0;			/* wrong driver */
+	value = pcmcia_bestvalue(paa->paa_cardinfo, devs, ndevs, &devmatch);
+	if (value > paa->paa_bestmatch) {
+		paa->paa_bestmatch = value;
+		paa->paa_link->device = devmatch;
+#ifdef PCMCIA_DEBUG
+		printf("pcmcia_slave_match: best so far, %p->%p\n",
+		       paa->paa_link, devmatch);
+		printf("pcmcia_slave_match returns %d\n", value);
+		delay(2000000);
+#endif
+		if (!paa->paa_matchonly)
+		    return value;
+	}
+	return 0;
 }

@@ -1,4 +1,6 @@
+/*	$Id: pcmcia.c,v 1.3 1996/04/29 14:17:15 hvozda Exp $	*/
 /*
+ * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +29,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: pcmcia.c,v 1.2 1996/01/26 21:27:31 hvozda Exp $
  */
+
+/* XXX - these next two lines are just "glue" until the confusion over
+   pcmcia vs pcmciabus between the framework and sys/conf/files
+   gets resolved */
+#define pcmciabus_cd pcmcia_cd
+#define pcmciabus_ca pcmcia_ca
 
 /* derived from scsiconf.c writte by Julian Elischer et al */
 /* TODO add modload support and loadable lists of devices */
@@ -39,14 +46,12 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
+#include <sys/proc.h>
+#include <sys/cpu.h>
 
-#include <dev/pcmcia/pcmcia.h>
-#include <dev/pcmcia/pcmciabus.h>
+#include <dev/pcmcia/pcmciavar.h>
+#include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmcia_ioctl.h>
-
-#include "ed.h"
-#include "com.h"
-#include "ep.h"
 
 #ifdef IBM_WD
 #define PCMCIA_DEBUG
@@ -57,107 +62,57 @@
 # define PPRINTF(a)
 #endif
 
-static void pcmciadumpcf __P((struct pcmcia_conf *));
-static int pcmcia_strcmp __P((char *, char *, int, char *));
+#ifdef PCMCIA_DEBUG
+void pcmciadumpcf __P((struct pcmcia_conf *));
+#endif
 
-void pcmcia_shuthook __P((void *));
-
-static struct pcmcia_adapter pcmcia_drivers[4];
-static int      pcmcia_cntrl = 0;
-static int      probed = 0;
-static struct device **deldevs = NULL;
+static struct old_devs {
+	struct device *dev;
+	struct pcmciadevs *pcdev;
+} *deldevs;
 static int      ndeldevs = 0;
-
-/* I've decided to re-ifdef these.  It makes making a kernel easier
-    until I either get config(8) modified to deal somehow
-    or figure out a better to way declare the prototypes and
-    build up the knowndevs struct.  Stefan may have ideas...
-*/
-
-#if NED > 0
-extern struct pcmciadevs pcmcia_ed_devs[];
-#endif
-#if NCOM > 0
-extern struct pcmciadevs pcmcia_com_devs[];
-#endif
-#if NEP > 0
-extern struct pcmciadevs pcmcia_ep_devs[];
-#endif
-
-static struct pcmciadevs *knowndevs[] = {
-#if NED > 0
-	pcmcia_ed_devs,
-#endif
-#if NCOM > 0
-	pcmcia_com_devs,
-#endif
-#if NEP > 0
-	pcmcia_ep_devs,
-#endif
-	NULL
-};
-
-#ifdef notyet
-static struct pcmciadevs *knowndevs[10] = { NULL };
-#define KNOWNSIZE (sizeof(knowndevs) / sizeof(knowndevs[0]))
-#endif
 
 #define PCMCIA_SERVICE(a,b,c,d,e)   ((a)->chip_link->pcmcia_service(b,c,\
 								(void *) d,e))
 #define PCMCIA_MAP_IO(a,b,c,d,e)    ((a)->chip_link->pcmcia_map_io(b,c,d,e))
 #define PCMCIA_MAP_INTR(a,b,c,d)    ((a)->chip_link->pcmcia_map_intr(b,c,d))
-#define PCMCIA_MAP_MEM(a,b,c,d,e,f) ((a)->chip_link->pcmcia_map_mem(b,c,d,e,f))
+/* XXX
+ * this is quite broken in the face of various bus mapping stuff...
+ * drivers need to cooperate with the pcmcia framework to deal with
+ * bus mapped memory.  Whee.
+ */
+#define PCMCIA_MAP_MEM(a,b,c,d,e,f,g) ((a)->chip_link->pcmcia_map_mem(b,c,d,e,f,g))
 
-#define PCMCIA_BUS_INIT(a,b,c,d,e,f)((a)->bus_link->bus_init((b),(c),(d),(e)\
-									,(f)))
-#define PCMCIA_BUS_SEARCH(a,b,c,d)  ((a)->bus_link->bus_search((b),(c),(d)))
-#define PCMCIA_BUS_PROBE(a,b,c,d,e) ((a)->bus_link->bus_probe((b),(c),(d),(e)))
-#define PCMCIA_BUS_CONFIG(a,b,c,d,e)((a)->bus_link->bus_config((b),(c),(d),(e)))
-#define PCMCIA_BUS_UNCONFIG(a,b)    ((a)->bus_link->bus_unconfig((b)))
-
-#define SCRATCH_MEM(a)	((a)->scratch_mem)
+#define SCRATCH_MEM(a)	((a)->scratch_memh)
+#define SCRATCH_BC(a)	((a)->pa_bc)
 #define SCRATCH_SIZE(a)	((a)->scratch_memsiz)
 #define SCRATCH_INUSE(a)((a)->scratch_inuse)
 
 /*
  * Declarations
  */
-struct pcmciadevs *pcmcia_probedev __P((struct pcmcia_link *));
-struct pcmciadevs *pcmcia_selectdev __P((char *, char *, char *, char *));
-int pcmcia_probe_bus __P((struct pcmcia_link *, int, int,
-			  struct pcmcia_conf *));
+int pcmcia_probedev __P((struct pcmcia_link *, struct pcmcia_cardinfo *));
+int pcmcia_probe_bus __P((int, int));
 int pcmciabusmatch __P((struct device *, void *, void *));
 void pcmciabusattach __P((struct device *, struct device *, void *));
+int  pcmcia_mapcard __P((struct pcmcia_link *, int, struct pcmcia_conf *));
 
-struct cfdriver pcmciabuscd = {
-	NULL, "pcmcia", pcmciabusmatch, pcmciabusattach, DV_DULL,
-	sizeof(struct pcmciabus_softc), 1
+int pcmcia_unconfigure __P((struct pcmcia_link *));
+int pcmcia_unmapcard __P((struct pcmcia_link *));
+
+int pcmcia_print __P((void *, char *));
+int pcmcia_submatch __P((struct device *, void *, void *));
+void pcmcia_probe_link __P((struct pcmcia_link *));
+
+struct cfattach pcmcia_ca = {
+	sizeof(struct pcmciabus_softc), pcmciabusmatch, pcmciabusattach,
 };
 
-#ifdef notyet
-int
-pcmcia_add_device(devs)
-	struct pcmciadevs *devs;
-{
-	int i;
+struct cfdriver pcmcia_cd = {
+	NULL, "pcmcia", DV_DULL, 1
+};
 
-	if (devs == NULL)
-		return 0;
-
-	for (i = 0; i < KNOWNSIZE; i++)
-		if (knowndevs[i] == NULL)
-			break;
-
-	if (i == KNOWNSIZE)
-		panic("Too many pcmcia devices");
-
-	knowndevs[i] = devs;
-	for (; devs->devname != NULL; devs++)
-		printf("added %s\n", devs->devname);
-	return i;
-}
-#endif
-
+#if 0
 int
 pcmcia_register(adapter_softc, bus_link, chip_link, slot)
 	void           *adapter_softc;
@@ -178,6 +133,7 @@ pcmcia_register(adapter_softc, bus_link, chip_link, slot)
 	}
 	return 0;
 }
+#endif
 
 int
 pcmciabusmatch(parent, self, aux)
@@ -187,18 +143,16 @@ pcmciabusmatch(parent, self, aux)
 {
 	struct pcmciabus_softc *sc = (void *)self;
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	int             i, found = 0;
+	struct pcmciabus_attach_args *pba = aux;
+	struct pcmcia_adapter *pca = pba->pba_aux;
+	int found = 0;
 
-	PPRINTF(("- pcmciabusmatch\n"));
-	if (pcmcia_cntrl <= 0)
-		return 0;
+	PPRINTF(("- pcmciabusmatch %p %p\n", pba, pca));
 
-	for (i = 0; i < 4; i++)
-		if (pcmcia_drivers[i].bus_link) {
-			if (PCMCIA_BUS_INIT(&pcmcia_drivers[i], parent, cf,
-					    aux, &pcmcia_drivers[i], 0))
-				found++;
-		}
+	if (pca->bus_link) {
+		if (PCMCIA_BUS_INIT(pca, parent, cf, aux, pca, 0))
+			found++;
+	}
 	return found != 0;
 }
 
@@ -214,19 +168,18 @@ pcmciabusattach(parent, self, aux)
 {
 	struct pcmciabus_softc *sc = (struct pcmciabus_softc *) self;
 	struct cfdata  *cf = self->dv_cfdata;
-	int             i, found = 0;
+	struct pcmciabus_attach_args *pba = aux;
+	struct pcmcia_adapter *pca = pba->pba_aux;
 
 	PPRINTF(("- pcmciabusattach\n"));
-	for (i = 0; i < 4; i++)
-		if (pcmcia_drivers[i].bus_link) {
-			if (PCMCIA_BUS_INIT(&pcmcia_drivers[i], parent, cf,
-					    aux, &pcmcia_drivers[i], 1))
-				found++;
-		}
-
+	if (pca->bus_link) {
+		PCMCIA_BUS_INIT(pca, parent, cf, aux, pca, 1);
+	}
 	printf("\n");
 
-	pcmcia_probe_bus(NULL, sc->sc_dev.dv_unit, -1, NULL);
+	sc->sc_driver = pca;
+	sc->sc_bc = pba->pba_bc;
+	pcmcia_probe_bus(sc->sc_dev.dv_unit, -1);
 }
 
 /*
@@ -239,52 +192,52 @@ pcmcia_probe_busses(bus, slot)
 {
 	PPRINTF(("- pcmcia_probe_busses\n"));
 	if (bus == -1) {
-		for (bus = 0; bus < pcmciabuscd.cd_ndevs; bus++)
-			if (pcmciabuscd.cd_devs[bus])
-				pcmcia_probe_bus(NULL, bus, slot, NULL);
+		for (bus = 0; bus < pcmciabus_cd.cd_ndevs; bus++)
+			if (pcmciabus_cd.cd_devs[bus])
+				pcmcia_probe_bus(bus, slot);
 		return 0;
 	} else {
-		return pcmcia_probe_bus(NULL, bus, slot, NULL);
+		return pcmcia_probe_bus(bus, slot);
 	}
 }
+
+/* Macros to clear/set/test flags. */
+#define	SET(t, f)	(t) |= (f)
+#define	CLR(t, f)	(t) &= ~(f)
+#define	ISSET(t, f)	((t) & (f))
 
 /*
  * Probe the requested pcmcia bus. It must be already set up.
  */
 int
-pcmcia_probe_bus(link, bus, slot, cf)
-	struct pcmcia_link *link;
+pcmcia_probe_bus(bus, slot)
 	int             bus, slot;
-	struct pcmcia_conf *cf;
 {
 	struct pcmciabus_softc *pcmcia;
-	int             maxslot, minslot, maxlun, minlun;
-	struct pcmciadevs *bestmatch = NULL;
-	int             spec_probe = (link != NULL);
+	int             maxslot, minslot;
+	struct pcmcia_link *link;
 
 	PPRINTF(("- pcmcia_probe_bus\n"));
-	if (bus < 0 || bus >= pcmciabuscd.cd_ndevs)
+	if (bus < 0 || bus >= pcmciabus_cd.cd_ndevs)
 		return ENXIO;
-	pcmcia = pcmciabuscd.cd_devs[bus];
-	if (!pcmcia)
+	pcmcia = pcmciabus_cd.cd_devs[bus];
+	if (!pcmcia || pcmcia->sc_driver == NULL) /* bus is not configured */
 		return ENXIO;
 
 	if (slot == -1) {
-		maxslot = 7;
+		maxslot = pcmcia->sc_driver->nslots - 1;
 		minslot = 0;
 	} else {
-		if (slot < 0 || slot > 7)
+		if (slot < 0 || slot >= pcmcia->sc_driver->nslots)
 			return EINVAL;
 		maxslot = minslot = slot;
 	}
 
 	for (slot = minslot; slot <= maxslot; slot++) {
-		if (link = pcmcia->sc_link[slot]) {
+		if ((link = pcmcia->sc_link[slot])) {
 			if (link->devp)
 				continue;
 		}
-		if (pcmcia_drivers[slot >> 1].adapter_softc == NULL)
-			continue;
 
 		/*
 	         * If we presently don't have a link block
@@ -297,88 +250,91 @@ pcmcia_probe_bus(link, bus, slot, cf)
 				return ENOMEM;
 			bzero(link, sizeof(*link));
 			link->opennings = 1;
-			link->adapter = &pcmcia_drivers[slot >> 1];
+			link->adapter = pcmcia->sc_driver;
+			link->bus = pcmcia;
 			link->slot = slot;
 		}
-		bestmatch = pcmcia_probedev(link);
-		/*
-		 * We already know what the device is.  We use a
-		 * special matching routine which insists that the
-		 * cfdata is of the right type rather than putting
-		 * more intelligence in individual match routines for
-		 * each high-level driver.
-		 * We must have the final probe do all of the comparisons,
-		 * or we could get stuck in an infinite loop trying the same
-		 * device repeatedly.  We use the `fordriver' field of
-		 * the pcmcia_link for now, rather than inventing a new
-		 * structure just for the config_search().
-		 */
-		if (link->fordriver == NULL) {
-			if (bestmatch)
-				link->fordriver = bestmatch->devname;
-			else {
-				if (!spec_probe) {
-					link->device = NULL;
-					link->devp = NULL;
-					PCMCIA_SERVICE(link->adapter,
-						       link, PCMCIA_OP_POWER,
-						       0, 0);
-				}
-			}
-		}
+		(void) pcmcia_probe_link(link);
+	}
+	return 0;
+}
 
-		if (spec_probe) {
-			if (cf && pcmcia_mapcard(link, -1, cf) != 0)
-				link->fordriver = NULL;
-		}
+void
+pcmcia_probe_link(link)
+	struct pcmcia_link *link;
+{
+	struct pcmcia_cardinfo cardinfo;
+	struct pcmcia_attach_args paa;
+	struct pcmciabus_softc *pcmcia = link->bus;
+	int             i;
 
-		if (link->fordriver != NULL) {
-			int             i;
-			struct device **delp = deldevs;
-			int             found = 0;
-			link->device = bestmatch;
-			link->flags = (link->flags &
-					  ~(PCMCIA_ATTACH_TYPE)) |
-					    PCMCIA_REATTACH;
-			for (i = 0; i < ndeldevs; i++, delp++) {
-				if (*delp &&
-				    pcmcia_configure((*delp)->dv_parent, *delp,
-						     link)) {
-					link->flags = (link->flags &
-							  ~PCMCIA_ATTACH_TYPE)
-						       | PCMCIA_SLOT_INUSE;
-					found = 1;
-					*delp = NULL;
-					break;
-				}
-			}
-			if (!found) {
-				link->flags = (link->flags &
-				       ~PCMCIA_ATTACH_TYPE) | PCMCIA_ATTACH;
-				if (PCMCIA_BUS_SEARCH(link->adapter,
-						      &pcmcia->sc_dev,
-						      link, NULL)) {
-					link->flags = (link->flags &
-							  ~PCMCIA_ATTACH_TYPE)
-						       | PCMCIA_SLOT_INUSE;
-				} else {
-					link->flags &= ~(PCMCIA_ATTACH_TYPE |
-							 PCMCIA_SLOT_INUSE);
-					link->device = NULL;
-					printf(
-					    "No matching config entry %s.\n",
-					       link->fordriver ? 
-					       link->fordriver : "(NULL)");
-					if (!spec_probe)
-						PCMCIA_SERVICE(link->adapter,
-							       link,
-							       PCMCIA_OP_POWER,
-							       0, 0);
-				}
+	PPRINTF(("- pcmcia_probe_link %p\n", link));
+	/*
+	 * Set up card and fetch card info.
+	 */
+	if (pcmcia_probedev(link, &cardinfo) == 0) {
+		/* could not fetch its strings, so give up on it. */
+		PCMCIA_SERVICE(link->adapter,
+			       link, PCMCIA_OP_POWER,
+			       0, 0);
+		return;
+	}
+
+	/*
+	 * See if we can reattach a device.
+	 */
+	CLR(link->flags, PCMCIA_ATTACH_TYPE);
+	SET(link->flags, PCMCIA_REATTACH);
+	for (i = 0; i < ndeldevs; i++) {
+		if (deldevs[i].dev) {
+			PPRINTF(("trying device\n"));
+			link->device = deldevs[i].pcdev;
+			if (pcmcia_configure(deldevs[i].dev->dv_parent,
+					     deldevs[i].dev, link)) {
+				CLR(link->flags, PCMCIA_ATTACH_TYPE);
+				SET(link->flags, PCMCIA_SLOT_INUSE);
+				deldevs[i].dev = NULL;
+				deldevs[i].pcdev = NULL;
+				return;
 			}
 		}
 	}
-	return 0;
+
+
+	paa.paa_cardinfo = &cardinfo;
+	paa.paa_link = link;
+	paa.paa_aux = NULL;
+	paa.paa_bestmatch = 0;
+	paa.paa_matchonly = 1;
+	CLR(link->flags, PCMCIA_ATTACH_TYPE);
+	SET(link->flags, PCMCIA_ATTACH);
+
+	/* Run the config matching routines to find us a good match.
+	 * match routines will flag on "matchonly" and fill in stuff
+	 * into the link structure, but not return any match.
+	 */
+	(void) config_found_sm(&pcmcia->sc_dev,
+			       &paa,
+			       pcmcia_print,
+			       pcmcia_submatch);
+
+	if (PCMCIA_BUS_SEARCH(link->adapter,
+			      &pcmcia->sc_dev,
+			      link, NULL)) {
+		CLR(link->flags, PCMCIA_ATTACH_TYPE);
+		SET(link->flags, PCMCIA_SLOT_INUSE);
+	} else {
+		CLR(link->flags, PCMCIA_ATTACH_TYPE|PCMCIA_SLOT_INUSE);
+		link->device = NULL;
+		printf("%s slot %d: No matching config entry.\n",
+		       pcmcia->sc_dev.dv_xname,
+		       link->slot);
+		PCMCIA_SERVICE(link->adapter,
+			       link, PCMCIA_OP_POWER,
+			       0, 0);
+		link->fordriver = NULL;
+	}
+	return;
 }
 
 /*
@@ -386,16 +342,13 @@ pcmcia_probe_bus(link, bus, slot, cf)
  * it is, and find the correct driver table
  * entry.
  */
-struct pcmciadevs *
-pcmcia_probedev(link)
+int
+pcmcia_probedev(link, cardinfo)
 	struct pcmcia_link *link;
+	struct pcmcia_cardinfo *cardinfo;
 {
 	struct pcmcia_adapter *pca = link->adapter;
 	u_char          scratch[CIS_MAXSIZE];
-	char            manu[MAX_CIS_NAMELEN];
-	char            model[MAX_CIS_NAMELEN];
-	char            add_inf1[MAX_CIS_NAMELEN];
-	char            add_inf2[MAX_CIS_NAMELEN];
 	int             card_stat;
 	int             err;
 	int             pow = 0;
@@ -403,22 +356,22 @@ pcmcia_probedev(link)
 
 	PPRINTF(("- pcmcia_probe_dev\n"));
 
-	printf("%s slot %d:",
-	       ((struct device *) link->adapter->adapter_softc)->dv_xname,
-	       slot & 1);
+	printf("%s: slot %d ", ((struct device *) link->bus)->dv_xname, slot);
 
+	/* turn off power in case it's on, to get a fresh start on things: */
+	PCMCIA_SERVICE(pca, link, PCMCIA_OP_POWER, 0, 0);
 	if ((err = PCMCIA_SERVICE(pca, link, PCMCIA_OP_STATUS,
 				  &card_stat, 0)) != 0) {
 		printf("failed to get status %d\n", err);
 		return NULL;
 	}
 
-	if ((card_stat & PCMCIA_CARD_PRESENT) == 0) {
-		printf(" <slot empty>\n");
+	if (ISSET(card_stat, PCMCIA_CARD_PRESENT) == 0) {
+		printf("is empty\n");
 		return NULL;
 	}
 
-	if (!(card_stat & PCMCIA_POWER)) {
+	if (!ISSET(card_stat, PCMCIA_POWER)) {
 		pow = 1;
 		if ((err = PCMCIA_SERVICE(pca, link, PCMCIA_OP_POWER, 10000,
 					  PCMCIA_POWER_ON|
@@ -428,7 +381,7 @@ pcmcia_probedev(link)
 		}
 	}
 
-	if (!(link->flags & (PCMCIA_SLOT_INUSE | CARD_IS_MAPPED))) {
+	if (!ISSET(link->flags, (PCMCIA_SLOT_INUSE | CARD_IS_MAPPED))) {
 		if ((err = PCMCIA_SERVICE(pca, link, PCMCIA_OP_RESET,
 					  500000, 0)) != 0) {
 			printf("failed to reset %d\n", err);
@@ -446,127 +399,25 @@ pcmcia_probedev(link)
 	}
 
 	if ((err = pcmcia_get_cisver1(link, scratch, sizeof(scratch),
-				      manu, model, add_inf1,
-				      add_inf2)) != 0) {
+				      cardinfo->manufacturer,
+				      cardinfo->model, cardinfo->add_info1,
+				      cardinfo->add_info2)) != 0) {
 		printf("failed to get cis info %d\n", err);
 		goto bad;
 	}
 
-	printf(" <%s, %s", manu, model);
-	if (add_inf1[0])
-		printf(", %s", add_inf1);
-	if (add_inf2[0])
-		printf(", %s", add_inf2);
+	printf("contains <%s, %s", cardinfo->manufacturer, cardinfo->model);
+	if (cardinfo->add_info1[0])
+		printf(", %s", cardinfo->add_info1);
+	if (cardinfo->add_info2[0])
+		printf(", %s", cardinfo->add_info2);
 	printf(">\n");
 
-
-	/*
-	 * Try make as good a match as possible with
-	 * available sub drivers
-	 */
-	return pcmcia_selectdev(manu, model, add_inf1, add_inf2);
+	return 1;
 bad:
 	if (!pow)
 		PCMCIA_SERVICE(pca, link, PCMCIA_OP_POWER, 0, 0);
-	return NULL;
-}
-
-/*
- * Try make as good a match as possible with
- * available sub drivers
- */
-struct pcmciadevs *
-pcmcia_selectdev(manu, model, add_inf1, add_inf2)
-	char *manu, *model, *add_inf1, *add_inf2;
-{
-	u_int bestmatches = 0;
-	struct pcmciadevs *bestmatch = (struct pcmciadevs *) 0;
-	struct pcmciadevs **dlist, *dentry;
-
-	PPRINTF(("- pcmcia_selectdev\n"));
-	for (dlist = knowndevs; *dlist; dlist++)
-		for (dentry = *dlist; dentry && 
-				      dentry->devname != NULL; dentry++) {
-			int match = 0;
-
-#ifdef PCMCIA_DEBUG
-			dentry->flags |= PC_SHOWME;
-#endif
-    	    	    	match|=pcmcia_strcmp(dentry->manufacturer,
-    	    	    	    	    manu,dentry->flags,"manufacturer")<<6;
-    	    	    	match|=pcmcia_strcmp(dentry->model,
-    	    	    	    	    model,dentry->flags,"model")<<4;
-    	    	    	match|=pcmcia_strcmp(dentry->add_inf1,
-    	    	    	    	    add_inf1,dentry->flags,"info1")<<2;
-    	    	    	match|=pcmcia_strcmp(dentry->add_inf2,
-    	    	    	    	    add_inf2,dentry->flags,"info2");
-/* the following was replaced by the wildcard function called above */
-#if 0
-			if (dentry->flags & PC_SHOWME)
-				printf("manufacturer = `%s'-`%s'\n", 
-				       dentry->manufacturer ?
-				       dentry->manufacturer :
-				       "X",
-				       manu);
-			if (dentry->manufacturer) {
-			    if (strcmp(dentry->manufacturer, manu) == 0) {
-				match |= 8;
-			    } else {
-				continue;
-			    }
-			}
-
-			if (dentry->flags & PC_SHOWME)
-				printf("model = `%s'-`%s'\n",
-				       dentry->model ? dentry->model :
-				       "X",
-				       model);
-			if (dentry->model)  {
-			    if (strcmp(dentry->model, model) == 0) {
-				match |= 4;
-			    } else {
-				continue;
-			    }
-			}
-
-
-			if (dentry->flags & PC_SHOWME)
-				printf("info1 = `%s'-`%s'\n",
-				       dentry->add_inf1 ? dentry->add_inf1 :
-				       "X",
-				       add_inf1);
-			if (dentry->add_inf1) {
-			    if (strcmp(dentry->add_inf1, add_inf1) == 0) {
-				match |= 2;
-			    } else {
-				continue;
-			    }
-			}
-
-			if (dentry->flags & PC_SHOWME)
-				printf("info2 = `%s'-`%s'\n", 
-				       dentry->add_inf2 ? dentry->add_inf2 :
-				       "X",
-				       add_inf2);
-			if (dentry->add_inf2) {
-			    if (strcmp(dentry->add_inf2, add_inf2) == 0) {
-				match |= 1;
-			    } else {
-				continue;
-			    }
-			}
-#endif
-#ifdef PCMCIA_DEBUG
-			printf("match == %d [%d]\n",match,bestmatches);
-#endif
-
-			if(match > bestmatches) {
-				bestmatches = match;
-				bestmatch = dentry;
-			}
-		}
-
-	return bestmatch;
+	return 0;
 }
 
 int
@@ -579,26 +430,29 @@ pcmcia_configure(parent, self, aux)
 	struct pcmcia_link *link = aux;
 	struct cfdata  *cf = dev->dv_cfdata;
 	struct cfdriver *cd = cf->cf_driver;
-	char           *devname = (char *) link->fordriver;
 	struct pcmciadevs *pcs = link->device;
 	struct pcmcia_device *pcd;
 	struct pcmcia_adapter *pca = link->adapter;
 	struct pcmcia_conf pc_cf;
+	char *devname = (char *) link->fordriver;
 	u_char          scratch[CIS_MAXSIZE];
 	int             mymap = 0;
 
 	PPRINTF(("- pcmcia_configure\n"));
 
-	if (strcmp(devname, cd->cd_name) || !pca)
+	if ((devname && strcmp(devname, cd->cd_name)) || !pca)
 		return 0;
+
+	if (link->devp)
+		return 0;		/* something else already attached */
 
 	if (pcs == NULL)
 		pcd = NULL;
 	else
 		pcd = pcs->dev;
 
-	PPRINTF(("pcmcia_configure: %x\n", pcd));
-	if (!(link->flags & CARD_IS_MAPPED)) {
+	PPRINTF(("pcmcia_configure: %p\n", pcd));
+	if (!ISSET(link->flags, CARD_IS_MAPPED)) {
 		/* read 'suggested' configuration */
 		PPRINTF(("pcmcia_configure: calling read cis\n"));
 		if (pcmcia_read_cis(link, scratch, 0, sizeof(scratch)) != 0)
@@ -615,8 +469,9 @@ pcmcia_configure(parent, self, aux)
 #endif
 		/* and modify it (device specific) */
 		if (pcd && pcd->pcmcia_config) {
-			PPRINTF(("pcmcia_configure: calling config\n"));
-			if (pcd->pcmcia_config(link, dev, &pc_cf, cf))
+			PPRINTF(("pcmcia_configure: calling config %p %p\n",
+				 pcd, pcd->pcmcia_config));
+			if ((*pcd->pcmcia_config)(link, dev, &pc_cf, cf))
 				return 0;
 
 			if ((pc_cf.cfgtype & CFGENTRYMASK) == CFGENTRYID) {
@@ -649,7 +504,7 @@ pcmcia_configure(parent, self, aux)
 	}
 	link->devp = dev;
 
-	PPRINTF(("pcmcia_configure: calling bus probe\n"));
+	PPRINTF(("pcmcia_configure: calling bus attach\n"));
 	if (!(PCMCIA_BUS_PROBE(pca, parent, dev, cf, link))) {
 		PPRINTF(("pcmcia_configure: bus probe failed\n"));
 		goto bad;
@@ -660,39 +515,34 @@ pcmcia_configure(parent, self, aux)
 		goto bad;
 	}
 
-	link->shuthook = shutdownhook_establish(pcmcia_shuthook,
-						(void *)link);
 	return 1;
 
 bad:
 	link->devp = NULL;
 	if (mymap)
 		pcmcia_unmapcard(link);
-	printf("pcmcia_configure: configuration error\n");
+	PPRINTF(("pcmcia_configure: configuration error\n"));
 	return 0;
 }
 
 void
-pcmcia_shuthook(arg)
-void *arg;
+pcmcia_detach(dev, arg)
+	struct device *dev;
+	void *arg;
 {
-    struct pcmcia_link *link = (struct pcmcia_link *)arg;
-    if (pcmcia_unconfigure(link) == 0) {
-	/*
-	 * turn off power too.
-	 */
-	PCMCIA_SERVICE(link->adapter, link, PCMCIA_OP_RESET, 500000, 0);
-	PCMCIA_SERVICE(link->adapter, link, PCMCIA_OP_POWER, 0, 0);
-    }
+	struct pcmcia_link *link = arg;
+
+	link->devp = NULL;
+	printf("%s: device %s at slot %d detached/really\n",
+	       dev->dv_parent->dv_xname,
+	       dev->dv_xname, link->slot);
 }
 
 int
 pcmcia_unconfigure(link)
 	struct pcmcia_link *link;
 {
-	int             status;
-	int             i, err;
-	struct device **delp;
+	int             i;
 	struct device  *dev;
 	struct pcmcia_adapter *pca = link->adapter;
 	struct pcmcia_device *pcd;
@@ -706,9 +556,9 @@ pcmcia_unconfigure(link)
 	else
 		pcd = NULL;
 
-	if (link->flags & CARD_IS_MAPPED) {
+	if (ISSET(link->flags, CARD_IS_MAPPED)) {
 		if (pcd && pcd->pcmcia_remove) {
-			if (pcd->pcmcia_remove(link, link->devp))
+			if ((*pcd->pcmcia_remove)(link, link->devp))
 				return EBUSY;
 		}
 		else {
@@ -718,39 +568,56 @@ pcmcia_unconfigure(link)
 		if (pcmcia_unmapcard(link) != 0)
 			return EBUSY;
 	}
-	delp = deldevs;
-	for (i = 0; delp && *delp && i < ndeldevs; i++, delp++)
-		continue;
-	if (i >= ndeldevs) {
-		int sz = ndeldevs ? (ndeldevs * 2) : 
-				    (MINALLOCSIZE / sizeof(void *));
-		struct device **ndel = malloc(sz * sizeof(void *),
-					      M_DEVBUF, M_NOWAIT);
-		if (!ndel) {
-			PPRINTF(("pcmcia_delete: creating dev array"));
-			return ENOMEM;
+	if (config_detach(link->devp->dv_cfdata, pcmcia_detach, link)) {
+		/* must be retained */
+		for (i = 0; deldevs && deldevs[i].dev && i < ndeldevs; i++)
+			continue;
+
+		if (i >= ndeldevs) {
+			int sz = ndeldevs ? (ndeldevs * 2) : 
+				(MINALLOCSIZE / sizeof(deldevs[0]));
+			struct old_devs *ndel = malloc(sz * sizeof(deldevs[0]),
+						      M_DEVBUF, M_NOWAIT);
+			if (!ndel) {
+				PPRINTF(("pcmcia_delete: creating dev array"));
+				return ENOMEM;
+			}
+			bzero(ndel, sz * sizeof(ndel[0]));
+			if (ndeldevs) {
+				bcopy(deldevs, ndel,
+				      ndeldevs * sizeof(deldevs[0]));
+				free(deldevs, M_DEVBUF);
+			}
+			ndeldevs = sz - 1;
+			deldevs = ndel;
 		}
-		bzero(ndel, sz * sizeof(void *));
-		if (ndeldevs) {
-			bcopy(deldevs, ndel, ndeldevs * sizeof(void *));
-			free(deldevs, M_DEVBUF);
-		}
-		ndeldevs = sz - 1;
-		deldevs = ndel;
-		delp = deldevs + i;
+		dev = deldevs[i].dev = link->devp;
+		deldevs[i].pcdev = link->device;
+		link->devp = NULL;
+		TAILQ_REMOVE(&alldevs, dev, dv_list);
+		printf("%s: device %s at slot %d detached/retained\n",
+		       dev->dv_parent->dv_xname,
+		       dev->dv_xname, link->slot);
+		/*
+		 * Make this node eligible to probe again.
+		 * Since we're indirectly allocating state,
+		 * this device data will not get trashed later and we
+		 * can hold onto it.
+		 */
+/*		dev->dv_cfdata->cf_fstate = FSTATE_NOTFOUND;*/
 	}
-	dev = *delp = link->devp;
-	link->devp = NULL;
-	printf("device %s in pcmcia slot %d detached\n", dev->dv_xname,
-	       link->slot);
-	shutdownhook_disestablish(link->shuthook);
-	link->shuthook = 0;
 	return 0;
 }
+
+/*
+ * Map the card into I/O and memory space, using the details provided
+ * with pc_cf.
+ */
 
 int
 pcmcia_mapcard(link, unit, pc_cf)
 	struct pcmcia_link *link;
+	int unit;
 	struct pcmcia_conf *pc_cf;
 {
 	struct pcmcia_adapter *pca = link->adapter;
@@ -768,6 +635,7 @@ pcmcia_mapcard(link, unit, pc_cf)
 	splx(s);
 	for (i = 0; i < pc_cf->memwin; i++) {
 		if ((err = PCMCIA_MAP_MEM(pca, link,
+					  pca->pa_bc,
 					  (caddr_t) pc_cf->mem[i].start,
 					  pc_cf->mem[i].caddr,
 					  pc_cf->mem[i].len,
@@ -797,7 +665,7 @@ pcmcia_mapcard(link, unit, pc_cf)
 		}
 	}
 	/* Now we've mapped everything enable it */
-	if ((err = PCMCIA_MAP_MEM(pca, link, SCRATCH_MEM(pca),
+	if ((err = PCMCIA_MAP_MEM(pca, link, SCRATCH_BC(pca), SCRATCH_MEM(pca),
 	     pc_cf->cfg_off & (~(SCRATCH_SIZE(pca) - 1)), SCRATCH_SIZE(pca),
 				  PCMCIA_MAP_ATTR | PCMCIA_LAST_WIN)) != 0) {
 		PPRINTF(("pcmcia_mapcard: enable err %d\n", err));
@@ -810,45 +678,59 @@ pcmcia_mapcard(link, unit, pc_cf)
 		goto error;
 	}
 
-#define GETMEM(x) SCRATCH_MEM(pca)[(pc_cf->cfg_off & \
-			            (SCRATCH_SIZE(pca) - 1)) + x]
-	if ((pc_cf->cfgtype & DOSRESET)) {
-		GETMEM(0) = PCMCIA_SRESET;
+#define GETMEM(x) bus_mem_read_1(pca->scratch_bc, SCRATCH_MEM(pca), \
+				 (pc_cf->cfg_off & (SCRATCH_SIZE(pca)-1)) + x)
+#define PUTMEM(x,v) \
+	bus_mem_write_1(pca->scratch_bc, SCRATCH_MEM(pca), \
+			(pc_cf->cfg_off & (SCRATCH_SIZE(pca)-1)) + x, v)
+
+	if (ISSET(pc_cf->cfgtype, DOSRESET)) {
+		PUTMEM(0, PCMCIA_SRESET);
 		delay(50000);
 	}
 
 
-	PPRINTF(("CMDR %x\n",((pc_cf->cfgtype & CFGENTRYID) ?
+	PPRINTF(("CMDR %x\n",(ISSET(pc_cf->cfgtype, CFGENTRYID) ?
 			 pc_cf->cfgid |CFGENTRYID:
 			 (pc_cf->cfgtype & CFGENTRYMASK)|1)|
 		    (pc_cf->irq_level ? PCMCIA_LVLREQ : 0)
 	));
 
-	GETMEM(0) = ((pc_cf->cfgtype & CFGENTRYID) ?
-			 pc_cf->cfgid |CFGENTRYID:
-			 (pc_cf->cfgtype & CFGENTRYMASK)|1)|
-		    (pc_cf->irq_level ? PCMCIA_LVLREQ : 0);
+	PUTMEM(0, (ISSET(pc_cf->cfgtype, CFGENTRYID) ?
+		   pc_cf->cfgid |CFGENTRYID:
+		   (pc_cf->cfgtype & CFGENTRYMASK)|1)|
+	       (pc_cf->irq_level ? PCMCIA_LVLREQ : 0));
 	delay(50000);
 
-	if (pc_cf->cfg_regmask & (1 << (PCMCIA_SCR / 2)))
-		GETMEM(PCMCIA_SCR) = (link->slot & 1) | 0x10;
+	if (ISSET(pc_cf->cfg_regmask, (1 << (PCMCIA_SCR / 2))))
+		PUTMEM(PCMCIA_SCR, (link->slot & 1) | 0x10);
 
 #if 0
 	DPRINTF(("CCSR %x\n", GETMEM(PCMCIA_CCSR]));
-	if (GETMEM(PCMCIA_CCSR] & PCMCIA_POWER_DOWN) {
-		GETMEM(PCMCIA_CCSR] &= ~PCMCIA_POWER_DOWN;
-		DPRINTF(("CCSR now %x\n", GETMEM(PCMCIA_CCSR]));
+	if (ISSET(GETMEM(PCMCIA_CCSR), PCMCIA_POWER_DOWN)) {
+		u_char val = GETMEM(PCMCIA_CCSR);
+		CLR(val, PCMCIA_POWER_DOWN);
+		PUTMEM(PCMCIA_CCSR, var);
+		DPRINTF(("CCSR now %x\n", GETMEM(PCMCIA_CCSR)));
 	}
 #endif
 
+
+	PPRINTF(("pcmcia_mapcard: about to initialize...\n"));
+
 	if ((err = PCMCIA_SERVICE(pca, link, PCMCIA_OP_WAIT,
-				  500000, 0)) != 0)
+				  1000, 0)) != 0) {
 		PPRINTF(("failed to initialize %d\n", err));
+		err = 0;		/* XXX */
+	}
 error:
-	PCMCIA_MAP_MEM(pca, link, 0, 0, 0, PCMCIA_LAST_WIN | PCMCIA_UNMAP);
+	PCMCIA_MAP_MEM(pca, link, SCRATCH_BC(pca), SCRATCH_MEM(pca), 0,
+		       SCRATCH_SIZE(pca), PCMCIA_LAST_WIN | PCMCIA_UNMAP);
 	if (err != 0) {
+		PPRINTF(("pcmcia_mapcard: unmaping\n"));
 		for (i = 0; i < pc_cf->memwin; i++) {
 			PCMCIA_MAP_MEM(pca, link,
+				       pca->pa_bc,
 				       (caddr_t) pc_cf->mem[i].start,
 				       pc_cf->mem[i].caddr,
 				       pc_cf->mem[i].len,
@@ -863,12 +745,12 @@ error:
 				      PCMCIA_MAP_8)) | i | PCMCIA_UNMAP);
 		}
 		PCMCIA_MAP_INTR(pca, link, pc_cf->irq_num, PCMCIA_UNMAP);
-		link->flags &= ~CARD_IS_MAPPED;
+		CLR(link->flags, CARD_IS_MAPPED);
 		link->iowin = 0;
 		link->memwin = 0;
 		link->intr = 0;
 	} else {
-		link->flags |= CARD_IS_MAPPED;
+		SET(link->flags, CARD_IS_MAPPED);
 		link->iowin = pc_cf->iowin;
 		link->memwin = pc_cf->memwin;
 		link->intr = pc_cf->irq_num;
@@ -891,14 +773,15 @@ pcmcia_unmapcard(link)
 		return ENODEV;
 
 	for (i = 0; i < link->memwin; i++)
-		PCMCIA_MAP_MEM(pca, link, 0, 0, 0, (i | PCMCIA_UNMAP));
+		PCMCIA_MAP_MEM(pca, link, pca->pa_bc, 0, 0, 0,
+			       (i | PCMCIA_UNMAP));
 
 	for (i = 0; i < link->iowin; i++)
 		PCMCIA_MAP_IO(pca, link, 0, 0, (i | PCMCIA_UNMAP));
 
 	PCMCIA_MAP_INTR(pca, link, link->intr, PCMCIA_UNMAP);
-	PCMCIA_SERVICE(pca, link, PCMCIA_OP_RESET, 0, 0);
-	link->flags &= ~(CARD_IS_MAPPED | PCMCIA_SLOT_INUSE);
+	PCMCIA_SERVICE(pca, link, PCMCIA_OP_RESET, 50000, 0);
+	CLR(link->flags, (CARD_IS_MAPPED | PCMCIA_SLOT_INUSE));
 	link->iowin = 0;
 	link->memwin = 0;
 	link->intr = 0;
@@ -906,30 +789,28 @@ pcmcia_unmapcard(link)
 }
 
 
-static int
+int
 pcmcia_mapcard_and_configure(link, unit, pc_cf)
 	struct pcmcia_link *link;
 	struct pcmcia_conf *pc_cf;
 	int             unit;
 {
-	int             err;
 	int             mymap = 0;
+	int err;
 
 	PPRINTF(("- pcmcia_mapcard_and_configure\n"));
 	if (pc_cf->driver_name[0][0]) {
-#if 0
 		if ((err = pcmcia_mapcard(link, unit, pc_cf)) != 0) {
 			return err;
 		}
 		mymap=1;
-#endif
 		link->fordriver = pc_cf->driver_name[0];
-	} else {
+	} else
 		link->fordriver = NULL;
-		pc_cf = NULL;
-	}
-	pcmcia_probe_bus(link, 0, link->slot, pc_cf);
-	if ((link->flags & PCMCIA_SLOT_INUSE) == 0) {
+	
+	pcmcia_probe_link(link);
+
+	if (!ISSET(link->flags, PCMCIA_SLOT_INUSE)) {
 		if (mymap)
 			pcmcia_unmapcard(link);
 		return ENODEV;
@@ -952,7 +833,7 @@ pcmcia_read_cis(link, scratch, offs, len)
 	int size = SCRATCH_SIZE(pca);
 	volatile int *inuse = &SCRATCH_INUSE(pca);
 
-	PPRINTF(("- pcmcia_read_cis\n"));
+	PPRINTF(("- pcmcia_read_cis: mem %p size %d\n", p, size));
 	if (pca == NULL)
 		return ENXIO;
 
@@ -968,15 +849,18 @@ pcmcia_read_cis(link, scratch, offs, len)
 		int tlen = min(len + toff, size / 2) - toff;
 		int i;
 
-		if ((err = PCMCIA_MAP_MEM(pca, link, p, pgoff, size,
+		if ((err = PCMCIA_MAP_MEM(pca, link, pca->pa_bc, p, pgoff,
+					  size,
 					  PCMCIA_MAP_ATTR |
 					  PCMCIA_LAST_WIN)) != 0)
 			goto error;
 
+		PPRINTF(("- pcmcia_read_cis: mem mapped\n"));
+
 		for (i = 0; i < tlen; j++, i++)
 			scratch[j] = p[toff + i * 2];
 
-		PCMCIA_MAP_MEM(pca, link, p, 0, size,
+		PCMCIA_MAP_MEM(pca, link, pca->pa_bc, p, 0, size,
 			       PCMCIA_LAST_WIN | PCMCIA_UNMAP);
 		len -= tlen;
 	}
@@ -986,21 +870,25 @@ error:
 	wakeup((caddr_t) inuse); 
 	splx(s);
 
+	PPRINTF(("- pcmcia_read_cis return %d\n", err));
 	return err;
 }
 
 /* here we start our pseudodev for controlling the slots */
 #define PCMCIABUS_UNIT(a)    (minor(a))
-#define PCMCIABUS_SLOT(a)    (a&0x7)
-#define PCMCIABUS_CHIPIID(a) (a&0x3)
-#define PCMCIABUS_CHIP       0x10
-#define PCMCIABUS_BUS        0x20
+#define PCMCIABUS_SLOT(a)    (a&0x3)	/* per-controller */
+#define PCMCIABUS_SLOTID(a)  (a&0xf)	/* system-wide assignment */
+#define PCMCIABUS_CHIPNO(a)  ((a&0xf)>>2)
+#define PCMCIABUS_CHIPID(a) (a&0x3)
+#define PCMCIABUS_CHIP       0x40
+#define PCMCIABUS_BUS        0x80
+#define PCMCIABUS_BUSID(a)   (a&0x3)
 #define PCMCIABUS_DEVTYPE(a) ((a)&(PCMCIABUS_CHIP|PCMCIABUS_BUS))
 static int      busopen = 0;
 static int      chipopen[4] = {0, 0, 0, 0};
 
 int
-pcmciabusopen(dev, flag, mode, p)
+pcmciaopen(dev, flag, mode, p)
 	dev_t           dev;
 	int             flag, mode;
 	struct proc    *p;
@@ -1011,8 +899,6 @@ pcmciabusopen(dev, flag, mode, p)
 	struct pcmciabus_softc *pcmcia;
 
 	PPRINTF(("- pcmciabusopen\n"));
-	if (pcmcia_cntrl == 0)
-		return ENXIO;
 	switch (PCMCIABUS_DEVTYPE(unit)) {
 	case PCMCIABUS_BUS:
 		if (unit != PCMCIABUS_BUS)
@@ -1023,10 +909,11 @@ pcmciabusopen(dev, flag, mode, p)
 		break;
 
 	case PCMCIABUS_CHIP:
-		chipid = PCMCIABUS_CHIPIID(unit);
-		if (chipid > 3)
+		chipid = PCMCIABUS_CHIPID(unit);
+		if (chipid < 0 || chipid >= pcmciabus_cd.cd_ndevs)
 			return ENXIO;
-		if (pcmcia_drivers[chipid].adapter_softc == NULL)
+		pcmcia = pcmciabus_cd.cd_devs[chipid];
+		if (pcmcia == NULL || pcmcia->sc_driver == NULL)
 			return ENXIO;
 
 		if (chipopen[chipid])
@@ -1037,20 +924,22 @@ pcmciabusopen(dev, flag, mode, p)
 
 	case 0:
 		slot = PCMCIABUS_SLOT(unit);
-		chipid = slot >> 1;
+		chipid = PCMCIABUS_CHIPNO(unit);
 
-		if (chipid > 7)
+		if (chipid < 0 || chipid >= pcmciabus_cd.cd_ndevs)
 			return ENXIO;
 
-		if (pcmcia_drivers[chipid].adapter_softc == NULL)
+		pcmcia = pcmciabus_cd.cd_devs[chipid];
+		if (pcmcia == NULL || pcmcia->sc_driver == NULL)
 			return ENXIO;
-		pcmcia = pcmciabuscd.cd_devs[0];
 		link = pcmcia->sc_link[slot];
+		if (!link)
+		 	return ENXIO;
 
-		if (link->flags & PCMCIA_SLOT_OPEN)
+		if (ISSET(link->flags, PCMCIA_SLOT_OPEN))
 			return EBUSY;
 
-		link->flags |= PCMCIA_SLOT_OPEN;
+		SET(link->flags, PCMCIA_SLOT_OPEN);
 		break;
 
 	default:
@@ -1062,7 +951,7 @@ pcmciabusopen(dev, flag, mode, p)
 
 
 int
-pcmciabusclose(dev)
+pcmciaclose(dev)
 {
 	int unit = PCMCIABUS_UNIT(dev);
 	int chipid, slot;
@@ -1071,25 +960,24 @@ pcmciabusclose(dev)
 	int s;
 
 	PPRINTF(("- pcmciabusclose\n"));
-	if (pcmcia_cntrl == 0)
-		return ENXIO;
 	switch (PCMCIABUS_DEVTYPE(unit)) {
 	case PCMCIABUS_BUS:
 		busopen = 0;
 		break;
 
 	case PCMCIABUS_CHIP:
-		chipid = PCMCIABUS_CHIPIID(unit);
+		chipid = PCMCIABUS_CHIPID(unit);
 		chipopen[chipid] = 0;
 		break;
 
 	case 0:
 		slot = PCMCIABUS_SLOT(unit);
-		pcmcia = pcmciabuscd.cd_devs[0];
+		chipid = PCMCIABUS_CHIPNO(unit);
+		pcmcia = pcmciabus_cd.cd_devs[chipid];
 		link = pcmcia->sc_link[slot];
 
 		s = splclock();
-		link->flags &= ~(PCMCIA_SLOT_OPEN|PCMCIA_SLOT_EVENT);
+		CLR(link->flags, (PCMCIA_SLOT_OPEN|PCMCIA_SLOT_EVENT));
 		splx(s);
 		break;
 
@@ -1104,8 +992,8 @@ pcmciachip_ioctl(chipid, cmd, data)
 	int             chipid, cmd;
 	caddr_t         data;
 {
-	int             err = 0;
-	struct pcmcia_adapter *pca = &pcmcia_drivers[chipid];
+	struct pcmciabus_softc *pcmcia = pcmciabus_cd.cd_devs[chipid];
+	struct pcmcia_adapter *pca = pcmcia->sc_driver;
 	struct pcmcia_link link;
 	struct pcmcia_regs *pi = (void *) data;
 
@@ -1117,7 +1005,7 @@ pcmciachip_ioctl(chipid, cmd, data)
 	case PCMCIAIO_READ_REGS:
 		pi->chip = chipid;
 		link.adapter = pca;
-		link.slot = chipid << 1;
+		link.slot = 0;
 		return PCMCIA_SERVICE(pca, &link, PCMCIA_OP_GETREGS,
 				      pi->chip_data, 0);
 	}
@@ -1131,7 +1019,9 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 	caddr_t         data;
 {
 	int             err = 0;
-	struct pcmcia_adapter *pca = &pcmcia_drivers[slotid >> 1];
+	struct pcmciabus_softc *pcmcia =
+	    pcmciabus_cd.cd_devs[PCMCIABUS_CHIPNO(slotid)];
+	struct pcmcia_adapter *pca = pcmcia->sc_driver;
 
 	PPRINTF(("- pcmciaslot_ioctl\n"));
 	if (link == NULL || pca->chip_link == NULL ||
@@ -1147,10 +1037,10 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 			err = PCMCIA_SERVICE(pca, link, PCMCIA_OP_STATUS,
 					     &pi->status, 0);
 			if (!err) {
-				pi->status |= ((link->flags & CARD_IS_MAPPED) ?
-					       PCMCIA_CARD_IS_MAPPED : 0) |
-					((link->flags & PCMCIA_SLOT_INUSE) ?
-					 PCMCIA_CARD_INUSE : 0);
+			    if (ISSET(link->flags, CARD_IS_MAPPED))
+				SET(pi->status, PCMCIA_CARD_IS_MAPPED);
+			    if (ISSET(link->flags, PCMCIA_SLOT_INUSE))
+				SET(pi->status, PCMCIA_CARD_INUSE);
 			}
 			return err;
 		}
@@ -1163,7 +1053,7 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 			if ((err = PCMCIA_SERVICE(pca, link, PCMCIA_OP_STATUS,
 						  &status, 0)) != 0)
 				return err;
-			if ((status & PCMCIA_CARD_PRESENT) == 0)
+			if (!ISSET(status, PCMCIA_CARD_PRESENT))
 				return ENODEV;
 			pi->slot = slotid;
 			return pcmcia_read_cis(link, pi->cis_data, 0,
@@ -1180,6 +1070,8 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 		return pcmcia_unconfigure(link);
 
 	case PCMCIAIO_UNMAP:
+		if (ISSET(link->flags, PCMCIA_SLOT_INUSE))
+			return EBUSY;
 		return pcmcia_unmapcard(link);
 
 	case PCMCIAIO_SET_POWER:
@@ -1226,11 +1118,11 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 					     &status, 0);
 			if (err)
 				return err;
-			if ((status & PCMCIA_CARD_PRESENT) == 0) 
+			if (!ISSET(status, PCMCIA_CARD_PRESENT)) 
 				return ENODEV;
 
-			if (status = pcmcia_read_cis(link, pi->cis_data, 0,
-						     CIS_MAXSIZE))
+			if ((status = pcmcia_read_cis(link, pi->cis_data, 0,
+						      CIS_MAXSIZE)))
 				return status;
 
 			bzero(&pc_cf, sizeof(pc_cf));
@@ -1246,7 +1138,9 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 
 			SCRATCH_INUSE(pca) = 1;
 			splx(s);
-			if ((err = PCMCIA_MAP_MEM(pca, link, SCRATCH_MEM(pca),
+			if ((err = PCMCIA_MAP_MEM(pca, link,
+						  SCRATCH_BC(pca),
+						  SCRATCH_MEM(pca),
 						  pc_cf.cfg_off &
 						  ~(SCRATCH_SIZE(pca)-1),
 						  SCRATCH_SIZE(pca),
@@ -1264,7 +1158,9 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 				}
 				*d++ = 0xff;
 				*d++ = 0xff;
-				PCMCIA_MAP_MEM(pca, link, SCRATCH_MEM(pca),
+				PCMCIA_MAP_MEM(pca, link,
+					       SCRATCH_BC(pca),
+					       SCRATCH_MEM(pca),
 					       0,SCRATCH_SIZE(pca), 
 					       PCMCIA_LAST_WIN|PCMCIA_UNMAP);
 			} 
@@ -1281,49 +1177,56 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 }
 
 int
-pcmciabusioctl(dev, cmd, data, flag, p)
+pcmciaioctl(dev, cmd, data, flag, p)
 	dev_t           dev;
 	int             cmd;
 	caddr_t         data;
 	int             flag;
 	struct proc    *p;
 {
-	int             unit = PCMCIABUS_UNIT(dev);
+	int unit = PCMCIABUS_UNIT(dev);
+	int chipid = PCMCIABUS_CHIPNO(unit);
 	struct pcmciabus_softc *pcmcia;
 	struct pcmcia_link *link;
 
-	PPRINTF(("- pcmciabus_ioctl\n"));
-	pcmcia = pcmciabuscd.cd_devs[0];
-	if (pcmcia_cntrl == 0 || pcmcia == NULL)
+	PPRINTF(("- pcmciabusioctl\n"));
+	if (chipid < 0 || chipid >= pcmciabus_cd.cd_ndevs)
 		return ENXIO;
+
+	pcmcia = pcmciabus_cd.cd_devs[chipid];
+	if (pcmcia == NULL)
+		return ENXIO;
+
 	switch (PCMCIABUS_DEVTYPE(unit)) {
 #if 0
 	case PCMCIABUS_BUS:
-		return pcmciabus_ioctl(0, cmd, data);
+		return pcmciabus_ioctl(PCMCIABUS_BUSID(unit), cmd, data);
 #endif
 	case PCMCIABUS_CHIP:
-		return pcmciachip_ioctl(PCMCIABUS_CHIPIID(unit), cmd, data);
+		return pcmciachip_ioctl(PCMCIABUS_CHIPID(unit), cmd, data);
 	case 0:
 		link = pcmcia->sc_link[PCMCIABUS_SLOT(unit)];
-		return pcmciaslot_ioctl(link, PCMCIABUS_SLOT(unit), cmd, data);
+		return pcmciaslot_ioctl(link, PCMCIABUS_SLOTID(unit),
+					cmd, data);
 	default:
 		return ENXIO;
 	}
 }
 
 int
-pcmciabusselect(device, rw, p)
+pcmciaselect(device, rw, p)
 	dev_t device;
 	int rw;
 	struct proc *p;
 {
 	int s;
 	int unit = PCMCIABUS_UNIT(device);
+	int chipid = PCMCIABUS_CHIPNO(unit);
 	struct pcmciabus_softc *pcmcia;
 	struct pcmcia_link *link;
 
-	PPRINTF(("- pcmciabus_ioctl\n"));
-	pcmcia = pcmciabuscd.cd_devs[0];
+	PPRINTF(("- pcmciabus_select\n"));
+	pcmcia = pcmciabus_cd.cd_devs[chipid];
 	
 	switch (PCMCIABUS_DEVTYPE(unit)) {
 	case 0:
@@ -1335,14 +1238,14 @@ pcmciabusselect(device, rw, p)
 		return 0;
 	}
 
-	s = splclock();		/* XXX something higher than all devices that can plug in.... */
+	s = splpcmcia();
 	switch (rw) {
 	case FREAD:
 	case FWRITE:
 		break;
 	case 0:
-		if (link->flags & PCMCIA_SLOT_EVENT) {
-			link->flags &= ~PCMCIA_SLOT_EVENT;
+		if (ISSET(link->flags, PCMCIA_SLOT_EVENT)) {
+			CLR(link->flags, PCMCIA_SLOT_EVENT);
 			splx(s);
 			return 1;
 		}
@@ -1354,54 +1257,14 @@ pcmciabusselect(device, rw, p)
 }
 
 int
-pcmciabusmmap()
+pcmciammap()
 {
 	return ENXIO;
 }
 
-/* pcmcia template string match. A '*' matches any number of characters.
-   A NULL template matches all strings.
-   return-value 
-    0 nomatch 
-    1 wildcard match 
-    2 excact match
- */
-static int
-pcmcia_strcmp(templ,val,flags,msg)
-    char *templ;
-    char *val;
-    int flags;
-    char *msg;
-{
-    char *ltempl=NULL,*lval=NULL;
-
-    if (flags & PC_SHOWME)
-	    printf("%s = `%s'-`%s'\n", msg, templ ? templ : "X", val);
-
-    if(templ==NULL)
-        return 1;
-    while(*val) {
-        while(*templ=='*') {
-            ltempl=++templ;
-            lval=val;
-        }
-        if(*templ==*val) {
-            templ++;
-            val++;
-        } else {
-            if(ltempl==NULL)
-                return 0;
-            val=++lval;
-            templ=ltempl;
-        }
-    }
-    if(*templ!=0 && *templ!='*')
-        return 0;
-    return  ltempl?1:2;
-}
 
 #ifdef PCMCIA_DEBUG
-static void
+void
 pcmciadumpcf(cf)
 	struct pcmcia_conf * cf;
 {
@@ -1414,6 +1277,7 @@ pcmciadumpcf(cf)
 	printf("IRQ type %s%s\n", cf->irq_level ? "Level " : "", 
 				  cf->irq_pulse ? "Pulse" : "");
 	printf("IRQ num %x\n", cf->irq_num);
+	printf("IRQ mask %x\n", cf->irq_mask);
 	printf("CFG type %x %x\n", cf->cfgtype,cf->cfgid);
 	printf("Cardtype %s\n", cf->iocard ? "IO" : "MEM");
 	for (i = 0; i < cf->iowin; i++) {
@@ -1431,3 +1295,43 @@ pcmciadumpcf(cf)
 	}
 }
 #endif
+
+int
+pcmcia_print(aux, pnp)
+	void *aux;
+	char *pnp;
+{
+#if 0
+	struct pcmcia_attach_args *paa = aux;
+	printf(" slot %d", paa->paa_link->slot);
+#endif
+	return (0);			/* be silent */
+}
+
+/*
+ * Filter out inappropriate configurations before heading off to
+ * the device match routines.
+ */
+int
+pcmcia_submatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct device *self = match;
+	struct cfdata *cf = self->dv_cfdata;
+	struct pcmcia_attach_args *paa = aux;
+	struct pcmcia_link *link = paa->paa_link;
+
+#if 0
+	printf("pcmcia_submatch: paa=%p link=%p, cf=%p\n", paa, link, cf);
+	delay(2000000);
+
+#endif
+
+	if (cf->cf_loc[6] != -1 && link->slot != cf->cf_loc[6]) {
+		printf("slot mismatch: %d cf_loc %d\n", link->slot, cf->cf_loc[6]);
+		return 0;
+	}
+
+	return ((*cf->cf_attach->ca_match)(parent, match, aux));
+}

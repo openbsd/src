@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 1996/04/21 22:16:31 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 1996/04/29 14:13:15 hvozda Exp $	*/
 /*	$NetBSD: machdep.c,v 1.197 1996/04/12 08:44:40 mycroft Exp $	*/
 
 /*-
@@ -92,6 +92,12 @@
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/nvram.h>
+
+#include "apm.h"
+
+#if NAPM > 0
+#include <machine/apmvar.h>
+#endif
 
 #ifdef VM86
 #include <machine/vm86.h>
@@ -736,6 +742,16 @@ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
+#if NAPM > 0 && !defined(APM_NO_POWEROFF)
+		/* turn off, if we can.  But try to turn disk off and
+		 * wait a bit first--some disk drives are slow to clean up
+		 * and users have reported disk corruption.
+		 */
+		delay(500000);
+		apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
+		delay(500000);
+		apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
+#endif
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -1168,6 +1184,16 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+
+#ifdef USER_LDT
+#define MAXPROC ((MAXGDTSIZ-NGDT)/2)
+#else
+#define MAXPROC (MAXGDTSIZ-NGDT)
+#endif
+	if (maxproc > MAXPROC) {
+		printf("reducing maxproc to %d to fit into gdt\n", MAXPROC);
+		maxproc = MAXPROC;
+	}
 
 #ifdef DDB
 	ddb_init();

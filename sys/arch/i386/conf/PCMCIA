@@ -1,0 +1,138 @@
+#	$Id: PCMCIA,v 1.1 1996/04/29 14:12:24 hvozda Exp $
+#	$Source: /home/cvs/src/sys/arch/i386/conf/Attic/PCMCIA,v $
+#
+#	ATHENA-AHA	-- ATHENA kernel for Adaptec & others...
+#
+# from:	GENERIC -- everything that's currently supported
+#       NetBSD: GENERIC,v 1.12 1995/02/21 01:43:02 brezak Exp
+#
+
+machine		i386		# architecture, used by config; REQUIRED
+
+options		I586_CPU
+options		I486_CPU
+options		I386_CPU
+options		INSECURE
+options		MATH_EMULATE
+
+options		DUMMY_NOPS	# speed hack; recommanded
+options		XSERVER,UCONSOLE
+options		MACHINE_NONCONTIG
+
+maxusers	32		# estimated number of users
+options		TIMEZONE=300	# time zone to adjust RTC time by
+options		DST=1		# daylight savings time used by RTC
+
+options		SWAPPAGER	# paging; REQUIRED
+options		VNODEPAGER	# mmap() of files
+options		DEVPAGER	# mmap() of devices
+
+options		DDB		# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
+#options	DIAGNOSTIC	# internally consistency checks
+options		KTRACE		# system call tracing, a la ktrace(1)
+
+options		SYSVMSG		# System V-like message queues
+options		SYSVSEM		# System V-like semaphores
+options		SYSVSHM		# System V-like memory sharing
+#options	SHMMAXPGS=1024	# 1024 pages is the default
+
+options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+options		COMPAT_09	# NetBSD 0.9,
+options		COMPAT_10	# NetBSD 1.0,
+options		COMPAT_43	# and 4.3BSD
+options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+
+options		COMPAT_SVR4	# binary compatibility with SVR4
+options		COMPAT_IBCS2	# binary compatibility with SCO and ISC
+options		COMPAT_LINUX	# binary compatibility with Linux
+
+options		USER_LDT	# user-settable LDT; used by WINE
+options		LKM		# loadable kernel modules
+
+options		FFS #,QUOTA	# UFS and quotas
+#options	LFS		# log-structured file system
+options		MFS		# memory file system
+
+options		NFSCLIENT	# Network File System client
+options		NFSSERVER	# Network File System server
+options		HAS_VOPLEASE	# XXX
+
+options		APM_NOIDLE
+#options		PCIVERBOSE
+#options		PCMCIA_DEBUG
+#options		PCMCIA_ISA_DEBUG
+
+### SCSI:
+#options		CD9660		# ISO 9660 + Rock Ridge file system
+###
+options		MSDOSFS		# MS-DOS file system
+options		FIFO		# FIFOs; RECOMMENDED
+options		PROCFS		# /proc
+
+#options	GATEWAY		# packet forwarding
+options		INET		# IP + ICMP + TCP + UDP
+#options	NS		# XNS
+#options	ISO,TPIP	# OSI
+#options	EON		# OSI tunneling over IP
+#options	CCITT,LLC,HDLC	# X.25
+
+config		netbsd	swap generic
+options		GENERIC
+
+# Local Athena options
+
+options		PCVT_CTRL_ALT_DEL	# For screwed-over Linux weenies
+
+mainbus0 at root
+isa0	at mainbus0
+pci0	at mainbus0 bus 0
+
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
+
+vt0	at isa? port 0x60 irq 1
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+
+pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fd0	at fdc0 drive 0
+
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+wd0	at wdc0 drive 0
+
+spkr0	at pckbd? port 0x61
+#apm0	at mainbus?
+
+# Multiple controllers need some testing.  Some laptops have multiple PCIC
+# controllers instead of two-slot controllers.
+# The i82365 (pcic) controller uses the same ports for the first two
+# controllers and for the second two controllers.
+
+# IRQ 2/9 doesn't seem to work for status change interrupts, so use one
+# of the higher ones.
+pcicmaster0	at isa? port 0x3E0 size 2
+pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
+pcic1	at pcicmaster0 irq 12 iomem 0xd5000 iosiz 4096
+pcicmaster1 at isa? port 0x3E2 size 2
+pcic2	at pcicmaster1 irq 11 iomem 0xd6000 iosiz 4096
+pcic3	at pcicmaster1 irq 12 iomem 0xd7000 iosiz 4096
+
+pcmcia* at pcic?
+
+#ed0     at pcmcia? port 0x300 iomem 0xd8000 iosiz 8192 	irq 10
+ed0     at pcmcia? port 0x300 size 0x20 irq 10 slot ?
+ep0     at pcmcia? port 0x300 size 0x10 irq 10 slot ?
+#com1    at pcmcia? port 0x2f8 size 8 irq 5 slot ?
+#com2    at pcmcia? port 0x3e8 size 8 irq 5 slot ?
+com3    at pcmcia? port 0x2e8 size 8	irq 3 slot ?
+
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 4		# packet filter
+pseudo-device	ppp	2		# PPP
+pseudo-device	pty	64		# pseudo-terminals
