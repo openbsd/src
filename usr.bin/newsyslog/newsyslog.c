@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.48 2002/09/13 00:16:13 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.49 2002/09/13 18:50:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -88,7 +88,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.48 2002/09/13 00:16:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.49 2002/09/13 18:50:09 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -136,6 +136,9 @@ static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.48 2002/09/13 00:16:13 mi
 #define CE_FOLLOW	0x10		/* Follow symbolic links */
 #define NONE -1
 
+#define	MIN_PID		4		/* Don't touch pids lower than this */
+#define	MIN_SIZE	512		/* Don't rotate if smaller than this */
+
 struct conf_entry {
 	char    *log;		/* Name of the log */
 	uid_t   uid;		/* Owner of log */
@@ -163,7 +166,6 @@ int     noaction = 0;		/* Don't do anything, just show it */
 int	monitormode = 0;	/* Don't do monitoring by default */
 char    *conf = CONF;		/* Configuration file to use */
 time_t  timenow;
-#define MIN_PID		4
 char    hostname[MAXHOSTNAMELEN]; /* hostname */
 char    *daytime;		/* timenow in human readable form */
 
@@ -292,9 +294,9 @@ do_entry(struct conf_entry *ent)
 			printf(" age (hr): %d [%d] ", modtime, ent->hours);
 		if (monitormode && ent->flags & CE_MONITOR)
 			domonitor(ent->log, ent->whom);
-		if (!monitormode && (((ent->size > 0) && (size >= ent->size)) ||
-		    ((ent->hours > 0) && ((modtime >= ent->hours) ||
-		    (modtime < 0))))) {
+		if (!monitormode && ((ent->size > 0 && size >= ent->size) ||
+		    (ent->hours > 0 && (modtime >= ent->hours || modtime < 0)
+		    && ((ent->flags & CE_BINARY) || size >= MIN_SIZE)))) {
 			if (verbose)
 				printf("--> trimming log....\n");
 			if (noaction && !verbose)

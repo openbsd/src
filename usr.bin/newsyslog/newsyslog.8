@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.23 2002/09/13 01:12:55 millert Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.24 2002/09/13 18:50:09 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -157,13 +157,20 @@ Octal mode of created log files and archives.
 .It number of archives
 Specify the number of archives to be kept besides the log file itself.
 .It size of archives
-When the size of the log file reaches this point, the log file becomes trimmed
-as described above.
+When the size of the log file (in kilobytes) reaches this point, the log
+file is trimmed as described above.
 If this field is replaced by a
 .Ql * ,
 then the size of
 the log file is not taken into account when determining when to trim the
 log file.
+By default, files smaller than 512 bytes are not rotated unless the 
+.Sq B
+(binary) flag is set.
+This prevents
+.Nm
+from rotating files consisting solely of a message indicating
+that the log file has been turned over.
 .It archive interval
 Specify the time separation between the trimming of the log file.
 If this field is replaced by a
