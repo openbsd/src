@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.41 2003/01/06 05:23:34 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.42 2003/01/06 05:32:39 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.41 2003/01/06 05:23:34 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.42 2003/01/06 05:32:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -197,14 +197,17 @@ main(int argc, char *argv[])
 		(void)setgid(getgid());
 	}
 
-	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == 0)
-		errx(1, "kvm_openfiles: %s", buf);
+	if (vnodeflag)
+		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == 0)
+			errx(1, "kvm_openfiles: %s", buf);
 
 	(void)setegid(getgid());
 	(void)setgid(getgid());
 
-	if ((ret = kvm_nlist(kd, nl)) == -1)
-		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
+	if (vnodeflag)
+		if ((ret = kvm_nlist(kd, nl)) == -1)
+			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
+
 	if (!(fileflag | vnodeflag | ttyflag | swapflag | totalflag))
 		usage();
 	if (fileflag || totalflag)
