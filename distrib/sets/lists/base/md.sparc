@@ -164,6 +164,9 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ccdvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/clock_subr.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/cons.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/dec
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/dec/clockvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/dec/mcclockvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/eisa
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/eisa/eisadevs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/eisa/eisadevs_data.ph
@@ -446,6 +449,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/esavar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/esovar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/fmsradio.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/fmsreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751var.ph
@@ -637,10 +642,14 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/sunkbdvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/uperfio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/ascvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/if_levar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/ioasicreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/ioasicvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/tcdevs.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/tcdevs_data.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/tcdsreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/tcdsvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/tcreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/tcvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb

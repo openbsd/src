@@ -528,7 +528,6 @@
 ./usr/share/man/cat1/rev.0
 ./usr/share/man/cat1/rksh.0
 ./usr/share/man/cat1/rlog.0
-./usr/share/man/cat1/rlogin.0
 ./usr/share/man/cat1/rm.0
 ./usr/share/man/cat1/rmd160.0
 ./usr/share/man/cat1/rmdir.0
@@ -1185,7 +1184,6 @@
 ./usr/share/man/cat4/ses.0
 ./usr/share/man/cat4/sf.0
 ./usr/share/man/cat4/sf2r.0
-./usr/share/man/cat4/sf4r.0
 ./usr/share/man/cat4/sfr.0
 ./usr/share/man/cat4/siop.0
 ./usr/share/man/cat4/sis.0
@@ -1326,6 +1324,7 @@
 ./usr/share/man/cat4/uplcom.0
 ./usr/share/man/cat4/urandom.0
 ./usr/share/man/cat4/urio.0
+./usr/share/man/cat4/url.0
 ./usr/share/man/cat4/usb.0
 ./usr/share/man/cat4/uscanner.0
 ./usr/share/man/cat4/usscanner.0
@@ -1861,9 +1860,7 @@
 ./usr/share/man/cat8/repquota.0
 ./usr/share/man/cat8/restore.0
 ./usr/share/man/cat8/revnetgroup.0
-./usr/share/man/cat8/rexecd.0
 ./usr/share/man/cat8/rip6query.0
-./usr/share/man/cat8/rlogind.0
 ./usr/share/man/cat8/rmail.0
 ./usr/share/man/cat8/rmgroup.0
 ./usr/share/man/cat8/rmt.0

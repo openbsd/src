@@ -380,7 +380,6 @@
 ./usr/bin/reset
 ./usr/bin/rev
 ./usr/bin/rlog
-./usr/bin/rlogin
 ./usr/bin/rpcinfo
 ./usr/bin/rs
 ./usr/bin/rsh
@@ -1175,8 +1174,6 @@
 ./usr/libexec/makekey
 ./usr/libexec/makewhatis
 ./usr/libexec/ntalkd
-./usr/libexec/rexecd
-./usr/libexec/rlogind
 ./usr/libexec/rpc.rquotad
 ./usr/libexec/rpc.rstatd
 ./usr/libexec/rpc.rusersd

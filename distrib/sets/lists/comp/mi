@@ -113,6 +113,9 @@
 ./usr/include/dev/ccdvar.h
 ./usr/include/dev/clock_subr.h
 ./usr/include/dev/cons.h
+./usr/include/dev/dec
+./usr/include/dev/dec/clockvar.h
+./usr/include/dev/dec/mcclockvar.h
 ./usr/include/dev/eisa
 ./usr/include/dev/eisa/eisadevs.h
 ./usr/include/dev/eisa/eisadevs_data.h
@@ -395,6 +398,8 @@
 ./usr/include/dev/pci/esavar.h
 ./usr/include/dev/pci/esoreg.h
 ./usr/include/dev/pci/esovar.h
+./usr/include/dev/pci/fmsradio.h
+./usr/include/dev/pci/fmsreg.h
 ./usr/include/dev/pci/fmsvar.h
 ./usr/include/dev/pci/hifn7751reg.h
 ./usr/include/dev/pci/hifn7751var.h
@@ -586,10 +591,14 @@
 ./usr/include/dev/sun/sunkbdvar.h
 ./usr/include/dev/sun/uperfio.h
 ./usr/include/dev/tc
+./usr/include/dev/tc/ascvar.h
 ./usr/include/dev/tc/if_levar.h
+./usr/include/dev/tc/ioasicreg.h
 ./usr/include/dev/tc/ioasicvar.h
 ./usr/include/dev/tc/tcdevs.h
 ./usr/include/dev/tc/tcdevs_data.h
+./usr/include/dev/tc/tcdsreg.h
+./usr/include/dev/tc/tcdsvar.h
 ./usr/include/dev/tc/tcreg.h
 ./usr/include/dev/tc/tcvar.h
 ./usr/include/dev/usb
