@@ -1,3 +1,4 @@
+/*	$OpenBSD: assert.h,v 1.4 1999/02/09 06:36:25 smurph Exp $ */
 #define assert(x) \
 ({\
 	if (!(x)) {\

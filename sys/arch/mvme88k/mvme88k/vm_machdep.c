@@ -1,3 +1,4 @@
+/*	$OpenBSD: vm_machdep.c,v 1.7 1999/02/09 06:36:30 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -41,7 +42,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.6 1999/01/10 13:34:18 niklas Exp $
+ *	$Id: vm_machdep.c,v 1.7 1999/02/09 06:36:30 smurph Exp $
  */
 
 #include <sys/param.h>

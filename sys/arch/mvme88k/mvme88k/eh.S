@@ -1,3 +1,4 @@
+/*	$OpenBSD: eh.S,v 1.6 1999/02/09 06:36:28 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University

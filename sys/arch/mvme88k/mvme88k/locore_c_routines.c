@@ -1,3 +1,4 @@
+/* $OpenBSD: locore_c_routines.c,v 1.5 1999/02/09 06:36:28 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -296,7 +297,7 @@ void vector_init(
     num++; /* skip 496, BUG ROM vector */
 
     SET_VECTOR(450, to, syscall_handler);
-#if 0
+
     while (num <= SIGSYS_MAX)
 	SET_VECTOR(num++, to, sigsys);
 
@@ -305,6 +306,7 @@ void vector_init(
 
     SET_VECTOR(504, to, stepbpt);
     SET_VECTOR(511, to, userbpt);
+#if 0
     vector[496].word_one = 496 * 4;
     vector[497].word_two = 497 * 4;
 #endif

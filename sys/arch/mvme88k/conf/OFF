@@ -1,6 +1,4 @@
-#
-# This configuration file contains all possible options
-#
+#	$OpenBSD: OFF,v 1.2 1999/02/09 06:36:24 smurph Exp $
 
 machine mvme88k
 

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ansi.h	8.2 (Berkeley) 1/4/94
- *      $Id: ansi.h,v 1.6 1997/07/07 05:56:38 millert Exp $
+ *      $Id: ansi.h,v 1.7 1999/02/09 06:36:25 smurph Exp $
  */
 
 #ifndef	_ANSI_H_
@@ -53,6 +53,10 @@
 #define	_BSD_TIME_T_	int			/* time() */
 #define	_BSD_CLOCKID_T_	int
 #define	_BSD_TIMER_T_	int
+
+#if 0
+#define	_BSD_VA_LIST_	char*			/* va_list */
+#endif
 
 #include "va-m88k.h"
 

@@ -1,4 +1,6 @@
+/*	$OpenBSD: reg.h,v 1.4 1999/02/09 06:36:27 smurph Exp $ */
 /*
+ * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
  *

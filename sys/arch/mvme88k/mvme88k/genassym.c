@@ -1,3 +1,4 @@
+/*	$OpenBSD: genassym.c,v 1.4 1999/02/09 06:36:28 smurph Exp $	*/
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.3 1997/03/03 20:21:34 rahnds Exp $
+ *	$Id: genassym.c,v 1.4 1999/02/09 06:36:28 smurph Exp $
  */
 
 #ifndef KERNEL

@@ -1,3 +1,4 @@
+/*	$OpenBSD: proc.h,v 1.4 1999/02/09 06:36:27 smurph Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +43,7 @@
  *	@(#)proc.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: proc.h,v 1.6 92/11/26 02:04:41 torek Exp  (LBL)
- * $Id: proc.h,v 1.3 1997/03/03 20:21:10 rahnds Exp $
+ * $Id: proc.h,v 1.4 1999/02/09 06:36:27 smurph Exp $
  */
 
 #include <machine/pcb.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1995/04/19 22:37:27 mycroft Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 1999/02/09 06:36:28 smurph Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.

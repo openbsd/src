@@ -1,3 +1,4 @@
+/*	$OpenBSD: process.S,v 1.5 1999/02/09 06:36:30 smurph Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.

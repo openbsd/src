@@ -1,3 +1,4 @@
+/*	$OpenBSD: cpu.h,v 1.5 1999/02/09 06:36:26 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993

@@ -1,3 +1,4 @@
+/*	$OpenBSD: db_trace.c,v 1.5 1999/02/09 06:36:25 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University

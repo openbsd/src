@@ -1,3 +1,4 @@
+/*	$OpenBSD: locore.S,v 1.7 1999/02/09 06:36:28 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur

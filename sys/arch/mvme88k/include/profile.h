@@ -1,3 +1,4 @@
+/*	$OpenBSD: profile.h,v 1.7 1999/02/09 06:36:27 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -32,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.6 1997/03/25 17:07:37 rahnds Exp $
+ *	$Id: profile.h,v 1.7 1999/02/09 06:36:27 smurph Exp $
  */
 
 #define	_MCOUNT_DECL static inline void _mcount

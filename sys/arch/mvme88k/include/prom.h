@@ -1,6 +1,6 @@
-/*	$NetBSD$ */
-
+/*	$OpenBSD: prom.h,v 1.3 1999/02/09 06:36:27 smurph Exp $ */
 /*
+ * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.

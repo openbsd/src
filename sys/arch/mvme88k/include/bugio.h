@@ -1,3 +1,4 @@
+/*	$OpenBSD: bugio.h,v 1.5 1999/02/09 06:36:25 smurph Exp $ */
 #include "sys/cdefs.h"
 
 struct bugdisk_io {

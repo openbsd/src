@@ -1,3 +1,4 @@
+/*	$OpenBSD: disklabel.h,v 1.4 1999/02/09 06:36:26 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1995 Dale Rahn.

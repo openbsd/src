@@ -1,3 +1,4 @@
+/*	$OpenBSD: disksubr.c,v 1.9 1999/02/09 06:36:28 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -96,6 +97,70 @@ dk_establish(dk, dev)
  * (e.g., sector size) must be filled in before calling us.
  * Returns null on success and an error string on failure.
  */
+
+char *
+readdisklabel(dev, strat, lp, clp, spoofonly)
+	dev_t dev;
+	void (*strat)();
+	struct disklabel *lp;
+	struct cpu_disklabel *clp;
+	int spoofonly;
+{
+	struct buf *bp;
+	char *msg = NULL;
+
+	/* minimal requirements for archetypal disk label */
+	if (lp->d_secsize == 0)
+		lp->d_secsize = DEV_BSIZE;
+	if (lp->d_secperunit == 0)
+		lp->d_secperunit = 0x1fffffff;
+	lp->d_npartitions = RAW_PART + 1;
+	if (lp->d_partitions[RAW_PART].p_size == 0)
+		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+	lp->d_partitions[RAW_PART].p_offset = 0;
+
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		return (NULL);
+
+	/* obtain buffer to probe drive with */
+	bp = geteblk((int)lp->d_secsize);
+
+	/* request no partition relocation by driver on I/O operations */
+	bp->b_dev = dev;
+	bp->b_blkno = 0; /* contained in block 0 */
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylin = 0; /* contained in block 0 */
+	(*strat)(bp);
+
+	if (biowait(bp)) {
+		msg = "cpu_disklabel read error\n";
+	} else {
+		bcopy(bp->b_data, clp, sizeof (struct cpu_disklabel));
+	}
+
+	bp->b_flags = B_INVAL | B_AGE | B_READ;
+	brelse(bp);
+
+	if (msg) {
+#if defined(CD9660)
+		if (iso_disklabelspoof(dev, strat, lp) == 0)
+			msg = NULL;
+#endif
+		return (msg); 
+	}
+	cputobsdlabel(lp, clp);
+#ifdef DEBUG
+	if (disksubr_debug > 0) {
+		printlp(lp, "readdisklabel:bsd label");
+		printclp(clp, "readdisklabel:cpu label");
+	}
+#endif
+	return (msg);
+}
+
+#if 0
 char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
@@ -144,6 +209,7 @@ readdisklabel(dev, strat, lp, clp)
 	return (msg);
 }
 
+#endif /* 0 */
 /*
  * Check new disk label for sensibility
  * before setting it.

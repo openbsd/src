@@ -1,3 +1,4 @@
+/*	$OpenBSD: vmparam.h,v 1.5 1999/02/09 06:36:27 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
