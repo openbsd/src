@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.6 1997/05/31 08:55:05 tholo Exp $
+.\"	$OpenBSD: malloc.3,v 1.7 1997/08/23 10:43:24 pefo Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -76,6 +76,8 @@ suitably aligned (after possible pointer
 coercion) for storage of any type of object. If the space is of
 .Em pagesize
 or larger, the memory returned will be page-aligned.
+.Pp
+Allocation of a zero size object returns a pointer to a zero size object.
 .Pp
 The
 .Fn free
@@ -120,7 +122,8 @@ If
 .Fa size
 is zero and
 .Fa ptr
-is not a null pointer, the object it points to is freed.
+is not a null pointer, the object it points to is freed and a new zero size
+object is returned.
 .Pp
 Malloc will first look for a symbolic link called
 .Pa /etc/malloc.conf
@@ -211,8 +214,8 @@ function returns no value.
 .Pp
 The
 .Fn realloc
-function returns either a null pointer or a pointer
-to the possibly moved allocated space.
+function a pointer to the possibly moved allocated space;
+otherwise a null pointer is returned.
 .Sh MESSAGES
 If 
 .Fn malloc ,

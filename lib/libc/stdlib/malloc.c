@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.28 1997/08/22 17:06:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.29 1997/08/23 10:43:25 pefo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1234,9 +1234,6 @@ realloc(void *ptr, size_t size)
     }
     if (!ptr) {
 	r = imalloc(size);
-    } else if (ptr && !size) {
-	ifree(ptr);
-	r = 0;
     } else {
         r = irealloc(ptr, size);
     }
