@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.7 2003/01/30 07:53:58 henric Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.16 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ prom_get_msgbuf(len, align)
 		char name[80];
 
 		if ((OF_getprop(rooth, "name", &name, sizeof(name))) != -1) {
-			if (strcmp(name, "SUNW,Ultra-250")) 
+			if (strcmp(name, "SUNW,Ultra-250") && strcmp(name, "SUNW,Ultra-4")) 
 				is_e250 = 0;
 		} else prom_printf("prom_get_msgbuf: cannot get \"name\"\r\n");
 	} else prom_printf("prom_get_msgbuf: cannot open root device \r\n");
@@ -523,7 +523,7 @@ prom_get_msgbuf(len, align)
 		return -1;
 	}
 	if (is_e250) {
-		prom_printf("prom_get_msgbuf: Cannot recover msgbuf on E250\r\n");
+		prom_printf("prom_get_msgbuf: Cannot recover msgbuf on E250/450\r\n");
 	} else if (OF_test("test-method") == 0) {
 		if (OF_test_method(memh, "SUNW,retain") != 0) {
 			args.name = ADR2CELL(&"call-method");
