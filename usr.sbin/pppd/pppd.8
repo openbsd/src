@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.21 2000/04/15 11:46:00 aaron Exp $
+.\" $OpenBSD: pppd.8,v 1.22 2002/05/19 20:47:52 deraadt Exp $
 .\" manual page [] for pppd 2.3
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\" SH section heading
@@ -662,6 +662,9 @@ A hash (#) starts a comment, which continues until the end of the
 line.  There is no restriction on using the \fIfile\fR or \fIcall\fR
 options within an options file.
 .SH SECURITY
+Users must be in group network to be able to use
+.I pppd.
+.LP
 .I pppd
 provides system administrators with sufficient access control that PPP
 access to a server machine can be provided to legitimate users without
