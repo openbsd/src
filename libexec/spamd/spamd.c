@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.5 2002/12/26 01:12:24 mickey Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.6 2002/12/30 22:05:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -76,7 +76,7 @@ struct con {
 	char obuf[8192];
 	char *op;
 	int ol;
-} con[MAXCON];
+} *con;
 
 void
 usage(void)
@@ -344,9 +344,6 @@ main(int argc, char *argv[])
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
 
-	for (i = 0; i < MAXCON; i++)
-		con[i].fd = -1;
-
 	while ((ch = getopt(argc, argv, "45c:p:dr:n:")) != -1) {
 		switch (ch) {
 		case '4':
@@ -379,6 +376,13 @@ main(int argc, char *argv[])
 			break;
 		}
 	}
+
+	con = calloc(maxcon, sizeof(*con));
+	if (con == NULL)
+		err(1, "calloc");
+
+	for (i = 0; i < maxcon; i++)
+		con[i].fd = -1;
 
 	signal(SIGPIPE, SIG_IGN);
 
