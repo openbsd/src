@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.61 2003/10/09 20:33:14 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.62 2003/10/16 20:14:42 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -315,6 +315,16 @@ mountd_svc_run(void)
 	extern int __svc_fdsetsize;
 
 	for (;;) {
+		if (gothup) {
+			get_exportlist();
+			gothup = 0;
+		}
+		if (gotterm) {
+			(void) clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1,
+			    RPCMNT_UMNTALL, xdr_void, (caddr_t)0, xdr_void,
+			    (caddr_t)0, umntall_each);
+			exit(0);
+		}
 		if (__svc_fdset) {
 			int bytes = howmany(__svc_fdsetsize, NFDBITS) *
 			    sizeof(fd_mask);
@@ -343,16 +353,6 @@ mountd_svc_run(void)
 		default:
 			svc_getreqset2(fds, svc_maxfd+1);
 			break;
-		}
-		if (gothup) {
-			get_exportlist();
-			gothup = 0;
-		}
-		if (gotterm) {
-			(void) clnt_broadcast(RPCPROG_MNT, RPCMNT_VER1,
-			    RPCMNT_UMNTALL, xdr_void, (caddr_t)0, xdr_void,
-			    (caddr_t)0, umntall_each);
-			exit(0);
 		}
 	}
 }
