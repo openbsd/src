@@ -1,3 +1,5 @@
+/*	$OpenBSD: dhcrelay.c,v 1.13 2004/04/13 23:16:17 henning Exp $ */
+
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
  * Copyright (c) 1997, 1998, 1999 The Internet Software Consortium.
