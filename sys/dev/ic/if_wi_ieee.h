@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.15 2002/10/22 19:48:22 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.16 2002/10/27 16:20:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -341,6 +341,15 @@ struct wi_ltv_keys {
 #define WI_RID_AUTH_STATION	0xFCE3 /* Authenticates Station (AP) */
 #define WI_RID_CHANNEL_REQ	0xFCE4 /* Channel Information Request (AP) */
 #define WI_RID_SCAN_RES		0xFD88 /* Scan Results Table */
+
+/*
+ * The following do not get passed down to the card, they are used
+ * by wicontrol to modify the behavior of the driver (use WEP in software or
+ * firmware, use alternate cryptographic algorithms, etc.)  I'm calling them
+ * "fake record IDs."
+ */
+#define	WI_FRID_CRYPTO_ALG	0xFCE3
+#define	WI_FRID_DEBUGGING	0xFCE4
 
 /*
  * bsd-airtools v0.2 - source-mods v0.2 [common.h]
@@ -708,6 +717,12 @@ struct wi_scan_p2_hdr {
 #define WI_RID_CCA_TIME		0xFDC4 /* clear chan assess time */
 #define WI_RID_MAC_PROC_DELAY	0xFDC5 /* MAC processing delay time */
 #define WI_RID_DATA_RATES	0xFDC6 /* supported data rates */
+
+/*
+ * Values for supported crypto algorithms:
+ */
+#define	WI_CRYPTO_FIRMWARE_WEP		0x00 /* default */
+#define	WI_CRYPTO_SOFTWARE_WEP		0x01
 
 /* Firmware types */
 #define	WI_NOTYPE	0

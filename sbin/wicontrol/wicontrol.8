@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.40 2002/06/09 08:13:09 todd Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.41 2002/10/27 16:20:48 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -44,6 +44,7 @@
 .Op Fl olL
 .Op Fl e Ar 0|1
 .Op Fl k Ar key "[ -v 1|2|3|4 ]"
+.Op Fl x Ar 0|1
 .Op Fl t Ar tx rate
 .Op Fl n Ar network name
 .Op Fl s Ar station name
@@ -145,6 +146,10 @@ keys, in which case WEP encryption will simply fail to work.
 .It Fl T Ar 1|2|3|4
 Specify which of the four WEP encryption keys will be used to encrypt
 transmitted packets.
+.It Fl x Ar 0|1
+[Prism2/Symbol only]
+Select between firmware-based (0) and software-based (1) WEP.
+Firmware-based WEP is the default.
 .It Fl t Ar tx rate
 Set the transmit rate of the specified interface.
 The legal values

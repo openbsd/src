@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.87 2002/10/27 14:46:30 markus Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.88 2002/10/27 16:20:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.87 2002/10/27 14:46:30 markus Exp $";
+	"$OpenBSD: if_wi.c,v 1.88 2002/10/27 16:20:48 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -234,6 +234,7 @@ wi_attach(sc)
 	sc->wi_roaming = WI_DEFAULT_ROAMING;
 	sc->wi_authtype = WI_DEFAULT_AUTHTYPE;
 	sc->wi_diversity = WI_DEFAULT_DIVERSITY;
+	sc->wi_crypto_algorithm = WI_CRYPTO_FIRMWARE_WEP;
 
 	/*
 	 * Read the default channel from the NIC. This may vary
@@ -701,6 +702,46 @@ wi_rxeof(sc)
 
 		ifp->if_ipackets++;
 
+		if (sc->wi_use_wep &&
+		    rx_frame.wi_frame_ctl & WI_FCTL_WEP) {
+			int len;
+			u_int8_t rx_buf[1596];
+
+			switch (sc->wi_crypto_algorithm) {
+			case WI_CRYPTO_FIRMWARE_WEP:
+				break;
+			case WI_CRYPTO_SOFTWARE_WEP:
+				m_copydata(m, 0, m->m_pkthdr.len,
+				    (caddr_t)rx_buf);
+				len = m->m_pkthdr.len -
+				    sizeof(struct ether_header);
+				if (wi_do_hostdecrypt(sc, rx_buf +
+				    sizeof(struct ether_header), len)) {
+					if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+						printf(WI_PRT_FMT ": Error decrypting incoming packet.\n", WI_PRT_ARG(sc));
+					return;
+				}
+				len -= IEEE80211_WEP_IVLEN +
+				    IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN;
+				/*
+				 * copy data back to mbufs:
+				 * we need to ditch the IV & most LLC/SNAP stuff
+				 * (except SNAP type, we're going use that to
+				 * overwrite the ethertype in the ether_header)
+				 */
+				m_copyback(m, sizeof(struct ether_header) -
+				    WI_ETHERTYPE_LEN, WI_ETHERTYPE_LEN +
+				    (len - WI_SNAPHDR_LEN),
+				    rx_buf + sizeof(struct ether_header) +
+				    IEEE80211_WEP_IVLEN +
+				    IEEE80211_WEP_KIDLEN + WI_SNAPHDR_LEN);
+				m_adj(m, -(WI_ETHERTYPE_LEN +
+				    IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN +
+				    WI_SNAPHDR_LEN));
+				break;
+			}
+		}
+
 		if (sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
 			/*
 			 * Give host AP code first crack at data packets.
@@ -1034,7 +1075,7 @@ wi_write_record(sc, ltv)
 	struct wi_ltv_gen	*ltv;
 {
 	u_int8_t		*ptr;
-	u_int16_t		val;
+	u_int16_t		val = 0;
 	int			i;
 	struct wi_ltv_gen	p2ltv;
 
@@ -1081,9 +1122,20 @@ wi_write_record(sc, ltv)
 				if (sc->wi_authtype != IEEE80211_AUTH_OPEN ||
 				    sc->sc_firmware_type == WI_SYMBOL)
 					val |= EXCLUDE_UNENCRYPTED;
-				/* TX encryption is broken in Host AP mode. */
-				if (sc->wi_ptype == WI_PORTTYPE_HOSTAP)
-					val |= HOST_ENCRYPT;
+
+				switch (sc->wi_crypto_algorithm) {
+				case WI_CRYPTO_FIRMWARE_WEP:
+					/*
+					 * TX encryption is broken in
+					 * Host AP mode.
+					 */
+					if (sc->wi_ptype == WI_PORTTYPE_HOSTAP)
+						val |= HOST_ENCRYPT;
+					break;
+				case WI_CRYPTO_SOFTWARE_WEP:
+					val |= HOST_ENCRYPT|HOST_DECRYPT;
+					break;
+				}
 				p2ltv.wi_val = htole16(val);
 			} else
 				p2ltv.wi_val = htole16(HOST_ENCRYPT | HOST_DECRYPT);
@@ -1400,6 +1452,20 @@ wi_setdef(sc, wreq)
 		bcopy((char *)wreq, (char *)&sc->wi_keys,
 		    sizeof(struct wi_ltv_keys));
 		break;
+	case WI_FRID_CRYPTO_ALG:
+		switch (letoh16(wreq->wi_val[0])) {
+		case WI_CRYPTO_FIRMWARE_WEP:
+			sc->wi_crypto_algorithm = WI_CRYPTO_FIRMWARE_WEP;
+			break;
+		case WI_CRYPTO_SOFTWARE_WEP:
+			sc->wi_crypto_algorithm = WI_CRYPTO_SOFTWARE_WEP;
+			break;
+		default:
+			printf(WI_PRT_FMT ": unsupported crypto algorithm %d\n",
+			    WI_PRT_ARG(sc), letoh16(wreq->wi_val[0]));
+			error = EINVAL;
+		}
+		break;
 	default:
 		error = EINVAL;
 		break;
@@ -1558,6 +1624,11 @@ wi_ioctl(ifp, command, data)
 				wreq.wi_len = sc->wi_scanbuf_len;
 				break;
 			}
+		case WI_FRID_CRYPTO_ALG:
+			wreq.wi_val[0] =
+			    htole16((u_int16_t)sc->wi_crypto_algorithm);
+			wreq.wi_len = 1;
+			break;
 		default:
 			if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq)) {
 				error = EINVAL;
@@ -1592,6 +1663,13 @@ wi_ioctl(ifp, command, data)
 			else
 				error = wi_write_record(sc,
 				    (struct wi_ltv_gen *)&wreq);
+			break;
+		case WI_FRID_CRYPTO_ALG:
+			if (sc->sc_firmware_type != WI_LUCENT) {
+				error = wi_setdef(sc, &wreq);
+				if (!error && (ifp->if_flags & IFF_UP))
+					wi_init(sc);
+			}
 			break;
 		case WI_RID_SYMBOL_DIVERSITY:
 		case WI_RID_ROAMING_MODE:

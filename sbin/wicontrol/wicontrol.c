@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.42 2002/10/11 13:33:14 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.43 2002/10/27 16:20:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.42 2002/10/11 13:33:14 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.43 2002/10/27 16:20:48 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -82,6 +82,7 @@ void wi_sethex(char *, int, char *);
 void wi_printwords(struct wi_req *);
 void wi_printbool(struct wi_req *);
 void wi_printhex(struct wi_req *);
+void wi_printalgorithm(struct wi_req *wreq);
 void wi_printaplist(char *);
 void wi_dumpinfo(char *);
 void wi_setkeys(char *, int, char *);
@@ -451,6 +452,23 @@ wi_printhex(wreq)
 }
 
 void
+wi_printalgorithm(wreq)
+	struct wi_req   *wreq;
+{
+	switch(letoh16(wreq->wi_val[0])) {
+	case WI_CRYPTO_FIRMWARE_WEP:
+		printf("[ Firmware WEP ]");
+		break;
+	case WI_CRYPTO_SOFTWARE_WEP:
+		printf("[ Software WEP ]");
+		break;
+	default:
+		printf("[ Unknown ]");
+		break;
+	}
+}
+
+void
 wi_printaplist(iface)
 	char			*iface;
 {
@@ -575,6 +593,7 @@ wi_printaplist(iface)
 #define WI_HEXBYTES		0x04
 #define WI_KEYSTRUCT		0x05
 #define WI_CARDINFO		0x06
+#define WI_ALGORITHM		0x07
 
 struct wi_table {
 	int			wi_code;
@@ -614,7 +633,8 @@ struct wi_table wi_table[] = {
 };
 
 struct wi_table wi_crypt_table[] = {
-	{ WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t" },
+	{ WI_RID_ENCRYPTION, WI_BOOL, "Encryption:\t\t\t\t" },
+	{ WI_FRID_CRYPTO_ALG, WI_ALGORITHM, "Encryption algorithm:\t\t\t" },
 	{ WI_RID_CNFAUTHMODE, WI_WORDS,
 	  "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t" },
 	{ WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
@@ -704,6 +724,9 @@ wi_dumpinfo(iface)
 				break;
 			case WI_KEYSTRUCT:
 				wi_printkeys(&wreq);
+				break;
+			case WI_ALGORITHM:
+				wi_printalgorithm(&wreq);
 				break;
 			default:
 				break;
@@ -822,10 +845,11 @@ usage()
 	fprintf(stderr,
 	    "usage: %s [interface] [-olL] [-t tx rate] [-n network name]\n"
 	    "       [-s station name] [-e 0|1] [-k key [-v 1|2|3|4]] [-T 1|2|3|4]\n"
-	    "       [-F 0|1] [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
-	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
-	    "       [-f frequency] [-M 0|1] [-P 0|1] [-S max sleep duration]\n"
-	    "       [-A 1|2|3] [-D 0|1|2] [-R 1|3]\n", __progname);
+	    "       [-x 0|1] [-F 0|1] [-c 0|1] [-q SSID] [-p port type]\n"
+	    "       [-a access point density] [-m MAC address] [-d max data length]\n"
+	    "       [-r RTS threshold] [-f frequency] [-M 0|1] [-P 0|1]\n"
+	    "       [-S max sleep duration] [-A 1|2|3] [-D 0|1|2] [-R 1|3]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -850,6 +874,7 @@ struct wi_func wi_opt[] = {
 	{ 'r', wi_setword, WI_RID_RTS_THRESH, NULL },
 	{ 's', wi_setstr, WI_RID_NODENAME, NULL },
 	{ 't', wi_setword, WI_RID_TX_RATE, NULL },
+	{ 'x', wi_setword, WI_FRID_CRYPTO_ALG, NULL },
 	{ 'A', wi_setword, WI_RID_CNFAUTHMODE, NULL },
 	{ 'D', wi_setword, WI_RID_SYMBOL_DIVERSITY, NULL },
 	{ 'M', wi_setword, WI_RID_MICROWAVE_OVEN, NULL },
@@ -886,7 +911,7 @@ main(argc, argv)
 	}
 
 	while ((ch = getopt(argc, argv,
-	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:A:D:F:LM:S:P:R:T:")) != -1) {
+	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:x:A:D:F:LM:S:P:R:T:")) != -1) {
 		for (p = 0; ch && wi_opt[p].key; p++)
 			if (ch == wi_opt[p].key) {
 				if (ch == 'p' && !isdigit(*optarg))

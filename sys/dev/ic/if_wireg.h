@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.29 2002/10/10 20:27:46 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.30 2002/10/27 16:20:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -598,3 +598,5 @@ struct wi_frame {
 #define WI_SNAP_WORD1		(WI_SNAP_K2 | (WI_SNAP_CONTROL << 8))
 #define WI_SNAPHDR_LEN		0x6
 #define WI_FCS_LEN		0x4
+
+#define	WI_ETHERTYPE_LEN	0x2
