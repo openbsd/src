@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.8 2002/08/12 00:42:56 aaron Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.9 2003/04/26 02:57:35 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.8 2002/08/12 00:42:56 aaron Exp $";
+static char rcsid[] = "$OpenBSD: symtab.c,v 1.9 2003/04/26 02:57:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -419,7 +419,7 @@ savename(name)
 		if (cp == NULL)
 			panic("no space for string table\n");
 	}
-	(void)strcpy(cp, name);
+	(void)strlcpy(cp, name, len + 1);
 	return (cp);
 }
 

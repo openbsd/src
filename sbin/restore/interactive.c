@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.15 2003/04/04 22:12:35 deraadt Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.16 2003/04/26 02:57:35 deraadt Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.15 2003/04/04 22:12:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.16 2003/04/26 02:57:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -500,14 +500,14 @@ canon(rawname, canonname, canonnamelen)
 			np++;
 		if (np - cp == 1 && *cp == '.') {
 			cp--;
-			(void)strcpy(cp, np);
+			(void)strlcpy(cp, np, canonname + canonnamelen - cp);
 			np = cp;
 		}
 		if (np - cp == 2 && strncmp(cp, "..", 2) == 0) {
 			cp--;
 			while (cp > &canonname[1] && *--cp != '/')
 				/* find beginning of name */;
-			(void)strcpy(cp, np);
+			(void)strlcpy(cp, np, canonname + canonnamelen - cp);
 			np = cp;
 		}
 	}
