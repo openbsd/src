@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.7 1998/04/30 05:55:05 deraadt Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.8 2001/01/16 03:04:45 deraadt Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)glob.c,v 1.1 1994/02/01 00:34:40 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: glbl.c,v 1.7 1998/04/30 05:55:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: glbl.c,v 1.8 2001/01/16 03:04:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ build_active_list(isgcmd)
 	char delimiter;
 
 	if ((delimiter = *ibufp) == ' ' || delimiter == '\n') {
-		strcpy(errmsg, "invalid pattern delimiter");
+		seterrmsg("invalid pattern delimiter");
 		return ERR;
 	} else if ((pat = get_compiled_pattern()) == NULL)
 		return ERR;
@@ -116,13 +116,13 @@ exec_global(interact, gflag)
 			if (n < 0)
 				return ERR;
 			else if (n == 0) {
-				strcpy(errmsg, "unexpected end-of-file");
+				seterrmsg("unexpected end-of-file");
 				return ERR;
 			} else if (n == 1 && !strcmp(ibuf, "\n"))
 				continue;
 			else if (n == 2 && !strcmp(ibuf, "&\n")) {
 				if (cmd == NULL) {
-					strcpy(errmsg, "no previous command");
+					seterrmsg("no previous command");
 					return ERR;
 				} else cmd = ocmd;
 			} else if ((cmd = get_extended_line(&n, 0)) == NULL)
@@ -167,7 +167,7 @@ set_active_node(lp)
 			if ((ts = (line_t **) realloc(active_list,
 			    (ti += MINBUFSZ) * sizeof(line_t **))) == NULL) {
 				perror(NULL);
-				strcpy(errmsg, "out of memory");
+				seterrmsg("out of memory");
 				SPL0();
 				return ERR;
 			}
@@ -176,7 +176,7 @@ set_active_node(lp)
 			if ((ts = (line_t **) malloc((ti += MINBUFSZ) *
 			    sizeof(line_t **))) == NULL) {
 				perror(NULL);
-				strcpy(errmsg, "out of memory");
+				seterrmsg("out of memory");
 				SPL0();
 				return ERR;
 			}

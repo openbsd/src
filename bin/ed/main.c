@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2000/05/01 18:30:52 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2001/01/16 03:04:45 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.19 2000/05/01 18:30:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.20 2001/01/16 03:04:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,6 +107,14 @@ char *dps = "*";		/* default command-line prompt */
 
 char *usage = "usage: %s [-] [-sx] [-p string] [name]\n";
 
+char *home;		/* home directory */
+
+void
+seterrmsg(char *s)
+{
+	strlcpy(errmsg, s, sizeof(errmsg));
+}
+
 /* ed: line editor */
 int
 main(argc, argv)
@@ -121,10 +129,12 @@ main(argc, argv)
 	(void)&argv;
 #endif
 
+	home = getenv("HOME");
+
 	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
 top:
 	while ((c = getopt(argc, argv, "p:sx")) != -1)
-		switch(c) {
+		switch (c) {
 		case 'p':				/* set prompt */
 			prompt = optarg;
 			break;
@@ -183,21 +193,20 @@ top:
 #endif
 	{
 		fputs("\n?\n", stderr);
-		strcpy(errmsg, "interrupt");
+		seterrmsg("interrupt");
 	} else {
 		init_buffers();
 		sigactive = 1;			/* enable signal handlers */
 		if (argc && **argv && is_legal_filename(*argv)) {
 			if (read_file(*argv, 0) < 0 && !interactive)
 				quit(2);
-			else if (**argv != '!') {
-				strncpy(old_filename, *argv, sizeof old_filename-1);
-				old_filename[sizeof old_filename-1] = '\0';
-			}
+			else if (**argv != '!')
+				strlcpy(old_filename, *argv,
+				    sizeof old_filename);
 		} else if (argc) {
 			fputs("?\n", stderr);
 			if (**argv == '\0')
-				strcpy(errmsg, "invalid filename");
+				seterrmsg("invalid filename");
 			if (!interactive)
 				quit(2);
 		}
@@ -215,7 +224,7 @@ top:
 		} else if (n == 0) {
 			if (modified && !scripted) {
 				fputs("?\n", stderr);
-				strcpy(errmsg, "warning: file modified");
+				seterrmsg("warning: file modified");
 				if (!interactive) {
 					fprintf(stderr, garrulous ?
 					    "script, line %d: %s\n" :
@@ -230,7 +239,7 @@ top:
 				quit(0);
 		} else if (ibuf[n - 1] != '\n') {
 			/* discard line */
-			strcpy(errmsg, "unexpected end-of-file");
+			seterrmsg("unexpected end-of-file");
 			clearerr(stdin);
 			status = ERR;
 			continue;
@@ -248,7 +257,7 @@ top:
 		case EMOD:
 			modified = 0;
 			fputs("?\n", stderr);		/* give warning */
-			strcpy(errmsg, "warning: file modified");
+			seterrmsg("warning: file modified");
 			if (!interactive) {
 				fprintf(stderr, garrulous ?
 				    "script, line %d: %s\n" :
@@ -305,10 +314,20 @@ extract_addr_range()
 }
 
 
-#define	SKIP_BLANKS() while (isspace(*ibufp) && *ibufp != '\n') ibufp++
+#define	SKIP_BLANKS() \
+	do { \
+		while (isspace(*ibufp) && *ibufp != '\n') \
+			ibufp++; \
+	} while (0)
 
 #define MUST_BE_FIRST() \
-	if (!first) { strcpy(errmsg, "invalid address"); return ERR; }
+	do { \
+		if (!first) { \
+			seterrmsg("invalid address"); \
+			return ERR; \
+		} \
+	} while (0)
+	
 
 /*  next_addr: return the next line address in the command buffer */
 long
@@ -322,7 +341,7 @@ next_addr()
 
 	SKIP_BLANKS();
 	for (hd = ibufp;; first = 0)
-		switch (c = *ibufp) {
+		switch ((c = *ibufp)) {
 		case '+':
 		case '\t':
 		case ' ':
@@ -378,7 +397,7 @@ next_addr()
 			if (ibufp == hd)
 				return EOF;
 			else if (addr < 0 || addr_last < addr) {
-				strcpy(errmsg, "invalid address");
+				seterrmsg("invalid address");
 				return ERR;
 			} else
 				return addr;
@@ -390,65 +409,73 @@ next_addr()
 #ifdef BACKWARDS
 /* GET_THIRD_ADDR: get a legal address from the command buffer */
 #define GET_THIRD_ADDR(addr) \
-{ \
-	long ol1, ol2; \
-\
-	ol1 = first_addr, ol2 = second_addr; \
-	if (extract_addr_range() < 0) \
-		return ERR; \
-	else if (addr_cnt == 0) { \
-		strcpy(errmsg, "destination expected"); \
-		return ERR; \
-	} else if (second_addr < 0 || addr_last < second_addr) { \
-		strcpy(errmsg, "invalid address"); \
-		return ERR; \
-	} \
-	addr = second_addr; \
-	first_addr = ol1, second_addr = ol2; \
-}
+	do { \
+		long ol1, ol2; \
+		\
+		ol1 = first_addr; \
+		ol2 = second_addr; \
+		if (extract_addr_range() < 0) \
+			return ERR; \
+		else if (addr_cnt == 0) { \
+			seterrmsg("destination expected"); \
+			return ERR; \
+		} else if (second_addr < 0 || addr_last < second_addr) { \
+			seterrmsg("invalid address"); \
+			return ERR; \
+		} \
+		addr = second_addr; \
+		first_addr = ol1; \
+		second_addr = ol2; \
+	} while (0)
+
 #else	/* BACKWARDS */
 /* GET_THIRD_ADDR: get a legal address from the command buffer */
 #define GET_THIRD_ADDR(addr) \
-{ \
-	long ol1, ol2; \
-\
-	ol1 = first_addr, ol2 = second_addr; \
-	if (extract_addr_range() < 0) \
-		return ERR; \
-	if (second_addr < 0 || addr_last < second_addr) { \
-		strcpy(errmsg, "invalid address"); \
-		return ERR; \
-	} \
-	addr = second_addr; \
-	first_addr = ol1, second_addr = ol2; \
-}
+	do { \
+		long ol1, ol2; \
+		\
+		ol1 = first_addr; \
+		ol2 = second_addr; \
+		if (extract_addr_range() < 0) \
+			return ERR; \
+		if (second_addr < 0 || addr_last < second_addr) { \
+			seterrmsg("invalid address"); \
+			return ERR; \
+		} \
+		addr = second_addr; \
+		first_addr = ol1; \
+		second_addr = ol2; \
+	} while (0)
 #endif
 
 
 /* GET_COMMAND_SUFFIX: verify the command suffix in the command buffer */
-#define GET_COMMAND_SUFFIX() { \
-	int done = 0; \
+#define GET_COMMAND_SUFFIX() \
 	do { \
-		switch(*ibufp) { \
-		case 'p': \
-			gflag |= GPR, ibufp++; \
-			break; \
-		case 'l': \
-			gflag |= GLS, ibufp++; \
-			break; \
-		case 'n': \
-			gflag |= GNP, ibufp++; \
-			break; \
-		default: \
-			done++; \
+		int done = 0; \
+		do { \
+			switch (*ibufp) { \
+			case 'p': \
+				gflag |= GPR; \
+				ibufp++; \
+				break; \
+			case 'l': \
+				gflag |= GLS; \
+				ibufp++; \
+				break; \
+			case 'n': \
+				gflag |= GNP; \
+				ibufp++; \
+				break; \
+			default: \
+				done++; \
+			} \
+		} while (!done); \
+		if (*ibufp++ != '\n') { \
+			seterrmsg("invalid command suffix"); \
+			return ERR; \
 		} \
-	} while (!done); \
-	if (*ibufp++ != '\n') { \
-		strcpy(errmsg, "invalid command suffix"); \
-		return ERR; \
-	} \
-}
-
+	} while (0)
 
 /* sflags */
 #define SGG 001		/* complement previous global substitute suffix */
@@ -458,7 +485,8 @@ next_addr()
 
 int patlock = 0;	/* if set, pattern not freed by get_compiled_pattern() */
 
-int rows = 22;		/* scroll length: ws_row - 2 */
+volatile int rows = 22;	/* scroll length: ws_row - 2 */
+volatile int cols = 72;	/* wrap column */
 
 /* exec_command: execute the next command in command buffer; return print
    request, if any */
@@ -481,7 +509,7 @@ exec_command()
 	int c;
 
 	SKIP_BLANKS();
-	switch(c = *ibufp++) {
+	switch ((c = *ibufp++)) {
 	case 'a':
 		GET_COMMAND_SUFFIX();
 		if (!isglobal) clear_undo_stack();
@@ -513,10 +541,10 @@ exec_command()
 		/* fall through */
 	case 'E':
 		if (addr_cnt > 0) {
-			strcpy(errmsg, "unexpected address");
+			seterrmsg("unexpected address");
 			return ERR;
 		} else if (!isspace(*ibufp)) {
-			strcpy(errmsg, "unexpected command suffix");
+			seterrmsg("unexpected command suffix");
 			return ERR;
 		} else if ((fnp = get_filename()) == NULL)
 			return ERR;
@@ -528,13 +556,11 @@ exec_command()
 			return ERR;
 		else if (open_sbuf() < 0)
 			return FATAL;
-		if (*fnp && *fnp != '!') {
-			strncpy(old_filename, fnp, sizeof old_filename-1);
-			old_filename[sizeof old_filename-1] = '\0';
-		}
+		if (*fnp && *fnp != '!')
+			strlcpy(old_filename, fnp, sizeof old_filename);
 #ifdef BACKWARDS
 		if (*fnp == '\0' && *old_filename == '\0') {
-			strcpy(errmsg, "no current filename");
+			seterrmsg("no current filename");
 			return ERR;
 		}
 #endif
@@ -546,22 +572,20 @@ exec_command()
 		break;
 	case 'f':
 		if (addr_cnt > 0) {
-			strcpy(errmsg, "unexpected address");
+			seterrmsg("unexpected address");
 			return ERR;
 		} else if (!isspace(*ibufp)) {
-			strcpy(errmsg, "unexpected command suffix");
+			seterrmsg("unexpected command suffix");
 			return ERR;
 		} else if ((fnp = get_filename()) == NULL)
 			return ERR;
 		else if (*fnp == '!') {
-			strcpy(errmsg, "invalid redirection");
+			seterrmsg("invalid redirection");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
-		if (*fnp) {
-			strncpy(old_filename, fnp, sizeof old_filename-1);
-			old_filename[sizeof old_filename-1] = '\0';
-		}
+		if (*fnp)
+			strlcpy(old_filename, fnp, sizeof old_filename);
 		puts(strip_escapes(old_filename));
 		break;
 	case 'g':
@@ -569,7 +593,7 @@ exec_command()
 	case 'G':
 	case 'V':
 		if (isglobal) {
-			strcpy(errmsg, "cannot nest global commands");
+			seterrmsg("cannot nest global commands");
 			return ERR;
 		} else if (check_addr_range(1, addr_last) < 0)
 			return ERR;
@@ -583,7 +607,7 @@ exec_command()
 		break;
 	case 'h':
 		if (addr_cnt > 0) {
-			strcpy(errmsg, "unexpected address");
+			seterrmsg("unexpected address");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
@@ -591,7 +615,7 @@ exec_command()
 		break;
 	case 'H':
 		if (addr_cnt > 0) {
-			strcpy(errmsg, "unexpected address");
+			seterrmsg("unexpected address");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
@@ -600,7 +624,7 @@ exec_command()
 		break;
 	case 'i':
 		if (second_addr == 0) {
-			strcpy(errmsg, "invalid address");
+			seterrmsg("invalid address");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
@@ -620,7 +644,7 @@ exec_command()
 	case 'k':
 		c = *ibufp++;
 		if (second_addr == 0) {
-			strcpy(errmsg, "invalid address");
+			seterrmsg("invalid address");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
@@ -640,7 +664,7 @@ exec_command()
 			return ERR;
 		GET_THIRD_ADDR(addr);
 		if (first_addr <= addr && addr < second_addr) {
-			strcpy(errmsg, "invalid destination");
+			seterrmsg("invalid destination");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
@@ -666,7 +690,7 @@ exec_command()
 		break;
 	case 'P':
 		if (addr_cnt > 0) {
-			strcpy(errmsg, "unexpected address");
+			seterrmsg("unexpected address");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
@@ -675,7 +699,7 @@ exec_command()
 	case 'q':
 	case 'Q':
 		if (addr_cnt > 0) {
-			strcpy(errmsg, "unexpected address");
+			seterrmsg("unexpected address");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
@@ -683,7 +707,7 @@ exec_command()
 		break;
 	case 'r':
 		if (!isspace(*ibufp)) {
-			strcpy(errmsg, "unexpected command suffix");
+			seterrmsg("unexpected command suffix");
 			return ERR;
 		} else if (addr_cnt == 0)
 			second_addr = addr_last;
@@ -691,24 +715,23 @@ exec_command()
 			return ERR;
 		GET_COMMAND_SUFFIX();
 		if (!isglobal) clear_undo_stack();
-		if (*old_filename == '\0' && *fnp != '!') {
-			strncpy(old_filename, fnp, sizeof old_filename-1);
-			old_filename[sizeof old_filename-1] = '\0';
-		}
+		if (*old_filename == '\0' && *fnp != '!')
+			strlcpy(old_filename, fnp, sizeof old_filename);
 #ifdef BACKWARDS
 		if (*fnp == '\0' && *old_filename == '\0') {
-			strcpy(errmsg, "no current filename");
+			seterrmsg("no current filename");
 			return ERR;
 		}
 #endif
-		if ((addr = read_file(*fnp ? fnp : old_filename, second_addr)) < 0)
+		if ((addr = read_file(*fnp ? fnp : old_filename,
+		    second_addr)) < 0)
 			return ERR;
 		else if (addr && addr != addr_last)
 			modified = 1;
 		break;
 	case 's':
 		do {
-			switch(*ibufp) {
+			switch (*ibufp) {
 			case '\n':
 				sflags |=SGF;
 				break;
@@ -732,18 +755,18 @@ exec_command()
 				break;
 			default:
 				if (sflags) {
-					strcpy(errmsg, "invalid command suffix");
+					seterrmsg("invalid command suffix");
 					return ERR;
 				}
 			}
 		} while (sflags && *ibufp != '\n');
 		if (sflags && !pat) {
-			strcpy(errmsg, "no previous substitution");
+			seterrmsg("no previous substitution");
 			return ERR;
 		} else if (sflags & SGG)
 			sgnum = 0;		/* override numeric arg */
 		if (*ibufp != '\n' && *(ibufp + 1) == '\n') {
-			strcpy(errmsg, "invalid pattern delimiter");
+			seterrmsg("invalid pattern delimiter");
 			return ERR;
 		}
 		tpat = pat;
@@ -769,18 +792,23 @@ exec_command()
 			sgflag &= ~GLB;
 		if (sflags & SGG)
 			sgflag ^= GSG;
-		if (sflags & SGP)
-			sgflag ^= GPR, sgflag &= ~(GLS | GNP);
+		if (sflags & SGP) {
+			sgflag ^= GPR;
+			sgflag &= ~(GLS | GNP);
+		}
 		do {
-			switch(*ibufp) {
+			switch (*ibufp) {
 			case 'p':
-				sgflag |= GPR, ibufp++;
+				sgflag |= GPR;
+				ibufp++;
 				break;
 			case 'l':
-				sgflag |= GLS, ibufp++;
+				sgflag |= GLS;
+				ibufp++;
 				break;
 			case 'n':
-				sgflag |= GNP, ibufp++;
+				sgflag |= GNP;
+				ibufp++;
 				break;
 			default:
 				n++;
@@ -804,7 +832,7 @@ exec_command()
 		break;
 	case 'u':
 		if (addr_cnt > 0) {
-			strcpy(errmsg, "unexpected address");
+			seterrmsg("unexpected address");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
@@ -818,7 +846,7 @@ exec_command()
 			ibufp++;
 		}
 		if (!isspace(*ibufp)) {
-			strcpy(errmsg, "unexpected command suffix");
+			seterrmsg("unexpected command suffix");
 			return ERR;
 		} else if ((fnp = get_filename()) == NULL)
 			return ERR;
@@ -827,13 +855,11 @@ exec_command()
 		else if (check_addr_range(1, addr_last) < 0)
 			return ERR;
 		GET_COMMAND_SUFFIX();
-		if (*old_filename == '\0' && *fnp != '!') {
-			strncpy(old_filename, fnp, sizeof old_filename-1);
-			old_filename[sizeof old_filename-1] = '\0';
-		}
+		if (*old_filename == '\0' && *fnp != '!')
+			strlcpy(old_filename, fnp, sizeof old_filename);
 #ifdef BACKWARDS
 		if (*fnp == '\0' && *old_filename == '\0') {
-			strcpy(errmsg, "no current filename");
+			seterrmsg("no current filename");
 			return ERR;
 		}
 #endif
@@ -847,22 +873,23 @@ exec_command()
 		break;
 	case 'x':
 		if (addr_cnt > 0) {
-			strcpy(errmsg, "unexpected address");
+			seterrmsg("unexpected address");
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
 #ifdef DES
 		des = get_keyword();
 #else
-		strcpy(errmsg, "crypt unavailable");
+		seterrmsg("crypt unavailable");
 		return ERR;
 #endif
 		break;
 	case 'z':
+		first_addr = 1;
 #ifdef BACKWARDS
-		if (check_addr_range(first_addr = 1, current_addr + 1) < 0)
+		if (check_addr_range(first_addr, current_addr + 1) < 0)
 #else
-		if (check_addr_range(first_addr = 1, current_addr + !isglobal) < 0)
+		if (check_addr_range(first_addr, current_addr + !isglobal) < 0)
 #endif
 			return ERR;
 		else if ('0' < *ibufp && *ibufp <= '9')
@@ -879,7 +906,7 @@ exec_command()
 		break;
 	case '!':
 		if (addr_cnt > 0) {
-			strcpy(errmsg, "unexpected address");
+			seterrmsg("unexpected address");
 			return ERR;
 		} else if ((sflags = get_shell_command()) < 0)
 			return ERR;
@@ -889,16 +916,17 @@ exec_command()
 		if (!scripted) printf("!\n");
 		break;
 	case '\n':
+		first_addr = 1;
 #ifdef BACKWARDS
-		if (check_addr_range(first_addr = 1, current_addr + 1) < 0
+		if (check_addr_range(first_addr, current_addr + 1) < 0
 #else
-		if (check_addr_range(first_addr = 1, current_addr + !isglobal) < 0
+		if (check_addr_range(first_addr, current_addr + !isglobal) < 0
 #endif
 		 || display_lines(second_addr, second_addr, 0) < 0)
 			return ERR;
 		break;
 	default:
-		strcpy(errmsg, "unknown command");
+		seterrmsg("unknown command");
 		return ERR;
 	}
 	return gflag;
@@ -916,7 +944,7 @@ check_addr_range(n, m)
 	}
 	if (first_addr > second_addr || 1 > first_addr ||
 	    second_addr > addr_last) {
-		strcpy(errmsg, "invalid address");
+		seterrmsg("invalid address");
 		return ERR;
 	}
 	return 0;
@@ -947,7 +975,7 @@ get_matching_node_addr(pat, dir)
 				return n;
 		}
 	} while (n != current_addr);
-	strcpy(errmsg, "no match");
+	seterrmsg("no match");
 	return  ERR;
 }
 
@@ -963,7 +991,7 @@ get_filename()
 	if (*ibufp != '\n') {
 		SKIP_BLANKS();
 		if (*ibufp == '\n') {
-			strcpy(errmsg, "invalid filename");
+			seterrmsg("invalid filename");
 			return NULL;
 		} else if ((ibufp = get_extended_line(&n, 1)) == NULL)
 			return NULL;
@@ -974,13 +1002,13 @@ get_filename()
 			if (n) printf("%s\n", shcmd + 1);
 			return shcmd;
 		} else if (n >= MAXPATHLEN) {
-			strcpy(errmsg, "filename too long");
+			seterrmsg("filename too long");
 			return  NULL;
 		}
 	}
 #ifndef BACKWARDS
 	else if (*old_filename == '\0') {
-		strcpy(errmsg, "no current filename");
+		seterrmsg("no current filename");
 		return  NULL;
 	}
 #endif
@@ -1005,7 +1033,7 @@ get_shell_command()
 	int j = 0;
 
 	if (red) {
-		strcpy(errmsg, "shell access restricted");
+		seterrmsg("shell access restricted");
 		return ERR;
 	} else if ((s = ibufp = get_extended_line(&j, 1)) == NULL)
 		return ERR;
@@ -1030,7 +1058,7 @@ get_shell_command()
 			else if (shcmd == NULL)
 #endif
 			{
-				strcpy(errmsg, "no previous command");
+				seterrmsg("no previous command");
 				return ERR;
 			} else {
 				REALLOC(buf, n, i + shcmdi, ERR);
@@ -1041,7 +1069,7 @@ get_shell_command()
 			break;
 		case '%':
 			if (*old_filename  == '\0') {
-				strcpy(errmsg, "no current filename");
+				seterrmsg("no current filename");
 				return ERR;
 			}
 			j = strlen(s = strip_escapes(old_filename));
@@ -1268,7 +1296,7 @@ display_lines(from, to, gflag)
 	char *s;
 
 	if (!from) {
-		strcpy(errmsg, "invalid address");
+		seterrmsg("invalid address");
 		return ERR;
 	}
 	ep = get_addressed_line_node(INC_MOD(to, addr_last));
@@ -1295,7 +1323,7 @@ mark_line_node(lp, n)
 	int n;
 {
 	if (!islower(n)) {
-		strcpy(errmsg, "invalid mark character");
+		seterrmsg("invalid mark character");
 		return ERR;
 	} else if (mark[n - 'a'] == NULL)
 		markno++;
@@ -1310,7 +1338,7 @@ get_marked_node_addr(n)
 	int n;
 {
 	if (!islower(n)) {
-		strcpy(errmsg, "invalid mark character");
+		seterrmsg("invalid mark character");
 		return ERR;
 	}
 	return get_line_node_addr(mark[n - 'a']);
@@ -1341,7 +1369,7 @@ dup_line_node(lp)
 
 	if ((np = (line_t *) malloc(sizeof(line_t))) == NULL) {
 		perror(NULL);
-		strcpy(errmsg, "out of memory");
+		seterrmsg("out of memory");
 		return NULL;
 	}
 	np->seek = lp->seek;
@@ -1385,10 +1413,13 @@ void
 signal_hup(signo)
 	int signo;
 {
+	int save_errno = errno;
+
 	if (mutex)
 		sigflags |= (1 << (signo - 1));
 	else
 		handle_hup(signo);
+	errno = save_errno;
 }
 
 
@@ -1396,10 +1427,13 @@ void
 signal_int(signo)
 	int signo;
 {
+	int save_errno = errno;
+
 	if (mutex)
 		sigflags |= (1 << (signo - 1));
 	else
 		handle_int(signo);
+	errno = save_errno;
 }
 
 
@@ -1407,23 +1441,17 @@ void
 handle_hup(signo)
 	int signo;
 {
+	char path[MAXPATHLEN];
 	char *hup = NULL;		/* hup filename */
-	char *s;
-	int n;
 
 	if (!sigactive)
 		quit(1);
 	sigflags &= ~(1 << (signo - 1));
 	if (addr_last && write_file("ed.hup", "w", 1, addr_last) < 0 &&
-	    (s = getenv("HOME")) != NULL &&
-	    (n = strlen(s)) + 8 <= MAXPATHLEN &&	/* "ed.hup" + '/' */
-	    (hup = (char *) malloc(n + 10)) != NULL) {
-		strcpy(hup, s);
-		if (hup[n - 1] != '/') {
-			hup[n] = '/';
-			hup[n+1] = '\0';
-		}
-		strcat(hup, "ed.hup");
+	    home != NULL &&
+	    strlen(home) + sizeof("/ed.hup") <= MAXPATHLEN) {
+		strlcpy(path, home, sizeof(path));
+		strlcat(path, "/ed.hup", sizeof(path));
 		write_file(hup, "w", 1, addr_last);
 	}
 	quit(2);
@@ -1445,8 +1473,6 @@ handle_int(signo)
 }
 
 
-int cols = 72;				/* wrap column */
-
 void
 handle_winch(signo)
 	int signo;
@@ -1457,8 +1483,10 @@ handle_winch(signo)
 
 	sigflags &= ~(1 << (signo - 1));
 	if (ioctl(0, TIOCGWINSZ, (char *) &ws) >= 0) {
-		if (ws.ws_row > 2) rows = ws.ws_row - 2;
-		if (ws.ws_col > 8) cols = ws.ws_col - 8;
+		if (ws.ws_row > 2)
+			rows = ws.ws_row - 2;
+		if (ws.ws_col > 8)
+			cols = ws.ws_col - 8;
 	}
 	errno = save_errno;
 }
@@ -1470,7 +1498,7 @@ is_legal_filename(s)
 	char *s;
 {
 	if (red && (*s == '!' || !strcmp(s, "..") || strchr(s, '/'))) {
-		strcpy(errmsg, "shell access restricted");
+		seterrmsg("shell access restricted");
 		return 0;
 	}
 	return 1;
