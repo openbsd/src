@@ -4,12 +4,10 @@
 .PATH:	${.CURDIR}/../named \
 	${.CURDIR}/../man
 
-all: ndc ndc.cat8
-
 CLEANFILES+= ndc
 MAN=	ndc.8
 
-realinstall:
+realinstall: ndc
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ndc ${DESTDIR}${BINDIR}/ndc
 
@@ -21,5 +19,5 @@ ndc: ndc.sh Makefile ${.CURDIR}/../Makefile.inc
 	    < ${.CURDIR}/ndc.sh > ndc
 	chmod +x ndc
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
+.include <bsd.prog.mk>

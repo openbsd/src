@@ -4,12 +4,10 @@
 .PATH:	${.CURDIR}/../named \
 	${.CURDIR}/../man
 
-all: named.restart named.restart.cat8
-
 CLEANFILES+= named.restart
 MAN=	named.restart.8
 
-realinstall:
+realinstall: named.restart
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    named.restart ${DESTDIR}${BINDIR}/named.restart
 
@@ -18,5 +16,5 @@ named.restart:	named.restart.sh Makefile ${.CURDIR}/../Makefile.inc
 	    < ${.CURDIR}/named.restart.sh > named.restart
 	chmod +x named.restart
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
+.include <bsd.prog.mk>

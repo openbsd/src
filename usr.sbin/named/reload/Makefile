@@ -4,12 +4,10 @@
 .PATH:	${.CURDIR}/../named \
 	${.CURDIR}/../man
 
-all: named.reload named.reload.cat8
-
 CLEANFILES+= named.reload
 MAN=	named.reload.8
 
-realinstall:
+realinstall: named.reload
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    named.reload ${DESTDIR}${BINDIR}/named.reload
 
@@ -18,5 +16,5 @@ named.reload:	named.reload.sh Makefile ${.CURDIR}/../Makefile.inc
 	    < ${.CURDIR}/named.reload.sh > named.reload
 	chmod +x named.reload
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
+.include <bsd.prog.mk>
