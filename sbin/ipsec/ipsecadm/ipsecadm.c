@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.12 1997/11/18 00:13:44 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.13 1997/11/24 19:15:58 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -95,6 +95,7 @@ transform xf[] = {
 	{"cast", ALG_ENC_CAST, XF_ENC |        ESP_NEW},
 	{"md5", ALG_AUTH_MD5,  XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
 	{"sha1", ALG_AUTH_SHA1,XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
+	{"rmd160", ALG_AUTH_RMD160, XF_AUTH|AH_NEW|ESP_NEW},
 };
 
 char    buf[1024];

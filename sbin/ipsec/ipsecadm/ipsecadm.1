@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.5 1997/11/18 00:13:43 provos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.6 1997/11/24 19:15:58 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -149,7 +149,9 @@ are:
 .Nm md5
 and
 .Nm sha1
-for both old and new ah and also new esp.
+for both old and new ah and also new esp. Also
+.Nm rmd160
+for both new ah and esp.
 .It key
 The secret symmetric key used for encryption and authentication. The size
 for 
