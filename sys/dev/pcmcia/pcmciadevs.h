@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.27 1999/08/25 21:55:49 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.28 1999/10/01 04:04:28 downsj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.23 1999/08/25 21:54:57 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.24 1999/10/01 04:04:01 downsj Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -308,6 +308,9 @@
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_8016	0x0105
 #define	PCMCIA_STR_SMC_8016	"SMC 8016"
+#define	PCMCIA_CIS_SMC_8020	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SMC_8020	0x0001
+#define	PCMCIA_STR_SMC_8020	"SMC EtherEZ 8020"
 #define	PCMCIA_CIS_SMC_EZCARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_EZCARD	0x8022
 #define	PCMCIA_STR_SMC_EZCARD	"SMC EXCard 10 PCMCIA"
