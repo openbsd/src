@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2001/10/03 17:11:32 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2002/04/22 01:50:51 deraadt Exp $
 #	etc.macppc/Makefile.inc -- macppc-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -11,12 +11,12 @@ bsd:
 	cp ${.CURDIR}/../sys/arch/macppc/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
-# knows about  bsd.rd 
+# knows about bsd.rd 
 distrib:
 	cp ${DESTDIR}/usr/mdec/ofwboot ${DESTDIR}/snapshot/ofwboot
 	cp ${DESTDIR}/usr/mdec/bsd.tbxi ${DESTDIR}/snapshot/bsd.tbxi
 	cd ${.CURDIR}/../distrib && make cleandir && \
-		make && make install
+	    make && make install
 	mkdir ${DESTDIR}/snapshot/boot
 	cp ${DESTDIR}/snapshot/bsd.rd ${DESTDIR}/snapshot/boot/bsd.rd
 	strip ${DESTDIR}/snapshot/boot/bsd.rd
@@ -25,11 +25,7 @@ distrib:
 	cp ${DESTDIR}/usr/mdec/ofwboot ${DESTDIR}/snapshot/boot
 	mkisofs -r ${DESTDIR}/snapshot/boot > ${DESTDIR}/snapshot/boot.fs
 	rm -rf ${DESTDIR}/snapshot/boot
-	#
-	# compress the bsd.rd files but keep original naming,
-	# bootloader can deal with it.
 	gzip -9 ${DESTDIR}/snapshot/bsd.rd
 	mv ${DESTDIR}/snapshot/bsd.rd.gz ${DESTDIR}/snapshot/bsd.rd
-
 
 .endif	# DESTDIR check
