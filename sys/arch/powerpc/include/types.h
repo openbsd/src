@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.1 1996/09/30 16:34:36 ws Exp $	*/
-/*	$OpenBSD: types.h,v 1.9 1999/11/09 04:13:54 rahnds Exp $	*/
+/*	$OpenBSD: types.h,v 1.10 2001/09/01 15:49:05 drahn Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -32,8 +32,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_TYPES_H_
-#define	_MACHINE_TYPES_H_
+#ifndef	_POWERPC_TYPES_H_
+#define	_POWERPC_TYPES_H_
 
 #include <sys/cdefs.h>
 
@@ -67,4 +67,4 @@ typedef struct label_t {
 
 #define	__BROKEN_INDIRECT_CONFIG
 
-#endif	/* _MACHINE_TYPES_H_ */
+#endif	/* _POWERPC_TYPES_H_ */

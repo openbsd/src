@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.8 2000/07/31 20:06:03 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.9 2001/09/01 15:49:05 drahn Exp $	*/
 /*	$NetBSD: limits.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -32,8 +32,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_LIMITS_H_
-#define _MACHINE_LIMITS_H_
+#ifndef _POWERPC_LIMITS_H_
+#define _POWERPC_LIMITS_H_
 
 #define	CHAR_BIT	8		/* bits per char		*/
 #define	MB_LEN_MAX	1		/* no multibyte characters	*/
@@ -85,4 +85,4 @@
 #define FLT_MAX		3.40282347E+38F
 #define FLT_MIN		1.17549435E-38F
 #endif
-#endif /* _MACHINE_LIMITS_H_ */
+#endif /* _POWERPC_LIMITS_H_ */

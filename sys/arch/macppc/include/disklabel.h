@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.15 2001/06/24 04:54:21 drahn Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.1 2001/09/01 15:49:06 drahn Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou

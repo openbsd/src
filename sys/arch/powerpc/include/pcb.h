@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.5 2001/06/29 06:07:09 drahn Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.6 2001/09/01 15:49:05 drahn Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -31,8 +31,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_PCB_H_
-#define	_MACHINE_PCB_H_
+#ifndef	_POWERPC_PCB_H_
+#define	_POWERPC_PCB_H_
 
 #include <machine/reg.h>
 
@@ -69,4 +69,4 @@ extern struct pmap *curpm;
 extern struct proc *fpuproc;
 int  setfault __P((faultbuf env));
 #endif
-#endif	/* _MACHINE_PCB_H_ */
+#endif	/* _POWERPC_PCB_H_ */

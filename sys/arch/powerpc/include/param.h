@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 2001/07/09 02:14:05 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.18 2001/09/01 15:49:05 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -32,18 +32,18 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_POWERPC_PARAM_H_
+#define	_POWERPC_PARAM_H_
+
 #ifdef	_KERNEL
 #ifndef	_LOCORE
 #include <machine/cpu.h>
 #endif	/* _LOCORE */
 #endif
 
-
 /*
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
-#define	MACHINE		"powerpc"
-#define	_MACHINE	powerpc
 #define	MACHINE_ARCH	"powerpc"
 #define	_MACHINE_ARCH	powerpc
 
@@ -68,8 +68,6 @@
 #define	UPAGES		4
 #define	USPACE		(UPAGES * NBPG)
 
-#define	KERNBASE	0x100000
-
 /*
  * Constants related to network buffer management.
  * MCLBYTES must be no larger than the software page size, and,
@@ -88,15 +86,6 @@
 #else
 #define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
-#endif
-
-#define MSGBUFSIZE	(NBPG*2)
-
-/*
- * Size of kernel malloc arena in logical pages.
- */
-#ifndef	NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(16 * 1024 * 1024 / PAGE_SIZE)
 #endif
 
 /*
@@ -137,8 +126,6 @@
 #define	EMPTY_SEGMENT	0xfffff0
 #define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHFT))
 
-#define	__COMPAT_OLD_TIMEOUTS
-
 /*
  * Some system constants
  */
@@ -150,3 +137,5 @@
  * Temporary kludge till we do (ov)bcopy in assembler
  */
 #define	ovbcopy	bcopy
+
+#endif	/* _POWERPC_PARAM_H_ */

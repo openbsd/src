@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.3 1997/02/18 15:54:27 rahnds Exp $	*/
+/*	$OpenBSD: signal.h,v 1.4 2001/09/01 15:49:05 drahn Exp $	*/
 /*	$NetBSD: signal.h,v 1.1 1996/09/30 16:34:34 ws Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_SIGNAL_H_
-#define	_MACHINE_SIGNAL_H_
+#ifndef	_POWERPC_SIGNAL_H_
+#define	_POWERPC_SIGNAL_H_
 
 typedef int sig_atomic_t;
 
@@ -65,4 +65,4 @@ struct sigcontext {
 	int sc_mask;			/* saved signal mask */
 	struct trapframe sc_frame;	/* saved registers */
 };
-#endif	/* _MACHINE_SIGNAL_H_ */
+#endif	/* _POWERPC_SIGNAL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.17 2001/08/18 20:50:18 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.18 2001/09/01 15:49:05 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -32,8 +32,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_PMAP_H_
-#define	_MACHINE_PMAP_H_
+#ifndef	_POWERPC_PMAP_H_
+#define	_POWERPC_PMAP_H_
 
 #include <machine/pte.h>
 
@@ -106,4 +106,4 @@ paddr_t vtophys __P((vaddr_t));
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
-#endif	/* _MACHINE_PMAP_H_ */
+#endif	/* _POWERPC_PMAP_H_ */

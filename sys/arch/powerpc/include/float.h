@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.4 1997/10/13 10:53:43 pefo Exp $	*/
+/*	$OpenBSD: float.h,v 1.5 2001/09/01 15:49:05 drahn Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -35,8 +35,8 @@
  *	@(#)float.h	7.1 (Berkeley) 5/8/90
  */
 
-#ifndef _MACHINE_FLOAT_H_
-#define _MACHINE_FLOAT_H_
+#ifndef _POWERPC_FLOAT_H_
+#define _POWERPC_FLOAT_H_
 
 #include <sys/cdefs.h>
 
@@ -77,4 +77,4 @@ __END_DECLS
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
-#endif	/* _MACHINE_FLOAT_H_ */
+#endif	/* _POWERPC_FLOAT_H_ */

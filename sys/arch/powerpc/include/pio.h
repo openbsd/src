@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.6 2001/06/29 06:07:09 drahn Exp $ */
+/*	$OpenBSD: pio.h,v 1.7 2001/09/01 15:49:05 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef _MACHINE_PIO_H_
-#define _MACHINE_PIO_H_
+#ifndef _POWERPC_PIO_H_
+#define _POWERPC_PIO_H_
 /*
  * I/O macros.
  */
@@ -178,4 +178,4 @@ __flash_led(bits, count)
 }
 #endif /* DEBUG */
 
-#endif /*_MACHINE_PIO_H_*/
+#endif /*_POWERPC_PIO_H_*/

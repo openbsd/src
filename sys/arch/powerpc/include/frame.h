@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.4 1997/10/13 10:53:44 pefo Exp $	*/
+/*	$OpenBSD: frame.h,v 1.5 2001/09/01 15:49:05 drahn Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_FRAME_H_
-#define	_MACHINE_FRAME_H_
+#ifndef	_POWERPC_FRAME_H_
+#define	_POWERPC_FRAME_H_
 
 #include <machine/types.h>
 
@@ -73,4 +73,4 @@ struct sigframe {
 	struct sigcontext sf_sc;
 	siginfo_t sf_si;
 };
-#endif	/* _MACHINE_FRAME_H_ */
+#endif	/* _POWERPC_FRAME_H_ */

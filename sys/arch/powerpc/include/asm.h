@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.4 1999/03/12 04:56:44 rahnds Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 2001/09/01 15:49:05 drahn Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PPC_ASM_H_
-#define _PPC_ASM_H_
+#ifndef _POWERPC_ASM_H_
+#define _POWERPC_ASM_H_
 
 /* XXX */
 #define TARGET_ELF
@@ -103,4 +103,4 @@ _TMP_LABEL(y):; \
 
 #define RCSID(x)	.text; .asciz x
 
-#endif /* !_PPC_ASM_H_ */
+#endif /* !_POWERPC_ASM_H_ */

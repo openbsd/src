@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.3 1997/10/13 10:53:48 pefo Exp $	*/
+/*	$OpenBSD: psl.h,v 1.4 2001/09/01 15:49:05 drahn Exp $	*/
 /*	$NetBSD: psl.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_MACHINE_PSL_H_
-#define	_MACHINE_PSL_H_
+#ifndef	_POWERPC_PSL_H_
+#define	_POWERPC_PSL_H_
 
 /*
  * Flags in MSR:
@@ -74,4 +74,4 @@
 
 #include <machine/intr.h>
 
-#endif	/* _MACHINE_PSL_H_ */
+#endif	/* _POWERPC_PSL_H_ */

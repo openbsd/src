@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbsys.h,v 1.5 2001/07/01 04:31:23 drahn Exp $	*/
+/*	$OpenBSD: adbsys.h,v 1.1 2001/09/01 15:49:06 drahn Exp $	*/
 /*	$NetBSD: adbsys.h,v 1.4 2000/12/19 02:59:24 tsubai Exp $	*/
 
 /*-

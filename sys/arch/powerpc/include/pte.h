@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.2 1996/12/28 06:25:25 rahnds Exp $	*/
+/*	$OpenBSD: pte.h,v 1.3 2001/09/01 15:49:05 drahn Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
 
 /*-
@@ -32,8 +32,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_PTE_H_
-#define	_MACHINE_PTE_H_
+#ifndef	_POWERPC_PTE_H_
+#define	_POWERPC_PTE_H_
 
 #include <sys/queue.h>
 
@@ -110,4 +110,4 @@ extern u_int dsisr __P((void));
 extern vm_offset_t dar __P((void));
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
-#endif	/* _MACHINE_PTE_H_ */
+#endif	/* _POWERPC_PTE_H_ */
