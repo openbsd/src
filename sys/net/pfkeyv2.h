@@ -178,6 +178,7 @@ struct sadb_x_cred {
 #ifdef _KERNEL
 #define SADB_X_GETSPROTO(x) ( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
                                 (x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
+                                    (x) == SADB_X_SATYPE_IPCOMP ? IPPROTO_IPCOMP:\
                                                          IPPROTO_IPIP )
 #endif
 
@@ -211,7 +212,9 @@ struct sadb_x_cred {
 #define SADB_X_EXT_REMOTE_CREDENTIALS 27
 #define SADB_X_EXT_LOCAL_AUTH         28
 #define SADB_X_EXT_REMOTE_AUTH        29
-#define SADB_EXT_MAX                  29
+#define SADB_X_EXT_SUPPORTED_COMP     30
+#define SADB_EXT_MAX                  30
+
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -223,7 +226,8 @@ struct sadb_x_cred {
 #define SADB_SATYPE_MIP			 6
 #define SADB_X_SATYPE_IPIP		 7
 #define SADB_X_SATYPE_TCPSIGNATURE	 8
-#define SADB_SATYPE_MAX			 8
+#define SADB_X_SATYPE_IPCOMP		 9
+#define SADB_SATYPE_MAX			 9
 
 #define SADB_SASTATE_LARVAL   0
 #define SADB_SASTATE_MATURE   1
@@ -258,6 +262,12 @@ struct sadb_x_cred {
 #define SADB_X_EALG_AES       12
 #define SADB_X_EALG_SKIPJACK  249
 #define SADB_EALG_MAX         249
+
+#define SADB_X_CALG_NONE	0
+#define SADB_X_CALG_OUI		1
+#define SADB_X_CALG_DEFLATE	2
+#define SADB_X_CALG_LSZ		3
+#define SADB_X_CALG_MAX		4
 
 #define SADB_SAFLAGS_PFS         	0x001    /* perfect forward secrecy */
 #define SADB_X_SAFLAGS_HALFIV    	0x002    /* Used for ESP-old */
