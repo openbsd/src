@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.16 2005/02/23 02:19:32 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.17 2005/03/15 00:34:25 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -199,6 +199,7 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_keystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
 	    M_DEVBUF, M_NOWAIT);
+	bzero(sc->sc_keystate, (sc->sc_nsense * sc->sc_nstrobe));
 
 	/* set all the strobe bits */
 	for (i = 0; i < sc->sc_nstrobe; i++) {
@@ -367,17 +368,29 @@ zkbd_poll(void *v)
 		keysdown |= keystate; /* if any keys held */
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-		if (keystate) {
-			if ((sc->sc_rawkbd) && !( npress >= MAXKEYS-1)) {
+		if (sc->sc_polling == 0 && sc->sc_rawkbd) {
+			if ((keystate) || (sc->sc_okeystate[i] != keystate)) {
 				c = sc->sc_xt_keymap[i];
-				if (c & 0x80)
-					sc->sc_rep[npress++] = 0xe0;
-				sc->sc_rep[npress++] = c & 0x7f;
+				if (c & 0x80) {
+					cbuf[ncbuf++] = 0xe0;
+				}
+				cbuf[ncbuf] = c & 0x7f;
+
+				if (keystate) {
+					if (c & 0x80) {
+						sc->sc_rep[npress++] = 0xe0;
+					}
+					sc->sc_rep[npress++] = c & 0x7f;
+				} else {
+					cbuf[ncbuf] |= 0x80;
+				}
+				ncbuf++;
+				sc->sc_okeystate[i] = keystate;
 			}
 		}
 #endif
 
-		if (sc->sc_okeystate[i] != keystate) {
+		if ((!sc->sc_rawkbd) && (sc->sc_okeystate[i] != keystate)) {
 
 			type = keystate ? WSCONS_EVENT_KEY_DOWN :
 			    WSCONS_EVENT_KEY_UP;
@@ -390,20 +403,6 @@ zkbd_poll(void *v)
 			if (sc->sc_polling) {
 				sc->sc_pollkey = i;
 				sc->sc_pollUD = type;
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-			} else if (sc->sc_rawkbd) {
-
-				if (npress < sizeof(cbuf)-2) {
-					c = sc->sc_xt_keymap[i];
-
-					if (c & 0x80)
-						cbuf[ncbuf++] = 0xe0;
-					cbuf[ncbuf] = c & 0x7f;
-					if (type == WSCONS_EVENT_KEY_UP)
-						cbuf[ncbuf] |= 0x80;
-					ncbuf++;
-				}
-#endif
 			} else {
 				wskbd_input(sc->sc_wskbddev, type, i);
 			}
