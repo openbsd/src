@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttzapple.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: ttzapple.c,v 1.5 2003/04/05 01:39:50 pvalchev Exp $	*/
 /*	$NetBSD: ttzapple.c,v 1.3 1995/09/28 10:34:57 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttzapple.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: ttzapple.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ttzapple.c,v 1.5 2003/04/05 01:39:50 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -334,7 +334,7 @@ zz_set_token(t, s, n)
 	if (zz_debug) {
 		char buf[100];
 		zz_setmodes(WWM_REV);
-		(void) sprintf(buf, "%02x=", t);
+		(void) snprintf(buf, sizeof(buf), "%02x=", t);
 		ttputs(buf);
 		tt.tt_col += 3;
 	}
@@ -354,7 +354,7 @@ zz_put_token(t, s, n)
 	if (zz_debug) {
 		char buf[100];
 		zz_setmodes(WWM_REV);
-		(void) sprintf(buf, "%02x>", t);
+		(void) snprintf(buf, sizeof(buf), "%02x>", t);
 		ttputs(buf);
 		tt.tt_col += 3;
 	}

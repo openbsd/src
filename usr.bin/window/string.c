@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: string.c,v 1.6 2003/04/05 01:39:50 pvalchev Exp $	*/
 /*	$NetBSD: string.c,v 1.5 1995/09/29 00:44:06 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)string.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: string.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: string.c,v 1.6 2003/04/05 01:39:50 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ int i;
 {
 	char buf[30];
 
-	(void) sprintf(buf, "%d", i);
+	(void) snprintf(buf, sizeof(buf), "%d", i);
 	return str_cpy(buf);
 }
 

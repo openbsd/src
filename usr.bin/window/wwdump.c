@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwdump.c,v 1.4 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: wwdump.c,v 1.5 2003/04/05 01:39:50 pvalchev Exp $	*/
 /*	$NetBSD: wwdump.c,v 1.5 1995/09/29 00:44:09 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwdump.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwdump.c,v 1.4 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: wwdump.c,v 1.5 2003/04/05 01:39:50 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ struct ww *w;
 	(*tt.tt_clear)();
 	for (i = w->ww_i.t; i < w->ww_i.b; i++) {
 		(*tt.tt_move)(i, w->ww_i.l);
-		(void) sprintf(buf, "%d", w->ww_nvis[i]);
+		(void) snprintf(buf, sizeof(buf), "%d", w->ww_nvis[i]);
 		(*tt.tt_write)(buf, strlen(buf));
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcmd1.c,v 1.6 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: lcmd1.c,v 1.7 2003/04/05 01:39:50 pvalchev Exp $	*/
 /*	$NetBSD: lcmd1.c,v 1.6 1996/02/08 20:45:00 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd1.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lcmd1.c,v 1.6 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: lcmd1.c,v 1.7 2003/04/05 01:39:50 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -330,7 +330,7 @@ struct value *a;
 		return;
 	while (a->v_type != V_ERR) {
 		if (a->v_type == V_NUM) {
-			(void) sprintf(buf, "%d", a->v_num);
+			(void) snprintf(buf, sizeof(buf), "%d", a->v_num);
 			(void) write(w->ww_pty, buf, strlen(buf));
 		} else
 			(void) write(w->ww_pty, a->v_str, strlen(a->v_str));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwprintf.c,v 1.4 2002/10/04 16:39:26 mickey Exp $	*/
+/*	$OpenBSD: wwprintf.c,v 1.5 2003/04/05 01:39:50 pvalchev Exp $	*/
 /*	$NetBSD: wwprintf.c,v 1.3 1995/09/28 10:35:44 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwprintf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwprintf.c,v 1.4 2002/10/04 16:39:26 mickey Exp $";
+static char rcsid[] = "$OpenBSD: wwprintf.c,v 1.5 2003/04/05 01:39:50 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,6 @@ wwprintf(struct ww *w, char *fmt, ...)
 
 	va_start(ap, fmt);
 	/* buffer can overflow */
-	(void) wwwrite(w, buf, vsprintf(buf, fmt, ap));
+	(void) wwwrite(w, buf, vsnprintf(buf, sizeof(buf), fmt, ap));
 	va_end(ap);
 }

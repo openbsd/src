@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwpty.c,v 1.5 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: wwpty.c,v 1.6 2003/04/05 01:39:50 pvalchev Exp $	*/
 /*	$NetBSD: wwpty.c,v 1.3 1995/09/28 10:35:45 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwpty.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwpty.c,v 1.5 2001/11/19 19:02:18 mpech Exp $";
+static char rcsid[] = "$OpenBSD: wwpty.c,v 1.6 2003/04/05 01:39:50 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ struct ww *w;
 #define _PQRS	8
 #define _0_9	9
 
-	(void) strcpy(w->ww_ttyname, PTY);
+	(void) strlcpy(w->ww_ttyname, PTY, sizeof(w->ww_ttyname));
 	for (c = 'p'; c <= 'u'; c++) {
 		w->ww_ttyname[_PT] = 'p';
 		w->ww_ttyname[_PQRS] = c;
