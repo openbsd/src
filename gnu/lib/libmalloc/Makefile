@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:38:20 deraadt Exp $
+#	$Id: Makefile,v 1.2 1996/02/02 07:10:59 etheisen Exp $
 
-CFLAGS+= -I${.CURDIR}
+CFLAGS+= -I${.CURDIR} -I/usr/include
 
 LIB=	gnumalloc
 SRCS+=	combined.c
