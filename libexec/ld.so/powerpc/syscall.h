@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.2 2000/08/25 03:36:38 rahnds Exp $ */
+/*	$OpenBSD: syscall.h,v 1.3 2000/10/01 00:51:20 rahnds Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -171,7 +171,7 @@ _dl_munmap (const void* addr, unsigned int len)
 		    "li    3,-1\n\t"
 		    "1:"
                     : "=r" (status)
-                    : "r" (SYS_read), "r" (addr), "r" (len)
+                    : "r" (SYS_munmap), "r" (addr), "r" (len)
                     : "0", "3", "4");
   return status;
 } 
@@ -190,7 +190,7 @@ _dl_mprotect (const void *addr, int size, int prot)
 		    "li    3,-1\n\t"
 		    "1:"
                     : "=r" (status)
-                    : "r" (SYS_read), "r" (addr), "r" (size), "r" (prot)
+                    : "r" (SYS_mprotect), "r" (addr), "r" (size), "r" (prot)
                     : "0", "3", "4", "5");
   return status;
 } 
