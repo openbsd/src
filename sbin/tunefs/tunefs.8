@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tunefs.8,v 1.2 1996/06/23 14:32:50 deraadt Exp $
+.\"	$OpenBSD: tunefs.8,v 1.3 1996/08/02 11:23:34 deraadt Exp $
 .\"	$NetBSD: tunefs.8,v 1.8 1995/03/18 15:01:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -42,6 +42,7 @@
 .Nd tune up an existing file system
 .Sh SYNOPSIS
 .Nm tunefs
+.Op Fl A
 .Op Fl a Ar maxcontig
 .Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
@@ -57,6 +58,10 @@ which affect the layout policies.
 The parameters which are to be changed are indicated by the flags
 given below:
 .Bl -tag -width Ds
+.It Fl A
+The file system has several backups of the super-block.  Specifying
+this option will cause all backups to be modified as well as the
+primary super-block.  This is potentially dangerous - use with caution.
 .It Fl a Ar maxcontig
 This specifies the maximum number of contiguous blocks that will
 be laid out before forcing a rotational delay (see
@@ -107,6 +112,12 @@ running out of full sized blocks.
 For values of minfree greater than or equal to 10%,
 fragmentation is unlikely to be problematical, and
 the file system can be optimized for time.
+.It Fl p
+This option shows a summary of what the current tuneable settings
+are on the selected file system.  More detailed information can be
+obtained in the
+.Xr dumpfs 8
+manual page.
 .El
 .Sh SEE ALSO
 .Xr fs 5 ,
@@ -133,6 +144,8 @@ is run on dismounted file systems.
 To change the root file system, the system must be rebooted
 after the file system is tuned.
 .Pp
+.\" Take this out and a Unix Demon will dog your steps from now until
+.\" the time_t's wrap around.
 You can tune a file system, but you can't tune a fish.
 .Sh HISTORY
 The
