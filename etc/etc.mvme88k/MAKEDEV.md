@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.9 2003/12/30 10:33:24 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.10 2004/01/05 20:11:56 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001,2002,2003 Todd T. Fries <todd@OpenBSD.org>
@@ -35,7 +35,7 @@ _mkdev(dart, {-tty[a-z]-}, {-u=${i#tty*}
 __devitem(cl, tty0*, MVME1x7 CL-CD2400 serial ports)dnl
 _mkdev(cl, {-tty0*-}, {-u=${i#tty0*}
 	case $u in
-	0|1|2|3)
+	0|1|2|3|4|5|6|7)
 		M tty0$u c major_cl_c $u 660 dialer uucp
 		M cua0$u c major_cl_c Add($u, 128) 660 dialer uucp
 		;;
@@ -84,7 +84,7 @@ target(all, uk, 0)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
 twrget(all, dart, tty, a, b)dnl
-twrget(all, cl, tty0, 0, 1, 2, 3)dnl
+twrget(all, cl, tty0, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 twrget(all, vx, ttyv, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 _DEV(all)
 dnl
