@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.48 2001/08/24 15:01:02 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.49 2001/09/16 15:27:16 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -256,18 +256,16 @@ Set based on corresponding INSTALL_* variables.
 .It Ev BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form
-.Sq file_to_test::directory[,-subpackage][,flavor ...][:target] .
-The double :: is designed to allow wedging a package specification in the
-near future.
+.Sq [legacy]:[pkgspec]:directory[,-subpackage][,flavor ...][:target] .
 .Sq target
 defaults to
 .Sq install
 if it is not specified.
-.Sq file_to_test
-is checked against the current path for ports (see PORTPATH), or as an absolute
-file name.
-The special name /nonexistent can be used to force a build
-dependency (see the ghostscript port for an example).
+.Sq legacy
+used to be a file to check. 
+The ports tree now uses
+.Sq pkgspec
+instead, as a package that must be installed prior to the build.
 .Sq directory
 is set relative to ${PORTSDIR}.
 .Sq subpackage
@@ -563,9 +561,11 @@ For use by ports which
 fetch dynamically generated archives that can't be checksummed.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
-Similar to BUILD_DEPENDS, except that
-.Sq file_to_test
-is replaced by a
+Each item has the form
+.Sq lib_specs:[pkgspec]:directory[,-subpackage][,flavor ...][:target] .
+Similar to BUILD_DEPENDS, except for
+.Sq lib_specs ,
+which is a comma-separated list of
 .Sq lib_spec
 of the form:
 .Sq libname.[version.[subversion]] .
@@ -1449,8 +1449,10 @@ Most of the ports tree will probably fall
 apart if one tries to build/use stuff elsewhere.
 .Pp
 .Ev LIB_DEPENDS
-is automatically both a BUILD_DEPENDS and a RUN_DEPENDS, whereas some
-smarter, more intricate mechanism could be designed to minimize dependencies.
+should only be a BUILD_DEPENDS on architectures without shared libraries.
+If a
+.Ev RUN_DEPENDS
+is needed as well, it should be mentionned explicitly.
 .Sh HISTORY
 The ports mechanism originally came from
 .Fx .
