@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.7 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.8 2002/07/27 08:01:47 nordin Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -884,7 +884,7 @@ seq_timer(sc, cmd, parm, b)
 			     when.tv_sec, when.tv_usec));
 		ADDTIMEVAL(&when, &t->start); /* abstime for end */
 		ticks = hzto(&when);
-		DPRINTFN(4, (" when+start=%ld.%06ld, tick=%d\n",
+		DPRINTFN(4, (" when+start=%ld.%06ld, ticks=%d\n",
 			     when.tv_sec, when.tv_usec, ticks));
 		if (ticks > 0) {
 #ifdef DIAGNOSTIC
@@ -898,7 +898,7 @@ seq_timer(sc, cmd, parm, b)
 			timeout_add(&sc->timo, ticks);
 		}
 #ifdef SEQUENCER_DEBUG
-		else if (tick < 0)
+		else if (ticks < 0)
 			DPRINTF(("seq_timer: ticks = %d\n", ticks));
 #endif
 		break;
