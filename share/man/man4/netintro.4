@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.28 2004/08/21 21:58:15 jaredy Exp $
+.\"	$OpenBSD: netintro.4,v 1.29 2004/10/11 22:27:54 jaredy Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -448,12 +448,16 @@ The
 .Vt ifgroupreq
 structure is as follows:
 .Bd -literal
+struct ifg_req {
+	char			 ifgrq_group[IFNAMSIZ];
+};
+
 struct ifgroupreq {
 	char	ifgr_name[IFNAMSIZ];
 	u_int	ifgr_len;
 	union {
 		char	ifgru_group[IFNAMSIZ];
-		struct	ifgroup *ifgru_groups;
+		struct	ifg_req *ifgru_groups;
 	} ifgr_ifgru;
 #define ifgr_group	ifgr_ifgru.ifgru_group
 #define ifgr_groups	ifgr_ifgru.ifgru_groups
