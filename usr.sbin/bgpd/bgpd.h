@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.85 2004/01/27 22:18:28 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.86 2004/01/28 11:03:32 markus Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -324,6 +324,6 @@ void	control_cleanup(void);
 int	control_imsg_relay(struct imsg *);
 
 /* pfkey.c */
-int	pfkey_setkey(struct sockaddr *, struct sockaddr *, char *);
+int	pfkey_setkey(struct bgpd_addr *, struct bgpd_addr *, char *);
 
 #endif /* __BGPD_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.4 2004/01/27 14:12:28 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.5 2004/01/28 11:03:32 markus Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,12 +37,12 @@
 static u_int32_t	sadb_msg_seq = 1;
 
 int	pfkey_reply(int, u_int32_t *);
-int	pfkey_send(int, uint8_t, struct sockaddr *, struct sockaddr *,
+int	pfkey_send(int, uint8_t, struct bgpd_addr *, struct bgpd_addr *,
     u_int32_t, char *);
 
 int
-pfkey_send(int sd, uint8_t mtype, struct sockaddr *src, struct sockaddr *dst,
-    u_int32_t spi, char *key)
+pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
+    struct bgpd_addr *dst, u_int32_t spi, char *key)
 {
 	struct sadb_msg		smsg;
 	struct sadb_sa		sa;
@@ -61,31 +61,31 @@ pfkey_send(int sd, uint8_t mtype, struct sockaddr *src, struct sockaddr *dst,
 
 	/* we need clean sockaddr... no ports set */
 	bzero(&ssrc, sizeof(ssrc));
-	if (src->sa_family == AF_INET) {
-		((struct sockaddr_in *)&ssrc)->sin_addr.s_addr =
-		    ((struct sockaddr_in *)src)->sin_addr.s_addr;
+	if (src->af == AF_INET) {
+		((struct sockaddr_in *)&ssrc)->sin_addr = src->v4;
 		ssrc.ss_len = sizeof(struct sockaddr_in);
 		ssrc.ss_family = AF_INET;
-	} else if (src->sa_family == AF_INET6) {
+	} else if (src->af == AF_INET6) {
 		memcpy(&((struct sockaddr_in6 *)&ssrc)->sin6_addr,
-		    &((struct sockaddr_in6 *)src)->sin6_addr,
-		    sizeof(struct in6_addr));
+		    &src->v6, sizeof(struct in6_addr));
 		ssrc.ss_len = sizeof(struct sockaddr_in6);
 		ssrc.ss_family = AF_INET6;
+	} else {
+		return (-1);
 	}
 
 	bzero(&sdst, sizeof(sdst));
-	if (dst->sa_family == AF_INET) {
-		((struct sockaddr_in *)&sdst)->sin_addr.s_addr =
-		    ((struct sockaddr_in *)dst)->sin_addr.s_addr;
+	if (dst->af == AF_INET) {
+		((struct sockaddr_in *)&sdst)->sin_addr = dst->v4;
 		sdst.ss_len = sizeof(struct sockaddr_in);
 		sdst.ss_family = AF_INET;
-	} else if (dst->sa_family == AF_INET6) {
+	} else if (dst->af == AF_INET6) {
 		memcpy(&((struct sockaddr_in6 *)&sdst)->sin6_addr,
-		    &((struct sockaddr_in6 *)dst)->sin6_addr,
-		    sizeof(struct in6_addr));
+		    &dst->v6, sizeof(struct in6_addr));
 		sdst.ss_len = sizeof(struct sockaddr_in6);
 		sdst.ss_family = AF_INET6;
+	} else {
+		return (-1);
 	}
 
 	bzero(&smsg, sizeof(smsg));
@@ -262,7 +262,7 @@ pfkey_reply(int sd, u_int32_t *spip)
 }
 
 int
-pfkey_setkey(struct sockaddr *src, struct sockaddr *dst, char *key)
+pfkey_setkey(struct bgpd_addr *src, struct bgpd_addr *dst, char *key)
 {
 	u_int32_t	spi = 0;
 	int		sd;
