@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.21 2005/02/19 09:09:16 mbalmer Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.22 2005/03/10 09:35:10 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -4988,7 +4988,9 @@ in any given negotiation session before giving up and closing that layer.
 .Ar value Ns ...
 .Xc
 This command allows the adjustment of the current log level.
-Refer to the Logging Facility section for further details.
+Refer to the
+.Sx LOGGING FACILITY
+section above for further details.
 .It Ic set login Ar chat-script
 This
 .Ar chat-script
