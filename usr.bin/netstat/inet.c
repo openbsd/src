@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.9 1997/02/21 02:46:49 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.10 1997/02/21 09:09:50 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.9 1997/02/21 02:46:49 deraadt Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.10 1997/02/21 09:09:50 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,9 @@ static char *rcsid = "$OpenBSD: inet.c,v 1.9 1997/02/21 02:46:49 deraadt Exp $";
 #include <netinet/tcp_debug.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+#include <netinet/ip_ah.h>
+#include <netinet/ip_esp.h>
+#include <netinet/ip_ip4.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -575,4 +578,91 @@ inetname(inp)
 		    C(inp->s_addr >> 16), C(inp->s_addr >> 8), C(inp->s_addr));
 	}
 	return (line);
+}
+
+/*
+ * Dump AH statistics structure.
+ */
+void
+ah_stats(off, name)
+        u_long off;
+        char *name;
+{
+        struct ahstat ahstat;
+
+        if (off == 0)
+                return;
+        kread(off, (char *)&ahstat, sizeof (ahstat));
+        printf("%s:\n", name);
+
+#define p(f, m) if (ahstat.f || sflag <= 1) \
+    printf(m, ahstat.f, plural(ahstat.f))
+
+        p(ahs_hdrops, "\t%u packet%s shorter than header shows\n");
+        p(ahs_notdb, "\t%u packet%s for which no TDB was found\n");
+        p(ahs_badkcr, "\t%u input packet%s that failed to be processed\n");
+        p(ahs_badauth, "\t%u packet%s that failed verification received\n");
+        p(ahs_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");
+        p(ahs_qfull, "\t%u packet%s were dropeed due to full output queue\n");
+        p(ahs_wrap, "\t%u packet%s where counter wrapping was detected\n");
+        p(ahs_replay, "\t%u possibly replayed packet%s received\n");
+        p(ahs_badauthl, "\t%u packet%s with bad authenticator length received\n");
+#undef p
+}
+
+/*
+ * Dump ESP statistics structure.
+ */
+void
+esp_stats(off, name)
+        u_long off;
+        char *name;
+{
+        struct espstat espstat;
+
+        if (off == 0)
+                return;
+        kread(off, (char *)&espstat, sizeof (espstat));
+        printf("%s:\n", name);
+
+#define p(f, m) if (espstat.f || sflag <= 1) \
+    printf(m, espstat.f, plural(espstat.f))
+
+        p(esps_hdrops, "\t%u packet%s shorter than header shows\n");
+        p(esps_notdb, "\t%u packet%s for which no TDB was found\n");
+        p(esps_badkcr, "\t%u input packet%s that failed to be processed\n");
+        p(esps_badauth, "\t%u packet%s that failed verification received\n");
+        p(esps_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");   
+        p(esps_qfull, "\t%u packet%s were dropeed due to full output queue\n");
+        p(esps_wrap, "\t%u packet%s where counter wrapping was detected\n");
+        p(esps_replay, "\t%u possibly replayed packet%s received\n"); 
+        p(esps_badilen, "\t%u packet%s with payload not a multiple of 8 received\n");
+
+#undef p
+}
+
+/*
+ * Dump ESP statistics structure.
+ */
+void
+ip4_stats(off, name)
+        u_long off;
+        char *name;
+{
+        struct ip4stat ip4stat;
+
+        if (off == 0)
+                return;
+        kread(off, (char *)&ip4stat, sizeof (ip4stat));
+        printf("%s:\n", name);
+
+#define p(f, m) if (ip4stat.f || sflag <= 1) \
+    printf(m, ip4stat.f, plural(ip4stat.f))
+
+        p(ip4s_ipackets, "\t%u total input packet%s\n");
+        p(ip4s_hdrops, "\t%u packet%s shorter than header shows\n");
+        p(ip4s_notip4, "\t%u packet%s with internal header not IPv4 received\n");
+        p(ip4s_qfull, "\t%u packet%s were dropeed due to full output queue\n");
+
+#undef p
 }

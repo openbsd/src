@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.4 1996/08/16 09:29:34 mickey Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.5 1997/02/21 09:09:53 angelos Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -69,6 +69,9 @@ void	udp_stats __P((u_long, char *));
 void	ip_stats __P((u_long, char *));
 void	icmp_stats __P((u_long, char *));
 void	igmp_stats __P((u_long, char *));
+void	ah_stats __P((u_long, char *));
+void	esp_stats __P((u_long, char *));
+void	ip4_stats __P((u_long, char *));
 void	protopr __P((u_long, char *));
 
 void	mbpr(u_long);
