@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.131 2003/09/24 06:25:19 jason Exp $
+dnl	$OpenBSD: hardware,v 1.132 2003/09/27 19:52:58 fgsch Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -643,6 +643,7 @@ Supported hardware {:-include-:}:
 		    RealTek 81[23]9-based, including:
 			Accton MPX5030 CardBus
 			Corega FEther CB-TXD 10/100 Ethernet
+			D-Link DFE-690TXD
 		    SMC 91Cxx-based, including:
 			Megahertz XJEM1144, CC10BT
 			SMC EtherEZ 8020BT
