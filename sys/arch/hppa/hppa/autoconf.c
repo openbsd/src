@@ -1,7 +1,7 @@
-/*	$OpenBSD: autoconf.c,v 1.29 2003/02/18 19:01:50 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 2003/03/29 01:08:15 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2001 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -158,7 +158,9 @@ heartbeat(v)
 		toggle = PALED_HEARTBEAT;
 	timeout_add(&heartbeat_tmo, hz / 8);
 	hbcnt &= 7;
-	ledctl(cp_mask, (~cp_mask & 0xf0)|PALED_NETRCV|PALED_NETSND, toggle);
+	ledctl(cp_mask,
+	    (~cp_mask & 0xf0) | PALED_NETRCV | PALED_NETSND | PALED_DISK,
+	    toggle);
 }
 #endif
 
@@ -603,14 +605,14 @@ pdc_scanbus(self, ca, maxmod)
 	int i;
 
 	for (i = maxmod; i--; ) {
-		struct pdc_iodc_read pdc_iodc_read;
-		struct pdc_memmap pdc_memmap;
+		struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
+		struct pdc_memmap pdc_memmap PDC_ALIGNMENT;
 		struct confargs nca;
-		hppa_hpa_t hpa;
 		int error;
 
-		hpa = 0;
-		nca = *ca;
+		bzero(&nca, sizeof(nca));
+		nca.ca_iot = ca->ca_iot;
+		nca.ca_dmatag = ca->ca_dmatag;
 		nca.ca_dp.dp_bc[0] = ca->ca_dp.dp_bc[1];
 		nca.ca_dp.dp_bc[1] = ca->ca_dp.dp_bc[2];
 		nca.ca_dp.dp_bc[2] = ca->ca_dp.dp_bc[3];
@@ -618,29 +620,72 @@ pdc_scanbus(self, ca, maxmod)
 		nca.ca_dp.dp_bc[4] = ca->ca_dp.dp_bc[5];
 		nca.ca_dp.dp_bc[5] = ca->ca_dp.dp_mod;
 		nca.ca_dp.dp_mod = i;
+		nca.ca_hpamask = ca->ca_hpamask;
 
 		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MEMMAP,
 		    PDC_MEMMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0)
-			hpa = pdc_memmap.hpa;
+			nca.ca_hpa = pdc_memmap.hpa;
 		else if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SYSMAP,
-		    PDC_SYSMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0)
-			hpa = pdc_memmap.hpa;
+		    PDC_SYSMAP_HPA, &pdc_memmap, &nca.ca_dp)) == 0) {
+			struct pdc_sysmap_find find PDC_ALIGNMENT;
+			struct pdc_sysmap_addrs addr PDC_ALIGNMENT;
+			struct device_path path PDC_ALIGNMENT;
+			int im, ia;
 
-		if (!hpa)
+			nca.ca_hpa = pdc_memmap.hpa;
+
+			/* TODO fetch the hpa size and the addrs */
+			for (im = 0; !(error = pdc_call((iodcio_t)pdc, 0,
+			    PDC_SYSMAP, PDC_SYSMAP_FIND, &find, &path, im)) &&
+			    find.hpa != nca.ca_hpa; im++)
+				;
+
+			if (!error)
+				nca.ca_hpasz = find.size << PGSHIFT;
+
+			if (!error && find.naddrs) {
+				nca.ca_naddrs = find.naddrs;
+				if (nca.ca_naddrs > 16) {
+					nca.ca_naddrs = 16;
+					printf("WARNING: too many (%d) addrs\n",
+					    find.naddrs);
+				}
+
+				if (autoconf_verbose)
+					printf(">> ADDRS:");
+
+				for (ia = 0; !(error = pdc_call((iodcio_t)pdc,
+				    0, PDC_SYSMAP, PDC_SYSMAP_ADDR, &addr,
+				    im, ia)) && ia < nca.ca_naddrs; ia++) {
+					nca.ca_addrs[ia].addr = addr.hpa;
+					nca.ca_addrs[ia].size =
+					    addr.size << PGSHIFT;
+
+					if (autoconf_verbose)
+						printf(" 0x%x[0x%x]",
+						    nca.ca_addrs[ia].addr,
+						    nca.ca_addrs[ia].size);
+				}
+				if (autoconf_verbose)
+					printf("\n");
+			}
+		}
+
+		if (!nca.ca_hpa)
 			continue;
 
 		if (autoconf_verbose)
-			printf(">> HPA 0x%x\n", hpa);
+			printf(">> HPA 0x%x[0x%x]\n",
+			    nca.ca_hpa, nca.ca_hpasz);
 
 		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_IODC,
-		    PDC_IODC_READ, &pdc_iodc_read, hpa, IODC_DATA,
+		    PDC_IODC_READ, &pdc_iodc_read, nca.ca_hpa, IODC_DATA,
 		    &nca.ca_type, sizeof(nca.ca_type))) < 0) {
 			if (autoconf_verbose)
 				printf(">> iodc_data error %d\n", error);
 			continue;
 		}
 
-		nca.ca_hpa = hpa;
 		nca.ca_pdc_iodc_read = &pdc_iodc_read;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
 					    nca.ca_type.iodc_sv_model);
@@ -652,7 +697,7 @@ pdc_scanbus(self, ca, maxmod)
 			    nca.ca_dp.dp_bc[2], nca.ca_dp.dp_bc[3],
 			    nca.ca_dp.dp_bc[4], nca.ca_dp.dp_bc[5]);
 			printf("mod %x hpa %x type %x sv %x\n",
-			    nca.ca_dp.dp_mod, hpa,
+			    nca.ca_dp.dp_mod, nca.ca_hpa,
 			    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 		}
 
