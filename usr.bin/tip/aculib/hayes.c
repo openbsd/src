@@ -1,4 +1,4 @@
-/*	$OpenBSD: hayes.c,v 1.6 1997/04/02 01:47:06 millert Exp $	*/
+/*	$OpenBSD: hayes.c,v 1.7 2001/09/26 06:07:28 pvalchev Exp $	*/
 /*	$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: hayes.c,v 1.6 1997/04/02 01:47:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: hayes.c,v 1.7 2001/09/26 06:07:28 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -84,6 +84,7 @@ static char dumbuf[DUMBUFLEN];
 #define	FAILED		4
 static	int state = IDLE;
 
+int
 hay_dialer(num, acu)
 	register char *num;
 	char *acu;
@@ -130,7 +131,7 @@ hay_dialer(num, acu)
 	tcflush(FD, TCIOFLUSH);
 #ifdef ACULOG
 	if (timeout) {
-		(void)sprintf(line, "%d second dial timeout",
+		(void)sprintf(line, "%ld second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "hayes", line);
 	}
@@ -141,11 +142,9 @@ hay_dialer(num, acu)
 }
 
 
+void
 hay_disconnect()
 {
-	char c;
-	int len, rlen;
-
 	/* first hang up the modem*/
 #ifdef DEBUG
 	printf("\rdisconnecting modem....\n\r");
@@ -156,10 +155,9 @@ hay_disconnect()
 	goodbye();
 }
 
+void
 hay_abort()
 {
-
-	char c;
 
 	write(FD, "\r", 1);	/* send anything to abort the call */
 	hay_disconnect();
@@ -210,6 +208,7 @@ gobble(match)
 	return (status);
 }
 
+static void
 error_rep(c)
 	register char c;
 {
@@ -250,9 +249,10 @@ error_rep(c)
 /*
  * set modem back to normal verbose status codes.
  */
+void
 goodbye()
 {
-	int len, rlen;
+	int len;
 	char c;
 
 	tcflush(FD, TCIOFLUSH);
@@ -294,6 +294,7 @@ goodbye()
 
 #define MAXRETRY	5
 
+int
 hay_sync()
 {
 	int len, retry = 0;

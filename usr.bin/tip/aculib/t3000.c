@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.7 2001/09/09 19:26:53 millert Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.8 2001/09/26 06:07:28 pvalchev Exp $	*/
 /*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: t3000.c,v 1.7 2001/09/09 19:26:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: t3000.c,v 1.8 2001/09/26 06:07:28 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -59,6 +59,7 @@ static	jmp_buf timeoutbuf, intbuf;
 static	int t3000_sync(), t3000_connect(), t3000_swallow();
 static	void t3000_nap();
 
+int
 t3000_dialer(num, acu)
 	register char *num;
 	char *acu;
@@ -106,7 +107,7 @@ badsynch:
 	connected = t3000_connect();
 #ifdef ACULOG
 	if (timeout) {
-		(void)sprintf(line, "%d second dial timeout",
+		(void)sprintf(line, "%ld second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "t3000", line);
 	}
@@ -116,6 +117,7 @@ badsynch:
 	return (connected);
 }
 
+void
 t3000_disconnect()
 {
 	 /* first hang up the modem*/
@@ -126,6 +128,7 @@ t3000_disconnect()
 	close(FD);
 }
 
+void
 t3000_abort()
 {
 	t3000_write(FD, "\r", 1);	/* send anything to abort the call */
@@ -265,9 +268,7 @@ again:
 			putchar(c);
 #endif
 	}
-error1:
 	printf("%s\r\n", dialer_buf);
-error:
 	signal(SIGALRM, f);
 	return (0);
 }
@@ -321,6 +322,7 @@ if (len == 0) len = 1;
 	return (0);
 }
 
+static int
 t3000_write(fd, cp, n)
 int fd;
 char *cp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v3451.c,v 1.4 1997/04/02 01:47:07 millert Exp $	*/
+/*	$OpenBSD: v3451.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $	*/
 /*	$NetBSD: v3451.c,v 1.6 1997/02/11 09:24:20 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v3451.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: v3451.c,v 1.4 1997/04/02 01:47:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: v3451.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -51,18 +51,16 @@ static	jmp_buf Sjbuf;
 static	int expect(), notin(), prefix();
 static	void vawrite(), alarmtr();
 
+int
 v3451_dialer(num, acu)
 	register char *num;
 	char *acu;
 {
 	sig_t func;
 	int ok;
-	int slow = number(value(BAUDRATE)) < 1200, rw = 2;
+	int slow = number(value(BAUDRATE)) < 1200;
 	char phone[50];
 	struct termios cntrl;
-#ifdef ACULOG
-	char line[80];
-#endif
 
 	/*
 	 * Get in synch
@@ -129,12 +127,14 @@ v3451_dialer(num, acu)
 	return (1);
 }
 
+void
 v3451_disconnect()
 {
 
 	close(FD);
 }
 
+void
 v3451_abort()
 {
 
@@ -151,7 +151,7 @@ vawrite(cp, delay)
 		write(FD, cp, 1);
 }
 
-static
+static int
 expect(cp)
 	register char *cp;
 {
@@ -207,7 +207,7 @@ notin(sh, lg)
 	return (1);
 }
 
-static
+static int
 prefix(s1, s2)
 	register char *s1, *s2;
 {

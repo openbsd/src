@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.11 2001/09/09 17:58:41 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.12 2001/09/26 06:07:28 pvalchev Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.11 2001/09/09 17:58:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.12 2001/09/26 06:07:28 pvalchev Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -806,7 +806,7 @@ listvariables()
 			putchar('\n');
 			break;
 		case NUMBER:
-			printf(" %d\r\n", number(p->v_value));
+			printf(" %ld\r\n", number(p->v_value));
 			break;
 		case BOOL:
 			printf(" %s\r\n",

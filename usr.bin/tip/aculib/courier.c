@@ -1,4 +1,4 @@
-/*	$OpenBSD: courier.c,v 1.7 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: courier.c,v 1.8 2001/09/26 06:07:28 pvalchev Exp $	*/
 /*	$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: courier.c,v 1.7 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: courier.c,v 1.8 2001/09/26 06:07:28 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -108,7 +108,7 @@ badsynch:
 	connected = cour_connect();
 #ifdef ACULOG
 	if (timeout) {
-		(void)sprintf(line, "%d second dial timeout",
+		(void)sprintf(line, "%ld second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "cour", line);
 	}
@@ -255,9 +255,7 @@ again:
 			putchar(c);
 #endif
 	}
-error1:
 	printf("%s\r\n", dialer_buf);
-error:
 	signal(SIGALRM, f);
 	return (0);
 }
@@ -308,6 +306,7 @@ coursync()
 	return (0);
 }
 
+static void
 cour_write(fd, cp, n)
 int fd;
 char *cp;

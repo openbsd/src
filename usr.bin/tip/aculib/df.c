@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.3 1996/06/26 05:40:52 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.4 2001/09/26 06:07:28 pvalchev Exp $	*/
 /*	$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: df.c,v 1.3 1996/06/26 05:40:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.4 2001/09/26 06:07:28 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -50,6 +50,7 @@ static char rcsid[] = "$OpenBSD: df.c,v 1.3 1996/06/26 05:40:52 deraadt Exp $";
 static jmp_buf Sjbuf;
 static void timeout();
 
+int
 df02_dialer(num, acu)
 	char *num, *acu;
 {
@@ -57,6 +58,7 @@ df02_dialer(num, acu)
 	return (df_dialer(num, acu, 0));
 }
 
+int
 df03_dialer(num, acu)
 	char *num, *acu;
 {
@@ -64,13 +66,14 @@ df03_dialer(num, acu)
 	return (df_dialer(num, acu, 1));
 }
 
+int
 df_dialer(num, acu, df03)
 	char *num, *acu;
 	int df03;
 {
 	register int f = FD;
 	struct termios cntrl;
-	int speed = 0, rw = 2;
+	int speed = 0;
 	char c = '\0';
 
 	tcgetattr(f, &cntrl);
@@ -117,16 +120,16 @@ df_dialer(num, acu, df03)
 	return (c == 'A');
 }
 
+void
 df_disconnect()
 {
-	int rw = 2;
-
 	write(FD, "\001", 1);
 	sleep(1);
 	tcflush(FD, TCIOFLUSH);
 }
 
 
+void
 df_abort()
 {
 

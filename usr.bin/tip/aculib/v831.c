@@ -1,4 +1,4 @@
-/*	$OpenBSD: v831.c,v 1.4 1997/04/02 01:47:08 millert Exp $	*/
+/*	$OpenBSD: v831.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $	*/
 /*	$NetBSD: v831.c,v 1.5 1996/12/29 10:42:01 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v831.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: v831.c,v 1.4 1997/04/02 01:47:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: v831.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $";
 #endif /* not lint */
 
 /*
@@ -47,19 +47,19 @@ static char rcsid[] = "$OpenBSD: v831.c,v 1.4 1997/04/02 01:47:08 millert Exp $"
 #include "tip.h"
 #include <termios.h>
 
-int	v831_abort();
+void	v831_abort();
 static	void alarmtr();
 static	int dialit();
 static	char *sanitize();
-extern	int errno;
 
 static jmp_buf jmpbuf;
 static int child = -1;
 
+int
 v831_dialer(num, acu)
         char *num, *acu;
 {
-        int status, pid, connected = 1;
+        int status, pid;
         register int timelim;
 
         if (boolean(value(VERBOSE)))
@@ -130,6 +130,7 @@ alarmtr()
  * Insurance, for some reason we don't seem to be
  *  hanging up...
  */
+void
 v831_disconnect()
 {
 	struct termios	cntrl;
@@ -149,6 +150,7 @@ v831_disconnect()
         close(FD);
 }
 
+void
 v831_abort()
 {
 
@@ -193,7 +195,7 @@ dialit(phonenum, acu)
         register struct vaconfig *vp;
 	struct termios cntrl;
         char c;
-        int i, two = 2;
+        int i;
 
         phonenum = sanitize(phonenum);
 #ifdef DEBUG

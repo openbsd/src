@@ -1,4 +1,4 @@
-/*	$OpenBSD: biz22.c,v 1.5 2001/07/12 05:17:24 deraadt Exp $	*/
+/*	$OpenBSD: biz22.c,v 1.6 2001/09/26 06:07:28 pvalchev Exp $	*/
 /*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: biz22.c,v 1.5 2001/07/12 05:17:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: biz22.c,v 1.6 2001/09/26 06:07:28 pvalchev Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -49,7 +49,8 @@ static	void sigALRM();
 static	int timeout = 0;
 static	jmp_buf timeoutbuf;
 
-static int cmd(), detect();
+static	int cmd(), detect();
+void	biz22_disconnect();
 
 /*
  * Dial up on a BIZCOMP Model 1022 with either
@@ -98,7 +99,7 @@ biz_dialer(num, mod)
 		char line[80];
 
 		(void)sprintf(line, "%ld second dial timeout",
-			(long)number(value(DIALTIMEOUT)));
+			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "biz1022", line);
 	}
 #endif
@@ -107,6 +108,7 @@ biz_dialer(num, mod)
 	return (connected);
 }
 
+int
 biz22w_dialer(num, acu)
 	char *num, *acu;
 {
@@ -114,6 +116,7 @@ biz22w_dialer(num, acu)
 	return (biz_dialer(num, "W"));
 }
 
+int
 biz22f_dialer(num, acu)
 	char *num, *acu;
 {
@@ -121,6 +124,7 @@ biz22f_dialer(num, acu)
 	return (biz_dialer(num, "V"));
 }
 
+void
 biz22_disconnect()
 {
 	write(FD, DISCONNECT_CMD, 4);
@@ -128,6 +132,7 @@ biz22_disconnect()
 	tcflush(FD, TCIOFLUSH);
 }
 
+void
 biz22_abort()
 {
 

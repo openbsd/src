@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.9 2001/09/24 17:43:15 millert Exp $	*/
+/*	$OpenBSD: cu.c,v 1.10 2001/09/26 06:07:28 pvalchev Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cu.c,v 1.9 2001/09/24 17:43:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: cu.c,v 1.10 2001/09/26 06:07:28 pvalchev Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -111,7 +111,7 @@ cumain(argc, argv)
 				DV[strlen(DV)-1] = ch;
 			break;
 		default:
-			cuusage;
+			cuusage();
 			break;
 		}
 	}
