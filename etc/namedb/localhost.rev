@@ -1,9 +1,9 @@
 ;	@(#)localhost.rev	5.1 (Berkeley) 6/30/90
 
 @	IN	SOA	ucbvax.Berkeley.EDU. rwh.ucbvax.Berkeley.EDU.  (
-				1.4	; Serial
+				14	; Serial
 				3600	; Refresh
-				300	; Retry
+				900	; Retry
 				3600000	; Expire
 				3600 )	; Minimum
 	IN	NS	ucbvax.Berkeley.EDU.
