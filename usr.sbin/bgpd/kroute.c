@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.31 2003/12/26 16:54:10 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.32 2003/12/26 17:35:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -46,15 +46,15 @@ struct knexthop_node {
 	struct kroute_node	*kroute;
 };
 
-void		kroute_protect_lo(void);
+int		kroute_protect_lo(void);
 int		kroute_msg(int, int, struct kroute *);
 int		kroute_compare(struct kroute_node *, struct kroute_node *);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
 int		kroute_fetchtable(void);
-void		kroute_remove(struct kroute_node *);
-void		kroute_nexthop_insert(in_addr_t, struct kroute_nexthop *);
+int		kroute_remove(struct kroute_node *);
+int		kroute_nexthop_insert(in_addr_t, struct kroute_nexthop *);
 int		knexthop_compare(struct knexthop_node *,
 		    struct knexthop_node *);
 
@@ -94,20 +94,26 @@ kroute_init(void)
 
 	RB_INIT(&krt);
 	RB_INIT(&knt);
-	kroute_fetchtable();
-	kroute_protect_lo();
+
+	if (kroute_fetchtable() == -1)
+		return (-1);
+
+	if (kroute_protect_lo() == -1)
+		return (-1);
 
 	return (s);
 }
 
-void
+int
 kroute_protect_lo(void)
 {
 	struct kroute_node	*kr;
 
 	/* special protection for 127/8 */
-	if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
-		fatal(NULL, errno);
+	if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
+		log_err("kroute_protect_lo");
+		return (-1);
+	}
 	kr->r.prefix = inet_addr("127.0.0.1");
 	kr->r.prefixlen = 8;
 	kr->r.nexthop = 0;
@@ -115,6 +121,8 @@ kroute_protect_lo(void)
 
 	if (RB_INSERT(kroute_tree, &krt, kr) != NULL)
 		free(kr);	/* kernel route already there, no problem */
+
+	return (0);
 }
 
 int
@@ -198,8 +206,10 @@ kroute_change(int fd, struct kroute *kroute)
 		return (-1);
 
 	if (action == RTM_ADD) {
-		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
-			fatal(NULL, errno);
+		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
+			log_err("kroute_change");
+			return (-1);
+		}
 		kr->r.prefix = kroute->prefix;
 		kr->r.prefixlen = kroute->prefixlen;
 		kr->r.nexthop = kroute->nexthop;
@@ -326,12 +336,18 @@ kroute_fetchtable(void)
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
 
-	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
-		fatal("sysctl", errno);
-	if ((buf = malloc(len)) == NULL)
-		fatal("kroute_fetchtable", errno);
-	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1)
-		fatal("sysctl", errno);
+	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
+		log_err("sysctl");
+		return (-1);
+	}
+	if ((buf = malloc(len)) == NULL) {
+		log_err("kroute_fetchtable");
+		return (-1);
+	}
+	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1) {
+		log_err("sysctl");
+		return (-1);
+	}
 
 	lim = buf + len;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
@@ -345,8 +361,10 @@ kroute_fetchtable(void)
 		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
 			continue;
 
-		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
-			fatal(NULL, errno);
+		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
+			log_err("kroute_fetchtable");
+			return (-1);
+		}
 
 		kr->flags = F_KERNEL;
 		kr->r.prefix = sa_in->sin_addr.s_addr;
@@ -476,21 +494,21 @@ kroute_dispatch_msg(int fd)
 				continue;
 			if (!(kr->flags & F_KERNEL))
 				continue;
-			kroute_remove(kr);
+			if (kroute_remove(kr) == -1)
+				fatal("this fatal will not last long", errno);
 			break;
 		default:
 			/* ingnore for now */
 			break;
 		}
-
 	}
 }
 
-void
+int
 kroute_remove(struct kroute_node *kr)
 {
 	struct knexthop_node	*s;
-	struct kroute_nexthop	 nh;
+	struct kroute_nexthop	 h;
 
 	/*
 	 * the foreach is suboptimal, but:
@@ -511,13 +529,14 @@ kroute_remove(struct kroute_node *kr)
 				 * non-bgp route. if not, notify RDE
 				 * that this nexthop is now invalid
 				 */
-				bzero(&nh, sizeof(nh));
-				kroute_nexthop_insert(s->nexthop, &nh);
-				if (nh.valid == 0)	/* no alternate route */
-					send_nexthop_update(&nh);
+				bzero(&h, sizeof(h));
+				if (kroute_nexthop_insert(s->nexthop, &h) == -1)
+					return (-1);
+				if (h.valid == 0)	/* no alternate route */
+					send_nexthop_update(&h);
 			}
-
 	free(kr);
+	return (0);
 }
 
 struct kroute_node *
@@ -558,7 +577,8 @@ kroute_nexthop_add(in_addr_t key)
 			nh.gateway = h->kroute->r.nexthop;
 		}
 	} else
-		kroute_nexthop_insert(key, &nh);
+		if (kroute_nexthop_insert(key, &nh) == -1)
+			fatal("this fatal will go away", errno);
 
 	send_nexthop_update(&nh);
 }
@@ -588,14 +608,16 @@ kroute_nexthop_delete(in_addr_t key)
 	RB_REMOVE(knexthop_tree, &knt, a);
 }
 
-void
+int
 kroute_nexthop_insert(in_addr_t key, struct kroute_nexthop *nh)
 {
 	struct kroute_node	*kr;
 	struct knexthop_node	*h;
 
-	if ((h = calloc(1, sizeof(struct knexthop_node))) == NULL)
-		fatal(NULL, errno);
+	if ((h = calloc(1, sizeof(struct knexthop_node))) == NULL) {
+		log_err("kroute_nexthop_insert");
+		return (-1);
+	}
 
 	h->nexthop = nh->nexthop = key;
 
@@ -613,6 +635,7 @@ kroute_nexthop_insert(in_addr_t key, struct kroute_nexthop *nh)
 			    log_ntoa(h->nexthop));
 		free(h);
 	}
+	return (0);
 }
 
 int
