@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.47 2004/06/06 11:24:13 otto Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.48 2004/06/07 19:28:03 otto Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -93,12 +93,12 @@ main(int argc, char **argv)
 			case 'a':
 				if (argv[++i] == NULL || argv[i][0] == '\0')
 					usage();
-				if (auth_type == NULL)
-					auth_type = argv[i];
+				auth_type = argv[i];
 				break;
 			case 's':
 				defaultsetup = 0;
-				auth_type = "skey";
+				if (auth_type == NULL)
+					auth_type = "skey";
 				break;
 			case 'x':
 				hexmode = 1;
@@ -179,7 +179,7 @@ main(int argc, char **argv)
 		/* existing user */
 		break;
 	case 1:
-		if (!defaultsetup) {
+		if (!defaultsetup && strcmp(auth_type, "skey") == 0) {
 			fprintf(stderr,
 "You must authenticate yourself before using S/Key for the first time.  In\n"
 "secure mode this is normally done via an existing S/Key key.  However, since\n"
