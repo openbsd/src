@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.129 2002/07/23 19:25:09 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.130 2002/07/25 15:27:20 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -673,14 +673,14 @@ hifn_enable_crypto(sc, pciid)
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, HIFN_DMACNFG_UNLOCK |
 	    HIFN_DMACNFG_MSTRESET | HIFN_DMACNFG_DMARESET | HIFN_DMACNFG_MODE);
 	DELAY(1000);
-	addr = READ_REG_1(sc, HIFN_UNLOCK_SECRET1);
+	addr = READ_REG_1(sc, HIFN_1_UNLOCK_SECRET1);
 	DELAY(1000);
-	WRITE_REG_1(sc, HIFN_UNLOCK_SECRET2, 0);
+	WRITE_REG_1(sc, HIFN_1_UNLOCK_SECRET2, 0);
 	DELAY(1000);
 
 	for (i = 0; i <= 12; i++) {
 		addr = hifn_next_signature(addr, offtbl[i] + 0x101);
-		WRITE_REG_1(sc, HIFN_UNLOCK_SECRET2, addr);
+		WRITE_REG_1(sc, HIFN_1_UNLOCK_SECRET2, addr);
 
 		DELAY(1000);
 	}
