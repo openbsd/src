@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.21 1998/09/06 23:00:03 niklas Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.22 1999/09/06 00:12:40 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -603,6 +603,13 @@
 #define SYS_FKL		0	/* in hp mode, sys-fkls are active */
 #define USR_FKL		1	/* in hp mode, user-fkls are active */
 
+#ifdef PCVT_SCROLLBACK
+
+/* scrollback buffer size (in pages) */
+#define SCROLLBACK_PAGES	8
+
+#endif
+
 /* variables */
 
 #ifdef EXTERN
@@ -646,6 +653,12 @@ struct rgb {
 typedef struct video_state {
 	u_short	*Crtat;			/* video page start addr */
 	u_short *Memory;		/* malloc'ed memory start address */
+#ifdef PCVT_SCROLLBACK
+	u_short *Scrollback;		/* scrollback buffer */
+	u_short scr_offset;		/* current scrollback offset (lines) */
+	short scrolling;		/* current scrollback page */
+	u_short max_off;		/* maximum scrollback offset */
+#endif
 	struct tty *vs_tty;		/* pointer to this screen's tty */
 	u_char	maxcol;			/* 80 or 132 cols on screen */
 	u_char 	row, col;		/* current cursor position */
@@ -821,6 +834,10 @@ struct tty *pcconsp;		/* ptr to current device, see pcattach() */
 
 u_short *Crtat;			/* screen start address */
 
+#ifdef PCVT_SCROLLBACK
+u_short *Scrollbuffer;		/* scrollback buffer */
+#endif
+
 #if PCVT_EMU_MOUSE
 struct mousestat	mouse = {{0}};
 struct mousedefs	mousedef = {0x3b, 0x3c, 0x3d, 0,     250000};
@@ -977,6 +994,10 @@ extern u_char		can_do_132col;
 extern u_char		vga_family;
 extern u_char		keyboard_is_initialized;
 extern u_char		kbd_polling;
+
+#ifdef PCVT_SCROLLBACK
+extern u_short		*Scrollbuffer;
+#endif
 
 #if PCVT_SHOWKEYS
 extern u_char		keyboard_show;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.22 1998/11/20 15:57:25 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.23 1999/09/06 00:12:39 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -706,7 +706,13 @@ pcstart(register struct tty *tp)
 	 */
 
 	while ((len = q_to_b(&tp->t_outq, buf, PCVT_PCBURST)) != 0)
+	{
+#ifdef PCVT_SCROLLBACK
+		if (vs[minor(tp->t_dev)].scrolling)
+			sgetc(31337);
+#endif
 		sput(&buf[0], 0, len, minor(tp->t_dev));
+	}
 
 	s = spltty();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.17 1998/09/28 03:00:27 downsj Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.18 1999/09/06 00:12:40 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -2552,6 +2552,18 @@ vgapage(int new_screen)
 		{
 			/* we are committed */
 			vt_switch_pending = 0;
+#ifdef PCVT_SCROLLBACK
+			if (vsp->Scrollback)
+			{
+				vsp->scrolling = 0;
+				fillw(user_attr | ' ', (caddr_t)vsp->Scrollback,
+				      vsp->screen_rowsize * vsp->maxcol *
+				      SCROLLBACK_PAGES);
+				bcopy(vsp->Crtat, vsp->Scrollback,
+				      vsp->screen_rows * vsp->maxcol * CHR);
+				vsp->scr_offset = vsp->row - 1;
+			}
+#endif
 		}
 	}
 	return 0;

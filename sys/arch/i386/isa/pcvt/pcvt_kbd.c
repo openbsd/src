@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.20 1999/07/06 07:59:54 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.21 1999/09/06 00:12:40 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -114,6 +114,13 @@ static int	ledstate  = LEDSTATE_UPDATE_PENDING;	/* keyboard led's */
 static int	tpmrate   = KBD_TPD500|KBD_TPM100;
 static u_char	altkpflag = 0;
 static u_short	altkpval  = 0;
+
+#ifdef PCVT_SCROLLBACK
+static u_short *scrollback_savedscreen = (u_short *)0;
+static size_t scrnsv_size = (size_t)-1;
+static void scrollback_save_screen ( void );
+static void scrollback_restore_screen ( void );
+#endif
 
 extern int kbd_reset;
 
@@ -1088,6 +1095,13 @@ loop:
 
 #if PCVT_KBD_FIFO
 
+#ifdef PCVT_SCROLLBACK
+	if (noblock == 31337) {
+		vsp->scrolling = 1;
+		goto scroll_reset;
+	}
+#endif
+
 	/* see if there is data from the keyboard available either from */
 	/* the keyboard fifo or from the 8042 keyboard controller	*/
 
@@ -1413,7 +1427,7 @@ no_mouse_event:
 
 #if PCVT_SHOWKEYS
 	showkey (' ', dt);
-#endif	/* PCVT_SHOWKEYS */
+#endif /* PCVT_SHOWKEYS */
 
 	/* lets look what we got */
 	switch(dt)
@@ -1473,6 +1487,98 @@ regular:
 		key = 129;
 
 	kbd_status.extended = kbd_status.ext1 = 0;
+
+#ifdef PCVT_SCROLLBACK
+	if ((key == 85) && shift_down && kbd_lastkey != 85)
+	{
+		if (vsp->scr_offset >= (vsp->screen_rows - 1))
+		{
+			if (!vsp->scrolling)
+			{
+				vsp->scrolling += vsp->screen_rows - 1;
+				if (vsp->Scrollback)
+				{
+					scrollback_save_screen();
+					if (vsp->scr_offset == vsp->max_off)
+					{
+						bcopy(vsp->Scrollback +
+						      vsp->maxcol,
+						      vsp->Scrollback,
+						      vsp->maxcol *
+						      vsp->max_off * CHR);
+						vsp->scr_offset--;
+					}
+					bcopy(vsp->Crtat + vsp->cur_offset -
+					      vsp->col, vsp->Scrollback +
+				      	      ((vsp->scr_offset + 1) *
+					      vsp->maxcol), vsp->maxcol * CHR);
+				}
+
+				if (vsp->cursor_on)
+					sw_cursor(0);
+			}
+
+			vsp->scrolling += vsp->screen_rows - 1;
+			if (vsp->scrolling > vsp->scr_offset)
+				vsp->scrolling = vsp->scr_offset;
+
+			bcopy(vsp->Scrollback + ((vsp->scr_offset -
+			      vsp->scrolling) * vsp->maxcol), vsp->Crtat,
+			      vsp->screen_rows * vsp->maxcol * CHR);
+		}
+
+		kbd_lastkey = 85;
+		goto loop;
+	}
+	else if ((key == 86) && shift_down && kbd_lastkey != 86)
+	     {
+scroll_reset:
+		if (vsp->scrolling > 0)
+		{
+			vsp->scrolling -= vsp->screen_rows - 1;
+			if (vsp->scrolling < 0)
+				vsp->scrolling = 0;
+
+			if (vsp->scrolling <= vsp->screen_rows)
+			{
+				vsp->scrolling = 0;
+				scrollback_restore_screen();
+			}
+			else
+			{
+				bcopy(vsp->Scrollback + ((vsp->scr_offset -
+			      	      vsp->scrolling) * vsp->maxcol),
+			              vsp->Crtat, vsp->screen_rows *
+				      vsp->maxcol * CHR);
+			}
+		}
+
+		if (vsp->scrolling == 0)
+		{
+			if (vsp->cursor_on)
+			{
+				sw_cursor(1);
+			}
+		}
+
+		if (noblock == 31337)
+			return NULL;
+
+		if (key != 86)
+			goto regular;
+		else
+		{
+			kbd_lastkey = 86;
+			goto loop;
+		}
+	}
+	else if (vsp->scrolling && key != 128 && key != 44 && key != 85 &&
+		 key != 86)
+	     {
+			vsp->scrolling = 1;
+			goto scroll_reset;
+	     }
+#endif
 
 	if(kbd_reset && (key == 76) && ctrl_down && (meta_down||altgr_down)) {
 		printf("\nconsole halt requested: going down.\n");
@@ -3042,5 +3148,36 @@ cfkey12(void)
 #endif	/* PCVT_VT220KEYB */
 
 #endif	/* NVT > 0 */
+
+#ifdef PCVT_SCROLLBACK
+static void
+scrollback_save_screen(void)
+{
+	int x = spltty();
+	register size_t s;
+
+	s = sizeof(u_short) * vsp->screen_rowsize * vsp->maxcol;
+
+	if (scrollback_savedscreen)
+		free(scrollback_savedscreen, M_TEMP);
+
+	scrnsv_size = s;
+
+	if (!(scrollback_savedscreen = (u_short *)malloc(s, M_TEMP, M_NOWAIT)))
+	{
+		splx(x);
+		return;
+	}
+	bcopy(vsp->Crtat, scrollback_savedscreen, scrnsv_size);
+	splx(x);
+}
+
+static void
+scrollback_restore_screen(void)
+{
+	if (scrollback_savedscreen)
+		bcopy(scrollback_savedscreen, vsp->Crtat, scrnsv_size);
+}
+#endif
 
 /* ------------------------------- EOF -------------------------------------*/
