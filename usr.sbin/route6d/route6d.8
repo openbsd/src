@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route6d.8,v 1.4 1999/12/12 11:00:29 itojun Exp $
+.\"	$OpenBSD: route6d.8,v 1.5 1999/12/16 05:34:03 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
 .\"
@@ -184,11 +184,11 @@ or
 .Dv SIGUSR1 ,
 .Nm
 will dump the current internal state into
-.Pa /var/tmp/route6d_dump .
+.Pa /var/run/route6d_dump .
 .\"
 .Sh FILES
-.Bl -tag -width /var/tmp/route6d_dump -compact
-.It Pa /var/tmp/route6d_dump
+.Bl -tag -width /var/run/route6d_dump -compact
+.It Pa /var/run/route6d_dump
 dumps internal state on
 .Dv SIGINT
 or
@@ -219,7 +219,7 @@ and
 .Li ff02::xx
 .Pc
 so they will be visible on internal state dump file
-.Pq Pa /var/tmp/route6d_dump .
+.Pq Pa /var/run/route6d_dump .
 .Pp
 Routing table manipulation differs from IPv6 implementation to implementation.
 Currently

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.h,v 1.2 1999/12/11 10:41:47 itojun Exp $	*/
+/*	$OpenBSD: route6d.h,v 1.3 1999/12/16 05:34:03 itojun Exp $	*/
 
 /*
  * KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.h,v 1.1.1.1 1999/08/08 23:31:35 itojun Exp
@@ -37,7 +37,7 @@
 #define	ROUTE6D_CONF	"/usr/local/v6/etc/route6d.conf"
 */
 
-#define	ROUTE6D_DUMP	"/var/tmp/route6d_dump"
+#define	ROUTE6D_DUMP	"/var/run/route6d_dump"
 #define	ROUTE6D_PID	"/var/run/route6d.pid"
 
 #define	RIP6_VERSION	1
