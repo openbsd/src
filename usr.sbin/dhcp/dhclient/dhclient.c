@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.2 1998/09/20 08:49:35 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.3 1999/02/11 22:49:59 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -103,7 +103,6 @@ int main (argc, argv, envp)
 	int i;
 	struct servent *ent;
 	struct interface_info *ip;
-	int seed;
 
 #ifdef SYSLOG_4_2
 	openlog ("dhclient", LOG_NDELAY);
@@ -214,21 +213,6 @@ int main (argc, argv, envp)
 			     ? DISCOVER_REQUESTED
 			     : DISCOVER_RUNNING);
 
-	/* Make up a seed for the random number generator from current
-	   time plus the sum of the last four bytes of each
-	   interface's hardware address interpreted as an integer.
-	   Not much entropy, but we're booting, so we're not likely to
-	   find anything better. */
-	seed = 0; /* Unfortunately, what's on the stack isn't random. :') */
-	for (ip = interfaces; ip; ip = ip -> next) {
-		int junk;
-		memcpy (&junk,
-			&ip -> hw_address.haddr [ip -> hw_address.hlen -
-						 sizeof seed], sizeof seed);
-		seed += junk;
-	}
-	srandom (seed + cur_time);
-
 	/* Start a configuration state machine for each interface. */
 	for (ip = interfaces; ip; ip = ip -> next) {
 		ip -> client -> state = S_INIT;
@@ -252,6 +236,8 @@ static void usage ()
 
 void cleanup ()
 {
+	/* Make sure the pidfile is gone. */
+	(void) unlink (path_dhclient_pid);
 }
 
 /* Individual States:
@@ -961,7 +947,7 @@ void send_discover (ipp)
 				ip -> client -> config -> initial_interval;
 		else {
 			ip -> client -> interval +=
-				((random () >> 2) %
+				((arc4random () >> 2) %
 				 (2 * ip -> client -> interval));
 		}
 
@@ -970,7 +956,7 @@ void send_discover (ipp)
 		    ip -> client -> config -> backoff_cutoff)
 			ip -> client -> interval =
 				((ip -> client -> config -> backoff_cutoff / 2)
-				 + ((random () >> 2)
+				 + ((arc4random () >> 2)
 				    % ip -> client -> interval));
 	} else if (!ip -> client -> interval)
 		ip -> client -> interval =
@@ -1181,7 +1167,7 @@ void send_request (ipp)
 			ip -> client -> config -> initial_interval;
 	else {
 		ip -> client -> interval +=
-			((random () >> 2) %
+			((arc4random () >> 2) %
 			 (2 * ip -> client -> interval));
 	}
 	
@@ -1190,7 +1176,7 @@ void send_request (ipp)
 	    ip -> client -> config -> backoff_cutoff)
 		ip -> client -> interval =
 			((ip -> client -> config -> backoff_cutoff / 2)
-			 + ((random () >> 2)
+			 + ((arc4random () >> 2)
 			    % ip -> client -> interval));
 
 	/* If the backoff would take us to the expiry time, just set the
@@ -1373,7 +1359,7 @@ void make_discover (ip, lease)
 	ip -> client -> packet.htype = ip -> hw_address.htype;
 	ip -> client -> packet.hlen = ip -> hw_address.hlen;
 	ip -> client -> packet.hops = 0;
-	ip -> client -> packet.xid = random ();
+	ip -> client -> packet.xid = arc4random ();
 	ip -> client -> packet.secs = 0; /* filled in by send_discover. */
 	ip -> client -> packet.flags = htons (BOOTP_BROADCAST); /* XXX */
 	memset (&(ip -> client -> packet.ciaddr),
@@ -1645,7 +1631,7 @@ void make_release (ip, lease)
 	ip -> client -> packet.htype = ip -> hw_address.htype;
 	ip -> client -> packet.hlen = ip -> hw_address.hlen;
 	ip -> client -> packet.hops = 0;
-	ip -> client -> packet.xid = ip -> client -> packet.xid;
+	ip -> client -> packet.xid = arc4random();
 	ip -> client -> packet.secs = 0;
 	ip -> client -> packet.flags = 0;
 	memcpy (&ip -> client -> packet.ciaddr,
@@ -1930,7 +1916,7 @@ void script_write_params (ip, prefix, lease)
 					       lease -> options [i].len);
 					if (len > sizeof dbuf) {
 						warn ("no space to %s %s",
-						      "prepend option",
+						      "append option",
 						      dhcp_options [i].name);
 						goto supersede;
 					}

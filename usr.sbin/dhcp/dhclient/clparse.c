@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.3 1998/09/17 15:31:15 deraadt Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.4 1999/02/11 22:49:59 deraadt Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -106,7 +106,7 @@ int read_client_conf ()
 	top_level_config.requested_options
 		[top_level_config.requested_option_count++] =
 			DHO_HOST_NAME;
-	requested_lease_time = 7200;
+	requested_lease_time = htonl(7200);
 	top_level_config.send_options [DHO_DHCP_LEASE_TIME].data
 		= (unsigned char *)&requested_lease_time;
 	top_level_config.send_options [DHO_DHCP_LEASE_TIME].len
