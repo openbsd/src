@@ -1,4 +1,4 @@
-/*	$OpenBSD: lf.c,v 1.1 1998/07/30 15:59:32 mickey Exp $	*/
+/*	$OpenBSD: lf.c,v 1.2 1998/09/29 07:17:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -45,7 +45,6 @@ lfopen(f, va_alist)
 	struct open_file *f;
 #endif
 {
-	extern dev_t bootdev;
 	struct hppa_dev *dp;
 	struct pz_device *pzd;
 
