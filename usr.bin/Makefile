@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.89 2004/01/13 03:43:40 mickey Exp $
+#	$OpenBSD: Makefile,v 1.90 2004/05/02 17:55:09 millert Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR= apply apropos arch asa asn1_compile at aucat audioctl awk banner \
 	basename bc bdes \
-	biff cal calendar cap_mkdb cdio checknr chpass cksum cmp col \
+	biff cal calendar cap_mkdb cdio checknr chpass cmp col \
 	colcrt colrm column comm compile_et compress cpp crontab ctags cut \
 	dc deroff diff diff3 dirname du elf2olf encrypt env expand false file \
 	file2c find fgen finger fmt fold from fsplit fstat ftp gencat getconf \
