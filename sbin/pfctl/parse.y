@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.380 2003/05/14 22:46:01 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.381 2003/05/14 22:54:39 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2587,7 +2587,8 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 		}
 		;
 
-binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
+binatrule	: no BINAT interface af proto FROM host TO ipspec tag
+		  redirection
 		{
 			struct pf_rule		binat;
 			struct pf_pooladdr	*pa;
@@ -2606,8 +2607,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				binat.af = $7->af;
 			if (!binat.af && $9 != NULL && $9->af)
 				binat.af = $9->af;
-			if (!binat.af && $10 != NULL && $10->host)
-				binat.af = $10->host->af;
+			if (!binat.af && $11 != NULL && $11->host)
+				binat.af = $11->host->af;
 			if (!binat.af) {
 				yyerror("address family (inet/inet6) "
 				    "undefined");
@@ -2619,6 +2620,9 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				    sizeof(binat.ifname));
 				free($3);
 			}
+			if ($10 != NULL)
+				strlcpy(binat.tagname, $10, PF_TAG_NAME_SIZE);
+
 			if ($5 != NULL) {
 				binat.proto = $5->proto;
 				free($5);
@@ -2627,8 +2631,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 			if ($7 != NULL && disallow_table($7, "invalid use of "
 			    "table <%s> as the source address of a binat rule"))
 				YYERROR;
-			if ($10 != NULL && $10->host != NULL && disallow_table(
-			    $10->host, "invalid use of table <%s> as the "
+			if ($11 != NULL && $11->host != NULL && disallow_table(
+			    $11->host, "invalid use of table <%s> as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
 
@@ -2663,22 +2667,22 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 			}
 
 			if (binat.action == PF_NOBINAT) {
-				if ($10 != NULL) {
+				if ($11 != NULL) {
 					yyerror("'no binat' rule does not need"
 					    " '->'");
 					YYERROR;
 				}
 			} else {
-				if ($10 == NULL || $10->host == NULL) {
+				if ($11 == NULL || $11->host == NULL) {
 					yyerror("'binat' rule requires"
 					    " '-> address'");
 					YYERROR;
 				}
 
-				remove_invalid_hosts(&$10->host, &binat.af);
-				if (invalid_redirect($10->host, binat.af))
+				remove_invalid_hosts(&$11->host, &binat.af);
+				if (invalid_redirect($11->host, binat.af))
 					YYERROR;
-				if ($10->host->next != NULL) {
+				if ($11->host->next != NULL) {
 					yyerror("binat rule must redirect to "
 					    "a single address");
 					YYERROR;
@@ -2687,7 +2691,7 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				if (!PF_AZERO(&binat.src.addr.v.a.mask,
 				    binat.af) &&
 				    !PF_AEQ(&binat.src.addr.v.a.mask,
-				    &$10->host->addr.v.a.mask, binat.af)) {
+				    &$11->host->addr.v.a.mask, binat.af)) {
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
@@ -2697,12 +2701,12 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 				pa = calloc(1, sizeof(struct pf_pooladdr));
 				if (pa == NULL)
 					err(1, "binat: calloc");
-				pa->addr.addr = $10->host->addr;
+				pa->addr.addr = $11->host->addr;
 				pa->ifname[0] = 0;
 				TAILQ_INSERT_TAIL(&binat.rpool.list,
 				    pa, entries);
 
-				free($10);
+				free($11);
 			}
 
 			pfctl_add_rule(pf, &binat);
