@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2004/04/28 01:00:50 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.8 2005/02/03 17:51:12 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride <mcbride@openbsd.org>
@@ -232,10 +232,14 @@ action		: RUN STRING		{
 			    action, entries);
 			action->parent = curaction;
 			curaction = action;
-		} expr optnl '{' optnl action_l '}' {
+		} expr action_block {
 			set_expression_depth(curaction->act.c.expression, 0);
 			curaction = curaction->parent;
 		}
+		;
+
+action_block	: optnl '{' optnl action_l '}'
+		| optnl action
 		;
 
 action_l	: action_l action nl
@@ -255,13 +259,13 @@ init		: INIT {
 		}
 		;
 
-if_test		: interface LINK UP		{
+if_test		: interface '.' LINK '.' UP		{
 			$$ = new_ifstate($1, IFSD_LINKUP);
 		}
-		| interface LINK DOWN		{
+		| interface '.' LINK '.' DOWN		{
 			$$ = new_ifstate($1, IFSD_LINKDOWN);
 		}
-		| interface LINK UNKNOWN	{
+		| interface '.' LINK '.' UNKNOWN	{
 			$$ = new_ifstate($1, IFSD_LINKUNKNOWN);
 		}
 		;
@@ -386,8 +390,8 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "&&",			AND},
 		{ "added",		ADDED},
-		{ "and",		AND},
 		{ "down",		DOWN},
 		{ "every",		EVERY},
 		{ "if",			IF},
@@ -395,13 +399,13 @@ lookup(char *s)
 		{ "init-state",		INITSTATE},
 		{ "link",		LINK},
 		{ "loglevel",		LOGLEVEL},
-		{ "or",			OR},
 		{ "removed",		REMOVED},
 		{ "run",		RUN},
 		{ "set-state",		SETSTATE},
 		{ "state",		STATE},
 		{ "unknown",		UNKNOWN},
-		{ "up",			UP}
+		{ "up",			UP},
+		{ "||",			OR}
 	};
 	const struct keywords	*p;
 
@@ -580,9 +584,9 @@ top:
 	(isalnum(x) || (ispunct(x) && x != '(' && x != ')' && \
 	x != '{' && x != '}' && \
 	x != '!' && x != '=' && x != '#' && \
-	x != ','))
+	x != ',' && x != '.'))
 
-	if (isalnum(c) || c == ':' || c == '_') {
+	if (isalnum(c) || c == ':' || c == '_' || c == '&' || c == '|') {
 		do {
 			*p++ = c;
 			if ((unsigned)(p-buf) >= sizeof(buf)) {
