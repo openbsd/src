@@ -1697,6 +1697,8 @@ sighup()
 		syslog(LOG_INFO, "restarting %s on signal", SaveArgv[0]);
 #endif
 	releasesignal(SIGHUP);
+	(void) setgid(RealGid);
+	(void) setuid(RealUid);
 	execv(SaveArgv[0], (ARGV_T) SaveArgv);
 #ifdef LOG
 	if (LogLevel > 0)
