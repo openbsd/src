@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.90 2002/06/09 20:20:58 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.91 2002/06/10 02:09:59 kjell Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -229,6 +229,7 @@ typedef struct {
 
 ruleset		: /* empty */
 		| ruleset '\n'
+		| ruleset scrubrule '\n'
 		| ruleset pfrule '\n'
 		| ruleset natrule '\n'
 		| ruleset binatrule '\n'
@@ -248,9 +249,29 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
+scrubrule	: SCRUB dir interface fromto nodf minttl maxmss
+		{
+			struct pf_rule r;
+
+			memset(&r, 0, sizeof(r));
+
+			r.action = PF_SCRUB;
+			r.direction = $2;
+
+			if ($5)
+				r.rule_flag |= PFRULE_NODF;
+			if ($6)
+				r.min_ttl = $6;
+			if ($7)
+				r.max_mss = $7;
+
+			pfctl_add_rule(pf, &r);
+
+		}
+		;
+
 pfrule		: action dir log quick interface route af proto fromto
-		  uids gids flags icmpspec keep fragment nodf minttl
-		  maxmss allowopts label
+		  uids gids flags icmpspec keep fragment allowopts label
 		{
 			struct pf_rule r;
 			struct node_state_opt *o;
@@ -307,13 +328,7 @@ pfrule		: action dir log quick interface route af proto fromto
 
 			if ($15)
 				r.rule_flag |= PFRULE_FRAGMENT;
-			if ($16)
-				r.rule_flag |= PFRULE_NODF;
-			if ($17)
-				r.min_ttl = $17;
-			if ($18)
-				r.max_mss = $18;
-			r.allow_opts = $19;
+			r.allow_opts = $16;
 
 			if ($6.rt) {
 				r.rt = $6.rt;
@@ -336,14 +351,14 @@ pfrule		: action dir log quick interface route af proto fromto
 				}
 			}
 
-			if ($20) {
-				if (strlen($20) >= PF_RULE_LABEL_SIZE) {
+			if ($17) {
+				if (strlen($17) >= PF_RULE_LABEL_SIZE) {
 					yyerror("rule label too long (max "
 					    "%d chars)", PF_RULE_LABEL_SIZE-1);
 					YYERROR;
 				}
-				strlcpy(r.label, $20, sizeof(r.label));
-				free($20);
+				strlcpy(r.label, $17, sizeof(r.label));
+				free($17);
 			}
 
 			expand_rule(&r, $5, $8, $9.src.host, $9.src.port,
@@ -353,7 +368,6 @@ pfrule		: action dir log quick interface route af proto fromto
 
 action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
 		| BLOCK blockspec	{ $$ = $2; $$.b1 = PF_DROP; }
-		| SCRUB			{ $$.b1 = PF_SCRUB; $$.b2 = $$.w = 0; }
 		;
 
 blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
@@ -1560,49 +1574,6 @@ rule_consistent(struct pf_rule *r)
 {
 	int problems = 0;
 
-	if (r->action == PF_SCRUB) {
-		if (r->quick) {
-			yyerror("quick does not apply to scrub");
-			problems++;
-		}
-		if (r->keep_state == PF_STATE_MODULATE) {
-			yyerror("modulate state does not apply to scrub");
-			problems++;
-		}
-		if (r->keep_state == PF_STATE_NORMAL) {
-			yyerror("keep state does not apply to scrub");
-			problems++;
-		}
-		if (r->src.port_op) {
-			yyerror("src port does not apply to scrub");
-			problems++;
-		}
-		if (r->dst.port_op) {
-			yyerror("dst port does not apply to scrub");
-			problems++;
-		}
-		if (r->type || r->code) {
-			yyerror("icmp-type/code does not apply to scrub");
-			problems++;
-		}
-		if (r->rule_flag & PFRULE_FRAGMENT) {
-			yyerror("fragment flag does not apply to scrub");
-			problems++;
-		}
-	} else {
-		if (r->rule_flag & PFRULE_NODF) {
-			yyerror("nodf only applies to scrub");
-			problems++;
-		}
-		if (r->min_ttl) {
-			yyerror("min-ttl only applies to scrub");
-			problems++;
-		}
-		if (r->max_mss) {
-			yyerror("max-mss only applies to scrub");
-			problems++;
-		}
-	}
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
 	    (r->src.port_op || r->dst.port_op)) {
 		yyerror("port only applies to tcp/udp");
