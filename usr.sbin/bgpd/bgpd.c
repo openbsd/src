@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.32 2003/12/26 00:49:52 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.33 2003/12/26 14:38:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -379,6 +379,12 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 void
 send_nexthop_update(struct kroute_nexthop *msg)
 {
+	logit(LOG_INFO, "nexthop %s now %s%s%s%s", log_ntoa(msg->nexthop),
+	    msg->valid ? "valid" : "invalid",
+	    msg->connected ? ", connected" : "",
+	    msg->gateway ? ", via " : "",
+	    msg->gateway ? log_ntoa(msg->gateway) : "");
+
 	imsg_compose(&ibuf_rde, IMSG_NEXTHOP_UPDATE, 0,
 	    msg, sizeof(struct kroute_nexthop));
 }

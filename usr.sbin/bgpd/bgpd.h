@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.33 2003/12/26 14:27:58 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.34 2003/12/26 14:38:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -288,7 +288,7 @@ void		 log_statechange(struct peer *, enum session_state,
 void		 log_notification(struct peer *, u_int8_t, u_int8_t,
 		    u_char *, u_int16_t);
 void		 log_conn_attempt(struct peer *, struct in_addr);
-char 		*log_ntoa(in_addr_t);
+char		*log_ntoa(in_addr_t);
 
 /* parse.y */
 int	 cmdline_symset(char *);
