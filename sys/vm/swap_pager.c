@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap_pager.c,v 1.16 1999/05/22 21:22:34 weingart Exp $	*/
+/*	$OpenBSD: swap_pager.c,v 1.17 2001/02/28 20:32:40 csapuntz Exp $	*/
 /*	$NetBSD: swap_pager.c,v 1.27 1996/03/16 23:15:20 christos Exp $	*/
 
 /*
@@ -702,10 +702,8 @@ swap_pager_io(swp, mlist, npages, flags)
 	bp->b_proc = &proc0;	/* XXX (but without B_PHYS set this is ok) */
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = swb->swb_block + btodb(off);
-	VHOLD(swapdev_vp);
-	bp->b_vp = swapdev_vp;
-	if (swapdev_vp->v_type == VBLK)
-		bp->b_dev = swapdev_vp->v_rdev;
+	bp->b_vp = 0;
+	buf_replacevnode(bp, swapdev_vp);
 	bp->b_bcount = npages * PAGE_SIZE;
 
 	/*
@@ -716,7 +714,6 @@ swap_pager_io(swp, mlist, npages, flags)
 		bp->b_dirtyoff = 0;
 		bp->b_dirtyend = npages * PAGE_SIZE;
 		s = splbio();
-		swapdev_vp->v_numoutput++;
 		swp->sw_poip++;
 		splx(s);
 		mask = (~(~0 << npages)) << atop(off);
