@@ -1,4 +1,4 @@
-/* $OpenBSD: brooktree848.c,v 1.12 1999/10/31 20:50:04 deraadt Exp $ */
+/* $OpenBSD: brooktree848.c,v 1.13 1999/11/03 19:22:52 angelos Exp $ */
 /* $Roger: brooktree848.c,v 1.85 1999/06/12 14:54:54 roger Exp $ */
 
 /* BT848 Driver for Brooktree's Bt848, Bt848A, Bt849A, Bt878, Bt879 based cards.
@@ -5432,7 +5432,7 @@ probeCard( bktr_ptr_t bktr, int verbose )
                 subsystem_vendor_id = (byte_254 << 8) | byte_255;
 
 	        if ( bootverbose ) 
-	            printf("subsytem 0x%04x 0x%04x\n",subsystem_vendor_id,
+	            printf("subsystem 0x%04x 0x%04x\n",subsystem_vendor_id,
 		                                  subsystem_id);
 
                 if (subsystem_vendor_id == VENDOR_AVER_MEDIA) {
