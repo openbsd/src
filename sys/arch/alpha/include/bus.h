@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.12 2000/12/15 21:38:05 art Exp $	*/
+/*	$OpenBSD: bus.h,v 1.13 2001/01/15 12:03:42 art Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -343,6 +343,23 @@ struct alpha_bus_space {
 #define	bus_space_write_region_8(t, h, o, a, c)				\
 	__abs_aligned_nonsingle(wr,8,(t),(h),(o),(a),(c))
 
+
+/*
+ *	void bus_space_write_raw_region_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    const u_int8_t *addr, size_t count));
+ *
+ * Write `count' bytes in 2, 4 or 8 byte wide quantities to bus space
+ * described by tag/handle and starting at `offset' from the
+ * buffer provided.  The buffer must have proper alignment for the N byte
+ * wide entities.  Furthermore possible byte-swapping should be done by
+ * these functions.
+ */
+
+#define bus_space_write_raw_region_2(t, h, o, a, c)			\
+    bus_space_write_region_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
+#define bus_space_write_raw_region_4(t, h, o, a, c)			\
+    bus_space_write_region_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
 
 /*
  * Set multiple operations.
