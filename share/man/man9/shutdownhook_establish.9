@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdownhook_establish.9,v 1.10 2001/07/27 09:55:07 niklas Exp $
+.\"	$OpenBSD: shutdownhook_establish.9,v 1.11 2002/03/01 00:10:52 art Exp $
 .\"	$NetBSD: shutdownhook_establish.9,v 1.1 1995/11/25 21:24:52 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -77,6 +77,19 @@ integrity (because the system could be rebooting after a crash).
 Shutdown hooks are, like startup hooks, implemented via the more general
 .Xr dohooks 9
 API.
+.Sh CAVEATS
+Shutdown hooks should only be used to do what's strictly necessary
+to do to ensure a correct reboot.
+Since shutdown hooks are run even after a panic, a panic caused by a
+shutdown hook will automatically cause the shutdown hook to be run again
+causing an endless loop.
+An example of things that need to be done in a shutdown hook could be
+stopping DMA engines that might corrupt memory when rebooting.
+An example of things that shouldn't be done in a shutdown hook is syncing
+the filesystems.
+Once again, since the system could be rebooting because of an internal
+inconsistency, writing down anything to permanent storage or trusting
+the internal state of the system is a very bad idea.
 .Sh RETURN VALUES
 If successful,
 .Fn shutdownhook_establish
