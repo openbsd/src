@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.30 1996/12/10 22:28:28 deraadt Exp $	*/
+/*	$OpenBSD: com.c,v 1.31 1997/03/06 07:07:43 tholo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -882,6 +882,8 @@ comioctl(dev, cmd, data, flag, p)
 			SET(userbits, TIOCFLAG_CRTSCTS);
 		if (ISSET(driverbits, COM_SW_MDMBUF))
 			SET(userbits, TIOCFLAG_MDMBUF);
+		if (ISSET(driverbits, COM_SW_PPS))
+			SET(userbits, TIOCFLAG_PPS);
 
 		*(int *)data = userbits;
 		break;
@@ -903,6 +905,8 @@ comioctl(dev, cmd, data, flag, p)
 			SET(driverbits, COM_SW_CRTSCTS);
 		if (ISSET(userbits, TIOCFLAG_MDMBUF))
 			SET(driverbits, COM_SW_MDMBUF);
+		if (ISSET(userbits, TIOCFLAG_PPS))
+			SET(driverbits, COM_SW_PPS);
 
 		sc->sc_swflags = driverbits;
 		break;
@@ -1271,6 +1275,10 @@ comintr(arg)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
 	u_char lsr, data, msr, delta;
+#ifdef PPS_SYNC
+	struct timeval tv;
+	long usec;
+#endif /* PPS_SYNC */
 #ifdef COM_DEBUG
 	int n;
 	struct {
@@ -1360,11 +1368,25 @@ comintr(arg)
 		if (msr != sc->sc_msr) {
 			delta = msr ^ sc->sc_msr;
 			sc->sc_msr = msr;
-			if (ISSET(delta, MSR_DCD) &&
-			    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR) &&
-			    (*linesw[tp->t_line].l_modem)(tp, ISSET(msr, MSR_DCD)) == 0) {
-				CLR(sc->sc_mcr, sc->sc_dtr);
-				bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+			if (ISSET(delta, MSR_DCD)) {
+#ifdef PPS_SYNC
+				if (ISSET(sc->sc_swflags, COM_SW_PPS)) {
+					if (ISSET(msr, MSR_DCD)) {
+						usec = time.tv_usec;
+						microtime(&tv);
+						usec = tv.tv_usec - usec;
+						if (usec < 0)
+							usec += 1000000;
+						hardpps(&tv, usec);
+					}
+				}
+				else
+#endif /* PPS_SYNC */
+				if (!ISSET(sc->sc_swflags, COM_SW_SOFTCAR) &&
+				    (*linesw[tp->t_line].l_modem)(tp, ISSET(msr, MSR_DCD)) == 0) {
+					CLR(sc->sc_mcr, sc->sc_dtr);
+					bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+				}
 			}
 			if (ISSET(delta & msr, MSR_CTS) &&
 			    ISSET(tp->t_cflag, CRTSCTS)) {
