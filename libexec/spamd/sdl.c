@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.1 2003/03/02 19:22:00 beck Exp $ */
+/*	$OpenBSD: sdl.c,v 1.2 2003/03/02 20:32:05 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -104,7 +104,7 @@ sdl_add (char *sdname, char *sdstring, char ** addrs, int addrc)
 		m = &blacklists[index].addrs[i].sdm;
 
 		j = sscanf(addrs[i], "%39[^/]/%u", astring, &maskbits);
-		if (j != 2) 
+		if (j != 2)
 			goto parse_error;
 		if (maskbits > 128)
 			goto parse_error;
@@ -132,7 +132,7 @@ sdl_add (char *sdname, char *sdstring, char ** addrs, int addrc)
 		while (maskbits >= 32) {
 			m->addr32[k++] = 0xffffffff;
 			maskbits -= 32;
- 		}
+		}
 		for (j = 31; j > 31 - maskbits; --j)
 			m->addr32[k] |= (1 << j);
 		if (maskbits)

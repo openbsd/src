@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.11 2003/03/02 19:22:00 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.12 2003/03/02 20:32:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -53,7 +53,7 @@ extern struct sdlist *blacklists;
 
 int conffd = -1;
 char *cb;
-size_t cbs, cbu; 
+size_t cbs, cbu;
 
 time_t t;
 
@@ -120,81 +120,82 @@ grow_obuf(struct con *cp, int off)
 int
 parse_configline(char *line)
 {
-	  char *cp, prev, *name, *msg;
-	  static char **av = NULL;
-	  static size_t ac = 0;
-	  size_t au = 0;
-	  int mdone = 0;
+	char *cp, prev, *name, *msg;
+	static char **av = NULL;
+	static size_t ac = 0;
+	size_t au = 0;
+	int mdone = 0;
 
-	  if (debug)
-		  printf("read config line %40s ...\n", line);
+	if (debug)
+		printf("read config line %40s ...\n", line);
 
-	  name = line;
+	name = line;
 
-	  for (cp = name; *cp != ';'; cp++);
-	  *cp++ = '\0';
-	  msg = cp;
-	  if (*cp++ != '"')
-		  goto parse_error;
-	  prev = '\0';
-	  for (;!mdone;cp++) {
-		  switch (*cp) {
-		  case '\\':
+	for (cp = name; *cp != ';'; cp++)
+		;
+	*cp++ = '\0';
+	msg = cp;
+	if (*cp++ != '"')
+		goto parse_error;
+	prev = '\0';
+	for (; !mdone; cp++) {
+		switch (*cp) {
+		case '\\':
 			if (!prev)
 				prev = *cp;
-			else 
+			else
 				prev = '\0';
 			break;
-		  case '"':
-			  if (prev != '\\') {
-				  cp++;
-				  if (*cp == ';') {
-					  mdone = 1;
-					  *cp = '\0';
-				  } else 
-					  goto parse_error;
-			  }
+		case '"':
+			if (prev != '\\') {
+				cp++;
+				if (*cp == ';') {
+					mdone = 1;
+					*cp = '\0';
+				} else
+					goto parse_error;
+			}
 			break;
-		  case '\0':
-			  goto parse_error;
-		  default:
-			  prev = '\0';
-		  }
-				
-	  }
+		case '\0':
+			goto parse_error;
+		default:
+			prev = '\0';
+		}
+	}
 
-	  do {
-		  if (ac == au) {
-			  char **tmp;
-			  tmp = realloc(av, (ac + 2048) * sizeof(char *));
-			  if (tmp == NULL) {
-				  return (-1);
-			  }
-			  av = tmp;
-			  ac += 2048;
-		  }
-	  } while ((av[au++] = strsep(&cp, ";")) != NULL);
-	  if (au < 2)
-		  goto parse_error;
-	  else 
-		  sdl_add(name, msg, av, au - 1);
-	  return(0);
+	do {
+		if (ac == au) {
+			char **tmp;
+
+			tmp = realloc(av, (ac + 2048) * sizeof(char *));
+			if (tmp == NULL)
+				return (-1);
+			av = tmp;
+			ac += 2048;
+		}
+	} while ((av[au++] = strsep(&cp, ";")) != NULL);
+
+	if (au < 2)
+		goto parse_error;
+	else
+		sdl_add(name, msg, av, au - 1);
+	return(0);
 
  parse_error:
-	  if (debug > 0)
-		  printf("bogus config line - need 'tag;message;a/m;a/m;a/m...'\n");
-	  return (-1);
-
+	if (debug > 0)
+		printf("bogus config line - need 'tag;message;a/m;a/m;a/m...'\n");
+	return (-1);
 }
 
-
 void
-parse_configs(void) {
+parse_configs(void)
+{
 	int i;
 	char *start, *end;
 
-	if (cbu == cbs) { 
-		char * tmp;
+	if (cbu == cbs) {
+		char *tmp;
+
 		tmp = realloc(cb, cbs + 8192);
 		if (tmp == NULL) {
 			if (debug > 0)
@@ -216,14 +217,12 @@ parse_configs(void) {
 			if (end > start + 1)
 				parse_configline(start);
 			start = ++end;
-		}
-		else 
+		} else
 			++end;
 	}
 	if (end > start + 1)
 		parse_configline(start);
 }
-
 
 void
 do_config(void)
@@ -233,8 +232,9 @@ do_config(void)
 	if (debug > 0)
 		printf("got configuration connection\n");
 
-	if (cbu == cbs) { 
-		char * tmp;
+	if (cbu == cbs) {
+		char *tmp;
+
 		tmp = realloc(cb, cbs + 8192);
 		if (tmp == NULL) {
 			if (debug > 0)
@@ -249,7 +249,7 @@ do_config(void)
 
 	n = read(conffd, cb+cbu, cbs-cbu);
 	if (debug > 0)
-		printf("read %d config bytes\n", n); 
+		printf("read %d config bytes\n", n);
 	if (n == 0) {
 		parse_configs();
 		goto configdone;
@@ -257,10 +257,10 @@ do_config(void)
 		if (debug > 0)
 			perror("read()");
 		goto configdone;
-	} else {
-		cbu += n;  
-	}
+	} else
+		cbu += n;
 	return;
+
  configdone:
 	cbu = 0;
 	close(conffd);
@@ -278,9 +278,9 @@ append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
 	size_t len = cp->osize - off;
 	int i = 0;
 
-	if (off == 0) {
+	if (off == 0)
 		lastcont = 0;
-	}
+
 	if (lastcont != 0)
 		cp->obuf[lastcont] = '-';
 	i += snprintf(c, len, "%s ", nreply);
@@ -288,8 +288,9 @@ append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
 	if (*s == '"')
 		s++;
 	while (*s) {
-		/* make sure we at minimum, have room to add a 
-		 * format code (4 bytes), and a v6 address(39 bytes) 
+		/*
+		 * Make sure we at minimum, have room to add a
+		 * format code (4 bytes), and a v6 address(39 bytes)
 		 * and a byte saved in sav.
 		 */
 		if (i >= len - 46) {
@@ -344,7 +345,7 @@ append_error_string (struct con *cp, size_t off, char *fmt, int af, void *ia)
 			if (sav)
 			c[i++] = sav;
 			c[i++] = *s;
-			sav='\0'; 
+			sav='\0';
 			c[i] = '\0';
 			break;
 		}
@@ -386,7 +387,7 @@ build_reply(struct  con * cp)
 		off += used;
 		left -= used;
 		if (cp->obuf[off - 1] != '\n') {
-			if ( left < 1) {
+			if (left < 1) {
 				c = grow_obuf(cp, off);
 				if (c == NULL) {
 					if (cp->osize)
@@ -412,9 +413,8 @@ bad:
 		/* we're having a really bad day.. */
 		cp->obufalloc = 0; /* know not to free or mangle */
 		cp->obuf="450 Try again\r\n";
-	} else {
+	} else
 		cp->osize = strlen(cp->obuf) + 1;
-	}
 }
 
 void
@@ -423,8 +423,7 @@ doreply(struct con *cp)
 	if (reply) {
 		if (!cp->obufalloc)
 			err(1, "shouldn't happen");
-		snprintf(cp->obuf, cp->osize,
-		    "%s %s\n", nreply, reply);
+		snprintf(cp->obuf, cp->osize, "%s %s\n", nreply, reply);
 		return;
 	}
 	build_reply(cp);
@@ -490,7 +489,7 @@ closecon(struct con *cp)
 	if (cp->osize > 0 && cp->obufalloc) {
 		free(cp->obuf);
 		cp->obuf = NULL;
-		cp->osize = 0;	
+		cp->osize = 0;
 	}
 	close(cp->fd);
 	clients--;
@@ -849,11 +848,10 @@ main(int argc, char *argv[])
 		FD_SET(s, fdsr);
 
 		/* only one active config conn at a time */
-		if (conffd == -1) 
+		if (conffd == -1)
 			FD_SET(conflisten, fdsr);
 		else
 			FD_SET(conffd, fdsr);
-			
 
 		if (writers == 0) {
 			tvp = NULL;

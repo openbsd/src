@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.4 2003/03/02 19:22:00 beck Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.5 2003/03/02 20:32:05 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -43,25 +43,25 @@
 .Op Fl 2
 .Op Fl f Ar file
 .Op Fl w Ar file
-.Op Ar file ... 
+.Op Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
-utility adds blacklists by adding addresses to the 
+utility adds blacklists by adding addresses to the
 .Xr pf 4
 table
 .Aq spamd ,
 as well as configuring mail rejection messages for
-the added list of addresses in 
+the added list of addresses in
 .Xr spamd 8 .
 The
 .Aq spamd
 table is used in conjuction with a
 .Xr pf 4
 redirection rule can be used to selectively redirect mail connections
-to the 
+to the
 .Xr spamd 8 .
-daemon . 
+daemon .
 Sources and actions are as follows:
 .Bl -tag -width XXXXXXXXXX
 .It Fl s
@@ -75,20 +75,20 @@ Synonym for
 .It Fl 2
 The SPEWS level 2 database is fetched via
 .Xr ftp 1
-and used in a blacklist named 
+and used in a blacklist named
 .Li spews-2
 .It Fl c
-The chinese netblock datbase is fetched via 
+The chinese netblock datbase is fetched via
 .Xr ftp 1
-and used in a blacklist named 
+and used in a blacklist named
 .Li china
 .It Fl k
-The korean netblock database is fetched via 
+The korean netblock database is fetched via
 .Xr ftp 1
-and used in a blacklist named 
+and used in a blacklist named
 .Li korea
 .It Fl f Ar file
-The local file specified is used in a black-list named 
+The local file specified is used in a black-list named
 .Li local
 .It Fl w Ar file
 The local file specified is added to the white-list.
@@ -102,7 +102,7 @@ Then, all of the addresses from the white-list are removed.
 Then, the blacklist address, are sent to a running
 .Xr spamd 8
 along with the message spamd will give on mail rejection when
-a matching client connects. 
+a matching client connects.
 The input file is expected to consist of one network block or address
  per line (optionally followed by a space and text that is ignored).
 Comment lines beginning with
@@ -124,7 +124,7 @@ the following example:
 additional files given as parameters to
 .Nm
 will be read to configure blacklists. The blacklist file format is
-as follows.  
+as follows.
 .Bd -literal -offset indent
 .Ic SPAMD_SOURCE;mylist;"Sorry %A, You are a probably spammer\enBye\en"
 .Ic file:/usr/local/share/spammers.txt
@@ -145,15 +145,15 @@ given to any connections that match this list. the message must
 be enclosed in double quotes
 and may include \en to produce a newline in the output. \e\" will produce
 a double quote in the output, and %% will produce a single % in the output.
-%A will be expanded by  
+%A will be expanded by
 .Xr spamd 8
 to display the connecting IP address in the output.
 .Pp
-Following the 
+Following the
 .Li SPAMD_SOURCE
-should be URL's, one per line, from which to fetch the 
-network blocks to blacklist. 
-Following the 
+should be URL's, one per line, from which to fetch the
+network blocks to blacklist.
+Following the
 .Li SPAMD_SOURCE_REMOVE
 line may be further URL's, one per line, from which to
 fetch network blocks that will be removed from this blacklist.
