@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.33 1999/09/30 06:29:57 downsj Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.34 2000/03/05 18:40:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -312,10 +312,6 @@ memprobe()
 
 	apmcheck();
 
-	/* Register in global var */
-	addbootarg(BOOTARG_MEMMAP, 
-		(pm - bios_memmap + 1) * sizeof(*bios_memmap), bios_memmap);
-
 #ifdef DEBUG
 	printf(")[");
 #endif
@@ -457,3 +453,13 @@ mem_add(sa, ea)
 	return 0;
 }
 
+void
+mem_pass()
+{
+	bios_memmap_t *p;
+
+	for (p = bios_memmap; p->type != BIOS_MAP_END; p++)
+		;
+	addbootarg(BOOTARG_MEMMAP, (p - bios_memmap + 1) * sizeof *bios_memmap,
+		bios_memmap);
+}

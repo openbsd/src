@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.25 2000/02/18 17:10:10 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.26 2000/03/05 18:40:59 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -65,6 +65,9 @@ machdep_exec(xp, howto, loadaddr)
 	cd.consdev = cn_tab->cn_dev;
 	cd.conspeed = com_speed;
 	addbootarg(BOOTARG_CONSDEV, sizeof(cd), &cd);
+
+	/* Pass memory map to the kernel */
+	mem_pass();
 
 	makebootargs(av, &ac);
 
