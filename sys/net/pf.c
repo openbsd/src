@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.279 2002/12/19 11:05:11 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.280 2002/12/19 12:46:06 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -699,68 +699,67 @@ pf_print_flags(u_int8_t f)
 		printf("W");
 }
 
-#define		 PF_CALC_SKIP_STEP(i, c) \
-		do { \
-			if (a & 1 << i) { \
-				if (c) \
-					r->skip[i].ptr = TAILQ_NEXT(s, entries); \
-				else \
-					a ^= 1 << i; \
-			} \
-		} while (0)
+#define	PF_SET_SKIP_STEPS(i)					\
+	do {							\
+		while (head[i] != cur) {			\
+			head[i]->skip[i].ptr = cur;		\
+			head[i] = TAILQ_NEXT(head[i], entries);	\
+		}						\
+	} while (0)
 
 void
 pf_calc_skip_steps(struct pf_rulequeue *rules)
 {
-	struct pf_rule	*r, *s;
-	int		 a, i;
+	struct pf_rule *cur, *prev, *head[PF_SKIP_COUNT];
+	int i;
 
-	r = TAILQ_FIRST(rules);
-	while (r != NULL) {
-		a = 0;
-		for (i = 0; i < PF_SKIP_COUNT; ++i) {
-			a |= 1 << i;
-			r->skip[i].ptr = TAILQ_NEXT(r, entries);
-		}
-		s = TAILQ_NEXT(r, entries);
-		while (a && s != NULL) {
-			PF_CALC_SKIP_STEP(PF_SKIP_ACTION,
-			    (s->action == PF_SCRUB && r->action == PF_SCRUB) ||
-			    (s->action != PF_SCRUB && r->action != PF_SCRUB));
-			PF_CALC_SKIP_STEP(PF_SKIP_IFP,
-			    s->ifp == r->ifp && s->ifnot == r->ifnot);
-			PF_CALC_SKIP_STEP(PF_SKIP_DIR,
-			    s->direction == r->direction);
-			PF_CALC_SKIP_STEP(PF_SKIP_AF, s->af == r->af);
-			PF_CALC_SKIP_STEP(PF_SKIP_PROTO, s->proto == r->proto);
-			PF_CALC_SKIP_STEP(PF_SKIP_SRC_ADDR,
-			    s->src.addr.addr_dyn == NULL &&
-			    r->src.addr.addr_dyn == NULL &&
-			    PF_AEQ(&s->src.addr.addr, &r->src.addr.addr,
-			    r->af) &&
-			    PF_AEQ(&s->src.addr.mask, &r->src.addr.mask,
-			    r->af) &&
-			    s->src.not == r->src.not);
-			PF_CALC_SKIP_STEP(PF_SKIP_SRC_PORT,
-			    s->src.port[0] == r->src.port[0] &&
-			    s->src.port[1] == r->src.port[1] &&
-			    s->src.port_op == r->src.port_op);
-			PF_CALC_SKIP_STEP(PF_SKIP_DST_ADDR,
-			    s->dst.addr.addr_dyn == NULL &&
-			    r->dst.addr.addr_dyn == NULL &&
-			    PF_AEQ(&s->dst.addr.addr, &r->dst.addr.addr,
-			    r->af) &&
-			    PF_AEQ(&s->dst.addr.mask, &r->dst.addr.mask,
-			    r->af) &&
-			    s->dst.not == r->dst.not);
-			PF_CALC_SKIP_STEP(PF_SKIP_DST_PORT,
-			    s->dst.port[0] == r->dst.port[0] &&
-			    s->dst.port[1] == r->dst.port[1] &&
-			    s->dst.port_op == r->dst.port_op);
-			s = TAILQ_NEXT(s, entries);
-		}
-		r = TAILQ_NEXT(r, entries);
+	cur = TAILQ_FIRST(rules);
+	prev = cur;
+	for (i = 0; i < PF_SKIP_COUNT; ++i)
+		head[i] = cur;
+	while (cur != NULL) {
+
+		if ((cur->action == PF_SCRUB && prev->action != PF_SCRUB) ||
+		    (cur->action != PF_SCRUB && prev->action == PF_SCRUB))
+			PF_SET_SKIP_STEPS(PF_SKIP_ACTION);
+		if (cur->ifp != prev->ifp || cur->ifnot != prev->ifnot)
+			PF_SET_SKIP_STEPS(PF_SKIP_IFP);
+		if (cur->direction != prev->direction)
+			PF_SET_SKIP_STEPS(PF_SKIP_DIR);
+		if (cur->af != prev->af)
+			PF_SET_SKIP_STEPS(PF_SKIP_AF);
+		if (cur->proto != prev->proto)
+			PF_SET_SKIP_STEPS(PF_SKIP_PROTO);
+		if (cur->src.addr.addr_dyn != NULL ||
+		    prev->src.addr.addr_dyn != NULL ||
+		    cur->src.not !=  prev->src.not ||
+		    !PF_AEQ(&cur->src.addr.addr, &prev->src.addr.addr,
+		    cur->af) ||
+		    !PF_AEQ(&cur->src.addr.mask, &prev->src.addr.mask,
+		    cur->af))
+			PF_SET_SKIP_STEPS(PF_SKIP_SRC_ADDR);
+		if (cur->src.port[0] != prev->src.port[0] ||
+		    cur->src.port[1] != prev->src.port[1] ||
+		    cur->src.port_op != prev->src.port_op)
+			PF_SET_SKIP_STEPS(PF_SKIP_SRC_PORT);
+		if (cur->dst.addr.addr_dyn != NULL ||
+		    prev->dst.addr.addr_dyn != NULL ||
+		    cur->dst.not !=  prev->dst.not ||
+		    !PF_AEQ(&cur->dst.addr.addr, &prev->dst.addr.addr,
+		    cur->af) ||
+		    !PF_AEQ(&cur->dst.addr.mask, &prev->dst.addr.mask,
+		    cur->af))
+			PF_SET_SKIP_STEPS(PF_SKIP_DST_ADDR);
+		if (cur->dst.port[0] != prev->dst.port[0] ||
+		    cur->dst.port[1] != prev->dst.port[1] ||
+		    cur->dst.port_op != prev->dst.port_op)
+			PF_SET_SKIP_STEPS(PF_SKIP_DST_PORT);
+
+		prev = cur;
+		cur = TAILQ_NEXT(cur, entries);
 	}
+	for (i = 0; i < PF_SKIP_COUNT; ++i)
+		PF_SET_SKIP_STEPS(i);
 }
 
 void
