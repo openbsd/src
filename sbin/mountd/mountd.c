@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.30 2000/05/01 20:20:12 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.31 2000/05/03 17:58:19 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -667,7 +667,7 @@ get_exportlist()
 	struct ucred anon;
 	char *cp, *endcp, *dirp = NULL, *hst, *usr, *dom, savedc;
 	int len, has_host, exflags, got_nondir, dirplen = 0, num, i, netgrp;
-	int lookup_failed;
+	int lookup_failed, num_hosts;
 
 	/*
 	 * First, get rid of the old list
@@ -742,6 +742,7 @@ get_exportlist()
 		 * Set defaults.
 		 */
 		has_host = FALSE;
+		num_hosts = 0;
 		lookup_failed = FALSE;
 		anon = def_anon;
 		exflags = MNT_EXPORTED;
@@ -852,11 +853,13 @@ get_exportlist()
 					    "NULL hostname in netgroup %s, skipping",
 					    cp);
 					grp->gr_type = GT_IGNORE;
+					lookup_failed = TRUE;
+					continue;
 				    } else if (get_host(hst, grp, tgrp)) {
 					syslog(LOG_ERR,
 					    "Unknown host (%s) in netgroup %s",
 					    hst, cp);
-					has_host = FALSE;
+					grp->gr_type = GT_IGNORE;
 					lookup_failed = TRUE;
 					continue;
 				    }
@@ -864,11 +867,12 @@ get_exportlist()
 				    syslog(LOG_ERR,
 					"Unknown host (%s) in line %s",
 					cp, line);
-				    has_host = FALSE;
+				    grp->gr_type = GT_IGNORE;
 				    lookup_failed = TRUE;
 				    continue;
 				}
 				has_host = TRUE;
+				num_hosts++;
 			    } while (netgrp && getnetgrent((const char **)&hst,
 				(const char **)&usr, (const char **)&dom));
 			    endnetgrent();
@@ -882,8 +886,8 @@ get_exportlist()
 		 * If the exports list is empty due to unresolvable hostnames
 		 * we throw away the line.
 		 */
-		if (lookup_failed == TRUE && has_host == FALSE &&
-		    tgrp->gr_type == GT_NULL)  {
+		if (lookup_failed == TRUE && num_hosts == 0 &&
+		    tgrp->gr_type == GT_IGNORE)  {
 			getexp_err(ep, tgrp);
 			goto nextline;
 		}
