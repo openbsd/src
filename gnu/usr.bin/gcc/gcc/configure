@@ -793,7 +793,7 @@ fi
 
 # Determine the host, build, and target systems
 ac_aux_dir=
-for ac_dir in $srcdir $srcdir/.. $srcdir/../..; do
+for ac_dir in ${GNUSYSTEM_AUX_DIR} $srcdir $srcdir/.. $srcdir/../..; do
   if test -f $ac_dir/install-sh; then
     ac_aux_dir=$ac_dir
     ac_install_sh="$ac_aux_dir/install-sh -c"
@@ -6708,7 +6708,7 @@ tm_file_list=
 for f in $tm_file; do
   case $f in
     ansidecl.h )
-       tm_file_list="${tm_file_list} \$(srcdir)/../include/ansidecl.h" ;;
+       tm_file_list="${tm_file_list} \$(LIBIBERTY_INCLUDES)/ansidecl.h" ;;
     defaults.h )
        tm_file_list="${tm_file_list} \$(srcdir)/$f" ;;
     *) tm_file_list="${tm_file_list} \$(srcdir)/config/$f" ;;
@@ -6724,7 +6724,7 @@ host_xm_file_list=
 for f in $host_xm_file; do
   case $f in
     ansidecl.h )
-       host_xm_file_list="${host_xm_file_list} \$(srcdir)/../include/ansidecl.h" ;;
+       host_xm_file_list="${host_xm_file_list} \$(LIBIBERTY_INCLUDES)/ansidecl.h" ;;
     auto-host.h )
        host_xm_file_list="${host_xm_file_list} $f" ;;
     defaults.h )
@@ -6737,7 +6737,7 @@ build_xm_file_list=
 for f in $build_xm_file; do
   case $f in
     ansidecl.h )
-       build_xm_file_list="${build_xm_file_list} \$(srcdir)/../include/ansidecl.h" ;;
+       build_xm_file_list="${build_xm_file_list} \$(LIBIBERTY_INCLUDES)/ansidecl.h" ;;
     auto-build.h | auto-host.h )
        build_xm_file_list="${build_xm_file_list} $f" ;;
     defaults.h )
