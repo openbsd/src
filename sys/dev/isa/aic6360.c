@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.10 1996/11/23 21:46:36 kstailey Exp $ */
+/*	$OpenBSD: aic6360.c,v 1.11 1997/01/23 04:13:52 flipk Exp $ */
 /*	$NetBSD: aic6360.c,v 1.46 1996/05/12 23:51:37 mycroft Exp $	*/
 
 #define	integrate	static inline
@@ -582,7 +582,6 @@ int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 
 int	aicprobe	__P((struct device *, void *, void *));
 void	aicattach	__P((struct device *, struct device *, void *));
-int	aicprint	__P((void *, const char *));
 void	aic_minphys	__P((struct buf *));
 int	aicintr		__P((void *));
 void 	aic_init	__P((struct aic_softc *));
@@ -753,16 +752,6 @@ aic_find(sc)
 	return 0;
 }
 
-int
-aicprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 /*
  * Attach the AIC6360, fill out some high and low level data structures
  */
@@ -795,7 +784,7 @@ aicattach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, aicintr, sc, sc->sc_dev.dv_xname);
 
-	config_found(self, &sc->sc_link, aicprint);
+	config_found(self, &sc->sc_link, scsiprint);
 }
 
 
