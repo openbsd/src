@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.20 2001/07/04 06:19:26 deraadt Exp $
+.\"	$OpenBSD: hifn.4,v 1.21 2001/07/04 11:51:54 brad Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -31,18 +31,18 @@
 .Os
 .Sh NAME
 .Nm hifn
-.Nd Hi/fn 7751/7951 crypto accelerator
+.Nd Hifn 7751/7951 crypto accelerator
 .Sh SYNOPSIS
 .Cd "hifn* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports various cards containing the Hi/fn 7751 or Hi/Fn 7951
+driver supports various cards containing the Hifn 7751 or Hifn 7951
 chipsets, such as
 .Bl -tag -width namenamenamena -offset indent
 .It Invertex AEON
 No longer being made.  Came as 128KB SRAM model, or 2MB DRAM model.
-.It Hi/fn 7751
+.It Hifn 7751
 Reference board with 512KB SRAM.
 .It PowerCrypt
 See
@@ -63,7 +63,7 @@ and SHA1-HMAC96 operations in
 .Xr ipsec 4 .
 .Pp
 The
-.Tn Hi/Fn 7951
+.Tn Hifn 7951
 will also supply data to the kernel
 .Xr random 4
 subsystem.
@@ -79,7 +79,7 @@ all vendors currently just use the obvious ID which is 13 bytes of 0.
 .Xr random 4 ,
 .Xr crypto 9
 .Sh CAVEATS
-The Hi/fn 9751 shares the same PCI id.  This chip is basically a 7751, but
+The Hifn 9751 shares the same PCI id.  This chip is basically a 7751, but
 with the cryptographic functions missing.  Instead, the 9751 is only capable
 of doing compression.  Since we do not currently attempt to use any of
 these chips to do compression, the 9751-based cards are not useful.
