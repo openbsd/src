@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.c,v 1.26 2001/06/19 10:24:55 brian Exp $
+ * $OpenBSD: lcp.c,v 1.27 2001/07/03 22:23:54 brian Exp $
  */
 
 #include <sys/param.h>
@@ -261,7 +261,7 @@ lcp_Init(struct lcp *lcp, struct bundle *bundle, struct link *l,
   lcp->cfg.chap05 = NEG_ACCEPTED;
 #ifdef HAVE_DES
   lcp->cfg.chap80nt = NEG_ACCEPTED;
-  lcp->cfg.chap80lm = NEG_ACCEPTED;
+  lcp->cfg.chap80lm = 0;
   lcp->cfg.chap81 = NEG_ACCEPTED;
 #endif
   lcp->cfg.lqr = NEG_ACCEPTED;
