@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.10 1999/04/18 18:09:30 deraadt Exp $
+.\"	$OpenBSD: doc-common,v 1.11 1999/07/08 19:56:58 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -166,21 +166,24 @@
 .\" .	if "\\$3"IMP"	.ds vT OpenBSD Implementation Notes
 .\" .	if "\\$3"HOW"	.ds vT OpenBSD How Pocket Manual
 .	if "\\$3"LOCAL" .ds vT OpenBSD Local Manual
-.	if "\\$3"amiga" .as vT \ (AMIGA Architecture)
-.	if "\\$3"da30"  .as vT \ (DA30 Architecture)
-.	if "\\$3"hp300" .as vT \ (HP300 Architecture)
-.	if "\\$3"i386"  .as vT \ (I386 Architecture)
-.	if "\\$3"mac68k" .as vT \ (MAC68K Architecture)
-.	if "\\$3"mvme68k" .as vT \ (MVME68K Architecture)
-.	if "\\$3"mvme88k" .as vT \ (MVME88K Architecture)
-.	if "\\$3"pc532" .as vT \ (PC532 Architecture)
-.	if "\\$3"pica"  .as vT \ (PICA  Architecture)
-.	if "\\$3"pmax"  .as vT \ (PMAX  Architecture)
-.	if "\\$3"sparc" .as vT \ (SPARC Architecture)
-.	if "\\$3"sun3"  .as vT \ (SUN3 Architecture)
-.	if "\\$3"tahoe" .as vT \ (TAHOE Architecture)
-.	if "\\$3"vax"   .as vT \ (VAX Architecture)
-.	if "\\$3"x68k"  .as vT \ (X68K Architecture)
+.	if "\\$3"alpha" .as vT \ (ALPHA)
+.	if "\\$3"arm32" .as vT \ (ARM32)
+.	if "\\$3"amiga" .as vT \ (AMIGA)
+.	if "\\$3"da30"  .as vT \ (DA30)
+.	if "\\$3"hp300" .as vT \ (HP300)
+.	if "\\$3"hppa" .as vT \ (HPPA)
+.	if "\\$3"i386"  .as vT \ (I386)
+.	if "\\$3"mac68k" .as vT \ (MAC68K)
+.	if "\\$3"mvme68k" .as vT \ (MVME68K)
+.	if "\\$3"mvme88k" .as vT \ (MVME88K)
+.	if "\\$3"pc532" .as vT \ (PC532)
+.	if "\\$3"arc"  .as vT \ (ARC)
+.	if "\\$3"pmax"  .as vT \ (PMAX)
+.	if "\\$3"sparc" .as vT \ (SPARC)
+.	if "\\$3"sun3"  .as vT \ (SUN3)
+.	if "\\$3"tahoe" .as vT \ (TAHOE)
+.	if "\\$3"vax"   .as vT \ (VAX)
+.	if "\\$3"x68k"  .as vT \ (X68K)
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
 ..
