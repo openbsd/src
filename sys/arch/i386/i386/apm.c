@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.23 1998/11/15 16:36:49 art Exp $	*/
+/*	$OpenBSD: apm.c,v 1.24 1999/01/06 01:31:20 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -527,7 +527,10 @@ apm_set_powstate(dev, state)
 	regs.cx = state;
 	if (apmcall(APM_SET_PWR_STATE, dev, &regs) != 0) {
 		apm_perror("set power state", &regs);
-		return EIO;
+		if (APM_ERR_CODE(&regs) == APM_ERR_UNRECOG_DEV)
+			return ENXIO;
+		else
+			return EIO;
 	}
 	return 0;
 }

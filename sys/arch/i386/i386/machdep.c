@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.95 1998/12/28 11:03:57 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.96 1999/01/06 01:31:20 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1229,6 +1229,8 @@ haltsys:
 	if (howto & RB_HALT) {
 #if NAPM > 0
 		if (howto & RB_POWERDOWN) {
+			int rv;
+
 			printf("\nAttempting to power down...\n");
 			/*
 			 * Turn off, if we can.  But try to turn disk off and
@@ -1239,8 +1241,8 @@ haltsys:
 			 * try to turn the system off.
 		 	 */
 			delay(500000);
-			if (apm_set_powstate(APM_DEV_DISK(0xff),
-					     APM_SYS_OFF) == 0) {
+			rv = apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
+			if (rv == 0 || rv == ENXIO) {
 				delay(500000);
 				(void) apm_set_powstate(APM_DEV_ALLDEVS,
 							APM_SYS_OFF);
