@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.75 2002/07/25 22:32:33 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.76 2002/08/03 18:57:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -899,36 +899,36 @@ boot(howto)
 	int howto;
 {
 	/* If system is cold, just halt. */
-	if (cold) {
+	if (cold)
 		howto |= RB_HALT;
-		goto haltsys;
+	else {
+
+		boothowto = howto | (boothowto & RB_HALT);
+
+		if (!(howto & RB_NOSYNC)) {
+			waittime = 0;
+			vfs_shutdown();
+			/*
+			 * If we've been adjusting the clock, the todr
+			 * will be out of synch; adjust it now unless
+			 * the system was sitting in ddb.
+			 */
+			if ((howto & RB_TIMEBAD) == 0)
+				resettodr();
+			else
+				printf("WARNING: not updating battery clock\n");
+		}
+
+		/* XXX probably save howto into stable storage */
+
+		splhigh();
+
+		if (howto & RB_DUMP)
+			dumpsys();
+
+		doshutdownhooks();
 	}
 
-	boothowto = howto | (boothowto & RB_HALT);
-
-	if (!(howto & RB_NOSYNC)) {
-		waittime = 0;
-		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now unless
-		 * the system was sitting in ddb.
-		 */
-		if ((howto & RB_TIMEBAD) == 0)
-			resettodr();
-		else
-			printf("WARNING: not updating battery clock\n");
-	}
-
-	/* XXX probably save howto into stable storage */
-
-	splhigh();
-
-	if (howto & RB_DUMP)
-		dumpsys();
-
-	doshutdownhooks();
-haltsys:
 	/* in case we came on powerfail interrupt */
 	if (cold_hook)
 		(*cold_hook)(HPPA_COLD_COLD);
