@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.48 2004/01/07 12:38:51 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.49 2004/01/07 13:32:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -428,7 +428,7 @@ kroute_fetchtable(void)
 		sa = (struct sockaddr *)(rtm + 1);
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
-		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_DST]) == NULL)
+		if ((sa = rti_info[RTAX_DST]) == NULL)
 			continue;
 
 		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
@@ -440,23 +440,38 @@ kroute_fetchtable(void)
 		}
 
 		kr->flags = F_KERNEL;
-		kr->r.prefix = sa_in->sin_addr.s_addr;
-		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK]) !=
-		    NULL) {
-			kr->r.prefixlen =
-			    mask2prefixlen(sa_in->sin_addr.s_addr);
-		} else if (rtm->rtm_flags & RTF_HOST)
-			kr->r.prefixlen = 32;
-		else
-			kr->r.prefixlen = prefixlen_classful(kr->r.prefix);
 
-		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_GATEWAY]) !=
-		    NULL) {
-			if (sa_in->sin_family == AF_INET)
-				kr->r.nexthop = sa_in->sin_addr.s_addr;
-			else if (sa_in->sin_family == AF_LINK)
-				kr->flags |= F_CONNECTED;
+		switch(sa->sa_family) {
+		case AF_INET:
+			kr->r.prefix =
+			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
+			if (kr->r.prefix == 0)	/* default route */
+				kr->r.prefixlen = 0;
+			else if (sa_in != NULL)
+				kr->r.prefixlen =
+				    mask2prefixlen(sa_in->sin_addr.s_addr);
+			else if (rtm->rtm_flags & RTF_HOST)
+				kr->r.prefixlen = 32;
+			else
+				kr->r.prefixlen =
+				    prefixlen_classful(kr->r.prefix);
+			break;
+		default:
+			continue;
+			/* not reached */
 		}
+
+		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
+			switch (sa->sa_family) {
+			case AF_INET:
+				kr->r.nexthop =
+				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+				break;
+			case AF_LINK:
+				kr->flags |= F_CONNECTED;
+				break;
+			}
 
 		if (kroute_insert(kr) == -1)
 			free(kr);
@@ -496,7 +511,7 @@ kroute_dispatch_msg(void)
 		flags = F_KERNEL;
 		nexthop = 0;
 
-		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_DST]) == NULL)
+		if ((sa = rti_info[RTAX_DST]) == NULL)
 			continue;
 
 		if (rtm->rtm_flags & RTF_LLINFO)	/* arp cache */
@@ -508,23 +523,36 @@ kroute_dispatch_msg(void)
 		if (rtm->rtm_errno)			/* failed attempts... */
 			continue;
 
-		s.r.prefix = sa_in->sin_addr.s_addr;
-		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK]) !=
-		    NULL) {
-			s.r.prefixlen =
-			    mask2prefixlen(sa_in->sin_addr.s_addr);
-		} else if (rtm->rtm_flags & RTF_HOST)
-			s.r.prefixlen = 32;
-		else
-			s.r.prefixlen = prefixlen_classful(s.r.prefix);
-
-		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_GATEWAY]) !=
-		    NULL) {
-			if (sa_in->sin_family == AF_INET)
-				nexthop = sa_in->sin_addr.s_addr;
-			else if (sa_in->sin_family == AF_LINK)
-				flags |= F_CONNECTED;
+		switch(sa->sa_family) {
+		case AF_INET:
+			s.r.prefix =
+			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
+			if (sa_in != NULL) {
+				if (sa_in->sin_family != AF_INET)
+					continue;
+				s.r.prefixlen =
+				    mask2prefixlen(sa_in->sin_addr.s_addr);
+			} else if (rtm->rtm_flags & RTF_HOST)
+				s.r.prefixlen = 32;
+			else
+				s.r.prefixlen = prefixlen_classful(s.r.prefix);
+			break;
+		default:
+			continue;
+			/* not reached */
 		}
+
+		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
+			switch (sa->sa_family) {
+			case AF_INET:
+				nexthop =
+				    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
+				break;
+			case AF_LINK:
+				flags |= F_CONNECTED;
+				break;
+			}
 
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
