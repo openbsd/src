@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.64 2002/06/08 21:56:02 jason Exp $
+#	$OpenBSD: GENERIC,v 1.65 2002/06/11 11:02:38 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -20,12 +20,14 @@ config		bsd	swap generic
 mainbus0 at root
 cpu0	at mainbus0
 
+upa0	at mainbus0 disable
+
 # Bus types found on SPARC systems.
 
 sbus0	at mainbus0				# Ultra 1
 psycho*	at mainbus0
 pci*	at psycho?				#
-schizo*	at mainbus0
+schizo*	at mainbus0 disable
 pci*	at schizo?				#
 pci*	at ppb?
 ppb*	at pci? dev ? function ?
@@ -205,6 +207,7 @@ apio*		at sbus? slot ? offset ?	# Aurora 210SJ
 lpt*		at apio?
 
 creator*	at mainbus0
+creator*	at upa0
 wsdisplay*	at creator?
 
 # mouse & keyboard multiplexor pseudo-devices
