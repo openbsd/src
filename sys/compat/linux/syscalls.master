@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.8 1997/04/14 11:16:31 graichen Exp $
+	$OpenBSD: syscalls.master,v 1.9 1997/07/27 21:01:37 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -256,4 +256,5 @@
 160	UNIMPL		sched_get_priority_min
 161	UNIMPL		sched_rr_get_interval
 162	UNIMPL		nanosleep
-163	UNIMPL		mremap
+163	STD		{ int mremap(void *old_address, size_t old_size, \
+			    size_t new_size, long flags); }

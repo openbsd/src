@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.6 1997/01/27 00:50:30 downsj Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.7 1997/07/27 21:01:36 deraadt Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -820,4 +820,24 @@ linux_sys_fdatasync(p, v, retval)
 		syscallarg(int) fd;
 	} */ *uap = v;
 	return sys_fsync(p, uap, retval);
+}
+
+/*
+ * mremap() dummy
+*/
+int
+linux_sys_mremap(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#ifdef notdef
+	struct linux_sys_mremap_args /* {
+		syscallarg(void *) old_address;
+		syscallarg(size_t) old_size;
+		syscallarg(size_t) new_size;
+		syscallarg(unsigned long) flags;
+	} */ *uap = v;
+#endif
+	return ENOMEM;
 }
