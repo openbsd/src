@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: lcp.h,v 1.7 2000/07/19 11:06:35 brian Exp $
+ * $OpenBSD: lcp.h,v 1.8 2000/11/02 00:54:34 brian Exp $
  *
  *	TODO:
  */
@@ -83,6 +83,7 @@ struct lcp {
 #ifdef HAVE_DES
     unsigned chap80nt : 2;	/* Microsoft (NT) CHAP */
     unsigned chap80lm : 2;	/* Microsoft (LANMan) CHAP */
+    unsigned chap81 : 2;	/* Microsoft CHAP v2 */
 #endif
     unsigned lqr : 2;		/* Link Quality Report */
     unsigned pap : 2;		/* Password Authentication protocol */

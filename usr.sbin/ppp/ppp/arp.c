@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: arp.c,v 1.7 2000/02/27 01:38:24 brian Exp $
+ * $OpenBSD: arp.c,v 1.8 2000/11/02 00:54:33 brian Exp $
  *
  */
 
@@ -179,7 +179,8 @@ arp_SetProxy(struct bundle *bundle, struct in_addr addr, int s)
    * address.
    */
   if (!get_ether_addr(s, addr, &dls.sdl)) {
-    log_Printf(LOG_PHASE_BIT, "Cannot determine ethernet address for proxy ARP\n");
+    log_Printf(LOG_PHASE_BIT, "Cannot determine ethernet address for "
+               "proxy ARP\n");
     return 0;
   }
   arpreq.arp_ha.sa_len = sizeof(struct sockaddr);

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.20 2000/08/17 14:14:55 brian Exp $
+ *	$OpenBSD: mp.c,v 1.21 2000/11/02 00:54:34 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1076,7 +1076,8 @@ mpserver_Read(struct fdescriptor *d, struct bundle *bundle, const fd_set *fdset)
 }
 
 static int
-mpserver_Write(struct fdescriptor *d, struct bundle *bundle, const fd_set *fdset)
+mpserver_Write(struct fdescriptor *d, struct bundle *bundle,
+               const fd_set *fdset)
 {
   /* We never want to write here ! */
   log_Printf(LogALERT, "mpserver_Write: Internal error: Bad call !\n");

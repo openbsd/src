@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: defs.c,v 1.18 2000/10/09 21:18:56 brian Exp $
+ *	$OpenBSD: defs.c,v 1.19 2000/11/02 00:54:33 brian Exp $
  */
 
 
@@ -301,7 +301,7 @@ MakeArgs(char *script, char **pvect, int maxargs, int flags)
   nargs = 0;
   while (*script) {
     script += strspn(script, " \t");
-    if (*script == '#' && flags & PARSE_NOHASH) {
+    if (*script == '#' && !(flags & PARSE_NOHASH)) {
       *script = '\0';
       break;
     }

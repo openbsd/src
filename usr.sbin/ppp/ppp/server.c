@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: server.c,v 1.7 2000/06/13 09:57:51 brian Exp $
+ *	$OpenBSD: server.c,v 1.8 2000/11/02 00:54:35 brian Exp $
  */
 
 #include <sys/types.h>
@@ -218,7 +218,8 @@ server_LocalOpen(struct bundle *bundle, const char *name, mode_t mask)
   if (mask != (mode_t)-1)
     umask(mask);
   if (listen(s, 5) != 0) {
-    log_Printf(LogERROR, "Local: Unable to listen to socket - BUNDLE overload?\n");
+    log_Printf(LogERROR, "Local: Unable to listen to socket -"
+               " BUNDLE overload?\n");
     close(s);
     ID0unlink(name);
     return 5;

@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: chap.h,v 1.9 2000/02/27 01:38:25 brian Exp $
+ * $OpenBSD: chap.h,v 1.10 2000/11/02 00:54:33 brian Exp $
  *
  *	TODO:
  */
@@ -46,12 +46,14 @@ struct chap {
 #ifdef HAVE_DES
   unsigned NTRespSent : 1;		/* Our last response */
   int peertries;
+  u_char authresponse[CHAPAUTHRESPONSELEN];	/* CHAP 81 response */
 #endif
 };
 
 #define descriptor2chap(d) \
   ((d)->type == CHAP_DESCRIPTOR ? (struct chap *)(d) : NULL)
-#define auth2chap(a) (struct chap *)((char *)a - (int)&((struct chap *)0)->auth)
+#define auth2chap(a) \
+  ((struct chap *)((char *)a - (int)&((struct chap *)0)->auth))
 
 extern void chap_Init(struct chap *, struct physical *);
 extern void chap_ReInit(struct chap *);

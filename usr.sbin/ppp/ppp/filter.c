@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: filter.c,v 1.16 2000/07/11 22:13:03 brian Exp $
+ * $OpenBSD: filter.c,v 1.17 2000/11/02 00:54:33 brian Exp $
  *
  *	TODO: Should send ICMP error message when we discard packets.
  */
@@ -502,9 +502,11 @@ Parse(struct ipcp *ipcp, int argc, char const *const *argv,
   }
 
   log_Printf(LogDEBUG, "Parse: Src: %s\n", inet_ntoa(filterdata.f_src.ipaddr));
-  log_Printf(LogDEBUG, "Parse: Src mask: %s\n", inet_ntoa(filterdata.f_src.mask));
+  log_Printf(LogDEBUG, "Parse: Src mask: %s\n",
+             inet_ntoa(filterdata.f_src.mask));
   log_Printf(LogDEBUG, "Parse: Dst: %s\n", inet_ntoa(filterdata.f_dst.ipaddr));
-  log_Printf(LogDEBUG, "Parse: Dst mask: %s\n", inet_ntoa(filterdata.f_dst.mask));
+  log_Printf(LogDEBUG, "Parse: Dst mask: %s\n",
+             inet_ntoa(filterdata.f_dst.mask));
   log_Printf(LogDEBUG, "Parse: Proto = %d\n", proto);
 
   log_Printf(LogDEBUG, "Parse: src:  %s (%d)\n",

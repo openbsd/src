@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: defs.h,v 1.18 2000/10/09 21:18:56 brian Exp $
+ * $OpenBSD: defs.h,v 1.19 2000/11/02 00:54:33 brian Exp $
  *
  *	TODO:
  */
@@ -49,6 +49,7 @@
 #define AUTHLEN 100 		/* Size of authname/authkey */
 #define CHAPDIGESTLEN 100	/* Maximum chap digest */
 #define CHAPCHALLENGELEN 48	/* Maximum chap challenge */
+#define CHAPAUTHRESPONSELEN 48	/* Maximum chap authresponse (chap81) */
 #define MAXARGS 40		/* How many args per config line */
 #define NCP_IDLE_TIMEOUT 180	/* Drop all links */
 #define CHOKED_TIMEOUT 120	/* Delete queued packets w/ blocked tun */

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: ether.c,v 1.5 2000/10/09 21:18:56 brian Exp $
+ *	$OpenBSD: ether.c,v 1.6 2000/11/02 00:54:33 brian Exp $
  */
 
 #include <sys/param.h>
@@ -584,11 +584,10 @@ ether_Create(struct physical *p)
 
     /* And finally, request a connection to the given provider */
 
-    data = (struct ngpppoe_init_data *)alloca(sizeof *data + providerlen + 1);
+    data = (struct ngpppoe_init_data *)alloca(sizeof *data + providerlen);
 
     snprintf(data->hook, sizeof data->hook, "%s", dev->hook);
     strcpy(data->data, provider);
-    data->data_len = providerlen;
 
     snprintf(connectpath, sizeof connectpath, ".:%s", dev->hook);
     log_Printf(LogDEBUG, "Sending PPPOE_CONNECT to %s\n", connectpath);
