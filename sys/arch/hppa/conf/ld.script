@@ -1,38 +1,40 @@
-/* 	$OpenBSD: ld.script,v 1.10 2002/03/19 23:08:55 mickey Exp $	*/
+/* 	$OpenBSD: ld.script,v 1.11 2003/01/31 23:42:28 mickey Exp $	*/
 
 OUTPUT_FORMAT("elf32-hppa")
 OUTPUT_ARCH(hppa)
 ENTRY($start)
 SECTIONS
 {
-	/* Read-only sections, merged into text segment: */
 	. = + SIZEOF_HEADERS;
 	.text :
 	{
 		kernel_text = . ;
 		*(.text) *(.text.*)
-		*(.rodata) *(.rodata1)
 		*(.reginfo)
 		*(.init)
 		*(.stub)
 		/* .gnu.warning sections are handled specially by elf32.em.  */
 		*(.gnu.warning)
+		. = ALIGN(4096);
+		etext = ABSOLUTE(.);
+	} = 0x08000240	/* nop filled */
+	.rodata :
+	{
+		__rodata_start = .;
+		*(.rodata) *(.rodata1)
 		__unwind_start = .;
 		*(.PARISC.unwind)
 		__unwind_end = .;
-		. = ALIGN(4096);
-		etext = ABSOLUTE(.);
-	} = 0 /* 0x08000240 nop filled, does not work cause of rodata */
+		__rodata_end = .;
+	} = 0
 	. = 0x400000;
-	etext1 = ABSOLUTE(.);
+	__data_start = ABSOLUTE(.);
 
 	.data  :
 	{
 		$global$ = . ;
 		. += 4;
 		*(.data)
-		/* [a-ps-z]*(.data) r[a-ce-z]*(.data) *libkern.o(.data) */
-		/* rd_root.o(.data)	* there is an overflow bug in ld */
 		CONSTRUCTORS
 		. = ALIGN(4096);
 		edata = ABSOLUTE(.);
@@ -50,4 +52,3 @@ SECTIONS
 	}
 	end = ABSOLUTE(.);
 }
-

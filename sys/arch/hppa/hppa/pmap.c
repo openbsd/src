@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.96 2003/01/29 17:06:05 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.97 2003/01/31 23:42:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -435,7 +435,7 @@ void
 pmap_bootstrap(vstart)
 	vaddr_t vstart;
 {
-	extern char etext, etext1;
+	extern int etext, __rodata_end, __data_start;
 	extern u_int totalphysmem, *ie_mem;
 	extern paddr_t hppa_vtop;
 	vaddr_t va, addr = hppa_round_page(vstart), t;
@@ -526,7 +526,7 @@ pmap_bootstrap(vstart)
 
 	/* XXX PCXS needs this inserted into an IBTLB */
 	/*	and can block-map the whole phys w/ another */
-	t = (vaddr_t)&etext1;
+	t = (vaddr_t)&etext;
 	if (btlb_insert(HPPA_SID_KERNEL, 0, 0, &t,
 	    pmap_sid2pid(HPPA_SID_KERNEL) |
 	    pmap_prot(pmap_kernel(), UVM_PROT_RX)) < 0)
@@ -534,9 +534,9 @@ pmap_bootstrap(vstart)
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 	    physmem = atop(t);
 
-	if (&etext < &etext1) {
-		physical_steal = (vaddr_t)&etext;
-		physical_end = (vaddr_t)&etext1;
+	if (&__rodata_end < &__data_start) {
+		physical_steal = (vaddr_t)&__rodata_end;
+		physical_end = (vaddr_t)&__data_start;
 		DPRINTF(PDB_INIT, ("physpool: 0x%x @ 0x%x\n",
 		    physical_end - physical_steal, physical_steal));
 	}
@@ -569,7 +569,7 @@ pmap_bootstrap(vstart)
 		extern struct user *proc0paddr;
 		vm_prot_t prot = UVM_PROT_RW;
 
-		if (va < (vaddr_t)&etext1)
+		if (va < (vaddr_t)&etext)
 			prot = UVM_PROT_RX;
 		else if (va == (vaddr_t)proc0paddr + USPACE)
 			prot = UVM_PROT_NONE;
@@ -577,7 +577,7 @@ pmap_bootstrap(vstart)
 		pmap_kenter_pa(va, va, prot);
 	}
 
-	DPRINTF(PDB_INIT, ("bootstrap: mapped %p - 0x%x\n", &etext1, va));
+	DPRINTF(PDB_INIT, ("bootstrap: mapped %p - 0x%x\n", &etext, va));
 }
 
 void
