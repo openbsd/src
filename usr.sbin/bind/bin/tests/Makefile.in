@@ -1,25 +1,25 @@
-# Copyright (C) 1998-2002  Internet Software Consortium.
+# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: Makefile.in,v 1.113.2.1 2002/02/12 12:02:05 marka Exp $
+# $ISC: Makefile.in,v 1.113.2.1.8.7 2004/07/20 07:01:50 marka Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
 top_srcdir =	@top_srcdir@
 
-@BIND9_INCLUDES@
+@BIND9_MAKE_INCLUDES@
 
 CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
 		${LWRES_INCLUDES} ${OMAPI_INCLUDES}
@@ -27,7 +27,7 @@ CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
 CDEFINES =
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_OPENSSL_LIBS@ @DNS_GSSAPI_LIBS@
+DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 ISCLIBS =	../../lib/isc/libisc.@A@
 ISCCFGLIBS = 	../../lib/isccfg/libisccfg.@A@
 LWRESLIBS =	../../lib/lwres/liblwres.@A@
@@ -46,49 +46,49 @@ SUBDIRS = db dst master mem names net rbt sockaddr tasks timers system
 # genrandom is needed by the system tests
 
 # Alphabetically
-TARGETS =	cfg_test \
-		genrandom
+TARGETS =	cfg_test@EXEEXT@ \
+		genrandom@EXEEXT@
 
 # All the other tests are optional and not built by default.
 
 # Alphabetically
-XTARGETS =	adb_test \
-		byaddr_test \
-		byname_test \
-		compress_test \
-		db_test \
-		entropy_test \
-		entropy2_test \
-		gxba_test \
-		gxbn_test \
-		hash_test \
-		fsaccess_test \
-		inter_test \
-		journalprint \
-		keyboard_test \
-		lcg_test \
-		lex_test \
-		lfsr_test \
-		log_test \
-		lwres_test \
-		lwresconf_test \
-		master_test \
-		mempool_test \
-		name_test \
-		nxtify \
-		ratelimiter_test \
-		rbt_test \
-		rdata_test \
-		rwlock_test \
-		serial_test \
-		shutdown_test \
-		sig0_test \
-		sock_test \
-		sym_test \
-		task_test \
-		timer_test \
-		wire_test \
-		zone_test
+XTARGETS =	adb_test@EXEEXT@ \
+		byaddr_test@EXEEXT@ \
+		byname_test@EXEEXT@ \
+		compress_test@EXEEXT@ \
+		db_test@EXEEXT@ \
+		entropy_test@EXEEXT@ \
+		entropy2_test@EXEEXT@ \
+		gxba_test@EXEEXT@ \
+		gxbn_test@EXEEXT@ \
+		hash_test@EXEEXT@ \
+		fsaccess_test@EXEEXT@ \
+		inter_test@EXEEXT@ \
+		journalprint@EXEEXT@ \
+		keyboard_test@EXEEXT@ \
+		lcg_test@EXEEXT@ \
+		lex_test@EXEEXT@ \
+		lfsr_test@EXEEXT@ \
+		log_test@EXEEXT@ \
+		lwres_test@EXEEXT@ \
+		lwresconf_test@EXEEXT@ \
+		master_test@EXEEXT@ \
+		mempool_test@EXEEXT@ \
+		name_test@EXEEXT@ \
+		nsecify@EXEEXT@ \
+		ratelimiter_test@EXEEXT@ \
+		rbt_test@EXEEXT@ \
+		rdata_test@EXEEXT@ \
+		rwlock_test@EXEEXT@ \
+		serial_test@EXEEXT@ \
+		shutdown_test@EXEEXT@ \
+		sig0_test@EXEEXT@ \
+		sock_test@EXEEXT@ \
+		sym_test@EXEEXT@ \
+		task_test@EXEEXT@ \
+		timer_test@EXEEXT@ \
+		wire_test@EXEEXT@ \
+		zone_test@EXEEXT@
 
 # Alphabetically
 SRCS =		adb_test.c \
@@ -114,7 +114,7 @@ SRCS =		adb_test.c \
 		master_test.c \
 		mempool_test.c \
 		name_test.c \
-		nxtify.c \
+		nsecify.c \
 		printmsg.c \
 		ratelimiter_test.c \
 		rbt_test.c \
@@ -134,159 +134,159 @@ SRCS =		adb_test.c \
 
 all_tests: ${XTARGETS}
 
-genrandom: genrandom.@O@
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ genrandom.@O@
+genrandom@EXEEXT@: genrandom.@O@
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ genrandom.@O@
 
-adb_test: adb_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ adb_test.@O@ \
+adb_test@EXEEXT@: adb_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ adb_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-nxtify: nxtify.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ nxtify.@O@ \
+nsecify@EXEEXT@: nsecify.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ nsecify.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-byaddr_test: byaddr_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ byaddr_test.@O@ \
+byaddr_test@EXEEXT@: byaddr_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ byaddr_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-byname_test: byname_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ byname_test.@O@ \
+byname_test@EXEEXT@: byname_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ byname_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-lcg_test: lcg_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ lcg_test.@O@ \
+lcg_test@EXEEXT@: lcg_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ lcg_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-lex_test: lex_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ lex_test.@O@ \
+lex_test@EXEEXT@: lex_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ lex_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-lfsr_test: lfsr_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ lfsr_test.@O@ \
+lfsr_test@EXEEXT@: lfsr_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ lfsr_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-log_test: log_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ log_test.@O@ \
+log_test@EXEEXT@: log_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ log_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-name_test: name_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ name_test.@O@ \
+name_test@EXEEXT@: name_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ name_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-hash_test: hash_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ hash_test.@O@ \
+hash_test@EXEEXT@: hash_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ hash_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-entropy_test: entropy_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ entropy_test.@O@ \
+entropy_test@EXEEXT@: entropy_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ entropy_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-entropy2_test: entropy2_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ entropy2_test.@O@ \
+entropy2_test@EXEEXT@: entropy2_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ entropy2_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-sock_test: sock_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ sock_test.@O@ \
+sock_test@EXEEXT@: sock_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ sock_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-sym_test: sym_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ sym_test.@O@ \
+sym_test@EXEEXT@: sym_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ sym_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-task_test: task_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ task_test.@O@ \
+task_test@EXEEXT@: task_test.@O@ ${ISCDEPLIBS}
+	${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ task_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-shutdown_test: shutdown_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ shutdown_test.@O@ \
+shutdown_test@EXEEXT@: shutdown_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ shutdown_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-timer_test: timer_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ timer_test.@O@ \
+timer_test@EXEEXT@: timer_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ timer_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-ratelimiter_test: ratelimiter_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ ratelimiter_test.@O@ \
+ratelimiter_test@EXEEXT@: ratelimiter_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ ratelimiter_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-rbt_test: rbt_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ rbt_test.@O@ \
+rbt_test@EXEEXT@: rbt_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ rbt_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-rdata_test: rdata_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ rdata_test.@O@ \
+rdata_test@EXEEXT@: rdata_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ rdata_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-rwlock_test: rwlock_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ rwlock_test.@O@ \
+rwlock_test@EXEEXT@: rwlock_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ rwlock_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-wire_test: wire_test.@O@ printmsg.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ wire_test.@O@ printmsg.@O@ \
+wire_test@EXEEXT@: wire_test.@O@ printmsg.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ wire_test.@O@ printmsg.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-master_test: master_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ master_test.@O@ \
+master_test@EXEEXT@: master_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ master_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-db_test: db_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ db_test.@O@ \
+db_test@EXEEXT@: db_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ db_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-compress_test: compress_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ compress_test.@O@ \
+compress_test@EXEEXT@: compress_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ compress_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-mempool_test: mempool_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ mempool_test.@O@ \
+mempool_test@EXEEXT@: mempool_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ mempool_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-serial_test: serial_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ serial_test.@O@ \
+serial_test@EXEEXT@: serial_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ serial_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-zone_test: zone_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ zone_test.@O@ \
+zone_test@EXEEXT@: zone_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ zone_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-fsaccess_test: fsaccess_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ fsaccess_test.@O@ \
+fsaccess_test@EXEEXT@: fsaccess_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ fsaccess_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-inter_test: inter_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ inter_test.@O@ \
+inter_test@EXEEXT@: inter_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ inter_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-keyboard_test: keyboard_test.@O@ ${ISCDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ keyboard_test.@O@ \
+keyboard_test@EXEEXT@: keyboard_test.@O@ ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ keyboard_test.@O@ \
 		${ISCLIBS} ${LIBS}
 
-lwresconf_test: lwresconf_test.@O@ ${ISCDEPLIBS} ${LWRESDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ lwresconf_test.@O@ \
+lwresconf_test@EXEEXT@: lwresconf_test.@O@ ${ISCDEPLIBS} ${LWRESDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ lwresconf_test.@O@ \
 		${LWRESLIBS} ${ISCLIBS} ${LIBS}
 
-lwres_test: lwres_test.@O@ ${ISCDEPLIBS} ${LWRESDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ lwres_test.@O@ \
+lwres_test@EXEEXT@: lwres_test.@O@ ${ISCDEPLIBS} ${LWRESDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ lwres_test.@O@ \
 		${LWRESLIBS} ${ISCLIBS} ${LIBS}
 
-gxbn_test: gxbn_test.@O@ ${LWRESDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ gxbn_test.@O@ \
+gxbn_test@EXEEXT@: gxbn_test.@O@ ${LWRESDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ gxbn_test.@O@ \
 		${LWRESLIBS} ${ISCLIBS} ${LIBS}
 
-gxba_test: gxba_test.@O@ ${LWRESDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ gxba_test.@O@ \
+gxba_test@EXEEXT@: gxba_test.@O@ ${LWRESDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ gxba_test.@O@ \
 		${LWRESLIBS} ${ISCLIBS} ${LIBS}
 
-sig0_test: sig0_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ sig0_test.@O@ \
+sig0_test@EXEEXT@: sig0_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ sig0_test.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-journalprint: journalprint.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ journalprint.@O@ \
+journalprint@EXEEXT@: journalprint.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ journalprint.@O@ \
 		${DNSLIBS} ${ISCLIBS} ${LIBS}
 
-cfg_test: cfg_test.@O@ ${ISCCFGDEPLIBS} ${DNSDEPLIBS} ${ISCDEPLIBS}
-	${LIBTOOL} ${CC} ${CFLAGS} -o $@ cfg_test.@O@ \
+cfg_test@EXEEXT@: cfg_test.@O@ ${ISCCFGDEPLIBS} ${ISCDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ cfg_test.@O@ \
 		${ISCCFGLIBS} ${DNSLIBS} ${ISCLIBS} ${LIBS}
 
 distclean::
@@ -295,6 +295,8 @@ distclean::
 clean distclean::
 	rm -f ${TARGETS} ${XTARGETS}
 	rm -f t_journal
+
+check: test
 
 test:
 	@for dir in $(SUBDIRS) ;\

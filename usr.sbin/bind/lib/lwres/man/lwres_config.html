@@ -1,27 +1,30 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
- - 
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2001  Internet Software Consortium.
+ -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
+
+<!-- $ISC: lwres_config.html,v 1.4.2.1.4.2 2004/08/22 23:39:03 marka Exp $ -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_config</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -32,8 +35,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
->lwres_config</A
-></H1
+></A
+>lwres_config</H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -51,11 +54,11 @@ NAME="AEN15"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
+><P
+></P
 ><A
 NAME="AEN16"
 ></A
-><P
-></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/lwres.h&gt;</PRE
@@ -111,9 +114,9 @@ NAME="AEN40"
 ><H2
 >DESCRIPTION</H2
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_conf_init()</TT
+>lwres_conf_init()</CODE
 >
 creates an empty
 <SPAN
@@ -121,16 +124,14 @@ CLASS="TYPE"
 >lwres_conf_t</SPAN
 >
 structure for lightweight resolver context
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->ctx</I
-></TT
+>ctx</VAR
 >.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_conf_clear()</TT
+>lwres_conf_clear()</CODE
 >
 frees up all the internal memory used by
 that
@@ -139,30 +140,24 @@ CLASS="TYPE"
 >lwres_conf_t</SPAN
 >
 structure in resolver context
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->ctx</I
-></TT
+>ctx</VAR
 >.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_conf_parse()</TT
+>lwres_conf_parse()</CODE
 >
 opens the file
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->filename</I
-></TT
+>filename</VAR
 >
 and parses it to initialise the resolver context
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->ctx</I
-></TT
+>ctx</VAR
 >'s
 <SPAN
 CLASS="TYPE"
@@ -170,9 +165,9 @@ CLASS="TYPE"
 >
 structure.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_conf_print()</TT
+>lwres_conf_print()</CODE
 >
 prints the
 <SPAN
@@ -180,22 +175,18 @@ CLASS="TYPE"
 >lwres_conf_t</SPAN
 >
 structure for resolver context
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->ctx</I
-></TT
+>ctx</VAR
 >
 to the
 <SPAN
 CLASS="TYPE"
 >FILE</SPAN
 >
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->fp</I
-></TT
+>fp</VAR
 >.</P
 ></DIV
 ><DIV
@@ -206,9 +197,9 @@ NAME="AEN61"
 ><H2
 >RETURN VALUES</H2
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_conf_parse()</TT
+>lwres_conf_parse()</CODE
 >
 returns
 <SPAN
@@ -216,11 +207,9 @@ CLASS="ERRORCODE"
 >LWRES_R_SUCCESS</SPAN
 >
 if it successfully read and parsed
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->filename</I
-></TT
+>filename</VAR
 >.
 It returns
 <SPAN
@@ -228,18 +217,16 @@ CLASS="ERRORCODE"
 >LWRES_R_FAILURE</SPAN
 >
 if
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->filename</I
-></TT
+>filename</VAR
 >
 could not be opened or contained incorrect
 resolver statements.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_conf_print()</TT
+>lwres_conf_print()</CODE
 >
 returns
 <SPAN

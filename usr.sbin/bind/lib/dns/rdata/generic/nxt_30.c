@@ -1,25 +1,25 @@
 /*
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: nxt_30.c,v 1.49.2.2 2003/07/22 04:03:46 marka Exp $ */
+/* $ISC: nxt_30.c,v 1.49.2.2.2.9 2004/03/08 09:04:41 marka Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
-/* RFC 2065 */
+/* RFC 2535 */
 
 #ifndef RDATA_GENERIC_NXT_30_C
 #define RDATA_GENERIC_NXT_30_C
@@ -28,7 +28,7 @@
  * The attributes do not include DNS_RDATATYPEATTR_SINGLETON
  * because we must be able to handle a parent/child NXT pair.
  */
-#define RRTYPE_NXT_ATTRIBUTES (DNS_RDATATYPEATTR_DNSSEC)
+#define RRTYPE_NXT_ATTRIBUTES (0)
 
 static inline isc_result_t
 fromtext_nxt(ARGS_FROMTEXT) {
@@ -56,16 +56,16 @@ fromtext_nxt(ARGS_FROMTEXT) {
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	origin = (origin != NULL) ? origin : dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, downcase, target));
+	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
-	memset(bm, 0, sizeof bm);
+	memset(bm, 0, sizeof(bm));
 	do {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string, ISC_TRUE));
 		if (token.type != isc_tokentype_string)
 			break;
-		n = strtol(token.value.as_pointer, &e, 10);
-		if (e != (char *)token.value.as_pointer && *e == '\0') {
+		n = strtol(DNS_AS_STR(token), &e, 10);
+		if (e != DNS_AS_STR(token) && *e == '\0') {
 			covered = (dns_rdatatype_t)n;
 		} else if (dns_rdatatype_fromtext(&covered,
 				&token.value.as_textregion) == DNS_R_UNKNOWN)
@@ -106,7 +106,7 @@ totext_nxt(ARGS_TOTEXT) {
 	sub = name_prefix(&name, tctx->origin, &prefix);
 	RETERR(dns_name_totext(&prefix, sub, target));
 
-	for (i = 0 ; i < sr.length ; i++) {
+	for (i = 0; i < sr.length; i++) {
 		if (sr.base[i] != 0)
 			for (j = 0; j < 8; j++)
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
@@ -116,7 +116,7 @@ totext_nxt(ARGS_TOTEXT) {
 						RETERR(dns_rdatatype_totext(t,
 								      target));
 					} else {
-						char buf[sizeof "65535"];
+						char buf[sizeof("65535")];
 						snprintf(buf, sizeof(buf),
 							 "%u", t);
 						RETERR(str_totext(buf,
@@ -140,7 +140,7 @@ fromwire_nxt(ARGS_FROMWIRE) {
 	dns_decompress_setmethods(dctx, DNS_COMPRESS_NONE);
 
 	dns_name_init(&name, NULL);
-	RETERR(dns_name_fromwire(&name, source, dctx, downcase, target));
+	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 
 	isc_buffer_activeregion(source, &sr);
 	if (sr.length > 0 && (sr.base[0] & 0x80) == 0 &&
@@ -194,7 +194,7 @@ compare_nxt(ARGS_COMPARE) {
 	if (order != 0)
 		return (order);
 
-	return (compare_region(&r1, &r2));
+	return (isc_region_compare(&r1, &r2));
 }
 
 static inline isc_result_t
@@ -300,6 +300,31 @@ digest_nxt(ARGS_DIGEST) {
 	isc_region_consume(&r, name_length(&name));
 
 	return ((digest)(arg, &r));
+}
+
+static inline isc_boolean_t
+checkowner_nxt(ARGS_CHECKOWNER) {
+
+	REQUIRE(type == 30);
+
+	UNUSED(name);
+	UNUSED(type);
+	UNUSED(rdclass);
+	UNUSED(wildcard);
+
+	return (ISC_TRUE);
+}
+
+static inline isc_boolean_t
+checknames_nxt(ARGS_CHECKNAMES) {
+
+	REQUIRE(rdata->type == 30);
+
+	UNUSED(rdata);
+	UNUSED(owner);
+	UNUSED(bad);
+
+	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_GENERIC_NXT_30_C */

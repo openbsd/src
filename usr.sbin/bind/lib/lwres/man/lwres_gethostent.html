@@ -1,27 +1,30 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
- - 
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2001  Internet Software Consortium.
+ -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
+
+<!-- $ISC: lwres_gethostent.html,v 1.8.2.1.4.2 2004/08/22 23:39:04 marka Exp $ -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_gethostent</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -32,8 +35,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
->lwres_gethostent</A
-></H1
+></A
+>lwres_gethostent</H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -51,11 +54,11 @@ NAME="AEN21"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
+><P
+></P
 ><A
 NAME="AEN22"
 ></A
-><P
-></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/netdb.h&gt;</PRE
@@ -200,27 +203,27 @@ CLASS="PROGRAMLISTING"
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->h_name</TT
+>h_name</CODE
 ></DT
 ><DD
 ><P
 >The official (canonical) name of the host.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->h_aliases</TT
+>h_aliases</CODE
 ></DT
 ><DD
 ><P
 >A NULL-terminated array of alternate names (nicknames) for the host.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->h_addrtype</TT
+>h_addrtype</CODE
 ></DT
 ><DD
 ><P
@@ -236,18 +239,18 @@ CLASS="TYPE"
 >.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->h_length</TT
+>h_length</CODE
 ></DT
 ><DD
 ><P
 >The length of the address in bytes.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->h_addr_list</TT
+>h_addr_list</CODE
 ></DT
 ><DD
 ><P
@@ -263,40 +266,40 @@ Host addresses are returned in network byte order.</P
 ></P
 ><P
 >For backward compatibility with very old software,
-<TT
+<CODE
 CLASS="CONSTANT"
->h_addr</TT
+>h_addr</CODE
 >
 is the first address in
-<TT
+<CODE
 CLASS="CONSTANT"
->h_addr_list.</TT
+>h_addr_list.</CODE
 ></P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_gethostent()</TT
+>lwres_gethostent()</CODE
 >,
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_sethostent()</TT
+>lwres_sethostent()</CODE
 >,
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_endhostent()</TT
+>lwres_endhostent()</CODE
 >,
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostent_r()</TT
+>lwres_gethostent_r()</CODE
 >,
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_sethostent_r()</TT
+>lwres_sethostent_r()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_endhostent_r()</TT
+>lwres_endhostent_r()</CODE
 >
 provide iteration over the known host entries on systems that
 provide such functionality through facilities like
@@ -308,33 +311,29 @@ or NIS.  The lightweight resolver does not currently implement
 these functions; it only provides them as stub functions that always
 return failure.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_gethostbyname()</TT
+>lwres_gethostbyname()</CODE
 > and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname2()</TT
+>lwres_gethostbyname2()</CODE
 > look up the hostname
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->name</I
-></TT
+>name</VAR
 >.
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname()</TT
+>lwres_gethostbyname()</CODE
 > always looks for an IPv4
-address while <TT
+address while <CODE
 CLASS="FUNCTION"
->lwres_gethostbyname2()</TT
+>lwres_gethostbyname2()</CODE
 > looks for an
-address of protocol family <TT
+address of protocol family <VAR
 CLASS="PARAMETER"
-><I
->af</I
-></TT
+>af</VAR
 >: either
 <SPAN
 CLASS="TYPE"
@@ -352,37 +351,31 @@ CLASS="TYPE"
 CLASS="TYPE"
 >NULL</SPAN
 > is returned if the lookups by
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname()</TT
+>lwres_gethostbyname()</CODE
 > or
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname2()</TT
+>lwres_gethostbyname2()</CODE
 > fail.</P
 ><P
 >Reverse lookups of addresses are performed by
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyaddr()</TT
+>lwres_gethostbyaddr()</CODE
 >.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->addr</I
-></TT
+>addr</VAR
 > is an address of length
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->len</I
-></TT
+>len</VAR
 > bytes and protocol family
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->type</I
-></TT
+>type</VAR
 > &mdash; <SPAN
 CLASS="TYPE"
 >PF_INET</SPAN
@@ -391,99 +384,81 @@ CLASS="TYPE"
 CLASS="TYPE"
 >PF_INET6</SPAN
 >.
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname_r()</TT
+>lwres_gethostbyname_r()</CODE
 > is a thread-safe function
 for forward lookups.  If an error occurs, an error code is returned in
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->*error</I
-></TT
+>*error</VAR
 >.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->resbuf</I
-></TT
+>resbuf</VAR
 > is a pointer to a <SPAN
 CLASS="TYPE"
 >struct
 hostent</SPAN
 > which is initialised by a successful call to
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname_r()</TT
+>lwres_gethostbyname_r()</CODE
 > .
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->buf</I
-></TT
+>buf</VAR
 > is a buffer of length
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->len</I
-></TT
+>len</VAR
 > bytes which is used to store the
-<TT
+<CODE
 CLASS="CONSTANT"
->h_name</TT
->, <TT
+>h_name</CODE
+>, <CODE
 CLASS="CONSTANT"
->h_aliases</TT
+>h_aliases</CODE
 >, and
-<TT
+<CODE
 CLASS="CONSTANT"
->h_addr_list</TT
+>h_addr_list</CODE
 > elements of the <SPAN
 CLASS="TYPE"
 >struct
 hostent</SPAN
-> returned in <TT
+> returned in <VAR
 CLASS="PARAMETER"
-><I
->resbuf</I
-></TT
+>resbuf</VAR
 >.
-Successful calls to <TT
+Successful calls to <CODE
 CLASS="FUNCTION"
->lwres_gethostbyname_r()</TT
+>lwres_gethostbyname_r()</CODE
 >
-return <TT
+return <VAR
 CLASS="PARAMETER"
-><I
->resbuf</I
-></TT
+>resbuf</VAR
 >,
 which is a pointer to the <SPAN
 CLASS="TYPE"
 >struct hostent</SPAN
 > it created.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_gethostbyaddr_r()</TT
+>lwres_gethostbyaddr_r()</CODE
 > is a thread-safe function
-that performs a reverse lookup of address <TT
+that performs a reverse lookup of address <VAR
 CLASS="PARAMETER"
-><I
->addr</I
-></TT
+>addr</VAR
 >
-which is <TT
+which is <VAR
 CLASS="PARAMETER"
-><I
->len</I
-></TT
+>len</VAR
 > bytes long and is of protocol
-family <TT
+family <VAR
 CLASS="PARAMETER"
-><I
->type</I
-></TT
+>type</VAR
 > &mdash; <SPAN
 CLASS="TYPE"
 >PF_INET</SPAN
@@ -492,75 +467,63 @@ CLASS="TYPE"
 CLASS="TYPE"
 >PF_INET6</SPAN
 >.  If an error occurs, the error code is returned
-in <TT
+in <VAR
 CLASS="PARAMETER"
-><I
->*error</I
-></TT
+>*error</VAR
 >.  The other function parameters are
-identical to those in <TT
+identical to those in <CODE
 CLASS="FUNCTION"
->lwres_gethostbyname_r()</TT
+>lwres_gethostbyname_r()</CODE
 >.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->resbuf</I
-></TT
+>resbuf</VAR
 > is a pointer to a <SPAN
 CLASS="TYPE"
 >struct
 hostent</SPAN
 > which is initialised by a successful call to
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyaddr_r()</TT
+>lwres_gethostbyaddr_r()</CODE
 >.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->buf</I
-></TT
+>buf</VAR
 > is a buffer of length
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->len</I
-></TT
+>len</VAR
 > bytes which is used to store the
-<TT
+<CODE
 CLASS="CONSTANT"
->h_name</TT
->, <TT
+>h_name</CODE
+>, <CODE
 CLASS="CONSTANT"
->h_aliases</TT
+>h_aliases</CODE
 >, and
-<TT
+<CODE
 CLASS="CONSTANT"
->h_addr_list</TT
+>h_addr_list</CODE
 > elements of the <SPAN
 CLASS="TYPE"
 >struct
 hostent</SPAN
-> returned in <TT
+> returned in <VAR
 CLASS="PARAMETER"
-><I
->resbuf</I
-></TT
+>resbuf</VAR
 >.  Successful
-calls to <TT
+calls to <CODE
 CLASS="FUNCTION"
->lwres_gethostbyaddr_r()</TT
+>lwres_gethostbyaddr_r()</CODE
 > return
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->resbuf</I
-></TT
+>resbuf</VAR
 >, which is a pointer to the
-<TT
+<CODE
 CLASS="FUNCTION"
->struct hostent()</TT
+>struct hostent()</CODE
 > it created.</P
 ></DIV
 ><DIV
@@ -572,22 +535,22 @@ NAME="AEN191"
 >RETURN VALUES</H2
 ><P
 >The functions
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname()</TT
+>lwres_gethostbyname()</CODE
 >,
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname2()</TT
+>lwres_gethostbyname2()</CODE
 >,
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyaddr()</TT
+>lwres_gethostbyaddr()</CODE
 >,
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostent()</TT
+>lwres_gethostent()</CODE
 >
 return NULL to indicate an error.  In this case the global variable
 <SPAN
@@ -606,18 +569,18 @@ CLASS="FILENAME"
 CLASS="VARIABLELIST"
 ><DL
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->HOST_NOT_FOUND</TT
+>HOST_NOT_FOUND</CODE
 ></DT
 ><DD
 ><P
 >The host or address was not found.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->TRY_AGAIN</TT
+>TRY_AGAIN</CODE
 ></DT
 ><DD
 ><P
@@ -625,18 +588,18 @@ CLASS="CONSTANT"
 Retrying the lookup may succeed.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->NO_RECOVERY</TT
+>NO_RECOVERY</CODE
 ></DT
 ><DD
 ><P
 >A non-recoverable error occurred.</P
 ></DD
 ><DT
-><TT
+><CODE
 CLASS="CONSTANT"
->NO_DATA</TT
+>NO_DATA</CODE
 ></DT
 ><DD
 ><P
@@ -659,14 +622,14 @@ CLASS="REFENTRYTITLE"
 >
 translates these error codes to suitable error messages.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_gethostent()</TT
+>lwres_gethostent()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostent_r()</TT
+>lwres_gethostent_r()</CODE
 >
 always return
 <SPAN
@@ -674,19 +637,17 @@ CLASS="TYPE"
 >NULL</SPAN
 >.</P
 ><P
->Successful calls to <TT
+>Successful calls to <CODE
 CLASS="FUNCTION"
->lwres_gethostbyname_r()</TT
+>lwres_gethostbyname_r()</CODE
 > and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyaddr_r()</TT
+>lwres_gethostbyaddr_r()</CODE
 > return
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->resbuf</I
-></TT
+>resbuf</VAR
 >, a pointer to the <SPAN
 CLASS="TYPE"
 >struct
@@ -695,40 +656,36 @@ hostent</SPAN
 <SPAN
 CLASS="TYPE"
 >NULL</SPAN
-> if the lookups fail or if <TT
+> if the lookups fail or if <VAR
 CLASS="PARAMETER"
-><I
->buf</I
-></TT
+>buf</VAR
 >
 was too small to hold the list of addresses and names referenced by
-the <TT
+the <CODE
 CLASS="CONSTANT"
->h_name</TT
->, <TT
+>h_name</CODE
+>, <CODE
 CLASS="CONSTANT"
->h_aliases</TT
+>h_aliases</CODE
 >, and
-<TT
+<CODE
 CLASS="CONSTANT"
->h_addr_list</TT
+>h_addr_list</CODE
 > elements of the <SPAN
 CLASS="TYPE"
 >struct
 hostent</SPAN
->.  If <TT
+>.  If <VAR
 CLASS="PARAMETER"
-><I
->buf</I
-></TT
+>buf</VAR
 > was too small, both
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname_r()</TT
+>lwres_gethostbyname_r()</CODE
 > and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyaddr_r()</TT
+>lwres_gethostbyaddr_r()</CODE
 > set the global variable
 <SPAN
 CLASS="TYPE"
@@ -778,34 +735,34 @@ NAME="AEN257"
 ><H2
 >BUGS</H2
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_gethostbyname()</TT
+>lwres_gethostbyname()</CODE
 >,
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname2()</TT
+>lwres_gethostbyname2()</CODE
 >,
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyaddr()</TT
+>lwres_gethostbyaddr()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_endhostent()</TT
+>lwres_endhostent()</CODE
 >
 are not thread safe; they return pointers to static data and 
 provide error codes through a global variable.
 Thread-safe versions for name and address lookup are provided by
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyname_r()</TT
+>lwres_gethostbyname_r()</CODE
 >,
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gethostbyaddr_r()</TT
+>lwres_gethostbyaddr_r()</CODE
 >
 respectively.</P
 ><P

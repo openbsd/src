@@ -1,22 +1,22 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <!--
- - Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- $ISC: dig.docbook,v 1.4.2.7 2003/05/12 02:50:15 marka Exp $ -->
+<!-- $ISC: dig.docbook,v 1.4.2.7.4.9 2004/06/23 04:19:41 marka Exp $ -->
 
 <refentry>
 
@@ -47,6 +47,8 @@
 <arg><option>-t <replaceable class="parameter">type</replaceable></option></arg>
 <arg><option>-x <replaceable class="parameter">addr</replaceable></option></arg>
 <arg><option>-y <replaceable class="parameter">name:key</replaceable></option></arg>
+<arg><option>-4</option></arg>
+<arg><option>-6</option></arg>
 <arg choice=opt>name</arg>
 <arg choice=opt>type</arg>
 <arg choice=opt>class</arg>
@@ -99,9 +101,9 @@ NS query for "." (the root).
 </para>
 
 <para>
-It is possible to set per user defaults for <command>dig</command> via
+It is possible to set per-user defaults for <command>dig</command> via
 <filename>${HOME}/.digrc</filename>.  This file is read and any options in it
-are applied before the command line arguements.
+are applied before the command line arguments.
 </para>
 
 </refsect1>
@@ -153,7 +155,8 @@ ANY, A, MX, SIG, etc.
 <para>
 The <option>-b</option> option sets the source IP address of the query
 to <parameter>address</parameter>.  This must be a valid address on
-one of the host's network interfaces.
+one of the host's network interfaces or "0.0.0.0" or "::".  An optional port
+may be specified by appending "#&lt;port&gt;"
 </para>
 
 <para>
@@ -181,6 +184,12 @@ on a non-standard port number.
 </para>
 
 <para>
+The <option>-4</option> option forces <command>dig</command> to only
+use IPv4 query transport.  The <option>-6</option> option forces
+<command>dig</command> to only use IPv6 query transport.
+</para>
+
+<para>
 The <option>-t</option> option sets the query type to
 <parameter>type</parameter>.  It can be any valid query type which is
 supported in BIND9.  The default query type "A", unless the
@@ -203,9 +212,10 @@ When this option is used, there is no need to provide the
 automatically performs a lookup for a name like
 <literal>11.12.13.10.in-addr.arpa</literal> and sets the query type and
 class to PTR and IN respectively.  By default, IPv6 addresses are
-looked up using the IP6.ARPA domain and binary labels as defined in
-RFC2874.  To use the older RFC1886 method using the IP6.INT domain and
-"nibble" labels, specify the <option>-n</option> (nibble) option.
+looked up using nibble format under the IP6.ARPA domain.
+To use the older RFC1886 method using the IP6.INT domain 
+specify the <option>-i</option> option.  Bit string labels (RFC2874)
+are now experimental and are not attempted.
 </para>
 
 <para>
@@ -296,9 +306,12 @@ Deprecated, treated as a synonym for <parameter>+[no]search</parameter>
 
 <varlistentry><term><option>+[no]aaonly</option></term>
 <listitem><para>
-This option does nothing.  It is provided for compatibility with old
-versions of <command>dig</command> where it set an unimplemented
-resolver flag.
+Sets the "aa" flag in the query.
+</para></listitem></varlistentry>
+
+<varlistentry><term><option>+[no]aaflag</option></term>
+<listitem><para>
+A synonym for <parameter>+[no]aaonly</parameter>.
 </para></listitem></varlistentry>
 
 <varlistentry><term><option>+[no]adflag</option></term>
@@ -313,6 +326,16 @@ completeness.
 <listitem><para>
 Set [do not set] the CD (checking disabled) bit in the query.  This
 requests the server to not perform DNSSEC validation of responses.
+</para></listitem></varlistentry>
+
+<varlistentry><term><option>+[no]cl</option></term>
+<listitem><para>
+Display [do not display] the CLASS when printing the record.
+</para></listitem></varlistentry>
+
+<varlistentry><term><option>+[no]ttlid</option></term>
+<listitem><para>
+Display [do not display] the TTL when printing the record.
 </para></listitem></varlistentry>
 
 <varlistentry><term><option>+[no]recurse</option></term>
@@ -422,10 +445,18 @@ in a query timeout of 1 second being applied.
 
 <varlistentry><term><option>+tries=T</option></term>
 <listitem><para>
-Sets the number of times to retry UDP queries to server to
+Sets the number of times to try UDP queries to server to
 <parameter>T</parameter> instead of the default, 3.  If
 <parameter>T</parameter> is less than or equal to zero, the number of
-retries is silently rounded up to 1.
+tries is silently rounded up to 1.
+</para></listitem></varlistentry>
+
+<varlistentry><term><option>+retry=T</option></term>
+<listitem><para>
+Sets the number of times to retry UDP queries to server to
+<parameter>T</parameter> instead of the default, 2.  Unlike
+<parameter>+tries</parameter>, this does not include the initial
+query.
 </para></listitem></varlistentry>
 
 <varlistentry><term><option>+ndots=D</option></term>
@@ -455,29 +486,46 @@ Print records like the SOA records in a verbose multi-line
 format with human-readable comments.  The default is to print
 each record on a single line, to facilitate machine parsing 
 of the <command>dig</command> output.
-</para>
-</listitem></varlistentry>
+</para></listitem></varlistentry>
 
 <varlistentry><term><option>+[no]fail</option></term>
 <listitem><para>
 Do not try the next server if you receive a SERVFAIL.  The default is
 to not try the next server which is the reverse of normal stub resolver
 behaviour.
-</para>
+</para></listitem></varlistentry>
 
-</listitem></varlistentry>
 <varlistentry><term><option>+[no]besteffort</option></term>
 <listitem><para>
 Attempt to display the contents of messages which are malformed.
 The default is to not display malformed answers.
-</para>
+</para></listitem></varlistentry>
 
-</listitem></varlistentry>
 <varlistentry><term><option>+[no]dnssec</option></term>
 <listitem><para>
 Requests DNSSEC records be sent by setting the DNSSEC OK bit (DO)
 in the OPT record in the additional section of the query.
-</para>
+</para></listitem></varlistentry>
+
+<varlistentry><term><option>+[no]sigchase</option></term>
+<listitem><para>
+Chase DNSSEC signature chains.  Requires dig be compiled with
+-DDIG_SIGCHASE.
+</para></listitem></varlistentry>
+
+<varlistentry><term><option>+trusted-key=####</option></term>
+<listitem><para>
+Specify a trusted key to be used with <option>+sigchase</option>.
+Requires dig be compiled with -DDIG_SIGCHASE.
+</para></listitem></varlistentry>
+
+<varlistentry><term><option>+[no]topdown</option></term>
+<listitem><para>
+When chasing DNSSEC signature chains perform a top down validation.
+Requires dig be compiled with -DDIG_SIGCHASE.
+</para></listitem></varlistentry>
+
+
 
 </variablelist>
 

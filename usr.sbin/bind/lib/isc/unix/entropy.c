@@ -517,8 +517,7 @@ isc_entropy_createfilesource(isc_entropy_t *ent, const char *fname) {
 
 		memset(&sname, 0, sizeof(sname));
 		sname.sun_family = AF_UNIX;
-		strncpy(sname.sun_path, fname, sizeof(sname.sun_path));
-		sname.sun_path[sizeof(sname.sun_path)-1] = '0';
+		strlcpy(sname.sun_path, fname, sizeof(sname.sun_path));
 #ifdef ISC_PLATFORM_HAVESALEN
 #if !defined(SUN_LEN)
 #define SUN_LEN(su) \

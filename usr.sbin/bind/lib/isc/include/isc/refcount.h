@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: refcount.h,v 1.3.2.3 2003/10/09 07:32:50 marka Exp $ */
+/* $ISC: refcount.h,v 1.3.2.2.2.2 2004/04/14 05:12:25 marka Exp $ */
 
 #ifndef ISC_REFCOUNT_H
 #define ISC_REFCOUNT_H 1
@@ -143,16 +143,18 @@ typedef struct isc_refcount {
 
 #define isc_refcount_increment(rp, tp)					\
 	do {								\
+		unsigned int *_tmp = (unsigned int *)(tp);		\
 		int _n = ++(rp)->refs;					\
-		if ((tp) != NULL)					\
-			*(unsigned int *)(tp) = (unsigned int)(_n);	\
+		if (_tmp != NULL)					\
+			*_tmp = _n;					\
 	} while (0)
 
 #define isc_refcount_decrement(rp, tp)					\
 	do {								\
+		unsigned int *_tmp = (unsigned int *)(tp);		\
 		int _n = --(rp)->refs;					\
-		if ((tp) != NULL)					\
-			*(unsigned int *)(tp) = (unsigned int)(_n);	\
+		if (_tmp != NULL)					\
+			*_tmp = _n;					\
 	} while (0)
 
 #endif

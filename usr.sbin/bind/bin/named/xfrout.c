@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: xfrout.c,v 1.101.2.5 2003/07/22 04:03:35 marka Exp $ */
+/* $ISC: xfrout.c,v 1.101.2.5.2.10 2004/04/02 06:08:17 marka Exp $ */
 
 #include <config.h>
 
@@ -38,6 +38,7 @@
 #include <dns/result.h>
 #include <dns/soa.h>
 #include <dns/timer.h>
+#include <dns/tsig.h>
 #include <dns/view.h>
 #include <dns/zone.h>
 #include <dns/zt.h>
@@ -253,7 +254,7 @@ db_rr_iterator_next(db_rr_iterator_t *it) {
 
 static void
 db_rr_iterator_pause(db_rr_iterator_t *it) {
-	dns_dbiterator_pause(it->dbit);
+	RUNTIME_CHECK(dns_dbiterator_pause(it->dbit) == ISC_R_SUCCESS);
 }
 
 static void
@@ -412,7 +413,7 @@ ixfr_rrstream_create(isc_mem_t *mctx,
 	return (ISC_R_SUCCESS);
 
  failure:
-	ixfr_rrstream_destroy((rrstream_t **) &s);
+	ixfr_rrstream_destroy((rrstream_t **) (void *)&s);
 	return (result);
 }
 
@@ -499,7 +500,7 @@ axfr_rrstream_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *ver,
 	return (ISC_R_SUCCESS);
 
  failure:
-	axfr_rrstream_destroy((rrstream_t **) &s);
+	axfr_rrstream_destroy((rrstream_t **) (void *)&s);
 	return (result);
 }
 
@@ -619,7 +620,7 @@ soa_rrstream_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *ver,
 	return (ISC_R_SUCCESS);
 
  failure:
-	soa_rrstream_destroy((rrstream_t **) &s);
+	soa_rrstream_destroy((rrstream_t **) (void *)&s);
 	return (result);
 }
 
@@ -735,7 +736,7 @@ compound_rrstream_first(rrstream_t *rs) {
 	do {
 		rrstream_t *curstream = s->components[s->state];
 		s->result = curstream->methods->first(curstream);
-	} while (s->result == ISC_R_NOMORE && s->state < 2) ;
+	} while (s->result == ISC_R_NOMORE && s->state < 2);
 	return (s->result);
 }
 
@@ -828,6 +829,7 @@ typedef struct {
 	isc_boolean_t		many_answers;
 	int			sends;		/* Send in progress */
 	isc_boolean_t		shuttingdown;
+	const char		*mnemonic;	/* Style of transfer */
 } xfrout_ctx_t;
 
 static isc_result_t
@@ -898,8 +900,8 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	dns_peer_t *peer = NULL;
 	isc_buffer_t *tsigbuf = NULL;
 	char *journalfile;
-	char msg[DNS_RDATACLASS_FORMATSIZE + DNS_NAME_FORMATSIZE
-		 + sizeof("zone transfer '/'")];
+	char msg[NS_CLIENT_ACLMSGSIZE("zone transfer")];
+	char keyname[DNS_NAME_FORMATSIZE];
 	isc_boolean_t is_poll = ISC_FALSE;
 
 	switch (reqtype) {
@@ -1019,7 +1021,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	/*
 	 * Decide whether to allow this transfer.
 	 */
-	ns_client_aclmsg("zone transfer", question_name,
+	ns_client_aclmsg("zone transfer", question_name, reqtype,
 			 client->view->rdclass, msg, sizeof(msg));
 	CHECK(ns_client_checkacl(client, msg,
 				 dns_zone_getxfracl(zone), ISC_TRUE,
@@ -1138,19 +1140,24 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 				(format == dns_many_answers) ?
 					ISC_TRUE : ISC_FALSE,
 				&xfr));
+	xfr->mnemonic = mnemonic;
 	stream = NULL;
-	db = NULL;
-	ver = NULL;
 	quota = NULL;
 
 	CHECK(xfr->stream->methods->first(xfr->stream));
 
+	if (xfr->tsigkey != NULL) {
+		dns_name_format(&xfr->tsigkey->name, keyname, sizeof(keyname));
+	} else
+		keyname[0] = '\0';
 	if (is_poll)
 		xfrout_log1(client, question_name, question_class,
-			    ISC_LOG_DEBUG(1), "IXFR poll up to date");
+			    ISC_LOG_DEBUG(1), "IXFR poll up to date%s%s",
+			    (xfr->tsigkey != NULL) ? ": TSIG " : "", keyname);
 	else
 		xfrout_log1(client, question_name, question_class,
-			    ISC_LOG_INFO, "%s started", mnemonic);
+			    ISC_LOG_INFO, "%s started%s%s", mnemonic,
+			    (xfr->tsigkey != NULL) ? ": TSIG " : "", keyname);
 
 	/*
 	 * Hand the context over to sendstream().  Set xfr to NULL;
@@ -1216,10 +1223,10 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	xfr->qname = qname;
 	xfr->qtype = qtype;
 	xfr->qclass = qclass;
-	xfr->db = db;
-	xfr->ver = ver;
-	xfr->quota = quota;
-	xfr->stream = stream;
+	xfr->db = NULL;
+	xfr->ver = NULL;
+	dns_db_attach(db, &xfr->db);
+	dns_db_attachversion(db, ver, &xfr->ver);
 	xfr->end_of_stream = ISC_FALSE;
 	xfr->tsigkey = tsigkey;
 	xfr->lasttsig = lasttsig;
@@ -1229,6 +1236,13 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	xfr->many_answers = many_answers,
 	xfr->sends = 0;
 	xfr->shuttingdown = ISC_FALSE;
+	xfr->mnemonic = NULL;
+	xfr->buf.base = NULL;
+	xfr->buf.length = 0;
+	xfr->txmem = NULL;
+	xfr->txmemlen = 0;
+	xfr->stream = NULL;
+	xfr->quota = NULL;
 
 	/*
 	 * Allocate a temporary buffer for the uncompressed response
@@ -1273,6 +1287,12 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	 */
 	xfr->client->shutdown = xfrout_client_shutdown;
 	xfr->client->shutdown_arg = xfr;
+	/*
+	 * These MUST be after the last "goto failure;" / CHECK to
+	 * prevent a double free by the caller.
+	 */
+	xfr->quota = quota;
+	xfr->stream = stream;
 
 	*xfrp = xfr;
 	return (ISC_R_SUCCESS);
@@ -1337,7 +1357,7 @@ sendstream(xfrout_ctx_t *xfr) {
 		msg->flags = DNS_MESSAGEFLAG_QR | DNS_MESSAGEFLAG_AA;
 		if ((xfr->client->attributes & NS_CLIENTATTR_RA) != 0)
 			msg->flags |= DNS_MESSAGEFLAG_RA;
-		dns_message_settsigkey(msg, xfr->tsigkey);
+		CHECK(dns_message_settsigkey(msg, xfr->tsigkey));
 		CHECK(dns_message_setquerytsig(msg, xfr->lasttsig));
 		if (xfr->lasttsig != NULL)
 			isc_buffer_free(&xfr->lasttsig);
@@ -1612,8 +1632,7 @@ xfrout_senddone(isc_task_t *task, isc_event_t *event) {
 		sendstream(xfr);
 	} else {
 		/* End of zone transfer stream. */
-		xfrout_log(xfr, ISC_LOG_DEBUG(6),
-			   "end of transfer");
+		xfrout_log(xfr, ISC_LOG_INFO, "%s ended", xfr->mnemonic);
 		ns_client_next(xfr->client, ISC_R_SUCCESS);
 		xfrout_ctx_destroy(&xfr);
 	}

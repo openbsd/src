@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.3 2004/04/03 10:21:57 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.4 2004/09/28 17:14:07 jakob Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>

@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: lex.c,v 1.66.2.7 2003/10/09 07:32:48 marka Exp $ */
+/* $ISC: lex.c,v 1.66.2.6.2.8 2004/08/28 06:25:21 marka Exp $ */
 
 #include <config.h>
 
@@ -28,6 +28,8 @@
 #include <isc/lex.h>
 #include <isc/mem.h>
 #include <isc/msgs.h>
+#include <isc/parseint.h>
+#include <isc/print.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -55,7 +57,6 @@ struct isc_lex {
 	isc_mem_t *			mctx;
 	size_t				max_token;
 	char *				data;
-	unsigned int			options;
 	unsigned int			comments;
 	isc_boolean_t			comment_ok;
 	isc_boolean_t			last_was_eol;
@@ -94,12 +95,12 @@ isc_lex_create(isc_mem_t *mctx, size_t max_token, isc_lex_t **lexp) {
 	REQUIRE(lexp != NULL && *lexp == NULL);
 	REQUIRE(max_token > 0U);
 
-	lex = isc_mem_get(mctx, sizeof *lex);
+	lex = isc_mem_get(mctx, sizeof(*lex));
 	if (lex == NULL)
 		return (ISC_R_NOMEMORY);
 	lex->data = isc_mem_get(mctx, max_token + 1);
 	if (lex->data == NULL) {
-		isc_mem_put(mctx, lex, sizeof *lex);
+		isc_mem_put(mctx, lex, sizeof(*lex));
 		return (ISC_R_NOMEMORY);
 	}
 	lex->mctx = mctx;
@@ -131,11 +132,11 @@ isc_lex_destroy(isc_lex_t **lexp) {
 	REQUIRE(VALID_LEX(lex));
 
 	while (!EMPTY(lex->sources))
-		isc_lex_close(lex);
+		RUNTIME_CHECK(isc_lex_close(lex) == ISC_R_SUCCESS);
 	if (lex->data != NULL)
 		isc_mem_put(lex->mctx, lex->data, lex->max_token + 1);
 	lex->magic = 0;
-	isc_mem_put(lex->mctx, lex, sizeof *lex);
+	isc_mem_put(lex->mctx, lex, sizeof(*lex));
 
 	*lexp = NULL;
 }
@@ -192,7 +193,7 @@ new_source(isc_lex_t *lex, isc_boolean_t is_file, isc_boolean_t need_close,
 	inputsource *source;
 	isc_result_t result;
 
-	source = isc_mem_get(lex->mctx, sizeof *source);
+	source = isc_mem_get(lex->mctx, sizeof(*source));
 	if (source == NULL)
 		return (ISC_R_NOMEMORY);
 	source->result = ISC_R_SUCCESS;
@@ -202,7 +203,7 @@ new_source(isc_lex_t *lex, isc_boolean_t is_file, isc_boolean_t need_close,
 	source->input = input;
 	source->name = isc_mem_strdup(lex->mctx, name);
 	if (source->name == NULL) {
-		isc_mem_put(lex->mctx, source, sizeof *source);
+		isc_mem_put(lex->mctx, source, sizeof(*source));
 		return (ISC_R_NOMEMORY);
 	}
 	source->pushback = NULL;
@@ -210,7 +211,7 @@ new_source(isc_lex_t *lex, isc_boolean_t is_file, isc_boolean_t need_close,
 				     lex->max_token);
 	if (result != ISC_R_SUCCESS) {
 		isc_mem_free(lex->mctx, source->name);
-		isc_mem_put(lex->mctx, source, sizeof *source);
+		isc_mem_put(lex->mctx, source, sizeof(*source));
 		return (result);
 	}
 	source->ignored = 0;
@@ -237,7 +238,7 @@ isc_lex_openfile(isc_lex_t *lex, const char *filename) {
 
 	result = new_source(lex, ISC_TRUE, ISC_TRUE, stream, filename);
 	if (result != ISC_R_SUCCESS)
-		fclose(stream);
+		(void)fclose(stream);
 	return (result);
 }
 
@@ -288,11 +289,11 @@ isc_lex_close(isc_lex_t *lex) {
 	ISC_LIST_UNLINK(lex->sources, source, link);
 	if (source->is_file) {
 		if (source->need_close)
-			fclose((FILE *)(source->input));
+			(void)fclose((FILE *)(source->input));
 	}
 	isc_mem_free(lex->mctx, source->name);
 	isc_buffer_free(&source->pushback);
-	isc_mem_put(lex->mctx, source, sizeof *source);
+	isc_mem_put(lex->mctx, source, sizeof(*source));
 
 	return (ISC_R_SUCCESS);
 }
@@ -359,9 +360,8 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 	FILE *stream;
 	char *curr, *prev;
 	size_t remaining;
-	unsigned long as_ulong;
+	isc_uint32_t as_ulong;
 	unsigned int saved_options;
-	char *e;
 	isc_result_t result;
 
 	/*
@@ -520,7 +520,7 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 				    != 0) {
 					lex->last_was_eol = ISC_FALSE;
 					tokenp->type = isc_tokentype_initialws;
-					tokenp->value.as_char = c;
+ 					tokenp->value.as_char = c;
 					done = ISC_TRUE;
 				}
 			} else if (c == '\n') {
@@ -589,17 +589,16 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 					else
 						base = 10;
 					pushback(source, c);
-					as_ulong = strtoul(lex->data, &e, base);
-					if (as_ulong == ULONG_MAX &&
-					    errno == ERANGE) {
-						result = ISC_R_RANGE;
-						goto done;
-					} else if (*e == 0) {
+
+					result = isc_parse_uint32(&as_ulong,
+								  lex->data,
+								  base);
+					if (result == ISC_R_SUCCESS) {
 						tokenp->type =
 							isc_tokentype_number;
 						tokenp->value.as_ulong =
 							as_ulong;
-					} else {
+					} else if (result == ISC_R_BADNUMBER) {
 						isc_tokenvalue_t *v;
 
 						tokenp->type =
@@ -610,7 +609,8 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 						v->as_textregion.length =
 							lex->max_token -
 							remaining;
-					}
+					} else
+						goto done;
 					done = ISC_TRUE;
 					continue;
 				} else if (!(options & ISC_LEXOPT_CNUMBER) ||
@@ -869,7 +869,7 @@ isc_lex_getsourcename(isc_lex_t *lex) {
 	source = HEAD(lex->sources);
 
 	if (source == NULL)
-		return(NULL);
+		return (NULL);
 
 	return (source->name);
 }
@@ -882,9 +882,28 @@ isc_lex_getsourceline(isc_lex_t *lex) {
 	source = HEAD(lex->sources);
 
 	if (source == NULL)
-		return(0);
+		return (0);
 
 	return (source->line);
+}
+
+
+isc_result_t
+isc_lex_setsourcename(isc_lex_t *lex, const char *name) {
+	inputsource *source;
+	char *newname;
+
+	REQUIRE(VALID_LEX(lex));
+	source = HEAD(lex->sources);
+
+	if (source == NULL)
+		return(ISC_R_NOTFOUND);
+	newname = isc_mem_strdup(lex->mctx, name);
+	if (newname == NULL)
+		return (ISC_R_NOMEMORY);
+	isc_mem_free(lex->mctx, source->name);
+	source->name = newname;
+	return (ISC_R_SUCCESS);
 }
 
 isc_boolean_t

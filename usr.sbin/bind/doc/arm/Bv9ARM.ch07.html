@@ -1,11 +1,11 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >BIND 9 Security Considerations</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
 REL="HOME"
 TITLE="BIND 9 Administrator Reference Manual"
 HREF="Bv9ARM.html"><LINK
@@ -70,11 +70,11 @@ CLASS="chapter"
 ><H1
 ><A
 NAME="ch07"
->Chapter 7. <SPAN
+></A
+>Chapter 7. <ACRONYM
 CLASS="acronym"
->BIND</SPAN
-> 9 Security Considerations</A
-></H1
+>BIND</ACRONYM
+> 9 Security Considerations</H1
 ><DIV
 CLASS="TOC"
 ><DL
@@ -89,7 +89,7 @@ HREF="Bv9ARM.ch07.html#Access_Control_Lists"
 ></DT
 ><DT
 >7.2. <A
-HREF="Bv9ARM.ch07.html#AEN4213"
+HREF="Bv9ARM.ch07.html#AEN4658"
 ><B
 CLASS="command"
 >chroot</B
@@ -137,7 +137,7 @@ CLASS="command"
 etc.</P
 ><P
 >Using ACLs allows you to have finer control over who can access
-your nameserver, without cluttering up your config files with huge
+your name server, without cluttering up your config files with huge
 lists of IP addresses.</P
 ><P
 >It is a <SPAN
@@ -197,7 +197,7 @@ CLASS="sect1"
 ><H1
 CLASS="sect1"
 ><A
-NAME="AEN4213"
+NAME="AEN4658"
 >7.2. <B
 CLASS="command"
 >chroot</B
@@ -208,9 +208,9 @@ CLASS="command"
 UNIX servers)</A
 ></H1
 ><P
->On UNIX servers, it is possible to run <SPAN
+>On UNIX servers, it is possible to run <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > in a <SPAN
 CLASS="emphasis"
 ><I
@@ -221,37 +221,35 @@ CLASS="emphasis"
 (<B
 CLASS="command"
 >chroot()</B
->) by specifying the "<TT
+>) by specifying the "<VAR
 CLASS="option"
->-t</TT
+>-t</VAR
 >"
-option. This can help improve system security by placing <SPAN
+option. This can help improve system security by placing <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > in
-a "sandbox," which will limit the damage done if a server is compromised.</P
+a "sandbox", which will limit the damage done if a server is compromised.</P
 ><P
->Another useful feature in the UNIX version of <SPAN
+>Another useful feature in the UNIX version of <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > is the
-ability to run the daemon as a nonprivileged user ( <TT
+ability to run the daemon as an unprivileged user ( <VAR
 CLASS="option"
->-u</TT
-> <TT
+>-u</VAR
+> <VAR
 CLASS="replaceable"
-><I
->user</I
-></TT
+>user</VAR
 > ).
-We suggest running as a nonprivileged user when using the <B
+We suggest running as an unprivileged user when using the <B
 CLASS="command"
 >chroot</B
 > feature.</P
 ><P
->Here is an example command line to load <SPAN
+>Here is an example command line to load <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > in a <B
 CLASS="command"
 >chroot()</B
@@ -268,18 +266,16 @@ CLASS="command"
 > to
 user 202:</P
 ><P
-><TT
+><KBD
 CLASS="userinput"
-><B
->/usr/local/bin/named -u 202 -t /var/named</B
-></TT
+>/usr/local/bin/named -u 202 -t /var/named</KBD
 ></P
 ><DIV
 CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN4236"
+NAME="AEN4681"
 >7.2.1. The <B
 CLASS="command"
 >chroot</B
@@ -296,13 +292,13 @@ CLASS="filename"
 >/var/named</TT
 >),
 you will need to set up an environment that includes everything
-<SPAN
+<ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > needs to run.
-From <SPAN
+From <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 >'s point of view, <TT
 CLASS="filename"
 >/var/named</TT
@@ -355,7 +351,7 @@ CLASS="sect2"
 ><H2
 CLASS="sect2"
 ><A
-NAME="AEN4254"
+NAME="AEN4699"
 >7.2.2. Using the <B
 CLASS="command"
 >setuid</B
@@ -375,15 +371,15 @@ CLASS="command"
 >chown</B
 > utility (to
 set the user id and/or group id) on files
-to which you want <SPAN
+to which you want <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 >
 to write.  Note that if the <B
 CLASS="command"
 >named</B
-> daemon is running as a
-nonprivileged user, it will not be able to bind to new restricted ports if the
+> daemon is running as an
+unprivileged user, it will not be able to bind to new restricted ports if the
 server is reloaded.</P
 ></DIV
 ></DIV
@@ -398,9 +394,9 @@ NAME="dynamic_update_security"
 ><P
 >Access to the dynamic
 update facility should be strictly limited.  In earlier versions of
-<SPAN
+<ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > the only way to do this was based on the IP
 address of the host requesting the update, by listing an IP address or
 network prefix in the <B
@@ -482,9 +478,9 @@ ACCESSKEY="N"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
-><SPAN
+><ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 Configuration Reference</TD
 ><TD
 WIDTH="34%"

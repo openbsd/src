@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: adb.h,v 1.66.2.5 2003/07/22 04:03:45 marka Exp $ */
+/* $ISC: adb.h,v 1.66.2.5.2.4 2004/03/06 08:13:50 marka Exp $ */
 
 #ifndef DNS_ADB_H
 #define DNS_ADB_H 1
@@ -47,9 +47,7 @@
  * sent instead.
  *
  * Records are stored internally until a timer expires. The timer is the
- * smaller of the TTL or signature validity period. For A6 records, the timer
- * is the smallest of all the TTL or signature validity periods in the A6
- * chain.
+ * smaller of the TTL or signature validity period.
  *
  * Lameness is stored per-zone, and this data hangs off each address field.
  * When an address is marked lame for a given zone the address will not
@@ -255,7 +253,7 @@ dns_adb_attach(dns_adb_t *adb, dns_adb_t **adbp);
  * Requires:
  *	'adb' to be a valid dns_adb_t, created via dns_adb_create().
  *	'adbp' to be a valid pointer to a *dns_adb_t which is initialized
- *		to NULL.
+ *	to NULL.
  */
 
 void
@@ -568,6 +566,30 @@ dns_adb_flush(dns_adb_t *adb);
  * Requires:
  * 	adb is valid.
  */
+
+void
+dns_adb_setadbsize(dns_adb_t *adb, isc_uint32_t size);
+/*
+ * Set a target memory size.  If memory usage exceeds the target
+ * size entries will be removed before they would have expired on
+ * a random basis.
+ *
+ * If 'size' is 0 then memory usage is unlimited.
+ *
+ * Requires:
+ *	'adb' is valid.
+ */
+
+void
+dns_adb_flushname(dns_adb_t *adb, dns_name_t *name);
+/*
+ * Flush 'name' from the adb cache.
+ * 
+ * Requires:
+ *	'adb' is valid.
+ *	'name' is valid.
+ */
+
 
 ISC_LANG_ENDDECLS
 

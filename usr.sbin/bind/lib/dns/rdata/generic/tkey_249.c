@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: tkey_249.c,v 1.48.2.2 2003/10/09 07:32:43 marka Exp $ */
+/* $ISC: tkey_249.c,v 1.48.2.1.2.6 2004/03/08 09:04:42 marka Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -51,7 +51,7 @@ fromtext_tkey(ARGS_FROMTEXT) {
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	origin = (origin != NULL) ? origin : dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, downcase, target));
+	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
 
 	/*
@@ -85,7 +85,7 @@ fromtext_tkey(ARGS_FROMTEXT) {
 	if (dns_tsigrcode_fromtext(&rcode, &token.value.as_textregion)
 				!= ISC_R_SUCCESS)
 	{
-		i = strtol(token.value.as_pointer, &e, 10);
+		i = strtol(DNS_AS_STR(token), &e, 10);
 		if (*e != 0)
 			RETTOK(DNS_R_UNKNOWN);
 		if (i < 0 || i > 0xffff)
@@ -126,7 +126,7 @@ fromtext_tkey(ARGS_FROMTEXT) {
 static inline isc_result_t
 totext_tkey(ARGS_TOTEXT) {
 	isc_region_t sr, dr;
-	char buf[sizeof "4294967295 "];
+	char buf[sizeof("4294967295 ")];
 	unsigned long n;
 	dns_name_t name;
 	dns_name_t prefix;
@@ -252,7 +252,7 @@ fromwire_tkey(ARGS_FROMWIRE) {
 	 * Algorithm.
 	 */
 	dns_name_init(&name, NULL);
-	RETERR(dns_name_fromwire(&name, source, dctx, downcase, target));
+	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 
 	/*
 	 * Inception: 4
@@ -340,7 +340,7 @@ compare_tkey(ARGS_COMPARE) {
 		return (order);
 	isc_region_consume(&r1, name_length(&name1));
 	isc_region_consume(&r2, name_length(&name2));
-	return (compare_region(&r1, &r2));
+	return (isc_region_compare(&r1, &r2));
 }
 
 static inline isc_result_t
@@ -525,6 +525,31 @@ digest_tkey(ARGS_DIGEST) {
 	REQUIRE(rdata->type == 249);
 
 	return (ISC_R_NOTIMPLEMENTED);
+}
+
+static inline isc_boolean_t
+checkowner_tkey(ARGS_CHECKOWNER) {
+
+	REQUIRE(type == 249);
+
+	UNUSED(name);
+	UNUSED(type);
+	UNUSED(rdclass);
+	UNUSED(wildcard);
+
+	return (ISC_TRUE);
+}
+
+static inline isc_boolean_t
+checknames_tkey(ARGS_CHECKNAMES) {
+
+	REQUIRE(rdata->type == 249);
+
+	UNUSED(rdata);
+	UNUSED(owner);
+	UNUSED(bad);
+
+	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_GENERIC_TKEY_249_C */

@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: name.h,v 1.95.2.4 2003/10/09 07:32:39 marka Exp $ */
+/* $ISC: name.h,v 1.95.2.3.2.11 2004/09/01 05:19:59 marka Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -87,86 +87,16 @@ ISC_LANG_BEGINDECLS
  ***** Labels
  *****
  ***** A 'label' is basically a region.  It contains one DNS wire format
- ***** label of either type 00 (ordinary) or type 01000001 (bitstring).
+ ***** label of type 00 (ordinary).
  *****/
-
-/***
- *** Extended Label Types
- ***/
-
-#define DNS_LABELTYPE_BITSTRING		0x41
-
-/***
- *** Properties
- ***/
-
-dns_labeltype_t
-dns_label_type(dns_label_t *label);
-/*
- * Get the type of 'label'.
- *
- * Requires:
- *	'label' is a valid label (i.e. not NULL, points to a
- *	struct dns_label)
- *	'label' is a type 00 or type 01000001 label (i.e. not compressed).
- *
- * Returns:
- *	dns_labeltype_ordinary		type 00 label
- *	dns_labeltype_bitstring		type 01000001 label
- */
-
-/***
- *** Bitstring Labels
- ***/
-
-unsigned int
-dns_label_countbits(dns_label_t *label);
-/*
- * The number of bits in a bitstring label.
- *
- * Requires:
- *	'label' is a valid label
- *
- *	dns_label_type(label) == dns_labeltype_bitstring
- *
- * Ensures:
- *	Result is <= 256.
- *
- * Returns:
- *	The number of bits in the bitstring label.
- */
-
-dns_bitlabel_t
-dns_label_getbit(dns_label_t *label, unsigned int n);
-/*
- * The 'n'th most significant bit of 'label'.
- *
- * Notes:
- *	Numbering starts at 0.
- *
- * Require:
- *	n < dns_label_countbits(label)
- *
- * Returns:
- *	dns_bitlabel_0		The bit was 0.
- *	dns_bitlabel_1		The bit was 1.
- */
-
-/***
- *** Note
- ***
- *** Some provision still needs to be made for splitting bitstring labels.
- ***/
-
-
 
 /*****
  ***** Names
  *****
  ***** A 'name' is a handle to a binary region.  It contains a sequence of one
- ***** or more DNS wire format labels of either type 00 (ordinary) or type
- ***** 01000001 (bitstring).  Note that all names are not required to end
- ***** with the root label, as they are in the actual DNS wire protocol.
+ ***** or more DNS wire format labels of type 00 (ordinary).
+ ***** Note that all names are not required to end with the root label,
+ ***** as they are in the actual DNS wire protocol.
  *****/
 
 /***
@@ -210,9 +140,15 @@ struct dns_name {
 #define DNS_NAMEATTR_NCACHE		0x0400		/* Used by resolver. */
 #define DNS_NAMEATTR_CHAINING		0x0800		/* Used by resolver. */
 #define DNS_NAMEATTR_CHASE		0x1000		/* Used by resolver. */
+#define DNS_NAMEATTR_WILDCARD		0x2000		/* Used by server. */
+
+#define DNS_NAME_DOWNCASE		0x0001
+#define DNS_NAME_CHECKNAMES		0x0002		/* Used by rdata. */
+#define DNS_NAME_CHECKNAMESFAIL		0x0004		/* Used by rdata. */
+#define DNS_NAME_CHECKREVERSE		0x0008		/* Used by rdata. */
 
 LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_rootname;
-extern dns_name_t *dns_wildcardname;
+LIBDNS_EXTERNAL_DATA extern dns_name_t *dns_wildcardname;
 
 /*
  * Standard size of a wire format name
@@ -360,25 +296,42 @@ dns_name_iswildcard(const dns_name_t *name);
  *	FALSE		The least significant label of 'name' is not '*'.
  */
 
-isc_boolean_t
-dns_name_requiresedns(const dns_name_t *name);
-/*
- * Does 'name' require EDNS for transmission?
- *
- * Requires:
- *	'name' is a valid name
- *
- *	dns_name_countlabels(name) > 0
- *
- * Returns:
- *	TRUE		The name requires EDNS to be transmitted.
- *	FALSE		The name does not require EDNS to be transmitted.
- */
-
 unsigned int
 dns_name_hash(dns_name_t *name, isc_boolean_t case_sensitive);
 /*
  * Provide a hash value for 'name'.
+ *
+ * Note: if 'case_sensitive' is ISC_FALSE, then names which differ only in
+ * case will have the same hash value.
+ *
+ * Requires:
+ *	'name' is a valid name
+ *
+ * Returns:
+ *	A hash value
+ */
+
+unsigned int
+dns_name_fullhash(dns_name_t *name, isc_boolean_t case_sensitive);
+/*
+ * Provide a hash value for 'name'.  Unlike dns_name_hash(), this function
+ * always takes into account of the entire name to calculate the hash value.
+ *
+ * Note: if 'case_sensitive' is ISC_FALSE, then names which differ only in
+ * case will have the same hash value.
+ *
+ * Requires:
+ *	'name' is a valid name
+ *
+ * Returns:
+ *	A hash value
+ */
+
+unsigned int
+dns_name_hashbylabel(dns_name_t *name, isc_boolean_t case_sensitive);
+/*
+ * Provide a hash value for 'name', where the hash value is the sum
+ * of the hash values of each label.
  *
  * Note: if 'case_sensitive' is ISC_FALSE, then names which differ only in
  * case will have the same hash value.
@@ -412,8 +365,7 @@ dns_fullname_hash(dns_name_t *name, isc_boolean_t case_sensitive);
 
 dns_namereln_t
 dns_name_fullcompare(const dns_name_t *name1, const dns_name_t *name2,
-		     int *orderp,
-		     unsigned int *nlabelsp, unsigned int *nbitsp);
+		     int *orderp, unsigned int *nlabelsp);
 /*
  * Determine the relative ordering under the DNSSEC order relation of
  * 'name1' and 'name2', and also determine the hierarchical
@@ -433,7 +385,7 @@ dns_name_fullcompare(const dns_name_t *name1, const dns_name_t *name2,
  *
  *	dns_name_countlabels(name2) > 0
  *
- *	orderp, nlabelsp, and nbitsp are valid pointers.
+ *	orderp and nlabelsp are valid pointers.
  *
  *	Either name1 is absolute and name2 is absolute, or neither is.
  *
@@ -443,10 +395,6 @@ dns_name_fullcompare(const dns_name_t *name1, const dns_name_t *name2,
  *	name1 > name2.
  *
  *	*nlabelsp is the number of common significant labels.
- *
- *	If *nbitsp is non-zero, then the least-signficant of the
- *	common significant labels is a bitstring label, and the
- *	two names have *nbitsp significant bits in common.
  *
  * Returns:
  *	dns_namereln_none		There's no hierarchical relationship
@@ -591,26 +539,6 @@ dns_name_matcheswildcard(const dns_name_t *name, const dns_name_t *wname);
  *	FALSE		'name' does not match the wildcard specified in 'wname'
  */
 
-unsigned int
-dns_name_depth(const dns_name_t *name);
-/*
- * The depth of 'name'.
- *
- * Notes:
- *	The "depth" of a name represents how far down the DNS tree of trees
- *	the name is.  For each wire-encoding label in name, the depth is
- *	increased by 1 for an ordinary label, and by the number of bits in
- *	a bitstring label.
- *
- *	Depth is used when creating or validating DNSSEC signatures.
- *
- * Requires:
- *	'name' is a valid name
- *
- * Returns:
- *	The depth of 'name'.
- */
-
 /***
  *** Labels
  ***/
@@ -621,9 +549,7 @@ dns_name_countlabels(const dns_name_t *name);
  * How many labels does 'name' have?
  *
  * Notes:
- *	In this case, as in other places, a 'label' is an ordinary label
- *	or a bitstring label.  The term is not meant to refer to individual
- *	bit labels.  For that purpose, use dns_name_depth().
+ *	In this case, as in other places, a 'label' is an ordinary label.
  *
  * Requires:
  *	'name' is a valid name
@@ -662,6 +588,9 @@ dns_name_getlabelsequence(const dns_name_t *source, unsigned int first,
  *
  * Notes:
  *	Numbering starts at 0.
+ *
+ *	Given "rc.vix.com.", the label 0 is "rc", and label 3 is the
+ *	root label.
  *
  *	'target' refers to the same memory as 'source', so 'source'
  *	must not be changed while 'target' is still in use.
@@ -706,7 +635,7 @@ dns_name_clone(dns_name_t *source, dns_name_t *target);
  ***/
 
 void
-dns_name_fromregion(dns_name_t *name, isc_region_t *r);
+dns_name_fromregion(dns_name_t *name, const isc_region_t *r);
 /*
  * Make 'name' refer to region 'r'.
  *
@@ -734,7 +663,7 @@ dns_name_toregion(dns_name_t *name, isc_region_t *r);
 
 isc_result_t
 dns_name_fromwire(dns_name_t *name, isc_buffer_t *source,
-		  dns_decompress_t *dctx, isc_boolean_t downcase,
+		  dns_decompress_t *dctx, unsigned int options,
 		  isc_buffer_t *target);
 /*
  * Copy the possibly-compressed name at source (active region) into target,
@@ -743,7 +672,7 @@ dns_name_fromwire(dns_name_t *name, isc_buffer_t *source,
  * Notes:
  *	Decompression policy is controlled by 'dctx'.
  *
- *	If 'downcase' is true, any uppercase letters in 'source' will be
+ *	If DNS_NAME_DOWNCASE is set, any uppercase letters in 'source' will be
  *	downcased when they are copied into 'target'.
  *
  * Security:
@@ -771,11 +700,8 @@ dns_name_fromwire(dns_name_t *name, isc_buffer_t *source,
  *	If result is success:
  *	 	If 'target' is not NULL, 'name' is attached to it.
  *
- *		Uppercase letters are downcased in the copy iff. 'downcase' is
- *		true.
- *
- *		Any bitstring labels in source are canonicalized.
- *		(i.e. maximally packed and any padding bits zeroed.)
+ *		Uppercase letters are downcased in the copy iff
+ *		DNS_NAME_DOWNCASE is set in options.
  *
  *		The current location in source is advanced, and the used space
  *		in target is updated.
@@ -827,7 +753,7 @@ dns_name_towire(dns_name_t *name, dns_compress_t *cctx, isc_buffer_t *target);
 
 isc_result_t
 dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
-		  dns_name_t *origin, isc_boolean_t downcase,
+		  dns_name_t *origin, unsigned int options,
 		  isc_buffer_t *target);
 /*
  * Convert the textual representation of a DNS name at source
@@ -838,8 +764,8 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
  *	unless 'origin' is NULL, in which case relative domain names
  *	will remain relative.
  *
- *	If 'downcase' is true, any uppercase letters in 'source' will be
- *	downcased when they are copied into 'target'.
+ *	If DNS_NAME_DOWNCASE is set in 'options', any uppercase letters
+ *	in 'source' will be downcased when they are copied into 'target'.
  *
  * Requires:
  *
@@ -855,10 +781,8 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
  *	If result is success:
  *	 	If 'target' is not NULL, 'name' is attached to it.
  *
- *		Any bitstring labels in source are canonicalized.
- *
- *		Uppercase letters are downcased in the copy iff. 'downcase' is
- *		true.
+ *		Uppercase letters are downcased in the copy iff
+ *		DNS_NAME_DOWNCASE is set in 'options'.
  *
  *		The current location in source is advanced, and the used space
  *		in target is updated.
@@ -868,8 +792,8 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
  *	DNS_R_EMPTYLABEL
  *	DNS_R_LABELTOOLONG
  *	DNS_R_BADESCAPE
- *	DNS_R_BADBITSTRING
- *	DNS_R_BITSTRINGTOOLONG
+ *	(DNS_R_BADBITSTRING: should not be returned)
+ *	(DNS_R_BITSTRINGTOOLONG: should not be returned)
  *	DNS_R_BADDOTTEDQUAD
  *	ISC_R_NOSPACE
  *	ISC_R_UNEXPECTEDEND
@@ -1014,8 +938,6 @@ dns_name_concatenate(dns_name_t *prefix, dns_name_t *suffix,
  *	 	If 'target' is not NULL and 'name' is not NULL, then 'name'
  *		is attached to it.
  *
- *		Any bitstring labels are in canonical form.
- *
  *		The used space in target is updated.
  *
  * Returns:
@@ -1024,44 +946,31 @@ dns_name_concatenate(dns_name_t *prefix, dns_name_t *suffix,
  *	DNS_R_NAMETOOLONG
  */
 
-isc_result_t
-dns_name_split(dns_name_t *name,
-	       unsigned int suffixlabels, unsigned int nbits,
+void
+dns_name_split(dns_name_t *name, unsigned int suffixlabels,
 	       dns_name_t *prefix, dns_name_t *suffix);
 /*
  *
- * Split 'name' into two pieces on a label or bitlabel boundary.
+ * Split 'name' into two pieces on a label boundary.
  *
  * Notes:
  *      'name' is split such that 'suffix' holds the most significant
- *      'suffixlabels' labels, except that if the least significant
- *      suffix label is a bitstring label, then only the 'nbits' most
- *      significant bits of that label are included in 'suffix'.  All 
- *      other labels and bits are stored in 'prefix'.
+ *      'suffixlabels' labels.  All other labels are stored in 'prefix'. 
  *
  *	Copying name data is avoided as much as possible, so 'prefix'
- *	and 'suffix' will usually end up pointing at the data for 'name',
- *	except when 'nbits' > 0.  The name data is copied to the
- *	the dedicated buffers when splitting on bitlabel boundaries
- *	because of the bit fiddling that must be done.
+ *	and 'suffix' will end up pointing at the data for 'name'.
  *
  *	It is legitimate to pass a 'prefix' or 'suffix' that has
  *	its name data stored someplace other than the dedicated buffer.
  *	This is useful to avoid name copying in the calling function.
  *
  *	It is also legitimate to pass a 'prefix' or 'suffix' that is
- *	the same dns_name_t as 'name', but note well the requirement
- *	below if splitting on a bitlabel boundary.
+ *	the same dns_name_t as 'name'.
  *
  * Requires:
  *	'name' is a valid name.
  *
  * 	'suffixlabels' cannot exceed the number of labels in 'name'.
- *
- *	'nbits' can be greater than zero only when the least significant
- *	label of 'suffix' is a bitstring label.
- *
- *	'nbits' cannot exceed the number of bits in the bitstring label.
  *
  *	'prefix' is a valid name or NULL, and cannot be read-only.
  *
@@ -1071,61 +980,22 @@ dns_name_split(dns_name_t *name,
  *
  *	'prefix' and 'suffix' cannot point to the same buffer.
  *
- *	If 'nbits' > 0 and 'prefix' and 'suffix' are both non-NULL,
- *	the buffer for 'prefix' cannot be storing the labels for 'name'.
- *
  * Ensures:
  *
  *	On success:
  *		If 'prefix' is not NULL it will contain the least significant
- *		labels and bits.
+ *		labels.
  *
  *		If 'suffix' is not NULL it will contain the most significant
- *		labels and bits.  dns_name_countlabels(suffix) will be
- *		equal to suffixlabels.
+ *		labels.  dns_name_countlabels(suffix) will be equal to
+ *		suffixlabels.
  *
  *	On failure:
  *		Either 'prefix' or 'suffix' is invalidated (depending
  *		on which one the problem was encountered with).
  *
  * Returns:
- *	ISC_R_SUCCESS	No worries.
- *	ISC_R_NOSPACE	An attempt was made to split a name on a bitlabel
- *			boundary but either 'prefix' or 'suffix' did not
- *			have enough room to receive the split name.
- */
-
-isc_result_t
-dns_name_splitatdepth(dns_name_t *name, unsigned int depth,
-		      dns_name_t *prefix, dns_name_t *suffix);
-/*
- * Split 'name' into two pieces at a certain depth.
- *
- * Requires:
- *	'name' is a valid non-empty name.
- *
- *	depth > 0
- *
- *	depth <= dns_name_depth(name)
- *
- *	The preconditions of dns_name_split() apply to 'prefix' and 'suffix'.
- *
- * Ensures:
- *
- *	On success:
- *		If 'prefix' is not NULL it will contain the least significant
- *		labels and bits.
- *
- *		If 'suffix' is not NULL it will contain the most significant
- *		labels and bits.  dns_name_countlabels(suffix) will be
- *		equal to suffixlabels.
- *
- *	On failure:
- *		Either 'prefix' or 'suffix' is invalidated (depending
- *		on which one the problem was encountered with).
- *
- * Returns:
- *	The possible result codes are the same as those of dns_name_split().
+ *	ISC_R_SUCCESS	No worries.  (This function should always success).
  */
 
 isc_result_t
@@ -1291,6 +1161,28 @@ dns_name_copy(dns_name_t *source, dns_name_t *dest, isc_buffer_t *target);
  *	ISC_R_NOSPACE
  */
 
+isc_boolean_t
+dns_name_ishostname(const dns_name_t *name, isc_boolean_t wildcard);
+/*
+ * Return if 'name' is a valid hostname.  RFC 952 / RFC 1123.
+ * If 'wildcard' is ISC_TRUE then allow the first label of name to
+ * be a wildcard.
+ * The root is also accepted.
+ *
+ * Requires:
+ *	'name' to be valid.
+ */
+ 
+
+isc_boolean_t
+dns_name_ismailbox(const dns_name_t *name);
+/*
+ * Return if 'name' is a valid mailbox.  RFC 821.
+ *
+ * Requires:
+ *	'name' to be valid.
+ */
+
 ISC_LANG_ENDDECLS
 
 /***
@@ -1341,8 +1233,19 @@ do { \
 do { \
 	(r)->base = (n)->ndata; \
 	(r)->length = (n)->length; \
-} while (0);
+} while (0)
 
+#define DNS_NAME_SPLIT(n, l, p, s) \
+do { \
+	dns_name_t *_n = (n); \
+	dns_name_t *_p = (p); \
+	dns_name_t *_s = (s); \
+	unsigned int _l = (l); \
+	if (_p != NULL) \
+		dns_name_getlabelsequence(_n, 0, _n->labels - _l, _p); \
+	if (_s != NULL) \
+		dns_name_getlabelsequence(_n, _n->labels - _l, _l, _s); \
+} while (0)
 
 #ifdef DNS_NAME_USEINLINE
 
@@ -1352,6 +1255,7 @@ do { \
 #define dns_name_countlabels(n)		DNS_NAME_COUNTLABELS(n)
 #define dns_name_isabsolute(n)		DNS_NAME_ISABSOLUTE(n)
 #define dns_name_toregion(n, r)		DNS_NAME_TOREGION(n, r)
+#define dns_name_split(n, l, p, s)	DNS_NAME_SPLIT(n, l, p, s)
 
 #endif /* DNS_NAME_USEINLINE */
 

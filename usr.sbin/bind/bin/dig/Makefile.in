@@ -1,19 +1,19 @@
-# Copyright (C) 2000, 2001  Internet Software Consortium.
+# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-# INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
 
-# $ISC: Makefile.in,v 1.25 2001/06/08 17:18:06 gson Exp $
+# $ISC: Makefile.in,v 1.25.12.12 2004/08/18 23:25:57 marka Exp $
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -21,26 +21,35 @@ top_srcdir =	@top_srcdir@
 
 @BIND9_VERSION@
 
-@BIND9_INCLUDES@
+@BIND9_MAKE_INCLUDES@
 
-CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} ${ISC_INCLUDES}
+CINCLUDES =	-I${srcdir}/include ${DNS_INCLUDES} ${BIND9_INCLUDES} \
+		${ISC_INCLUDES} ${LWRES_INCLUDES}
 
 CDEFINES =	-DVERSION=\"${VERSION}\"
 CWARNINGS =
 
-DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_OPENSSL_LIBS@ @DNS_GSSAPI_LIBS@
+ISCCFGLIBS =	../../lib/isccfg/libisccfg.@A@
+DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
+BIND9LIBS =	../../lib/bind9/libbind9.@A@
 ISCLIBS =	../../lib/isc/libisc.@A@
+LWRESLIBS =	../../lib/lwres/liblwres.@A@
 
+ISCCFGDEPLIBS =	../../lib/isccfg/libisccfg.@A@
 DNSDEPLIBS =	../../lib/dns/libdns.@A@
+BIND9DEPLIBS =	../../lib/bind9/libbind9.@A@
 ISCDEPLIBS =	../../lib/isc/libisc.@A@
+LWRESDEPLIBS =	../../lib/lwres/liblwres.@A@
 
-DEPLIBS =	${DNSDEPLIBS} ${ISCDEPLIBS}
+DEPLIBS =	${DNSDEPLIBS} ${BIND9DEPLIBS} ${ISCDEPLIBS} ${ISCCFGDEPLIBS} \
+		${LWRESDEPLIBS}
 
-LIBS =		${DNSLIBS} ${ISCLIBS} @LIBS@
+LIBS =		${LWRESLIBS} ${DNSLIBS} ${BIND9LIBS} ${ISCLIBS} \
+		${ISCCFGLIBS} @LIBS@
 
 SUBDIRS =
 
-TARGETS =	dig host nslookup
+TARGETS =	dig@EXEEXT@ host@EXEEXT@ nslookup@EXEEXT@
 
 OBJS =		dig.@O@ dighost.@O@ host.@O@ nslookup.@O@
 
@@ -50,20 +59,23 @@ SRCS =		dig.c dighost.c host.c nslookup.c
 
 MANPAGES =	dig.1 host.1 nslookup.8
 
-HTMLPAGES =	dig.html host.html
+HTMLPAGES =	dig.html host.html nslookup.html
 
 MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
 
-dig: dig.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ dig.@O@ dighost.@O@ ${UOBJS} ${LIBS}
+dig@EXEEXT@: dig.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+	dig.@O@ dighost.@O@ ${UOBJS} ${LIBS}
 
-host: host.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ host.@O@ dighost.@O@ ${UOBJS} ${LIBS}
+host@EXEEXT@: host.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+	host.@O@ dighost.@O@ ${UOBJS} ${LIBS}
 
-nslookup: nslookup.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
-	${LIBTOOL} ${PURIFY} ${CC} ${CFLAGS} -o $@ nslookup.@O@ dighost.@O@ ${UOBJS} ${LIBS}
+nslookup@EXEEXT@: nslookup.@O@ dighost.@O@ ${UOBJS} ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+	nslookup.@O@ dighost.@O@ ${UOBJS} ${LIBS}
 
 doc man:: ${MANOBJS}
 
@@ -77,8 +89,13 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${bindir}
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man1
 
-install:: dig host nslookup installdirs
-	${LIBTOOL} ${INSTALL_PROGRAM} dig ${DESTDIR}${bindir}
-	${LIBTOOL} ${INSTALL_PROGRAM} host ${DESTDIR}${bindir}
-	${LIBTOOL} ${INSTALL_PROGRAM} nslookup ${DESTDIR}${bindir}
-	for m in ${MANPAGES}; do ${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man1; done
+install:: dig@EXEEXT@ host@EXEEXT@ nslookup@EXEEXT@ installdirs
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
+		dig@EXEEXT@ ${DESTDIR}${bindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
+		host@EXEEXT@ ${DESTDIR}${bindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} \
+		nslookup@EXEEXT@ ${DESTDIR}${bindir}
+	for m in ${MANPAGES}; do \
+		${INSTALL_DATA} ${srcdir}/$$m ${DESTDIR}${mandir}/man1; \
+		done

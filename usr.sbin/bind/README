@@ -28,7 +28,7 @@ BIND 9
 
 
 	BIND version 9 development has been underwritten by the following
-	organisations:
+	organizations:
 
 		Sun Microsystems, Inc.
 		Hewlett Packard
@@ -43,38 +43,44 @@ BIND 9
 		Nominum, Inc.
 
 
-BIND 9.2.3
-	
-	BIND 9.2.3 is a maintenance release, containing fixes for
-	a number of bugs in 9.2.2.
+BIND 9.3.0
 
-	A new zone type delegation-only is now supported.
-	A new view option root-delegation-only is now supported.
+	BIND 9.3.0 has a number of new features over 9.2,
+	including:
 
-	libbind: corresponds to that from BIND 8.4.0.
+	DNSSEC is now DS based (RFC 3658).
+	See also RFC 3845, doc/draft/draft-ietf-dnsext-dnssec-*.
 
-BIND 9.2.2
+	DNSSEC lookaside validation.
 
-	BIND 9.2.2 is a maintenance release, containing fixes for
-	a number of bugs in 9.2.1 but no new features.  RFC 2535
-	style DNSSEC is disabled as it is incompatible with the
-	forthcoming DS style DNSSEC.
+	check-names is now implemented.
+	rrset-order in more complete.
 
-	libbind: from BIND 8.3.3. [CERT CA-2002-19]
-	Minimum OpenSSL version now 0.9.6e. [CERT CA-2002-23]
+	IPv4/IPv6 transition support, dual-stack-servers.
 
-BIND 9.2.1
+	IXFR deltas can now be generated when loading master files,
+	ixfr-from-differences.
 
-	BIND 9.2.1 is a maintenance release, containing fixes for
-	a number of bugs in 9.2.0 but no new features.
+	It is now possible to specify the size of a journal, max-journal-size.
 
-	NOTE: dig, nslookup name. now report "Not Implemented" as
-	NOTIMP rather than NOTIMPL.  This will have impact on scripts
-	that are looking for NOTIMPL.
+	It is now possible to define a named set of master servers to be
+	used in masters clause, masters.
+
+	The advertised EDNS UDP size can now be set, edns-udp-size.
+
+	allow-v6-synthesis has been obsoleted.
+
+	NOTE:
+	* Zones containing MD and MF will now be rejected.
+	* dig, nslookup name. now report "Not Implemented" as
+	  NOTIMP rather than NOTIMPL.  This will have impact on scripts
+	  that are looking for NOTIMPL.
+
+	libbind: corresponds to that from BIND 8.4.5.
 
 BIND 9.2.0
 
-	BIND 9.2.0 introduces a number of new features over 9.1,
+	BIND 9.2.0 has a number of new features over 9.1,
 	including:
 
 	  - The size of the cache can now be limited using the
@@ -128,8 +134,8 @@ BIND 9.2.0
 
 	BIND 9.2 is capable of acting as an authoritative server
 	for DNSSEC secured zones.  This functionality is believed to
-	be stable and complete except for lacking support for wildcard
-	records in secure zones.
+	be stable and complete except for lacking support for
+	verifications involving wildcard records in secure zones.
 
 	When acting as a caching server, BIND 9.2 can be configured
 	to perform DNSSEC secure resolution on behalf of its clients.
@@ -153,7 +159,8 @@ BIND 9.2.0
 		This is due to a bug in "/dev/random" and impacts the
 		server's DNSSEC support.
 
-		OS X 10.1.4 (Darwin 5.4) reports errors like
+		OS X 10.1.4 (Darwin 5.4), OS X 10.1.5 (Darwin 5.5) and
+		OS X 10.2 (Darwin 6.0) reports errors like
 		"fcntl(3, F_SETFL, 4): Operation not supported by device".
 		This is due to a bug in "/dev/random" and impacts the
 		server's DNSSEC support.
@@ -175,16 +182,13 @@ Building
 
 	We've had successful builds and tests on the following systems:
 
-		AIX 4.3
-		COMPAQ Tru64 UNIX 4.0D
-		COMPAQ Tru64 UNIX 5 (with IPv6 EAK)
-		FreeBSD 3.4-STABLE, 3.5, 4.0, 4.1
-		HP-UX 11.x, x < 11
-		IRIX64 6.5
+		COMPAQ Tru64 UNIX 5.1B
+		FreeBSD 4.10, 5.2.1
+		HP-UX 11.11
 		NetBSD 1.5
-		Red Hat Linux 6.0, 6.1, 6.2, 7.0
-		Solaris 2.6, 7, 8
-		Windows NT/W2K
+		Slackware Linux 8.1
+		Solaris 8, 9, 9 (x86)
+		Windows NT/2000/XP/2003
 
 	Additionally, we have unverified reports of success building
 	previous versions of BIND 9 from users of the following systems:
@@ -194,11 +198,11 @@ Building
 		Slackware Linux 7.x, 8.0
 	        Red Hat Linux 7.1
 		Debian GNU/Linux 2.2 and 3.0
+		Mandrake 8.1
 		OpenBSD 2.6, 2.8, 2.9
 		UnixWare 7.1.1
 		HP-UX 10.20
 		BSD/OS 4.2
-		OpenUNIX 8
 		Mac OS X 10.1
 
 	To build, just
@@ -217,7 +221,7 @@ Building
 
 	    CFLAGS
 		C compiler flags.  Defaults to include -g and/or -O2
-		as supported by the compiler.
+		as supported by the compiler.  
 
 	    STD_CINCLUDES
 		System header file directories.	 Can be used to specify
@@ -229,11 +233,14 @@ Building
 		Defaults to empty string.
 
 		Possible settings:
-		-DISC_RFC2535
-			Enable support RFC 2535 style DNSSEC.  This
-			is incompatable with the upcoming DS support
-			and SHOULD NOT be set unless you are currently
-			making use of it.
+		Change the default syslog facility of named/lwresd.
+		  -DISC_FACILITY=LOG_LOCAL0	
+		Enable DNSSEC signature chasing support in dig.
+		  -DDIG_SIGCHASE=1 (sets -DDIG_SIGCHASE_TD=1 and
+				    -DDIG_SIGCHASE_BU=1)
+
+	    LDFLAGS
+		Linker flags. Defaults to empty string.
 
 	To build shared libraries, specify "--with-libtool" on the
 	configure command line.
@@ -286,14 +293,14 @@ Building
 	Building with gcc is not supported, unless gcc is the vendor's usual
 	compiler (e.g. the various BSD systems, Linux).
 	
-	* gcc-3.2.1 and gcc-3.1.1 is known to cause problems with solaris-x86
-	  if the optimiser is enabled.  Use -O0 to disable the optimiser.
-	* gcc ultrasparc generates incorrect code at -02.
+	* gcc-3.2.1 and gcc-3.1.1 is known to cause problems with solaris-x86.
+	* gcc prior to gcc-3.2.3 ultrasparc generates incorrect code at -02.
 
 	A limited test suite can be run with "make test".  Many of
 	the tests require you to configure a set of virtual IP addresses
 	on your system, and some require Perl; see bin/tests/system/README
 	for details.
+
 
 Documentation
 
@@ -320,17 +327,13 @@ Bug Reports and Mailing Lists
 
 		bind9-bugs@isc.org
 
-	Configuration questions should be sent to the BIND 9 Users
-	mailing list.  Compilation questions should be sent to the
-	BIND 9 Users mailing list.
+	To join the BIND Users mailing list, send mail to
 
-	To join the BIND 9 Users mailing list, send mail to
+		bind-users-request@isc.org
 
-		bind9-users-request@isc.org
- 
 	archives of which can be found via
 
-		http://www.isc.org/ml-archives/
+		http://www.isc.org/ops/lists/
 
 	If you're planning on making changes to the BIND 9 source
 	code, you might want to join the BIND Workers mailing list.

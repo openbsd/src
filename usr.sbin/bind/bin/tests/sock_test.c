@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sock_test.c,v 1.47 2001/01/09 21:41:41 bwelling Exp $ */
+/* $ISC: sock_test.c,v 1.47.12.4 2004/08/28 06:25:32 marka Exp $ */
 
 #include <config.h>
 
@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/socket.h>
 #include <isc/timer.h>
@@ -82,12 +83,12 @@ my_recv(isc_task_t *task, isc_event_t *event) {
 	       dev->n, dev->result);
 	if (dev->address.type.sa.sa_family == AF_INET6) {
 		inet_ntop(AF_INET6, &dev->address.type.sin6.sin6_addr,
-			  host, sizeof (host));
+			  host, sizeof(host));
 		printf("\tFrom: %s port %d\n", host,
 		       ntohs(dev->address.type.sin6.sin6_port));
 	} else {
 		inet_ntop(AF_INET, &dev->address.type.sin.sin_addr,
-			  host, sizeof (host));
+			  host, sizeof(host));
 		printf("\tFrom: %s port %d\n", host,
 		       ntohs(dev->address.type.sin.sin_port));
 	}
@@ -111,10 +112,10 @@ my_recv(isc_task_t *task, isc_event_t *event) {
 		region = dev->region;
 		snprintf(buf, sizeof(buf), "\r\nReceived: %.*s\r\n\r\n",
 			(int)dev->n, (char *)region.base);
-		len = strlen(buf) + 1;
-		region.base = isc_mem_get(mctx, len);
-		region.length = len;
-		strlcpy((char *)region.base, buf, len);
+		len = strlen(buf);
+		region.base = isc_mem_get(mctx, len + 1);
+		region.length = len + 1;
+		strlcpy((char *)region.base, buf, region.length);
 		isc_socket_send(sock, &region, task, my_send, event->ev_arg);
 	} else {
 		region = dev->region;
@@ -180,10 +181,10 @@ my_connect(isc_task_t *task, isc_event_t *event) {
 	 */
 	strlcpy(buf, "GET / HTTP/1.1\r\nHost: www.flame.org\r\n"
 	       "Connection: Close\r\n\r\n", sizeof(buf));
-	len = strlen(buf) + 1;
-	region.base = isc_mem_get(mctx, len);
-	region.length = len;
-	strlcpy((char *)region.base, buf, len);
+	len = strlen(buf);
+	region.base = isc_mem_get(mctx, len + 1);
+	region.length = len + 1;
+	strlcpy((char *)region.base, buf, region.length);
 
 	isc_socket_send(sock, &region, task, my_http_get, event->ev_arg);
 

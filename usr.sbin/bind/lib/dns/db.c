@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: db.c,v 1.69.2.3 2003/10/09 07:32:36 marka Exp $ */
+/* $ISC: db.c,v 1.69.2.1.10.4 2004/03/08 02:07:52 marka Exp $ */
 
 /***
  *** Imports
@@ -446,7 +446,7 @@ dns_db_find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	 */
 
 	REQUIRE(DNS_DB_VALID(db));
-	REQUIRE(type != dns_rdatatype_sig);
+	REQUIRE(type != dns_rdatatype_rrsig);
 	REQUIRE(nodep == NULL || (nodep != NULL && *nodep == NULL));
 	REQUIRE(dns_name_hasbuffer(foundname));
 	REQUIRE(rdataset == NULL ||
@@ -575,7 +575,7 @@ dns_db_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	REQUIRE(node != NULL);
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(! dns_rdataset_isassociated(rdataset));
-	REQUIRE(covers == 0 || type == dns_rdatatype_sig);
+	REQUIRE(covers == 0 || type == dns_rdatatype_rrsig);
 	REQUIRE(type != dns_rdatatype_any);
 	REQUIRE(sigrdataset == NULL ||
 		(DNS_RDATASET_VALID(sigrdataset) &&
@@ -728,6 +728,13 @@ dns_db_nodecount(dns_db_t *db) {
 	REQUIRE(DNS_DB_VALID(db));
 
 	return ((db->methods->nodecount)(db));
+}
+
+void
+dns_db_settask(dns_db_t *db, isc_task_t *task) {
+	REQUIRE(DNS_DB_VALID(db));
+
+	(db->methods->settask)(db, task);
 }
 
 isc_result_t

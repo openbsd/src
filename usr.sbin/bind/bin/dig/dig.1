@@ -1,25 +1,26 @@
-.\"
-.\" Copyright (C) 2000, 2001  Internet Software Consortium.
+.\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000-2003  Internet Software Consortium.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-.\" DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-.\" INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-.\" FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-.\" NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-.\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+.\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+.\" LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+.\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" $ISC: dig.1,v 1.14.2.4.2.6 2004/06/23 09:11:01 marka Exp $
 .\"
 .TH "DIG" "1" "Jun 30, 2000" "BIND9" ""
 .SH NAME
 dig \- DNS lookup utility
 .SH SYNOPSIS
 .sp
-\fBdig\fR [ \fB@server\fR ]  [ \fB-b \fIaddress\fB\fR ]  [ \fB-c \fIclass\fB\fR ]  [ \fB-f \fIfilename\fB\fR ]  [ \fB-k \fIfilename\fB\fR ]  [ \fB-p \fIport#\fB\fR ]  [ \fB-t \fItype\fB\fR ]  [ \fB-x \fIaddr\fB\fR ]  [ \fB-y \fIname:key\fB\fR ]  [ \fBname\fR ]  [ \fBtype\fR ]  [ \fBclass\fR ]  [ \fBqueryopt\fR\fI...\fR ] 
+\fBdig\fR [ \fB@server\fR ]  [ \fB-b \fIaddress\fB\fR ]  [ \fB-c \fIclass\fB\fR ]  [ \fB-f \fIfilename\fB\fR ]  [ \fB-k \fIfilename\fB\fR ]  [ \fB-p \fIport#\fB\fR ]  [ \fB-t \fItype\fB\fR ]  [ \fB-x \fIaddr\fB\fR ]  [ \fB-y \fIname:key\fB\fR ]  [ \fB-4\fR ]  [ \fB-6\fR ]  [ \fBname\fR ]  [ \fBtype\fR ]  [ \fBclass\fR ]  [ \fBqueryopt\fR\fI...\fR ] 
 .sp
 \fBdig\fR [ \fB-h\fR ] 
 .sp
@@ -49,9 +50,9 @@ Unless it is told to query a specific name server,
 When no command line arguments or options are given, will perform an
 NS query for "." (the root).
 .PP
-It is possible to set per user defaults for \fBdig\fR via
+It is possible to set per-user defaults for \fBdig\fR via
 \fI${HOME}/.digrc\fR. This file is read and any options in it
-are applied before the command line arguements.
+are applied before the command line arguments.
 .SH "SIMPLE USAGE"
 .PP
 A typical invocation of \fBdig\fR looks like:
@@ -86,7 +87,8 @@ ANY, A, MX, SIG, etc.
 .PP
 The \fB-b\fR option sets the source IP address of the query
 to \fIaddress\fR. This must be a valid address on
-one of the host's network interfaces.
+one of the host's network interfaces or "0.0.0.0" or "::". An optional port
+may be specified by appending "#<port>"
 .PP
 The default query class (IN for internet) is overridden by the
 \fB-c\fR option. \fIclass\fR is any valid
@@ -105,6 +107,10 @@ the port number that \fBdig\fR will send its queries
 instead of the standard DNS port number 53. This option would be used
 to test a name server that has been configured to listen for queries
 on a non-standard port number.
+.PP
+The \fB-4\fR option forces \fBdig\fR to only
+use IPv4 query transport. The \fB-6\fR option forces
+\fBdig\fR to only use IPv6 query transport.
 .PP
 The \fB-t\fR option sets the query type to
 \fItype\fR. It can be any valid query type which is
@@ -126,9 +132,10 @@ When this option is used, there is no need to provide the
 automatically performs a lookup for a name like
 11.12.13.10.in-addr.arpa and sets the query type and
 class to PTR and IN respectively. By default, IPv6 addresses are
-looked up using the IP6.ARPA domain and binary labels as defined in
-RFC2874. To use the older RFC1886 method using the IP6.INT domain and
-"nibble" labels, specify the \fB-n\fR (nibble) option.
+looked up using nibble format under the IP6.ARPA domain.
+To use the older RFC1886 method using the IP6.INT domain 
+specify the \fB-i\fR option. Bit string labels (RFC2874)
+are now experimental and are not attempted.
 .PP
 To sign the DNS queries sent by \fBdig\fR and their
 responses using transaction signatures (TSIG), specify a TSIG key file
@@ -190,9 +197,10 @@ The search list is not used by default.
 Deprecated, treated as a synonym for \fI+[no]search\fR
 .TP
 \fB+[no]aaonly\fR
-This option does nothing. It is provided for compatibility with old
-versions of \fBdig\fR where it set an unimplemented
-resolver flag.
+Sets the "aa" flag in the query.
+.TP
+\fB+[no]aaflag\fR
+A synonym for \fI+[no]aaonly\fR.
 .TP
 \fB+[no]adflag\fR
 Set [do not set] the AD (authentic data) bit in the query. The AD bit
@@ -203,6 +211,12 @@ completeness.
 \fB+[no]cdflag\fR
 Set [do not set] the CD (checking disabled) bit in the query. This
 requests the server to not perform DNSSEC validation of responses.
+.TP
+\fB+[no]cl\fR
+Display [do not display] the CLASS when printing the record.
+.TP
+\fB+[no]ttlid\fR
+Display [do not display] the TTL when printing the record.
 .TP
 \fB+[no]recurse\fR
 Toggle the setting of the RD (recursion desired) bit in the query.
@@ -279,10 +293,16 @@ An attempt to set \fIT\fR to less than 1 will result
 in a query timeout of 1 second being applied.
 .TP
 \fB+tries=T\fR
-Sets the number of times to retry UDP queries to server to
+Sets the number of times to try UDP queries to server to
 \fIT\fR instead of the default, 3. If
 \fIT\fR is less than or equal to zero, the number of
-retries is silently rounded up to 1.
+tries is silently rounded up to 1.
+.TP
+\fB+retry=T\fR
+Sets the number of times to retry UDP queries to server to
+\fIT\fR instead of the default, 2. Unlike
+\fI+tries\fR, this does not include the initial
+query.
 .TP
 \fB+ndots=D\fR
 Set the number of dots that have to appear in
@@ -318,6 +338,18 @@ The default is to not display malformed answers.
 \fB+[no]dnssec\fR
 Requests DNSSEC records be sent by setting the DNSSEC OK bit (DO)
 in the OPT record in the additional section of the query.
+.TP
+\fB+[no]sigchase\fR
+Chase DNSSEC signature chains. Requires dig be compiled with
+-DDIG_SIGCHASE.
+.TP
+\fB+trusted-key=####\fR
+Specify a trusted key to be used with \fB+sigchase\fR.
+Requires dig be compiled with -DDIG_SIGCHASE.
+.TP
+\fB+[no]topdown\fR
+When chasing DNSSEC signature chains perform a top down validation.
+Requires dig be compiled with -DDIG_SIGCHASE.
 .SH "MULTIPLE QUERIES"
 .PP
 The BIND 9 implementation of \fBdig \fR supports
@@ -362,6 +394,7 @@ isc.org.
 .PP
 \fBhost\fR(1),
 \fBnamed\fR(8),
+\fBdnssec-keygen\fR(8),
 \fIRFC1035\fR.
 .SH "BUGS"
 .PP

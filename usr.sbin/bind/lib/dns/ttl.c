@@ -1,29 +1,31 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: ttl.c,v 1.21 2001/01/09 21:51:41 bwelling Exp $ */
+/* $ISC: ttl.c,v 1.21.12.5 2004/03/08 09:04:32 marka Exp $ */
 
 #include <config.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
+#include <isc/parseint.h>
 #include <isc/print.h>
 #include <isc/region.h>
 #include <isc/string.h>
@@ -60,7 +62,7 @@ ttlfmt(unsigned int t, const char *s, isc_boolean_t verbose,
 	else
 		len = snprintf(tmp, sizeof(tmp), "%u%c", t, s[0]);
 
-	INSIST(len + 1 <= sizeof tmp);
+	INSIST(len + 1 <= sizeof(tmp));
 	isc_buffer_availableregion(target, &region);
 	if (len > region.length)
 		return (ISC_R_NOSPACE);
@@ -145,9 +147,10 @@ dns_ttl_fromtext(isc_textregion_t *source, isc_uint32_t *ttl) {
 static isc_result_t
 bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl) {
 	isc_uint32_t tmp = 0;
-	unsigned long n;
-	char *e, *s;
+	isc_uint32_t n;
+	char *s;
 	char buf[64];
+	char nbuf[64]; /* Number buffer */
 
 	/*
 	 * Copy the buffer as it may not be NULL terminated.
@@ -159,46 +162,52 @@ bind_ttl(isc_textregion_t *source, isc_uint32_t *ttl) {
 	s = buf;
 
 	do {
-		n = strtoul(s, &e, 10);
-		if (s == e)
+		isc_result_t result;
+
+		char *np = nbuf;
+		while (*s != '\0' && isdigit((unsigned char)*s))
+			*np++ = *s++;
+		*np++ = '\0';
+		INSIST(np - nbuf <= (int)sizeof(nbuf));
+		result = isc_parse_uint32(&n, nbuf, 10);
+		if (result != ISC_R_SUCCESS)
 			return (DNS_R_SYNTAX);
-		switch (*e) {
+		switch (*s) {
 		case 'w':
 		case 'W':
 			tmp += n * 7 * 24 * 3600;
-			s = e + 1;
+			s++;
 			break;
 		case 'd':
 		case 'D':
 			tmp += n * 24 * 3600;
-			s = e + 1;
+			s++;
 			break;
 		case 'h':
 		case 'H':
 			tmp += n * 3600;
-			s = e + 1;
+			s++;
 			break;
 		case 'm':
 		case 'M':
 			tmp += n * 60;
-			s = e + 1;
+			s++;
 			break;
 		case 's':
 		case 'S':
 			tmp += n;
-			s = e + 1;
+			s++;
 			break;
 		case '\0':
 			/* Plain number? */
 			if (tmp != 0)
 				return (DNS_R_SYNTAX);
 			tmp = n;
-			s = e;
 			break;
 		default:
 			return (DNS_R_SYNTAX);
 		}
-	} while (*s != 0);
+	} while (*s != '\0');
 	*ttl = tmp;
 	return (ISC_R_SUCCESS);
 }

@@ -1,35 +1,71 @@
 /*
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: file.c,v 1.38 2001/07/16 18:33:01 gson Exp $ */
+/*
+ * Portions Copyright (c) 1987, 1993
+ *      The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/* $ISC: file.c,v 1.38.12.8 2004/03/16 05:50:25 marka Exp $ */
 
 #include <config.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <time.h>		/* Required for utimes on some platforms. */
 #include <unistd.h>		/* Required for mkstemp on NetBSD. */
+
 
 #include <sys/stat.h>
 #include <sys/time.h>
 
 #include <isc/dir.h>
 #include <isc/file.h>
+#include <isc/random.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
@@ -115,7 +151,6 @@ isc_file_settime(const char *file, isc_time_t *time) {
 		return (isc__errno2result(errno));
 
 	return (ISC_R_SUCCESS);
-
 }
 
 #undef TEMPLATE
@@ -157,57 +192,102 @@ isc_file_template(const char *path, const char *templet, char *buf,
 	return (ISC_R_SUCCESS);
 }
 
+static char alphnum[] =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
 isc_result_t
 isc_file_renameunique(const char *file, char *templet) {
-	int fd = -1;
-	int res = 0;
-	isc_result_t result = ISC_R_SUCCESS;
+	char *x;
+	char *cp;
+	isc_uint32_t which;
 
 	REQUIRE(file != NULL);
 	REQUIRE(templet != NULL);
 
-	fd = mkstemp(templet);
-	if (fd == -1) {
-		result = isc__errno2result(errno);
+	cp = templet;
+	while (*cp != '\0')
+		cp++;
+	if (cp == templet)
+		return (ISC_R_FAILURE);
+
+	x = cp--;
+	while (cp >= templet && *cp == 'X') {
+		isc_random_get(&which);
+		*cp = alphnum[which % (sizeof(alphnum) - 1)];
+		x = cp--;
 	}
-	if (result == ISC_R_SUCCESS) {
-		res = rename(file, templet);
-		if (res != 0) {
-			result = isc__errno2result(errno);
-			(void)unlink(templet);
+	while (link(file, templet) == -1) {
+		if (errno != EEXIST)
+			return (isc__errno2result(errno));
+		for (cp = x;;) {
+			char *t;
+			if (*cp == '\0')
+				return (ISC_R_FAILURE);
+			t = strchr(alphnum, *cp);
+			if (t == NULL || *++t == '\0')
+				*cp++ = alphnum[0];
+			else {
+				*cp = *t;
+				break;
+			}
 		}
 	}
-	if (fd != -1)
-		close(fd);
-	return (result);
+	(void)unlink(file);
+	return (ISC_R_SUCCESS);
 }
+
 
 isc_result_t
 isc_file_openunique(char *templet, FILE **fp) {
 	int fd;
 	FILE *f;
 	isc_result_t result = ISC_R_SUCCESS;
+	char *x;
+	char *cp;
+	isc_uint32_t which;
+	int mode;
 
 	REQUIRE(templet != NULL);
 	REQUIRE(fp != NULL && *fp == NULL);
 
-	/*
-	 * Win32 does not have mkstemp.
-	 */
-	fd = mkstemp(templet);
+	cp = templet;
+	while (*cp != '\0')
+		cp++;
+	if (cp == templet)
+		return (ISC_R_FAILURE);
 
-	if (fd == -1)
-		result = isc__errno2result(errno);
-	if (result == ISC_R_SUCCESS) {
-		f = fdopen(fd, "w+");
-		if (f == NULL) {
-			result = isc__errno2result(errno);
-			(void)remove(templet);
-			(void)close(fd);
-
-		} else
-			*fp = f;
+	x = cp--;
+	while (cp >= templet && *cp == 'X') {
+		isc_random_get(&which);
+		*cp = alphnum[which % (sizeof(alphnum) - 1)];
+		x = cp--;
 	}
+
+	mode = S_IWUSR|S_IRUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+
+	while ((fd = open(templet, O_RDWR|O_CREAT|O_EXCL, mode)) == -1) {
+		if (errno != EEXIST)
+			return (isc__errno2result(errno));
+		for (cp = x;;) {
+			char *t;
+			if (*cp == '\0')
+				return (ISC_R_FAILURE);
+			t = strchr(alphnum, *cp);
+			if (t == NULL || *++t == '\0')
+				*cp++ = alphnum[0];
+			else {
+				*cp = *t;
+				break;
+			}
+		}
+	}
+	f = fdopen(fd, "w+");
+	if (f == NULL) {
+		result = isc__errno2result(errno);
+		(void)remove(templet);
+		(void)close(fd);
+	} else
+		*fp = f;
 
 	return (result);
 }
@@ -301,14 +381,54 @@ isc_file_progname(const char *filename, char *buf, size_t buflen) {
 	return (ISC_R_SUCCESS);
 }
 
+/*
+ * Put the absolute name of the current directory into 'dirname', which is
+ * a buffer of at least 'length' characters.  End the string with the 
+ * appropriate path separator, such that the final product could be
+ * concatenated with a relative pathname to make a valid pathname string.
+ */
+static isc_result_t
+dir_current(char *dirname, size_t length) {
+	char *cwd;
+	isc_result_t result = ISC_R_SUCCESS;
+
+	REQUIRE(dirname != NULL);
+	REQUIRE(length > 0U);
+
+	cwd = getcwd(dirname, length);
+
+	if (cwd == NULL) {
+		if (errno == ERANGE)
+			result = ISC_R_NOSPACE;
+		else
+			result = isc__errno2result(errno);
+	} else {
+		if (strlen(dirname) + 1 == length)
+			result = ISC_R_NOSPACE;
+		else if (dirname[1] != '\0')
+			strlcat(dirname, "/", length);
+	}
+
+	return (result);
+}
+
 isc_result_t
 isc_file_absolutepath(const char *filename, char *path, size_t pathlen) {
 	isc_result_t result;
-	result = isc_dir_current(path, pathlen, ISC_TRUE);
+	result = dir_current(path, pathlen);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 	if (strlen(path) + strlen(filename) + 1 > pathlen)
 		return (ISC_R_NOSPACE);
 	strlcat(path, filename, pathlen);
 	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_truncate(const char *filename, isc_offset_t size) {
+	isc_result_t result = ISC_R_SUCCESS;
+
+	if (truncate(filename, size) < 0) 
+		result = isc__errno2result(errno);
+	return (result);
 }

@@ -1,22 +1,22 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
- * $ISC: tsig.c,v 1.112.2.3 2002/03/26 00:55:01 marka Exp $
+ * $ISC: tsig.c,v 1.112.2.3.8.4 2004/03/08 09:04:32 marka Exp $
  */
 
 #include <config.h>
@@ -79,7 +79,7 @@ static dns_name_t gsstsig = {
 	{NULL, NULL}
 };
 
-dns_name_t *dns_tsig_gssapi_name = &gsstsig;
+LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_gssapi_name = &gsstsig;
 
 /* It's nice of Microsoft to conform to their own standard. */
 static unsigned char gsstsigms_ndata[] = "\003gss\011microsoft\003com";
@@ -94,7 +94,7 @@ static dns_name_t gsstsigms = {
 	{NULL, NULL}
 };
 
-dns_name_t *dns_tsig_gssapims_name = &gsstsigms;
+LIBDNS_EXTERNAL_DATA dns_name_t *dns_tsig_gssapims_name = &gsstsigms;
 
 static isc_result_t
 tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg);
@@ -146,7 +146,7 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 	ret = dns_name_dup(name, mctx, &tkey->name);
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_key;
-	dns_name_downcase(&tkey->name, &tkey->name, NULL);
+	(void)dns_name_downcase(&tkey->name, &tkey->name, NULL);
 
 	if (dns_name_equal(algorithm, DNS_TSIG_HMACMD5_NAME)) {
 		tkey->algorithm = DNS_TSIG_HMACMD5_NAME;
@@ -180,7 +180,8 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 		ret = dns_name_dup(algorithm, mctx, tkey->algorithm);
 		if (ret != ISC_R_SUCCESS)
 			goto cleanup_algorithm;
-		dns_name_downcase(tkey->algorithm, tkey->algorithm, NULL);
+		(void)dns_name_downcase(tkey->algorithm, tkey->algorithm,
+					NULL);
 	}
 
 	if (creator != NULL) {
@@ -597,7 +598,8 @@ dns_tsig_sign(dns_message_t *msg) {
 	if (ret != ISC_R_SUCCESS)
 		goto cleanup_owner;
 	dns_rdataset_init(dataset);
-	dns_rdatalist_tordataset(datalist, dataset);
+	RUNTIME_CHECK(dns_rdatalist_tordataset(datalist, dataset)
+		      == ISC_R_SUCCESS);
 	msg->tsig = dataset;
 	msg->tsigname = owner;
 

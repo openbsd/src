@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: sig_24.c,v 1.54.2.2 2003/10/09 07:32:43 marka Exp $ */
+/* $ISC: sig_24.c,v 1.54.2.1.2.7 2004/03/08 09:04:42 marka Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -24,7 +24,7 @@
 #ifndef RDATA_GENERIC_SIG_24_C
 #define RDATA_GENERIC_SIG_24_C
 
-#define RRTYPE_SIG_ATTRIBUTES (DNS_RDATATYPEATTR_DNSSEC)
+#define RRTYPE_SIG_ATTRIBUTES (0)
 
 static inline isc_result_t
 fromtext_sig(ARGS_FROMTEXT) {
@@ -51,7 +51,7 @@ fromtext_sig(ARGS_FROMTEXT) {
 				      ISC_FALSE));
 	result = dns_rdatatype_fromtext(&covered, &token.value.as_textregion);
 	if (result != ISC_R_SUCCESS && result != ISC_R_NOTIMPLEMENTED) {
-		i = strtol(token.value.as_pointer, &e, 10);
+		i = strtol(DNS_AS_STR(token), &e, 10);
 		if (i < 0 || i > 65535)
 			RETTOK(ISC_R_RANGE);
 		if (*e != 0)
@@ -90,7 +90,7 @@ fromtext_sig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	RETTOK(dns_time32_fromtext(token.value.as_pointer, &time_expire));
+	RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_expire));
 	RETERR(uint32_tobuffer(time_expire, target));
 
 	/*
@@ -98,7 +98,7 @@ fromtext_sig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	RETTOK(dns_time32_fromtext(token.value.as_pointer, &time_signed));
+	RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_signed));
 	RETERR(uint32_tobuffer(time_signed, target));
 
 	/*
@@ -116,7 +116,7 @@ fromtext_sig(ARGS_FROMTEXT) {
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
 	origin = (origin != NULL) ? origin : dns_rootname;
-	RETTOK(dns_name_fromtext(&name, &buffer, origin, downcase, target));
+	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
 	/*
 	 * Sig.
@@ -127,7 +127,7 @@ fromtext_sig(ARGS_FROMTEXT) {
 static inline isc_result_t
 totext_sig(ARGS_TOTEXT) {
 	isc_region_t sr;
-	char buf[sizeof "4294967295"];
+	char buf[sizeof("4294967295")];
 	dns_rdatatype_t covered;
 	unsigned long ttl;
 	unsigned long when;
@@ -154,7 +154,7 @@ totext_sig(ARGS_TOTEXT) {
 	if (dns_rdatatype_isknown(covered) && covered != 0) {
 		RETERR(dns_rdatatype_totext(covered, target));
 	} else {
-		char buf[sizeof "65535"];
+		char buf[sizeof("65535")];
 		snprintf(buf, sizeof(buf), "%u", covered);
 		RETERR(str_totext(buf, target));
 	}
@@ -267,7 +267,7 @@ fromwire_sig(ARGS_FROMWIRE) {
 	 * Signer.
 	 */
 	dns_name_init(&name, NULL);
-	RETERR(dns_name_fromwire(&name, source, dctx, downcase, target));
+	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 
 	/*
 	 * Sig.
@@ -335,7 +335,7 @@ compare_sig(ARGS_COMPARE) {
 	INSIST(r2.length > 18);
 	r1.length = 18;
 	r2.length = 18;
-	order = compare_region(&r1, &r2);
+	order = isc_region_compare(&r1, &r2);
 	if (order != 0)
 		return (order);
 
@@ -354,7 +354,7 @@ compare_sig(ARGS_COMPARE) {
 	isc_region_consume(&r1, name_length(&name1));
 	isc_region_consume(&r2, name_length(&name2));
 
-	return (compare_region(&r1, &r2));
+	return (isc_region_compare(&r1, &r2));
 }
 
 static inline isc_result_t
@@ -548,6 +548,31 @@ covers_sig(dns_rdata_t *rdata) {
 	type = uint16_fromregion(&r);
 
 	return (type);
+}
+
+static inline isc_boolean_t
+checkowner_sig(ARGS_CHECKOWNER) {
+
+	REQUIRE(type == 24);
+
+	UNUSED(name);
+	UNUSED(type);
+	UNUSED(rdclass);
+	UNUSED(wildcard);
+
+	return (ISC_TRUE);
+}
+
+static inline isc_boolean_t
+checknames_sig(ARGS_CHECKNAMES) {
+
+	REQUIRE(rdata->type == 24);
+
+	UNUSED(rdata);
+	UNUSED(owner);
+	UNUSED(bad);
+
+	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_GENERIC_SIG_24_C */

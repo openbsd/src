@@ -1,25 +1,26 @@
-.\"
-.\" Copyright (C) 2000, 2001  Internet Software Consortium.
+.\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-.\" DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-.\" INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-.\" FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-.\" NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-.\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+.\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+.\" LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+.\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" $ISC: named.8,v 1.17.208.3 2004/06/03 05:35:47 marka Exp $
 .\"
 .TH "NAMED" "8" "June 30, 2000" "BIND9" ""
 .SH NAME
 named \- Internet domain name server
 .SH SYNOPSIS
 .sp
-\fBnamed\fR [ \fB-c \fIconfig-file\fB\fR ]  [ \fB-d \fIdebug-level\fB\fR ]  [ \fB-f\fR ]  [ \fB-g\fR ]  [ \fB-n \fI#cpus\fB\fR ]  [ \fB-p \fIport\fB\fR ]  [ \fB-s\fR ]  [ \fB-t \fIdirectory\fB\fR ]  [ \fB-u \fIuser\fB\fR ]  [ \fB-v\fR ]  [ \fB-x \fIcache-file\fB\fR ] 
+\fBnamed\fR [ \fB-4\fR ]  [ \fB-6\fR ]  [ \fB-c \fIconfig-file\fB\fR ]  [ \fB-d \fIdebug-level\fB\fR ]  [ \fB-f\fR ]  [ \fB-g\fR ]  [ \fB-n \fI#cpus\fB\fR ]  [ \fB-p \fIport\fB\fR ]  [ \fB-s\fR ]  [ \fB-t \fIdirectory\fB\fR ]  [ \fB-u \fIuser\fB\fR ]  [ \fB-v\fR ]  [ \fB-x \fIcache-file\fB\fR ] 
 .SH "DESCRIPTION"
 .PP
 \fBnamed\fR is a Domain Name System (DNS) server,
@@ -35,6 +36,16 @@ data, and listen for queries. The privileged process
 will communicate with the child and bind to privileged
 ports on its behalf. See CAVEATS section below.
 .SH "OPTIONS"
+.TP
+\fB-4\fR
+Use IPv4 only even if the host machine is capable of IPv6.
+\fB-4\fR and \fB-6\fR are mutually
+exclusive.
+.TP
+\fB-6\fR
+Use IPv6 only even if the host machine is capable of IPv4.
+\fB-4\fR and \fB-6\fR are mutually
+exclusive.
 .TP
 \fB-c \fIconfig-file\fB\fR
 Use \fIconfig-file\fR as the
@@ -156,7 +167,7 @@ The default process-id file.
 \fIBIND 9 Administrator Reference Manual\fR.
 .SH "AUTHOR"
 .PP
-Internet Software Consortium
+Internet Systems Consortium
 .SH "CAVEATS"
 \fBnamed\fR runs privilege separated for binding
 the privileged ports after an interface or address

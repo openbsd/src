@@ -1,3 +1,4 @@
+Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
@@ -242,4 +243,4 @@ necessary, the umask should be set explicitly in the script used to
 start the named process.
 
 
-$ISC: migration,v 1.37.2.4 2003/09/02 02:20:15 marka Exp $
+$ISC: migration,v 1.37.2.3.2.2 2004/03/06 13:16:19 marka Exp $

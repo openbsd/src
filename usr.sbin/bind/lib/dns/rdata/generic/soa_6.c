@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1998-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: soa_6.c,v 1.53 2001/07/30 01:09:10 marka Exp $ */
+/* $ISC: soa_6.c,v 1.53.12.6 2004/03/08 09:04:42 marka Exp $ */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -31,6 +31,7 @@ fromtext_soa(ARGS_FROMTEXT) {
 	isc_buffer_t buffer;
 	int i;
 	isc_uint32_t n;
+	isc_boolean_t ok;
 
 	REQUIRE(type == 6);
 
@@ -40,7 +41,7 @@ fromtext_soa(ARGS_FROMTEXT) {
 
 	origin = (origin != NULL) ? origin : dns_rootname;
 
-	for (i = 0 ; i < 2 ; i++) {
+	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string,
 					      ISC_FALSE));
@@ -48,7 +49,22 @@ fromtext_soa(ARGS_FROMTEXT) {
 		dns_name_init(&name, NULL);
 		buffer_fromregion(&buffer, &token.value.as_region);
 		RETTOK(dns_name_fromtext(&name, &buffer, origin,
-					 downcase, target));
+					 options, target));
+		ok = ISC_TRUE;
+		if ((options & DNS_RDATA_CHECKNAMES) != 0)
+			switch (i) {
+			case 0:
+				ok = dns_name_ishostname(&name, ISC_FALSE);
+				break;
+			case 1:
+				ok = dns_name_ismailbox(&name);
+				break;
+
+			}
+		if (!ok && (options & DNS_RDATA_CHECKNAMESFAIL) != 0)
+			RETTOK(DNS_R_BADNAME);
+		if (!ok && callbacks != NULL)
+			warn_badname(&name, lexer, callbacks);
 	}
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
@@ -111,14 +127,14 @@ totext_soa(ARGS_TOTEXT) {
 		RETERR(str_totext(" (" , target));
 	RETERR(str_totext(tctx->linebreak, target));
 
-	for (i = 0; i < 5 ; i++) {
-		char buf[sizeof "2147483647"];
+	for (i = 0; i < 5; i++) {
+		char buf[sizeof("2147483647")];
 		unsigned long num;
 		unsigned int numlen;
 		num = uint32_fromregion(&dregion);
 		isc_region_consume(&dregion, 4);
 		numlen = snprintf(buf, sizeof(buf), "%lu", num);
-		INSIST(numlen > 0 && numlen < sizeof "2147483647");
+		INSIST(numlen > 0 && numlen < sizeof("2147483647"));
 		RETERR(str_totext(buf, target));
 		if (multiline && comment) {
 			RETERR(str_totext("           ; " + numlen, target));
@@ -158,8 +174,8 @@ fromwire_soa(ARGS_FROMWIRE) {
         dns_name_init(&mname, NULL);
         dns_name_init(&rname, NULL);
 
-        RETERR(dns_name_fromwire(&mname, source, dctx, downcase, target));
-        RETERR(dns_name_fromwire(&rname, source, dctx, downcase, target));
+        RETERR(dns_name_fromwire(&mname, source, dctx, options, target));
+        RETERR(dns_name_fromwire(&rname, source, dctx, options, target));
 
 	isc_buffer_activeregion(source, &sregion);
 	isc_buffer_availableregion(target, &tregion);
@@ -255,7 +271,7 @@ compare_soa(ARGS_COMPARE) {
 	isc_region_consume(&region1, name_length(&name1));
 	isc_region_consume(&region2, name_length(&name2));
 
-	return (compare_region(&region1, &region2));
+	return (isc_region_compare(&region1, &region2));
 }
 
 static inline isc_result_t
@@ -382,6 +398,46 @@ digest_soa(ARGS_DIGEST) {
 	isc_region_consume(&r, name_length(&name));
 
 	return ((digest)(arg, &r));
+}
+
+static inline isc_boolean_t
+checkowner_soa(ARGS_CHECKOWNER) {
+
+	REQUIRE(type == 6);
+
+	UNUSED(name);
+	UNUSED(type);
+	UNUSED(rdclass);
+	UNUSED(wildcard);
+
+	return (ISC_TRUE);
+}
+
+static inline isc_boolean_t
+checknames_soa(ARGS_CHECKNAMES) {
+	isc_region_t region;
+	dns_name_t name;
+
+	REQUIRE(rdata->type == 6);
+
+	UNUSED(owner);
+
+	dns_rdata_toregion(rdata, &region);
+	dns_name_init(&name, NULL);
+	dns_name_fromregion(&name, &region);
+	if (!dns_name_ishostname(&name, ISC_FALSE)) {
+		if (bad != NULL)
+			dns_name_clone(&name, bad);
+		return (ISC_FALSE);
+	}
+	isc_region_consume(&region, name_length(&name));
+	dns_name_fromregion(&name, &region);
+	if (!dns_name_ismailbox(&name)) {
+		if (bad != NULL)
+			dns_name_clone(&name, bad);
+		return (ISC_FALSE);
+	}
+	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_GENERIC_SOA_6_C */

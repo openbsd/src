@@ -1,27 +1,30 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
- - 
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2001  Internet Software Consortium.
+ -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
+
+<!-- $ISC: rndc.html,v 1.7.2.1.4.3 2004/08/22 23:39:00 marka Exp $ -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >rndc</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -32,10 +35,10 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
+></A
 ><SPAN
 CLASS="APPLICATION"
 >rndc</SPAN
-></A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
@@ -59,49 +62,39 @@ NAME="AEN13"
 ><B
 CLASS="COMMAND"
 >rndc</B
->  [<TT
+>  [<VAR
 CLASS="OPTION"
->-c <TT
+>-c <VAR
 CLASS="REPLACEABLE"
-><I
->config-file</I
-></TT
-></TT
->] [<TT
+>config-file</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-k <TT
+>-k <VAR
 CLASS="REPLACEABLE"
-><I
->key-file</I
-></TT
-></TT
->] [<TT
+>key-file</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-s <TT
+>-s <VAR
 CLASS="REPLACEABLE"
-><I
->server</I
-></TT
-></TT
->] [<TT
+>server</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-p <TT
+>-p <VAR
 CLASS="REPLACEABLE"
-><I
->port</I
-></TT
-></TT
->] [<TT
+>port</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-V</TT
->] [<TT
+>-V</VAR
+>] [<VAR
 CLASS="OPTION"
->-y <TT
+>-y <VAR
 CLASS="REPLACEABLE"
-><I
->key_id</I
-></TT
-></TT
+>key_id</VAR
+></VAR
 >] {command}</P
 ></DIV
 ><DIV
@@ -172,19 +165,15 @@ NAME="AEN46"
 CLASS="VARIABLELIST"
 ><DL
 ><DT
->-c <TT
+>-c <VAR
 CLASS="REPLACEABLE"
-><I
->config-file</I
-></TT
+>config-file</VAR
 ></DT
 ><DD
 ><P
->	      Use <TT
+>	      Use <VAR
 CLASS="REPLACEABLE"
-><I
->config-file</I
-></TT
+>config-file</VAR
 >
 	      as the configuration file instead of the default,
 	      <TT
@@ -194,19 +183,15 @@ CLASS="FILENAME"
 	  </P
 ></DD
 ><DT
->-k <TT
+>-k <VAR
 CLASS="REPLACEABLE"
-><I
->key-file</I
-></TT
+>key-file</VAR
 ></DT
 ><DD
 ><P
->	      Use <TT
+>	      Use <VAR
 CLASS="REPLACEABLE"
-><I
->key-file</I
-></TT
+>key-file</VAR
 >
 	      as the key file instead of the default,
 	      <TT
@@ -217,29 +202,23 @@ CLASS="FILENAME"
 CLASS="FILENAME"
 >/etc/rndc.key</TT
 > will be used to authenticate
-	      commands sent to the server if the <TT
+	      commands sent to the server if the <VAR
 CLASS="REPLACEABLE"
-><I
->config-file</I
-></TT
+>config-file</VAR
 >
 	      does not exist.
 	  </P
 ></DD
 ><DT
->-s <TT
+>-s <VAR
 CLASS="REPLACEABLE"
-><I
->server</I
-></TT
+>server</VAR
 ></DT
 ><DD
 ><P
->	       <TT
+>	       <VAR
 CLASS="REPLACEABLE"
-><I
->server</I
-></TT
+>server</VAR
 > is
 	       the name or address of the server which matches a
 	       server statement in the configuration file for
@@ -253,20 +232,16 @@ CLASS="COMMAND"
 	  </P
 ></DD
 ><DT
->-p <TT
+>-p <VAR
 CLASS="REPLACEABLE"
-><I
->port</I
-></TT
+>port</VAR
 ></DT
 ><DD
 ><P
 >	       Send commands to TCP port
-	       <TT
+	       <VAR
 CLASS="REPLACEABLE"
-><I
->port</I
-></TT
+>port</VAR
 > instead
 	       of BIND 9's default control channel port, 953.
 	  </P
@@ -279,34 +254,26 @@ CLASS="REPLACEABLE"
 	  </P
 ></DD
 ><DT
->-y <TT
+>-y <VAR
 CLASS="REPLACEABLE"
-><I
->keyid</I
-></TT
+>keyid</VAR
 ></DT
 ><DD
 ><P
->	       Use the key <TT
+>	       Use the key <VAR
 CLASS="REPLACEABLE"
-><I
->keyid</I
-></TT
+>keyid</VAR
 >
 	       from the configuration file.
-	       <TT
+	       <VAR
 CLASS="REPLACEABLE"
-><I
->keyid</I
-></TT
+>keyid</VAR
 > must be
 	       known by named with the same algorithm and secret string
 	       in order for control message validation to succeed.
-	       If no <TT
+	       If no <VAR
 CLASS="REPLACEABLE"
-><I
->keyid</I
-></TT
+>keyid</VAR
 >
 	       is specified, <B
 CLASS="COMMAND"
@@ -354,9 +321,9 @@ CLASS="COMMAND"
     </P
 ><P
 >        There is currently no way to provide the shared secret for a
-        <TT
+        <VAR
 CLASS="OPTION"
->key_id</TT
+>key_id</VAR
 > without using the configuration file.
     </P
 ><P
@@ -413,7 +380,7 @@ NAME="AEN118"
 ><H2
 >AUTHOR</H2
 ><P
->        Internet Software Consortium
+>        Internet Systems Consortium
     </P
 ></DIV
 ></BODY

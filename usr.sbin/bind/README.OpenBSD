@@ -1,18 +1,11 @@
-$OpenBSD: README.OpenBSD,v 1.7 2004/03/24 07:59:07 deraadt Exp $
+$OpenBSD: README.OpenBSD,v 1.8 2004/09/28 17:14:01 jakob Exp $
 
 additional features
 
-- call tzset before chroot
-- open /dev/null before chroot
 - write pid-file before chroot
 - privilege separation for binding to privileged ports from within chroot
-- arc4random() support (integrated in 9.3.0-snapshot)
-- fall back to system default random device when running chroot
 - add LCG (Linear Congruential Generator) implementation to libisc
 - use LCG instead of LFSR for ID generation until LFSR is proven reliable
-- IPv{4,6} query transport selection for dig(1)
-- add nslookup(8) manpage
-- add support for SSHFP resource records
 - strlcpy/strlcat/snprintf fixes
 
 default parameter changes

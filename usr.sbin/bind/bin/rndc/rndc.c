@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rndc.c,v 1.77.2.5 2003/07/22 04:03:37 marka Exp $ */
+/* $ISC: rndc.c,v 1.77.2.5.2.12.6.1 2004/09/20 01:00:01 marka Exp $ */
 
 /*
  * Principal Author: DCL
@@ -31,7 +31,6 @@
 #include <isc/file.h>
 #include <isc/log.h>
 #include <isc/mem.h>
-#include <isc/netdb.h>
 #include <isc/random.h>
 #include <isc/socket.h>
 #include <isc/stdtime.h>
@@ -40,7 +39,7 @@
 #include <isc/thread.h>
 #include <isc/util.h>
 
-#include <isccfg/cfg.h>
+#include <isccfg/namedconf.h>
 
 #include <isccc/alist.h>
 #include <isccc/base64.h>
@@ -51,21 +50,11 @@
 #include <isccc/types.h>
 #include <isccc/util.h>
 
+#include <bind9/getaddresses.h>
+
 #include "util.h"
 
-#ifdef HAVE_ADDRINFO
-#ifdef HAVE_GETADDRINFO
-#ifdef HAVE_GAISTRERROR
-#define USE_GETADDRINFO
-#endif
-#endif
-#endif
-
-#ifndef USE_GETADDRINFO
-#ifndef ISC_PLATFORM_NONSTDHERRNO
-extern int h_errno;
-#endif
-#endif
+#define SERVERADDRS 10
 
 char *progname;
 isc_boolean_t verbose;
@@ -74,6 +63,9 @@ static const char *admin_conffile;
 static const char *admin_keyfile;
 static const char *version = VERSION;
 static const char *servername = NULL;
+static isc_sockaddr_t serveraddrs[SERVERADDRS];
+static int nserveraddrs;
+static int currentaddr = 0;
 static unsigned int remoteport = 0;
 static isc_socketmgr_t *socketmgr = NULL;
 static unsigned char databuf[2048];
@@ -88,6 +80,8 @@ static char program[256];
 static isc_socket_t *sock = NULL;
 static isc_uint32_t serial;
 
+static void rndc_startconnect(isc_sockaddr_t *addr, isc_task_t *task);
+
 static void
 usage(int status) {
 	fprintf(stderr, "\
@@ -101,18 +95,31 @@ command is one of the following:\n\
 		Reload a single zone.\n\
   refresh zone [class [view]]\n\
 		Schedule immediate maintenance for a zone.\n\
+  retransfer zone [class [view]]\n\
+		Retransfer a single zone without checking serial number.\n\
+  freeze zone [class [view]]\n\
+  		Suspend updates to a dynamic zone.\n\
+  thaw zone [class [view]]\n\
+  		Enable updates to a frozen dynamic zone and reload it.\n\
   reconfig	Reload configuration file and new zones only.\n\
   stats		Write server statistics to the statistics file.\n\
   querylog	Toggle query logging.\n\
   dumpdb	Dump cache(s) to the dump file (named_dump.db).\n\
   stop		Save pending updates to master files and stop the server.\n\
+  stop -p	Save pending updates to master files and stop the server\n\
+		reporting process id.\n\
   halt		Stop the server without saving pending updates.\n\
+  halt -p	Stop the server without saving pending updates reporting\n\
+		process id.\n\
   trace		Increment debugging level by one.\n\
   trace level	Change the debugging level.\n\
   notrace	Set debugging level to 0.\n\
   flush 	Flushes all of the server's caches.\n\
   flush [view]	Flushes the server's cache for a view.\n\
+  flushname name [view]\n\
+		Flush the given name from the server's cache(s)\n\
   status	Display status of the server.\n\
+  recursing	Dump the queries that are currently recursing (named.recursing)\n\
   *restart	Restart the server.\n\
 \n\
 * == not yet implemented\n\
@@ -123,74 +130,17 @@ Version: %s\n",
 }
 
 static void
-get_address(const char *host, in_port_t port, isc_sockaddr_t *sockaddr) {
-	struct in_addr in4;
-	struct in6_addr in6;
-	isc_boolean_t have_ipv6;
-#ifdef USE_GETADDRINFO
-	struct addrinfo *res = NULL, hints;
-	int result;
-#else
-	struct hostent *he;
-#endif
+get_addresses(const char *host, in_port_t port) {
+	isc_result_t result;
 
-	have_ipv6 = ISC_TF(isc_net_probeipv6() == ISC_R_SUCCESS);
-
-	/*
-	 * Assume we have v4 if we don't have v6, since setup_libs
-	 * fatal()'s out if we don't have either.
-	 */
-	if (have_ipv6 && inet_pton(AF_INET6, host, &in6) == 1)
-		isc_sockaddr_fromin6(sockaddr, &in6, port);
-	else if (inet_pton(AF_INET, host, &in4) == 1)
-		isc_sockaddr_fromin(sockaddr, &in4, port);
-	else {
-#ifdef USE_GETADDRINFO
-		memset(&hints, 0, sizeof(hints));
-		if (!have_ipv6)
-			hints.ai_family = PF_INET;
-		else if (isc_net_probeipv4() != ISC_R_SUCCESS)
-			hints.ai_family = PF_INET6;
-		else {
-			hints.ai_family = PF_UNSPEC;
-#ifdef AI_ADDRCONFIG
-			hints.ai_flags = AI_ADDRCONFIG;
-#endif
-		}
-		hints.ai_socktype = SOCK_STREAM;
-		isc_app_block();
-#ifdef AI_ADDRCONFIG
- again:
-#endif
-		result = getaddrinfo(host, NULL, &hints, &res);
-#ifdef AI_ADDRCONFIG
-		if (result == EAI_BADFLAGS &&
-		    (hints.ai_flags & AI_ADDRCONFIG) != 0) {
-			hints.ai_flags &= ~AI_ADDRCONFIG;
-			goto again;
-		}
-#endif
-		isc_app_unblock();
-		if (result != 0)
-			fatal("Couldn't find server '%s': %s",
-			      host, gai_strerror(result));
-		memcpy(&sockaddr->type.sa, res->ai_addr, res->ai_addrlen);
-		sockaddr->length = res->ai_addrlen;
-		isc_sockaddr_setport(sockaddr, port);
-		freeaddrinfo(res);
-#else
-		isc_app_block();
-		he = gethostbyname(host);
-		isc_app_unblock();
-		if (he == NULL)
-			fatal("Couldn't find server '%s' (h_errno=%d)",
-			      host, h_errno);
-		INSIST(he->h_addrtype == AF_INET);
-		isc_sockaddr_fromin(sockaddr,
-				    (struct in_addr *)(he->h_addr_list[0]),
-				    port);
-#endif
-	}
+	isc_app_block();
+	result = bind9_getaddresses(servername, port,
+				    serveraddrs, SERVERADDRS, &nserveraddrs);
+	isc_app_unblock();
+	if (result != ISC_R_SUCCESS)
+		fatal("couldn't get address for '%s': %s",
+		      host, isc_result_totext(result));
+	INSIST(nserveraddrs > 0);
 }
 
 static void
@@ -255,7 +205,7 @@ rndc_recvdone(isc_task_t *task, isc_event_t *event) {
 	isccc_sexpr_free(&response);
 	isc_socket_detach(&sock);
 	isc_task_shutdown(task);
-	isc_app_shutdown();
+	RUNTIME_CHECK(isc_app_shutdown() == ISC_R_SUCCESS);
 }
 
 static void
@@ -349,8 +299,20 @@ rndc_connected(isc_task_t *task, isc_event_t *event) {
 
 	connects--;
 
-	if (sevent->result != ISC_R_SUCCESS)
-		fatal("connect failed: %s", isc_result_totext(sevent->result));
+	if (sevent->result != ISC_R_SUCCESS) {
+		if (sevent->result != ISC_R_CANCELED &&
+		    currentaddr < nserveraddrs)
+		{
+			notify("connection failed: %s",
+			       isc_result_totext(sevent->result));
+			isc_socket_detach(&sock);
+			isc_event_free(&event);
+			rndc_startconnect(&serveraddrs[currentaddr++], task);
+			return;
+		} else
+			fatal("connect failed: %s",
+			      isc_result_totext(sevent->result));
+	}
 
 	isc_stdtime_get(&now);
 	DO("create message", isccc_cc_createmessage(1, NULL, NULL, ++serial,
@@ -382,25 +344,31 @@ rndc_connected(isc_task_t *task, isc_event_t *event) {
 }
 
 static void
-rndc_start(isc_task_t *task, isc_event_t *event) {
-	isc_sockaddr_t addr;
+rndc_startconnect(isc_sockaddr_t *addr, isc_task_t *task) {
 	isc_result_t result;
+
 	char socktext[ISC_SOCKADDR_FORMATSIZE];
 
-	isc_event_free(&event);
-
-	get_address(servername, (in_port_t) remoteport, &addr);
-
-	isc_sockaddr_format(&addr, socktext, sizeof(socktext));
+	isc_sockaddr_format(addr, socktext, sizeof(socktext));
 
 	notify("using server %s (%s)", servername, socktext);
 
 	DO("create socket", isc_socket_create(socketmgr,
-					      isc_sockaddr_pf(&addr),
+					      isc_sockaddr_pf(addr),
 					      isc_sockettype_tcp, &sock));
-	DO("connect", isc_socket_connect(sock, &addr, task, rndc_connected,
+	DO("connect", isc_socket_connect(sock, addr, task, rndc_connected,
 					 NULL));
 	connects++;
+}
+
+static void
+rndc_start(isc_task_t *task, isc_event_t *event) {
+	isc_event_free(&event);
+
+	get_addresses(servername, (in_port_t) remoteport);
+
+	currentaddr = 0;
+	rndc_startconnect(&serveraddrs[currentaddr++], task);
 }
 
 static void
@@ -461,7 +429,7 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 		fatal("no server specified and no default");
 
 	if (!key_only) {
-		cfg_map_get(config, "server", &servers);
+		(void)cfg_map_get(config, "server", &servers);
 		if (servers != NULL) {
 			for (elt = cfg_list_first(servers);
 			     elt != NULL; 
@@ -537,7 +505,7 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 		if (server != NULL)
 			(void)cfg_map_get(server, "port", &defport);
 		if (defport == NULL && options != NULL)
-			cfg_map_get(options, "default-port", &defport);
+			(void)cfg_map_get(options, "default-port", &defport);
 	}
 	if (defport != NULL) {
 		remoteport = cfg_obj_asuint32(defport);
@@ -574,7 +542,9 @@ main(int argc, char **argv) {
 	admin_conffile = RNDC_CONFFILE;
 	admin_keyfile = RNDC_KEYFILE;
 
-	isc_app_start();
+	result = isc_app_start();
+	if (result != ISC_R_SUCCESS)
+		fatal("isc_app_start() failed: %s", isc_result_totext(result));
 
 	while ((ch = isc_commandline_parse(argc, argv, "c:k:Mmp:s:Vy:"))
 	       != -1) {
@@ -588,7 +558,7 @@ main(int argc, char **argv) {
 			break;
 
 		case 'M':
-			isc_mem_debugging = 1;
+			isc_mem_debugging = ISC_MEM_DEBUGTRACE;
 			break;
 
 		case 'm':
@@ -686,7 +656,9 @@ main(int argc, char **argv) {
 
 	DO("post event", isc_app_onrun(mctx, task, rndc_start, NULL));
 
-	isc_app_run();
+	result = isc_app_run();
+	if (result != ISC_R_SUCCESS)
+		fatal("isc_app_run() failed: %s", isc_result_totext(result));
 
 	if (connects > 0 || sends > 0 || recvs > 0)
 		isc_socket_cancel(sock, task, ISC_SOCKCANCEL_ALL);

@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rdata.h,v 1.51.2.4 2003/10/09 07:32:39 marka Exp $ */
+/* $ISC: rdata.h,v 1.51.2.3.2.4 2004/03/08 02:08:01 marka Exp $ */
 
 #ifndef DNS_RDATA_H
 #define DNS_RDATA_H 1
@@ -96,6 +96,7 @@
 #include <isc/lang.h>
 
 #include <dns/types.h>
+#include <dns/name.h>
 
 ISC_LANG_BEGINDECLS
 
@@ -141,6 +142,11 @@ struct dns_rdata {
 
 /* Output explanatory comments. */
 #define DNS_STYLEFLAG_COMMENT		0x00000002U
+
+#define DNS_RDATA_DOWNCASE		DNS_NAME_DOWNCASE
+#define DNS_RDATA_CHECKNAMES		DNS_NAME_CHECKNAMES
+#define DNS_RDATA_CHECKNAMESFAIL	DNS_NAME_CHECKNAMESFAIL
+#define DNS_RDATA_CHECKREVERSE		DNS_NAME_CHECKREVERSE
 
 /***
  *** Initialization
@@ -220,8 +226,7 @@ dns_rdata_toregion(const dns_rdata_t *rdata, isc_region_t *r);
 isc_result_t
 dns_rdata_fromwire(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 		   dns_rdatatype_t type, isc_buffer_t *source,
-		   dns_decompress_t *dctx,
-		   isc_boolean_t downcase,
+		   dns_decompress_t *dctx, unsigned int options,
 		   isc_buffer_t *target);
 /*
  * Copy the possibly-compressed rdata at source into the target region.
@@ -229,8 +234,9 @@ dns_rdata_fromwire(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
  * Notes:
  *	Name decompression policy is controlled by 'dctx'.
  *
- *	If 'downcase' is true, any uppercase letters in domain names in
- * 	'source' will be downcased when they are copied into 'target'.
+ *	'options'
+ *	DNS_RDATA_DOWNCASE	downcase domain names when they are copied
+ *				into target.
  *
  * Requires:
  *
@@ -294,7 +300,7 @@ dns_rdata_towire(dns_rdata_t *rdata, dns_compress_t *cctx,
 isc_result_t
 dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 		   dns_rdatatype_t type, isc_lex_t *lexer, dns_name_t *origin,
-		   isc_boolean_t downcase, isc_mem_t *mctx,
+		   unsigned int options, isc_mem_t *mctx,
 		   isc_buffer_t *target, dns_rdatacallbacks_t *callbacks);
 /*
  * Convert the textual representation of a DNS rdata into uncompressed wire
@@ -305,8 +311,15 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
  *	Relative domain names in the rdata will have 'origin' appended to them.
  *	A NULL origin implies "origin == dns_rootname".
  *
- *	If 'downcase' is true, any uppercase letters in domain names in
- * 	'source' will be downcased when they are copied into 'target'.
+ *
+ *	'options'
+ *	DNS_RDATA_DOWNCASE	downcase domain names when they are copied
+ *				into target.
+ *	DNS_RDATA_CHECKNAMES 	perform checknames checks.
+ *	DNS_RDATA_CHECKNAMESFAIL fail if the checknames check fail.  If
+ *				not set a warning will be issued.
+ *	DNS_RDATA_CHECKREVERSE  this should set if the owner name ends
+ *				in IP6.ARPA, IP6.INT or IN-ADDR.ARPA.
  *
  * Requires:
  *
@@ -502,7 +515,7 @@ isc_boolean_t
 dns_rdatatype_iszonecutauth(dns_rdatatype_t type);
 /*
  * Return true iff rdata of type 'type' is considered authoritative
- * data (not glue) in the NXT chain when it occurs in the parent zone
+ * data (not glue) in the NSEC chain when it occurs in the parent zone
  * at a zone cut.
  *
  * Requires:
@@ -602,6 +615,17 @@ dns_rdatatype_notquestion(dns_rdatatype_t type);
  *
  */
 
+isc_boolean_t
+dns_rdatatype_atparent(dns_rdatatype_t type);
+/*
+ * Return true iff rdata of type 'type' should appear at the parent of
+ * a zone cut.
+ *
+ * Requires:
+ * 	'type' is a valid rdata type.
+ *
+ */
+
 unsigned int
 dns_rdatatype_attributes(dns_rdatatype_t rdtype);
 /*
@@ -620,7 +644,7 @@ dns_rdatatype_attributes(dns_rdatatype_t rdtype);
 #define DNS_RDATATYPEATTR_EXCLUSIVE		0x00000002U
 /* Is a meta type */
 #define DNS_RDATATYPEATTR_META			0x00000004U
-/* Is a DNSSEC type, like SIG or NXT */
+/* Is a DNSSEC type, like RRSIG or NSEC */
 #define DNS_RDATATYPEATTR_DNSSEC		0x00000008U
 /* Is a zone cut authority type */
 #define DNS_RDATATYPEATTR_ZONECUTAUTH		0x00000010U
@@ -632,6 +656,8 @@ dns_rdatatype_attributes(dns_rdatatype_t rdtype);
 #define DNS_RDATATYPEATTR_QUESTIONONLY		0x00000080U
 /* is META, and can NOT be in a question section */
 #define DNS_RDATATYPEATTR_NOTQUESTION		0x00000100U
+/* Is present at zone cuts in the parent, not the child */
+#define DNS_RDATATYPEATTR_ATPARENT		0x00000200U
 
 dns_rdatatype_t
 dns_rdata_covers(dns_rdata_t *rdata);
@@ -645,6 +671,34 @@ dns_rdata_covers(dns_rdata_t *rdata);
  *
  * Returns:
  *	The type covered.
+ */
+
+isc_boolean_t
+dns_rdata_checkowner(dns_name_t* name, dns_rdataclass_t rdclass,
+		     dns_rdatatype_t type, isc_boolean_t wildcard);
+/*
+ * Returns whether this is a valid ownername for this <type,class>.
+ * If wildcard is true allow the first label to be a wildcard if
+ * appropriate.
+ *
+ * Requires:
+ *	'name' is a valid name.
+ */
+
+isc_boolean_t
+dns_rdata_checknames(dns_rdata_t *rdata, dns_name_t *owner, dns_name_t *bad);
+/*
+ * Returns whether 'rdata' contains valid domain names.  The checks are
+ * sensitive to the owner name.
+ *
+ * If 'bad' is non-NULL and a domain name fails the check the
+ * the offending name will be return in 'bad' by cloning from
+ * the 'rdata' contents.
+ *
+ * Requires:
+ *	'rdata' to be valid.
+ *	'owner' to be valid.
+ *	'bad'	to be NULL or valid.
  */
 
 ISC_LANG_ENDDECLS

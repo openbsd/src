@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rdata.c,v 1.147.2.11 2003/07/30 01:04:15 marka Exp $ */
+/* $ISC: rdata.c,v 1.147.2.11.2.15 2004/03/12 10:31:25 marka Exp $ */
 
 #include <config.h>
 #include <ctype.h>
@@ -24,14 +24,18 @@
 #include <isc/hex.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
+#include <isc/parseint.h>
 #include <isc/print.h>
 #include <isc/string.h>
+#include <isc/stdlib.h>
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
 #include <dns/cert.h>
 #include <dns/compress.h>
+#include <dns/enumtype.h>
 #include <dns/keyflags.h>
+#include <dns/keyvalues.h>
 #include <dns/rcode.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -49,6 +53,7 @@
 		if (_r != ISC_R_SUCCESS) \
 			return (_r); \
 	} while (0)
+
 #define RETTOK(x) \
 	do { \
 		isc_result_t _r = (x); \
@@ -58,9 +63,11 @@
 		} \
 	} while (0)
 
+#define DNS_AS_STR(t) ((t).value.as_textregion.base)
+
 #define ARGS_FROMTEXT	int rdclass, dns_rdatatype_t type, \
 			isc_lex_t *lexer, dns_name_t *origin, \
-			isc_boolean_t downcase, isc_buffer_t *target, \
+			unsigned int options, isc_buffer_t *target, \
 			dns_rdatacallbacks_t *callbacks
 
 #define ARGS_TOTEXT	dns_rdata_t *rdata, dns_rdata_textctx_t *tctx, \
@@ -68,7 +75,7 @@
 
 #define ARGS_FROMWIRE	int rdclass, dns_rdatatype_t type, \
 			isc_buffer_t *source, dns_decompress_t *dctx, \
-			isc_boolean_t downcase, isc_buffer_t *target
+			unsigned int options, isc_buffer_t *target
 
 #define ARGS_TOWIRE	dns_rdata_t *rdata, dns_compress_t *cctx, \
 			isc_buffer_t *target
@@ -86,6 +93,12 @@
 			void *arg
 
 #define ARGS_DIGEST	dns_rdata_t *rdata, dns_digestfunc_t digest, void *arg
+
+#define ARGS_CHECKOWNER dns_name_t *name, dns_rdataclass_t rdclass, \
+			dns_rdatatype_t type, isc_boolean_t wildcard
+
+#define ARGS_CHECKNAMES dns_rdata_t *rdata, dns_name_t *owner, dns_name_t *bad
+
 
 /*
  * Context structure for the totext_ functions.
@@ -151,9 +164,6 @@ static isc_result_t
 mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length);
 
 static int
-compare_region(isc_region_t *r1, isc_region_t *r2);
-
-static int
 hexvalue(char value);
 
 static int
@@ -181,6 +191,10 @@ static isc_result_t
 rdata_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 	     isc_buffer_t *target);
 
+static void
+warn_badname(dns_name_t *name, isc_lex_t *lexer,
+	     dns_rdatacallbacks_t *callbacks);
+
 static inline int
 getquad(const void *src, struct in_addr *dst,
 	isc_lex_t *lexer, dns_rdatacallbacks_t *callbacks)
@@ -194,7 +208,7 @@ getquad(const void *src, struct in_addr *dst,
 		const char *name = isc_lex_getsourcename(lexer);
 		if (name == NULL)
 			name = "UNKNOWN";
-		(*callbacks->warn)(callbacks, "%s:%lu: warning \"%s\" "
+		(*callbacks->warn)(callbacks, "%s:%lu: \"%s\" "
 				   "is not a decimal dotted quad", name,
 				   isc_lex_getsourceline(lexer), src);
 	}
@@ -230,119 +244,6 @@ static const char decdigits[] = "0123456789";
 
 #define META 0x0001
 #define RESERVED 0x0002
-
-#define RCODENAMES \
-	/* standard rcodes */ \
-	{ dns_rcode_noerror, "NOERROR", 0}, \
-	{ dns_rcode_formerr, "FORMERR", 0}, \
-	{ dns_rcode_servfail, "SERVFAIL", 0}, \
-	{ dns_rcode_nxdomain, "NXDOMAIN", 0}, \
-	{ dns_rcode_notimp, "NOTIMP", 0}, \
-	{ dns_rcode_refused, "REFUSED", 0}, \
-	{ dns_rcode_yxdomain, "YXDOMAIN", 0}, \
-	{ dns_rcode_yxrrset, "YXRRSET", 0}, \
-	{ dns_rcode_nxrrset, "NXRRSET", 0}, \
-	{ dns_rcode_notauth, "NOTAUTH", 0}, \
-	{ dns_rcode_notzone, "NOTZONE", 0},
-
-#define ERCODENAMES \
-	/* extended rcodes */ \
-	{ dns_rcode_badvers, "BADVERS", 0}, \
-	{ 0, NULL, 0 }
-
-#define TSIGRCODENAMES \
-	/* extended rcodes */ \
-	{ dns_tsigerror_badsig, "BADSIG", 0}, \
-	{ dns_tsigerror_badkey, "BADKEY", 0}, \
-	{ dns_tsigerror_badtime, "BADTIME", 0}, \
-	{ dns_tsigerror_badmode, "BADMODE", 0}, \
-	{ dns_tsigerror_badname, "BADNAME", 0}, \
-	{ dns_tsigerror_badalg, "BADALG", 0}, \
-	{ 0, NULL, 0 }
-
-/* RFC2538 section 2.1 */
-
-#define CERTNAMES \
-	{ 1, "PKIX", 0}, \
-	{ 2, "SPKI", 0}, \
-	{ 3, "PGP", 0}, \
-	{ 253, "URI", 0}, \
-	{ 254, "OID", 0}, \
-	{ 0, NULL, 0}
-
-/* RFC2535 section 7 */
-
-#define SECALGNAMES \
-	{ 1, "RSAMD5", 0 }, \
-	{ 2, "DH", 0 }, \
-	{ 3, "DSA", 0 }, \
-	{ 4, "ECC", 0 }, \
-	{ 252, "INDIRECT", 0 }, \
-	{ 253, "PRIVATEDNS", 0 }, \
-	{ 254, "PRIVATEOID", 0 }, \
-	{ 0, NULL, 0}
-
-/* RFC2535 section 7.1 */
-
-#define SECPROTONAMES \
-	{   0,    "NONE", 0 }, \
-	{   1,    "TLS", 0 }, \
-	{   2,    "EMAIL", 0 }, \
-	{   3,    "DNSSEC", 0 }, \
-	{   4,    "IPSEC", 0 }, \
-	{ 255,    "ALL", 0 }, \
-	{ 0, NULL, 0}
-
-struct tbl {
-	unsigned int	value;
-	const char	*name;
-	int		flags;
-};
-
-static struct tbl rcodes[] = { RCODENAMES ERCODENAMES };
-static struct tbl tsigrcodes[] = { RCODENAMES TSIGRCODENAMES };
-static struct tbl certs[] = { CERTNAMES };
-static struct tbl secalgs[] = { SECALGNAMES };
-static struct tbl secprotos[] = { SECPROTONAMES };
-
-static struct keyflag {
-	const char *name;
-	unsigned int value;
-	unsigned int mask;
-} keyflags[] = {
-	{ "NOCONF", 0x4000, 0xC000 },
-	{ "NOAUTH", 0x8000, 0xC000 },
-	{ "NOKEY",  0xC000, 0xC000 },
-	{ "FLAG2",  0x2000, 0x2000 },
-	{ "EXTEND", 0x1000, 0x1000 },
-	{ "FLAG4",  0x0800, 0x0800 },
-	{ "FLAG5",  0x0400, 0x0400 },
-	{ "USER",   0x0000, 0x0300 },
-	{ "ZONE",   0x0100, 0x0300 },
-	{ "HOST",   0x0200, 0x0300 },
-	{ "NTYP3",  0x0300, 0x0300 },
-	{ "FLAG8",  0x0080, 0x0080 },
-	{ "FLAG9",  0x0040, 0x0040 },
-	{ "FLAG10", 0x0020, 0x0020 },
-	{ "FLAG11", 0x0010, 0x0010 },
-	{ "SIG0",   0x0000, 0x000F },
-	{ "SIG1",   0x0001, 0x000F },
-	{ "SIG2",   0x0002, 0x000F },
-	{ "SIG3",   0x0003, 0x000F },
-	{ "SIG4",   0x0004, 0x000F },
-	{ "SIG5",   0x0005, 0x000F },
-	{ "SIG6",   0x0006, 0x000F },
-	{ "SIG7",   0x0007, 0x000F },
-	{ "SIG8",   0x0008, 0x000F },
-	{ "SIG9",   0x0009, 0x000F },
-	{ "SIG10",  0x000A, 0x000F },
-	{ "SIG11",  0x000B, 0x000F },
-	{ "SIG12",  0x000C, 0x000F },
-	{ "SIG13",  0x000D, 0x000F },
-	{ "SIG14",  0x000E, 0x000F },
-	{ "SIG15",  0x000F, 0x000F },
-	{ NULL,     0, 0 }
-};
 
 /***
  *** Initialization
@@ -446,7 +347,7 @@ dns_rdata_compare(const dns_rdata_t *rdata1, const dns_rdata_t *rdata2) {
 
 		dns_rdata_toregion(rdata1, &r1);
 		dns_rdata_toregion(rdata2, &r2);
-		result = compare_region(&r1, &r2);
+		result = isc_region_compare(&r1, &r2);
 	}
 	return (result);
 }
@@ -487,7 +388,7 @@ dns_rdata_toregion(const dns_rdata_t *rdata, isc_region_t *r) {
 isc_result_t
 dns_rdata_fromwire(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 		   dns_rdatatype_t type, isc_buffer_t *source,
-		   dns_decompress_t *dctx, isc_boolean_t downcase,
+		   dns_decompress_t *dctx, unsigned int options,
 		   isc_buffer_t *target)
 {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
@@ -601,7 +502,7 @@ rdata_validate(isc_buffer_t *src, isc_buffer_t *dest, dns_rdataclass_t rdclass,
 	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_NONE);
 	isc_buffer_setactive(src, isc_buffer_usedlength(src));
 	result = dns_rdata_fromwire(&rdata, rdclass, type, src,
-				    &dctx, ISC_FALSE, dest);
+				    &dctx, 0, dest);
 	dns_decompress_invalidate(&dctx);
 
 	return (result);
@@ -656,15 +557,15 @@ unknown_fromtext(dns_rdataclass_t rdclass, dns_rdatatype_t type,
 isc_result_t
 dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 		   dns_rdatatype_t type, isc_lex_t *lexer,
-		   dns_name_t *origin, isc_boolean_t downcase, isc_mem_t *mctx,
+		   dns_name_t *origin, unsigned int options, isc_mem_t *mctx,
 		   isc_buffer_t *target, dns_rdatacallbacks_t *callbacks)
 {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
 	isc_region_t region;
 	isc_buffer_t st;
 	isc_token_t token;
-	unsigned int options = ISC_LEXOPT_EOL | ISC_LEXOPT_EOF |
-			       ISC_LEXOPT_DNSMULTILINE | ISC_LEXOPT_ESCAPE;
+	unsigned int lexoptions = ISC_LEXOPT_EOL | ISC_LEXOPT_EOF |
+				  ISC_LEXOPT_DNSMULTILINE | ISC_LEXOPT_ESCAPE;
 	char *name;
 	unsigned long line;
 	void (*callback)(dns_rdatacallbacks_t *, const char *, ...);
@@ -697,7 +598,7 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 		return (result);
 	}
 
-	if (strcmp((char *)token.value.as_pointer, "\\#") == 0)
+	if (strcmp(DNS_AS_STR(token), "\\#") == 0)
 		result = unknown_fromtext(rdclass, type, lexer, mctx, target);
 	else {
 		isc_lex_ungettoken(lexer, &token);
@@ -713,7 +614,7 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	do {
 		name = isc_lex_getsourcename(lexer);
 		line = isc_lex_getsourceline(lexer);
-		tresult = isc_lex_gettoken(lexer, options, &token);
+		tresult = isc_lex_gettoken(lexer, lexoptions, &token);
 		if (tresult != ISC_R_SUCCESS) {
 			if (result == ISC_R_SUCCESS)
 				result = tresult;
@@ -759,7 +660,7 @@ rdata_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
 	isc_boolean_t use_default = ISC_FALSE;
-	char buf[sizeof("65536")];
+	char buf[sizeof("65535")];
 	isc_region_t sr;
 
 	REQUIRE(rdata != NULL);
@@ -949,182 +850,32 @@ dns_rdata_digest(dns_rdata_t *rdata, dns_digestfunc_t digest, void *arg) {
 	return (result);
 }
 
+isc_boolean_t
+dns_rdata_checkowner(dns_name_t *name, dns_rdataclass_t rdclass,
+		     dns_rdatatype_t type, isc_boolean_t wildcard)
+{
+	isc_boolean_t result;
+
+	CHECKOWNERSWITCH
+	return (result);
+}
+
+isc_boolean_t
+dns_rdata_checknames(dns_rdata_t *rdata, dns_name_t *owner, dns_name_t *bad)
+{
+	isc_boolean_t result;
+
+	CHECKNAMESSWITCH
+	return (result);
+}
+
 unsigned int
 dns_rdatatype_attributes(dns_rdatatype_t type)
 {
-	if (type < (sizeof(typeattr)/sizeof(typeattr[0])))
-		return (typeattr[type].flags);
+	RDATATYPE_ATTRIBUTE_SW
+	if (type >= (dns_rdatatype_t)128 && type < (dns_rdatatype_t)255)
+		return (DNS_RDATATYPEATTR_UNKNOWN | DNS_RDATATYPEATTR_META);
 	return (DNS_RDATATYPEATTR_UNKNOWN);
-}
-
-#define NUMBERSIZE sizeof("037777777777") /* 2^32-1 octal + NUL */
-
-static isc_result_t
-dns_mnemonic_fromtext(unsigned int *valuep, isc_textregion_t *source,
-		      struct tbl *table, unsigned int max)
-{
-	int i;
-
-	if (isdigit(source->base[0] & 0xff) &&
-	    source->length <= NUMBERSIZE - 1) {
-		unsigned int n;
-		char *e;
-		char buffer[NUMBERSIZE];
-		/*
-		 * We have a potential number.  Try to parse it with strtoul().
-		 * strtoul() requires null termination, so we must make
-		 * a copy.
-		 */
-		strlcpy(buffer, source->base, NUMBERSIZE);
-		INSIST(buffer[source->length] == '\0');
-
-		n = strtoul(buffer, &e, 10);
-		if (*e == 0) {
-			if (n > max)
-				return (ISC_R_RANGE);
-			*valuep = n;
-			return (ISC_R_SUCCESS);
-		}
-		/*
-		 * It was not a number after all; fall through.
-		 */
-	}
-
-	for (i = 0; table[i].name != NULL; i++) {
-		unsigned int n;
-		n = strlen(table[i].name);
-		if (n == source->length &&
-		    strncasecmp(source->base, table[i].name, n) == 0) {
-			*valuep = table[i].value;
-			return (ISC_R_SUCCESS);
-		}
-	}
-	return (DNS_R_UNKNOWN);
-}
-
-static isc_result_t
-dns_mnemonic_totext(unsigned int value, isc_buffer_t *target,
-		    struct tbl *table)
-{
-	int i = 0;
-	char buf[sizeof "4294967296"];
-	while (table[i].name != NULL) {
-		if (table[i].value == value) {
-			return (str_totext(table[i].name, target));
-		}
-		i++;
-	}
-	snprintf(buf, sizeof buf, "%u", value);
-	return (str_totext(buf, target));
-}
-
-
-/*
- * This uses lots of hard coded values, but how often do we actually
- * add classes?
- */
-isc_result_t
-dns_rdataclass_fromtext(dns_rdataclass_t *classp, isc_textregion_t *source) {
-#define COMPARE(string, rdclass) \
-	if (((sizeof(string) - 1) == source->length) \
-	    && (strncasecmp(source->base, string, source->length) == 0)) { \
-		*classp = rdclass; \
-		return (ISC_R_SUCCESS); \
-	}
-
-	switch (tolower((unsigned char)source->base[0])) {
-	case 'a':
-		COMPARE("any", dns_rdataclass_any);
-		break;
-	case 'c':
-		/*
-		 * RFC1035 says the mnemonic for the CHAOS class is CH,
-		 * but historical BIND practice is to call it CHAOS.
-		 * We will accept both forms, but only generate CH.
-		 */
-		COMPARE("ch", dns_rdataclass_chaos);
-		COMPARE("chaos", dns_rdataclass_chaos);
-
-		if (source->length > 5 &&
-		    source->length < (5 + sizeof("65000")) &&
-		    strncasecmp("class", source->base, 5) == 0) {
-			char buf[sizeof("65000")];
-			char *endp;
-			unsigned int val;
-
-			strlcpy(buf, source->base + 5, sizeof(buf));
-			val = strtoul(buf, &endp, 10);
-			if (*endp == '\0' && val <= 0xffff) {
-				*classp = (dns_rdataclass_t)val;
-				return (ISC_R_SUCCESS);
-			}
-		}
-		break;
-	case 'h':
-		COMPARE("hs", dns_rdataclass_hs);
-		COMPARE("hesiod", dns_rdataclass_hs);
-		break;
-	case 'i':
-		COMPARE("in", dns_rdataclass_in);
-		break;
-	case 'n':
-		COMPARE("none", dns_rdataclass_none);
-		break;
-	case 'r':
-		COMPARE("reserved0", dns_rdataclass_reserved0);
-		break;
-	}
-
-#undef COMPARE
-
-	return (DNS_R_UNKNOWN);
-}
-
-isc_result_t
-dns_rdataclass_totext(dns_rdataclass_t rdclass, isc_buffer_t *target) {
-	char buf[sizeof("CLASS65535")];
-
-	switch (rdclass) {
-	case dns_rdataclass_any:
-		return (str_totext("ANY", target));
-	case dns_rdataclass_chaos:
-		return (str_totext("CH", target));
-	case dns_rdataclass_hs:
-		return (str_totext("HS", target));
-	case dns_rdataclass_in:
-		return (str_totext("IN", target));
-	case dns_rdataclass_none:
-		return (str_totext("NONE", target));
-	case dns_rdataclass_reserved0:
-		return (str_totext("RESERVED0", target));
-	default:
-		snprintf(buf, sizeof(buf), "CLASS%u", rdclass);
-		return (str_totext(buf, target));
-	}
-}
-
-void
-dns_rdataclass_format(dns_rdataclass_t rdclass,
-		      char *array, unsigned int size)
-{
-	isc_result_t result;
-	isc_buffer_t buf;
-
-	isc_buffer_init(&buf, array, size);
-	result = dns_rdataclass_totext(rdclass, &buf);
-	/*
-	 * Null terminate.
-	 */
-	if (result == ISC_R_SUCCESS) {
-		if (isc_buffer_availablelength(&buf) >= 1)
-			isc_buffer_putuint8(&buf, 0);
-		else
-			result = ISC_R_NOSPACE;
-	}
-	if (result != ISC_R_SUCCESS) {
-		snprintf(array, size, "<unknown>");
-		array[size - 1] = '\0';
-	}
 }
 
 isc_result_t
@@ -1169,11 +920,10 @@ dns_rdatatype_fromtext(dns_rdatatype_t *typep, isc_textregion_t *source) {
 
 isc_result_t
 dns_rdatatype_totext(dns_rdatatype_t type, isc_buffer_t *target) {
-	char buf[sizeof("TYPE65536")];
+	char buf[sizeof("TYPE65535")];
 
-	if (type < (sizeof(typeattr)/sizeof(typeattr[0])))
-		return (str_totext(typeattr[type].name, target));
-	snprintf(buf, sizeof buf, "TYPE%u", type);
+	RDATATYPE_TOTEXT_SW
+	snprintf(buf, sizeof(buf), "TYPE%u", type);
 	return (str_totext(buf, target));
 }
 
@@ -1199,135 +949,6 @@ dns_rdatatype_format(dns_rdatatype_t rdtype,
 		snprintf(array, size, "<unknown>");
 		array[size - 1] = '\0';
 	}
-}
-
-
-/* XXXRTH  Should we use a hash table here? */
-
-isc_result_t
-dns_rcode_fromtext(dns_rcode_t *rcodep, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, rcodes, 0xffff));
-	*rcodep = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_rcode_totext(dns_rcode_t rcode, isc_buffer_t *target) {
-	return (dns_mnemonic_totext(rcode, target, rcodes));
-}
-
-isc_result_t
-dns_tsigrcode_fromtext(dns_rcode_t *rcodep, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, tsigrcodes, 0xffff));
-	*rcodep = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_tsigrcode_totext(dns_rcode_t rcode, isc_buffer_t *target) {
-	return (dns_mnemonic_totext(rcode, target, tsigrcodes));
-}
-
-isc_result_t
-dns_cert_fromtext(dns_cert_t *certp, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, certs, 0xffff));
-	*certp = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_cert_totext(dns_cert_t cert, isc_buffer_t *target) {
-	return (dns_mnemonic_totext(cert, target, certs));
-}
-
-isc_result_t
-dns_secalg_fromtext(dns_secalg_t *secalgp, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, secalgs, 0xff));
-	*secalgp = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_secalg_totext(dns_secalg_t secalg, isc_buffer_t *target) {
-	return (dns_mnemonic_totext(secalg, target, secalgs));
-}
-
-isc_result_t
-dns_secproto_fromtext(dns_secproto_t *secprotop, isc_textregion_t *source) {
-	unsigned int value;
-	RETERR(dns_mnemonic_fromtext(&value, source, secprotos, 0xff));
-	*secprotop = value;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_secproto_totext(dns_secproto_t secproto, isc_buffer_t *target) {
-	return (dns_mnemonic_totext(secproto, target, secprotos));
-}
-
-isc_result_t
-dns_keyflags_fromtext(dns_keyflags_t *flagsp, isc_textregion_t *source)
-{
-	char *text, *end;
-	unsigned int value, mask;
-
-	if (isdigit(source->base[0] & 0xff) &&
-	    source->length <= NUMBERSIZE - 1) {
-		unsigned int n;
-		char *e;
-		char buffer[NUMBERSIZE];
-		/*
-		 * We have a potential number.  Try to parse it with strtoul().
-		 * strtoul() requires null termination, so we must make
-		 * a copy.
-		 */
-		strlcpy(buffer, source->base, NUMBERSIZE);
-		INSIST(buffer[source->length] == '\0');
-
-		n = strtoul(buffer, &e, 0); /* Allow hex/octal. */
-		if (*e == 0) {
-			if (n > 0xffff)
-				return (ISC_R_RANGE);
-			*flagsp = n;
-			return (ISC_R_SUCCESS);
-		}
-		/* It was not a number after all; fall through. */
-	}
-
-	text = source->base;
-	end = source->base + source->length;
-	value = mask = 0;
-
-	while (text < end) {
-		struct keyflag *p;
-		unsigned int len;
-		char *delim = memchr(text, '|', end - text);
-		if (delim != NULL)
-			len = delim - text;
-		else
-			len = end - text;
-		for (p = keyflags; p->name != NULL; p++) {
-			if (strncasecmp(p->name, text, len) == 0)
-				break;
-		}
-		if (p->name == NULL)
-			return (DNS_R_UNKNOWN);
-		value |= p->value;
-#ifdef notyet
-		if ((mask & p->mask) != 0)
-			warn("overlapping key flags");
-#endif
-		mask |= p->mask;
-		text += len;
-		if (delim != NULL)
-			text++;	/* Skip "|" */
-	}
-	*flagsp = value;
-	return (ISC_R_SUCCESS);
 }
 
 /*
@@ -1364,7 +985,7 @@ txt_totext(isc_region_t *source, isc_buffer_t *target) {
 		if (*sp < 0x20 || *sp >= 0x7f) {
 			if (tl < 4)
 				return (ISC_R_NOSPACE);
-			snprintf(tp, tl, "\\%03u", *sp++);
+			snprintf(tp, 5, "\\%03u", *sp++);
 			tp += 4;
 			tl -= 4;
 			continue;
@@ -1630,20 +1251,6 @@ mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
 }
 
 static int
-compare_region(isc_region_t *r1, isc_region_t *r2) {
-	unsigned int l;
-	int result;
-
-	l = (r1->length < r2->length) ? r1->length : r2->length;
-
-	if ((result = memcmp(r1->base, r2->base, l)) != 0)
-		return ((result < 0) ? -1 : 1);
-	else
-		return ((r1->length == r2->length) ? 0 :
-			(r1->length < r2->length) ? -1 : 1);
-}
-
-static int
 hexvalue(char value) {
 	char *s;
 	unsigned char c;
@@ -1823,7 +1430,7 @@ atob_tobuffer(isc_lex_t *lexer, isc_buffer_t *target) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	oeor = strtol(token.value.as_pointer, &e, 16);
+	oeor = strtol(DNS_AS_STR(token), &e, 16);
 	if (*e != 0)
 		return (DNS_R_SYNTAX);
 
@@ -1832,7 +1439,7 @@ atob_tobuffer(isc_lex_t *lexer, isc_buffer_t *target) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	osum = strtol(token.value.as_pointer, &e, 16);
+	osum = strtol(DNS_AS_STR(token), &e, 16);
 	if (*e != 0)
 		return (DNS_R_SYNTAX);
 
@@ -1841,7 +1448,7 @@ atob_tobuffer(isc_lex_t *lexer, isc_buffer_t *target) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
-	orot = strtol(token.value.as_pointer, &e, 16);
+	orot = strtol(DNS_AS_STR(token), &e, 16);
 	if (*e != 0)
 		return (DNS_R_SYNTAX);
 
@@ -1924,7 +1531,7 @@ static isc_result_t
 btoa_totext(unsigned char *inbuf, int inbuflen, isc_buffer_t *target) {
 	int inc;
 	struct state statebuf, *state = &statebuf;
-	char buf[sizeof "x 2000000000 ffffffff ffffffff ffffffff"];
+	char buf[sizeof("x 2000000000 ffffffff ffffffff ffffffff")];
 
 	Ceor = Csum = Crot = word = bcount = 0;
 	for (inc = 0; inc < inbuflen; inbuf++, inc++)
@@ -1953,6 +1560,7 @@ default_fromtext_callback(dns_rdatacallbacks_t *callbacks, const char *fmt,
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+	fprintf(stderr, "\n");
 }
 
 static void
@@ -1964,6 +1572,24 @@ fromtext_warneof(isc_lex_t *lexer, dns_rdatacallbacks_t *callbacks) {
 		(*callbacks->warn)(callbacks,
 				   "%s:%lu: file does not end with newline",
 				   name, isc_lex_getsourceline(lexer));
+	}
+}
+
+static void
+warn_badname(dns_name_t *name, isc_lex_t *lexer,
+	     dns_rdatacallbacks_t *callbacks)
+{
+	const char *file;
+	unsigned long line;
+	char namebuf[DNS_NAME_FORMATSIZE];
+	
+	if (lexer != NULL) {
+		file = isc_lex_getsourcename(lexer);
+		line = isc_lex_getsourceline(lexer);
+		dns_name_format(name, namebuf, sizeof(namebuf));
+		(*callbacks->warn)(callbacks, "%s:%u: %s: %s", 
+				   file, line, namebuf,
+				   dns_result_totext(DNS_R_BADNAME));
 	}
 }
 
@@ -1997,7 +1623,7 @@ fromtext_error(void (*callback)(dns_rdatacallbacks_t *, const char *, ...),
 		case isc_tokentype_qstring:
 			(*callback)(callbacks, "%s: %s:%lu: near '%s': %s",
 				    "dns_rdata_fromtext", name, line,
-				    (char *)token->value.as_pointer,
+				    DNS_AS_STR(*token),
 				    dns_result_totext(result));
 			break;
 		default:
@@ -2014,6 +1640,8 @@ fromtext_error(void (*callback)(dns_rdatacallbacks_t *, const char *, ...),
 
 dns_rdatatype_t
 dns_rdata_covers(dns_rdata_t *rdata) {
+	if (rdata->type == 46)
+		return (covers_rrsig(rdata));
 	return (covers_sig(rdata));
 }
 
@@ -2044,6 +1672,13 @@ isc_boolean_t
 dns_rdatatype_questiononly(dns_rdatatype_t type) {
 	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_QUESTIONONLY)
 	    != 0)
+		return (ISC_TRUE);
+	return (ISC_FALSE);
+}
+
+isc_boolean_t
+dns_rdatatype_atparent(dns_rdatatype_t type) {
+	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ATPARENT) != 0)
 		return (ISC_TRUE);
 	return (ISC_FALSE);
 }
@@ -2082,4 +1717,3 @@ dns_rdatatype_isknown(dns_rdatatype_t type) {
 		return (ISC_TRUE);
 	return (ISC_FALSE);
 }
-

@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: wks_11.c,v 1.44 2001/07/16 03:06:51 marka Exp $ */
+/* $ISC: wks_11.c,v 1.44.12.7 2004/03/08 09:04:44 marka Exp $ */
 
 /* Reviewed: Fri Mar 17 15:01:49 PST 2000 by explorer */
 
@@ -52,7 +52,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 
 	UNUSED(type);
 	UNUSED(origin);
-	UNUSED(downcase);
+	UNUSED(options);
 	UNUSED(rdclass);
 
 	/*
@@ -62,7 +62,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 				      ISC_FALSE));
 
 	isc_buffer_availableregion(target, &region);
-	if (getquad(token.value.as_pointer, &addr, lexer, callbacks) != 1)
+	if (getquad(DNS_AS_STR(token), &addr, lexer, callbacks) != 1)
 		RETTOK(DNS_R_BADDOTTEDQUAD);
 	if (region.length < 4)
 		return (ISC_R_NOSPACE);
@@ -75,10 +75,10 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
 
-	proto = strtol(token.value.as_pointer, &e, 10);
+	proto = strtol(DNS_AS_STR(token), &e, 10);
 	if (*e == 0)
 		;
-	else if ((pe = getprotobyname(token.value.as_pointer)) != NULL)
+	else if ((pe = getprotobyname(DNS_AS_STR(token))) != NULL)
 		proto = pe->p_proto;
 	else
 		RETTOK(DNS_R_UNKNOWNPROTO);
@@ -92,7 +92,7 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 
 	RETERR(uint8_tobuffer(proto, target));
 
-	memset(bm, 0, sizeof bm);
+	memset(bm, 0, sizeof(bm));
 	do {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_string, ISC_TRUE));
@@ -108,12 +108,12 @@ fromtext_in_wks(ARGS_FROMTEXT) {
 			if (isupper(service[i]&0xff))
 				service[i] = tolower(service[i]);
 
-		port = strtol(token.value.as_pointer, &e, 10);
+		port = strtol(DNS_AS_STR(token), &e, 10);
 		if (*e == 0)
 			;
 		else if ((se = getservbyname(service, ps)) != NULL)
 			port = ntohs(se->s_port);
-		else if ((se = getservbyname(token.value.as_pointer, ps))
+		else if ((se = getservbyname(DNS_AS_STR(token), ps))
 			  != NULL)
 			port = ntohs(se->s_port);
 		else
@@ -138,7 +138,7 @@ static inline isc_result_t
 totext_in_wks(ARGS_TOTEXT) {
 	isc_region_t sr;
 	unsigned short proto;
-	char buf[sizeof "65535"];
+	char buf[sizeof("65535")];
 	unsigned int i, j;
 
 	UNUSED(tctx);
@@ -157,9 +157,9 @@ totext_in_wks(ARGS_TOTEXT) {
 	RETERR(str_totext(buf, target));
 	isc_region_consume(&sr, 1);
 
-	for (i = 0 ; i < sr.length ; i++) {
+	for (i = 0; i < sr.length; i++) {
 		if (sr.base[i] != 0)
-			for (j = 0 ; j < 8 ; j++)
+			for (j = 0; j < 8; j++)
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
 					snprintf(buf, sizeof(buf), "%u", i * 8 + j);
 					RETERR(str_totext(" ", target));
@@ -180,7 +180,7 @@ fromwire_in_wks(ARGS_FROMWIRE) {
 
 	UNUSED(type);
 	UNUSED(dctx);
-	UNUSED(downcase);
+	UNUSED(options);
 	UNUSED(rdclass);
 
 	isc_buffer_activeregion(source, &sr);
@@ -228,7 +228,7 @@ compare_in_wks(ARGS_COMPARE) {
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
-	return (compare_region(&r1, &r2));
+	return (isc_region_compare(&r1, &r2));
 }
 
 static inline isc_result_t
@@ -318,6 +318,31 @@ digest_in_wks(ARGS_DIGEST) {
 	dns_rdata_toregion(rdata, &r);
 
 	return ((digest)(arg, &r));
+}
+
+static inline isc_boolean_t
+checkowner_in_wks(ARGS_CHECKOWNER) {
+
+	REQUIRE(type == 11);
+	REQUIRE(rdclass == 1);
+
+	UNUSED(type);
+	UNUSED(rdclass);
+
+	return (dns_name_ishostname(name, wildcard));
+}
+
+static inline isc_boolean_t
+checknames_in_wks(ARGS_CHECKNAMES) {
+
+	REQUIRE(rdata->type == 11);
+	REQUIRE(rdata->rdclass == 1);
+
+	UNUSED(rdata);
+	UNUSED(owner);
+	UNUSED(bad);
+
+	return (ISC_TRUE);
 }
 
 #endif	/* RDATA_IN_1_WKS_11_C */

@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: dig.h,v 1.71.2.6 2003/07/25 04:36:44 marka Exp $ */
+/* $ISC: dig.h,v 1.71.2.6.2.6 2004/06/19 02:30:12 sra Exp $ */
 
 #ifndef DIG_H
 #define DIG_H
@@ -74,11 +74,27 @@
  * be 1.
  */
 
+/*
+ * Defaults for the sigchase suboptions.  Consolidated here because
+ * these control the layout of dig_lookup_t (among other things).
+ */
+#ifdef DIG_SIGCHASE
+#ifndef DIG_SIGCHASE_BU
+#define DIG_SIGCHASE_BU 1
+#endif
+#ifndef DIG_SIGCHASE_TD
+#define DIG_SIGCHASE_TD 1
+#endif
+#endif
+
 ISC_LANG_BEGINDECLS
 
 typedef struct dig_lookup dig_lookup_t;
 typedef struct dig_query dig_query_t;
 typedef struct dig_server dig_server_t;
+#ifdef DIG_SIGCHASE
+typedef struct dig_message dig_message_t;
+#endif
 typedef ISC_LIST(dig_server_t) dig_serverlist_t;
 typedef struct dig_searchlist dig_searchlist_t;
 
@@ -110,10 +126,27 @@ struct dig_lookup {
 		new_search,
 		besteffort,
 		dnssec;
+#ifdef DIG_SIGCHASE
+isc_boolean_t	sigchase;
+#if DIG_SIGCHASE_TD
+ 	isc_boolean_t do_topdown,
+	        trace_root_sigchase,
+	        rdtype_sigchaseset,
+	        rdclass_sigchaseset;
+	/* Name we are going to validate RRset */
+  	char textnamesigchase[MXNAME];
+#endif
+#endif
+	
 	char textname[MXNAME]; /* Name we're going to be looking up */
 	char cmdline[MXNAME];
 	dns_rdatatype_t rdtype;
 	dns_rdatatype_t qrdtype;
+#if DIG_SIGCHASE_TD
+        dns_rdatatype_t rdtype_sigchase;
+        dns_rdatatype_t qrdtype_sigchase;
+        dns_rdataclass_t rdclass_sigchase;
+#endif
 	dns_rdataclass_t rdclass;
 	isc_boolean_t rdtypeset;
 	isc_boolean_t rdclassset;
@@ -156,6 +189,7 @@ struct dig_query {
 		warn_id;
 	isc_uint32_t first_rr_serial;
 	isc_uint32_t second_rr_serial;
+	isc_uint32_t msg_count;
 	isc_uint32_t rr_count;
 	char *servname;
 	isc_bufferlist_t sendlist,
@@ -182,7 +216,12 @@ struct dig_searchlist {
 	char origin[MXNAME];
 	ISC_LINK(dig_searchlist_t) link;
 };
-
+#ifdef DIG_SIGCHASE
+struct dig_message {
+	        dns_message_t *msg;
+		ISC_LINK(dig_message_t) link;
+};
+#endif
 /*
  * Routines in dighost.c.
  */
@@ -190,7 +229,7 @@ void
 get_address(char *host, in_port_t port, isc_sockaddr_t *sockaddr);
 
 isc_result_t
-get_reverse(char *reverse, char *value, isc_boolean_t ip6int,
+get_reverse(char *reverse, size_t len, char *value, isc_boolean_t ip6_int,
 	    isc_boolean_t strict);
 
 void
@@ -236,6 +275,12 @@ dig_server_t *
 make_server(const char *servname);
 
 void
+flush_server_list(void);
+
+void
+set_nameserver(char *opt);
+
+void
 clone_server_list(dig_serverlist_t src,
 		  dig_serverlist_t *dest);
 
@@ -248,9 +293,19 @@ destroy_libs(void);
 void
 set_search_domain(char *domain);
 
+#ifdef DIG_SIGCHASE
+void
+clean_trustedkey(void);
+#endif
+
 /*
  * Routines to be defined in dig.c, host.c, and nslookup.c.
  */
+#ifdef DIG_SIGCHASE
+isc_result_t
+printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
+	      isc_buffer_t *target);
+#endif
 
 isc_result_t
 printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers);
@@ -274,6 +329,14 @@ dighost_shutdown(void);
 
 char *
 next_token(char **stringp, const char *delim);
+
+#ifdef DIG_SIGCHASE
+/* Chasing functions */
+dns_rdataset_t *
+chase_scanname(dns_name_t *name, dns_rdatatype_t type, dns_rdatatype_t covers);
+void
+chase_sig(dns_message_t *msg);
+#endif
 
 ISC_LANG_ENDDECLS
 

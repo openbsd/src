@@ -1,35 +1,34 @@
-.\"
-.\" Copyright (C) 2000, 2001  Internet Software Consortium.
+.\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2000-2003  Internet Software Consortium.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
-.\" DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
-.\" INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
-.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
-.\" FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
-.\" NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-.\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+.\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+.\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+.\" LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+.\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" $ISC: dnssec-signzone.8,v 1.23.2.1.4.6 2004/06/11 02:32:46 marka Exp $
 .\"
 .TH "DNSSEC-SIGNZONE" "8" "June 30, 2000" "BIND9" ""
 .SH NAME
 dnssec-signzone \- DNSSEC zone signing tool
 .SH SYNOPSIS
 .sp
-\fBdnssec-signzone\fR [ \fB-a\fR ]  [ \fB-c \fIclass\fB\fR ]  [ \fB-d \fIdirectory\fB\fR ]  [ \fB-s \fIstart-time\fB\fR ]  [ \fB-e \fIend-time\fB\fR ]  [ \fB-f \fIoutput-file\fB\fR ]  [ \fB-h\fR ]  [ \fB-i \fIinterval\fB\fR ]  [ \fB-n \fInthreads\fB\fR ]  [ \fB-o \fIorigin\fB\fR ]  [ \fB-p\fR ]  [ \fB-r \fIrandomdev\fB\fR ]  [ \fB-t\fR ]  [ \fB-v \fIlevel\fB\fR ]  \fBzonefile\fR [ \fBkey\fR\fI...\fR ] 
+\fBdnssec-signzone\fR [ \fB-a\fR ]  [ \fB-c \fIclass\fB\fR ]  [ \fB-d \fIdirectory\fB\fR ]  [ \fB-e \fIend-time\fB\fR ]  [ \fB-f \fIoutput-file\fB\fR ]  [ \fB-g\fR ]  [ \fB-h\fR ]  [ \fB-k \fIkey\fB\fR ]  [ \fB-l \fIdomain\fB\fR ]  [ \fB-i \fIinterval\fB\fR ]  [ \fB-n \fInthreads\fB\fR ]  [ \fB-o \fIorigin\fB\fR ]  [ \fB-p\fR ]  [ \fB-r \fIrandomdev\fB\fR ]  [ \fB-s \fIstart-time\fB\fR ]  [ \fB-t\fR ]  [ \fB-v \fIlevel\fB\fR ]  [ \fB-z\fR ]  \fBzonefile\fR [ \fBkey\fR\fI...\fR ] 
 .SH "DESCRIPTION"
 .PP
-\fBdnssec-signzone\fR signs a zone. It generates NXT
-and SIG records and produces a signed version of the zone. If there
-is a \fIsignedkey\fR file from the zone's parent,
-the parent's signatures will be incorporated into the generated
-signed zone file. The security status of delegations from the the
-signed zone (that is, whether the child zones are secure or not) is
+\fBdnssec-signzone\fR signs a zone. It generates
+NSEC and RRSIG records and produces a signed version of the
+zone. The security status of delegations from the signed zone
+(that is, whether the child zones are secure or not) is
 determined by the presence or absence of a
-\fIsignedkey\fR file for each child zone.
+\fIkeyset\fR file for each child zone.
 .SH "OPTIONS"
 .TP
 \fB-a\fR
@@ -38,22 +37,34 @@ Verify all generated signatures.
 \fB-c \fIclass\fB\fR
 Specifies the DNS class of the zone.
 .TP
+\fB-k \fIkey\fB\fR
+Treat specified key as a key signing key ignoring any
+key flags. This option may be specified multiple times.
+.TP
+\fB-l \fIdomain\fB\fR
+Generate a DLV set in addition to the key (DNSKEY) and DS sets.
+The domain is appended to the name of the records.
+.TP
 \fB-d \fIdirectory\fB\fR
-Look for \fIsignedkey\fR files in
+Look for \fIkeyset\fR files in
 \fBdirectory\fR as the directory 
 .TP
+\fB-g\fR
+Generate DS records for child zones from keyset files.
+Existing DS records will be removed.
+.TP
 \fB-s \fIstart-time\fB\fR
-Specify the date and time when the generated SIG records
+Specify the date and time when the generated RRSIG records
 become valid. This can be either an absolute or relative
 time. An absolute start time is indicated by a number
 in YYYYMMDDHHMMSS notation; 20000530144500 denotes
 14:45:00 UTC on May 30th, 2000. A relative start time is
 indicated by +N, which is N seconds from the current time.
 If no \fBstart-time\fR is specified, the current
-time is used.
+time minus 1 hour (to allow for clock skew) is used.
 .TP
 \fB-e \fIend-time\fB\fR
-Specify the date and time when the generated SIG records
+Specify the date and time when the generated RRSIG records
 expire. As with \fBstart-time\fR, an absolute
 time is indicated in YYYYMMDDHHMMSS notation. A time relative
 to the start time is indicated with +N, which is N seconds from
@@ -74,7 +85,7 @@ Prints a short summary of the options and arguments to
 When a previously signed zone is passed as input, records
 may be resigned. The \fBinterval\fR option
 specifies the cycle interval as an offset from the current
-time (in seconds). If a SIG record expires after the
+time (in seconds). If a RRSIG record expires after the
 cycle interval, it is retained. Otherwise, it is considered
 to be expiring soon, and it will be replaced.
 
@@ -83,7 +94,7 @@ between the signature end and start times. So if neither
 \fBend-time\fR or \fBstart-time\fR
 are specified, \fBdnssec-signzone\fR generates
 signatures that are valid for 30 days, with a cycle
-interval of 7.5 days. Therefore, if any existing SIG records
+interval of 7.5 days. Therefore, if any existing RRSIG records
 are due to expire in less than 7.5 days, they would be
 replaced.
 .TP
@@ -117,6 +128,9 @@ Print statistics at completion.
 \fB-v \fIlevel\fB\fR
 Sets the debugging level.
 .TP
+\fB-z\fR
+Ignore KSK flag on key when determining what to sign.
+.TP
 \fBzonefile\fR
 The file containing the zone to be signed.
 Sets the debugging level.
@@ -130,8 +144,8 @@ current directory.
 The following command signs the \fBexample.com\fR
 zone with the DSA key generated in the \fBdnssec-keygen\fR
 man page. The zone's keys must be in the zone. If there are
-\fIsignedkey\fR files associated with this zone
-or any child zones, they must be in the current directory.
+\fIkeyset\fR files associated with child zones,
+they must be in the current directory.
 \fBexample.com\fR, the following command would be
 issued:
 .PP
@@ -146,9 +160,8 @@ should be referenced in a zone statement in a
 .SH "SEE ALSO"
 .PP
 \fBdnssec-keygen\fR(8),
-\fBdnssec-signkey\fR(8),
 \fIBIND 9 Administrator Reference Manual\fR,
 \fIRFC 2535\fR.
 .SH "AUTHOR"
 .PP
-Internet Software Consortium
+Internet Systems Consortium

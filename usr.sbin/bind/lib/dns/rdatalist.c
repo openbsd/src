@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rdatalist.c,v 1.25.2.2 2003/07/22 04:03:43 marka Exp $ */
+/* $ISC: rdatalist.c,v 1.25.2.2.2.2 2004/03/08 02:07:56 marka Exp $ */
 
 #include <config.h>
 
@@ -23,6 +23,7 @@
 
 #include <isc/util.h>
 
+#include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
@@ -35,7 +36,9 @@ static dns_rdatasetmethods_t methods = {
 	isc__rdatalist_next,
 	isc__rdatalist_current,
 	isc__rdatalist_clone,
-	isc__rdatalist_count
+	isc__rdatalist_count,
+	isc__rdatalist_addnoqname,
+	isc__rdatalist_getnoqname
 };
 
 void
@@ -149,4 +152,73 @@ isc__rdatalist_count(dns_rdataset_t *rdataset) {
 		count++;
 
 	return (count);
+}
+
+isc_result_t
+isc__rdatalist_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name) {
+	dns_rdataset_t *nsec = NULL;
+	dns_rdataset_t *nsecsig = NULL;
+	dns_rdataset_t *rdset;
+	dns_ttl_t ttl;
+
+	for (rdset = ISC_LIST_HEAD(name->list);
+	     rdset != NULL;
+	     rdset = ISC_LIST_NEXT(rdset, link))
+	{
+		if (rdset->rdclass != rdataset->rdclass)
+			continue;
+		if (rdset->type == dns_rdatatype_nsec)
+			nsec = rdset;
+		if (rdset->type == dns_rdatatype_rrsig &&
+		    rdset->covers == dns_rdatatype_nsec)
+			nsecsig = rdset;
+	}
+
+	if (nsec == NULL || nsecsig == NULL)
+		return (ISC_R_NOTFOUND);
+	/*
+	 * Minimise ttl.
+	 */
+	ttl = rdataset->ttl;
+	if (nsec->ttl < ttl)
+		ttl = nsec->ttl;
+	if (nsecsig->ttl < ttl)
+		ttl = nsecsig->ttl;
+	rdataset->ttl = nsec->ttl = nsecsig->ttl = ttl;
+	rdataset->attributes |= DNS_RDATASETATTR_NOQNAME;
+	rdataset->private6 = name;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc__rdatalist_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
+			 dns_rdataset_t *nsec, dns_rdataset_t *nsecsig)
+{
+	dns_rdataclass_t rdclass = rdataset->rdclass;
+	dns_rdataset_t *tnsec = NULL;
+	dns_rdataset_t *tnsecsig = NULL;
+	dns_name_t *noqname = rdataset->private6;
+
+	REQUIRE((rdataset->attributes & DNS_RDATASETATTR_NOQNAME) != 0);
+	(void)dns_name_dynamic(noqname);	/* Sanity Check. */
+
+	for (rdataset = ISC_LIST_HEAD(noqname->list);
+	     rdataset != NULL;
+	     rdataset = ISC_LIST_NEXT(rdataset, link))
+	{
+		if (rdataset->rdclass != rdclass)
+			continue;
+		if (rdataset->type == dns_rdatatype_nsec)
+			tnsec = rdataset;
+		if (rdataset->type == dns_rdatatype_rrsig &&
+		    rdataset->covers == dns_rdatatype_nsec)
+			tnsecsig = rdataset;
+	}
+	if (tnsec == NULL || tnsecsig == NULL)
+		return (ISC_R_NOTFOUND);
+
+	dns_name_clone(noqname, name);
+	dns_rdataset_clone(tnsec, nsec);
+	dns_rdataset_clone(tnsecsig, nsecsig);
+	return (ISC_R_SUCCESS);
 }

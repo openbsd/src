@@ -1,18 +1,18 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
@@ -44,7 +44,7 @@
  * SUCH DAMAGE.
  */
 
-/* $ISC: gen-win32.h,v 1.14 2001/07/26 20:31:48 gson Exp $ */
+/* $ISC: gen-win32.h,v 1.14.12.3 2004/03/08 09:04:30 marka Exp $ */
 
 /*
  * Principal Authors: Computer Systems Research Group at UC Berkeley
@@ -85,7 +85,7 @@ int isc_commandline_option;		/* Character checked for validity. */
 char *isc_commandline_argument;		/* Argument associated with option. */
 char *isc_commandline_progname;		/* For printing error messages. */
 
-isc_boolean_t isc_commandline_errprint = ISC_TRUE;/* Print error messages. */
+isc_boolean_t isc_commandline_errprint = ISC_TRUE; /* Print error messages. */
 isc_boolean_t isc_commandline_reset = ISC_TRUE; /* Reset processing. */
 
 #define BADOPT	'?'
@@ -231,7 +231,7 @@ start_directory(const char *path, isc_dir_t *dir) {
 	if (strlen(path) + 3 > sizeof(pattern))
 		return (ISC_FALSE);
 
-	strcpy(pattern, path);
+	strlcpy(pattern, path, sizeof(pattern));
 
 	/*
 	 * Append slash (if needed) and splat.

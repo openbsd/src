@@ -266,20 +266,41 @@ use those to make sure you reach the correct view on the other machine.
 	You put the external address on the alias so that all the other
 	dns clients on these boxes see the internal view by default.
 
+A: (BIND 9.3 and later) Use TSIG to select the appropriate view.
 
-Q: When I try to use rndc, I get the error message "network
-unreachable" or "connection refused", even though I know named is
-running.
+	Master 10.0.1.1:
+	key "external" {
+		algorithm hmac-md5;
+		secret "xxxxxxxx";
+	};
+	view "internal" {
+		match-clients { !key external; 10.0.1/24; };
+		...
+	};
+	view "external" {
+		match-clients { key external; any; };
+		server 10.0.0.2 { keys external; };
+		recursion no;
+		...
+	};
 
-A: You probably have "default-server localhost" in /etc/rndc.conf,
-your /etc/hosts or DNS maps "localhost" to both the IPv4 loopback
-address 127.0.0.1 and the IPv6 loopback address ::1, and you do not
-have IPv6 fully operational.  Change the "default-server localhost" to
-"default-server 127.0.0.1" to make sure rdnc does not try to contact
-the name server using IPv6.
+	Slave 10.0.1.2:
+	key "external" {
+		 algorithm hmac-md5;
+		 secret "xxxxxxxx";
+	};
+	view "internal" {
+		match-clients { !key external; 10.0.1/24; };
+	};
+	view "external" {
+		match-clients { key external; any; };
+		server 10.0.0.1 { keys external; };
+		recursion no;
+		...
+	};
 
 
-Q: I have Freebsd 4.4 and "rndc-confgen -a" just sits there.
+Q: I have Freebsd 4.x and "rndc-confgen -a" just sits there.
 
 A: /dev/random is not configured.  Use rndcontrol(8) to tell the kernel
 to use certain interrupts as a source of random events.  You can make this
@@ -289,12 +310,14 @@ e.g.
 	/etc/rc.conf
 	rand_irqs="3 14 15"
 
+See also http://people.freebsd.org/~dougb/randomness.html
+
 
 Q: Why is named listening on UDP port other than 53?
 
 A: Named uses a system selected port to make queries of other nameservers.
 This behaviour can be overridden by using query-source to lock down the
-port and/or address.
+port and/or address.  See also notify-source and transfer-source.
 
 
 Q: I get error messages like "multiple RRs of singleton type" and
@@ -330,3 +353,102 @@ the serial query rate.
 
 	serial-query-rate 5; // default 20
 
+Q: How do I share a dynamic zone between multiple views?
+
+A: You choose one view to be master and the second a slave and transfer
+the zone between views.
+
+	Master 10.0.1.1:
+	key "external" {
+		algorithm hmac-md5;
+		secret "xxxxxxxx";
+	};
+
+	key "mykey" {
+		algorithm hmac-md5;
+		secret "yyyyyyyy";
+	};
+
+	view "internal" {
+		match-clients { !external; 10.0.1/24; };
+		server 10.0.1.1 {
+			/* Deliver notify messages to external view. */
+			keys { external; };
+		};
+		zone "example.com" {
+			type master;
+			file "internal/example.db";
+			allow-update { key mykey; };
+			notify-also { 10.0.1.1; };
+		};
+	};
+
+	view "external" {
+		match-clients { external; any; };
+		zone "example.com" {
+			type slave;
+			file "external/example.db";
+			masters { 10.0.1.1; };
+			transfer-source { 10.0.1.1; };
+			// allow-update-forwarding { any; };
+			// allow-notify { ... };
+		};
+	};
+
+Q: I get a error message like "zone wireless.ietf56.ietf.org/IN: loading master
+file primaries/wireless.ietf56.ietf.org: no owner".
+
+A: This error is produced when a line in the master file contains leading
+white space (tab/space) but the is no current record owner name to inherit
+the name from.  Usually this is the result of putting white space before
+a comment.  Forgeting the "@" for the SOA record or indenting the master
+file.
+
+
+Q: Why are my logs in GMT (UTC).
+
+A: You are running chrooted (-t) and have not supplied local timzone
+information in the chroot area.
+
+	FreeBSD: /etc/localtime
+	Solaris: /etc/TIMEZONE and /usr/share/lib/zoneinfo
+	OSF: /etc/zoneinfo/localtime
+
+	See also tzset(3) and zic(8).
+
+
+Q: I get the error message "named: capset failed: Operation not permitted"
+when starting named.
+
+A: The capset module has not been loaded into the kernel.  See insmod(8).
+
+
+Q: I get "rndc: connect failed: connection refused" when I try to run
+   rndc.
+
+A: This is usually a configuration error.
+
+   First ensure that named is running and no errors are being
+   reported at startup (/var/log/messages or equivalent).  Running
+   "named -g <usual arguements>" from a terminal can help at this
+   point.
+
+   Secondly ensure that named is configured to use rndc either by
+   "rndc-confgen -a", rndc-confgen or manually.  The Administators
+   Reference manual has details on how to do this.
+
+   Old versions of rndc-confgen used localhost rather than 127.0.0.1
+   in /etc/rndc.conf for the default server.  Update /etc/rndc.conf
+   if necessary so that the default server listed in /etc/rndc.conf
+   matches the addresses used in named.conf.  "localhost" has two
+   address (127.0.0.1 and ::1).
+
+   If you use "rndc-confgen -a" and named is running with -t or -u
+   ensure that /etc/rndc.conf has the correct ownership and that
+   a copy is in the chroot area.  You can do this by re-running
+   "rndc-confgen -a" with appropriate -t and -u arguements.
+
+
+Q: I don't get RRSIG's returned when I use "dig +dnssec".
+
+A: You need to ensure DNSSEC is enabled (dnssec-enable yes;).

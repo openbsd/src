@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: view.c,v 1.103.2.9 2003/09/19 13:24:03 marka Exp $ */
+/* $ISC: view.c,v 1.103.2.5.2.14 2004/03/10 02:55:58 marka Exp $ */
 
 #include <config.h>
 
@@ -33,6 +33,7 @@
 #include <dns/keytable.h>
 #include <dns/master.h>
 #include <dns/masterdump.h>
+#include <dns/order.h>
 #include <dns/peer.h>
 #include <dns/rdataset.h>
 #include <dns/request.h>
@@ -66,7 +67,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	REQUIRE(name != NULL);
 	REQUIRE(viewp != NULL && *viewp == NULL);
 
-	view = isc_mem_get(mctx, sizeof *view);
+	view = isc_mem_get(mctx, sizeof(*view));
 	if (view == NULL)
 		return (ISC_R_NOMEMORY);
 	view->name = isc_mem_strdup(mctx, name);
@@ -142,7 +143,10 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_fwdtable;
 	view->peers = NULL;
+	view->order = NULL;
 	view->delonly = NULL;
+	view->rootdelonly = ISC_FALSE;
+	view->rootexclude = NULL;
 
 	/*
 	 * Initialize configuration data with default values.
@@ -151,38 +155,42 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->auth_nxdomain = ISC_FALSE; /* Was true in BIND 8 */
 	view->additionalfromcache = ISC_TRUE;
 	view->additionalfromauth = ISC_TRUE;
+	view->enablednssec = ISC_TRUE;
 	view->minimalresponses = ISC_FALSE;
 	view->transfer_format = dns_one_answer;
 	view->queryacl = NULL;
 	view->recursionacl = NULL;
-	view->v6synthesisacl = NULL;
 	view->sortlist = NULL;
 	view->requestixfr = ISC_TRUE;
 	view->provideixfr = ISC_TRUE;
 	view->maxcachettl = 7 * 24 * 3600;
 	view->maxncachettl = 3 * 3600;
 	view->dstport = 53;
+	view->preferred_glue = 0;
 	view->flush = ISC_FALSE;
-	view->delonly = NULL;
-	view->rootdelonly = ISC_FALSE;
-	view->rootexclude = NULL;
+	view->dlv = NULL;
+	dns_fixedname_init(&view->dlv_fixed);
+
+	result = dns_order_create(view->mctx, &view->order);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup_dynkeys;
 
 	result = dns_peerlist_new(view->mctx, &view->peers);
 	if (result != ISC_R_SUCCESS)
-		goto cleanup_dynkeys;
+		goto cleanup_order;
 
 	result = dns_aclenv_init(view->mctx, &view->aclenv);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_peerlist;
 
 	ISC_LINK_INIT(view, link);
-	ISC_EVENT_INIT(&view->resevent, sizeof view->resevent, 0, NULL,
+	ISC_EVENT_INIT(&view->resevent, sizeof(view->resevent), 0, NULL,
 		       DNS_EVENT_VIEWRESSHUTDOWN, resolver_shutdown,
 		       view, NULL, NULL, NULL);
-	ISC_EVENT_INIT(&view->adbevent, sizeof view->adbevent, 0, NULL,
+	ISC_EVENT_INIT(&view->adbevent, sizeof(view->adbevent), 0, NULL,
 		       DNS_EVENT_VIEWADBSHUTDOWN, adb_shutdown,
 		       view, NULL, NULL, NULL);
-	ISC_EVENT_INIT(&view->reqevent, sizeof view->reqevent, 0, NULL,
+	ISC_EVENT_INIT(&view->reqevent, sizeof(view->reqevent), 0, NULL,
 		       DNS_EVENT_VIEWREQSHUTDOWN, req_shutdown,
 		       view, NULL, NULL, NULL);
 	view->magic = DNS_VIEW_MAGIC;
@@ -193,6 +201,9 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 
  cleanup_peerlist:
 	dns_peerlist_detach(&view->peers);
+
+ cleanup_order:
+	dns_order_detach(&view->order);
 
  cleanup_dynkeys:
 	dns_tsigkeyring_destroy(&view->dynamickeys);
@@ -216,7 +227,7 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	isc_mem_free(mctx, view->name);
 
  cleanup_view:
-	isc_mem_put(mctx, view, sizeof *view);
+	isc_mem_put(mctx, view, sizeof(*view));
 
 	return (result);
 }
@@ -230,6 +241,8 @@ destroy(dns_view_t *view) {
 	REQUIRE(ADBSHUTDOWN(view));
 	REQUIRE(REQSHUTDOWN(view));
 
+	if (view->order != NULL)
+		dns_order_detach(&view->order);
 	if (view->peers != NULL)
 		dns_peerlist_detach(&view->peers);
 	if (view->dynamickeys != NULL)
@@ -258,8 +271,6 @@ destroy(dns_view_t *view) {
 		dns_acl_detach(&view->queryacl);
 	if (view->recursionacl != NULL)
 		dns_acl_detach(&view->recursionacl);
-	if (view->v6synthesisacl != NULL)
-		dns_acl_detach(&view->v6synthesisacl);
 	if (view->sortlist != NULL)
 		dns_acl_detach(&view->sortlist);
 	if (view->delonly != NULL) {
@@ -304,7 +315,7 @@ destroy(dns_view_t *view) {
 	DESTROYLOCK(&view->lock);
 	isc_refcount_destroy(&view->references);
 	isc_mem_free(view->mctx, view->name);
-	isc_mem_put(view->mctx, view, sizeof *view);
+	isc_mem_put(view->mctx, view, sizeof(*view));
 }
 
 /*
@@ -388,7 +399,7 @@ dialup(dns_zone_t *zone, void *dummy) {
 void
 dns_view_dialup(dns_view_t *view) {
 	REQUIRE(DNS_VIEW_VALID(view));
-	dns_zt_apply(view->zonetable, ISC_FALSE, dialup, NULL);
+	(void)dns_zt_apply(view->zonetable, ISC_FALSE, dialup, NULL);
 }
 
 void
@@ -511,6 +522,7 @@ dns_view_createresolver(dns_view_t *view,
 {
 	isc_result_t result;
 	isc_event_t *event;
+	isc_mem_t *mctx = NULL;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 	REQUIRE(!view->frozen);
@@ -533,8 +545,14 @@ dns_view_createresolver(dns_view_t *view,
 	dns_resolver_whenshutdown(view->resolver, view->task, &event);
 	view->attributes &= ~DNS_VIEWATTR_RESSHUTDOWN;
 
-	result = dns_adb_create(view->mctx, view, timermgr, taskmgr,
-				&view->adb);
+	result = isc_mem_create(0, 0, &mctx);
+	if (result != ISC_R_SUCCESS) {
+		dns_resolver_shutdown(view->resolver);
+		return (result);
+	}
+
+	result = dns_adb_create(mctx, view, timermgr, taskmgr, &view->adb);
+	isc_mem_detach(&mctx);
 	if (result != ISC_R_SUCCESS) {
 		dns_resolver_shutdown(view->resolver);
 		return (result);
@@ -659,7 +677,7 @@ dns_view_find(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 
 	REQUIRE(DNS_VIEW_VALID(view));
 	REQUIRE(view->frozen);
-	REQUIRE(type != dns_rdatatype_sig);
+	REQUIRE(type != dns_rdatatype_rrsig);
 	REQUIRE(rdataset != NULL);  /* XXXBEW - remove this */
 
 	/*
@@ -861,7 +879,7 @@ dns_view_simplefind(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 			       rdataset, sigrdataset);
 	if (result == DNS_R_NXDOMAIN) {
 		/*
-		 * The rdataset and sigrdataset of the relevant NXT record
+		 * The rdataset and sigrdataset of the relevant NSEC record
 		 * may be returned, but the caller cannot use them because
 		 * foundname is not returned by this simplified API.  We
 		 * disassociate them here to prevent any misuse by the caller.
@@ -1165,9 +1183,7 @@ dns_view_dumpdbtostream(dns_view_t *view, FILE *fp) {
 					  &dns_master_style_cache, fp);
 	if (result != ISC_R_SUCCESS)
 		return (result);
-#ifdef notyet /* clean up adb dump format first */
 	dns_adb_dump(view->adb, fp);
-#endif
 	return (ISC_R_SUCCESS);
 }
 
@@ -1187,6 +1203,18 @@ dns_view_flushcache(dns_view_t *view) {
 
 	dns_adb_flush(view->adb);
 	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_view_flushname(dns_view_t *view, dns_name_t *name) {
+
+	REQUIRE(DNS_VIEW_VALID(view));
+
+	if (view->adb != NULL)
+		dns_adb_flushname(view->adb, name);
+	if (view->cache == NULL)
+		return (ISC_R_SUCCESS);
+	return (dns_cache_flushname(view->cache, name));
 }
 
 isc_result_t

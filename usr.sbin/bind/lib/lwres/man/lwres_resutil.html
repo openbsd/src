@@ -1,27 +1,30 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
- - 
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2001  Internet Software Consortium.
+ -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
+
+<!-- $ISC: lwres_resutil.html,v 1.8.2.1.4.2 2004/08/22 23:39:05 marka Exp $ -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_resutil</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -32,8 +35,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
->lwres_resutil</A
-></H1
+></A
+>lwres_resutil</H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -51,11 +54,11 @@ NAME="AEN14"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
+><P
+></P
 ><A
 NAME="AEN15"
 ></A
-><P
-></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/lwres.h&gt;</PRE
@@ -103,32 +106,26 @@ NAME="AEN43"
 ><H2
 >DESCRIPTION</H2
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_string_parse()</TT
+>lwres_string_parse()</CODE
 > retrieves a DNS-encoded
 string starting the current pointer of lightweight resolver buffer
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->b</I
-></TT
->: i.e.  <TT
+>b</VAR
+>: i.e.  <CODE
 CLASS="CONSTANT"
->b-&gt;current</TT
+>b-&gt;current</CODE
 >.
 When the function returns, the address of the first byte of the
-encoded string is returned via <TT
+encoded string is returned via <VAR
 CLASS="PARAMETER"
-><I
->*c</I
-></TT
+>*c</VAR
 > and the
-length of that string is given by <TT
+length of that string is given by <VAR
 CLASS="PARAMETER"
-><I
->*len</I
-></TT
+>*len</VAR
 >.  The
 buffer's current pointer is advanced to point at the character
 following the string length, the encoded string, and the trailing
@@ -137,45 +134,43 @@ CLASS="TYPE"
 >NULL</SPAN
 > character.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_addr_parse()</TT
+>lwres_addr_parse()</CODE
 > extracts an address from the
-buffer <TT
+buffer <VAR
 CLASS="PARAMETER"
-><I
->b</I
-></TT
+>b</VAR
 >.  The buffer's current pointer
-<TT
+<CODE
 CLASS="CONSTANT"
->b-&gt;current</TT
+>b-&gt;current</CODE
 > is presumed to point at an encoded
 address: the address preceded by a 32-bit protocol family identifier
 and a 16-bit length field.  The encoded address is copied to
-<TT
+<CODE
 CLASS="CONSTANT"
->addr-&gt;address</TT
+>addr-&gt;address</CODE
 > and
-<TT
+<CODE
 CLASS="CONSTANT"
->addr-&gt;length</TT
+>addr-&gt;length</CODE
 > indicates the size in bytes of
-the address that was copied.  <TT
+the address that was copied.  <CODE
 CLASS="CONSTANT"
->b-&gt;current</TT
+>b-&gt;current</CODE
 > is
 advanced to point at the next byte of available data in the buffer
 following the encoded address.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_getaddrsbyname()</TT
+>lwres_getaddrsbyname()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_getnamebyaddr()</TT
+>lwres_getnamebyaddr()</CODE
 >
 use the
 <SPAN
@@ -210,27 +205,21 @@ CLASS="REFENTRYTITLE"
 functions.</P
 ><P
 >The lightweight resolver uses
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_getaddrsbyname()</TT
+>lwres_getaddrsbyname()</CODE
 > to perform foward lookups.
-Hostname <TT
+Hostname <VAR
 CLASS="PARAMETER"
-><I
->name</I
-></TT
+>name</VAR
 > is looked up using the resolver
-context <TT
+context <VAR
 CLASS="PARAMETER"
-><I
->ctx</I
-></TT
+>ctx</VAR
 > for memory allocation.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->addrtypes</I
-></TT
+>addrtypes</VAR
 > is a bitmask indicating which type of
 addresses are to be looked up.  Current values for this bitmask are
 <SPAN
@@ -241,29 +230,23 @@ CLASS="TYPE"
 CLASS="TYPE"
 >LWRES_ADDRTYPE_V6</SPAN
 > for IPv6 addresses.  Results of the
-lookup are returned in <TT
+lookup are returned in <VAR
 CLASS="PARAMETER"
-><I
->*structp</I
-></TT
+>*structp</VAR
 >.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_getnamebyaddr()</TT
+>lwres_getnamebyaddr()</CODE
 > performs reverse lookups.
-Resolver context <TT
+Resolver context <VAR
 CLASS="PARAMETER"
-><I
->ctx</I
-></TT
+>ctx</VAR
 > is used for memory
 allocation.  The address type is indicated by
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->addrtype</I
-></TT
+>addrtype</VAR
 >: <SPAN
 CLASS="TYPE"
 >LWRES_ADDRTYPE_V4</SPAN
@@ -272,23 +255,17 @@ CLASS="TYPE"
 CLASS="TYPE"
 >LWRES_ADDRTYPE_V6</SPAN
 >.  The address to be looked up is given
-by <TT
+by <VAR
 CLASS="PARAMETER"
-><I
->addr</I
-></TT
+>addr</VAR
 > and its length is
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->addrlen</I
-></TT
+>addrlen</VAR
 > bytes.  The result of the function call
-is made available through <TT
+is made available through <VAR
 CLASS="PARAMETER"
-><I
->*structp</I
-></TT
+>*structp</VAR
 >.</P
 ></DIV
 ><DIV
@@ -300,14 +277,14 @@ NAME="AEN84"
 >RETURN VALUES</H2
 ><P
 >Successful calls to
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_string_parse()</TT
+>lwres_string_parse()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_addr_parse()</TT
+>lwres_addr_parse()</CODE
 >
 return
 <SPAN
@@ -327,9 +304,9 @@ CLASS="ERRORCODE"
 if the buffer has less space than expected for the components of the
 encoded string or address.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_getaddrsbyname()</TT
+>lwres_getaddrsbyname()</CODE
 >
 returns
 <SPAN
@@ -342,11 +319,9 @@ CLASS="ERRORCODE"
 >LWRES_R_NOTFOUND</SPAN
 >
 if the hostname
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->name</I
-></TT
+>name</VAR
 >
 could not be found.</P
 ><P
@@ -355,20 +330,20 @@ CLASS="ERRORCODE"
 >LWRES_R_SUCCESS</SPAN
 >
 is returned by a successful call to
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_getnamebyaddr()</TT
+>lwres_getnamebyaddr()</CODE
 >.</P
 ><P
 >Both
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_getaddrsbyname()</TT
+>lwres_getaddrsbyname()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_getnamebyaddr()</TT
+>lwres_getnamebyaddr()</CODE
 >
 return
 <SPAN

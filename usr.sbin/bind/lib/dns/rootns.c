@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: rootns.c,v 1.20.2.3 2003/07/22 04:03:44 marka Exp $ */
+/* $ISC: rootns.c,v 1.20.2.3.2.5 2004/03/08 09:04:32 marka Exp $ */
 
 #include <config.h>
 
@@ -57,7 +57,7 @@ static char root_ns[] =
 ".                       518400  IN      NS      L.ROOT-SERVERS.NET.\n"
 ".                       518400  IN      NS      M.ROOT-SERVERS.NET.\n"
 "A.ROOT-SERVERS.NET.     3600000 IN      A       198.41.0.4\n"
-"B.ROOT-SERVERS.NET.     3600000 IN      A       128.9.0.107\n"
+"B.ROOT-SERVERS.NET.     3600000 IN      A       192.228.79.201\n"
 "C.ROOT-SERVERS.NET.     3600000 IN      A       192.33.4.12\n"
 "D.ROOT-SERVERS.NET.     3600000 IN      A       128.8.10.90\n"
 "E.ROOT-SERVERS.NET.     3600000 IN      A       192.203.230.10\n"
@@ -107,7 +107,6 @@ check_node(dns_rdataset_t *rootns, dns_name_t *name,
 		switch (rdataset.type) {
 		case dns_rdatatype_a:
 		case dns_rdatatype_aaaa:
-		case dns_rdatatype_a6:
 			result = in_rootns(rootns, name);
 			if (result != ISC_R_SUCCESS)
 				goto cleanup;
@@ -215,14 +214,16 @@ dns_rootns_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 		 * Load the hints from the specified filename.
 		 */
 		result = dns_master_loadfile(filename, &db->origin,
-					     &db->origin, db->rdclass, 0,
+					     &db->origin, db->rdclass,
+					     DNS_MASTER_HINT,
 					     &callbacks, db->mctx);
 	} else if (rdclass == dns_rdataclass_in) {
 		/*
 		 * Default to using the Internet root servers.
 		 */
 		result = dns_master_loadbuffer(&source, &db->origin,
-					       &db->origin, db->rdclass, 0,
+					       &db->origin, db->rdclass, 
+					       DNS_MASTER_HINT,
 					       &callbacks, db->mctx);
 	} else
 		result = ISC_R_NOTFOUND;

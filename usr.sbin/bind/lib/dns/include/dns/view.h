@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: view.h,v 1.73.2.7 2003/09/19 14:10:31 marka Exp $ */
+/* $ISC: view.h,v 1.73.2.4.2.12 2004/03/10 02:55:58 marka Exp $ */
 
 #ifndef DNS_VIEW_H
 #define DNS_VIEW_H 1
@@ -71,6 +71,7 @@
 #include <isc/stdtime.h>
 
 #include <dns/acl.h>
+#include <dns/fixedname.h>
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
@@ -100,16 +101,17 @@ struct dns_view {
 	dns_tsig_keyring_t *		statickeys;
 	dns_tsig_keyring_t *		dynamickeys;
 	dns_peerlist_t *		peers;
+	dns_order_t *			order;
 	dns_fwdtable_t *		fwdtable;
 	isc_boolean_t			recursion;
 	isc_boolean_t			auth_nxdomain;
 	isc_boolean_t			additionalfromcache;
 	isc_boolean_t			additionalfromauth;
 	isc_boolean_t			minimalresponses;
+	isc_boolean_t			enablednssec;
 	dns_transfer_format_t		transfer_format;
 	dns_acl_t *			queryacl;
 	dns_acl_t *			recursionacl;
-	dns_acl_t *			v6synthesisacl;
 	dns_acl_t *			sortlist;
 	isc_boolean_t			requestixfr;
 	isc_boolean_t			provideixfr;
@@ -117,10 +119,14 @@ struct dns_view {
 	dns_ttl_t			maxncachettl;
 	in_port_t			dstport;
 	dns_aclenv_t			aclenv;
+	dns_rdatatype_t			preferred_glue;
 	isc_boolean_t			flush;
 	dns_namelist_t *		delonly;
 	isc_boolean_t			rootdelonly;
 	dns_namelist_t *		rootexclude;
+	isc_boolean_t			checknames;
+	dns_name_t *			dlv;
+	dns_fixedname_t			dlv_fixed;
 
 	/*
 	 * Configurable data for server use only,
@@ -486,7 +492,7 @@ dns_view_simplefind(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
  *	'name' is valid name.
  *
  *	'type' is a valid dns_rdatatype_t, and is not a meta query type
- *	(e.g. dns_rdatatype_any), or dns_rdatatype_sig.
+ *	(e.g. dns_rdatatype_any), or dns_rdatatype_rrsig.
  *
  *	'rdataset' is a valid, disassociated rdataset.
  *
@@ -701,6 +707,20 @@ dns_view_flushcache(dns_view_t *view);
  * Returns:
  *	ISC_R_SUCCESS
  *	ISC_R_NOMEMORY
+ */
+
+isc_result_t
+dns_view_flushname(dns_view_t *view, dns_name_t *);
+/*
+ * Flush the given name from the view's cache (and ADB).
+ *
+ * Requires:
+ *	'view' is valid.
+ *	'name' is valid.
+ *
+ * Returns:
+ *	ISC_R_SUCCESS
+ *	other returns are failures.
  */
 
 isc_result_t

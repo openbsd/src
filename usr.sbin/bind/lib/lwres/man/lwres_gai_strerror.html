@@ -1,27 +1,30 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
- - 
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2001  Internet Software Consortium.
+ -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
+
+<!-- $ISC: lwres_gai_strerror.html,v 1.5.2.1.4.2 2004/08/22 23:39:03 marka Exp $ -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_gai_strerror</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -32,8 +35,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
->lwres_gai_strerror</A
-></H1
+></A
+>lwres_gai_strerror</H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -51,11 +54,11 @@ NAME="AEN11"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
+><P
+></P
 ><A
 NAME="AEN12"
 ></A
-><P
-></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/netdb.h&gt;</PRE
@@ -79,14 +82,14 @@ NAME="AEN18"
 ><H2
 >DESCRIPTION</H2
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_gai_strerror()</TT
+>lwres_gai_strerror()</CODE
 >
 returns an error message corresponding to an error code returned by
-<TT
+<CODE
 CLASS="FUNCTION"
->getaddrinfo()</TT
+>getaddrinfo()</CODE
 >.
 The following error codes and their meaning are defined in
 <TT
@@ -124,9 +127,9 @@ CLASS="ERRORCODE"
 ><DD
 ><P
 >invalid value for
-<TT
+<CODE
 CLASS="CONSTANT"
->ai_flags</TT
+>ai_flags</CODE
 ></P
 ></DD
 ><DT
@@ -145,9 +148,9 @@ CLASS="ERRORCODE"
 ></DT
 ><DD
 ><P
-><TT
+><CODE
 CLASS="CONSTANT"
->ai_family</TT
+>ai_family</CODE
 > not supported</P
 ></DD
 ><DT
@@ -184,9 +187,9 @@ CLASS="ERRORCODE"
 ></DT
 ><DD
 ><P
->servname not supported for <TT
+>servname not supported for <CODE
 CLASS="CONSTANT"
->ai_socktype</TT
+>ai_socktype</CODE
 ></P
 ></DD
 ><DT
@@ -196,9 +199,9 @@ CLASS="ERRORCODE"
 ></DT
 ><DD
 ><P
-><TT
+><CODE
 CLASS="CONSTANT"
->ai_socktype</TT
+>ai_socktype</CODE
 > not supported</P
 ></DD
 ><DT
@@ -217,26 +220,24 @@ The message <SPAN
 CLASS="ERRORNAME"
 >invalid error code</SPAN
 > is returned if
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->ecode</I
-></TT
+>ecode</VAR
 >
 is out of range.</P
 ><P
-><TT
+><CODE
 CLASS="CONSTANT"
->ai_flags</TT
+>ai_flags</CODE
 >,
-<TT
+<CODE
 CLASS="CONSTANT"
->ai_family</TT
+>ai_family</CODE
 >
 and
-<TT
+<CODE
 CLASS="CONSTANT"
->ai_socktype</TT
+>ai_socktype</CODE
 >
 are elements of the
 <SPAN
@@ -244,9 +245,9 @@ CLASS="TYPE"
 >struct  addrinfo</SPAN
 >
 used by
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_getaddrinfo()</TT
+>lwres_getaddrinfo()</CODE
 >.</P
 ></DIV
 ><DIV

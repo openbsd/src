@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: main.c,v 1.119.2.5 2003/10/09 07:32:33 marka Exp $ */
+/* $ISC: main.c,v 1.119.2.3.2.16 2004/09/01 07:16:35 marka Exp $ */
 
 #include <config.h>
 
@@ -33,6 +33,8 @@
 #include <isc/platform.h>
 #include <isc/privsep.h>
 #include <isc/resource.h>
+#include <isc/stdio.h>
+#include <isc/string.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>
@@ -46,12 +48,17 @@
 
 #include <dst/result.h>
 
+#ifdef HAVE_LIBSCF
+#include <libscf.h>
+#endif
+
 /*
  * Defining NS_MAIN provides storage declarations (rather than extern)
  * for variables in named/globals.h.
  */
 #define NS_MAIN 1
 
+#include <named/builtin.h>
 #include <named/control.h>
 #include <named/globals.h>	/* Explicit, though named/log.h includes it. */
 #include <named/interfacemgr.h>
@@ -69,7 +76,8 @@
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
 static char		absolute_conffile[ISC_DIR_PATHMAX];
-static char    		saved_command_line[512];
+static char		saved_command_line[512];
+static char		version[512];
 
 void
 ns_main_earlywarning(const char *format, ...) {
@@ -215,11 +223,12 @@ library_unexpected_error(const char *file, int line, const char *format,
 static void
 lwresd_usage(void) {
 	fprintf(stderr,
-		"usage: lwresd [-c conffile | -C resolvconffile] "
-		"[-d debuglevel] [-f|-g]\n"
-		"              [-n number_of_cpus] [-p port]"
+		"usage: lwresd [-4|-6] [-c conffile | -C resolvconffile] "
+		"[-d debuglevel]\n"
+		"              [-f|-g] [-n number_of_cpus] [-p port] "
 		"[-P listen-port] [-s]\n"
-		"              [-t chrootdir] [-u username] [-i pidfile]\n");
+		"              [-t chrootdir] [-u username] [-i pidfile]\n"
+		"              [-m {usage|trace|record}]\n");
 }
 
 static void
@@ -229,9 +238,10 @@ usage(void) {
 		return;
 	}
 	fprintf(stderr,
-		"usage: named [-c conffile] [-d debuglevel] "
+		"usage: named [-4|-6] [-c conffile] [-d debuglevel] "
 		"[-f|-g] [-n number_of_cpus]\n"
-		"             [-p port] [-s] [-t chrootdir] [-u username] [-i pidfile]\n");
+		"             [-p port] [-s] [-t chrootdir] [-u username] [-i pidfile]\n"
+		"             [-m {usage|trace|record}]\n");
 }
 
 static void
@@ -292,18 +302,69 @@ parse_int(char *arg, const char *desc) {
 	return (tmp);
 }
 
+static struct flag_def {
+	const char *name;
+	unsigned int value;
+} mem_debug_flags[] = {
+	{ "trace",  ISC_MEM_DEBUGTRACE },
+	{ "record", ISC_MEM_DEBUGRECORD },
+	{ "usage", ISC_MEM_DEBUGUSAGE },
+	{ NULL, 0 }
+};
+
+static void
+set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
+	for (;;) {
+		const struct flag_def *def;
+		const char *end = strchr(arg, ',');
+		int arglen;
+		if (end == NULL)
+			end = arg + strlen(arg);
+		arglen = end - arg;
+		for (def = defs; def->name != NULL; def++) {
+			if (arglen == (int)strlen(def->name) &&
+			    memcmp(arg, def->name, arglen) == 0) {
+				*ret |= def->value;
+				goto found;
+			}
+		}
+		ns_main_earlyfatal("unrecognized flag '%.*s'", arglen, arg);
+	 found:
+		if (*end == '\0')
+			break;
+		arg = end + 1;
+	}
+}
+
 static void
 parse_command_line(int argc, char *argv[]) {
 	int ch;
 	int port;
+	isc_boolean_t disable6 = ISC_FALSE;
+	isc_boolean_t disable4 = ISC_FALSE;
 
 	save_command_line(argc, argv);
 
 	isc_commandline_errprint = ISC_FALSE;
 	while ((ch = isc_commandline_parse(argc, argv,
-					   "c:C:d:fgi:ln:N:p:P:st:u:vx:")) !=
-	       -1) {
+			           "46c:C:d:fgi:lm:n:N:p:P:st:u:vx:")) != -1) {
 		switch (ch) {
+		case '4':
+			if (disable4)
+				ns_main_earlyfatal("cannot specify -4 and -6");
+			if (isc_net_probeipv4() != ISC_R_SUCCESS)
+				ns_main_earlyfatal("IPv4 not supported by OS");
+			isc_net_disableipv6();
+			disable6 = ISC_TRUE;
+			break;
+		case '6':
+			if (disable6)
+				ns_main_earlyfatal("cannot specify -4 and -6");
+			if (isc_net_probeipv6() != ISC_R_SUCCESS)
+				ns_main_earlyfatal("IPv6 not supported by OS");
+			isc_net_disableipv4();
+			disable4 = ISC_TRUE;
+			break;
 		case 'c':
 			ns_g_conffile = isc_commandline_argument;
 			lwresd_g_conffile = isc_commandline_argument;
@@ -333,6 +394,10 @@ parse_command_line(int argc, char *argv[]) {
 			break;
 		case 'l':
 			ns_g_lwresdonly = ISC_TRUE;
+			break;
+		case 'm':
+			set_flags(isc_commandline_argument, mem_debug_flags,
+				  &isc_mem_debugging);
 			break;
 		case 'N': /* Deprecated. */
 		case 'n':
@@ -386,23 +451,26 @@ parse_command_line(int argc, char *argv[]) {
 		usage();
 		ns_main_earlyfatal("extra command line arguments");
 	}
-
-	
 }
 
 static isc_result_t
 create_managers(void) {
 	isc_result_t result;
+#ifdef ISC_PLATFORM_USETHREADS
+	unsigned int cpus_detected;
+#endif
 
 #ifdef ISC_PLATFORM_USETHREADS
+	cpus_detected = isc_os_ncpus();
 	if (ns_g_cpus == 0)
-		ns_g_cpus = isc_os_ncpus();
+		ns_g_cpus = cpus_detected;
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
+		      ISC_LOG_INFO, "found %u CPU%s, using %u worker thread%s",
+		      cpus_detected, cpus_detected == 1 ? "" : "s",
+		      ns_g_cpus, ns_g_cpus == 1 ? "" : "s");
 #else
 	ns_g_cpus = 1;
 #endif
-	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
-		      ISC_LOG_INFO, "using %u CPU%s",
-		      ns_g_cpus, ns_g_cpus == 1 ? "" : "s");
 	result = isc_taskmgr_create(ns_g_mctx, ns_g_cpus, 0, &ns_g_taskmgr);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -451,9 +519,9 @@ destroy_managers(void) {
 	ns_lwresd_shutdown();
 
 	isc_entropy_detach(&ns_g_entropy);
-	if (ns_g_fallbackentropy != NULL) {
+	if (ns_g_fallbackentropy != NULL)
 		isc_entropy_detach(&ns_g_fallbackentropy);
-	}
+
 	/*
 	 * isc_taskmgr_destroy() will block until all tasks have exited,
 	 */
@@ -487,28 +555,32 @@ setup(void) {
 	ns_os_inituserinfo(ns_g_username);
 
 	/*
-	 * Initialize time conversion information and /dev/null
+	 * Initialize time conversion information
 	 */
 	ns_os_tzset();
+
 	ns_os_opendevnull();
 
+#ifdef PATH_RANDOMDEV
 	/*
 	 * Initialize system's random device as fallback entropy source
 	 * if running chroot'ed.
 	 */
-	result = isc_entropy_create(ns_g_mctx, &ns_g_fallbackentropy);
-	if (result != ISC_R_SUCCESS)
-		ns_main_earlyfatal("isc_entropy_create() failed: %s",
-				   isc_result_totext(result));
-#ifdef PATH_RANDOMDEV
 	if (ns_g_chrootdir != NULL) {
+		result = isc_entropy_create(ns_g_mctx, &ns_g_fallbackentropy);
+		if (result != ISC_R_SUCCESS)
+			ns_main_earlyfatal("isc_entropy_create() failed: %s",
+					   isc_result_totext(result));
+
 		result = isc_entropy_createfilesource(ns_g_fallbackentropy,
 						      PATH_RANDOMDEV);
-		if (result != ISC_R_SUCCESS)
+		if (result != ISC_R_SUCCESS) {
 			ns_main_earlywarning("could not open pre-chroot "
 					     "entropy source %s: %s",
 					     PATH_RANDOMDEV,
 					     isc_result_totext(result));
+			isc_entropy_detach(&ns_g_fallbackentropy);
+		}
 	}
 #endif
 
@@ -586,6 +658,8 @@ setup(void) {
 		ns_main_earlyfatal("create_managers() failed: %s",
 				   isc_result_totext(result));
 
+	ns_builtin_init();
+
 	/*
 	 * Add calls to register sdb drivers here.
 	 */
@@ -600,6 +674,8 @@ cleanup(void) {
 
 	ns_server_destroy(&ns_g_server);
 
+	ns_builtin_deinit();
+
 	/*
 	 * Add calls to unregister sdb drivers here.
 	 */
@@ -610,10 +686,125 @@ cleanup(void) {
 	ns_log_shutdown();
 }
 
+static char *memstats = NULL;
+
+void
+ns_main_setmemstats(const char *filename) {
+	/*
+	 * Caller has to ensure locking.
+	 */
+
+	if (memstats != NULL) {
+		free(memstats);
+		memstats = NULL;
+	}
+	if (filename == NULL)
+		return;
+	memstats = malloc(strlen(filename) + 1);
+	if (memstats)
+		strlcpy(memstats, filename, strlen(filename) + 1);
+}
+
+#ifdef HAVE_LIBSCF
+/*
+ * Get FMRI for the current named process
+ */
+static char *
+scf_get_ins_name(void) {
+	scf_handle_t *h = NULL;
+	int namelen;
+	char *ins_name;
+
+	if ((h = scf_handle_create(SCF_VERSION)) == NULL) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "scf_handle_create() failed: %s",
+				 scf_strerror(scf_error()));
+		return (NULL);
+	}
+
+	if (scf_handle_bind(h) == -1) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "scf_handle_bind() failed: %s",
+				 scf_strerror(scf_error()));
+		scf_handle_destroy(h);
+		return (NULL);
+	}
+
+	if ((namelen = scf_myname(h, NULL, 0)) == -1) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_MAIN, ISC_LOG_INFO,
+			      "scf_myname() failed: %s",
+			      scf_strerror(scf_error()));
+		scf_handle_destroy(h);
+		return (NULL);
+	}
+
+	if ((ins_name = malloc(namelen + 1)) == NULL) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "scf_get_ins_named() memory "
+				 "allocation failed: %s",
+				 isc_result_totext(ISC_R_NOMEMORY));
+		scf_handle_destroy(h);
+		return (NULL);
+	}
+
+	if (scf_myname(h, ins_name, namelen + 1) == -1) {
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "scf_myname() failed: %s",
+				 scf_strerror(scf_error()));
+		scf_handle_destroy(h);
+		free(ins_name);
+		return (NULL);
+	}
+
+	scf_handle_destroy(h);
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_INFO, "instance name:%s", ins_name);
+
+	return (ins_name);
+}
+
+static void
+scf_cleanup(void) {
+	char *s;
+	char *ins_name;
+
+	if ((ins_name = scf_get_ins_name()) != NULL) {
+		if ((s = smf_get_state(ins_name)) != NULL) {
+			if ((strcmp(SCF_STATE_STRING_ONLINE, s) == 0) ||
+			    (strcmp(SCF_STATE_STRING_DEGRADED, s) == 0)) {
+				if (smf_disable_instance(ins_name, 0) != 0) {
+				    UNEXPECTED_ERROR(__FILE__, __LINE__,
+					"smf_disable_instance() failed: %s",
+					scf_strerror(scf_error()));
+				}
+			}
+			free(s);
+		} else {
+			UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "smf_get_state() failed: %s",
+					 scf_strerror(scf_error()));
+		}
+		free(ins_name);
+	}
+}
+#endif
+
 int
 main(int argc, char *argv[]) {
 	isc_result_t result;
 
+	/*
+	 * Record version in core image.
+	 * strings named.core | grep "named version:"
+	 */
+	strlcat(version,
+#ifdef __DATE__
+		"named version: BIND " VERSION " (" __DATE__ ")",
+#else
+		"named version: BIND " VERSION,
+#endif
+		sizeof(version));
 	result = isc_file_progname(*argv, program_name, sizeof(program_name));
 	if (result != ISC_R_SUCCESS)
 		ns_main_earlyfatal("program name too long");
@@ -632,16 +823,28 @@ main(int argc, char *argv[]) {
 		ns_main_earlyfatal("isc_app_start() failed: %s",
 				   isc_result_totext(result));
 
-	result = isc_mem_create(0, 0, &ns_g_mctx);
-	if (result != ISC_R_SUCCESS)
-		ns_main_earlyfatal("isc_mem_create() failed: %s",
-				   isc_result_totext(result));
-
 	dns_result_register();
 	dst_result_register();
 	isccc_result_register();
 
 	parse_command_line(argc, argv);
+
+	/*
+	 * Warn about common configuration error.
+	 */
+	if (ns_g_chrootdir != NULL) {
+		int len = strlen(ns_g_chrootdir);
+		if (strncmp(ns_g_chrootdir, ns_g_conffile, len) == 0 &&
+		    (ns_g_conffile[len] == '/' || ns_g_conffile[len] == '\\'))
+			ns_main_earlywarning("config filename (-c %s) contains "
+					     "chroot path (-t %s)",
+					     ns_g_conffile, ns_g_chrootdir);
+	}
+
+	result = isc_mem_create(0, 0, &ns_g_mctx);
+	if (result != ISC_R_SUCCESS)
+		ns_main_earlyfatal("isc_mem_create() failed: %s",
+				   isc_result_totext(result));
 
 	setup();
 
@@ -665,13 +868,28 @@ main(int argc, char *argv[]) {
 		}
 	} while (result != ISC_R_SUCCESS);
 
+#ifdef HAVE_LIBSCF
+	scf_cleanup();
+#endif
+
 	cleanup();
 
 	if (want_stats) {
 		isc_mem_stats(ns_g_mctx, stdout);
 		isc_mutex_stats(stdout);
 	}
+	if (memstats != NULL) {
+		FILE *fp = NULL;
+		result = isc_stdio_open(memstats, "w", &fp);
+		if (result == ISC_R_SUCCESS) {
+			isc_mem_stats(ns_g_mctx, fp);
+			isc_mutex_stats(fp);
+			isc_stdio_close(fp);
+		}
+	}
 	isc_mem_destroy(&ns_g_mctx);
+
+	ns_main_setmemstats(NULL);
 
 	isc_app_finish();
 

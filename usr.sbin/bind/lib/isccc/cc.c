@@ -1,35 +1,37 @@
 /*
+ * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001-2003  Internet Software Consortium.
- * Portions Copyright (C) 2001-2003  Nominum, Inc.
+ * Portions Copyright (C) 2001  Nominum, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM AND
- * NOMINUM DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING
- * ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT
- * SHALL INTERNET SOFTWARE CONSORTIUM OR NOMINUM BE LIABLE FOR ANY
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NOMINUM DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY
  * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
- * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: cc.c,v 1.4.2.4 2003/10/09 07:32:53 marka Exp $ */
+/* $ISC: cc.c,v 1.4.2.3.2.5 2004/08/28 06:25:23 marka Exp $ */
 
 #include <config.h>
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
-#include <isccc/alist.h>
 #include <isc/assertions.h>
+#include <isc/hmacmd5.h>
+#include <isc/print.h>
+#include <isc/stdlib.h>
+
+#include <isccc/alist.h>
 #include <isccc/base64.h>
 #include <isccc/cc.h>
-#include <isc/hmacmd5.h>
 #include <isccc/result.h>
 #include <isccc/sexpr.h>
 #include <isccc/symtab.h>
@@ -218,7 +220,7 @@ isccc_cc_towire(isccc_sexpr_t *alist, isccc_region_t *target,
 	unsigned char *hmd5_rstart, *signed_rstart;
 	isc_result_t result;
 
-	if (REGION_SIZE(*target) < 4 + sizeof auth_hmd5)
+	if (REGION_SIZE(*target) < 4 + sizeof(auth_hmd5))
 		return (ISC_R_NOSPACE);
 	/*
 	 * Emit protocol version.
@@ -231,7 +233,7 @@ isccc_cc_towire(isccc_sexpr_t *alist, isccc_region_t *target,
 		 * we know what it is.
 		 */
 		hmd5_rstart = target->rstart + HMD5_OFFSET;
-		PUT_MEM(auth_hmd5, sizeof auth_hmd5, target->rstart);
+		PUT_MEM(auth_hmd5, sizeof(auth_hmd5), target->rstart);
 	} else
 		hmd5_rstart = NULL;
 	signed_rstart = target->rstart;

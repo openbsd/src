@@ -1,21 +1,21 @@
 /*
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: result.c,v 1.90.2.9 2003/07/22 04:03:44 marka Exp $ */
+/* $ISC: result.c,v 1.90.2.9.2.13 2004/05/14 05:06:39 marka Exp $ */
 
 #include <config.h>
 
@@ -28,6 +28,10 @@
 static const char *text[DNS_R_NRESULTS] = {
 	"label too long",		       /*  0 DNS_R_LABELTOOLONG	     */
 	"bad escape",			       /*  1 DNS_R_BADESCAPE	     */
+	/*
+	 * Note that DNS_R_BADBITSTRING and DNS_R_BITSTRINGTOOLONG are
+	 * deprecated.
+	 */
 	"bad bitstring",		       /*  2 DNS_R_BADBITSTRING	     */
 	"bitstring too long",		       /*  3 DNS_R_BITSTRINGTOOLONG  */
 	"empty label",			       /*  4 DNS_R_EMPTYLABEL	     */
@@ -74,9 +78,9 @@ static const char *text[DNS_R_NRESULTS] = {
 	"tsig verify failure",		       /* 38 DNS_R_TSIGVERIFYFAILURE */
 	"tsig indicates error",		       /* 39 DNS_R_TSIGERRORSET	     */
 
-	"SIG failed to verify",		       /* 40 DNS_R_SIGINVALID	     */
-	"SIG has expired",		       /* 41 DNS_R_SIGEXPIRED	     */
-	"SIG validity period has not begun",   /* 42 DNS_R_SIGFUTURE	     */
+	"RRSIG failed to verify",	       /* 40 DNS_R_SIGINVALID	     */
+	"RRSIG has expired",		       /* 41 DNS_R_SIGEXPIRED	     */
+	"RRSIG validity period has not begun", /* 42 DNS_R_SIGFUTURE	     */
 	"key is unauthorized to sign data",    /* 43 DNS_R_KEYUNAUTHORIZED   */
 	"invalid time",			       /* 44 DNS_R_INVALIDTIME	     */
 
@@ -96,9 +100,9 @@ static const char *text[DNS_R_NRESULTS] = {
 	"no journal",			       /* 56 DNS_R_NOJOURNAL	     */
 	"alias",			       /* 57 DNS_R_ALIAS	     */
 	"use TCP",			       /* 58 DNS_R_USETCP	     */
-	"no valid SIG",			       /* 59 DNS_R_NOVALIDSIG	     */
+	"no valid RRSIG",		       /* 59 DNS_R_NOVALIDSIG	     */
 
-	"no valid NXT",			       /* 60 DNS_R_NOVALIDNXT	     */
+	"no valid NSEC",		       /* 60 DNS_R_NOVALIDNSEC	     */
 	"not insecure",			       /* 61 DNS_R_NOTINSECURE	     */
 	"unknown service",		       /* 62 DNS_R_UNKNOWNSERVICE    */
 	"recoverable error occurred",	       /* 63 DNS_R_RECOVERABLE       */
@@ -119,26 +123,35 @@ static const char *text[DNS_R_NRESULTS] = {
 	"unknown protocol",		       /* 75 DNS_R_UNKNOWNPROTO	     */
 	"clocks are unsynchronized",	       /* 76 DNS_R_CLOCKSKEW	     */
 	"IXFR failed",			       /* 77 DNS_R_BADIXFR	     */
-	"<unused 78>",			       /* 78 unused		     */
-	"no valid KEY",			       /* 79 DNS_R_NOVALIDKEY	     */
+	"not authoritative",		       /* 78 DNS_R_NOTAUTHORITATIVE  */
+	"no valid KEY",		       	       /* 79 DNS_R_NOVALIDKEY	     */
 
 	"obsolete",			       /* 80 DNS_R_OBSOLETE	     */
 	"already frozen",		       /* 81 DNS_R_FROZEN	     */
 	"unknown flag",			       /* 82 DNS_R_UNKNOWNFLAG	     */
 	"expected a response",		       /* 83 DNS_R_EXPECTEDRESPONSE  */
-	"<unused 84>",
+	"no valid DS",			       /* 84 DNS_R_NOVALIDDS	     */
 
-	"<unused 85>",
-	"<unused 86>",
-	"<unused 87>",
-	"<unused 88>",
-	"<unused 89>",
+	"NS is an address",		       /* 85 DNS_R_NSISADDRESS	     */
+	"received FORMERR",		       /* 86 DNS_R_REMOTEFORMERR     */
+	"truncated TCP response",	       /* 87 DNS_R_TRUNCATEDTCP	     */
+	"lame server detected",		       /* 88 DNS_R_LAME		     */
+	"unexpected RCODE",		       /* 89 DNS_R_UNEXPECTEDRCODE   */
 
-	"<unused 90>",
-	"<unused 91>",
-	"empty name",				/* 92 DNS_R_EMPTYNAME	     */
-	"empty wild",				/* 93 DNS_R_EMPTYWILD	     */
-	"bad bitmap"				/* 94 DNS_R_BADBITMAP	     */
+	"unexpected OPCODE",		       /* 90 DNS_R_UNEXPECTEDOPCODE  */
+	"chase DS servers",		       /* 91 DNS_R_CHASEDSSERVERS    */
+	"empty name",			       /* 92 DNS_R_EMPTYNAME	     */
+	"empty wild",			       /* 93 DNS_R_EMPTYWILD	     */
+	"bad bitmap",			       /* 94 DNS_R_BADBITMAP	     */
+
+	"from wildcard",		       /* 95 DNS_R_FROMWILDCARD	     */
+	"bad owner name (check-names)",	       /* 96 DNS_R_BADOWNERNAME	     */
+	"bad name (check-names)",	       /* 97 DNS_R_BADNAME	     */
+	"dynamic zone",			       /* 98 DNS_R_DYNAMIC	     */
+	"unknown command",		       /* 99 DNS_R_UNKNOWNCOMMAND    */
+
+	"must-be-secure",		       /* 100 DNS_R_MUSTBESECURE     */
+	"covering NSEC record returned"	       /* 101 DNS_R_COVERINGNSEC     */
 };
 
 static const char *rcode_text[DNS_R_NRCODERESULTS] = {
@@ -226,14 +239,14 @@ dns_result_torcode(isc_result_t result) {
 	case ISC_R_RANGE:
 	case ISC_R_UNEXPECTEDEND:
 	case DNS_R_BADAAAA:
-	case DNS_R_BADBITSTRING:
+	/* case DNS_R_BADBITSTRING: deprecated */
 	case DNS_R_BADCKSUM:
 	case DNS_R_BADCLASS:
 	case DNS_R_BADLABELTYPE:
 	case DNS_R_BADPOINTER:
 	case DNS_R_BADTTL:
 	case DNS_R_BADZONE:
-	case DNS_R_BITSTRINGTOOLONG:
+	/* case DNS_R_BITSTRINGTOOLONG: deprecated */
 	case DNS_R_EXTRADATA:
 	case DNS_R_LABELTOOLONG:
 	case DNS_R_NOREDATA:

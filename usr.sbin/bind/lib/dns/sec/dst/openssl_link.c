@@ -1,25 +1,24 @@
 /*
- * Portions Copyright (C) 1999-2001, 2003  Internet Software Consortium.
+ * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  * Portions Copyright (C) 1995-2000 by Network Associates, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM AND
- * NETWORK ASSOCIATES DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
- * SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE CONSORTIUM OR NETWORK
- * ASSOCIATES BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
- * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
- * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK ASSOCIATES DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE
+ * FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
  * Principal Author: Brian Wellington
- * $ISC: openssl_link.c,v 1.46.2.2 2003/07/22 04:03:47 marka Exp $
+ * $ISC: openssl_link.c,v 1.46.2.2.2.9 2004/03/16 05:50:23 marka Exp $
  */
 #ifdef OPENSSL
 
@@ -34,7 +33,9 @@
 #include <isc/util.h>
 
 #include "dst_internal.h"
+#include "dst_openssl.h"
 
+#include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
 
@@ -98,14 +99,42 @@ id_callback(void) {
 	return ((unsigned long)isc_thread_self());
 }
 
+static void *
+mem_alloc(size_t size) {
+	INSIST(dst__memory_pool != NULL);
+	return (isc_mem_allocate(dst__memory_pool, size));
+}
+
+static void
+mem_free(void *ptr) {
+	INSIST(dst__memory_pool != NULL);
+	if (ptr != NULL)
+		isc_mem_free(dst__memory_pool, ptr);
+}
+
+static void *
+mem_realloc(void *ptr, size_t size) {
+	void *p;
+
+	INSIST(dst__memory_pool != NULL);
+	p = NULL;
+	if (size > 0U) {
+		p = mem_alloc(size);
+		if (p != NULL && ptr != NULL)
+			memcpy(p, ptr, size);
+	}
+	if (ptr != NULL)
+		mem_free(ptr);
+	return (p);
+}
+
 isc_result_t
 dst__openssl_init() {
 	isc_result_t result;
 
-	CRYPTO_set_mem_functions(dst__mem_alloc, dst__mem_realloc,
-				 dst__mem_free);
+	CRYPTO_set_mem_functions(mem_alloc, mem_realloc, mem_free);
 	nlocks = CRYPTO_num_locks();
-	locks = dst__mem_alloc(sizeof(isc_mutex_t) * nlocks);
+	locks = mem_alloc(sizeof(isc_mutex_t) * nlocks);
 	if (locks == NULL)
 		return (ISC_R_NOMEMORY);
 	result = isc_mutexblock_init(locks, nlocks);
@@ -113,7 +142,7 @@ dst__openssl_init() {
 		goto cleanup_mutexalloc;
 	CRYPTO_set_locking_callback(lock_callback);
 	CRYPTO_set_id_callback(id_callback);
-	rm = dst__mem_alloc(sizeof(RAND_METHOD));
+	rm = mem_alloc(sizeof(RAND_METHOD));
 	if (rm == NULL) {
 		result = ISC_R_NOMEMORY;
 		goto cleanup_mutexinit;
@@ -139,17 +168,18 @@ dst__openssl_init() {
 
 #ifdef USE_ENGINE
  cleanup_rm:
-	dst__mem_free(rm);
+	mem_free(rm);
 #endif
  cleanup_mutexinit:
-	RUNTIME_CHECK(isc_mutexblock_destroy(locks, nlocks) == ISC_R_SUCCESS);
+	DESTROYMUTEXBLOCK(locks, nlocks);
  cleanup_mutexalloc:
-	dst__mem_free(locks);
+	mem_free(locks);
 	return (result);
 }
 
 void
 dst__openssl_destroy() {
+	ERR_clear_error();
 #ifdef USE_ENGINE
 	if (e != NULL) {
 		ENGINE_free(e);
@@ -157,12 +187,33 @@ dst__openssl_destroy() {
 	}
 #endif
 	if (locks != NULL) {
-		RUNTIME_CHECK(isc_mutexblock_destroy(locks, nlocks) ==
-			      ISC_R_SUCCESS);
-		dst__mem_free(locks);
+		DESTROYMUTEXBLOCK(locks, nlocks);
+		mem_free(locks);
 	}
 	if (rm != NULL)
-		dst__mem_free(rm);
+		mem_free(rm);
 }
+
+isc_result_t
+dst__openssl_toresult(isc_result_t fallback) {
+	isc_result_t result = fallback;
+	int err = ERR_get_error();
+
+	switch (ERR_GET_REASON(err)) {
+	case ERR_R_MALLOC_FAILURE:
+		result = ISC_R_NOMEMORY;
+		break;
+	default:
+		break;
+	}
+	ERR_clear_error();
+	return (result);
+}
+
+#else /* OPENSSL */
+
+#include <isc/util.h>
+
+EMPTY_TRANSLATION_UNIT
 
 #endif /* OPENSSL */

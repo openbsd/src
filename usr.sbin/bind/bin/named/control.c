@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: control.c,v 1.7.2.2 2003/07/22 04:03:33 marka Exp $ */
+/* $ISC: control.c,v 1.7.2.2.2.10.4.1 2004/09/20 01:00:00 marka Exp $ */
 
 #include <config.h>
 
@@ -24,7 +24,10 @@
 #include <isc/app.h>
 #include <isc/event.h>
 #include <isc/mem.h>
+#include <isc/timer.h>
 #include <isc/util.h>
+
+#include <dns/result.h>
 
 #include <isccc/alist.h>
 #include <isccc/cc.h>
@@ -32,6 +35,7 @@
 
 #include <named/control.h>
 #include <named/log.h>
+#include <named/os.h>
 #include <named/server.h>
 
 static isc_boolean_t
@@ -80,17 +84,21 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	 * Compare the 'command' parameter against all known control commands.
 	 */
 	if (command_compare(command, NS_COMMAND_RELOAD)) {
-		result = ns_server_reloadcommand(ns_g_server, command);
+		result = ns_server_reloadcommand(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_RECONFIG)) {
 		result = ns_server_reconfigcommand(ns_g_server, command);
 	} else if (command_compare(command, NS_COMMAND_REFRESH)) {
-		result = ns_server_refreshcommand(ns_g_server, command);
+		result = ns_server_refreshcommand(ns_g_server, command, text);
+	} else if (command_compare(command, NS_COMMAND_RETRANSFER)) {
+		result = ns_server_retransfercommand(ns_g_server, command);
 	} else if (command_compare(command, NS_COMMAND_HALT)) {
 		ns_server_flushonshutdown(ns_g_server, ISC_FALSE);
+		ns_os_shutdownmsg(command, text);
 		isc_app_shutdown();
 		result = ISC_R_SUCCESS;
 	} else if (command_compare(command, NS_COMMAND_STOP)) {
 		ns_server_flushonshutdown(ns_g_server, ISC_TRUE);
+		ns_os_shutdownmsg(command, text);
 		isc_app_shutdown();
 		result = ISC_R_SUCCESS;
 	} else if (command_compare(command, NS_COMMAND_DUMPSTATS)) {
@@ -98,7 +106,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 	} else if (command_compare(command, NS_COMMAND_QUERYLOG)) {
 		result = ns_server_togglequerylog(ns_g_server);
 	} else if (command_compare(command, NS_COMMAND_DUMPDB)) {
-		ns_server_dumpdb(ns_g_server);
+		ns_server_dumpdb(ns_g_server, command);
 		result = ISC_R_SUCCESS;
 	} else if (command_compare(command, NS_COMMAND_TRACE)) {
 		result = ns_server_setdebuglevel(ns_g_server, command);
@@ -108,8 +116,17 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 		result = ISC_R_SUCCESS;
 	} else if (command_compare(command, NS_COMMAND_FLUSH)) {
 		result = ns_server_flushcache(ns_g_server, command);
+	} else if (command_compare(command, NS_COMMAND_FLUSHNAME)) {
+		result = ns_server_flushname(ns_g_server, command);
 	} else if (command_compare(command, NS_COMMAND_STATUS)) {
 		result = ns_server_status(ns_g_server, text);
+	} else if (command_compare(command, NS_COMMAND_FREEZE)) {
+		result = ns_server_freeze(ns_g_server, ISC_TRUE, command);
+	} else if (command_compare(command, NS_COMMAND_UNFREEZE) ||
+		   command_compare(command, NS_COMMAND_THAW)) {
+		result = ns_server_freeze(ns_g_server, ISC_FALSE, command);
+	} else if (command_compare(command, NS_COMMAND_RECURSING)) {
+		result = ns_server_dumprecursing(ns_g_server);
 	} else if (command_compare(command, NS_COMMAND_NULL)) {
 		result = ISC_R_SUCCESS;
 	} else {
@@ -117,7 +134,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 			      NS_LOGMODULE_CONTROL, ISC_LOG_WARNING,
 			      "unknown control channel command '%s'",
 			      command);
-		result = ISC_R_NOTIMPLEMENTED;
+		result = DNS_R_UNKNOWNCOMMAND;
 	}
 
 	return (result);

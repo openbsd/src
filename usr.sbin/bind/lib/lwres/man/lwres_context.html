@@ -1,27 +1,30 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
- - 
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2001  Internet Software Consortium.
+ -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
+
+<!-- $ISC: lwres_context.html,v 1.5.2.2.2.3 2004/08/22 23:39:03 marka Exp $ -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_context</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -32,8 +35,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
->lwres_context</A
-></H1
+></A
+>lwres_context</H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -51,11 +54,11 @@ NAME="AEN17"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
+><P
+></P
 ><A
 NAME="AEN18"
 ></A
-><P
-></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/lwres.h&gt;</PRE
@@ -127,9 +130,9 @@ NAME="AEN60"
 ><H2
 >DESCRIPTION</H2
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_context_create()</TT
+>lwres_context_create()</CODE
 >
 creates a
 <SPAN
@@ -145,11 +148,9 @@ CLASS="TYPE"
 >lwres_context_t</SPAN
 >
 is returned through
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->contextp</I
-></TT
+>contextp</VAR
 >,
 
 a pointer to a
@@ -171,33 +172,25 @@ CLASS="TYPE"
 ><P
 >When the lightweight resolver needs to perform dynamic memory
 allocation, it will call
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->malloc_function</I
-></TT
+>malloc_function</VAR
 >
 to allocate memory and
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->free_function</I
-></TT
+>free_function</VAR
 >
 
 to free it.  If 
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->malloc_function</I
-></TT
+>malloc_function</VAR
 >
 and
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->free_function</I
-></TT
+>free_function</VAR
 >
 
 are NULL, memory is allocated using
@@ -212,48 +205,36 @@ CLASS="REFENTRYTITLE"
 >.
 
 It is not permitted to have a NULL
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->malloc_function</I
-></TT
+>malloc_function</VAR
 >
 and a non-NULL
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->free_function</I
-></TT
+>free_function</VAR
 >
 or vice versa.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->arg</I
-></TT
+>arg</VAR
 >
 is passed as the first parameter to the memory
 allocation functions.  
 If
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->malloc_function</I
-></TT
+>malloc_function</VAR
 >
 and
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->free_function</I
-></TT
+>free_function</VAR
 >
 are NULL,
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->arg</I
-></TT
+>arg</VAR
 >
 
 is unused and should be passed as NULL.</P
@@ -269,16 +250,14 @@ CLASS="REFENTRYTITLE"
 >
 
 and returned via
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->*contextp</I
-></TT
+>*contextp</VAR
 >.&#13;</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_context_destroy()</TT
+>lwres_context_destroy()</CODE
 >
 destroys a 
 <SPAN
@@ -287,11 +266,9 @@ CLASS="TYPE"
 >,
 
 closing its socket.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->contextp</I
-></TT
+>contextp</VAR
 >
 is a pointer to a pointer to the context that is to be destroyed.
 The pointer will be set to NULL when the context has been destroyed.</P
@@ -299,124 +276,106 @@ The pointer will be set to NULL when the context has been destroyed.</P
 >The context holds a serial number that is used to identify resolver
 request packets and associate responses with the corresponding requests.
 This serial number is controlled using
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_initserial()</TT
+>lwres_context_initserial()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_nextserial()</TT
+>lwres_context_nextserial()</CODE
 >.
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_initserial()</TT
+>lwres_context_initserial()</CODE
 >
 sets the serial number for context
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->*ctx</I
-></TT
+>*ctx</VAR
 >
 to
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->serial</I
-></TT
+>serial</VAR
 >.
 
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_nextserial()</TT
+>lwres_context_nextserial()</CODE
 >
 increments the serial number and returns the previous value.</P
 ><P
 >Memory for a lightweight resolver context is allocated and freed using
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_allocmem()</TT
+>lwres_context_allocmem()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_freemem()</TT
+>lwres_context_freemem()</CODE
 >.
 These use whatever allocations were defined when the context was
 created with
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_create()</TT
+>lwres_context_create()</CODE
 >.
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_allocmem()</TT
+>lwres_context_allocmem()</CODE
 >
 allocates
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->len</I
-></TT
+>len</VAR
 >
 bytes of memory and if successful returns a pointer to the allocated
 storage.
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_freemem()</TT
+>lwres_context_freemem()</CODE
 >
 frees
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->len</I
-></TT
+>len</VAR
 >
 bytes of space starting at location
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->mem</I
-></TT
+>mem</VAR
 >.&#13;</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_context_sendrecv()</TT
+>lwres_context_sendrecv()</CODE
 >
 performs I/O for the context
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->ctx</I
-></TT
+>ctx</VAR
 >.
 
 Data are read and written from the context's socket.
 It writes data from
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->sendbase</I
-></TT
+>sendbase</VAR
 >
 &mdash; typically a lightweight resolver query packet &mdash;
 and waits for a reply which is copied to the receive buffer at
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->recvbase</I
-></TT
+>recvbase</VAR
 >.
 
 The number of bytes that were written to this receive buffer is
 returned in
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->*recvd_len</I
-></TT
+>*recvd_len</VAR
 >.&#13;</P
 ></DIV
 ><DIV
@@ -427,9 +386,9 @@ NAME="AEN115"
 ><H2
 >RETURN VALUES</H2
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_context_create()</TT
+>lwres_context_create()</CODE
 >
 returns
 <SPAN
@@ -449,9 +408,9 @@ CLASS="ERRORCODE"
 otherwise.</P
 ><P
 >Successful calls to the memory allocator
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_allocmem()</TT
+>lwres_context_allocmem()</CODE
 >
 return a pointer to the start of the allocated space.
 It returns NULL if memory could not be allocated.</P
@@ -461,9 +420,9 @@ CLASS="ERRORCODE"
 >LWRES_R_SUCCESS</SPAN
 >
 is returned when
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_sendrecv()</TT
+>lwres_context_sendrecv()</CODE
 >
 completes successfully.
 <SPAN
@@ -476,9 +435,9 @@ CLASS="ERRORCODE"
 >LWRES_R_TIMEOUT</SPAN
 >
 is returned if
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_context_sendrecv()</TT
+>lwres_context_sendrecv()</CODE
 >
 times out waiting for a response.</P
 ></DIV

@@ -16,7 +16,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: lcg.h,v 1.1 2003/01/20 21:24:41 jakob Exp $ */
+/* $OpenBSD: lcg.h,v 1.2 2004/09/28 17:14:07 jakob Exp $ */
 
 /*
  * Theo de Raadt <deraadt@openbsd.org> came up with the idea of using

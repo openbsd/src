@@ -1,27 +1,30 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
- - 
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2000-2002  Internet Software Consortium.
+ -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
+
+<!-- $ISC: host.html,v 1.4.2.1.4.6 2004/08/22 23:38:58 marka Exp $ -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >host</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -32,8 +35,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
->host</A
-></H1
+></A
+>host</H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -53,55 +56,51 @@ NAME="AEN11"
 ><B
 CLASS="COMMAND"
 >host</B
->  [<TT
+>  [<VAR
 CLASS="OPTION"
->-aCdlnrTwv</TT
->] [<TT
+>-aCdlnrTwv</VAR
+>] [<VAR
 CLASS="OPTION"
->-c <TT
+>-c <VAR
 CLASS="REPLACEABLE"
-><I
->class</I
-></TT
-></TT
->] [<TT
+>class</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-N <TT
+>-N <VAR
 CLASS="REPLACEABLE"
-><I
->ndots</I
-></TT
-></TT
->] [<TT
+>ndots</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-R <TT
+>-R <VAR
 CLASS="REPLACEABLE"
-><I
->number</I
-></TT
-></TT
->] [<TT
+>number</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-t <TT
+>-t <VAR
 CLASS="REPLACEABLE"
-><I
->type</I
-></TT
-></TT
->] [<TT
+>type</VAR
+></VAR
+>] [<VAR
 CLASS="OPTION"
->-W <TT
+>-W <VAR
 CLASS="REPLACEABLE"
-><I
->wait</I
-></TT
-></TT
+>wait</VAR
+></VAR
+>] [<VAR
+CLASS="OPTION"
+>-4</VAR
+>] [<VAR
+CLASS="OPTION"
+>-6</VAR
 >] {name} [server]</P
 ></DIV
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN33"
+NAME="AEN37"
 ></A
 ><H2
 >DESCRIPTION</H2
@@ -119,11 +118,9 @@ CLASS="COMMAND"
 >
 prints a short summary of its command line arguments and options.</P
 ><P
-><TT
+><VAR
 CLASS="PARAMETER"
-><I
->name</I
-></TT
+>name</VAR
 > is the domain name that is to be looked
 up.  It can also be a dotted-decimal IPv4 address or a colon-delimited
 IPv6 address, in which case <B
@@ -131,11 +128,9 @@ CLASS="COMMAND"
 >host</B
 > will by default
 perform a reverse lookup for that address.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->server</I
-></TT
+>server</VAR
 > is an optional argument which is either
 the name or IP address of the name server that <B
 CLASS="COMMAND"
@@ -147,45 +142,41 @@ CLASS="FILENAME"
 >/etc/resolv.conf</TT
 >.</P
 ><P
->The <TT
+>The <VAR
 CLASS="OPTION"
->-a</TT
+>-a</VAR
 > (all) option is equivalent to setting the
-<TT
+<VAR
 CLASS="OPTION"
->-v</TT
+>-v</VAR
 > option and asking <B
 CLASS="COMMAND"
 >host</B
 > to make
 a query of type ANY.</P
 ><P
->When the <TT
+>When the <VAR
 CLASS="OPTION"
->-C</TT
+>-C</VAR
 > option is used, <B
 CLASS="COMMAND"
 >host</B
 >
 will attempt to display the SOA records for zone
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->name</I
-></TT
+>name</VAR
 > from all the listed authoritative name
 servers for that zone.  The list of name servers is defined by the NS
 records that are found for the zone.</P
 ><P
->The <TT
+>The <VAR
 CLASS="OPTION"
->-c</TT
+>-c</VAR
 > option instructs to make a DNS query of class
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->class</I
-></TT
+>class</VAR
 >.  This can be used to lookup Hesiod or
 Chaosnet class resource records.  The default class is IN (Internet).</P
 ><P
@@ -193,58 +184,57 @@ Chaosnet class resource records.  The default class is IN (Internet).</P
 CLASS="COMMAND"
 >host</B
 > when the
-<TT
+<VAR
 CLASS="OPTION"
->-d</TT
-> or <TT
+>-d</VAR
+> or <VAR
 CLASS="OPTION"
->-v</TT
+>-v</VAR
 > option is used.  The two
 options are equivalent.  They have been provided for backwards
-compatibility.  In previous versions, the <TT
+compatibility.  In previous versions, the <VAR
 CLASS="OPTION"
->-d</TT
+>-d</VAR
 > option
-switched on debugging traces and <TT
+switched on debugging traces and <VAR
 CLASS="OPTION"
->-v</TT
+>-v</VAR
 > enabled verbose
 output.</P
 ><P
->List mode is selected by the <TT
+>List mode is selected by the <VAR
 CLASS="OPTION"
->-l</TT
+>-l</VAR
 > option.  This makes
 <B
 CLASS="COMMAND"
 >host</B
 > perform a zone transfer for zone
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->name</I
-></TT
->.  The argument is provided for
-compatibility with older implementations.  This option is equivalent
-to making a query of type AXFR.</P
-><P
->The <TT
+>name</VAR
+>.  Transfer the zone printing out the NS, PTR
+and address records (A/AAAA).  If combined with <VAR
 CLASS="OPTION"
->-n</TT
+>-a</VAR
+>
+all records will be printed.  </P
+><P
+>The <VAR
+CLASS="OPTION"
+>-i</VAR
 >
 option specifies that reverse lookups of IPv6 addresses should
-use the IP6.INT domain and "nibble" labels as defined in RFC1886.
-The default is to use IP6.ARPA and binary labels as defined in RFC2874.</P
+use the IP6.INT domain as defined in RFC1886.
+The default is to use IP6.ARPA.</P
 ><P
->The <TT
+>The <VAR
 CLASS="OPTION"
->-N</TT
+>-N</VAR
 > option sets the number of dots that have to be
-in <TT
+in <VAR
 CLASS="PARAMETER"
-><I
->name</I
-></TT
+>name</VAR
 > for it to be considered absolute.  The
 default value is that defined using the ndots statement in
 <TT
@@ -266,31 +256,27 @@ CLASS="FILENAME"
 >.</P
 ><P
 >The number of UDP retries for a lookup can be changed with the
-<TT
+<VAR
 CLASS="OPTION"
->-R</TT
-> option.  <TT
+>-R</VAR
+> option.  <VAR
 CLASS="PARAMETER"
-><I
->number</I
-></TT
+>number</VAR
 > indicates
 how many times <B
 CLASS="COMMAND"
 >host</B
 > will repeat a query that does
 not get answered.  The default number of retries is 1.  If
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->number</I
-></TT
+>number</VAR
 > is negative or zero, the number of
 retries will default to 1.</P
 ><P
->Non-recursive queries can be made via the <TT
+>Non-recursive queries can be made via the <VAR
 CLASS="OPTION"
->-r</TT
+>-r</VAR
 > option.
 Setting this option clears the <SPAN
 CLASS="TYPE"
@@ -301,15 +287,13 @@ CLASS="COMMAND"
 >host</B
 > makes.
 This should mean that the name server receiving the query will not
-attempt to resolve <TT
+attempt to resolve <VAR
 CLASS="PARAMETER"
-><I
->name</I
-></TT
+>name</VAR
 >.  The
-<TT
+<VAR
 CLASS="OPTION"
->-r</TT
+>-r</VAR
 > option enables <B
 CLASS="COMMAND"
 >host</B
@@ -322,22 +306,36 @@ referrals to other name servers.</P
 CLASS="COMMAND"
 >host</B
 > uses UDP when making queries.  The
-<TT
+<VAR
 CLASS="OPTION"
->-T</TT
+>-T</VAR
 > option makes it use a TCP connection when querying
 the name server.  TCP will be automatically selected for queries that
 require it, such as zone transfer (AXFR) requests.</P
 ><P
->The <TT
+>The <VAR
 CLASS="OPTION"
->-t</TT
+>-4</VAR
+> option forces <B
+CLASS="COMMAND"
+>host</B
+> to only
+use IPv4 query transport.  The <VAR
+CLASS="OPTION"
+>-6</VAR
+> option forces
+<B
+CLASS="COMMAND"
+>host</B
+> to only use IPv6 query transport.</P
+><P
+>The <VAR
+CLASS="OPTION"
+>-t</VAR
 > option is used to select the query type.
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->type</I
-></TT
+>type</VAR
 > can be any recognised query type: CNAME,
 NS, SOA, SIG, KEY, AXFR, etc.  When no query type is specified,
 <B
@@ -345,52 +343,48 @@ CLASS="COMMAND"
 >host</B
 > automatically selects an appropriate query
 type.  By default it looks for A records, but if the
-<TT
+<VAR
 CLASS="OPTION"
->-C</TT
+>-C</VAR
 > option was given, queries will be made for SOA
-records, and if <TT
+records, and if <VAR
 CLASS="PARAMETER"
-><I
->name</I
-></TT
+>name</VAR
 > is a dotted-decimal IPv4
 address or colon-delimited IPv6 address, <B
 CLASS="COMMAND"
 >host</B
 > will
-query for PTR records.</P
+query for PTR records.  If a query type of IXFR is chosen the starting
+serial number can be specified by appending an equal followed by the
+starting serial number (e.g. -t IXFR=12345678).</P
 ><P
 >The time to wait for a reply can be controlled through the
-<TT
+<VAR
 CLASS="OPTION"
->-W</TT
-> and <TT
+>-W</VAR
+> and <VAR
 CLASS="OPTION"
->-w</TT
+>-w</VAR
 > options.  The
-<TT
+<VAR
 CLASS="OPTION"
->-W</TT
+>-W</VAR
 > option makes <B
 CLASS="COMMAND"
 >host</B
 > wait for
-<TT
+<VAR
 CLASS="PARAMETER"
-><I
->wait</I
-></TT
-> seconds.  If <TT
+>wait</VAR
+> seconds.  If <VAR
 CLASS="PARAMETER"
-><I
->wait</I
-></TT
+>wait</VAR
 >
 is less than one, the wait interval is set to one second.  When the
-<TT
+<VAR
 CLASS="OPTION"
->-w</TT
+>-w</VAR
 > option is used, <B
 CLASS="COMMAND"
 >host</B
@@ -402,7 +396,7 @@ value for an integer quantity.</P
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN105"
+NAME="AEN115"
 ></A
 ><H2
 >FILES</H2
@@ -415,7 +409,7 @@ CLASS="FILENAME"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN109"
+NAME="AEN119"
 ></A
 ><H2
 >SEE ALSO</H2

@@ -1,27 +1,30 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
- - 
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2001  Internet Software Consortium.
+ -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
+
+<!-- $ISC: lwres_gnba.html,v 1.6.2.1.4.2 2004/08/22 23:39:04 marka Exp $ -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >lwres_gnba</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -32,8 +35,8 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
->lwres_gnba</A
-></H1
+></A
+>lwres_gnba</H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
@@ -51,11 +54,11 @@ NAME="AEN16"
 >Synopsis</H2
 ><DIV
 CLASS="FUNCSYNOPSIS"
+><P
+></P
 ><A
 NAME="AEN17"
 ></A
-><P
-></P
 ><PRE
 CLASS="FUNCSYNOPSISINFO"
 >#include &lt;lwres/lwres.h&gt;</PRE
@@ -168,41 +171,41 @@ typedef struct {
 } lwres_gnbaresponse_t;</PRE
 ></P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_gnbarequest_render()</TT
+>lwres_gnbarequest_render()</CODE
 >
 uses resolver context
-<TT
+<VAR
 CLASS="VARNAME"
->ctx</TT
+>ctx</VAR
 >
 to convert getnamebyaddr request structure
-<TT
+<VAR
 CLASS="VARNAME"
->req</TT
+>req</VAR
 >
 to canonical format.
 The packet header structure
-<TT
+<VAR
 CLASS="VARNAME"
->pkt</TT
+>pkt</VAR
 >
 is initialised and transferred to
 buffer
-<TT
+<VAR
 CLASS="VARNAME"
->b</TT
+>b</VAR
 >.
 The contents of
-<TT
+<VAR
 CLASS="VARNAME"
->*req</TT
+>*req</VAR
 >
 are then appended to the buffer in canonical format.
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbaresponse_render()</TT
+>lwres_gnbaresponse_render()</CODE
 >
 performs the same task, except it converts a getnamebyaddr response structure
 <SPAN
@@ -211,19 +214,19 @@ CLASS="TYPE"
 >
 to the lightweight resolver's canonical format.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_gnbarequest_parse()</TT
+>lwres_gnbarequest_parse()</CODE
 >
 uses context
-<TT
+<VAR
 CLASS="VARNAME"
->ctx</TT
+>ctx</VAR
 >
 to convert the contents of packet
-<TT
+<VAR
 CLASS="VARNAME"
->pkt</TT
+>pkt</VAR
 >
 to a
 <SPAN
@@ -232,9 +235,9 @@ CLASS="TYPE"
 >
 structure.
 Buffer
-<TT
+<VAR
 CLASS="VARNAME"
->b</TT
+>b</VAR
 >
 provides space to be used for storing this structure.
 When the function succeeds, the resulting
@@ -243,18 +246,18 @@ CLASS="TYPE"
 >lwres_gnbarequest_t</SPAN
 >
 is made available through
-<TT
+<VAR
 CLASS="VARNAME"
->*structp</TT
+>*structp</VAR
 >.
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbaresponse_parse()</TT
+>lwres_gnbaresponse_parse()</CODE
 >
 offers the same semantics as
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbarequest_parse()</TT
+>lwres_gnbarequest_parse()</CODE
 >
 except it yields a
 <SPAN
@@ -263,19 +266,19 @@ CLASS="TYPE"
 >
 structure.</P
 ><P
-><TT
+><CODE
 CLASS="FUNCTION"
->lwres_gnbaresponse_free()</TT
+>lwres_gnbaresponse_free()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbarequest_free()</TT
+>lwres_gnbarequest_free()</CODE
 >
 release the memory in resolver context
-<TT
+<VAR
 CLASS="VARNAME"
->ctx</TT
+>ctx</VAR
 >
 that was allocated to the
 <SPAN
@@ -288,9 +291,9 @@ CLASS="TYPE"
 >lwres_gnbarequest_t</SPAN
 >
 structures referenced via
-<TT
+<VAR
 CLASS="VARNAME"
->structp</TT
+>structp</VAR
 >.
 Any memory associated with ancillary buffers and strings for those
 structures is also discarded.</P
@@ -304,22 +307,22 @@ NAME="AEN97"
 >RETURN VALUES</H2
 ><P
 >The getnamebyaddr opcode functions
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbarequest_render()</TT
+>lwres_gnbarequest_render()</CODE
 >,
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbaresponse_render()</TT
+>lwres_gnbaresponse_render()</CODE
 >
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbarequest_parse()</TT
+>lwres_gnbarequest_parse()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbaresponse_parse()</TT
+>lwres_gnbaresponse_parse()</CODE
 >
 all return
 <SPAN
@@ -338,9 +341,9 @@ CLASS="ERRORCODE"
 >LWRES_R_UNEXPECTEDEND</SPAN
 >
 is returned if the available space in the buffer
-<TT
+<VAR
 CLASS="VARNAME"
->b</TT
+>b</VAR
 >
 is too small to accommodate the packet header or the
 <SPAN
@@ -353,14 +356,14 @@ CLASS="TYPE"
 >lwres_gnbaresponse_t</SPAN
 >
 structures.
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbarequest_parse()</TT
+>lwres_gnbarequest_parse()</CODE
 >
 and
-<TT
+<CODE
 CLASS="FUNCTION"
->lwres_gnbaresponse_parse()</TT
+>lwres_gnbaresponse_parse()</CODE
 >
 will return
 <SPAN
@@ -374,11 +377,9 @@ CLASS="ERRORCODE"
 >LWRES_R_FAILURE</SPAN
 >
 if
-<TT
+<CODE
 CLASS="STRUCTFIELD"
-><I
->pktflags</I
-></TT
+>pktflags</CODE
 >
 in the packet header structure
 <SPAN

@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: byaddr.h,v 1.12.2.2 2003/10/09 07:32:39 marka Exp $ */
+/* $ISC: byaddr.h,v 1.12.2.1.2.4 2004/03/08 09:04:34 marka Exp $ */
 
 #ifndef DNS_BYADDR_H
 #define DNS_BYADDR_H 1
@@ -68,8 +68,11 @@ typedef struct dns_byaddrevent {
 	dns_namelist_t			names;
 } dns_byaddrevent_t;
 
+/*
+ * This option is deprecated since we now only consider nibbles.
 #define DNS_BYADDROPT_IPV6NIBBLE	0x0001
-#define DNS_BYADDROPT_IPV6INT		0x0002	/* Use IP6.INT nibble lookups */
+ */
+#define DNS_BYADDROPT_IPV6INT		0x0002
 
 isc_result_t
 dns_byaddr_create(isc_mem_t *mctx, isc_netaddr_t *address, dns_view_t *view,
@@ -151,8 +154,9 @@ dns_byaddr_createptrname2(isc_netaddr_t *address, unsigned int options,
 /*
  * Creates a name that would be used in a PTR query for this address.  The
  * nibble flag indicates that the 'nibble' format is to be used if an IPv6
- * address is provided, instead of the 'bitstring' format.  'options' are
- * the same as for dns_byaddr_create().
+ * address is provided, instead of the 'bitstring' format.  Since we dropped
+ * the support of the bitstring labels, it is expected that the flag is always
+ * set.  'options' are the same as for dns_byaddr_create().
  *
  * Requires:
  * 

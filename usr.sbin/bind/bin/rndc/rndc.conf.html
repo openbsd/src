@@ -1,27 +1,30 @@
 <!--
- - Copyright (C) 2000, 2001  Internet Software Consortium.
- - 
+ - Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2001  Internet Software Consortium.
+ -
  - Permission to use, copy, modify, and distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
- - 
- - THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- - DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- - IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- - INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- - FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- - NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- - WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
 -->
+
+<!-- $ISC: rndc.conf.html,v 1.5.2.1.4.3 2004/08/22 23:39:00 marka Exp $ -->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >rndc.conf</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -32,10 +35,10 @@ ALINK="#0000FF"
 ><H1
 ><A
 NAME="AEN1"
+></A
 ><TT
 CLASS="FILENAME"
 >rndc.conf</TT
-></A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
@@ -108,86 +111,86 @@ CLASS="FILENAME"
 	and a key statement.
     </P
 ><P
->        The <TT
+>        The <VAR
 CLASS="OPTION"
->options</TT
+>options</VAR
 > statement contains three clauses.
-	The <TT
+	The <VAR
 CLASS="OPTION"
->default-server</TT
+>default-server</VAR
 > clause is followed by the
 	name or address of a name server.  This host will be used when
 	no name server is given as an argument to
 	<B
 CLASS="COMMAND"
 >rndc</B
->.  The <TT
+>.  The <VAR
 CLASS="OPTION"
->default-key</TT
+>default-key</VAR
 >
 	clause is followed by the name of a key which is identified by
-	a <TT
+	a <VAR
 CLASS="OPTION"
->key</TT
+>key</VAR
 > statement.  If no
-	<TT
+	<VAR
 CLASS="OPTION"
->keyid</TT
+>keyid</VAR
 > is provided on the rndc command line,
-	and no <TT
+	and no <VAR
 CLASS="OPTION"
->key</TT
+>key</VAR
 > clause is found in a matching
-	<TT
+	<VAR
 CLASS="OPTION"
->server</TT
+>server</VAR
 > statement, this default key will be
 	used to authenticate the server's commands and responses.  The
-	<TT
+	<VAR
 CLASS="OPTION"
->default-port</TT
+>default-port</VAR
 > clause is followed by the port
 	to connect to on the remote name server.  If no
-	<TT
+	<VAR
 CLASS="OPTION"
->port</TT
+>port</VAR
 > option is provided on the rndc command
-	line, and no <TT
+	line, and no <VAR
 CLASS="OPTION"
->port</TT
+>port</VAR
 > clause is found in a
-	matching <TT
+	matching <VAR
 CLASS="OPTION"
->server</TT
+>server</VAR
 > statement, this default port
 	will be used to connect.
     </P
 ><P
->        After the <TT
+>        After the <VAR
 CLASS="OPTION"
->server</TT
+>server</VAR
 > keyword, the server statement
 	includes a string which is the hostname or address for a name
 	server.  The statement has two possible clauses:
-	<TT
+	<VAR
 CLASS="OPTION"
->key</TT
-> and <TT
+>key</VAR
+> and <VAR
 CLASS="OPTION"
->port</TT
+>port</VAR
 >. The key name must
 	match the name of a key statement in the file.  The port number
 	specifies the port to connect to.
     </P
 ><P
->        The <TT
+>        The <VAR
 CLASS="OPTION"
->key</TT
+>key</VAR
 > statement begins with an identifying
 	string, the name of the key.  The statement has two clauses.
-	<TT
+	<VAR
 CLASS="OPTION"
->algorithm</TT
+>algorithm</VAR
 > identifies the encryption algorithm
 	for <B
 CLASS="COMMAND"
@@ -262,11 +265,9 @@ CLASS="COMMAND"
 >:
     </P
 ><P
->        <TT
+>        <KBD
 CLASS="USERINPUT"
-><B
->rndc-confgen</B
-></TT
+>rndc-confgen</KBD
 >
     </P
 ><P
@@ -275,13 +276,13 @@ CLASS="FILENAME"
 >rndc.conf</TT
 > file, including the
         randomly generated key, will be written to the standard
-        output.  Commented out <TT
+        output.  Commented out <VAR
 CLASS="OPTION"
->key</TT
+>key</VAR
 > and
-        <TT
+        <VAR
 CLASS="OPTION"
->controls</TT
+>controls</VAR
 > statements for
         <TT
 CLASS="FILENAME"
@@ -295,11 +296,9 @@ CLASS="COMMAND"
 >:
     </P
 ><P
->        <TT
+>        <KBD
 CLASS="USERINPUT"
-><B
->echo "known plaintext for a secret" | mmencode</B
-></TT
+>echo "known plaintext for a secret" | mmencode</KBD
 >
     </P
 ></DIV
@@ -320,9 +319,9 @@ CLASS="FILENAME"
 CLASS="FILENAME"
 >named.conf</TT
 >.
-	See the sections on the <TT
+	See the sections on the <VAR
 CLASS="OPTION"
->controls</TT
+>controls</VAR
 > statement in the
 	BIND 9 Administrator Reference Manual for details.
     </P
@@ -370,7 +369,7 @@ NAME="AEN91"
 ><H2
 >AUTHOR</H2
 ><P
->        Internet Software Consortium
+>        Internet Systems Consortium
     </P
 ></DIV
 ></BODY

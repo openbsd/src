@@ -1,16 +1,16 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >The BIND 9 Lightweight Resolver</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
 REL="HOME"
 TITLE="BIND 9 Administrator Reference Manual"
 HREF="Bv9ARM.html"><LINK
 REL="PREVIOUS"
-TITLE="Advanced Concepts"
+TITLE="Advanced DNS Features"
 HREF="Bv9ARM.ch04.html"><LINK
 REL="NEXT"
 TITLE="BIND 9 Configuration Reference"
@@ -70,11 +70,11 @@ CLASS="chapter"
 ><H1
 ><A
 NAME="ch05"
->Chapter 5. The <SPAN
+></A
+>Chapter 5. The <ACRONYM
 CLASS="acronym"
->BIND</SPAN
-> 9 Lightweight Resolver</A
-></H1
+>BIND</ACRONYM
+> 9 Lightweight Resolver</H1
 ><DIV
 CLASS="TOC"
 ><DL
@@ -84,7 +84,7 @@ CLASS="TOC"
 ></DT
 ><DT
 >5.1. <A
-HREF="Bv9ARM.ch05.html#AEN1018"
+HREF="Bv9ARM.ch05.html#AEN1034"
 >The Lightweight Resolver Library</A
 ></DT
 ><DT
@@ -99,7 +99,7 @@ CLASS="sect1"
 ><H1
 CLASS="sect1"
 ><A
-NAME="AEN1018"
+NAME="AEN1034"
 >5.1. The Lightweight Resolver Library</A
 ></H1
 ><P
@@ -107,14 +107,15 @@ NAME="AEN1018"
 library that sends recursive DNS queries to a local caching name
 server.</P
 ><P
->IPv6 introduces new complexity into the resolution process,
+>IPv6 once introduced new complexity into the resolution process,
 such as following A6 chains and DNAME records, and simultaneous
-lookup of IPv4 and IPv6 addresses.  These are hard or impossible
+lookup of IPv4 and IPv6 addresses.  Though most of the complexity was
+then removed, these are hard or impossible
 to implement in a traditional stub resolver.</P
 ><P
->Instead, <SPAN
+>Instead, <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 provides resolution services to local clients
 using a combination of a lightweight resolver library and a resolver
 daemon process running on the local host.  These communicate using
@@ -134,7 +135,11 @@ NAME="lwresd"
 run the resolver daemon <B
 CLASS="command"
 >lwresd</B
->.</P
+> or a local
+name server configured with a <B
+CLASS="command"
+>lwres</B
+> statement.</P
 ><P
 >By default, applications using the lightweight resolver library will make
 UDP requests to the IPv4 loopback address (127.0.0.1) on port 921.  The
@@ -145,14 +150,7 @@ CLASS="command"
 <TT
 CLASS="filename"
 >/etc/resolv.conf</TT
->.
-The daemon will try to find the answer to the questions "what are the
-addresses for host
-<TT
-CLASS="literal"
->foo.example.com</TT
->?" and "what are
-the names for IPv4 address 10.1.2.3?"</P
+>.</P
 ><P
 >The daemon currently only looks in the DNS, but in the future
 it may use other sources such as <TT
@@ -165,7 +163,7 @@ NIS, etc.</P
 CLASS="command"
 >lwresd</B
 > daemon is essentially a
-caching-only name server that answers requests using the lightweight
+caching-only name server that responds to requests using the lightweight
 resolver protocol rather than the DNS protocol.  Because it needs
 to run on each host, it is designed to require no or minimal configuration.
 Unless configured otherwise, it uses the name servers listed on
@@ -245,7 +243,7 @@ ACCESSKEY="N"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Advanced Concepts</TD
+>Advanced DNS Features</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -255,9 +253,9 @@ VALIGN="top"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
-><SPAN
+><ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 Configuration Reference</TD
 ></TR
 ></TABLE

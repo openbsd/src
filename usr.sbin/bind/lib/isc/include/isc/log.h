@@ -1,21 +1,21 @@
 /*
- * Copyright (C) 1999-2003  Internet Software Consortium.
+ * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM
- * DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
- * INTERNET SOFTWARE CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
- * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
- * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ * REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ * INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $ISC: log.h,v 1.39.2.4 2003/07/22 04:03:49 marka Exp $ */
+/* $ISC: log.h,v 1.39.2.4.2.7 2004/04/10 04:31:40 marka Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -96,6 +96,8 @@ struct isc_logmodule {
  * channel the name, versions and maximum_size should be set before calling
  * isc_log_createchannel().  To define an ISC_LOG_TOFILEDESC channel set only
  * the stream before the call.
+ * 
+ * Setting maximum_size to zero implies no maximum.
  */
 typedef struct isc_logfile {
 	FILE *stream;		/* Initialized to NULL for ISC_LOG_TOFILE. */
@@ -141,6 +143,8 @@ LIBISC_EXTERNAL_DATA extern isc_logmodule_t isc_modules[];
 
 #define ISC_LOGMODULE_SOCKET (&isc_modules[0])
 #define ISC_LOGMODULE_TIME (&isc_modules[1])
+#define ISC_LOGMODULE_INTERFACE (&isc_modules[2])
+#define ISC_LOGMODULE_TIMER (&isc_modules[3])
 
 ISC_LANG_BEGINDECLS
 
@@ -736,9 +740,6 @@ isc_log_settag(isc_logconfig_t *lcfg, const char *tag);
  *	Setting the tag to NULL or the empty string will also cause the
  *	ISC_LOG_PRINTTAG channel flag to not print anything.  If tag equals the
  *	empty string, calls to isc_log_gettag will return NULL.
- *
- *	Because the name is used by ISC_LOG_PRINTTAG, it should not be
- *	altered or destroyed after isc_log_settag().
  *
  * Returns:
  *	ISC_R_SUCCESS	Success
