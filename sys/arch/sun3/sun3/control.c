@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.12 1995/10/10 21:38:56 gwr Exp $	*/
+/*	$NetBSD: control.c,v 1.12.2.1 1995/11/18 06:56:12 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -42,42 +42,42 @@
 
 int get_context()
 {
-    int c;
-    
-    c = get_control_byte((char *) CONTEXT_REG);
-    return c & CONTEXT_MASK;
+	int c;
+
+	c = get_control_byte((char *) CONTEXT_REG);
+	return (c & CONTEXT_MASK);
 }
 
 void set_context(int c)
 {
-    set_control_byte((char *) CONTEXT_REG, c & CONTEXT_MASK);
+	set_control_byte((char *) CONTEXT_REG, c & CONTEXT_MASK);
 }
 
 vm_offset_t get_pte(va)
-     vm_offset_t va;
+	vm_offset_t va;
 {
-    return (vm_offset_t)
-	get_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va));
+	return (vm_offset_t)
+		get_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va));
 }
 
 void set_pte(va, pte)
-     vm_offset_t va, pte;
+	vm_offset_t va, pte;
 {
-    set_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va),
-		     (unsigned int) pte);
+	set_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va),
+			 (unsigned int) pte);
 }
 
 unsigned char get_segmap(va)
-     vm_offset_t va;
+	vm_offset_t va;
 {
-    return get_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va));
+	return get_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va));
 }
 
 void set_segmap(va, sme)
-     vm_offset_t va;
-     unsigned char sme;
+	vm_offset_t va;
+	unsigned char sme;
 {
-    set_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);
+	set_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);
 }
 
 /*
@@ -93,7 +93,7 @@ void set_segmap_allctx(va, sme)
 	register char ctx, oldctx;
 
 	/* Inline get_context() */
-    oldctx = get_control_byte((char *) CONTEXT_REG);
+	oldctx = get_control_byte((char *) CONTEXT_REG);
 	oldctx &= CONTEXT_MASK;
 
 	for (ctx = 0; ctx < NCONTEXT; ctx++) {
