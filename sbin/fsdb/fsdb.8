@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsdb.8,v 1.5 1997/01/16 04:04:18 millert Exp $
+.\"	$OpenBSD: fsdb.8,v 1.6 1997/01/16 04:57:04 millert Exp $
 .\"	$NetBSD: fsdb.8,v 1.5 1997/01/11 05:51:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ where
 is the currently selected i-number.  The initial selected inode is the
 root of the filesystem (i-number 2).
 The command processor uses the
-.Xr libedit 3
+.Xr editline 3
 library, so you can use command line editing to reduce typing if desired.
 When you exit the command loop, the file system superblock is marked
 dirty and any buffered blocks are written to the file system.
@@ -70,7 +70,7 @@ option enables additional debugging output (which comes primarily from
 code).
 .Sh COMMANDS
 Besides the built-in 
-.Xr libedit 3
+.Xr editline 3
 commands,
 .Nm
 supports these commands:
@@ -177,7 +177,7 @@ Change the owner of the current inode to
 .Ar uid .
 .Pp
 .It Cm chlen Ar length 
-Change length of current inode to
+Change the length of the current inode to
 .Ar length .
 .Pp
 .It Cm chgrp Ar gid
@@ -210,7 +210,7 @@ field will be set to zero.
 Exit the program.
 .El
 .Sh SEE ALSO
-.Xr libedit 3 ,
+.Xr editline 3 ,
 .Xr fs 5 ,
 .Xr fsck 8 ,
 .Xr clri 8 .
@@ -223,10 +223,6 @@ You must specify modes as numbers rather than symbolic names.
 There are a bunch of other things that you might want to do which
 .Nm
 doesn't implement.
-.br
-The
-.Xr libedit 3
-reference page is not yet written.
 .Sh HISTORY
 .Nm
 uses the source code for
