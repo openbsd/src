@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2002/06/14 04:17:59 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2002/08/02 04:17:05 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -61,7 +61,7 @@
 	{ 0, 0 },				\
 	{ "booted_kernel", CTLTYPE_STRING },	\
 	{ "led_blink", CTLTYPE_INT },		\
-	{ "allowaperture", CTLTYPE_INT },		\
+	{ "allowaperture", CTLTYPE_INT },	\
 }
 
 #ifdef _KERNEL
