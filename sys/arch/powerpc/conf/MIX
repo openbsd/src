@@ -80,7 +80,7 @@ cd*		at scsibus? target ? lun ?
 
 ofbus*		at openfirm?
 
-#ofdisk*		at openfirm?
+ofdisk*		at openfirm?
 
 #ofnet*		at openfirm?
 #ipkdbif0	at ofnet?

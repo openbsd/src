@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofbus.c,v 1.4 1998/09/09 04:25:52 rahnds Exp $	*/
+/*	$OpenBSD: ofbus.c,v 1.5 1998/09/20 23:03:03 rahnds Exp $	*/
 /*	$NetBSD: ofbus.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -37,6 +37,10 @@
 
 #include <machine/autoconf.h>
 #include <dev/ofw/openfirm.h>
+
+/* a bit of a hack to prevent conflicts between ofdisk and sd/wd */
+#include "sd.h"
+#include "wd.h"
 
 int ofrprobe __P((struct device *, void *, void *));
 void ofrattach __P((struct device *, struct device *, void *));
@@ -176,10 +180,19 @@ ofbattach(parent, dev, aux)
 	 */
 	units = 1;
 	if (OF_getprop(ofp->phandle, "name", name, sizeof name) > 0) {
-		if (!strcmp(name, "scsi"))
+		if (!strcmp(name, "scsi")) {
+#if NSD > 0
+			units = 0; /* if sd driver in kernel, dont use ofw */
+#else
 			units = 7; /* What about wide or hostid != 7?	XXX */
-		else if (!strcmp(name, "ide"))
+#endif
+		} else if (!strcmp(name, "ide")) {
+#if NWD > 0
+			units = 0; /* if wd driver in kernel, dont use ofw */
+else 
 			units = 2;
+#endif
+		}
 	}
 	for (child = OF_child(ofp->phandle); child; child = OF_peer(child)) {
 		/*
