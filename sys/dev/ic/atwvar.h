@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.8 2004/01/29 10:25:49 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.9 2004/06/23 08:13:29 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -146,7 +146,7 @@ enum atw_rftype { ATW_RFTYPE_INTERSIL = 0, ATW_RFTYPE_RFMD  = 1,
        ATW_RFTYPE_MARVEL = 2 };
 
 enum atw_bbptype { ATW_BBPTYPE_INTERSIL = 0, ATW_BBPTYPE_RFMD  = 1,
-       ATW_BBPTYPE_MARVEL = 2 };
+       ATW_BBPTYPE_MARVEL = 2, ATW_C_BBPTYPE_RFMD  = 5 };
 
 /* Radio capture format for ADMtek. */
 
