@@ -1,4 +1,4 @@
-/*	$OpenBSD: ymvar.h,v 1.3 1999/07/20 16:36:06 deraadt Exp $	*/
+/*	$OpenBSD: ymvar.h,v 1.4 1999/10/06 12:48:33 fgsch Exp $	*/
 /*	$NetBSD: wssvar.h,v 1.1 1998/01/19 22:18:25 augustss Exp $	*/
 
 /*
@@ -30,33 +30,45 @@
 /*
  * Mixer devices
  */
-#define YM_MIDI_LVL          0
-#define YM_CD_LVL            1
-#define YM_DAC_LVL           2
-#define YM_LINE_LVL          3
-#define YM_SPEAKER_LVL       4
-#define YM_MIC_LVL           5
-#define YM_MONITOR_LVL       6
-#define YM_MIDI_MUTE	     7
-#define YM_CD_MUTE           8
-#define YM_DAC_MUTE          9
-#define YM_LINE_MUTE         10
-#define YM_SPEAKER_MUTE      11
-#define YM_MIC_MUTE          12
-#define YM_MONITOR_MUTE      13
+#define YM_MIDI_LVL		0
+#define YM_CD_LVL		1
+#define YM_DAC_LVL		2
+#define YM_LINE_LVL		3
+#define YM_SPEAKER_LVL		4
+#define YM_MIC_LVL		5
+#define YM_MONITOR_LVL		6
+#define YM_MIDI_MUTE		7
+#define YM_CD_MUTE		8
+#define YM_DAC_MUTE		9
+#define YM_LINE_MUTE		10
+#define YM_SPEAKER_MUTE		11
+#define YM_MIC_MUTE		12
+#define YM_MONITOR_MUTE		13
 
-#define YM_REC_LVL           14
+#define YM_REC_LVL		14
 #define YM_RECORD_SOURCE	15
 
-#define YM_OUTPUT_LVL            16
-#define YM_OUTPUT_MUTE           17
+#define YM_OUTPUT_LVL		16
+#define YM_OUTPUT_MUTE		17
+
+#define	YM_MASTER_EQMODE	18
+#define	YM_MASTER_TREBLE	19
+#define	YM_MASTER_BASS		20
+#define	YM_MASTER_WIDE		21
 
 /* Classes - don't change this without looking at mixer_classes array */
-#define YM_INPUT_CLASS		18
-#define YM_RECORD_CLASS	        19
-#define YM_OUTPUT_CLASS         20
-#define YM_MONITOR_CLASS        21
+#define	YM_CLASS_TOP		22
+#define YM_INPUT_CLASS		(YM_CLASS_TOP + 0)
+#define YM_RECORD_CLASS		(YM_CLASS_TOP + 1) 
+#define YM_OUTPUT_CLASS		(YM_CLASS_TOP + 2)
+#define YM_MONITOR_CLASS	(YM_CLASS_TOP + 3)
+#define YM_EQ_CLASS		(YM_CLASS_TOP + 4)
 
+#define	AudioNmode		"mode"
+#define	AudioNdesktop		"desktop"
+#define	AudioNlaptop		"laptop"
+#define	AudioNsubnote		"subnote"
+#define	AudioNhifi		"hifi"
 
 struct ym_softc {
 	struct	device sc_dev;		/* base device */
@@ -74,7 +86,12 @@ struct ym_softc {
 #define ym_recdrq sc_ad1848.sc_recdrq
 
         int  master_mute, mic_mute;
-        struct ad1848_volume mic_gain, master_gain;
+        struct ad1848_volume master_gain;
+	u_int8_t mic_gain;
+
+	/* 3D enhancement */
+	u_int8_t sc_eqmode;
+	struct ad1848_volume sc_treble, sc_bass, sc_wide;
 #if NMIDI > 0
 	int	sc_hasmpu;
 	struct	mpu_softc sc_mpu_sc;	/* MPU401 Uart state */

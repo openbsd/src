@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.8 1999/08/05 05:32:41 deraadt Exp $ */
+/* $OpenBSD: ym.c,v 1.9 1999/10/06 12:48:33 fgsch Exp $ */
 
 
 /*
@@ -51,7 +51,7 @@
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/isa/ad1848var.h>
-#include <dev/ic/opl3sa3.h>
+#include <dev/ic/opl3sa3reg.h>
 #include <dev/ic/mpuvar.h>
 #include <dev/isa/ymvar.h>
 
@@ -63,9 +63,9 @@ int ym_intr __P((void *));
 
 static void ym_mute __P((struct ym_softc *, int, int));
 static void ym_set_master_gain __P((struct ym_softc *, struct ad1848_volume *));
-static void ym_set_mic_gain __P((struct ym_softc *, struct ad1848_volume *));
-
-
+static void ym_set_mic_gain __P((struct ym_softc *, int));
+static void ym_set_3d __P((struct ym_softc *, mixer_ctrl_t *,
+	struct ad1848_volume *, int));
 
 struct audio_hw_if ym_hw_if = {
 	ad1848_open,
@@ -145,7 +145,6 @@ ym_attach(sc)
 
 {
 	struct ad1848_volume vol_mid = {220, 220};
-	struct ad1848_volume vol_0 = {0, 0};
 #if NMIDI > 0
 	struct midi_hw_if *mhw = &ym_mpu401_hw_if;
 #endif
@@ -159,13 +158,13 @@ ym_attach(sc)
 
 	/* Establish chip in well known mode */
 	ym_set_master_gain(sc, &vol_mid);
-	ym_set_mic_gain(sc, &vol_0);
+	ym_set_mic_gain(sc, 0);
 	sc->master_mute = 0;
-	ym_mute(sc, SA3_LCH, sc->master_mute);
-	ym_mute(sc, SA3_RCH, sc->master_mute);
+	ym_mute(sc, SA3_VOL_L, sc->master_mute);
+	ym_mute(sc, SA3_VOL_R, sc->master_mute);
 
 	sc->mic_mute = 1;
-	ym_mute(sc, SA3_MIC, sc->mic_mute);
+	ym_mute(sc, SA3_MIC_VOL, sc->mic_mute);
 
 #if NMIDI > 0
 	sc->sc_hasmpu = 0;
@@ -187,9 +186,9 @@ ym_read(sc, reg)
 	struct ym_softc *sc;
 	int     reg;
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, 0x1d);
-	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, (reg & 0xff));
-	return (bus_space_read_1(sc->sc_iot, sc->sc_controlioh, 1));
+	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, SA3_CTL_INDEX,
+	    (reg & 0xff));
+	return (bus_space_read_1(sc->sc_iot, sc->sc_controlioh, SA3_CTL_DATA));
 }
 
 static __inline void
@@ -198,9 +197,10 @@ ym_write(sc, reg, data)
 	int     reg;
 	int     data;
 {
-	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, 0x1d);
-	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 0, (reg & 0xff));
-	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, 1, (data & 0xff));
+	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, SA3_CTL_INDEX,
+	    (reg & 0xff));
+	bus_space_write_1(sc->sc_iot, sc->sc_controlioh, SA3_CTL_DATA,
+	    (data & 0xff));
 }
 
 
@@ -232,7 +232,7 @@ static ad1848_devmap_t mappings[] = {
 	{ YM_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1 }
 };
 
-static int nummap = sizeof(mappings) / sizeof(mappings[0]);
+#define NUMMAP	(sizeof(mappings) / sizeof(mappings[0]))
 
 
 static void
@@ -241,63 +241,68 @@ ym_mute(sc, left_reg, mute)
 	int     left_reg;
 	int     mute;
 {
-	u_char  reg;
+	u_int8_t reg;
 
-	if (mute) {
-		reg = ym_read(sc, left_reg);
+	reg = ym_read(sc, left_reg);
+	if (mute)
 		ym_write(sc, left_reg, reg | 0x80);
-	} else {
-		reg = ym_read(sc, left_reg);
+	else
 		ym_write(sc, left_reg, reg & ~0x80);
-	}
 }
-
-#define MIC_ATTEN_BITS 0x1f
-#define MASTER_ATTEN_BITS 0x0f
 
 static void
 ym_set_master_gain(sc, vol)
 	struct ym_softc *sc;
 	struct ad1848_volume *vol;
 {
-	u_char  reg;
 	u_int   atten;
 
 	sc->master_gain = *vol;
 
-	atten = ((AUDIO_MAX_GAIN - vol->left) * MASTER_ATTEN_BITS) / AUDIO_MAX_GAIN;
+	atten = ((AUDIO_MAX_GAIN - vol->left) * (SA3_VOL_MV + 1)) /
+	   (AUDIO_MAX_GAIN + 1);
 
-	reg = ym_read(sc, SA3_LCH);
+	ym_write(sc, SA3_VOL_L, (ym_read(sc, SA3_VOL_L) & ~SA3_VOL_MV) | atten);
 
-	reg &= ~(MASTER_ATTEN_BITS);
-	reg |= atten;
+	atten = ((AUDIO_MAX_GAIN - vol->right) * (SA3_VOL_MV + 1)) /
+	   (AUDIO_MAX_GAIN + 1);
 
-	ym_write(sc, SA3_LCH, reg);
-
-	atten = ((AUDIO_MAX_GAIN - vol->right) * MASTER_ATTEN_BITS) / AUDIO_MAX_GAIN;
-
-	reg = ym_read(sc, SA3_RCH) & ~(MASTER_ATTEN_BITS);
-	reg |= atten;
-
-	ym_write(sc, SA3_RCH, reg);
+	ym_write(sc, SA3_VOL_R, (ym_read(sc, SA3_VOL_R) & ~SA3_VOL_MV) | atten);
 }
 
 static void
 ym_set_mic_gain(sc, vol)
 	struct ym_softc *sc;
-	struct ad1848_volume *vol;
+	int vol;
 {
-	u_char  reg;
 	u_int   atten;
 
-	sc->mic_gain = *vol;
+	sc->mic_gain = vol;
 
-	atten = ((AUDIO_MAX_GAIN - vol->left) * MIC_ATTEN_BITS) / AUDIO_MAX_GAIN;
+	atten = ((AUDIO_MAX_GAIN - vol) * (SA3_MIC_MCV + 1)) /
+	    (AUDIO_MAX_GAIN + 1);
 
-	reg = ym_read(sc, SA3_MIC) & ~(MIC_ATTEN_BITS);
-	reg |= atten;
+	ym_write(sc, SA3_MIC_VOL,
+	    (ym_read(sc, SA3_MIC_VOL) & ~SA3_MIC_MCV) | atten);
+}
 
-	ym_write(sc, SA3_MIC, reg);
+static void
+ym_set_3d(sc, cp, val, reg)
+	struct ym_softc *sc;
+	mixer_ctrl_t *cp;
+	struct ad1848_volume *val;
+	int reg;
+{
+	u_int8_t e;
+
+	ad1848_to_vol(cp, val);
+
+	e = (val->left * (SA3_3D_BITS + 1) + (SA3_3D_BITS + 1) / 2) /
+		(AUDIO_MAX_GAIN + 1) << SA3_3D_LSHIFT |
+	    (val->right * (SA3_3D_BITS + 1) + (SA3_3D_BITS + 1) / 2) /
+		(AUDIO_MAX_GAIN + 1) << SA3_3D_RSHIFT;
+
+	ym_write(sc, reg, e);
 }
 
 int
@@ -308,7 +313,7 @@ ym_mixer_set_port(addr, cp)
 	struct ad1848_softc *ac = addr;
 	struct ym_softc *sc = ac->parent;
 	struct ad1848_volume vol;
-	int     error = ad1848_mixer_set_port(ac, mappings, nummap, cp);
+	int     error = ad1848_mixer_set_port(ac, mappings, NUMMAP, cp);
 
 	if (error != ENXIO)
 		return (error);
@@ -323,21 +328,39 @@ ym_mixer_set_port(addr, cp)
 
 	case YM_OUTPUT_MUTE:
 		sc->master_mute = (cp->un.ord != 0);
-		ym_mute(sc, SA3_LCH, sc->master_mute);
-		ym_mute(sc, SA3_RCH, sc->master_mute);
+		ym_mute(sc, SA3_VOL_L, sc->master_mute);
+		ym_mute(sc, SA3_VOL_R, sc->master_mute);
 		break;
 
 	case YM_MIC_LVL:
 		if (cp->un.value.num_channels != 1)
 			error = EINVAL;
+		else
+			ym_set_mic_gain(sc,
+			    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
+		break;
 
-		ad1848_to_vol(cp, &vol);
-		ym_set_mic_gain(sc, &vol);
+	case YM_MASTER_EQMODE:
+		sc->sc_eqmode = cp->un.ord & SA3_SYS_CTL_YMODE;
+		ym_write(sc, SA3_SYS_CTL, (ym_read(sc, SA3_SYS_CTL) &
+		    ~SA3_SYS_CTL_YMODE) | sc->sc_eqmode);
+		break;
+
+	case YM_MASTER_TREBLE:
+		ym_set_3d(sc, cp, &sc->sc_treble, SA3_3D_TREBLE);
+		break;
+
+	case YM_MASTER_BASS:
+		ym_set_3d(sc, cp, &sc->sc_bass, SA3_3D_BASS);
+		break;
+
+	case YM_MASTER_WIDE:
+		ym_set_3d(sc, cp, &sc->sc_wide, SA3_3D_WIDE);
 		break;
 
 	case YM_MIC_MUTE:
 		sc->mic_mute = (cp->un.ord != 0);
-		ym_mute(sc, SA3_MIC, sc->mic_mute);
+		ym_mute(sc, SA3_MIC_VOL, sc->mic_mute);
 		break;
 
 	default:
@@ -356,7 +379,7 @@ ym_mixer_get_port(addr, cp)
 	struct ad1848_softc *ac = addr;
 	struct ym_softc *sc = ac->parent;
 
-	int     error = ad1848_mixer_get_port(ac, mappings, nummap, cp);
+	int     error = ad1848_mixer_get_port(ac, mappings, NUMMAP, cp);
 
 	if (error != ENXIO)
 		return (error);
@@ -375,8 +398,23 @@ ym_mixer_get_port(addr, cp)
 	case YM_MIC_LVL:
 		if (cp->un.value.num_channels != 1)
 			error = EINVAL;
+		cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->mic_gain;	
+		break;
 
-		ad1848_from_vol(cp, &sc->mic_gain);
+	case YM_MASTER_EQMODE:
+		cp->un.ord = sc->sc_eqmode;
+		break;
+
+	case YM_MASTER_TREBLE:
+		ad1848_from_vol(cp, &sc->sc_treble);
+		break;
+
+	case YM_MASTER_BASS:
+		ad1848_from_vol(cp, &sc->sc_bass);
+		break;
+
+	case YM_MASTER_WIDE:
+		ad1848_from_vol(cp, &sc->sc_wide);
 		break;
 
 	case YM_MIC_MUTE:
@@ -391,18 +429,19 @@ ym_mixer_get_port(addr, cp)
 	return (error);
 }
 
-static char *mixer_classes[] = {AudioCinputs, AudioCrecord, AudioCoutputs,
-AudioCmonitor};
+static char *mixer_classes[] = {
+	AudioCinputs, AudioCrecord, AudioCoutputs, AudioCmonitor,
+	AudioCequalization
+};
 
 int
 ym_query_devinfo(addr, dip)
 	void   *addr;
 	mixer_devinfo_t *dip;
 {
-	static char *mixer_port_names[] = {AudioNmidi, AudioNcd, AudioNdac,
-		AudioNline, AudioNspeaker,
-		AudioNmicrophone,
-	AudioNmonitor};
+	static char *mixer_port_names[] = { AudioNmidi, AudioNcd, AudioNdac,
+		AudioNline, AudioNspeaker, AudioNmicrophone, AudioNmonitor
+	};
 
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
 
@@ -411,6 +450,7 @@ ym_query_devinfo(addr, dip)
 	case YM_OUTPUT_CLASS:
 	case YM_MONITOR_CLASS:
 	case YM_RECORD_CLASS:
+	case YM_EQ_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = dip->index;
 		strcpy(dip->label.name,
@@ -505,6 +545,46 @@ mute:
 		dip->un.e.member[2].ord = DAC_IN_PORT;
 		strcpy(dip->un.e.member[3].label.name, AudioNcd);
 		dip->un.e.member[3].ord = AUX1_IN_PORT;
+		break;
+
+	case YM_MASTER_EQMODE:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = YM_EQ_CLASS;
+		strcpy(dip->label.name, AudioNmode);
+		strcpy(dip->un.v.units.name, AudioNmode);
+		dip->un.e.num_mem = 4;
+		strcpy(dip->un.e.member[0].label.name, AudioNdesktop);
+		dip->un.e.member[0].ord = SA3_SYS_CTL_YMODE0;
+		strcpy(dip->un.e.member[1].label.name, AudioNlaptop);
+		dip->un.e.member[1].ord = SA3_SYS_CTL_YMODE1;
+		strcpy(dip->un.e.member[2].label.name, AudioNsubnote);
+		dip->un.e.member[2].ord = SA3_SYS_CTL_YMODE2;
+		strcpy(dip->un.e.member[3].label.name, AudioNhifi);
+		dip->un.e.member[3].ord = SA3_SYS_CTL_YMODE3;
+		break;
+
+	case YM_MASTER_TREBLE:
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = YM_EQ_CLASS;
+		strcpy(dip->label.name, AudioNtreble);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNtreble);
+		break;
+
+	case YM_MASTER_BASS:
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = YM_EQ_CLASS;
+		strcpy(dip->label.name, AudioNbass);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNbass);
+		break;
+
+	case YM_MASTER_WIDE:
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = YM_EQ_CLASS;
+		strcpy(dip->label.name, AudioNsurround);
+		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNsurround);
 		break;
 
 	default:
