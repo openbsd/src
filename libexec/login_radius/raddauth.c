@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.3 2001/07/09 18:59:25 millert Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.4 2001/07/26 20:47:44 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -152,7 +152,7 @@ raddauth(char *username, char *class, char *style, char *challenge,
 		return (1);
 	}
 
-	timeout = login_getcapnum(lc, "radius-timout", 2, 2);
+	timeout = login_getcapnum(lc, "radius-timeout", 2, 2);
 	retries = login_getcapnum(lc, "radius-retries", 6, 6);
 	if (timeout < 1)
 		timeout = 1;
