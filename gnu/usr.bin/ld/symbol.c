@@ -1,4 +1,4 @@
-/* * $OpenBSD: symbol.c,v 1.4 1999/08/24 19:05:16 niklas Exp $	- symbol table routines*/
+/* * $OpenBSD: symbol.c,v 1.5 2002/07/10 17:28:16 marc Exp $	- symbol table routines*/
 /*
  */
 
@@ -77,8 +77,8 @@ int
 hash_string (key)
      char *key;
 {
-	register char *cp;
-	register int k;
+	char *cp;
+	int k;
 
 	cp = key;
 	k = 0;
@@ -97,8 +97,8 @@ symbol *
 getsym(key)
 	char *key;
 {
-	register int hashval;
-	register symbol *bp;
+	int hashval;
+	symbol *bp;
 
 	if (strcmp(key, OTHER_SYM) == 0)
 		key = GOT_SYM;
@@ -150,8 +150,8 @@ symbol *
 getsym_soft (key)
 	char *key;
 {
-	register int hashval;
-	register symbol *bp;
+	int hashval;
+	symbol *bp;
 
 	if (strcmp(key, OTHER_SYM) == 0)
 		key = GOT_SYM;

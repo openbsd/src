@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.h,v 1.8 2002/05/24 06:08:52 ericj Exp $	*/
+/*	$OpenBSD: ld.h,v 1.9 2002/07/10 17:28:16 marc Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -424,8 +424,8 @@ typedef struct glosym {
 extern symbol *symtab[];
 #define FOR_EACH_SYMBOL(i,sp) {					\
 	int i;							\
-	for (i = 0; i < SYMTABSIZE; i++) {				\
-		register symbol *sp;				\
+	for (i = 0; i < SYMTABSIZE; i++) {			\
+		symbol *sp;					\
 		for (sp = symtab[i]; sp; sp = sp->link)
 
 #define END_EACH_SYMBOL	}}

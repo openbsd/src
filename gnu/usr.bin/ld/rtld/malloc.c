@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.2 1998/03/26 19:47:22 niklas Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.3 2002/07/10 17:28:16 marc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$OpenBSD: malloc.c,v 1.2 1998/03/26 19:47:22 niklas Exp $";
+static char *rcsid = "$OpenBSD: malloc.c,v 1.3 2002/07/10 17:28:16 marc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -153,9 +153,9 @@ void *
 malloc(nbytes)
 	size_t nbytes;
 {
-  	register union overhead *op;
-  	register int bucket, n;
-	register unsigned amt;
+  	union overhead *op;
+  	int bucket, n;
+	unsigned amt;
 
 	/*
 	 * First time malloc is called, setup page size and
@@ -239,8 +239,8 @@ static void
 morecore(bucket)
 	int bucket;
 {
-  	register union overhead *op;
-	register int sz;		/* size of desired block */
+  	union overhead *op;
+	int sz;				/* size of desired block */
   	int amt;			/* amount to allocate */
   	int nblks;			/* how many blocks we get */
 
@@ -283,8 +283,8 @@ void
 free(cp)
 	void *cp;
 {   
-  	register int size;
-	register union overhead *op;
+  	int size;
+	union overhead *op;
 
   	if (cp == NULL)
   		return;
@@ -326,8 +326,8 @@ realloc(cp, nbytes)
 	void *cp; 
 	size_t nbytes;
 {   
-  	register u_int onb;
-	register int i;
+  	u_int onb;
+	int i;
 	union overhead *op;
   	char *res;
 	int was_alloced = 0;
@@ -397,8 +397,8 @@ findbucket(freep, srchlen)
 	union overhead *freep;
 	int srchlen;
 {
-	register union overhead *p;
-	register int i, j;
+	union overhead *p;
+	int i, j;
 
 	for (i = 0; i < NBUCKETS; i++) {
 		j = 0;
@@ -422,8 +422,8 @@ findbucket(freep, srchlen)
 mstats(s)
 	char *s;
 {
-  	register int i, j;
-  	register union overhead *p;
+  	int i, j;
+  	union overhead *p;
   	int totfree = 0,
   	totused = 0;
 

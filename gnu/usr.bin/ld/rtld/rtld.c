@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.23 2002/06/03 09:28:07 deraadt Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.24 2002/07/10 17:28:16 marc Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -202,7 +202,7 @@ static void		preload __P((char *));
 static void		ld_trace __P((struct so_map *));
 
 static inline int
-strcmp (register const char *s1, register const char *s2)
+strcmp (const char *s1, const char *s2)
 {
 	while (*s1 == *s2++)
 		if (*s1++ == 0)
@@ -247,7 +247,7 @@ rtld(version, crtp, dp)
 	/* Relocate ourselves */
 	for (reloc = (struct relocation_info *)(LD_REL(dp) + crtp->crt_ba);
 	    nreloc; nreloc--, reloc++) {
-		register long	addr = reloc->r_address + crtp->crt_ba;
+		long	addr = reloc->r_address + crtp->crt_ba;
 		md_relocate_simple(reloc, crtp->crt_ba, addr);
 	}
 
@@ -881,8 +881,8 @@ static inline int
 hash_string(key)
 	const char *key;
 {
-	register const char *cp;
-	register int k;
+	const char *cp;
+	int k;
 
 	cp = key;
 	k = 0;
@@ -900,8 +900,8 @@ static inline struct rt_symbol *
 lookup_rts(key)
 	const char *key;
 {
-	register int			hashval;
-	register struct rt_symbol	*rtsp;
+	int			hashval;
+	struct rt_symbol	*rtsp;
 
 	/* Determine which bucket.  */
 
@@ -925,8 +925,8 @@ enter_rts(name, value, type, srcaddr, size, smp)
 	long		size;
 	struct so_map	*smp;
 {
-	register int			hashval;
-	register struct rt_symbol	*rtsp, **rpp;
+	int			hashval;
+	struct rt_symbol	*rtsp, **rpp;
 
 	/* Determine which bucket */
 	hashval = hash_string(name) % RTC_TABSIZE;
@@ -1302,8 +1302,8 @@ rtfindlib(name, major, minor, usehints, ipath)
 	int	*usehints;
 	char	*ipath;
 {
-	register char	*cp;
-	int		realminor;
+	char	*cp;
+	int	realminor;
 
 	if (hheader == NULL)
 		maphints();
@@ -1315,8 +1315,8 @@ rtfindlib(name, major, minor, usehints, ipath)
 
 	if (ld_library_path || ipath) {
 		/* Prefer paths from some explicit LD_LIBRARY_PATH */
-		register char	*lpath;
-		char		*dp;
+		char	*lpath;
+		char	*dp;
 
 		dp = lpath = concat(ld_library_path ? ld_library_path : "",
 				    (ld_library_path && ipath) ? ":" : "",

@@ -1,4 +1,4 @@
-/* * $OpenBSD: warnings.c,v 1.4 2000/01/23 14:57:29 espie Exp $*/
+/* * $OpenBSD: warnings.c,v 1.5 2002/07/10 17:28:16 marc Exp $*/
 /*
  */
 
@@ -155,7 +155,7 @@ list_file_locals (entry, outfile)
 
 	lspend = entry->symbols + entry->nsymbols;
 	for (lsp = entry->symbols; lsp < lspend; lsp++) {
-		register struct nlist *p = &lsp->nzlist.nlist;
+		struct nlist *p = &lsp->nzlist.nlist;
 		/*
 		 * If this is a definition,
 		 * update it if necessary by this file's start address.
@@ -215,12 +215,11 @@ reloc_cmp(rel1, rel2)
 
 static int
 next_debug_entry(use_data_symbols, state_pointer)
-	register int use_data_symbols;
+	int use_data_symbols;
 	/* Next must be passed by reference! */
 	struct line_debug_entry state_pointer[3];
 {
-	register struct line_debug_entry
-				*current = state_pointer,
+	struct line_debug_entry	*current = state_pointer,
 				*next = state_pointer + 1,
 				/* Used to store source file */
 				*source = state_pointer + 2;
@@ -284,7 +283,7 @@ init_debug_scan(use_data_symbols, entry)
 	int			use_data_symbols;
 	struct file_entry	*entry;
 {
-	register struct localsymbol	*lsp, *lspend;
+	struct localsymbol	*lsp, *lspend;
 	struct line_debug_entry *state_pointer, *current, *next, *source;
 
 	state_pointer = (struct line_debug_entry *)
@@ -432,8 +431,8 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
 	qsort(rp, erp - rp, sizeof(rp[0]), reloc_cmp);
 
 	for (; rp < erp; rp++) {
-		register struct localsymbol *lsp;
-		register symbol *g;
+		struct localsymbol *lsp;
+		symbol *g;
 
 		/*
 		 * If the relocation isn't resolved through a symbol, continue.
@@ -590,7 +589,7 @@ do_file_warnings (entry, outfile)
 #if 0
 			/* Check for undefined shobj symbols */
 			struct localsymbol	*lsp;
-			register int		type;
+			int			type;
 
 			for (lsp = g->sorefs; lsp; lsp = lsp->next) {
 				type = lsp->nzlist.nz_type;

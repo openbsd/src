@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.5 2002/04/17 15:33:16 espie Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.6 2002/07/10 17:28:16 marc Exp $	- library routines*/
 /*
  */
 
@@ -40,9 +40,9 @@ search_library(fd, entry)
 	int             fd;
 	struct file_entry *entry;
 {
-	int             member_length;
-	register char  *name;
-	register struct file_entry *subentry;
+	int member_length;
+	char *name;
+	struct file_entry *subentry;
 
 	if (!(link_mode & FORCEARCHIVE) && !undefined_global_sym_count)
 		return;
@@ -78,12 +78,12 @@ decode_library_subfile(fd, library_entry, subfile_offset, length_loc)
 	int            *length_loc;
 {
 	int             bytes_read;
-	register int    namelen;
+	int		namelen;
 	int             member_length, content_length;
 	int		starting_offset;
-	register char  *name;
+	char	       *name;
 	struct ar_hdr   hdr1;
-	register struct file_entry *subentry;
+	struct file_entry *subentry;
 
 	lseek(fd, subfile_offset, 0);
 
@@ -172,13 +172,13 @@ symdef_library(fd, entry, member_length)
 	int             member_length;
 {
 	int            *symdef_data = (int *) xmalloc(member_length);
-	register struct ranlib *symdef_base;
+	struct ranlib  *symdef_base;
 	char           *sym_name_base;
 	int             nsymdefs;
 	int             length_of_strings;
 	int             not_finished;
 	int             bytes_read;
-	register int    i;
+	int		i;
 	struct file_entry *prev = 0;
 	int             prev_offset = 0;
 
@@ -207,7 +207,7 @@ symdef_library(fd, entry, member_length)
 	/* Check all the string indexes for validity.  */
 	md_swapin_ranlib_hdr(symdef_base, nsymdefs);
 	for (i = 0; i < nsymdefs; i++) {
-		register int    index = symdef_base[i].ran_un.ran_strx;
+		int    index = symdef_base[i].ran_un.ran_strx;
 		if (index < 0 || index >= length_of_strings
 		    || (index && *(sym_name_base + index - 1)))
 			errx(1, "%s: malformatted __.SYMDEF",
@@ -235,10 +235,10 @@ symdef_library(fd, entry, member_length)
 					undefined_global_sym_count ||
 					common_defined_global_count)); i++) {
 
-			register symbol *sp;
-			int             junk;
-			register int    j;
-			register int    offset = symdef_base[i].ran_off;
+			symbol *sp;
+			int	junk;
+			int	j;
+			int	offset = symdef_base[i].ran_off;
 			struct file_entry *subentry;
 
 
@@ -362,14 +362,14 @@ linear_library(fd, entry)
 	int             fd;
 	struct file_entry *entry;
 {
-	register struct file_entry *prev = 0;
-	register int    this_subfile_offset = SARMAG;
+	struct file_entry *prev = 0;
+	int    this_subfile_offset = SARMAG;
 
 	while ((link_mode & FORCEARCHIVE) ||
 		undefined_global_sym_count || common_defined_global_count) {
 
 		int				member_length;
-		register struct file_entry	*subentry;
+		struct file_entry	*subentry;
 
 		subentry = decode_library_subfile(fd, entry,
 					this_subfile_offset, &member_length);
@@ -416,16 +416,16 @@ subfile_wanted_p(entry)
 {
 	struct localsymbol	*lsp, *lspend;
 #ifdef DOLLAR_KLUDGE
-	register int    dollar_cond = 0;
+	int    dollar_cond = 0;
 #endif
 
 	lspend = entry->symbols + entry->nsymbols;
 
 	for (lsp = entry->symbols; lsp < lspend; lsp++) {
-		register struct nlist *p = &lsp->nzlist.nlist;
-		register int	type = p->n_type;
-		register char	*name = p->n_un.n_strx + entry->strings;
-		register symbol	*sp = getsym_soft(name);
+		struct nlist *p = &lsp->nzlist.nlist;
+		int	type = p->n_type;
+		char	*name = p->n_un.n_strx + entry->strings;
+		symbol	*sp = getsym_soft(name);
 
 		/*
 		 * If the symbol has an interesting definition, we could
@@ -845,8 +845,7 @@ dot_a:
 		fname = concat("lib", p->filename, ".a");
 
 	for (i = 0; i < n_search_dirs; i++) {
-		register char *path
-			= concat(search_dirs[i], "/", fname);
+		char *path = concat(search_dirs[i], "/", fname);
 		fd = open(path, O_RDONLY, 0);
 		if (fd >= 0) {
 			p->filename = path;

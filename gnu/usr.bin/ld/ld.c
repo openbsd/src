@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.23 2002/06/04 00:10:58 deraadt Exp $	*/
+/*	$OpenBSD: ld.c,v 1.24 2002/07/10 17:28:15 marc Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -432,7 +432,7 @@ main(argc, argv)
 
 static int
 classify_arg(arg)
-	register char  *arg;
+	char  *arg;
 {
 	if (*arg != '-')
 		return 0;
@@ -498,8 +498,8 @@ decode_command(argc, argv)
 	int             argc;
 	char          **argv;
 {
-	register int    i;
-	register struct file_entry *p;
+	int	i;
+	struct file_entry *p;
 
 	number_of_files = 0;
 	output_filename = "a.out";
@@ -511,7 +511,7 @@ decode_command(argc, argv)
 	 */
 
 	for (i = 1; i < argc; i++) {
-		register int    code = classify_arg(argv[i]);
+		int    code = classify_arg(argv[i]);
 		if (code) {
 			if (i + code > argc)
 				errx(1, "no argument following %s", argv[i]);
@@ -537,8 +537,8 @@ decode_command(argc, argv)
 	/* All options except -A, -B and -l are ignored here.  */
 
 	for (i = 1; i < argc; i++) {
-		char           *string;
-		register int    code = classify_arg(argv[i]);
+		char	*string;
+		int	code = classify_arg(argv[i]);
 
 		if (code == 0) {
 			p->filename = argv[i];
@@ -650,7 +650,7 @@ set_element_prefixed_p(name)
 
 static void
 decode_option(swt, arg)
-	register char  *swt, *arg;
+	char  *swt, *arg;
 {
 	if (!strcmp(swt + 1, "Bstatic"))
 		return;
@@ -816,7 +816,7 @@ do_rpath:
 
 	case 'u':
 		{
-			register symbol *sp = getsym(arg);
+			symbol *sp = getsym(arg);
 
 			if (!sp->defined && !(sp->flags & GS_REFERENCED))
 				undefined_global_sym_count++;
@@ -841,7 +841,7 @@ do_rpath:
 
 	case 'y':
 		{
-			register symbol *sp = getsym(&swt[2]);
+			symbol *sp = getsym(&swt[2]);
 			sp->flags |= GS_TRACE;
 		}
 		return;
@@ -878,14 +878,14 @@ do_rpath:
 
 void
 each_file(function, arg)
-	register void	(*function)();
-	register void	*arg;
+	void	(*function)();
+	void	*arg;
 {
-	register int    i;
+	int    i;
 
 	for (i = 0; i < number_of_files; i++) {
-		register struct file_entry *entry = &file_table[i];
-		register struct file_entry *subentry;
+		struct file_entry *entry = &file_table[i];
+		struct file_entry *subentry;
 
 		if (entry->flags & E_SCRAPPED)
 			continue;
@@ -931,18 +931,18 @@ each_file(function, arg)
 
 unsigned long
 check_each_file(function, arg)
-	register unsigned long	(*function)();
-	register void		*arg;
+	unsigned long	(*function)();
+	void		*arg;
 {
-	register int    i;
-	register unsigned long return_val;
+	int    i;
+	unsigned long return_val;
 
 	for (i = 0; i < number_of_files; i++) {
-		register struct file_entry *entry = &file_table[i];
+		struct file_entry *entry = &file_table[i];
 		if (entry->flags & E_SCRAPPED)
 			continue;
 		if (entry->flags & E_IS_LIBRARY) {
-			register struct file_entry *subentry = entry->subfiles;
+			struct file_entry *subentry = entry->subfiles;
 			for (; subentry; subentry = subentry->chain) {
 				if (subentry->flags & E_SCRAPPED)
 					continue;
@@ -959,14 +959,14 @@ check_each_file(function, arg)
 
 void
 each_full_file(function, arg)
-	register void	(*function)();
-	register void	*arg;
+	void	(*function)();
+	void	*arg;
 {
-	register int    i;
+	int    i;
 
 	for (i = 0; i < number_of_files; i++) {
-		register struct file_entry *entry = &file_table[i];
-		register struct file_entry *subentry;
+		struct file_entry *entry = &file_table[i];
+		struct file_entry *subentry;
 
 		if (entry->flags & (E_SCRAPPED | E_JUST_SYMS))
 			continue;
@@ -1021,9 +1021,9 @@ file_close()
  */
 int
 file_open(entry)
-	register struct file_entry *entry;
+	struct file_entry *entry;
 {
-	register int	fd;
+	int	fd;
 
 	if (entry->superfile && (entry->superfile->flags & E_IS_LIBRARY))
 		return file_open(entry->superfile);
@@ -1070,7 +1070,7 @@ read_header(fd, entry)
 	int	fd;
 	struct file_entry *entry;
 {
-	register int len;
+	int len;
 
 	if (lseek(fd, entry->starting_offset, L_SET) !=
 	    entry->starting_offset)
@@ -1185,7 +1185,7 @@ read_entry_relocation(fd, entry)
 	int			fd;
 	struct file_entry	*entry;
 {
-	register struct relocation_info *reloc;
+	struct relocation_info *reloc;
 	off_t	pos;
 
 	if (!entry->textrel) {
@@ -1281,10 +1281,10 @@ load_symbols()
 
 void
 read_file_symbols(entry)
-	register struct file_entry *entry;
+	struct file_entry *entry;
 {
-	register int	fd;
-	register int	len;
+	int	fd;
+	int	len;
 	struct exec	hdr;
 
 	fd = file_open(entry);
@@ -1357,7 +1357,7 @@ enter_file_symbols(entry)
 	lspend = entry->symbols + entry->nsymbols;
 
 	for (lsp = entry->symbols; lsp < lspend; lsp++) {
-		register struct nlist *p = &lsp->nzlist.nlist;
+		struct nlist *p = &lsp->nzlist.nlist;
 
 		if (p->n_type == (N_SETV | N_EXT))
 			continue;
@@ -1436,9 +1436,9 @@ enter_global_ref(lsp, name, entry)
      char *name;
      struct file_entry *entry;
 {
-	register struct nzlist *nzp = &lsp->nzlist;
-	register symbol *sp = getsym(name);
-	register int type = nzp->nz_type;
+	struct nzlist *nzp = &lsp->nzlist;
+	symbol *sp = getsym(name);
+	int type = nzp->nz_type;
 	int oldref = (sp->flags & GS_REFERENCED);
 	int olddef = sp->defined;
 	int com = sp->defined && sp->common_size;
@@ -1647,7 +1647,7 @@ enter_global_ref(lsp, name, entry)
 		text_start = nzp->nz_value;
 
 	if (sp->flags & GS_TRACE) {
-		register char *reftype;
+		char *reftype;
 		switch (type & N_TYPE) {
 		case N_UNDF:
 			reftype = nzp->nz_value
@@ -1699,7 +1699,7 @@ enter_global_ref(lsp, name, entry)
 unsigned long
 contains_symbol(entry, np)
      struct file_entry *entry;
-     register struct nlist *np;
+     struct nlist *np;
 {
 	if (np >= &entry->symbols->nzlist.nlist &&
 		np < &(entry->symbols + entry->nsymbols)->nzlist.nlist)
@@ -1933,8 +1933,8 @@ digest_pass1()
 			continue;
 
 		for (lsp = sp->refs; lsp; lsp = lsp->next) {
-			register struct nlist *p = &lsp->nzlist.nlist;
-			register int    type = p->n_type;
+			struct nlist *p = &lsp->nzlist.nlist;
+			int    type = p->n_type;
 
 			if (SET_ELEMENT_P(type)) {
 				if (relocatable_output)
@@ -2028,8 +2028,8 @@ digest_pass1()
 		spsave=sp; /*XXX*/
 	again:
 		for (lsp = sp->sorefs; lsp; lsp = lsp->next) {
-			register struct nlist *p = &lsp->nzlist.nlist;
-			register int    type = p->n_type;
+			struct nlist *p = &lsp->nzlist.nlist;
+			int    type = p->n_type;
 
 			if ((type & N_EXT) && type != (N_UNDF | N_EXT) &&
 			    (type & N_TYPE) != N_FN) {
@@ -2308,9 +2308,9 @@ consider_relocation(entry, dataseg)
  */
 static void
 consider_local_symbols(entry)
-     register struct file_entry *entry;
+     struct file_entry *entry;
 {
-	register struct localsymbol	*lsp, *lspend;
+	struct localsymbol	*lsp, *lspend;
 
 	if (entry->flags & E_DYNAMIC)
 		return;
@@ -2323,8 +2323,8 @@ consider_local_symbols(entry)
 	 */
 
 	for (lsp = entry->symbols; lsp < lspend; lsp++) {
-		register struct nlist *p = &lsp->nzlist.nlist;
-		register int type = p->n_type;
+		struct nlist *p = &lsp->nzlist.nlist;
+		int type = p->n_type;
 
 		if (type == N_WARNING)
 			continue;
@@ -2379,7 +2379,7 @@ consider_local_symbols(entry)
  */
 static void
 consider_file_section_lengths(entry)
-     register struct file_entry *entry;
+     struct file_entry *entry;
 {
 
 	entry->text_start_address = text_size;
@@ -2401,9 +2401,9 @@ consider_file_section_lengths(entry)
  */
 static void
 relocate_file_addresses(entry)
-     register struct file_entry *entry;
+     struct file_entry *entry;
 {
-	register struct localsymbol	*lsp, *lspend;
+	struct localsymbol	*lsp, *lspend;
 
 	entry->text_start_address += text_start;
 	/*
@@ -2421,8 +2421,8 @@ printf("%s: datastart: %#x, bss %#x\n", get_file_name(entry),
 	lspend = entry->symbols + entry->nsymbols;
 
 	for (lsp = entry->symbols; lsp < lspend; lsp++) {
-		register struct nlist *p = &lsp->nzlist.nlist;
-		register int type = p->n_type;
+		struct nlist *p = &lsp->nzlist.nlist;
+		int type = p->n_type;
 
 		/*
 		 * If this belongs to a section, update it
@@ -2788,8 +2788,8 @@ void
 copy_text(entry)
 	struct file_entry *entry;
 {
-	register char	*bytes;
-	register int	fd;
+	char	*bytes;
+	int	fd;
 
 	if (trace_files)
 		prline_file_name(entry, stderr);
@@ -2863,8 +2863,8 @@ void
 copy_data(entry)
 	struct file_entry *entry;
 {
-	register char	*bytes;
-	register int	fd;
+	char	*bytes;
+	int	fd;
 
 	if (trace_files)
 		prline_file_name (entry, stderr);
@@ -2908,8 +2908,8 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 	int			dataseg;
 {
 
-	register struct relocation_info	*r = reloc;
-	struct relocation_info		*end = reloc + nreloc;
+	struct relocation_info	*r = reloc;
+	struct relocation_info	*end = reloc + nreloc;
 
 	int text_relocation = entry->text_start_address;
 	int data_relocation = entry->data_start_address - entry->header.a_text;
@@ -3231,14 +3231,14 @@ static void
 coptxtrel(entry)
 	struct file_entry *entry;
 {
-	register struct relocation_info *r, *end;
-	register int    reloc = entry->text_start_address;
+	struct relocation_info *r, *end;
+	int reloc = entry->text_start_address;
 
 	r = entry->textrel;
 	end = r + entry->ntextrel;
 
 	for (; r < end; r++) {
-		register int  		symindex;
+		int  			symindex;
 		struct localsymbol	*lsp;
 		symbol			*sp;
 
@@ -3296,21 +3296,21 @@ static void
 copdatrel(entry)
 	struct file_entry *entry;
 {
-	register struct relocation_info *r, *end;
+	struct relocation_info *r, *end;
 	/*
 	 * Relocate the address of the relocation. Old address is relative to
 	 * start of the input file's data section. New address is relative to
 	 * start of the output file's data section.
 	 */
-	register int    reloc = entry->data_start_address - text_size;
+	int reloc = entry->data_start_address - text_size;
 
 	r = entry->datarel;
 	end = r + entry->ndatarel;
 
 	for (; r < end; r++) {
-		register int  symindex;
-		symbol       *sp;
-		int           symtype;
+		int	symindex;
+		symbol	*sp;
+		int	symtype;
 
 		RELOC_ADDRESS(r) += reloc;
 
@@ -3395,8 +3395,8 @@ static int
 assign_string_table_index(name)
 	char           *name;
 {
-	register int    index = strtab_size;
-	register int    len = strlen(name) + 1;
+	int    index = strtab_size;
+	int    len = strlen(name) + 1;
 
 	strtab_size += len;
 	strtab_vector[strtab_index] = name;
@@ -3413,7 +3413,7 @@ assign_string_table_index(name)
 void
 write_string_table()
 {
-	register int i;
+	int i;
 
 	if (fseek(outstream, strtab_offset + strtab_len, SEEK_SET) != 0)
 		err(1, "write_string_table: %s: fseek", output_filename);
@@ -3440,7 +3440,7 @@ write_syms()
 	struct nlist   *buf = (struct nlist *)
 				alloca(global_sym_count * sizeof(struct nlist));
 	/* Pointer for storing into BUF.  */
-	register struct nlist *bufp = buf;
+	struct nlist *bufp = buf;
 
 	/* Size of string table includes the bytes that store the size.  */
 	strtab_size = sizeof strtab_size;
@@ -3714,7 +3714,7 @@ write_file_syms(entry, syms_written_addr)
 	struct nlist *buf = (struct nlist *)
 			alloca(max_syms * sizeof(struct nlist));
 
-	register struct nlist *bufp = buf;
+	struct nlist *bufp = buf;
 
 	if (entry->flags & E_DYNAMIC)
 		return;
@@ -3750,7 +3750,7 @@ write_file_syms(entry, syms_written_addr)
 	lspend = entry->symbols + entry->nsymbols;
 
 	for (lsp = entry->symbols; lsp < lspend; lsp++) {
-		register struct nlist *p = &lsp->nzlist.nlist;
+		struct nlist *p = &lsp->nzlist.nlist;
 		char		*name;
 
 		if (!(lsp->flags & LS_WRITE))
@@ -3856,7 +3856,7 @@ padfile(padding, fd)
 	int	padding;
 	FILE	*fd;
 {
-	register char *buf;
+	char *buf;
 	if (padding <= 0)
 		return;
 
