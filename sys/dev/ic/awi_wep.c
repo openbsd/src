@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi_wep.c,v 1.10 2003/09/02 16:58:11 tedu Exp $	*/
+/*	$OpenBSD: awi_wep.c,v 1.11 2004/09/18 21:52:57 tedu Exp $	*/
 /*	$NetBSD: awi_wep.c,v 1.2 2000/07/04 14:47:58 onoe Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ awi_wep_setalgo(sc, algo)
 	int ctxlen;
 
 	awi_crc_init();	/* XXX: not belongs here */
-	if (algo < 0 || algo > sizeof(awi_wep_algo)/sizeof(awi_wep_algo[0]))
+	if (algo < 0 || algo >= sizeof(awi_wep_algo)/sizeof(awi_wep_algo[0]))
 		return EINVAL;
 	awa = &awi_wep_algo[algo];
 	if (awa->awa_name == NULL)
