@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.46 2003/01/13 18:32:03 weingart Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.47 2003/05/06 12:22:08 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -198,7 +198,7 @@ panic(const char *fmt, ...)
 	if (panicstr)
 		bootopt |= RB_NOSYNC;
 	else {
-		vsprintf(panicbuf, fmt, ap);
+		vsnprintf(panicbuf, sizeof panicbuf, fmt, ap);
 		panicstr = panicbuf;
 	}
 	va_end(ap);
@@ -290,7 +290,7 @@ logpri(level)
 	char snbuf[KPRINTF_BUFSIZE];
 
 	kputchar('<', TOLOG, NULL);
-	sprintf(snbuf, "%d", level);
+	snprintf(snbuf, sizeof snbuf, "%d", level);
 	for (p = snbuf ; *p ; p++)
 		kputchar(*p, TOLOG, NULL);
 	kputchar('>', TOLOG, NULL);
@@ -782,11 +782,11 @@ reswitch:	switch (ch) {
 			_uquad = va_arg(ap, u_int);
 			b = va_arg(ap, char *);
 			if (*b == 8)
-				sprintf(buf, "%llo", _uquad);
+				snprintf(buf, sizeof buf, "%llo", _uquad);
 			else if (*b == 10)
-				sprintf(buf, "%lld", _uquad);
+				snprintf(buf, sizeof buf, "%lld", _uquad);
 			else if (*b == 16)
-				sprintf(buf, "%llx", _uquad);
+				snprintf(buf, sizeof buf, "%llx", _uquad);
 			else
 				break;
 			b++;
