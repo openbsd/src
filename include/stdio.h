@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.9 1997/11/29 20:01:03 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.10 1998/11/20 11:18:26 d Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -271,10 +271,31 @@ __END_DECLS
 
 __BEGIN_DECLS
 char	*ctermid __P((char *));
+char	*ctermid_r __P((char *));
 char	*cuserid __P((char *));
 FILE	*fdopen __P((int, const char *));
 int	 fileno __P((FILE *));
+void	 flockfile __P((FILE *));
+int	 ftrylockfile __P((FILE *));
+void	 funlockfile __P((FILE *));
+void	 _flockfile_debug __P((FILE *, const char *, int));
+int	 getc_unlocked __P((FILE *));
+int	 putc_unlocked __P((int, FILE *));
+int	 getchar_unlocked __P((void));
+int	 putchar_unlocked __P((int));
 __END_DECLS
+
+#ifndef _POSIX_THREADS
+#  define flockfile(fp)			/* nothing */
+#  define ftrylockfile(fp)		(0)
+#  define funlockfile(fp)		/* nothing */
+#  define _flockfile_debug(fp,f,l)	/* nothing */
+#endif
+
+#if 0 /* defined(DEBUG_FLOCKFILE) && defined(_POSIX_THREADS) */
+#  define flockfile(fp)		_flockfile_debug(fp, __FILE__, __LINE__)
+#endif
+
 #endif /* not ANSI */
 
 /*
@@ -368,23 +389,35 @@ static __inline int __sputc(int _c, FILE *_p) {
 
 #define	feof(p)		__sfeof(p)
 #define	ferror(p)	__sferror(p)
+
+#ifndef _POSIX_THREADS
 #define	clearerr(p)	__sclearerr(p)
+#endif
 
 #ifndef _ANSI_SOURCE
 #define	fileno(p)	__sfileno(p)
 #endif
 
 #ifndef lint
+#ifndef _POSIX_THREADS
 #define	getc(fp)	__sgetc(fp)
+#endif /* _POSIX_THREADS */
+#define	getc_unlocked(fp)	__sgetc(fp)
 /*
- * The macro implementation of putc is not fully POSIX
- * compliant; it does not set errno on failure
+ * The macro implementations of putc and putc_unlocked are not
+ * fully POSIX compliant; they do not set errno on failure
  */
 #ifndef _POSIX_SOURCE
+#ifndef _POSIX_THREADS
 #define putc(x, fp)	__sputc(x, fp)
+#endif /* _POSIX_THREADS */
+#define putc_unlocked(x, fp)	__sputc(x, fp)
 #endif /* _POSIX_SOURCE */
 #endif /* lint */
 
 #define	getchar()	getc(stdin)
 #define	putchar(x)	putc(x, stdout)
+#define getchar_unlocked()	getc_unlocked(stdin)
+#define putchar_unlocked(c)	putc_unlocked(c, stdout)
+
 #endif /* _STDIO_H_ */

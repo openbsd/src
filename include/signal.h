@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.3 1996/09/20 07:27:50 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.4 1998/11/20 11:18:26 d Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -113,6 +113,7 @@ int	sigstack __P((const struct sigstack *, struct sigstack *));
 int	sigaltstack __P((const struct sigaltstack *, struct sigaltstack *));
 int	sigvec __P((int, struct sigvec *, struct sigvec *));
 void	psignal __P((unsigned int, const char *));
+int	sigwait __P((const sigset_t *, int *));
 #endif	/* !_POSIX_SOURCE */
 #endif	/* !_ANSI_SOURCE */
 __END_DECLS

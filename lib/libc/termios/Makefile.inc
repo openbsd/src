@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/08/19 08:34:34 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1998/11/20 11:18:54 d Exp $
 
-.PATH:	${.CURDIR}/termios
+.PATH:	${LIBCSRCDIR}/termios
 
 SRCS+=	cfgetispeed.c cfgetospeed.c cfmakeraw.c cfsetispeed.c cfsetospeed.c \
 	cfsetspeed.c tcdrain.c tcflow.c tcflush.c tcgetattr.c tcgetpgrp.c \

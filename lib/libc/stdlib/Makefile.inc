@@ -1,7 +1,7 @@
 #	$OpenBDS: Makefile.inc,v 1.6 1996/08/21 03:47:21 tholo Exp $
 
 # stdlib sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/stdlib ${LIBCSRCDIR}/stdlib
 
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c \
 	cfree.c exit.c getenv.c getopt.c getsubopt.c heapsort.c l64a.c \

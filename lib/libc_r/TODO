@@ -1,11 +1,17 @@
 
 This is a list of things that still need to be done:
 
-* Fix the totally bogus _atomic_lock in arch/mips
+* Fix the totally bogus _atomic_lock in arch/mips.
+  This is a nightmare because you really need to incur a ctxt switch
+  for pmaxen. R4000 has some instructions to do an atomic test-and-set
+  but not mips1. fuck fuck fuck. the ctx switch has to be sigsetmask
 
 * Add thread stuff to the other archs in libc/arch/; ie change
   some usages of ENTRY to SYSENTRY in some .S files and add
   the new macros to their SYS.h. Only the i386 arch is working.
+
+* Finish/verify the md stuff for setjmp and atomic_lock for sparc and
+  alpha. Boy do they look dodgy.
 
 * Find a better way of doing the _sys_aliases stuff; ideally by
   using the linker. jmp's (current implementation) are ugly, but
@@ -17,16 +23,25 @@ This is a list of things that still need to be done:
   instead of libc_r.a ... some kind of shlib common problem? may
   need to use crt0 instead? __CTOR_LIST__ is just not being updated by ld.
   Frankly this one is driving me nuts. Maybe <bsd.lib.mk> is wrong.
-
-* Signals seem to cause busy-hangs. SIGINFO especially. test_sock_2
-  fails because of its use of signals. still dumps /tmp/uthread.dump
-  though - needs debugging.
+  This varies on different architectures and exec format.
 
 * Test the objective-C compiler to see if it can use threads.
+  Really this shows up a nasty problem with needing to say -threads
+  whenever you want to use threads. Ideally, linking with -lc_r library
+  would override -lc; but the _POSIX_THREADS define would alter
+  some optimisations done in <stdio.h>... What to do!?! FreeBSD looks
+  like they are going to have an always-threaded libc with optimisations
+  for the 1-thread case and use weak symbols to override functions when
+  someone uses -lc_r. Do we have weak symbols everywhere? I wonder
+  what the performance hit is if #define LOCK() if(nthreads>1){lock();}
+  is used... need to profile this.
 
 * Find all the static buffers in libc and make them per-thread. This
   is not absolutely necessary but incurs no penalty for single-threaded
   operation, and makes life easier & safer for when threads are used.
+  On the other hand, it adds a bit more code bloat when you use threads
+  and makes openbsd programs non-portable to other OSs with less-nicer
+  libraries. If we do the bare posix minimum, we promote portable code.
   
 * Look into how netbsd are going with their kernel threads
 
@@ -40,4 +55,9 @@ This is a list of things that still need to be done:
   May also need to document "This is not thread-safe" for some library
   functions (yet to be identified).
 
-$OpenBSD: TODO,v 1.2 1998/11/09 03:12:54 d Exp $
+* Find out where freebsd/netbsd use pread() and pwrite().. i think
+  its in the database routines mostly. We will need to rip their code.
+
+* Figure out what to do with the configuration system variables (_SC_*)
+
+$OpenBSD: TODO,v 1.3 1998/11/20 11:18:57 d Exp $

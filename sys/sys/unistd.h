@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.7 1998/07/13 00:56:54 millert Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.8 1998/11/20 11:19:01 d Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -118,6 +118,24 @@
 #define	_SC_PAGE_SIZE		_SC_PAGESIZE	/* 1170 compatibility */
 #define	_SC_FSYNC		29
 #define	_SC_XOPEN_SHM		30
+
+/* P1003.1c */
+#define _SC_GETGR_R_SIZE_MAX
+#define _SC_GETPW_R_SIZE_MAX
+#define _SC_LOGIN_NAME_MAX
+#define _SC_THREAD_DESTRUCTOR_ITERATIONS
+#define _SC_THREAD_KEYS_MAX
+#define _SC_THREAD_STACK_MIN
+#define _SC_THREAD_THREADS_MAX
+#define _SC_TTY_NAME_MAX
+#define _SC_THREADS
+#define _SC_THREAD_ATTR_STACKADDR
+#define _SC_THREAD_ATTR_STACKSIZE
+#define _SC_THREAD_PRIORITY_SCHEDULING
+#define _SC_THREAD_PRIO_INHERIT
+#define _SC_THREAD_PRIO_PROTECT
+#define _SC_THREAD_PROCESS_SHARED
+#define _SC_THREAD_SAFE_FUNCTIONS
 
 /* configurable system strings */
 #define	_CS_PATH		 1

@@ -32,11 +32,12 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ftruncate.c,v 1.6 1997/04/26 08:50:12 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ftruncate.c,v 1.7 1998/11/20 11:18:52 d Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include "thread_private.h"
 
 #ifdef lint
 quad_t __syscall(quad_t, ...);
@@ -51,6 +52,13 @@ ftruncate(fd, length)
 	int	fd;
 	off_t	length;
 {
+	int retval;
 
-	return(__syscall((quad_t)SYS_ftruncate, fd, 0, length));
+	if (_FD_LOCK(fd, FD_RDWR, NULL) != 0) {
+		retval = -1;
+	} else {
+		retval = __syscall((quad_t)SYS_ftruncate, fd, 0, length);
+		_FD_UNLOCK(fd, FD_RDWR);
+	}
+	return retval;
 }

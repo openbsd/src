@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.18 1998/08/29 21:11:21 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 1998/11/20 11:18:37 d Exp $
 
 # gen sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
 
 SRCS+=	alarm.c assert.c basename.c clock.c closedir.c confstr.c ctermid.c \
 	ctype_.c daemon.c devname.c dirname.c disklabel.c elf_hash.c err.c \
@@ -28,14 +28,14 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 #	_setjmp() fabs() frexp() infinity isinf() ldexp() modf()
 #	setjmp() sigsetjmp()
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
+.include "${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
 
 .ifdef _NOTDEF_XXX_
 
 .if (${MACHINE} == "tahoe" )
 errlst.o errlst.po:
 	${CC} -S ${CFLAGS} ${.IMPSRC}
-	ed - < ${.CURDIR}/${MACHINE}/:errfix errlst.s
+	ed - < ${LIBCSRCDIR}/${MACHINE}/:errfix errlst.s
 	${AS} -o ${.TARGET} errlst.s
 	rm -f errlst.s
 .endif

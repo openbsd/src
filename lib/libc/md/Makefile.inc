@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.4 1996/10/20 19:14:45 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 1998/11/20 11:18:42 d Exp $
 
-.PATH: ${.CURDIR}/md
+.PATH: ${LIBCSRCDIR}/md
 
 SRCS+=	md4c.c md5c.c md4hl.c md5hl.c
 

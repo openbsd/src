@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.8 1997/12/19 09:42:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.9 1998/11/20 11:18:37 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,12 +48,16 @@ static char rcsid[] = "$OpenBSD: getgrent.c,v 1.8 1997/12/19 09:42:22 deraadt Ex
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
 #endif
+#include "thread_private.h"
 
+_THREAD_PRIVATE_KEY(gr)
+_THREAD_PRIVATE_MUTEX(gr)
 static FILE *_gr_fp;
 static struct group _gr_group;
 static int _gr_stayopen;
-static int grscan __P((int, gid_t, const char *));
+static int grscan __P((int, gid_t, const char *, struct group *));
 static int start_gr __P((void));
+static void endgrent_basic __P((void));
 
 #define	MAXGRP		200
 static char *members[MAXGRP];
@@ -68,43 +72,78 @@ static int	__ypcurrentlen;
 #endif
 
 struct group *
+getgrent_r(p_gr)
+struct group * p_gr;
+{
+	_THREAD_PRIVATE_MUTEX_LOCK(gr);
+	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL, p_gr))
+		p_gr = NULL;
+	_THREAD_PRIVATE_MUTEX_UNLOCK(gr);
+	return (p_gr);
+}
+
+struct group *
 getgrent()
 {
-	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL))
-		return(NULL);
-	return(&_gr_group);
+	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
+
+	return getgrent_r(p_gr);
+}
+
+struct group *
+getgrnam_r(name, p_gr)
+	const char *name;
+	struct group *p_gr;
+{
+	int rval;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(gr);
+	if (!start_gr())
+		rval = 0;
+	else {
+		rval = grscan(1, 0, name, p_gr);
+		if (!_gr_stayopen)
+			endgrent_basic();
+	}
+	_THREAD_PRIVATE_MUTEX_UNLOCK(gr);
+	return(rval ? p_gr : NULL);
 }
 
 struct group *
 getgrnam(name)
 	const char *name;
 {
-	int rval;
+	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
 
-	if (!start_gr())
-		return(NULL);
-	rval = grscan(1, 0, name);
-	if (!_gr_stayopen)
-		endgrent();
-	return(rval ? &_gr_group : NULL);
+	return getgrnam_r(name, p_gr);
 }
 
 struct group *
-#ifdef __STDC__
-getgrgid(gid_t gid)
-#else
-getgrgid(gid)
+getgrgid_r(gid, p_gr)
 	gid_t gid;
-#endif
+	struct group * p_gr;
 {
 	int rval;
 
+	_THREAD_PRIVATE_MUTEX_LOCK(gr);
 	if (!start_gr())
-		return(NULL);
-	rval = grscan(1, gid, NULL);
-	if (!_gr_stayopen)
-		endgrent();
-	return(rval ? &_gr_group : NULL);
+		rval = 0;
+	else {
+		rval = grscan(1, gid, NULL, p_gr);
+		if (!_gr_stayopen)
+			endgrent_basic();
+	}
+	_THREAD_PRIVATE_MUTEX_UNLOCK(gr);
+	return(rval ? p_gr : NULL);
+}
+
+struct group *
+getgrgid(gid)
+	gid_t gid;
+{
+	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
+
+	return getgrgid_r(gid, p_gr);
 }
 
 static int
@@ -133,14 +172,22 @@ int
 setgroupent(stayopen)
 	int stayopen;
 {
+	int retval;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(gr);
 	if (!start_gr())
-		return(0);
-	_gr_stayopen = stayopen;
-	return(1);
+		retval = 0;
+	else {
+		_gr_stayopen = stayopen;
+		retval = 1;
+	}
+	_THREAD_PRIVATE_MUTEX_LOCK(gr);
+	return (retval);
 }
 
+static
 void
-endgrent()
+endgrent_basic()
 {
 	if (_gr_fp) {
 		(void)fclose(_gr_fp);
@@ -154,11 +201,20 @@ endgrent()
 	}
 }
 
+void
+endgrent()
+{
+	_THREAD_PRIVATE_MUTEX_LOCK(gr);
+	endgrent_basic();
+	_THREAD_PRIVATE_MUTEX_UNLOCK(gr);
+}
+
 static int
-grscan(search, gid, name)
+grscan(search, gid, name, p_gr)
 	register int search;
 	register gid_t gid;
 	register const char *name;
+	struct group * p_gr;
 {
 	register char *cp, **m;
 	char *bp;
@@ -282,12 +338,12 @@ grscan(search, gid, name)
 					free(data);
 					line[datalen] = '\0';
 					bp = line;
-					_gr_group.gr_name = strsep(&bp, ":\n");
-					_gr_group.gr_passwd =
+					p_gr->gr_name = strsep(&bp, ":\n");
+					p_gr->gr_passwd =
 						strsep(&bp, ":\n");
 					if (!(cp = strsep(&bp, ":\n")))
 						continue;
-					_gr_group.gr_gid =
+					p_gr->gr_gid =
 						name ? atoi(cp) : gid;
 					goto found_it;
 				}
@@ -308,20 +364,20 @@ grscan(search, gid, name)
 		}
 parse:
 #endif
-		_gr_group.gr_name = strsep(&bp, ":\n");
-		if (search && name && strcmp(_gr_group.gr_name, name))
+		p_gr->gr_name = strsep(&bp, ":\n");
+		if (search && name && strcmp(p_gr->gr_name, name))
 			continue;
-		_gr_group.gr_passwd = strsep(&bp, ":\n");
+		p_gr->gr_passwd = strsep(&bp, ":\n");
 		if (!(cp = strsep(&bp, ":\n")))
 			continue;
-		_gr_group.gr_gid = atoi(cp);
-		if (search && name == NULL && _gr_group.gr_gid != gid)
+		p_gr->gr_gid = atoi(cp);
+		if (search && name == NULL && p_gr->gr_gid != gid)
 			continue;
 	found_it:
 		cp = NULL;
 		if (bp == NULL)
 			continue;
-		for (m = _gr_group.gr_mem = members;; bp++) {
+		for (m = p_gr->gr_mem = members;; bp++) {
 			if (m == &members[MAXGRP - 1])
 				break;
 			if (*bp == ',') {

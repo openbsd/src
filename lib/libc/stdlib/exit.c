@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: exit.c,v 1.2 1996/08/19 08:33:30 tholo Exp $";
+static char *rcsid = "$OpenBSD: exit.c,v 1.3 1998/11/20 11:18:50 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -40,6 +40,15 @@ static char *rcsid = "$OpenBSD: exit.c,v 1.2 1996/08/19 08:33:30 tholo Exp $";
 #include "atexit.h"
 
 void (*__cleanup)();
+
+/*
+ * This variable is zero until a process has created a thread.
+ * It is used to avoid calling locking functions in libc when they
+ * are not required. By default, libc is intended to be(come)
+ * thread-safe, but without a (significant) penalty to non-threaded
+ * processes.
+ */
+int     __isthreaded    = 0;
 
 /*
  * Exit, flushing stdio buffers if necessary.

@@ -5,7 +5,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)localtime.c	7.64";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.13 1998/07/11 23:17:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.14 1998/11/20 11:18:55 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -19,6 +19,7 @@ static char rcsid[] = "$OpenBSD: localtime.c,v 1.13 1998/07/11 23:17:20 deraadt 
 #include "private.h"
 #include "tzfile.h"
 #include "fcntl.h"
+#include "thread_private.h"
 
 /*
 ** SunOS 4.1.1 headers lack O_BINARY.
@@ -166,6 +167,8 @@ static struct state	gmtmem;
 static char		lcl_TZname[TZ_STRLEN_MAX + 1];
 static int		lcl_is_set;
 static int		gmt_is_set;
+_THREAD_PRIVATE_MUTEX(lcl);
+_THREAD_PRIVATE_MUTEX(gmt);
 
 char *			tzname[2] = {
 	wildabbr,
@@ -920,16 +923,9 @@ struct state * const	sp;
 	if (tzload(gmt, sp) != 0)
 		(void) tzparse(gmt, sp, TRUE);
 }
-
-#ifndef STD_INSPIRED
-/*
-** A non-static declaration of tzsetwall in a system header file
-** may cause a warning about this upcoming static declaration...
-*/
 static
-#endif /* !defined STD_INSPIRED */
 void
-tzsetwall P((void))
+tzsetwall_basic P((void))
 {
 	if (lcl_is_set < 0)
 		return;
@@ -949,14 +945,30 @@ tzsetwall P((void))
 	settzname();
 }
 
+#ifndef STD_INSPIRED
+/*
+** A non-static declaration of tzsetwall in a system header file
+** may cause a warning about this upcoming static declaration...
+*/
+static
+#endif /* !defined STD_INSPIRED */
 void
-tzset P((void))
+tzsetwall P((void))
+{
+	_THREAD_PRIVATE_MUTEX_LOCK(lcl);
+	tzsetwall_basic();
+	_THREAD_PRIVATE_MUTEX_UNLOCK(lcl);
+}
+
+static
+void
+tzset_basic P((void))
 {
 	register const char *	name;
 
 	name = getenv("TZ");
 	if (name == NULL) {
-		tzsetwall();
+		tzsetwall_basic();
 		return;
 	}
 
@@ -988,6 +1000,14 @@ tzset P((void))
 		if (name[0] == ':' || tzparse(name, lclptr, FALSE) != 0)
 			(void) gmtload(lclptr);
 	settzname();
+}
+
+void
+tzset P((void))
+{
+	_THREAD_PRIVATE_MUTEX_LOCK(lcl);
+	tzset_basic();
+	_THREAD_PRIVATE_MUTEX_UNLOCK(lcl);
 }
 
 /*
@@ -1047,12 +1067,27 @@ struct tm * const	tmp;
 }
 
 struct tm *
+localtime_r(timep, p_tm)
+const time_t * const	timep;
+struct tm *p_tm;
+{
+	_THREAD_PRIVATE_MUTEX_LOCK(lcl);
+	tzset_basic();
+	localsub(timep, 0L, p_tm);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(lcl);
+	return p_tm;
+}
+
+struct tm *
 localtime(timep)
 const time_t * const	timep;
 {
-	tzset();
-	localsub(timep, 0L, &tm);
-	return &tm;
+	_THREAD_PRIVATE_KEY(localtime)
+	struct tm * p_tm = (struct tm*)_THREAD_PRIVATE(localtime, tm, NULL);
+
+	if (p_tm == NULL)
+		return NULL;
+	return localtime_r(timep, p_tm);
 }
 
 /*
@@ -1065,6 +1100,7 @@ const time_t * const	timep;
 const long		offset;
 struct tm * const	tmp;
 {
+	_THREAD_PRIVATE_MUTEX_LOCK(gmt);
 	if (!gmt_is_set) {
 		gmt_is_set = TRUE;
 #ifdef ALL_STATE
@@ -1073,6 +1109,7 @@ struct tm * const	tmp;
 #endif /* defined ALL_STATE */
 			gmtload(gmtptr);
 	}
+	_THREAD_PRIVATE_MUTEX_UNLOCK(gmt);
 	timesub(timep, offset, gmtptr, tmp);
 #ifdef TM_ZONE
 	/*
@@ -1096,11 +1133,25 @@ struct tm * const	tmp;
 }
 
 struct tm *
+gmtime_r(timep, p_tm)
+const time_t *		timep;
+struct tm *		p_tm;
+{
+	gmtsub(timep, 0L, p_tm);
+	return p_tm;
+}
+
+struct tm *
 gmtime(timep)
 const time_t * const	timep;
 {
-	gmtsub(timep, 0L, &tm);
-	return &tm;
+	_THREAD_PRIVATE_KEY(gmtime)
+	struct tm * p_tm = (struct tm*) _THREAD_PRIVATE(gmtime, tm, NULL);
+
+	if (p_tm == NULL)
+		return NULL;
+	return gmtime_r(timep, p_tm);
+
 }
 
 #ifdef STD_INSPIRED
@@ -1228,6 +1279,15 @@ const time_t * const	timep;
 **		asctime(localtime(timer))
 */
 	return asctime(localtime(timep));
+}
+
+char *
+ctime_r(timep, buf)
+const time_t * const	timep;
+char * buf;
+{
+	struct tm tm;
+	return asctime_r(localtime_r(timep, &tm), buf);
 }
 
 /*
@@ -1534,8 +1594,13 @@ time_t
 mktime(tmp)
 struct tm * const	tmp;
 {
-	tzset();
-	return time1(tmp, localsub, 0L);
+	time_t ret;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(lcl);
+	tzset_basic();
+	ret = time1(tmp, localsub, 0L);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(lcl);
+	return ret;
 }
 
 #ifdef STD_INSPIRED

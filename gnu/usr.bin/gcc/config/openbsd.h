@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd.h,v 1.9 1998/05/06 14:25:35 csapuntz Exp $	*/
+/*	$OpenBSD: openbsd.h,v 1.10 1998/11/20 11:18:22 d Exp $	*/
 
 /* OPENBSD_NATIVE is defined when gcc is integrated into the OpenBSD
    source tree so it can be configured appropriately when using the
@@ -40,7 +40,7 @@
    the GCC option `-posix'.  */
 
 #undef CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
+#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
 
 /* Provide an ASM_SPEC appropriate for OpenBSD.  Currently we only deal
    with the options for generating PIC code.  */
@@ -50,9 +50,11 @@
 
 /* Provide a LIB_SPEC appropriate for OpenBSD.  Just select the appropriate
    libc, depending on whether we're doing profiling.  */
+/* Also, deal with the -pthread option. */
 
 #undef LIB_SPEC
-#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
+/* #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}" */
+#define LIB_SPEC "-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}"
 
 /* Provide a LINK_SPEC appropriate for OpenBSD.  Here we provide support
    for the special GCC options -static, -assert, and -nostdlib.  */

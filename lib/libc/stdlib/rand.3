@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: rand.3,v 1.4 1998/07/05 19:54:22 millert Exp $
+.\"	$OpenBSD: rand.3,v 1.5 1998/11/20 11:18:50 d Exp $
 .\"
 .Dd June 29, 1991
 .Dt RAND 3
@@ -48,6 +48,8 @@
 .Fn srand "unsigned seed"
 .Ft int
 .Fn rand void
+.Ft int
+.Fn rand_r "unsigned int *seed"
 .Sh DESCRIPTION
 .Bf -symbolic
 These interfaces are obsoleted by
@@ -73,6 +75,14 @@ with the same seed value.
 .Pp
 If no seed value is provided, the functions are automatically
 seeded with a value of 1.
+.Pp
+The
+.Fn rand_r
+is a thread-safe version of
+.Fn rand .
+Storage for the seed must be provided through the
+.Ar seed
+argument, and needs to have been initialized by the caller.
 .Sh SEE ALSO
 .Xr arc4random 3 ,
 .Xr rand48 3 ,
@@ -85,3 +95,10 @@ and
 functions
 conform to
 .St -ansiC .
+.Pp
+The
+.Fn rand_r
+function
+conforms to ISO/IEC 9945-1 ANSI/IEEE
+.Pq Dq Tn POSIX
+Std 1003.1c Draft 10.

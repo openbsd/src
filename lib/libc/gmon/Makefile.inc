@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1998/08/29 21:11:38 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1998/11/20 11:18:40 d Exp $
 
 # gmon sources
-.PATH: ${.CURDIR}/gmon
+.PATH: ${LIBCSRCDIR}/gmon
 
 SRCS+=	gmon.c mcount.c
 MAN+=	moncontrol.3

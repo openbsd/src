@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1996/08/19 08:20:54 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1998/11/20 11:18:36 d Exp $
 
-.PATH: ${.CURDIR}/db/recno
+.PATH: ${LIBCSRCDIR}/db/recno
 
 SRCS+=	rec_close.c rec_delete.c rec_get.c rec_open.c rec_put.c rec_search.c \
 	rec_seq.c rec_utils.c

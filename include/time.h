@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.3 1998/02/08 18:50:05 deraadt Exp $	*/
+/*	$OpenBSD: time.h,v 1.4 1998/11/20 11:18:26 d Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -95,6 +95,10 @@ time_t mktime __P((struct tm *));
 size_t strftime __P((char *, size_t, const char *, const struct tm *));
 char *strptime __P((const char *, const char *, struct tm *));
 time_t time __P((time_t *));
+char *asctime_r __P((const struct tm *, char *));
+char *ctime_r __P((const time_t *, char *));
+struct tm *gmtime_r __P((const time_t *, struct tm *));
+struct tm *localtime_r __P((const time_t *, struct tm *));
 
 #if !defined(_ANSI_SOURCE)
 #define CLK_TCK		100

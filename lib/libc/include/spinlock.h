@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1993
- *	Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,13 +12,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ *	This product includes software developed by John Birrell.
+ * 4. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
@@ -29,37 +28,46 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $Id: spinlock.h,v 1.1 1998/11/20 11:18:41 d Exp $
+ * $OpenBSD: spinlock.h,v 1.1 1998/11/20 11:18:41 d Exp $
+ *
+ * Lock definitions used in both libc and libpthread.
+ *
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: closedir.c,v 1.3 1998/11/20 11:18:37 d Exp $";
-#endif /* LIBC_SCCS and not lint */
-
+#ifndef _SPINLOCK_H_
+#define _SPINLOCK_H_
+#include <sys/cdefs.h>
 #include <sys/types.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include "thread_private.h"
 
 /*
- * close a directory.
+ * Lock structure with room for debugging information.
  */
-int
-closedir(dirp)
-	register DIR *dirp;
-{
-	int fd;
-	int ret;
+typedef struct {
+	volatile register_t	access_lock;
+	volatile long	lock_owner;
+	volatile const char * fname;
+	volatile int	lineno;
+} spinlock_t;
 
-	if ((ret = _FD_LOCK(dirp->dd_fd, FD_READ, NULL)) != 0)
-		return (ret);
-	seekdir(dirp, dirp->dd_rewind);	/* free seekdir storage */
-	fd = dirp->dd_fd;
-	dirp->dd_fd = -1;
-	dirp->dd_loc = 0;
-	free((void *)dirp->dd_buf);
-	free((void *)dirp);
-	ret = close(fd);
-	_FD_UNLOCK(fd, FD_READ);
-	return (ret);
-}
+#define	_SPINLOCK_INITIALIZER	{ 0, 0, 0, 0 }
+
+#define _SPINUNLOCK(_lck)	(_lck)->access_lock = 0
+#ifdef	_LOCK_DEBUG
+#define	_SPINLOCK(_lck)		_spinlock_debug(_lck, __FILE__, __LINE__)
+#else
+#define	_SPINLOCK(_lck)		_spinlock(_lck)
+#endif
+
+/*
+ * Thread function prototype definitions:
+ */
+__BEGIN_DECLS
+register_t	_atomic_lock __P((volatile register_t *));
+register_t	_thread_slow_atomic_lock __P((volatile register_t *));
+void	_spinlock __P((spinlock_t *));
+void	_spinlock_debug __P((spinlock_t *, const char *, int));
+__END_DECLS
+
+#endif /* _SPINLOCK_H_ */

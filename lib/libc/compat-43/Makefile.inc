@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/08/19 08:19:13 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1998/11/20 11:18:32 d Exp $
 
 # compat-43 sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/compat-43 ${.CURDIR}/compat-43
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/compat-43 ${LIBCSRCDIR}/compat-43
 
 SRCS+=	__setreuid.c __setregid.c creat.c getdtablesize.c gethostid.c \
 	getwd.c killpg.c sethostid.c setpgrp.c setregid.c setreuid.c \

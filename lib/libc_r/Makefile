@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1998/11/09 03:12:53 d Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/11/20 11:18:57 d Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -40,8 +40,10 @@ HIDDEN_SYSCALLS= accept.o bind.o close.o connect.o dup.o dup2.o \
 	signanosleep.o socket.o socketpair.o wait4.o write.o writev.o \
 	_exit.o getlogin.o
 
-.include "${.CURDIR}/../libc/Makefile.inc"
-# let manual pages be built/installed from libc
+LIBCSRCDIR = ${.CURDIR}/../libc
+.include "${LIBCSRCDIR}/Makefile.inc"
+
+# libc man pages built/installed by libc
 MAN=
 MLINKS=
 

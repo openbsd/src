@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.4 1998/02/04 22:22:42 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 1998/11/20 11:18:55 d Exp $
 
-.PATH: ${.CURDIR}/time
+.PATH: ${LIBCSRCDIR}/time
 
 SRCS+=	asctime.c difftime.c localtime.c strftime.c strptime.c
 MAN+=	ctime.3 strftime.3 time2posix.3 tzfile.5 tzset.3 strptime.3

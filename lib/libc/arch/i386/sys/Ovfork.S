@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: Ovfork.S,v 1.2 1996/08/19 08:13:26 tholo Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.3 1998/11/20 11:18:29 d Exp $"
 #endif /* SYSLIB_SCCS */
 
 /*
@@ -48,7 +48,7 @@
  * %eax == pid of child in parent, %eax == pid of parent in child.
  *
  */
-ENTRY(vfork)
+SYSENTRY(vfork)
 	popl	%ecx		/* my rta into ecx */
 	movl	$(SYS_vfork),%eax
 	int	$0x80

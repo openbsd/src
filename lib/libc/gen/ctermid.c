@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ctermid.c,v 1.2 1996/08/19 08:22:03 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ctermid.c,v 1.3 1998/11/20 11:18:37 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -50,4 +50,14 @@ ctermid(s)
 		return(s);
 	}
 	return(def);
+}
+
+char *
+ctermid_r(s)
+	char *s;
+{
+	if (s)
+		return ctermid(s);
+	else
+		return(NULL);
 }

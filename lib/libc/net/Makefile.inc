@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.16 1998/08/29 21:11:40 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 1998/11/20 11:18:43 d Exp $
 
 # net sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
 
 CFLAGS+=-DRESOLVSORT
 
@@ -19,7 +19,7 @@ SRCS+=	base64.c gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 # m-d Makefile.inc must include sources for:
 #	htonl() htons() ntohl() ntohs()
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
+.include "${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getnetent.3 getprotoent.3 \
 	getservent.3 inet.3 inet_net.3 iso_addr.3 link_addr.3 ns.3 ipx.3 \

@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1996/07/01 07:08:52 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1998/11/20 11:18:56 d Exp $
 
 # yp sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/yp ${.CURDIR}/yp
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/yp ${LIBCSRCDIR}/yp
 
 SRCS+=	ypmatch_cache.c yp_bind.c yp_get_default_domain.c \
 	yp_first.c yp_all.c yp_order.c \

@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1996/08/19 08:29:58 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1998/11/20 11:18:45 d Exp $
 
-.PATH: ${.CURDIR}/nls
+.PATH: ${LIBCSRCDIR}/nls
 
 SRCS+=	catclose.c catgets.c catopen.c 
 MAN+=	catclose.3 catgets.3 catopen.3

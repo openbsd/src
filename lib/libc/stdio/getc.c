@@ -35,10 +35,22 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getc.c,v 1.2 1996/08/19 08:32:51 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getc.c,v 1.3 1998/11/20 11:18:48 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+
+/*
+ * A subroutine version of the macro getc_unlocked.
+ */
+#undef getc_unlocked
+
+int
+getc_unlocked(fp)
+	FILE *fp;
+{
+	return (__sgetc(fp));
+}
 
 /*
  * A subroutine version of the macro getc.
@@ -49,5 +61,10 @@ int
 getc(fp)
 	register FILE *fp;
 {
-	return (__sgetc(fp));
+	int c;
+
+	flockfile(fp);
+	c = __sgetc(fp);
+	funlockfile(fp);
+	return (c);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ttyname.3,v 1.4 1998/06/08 17:21:45 deraadt Exp $
+.\"	$OpenBSD: ttyname.3,v 1.5 1998/11/20 11:18:40 d Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,6 +36,7 @@
 .Os
 .Sh NAME
 .Nm ttyname ,
+.Nm ttyname_r ,
 .Nm isatty ,
 .Nm ttyslot
 .Nd get name of associated terminal (tty) from file descriptor
@@ -43,6 +44,8 @@
 .Fd #include <unistd.h>
 .Ft char *
 .Fn ttyname "int fd"
+.Ft int
+.Fn ttyname_r "int fd" "char *name" "size_t namesize"
 .Ft int
 .Fn isatty "int fd"
 .Ft int
@@ -72,11 +75,25 @@ terminal type device.
 .Pp
 The
 .Fn ttyname
-function
-gets the related device name of
+and
+.Fn ttyname_r
+functions
+get the related device name of
 a file descriptor for which
 .Fn isatty
-is true
+is true.
+The
+.Fn ttyname_r
+function stores the nul-terminated pathname of the terminal associated with 
+the file descriptor
+.Fa fd
+in the character array referenced by
+.Fa name .
+The array is
+.Fa namesize
+characters long and should have space for the name and the terminating nul
+character. The maximum length of the terminal name is
+.Dv TTY_NAME_MAX .
 .Pp
 The
 .Fn ttyslot
@@ -87,8 +104,10 @@ file entry.
 .Sh RETURN VALUES
 The
 .Fn ttyname
-function
-returns the null terminated name if the device is found and
+and
+.Fn ttyname_r
+functions
+return the nul terminated name if the device is found and
 .Fn isatty
 is true; otherwise 
 a
@@ -125,6 +144,11 @@ argument is not a valid file descriptor.
 The
 .Fa fd
 argument does not refer to a terminal device.
+.It Bq Er ERANGE
+The value of 
+.Fa namesize
+is smaller than the length of the string to be returned including the
+terminating nul character.
 .El
 .Sh FILES
 .Bl -tag -width /etc/ttys -compact
@@ -133,7 +157,8 @@ argument does not refer to a terminal device.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr ttys 5
+.Xr ttys 5 ,
+.Xr dev_mkdb 8
 .Sh HISTORY
 A
 .Fn isatty ,
@@ -143,6 +168,9 @@ and
 function
 appeared in
 .At v7 .
+The
+.Fn ttyname_r
+function appeared in the POSIX Threads Extension (1003.1c-1995).
 .Sh BUGS
 The
 .Fn ttyname

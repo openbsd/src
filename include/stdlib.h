@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.7 1998/02/07 02:16:26 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.8 1998/11/20 11:18:26 d Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -105,6 +105,7 @@ void	*malloc __P((size_t));
 void	 qsort __P((void *, size_t, size_t,
 	    int (*)(const void *, const void *)));
 int	 rand __P((void));
+int	 rand_r __P((unsigned int *));
 void	*realloc __P((void *, size_t));
 void	 srand __P((unsigned));
 double	 strtod __P((const char *, char **));

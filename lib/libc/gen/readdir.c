@@ -32,11 +32,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: readdir.c,v 1.2 1996/08/19 08:25:35 tholo Exp $";
+static char rcsid[] = "$OpenBSD: readdir.c,v 1.3 1998/11/20 11:18:39 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <dirent.h>
+#include <errno.h>
+#include "thread_private.h"
 
 /*
  * get next entry in a directory.
@@ -72,4 +74,34 @@ readdir(dirp)
 			continue;
 		return (dp);
 	}
+}
+
+int
+readdir_r(dirp, entry, result)
+	DIR *dirp;
+	struct dirent *entry;
+	struct dirent **result;
+{
+	struct dirent *dp;
+	int ret;
+
+	if (dirp->dd_fd < 0) {
+		return EBADF;
+	}
+	if ((ret = _FD_LOCK(dirp->dd_fd, FD_READ, NULL)) != 0)
+		return ret;
+	errno = 0;
+	dp = readdir(dirp);
+	if (dp == NULL && errno != 0) {
+		_FD_UNLOCK(dirp->dd_fd, FD_READ);
+		return errno;
+	}
+	if (dp != NULL) 
+		memcpy(entry, dp, sizeof *entry);
+	_FD_UNLOCK(dirp->dd_fd, FD_READ);
+	if (dp != NULL)
+	*result = entry;
+	else
+		*result = NULL;
+	return 0;
 }

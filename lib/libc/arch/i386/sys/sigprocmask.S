@@ -38,10 +38,10 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigprocmask.S,v 1.3 1997/07/23 20:55:23 kstailey Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.4 1998/11/20 11:18:30 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
-ENTRY(sigprocmask)
+SYSENTRY(sigprocmask)
 	movl	8(%esp),%ecx		# fetch new sigset pointer
 	testl	%ecx,%ecx		# check new sigset pointer
 	jnz	1f			# if not null, indirect

@@ -38,10 +38,10 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigsuspend.S,v 1.2 1996/08/19 08:13:44 tholo Exp $"
+	.asciz "$OpenBSD: sigsuspend.S,v 1.3 1998/11/20 11:18:30 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
-ENTRY(sigsuspend)
+SYSENTRY(sigsuspend)
 	movl	4(%esp),%eax		# fetch mask arg
 	movl	(%eax),%eax		# indirect to mask arg
 	movl	%eax,4(%esp)

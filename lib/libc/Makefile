@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1998/08/08 04:12:16 form Exp $
+#	$OpenBSD: Makefile,v 1.16 1998/11/20 11:18:28 d Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -16,60 +16,13 @@
 .include <bsd.own.mk>
 
 LIB=c
-CFLAGS+=-DNLS -DLIBC_SCCS -DSYSLIBC_SCCS -I${.CURDIR}/include
-.if (${YP} == "yes")
-CFLAGS+=-DYP -I${.CURDIR}/yp
-.endif
 LINTFLAGS=-z
-LLIBS=
-AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
-.if defined(DESTDIR)
-AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include
-.endif
 CLEANFILES+=tags
 
-.if exists (${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
-.PATH:	${.CURDIR}/arch/${MACHINE_ARCH}
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
-.endif
-
-.include "${.CURDIR}/db/Makefile.inc"
-.include "${.CURDIR}/compat-43/Makefile.inc"
-.include "${.CURDIR}/gen/Makefile.inc"
-.include "${.CURDIR}/crypt/Makefile.inc"
-.include "${.CURDIR}/gmon/Makefile.inc"
-.include "${.CURDIR}/hash/Makefile.inc"
-.include "${.CURDIR}/locale/Makefile.inc"
-.include "${.CURDIR}/md/Makefile.inc"
-.include "${.CURDIR}/net/Makefile.inc"
-.include "${.CURDIR}/nls/Makefile.inc"
-.if (${MACHINE_ARCH} != "alpha")
-.include "${.CURDIR}/quad/Makefile.inc"
-.endif
-.include "${.CURDIR}/regex/Makefile.inc"
-.include "${.CURDIR}/rpc/Makefile.inc"
-.include "${.CURDIR}/stdio/Makefile.inc"
-.include "${.CURDIR}/stdlib/Makefile.inc"
-.include "${.CURDIR}/string/Makefile.inc"
-.include "${.CURDIR}/termios/Makefile.inc"
-.include "${.CURDIR}/time/Makefile.inc"
-.include "${.CURDIR}/sys/Makefile.inc"
-.if (${YP} == "yes")
-.include "${.CURDIR}/yp/Makefile.inc"
-.endif
+LIBCSRCDIR=${.CURDIR}
+.include "${LIBCSRCDIR}/Makefile.inc"
 
 NLS=	C.msg Pig.msg de.msg es.msg fi.msg fr.msg nl.msg no.msg ru.msg sv.msg
-
-LIBKERN=	${.CURDIR}/../../sys/lib/libkern
-
-KSRCS=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
-	strncpy.c htonl.c htons.c ntohl.c ntohs.c
-.if (${MACHINE_ARCH} != "alpha")
-KSRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
-	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
-	subdi3.c  ucmpdi2.c udivdi3.c umoddi3.c xordi3.c
-KINCLUDES+=	quad/quad.h
-.endif
 
 copy-to-libkern:	copy-to-libkern-machind copy-to-libkern-machdep
 
@@ -102,6 +55,6 @@ tags: ${SRCS}
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 tags \
-		${DESTDIR}/var/db/libc.tags
+		${DESTDIR}/var/db/lib${LIB}.tags
 
 .include <bsd.lib.mk>

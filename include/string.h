@@ -1,4 +1,4 @@
-/*	$OpenBSD: string.h,v 1.4 1998/11/04 19:35:48 millert Exp $	*/
+/*	$OpenBSD: string.h,v 1.5 1998/11/20 11:18:26 d Exp $	*/
 /*	$NetBSD: string.h,v 1.6 1994/10/26 00:56:30 cgd Exp $	*/
 
 /*-
@@ -73,6 +73,7 @@ char	*strrchr __P((const char *, int));
 size_t	 strspn __P((const char *, const char *));
 char	*strstr __P((const char *, const char *));
 char	*strtok __P((char *, const char *));
+char	*strtok_r __P((char *, const char *, char **));
 size_t	 strxfrm __P((char *, const char *, size_t));
 
 /* Nonstandard routines */

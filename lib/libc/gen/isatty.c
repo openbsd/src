@@ -32,17 +32,25 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: isatty.c,v 1.2 1996/08/19 08:24:32 tholo Exp $";
+static char rcsid[] = "$OpenBSD: isatty.c,v 1.3 1998/11/20 11:18:39 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <termios.h>
 #include <unistd.h>
+#include "thread_private.h"
 
 int
 isatty(fd)
 	int fd;
 {
+	int retval;
 	struct termios t;
 
-	return(tcgetattr(fd, &t) != -1);
+	if (_FD_LOCK(fd, FD_READ, NULL) == 0) {
+		retval = (tcgetattr(fd, &t) != -1);
+		_FD_UNLOCK(fd, FD_READ);
+	} else {
+		retval = 0;
+	}
+	return(retval);
 }

@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.30 1998/03/16 05:06:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.31 1998/11/20 11:18:44 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -67,12 +67,14 @@ static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.30 1998/03/16 05:06:55 mill
 #include <errno.h>
 #include <string.h>
 #include <syslog.h>
+#include <stdlib.h>
 #ifdef YP
 #include <rpc/rpc.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
 #endif
+#include "thread_private.h"
 
 #define MULTI_PTRS_ARE_ALIASES 1	/* XXX - experimental */
 
@@ -423,6 +425,60 @@ getanswer(answer, anslen, qname, qtype)
 	return (NULL);
 }
 
+#ifndef notyet
+/*
+ * XXX This is an extremely bogus implementations.
+ *
+ * FreeBSD has this interface:
+ *    int gethostbyaddr_r(const char *addr, int len, int type,
+ *             struct hostent *result, struct hostent_data *buffer)
+ */
+
+struct hostent *
+gethostbyname_r(name, hp, buf, buflen, errorp)
+	const char * name;
+	struct hostent * hp;
+	char * buf;
+	int buflen;
+	int * errorp;
+{
+	struct hostent *res;
+
+	res = gethostbyname(name);
+	*errorp = h_errno;
+	if (res == NULL)
+		return NULL;
+	memcpy(hp, res, sizeof *hp); /* XXX not sufficient */
+	return hp;
+}
+
+/*
+ * XXX This is an extremely bogus implementations.
+ */
+struct hostent *
+gethostbyaddr_r(addr, len, af, he, buf, buflen, errorp)
+	const char *addr;	/* XXX should have been def'd as u_char! */
+	int len, af;
+	struct hostent * he;
+	char * buf;
+	int buflen;
+	int * errorp;
+{
+	struct hostent * res;
+
+	res = gethostbyaddr(addr, len, af);
+	*errorp = h_errno;
+	if (res == NULL)
+		return NULL;
+	memcpy(he, res, sizeof *he); /* XXX not sufficient */
+	return he;
+}
+
+/* XXX RFC2133 expects a gethostbyname2_r() -- unimplemented */
+#endif
+
+_THREAD_PRIVATE_MUTEX(gethostnamadr)
+
 struct hostent *
 gethostbyname(name)
 	const char *name;
@@ -430,15 +486,19 @@ gethostbyname(name)
 	struct hostent *hp;
 	extern struct hostent *_gethtbyname2();
 
+	_THREAD_PRIVATE_MUTEX_LOCK(gethostnamadr);
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
-		return (_gethtbyname2(name, AF_INET));
+		hp = _gethtbyname2(name, AF_INET);
 
-	if (_res.options & RES_USE_INET6) {
+	else if (_res.options & RES_USE_INET6) {
 		hp = gethostbyname2(name, AF_INET6);
-		if (hp)
-			return (hp);
+		if (hp == NULL)
+			hp = gethostbyname2(name, AF_INET);
 	}
-	return (gethostbyname2(name, AF_INET));
+	else
+		hp = gethostbyname2(name, AF_INET);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
+	return hp;
 }
 
 struct hostent *
@@ -599,9 +659,14 @@ gethostbyaddr(addr, len, af)
 	char qbuf[MAXDNAME+1], *qp;
 	extern struct hostent *_gethtbyaddr(), *_yp_gethtbyaddr();
 	char lookups[MAXDNSLUS];
+	struct hostent *res;
 	
-	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
-		return (_gethtbyaddr(addr, len, af));
+	_THREAD_PRIVATE_MUTEX_LOCK(gethostnamadr);
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
+		res = _gethtbyaddr(addr, len, af);
+		_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
+		return (res);
+	}
 
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (!bcmp(uaddr, mapped, sizeof mapped) ||
@@ -622,11 +687,13 @@ gethostbyaddr(addr, len, af)
 	default:
 		errno = EAFNOSUPPORT;
 		h_errno = NETDB_INTERNAL;
+		_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
 		return (NULL);
 	}
 	if (size != len) {
 		errno = EINVAL;
 		h_errno = NETDB_INTERNAL;
+		_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
 		return (NULL);
 	}
 	switch (af) {
@@ -692,6 +759,7 @@ gethostbyaddr(addr, len, af)
 			break;
 		}
 	}
+	_THREAD_PRIVATE_MUTEX_UNLOCK(gethostnamadr);
 	/* XXX h_errno not correct in all cases... */
 	return (hp);
 }

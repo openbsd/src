@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1998/07/01 01:29:44 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 1998/11/20 11:18:51 d Exp $
 
 # string sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
+.PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string ${LIBCSRCDIR}/string
 
 SRCS+=	bm.c memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
 	strlcat.c strlcpy.c strmode.c strsignal.c strtok.c strxfrm.c \
@@ -16,7 +16,7 @@ SRCS+=	bm.c memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
 # m-d Makefile.inc may include sources for:
 #	memcpy() memmove() strchr() strrchr()
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/string/Makefile.inc"
+.include "${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string/Makefile.inc"
 
 # if no machine specific memmove(3), build one out of bcopy(3).
 .if empty(SRCS:Mmemmove.S)
@@ -100,19 +100,19 @@ LOBJS+=	memmove.ln memcpy.ln strchr.ln strrchr.ln
 
 memmove.ln: bcopy.c
 	lint ${LINTFLAGS} -DMEMMOVE ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
-		${.CURDIR}/string/bcopy.c
+		${LIBCSRCDIR}/string/bcopy.c
 
 memcpy.ln: bcopy.c
 	lint ${LINTFLAGS} -DMEMCOPY ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
-		${.CURDIR}/string/bcopy.c
+		${LIBCSRCDIR}/string/bcopy.c
 
 strchr.ln: index.c
 	lint ${LINTFLAGS} -DSTRCHR ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
-		${.CURDIR}/string/index.c
+		${LIBCSRCDIR}/string/index.c
 
 strrchr.ln: rindex.c
 	lint ${LINTFLAGS} -DSTRRCHR ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} \
-		${.CURDIR}/string/rindex.c
+		${LIBCSRCDIR}/string/rindex.c
 
 MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 index.3 memccpy.3 memchr.3 \
 	memcmp.3 memcpy.3 memmove.3 memset.3 rindex.3 strcasecmp.3 strcat.3 \

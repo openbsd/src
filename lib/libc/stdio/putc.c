@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: putc.c,v 1.3 1996/10/28 05:32:55 tholo Exp $";
+static char rcsid[] = "$OpenBSD: putc.c,v 1.4 1998/11/20 11:18:48 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -43,11 +43,12 @@ static char rcsid[] = "$OpenBSD: putc.c,v 1.3 1996/10/28 05:32:55 tholo Exp $";
 #include "local.h"
 
 /*
- * A subroutine version of the macro putc.
+ * A subroutine version of the macro putc_unlocked.
  */
-#undef putc
+#undef putc_unlocked
 
-putc(c, fp)
+int
+putc_unlocked(c, fp)
 	int c;
 	register FILE *fp;
 {
@@ -56,4 +57,22 @@ putc(c, fp)
 		return (EOF);
 	}
 	return (__sputc(c, fp));
+}
+
+/*
+ * A subroutine version of the macro putc.
+ */
+#undef putc
+
+int
+putc(c, fp)
+	int c;
+	FILE *fp;
+{
+	int ret;
+
+	flockfile(fp);
+	ret = putc_unlocked(c, fp);
+	funlockfile(fp);
+	return (ret);
 }

@@ -32,11 +32,12 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: lseek.c,v 1.5 1997/04/26 08:50:12 tholo Exp $";
+static char rcsid[] = "$OpenBSD: lseek.c,v 1.6 1998/11/20 11:18:53 d Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
+#include "thread_private.h"
 
 /*
  * This function provides 64-bit offset padding that
@@ -49,6 +50,13 @@ lseek(fd, offset, whence)
 	int	whence;
 {
 	extern off_t __syscall();
+	off_t retval;
 
-	return(__syscall((quad_t)SYS_lseek, fd, 0, offset, whence));
+	if (_FD_LOCK(fd, FD_RDWR, NULL) != 0) {
+		retval = -1;
+	} else {
+		retval = __syscall((quad_t)SYS_lseek, fd, 0, offset, whence);
+		_FD_UNLOCK(fd, FD_RDWR);
+	}
+	return retval;
 }

@@ -1,9 +1,6 @@
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
+/*
+ * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,13 +12,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ *	This product includes software developed by John Birrell.
+ * 4. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY JOHN BIRRELL AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
@@ -32,24 +28,26 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $Id: _spinlock_stub.c,v 1.1 1998/11/20 11:18:37 d Exp $
+ * $OpenBSD: _spinlock_stub.c,v 1.1 1998/11/20 11:18:37 d Exp $
+ *
  */
 
-#include "SYS.h"
+#include <stdio.h>
+#include <thread_private.h>
 
-#if defined(SYSLIBC_SCCS)
-	.text
-	.asciz "$OpenBSD: setlogin.S,v 1.2 1996/08/19 08:13:39 tholo Exp $"
-#endif /* SYSLIB_SCCS */
+/* Don't build these stubs into libc_r: */
+#ifndef	_THREAD_SAFE
+#include "spinlock.h"
 
-	.globl	___logname_valid	/* in getlogin() */
-SYSCALL(setlogin)
-	xorl	%eax,%eax
-#ifdef PIC
-	PIC_PROLOGUE
-	movl	PIC_GOT(___logname_valid),%edx
-	PIC_EPILOGUE
-	movl	%eax,(%edx)
-#else
-	movl	%eax,___logname_valid
+void
+_spinlock(spinlock_t *lck)
+{
+}
+
+void
+_spinlock_debug(spinlock_t *lck, char *fname, int lineno)
+{
+}
 #endif
-	ret				/* setlogin(name) */
