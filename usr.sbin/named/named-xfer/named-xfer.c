@@ -1,4 +1,4 @@
-/*	$OpenBSD: named-xfer.c,v 1.10 2002/02/17 19:42:38 millert Exp $	*/
+/*	$OpenBSD: named-xfer.c,v 1.11 2002/06/09 04:42:44 pvalchev Exp $	*/
 
 /*
  * The original version of xfer by Kevin Dunlap.
@@ -97,7 +97,7 @@ char copyright[] =
 static char sccsid[] = "@(#)named-xfer.c	4.18 (Berkeley) 3/7/91";
 static char rcsid[] = "$From: named-xfer.c,v 8.24 1998/04/07 04:59:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.10 2002/02/17 19:42:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: named-xfer.c,v 1.11 2002/06/09 04:42:44 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -313,7 +313,7 @@ main(argc, argv)
 	if ((dbfd = mkstemp(tmpname)) == -1) {
 		perror(tmpname);
 		if (!quiet)
-			syslog(LOG_ERR, "can't make tmpfile (%s): %m\n",
+			syslog(LOG_ERR, "can't make tmpfile (%s): %m",
 			       tmpname);
 		exit(XFER_FAIL);
 	}
@@ -325,7 +325,7 @@ main(argc, argv)
 	{
 		perror(tmpname);
 		if (!quiet)
-			syslog(LOG_ERR, "can't [f]chmod tmpfile (%s): %m\n",
+			syslog(LOG_ERR, "can't [f]chmod tmpfile (%s): %m",
 			       tmpname);
 		exit(XFER_FAIL);
 	}
