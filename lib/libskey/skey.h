@@ -11,7 +11,7 @@
  *
  * Main client header
  *
- * $Id: skey.h,v 1.7 1996/11/03 18:57:29 millert Exp $
+ * $Id: skey.h,v 1.8 1997/07/23 00:42:26 millert Exp $
  */
 
 /* Server-side data structure for reading keys file during login */
@@ -59,8 +59,8 @@ struct mc
 #define SKEY_MAX_CHALLENGE	(11 + SKEY_MAX_HASHNAME_LEN + SKEY_MAX_SEED_LEN)
 #endif
 
-/* Max length of hash algorithm name (md4/md5/sha1) */
-#define SKEY_MAX_HASHNAME_LEN	4
+/* Max length of hash algorithm name (md4/md5/sha1/rmd160) */
+#define SKEY_MAX_HASHNAME_LEN	6
 
 /* Size of a binary key (not NULL-terminated) */
 #define SKEY_BINKEY_SIZE	8
