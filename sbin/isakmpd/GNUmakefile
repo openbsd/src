@@ -1,4 +1,4 @@
-#    $OpenBSD: GNUmakefile,v 1.12 2005/04/05 20:46:20 cloder Exp $
+#    $OpenBSD: GNUmakefile,v 1.13 2005/04/05 21:07:35 hshoexer Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -36,14 +36,13 @@
 # produce similar behaviour.
 #
 
-# openbsd means 2.5 or newer, freeswan is the name for Linux with FreeS/WAN
-# integrated, freebsd/netbsd means FreeBSD/NetBSD with KAME IPsec.
+# openbsd means 2.5 or newer.
+# freebsd/netbsd means FreeBSD/NetBSD with KAME IPsec.
 # darwin means MacOS X 10.2 and later with KAME IPsec. linux means Linux-2.5
 # and later with native IPSec support.
 OS=		openbsd
 #OS=		netbsd
 #OS=		freebsd
-#OS=		freeswan
 #OS=		darwin
 #OS=		linux
 

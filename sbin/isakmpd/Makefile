@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2005/04/05 20:46:20 cloder Exp $
+#	$OpenBSD: Makefile,v 1.60 2005/04/05 21:07:35 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -36,12 +36,11 @@
 # may provide this make variant as "pmake" or maybe "bsdmake".
 #
 
-# openbsd means OpenBSD 2.5 or newer. freeswan is the name for Linux with
-# FreeS/WAN integrated, freebsd/netbsd means FreeBSD/NetBSD with KAME IPsec.
+# openbsd means OpenBSD 2.5 or newer.
+# freebsd/netbsd means FreeBSD/NetBSD with KAME IPsec.
 OS=		openbsd
 #OS=		netbsd
 #OS=		freebsd
-#OS=		freeswan
 #OS=		bsdi
 
 # Compile-time configuration of otherwise optional features
