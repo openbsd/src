@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs_data.h,v 1.6 1998/11/05 09:12:52 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs_data.h,v 1.7 1998/12/04 06:49:58 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.4 1998/10/14 07:34:43 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.5 1998/11/05 09:12:52 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -251,6 +251,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "SMC 8016 EtherCard"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_UNKNOWN_ECARD,
+	    PCMCIA_CIS_UNKNOWN_ECARD,
+	    0,
+	    "Unknown",
+	    "NE2000 Compatible"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -444,6 +451,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Hagiwara SYS-COM",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Unknown",
 	    NULL,
 	},
 	{

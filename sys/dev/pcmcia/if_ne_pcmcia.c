@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.4 1998/11/06 06:32:15 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.5 1998/12/04 06:49:58 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -195,6 +195,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_2,
       PCMCIA_CIS_DAYNA_COMMUNICARD_E_2,
       0, -1, { 0x00, 0x80, 0x19 } },
+
+    { PCMCIA_STR_UNKNOWN_ECARD,
+      PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_UNKNOWN_ECARD,
+      PCMCIA_CIS_UNKNOWN_ECARD,
+      0, -1, { 0x00, 0xa0, 0x0c } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for

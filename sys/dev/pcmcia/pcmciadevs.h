@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.6 1998/11/05 09:12:52 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.7 1998/12/04 06:49:58 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.4 1998/10/14 07:34:43 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.5 1998/11/05 09:12:52 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -60,6 +60,7 @@
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
+#define	PCMCIA_VENDOR_UNKNOWN	0x8a01	/* Unknown */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -185,6 +186,11 @@
 #define	PCMCIA_CIS_SMC_8016	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SMC_8016	0x0105
 #define	PCMCIA_STR_SMC_8016	"SMC 8016 EtherCard"
+
+/* Unknown Product */
+#define	PCMCIA_CIS_UNKNOWN_ECARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_UNKNOWN_ECARD	0x0100
+#define	PCMCIA_STR_UNKNOWN_ECARD	"NE2000 Compatible"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */

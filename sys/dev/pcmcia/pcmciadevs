@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.5 1998/11/05 09:12:52 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.6 1998/12/04 06:49:58 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -53,6 +53,7 @@ vendor SIMPLETECH		0x014d	Simple Technology
 vendor DAYNA			0x0194	Dayna
 vendor IODATA			0x01bf	I-O DATA
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
+vendor UNKNOWN			0x8a01	Unknown
 
 /*
  * List of known products.  Grouped by vendor.
@@ -118,6 +119,9 @@ product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
 
 /* Standard Microsystems Corporation Products */
 product SMC 8016		0x0105 SMC 8016 EtherCard
+
+/* Unknown Product */
+product UNKNOWN ECARD		0x0100 NE2000 Compatible
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax
