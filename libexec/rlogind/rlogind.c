@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.4 1996/04/17 07:21:18 tholo Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.5 1996/07/31 09:05:15 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -90,9 +90,9 @@ u_char		tick_buf[sizeof(KTEXT_ST)];
 Key_schedule	schedule;
 int		doencrypt, retval, use_kerberos, vacuous;
 
-#define		ARGSTR			"alnkvx"
+#define		ARGSTR			"lnkvx"
 #else
-#define		ARGSTR			"aln"
+#define		ARGSTR			"ln"
 #endif	/* KERBEROS */
 
 char	*env[2];
@@ -101,7 +101,6 @@ char	lusername[NMAX+1], rusername[NMAX+1];
 static	char term[64] = "TERM=";
 #define	ENVSIZE	(sizeof("TERM=")-1)	/* skip null for concatenation */
 int	keepalive = 1;
-int	check_all = 0;
 
 struct	passwd *pwd;
 
@@ -132,9 +131,6 @@ main(argc, argv)
 	opterr = 0;
 	while ((ch = getopt(argc, argv, ARGSTR)) != EOF)
 		switch (ch) {
-		case 'a':
-			check_all = 1;
-			break;
 		case 'l':
 			__check_rhosts_file = 0;
 			break;
@@ -197,7 +193,7 @@ doit(f, fromp)
 	int master, pid, on = 1;
 	int authenticated = 0;
 	register struct hostent *hp;
-	char hostname[2 * MAXHOSTNAMELEN + 1];
+	char hostname[MAXHOSTNAMELEN];
 	char c;
 
 	alarm(60);
@@ -215,9 +211,9 @@ doit(f, fromp)
 	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof(struct in_addr),
 	    fromp->sin_family);
 	if (hp)
-		(void)strcpy(hostname, hp->h_name);
+		strncpy(hostname, hp->h_name, sizeof hostname);
 	else
-		(void)strcpy(hostname, inet_ntoa(fromp->sin_addr));
+		strncpy(hostname, inet_ntoa(fromp->sin_addr), sizeof hostname);
 
 #ifdef	KERBEROS
 	if (use_kerberos) {
@@ -225,7 +221,7 @@ doit(f, fromp)
 		if (retval == 0)
 			authenticated++;
 		else if (retval > 0)
-			fatal(f, krb_err_txt[retval], 0);
+			fatal(f, (char *)krb_err_txt[retval], 0);
 		write(f, &c, 1);
 		confirmed = 1;		/* we sent the null! */
 	} else
