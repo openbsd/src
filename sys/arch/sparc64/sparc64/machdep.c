@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 2001/11/16 16:42:45 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 2001/11/16 20:58:45 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1180,16 +1180,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
-	{ 
-#ifdef DEBUG
-		printf("_bus_dmamap_load(): error %lu > %lu -- map size exceeded!\n",
-		    (unsigned long)buflen, (unsigned long)map->_dm_size);
-#ifdef DDB
-		Debugger();
-#endif
-#endif
-		return (EINVAL);
-	}		
+		return (EFBIG);
 
 	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
 
@@ -1232,7 +1223,6 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	struct mbuf *m;
 	int flags;
 {
-#if 1
 	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i;
 	size_t len;
@@ -1281,10 +1271,6 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 
 	return (bus_dmamap_load_raw(t, map, segs, i,
 			    (bus_size_t)len, flags));
-#else
-	panic("_bus_dmamap_load_mbuf: not implemented");
-	return 0;
-#endif
 }
 
 /*
