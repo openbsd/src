@@ -80,10 +80,15 @@ Boston, MA 02111-1307, USA.  */
 #undef OBSD_LINK_SPEC
 #ifdef OBSD_NO_DYNAMIC_LIBRARIES
 #define OBSD_LINK_SPEC \
-  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!nostdlib:%{!r*:%{!e*:-e %(openbsd_entry_point)}}} -dc -dp %{assert*}"
+  "%{!nostdlib:%{!r*:%{!e*:-e __start}}} %{assert*}"
 #else
 #define OBSD_LINK_SPEC \
-  "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e %(openbsd_entry_point)}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+  "%{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} \
+   %{shared:-shared} %{R*} \
+   %{static:-Bstatic} \
+   %{!static:-Bdynamic} \
+   %{assert*} \
+   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
 #endif
 
 #undef SUBTARGET_EXTRA_ASM_SPEC
