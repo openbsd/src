@@ -2624,3 +2624,6 @@
 ./etc/isakmpd/ca
 ./etc/isakmpd/certs
 ./etc/isakmpd/private
+./usr/libexec/sendmail
+./usr/libexec/sendmail/sendmail
+./usr/sbin/mailwrapper

@@ -144,3 +144,4 @@
 ./var/www/conf/httpd.conf
 ./var/www/conf/mime.types
 ./var/www/conf/srm.conf
+./etc/mailer.conf

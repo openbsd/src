@@ -1,5 +1,3 @@
-./usr/share/man/cat5/intro.0
-./usr/share/man/cat6/intro.0
 ./usr/share/doc/html
 ./usr/share/doc/html/curses
 ./usr/share/doc/html/curses/hackguide.html
@@ -593,6 +591,7 @@
 ./usr/share/man/cat3/fetch.0
 ./usr/share/man/cat3/firstkey.0
 ./usr/share/man/cat3/flockfile.0
+./usr/share/man/cat3/fparseln.0
 ./usr/share/man/cat3/ftrylockfile.0
 ./usr/share/man/cat3/funlockfile.0
 ./usr/share/man/cat3/getc_unlocked.0
@@ -874,6 +873,7 @@
 ./usr/share/man/cat4/arm32/wd.0
 ./usr/share/man/cat4/arp.0
 ./usr/share/man/cat4/atalk.0
+./usr/share/man/cat4/atapiscsi.0
 ./usr/share/man/cat4/atari/floppy.0
 ./usr/share/man/cat4/atari/ms.0
 ./usr/share/man/cat4/audio.0
@@ -890,6 +890,7 @@
 ./usr/share/man/cat4/drum.0
 ./usr/share/man/cat4/eap.0
 ./usr/share/man/cat4/ec.0
+./usr/share/man/cat4/ef.0
 ./usr/share/man/cat4/ep.0
 ./usr/share/man/cat4/esis.0
 ./usr/share/man/cat4/exphy.0
@@ -958,8 +959,10 @@
 ./usr/share/man/cat4/i386/uha.0
 ./usr/share/man/cat4/i386/wdc.0
 ./usr/share/man/cat4/i386/wdt.0
+./usr/share/man/cat4/i386/wi.0
 ./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
+./usr/share/man/cat4/i386/xe.0
 ./usr/share/man/cat4/i386/xf86.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/icsphy.0
@@ -979,6 +982,7 @@
 ./usr/share/man/cat4/keynote.0
 ./usr/share/man/cat4/ksyms.0
 ./usr/share/man/cat4/lkm.0
+./usr/share/man/cat4/lmc.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/lxtphy.0
 ./usr/share/man/cat4/mac68k/adb.0
@@ -1009,6 +1013,7 @@
 ./usr/share/man/cat4/pc532/lpt.0
 ./usr/share/man/cat4/pc532/mem.0
 ./usr/share/man/cat4/pc532/plip.0
+./usr/share/man/cat4/pciide.0
 ./usr/share/man/cat4/pcmcia.0
 ./usr/share/man/cat4/pmax
 ./usr/share/man/cat4/pmax/asc.0
@@ -1050,6 +1055,8 @@
 ./usr/share/man/cat4/sparc/cgtwo.0
 ./usr/share/man/cat4/sparc/esp.0
 ./usr/share/man/cat4/sparc/fd.0
+./usr/share/man/cat4/sparc/fga.0
+./usr/share/man/cat4/sparc/fvme.0
 ./usr/share/man/cat4/sparc/hme.0
 ./usr/share/man/cat4/sparc/ie.0
 ./usr/share/man/cat4/sparc/intro.0
@@ -1062,6 +1069,7 @@
 ./usr/share/man/cat4/sparc/openprom.0
 ./usr/share/man/cat4/sparc/qe.0
 ./usr/share/man/cat4/sparc/qec.0
+./usr/share/man/cat4/sparc/scf.0
 ./usr/share/man/cat4/sparc/si.0
 ./usr/share/man/cat4/sparc/spif.0
 ./usr/share/man/cat4/sparc/sw.0
@@ -1071,6 +1079,7 @@
 ./usr/share/man/cat4/sparc/xy.0
 ./usr/share/man/cat4/sparc/zs.0
 ./usr/share/man/cat4/spp.0
+./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat4/sqphy.0
 ./usr/share/man/cat4/srandom.0
 ./usr/share/man/cat4/ss.0
@@ -1091,6 +1100,7 @@
 ./usr/share/man/cat4/tb.0
 ./usr/share/man/cat4/tcp.0
 ./usr/share/man/cat4/termios.0
+./usr/share/man/cat4/ti.0
 ./usr/share/man/cat4/tl.0
 ./usr/share/man/cat4/tlphy.0
 ./usr/share/man/cat4/tp.0
@@ -1153,6 +1163,7 @@
 ./usr/share/man/cat4/vax/vp.0
 ./usr/share/man/cat4/vax/vv.0
 ./usr/share/man/cat4/vnd.0
+./usr/share/man/cat4/vr.0
 ./usr/share/man/cat4/wb.0
 ./usr/share/man/cat4/wd.0
 ./usr/share/man/cat4/we.0
@@ -1196,6 +1207,7 @@
 ./usr/share/man/cat5/hosts_options.0
 ./usr/share/man/cat5/inetd.0
 ./usr/share/man/cat5/inode.0
+./usr/share/man/cat5/intro.0
 ./usr/share/man/cat5/ipf.0
 ./usr/share/man/cat5/ipnat.0
 ./usr/share/man/cat5/ipsend.0
@@ -1244,6 +1256,7 @@
 ./usr/share/man/cat6/grdc.0
 ./usr/share/man/cat6/hunt.0
 ./usr/share/man/cat6/huntd.0
+./usr/share/man/cat6/intro.0
 ./usr/share/man/cat7/ascii.0
 ./usr/share/man/cat7/environ.0
 ./usr/share/man/cat7/groff_char.0
@@ -1298,6 +1311,7 @@
 ./usr/share/man/cat8/bootptest.0
 ./usr/share/man/cat8/brconfig.0
 ./usr/share/man/cat8/ccdconfig.0
+./usr/share/man/cat8/certpatch.0
 ./usr/share/man/cat8/chat.0
 ./usr/share/man/cat8/chown.0
 ./usr/share/man/cat8/chroot.0
@@ -1315,6 +1329,7 @@
 ./usr/share/man/cat8/dev_mkdb.0
 ./usr/share/man/cat8/dhclient-script.0
 ./usr/share/man/cat8/dhclient.0
+./usr/share/man/cat8/dhcp.0
 ./usr/share/man/cat8/dhcpd.0
 ./usr/share/man/cat8/dhcrelay.0
 ./usr/share/man/cat8/disklabel.0
@@ -1451,6 +1466,7 @@
 ./usr/share/man/cat8/rc.conf.0
 ./usr/share/man/cat8/rc.local.0
 ./usr/share/man/cat8/rc.securelevel.0
+./usr/share/man/cat8/rc.shutdown.0
 ./usr/share/man/cat8/rdate.0
 ./usr/share/man/cat8/rdconfig.0
 ./usr/share/man/cat8/rdump.0
@@ -1586,17 +1602,6 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat4/lmc.0
-./usr/share/man/cat4/sppp.0
-./usr/share/man/cat8/dhcp.0
-./usr/share/man/cat8/certpatch.0
-./usr/share/man/cat3/fparseln.0
-./usr/share/man/cat8/rc.shutdown.0
-./usr/share/man/cat4/i386/wi.0
-./usr/share/man/cat4/ti.0
-./usr/share/man/cat4/sparc/scf.0
-./usr/share/man/cat4/sparc/fga.0
-./usr/share/man/cat4/sparc/fvme.0
-./usr/share/man/cat4/pciide.0
-./usr/share/man/cat4/atapiscsi.0
-./usr/share/man/cat4/i386/xe.0
+./usr/share/man/cat5/mailer.conf.0
+./usr/share/man/cat8/mailwrapper.0
+./usr/share/man/cat4/i386/spkr.0
