@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.19 2000/11/08 18:10:39 aaron Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.20 2000/11/11 16:23:30 drahn Exp $ */
 /*	$NetBSD: usb_port.h,v 1.35 2000/09/23 04:32:23 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -225,6 +225,16 @@ __CONCAT(dname,_detach)(self, flags) \
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
 #define bswap16(x)		swap16(x)
+
+/*
+ * The UHCI/OHCI controllers are little endian, so on big endian machines
+ * the data strored in memory needs to be swapped.
+ */
+
+#if defined(letoh32)
+#define le32toh(x) letoh32(x)
+#define le16toh(x) letoh16(x)
+#endif
 
 #define usb_kthread_create1	kthread_create
 #define usb_kthread_create	kthread_create_deferred

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.15 2000/11/08 18:10:38 aaron Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.16 2000/11/11 16:23:30 drahn Exp $	*/
 /*	$NetBSD: uhci.c,v 1.125 2000/09/23 21:00:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -108,20 +108,6 @@ int uhcinoloop = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
-#endif
-
-/*
- * The UHCI controller is little endian, so on big endian machines
- * the data strored in memory needs to be swapped.
- */
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-#if BYTE_ORDER == BIG_ENDIAN
-#define htole32(x) (bswap32(x))
-#define le32toh(x) (bswap32(x))
-#else
-#define htole32(x) (x)
-#define le32toh(x) (x)
-#endif
 #endif
 
 struct uhci_pipe {
