@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.13 2001/01/11 22:36:22 deraadt Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.14 2001/01/17 19:21:48 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,7 +82,7 @@ void readutmp __P((int));
 void doreadutmp __P((void));
 void reapchildren __P((int));
 
-volatile int wantreadutmp;
+sig_atomic_t wantreadutmp;
 
 int
 main(argc, argv)
@@ -120,14 +120,15 @@ main(argc, argv)
 	(void)signal(SIGTTOU, SIG_IGN);
 	(void)signal(SIGCHLD, reapchildren);
 	for (;;) {
+		if (wantreadutmp) {
+			doreadutmp();
+			wantreadutmp = 0;
+		}
+
 		cc = recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		if (cc <= 0) {
 			if (errno != EINTR)
 				sleep(1);
-			if (wantreadutmp) {
-				doreadutmp();
-				wantreadutmp = 0;
-			}
 			continue;
 		}
 		if (!nutmp)		/* no one has logged in yet */
