@@ -1,4 +1,5 @@
-/*	$NetBSD: isa_machdep.c,v 1.10 1996/02/09 02:26:00 mycroft Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.10 1996/04/18 17:12:16 niklas Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11 1996/02/28 01:49:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -60,35 +61,6 @@
 typedef (*vector)();
 extern vector IDTVEC(intr)[], IDTVEC(fast)[];
 extern struct gate_descriptor idt[];
-
-int isamatch __P((struct device *, void *, void *));
-void isaattach __P((struct device *, struct device *, void *));
-
-struct cfdriver isacd = {
-	NULL, "isa", isamatch, isaattach, DV_DULL, sizeof(struct isa_softc), 1
-};
-
-int
-isamatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-
-	return (1);
-}
-
-void
-isaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct isa_softc *sc = (struct isa_softc *)self;
-
-	printf("\n");
-
-	TAILQ_INIT(&sc->sc_subdevs);
-	config_scan(isascan, self);
-}
 
 /*
  * Fill in default interrupt table (in case of spuruious interrupt

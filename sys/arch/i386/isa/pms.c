@@ -1,4 +1,5 @@
-/*	$NetBSD: pms.c,v 1.24 1995/12/24 02:30:28 mycroft Exp $	*/
+/*	$OpenBSD: pms.c,v 1.6 1996/04/18 17:12:20 niklas Exp $	*/
+/*	$NetBSD: pms.c,v 1.25 1996/03/16 06:08:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -155,16 +156,31 @@ pms_pit_cmd(value)
 	outb(PMS_DATA, value);
 }
 
+/*
+ * XXX needs more work yet.  We should have a `pckbd_attach_args' that
+ * provides the parent's io port and our irq.
+ */
 int
 pmsprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct isa_attach_args *ia = aux;
+	struct cfdata *cf = match;
 	u_char x;
 
-	if (ia->ia_iobase != 0x60)
-		return 0;
+	/*
+	 * We only attach to the keyboard controller via
+	 * the console drivers. (We really wish we could be the
+	 * child of a real keyboard controller driver.)
+	 */
+	if ((parent == NULL) ||
+	   ((strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0) &&
+	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "vt") != 0)))
+		return (0);
+
+	/* Can't wildcard IRQ. */
+	if (cf->cf_loc[0] == -1)
+		return (0);
 
 	pms_dev_cmd(PMS_RESET);
 	pms_aux_cmd(PMS_AUX_TEST);
@@ -174,8 +190,6 @@ pmsprobe(parent, match, aux)
 	if (x & 0x04)
 		return 0;
 
-	ia->ia_iosize = PMS_NPORTS;
-	ia->ia_msize = 0;
 	return 1;
 }
 
@@ -185,14 +199,14 @@ pmsattach(parent, self, aux)
 	void *aux;
 {
 	struct pms_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
+	int irq = self->dv_cfdata->cf_loc[0];
 
-	printf("\n");
+	printf(" irq %d\n", irq);
 
 	/* Other initialization was done by pmsprobe. */
 	sc->sc_state = 0;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pmsintr,
+	sc->sc_ih = isa_intr_establish(irq, IST_EDGE, IPL_TTY, pmsintr,
 	    sc, sc->sc_dev.dv_xname);
 }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pccons.c,v 1.6 1996/03/29 12:05:39 mickey Exp $	*/
-/*	$NetBSD: pccons.c,v 1.91 1995/12/24 02:30:25 mycroft Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.7 1996/04/18 17:12:18 niklas Exp $	*/
+/*	$NetBSD: pccons.c,v 1.92 1996/03/16 06:08:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -478,6 +478,14 @@ pcattach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pcintr,
 	    sc, sc->sc_dev.dv_xname);
+
+	/*
+	 * Look for children of the keyboard controller.
+	 * XXX Really should decouple keyboard controller
+	 * from the console code.
+	 */
+	while (config_found(self, NULL, NULL))
+		/* will break when no more children */ ;
 }
 
 int
