@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.35 2000/09/14 13:56:14 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.36 2000/10/13 08:30:49 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
  *				exists. The time is placed in the member's 
  *				GNode. Returns the modification time.
  *
- *	Arch_MemTime	    	Find the modification time of a member of
+ *	Arch_MemMTime	    	Find the modification time of a member of
  *	    	  	    	an archive. Called when the member doesn't
  *	    	  	    	already exist. Looks in the archive for the
  *	    	  	    	modification time. Returns the modification
@@ -108,7 +108,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.35 2000/09/14 13:56:14 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.36 2000/10/13 08:30:49 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1065,15 +1065,9 @@ Arch_MTime(gn)
  *	Given a non-existent archive member's node, get its modification
  *	time from its archived form, if it exists.
  *
- * Results:
- *	TRUE if found.
- *
- * Side Effects:
- *	The mtime field is filled in.
- *
  *-----------------------------------------------------------------------
  */
-Boolean
+TIMESTAMP
 Arch_MemMTime (gn)
     GNode   	  *gn;
 {
@@ -1120,7 +1114,7 @@ Arch_MemMTime (gn)
 
     Lst_Close(&gn->parents);
 
-    return gn->mtime == OUT_OF_DATE;
+    return gn->mtime;
 }
 
 /*-
