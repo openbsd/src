@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_gsc.c,v 1.8 2003/10/31 18:32:43 mickey Exp $	*/
+/*	$OpenBSD: osiop_gsc.c,v 1.9 2004/02/13 21:09:42 mickey Exp $	*/
 /*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*
@@ -98,8 +98,8 @@ osiop_gsc_match(parent, match, aux)
 	struct gsc_attach_args *ga = aux;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
-	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GSCSI &&
-	     ga->ga_type.iodc_sv_model != HPPA_FIO_SCSI))
+	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GSCSI /* &&
+	     ga->ga_type.iodc_sv_model != HPPA_FIO_SCSI   */))
 		return 0;
 
 	return 1;
