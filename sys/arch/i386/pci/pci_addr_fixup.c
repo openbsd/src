@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.8 2001/01/27 04:59:39 mickey Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.9 2001/03/15 03:55:19 mickey Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -369,9 +369,8 @@ pciaddr_search(mem_port, startp, size)
 	extern struct cfdriver pcibios_cd;
 	struct pcibios_softc *sc;
 
-	sc = pcibios_cd.cd_devs[0];
-
-	if (!(pcibios_flags & PCIBIOS_ADDR_FIXUP)) {
+	sc = (struct pcibios_softc *)device_lookup(&pcibios_cd, 0);
+	if (sc && !(pcibios_flags & PCIBIOS_ADDR_FIXUP)) {
 		struct extent_region *rp;
 		struct extent *ex = mem_port? sc->extent_mem : sc->extent_port;
 
