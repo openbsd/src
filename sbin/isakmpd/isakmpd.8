@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.34 2001/12/10 03:45:03 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.35 2001/12/10 04:06:45 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -256,10 +256,10 @@ value, if you enter '.', the field will be left blank.
 Create keys and certificates for your IKE peers.  This step as well
 as the next one, needs to be done for every peer.  Furthermore the
 last step will need to be done once for each ID you want the peer
-to have.  The 10.0.0.1 below symbolizes that ID, and should be
-changed for each invocation.  You will be asked for a DN for each
-run too.  See to encode the ID in the common name too, so it gets
-unique.
+to have.  The 10.0.0.1 below symbolizes that ID, in this case an IPv4 ID,
+and should be changed for each invocation.  You will be asked for a DN
+for each run.  Encoding the ID in the common name is recommended, as
+it should be unique.
 .Pp
 .Bd -literal
 # openssl genrsa -out /etc/isakmpd/private/local.key 1024
@@ -278,10 +278,10 @@ or you have to make use of an OpenSSL configuration file, for example
 .Pa /etc/ssl/x509v3.cnf .
 Replace 10.0.0.1 with the IP-address which
 .Nm
-will be using for identity.
+will use as the certificate identity.
 .Pp
-For using
-.Xr certpach 8 ,
+To use
+.Xr certpatch 8 ,
 do the following
 .Bd -literal
 # openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \\
@@ -299,6 +299,19 @@ Otherwise do
 	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_IPAddr \\
 	-out 10.0.0.1.crt
 .Ed
+.Pp
+For a FQDN certificate, do
+.Bd -literal
+# setenv CERTFQDN somehost.somedomain
+# openssl x509 -req -days 365 -in somehost.somedomain.csr \\
+	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \\
+	-CAcreateserial \\
+	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_FQDN \\
+	-out somehost.somedomain.crt
+.Ed
+.Pp
+(This assumes the previous steps were used to create a request for
+somehost.somedomain instead of 10.0.0.1)
 .Pp
 Put the certificate (the file ending in .crt) in
 .Pa /etc/isakmpd/certs/
