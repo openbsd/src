@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.18 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.19 2003/03/13 09:03:07 deraadt Exp $	*/
 
 /*
  * Process and job control
@@ -1537,16 +1537,17 @@ j_print(j, how, shf)
 		coredumped = 0;
 		switch (p->state) {
 		case PRUNNING:
-			strcpy(buf, "Running");
+			strlcpy(buf, "Running", sizeof buf);
 			break;
 		case PSTOPPED:
-			strcpy(buf, sigtraps[WSTOPSIG(p->status)].mess);
+			strlcpy(buf, sigtraps[WSTOPSIG(p->status)].mess,
+			    sizeof buf);
 			break;
 		case PEXITED:
 			if (how == JP_SHORT)
 				buf[0] = '\0';
 			else if (WEXITSTATUS(p->status) == 0)
-				strcpy(buf, "Done");
+				strlcpy(buf, "Done", sizeof buf);
 			else
 				shf_snprintf(buf, sizeof(buf), "Done (%d)",
 					WEXITSTATUS(p->status));
@@ -1562,7 +1563,8 @@ j_print(j, how, shf)
 				|| WTERMSIG(p->status) == SIGPIPE)) {
 				buf[0] = '\0';
 			} else
-				strcpy(buf, sigtraps[WTERMSIG(p->status)].mess);
+				strlcpy(buf, sigtraps[WTERMSIG(p->status)].mess,
+				    sizeof buf);
 			break;
 		}
 
@@ -1643,27 +1645,27 @@ j_lookup(cp, ecodep)
 		return (Job *) 0;
 	}
 	switch (*++cp) {
-	  case '\0': /* non-standard */
-	  case '+':
-	  case '%':
+	case '\0': /* non-standard */
+	case '+':
+	case '%':
 		if (job_list != (Job *) 0)
 			return job_list;
 		break;
 
-	  case '-':
+	case '-':
 		if (job_list != (Job *) 0 && job_list->next)
 			return job_list->next;
 		break;
 
-	  case '0': case '1': case '2': case '3': case '4':
-	  case '5': case '6': case '7': case '8': case '9':
+	case '0': case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7': case '8': case '9':
 		job = atoi(cp);
 		for (j = job_list; j != (Job *) 0; j = j->next)
 			if (j->job == job)
 				return j;
 		break;
 
-	  case '?':		/* %?string */
+	case '?':		/* %?string */
 		last_match = (Job *) 0;
 		for (j = job_list; j != (Job *) 0; j = j->next)
 			for (p = j->proc_list; p != (Proc *) 0; p = p->next)
@@ -1679,7 +1681,7 @@ j_lookup(cp, ecodep)
 			return last_match;
 		break;
 
-	  default:		/* %string */
+	default:		/* %string */
 		len = strlen(cp);
 		last_match = (Job *) 0;
 		for (j = job_list; j != (Job *) 0; j = j->next)

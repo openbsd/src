@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.10 2002/04/29 06:26:50 pvalchev Exp $	*/
+/*	$OpenBSD: vi.c,v 1.11 2003/03/13 09:03:07 deraadt Exp $	*/
 
 /*
  *	vi command editing
@@ -422,7 +422,7 @@ vi_hook(ch)
 				}
 			} else {
 				locpat[srchlen] = '\0';
-				(void) strcpy(srchpat, locpat);
+				(void) strlcpy(srchpat, locpat, sizeof srchpat);
 			}
 			state = VCMD;
 		} else if (ch == edchars.erase || ch == Ctrl('h')) {
@@ -1406,7 +1406,7 @@ save_edstate(old)
 	new = (struct edstate *)alloc(sizeof(struct edstate), APERM);
 	new->cbuf = alloc(old->cbufsize, APERM);
 	new->cbufsize = old->cbufsize;
-	strcpy(new->cbuf, old->cbuf);
+	strlcpy(new->cbuf, old->cbuf, new->cbufsize);
 	new->linelen = old->linelen;
 	new->cursor = old->cursor;
 	new->winleft = old->winleft;

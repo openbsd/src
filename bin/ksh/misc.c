@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.13 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: misc.c,v 1.14 2003/03/13 09:03:07 deraadt Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -350,9 +350,11 @@ parse_args(argv, what, setargsp)
 	if (cmd_opts[0] == '\0') {
 		char *p, *q;
 
-		strcpy(cmd_opts, "o:"); /* see cmd_opts[] declaration */
+		/* see cmd_opts[] declaration */
+		strlcpy(cmd_opts, "o:", sizeof cmd_opts);
 		p = cmd_opts + strlen(cmd_opts);
-		strcpy(set_opts, "A:o;s"); /* see set_opts[] declaration */
+		/* see set_opts[] declaration */
+		strlcpy(set_opts, "A:o;s", sizeof set_opts);
 		q = set_opts + strlen(set_opts);
 		for (i = 0; i < NELEM(options); i++) {
 			if (options[i].c) {
