@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.52 2003/04/03 13:17:24 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.53 2003/04/03 15:27:17 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -963,7 +963,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(n->state, &ps->state, sizeof(struct pf_state));
-		if (n->state->rule.ptr->entries.tqe_prev == NULL)
+		if (n->state->rule.ptr == NULL)
 			ps->state.rule.nr = -1;
 		else
 			ps->state.rule.nr = n->state->rule.ptr->nr;
@@ -1002,7 +1002,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 
 			bcopy(n->state, &pstore, sizeof(pstore));
-			if (n->state->rule.ptr->entries.tqe_prev == NULL)
+			if (n->state->rule.ptr == NULL)
 				pstore.rule.nr = -1;
 			else
 				pstore.rule.nr = n->state->rule.ptr->nr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.330 2003/04/03 13:17:24 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.331 2003/04/03 15:27:17 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -253,6 +253,7 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
 		if (*state == NULL)					\
 			return (PF_DROP);				\
 		if (direction == PF_OUT &&				\
+		    (*state)->rule.ptr != NULL &&			\
 		    (((*state)->rule.ptr->rt == PF_ROUTETO &&		\
 		    (*state)->rule.ptr->direction == PF_OUT) ||		\
 		    ((*state)->rule.ptr->rt == PF_REPLYTO &&		\
@@ -503,8 +504,9 @@ pf_purge_expired_states(void)
 #if NPFSYNC
 			pfsync_delete_state(cur->state);
 #endif
-			if (--cur->state->rule.ptr->states <= 0)
-				pf_rm_rule(NULL, cur->state->rule.ptr);
+			if (cur->state->rule.ptr != NULL)
+				if (--cur->state->rule.ptr->states <= 0)
+					pf_rm_rule(NULL, cur->state->rule.ptr);
 			if (cur->state->nat_rule != NULL)
 				if (--cur->state->nat_rule->states <= 0)
 					pf_rm_rule(NULL, cur->state->nat_rule);
@@ -3147,8 +3149,10 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 	}
 
-	(*state)->rule.ptr->packets++;
-	(*state)->rule.ptr->bytes += pd->tot_len;
+	if ((*state)->rule.ptr != NULL) {
+		(*state)->rule.ptr->packets++;
+		(*state)->rule.ptr->bytes += pd->tot_len;
+	}
 	if ((*state)->nat_rule != NULL) {
 		(*state)->nat_rule->packets++;
 		(*state)->nat_rule->bytes += pd->tot_len;
@@ -3211,8 +3215,10 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 		m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
 	}
 
-	(*state)->rule.ptr->packets++;
-	(*state)->rule.ptr->bytes += pd->tot_len;
+	if ((*state)->rule.ptr != NULL) {
+		(*state)->rule.ptr->packets++;
+		(*state)->rule.ptr->bytes += pd->tot_len;
+	}
 	if ((*state)->nat_rule != NULL) {
 		(*state)->nat_rule->packets++;
 		(*state)->nat_rule->bytes += pd->tot_len;
@@ -3765,8 +3771,10 @@ pf_test_state_other(struct pf_state **state, int direction, struct ifnet *ifp,
 			}
 	}
 
-	(*state)->rule.ptr->packets++;
-	(*state)->rule.ptr->bytes += pd->tot_len;
+	if ((*state)->rule.ptr != NULL) {
+		(*state)->rule.ptr->packets++;
+		(*state)->rule.ptr->bytes += pd->tot_len;
+	}
 	if ((*state)->nat_rule != NULL) {
 		(*state)->nat_rule->packets++;
 		(*state)->nat_rule->bytes += pd->tot_len;
