@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.5 2002/09/12 07:10:32 fgsch Exp $
+ * $OpenBSD: calendar.openbsd,v 1.6 2002/11/01 22:49:48 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -39,6 +39,7 @@ Aug 17	c2k1-II hackathon, Washington D.C., 12 developers, 2001
 Aug 17	OpenBSD/sparc64 port added, from NetBSD, 2001
 Sep 26	OpenSSH born, Sunday 11:56 MST, 1999
 Oct 14	OpenBSD born, Saturday 16:36 MST, 1995
+Nov 01	OpenBSD 3.2 released, ftp mirrors preload for the first time, 2002
 Nov 11	want.html added to OpenBSD/www, 1998
 Nov 27	Unified buffer & VM cache enters OpenBSD, 2001
 Nov 30	OpenBSD gets RAID support w/ a dpt(4) addition, 1999
