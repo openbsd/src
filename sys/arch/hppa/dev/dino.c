@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.11 2004/08/06 20:29:47 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.12 2004/08/29 00:26:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -1488,7 +1488,6 @@ dinoattach(parent, self, aux)
 	r->pciwor = 0;
 	r->io_addr_en = 0;
 	r->gmask &= ~1;	/* allow GSC bus req */
-printf("feat %08x ", r->brdg_feat);
 	r->brdg_feat &= ~0xf00;
 	r->brdg_feat |= 3;
 #ifdef notyet_card_mode
