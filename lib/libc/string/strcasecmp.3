@@ -1,4 +1,4 @@
-.\" $OpenBSD: strcasecmp.3,v 1.4 1998/06/15 17:55:11 mickey Exp $
+.\" $OpenBSD: strcasecmp.3,v 1.5 1999/06/06 15:17:32 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,8 @@
 .Dt STRCASECMP 3
 .Os
 .Sh NAME
-.Nm strcasecmp
+.Nm strcasecmp ,
+.Nm strncasecmp
 .Nd compare strings, ignoring case
 .Sh SYNOPSIS
 .Fd #include <string.h>
@@ -69,7 +70,6 @@ The comparison is done using unsigned characters, so that
 is greater than
 .Ql \e0 .
 .Pp
-The
 .Fn strncasecmp
 compares at most
 .Fa len

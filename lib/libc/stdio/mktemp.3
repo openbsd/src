@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.15 1999/05/25 21:16:26 aaron Exp $
+.\"	$OpenBSD: mktemp.3,v 1.16 1999/06/06 15:17:31 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,10 @@
 .Dt MKTEMP 3
 .Os
 .Sh NAME
-.Nm mktemp
+.Nm mktemp ,
+.Nm mkstemp ,
+.Nm mkstemps ,
+.Nm mkdtemp
 .Nd make temporary file name (unique)
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
@@ -233,7 +236,7 @@ should be rewritten like this:
 char sfn[15] = "";
 FILE *sfp;
 int fd = -1;
- 
+
 strcpy(sfn, "/tmp/ed.XXXXXX");
 if ((fd = mkstemp(sfn)) == -1 ||
     (sfp = fdopen(fd, "w+")) == NULL) {
