@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.12 2000/02/07 06:09:08 itojun Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.13 2000/09/12 04:09:11 itojun Exp $       */
 
 /*
  *
@@ -71,12 +71,13 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in.h>
 #include <netinet/if_atm.h>
 #include <netinet/if_ether.h> /* XXX: for ETHERTYPE_* */
-#ifdef INET
+#if defined(INET) || defined(INET6)
 #include <netinet/in_var.h>
 #endif
 #ifdef NATM
 #include <netnatm/natm.h>
 #endif
+
 #ifdef INET6
 #include <netinet6/in6_var.h>
 #endif /* INET6 */
@@ -151,6 +152,23 @@ atm_output(ifp, m0, dst, rt0)
 		switch (dst->sa_family) {
 #ifdef INET
 		case AF_INET:
+#endif
+#ifdef INET6
+		case AF_INET6:
+#endif
+#if defined(INET) || defined(INET6)
+			if (dst->sa_family == AF_INET)
+				etype = ETHERTYPE_IP;
+			else
+				etype = ETHERTYPE_IPV6;
+# ifdef ATM_PVCEXT
+			if (ifp->if_flags & IFF_POINTOPOINT) {
+				/* pvc subinterface */
+				struct pvcsif *pvcsif = (struct pvcsif *)ifp;
+				atmdst = pvcsif->sif_aph;
+				break;
+			}
+# endif
 			if (!atmresolve(rt, m, dst, &atmdst)) {
 				m = NULL; 
 				/* XXX: atmresolve already free'd it */
@@ -158,10 +176,9 @@ atm_output(ifp, m0, dst, rt0)
 				/* XXX: put ATMARP stuff here */
 				/* XXX: watch who frees m on failure */
 			}
-			etype = ETHERTYPE_IP;
 			break;
 #endif
-#ifdef INET6
+#if 0	/*NRL INET6*/
 		case AF_INET6:
 			/*
 			 * The bottom line here is to either queue the
@@ -188,10 +205,10 @@ atm_output(ifp, m0, dst, rt0)
 		default:
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 			printf("%s: can't handle af%d\n", ifp->if_xname, 
-				dst->sa_family);
+			       dst->sa_family);
 #elif defined(__FreeBSD__) || defined(__bsdi__)
 			printf("%s%d: can't handle af%d\n", ifp->if_name, 
-				ifp->if_unit, dst->sa_family);
+			       ifp->if_unit, dst->sa_family);
 #endif
 			senderr(EAFNOSUPPORT);
 		}
@@ -212,7 +229,6 @@ atm_output(ifp, m0, dst, rt0)
 			bcopy(ATMLLC_HDR, atmllc->llchdr, 
 						sizeof(atmllc->llchdr));
 			ATM_LLC_SETTYPE(atmllc, etype); 
-					/* note: already in network order */
 		}
 	}
 
@@ -306,13 +322,13 @@ atm_input(ifp, ah, m, rxhand)
 		  schednetisr(NETISR_IP);
 		  inq = &ipintrq;
 		  break;
-#endif
+#endif /* INET */
 #ifdef INET6
-	case ETHERTYPE_IPV6:
-		schednetisr(NETISR_IPV6);
-		inq = &ipv6intrq;
-		break;
-#endif /* INET6 */
+	  case ETHERTYPE_IPV6:
+		  schednetisr(NETISR_IPV6);
+		  inq = &ip6intrq;
+		  break;
+#endif
 	  default:
 	      m_freem(m);
 	      return;
