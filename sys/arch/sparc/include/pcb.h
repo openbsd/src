@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.2 1997/08/08 08:26:37 downsj Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.3 1999/04/22 17:02:25 art Exp $	*/
 /*	$NetBSD: pcb.h,v 1.4 1995/03/28 18:19:56 jtc Exp $ */
 
 /*
@@ -44,6 +44,9 @@
  *
  *	@(#)pcb.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _SPARC_PCB_H_
+#define _SPARC_PCB_H_
 
 #include <machine/reg.h>
 
@@ -122,3 +125,5 @@ struct md_coredump {
 #ifdef _KERNEL
 extern struct pcb *cpcb;
 #endif /* _KERNEL */
+
+#endif
