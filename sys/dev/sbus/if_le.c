@@ -163,6 +163,7 @@ leattach_sbus(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	bus_dma_tag_t dmatag;
 	struct sbusdev *sd;
+	struct bootpath *bp;
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
@@ -179,6 +180,12 @@ leattach_sbus(parent, self, aux)
 		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
 		return;
 	}
+
+	bp = sa->sa_bp;
+	if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
+	    ((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) ||
+	    (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit)))
+		bp->dev = &sc->sc_dev;
 
 	/*
 	 * Look for an "unallocated" lebuffer and pair it with

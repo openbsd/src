@@ -57,6 +57,7 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -101,12 +102,6 @@ void	lemediastatus __P((struct ifnet *, struct ifmediareq *));
 struct cfattach le_ledma_ca = {
 	sizeof(struct le_softc), lematch_ledma, leattach_ledma
 };
-
-#if 0
-struct cfdriver le_cd = {
-	NULL, "le", DV_DULL
-};
-#endif
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -348,6 +343,7 @@ leattach_ledma(parent, self, aux)
 	bus_dma_tag_t dmatag = sa->sa_dmatag;
 	bus_dma_segment_t seg;
 	int rseg, error;
+	struct bootpath *bp;
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
@@ -446,4 +442,10 @@ leattach_ledma(parent, self, aux)
 
 	/* now initialize DMA */
 	lehwreset(sc);
+
+	bp = sa->sa_bp;
+	if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
+	    ((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) ||
+	    (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit)))
+		bp->dev = &sc->sc_dev;
 }

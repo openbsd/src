@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbusvar.h,v 1.2 2001/08/19 05:36:11 jason Exp $	*/
+/*	$OpenBSD: sbusvar.h,v 1.3 2001/08/20 19:34:10 jason Exp $	*/
 /*	$NetBSD: sbusvar.h,v 1.11 2000/11/01 06:18:45 eeh Exp $ */
 
 /*-
@@ -97,6 +97,7 @@ struct sbus_attach_args {
 	int		sa_npromvaddrs;	/* Number of PROM VAs */
 #define sa_promvaddr	sa_promvaddrs[0]
 	int		sa_frequency;	/* SBus clockrate */
+	struct bootpath	*sa_bp;		/* boot path */
 };
 
 /* sbus_attach_internal() is also used from obio.c */
