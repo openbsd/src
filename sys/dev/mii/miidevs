@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.13 2000/08/28 13:22:09 jason Exp $
+$OpenBSD: miidevs,v 1.14 2001/02/18 20:56:43 jason Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -42,6 +42,7 @@ $OpenBSD: miidevs,v 1.13 2000/08/28 13:22:09 jason Exp $
  * List of known MII OUIs
  */
 
+oui ALTIMA			0x0010a9	Altima Communications
 oui AMD				0x00001a	Advanced Micro Devices
 oui BROADCOM			0x001018	Broadcom Corporation
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
@@ -59,6 +60,7 @@ oui TSC				0x00c039	TDK Semiconductor
 oui XAQTI			0x00e0ae	XaQti Corp.
 
 /* in the 79c873, AMD uses another OUI (which matches Davicom!) */
+oui xxALTIMA			0x000895	Altima Communications
 oui xxAMD			0x00606e	Advanced Micro Devices
 
 oui xxINTEL			0x00f800	Intel (alt)
@@ -89,6 +91,9 @@ oui xxDEC			0x040440	Digital Clone
 /* Advanced Micro Devices PHYs */
 model xxAMD 79C873		0x0000 Am79C873 10/100 media interface
 model AMD 79C873phy		0x0036 Am79C873 internal PHY
+
+/* Altima Communications PHYs */
+model xxALTIMA AC101		0x0021 AC101 10/100 media interface
 
 /* Broadcom Corp. PHYs */
 model BROADCOM 3C905C		0x0017 Broadcom 3C905C internal PHY
