@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.23 1998/10/21 00:56:58 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.25 1998/10/28 17:56:00 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -365,6 +365,8 @@ com	USR0006 #USR modem
 pccom	USR0006 #USR modem
 com	SUP1380 #SupraExpress 288i PnP Voice Modem
 pccom	SUP1380 #SupraExpress 288i PnP Voice Modem
+com	GVC5000 #some GVC modem
+pccom	GVC5000 #some GVC modem
 
 # Ethernet:
 #le	BRI1001	#BOCALANcard COMBO	(PNP8200)
@@ -380,6 +382,8 @@ sb	CTL0042	#SB AWE64 Value
 sb	CTL0044	#SB AWE64 Gold
 sb	CTL0045	#SB AWE64 Value
 sb	@X@0001	#CMI8330. Audio Adapter
+ym	@@@1001 #ALS100+
 ym	YMH0021 #
 sb	ESS1868	#
 ed	SMC8416 #SMC EtherEZ
+joy	@P@1001	#ALS100+
