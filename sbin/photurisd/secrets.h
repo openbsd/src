@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: secrets.h,v 1.2 2000/12/11 02:16:50 provos Exp $ */
+/* $Id: secrets.h,v 1.3 2000/12/15 01:58:27 provos Exp $ */
 /*
  * secrets.h:
  * prototypes for compute_secrets.c
@@ -38,7 +38,6 @@
  
 #include "state.h" 
 #include "spi.h"
-#include "gmp.h"
  
 #undef EXTERN 
   

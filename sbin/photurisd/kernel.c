@@ -1,5 +1,5 @@
 /*
- * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.16 2000/12/15 01:06:51 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.17 2000/12/15 01:58:27 provos Exp $";
 #endif
 
 #include <time.h>

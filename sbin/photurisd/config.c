@@ -1,5 +1,5 @@
 /*
- * Copyright 1997,1998 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.4 2000/12/11 21:21:17 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.5 2000/12/15 01:58:27 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -466,6 +466,8 @@ init_moduli(int primes)
      struct moduli_cache *tmp;
      char *p, *p2;
      BIGNUM *m, *g, *a;
+
+     mod_init();
 
      open_config_file(NULL);
  

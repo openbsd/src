@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+ * Copyright 1997-2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: exchange.c,v 1.3 2000/12/11 21:21:17 provos Exp $";
+static char rcsid[] = "$Id: exchange.c,v 1.4 2000/12/15 01:58:27 provos Exp $";
 #endif
 
 #define _EXCHANGE_C_
@@ -45,9 +45,10 @@ static char rcsid[] = "$Id: exchange.c,v 1.3 2000/12/11 21:21:17 provos Exp $";
 #include <sys/socket.h> 
 #include <netinet/in.h> 
 #include <arpa/inet.h> 
+#include <ssl/bn.h>
+
 #include "config.h"
 #include "state.h"
-#include "gmp.h"
 #include "exchange.h"
 #include "modulus.h"
 #include "attributes.h"
