@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.46 2002/08/13 07:00:50 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.47 2002/09/10 22:43:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -91,7 +91,7 @@ int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
 
 int want_resched, astpending;
 
-void syscall(struct trapframe *frame, int *args);
+void syscall(struct trapframe *frame);
 
 static __inline void
 userret (struct proc *p, register_t pc, u_quad_t oticks)
@@ -354,6 +354,10 @@ trap(type, frame)
 				trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 			} else {
 				if (p && p->p_addr->u_pcb.pcb_onfault) {
+#if 0
+if (kdb_trap (type, va, frame))
+	return;
+#endif
 					pcbp = &p->p_addr->u_pcb;
 					frame->tf_iioq_tail = 4 +
 					    (frame->tf_iioq_head =
@@ -361,15 +365,16 @@ trap(type, frame)
 #ifdef DDB
 					frame->tf_iir = 0;
 #endif
-					break;
-				}
+				} else {
 #if 0
 if (kdb_trap (type, va, frame))
 	return;
 #else
-				panic("trap: uvm_fault(%p, %x, %d, %d): %d",
-				    map, va, 0, vftype, ret);
+					panic("trap: "
+					    "uvm_fault(%p, %x, %d, %d): %d",
+					    map, va, 0, vftype, ret);
 #endif
+				}
 			}
 		}
 		break;
@@ -449,50 +454,107 @@ child_return(arg)
 #endif
 }
 
+
 /*
  * call actual syscall routine
- * from the low-level syscall handler:
- * - all HPPA_FRAME_NARGS syscall's arguments supposed to be copied onto
- *   our stack, this wins compared to copyin just needed amount anyway
- * - register args are copied onto stack too
  */
 void
-syscall(frame, args)
+syscall(frame)
 	struct trapframe *frame;
-	int *args;
 {
-	register struct proc *p;
+	register struct proc *p = curproc;
 	register const struct sysent *callp;
-	int nsys, code, argsize, error;
-	int rval[2];
+	int nsys, code, argsize, argoff, oerror, error;
+	int args[8], rval[2];
 
 	uvmexp.syscalls++;
 
 	if (!USERMODE(frame->tf_iioq_head))
 		panic("syscall");
 
-	p = curproc;
 	p->p_md.md_regs = frame;
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
-	code = frame->tf_t1;
-	switch (code) {
+
+	argoff = 4;
+	switch (code = frame->tf_t1) {
 	case SYS_syscall:
-		code = *args;
-		args += 1;
+		code = frame->tf_arg0;
+		args[0] = frame->tf_arg1;
+		args[1] = frame->tf_arg2;
+		args[2] = frame->tf_arg3;
+		argoff = 3;
 		break;
 	case SYS___syscall:
 		if (callp != sysent)
 			break;
-		code = *args;
-		args += 2;
+		/*
+		 * this works, because quads get magically swapped
+		 * due to the args being layed backwards on the stack
+		 * and then copied in words
+		 */
+		code = frame->tf_arg0;
+		args[0] = frame->tf_arg2;
+		args[1] = frame->tf_arg3;
+		argoff = 2;
+		break;
+	default:
+		args[0] = frame->tf_arg0;
+		args[1] = frame->tf_arg1;
+		args[2] = frame->tf_arg2;
+		args[3] = frame->tf_arg3;
+		break;
 	}
 
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;	/* bad syscall # */
 	else
 		callp += code;
-	argsize = callp->sy_argsize;
+
+	oerror = error = 0;
+	if ((argsize = callp->sy_argsize)) {
+		int i;
+
+		for (i = 0, argsize -= argoff * 4;
+		    argsize > 0; i++, argsize -= 4) {
+			error = copyin((void *)(frame->tf_sp +
+			    HPPA_FRAME_ARG(i + 4)), args + i + argoff, 4);
+
+			if (error)
+				break;
+		}
+
+		/*
+		 * coming from syscall() or __syscall we must be
+		 * having one of those w/ a 64 bit arguments,
+		 * which needs a word swap due to the order
+		 * of the arguments on the stack.
+		 * this assumes that none of 'em are called
+		 * by their normal syscall number, maybe a regress
+		 * test should be used, to whatch the behaviour.
+		 */
+		if (!error && argoff < 4) {
+			int t;
+
+			i = 0;
+			switch (code) {
+			case SYS_lseek:
+			case SYS_truncate:
+			case SYS_ftruncate:	i = 2;	break;
+			case SYS_preadv:
+			case SYS_pwritev:
+			case SYS_pread:
+			case SYS_pwrite:	i = 4;	break;
+			case SYS_mmap:		i = 6;	break;
+			}
+
+			if (i) {
+				t = args[i];
+				args[i] = args[i + 1];
+				args[i + 1] = t;
+			}
+		}
+	}
 
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
@@ -501,15 +563,17 @@ syscall(frame, args)
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p, code, argsize, args);
 #endif
+	if (error)
+		goto bad;
 
 	rval[0] = 0;
-	rval[1] = 0;
+	rval[1] = frame->tf_ret1;
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		error = systrace_redirect(code, p, args, rval);
+		oerror = error = systrace_redirect(code, p, args, rval);
 	else
 #endif
-		error = (*callp->sy_call)(p, args, rval);
+		oerror = error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
 		p = curproc;			/* changes on exec() */
@@ -526,17 +590,18 @@ syscall(frame, args)
 		p = curproc;
 		break;
 	default:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->tf_t1 = error;
 		break;
 	}
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(p, code, oerror, rval);
 #endif
 	userret(p, frame->tf_iioq_head, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
+		ktrsysret(p, code, oerror, rval[0]);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.85 2002/09/10 21:20:23 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.86 2002/09/10 22:43:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -573,7 +573,6 @@ $syscall
 	stw	t4, TF_R19 -TRAPFRAME_SIZEOF(sr1, t3)	/* t4 for vfork() */
 	stw	t1, TF_R22 -TRAPFRAME_SIZEOF(sr1, t3)	/* syscall # */
 	stw	sp, TF_R30 -TRAPFRAME_SIZEOF(sr1, t3)	/* user stack */
-	copy	sp, t4
 	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS(t3), sp
 	ldil	L%kpsw, t1
 	ldw	R%kpsw(sr1, t1), t1
@@ -621,34 +620,6 @@ $syscall
 	copy	r0 , r3
 	stw	r0, HPPA_FRAME_PSP(sr1, sp)
 	stw	r0, HPPA_FRAME_CRP(sr1, sp)
-
-	/*
-	 * Copy Arguments
-	 * unfortunately mmap() under bsd requires 7 words;
-	 * linux is confined to 5, and hpux to 6.
-	 * assuming the `long' syscall it gives us the maximum
-	 * 9 words, which very much overkill for an average of 3.
-	 * we keep it at 10, since bundling will keep it
-	 * at the same speed as 9 anyway.
-	 *
-	 * TODO: setup the onfault handler
-	 */
-	stw	arg0, 1*4(sr1, t3)	/* XXX can use ,bc */
-	stw	arg1, 2*4(sr1, t3)
-	stw	arg2, 3*4(sr1, t3)
-	stw	arg3, 4*4(sr1, t3)
-	ldw	HPPA_FRAME_ARG( 4)(sr2, t4), arg0
-	ldw	HPPA_FRAME_ARG( 5)(sr2, t4), arg1
-	ldw	HPPA_FRAME_ARG( 6)(sr2, t4), arg2
-	ldw	HPPA_FRAME_ARG( 7)(sr2, t4), arg3
-	stw	arg0, 5*4(sr1, t3)
-	stw	arg1, 6*4(sr1, t3)
-	stw	arg2, 7*4(sr1, t3)
-	stw	arg3, 8*4(sr1, t3)
-	ldw	HPPA_FRAME_ARG( 8)(sr2, t4), arg0
-	ldw	HPPA_FRAME_ARG( 9)(sr2, t4), arg1
-	stw	arg0, 9*4(sr1, t3)
-	stw	arg1,10*4(sr1, t3)
 
 	/*
 	 * Save the rest of the CPU context
