@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.9 1996/11/28 23:35:40 niklas Exp $
+#	$OpenBSD: files.arc,v 1.10 1996/11/30 13:39:41 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -113,6 +113,7 @@ file    arch/arc/dti/btl.c                    btl needs-count
 
 # 8250/16[45]50-based "com" ports
 attach	com at pica with com_pica
+file	arch/arc/pica/com_pica.c	com_pica
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)

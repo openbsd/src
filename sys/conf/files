@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.47 1996/11/30 00:53:34 niklas Exp $
+#	$OpenBSD: files,v 1.48 1996/11/30 13:39:20 niklas Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -49,6 +49,10 @@ file	dev/ic/elink3.c		ep
 # LANCE and PCnet Ethernet controllers
 device	le: ether, ifnet
 file	dev/ic/am7990.c		le
+
+# 8250/16[45]50-based "com" ports
+device	com: tty
+file	dev/ic/com.c		com & (com_isa | com_commulti | com_pcmcia | com_pica) needs-flag
 
 # Cyclades Cyclom multiport serial cards
 device	cy: tty

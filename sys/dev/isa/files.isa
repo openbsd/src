@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.29 1996/11/30 00:53:39 niklas Exp $
+#	$OpenBSD: files.isa,v 1.30 1996/11/30 13:39:38 niklas Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -56,11 +56,8 @@ file	dev/isa/rtfps.c			rtfps
 #
 
 # 8250/16[45]50-based "com" ports
-device	com: tty
 attach	com at isa with com_isa
 attach	com at commulti with com_commulti
-attach	com at pcmcia with com_pcmcia
-file	dev/isa/com.c			com & (com_isa | com_commulti | com_pcmcia | com_pica) needs-flag
 
 # Cyclades Cyclom multiport serial cards
 attach	cy at isa with cy_isa
