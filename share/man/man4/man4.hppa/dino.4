@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dino.4,v 1.1 2003/09/29 20:09:09 mickey Exp $
+.\"	$OpenBSD: dino.4,v 1.2 2004/01/14 09:58:27 mickey Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\" All rights reserved.
@@ -51,3 +51,14 @@ The
 driver
 appeared in
 .Ox 3.5 .
+.Sh BUGS
+.Nm
+bridges of revision earlier than three may exhibit data corruption on DMA.
+This hardware bug does not affect
+.Nm cujo
+or card mode
+.Nm
+bridges.
+See HP Service Note Numbers A4190A-01 and A4191A-01 for more details.
+Systems affected are those shipped before Aug 20, 1997 and
+of models: B132L, B160L, C160, C180, C200, C240.
