@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.114 1999/09/28 07:20:01 deraadt Exp $
+#	$OpenBSD: rc,v 1.115 1999/09/29 06:46:04 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -375,6 +375,17 @@ if [ -f /var/account/acct ]; then
 	echo 'turning on accounting';	accton /var/account/acct
 fi
 
+if [ -f /sbin/ldconfig ]; then
+	echo 'creating runtime link editor directory cache.'
+	if [ -d /usr/local/lib ]; then
+		shlib_dirs="$shlib_dirs /usr/local/lib"
+	fi
+	if [ -d /usr/X11R6/lib ]; then
+		shlib_dirs="$shlib_dirs /usr/X11R6/lib"
+	fi
+	ldconfig $shlib_dirs
+fi
+
 if [ ! -f /etc/ssh_host_key ]; then
 	umask 022
 	echo -n "ssh-keygen: generating new host key... "
@@ -478,30 +489,19 @@ if [ "X${mopd_flags}" != X"NO" -a -d /tftpboot/mop ]; then
 	echo -n ' mopd';		mopd ${mopd_flags}
 fi
 
-if [ X"${sshd}" == X"YES" -a -x /usr/sbin/sshd ]; then
-	echo -n ' sshd';	/usr/sbin/sshd
-	#echo -n ' sshd2022';	/usr/sbin/sshd -p 2022
-fi
-
 if [ -x /usr/sbin/screenblank ]; then
 	echo -n ' screenblank';	/usr/sbin/screenblank
+fi
+
+if [ X"${sshd}" == X"YES" -a -x /usr/sbin/sshd ]; then
+	echo -n ' sshd';	/usr/sbin/sshd
+	#echo -n ' sshd(2022)';	/usr/sbin/sshd -p 2022
 fi
 
 echo '.'
 
 if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
 	kbd `cat /etc/kbdtype`
-fi
-
-if [ -f /sbin/ldconfig ]; then
-	echo 'creating runtime link editor directory cache.'
-	if [ -d /usr/local/lib ]; then
-		shlib_dirs="$shlib_dirs /usr/local/lib"
-	fi
-	if [ -d /usr/X11R6/lib ]; then
-		shlib_dirs="$shlib_dirs /usr/X11R6/lib"
-	fi
-	ldconfig $shlib_dirs
 fi
 
 # Kerberos runs ONLY on the Kerberos servers
