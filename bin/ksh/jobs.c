@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.20 2003/10/22 07:40:38 jmc Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.21 2003/11/10 21:26:39 millert Exp $	*/
 
 /*
  * Process and job control
@@ -629,8 +629,10 @@ exchild(t, flags, close_fd)
 				SS_RESTORE_IGN|SS_FORCE);
 			if (!(flags & (XPIPEI | XCOPROC))) {
 				int fd = open("/dev/null", 0);
-				(void) ksh_dup2(fd, 0, TRUE);
-				close(fd);
+				if (fd != 0) {
+					(void) ksh_dup2(fd, 0, TRUE);
+					close(fd);
+				}
 			}
 		}
 		remove_job(j, "child");	/* in case of `jobs` command */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.13 2003/04/16 23:11:52 tdeval Exp $	*/
+/*	$OpenBSD: eval.c,v 1.14 2003/11/10 21:26:39 millert Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -874,8 +874,10 @@ comsub(xp, cp)
 		openpipe(pv);
 		shf = shf_fdopen(pv[0], SHF_RD, (struct shf *) 0);
 		ofd1 = savefd(1, 0);	/* fd 1 may be closed... */
-		ksh_dup2(pv[1], 1, FALSE);
-		close(pv[1]);
+		if (pv[1] != 1) {
+			ksh_dup2(pv[1], 1, FALSE);
+			close(pv[1]);
+		}
 		execute(t, XFORK|XXCOM|XPIPEO);
 		restfd(1, ofd1);
 		startlast();

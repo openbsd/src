@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.29 2003/11/10 21:24:30 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.30 2003/11/10 21:26:39 millert Exp $	*/
 
 /*
  * execute command tree
@@ -230,8 +230,10 @@ execute(t, flags)
 		e->savefd[1] = savefd(1, 0);
 
 		openpipe(pv);
-		ksh_dup2(pv[0], 0, FALSE);
-		close(pv[0]);
+		if (pv[0] != 0) {
+			ksh_dup2(pv[0], 0, FALSE);
+			close(pv[0]);
+		}
 		coproc.write = pv[1];
 		coproc.job = (void *) 0;
 
