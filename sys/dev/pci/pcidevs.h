@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.384 2001/03/29 17:29:37 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.386 2001/04/11 01:57:16 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -806,12 +806,17 @@
 #define	PCI_PRODUCT_ATI_MOBILITY_1	0x4c4d		/* Mobility 1 */
 #define	PCI_PRODUCT_ATI_MACH64_LP	0x4c50		/* Mach64 LP */
 #define	PCI_PRODUCT_ATI_RAGE_PM	0x4c52		/* Rage P/M */
-#define	PCI_PRODUCT_ATI_RAGE_FURY	0x5046		/* Rage Fury AGP4x */
+#define	PCI_PRODUCT_ATI_RAGE_FURY	0x5046		/* Rage Fury */
 #define	PCI_PRODUCT_ATI_RAGE128_PK	0x5052		/* Rage 128 PK */
 #define	PCI_PRODUCT_ATI_RADEON_AIW	0x5144		/* AIW Radeon */
-#define	PCI_PRODUCT_ATI_RAGE128GL	0x5245		/* Rage 128 GL */
+#define	PCI_PRODUCT_ATI_RAGE128_GL	0x5245		/* Rage 128 GL */
 #define	PCI_PRODUCT_ATI_RAGE_MAGNUM	0x5246		/* Rage Magnum */
-#define	PCI_PRODUCT_ATI_RAGE_128_VR_AGP	0x524c		/* Rage 128 VR AGP */
+#define	PCI_PRODUCT_ATI_RAGE128_VR	0x524c		/* Rage 128 VR */
+#define	PCI_PRODUCT_ATI_RAGE128_SH	0x5348		/* Rage 128 SH */
+#define	PCI_PRODUCT_ATI_RAGE128_SK	0x534b		/* Rage 128 SK */
+#define	PCI_PRODUCT_ATI_RAGE128_SL	0x534c		/* Rage 128 SL */
+#define	PCI_PRODUCT_ATI_RAGE128_SM	0x534d		/* Rage 128 SM */
+prodcut ATI RAGE128		0x534e	Rage 128
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
 #define	PCI_PRODUCT_ATI_MACH64_VU	0x5655		/* Mach64 VU */
 #define	PCI_PRODUCT_ATI_MACH64_VV	0x5656		/* Mach64 VV */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.384 2001/03/29 17:29:37 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.386 2001/04/11 01:57:16 chris Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -816,7 +816,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_FURY,
-	    "Rage Fury AGP4x",
+	    "Rage Fury",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PK,
@@ -827,7 +827,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AIW Radeon",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128GL,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_GL,
 	    "Rage 128 GL",
 	},
 	{
@@ -835,8 +835,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Rage Magnum",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_128_VR_AGP,
-	    "Rage 128 VR AGP",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_VR,
+	    "Rage 128 VR",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_SH,
+	    "Rage 128 SH",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_SK,
+	    "Rage 128 SK",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_SL,
+	    "Rage 128 SL",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_SM,
+	    "Rage 128 SM",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
