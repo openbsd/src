@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.403 2001/06/10 05:47:02 millert Exp 
+ *		OpenBSD: pcidevs,v 1.404 2001/06/13 04:58:35 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -637,6 +637,7 @@
 #define	PCI_PRODUCT_TRIWARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID */
 
 /* Aironet Products */
+#define	PCI_PRODUCT_AIRONET_PCI352	0x0350		/* Cisco/Aironet PCI352 WLAN */
 #define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless */
 #define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* PC4800 Wireless */
 
