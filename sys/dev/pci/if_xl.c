@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.25 1999/06/29 17:14:35 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.26 1999/06/29 20:24:10 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -49,11 +49,11 @@
  * 3Com 3c900B-COMBO	10Mbps/RJ-45,AUI,BNC
  * 3Com 3c900B-TPC	10Mbps/RJ-45,BNC
  * 3Com 3c900B-FL	10Mbps/Fiber-optic
+ * 3Com 3c905B-COMBO	10/100Mbps/RJ-45,AUI,BNC
  * 3Com 3c905B-TX	10/100Mbps/RJ-45
- * 3Com 3c900-FL	10Mbps FL Fiber-optic
+ * 3Com 3c900-FL/FX	10/100Mbps/Fiber-optic
  * 3Com 3c905C-TX	10/100Mbs/RJ45
  * 3Com 3c980-TX	10/100Mbps server adapter
- * 3Com 3c905B-FX	100Mbs FX Fiber-optic
  * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45
  * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
  * Dell Precision on-board 3c905B 10/100Mbps/RJ-45
@@ -1898,9 +1898,6 @@ static int xl_newbuf(sc, c)
 	struct xl_chain_onefrag	*c;
 {
 	struct mbuf		*m_new = NULL;
-#if defined(__alpha__) && defined(__OpenBSD__)
-	int pad;
-#endif
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL) {
@@ -1910,12 +1907,6 @@ static int xl_newbuf(sc, c)
 #endif
 		return(ENOBUFS);
 	}
-
-#if defined(__alpha__) && defined(__OpenBSD__)
-	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
-	m_new->m_data += pad;
-	m_new->m_len -= pad;
-#endif
 
 	MCLGET(m_new, M_DONTWAIT);
 	if (!(m_new->m_flags & M_EXT)) {
@@ -1927,11 +1918,8 @@ static int xl_newbuf(sc, c)
 		return(ENOBUFS);
 	}
 
-#if defined(__alpha__) && defined(__OpenBSD__)
-	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
-	m_new->m_data += pad;
-	m_new->m_len -= pad;
-#endif
+	/* Force longword alignment for packet payload. */
+	m_new->m_data += 2;
 
 	c->xl_mbuf = m_new;
 	c->xl_ptr->xl_status = 0;
