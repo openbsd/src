@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2000/07/06 12:56:19 art Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.19 2001/03/12 07:38:33 smurph Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,9 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -92,13 +95,13 @@ cpu_fork(p1, p2, stack, stacksize)
 	p2->p_md.md_regs = (int *)tf;
 	*tf = *(struct trapframe *)p1->p_md.md_regs;
 	
-   /*
+	/*
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
 		tf->tf_regs[15] = (u_int)stack + stacksize;
 	
-   sf = (struct switchframe *)tf - 1;
+	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
 
 	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
@@ -130,7 +133,11 @@ cpu_exit(p)
 {
 
 	(void) splimp();
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -286,7 +293,11 @@ vmapbuf(bp, siz)
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
 	npf = btoc(round_page(bp->b_bcount + off));
+#if defined(UVM)
+	kva = uvm_km_valloc_wait(phys_map, ctob(npf));
+#else
 	kva = kmem_alloc_wait(phys_map, ctob(npf));
+#endif
 	bp->b_data = (caddr_t)(kva + off);
 	while (npf--) {
 		pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
@@ -317,7 +328,11 @@ vunmapbuf(bp, siz)
 	addr = bp->b_data;
 	npf = btoc(round_page(bp->b_bcount + ((int)addr & PGOFSET)));
 	kva = (vm_offset_t)((int)addr & ~PGOFSET);
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, kva, ctob(npf));
+#else
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

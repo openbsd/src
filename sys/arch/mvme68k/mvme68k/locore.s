@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.22 2000/07/06 12:56:18 art Exp $ */
+/*	$OpenBSD: locore.s,v 1.23 2001/03/12 07:38:31 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -456,7 +456,7 @@ Lstart2:
 #endif
 
 /* do pmap_bootstrap stuff */	
-   RELOC(_mmutype, a0)
+	RELOC(_mmutype, a0)
 	cmpl	#MMU_68060,a0@		| 68060?
 	jne	Lpmap040	        | no, skip
         pea	a5@			| firstpa
@@ -1827,7 +1827,7 @@ _getdfc:
 /*
  * Load a new user segment table pointer.
  */
-ENTRY(loadustp)       /* XXX - smuprh */
+ENTRY(loadustp)       /* XXX - smurph */
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr

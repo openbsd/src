@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2000/03/23 09:59:55 art Exp $ */
+/*	$OpenBSD: machdep.c,v 1.34 2001/03/12 07:38:31 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -117,10 +117,21 @@
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
 
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 /* the following is used externally (sysctl_hw) */
 char machine[] = "mvme68k";		/* cpu "architecture" */
 
+#if defined(UVM)
+vm_map_t exec_map = NULL;
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+#else
 vm_map_t buffer_map;
+#endif
+
 extern vm_offset_t avail_end;
 
 /*
@@ -188,12 +199,15 @@ mvme68k_init()
 	 * Tell the VM system about available physical memory.  The
 	 * hp300 only has one segment.
 	 */
+
 #if defined(UVM)
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
 	uvm_page_physload(atop(avail_start), atop(avail_end),
-							atop(avail_start), atop(avail_end));
+			  atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 #else
 	vm_page_physload(atop(avail_start), atop(avail_end),
-						  atop(avail_start), atop(avail_end));
+			 atop(avail_start), atop(avail_end));
 #endif /* UVM */
 #endif /* MACHINE_NEW_NONCONTIG */
 
@@ -239,7 +253,12 @@ cpu_startup()
 	register unsigned i;
 	register caddr_t v, firstaddr;
 	int base, residual;
+	
+#if defined(UVM)
+	vaddr_t minaddr, maxaddr;
+#else
 	vm_offset_t minaddr, maxaddr;
+#endif 
 	vm_size_t size;
 #ifdef BUFFERS_UNMANAGED
 	vm_offset_t bufmemp;
@@ -330,18 +349,28 @@ cpu_startup()
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
+#if !defined(UVM)
 	valloc(swbuf, struct buf, nswbuf);
+#endif
 	valloc(buf, struct buf, nbuf);
 	/*
 	 * End of first pass, size has been calculated so allocate memory
 	 */
 	if (firstaddr == 0) {
 		size = (vm_size_t)(v - firstaddr);
+#if defined(UVM)
+		firstaddr = (caddr_t) uvm_km_zalloc(kernel_map, round_page(size));
+#else
 		firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
+#endif
 		if (firstaddr == 0)
 			panic("startup: no room for tables");
 #ifdef BUFFERS_UNMANAGED
+#if defined(UVM)
+		buffermem = (caddr_t) uvm_km_zalloc(kernel_map, bufpages*CLBYTES);
+#else
 		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages*CLBYTES);
+#endif
 		if (buffermem == 0)
 			panic("startup: no room for buffers");
 #endif
@@ -357,15 +386,55 @@ cpu_startup()
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
+
+#if defined(UVM)
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, m88k_round_page(size),
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+		panic("cpu_startup: cannot allocate VM for buffers");
+	minaddr = (vaddr_t)buffers;
+#else
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-										&maxaddr, size, TRUE);
+				   &maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
-						 &minaddr, size, FALSE) != KERN_SUCCESS)
+	    (vm_offset_t *)&minaddr, size, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
+#endif
+	
+	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+		/* don't want to alloc more physical mem than needed */
+		bufpages = btoc(MAXBSIZE) * nbuf;
+	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
+#if defined(UVM)
+		vsize_t curbufsize;
+		vaddr_t curbuf;
+		struct vm_page *pg;
+
+		/*
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
+		 */
+		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
+			if (pg == NULL)
+				panic("cpu_startup: not enough memory for "
+				      "buffer cache");
+			pmap_enter(kernel_map->pmap, curbuf,
+				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE,
+				   VM_PROT_READ|VM_PROT_WRITE);
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
+#else
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
 
@@ -378,20 +447,32 @@ cpu_startup()
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+		/* this faults in the required physical pages */
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
+#endif 
 	}
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+#if defined(UVM)
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+#else
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-									 16*NCARGS, TRUE);
+				 16*NCARGS, TRUE);
+#endif
 	/*
 	 * Allocate a submap for physio
 	 */
-	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-									 VM_PHYS_SIZE, TRUE);
+#if defined(UVM)
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
+#else
+	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, 
+				 VM_PHYS_SIZE, TRUE);
+#endif
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -400,8 +481,13 @@ cpu_startup()
 	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
 										M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+#if defined(UVM)
+	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
+				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
+#else
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-								  VM_MBUF_SIZE, FALSE);
+			       VM_MBUF_SIZE, FALSE);
+#endif
 	/*
 	 * Initialize timeouts
 	 */
@@ -410,7 +496,12 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+#if defined(UVM)
+	printf("avail mem = %ld (%ld pages)\n", ptoa(uvmexp.free), uvmexp.free);
+#else
+	printf("avail mem = %ld (%ld pages)\n", ptoa(cnt.v_free_count),
+	    ptoa(cnt.v_free_count)/NBPG);
+#endif
 	printf("using %d buffers containing %d bytes of memory\n",
 			 nbuf, bufpages * CLBYTES);
 #ifdef MFS

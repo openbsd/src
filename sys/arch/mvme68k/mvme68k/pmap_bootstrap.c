@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.5 2000/02/22 19:27:54 deraadt Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.6 2001/03/12 07:38:32 smurph Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -364,10 +364,10 @@ register vm_offset_t firstpa;
 	 * iiomapsize pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(intiobase, char *) = (char *)
-										m68k_ptob(nptpages*NPTEPG - (RELOC(iiomapsize, int)+EIOMAPSIZE));
-	RELOC(intiolimit, char *) = (char *)
-										 m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+	RELOC(intiobase, char *) = 
+		(char *)m68k_ptob(nptpages*NPTEPG - (RELOC(iiomapsize, int)+EIOMAPSIZE));
+	RELOC(intiolimit, char *) = 
+		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
 	/*
 	 * extiobase: base of external (DIO-II) IO space.
 	 * EIOMAPSIZE pages at the end of the static kernel page table.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2000/11/10 18:15:39 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.26 2001/03/12 07:38:32 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -98,6 +98,9 @@ extern struct emul emul_sunos;
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
@@ -278,7 +281,11 @@ struct frame frame;
 #endif
 	register union sigval sv;
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	p = curproc;
 	ucode = 0;
 	if (USERMODE(frame.f_sr)) {
@@ -518,7 +525,11 @@ copyfault:
 			while (bit = ffs(ssir)) {
 				--bit;
 				ssir &= ~(1 << bit);
+#if defined(UVM)
+				uvmexp.softs++;
+#else
 				cnt.v_soft++;
+#endif
 				if (sir_routines[bit])
 					sir_routines[bit](sir_args[bit]);
 			}
@@ -596,17 +607,30 @@ copyfault:
 					rv = pmap_mapmulti(map->pmap, va);
 					if (rv != KERN_SUCCESS) {
 						bva = HPMMBASEADDR(va);
+#if defined(UVM)
+						rv = uvm_fault(map, bva, 0, ftype);
+#else
 						rv = vm_fault(map, bva, ftype, FALSE);
+#endif
 						if (rv == KERN_SUCCESS)
 							(void) pmap_mapmulti(map->pmap, va);
 					}
 				} else
 #endif
-					rv	= vm_fault(map, va, ftype, FALSE);
+#if defined(UVM)
+					rv = uvm_fault(map, va, 0, ftype);
+#else
+					rv = vm_fault(map, va, ftype, FALSE);
+#endif 
 #ifdef DEBUG
 				if (rv && MDB_ISPID(p->p_pid))
+#if defined(UVM)
+					printf("uvm_fault(%x, %x, 0, %x) -> %x\n",
+							 map, va, ftype, rv);
+#else
 					printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 							 map, va, ftype, rv);
+#endif 
 #endif
 				/*
 				 * If this was a stack access we keep track of the maximum
@@ -637,9 +661,14 @@ copyfault:
 				}
 				if (type == T_MMUFLT) {
 					if (p && p->p_addr->u_pcb.pcb_onfault)
-                  goto copyfault;
+						goto copyfault;
+#if defined(UVM)
+					printf("uvm_fault(%x, %x, 0, %x) -> %x\n",
+							 map, va, ftype, rv);
+#else
 					printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 							 map, va, ftype, rv);
+#endif 
 					printf("  type %x, code [mmu,,ssw]: %x\n",
 							 type, code);
 					goto dopanic;
@@ -977,8 +1006,12 @@ struct frame frame;
 #ifdef COMPAT_SUNOS
 	extern struct emul emul_sunos;
 #endif
-
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
+	
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;
