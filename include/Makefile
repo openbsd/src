@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 1999/01/08 00:33:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.58 1999/02/01 22:59:15 d Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -33,9 +33,9 @@ DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netinet6 netccitt netiso netns netipx nfs sys ufs vm ddb \
 	scsi netatalk isofs xfs
 
-RDIRS=	../lib/libcom_err ../lib/libcompat ../lib/libcurses ../lib/libform \
-	../lib/libmenu ../lib/libocurses ../lib/libossaudio ../lib/libpanel \
-	../lib/librpcsvc ../lib/libskey ../lib/libedit \
+RDIRS=	../lib/libc_r ../lib/libcom_err ../lib/libcompat ../lib/libcurses \
+        ../lib/libform ../lib/libmenu ../lib/libocurses ../lib/libossaudio \
+	../lib/libpanel ../lib/librpcsvc ../lib/libskey ../lib/libedit \
 	../lib/libpcap ../lib/libutil ../lib/libwrap ../lib/libz \
 	../sys/arch/${MACHINE}
 
