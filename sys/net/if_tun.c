@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.57 2004/01/12 04:48:25 tedu Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.58 2004/03/02 23:09:29 markus Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -729,7 +729,7 @@ tunwrite(dev, uio, ioflag)
 		error = uiomove(mtod (m, caddr_t), m->m_len, uio);
 		*mp = m;
 		mp = &m->m_next;
-		if (uio->uio_resid > 0) {
+		if (error == 0 && uio->uio_resid > 0) {
 			MGET (m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
 				error = ENOBUFS;
