@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.25 2000/04/15 11:45:56 aaron Exp $
+.\"	$OpenBSD: telnet.1,v 1.26 2000/04/16 17:49:11 aaron Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -44,24 +44,13 @@
 protocol
 .Sh SYNOPSIS
 .Nm telnet
-.Op Fl 8
-.Op Fl E
-.Op Fl F
-.Op Fl K
-.Op Fl L
-.Op Fl S Ar tos
+.Op Fl 8EFKLacdfrx
 .Op Fl X Ar authtype
-.Op Fl a
 .Op Fl b Ar hostalias
-.Op Fl c
-.Op Fl d
 .Op Fl e Ar escapechar
-.Op Fl f
 .Op Fl k Ar realm
 .Op Fl l Ar user
 .Op Fl n Ar tracefile
-.Op Fl r
-.Op Fl x
 .Oo
 .Ar host
 .Op Ar port
@@ -105,15 +94,6 @@ Specifies no automatic login to the remote system.
 .It Fl L
 Specifies an 8-bit data path on output.
 This causes the BINARY option to be negotiated on output.
-.It Fl S Ar tos
-Sets the IP type-of-service (TOS) option for the telnet
-connection to the value
-.Ar tos ,
-which can be a numeric TOS value
-or, on systems that support it, a symbolic
-TOS name found in the
-.Pa /etc/iptos
-file.
 .It Fl X Ar atype
 Disables the
 .Ar atype
