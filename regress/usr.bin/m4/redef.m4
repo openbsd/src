@@ -1,4 +1,7 @@
-dnl $OpenBSD: redef.m4,v 1.1 2001/09/19 19:15:08 espie Exp $
+dnl $OpenBSD: redef.m4,v 1.2 2001/09/27 22:40:58 espie Exp $
+dnl check all properties of builtin are passed on, including args behavior
+define(`mybuiltin',defn(`builtin'))dnl
+builtin mybuiltin
 define(`mydefine',defn(`define'))dnl
 mydefine(`mydefn',defn(`defn'))dnl
 mydefine(`myundefine',mydefn(`undefine'))dnl
