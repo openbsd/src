@@ -1,7 +1,7 @@
-/*	$OpenBSD: locore.S,v 1.53 2002/02/12 05:23:27 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.54 2002/02/20 19:33:01 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2001 Michael Shalayeff
+ * Copyright (c) 1998-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,7 @@
  */
 
 #include <sys/errno.h>
+#include <sys/reboot.h>
 #include <machine/param.h>
 #include <machine/asm.h>
 #include <machine/psl.h>
@@ -1027,21 +1028,6 @@ hpmc_never_dies
 	nop
 EXIT(TLABEL(hpmc))
 
-ENTRY(hppa_toc,0)
-
-	.import	boot, code
-	ldil	L%boot, t1
-	ldo	R%boot(t1), t1
-	ldi	0, arg0
-	.call
-	blr	r0, rp
-	bv,n	0(t1)
-	nop
-
-ALTENTRY(hppa_toc_end)
-	.word	0
-EXIT(hppa_toc)
-
 	.export TLABEL(emu), entry
 LEAF_ENTRY(TLABEL(emu))
 	/* restore %r1 from CTRAP() */
@@ -1860,6 +1846,42 @@ $trapnowvirt
 	.export	$trap$all$end, entry
 $trap$all$end
 EXIT(TLABEL(all))
+
+/*
+ * transfer of control handler
+ */
+ENTRY(hppa_toc,0)
+
+	.import	boot, code
+	ldil	L%boot, t1
+	ldo	R%boot(t1), t1
+	ldi	0, arg0
+	.call
+	blr	r0, rp
+	bv,n	0(t1)
+	nop
+
+ALTENTRY(hppa_toc_end)
+	.word	0
+EXIT(hppa_toc)
+
+/*
+ * power fail recovery handler
+ */
+ENTRY(hppa_pfr,0)
+
+	.import	boot, code
+	ldil	L%boot, t1
+	ldo	R%boot(t1), t1
+	ldi	RB_HALT|RB_POWERDOWN, arg0
+	.call
+	blr	r0, rp
+	bv,n	0(t1)
+	nop
+
+ALTENTRY(hppa_pfr_end)
+	.word	0
+EXIT(hppa_pfr)
 
 	.align	32
 	.export	TLABEL(ibrk), entry

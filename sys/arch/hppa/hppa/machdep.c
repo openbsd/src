@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 2002/02/17 22:59:52 maja Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.60 2002/02/20 19:33:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -349,7 +349,19 @@ hppa_init(start)
 
 		*p = cksum;
 		PAGE0->ivec_toc = (int (*)(void))hppa_toc;
-		PAGE0->ivec_toclen = hppa_toc_end - hppa_toc + 1;
+		PAGE0->ivec_toclen = (hppa_toc_end - hppa_toc + 1) * 4;
+	}
+
+	{
+		extern u_int hppa_pfr[], hppa_pfr_end[];
+		register u_int cksum, *p;
+
+		for (cksum = 0, p = hppa_pfr; p < hppa_pfr_end; p++)
+			cksum += *p;
+
+		*p = cksum;
+		PAGE0->ivec_mempf = (int (*)(void))hppa_pfr;
+		PAGE0->ivec_mempflen = (hppa_pfr_end - hppa_pfr + 1) * 4;
 	}
 
 	/* BTLB params */
