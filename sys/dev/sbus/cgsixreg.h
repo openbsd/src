@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsixreg.h,v 1.4 2002/08/12 16:18:59 jason Exp $	*/
+/*	$OpenBSD: cgsixreg.h,v 1.5 2003/03/27 18:08:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -222,6 +222,9 @@ struct cgsix_softc {
 	void *sc_ih;
 	u_int sc_mode;
 	int *sc_crowp, *sc_ccolp;
+	u_int sc_curs_enabled, sc_curs_fg, sc_curs_bg;
+	struct wsdisplay_curpos sc_curs_pos, sc_curs_hot, sc_curs_size;
+	u_char sc_curs_image[128], sc_curs_mask[128];
 };
 
 #define	CG6_USER_FBC	0x70000000
@@ -271,5 +274,7 @@ struct cgsix_softc {
 	    (FBC_DRAW_UNKNOWN|FBC_DRAW_GXFULL))
 #define	CG6_DRAIN(sc)						\
 	while (FBC_READ(sc, CG6_FBC_S) & FBC_S_GXINPROGRESS)
+
+#define	CG6_MAX_CURSOR		32
 
 #define	CG6_CFFLAG_NOACCEL	0x1	/* disable console acceleration */
