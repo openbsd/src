@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.52 2003/12/16 23:32:24 henning Exp $	*/
+/*	$OpenBSD: main.c,v 1.53 2004/01/22 18:50:39 millert Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.52 2003/12/16 23:32:24 henning Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.53 2004/01/22 18:50:39 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -386,9 +386,11 @@ main(int argc, char *argv[])
 			if (decomp) {
 				if (set_outfile(infile, outfile,
 				    sizeof outfile) == NULL) {
-					if (!recurse)
+					if (!recurse) {
 						warnx("%s: unknown suffix: "
 						    "ignored", infile);
+						rc = rc ? rc : WARNING;
+					}
 					continue;
 				}
 			} else {
@@ -396,6 +398,7 @@ main(int argc, char *argv[])
 				    "%s%s", infile, suffix) >= sizeof(outfile)) {
 					warnx("%s%s: name too long",
 					    infile, suffix);
+					rc = rc ? rc : WARNING;
 					continue;
 				}
 			}
