@@ -14,7 +14,7 @@ nat on lo0 inet from 192.168.1.6 to 172.16.2.0/24 -> 127.0.0.1
 nat on lo0 inet from 192.168.1.7 to 172.6.1.1 -> 127.0.0.1
 nat on lo0 inet from 192.168.1.7 to 172.14.1.2 -> 127.0.0.1
 nat on lo0 inet from 192.168.1.7 to 172.16.2.0/24 -> 127.0.0.1
-nat on lo0 inet from 192.168.0.1/24 to any -> (lo0)
+nat on lo0 inet from 192.168.0.0/24 to any -> (lo0)
 nat on lo0 inet from 192.168.1.8 to ! 172.17.0.0/16 -> 10.0.0.8
 nat on ! lo0 inet proto udp all -> 10.0.0.8
 nat on ! lo0 inet proto tcp all -> 10.0.0.8
