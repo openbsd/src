@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.h,v 1.11 2001/01/22 18:01:35 millert Exp $	*/
+/*	$OpenBSD: tic.h,v 1.12 2001/02/22 04:37:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -249,7 +249,7 @@ extern NCURSES_EXPORT(struct name_table_entry const *) _nc_find_type_entry
 	(const char *, int, const struct name_table_entry *);
 
 /* comp_scan.c: lexical analysis */
-extern NCURSES_EXPORT(int)  _nc_get_token (void);
+extern NCURSES_EXPORT(int)  _nc_get_token (bool);
 extern NCURSES_EXPORT(void) _nc_panic_mode (char);
 extern NCURSES_EXPORT(void) _nc_push_token (int);
 extern NCURSES_EXPORT(void) _nc_reset_input (FILE *, char *);

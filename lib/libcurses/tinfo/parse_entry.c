@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_entry.c,v 1.9 2001/01/22 18:01:55 millert Exp $	*/
+/*	$OpenBSD: parse_entry.c,v 1.10 2001/02/22 04:37:56 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -205,7 +205,7 @@ _nc_parse_entry
     struct name_table_entry const *entry_ptr;
     char *ptr, *base;
 
-    token_type = _nc_get_token();
+    token_type = _nc_get_token(silent);
 
     if (token_type == EOF)
 	return (EOF);
@@ -251,9 +251,9 @@ _nc_parse_entry
 
     entryp->nuses = 0;
 
-    for (token_type = _nc_get_token();
+    for (token_type = _nc_get_token(silent);
 	 token_type != EOF && token_type != NAMES;
-	 token_type = _nc_get_token()) {
+	 token_type = _nc_get_token(silent)) {
 	if (strcmp(_nc_curr_token.tk_name, "use") == 0
 	    || strcmp(_nc_curr_token.tk_name, "tc") == 0) {
 	    entryp->uses[entryp->nuses].name = _nc_save_str(_nc_curr_token.tk_valstring);

@@ -944,7 +944,7 @@ _nc_read_termcap_entry
 	_nc_curr_line = lineno;
 	_nc_set_source(source);
     }
-    _nc_read_entry_source((FILE *) 0, tc, FALSE, FALSE, NULLHOOK);
+    _nc_read_entry_source((FILE *) 0, tc, FALSE, TRUE, NULLHOOK);
 #else
     /*
      * Here is what the 4.4BSD termcap(3) page prescribes:
@@ -1025,12 +1025,7 @@ _nc_read_termcap_entry
     /* parse the sources */
     if (use_buffer) {
 	_nc_set_source("TERMCAP");
-
-	/*
-	 * We don't suppress warning messages here.  The presumption is
-	 * that since it's just a single entry, they won't be a pain.
-	 */
-	_nc_read_entry_source((FILE *) 0, tc_buf, FALSE, FALSE, NULLHOOK);
+	_nc_read_entry_source((FILE *) 0, tc_buf, FALSE, TRUE, NULLHOOK);
     } else {
 	int i;
 
