@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.168 2000/04/03 01:39:12 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.169 2000/04/03 01:53:36 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -252,10 +252,6 @@ ne*	at pcmcia? function ?			# PCMCIA based NE2000 ethernet
 ep*	at pcmcia? function ?			# PCMCIA based 3C5xx ethernet
 sm*	at pcmcia? function ?			# PCMCIA based sm ethernet
 xe*	at pcmcia? function ?			# Xircom ethernet
-wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11
-an*	at pcmcia? function ?			# Aironet IEEE 802.11
-#cnw*	at pcmcia? function ?			# Xircom Netwave
-#ray*	at pcmcia? function ?			# Raylink Aviator2.4/Pro 802.11
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI
 xl*	at pci? dev ? function ?		# 3c9xx ethernet
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
@@ -271,6 +267,12 @@ dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above
 wx*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
+
+# Wireless network cards
+wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
+an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
+#cnw*	at pcmcia? function ?			# Xircom Netwave
+#ray*	at pcmcia? function ?			# Raylink Aviator2.4/Pro 802.11FH
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii? phy ?				# 3Com internal PHYs
