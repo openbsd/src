@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.2 2004/07/04 22:34:14 naddy Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -35,8 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__FreeBSD__)
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25
- sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
 #elif defined(__NetBSD__)
 __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $");
 #endif

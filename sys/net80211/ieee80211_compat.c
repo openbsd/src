@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_compat.c,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
+/*	$OpenBSD: ieee80211_compat.c,v 1.2 2004/07/04 22:34:14 naddy Exp $	*/
 /*	$NetBSD: ieee80211_compat.c,v 1.3 2003/09/23 15:57:25 dyoung Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
 
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <machine/stdarg.h>
 #include <net/if.h>
 #include <net80211/ieee80211_compat.h>
 
