@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.21 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.22 2004/12/18 21:58:39 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -24,13 +24,6 @@
 #include <limits.h>
 
 #include <signal.h>
-
-/* struct sigaction.sa_flags is set to KSH_SA_FLAGS.  Used to ensure
- * system calls are interrupted
- */
-#define KSH_SA_FLAGS	0
-
-typedef	void (*handler_t)(int);	/* signal handler */
 
 #include <paths.h>
 
@@ -265,8 +258,8 @@ typedef struct trap {
 	char   *trap;		/* trap command */
 	int	volatile set;	/* trap pending */
 	int	flags;		/* TF_* */
-	handler_t cursig;	/* current handler (valid if TF_ORIG_* set) */
-	handler_t shtrap;	/* shell signal handler */
+	sig_t cursig;		/* current handler (valid if TF_ORIG_* set) */
+	sig_t shtrap;		/* shell signal handler */
 } Trap;
 
 /* values for Trap.flags */

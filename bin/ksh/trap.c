@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.16 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.17 2004/12/18 21:58:39 millert Exp $	*/
 
 /*
  * signal handling
@@ -30,7 +30,7 @@ inittraps()
 			sigtraps[i].mess = sys_siglist[i];
 
 	sigemptyset(&Sigact_ign.sa_mask);
-	Sigact_ign.sa_flags = KSH_SA_FLAGS;
+	Sigact_ign.sa_flags = 0; /* interruptible */
 	Sigact_ign.sa_handler = SIG_IGN;
 	Sigact_trap = Sigact_ign;
 	Sigact_trap.sa_handler = trapsig;
@@ -289,7 +289,7 @@ settrap(p, s)
 	Trap *p;
 	char *s;
 {
-	handler_t f;
+	sig_t f;
 
 	if (p->trap)
 		afree(p->trap, APERM);
@@ -355,7 +355,7 @@ restore_pipe(restore_dfl)
 int
 setsig(p, f, flags)
 	Trap *p;
-	handler_t f;
+	sig_t f;
 	int flags;
 {
 	struct sigaction sigact;
@@ -388,7 +388,7 @@ setsig(p, f, flags)
 	 * all users of shtrap are lifetime users (SIGCHLD, SIGALRM, SIGWINCH).
 	 */
 	if (!(flags & SS_USER))
-		p->shtrap = (handler_t) 0;
+		p->shtrap = NULL;
 	if (flags & SS_SHTRAP) {
 		p->shtrap = f;
 		f = trapsig;
@@ -397,7 +397,7 @@ setsig(p, f, flags)
 	if (p->cursig != f) {
 		p->cursig = f;
 		sigemptyset(&sigact.sa_mask);
-		sigact.sa_flags = KSH_SA_FLAGS;
+		sigact.sa_flags = 0 /* interruptible */;
 		sigact.sa_handler = f;
 		sigaction(p->signal, &sigact, (struct sigaction *) 0);
 	}

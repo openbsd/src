@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.16 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.17 2004/12/18 21:58:39 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -233,7 +233,7 @@ void 	restoresigs(void);
 void	settrap(Trap *p, char *s);
 int	block_pipe(void);
 void	restore_pipe(int restore_dfl);
-int	setsig(Trap *p, handler_t f, int flags);
+int	setsig(Trap *p, sig_t f, int flags);
 void	setexecsig(Trap *p, int restore);
 /* tree.c */
 int 	fptreef(struct shf *f, int indent, const char *fmt, ...);
