@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.18 2001/11/19 19:02:18 mpech Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.19 2002/12/03 21:34:21 mickey Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ char *banner[] =
     "#if __GNUC__ == 2",
     "  __attribute__ ((unused))",
     "#endif /* __GNUC__ == 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.18 2001/11/19 19:02:18 mpech Exp $\";",
+    "  = \"$OpenBSD: skeleton.c,v 1.19 2002/12/03 21:34:21 mickey Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -84,6 +84,21 @@ char *banner[] =
 
 char *tables[] =
 {
+    "#if defined(__cplusplus) || defined(__STDC__)",
+    "extern const short yylhs[];",
+    "extern const short yylen[];",
+    "extern const short yydefred[];",
+    "extern const short yydgoto[];",
+    "extern const short yysindex[];",
+    "extern const short yyrindex[];",
+    "extern const short yygindex[];",
+    "extern const short yytable[];",
+    "extern const short yycheck[];",
+    "#if YYDEBUG",
+    "extern const char *const yyname[];",
+    "extern const char *const yyrule[];",
+    "#endif",
+    "#else /* !(defined(__cplusplus) || defined(__STDC__)) */",
     "extern short yylhs[];",
     "extern short yylen[];",
     "extern short yydefred[];",
@@ -94,14 +109,10 @@ char *tables[] =
     "extern short yytable[];",
     "extern short yycheck[];",
     "#if YYDEBUG",
-    "#if defined(__cplusplus) || __STDC__",
-    "extern const char * const yyname[];",
-    "extern const char * const yyrule[];",
-    "#else /* !(defined(__cplusplus) || __STDC__) */",
     "extern char *yyname[];",
     "extern char *yyrule[];",
-    "#endif /* !(defined(__cplusplus) || __STDC__) */",
     "#endif /* YYDEBUG */",
+    "#endif /* !(defined(__cplusplus) || defined(__STDC__)) */",
     0
 };
 
@@ -139,7 +150,7 @@ char *header[] =
 char *body[] =
 {
     "/* allocate initial stack or double stack size, up to YYMAXDEPTH */",
-    "#if defined(__cplusplus) || __STDC__",
+    "#if defined(__cplusplus) || defined(__STDC__)",
     "static int yygrowstack(void)",
     "#else",
     "static int yygrowstack()",
@@ -187,7 +198,7 @@ char *body[] =
     "#define YYACCEPT goto yyaccept",
     "#define YYERROR goto yyerrlab",
     "int",
-    "#if defined(__cplusplus) || __STDC__",
+    "#if defined(__cplusplus) || defined(__STDC__)",
     "yyparse(void)",
     "#else",
     "yyparse()",
@@ -195,11 +206,11 @@ char *body[] =
     "{",
     "    int yym, yyn, yystate;",
     "#if YYDEBUG",
-    "#if defined(__cplusplus) || __STDC__",
+    "#if defined(__cplusplus) || defined(__STDC__)",
     "    const char *yys;",
-    "#else /* !(defined(__cplusplus) || __STDC__) */",
+    "#else /* !(defined(__cplusplus) || defined(__STDC__)) */",
     "    char *yys;",
-    "#endif /* !(defined(__cplusplus) || __STDC__) */",
+    "#endif /* !(defined(__cplusplus) || defined(__STDC__)) */",
     "",
     "    if ((yys = getenv(\"YYDEBUG\")))",
     "    {",
