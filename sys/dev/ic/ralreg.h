@@ -1,4 +1,4 @@
-/*	$OpenBSD: ralreg.h,v 1.2 2005/03/11 20:47:59 damien Exp $  */
+/*	$OpenBSD: ralreg.h,v 1.3 2005/04/01 09:40:43 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -260,6 +260,7 @@ struct ral_rx_desc {
 #define RAL_RF_2524	0x02
 #define RAL_RF_2525	0x03
 #define RAL_RF_2525E	0x04
+#define RAL_RF_2526	0x05
 /* dual-band RF */
 #define RAL_RF_5222	0x10
 

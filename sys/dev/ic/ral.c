@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.39 2005/04/01 09:25:36 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.40 2005/04/01 09:40:43 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -202,8 +202,8 @@ static const struct {
 	{ 21, 0x08 },
 	{ 22, 0x08 },
 	{ 23, 0x08 },
-	{ 24, 0x70 },
-	{ 25, 0x40 },
+	{ 24, 0x80 },
+	{ 25, 0x50 },
 	{ 26, 0x08 },
 	{ 27, 0x23 },
 	{ 30, 0x10 },
@@ -219,8 +219,9 @@ static const struct {
 	{ 56, 0x08 },
 	{ 57, 0x10 },
 	{ 58, 0x08 },
-	{ 61, 0x6d },
-	{ 62, 0x10 }
+	{ 61, 0x60 },
+	{ 62, 0x10 },
+	{ 75, 0xff }
 };
 
 /*
@@ -255,6 +256,16 @@ static const uint32_t ral_rf2525_hi_r2[] = {
 static const uint32_t ral_rf2525e_r2[] = {
 	0x2044d, 0x2044e, 0x2044f, 0x20460, 0x20461, 0x20462, 0x20463,
 	0x20464, 0x20465, 0x20466, 0x20467, 0x20468, 0x20469, 0x2046b
+};
+
+static const uint32_t ral_rf2526_hi_r2[] = {
+	0x0022a, 0x0022b, 0x0022b, 0x0022c, 0x0022c, 0x0022d, 0x0022d,
+	0x0022e, 0x0022e, 0x0022f, 0x0022d, 0x00240, 0x00240, 0x00241
+};
+
+static const uint32_t ral_rf2526_r2[] = {
+	0x00226, 0x00227, 0x00227, 0x00228, 0x00228, 0x00229, 0x00229,
+	0x0022a, 0x0022a, 0x0022b, 0x0022b, 0x0022c, 0x0022c, 0x0022d
 };
 
 /*
@@ -2248,6 +2259,16 @@ ral_set_chan(struct ral_softc *sc, struct ieee80211_channel *c)
 		ral_rf_write(sc, RAL_RF4, (chan == 14) ? 0x00286 : 0x00282);
 		break;
 
+	case RAL_RF_2526:
+		ral_rf_write(sc, RAL_RF2, ral_rf2526_hi_r2[chan - 1]);
+		ral_rf_write(sc, RAL_RF4, (chan & 1) ? 0x00386 : 0x00381);
+		ral_rf_write(sc, RAL_RF1, 0x08804);
+
+		ral_rf_write(sc, RAL_RF2, ral_rf2526_r2[chan - 1]);
+		ral_rf_write(sc, RAL_RF3, power << 7 | 0x18044);
+		ral_rf_write(sc, RAL_RF4, (chan & 1) ? 0x00386 : 0x00381);
+		break;
+
 	/* dual-band RF */
 	case RAL_RF_5222:
 		for (i = 0; i < N(ral_rf5222); i++)
@@ -2477,6 +2498,7 @@ ral_get_rf(int rev)
 	case RAL_RF_2524:	return "RT2524";
 	case RAL_RF_2525:	return "RT2525";
 	case RAL_RF_2525E:	return "RT2525e";
+	case RAL_RF_2526:	return "RT2526";
 	case RAL_RF_5222:	return "RT5222";
 	default:		return "unknown";
 	}
