@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.15 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.16 2002/03/09 18:49:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: create.c,v 1.15 2002/02/19 19:39:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: create.c,v 1.16 2002/03/09 18:49:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ static const char rcsid[] = "$OpenBSD: create.c,v 1.15 2002/02/19 19:39:40 mille
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <vis.h>
 #include <md5.h>
 #include <sha1.h>
 #include <rmd160.h>
@@ -144,11 +145,19 @@ statf(indent, p)
 	struct passwd *pw;
 	u_int32_t len, val;
 	int fd, offset;
+	char *escaped_name;
+
+	escaped_name = malloc(p->fts_namelen * 4  +  1);
+	if (escaped_name == NULL)
+		error("statf: %s", strerror(errno));
+	strvis(escaped_name, p->fts_name, VIS_WHITE | VIS_OCTAL);
 
 	if (iflag || S_ISDIR(p->fts_statp->st_mode))
-		offset = printf("%*s%s", indent, "", p->fts_name);
+		offset = printf("%*s%s", indent, "", escaped_name);
 	else
-		offset = printf("%*s    %s", indent, "", p->fts_name);
+		offset = printf("%*s    %s", indent, "", escaped_name);
+
+	free(escaped_name);
 
 	if (offset > (INDENTNAMELEN + indent))
 		offset = MAXLINELEN;

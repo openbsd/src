@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.13 2002/02/16 21:28:05 millert Exp $	*/
+/*	$OpenBSD: spec.c,v 1.14 2002/03/09 18:49:09 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: spec.c,v 1.13 2002/02/16 21:28:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.14 2002/03/09 18:49:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ static const char rcsid[] = "$OpenBSD: spec.c,v 1.13 2002/02/16 21:28:05 millert
 #include <unistd.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <vis.h>
 #include "mtree.h"
 #include "extern.h"
 
@@ -144,10 +145,14 @@ noparent:		error("no parent node");
 		if ((centry = calloc(1, sizeof(NODE) + strlen(p))) == NULL)
 			error("%s", strerror(errno));
 		*centry = ginfo;
-		(void)strcpy(centry->name, p);
 #define	MAGIC	"?*["
 		if (strpbrk(p, MAGIC))
 			centry->flags |= F_MAGIC;
+		if (strunvis(centry->name, p) == -1) {
+			fprintf(stderr,
+			    "mtree: filename (%s) encoded incorrectly\n", p);
+			strcpy(centry->name, p);
+		}
 		set(NULL, centry);
 
 		if (!root) {
