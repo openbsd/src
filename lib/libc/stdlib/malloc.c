@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.30 1998/01/02 05:32:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.31 1998/06/28 06:30:34 rahnds Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -84,7 +84,7 @@ static char rcsid[] = "$OpenBSD: malloc.c,v 1.30 1998/01/02 05:32:49 deraadt Exp
 #ifdef __OpenBSD__
 #   if defined(__alpha__) || defined(__m68k__) || defined(__mips__) || \
        defined(__i386__) || defined(__m88k__) || defined(__ns32k__) || \
-       defined(__vax__)
+       defined(__vax__) || defined(__powerpc__)
 #	define	malloc_pageshift	(PGSHIFT)
 #	define	malloc_minsize		16U
 #   endif /* __i386__ */
