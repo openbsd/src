@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/08/21 17:44:19 miod Exp $
+#	$OpenBSD: Makefile,v 1.3 2003/04/10 22:42:29 millert Exp $
 
 SIZE?=	size
 STRIP?= strip
@@ -35,7 +35,7 @@ tftpboot.bin: tftpboot
 	${STRIP} tftpboot
 	dd ibs=96 skip=1 if=tftpboot of=$@
 #	dd ibs=38 skip=1 if=tftpboot of=$@
-	chown ${LIBOWN}.${LIBGRP} tftpboot.bin
+	chown ${LIBOWN}:${LIBGRP} tftpboot.bin
 	chmod ${LIBMODE} tftpboot.bin
 
 install:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.11 2003/04/05 20:31:58 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.12 2003/04/10 22:42:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] =
 "$From: server.c,v 6.85 1996/03/12 22:55:38 mcooper Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: server.c,v 1.11 2003/04/05 20:31:58 deraadt Exp $";
+"$OpenBSD: server.c,v 1.12 2003/04/10 22:42:29 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
@@ -110,7 +110,7 @@ static int setownership(file, fd, uid, gid)
 				       (CHOWN_GID_T) gid);
 
 		if (status < 0) {
-			message(MT_NOTICE, "%s: chown %d.%d failed: %s", 
+			message(MT_NOTICE, "%s: chown %d:%d failed: %s", 
 				target, (UID_T) uid, (GID_T) gid, SYSERR);
 			return(-1);
 		}
@@ -1077,7 +1077,7 @@ static void recvdir(opts, mode, owner, group)
 
 				if (IS_ON(opts, DO_VERIFY))
 					message(MT_NOTICE,
-				"%s: need to chown from %s.%s to %s.%s",
+				"%s: need to chown from %s:%s to %s:%s",
 						target, 
 						PRN(lowner), PRN(lgroup),
 						PRN(owner), PRN(group));
@@ -1085,7 +1085,7 @@ static void recvdir(opts, mode, owner, group)
 					if (fchog(-1, target, owner, 
 						  group, -1) == 0)
 						message(MT_NOTICE,
-					       "%s: chown from %s.%s to %s.%s",
+					       "%s: chown from %s:%s to %s:%s",
 							target,
 							PRN(lowner), 
 							PRN(lgroup),

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: install.sh,v 1.5 2002/06/09 06:15:14 todd Exp $
+# $OpenBSD: install.sh,v 1.6 2003/04/10 22:42:29 millert Exp $
 
 # XXX should handle --unlink
 
@@ -99,7 +99,7 @@ done
 #
 echo "Installing bsd.scsi3 as kernel, replace by hand you need to."
 cp ./bsd.scsi3 $INSTALLTO/bsd
-chmod 640 $INSTALLTO/bsd; chown root.kmem $INSTALLTO/bsd
+chmod 640 $INSTALLTO/bsd; chown root:kmem $INSTALLTO/bsd
 if [ ! -c $INSTALLTO/dev/console ];then
 	echo "Tar did not understand device nodes - removing"
 	rm -rf $INSTALLTO/dev/[a-z]*

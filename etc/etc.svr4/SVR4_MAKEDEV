@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: SVR4_MAKEDEV,v 1.5 2002/06/09 06:15:15 todd Exp $
+#	$OpenBSD: SVR4_MAKEDEV,v 1.6 2003/04/10 22:42:29 millert Exp $
 #	$NetBSD: SVR4_MAKEDEV,v 1.3 1996/04/11 12:59:45 christos Exp $
 #
 # Copyright (c) 1995 Christos Zoulas
@@ -55,45 +55,45 @@ all)
 	;;
 tcp)
 	mknod $i		c 43 35
-	chown bin.bin $i
+	chown bin:bin $i
 	chmod 666 $i
 	;;
 
 
 udp)
 	mknod udp		c 43 36
-	chown bin.bin $i
+	chown bin:bin $i
 	chmod 666 $i
 	;;
 
 rawip)
 	mknod $i		c 43 37
-	chown bin.bin $i
+	chown bin:bin $i
 	chmod 666 $i
 	;;
 
 ticlts)
 	mknod $i		c 43 38
-	chown bin.bin $i
+	chown bin:bin $i
 	chmod 666 $i
 	;;
 
 ticotsord)
 	mknod $i		c 43 39
-	chown bin.bin $i
+	chown bin:bin $i
 	chmod 666 $i
 	;;
 
 ticots)
 	mknod $i		c 43 40
-	chown bin.bin $i
+	chown bin:bin $i
 	chmod 666 $i
 	;;
 
 
 wabi)
 	mknod $i		c 3 2	# /dev/null
-	chown bin.bin $i
+	chown bin:bin $i
 	chmod 666 $i
 	;;
 
