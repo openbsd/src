@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.11 1996/11/09 06:39:41 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.12 1996/11/09 07:43:22 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.11 1996/11/09 06:39:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.12 1996/11/09 07:43:22 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -115,7 +115,7 @@ int	authok;
 
 struct	passwd *pwd;
 int	failures;
-char	term[64], *envinit[1], *hostname, *username, *tty;
+char	term[64], *envinit[1], *hostname, *tty, *username = NULL;
 
 int
 main(argc, argv)
@@ -198,7 +198,7 @@ main(argc, argv)
 		(void)snprintf(tname, sizeof(tname), "%s??", _PATH_TTY);
 		ttyn = tname;
 	}
-	if (tty = strrchr(ttyn, '/'))
+	if ((tty = strrchr(ttyn, '/')))
 		++tty;
 	else
 		tty = ttyn;
@@ -243,7 +243,7 @@ main(argc, argv)
 		}
 		(void)strcpy(tbuf, username);
 
-		if (pwd = getpwnam(username))
+		if ((pwd = getpwnam(username)))
 			salt = pwd->pw_passwd;
 		else
 			salt = "xx";
