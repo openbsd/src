@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmon.c,v 1.15 1998/10/29 02:15:21 deraadt Exp $
+/*	$OpenBSD: ipmon.c,v 1.16 1998/11/10 22:04:11 deraadt Exp $
  * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.15 1998/10/29 02:15:21 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.16 1998/11/10 22:04:11 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -88,6 +88,13 @@ struct	flags	tcpfl[] = {
 	{ 0, '\0' }
 };
 
+struct hlist {
+	struct hlist *next;
+	struct in_addr addr;
+	char name[MAXHOSTNAMELEN];
+};
+#define PRIME 367
+static  struct	hlist htable[PRIME];
 
 static	char	line[2048];
 static	int	opts = 0;
@@ -160,13 +167,30 @@ int	res;
 struct	in_addr	ip;
 {
 	struct hostent *hp;
+	struct hlist *hl;
 
 	if (!res)
 		return inet_ntoa(ip);
+
+	hl = &htable[ip.s_addr % PRIME];
+	for ( ; hl->next != NULL; hl = hl->next) 
+		if (hl->addr.s_addr == ip.s_addr)
+			return hl->name;
+
+	hl->addr.s_addr = ip.s_addr;
+	hl->next = (struct hlist *)calloc(1, sizeof(*hl));
+	if (hl->next == NULL) {
+		perror("calloc");
+		exit(1);
+	}
+		
 	hp = gethostbyaddr((char *)&ip, sizeof(ip), AF_INET);
 	if (!hp)
-		return inet_ntoa(ip);
-	return hp->h_name;
+		strlcpy(hl->name, inet_ntoa(ip), sizeof hl->name);
+	else
+		strlcpy(hl->name, hp->h_name, sizeof hl->name);
+
+	return hl->name;
 }
 
 
