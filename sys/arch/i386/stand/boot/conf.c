@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 1997/03/31 23:06:22 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 1997/07/17 23:11:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,16 +35,16 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <libsa.h>
-#include <ufs.h>
-#include <nfs.h>
-#include <cd9660.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/nfs.h>
+#include <lib/libsa/cd9660.h>
 #ifdef notdef
-#include <fat.h>
-#include <tftp.h>
+#include <lib/libsa/fat.h>
+#include <lib/libsa/tftp.h>
 #endif
-#include <netif.h>
-#include "biosdev.h"
-#include "unixdev.h"
+#include <lib/libsa/netif.h>
+#include <lib/libsa/unixdev.h>
+#include <biosdev.h>
 
 const char version[] = "0.99a";
 int	debug = 1;
@@ -79,7 +79,7 @@ struct devsw	devsw[] = {
 	{ "TFTP", tftpstrategy, tftpopen, tftpclose, tftpioctl },
 #endif
 };
-int	ndevs = NENTS(devsw);
+int ndevs = NENTS(devsw);
 
 #ifndef NO_NET
 struct netif_driver	*netif_drivers[] = {
@@ -88,15 +88,16 @@ struct netif_driver	*netif_drivers[] = {
 int n_netif_drivers = NENTS(netif_drivers);
 #endif
 
-struct consw	consw[] = {
+const struct consw	consw[] = {
 #ifdef _TEST
 	{ "unix",unix_probe,unix_putc,unix_getc,unix_ischar},
 #else
-	{ "kbd", kbd_probe, kbd_putc, kbd_getc, kbd_ischar },
-#if 0
-	{ "com", com_probe, com_putc, com_getc, com_ischar },
-#endif
+	{ "kbd",  kbd_probe,  kbd_putc,  kbd_getc,  kbd_ischar  },
+	{ "com0", com0_probe, com0_putc, com0_getc, com0_ischar },
+	{ "com1", com1_probe, com1_putc, com1_getc, com1_ischar },
+	{ "com2", com2_probe, com2_putc, com2_getc, com2_ischar },
+	{ "com3", com3_probe, com3_putc, com3_getc, com3_ischar },
 #endif
 };
-int	ncons = NENTS(consw);
+const int ncons = NENTS(consw);
 
