@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.22 2002/02/23 01:08:18 dhartmei Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.23 2002/02/27 15:15:29 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -112,8 +112,8 @@ An
 .Em ifname
 is a network interface such as fxp4, ne0, or ep1.
 .Em address
-can be specified in CIDR notation (matching netblocks), as
-symbolic host names or interface names.
+can be specified in CIDR notation (matching a netblock), as
+symbolic host name or interface name.
 Host name resolution and interface to address translation are done at rule
 set load-time.
 When the address of an interface (or host name) changes (by DHCP or PPP,
@@ -134,12 +134,7 @@ may be used before an
 or an
 .Em address .
 The protocol specification is optional.
-If it is omitted from a
-.Em nat
-rule, "tcp", "udp", and "icmp" connections will be translated.
-If the protocol specification is omitted from an
-.Em rdr
-rule, only "tcp" connections will be redirected.
+If it is omitted, the rule applies to packets of all protocols.
 .Pp
 .Em rdr
 rules can optionally specify port ranges instead of single ports.
