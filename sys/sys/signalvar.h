@@ -1,5 +1,5 @@
-/*	$OpenBSD: signalvar.h,v 1.2 1996/03/03 12:12:19 niklas Exp $	*/
-/*	$NetBSD: signalvar.h,v 1.16 1996/02/09 18:25:34 christos Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.3 1996/05/02 13:14:58 deraadt Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -169,5 +169,10 @@ int	killpg1 __P((struct proc *, int, int, int));
  * Machine-dependent functions:
  */
 void	sendsig __P((sig_t action, int sig, int returnmask, u_long code));
+struct core;
+struct vnode;
+struct ucred;
+int	cpu_coredump __P((struct proc *, struct vnode *, struct ucred *,
+			  struct core *));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */

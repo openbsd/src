@@ -1,5 +1,5 @@
-/*	$OpenBSD: systm.h,v 1.4 1996/04/21 22:32:04 deraadt Exp $	*/
-/*	$NetBSD: systm.h,v 1.48 1996/04/09 20:55:38 cgd Exp $	*/
+/*	$OpenBSD: systm.h,v 1.5 1996/05/02 13:14:59 deraadt Exp $	*/
+/*	$NetBSD: systm.h,v 1.49 1996/04/22 01:23:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -185,6 +185,7 @@ void	statclock __P((struct clockframe *frame));
 void	initclocks __P((void));
 void	inittodr __P((time_t));
 void	resettodr __P((void));
+void	cpu_initclocks __P((void));
 
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));
@@ -202,6 +203,12 @@ int	uiomove __P((caddr_t, int, struct uio *));
 
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));
+
+void	consinit __P((void));
+
+void	cpu_startup __P((void));
+void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
+
 
 #ifdef GPROF
 void	kmstartup __P((void));

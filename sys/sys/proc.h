@@ -1,5 +1,5 @@
-/*	$OpenBSD: proc.h,v 1.6 1996/04/18 21:41:05 niklas Exp $	*/
-/*	$NetBSD: proc.h,v 1.43 1996/03/14 18:59:11 christos Exp $	*/
+/*	$OpenBSD: proc.h,v 1.7 1996/05/02 13:14:54 deraadt Exp $	*/
+/*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -336,5 +336,8 @@ int	fork1 __P((struct proc *, int, int, register_t *));
 void	kmeminit __P((void));
 void	rqinit __P((void));
 int	groupmember __P((gid_t, struct ucred *));
+void	cpu_switch __P((struct proc *));
+void	cpu_wait __P((struct proc *));
+void	cpu_exit __P((struct proc *));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

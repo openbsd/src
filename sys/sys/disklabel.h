@@ -1,5 +1,5 @@
-/*	$OpenBSD: disklabel.h,v 1.6 1996/04/21 22:31:42 deraadt Exp $	*/
-/*	$NetBSD: disklabel.h,v 1.39 1996/04/09 20:55:26 cgd Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.7 1996/05/02 13:14:51 deraadt Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.40 1996/04/22 01:23:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -321,6 +321,7 @@ char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
 int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
+int	 bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 #endif
 #endif /* _LOCORE */
 

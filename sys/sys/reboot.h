@@ -1,5 +1,5 @@
-/*	$OpenBSD: reboot.h,v 1.3 1996/04/18 21:41:07 niklas Exp $	*/
-/*	$NetBSD: reboot.h,v 1.8 1996/02/22 20:30:16 scottr Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.4 1996/05/02 13:14:55 deraadt Exp $	*/
+/*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -88,3 +88,15 @@
 	(((type) << B_TYPESHIFT) | ((adaptor) << B_ADAPTORSHIFT) | \
 	((controller) << B_CONTROLLERSHIFT) | ((unit) << B_UNITSHIFT) | \
 	((partition) << B_PARTITIONSHIFT) | B_DEVMAGIC)
+
+#ifdef _KERNEL
+
+__BEGIN_DECLS
+
+void	boot __P((int))
+    __attribute__((__noreturn__));
+
+__END_DECLS
+
+#endif /* _KERNEL */
+
