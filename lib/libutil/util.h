@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.4 1996/12/23 07:43:42 downsj Exp $	*/
+/*	$OpenBSD: util.h,v 1.5 1997/02/16 19:59:23 provos Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -64,6 +64,7 @@ void	pw_init __P((void));
 void	pw_edit __P((int, const char *));
 void	pw_prompt __P((void));
 void	pw_copy __P((int, int, struct passwd *));
+void	pw_getconf __P((char *, size_t, const char *, const char *));
 int	pw_scan __P((char *, struct passwd *, int *));
 void	pw_error __P((const char *, int, int));
 int	openpty __P((int *, int *, char *, struct termios *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.7 1997/02/15 09:47:54 provos Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.8 1997/02/16 19:59:21 provos Exp $	*/
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,149 @@ static char rcsid[] = "$NetBSD: passwd.c,v 1.1.4.1 1996/06/02 19:48:31 ghudson E
 
 #include "util.h"
 
+#define NUM_OPTIONS     2       /* Number of hardcoded defaults */
+
 static void	pw_cont __P((int sig));
+
+static const char options[NUM_OPTIONS][2][80] =
+{
+	{"localcipher", "blowfish,4"},
+	{"ypcipher", "old"}
+};
+
+/* Removes trailers. */
+static void
+remove_trailing_space(line)
+	char   *line;
+{
+	char   *p;
+	/* Remove trailing spaces */
+	p = line;
+	while (isspace(*p))
+		p++;
+	memcpy(line, p, strlen(p) + 1);
+
+	p = line + strlen(line) - 1;
+	while (isspace(*p))
+		p--;
+	*(p + 1) = '\0';
+}
+
+
+/* Get one line, remove trailers */
+static int
+read_line(fp, line, max)
+	FILE   *fp;
+	char   *line;
+	int     max;
+{
+	char   *p, *c;
+	/* Read one line of config */
+	if (fgets(line, max, fp) == 0)
+		return 0;
+	if (!(p = strchr(line, '\n'))) {
+		warnx("line too long");
+		return 0;
+	}
+	*p = '\0';
+
+	/* Remove comments */
+	if ((p = strchr(line, '#')))
+		*p = '\0';
+
+	remove_trailing_space(line);
+	return 1;
+}
+
+
+static const char *
+pw_default(option)
+	char   *option;
+{
+	int     i;
+	for (i = 0; i < NUM_OPTIONS; i++)
+		if (!strcmp(options[i][0], option))
+			return options[i][1];
+	return NULL;
+}
+
+/* Retrieve password information from the /etc/passwd.conf file,
+ * at the moment this is only for choosing the cipher to use.
+ * It could easily be used for other authentication methods as
+ * well. 
+ */
+
+void
+pw_getconf(data, max, key, option)
+	char	*data;
+	size_t	max;
+	const char *key;
+	const char *option;
+{
+	FILE   *fp;
+	char    line[LINE_MAX];
+	static char result[LINE_MAX];
+	char   *p;
+	int     defaultw;
+	int     keyw;
+	int     got;
+
+	result[0] = '\0';
+
+	if ((fp = fopen(_PATH_PASSWDCONF, "r")) == NULL) {
+		if((p=(char *)pw_default(option))) {
+			strncpy(data, p, max - 1);
+			data[max - 1] = '\0';
+		} else
+			data[0] = '\0';
+		return;
+	}
+	defaultw = 0;
+	keyw = 0;
+	got = 0;
+	while (!keyw && (got || read_line(fp, line, LINE_MAX))) {
+		got = 0;
+		if (!strcmp("default:", line))
+			defaultw = 1;
+		if (!strncmp(key, line, strlen(key)) &&
+		    line[strlen(key)] == ':')
+			keyw = 1;
+
+		/* Now we found default or specified key */
+		if (defaultw || keyw) {
+			while (read_line(fp, line, LINE_MAX)) {
+				char   *p2;
+				/* Leaving key field */
+				if (strchr(line, ':')) {
+					got = 1;
+					keyw = 0;
+					break;
+				}
+				p2 = line;
+				if (!(p = strsep(&p2, "=")) || p2 == NULL)
+					continue;
+				remove_trailing_space(p);
+				if (!strncmp(p, option, strlen(option))) {
+					remove_trailing_space(p2);
+					strcpy(result, p2);
+					break;
+				}
+			}
+			if (keyw)
+				break;
+			defaultw = 0;
+		}
+	}
+	fclose(fp);
+
+	/* If we got no result and have a default use that */
+
+	if (!strlen(result) && (p=(char *)pw_default(option)))
+		strncpy(data, p, max - 1);
+	else 
+		strncpy(data, result, max - 1);
+	data[max - 1] = '\0';
+}
 
 int
 pw_lock(retries)
