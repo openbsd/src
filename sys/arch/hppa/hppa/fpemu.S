@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.8 2003/04/10 17:27:58 mickey Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.9 2004/04/02 20:56:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2002 Michael Shalayeff
@@ -31,6 +31,7 @@
  */
 
 #include <machine/asm.h>
+#include <machine/cpu.h>
 #include "assym.h"
 
 #define	FPEMU_VERSION	(1 << 11)
@@ -96,7 +97,7 @@ LEAF_ENTRY(fpu_emulate)
 	extru,<> arg0, 31, 5, t2
 	b,n	$fpemu_nzt
 	nop
-	comib,=,n 2, t3, $fpemu_exit
+	/*comib,=,n 2, t3, $fpemu_exit*/
 	nop
 $fpemu_nzt
 	/*
@@ -191,7 +192,7 @@ $fpemu0c_0_5	/* frnd */
 	FP_TABLE2(frnd,sgl,dbl,invalid,quad)
 
 $fpemu0c_1
-	extru	t4, 16, 4, r1
+	extru	t4, 20, 4, r1
 	comib,=,n 0, r31, $fpemu0c_1_0
 	comib,=,n 1, r31, $fpemu0c_1_1
 	comib,=,n 2, r31, $fpemu0c_1_2
@@ -323,7 +324,7 @@ invalid_fmpy
 invalid_fdiv
 invalid_frem
 	bv	0(rp)
-	ldi	1, ret0
+	ldi	HPPA_FPU_ILL, ret0
 EXIT(fpu_emulate)
 
 	.end

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.70 2003/12/20 21:49:06 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.71 2004/04/02 20:56:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -263,17 +263,17 @@ trap(type, frame)
 		flt = 0;
 		if (i < 7) {
 			u_int32_t stat = HPPA_FPU_OP(*pex);
-			if (stat == HPPA_FPU_UNMPL)
+			if (stat & HPPA_FPU_UNMPL)
 				flt = FPE_FLTINV;
-			else if (stat & HPPA_FPU_V)
+			else if (stat & (HPPA_FPU_V << 1))
 				flt = FPE_FLTINV;
-			else if (stat & HPPA_FPU_Z)
+			else if (stat & (HPPA_FPU_Z << 1))
 				flt = FPE_FLTDIV;
-			else if (stat & HPPA_FPU_I)
+			else if (stat & (HPPA_FPU_I << 1))
 				flt = FPE_FLTRES;
-			else if (stat & HPPA_FPU_O)
+			else if (stat & (HPPA_FPU_O << 1))
 				flt = FPE_FLTOVF;
-			else if (stat & HPPA_FPU_U)
+			else if (stat & (HPPA_FPU_U << 1))
 				flt = FPE_FLTUND;
 			/* still left: under/over-flow w/ inexact */
 			*pex = 0;
@@ -294,7 +294,7 @@ trap(type, frame)
 
 	case T_EMULATION | T_USER:
 		sv.sival_int = va;
-		trapsignal(p, SIGILL, type &~ T_USER, ILL_ILLOPC, sv);
+		trapsignal(p, SIGILL, type &~ T_USER, ILL_COPROC, sv);
 		break;
 
 	case T_OVERFLOW | T_USER:

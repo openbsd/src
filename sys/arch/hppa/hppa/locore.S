@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.122 2004/03/09 04:43:55 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.123 2004/04/02 20:56:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1062,13 +1062,12 @@ ENTRY(TLABEL(excpt),0)
 	bb,>=,n	r1, HPPA_FPU_T_POS, excpt_notrap
 	ldw	8(r9), r1
 	extru	r1, 5, 6, r1
-	comib,<>,n HPPA_FPU_UNMPL, r1, excpt_notrap
+	bb,<,n	r1, HPPA_FPU_UNMPL, excpt_notrap
 
 	ldw	0(r9), r1
 	depi	0, HPPA_FPU_T_POS, 1, r1
 	stw	r1, 0(r9)
 	ldw	8(r9), r1
-	stw	r0, 8(r9)
 	.import	$fpu_emulate, code
 	b	$fpu_emulate
 	fdc	r0(r9)
@@ -2305,16 +2304,21 @@ ENTRY($fpu_emulate,320)
 	bv,n	0(t1)
 	nop
 
-	mfctl	cr30, arg0
+	mfctl	cr30, r25
 	ldi	32, r1
-	fdc,m	r1(arg0)
-	fdc,m	r1(arg0)
-	fdc,m	r1(arg0)
-	fdc,m	r1(arg0)
-	fdc,m	r1(arg0)
-	fdc,m	r1(arg0)
-	fdc,m	r1(arg0)
-	fdc	r0(arg0)
+
+	ldw	8(r25), r17	/* fpu exception reg 0 */
+	zdep	ret0, 5, 6, r17	/* intentionally zero the insn */
+	stw	r17, 8(r25)
+
+	fdc,m	r1(r25)
+	fdc,m	r1(r25)
+	fdc,m	r1(r25)
+	fdc,m	r1(r25)
+	fdc,m	r1(r25)
+	fdc,m	r1(r25)
+	fdc,m	r1(r25)
+	fdc	r0(r25)
 	sync
 
 	ldil	L%fpemu_stack, r31
@@ -2356,9 +2360,18 @@ ENTRY($fpu_emulate,320)
 	ldw	TF_R30(r31), r30
 	ldw	TF_R31(r31), r31
 
-	comb,<>	r0, r1, TLABEL(all)
+	bb,>=,n	r1, 24, $fpu_emulate_done
+
+	b	TLABEL(all)
+	ldi	T_EMULATION, r1
+
+$fpu_emulate_done
+	comb,=,n r0, r1, $fpu_emulate_done2
+
+	b	TLABEL(all)
 	ldi	T_EXCEPTION, r1
 
+$fpu_emulate_done2
 	rfir
 	nop
 EXIT($fpu_emulate)

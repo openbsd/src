@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.39 2003/10/15 18:54:55 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.40 2004/04/02 20:56:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff
@@ -83,7 +83,8 @@ extern int cpu_hvers;
 #define	HPPA_FPUS	0xc0
 #define	HPPA_FPUVER(w)	(((w) & 0x003ff800) >> 11)
 #define	HPPA_FPU_OP(w)	((w) >> 26)
-#define	HPPA_FPU_UNMPL	0x9
+#define	HPPA_FPU_UNMPL	0x01	/* exception reg, the rest is << 1 */
+#define	HPPA_FPU_ILL	0x80	/* software-only */
 #define	HPPA_FPU_I	0x01
 #define	HPPA_FPU_U	0x02
 #define	HPPA_FPU_O	0x04
