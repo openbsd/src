@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.7 2001/07/18 10:52:34 deraadt Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.8 2001/07/26 17:37:38 chris Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -108,14 +108,16 @@ therefore lacks permission to bind to port 80).
 rdr on ne3 proto tcp from any to any port 80 -> 127.0.0.1 port 8080
 .Ed
 .Pp
-In the example below, lo0 is the system loopback; the machine translates
-all packets coming from 192.168.168.0/24 to 204.92.77.111 going out any
-interface except the loopback.
+In the example below, vlan12 is configured for the 192.168.168.1;
+the machine translates all packets coming from 192.168.168.0/24 to 204.92.77.111
+when they are going out any interface except vlan12.
 This has the net effect of making traffic from the 192.168.168.0/24
-network appear as though it is part of the Internet routeable address
-204.92.77.111 to nodes behind any interface on the router.
+network appear as though it is the Internet routeable address
+204.92.77.111 to nodes behind any interface on the router except 
+the for the nodes on vlan12.  (Thus, 192.168.168.1 can talk to the
+192.168.168.0/24 nodes.)
 .Bd -literal
-nat on ! lo0 from 192.168.168.0/24 to any -> 204.92.77.111
+nat on ! vlan12 from 192.168.168.0/24 to any -> 204.92.77.111
 .Ed
 .Pp
 In the example below, fxp1 is the outside interface; the machine sits between a
@@ -131,7 +133,7 @@ kue0 is the outside interface, and its external address is 157.161.48.183.
 # translate outgoing packets' source addresses (any protocol)
 # in my case, any address but the gateway's external address is mapped
 #
-nat on kue0 ! 157.161.48.183 to any -> 157.161.48.183
+nat on kue0 from ! 157.161.48.183 to any -> 157.161.48.183
 
 # RDR
 # translate incoming packets' destination addresses
