@@ -42,6 +42,9 @@
  *	across the network to save BandWidth
  *
  * $Log: supfilesrv.c,v $
+ * Revision 1.2  1996/06/10 20:45:35  deraadt
+ * hack: print hostname connection failed with
+ *
  * Revision 1.1  1995/12/16 11:46:59  deraadt
  * add sup to the tree
  *
@@ -1675,6 +1678,9 @@ va_dcl
 #endif
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
+	strcat(buf, " [");
+	strcat(buf, remotehost());
+	strcat(buf, "]");
 	goawayreason = salloc (buf);
 	(void) msggoaway ();
 	logerr ("%s",buf);
