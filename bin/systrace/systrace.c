@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.21 2002/07/09 15:22:27 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.22 2002/07/09 20:46:18 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -512,6 +512,7 @@ main(int argc, char **argv)
 	char *guipath = _PATH_XSYSTRACE;
 	pid_t pidattach = 0;
 	int usex11 = 1;
+	int background;
 
 	while ((c = getopt(argc, argv, "aAituUg:f:p:")) != -1) {
 		switch (c) {
@@ -563,9 +564,6 @@ main(int argc, char **argv)
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		err(1, "getcwd");
 
-	if (signal(SIGCHLD, child_handler) == SIG_ERR)
-		err(1, "signal");
-
 	/* Local initalization */
 	systrace_initalias();
 	systrace_initpolicy(filename);
@@ -573,6 +571,9 @@ main(int argc, char **argv)
 
 	if ((fd = intercept_open()) == -1)
 		exit(1);
+
+	/* See if we can run the systrace process in the background */
+	background = usex11 || automatic || allow;
 
 	if (pidattach == 0) {
 		/* Run a command and attach to it */
@@ -583,21 +584,30 @@ main(int argc, char **argv)
 			args[i] = argv[i];
 		args[i] = NULL;
 
-		pid = intercept_run(fd, args[0], args);
+		pid = intercept_run(background, fd, args[0], args);
 		if (pid == -1)
 			err(1, "fork");
 
 		if (intercept_attach(fd, pid) == -1)
 			err(1, "attach");
 
-		if (kill(pid, SIGCONT) == -1)
+		if (kill(pid, SIGUSR1) == -1)
 			err(1, "kill");
 	} else {
-		/* Attach to a running command */
+		pid_t cpid;
 
+		/* Attach to a running command */
 		if (intercept_attachpid(fd, pidattach, argv[0]) == -1)
 			err(1, "attachpid");
+
+		if (background) {
+			if (daemon(0, 0) == -1)
+				err(1, "daemon");
+		}
 	}
+
+	if (signal(SIGCHLD, child_handler) == SIG_ERR)
+		err(1, "signal");
 
 	/* Start the policy gui if necessary */
 	if (usex11 && !automatic && !allow)

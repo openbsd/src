@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.4 2002/07/09 15:22:27 provos Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.5 2002/07/09 20:46:18 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -110,7 +110,7 @@ struct intercept_replace {
 TAILQ_HEAD(intercept_tlq, intercept_translate);
 
 int intercept_init(void);
-pid_t intercept_run(int, char *, char * const *);
+pid_t intercept_run(int, int, char *, char * const *);
 int intercept_open(void);
 int intercept_attach(int, pid_t);
 int intercept_attachpid(int, pid_t, char *);
