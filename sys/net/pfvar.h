@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.1 2001/06/24 19:48:58 kjell Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.2 2001/06/24 21:24:13 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef _NETINET_PACKETFILTER_H_
-#define _NETINET_PACKETFILTER_H_
+#ifndef _NET_PFVAR_H_
+#define _NET_PFVAR_H_
 
 #include <sys/types.h>
 
@@ -167,4 +167,4 @@ int pf_test (int, struct ifnet *, struct mbuf **);
 
 #endif /* _KERNEL */
 
-#endif /* _NET_PACKETFILTER_H_ */
+#endif /* _NET_PFVAR_H_ */
