@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.152 2002/09/22 15:22:20 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.153 2002/09/22 15:28:53 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2365,12 +2365,11 @@ findeol(void)
 	/* skip to either EOF or the first real EOL */
 	while (1) {
 		c = lgetc(fin);
-		if (c == '\\') {
-			c = lgetc(fin);
-			if (c == '\n')
-				continue;
+		if (c == '\n') {
+			lineno++;
+			break;
 		}
-		if (c == EOF || c == '\n')
+		if (c == EOF)
 			break;
 	}
 	return (ERROR);
@@ -2495,9 +2494,9 @@ top:
 	if (isalnum(c) || c == ':') {
 		do {
 			*p++ = c;
-			if (p-buf >= sizeof buf) {
+			if (p-buf >= sizeof(buf)) {
 				yyerror("string too long");
-				return (ERROR);
+				return (findeol());
 			}
 		} while ((c = lgetc(fin)) != EOF && (allowed_in_string(c)));
 		lungetc(c, fin);
