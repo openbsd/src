@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.46 2001/01/30 04:22:24 kjell Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.47 2001/02/01 01:32:51 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1104,6 +1104,8 @@ bridge_input(ifp, eh, m)
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("bridge_input(): no HDR");
 
+	m->m_flags &= ~M_PROTO1;	/* Loop prevention */
+
 	sc = (struct bridge_softc *)ifp->if_bridge;
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (m);
@@ -1154,6 +1156,18 @@ bridge_input(ifp, eh, m)
 		IF_ENQUEUE(&sc->sc_if.if_snd, mc);
 		splx(s);
 		schednetisr(NETISR_BRIDGE);
+		if (ifp->if_type == IFT_GIF) {
+			LIST_FOREACH(ifl, &sc->sc_iflist, next) {
+				if (ifl->ifp->if_type == IFT_ETHER)
+					break;
+			}
+			if (ifl == LIST_END(&sc->sc_iflist)) {
+				m->m_flags |= M_PROTO1;
+				m->m_pkthdr.rcvif = ifl->ifp;
+				ether_input(ifl->ifp, eh, m);
+				m = NULL;
+			}
+		}
 		return (m);
 	}
 
@@ -1181,6 +1195,11 @@ bridge_input(ifp, eh, m)
 				    (struct ether_addr *)&eh->ether_dhost,
 				    ifp, 0, IFBAF_DYNAMIC);
 			m->m_pkthdr.rcvif = ifl->ifp;
+			if (ifp->if_type == IFT_GIF) {
+				m->m_flags |= M_PROTO1;
+				ether_input(ifl->ifp, eh, m);
+				m = NULL;
+			}
 			return (m);
 		}
 		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0) {

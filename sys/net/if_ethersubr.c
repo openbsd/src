@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.40 2000/12/12 03:41:22 jason Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.41 2001/02/01 01:32:51 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -579,6 +579,10 @@ ether_input(ifp, eh, m)
 	 * gets processed as normal.
 	 */
 	if (ifp->if_bridge) {
+		if (m->m_flags & M_PROTO1) {
+			m->m_flags &= ~M_PROTO1;
+			goto decapsulate;
+		}
 		m = bridge_input(ifp, eh, m);
 		if (m == NULL)
 			return;
