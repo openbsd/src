@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.39 2000/10/14 12:12:09 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.40 2000/10/15 14:14:01 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -673,7 +673,7 @@ do_login(Session *s)
 		time_string = ctime(&last_login_time);
 		if (strchr(time_string, '\n'))
 			*strchr(time_string, '\n') = 0;
-		if (strcmp(buf, "") == 0)
+		if (strcmp(hostname, "") == 0)
 			printf("Last login: %s\r\n", time_string);
 		else
 			printf("Last login: %s from %s\r\n", time_string, hostname);
