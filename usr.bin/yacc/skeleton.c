@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.4 1996/04/21 23:45:21 deraadt Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.5 1996/05/20 07:31:54 tholo Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ char *banner[] =
 {
     "#ifndef lint",
     "/*static char yysccsid[] = \"from: @(#)yaccpar	1.9 (Berkeley) 02/21/93\";*/",
-    "static char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.4 1996/04/21 23:45:21 deraadt Exp $\";",
+    "static char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.5 1996/05/20 07:31:54 tholo Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -130,7 +130,11 @@ char *header[] =
 char *body[] =
 {
     "/* allocate initial stack or double stack size, up to YYMAXDEPTH */",
+    "#if defined(__cplusplus) || __STDC__",
+    "static int yygrowstack(void)",
+    "#else",
     "static int yygrowstack()",
+    "#endif",
     "{",
     "    int newsize, i;",
     "    short *newss;",
@@ -161,7 +165,11 @@ char *body[] =
     "#define YYACCEPT goto yyaccept",
     "#define YYERROR goto yyerrlab",
     "int",
+    "#if defined(__cplusplus) || __STDC__",
+    "yyparse(void)",
+    "#else",
     "yyparse()",
+    "#endif",
     "{",
     "    register int yym, yyn, yystate;",
     "#if YYDEBUG",
