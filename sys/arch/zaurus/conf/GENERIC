@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2005/01/14 18:09:07 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.15 2005/01/14 18:18:19 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -25,8 +25,6 @@ include "../../../conf/GENERIC"
 options		ARM32
 #options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
 options		PXA2x0_INTR
-options 	COTULLA
-options 	LUBBOCK
 options		PXAGPIO_HAS_GPION_INTRS
 
 options		CACHE_CLEAN_BLOCK_INTR
