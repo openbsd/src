@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.24 2005/03/12 07:05:48 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.25 2005/03/15 09:24:53 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -507,7 +507,7 @@ rtw_chip_reset1(struct rtw_regs *regs, const char *dvname)
 		DELAY(10); /* 10us */
 	}
 
-	printf("%s: reset failed\n", dvname);
+	printf("\n%s: reset failed\n", dvname);
 	return ETIMEDOUT;
 }
 
@@ -551,7 +551,7 @@ rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 		DELAY(200);
 	}
 
-	printf("%s: could not recall EEPROM in %dus\n", dvname, i * 200);
+	printf("\n%s: could not recall EEPROM in %dus\n", dvname, i * 200);
 
 	return (ETIMEDOUT);
 }
@@ -660,7 +660,8 @@ rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 	*rcr &= ~(RTW_RCR_ENCS1 | RTW_RCR_ENCS2);
 
 	version = RTW_SR_GET16(sr, RTW_SR_VERSION);
-	printf("SROM %d.%d ", version >> 8, version & 0xff);
+	RTW_DPRINTF(RTW_DEBUG_ATTACH,
+	    ("%s: SROM %d.%d\n", dvname, version >> 8, version & 0xff));
 
 	if (version <= 0x0101) {
 		printf(" is not understood, limping along with defaults ");
@@ -693,15 +694,15 @@ rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 	*rfchipid = RTW_SR_GET(sr, RTW_SR_RFCHIPID);
 	switch (*rfchipid) {
 	case RTW_RFCHIPID_GCT:		/* this combo seen in the wild */
-		rfname = "GCT GRF5101";
-		paname = "Winspring WS9901";
+		rfname = "GRF5101";
+		paname = "WS9901";
 		break;
 	case RTW_RFCHIPID_MAXIM:
 		rfname = "MAX2820";	/* guess */
 		paname = "MAX2422";	/* guess */
 		break;
 	case RTW_RFCHIPID_INTERSIL:
-		rfname = "Intersil HFA3873";	/* guess */
+		rfname = "HFA3873";	/* guess */
 		paname = "Intersil <unknown>";
 		break;
 	case RTW_RFCHIPID_PHILIPS:	/* this combo seen in the wild */
@@ -715,7 +716,7 @@ rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 			 "SYN: Silicon Labs Si4126";	/* inferred from
 			 				 * reference driver
 							 */
-		paname = "RFMD RF2189";		/* mentioned in Realtek docs */
+		paname = "RF2189";		/* mentioned in Realtek docs */
 		break;
 	case RTW_RFCHIPID_RESERVED:
 		rfname = paname = "reserved";
@@ -724,7 +725,7 @@ rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 		snprintf(scratch, sizeof(scratch), "unknown 0x%02x", *rfchipid);
 		rfname = paname = scratch;
 	}
-	printf("RF %s PA %s ", rfname, paname);
+	printf("radio %s, amp %s, ", rfname, paname);
 
 	switch (RTW_SR_GET(sr, RTW_SR_CONFIG0) & RTW_CONFIG0_GL_MASK) {
 	case RTW_CONFIG0_GL_USA:
@@ -801,7 +802,7 @@ rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
 
 	/* TBD bus barriers */
 	if (!read_seeprom(&sd, sr->sr_content, 0, sr->sr_size/2)) {
-		printf("%s: could not read SROM\n", dvname);
+		printf("\n%s: could not read SROM\n", dvname);
 		free(sr->sr_content, M_DEVBUF);
 		sr->sr_content = NULL;
 		return -1;	/* XXX */
@@ -951,7 +952,7 @@ rtw_identify_sta(struct rtw_regs *regs, u_int8_t (*addr)[IEEE80211_ADDR_LEN],
 	(*addr)[5] = MASK_AND_RSHIFT(idr1, BITS(8, 15));
 
 	if (IEEE80211_ADDR_EQ(addr, empty_macaddr)) {
-		printf("%s: could not get mac address, attach failed\n",
+		printf("\n%s: could not get mac address, attach failed\n",
 		    dvname);
 		return ENXIO;
 	}
@@ -3676,14 +3677,14 @@ rtw_attach(struct rtw_softc *sc)
 		sc->sc_hwverid = '?';
 		break;
 	}
-	printf("%s: ver %c ", sc->sc_dev.dv_xname, sc->sc_hwverid);
+	printf("%s: ver %c, ", sc->sc_dev.dv_xname, sc->sc_hwverid);
 
 	rc = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct rtw_descs),
 	    RTW_DESC_ALIGNMENT, 0, &sc->sc_desc_segs, 1, &sc->sc_desc_nsegs,
 	    0);
 
 	if (rc != 0) {
-		printf("%s: could not allocate hw descriptors, error %d\n",
+		printf("\n%s: could not allocate hw descriptors, error %d\n",
 		     sc->sc_dev.dv_xname, rc);
 		goto err;
 	}
@@ -3695,7 +3696,7 @@ rtw_attach(struct rtw_softc *sc)
 	    (caddr_t*)&sc->sc_descs, BUS_DMA_COHERENT);
 
 	if (rc != 0) {
-		printf("%s: could not map hw descriptors, error %d\n",
+		printf("\n%s: could not map hw descriptors, error %d\n",
 		    sc->sc_dev.dv_xname, rc);
 		goto err;
 	}
@@ -3705,7 +3706,7 @@ rtw_attach(struct rtw_softc *sc)
 	    sizeof(struct rtw_descs), 0, 0, &sc->sc_desc_dmamap);
 
 	if (rc != 0) {
-		printf("%s: could not create DMA map for hw descriptors, "
+		printf("\n%s: could not create DMA map for hw descriptors, "
 		    "error %d\n", sc->sc_dev.dv_xname, rc);
 		goto err;
 	}
@@ -3723,7 +3724,7 @@ rtw_attach(struct rtw_softc *sc)
 	    sizeof(struct rtw_descs), NULL, 0);
 
 	if (rc != 0) {
-		printf("%s: could not load DMA map for hw descriptors, "
+		printf("\n%s: could not load DMA map for hw descriptors, "
 		    "error %d\n", sc->sc_dev.dv_xname, rc);
 		goto err;
 	}
@@ -3744,7 +3745,7 @@ rtw_attach(struct rtw_softc *sc)
 
 		if ((rc = rtw_txdesc_dmamaps_create(sc->sc_dmat,
 		    &tsb->tsb_desc[0], tsb->tsb_ndesc)) != 0) {
-			printf("%s: could not load DMA map for "
+			printf("\n%s: could not load DMA map for "
 			    "hw tx descriptors, error %d\n",
 			    sc->sc_dev.dv_xname, rc);
 			goto err;
@@ -3754,7 +3755,7 @@ rtw_attach(struct rtw_softc *sc)
 	NEXT_ATTACH_STATE(sc, FINISH_TXMAPS_CREATE);
 	if ((rc = rtw_rxdesc_dmamaps_create(sc->sc_dmat, &sc->sc_rxsoft[0],
 	                                    RTW_RXQLEN)) != 0) {
-		printf("%s: could not load DMA map for hw rx descriptors, "
+		printf("\n%s: could not load DMA map for hw rx descriptors, "
 		    "error %d\n", sc->sc_dev.dv_xname, rc);
 		goto err;
 	}
@@ -3779,7 +3780,7 @@ rtw_attach(struct rtw_softc *sc)
 	if (rtw_srom_parse(&sc->sc_srom, &sc->sc_flags, &sc->sc_csthr,
 	    &sc->sc_rfchipid, &sc->sc_rcr, &sc->sc_locale,
 	    sc->sc_dev.dv_xname) != 0) {
-		printf("%s: attach failed, malformed serial ROM\n",
+		printf("\n%s: attach failed, malformed serial ROM\n",
 		    sc->sc_dev.dv_xname);
 		goto err;
 	}
@@ -3796,7 +3797,7 @@ rtw_attach(struct rtw_softc *sc)
 	    sc->sc_flags & RTW_F_DIGPHY);
 
 	if (sc->sc_rf == NULL) {
-		printf("%s: attach failed, could not attach RF\n",
+		printf("\n%s: attach failed, could not attach RF\n",
 		    sc->sc_dev.dv_xname);
 		goto err;
 	}
