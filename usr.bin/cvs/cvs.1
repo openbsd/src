@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.45 2005/02/09 16:11:15 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.46 2005/02/09 16:34:56 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -126,40 +126,37 @@ are replaced with strings of the form $keyword: value$ whenever you
 obtain a new revision of the file.
 The possible keywords are as follows:
 .Bl -tag -width "RevisionXXX"
-.It $Author: xsa $
+.It \&$Author\&$
 The name of the user who checked in the revision.
-.It $Date: 2005/02/09 16:11:15 $
+.It \&$Date\&$
 The date and hour (UTC) the revision was checked in.
-.It $Header: /home/cvs/src/usr.bin/cvs/cvs.1,v 1.45 2005/02/09 16:11:15 xsa Exp $
+.It \&$Header\&$
 Standard header containing the full pathname of the RCS
 file, the revision number, the date (UTC), the author and the state.
-.It $Id: cvs.1,v 1.45 2005/02/09 16:11:15 xsa Exp $
-The same content as $Header: /home/cvs/src/usr.bin/cvs/cvs.1,v 1.45 2005/02/09 16:11:15 xsa Exp $ but without the path
+.It \&$Id\&$
+The same content as $Header: /home/cvs/src/usr.bin/cvs/cvs.1,v 1.46 2005/02/09 16:34:56 xsa Exp $ but without the path
 of the RCS file.
-.It $Log: cvs.1,v $
-.It Revision 1.45  2005/02/09 16:11:15  xsa
-.It add a KEYWORD SUBSTITUTION section; ok jmc@ jfb@ Joris Vink;
-.It
+.It \&$Log\&$
 The log message supplied during commit, preceded by a header
 containing the RCS filename, the revision number, the
 author, and the date (UTC).
-.It $Name:  $
+.It \&$Name\&$
 The tag name used to check out the file.
-.It $RCSfile: cvs.1,v $
+.It \&$RCSfile\&$
 The name of the RCS file, but without a path.
-.It $Revision: 1.45 $
+.It \&$Revision\&$
 The revision number assigned to the revision.
-.It $Source: /home/cvs/src/usr.bin/cvs/cvs.1,v $
+.It \&$Source\&$
 The full pathname of the RCS file.
-.It $State: Exp $
+.It \&$State\&$
 The state assigned to the revision.
 .El
 .Pp
 Keyword substitution has its disadvantages: sometimes the
-literal text string $Author: xsa $ is wanted inside a file without
+literal text string \&$Author\&$ is wanted inside a file without
 .Nm
 interpreting it as a keyword and expanding it into something like
-$Author: xsa $.
+\&$Author\&$.
 The
 .Fl k Ar o
 option can be used to turn off keyword substitution entirely though. 
@@ -197,7 +194,7 @@ Useful with the
 command to avoid displaying the differences between keyword substitutions.
 .It Fl k Ar kv
 The default behaviour.
-Keywords are normally substituted i.e. $Revision: 1.45 $ becomes $Revision: 1.45 $.
+Keywords are normally substituted i.e. \&$Revision\&$ becomes $Revision: 1.46 $.
 .It Fl k Ar kvl
 Like
 .Fl k Ar kv ,
@@ -214,7 +211,7 @@ command to guarantee that files that already contain external keywords
 do not get modified.
 .It Fl k Ar v
 Substitue the value of keywords instead of keywords themselves
-e.g. instead of $Revision: 1.45 $, only insert 1.1 and not $Revision: 1.45 $.
+e.g. instead of \&$Revision\&$, only insert 1.1 and not $Revision: 1.46 $.
 This option must be used with care, as it can only be used once.
 It is often used with the
 .Ic export
