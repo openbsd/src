@@ -1,4 +1,4 @@
-$OpenBSD: cardbusdevs,v 1.5 2000/09/17 03:50:20 aaron Exp $
+$OpenBSD: cardbusdevs,v 1.6 2000/10/26 22:27:28 deraadt Exp $
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
 /*
@@ -41,50 +41,50 @@ $OpenBSD: cardbusdevs,v 1.5 2000/09/17 03:50:20 aaron Exp $
  * List of known CardBus vendors
  */
 
-vendor DEC		0x1011	Digital Equipment
-vendor OPTI		0x1045	Opti
-vendor 3COM		0x10B7	3Com
-vendor XIRCOM		0x115d	Xircom
-vendor ADMTEK		0x1317	ADMtek
-vendor INTEL		0x8086	Intel
-vendor ADP		0x9004	Adaptec
-vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
-vendor INVALID		0xffff	INVALID VENDOR ID
+vendor DEC			0x1011	DEC
+vendor OPTI			0x1045	Opti
+vendor 3COM			0x10B7	3Com
+vendor XIRCOM			0x115d	Xircom
+vendor ADMTEK			0x1317	ADMtek
+vendor INTEL			0x8086	Intel
+vendor ADP			0x9004	Adaptec
+vendor ADP2			0x9005	Adaptec(2)
+vendor INVALID			0xffff	INVALID
 
 /*
  * List of known products.  Grouped by vendor.
  */
 
 /* 3COM Products */
-product 3COM 3C575	0x5057	3C575 100Base-TX
-product 3COM 3CCFE575BT	0x5157  3CCFE575BT 100Base-TX
-product 3COM 3CCFE575CT	0x5257	3CCFE575CT 100Base-TX
-product 3COM 3CCFEM656	0x6560	3CCFEM656 100Base-TX
-product 3COM 3CCFEM656B	0x6562	3CCFEM656B 100Base-TX
-product 3COM MODEM56	0x6563	56k Modem
-product 3COM 3CCFEM656C	0x6564	3CCFEM656C 100Base-TX
+product 3COM 3C575		0x5057	3C575
+product 3COM 3CCFE575BT		0x5157  3CCFE575BT
+product 3COM 3CCFE575CT		0x5257	3CCFE575CT
+product 3COM 3CCFEM656		0x6560	3CCFEM656
+product 3COM 3CCFEM656B		0x6562	3CCFEM656B
+product 3COM MODEM56		0x6563	56k Modem
+product 3COM 3CCFEM656C		0x6564	3CCFEM656C
 
 /* ADMtek products */
-product ADMTEK AN985	0x1985	AN985 100Base-TX
+product ADMTEK AN985		0x1985	AN985
 
 /* Adaptec products */
-product ADP 1480        0x6075  APA-1480
+product ADP 1480	        0x6075  APA-1480
 
 /* DEC products */
-product DEC 21142	0x0019	DECchip 21142/3
+product DEC 21142		0x0019	21142/3
 
 /* Intel products */
-product INTEL 82557	0x1229	82557 Fast Ethernet LAN Controller
+product INTEL 82557		0x1229	82557
 /* XXX product name? */
-product INTEL MODEM56	0x1002	Modem
+product INTEL MODEM56		0x1002	Modem
 
 /* Opti products */
-product OPTI 82C861	0xc861	82C861 USB Host Controller (OHCI)
+product OPTI 82C861		0xc861	82C861
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part
    of the device name? */
-product XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
+product XIRCOM X3201_3		0x0002	X3201-3
 /* this is the device id `indicating 21143 driver compatibility' */
-product XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
+product XIRCOM X3201_3_21143	0x0003	X3201-3 (21143)
 product XIRCOM MODEM56		0x0103	56k Modem
