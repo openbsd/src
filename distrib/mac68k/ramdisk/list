@@ -1,6 +1,6 @@
-#	$OpenBSD: list,v 1.8 2002/02/09 17:02:14 deraadt Exp $
+#	$OpenBSD: list,v 1.9 2002/04/21 17:10:10 deraadt Exp $
 
-COPY	${OBJDIR}/raminst		raminst
+COPY	${OBJDIR}/raminst	raminst
 LINK	raminst			bin/cat
 LINK	raminst			bin/chmod bin/chgrp sbin/chown
 LINK	raminst			bin/cp
@@ -38,7 +38,6 @@ LINK	raminst			sbin/mount_mfs
 LINK	raminst			sbin/newfs
 LINK	raminst			sbin/reboot
 LINK	raminst			sbin/route
-LINK	raminst			sbin/slattach
 LINK	raminst			sbin/umount
 LINK	raminst			usr/bin/ftp
 LINK	raminst			usr/bin/egrep
@@ -46,13 +45,8 @@ LINK	raminst			usr/bin/grep
 LINK	raminst			usr/bin/gzip
 LINK	raminst			usr/bin/less
 LINK	raminst			usr/bin/sed
-LINK	raminst			usr/bin/sort
 LINK	raminst			bin/pax
 LINK	raminst			usr/bin/tar
-LINK	raminst			usr/bin/tip
-LINK	raminst			usr/sbin/chat
-LINK	raminst			usr/sbin/pppd
-LINK	raminst			usr/bin/vi
 SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
