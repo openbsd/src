@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.15 2004/01/09 17:10:07 brad Exp $
+#	$OpenBSD: mkioctls,v 1.16 2004/06/07 20:36:07 mickey Exp $
 
 #
 # Copyright (c) 1994
@@ -65,6 +65,7 @@ BEGIN {
 	print "#include <sys/dkbad.h>"
 	print "#include <sys/dkio.h>"
 	print "#include <sys/filio.h>"
+	print "#include <sys/gpio.h>"
 	print "#include <sys/midiio.h>"
 	print "#include <sys/mtio.h>"
 	print "#include <sys/pciio.h>"
@@ -91,7 +92,7 @@ BEGIN {
 	print ""
 }
 
-/^#[ 	]*define[ 	]*(AGPIOC_|ATAIO|AUDIO_|BIOC|CCDIOC|CDIO|CIOC|CHIO|DIOC|MIDI_|SEQUENCER_|TIO|FIO|FIBMAP|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|RD_|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z_0-9]*[ 	]*_IO/ {
+/^#[ 	]*define[ 	]*(AGPIOC_|ATAIO|AUDIO_|BIOC|CCDIOC|CDIO|CIOC|CHIO|DIOC|MIDI_|GPIO|SEQUENCER_|TIO|FIO|FIBMAP|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|RD_|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z_0-9]*[ 	]*_IO/ {
 
 	# find where the name starts
 	for (i = 1; i <= NF; i++)

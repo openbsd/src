@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2003/07/02 20:54:17 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2004/06/07 20:36:07 mickey Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -32,6 +32,7 @@ ioctl.c: ${.CURDIR}/mkioctls
 	    ${DESTDIR}/usr/include/sys/chio.h \
 	    ${DESTDIR}/usr/include/sys/dkio.h \
 	    ${DESTDIR}/usr/include/sys/filio.h \
+	    ${DESTDIR}/usr/include/sys/gpio.h \
 	    ${DESTDIR}/usr/include/sys/midiio.h \
 	    ${DESTDIR}/usr/include/sys/mtio.h \
 	    ${DESTDIR}/usr/include/sys/pciio.h \
