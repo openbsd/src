@@ -341,7 +341,7 @@ hist_error(s, start, current, errtype)
       int start, current, errtype;
 {
   char *temp, *emsg;
-  int ll, elen;
+  int ll, elen, len;
 
   ll = current - start;
 
@@ -373,11 +373,11 @@ hist_error(s, start, current, errtype)
       break;
     }
 
-  temp = xmalloc (ll + elen + 3);
+  len = ll + elen + 3; 
+  temp = xmalloc (len);
   strncpy (temp, s + start, ll);
-  temp[ll] = ':';
-  temp[ll + 1] = ' ';
-  strcpy (temp + ll + 2, emsg);
+  strlcat (temp, ": ", len);
+  strlcat (temp, emsg, len);
   return (temp);
 }
 
@@ -443,7 +443,7 @@ postproc_subst_rhs ()
 	{
 	  if (j + subst_lhs_len >= new_size)
 	    new = xrealloc (new, (new_size = new_size * 2 + subst_lhs_len));
-	  strcpy (new + j, subst_lhs);
+	  strlcpy (new + j, subst_lhs, new_size - j);
 	  j += subst_lhs_len;
 	}
       else
@@ -754,7 +754,7 @@ history_expand_internal (string, start, end_index_ptr, ret_string, current_line)
   n = strlen (temp);
   if (n >= result_len)
     result = xrealloc (result, n + 2);
-  strcpy (result, temp);
+  strlcpy (result, temp, n + 2);
   free (temp);
 
   *end_index_ptr = i;
@@ -786,7 +786,7 @@ history_expand_internal (string, start, end_index_ptr, ret_string, current_line)
 		  result_len += 128; \
 		result = xrealloc (result, result_len); \
 	      } \
-	    strcpy (result + j - sl, s); \
+	    strlcpy (result + j - sl, s, result_len - j + sl); \
 	  } \
 	while (0)
 
@@ -847,7 +847,7 @@ history_expand (hstring, output)
       string[0] = string[1] = history_expansion_char;
       string[2] = ':';
       string[3] = 's';
-      strcpy (string + 4, hstring);
+      strlcpy (string + 4, hstring, l - 4);
       l += 4;
     }
   else
@@ -966,7 +966,7 @@ history_expand (hstring, output)
 	  if (i == 0 || member (string[i - 1], HISTORY_WORD_DELIMITERS))
 	    {
 	      temp = xmalloc (l - i + 1);
-	      strcpy (temp, string + i);
+	      strlcpy (temp, string + i, l - i + 1);
 	      ADD_STRING (temp);
 	      free (temp);
 	      i = l;
@@ -998,7 +998,7 @@ history_expand (hstring, output)
 	      if (result)
 		{
 		  temp = xmalloc (1 + strlen (result));
-		  strcpy (temp, result);
+		  strlcpy (temp, result, 1 + strlen(result));
 		  ADD_STRING (temp);
 		  free (temp);
 		}
@@ -1192,7 +1192,7 @@ history_arg_extract (first, last, string)
 
       for (i = first, offset = 0; i < last; i++)
 	{
-	  strcpy (result + offset, list[i]);
+	  strlcpy (result + offset, list[i], size + 1 - offset);
 	  offset += strlen (list[i]);
 	  if (i + 1 < last)
 	    {

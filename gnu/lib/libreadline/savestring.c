@@ -20,16 +20,21 @@
    have a copy of the license, write to the Free Software Foundation,
    59 Temple Place, Suite 330, Boston, MA 02111 USA. */
 
+#include <stdio.h>
 #include <string.h>
-
-extern char *strcpy ();
-extern char *xmalloc ();
 
 /* Backwards compatibility, now that savestring has been removed from
    all `public' readline header files. */
+
 char *
-savestring (s)
-     char *s;
+savestring(char *s) 
 {
-  return ((char *)strcpy (xmalloc (1 + (int)strlen (s)), (s)));
+	char * cp;
+	cp = strdup(s);
+	if (cp == NULL) {
+		fprintf (stderr, "savestring: out of virtual memory\n"); 
+		exit (2);
+	}
+	return(cp);
 }
+

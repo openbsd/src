@@ -40,14 +40,6 @@
 /*								    */
 /* **************************************************************** */
 
-static void
-memory_error_and_abort (fname)
-     char *fname;
-{
-  fprintf (stderr, "%s: out of virtual memory\n", fname);
-  exit (2);
-}
-
 /* Return a pointer to free()able block of memory large enough
    to hold BYTES number of bytes.  If the memory cannot be allocated,
    print an error message and abort. */
