@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.39 2004/12/10 02:49:18 krw Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.40 2004/12/10 05:04:23 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -480,6 +480,7 @@ bge_miibus_readreg(dev, phy, reg)
 		val = CSR_READ_4(sc, BGE_MI_COMM);
 		if (!(val & BGE_MICOMM_BUSY))
 			break;
+		delay(10);
 	}
 
 	if (i == BGE_TIMEOUT) {
@@ -524,6 +525,7 @@ bge_miibus_writereg(dev, phy, reg, val)
 	for (i = 0; i < BGE_TIMEOUT; i++) {
 		if (!(CSR_READ_4(sc, BGE_MI_COMM) & BGE_MICOMM_BUSY))
 			break;
+		delay(10);
 	}
 
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
