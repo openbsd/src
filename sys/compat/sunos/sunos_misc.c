@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.10 1997/06/17 11:11:11 deraadt Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.11 1997/07/28 09:53:12 deraadt Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -1217,4 +1217,20 @@ sunos_sys_sigvec(p, v, retval)
 		setsigvec(p, signum, (struct sigaction *)sv);
 	}
 	return (0);
+}
+
+int
+sunos_sys_stime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos_sys_stime_args /* {
+		time_t		*tp;
+	} */ *uap = v;
+	struct timeval tv;
+
+	*retval = 0;
+	microtime(&tv);
+	return copyout(&tv.tv_sec, SCARG(uap, tp), sizeof(*(SCARG(uap, tp))));
 }
