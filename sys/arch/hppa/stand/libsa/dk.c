@@ -1,4 +1,4 @@
-/*	$OpenBSD: dk.c,v 1.3 1998/09/29 07:20:45 mickey Exp $	*/
+/*	$OpenBSD: dk.c,v 1.4 1998/10/30 19:42:17 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -57,47 +57,61 @@ dkopen(f, va_alist)
 	struct open_file *f;
 #endif
 {
-	struct disklabel *lp;
-	struct hppa_dev *dp;
-	struct pz_device *pzd;
-	const char *st;
-	int i;
+	register struct disklabel *lp;
+	register struct hppa_dev *dp;
+	register struct pz_device *pzd;
+	register const char *st;
 
 #ifdef	DEBUG
-	printf("dkopen(%p)\n", f);
+	if (debug)
+		printf("dkopen(%p)\n", f);
 #endif
 
 	if (!(pzd = pdc_findev(-1, PCL_RANDOM)))
 		return ENXIO;
-#ifdef PDCDEBUG
-	else if (debug)
-		PZDEV_PRINT(pzd);
-#endif
 
-	if (f->f_devdata == 0) 
-		f->f_devdata = alloc(sizeof *dp);
-	dp = f->f_devdata;
+#ifdef	DEBUG
+	if (debug)
+		printf("alloc\n");
+#endif
+	if (!(dp = alloc(sizeof *dp))) {
+#ifdef DEBUG
+		printf ("dkopen: no mem\n");
+#endif
+		return ENODEV;
+	}
 
 	bzero(dp, sizeof *dp);
 
 	dp->bootdev = bootdev;
 	dp->pz_dev = pzd;
 	lp = dp->label;
-	
+	st = NULL;
+#if 0	
+#ifdef DEBUG
+	if (debug)
+		printf ("disklabel\n");
+#endif
 	if ((st = dk_disklabel(dp, lp)) != NULL) {
 #ifdef DEBUG
 		if (debug)
-			printf ("%s\n", st);
+			printf ("dkopen: %s\n", st);
 #endif
 		return ERDLAB;
-	}
+	} else {
+		register u_int i;
 
-	i = B_PARTITION(dp->bootdev);
-	if ((unsigned int)i >= lp->d_npartitions ||
-	    lp->d_partitions[i].p_size == 0) {
-		return (EPART);
+		i = B_PARTITION(dp->bootdev);
+		if (i >= lp->d_npartitions || !lp->d_partitions[i].p_size) {
+			return (EPART);
+		}
 	}
-
+#endif
+#ifdef DEBUG
+	if (debug)
+		printf ("dkopen() ret\n");
+#endif
+	f->f_devdata = dp;
 	return (0);
 }
 
