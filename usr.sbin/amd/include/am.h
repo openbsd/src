@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.5 2002/06/11 05:29:55 itojun Exp $	*/
+/*	$OpenBSD: am.h,v 1.6 2002/07/18 00:58:58 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -219,122 +219,119 @@ typedef struct mnt_map mnt_map;
 /*
  * Global routines
  */
-extern int atoi P((Const char *)); /* C */
-extern void am_mounted P((am_node*));
-extern void am_unmounted P((am_node*));
-extern pid_t background(P_void);
-extern int bind_resv_port P((int, unsigned short*));
-extern int compute_mount_flags P((struct mntent *));
-extern int softclock(P_void);
+extern void	 am_mounted(am_node *);
+extern void	 am_unmounted(am_node *);
+extern pid_t	 background(P_void);
+extern int	 bind_resv_port(int, unsigned short *);
+extern int	 compute_mount_flags(struct mntent *);
+extern int	 softclock(P_void);
 #ifdef DEBUG
-extern int debug_option P((char*));
+extern int	 debug_option(char *);
 #endif /* DEBUG */
-extern void deslashify P((char*));
-/*extern void domain_strip P((char*, char*));*/
-extern mntfs* dup_mntfs P((mntfs*));
-extern fserver* dup_srvr P((fserver*));
-extern int eval_fs_opts P((am_opts*, char*, char*, char*, char*, char*));
-extern char* expand_key P((char*));
-extern am_node* exported_ap_alloc(P_void);
-extern am_node* find_ap P((char*));
-extern am_node* find_mf P((mntfs*));
-extern mntfs* find_mntfs P((am_ops*, am_opts*, char*, char*, char*, char*, char*));
-extern void flush_mntfs(P_void);
-extern void flush_nfs_fhandle_cache P((fserver*));
-extern void forcibly_timeout_mp P((am_node*));
-extern FREE_RETURN_TYPE free P((voidp)); /* C */
-extern void free_mntfs P((mntfs*));
-extern void free_opts P((am_opts*));
-extern void free_map P((am_node*));
-extern void free_mntlist P((mntlist*));
-extern void free_srvr P((fserver*));
-extern int fwd_init(P_void);
-extern int fwd_packet P((int, voidp, int, struct sockaddr_in *,
-		struct sockaddr_in *, voidp, fwd_fun));
-extern void fwd_reply(P_void);
-extern void get_args P((int, char*[]));
-extern char *getwire P((void));
+extern void	 deslashify(char *);
+/*extern void	 domain_strip(char*, char *);*/
+extern mntfs	*dup_mntfs(mntfs *);
+extern fserver	*dup_srvr(fserver*);
+extern int	eval_fs_opts(am_opts *, char *, char *, char *, char *, char *);
+extern char	*expand_key(char *);
+extern am_node	*exported_ap_alloc(P_void);
+extern am_node	*find_ap(char *);
+extern am_node	*find_mf(mntfs *);
+extern mntfs	*find_mntfs(am_ops *, am_opts *, char *, char *, char *,
+		 char *, char *);
+extern void	 flush_mntfs(P_void);
+extern void	 flush_nfs_fhandle_cache(fserver *);
+extern void	 forcibly_timeout_mp(am_node *);
+extern void	 free_mntfs(mntfs *);
+extern void	 free_opts(am_opts *);
+extern void	 free_map(am_node *);
+extern void	 free_mntlist(mntlist *);
+extern void	 free_srvr(fserver *);
+extern int	 fwd_init(P_void);
+extern int	 fwd_packet(int, voidp, int, struct sockaddr_in *,
+		 struct sockaddr_in *, voidp, fwd_fun);
+extern void	 fwd_reply(P_void);
+extern void	 get_args(int, char *[]);
+extern char	*getwire(void);
 #ifdef NEED_MNTOPT_PARSER
-extern char *hasmntopt P((struct mntent*, char*));
+extern char	*hasmntopt(struct mntent *, char *);
 #endif /* NEED_MNTOPT_PARSER */
-extern int hasmntval P((struct mntent*, char*));
-extern void host_normalize P((char **));
-extern char *inet_dquad P((char*, size_t, u_int32_t));
-extern void init_map P((am_node*, char*));
-extern void insert_am P((am_node*, am_node*));
-extern void ins_que P((qelem*, qelem*));
-extern int islocalnet P((u_int32_t));
-extern int make_nfs_auth P((void));
-extern void make_root_node(P_void);
-extern int make_rpc_packet P((char*, int, u_long, struct rpc_msg*, voidp, xdrproc_t, AUTH*));
-extern void map_flush_srvr P((fserver*));
-extern void mapc_add_kv P((mnt_map*, char*, char*));
-extern mnt_map* mapc_find P((char*, char*));
-extern void mapc_free P((mnt_map*));
-extern int mapc_keyiter P((mnt_map*, void (*)(char*,voidp), voidp));
-extern int mapc_search P((mnt_map*, char*, char**));
-extern void mapc_reload(P_void);
-extern void mapc_showtypes P((FILE*));
-extern int mkdirs P((char*, int));
-extern void mk_fattr P((am_node*, int));
-extern void mnt_free P((struct mntent*));
-extern int mount_auto_node P((char*, voidp));
-extern int mount_automounter P((pid_t));
-extern int mount_exported(P_void);
-extern int mount_fs P((struct mntent*, int, caddr_t, int, MTYPE_TYPE));
-/*extern int mount_nfs_fh P((struct fhstatus*, char*, char*, char*, mntfs*));*/
-extern int mount_node P((am_node*));
-extern mntfs* new_mntfs(P_void);
-extern void new_ttl P((am_node*));
-extern am_node* next_map P((int*));
-extern int nfs_srvr_port P((fserver*, u_short*, voidp));
-extern void normalize_slash P((char*));
-extern void ops_showfstypes P((FILE*));
-extern int pickup_rpc_reply P((voidp, int, voidp, xdrproc_t));
-extern mntlist* read_mtab P((char*));
-extern mntfs* realloc_mntfs  P((mntfs*, am_ops*, am_opts*, char*, char*, char*, char*, char*));
-extern void rem_que P((qelem*));
-extern void reschedule_timeout_mp(P_void);
-extern void restart(P_void);
+extern int	 hasmntval(struct mntent *, char *);
+extern void	 host_normalize(char **);
+extern char	*inet_dquad(char *, size_t, u_int32_t);
+extern void	 init_map(am_node *, char *);
+extern void	 insert_am(am_node *, am_node *);
+extern void	 ins_que(qelem *, qelem *);
+extern int	 islocalnet(u_int32_t);
+extern int	 make_nfs_auth(void);
+extern void	 make_root_node(P_void);
+extern int	 make_rpc_packet(char *, int, u_long, struct rpc_msg *,
+		 voidp, xdrproc_t, AUTH *);
+extern void	 map_flush_srvr(fserver *);
+extern void	 mapc_add_kv(mnt_map *, char *, char *);
+extern mnt_map	*mapc_find(char *, char *);
+extern void	 mapc_free(mnt_map *);
+extern int	 mapc_keyiter(mnt_map*, void (*)(char *,voidp), voidp);
+extern int	 mapc_search(mnt_map *, char *, char **);
+extern void	 mapc_reload(P_void);
+extern void	 mapc_showtypes(FILE *);
+extern int	 mkdirs(char *, int);
+extern void	 mk_fattr(am_node *, int);
+extern void	 mnt_free(struct mntent *);
+extern int	 mount_auto_node(char *, voidp);
+extern int	 mount_automounter(pid_t);
+extern int	 mount_exported(P_void);
+extern int	 mount_fs(struct mntent *, int, caddr_t, int, MTYPE_TYPE);
+/*extern int	 mount_nfs_fh(struct fhstatus *, char *, char *, char *, mntfs *);*/
+extern int	 mount_node(am_node *);
+extern mntfs	*new_mntfs(P_void);
+extern void	 new_ttl(am_node *);
+extern am_node	*next_map(int *);
+extern int	 nfs_srvr_port(fserver *, u_short *, voidp);
+extern void	 normalize_slash(char *);
+extern void	 ops_showfstypes(FILE *);
+extern int	 pickup_rpc_reply(voidp, int, voidp, xdrproc_t);
+extern mntlist	*read_mtab(char *);
+extern mntfs	*realloc_mntfs(mntfs *, am_ops *, am_opts *, char *,
+		 char *, char *, char *, char *);
+extern void	 rem_que(qelem *);
+extern void	 reschedule_timeout_mp(P_void);
+extern void	 restart(P_void);
 #ifdef UPDATE_MTAB
-extern void rewrite_mtab P((mntlist *));
+extern void	 rewrite_mtab(mntlist *);
 #endif /* UPDATE_MTAB */
-extern void rmdirs P((char*));
-extern am_node* root_ap P((char*, int));
-extern int root_keyiter P((void (*)(char*,voidp), voidp));
-extern void root_newmap P((char*, char*, char*));
-extern void rpc_msg_init P((struct rpc_msg*, u_long, u_long, u_long));
-extern void run_task P((task_fun, voidp, cb_fun, voidp));
-extern void sched_task P((cb_fun, voidp, voidp));
-extern void show_rcs_info P((Const char*, char*));
-extern void sigchld P((int));
-extern void srvrlog P((fserver*, char*));
-extern char* str3cat P((char*, char*, char*, char*));
-extern char* strcat P((char*, Const char*)); /* C */
-extern int strcmp P((Const char*, Const char*)); /* C */
-extern char* strdup P((Const char*));
-extern char* strnsave P((Const char*, int));
-extern char* strrchr P((Const char*, int)); /* C */
-extern char* strealloc P((char*, char *));
-extern char** strsplit P((char*, int, int));
-extern int switch_option P((char*));
-extern int switch_to_logfile P((char*));
-extern void do_task_notify(P_void);
-extern int timeout P((unsigned int, void (*fn)(), voidp));
-extern void timeout_mp(P_void);
-extern void umount_exported(P_void);
-extern int umount_fs P((char*));
+extern void	 rmdirs(char *);
+extern am_node	*root_ap(char *, int);
+extern int	 root_keyiter(void (*)(char *,voidp), voidp);
+extern void	 root_newmap(char *, char *, char *);
+extern void	 rpc_msg_init(struct rpc_msg *, u_long, u_long, u_long);
+extern void	 run_task(task_fun, voidp, cb_fun, voidp);
+extern void	 sched_task(cb_fun, voidp, voidp);
+extern void	 show_rcs_info(Const char *, char *);
+extern void	 sigchld(int);
+extern void	 srvrlog(fserver *, char *);
+extern char	*str3cat(char *, char *, char *, char *);
+extern char	*strnsave(Const char *, int);
+extern char	*strealloc(char *, char *);
+extern char	**strsplit(char *, int, int);
+extern int	 switch_option(char *);
+extern int	 switch_to_logfile(char *);
+extern void	 do_task_notify(P_void);
+extern int	 timeout(unsigned int, void (*fn)(), voidp);
+extern void	 timeout_mp(P_void);
+extern void	 umount_exported(P_void);
+extern int	 umount_fs(char *);
 /*extern int unmount_node P((am_node*));
 extern int unmount_node_wrap P((voidp));*/
-extern void unregister_amq(P_void);
-extern void untimeout P((int));
-extern int valid_key P((char*));
-extern void wakeup P((voidp));
-extern void wakeup_task P((int,int,voidp));
-extern void wakeup_srvr P((fserver*));
-extern void write_mntent P((struct mntent*));
+extern void	 unregister_amq(P_void);
+extern void	 untimeout(int);
+extern int	 valid_key(char *);
+extern void	 wakeup(voidp);
+extern void	 wakeup_task(int, int, voidp);
+extern void	 wakeup_srvr(fserver *);
+extern void	 write_mntent(struct mntent *);
 #ifdef UPDATE_MTAB
-extern void unlock_mntlist P((void));
+extern void	 unlock_mntlist(void);
 #else
 #define	unlock_mntlist()
 #endif /* UPDATE_MTAB */
@@ -437,9 +434,9 @@ extern int efs_readdir P((am_node*, nfscookie, dirlist*, entry*, int));
 #define	FS_AMQINFO	0x0040		/* Amq is interested in this fs type */
 
 #ifdef SUNOS4_COMPAT
-extern am_ops *sunos4_match P((am_opts*, char*, char*, char*, char*, char*));
+extern am_ops	*sunos4_match(am_opts *, char *, char *, char *, char *, char *);
 #endif /* SUNOS4_COMPAT */
-extern am_ops *ops_match P((am_opts*, char*, char*, char*, char*, char*));
+extern am_ops	*ops_match(am_opts *, char *, char *, char *, char *, char *);
 #include "fstype.h"
 
 /*
