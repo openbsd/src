@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.2 1999/02/26 19:17:41 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.3 1999/02/27 18:29:54 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,15 +34,15 @@
 .Os
 .Sh NAME
 .Nm brconfig
-.Nd manipulate Ethernet bridges
+.Nd manipulate bridge interfaces
 .Sh SYNOPSIS
+.Nm brconfig
+.Ar -a
 .Nm brconfig
 .Ar bridge-name
 .Op Ar up
 .Op Ar down
-.Op Ar list
-.Op Ar routes
-.Op Ar status
+.Op Ar addr
 .Op Ar add interface-name
 .Op Ar delete interface-name
 .Op Ar link0
@@ -53,11 +53,16 @@
 .Sh DESCRIPTION
 The
 .Nm brconfig
-utility retrieves kernel state of Ethernet bridges and allows
-user control of these bridges.  Its command line consists
+utility retrieves kernel state of bridge interfaces and allows
+user control of these bridges.  In the first synopsis, the command
+will list the status of all bridges in the system.
+In the second, its command line consists
 of the name of a bridge and a set of operations to be
 performed on that bridge.  The commands are executed in
-the order they were specified.
+the order they were specified.  If no command is specified in
+the second synopsis, the
+.Nm brconfig
+will display status information about the bridge.
 .Pp
 The available commands are:
 .Bl -tag -width Ds
@@ -65,13 +70,8 @@ The available commands are:
 Start the bridge forwarding packets.
 .It Ar down
 Stop the bridge from forwarding packets.
-.It Ar list
-Retrieve a list of interface members of the bridge.
-.It Ar routes
-Display the routes that have been learned by the bridge.
-.It Ar status
-Print the status of the bridge, including member interfaces and
-routes learned by the bridge.
+.It Ar addr
+Display the addresses that have been learned by the bridge.
 .It Ar add interface-name
 Add the interface named by
 .Ar interface-name
@@ -90,6 +90,8 @@ Remove the interface named by
 from the bridge.
 Promiscuous mode is turned off for the interface when it is
 removed from the bridge.
+.It Ar del
+Alias for `delete'.
 .It Ar link0
 Setting this flag stops all non-IP multicast packets from
 being forwarded by the bridge.
@@ -110,8 +112,9 @@ flag on the bridge interface.
 .It Cm brconfig bridge0 add pn0 add mx0 up
 Add the Ethernet interfaces pn0 and mx0 to the bridge bridge0, and
 start the bridge forwarding packets.
-.It Cm brconfig bridge0 list
-Retrieve a list of interfaces that are members of bridge0.
+.It Cm brconfig bridge0
+Retrieve a list of interfaces that are members of bridge0, and the addresses
+learned by the bridge.
 .It Cm brconfig bridge0 down
 Stop bridge0 from forwarding packets.
 .It Cm brconfig bridge0 delete pn0
@@ -133,7 +136,7 @@ kernel interface were written by Jason L. Wright <jason@thought.net> as
 part of an undergraduate indenpendent study
 at the University of North Carolina at Greensboro.
 .Sh BUGS
-There are some Ethernet chipsets which will not work in a bridge
+There are some network interface chipsets which will not work in a bridge
 configuration.  Some, like the Lite-On PNIC, have serious flaws when
 running in promiscuous mode, and others, like the TI ThunderLAN, receive
-their own transmissions, which makes the route learning code ineffective.
+their own transmissions, which makes the address learning code ineffective.

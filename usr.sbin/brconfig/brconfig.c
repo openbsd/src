@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.1 1999/02/26 17:52:12 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.2 1999/02/27 18:29:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -51,11 +52,12 @@ int main(int, char **);
 int bridge_setflag(int, char *, short);
 int bridge_clrflag(int, char *, short);
 int bridge_list(int, char *, char *);
-int bridge_routes(int, char *, char *);
+int bridge_addrs(int, char *, char *);
 int bridge_add(int, char *, char *);
 int bridge_delete(int, char *, char *);
 int bridge_status(int, char *);
 int is_bridge(int, char *);
+int bridge_show_all(int);
 void printb(char *, unsigned short, char *);
 
 /* if_flags bits: borrowed from ifconfig.c */
@@ -65,9 +67,9 @@ void printb(char *, unsigned short, char *);
 
 void
 usage() {
+	fprintf(stderr, "brconfig -a\n");
 	fprintf(stderr,
-	    "brconfig bridge_name [up] [down] [add interface_name]\n");
-	fprintf(stderr, "\t[delete interface_name] ...\n");
+	    "brconfig interface [up] [down] [add interface] [delete interface] ...\n");
 }
 
 int
@@ -90,8 +92,13 @@ main(argc, argv)
 	argc--; argv++;
 	brdg = argv[0];
 
-	if (!is_bridge(sock, brdg))
+	if (strcmp(brdg, "-a") == 0)
+		return bridge_show_all(sock);
+
+	if (!is_bridge(sock, brdg)) {
+		warnx("%s is not a bridge", brdg);
 		return (EX_USAGE);
+	}
 
 	if (argc == 1) {
 		error = bridge_status(sock, brdg);
@@ -109,18 +116,14 @@ main(argc, argv)
 			if (error)
 				return (error);
 		}
-		else if (strcmp("delete", argv[0]) == 0) {
+		else if (strcmp("delete", argv[0]) == 0 ||
+		    strcmp("del", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
 				warnx("delete requires an argument");
 				return (EX_USAGE);
 			}
 			error = bridge_delete(sock, brdg, argv[0]);
-			if (error)
-				return (error);
-		}
-		else if (strcmp("list", argv[0]) == 0) {
-			error = bridge_list(sock, brdg, "");
 			if (error)
 				return (error);
 		}
@@ -154,13 +157,8 @@ main(argc, argv)
 			if (error)
 				return (error);
 		}
-		else if (strcmp("routes", argv[0]) == 0) {
-			error = bridge_routes(sock, brdg, "");
-			if (error)
-				return (error);
-		}
-		else if (strcmp("status", argv[0]) == 0) {
-			error = bridge_status(sock, brdg);
+		else if (strcmp("addr", argv[0]) == 0) {
+			error = bridge_addrs(sock, brdg, "");
 			if (error)
 				return (error);
 		}
@@ -170,6 +168,42 @@ main(argc, argv)
 		}
 	}
 
+	return (0);
+}
+
+int
+bridge_show_all(s)
+	int s;
+{
+	char *inbuf = NULL;
+	struct ifconf ifc;
+	struct ifreq *ifrp, ifreq;
+	int len = 8192, i;
+
+	while (1) {
+		ifc.ifc_len = len;
+		ifc.ifc_buf = inbuf = realloc(inbuf, len);
+		if (inbuf == NULL)
+			err(1, "malloc");
+		if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
+			err(1, "ioctl(SIOCGIFCONF)");
+		if (ifc.ifc_len + sizeof(struct ifreq) < len)
+			break;
+		len *= 2;
+	}
+	ifrp = ifc.ifc_req;
+	ifreq.ifr_name[0] = '\0';
+	for (i = 0; i < ifc.ifc_len; ) {
+		ifrp = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
+		i += sizeof(ifrp->ifr_name) +
+		    (ifrp->ifr_addr.sa_len > sizeof(struct sockaddr) ?
+		    ifrp->ifr_addr.sa_len : sizeof(struct sockaddr));
+		if (ifrp->ifr_addr.sa_family != AF_LINK)
+			continue;
+		if (!is_bridge(s, ifrp->ifr_name))
+			continue;
+		bridge_status(s, ifrp->ifr_name);
+	}
 	return (0);
 }
 
@@ -296,7 +330,7 @@ bridge_delete(s, brdg, ifn)
 }
 
 int
-bridge_routes(s, brdg, delim)
+bridge_addrs(s, brdg, delim)
 	int s;
 	char *brdg, *delim;
 {
@@ -346,7 +380,6 @@ is_bridge(s, brdg)
 	if (ioctl(s, SIOCBRDGRT, (caddr_t)&req) < 0) {
 		if (errno == ENOENT || errno == ENETDOWN)
 			return (1);
-		warn("ioctl(SIOCBRDGRT)");
 		return (0);
 	}
 	return (1);
@@ -378,8 +411,8 @@ bridge_status(s, brdg)
 	if (err)
 		return (err);
 
-	printf("\tRoutes:\n");
-	err = bridge_routes(s, brdg, "\t\t");
+	printf("\tAddresses:\n");
+	err = bridge_addrs(s, brdg, "\t\t");
 	return (err);
 }
 
