@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
+/*	$OpenBSD: exception.h,v 1.4 2004/09/16 07:25:24 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -51,10 +51,10 @@
 #define	EX_CPU		11	/* Coprocessor unusable exception */
 #define	EX_OV		12	/* Arithmetic overflow exception */
 #define	EX_TR		13	/* Trap exception */
-#define	EX_VCEI		14	/* Viritual coherency exception instruction */
+#define	EX_VCEI		14	/* Virtual coherency exception instruction */
 #define	EX_FPE		15	/* Floating point exception */
 #define	EX_WATCH	23	/* Reference to watch/hi/watch/lo address */
-#define	EX_VCED		31	/* Viritual coherency exception data */
+#define	EX_VCED		31	/* Virtual coherency exception data */
 
 #define	EX_U		32	/* Exception from user mode (SW flag) */
 

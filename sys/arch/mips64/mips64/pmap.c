@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 2004/09/09 22:11:38 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 2004/09/16 07:25:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1331,7 +1331,7 @@ pmap_zero_page(struct vm_page *pg)
  *	pmap_copy_page copies the specified (machine independent) page.
  *
  *	We do the copy phys to phys and need to check if there may be
- *	a viritual coherence problem. If so flush the cache for the
+ *	a virtual coherence problem. If so flush the cache for the
  *	areas before copying, and flush afterwards.
  */
 void

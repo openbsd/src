@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.7 2004/09/10 09:32:13 pefo Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.8 2004/09/16 07:25:26 miod Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -661,7 +661,7 @@ END(Mips5k_SyncDCachePage)
  *		vaddr_t addr, len;
  *
  *	Sync data cache for range of addr to addr + len - 1.
- *	The address can be any valid viritual address as long
+ *	The address can be any valid virtual address as long
  *	as no TLB invalid traps occur. Only lines with matching
  *	addr are flushed.
  *
@@ -719,7 +719,7 @@ END(Mips5k_HitSyncDCache)
  *		vaddr_t addr, len;
  *
  *	Sync secondary cache for range of addr to addr + len - 1.
- *	The address can be any valid viritual address as long
+ *	The address can be any valid virtual address as long
  *	as no TLB invalid traps occur. Only lines with matching
  *	addr are flushed.
  *

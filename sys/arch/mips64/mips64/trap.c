@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.5 2004/09/09 22:11:38 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.6 2004/09/16 07:25:26 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -107,7 +107,7 @@ char	*trap_type[] = {
 	"coprocessor unusable",
 	"arithmetic overflow",
 	"trap",
-	"viritual coherency instruction",
+	"virtual coherency instruction",
 	"floating point",
 	"reserved 16",
 	"reserved 17",
@@ -124,7 +124,7 @@ char	*trap_type[] = {
 	"reserved 28",
 	"reserved 29",
 	"reserved 30",
-	"viritual coherency data",
+	"virtual coherency data",
 };
 
 #if defined(DDB) || defined(DEBUG)
