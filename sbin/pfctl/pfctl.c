@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.221 2004/08/08 19:04:25 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.222 2004/08/26 16:35:36 jaredy Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -195,12 +195,11 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-AdeghNnOoqRrvz] ", __progname);
-	fprintf(stderr, "[-a anchor[/ruleset]] [-D macro=value]\n");
+	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-F modifier] [-f file] [-i interface] ");
-	fprintf(stderr, "[-k host] [-p device]\n");
+	fprintf(stderr, "[-f file] [-i interface] [-k host] ");
+	fprintf(stderr, "[-p device] [-s modifier]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-s modifier] ");
 	fprintf(stderr, "[-t table -T command [address ...]] ");
 	fprintf(stderr, "[-x level]\n");
 	exit(1);
