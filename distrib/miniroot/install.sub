@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.216 2002/04/30 04:04:47 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.217 2002/04/30 23:26:27 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -399,51 +399,42 @@ addifconfig() {
 }
 
 configure_all_interfaces() {
-	local _ifsdone= _ifs _ouranswer= _reprompt=1
+	local _ifsdone _ifs _ouranswer
 
 	_IFS=`get_ifdevs`
 
-	resp=
-	while [ "$resp" != "done" ]; do
-		if [ $_reprompt = 1 ]; then
-			cat << __EOT
+	while : ; do
+		cat << __EOT
 
 You may configure the following network interfaces (the interfaces
 marked with [X] have been successfully configured):
 
 __EOT
-
-			for _ifs in $_IFS; do
+		_ouranswer=
+		for _ifs in $_IFS; do
+			if isin $_ifs $_ifsdone ; then
+				echo -n "	[X] "
+			else
+				echo -n "	[ ] "
 				: ${_ouranswer:=$_ifs}
-				if isin $_ifs $_ifsdone ; then
-					echo -n "	[X] "
-				else
-					echo -n "	[ ] "
-				fi
-				echo $_ifs
-			done
-			echo
-		fi
-		ask "Configure which interface? (or 'done')" "$_ouranswer"
+			fi
+			echo $_ifs
+		done
+		: ${_ouranswer:=done} 
+		ask "\nConfigure which interface? (or 'done')" "$_ouranswer"
 		case $resp in
-		"done")	;;
-		"")	_reprompt=0
+		"done")	break	
 			;;
 		*)	_ifs=$resp
-			_ouranswer=done
 			if isin $_ifs $_IFS ; then
 				if configure_ifs $_ifs ; then
 					_ifsdone="$_ifs $_ifsdone"
-				else
-				_ouranswer=
 				fi
 			else
 				echo "Invalid response: '$resp' is not in list"
 			fi
-			_reprompt=1
 			;;
 		esac
-
 	done
 }
 
