@@ -63,6 +63,9 @@ buf_close(int sock, struct buf *buf)
 		error("short write: wanted %u got %d bytes", buf->size,
 		    buf->rpos);
 
+	free(buf->buf);
+	free(buf);
+
 	return (n);
 }
 
