@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.316 2000/09/14 11:52:43 niklas Exp $
+	$OpenBSD: pcidevs,v 1.317 2000/09/14 13:18:50 niklas Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -510,7 +510,7 @@ vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
 vendor AUREAL		0x12eb	Aureal
 vendor ADMTEK		0x1317	ADMtek
-vendor ALTATECH		0x1318	Alta Technology
+vendor PE		0x1318	Packet Engines Inc.
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor SIIG		0x131f	SIIG
 vendor LMC		0x1376	LAN Media Corp
@@ -701,9 +701,6 @@ product ADVSYS U3W		0x2700	ASP-3940U3W
 /* Alliance products */
 product ALLIANCE AT22		0x6424	AT22
 product ALLIANCE AT24		0x6424	AT24
-
-/* Alta Technology products */
-product ALTATECH GNIC2		0x0911	PMC/GNIC2
 
 /* Alteon products */
 product ALTEON ACENIC		0x0001	Acenic
@@ -1363,6 +1360,9 @@ product OPTI 82C700		0xc700	82C700
 product OPTI 82C701		0xc701	82C701
 product OPTI 82C822		0xc822	82C822
 product OPTI RM861HA		0xc861	RM861HA
+
+/* Packet Engines Inc. products */
+product PE GNIC2		0x0911	PMC/GNIC2
 
 /* PC Tech products */
 product PCTECH RZ1000		0x1000	RZ1000
