@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.46 2001/09/20 20:52:09 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.47 2001/09/25 13:04:30 drahn Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -96,7 +96,8 @@ ${PASM}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 ${SASM}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
+	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${AS} ${ASPICFLAG} -o ${.TARGET}
 .else
 ${SASM}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
@@ -129,7 +130,8 @@ ${PPSEUDO}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 ${SPSEUDO}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
+	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${AS} ${ASPICFLAG} -o ${.TARGET}
 .else
 ${SPSEUDO}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
@@ -155,7 +157,8 @@ ${PPSEUDO_NOERR}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/sysc
 ${SPSEUDO_NOERR}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
+	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | \
+	    ${AS} ${ASPICFLAG} -o ${.TARGET}
 .else
 ${SPSEUDO_NOERR}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
