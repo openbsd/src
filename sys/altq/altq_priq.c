@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.3 2001/10/26 07:36:46 kjc Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -255,7 +255,7 @@ priq_class_create(pif, pri, qlimit, flags)
 		if (flags & PRCF_CLEARDSCP)
 			red_flags |= RIOF_CLEARDSCP;
 #endif
-		if (pif->pif_bandwidth == 0)
+		if (pif->pif_bandwidth < 8)
 			red_pkttime = 1000 * 1000 * 1000; /* 1 sec */
 		else
 			red_pkttime = (int64_t)pif->pif_ifq->altq_ifp->if_mtu
