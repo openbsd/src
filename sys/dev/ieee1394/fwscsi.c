@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.6 2002/12/14 01:15:21 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.7 2002/12/17 10:54:52 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -33,9 +33,7 @@
 #include <sys/uio.h>
 #include <sys/types.h>
 #include <sys/proc.h>
-#if 1	/* NO_THREAD */
 #include <sys/kthread.h>
-#endif	/* NO_THREAD */
 #include <sys/timeout.h>
 
 #include <dev/rndvar.h>
@@ -91,12 +89,8 @@ int  fwscsi_match(struct device *, struct cfdata *, void *);
 int  fwscsi_match(struct device *, void *, void *);
 #endif
 void fwscsi_attach(struct device *, struct device *, void *);
-#if 0	/* NO_THREAD */
-void fwscsi_init(void *);
-#else	/* NO_THREAD */
 void fwscsi_config_thread(void *);
 void fwscsi_login_cb(void *, struct sbp2_status_notification *);
-#endif	/* NO_THREAD */
 void fwscsi_agent_init(void *);
 void fwscsi_status_notify(void *, struct sbp2_status_notification *);
 int  fwscsi_detach(struct device *, int);
@@ -108,13 +102,8 @@ void fwscsi_scsipi_minphys(struct buf *);
 int  fwscsi_scsi_cmd(struct scsi_xfer *);
 void fwscsi_minphys(struct buf *);
 #endif
-//void fwscsi_cmd_notify(struct sbp2_status_notification *);
-#if 0	/* NO_THREAD */
-void fwscsi_command_wait(void *);
-#else	/* NO_THREAD */
 void fwscsi_command_timeout(void *);
 void fwscsi_command_wait(void *, struct sbp2_status_notification *);
-#endif	/* NO_THREAD */
 void fwscsi_command_data(struct ieee1394_abuf *, int);
 
 typedef struct fwscsi_orb_data {
@@ -288,13 +277,7 @@ fwscsi_attach(struct device *parent, struct device *self, void *aux)
 	struct fwscsi_softc *sc = (struct fwscsi_softc *)self;
 	struct p1212_dir **udir = (struct p1212_dir **)aux;
 	int lun, n;
-#if 1	/* NO_THREAD */
 	struct sbp2_login_orb *login_orb;
-#if 0
-	struct sbp2_status_block *status = NULL;
-#endif
-//	int error;
-#endif	/* NO_THREAD */
 
 	DPRINTF(("%s: cpl = %d(%08x)\n", __func__, cpl, cpl));
 
@@ -347,27 +330,6 @@ fwscsi_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_lun = lun;
 
-#if 0	/* NO_THREAD */
-	if (kthread_create(fwscsi_init, sc, NULL, "%s",
-	    sc->sc_dev.dv_xname))
-	{
-		printf("%s: unable to create init thread\n",
-		    sc->sc_dev.dv_xname);
-	}
-}
-
-void
-fwscsi_init(void *aux)
-{
-	struct device *dev;
-	struct sbp2_login_orb *login_orb;
-	struct fwscsi_softc *sc = (struct fwscsi_softc *)aux;
-#if 0
-	struct sbp2_status_block *status = NULL;
-#endif
-	int error;
-#endif	/* NO_THREAD */
-
 #ifdef	FWSCSI_DEBUG
 	if (fwscsidebug & 4)
 		Debugger();
@@ -378,9 +340,6 @@ fwscsi_init(void *aux)
 	bzero(login_orb, sizeof(struct sbp2_login_orb));
 
 	login_orb->lun = htons(sc->sc_lun);
-#if 0	/* NO_THREAD */
-	sbp2_login(sc->sc_fwnode, login_orb, fwscsi_status_notify);
-#else	/* NO_THREAD */
 	sbp2_login(sc->sc_fwnode, login_orb, fwscsi_login_cb, (void *)sc);
 }
 
@@ -447,49 +406,6 @@ fwscsi_config_thread(void *arg)
 	DPRINTF(("%s: exiting...\n", __func__));
 
 	kthread_exit(0);
-#endif	/* NO_THREAD */
-
-#if 0	/* NO_THREAD */
-	error = tsleep(login_orb, PRIBIO, "sbplogin", 5*hz);
-
-	if (error == EWOULDBLOCK) {
-		DPRINTF(("%s: SBP Login failure\n", __func__));
-		free(login_orb, M_1394DATA);
-		MPRINTF("free(1394DATA)", login_orb);
-		login_orb = NULL;	/* XXX */
-		kthread_exit(1);
-	}
-
-#if 0
-	status = ((struct sbp2_status_block **)login_orb)[0];
-	if (status != NULL) {
-		free(status, M_1394DATA);
-		MPRINTF("free(1394DATA)", status);
-		status = NULL;	/* XXX */
-	}
-#endif
-	free(login_orb, M_1394DATA);
-	MPRINTF("free(1394DATA)", login_orb);
-	login_orb = NULL;	/* XXX */
-
-	TAILQ_INIT(&sc->sc_data);
-
-#ifdef	FWSCSI_DEBUG
-	if (fwscsidebug & 4)
-		Debugger();
-#endif	/* FWSCSI_DEBUG */
-
-#ifdef	__NetBSD__
-	dev = config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
-#else
-	dev = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
-#endif
-
-	sc->sc_bus = dev;
-
-	DPRINTF(("%s: exiting...\n", __func__));
-	kthread_exit(0);
-#endif	/* NO_THREAD */
 }
 
 void
@@ -616,19 +532,14 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 
 	s = splbio();
 
-#if 1	/* NO_THREAD */
-	/* Always reset xs->stimeout, lest we timeout_del() with trash */
+	/* Always reset xs->stimeout, lest we timeout_del() with trash. */
 	timeout_set(&xs->stimeout, fwscsi_command_timeout, (void *)xs);
-#endif	/* NO_THREAD */
 	bzero(&xs->sense, sizeof(struct scsi_mode_sense));
 
+	/* Don't probe for unsupported targets. */
 	if (xs->sc_link->target != sc->sc_lun || xs->sc_link->lun != 0) {
 		DPRINTF(("    device not available...\n"));
-#if 0
-		xs->error = XS_SENSE;
-#else
 		xs->error = XS_SELTIMEOUT;
-#endif
 		xs->status = SCSI_CHECK;
 		xs->flags |= ITSDONE | SCSI_SILENT;
 		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
@@ -719,31 +630,18 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 		TAILQ_INSERT_TAIL(&sc->sc_data, data_elm, data_chain);
 		xs->data = (u_char *)data_elm;
 
-		/* Check direction of data transfer */
+		/* Check direction of data transfer. */
 		if (xs->flags & SCSI_DATA_OUT) {
 			data_ab->ab_tcode =
 			    IEEE1394_TCODE_READ_REQUEST_DATABLOCK;
-#if 1
 			options |= (7 + fwsc->sc_sc1394.sc1394_link_speed) << 4;
-#else
-			options |=
-			    ((fwsc->sc_sc1394.sc1394_max_receive - 1)
-			     & 0xF) << 4;
-			options |= 0x9 << 4;	/* 2048 max payload	*/
-#endif
 			DPRINTFN(1, (" -- OUT(%d/%X)\n", datalen,
 			    (options >> 4) & 0xf));
 		} else {
 			data_ab->ab_tcode =
 			    IEEE1394_TCODE_WRITE_REQUEST_DATABLOCK;
 			options |= 0x0800;
-#if 1
 			options |= (7 + fwsc->sc_sc1394.sc1394_link_speed) << 4;
-#else
-			options |= (sc->sc_maxpayload & 0xF) << 4;
-			options |= ((fwsc->sc_sc1394.sc1394_max_receive -1) & 0xF) << 4;
-			options |= 0x9 << 4;	/* 2048 max payload	*/
-#endif
 			DPRINTFN(1, (" -- IN(%d/%X)\n", datalen,
 			    (options >> 4) & 0xf));
 		}
@@ -770,30 +668,14 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 	bcopy(xs->cmd, (void*)(&cmd_orb->command_block[0]), xs->cmdlen);
 	xs->cmd = (struct scsi_generic *) cmd_orb;
 
-#if 0	/* NO_THREAD */
-	if (kthread_create(fwscsi_command_wait, xs, NULL, "%s",
-	    sc->sc_dev.dv_xname))
-	{
-		printf("%s: unable to create event thread\n",
-		    sc->sc_dev.dv_xname);
-		return (TRY_AGAIN_LATER);
-	}
-#endif	/* NO_THREAD */
-
-#if 0	/* NO_THREAD */
-	sbp2_command_add(fwsc, sc->sc_lun, cmd_orb, 8, xs->data,
-	    fwscsi_status_notify);
-#else	/* NO_THREAD */
 	timeout_add(&xs->stimeout, (xs->timeout * hz) / 1000);
 	sbp2_command_add(fwsc, sc->sc_lun, cmd_orb, 8, xs->data,
 	    fwscsi_command_wait, (void *)xs);
-#endif	/* NO_THREAD */
 
 	splx(s);
 	return (SUCCESSFULLY_QUEUED);
 }
 
-#if 1	/* NO_THREAD */
 void
 fwscsi_command_timeout(void *arg)
 {
@@ -814,14 +696,9 @@ fwscsi_command_timeout(void *arg)
 	notification.status = status;
 	fwscsi_command_wait(arg, &notification);
 }
-#endif	/* NO_THREAD */
 
 void
-#if 0	/* NO_THREAD */
-fwscsi_command_wait(void *aux)
-#else	/* NO_THREAD */
 fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
-#endif	/* NO_THREAD */
 {
 	struct scsi_xfer *xs = (struct scsi_xfer *)aux;
 	struct fwscsi_orb_data *data_elm = (struct fwscsi_orb_data *)xs->data;
@@ -830,11 +707,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	struct ieee1394_abuf *data_ab;
 	struct fwscsi_status *status = NULL;
 	u_int32_t tmp;
-#if 0	/* NO_THREAD */
-	int error;
-#endif	/* NO_THREAD */
 	int s;
-#if 1	/* NO_THREAD */
 #ifdef	FWSCSI_DEBUG
 	void *orb = notification->origin;
 	int i;
@@ -842,11 +715,9 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 
 	DPRINTF(("%s: cpl = %d(%08x)\n", __func__, cpl, cpl));
 
-#if 1	/* NO_THREAD */
 	s = splbio();
 	timeout_del(&xs->stimeout);
 	splx(s);
-#endif	/* NO_THREAD */
 	status = (struct fwscsi_status *)notification->status;
 
 	DPRINTF(("%s: origin=0x%08x csr=0x%016qx", __func__,
@@ -860,14 +731,9 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 	}
 	DPRINTFN(2, ("\n"));
 #endif	/* FWSCSI_DEBUG */
-#endif	/* NO_THREAD */
 
 	cmd_orb = (struct sbp2_command_orb *)(xs->cmd);
 	xs->cmd = &xs->cmdstore;
-
-#if 0	/* NO_THREAD */
-	error = tsleep(cmd_orb, PRIBIO, "sbpcmd", (xs->timeout * hz) / 1000);
-#endif	/* NO_THREAD */
 
 	if (data_elm != NULL) {
 		data_ab = data_elm->data_ab;
@@ -893,18 +759,6 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		MPRINTF("FREE(1394CTL)", data_elm);
 		data_elm = NULL;	/* XXX */
 	}
-
-#if 0	/* NO_THREAD */
-	if (error == EWOULDBLOCK) {
-		DPRINTF(("%s: Command Timeout.\n", __func__));
-		DPRINTF(("  -> XS_SELTIMEOUT\n"));
-		xs->error = XS_SELTIMEOUT;
-		cmd_orb = NULL;
-	} else {
-		DPRINTF(("%s: Command returned.\n", __func__));
-		status = ((struct fwscsi_status **)cmd_orb)[0];
-	}
-#endif	/* NO_THREAD */
 
 	if (status != NULL &&
 	    ((status->flags & SBP2_STATUS_RESPONSE_MASK) ==
@@ -966,11 +820,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		scsi_done(xs);
 		splx(s);
 
-#if 0	/* NO_THREAD */
-		kthread_exit(0);
-#else	/* NO_THREAD */
 		return;
-#endif	/* NO_THREAD */
 	}
 
 	/*
@@ -1000,6 +850,7 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 		MPRINTF("FREE(1394DATA)", status);
 		status = NULL;	/* XXX */
 	}
+
 	if (cmd_orb != NULL) {
 		DPRINTF(("%s: Nullify orb(0x%08x)\n", __func__,
 		    (u_int32_t)cmd_orb));
@@ -1012,13 +863,10 @@ fwscsi_command_wait(void *aux, struct sbp2_status_notification *notification)
 
 	xs->flags |= ITSDONE;
 	xs->resid = 0;
+
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-
-#if 0	/* NO_THREAD */
-	kthread_exit(0);
-#endif	/* NO_THREAD */
 }
 
 void
@@ -1146,12 +994,8 @@ fwscsi_minphys(struct buf *buf)
 {
 	DPRINTF(("%s: cpl = %d(%08x)\n", __func__, cpl, cpl));
 
-#if 1
 	if (buf->b_bcount > SBP2_MAX_TRANS)
 		buf->b_bcount = SBP2_MAX_TRANS;
-#else
-	if (buf->b_bcount > 512)
-		buf->b_bcount = 512;
-#endif
+
 	minphys(buf);
 }
