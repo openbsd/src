@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.2 1996/06/23 14:31:51 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.3 1996/07/01 11:02:53 downsj Exp $	*/
 /*	$NetBSD: config.h,v 1.2 1995/03/18 14:58:47 cgd Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)config.h	8.2 (Berkeley) 4/22/94
+ *	@(#)config.h	8.3 (Berkeley) 5/24/95
  */
 
 /*
@@ -135,3 +135,9 @@
 #define	DFL_LFSBLOCK		4096
 #define	DFL_LFSBLOCK_SHIFT	12
 #define	DFL_LFSBLOCK_MASK	0xFFF
+
+#define DFL_LFSFRAG		4096
+#define DFL_LFS_FFMASK		DFL_LFSBLOCK_MASK
+#define DFL_LFS_FFSHIFT		DFL_LFSBLOCK_SHIFT
+#define DFL_LFS_FBMASK		0
+#define DFL_LFS_FBSHIFT		0

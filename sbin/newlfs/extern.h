@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1996/06/23 14:31:52 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 1996/07/01 11:02:54 downsj Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/03/18 14:58:48 cgd Exp $	*/
 
 /*-
@@ -33,15 +33,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.1 (Berkeley) 6/5/93
+ *	@(#)extern.h	8.2 (Berkeley) 5/24/95
  */
 
 u_long	cksum __P((void *, size_t));
 u_short	dkcksum __P((struct disklabel *));
 void	fatal __P((const char *fmt, ...));
 u_int	log2 __P((u_int));
-int	make_lfs
-	    __P((int, struct disklabel *, struct partition *, int, int, int));
+int	make_lfs __P((int, struct disklabel *, struct partition *, int,
+		int, int, int));
 int	mkfs __P((struct partition *, char *, int, int));
 
 extern char	*progname;
