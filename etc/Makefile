@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.142 2002/01/23 08:21:22 todd Exp $
+#	$OpenBSD: Makefile,v 1.143 2002/02/08 20:13:36 todd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -55,7 +55,7 @@ distribution-etc-root-var distribution distrib-dirs release snapshot:
 	@echo setenv DESTDIR before doing that!
 	@false
 .else
-distribution-etc-root-var: distrib-dirs allarchs
+distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	cat etc.${MACHINE}/ttys ttys.pty > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
