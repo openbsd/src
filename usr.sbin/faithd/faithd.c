@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.26 2003/09/02 22:55:26 deraadt Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.27 2003/09/02 23:35:24 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.58 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -262,7 +262,6 @@ daemon_main(int argc, char **argv)
 		usage();
 		/*NOTREACHED*/
 	default:
-	    {
 		serverargc = argc - NUMARG;
 		if (serverargc >= MAXARGV)
 			exit_stderr("too many arguments");
@@ -277,7 +276,6 @@ daemon_main(int argc, char **argv)
 		}
 		serverarg[i] = NULL;
 		/* fall throuth */
-	    }
 	case 1:	/* no local service */
 		service = argv[NUMPRT];
 		break;
