@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.4 1998/09/14 22:13:37 aaron Exp $
+.\"	$OpenBSD: cp.1,v 1.5 1998/11/28 03:20:31 aaron Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -44,14 +44,14 @@
 .Nm cp
 .Nd copy files
 .Sh SYNOPSIS
-.Nm cp
+.Nm
 .Oo
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
 .Op Fl fip
 .Ar source_file target_file
-.Nm cp
+.Nm
 .Oo
 .Fl R
 .Op Fl H | Fl L | Fl P
@@ -60,7 +60,7 @@
 .Ar source_file ... target_directory
 .Sh DESCRIPTION
 In the first synopsis form, the
-.Nm cp
+.Nm
 utility copies the contents of the
 .Ar source_file
 to the
@@ -72,7 +72,7 @@ are copied to the destination
 .Ar target_directory .
 The names of the files themselves are not changed.
 If
-.Nm cp
+.Nm
 detects an attempt to copy a file to itself, the copy will fail.
 .Pp
 The following options are available:
@@ -94,11 +94,11 @@ option is specified, no symbolic links are followed.
 If
 .Ar source_file
 designates a directory,
-.Nm cp
+.Nm
 copies the directory and the entire subtree connected at that point.
 This option also causes symbolic links to be copied, rather than
 indirected through, and for
-.Nm cp
+.Nm
 to create special files rather than copying them as normal files.
 Created directories have the same mode as the corresponding source
 directory, unmodified by the process's umask.
@@ -113,7 +113,7 @@ option is ignored if the
 option is specified.)
 .It Fl i
 Causes
-.Nm cp
+.Nm
 to write a prompt to the standard error output before copying a file
 that would overwrite an existing file.
 If the response from the standard input begins with the character
@@ -121,7 +121,7 @@ If the response from the standard input begins with the character
 the file copy is attempted.
 .It Fl p
 Causes
-.Nm cp
+.Nm
 to preserve in the copy as many of the modification time, access time,
 file flags, file mode, user ID, and group ID as allowed by permissions.
 .Pp
@@ -190,11 +190,11 @@ In addition, these options override each other and the
 command's actions are determined by the last one specified.
 .Pp
 The
-.Nm cp
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh COMPATIBILITY
 Historic versions of the
-.Nm cp
+.Nm
 utility had a
 .Fl r
 option.
@@ -209,7 +209,7 @@ or FIFOs.
 .Xr symlink 7
 .Sh STANDARDS
 The
-.Nm cp
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.6 1998/11/06 00:34:07 aaron Exp $
+.\"	$OpenBSD: chmod.1,v 1.7 1998/11/28 03:20:31 aaron Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -44,7 +44,7 @@
 .Nm chmod
 .Nd change file modes
 .Sh SYNOPSIS
-.Nm chmod
+.Nm
 .Oo
 .Fl R
 .Op Fl H | Fl L | Fl P
@@ -53,7 +53,7 @@
 .Ar file Op Ar ...
 .Sh DESCRIPTION
 The
-.Nm chmod
+.Nm
 utility modifies the file mode bits of the listed files
 as specified by the
 .Ar mode
@@ -84,7 +84,7 @@ Symbolic links do not have modes, so unless the
 or
 .Fl L
 option is set,
-.Nm chmod
+.Nm
 on a symbolic link always succeeds and has no effect.
 The
 .Fl H ,
@@ -101,7 +101,7 @@ Only the owner of a file or the super-user is permitted to change
 the mode of a file.
 .Pp
 The
-.Nm chmod
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh MODES
 Modes may be absolute or symbolic.
@@ -310,7 +310,7 @@ option for the naughty bits.
 .Xr chown 8
 .Sh STANDARDS
 The
-.Nm chmod
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible with the exception of the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.14 1998/11/06 00:34:09 aaron Exp $
+.\"	$OpenBSD: ps.1,v 1.15 1998/11/28 03:20:34 aaron Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -38,10 +38,10 @@
 .Dt PS 1
 .Os BSD 4
 .Sh NAME
-.Nm \&ps
+.Nm ps
 .Nd process status
 .Sh SYNOPSIS
-.Nm \&ps
+.Nm
 .Op Fl acCehjlmrSTuvwx
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -50,10 +50,10 @@
 .Op Fl p Ar pid
 .Op Fl t Ar tty
 .Op Fl W Ar swap
-.Nm ps
+.Nm
 .Op Fl L
 .Sh DESCRIPTION
-.Nm ps
+.Nm
 displays a header line followed by lines containing information about your
 processes that have controlling terminals.
 This information is sorted by process
@@ -174,7 +174,7 @@ is your window size.
 If the
 .Fl w
 option is specified more than once,
-.Nm \&ps
+.Nm
 will use as many columns as necessary without regard for your window size.
 .It Fl x
 Display information about processes without controlling terminals.
@@ -343,7 +343,7 @@ is listed as
 and a process which is blocked while trying
 to exit is listed as
 .Dq <exiting> .
-.Nm ps
+.Nm
 makes an educated guess as to the file name and arguments given when the
 process was created by examining memory or the swap area.
 The method is inherently somewhat unreliable and in any event a process
@@ -529,6 +529,6 @@ default system namelist
 .Xr pstat 8
 .Sh BUGS
 Since
-.Nm \&ps
+.Nm
 cannot run faster than the system and is run as any other scheduled
 process, the information it displays can never be exact.

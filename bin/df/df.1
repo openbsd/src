@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.12 1998/09/23 00:13:48 aaron Exp $
+.\"	$OpenBSD: df.1,v 1.13 1998/11/28 03:20:32 aaron Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -41,12 +41,12 @@
 .Nm df
 .Nd display free disk space
 .Sh SYNOPSIS
-.Nm df
+.Nm
 .Op Fl hiklnP
 .Op Fl t Ar type
 .Op Ar file | Ar file_system ...
 .Sh DESCRIPTION
-.Nm df
+.Nm
 displays statistics about the amount of free disk space on the specified
 .Ar file_system
 or on the file system of which
@@ -86,7 +86,7 @@ This option should be used if it is possible that one or more
 file systems are in a state such that they will not be able to provide
 statistics without a long delay.
 When this option is specified,
-.Nm df
+.Nm
 will not request new statistics from the file systems, but will respond
 with the possibly stale statistics that were previously obtained.
 .It Fl P
@@ -126,12 +126,13 @@ size block.
 .Xr quot 8
 .Sh STANDARDS
 The
-.Nm df
+.Nm
 utility is compliant with the
 .St -p1003.2-92
 specification.
 .Sh HISTORY
 A
-.Nm df
+.Nm
 utility appeared in
 .At v6 .
+

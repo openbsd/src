@@ -1,4 +1,4 @@
-.\"	$OpenBSD: echo.1,v 1.4 1998/11/06 00:34:08 aaron Exp $
+.\"	$OpenBSD: echo.1,v 1.5 1998/11/28 03:20:33 aaron Exp $
 .\"	$NetBSD: echo.1,v 1.7 1995/03/21 09:04:26 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -44,12 +44,12 @@
 .Nm echo
 .Nd write arguments to the standard output
 .Sh SYNOPSIS
-.Nm echo
+.Nm
 .Op Fl n
 .Op Ar string ...
 .Sh DESCRIPTION
 The
-.Nm echo
+.Nm
 utility writes any specified operands, separated by single blank
 .Pq Sq \ 
 characters and followed by a newline
@@ -64,13 +64,13 @@ Do not print the trailing newline character.
 .El
 .Pp
 The
-.Nm echo
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr printf 1
 .Sh STANDARDS
 The
-.Nm echo
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.

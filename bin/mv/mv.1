@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.5 1998/11/06 00:34:08 aaron Exp $
+.\"	$OpenBSD: mv.1,v 1.6 1998/11/28 03:20:34 aaron Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -44,15 +44,15 @@
 .Nm mv
 .Nd move files
 .Sh SYNOPSIS
-.Nm mv
+.Nm
 .Op Fl fi
 .Ar source target
-.Nm mv
+.Nm
 .Op Fl fi
 .Ar source ... directory
 .Sh DESCRIPTION
 In its first form, the
-.Nm mv
+.Nm
 utility renames the file named by the
 .Ar source
 operand to the destination path named by the
@@ -62,7 +62,7 @@ This form is assumed when the last operand does not name an already
 existing directory.
 .Pp
 In its second form,
-.Nm mv
+.Nm
 moves each file named by a
 .Ar source
 operand to a destination file in the existing directory named by the
@@ -79,7 +79,7 @@ Do not prompt for confirmation before overwriting the destination
 path.
 .It Fl i
 Causes
-.Nm mv
+.Nm
 to write a prompt to standard error before moving a file that would
 overwrite an existing file.
 If the response from the standard input begins with the character
@@ -100,7 +100,7 @@ It is an error for either the
 operand or the destination path to specify a directory unless both do.
 .Pp
 If the destination path does not have a mode which permits writing,
-.Nm mv
+.Nm
 prompts the user for confirmation as specified for the
 .Fl i
 option.
@@ -108,7 +108,7 @@ option.
 As the
 .Xr rename  2
 call does not work across file systems,
-.Nm mv
+.Nm
 uses
 .Xr cp 1
 and
@@ -122,14 +122,14 @@ rm -f destination_path && \e
 .Ed
 .Pp
 The
-.Nm mv
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr symlink 7
 .Sh STANDARDS
 The
-.Nm mv
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.

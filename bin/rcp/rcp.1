@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcp.1,v 1.5 1998/11/06 00:34:09 aaron Exp $
+.\"	$OpenBSD: rcp.1,v 1.6 1998/11/28 03:20:35 aaron Exp $
 .\"	$NetBSD: rcp.1,v 1.6 1995/07/25 19:37:25 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -41,17 +41,17 @@
 .Nm rcp
 .Nd remote file copy
 .Sh SYNOPSIS
-.Nm rcp
+.Nm
 .Op Fl Kpx
 .Op Fl k Ar realm
 .Ar file1 file2
-.Nm rcp
+.Nm
 .Op Fl Kprx
 .Op Fl k Ar realm
 .Ar file ...
 .Ar directory
 .Sh DESCRIPTION
-.Nm rcp
+.Nm
 copies files between machines.  Each
 .Ar file
 or
@@ -75,7 +75,7 @@ Available options are as follows:
 Turns off all Kerberos authentication.
 .It Fl k
 Requests
-.Nm rcp
+.Nm
 to obtain tickets
 for the remote host in realm
 .Ar realm
@@ -83,7 +83,7 @@ instead of the remote host's realm as determined by
 .Xr krb_realmofhost 3 .
 .It Fl p
 Causes
-.Nm rcp
+.Nm
 to attempt to preserve (duplicate) in its copies the modification
 times and modes of the source files, ignoring the
 .Ar umask .
@@ -95,7 +95,7 @@ modified by the
 on the destination host is used.
 .It Fl r
 If any of the source files are directories,
-.Nm rcp
+.Nm
 copies each subtree rooted at that name; in this case
 the destination must be a directory.
 .It Fl x
@@ -122,13 +122,13 @@ A
 on a remote host may be quoted (using \e, ", or \(aa)
 so that the metacharacters are interpreted remotely.
 .Pp
-.Nm rcp
+.Nm
 does not prompt for passwords; it performs remote execution
 via
 .Xr rsh  1  ,
 and requires the same authorization.
 .Pp
-.Nm rcp
+.Nm
 handles third party copies, where neither source nor target files
 are on the current machine.
 .Sh SEE ALSO
@@ -138,11 +138,11 @@ are on the current machine.
 .Xr rsh 1
 .Sh HISTORY
 The
-.Nm rcp
+.Nm
 utility appeared in
 .Bx 4.2 .
 The version of
-.Nm rcp
+.Nm
 described here
 has been reimplemented with Kerberos in
 .Bx 4.3 Reno .

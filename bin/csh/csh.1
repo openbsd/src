@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.18 1998/11/19 23:33:45 aaron Exp $
+.\"	$OpenBSD: csh.1,v 1.19 1998/11/28 03:20:31 aaron Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -41,21 +41,21 @@
 .Nm csh
 .Nd a shell (command interpreter) with C-like syntax
 .Sh SYNOPSIS
-.Nm csh
+.Nm
 .Op Fl bcefinstvVxX
 .Op arg ...
-.Nm csh
+.Nm
 .Op Fl l
 .Sh DESCRIPTION
-.Nm csh
+.Nm
 is a command language interpreter
 incorporating a history mechanism (see
-.Nm History Substitutions ) ,
+.Sx History substitutions ) ,
 job control facilities (see
-.Nm Jobs ) ,
+.Sx Jobs ) ,
 interactive file name
 and user name completion (see
-.Nm File Name Completion ) ,
+.Sx File name completion ) ,
 and a C-like syntax. It is used both as an interactive
 login shell and a shell script command processor.
 .Ss Argument list processing
@@ -160,7 +160,7 @@ Remaining arguments initialize the variable
 .Va argv .
 .Pp
 An instance of
-.Nm csh
+.Nm
 begins by executing commands from the file
 .Pa /etc/csh.cshrc
 and,
@@ -429,7 +429,7 @@ the shell variable
 .Va filec
 (see
 .Ic set ) ,
-.Nm csh
+.Nm
 will
 interactively complete file names and user names from unique
 prefixes when they are input from the terminal followed by
@@ -446,7 +446,7 @@ and the input is
 .Pp
 .Dl % vi ch<escape>
 .Pp
-.Nm csh
+.Nm
 will complete the prefix
 .Dq ch
 to the only matching file name
@@ -459,7 +459,7 @@ However, given
 .Pp
 .Dl % vi D<escape>
 .Pp
-.Nm csh
+.Nm
 will only expand the input to
 .Pp
 .Dl % vi DSC.
@@ -470,7 +470,7 @@ incomplete, since there are two file names matching the prefix
 .Pp
 If a partial file name is followed by the end-of-file character
 (usually control-D), then, instead of completing the name,
-.Nm csh
+.Nm
 will list all file names matching the prefix.  For example,
 the input
 .Pp
@@ -538,8 +538,8 @@ History substitutions begin with the character
 .Dq !
 and may begin
 .Em anywhere
-in the input stream (with the proviso that they
-.Nm "do not"
+in the input stream (with the proviso that they do
+.Em not
 nest.)
 This
 .Dq !
@@ -907,7 +907,7 @@ occurs.
 Strings quoted by backticks
 .Pq ` `
 are interpreted later (see
-.Nm "Command substitution"
+.Sx Command substitution
 below) so
 .Dq $
 substitution does not occur there until later, if at all.
@@ -958,7 +958,7 @@ If
 .Ar name
 is not a shell variable, but is set in the environment, then
 that value is returned (but
-.Nm :
+.Dq :
 modifiers and the other forms
 given below are not available here).
 .It $name Ns Op selector
@@ -1303,11 +1303,11 @@ Several of the built-in commands (to be described later)
 take expressions, in which the operators are similar to those of C, with
 the same precedence.
 These expressions appear in the
-.Nm @ ,
-.Ar exit ,
-.Ar if ,
+.Ic @ ,
+.Ic exit ,
+.Ic if ,
 and
-.Ar while
+.Ic while
 commands.
 The following operators are available:
 .Bd -ragged -offset indent
@@ -2030,7 +2030,7 @@ The most commonly used environment variables
 and
 .Ev PATH
 are automatically imported to and exported from the
-.Nm csh
+.Nm
 variables
 .Ar user ,
 .Ar term ,
@@ -2300,7 +2300,7 @@ is likewise handled; it is not
 necessary to worry about its setting other than in the file
 .Pa \&.cshrc
 as inferior
-.Nm csh
+.Nm
 processes will import the definition of
 .Ar path
 from the environment, and re-export it if you then change it.
@@ -2630,7 +2630,7 @@ substitutions on a single line to 20.
 .Pp
 .Em 'An introduction to the C shell'
 .Sh HISTORY
-.Nm csh
+.Nm
 appeared in
 .Bx 3 .
 It

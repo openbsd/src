@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: cpio.1,v 1.5 1998/09/14 22:13:52 aaron Exp $
+.\"	$OpenBSD: cpio.1,v 1.6 1998/11/28 03:20:34 aaron Exp $
 .\"
 .Dd February 16, 1997
 .Dt CPIO 1
@@ -36,7 +36,7 @@
 .Nm cpio
 .Nd copy file archives in and out
 .Sh SYNOPSIS
-.Nm cpio
+.Nm
 .Fl o
 .Op Fl aABcLvzZ
 .Op Fl C Ar bytes
@@ -45,7 +45,7 @@
 .Op Fl O Ar archive
 .Ar "< name-list"
 .Op Ar "> archive"
-.Nm cpio
+.Nm
 .Fl i
 .Op Fl bBcdfmrsStuvzZ6
 .Op Fl C Ar bytes
@@ -55,7 +55,7 @@
 .Op Fl I Ar archive
 .Op Ar "pattern ..."
 .Op Ar "< archive"
-.Nm cpio
+.Nm
 .Fl p
 .Op Fl adlLmuv
 .Ar destination-directory

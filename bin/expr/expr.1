@@ -1,4 +1,4 @@
-.\"	$OpenBSD: expr.1,v 1.4 1998/09/14 22:13:47 aaron Exp $
+.\"	$OpenBSD: expr.1,v 1.5 1998/11/28 03:20:33 aaron Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
@@ -11,17 +11,17 @@
 .Nm expr
 .Nd evaluate expression
 .Sh SYNOPSIS
-.Nm expr
+.Nm
 .Ar expression
 .Sh DESCRIPTION
 The
-.Nm expr
+.Nm
 utility evaluates 
 .Ar expression
 and writes the result on standard output.
 .Pp
 All operators are separate arguments to the
-.Nm expr
+.Nm
 utility.
 Characters special to the command interpreter must be escaped.
 .Pp
@@ -89,7 +89,7 @@ The following example returns the number of characters in variable a.
 .El
 .Sh DIAGNOSTICS
 The
-.Nm expr 
+.Nm
 utility exits with one of the following values:
 .Pp
 .Bl -tag -width Ds -compact
@@ -104,6 +104,6 @@ An error occurred (such as memory allocation failure).
 .El
 .Sh STANDARDS
 The
-.Nm expr
+.Nm
 utility conforms to
 .St -p1003.2 .

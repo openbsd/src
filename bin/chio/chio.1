@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.7 1998/09/14 22:13:37 aaron Exp $
+.\"	$OpenBSD: chio.1,v 1.8 1998/11/28 03:20:31 aaron Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -38,7 +38,7 @@
 .Nm chio
 .Nd medium changer control utility
 .Sh SYNOPSIS
-.Nm chio
+.Nm
 .Op Fl f Ar changer
 .Ar command
 .Ar arg1
@@ -48,7 +48,7 @@
 .Oc
 .Oc
 .Sh DESCRIPTION
-.Nm chio
+.Nm
 is used to control the operation of medium changers, such as those found
 in tape and optical disk jukeboxes.
 .Pp
@@ -76,9 +76,9 @@ There are four element types:
 (import/export), and
 .Pa drive
 (data transfer).  In this command description, the shorthand
-.Nm ET
+.Dq ET
 will be used to represent an element type, and
-.Nm EU
+.Dq EU
 will be used to represent an element unit.  For example, to represent
 the first robotic arm in the changer, the ET would be
 .Dq picker
@@ -86,7 +86,7 @@ and the EU would be
 .Dq 0 .
 .Pp
 .Sh SUPPORTED COMMANDS
-.Nm chio move
+.Cm chio move
 .Ar <from ET> <from EU> <to ET> <to EU>
 .Op Ar inv
 .Pp
@@ -98,7 +98,7 @@ If the optional modifier
 .Pa inv
 is specified, the media unit will be inverted before insertion.
 .Pp
-.Nm chio exchange
+.Cm chio exchange
 .Ar <src ET> <src EU> <dst1 ET> <dst1 EU>
 .Op Ar <dst2 ET> <dst2 ET>
 .Op Ar inv1
@@ -128,11 +128,11 @@ and
 respectively.
 .Pp
 Note that not all medium changers support the
-.Nm exchange
+.Cm exchange
 operation; the changer must have multiple free pickers or emulate
 multiple free pickers with transient storage.
 .Pp
-.Nm chio position
+.Cm chio position
 .Ar <to ET> <to EU>
 .Op Ar inv
 .Pp
@@ -144,22 +144,22 @@ is specified, the media unit will be inverted before insertion.
 .Pp
 Note that not all changers behave as expected when issued this command.
 .Pp
-.Nm chio params
+.Cm chio params
 .Pp
 Report the number of slots, drives, pickers, and portals in the changer,
 and which picker unit the changer is currently configured to use.
 .Pp
-.Nm chio getpicker
+.Cm chio getpicker
 .Pp
 Report which picker unit the changer is currently configured to use.
 .Pp
-.Nm chio setpicker
+.Cm chio setpicker
 .Ar <unit>
 .Pp
 Configure the changer to use picker
 .Pa <unit> .
 .Pp
-.Nm chio status
+.Cm chio status
 .Op Ar <type>
 .Pp
 Report the status of all elements in the changer.  If
@@ -169,26 +169,26 @@ is specified, report the status of all elements of type
 .Pp
 The status bits are defined as follows:
 .Bl -tag -width indent
-.It Nm FULL
+.It Dv FULL
 Element contains a media unit.
-.It Nm IMPEXP
+.It Dv IMPEXP
 Media was deposited into element by an outside human operator.
-.It Nm EXCEPT
+.It Dv EXCEPT
 Element is in an abnormal state.
-.It Nm ACCESS
+.It Dv ACCESS
 Media in this element is accessible by a picker.
-.It Nm EXENAB
+.It Dv EXENAB
 Element supports passing media (exporting) to an outside human operator.
-.It Nm INENAB
+.It Dv INENAB
 Element supports receiving media (importing) from an outside human operator.
 .El
 .Pp
 .Sh EXAMPLES
-.Nm chio move slot 3 drive 0
+.Cm chio move slot 3 drive 0
 .Pp
 Moves the media in slot 3 (fourth slot) to drive 0 (first drive).
 .Pp
-.Nm chio setpicker 2
+.Cm chio setpicker 2
 .Pp
 Configures the changer to use picker 2 (third picker) for operations.
 .Pp
@@ -203,6 +203,6 @@ default changer device
 .Xr mount 8
 .Sh AUTHOR
 The
-.Nm chio
+.Nm
 program and SCSI changer driver were written by Jason R. Thorpe
 <thorpej@and.com> for And Communications (http://www.and.com/).

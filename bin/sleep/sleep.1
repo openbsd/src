@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.1,v 1.5 1998/09/23 00:13:50 aaron Exp $
+.\"	$OpenBSD: sleep.1,v 1.6 1998/11/28 03:20:35 aaron Exp $
 .\"	$NetBSD: sleep.1,v 1.9 1995/07/25 19:37:43 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -44,21 +44,21 @@
 .Nm sleep
 .Nd suspend execution for an interval of time
 .Sh SYNOPSIS
-.Nm sleep
+.Nm
 .Ar seconds
 .Sh DESCRIPTION
 The
-.Nm sleep
+.Nm
 utility
 suspends execution for a minimum of
 .Ar seconds .
-.Nm sleep
+.Nm
 is used to schedule the execution of other commands (see
 .Sx EXAMPLES
 below).
 .Pp
 The
-.Nm sleep
+.Nm
 utility exits with one of the following values:
 .Bl -tag -width flag
 .It Li \&0
@@ -113,7 +113,7 @@ awk job.
 .Xr sleep 3
 .Sh STANDARDS
 The
-.Nm sleep
+.Nm
 command offers a superset of
 .St -p1003.2
 functionality.
