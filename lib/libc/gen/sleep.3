@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.3,v 1.2 1996/08/19 08:26:18 tholo Exp $
+.\"	$OpenBSD: sleep.3,v 1.3 1997/04/25 14:39:00 kstailey Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,25 +52,17 @@ action is to invoke a signal-catching function or to terminate the
 process.  The suspension time may be longer than requested due to the
 scheduling of other activity by the system.
 .Pp
-If a timer is already running on the process its state is saved.
-If the value
-.Fa seconds
-is more than or equal to the remaining clock time for the saved timer,
-the sleep time is set to
-the remaining clock time.
-The state of the previous timer
-is restored after
-.Fa seconds
-has passed.
-.Pp
 This function is implemented using
-.Xr setitimer 2 ;
-it requires eight system calls each time it is invoked.
+.Xr nanosleep 2 ;
+it requires one system call each time it is invoked.
 A similar but less compatible function can be obtained with a single
 .Xr select 2 ;
-such a function would not restart after signals, but would not interfere
+such a function would not restart after signals, and also does not interfere
 with other uses of
-.Xr setitimer .
+.Xr setitimer
+(not that
+.Fn sleep
+interferes with interval timers anymore.)
 .Sh RETURN VALUE
 If the 
 .Fn sleep
@@ -81,6 +73,7 @@ function returns due to the delivery of a signal, the value returned
 will be the unslept amount (the request time minus the time actually
 slept) in seconds.
 .Sh SEE ALSO
+.Xr nanosleep 2 ,
 .Xr setitimer 2 ,
 .Xr sigaction 2 ,
 .Xr sigsuspend 2 ,
