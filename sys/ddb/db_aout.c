@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.18 1997/06/12 03:46:57 mickey Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.19 1997/07/08 10:48:32 niklas Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -68,7 +68,7 @@ int db_symtab[SYMTAB_SPACE/sizeof(int)] = { 0, 1 };
  */
 void
 X_db_sym_init(symtab, esymtab, name)
-	int *symtab;		/* pointer to start of symbol table */
+	long *symtab;		/* pointer to start of symbol table */
 	char *esymtab;		/* pointer to end of string table,
 				   for checking - rounded up to integer
 				   boundary */
@@ -437,7 +437,7 @@ ddb_init()
 	db_sym_init();
 
 	if (esym > (char *)&end) {
-	    X_db_sym_init((int *)&end, esym, "bsd");
+	    X_db_sym_init((long *)&end, esym, "bsd");
 	}
 #else
 	db_sym_init();
