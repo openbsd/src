@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.9 2001/01/20 20:25:22 art Exp $ */
+/* $OpenBSD: cpu.c,v 1.10 2001/04/15 05:54:39 art Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -122,7 +122,7 @@ struct cfdriver cpu_cd = {
 
 extern struct cfdriver cpu_cd;
 
-static char *ev4minor[] = {
+static const char *ev4minor[] = {
 	"pass 2 or 2.1", "pass 3", 0
 }, *lcaminor[] = {
 	"",
@@ -144,8 +144,8 @@ static char *ev4minor[] = {
 
 struct cputable_struct {
 	int	cpu_major_code;
-	char	*cpu_major_name;
-	char	**cpu_minor_names;
+	const char *cpu_major_name;
+	const char **cpu_minor_names;
 } cpunametable[] = {
 	{ PCS_PROC_EV3,		"EV3",		0		},
 	{ PCS_PROC_EV4,		"21064",	ev4minor	},
@@ -155,7 +155,9 @@ struct cputable_struct {
 	{ PCS_PROC_EV45,	"21064A",	ev45minor	},
 	{ PCS_PROC_EV56,	"21164A",	ev56minor	},
 	{ PCS_PROC_EV6,		"21264",	ev6minor	},
-	{ PCS_PROC_PCA56,	"PCA56",	pca56minor	}
+	{ PCS_PROC_PCA56,	"PCA56",	pca56minor	},
+	{ PCS_PROC_PCA57,	"PCA57",	NULL		},
+	{ PCS_PROC_EV67,	"21264A",	NULL		},
 };
 
 /*
@@ -210,7 +212,7 @@ cpuattach(parent, dev, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	int i;
-	char **s;
+	const char **s;
 	struct pcs *p;
 #ifdef DEBUG
 	int needcomma;
@@ -237,17 +239,18 @@ cpuattach(parent, dev, aux)
 			s = cpunametable[i].cpu_minor_names;
 			for(i = 0; s && s[i]; ++i) {
 				if (i == minor && strlen(s[i]) != 0) {
-					printf(" (%s)\n", s[i]);
+					printf(" (%s)", s[i]);
 					goto recognized;
 				}
 			}
-			printf(" (unknown minor type %d)\n", minor);
+			printf(" (unknown minor type %d)", minor);
 			goto recognized;
 		}
 	}
 	printf("UNKNOWN CPU TYPE (%d:%d)", major, minor);
 
 recognized:
+	printf("\n");
 
 	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
 		cpu_implver = alpha_implver();
@@ -425,17 +428,9 @@ cpu_boot_secondary(ci)
 	 * CPUs PCS.
 	 */
 
-	/*
-	 * XXX Until I can update the boot block on my test system.
-	 * XXX --thorpej
-	 */
-#if 0
 	memcpy(&pcsp->pcs_pal_rev, &primary_pcsp->pcs_pal_rev,
 	    sizeof(pcsp->pcs_pal_rev));
-#else
-	memcpy(&pcsp->pcs_pal_rev, &pcsp->pcs_palrevisions[PALvar_OSF1],
-	    sizeof(pcsp->pcs_pal_rev));
-#endif
+
 	pcsp->pcs_flags |= (PCS_CV|PCS_RC);
 	pcsp->pcs_flags &= ~PCS_BIP;
 
