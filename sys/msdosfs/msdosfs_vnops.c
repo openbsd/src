@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.48 2004/11/29 17:05:06 grange Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.49 2004/11/30 12:39:43 pedro Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -432,6 +432,7 @@ msdosfs_read(v)
 	long on;
 	daddr_t lbn;
 	daddr_t rablock;
+	daddr_t rablkno;
 	struct buf *bp;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
@@ -471,11 +472,12 @@ msdosfs_read(v)
 			error = bread(pmp->pm_devvp, lbn, blsize, NOCRED, &bp);
 		} else {
 			rablock = lbn + 1;
+			rablkno = de_cn2bn(pmp, rablock);
 			if (dep->de_lastr + 1 == lbn &&
 			    de_cn2off(pmp, rablock) < dep->de_FileSize)
-				error = breada(vp, de_cn2bn(pmp, lbn),
-				    pmp->pm_bpcluster, de_cn2bn(pmp, rablock),
-				    pmp->pm_bpcluster, NOCRED, &bp);
+				error = breadn(vp, de_cn2bn(pmp, lbn),
+				    pmp->pm_bpcluster, &rablkno,
+				    &pmp->pm_bpcluster, 1, NOCRED, &bp);
 			else
 				error = bread(vp, de_cn2bn(pmp, lbn),
 				    pmp->pm_bpcluster, NOCRED, &bp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.45 2004/01/21 21:00:14 tedu Exp $	*/
+/*	$OpenBSD: buf.h,v 1.46 2004/11/30 12:39:43 pedro Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -223,8 +223,6 @@ void	biodone(struct buf *);
 int	biowait(struct buf *);
 int	bread(struct vnode *, daddr_t, int,
 		   struct ucred *, struct buf **);
-int	breada(struct vnode *, daddr_t, int, daddr_t, int,
-		    struct ucred *, struct buf **);
 int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
 		    struct ucred *, struct buf **);
 void	brelse(struct buf *);
