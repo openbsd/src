@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.206 2004/05/04 23:37:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.207 2004/05/18 16:45:46 drahn Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -58,7 +58,7 @@ distribution-etc-root-var distribution distrib-dirs release snapshot:
 .else
 distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
-	cat etc.${MACHINE}/ttys ttys.pty > ${DESTDIR}/etc/ttys && \
+	ksh ttys.pty | cat etc.${MACHINE}/ttys - > ${DESTDIR}/etc/ttys && \
 	    chown ${BINOWN} ${DESTDIR}/etc/ttys && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/ttys && \
 	    chmod 644 ${DESTDIR}/etc/ttys
@@ -373,7 +373,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.206 2004/05/04 23:37:04 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.207 2004/05/18 16:45:46 drahn Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
