@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.81 1999/03/30 07:12:05 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.82 1999/04/02 06:55:56 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.81 1999/03/30 07:12:05 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.82 1999/04/02 06:55:56 marc Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -360,6 +360,10 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #				  Setting MIRROR_DISTFILE to "no" in the package Makefile
 #				  will override the default "yes", and the distfile will
 #				  not be fetched.
+# list-distfiles- list the distribution and patch files used by a port.
+#				  Typical use is (from the top level of the ports tree)
+#				  make ECHO_MSG=: list-distfiles | tee some-file
+# obj			- pre-build ${WRKDIR} -> ${WRKOBJDIR}/${PORTSUBDIR} links
 #
 # Default sequence for "all" is:  fetch checksum extract patch configure build
 #
@@ -1274,8 +1278,14 @@ mirror-distfiles:
 	@make fetch __ARCH_OK=yes NO_IGNORE=yes NO_WARNINGS=yes
 .endif
 
-# Obj
+# list the distribution and patch files used by a port.  Typical
+# use is		make ECHO_MSG=: list-distfiles | tee some-file
+#
+list-distfiles:
+	@for file in ${DISTFILES} ${PATCHFILES}; do ${ECHO} $$file; done
 
+# Obj
+#
 .if !target(obj)
 obj:
 .if !defined(NO_WRKDIR)
@@ -2314,7 +2324,7 @@ tags:
    checksum clean clean-depends configure deinstall \
    delete-package delete-package-links depend depends depends-list \
    describe distclean do-build do-configure do-extract \
-   do-fetch do-install do-package do-patch extract \
+   do-fetch do-install do-package do-patch extract list-distfiles \
    fake-pkg fetch fetch-depends fetch-list fetch-list-one-pkg \
    fetch-list-recursive install lib-depends makesum mirror-distfiles \
    misc-depends package package-depends package-links package-name \
