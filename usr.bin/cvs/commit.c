@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.3 2004/11/09 20:59:31 krapht Exp $	*/
+/*	$OpenBSD: commit.c,v 1.4 2004/11/09 21:11:37 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -148,15 +148,18 @@ cvs_commit_openmsg(const char *path)
 			}
 
 			sz = strlen(buf);
-			if ((sz == 0) || (sz > 2)) {
+			if ((sz == 0) || (sz > 2) ||
+			    ((buf[sz] != 'y') && (buf[sz] != 'n'))) {
+				fprintf(stderr, "invalid input\n");
 				continue;
 			}
-
+			else if (buf[sz] == 'y') 
+				break;
+			else if (buf[sz] == 'n') {
 				cvs_log(LP_ERR, "aborted by user");
 				return (NULL);
 			}
 
-			fprintf(stderr, "Invalid character\n");
 		} while (1);
 	}
 
