@@ -54,16 +54,6 @@ struct tree_cache *global_options [256];
 
 int log_perror = 1;
 
-/* Needed to prevent linking against conflex.c. */
-#if 0
-int lexline;
-int lexchar;
-char *token_line;
-char *tlname;
-#endif
-
-char *path_dhcrelay_pid = "/var/run/dhcrelay.pid";
-
 u_int16_t local_port;
 u_int16_t remote_port;
 int log_priority;
@@ -103,10 +93,6 @@ int main (argc, argv)
 			local_port = htons (atoi (argv [i]));
 			debug ("binding to user-specified port %d",
 			       ntohs (local_port));
-		} else if (!strcmp (argv [i], "-pf")) {
-			if (++i == argc)
-				usage();
-			path_dhcrelay_pid = argv [i];
 		} else if (!strcmp (argv [i], "-d")) {
 			no_daemon = 1;
  		} else if (!strcmp (argv [i], "-i")) {
@@ -189,8 +175,6 @@ int main (argc, argv)
 	/* Become a daemon... */
 	if (!no_daemon) {
 		int pid;
-		FILE *pf;
-		int pfdesc;
 
 		log_perror = 0;
 
@@ -198,22 +182,6 @@ int main (argc, argv)
 			error ("can't fork daemon: %m");
 		else if (pid)
 			exit (0);
-
-		pfdesc = open (path_dhcrelay_pid,
-			       O_CREAT | O_TRUNC | O_WRONLY, 0644);
-
-		if (pfdesc < 0) {
-			warn ("Can't create %s: %m", path_dhcrelay_pid);
-		} else {
-			pf = fdopen (pfdesc, "w");
-			if (!pf)
-				warn ("Can't fdopen %s: %m",
-				      path_dhcrelay_pid);
-			else {
-				fprintf (pf, "%ld\n", (long)getpid ());
-				fclose (pf);
-			}	
-		}
 
 		close (0);
 		close (1);
@@ -326,8 +294,8 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "Usage: %s [-q] [-d] [-p <port>]", __progname);
-	fprintf(stderr, "server1 [... serverN]\n");
+	fprintf(stderr, "Usage: %s [-q] [-d] [-p <port>] ", __progname);
+	fprintf(stderr, "-i interface server1 [... serverN]\n");
 	exit (1);
 }
 
