@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 2001/02/24 10:31:58 hugh Exp $ */
+/*	$OpenBSD: conf.c,v 1.24 2001/03/15 20:32:11 bjc Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -284,13 +284,6 @@ struct	consdev constab[]={
 	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) nullop, \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, read, write, ioctl, stop, tty, select, mmap */
-#define cdev_wscons_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-        dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-        dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
-
-
 cdev_decl(cn);
 cdev_decl(ctty);
 #define mmread	mmrw
@@ -436,8 +429,9 @@ cdev_decl(xfs_dev);
 
 dev_decl(filedesc,open);
 
-#include "wscons.h"
-cdev_decl(wscons);
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -509,7 +503,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
 	cdev_tty_init(NDL,dl),		/* 66: DL11 */
     cdev_random_init(1,random), /* 67: random data source */
-	cdev_wscons_init(NWSCONS, wscons),	/* 68: workstation console */
+	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 68: workstation console */
 	cdev_disk_init(NRY,ry),		/* 71: VS floppy */
 	cdev_notdef(),		/* 72: was: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 73: RAIDframe disk driver */
