@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.23 1998/09/30 07:49:36 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.24 1999/02/09 03:43:48 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.23 1998/09/30 07:49:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.24 1999/02/09 03:43:48 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -474,6 +474,12 @@ url_get(origline, proxyenv, outfile)
 		goto cleanup_url_get;
 	}
 	progressmeter(1);
+	if (filesize != -1 && len == 0 && bytes != filesize) {
+		if (verbose)
+			fputs("Read short file.\n", ttyout);
+		goto cleanup_url_get;
+	}
+
 	if (verbose)
 		fputs("Successfully retrieved file.\n", ttyout);
 	(void)signal(SIGINT, oldintr);
