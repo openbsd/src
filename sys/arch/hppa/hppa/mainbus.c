@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.13 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.14 2001/11/05 17:25:57 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -682,7 +682,8 @@ mbus_dmamap_unload(void *v, bus_dmamap_t map)
 }
 
 void
-mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_dmasync_op_t ops)
+mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
+    int ops)
 {
 	int i;
 	switch (ops) {
@@ -693,15 +694,17 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_dmasync_op_t ops)
 
 	case BUS_DMASYNC_PREREAD:
 		for (i = map->dm_nsegs; i--; )
-			pdcache(HPPA_SID_KERNEL, map->dm_segs[i].ds_addr,
-			    map->dm_segs[i].ds_len);
+			pdcache(HPPA_SID_KERNEL,
+			    map->dm_segs[i].ds_addr + offset,
+			    len);
 		sync_caches();
 		break;
 
 	case BUS_DMASYNC_PREWRITE:
 		for (i = map->dm_nsegs; i--; )
-			fdcache(HPPA_SID_KERNEL, map->dm_segs[i].ds_addr,
-			    map->dm_segs[i].ds_len);
+			fdcache(HPPA_SID_KERNEL,
+			    map->dm_segs[i].ds_addr + offset,
+			    len);
 		sync_caches();
 		break;
 	}

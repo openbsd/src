@@ -1,4 +1,4 @@
-/* $OpenBSD: bus_dma.c,v 1.4 2001/09/19 20:50:56 mickey Exp $ */
+/* $OpenBSD: bus_dma.c,v 1.5 2001/11/05 17:25:57 art Exp $ */
 /* $NetBSD: bus_dma.c,v 1.40 2000/07/17 04:47:56 thorpej Exp $ */
 
 /*-
@@ -429,10 +429,12 @@ _bus_dmamap_unload(t, map)
  * by chipset-specific DMA map synchronization functions.
  */
 void
-_bus_dmamap_sync(t, map, op)
+_bus_dmamap_sync(t, map, offset, len, op)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	bus_dmasync_op_t op;
+	bus_addr_t offset;
+	bus_size_t len;
+	int op;
 {
 
 	/*

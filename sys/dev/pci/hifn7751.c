@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.104 2001/11/04 18:31:42 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.105 2001/11/05 17:25:58 art Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -105,14 +105,6 @@ void	hifn_tick __P((void *));
 void	hifn_abort __P((struct hifn_softc *));
 
 struct hifn_stats hifnstats;
-
-#ifdef __HAS_NEW_BUS_DMAMAP_SYNC
-#define hifn_bus_dmamap_sync(t, m, o, l, f) \
-    bus_dmamap_sync((t), (m), (o), (l), (f))
-#else
-#define hifn_bus_dmamap_sync(t, m, o, l, f) \
-    bus_dmamap_sync((t), (m), (f))
-#endif
 
 int
 hifn_probe(parent, match, aux)
@@ -318,7 +310,7 @@ hifn_attach(parent, self, aux)
 		    NULL, NULL, NULL);
 	}
 
-	hifn_bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
 	    sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
@@ -874,13 +866,13 @@ hifn_writeramaddr(sc, addr, data, slot)
 	dma->dstr[slot].l = 4 | masks;
 	dma->resr[slot].l = 4 | masks;
 
-	hifn_bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    0, sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	DELAY(3000);	/* let write command execute */
 
-	hifn_bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    0, sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
@@ -934,13 +926,13 @@ hifn_readramaddr(sc, addr, data, slot)
 	dma->dstr[slot].l = 8 | masks;
 	dma->resr[slot].l = HIFN_MAX_RESULT | masks;
 
-	hifn_bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    0, sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	DELAY(3000);	/* let read command execute */
 
-	hifn_bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    0, sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
@@ -1350,13 +1342,13 @@ hifn_crypto(sc, cmd, crp)
 #endif
 
 	if (cmd->src_map == cmd->dst_map)
-		hifn_bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
 		    0, cmd->src_map->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	else {
-		hifn_bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
 		    0, cmd->src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-		hifn_bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
+		bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
 		    0, cmd->dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	}
 
@@ -1994,14 +1986,14 @@ hifn_abort(sc)
 			hifn_callback(sc, cmd, macbuf);
 		} else {
 			if (cmd->src_map == cmd->dst_map)
-				hifn_bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+				bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
 				    0, cmd->src_map->dm_mapsize,
 				    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			else {
-				hifn_bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+				bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
 				    0, cmd->src_map->dm_mapsize,
 				    BUS_DMASYNC_POSTWRITE);
-				hifn_bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
+				bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
 				    0, cmd->dst_map->dm_mapsize,
 				    BUS_DMASYNC_POSTREAD);
 			}
@@ -2060,13 +2052,13 @@ hifn_callback(sc, cmd, macbuf)
 	int totlen, i, u;
 
 	if (cmd->src_map == cmd->dst_map)
-		hifn_bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
 		    0, cmd->src_map->dm_mapsize,
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	else {
-		hifn_bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
+		bus_dmamap_sync(sc->sc_dmat, cmd->src_map,
 		    0, cmd->src_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-		hifn_bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
+		bus_dmamap_sync(sc->sc_dmat, cmd->dst_map,
 		    0, cmd->dst_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 	}
 
@@ -2100,11 +2092,11 @@ hifn_callback(sc, cmd, macbuf)
 
 	i = dma->dstk; u = dma->dstu;
 	while (u != 0) {
-		hifn_bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 		    offsetof(struct hifn_dma, dstr[i]), sizeof(struct hifn_desc),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		if (dma->dstr[i].l & HIFN_D_VALID) {
-			hifn_bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 			    offsetof(struct hifn_dma, dstr[i]),
 			    sizeof(struct hifn_desc),
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);

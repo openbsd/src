@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.31 2001/09/20 17:02:31 mpech Exp $
+ * $OpenBSD: aic7xxx.c,v 1.32 2001/11/05 17:25:58 art Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -254,14 +254,6 @@ typedef enum {
 	MSGLOOP_MSGCOMPLETE,
 	MSGLOOP_TERMINATED
 } msg_loop_stat;
-
-#ifdef __HAS_NEW_BUS_DMAMAP_SYNC
-#define	ahc_bus_dmamap_sync(tag, map, off, len, op)	\
-    bus_dmamap_sync((tag), (map), (off), (len), (op))
-#else
-#define	ahc_bus_dmamap_sync(tag, map, off, len, op)	\
-    bus_dmamap_sync((tag), (map), (op))
-#endif
 
 STATIC int	ahc_parse_msg __P((struct ahc_softc *ahc,
 				   struct scsi_link *sc_link,
@@ -531,7 +523,7 @@ ahc_index_busy_tcl(ahc, tcl, unbusy)
 	scbid = ahc->untagged_scbs[tcl];
 	if (unbusy) {
 		ahc->untagged_scbs[tcl] = SCB_LIST_NULL;
-		ahc_bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap,
+		bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap,
 		    UNTAGGEDSCB_OFFSET * 256, 256, BUS_DMASYNC_PREWRITE);
 	}
 
@@ -544,7 +536,7 @@ ahc_busy_tcl(ahc, scb)
 	struct scb *scb;
 {
 	ahc->untagged_scbs[scb->hscb->tcl] = scb->hscb->tag;
-	ahc_bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
+	bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
 	    UNTAGGEDSCB_OFFSET * 256, 256, BUS_DMASYNC_PREWRITE);
 }
 
@@ -606,7 +598,7 @@ ahc_run_qoutfifo(ahc)
 	struct scb *scb;
 	u_int  scb_index;
 
-	ahc_bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
+	bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
 	    0, 256, BUS_DMASYNC_POSTREAD);
 
 	while (ahc->qoutfifo[ahc->qoutfifonext] != SCB_LIST_NULL) {
@@ -3455,13 +3447,13 @@ ahc_done(ahc, scb)
 	target = sc_link->target;
 	
 	if (xs->datalen) {
-		bus_dmasync_op_t op;
+		int op;
 	
 		if ((xs->flags & SCSI_DATA_IN) != 0)
 			op = BUS_DMASYNC_POSTREAD;
 		else
 			op = BUS_DMASYNC_POSTWRITE;
-		ahc_bus_dmamap_sync(ahc->sc_dmat, scb->dmamap,
+		bus_dmamap_sync(ahc->sc_dmat, scb->dmamap,
 		    0, scb->dmamap->dm_mapsize, op);
 		bus_dmamap_unload(ahc->sc_dmat, scb->dmamap);
 	}
@@ -3681,7 +3673,7 @@ ahc_init(ahc)
 	for (i = 0; i < 256; i++)
 		ahc->qoutfifo[i] = SCB_LIST_NULL;
 
-	ahc_bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap,
+	bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap,
 		 0, driver_data_size, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	
 	/*
@@ -4297,9 +4289,9 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 
 
 	if (nsegments != 0) {
-		struct	  ahc_dma_seg *sg;
+		struct ahc_dma_seg *sg;
 		bus_dma_segment_t *end_seg;
-		bus_dmasync_op_t op;
+		int op;
 
 		end_seg = dm_segs + nsegments;
 
@@ -4323,7 +4315,7 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 			op = BUS_DMASYNC_PREREAD;
 		else
 			op = BUS_DMASYNC_PREWRITE;
-		ahc_bus_dmamap_sync(ahc->sc_dmat, scb->dmamap,
+		bus_dmamap_sync(ahc->sc_dmat, scb->dmamap,
 		    0, scb->dmamap->dm_mapsize, op);
 	} else {
 		scb->hscb->SG_pointer = 0;
@@ -4379,7 +4371,7 @@ ahc_execute_scb(arg, dm_segs, nsegments)
 
 		ahc->qinfifo[ahc->qinfifonext++] = scb->hscb->tag;
 
-		ahc_bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
+		bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
 		    QINFIFO_OFFSET * 256, 256, BUS_DMASYNC_PREWRITE);
 		
 		if ((ahc->features & AHC_QUEUE_REGS) != 0) {
@@ -5080,7 +5072,7 @@ bus_reset:
 				ahc->qinfifo[ahc->qinfifonext++] =
 				    scb->hscb->tag;
 
-				ahc_bus_dmamap_sync(ahc->sc_dmat,
+				bus_dmamap_sync(ahc->sc_dmat,
 				    ahc->shared_data_dmamap,
 				    QINFIFO_OFFSET * 256, 256,
 				    BUS_DMASYNC_PREWRITE);
@@ -5134,7 +5126,7 @@ ahc_search_qinfifo(ahc, target, channel, lun, tag, role, status, action)
 	 * for removal will be re-added to the queue as we go.
 	 */
 	ahc->qinfifonext = qinpos;
-	ahc_bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
+	bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
 	    QINFIFO_OFFSET * 256, 256, BUS_DMASYNC_POSTREAD);
 
 	while (qinpos != qintail) {
@@ -5165,7 +5157,7 @@ ahc_search_qinfifo(ahc, target, channel, lun, tag, role, status, action)
 		}
 		qinpos++;
 	}
-	ahc_bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
+	bus_dmamap_sync(ahc->sc_dmat, ahc->shared_data_dmamap, 
 	    QINFIFO_OFFSET * 256, 256, BUS_DMASYNC_PREWRITE);
 	
 	if ((ahc->features & AHC_QUEUE_REGS) != 0) {

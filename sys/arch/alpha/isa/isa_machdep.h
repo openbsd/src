@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.h,v 1.9 2001/11/05 02:39:57 art Exp $	*/
+/*	$OpenBSD: isa_machdep.h,v 1.10 2001/11/05 17:25:57 art Exp $	*/
 /*	$NetBSD: isa_machdep.h,v 1.3 1996/11/19 04:53:07 cgd Exp $	*/
 
 /*
@@ -77,8 +77,8 @@ int	isadma_bounce_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
 int	isadma_bounce_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int);
 void	isadma_bounce_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-void	isadma_bounce_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
-	    bus_dmasync_op_t);
+void	isadma_bounce_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 int	isadma_bounce_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t *, int, int *, int);
 #endif /* _ALPHA_BUS_DMA_PRIVATE */

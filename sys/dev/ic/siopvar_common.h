@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.8 2001/10/30 00:02:55 krw Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.9 2001/11/05 17:25:58 art Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.10 2001/01/26 21:58:56 bouyer Exp $	*/
 
 /*
@@ -182,14 +182,6 @@ struct siop_lunsw {
 	u_int32_t lunsw_size; /* size of this lun sw */
 };
 
-#ifdef __HAS_NEW_BUS_DMAMAP_SYNC
-#define	siop_bus_dmamap_sync(tag, map, off, len, op)	\
-    bus_dmamap_sync((tag), (map), (off), (len), (op))
-#else
-#define	siop_bus_dmamap_sync(tag, map, off, len, op)	\
-    bus_dmamap_sync((tag), (map), (op))
-#endif
-
 static __inline__ void siop_table_sync __P((struct siop_cmd *, int));
 static __inline__ void
 siop_table_sync(siop_cmd, ops)
@@ -201,7 +193,7 @@ siop_table_sync(siop_cmd, ops)
         
         offset = siop_cmd->dsa -
 		siop_cmd->siop_cbdp->xferdma->dm_segs[0].ds_addr;
-	siop_bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, offset,
+	bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, offset,
             sizeof(struct siop_xfer), ops);
 }
 

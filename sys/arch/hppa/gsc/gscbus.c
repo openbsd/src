@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.14 2001/10/04 22:01:30 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.15 2001/11/05 17:25:57 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -106,7 +106,8 @@ int	gsc_dmamap_load_uio __P((void *, bus_dmamap_t, struct uio *, int));
 int	gsc_dmamap_load_raw __P((void *, bus_dmamap_t,
 				 bus_dma_segment_t *, int, bus_size_t, int));
 void	gsc_dmamap_unload __P((void *, bus_dmamap_t));
-void	gsc_dmamap_sync __P((void *, bus_dmamap_t, bus_dmasync_op_t));
+void	gsc_dmamap_sync __P((void *, bus_dmamap_t, bus_addr_t, bus_size_t,
+			     int));
 
 int	gsc_dmamem_alloc __P((void *, bus_size_t, bus_size_t,
 			      bus_size_t, bus_dma_segment_t *, int, int *, int));
@@ -347,10 +348,12 @@ gsc_dmamap_unload(v, map)
 }
 
 void
-gsc_dmamap_sync(v, map, op)
+gsc_dmamap_sync(v, map, offset, len, op)
 	void *v;
 	bus_dmamap_t map;
-	bus_dmasync_op_t op;
+	bus_addr_t offset;
+	bus_size_t len;
+	int op;
 {
 
 }

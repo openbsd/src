@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tribm_isa.c,v 1.1 1999/12/27 21:51:35 fgsch Exp $	*/
+/*	$OpenBSD: if_tribm_isa.c,v 1.2 2001/11/05 17:25:58 art Exp $	*/
 /*	$NetBSD: if_tribm_isa.c,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

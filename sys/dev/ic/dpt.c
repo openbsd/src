@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpt.c,v 1.4 2001/07/13 17:04:28 mickey Exp $	*/
+/*	$OpenBSD: dpt.c,v 1.5 2001/11/05 17:25:58 art Exp $	*/
 /*	$NetBSD: dpt.c,v 1.12 1999/10/23 16:26:33 ad Exp $	*/
 
 /*-
@@ -202,14 +202,8 @@ dpt_intr(xxx_sc)
 			break;
 		}
 		
-#ifdef __NetBSD__
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_spoff,
 		    sizeof(struct eata_sp), BUS_DMASYNC_POSTREAD);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb,
-		    BUS_DMASYNC_POSTREAD);
-#endif /* __OpenBSD__ */
 
 		if (!sp) {
 			more = dpt_inb(sc, HA_STATUS) & HA_ST_MORE;
@@ -234,15 +228,9 @@ dpt_intr(xxx_sc)
 			    sc->sc_dv.dv_xname);
 #endif
 			/* Re-sync DMA map */
-#ifdef __NetBSD__
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, 
 			    sc->sc_spoff, sizeof(struct eata_sp),
 			    BUS_DMASYNC_POSTREAD);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, 
-			    BUS_DMASYNC_POSTREAD);
-#endif /* __OpenBSD__ */
 		}
 
 		/* Make sure CCB ID from status packet is realistic */
@@ -250,15 +238,9 @@ dpt_intr(xxx_sc)
 			/* Sync up DMA map and cache cmd status */
 			ccb = sc->sc_ccbs + sp->sp_ccbid;
 
-#ifdef __NetBSD__
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, 
 			    CCB_OFF(sc, ccb), sizeof(struct dpt_ccb), 
 			    BUS_DMASYNC_POSTWRITE);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, 
-			    BUS_DMASYNC_POSTWRITE);
-#endif /* __OpenBSD__ */
 
 			ccb->ccb_hba_status = sp->sp_hba_status & 0x7F;
 			ccb->ccb_scsi_status = sp->sp_scsi_status;
@@ -824,17 +806,10 @@ dpt_done_ccb(sc, ccb)
 	 * data buffer.
 	 */
 	if (xs->datalen) {
-#ifdef __NetBSD__
 		bus_dmamap_sync(dmat, ccb->ccb_dmamap_xfer, 0,
 		    ccb->ccb_dmamap_xfer->dm_mapsize,
-		    (xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMASYNC_POSTREAD :
-		    BUS_DMASYNC_POSTWRITE);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-		bus_dmamap_sync(dmat, ccb->ccb_dmamap_xfer,
 		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
-#endif /* __OpenBSD__ */
 		bus_dmamap_unload(dmat, ccb->ccb_dmamap_xfer);
 	}
 
@@ -1195,15 +1170,9 @@ dpt_scsi_cmd(xs)
 			return (COMPLETE);
 		}
 
-#ifdef __NetBSD__
 		bus_dmamap_sync(dmat, xfer, 0, xfer->dm_mapsize,
-		    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-		bus_dmamap_sync(dmat, xfer, (xs->flags & SCSI_DATA_IN) ?
-				BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-#endif /* __OpenBSD__ */
 
 		/* Don't bother using scatter/gather for just 1 segment */
 		if (xfer->dm_nsegs == 1) {
@@ -1235,16 +1204,10 @@ dpt_scsi_cmd(xs)
 	}
 
 	/* Sync up CCB and status packet */
-#ifdef __NetBSD__
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, CCB_OFF(sc, ccb), 
 	    sizeof(struct dpt_ccb), BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_spoff, 
 	    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, BUS_DMASYNC_PREREAD);
-#endif /* __OpenBSD__ */
 
 	/* 
 	 * Start the command. If we are polling on completion, mark it
@@ -1405,19 +1368,12 @@ dpt_hba_inquire(sc, ei)
 	cp->cp_len = sizeof(struct eata_inquiry_data);
 
 	/* Sync up CCB, status packet and scratch area */
-#ifdef __NetBSD__
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, CCB_OFF(sc, ccb), 
 	    sizeof(struct dpt_ccb), BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_spoff, 
 	    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_scroff, 
 	    sizeof(struct eata_inquiry_data), BUS_DMASYNC_PREREAD);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, BUS_DMASYNC_PREREAD);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, BUS_DMASYNC_PREREAD);
-#endif /* __OpenBSD__ */
 
 	/* Start the command and poll on completion */
 	if (dpt_cmd(sc, &ccb->ccb_eata_cp, ccb->ccb_ccbpa, CP_DMA_CMD, 0))
@@ -1433,12 +1389,7 @@ dpt_hba_inquire(sc, ei)
 	    	    ccb->ccb_scsi_status);
 	
 	/* Sync up the DMA map and free CCB, returning */
-#ifdef __NetBSD__
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_scroff, 
 	    sizeof(struct eata_inquiry_data), BUS_DMASYNC_POSTREAD);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, BUS_DMASYNC_POSTREAD);
-#endif /* __OpenBSD__ */
 	dpt_free_ccb(sc, ccb);
 }

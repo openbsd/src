@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.25 2001/10/06 22:45:52 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.26 2001/11/05 17:25:58 art Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -288,14 +288,6 @@ static struct ispmdvec mdvec_2300 = {
 
 #ifndef	BUS_DMA_COHERENT
 #define	BUS_DMA_COHERENT	BUS_DMAMEM_NOSYNC
-#endif
-
-#ifdef __HAS_NEW_BUS_DMAMAP_SYNC
-#define	isp_bus_dmamap_sync(t, m, o, l, f) \
-    bus_dmamap_sync((t), (m), (o), (l), (f))
-#else
-#define	isp_bus_dmamap_sync(t, m, o, l, f) \
-    bus_dmamap_sync((t), (m), (f))
 #endif
 
 static int isp_pci_probe (struct device *, void *, void *);
@@ -1067,13 +1059,13 @@ isp_pci_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq, u_int16_t *iptrp,
 	} while (seg < segcnt);
 
 dmasync:
-	isp_bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
+	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
 	    (xs->flags & SCSI_DATA_IN) ?
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 mbxsync:
 	ISP_SWIZZLE_REQUEST(isp, rq);
-	isp_bus_dmamap_sync(pci->pci_dmat, pci->pci_rquest_dmap, 0,
+	bus_dmamap_sync(pci->pci_dmat, pci->pci_rquest_dmap, 0,
 	    pci->pci_rquest_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	return (CMD_QUEUED);
 }
@@ -1090,7 +1082,7 @@ isp_pci_intr(void *arg)
 		isp->isp_intbogus++;
 		return (0);
 	} else {
-		isp_bus_dmamap_sync(p->pci_dmat, p->pci_result_dmap, 0,
+		bus_dmamap_sync(p->pci_dmat, p->pci_result_dmap, 0,
 		    p->pci_result_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		isp->isp_osinfo.onintstack = 1;
 		isp_intr(isp, isr, sema, mbox);
@@ -1104,7 +1096,7 @@ isp_pci_dmateardown(struct ispsoftc *isp, XS_T *xs, u_int16_t handle)
 {
 	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
 	bus_dmamap_t dmap = pci->pci_xfer_dmap[isp_handle_index(handle)];
-	isp_bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
+	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
 	    xs->flags & SCSI_DATA_IN ?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(pci->pci_dmat, dmap);

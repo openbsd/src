@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_pci.c,v 1.6 2001/10/11 21:03:35 mickey Exp $	*/
+/*	$OpenBSD: cac_pci.c,v 1.7 2001/11/05 17:25:58 art Exp $	*/
 /*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
@@ -246,7 +246,8 @@ void
 cac_pci_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+	    sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	cac_outl(sc, CAC_42REG_CMD_FIFO, ccb->ccb_paddr);
 }
@@ -264,7 +265,8 @@ cac_pci_l0_completed(struct cac_softc *sc)
 	off = (off & ~3) - sc->sc_ccbs_paddr;
 	ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+	    sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	return (ccb);

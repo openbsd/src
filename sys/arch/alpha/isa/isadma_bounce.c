@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma_bounce.c,v 1.1 2001/11/05 02:39:56 art Exp $	*/
+/*	$OpenBSD: isadma_bounce.c,v 1.2 2001/11/05 17:25:57 art Exp $	*/
 /* $NetBSD: isadma_bounce.c,v 1.3 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -386,12 +386,10 @@ isadma_bounce_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 }
 
 void
-isadma_bounce_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map,
-	bus_dmasync_op_t ops)
+isadma_bounce_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+	bus_size_t len, int ops)
 {
 	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
-	bus_addr_t offset = 0;
-	bus_size_t len = map->dm_mapsize;
 
 	/*
 	 * Mixing PRE and POST operations is not allowed.

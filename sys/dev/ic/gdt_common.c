@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.14 2001/08/12 20:12:12 mickey Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.15 2001/11/05 17:25:58 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -643,7 +643,8 @@ gdt_scsi_cmd(xs)
 					scsi_done(xs);
 					goto ready;
 				}
-				bus_dmamap_sync(gdt->sc_dmat, xfer,
+				bus_dmamap_sync(gdt->sc_dmat, xfer, 0,
+				    xfer->dm_mapsize,
 				    (xs->flags & SCSI_DATA_IN) ?
 				    BUS_DMASYNC_PREREAD :
 				    BUS_DMASYNC_PREWRITE);
@@ -1062,7 +1063,8 @@ gdt_intr(arg)
 	prev_cmd = ccb->gc_flags & GDT_GCF_CMD_MASK;
 	if (xs && xs->cmd->opcode != PREVENT_ALLOW &&
 	    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-		bus_dmamap_sync(gdt->sc_dmat, ccb->gc_dmamap_xfer,
+		bus_dmamap_sync(gdt->sc_dmat, ccb->gc_dmamap_xfer, 0,
+		    ccb->gc_dmamap_xfer->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(gdt->sc_dmat, ccb->gc_dmamap_xfer);

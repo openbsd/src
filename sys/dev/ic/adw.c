@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.22 2001/09/21 17:55:43 miod Exp $ */
+/*	$OpenBSD: adw.c,v 1.23 2001/11/05 17:25:58 art Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -854,7 +854,7 @@ adw_build_req(xs, ccb, flags)
 			adw_free_ccb(sc, ccb);
 			return (0);
 		}
-		adw_bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
 		    0, ccb->dmamap_xfer->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ?
 		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
@@ -1206,7 +1206,7 @@ adw_isr_callback(sc, scsiq)
          */
 	dmat = sc->sc_dmat;
 	if (xs->datalen) {
-		adw_bus_dmamap_sync(dmat, ccb->dmamap_xfer,
+		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
 		    0, ccb->dmamap_xfer->dm_mapsize,
 		    ((xs->flags & SCSI_DATA_IN) ?
 		        BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));

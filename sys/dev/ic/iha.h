@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.h,v 1.7 2001/08/26 02:39:05 krw Exp $ */
+/*	$OpenBSD: iha.h,v 1.8 2001/11/05 17:25:58 art Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -445,15 +445,5 @@ int  iha_scsi_cmd   __P((struct scsi_xfer *));
 int  iha_intr	    __P((void *));
 void iha_minphys    __P((struct buf *));
 int  iha_init_tulip __P((struct iha_softc *));
-
-#ifdef __HAS_NEW_BUS_DMAMAP_SYNC
-#define	iha_bus_dmamap_sync(tag, map, off, len, op)	\
-    bus_dmamap_sync((tag), (map), (off), (len), (op))
-#else
-#define	iha_bus_dmamap_sync(tag, map, off, len, op)	\
-    bus_dmamap_sync((tag), (map), (op))
-#endif
-
-
 
 

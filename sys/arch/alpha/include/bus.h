@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.14 2001/10/26 01:28:06 nate Exp $	*/
+/*	$OpenBSD: bus.h,v 1.15 2001/11/05 17:25:57 art Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -430,16 +430,12 @@ struct uio;
 struct alpha_sgmap;
 
 /*
- * bus_dmasync_op_t
- *
  * Operations performed by bus_dmamap_sync().
  */
-typedef enum {
-	BUS_DMASYNC_PREREAD,
-	BUS_DMASYNC_POSTREAD,
-	BUS_DMASYNC_PREWRITE,
-	BUS_DMASYNC_POSTWRITE,
-} bus_dmasync_op_t;
+#define BUS_DMASYNC_PREREAD	0x01
+#define BUS_DMASYNC_POSTREAD	0x02
+#define BUS_DMASYNC_PREWRITE	0x04
+#define BUS_DMASYNC_POSTWRITE	0x08
 
 /*
  *	alpha_bus_t
@@ -537,7 +533,7 @@ struct alpha_bus_dma_tag {
 		    bus_dma_segment_t *, int, bus_size_t, int);
 	void	(*_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
 	void	(*_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
-		    bus_dmasync_op_t);
+		    bus_addr_t, bus_size_t, int);
 
 	/*
 	 * DMA memory utility functions.
@@ -570,8 +566,8 @@ struct alpha_bus_dma_tag {
 	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
 #define	bus_dmamap_unload(t, p)					\
 	(*(t)->_dmamap_unload)((t), (p))
-#define	bus_dmamap_sync(t, p, op)				\
-	(*(t)->_dmamap_sync)((t), (p), (op))
+#define	bus_dmamap_sync(t, p, a, s, op)				\
+	(*(t)->_dmamap_sync)((t), (p), (a), (s), (op))
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
 	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
 #define	bus_dmamem_free(t, sg, n)				\
@@ -635,7 +631,8 @@ int	_bus_dmamap_load_raw_direct(bus_dma_tag_t,
 	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int);
 
 void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_dmasync_op_t);
+void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 
 int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,

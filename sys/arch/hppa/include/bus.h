@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
+/*	$OpenBSD: bus.h,v 1.14 2001/11/05 17:25:57 art Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -298,12 +298,11 @@ struct mbuf;
 struct proc;
 struct uio;
 
-typedef enum {
-	BUS_DMASYNC_POSTREAD,
-	BUS_DMASYNC_POSTWRITE,
-	BUS_DMASYNC_PREREAD,
-	BUS_DMASYNC_PREWRITE
-} bus_dmasync_op_t;
+/* Operations performed by bus_dmamap_sync().  */
+#define BUS_DMASYNC_POSTREAD	0x01
+#define BUS_DMASYNC_POSTWRITE	0x02
+#define BUS_DMASYNC_PREREAD	0x04
+#define BUS_DMASYNC_PREWRITE	0x08
 
 typedef const struct hppa_bus_dma_tag	*bus_dma_tag_t;
 typedef struct hppa_bus_dmamap	*bus_dmamap_t;
@@ -345,7 +344,8 @@ struct hppa_bus_dma_tag {
 	int	(*_dmamap_load_raw) __P((void *, bus_dmamap_t,
 		    bus_dma_segment_t *, int, bus_size_t, int));
 	void	(*_dmamap_unload) __P((void *, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((void *, bus_dmamap_t, bus_dmasync_op_t));
+	void	(*_dmamap_sync) __P((void *, bus_dmamap_t, bus_addr_t,
+		    bus_size_t, int));
 
 	/*
 	 * DMA memory utility functions.
@@ -374,9 +374,9 @@ struct hppa_bus_dma_tag {
 	(*(t)->_dmamap_load_raw)((t)->_cookie, (m), (sg), (n), (s), (f))
 #define	bus_dmamap_unload(t, p)					\
 	(*(t)->_dmamap_unload)((t)->_cookie, (p))
-#define	bus_dmamap_sync(t, p, o)				\
+#define	bus_dmamap_sync(t, p, a, l, o)				\
 	(void)((t)->_dmamap_sync ?				\
-	    (*(t)->_dmamap_sync)((t)->_cookie, (p), (o)) : (void)0)
+	    (*(t)->_dmamap_sync)((t)->_cookie, (p), (a), (l), (o)) : (void)0)
 
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
 	(*(t)->_dmamem_alloc)((t)->_cookie, (s), (a), (b), (sg), (n), (r), (f))

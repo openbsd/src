@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.7 2001/10/31 11:00:24 art Exp $	*/
+/*	$OpenBSD: yds.c,v 1.8 2001/11/05 17:25:58 art Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -90,18 +91,11 @@ int	yds_match __P((struct device *, void *, void *));
 void	yds_attach __P((struct device *, struct device *, void *));
 int	yds_intr __P((void *));
 
-#ifdef __HAS_NEW_BUS_DMAMAP_SYNC
-#define yds_bus_dmamap_sync(t, m, o, l, f) \
-    bus_dmamap_sync((t), (m), (o), (l), (f))
-#else
-#define yds_bus_dmamap_sync(t, m, o, l, f) \
-    bus_dmamap_sync((t), (m), (f))
-#endif
-
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
 #define KERNADDR(p) ((void *)((p)->addr))
 
-int	yds_allocmem __P((struct yds_softc *, size_t, size_t, struct yds_dma *));
+int	yds_allocmem __P((struct yds_softc *, size_t, size_t,
+	    struct yds_dma *));
 int	yds_freemem __P((struct yds_softc *, struct yds_dma *));
 
 #ifndef AUDIO_DEBUG
@@ -149,18 +143,19 @@ void YWRITE4(struct yds_softc *sc,bus_size_t r,u_int32_t x)
 #define	YWRITEREGION4(sc, r, x, c)	\
 	bus_space_write_region_4((sc)->memt, (sc)->memh, (r), (x), (c) / 4)
 
-struct cfdriver yds_cd = {
-	NULL, "yds", DV_DULL
-};
-
 struct cfattach yds_ca = {
 	sizeof(struct yds_softc), yds_match, yds_attach
+};
+
+struct cfdriver yds_cd = {
+	NULL, "yds", DV_DULL
 };
 
 int	yds_open __P((void *, int));
 void	yds_close __P((void *));
 int	yds_query_encoding __P((void *, struct audio_encoding *));
-int	yds_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
+int	yds_set_params __P((void *, int, int,
+	    struct audio_params *, struct audio_params *));
 int	yds_round_blocksize __P((void *, int));
 int	yds_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *));
@@ -183,7 +178,7 @@ int	yds_read_codec __P((void *sc, u_int8_t a, u_int16_t *d));
 int	yds_write_codec __P((void *sc, u_int8_t a, u_int16_t d));
 void    yds_reset_codec __P((void *sc));
 int     yds_get_portnum_by_name __P((struct yds_softc *, char *, char *,
-				 char *));
+	    char *));
 
 static u_int yds_get_dstype __P((int));
 static int yds_download_mcode __P((struct yds_softc *));
@@ -231,7 +226,7 @@ static struct audio_hw_if yds_hw_if = {
 	yds_mappage,
 	yds_get_props,
 	yds_trigger_output,
-	yds_trigger_input,
+	yds_trigger_input
 };
 
 struct audio_device yds_device = {
@@ -485,9 +480,9 @@ yds_allocate_slots(sc)
                 cb += pcs;
         }
 	/* Sync play control data table */
-	yds_bus_dmamap_sync(sc->sc_dmatag, p->map, sc->ptbloff,
-	    (N_PLAY_SLOT_CTRL+1) * sizeof(u_int32_t),
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmatag, p->map,
+			sc->ptbloff, (N_PLAY_SLOT_CTRL+1) * sizeof(u_int32_t),
+			BUS_DMASYNC_PREWRITE);
 
 	return 0;
 }
@@ -661,9 +656,15 @@ yds_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	struct yds_codec_softc *codec;
+	char devinfo[256];
 	mixer_ctrl_t ctl;
 	int i, r, to;
+	int revision;
 	int ac97_id2;
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	revision = PCI_REVISION(pa->pa_class);
+	printf(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	/* Map register to memory */
 	if (pci_mapreg_map(pa, YDS_PCI_MBA, PCI_MAPREG_TYPE_MEM, 0,
@@ -1004,11 +1005,13 @@ yds_intr(p)
 			u_int dma, cpu, blk, len;
 
 			/* Sync play slot control data */
-			yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-			    sc->pbankoff,
-			    sizeof(struct play_slot_ctrl_bank) * (*sc->ptbl)*
-			    N_PLAY_SLOT_CTRL_BANK,
-			    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
+			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+					sc->pbankoff,
+					sizeof(struct play_slot_ctrl_bank)*
+					    (*sc->ptbl)*
+					    N_PLAY_SLOT_CTRL_BANK,
+					BUS_DMASYNC_POSTWRITE|
+					BUS_DMASYNC_POSTREAD);
 			dma = sc->pbankp[nbank]->pgstart * sc->sc_play.factor;
 			cpu = sc->sc_play.offset;
 			blk = sc->sc_play.blksize;
@@ -1017,11 +1020,11 @@ yds_intr(p)
 			if (((dma > cpu) && (dma - cpu > blk * 2)) ||
 			    ((cpu > dma) && (dma + len - cpu > blk * 2))) {
 				/* We can fill the next block */
-				/* Sync ring buffer first for previous write */
-				yds_bus_dmamap_sync(sc->sc_dmatag,
-				    sc->sc_play.dma->map,
-				    cpu, blk,
-				    BUS_DMASYNC_POSTWRITE);
+				/* Sync ring buffer for previous write */
+				bus_dmamap_sync(sc->sc_dmatag,
+						sc->sc_play.dma->map,
+						cpu, blk,
+						BUS_DMASYNC_POSTWRITE);
 				sc->sc_play.intr(sc->sc_play.intr_arg);
 				sc->sc_play.offset += blk;
 				if (sc->sc_play.offset >= len) {
@@ -1032,19 +1035,23 @@ yds_intr(p)
 #endif
 				}
 				/* Sync ring buffer for next write */
-				yds_bus_dmamap_sync(sc->sc_dmatag,
-				    sc->sc_play.dma->map, cpu, blk,
-				    BUS_DMASYNC_PREWRITE);
+				bus_dmamap_sync(sc->sc_dmatag,
+						sc->sc_play.dma->map,
+						cpu, blk,
+						BUS_DMASYNC_PREWRITE);
 			}
 		}
 		if (sc->sc_rec.intr) {
 			u_int dma, cpu, blk, len;
 
 			/* Sync rec slot control data */
-			yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-			    sc->rbankoff, sizeof(struct rec_slot_ctrl_bank)*
-			    N_REC_SLOT_CTRL * N_REC_SLOT_CTRL_BANK,
-			    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
+			bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+					sc->rbankoff,
+					sizeof(struct rec_slot_ctrl_bank)*
+					    N_REC_SLOT_CTRL*
+					    N_REC_SLOT_CTRL_BANK,
+					BUS_DMASYNC_POSTWRITE|
+					BUS_DMASYNC_POSTREAD);
 			dma = sc->rbank[YDS_INPUT_SLOT*2 + nbank].pgstartadr;
 			cpu = sc->sc_rec.offset;
 			blk = sc->sc_rec.blksize;
@@ -1054,9 +1061,10 @@ yds_intr(p)
 			    ((cpu > dma) && (dma + len - cpu > blk * 2))) {
 				/* We can drain the current block */
 				/* Sync ring buffer first */
-				yds_bus_dmamap_sync(sc->sc_dmatag,
-				    sc->sc_rec.dma->map, cpu, blk,
-				    BUS_DMASYNC_POSTREAD);
+				bus_dmamap_sync(sc->sc_dmatag,
+						sc->sc_rec.dma->map,
+						cpu, blk,
+						BUS_DMASYNC_POSTREAD);
 				sc->sc_rec.intr(sc->sc_rec.intr_arg);
 				sc->sc_rec.offset += blk;
 				if (sc->sc_rec.offset >= len) {
@@ -1067,9 +1075,10 @@ yds_intr(p)
 #endif
 				}
 				/* Sync ring buffer for next read */
-				yds_bus_dmamap_sync(sc->sc_dmatag,
-				    sc->sc_rec.dma->map, cpu, blk,
-				    BUS_DMASYNC_PREREAD);
+				bus_dmamap_sync(sc->sc_dmatag,
+						sc->sc_rec.dma->map,
+						cpu, blk,
+						BUS_DMASYNC_PREREAD);
 			}
 		}
 	}
@@ -1489,12 +1498,14 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	/* Now the play slot for the next frame is set up!! */
 	/* Sync play slot control data for both directions */
-	yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-	    sc->ptbloff, sizeof(struct play_slot_ctrl_bank) * channels *
-	    N_PLAY_SLOT_CTRL_BANK, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+			sc->ptbloff,
+			sizeof(struct play_slot_ctrl_bank) *
+			    channels * N_PLAY_SLOT_CTRL_BANK,
+			BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	/* Sync ring buffer */
-	yds_bus_dmamap_sync(sc->sc_dmatag, p->map, 0, blksize,
-	    BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmatag, p->map, 0, blksize,
+			BUS_DMASYNC_PREWRITE);
 	/* HERE WE GO!! */
 	YWRITE4(sc, YDS_MODE,
 		YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV | YDS_MODE_ACTV2);
@@ -1589,11 +1600,15 @@ yds_trigger_input(addr, start, end, blksize, intr, arg, param)
 #endif
 	/* Now the rec slot for the next frame is set up!! */
 	/* Sync record slot control data */
-	yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map, sc->rbankoff,
-	    sizeof(struct rec_slot_ctrl_bank) * N_REC_SLOT_CTRL *
-	    N_REC_SLOT_CTRL_BANK, BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+			sc->rbankoff,
+			sizeof(struct rec_slot_ctrl_bank)*
+			    N_REC_SLOT_CTRL*
+			    N_REC_SLOT_CTRL_BANK,
+			BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	/* Sync ring buffer */
-	yds_bus_dmamap_sync(sc->sc_dmatag, p->map, 0, blksize, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmatag, p->map, 0, blksize,
+			BUS_DMASYNC_PREREAD);
 	/* HERE WE GO!! */
 	YWRITE4(sc, YDS_MODE,
 		YREAD4(sc, YDS_MODE) | YDS_MODE_ACTV | YDS_MODE_ACTV2);
@@ -1632,18 +1647,19 @@ yds_halt_output(addr)
 	if (sc->sc_play.intr) {
 		sc->sc_play.intr = 0;
 		/* Sync play slot control data */
-		yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-		    sc->pbankoff, sizeof(struct play_slot_ctrl_bank) *
-		    (*sc->ptbl)*N_PLAY_SLOT_CTRL_BANK,
-		    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+				sc->pbankoff,
+				sizeof(struct play_slot_ctrl_bank)*
+				    (*sc->ptbl)*N_PLAY_SLOT_CTRL_BANK,
+				BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 		/* Stop the play slot operation */
 		sc->pbankp[0]->status =
 		sc->pbankp[1]->status =
 		sc->pbankp[2]->status =
 		sc->pbankp[3]->status = 1;
 		/* Sync ring buffer */
-		yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_play.dma->map, 0,
-		    sc->sc_play.length, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_play.dma->map,
+				0, sc->sc_play.length, BUS_DMASYNC_POSTWRITE);
 	}
 
 	return 0;
@@ -1662,13 +1678,14 @@ yds_halt_input(addr)
 		YWRITE4(sc, YDS_MAPOF_REC, 0);
 		sc->sc_rec.intr = 0;
 		/* Sync rec slot control data */
-		yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
-		    sc->rbankoff, sizeof(struct rec_slot_ctrl_bank)*
-		    N_REC_SLOT_CTRL*N_REC_SLOT_CTRL_BANK,
-		    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_ctrldata.map,
+				sc->rbankoff,
+				sizeof(struct rec_slot_ctrl_bank)*
+				    N_REC_SLOT_CTRL*N_REC_SLOT_CTRL_BANK,
+				BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 		/* Sync ring buffer */
-		yds_bus_dmamap_sync(sc->sc_dmatag, sc->sc_rec.dma->map, 0,
-		    sc->sc_rec.length, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_sync(sc->sc_dmatag, sc->sc_rec.dma->map,
+				0, sc->sc_rec.length, BUS_DMASYNC_POSTREAD);
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.13 2001/09/24 06:52:33 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.14 2001/11/05 17:25:58 art Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Michael Shalayeff.  All rights reserved.
@@ -496,9 +496,11 @@ twe_cmd(ccb, flags, wait)
 			}
 		}
 		TWE_DPRINTF(TWE_D_DMA, ("> "));
-		bus_dmamap_sync(sc->dmat, dmap, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->dmat, dmap, 0, dmap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
 	}
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, sc->sc_cmdmap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	if ((error = twe_start(ccb, wait))) {
 		bus_dmamap_unload(sc->dmat, dmap);
@@ -624,8 +626,8 @@ twe_done(sc, idx)
 	if (xs) {
 		if (xs->cmd->opcode != PREVENT_ALLOW &&
 		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-			bus_dmamap_sync(sc->dmat, dmap,
-			    (xs->flags & SCSI_DATA_IN) ?
+			bus_dmamap_sync(sc->dmat, dmap, 0,
+			    dmap->dm_mapsize, (xs->flags & SCSI_DATA_IN) ?
 			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->dmat, dmap);
 		}
@@ -633,12 +635,14 @@ twe_done(sc, idx)
 		switch (letoh16(cmd->cmd_op)) {
 		case TWE_CMD_GPARAM:
 		case TWE_CMD_READ:
-			bus_dmamap_sync(sc->dmat, dmap, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_sync(sc->dmat, dmap, 0,
+			    dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->dmat, dmap);
 			break;
 		case TWE_CMD_SPARAM:
 		case TWE_CMD_WRITE:
-			bus_dmamap_sync(sc->dmat, dmap, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_sync(sc->dmat, dmap, 0,
+			    dmap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->dmat, dmap);
 			break;
 		default:

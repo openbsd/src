@@ -1,5 +1,5 @@
 /*      $NetBSD: bus.h,v 1.1 2001/06/06 17:37:37 matt Exp $        */
-/*      $OpenBSD: bus_mi.h,v 1.2 2001/09/23 01:42:38 miod Exp $        */
+/*      $OpenBSD: bus_mi.h,v 1.3 2001/11/05 17:25:58 art Exp $        */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -977,15 +977,10 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 struct mbuf;
 struct uio;
 
-/*
- * Operations performed by bus_dmamap_sync().
- */
-typedef enum {
-	BUS_DMASYNC_PREREAD	= 0x01,	/* pre-read synchronization */
-	BUS_DMASYNC_POSTREAD	= 0x02,	/* post-read synchronization */
-	BUS_DMASYNC_PREWRITE	= 0x04,	/* pre-write synchronization */
-	BUS_DMASYNC_POSTWRITE	= 0x08	/* post-write synchronization */
-} bus_dmasync_op_t;
+#define BUS_DMASYNC_PREREAD	0x01
+#define BUS_DMASYNC_POSTREAD	0x02
+#define BUS_DMASYNC_PREWRITE	0x04
+#define BUS_DMASYNC_POSTWRITE	0x08
 
 typedef struct powerpc_bus_dma_tag              *bus_dma_tag_t;
 typedef struct powerpc_bus_dmamap               *bus_dmamap_t;
@@ -1035,7 +1030,8 @@ struct powerpc_bus_dma_tag {
         int        (*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
                     bus_dma_segment_t *, int, bus_size_t, int));
         void        (*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
-	void	    (*_dmamap_sync) __P((bus_dma_tag_t , bus_dmamap_t, bus_dmasync_op_t));
+	void	    (*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int));
         
 	/*
          * DMA memory utility functions.
@@ -1065,9 +1061,9 @@ struct powerpc_bus_dma_tag {
         (*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
 #define bus_dmamap_unload(t, p)                                        \
         (*(t)->_dmamap_unload)((t), (p))
-#define	bus_dmamap_sync(t, p, o)				\
+#define	bus_dmamap_sync(t, p, a, l, o)				\
 	(void)((t)->_dmamap_sync ?				\
-	    (*(t)->_dmamap_sync)((t), (p), (o)) : (void)0)
+	    (*(t)->_dmamap_sync)((t), (p), (a), (l), (o)) : (void)0)
 
 #define bus_dmamem_alloc(t, s, a, b, sg, n, r, f)                \
         (*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
@@ -1119,7 +1115,8 @@ int     _bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
 int     _bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
             bus_dma_segment_t *, int, bus_size_t, int));
 void    _bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_dmasync_op_t));
+void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int));
 
 int     _bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
             bus_size_t alignment, bus_size_t boundary,

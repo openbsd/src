@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.3 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: dma.c,v 1.4 2001/11/05 17:25:58 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -104,6 +104,7 @@ _dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_nsegs = 0;		/* no valid mappings */
+	map->dm_mapsize = 0;
 
 	*dmamp = map;
 	return (0);
@@ -140,11 +141,13 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 	caddr_t vaddr = buf;
 	int first, seg;
 	pmap_t pmap;
+	bus_size_t saved_buflen;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
 	map->dm_nsegs = 0;
+	map->dm_mapsize = 0;
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -157,6 +160,7 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 	lastaddr = ~0;		/* XXX gcc */
 	bmask  = ~(map->_dm_boundary - 1);
 
+	saved_buflen = buflen;
 	for (first = 1, seg = 0; buflen > 0; ) {
 		/*
 		 * Get the physical address for this segment.
@@ -215,6 +219,7 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 		return (EFBIG);		/* XXX better return value here? */
 
 	map->dm_nsegs = seg + 1;
+	map->dm_mapsize = saved_buflen;
 	return (0);
 }
 
@@ -280,6 +285,7 @@ _dmamap_load_raw(t, map, segs, nsegs, size, flags)
 
 	bcopy(segs, map->dm_segs, nsegs * sizeof(*segs));
 	map->dm_nsegs = nsegs;
+	map->dm_mapsize = size;
 	return (0);
 }
 
@@ -298,6 +304,7 @@ _dmamap_unload(t, map)
 	 * invalid.
 	 */
 	map->dm_nsegs = 0;
+	map->dm_mapsize = 0;
 }
 
 /*
@@ -305,10 +312,12 @@ _dmamap_unload(t, map)
  * by bus-specific DMA map synchronization functions.
  */
 void
-_dmamap_sync(t, map, op)
+_dmamap_sync(t, map, offset, len, op)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	bus_dmasync_op_t op;
+	bus_addr_t offset;
+	bus_size_t len;
+	int op;
 {
 
 	/* Nothing to do here. */

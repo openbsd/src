@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.7 2001/10/18 20:24:10 mickey Exp $	*/
+/*	$OpenBSD: cac.c,v 1.8 2001/11/05 17:25:58 art Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -339,7 +339,8 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 		bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap_xfer,
 		    (void *)data, datasize, NULL, BUS_DMA_NOWAIT);
 
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap_xfer,
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap_xfer, 0,
+		    ccb->ccb_dmamap_xfer->dm_mapsize,
 		    (flags & CAC_CCB_DATA_IN) != 0 ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 	
@@ -464,7 +465,8 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 	ccb->ccb_flags &= ~CAC_CCB_ACTIVE;
 
 	if ((ccb->ccb_flags & (CAC_CCB_DATA_IN | CAC_CCB_DATA_OUT)) != 0) {
-		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap_xfer,
+		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap_xfer, 0,
+		    ccb->ccb_dmamap_xfer->dm_mapsize,
 		    ccb->ccb_flags & CAC_CCB_DATA_IN ?
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap_xfer);
@@ -795,7 +797,8 @@ cac_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 #ifdef CAC_DEBUG
 	printf("submit-%x ", ccb->ccb_paddr);
 #endif
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+	    sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	cac_outl(sc, CAC_REG_CMD_FIFO, ccb->ccb_paddr);
 }
@@ -815,7 +818,8 @@ cac_l0_completed(sc)
 	ccb = (struct cac_ccb *)(sc->sc_ccbs +
 	    ((off & ~3) - sc->sc_ccbs_paddr));
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+	    sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	return (ccb);

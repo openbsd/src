@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.38 2001/07/30 14:15:59 art Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.39 2001/11/05 17:25:57 art Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -169,7 +169,7 @@ int	_isa_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 void	_isa_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_isa_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dmasync_op_t));
+	    bus_addr_t, bus_size_t, int));
 
 int	_isa_bus_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t *, int, int *, int));
@@ -885,12 +885,23 @@ _isa_bus_dmamap_unload(t, map)
  * Synchronize an ISA DMA map.
  */
 void
-_isa_bus_dmamap_sync(t, map, op)
+_isa_bus_dmamap_sync(t, map, offset, len, op)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	bus_dmasync_op_t op;
+	bus_addr_t offset;
+	bus_size_t len;
+	int op;
 {
 	struct i386_isa_dma_cookie *cookie = map->_dm_cookie;
+
+#ifdef DEBUG
+	if ((op & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0) {
+		if (offset >= map->dm_mapsize)
+			panic("_isa_bus_dmamap_sync: bad offset");
+		if (len == 0 || (offset + len) > map->dm_mapsize)
+			panic("_isa_bus_dmamap_sync: bad length");
+	}
+#endif
 
 	switch (op) {
 	case BUS_DMASYNC_PREREAD:
@@ -905,8 +916,9 @@ _isa_bus_dmamap_sync(t, map, op)
 		 * caller's buffer to the bounce buffer.
 		 */
 		if (cookie->id_flags & ID_IS_BOUNCING)
-			bcopy(cookie->id_origbuf, cookie->id_bouncebuf,
-			    cookie->id_origbuflen);
+			bcopy(cookie->id_origbuf + offset,
+			    cookie->id_bouncebuf + offset,
+			    len);
 		break;
 
 	case BUS_DMASYNC_POSTREAD:
@@ -915,8 +927,9 @@ _isa_bus_dmamap_sync(t, map, op)
 		 * bounce buffer to the caller's buffer.
 		 */
 		if (cookie->id_flags & ID_IS_BOUNCING)
-			bcopy(cookie->id_bouncebuf, cookie->id_origbuf,
-			    cookie->id_origbuflen);
+			bcopy(cookie->id_bouncebuf + offset,
+			    cookie->id_origbuf + offset,
+			    len);
 		break;
 
 	case BUS_DMASYNC_POSTWRITE:
@@ -1214,7 +1227,7 @@ isadma_copyfrombuf(addr, nbytes, nphys, phys)
 	bus_dma_tag_t dmat = ((struct isa_softc *)isa_dev)->sc_dmat;
 	bus_dmamap_t dmam = phys[0].dmam;
 
-	bus_dmamap_sync(dmat, dmam, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(dmat, dmam, 0, dmam->dm_mapsize, BUS_DMASYNC_POSTREAD);
 }
 
 /*
@@ -1230,7 +1243,7 @@ isadma_copytobuf(addr, nbytes, nphys, phys)
 	bus_dma_tag_t dmat = ((struct isa_softc *)isa_dev)->sc_dmat;
 	bus_dmamap_t dmam = phys[0].dmam;
 
-	bus_dmamap_sync(dmat, dmam, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(dmat, dmam, 0, dmam->dm_mapsize, BUS_DMASYNC_PREWRITE);
 }
 #endif /* __ISADMA_COMPAT */
 #endif /* NISADMA > 0 */

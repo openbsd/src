@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trtcm_isa.c,v 1.1 1999/12/27 21:51:35 fgsch Exp $	*/
+/*	$OpenBSD: if_trtcm_isa.c,v 1.2 2001/11/05 17:25:58 art Exp $	*/
 /*	$NetBSD: if_trtcm_isa.c,v 1.3 1999/04/30 15:29:24 bad Exp $	*/
 
 #undef TRTCMISADEBUG
@@ -43,6 +43,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

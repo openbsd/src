@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.28 2001/09/20 17:02:31 mpech Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.29 2001/11/05 17:25:58 art Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -812,7 +812,7 @@ rcvloop:
 			m = sc->rfa_headm;
 			rfap = m->m_ext.ext_buf + RFA_ALIGNMENT_FUDGE;
 			rxmap = *((bus_dmamap_t *)m->m_ext.ext_buf);
-			fxp_bus_dmamap_sync(sc->sc_dmat, rxmap,
+			bus_dmamap_sync(sc->sc_dmat, rxmap,
 			    0, MCLBYTES, BUS_DMASYNC_POSTREAD |
 			    BUS_DMASYNC_POSTWRITE);
 
@@ -1223,8 +1223,9 @@ fxp_init(xsc)
 	sc->sc_cbt_cnt = 1;
 	sc->sc_ctrl->tx_cb[0].cb_command = FXP_CB_COMMAND_NOP |
 	    FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
-	fxp_bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map, 0,
-	    sc->tx_cb_map->dm_mapsize, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map, 0,
+	    sc->tx_cb_map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr +
@@ -1383,7 +1384,7 @@ fxp_add_rfabuf(sc, oldm)
 
 	sc->rfa_tailm = m;
 
-	fxp_bus_dmamap_sync(sc->sc_dmat, rxmap, 0, MCLBYTES,
+	bus_dmamap_sync(sc->sc_dmat, rxmap, 0, MCLBYTES,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return (m == oldm);

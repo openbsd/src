@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.38 2001/11/04 18:31:42 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.39 2001/11/05 17:25:58 art Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -104,7 +104,7 @@ struct hifn_session {
 };
 
 #define	HIFN_RING_SYNC(sc, r, i, f)					\
-	hifn_bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
 	    offsetof(struct hifn_dma, r[i]), sizeof(struct hifn_desc), (f))
 
 #define	HIFN_CMDR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), cmdr, (i), (f))
@@ -113,12 +113,12 @@ struct hifn_session {
 #define	HIFN_DSTR_SYNC(sc, i, f)	HIFN_RING_SYNC((sc), dstr, (i), (f))
 
 #define	HIFN_CMD_SYNC(sc, i, f)						\
-	hifn_bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
 	    offsetof(struct hifn_dma, command_bufs[(i)][0]),		\
 	    HIFN_MAX_COMMAND, (f))
 
 #define	HIFN_RES_SYNC(sc, i, f)						\
-	hifn_bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
 	    offsetof(struct hifn_dma, result_bufs[(i)][0]),		\
 	    HIFN_MAX_RESULT, (f))
 

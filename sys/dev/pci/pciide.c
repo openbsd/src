@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.71 2001/09/29 04:46:49 jason Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.72 2001/11/05 17:25:58 art Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1032,16 +1032,10 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 		return error;
 	}
 
-#ifdef __HAVE_NEW_BUS_DMAMAP_SYNC
 	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 0,
 	    dma_maps->dmamap_xfer->dm_mapsize,		
 	    (flags & WDC_DMA_READ) ?
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-#else
-	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer,
-	    (flags & WDC_DMA_READ) ?
-	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-#endif
 
 	for (seg = 0; seg < dma_maps->dmamap_xfer->dm_nsegs; seg++) {
 #ifdef DIAGNOSTIC
@@ -1071,14 +1065,9 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	dma_maps->dma_table[dma_maps->dmamap_xfer->dm_nsegs -1].byte_count |=
 	    htole32(IDEDMA_BYTE_COUNT_EOT);
 
-#ifdef __HAVE_NEW_BUS_DMAMAP_SYNC
 	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_table, 0, 
 	    dma_maps->dmamap_table->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
-#else
-	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_table, 
-	    BUS_DMASYNC_PREWRITE);
-#endif
 
 	/* Maps are ready. Start DMA function */
 #ifdef DIAGNOSTIC
@@ -1148,16 +1137,10 @@ pciide_dma_finish(v, channel, drive)
 	    0x00 : IDEDMA_CMD_WRITE);
 
 	/* Unload the map of the data buffer */
-#ifdef __HAVE_NEW_BUS_DMAMAP_SYNC
 	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 0, 
 	    dma_maps->dmamap_xfer->dm_mapsize,
 	    (dma_maps->dma_flags & WDC_DMA_READ) ?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-#else
-	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 
-	    (dma_maps->dma_flags & WDC_DMA_READ) ?
-	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-#endif
 	bus_dmamap_unload(sc->sc_dmat, dma_maps->dmamap_xfer);
 
 	/* Clear status bits */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.11 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: ami.c,v 1.12 2001/11/05 17:25:58 art Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -536,7 +536,8 @@ ami_quartz_done(sc, mbox)
 	qdb = bus_space_read_4(sc->iot, sc->ioh, AMI_QODB);
 	if (qdb == AMI_QODB_READY) {
 
-		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0,
+		    sc->sc_cmdmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		*mbox = *sc->sc_mbox;
 
 		/* ack interrupt */
@@ -659,9 +660,11 @@ ami_cmd(ccb, flags, wait)
 		}
 		AMI_DPRINTF(AMI_D_DMA, ("> "));
 
-		bus_dmamap_sync(sc->dmat, dmap, BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->dmat, dmap, 0, dmap->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
 	}
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, sc->sc_cmdmap->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	if ((error = ami_start(ccb, wait))) {
 		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
@@ -858,7 +861,8 @@ ami_done(sc, idx)
 		timeout_del(&xs->stimeout);
 		if (xs->cmd->opcode != PREVENT_ALLOW &&
 		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
+			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+			    ccb->ccb_dmamap->dm_mapsize,
 			    (xs->flags & SCSI_DATA_IN) ?
 			    BUS_DMASYNC_POSTREAD :
 			    BUS_DMASYNC_POSTWRITE);
@@ -871,8 +875,8 @@ ami_done(sc, idx)
 		case AMI_INQUIRY:
 		case AMI_EINQUIRY:
 		case AMI_EINQUIRY3:
-			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap,
-			    BUS_DMASYNC_POSTREAD);
+			bus_dmamap_sync(sc->dmat, ccb->ccb_dmamap, 0,
+			    ccb->ccb_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 			break;
 		default:

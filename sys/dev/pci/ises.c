@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.16 2001/09/21 19:41:13 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.17 2001/11/05 17:25:58 art Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -751,8 +751,8 @@ ises_intr(void *arg)
 		    (dma_status & ISES_DMA_STATUS_R_RUN) == 0) {
 			DPRINTF(("%s: DMA read complete\n", dv));
 
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
-			    BUS_DMASYNC_POSTREAD);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    sc->sc_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 			/* XXX Pick up and return the data.*/
 
@@ -762,8 +762,8 @@ ises_intr(void *arg)
 		    (dma_status & ISES_DMA_STATUS_W_RUN) == 0) {
 			DPRINTF(("%s: DMA write complete\n", dv));
 
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
-			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+			    sc->sc_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
 			WRITE_REG(sc, ISES_DMA_RESET, 0);
 			ises_feed(sc);
@@ -902,7 +902,8 @@ ises_feed(struct ises_softc *sc)
 	/* ... else */	
 
 	/* Start writing data to the ises. */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+	    sc->sc_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 	
 	DPRINTF(("%s:ises_feed: writing DMA\n", dv));
 	DELAY(1000000);
@@ -1763,7 +1764,8 @@ ises_read_dma (struct ises_softc *sc)
 	bus_dma_segment_t *ds = &sc->sc_dmamap->dm_segs[0];
 	u_int32_t dma_status;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
+	    sc->sc_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	WRITE_REG(sc, ISES_DMA_READ_START, ds->ds_addr);
 	WRITE_REG(sc, ISES_DMA_READ_START, ISES_DMA_RCOUNT(ds->ds_len));
