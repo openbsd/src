@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.13 2001/01/31 17:42:26 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.14 2001/02/06 22:10:09 fgsch Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.13 2001/01/31 17:42:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.14 2001/02/06 22:10:09 fgsch Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ void	 wtmp __P((void));
 void 	 checkargs __P((void));
 
 #define NAME_WIDTH	8
-#define HOST_WIDTH	32
+#define HOST_WIDTH	24
 
 int
 main(argc, argv)
