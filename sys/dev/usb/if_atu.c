@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.53 2005/02/28 05:59:00 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.54 2005/03/03 09:38:07 itojun Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -129,6 +129,8 @@ struct atu_type atu_devs[] = {
 	  RadioRFMD2958,	ATU_NO_QUIRK },
 	{ USB_VENDOR_AINCOMM,	USB_PRODUCT_AINCOMM_AWU2000B,
 	  RadioRFMD2958,	ATU_NO_QUIRK },
+	{ USB_VENDOR_OQO,	USB_PRODUCT_OQO_WIFI01,
+	  RadioRFMD2958_SMC,	ATU_QUIRK_NO_REMAP | ATU_QUIRK_FW_DELAY },
 	/* SMC2662 V.4 */
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_AT76C505A,
 	  RadioRFMD2958_SMC,	ATU_QUIRK_NO_REMAP | ATU_QUIRK_FW_DELAY },
