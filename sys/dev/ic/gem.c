@@ -1,3 +1,4 @@
+/*	$OpenBSD: gem.c,v 1.8 2001/09/28 13:09:06 art Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1277,11 +1278,11 @@ gem_tint(sc)
 
 		sc->sc_txfree += txs->txs_ndescs;
 
-		if (txs->txs_mbuf == NULL) {
 #ifdef DIAGNOSTIC
-				panic("gem_txintr: null mbuf");
-#endif
+		if (txs->txs_mbuf == NULL) {
+			panic("gem_txintr: null mbuf");
 		}
+#endif
 
 		bus_dmamap_sync(sc->sc_dmatag, txs->txs_dmamap,
 		    0, txs->txs_dmamap->dm_mapsize,
