@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1997/04/14 11:01:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/04/16 01:53:44 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -13,6 +13,7 @@ BDEV=		/dev/rd0a
 CDEV=		/dev/rrd0a
 RDEV=		/dev/rd0c
 
+FS=		floppy-${REV}.fs
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
@@ -23,9 +24,9 @@ LISTFLOPPY=	${.CURDIR}/list_floppy
 
 .include "Makefile.inc"
 
-all:	floppy
+all:	${FS}
 
-floppy: bsd.gz
+${FS}:	bsd.gz
 .ifndef FLOPPY3
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
 	vnconfig -v -c ${VND} ${REALIMAGE}
@@ -52,7 +53,7 @@ floppy: bsd.gz
 	sync
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
-	cp ${REALIMAGE} ${IMAGE}
+	cp ${REALIMAGE} ${FS}
 	rm ${REALIMAGE}
 
 DISKTYPE=       rdroot
