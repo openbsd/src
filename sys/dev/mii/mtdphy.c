@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtdphy.c,v 1.2 1999/07/16 14:59:07 jason Exp $	*/
+/*	$OpenBSD: mtdphy.c,v 1.3 1999/07/23 12:39:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -106,13 +106,9 @@ mtdphyattach(parent, self, aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->mii_dev.dv_xname);
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		printf("no media present");
-	else
+	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_add_media(mii, sc->mii_capabilities,
 		    sc->mii_inst);
-	printf("\n");
 }
 
 int

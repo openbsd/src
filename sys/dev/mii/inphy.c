@@ -1,4 +1,4 @@
-/*	$OpenBSD: inphy.c,v 1.3 1999/07/16 14:59:06 jason Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.4 1999/07/23 12:39:11 deraadt Exp $	*/
 /*	$NetBSD: inphy.c,v 1.10.6.1 1999/04/23 15:39:09 perry Exp $	*/
 
 /*-
@@ -165,13 +165,9 @@ inphyattach(parent, self, aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->mii_dev.dv_xname);
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		printf("no media present");
-	else
+	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_add_media(mii, sc->mii_capabilities,
 		    sc->mii_inst);
-	printf("\n");
 #undef ADD
 }
 

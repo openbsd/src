@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.3 1999/07/16 14:59:07 jason Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.4 1999/07/23 12:39:11 deraadt Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.16.6.1 1999/04/23 15:40:13 perry Exp $	*/
 
 /*-
@@ -159,7 +159,6 @@ tlphyattach(parent, self, aux)
 	struct tl_softc *tlsc = (struct tl_softc *)self->dv_parent;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
-	const char *sep = "";
 
 	printf(": %s, rev. %d\n", MII_STR_TI_TLAN10T,
 	    MII_REV(ma->mii_id2));
@@ -194,30 +193,20 @@ tlphyattach(parent, self, aux)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_LOOP,
 		    sc->sc_mii.mii_inst), BMCR_LOOP);
 
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
-
-	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
 	if (sc->sc_tlphycap) {
 		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
 			    sc->sc_mii.mii_inst), 0);
-			PRINT("10base2/BNC");
 		} else if (sc->sc_tlphycap & TLPHY_MEDIA_10_5) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_5, 0,
 			    sc->sc_mii.mii_inst), 0);
-			PRINT("10base5/AUI");
 		}
 	}
 	if (sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) {
-		printf(sep);
 		mii_add_media(mii, sc->sc_mii.mii_capabilities,
 		    sc->sc_mii.mii_inst);
-	} else if ((sc->sc_tlphycap & (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5))
-	    == 0)
-		printf("no media present");
-	printf("\n");
+	}
 #undef ADD
-#undef PRINT
 }
 
 int

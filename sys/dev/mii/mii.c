@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.4 1999/02/04 23:00:57 jason Exp $	*/
+/*	$OpenBSD: mii.c,v 1.5 1999/07/23 12:39:11 deraadt Exp $	*/
 /*	$NetBSD: mii.c,v 1.9 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
@@ -278,30 +278,19 @@ mii_add_media(mii, bmsr, instance)
 	struct mii_data *mii;
 	int bmsr, instance;
 {
-	const char *sep = "";
-
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
 
-	if (bmsr & BMSR_10THDX) {
+	if (bmsr & BMSR_10THDX)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, instance), 0);
-		PRINT("10baseT");
-	}
-	if (bmsr & BMSR_10TFDX) {
+	if (bmsr & BMSR_10TFDX)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_FDX, instance),
 		    BMCR_FDX);
-		PRINT("10baseT-FDX");
-	}
-	if (bmsr & BMSR_100TXHDX) {
+	if (bmsr & BMSR_100TXHDX)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, 0, instance),
 		    BMCR_S100);
-		PRINT("100baseTX");
-	}
-	if (bmsr & BMSR_100TXFDX) {
+	if (bmsr & BMSR_100TXFDX)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_FDX, instance),
 		    BMCR_S100|BMCR_FDX);
-		PRINT("100baseTX-FDX");
-	}
 	if (bmsr & BMSR_100T4) {
 		/*
 		 * XXX How do you enable 100baseT4?  I assume we set
@@ -311,13 +300,9 @@ mii_add_media(mii, bmsr, instance)
 		 */
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_T4, 0, instance),
 		    BMCR_S100);
-		PRINT("100baseT4");
 	}
-	if (bmsr & BMSR_ANEG) {
+	if (bmsr & BMSR_ANEG)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, instance),
 		    BMCR_AUTOEN);
-		PRINT("auto");
-	}
 #undef ADD
-#undef PRINT
 }
