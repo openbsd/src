@@ -1,7 +1,7 @@
-/*	$OpenBSD: sensors.h,v 1.2 2004/01/12 14:10:53 grange Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.3 2004/02/07 18:20:22 grange Exp $	*/
 
 /*
- * Copyright (c) 2003 Alexander Yurchenko <grange@openbsd.org>
+ * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,15 @@
 enum sensor_type {
 	SENSOR_TEMP,			/* temperature */
 	SENSOR_FANRPM,			/* fan revolution speed */
-	SENSOR_VOLTS_DC			/* voltage */
+	SENSOR_VOLTS_DC,		/* voltage */
+	SENSOR_VOLTS_AC,		/* voltage (alternating-current) */
+	SENSOR_OHMS,			/* resistance */
+	SENSOR_WATTS,			/* power */
+	SENSOR_AMPS,			/* current */
+	SENSOR_WATTHOUR,		/* power capacity */
+	SENSOR_AMPHOUR,			/* power capacity */
+	SENSOR_INDICATOR,		/* boolean indicator */
+	SENSOR_INTEGER			/* generic interger value */
 };
 
 /* Sensor data */
