@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_page.h,v 1.13 2001/06/27 04:52:40 art Exp $	*/
+/*	$OpenBSD: vm_page.h,v 1.14 2001/07/05 07:32:54 art Exp $	*/
 /*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
 
 /* 
@@ -208,29 +208,6 @@ struct vm_physseg {
 #if defined(_KERNEL)
 
 /*
- *	Each pageable resident page falls into one of three lists:
- *
- *	free	
- *		Available for allocation now.
- *	inactive
- *		Not referenced in any map, but still has an
- *		object/offset-page mapping, and may be dirty.
- *		This is the list of pages that should be
- *		paged out next.
- *	active
- *		A list of pages which have been placed in
- *		at least one physical map.  This list is
- *		ordered, in LRU-like fashion.
- */
-
-extern
-struct pglist	vm_page_queue_free;	/* memory free queue */
-extern
-struct pglist	vm_page_queue_active;	/* active memory queue */
-extern
-struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
-
-/*
  * physical memory config is stored in vm_physmem.
  */
 
@@ -329,12 +306,6 @@ vm_physseg_find(pframe, offp)
 
 
 /*
- * IS_VM_PHYSADDR: only used my mips/pmax/pica trap/pmap.
- */
-
-#define IS_VM_PHYSADDR(PA) (vm_physseg_find(atop(PA), NULL) != -1)
-
-/*
  * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
  * back from an I/O mapping (ugh!).   used in some MD code as well.
  */
@@ -353,68 +324,6 @@ PHYS_TO_VM_PAGE(pa)
 }
 
 #define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
-
-extern
-simple_lock_data_t	vm_page_queue_lock;	/* lock on active and inactive
-						   page queues */
-extern						/* lock on free page queue */
-simple_lock_data_t	vm_page_queue_free_lock;
-
-#define PAGE_ASSERT_WAIT(m, interruptible)	{ \
-				(m)->flags |= PG_WANTED; \
-				assert_wait((m), (interruptible)); \
-			}
-
-#define PAGE_WAKEUP(m)	{ \
-				(m)->flags &= ~PG_BUSY; \
-				if ((m)->flags & PG_WANTED) { \
-					(m)->flags &= ~PG_WANTED; \
-					thread_wakeup((m)); \
-				} \
-			}
-
-#define	vm_page_lock_queues()	simple_lock(&vm_page_queue_lock)
-#define	vm_page_unlock_queues()	simple_unlock(&vm_page_queue_lock)
-
-#define vm_page_set_modified(m)	{ (m)->flags &= ~PG_CLEAN; }
-
-/*
- * XXXCDC: different versions of this should die
- */
-#define	VM_PAGE_INIT(mem, obj, offset) { \
-	(mem)->flags = PG_BUSY | PG_CLEAN | PG_FAKE; \
-	if (obj) \
-		vm_page_insert((mem), (obj), (offset)); \
-	else \
-		(mem)->object = NULL; \
-	(mem)->wire_count = 0; \
-}
-
-#if VM_PAGE_DEBUG
-
-/*
- * VM_PAGE_CHECK: debugging check of a vm_page structure
- */
-static __inline void
-VM_PAGE_CHECK(mem)
-	struct vm_page *mem;
-{
-	int lcv;
-
-	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
-		if ((unsigned int) mem >= (unsigned int) vm_physmem[lcv].pgs &&
-		    (unsigned int) mem <= (unsigned int) vm_physmem[lcv].lastpg)
-			break;
-	}
-	if (lcv == vm_nphysseg ||
-	    (mem->flags & (PG_ACTIVE|PG_INACTIVE)) == (PG_ACTIVE|PG_INACTIVE))
-		panic("vm_page_check: not valid!"); 
-	return;
-}
-
-#else /* VM_PAGE_DEBUG */
-#define	VM_PAGE_CHECK(mem)
-#endif /* VM_PAGE_DEBUG */
 
 #endif /* _KERNEL */
 #endif /* !_VM_PAGE_ */
