@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2002/06/11 03:39:50 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.13 2002/06/11 03:43:46 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -376,7 +376,6 @@ blktochr(dev)
 #include "vgafb_pci.h"
 
 cons_decl(ws);
-cons_decl(ucom);
 cons_decl(ofc);
 
 struct consdev constab[] = {
@@ -385,9 +384,6 @@ struct consdev constab[] = {
 #endif
 #if NOFCONS > 0
 	cons_init(ofc),
-#endif
-#if NUCOM > 0
-	cons_init(ucom),
 #endif
 	{ 0 },
 };
