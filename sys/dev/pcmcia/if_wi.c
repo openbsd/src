@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.4 1999/10/27 00:58:35 deraadt Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.5 1999/12/15 21:49:07 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,6 +81,7 @@
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/socket.h>
 #ifndef __FreeBSD__
 #include <sys/device.h>
@@ -176,9 +177,9 @@ u_int32_t	widebug = WIDEBUG;
 #if !defined(lint)
 static const char rcsid[] =
 #ifdef __FreeBSD__
-	"$Id: if_wi.c,v 1.4 1999/10/27 00:58:35 deraadt Exp $";
+	"$Id: if_wi.c,v 1.5 1999/12/15 21:49:07 angelos Exp $";
 #else	/* !__FreeBSD__ */
-	"$OpenBSD: if_wi.c,v 1.4 1999/10/27 00:58:35 deraadt Exp $";
+	"$OpenBSD: if_wi.c,v 1.5 1999/12/15 21:49:07 angelos Exp $";
 #endif	/* __FreeBSD__ */
 #endif	/* lint */
 
@@ -1324,6 +1325,7 @@ STATIC int wi_ioctl(ifp, command, data)
 	struct wi_softc		*sc;
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
+	struct proc *p = curproc;
 #ifndef __FreeBSD__
 	struct ifaddr		*ifa = (struct ifaddr *)data;
 #endif	/* !__FreeBSD__ */
@@ -1411,6 +1413,9 @@ STATIC int wi_ioctl(ifp, command, data)
 		error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
 		break;
 	case SIOCSWAVELAN:
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			break;
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
 			break;
