@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.4 2001/06/24 20:54:55 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.5 2001/06/24 21:10:24 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -135,7 +135,7 @@ struct state	*pf_test_state_udp (int direction, struct ifnet *ifp, struct ip *h,
 struct state	*pf_test_state_icmp (int direction, struct ifnet *ifp,
 		    struct ip *h, struct icmp *ih);
 void		*pull_hdr (struct ifnet *ifp, struct mbuf **m, struct ip *h,
-		    int, int *action, u_int8_t len, void *);
+		    int off, int *action, u_int8_t len);
 int		 pf_test (int direction, struct ifnet *ifp, struct mbuf **m);
 
 /* ------------------------------------------------------------------------ */
@@ -1596,10 +1596,12 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct ip *h, struct icmp *
 /* ------------------------------------------------------------------------ */
 
 inline void *
-pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int off,
-    int *action, u_int8_t len, void *header)
+pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int off, int *action,
+    u_int8_t len)
 {
 	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
+	struct mbuf *n;
+	int newoff;
 
 	if (fragoff) {
 		if (fragoff >= len)
@@ -1617,12 +1619,18 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, struct ip *h, int off,
 		print_ip(ifp, h);
 		return NULL;
 	}
-	if (off + len > (*m)->m_pkthdr.len) {
+	/*
+	 * XXX should use m_copydata, but NAT portion tries to touch mbuf
+	 * directly
+	 */
+	n = m_pulldown((*m), off, len, &newoff);
+	if (!n) {
+		printf("packetfilter: pullup proto header failed\n");
 		*action = PF_DROP;
+		*m = NULL;
 		return NULL;
 	}
-	m_copydata(*m, off, len, header);
-	return header;
+	return mtod(n, char *) + newoff;
 }
 
 int
@@ -1635,17 +1643,17 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	if (!status.running)
 		return PF_PASS;
 
+#ifdef DIAGNOSTIC
+	if (((*m)->m_flags & M_PKTHDR) == 0)
+		panic("non-M_PKTHDR is passed to pf_test");
+#endif
+
 	/* purge expire states, at most once every 10 seconds */
 	microtime(&tv);
 	if ((tv.tv_sec - last_purge) >= 10) {
 		purge_expired_states();
 		last_purge = tv.tv_sec;
 	}
-
-#ifdef DIAGNOSTIC
-	if (((*m)->m_flags & M_PKTHDR) == 0)
-		panic("pf_test called with non-header mbuf");
-#endif
 
 	off = h->ip_hl << 2;
 
@@ -1660,35 +1668,38 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	switch (h->ip_p) {
 
 	case IPPROTO_TCP: {
-		struct tcphdr th;
-		if (pull_hdr(ifp, m, h, off, &action, 20, &th) == NULL)
+		struct tcphdr *th = pull_hdr(ifp, m, h, off, &action,
+		    sizeof(*th));
+		if (th == NULL)
 			goto done;
-		if (pf_test_state_tcp(direction, ifp, h, &th))
+		if (pf_test_state_tcp(direction, ifp, h, th))
 			action = PF_PASS;
 		else
-			action = pf_test_tcp(direction, ifp, h, &th);
+			action = pf_test_tcp(direction, ifp, h, th);
 		break;
 	}
 
 	case IPPROTO_UDP: {
-		struct udphdr uh;
-		if (pull_hdr(ifp, m, h, off, &action, 8, &uh) == NULL)
+		struct udphdr *uh = pull_hdr(ifp, m, h, off, &action,
+		    sizeof(*uh));
+		if (uh == NULL)
 			goto done;
-		if (pf_test_state_udp(direction, ifp, h, &uh))
+		if (pf_test_state_udp(direction, ifp, h, uh))
 			action = PF_PASS;
 		else
-			action = pf_test_udp(direction, ifp, h, &uh);
+			action = pf_test_udp(direction, ifp, h, uh);
 		break;
 	}
 
 	case IPPROTO_ICMP: {
-		struct icmp ih;
-		if (pull_hdr(ifp, m, h, off, &action, 8, &ih) == NULL)
+		struct icmp *ih = pull_hdr(ifp, m, h, off, &action,
+		    sizeof(*ih));
+		if (ih == NULL)
 			goto done;
-		if (pf_test_state_icmp(direction, ifp, h, &ih))
+		if (pf_test_state_icmp(direction, ifp, h, ih))
 			action = PF_PASS;
 		else
-			action = pf_test_icmp(direction, ifp, h, &ih);
+			action = pf_test_icmp(direction, ifp, h, ih);
 		break;
 	}
 
