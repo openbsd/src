@@ -1,0 +1,30 @@
+.\"
+.\" This document is in the public domain.  Jason Downs, 1996.
+.\"
+.Dd May 14, 1996
+.Dt ACD 4 i386
+.Os NetBSD 
+.Sh NAME
+.Nm acd
+.Nd ATAPI CD-ROM driver
+.Sh SYNOPSIS
+.Cd "atapibus* at wdc?"
+.Cd "acd* at atapibus? drive?"
+.Sh DESCRIPTION
+The
+.Nm acd 
+driver provides support for ATAPI CD-ROM drives, using standard IDE
+controllers.
+.Pp
+.Sh BUGS
+The ATAPI subsystem is only known to work on the
+.Tn i386 .
+.Pp
+Audio is not yet supported by the
+.Nm acd
+driver.
+.Sh FILES
+.Xr /dev/acd*
+.Xr /dev/racd*
+.Sh SEE ALSO
+.Xr intro 4

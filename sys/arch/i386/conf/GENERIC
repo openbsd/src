@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 1996/06/01 11:55:46 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.18 1996/06/08 09:12:37 downsj Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -173,6 +173,9 @@ mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq ?
 wd*	at wdc? drive ?
+
+atapibus* at wdc?
+acd*	at atapibus? drive?
 
 wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 

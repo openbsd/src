@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.18 1996/05/27 01:11:49 deraadt Exp $
+#	$OpenBSD: files.isa,v 1.19 1996/06/08 09:12:44 downsj Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -119,12 +119,14 @@ device	pcd: disk, opti
 attach	pcd at isa
 file	dev/isa/pcd.c			pcd needs-flag
 
-# ISA "wd" (ESDI/IDE/etc.) controllers
-device	wdc {drive = -1}
-attach	wdc at isa
-device	wd: disk, isadma
-attach	wd at wdc
-file	dev/isa/wd.c			wdc needs-flag
+# ISA "wd" (ESDI/IDE/etc.) controllers, ATAPI bus
+define       ata {drive = -1}
+device       wdc {drive = -1}: atapi, ata
+attach       wdc at isa
+device       wd: disk, isadma
+attach       wd at wdc
+file dev/isa/wdc.c                   wdc needs-flag
+file dev/isa/wd.c                    wd needs-flag
 
 # Wangtek- and Archive-compatible tape controller boards
 device	wt: tape, isadma

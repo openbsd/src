@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 1996/05/07 07:21:31 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 1996/06/08 09:12:39 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -51,6 +51,8 @@ bdev_decl(sd);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
+#include "acd.h"
+bdev_decl(acd);
 #include "mcd.h"
 bdev_decl(mcd);
 #include "vnd.h"
@@ -83,6 +85,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSCD,scd),	/* 15: Sony CD-ROM */
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NRD,rd),		/* 17: ram disk driver */
+	bdev_disk_init(NACD,acd),	/* 18: ATAPI CD-ROM */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -147,6 +150,7 @@ cdev_decl(st);
 #include "ss.h"
 cdev_decl(ss);
 cdev_decl(cd);
+cdev_decl(acd);
 #include "lpt.h"
 cdev_decl(lpt);
 #include "ch.h"
@@ -215,7 +219,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ocis_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
-	cdev_notdef(),			/* 24 */
+	cdev_disk_init(NACD,acd),	/* 24: ATAPI CD-ROM */
 	cdev_ocis_init(NPCMCIA,pcmcia), /* 25: PCMCIA Bus */
 	cdev_joy_init(NJOY,joy),        /* 26: joystick */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.17 1996/05/10 12:43:59 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.18 1996/06/08 09:12:38 downsj Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -48,6 +48,13 @@ pseudo-device rd
 file dev/ramdisk.c			rd needs-flag
 file arch/i386/i386/rd_root.c		ramdisk_hooks
 major	{rd = 17}
+
+#
+# Machine-independent ATAPI drivers
+#
+
+include "../../../dev/atapi/files.atapi"
+
 
 #
 # System bus types
