@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: random.c,v 1.10 2002/12/06 17:43:34 millert Exp $";
+static char *rcsid = "$OpenBSD: random.c,v 1.11 2003/02/28 21:27:44 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -59,10 +59,10 @@ static char *rcsid = "$OpenBSD: random.c,v 1.10 2002/12/06 17:43:34 millert Exp 
  * congruential generator.  If the amount of state information is less than
  * 32 bytes, a simple linear congruential R.N.G. is used.
  *
- * Internally, the state information is treated as an array of longs; the
+ * Internally, the state information is treated as an array of int32_t; the
  * zeroeth element of the array is the type of R.N.G. being used (small
  * integer); the remainder of the array is the state information for the
- * R.N.G.  Thus, 32 bytes of state information will give 7 longs worth of
+ * R.N.G.  Thus, 32 bytes of state information will give 7 int32_ts worth of
  * state information, which will allow a degree seven polynomial.  (Note:
  * the zeroeth word of state information also has some other information
  * stored in it -- see setstate() for details).
@@ -138,7 +138,7 @@ static int seps [MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
  *	MAX_TYPES * (rptr - state) + TYPE_3 == TYPE_3.
  */
 
-static long randtbl[DEG_3 + 1] = {
+static int32_t randtbl[DEG_3 + 1] = {
 	TYPE_3,
 	0x991539b1, 0x16a5bce3, 0x6774a4cd, 0x3e01511e, 0x4e508aaa, 0x61048c05, 
 	0xf5500617, 0x846b7115, 0x6a19892c, 0x896a97af, 0xdb48f936, 0x14898454, 
@@ -162,8 +162,8 @@ static long randtbl[DEG_3 + 1] = {
  * in the initialization of randtbl) because the state table pointer is set
  * to point to randtbl[1] (as explained below).
  */
-static long *fptr = &randtbl[SEP_3 + 1];
-static long *rptr = &randtbl[1];
+static int32_t *fptr = &randtbl[SEP_3 + 1];
+static int32_t *rptr = &randtbl[1];
 
 /*
  * The following things are the pointer to the state information table, the
@@ -175,11 +175,11 @@ static long *rptr = &randtbl[1];
  * this is more efficient than indexing every time to find the address of
  * the last element to see if the front and rear pointers have wrapped.
  */
-static long *state = &randtbl[1];
+static int32_t *state = &randtbl[1];
+static int32_t *end_ptr = &randtbl[DEG_3 + 1];
 static int rand_type = TYPE_3;
 static int rand_deg = DEG_3;
 static int rand_sep = SEP_3;
-static long *end_ptr = &randtbl[DEG_3 + 1];
 
 /*
  * srandom:
@@ -195,11 +195,11 @@ static long *end_ptr = &randtbl[DEG_3 + 1];
  */
 void
 srandom(x)
-	u_int x;
+	unsigned int x;
 {
-	register long int test;
-	register int i;
-	ldiv_t val;
+	int i;
+	int32_t test;
+	div_t val;
 
 	if (rand_type == TYPE_0)
 		state[0] = x;
@@ -213,7 +213,7 @@ srandom(x)
 			 *
 			 *	2^31-1 (prime) = 2147483647 = 127773*16807+2836
 			 */
-			val = ldiv(state[i-1], 127773);
+			val = div(state[i-1], 127773);
 			test = 16807 * val.rem - 2836 * val.quot;
 			state[i] = test + (test < 0 ? 2147483647 : 0);
 		}
@@ -308,7 +308,7 @@ initstate(seed, arg_state, n)
 	char *arg_state;		/* pointer to state array */
 	size_t n;			/* # bytes of state info */
 {
-	register char *ostate = (char *)(&state[-1]);
+	char *ostate = (char *)(&state[-1]);
 
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
@@ -337,7 +337,7 @@ initstate(seed, arg_state, n)
 		rand_deg = DEG_4;
 		rand_sep = SEP_4;
 	}
-	state = &(((long *)arg_state)[1]);	/* first location */
+	state = &(((int32_t *)arg_state)[1]);	/* first location */
 	end_ptr = &state[rand_deg];	/* must set end_ptr before srandom */
 	srandom(seed);
 	if (rand_type == TYPE_0)
@@ -366,9 +366,9 @@ char *
 setstate(arg_state)
 	const char *arg_state;
 {
-	register long *new_state = (long *)arg_state;
-	register int type = new_state[0] % MAX_TYPES;
-	register int rear = new_state[0] / MAX_TYPES;
+	int32_t *new_state = (int32_t *)arg_state;
+	int32_t type = new_state[0] % MAX_TYPES;
+	int32_t rear = new_state[0] / MAX_TYPES;
 	char *ostate = (char *)(&state[-1]);
 
 	if (rand_type == TYPE_0)
@@ -417,7 +417,7 @@ setstate(arg_state)
 long
 random()
 {
-	long i;
+	int32_t i;
 
 	if (rand_type == TYPE_0)
 		i = state[0] = (state[0] * 1103515245 + 12345) & 0x7fffffff;
@@ -430,5 +430,5 @@ random()
 		} else if (++rptr >= end_ptr)
 			rptr = state;
 	}
-	return(i);
+	return((long)i);
 }
