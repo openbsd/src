@@ -8,7 +8,7 @@
 #if 0
 #ifndef	lint
 static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$OpenBSD: ip_frag.c,v 1.5 1996/10/24 17:56:21 tholo Exp $";
+static	char	rcsid[] = "$OpenBSD: ip_frag.c,v 1.6 1997/01/18 08:29:20 downsj Exp $";
 #endif
 #endif
 
@@ -54,7 +54,7 @@ static	char	rcsid[] = "$OpenBSD: ip_frag.c,v 1.5 1996/10/24 17:56:21 tholo Exp $
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
-#include <syslog.h>
+#include <sys/syslog.h>
 #include "ip_fil_compat.h"
 #include "ip_fil.h"
 #include "ip_frag.h"
