@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.58 2004/03/11 18:32:17 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.59 2004/03/12 21:02:58 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -533,8 +533,11 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	time(&t);
 	free(cp->obuf);
 	cp->obuf = NULL;
-	if (cp->blacklists)
-		free(cp->blacklists);
+	cp->osize = 0;
+	free(cp->blacklists);
+	cp->blacklists = NULL;
+	free(cp->lists);
+	cp->lists = NULL;
 	bzero(cp, sizeof(struct con));
 	if (grow_obuf(cp, 0) == NULL)
 		err(1, "malloc");
@@ -586,7 +589,7 @@ closecon(struct con *cp)
 		free(cp->blacklists);
 		cp->blacklists = NULL;
 	}
-	if (cp->osize > 0) {
+	if (cp->obuf != NULL) {
 		free(cp->obuf);
 		cp->obuf = NULL;
 		cp->osize = 0;
