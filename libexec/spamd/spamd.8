@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.8 2003/01/20 19:52:51 deraadt Exp $
+.\"	$OpenBSD: spamd.8,v 1.9 2003/02/10 12:01:51 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -121,8 +121,8 @@ can be loaded into one or more rulesets inside that
 .Pa anchor ,
 like:
 .Bd -literal
-    echo "rdr from { 10.1.2.3, 10.2.3.4/30, 10.3.4.5/24 } to any port smtp
-      -> 127.0.0.1 port 8025" | pfctl -a spews:first -f -
+    echo "rdr inet proto tcp from { 10.1.2.3, 10.2.3.4/30, 10.3.4.5/24 }
+      to any port smtp -> 127.0.0.1 port 8025" | pfctl -a spews:first -f -
 .Ed
 .Pp
 .Sh SEE ALSO
