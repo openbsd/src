@@ -1,4 +1,4 @@
-#	$OpenBSD: ssh-com-client.sh,v 1.1 2002/03/26 15:14:33 markus Exp $
+#	$OpenBSD: ssh-com-client.sh,v 1.2 2002/03/27 00:03:37 markus Exp $
 #	Placed in the Public Domain.
 
 tid="connect with ssh.com client"
@@ -120,7 +120,7 @@ for v in ${VERSIONS}; do
 done
 
 rm -rf ${OBJ}/${USER}
-for i in ssh2_config random_seed dsa.pub dsa \
+for i in ssh2_config random_seed dsa.pub dsa host.dsa \
     id.list id.com id.com.pub id.openssh; do
 	rm -f ${OBJ}/$i
 done

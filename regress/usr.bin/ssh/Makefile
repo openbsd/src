@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2002/03/26 15:14:33 markus Exp $
+#	$OpenBSD: Makefile,v 1.11 2002/03/27 00:03:37 markus Exp $
 
 REGRESSTARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -10,6 +10,7 @@ LTESTS= 	connect \
 		proto-version \
 		proto-mismatch \
 		exit-status \
+		transfer \
 		stderr-data \
 		stderr-after-eof \
 		broken-pipe \
