@@ -1,6 +1,7 @@
-/*	$OpenBSD: biosboot.S,v 1.34 2003/06/03 20:22:11 mickey Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.35 2003/06/27 18:27:53 weingart Exp $	*/
 
 /*
+ * Copyright (c) 2003 Tobias Weingartner
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
  * All rights reserved.
  *
@@ -31,9 +32,9 @@
 #include <machine/asm.h>
 #include <assym.h>
 
-#define	BLKCNT	52
+#define	BLKCNT	63
 
-#define BOOTSEG		0x07c0	/* boot loaded here */
+#define BOOTSEG		0x07c0	/* biosboot loaded here */
 #define BOOTSTACK	0xfffc	/* stack starts here */
 #define LFMAGIC		0x464c  /* LFMAGIC (only uses two bytes of \7fELF */
 
@@ -86,25 +87,22 @@ ebpb:	.long	16		/* hidden sectors */
 
 1:
 	/* Fix up %cs just in case */
-	data32 ljmp	$BOOTSEG, $1f
+	ljmp	$BOOTSEG, $1f
 
 load_msg:
 	.asciz	"reading boot"
 
 1:
-	/* set up stack (%ss:%esp) */
+	/* set up stack (%ss:%sp) */
 	cli			/* disable interrupts w/o stack */
 	xor	%ax, %ax
 	mov	%ax, %ss
-	movl	$BOOTSTACK, %esp
+	mov	$BOOTSTACK, %sp
 	sti			/* we have stack, do ints */
 
-	/* Set up other segment regs */
+	/* Set up needed data segment reg */
 	mov	$BOOTSEG, %ax
 	mov	%ax, %ds
-	mov	%ax, %es
-	mov	%ax, %fs
-	mov	%ax, %gs
 
 #ifdef SERIAL
 	# Initialize the serial port to 9600 baud, 8N1.
@@ -126,9 +124,9 @@ load_msg:
 	mov	$(LOADADDR >> 4), %ax
 	mov	%ax, %es
 
-	xorl	%ebx, %ebx		/* put it at %es:0 */
+	xorw	%bx, %bx		/* put it at %es:0 */
 	movb	block_count, %cl	/* how many to read */
-	movzbl	%cl, %ecx
+	movzbw	%cl, %cx
 	movw	$block_table, %si
 
 1:
@@ -153,7 +151,7 @@ load_msg:
 3:	/* read next block */
 
 	pop	%ax
-	movzbl	%al, %eax
+	movzbw	%al, %ax
 	shl	$9, %ax		/* 512 bytes sectors */
 	add	%ax, %bx
 	pop	%cx
@@ -187,17 +185,11 @@ halt:
 	putc('P')
 #endif
 
-#ifdef	BDEBUG
-	movl	$0xb8004, %ebx
-	movl	$0x074f0747, (%ebx)
-#endif
-
 	movzbl	%dl, %eax	/* drive number is in the lowest byte */
 	pushl	%eax
 	pushl	$BOOTMAGIC	/* use some magic */
 
 	/* jmp	/boot */
-	/* data32 */
 	ljmp $(LINKADDR >> 4), $0
 	/* not reached */
 
