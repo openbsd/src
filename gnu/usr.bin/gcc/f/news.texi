@@ -5,7 +5,7 @@
 @c The text of this file appears in the file BUGS
 @c in the G77 distribution, as well as in the G77 manual.
 
-@c 1996-12-03
+@c 1996-02-01
 
 @ifclear NEWSONLY
 @node News
@@ -19,6 +19,29 @@
 @c at configuration time to indicate that a version of the
 @c @samp{libU77} is present and to be built and installed
 @c along with the rest of @samp{libf2c}.
+
+@heading In 0.5.19.1:
+@itemize @bullet
+Code-generation bugs afflicting operations on complex
+data have been fixed.
+
+These bugs occurred when assigning the result of an
+operation to a complex variable (or array element)
+that also served as an input to that operation.
+
+The operations affected by this bug were: @samp{CONJG()},
+@samp{DCONJG()}, @samp{CCOS()}, @samp{CDCOS()},
+@samp{CLOG()}, @samp{CDLOG()}, @samp{CSIN()}, @samp{CDSIN()},
+@samp{CSQRT()}, @samp{CDSQRT()}, complex division, and
+raising a @code{DOUBLE COMPLEX} operand to an @code{INTEGER}
+power.
+(The related generic and @samp{Z}-prefixed intrinsics,
+such as @samp{ZSIN()}, also were affected.)
+
+For example, @samp{C = CSQRT(C)}, @samp{Z = Z/C}, and @samp{Z = Z**I}
+(where @samp{C} is @code{COMPLEX} and @samp{Z} is
+@code{DOUBLE COMPLEX}) have been fixed.
+@end itemize
 
 @heading In 0.5.19:
 @itemize @bullet

@@ -2579,14 +2579,17 @@ ffecom_expr_ (ffebld expr, tree dest_tree,
 	      case FFEINFO_basictypeCOMPLEX:
 		if (ffeinfo_kindtype (ffebld_info (left))
 		    == FFEINFO_kindtypeREAL1)
-		  code = FFECOM_gfrtPOW_CI;
+		  code = FFECOM_gfrtPOW_CI;	/* Overlapping result okay. */
 		else
-		  code = FFECOM_gfrtPOW_ZI;
+		  {
+		    code = FFECOM_gfrtPOW_ZI;
+		    dest_used = NULL;	/* This one doesn't work with overlapping result. */
+		  }
 		break;
 
 	      default:
 		assert ("bad pow_*i" == NULL);
-		code = FFECOM_gfrtPOW_CI;
+		code = FFECOM_gfrtPOW_CI;	/* Overlapping result okay. */
 		break;
 	      }
 	    if (ffeinfo_kindtype (ffebld_info (left)) != rtkt)
@@ -2633,7 +2636,7 @@ ffecom_expr_ (ffebld expr, tree dest_tree,
 				       FFEINFO_kindtypeREALDOUBLE, 0,
 				       FFETARGET_charactersizeNONE,
 				       FFEEXPR_contextLET);
-	    code = FFECOM_gfrtPOW_ZZ;
+	    code = FFECOM_gfrtPOW_ZZ;	/* Overlapping result okay. */
 	    break;
 
 	  default:
@@ -3360,6 +3363,7 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 	  assert ("bad CONJG kind type" == NULL);
 	  ix = FFECOM_gfrt;
 	}
+      dest_used = NULL;		/* These don't work with overlapping result. */
       goto library;		/* :::::::::::::::::::: */
 
     case FFEINTRIN_impCOS:	/* Plus impCCOS, impCDCOS, impDCOS. */
@@ -3374,6 +3378,7 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 	      assert ("bad COS COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -3438,6 +3443,7 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 	      assert ("bad EXP COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -3513,6 +3519,7 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 	      assert ("bad LOG COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -3666,6 +3673,7 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 	      assert ("bad SIN COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -3705,6 +3713,7 @@ ffecom_expr_intrinsic_ (ffebld expr, tree dest_tree,
 	      assert ("bad SQRT COMPLEX kind type" == NULL);
 	      ix = FFECOM_gfrt;
 	    }
+	  dest_used = NULL;		/* These don't work with overlapping result. */
 	}
       else
 	{
@@ -8736,6 +8745,7 @@ ffecom_tree_divide_ (tree tree_type, tree left, tree right,
 	  ix = FFECOM_gfrtDIV_CC;
 	else
 	  ix = FFECOM_gfrtDIV_ZZ;
+	dest_used = NULL;		/* These don't work with overlapping result. */
 
 	left = ffecom_1 (ADDR_EXPR,
 			 build_pointer_type (TREE_TYPE (left)),

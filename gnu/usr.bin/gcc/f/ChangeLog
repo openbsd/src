@@ -1,3 +1,21 @@
+Sat Feb  1 12:15:09 1997  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* Version 0.5.19.1 released.
+
+	* com.c (ffecom_expr_, ffecom_expr_intrinsic_,
+	ffecom_tree_divide_): FFECOM_gfrtPOW_ZI,
+	FFECOM_gfrtCONJG, FFECOM_gfrtDCONJG,
+	FFECOM_gfrtCCOS, FFECOM_gfrtCDCOS,
+	FFECOM_gfrtCLOG, FFECOM_gfrtCDLOG,
+	FFECOM_gfrtCSIN, FFECOM_gfrtCDSIN,
+	FFECOM_gfrtCSQRT, FFECOM_gfrtCDSQRT,
+	FFECOM_gfrtDIV_CC, FFECOM_gfrtDIV_ZZ: These all require
+	result to _not_ overlap one or more inputs.
+
+Sat Dec  7 07:15:17 1996  Craig Burley  <burley@gnu.ai.mit.edu>
+
+	* Version 0.5.19 released.
+
 Fri Dec  6 12:23:55 1996  Craig Burley  <burley@gnu.ai.mit.edu>
 
 	* g77.c: Default to assuming "f77" is in $LANGUAGES, since
