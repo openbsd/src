@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.18 2003/05/11 07:25:12 tedu Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.19 2003/05/12 21:06:00 tedu Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -112,11 +112,11 @@ extern	struct vfsops portal_vfsops;
 #endif
 
 #ifdef NULLFS
-extern	struct vfsops null_vfsops;
+extern	struct vfsops nullfs_vfsops;
 #endif
 
 #ifdef UMAPFS
-extern	struct vfsops umap_vfsops;
+extern	struct vfsops umapfs_vfsops;
 #endif
 
 #ifdef KERNFS
@@ -202,7 +202,7 @@ static struct vfsconf vfsconflist[] = {
 
         /* Loopback (Minimal) Filesystem Layer */
 #ifdef NULLFS
-        { &null_vfsops, MOUNT_NULL, 9, 0, 0, NULL, NULL },
+        { &nullfs_vfsops, MOUNT_NULL, 9, 0, 0, NULL, NULL },
 #endif
 
         /* Union (translucent) Filesystem */
@@ -212,7 +212,7 @@ static struct vfsconf vfsconflist[] = {
 
         /* User/Group Identifer Remapping Filesystem */
 #ifdef UMAPFS
-        { &umap_vfsops, MOUNT_UMAP, 10, 0, 0, NULL, NULL },
+        { &umapfs_vfsops, MOUNT_UMAP, 10, 0, 0, NULL, NULL },
 #endif
 
         /* Portal Filesystem */
@@ -262,8 +262,8 @@ extern struct vnodeopv_desc spec_nfsv2nodeop_opv_desc;
 extern struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc;
 extern struct vnodeopv_desc fdesc_vnodeop_opv_desc;
 extern struct vnodeopv_desc portal_vnodeop_opv_desc;
-extern struct vnodeopv_desc null_vnodeop_opv_desc;
-extern struct vnodeopv_desc umap_vnodeop_opv_desc;
+extern struct vnodeopv_desc nullfs_vnodeop_opv_desc;
+extern struct vnodeopv_desc umapfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc procfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc cd9660_vnodeop_opv_desc;
@@ -315,10 +315,10 @@ struct vnodeopv_desc *vfs_opv_descs[] = {
 	&portal_vnodeop_opv_desc,
 #endif
 #ifdef NULLFS
-	&null_vnodeop_opv_desc,
+	&nullfs_vnodeop_opv_desc,
 #endif
 #ifdef UMAPFS
-	&umap_vnodeop_opv_desc,
+	&umapfs_vnodeop_opv_desc,
 #endif
 #ifdef KERNFS
 	&kernfs_vnodeop_opv_desc,
