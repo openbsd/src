@@ -49,6 +49,7 @@
 #include <sys/exec.h>
 
 #ifdef UVM_SWAP_ENCRYPT
+#include <uvm/uvm_swap.h>
 #include <uvm/uvm_swap_encrypt.h>
 #endif
 
@@ -153,9 +154,23 @@ uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &_ps,
 		    sizeof(_ps)));
 #ifdef UVM_SWAP_ENCRYPT
-	case VM_SWAPENCRYPT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &uvm_doswapencrypt));
+	case VM_SWAPENCRYPT: {
+		int doencrypt = uvm_doswapencrypt;
+		int result;
+
+		result = sysctl_int(oldp, oldlenp, newp, newlen, &doencrypt);
+		if (result)
+			return result;
+
+		/* Swap Encryption has been turned on, we need to
+		 * initalize state for swap devices that have been
+		 * added 
+		 */
+		if (doencrypt)
+			uvm_swap_initcrypt_all();
+		uvm_doswapencrypt = doencrypt;
+		return (0);
+	}
 #endif
 	default:
 		return (EOPNOTSUPP);
