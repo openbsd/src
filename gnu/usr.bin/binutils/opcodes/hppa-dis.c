@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include <ansidecl.h>
 #include "sysdep.h"
 #include "dis-asm.h"
 #include "libhppa.h"
@@ -46,6 +45,7 @@ typedef unsigned int CORE_ADDR;
 /* Get at various relevent fields of an instruction word. */
 
 #define MASK_5 0x1f
+#define MASK_10 0x3ff
 #define MASK_11 0x7ff
 #define MASK_14 0x3fff
 #define MASK_21 0x1fffff
@@ -58,7 +58,7 @@ typedef unsigned int CORE_ADDR;
 /* Some of these have been converted to 2-d arrays because they
    consume less storage this way.  If the maintenance becomes a
    problem, convert them back to const 1-d pointer arrays.  */
-static const char control_reg[][6] = {
+static const char *const control_reg[] = {
   "rctr", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7",
   "pidr1", "pidr2", "ccr", "sar", "pidr3", "pidr4",
   "iva", "eiem", "itmr", "pcsq", "pcoq", "iir", "isr",
@@ -66,39 +66,70 @@ static const char control_reg[][6] = {
   "tr4", "tr5", "tr6", "tr7"
 };
 
-static const char compare_cond_names[][5] = {
-  "", ",=", ",<", ",<=", ",<<", ",<<=", ",sv",
-  ",od", ",tr", ",<>", ",>=", ",>", ",>>=",
-  ",>>", ",nsv", ",ev"
+static const char *const compare_cond_names[] = {
+  "", ",=", ",<", ",<=", ",<<", ",<<=", ",sv", ",od",
+  ",tr", ",<>", ",>=", ",>", ",>>=", ",>>", ",nsv", ",ev"
 };
-static const char add_cond_names[][5] = {
-  "", ",=", ",<", ",<=", ",nuv", ",znv", ",sv",
-  ",od", ",tr", ",<>", ",>=", ",>", ",uv",
-  ",vnz", ",nsv", ",ev"
+static const char *const compare_cond_64_names[] = {
+  "", ",*=", ",*<", ",*<=", ",*<<", ",*<<=", ",*sv", ",*od",
+  ",*tr", ",*<>", ",*>=", ",*>", ",*>>=", ",*>>", ",*nsv", ",*ev"
+};
+static const char *const cmpib_cond_64_names[] = {
+  ",*<<", ",*=", ",*<", ",*<=", ",*>>=", ",*<>", ",*>=", ",*>"
+};
+static const char *const add_cond_names[] = {
+  "", ",=", ",<", ",<=", ",nuv", ",znv", ",sv", ",od",
+  ",tr", ",<>", ",>=", ",>", ",uv", ",vnz", ",nsv", ",ev"
+};
+static const char *const add_cond_64_names[] = {
+  "", ",*=", ",*<", ",*<=", ",*nuv", ",*znv", ",*sv", ",*od",
+  ",*tr", ",*<>", ",*>=", ",*>", ",*uv", ",*vnz", ",*nsv", ",*ev"
+};
+static const char *const wide_add_cond_names[] = {
+  "", ",=", ",<", ",<=", ",nuv", ",*=", ",*<", ",*<=",
+  ",tr", ",<>", ",>=", ",>", ",uv", ",*<>", ",*>=", ",*>"
 };
 static const char *const logical_cond_names[] = {
   "", ",=", ",<", ",<=", 0, 0, 0, ",od",
   ",tr", ",<>", ",>=", ",>", 0, 0, 0, ",ev"};
+static const char *const logical_cond_64_names[] = {
+  "", ",*=", ",*<", ",*<=", 0, 0, 0, ",*od",
+  ",*tr", ",*<>", ",*>=", ",*>", 0, 0, 0, ",*ev"};
 static const char *const unit_cond_names[] = {
-  "", 0, ",sbz", ",shz", ",sdc", 0, ",sbc", ",shc",
-  ",tr", 0, ",nbz", ",nhz", ",ndc", 0, ",nbc", ",nhc"
+  "", ",swz", ",sbz", ",shz", ",sdc", ",swc", ",sbc", ",shc",
+  ",tr", ",nwz", ",nbz", ",nhz", ",ndc", ",nwc", ",nbc", ",nhc"
 };
-static const char shift_cond_names[][4] = {
+static const char *const unit_cond_64_names[] = {
+  "", ",*swz", ",*sbz", ",*shz", ",*sdc", ",*swc", ",*sbc", ",*shc",
+  ",*tr", ",*nwz", ",*nbz", ",*nhz", ",*ndc", ",*nwc", ",*nbc", ",*nhc"
+};
+static const char *const shift_cond_names[] = {
   "", ",=", ",<", ",od", ",tr", ",<>", ",>=", ",ev"
 };
-static const char index_compl_names[][4] = {"", ",m", ",s", ",sm"};
-static const char short_ldst_compl_names[][4] = {"", ",ma", "", ",mb"};
+static const char *const shift_cond_64_names[] = {
+  "", ",*=", ",*<", ",*od", ",*tr", ",*<>", ",*>=", ",*ev"
+};
+static const char *const bb_cond_64_names[] = {
+  ",*<", ",*>="
+};
+static const char *const index_compl_names[] = {"", ",m", ",s", ",sm"};
+static const char *const short_ldst_compl_names[] = {"", ",ma", "", ",mb"};
 static const char *const short_bytes_compl_names[] = {
   "", ",b,m", ",e", ",e,m"
 };
 static const char *const float_format_names[] = {",sgl", ",dbl", "", ",quad"};
-static const char float_comp_names[][8] =
+static const char *const float_comp_names[] =
 {
   ",false?", ",false", ",?", ",!<=>", ",=", ",=t", ",?=", ",!<>",
   ",!?>=", ",<", ",?<", ",!>=", ",!?>", ",<=", ",?<=", ",!>",
   ",!?<=", ",>", ",?>", ",!<=", ",!?<", ",>=", ",?>=", ",!<",
   ",!?=", ",<>", ",!=", ",!=t", ",!?", ",<=>", ",true?", ",true"
 };
+static const char *const signed_unsigned_names[] = {",u", ",s"};
+static const char *const mix_half_names[] = {",l", ",r"};
+static const char *const saturation_names[] = {",us", ",ss", 0, ""};
+static const char *const read_write_names[] = {",r", ",w"};
+static const char *const add_compl_names[] = { 0, "", ",l", ",tsv" };
 
 /* For a bunch of different instructions form an index into a 
    completer name table. */
@@ -205,6 +236,14 @@ extract_5R_store (word)
   return (word >> 16 & MASK_5);
 }
 
+/* extract the 10 bit immediate field from a {sr}sm instruction */
+static unsigned
+extract_10U_store (word)
+     unsigned word;
+{
+  return (word >> 16 & MASK_10);
+}
+
 /* extract the immediate field from a bb instruction */
 static unsigned
 extract_5Q_store (word)
@@ -275,6 +314,17 @@ extract_17 (word)
                       (word & 0x1) << 16, 17) << 2;
 }
 
+static int
+extract_22 (word)
+     unsigned word;
+{
+  return sign_extend (GET_FIELD (word, 19, 28) |
+                      GET_FIELD (word, 29, 29) << 10 |
+                      GET_FIELD (word, 11, 15) << 11 |
+                      GET_FIELD (word, 6, 10) << 16 |
+                      (word & 0x1) << 21, 22) << 2;
+}
+
 /* Print one instruction.  */
 int
 print_insn_hppa (memaddr, info)
@@ -305,7 +355,7 @@ print_insn_hppa (memaddr, info)
 	  
 	  (*info->fprintf_func) (info->stream, "%s", opcode->name);
 
-	  if (!strchr ("cfCY<?!@-+&U>~nHNZFIMadu|", opcode->args[0]))
+	  if (!strchr ("cfCY?-+nHNZFIuv", opcode->args[0]))
 	    (*info->fprintf_func) (info->stream, " ");
 	  for (s = opcode->args; *s != '\0'; ++s)
 	    {
@@ -314,76 +364,125 @@ print_insn_hppa (memaddr, info)
 		case 'x':
 		  fput_reg (GET_FIELD (insn, 11, 15), info);
 		  break;
-		case 'X':
-                  if (GET_FIELD (insn, 25, 25))
-		      fput_fp_reg_r (GET_FIELD (insn, 11, 15), info);
-		  else
-		      fput_fp_reg (GET_FIELD (insn, 11, 15), info);
-		  break;
+		case 'a':
 		case 'b':
 		  fput_reg (GET_FIELD (insn, 6, 10), info);
 		  break;
 		case '^':
 		  fput_creg (GET_FIELD (insn, 6, 10), info);
 		  break;
-		case 'E':
-                  if (GET_FIELD (insn, 25, 25))
-		      fput_fp_reg_r (GET_FIELD (insn, 6, 10), info);
-		  else
-		      fput_fp_reg (GET_FIELD (insn, 6, 10), info);
-		  break;
 		case 't':
 		  fput_reg (GET_FIELD (insn, 27, 31), info);
 		  break;
-		case 'v':
-                  if (GET_FIELD (insn, 25, 25))
-		      fput_fp_reg_r (GET_FIELD (insn, 27, 31), info);
-		  else
+
+		/* Handle floating point registers.  */
+		case 'f':
+		  switch (*++s)
+		    {
+		    case 't':
 		      fput_fp_reg (GET_FIELD (insn, 27, 31), info);
+		      break;
+		    case 'T':
+		      if (GET_FIELD (insn, 25, 25))
+			fput_fp_reg_r (GET_FIELD (insn, 27, 31), info);
+		      else
+			fput_fp_reg (GET_FIELD (insn, 27, 31), info);
+		      break;
+		    case 'a':
+		      if (GET_FIELD (insn, 25, 25))
+			fput_fp_reg_r (GET_FIELD (insn, 6, 10), info);
+		      else
+			fput_fp_reg (GET_FIELD (insn, 6, 10), info);
+		      break;
+
+		    /* 'fA' will not generate a space before the regsiter
+			name.  Normally that is fine.  Except that it
+			causes problems with xmpyu which has no FP format
+			completer.  */
+		    case 'X':
+		      fputs_filtered (" ", info);
+
+		    /* FALLTHRU */
+
+		    case 'A':
+		      if (GET_FIELD (insn, 24, 24))
+			fput_fp_reg_r (GET_FIELD (insn, 6, 10), info);
+		      else
+			fput_fp_reg (GET_FIELD (insn, 6, 10), info);
+		      
+		      break;
+		    case 'b':
+		      if (GET_FIELD (insn, 25, 25))
+			fput_fp_reg_r (GET_FIELD (insn, 11, 15), info);
+		      else
+			fput_fp_reg (GET_FIELD (insn, 11, 15), info);
+		      break;
+		    case 'B':
+		      if (GET_FIELD (insn, 19, 19))
+			fput_fp_reg_r (GET_FIELD (insn, 11, 15), info);
+		      else
+			fput_fp_reg (GET_FIELD (insn, 11, 15), info);
+		      break;
+		    case 'C':
+		      {
+			int reg = GET_FIELD (insn, 21, 22);
+			reg |= GET_FIELD (insn, 16, 18) << 2;
+			if (GET_FIELD (insn, 23, 23) != 0)
+			  fput_fp_reg_r (reg, info);
+			else
+			  fput_fp_reg (reg, info);
+			break;
+		      }
+		    case 'i':
+		      {
+			int reg = GET_FIELD (insn, 6, 10);
+
+			reg |= (GET_FIELD (insn, 26, 26) << 4);
+			fput_fp_reg (reg, info);
+			break;
+		      }
+		    case 'j':
+		      {
+			int reg = GET_FIELD (insn, 11, 15);
+
+			reg |= (GET_FIELD (insn, 26, 26) << 4);
+			fput_fp_reg (reg, info);
+			break;
+		      }
+		    case 'k':
+		      {
+			int reg = GET_FIELD (insn, 27, 31);
+
+			reg |= (GET_FIELD (insn, 26, 26) << 4);
+			fput_fp_reg (reg, info);
+			break;
+		      }
+		    case 'l':
+		      {
+			int reg = GET_FIELD (insn, 21, 25);
+
+			reg |= (GET_FIELD (insn, 26, 26) << 4);
+			fput_fp_reg (reg, info);
+			break;
+		      }
+		    case 'm':
+		      {
+			int reg = GET_FIELD (insn, 16, 20);
+
+			reg |= (GET_FIELD (insn, 26, 26) << 4);
+			fput_fp_reg (reg, info);
+			break;
+		      }
+		    case 'e':
+		      if (GET_FIELD (insn, 25, 25))
+			fput_fp_reg_r (GET_FIELD (insn, 11, 15), info);
+		      else
+			fput_fp_reg (GET_FIELD (insn, 11, 15), info);
+		      break;
+
+		    }
 		  break;
-		case 'y':
-		  fput_fp_reg (GET_FIELD (insn, 27, 31), info);
-		  break;
-		case '4':
-		  {
-		    int reg = GET_FIELD (insn, 6, 10);
 
-		    reg |= (GET_FIELD (insn, 26, 26) << 4);
-		    fput_fp_reg (reg, info);
-		    break;
-		  }
-		case '6':
-		  {
-		    int reg = GET_FIELD (insn, 11, 15);
-
-		    reg |= (GET_FIELD (insn, 26, 26) << 4);
-		    fput_fp_reg (reg, info);
-		    break;
-		  }
-		case '7':
-		  {
-		    int reg = GET_FIELD (insn, 27, 31);
-
-		    reg |= (GET_FIELD (insn, 26, 26) << 4);
-		    fput_fp_reg (reg, info);
-		    break;
-		  }
-		case '8':
-		  {
-		    int reg = GET_FIELD (insn, 16, 20);
-
-		    reg |= (GET_FIELD (insn, 26, 26) << 4);
-		    fput_fp_reg (reg, info);
-		    break;
-		  }
-		case '9':
-		  {
-		    int reg = GET_FIELD (insn, 21, 25);
-
-		    reg |= (GET_FIELD (insn, 26, 26) << 4);
-		    fput_fp_reg (reg, info);
-		    break;
-		  }
 		case '5':
 		  fput_const (extract_5_load (insn), info);
 		  break;
@@ -391,69 +490,326 @@ print_insn_hppa (memaddr, info)
 		  (*info->fprintf_func) (info->stream,
 					 "sr%d", GET_FIELD (insn, 16, 17));
 		  break;
+
 		case 'S':
 		  (*info->fprintf_func) (info->stream, "sr%d", extract_3 (insn));
 		  break;
+
+		/* Handle completers.  */
 		case 'c':
-		  (*info->fprintf_func) (info->stream, "%s ",
-				    index_compl_names[GET_COMPL (insn)]);
+		  switch (*++s)
+		    {
+		    case 'x':
+		      (*info->fprintf_func) (info->stream, "%s ",
+					     index_compl_names[GET_COMPL (insn)]);
+		      break;
+		    case 'm':
+		      (*info->fprintf_func) (info->stream, "%s ",
+					     short_ldst_compl_names[GET_COMPL (insn)]);
+		      break;
+		    case 's':
+		      (*info->fprintf_func) (info->stream, "%s ",
+					     short_bytes_compl_names[GET_COMPL (insn)]);
+		      break;
+		    case 'c':
+		    case 'C':
+		      switch (GET_FIELD (insn, 20, 21))
+			{
+			case 1:
+			  (*info->fprintf_func) (info->stream, ",bc ");
+			  break;
+			case 2:
+			  (*info->fprintf_func) (info->stream, ",sl ");
+			  break;
+			default:
+			  (*info->fprintf_func) (info->stream, " ");
+			}
+		      break;
+		    case 'd':
+		      switch (GET_FIELD (insn, 20, 21))
+			{
+			case 1:
+			  (*info->fprintf_func) (info->stream, ",co ");
+			  break;
+			default:
+			  (*info->fprintf_func) (info->stream, " ");
+			}
+		      break;
+		    case 'o':
+		      (*info->fprintf_func) (info->stream, ",o");
+		      break;
+		    case 'g':
+		      (*info->fprintf_func) (info->stream, ",gate");
+		      break;
+		    case 'p':
+		      (*info->fprintf_func) (info->stream, ",l,push");
+		      break;
+		    case 'P':
+		      (*info->fprintf_func) (info->stream, ",pop");
+		      break;
+		    case 'l':
+		    case 'L':
+		      (*info->fprintf_func) (info->stream, ",l");
+		      break;
+		    case 'w':
+		      (*info->fprintf_func) (info->stream, "%s ",
+					     read_write_names[GET_FIELD (insn, 25, 25)]);
+		      break;
+		    case 'W':
+		      (*info->fprintf_func) (info->stream, ",w");
+		      break;
+		    case 'r':
+		      if (GET_FIELD (insn, 23, 26) == 5)
+			(*info->fprintf_func) (info->stream, ",r");
+		      break;
+		    case 'Z':
+		      if (GET_FIELD (insn, 26, 26))
+			(*info->fprintf_func) (info->stream, ",m ");
+		      else
+			(*info->fprintf_func) (info->stream, " ");
+		      break;
+		    case 'i':
+		      if (GET_FIELD (insn, 25, 25))
+			(*info->fprintf_func) (info->stream, ",i");
+		      break;
+		    case 'z':
+		      if (!GET_FIELD (insn, 21, 21))
+			(*info->fprintf_func) (info->stream, ",z");
+		      break;
+		    case 'a':
+		      (*info->fprintf_func)
+			(info->stream, "%s", add_compl_names[GET_FIELD
+							    (insn, 20, 21)]);
+		      break;
+		    case 'Y':
+		      (*info->fprintf_func)
+			(info->stream, ",dc%s", add_compl_names[GET_FIELD
+							       (insn, 20, 21)]);
+		      break;
+		    case 'y':
+		      (*info->fprintf_func)
+			(info->stream, ",c%s", add_compl_names[GET_FIELD
+							      (insn, 20, 21)]);
+		      break;
+		    case 'v':
+		      if (GET_FIELD (insn, 20, 20))
+			(*info->fprintf_func) (info->stream, ",tsv");
+		      break;
+		    case 't':
+		      (*info->fprintf_func) (info->stream, ",tc");
+		      if (GET_FIELD (insn, 20, 20))
+			(*info->fprintf_func) (info->stream, ",tsv");
+		      break;
+		    case 'B':
+		      (*info->fprintf_func) (info->stream, ",db");
+		      if (GET_FIELD (insn, 20, 20))
+			(*info->fprintf_func) (info->stream, ",tsv");
+		      break;
+		    case 'b':
+		      (*info->fprintf_func) (info->stream, ",b");
+		      if (GET_FIELD (insn, 20, 20))
+			(*info->fprintf_func) (info->stream, ",tsv");
+		      break;
+		    case 'T':
+		      if (GET_FIELD (insn, 25, 25))
+			(*info->fprintf_func) (info->stream, ",tc");
+		      break;
+		    case 'S':
+		      /* EXTRD/W has a following condition.  */
+		      if (*(s + 1) == '?')
+			(*info->fprintf_func)
+			  (info->stream, "%s", signed_unsigned_names[GET_FIELD
+								    (insn, 21, 21)]);
+		      else
+			(*info->fprintf_func)
+			  (info->stream, "%s ", signed_unsigned_names[GET_FIELD
+								     (insn, 21, 21)]);
+		      break;
+		    case 'h':
+		      (*info->fprintf_func)
+			  (info->stream, "%s", mix_half_names[GET_FIELD
+							     (insn, 17, 17)]);
+		      break;
+		    case 'H':
+		      (*info->fprintf_func)
+			  (info->stream, "%s", saturation_names[GET_FIELD
+							       (insn, 24, 25)]);
+		      break;
+		    case '*':
+		      (*info->fprintf_func)
+			  (info->stream, ",%d%d%d%d ",
+			   GET_FIELD (insn, 17, 18), GET_FIELD (insn, 20, 21),
+			   GET_FIELD (insn, 22, 23), GET_FIELD (insn, 24, 25));
+		      break;
+
+		    case 'q':
+		      {
+			int m, a;
+
+			m = GET_FIELD (insn, 28, 28);
+			a = GET_FIELD (insn, 29, 29);
+
+			if (m && !a)
+			  fputs_filtered (",ma ", info);
+			else if (m && a)
+			  fputs_filtered (",mb ", info);
+			else
+			  fputs_filtered (" ", info);
+			break;
+		      }
+
+		    case 'J':
+		      {
+			int opcode = GET_FIELD (insn, 0, 5);
+
+			if (opcode == 0x16 || opcode == 0x1e)
+			  {
+			    if (GET_FIELD (insn, 29, 29) == 0)
+			      fputs_filtered (",ma ", info);
+			    else
+			      fputs_filtered (",mb ", info);
+			  }
+			else
+			  fputs_filtered (" ", info);
+			break;
+		      }
+
+		    case 'e':
+		      {
+			int opcode = GET_FIELD (insn, 0, 5);
+
+			if (opcode == 0x13 || opcode == 0x1b)
+			  {
+			    if (GET_FIELD (insn, 18, 18) == 1)
+			      fputs_filtered (",mb ", info);
+			    else
+			      fputs_filtered (",ma ", info);
+			  }
+			else if (opcode == 0x17 || opcode == 0x1f)
+			  {
+			    if (GET_FIELD (insn, 31, 31) == 1)
+			      fputs_filtered (",ma ", info);
+			    else
+			      fputs_filtered (",mb ", info);
+			  }
+			else
+			  fputs_filtered (" ", info);
+
+			break;
+		      }
+		    }
 		  break;
-		case 'C':
-		  (*info->fprintf_func) (info->stream, "%s ",
-				    short_ldst_compl_names[GET_COMPL (insn)]);
-		  break;
-		case 'Y':
-		  (*info->fprintf_func) (info->stream, "%s ",
-				    short_bytes_compl_names[GET_COMPL (insn)]);
-		  break;
-		/* these four conditions are for the set of instructions
-		   which distinguish true/false conditions by opcode rather
-		   than by the 'f' bit (sigh): comb, comib, addb, addib */
-		case '<':
-		  fputs_filtered (compare_cond_names[GET_FIELD (insn, 16, 18)],
-				  info);
-		  break;
+
+		/* Handle conditions.  */
 		case '?':
-		  fputs_filtered (compare_cond_names[GET_FIELD (insn, 16, 18)
-				  + GET_FIELD (insn, 4, 4) * 8], info);
-		  break;
-		case '@':
-		  fputs_filtered (add_cond_names[GET_FIELD (insn, 16, 18)
-				  + GET_FIELD (insn, 4, 4) * 8], info);
-		  break;
-		case 'a':
-		  (*info->fprintf_func) (info->stream, "%s ",
-					 compare_cond_names[GET_COND (insn)]);
-		  break;
-		case 'd':
-		  (*info->fprintf_func) (info->stream, "%s ",
-					 add_cond_names[GET_COND (insn)]);
-		  break;
-		case '!':
-		  (*info->fprintf_func) (info->stream, "%s",
-				    add_cond_names[GET_FIELD (insn, 16, 18)]);
-		  break;
+		  {
+		    s++;
+		    switch (*s)
+		      {
+		      case 'f':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       float_comp_names[GET_FIELD
+							       (insn, 27, 31)]);
+			break;
 
-		case '&':
-		  (*info->fprintf_func) (info->stream, "%s ",
-				    logical_cond_names[GET_COND (insn)]);
-		  break;
-		case 'U':
-		  (*info->fprintf_func) (info->stream, "%s ",
-				    unit_cond_names[GET_COND (insn)]);
-		  break;
-		case '|':
-		case '>':
-		case '~':
-		  (*info->fprintf_func)
-		    (info->stream, "%s",
-		     shift_cond_names[GET_FIELD (insn, 16, 18)]);
+		      /* these four conditions are for the set of instructions
+			   which distinguish true/false conditions by opcode
+			   rather than by the 'f' bit (sigh): comb, comib,
+			   addb, addib */
+		      case 't':
+			fputs_filtered (compare_cond_names[GET_FIELD (insn, 16, 18)],
+					info);
+			break;
+		      case 'n':
+			fputs_filtered (compare_cond_names[GET_FIELD (insn, 16, 18)
+					+ GET_FIELD (insn, 4, 4) * 8], info);
+			break;
+		      case 'N':
+			fputs_filtered (compare_cond_64_names[GET_FIELD (insn, 16, 18)
+					+ GET_FIELD (insn, 2, 2) * 8], info);
+			break;
+		      case 'Q':
+			fputs_filtered (cmpib_cond_64_names[GET_FIELD (insn, 16, 18)],
+					info);
+			break;
+		      case '@':
+			fputs_filtered (add_cond_names[GET_FIELD (insn, 16, 18)
+					+ GET_FIELD (insn, 4, 4) * 8], info);
+			break;
+		      case 's':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       compare_cond_names[GET_COND (insn)]);
+			break;
+		      case 'S':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       compare_cond_64_names[GET_COND (insn)]);
+			break;
+		      case 'a':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       add_cond_names[GET_COND (insn)]);
+			break;
+		      case 'A':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       add_cond_64_names[GET_COND (insn)]);
+			break;
+		      case 'd':
+			(*info->fprintf_func) (info->stream, "%s",
+					       add_cond_names[GET_FIELD (insn, 16, 18)]);
+			break;
 
-		  /* If the next character in args is 'n', it will handle
-		     putting out the space.  */
-		  if (s[1] != 'n')
-		    (*info->fprintf_func) (info->stream, " ");
-		  break;
+		      case 'W':
+			(*info->fprintf_func) 
+			  (info->stream, "%s",
+			   wide_add_cond_names[GET_FIELD (insn, 16, 18) + 
+					      GET_FIELD (insn, 4, 4) * 8]);
+			break;
+
+		      case 'l':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       logical_cond_names[GET_COND (insn)]);
+			break;
+		      case 'L':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       logical_cond_64_names[GET_COND (insn)]);
+			break;
+		      case 'u':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       unit_cond_names[GET_COND (insn)]);
+			break;
+		      case 'U':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       unit_cond_64_names[GET_COND (insn)]);
+			break;
+		      case 'y':
+		      case 'x':
+		      case 'b':
+			(*info->fprintf_func)
+			  (info->stream, "%s",
+			   shift_cond_names[GET_FIELD (insn, 16, 18)]);
+
+			/* If the next character in args is 'n', it will handle
+			   putting out the space.  */
+			if (s[1] != 'n')
+			  (*info->fprintf_func) (info->stream, " ");
+			break;
+		      case 'X':
+			(*info->fprintf_func) (info->stream, "%s ",
+					       shift_cond_64_names[GET_FIELD (insn, 16, 18)]);
+			break;
+		      case 'B':
+			(*info->fprintf_func)
+			  (info->stream, "%s",
+			   bb_cond_64_names[GET_FIELD (insn, 16, 16)]);
+
+			/* If the next character in args is 'n', it will handle
+			   putting out the space.  */
+			if (s[1] != 'n')
+			  (*info->fprintf_func) (info->stream, " ");
+			break;
+		      }
+		    break;
+		  }
+
 		case 'V':
 		  fput_const (extract_5_store (insn), info);
 		  break;
@@ -463,6 +819,10 @@ print_insn_hppa (memaddr, info)
 		case 'R':
 		  fput_const (extract_5R_store (insn), info);
 		  break;
+		case 'U':
+		  fput_const (extract_10U_store (insn), info);
+		  break;
+		case 'B':
 		case 'Q':
 		  fput_const (extract_5Q_store (insn), info);
 		  break;
@@ -505,31 +865,86 @@ print_insn_hppa (memaddr, info)
 		     of address.  */
 		  fput_const (extract_17 (insn), info);
 		  break;
+
+		case 'Z':
+		  /* addil %r1 implicit output.  */
+		  (*info->fprintf_func) (info->stream, "%%r1");
+		  break;
+
+		case 'Y':
+		  /* be,l %sr0,%r31 implicit output.  */
+		  (*info->fprintf_func) (info->stream, "%%sr0,%%r31");
+		  break;
+		  
+		case '@':
+		  (*info->fprintf_func) (info->stream, "0");
+		  break;
+
+		case '.':
+		  (*info->fprintf_func) (info->stream, "%d",
+				    GET_FIELD (insn, 24, 25));
+		  break;
+		case '*':
+		  (*info->fprintf_func) (info->stream, "%d",
+				    GET_FIELD (insn, 22, 25));
+		  break;
+		case '!':
+		  (*info->fprintf_func) (info->stream, "%%sar");
+		  break;
 		case 'p':
 		  (*info->fprintf_func) (info->stream, "%d",
 				    31 - GET_FIELD (insn, 22, 26));
 		  break;
+		case '~':
+		  {
+		    int num;
+		    num = GET_FIELD (insn, 20, 20) << 5;
+		    num |= GET_FIELD (insn, 22, 26);
+		    (*info->fprintf_func) (info->stream, "%d", 63 - num);
+		    break;
+		  }
 		case 'P':
 		  (*info->fprintf_func) (info->stream, "%d",
 				    GET_FIELD (insn, 22, 26));
 		  break;
+		case 'q':
+		  {
+		    int num;
+		    num = GET_FIELD (insn, 20, 20) << 5;
+		    num |= GET_FIELD (insn, 22, 26);
+		    (*info->fprintf_func) (info->stream, "%d", num);
+		    break;
+		  }
 		case 'T':
 		  (*info->fprintf_func) (info->stream, "%d",
 				    32 - GET_FIELD (insn, 27, 31));
 		  break;
+		case '%':
+		  {
+		    int num;
+		    num = (GET_FIELD (insn, 23, 23) + 1) * 32;
+		    num -= GET_FIELD (insn, 27, 31);
+		    (*info->fprintf_func) (info->stream, "%d", num);
+		    break;
+		  }
+		case '|':
+		  {
+		    int num;
+		    num = (GET_FIELD (insn, 19, 19) + 1) * 32;
+		    num -= GET_FIELD (insn, 27, 31);
+		    (*info->fprintf_func) (info->stream, "%d", num);
+		    break;
+		  }
+		case '$':
+		  fput_const (GET_FIELD (insn, 20, 28), info);
+		  break;
 		case 'A':
 		  fput_const (GET_FIELD (insn, 6, 18), info);
-		  break;
-		case 'Z':
-		  if (GET_FIELD (insn, 26, 26))
-		    (*info->fprintf_func) (info->stream, ",m ");
-		  else
-		    (*info->fprintf_func) (info->stream, " ");
 		  break;
 		case 'D':
 		  fput_const (GET_FIELD (insn, 6, 31), info);
 		  break;
-		case 'f':
+		case 'v':
 		  (*info->fprintf_func) (info->stream, ",%d", GET_FIELD (insn, 23, 25));
 		  break;
 		case 'O':
@@ -557,7 +972,7 @@ print_insn_hppa (memaddr, info)
 		case 'F':
 		  /* if no destination completer and not before a completer
 		     for fcmp, need a space here */
-		  if (GET_FIELD (insn, 21, 22) == 1 || s[1] == 'M')
+		  if (s[1] == 'G' || s[1] == '?')
 		    fputs_filtered (float_format_names[GET_FIELD (insn, 19, 20)],
 				    info);
 		  else
@@ -581,7 +996,7 @@ print_insn_hppa (memaddr, info)
 		case 'I':
 		  /* if no destination completer and not before a completer
 		     for fcmp, need a space here */
-		  if (GET_FIELD (insn, 21, 22) == 1 || s[1] == 'M')
+		  if (s[1] == '?')
 		    fputs_filtered (float_format_names[GET_FIELD (insn, 20, 20)],
 				    info);
 		  else
@@ -589,23 +1004,99 @@ print_insn_hppa (memaddr, info)
 					   float_format_names[GET_FIELD
 							      (insn, 20, 20)]);
 		  break;
-		case 'J':
-                  if (GET_FIELD (insn, 24, 24))
-		      fput_fp_reg_r (GET_FIELD (insn, 6, 10), info);
-		  else
-		      fput_fp_reg (GET_FIELD (insn, 6, 10), info);
-		      
+
+                case 'J':
+                  fput_const (extract_14 (insn), info);
+                  break;
+
+		case '#':
+		  {
+		    int sign = GET_FIELD (insn, 31, 31);
+		    int imm10 = GET_FIELD (insn, 18, 27);
+		    int disp;
+
+		    if (sign)
+		      disp = (-1 << 10) | imm10;
+		    else
+		      disp = imm10;
+
+		    disp <<= 3;
+		    fput_const (disp, info);
+		    break;
+		  }
+                case 'K':
+		case 'd':
+		  {
+		    int sign = GET_FIELD (insn, 31, 31);
+		    int imm11 = GET_FIELD (insn, 18, 28);
+		    int disp;
+
+		    if (sign)
+		      disp = (-1 << 11) | imm11;
+		    else
+		      disp = imm11;
+
+		    disp <<= 2;
+		    fput_const (disp, info);
+		    break;
+		  }
+
+		/* ?!? FIXME */
+		case '_':
+		case '{':
+		  fputs_filtered ("Disassembler botch.\n", info);
 		  break;
-		case 'K':
-                  if (GET_FIELD (insn, 19, 19))
-		      fput_fp_reg_r (GET_FIELD (insn, 11, 15), info);
-		  else
-		      fput_fp_reg (GET_FIELD (insn, 11, 15), info);
+
+		case 'm':
+		  {
+		    int y = GET_FIELD (insn, 16, 18);
+
+		    if (y != 1)
+		      fput_const ((y ^ 1) - 1, info);
+		  }
 		  break;
-		case 'M':
-		    (*info->fprintf_func) (info->stream, "%s ",
-					   float_comp_names[GET_FIELD
-							      (insn, 27, 31)]);
+
+		case 'h':
+		  {
+		    int cbit;
+
+		    cbit = GET_FIELD (insn, 16, 18);
+
+		    if (cbit > 0)
+		      (*info->fprintf_func) (info->stream, ",%d", cbit - 1);
+		    break;
+		  }
+
+		case '=':
+		  {
+		    int cond = GET_FIELD (insn, 27, 31);
+
+		    if (cond == 0)
+		      fputs_filtered (" ", info);
+		    else if (cond == 1)
+		      fputs_filtered ("acc ", info);
+		    else if (cond == 2)
+		      fputs_filtered ("rej ", info);
+		    else if (cond == 5)
+		      fputs_filtered ("acc8 ", info);
+		    else if (cond == 6)
+		      fputs_filtered ("rej8 ", info);
+		    else if (cond == 9)
+		      fputs_filtered ("acc6 ", info);
+		    else if (cond == 13)
+		      fputs_filtered ("acc4 ", info);
+		    else if (cond == 17)
+		      fputs_filtered ("acc2 ", info);
+		    break;
+		  }
+
+		case 'X':
+		  (*info->print_address_func) ((memaddr + 8 
+						+ extract_22 (insn)),
+					       info);
+		  break;
+		case 'L':
+		  fputs_filtered (",%r2", info);
 		  break;
 		default:
 		  (*info->fprintf_func) (info->stream, "%c", *s);

@@ -28,10 +28,10 @@ g
 	.PROC
 	.CALLINFO FRAME=0,NO_CALLS
 	.ENTRY
-	stw %r19,-32(0,%r30)
+	stw %r19,-32(%r30)
 	ldw T'L$C0000(%r19),%r20
-	bv 0(%r2)
-	fldds 0(0,%r20),%fr4
+	bv %r0(%r2)
+	fldds 0(%r20),%fr4
 	.EXIT
 	.PROCEND
 	.IMPORT abort,CODE
@@ -52,10 +52,10 @@ main
 	.PROC
 	.CALLINFO FRAME=128,CALLS,SAVE_RP,ENTRY_GR=3
 	.ENTRY
-	stw %r2,-20(0,%r30)
+	stw %r2,-20(%r30)
 	ldo 128(%r30),%r30
-	stw %r19,-32(0,%r30)
-	stw %r4,-128(0,%r30)
+	stw %r19,-32(%r30)
+	stw %r4,-128(%r30)
 
 	copy %r19,%r4
 	.CALL 
@@ -63,11 +63,11 @@ main
 	copy %r4,%r19
 	copy %r4,%r19
 	ldw T'L$C0001(%r19),%r20
-	fldds 0(0,%r20),%fr8
+	fldds 0(%r20),%fr8
 	fcmp,dbl,= %fr4,%fr8
 	ftest
-	add,tr 0,0,0
-	bl,n L$0003,0
+	add,tr %r0,%r0,%r0
+	b,n L$0003
 	.CALL 
 	bl abort,%r2
 	nop

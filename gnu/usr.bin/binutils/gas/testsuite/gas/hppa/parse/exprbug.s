@@ -1,5 +1,4 @@
-        .space	$TEXT$
-        .subspa	$CODE$
+	.code
 
 	.align	8
 	.export	icode,data
@@ -7,7 +6,7 @@ icode:
 	.proc
 	.callinfo	frame=0,no_calls
 	.entry
-	bv,n	0(2)
+	bv,n	%r0(%r2)
 	.exit
 	nop
 	.procend

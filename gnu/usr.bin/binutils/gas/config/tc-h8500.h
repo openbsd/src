@@ -1,5 +1,5 @@
 /* This file is tc-h8500.h
-   Copyright (C) 1993, 95, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1993, 95, 97, 1998 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -23,6 +23,12 @@
 
 #define TARGET_BYTES_BIG_ENDIAN 1
 
+#if ANSI_PROTOTYPES
+struct internal_reloc;
+#endif
+
+#define WORKING_DOT_WORD
+
 /* This macro translates between an internal fix and an coff reloc type */
 #define TC_COFF_FIX2RTYPE(fixP) tc_coff_fix2rtype(fixP)
 
@@ -32,6 +38,8 @@
 #define IGNORE_NONSTANDARD_ESCAPES
 
 #define TC_RELOC_MANGLE(s,a,b,c) tc_reloc_mangle(a,b,c)
+extern void tc_reloc_mangle
+  PARAMS ((struct fix *, struct internal_reloc *, bfd_vma));
 
 #define DO_NOT_STRIP 0
 #define LISTING_HEADER "Hitachi H8/500 GAS "

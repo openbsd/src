@@ -1,5 +1,5 @@
 /* vms.c -- Write out a VAX/VMS object file
-   Copyright (C) 1987, 1988, 1992, 1994, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 92, 94, 95, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +14,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GAS; see the file COPYING.  If not, write to
-the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+along with GAS; see the file COPYING.  If not, write to the Free
+Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+02111-1307, USA.  */
 
 /* Written by David L. Kashtan */
 /* Modified by Eric Youngdale to write VMS debug records for program
@@ -79,6 +80,8 @@ struct VMS_Symbol
 };
 
 struct VMS_Symbol *VMS_Symbols = 0;
+struct VMS_Symbol *Ctors_Symbols = 0;
+struct VMS_Symbol *Dtors_Symbols = 0;
 
 /* We need this to keep track of the various input files, so that we can
  * give the debugger the correct source line.
@@ -106,7 +109,7 @@ static struct input_file *file_root = (struct input_file *) NULL;
  */
 enum ps_type
 {
-  ps_TEXT, ps_DATA, ps_COMMON, ps_CONST
+  ps_TEXT, ps_DATA, ps_COMMON, ps_CONST, ps_CTORS, ps_DTORS
 };
 
 /*
@@ -418,6 +421,7 @@ static void vms_fixup_data_section PARAMS ((unsigned,unsigned));
 static void global_symbol_directory PARAMS ((unsigned,unsigned));
 static void local_symbols_DST PARAMS ((symbolS *,symbolS *));
 static void vms_build_DST PARAMS ((unsigned));
+static void vms_fixup_xtors_section PARAMS ((struct VMS_Symbol *, int));
 
 
 /* The following code defines the special types of pseudo-ops that we
@@ -457,7 +461,7 @@ vms_resolve_symbol_redef (sym)
   if (SEGMENT_TO_SYMBOL_TYPE ((int) now_seg) == (N_UNDF | N_EXT)
       && frag_now_fix () == 0)
     {
-      as_warn ("compiler emitted zero-size common symbol `%s' already defined",
+      as_warn (_("compiler emitted zero-size common symbol `%s' already defined"),
 	       S_GET_NAME (sym));
       return 1;
     }
@@ -467,7 +471,7 @@ vms_resolve_symbol_redef (sym)
    */
   if (S_IS_EXTERNAL (sym) && S_IS_DEFINED (sym) && S_GET_VALUE (sym) == 0)
     {
-      as_warn ("compiler redefined zero-size common symbol `%s'",
+      as_warn (_("compiler redefined zero-size common symbol `%s'"),
 	       S_GET_NAME (sym));
       sym->sy_frag  = frag_now;
       S_SET_OTHER (sym, const_flag);
@@ -533,7 +537,7 @@ obj_crawl_symbol_chain (headers)
   symbolPP = &symbol_rootP;	/* -> last symbol chain link. */
   while ((symbolP = *symbolPP) != NULL)
     {
-      resolve_symbol_value (symbolP);
+      resolve_symbol_value (symbolP, 1);
 
      /* OK, here is how we decide which symbols go out into the
 	brave new symtab.  Symbols that do are:
@@ -559,7 +563,7 @@ obj_crawl_symbol_chain (headers)
 	{
 	  if (S_IS_EXTERNAL (symbolP) || !S_IS_DEFINED (symbolP))
 	    {
-	      as_bad ("Local symbol %s never defined", S_GET_NAME (symbolP));
+	      as_bad (_("Local symbol %s never defined"), S_GET_NAME (symbolP));
 	    }			/* oops. */
 
 	  /* Unhook it from the chain.  */
@@ -585,11 +589,12 @@ Create_VMS_Object_File ()
   VMS_Object_File_FD = creat (out_file_name, 0777, "var");
 #else	/* eunice */
   VMS_Object_File_FD = creat (out_file_name, 0, "rfm=var",
-			      "mbc=16", "deq=64", "fop=tef", "shr=nil");
+			      "ctx=bin", "mbc=16", "deq=64", "fop=tef",
+			      "shr=nil");
 #endif	/* eunice */
   /* Deal with errors.  */
   if (VMS_Object_File_FD < 0)
-    as_fatal ("Couldn't create VMS object file \"%s\"", out_file_name);
+    as_fatal (_("Couldn't create VMS object file \"%s\""), out_file_name);
   /* Initialize object file hacking variables.  */
   Object_Record_Offset = 0;
   Current_Object_Record_Type = -1;
@@ -615,7 +620,7 @@ Flush_VMS_Object_Record_Buffer ()
        When cross-assembling, we must write it explicitly.  */
     md_number_to_chars (RecLen, Object_Record_Offset, 2);
     if (write (VMS_Object_File_FD, RecLen, 2) != 2)
-      error ("I/O error writing VMS object file (length prefix)");
+      error (_("I/O error writing VMS object file (length prefix)"));
     /* We also need to force the actual record to be an even number of
        bytes.  For native output, that's automatic; when cross-assembling,
        pad with a NUL byte if length is odd.  Do so _after_ writing the
@@ -629,7 +634,7 @@ Flush_VMS_Object_Record_Buffer ()
   /* Write the data to the file.  */
   if (write (VMS_Object_File_FD, Object_Record_Buffer, Object_Record_Offset)
       != Object_Record_Offset)
-    error ("I/O error writing VMS object file");
+    error (_("I/O error writing VMS object file"));
 
   /* The buffer is now empty.  */
   Object_Record_Offset = 0;
@@ -1232,7 +1237,7 @@ VMS_TBT_Source_File (Filename, ID_Number)
   Status = sys$open (&fab);
   if (!(Status & 1))
     {
-      as_tsktsk ("Couldn't find source file \"%s\", status=%%X%x",
+      as_tsktsk (_("Couldn't find source file \"%s\", status=%%X%x"),
 		 Filename, Status);
       return 0;
     }
@@ -1741,7 +1746,7 @@ gen1 (spnt, array_suffix_len)
 	  spnt1 = find_symbol (spnt1->type2);
 	  if (!spnt1)
 	    {
-	      as_tsktsk ("debugger forward reference error, dbx type %d",
+	      as_tsktsk (_("debugger forward reference error, dbx type %d"),
 			 spnt->type2);
 	      return 0;
 	    }
@@ -1817,7 +1822,7 @@ generate_suffix (spnt, dbx_type)
      for a pointer to void.  */
   if ((total_len >= MAX_DEBUG_RECORD) || overflow)
     {
-      as_warn ("Variable descriptor %d too complicated.  Defined as `void *'.",
+      as_warn (_("Variable descriptor %d too complicated.  Defined as `void *'."),
 		spnt->dbx_type);
       VMS_Store_Immediate_Data (pvoid, 6, OBJ_S_C_DBG);
       return;
@@ -2136,14 +2141,14 @@ VMS_stab_parse (sp, expected_type, type1, type2, Text_Psect)
 	    {
 	      if (!gave_compiler_message && expected_type == 'G')
 		{
-		  static const char long_const_msg[] = "\
+		  char *long_const_msg = _("\
 ***Warning - the assembly code generated by the compiler has placed \n\
  global constant(s) in the text psect.  These will not be available to \n\
  other modules, since this is not the correct way to handle this. You \n\
  have two options: 1) get a patched compiler that does not put global \n\
  constants in the text psect, or 2) remove the 'const' keyword from \n\
  definitions of global variables in your source module(s).  Don't say \n\
- I didn't warn you! \n";
+ I didn't warn you! \n");
 
 		  as_tsktsk (long_const_msg);
 		  gave_compiler_message = 1;
@@ -2455,7 +2460,7 @@ VMS_typedef_parse (str)
 	  strcpy (str, pnt1);
 	  return 0;
 	}
-      as_tsktsk ("debugginer output: %d is an unknown untyped variable.",
+      as_tsktsk (_("debugginer output: %d is an unknown untyped variable."),
 		 spnt->dbx_type);
       return 1;			/* do not know what this is */
     }
@@ -2673,7 +2678,7 @@ VMS_typedef_parse (str)
 	      /* check if this is a forward reference */
 	      if (final_pass && final_forward_reference (spnt1))
 		{
-		  as_tsktsk ("debugger output: structure element `%s' has undefined type",
+		  as_tsktsk (_("debugger output: structure element `%s' has undefined type"),
 			   pnt2);
 		  continue;
 		}
@@ -2784,7 +2789,7 @@ VMS_typedef_parse (str)
     default:
       spnt->advanced = UNKNOWN;
       spnt->VMS_type = 0;
-      as_tsktsk ("debugger output: %d is an unknown type of variable.",
+      as_tsktsk (_("debugger output: %d is an unknown type of variable."),
 		 spnt->dbx_type);
       return 1;			/* unable to decipher */
     }
@@ -2918,7 +2923,7 @@ VMS_LSYM_Parse ()
 /*	if (pass > 1) printf (" Required %d passes\n", pass); */
   if (incomplete != 0)
     {
-      as_tsktsk ("debugger output: Unable to resolve %d circular references.",
+      as_tsktsk (_("debugger output: Unable to resolve %d circular references."),
 		 incomplete);
     }
   fpnt = f_ref_root;
@@ -2929,7 +2934,7 @@ VMS_LSYM_Parse ()
 	{
 	  if (find_symbol (fpnt->dbx_type))
 	    {
-	      as_tsktsk ("debugger forward reference error, dbx type %d",
+	      as_tsktsk (_("debugger forward reference error, dbx type %d"),
 			 fpnt->dbx_type);
 	      break;
 	    }
@@ -3123,7 +3128,7 @@ Write_VMS_MHD_Records ()
   if (strlen (Module_Name) > 31)
     {
       if (flag_hash_long_names)
-	as_tsktsk ("Module name truncated: %s\n", Module_Name);
+	as_tsktsk (_("Module name truncated: %s\n"), Module_Name);
       Module_Name[31] = '\0';
     }
   PUT_COUNTED_STRING (Module_Name);
@@ -3166,7 +3171,7 @@ Write_VMS_MHD_Records ()
       cp = "GNU AS  V";
       while (*cp)
 	PUT_CHAR (*cp++);
-      cp = GAS_VERSION;
+      cp = VERSION;
     }
   while (*cp >= ' ')
     PUT_CHAR (*cp++);
@@ -3402,7 +3407,7 @@ VMS_Case_Hack_Symbol (In, Out)
    */
   *Out = 0;
   if (truncate == 1 && flag_hash_long_names && flag_show_after_trunc)
-    as_tsktsk ("Symbol %s replaced by %s\n", old_name, new_name);
+    as_tsktsk (_("Symbol %s replaced by %s\n"), old_name, new_name);
 }
 
 
@@ -3521,6 +3526,7 @@ VMS_Modify_Psect_Attributes (Name, Attribute_Pointer)
 #define GBLSYM_DEF 1
 #define GBLSYM_VAL 2
 #define GBLSYM_LCL 4	/* not GBL after all... */
+#define GBLSYM_WEAK 8
 
 /*
  *	Define a global symbol (or possibly a local one).
@@ -3566,12 +3572,18 @@ VMS_Global_Symbol_Spec (Name, Psect_Number, Psect_Offset, Flags)
     }
   else
     {
+      int sym_flags;
+
       /*
        *	Definition
        *[ assert (LSY_S_M_DEF == GSY_S_M_DEF && LSY_S_M_REL == GSY_S_M_REL); ]
        */
-      PUT_SHORT (((Flags & GBLSYM_VAL) == 0) ?
-		  GSY_S_M_DEF | GSY_S_M_REL : GSY_S_M_DEF);
+      sym_flags = GSY_S_M_DEF;
+      if (Flags & GBLSYM_WEAK)
+	sym_flags |= GSY_S_M_WEAK;
+      if ((Flags & GBLSYM_VAL) == 0)
+	sym_flags |= GSY_S_M_REL;
+      PUT_SHORT (sym_flags);
       if ((Flags & GBLSYM_LCL) != 0)	/* local symbols have extra field */
 	PUT_SHORT (Current_Environment);
       /*
@@ -3660,18 +3672,26 @@ VMS_Psect_Spec (Name, Size, Type, vsp)
       Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_REL|GPS_S_M_RD|GPS_S_M_WRT);
       break;
     case ps_COMMON:
-      /* Common block psects are:  PIC,OVR,REL,GBL,SHR,noEXE,RD,WRT. */
+      /* Common block psects are:  PIC,OVR,REL,GBL,noSHR,noEXE,RD,WRT. */
       Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_OVR|GPS_S_M_REL|GPS_S_M_GBL
-			  |GPS_S_M_SHR|GPS_S_M_RD|GPS_S_M_WRT);
+			  |GPS_S_M_RD|GPS_S_M_WRT);
       break;
     case ps_CONST:
-      /* Const data psects are:  PIC,OVR,REL,GBL,SHR,noEXE,RD,noWRT. */
+      /* Const data psects are:  PIC,OVR,REL,GBL,noSHR,noEXE,RD,noWRT. */
       Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_OVR|GPS_S_M_REL|GPS_S_M_GBL
-			  |GPS_S_M_SHR|GPS_S_M_RD);
+			  |GPS_S_M_RD);
+      break;
+    case ps_CTORS:
+      /* Ctor psects are PIC,noOVR,REL,GBL,noSHR,noEXE,RD,noWRT. */
+      Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_REL|GPS_S_M_GBL|GPS_S_M_RD);
+      break;
+    case ps_DTORS:
+      /* Dtor psects are PIC,noOVR,REL,GBL,noSHR,noEXE,RD,noWRT. */
+      Psect_Attributes = (GPS_S_M_PIC|GPS_S_M_REL|GPS_S_M_GBL|GPS_S_M_RD);
       break;
     default:
       /* impossible */
-      error ("Unknown VMS psect type (%ld)", (long) Type);
+      error (_("Unknown VMS psect type (%ld)"), (long) Type);
       break;
     }
   /*
@@ -3712,7 +3732,7 @@ VMS_Psect_Spec (Name, Size, Type, vsp)
 	  /* In this case we still generate the psect */
 	  break;
 	default:
-	  as_fatal ("Globalsymbol attribute for symbol %s was unexpected.",
+	  as_fatal (_("Globalsymbol attribute for symbol %s was unexpected."),
 		    Name);
 	  break;
 	}			/* switch */
@@ -3862,7 +3882,7 @@ VMS_Emit_Globalvalues (text_siz, data_siz, Data_Segment)
 	    case N_DATA | N_EXT:
 	      Size = VMS_Initialized_Data_Size (sp, text_siz + data_siz);
 	      if (Size > 4)
-		error ("Invalid data type for globalvalue");
+		error (_("Invalid data type for globalvalue"));
 	      globalvalue = md_chars_to_number (Data_Segment + 
 		     S_GET_VALUE (sp) - text_siz , Size);
 	      /* Three times for good luck.  The linker seems to get confused
@@ -3874,7 +3894,7 @@ VMS_Emit_Globalvalues (text_siz, data_siz, Data_Segment)
 				      GBLSYM_DEF|GBLSYM_VAL);
 	      break;
 	    default:
-	      as_warn ("Invalid globalvalue of %s", stripped_name);
+	      as_warn (_("Invalid globalvalue of %s"), stripped_name);
 	      break;
 	    }			/* switch */
 	}			/* if */
@@ -4224,7 +4244,7 @@ VMS_Fix_Indirect_Reference (Text_Psect, Offset, fragP, text_frag_root)
        *	If we couldn't find the frag, things are BAD!!
        */
       if (fragP == 0)
-	error ("Couldn't find fixup fragment when checking for indirect reference");
+	error (_("Couldn't find fixup fragment when checking for indirect reference"));
     }
   /*
    *	Check for indirect PC relative addressing mode
@@ -4490,6 +4510,12 @@ struct vms_obj_state {
   /* Psect index for uninitialized static variables.  */
   int	bss_psect;
 
+  /* Psect index for static constructors.  */
+  int	ctors_psect;
+
+  /* Psect index for static destructors.  */
+  int	dtors_psect;
+
   /* Number of bytes used for local symbol data.  */
   int	local_initd_data_size;
 
@@ -4502,11 +4528,15 @@ struct vms_obj_state {
 #define Text_Psect		vms_obj_state.text_psect
 #define Data_Psect		vms_obj_state.data_psect
 #define Bss_Psect		vms_obj_state.bss_psect
+#define Ctors_Psect		vms_obj_state.ctors_psect
+#define Dtors_Psect		vms_obj_state.dtors_psect
 #define Local_Initd_Data_Size	vms_obj_state.local_initd_data_size
 #define Data_Segment		vms_obj_state.data_segment
 
 
 #define IS_GXX_VTABLE(symP) (strncmp (S_GET_NAME (symP), "__vt.", 5) == 0)
+#define IS_GXX_XTOR(symP) (strncmp (S_GET_NAME (symP), "__GLOBAL_.", 10) == 0)
+#define XTOR_SIZE 4
 
 
 /* Perform text segment fixups.  */
@@ -4558,14 +4588,14 @@ vms_fixup_text_section (text_siz, text_frag_root, data_frag_root)
 	  /* They need to be in the same segment.  */
 	  if (S_GET_RAW_TYPE (fixP->fx_subsy) !=
 	      S_GET_RAW_TYPE (fixP->fx_addsy))
-	    error ("Fixup data addsy and subsy don't have the same type");
+	    error (_("Fixup data addsy and subsy don't have the same type"));
 	  /* And they need to be in one that we can check the psect on.  */
 	  if ((S_GET_TYPE (fixP->fx_addsy) != N_DATA) &&
 		    (S_GET_TYPE (fixP->fx_addsy) != N_TEXT))
-	    error ("Fixup data addsy and subsy don't have an appropriate type");
+	    error (_("Fixup data addsy and subsy don't have an appropriate type"));
 	  /* This had better not be PC relative!  */
 	  if (fixP->fx_pcrel)
-	    error ("Fixup data is erroneously \"pcrel\"");
+	    error (_("Fixup data is erroneously \"pcrel\""));
 	  /* Subtract their values to get the difference.  */
 	  dif = S_GET_VALUE (fixP->fx_addsy) - S_GET_VALUE (fixP->fx_subsy);
 	  md_number_to_chars (Local, (valueT)dif, fixP->fx_size);
@@ -4581,11 +4611,11 @@ vms_fixup_text_section (text_siz, text_frag_root, data_frag_root)
 	    }		/* if fx_subsy && fx_addsy */
       /* Size will HAVE to be "long".  */
       if (fixP->fx_size != 4)
-	error ("Fixup datum is not a longword");
+	error (_("Fixup datum is not a longword"));
       /* Symbol must be "added" (if it is ever
 	 subtracted we can fix this assumption).  */
       if (fixP->fx_addsy == 0)
-	error ("Fixup datum is not \"fixP->fx_addsy\"");
+	error (_("Fixup datum is not \"fixP->fx_addsy\""));
       /* Store the symbol value in a PIC fashion.  */
       VMS_Store_PIC_Symbol_Reference (fixP->fx_addsy,
 				      fixP->fx_offset,
@@ -4700,14 +4730,14 @@ vms_fixup_data_section (data_siz, text_siz)
 	      /* They need to be in the same segment.  */
 	      if (S_GET_RAW_TYPE (fixP->fx_subsy) !=
 		  S_GET_RAW_TYPE (fixP->fx_addsy))
-		error ("Fixup data addsy and subsy don't have the same type");
+		error (_("Fixup data addsy and subsy don't have the same type"));
 	      /* And they need to be in one that we can check the psect on.  */
 	      if ((S_GET_TYPE (fixP->fx_addsy) != N_DATA) &&
 		  (S_GET_TYPE (fixP->fx_addsy) != N_TEXT))
-		error ("Fixup data addsy and subsy don't have an appropriate type");
+		error (_("Fixup data addsy and subsy don't have an appropriate type"));
 	      /* This had better not be PC relative!  */
 	      if (fixP->fx_pcrel)
-		error ("Fixup data is erroneously \"pcrel\"");
+		error (_("Fixup data is erroneously \"pcrel\""));
 	      /* Subtract their values to get the difference.  */
 	      dif = S_GET_VALUE (fixP->fx_addsy) - S_GET_VALUE (fixP->fx_subsy);
 	      md_number_to_chars (Local, (valueT)dif, fixP->fx_size);
@@ -4726,11 +4756,11 @@ vms_fixup_data_section (data_siz, text_siz)
 		}
 	  /* Size will HAVE to be "long".  */
 	  if (fixP->fx_size != 4)
-	    error ("Fixup datum is not a longword");
+	    error (_("Fixup datum is not a longword"));
 	  /* Symbol must be "added" (if it is ever
 	     subtracted we can fix this assumption).  */
 	  if (fixP->fx_addsy == 0)
-	    error ("Fixup datum is not \"fixP->fx_addsy\"");
+	    error (_("Fixup datum is not \"fixP->fx_addsy\""));
 	  /* Store the symbol value in a PIC fashion.  */
 	  VMS_Store_PIC_Symbol_Reference (fixP->fx_addsy,
 					  fixP->fx_offset,
@@ -4745,6 +4775,34 @@ vms_fixup_data_section (data_siz, text_siz)
 
     }			/* data fix loop */
 }
+
+/* Perform ctors/dtors segment fixups.  */
+
+static void
+vms_fixup_xtors_section (symbols, sect_no)
+	struct VMS_Symbol *symbols;
+	int sect_no;
+{
+  register struct VMS_Symbol *vsp;
+
+  /* Run through all the symbols and store the data.  */
+  for (vsp = symbols; vsp; vsp = vsp->Next)
+    {
+      register symbolS *sp;
+
+      /* Set relocation base.  */
+      VMS_Set_Psect (vsp->Psect_Index, vsp->Psect_Offset, OBJ_S_C_TIR);
+
+      sp = vsp->Symbol;
+      /* Stack the Psect base with its offset.  */
+      VMS_Set_Data (Text_Psect, S_GET_VALUE (sp), OBJ_S_C_TIR, 0);
+    }
+  /* Flush the buffer if it is more than 75% full.  */
+  if (Object_Record_Offset > (sizeof (Object_Record_Buffer) * 3 / 4))
+    Flush_VMS_Object_Record_Buffer ();
+
+  return;
+}
 
 
 /* Define symbols for the linker.  */
@@ -4758,23 +4816,25 @@ global_symbol_directory (text_siz, data_siz)
   register struct VMS_Symbol *vsp;
   int Globalref, define_as_global_symbol;
 
-#ifndef gxx_bug_fixed
-  /*
-   * The g++ compiler does not write out external references to vtables
-   * correctly.  Check for this and holler if we see it happening.
-   * If that compiler bug is ever fixed we can remove this.
-   * (Jun'95:  gcc 2.7.0's cc1plus still exhibits this behavior.)
-   */
+#if 0
+  /* The g++ compiler does not write out external references to
+     vtables correctly.  Check for this and holler if we see it
+     happening.  If that compiler bug is ever fixed we can remove
+     this.
+
+     (Jun'95: gcc 2.7.0's cc1plus still exhibits this behavior.)
+
+     This was reportedly fixed as of June 2, 1998.   */
+
   for (sp = symbol_rootP; sp; sp = symbol_next (sp))
     if (S_GET_RAW_TYPE (sp) == N_UNDF && IS_GXX_VTABLE (sp))
       {
 	S_SET_TYPE (sp, N_UNDF | N_EXT);
 	S_SET_OTHER (sp, 1);
-	as_warn ("g++ wrote an extern reference to `%s' as a routine.\n%s",
-		 S_GET_NAME (sp),
-		 "I will fix it, but I hope that it was not really a routine.");
+	as_warn (_("g++ wrote an extern reference to `%s' as a routine.\nI will fix it, but I hope that it was note really a routine."),
+		 S_GET_NAME (sp));
       }
-#endif /* gxx_bug_fixed */
+#endif
 
   /*
    * Now scan the symbols and emit the appropriate GSD records
@@ -4881,33 +4941,65 @@ global_symbol_directory (text_siz, data_siz)
 	/* Global Text definition.  */
 	case N_TEXT | N_EXT:
 	  {
-	    unsigned short Entry_Mask;
 
-	    /* Get the entry mask.  */
-	    fragP = sp->sy_frag;
-	    /* First frag might be empty if we're generating listings.
-	       So skip empty rs_fill frags.  */
-	    while (fragP && fragP->fr_type == rs_fill && fragP->fr_fix == 0)
-	      fragP = fragP->fr_next;
+	    if (IS_GXX_XTOR (sp))
+	      {
+		vsp = (struct VMS_Symbol *) xmalloc (sizeof *vsp);
+		vsp->Symbol = sp;
+		vsp->Size = XTOR_SIZE;
+		sp->sy_obj = vsp;
+		switch ((S_GET_NAME (sp))[10])
+		  {
+		    case 'I':
+		      vsp->Psect_Index = Ctors_Psect;
+		      vsp->Psect_Offset = (Ctors_Symbols==0)?0:(Ctors_Symbols->Psect_Offset+XTOR_SIZE);
+		      vsp->Next = Ctors_Symbols;
+		      Ctors_Symbols = vsp;
+		      break;
+		    case 'D':
+		      vsp->Psect_Index = Dtors_Psect;
+		      vsp->Psect_Offset = (Dtors_Symbols==0)?0:(Dtors_Symbols->Psect_Offset+XTOR_SIZE);
+		      vsp->Next = Dtors_Symbols;
+		      Dtors_Symbols = vsp;
+		      break;
+		    case 'G':
+		      as_warn (_("Can't handle global xtors symbols yet."));
+		      break;
+		    default:
+		      as_warn (_("Unknown %s"), S_GET_NAME (sp));
+		      break;
+		  }
+	      }
+	    else
+	      {
+		unsigned short Entry_Mask;
 
-	    /* If first frag doesn't contain the data, what do we do?
-	       If it's possibly smaller than two bytes, that would
-	       imply that the entry mask is not stored where we're
-	       expecting it.
+		/* Get the entry mask.  */
+		fragP = sp->sy_frag;
+		/* First frag might be empty if we're generating listings.
+		   So skip empty rs_fill frags.  */
+		while (fragP && fragP->fr_type == rs_fill && fragP->fr_fix == 0)
+		  fragP = fragP->fr_next;
 
-	       If you can find a test case that triggers this, report
-	       it (and tell me what the entry mask field ought to be),
-	       and I'll try to fix it.  KR */
-	    if (fragP->fr_fix < 2)
-	      abort ();
+		/* If first frag doesn't contain the data, what do we do?
+		   If it's possibly smaller than two bytes, that would
+		   imply that the entry mask is not stored where we're
+		   expecting it.
 
-	    Entry_Mask = (fragP->fr_literal[0] & 0x00ff) |
-			 ((fragP->fr_literal[1] & 0x00ff) << 8);
-	    /* Define the procedure entry point.  */
-	    VMS_Procedure_Entry_Pt (S_GET_NAME (sp),
+		   If you can find a test case that triggers this, report
+		   it (and tell me what the entry mask field ought to be),
+		   and I'll try to fix it.  KR */
+		if (fragP->fr_fix < 2)
+		  abort ();
+
+		Entry_Mask = (fragP->fr_literal[0] & 0x00ff) |
+			     ((fragP->fr_literal[1] & 0x00ff) << 8);
+		/* Define the procedure entry point.  */
+		VMS_Procedure_Entry_Pt (S_GET_NAME (sp),
 				    Text_Psect,
 				    S_GET_VALUE (sp),
 				    Entry_Mask);
+	      }
 	    break;
 	  }
 
@@ -4959,7 +5051,7 @@ global_symbol_directory (text_siz, data_siz)
 	  /*
 	   *	Error otherwise.
 	   */
-	  as_tsktsk ("unhandled stab type %d", S_GET_TYPE (sp));
+	  as_tsktsk (_("unhandled stab type %d"), S_GET_TYPE (sp));
 	  break;
 	}
 
@@ -5312,6 +5404,8 @@ vms_write_object_file (text_siz, data_siz, bss_siz, text_frag_root,
   Text_Psect = -1;		/* Text Psect Index   */
   Data_Psect = -2;		/* Data Psect Index   JF: Was -1 */
   Bss_Psect = -3;		/* Bss Psect Index    JF: Was -1 */
+  Ctors_Psect = -4;		/* Ctors Psect Index  */
+  Dtors_Psect = -5;		/* Dtors Psect Index  */
   /* Initialize other state variables.  */
   Data_Segment = 0;
   Local_Initd_Data_Size = 0;
@@ -5380,6 +5474,30 @@ vms_write_object_file (text_siz, data_siz, bss_siz, text_frag_root,
     }
 
 
+  if (Ctors_Symbols != 0)
+    {
+      char *ps_name = "$ctors";
+      Ctors_Psect = Psect_Number++;
+      VMS_Psect_Spec (ps_name, Ctors_Symbols->Psect_Offset + XTOR_SIZE,
+		      ps_CTORS, 0);
+      VMS_Global_Symbol_Spec (ps_name, Ctors_Psect,
+				  0, GBLSYM_DEF|GBLSYM_WEAK);
+      for (vsp = Ctors_Symbols; vsp; vsp = vsp->Next)
+	vsp->Psect_Index = Ctors_Psect;
+    }
+
+  if (Dtors_Symbols != 0)
+    {
+      char *ps_name = "$dtors";
+      Dtors_Psect = Psect_Number++;
+      VMS_Psect_Spec (ps_name, Dtors_Symbols->Psect_Offset + XTOR_SIZE,
+		      ps_DTORS, 0);
+      VMS_Global_Symbol_Spec (ps_name, Dtors_Psect,
+				  0, GBLSYM_DEF|GBLSYM_WEAK);
+      for (vsp = Dtors_Symbols; vsp; vsp = vsp->Next)
+	vsp->Psect_Index = Dtors_Psect;
+    }
+
   /*******  Text Information and Relocation Records  *******/
 
   /*
@@ -5394,6 +5512,16 @@ vms_write_object_file (text_siz, data_siz, bss_siz, text_frag_root,
     {
       vms_fixup_data_section (data_siz, text_siz);
       free (Data_Segment),  Data_Segment = 0;
+    }
+
+  if (Ctors_Symbols != 0)
+    {
+      vms_fixup_xtors_section (Ctors_Symbols, Ctors_Psect);
+    }
+
+  if (Dtors_Symbols != 0)
+    {
+      vms_fixup_xtors_section (Dtors_Symbols, Dtors_Psect);
     }
 
 

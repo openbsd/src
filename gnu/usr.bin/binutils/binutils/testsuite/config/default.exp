@@ -22,15 +22,8 @@
 load_lib util-defs.exp
 load_lib utils-lib.exp
 
-if ![info exists AS] then {
-    set AS [findfile $base_dir/../gas/as.new $base_dir/../gas/as.new [transform as]]
-}
-if ![info exists ASFLAGS] then {
-    set ASFLAGS ""
-}
-
 if ![info exists NM] then {
-    set NM [findfile $base_dir/nm.new $base_dir/nm.new [transform nm]]
+    set NM [findfile $base_dir/nm-new $base_dir/nm-new [transform nm]]
 }
 if ![info exists NMFLAGS] then {
     set NMFLAGS ""
@@ -62,10 +55,17 @@ if ![info exists AR] then {
 }
 
 if ![info exists STRIP] then {
-    set STRIP [findfile $base_dir/strip.new $base_dir/strip.new [transform strip]]
+    set STRIP [findfile $base_dir/strip-new $base_dir/strip-new [transform strip]]
 }
 if ![info exists STRIPFLAGS] then {
     set STRIPFLAGS ""
+}
+
+if ![info exists READELF] then {
+    set READELF [findfile $base_dir/readelf]
+}
+if ![info exists READELFFLAGS] then {
+    set READELFFLAGS ""
 }
 
 if ![file isdirectory tmpdir] {catch "exec mkdir tmpdir" status}
@@ -83,31 +83,6 @@ proc binutils_run { prog progargs } {
 # binutils_assemble
 #	assemble a file
 #
-proc binutils_assemble { as source object } {
-    default_binutils_assemble $as $source $object
-}
-
-#
-# binutils_compile
-#	compile a file
-#
-proc binutils_compile { cc flags source object } {
-    default_binutils_compile $cc $flags $source $object
-}
-
-#
-# binutils_remove
-#	remove a file
-#
-proc binutils_remove { file } {
-    default_binutils_remove $file
-}
-
-#
-# add some basic error trapping. These mostly catch programming error's
-# within the tests themselves
-#
-expect_before {
-    buffer_full		   { perror "internal buffer is full." }
-    "can't open '*'" { perror "Can't open test file." }
+proc binutils_assemble { source object } {
+    default_binutils_assemble $source $object
 }

@@ -1,21 +1,22 @@
 /* Sysroff object format dumper.
- Copyright (C) 1994 Free Software Foundation, Inc.
+   Copyright (C) 1994, 95, 98, 99, 2000 Free Software Foundation, Inc.
 
-This file is part of GNU Binutils.
+   This file is part of GNU Binutils.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 
 /* Written by Steve Chamberlain <sac@cygnus.com>.
@@ -33,22 +34,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysroff.h"
 
 #define PROGRAM_VERSION "1.0"
-static int h8300;
-static int sh;
+
 static int dump = 1;
 static int segmented_p;
 static int code;
+static int addrsize = 4;
 static FILE *file;
-
-static char *
-xcalloc (a, b)
-     int a;
-     int b;
-{
-  char *r = xmalloc (a * b);
-  memset (r, 0, a * b);
-  return r;
-}
 
 char *
 getCHARS (ptr, idx, size, max)
@@ -171,7 +162,7 @@ getINT (ptr, idx, size, max)
       return 0;
     }
   if (size == -2)
-    size = 4;
+    size = addrsize;
   if (size == -1)
     size = 0;
   switch (size)
@@ -195,13 +186,16 @@ getINT (ptr, idx, size, max)
 }
 
 int
-getBITS (ptr, idx, size)
+getBITS (ptr, idx, size, max)
      char *ptr;
      int *idx;
-     int size;
+     int size, max;
 {
   int byte = *idx / 8;
   int bit = *idx % 8;
+
+  if (byte >= max)
+    return 0;
 
   *idx += size;
 
@@ -308,6 +302,7 @@ getone (type)
       {
 	struct IT_hd dummy;
 	sysroff_swap_hd_in (&dummy);
+	addrsize = dummy.afl;
 	sysroff_print_hd_out (&dummy);
       }
       break;
@@ -487,6 +482,10 @@ opt (x)
   return getone (x);
 }
 
+#if 0
+
+/* This is no longer used.  */
+
 static void
 unit_info_list ()
 {
@@ -505,6 +504,12 @@ unit_info_list ()
     }
 }
 
+#endif
+
+#if 0
+
+/* This is no longer used.  */
+
 static void
 object_body_list ()
 {
@@ -516,6 +521,8 @@ object_body_list ()
 	;
     }
 }
+
+#endif
 
 static void
 must (x)
@@ -612,6 +619,10 @@ derived_type ()
   tab (-1, "");
 }
 
+#if 0
+
+/* This is no longer used.  */
+
 static void
 program_structure ()
 {
@@ -626,6 +637,12 @@ program_structure ()
   tab (-1, "");
 }
 
+#endif
+
+#if 0
+
+/* This is no longer used.  */
+
 static void
 debug_list ()
 {
@@ -638,6 +655,8 @@ debug_list ()
 
   tab (-1, "");
 }
+
+#endif
 
 static void
 module ()
@@ -690,14 +709,14 @@ show_usage (file, status)
      FILE *file;
      int status;
 {
-  fprintf (file, "Usage: %s [-hV] in-file\n", program_name);
+  fprintf (file, _("Usage: %s [-hV] in-file\n"), program_name);
   exit (status);
 }
 
 static void
 show_help ()
 {
-  printf ("%s: Print a human readable interpretation of a SYSROFF object file\n",
+  printf (_("%s: Print a human readable interpretation of a SYSROFF object file\n"),
 	  program_name);
   show_usage (stdout, 0);
 }
@@ -716,6 +735,12 @@ main (ac, av)
     {NULL, no_argument, 0, 0}
   };
 
+#if defined (HAVE_SETLOCALE) && defined (HAVE_LC_MESSAGES)
+  setlocale (LC_MESSAGES, "");
+#endif
+  bindtextdomain (PACKAGE, LOCALEDIR);
+  textdomain (PACKAGE);
+
   program_name = av[0];
   xmalloc_set_program_name (program_name);
 
@@ -727,7 +752,7 @@ main (ac, av)
 	  show_help ();
 	  /*NOTREACHED*/
 	case 'V':
-	  printf ("GNU %s version %s\n", program_name, PROGRAM_VERSION);
+	  printf (_("GNU %s version %s\n"), program_name, PROGRAM_VERSION);
 	  exit (0);
 	  /*NOTREACHED*/
 	case 0:
@@ -747,17 +772,13 @@ main (ac, av)
 
   if (!input_file)
     {
-      fprintf (stderr, "%s: no input file specified\n",
-	       program_name);
-      exit (1);
+      fatal (_("no input file specified"));
     }
 
   file = fopen (input_file, FOPEN_RB);
   if (!file)
     {
-      fprintf (stderr, "%s: cannot open input file %s\n",
-	       program_name, input_file);
-      exit (1);
+      fatal (_("cannot open input file %s"), input_file);
     }
 
   module ();

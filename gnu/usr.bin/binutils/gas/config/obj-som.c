@@ -1,5 +1,5 @@
 /* SOM object file format.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1998 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -13,9 +13,10 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
    the GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public
-   License along with GAS; see the file COPYING.  If not, write
-   to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   You should have received a copy of the GNU General Public License
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.
 
    Written by the Center for Software Science at the University of Utah
    and by Cygnus Support.  */
@@ -25,18 +26,97 @@
 #include "aout/stab_gnu.h"
 #include "obstack.h"
 
-/* SOM does not need any pseudo-ops.  */
+static void obj_som_weak PARAMS ((int));
 
 const pseudo_typeS obj_pseudo_table[] =
 {
-  {NULL}
+  {"weak", obj_som_weak, 0}
 };
 
 static int version_seen = 0;
 static int copyright_seen = 0;
+static int compiler_seen = 0;
 
 /* Unused by SOM.  */
 void obj_read_begin_hook () {}
+
+/* Handle a .compiler directive.   This is intended to create the
+   compilation unit auxiliary header for MPE such that the linkeditor
+   can handle SOM extraction from archives. The format of the quoted
+   string is "sourcefile language version" and is delimited by blanks.*/
+
+void
+obj_som_compiler (unused)
+     int unused;
+{
+  char *buf;
+  char c;
+  char *filename;
+  char *language_name;
+  char *p;
+  char *version_id;
+
+  if (compiler_seen)
+    {
+      as_bad ("Only one .compiler pseudo-op per file!");
+      ignore_rest_of_line ();
+      return;
+    }
+
+  SKIP_WHITESPACE ();
+  if (*input_line_pointer == '\"')
+    {
+      buf = input_line_pointer;
+      ++input_line_pointer;
+      while (is_a_char (next_char_of_string ()))
+	;
+      c = *input_line_pointer;
+      *input_line_pointer = '\000';
+    }
+  else
+    {
+      as_bad ("Expected quoted string");
+      ignore_rest_of_line ();
+      return;
+    }
+
+  /* Parse the quoted string into its component parts.  Skip the
+     quote.  */
+  filename = buf + 1;
+  p = filename;
+  while (*p != ' ' && *p != '\000')
+    p++;
+  if (*p == '\000')
+    {
+      as_bad (".compiler directive missing language and version");
+      return;
+    }
+  *p = '\000';
+
+  language_name	= ++p;
+  while (*p != ' ' && *p != '\000') p++;
+  if (*p == '\000')
+    {
+      as_bad (".compiler directive missing version");
+      return;
+    }
+  *p = '\000';
+
+  version_id	= ++p;
+  while (*p != '\000') p++;
+  /* Remove the trailing quote.  */
+  *(--p) = '\000';
+
+  compiler_seen = 1;
+  if (! bfd_som_attach_compilation_unit (stdoutput, filename, language_name,
+					 "GNU Tools", version_id))
+    {
+      bfd_perror (stdoutput->filename);
+      as_fatal ("FATAL: Attaching compiler header %s", stdoutput->filename);
+    }
+  *input_line_pointer = c;
+  demand_empty_rest_of_line ();
+}
 
 /* Handle a .version directive.  */
 
@@ -48,7 +128,7 @@ obj_som_version (unused)
 
   if (version_seen)
     {
-      as_bad ("Only one .version pseudo-op per file!");
+      as_bad (_("Only one .version pseudo-op per file!"));
       ignore_rest_of_line ();
       return;
     }
@@ -65,7 +145,7 @@ obj_som_version (unused)
     }
   else
     {
-      as_bad ("Expected quoted string");
+      as_bad (_("Expected quoted string"));
       ignore_rest_of_line ();
       return;
     }
@@ -74,7 +154,7 @@ obj_som_version (unused)
   if (bfd_som_attach_aux_hdr (stdoutput, VERSION_AUX_ID, version) == false)
     {
       bfd_perror (stdoutput->filename);
-      as_perror ("FATAL: Attaching version header %s", stdoutput->filename);
+      as_perror (_("FATAL: Attaching version header %s"), stdoutput->filename);
       exit (EXIT_FAILURE);
     }
   *input_line_pointer = c;
@@ -93,7 +173,7 @@ obj_som_copyright (unused)
 
   if (copyright_seen)
     {
-      as_bad ("Only one .copyright pseudo-op per file!");
+      as_bad (_("Only one .copyright pseudo-op per file!"));
       ignore_rest_of_line ();
       return;
     }
@@ -110,7 +190,7 @@ obj_som_copyright (unused)
     }
   else
     {
-      as_bad ("Expected quoted string");
+      as_bad (_("Expected quoted string"));
       ignore_rest_of_line ();
       return;
     }
@@ -119,7 +199,7 @@ obj_som_copyright (unused)
   if (bfd_som_attach_aux_hdr (stdoutput, COPYRIGHT_AUX_ID, copyright) == false)
     {
       bfd_perror (stdoutput->filename);
-      as_perror ("FATAL: Attaching copyright header %s", stdoutput->filename);
+      as_perror (_("FATAL: Attaching copyright header %s"), stdoutput->filename);
       exit (EXIT_FAILURE);
     }
   *input_line_pointer = c;
@@ -225,3 +305,35 @@ som_frob_file ()
 {
   bfd_map_over_sections (stdoutput, adjust_stab_sections, (PTR) 0);
 }
+
+static void
+obj_som_weak (ignore)
+     int ignore ATTRIBUTE_UNUSED;
+{
+  char *name;
+  int c;
+  symbolS *symbolP;
+ 
+  do
+    {
+      name = input_line_pointer;
+      c = get_symbol_end ();
+      symbolP = symbol_find_or_make (name);
+      *input_line_pointer = c;
+      SKIP_WHITESPACE ();
+      S_SET_WEAK (symbolP);
+#if 0
+      symbol_get_obj (symbolP)->local = 1;
+#endif
+      if (c == ',')
+        {
+          input_line_pointer++;
+          SKIP_WHITESPACE ();
+          if (*input_line_pointer == '\n')
+            c = '\n';
+        }
+    }
+  while (c == ',');
+  demand_empty_rest_of_line ();
+}
+

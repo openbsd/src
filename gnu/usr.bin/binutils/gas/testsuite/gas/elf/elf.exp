@@ -1,0 +1,15 @@
+#
+# elf tests
+#
+
+# We're testing bits in obj-elf -- don't run on anything else.
+if { ([istarget "*-*-elf*"]		
+      || [istarget "*-*-linux*"]
+      || [istarget "sparc*-*-solaris*"]
+      || [istarget "mips*-*-irix6*"])
+     && ![istarget *-*-linux*aout*]
+     && ![istarget *-*-linux*oldld*]
+} then {
+    run_dump_test "section0" 
+    run_dump_test "section1" 
+}

@@ -2,7 +2,7 @@
 # Alpha OSF/1 tests
 #
 
-if [istarget alpha-*-osf1*] then {
+if [istarget alpha-*-osf*] then {
     set testname "fp constants (part 2)"
     if [gas_test_old "fp.s" "" "fp constants (part 1)"] then {
 	objdump "-s -j .rdata > a.dump"

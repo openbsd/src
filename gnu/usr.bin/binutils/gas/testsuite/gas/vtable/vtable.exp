@@ -1,0 +1,49 @@
+#
+# vtable tests
+#
+proc run_list_test { name opts } {
+    global srcdir subdir
+    set testname "vtable $name"
+    set file $srcdir/$subdir/$name
+    gas_run ${name}.s $opts ">&dump.out"
+    if { [regexp_diff "dump.out" "${file}.l"] } then {
+	fail $testname
+	verbose "output is [file_contents "dump.out"]" 2
+	return
+    }
+    pass $testname
+}
+
+# Vtable bits are only supported by ELF targets.
+if { ([istarget "*-*-elf*"]		
+      || [istarget "*-*-linux*"])
+     && ![istarget *-*-linux*aout*]
+     && ![istarget *-*-linux*oldld*] } then {
+
+    # not supported by D30V
+    if {[istarget "d30v-*-*"]} {
+      return
+    }
+
+    # not yet supported by i960
+    if {[istarget "i960-*-*"]} {
+      return
+    }
+
+    run_dump_test "inherit0" 
+    run_list_test "inherit1" "-al"
+
+    # The vtable entry results are different on Rel and Rela targets.
+    if {[istarget "i*86-*-*"] 
+	|| [istarget "mips*-*-*"] 
+	|| [istarget "strongarm*-*-*"] 
+	|| [istarget "arm*-*-*"]} then {
+
+	run_dump_test "entry0"
+
+    } else {
+
+	run_dump_test "entry1"
+
+    }
+}

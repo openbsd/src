@@ -1,12 +1,4 @@
-	.SPACE $PRIVATE$
-	.SUBSPA $DATA$,QUAD=1,ALIGN=8,ACCESS=31
-	.SUBSPA $BSS$,QUAD=1,ALIGN=8,ACCESS=31,ZERO,SORT=82
-	.SPACE	$TEXT$, SORT=8
-	.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=44
-	.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY
-
-	.SPACE $TEXT$
-	.SUBSPA $CODE$
+	.code
 
 	.align 4
 ; A comment.  This should not be interpreted as a label, but both of the
@@ -26,10 +18,10 @@ L$2:	add %r2,%r2,%r2
 L$3
 	add %r2,%r2,%r2
 
-L$4	add 2,%r2,%r2
-L$5:	add 2,%r2,%r2
+L$4	add %r2,%r2,%r2
+L$5:	add %r2,%r2,%r2
 L$6
-	add 2,%r2,%r2
+	add %r2,%r2,%r2
 
 ; An instruction or pseudo-op may begin anywhere after column 0.
  b,n label_without_colon

@@ -1,5 +1,5 @@
 /* tc-ns32k.h -- Opcode table for National Semi 32k processor
-   Copyright (C) 1987, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 92, 93, 94, 95, 97, 1999 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,13 +29,9 @@
 
 #define TARGET_ARCH		bfd_arch_ns32k
 
-#ifndef TARGET_FORMAT
+#ifndef TARGET_FORMAT		/* Maybe defined in te-*.h */
 #define TARGET_FORMAT		"a.out-pc532-mach"
 #endif
-
-/* Experimental code. See write.c */
-#define BFD_FAST_SECTION_FILL
-
 #else
 #define NO_RELOC 0
 #endif
@@ -70,29 +66,31 @@ extern void fix_new_ns32k_exp PARAMS((fragS *frag,
 				   int size,
 				   expressionS *exp,
 				   int pcrel,
-				   int pcrel_adjust,
 				   int im_disp,
 				   bit_fixS *bit_fixP,	/* really bit_fixS */
-				   int bsr));
+				   int bsr,
+				   fragS *opcode_frag,
+				   unsigned int opcode_offset));
 
 
 extern void fix_new_ns32k PARAMS ((fragS *frag,
 				   int where,
 				   int size,
-				   struct symbol *add_symbol,
+				   symbolS *add_symbol,
 				   long offset,
 				   int pcrel,
-				   int pcrel_adjust,
 				   int im_disp,
 				   bit_fixS *bit_fixP,	/* really bit_fixS */
-				   int bsr));
+				   int bsr,
+				   fragS *opcode_frag,
+				   unsigned int opcode_offset));
 
 extern void cons_fix_new_ns32k PARAMS ((fragS *frag,
 					int where,
 					int size,
 					expressionS *exp));
 
-/* the NS32x32 has a non 0 nop instruction which should be used in alligns */
+/* the NS32x32 has a non 0 nop instruction which should be used in aligns */
 #define NOP_OPCODE 0xa2
 
 #define md_operand(x)
@@ -100,6 +98,58 @@ extern void cons_fix_new_ns32k PARAMS ((fragS *frag,
 extern const struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
 
-#define TC_FIX_TYPE struct { unsigned bsr : 1; }
-#define fx_bsr tc_fix_data.bsr
-#define TC_INIT_FIX_DATA(F)	((F)->tc_fix_data.bsr = 0)
+#define TC_FRAG_TYPE				\
+struct {					\
+  fragS *fr_opcode_fragP;			\
+  unsigned int fr_opcode_offset;		\
+  char fr_bsr;					\
+}
+
+#define TC_FRAG_INIT(X)				\
+  do						\
+     {						\
+       frag_opcode_frag (X) = NULL;		\
+       frag_opcode_offset (X) = 0;		\
+       frag_bsr (X) = 0;				\
+     }						\
+  while(0)
+
+/* Accessor macros for things which may move around */
+#define frag_opcode_frag(X)   (X)->tc_frag_data.fr_opcode_fragP
+#define frag_opcode_offset(X) (X)->tc_frag_data.fr_opcode_offset
+#define frag_bsr(X)           (X)->tc_frag_data.fr_bsr
+
+#define TC_FIX_TYPE				\
+struct						\
+{						\
+  fragS *opcode_fragP;				\
+  unsigned int opcode_offset;			\
+  unsigned int bsr : 1;				\
+}
+
+/* Accessor macros for things which may move around.
+   See comments in write.h.  */
+#define fix_im_disp(X)       (X)->fx_im_disp
+#define fix_bit_fixP(X)      (X)->fx_bit_fixP
+#define fix_opcode_frag(X)   (X)->tc_fix_data.opcode_fragP
+#define fix_opcode_offset(X) (X)->tc_fix_data.opcode_offset
+#define fix_bsr(X)           (X)->tc_fix_data.bsr
+
+#define TC_INIT_FIX_DATA(X)			\
+  do						\
+     {						\
+       fix_opcode_frag(X) = NULL;		\
+       fix_opcode_offset(X) = 0;		\
+       fix_bsr(X) = 0;				\
+     }						\
+  while(0)
+
+#define TC_FIX_DATA_PRINT(FILE, FIXP)					\
+  do									\
+    {									\
+      fprintf((FILE), "opcode_frag=%ld, operand offset=%d, bsr=%d\n",	\
+	      (unsigned long) fix_opcode_frag (FIXP),			\
+	      fix_opcode_offset (FIXP),					\
+	      fix_bsr (FIXP));						\
+    }									\
+  while(0)

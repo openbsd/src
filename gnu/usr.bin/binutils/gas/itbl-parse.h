@@ -5,16 +5,16 @@ typedef union
     int processor;
     unsigned long val;
   } YYSTYPE;
-#define	DREG	258
-#define	CREG	259
-#define	GREG	260
-#define	IMMED	261
-#define	ADDR	262
-#define	INSN	263
-#define	NUM	264
-#define	ID	265
-#define	NL	266
-#define	PNUM	267
+#define	DREG	257
+#define	CREG	258
+#define	GREG	259
+#define	IMMED	260
+#define	ADDR	261
+#define	INSN	262
+#define	NUM	263
+#define	ID	264
+#define	NL	265
+#define	PNUM	266
 
 
 extern YYSTYPE yylval;

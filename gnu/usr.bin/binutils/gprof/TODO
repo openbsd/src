@@ -1,14 +1,14 @@
-Thu Feb  9 16:48:04 1995
 
-- documentation
-- optimize bfd_find_nearest_line_num() (or replace by different interface)
 - gmon_io.c cannot deal with target architecture that have a pointer size
   that is different from the host architectures pointer size---fix this
   (gmon_out.h, and gmon_io.c)
 - add support for prof file format so that prof files can be displayed
   at the line-level (this is useful for the uprofile tool under DEC's
   OSF/1)
+- take a hard look at --file-ordering (broken) and --function-ordering
 
++ documentation
++ optimize bfd_find_nearest_line_num() (or replace by different interface)
 + cleanup _bfd_ecoff_find_nearest_line_num() fixes & description
 + ensure "cc -pg" produces good files under OSF/1 v3.0
 + make sure gprof works together with OSF/1 v3.0's profiling libraries

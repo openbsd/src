@@ -14,6 +14,9 @@ run_dump_test rept
 
 gas_test_error "err.s" "" "macro infinite recursion"
 
-if ![istarget hppa*-*-*] {
-    run_dump_test semi
+case $target_triplet in {
+    { hppa*-*-* } { }
+    default {
+	run_dump_test semi
+    }
 }

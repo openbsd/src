@@ -1,17 +1,18 @@
 $!
-$! This file configures the bfd library for use with openVMS/Alpha
+$! This file configures the bfd library for use with openVMS (Alpha and Vax)
+$!
 $! We do not use the configure script, since we do not have /bin/sh
 $! to execute it.
 $!
-$! Written by Klaus K"ampf (kkaempf@progis.de)
+$! Written by Klaus K"ampf (kkaempf@rmi.de)
 $!
 $arch_indx = 1 + ((f$getsyi("CPU").ge.128).and.1)      ! vax==1, alpha==2
 $arch = f$element(arch_indx,"|","|VAX|Alpha|")
-$if arch .eqs. "VAX"
+$!
+$if arch .eqs. "Alpha"
 $then
-$ write sys$output "Target VAX not supported."
-$ exit 2
-$endif
+$ write sys$output "Configuring for Alpha target"
+$ target = "alpha"
 $!
 $! copy bfd-in2.h to bfd.h, replacing @ macros
 $!
@@ -22,9 +23,16 @@ $DECK
 !  Copy file, changing lines with macros (@@)
 !
 !
-   vfile := CREATE_BUFFER("vfile", "VERSION.");
-   POSITION(BEGINNING_OF(vfile));
-   vers := CURRENT_LINE;
+   vfile := CREATE_BUFFER("vfile", "CONFIGURE.IN");
+   rang := CREATE_RANGE(BEGINNING_OF(vfile), END_OF(vfile));
+   match_pos := SEARCH_QUIETLY('AM_INIT_AUTOMAKE(bfd, ', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+     POSITION(BEGINNING_OF(match_pos));
+     ERASE(match_pos);
+     vers := CURRENT_LINE-")";
+   ELSE;
+     vers := "unknown";
+   ENDIF;
 
    file := CREATE_BUFFER("file", GET_INFO(COMMAND_LINE, "file_name"));
    rang := CREATE_RANGE(BEGINNING_OF(file), END_OF(file));
@@ -51,32 +59,106 @@ $DECK
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('0');
+      COPY_TEXT('__DECC');
+      SPLIT_LINE;
+      COPY_TEXT('#include <ints.h>');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@BFD_HOST_64_BIT@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('');
+      COPY_TEXT('int64');
    ENDIF;
    match_pos := SEARCH_QUIETLY('@BFD_HOST_U_64_BIT@', FORWARD, EXACT, rang);
    IF match_pos <> 0 THEN;
       POSITION(BEGINNING_OF(match_pos));
       ERASE(match_pos);
-      COPY_TEXT('');
+      COPY_TEXT('uint64');
    ENDIF;
    WRITE_FILE(file, GET_INFO(COMMAND_LINE, "output_file"));
    QUIT
 $  EOD
+$
+$else
+$
+$ write sys$output "Configuring for Vax target"
+$ target = "vax"
+$!
+$! copy bfd-in2.h to bfd.h, replacing @ macros
+$!
+$ edit/tpu/nojournal/nosection/nodisplay/command=sys$input -
+        []bfd-in2.h /output=[]bfd.h
+$DECK
+!
+!  Copy file, changing lines with macros (@@)
+!
+!
+   vfile := CREATE_BUFFER("vfile", "CONFIGURE.IN");
+   rang := CREATE_RANGE(BEGINNING_OF(vfile), END_OF(vfile));
+   match_pos := SEARCH_QUIETLY('AM_INIT_AUTOMAKE(bfd, ', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+     POSITION(BEGINNING_OF(match_pos));
+     ERASE(match_pos);
+     vers := CURRENT_LINE-")";
+   ELSE;
+     vers := "unknown";
+   ENDIF;
+
+   file := CREATE_BUFFER("file", GET_INFO(COMMAND_LINE, "file_name"));
+   rang := CREATE_RANGE(BEGINNING_OF(file), END_OF(file));
+
+   match_pos := SEARCH_QUIETLY('@VERSION@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT(vers);
+   ENDIF;
+   match_pos := SEARCH_QUIETLY('@wordsize@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT('32');
+   ENDIF;
+   match_pos := SEARCH_QUIETLY('@BFD_HOST_64BIT_LONG@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT('0');
+   ENDIF;
+   match_pos := SEARCH_QUIETLY('@BFD_HOST_64_BIT_DEFINED@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT('__DECC');
+      SPLIT_LINE;
+      COPY_TEXT('#include <ints.h>');
+   ENDIF;
+   match_pos := SEARCH_QUIETLY('@BFD_HOST_64_BIT@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT('int64');
+   ENDIF;
+   match_pos := SEARCH_QUIETLY('@BFD_HOST_U_64_BIT@', FORWARD, EXACT, rang);
+   IF match_pos <> 0 THEN;
+      POSITION(BEGINNING_OF(match_pos));
+      ERASE(match_pos);
+      COPY_TEXT('uint64');
+   ENDIF;
+   WRITE_FILE(file, GET_INFO(COMMAND_LINE, "output_file"));
+   QUIT
+$  EOD
+$endif
+$
 $ write sys$output "Generated `bfd.h' from `bfd-in2.h'."
 $!
 $!
 $! create targmatch.h
 $!
 $ open/write tfile []targmatch.h
-$ write tfile "{ " + """alpha-*-*vms*""" + ","
-$ write tfile "#if !defined (SELECT_VECS) || defined (HAVE_evax_alpha_vec)"
-$ write tfile "&evax_alpha_vec"
+$ write tfile "{ """ + target + "-*-*vms*""" + ","
+$ write tfile "#if defined (SELECT_VECS)"
+$ write tfile "SELECT_VECS"
 $ write tfile "#else"
 $ write tfile "UNSUPPORTED_TARGET"
 $ write tfile "#endif"

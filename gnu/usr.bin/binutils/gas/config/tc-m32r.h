@@ -1,5 +1,5 @@
 /* tc-m32r.h -- Header file for tc-m32r.c.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -35,6 +35,7 @@
 #define TARGET_BYTES_BIG_ENDIAN 1
 
 /* call md_pcrel_from_section, not md_pcrel_from */
+long md_pcrel_from_section PARAMS ((struct fix *, segT));
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section(FIXP, SEC)   
 
 /* Permit temporary numeric labels.  */
@@ -53,6 +54,7 @@ extern void m32r_prepare_relax_scan ();
 #define md_prepare_relax_scan(fragP, address, aim, this_state, this_type) \
 m32r_prepare_relax_scan (fragP, address, aim, this_state, this_type)
 #else
+extern long m32r_relax_frag PARAMS ((fragS *, long));
 #define md_relax_frag(fragP, stretch) \
 m32r_relax_frag (fragP, stretch)
 #endif
@@ -65,34 +67,18 @@ extern int m32r_do_align PARAMS ((int, const char *, int, int));
 #define md_do_align(n, fill, len, max, l) \
 if (m32r_do_align (n, fill, len, max)) goto l
 
-/* FIXME: Obviously the cgen_xxx decls here should be in a header.  Later.  */
-
 #define MD_APPLY_FIX3
-extern int cgen_md_apply_fix3 ();
-#define md_apply_fix3 cgen_md_apply_fix3
+#define md_apply_fix3 gas_cgen_md_apply_fix3
 
-#define md_init_frag(fragP) \
-do { \
-  (fragP)->fr_targ.cgen.insn = 0; \
-  (fragP)->fr_targ.cgen.opindex = 0; \
-  (fragP)->fr_targ.cgen.opinfo = 0; \
-} while (0);
+#define obj_fix_adjustable(fixP) m32r_fix_adjustable(fixP)
 
 /* After creating a fixup for an instruction operand, we need to check for
    HI16 relocs and queue them up for later sorting.  */
 #define md_cgen_record_fixup_exp m32r_cgen_record_fixup_exp
-extern struct fix *m32r_cgen_record_fixup_exp ();
-extern struct fix *cgen_record_fixup_exp ();
 
 #define TC_HANDLES_FX_DONE
 
-/* Record a pointer to the insn table entry for each fixup.  */
-#define TC_FIX_TYPE struct { PTR insn; int opinfo; }
-#define TC_INIT_FIX_DATA(FIXP) \
-  ((FIXP)->tc_fix_data.insn = NULL, (FIXP)->tc_fix_data.opinfo = 0)
-
-extern arelent *cgen_tc_gen_reloc ();
-#define tc_gen_reloc cgen_tc_gen_reloc
+#define tc_gen_reloc gas_cgen_tc_gen_reloc
 
 #define tc_frob_file() m32r_frob_file ()
 extern void m32r_frob_file PARAMS ((void));
@@ -110,3 +96,7 @@ int m32r_fill_insn PARAMS ((int));
 #define ELF_TC_SPECIAL_SECTIONS \
   { ".sdata",		SHT_PROGBITS,	SHF_ALLOC + SHF_WRITE }, \
   { ".sbss",		SHT_NOBITS,	SHF_ALLOC + SHF_WRITE },
+
+#define md_cleanup                 m32r_elf_section_change_hook
+#define md_elf_section_change_hook m32r_elf_section_change_hook
+extern void m32r_elf_section_change_hook ();    

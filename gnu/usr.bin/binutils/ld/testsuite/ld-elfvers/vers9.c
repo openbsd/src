@@ -5,32 +5,40 @@
 const char * bar1 = "asdf";
 const char * bar2 = "asdf";
 
-int bar()
+extern int old_foo1();
+
+int
+bar()
 {
 	return 3;
 }
 
+int
 original_foo()
 {
 	return 1+bar();
 
 }
 
+int
 old_foo()
 {
 	return 10+bar();
 
 }
 
+int
 new_foo()
 {
 	return 1000+bar();
 
 }
 
+int
 main()
 {
   old_foo1();
+  return 0;
 }
 
 __asm__(".symver original_foo,foo@");

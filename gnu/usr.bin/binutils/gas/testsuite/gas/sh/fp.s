@@ -26,7 +26,6 @@ _foo:
 	fmac	fr0,fr0,fr1
 	fcmp/eq	fr0,fr1
 	fcmp/gt	fr0,fr1
-	ftst/nan	fr0
 	fneg	fr0
 	fabs	fr0
 	fsqrt	fr0

@@ -1,4 +1,4 @@
-	.text
+	.code
 text_symbol:	
 	.long	1
 	.long	external_symbol

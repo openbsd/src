@@ -19,7 +19,7 @@ main ()
   return e1 + e2 + i + j + k + l;
 }
 
-int
+void
 __main ()
 {
 }

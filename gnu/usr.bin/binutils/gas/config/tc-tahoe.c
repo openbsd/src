@@ -384,27 +384,27 @@ md_parse_option (c, arg)
   switch (c)
     {
     case 'a':
-      as_warn ("The -a option doesn't exist. (Despite what the man page says!");
+      as_warn (_("The -a option doesn't exist. (Despite what the man page says!"));
       break;
 
     case 'd':
-      as_warn ("Displacement length %s ignored!", arg);
+      as_warn (_("Displacement length %s ignored!"), arg);
       break;
 
     case 'S':
-      as_warn ("SYMBOL TABLE not implemented");
+      as_warn (_("SYMBOL TABLE not implemented"));
       break;
 
     case 'T':
-      as_warn ("TOKEN TRACE not implemented");
+      as_warn (_("TOKEN TRACE not implemented"));
       break;
 
     case 't':
-      as_warn ("I don't need or use temp. file \"%s\".", arg);
+      as_warn (_("I don't need or use temp. file \"%s\"."), arg);
       break;
 
     case 'V':
-      as_warn ("I don't use an interpass file! -V ignored");
+      as_warn (_("I don't use an interpass file! -V ignored"));
       break;
 
     default:
@@ -418,7 +418,7 @@ void
 md_show_usage (stream)
      FILE *stream;
 {
-  fprintf(stream, "\
+  fprintf(stream, _("\
 Tahoe options:\n\
 -a			ignored\n\
 -d LENGTH		ignored\n\
@@ -426,7 +426,7 @@ Tahoe options:\n\
 -S			ignored\n\
 -t FILE			ignored\n\
 -T			ignored\n\
--V			ignored\n");
+-V			ignored\n"));
 }
 
 /* The functions in this section take numbers in the machine format, and
@@ -1072,7 +1072,7 @@ tip_op (optex, topP)
       case 'l':
       case 'L':
 	if (com_width)
-	  as_warn ("Casting a branch displacement is bad form, and is ignored.");
+	  as_warn (_("Casting a branch displacement is bad form, and is ignored."));
 	else
 	  {
 	    c = (isupper (*point) ? tolower (*point) : *point);
@@ -1128,13 +1128,13 @@ tip_op (optex, topP)
 	    }
 	  if (ndx == -1)
 	    {
-	      op_bad = "Couldn't parse the [index] in this operand.";
+	      op_bad = _("Couldn't parse the [index] in this operand.");
 	      end = point;	/* Force all the rest of the tests to fail. */
 	    }
 	}
       else
 	{
-	  op_bad = "Couldn't find the opening '[' for the index of this operand.";
+	  op_bad = _("Couldn't find the opening '[' for the index of this operand.");
 	  end = point;		/* Force all the rest of the tests to fail. */
 	}
     }
@@ -1174,7 +1174,7 @@ tip_op (optex, topP)
 	}
       else
 	{
-	  op_bad = "Couldn't find the opening '(' for the deref of this operand.";
+	  op_bad = _("Couldn't find the opening '(' for the deref of this operand.");
 	  end = point;		/* Force all the rest of the tests to fail. */
 	}
     }
@@ -1184,7 +1184,7 @@ tip_op (optex, topP)
     {
       if (dec_inc != ' ')
 	{
-	  op_bad = "Operand can't be both pre-inc and post-dec.";
+	  op_bad = _("Operand can't be both pre-inc and post-dec.");
 	  end = point;
 	}
       else
@@ -1214,7 +1214,7 @@ tip_op (optex, topP)
     }
 
   if (imreg != -1 && reg != -1)
-    op_bad = "I parsed 2 registers in this operand.";
+    op_bad = _("I parsed 2 registers in this operand.");
 
   /*
    * Evaluate whats left of the expression to see if it's valid.
@@ -1264,19 +1264,19 @@ tip_op (optex, topP)
 	   * then coding up a frag for this case will be easy.
 	   */
 	  need_pass_2 = 1;
-	  op_bad = "Can't relocate expression error.";
+	  op_bad = _("Can't relocate expression error.");
 	  break;
 
 	case O_big:
 	  /* This is an error. Tahoe doesn't allow any expressions
 	     bigger that a 32 bit long word. Any bigger has to be referenced
 	     by address. */
-	  op_bad = "Expression is too large for a 32 bits.";
+	  op_bad = _("Expression is too large for a 32 bits.");
 	  break;
 	}
       if (*input_line_pointer != '\0')
 	{
-	  op_bad = "Junk at end of expression.";
+	  op_bad = _("Junk at end of expression.");
 	}
     }
 
@@ -1316,26 +1316,26 @@ tip_op (optex, topP)
 	  mode = TAHOE_DIRECT_REG;
 	  if (deferred || immediate || (dec_inc != ' ') ||
 	      (reg != -1) || !really_none)
-	    op_bad = "Syntax error in direct register mode.";
+	    op_bad = _("Syntax error in direct register mode.");
 	  else if (ndx != -1)
-	    op_bad = "You can't index a register in direct register mode.";
+	    op_bad = _("You can't index a register in direct register mode.");
 	  else if (imreg == SP_REG && access == 'r')
 	    op_bad =
-	      "SP can't be the source operand with direct register addressing.";
+	      _("SP can't be the source operand with direct register addressing.");
 	  else if (access == 'a')
-	    op_bad = "Can't take the address of a register.";
+	    op_bad = _("Can't take the address of a register.");
 	  else if (access == 'b')
-	    op_bad = "Direct Register can't be used in a branch.";
+	    op_bad = _("Direct Register can't be used in a branch.");
 	  else if (width == 'q' && ((imreg % 2) || (imreg > 13)))
-	    op_bad = "For quad access, the register must be even and < 14.";
+	    op_bad = _("For quad access, the register must be even and < 14.");
 	  else if (call_width)
-	    op_bad = "You can't cast a direct register.";
+	    op_bad = _("You can't cast a direct register.");
 
 	  if (*op_bad == '\0')
 	    {
 	      /* No errors, check for warnings */
 	      if (width == 'q' && imreg == 12)
-		as_warn ("Using reg 14 for quadwords can tromp the FP register.");
+		as_warn (_("Using reg 14 for quadwords can tromp the FP register."));
 
 	      reg = imreg;
 	    }
@@ -1347,49 +1347,49 @@ tip_op (optex, topP)
 	  /* -(SP) */
 	  mode = TAHOE_AUTO_DEC;
 	  if (deferred || immediate || !really_none)
-	    op_bad = "Syntax error in auto-dec mode.";
+	    op_bad = _("Syntax error in auto-dec mode.");
 	  else if (ndx != -1)
-	    op_bad = "You can't have an index auto dec mode.";
+	    op_bad = _("You can't have an index auto dec mode.");
 	  else if (access == 'r')
-	    op_bad = "Auto dec mode cant be used for reading.";
+	    op_bad = _("Auto dec mode cant be used for reading.");
 	  else if (reg != SP_REG)
-	    op_bad = "Auto dec only works of the SP register.";
+	    op_bad = _("Auto dec only works of the SP register.");
 	  else if (access == 'b')
-	    op_bad = "Auto dec can't be used in a branch.";
+	    op_bad = _("Auto dec can't be used in a branch.");
 	  else if (width == 'q')
-	    op_bad = "Auto dec won't work with quadwords.";
+	    op_bad = _("Auto dec won't work with quadwords.");
 
 	  /* We know: imm = -1, dec_inc != '-' */
 	}
       else if (dec_inc == '+')
 	{
 	  if (immediate || !really_none)
-	    op_bad = "Syntax error in one of the auto-inc modes.";
+	    op_bad = _("Syntax error in one of the auto-inc modes.");
 	  else if (deferred)
 	    {
 	      /* *(SP)+ */
 	      mode = TAHOE_AUTO_INC_DEFERRED;
 	      if (reg != SP_REG)
-		op_bad = "Auto inc deferred only works of the SP register.";
+		op_bad = _("Auto inc deferred only works of the SP register.");
 	      else if (ndx != -1)
-		op_bad = "You can't have an index auto inc deferred mode.";
+		op_bad = _("You can't have an index auto inc deferred mode.");
 	      else if (access == 'b')
-		op_bad = "Auto inc can't be used in a branch.";
+		op_bad = _("Auto inc can't be used in a branch.");
 	    }
 	  else
 	    {
 	      /* (SP)+ */
 	      mode = TAHOE_AUTO_INC;
 	      if (access == 'm' || access == 'w')
-		op_bad = "You can't write to an auto inc register.";
+		op_bad = _("You can't write to an auto inc register.");
 	      else if (reg != SP_REG)
-		op_bad = "Auto inc only works of the SP register.";
+		op_bad = _("Auto inc only works of the SP register.");
 	      else if (access == 'b')
-		op_bad = "Auto inc can't be used in a branch.";
+		op_bad = _("Auto inc can't be used in a branch.");
 	      else if (width == 'q')
-		op_bad = "Auto inc won't work with quadwords.";
+		op_bad = _("Auto inc won't work with quadwords.");
 	      else if (ndx != -1)
-		op_bad = "You can't have an index in auto inc mode.";
+		op_bad = _("You can't have an index in auto inc mode.");
 	    }
 
 	  /* We know: imm = -1, dec_inc == ' ' */
@@ -1397,13 +1397,13 @@ tip_op (optex, topP)
       else if (reg != -1)
 	{
 	  if ((ndx != -1) && (reg == SP_REG))
-	    op_bad = "You can't index the sp register.";
+	    op_bad = _("You can't index the sp register.");
 	  if (deferred)
 	    {
 	      /* *<disp>(Rn) */
 	      mode = TAHOE_REG_DISP_DEFERRED;
 	      if (immediate)
-		op_bad = "Syntax error in register displaced mode.";
+		op_bad = _("Syntax error in register displaced mode.");
 	    }
 	  else if (really_none)
 	    {
@@ -1422,7 +1422,7 @@ tip_op (optex, topP)
       else
 	{
 	  if (really_none)
-	    op_bad = "An offest is needed for this operand.";
+	    op_bad = _("An offest is needed for this operand.");
 	  if (deferred && immediate)
 	    {
 	      /* *$<ADDR> */
@@ -1434,9 +1434,9 @@ tip_op (optex, topP)
 	      /* $<disp> */
 	      mode = TAHOE_IMMEDIATE;
 	      if (ndx != -1)
-		op_bad = "You can't index a register in immediate mode.";
+		op_bad = _("You can't index a register in immediate mode.");
 	      if (access == 'a')
-		op_bad = "Immediate access can't be used as an address.";
+		op_bad = _("Immediate access can't be used as an address.");
 	      /* ponder the wisdom of a cast because it doesn't do any good. */
 	    }
 	  else if (deferred)
@@ -1502,7 +1502,7 @@ tip (titP, instring)
   /* Operation-code is ended with whitespace. */
   if (p == instring)
     {
-      titP->tit_error = "No operator";
+      titP->tit_error = _("No operator");
       count = 0;
       titP->tit_opcode = 0;
     }
@@ -1519,7 +1519,7 @@ tip (titP, instring)
       *p = c;			/* Restore char after op-code. */
       if (twP == 0)
 	{
-	  titP->tit_error = "Unknown operator";
+	  titP->tit_error = _("Unknown operator");
 	  count = 0;
 	  titP->tit_opcode = 0;
 	}
@@ -1547,7 +1547,7 @@ tip (titP, instring)
 	 * past any one ',' that marks the end of this operand.
 	 */
 	      if (!p[1])
-		as_fatal ("Compiler bug: ODD number of bytes in arg structure %s.",
+		as_fatal (_("Compiler bug: ODD number of bytes in arg structure %s."),
 			  twP->args);
 	      else if (*instring)
 		{
@@ -1574,7 +1574,7 @@ tip (titP, instring)
 		  count++;	/*  won another argument, may have an operr */
 		}
 	      else
-		alloperr = "Not enough operands";
+		alloperr = _("Not enough operands");
 	    }
 	  /* Restore the pointer. */
 	  input_line_pointer = save_input_line_pointer;
@@ -1584,7 +1584,7 @@ tip (titP, instring)
 	      if (*instring == ' ')
 		instring++;	/* Skip whitespace. */
 	      if (*instring)
-		alloperr = "Too many operands";
+		alloperr = _("Too many operands");
 	    }
 	  titP->tit_error = alloperr;
 	}
@@ -1611,7 +1611,7 @@ md_assemble (instruction_string)
   segT to_seg;			/* Target segment of the address.	 */
 
   register valueT this_add_number;
-  register struct symbol *this_add_symbol;	/* +ve (minuend) symbol. */
+  register symbolS *this_add_symbol;	/* +ve (minuend) symbol. */
 
   /*  tahoe_opcodeT opcode_as_number; fixme: remove this line *//* The opcode as a number. */
   char *opcodeP;		/* Where it is in a frag. */
@@ -1635,7 +1635,7 @@ md_assemble (instruction_string)
    */
   if (*t.tit_error)
     {
-      as_warn ("Ignoring statement due to \"%s\"", t.tit_error);
+      as_warn (_("Ignoring statement due to \"%s\""), t.tit_error);
     }
   else
     {
@@ -1730,7 +1730,7 @@ md_assemble (instruction_string)
 				    opcodeP);
 			  break;
 			default:
-			  as_fatal ("Compliler bug: Got a case (%d) I wasn't expecting.",
+			  as_fatal (_("Compliler bug: Got a case (%d) I wasn't expecting."),
 				    operandP->top_width);
 			}
 		    }
@@ -1824,10 +1824,10 @@ md_assemble (instruction_string)
 		      break;
 		    case 'b':
 		    case 'w':
-		      as_warn ("Real branch displacements must be expressions.");
+		      as_warn (_("Real branch displacements must be expressions."));
 		      break;
 		    default:
-		      as_fatal ("Complier error: I got an unknown synthetic branch :%c",
+		      as_fatal (_("Complier error: I got an unknown synthetic branch :%c"),
 				operandP->top_width);
 		      break;
 		    }
@@ -1968,7 +1968,7 @@ md_assemble (instruction_string)
 		    }
 		  break;
 		default:
-		  as_fatal ("Barf, bad mode %x\n", operandP->top_mode);
+		  as_fatal (_("Barf, bad mode %x\n"), operandP->top_mode);
 		}
 	    }
 	}			/* for(operandP) */

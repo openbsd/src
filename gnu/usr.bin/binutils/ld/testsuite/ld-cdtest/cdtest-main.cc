@@ -27,7 +27,7 @@ __init_start()
 
 static Foo static_foo( "static_foo"); 
 
-main() 
+int main() 
 { 
     assert (Foo::nb_foos() == 2);
     Foo automatic_foo( "automatic_foo");

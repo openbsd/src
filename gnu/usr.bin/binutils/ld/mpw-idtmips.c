@@ -90,7 +90,7 @@ gldmipsidt_after_open ()
 	      || ! bfd_set_section_alignment (abfd, relsec, 2)
 	      || ! bfd_set_section_size (abfd, relsec,
 					 datasec->reloc_count * 4))
-	    einfo ("%F%B: can not create .rel.sdata section: %E");
+	    einfo (_("%F%B: can not create .rel.sdata section: %E\n"));
 	}
 
       /* Double check that all other data sections are empty, as is
@@ -111,7 +111,7 @@ check_sections (abfd, sec, sdatasec)
   if ((bfd_get_section_flags (abfd, sec) & SEC_CODE) == 0
       && sec != (asection *) sdatasec
       && sec->reloc_count != 0)
-    einfo ("%F%X: section %s has relocs; can not use --embedded-relocs",
+    einfo (_("%F%X: section %s has relocs; can not use --embedded-relocs\n"),
 	   abfd, bfd_get_section_name (abfd, sec));
 }
 
@@ -146,10 +146,10 @@ gldmipsidt_after_allocation ()
 						   &errmsg))
 	{
 	  if (errmsg == NULL)
-	    einfo ("%B%X: can not create runtime reloc information: %E",
+	    einfo (_("%B%X: can not create runtime reloc information: %E\n"),
 		   abfd);
 	  else
-	    einfo ("%X%B: can not create runtime reloc information: %s",
+	    einfo (_("%X%B: can not create runtime reloc information: %s\n"),
 		   abfd, errmsg);
 	}
     }

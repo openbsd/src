@@ -24,6 +24,7 @@ Programming'' in the same work.
 * MIPS Object:: 	ECOFF object code
 * MIPS Stabs::  	Directives for debugging information
 * MIPS ISA::    	Directives to override the ISA level
+* MIPS autoextend::	Directives for extending MIPS 16 bit instructions
 * MIPS insn::		Directive to mark data as an instruction
 * MIPS option stack::	Directives to save and restore options
 @end menu
@@ -66,18 +67,29 @@ Generate code for a particular MIPS Instruction Set Architecture level.
 @sc{r10000} processors.  You can also switch instruction sets during the
 assembly; see @ref{MIPS ISA,, Directives to override the ISA level}.
 
+@item -mgp32
+Assume that 32-bit general purpose registers are available.  This
+affects synthetic instructions such as @code{move}, which will assemble
+to a 32-bit or a 64-bit instruction depending on this flag.  On some
+MIPS variants there is a 32-bit mode flag; when this flag is set,
+64-bit instructions generate a trap.  Also, some 32-bit OSes only save
+the 32-bit registers on a context switch, so it is essential never to
+use the 64-bit registers.
+
+@item -mgp64
+Assume that 64-bit general purpose registers are available.  This is
+provided in the interests of symmetry with -gp32.
+
 @item -mips16
 @itemx -no-mips16
 Generate code for the MIPS 16 processor.  This is equivalent to putting
 @samp{.set mips16} at the start of the assembly file.  @samp{-no-mips16}
 turns off this option.
 
-@item -m4650
-@itemx -no-m4650
-Generate code for the MIPS @sc{r4650} chip.  This tells the assembler to accept
-the @samp{mad} and @samp{madu} instruction, and to not schedule @samp{nop}
-instructions around accesses to the @samp{HI} and @samp{LO} registers.
-@samp{-no-m4650} turns off this option.
+@item -mfix7000
+@itemx -no-mfix7000
+Cause nops to be inserted if the read of the destination register
+of an mfhi or mflo instruction occurs in the following two instructions.
 
 @item -m4010
 @itemx -no-m4010
@@ -87,9 +99,44 @@ etc.), and to not schedule @samp{nop} instructions around accesses to
 the @samp{HI} and @samp{LO} registers.  @samp{-no-m4010} turns off this
 option.
 
-@item -mcpu=@var{CPU}
-Generate code for a particular MIPS cpu.  This has little effect on the
-assembler, but it is passed by @code{@value{GCC}}.
+@item -m4650
+@itemx -no-m4650
+Generate code for the MIPS @sc{r4650} chip.  This tells the assembler to accept
+the @samp{mad} and @samp{madu} instruction, and to not schedule @samp{nop}
+instructions around accesses to the @samp{HI} and @samp{LO} registers.
+@samp{-no-m4650} turns off this option.
+
+@itemx -m3900
+@itemx -no-m3900
+@itemx -m4100
+@itemx -no-m4100
+For each option @samp{-m@var{nnnn}}, generate code for the MIPS
+@sc{r@var{nnnn}} chip.  This tells the assembler to accept instructions
+specific to that chip, and to schedule for that chip's hazards.
+
+@item -mcpu=@var{cpu}
+Generate code for a particular MIPS cpu.  It is exactly equivalent to
+@samp{-m@var{cpu}}, except that there are more value of @var{cpu}
+understood.  Valid @var{cpu} value are:
+
+@quotation
+2000,
+3000,
+3900,
+4000,
+4010,
+4100,
+4111,
+4300,
+4400,
+4600,
+4650,
+5000,
+6000,
+8000,
+10000
+@end quotation
+
 
 @cindex @code{-nocpp} ignored (MIPS)
 @item -nocpp
@@ -183,6 +230,21 @@ in which it will assemble instructions for the MIPS 16 processor.  Use
 @samp{.set nomips16} to return to normal 32 bit mode.
 
 Traditional @sc{mips} assemblers do not support this directive.  
+
+@node MIPS autoextend
+@section Directives for extending MIPS 16 bit instructions
+
+@kindex @code{.set autoextend}
+@kindex @code{.set noautoextend}
+By default, MIPS 16 instructions are automatically extended to 32 bits
+when necessary.  The directive @samp{.set noautoextend} will turn this
+off.  When @samp{.set noautoextend} is in effect, any 32 bit instruction
+must be explicitly extended with the @samp{.e} modifier (e.g.,
+@samp{li.e $4,1000}).  The directive @samp{.set autoextend} may be used
+to once again automatically extend instructions when necessary.
+
+This directive is only meaningful when in MIPS 16 mode.  Traditional
+@sc{mips} assemblers do not support this directive.
 
 @node MIPS insn
 @section Directive to mark data as an instruction

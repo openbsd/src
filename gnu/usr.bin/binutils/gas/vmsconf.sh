@@ -1,6 +1,7 @@
 #!/bin/sh
 
 cat << 'EOF'
+$!make-gas.com
 $! Set the def dir to proper place for use in batch. Works for interactive to.
 $flnm = f$enviroment("PROCEDURE")     ! get current procedure name
 $set default 'f$parse(flnm,,,"DEVICE")''f$parse(flnm,,,"DIRECTORY")'
@@ -31,6 +32,23 @@ $ !write sys$output "constant variables are handled.  Failure to include this"
 $ !write sys$output "will result in linker warning messages about mismatched
 $ !write sys$output "psect attributes."
 $!
+$ gas_host="vms"
+$ arch_indx = 1 + ((f$getsyi("CPU").ge.128).and.1)	! vax==1, alpha==2
+$ arch = f$element(arch_indx,"|","|VAX|Alpha|")
+$ if arch.eqs."VAX"
+$ then
+$  cpu_type="vax"
+$  obj_format="vms"
+$  atof="vax"
+$ else
+$  cpu_type="alpha"
+$  obj_format="evax"
+$  atof="ieee"
+$ endif
+$ emulation="generic"
+$!
+$	COPY	= "copy/noLog"
+$!
 $ C_DEFS :="""VMS"""
 $! C_DEFS :="""VMS""","""const="""
 $ C_INCLUDES	= "/Include=([],[.config],[-.include],[-.include.aout])"
@@ -58,6 +76,9 @@ $assign 'opcode_dir' opcode/tran=conc
 $!
 $ set verify
 $!
+$ gcc 'c_flags'/Define=('C_DEFS')/Object=[]tc-'cpu_type'.obj [.config]tc-'cpu_type'.c
+$ gcc 'c_flags'/Define=('C_DEFS')/Object=[]obj-'obj_format'.obj [.config]obj-'obj_format'.c
+$ gcc 'c_flags'/Define=('C_DEFS')/Object=[]atof-'atof'.obj [.config]atof-'atof'.c
 EOF
 
 cfiles="`echo $* | sed -e 's/\.o/.c/g' -e 's!../\([^ /]*\)/\([^ /]*\.c\)![-.\1]\2!g'`"
@@ -77,11 +98,16 @@ done
 cat << 'EOF'
 $link:
 $!'f$verify(0)'
-$ set verify=(Proc,noImag)
-$ link/noMap/Exec=gcc-as version.opt/Opt+sys$input:/Opt
+$ if f$trnlnm("IFILE$").nes."" then  close/noLog ifile$
+$ create gcc-as.opt
 !
 !	Linker options file for GNU assembler
 !
+$ open/Append ifile$ gcc-as.opt
+$ write ifile$ "tc-''cpu_type'.obj"
+$ write ifile$ "obj-''obj_format'.obj"
+$ write ifile$ "atof-''atof'.obj"
+$ COPY sys$input: ifile$:
 EOF
 
 for obj in $* ; do
@@ -94,6 +120,9 @@ cat << 'EOF'
 gnu_cc:[000000]gcclib.olb/Lib,sys$library:vaxcrtl.olb/Lib
 ! Tell linker exactly what psect attributes we want -- match VAXCRTL.
 psect_attr=ENVIRON,long,pic,ovr,rel,gbl,noshr,noexe,rd,wrt
+$ close ifile$
+$ set verify=(Proc,noImag)
+$ link/noMap/Exec=gcc-as.exe gcc-as.opt/Opt,version.opt/Opt
 $!
 $bail: exit $status + 0*f$verify(v)	!'f$verify(0)'
 EOF

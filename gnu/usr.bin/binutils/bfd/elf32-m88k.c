@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_BIG_NAME		"elf32-m88k"
 #define ELF_ARCH		bfd_arch_m88k
 #define ELF_MACHINE_CODE	EM_88K
+#define ELF_MAXPAGESIZE  	1 /* FIXME: This number is wrong,  It should be the page size in bytes.  */
 #define bfd_elf32_bfd_reloc_type_lookup bfd_default_reloc_type_lookup
 #define elf_info_to_howto		_bfd_elf_no_info_to_howto
 

@@ -367,4 +367,16 @@ str00022:	.byte	100,111,110,107,101,121
 !end_str00022
 end_str00022:
 ! 	RES_STR donkey Rn=R1
+!	MOV.L	#str00023,R1
+	MOV.L	#str00023,R1
+!	BRA	end_str00023
+	BRA	end_str00023
+!	NOP
+	NOP
+!str00023	.SDATA "donkey"
+str00023:	.byte	100,111,110,107,101,121
+!	.ALIGN	2
+	.align	2
+!end_str00023
+end_str00023:
 !	.END

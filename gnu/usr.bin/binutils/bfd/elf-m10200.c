@@ -1,5 +1,5 @@
 /* Matsushita 10200 specific support for 32-bit ELF
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998, 1999 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -167,7 +167,7 @@ static reloc_howto_type elf_mn10200_howto_table[] =
 
 struct mn10200_reloc_map
 {
-  unsigned char bfd_reloc_val;
+  bfd_reloc_code_real_type bfd_reloc_val;
   unsigned char elf_reloc_val;
 };
 
@@ -185,7 +185,7 @@ static const struct mn10200_reloc_map mn10200_reloc_map[] =
 
 static reloc_howto_type *
 bfd_elf32_bfd_reloc_type_lookup (abfd, code)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      bfd_reloc_code_real_type code;
 {
   unsigned int i;
@@ -205,7 +205,7 @@ bfd_elf32_bfd_reloc_type_lookup (abfd, code)
 
 static void
 mn10200_info_to_howto (abfd, cache_ptr, dst)
-     bfd *abfd;
+     bfd *abfd ATTRIBUTE_UNUSED;
      arelent *cache_ptr;
      Elf32_Internal_Rela *dst;
 {
@@ -223,15 +223,15 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
 				 addend, info, sym_sec, is_local)
      reloc_howto_type *howto;
      bfd *input_bfd;
-     bfd *output_bfd;
+     bfd *output_bfd ATTRIBUTE_UNUSED;
      asection *input_section;
      bfd_byte *contents;
      bfd_vma offset;
      bfd_vma value;
      bfd_vma addend;
-     struct bfd_link_info *info;
-     asection *sym_sec;
-     int is_local;
+     struct bfd_link_info *info ATTRIBUTE_UNUSED;
+     asection *sym_sec ATTRIBUTE_UNUSED;
+     int is_local ATTRIBUTE_UNUSED;
 {
   unsigned long r_type = howto->type;
   bfd_byte *hit_data = contents + offset;
@@ -259,7 +259,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_8:
       value += addend;
 
-      if ((long)value > 0x7fff || (long)value < -0x8000)
+      if ((long)value > 0x7f || (long)value < -0x80)
 	return bfd_reloc_overflow;
 
       bfd_put_8 (input_bfd, value, hit_data);
@@ -279,7 +279,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_PCREL8:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset);
-      value -= offset;
+      value -= (offset + 1);
       value += addend;
 
       if ((long)value > 0xff || (long)value < -0x100)
@@ -291,7 +291,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_PCREL16:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset);
-      value -= offset;
+      value -= (offset + 2);
       value += addend;
 
       if ((long)value > 0xffff || (long)value < -0x10000)
@@ -303,7 +303,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_PCREL24:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset);
-      value -= offset;
+      value -= (offset + 3);
       value += addend;
 
       if ((long)value > 0xffffff || (long)value < -0x1000000)
@@ -408,7 +408,7 @@ mn10200_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	    {
 	      if (! ((*info->callbacks->undefined_symbol)
 		     (info, h->root.root.string, input_bfd,
-		      input_section, rel->r_offset)))
+		      input_section, rel->r_offset, true)))
 		return false;
 	      relocation = 0;
 	    }
@@ -447,24 +447,24 @@ mn10200_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	    case bfd_reloc_undefined:
 	      if (! ((*info->callbacks->undefined_symbol)
 		     (info, name, input_bfd, input_section,
-		      rel->r_offset)))
+		      rel->r_offset, true)))
 		return false;
 	      break;
 
 	    case bfd_reloc_outofrange:
-	      msg = "internal error: out of range error";
+	      msg = _("internal error: out of range error");
 	      goto common_error;
 
 	    case bfd_reloc_notsupported:
-	      msg = "internal error: unsupported relocation error";
+	      msg = _("internal error: unsupported relocation error");
 	      goto common_error;
 
 	    case bfd_reloc_dangerous:
-	      msg = "internal error: dangerous error";
+	      msg = _("internal error: dangerous error");
 	      goto common_error;
 
 	    default:
-	      msg = "internal error: unknown error";
+	      msg = _("internal error: unknown error");
 	      /* fall through */
 
 	    common_error:
@@ -586,7 +586,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	    }
 	}
 
-      /* Read the local symbols if we haven't done so already.  */
+      /* Read this BFD's symbols if we haven't done so already.  */
       if (extsyms == NULL)
 	{
 	  /* Get cached copy if it exists.  */
@@ -596,15 +596,13 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	    {
 	      /* Go get them off disk.  */
 	      extsyms = ((Elf32_External_Sym *)
-			 bfd_malloc (symtab_hdr->sh_info
-				     * sizeof (Elf32_External_Sym)));
+			 bfd_malloc (symtab_hdr->sh_size));
 	      if (extsyms == NULL)
 		goto error_return;
 	      free_extsyms = extsyms;
 	      if (bfd_seek (abfd, symtab_hdr->sh_offset, SEEK_SET) != 0
-		  || (bfd_read (extsyms, sizeof (Elf32_External_Sym),
-				symtab_hdr->sh_info, abfd)
-		      != (symtab_hdr->sh_info * sizeof (Elf32_External_Sym))))
+		  || (bfd_read (extsyms, 1, symtab_hdr->sh_size, abfd)
+		      != symtab_hdr->sh_size))
 		goto error_return;
 	    }
 	}
@@ -665,7 +663,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 
 	  /* Deal with pc-relative gunk.  */
 	  value -= (sec->output_section->vma + sec->output_offset);
-	  value -= irel->r_offset;
+	  value -= (irel->r_offset + 3);
 	  value += irel->r_addend;
 
 	  /* See if the value will fit in 16 bits, note the high value is
@@ -701,9 +699,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	      irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
 					   R_MN10200_PCREL16);
 
-	      /* The opcode got shorter too, so we have to fix the
-		 addend and offset too!  */
-	      irel->r_addend -= 1;
+	      /* The opcode got shorter too, so we have to fix the offset.  */
 	      irel->r_offset -= 1;
 
 	      /* Delete two bytes of data.  */
@@ -725,7 +721,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 
 	  /* Deal with pc-relative gunk.  */
 	  value -= (sec->output_section->vma + sec->output_offset);
-	  value -= irel->r_offset;
+	  value -= (irel->r_offset + 2);
 	  value += irel->r_addend;
 
 	  /* See if the value will fit in 8 bits, note the high value is
@@ -789,7 +785,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 
 	  /* Deal with pc-relative gunk.  */
 	  value -= (sec->output_section->vma + sec->output_offset);
-	  value -= irel->r_offset;
+	  value -= (irel->r_offset + 1);
 	  value += irel->r_addend;
 
 	  /* Do nothing if this reloc is the last byte in the section.  */
@@ -982,7 +978,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 					       R_MN10200_16);
 
 		  /* The opcode got shorter too, so we have to fix the
-		     addend and offset too!  */
+		     offset.  */
 		  irel->r_offset -= 1;
 
 		  /* Delete two bytes of data.  */
@@ -1038,7 +1034,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 					       R_MN10200_16);
 
 		  /* The opcode got shorter too, so we have to fix the
-		     addend and offset too!  */
+		     offset.  */
 		  irel->r_offset -= 1;
 
 		  /* Delete two bytes of data.  */
@@ -1250,13 +1246,13 @@ mn10200_elf_relax_delete_bytes (abfd, sec, addr, count)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf32_External_Sym *extsyms;
-  int shndx;
+  int shndx, index;
   bfd_byte *contents;
   Elf_Internal_Rela *irel, *irelend;
   Elf_Internal_Rela *irelalign;
   bfd_vma toaddr;
   Elf32_External_Sym *esym, *esymend;
-  struct elf_link_hash_entry **sym_hash, **sym_hash_end;
+  struct elf_link_hash_entry *sym_hash;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   extsyms = (Elf32_External_Sym *) symtab_hdr->contents;
@@ -1287,7 +1283,7 @@ mn10200_elf_relax_delete_bytes (abfd, sec, addr, count)
 	irel->r_offset -= count;
     }
 
-  /* Adjust all the symbols.  */
+  /* Adjust the local symbols defined in this section.  */
   esym = extsyms;
   esymend = esym + symtab_hdr->sh_info;
   for (; esym < esymend; esym++)
@@ -1305,19 +1301,23 @@ mn10200_elf_relax_delete_bytes (abfd, sec, addr, count)
 	}
     }
 
-  sym_hash = elf_sym_hashes (abfd);
-  sym_hash_end = (sym_hash
-		  + (symtab_hdr->sh_size / sizeof (Elf32_External_Sym)
-		     - symtab_hdr->sh_info));
-  for (; sym_hash < sym_hash_end; sym_hash++)
+  /* Now adjust the global symbols defined in this section.  */
+  esym = extsyms + symtab_hdr->sh_info;
+  esymend = extsyms + (symtab_hdr->sh_size / sizeof (Elf32_External_Sym));
+  for (index = 0; esym < esymend; esym++, index++)
     {
-      if (((*sym_hash)->root.type == bfd_link_hash_defined
-	   || (*sym_hash)->root.type == bfd_link_hash_defweak)
-	  && (*sym_hash)->root.u.def.section == sec
-	  && (*sym_hash)->root.u.def.value > addr
-	  && (*sym_hash)->root.u.def.value < toaddr)
+      Elf_Internal_Sym isym;
+
+      bfd_elf32_swap_symbol_in (abfd, esym, &isym);
+      sym_hash = elf_sym_hashes (abfd)[index];
+      if (isym.st_shndx == shndx
+	  && ((sym_hash)->root.type == bfd_link_hash_defined
+	      || (sym_hash)->root.type == bfd_link_hash_defweak)
+	  && (sym_hash)->root.u.def.section == sec
+	  && (sym_hash)->root.u.def.value > addr
+	  && (sym_hash)->root.u.def.value < toaddr)
 	{
-	  (*sym_hash)->root.u.def.value -= count;
+	  (sym_hash)->root.u.def.value -= count;
 	}
     }
 

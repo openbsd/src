@@ -1,5 +1,5 @@
 /* BFD support for the D10V processor
-   Copyright 1996 Free Software Foundation, Inc.
+   Copyright 1996, 1999 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -22,19 +22,50 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "sysdep.h"
 #include "libbfd.h"
 
-const bfd_arch_info_type bfd_d10v_arch = 
+static const bfd_arch_info_type d10v_ts3_info = 
 {					
-    16,	/* 16 bits in a word */		
-    16,	/* 16 bits in an address */	
-    8,	/* 8 bits in a byte */		
-    bfd_arch_d10v,
-    0,		
-    "d10v",				
-    "d10v",				
-    4, /* section alignment power */	
-    true,				
-    bfd_default_compatible, 		
-    bfd_default_scan,			
-    0,				
+  16,	/* 16 bits in a word */		
+  16,	/* 16 bits in an address */	
+  8,	/* 8 bits in a byte */		
+  bfd_arch_d10v,
+  bfd_mach_d10v_ts3,		
+  "d10v",				
+  "d10v:ts3",				
+  4, /* section alignment power */	
+  false,				
+  bfd_default_compatible, 		
+  bfd_default_scan,			
+  0,				
 };
 
+static const bfd_arch_info_type d10v_ts2_info = 
+{
+  16,	/* 16 bits in a word */		
+  16,	/* 16 bits in an address */	
+  8,	/* 8 bits in a byte */		
+  bfd_arch_d10v,
+  bfd_mach_d10v_ts2,		
+  "d10v",				
+  "d10v:ts2",				
+  4, /* section alignment power */	
+  false,				
+  bfd_default_compatible, 		
+  bfd_default_scan,			
+  &d10v_ts3_info,				
+};
+
+const bfd_arch_info_type bfd_d10v_arch = 
+{					
+  16,	/* 16 bits in a word */		
+  16,	/* 16 bits in an address */	
+  8,	/* 8 bits in a byte */		
+  bfd_arch_d10v,
+  bfd_mach_d10v,		
+  "d10v",				
+  "d10v",				
+  4, /* section alignment power */	
+  true,				
+  bfd_default_compatible, 		
+  bfd_default_scan,			
+  &d10v_ts2_info,				
+};

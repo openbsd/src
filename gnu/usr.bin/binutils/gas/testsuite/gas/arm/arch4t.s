@@ -18,4 +18,18 @@ foo:
 
 	strh	r2, bar
 	strneh	r3, [r3]
+
+	msr	CPSR_f, #2
+	msr	CPSR_c, r3
+	msr	CPSR_x, r4
+	msr	CPSR_s, r5
+	msr	CPSR_f, r6
+	msr	CPSR_all, r7
+	
+	msr	SPSR_f, #4
+	msr	SPSR_c, r8
+	msr	SPSR_x, r9
+	msr	SPSR_s, r10
+	msr	SPSR_f, r11
+	msr	SPSR_all, r12
 bar:

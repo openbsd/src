@@ -1,5 +1,5 @@
 # Source file used to test the beq macro.
-	.globl	text_label	
+	.globl	text_label	.text
 text_label:	
 	beq	$4,$5,text_label
 	beq	$4,0,text_label

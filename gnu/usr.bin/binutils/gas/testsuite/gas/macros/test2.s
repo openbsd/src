@@ -6,4 +6,4 @@
 	.endif
 	.endm
 
-	m	r1,r2,r3
+	m	foo1,foo2,foo3

@@ -1,5 +1,5 @@
 /* BFD library support routines for the H8/500 architecture.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1999 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -156,7 +156,7 @@ int bfd_default_scan_num_mach();
 
 static boolean 
 scan_mach (info, string)
-     const struct bfd_arch_info *info;
+     const struct bfd_arch_info *info ATTRIBUTE_UNUSED;
      const char *string;
 {
   if (strcmp(string,"h8/500") == 0) return true;

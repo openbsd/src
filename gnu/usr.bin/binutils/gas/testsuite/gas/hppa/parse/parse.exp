@@ -189,6 +189,7 @@ if [istarget hppa*-*-*] then {
     # Bad things happen in the PA ELF backend (others too?) if a non-default
     # section is created...
     setup_xfail hppa*-*-*elf*
+    setup_xfail hppa*w-*-*
     gas_test "ssbug.s" "" "" "Check for acceptance of non-default subspaces"
 
     # To be compatable with certain "features" of the HP compiler

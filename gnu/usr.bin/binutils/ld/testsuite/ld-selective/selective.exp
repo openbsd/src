@@ -1,0 +1,174 @@
+# Expect script for LD selective linking tests
+#   Copyright (C) 1998, 1999 Free Software Foundation
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# Written by Catherine Moore (clm@cygnus.com)
+# Make sure that constructors are handled correctly.
+
+
+# COFF based ports do not support selective linking
+if {[istarget "*-*-coff"]} {
+  return
+}
+if {[istarget "*-*-pe"]} {
+  return
+}
+
+set test1 "selective1"
+set test2 "selective2"
+set test3 "selective3"
+set test4 "selective4"
+set test5 "selective5"
+
+set cflags "-w -O2 -ffunction-sections -fdata-sections" 
+set cxxflags "-fvtable-gc -fno-exceptions -fno-rtti"
+set ldflags "--gc-sections -Bstatic"
+
+if { [which $CXX] == 0 } {
+    untested $test1
+    untested $test2
+    untested $test3
+    untested $test4
+    untested $test5
+    return
+}
+
+if { ![ld_compile "$CC $cflags" $srcdir/$subdir/1.c tmpdir/1.o]} {
+    unresolved $test1
+    return
+}
+
+if ![ld_simple_link $ld tmpdir/1.x "$ldflags tmpdir/1.o"] {
+    fail $test1
+} else {
+    if ![ld_nm $nm tmpdir/1.x] {
+	unresolved $test1
+    } else {
+	if {[info exists nm_output(dropme1)]} {
+		send_log "dropme1 == $nm_output(dropme1)\n"
+		verbose "dropme1 == $nm_output(dropme1)"
+		fail $test1
+	    } else {
+		if {[info exists nm_output(dropme2)]} {
+		    send_log "dropme2 == $nm_output(dropme2)\n"
+		    verbose "dropme2 == $nm_output(dropme2)"
+		    fail $test1
+		} else {
+		    pass $test1
+		}
+	    }
+	}
+    }
+
+if { ![ld_compile "$CC $cflags" $srcdir/$subdir/2.c tmpdir/2.o]} {
+    unresolved $test2
+    return
+}
+
+if ![ld_simple_link $ld tmpdir/2.x "$ldflags tmpdir/2.o"] {
+    fail $test2
+} else {
+    if ![ld_nm $nm tmpdir/2.x] {
+	unresolved $test2
+    } else {
+	if {[info exists nm_output(foo)] } {
+            send_log "foo == $nm_output(foo)\n"
+            verbose "foo== $nm_output(foo)"
+            fail $test2
+	} else {
+            pass $test2
+	    } 
+	 }
+     }
+
+if { ![ld_compile "$CC $cflags" $srcdir/$subdir/2.c tmpdir/2.o]} {
+    unresolved $test3
+    return
+}
+
+if ![ld_simple_link $ld tmpdir/2.x "$ldflags -u foo tmpdir/2.o"] {
+    fail $test3
+} else {
+    if ![ld_nm $nm tmpdir/2.x] {
+	unresolved $test3
+    } else {
+	if {![info exists nm_output(foo)] } {
+	    send_log "bad output from nm\n"
+	    verbose "bad output from nm"
+	    fail $test3
+	} else {
+	    if {$nm_output(foo) == 0} {
+		send_log "foo == $nm_output(foo)\n"
+		verbose "foo== $nm_output(foo)"
+		fail $test3
+	    } else {
+                pass $test3
+		}
+	 }
+     }
+}
+
+setup_xfail "v850*-*-elf"
+
+if { ![ld_compile "$CC $cflags $cxxflags" $srcdir/$subdir/3.cc tmpdir/3.o]} {
+    unresolved $test4
+    return
+}
+
+setup_xfail "v850*-*-elf"
+
+if ![ld_simple_link $ld tmpdir/3.x "$ldflags tmpdir/3.o"] {
+   fail $test4
+} else {
+    if ![ld_nm $nm tmpdir/3.x] {
+       unresolved $test4
+    } else {
+	if {[ info exists nm_output(bar__1A)]} {
+	    send_log "bar__1A== $nm_output(_bar__1A)\n"
+	    verbose "bar__1A == $nm_output(_bar__1A)"
+	    fail $test4
+	} else {
+	    pass $test4
+	}
+    }
+}
+
+if { ![ld_compile "$CC $cflags $cxxflags" $srcdir/$subdir/4.cc tmpdir/4.o]} {
+    unresolved $test5
+    return
+}
+
+if ![ld_simple_link $ld tmpdir/4.x "$ldflags tmpdir/4.o"] {
+    fail $test5
+} else {
+    if ![ld_nm $nm tmpdir/4.x] {
+	unresolved $test5
+    } else {
+	if {[info exists nm_output(foo__1B)]} { 
+            send_log "foo__1B == $nm_output(foo__1B)\n"
+            verbose "foo__1B == $nm_output(foo__1B)"
+	    fail $test5
+	} else {
+          if {[info exists nm_output(foo__1A)]} {
+	        send_log "foo__1A== $nm_output(foo__1A)\n"
+		verbose "foo__1A == $nm_output(foo__1A)"
+		fail $test5
+          } else {
+	      pass $test5
+             }
+	}
+    }
+}

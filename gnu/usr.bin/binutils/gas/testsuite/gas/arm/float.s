@@ -4,21 +4,21 @@
 	mvfeqe	f3, f5
 	mvfeqd	f4, #1.0
 	mvfs	f4, f7
-	mvfsp	f0, f1
-	mvfdm	f3, f4
-	mvfez	f7, f7
+	mvfsp	s0, s1
+	mvfdm	s3, s4
+	mvfez	s7, s7
 
 	adfe	f0, f1, #2.0
-	adfeqe	f1, f2, #0.5
-	adfsm	f3, f4, f5
+	adfeqe	f1, s2, #0.5
+	adfsm	f3, f4, s5
 	
-	sufd	f0, f0, #2.0
-	sufs	f1, f2, #10.0
-	sufneez f3, f4, f5
+	sufd	d0, f0, #2.0
+	sufs	d1, d2, #10.0
+	sufneez d3, d4, d5
 
 	rsfs	f1, f1, #0.0
 	rsfdp	f3, f0, #5.0
-	rsfled	f7, f6, f0
+	rsfled	f7, s6, f0
 
 	mufd	f0, f0, f0
 	mufez	f1, f2, #3.0
@@ -34,9 +34,9 @@
 
 	powd	f0, f2, f3
 	pows	f1, f3, #0e1e1
-	powcsez	f4, f7, #1
+	powcsez	f4, d7, #1
 
-	rpws	f7, f6, f7
+	rpws	f7, d6, f7
 	rpweqd	f0, f1, f2
 	rpwem	f2, f2, f3
 

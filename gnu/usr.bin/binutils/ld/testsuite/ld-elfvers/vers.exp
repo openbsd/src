@@ -1,5 +1,5 @@
 # Expect script for ld-version tests
-#   Copyright (C) 1997 Free Software Foundation
+#   Copyright (C) 1997, 1998, 1999 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,31 +25,24 @@ if ![isnative] then {return}
 # This test can only be run on a couple of ELF platforms.
 # Square bracket expressions seem to confuse istarget.
 # This is similar to the test that is used in ld-shared, BTW.
-if { ![istarget i386-*-sysv4*] \
-     && ![istarget i486-*-sysv4*] \
-     && ![istarget i586-*-sysv4*] \
-     && ![istarget i386-*-unixware] \
-     && ![istarget i486-*-unixware] \
-     && ![istarget i586-*-unixware] \
-     && ![istarget i386-*-elf*] \
-     && ![istarget i486-*-elf*] \
-     && ![istarget i586-*-elf*] \
-     && ![istarget i386-*-linux*] \
-     && ![istarget i486-*-linux*] \
-     && ![istarget i586-*-linux*] \
+if { ![istarget i?86-*-sysv4*] \
+     && ![istarget i?86-*-unixware] \
+     && ![istarget i?86-*-elf*] \
+     && ![istarget i?86-*-linux*] \
      && ![istarget m68k-*-linux*] \
      && ![istarget mips*-*-irix5*] \
+     && ![istarget powerpc-*-elf*] \
+     && ![istarget powerpc-*-linux*] \
+     && ![istarget powerpc-*-sysv4*] \
      && ![istarget sparc*-*-elf] \
-     && ![istarget sparc*-*-solaris2*] } {
+     && ![istarget sparc*-*-solaris2*] \
+     && ![istarget sparc*-*-linux*] \
+     && ![istarget alpha*-*-linux*] } {
     return
 }
 
-if { [istarget i386-*-linuxaout*] \
-     || [istarget i486-*-linuxaout*] \
-     || [istarget i586-*-linuxaout*] \
-     || [istarget i386-*-linuxoldld*] \
-     || [istarget i486-*-linuxoldld*] \
-     || [istarget i586-*-linuxoldld*] \
+if { [istarget i?86-*-linuxaout*] \
+     || [istarget i?86-*-linuxoldld*] \
      || [istarget m68k-*-linuxaout*] } {
     return
 }
@@ -83,9 +76,9 @@ proc test_ar { test lib object expect } {
 	return
     }
     
-    verbose -log "$nm --print-armap $tmpdir/$lib | grep \" in \" | grep \"VERS\\|bar\\|foo\" | sort > $tmpdir/nm.out"
+    verbose -log "$nm --print-armap $tmpdir/$lib | grep \" in \" | egrep \"VERS\\|bar\\|foo\" | sort > $tmpdir/nm.out"
 
-    catch "exec $nm --print-armap $tmpdir/$lib | grep \\\ in\\\  | grep VERS\\\\|bar\\\\|foo | sort > $tmpdir/nm.out" exec_output
+    catch "exec $nm --print-armap $tmpdir/$lib | grep \\\ in\\\  | egrep VERS\\\|bar\\\|foo | sort > $tmpdir/nm.out" exec_output
     if [string match "" $exec_output] then {
 	catch "exec $diff -q $tmpdir/nm.out $srcdir/$subdir/$expect" exec_output
 	set exec_output [prune_warnings $exec_output]
@@ -182,11 +175,15 @@ proc objdump_emptyverstuff { objdump object } {
     if [string match "" $exec_output] then {
 # it is normal to fail here - we have no output to compare.
 	return 1
+    } else { if { [string match "*libc*" $exec_output] } then {
+# this probably means that there is version information in libc, so we
+# can't really perform this test.
+	return 1
     } else {
 	verbose -log "$exec_output"
 	verbose -log "objdump_emptyverstuff: did not expect any output from objdump"
 	return 0
-    }
+    } }
 
 }
 
@@ -418,18 +415,37 @@ proc objdump_versionstuff { objdump object expectfile } {
     set exec_output [prune_warnings $exec_output]
     if [string match "" $exec_output] then {
 
-# now perform differences against the expected output.
-	verbose -log "$diff -q $tmpdir/objdump.out $expectfile"
-	catch "exec $diff -q $tmpdir/objdump.out $expectfile" exec_output
-	set exec_output [prune_warnings $exec_output]
-	if [string match "" $exec_output] then {
-	    return 1
-	} else {
-	    verbose -log "$exec_output"
-	    return 0
+	# It's OK if there are extra lines in the actual output; they
+	# may come from version information in libc.  We require that
+	# every line in EXPECTFILE appear in the output in order.
+
+	set f1 [open $tmpdir/objdump.out r]
+	set f2 [open $expectfile r]
+	gets $f2 l2
+	while { [gets $f1 l1] != -1 } {
+	    if { [string match $l2 $l1] } then {
+		if { [gets $f2 l2] == -1 } then {
+		    close $f1
+		    close $f2
+		    return 1
+		}
+	    }
 	}
 
-	return 1
+	# We reached the end of the output without seeing the line we
+	# expected.  This is a test failure.
+
+	close $f1
+	close $f2
+
+	verbose -log "Did not find \"$l2\""
+	set f1 [open $tmpdir/objdump.out r]
+	while { [gets $f1 l1] != -1 } {
+	    verbose -log $l1
+	}
+
+	verbose -log "$exec_output"
+	return 0
     } else {
 	verbose -log "$exec_output"
 	return 0
@@ -784,3 +800,15 @@ test_strip_vers_lib "vers14" vers1.so vers14 vers1.ver vers1.dsym
 # any errors.
 #
 build_exec "vers15" vers15.c vers15 "" vers1.so vers15.ver vers15.dsym vers15.sym
+
+#
+# Test that when we override a versioned symbol from the library this
+# symbol appears in the dynamic symbol table of the executable.
+#
+build_vers_lib "vers16a" vers16a.c vers16a "" vers16.map vers16a.ver vers16a.dsym ""
+build_exec "vers16" vers16.c vers16 "" vers16a.so "" vers16.dsym ""
+
+# Test a weak versioned symbol.
+build_vers_lib "vers17" vers17.c vers17 "" vers17.map vers17.ver vers17.dsym ""
+build_vers_lib "vers18" vers18.c vers18 vers17.so vers18.map vers18.ver vers18.dsym vers18.sym
+build_exec "vers19" vers19.c vers19 "-rpath ." vers18.so vers19.ver vers19.dsym ""

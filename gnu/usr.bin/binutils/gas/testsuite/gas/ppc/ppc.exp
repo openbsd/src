@@ -1,0 +1,21 @@
+#
+# Some PowerPC tests
+#
+
+# These tests are currently ELF specific, only because nobody has
+# converted them to look for XCOFF relocations.
+
+if { [istarget powerpc*-*-*bsd*] \
+     || [istarget powerpc*-*-elf*] \
+     || [istarget powerpc*-*-eabi*] \
+     || [istarget powerpc*-*-sysv4*] \
+     || [istarget powerpc*-*-linux*] \
+     || [istarget powerpc*-*-solaris*] \
+     || [istarget powerpc*-*-rtems*] } then {
+    run_dump_test "astest"
+    run_dump_test "astest2"
+}
+
+if { [istarget powerpc*-*-*] } then {
+   run_dump_test "simpshft"
+}

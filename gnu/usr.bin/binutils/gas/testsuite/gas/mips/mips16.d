@@ -1,5 +1,5 @@
-#objdump: -dr
-#as: -mips3
+#objdump: -dr -mmips:4000
+#as: -mips3 -mcpu=r4000
 #name: mips16
 
 # Test the mips16 instruction set.
@@ -579,13 +579,13 @@ Disassembly of section .text:
  76a:	eb54      	dsllv	\$v0,\$v1
  76c:	f000 e848 	dsrl	\$v0,0
  770:	e948      	dsrl	\$v0,1
- 772:	e848      	dsrl	\$v0,0
+ 772:	e848      	dsrl	\$v0,8
  774:	f240 e848 	dsrl	\$v0,9
  778:	f7e0 e848 	dsrl	\$v0,63
  77c:	eb56      	dsrlv	\$v0,\$v1
  77e:	f000 e853 	dsra	\$v0,0
  782:	e953      	dsra	\$v0,1
- 784:	e853      	dsra	\$v0,0
+ 784:	e853      	dsra	\$v0,8
  786:	f240 e853 	dsra	\$v0,9
  78a:	f7e0 e853 	dsra	\$v0,63
  78e:	eb57      	dsrav	\$v0,\$v1
@@ -612,13 +612,13 @@ Disassembly of section .text:
  7ca:	ea7c      	dmult	\$v0,\$v1
  7cc:	ea7d      	dmultu	\$v0,\$v1
  7ce:	ea7e      	ddiv	\$zero,\$v0,\$v1
- 7d0:	2b01      	bnez	\$v1,7d4 <insns2\+b4>
+ 7d0:	2b01      	bnez	\$v1,7d4 <insns2\+(0x|)b4>
  7d2:	e8e5      	break	7
  7d4:	ea12      	mflo	\$v0
  7d6:	6500      	nop
  7d8:	6500      	nop
  7da:	ea7f      	ddivu	\$zero,\$v0,\$v1
- 7dc:	2b01      	bnez	\$v1,7e0 <insns2\+c0>
+ 7dc:	2b01      	bnez	\$v1,7e0 <insns2\+(0x|)c0>
  7de:	e8e5      	break	7
  7e0:	ea12      	mflo	\$v0
  7e2:	6500      	nop
@@ -626,13 +626,13 @@ Disassembly of section .text:
  7e6:	ea78      	mult	\$v0,\$v1
  7e8:	ea79      	multu	\$v0,\$v1
  7ea:	ea7a      	div	\$zero,\$v0,\$v1
- 7ec:	2b01      	bnez	\$v1,7f0 <insns2\+d0>
+ 7ec:	2b01      	bnez	\$v1,7f0 <insns2\+(0x|)d0>
  7ee:	e8e5      	break	7
  7f0:	ea12      	mflo	\$v0
  7f2:	6500      	nop
  7f4:	6500      	nop
  7f6:	ea7b      	divu	\$zero,\$v0,\$v1
- 7f8:	2b01      	bnez	\$v1,7fc <insns2\+dc>
+ 7f8:	2b01      	bnez	\$v1,7fc <insns2\+(0x|)dc>
  7fa:	e8e5      	break	7
  7fc:	ea12      	mflo	\$v0
  7fe:	ea00      	jr	\$v0

@@ -15,7 +15,7 @@ DEFUN (search_list_append, (list, paths),
   do
     {
       beg = colon + 1;
-      colon = strchr (beg, ':');
+      colon = strchr (beg, PATH_SEP_CHAR);
       if (colon)
 	{
 	  len = colon - beg;

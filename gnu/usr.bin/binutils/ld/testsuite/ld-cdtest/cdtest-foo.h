@@ -11,7 +11,7 @@
 class Foo {
     static int foos;
     int i;
-    const len = FOO_MSG_LEN;
+    static const int len = FOO_MSG_LEN;
     char message[len];
 public: 
     static void init_foo ();

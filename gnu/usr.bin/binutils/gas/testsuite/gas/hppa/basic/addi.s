@@ -1,15 +1,6 @@
-	.SPACE $PRIVATE$
-	.SUBSPA $DATA$,QUAD=1,ALIGN=8,ACCESS=31
-	.SUBSPA $BSS$,QUAD=1,ALIGN=8,ACCESS=31,ZERO,SORT=82
-	.SPACE $TEXT$
-	.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=44
-	.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY
-
-	.SPACE $TEXT$
-	.SUBSPA $CODE$
-
+	.code
 	.align 4
-; Basic immediate instruction tests.  
+; Basic add immediate instruction tests.  
 ;
 ; We could/should test some of the corner cases for register and 
 ; immediate fields.  We should also check the assorted field
@@ -81,3 +72,54 @@
 	addito,vnz  123,%r5,%r6
 	addito,nsv  123,%r5,%r6
 	addito,ev  123,%r5,%r6
+
+	addi,tsv  123,%r5,%r6
+	addi,tsv,=  123,%r5,%r6
+	addi,tsv,<  123,%r5,%r6
+	addi,tsv,<=  123,%r5,%r6
+	addi,tsv,nuv  123,%r5,%r6
+	addi,tsv,znv  123,%r5,%r6
+	addi,tsv,sv  123,%r5,%r6
+	addi,tsv,od  123,%r5,%r6
+	addi,tsv,tr  123,%r5,%r6
+	addi,tsv,<>  123,%r5,%r6
+	addi,tsv,>=  123,%r5,%r6
+	addi,tsv,>  123,%r5,%r6
+	addi,tsv,uv  123,%r5,%r6
+	addi,tsv,vnz  123,%r5,%r6
+	addi,tsv,nsv  123,%r5,%r6
+	addi,tsv,ev  123,%r5,%r6
+
+	addi,tc  123,%r5,%r6
+	addi,tc,=  123,%r5,%r6
+	addi,tc,<  123,%r5,%r6
+	addi,tc,<=  123,%r5,%r6
+	addi,tc,nuv  123,%r5,%r6
+	addi,tc,znv  123,%r5,%r6
+	addi,tc,sv  123,%r5,%r6
+	addi,tc,od  123,%r5,%r6
+	addi,tc,tr  123,%r5,%r6
+	addi,tc,<>  123,%r5,%r6
+	addi,tc,>=  123,%r5,%r6
+	addi,tc,>  123,%r5,%r6
+	addi,tc,uv  123,%r5,%r6
+	addi,tc,vnz  123,%r5,%r6
+	addi,tc,nsv  123,%r5,%r6
+	addi,tc,ev  123,%r5,%r6
+
+	addi,tc,tsv  123,%r5,%r6
+	addi,tc,tsv,=  123,%r5,%r6
+	addi,tc,tsv,<  123,%r5,%r6
+	addi,tc,tsv,<=  123,%r5,%r6
+	addi,tc,tsv,nuv  123,%r5,%r6
+	addi,tc,tsv,znv  123,%r5,%r6
+	addi,tc,tsv,sv  123,%r5,%r6
+	addi,tc,tsv,od  123,%r5,%r6
+	addi,tsv,tc,tr  123,%r5,%r6
+	addi,tsv,tc,<>  123,%r5,%r6
+	addi,tsv,tc,>=  123,%r5,%r6
+	addi,tsv,tc,>  123,%r5,%r6
+	addi,tsv,tc,uv  123,%r5,%r6
+	addi,tsv,tc,vnz  123,%r5,%r6
+	addi,tsv,tc,nsv  123,%r5,%r6
+	addi,tsv,tc,ev  123,%r5,%r6

@@ -49,7 +49,18 @@ proc check_script { } {
     }
 }
 
-if ![ld_simple_link $ld tmpdir/script "-T $srcdir/$subdir/script.t tmpdir/script.o"] {
+# PE targets need to set the image base to 0 to avoid complications from nm.
+set flags ""
+if {[istarget "*-*-pe*"] \
+    || [istarget "*-*-cygwin*"] \
+    || [istarget "*-*-mingw32*"] \
+    || [istarget "*-*-winnt*"] \
+    || [istarget "*-*-nt*"] \
+    || [istarget "*-*-interix*"] } then {
+  set flags "--image-base 0"
+}
+
+if ![ld_simple_link $ld tmpdir/script "$flags -T $srcdir/$subdir/script.t tmpdir/script.o"] {
     fail $testname
 } else {
     check_script
@@ -57,7 +68,7 @@ if ![ld_simple_link $ld tmpdir/script "-T $srcdir/$subdir/script.t tmpdir/script
 
 set testname "MRI script"
 
-if ![ld_simple_link $ld tmpdir/script "-c $srcdir/$subdir/scriptm.t"] {
+if ![ld_simple_link $ld tmpdir/script "$flags -c $srcdir/$subdir/scriptm.t"] {
     fail $testname
 } else {
     check_script

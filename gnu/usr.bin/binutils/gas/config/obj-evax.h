@@ -1,5 +1,5 @@
 /* This file is obj-evax.h
-   Copyright (C) 1996 Free Software Foundation, Inc.
+   Copyright (C) 1996, 2000 Free Software Foundation, Inc.
    Contributed by Klaus Kämpf (kkaempf@progis.de) of
      proGIS Software, Aachen, Germany.
 
@@ -84,6 +84,8 @@ typedef void *object_headers;
 #define PDSC_S_M_NO_JACKET 0x20		/* high byte */
 
 #define LKP_S_K_SIZE 16
+
+#define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) (P2VAR) = 3
 
 /*
  * Local Variables:

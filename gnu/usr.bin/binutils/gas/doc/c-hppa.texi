@@ -233,7 +233,7 @@ Like @code{.string}, but appends a zero byte after copying @var{str} to object
 file.
 
 @item .subspa @var{name} [ ,@var{params} ]
-@item .nsubspa @var{name} [ ,@var{params} ]
+@itemx .nsubspa @var{name} [ ,@var{params} ]
 Similar to @code{.space}, but selects a subsection @var{name} within the
 current section.  You may only specify @var{params} when you create a
 subsection (in the first instance of @code{.subspa} for this @var{name}).

@@ -1,5 +1,5 @@
 /* BFD back-end for Mach3/532 a.out-ish binaries.
-   Copyright (C) 1990, 1991, 1992, 1994 Free Software Foundation, Inc.
+   Copyright (C) 1990, 1991, 1992, 1994, 2000 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -92,11 +92,7 @@ bfd *abfd;
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);
   
-#if CHOOSE_RELOC_SIZE
-  CHOOSE_RELOC_SIZE(abfd);
-#else
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
-#endif
   
   BFD_ASSERT (bfd_get_arch (abfd) == bfd_arch_ns32k);
   switch (bfd_get_mach (abfd))

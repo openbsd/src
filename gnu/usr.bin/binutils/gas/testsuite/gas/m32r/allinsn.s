@@ -9,7 +9,7 @@ add:
 	.text
 	.global add3
 add3:
-	add3 fp,fp,0
+	add3 fp,fp,#0
 	.text
 	.global and
 and:
@@ -17,7 +17,7 @@ and:
 	.text
 	.global and3
 and3:
-	and3 fp,fp,0
+	and3 fp,fp,#0
 	.text
 	.global or
 or:
@@ -25,7 +25,7 @@ or:
 	.text
 	.global or3
 or3:
-	or3 fp,fp,0
+	or3 fp,fp,#0
 	.text
 	.global xor
 xor:
@@ -33,11 +33,11 @@ xor:
 	.text
 	.global xor3
 xor3:
-	xor3 fp,fp,0
+	xor3 fp,fp,#0
 	.text
 	.global addi
 addi:
-	addi fp,0
+	addi fp,#0
 	.text
 	.global addv
 addv:
@@ -45,7 +45,7 @@ addv:
 	.text
 	.global addv3
 addv3:
-	addv3 fp,fp,0
+	addv3 fp,fp,#0
 	.text
 	.global addx
 addx:
@@ -153,7 +153,7 @@ cmp:
 	.text
 	.global cmpi
 cmpi:
-	cmpi fp,0
+	cmpi fp,#0
 	.text
 	.global cmpu
 cmpu:
@@ -161,7 +161,7 @@ cmpu:
 	.text
 	.global cmpui
 cmpui:
-	cmpui fp,0
+	cmpui fp,#0
 	.text
 	.global div
 div:
@@ -279,17 +279,9 @@ ld24:
 ldi8:
 	ldi fp,0
 	.text
-	.global ldi8a
-ldi8a:
-	ldi8 fp,0
-	.text
 	.global ldi16
 ldi16:
-	ldi fp,0
-	.text
-	.global ldi16a
-ldi16a:
-	ldi16 fp,0
+	ldi fp,256
 	.text
 	.global lock
 lock:
@@ -369,6 +361,7 @@ neg:
 	.text
 	.global nop
 nop:
+	nop
 	.text
 	.global not
 not:

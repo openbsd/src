@@ -1,13 +1,4 @@
-	.SPACE $PRIVATE$
-	.SUBSPA $DATA$,QUAD=1,ALIGN=8,ACCESS=31
-	.SUBSPA $BSS$,QUAD=1,ALIGN=8,ACCESS=31,ZERO,SORT=82
-	.SPACE $TEXT$
-	.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=44
-	.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY
-
-	.SPACE $TEXT$
-	.SUBSPA $CODE$
-
+	.code
 	.align 4
 ; Basic add/sh?add instruction tests.  
 ;
@@ -98,3 +89,71 @@
 	addco,vnz  %r4,%r5,%r6
 	addco,nsv  %r4,%r5,%r6
 	addco,ev  %r4,%r5,%r6
+
+	add,l  %r4,%r5,%r6
+	add,l,=  %r4,%r5,%r6
+	add,l,<  %r4,%r5,%r6
+	add,l,<=  %r4,%r5,%r6
+	add,l,nuv  %r4,%r5,%r6
+	add,l,znv  %r4,%r5,%r6
+	add,l,sv  %r4,%r5,%r6
+	add,l,od  %r4,%r5,%r6
+	add,l,tr  %r4,%r5,%r6
+	add,l,<>  %r4,%r5,%r6
+	add,l,>=  %r4,%r5,%r6
+	add,l,>  %r4,%r5,%r6
+	add,l,uv  %r4,%r5,%r6
+	add,l,vnz  %r4,%r5,%r6
+	add,l,nsv  %r4,%r5,%r6
+	add,l,ev  %r4,%r5,%r6
+
+	add,tsv  %r4,%r5,%r6
+	add,tsv,=  %r4,%r5,%r6
+	add,tsv,<  %r4,%r5,%r6
+	add,tsv,<=  %r4,%r5,%r6
+	add,tsv,nuv  %r4,%r5,%r6
+	add,tsv,znv  %r4,%r5,%r6
+	add,tsv,sv  %r4,%r5,%r6
+	add,tsv,od  %r4,%r5,%r6
+	add,tsv,tr  %r4,%r5,%r6
+	add,tsv,<>  %r4,%r5,%r6
+	add,tsv,>=  %r4,%r5,%r6
+	add,tsv,>  %r4,%r5,%r6
+	add,tsv,uv  %r4,%r5,%r6
+	add,tsv,vnz  %r4,%r5,%r6
+	add,tsv,nsv  %r4,%r5,%r6
+	add,tsv,ev  %r4,%r5,%r6
+
+	add,c  %r4,%r5,%r6
+	add,c,=  %r4,%r5,%r6
+	add,c,<  %r4,%r5,%r6
+	add,c,<=  %r4,%r5,%r6
+	add,c,nuv  %r4,%r5,%r6
+	add,c,znv  %r4,%r5,%r6
+	add,c,sv  %r4,%r5,%r6
+	add,c,od  %r4,%r5,%r6
+	add,c,tr  %r4,%r5,%r6
+	add,c,<>  %r4,%r5,%r6
+	add,c,>=  %r4,%r5,%r6
+	add,c,>  %r4,%r5,%r6
+	add,c,uv  %r4,%r5,%r6
+	add,c,vnz  %r4,%r5,%r6
+	add,c,nsv  %r4,%r5,%r6
+	add,c,ev  %r4,%r5,%r6
+
+	add,c,tsv  %r4,%r5,%r6
+	add,c,tsv,=  %r4,%r5,%r6
+	add,c,tsv,<  %r4,%r5,%r6
+	add,c,tsv,<=  %r4,%r5,%r6
+	add,c,tsv,nuv  %r4,%r5,%r6
+	add,c,tsv,znv  %r4,%r5,%r6
+	add,c,tsv,sv  %r4,%r5,%r6
+	add,c,tsv,od  %r4,%r5,%r6
+	add,tsv,c,tr  %r4,%r5,%r6
+	add,tsv,c,<>  %r4,%r5,%r6
+	add,tsv,c,>=  %r4,%r5,%r6
+	add,tsv,c,>  %r4,%r5,%r6
+	add,tsv,c,uv  %r4,%r5,%r6
+	add,tsv,c,vnz  %r4,%r5,%r6
+	add,tsv,c,nsv  %r4,%r5,%r6
+	add,tsv,c,ev  %r4,%r5,%r6

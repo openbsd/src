@@ -1,5 +1,5 @@
 /* d10v.h -- Header file for D10V opcode table
-   Copyright 1996 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998 Free Software Foundation, Inc.
    Written by Martin Hunt (hunt@cygnus.com), Cygnus Support
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -148,24 +148,37 @@ extern const struct d10v_operand d10v_operands[];
 /* @(  */
 #define OPERAND_ATPAR	(0x200)
 
-/* accumulator */
-#define OPERAND_ACC	(0x400)
+/* accumulator 0 */
+#define OPERAND_ACC0	(0x400)
 
-/* flag register */
-#define OPERAND_FLAG	(0x800)
+/* accumulator 1 */
+#define OPERAND_ACC1	(0x800)
+
+/* f0 / f1 flag register */
+#define OPERAND_FFLAG	(0x1000)
+
+/* c flag register */
+#define OPERAND_CFLAG	(0x2000)
 
 /* control register  */
-#define OPERAND_CONTROL	(0x1000)
+#define OPERAND_CONTROL	(0x4000)
 
 /* predecrement mode '@-sp'  */
-#define OPERAND_ATMINUS	(0x2000)
+#define OPERAND_ATMINUS	(0x8000)
 
 /* signed number */
-#define OPERAND_SIGNED	(0x4000)
+#define OPERAND_SIGNED	(0x10000)
 
 /* special accumulator shifts need a 4-bit number */
 /* 1 <= x <= 16 */
-#define OPERAND_SHIFT	(0x8000)
+#define OPERAND_SHIFT	(0x20000)
+
+/* general purpose register */
+#define OPERAND_GPR	(0x40000)
+
+/* special imm3 values with range restricted to -2 <= imm3 <= 3 */
+/* needed for rac/rachi */
+#define RESTRICTED_NUM3	(0x80000)
 
 /* Structure to hold information about predefined registers.  */
 struct pd_reg

@@ -1,5 +1,5 @@
 /* Disassemble h8500 instructions.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,8 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define DISASSEMBLER_TABLE
 #define DEFINE_TABLE
 
+#include "sysdep.h"
 #include "h8500-opc.h"
 #include "dis-asm.h"
+#include "opintl.h"
 
 /* Maximum length of an instruction.  */
 #define MAXLEN 8
@@ -107,16 +109,16 @@ if (0)  {
   for (opcode = h8500_table; opcode->name; opcode++)
     {
       int byte;
-      int rn;
-      int rd;
-      int rs;
-      int disp;
-      int abs;
-      int imm;
-      int pcrel;
-      int qim;
+      int rn = 0;
+      int rd = 0;
+      int rs = 0;
+      int disp = 0;
+      int abs = 0;
+      int imm = 0;
+      int pcrel = 0;
+      int qim = 0;
       int i;
-      int cr;
+      int cr = 0;
       for (byte = 0; byte < opcode->length; byte++)
 	{
 	  FETCH_DATA (info, buffer + byte + 1);
@@ -134,7 +136,8 @@ if (0)  {
 		case FP:
 		  break;
 		default:
-		  func (stream, "can't cope with insert %d\n",
+		  /* xgettext:c-format */
+		  func (stream, _("can't cope with insert %d\n"),
 			opcode->bytes[byte].insert);
 		  break;
 		case RN:
@@ -338,7 +341,8 @@ if (0)  {
     }
 
   /* Couldn't understand anything */
-  func (stream, "%02x\t\t*unknown*", buffer[0]);
+  /* xgettext:c-format */
+  func (stream, _("%02x\t\t*unknown*"), buffer[0]);
   return 1;
 
 }

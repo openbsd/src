@@ -1,6 +1,6 @@
 #include "cg_arcs.h"
 #include "call_graph.h"
-#include "core.h"
+#include "corefile.h"
 #include "gmon_io.h"
 #include "gmon_out.h"
 #include "symtab.h"
@@ -8,13 +8,32 @@
 
 extern void
 DEFUN (cg_tally, (from_pc, self_pc, count),
-       bfd_vma from_pc AND bfd_vma self_pc AND int count)
+       bfd_vma from_pc AND bfd_vma self_pc AND unsigned long count)
 {
   Sym *parent;
   Sym *child;
 
   parent = sym_lookup (&symtab, from_pc);
   child = sym_lookup (&symtab, self_pc);
+
+  if (child == NULL || parent == NULL)
+    return;
+
+  /* If we're doing line-by-line profiling, both the parent and the
+     child will probably point to line symbols instead of function
+     symbols.  For the parent this is fine, since this identifies the
+     line number in the calling routing, but the child should always
+     point to a function entry point, so we back up in the symbol
+     table until we find it.
+   
+     For normal profiling, is_func will be set on all symbols, so this
+     code will do nothing.  */
+
+  while (child >= symtab.base && ! child->is_func)
+    --child;
+
+  if (child < symtab.base)
+    return;
 
   /*
    * Keep arc if it is on INCL_ARCS table or if the INCL_ARCS table
@@ -26,7 +45,7 @@ DEFUN (cg_tally, (from_pc, self_pc, count),
     {
       child->ncalls += count;
       DBG (TALLYDEBUG,
-	   printf ("[cg_tally] arc from %s to %s traversed %d times\n",
+	   printf (_("[cg_tally] arc from %s to %s traversed %lu times\n"),
 		   parent->name, child->name, count));
       arc_add (parent, child, count);
     }
@@ -44,11 +63,11 @@ DEFUN (cg_read_rec, (ifp, filename), FILE * ifp AND CONST char *filename)
 {
   bfd_vma from_pc, self_pc;
   struct gmon_cg_arc_record arc;
-  int count;
+  unsigned long count;
 
   if (fread (&arc, sizeof (arc), 1, ifp) != 1)
     {
-      fprintf (stderr, "%s: %s: unexpected end of file\n",
+      fprintf (stderr, _("%s: %s: unexpected end of file\n"),
 	       whoami, filename);
       done (1);
     }
@@ -56,8 +75,8 @@ DEFUN (cg_read_rec, (ifp, filename), FILE * ifp AND CONST char *filename)
   self_pc = get_vma (core_bfd, (bfd_byte *) arc.self_pc);
   count = bfd_get_32 (core_bfd, (bfd_byte *) arc.count);
   DBG (SAMPLEDEBUG,
-       printf ("[cg_read_rec] frompc 0x%lx selfpc 0x%lx count %d\n",
-	       from_pc, self_pc, count));
+       printf ("[cg_read_rec] frompc 0x%lx selfpc 0x%lx count %lu\n",
+	       (unsigned long) from_pc, (unsigned long) self_pc, count));
   /* add this arc: */
   cg_tally (from_pc, self_pc, count);
 }
@@ -90,8 +109,9 @@ DEFUN (cg_write_arcs, (ofp, filename), FILE * ofp AND const char *filename)
 	      done (1);
 	    }
 	  DBG (SAMPLEDEBUG,
-	     printf ("[cg_write_arcs] frompc 0x%lx selfpc 0x%lx count %d\n",
-		     arc->parent->addr, arc->child->addr, arc->count));
+	     printf ("[cg_write_arcs] frompc 0x%lx selfpc 0x%lx count %lu\n",
+		     (unsigned long) arc->parent->addr,
+		     (unsigned long) arc->child->addr, arc->count));
 	}
     }
 }

@@ -4,11 +4,17 @@
  * the actual symbol is exported.  This is built both with and without
  * -export-dynamic.
  */
-int bar()
+#include <stdio.h>
+
+extern int foo ();
+
+int
+bar()
 {
 	return 3;
 }
 
+int
 new_foo()
 {
 	return 1000+bar();
@@ -17,7 +23,9 @@ new_foo()
 
 __asm__(".symver new_foo,foo@@VERS_2.0");
 
+int
 main()
 {
   printf("%d\n", foo());
+  return 0;
 }

@@ -18,30 +18,29 @@
  */
 #include "gprof.h"
 #include "cg_arcs.h"
-#include "core.h"
+#include "corefile.h"
 #include "hist.h"
 #include "symtab.h"
 
 
 int
-DEFUN (iscall, (ip), unsigned char *ip)
+DEFUN (i386_iscall, (ip), unsigned char *ip)
 {
-  if (*ip == 0xeb || *ip == 0x9a)
+  if (*ip == 0xe8)
     return 1;
   return 0;
 }
 
 
 void
-find_call (parent, p_lowpc, p_highpc)
+i386_find_call (parent, p_lowpc, p_highpc)
      Sym *parent;
      bfd_vma p_lowpc;
      bfd_vma p_highpc;
 {
   unsigned char *instructp;
-  long length;
   Sym *child;
-  bfd_vma destpc;
+  bfd_vma destpc, delta;
 
   if (core_text_space == 0)
     {
@@ -56,55 +55,52 @@ find_call (parent, p_lowpc, p_highpc)
       p_highpc = s_highpc;
     }
   DBG (CALLDEBUG, printf ("[findcall] %s: 0x%lx to 0x%lx\n",
-			  parent->name, p_lowpc, p_highpc));
-  for (instructp = (unsigned char *) core_text_space + p_lowpc;
-       instructp < (unsigned char *) core_text_space + p_highpc;
-       instructp += length)
+			  parent->name, (unsigned long) p_lowpc,
+			  (unsigned long) p_highpc));
+
+  delta = (bfd_vma) core_text_space - core_text_sect->vma;
+
+  for (instructp = (unsigned char *) (p_lowpc + delta);
+       instructp < (unsigned char *) (p_highpc + delta);
+       instructp ++)
     {
-      length = 1;
-      if (iscall (instructp))
+      if (i386_iscall (instructp))
 	{
 	  DBG (CALLDEBUG,
-	       printf ("[findcall]\t0x%x:callf",
-		       instructp - (unsigned char *) core_text_space));
-	  length = 4;
+	       printf ("[findcall]\t0x%lx:call",
+		       (unsigned long) (instructp - (unsigned char *) delta)));
 	  /*
 	   *  regular pc relative addressing
 	   *    check that this is the address of 
 	   *    a function.
 	   */
-	  destpc = ((bfd_vma) instructp + 5 - (bfd_vma) core_text_space);
+
+	  destpc = ((bfd_vma) bfd_get_32 (core_bfd, instructp + 1)
+		    + (bfd_vma) instructp - (bfd_vma) delta + 5);
 	  if (destpc >= s_lowpc && destpc <= s_highpc)
 	    {
 	      child = sym_lookup (&symtab, destpc);
-	      DBG (CALLDEBUG,
-		   printf ("[findcall]\tdestpc 0x%lx", destpc);
-		   printf (" child->name %s", child->name);
-		   printf (" child->addr 0x%lx\n", child->addr);
-		);
-	      if (child->addr == destpc)
+	      if (child && child->addr == destpc)
 		{
 		  /*
 		   *      a hit
 		   */
-		  arc_add (parent, child, (long) 0);
-		  length += 4;	/* constant lengths */
+		  DBG (CALLDEBUG,
+		       printf ("\tdestpc 0x%lx (%s)\n",
+			       (unsigned long) destpc, child->name));
+		  arc_add (parent, child, (unsigned long) 0);
+		  instructp += 4;	/* call is a 5 byte instruction */
 		  continue;
 		}
-	      goto botched;
 	    }
 	  /*
 	   *  else:
-	   *    it looked like a callf,
-	   *    but it wasn't to anywhere.
+	   *    it looked like a callf, but it:
+	   *      a) wasn't actually a callf, or
+	   *      b) didn't point to a known function in the symtab, or
+	   *      c) something funny is going on.
 	   */
-	botched:
-	  /*
-	   *  something funny going on.
-	   */
-	  DBG (CALLDEBUG, printf ("[findcall]\tbut it's a botch\n"));
-	  length = 1;
-	  continue;
+	  DBG (CALLDEBUG, printf ("\tbut it's a botch\n"));
 	}
     }
 }

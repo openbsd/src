@@ -20,16 +20,24 @@
 # This file was written by Rob Savoye <rob@cygnus.com>
 # and rewritten by Ian Lance Taylor <ian@cygnus.com>
 
-if {[which $SIZE] == 0} then {
-    perror "$SIZE does not exist"
-    return
+if ![is_remote host] {
+    if {[which $SIZE] == 0} then {
+	perror "$SIZE does not exist"
+	return
+    }
 }
 
 send_user "Version [binutil_version $SIZE]"
 
 
-if {![binutils_assemble $AS $srcdir/$subdir/bintest.s tmpdir/bintest.o]} then {
+if {![binutils_assemble $srcdir/$subdir/bintest.s tmpdir/bintest.o]} then {
     return
+}
+
+if [is_remote host] {
+    set testfile [remote_download host tmpdir/bintest.o]
+} else {
+    set testfile tmpdir/bintest.o
 }
 
 set dec "\[0-9\]+"
@@ -37,9 +45,9 @@ set hex "\[0-9a-fA-F\]+"
 
 # Test size with no arguments
 
-set got [binutils_run $SIZE "$SIZEFLAGS tmpdir/bintest.o"]
+set got [binutils_run $SIZE "$SIZEFLAGS $testfile"]
 
-set want "($dec)\[ 	\]+($dec)\[ 	\]+($dec)\[ 	\]+($dec)\[ 	\]+($hex)\[ 	\]+tmpdir/bintest.o"
+set want "($dec)\[ 	\]+($dec)\[ 	\]+($dec)\[ 	\]+($dec)\[ 	\]+($hex)\[ 	\]+${testfile}"
 
 if ![regexp $want $got all text data bss dtot hextot] then {
     fail "size (no arguments)"
@@ -53,9 +61,9 @@ if ![regexp $want $got all text data bss dtot hextot] then {
 
 # Test size -A
 
-set got [binutils_run $SIZE "$SIZEFLAGS -A tmpdir/bintest.o"]
+set got [binutils_run $SIZE "$SIZEFLAGS -A ${testfile}"]
 
-set want "tmpdir/bintest.o.*(text|TEXT)\[^\n\r\]*\[ 	\]($dec)\[ 	\]+$dec.*(data|DATA)\[^\n\r\]*\[ 	\]($dec)\[ 	\]+$dec"
+set want "${testfile}.*(text|TEXT)\[^\n\r\]*\[ 	\]($dec)\[ 	\]+$dec.*(\\.data|DATA)\[^\n\r\]*\[ 	\]($dec)\[ 	\]+$dec"
 
 if ![regexp $want $got all textname textsize dataname datasize] then {
     fail "size -A"

@@ -1,5 +1,6 @@
 /* BFD library support routines for architectures.
-   Copyright (C) 1990, 91, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 97, 1998
+   Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -27,13 +28,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 static const bfd_arch_info_type arch_info_struct[] =
 { 
-  N(68008,"m68k:68008",false, &arch_info_struct[1]),
-  N(68010,"m68k:68010",false, &arch_info_struct[2]),
-  N(68020,"m68k:68020",true, &arch_info_struct[3]),
-  N(68030,"m68k:68030",false, &arch_info_struct[4]),
-  N(68040,"m68k:68040",false, &arch_info_struct[5]),
-  N(68070,"m68k:68070",false, 0),
+  N(bfd_mach_m68000, "m68k:68000", false, &arch_info_struct[1]),
+  N(bfd_mach_m68008, "m68k:68008", false, &arch_info_struct[2]),
+  N(bfd_mach_m68010, "m68k:68010", false, &arch_info_struct[3]),
+  N(bfd_mach_m68020, "m68k:68020", false, &arch_info_struct[4]),
+  N(bfd_mach_m68030, "m68k:68030", false, &arch_info_struct[5]),
+  N(bfd_mach_m68040, "m68k:68040", false, &arch_info_struct[6]),
+  N(bfd_mach_cpu32,  "m68k:cpu32", false, &arch_info_struct[7]),
+  N(bfd_mach_m68060, "m68k:68060", false, 0),
 };
 
 const bfd_arch_info_type bfd_m68k_arch =
-  N(68000,"m68k:68000",false, &arch_info_struct[0]);
+  N(0, "m68k", true, &arch_info_struct[0]);

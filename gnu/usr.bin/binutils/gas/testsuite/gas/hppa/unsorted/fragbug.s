@@ -1,3 +1,2 @@
-	.SPACE $TEXT$	
-	.SUBSPA $CODE$	
+	.code
 	nop			

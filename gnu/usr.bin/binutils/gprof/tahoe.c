@@ -17,7 +17,29 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #include "gprof.h"
-#include "time_host.h"
+#include "cg_arcs.h"
+#include "corefile.h"
+#include "hist.h"
+#include "symtab.h"
+
+    /*
+     *        opcode of the `callf' instruction
+     */
+#define	CALLF	0xfe
+
+    /*
+     *        register for pc relative addressing
+     */
+#define	PC	0xf
+
+enum tahoe_opermodes
+  {
+    literal, indexed, reg, regdef, autodec, autoinc, autoincdef,
+    bytedisp, bytedispdef, worddisp, worddispdef, longdisp, longdispdef,
+    immediate, absolute, byterel, bytereldef, wordrel, wordreldef,
+    longrel, longreldef
+  };
+typedef enum tahoe_opermodes tahoe_operandenum;
 
 /*
  * A symbol to be the child of indirect callf:
@@ -25,8 +47,8 @@
 Sym indirectchild;
 
 
-operandenum
-operandmode (modep)
+tahoe_operandenum
+tahoe_operandmode (modep)
      unsigned char *modep;
 {
   long usesreg = ((long) *modep) & 0xf;
@@ -64,11 +86,12 @@ operandmode (modep)
       return usesreg != PC ? longdispdef : longreldef;
     }
   /* NOTREACHED */
+  abort ();
 }
 
 char *
-operandname (mode)
-     operandenum mode;
+tahoe_operandname (mode)
+     tahoe_operandenum mode;
 {
 
   switch (mode)
@@ -117,14 +140,15 @@ operandname (mode)
       return "long relative deferred";
     }
   /* NOTREACHED */
+  abort ();
 }
 
 long
-operandlength (modep)
+tahoe_operandlength (modep)
      unsigned char *modep;
 {
 
-  switch (operandmode (modep))
+  switch (tahoe_operandmode (modep))
     {
     case literal:
     case reg:
@@ -151,16 +175,17 @@ operandlength (modep)
     case longreldef:
       return 5;
     case indexed:
-      return 1 + operandlength (modep + 1);
+      return 1 + tahoe_operandlength (modep + 1);
     }
   /* NOTREACHED */
+  abort ();
 }
 
 bfd_vma
-reladdr (modep)
+tahoe_reladdr (modep)
      char *modep;
 {
-  operandenum mode = operandmode (modep);
+  tahoe_operandenum mode = tahoe_operandmode (modep);
   char *cp;
   short *sp;
   long *lp;
@@ -177,17 +202,18 @@ reladdr (modep)
     case byterel:
       return (bfd_vma) (cp + sizeof *cp + *cp);
     case wordrel:
-      for (i = 0; i < sizeof *sp; i++)
+      for (i = 0; (size_t) i < sizeof *sp; i++)
 	value = (value << 8) + (cp[i] & 0xff);
       return (bfd_vma) (cp + sizeof *sp + value);
     case longrel:
-      for (i = 0; i < sizeof *lp; i++)
+      for (i = 0; (size_t) i < sizeof *lp; i++)
 	value = (value << 8) + (cp[i] & 0xff);
       return (bfd_vma) (cp + sizeof *lp + value);
     }
 }
 
-find_call (parent, p_lowpc, p_highpc)
+void
+tahoe_find_call (parent, p_lowpc, p_highpc)
      Sym *parent;
      bfd_vma p_lowpc;
      bfd_vma p_highpc;
@@ -195,8 +221,8 @@ find_call (parent, p_lowpc, p_highpc)
   unsigned char *instructp;
   long length;
   Sym *child;
-  operandenum mode;
-  operandenum firstmode;
+  tahoe_operandenum mode;
+  tahoe_operandenum firstmode;
   bfd_vma destpc;
   static bool inited = FALSE;
 
@@ -208,7 +234,7 @@ find_call (parent, p_lowpc, p_highpc)
       indirectchild.cg.cyc.head = &indirectchild;
     }
 
-  if (textspace == 0)
+  if (core_text_space == 0)
     {
       return;
     }
@@ -220,10 +246,11 @@ find_call (parent, p_lowpc, p_highpc)
     {
       p_highpc = s_highpc;
     }
-  DBG (CALLDEBUG, printf ("[findcall] %s: 0x%x to 0x%x\n",
-			  parent->name, p_lowpc, p_highpc));
-  for (instructp = textspace + p_lowpc;
-       instructp < textspace + p_highpc;
+  DBG (CALLDEBUG, printf ("[findcall] %s: 0x%lx to 0x%lx\n",
+			  parent->name, (unsigned long) p_lowpc,
+			  (unsigned long) p_highpc));
+  for (instructp = (unsigned char *) core_text_space + p_lowpc;
+       instructp < (unsigned char *) core_text_space + p_highpc;
        instructp += length)
     {
       length = 1;
@@ -233,9 +260,11 @@ find_call (parent, p_lowpc, p_highpc)
 	   *    maybe a callf, better check it out.
 	   *      skip the count of the number of arguments.
 	   */
-	  DBG (CALLDEBUG, printf ("[findcall]\t0x%x:callf",
-				  instructp - textspace));
-	  firstmode = operandmode (instructp + length);
+	  DBG (CALLDEBUG, printf ("[findcall]\t0x%lx:callf",
+				  ((unsigned long)
+				   (instructp
+				    - (unsigned char *) core_text_space))));
+	  firstmode = tahoe_operandmode (instructp + length);
 	  switch (firstmode)
 	    {
 	    case literal:
@@ -244,11 +273,11 @@ find_call (parent, p_lowpc, p_highpc)
 	    default:
 	      goto botched;
 	    }
-	  length += operandlength (instructp + length);
-	  mode = operandmode (instructp + length);
+	  length += tahoe_operandlength (instructp + length);
+	  mode = tahoe_operandmode (instructp + length);
 	  DBG (CALLDEBUG,
-	       printf ("\tfirst operand is %s", operandname (firstmode));
-	       printf ("\tsecond operand is %s\n", operandname (mode));
+	       printf ("\tfirst operand is %s", tahoe_operandname (firstmode));
+	       printf ("\tsecond operand is %s\n", tahoe_operandname (mode));
 	    );
 	  switch (mode)
 	    {
@@ -267,8 +296,8 @@ find_call (parent, p_lowpc, p_highpc)
 	       *      [are there others that we miss?,
 	       *       e.g. arrays of pointers to functions???]
 	       */
-	      arc_add (parent, &indirectchild, (long) 0);
-	      length += operandlength (instructp + length);
+	      arc_add (parent, &indirectchild, (unsigned long) 0);
+	      length += tahoe_operandlength (instructp + length);
 	      continue;
 	    case byterel:
 	    case wordrel:
@@ -278,23 +307,25 @@ find_call (parent, p_lowpc, p_highpc)
 	       *      check that this is the address of 
 	       *      a function.
 	       */
-	      destpc = reladdr (instructp + length)
-		- (bfd_vma) textspace;
+	      destpc = tahoe_reladdr (instructp + length)
+		- (bfd_vma) core_text_space;
 	      if (destpc >= s_lowpc && destpc <= s_highpc)
 		{
-		  child = sym_lookup (destpc);
+		  child = sym_lookup (&symtab, destpc);
 		  DBG (CALLDEBUG,
-		       printf ("[findcall]\tdestpc 0x%x", destpc);
+		       printf ("[findcall]\tdestpc 0x%lx",
+			       (unsigned long) destpc);
 		       printf (" child->name %s", child->name);
-		       printf (" child->addr 0x%x\n", child->addr);
+		       printf (" child->addr 0x%lx\n",
+			       (unsigned long) child->addr);
 		    );
 		  if (child->addr == destpc)
 		    {
 		      /*
 		       *    a hit
 		       */
-		      arc_add (parent, child, (long) 0);
-		      length += operandlength (instructp + length);
+		      arc_add (parent, child, (unsigned long) 0);
+		      length += tahoe_operandlength (instructp + length);
 		      continue;
 		    }
 		  goto botched;

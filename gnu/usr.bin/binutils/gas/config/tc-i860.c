@@ -1,5 +1,5 @@
 /* tc-i860.c -- Assemble for the I860
-   Copyright (C) 1989, 1992, 1993 Free Software Foundation, Inc.
+   Copyright (C) 1989, 92, 93, 94, 95, 98, 1999 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -13,9 +13,9 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License along
+   with GAS; see the file COPYING.  If not, write to the Free Software
+   Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "as.h"
 
@@ -26,8 +26,6 @@ void md_number_to_chars ();
 void md_assemble ();
 char *md_atof ();
 void md_convert_frag ();
-void md_create_short_jump ();
-void md_create_long_jump ();
 int md_estimate_size_before_relax ();
 void md_number_to_imm ();
 void md_number_to_disp ();
@@ -54,9 +52,6 @@ const pseudo_typeS
   {"atmp", s_atmp, 4},
   {NULL, 0, 0},
 };
-
-int md_short_jump_size = 4;
-int md_long_jump_size = 4;
 
 /* This array holds the chars that always start a comment.  If the
    pre-processor is disabled, these aren't very useful */
@@ -159,11 +154,11 @@ s_atmp ()
       if (temp >= 0 && temp <= 31)
 	atmp = temp;
       else
-	as_bad ("Unknown temporary pseudo register");
+	as_bad (_("Unknown temporary pseudo register"));
     }
   else
     {
-      as_bad ("Unknown temporary pseudo register");
+      as_bad (_("Unknown temporary pseudo register"));
     }
   demand_empty_rest_of_line ();
 }
@@ -185,7 +180,7 @@ md_begin ()
       retval = hash_insert (op_hash, name, &i860_opcodes[i]);
       if (retval != NULL)
 	{
-	  fprintf (stderr, "internal error: can't hash `%s': %s\n",
+	  fprintf (stderr, _("internal error: can't hash `%s': %s\n"),
 		   i860_opcodes[i].name, retval);
 	  lose = 1;
 	}
@@ -193,7 +188,7 @@ md_begin ()
 	{
 	  if (i860_opcodes[i].match & i860_opcodes[i].lose)
 	    {
-	      fprintf (stderr, "internal error: losing opcode: `%s' \"%s\"\n",
+	      fprintf (stderr, _("internal error: losing opcode: `%s' \"%s\"\n"),
 		       i860_opcodes[i].name, i860_opcodes[i].args);
 	      lose = 1;
 	    }
@@ -204,7 +199,7 @@ md_begin ()
     }
 
   if (lose)
-    as_fatal ("Broken assembler.  No assembly attempted.");
+    as_fatal (_("Broken assembler.  No assembly attempted."));
 
   for (i = '0'; i < '8'; ++i)
     octal[i] = 1;
@@ -337,15 +332,15 @@ md_assemble (str)
 	  break;
 
 	default:
-	  as_fatal ("failed sanity check.");
+	  as_fatal (_("failed sanity check."));
 	}
 
       the_insn = pseudo[0];
       /* check for expanded opcode after branch or in dual */
       if (no_opcodes > 1 && last_expand == 1)
-	as_warn ("Expanded opcode after delayed branch: `%s'", str);
+	as_warn (_("Expanded opcode after delayed branch: `%s'"), str);
       if (no_opcodes > 1 && dual_mode != DUAL_OFF)
-	as_warn ("Expanded opcode in dual mode: `%s'", str);
+	as_warn (_("Expanded opcode in dual mode: `%s'"), str);
     }
 
   i = 0;
@@ -409,7 +404,7 @@ i860_ip (str)
       break;
 
     default:
-      as_fatal ("Unknown opcode: `%s'", str);
+      as_fatal (_("Unknown opcode: `%s'"), str);
     }
 
   if (strncmp (str, "d.", 2) == 0)
@@ -425,7 +420,7 @@ i860_ip (str)
     {
       if (dual_mode == DUAL_DDOT || dual_mode == DUAL_ONDDOT)
 	str -= 2;
-      as_bad ("Unknown opcode: `%s'", str);
+      as_bad (_("Unknown opcode: `%s'"), str);
       return;
     }
   if (comma)
@@ -582,7 +577,7 @@ i860_ip (str)
 		      if (dual_mode == DUAL_ONDDOT)
 			dual_mode = DUAL_ON;
 		      if ((opcode & (1 << 10)) && (mask == ((opcode >> 11) & 0x1f)))
-			as_warn ("Fsr1 equals fdest with Pipelining");
+			as_warn (_("Fsr1 equals fdest with Pipelining"));
 		      continue;
 		    }
 		}
@@ -633,7 +628,7 @@ i860_ip (str)
 		{
 		  s = expr_end;
 		  if (the_insn.exp.X_add_number & ~0x1f)
-		    as_bad ("5-bit immediate too large");
+		    as_bad (_("5-bit immediate too large"));
 		  opcode |= (the_insn.exp.X_add_number & 0x1f) << 11;
 		  memset (&the_insn, '\0', sizeof (the_insn));
 		  the_insn.reloc = NO_RELOC;
@@ -710,7 +705,7 @@ i860_ip (str)
 	      break;
 
 	    default:
-	      as_fatal ("failed sanity check.");
+	      as_fatal (_("failed sanity check."));
 	    }
 	  break;
 	}
@@ -727,7 +722,7 @@ i860_ip (str)
 	    }
 	  else
 	    {
-	      as_bad ("Illegal operands");
+	      as_bad (_("Illegal operands"));
 	      return;
 	    }
 	}
@@ -751,7 +746,7 @@ getExpression (str)
       && seg != undefined_section
       && ! SEG_NORMAL (seg))
     {
-      the_insn.error = "bad segment";
+      the_insn.error = _("bad segment");
       expr_end = input_line_pointer;
       input_line_pointer = save_in;
       return 1;
@@ -815,7 +810,7 @@ md_atof (type, litP, sizeP)
 
     default:
       *sizeP = 0;
-      return "Bad call to MD_ATOF()";
+      return _("Bad call to MD_ATOF()");
     }
   t = atof_ieee (input_line_pointer, type, words);
   if (t)
@@ -880,11 +875,11 @@ md_number_to_imm (buf, val, n, fixP)
 
     case BRADDR:		/* br,call,bc,bc.t,bnc,bnc.t w/26-bit immediate */
       if (fixP->fx_pcrel != 1)
-	as_bad ("26-bit branch w/o pc relative set: 0x%08x", val);
+	as_bad (_("26-bit branch w/o pc relative set: 0x%08x"), val);
       val >>= 2;		/* align pcrel offset, see manual */
 
       if (val >= (1 << 25) || val < -(1 << 25))	/* check for overflow */
-	as_bad ("26-bit branch offset overflow: 0x%08x", val);
+	as_bad (_("26-bit branch offset overflow: 0x%08x"), val);
       buf[0] = (buf[0] & 0xfc) | ((val >> 24) & 0x3);
       buf[1] = val >> 16;
       buf[2] = val >> 8;
@@ -893,12 +888,12 @@ md_number_to_imm (buf, val, n, fixP)
 
     case SPLIT2:		/* 16 bit immediate, 4-byte aligned */
       if (val & 0x3)
-	as_bad ("16-bit immediate 4-byte alignment error: 0x%08x", val);
+	as_bad (_("16-bit immediate 4-byte alignment error: 0x%08x"), val);
       val &= ~0x3;		/* 4-byte align value */
       /*FALLTHROUGH*/
     case SPLIT1:		/* 16 bit immediate, 2-byte aligned */
       if (val & 0x1)
-	as_bad ("16-bit immediate 2-byte alignment error: 0x%08x", val);
+	as_bad (_("16-bit immediate 2-byte alignment error: 0x%08x"), val);
       val &= ~0x1;		/* 2-byte align value */
       /*FALLTHROUGH*/
     case SPLIT0:		/* st,bla,bte,btne w/16-bit immediate */
@@ -906,7 +901,7 @@ md_number_to_imm (buf, val, n, fixP)
 	val >>= 2;		/* align pcrel offset, see manual */
       /* check for bounds */
       if (highlow != PAIR && (val >= (1 << 16) || val < -(1 << 15)))
-	as_bad ("16-bit branch offset overflow: 0x%08x", val);
+	as_bad (_("16-bit branch offset overflow: 0x%08x"), val);
       buf[1] = (buf[1] & ~0x1f) | ((val >> 11) & 0x1f);
       buf[2] = (buf[2] & ~0x7) | ((val >> 8) & 0x7);
       buf[3] |= val;		/* perserve bottom opcode bits */
@@ -914,48 +909,37 @@ md_number_to_imm (buf, val, n, fixP)
 
     case LOW4:			/* fld,pfld,pst,flush 16-byte aligned */
       if (val & 0xf)
-	as_bad ("16-bit immediate 16-byte alignment error: 0x%08x", val);
+	as_bad (_("16-bit immediate 16-byte alignment error: 0x%08x"), val);
       val &= ~0xf;		/* 16-byte align value */
       /*FALLTHROUGH*/
     case LOW3:			/* fld,pfld,pst,flush 8-byte aligned */
       if (val & 0x7)
-	as_bad ("16-bit immediate 8-byte alignment error: 0x%08x", val);
+	as_bad (_("16-bit immediate 8-byte alignment error: 0x%08x"), val);
       val &= ~0x7;		/* 8-byte align value */
       /*FALLTHROUGH*/
     case LOW2:			/* 16 bit immediate, 4-byte aligned */
       if (val & 0x3)
-	as_bad ("16-bit immediate 4-byte alignment error: 0x%08x", val);
+	as_bad (_("16-bit immediate 4-byte alignment error: 0x%08x"), val);
       val &= ~0x3;		/* 4-byte align value */
       /*FALLTHROUGH*/
     case LOW1:			/* 16 bit immediate, 2-byte aligned */
       if (val & 0x1)
-	as_bad ("16-bit immediate 2-byte alignment error: 0x%08x", val);
+	as_bad (_("16-bit immediate 2-byte alignment error: 0x%08x"), val);
       val &= ~0x1;		/* 2-byte align value */
       /*FALLTHROUGH*/
     case LOW0:			/* 16 bit immediate, byte aligned */
       /* check for bounds */
       if (highlow != PAIR && (val >= (1 << 16) || val < -(1 << 15)))
-	as_bad ("16-bit immediate overflow: 0x%08x", val);
+	as_bad (_("16-bit immediate overflow: 0x%08x"), val);
       buf[2] = val >> 8;
       buf[3] |= val;		/* perserve bottom opcode bits */
       break;
 
     case NO_RELOC:
     default:
-      as_bad ("bad relocation type: 0x%02x", reloc);
+      as_bad (_("bad relocation type: 0x%02x"), reloc);
       break;
     }
-}
-
-/* should never be called for i860 */
-void
-md_create_short_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr, to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  as_fatal ("i860_create_short_jmp\n");
 }
 
 /* should never be called for i860 */
@@ -964,7 +948,7 @@ md_number_to_disp (buf, val, n)
      char *buf;
      long val;
 {
-  as_fatal ("md_number_to_disp\n");
+  as_fatal (_("md_number_to_disp\n"));
 }
 
 /* should never be called for i860 */
@@ -974,7 +958,7 @@ md_number_to_field (buf, val, fix)
      long val;
      void *fix;
 {
-  as_fatal ("i860_number_to_field\n");
+  as_fatal (_("i860_number_to_field\n"));
 }
 
 /* the bit-field entries in the relocation_info struct plays hell
@@ -1014,18 +998,7 @@ md_convert_frag (headers, seg, fragP)
      segT seg;
      register fragS *fragP;
 {
-  as_fatal ("i860_convert_frag\n");
-}
-
-/* should never be called for i860 */
-void
-md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr, to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  as_fatal ("i860_create_long_jump\n");
+  as_fatal (_("i860_convert_frag\n"));
 }
 
 /* should never be called for i860 */
@@ -1034,7 +1007,7 @@ md_estimate_size_before_relax (fragP, segtype)
      register fragS *fragP;
      segT segtype;
 {
-  as_fatal ("i860_estimate_size_before_relax\n");
+  as_fatal (_("i860_estimate_size_before_relax\n"));
 }
 
 /* for debugging only, must match enum reloc_type */
@@ -1145,9 +1118,9 @@ emit_machine_reloc (fixP, segment_address_in_file)
 	      ri.r_extern = 0;
 	      ri.r_symbolnum = S_GET_TYPE (symbolP);
 	    }
-	  if (symbolP && symbolP->sy_frag)
+	  if (symbolP && symbol_get_frag (symbolP))
 	    {
-	      ri.r_addend = symbolP->sy_frag->fr_address;
+	      ri.r_addend = symbol_get_frag (symbolP)->fr_address;
 	    }
 	  ri.r_type = fixP->fx_r_type;
 	  if (fixP->fx_pcrel)
@@ -1211,9 +1184,9 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
 	      | ((r_extern << 6) & 0x40)
 	      | (fixP->fx_r_type & 0x3F));
 
-  if (fixP->fx_addsy->sy_frag)
+  if (symbol_get_frag (fixP->fx_addsy))
     {
-      r_addend = fixP->fx_addsy->sy_frag->fr_address;
+      r_addend = symbol_get_frag (fixP->fx_addsy)->fr_address;
     }
 
   if (fixP->fx_pcrel)

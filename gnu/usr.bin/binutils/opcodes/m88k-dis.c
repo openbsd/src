@@ -1,5 +1,5 @@
 /* Print instructions for the Motorola 88000, for GDB and GNU Binutils.
-   Copyright 1986, 1987, 1988, 1989, 1990, 1991, 1993
+   Copyright (c) 1986, 1987, 1988, 1989, 1990, 1991, 1993, 1998
    Free Software Foundation, Inc.
    Contributed by Data General Corporation, November 1989.
    Partially derived from an earlier printcmd.c.
@@ -20,8 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
+#include "sysdep.h"
 #include "dis-asm.h"
 #include "opcode/m88k.h"
+#include "opintl.h"
 
 INSTAB  *hashtable[HASHVAL] = {0};
 
@@ -268,7 +270,8 @@ printop (info, opptr, inst, pc, first)
       break;
 
     default:
-      (*info->fprintf_func) (info->stream, "# <dis error: %08x>", inst);
+      /* xgettext:c-format */
+      (*info->fprintf_func) (info->stream, _("# <dis error: %08x>"), inst);
     }
 }
 

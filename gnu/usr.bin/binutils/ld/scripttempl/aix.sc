@@ -37,6 +37,7 @@ SECTIONS
     ${RELOCATING+PROVIDE (_edata = .);}
   }
   .bss : {
+    *(.tocbss)
     *(.bss)
     *(.bs)
     *(.uc)

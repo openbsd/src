@@ -1,21 +1,21 @@
 
-/*  A Bison parser, made from ./itbl-parse.y with Bison version GNU Bison version 1.24
-  */
+/*  A Bison parser, made from itbl-parse.y
+    by GNU Bison version 1.28  */
 
 #define YYBISON 1  /* Identify Bison output.  */
 
-#define	DREG	258
-#define	CREG	259
-#define	GREG	260
-#define	IMMED	261
-#define	ADDR	262
-#define	INSN	263
-#define	NUM	264
-#define	ID	265
-#define	NL	266
-#define	PNUM	267
+#define	DREG	257
+#define	CREG	258
+#define	GREG	259
+#define	IMMED	260
+#define	ADDR	261
+#define	INSN	262
+#define	NUM	263
+#define	ID	264
+#define	NL	265
+#define	PNUM	266
 
-#line 21 "./itbl-parse.y"
+#line 21 "itbl-parse.y"
 
 
 /* 
@@ -277,7 +277,7 @@ int yylex PARAMS ((void));
 static int yyerror PARAMS ((const char *));
 
 
-#line 283 "./itbl-parse.y"
+#line 283 "itbl-parse.y"
 typedef union 
   {
     char *str;
@@ -285,23 +285,6 @@ typedef union
     int processor;
     unsigned long val;
   } YYSTYPE;
-
-#ifndef YYLTYPE
-typedef
-  struct yyltype
-    {
-      int timestamp;
-      int first_line;
-      int first_column;
-      int last_line;
-      int last_column;
-      char *text;
-   }
-  yyltype;
-
-#define YYLTYPE yyltype
-#endif
-
 #include <stdio.h>
 
 #ifndef __cplusplus
@@ -316,7 +299,7 @@ typedef
 #define	YYFLAG		-32768
 #define	YYNTBASE	20
 
-#define YYTRANSLATE(x) ((unsigned)(x) <= 267 ? yytranslate[x] : 34)
+#define YYTRANSLATE(x) ((unsigned)(x) <= 266 ? yytranslate[x] : 34)
 
 static const char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -344,8 +327,8 @@ static const char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     1,     2,     3,     4,     5,
-     6,     7,     8,     9,    10,    11,    12
+     2,     2,     2,     2,     2,     1,     3,     4,     5,     6,
+     7,     8,     9,    10,    11,    12
 };
 
 #if YYDEBUG != 0
@@ -374,11 +357,15 @@ static const short yyrline[] = { 0,
    331,   334,   340,   345,   352,   361,   366,   370,   376,   382,
    388,   395,   402,   410,   416,   421,   428,   436,   444
 };
+#endif
+
+
+#if YYDEBUG != 0 || defined (YYERROR_VERBOSE)
 
 static const char * const yytname[] = {   "$","error","$undefined.","DREG","CREG",
 "GREG","IMMED","ADDR","INSN","NUM","ID","NL","PNUM","','","'|'","'['","']'",
 "'*'","':'","'-'","insntbl","entrys","entry","@1","fieldspecs","ftype","fieldspec",
-"flagexpr","flags","range","pnum","regtype","name","value","value"
+"flagexpr","flags","range","pnum","regtype","name","value", NULL
 };
 #endif
 
@@ -442,7 +429,8 @@ static const short yycheck[] = {     0,
     45,     6,    38,    13,    16
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/unsupported/share/bison.simple"
+#line 3 "/usr/share/misc/bison.simple"
+/* This file comes from bison-1.28.  */
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -459,46 +447,66 @@ static const short yycheck[] = {     0,
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 /* As a special exception, when this file is copied by Bison into a
    Bison output file, you may use that output file without restriction.
    This special exception was added by the Free Software Foundation
    in version 1.24 of Bison.  */
 
-#ifndef alloca
-#ifdef __GNUC__
-#define alloca __builtin_alloca
-#else /* not GNU C.  */
-#if (!defined (__STDC__) && defined (sparc)) || defined (__sparc__) || defined (__sparc) || defined (__sgi)
-#include <alloca.h>
-#else /* not sparc */
-#if defined (MSDOS) && !defined (__TURBOC__)
-#include <malloc.h>
-#else /* not MSDOS, or __TURBOC__ */
-#if defined(_AIX)
-#include <malloc.h>
- #pragma alloca
-#else /* not MSDOS, __TURBOC__, or _AIX */
-#ifdef __hpux
-#ifdef __cplusplus
-extern "C" {
-void *alloca (unsigned int);
-};
-#else /* not __cplusplus */
-void *alloca ();
-#endif /* not __cplusplus */
-#endif /* __hpux */
-#endif /* not _AIX */
-#endif /* not MSDOS, or __TURBOC__ */
-#endif /* not sparc.  */
-#endif /* not GNU C.  */
-#endif /* alloca not defined.  */
-
 /* This is the parser code that is written into each bison parser
   when the %semantic_parser declaration is not specified in the grammar.
   It was written by Richard Stallman by simplifying the hairy parser
   used when %semantic_parser is specified.  */
+
+#ifndef YYSTACK_USE_ALLOCA
+#ifdef alloca
+#define YYSTACK_USE_ALLOCA
+#else /* alloca not defined */
+#ifdef __GNUC__
+#define YYSTACK_USE_ALLOCA
+#define alloca __builtin_alloca
+#else /* not GNU C.  */
+#if (!defined (__STDC__) && defined (sparc)) || defined (__sparc__) || defined (__sparc) || defined (__sgi) || (defined (__sun) && defined (__i386))
+#define YYSTACK_USE_ALLOCA
+#include <alloca.h>
+#else /* not sparc */
+/* We think this test detects Watcom and Microsoft C.  */
+/* This used to test MSDOS, but that is a bad idea
+   since that symbol is in the user namespace.  */
+#if (defined (_MSDOS) || defined (_MSDOS_)) && !defined (__TURBOC__)
+#if 0 /* No need for malloc.h, which pollutes the namespace;
+	 instead, just don't use alloca.  */
+#include <malloc.h>
+#endif
+#else /* not MSDOS, or __TURBOC__ */
+#if defined(_AIX)
+/* I don't know what this was needed for, but it pollutes the namespace.
+   So I turned it off.   rms, 2 May 1997.  */
+/* #include <malloc.h>  */
+ #pragma alloca
+#define YYSTACK_USE_ALLOCA
+#else /* not MSDOS, or __TURBOC__, or _AIX */
+#if 0
+#ifdef __hpux /* haible@ilog.fr says this works for HPUX 9.05 and up,
+		 and on HPUX 10.  Eventually we can turn this on.  */
+#define YYSTACK_USE_ALLOCA
+#define alloca __builtin_alloca
+#endif /* __hpux */
+#endif
+#endif /* not _AIX */
+#endif /* not MSDOS, or __TURBOC__ */
+#endif /* not sparc */
+#endif /* not GNU C */
+#endif /* alloca not defined */
+#endif /* YYSTACK_USE_ALLOCA not defined */
+
+#ifdef YYSTACK_USE_ALLOCA
+#define YYSTACK_ALLOC alloca
+#else
+#define YYSTACK_ALLOC malloc
+#endif
 
 /* Note: there must be only one dollar sign in this file.
    It is replaced by the list of actions, each action
@@ -508,8 +516,8 @@ void *alloca ();
 #define yyclearin	(yychar = YYEMPTY)
 #define YYEMPTY		-2
 #define YYEOF		0
-#define YYACCEPT	return(0)
-#define YYABORT 	return(1)
+#define YYACCEPT	goto yyacceptlab
+#define YYABORT 	goto yyabortlab
 #define YYERROR		goto yyerrlab1
 /* Like YYERROR except do call yyerror.
    This remains here temporarily to ease the
@@ -590,24 +598,24 @@ int yydebug;			/*  nonzero means print parse trace	*/
 #ifndef YYMAXDEPTH
 #define YYMAXDEPTH 10000
 #endif
-
-/* Prevent warning if -Wstrict-prototypes.  */
-#ifdef __GNUC__
-int yyparse (void);
-#endif
 
+/* Define __yy_memcpy.  Note that the size argument
+   should be passed with type unsigned int, because that is what the non-GCC
+   definitions require.  With GCC, __builtin_memcpy takes an arg
+   of type size_t, but it can handle unsigned int.  */
+
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
-#define __yy_memcpy(FROM,TO,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
+#define __yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
 #ifndef __cplusplus
 
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (from, to, count)
-     char *from;
+__yy_memcpy (to, from, count)
      char *to;
-     int count;
+     char *from;
+     unsigned int count;
 {
   register char *f = from;
   register char *t = to;
@@ -622,10 +630,10 @@ __yy_memcpy (from, to, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (char *from, char *to, int count)
+__yy_memcpy (char *to, char *from, unsigned int count)
 {
-  register char *f = from;
   register char *t = to;
+  register char *f = from;
   register int i = count;
 
   while (i-- > 0)
@@ -635,7 +643,7 @@ __yy_memcpy (char *from, char *to, int count)
 #endif
 #endif
 
-#line 192 "/usr/unsupported/share/bison.simple"
+#line 217 "/usr/share/misc/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -644,14 +652,29 @@ __yy_memcpy (char *from, char *to, int count)
    to the proper pointer type.  */
 
 #ifdef YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
-#else
-#define YYPARSE_PARAM
+#ifdef __cplusplus
+#define YYPARSE_PARAM_ARG void *YYPARSE_PARAM
 #define YYPARSE_PARAM_DECL
+#else /* not __cplusplus */
+#define YYPARSE_PARAM_ARG YYPARSE_PARAM
+#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
+#endif /* not __cplusplus */
+#else /* not YYPARSE_PARAM */
+#define YYPARSE_PARAM_ARG
+#define YYPARSE_PARAM_DECL
+#endif /* not YYPARSE_PARAM */
+
+/* Prevent warning if -Wstrict-prototypes.  */
+#ifdef __GNUC__
+#ifdef YYPARSE_PARAM
+int yyparse (void *);
+#else
+int yyparse (void);
+#endif
 #endif
 
 int
-yyparse(YYPARSE_PARAM)
+yyparse(YYPARSE_PARAM_ARG)
      YYPARSE_PARAM_DECL
 {
   register int yystate;
@@ -678,6 +701,7 @@ yyparse(YYPARSE_PARAM)
 #endif
 
   int yystacksize = YYINITDEPTH;
+  int yyfree_stacks = 0;
 
 #ifdef YYPURE
   int yychar;
@@ -762,18 +786,32 @@ yynewstate:
       if (yystacksize >= YYMAXDEPTH)
 	{
 	  yyerror("parser stack overflow");
+	  if (yyfree_stacks)
+	    {
+	      free (yyss);
+	      free (yyvs);
+#ifdef YYLSP_NEEDED
+	      free (yyls);
+#endif
+	    }
 	  return 2;
 	}
       yystacksize *= 2;
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
-      yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_memcpy ((char *)yyss1, (char *)yyss, size * sizeof (*yyssp));
-      yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_memcpy ((char *)yyvs1, (char *)yyvs, size * sizeof (*yyvsp));
+#ifndef YYSTACK_USE_ALLOCA
+      yyfree_stacks = 1;
+#endif
+      yyss = (short *) YYSTACK_ALLOC (yystacksize * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss, (char *)yyss1,
+		   size * (unsigned int) sizeof (*yyssp));
+      yyvs = (YYSTYPE *) YYSTACK_ALLOC (yystacksize * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs, (char *)yyvs1,
+		   size * (unsigned int) sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
-      yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_memcpy ((char *)yyls1, (char *)yyls, size * sizeof (*yylsp));
+      yyls = (YYLTYPE *) YYSTACK_ALLOC (yystacksize * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls, (char *)yyls1,
+		   size * (unsigned int) sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -934,7 +972,7 @@ yyreduce:
   switch (yyn) {
 
 case 4:
-#line 311 "./itbl-parse.y"
+#line 311 "itbl-parse.y"
 {
 	    DBG (("line %d: entry pnum=%d type=%d name=%s value=x%x\n", 
 	    	    insntbl_line, yyvsp[-4].num, yyvsp[-3].num, yyvsp[-2].str, yyvsp[-1].val));
@@ -942,7 +980,7 @@ case 4:
 	  ;
     break;}
 case 5:
-#line 317 "./itbl-parse.y"
+#line 317 "itbl-parse.y"
 {
 	    DBG (("line %d: entry pnum=%d type=INSN name=%s value=x%x",
 	    	    insntbl_line, yyvsp[-5].num, yyvsp[-3].str, yyvsp[-2].val));
@@ -951,28 +989,28 @@ case 5:
 	  ;
     break;}
 case 12:
-#line 336 "./itbl-parse.y"
+#line 336 "itbl-parse.y"
 {
 	    DBGL2 (("ftype\n"));
 	    yyval.num = yyvsp[0].num;
 	  ;
     break;}
 case 13:
-#line 341 "./itbl-parse.y"
+#line 341 "itbl-parse.y"
 {
 	    DBGL2 (("addr\n"));
 	    yyval.num = ADDR;
 	  ;
     break;}
 case 14:
-#line 346 "./itbl-parse.y"
+#line 346 "itbl-parse.y"
 {
 	    DBGL2 (("immed\n"));
 	    yyval.num = IMMED;
 	  ;
     break;}
 case 15:
-#line 354 "./itbl-parse.y"
+#line 354 "itbl-parse.y"
 {
 	    DBG (("line %d: field type=%d sbit=%d ebit=%d, flags=0x%x\n", 
 	    	    insntbl_line, yyvsp[-2].num, sbit, ebit, yyvsp[0].val));
@@ -980,38 +1018,38 @@ case 15:
 	  ;
     break;}
 case 16:
-#line 363 "./itbl-parse.y"
+#line 363 "itbl-parse.y"
 {
 	    yyval.val = yyvsp[-2].num | yyvsp[0].val;
 	  ;
     break;}
 case 17:
-#line 367 "./itbl-parse.y"
+#line 367 "itbl-parse.y"
 {
 	    yyval.val = yyvsp[-1].val;
 	  ;
     break;}
 case 18:
-#line 371 "./itbl-parse.y"
+#line 371 "itbl-parse.y"
 {
 	    yyval.val = yyvsp[0].num;
 	  ;
     break;}
 case 19:
-#line 378 "./itbl-parse.y"
+#line 378 "itbl-parse.y"
 {
 	    DBGL2 (("flags=%d\n", yyvsp[0].val));
 	    yyval.val = yyvsp[0].val;
 	  ;
     break;}
 case 20:
-#line 383 "./itbl-parse.y"
+#line 383 "itbl-parse.y"
 {
 	    yyval.val = 0;
 	  ;
     break;}
 case 21:
-#line 390 "./itbl-parse.y"
+#line 390 "itbl-parse.y"
 {
 	    DBGL2 (("range %d %d\n", yyvsp[-2].num, yyvsp[0].num));
 	    sbit = yyvsp[-2].num;
@@ -1019,56 +1057,56 @@ case 21:
 	  ;
     break;}
 case 22:
-#line 396 "./itbl-parse.y"
+#line 396 "itbl-parse.y"
 {
 	    sbit = 31;
 	    ebit = 0;
 	  ;
     break;}
 case 23:
-#line 404 "./itbl-parse.y"
+#line 404 "itbl-parse.y"
 {
 	    DBGL2 (("pnum=%d\n",yyvsp[0].num));
 	    yyval.num = yyvsp[0].num;
 	  ;
     break;}
 case 24:
-#line 412 "./itbl-parse.y"
+#line 412 "itbl-parse.y"
 {
 	    DBGL2 (("dreg\n"));
 	    yyval.num = DREG;
 	  ;
     break;}
 case 25:
-#line 417 "./itbl-parse.y"
+#line 417 "itbl-parse.y"
 {
 	    DBGL2 (("creg\n"));
 	    yyval.num = CREG;
 	  ;
     break;}
 case 26:
-#line 422 "./itbl-parse.y"
+#line 422 "itbl-parse.y"
 {
 	    DBGL2 (("greg\n"));
 	    yyval.num = GREG;
 	  ;
     break;}
 case 27:
-#line 430 "./itbl-parse.y"
+#line 430 "itbl-parse.y"
 {
 	    DBGL2 (("name=%s\n",yyvsp[0].str));
 	    yyval.str = yyvsp[0].str; 
 	  ;
     break;}
 case 28:
-#line 438 "./itbl-parse.y"
+#line 438 "itbl-parse.y"
 {
 	    DBGL2 (("num=%d\n",yyvsp[0].num));
 	    yyval.num = yyvsp[0].num;
 	  ;
     break;}
 case 29:
-#line 446 "./itbl-parse.y"
+#line 446 "itbl-parse.y"
 {
 	    DBGL2 (("val=x%x\n",yyvsp[0].num));
 	    yyval.val = yyvsp[0].num;
@@ -1076,7 +1114,7 @@ case 29:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 487 "/usr/unsupported/share/bison.simple"
+#line 543 "/usr/share/misc/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1271,8 +1309,32 @@ yyerrhandle:
 
   yystate = yyn;
   goto yynewstate;
+
+ yyacceptlab:
+  /* YYACCEPT comes here.  */
+  if (yyfree_stacks)
+    {
+      free (yyss);
+      free (yyvs);
+#ifdef YYLSP_NEEDED
+      free (yyls);
+#endif
+    }
+  return 0;
+
+ yyabortlab:
+  /* YYABORT comes here.  */
+  if (yyfree_stacks)
+    {
+      free (yyss);
+      free (yyvs);
+#ifdef YYLSP_NEEDED
+      free (yyls);
+#endif
+    }
+  return 1;
 }
-#line 451 "./itbl-parse.y"
+#line 451 "itbl-parse.y"
 
 
 static int

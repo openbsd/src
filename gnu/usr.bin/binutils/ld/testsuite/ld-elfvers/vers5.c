@@ -5,29 +5,34 @@
 const char * bar1 = "asdf";
 const char * bar2 = "asdf";
 
-int bar()
+int
+bar()
 {
 	return 3;
 }
 
+int
 original_foo()
 {
 	return 1+bar();
 
 }
 
+int
 old_foo()
 {
 	return 10+bar();
 
 }
 
+int
 old_foo1()
 {
 	return 100+bar();
 
 }
 
+int
 new_foo()
 {
 	return 1000+bar();

@@ -1,13 +1,4 @@
-	.SPACE $PRIVATE$
-	.SUBSPA $DATA$,QUAD=1,ALIGN=8,ACCESS=31
-	.SUBSPA $BSS$,QUAD=1,ALIGN=8,ACCESS=31,ZERO,SORT=82
-	.SPACE $TEXT$
-	.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=44
-	.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY
-
-	.SPACE $TEXT$
-	.SUBSPA $CODE$
-
+	.code
 	.align 4
 ; Basic immediate instruction tests.  
 ;
@@ -115,3 +106,88 @@
 	subto,>> %r4,%r5,%r6
 	subto,nsv %r4,%r5,%r6
 	subto,ev %r4,%r5,%r6
+
+	sub,tsv %r4,%r5,%r6
+	sub,tsv,= %r4,%r5,%r6
+	sub,tsv,< %r4,%r5,%r6
+	sub,tsv,<= %r4,%r5,%r6
+	sub,tsv,<< %r4,%r5,%r6
+	sub,tsv,<<= %r4,%r5,%r6
+	sub,tsv,sv %r4,%r5,%r6
+	sub,tsv,od %r4,%r5,%r6
+	sub,tsv,tr %r4,%r5,%r6
+	sub,tsv,<> %r4,%r5,%r6
+	sub,tsv,>= %r4,%r5,%r6
+	sub,tsv,> %r4,%r5,%r6
+	sub,tsv,>>= %r4,%r5,%r6
+	sub,tsv,>> %r4,%r5,%r6
+	sub,tsv,nsv %r4,%r5,%r6
+	sub,tsv,ev %r4,%r5,%r6
+
+	sub,b %r4,%r5,%r6
+	sub,b,= %r4,%r5,%r6
+	sub,b,< %r4,%r5,%r6
+	sub,b,<= %r4,%r5,%r6
+	sub,b,<< %r4,%r5,%r6
+	sub,b,<<= %r4,%r5,%r6
+	sub,b,sv %r4,%r5,%r6
+	sub,b,od %r4,%r5,%r6
+	sub,b,tr %r4,%r5,%r6
+	sub,b,<> %r4,%r5,%r6
+	sub,b,>= %r4,%r5,%r6
+	sub,b,> %r4,%r5,%r6
+	sub,b,>>= %r4,%r5,%r6
+	sub,b,>> %r4,%r5,%r6
+	sub,b,nsv %r4,%r5,%r6
+	sub,b,ev %r4,%r5,%r6
+
+	sub,b,tsv %r4,%r5,%r6
+	sub,b,tsv,= %r4,%r5,%r6
+	sub,b,tsv,< %r4,%r5,%r6
+	sub,b,tsv,<= %r4,%r5,%r6
+	sub,b,tsv,<< %r4,%r5,%r6
+	sub,b,tsv,<<= %r4,%r5,%r6
+	sub,b,tsv,sv %r4,%r5,%r6
+	sub,b,tsv,od %r4,%r5,%r6
+	sub,tsv,b,tr %r4,%r5,%r6
+	sub,tsv,b,<> %r4,%r5,%r6
+	sub,tsv,b,>= %r4,%r5,%r6
+	sub,tsv,b,> %r4,%r5,%r6
+	sub,tsv,b,>>= %r4,%r5,%r6
+	sub,tsv,b,>> %r4,%r5,%r6
+	sub,tsv,b,nsv %r4,%r5,%r6
+	sub,tsv,b,ev %r4,%r5,%r6
+
+	sub,tc %r4,%r5,%r6
+	sub,tc,= %r4,%r5,%r6
+	sub,tc,< %r4,%r5,%r6
+	sub,tc,<= %r4,%r5,%r6
+	sub,tc,<< %r4,%r5,%r6
+	sub,tc,<<= %r4,%r5,%r6
+	sub,tc,sv %r4,%r5,%r6
+	sub,tc,od %r4,%r5,%r6
+	sub,tc,tr %r4,%r5,%r6
+	sub,tc,<> %r4,%r5,%r6
+	sub,tc,>= %r4,%r5,%r6
+	sub,tc,> %r4,%r5,%r6
+	sub,tc,>>= %r4,%r5,%r6
+	sub,tc,>> %r4,%r5,%r6
+	sub,tc,nsv %r4,%r5,%r6
+	sub,tc,ev %r4,%r5,%r6
+
+	sub,tc,tsv %r4,%r5,%r6
+	sub,tc,tsv,= %r4,%r5,%r6
+	sub,tc,tsv,< %r4,%r5,%r6
+	sub,tc,tsv,<= %r4,%r5,%r6
+	sub,tc,tsv,<< %r4,%r5,%r6
+	sub,tc,tsv,<<= %r4,%r5,%r6
+	sub,tc,tsv,sv %r4,%r5,%r6
+	sub,tc,tsv,od %r4,%r5,%r6
+	sub,tsv,tc,tr %r4,%r5,%r6
+	sub,tsv,tc,<> %r4,%r5,%r6
+	sub,tsv,tc,>= %r4,%r5,%r6
+	sub,tsv,tc,> %r4,%r5,%r6
+	sub,tsv,tc,>>= %r4,%r5,%r6
+	sub,tsv,tc,>> %r4,%r5,%r6
+	sub,tsv,tc,nsv %r4,%r5,%r6
+	sub,tsv,tc,ev %r4,%r5,%r6

@@ -1,3 +1,3 @@
 	.rept	3
-	.long	r1
+	.long	foo1
 	.endr

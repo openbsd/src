@@ -6,7 +6,11 @@
 const char * show_bar1 = "asdf";
 const char * show_bar2 = "asdf";
 
-int bar()
+extern int new2_foo();
+extern int bar33();
+
+int
+bar()
 {
 	return 3;
 }
@@ -15,24 +19,28 @@ int bar()
  * The 'hide' prefix is something so that we can automatically search the
  * symbol table and verify that none of these symbols were actually exported.
  */
+int
 hide_original_foo()
 {
 	return 1+bar();
 
 }
 
+int
 hide_old_foo()
 {
 	return 10+bar();
 
 }
 
+int
 hide_old_foo1()
 {
 	return 100+bar();
 
 }
 
+int
 hide_new_foo()
 {
 	return 1000+bar();
@@ -49,6 +57,7 @@ __asm__(".symver hide_new_foo,show_foo@@VERS_2.0");
 #ifdef DO_TEST10
 /* In test 10, we try and define a non-existant version node.  The linker
  * should catch this and complain. */
+int
 hide_new_bogus_foo()
 {
 	return 1000+bar();
@@ -65,6 +74,7 @@ __asm__(".symver hide_new_bogus_foo,show_foo@VERS_2.2");
  * This test is designed to catch a couple of syntactic errors.  The assembler
  * should complain about both of the directives below.
  */
+void
 xyzzz()
 {
   new2_foo();
@@ -80,6 +90,7 @@ __asm__(".symver bar33,bar@@VERS_2.0");
  * This test is designed to catch a couple of syntactic errors.  The assembler
  * should complain about both of the directives below.
  */
+void
 xyzzz()
 {
   new2_foo();

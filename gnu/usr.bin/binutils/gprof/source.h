@@ -9,7 +9,7 @@ typedef struct source_file
   {
     struct source_file *next;
     const char *name;		/* name of source file */
-    int ncalls;			/* # of "calls" to this file */
+    unsigned long ncalls;	/* # of "calls" to this file */
     int num_lines;		/* # of lines in file */
     int nalloced;		/* number of lines allocated */
     void **line;		/* usage-dependent per-line data */

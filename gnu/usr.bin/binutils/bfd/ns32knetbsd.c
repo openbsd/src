@@ -1,5 +1,5 @@
 /* BFD back-end for NetBSD/ns32k a.out-ish binaries.
-   Copyright (C) 1990, 1991, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 94, 95, 1998 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #define	SEGMENT_SIZE	4096
 
 #define	DEFAULT_ARCH	bfd_arch_ns32k
-#define MACHTYPE_OK(mtype) ((mtype) == M_532_NETBSD || (mtype) == M_UNKNOWN)
+#define	DEFAULT_MID 	M_532_NETBSD
 
 #define MY(OP) CAT(pc532netbsd_,OP)
 

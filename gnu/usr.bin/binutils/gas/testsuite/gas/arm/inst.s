@@ -9,25 +9,25 @@
 	mov	r8, r9, asr r10
 	mov	r11, r12, asl r13
 	mov	r14, r15, rrx
-	moval	r1, r2
-	moveq	r2, r3
-	movne	r4, r5
-	movlt	r6, r7
-	movge	r8, r9
-	movle	r10, r11
-	movgt	r12, r13
+	moval	a2, a3
+	moveq	a3, a4
+	movne	v1, v2
+	movlt	v3, v4
+	movge	v5, v6
+	movle	v7, v8
+	movgt	ip, sp
 	movcc	r1, r2
 	movcs	r1, r3
 	movmi	r3, r6
-	movpl	r7, r9
+	movpl	wr, sb
 	movvs	r1, r8
-	movvc	r9, r1, lsr #31
-	movhi	r8, r15
-	movls	r15, r14
+	movvc	SB, r1, lsr #31
+	movhi	r8, pc
+	movls	PC, lr
 	movhs	r9, r8
 	movul	r1, r3
 	movs	r0, r8
-	movuls	r0, r7
+	movuls	r0, WR
 	
 	add	r0, r1, #10
 	add	r2, r3, r4
@@ -129,10 +129,10 @@
 	mulne	r0, r1, r0
 	mullss	r9, r8, r7
 
-	mla	r1, r9, r10, r11
-	mlas	r3, r4, r9, r12
-	mlalt	r9, r8, r7, r13
-	mlages	r4, r1, r3, r14
+	mla	r1, r9, sl, fp
+	mlas	r3, r4, r9, IP
+	mlalt	r9, r8, r7, SP
+	mlages	r4, r1, r3, LR
 
 	ldr	r0, [r1]
 	ldr	r1, [r1, r2]
@@ -150,7 +150,7 @@ foo:
 	
 	str	r0, [r1]
 	str	r1, [r1, r2]
-	str	r3, [r3, r4]!
+	str	r3, [r4, r3]!
 	str	r2, [r2, #32]
 	str	r2, [r3, r4, lsr #8]
 	streq	r4, [r5, r4, asl #9]!
@@ -165,7 +165,7 @@ bar:
 	ldmia	r0, {r1}
 	ldmeqib	r2, {r3, r4, r5}
 	ldmalda	r3, {r0-r15}^
-	ldmdb	r11!, {r0-r8, r10}
+	ldmdb	FP!, {r0-r8, SL}
 	ldmed	r1, {r0, r1, r2}|0xf0
 	ldmfd	r2, {r3, r4}+{r5, r6, r7, r8}
 	ldmea	r3, 3
@@ -184,6 +184,6 @@ bar:
 	swihs	0x33
 
 	bl	_wombat
-	blpl	bar
+	blpl	hohum
 	b	_wibble
 	ble	testerfunc

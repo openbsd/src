@@ -1,5 +1,5 @@
 /* SOM object file format.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1998 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.
 
    Written by the Center for Software Science at the University of Utah
    and by Cygnus Support.  */
@@ -40,6 +41,8 @@
 extern void som_file_symbol PARAMS ((char *));
 extern void obj_som_version PARAMS ((int));
 extern void obj_som_init_stab_section PARAMS ((segT));
+extern void obj_som_copyright PARAMS ((int));
+extern void obj_som_compiler PARAMS ((int));
 
 #define obj_symbol_new_hook(s) {;}
 

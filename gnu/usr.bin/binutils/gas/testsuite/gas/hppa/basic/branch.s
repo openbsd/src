@@ -1,13 +1,4 @@
-	.SPACE $PRIVATE$
-	.SUBSPA $DATA$,QUAD=1,ALIGN=8,ACCESS=31
-	.SUBSPA $BSS$,QUAD=1,ALIGN=8,ACCESS=31,ZERO,SORT=82
-	.SPACE $TEXT$
-	.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=44
-	.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY
-
-	.SPACE $TEXT$
-	.SUBSPA $CODE$
-
+	.code
 	.align 4
 ; More branching instructions than you ever knew what to do with.
 ;
@@ -25,8 +16,8 @@ branch_tests:
 	blr,n %r4,%r2
 	blr %r4,%r0
 	blr,n %r4,%r0
-	bv 0(%r2)
-	bv,n 0(%r2)
+	bv %r0(%r2)
+	bv,n %r0(%r2)
 	be 0x1234(%sr1,%r2)
 	be,n 0x1234(%sr1,%r2)
 	ble 0x1234(%sr1,%r2)

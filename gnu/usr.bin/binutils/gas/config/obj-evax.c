@@ -1,5 +1,5 @@
 /* obj-evax.c - EVAX (openVMS/Alpha) object file format.
-   Copyright (C) 1996 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
    Contributed by Klaus Kämpf (kkaempf@progis.de) of
      proGIS Software, Aachen, Germany.
 
@@ -24,13 +24,54 @@
 
 #include "as.h"
 
-void obj_read_begin_hook () {}
+static void s_evax_weak PARAMS ((int));
 
 const pseudo_typeS obj_pseudo_table[] =
 {
+  { "weak", s_evax_weak, 0},
   {0, 0, 0},
 };				/* obj_pseudo_table */
 
+void obj_read_begin_hook () {}
+
+/* Handle the weak specific pseudo-op.  */
+
+static void
+s_evax_weak (ignore)
+     int ignore;
+{
+  char *name;
+  int c;
+  symbolS *symbolP;
+  char *stop = NULL;
+  char stopc;
+
+  if (flag_mri)
+    stop = mri_comment_field (&stopc);
+
+  do
+    {
+      name = input_line_pointer;
+      c = get_symbol_end ();
+      symbolP = symbol_find_or_make (name);
+      *input_line_pointer = c;
+      SKIP_WHITESPACE ();
+      S_SET_WEAK (symbolP);
+      if (c == ',')
+	{
+	  input_line_pointer++;
+	  SKIP_WHITESPACE ();
+	  if (*input_line_pointer == '\n')
+	    c = '\n';
+	}
+    }
+  while (c == ',');
+
+  if (flag_mri)
+    mri_comment_end (stop, stopc);
+
+  demand_empty_rest_of_line ();
+}
 
 /*
  * Local Variables:

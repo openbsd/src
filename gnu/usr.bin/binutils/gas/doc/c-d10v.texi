@@ -31,6 +31,10 @@ dependent options.
 The D10V can often execute two sub-instructions in parallel. When this option
 is used, @code{@value{AS}} will attempt to optimize its output by detecting when
 instructions can be executed in parallel.
+@item --nowarnswap
+To optimize execution performance, @code{@value{AS}} will sometimes swap the
+order of instructions. Normally this generates a warning. When this option 
+is used, no warning will be generated when instructions are swapped.
 @end table
 
 @node D10V-Syntax

@@ -1,5 +1,5 @@
 /* Disassemble D10V instructions.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,13 +18,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include <stdio.h>
 
-#include "ansidecl.h"
+#include "sysdep.h"
 #include "opcode/d10v.h" 
 #include "dis-asm.h"
 
 /* the PC wraps at 18 bits, except for the segment number */
 /* so use this mask to keep the parts we want */
-#define PC_MASK	0x03003FFF
+#define PC_MASK	0x0303FFFF
 
 static void dis_2_short PARAMS ((unsigned long insn, bfd_vma memaddr, 
 				 struct disassemble_info *info, int order));
@@ -114,7 +114,10 @@ print_operand (oper, insn, op, memaddr, info)
     {
       int i;
       int match=0;
-      num += oper->flags & (OPERAND_ACC|OPERAND_FLAG|OPERAND_CONTROL);
+      num += (oper->flags
+	      & (OPERAND_GPR|OPERAND_FFLAG|OPERAND_CFLAG|OPERAND_CONTROL));
+      if (oper->flags & (OPERAND_ACC0|OPERAND_ACC1))
+	num += num ? OPERAND_ACC1 : OPERAND_ACC0;
       for (i = 0; i < d10v_reg_name_cnt(); i++)
 	{
 	  if (num == d10v_predefined_registers[i].value)
@@ -131,7 +134,7 @@ print_operand (oper, insn, op, memaddr, info)
 	{
 	  /* this would only get executed if a register was not in the 
 	     register table */
-	  if (oper->flags & OPERAND_ACC)
+	  if (oper->flags & (OPERAND_ACC0|OPERAND_ACC1))
 	    (*info->fprintf_func) (info->stream, "a");
 	  else if (oper->flags & OPERAND_CONTROL)
 	    (*info->fprintf_func) (info->stream, "cr");
@@ -154,10 +157,15 @@ print_operand (oper, insn, op, memaddr, info)
 	      neg = 1;
 	    }
 	  num = num<<2;
-	  if (neg)
-	    (*info->print_address_func) ((memaddr - num) & PC_MASK, info);
+	  if (info->flags & INSN_HAS_RELOC)
+	    (*info->print_address_func) (num & PC_MASK, info);
 	  else
-	    (*info->print_address_func) ((memaddr + num) & PC_MASK, info);
+	    {
+	      if (neg)
+		(*info->print_address_func) ((memaddr - num) & PC_MASK, info);
+	      else
+		(*info->print_address_func) ((memaddr + num) & PC_MASK, info);
+	    }
 	}
       else
 	{

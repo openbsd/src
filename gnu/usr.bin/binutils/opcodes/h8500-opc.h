@@ -3830,7 +3830,7 @@ IMM16,RD  'a','E','D','D'
 QIM,ABS16  'a','I','E','E'
 RNIND_D16,RD  'a','E','D','D'
 */ 
-0,0,0}
+{0,0,0}}
 #endif
 ;
 #endif

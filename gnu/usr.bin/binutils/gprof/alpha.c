@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
+ * Copyright (c) 1983, 1998 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -18,7 +18,7 @@
  */
 #include "gprof.h"
 #include "cg_arcs.h"
-#include "core.h"
+#include "corefile.h"
 #include "hist.h"
 #include "symtab.h"
 
@@ -43,14 +43,14 @@ typedef union
     a;				/* any format */
     struct
       {
-	signed disp:21;
+	int disp:21;
 	unsigned ra:5;
 	unsigned op_code:6;
       }
     b;				/* branch format */
     struct
       {
-	signed hint:14;
+	int hint:14;
 	unsigned func:2;
 	unsigned rb:5;
 	unsigned ra:5;
@@ -58,7 +58,7 @@ typedef union
       }
     j;				/* jump format */
   }
-Instruction;
+alpha_Instruction;
 
 static Sym indirect_child;
 
@@ -71,14 +71,14 @@ static Sym indirect_child;
  *  potentially call integer division routines, for example.)
  */
 void
-find_call (parent, p_lowpc, p_highpc)
+alpha_find_call (parent, p_lowpc, p_highpc)
      Sym *parent;
      bfd_vma p_lowpc;
      bfd_vma p_highpc;
 {
   static bfd_vma delta = 0;
   bfd_vma dest_pc;
-  Instruction *pc;
+  alpha_Instruction *pc;
   Sym *child;
 
   if (!delta)
@@ -86,7 +86,7 @@ find_call (parent, p_lowpc, p_highpc)
       delta = (bfd_vma) core_text_space - core_text_sect->vma;
 
       sym_init (&indirect_child);
-      indirect_child.name = "<indirect child>";
+      indirect_child.name = _("<indirect child>");
       indirect_child.cg.prop.fract = 1.0;
       indirect_child.cg.cyc.head = &indirect_child;
     }
@@ -103,10 +103,11 @@ find_call (parent, p_lowpc, p_highpc)
     {
       p_highpc = s_highpc;
     }
-  DBG (CALLDEBUG, printf ("[find_call] %s: 0x%lx to 0x%lx\n",
-			  parent->name, p_lowpc, p_highpc));
-  for (pc = (Instruction *) (p_lowpc + delta);
-       pc < (Instruction *) (p_highpc + delta);
+  DBG (CALLDEBUG, printf (_("[find_call] %s: 0x%lx to 0x%lx\n"),
+			  parent->name, (unsigned long) p_lowpc,
+			  (unsigned long) p_highpc));
+  for (pc = (alpha_Instruction *) (p_lowpc + delta);
+       pc < (alpha_Instruction *) (p_highpc + delta);
        ++pc)
     {
       switch (pc->a.op_code)
@@ -124,16 +125,17 @@ find_call (parent, p_lowpc, p_highpc)
 	      || pc->j.func == Jxx_FUNC_JSR_COROUTINE)
 	    {
 	      DBG (CALLDEBUG,
-		   printf ("[find_call] 0x%lx: jsr%s <indirect_child>\n",
-			   (bfd_vma) pc - delta,
+		   printf (_("[find_call] 0x%lx: jsr%s <indirect_child>\n"),
+			   (unsigned long) pc - delta,
 			   pc->j.func == Jxx_FUNC_JSR ? "" : "_coroutine"));
-	      arc_add (parent, &indirect_child, 0);
+	      arc_add (parent, &indirect_child, (unsigned long) 0);
 	    }
 	  break;
 
 	case OP_BSR:
 	  DBG (CALLDEBUG,
-	       printf ("[find_call] 0x%lx: bsr", (bfd_vma) pc - delta));
+	       printf (_("[find_call] 0x%lx: bsr"),
+		       (unsigned long) pc - delta));
 	  /*
 	   * Regular PC relative addressing.  Check that this is the
 	   * address of a function.  The linker sometimes redirects
@@ -146,12 +148,13 @@ find_call (parent, p_lowpc, p_highpc)
 	      child = sym_lookup (&symtab, dest_pc);
 	      DBG (CALLDEBUG,
 		   printf (" 0x%lx\t; name=%s, addr=0x%lx",
-			   dest_pc, child->name, child->addr));
+			   (unsigned long) dest_pc, child->name,
+			   (unsigned long) child->addr));
 	      if (child->addr == dest_pc || child->addr == dest_pc - 8)
 		{
 		  DBG (CALLDEBUG, printf ("\n"));
 		  /* a hit:  */
-		  arc_add (parent, child, 0);
+		  arc_add (parent, child, (unsigned long) 0);
 		  continue;
 		}
 	    }

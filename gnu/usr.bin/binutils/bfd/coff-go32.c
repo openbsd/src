@@ -1,5 +1,5 @@
-/* BFD back-end for Intel 386 COFF files (go32 variant).
-   Copyright 1990, 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
+/* BFD back-end for Intel 386 COFF files (DJGPP variant).
+   Copyright 1990, 91, 92, 93, 94, 1999, 2000 Free Software Foundation, Inc.
    Written by DJ Delorie.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -21,5 +21,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_SYM		go32coff_vec
 #define TARGET_NAME		"coff-go32"
 #define TARGET_UNDERSCORE	'_'
+#define COFF_LONG_SECTION_NAMES
+#define COFF_SUPPORT_GNU_LINKONCE
+
+#define COFF_SECTION_ALIGNMENT_ENTRIES \
+{ COFF_SECTION_NAME_EXACT_MATCH (".data"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 4 }, \
+{ COFF_SECTION_NAME_EXACT_MATCH (".text"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 4 }, \
+{ COFF_SECTION_NAME_EXACT_MATCH (".bss"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 4 }, \
+{ COFF_SECTION_NAME_PARTIAL_MATCH (".gnu.linkonce.d"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 4 }, \
+{ COFF_SECTION_NAME_PARTIAL_MATCH (".gnu.linkonce.t"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 4 }, \
+{ COFF_SECTION_NAME_PARTIAL_MATCH (".gnu.linkonce.r"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 4 }
 
 #include "coff-i386.c"

@@ -1,0 +1,76 @@
+The section .debug_info contains:
+
+  Compilation Unit:
+   Length:        .*
+   Version:       2
+   Abbrev Offset: 0
+   Pointer Size:  4
+ <.><.*>: Abbrev Number: 1 \(DW_TAG_compile_unit\)
+     DW_AT_name        : .*/testprog.c	
+     DW_AT_comp_dir    : .*/binutils	
+     DW_AT_producer    : GNU C .*	
+     DW_AT_language    : 1	\(ANSI C\)
+     DW_AT_low_pc      : 0	
+     DW_AT_high_pc     : .*	
+     DW_AT_stmt_list   : 0	
+ <.><.*>: Abbrev Number: 2 \(DW_TAG_subprogram\)
+     DW_AT_external    : 1	
+     DW_AT_name        : fn	
+     DW_AT_decl_file   : 1	
+     DW_AT_decl_line   : 10	
+     DW_AT_type        : .*	
+     DW_AT_low_pc      : 0	
+     DW_AT_high_pc     : .*	
+     DW_AT_frame_base  : 1 byte block: .*
+ <.><.*>: Abbrev Number: 3 \(DW_TAG_base_type\)
+     DW_AT_name        : int	
+     DW_AT_byte_size   : 4	
+     DW_AT_encoding    : 5	\(signed\)
+ <.><.*>: Abbrev Number: 4 \(DW_TAG_subprogram\)
+     DW_AT_sibling     : .*	
+     DW_AT_external    : 1	
+     DW_AT_name        : main	
+     DW_AT_decl_file   : 1	
+     DW_AT_decl_line   : 16	
+     DW_AT_type        : .*	
+     DW_AT_low_pc      : .*	
+     DW_AT_high_pc     : .*	
+     DW_AT_frame_base  : 1 byte block: .*
+ <.><.*>: Abbrev Number: 5 \(DW_TAG_lexical_block\)
+     DW_AT_low_pc      : .*	
+     DW_AT_high_pc     : .*	
+ <.><.*>: Abbrev Number: 6 \(DW_TAG_variable\)
+     DW_AT_name        : common	
+     DW_AT_decl_file   : 1	
+     DW_AT_decl_line   : 3	
+     DW_AT_type        : <.*>	
+     DW_AT_external    : 1	
+     DW_AT_location    : 5 byte block: 3 0 0 0 0 	\(DW_OP_addr: 0\)
+ <.><.*>: Abbrev Number: 6 \(DW_TAG_variable\)
+     DW_AT_name        : global	
+     DW_AT_decl_file   : 1	
+     DW_AT_decl_line   : 4	
+     DW_AT_type        : <.*>	
+     DW_AT_external    : 1	
+     DW_AT_location    : 5 byte block: 3 0 0 0 0 	\(DW_OP_addr: 0\)
+ <.><.*>: Abbrev Number: 7 \(DW_TAG_variable\)
+     DW_AT_name        : local	
+     DW_AT_decl_file   : 1	
+     DW_AT_decl_line   : 5	
+     DW_AT_type        : <.*>	
+     DW_AT_location    : 5 byte block: 3 . 0 0 . 	\(DW_OP_addr: .\)
+ <.><.*>: Abbrev Number: 8 \(DW_TAG_array_type\)
+     DW_AT_sibling     : <.*>	
+     DW_AT_type        : <.*>	
+ <.><.*>: Abbrev Number: 9 \(DW_TAG_subrange_type\)
+     DW_AT_upper_bound : 6	
+ <.><.*>: Abbrev Number: 3 \(DW_TAG_base_type\)
+     DW_AT_name        : char	
+     DW_AT_byte_size   : 1	
+     DW_AT_encoding    : 8	\(unsigned char\)
+ <.><.*>: Abbrev Number: 7 \(DW_TAG_variable\)
+     DW_AT_name        : string	
+     DW_AT_decl_file   : 1	
+     DW_AT_decl_line   : 6	
+     DW_AT_type        : <.*>	
+     DW_AT_location    : 5 byte block: 3 . 0 0 . 	\(DW_OP_addr: .\)

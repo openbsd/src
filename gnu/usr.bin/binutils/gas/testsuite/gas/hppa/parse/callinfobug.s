@@ -1,5 +1,4 @@
-	.space $TEXT$
-	.subspa $CODE$
+	.code
 	.align 4
 	.export divu,millicode
 	.proc

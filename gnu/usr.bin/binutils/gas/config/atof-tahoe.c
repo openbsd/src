@@ -1,6 +1,6 @@
 
 /* atof_tahoe.c - turn a string into a Tahoe floating point number
-   Copyright (C) 1987 Free Software Foundation, Inc.
+   Copyright (C) 1987, 1998 Free Software Foundation, Inc.
    */
 
 /* This is really a simplified version of atof_vax.c. I glommed it wholesale
@@ -425,7 +425,7 @@ md_atof (what_statement_type, literalP, sizeP)
     };
 
   *sizeP = number_of_chars;
-  return kind_of_float ? 0 : "Bad call to md_atof()";
+  return kind_of_float ? 0 : _("Bad call to md_atof()");
 }
 
 /* atof_tahoe.c */

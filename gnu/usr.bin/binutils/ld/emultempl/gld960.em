@@ -1,7 +1,7 @@
 # This shell script emits a C file. -*- C -*-
 # It does some substitutions.
 cat >e${EMULATION_NAME}.c <<EOF
-/* Copyright (C) 1991, 1993 Free Software Foundation, Inc.
+/* Copyright (C) 1991, 93, 94, 95, 1999 Free Software Foundation, Inc.
 
 This file is part of GLD, the Gnu Linker.
 
@@ -111,28 +111,25 @@ then
 # Scripts compiled in.
 
 # sed commands to quote an ld script as a C string.
-sc='s/["\\]/\\&/g
-s/$/\\n\\/
-1s/^/"/
-$s/$/n"/
-'
+sc="-f stringify.sed"
 
 cat >>e${EMULATION_NAME}.c <<EOF
 {			     
   *isfile = 0;
 
   if (link_info.relocateable == true && config.build_constructors == true)
-    return `sed "$sc" ldscripts/${EMULATION_NAME}.xu`;
-  else if (link_info.relocateable == true)
-    return `sed "$sc" ldscripts/${EMULATION_NAME}.xr`;
-  else if (!config.text_read_only)
-    return `sed "$sc" ldscripts/${EMULATION_NAME}.xbn`;
-  else if (!config.magic_demand_paged)
-    return `sed "$sc" ldscripts/${EMULATION_NAME}.xn`;
-  else
-    return `sed "$sc" ldscripts/${EMULATION_NAME}.x`;
-}
+    return
 EOF
+sed $sc ldscripts/${EMULATION_NAME}.xu                     >> e${EMULATION_NAME}.c
+echo '  ; else if (link_info.relocateable == true) return' >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xr                     >> e${EMULATION_NAME}.c
+echo '  ; else if (!config.text_read_only) return'         >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xbn                    >> e${EMULATION_NAME}.c
+echo '  ; else if (!config.magic_demand_paged) return'     >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.xn                     >> e${EMULATION_NAME}.c
+echo '  ; else return'                                     >> e${EMULATION_NAME}.c
+sed $sc ldscripts/${EMULATION_NAME}.x                      >> e${EMULATION_NAME}.c
+echo '; }'                                                 >> e${EMULATION_NAME}.c
 
 else
 # Scripts read from the filesystem.
@@ -171,6 +168,16 @@ struct ld_emulation_xfer_struct ld_gld960_emulation =
   before_allocation_default,
   gld960_get_script,
   "960",
-  ""
+  "",
+  NULL,	/* finish */
+  NULL,	/* create output section statements */
+  NULL,	/* open dynamic archive */
+  NULL,	/* place orphan */
+  NULL,	/* set symbols */
+  NULL,	/* parse args */
+  NULL,	/* unrecognized file */
+  NULL,	/* list options */
+  NULL,	/* recognized file */
+  NULL 	/* find_potential_libraries */
 };
 EOF

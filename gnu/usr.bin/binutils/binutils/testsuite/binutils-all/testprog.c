@@ -1,5 +1,7 @@
 /* This program is used to test objcopy and strip.  */
 
+#include <stdio.h>
+
 int common;
 int global = 1;
 static int local = 2;

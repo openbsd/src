@@ -1,19 +1,28 @@
 #
-# Makefile for libopcodes under openVMS/Alpha
+# Makefile for libopcodes under openVMS VAX and Alpha
 #
 # For use with gnu-make for vms
 #
 # Created by Klaus K"ampf, kkaempf@progis.de
 #
 #
+ifeq ($(ARCH),alpha)
 OBJS=alpha-dis.obj,alpha-opc.obj,dis-buf.obj,disassemble.obj
+FORMAT=OBJ_EVAX
+ARCHDEF="ARCH_alpha"
+else
+OBJS=vax-dis.obj,dis-buf.obj,disassemble.obj
+FORMAT=OBJ_VAX
+ARCHDEF="ARCH_vax"
+endif
 
 ifeq ($(CC),gcc)
-DEFS=/define=(OBJ_EVAX)
+DEFS=/define=($(FORMAT))
 CFLAGS=/include=([],[-.include],[-.bfd])$(DEFS)
 else
-DEFS=/define=(OBJ_EVAX,"const=")
-CFLAGS=/noopt/debug/include=([],[-.include],[-.bfd])$(DEFS)
+DEFS=/define=($(FORMAT),"const=")
+CFLAGS=/noopt/debug/include=([],[-.include],[-.bfd])$(DEFS)\
+/warnings=disable=(missingreturn,implicitfunc,longextern)
 endif
 
 libopcodes.olb: sysdep.h $(OBJS)
@@ -21,11 +30,9 @@ libopcodes.olb: sysdep.h $(OBJS)
 	lib/create libopcodes *.obj
 
 disassemble.obj: disassemble.c
-	$(CC)$(CFLAGS)/define=("ARCH_alpha") $<
+	$(CC)$(CFLAGS)/define=($(ARCHDEF)) $<
 
-alpha-dis.obj: alpha-dis.c
-
-sysdep.h: [-.bfd.hosts]alphavms.h
+sysdep.h: [-.bfd.hosts]$(ARCH)vms.h
 	$(CP) $< $@
 
 clean:

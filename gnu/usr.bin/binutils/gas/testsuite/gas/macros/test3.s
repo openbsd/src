@@ -4,4 +4,4 @@
 	\arg2
 	.endm
 
-	m	".long r1",.garbage
+	m	".long foo1",.garbage

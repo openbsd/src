@@ -17,13 +17,14 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #include <stdio.h>
+#include "libiberty.h"
 #include "gprof.h"
 #include "cg_arcs.h"
 #include "cg_dfn.h"
 #include "symtab.h"
 #include "utils.h"
 
-#define	DFN_DEPTH	100
+#define	DFN_INCR_DEPTH (128)
 
 typedef struct
   {
@@ -32,7 +33,8 @@ typedef struct
   }
 DFN_Stack;
 
-DFN_Stack dfn_stack[DFN_DEPTH];
+DFN_Stack *dfn_stack = NULL;
+int dfn_maxdepth = 0;
 int dfn_depth = 0;
 int dfn_counter = DFN_NAN;
 
@@ -194,11 +196,13 @@ static void
 DEFUN (pre_visit, (parent), Sym * parent)
 {
   ++dfn_depth;
-  if (dfn_depth >= DFN_DEPTH)
+
+  if (dfn_depth >= dfn_maxdepth)
     {
-      fprintf (stderr, "[pre_visit] dfn_stack overflow\n");
-      done (1);
+      dfn_maxdepth += DFN_INCR_DEPTH;
+      dfn_stack = xrealloc (dfn_stack, dfn_maxdepth * sizeof *dfn_stack);
     }
+
   dfn_stack[dfn_depth].sym = parent;
   dfn_stack[dfn_depth].cycle_top = dfn_depth;
   parent->cg.top_order = DFN_BUSY;

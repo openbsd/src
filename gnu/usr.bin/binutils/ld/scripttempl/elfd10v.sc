@@ -1,26 +1,3 @@
-#
-# Unusual variables checked by this code:
-#	NOP - two byte opcode for no-op (defaults to 0)
-#	DATA_ADDR - if end-of-text-plus-one-page isn't right for data start
-#	OTHER_READONLY_SECTIONS - other than .text .init .rodata ...
-#		(e.g., .PARISC.milli)
-#	OTHER_READWRITE_SECTIONS - other than .data .bss .ctors .sdata ...
-#		(e.g., .PARISC.global)
-#	OTHER_SECTIONS - at the end
-#	EXECUTABLE_SYMBOLS - symbols that must be defined for an
-#		executable (e.g., _DYNAMIC_LINK)
-#	TEXT_START_SYMBOLS - symbols that appear at the start of the
-#		.text section.
-#	DATA_START_SYMBOLS - symbols that appear at the start of the
-#		.data section.
-#	OTHER_BSS_SYMBOLS - symbols that appear at the start of the
-#		.bss section besides __bss_start.
-#	DATA_PLT - .plt should be in data segment, not text segment.
-#	EMBEDDED - whether this is for an embedded system. 
-#
-# When adding sections, do note that the names of some sections are used
-# when specifying the start address of the next.
-#
 test -z "$ENTRY" && ENTRY=_start
 test -z "${BIG_OUTPUT_FORMAT}" && BIG_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 test -z "${LITTLE_OUTPUT_FORMAT}" && LITTLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
@@ -28,6 +5,45 @@ if [ -z "$MACHINE" ]; then OUTPUT_ARCH=${ARCH}; else OUTPUT_ARCH=${ARCH}:${MACHI
 test "$LD_FLAG" = "N" && DATA_ADDR=.
 INTERP=".interp   ${RELOCATING-0} : { *(.interp) 	}"
 PLT=".plt    ${RELOCATING-0} : { *(.plt)	}"
+
+
+CTOR=".ctors ${CONSTRUCTING-0} : 
+  {
+    ${CONSTRUCTING+${CTOR_START}}
+    /* gcc uses crtbegin.o to find the start of
+       the constructors, so we make sure it is
+       first.  Because this is a wildcard, it
+       doesn't matter if the user does not
+       actually link against crtbegin.o; the
+       linker won't look for a file to match a
+       wildcard.  The wildcard also means that it
+       doesn't matter which directory crtbegin.o
+       is in.  */
+
+    KEEP (*crtbegin.o(.ctors))
+
+    /* We don't want to include the .ctor section from
+       from the crtend.o file until after the sorted ctors.
+       The .ctor section from the crtend file contains the
+       end of ctors marker and it must be last */
+
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
+    KEEP (*(SORT(.ctors.*)))
+    KEEP (*(.ctors))
+    ${CONSTRUCTING+${CTOR_END}}
+  }"
+
+DTOR=" .dtors       ${CONSTRUCTING-0} :
+  {
+    ${CONSTRUCTING+${DTOR_START}}
+    KEEP (*crtbegin.o(.dtors))
+    KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
+    KEEP (*(SORT(.dtors.*)))
+    KEEP (*(.dtors))
+    ${CONSTRUCTING+${DTOR_END}}
+  }"
+
+STACK=" .stack : { _stack = .; *(.stack) } >STACK "
 
 # if this is for an embedded system, don't add SIZEOF_HEADERS.
 if [ -z "$EMBEDDED" ]; then
@@ -46,88 +62,66 @@ ${RELOCATING+${LIB_SEARCH_DIRS}}
 ${RELOCATING+/* Do we need any of these for elf?
    __DYNAMIC = 0; ${STACKZERO+${STACKZERO}} ${SHLIB_PATH+${SHLIB_PATH}}  */}
 ${RELOCATING+${EXECUTABLE_SYMBOLS}}
-${RELOCATING- /* For some reason, the Solaris linker makes bad executables
-  if gld -r is used and the intermediate file has sections starting
-  at non-zero addresses.  Could be a Solaris ld bug, could be a GNU ld
-  bug.  But for now assigning the zero vmas works.  */}
+
+MEMORY
+{
+  UNIFIED : org = 0,         len = 0x1000000
+  INSN    : org = 0x1000000, len = 0x40000
+  DATA    : org = 0x2000004, len = 0x7FFC
+  STACK   : org = 0x2007FFE, len = 4
+}
+
 SECTIONS
 {
-  /* Read-only sections, merged into text segment: */
-  ${CREATE_SHLIB-${RELOCATING+. = ${READONLY_BASE_ADDRESS};}}
-  ${CREATE_SHLIB+${RELOCATING+. = SIZEOF_HEADERS;}}
-  ${CREATE_SHLIB-${INTERP}}
-  .hash        ${RELOCATING-0} : { *(.hash)		}
-  .dynsym      ${RELOCATING-0} : { *(.dynsym)		}
-  .dynstr      ${RELOCATING-0} : { *(.dynstr)		}
-  .rel.text    ${RELOCATING-0} : { *(.rel.text)		}
-  .rela.text   ${RELOCATING-0} : { *(.rela.text) 	}
-  .rel.data    ${RELOCATING-0} : { *(.rel.data)		}
-  .rela.data   ${RELOCATING-0} : { *(.rela.data) 	}
-  .rel.rodata  ${RELOCATING-0} : { *(.rel.rodata) 	}
-  .rela.rodata ${RELOCATING-0} : { *(.rela.rodata) 	}
-  .rel.got     ${RELOCATING-0} : { *(.rel.got)		}
-  .rela.got    ${RELOCATING-0} : { *(.rela.got)		}
-  .rel.ctors   ${RELOCATING-0} : { *(.rel.ctors)	}
-  .rela.ctors  ${RELOCATING-0} : { *(.rela.ctors)	}
-  .rel.dtors   ${RELOCATING-0} : { *(.rel.dtors)	}
-  .rela.dtors  ${RELOCATING-0} : { *(.rela.dtors)	}
-  .rel.init    ${RELOCATING-0} : { *(.rel.init)	}
-  .rela.init   ${RELOCATING-0} : { *(.rela.init)	}
-  .rel.fini    ${RELOCATING-0} : { *(.rel.fini)	}
-  .rela.fini   ${RELOCATING-0} : { *(.rela.fini)	}
-  .rel.bss     ${RELOCATING-0} : { *(.rel.bss)		}
-  .rela.bss    ${RELOCATING-0} : { *(.rela.bss)		}
-  .rel.plt     ${RELOCATING-0} : { *(.rel.plt)		}
-  .rela.plt    ${RELOCATING-0} : { *(.rela.plt)		}
-  ${DATA_PLT-${PLT}}
-  .rodata  ${RELOCATING-0} : { *(.rodata) *(.gnu.linkonce.r*) }
-  .rodata1 ${RELOCATING-0} : { *(.rodata1) }
-  ${RELOCATING+${OTHER_READONLY_SECTIONS}}
+  .text :
+  {
+    ${RELOCATING+${TEXT_START_SYMBOLS}}
+    KEEP (*(.init))
+    KEEP (*(.fini))
+    *(.text)
+    *(.text.*)
+    /* .gnu.warning sections are handled specially by elf32.em.  */
+    *(.gnu.warning)
+    *(.gnu.linkonce.t*)
+    ${RELOCATING+_etext = .;}
+    ${RELOCATING+PROVIDE (etext = .);}
+  } ${RELOCATING+ >INSN} =${NOP-0}
 
-  /* Adjust the address for the data segment.  */
-  ${RELOCATING+. = ${DATA_ADDR-ALIGN(4);}}
+  .rodata  ${RELOCATING-0} : {
+    *(.rodata) *(.gnu.linkonce.r*)
+  } ${RELOCATING+ >DATA}
+  .rodata1 ${RELOCATING-0} : { *(.rodata1) } ${RELOCATING+ >DATA}
 
   .data  ${RELOCATING-0} :
   {
     ${RELOCATING+${DATA_START_SYMBOLS}}
     *(.data)
+    *(.data.*)
     *(.gnu.linkonce.d*)
     ${CONSTRUCTING+CONSTRUCTORS}
-  }
-  .data1 ${RELOCATING-0} : { *(.data1) }
-  ${RELOCATING+${OTHER_READWRITE_SECTIONS}}
-  .ctors       ${RELOCATING-0} :
-  {
-    ${CONSTRUCTING+${CTOR_START}}
-    *(.ctors)
-    ${CONSTRUCTING+${CTOR_END}}
-  }
-  .dtors       ${RELOCATING-0} :
-  {
-    ${CONSTRUCTING+${DTOR_START}}
-    *(.dtors)
-    ${CONSTRUCTING+${DTOR_END}}
-  }
-  .got         ${RELOCATING-0} : { *(.got.plt) *(.got) }
-  .dynamic     ${RELOCATING-0} : { *(.dynamic) }
-  ${DATA_PLT+${PLT}}
+  } ${RELOCATING+ >DATA}
+  .data1 ${RELOCATING-0} : { *(.data1) } ${RELOCATING+ >DATA}
+  ${RELOCATING+${CTOR} >DATA}
+  ${RELOCATING+${DTOR} >DATA}
+
   /* We want the small data sections together, so single-instruction offsets
      can access them all, and initialized data all before uninitialized, so
      we can shorten the on-disk segment size.  */
-  .sdata   ${RELOCATING-0} : { *(.sdata) }
-  ${RELOCATING+_edata  =  .;}
+  .sdata   ${RELOCATING-0} : { *(.sdata) } ${RELOCATING+ >DATA}
+  ${RELOCATING+_edata = .;}
   ${RELOCATING+PROVIDE (edata = .);}
   ${RELOCATING+__bss_start = .;}
-  ${RELOCATING+${OTHER_BSS_SYMBOLS}}
-  .sbss    ${RELOCATING-0} : { *(.sbss) *(.scommon) }
+  .sbss    ${RELOCATING-0} : { *(.sbss) *(.scommon) } ${RELOCATING+ >DATA}
   .bss     ${RELOCATING-0} :
   {
    *(.dynbss)
    *(.bss)
    *(COMMON)
-  }
+  } ${RELOCATING+ >DATA}
   ${RELOCATING+_end = . ;}
   ${RELOCATING+PROVIDE (end = .);}
+
+  ${RELOCATING+$STACK}
 
   /* Stabs debugging sections.  */
   .stab 0 : { *(.stab) }
@@ -169,28 +163,5 @@ SECTIONS
   .debug_funcnames 0 : { *(.debug_funcnames) }
   .debug_typenames 0 : { *(.debug_typenames) }
   .debug_varnames  0 : { *(.debug_varnames) }
-
-  ${RELOCATING+${OTHER_RELOCATING_SECTIONS}}
-
-  /* These must appear regardless of ${RELOCATING}.  */
-  ${OTHER_SECTIONS}
-
-
-  /* Hmmm, there's got to be a better way.  This sets the stack to the
-     top of the simulator memory (i.e. top of 64K data space). */
-  .stack 0x2007FFE : { _stack = .; *(.stack) }
-
-  .text    ${RELOCATING+${TEXT_START_ADDR}} :
-  {
-    ${RELOCATING+${TEXT_START_SYMBOLS}}
-    *(.init)
-    *(.fini)
-    *(.text)
-    /* .gnu.warning sections are handled specially by elf32.em.  */
-    *(.gnu.warning)
-    *(.gnu.linkonce.t*)
-  } =${NOP-0}
-  ${RELOCATING+_etext = .;}
-  ${RELOCATING+PROVIDE (etext = .);}
 }
 EOF

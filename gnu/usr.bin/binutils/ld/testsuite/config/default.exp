@@ -1,5 +1,5 @@
 # Basic expect script for LD Regression Tests
-#   Copyright (C) 1993, 1994, 1995, 1997 Free Software Foundation
+#   Copyright (C) 1993, 94, 95, 97, 98, 1999 Free Software Foundation
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,15 +19,15 @@
 #
 
 if ![info exists ld] then {
-    set ld [findfile $base_dir/ld.new $base_dir/ld.new [transform ld]]
+    set ld [findfile $base_dir/ld-new $base_dir/ld-new [transform ld]]
 }
 
 if ![info exists as] then {
-    set as [findfile $base_dir/../gas/as.new $base_dir/../gas/as.new [transform as]]
+    set as [findfile $base_dir/../gas/as-new $base_dir/../gas/as-new [transform as]]
 }
 
 if ![info exists nm] then {
-    set nm [findfile $base_dir/../binutils/nm.new $base_dir/../binutils/nm.new [transform nm]]
+    set nm [findfile $base_dir/../binutils/nm-new $base_dir/../binutils/nm-new [transform nm]]
 }
 
 if ![info exists objdump] then {
@@ -43,13 +43,53 @@ if ![info exists ar] then {
 }
 
 if ![info exists strip] then {
-    set strip [findfile $base_dir/../binutils/strip.new $base_dir/../binutils/strip.new [transform strip]]
+    set strip [findfile $base_dir/../binutils/strip-new $base_dir/../binutils/strip-new [transform strip]]
 }
 
-if ![file isdirectory tmpdir] {catch "exec mkdir tmpdir" status}
+if {![file isdirectory tmpdir]} then {
+    catch "exec mkdir tmpdir" status
+}
+
+# Make a symlink from tmpdir/as to the assembler in the build tree, so
+# that we can use a -B option to gcc to force it to use the newly
+# built assembler.
+if {![file isdirectory tmpdir/gas]} then {
+    catch "exec mkdir tmpdir/gas" status
+    catch "exec ln -s ../../../gas/as-new tmpdir/gas/as" status
+}
+set gcc_gas_flag "-B[pwd]/tmpdir/gas/"
 
 # load the utility procedures
-load_lib ld.exp
+load_lib ld-lib.exp
+
+proc get_link_files {varname} {
+    global $varname
+    global target_triplet
+    global srcdir
+    global CC
+    if ![info exists $varname] {
+	set status [catch "exec sh -c \"host='$target_triplet' && CC='$CC' && . $srcdir/../configure.host && eval echo \\$$varname\"" result]
+	if $status { error "Error getting native link files: $result" }
+	set $varname $result
+    }
+}
+
+proc get_target_emul {} {
+    global target_triplet
+    global srcdir
+    set status [catch "exec sh -c \"targ='$target_triplet' && . $srcdir/../configure.tgt && echo \\\$targ_emul\"" result]
+    if $status { error "Error getting emulation name: $result" }
+    return $result
+}
+
+if [isnative] {
+    foreach x {HOSTING_CRT0 HOSTING_LIBS} {
+	get_link_files $x
+    }
+} else {
+    foreach x {HOSTING_CRT0 HOSTING_LIBS} { set $x "" }
+}
+if ![info exists HOSTING_EMU] { set HOSTING_EMU "-m [get_target_emul]" }
 
 #
 # ld_version -- extract and print the version number of ld compiler (GCC)

@@ -14,3 +14,6 @@ foo:
 	clrx [%g1+1]
 	clrx [42+%g1]
 	clrx [0x42]
+
+	signx %g1
+	clruw %g2

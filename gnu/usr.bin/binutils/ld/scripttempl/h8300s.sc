@@ -17,7 +17,7 @@ MEMORY
 	/* The stack starts at the top of main ram.  */
 	topram : o = 0x3fffc, l = 0x4
 	/* This holds variables in the "tiny" sections.  */
-	tiny   : o = 0xff8000, l = 7f00
+	tiny   : o = 0xff8000, l = 0x7f00
 	/* At the very top of the address space is the 8-bit area.  */
 	eight  : o = 0xffff00, l = 0x100
 }

@@ -85,6 +85,9 @@ extern const int powerpc_num_opcodes;
    for the assembler's -many option, and it eliminates duplicates).  */
 #define PPC_OPCODE_ANY (0200)
 
+/* Opcode is supported as part of the 64-bit bridge.  */
+#define PPC_OPCODE_64_BRIDGE (0400)
+
 /* A macro to extract the major opcode from an instruction.  */
 #define PPC_OP(i) (((i) >> 26) & 0x3f)
 

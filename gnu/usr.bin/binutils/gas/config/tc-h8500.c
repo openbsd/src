@@ -1,5 +1,5 @@
 /* tc-h8500.c -- Assemble code for the Hitachi H8/500
-   Copyright (C) 1993 Free Software Foundation.
+   Copyright (C) 1993, 94, 95, 1998 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -14,8 +14,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 /*
   Written By Steve Chamberlain
@@ -186,68 +187,73 @@ parse_reg (src, mode, reg)
      int *mode;
      int *reg;
 {
-  if (src[0] == 'r')
+  char *end;
+  int len;
+
+  /* Cribbed from get_symbol_end().  */
+  if (!is_name_beginner (*src) || *src == '\001')
+    return 0;
+  end = src+1;
+  while (is_part_of_name (*end) || *end == '\001')
+    end++;
+  len = end - src;
+
+  if (len == 2 && src[0] == 'r')
     {
       if (src[1] >= '0' && src[1] <= '7')
 	{
 	  *mode = RN;
 	  *reg = (src[1] - '0');
-	  return 2;
+	  return len;
 	}
     }
-
-  if (src[0] == 's' && src[1] == 'p')
+  if (len == 2 && src[0] == 's' && src[1] == 'p')
     {
       *mode = RN;
       *reg = 7;
-      return 2;
+      return len;
     }
-  if (src[0] == 'c' && src[1] == 'c' && src[2] == 'r')
+  if (len == 3 && src[0] == 'c' && src[1] == 'c' && src[2] == 'r')
     {
       *mode = CRB;
       *reg = 1;
-      return 3;
+      return len;
     }
-  if (src[0] == 's' && src[1] == 'r')
+  if (len == 2 && src[0] == 's' && src[1] == 'r')
     {
       *mode = CRW;
       *reg = 0;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 'b' && src[1] == 'r')
+  if (len == 2 && src[0] == 'b' && src[1] == 'r')
     {
       *mode = CRB;
       *reg = 3;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 'e' && src[1] == 'p')
+  if (len == 2 && src[0] == 'e' && src[1] == 'p')
     {
       *mode = CRB;
       *reg = 4;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 'd' && src[1] == 'p')
+  if (len == 2 && src[0] == 'd' && src[1] == 'p')
     {
       *mode = CRB;
       *reg = 5;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 't' && src[1] == 'p')
+  if (len == 2 && src[0] == 't' && src[1] == 'p')
     {
       *mode = CRB;
       *reg = 7;
-      return 2;
+      return len;
     }
-
-  if (src[0] == 'f' && src[1] == 'p')
+  if (len == 2 && src[0] == 'f' && src[1] == 'p')
     {
       *mode = RN;
       *reg = 6;
-      return 2;
+      return len;
     }
   return 0;
 }
@@ -288,7 +294,7 @@ parse_exp (s, op, page)
 
   expression (op);
   if (op->X_op == O_absent)
-    as_bad ("missing operand");
+    as_bad (_("missing operand"));
   new = input_line_pointer;
   input_line_pointer = save;
   return new;
@@ -328,14 +334,14 @@ skip_colonthing (sign, ptr, exp, def, size8, size16, size24)
 	{
 	  if (!size24)
 	    {
-	      as_bad (":24 not valid for this opcode");
+	      as_bad (_(":24 not valid for this opcode"));
 	    }
 	  ptr += 2;
 	  exp->type = size24;
 	}
       else
 	{
-	  as_bad ("expect :8,:16 or :24");
+	  as_bad (_("expect :8,:16 or :24"));
 	  exp->type = size16;
 	}
     }
@@ -392,7 +398,7 @@ parse_reglist (src, op)
 	}
       else
 	{
-	  as_bad ("syntax error in reg list");
+	  as_bad (_("syntax error in reg list"));
 	  return 0;
 	}
       if (src[idx] == '-')
@@ -410,7 +416,7 @@ parse_reglist (src, op)
 	    }
 	  else
 	    {
-	      as_bad ("missing final register in range");
+	      as_bad (_("missing final register in range"));
 	    }
 	}
       if (src[idx] == ',')
@@ -497,20 +503,20 @@ get_operand (ptr, op, ispage)
 
 	  if (*src != ',')
 	    {
-	      as_bad ("expected @(exp, Rn)");
+	      as_bad (_("expected @(exp, Rn)"));
 	      return;
 	    }
 	  src++;
 	  len = parse_reg (src, &mode, &op->reg);
 	  if (len == 0 || mode != RN)
 	    {
-	      as_bad ("expected @(exp, Rn)");
+	      as_bad (_("expected @(exp, Rn)"));
 	      return;
 	    }
 	  src += len;
 	  if (*src != ')')
 	    {
-	      as_bad ("expected @(exp, Rn)");
+	      as_bad (_("expected @(exp, Rn)"));
 	      return;
 	    }
 	  *ptr = src + 1;
@@ -526,7 +532,7 @@ get_operand (ptr, op, ispage)
 	      src++;
 	      if (mode != RN)
 		{
-		  as_bad ("@Rn+ needs word register");
+		  as_bad (_("@Rn+ needs word register"));
 		  return;
 		}
 	      op->type = RNINC;
@@ -536,7 +542,7 @@ get_operand (ptr, op, ispage)
 	    }
 	  if (mode != RN)
 	    {
-	      as_bad ("@Rn needs word register");
+	      as_bad (_("@Rn needs word register"));
 	      return;
 	    }
 	  op->type = RNIND;
@@ -836,7 +842,7 @@ get_specific (opcode, operands)
 		}
 	      break;
 	    default:
-	      printf ("unhandled %d\n", this_try->arg_type[i]);
+	      printf (_("unhandled %d\n"), this_try->arg_type[i]);
 	      break;
 	    }
 
@@ -864,7 +870,7 @@ check (operand, low, high)
       || operand->X_add_number < low
       || operand->X_add_number > high)
     {
-      as_bad ("operand must be absolute in range %d..%d", low, high);
+      as_bad (_("operand must be absolute in range %d..%d"), low, high);
     }
   return operand->X_add_number;
 }
@@ -954,7 +960,7 @@ build_bytes (opcode, operand)
 	  switch (opcode->bytes[index].insert)
 	    {
 	    default:
-	      printf ("failed for %d\n", opcode->bytes[index].insert);
+	      printf (_("failed for %d\n"), opcode->bytes[index].insert);
 	      break;
 	    case 0:
 	      break;
@@ -1113,14 +1119,14 @@ DEFUN (md_assemble, (str),
 
   if (op_end == op_start)
     {
-      as_bad ("can't find opcode ");
+      as_bad (_("can't find opcode "));
     }
 
   opcode = (h8500_opcode_info *) hash_find (opcode_hash_control, name);
 
   if (opcode == NULL)
     {
-      as_bad ("unknown opcode");
+      as_bad (_("unknown opcode"));
       return;
     }
 
@@ -1136,7 +1142,7 @@ DEFUN (md_assemble, (str),
 
       where[0] = 0x0;
       where[1] = 0x0;
-      as_bad ("invalid operands for opcode");
+      as_bad (_("invalid operands for opcode"));
       return;
     }
 
@@ -1148,7 +1154,7 @@ void
 DEFUN (tc_crawl_symbol_chain, (headers),
        object_headers * headers)
 {
-  printf ("call to tc_crawl_symbol_chain \n");
+  printf (_("call to tc_crawl_symbol_chain \n"));
 }
 
 symbolS *
@@ -1162,7 +1168,7 @@ void
 DEFUN (tc_headers_hook, (headers),
        object_headers * headers)
 {
-  printf ("call to tc_headers_hook \n");
+  printf (_("call to tc_headers_hook \n"));
 }
 
 /* Various routines to kill one day */
@@ -1213,7 +1219,7 @@ md_atof (type, litP, sizeP)
 
     default:
       *sizeP = 0;
-      return "Bad call to MD_ATOF()";
+      return _("Bad call to MD_ATOF()");
     }
   t = atof_ieee (input_line_pointer, type, words);
   if (t)
@@ -1248,34 +1254,11 @@ md_show_usage (stream)
 {
 }
 
-int md_short_jump_size;
-
 void
 tc_aout_fix_to_chars ()
 {
-  printf ("call to tc_aout_fix_to_chars \n");
+  printf (_("call to tc_aout_fix_to_chars \n"));
   abort ();
-}
-
-void
-md_create_short_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr;
-     addressT to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  as_fatal ("failed sanity check.");
-}
-
-void
-md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
-     char *ptr;
-     addressT from_addr, to_addr;
-     fragS *frag;
-     symbolS *to_symbol;
-{
-  as_fatal ("failed sanity check.");
 }
 
 static
@@ -1474,8 +1457,6 @@ md_apply_fix (fixP, val)
 
     }
 }
-
-int md_long_jump_size;
 
 /*
 called just before address relaxation, return the length

@@ -1,13 +1,4 @@
-	.SPACE $PRIVATE$
-	.SUBSPA $DATA$,QUAD=1,ALIGN=8,ACCESS=31
-	.SUBSPA $BSS$,QUAD=1,ALIGN=8,ACCESS=31,ZERO,SORT=82
-	.SPACE $TEXT$
-	.SUBSPA $LIT$,QUAD=0,ALIGN=8,ACCESS=44
-	.SUBSPA $CODE$,QUAD=0,ALIGN=8,ACCESS=44,CODE_ONLY
-
-	.SPACE $TEXT$
-	.SUBSPA $CODE$
-
+	.code
 	.align 4
 ; Basic immediate instruction tests.  
 ;
@@ -47,3 +38,20 @@
 	subio,>> 123,%r5,%r6
 	subio,nsv 123,%r5,%r6
 	subio,ev 123,%r5,%r6
+
+	subi,tsv 123,%r5,%r6
+	subi,tsv,= 123,%r5,%r6
+	subi,tsv,< 123,%r5,%r6
+	subi,tsv,<= 123,%r5,%r6
+	subi,tsv,<< 123,%r5,%r6
+	subi,tsv,<<= 123,%r5,%r6
+	subi,tsv,sv 123,%r5,%r6
+	subi,tsv,od 123,%r5,%r6
+	subi,tsv,tr 123,%r5,%r6
+	subi,tsv,<> 123,%r5,%r6
+	subi,tsv,>= 123,%r5,%r6
+	subi,tsv,> 123,%r5,%r6
+	subi,tsv,>>= 123,%r5,%r6
+	subi,tsv,>> 123,%r5,%r6
+	subi,tsv,nsv 123,%r5,%r6
+	subi,tsv,ev 123,%r5,%r6

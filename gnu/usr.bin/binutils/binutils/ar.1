@@ -1,6 +1,6 @@
-.\" Copyright (c) 1991 Free Software Foundation
+.\" Copyright (c) 1991, 1992, 1993, 1995, 1998, 1999 Free Software Foundation
 .\" See section COPYING for conditions for redistribution
-.TH ar 1 "5 November 1991" "cygnus support" "GNU Development Tools"
+.TH ar 1 "1999" "Cygnus Solutions" "GNU Development Tools"
 .de BP
 .sp
 .ti \-.2i
@@ -14,9 +14,12 @@ ar \- create, modify, and extract from archives.
 .hy 0
 .na
 .BR ar " [\|" "-" "\|]"\c
-.I {dmpqrtx}[abcilosuvV] \c
+.I {dmpqrtx}[abcfilNoPsSuvV] \c
 [\|\c
 .I membername\c
+\&\|] \c
+[\|\c
+.I count\c
 \&\|] \c
 .I archive\c
 \& \c
@@ -215,6 +218,15 @@ index is not updated, even if it already existed; you can use `\|\c
 .B ranlib\c
 \& explicitly to update the symbol table index.
 
+However, too many different systems assume quick append rebuilds the
+index, so GNU
+.B ar
+implements `\|\c
+.B q\c
+\|' as a synonym for `\|\c
+.B r\c
+\|'.
+
 .TP
 .B r
 Insert \c
@@ -397,12 +409,33 @@ member must be present as the \c
 This modifier is accepted but not used.
 
 .TP
+.B N
+Uses the
+.I count
+parameter.  This is used if there are multiple entries in the archive
+with the same name.  Extract or delete instance
+.I count
+of the given name from the archive.
+
+.TP
 .B o
 Preserve the \c
 .I original\c
 \& dates of members when extracting them.  If
 you do not specify this modifier, files extracted from the archive
 will be stamped with the time of extraction.
+
+.TP
+.B P
+Use the full path name when matching names in the archive.
+.B ar
+can not create an archive with a full path name (such archives are not
+POSIX complaint), but other archive creators can.  This option will
+cause
+.B ar
+to match file names using a complete path name, which can be
+convenient when extracting a single file from an archive created by
+another tool.
 
 .TP
 .B s
@@ -414,6 +447,19 @@ flag either with any operation, or alone.  Running `\|\c
 archive is equivalent to running `\|\c
 .B ranlib\c
 \|' on it.
+
+.TP
+.B S
+Do not generate an archive symbol table.  This can speed up building a
+large library in several steps.  The resulting archive can not be used
+with the linker.  In order to build a symbol table, you must omit the
+`\|\c
+.B S\c
+\|' modifier on the last execution of `\|\c
+.B ar\c
+\|', or you must run `\|\c
+.B ranlib\c
+\|' on the archive.
 
 .TP
 .B u
@@ -469,7 +515,7 @@ The GNU Binary Utilities\c
 \&.
 
 .SH COPYING
-Copyright (c) 1991 Free Software Foundation, Inc.
+Copyright (c) 1991, 1992, 1993, 1995, 1998, 1999 Free Software Foundation, Inc.
 .PP
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice

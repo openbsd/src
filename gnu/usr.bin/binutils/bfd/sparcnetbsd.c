@@ -1,5 +1,5 @@
 /* BFD back-end for NetBSD/sparc a.out-ish binaries.
-   Copyright (C) 1990, 91, 92, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 94, 95, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define TARGET_PAGE_SIZE 0x2000
 
 #define DEFAULT_ARCH	bfd_arch_sparc
-#define MACHTYPE_OK(mtype) ((mtype) == M_SPARC_NETBSD || (mtype) == M_UNKNOWN)
+#define DEFAULT_MID 	M_SPARC_NETBSD
 
 #define MY(OP) CAT(sparcnetbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */

@@ -1,5 +1,6 @@
 /* BFD support for Sparc binaries under LynxOS.
-   Copyright (C) 1990, 91, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1990, 91, 92, 93, 94, 95, 97, 1998
+   Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -91,19 +92,19 @@ NAME(lynx,set_arch_mach) (abfd, machtype)
       /* Some Sun3s make magic numbers without cpu types in them, so
 	 we'll default to the 68000. */
       arch = bfd_arch_m68k;
-      machine = 68000;
+      machine = bfd_mach_m68000;
       break;
 
     case M_68010:
     case M_HP200:
       arch = bfd_arch_m68k;
-      machine = 68010;
+      machine = bfd_mach_m68010;
       break;
 
     case M_68020:
     case M_HP300:
       arch = bfd_arch_m68k;
-      machine = 68020;
+      machine = bfd_mach_m68020;
       break;
 
     case M_SPARC:
@@ -173,11 +174,11 @@ NAME(aout,sparclynx_write_object_contents) (abfd)
     case bfd_arch_m68k:
       switch (bfd_get_mach (abfd))
 	{
-	case 68010:
+	case bfd_mach_m68010:
 	  N_SET_MACHTYPE (*execp, M_68010);
 	  break;
 	default:
-	case 68020:
+	case bfd_mach_m68020:
 	  N_SET_MACHTYPE (*execp, M_68020);
 	  break;
 	}

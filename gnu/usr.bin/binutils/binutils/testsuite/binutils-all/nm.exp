@@ -20,16 +20,24 @@
 # This file was written by Rob Savoye <rob@cygnus.com>
 # and rewritten by Ian Lance Taylor <ian@cygnus.com>
 
-if {[which $NM] == 0} then {
-    perror "$NM does not exist"
-    return
+if ![is_remote host] {
+    if {[which $NM] == 0} then {
+        perror "$NM does not exist"
+        return
+    }
 }
 
 send_user "Version [binutil_version $NM]"
 
 
-if {![binutils_assemble $AS $srcdir/$subdir/bintest.s tmpdir/bintest.o]} then {
+if {![binutils_assemble $srcdir/$subdir/bintest.s tmpdir/bintest.o]} then {
     return
+}
+
+if [is_remote host] {
+    set tempfile [remote_download host tmpdir/bintest.o]
+} else {
+    set tempfile tmpdir/bintest.o
 }
 
 # Test nm with no arguments.
@@ -44,7 +52,7 @@ setup_xfail "mips*-*-riscos*" "mips*-*-sysv3*" "mips*-sony-bsd*"
 # does not enter static symbols in the symbol table.
 setup_xfail "*-*-aix*"
 
-set got [binutils_run $NM "$NMFLAGS tmpdir/bintest.o"]
+set got [binutils_run $NM "$NMFLAGS $tempfile"]
 
 if [info exists vars] then { unset vars }
 while {[regexp "(\[a-zA-Z\]) (\[a-z_\]*_symbol)(.*)" $got all type symbol rest]} {
@@ -71,7 +79,7 @@ if {![info exists vars(text_symbol)] \
 
 # Test nm -g
 
-set got [binutils_run $NM "$NMFLAGS -g tmpdir/bintest.o"]
+set got [binutils_run $NM "$NMFLAGS -g $tempfile"]
 
 if [info exists vars] then { unset vars }
 while {[regexp "(\[a-z_\]*_symbol)(.*)" $got all symbol rest]} {
@@ -102,7 +110,7 @@ setup_xfail "mips*-*-riscos*" "mips*-*-sysv3*" "mips*-sony-bsd*"
 # does not enter static symbols in the symbol table.
 setup_xfail "*-*-aix*"
 
-set got [binutils_run $NM "$NMFLAGS -P tmpdir/bintest.o"]
+set got [binutils_run $NM "$NMFLAGS -P $tempfile"]
 
 set want "common_symbol C \[0\]*4.*data_symbol D \[0-9a-fA-F\]*.*external_symbol U.*static_data_symbol d \[0-9a-fA-F\]*.*static_text_symbol t \[0-9a-fA-F\]*.*text_symbol T \[0-9a-fA-F\]*"
 

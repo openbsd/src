@@ -8,13 +8,13 @@ SECTIONS
 	${RELOCATING+ _etext = .};
 	${CONSTRUCTING+${COFF_CTORS}}
     }  
-    .data SIZEOF(.text) + ADDR(.text):
+    .data :
     { 
  	*(.data) 
 	${CONSTRUCTING+CONSTRUCTORS}
 	${RELOCATING+ _edata = .};
     }  
-    .bss SIZEOF(.data) + ADDR(.data):
+    .bss :
     { 
 	${RELOCATING+ _bss_start = .};
 	*(.bss)	 

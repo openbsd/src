@@ -17,6 +17,7 @@ extern int shlib_checkfunptr2 ();
 extern int (*shlib_getfunptr1 ()) ();
 extern int (*shlib_getfunptr2 ()) ();
 extern int shlib_check ();
+extern int shlib_shlibcall2 ();
 
 /* This function is called by the shared library.  */
 
@@ -24,6 +25,14 @@ int
 main_called ()
 {
   return 6;
+}
+
+/* This function overrides a function in the shared library.  */
+
+int
+shlib_overriddencall2 ()
+{
+  return 8;
 }
 
 int
@@ -42,6 +51,7 @@ main ()
   printf ("shlib_shlibvar2 () == %d\n", shlib_shlibvar2 ());
   printf ("shlib_shlibcall () == %d\n", shlib_shlibcall ());
 #ifndef XCOFF_TEST
+  printf ("shlib_shlibcall2 () == %d\n", shlib_shlibcall2 ());
   printf ("shlib_maincall () == %d\n", shlib_maincall ());
 #endif
   printf ("main_called () == %d\n", main_called ());

@@ -1,0 +1,10 @@
+#
+# Tests for m88k svr3 targets
+#
+if { [istarget m88*-*-sysv3] || [istarget m88*-*-coff* ] } then {
+    set testname "Proper padding of .init section"
+    run_dump_test init
+}
+if [info exists errorInfo] then {
+    unset errorInfo
+}

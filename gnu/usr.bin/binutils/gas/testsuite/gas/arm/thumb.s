@@ -1,6 +1,6 @@
 	.text
 	.code 16
-foo:	
+.foo:	
 	lsl	r2, r1, #3
 	lsr	r3, r4, #31
 wibble/data:	
@@ -118,6 +118,7 @@ bar:
 	bhi	bar
 	blo	bar
 	bul	bar
+	bal	bar
 
 close:
 	lsl	r4, r5, #near - close
@@ -129,63 +130,65 @@ near:
 	add	r0, sp, #255 << 2
 	add	r0, pc, #255 << 2
 
-	add	sp, sp, #bar - foo
-	sub	sp, sp, #bar - foo
-	add	r0, sp, #bar - foo
-	add	r0, pc, #bar - foo
+	add	sp, sp, #bar - .foo
+	sub	sp, sp, #bar - .foo
+	add	r0, sp, #bar - .foo
+	add	r0, pc, #bar - .foo
 
-	add	r1, #bar - foo
-	mov	r6, #bar - foo
-	cmp	r7, #bar - foo
+	add	r1, #bar - .foo
+	mov	r6, #bar - .foo
+	cmp	r7, #bar - .foo
 
 	nop
 	nop
 
 	.arm
-localbar:
-	b	localbar
-	b	wombat
-	bl	localbar
-	bl	wombat
+.localbar:
+	b	.localbar
+	b	.wombat
+	bl	.localbar
+	bl	.wombat
 
 	bx	r0
 	swi	0x123456
 
 	.thumb
-
+	@ The following will be disassembled incorrectly if we do not
+	@ have a Thumb symbol defined before the first Thumb instruction:
+morethumb:
 	adr	r0, forwardonly
 
-	b	foo
-	b	wombat
-	bl	foo
-	bl	wombat
+	b	.foo
+	b	.wombat
+	bl	.foo
+	bl	.wombat
 
 	bx	r0
 
 	swi	0xff
 	.align	0
 forwardonly:
-	beq	wombat
-	bne	wombat
-	bcs	wombat
-	bcc	wombat
-	bmi	wombat
-	bpl	wombat
-	bvs	wombat
-	bvc	wombat
-	bhi	wombat
-	bls	wombat
-	bge	wombat
-	bgt	wombat
-	blt	wombat
-	bgt	wombat
-	ble	wombat
-	bhi	wombat
-	blo	wombat
-	bul	wombat
+	beq	.wombat
+	bne	.wombat
+	bcs	.wombat
+	bcc	.wombat
+	bmi	.wombat
+	bpl	.wombat
+	bvs	.wombat
+	bvc	.wombat
+	bhi	.wombat
+	bls	.wombat
+	bge	.wombat
+	bgt	.wombat
+	blt	.wombat
+	bgt	.wombat
+	ble	.wombat
+	bhi	.wombat
+	blo	.wombat
+	bul	.wombat
 
-back:
-	bl	local
+.back:
+	bl	.local
 	.space	(1 << 11)	@ leave space to force long offsets
-local:
-	bl	back
+.local:
+	bl	.back

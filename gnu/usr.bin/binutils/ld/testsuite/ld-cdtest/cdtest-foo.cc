@@ -22,7 +22,7 @@ int Foo::foos = 0;
 
 void Foo::init_foo ()
 {
-    printf ("BROKENLY calling Foo::init_foo from __init_start; size_of(Foo) = %d\n", sizeof(Foo));
+    printf ("BROKENLY calling Foo::init_foo from __init_start; size_of(Foo) = %ld\n", (long) sizeof(Foo));
     foos = FOOLISH_NUMBER;
 }
 

@@ -1,5 +1,5 @@
 /* BFD library support routines for the WDC 65816 architecture.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1999 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -27,7 +27,7 @@ int bfd_default_scan_num_mach();
 
 static boolean 
 scan_mach (info, string)
-     const struct bfd_arch_info *info;
+     const struct bfd_arch_info *info ATTRIBUTE_UNUSED;
      const char *string;
 {
   if (strcmp(string,"w65") == 0) return true;

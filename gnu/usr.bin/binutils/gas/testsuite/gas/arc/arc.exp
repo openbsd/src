@@ -1,0 +1,114 @@
+# ARC gas testsuite
+
+# Test an insn from a template .s/.d.
+# The best way to create the .d file is to run the tests without it, let
+# dejagnu crash, run as.new on the just built .s file, run objdump -dr on
+# the result of that, copy the result into the .d file, and edit in the
+# necessary patterns (@OC@, etc.).  Sounds complicated but it's easy.  The
+# catch is that we assume a working assembler is used to build it.  That's
+# obviously not entirely kosher, but once the .d file is created one can
+# verify it's contents over time.
+#
+# Template patterns:
+# @OC@ - placeholder for the opcode
+# @IC+?@ - place holder for the insn code
+# @I3+??@ - place holder for the operation code of code 3 insns.
+
+proc test_template_insn { cpu tmpl opcode icode } {
+    global srcdir subdir objdir
+
+    # Change @OC@ in the template file to $opcode
+
+    set in_fd [open $srcdir/$subdir/$tmpl.s r]
+    set out_fd [open $objdir/$opcode.s w]
+    # FIXME: check return codes
+
+    puts $out_fd "\t.cpu $cpu\n"
+    while { [gets $in_fd line] >= 0 } {
+	regsub "@OC@" $line $opcode line
+	puts $out_fd $line
+    }
+
+    close $in_fd
+    close $out_fd
+
+    # Create output template.
+
+    set in_fd [open $srcdir/$subdir/$tmpl.d r]
+    set out_fd [open $objdir/$opcode.d w]
+    # FIXME: check return codes
+
+    while { [gets $in_fd line] >= 0 } {
+	regsub "@OC@" $line $opcode line
+	#send_user "$line\n"
+	if [string match "*@IC+?@*" $line] {
+	    # Insert the opcode.  It occupies the top 5 bits.
+	    regexp "^(.*)@IC\\+(.)@(.*)$" $line junk leftpart n rightpart
+	    set n [expr ($icode << 3) + $n]
+	    set n [format "%02x" $n]
+	    puts $out_fd "$leftpart$n$rightpart"
+	} elseif [string match "*@I3+??@*" $line] {
+	    # Insert insn 3 code (register C field)
+	    # b15=8/0, b8=1/0 (their respective hex values in the objdump)
+	    regexp "^(.*)@I3\\+(.)(.)@(.*)$" $line junk leftpart b15 b8 rightpart
+	    set n [expr ($icode << 1) + ($b15 << 4) + ($b8 << 0)]
+	    set n [format "%02x" $n]
+	    puts $out_fd "$leftpart$n$rightpart"
+	} else {
+	    puts $out_fd $line
+	}
+    }
+
+    close $in_fd
+    close $out_fd
+
+    # Finally, run the test.
+
+    run_dump_test $objdir/$opcode
+
+    # "make clean" won't delete these, so for now we must.
+    catch "exec rm -f $objdir/$opcode.s $objdir/$opcode.d"
+}
+
+# Run the tests.
+
+if [istarget arc*-*-*] then {
+
+    test_template_insn base math adc 9
+    test_template_insn base math add 8
+    test_template_insn base math and 12
+    test_template_insn base math bic 14
+    test_template_insn base math or 13
+    test_template_insn base math sbc 11
+    test_template_insn base math sub 10
+    test_template_insn base math xor 15
+
+    test_template_insn base alias mov 12
+    test_template_insn base alias rlc 9
+    test_template_insn base alias asl 8
+# `lsl' gets dumped as `asl' so this must be tested elsewhere.
+#   test_template_insn base alias lsl 8
+
+    test_template_insn base sshift asr 1
+    test_template_insn base sshift lsr 2
+    test_template_insn base sshift ror 3
+    test_template_insn base sshift rrc 4
+
+    test_template_insn base branch b 4
+    test_template_insn base branch bl 5
+    test_template_insn base branch lp 6
+
+    run_dump_test "j"
+
+    test_template_insn base insn3 sexb 5
+    test_template_insn base insn3 sexw 6
+    test_template_insn base insn3 extb 7
+    test_template_insn base insn3 extw 8
+
+    run_dump_test "flag"
+#    run_dump_test "nop"
+
+    run_dump_test "ld"
+    run_dump_test "st"
+
+}

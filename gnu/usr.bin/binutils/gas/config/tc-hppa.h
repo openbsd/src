@@ -1,5 +1,6 @@
 /* tc-hppa.h -- Header file for the PA
-   Copyright (C) 1989, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1989, 93, 94, 95, 96, 97, 98, 99, 2000
+   Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -43,11 +44,18 @@
 
 #define TARGET_ARCH bfd_arch_hppa
 
+#define WORKING_DOT_WORD
+
 /* FIXME.  The lack of a place to put things which are both target cpu
    and target format dependent makes hacks like this necessary.  */
 #ifdef OBJ_ELF
+#ifdef BFD64
+#include "bfd/elf64-hppa.h"
+#define TARGET_FORMAT "elf64-hppa"
+#else
 #include "bfd/elf32-hppa.h"
 #define TARGET_FORMAT "elf32-hppa"
+#endif
 #endif
 
 #ifdef OBJ_SOM
@@ -64,7 +72,7 @@
 #define ASEC_NULL (asection *)0
 
 /* Labels are not required to have a colon for a suffix.  */
-#define LABELS_WITHOUT_COLONS
+#define LABELS_WITHOUT_COLONS 1
 
 /* FIXME.  This should be static and declared in tc-hppa.c, but 
    pa_define_label gets used outside of tc-hppa.c via tc_frob_label.
@@ -126,9 +134,9 @@ void elf_hppa_final_processing PARAMS ((void));
    *not* end up in the symbol table.  Likewise for absolute symbols
    with local scope.  */
 #define tc_frob_symbol(sym,punt) \
-    if ((S_GET_SEGMENT (sym) == &bfd_und_section && sym->sy_used == 0) \
+    if ((S_GET_SEGMENT (sym) == &bfd_und_section && ! symbol_used_p (sym)) \
 	|| (S_GET_SEGMENT (sym) == &bfd_abs_section \
-	    && (sym->bsym->flags & BSF_EXPORT) == 0)) \
+	    && ! S_IS_EXTERNAL (sym))) \
       punt = 1
 
 /* We need to be able to make relocations involving the difference of
@@ -145,14 +153,18 @@ void elf_hppa_final_processing PARAMS ((void));
 #ifdef OBJ_ELF
 #define tc_frob_symbol(sym,punt) \
   { \
-    if ((S_GET_SEGMENT (sym) == &bfd_und_section && sym->sy_used == 0) \
+    if ((S_GET_SEGMENT (sym) == &bfd_und_section && ! symbol_used_p (sym)) \
 	|| (S_GET_SEGMENT (sym) == &bfd_abs_section \
-	    && (sym->bsym->flags & BSF_EXPORT) == 0)) \
+	    && ! S_IS_EXTERNAL (sym)) \
+	|| strcmp (S_GET_NAME (sym), "$global$") == 0) \
       punt = 1; \
   }
 #endif
 
 #define md_operand(x)
+#ifdef OBJ_ELF
+#define md_end() pa_end_of_source ()
+#endif
 
 #define TC_FIX_TYPE PTR
 #define TC_INIT_FIX_DATA(FIXP) ((FIXP)->tc_fix_data = NULL)
