@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.24 1998/09/15 10:23:22 pattonme Exp $
+#	$OpenBSD: MAKEDEV,v 1.25 1998/09/25 12:28:04 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -22,57 +22,71 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#     $NetBSD: MAKEDEV,v 1.17 1996/02/03 15:02:42 briggs Exp $
+#	$NetBSD: MAKEDEV,v 1.17 1996/02/03 15:02:42 briggs Exp $ 
 #
 # Device "make" file.  Valid arguments:
-#	all	a smattering--at least one of each except
-#		fd* (unimp.) and ch*
-#
+#	all	makes all known devices, including local devices.
+#		Tries to make the ``standard'' number of each type.
 #	std	standard devices
-#	fd	file descriptor device nodes
+#	fd	makes fd/* for the fdescfs.
 #	local	configuration specific devices
-#	raminst	for RAM disk install
+#	ramdisk	makes all devices for a ramdisk kernel
 #
 # Tapes:
-#	st*	scsi tapes
+#	st*	SCSI tapes
 #
 # Disks:
-#	fd*	floppy disk drives (3 1/2") (not yet available)
+#	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	sd*	SCSI disks
-#	cd*	SCSI compact discs
-#	ch*	SCSI changers
-#	vnd*	vnode pseudo-disks
-#	ccd*	concatenated disk driver
+#	cd*	SCSI cdrom drives
+#	ch*	SCSI media changer
+#	vnd*	"file" pseudo-disks
+#	ccd*	concatenated disk devices
 #
 # Terminal ports:
-#	ttye*	ite consoles
+#	ttye*	ite bitmapped consoles
 #	tty*	standard built-in serial ports (2)
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Graphics devices:
-#	grf*	Bitmapped graphics device
+#	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
+#		Cirrus boards (grf3), A2410 (grf4) video or
+#		CyberVision 64 (grf5)
 #
 # Special purpose devices:
-#	bpf*	packet filter
+#	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
-#	lkm	Device to for loadable kernel modules
-#	*random	random data source
-#	uk*	unknown SCSI
+#	lkm	loadable kernel modules interface
+#	*random	inkernal random data source
+#	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
 #
 
-PATH=/sbin:/bin/:/usr/bin:/usr/sbin
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+this=$0
 umask 77
+
+# default shell support functions
 add ()
 {
-	echo "$(( $1 + $2 ))"
+	tmp=0
+	while [ "$1" ]
+	do
+		tmp=$(( $1 + $tmp ))
+		shift
+	done
+	echo $tmp
+}
+mult ()
+{
+	echo "$(( $1 * $2 ))"
 }
 hex ()
 {
 	case $1 in
-		[0-9])  echo -n $1 ;;
+		[0-9]) echo -n $1;;
 		10) echo -n a;;
 		11) echo -n b;;
 		12) echo -n c;;
@@ -81,33 +95,64 @@ hex ()
 		15) echo -n f;;
 	esac
 }
+trunc ()
+{
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg1="$1"
+	arg2="$2"
+	echo ${arg1#$arg2}
+}
+unt()
+{
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg1="$1"
+	tmp="${arg1#[a-z]*}"
+	while [ "$tmp" != "$arg1" ]
+	do
+		arg1=$tmp
+		tmp="${arg1#[a-z]*}"
+	done
+	tmp="${arg1%*[a-z]}"
+	while [ "$tmp" != "$arg1" ]
+	do
+		arg1=$tmp
+		tmp="${arg1%*[a-z]}"
+	done
+	echo $arg1
+}
 
 for i
 do
+
+unit=`unt $i`
+[ "$unit" ] || unit=0
+
 case $i in
 
 all)
-	sh MAKEDEV std fd
-	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV adb asc0 grf0 grf1 grf2 grf3 ttye0
-	sh MAKEDEV tty00 tty01 pty0
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh MAKEDEV ipl
-	sh MAKEDEV tun0 tun1 tun2 tun3
-	sh MAKEDEV lkm
-	sh MAKEDEV random
-	sh MAKEDEV uk0 uk1
-	sh MAKEDEV ss0
-	sh MAKEDEV local
+	sh $this std fd
+	sh $this sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh $this vnd0 vnd1 vnd2 vnd3
+	sh $this ccd0 ccd1 ccd2 ccd3
+	sh $this adb asc0 grf0 grf1 grf2 grf3 ttye0
+	sh $this tty00 tty01 pty0
+	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh $this ipl
+	sh $this tun0 tun1 tun2 tun3
+	sh $this lkm
+	sh $this random
+	sh $this uk0 uk1
+	sh $this ss0
+	sh $this local
 	;;
 
-raminst)
-	sh MAKEDEV std
-	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	sh MAKEDEV adb asc0 grf0 grf1 ttye0
-	sh MAKEDEV tty00 tty01 pty0
+ramdisk)
+	sh $this std
+	sh $this sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh $this adb asc0 grf0 grf1 ttye0
+	sh $this tty00 tty01 pty0
 	;;
 
 std)
@@ -419,9 +464,16 @@ ss*)
 	ln -s ss$unit scan$unit
 	;;
 
+xfs*)
+	rm -f xfs$unit
+	mknod xfs$unit c 51 $unit 
+	chmod 600 xfs$unit 
+	chown root.wheel xfs$unit
+	;;
+
 local)
 	umask 0
-	test -s MAKEDEV.local && sh MAKEDEV.local
+	test -s MAKEDEV.local && sh $this.local
 	;;
 
 *)
