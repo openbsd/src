@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.160 2004/01/29 16:38:31 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.161 2004/02/26 00:10:04 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1041,6 +1041,8 @@ man
 # ./usr/share/man/cat1
 cat1
 
+amd64
+..
 alpha
 ..
 hp300
@@ -1082,6 +1084,10 @@ cat2
 alpha
 ..
 
+# ./usr/share/man/cat2/amd64
+amd64
+..
+
 # ./usr/share/man/cat2/i386
 i386
 
@@ -1095,6 +1101,8 @@ i386
 cat3
 
 alpha
+..
+amd64
 ..
 hp300
 ..
@@ -1138,6 +1146,8 @@ cat4
 
 alpha
 ..
+amd64
+..
 hp300
 ..
 hppa
@@ -1174,6 +1184,8 @@ vax
 cat5
 
 alpha
+..
+amd64
 ..
 hp300
 ..
@@ -1222,6 +1234,8 @@ cat8
 
 alpha
 ..
+amd64
+..
 hp300
 ..
 hppa
@@ -1259,6 +1273,8 @@ cat9
 
 alpha
 ..
+amd64
+..
 hp300
 ..
 hppa
@@ -1295,6 +1311,8 @@ vax
 ps1
 
 alpha
+..
+amd64
 ..
 hp300
 ..
@@ -1334,8 +1352,8 @@ ps2
 # ./usr/share/man/ps2/alpha
 alpha
 
-# ./usr/share/man/ps2/alpha
-..
+# ./usr/share/man/ps2/amd64
+amd64
 
 # ./usr/share/man/ps2/i386
 i386
@@ -1350,6 +1368,8 @@ i386
 ps3
 
 alpha
+..
+amd64
 ..
 hp300
 ..
@@ -1393,6 +1413,8 @@ ps4
 
 alpha
 ..
+amd64
+..
 hp300
 ..
 hppa
@@ -1429,6 +1451,8 @@ vax
 ps5
 
 alpha
+..
+amd64
 ..
 hp300
 ..
@@ -1477,6 +1501,8 @@ ps8
 
 alpha
 ..
+amd64
+..
 hp300
 ..
 hppa
@@ -1514,6 +1540,8 @@ ps9
 
 alpha
 ..
+amd64
+..
 hp300
 ..
 hppa
@@ -1550,6 +1578,8 @@ vax
 man1
 
 alpha
+..
+amd64
 ..
 hp300
 ..
@@ -1603,6 +1633,8 @@ man4
 
 alpha
 ..
+amd64
+..
 hp300
 ..
 hppa
@@ -1654,6 +1686,8 @@ man7
 man8
 
 alpha
+..
+amd64
 ..
 hp300
 ..
