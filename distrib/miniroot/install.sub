@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.128 1999/09/23 18:57:39 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.129 1999/09/23 18:58:19 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -946,16 +946,6 @@ if [ "${_url_type}" = "ftp" ]; then
 			stty echo
 			echo
 			_ftp_server_password=$resp
-
-			echo -n "Password (again): "
-			stty -echo
-			getresp "${_ftp_server_password}"
-			stty echo
-			echo
-			if [ "${_ftp_server_password}" != "${resp}" ]; then
-				echo "Passwords do not match, try again."
-				resp=
-			fi
 		done
 	else
 		# only used by ftp_list_files()
