@@ -63,6 +63,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
   : regno >= FP0_REGNUM ?	FPBASE + (regno - FP0_REGNUM) \
   : 0)
 
+#define MIPS_NUM_REGS (FSR + 1)
+
 static char zerobuf[MAX_REGISTER_RAW_SIZE] = {0};
 
 /* Get all registers from the inferior */
@@ -161,7 +163,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
   int bad_reg = -1;
   register reg_ptr = -reg_addr;		/* Original u.u_ar0 is -reg_addr. */
 
-  for (regno = 0; regno < NUM_REGS; regno++)
+  for (regno = 0; regno < MIPS_NUM_REGS; regno++)
     {
       addr = (regno * sizeof(int) + reg_ptr);
       if (addr >= core_reg_size) {
