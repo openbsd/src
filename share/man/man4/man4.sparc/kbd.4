@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kbd.4,v 1.2 1998/03/08 01:16:07 johns Exp $
+.\"	$OpenBSD: kbd.4,v 1.3 1998/06/06 21:05:57 todd Exp $
 .\"	$NetBSD: kbd.4,v 1.3 1997/11/25 22:15:56 pk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ Get key station translation. The argument is of type
 Get keyboard layout
 .Pq Do type 4 Dc only .
 The argument is of type
-.Fa "int *" ,
+.Fa "char *" ,
 in which the uninterpreted result of the
 .Dv KBD_CMD_GLAYOUT
 keyboard command is returned
