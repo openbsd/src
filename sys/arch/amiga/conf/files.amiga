@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.11 1996/05/02 06:43:30 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.12 1996/05/02 07:31:53 niklas Exp $
 #	$NetBSD: files.amiga,v 1.44 1996/04/27 20:51:08 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -267,6 +267,7 @@ file	arch/amiga/isa/cross.c		cross needs-flag
 
 # XXX Dummy busses needed for some multi-homed devices specified in files.isa
 define	pci { }
+define	pcmcia {}
 
 include	"../../../dev/isa/files.isa"
 
