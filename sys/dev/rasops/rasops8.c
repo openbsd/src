@@ -1,5 +1,5 @@
-/*	$OpenBSD: rasops8.c,v 1.2 2002/03/14 01:27:02 millert Exp $ */
-/* 	$NetBSD: rasops8.c,v 1.8 2000/04/12 14:22:29 pk Exp $	*/
+/*	$OpenBSD: rasops8.c,v 1.3 2002/05/28 22:10:03 fgsch Exp $	*/
+/*	$NetBSD: rasops8.c,v 1.8 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,9 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-//__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.8 2000/04/12 14:22:29 pk Exp $");
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +52,6 @@ static void 	rasops8_putchar8(void *, int, int, u_int, long attr);
 static void 	rasops8_putchar12(void *, int, int, u_int, long attr);
 static void 	rasops8_putchar16(void *, int, int, u_int, long attr);
 static void	rasops8_makestamp(struct rasops_info *ri, long);
-#endif
 
 /*
  * 4x1 stamp for optimized character blitting
@@ -63,6 +59,7 @@ static void	rasops8_makestamp(struct rasops_info *ri, long);
 static int32_t	stamp[16];
 static long	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in README */
+#endif
 
 /*
  * XXX this confuses the hell out of gcc2 (not egcs) which always insists
@@ -76,7 +73,7 @@ static int	stamp_mutex;	/* XXX see note in README */
 #define STAMP_READ(o)		(*(int32_t *)((caddr_t)stamp + (o)))
 
 /*
- * Initalize a 'rasops_info' descriptor for this depth.
+ * Initialize a 'rasops_info' descriptor for this depth.
  */
 void
 rasops8_init(ri)

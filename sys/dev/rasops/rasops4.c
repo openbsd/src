@@ -1,5 +1,5 @@
-/*	$OpenBSD: rasops4.c,v 1.2 2002/03/14 01:27:02 millert Exp $ */
-/* 	$NetBSD: $	*/
+/*	$OpenBSD: rasops4.c,v 1.3 2002/05/28 22:10:03 fgsch Exp $	*/
+/*	$NetBSD: rasops4.c,v 1.4 2001/11/15 09:48:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,10 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-//__KERNEL_RCSID(0, "$NetBSD: $");
-
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -60,7 +56,6 @@ static void	rasops4_putchar8(void *, int, int col, u_int, long);
 static void	rasops4_putchar12(void *, int, int col, u_int, long);
 static void	rasops4_putchar16(void *, int, int col, u_int, long);
 static void	rasops4_makestamp(struct rasops_info *, long);
-#endif
 
 /*
  * 4x1 stamp for optimized character blitting
@@ -68,6 +63,7 @@ static void	rasops4_makestamp(struct rasops_info *, long);
 static u_int16_t	stamp[16];
 static long	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in README */
+#endif
 
 /*
  * Initialize rasops_info struct for this colordepth.

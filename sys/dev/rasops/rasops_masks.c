@@ -1,5 +1,5 @@
-/*	$OpenBSD: rasops_masks.c,v 1.1 2001/03/18 04:32:45 nate Exp $ */
-/* 	$NetBSD: rasops_masks.c,v 1.5 2000/06/13 13:37:00 ad Exp $	*/
+/*	$OpenBSD: rasops_masks.c,v 1.2 2002/05/28 22:10:03 fgsch Exp $	*/
+/*	$NetBSD: rasops_masks.c,v 1.5 2000/06/13 13:37:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

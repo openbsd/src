@@ -1,5 +1,5 @@
-/*	$OpenBSD: rasops.c,v 1.3 2002/05/02 19:21:48 matthieu Exp $ */
-/*	 $NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.4 2002/05/28 22:10:03 fgsch Exp $	*/
+/*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,17 +37,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-//__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $");
-
 #include "rasops_glue.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 
-/* #include <machine/bswap.h> */
 #include <machine/endian.h>
 
 #include <dev/wscons/wsdisplayvar.h>
@@ -114,7 +109,7 @@ static void	rasops_do_cursor(struct rasops_info *);
 static void	rasops_init_devcmap(struct rasops_info *);
 
 /*
- * Initalize a 'rasops_info' descriptor.
+ * Initialize a 'rasops_info' descriptor.
  */
 int
 rasops_init(ri, wantrows, wantcols)
@@ -129,13 +124,13 @@ rasops_init(ri, wantrows, wantcols)
 
 		wsfont_init();
 
-		if (ri->ri_width > 80*12) 
+		if (ri->ri_width > 80*12)
 			/* High res screen, choose a big font */
 			cookie = wsfont_find(NULL, 12, 0, 0);
-		else 
+		else
 			/*  lower res, choose a 8 pixel wide font */
 			cookie = wsfont_find(NULL, 8, 0, 0);
-		
+
 		if (cookie <= 0)
 			cookie = wsfont_find(NULL, 0, 0, 0);
 
@@ -169,7 +164,7 @@ rasops_init(ri, wantrows, wantcols)
 
 	if (rasops_reconfig(ri, wantrows, wantcols))
 		return (-1);
- 
+
 	rasops_init_devcmap(ri);
 	return (0);
 }
@@ -240,7 +235,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 	ri->ri_origbits = ri->ri_bits;
 
 	if ((ri->ri_flg & RI_CENTER) != 0) {
-		ri->ri_bits += (((ri->ri_width * bpp >> 3) - 
+		ri->ri_bits += (((ri->ri_width * bpp >> 3) -
 		    ri->ri_emustride) >> 1) & ~3;
 		ri->ri_bits += ((ri->ri_height - ri->ri_emuheight) >> 1) *
 		    ri->ri_stride;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rasops32.c,v 1.2 2002/03/14 01:27:02 millert Exp $ */
-/*	 $NetBSD: rasops32.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
+/*	$OpenBSD: rasops32.c,v 1.3 2002/05/28 22:10:03 fgsch Exp $	*/
+/*	$NetBSD: rasops32.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,10 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-//__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.7 2000/04/12 14:22:29 pk Exp $");
-
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -49,10 +45,10 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-static void 	rasops32_putchar(void *, int, int, u_int, long attr);
+static void 	rasops32_putchar(void *, int, int, u_int, long);
 
 /*
- * Initalize a 'rasops_info' descriptor for this depth.
+ * Initialize a 'rasops_info' descriptor for this depth.
  */
 void
 rasops32_init(ri)

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.rasops,v 1.1 2001/03/18 04:32:44 nate Exp $
+#	$OpenBSD: files.rasops,v 1.2 2002/05/28 22:10:03 fgsch Exp $
 # 	$NetBSD: files.rasops,v 1.7 2001/01/21 13:50:59 takemura Exp $
 
 # Note: `rasops_glue' is only here to force the header file's name
@@ -8,7 +8,7 @@ file dev/rasops/rasops.c ( (rasops_glue |
     rasops32) &
     (rasterconsole | wsdisplay)) needs-flag
 
-file dev/rasops/rasops_masks.c ((rasterconsole | wsdisplay) & 
+file dev/rasops/rasops_masks.c ((rasterconsole | wsdisplay) &
     (rasops1 | rasops2 | rasops4))
 file dev/rasops/rasops1.c ((rasterconsole | wsdisplay) & rasops1)
 file dev/rasops/rasops2.c ((rasterconsole | wsdisplay) & rasops2)
