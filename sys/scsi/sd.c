@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.62 2003/06/24 22:42:07 mickey Exp $	*/
+/*	$OpenBSD: sd.c,v 1.63 2004/01/05 02:57:01 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -409,10 +409,13 @@ sdopen(dev, flag, fmt, p)
 		sc_link->flags |= SDEV_OPEN;
 
 		/* Lock the pack in. */
-		error = scsi_prevent(sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
-		if (error)
-			goto bad;
+		if ((sc_link->flags & SDEV_REMOVABLE) != 0) {
+			error = scsi_prevent(sc_link, PR_PREVENT,
+			    SCSI_IGNORE_ILLEGAL_REQUEST |
+			        SCSI_IGNORE_MEDIA_CHANGE);
+			if (error)
+				goto bad;
+		}
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			sc_link->flags |= SDEV_MEDIA_LOADED;
@@ -461,9 +464,11 @@ bad2:
 
 bad:
 	if (sd->sc_dk.dk_openmask == 0) {
+	    if ((sd->sc_link->flags & SDEV_REMOVABLE) != 0)
 		scsi_prevent(sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
-		sc_link->flags &= ~SDEV_OPEN;
+		    SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_MEDIA_CHANGE);
+	    sc_link->flags &= ~SDEV_OPEN;
 	}
 
 bad3:
@@ -508,8 +513,9 @@ sdclose(dev, flag, fmt, p)
 		    sd->sc_ops->sdo_flush != NULL)
 			(*sd->sc_ops->sdo_flush)(sd, 0);
 
-		scsi_prevent(sd->sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
+		if ((sd->sc_link->flags & SDEV_REMOVABLE) != 0)
+			scsi_prevent(sd->sc_link, PR_ALLOW,
+			    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 		sd->sc_link->flags &= ~(SDEV_OPEN|SDEV_MEDIA_LOADED);
 
 		if (sd->sc_link->flags & SDEV_EJECTING) {
