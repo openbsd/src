@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.42 2000/12/21 00:25:17 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.43 2001/01/11 19:22:09 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.42 2000/12/21 00:25:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.43 2001/01/11 19:22:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -557,6 +557,7 @@ catcher()
 
 /*
  * Print statistics when SIGINFO is received.
+ * XXX not race safe
  */
 void
 prtsig()
