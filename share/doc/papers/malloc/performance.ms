@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" $Id: performance.ms,v 1.1.1.1 1997/01/05 22:15:45 tholo Exp $
+.\" $OpenBSD: performance.ms,v 1.2 1997/01/05 22:18:10 tholo Exp $
 .\"
 .ds RH Performance
 .NH

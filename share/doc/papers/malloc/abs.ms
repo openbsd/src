@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" $Id: abs.ms,v 1.1.1.1 1997/01/05 22:15:45 tholo Exp $
+.\" $OpenBSD: abs.ms,v 1.2 1997/01/05 22:18:06 tholo Exp $
 .\"
 .if n .ND
 .TL
