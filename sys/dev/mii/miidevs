@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.26 2001/12/15 02:41:33 deraadt Exp $
+$OpenBSD: miidevs,v 1.27 2002/04/02 13:04:44 nate Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -87,6 +87,8 @@ oui xxDAVICOM			0x006040	Davicom Semiconductor
 /* Contrived vendor for dcphy */
 oui xxDEC			0x040440	Digital Clone
 
+oui xxMARVELL			0x000ac2	Marvell Semiconductor
+
 /*
  * List of known models.  Grouped by oui.
  */
@@ -118,7 +120,10 @@ model ENABLESEMI 88E1000	0x0005 Enable 88E1000
 model ENABLESEMI 88E1000S	0x0004 Enable 88E1000S
 
 /* Marvell Semiconductor PHYs */
-model MARVELL E1000		0x0000 Marvell Semiconductor 88E1000* Gigabit
+model MARVELL E1000		0x0000 Marvell 88E1000* Gigabit PHY
+model MARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
+model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
 
 /* Contrived vendor/model for dcphy */
 model xxDEC xxDC		0x0001 DC

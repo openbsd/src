@@ -1,4 +1,4 @@
-/* $OpenBSD: eephy.c,v 1.3 2001/10/05 18:26:48 nate Exp $ */
+/* $OpenBSD: eephy.c,v 1.4 2002/04/02 13:05:09 nate Exp $ */
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -82,6 +82,16 @@ eephymatch(struct device *parent, void *match, void *aux)
 	if (id == E1000_ID_88E1000 || id == E1000_ID_88E1000S) {
 		return(10);
 	}
+
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxMARVELL &&
+	    (MII_MODEL(ma->mii_id2) == MII_MODEL_xxMARVELL_E1000_3 ||
+	     MII_MODEL(ma->mii_id2) == MII_MODEL_xxMARVELL_E1000_5 ))
+		return (10);
+
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_MARVELL &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_MARVELL_E1000_3)
+		return (10);
+
 	return(0);
 }
 
@@ -102,7 +112,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_status = eephy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
-	sc->mii_anegticks = 5;
+	sc->mii_anegticks = 10;
 
 	eephy_reset(sc);
 
