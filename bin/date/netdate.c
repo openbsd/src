@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdate.c,v 1.2 1996/06/23 14:19:43 deraadt Exp $	*/
+/*	$OpenBSD: netdate.c,v 1.3 1996/08/04 15:45:26 deraadt Exp $	*/
 /*	$NetBSD: netdate.c,v 1.10 1995/09/07 06:21:06 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: netdate.c,v 1.2 1996/06/23 14:19:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netdate.c,v 1.3 1996/08/04 15:45:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ netsettime(tval)
 	struct sockaddr_in sin, dest, from;
 	fd_set ready;
 	long waittime;
-	int s, length, port, timed_ack, found, err;
+	int s, length, timed_ack, found, err;
 	char hostname[MAXHOSTNAMELEN];
 
 	if ((sp = getservbyname("timed", "udp")) == NULL) {
@@ -104,17 +104,7 @@ netsettime(tval)
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(struct sockaddr_in);
 	sin.sin_family = AF_INET;
-	for (port = IPPORT_RESERVED - 1; port > IPPORT_RESERVED / 2; port--) {
-		sin.sin_port = htons((u_short)port);
-		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
-			break;
-		if (errno == EADDRINUSE)
-			continue;
-		if (errno != EADDRNOTAVAIL)
-			warn("bind");
-		goto bad;
-	}
-	if (port == IPPORT_RESERVED / 2) {
+	if (bindresvport(s, &sin) < 0) {
 		warnx("all ports in use");
 		goto bad;
 	}
