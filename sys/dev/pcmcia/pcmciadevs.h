@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.64 2001/04/23 20:53:11 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.65 2001/05/22 08:31:11 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.59 2001/04/23 20:52:35 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.60 2001/05/22 08:30:27 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -411,6 +411,7 @@
 #define	PCMCIA_VENDOR_SARAMNCOM	-1	/* SaramNcom Co.,Ltd. */
 #define	PCMCIA_VENDOR_SHUTTLE	-1	/* Shuttle */
 #define	PCMCIA_VENDOR_SVEC	-1	/* SVEC/Hawking */
+#define	PCMCIA_VENDOR_SYNERGY21	-1	/* Synergy 21 */
 #define	PCMCIA_VENDOR_TEAC	-1	/* TEAC */
 #define	PCMCIA_VENDOR_YEDATA	-1	/* Y-E DATA */
 #define	PCMCIA_VENDOR_ZOOM	-1	/* Zoom */
@@ -525,3 +526,5 @@
 #define	PCMCIA_PRODUCT_CABLETRON_ROAMABOUT	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_GVC_NIC2000P	{ "GVC", "NIC-2000p", "ETHERNET", "R01" }
 #define	PCMCIA_PRODUCT_GVC_NIC2000P	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_SYNERGY21_S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
+#define	PCMCIA_PRODUCT_SYNERGY21_S21810	PCMCIA_PRODUCT_INVALID
