@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.27 1998/11/20 11:18:52 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.28 1999/02/01 08:13:01 d Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -6,22 +6,22 @@
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/sys ${LIBCSRCDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
+SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S \
 	sbrk.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S
 
 LSRCS+=	Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
-	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
+	Lint_pipe.c Lint_sbrk.c \
 	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
 	Lint_sigsuspend.c Lint_syscall.c
 DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
-	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
+	Lint_pipe.c Lint_sbrk.c \
 	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
 	Lint_sigsuspend.c Lint_syscall.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c \
+SRCS+=	ftruncate.c lseek.c mmap.c ptrace.c semctl.c truncate.c \
 	timer_create.c timer_delete.c timer_getoverrun.c timer_gettime.c \
 	timer_settime.c
 
@@ -58,7 +58,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 
-PSEUDO=	_exit.o _getlogin.o _setlogin.o
+PSEUDO=	_exit.o _getlogin.o _setlogin.o _ptrace.o
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
 

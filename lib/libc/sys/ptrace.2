@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ptrace.2,v 1.3 1996/10/08 01:20:12 michaels Exp $
+.\"	$OpenBSD: ptrace.2,v 1.4 1999/02/01 08:13:01 d Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
@@ -303,7 +303,7 @@ to return
 .Li -1
 as a non-error value; to disambiguate,
 .Va errno
-can be set to 0 before the call and checked afterwards.  The possible
+is set to zero and this should be checked.  The possible
 errors are:
 .Bl -tag -width 4n
 .It Bq Er ESRCH
