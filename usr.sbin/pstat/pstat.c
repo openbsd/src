@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.8 1997/05/30 13:28:38 downsj Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.9 1997/05/31 07:37:58 downsj Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.8 1997/05/30 13:28:38 downsj Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.9 1997/05/31 07:37:58 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,8 @@ void	ttymode __P((void));
 void	ttyprt __P((struct tty *));
 void	ufs_header __P((void));
 int	ufs_print __P((struct vnode *));
+void	ext2fs_header __P((void));
+int	ext2fs_print __P((struct vnode *));
 void	usage __P((void));
 void	vnode_header __P((void));
 void	vnode_print __P((struct vnode *, struct vnode *));
@@ -280,6 +282,9 @@ vnodemode()
 			} else if (!strncmp(ST.f_fstypename, MOUNT_NFS,
 			    MFSNAMELEN)) {
 				nfs_header();
+			} else if (!strncmp(ST.f_fstypename, MOUNT_EXT2FS,
+			    MFSNAMELEN)) {
+				ext2fs_header();
 			}
 			(void)printf("\n");
 		}
@@ -289,6 +294,9 @@ vnodemode()
 			ufs_print(vp);
 		} else if (!strncmp(ST.f_fstypename, MOUNT_NFS, MFSNAMELEN)) {
 			nfs_print(vp);
+		} else if (!strncmp(ST.f_fstypename, MOUNT_EXT2FS,
+		    MFSNAMELEN)) {
+			ext2fs_print(vp);
 		}
 		(void)printf("\n");
 	}
@@ -415,6 +423,52 @@ ufs_print(vp)
 			(void)printf(" %7s", name);
 	else
 		(void)printf(" %7qd", ip->i_ffs_size);
+	return (0);
+}
+
+void
+ext2fs_header() 
+{
+	(void)printf(" FILEID IFLAG SZ");
+}
+
+int
+ext2fs_print(vp) 
+	struct vnode *vp;
+{
+	register int flag;
+	struct inode inode, *ip = &inode;
+	char flagbuf[16], *flags = flagbuf;
+	char *name;
+	mode_t type;
+
+	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
+	flag = ip->i_flag;
+	if (flag & IN_LOCKED)
+		*flags++ = 'L';
+	if (flag & IN_WANTED)
+		*flags++ = 'W';
+	if (flag & IN_RENAME)
+		*flags++ = 'R';
+	if (flag & IN_UPDATE)
+		*flags++ = 'U';
+	if (flag & IN_ACCESS)
+		*flags++ = 'A';
+	if (flag & IN_CHANGE)
+		*flags++ = 'C';
+	if (flag & IN_MODIFIED)
+		*flags++ = 'M';
+	if (flag & IN_SHLOCK)
+		*flags++ = 'S';
+	if (flag & IN_EXLOCK)
+		*flags++ = 'E';
+	if (flag & IN_LWAIT)
+		*flags++ = 'Z';
+	if (flag == 0)
+		*flags++ = '-';
+	*flags = '\0';
+
+	(void)printf(" %6d %5s %2d", ip->i_number, flagbuf, ip->i_e2fs_size);
 	return (0);
 }
 
