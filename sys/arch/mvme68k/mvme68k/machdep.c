@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2002/03/23 13:28:34 espie Exp $ */
+/*	$OpenBSD: machdep.c,v 1.69 2002/04/18 21:39:51 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -482,7 +482,7 @@ struct   mvmeprom_brdid brdid;
 
 identifycpu()
 {
-	char *t, *mc;
+	char *t, mc;
 	char speed[6];
 	char suffix[30];
 	extern u_long fpvect_tab, fpvect_end, fpsp_tab;
@@ -491,18 +491,19 @@ identifycpu()
 	bzero(suffix, sizeof suffix);
 
 	switch (mmutype) {
-		case MMU_68060:
-			mc = "60";
-			break;
-		case MMU_68040:
-			mc = "40";
-			break;
-		case MMU_68030:
-			mc = "30";
-			break;
-		default:
-			mc = "20";
+	case MMU_68060:
+		mc = '6';
+		break;
+	case MMU_68040:
+		mc = '4';
+		break;
+	case MMU_68030:
+		mc = '3';
+		break;
+	default:
+		mc = '2';
 	}
+
 	switch (cputyp) {
 #ifdef MVME147
 	case CPU_147:
@@ -537,9 +538,10 @@ identifycpu()
 		break;
 #endif
 	}
-	sprintf(cpu_model, "Motorola %s: %sMHz MC680%s CPU",
-			  suffix, speed, mc);
+	sprintf(cpu_model, "Motorola %s: %sMHz MC680%c0 CPU",
+	    suffix, speed, mc);
 	switch (mmutype) {
+#if defined(M68060) || defined(M68040)
 	case MMU_68060:
 	case MMU_68040:
 #ifdef FPSP
@@ -548,6 +550,7 @@ identifycpu()
 #endif
 		strcat(cpu_model, "+MMU");
 		break;
+#endif
 	case MMU_68030:
 		strcat(cpu_model, "+MMU");
 		break;
@@ -555,33 +558,42 @@ identifycpu()
 		strcat(cpu_model, ", MC68851 MMU");
 		break;
 	default:
-		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
-		panic("startup");
+		printf("%s\n", cpu_model);
+		panic("unknown MMU type %d", mmutype);
 	}
 	len = strlen(cpu_model);
-	if (mmutype == MMU_68060)
+	switch (mmutype) {
+#if defined(M68060)
+	case MMU_68060:
 		len += sprintf(cpu_model + len,
-							"+FPU, 8k on-chip physical I/D caches");
-	if (mmutype == MMU_68040)
+		    "+FPU, 8k on-chip physical I/D caches");
+		break;
+#endif
+#if defined(M68040)
+	case MMU_68040:
 		len += sprintf(cpu_model + len,
-							"+FPU, 4k on-chip physical I/D caches");
+		    "+FPU, 4k on-chip physical I/D caches");
+		break;
+#endif
 #if defined(M68030) || defined(M68020)
-	else {
-		int fpu = fpu_gettype();
+	default:
+		fputype = fpu_gettype();
 
-		switch (fpu) {
-		case 0:
+		switch (fputype) {
+		case FPU_NONE:
 			break;
-		case 1:
-		case 2:
-			len += sprintf(cpu_model + len, ", MC6888%d FPU", fpu);
+		case FPU_68881:
+		case FPU_68882:
+			len += sprintf(cpu_model + len, ", MC6888%d FPU",
+			    fputype);
 			break;
-		case 3:
+		default:
 			len += sprintf(cpu_model + len, ", unknown FPU", speed);
 			break;
 		}
-	}
+		break;
 #endif
+	}
 	printf("%s\n", cpu_model);
 }
 
@@ -935,7 +947,7 @@ initvectors()
 #endif
 
 #ifdef M68060
-	if (cputyp == CPU_177 || cputyp == CPU_172) {
+	if (cputype == CPU_68060) {
 		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
 						  "d"(m68060_pcr_init):"d0" );
 
@@ -1137,10 +1149,10 @@ fpu_gettype()
 	m68881_restore(fpframe);
 
 	if (b == 0x18)
-		return (1);	/* The size of a 68881 IDLE frame is 0x18 */
+		return (FPU_68881);	/* The size of a 68881 IDLE frame is 0x18 */
 	if (b == 0x38)
-		return (2);	/* 68882 frame is 0x38 bytes long */
-	return (3);		/* unknown FPU type */
+		return (FPU_68882);	/* 68882 frame is 0x38 bytes long */
+	return (FPU_UNKNOWN);		/* unknown FPU type */
 }
 #endif
 
