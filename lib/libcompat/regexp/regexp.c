@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexp.c,v 1.3 2002/02/16 21:27:26 millert Exp $	*/
+/*	$OpenBSD: regexp.c,v 1.4 2003/03/16 03:16:45 deraadt Exp $	*/
 
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: regexp.c,v 1.3 2002/02/16 21:27:26 millert Exp $";
+static char *rcsid = "$OpenBSD: regexp.c,v 1.4 2003/03/16 03:16:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <regexp.h>
@@ -1208,10 +1208,8 @@ static char *
 regprop(op)
 char *op;
 {
-	register char *p;
+	register char *p = NULL;
 	static char buf[50];
-
-	(void) strcpy(buf, ":");
 
 	switch (OP(op)) {
 	case BOL:
@@ -1253,8 +1251,7 @@ char *op;
 	case OPEN+7:
 	case OPEN+8:
 	case OPEN+9:
-		sprintf(buf+strlen(buf), "OPEN%d", OP(op)-OPEN);
-		p = NULL;
+		snprintf(buf, sizeof buf, ":OPEN%d", OP(op)-OPEN);
 		break;
 	case CLOSE+1:
 	case CLOSE+2:
@@ -1265,8 +1262,7 @@ char *op;
 	case CLOSE+7:
 	case CLOSE+8:
 	case CLOSE+9:
-		sprintf(buf+strlen(buf), "CLOSE%d", OP(op)-CLOSE);
-		p = NULL;
+		snprintf(buf, sizeof buf, ":CLOSE%d", OP(op)-CLOSE);
 		break;
 	case STAR:
 		p = "STAR";
@@ -1282,10 +1278,11 @@ char *op;
 		break;
 	default:
 		v8_regerror("corrupted opcode");
+		p = "ERROR";
 		break;
 	}
 	if (p != NULL)
-		(void) strcat(buf, p);
+		(void) snprintf(buf, sizeof buf, ":%s", p);
 	return(buf);
 }
 #endif
