@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.8 1996/07/25 14:20:50 joshd Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.9 1996/12/19 13:45:16 mickey Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.31 1996/05/07 02:40:36 thorpej Exp $	*/
 
 /*
@@ -755,7 +755,7 @@ pppoutput(ifp, m0, dst, rtp)
 	}
 
 	/*
-	 * Update the time we sent the most recent packet.
+	 * Update the time we sent the most recent data packet.
 	 */
 	if (sc->sc_active_filt.bf_insns == 0
 	    || bpf_filter(sc->sc_active_filt.bf_insns, (u_char *) m0, len, 0))
@@ -930,8 +930,7 @@ ppp_dequeue(sc)
                     break;
                 ip = mtod(mp, struct ip *);
             }
-            /* this code assumes the IP/TCP header is in one non-shared
-mbuf */
+            /* this code assumes the IP/TCP header is in one non-shared mbuf */
             if (ip->ip_p == IPPROTO_TCP) {
                 type = sl_compress_tcp(mp, ip, sc->sc_comp,
                                        !(sc->sc_flags & SC_NO_TCP_CCID));
@@ -971,12 +970,18 @@ mbuf */
             slen += mp->m_len;
         clen = (*sc->sc_xcomp->compress)
             (sc->sc_xc_state, &mcomp, m, slen,
-             (sc->sc_flags & SC_CCP_UP? sc->sc_if.if_mtu: 0));
+             (sc->sc_flags & SC_CCP_UP? sc->sc_if.if_mtu + PPP_HDRLEN: 0));
         if (mcomp != NULL) {
-            m_freem(m);
-            m = mcomp;
-            cp = mtod(m, u_char *);
-            protocol = cp[3];
+            if (sc->sc_flags & SC_CCP_UP) {
+                /* Send the compressed packet instead of the original. */
+                m_freem(m);
+                m = mcomp;
+                cp = mtod(m, u_char *);
+                protocol = cp[3];
+            } else {
+                /* Can't transmit compressed packets until CCP is up. */
+                m_freem(mcomp);
+            }
         }       
     }
 #endif  /* PPP_COMPRESS */

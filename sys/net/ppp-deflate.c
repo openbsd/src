@@ -531,7 +531,9 @@ z_decompress(arg, mi, mop)
     for (;;) {
 	r = inflate(&state->strm, flush);
 	if (r != Z_OK) {
+#ifndef DEFLATE_DEBUG
 	    if (state->debug)
+#endif
 		printf("z_decompress%d: inflate returned %d (%s)\n",
 		       state->unit, r, (state->strm.msg? state->strm.msg: ""));
 	    m_freem(mo_head);
@@ -578,6 +580,11 @@ z_decompress(arg, mi, mop)
 	return DECOMP_ERROR;
     }
     olen += (mo->m_len = ospace - state->strm.avail_out);
+#ifdef DEFLATE_DEBUG
+    if (olen > state->mru + PPP_HDRLEN)
+        printf("ppp_deflate%d: exceeded mru (%d > %d)\n",
+               state->unit, olen, state->mru + PPP_HDRLEN);
+#endif
 
     state->stats.unc_bytes += olen;
     state->stats.unc_packets++;
@@ -627,10 +634,11 @@ z_incomp(arg, mi)
 	r = inflateIncomp(&state->strm);
 	if (r != Z_OK) {
 	    /* gak! */
-	    if (state->debug) {
+#ifndef DEFLATE_DEBUG
+	    if (state->debug)
+#endif
 		printf("z_incomp%d: inflateIncomp returned %d (%s)\n",
 		       state->unit, r, (state->strm.msg? state->strm.msg: ""));
-	    }
 	    return;
 	}
 	mi = mi->m_next;
