@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.65 2001/07/02 04:34:47 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.66 2001/07/04 06:03:55 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -803,6 +803,11 @@ ubsec_process(crp)
 		err = ENOMEM;
 		goto errout;
 	}
+	if (q->q_src_l > 0xfffc) {
+		err = EIO;
+		goto errout;
+	}
+
 	q->q_mcr->mcr_pktlen = stheend;
 
 #ifdef UBSEC_DEBUG
@@ -823,6 +828,11 @@ ubsec_process(crp)
 			q->q_src_packp[i] += sskip;
 			q->q_src_packl[i] -= sskip;
 			sskip = 0;
+		}
+
+		if (q->q_src_packl[i] > 0xfffc) {
+			err = EIO;
+			goto errout;
 		}
 
 		if (j == 0)
@@ -930,6 +940,15 @@ ubsec_process(crp)
 			q->q_dst_l = iov2pages(q->q_dst_io, &q->q_dst_npa,
 			    q->q_dst_packp, q->q_dst_packl, UBS_MAX_SCATTER, NULL);
 
+		if (q->q_dst_l == 0) {
+			err = ENOMEM;
+			goto errout;
+		}
+		if (q->q_dst_l > 0xfffc) {
+			err = ENOMEM;
+			goto errout;
+		}
+
 #ifdef UBSEC_DEBUG
 		printf("dst skip: %d\n", dskip);
 #endif
@@ -948,6 +967,11 @@ ubsec_process(crp)
 				q->q_dst_packp[i] += dskip;
 				q->q_dst_packl[i] -= dskip;
 				dskip = 0;
+			}
+
+			if (q->q_dst_packl[i] > 0xfffc) {
+				err = EIO;
+				goto errout;
 			}
 
 			if (j == 0)
