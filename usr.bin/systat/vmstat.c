@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.24 2001/06/27 06:16:49 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.25 2001/08/28 05:17:55 weingart Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.24 2001/06/27 06:16:49 art Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.25 2001/08/28 05:17:55 weingart Exp $";
 #endif /* not lint */
 
 /*
@@ -184,7 +184,7 @@ static struct nlist namelist[] = {
 #define VMSTATCOL	48
 #define GRAPHROW	10	/* uses 3 rows and 51 cols */
 #define GRAPHCOL	 0
-#define NAMEIROW	14	/* uses 3 rows and 38 cols */
+#define NAMEIROW	14	/* uses 3 rows and 49 cols */
 #define NAMEICOL	 0
 #define DISKROW		18	/* uses 5 rows and 50 cols (for 9 drives) */
 #define DISKCOL		 0
@@ -350,9 +350,10 @@ labelkre()
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
 		"|    |    |    |    |    |    |    |    |    |    |");
 
-	mvprintw(NAMEIROW, NAMEICOL, "Namei         Sys-cache     Proc-cache");
+	mvprintw(NAMEIROW, NAMEICOL,
+		"Namei         Sys-cache    Proc-cache    No-cache");
 	mvprintw(NAMEIROW + 1, NAMEICOL,
-		"    Calls     hits    %%     hits     %%");
+		"    Calls     hits    %%    hits     %%    miss   %%");
 	mvprintw(DISKROW, DISKCOL, "Discs");
 	mvprintw(DISKROW + 1, DISKCOL, "seeks");
 	mvprintw(DISKROW + 2, DISKCOL, "xfers");
@@ -532,13 +533,17 @@ showkre()
 			dinfo(i, ++c);
 		}
 	putint(s.nchcount, NAMEIROW + 2, NAMEICOL, 9);
-	putint(nchtotal.ncs_goodhits, NAMEIROW + 2, NAMEICOL + 9, 9);
+	putint(nchtotal.ncs_goodhits, NAMEIROW + 2, NAMEICOL + 10, 8);
 #define nz(x)	((x) ? (x) : 1)
 	putfloat(nchtotal.ncs_goodhits * 100.0 / nz(s.nchcount),
 	   NAMEIROW + 2, NAMEICOL + 19, 4, 0, 1);
-	putint(nchtotal.ncs_pass2, NAMEIROW + 2, NAMEICOL + 23, 9);
+	putint(nchtotal.ncs_pass2, NAMEIROW + 2, NAMEICOL + 24, 7);
 	putfloat(nchtotal.ncs_pass2 * 100.0 / nz(s.nchcount),
-	   NAMEIROW + 2, NAMEICOL + 34, 4, 0, 1);
+	   NAMEIROW + 2, NAMEICOL + 33, 4, 0, 1);
+	putint(nchtotal.ncs_miss - nchtotal.ncs_pass2,
+	   NAMEIROW + 2, NAMEICOL + 38, 7);
+	putfloat((nchtotal.ncs_miss - nchtotal.ncs_pass2) *
+	   100.0 / nz(s.nchcount), NAMEIROW + 2, NAMEICOL + 45, 4, 0, 1);
 #undef nz
 }
 
