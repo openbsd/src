@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.45 2001/08/22 17:24:45 beck Exp $
+.\"	$OpenBSD: ftpd.8,v 1.46 2001/10/10 03:25:03 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -64,8 +64,7 @@ Permit only anonymous ftp connections, accounts listed in
 .Pa /etc/ftpchroot
 or users in a login class with the
 .Dq ftp-chroot
-variable set (see
-.Xr login.conf 5 ) .
+variable set (see below).
 Other connection attempts are refused.
 .It Fl d
 Debugging information is written to the syslog using LOG_FTP.
