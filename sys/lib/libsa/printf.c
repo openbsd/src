@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.13 1998/06/12 12:09:12 d Exp $	*/
+/*	$OpenBSD: printf.c,v 1.14 1999/08/16 09:21:38 downsj Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -242,11 +242,15 @@ kprintn(put, ul, base)
 	} while (p > buf);
 }
 
+int donottwiddle = 0;
+
 void
 twiddle()
 {
 	static int pos;
 
-	putchar("|/-\\"[pos++ & 3]);
-	putchar('\b');
+	if (!donottwiddle) {
+		putchar("|/-\\"[pos++ & 3]);
+		putchar('\b');
+	}
 }
