@@ -1517,7 +1517,6 @@
 ./usr/lib/libperl.a
 ./usr/lib/libperl_p.a
 ./usr/lib/libreadline_p.a
-./usr/lib/libreadline_pic.a
 ./usr/lib/libresolv.a
 ./usr/lib/libresolv_p.a
 ./usr/lib/librpcsvc.a

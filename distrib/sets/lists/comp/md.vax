@@ -83,3 +83,4 @@
 ./usr/lib/libopcodes.a
 ./usr/lib/libreadline.a
 ./usr/lib/scrt0.o
+./usr/lib/libreadline_pic.a
