@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: auth_unix.c,v 1.14 2001/09/15 13:51:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: auth_unix.c,v 1.15 2002/01/02 23:00:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -143,8 +143,8 @@ authunix_create(machname, uid, gid, len, aup_gids)
 	 * Serialize the parameters into origcred
 	 */
 	xdrmem_create(&xdrs, mymem, MAX_AUTH_BYTES, XDR_ENCODE);
-	if (! xdr_authunix_parms(&xdrs, &aup)) 
-		abort();
+	if (!xdr_authunix_parms(&xdrs, &aup)) 
+		abort();	/* XXX abort illegal in library */
 	au->au_origcred.oa_length = len = XDR_GETPOS(&xdrs);
 	au->au_origcred.oa_flavor = AUTH_UNIX;
 #ifdef KERNEL

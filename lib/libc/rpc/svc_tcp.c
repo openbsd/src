@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.20 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.21 2002/01/02 23:00:10 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -82,9 +82,9 @@ static enum xprt_stat	rendezvous_stat();
 static struct xp_ops svctcp_rendezvous_op = {
 	rendezvous_request,
 	rendezvous_stat,
-	(bool_t (*)())abort,
-	(bool_t (*)())abort,
-	(bool_t (*)())abort,
+	(bool_t (*)())abort,	/* XXX abort illegal in library */
+	(bool_t (*)())abort,	/* XXX abort illegal in library */
+	(bool_t (*)())abort,	/* XXX abort illegal in library */
 	svctcp_destroy
 };
 

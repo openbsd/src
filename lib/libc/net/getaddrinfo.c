@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.30 2001/08/20 02:23:05 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.31 2002/01/02 23:00:10 deraadt Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1052,7 +1052,7 @@ getanswer(answer, anslen, qname, qtype, pai)
 		name_ok = res_hnok;
 		break;
 	default:
-		return (NULL);	/* XXX should be abort(); */
+		return (NULL);	/* XXX should be abort() -- but that is illegal */
 	}
 	/*
 	 * find first satisfactory answer
@@ -1185,7 +1185,7 @@ getanswer(answer, anslen, qname, qtype, pai)
 			cp += n;
 			break;
 		default:
-			abort();
+			abort();	/* XXX abort illegal in library */
 		}
 		if (!had_error)
 			haveanswer++;

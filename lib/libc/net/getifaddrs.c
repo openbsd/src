@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.6 2001/08/20 02:27:10 itojun Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.7 2002/01/02 23:00:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -152,7 +152,7 @@ getifaddrs(struct ifaddrs **pif)
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)rtm;
 			if (index && ifam->ifam_index != index)
-				abort();	/* this cannot happen */
+				abort();	/* XXX abort illegal in library */
 
 #define	RTA_MASKS	(RTA_NETMASK | RTA_IFA | RTA_BRD)
 			if (index == 0 || (ifam->ifam_addrs & RTA_MASKS) == 0)
@@ -279,7 +279,7 @@ getifaddrs(struct ifaddrs **pif)
 		case RTM_NEWADDR:
 			ifam = (struct ifa_msghdr *)rtm;
 			if (index && ifam->ifam_index != index)
-				abort();	/* this cannot happen */
+				abort();	/* XXX abort illegal in library */
 
 			if (index == 0 || (ifam->ifam_addrs & RTA_MASKS) == 0)
 				break;
