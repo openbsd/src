@@ -546,6 +546,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/i82596var.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/i82802reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/ics2101reg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/iha.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/intersil7170.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/isp_inline.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/isp_openbsd.ph

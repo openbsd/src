@@ -962,6 +962,7 @@
 ./usr/share/man/cat4/cd.0
 ./usr/share/man/cat4/ch.0
 ./usr/share/man/cat4/clcs.0
+./usr/share/man/cat4/clct.0
 ./usr/share/man/cat4/clnp.0
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cmpci.0
@@ -1059,6 +1060,7 @@
 ./usr/share/man/cat4/icsphy.0
 ./usr/share/man/cat4/idp.0
 ./usr/share/man/cat4/ifmedia.0
+./usr/share/man/cat4/iha.0
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/inet6.0
 ./usr/share/man/cat4/inphy.0
@@ -1091,6 +1093,7 @@
 ./usr/share/man/cat4/mac68k/mem.0
 ./usr/share/man/cat4/mac68k/obio.0
 ./usr/share/man/cat4/mac68k/sn.0
+./usr/share/man/cat4/maestro.0
 ./usr/share/man/cat4/midi.0
 ./usr/share/man/cat4/mii.0
 ./usr/share/man/cat4/mtdphy.0
@@ -1599,6 +1602,7 @@
 ./usr/share/man/cat8/intro.0
 ./usr/share/man/cat8/iostat.0
 ./usr/share/man/cat8/ipf.0
+./usr/share/man/cat8/ipfs.0
 ./usr/share/man/cat8/ipfstat.0
 ./usr/share/man/cat8/ipmon.0
 ./usr/share/man/cat8/ipnat.0
@@ -2032,6 +2036,3 @@
 ./var/www/htdocs/manual/new_features_2_0.html
 ./var/www/htdocs/manual/win_compiling.html
 ./var/www/htdocs/manual/win_service.html
-./usr/share/man/cat4/clct.0
-./usr/share/man/cat4/maestro.0
-./usr/share/man/cat8/ipfs.0
