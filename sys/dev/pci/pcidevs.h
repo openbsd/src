@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.195 1999/11/09 16:10:29 provos Exp 
+ *	MOpenBSD: pcidevs,v 1.196 1999/11/14 00:19:41 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1090,43 +1090,43 @@
 #define	PCI_PRODUCT_NEWBRIDGE_CA91CX42	0x0000		/* Universe VME */
 
 /* SIIG products */
-#define	PCI_PRODUCT_SIIG_1000	0x1000		/* Serial PCI */
-#define	PCI_PRODUCT_SIIG_1001	0x1001		/* Serial PCI */
-#define	PCI_PRODUCT_SIIG_1002	0x1002		/* Serial PCI */
-#define	PCI_PRODUCT_SIIG_1010	0x1010		/* I/O PCI */
-#define	PCI_PRODUCT_SIIG_1011	0x1011		/* I/O PCI */
-#define	PCI_PRODUCT_SIIG_1012	0x1012		/* I/O PCI */
-#define	PCI_PRODUCT_SIIG_1020	0x1020		/* Parallel PCI */
-#define	PCI_PRODUCT_SIIG_1021	0x1021		/* Parallel Dual PCI */
-#define	PCI_PRODUCT_SIIG_1030	0x1030		/* Serial Dual PCI */
-#define	PCI_PRODUCT_SIIG_1031	0x1031		/* Serial Dual PCI */
-#define	PCI_PRODUCT_SIIG_1032	0x1032		/* Serial Dual PCI */
-#define	PCI_PRODUCT_SIIG_1034	0x1034		/* 2S1P PCI */
-#define	PCI_PRODUCT_SIIG_1035	0x1035		/* 2S1P PCI */
-#define	PCI_PRODUCT_SIIG_1036	0x1036		/* 2S1P PCI */
-#define	PCI_PRODUCT_SIIG_1050	0x1050		/* 4S PCI */
-#define	PCI_PRODUCT_SIIG_1051	0x1051		/* 4S PCI */
-#define	PCI_PRODUCT_SIIG_1052	0x1052		/* 4S PCI */
-#define	PCI_PRODUCT_SIIG_2000	0x2000		/* Serial PCI */
-#define	PCI_PRODUCT_SIIG_2001	0x2001		/* Serial PCI */
-#define	PCI_PRODUCT_SIIG_2002	0x2002		/* Serial PCI */
-#define	PCI_PRODUCT_SIIG_2010	0x2010		/* I/O PCI */
-#define	PCI_PRODUCT_SIIG_2011	0x2011		/* I/O PCI */
-#define	PCI_PRODUCT_SIIG_2012	0x2012		/* I/O PCI */
-#define	PCI_PRODUCT_SIIG_2020	0x2020		/* Parallel PCI */
-#define	PCI_PRODUCT_SIIG_2021	0x2021		/* Parallel Dual PCI */
-#define	PCI_PRODUCT_SIIG_2030	0x2030		/* Serial Dual PCI */
-#define	PCI_PRODUCT_SIIG_2031	0x2031		/* Serial Dual PCI */
-#define	PCI_PRODUCT_SIIG_2032	0x2032		/* Serial Dual PCI */
-#define	PCI_PRODUCT_SIIG_2040	0x2040		/* 2P1S PCI */
-#define	PCI_PRODUCT_SIIG_2041	0x2041		/* 2P1S PCI */
-#define	PCI_PRODUCT_SIIG_2042	0x2042		/* 2P1S PCI */
-#define	PCI_PRODUCT_SIIG_2050	0x2050		/* 4S PCI */
-#define	PCI_PRODUCT_SIIG_2051	0x2051		/* 4S PCI */
-#define	PCI_PRODUCT_SIIG_2052	0x2052		/* 4S PCI */
-#define	PCI_PRODUCT_SIIG_2060	0x2060		/* 2S1P PCI */
-#define	PCI_PRODUCT_SIIG_2061	0x2061		/* 2S1P PCI */
-#define	PCI_PRODUCT_SIIG_2062	0x2062		/* 2S1P PCI */
+#define	PCI_PRODUCT_SIIG_1000	0x1000		/* Serial */
+#define	PCI_PRODUCT_SIIG_1001	0x1001		/* Serial */
+#define	PCI_PRODUCT_SIIG_1002	0x1002		/* Serial */
+#define	PCI_PRODUCT_SIIG_1010	0x1010		/* I/O */
+#define	PCI_PRODUCT_SIIG_1011	0x1011		/* I/O */
+#define	PCI_PRODUCT_SIIG_1012	0x1012		/* I/O */
+#define	PCI_PRODUCT_SIIG_1020	0x1020		/* Parallel */
+#define	PCI_PRODUCT_SIIG_1021	0x1021		/* Parallel Dual */
+#define	PCI_PRODUCT_SIIG_1030	0x1030		/* Serial Dual */
+#define	PCI_PRODUCT_SIIG_1031	0x1031		/* Serial Dual */
+#define	PCI_PRODUCT_SIIG_1032	0x1032		/* Serial Dual */
+#define	PCI_PRODUCT_SIIG_1034	0x1034		/* 2S1P */
+#define	PCI_PRODUCT_SIIG_1035	0x1035		/* 2S1P */
+#define	PCI_PRODUCT_SIIG_1036	0x1036		/* 2S1P */
+#define	PCI_PRODUCT_SIIG_1050	0x1050		/* 4S */
+#define	PCI_PRODUCT_SIIG_1051	0x1051		/* 4S */
+#define	PCI_PRODUCT_SIIG_1052	0x1052		/* 4S */
+#define	PCI_PRODUCT_SIIG_2000	0x2000		/* Serial */
+#define	PCI_PRODUCT_SIIG_2001	0x2001		/* Serial */
+#define	PCI_PRODUCT_SIIG_2002	0x2002		/* Serial */
+#define	PCI_PRODUCT_SIIG_2010	0x2010		/* I/O */
+#define	PCI_PRODUCT_SIIG_2011	0x2011		/* I/O */
+#define	PCI_PRODUCT_SIIG_2012	0x2012		/* I/O */
+#define	PCI_PRODUCT_SIIG_2020	0x2020		/* Parallel */
+#define	PCI_PRODUCT_SIIG_2021	0x2021		/* Parallel Dual */
+#define	PCI_PRODUCT_SIIG_2030	0x2030		/* Serial Dual */
+#define	PCI_PRODUCT_SIIG_2031	0x2031		/* Serial Dual */
+#define	PCI_PRODUCT_SIIG_2032	0x2032		/* Serial Dual */
+#define	PCI_PRODUCT_SIIG_2040	0x2040		/* 2P1S */
+#define	PCI_PRODUCT_SIIG_2041	0x2041		/* 2P1S */
+#define	PCI_PRODUCT_SIIG_2042	0x2042		/* 2P1S */
+#define	PCI_PRODUCT_SIIG_2050	0x2050		/* 4S */
+#define	PCI_PRODUCT_SIIG_2051	0x2051		/* 4S */
+#define	PCI_PRODUCT_SIIG_2052	0x2052		/* 4S */
+#define	PCI_PRODUCT_SIIG_2060	0x2060		/* 2S1P */
+#define	PCI_PRODUCT_SIIG_2061	0x2061		/* 2S1P */
+#define	PCI_PRODUCT_SIIG_2062	0x2062		/* 2S1P */
 
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
