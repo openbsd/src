@@ -1,4 +1,4 @@
-/*	$OpenBSD: bevar.h,v 1.5 1998/08/26 05:00:54 jason Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.6 1998/08/28 19:06:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -47,6 +47,7 @@ struct besoftc {
 	int	sc_promisc;
 	int	sc_burst;
 	int	sc_tcvr_type;
+	int	sc_nticks;		/* negotiation ticks */
 
 	struct	be_bufs *sc_bufs, *sc_bufs_dva;
 	struct	be_desc *sc_desc, *sc_desc_dva;

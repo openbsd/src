@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.6 1998/08/26 05:00:51 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.7 1998/08/28 19:06:46 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -29,10 +29,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
-#include <sys/syslog.h>
+#include <sys/kernel.h>
+#include <sys/errno.h>
 #include <sys/ioctl.h>
+#include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
@@ -94,6 +96,8 @@ void	be_tcvr_write_bit __P((struct besoftc *sc, int bit));
 int	be_tcvr_read_bit1 __P((struct besoftc *sc));
 int	be_tcvr_read_bit2 __P((struct besoftc *sc));
 int	be_tcvr_read __P((struct besoftc *sc, u_int8_t reg));
+
+void	be_negotiate_watchdog __P((void *));
 
 struct cfdriver be_cd = {
 	NULL, "be", DV_IFNET
@@ -230,7 +234,7 @@ bestart(ifp)
 			(len & BE_TXD_LENGTH);
 		sc->sc_cr->ctrl = BE_CR_CTRL_TWAKEUP;
 
-		if (++bix == BE_TX_RING_SIZE)
+		if (++bix == BE_TX_RING_MAXSIZE)
 			bix = 0;
 
 		if (++sc->sc_no_td == BE_TX_RING_SIZE) {
@@ -461,7 +465,7 @@ betint(sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_opackets++;
 
-		if (++bix == BE_TX_RING_SIZE)
+		if (++bix == BE_TX_RING_MAXSIZE)
 			bix = 0;
 
 		--sc->sc_no_td;
@@ -505,7 +509,7 @@ berint(sc)
 
 		bcopy(&rxd, &sc->sc_desc->be_rxd[bix], sizeof(rxd));
 
-		if (++bix == BE_RX_RING_SIZE)
+		if (++bix == BE_RX_RING_MAXSIZE)
 			bix = 0;
 	}
 
@@ -631,6 +635,9 @@ beinit(sc)
 	int s = splimp();
 	int i;
 
+	untimeout(be_negotiate_watchdog, sc);
+	sc->sc_nticks = 0;
+
 	qec_reset(sc->sc_qec);
 
 	/*
@@ -658,14 +665,14 @@ beinit(sc)
 		sc->sc_bufs_dva = (struct be_bufs *) dvma_malloc(
 			sizeof(struct be_bufs), &sc->sc_bufs, M_NOWAIT);
 	
-	for (i = 0; i < BE_TX_RING_SIZE; i++) {
+	for (i = 0; i < BE_TX_RING_MAXSIZE; i++) {
 		sc->sc_desc->be_txd[i].tx_addr =
-			(u_int32_t) &sc->sc_bufs_dva->tx_buf[i][0];
+			(u_int32_t) &sc->sc_bufs_dva->tx_buf[i % BE_TX_RING_SIZE][0];
 		sc->sc_desc->be_txd[i].tx_flags = 0;
 	}
-	for (i = 0; i < BE_RX_RING_SIZE; i++) {
+	for (i = 0; i < BE_RX_RING_MAXSIZE; i++) {
 		sc->sc_desc->be_rxd[i].rx_addr =
-			(u_int32_t) &sc->sc_bufs_dva->rx_buf[i][0];
+			(u_int32_t) &sc->sc_bufs_dva->rx_buf[i % BE_RX_RING_SIZE][0];
 		sc->sc_desc->be_rxd[i].rx_flags =
 			BE_RXD_OWN |
 			(BE_PKT_BUF_SZ & BE_RXD_LENGTH);
@@ -745,10 +752,32 @@ void
 be_tcvr_setspeed(sc)
 	struct besoftc *sc;
 {
-	int x;
+	int x, tries, i;
 
-	be_tcvr_write(sc, PHY_BMCR, 0);
+	be_tcvr_write(sc, PHY_BMCR,
+		PHY_BMCR_LOOPBACK | PHY_BMCR_PDOWN | PHY_BMCR_ISOLATE);
+	be_tcvr_write(sc, PHY_BMCR, PHY_BMCR_RESET);
+
+	for (tries = 0; tries < 16; i++) {
+		x = be_tcvr_read(sc, PHY_BMCR);
+		if ((x & PHY_BMCR_RESET) == 0)
+			break;
+		DELAY(20);
+	}
+
+	x = be_tcvr_read(sc, PHY_BMCR);
+	be_tcvr_write(sc, PHY_BMCR, x & (~PHY_BMCR_ISOLATE));
+
+	for (tries = 0; tries < 32; i++) {
+		x = be_tcvr_read(sc, PHY_BMCR);
+		if ((x & PHY_BMCR_ISOLATE) == 0)
+			break;
+		DELAY(20);
+	}
+
 	x = be_tcvr_read(sc, PHY_BMSR);
+	if ((x & PHY_BMSR_LINKSTATUS) == 0)
+		timeout(be_negotiate_watchdog, sc, (12 * hz)/10);
 }
 
 /*
@@ -1014,7 +1043,8 @@ be_put(sc, idx, m)
 			MFREE(m, n);
 			continue;
 		}
-		bcopy(mtod(m, caddr_t), &sc->sc_bufs->tx_buf[idx][boff], len);
+		bcopy(mtod(m, caddr_t),
+		      ((char *)sc->sc_desc->be_txd[idx].tx_addr) + boff, len);
 		boff += len;
 		tlen += len;
 		MFREE(m, n);
@@ -1112,7 +1142,8 @@ be_get(sc, idx, totlen)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		bcopy(&sc->sc_bufs->rx_buf[idx][boff], mtod(m, caddr_t), len);
+		bcopy(((char *)sc->sc_desc->be_rxd[idx].rx_addr) + boff,
+		      mtod(m, caddr_t), len);
 		boff += len;
 		totlen -= len;
 		*mp = m;
@@ -1120,4 +1151,31 @@ be_get(sc, idx, totlen)
 	}
 
 	return (top);
+}
+
+void
+be_negotiate_watchdog(v)
+	void *v;
+{
+	struct besoftc *sc = (struct besoftc *)v;
+	int x;
+
+	if (sc->sc_nticks == BE_NEGOTIATE_MAXTICKS) {
+		sc->sc_nticks = 0;
+		be_tcvr_setspeed(sc);
+		return;
+	}
+	sc->sc_nticks++;
+
+	x = be_tcvr_read(sc, PHY_BMSR);
+	if ((x & PHY_BMSR_LINKSTATUS) == 0) {
+		timeout(be_negotiate_watchdog, sc, (12 * hz)/10);
+		return;
+	}
+
+	x = be_tcvr_read(sc, PHY_BMCR);
+	printf("%s: %d Mb/s %s duplex, link up.\n",
+			sc->sc_dev.dv_xname,
+			(x & PHY_BMCR_SPEED) ? 100 : 10,
+			(x & PHY_BMCR_DUPLEX) ? "full" : "half");
 }
