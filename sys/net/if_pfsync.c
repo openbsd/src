@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.40 2004/12/06 10:27:53 mpf Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.41 2004/12/13 01:47:26 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -211,7 +211,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	pf_state_peer_ntoh(&sp->dst, &st->dst);
 
 	bcopy(&sp->rt_addr, &st->rt_addr, sizeof(st->rt_addr));
-	st->creation = ntohl(sp->creation) + time_second;
+	st->creation = time_second - ntohl(sp->creation);
 	st->expire = ntohl(sp->expire) + time_second;
 
 	st->af = sp->af;
