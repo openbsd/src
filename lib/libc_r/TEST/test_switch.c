@@ -46,7 +46,7 @@ main(argc, argv)
 	char **argv;
 {
 	pthread_t thread;
-	int count = 2;
+	int count = 4;
 	int debug = 0;
 	int eof = 0;
 	long i;
@@ -84,7 +84,7 @@ main(argc, argv)
 		    (void*)(buf+i)));
 
 	/* give all threads a chance to run */
-	sleep (6);
+	sleep (4);
 
 	for (i = 0; i < count; i++)
 		ASSERT(x[i]);	/* make sure each thread ran */
