@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.8,v 1.17 2002/05/29 14:34:05 itojun Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.18 2002/05/29 14:55:45 itojun Exp $
 .\"	$KAME: rtadvd.8,v 1.18 2002/04/28 10:43:02 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -107,7 +107,7 @@ Log messages will be dumped to stderr when this option is specified.
 Specify an interface to join the all-routers site-local multicast group.
 By default,
 .Nm
-tries to join the first advertising interface appeared in the command
+tries to join the first advertising interface appearing on the command
 line.
 This option has meaning only with the
 .Fl R
@@ -158,7 +158,7 @@ The default configuration file.
 contains the pid of the currently running
 .Nm rtadvd .
 .It Pa /var/run/rtadvd.dump
-in which
+The file in which
 .Nm
 dumps its internal state.
 .El
@@ -168,8 +168,8 @@ dumps its internal state.
 .Sh HISTORY
 The
 .Nm
-command first appeared in WIDE Hydrangea IPv6 protocol stack kit.
-.Sh CAVEAT
+command first appeared in the WIDE Hydrangea IPv6 protocol stack kit.
+.Sh BUGS
 There used to be some text that recommended users not to let
 .Nm
 advertise Router Advertisement messages on an upstream link to avoid
