@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.35 2001/01/10 20:31:24 angelos Exp $	*/
-/*	$EOM: x509.c,v 1.51 2000/12/12 01:38:38 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.36 2001/01/26 11:09:12 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -47,6 +47,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
+#include <gmp.h>
+#endif
 
 #ifdef USE_POLICY
 #include <regex.h>
