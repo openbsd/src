@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.6 2000/06/30 16:00:24 millert Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.7 2001/09/20 20:42:25 jason Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -177,6 +177,7 @@ ee_num16(ktent, arg)
 	printf("%s=%d\n", ktent->kt_keyword, num16);
 }
 
+#ifndef __sparc64__
 static	struct strvaltabent scrsizetab[] = {
 	{ "640x480",		EED_SCR_640X480 },
 	{ "1152x900",		EED_SCR_1152X900 },
@@ -220,6 +221,7 @@ ee_screensize(ktent, arg)
 	}
 	printf("%s=%s\n", ktent->kt_keyword, svp->sv_str);
 }
+#endif
 
 static	struct strvaltabent truthtab[] = {
 	{ "true",		EE_TRUE },
@@ -359,6 +361,7 @@ ee_kbdtype(ktent, arg)
 	printf("%s=%d (%s)\n", ktent->kt_keyword, kbd, kbd ? "other" : "Sun");
 }
 
+#ifndef __sparc64__
 static	struct strvaltabent constab[] = {
 	{ "b&w",		EED_CONS_BW },
 	{ "ttya",		EED_CONS_TTYA },
@@ -402,6 +405,7 @@ ee_constype(ktent, arg)
 	printf("%s=%s\n", ktent->kt_keyword, svp->sv_str);
 		
 }
+#endif
 
 void
 ee_diagpath(ktent, arg)

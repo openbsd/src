@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 2000/06/30 16:00:25 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 2001/09/20 20:42:25 jason Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -68,12 +68,20 @@ struct	keytabent eekeytab[] = {
 	{ "hwupdate",		0x10,	ee_hwupdate },
 	{ "memsize",		0x14,	ee_num8 },
 	{ "memtest",		0x15,	ee_num8 },
+#ifdef __sparc64__
+	{ "scrsize",		0x16,	ee_notsupp },
+#else
 	{ "scrsize",		0x16,	ee_screensize },
+#endif
 	{ "watchdog_reboot",	0x17,	ee_truefalse },
 	{ "default_boot",	0x18,	ee_truefalse },
 	{ "bootdev",		0x19,	ee_bootdev },
 	{ "kbdtype",		0x1e,	ee_kbdtype },
+#ifdef __sparc64__
+	{ "console",		0x1f,	ee_notsupp },
+#else
 	{ "console",		0x1f,	ee_constype },
+#endif
 	{ "keyclick",		0x21,	ee_truefalse },
 	{ "diagdev",		0x22,	ee_bootdev },
 	{ "diagpath",		0x28,	ee_diagpath },
