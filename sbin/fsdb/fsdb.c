@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.11 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.12 2003/04/17 06:56:04 deraadt Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -564,7 +564,7 @@ chnamefunc(idesc)
 	    testdir.d_namlen = strlen(idesc->id_name);
 	    if (DIRSIZ(NEWDIRFMT, &testdir) <= dirp->d_reclen) {
 		dirp->d_namlen = testdir.d_namlen;
-		strcpy(dirp->d_name, idesc->id_name);
+		strlcpy(dirp->d_name, idesc->id_name, sizeof dirp->d_name);
 		return STOP|ALTERED|FOUND;
 	    } else
 		return STOP|FOUND;	/* won't fit, so give up */
