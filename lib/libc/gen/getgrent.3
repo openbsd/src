@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgrent.3,v 1.6 1999/07/09 13:35:16 aaron Exp $
+.\"	$OpenBSD: getgrent.3,v 1.7 2000/03/23 22:09:01 d Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,9 @@
 .Sh NAME
 .Nm getgrent ,
 .Nm getgrnam ,
+.Nm getgrnam_r ,
 .Nm getgrgid ,
+.Nm getgrgid_r ,
 .Nm setgroupent ,
 .\" .Nm setgrfile ,
 .Nm setgrent ,
@@ -51,7 +53,11 @@
 .Ft struct group *
 .Fn getgrnam "const char *name"
 .Ft struct group *
+.Fn getgrnam_r "const char *name" "struct group *grp" "char *buffer" "size_t bufsize" "struct group **result"
+.Ft struct group *
 .Fn getgrgid "gid_t gid"
+.Ft struct group *
+.Fn getgrgid_r "gid_t gid" "struct group *grp" "char *buffer" "size_t bufsize" "struct group **result"
 .Ft int
 .Fn setgroupent "int stayopen"
 .\" .Ft void
@@ -116,6 +122,30 @@ The
 .Fn endgrent
 function
 closes any open files.
+.Pp
+The
+.Fn getgrgid_r
+and
+.Fn getgrnam_r
+functions both update the group structure pointed to by
+.Fa grp
+and store a pointer to that structure at the location pointed to by
+.Fa result .
+The structure is filled with an entry from the group database with a
+matching
+.Fa gid
+or
+.Fa name .
+Storage referenced by the group structure will be allocated from the memory
+provided with the
+.Fa buffer
+parameter, which is
+.Fa bufsiz
+characters in size.
+.\" The maximum size needed for this buffer can be determined with the
+.\" .Dv _SC_GETGR_R_SIZE_MAX
+.\" .Xr sysconf 2
+.\" parameter.
 .Sh RETURN VALUES
 The functions
 .Fn getgrent ,
@@ -132,6 +162,13 @@ The
 and
 .Fn setgrent
 functions have no return value.
+The functions
+.Fn getgrgid_r
+and
+.Fn getgrnam_r
+store a null pointer at the location pointed to by
+.Fa result
+if an error occurs, or the requested entry is not found.
 .Sh FILES
 .Bl -tag -width /etc/group -compact
 .It Pa /etc/group
