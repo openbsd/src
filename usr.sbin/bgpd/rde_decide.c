@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.19 2004/01/13 13:45:50 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.20 2004/01/13 16:15:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -428,6 +428,10 @@ up_generate_updates(struct rde_peer *peer,
 			/* Do not send routes back to sender */
 			return;
 
+		if (peer->conf.ebgp == 0 && old->peer->conf.ebgp == 0)
+			/* Do not redistribute updates to ibgp peers */
+			return;
+
 		/* announce type handling */
 		switch (peer->conf.announce_type) {
 		case ANNOUNCE_NONE:
@@ -456,6 +460,10 @@ up_generate_updates(struct rde_peer *peer,
 	} else {
 		if (peer == new->peer)
 			/* Do not send routes back to sender */
+			return;
+
+		if (peer->conf.ebgp == 0 && new->peer->conf.ebgp == 0)
+			/* Do not redistribute updates to ibgp peers */
 			return;
 
 		/* announce type handling */
