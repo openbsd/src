@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.7 1999/08/04 23:27:49 niklas Exp $ */
+/*      $OpenBSD: sv.c,v 1.8 2000/04/03 21:13:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -290,20 +290,18 @@ sv_attach(parent, self, aux)
   u_int32_t  dmareg, dmaio; 
   u_int8_t   reg;
 
-  printf ("\n");
-
   sc->sc_pci_chipset_tag = pc;
   sc->sc_pci_tag = pa->pa_tag;
 
   /* Map the enhanced port only */
   if (pci_io_find(pc, pa->pa_tag, SV_ENHANCED_PORTBASE_SLOT, 
 		  &iobase, &iosize)) {
-    printf ("%s: Couldn't find enhanced synth I/O range\n", sc->sc_dev.dv_xname);
+    printf (": Couldn't find enhanced synth I/O range\n");
     return;
   }
 
   if (bus_space_map(sc->sc_iot, iobase, iosize, 0, &sc->sc_ioh)) {
-      printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+      printf(": can't map i/o space\n");
       return;
   }
 
@@ -321,7 +319,7 @@ sv_attach(parent, self, aux)
          and disable this DMA before we enable the device */
       pci_conf_write(pa->pa_pc, pa->pa_tag, SV_DMAA_CONFIG_OFF, 0);
 
-      printf ("%s: can't map DMA i/o space\n", sc->sc_dev.dv_xname);
+      printf (": can't map DMA i/o space\n");
       goto enable;
     }
 
@@ -341,7 +339,7 @@ sv_attach(parent, self, aux)
          and disable this DMA before we enable the device */
       pci_conf_write (pa->pa_pc, pa->pa_tag, SV_DMAC_CONFIG_OFF, 
 		      dmareg & ~SV_DMA_CHANNEL_ENABLE); 
-      printf ("%s: can't map DMA i/o space\n", sc->sc_dev.dv_xname);
+      printf (": can't map DMA i/o space\n");
       goto enable;
     }
 
@@ -393,21 +391,20 @@ sv_attach(parent, self, aux)
   /* Map and establish the interrupt. */
   if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 		   pa->pa_intrline, &ih)) {
-    printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+    printf(": couldn't map interrupt\n");
     return;
   }
   intrstr = pci_intr_string(pc, ih);
   sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, sv_intr, sc,
 				 sc->sc_dev.dv_xname);
   if (sc->sc_ih == NULL) {
-    printf("%s: couldn't establish interrupt",
-	   sc->sc_dev.dv_xname);
+    printf(": couldn't establish interrupt");
     if (intrstr != NULL)
       printf(" at %s", intrstr);
     printf("\n");
     return;
   }
-  printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+  printf(": %s\n", intrstr);
 
   sv_init_mixer(sc);
 

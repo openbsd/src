@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.8 2000/01/11 13:40:05 deraadt Exp $	*/
+/*	$OpenBSD: eso.c,v 1.9 2000/04/03 21:13:48 deraadt Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -350,7 +350,7 @@ eso_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(" %s\n", intrstring);
+	printf(", %s\n", intrstring);
 
 	/*
 	 * Set up the DDMA Control register; a suitable I/O region has been
