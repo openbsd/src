@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.8 2003/12/31 11:18:25 cedric Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.9 2004/01/18 19:55:52 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -219,12 +219,12 @@ struct pfsyncreq {
 
 #define pf_state_host_hton(s,d) do {				\
 	bcopy(&(s)->addr, &(d)->addr, sizeof((d)->addr));	\
-	(d)->port = htons((s)->port);				\
+	(d)->port = (s)->port;					\
 } while (0)
 
 #define pf_state_host_ntoh(s,d) do {				\
 	bcopy(&(s)->addr, &(d)->addr, sizeof((d)->addr));	\
-	(d)->port = ntohs((s)->port);				\
+	(d)->port = (s)->port;					\
 } while (0)
 
 #ifdef _KERNEL
