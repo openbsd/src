@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.14 2003/07/08 13:19:08 nate Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.15 2003/08/11 02:21:28 mickey Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.24 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size, 0)) {
-		printf("%s: can't map i/o space\n", devname);
+		printf(": can't map i/o space\n");
 		return;
 	}
 
@@ -128,20 +128,20 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", devname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc,
 				       devname);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt", devname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf(": interrupting at %s\n", intrstr);
+	printf(": %s\n", intrstr);
 
 	/* Set LEGSUP register to its default value. */
 	pci_conf_write(pc, tag, PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);

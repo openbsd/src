@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.18 2003/07/08 13:19:08 nate Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.19 2003/08/11 02:21:28 mickey Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size, 0)) {
-		printf("%s: can't map mem space\n", devname);
+		printf(": can't map mem space\n");
 		return;
 	}
 
@@ -146,17 +146,16 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ohci_intr, sc,
-				       devname);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ohci_intr, sc, devname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", devname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		splx(s);
 		return;
 	}
-	printf(": interrupting at %s", intrstr);
+	printf(": %s", intrstr);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);
