@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_mouse.c,v 1.6 2000/10/25 16:55:53 aaron Exp $ */
+/*	$OpenBSD: pcvt_mouse.c,v 1.7 2000/10/26 22:53:32 aaron Exp $ */
 
 /*
  * Copyright (c) 2000 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -63,7 +63,6 @@ void mouse_copy_extend_after(void);
 void remove_selection(void);
 void mouse_copy_selection(void);
 void mouse_paste(void);
-uid_t current_uid(void);
 
 void mouse_zaxis(int z);
 void mouse_button(int button, int clicks);
@@ -911,38 +910,6 @@ remove_selection()
 	vsp->mouse_flags &= ~SEL_EXISTS;
 }
 
-/*
- * Function to get the uid of the user behind the *shell* on the current tty
- * We handle su and sudo cases...
- */
-
-uid_t
-current_uid(void)
-{
-	pid_t pg = 0; /* process group id */
-	struct proc *owner_proc = 0;
-	
-	if (vsp->vs_tty && vsp->vs_tty->t_pgrp)
-			pg = vsp->vs_tty->t_pgrp->pg_id;
-	else
-		return (0); /* the uid of root, just to be sure */
-	
-	if (pg) 
-		owner_proc = pfind(pg);
-	
-	if (!owner_proc) {
-		Paste_avail = 0; /* this selection will never be available
-				    because the process doesn't exist... */
-		return (0); /* the uid of root, just to be sure */
-	}
-	
-	/* 
-	 * We use the real user id and not the *effective* one, as a foreground
-	 * setuid process could permit to paste selection of another user
-	 */
-	
-	return (owner_proc->p_cred->p_ruid);
-}
 
 /* 
  * Function to put the current visual selection in the selection buffer
@@ -976,7 +943,6 @@ mouse_copy_selection(void)
 	}
 	
 	Copybuffer[current] = '\0';
-	Copyowner = current_uid();
 }
 
 /*
@@ -988,11 +954,8 @@ mouse_paste(void)
 {
 	unsigned short len;
 	char *current = Copybuffer;
-	uid_t cur_uid;
 
-	cur_uid = current_uid();	
-	if (Paste_avail && ((cur_uid == Copyowner) || !cur_uid)) {
-		/* either the owner of the selection or root */
+	if (Paste_avail) {
 		len = strlen(Copybuffer);
 		for (; len > 0; len--) {
 			(*linesw[vsp->vs_tty->t_line].l_rint)

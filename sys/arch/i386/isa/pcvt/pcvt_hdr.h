@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.41 2000/10/07 03:12:46 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.42 2000/10/26 22:53:31 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1144,9 +1144,6 @@ static __inline void vt_selattr(struct video_state *svsp)
 
 char *Copybuffer; /* buffer that contains mouse selections */
 unsigned int Copybuffer_size;
-uid_t Copyowner; /* uid of the owner of the selection, useful for verifying
-		    permissions on it
-		  */
 char Paste_avail; /* flag, to indicate whether a selection is in the
 			 Copy buffer */
 
