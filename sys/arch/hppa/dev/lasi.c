@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.8 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.9 2002/04/22 01:48:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -44,6 +44,8 @@
 #include <hppa/dev/cpudevs.h>
 
 #include <hppa/gsc/gscbusvar.h>
+
+#define	LASI_IOMASK	0xfff00000
 
 struct lasi_hwr {
 	u_int32_t lasi_power;
@@ -151,6 +153,7 @@ lasiattach(parent, self, aux)
 	sc->sc_ic.gsc_intr_ack = lasi_intr_ack;
 
 	sc->ga.ga_ca = *ca;	/* clone from us */
+	sc->ga.ga_hpamask = LASI_IOMASK;
 	if (sc->sc_dev.dv_unit)
 		config_defer(self, lasi_gsc_attach);
 	else {
