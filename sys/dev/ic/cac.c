@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.5 2001/04/23 10:47:56 art Exp $	*/
+/*	$OpenBSD: cac.c,v 1.6 2001/08/16 17:26:51 brad Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -73,7 +73,8 @@
 /*
  * Driver for Compaq array controllers.
  */
-#undef CAC_DEBUG
+
+/* #define	CAC_DEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
