@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.29 2000/06/17 14:38:15 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.30 2000/06/23 16:15:49 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.29 2000/06/17 14:38:15 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.30 2000/06/23 16:15:49 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1739,6 +1739,7 @@ JobStart(gn, flags, previous)
 	 * per shell.
 	 */
 	if (compatMake) {
+	    LstNode ln;
 	    /*
 	     * Be compatible: If this is the first time for this node,
 	     * verify its commands are ok and open the commands list for
@@ -1747,29 +1748,27 @@ JobStart(gn, flags, previous)
 	     * and print it to the command file. If the command was an
 	     * ellipsis, note that there's nothing more to execute.
 	     */
-	    if ((job->flags&JOB_FIRST) && (Lst_Open(&gn->commands) != SUCCESS)){
-		cmdsOK = FALSE;
-	    } else {
-		LstNode	ln = Lst_Next(&gn->commands);
+	    if ((job->flags&JOB_FIRST))
+	    	Lst_Open(&gn->commands);
+	    ln = Lst_Next(&gn->commands);
 
-		if ((ln == NULL) || !JobPrintCommand(Lst_Datum(ln), job)) {
-		    noExec = TRUE;
-		    Lst_Close(&gn->commands);
-		}
-		if (noExec && !(job->flags & JOB_FIRST)) {
-		    /*
-		     * If we're not going to execute anything, the job
-		     * is done and we need to close down the various
-		     * file descriptors we've opened for output, then
-		     * call JobDoOutput to catch the final characters or
-		     * send the file to the screen... Note that the i/o streams
-		     * are only open if this isn't the first job.
-		     * Note also that this could not be done in
-		     * Job_CatchChildren b/c it wasn't clear if there were
-		     * more commands to execute or not...
-		     */
-		    JobClose(job);
-		}
+	    if ((ln == NULL) || !JobPrintCommand(Lst_Datum(ln), job)) {
+		noExec = TRUE;
+		Lst_Close(&gn->commands);
+	    }
+	    if (noExec && !(job->flags & JOB_FIRST)) {
+		/*
+		 * If we're not going to execute anything, the job
+		 * is done and we need to close down the various
+		 * file descriptors we've opened for output, then
+		 * call JobDoOutput to catch the final characters or
+		 * send the file to the screen... Note that the i/o streams
+		 * are only open if this isn't the first job.
+		 * Note also that this could not be done in
+		 * Job_CatchChildren b/c it wasn't clear if there were
+		 * more commands to execute or not...
+		 */
+		JobClose(job);
 	    }
 	} else {
 	    /*
@@ -2249,7 +2248,7 @@ Job_CatchChildren(block)
 		continue;
 	    }
 	} else {
-	    job = (Job *) Lst_Datum(jnode);
+	    job = (Job *)Lst_Datum(jnode);
 	    Lst_Remove(&jobs, jnode);
 	    nJobs -= 1;
 	    if (jobFull && DEBUG(JOB)) {
@@ -2341,12 +2340,9 @@ Job_CatchOutput()
 	    free(readfdsp);
 	    return;
 	} else {
-	    if (Lst_Open(&jobs) == FAILURE) {
-		free(readfdsp);
-		Punt("Cannot open job table");
-	    }
+	    Lst_Open(&jobs);
 	    while (nfds && (ln = Lst_Next(&jobs)) != NULL) {
-		job = (Job *) Lst_Datum(ln);
+		job = (Job *)Lst_Datum(ln);
 		if (FD_ISSET(job->inPipe, readfdsp)) {
 		    JobDoOutput(job, FALSE);
 		    nfds -= 1;
@@ -2789,9 +2785,9 @@ JobInterrupt(runINTERRUPT, signo)
 
     aborting = ABORT_INTERRUPT;
 
-   (void) Lst_Open(&jobs);
+    Lst_Open(&jobs);
     while ((ln = Lst_Next(&jobs)) != NULL) {
-	job = (Job *) Lst_Datum(ln);
+	job = (Job *)Lst_Datum(ln);
 
 	if (!Targ_Precious(job->node)) {
 	    char  	*file = (job->node->path == NULL ?
@@ -2834,9 +2830,9 @@ JobInterrupt(runINTERRUPT, signo)
     }
 
 #ifdef REMOTE
-   (void)Lst_Open(&stoppedJobs);
+    Lst_Open(&stoppedJobs);
     while ((ln = Lst_Next(&stoppedJobs)) != NULL) {
-	job = (Job *) Lst_Datum(ln);
+	job = (Job *)Lst_Datum(ln);
 
 	if (job->flags & JOB_RESTART) {
 	    if (DEBUG(JOB)) {
@@ -3013,9 +3009,9 @@ Job_AbortAll()
 
     if (nJobs) {
 
-	(void) Lst_Open(&jobs);
+	Lst_Open(&jobs);
 	while ((ln = Lst_Next(&jobs)) != NULL) {
-	    job = (Job *) Lst_Datum(ln);
+	    job = (Job *)Lst_Datum(ln);
 
 	    /*
 	     * kill the child process with increasingly drastic signals to make
@@ -3080,7 +3076,7 @@ JobFlagForMigration(hostID)
 		    return;
 		}
     }
-    job = (Job *) Lst_Datum(jnode);
+    job = (Job *)Lst_Datum(jnode);
 
     if (DEBUG(JOB)) {
 	(void) fprintf(stdout,

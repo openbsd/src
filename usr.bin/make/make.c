@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.18 2000/06/17 14:43:36 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.19 2000/06/23 16:15:50 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.18 2000/06/17 14:43:36 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.19 2000/06/23 16:15:50 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -332,18 +332,17 @@ Make_HandleUse(cgn, pgn)
 	    Lst_Concat(&pgn->commands, &cgn->commands);
 	}
 
-	if (Lst_Open(&cgn->children) == SUCCESS) {
-	    while ((ln = Lst_Next(&cgn->children)) != NULL) {
-		gn = (GNode *)Lst_Datum (ln);
+	Lst_Open(&cgn->children);
+	while ((ln = Lst_Next(&cgn->children)) != NULL) {
+	    gn = (GNode *)Lst_Datum(ln);
 
-		if (Lst_Member(&pgn->children, gn) == NULL) {
-		    Lst_AtEnd(&pgn->children, gn);
-		    Lst_AtEnd(&gn->parents, pgn);
-		    pgn->unmade += 1;
-		}
+	    if (Lst_Member(&pgn->children, gn) == NULL) {
+		Lst_AtEnd(&pgn->children, gn);
+		Lst_AtEnd(&gn->parents, pgn);
+		pgn->unmade += 1;
 	    }
-	    Lst_Close(&cgn->children);
 	}
+	Lst_Close(&cgn->children);
 
 	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_TRANSFORM);
 
@@ -469,42 +468,41 @@ Make_Update (cgn)
 #endif
     }
 
-    if (Lst_Open(&cgn->parents) == SUCCESS) {
-	while ((ln = Lst_Next(&cgn->parents)) != NULL) {
-	    pgn = (GNode *)Lst_Datum (ln);
-	    if (pgn->make) {
-		pgn->unmade -= 1;
+    Lst_Open(&cgn->parents);
+    while ((ln = Lst_Next(&cgn->parents)) != NULL) {
+	pgn = (GNode *)Lst_Datum(ln);
+	if (pgn->make) {
+	    pgn->unmade -= 1;
 
-		if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
-		    if (cgn->made == MADE) {
-			pgn->childMade = TRUE;
-			if (pgn->cmtime < cgn->mtime) {
-			    pgn->cmtime = cgn->mtime;
-			}
-		    } else {
-			(void)Make_TimeStamp (pgn, cgn);
+	    if ( ! (cgn->type & (OP_EXEC|OP_USE))) {
+		if (cgn->made == MADE) {
+		    pgn->childMade = TRUE;
+		    if (pgn->cmtime < cgn->mtime) {
+			pgn->cmtime = cgn->mtime;
 		    }
-		}
-		if (pgn->unmade == 0) {
-		    /*
-		     * Queue the node up -- any unmade predecessors will
-		     * be dealt with in MakeStartJobs.
-		     */
-		    Lst_EnQueue(&toBeMade, pgn);
-		} else if (pgn->unmade < 0) {
-		    Error ("Graph cycles through %s", pgn->name);
+		} else {
+		    (void)Make_TimeStamp (pgn, cgn);
 		}
 	    }
+	    if (pgn->unmade == 0) {
+		/*
+		 * Queue the node up -- any unmade predecessors will
+		 * be dealt with in MakeStartJobs.
+		 */
+		Lst_EnQueue(&toBeMade, pgn);
+	    } else if (pgn->unmade < 0) {
+		Error ("Graph cycles through %s", pgn->name);
+	    }
 	}
-	Lst_Close(&cgn->parents);
     }
+    Lst_Close(&cgn->parents);
     /*
      * Deal with successor nodes. If any is marked for making and has an unmade
      * count of 0, has not been made and isn't in the examination queue,
      * it means we need to place it in the queue as it restrained itself
      * before.
      */
-    for (ln = Lst_First(&cgn->successors); ln != NULL; ln = Lst_Succ(ln)) {
+    for (ln = Lst_First(&cgn->successors); ln != NULL; ln = Lst_Adv(ln)) {
 	GNode	*succ = (GNode *)Lst_Datum(ln);
 
 	if (succ->make && succ->unmade == 0 && succ->made == UNMADE &&
@@ -516,9 +514,10 @@ Make_Update (cgn)
      * Set the .PREFIX and .IMPSRC variables for all the implied parents
      * of this node.
      */
-    if (Lst_Open(&cgn->iParents) == SUCCESS) {
-	char	*cpref = Var_Value(PREFIX, cgn);
+    {
+    char	*cpref = Var_Value(PREFIX, cgn);
 
+	Lst_Open(&cgn->iParents);
 	while ((ln = Lst_Next(&cgn->iParents)) != NULL) {
 	    pgn = (GNode *)Lst_Datum (ln);
 	    if (pgn->make) {
@@ -666,7 +665,7 @@ MakeStartJobs ()
 	if (!Lst_IsEmpty(&gn->preds)) {
 	    LstNode ln;
 
-	    for (ln = Lst_First(&gn->preds); ln != NULL; ln = Lst_Succ(ln)){
+	    for (ln = Lst_First(&gn->preds); ln != NULL; ln = Lst_Adv(ln)){
 		GNode	*pgn = (GNode *)Lst_Datum(ln);
 
 		if (pgn->make && pgn->made == UNMADE) {

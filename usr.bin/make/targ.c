@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.21 2000/06/17 14:43:37 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.22 2000/06/23 16:15:50 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.21 2000/06/17 14:43:37 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.22 2000/06/23 16:15:50 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -303,7 +303,7 @@ Targ_FindList(nodes, names)
     GNode	*gn;		/* node in tLn */
     char	*name;
 
-    for (ln = Lst_First(names); ln != NULL; ln = Lst_Succ(ln)) {
+    for (ln = Lst_First(names); ln != NULL; ln = Lst_Adv(ln)) {
 	name = (char *)Lst_Datum(ln);
 	gn = Targ_FindNode(name, TARG_CREATE);
 	/*

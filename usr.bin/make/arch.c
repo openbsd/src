@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.28 2000/06/17 14:38:13 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.29 2000/06/23 16:15:49 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.28 2000/06/17 14:38:13 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.29 2000/06/23 16:15:49 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -499,7 +499,7 @@ ArchStatMember (archive, member, hash)
 
     ln = Lst_Find(&archives, ArchFindArchive, archive);
     if (ln != NULL) {
-	ar = (Arch *) Lst_Datum (ln);
+	ar = (Arch *)Lst_Datum(ln);
 
 	he = Hash_FindEntry (&ar->members, member);
 
@@ -1045,12 +1045,9 @@ Arch_MemMTime (gn)
     char    	  *nameStart,
 		  *nameEnd;
 
-    if (Lst_Open(&gn->parents) != SUCCESS) {
-	gn->mtime = OUT_OF_DATE;
-	return FALSE;
-    }
+    Lst_Open(&gn->parents);
     while ((ln = Lst_Next(&gn->parents)) != NULL) {
-	pgn = (GNode *) Lst_Datum (ln);
+	pgn = (GNode *)Lst_Datum(ln);
 
 	if (pgn->type & OP_ARCHV) {
 	    /*

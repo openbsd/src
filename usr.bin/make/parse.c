@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.45 2000/06/17 14:43:36 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.46 2000/06/23 16:15:50 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.45 2000/06/17 14:43:36 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.46 2000/06/23 16:15:50 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -656,7 +656,7 @@ ParseDoSrc (tOp, src, allsrc)
 	    register GNode  	*cohort;
 	    register LstNode	ln;
 
-	    for (ln=Lst_First(&gn->cohorts); ln != NULL; ln = Lst_Succ(ln)){
+	    for (ln=Lst_First(&gn->cohorts); ln != NULL; ln = Lst_Adv(ln)){
 		cohort = (GNode *)Lst_Datum(ln);
 		if (tOp) {
 		    cohort->type |= tOp;

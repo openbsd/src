@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.21 2000/06/17 14:40:27 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.22 2000/06/23 16:15:49 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.21 2000/06/17 14:40:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.22 2000/06/23 16:15:49 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -522,13 +522,12 @@ DirExpandInt(word, path, expansions)
     LstNode 	  ln;	    	/* Current node */
     Path	  *p;	    	/* Directory in the node */
 
-    if (Lst_Open(path) == SUCCESS) {
-	while ((ln = Lst_Next(path)) != NULL) {
-	    p = (Path *)Lst_Datum(ln);
-	    DirMatchFiles(word, p, expansions);
-	}
-	Lst_Close(path);
+    Lst_Open(path);
+    while ((ln = Lst_Next(path)) != NULL) {
+	p = (Path *)Lst_Datum(ln);
+	DirMatchFiles(word, p, expansions);
     }
+    Lst_Close(path);
 }
 
 /*-
@@ -710,13 +709,7 @@ Dir_FindFile (name, path)
 	    return (estrdup (name));
     }
 
-    if (Lst_Open (path) == FAILURE) {
-	if (DEBUG(DIR)) {
-	    printf("couldn't open path, file not found\n");
-	}
-	misses += 1;
-	return ((char *) NULL);
-    }
+    Lst_Open(path);
 
     /*
      * We look through all the directories on the path seeking one which
@@ -727,7 +720,7 @@ Dir_FindFile (name, path)
      * we go on to phase two...
      */
     while ((ln = Lst_Next (path)) != NULL) {
-	p = (Path *) Lst_Datum (ln);
+	p = (Path *)Lst_Datum(ln);
 	if (DEBUG(DIR)) {
 	    printf("%s...", p->name);
 	}
@@ -809,9 +802,9 @@ Dir_FindFile (name, path)
 	if (DEBUG(DIR)) {
 	    printf("failed. Trying subdirectories...");
 	}
-	(void) Lst_Open (path);
+	Lst_Open(path);
 	while ((ln = Lst_Next (path)) != NULL) {
-	    p = (Path *) Lst_Datum (ln);
+	    p = (Path *)Lst_Datum(ln);
 	    if (p != dot) {
 		file = str_concat (p->name, name, STR_ADDSLASH);
 	    } else {
@@ -907,12 +900,11 @@ Dir_FindFile (name, path)
     cp[-1] = '/';
 
     bigmisses += 1;
-    ln = Lst_Last (path);
-    if (ln == NULL) {
-	return ((char *) NULL);
-    } else {
-	p = (Path *) Lst_Datum (ln);
-    }
+    ln = Lst_Last(path);
+    if (ln == NULL)
+	return NULL;
+    else
+	p = (Path *)Lst_Datum(ln);
 
     if (Hash_FindEntry (&p->files, cp) != (Hash_Entry *)NULL) {
 	return (estrdup (name));
@@ -1051,7 +1043,7 @@ Dir_AddDir (path, name)
 
     ln = Lst_Find(&openDirectories, DirFindName, name);
     if (ln != NULL) {
-	p = (Path *)Lst_Datum (ln);
+	p = (Path *)Lst_Datum(ln);
 	if (Lst_Member(path, p) == NULL) {
 	    p->refCount += 1;
 	    Lst_AtEnd(path, p);
@@ -1139,7 +1131,7 @@ Dir_CopyDir(p)
  *-----------------------------------------------------------------------
  */
 char *
-Dir_MakeFlags (flag, path)
+Dir_MakeFlags(flag, path)
     char	  *flag;  /* flag which should precede each directory */
     Lst	    	  path;	  /* list of directories */
 {
@@ -1148,18 +1140,17 @@ Dir_MakeFlags (flag, path)
     LstNode	  ln;	  /* the node of the current directory */
     Path	  *p;	  /* the structure describing the current directory */
 
-    str = estrdup ("");
+    str = estrdup("");
 
-    if (Lst_Open (path) == SUCCESS) {
-	while ((ln = Lst_Next (path)) != NULL) {
-	    p = (Path *) Lst_Datum (ln);
-	    tstr = str_concat (flag, p->name, 0);
-	    str = str_concat (str, tstr, STR_ADDSPACE | STR_DOFREE);
-	}
-	Lst_Close (path);
+    Lst_Open(path);
+    while ((ln = Lst_Next(path)) != NULL) {
+	p = (Path *)Lst_Datum(ln);
+	tstr = str_concat(flag, p->name, 0);
+	str = str_concat(str, tstr, STR_ADDSPACE | STR_DOFREE);
     }
+    Lst_Close(path);
 
-    return (str);
+    return str;
 }
 
 /*-
@@ -1242,7 +1233,7 @@ Dir_Concat(path1, path2)
     LstNode ln;
     Path    *p;
 
-    for (ln = Lst_First(path2); ln != NULL; ln = Lst_Succ(ln)) {
+    for (ln = Lst_First(path2); ln != NULL; ln = Lst_Adv(ln)) {
 	p = (Path *)Lst_Datum(ln);
 	if (Lst_Member(path1, p) == NULL) {
 	    p->refCount += 1;
@@ -1264,13 +1255,12 @@ Dir_PrintDirectories()
 	      (hits+bigmisses+nearmisses ?
 	       hits * 100 / (hits + bigmisses + nearmisses) : 0));
     printf ("# %-20s referenced\thits\n", "directory");
-    if (Lst_Open(&openDirectories) == SUCCESS) {
-	while ((ln = Lst_Next(&openDirectories)) != NULL) {
-	    p = (Path *) Lst_Datum (ln);
-	    printf ("# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
-	}
-	Lst_Close(&openDirectories);
+    Lst_Open(&openDirectories);
+    while ((ln = Lst_Next(&openDirectories)) != NULL) {
+	p = (Path *)Lst_Datum(ln);
+	printf("# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
     }
+    Lst_Close(&openDirectories);
 }
 
 static void 

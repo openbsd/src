@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.30 2000/06/17 14:43:36 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.31 2000/06/23 16:15:50 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.30 2000/06/17 14:43:36 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.31 2000/06/23 16:15:50 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -411,11 +411,9 @@ SuffInsert (l, s)
     LstNode 	  ln;		/* current element in l we're examining */
     Suff          *s2 = NULL;	/* the suffix descriptor in this element */
 
-    if (Lst_Open (l) == FAILURE) {
-	return;
-    }
-    while ((ln = Lst_Next (l)) != NULL) {
-	s2 = (Suff *) Lst_Datum (ln);
+    Lst_Open(l);
+    while ((ln = Lst_Next(l)) != NULL) {
+	s2 = (Suff *)Lst_Datum(ln);
 	if (s2->sNum >= s->sNum) {
 	    break;
 	}
@@ -534,7 +532,7 @@ SuffParseTransform(str, srcPtr, targPtr)
 	    }
 	    return (FALSE);
 	}
-	src = (Suff *) Lst_Datum (srcLn);
+	src = (Suff *)Lst_Datum(srcLn);
 	str2 = str + src->nameLen;
 	if (*str2 == '\0') {
 	    single = src;
@@ -611,7 +609,7 @@ Suff_AddTransform (line)
 	 * free the commands themselves, because a given command can be
 	 * attached to several different transformations.
 	 */
-	gn = (GNode *) Lst_Datum (ln);
+	gn = (GNode *)Lst_Datum(ln);
 	Lst_Destroy(&gn->commands, NOFREE);
 	Lst_Destroy(&gn->children, NOFREE);
 	Lst_Init(&gn->commands);
@@ -850,14 +848,13 @@ Suff_DoPaths()
     LIST    	    	inIncludes; /* Cumulative .INCLUDES path */
     LIST    	    	inLibs;	    /* Cumulative .LIBS path */
 
-    if (Lst_Open(&sufflist) == FAILURE)
-	return;
+    Lst_Open(&sufflist);
 
     Lst_Init(&inIncludes);
     Lst_Init(&inLibs);
 
     while ((ln = Lst_Next(&sufflist)) != NULL) {
-	s = (Suff *) Lst_Datum (ln);
+	s = (Suff *)Lst_Datum(ln);
 	if (!Lst_IsEmpty(&s->searchPath)) {
 #ifdef INCLUDES
 	    if (s->flags & SUFF_INCLUDE) {
@@ -911,7 +908,7 @@ Suff_AddInclude (sname)
 
     ln = Lst_Find(&sufflist, SuffSuffHasNameP, sname);
     if (ln != NULL) {
-	s = (Suff *) Lst_Datum (ln);
+	s = (Suff *)Lst_Datum(ln);
 	s->flags |= SUFF_INCLUDE;
     }
 }
@@ -941,7 +938,7 @@ Suff_AddLib (sname)
 
     ln = Lst_Find(&sufflist, SuffSuffHasNameP, sname);
     if (ln != NULL) {
-	s = (Suff *) Lst_Datum (ln);
+	s = (Suff *)Lst_Datum(ln);
 	s->flags |= SUFF_LIBRARY;
     }
 }
@@ -1057,9 +1054,7 @@ SuffRemoveSrc (l)
     Src *s;
     int t = 0;
 
-    if (Lst_Open (l) == FAILURE) {
-	return 0;
-    }
+    Lst_Open(l);
 #ifdef DEBUG_SRC
     printf("cleaning %lx: ", (unsigned long) l);
     Lst_Every(l, PrintAddr);
@@ -1068,7 +1063,7 @@ SuffRemoveSrc (l)
 
 
     while ((ln = Lst_Next (l)) != NULL) {
-	s = (Src *) Lst_Datum (ln);
+	s = (Src *)Lst_Datum(ln);
 	if (s->children == 0) {
 	    free(s->file);
 	    if (!s->parent)
@@ -1197,11 +1192,11 @@ SuffFindCmds (targ, slst)
     char    	  	*cp;
 
     t = targ->node;
-    (void) Lst_Open(&t->children);
+    Lst_Open(&t->children);
     prefLen = strlen (targ->pref);
 
     while ((ln = Lst_Next(&t->children)) != NULL) {
-	s = (GNode *)Lst_Datum (ln);
+	s = (GNode *)Lst_Datum(ln);
 
 	cp = strrchr (s->name, '/');
 	if (cp == (char *)NULL) {
@@ -1222,7 +1217,7 @@ SuffFindCmds (targ, slst)
 		 *
 		 * XXX: Handle multi-stage transformations here, too.
 		 */
-		suff = (Suff *)Lst_Datum (ln);
+		suff = (Suff *)Lst_Datum(ln);
 
 		if (Lst_Member(&suff->parents, targ->suff) != NULL)
 		{
@@ -1517,7 +1512,7 @@ SuffApplyTransform(tGn, sGn, t, s)
 	 * sGn gets the target in its iParents list, however, as that
 	 * will be sufficient to get the .IMPSRC variable set for tGn
 	 */
-	for (ln=Lst_First(&sGn->cohorts); ln != NULL; ln=Lst_Succ(ln)) {
+	for (ln=Lst_First(&sGn->cohorts); ln != NULL; ln=Lst_Adv(ln)) {
 	    gn = (GNode *)Lst_Datum(ln);
 
 	    if (Lst_Member(&tGn->children, gn) == NULL) {
@@ -2148,7 +2143,7 @@ SuffFindDeps (gn, slst)
 
 	ln = Lst_Find(&sufflist, SuffSuffHasNameP, LIBSUFF);
 	if (ln != NULL) {
-	    gn->suffix = s = (Suff *) Lst_Datum (ln);
+	    gn->suffix = s = (Suff *)Lst_Datum(ln);
 	    Arch_FindLib(gn, &s->searchPath);
 	} else {
 	    gn->suffix = NULL;

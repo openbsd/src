@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.16 2000/06/17 14:43:36 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.17 2000/06/23 16:15:49 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -141,13 +141,15 @@ void		Lst_Concat __P((Lst, Lst));
  * Node-specific functions
  */
 /* Return first element in list */
-LstNode		Lst_First __P((Lst));
+#define	Lst_First(l)	((l)->firstPtr)
 /* Return last element in list */
-LstNode		Lst_Last __P((Lst));
+#define Lst_Last(l)	((l)->lastPtr)
 /* Return successor to given element */
 LstNode		Lst_Succ __P((LstNode));
+/* Return successor to existing element */
+#define Lst_Adv(ln)	((ln)->nextPtr)
 /* Get datum from LstNode */
-void *	Lst_Datum __P((LstNode));
+#define Lst_Datum(ln)	((ln)->datum)
 
 /*
  * Functions for entire lists
@@ -178,7 +180,7 @@ LstNode		Lst_Member __P((Lst, void *));
  * between Lst_Open() and Lst_Close().
  */
 /* Open the list */
-ReturnStatus	Lst_Open __P((Lst));
+void		Lst_Open __P((Lst));
 /* Next element please */
 LstNode		Lst_Next __P((Lst));
 /* Done yet? */

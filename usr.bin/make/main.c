@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2000/06/17 14:40:29 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2000/06/23 16:15:49 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.34 2000/06/17 14:40:29 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.35 2000/06/23 16:15:49 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -674,8 +674,7 @@ main(argc, argv)
 	if (!Lst_IsEmpty(&create)) {
 		LstNode ln;
 
-		for (ln = Lst_First(&create); ln != NULL;
-		    ln = Lst_Succ(ln)) {
+		for (ln = Lst_First(&create); ln != NULL; ln = Lst_Adv(ln)) {
 			char *name = (char *)Lst_Datum(ln);
 
 			Var_Append(".TARGETS", name, VAR_GLOBAL);
@@ -791,8 +790,7 @@ main(argc, argv)
 	if (printVars) {
 		LstNode ln;
 
-		for (ln = Lst_First(&variables); ln != NULL;
-		    ln = Lst_Succ(ln)) {
+		for (ln = Lst_First(&variables); ln != NULL; ln = Lst_Adv(ln)) {
 			char *value = Var_Value((char *)Lst_Datum(ln),
 					  VAR_GLOBAL);
 
