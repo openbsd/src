@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: binstall.sh,v 1.2 1998/02/12 20:32:19 mho Exp $
+#	$OpenBSD: binstall.sh,v 1.3 1998/02/18 08:17:46 deraadt Exp $
 #	$NetBSD: binstall.sh,v 1.3 1996/04/07 20:00:12 thorpej Exp $
 #
 
@@ -95,6 +95,7 @@ case $WHAT in
 		exit 1
 	fi
 	TARGET=$DEST/boot
+	DEV=`echo $DEV | sed -e 's/a$/c/'`
 	vecho Boot device: $DEV
 	vecho Target: $TARGET
 	$DOIT dd if=${MDEC}/boot of=$TARGET bs=32 skip=$SKIP
