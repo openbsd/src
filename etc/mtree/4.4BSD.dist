@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.49 1998/03/22 20:58:40 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.50 1998/03/25 07:27:05 beck Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1659,6 +1659,59 @@ vi.recover	 mode=01777
 ..
 
 # ./var/tmp
+..
+
+# ./www
+www type=dir uname=root gname=daemon mode=755
+
+# ./www/icons
+icons  type=dir uname=root gname=daemon mode=755
+# ./www/icons
+..
+
+#./www/cgi-bin
+cgi-bin  type=dir uname=root gname=daemon mode=755
+#./www/cgi-bin
+..
+
+#./www/htdocs
+htdocs  type=dir uname=root gname=daemon mode=755
+
+#./www/htdocs/manual
+manual  type=dir uname=root gname=daemon mode=755
+
+#./www/htdocs/manual/mod
+mod  type=dir uname=root gname=daemon mode=755
+#./www/htdocs/manual/mod
+..
+
+#./www/htdocs/manual/images
+images  type=dir uname=root gname=daemon mode=755
+#./www/htdocs/manual/images
+..
+
+#./www/htdocs/manual/misc
+misc  type=dir uname=root gname=daemon mode=755
+#./www/htdocs/manual/misc
+..
+
+#./www/htdocs/manual
+..
+
+#./www/htdocs
+..
+
+#./www/logs
+logs  type=dir uname=root gname=daemon mode=755
+#./www/logs
+..
+
+#./www/conf
+conf  type=dir uname=root gname=daemon mode=755
+#./www/conf
+..
+
+#./www
 ..
 
 # ./var
