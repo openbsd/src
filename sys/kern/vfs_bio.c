@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.52 2001/11/27 05:27:11 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.53 2001/11/27 06:21:37 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -324,23 +324,6 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 
 	/* Otherwise, we had to start a read for it; wait until it's valid. */
 	return (biowait(bp));
-}
-
-/*
- * Read with single-block read-ahead.  Defined in Bach (p.55), but
- * implemented as a call to breadn().
- * XXX for compatibility with old file systems.
- */
-int
-breada(vp, blkno, size, rablkno, rabsize, cred, bpp)
-	struct vnode *vp;
-	daddr_t blkno; int size;
-	daddr_t rablkno; int rabsize;
-	struct ucred *cred;
-	struct buf **bpp;
-{
-
-	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));	
 }
 
 /*
