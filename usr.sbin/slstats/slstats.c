@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.10 2001/06/12 21:41:32 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.11 2001/07/31 19:50:16 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.10 2001/06/12 21:41:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.11 2001/07/31 19:50:16 deraadt Exp $";
 #endif
 
 #define INET
@@ -62,15 +62,14 @@ static char rcsid[] = "$OpenBSD: slstats.c,v 1.10 2001/06/12 21:41:32 deraadt Ex
 extern	char *__progname;	/* from crt0.o */
 
 int	vflag;
-unsigned interval = 5;
+u_int	interval = 5;
 int	unit;
+int	s;
+char    interface[IFNAMSIZ];
 
 void	catchalarm __P((void));
 void	intpr __P((void));
 void	usage __P((void));
-
-int s;
-char    interface[IFNAMSIZ];
 
 int
 main(argc, argv)
@@ -163,23 +162,13 @@ get_sl_stats(curp)
 void
 intpr()
 {
-	register int line = 0;
+	int line = 0;
 	int oldmask;
 	struct sl_stats cur, old;
-#if 0
-	struct sl_comp_stats ccs, ocs;
-#endif
 
 	bzero(&old, sizeof(old));
-#if 0
-	bzero(&ocs, sizeof(ocs));
-#endif
 	while (1) {
 		get_sl_stats(&cur);
-#if 0
-		if (zflag || rflag)
-			get_sl_cstats(&ccs);
-#endif		
 
 		(void)signal(SIGALRM, (void (*)())catchalarm);
 		signalled = 0;
@@ -218,9 +207,8 @@ intpr()
 		fflush(stdout);
 		line++;
 		oldmask = sigblock(sigmask(SIGALRM));
-		if (!signalled) {
+		if (!signalled)
 			sigpause(0);
-		}
 		sigsetmask(oldmask);
 		signalled = 0;
 		(void)alarm(interval);
