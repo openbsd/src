@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pty.4,v 1.7 2001/12/14 04:09:42 millert Exp $
+.\"	$OpenBSD: pty.4,v 1.8 2003/03/06 20:40:35 jmc Exp $
 .\"	$NetBSD: pty.4,v 1.4 1998/03/21 03:14:30 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -132,9 +132,9 @@ to be read from the master side may be detected by a
 for exceptional conditions.
 .Pp
 This mode is used by
-.Xr rlogin 1
+.Nm rlogin
 and
-.Xr rlogind 8
+.Nm rlogind
 to implement a remote-echoed, locally
 .Ql ^S/^Q
 flow-controlled

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tp.4,v 1.14 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: tp.4,v 1.15 2003/03/06 20:40:35 jmc Exp $
 .\"	$NetBSD: tp.4,v 1.4 1994/11/30 16:22:38 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -266,8 +266,8 @@ connect request packet; if the peer is another
 implementation, this will cause performance measurement to be
 turned
 on the passive side as well.
-See
-.Xr tpperf 8 .
+.\" See
+.\" .Xr tpperf 8 .
 .It Dv TPOPT_PSTATISTICS
 No associated value on input.
 On output,
@@ -279,8 +279,8 @@ It can only be used with
 .Xr getsockopt 2 .
 The structure it returns is described in
 .Aq Pa netiso/tp_stat.h .
-See
-.Xr tpperf 8 .
+.\" See
+.\" .Xr tpperf 8 .
 .It Dv TPOPT_FLAGS
 unsigned integer.
 [0x0]

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.27 2002/12/31 16:22:26 miod Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.28 2003/03/06 20:40:35 jmc Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ card BIOS mapped in the same memory space the
 driver is configured to use (this is often the case with ethernet
 card boot ROMs).
 The output from
-.Xr dmesg 1
+.Xr dmesg 8
 should contain a line beginning with
 .Dq bios0
 that lists the memory address and size of mapped regions.
