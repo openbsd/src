@@ -1,6 +1,5 @@
-/*	$NetBSD$ */
-
-/*
+/*	$OpenBSD: bugtty.c,v 1.4 1998/12/15 05:52:29 smurph Exp $ */
+/* Copyright (c) 1998 Steve Murphree, Jr. 
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
  *   
@@ -81,6 +80,17 @@ char bug_obuffer[BUGBUF+1];
 #define bugtty_tty bugttytty
 struct tty *bugtty_tty[NBUGTTY];
 int needprom = 1;
+/*
+	int	ca_bustype;
+	void	*ca_vaddr;
+	void	*ca_paddr;
+	int	ca_offset;
+	int	ca_len;
+	int	ca_ipl;
+	int	ca_vec;
+	char	*ca_name;
+	void	*ca_master;	 points to bus-dependent data 
+*/
 
 int
 bugttymatch(parent, self, aux)
@@ -88,17 +98,15 @@ bugttymatch(parent, self, aux)
 	void *self;
 	void *aux;
 {
-	extern int needprom;
 	struct confargs *ca = aux;
 	
 	if (needprom == 0)
 		return (0);
-	/*
-	 * tell our parent our requirements
-	 */
-	ca->ca_paddr = (caddr_t)0xfff45000;
-	ca->ca_size = 0x200;
+	ca->ca_paddr = (void *)0xfff45000;
+	ca->ca_vaddr = (void *)0xfff45000;
+	ca->ca_len = 0x200;
 	ca->ca_ipl = IPL_TTY;
+	ca->ca_name = "bugtty\0";
 	return (1);
 }
 
@@ -108,7 +116,7 @@ bugttyattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf("\n");
+	printf(": bugtty\n");
 }
 
 #define BUGTTYUNIT(x) ((x) & (0x7f))
@@ -444,8 +452,8 @@ bugttycnprobe(cp)
 	struct consdev *cp;
 {
 	int maj;
-	extern int needprom;
-
+	int needprom = 1;
+	
 	if (needprom == 0) {
 		cp->cn_pri = CN_DEAD;
 		return (0);
@@ -460,7 +468,8 @@ bugttycnprobe(cp)
 	default:
 		break;
 	}
-#else
+#endif
+#if 0
 	cp->cn_pri = CN_NORMAL;
 	return (0);
 #endif /* 0 */
@@ -472,7 +481,6 @@ bugttycnprobe(cp)
 
 	cp->cn_dev = makedev(maj, 0);
 	cp->cn_pri = CN_NORMAL;
-
 	return (1);
 }
 
@@ -480,6 +488,7 @@ int
 bugttycninit(cp)
 	struct consdev *cp;
 {
+    /* Nothing to do */
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD$ */
+/*	$OpenBSD: vmes.c,v 1.2 1998/12/15 05:52:31 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -50,11 +50,6 @@
 void vmesattach __P((struct device *, struct device *, void *));
 int  vmesmatch __P((struct device *, void *, void *));
 
-struct vmessoftc {
-	struct device		sc_dev;
-	struct vmesoftc		*sc_vme;
-};
-
 struct cfattach vmes_ca = {
         sizeof(struct vmessoftc), vmesmatch, vmesattach
 }; 
@@ -62,7 +57,6 @@ struct cfattach vmes_ca = {
 struct cfdriver vmes_cd = {
         NULL, "vmes", DV_DULL, 0
 };
-
 
 int
 vmesmatch(parent, cf, args)
@@ -167,9 +161,9 @@ vmesmmap(dev, off, prot)
 {
 	int unit = minor(dev);
 	struct vmessoftc *sc = (struct vmessoftc *) vmes_cd.cd_devs[unit];
-	caddr_t pa;
+	void * pa;
 
-	pa = vmepmap(sc->sc_vme, (caddr_t)off, NBPG, BUS_VMES);
+	pa = vmepmap(sc->sc_vme, (void *)off, NBPG, BUS_VMES);
 	printf("vmes %x pa %x\n", off, pa);
 	if (pa == NULL)
 		return (-1);

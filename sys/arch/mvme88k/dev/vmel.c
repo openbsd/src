@@ -1,4 +1,4 @@
-/*	$NetBSD$ */
+/*	$OpenBSD: vmel.c,v 1.2 1998/12/15 05:52:31 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -49,11 +49,6 @@
 
 void vmelattach __P((struct device *, struct device *, void *));
 int  vmelmatch __P((struct device *, void *, void *));
-
-struct vmelsoftc {
-	struct device		sc_dev;
-	struct vmesoftc		*sc_vme;
-};
 
 struct cfattach vmel_ca = {
         sizeof(struct vmelsoftc), vmelmatch, vmelattach
@@ -166,9 +161,9 @@ vmelmmap(dev, off, prot)
 {
 	int unit = minor(dev);
 	struct vmelsoftc *sc = (struct vmelsoftc *) vmel_cd.cd_devs[unit];
-	caddr_t pa;
+	void * pa;
 
-	pa = vmepmap(sc->sc_vme, (caddr_t)off, NBPG, BUS_VMEL);
+	pa = vmepmap(sc->sc_vme, (void *)off, NBPG, BUS_VMEL);
 	printf("vmel %x pa %x\n", off, pa);
 	if (pa == NULL)
 		return (-1);

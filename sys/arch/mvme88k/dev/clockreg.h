@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.5 1994/11/20 20:54:07 deraadt Exp $ */
+/*	$OpenBSD: clockreg.h,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

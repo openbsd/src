@@ -1,3 +1,5 @@
+/*	$OpenBSD: bugio.c,v 1.2 1998/12/15 05:52:29 smurph Exp $ */
+/*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <machine/bugio.h>
 
 #define INCHR	"0x0000"
@@ -62,27 +64,12 @@ char
 buginchr(void)
 {
 	register int cc asm("r2");
-	
 	BUGCTXT();
 	asm volatile ("or r9,r0," INCHR);
 	asm volatile ("tb0 0,r0,0x1F0");
-	/*asm("or %0,r0,r2" : "=r" (cc) : );*/
+	asm volatile ("or %0,r0,r2" : "=r" (cc) : );
 	OSCTXT();
 	return ((char)cc & 0xFF);
-}
-
-/* return 1 if not empty else 0 */
-
-buginstat(void)
-{
-	int ret;
-
-	BUGCTXT();
-	asm volatile ("or r9,r0," INSTAT);
-	asm volatile ("tb0 0,r0,0x1F0");
-	asm volatile ("or %0,r0,r2" : "=r" (ret) : );
-	OSCTXT();
-	return (ret & 0x40 ? 1 : 0);
 }
 
 bugoutchr(unsigned char c)
@@ -101,6 +88,20 @@ bugoutchr(unsigned char c)
 	asm("tb0 0,r0,0x1F0");
 
 	OSCTXT();
+}
+
+/* return 1 if not empty else 0 */
+
+buginstat(void)
+{
+	int ret;
+
+	BUGCTXT();
+	asm volatile ("or r9,r0," INSTAT);
+	asm volatile ("tb0 0,r0,0x1F0");
+	asm volatile ("or %0,r0,r2" : "=r" (ret) : );
+	OSCTXT();
+	return (ret & 0x4 ? 1 : 0);
 }
 
 bugoutstr(char *s, char *se)
@@ -176,9 +177,9 @@ bugbrdid(struct bugbrdid *id)
 
 bugnetctrl(struct bugniocall *niocall)
 {
-	BUGCTXT();
+/*	BUGCTXT();*/
 	asm("or r2,r0,%0" : : "r" (niocall));
 	asm("or r9,r0, " NETCTRL);
 	asm("tb0 0,r0,0x1F0");
-	OSCTXT();
+/*	OSCTXT();*/
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD$ */
+/*	$OpenBSD: vme.h,v 1.2 1998/12/15 05:52:31 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -35,10 +35,18 @@
 #endif
 struct vmesoftc {
 	struct device	sc_dev;
-	caddr_t		sc_vaddr;
-#if 1
+	void *		sc_vaddr;
 	struct intrhand sc_abih;       /* `abort' switch */
-#endif
+};
+
+struct vmessoftc {
+	struct device		sc_dev;
+	struct vmesoftc		*sc_vme;
+};
+
+struct vmelsoftc {
+	struct device		sc_dev;
+	struct vmesoftc		*sc_vme;
 };
 
 /*
@@ -222,6 +230,7 @@ struct vme2reg {
 /*60*/	volatile u_long		vme2_tctl;
 #define VME2_TCTL_SCON		0x40000000	/* we are SCON */
 #define VME2_TCTL_SYSFAIL	0x20000000	/* light SYSFAIL led */
+#define VME2_TCTL_SRST		0x00800000	/* system reset */
 /*64*/	volatile u_long		vme2_prescale;
 /*68*/	volatile u_long		vme2_irqstat;
 /*6c*/	volatile u_long		vme2_irqen;
@@ -322,8 +331,8 @@ struct vme2reg {
 #define VME2_A16BASE	0xffff0000UL
 #define VME2_A24BASE	0xff000000UL
 
-caddr_t	vmepmap __P((struct vmesoftc *sc, caddr_t vmeaddr, int len,
+void * vmepmap __P((struct vmesoftc *sc, void * vmeaddr, int len,
 	    int bustype));
-caddr_t	vmemap __P((struct vmesoftc *sc, caddr_t vmeaddr, int len,
+void * vmemap __P((struct vmesoftc *sc, void * vmeaddr, int len,
 	    int bustype));
 int	vmerw __P((struct vmesoftc *sc, struct uio *uio, int flags, int bus));

@@ -1,7 +1,7 @@
-/*	$OpenBSD: memdevs.c,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
+/*	$OpenBSD: rd_root.c,v 1.1 1998/12/15 05:52:30 smurph Exp $	*/
 
 /*
- * Copyright (c) 1995 Theo de Raadt
+ * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Theo de Raadt
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -31,46 +28,53 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
-#include <sys/systm.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
+#include <sys/reboot.h>
 
-#include <sys/device.h>
-#include <machine/cpu.h>
-#include <machine/autoconf.h>
+#include <dev/ramdisk.h>
 
-/*ARGSUSED*/
-int
-memdevrw(base, len, uio, flags)
-	caddr_t base;
-	int len;
-	struct uio *uio;
-	int flags;
+extern int boothowto;
+
+#ifndef MINIROOTSIZE
+#define MINIROOTSIZE 512
+#endif
+
+#define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
+
+/*
+ * This array will be patched to contain a file-system image.
+ * See the program:  src/distrib/sun3/common/rdsetroot.c
+ */
+int rd_root_size = ROOTBYTES;
+char rd_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
+
+/*
+ * This is called during autoconfig.
+ */
+void
+rd_attach_hook(unit, rd)
+	int unit;
+	struct rd_conf *rd;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
-	int error = 0;
-
-	while (uio->uio_resid > 0 && error == 0) {
-		iov = uio->uio_iov;
-		if (iov->iov_len == 0) {
-			uio->uio_iov++;
-			uio->uio_iovcnt--;
-			if (uio->uio_iovcnt < 0)
-				panic("memdevrw");
-			continue;
-		}
-
-		v = uio->uio_offset;
-		c = min(iov->iov_len, MAXPHYS);
-		if (v + c > len)
-			c = len - v;	/* till end of dev */
-		if (c == 0)
-			return (0);
-		error = uiomove(base + v, c, uio);
+	if (unit == 0) {
+		/* Setup root ramdisk */
+		rd->rd_addr = (caddr_t) rd_root_image;
+		rd->rd_size = (size_t)  rd_root_size;
+		rd->rd_type = RD_KMEM_FIXED;
+		printf("rd%d: fixed, %d blocks\n", unit, MINIROOTSIZE);
 	}
-	return (error);
+}
+
+/*
+ * This is called during open (i.e. mountroot)
+ */
+void
+rd_open_hook(unit, rd)
+	int unit;
+	struct rd_conf *rd;
+{
+	if (unit == 0) {
+		/* The root ramdisk only works single-user. */
+		boothowto |= RB_SINGLE;
+		printf("rd%d: mounting root, single user mode.\n", unit);
+	}
 }

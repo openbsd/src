@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.7 1995/08/18 15:28:13 chopps Exp $	*/
+/*	$OpenBSD: siopreg.h,v 1.2 1998/12/15 05:52:31 smurph Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

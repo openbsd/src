@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.6 1995/02/12 19:19:00 chopps Exp $	*/
+/*	$OpenBSD: siopdma.c,v 1.2 1998/12/15 05:52:31 smurph Exp $ */
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -113,39 +113,14 @@ afscmatch(pdp, vcf, args)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
+	int ret;
 
-#if defined(MVME187)
-	caddr_t base;
-	if (cputyp != CPU_187)
-	{
-		return 0;
+	if ((ret = badvaddr(IIOV(ca->ca_vaddr), 4)) <=0){
+	    printf("==> siop: failed address check returning %ld.\n", ret);
+	    return(0);
 	}
 
-	/*
-	 * If bus or name do not match, fail.
-	 */
-	if (ca->ca_bustype != BUS_PCCTWO ||
-		strcmp(cf->cf_driver->cd_name, "siop")) {
-		return 0;
-	}
-
-	base = (caddr_t)cf->cf_loc[0];
-
-	if (badpaddr(base, 1) == -1) {
-		return 0;
-	}
-
-	/*
-	 * tell our parent our requirements
-	 */
-	ca->ca_paddr = (caddr_t)SCSI_ADDR;
-	ca->ca_size = NCR710_SIZE;
-	ca->ca_ipl = IPL_BIO;
-	
-	return 1;
-#else
-	return (!badvaddr(ca->ca_vaddr, 4));
-#endif /* defined(MVME187) */
+	return (1);
 }
 
 void
@@ -156,16 +131,17 @@ afscattach(parent, self, auxp)
 	struct siop_softc *sc = (struct siop_softc *)self;
 	struct confargs *ca = auxp;
 	siop_regmap_p rp;
+	int tmp;
 	extern int cpuspeed;
 
-	sc->sc_siopp = rp = (siop_regmap_p)ca->ca_vaddr;
+	sc->sc_siopp = rp = ca->ca_vaddr;
 
 	/*
 	 * siop uses sc_clock_freq to define the dcntl & ctest7 reg values
 	 * (was 0x0221, but i added SIOP_CTEST7_SC0 for snooping control)
+	 * XXX does the clock frequency change for the 33MHz processors?
 	 */
 	sc->sc_clock_freq = cpuspeed * 2;
-
 #ifdef MVME177
 	/* XXX this is a guess! */
 	if (cputyp == CPU_177)
@@ -226,16 +202,17 @@ afscattach(parent, self, auxp)
 		 * just in case.
 		 */
 
-		struct pcc2reg *pcc2 = (struct pcc2reg *)ca->ca_parent;
+		struct pcctworeg *pcc2 = (struct pcctworeg *)ca->ca_master;
 		
 		pmap_cache_ctrl(pmap_kernel(), M88K_TRUNC_PAGE((vm_offset_t)sc),
 			M88K_ROUND_PAGE((vm_offset_t)sc + sizeof(*sc)),
 			CACHE_INH);
 #endif
-		intr_establish(PCC2_VECT + SCSIIRQ, &sc->sc_ih);
+		pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
+/*		intr_establish(PCC2_VECT + SCSIIRQ, &sc->sc_ih);*/
 		/* enable interrupts at ca_ipl */
-		pcc2->pcc2_scsiirq = ca->ca_ipl | PCC2_SCSIIRQ_IEN;
-
+		pcc2->pcc2_ncrirq = ca->ca_ipl | PCC2_IRQ_IEN;
+/*		pcc2->pcc2_scsiirq = ca->ca_ipl | PCC2_SCSIIRQ_IEN;*/
 		break;
 	    }
 #endif
@@ -244,11 +221,15 @@ afscattach(parent, self, auxp)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	/*
-	 * attach all scsi units on us
+	 * attach all scsi units on us, watching for boot device
+	 * (see dk_establish).
 	 */
-	config_found(self, &sc->sc_link, afscprint);
+	tmp = bootpart;
+	if (ca->ca_paddr != bootaddr) 
+		bootpart = -1;          /* invalid flag to dk_establish */
+	config_found(self, &sc->sc_link, scsiprint);
+	bootpart = tmp;             /* restore old value */
 }
-
 /*
  * print diag if pnp is NULL else just extra
  */
@@ -298,14 +279,14 @@ afsc_dmaintr(sc)
 	return (1);
 }
 
-#ifdef DEBUG
+#ifdef XXX_CD_DEBUG /* XXXsmurph What is afsccd ?? */
 void
 afsc_dump()
 {
 	int i;
 
-	for (i = 0; i < siop_cd.cd_ndevs; ++i)
-		if (siop_cd.cd_devs[i])
-			siop_dump(siop_cd.cd_devs[i]);
+	for (i = 0; i < afsccd.cd_ndevs; ++i)
+		if (afsccd.cd_devs[i])
+			siop_dump(afsccd.cd_devs[i]);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD$ */
+/*	$OpenBSD: memcreg.h,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Theo de Raadt
+ *      This product includes software developed under OpenBSD by
+ *	Theo de Raadt for Willowglen Singapore.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -31,7 +32,7 @@
  */
 
 /*
- * the MEMC's registers are very similar to the MCECC chip
+ * the MEMC's registers are a subset of the MCECC chip
  */
 struct memcreg {
 	volatile u_char		memc_chipid;
@@ -40,10 +41,7 @@ struct memcreg {
 	volatile u_char		xx1[3];
 	volatile u_char		memc_memconf;
 #define MEMC_MEMCONF_MSIZ	0x07
-/*
-#define MEMC_MEMCONF_RTOB(x) (((x) & MEMC_MEMCONF_MSIZ) * 4*1024*1024)
-*/
-#define MEMC_MEMCONF_RTOB(x) (1 << (((x) & MEMC_MEMCONF_MSIZ) + 22))
+#define MEMC_MEMCONF_RTOB(x) ((4*1024*1024) << ((x) & MEMC_MEMCONF_MSIZ))
 	volatile u_char		xx2[3];
 	volatile u_char		memc_x0;
 	volatile u_char		xx3[3];
@@ -55,6 +53,55 @@ struct memcreg {
 	volatile u_char		xx6[3];
 	volatile u_char		memc_bclk;
 	volatile u_char		xx7[3];
+
+	/* the following registers only exist on the MCECC */
+	volatile u_char		memc_datactl;
+	volatile u_char		xx8[3];
+	volatile u_char		memc_scrubctl;
+	volatile u_char		xx9[3];
+	volatile u_char		memc_scrubperh;
+	volatile u_char		xx10[3];
+	volatile u_char		memc_scrubperl;
+	volatile u_char		xx11[3];
+	volatile u_char		memc_chipprescale;
+	volatile u_char		xx12[3];
+	volatile u_char		memc_scrubtime;
+	volatile u_char		xx13[3];
+	volatile u_char		memc_scrubprescaleh;
+	volatile u_char		xx14[3];
+	volatile u_char		memc_scrubprescalem;
+	volatile u_char		xx15[3];
+	volatile u_char		memc_scrubprescalel;
+	volatile u_char		xx16[3];
+	volatile u_char		memc_scrubtimeh;
+	volatile u_char		xx17[3];
+	volatile u_char		memc_scrubtimel;
+	volatile u_char		xx18[3];
+	volatile u_char		memc_scrubaddrhh;
+	volatile u_char		xx19[3];
+	volatile u_char		memc_scrubaddrhm;
+	volatile u_char		xx20[3];
+	volatile u_char		memc_scrubaddrlm;
+	volatile u_char		xx21[3];
+	volatile u_char		memc_scrubaddrll;
+	volatile u_char		xx22[3];
+	volatile u_char		memc_errlog;
+	volatile u_char		xx23[3];
+	volatile u_char		memc_errloghh;
+	volatile u_char		xx24[3];
+	volatile u_char		memc_errloghm;
+	volatile u_char		xx25[3];
+	volatile u_char		memc_errloglm;
+	volatile u_char		xx26[3];
+	volatile u_char		memc_errlogll;
+	volatile u_char		xx27[3];
+	volatile u_char		memc_errsyndrome;
+	volatile u_char		xx28[3];
+	volatile u_char		memc_defaults1;
+	volatile u_char		xx29[3];
+	volatile u_char		memc_defaults2;
+	volatile u_char		xx30[3];
 };
 
-#define MEMC_CHIPID		0x81
+#define MEMC_CHIPID		0x80
+#define MCECC_CHIPID		0x81

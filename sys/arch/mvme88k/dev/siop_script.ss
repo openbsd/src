@@ -1,4 +1,4 @@
-;	$NetBSD: siop_script.ss,v 1.3 1995/08/18 15:28:11 chopps Exp $
+;	$OpenBSD: siop_script.ss,v 1.2 1998/12/15 05:52:31 smurph Exp $
 
 ;
 ; Copyright (c) 1995 Michael L. Hitch
@@ -91,7 +91,6 @@ msgin:
 	JUMP REL(msg_sdp), IF 0x02	; save data pointers
 	JUMP REL(msg_rej), IF 0x07	; message reject
 	JUMP REL(msg_rdp), IF 0x03	; restore data pointers
-
 	INT err6			; unrecognized message
 
 msg_rdp:
@@ -136,14 +135,16 @@ wait_reselect:
 
 	INT err9, WHEN NOT MSG_IN	; didn't get IDENTIFY
 	MOVE FROM ds_Msg, WHEN MSG_IN
-	CLEAR ACK			; acknowlege the message
 	INT err3			; let host know about reconnect
+	CLEAR ACK			; acknowlege the message
+	JUMP REL(switch)
+
 
 select_adr:
-	MOVE ISTAT & 0x28 to SFBR	; get connected status
-	MOVE CTEST2 to CTEST2		; clear Sig_P
-	INT err4, IF 0x20		; tell host of interrupted reselect 
-	JUMP REL(wait_reselect)		; try reselect again
+	MOVE SCNTL1 & 0x10 to SFBR	; get connected status
+	INT err4, IF 0x00		; tell host if not connected
+	MOVE CTEST2 & 0x40 to SFBR	; clear Sig_P
+	JUMP REL(wait_reselect)		; and try reselect again
 
 msgout:
 	MOVE FROM ds_MsgOut, WHEN MSG_OUT
@@ -201,3 +202,4 @@ end:
 	CLEAR ACK
 	WAIT DISCONNECT
 	INT ok				; signal completion
+	JUMP REL(wait_reselect)

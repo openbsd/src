@@ -1,3 +1,5 @@
+/*	$OpenBSD: mainbus.c,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
+/*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
@@ -8,17 +10,11 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-void mbattach __P((struct device *, struct device *, void *));
-int mbprint __P((void *, const char *));
-int mbmatch __P((struct device *, void *, void *));
-int submatch __P((struct device *, void *, void *));
-
-/* 
- * mainbus driver 
- */
+void mainbus_attach __P((struct device *, struct device *, void *));
+int  mainbus_match __P((struct device *, void *, void *));
 
 struct cfattach mainbus_ca = {
-	sizeof(struct device), mbmatch, mbattach
+	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
 struct cfdriver mainbus_cd = {
@@ -26,70 +22,59 @@ struct cfdriver mainbus_cd = {
 };
 
 int
-mbmatch(struct device *pdp, void *self, void *auxp)
+mainbus_match(parent, cf, args)
+	struct device *parent;
+	void *cf;
+	void *args;
 {
-	struct cfdata *cfp = self;
-
-	if (cfp->cf_unit > 0)
-		return(0);
-	/*
-	 * We are always here
-	 */
-	return(1);
+	return (1);
 }
 
-/*
- * "find" all the things that should be there.
- */
-void
-mbattach(struct device *pdp, struct device *dp, void *auxp)
+int
+mainbus_print(args, bus)
+	void *args;
+	const char *bus;
 {
-	struct cfdata *cf;
-	extern int cputyp;
+	struct confargs *ca = args;
 
-	/* nothing to do for this bus */
+	if (ca->ca_paddr != (void *)-1)
+		printf(" addr 0x%x", (u_int32_t)ca->ca_paddr);
+	return (UNCONF);
+}
+
+int
+mainbus_scan(parent, child, args)
+	struct device *parent;
+	void *child, *args;
+{
+	struct cfdata *cf = child;
+	struct confargs oca;
+
+	bzero(&oca, sizeof oca);
+	oca.ca_paddr = (void *)cf->cf_loc[0];
+	oca.ca_vaddr = (void *)-1;
+	oca.ca_ipl = -1;
+	oca.ca_bustype = BUS_MAIN;
+	oca.ca_name = cf->cf_driver->cd_name;
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
+		return (0);
+	config_attach(parent, cf, &oca, mainbus_print);
+	return (1);
+}
+
+void
+mainbus_attach(parent, self, args)
+	struct device *parent, *self;
+	void *args;
+{
 	printf (" machine type %x\n", cputyp);
 
-	if ((cf = config_search(submatch, dp, auxp)) != NULL) {
-		return;
-	}
-
-}
-
-int
-mbprint(void *auxp, const char *pnp)
-{
-	if (pnp)
-		printf("%s at %s", (char *)auxp, pnp);
-	return(UNCONF);
-}
-
-int
-submatch(struct device *parent, void *self, void *aux)
-{
-	struct confargs *ca = aux;
-	struct cfdata   *cf = self;
-
-	ca->ca_bustype = BUS_MAIN;
-	ca->ca_paddr = (caddr_t)cf->cf_loc[0];
-	ca->ca_size = cf->cf_loc[1];
-
-	if (!(*cf->cf_attach->ca_match)(parent, cf, ca)) {
-		if (!parent)
-			cf->cf_fstate = FSTATE_FOUND;
-
-		return 0;
-	}
-
-	/*
-	 * mapin the device memory of the child and call attach.
+	/* XXX
+	 * should have a please-attach-first list for mainbus,
+	 * to ensure that the pcc/vme2/mcc chips are attached
+	 * first.
 	 */
-#if 0
-	ca->ca_vaddr = (caddr_t)iomap_mapin(ca->ca_paddr, ca->ca_size, 1);
-#endif /* 0 */
-	ca->ca_vaddr = ca->ca_paddr;
 
-	config_attach(parent, cf, ca, mbprint);
-
-	return 1;
+	(void)config_search(mainbus_scan, self, args);
 }
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.1.1.1 1997/03/03 19:32:04 rahnds Exp $ */
+/*	$OpenBSD: cl.c,v 1.2 1998/12/15 05:52:29 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -84,10 +84,14 @@
 #define CL_TXINTR	0x02
 #define CL_RXINTR	0x02
 
+#ifdef DEBUG
+#undef DEBUG
+#endif
+#define DEBUG_KERN 1
 struct cl_cons {
 	void	*cl_paddr;
 	volatile struct clreg *cl_vaddr;
-	volatile struct pcc2reg *pcctwoaddr;
+	volatile struct pcctworeg *pcctwoaddr;
 	u_char	channel;
 } cl_cons;
 
@@ -133,7 +137,7 @@ struct clsoftc {
 	struct intrhand		sc_ih_m;
 	struct intrhand		sc_ih_t;
 	struct intrhand		sc_ih_r;
-	struct pcc2reg		*sc_pcctwo;
+	struct pcctworeg		*sc_pcctwo;
 	int			sc_flags;
 };
 struct {
@@ -241,46 +245,20 @@ int	clprobe(parent, self, aux)
 	 */
 	struct clreg *cl_reg;
 	struct confargs *ca = aux;
-	register struct cfdata *cf = self;
-	caddr_t base;
-
 	int ret;
-#if 0
-	if (cputyp != CPU_167 && cputyp != CPU_166
-#ifdef CPU_187
-		&& cputyp != CPU_187
-#endif
-		)
-	{
+	if (cputyp != CPU_187)
 		return 0;
-	}
-#endif /* 0 */
-	if (cputyp != CPU_187) {
-		return 0;
-	}
 
-	/*
-	 * If bus or name do not match, fail.
-	 */
-	if (ca->ca_bustype != BUS_PCCTWO ||
-		strcmp(cf->cf_driver->cd_name, "cl")) {
-		return 0;
-	}
-
-	base = (caddr_t)cf->cf_loc[0];
-
-	if (badpaddr(base, 1) == -1) {
-		return 0;
-	}
-
-	/*
-	 * tell our parent our requirements
-	 */
-	ca->ca_paddr = (caddr_t)CD2400_BASE_ADDR;
-	ca->ca_size = CD2400_SIZE;
 	ca->ca_ipl = IPL_TTY;
-	
-	return 1;
+	ca->ca_paddr = (void *)CD2400_BASE_ADDR;
+	cl_reg = (struct clreg *)ca->ca_vaddr;
+
+#if 0
+	ret = !badvaddr(&cl_reg->cl_gfrcr,1);
+#else
+	ret = 1;
+#endif
+	return ret;
 }
 
 void
@@ -294,7 +272,7 @@ clattach(parent, self, aux)
 	int i;
 
 	sc->cl_reg = (struct clreg *)ca->ca_vaddr;
-	sc->sc_pcctwo = (struct pcc2reg *)ca->ca_parent;
+	sc->sc_pcctwo = ca->ca_master;
 
 	if ((u_char *)ca->ca_paddr == (u_char *)cl_cons.cl_paddr) {
 		/* if this device is configured as console,
@@ -305,6 +283,9 @@ clattach(parent, self, aux)
 		/* reset chip only if we are not console device */
 		/* wait for GFRCR */
 	}
+        /* allow chip to settle before continuing */
+        delay(100);
+
 	/* set up global registers */
 	sc->cl_reg->cl_tpr = CL_TIMEOUT;
 	sc->cl_reg->cl_rpilr = 0x03;
@@ -383,13 +364,13 @@ clattach(parent, self, aux)
 		intr_establish(PCC2_VECT + SMOIRQ, &sc->sc_ih_m);
 		intr_establish(PCC2_VECT + STxIRQ, &sc->sc_ih_t);
 		intr_establish(PCC2_VECT + SRxIRQ, &sc->sc_ih_r);
-		sc->sc_pcctwo = (struct pcc2reg *)ca->ca_parent;
-		sc->sc_pcctwo->pcc2_sccerrstat = 0x01; /* clear errors */
+		sc->sc_pcctwo = ca->ca_master;
+		sc->sc_pcctwo->pcc2_sccerr = 0x01; /* clear errors */
 
 		/* enable all interrupts at ca_ipl */
-		sc->sc_pcctwo->pcc2_sccmoirq = 0x10 | (ca->ca_ipl & 0x7);
-		sc->sc_pcctwo->pcc2_scctxirq  = 0x10 | (ca->ca_ipl & 0x7);
-		sc->sc_pcctwo->pcc2_sccrxirq  = 0x10 | (ca->ca_ipl & 0x7);
+		sc->sc_pcctwo->pcc2_sccirq = 0x10 | (ca->ca_ipl & 0x7);
+		sc->sc_pcctwo->pcc2_scctx  = 0x10 | (ca->ca_ipl & 0x7);
+		sc->sc_pcctwo->pcc2_sccrx  = 0x10 | (ca->ca_ipl & 0x7);
 		break;
 	default:	
 		/* oops */
@@ -959,29 +940,11 @@ int
 clcninit(cp)
 struct consdev *cp;
 {
-#if defined(MVME187)
- 	volatile struct clreg *cl_reg;
-	extern vm_offset_t clconsvaddr, pcc2consvaddr;
-	
-	cl_cons.cl_paddr = (void *)CD2400_BASE_ADDR;
-	cl_cons.cl_vaddr = (struct clreg *)CD2400_BASE_ADDR;
-	cl_cons.pcctwoaddr = (struct pcc2reg *)PCC2_BASE_ADDR;
-#else
-#ifdef MAP_DOES_WORK
-	int size = (0x1ff + PGOFSET) & ~PGOFSET;
-	int pcc2_size = (0x3C + PGOFSET) & ~PGOFSET;
-#endif
-	struct clreg *cl_reg;
+	volatile struct clreg *cl_reg;
 	
 	cl_cons.cl_paddr = (void *)0xfff45000;
-#ifdef MAP_DOES_WORK
-	cl_cons.cl_vaddr = mapiodev(cl_cons.cl_paddr,size);
-	cd_pcc2_base = mapiodev(0xfff42000,pcc2_size);
-#else
 	cl_cons.cl_vaddr   = (struct clreg *)IIOV(cl_cons.cl_paddr);
 	cl_cons.pcctwoaddr = (void *)IIOV(0xfff42000);
-#endif
-#endif /* defined(MVME187)
 	cl_reg = cl_cons.cl_vaddr;
 	/* reset the chip? */
 #ifdef CLCD_DO_RESET
@@ -1035,12 +998,13 @@ clcngetc(dev)
 	int got_char = 0;
 	u_char ier_old = 0xff;
 	volatile struct clreg *cl_reg = cl_cons.cl_vaddr;
-	volatile struct pcc2reg *pcc2_base = cl_cons.pcctwoaddr;
+	volatile struct pcctworeg *pcc2_base = cl_cons.pcctwoaddr;
 	cl_reg->cl_car = 0;
 	if (!(cl_reg->cl_ier & 0x08)) {
 		ier_old = cl_reg->cl_ier;
 		cl_reg->cl_ier	= 0x08;
 	}
+
 	while (got_char == 0) {
 		val = cl_reg->cl_rir;
 		/* if no receive interrupt pending wait */
@@ -1048,7 +1012,7 @@ clcngetc(dev)
 			continue;
 		}
 		/* XXX do we need to suck the entire FIFO contents? */
-		reoir = pcc2_base->pcc2_sccrxpiack; /* receive PIACK */
+		reoir = pcc2_base->pcc2_sccrxiack; /* receive PIACK */
 		licr = cl_reg->cl_licr;
 		if (((licr >> 2) & 0x3) == 0) {
 			/* is the interrupt for us (port 0) */
@@ -1216,7 +1180,7 @@ clgetc(sc, channel)
 	int *channel;
 {
 	volatile struct clreg *cl_reg;
-	volatile struct pcc2reg *pcc2_base;
+	volatile struct pcctworeg *pcc2_base;
 	u_char val, reoir, licr, isrl, fifo_cnt, data;
 	if (0 == sc) {
 		cl_reg = cl_cons.cl_vaddr;
@@ -1231,7 +1195,7 @@ clgetc(sc, channel)
 		return 0;
 	}
 	/* XXX do we need to suck the entire FIFO contents? */
-	reoir = pcc2_base->pcc2_sccrxpiack; /* receive PIACK */
+	reoir = pcc2_base->pcc2_sccrxiack; /* receive PIACK */
 	licr = cl_reg->cl_licr;
 	*channel = (licr >> 2) & 0x3;
 	/* is the interrupt for us (port 0) */
@@ -1685,7 +1649,7 @@ cl_rxintr(sc)
 	} else
 	/* We don't need no sinkin special characters */
 	if (risrl & 0x08) {
-		cl_overflow (sc, channel, &sc->sc_fotime, "fifo");
+		cl_overflow (sc, channel, (long*)&sc->sc_fotime, "fifo");
 		reoir = 0x08;
 	} else
 	if (risrl & 0x04) {
@@ -1871,7 +1835,11 @@ cl_break (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
+#ifdef DEBUG_KERN
+	Debugger();
+#else
 	log(LOG_WARNING, "%s%d[%d]: break detected\n", cl_cd.cd_name, 0, channel);
+#endif
 	return;
 }
 

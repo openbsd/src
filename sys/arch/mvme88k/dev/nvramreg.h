@@ -1,3 +1,5 @@
+/*	$OpenBSD: nvramreg.h,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -79,10 +81,13 @@ struct clockreg {
 struct clockreg *clockreg;
 
 /*
- * Motorola chose the year `00' as their base count, so that
- * cl_year == 0 means 1900.
+ * Motorola chose the year `1900' as their base count.
+ * XXX what happens when it wraps?
  */
 #define	YEAR0	00
 
 #define NVRAMSIZE	0x8000
 #define NVRAM_TOD_OFF	0x1ff8 /* offset of tod in NVRAM space */
+#define MK48T02_SIZE	2*1024
+#define MK48T08_SIZE	8*1024
+

@@ -1,6 +1,7 @@
-/*	$Id: if_ie.c,v 1.1.1.1 1997/03/03 19:32:06 rahnds Exp $ */
+/*	$Id: if_ie.c,v 1.2 1998/12/15 05:52:30 smurph Exp $ */
 
 /*-
+ * Copyright (c) 1998 Steve Murphree, Jr. 
  * Copyright (c) 1995 Theo de Raadt
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
  * Copyright (c) 1992, 1993, University of Vermont and State
@@ -288,7 +289,7 @@ struct ie_softc {
 	struct mcreg *sc_mc;
 #endif
 #if NPCCTWO > 0
-	struct pcc2reg *sc_pcc2;
+	struct pcctworeg *sc_pcc2;
 #endif
 };
 
@@ -339,13 +340,12 @@ struct cfdriver ie_cd = {
  *   MK_16 = KVA -> 16 bit address in INTEL byte order
  *   ST_24 = store a 24 bit address in SUN byte order to INTEL byte order
  */
-
-#define MK_24(base, ptr) ((caddr_t)(((u_long)(ptr)) & 0x00ffffff))
+#define MK_24(base, ptr) ((caddr_t)((u_long)ptr))
 #define MK_16(base, ptr) SWAP((u_short)( ((u_long)(ptr)) - ((u_long)(base)) ))
 #define ST_24(to, from) { \
                             u_long fval = (u_long)(from); \
                             u_char *t = (u_char *)&(to), *f = (u_char *)&fval; \
-                            t[0] = f[2]; t[1] = f[3]; t[2] = 0; t[3] = f[1]; \
+                            t[0] = f[2]; t[1] = f[3]; /*t[2] = f[0]*/; t[3] = f[1]; \
                         }
 /*
  * Here are a few useful functions.  We could have done these as macros, but
@@ -388,39 +388,13 @@ iematch(parent, vcf, args)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-
-#if defined(MVME187)
-	caddr_t base;
-	if (cputyp != CPU_187)
-	{
-		return 0;
+	int ret;
+	
+	if ((ret = badvaddr(IIOV(ca->ca_vaddr), 1)) <=0){
+	    printf("==> ie: failed address check returning %ld.\n", ret);
+	    return(0);
 	}
-
-	/*
-	 * If bus or name do not match, fail.
-	 */
-	if (ca->ca_bustype != BUS_PCCTWO ||
-		strcmp(cf->cf_driver->cd_name, "ie")) {
-		return 0;
-	}
-
-	base = (caddr_t)cf->cf_loc[0];
-
-	if (badpaddr(base, 1) == -1) {
-		return 0;
-	}
-
-	/*
-	 * tell our parent our requirements
-	 */
-	ca->ca_paddr = (caddr_t)LANCE_ADDR;
-	ca->ca_size = 0x1000;
-	ca->ca_ipl = IPL_NET;
-
-	return 1;
-#else
-	return (!badvaddr(ca->ca_vaddr, 4));
-#endif
+	return (1);
 }
 
 /*
@@ -433,25 +407,18 @@ ie_obreset(sc)
 	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
 	volatile int t;
 	u_long	a;
-	u_long	b;
 
-	/*
-	 * Convert a to the format the chip expects before writing
-	 * the high and low (16 bit) words of the CPU port.
-	 */
 	a = IE_PORT_RESET;
-	ST_24(b, a);
-	ieo->porthigh = b >> 16;
+	ieo->porthigh = a & 0xffff;
 	t = 0; t = 1;
-	ieo->portlow = b & 0xffff;
+	ieo->portlow = a >> 16;
 	delay(1000);
 
-	a = (u_long)pmap_extract(pmap_kernel(), (vm_offset_t)sc->scp)
-						| IE_PORT_NEWSCPADDR;
-	ST_24(b, a);
-	ieo->porthigh = b >> 16;
+	a = (u_long)pmap_extract(pmap_kernel(), (vm_offset_t)sc->scp) |
+	    IE_PORT_NEWSCPADDR;
+	ieo->porthigh = a & 0xffff;
 	t = 0; t = 1;
-	ieo->portlow = b & 0xffff;
+	ieo->portlow = a >> 16;
 	delay(1000);
 }
 
@@ -496,14 +463,10 @@ ieattach(parent, self, aux)
 	sc->sc_reg = ca->ca_vaddr;
 	ieo = (volatile struct ieob *) sc->sc_reg;
 
-#if XXXX
-	/* Don't know what this yet XXX nivas */
         /* Are we the boot device? */
         if (ca->ca_paddr == bootaddr)
                 bootdv = self;
-#endif
 
-#if 0
 	sc->sc_maddr = etherbuf;	/* maddr = vaddr */
 	pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);
 	if (pa == 0) panic("ie pmap_extract");
@@ -521,28 +484,6 @@ ieattach(parent, self, aux)
 	/*printf("scpV %x iscpV %x scbV %x\n", sc->scp, sc->iscp, sc->scb);*/
 
 	sc->scp->ie_bus_use = 0;	/* 16-bit */
-#endif /* 0 */
-	sc->sc_maddr = etherbuf;	/* maddr = vaddr */
-	pa = pmap_extract(pmap_kernel(), (vm_offset_t)sc->sc_maddr);
-	if (pa == 0) panic("ie pmap_extract");
-	sc->sc_iobase = (caddr_t)pa;	/* iobase = paddr (24 bit) */
-
-	(sc->memzero)(sc->sc_maddr, sc->sc_msize);
-
-	sc->scb = (volatile struct ie_sys_ctl_block *)
-	    			sc->sc_maddr; /* @ location zero */
-	sc->scp = (struct ie_sys_conf_ptr *)
-	    roundup((int)sc->scb + sizeof(struct ie_sys_ctl_block), 16);
-	sc->iscp = (volatile struct ie_int_sys_conf_ptr *)
-	    roundup((int)sc->scp + sizeof(struct ie_sys_conf_ptr), 16);
-
-	/*printf("maddrV %x iobaseP %x\n", sc->sc_maddr, sc->sc_iobase);*/
-	/*printf("scpV %x iscpV %x scbV %x\n", sc->scp, sc->iscp, sc->scb);*/
-
-	/*
-	 * init scp; iscp will be inited later in ie_setupram().
-	 */
-	sc->scp->ie_bus_use = 0;	/* 8-bit */
 	ST_24(sc->scp->ie_iscp_ptr,
 		pmap_extract(pmap_kernel(), (vm_offset_t)sc->iscp));
 
@@ -603,13 +544,12 @@ ieattach(parent, self, aux)
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
-
-		intr_establish(PCC2_VECT + LANCIRQ, &sc->sc_ih);
-		sc->sc_pcc2 = (struct pcc2reg *)ca->ca_parent;
-		sc->sc_pcc2->pcc2_lancirq = pri |
+		pcctwointr_establish(PCC2V_IE, &sc->sc_ih);
+		sc->sc_pcc2 = (struct pcctworeg *)ca->ca_master;
+		sc->sc_pcc2->pcc2_ieirq = pri | PCC2_SC_SNOOP |
 		    PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
-		intr_establish(PCC2_VECT + LANCERR, &sc->sc_failih);
-		sc->sc_pcc2->pcc2_lancerrirq = pri | PCC2_IRQ_IEN |
+		pcctwointr_establish(PCC2V_IEFAIL, &sc->sc_failih);
+		sc->sc_pcc2->pcc2_iefailirq = pri | PCC2_IRQ_IEN |
 		    PCC2_IRQ_ICLR;
 		break;
 #endif
@@ -650,9 +590,9 @@ void *v;
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
-		sc->sc_pcc2->pcc2_lancirq |= PCC2_IRQ_ICLR;	/* safe: clear irq */
-		sc->sc_pcc2->pcc2_lancerrirq |= PCC2_IRQ_ICLR;	/* clear failure */
-		sc->sc_pcc2->pcc2_lancerrstat = PCC2_IEERR_SCLR;	/* reset error */
+		sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* safe: clear irq */
+		sc->sc_pcc2->pcc2_iefailirq |= PCC2_IRQ_ICLR;	/* clear failure */
+		sc->sc_pcc2->pcc2_ieerr = PCC2_IEERR_SCLR;	/* reset error */
 		break;
 #endif
 	}
@@ -685,7 +625,7 @@ loop:
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
-		sc->sc_pcc2->pcc2_lancirq |= PCC2_IRQ_ICLR;	/* clear irq */
+		sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* clear irq */
 		break;
 #endif
 	}
