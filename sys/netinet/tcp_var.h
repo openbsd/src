@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.59 2004/02/27 16:28:24 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.60 2004/02/27 16:44:45 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ struct tcpcb {
 #define TF_SEND_CWR	0x00020000	/* send CWR in next seg */
 #define TF_DISABLE_ECN	0x00040000	/* disable ECN for this connection */
 #endif
-#define TF_DEAD		0x00080000	/* dead and to-be-released */
+#define TF_REASSLOCK	0x00080000	/* reassembling or draining */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
@@ -209,7 +209,6 @@ do {									\
 		timeout_del(&(tp)->t_delack_to);			\
 	}								\
 } while (/*CONSTCOND*/0)
-#endif /* _KERNEL */
 
 /*
  * Handy way of passing around TCP option info.
@@ -220,8 +219,6 @@ struct tcp_opt_info {
 	u_int32_t	ts_ecr;
 	u_int16_t	maxseg;
 };
-
-#ifdef _KERNEL
 
 /*
  * Data for the TCP compressed state engine.
@@ -284,6 +281,35 @@ struct syn_cache_head {
 	TAILQ_HEAD(, syn_cache) sch_bucket;	/* bucket entries */
 	u_short sch_length;			/* # entries in bucket */
 };
+
+static __inline int tcp_reass_lock_try(struct tcpcb *);
+static __inline void tcp_reass_unlock(struct tcpcb *);
+#define tcp_reass_lock(tp) tcp_reass_lock_try(tp)
+
+static __inline int
+tcp_reass_lock_try(struct tcpcb *tp)
+{
+	int s;
+
+	s = splimp();
+	if (tp->t_flags & TF_REASSLOCK) {
+		splx(s);
+		return (0);
+	}
+	tp->t_flags |= TF_REASSLOCK;
+	splx(s);
+	return (1);
+}
+
+static __inline void
+tcp_reass_unlock(struct tcpcb *tp)
+{
+	int s;
+
+	s = splimp();
+	tp->t_flags &= ~TF_REASSLOCK;
+	splx(s);
+}
 #endif /* _KERNEL */
 
 /*
