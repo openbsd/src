@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.128 2003/05/29 00:35:18 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.129 2003/05/29 04:55:55 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3011,7 +3011,16 @@ tcp_mss(tp, offer)
 
 	/* Calculate the value that we offer in TCPOPT_MAXSEG */
 	if (offer != -1) {
+#ifndef INET6
 		mssopt = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+#else
+		if (tp->pf == AF_INET)
+			mssopt = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		else
+			mssopt = IN6_LINKMTU(ifp) - iphlen -
+			    sizeof(struct tcphdr);
+#endif
+
 		mssopt = max(tcp_mssdflt, mssopt);
 	}
 
