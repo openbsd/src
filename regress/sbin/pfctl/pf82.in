@@ -1,0 +1,16 @@
+# skip step optimization involving dynaddr, tables, no-route
+# no source address optimisation should be done on theses rules
+
+pass inet from (lo0)
+pass inet from !(lo0)
+pass inet from (lo0)
+pass inet6 from (lo0)
+pass from <foo>
+pass from !<foo>
+pass from <foo>
+pass inet from <bar>
+pass from <bar>
+pass inet6 from <foo>
+pass from <foo>
+pass from no-route
+pass inet from no-route

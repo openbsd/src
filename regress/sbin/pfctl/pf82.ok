@@ -1,0 +1,13 @@
+pass inet from (lo0) to any 
+pass inet from ! (lo0) to any 
+pass inet from (lo0) to any 
+pass inet6 from (lo0) to any 
+pass from <foo> to any 
+pass from ! <foo> to any 
+pass from <foo> to any 
+pass inet from <bar> to any 
+pass from <bar> to any 
+pass inet6 from <foo> to any 
+pass from <foo> to any 
+pass from no-route to any 
+pass inet from no-route to any 
