@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.210 2000/01/18 05:18:23 jason Exp 
+ *		OpenBSD: pcidevs,v 1.211 2000/01/20 20:11:24 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1417,6 +1417,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "DEC",
 	    "DECchip 21150 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21150_BC,
+	    0,
+	    "DEC",
+	    "DECchip 21150-BC PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21152,
