@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.3 2000/11/21 19:43:10 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.4 2000/11/23 00:38:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -185,6 +185,7 @@ auth_clean(auth_session_t *as)
 	auth_setitem(as, AUTHV_ALL, NULL);
 
 	if (as->pwd != NULL) {
+		memset(as->pwd->pw_passwd, 0, strlen(as->pwd->pw_passwd));
 		free(as->pwd);
 		as->pwd = NULL;
 	}
@@ -590,8 +591,10 @@ auth_setpwd(auth_session_t *as, struct passwd *pwd)
 	}
 	if ((pwd = pw_dup(pwd)) == NULL)
 		return (-1);		/* true failure */
-	if (as->pwd)
+	if (as->pwd) {
+		memset(as->pwd->pw_passwd, 0, strlen(as->pwd->pw_passwd));
 		free(as->pwd);
+	}
 	as->pwd = pwd;
 	return (0);
 }
