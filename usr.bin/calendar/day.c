@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.4 1998/03/30 06:59:26 deraadt Exp $	*/
+/*	$OpenBSD: day.c,v 1.5 1998/11/04 11:32:02 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.4 1998/03/30 06:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.5 1998/11/04 11:32:02 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,9 @@ time_t Mktime (date)
 	return((time_t)-1);
     tm.tm_sec = 0;
     tm.tm_min = 0;
-    tm.tm_hour = 0;
+    /* Avoid getting caught by a timezone shift; set time to noon */
+    tm.tm_isdst = 0;
+    tm.tm_hour = 12;
     tm.tm_wday = 0;
     tm.tm_mday = tp->tm_mday;
     tm.tm_mon = tp->tm_mon;
@@ -199,12 +201,12 @@ time_t Mktime (date)
     }
 
     /* Year */
-    if (len >= 7) {
+    if (len >= 6) {
 	*(date + len - 4) = '\0';
 	tm.tm_year = atoi(date);
 
 	/* tm_year up TM_YEAR_BASE ... */
-	if (tm.tm_year < 70)
+	if (tm.tm_year < 69)		/* Y2K */
 		tm.tm_year += 2000 - TM_YEAR_BASE;
 	else if (tm.tm_year < 100)
 		tm.tm_year += 1900 - TM_YEAR_BASE;
@@ -310,7 +312,7 @@ isnow(endp, monthp, dayp, varp)
 
 	/* convert Weekday into *next*  Day,
 	 * e.g.: 'Sunday' -> 22
-	 *       'SunayLast' -> ??
+	 *       'SundayLast' -> ??
 	 */
 	if (flags & F_ISDAY) {
 #if DEBUG
@@ -324,44 +326,35 @@ isnow(endp, monthp, dayp, varp)
 		/* negative offset; last, -4 .. -1 */
 		if (day < 0) {
 		    v1 = day/10 - 1;          /* offset -4 ... -1 */
-	            day = 10 + (day % 10);    /* day 1 ... 7 */
+		    day = 10 + (day % 10);    /* day 1 ... 7 */
 
-		    /* day, eg '22th' */
-		    v2 = tp->tm_mday + (((day - 1) - tp->tm_wday + 7) % 7);
+		    /* which weekday the end of the month is (1-7) */
+		    v2 = (cumdays[month + 1] - tp->tm_yday +
+		        tp->tm_wday + 371) % 7 + 1;
 
-		    /* (month length - day) / 7 + 1 */
-		    if (((int)((cumdays[month+1] -
-		               cumdays[month] - v2) / 7) + 1) == -v1)
-			/* bingo ! */
-			day = v2;
-
-		    /* set to yesterday */
-		    else
-			day = tp->tm_mday - 1;
+		    /* and subtract enough days */
+		    day = cumdays[month + 1] - cumdays[month] +
+		        (v1 + 1) * 7 - (v2 - day + 7) % 7;
+#if DEBUG
+		    fprintf(stderr, "\nMonth %d ends on weekday %d\n", month, v2);
+#endif
 		}
 
 		/* first, second ... +1 ... +5 */
 		else {
-		    v1 = day/10;        /* offset: +1 (first Sunday) ... */
+		    v1 = day/10;        /* offset */
 		    day = day % 10;
 
-		    /* day, eg '22th' */
-		    v2 = tp->tm_mday + (((day - 1) - tp->tm_wday + 7) % 7);
-
-		    /* Hurrah! matched */
-		    if ( ((v2 - 1 + 7) / 7) == v1 )
-			day = v2;
-
-		    /* set to yesterday */
-		    else
-			day = tp->tm_mday - 1;
-		}
+		    /* which weekday the first of the month is */
+		    v2 = (cumdays[month] - tp->tm_yday +
+		        tp->tm_wday + 372) % 7 + 1;
+		    
+		    /* and add enough days */
+		    day = 1 + (v1 - 1) * 7 + (day - v2 + 7) % 7;
+#if DEBUG
+		    fprintf(stderr, "\nMonth %d starts on weekday %d\n", month, v2);
+#endif
 	    }
-
-	    /* wired */
-	    else {
-		day = tp->tm_mday + (((day - 1) - tp->tm_wday + 7) % 7);
-		*varp = 1;
 	    }
 	}
 

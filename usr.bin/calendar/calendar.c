@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.10 1997/09/15 07:12:03 millert Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.11 1998/11/04 11:32:02 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.10 1997/09/15 07:12:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.11 1998/11/04 11:32:02 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,8 @@ main(argc, argv)
 			break;
 
 		case 't': /* other date, undocumented, for tests */
-			f_time = Mktime (optarg);
+			if ((f_time = Mktime (optarg)) <= 0)
+				errx(1, "specified date is outside allowed range");
 			break;
 
 		case 'A': /* days after current date */
