@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.5 2001/04/06 17:14:14 aaron Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.6 2001/08/22 16:38:38 aaron Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,8 @@ struct dc_type dc_cardbus_devs[] = {
 	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142 },
 	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143 },
 	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985 },
+	{ CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500 },
+	{ CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_PCM200 },
 	{ 0 }
 };
 
@@ -154,11 +156,15 @@ dc_cardbus_attach(parent, self, aux)
 		}
 		break;
 	case PCI_VENDOR_ADMTEK:
-		if (PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADMTEK_AN985) {
+	case CARDBUS_VENDOR_ABOCOM:
+		if (PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADMTEK_AN985 ||
+		    PCI_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_ABOCOM_FE2500 ||
+		    PCI_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_ABOCOM_PCM200) {
 			sc->dc_type = DC_TYPE_AN983;
 			sc->dc_flags |= DC_TX_USE_TX_INTR|DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
 			dc_eeprom_width(sc);
+			dc_read_srom(sc, sc->dc_romwidth);
 		}
 		break;
 	default:
