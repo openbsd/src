@@ -1,18 +1,592 @@
-Sun Oct 24 23:54:10 PDT 1999 Jeff Law  (law@cygnus.com)
+2003-10-16  Release Manager
 
-	* gcc-2.95.2 Released.
+	* GCC 3.3.2 Released.
 
-Mon Aug 16 01:29:24 PDT 1999 Jeff Law  (law@cygnus.com)
+2003-08-04  Release Manager
 
-	* gcc-2.95.1 Released.
+	* GCC 3.3.1 Released.
 
-Wed Jul 28 21:39:31 PDT 1999 Jeff Law  (law@cygnus.com)
+2003-08-04  Release Manager
 
-	* gcc-2.95 Released.
+	* GCC 3.3.1 Released.
 
-Sun Jul 25 23:40:51 PDT 1999 Jeff Law  (law@cygnus.com)
+2003-07-06  H.J. Lu <hongjiu.lu@intel.com>
 
-	* gcc-2.95 Released.
+	* demangle.h: Support C++.
+
+2003-05-13  Release Manager
+
+	* GCC 3.3 Released.
+
+2003-05-13  Release Manager
+
+	* GCC 3.3 Released.
+
+2003-05-13  Release Manager
+
+	* GCC 3.3 Released.
+
+2003-03-17  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* ansidecl.h (ATTRIBUTE_NONNULL, ATTRIBUTE_NULL_PRINTF,
+	ATTRIBUTE_NULL_PRINTF_1, ATTRIBUTE_NULL_PRINTF_2,
+	ATTRIBUTE_NULL_PRINTF_3, ATTRIBUTE_NULL_PRINTF_4,
+	ATTRIBUTE_NULL_PRINTF_5): New.
+	(ATTRIBUTE_PRINTF): Add ATTRIBUTE_NONNULL.
+
+2003-02-27  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h: Document return value of physmem routines.
+
+2003-02-20  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h (physmem_total, physmem_available): Prototype.
+
+2002-11-23  Simon Burge  <simonb@wasabisystems.com>
+
+	* libiberty.h (basename): Add NetBSD to the list.
+
+2002-11-22  Daniel Jacobowitz  <drow@mvista.com>
+
+	* libiberty.h (make_relative_prefix): Add prototype.
+
+2002-10-26  Roger Sayle  <roger@eyesopen.com>
+
+	* partition.h:  Close the extern "C" scope when compiling with C++.
+
+2002-10-26  Roger Sayle  <roger@eyesopen.com>
+	    DJ Delorie <dj@redhat.com>
+
+	PR bootstrap/8351
+	* getopt.h: Avoid prototyping getopt with no arguments in C++.
+
+2002-10-24  Nathan Tallent  <eraxxon@alumni.rice.edu>
+
+	* ansidecl.h (__STDC__): Add (__alpha && __cplusplus) to the
+	list of	platform compilers that may look, smell and act
+	like __STDC__ but that may not define it.
+
+2002-10-11  David O'Brien  <obrien@FreeBSD.org>
+
+	* getopt.h: getopt is in unistd.h (based on SUSv2).
+
+2002-09-19  Alexandre Oliva  <aoliva@redhat.com>
+
+	* libiberty.h (asprintf, vasprintf): Don't declare them if the
+	corresponding HAVE_DECL_ macro is 1.
+
+2002-06-25  Alan Modra  <amodra@bigpond.net.au>
+
+	* demangle.h: #include "ansidecl.h" rather than #include <ansidecl.h>.
+	* fibheap.h: Likewise.
+	* hashtab.h: Likewise.
+	* partition.h: Likewise.
+	* sort.h: Likewise.
+	* splay-tree.h: Likewise.
+
+2002-06-24  Alan Modra  <amodra@bigpond.net.au>
+
+	* libiberty.h (basename): Don't declare if HAVE_DECL_BASENAME.
+	* getopt.h (getopt): Don't declare if HAVE_DECL_GETOPT.
+
+2002-06-06  DJ Delorie  <dj@redhat.com>
+
+	* hashtab.h (htab): Rearrange new members for backward
+	compatibility.
+	(htab_create): Don't use a macro that requires other headers.
+
+2002-06-05  Geoffrey Keating  <geoffk@redhat.com>
+
+	* hashtab.h (htab_create): Restore prototype for backward
+	compatibility.
+	(htab_try_create): Likewise.
+
+2002-05-22  Geoffrey Keating  <geoffk@redhat.com>
+
+	* hashtab.h (struct htab): Update for change to length specifier.
+
+2002-05-10  Geoffrey Keating  <geoffk@redhat.com>
+
+	* hashtab.h (GTY): Define if undefined.
+	(htab_alloc): New typedef.
+	(htab_free): New typedef.
+	(struct htab): Support gengtype; allow user-specified memory
+	allocation.
+	(htab_create_alloc): New.
+	(htab_create): Replace with #define.
+	(htab_try_create): Delete.
+
+2002-04-16  David S. Miller  <davem@redhat.com>
+
+	* xregex2.h (__restrict_arr): Define to __restrict on GCC
+	3.1 and later.  Do not redefine.
+
+2002-04-01  Phil Edwards  <pme@gcc.gnu.org>
+
+	* dyn-string.h:  Also allow IN_GLIBCPP_V3 to redefine names.
+
+2002-03-06  Andrew Cagney  <ac131313@redhat.com>
+
+	* floatformat.h (floatformat_arm_ext): Delete declaration.
+
+2002-02-22  Jim Blandy  <jimb@redhat.com>
+
+	Allow the user to specify functions for allocating memory for
+	splay tree roots and nodes.
+	* splay-tree.h (splay_tree_allocate_fn, splay_tree_deallocate_fn):
+	New types.
+	(splay_tree): New fields: `allocate', `deallocate', and
+	`allocate_data'.
+	(splay_tree_new_with_allocator): New function declaration.
+
+2002-02-05  Jason Merrill  <jason@redhat.com>
+
+	* demangle.h (cplus_demangle_v3): Add "options" parm.
+	(cplus_demangle_v3_type): Remove prototype.
+	(DMGL_VERBOSE): New macro.
+	(DMGL_TYPES): New macro.
+
+2002-02-02  H.J. Lu  (hjl@gnu.org)
+
+	* demangle.h (cplus_demangle_v3_type): New prototype.
+
+2002-01-28  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h (C_alloca): Add ATTRIBUTE_MALLOC.
+
+2001-12-06  Richard Henderson  <rth@redhat.com>
+
+	* demangle.h (no_demangling): New.
+	(NO_DEMANGLING_STYLE_STRING): New.
+
+2001-10-24  Neil Booth  <neil@daikokuya.demon.co.uk>
+
+	* safe-ctype.h (_sch_isbasic, IS_ISOBASIC): New.
+
+2001-10-22  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h (hex_init): Revert delete.
+
+	* libiberty.h (_hex_value): Const-ify.
+	(hex_init): Delete.
+
+2001-10-07  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* demangle.h (demangler_engine): Const-ify.
+	* libiberty.h (buildargv): Likewise.
+
+2001-09-24  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h (reconcat): New function.
+
+2001-09-18  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h (concat, concat_length, concat_copy, concat_copy2,
+	ACONCAT): Improve comments.
+
+2001-09-18  Alan Modra  <amodra@bigpond.net.au>
+
+	* objalloc.h (OBJALLOC_ALIGN): Define using offsetof.
+
+2001-09-17  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h (concat_length, concat_copy, concat_copy2,
+	libiberty_concat_ptr, ACONCAT): New.
+
+	* libiberty.h (ASTRDUP): New macro.
+	libiberty_optr, libiberty_nptr, libiberty_len): Declare.
+
+2001-08-29  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* ansidecl.h: Update comments reflecting previous change.
+
+2001-08-27  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* ansidecl.h (VA_OPEN, VA_CLOSE): Allow multiple uses.
+
+2001-08-23  Lars Brinkhoff  <lars@nocrew.org>
+
+	* dyn-string.h, fibheap.h, partition.h, sort.h, splay-tree.h:
+	replace "GNU CC" with "GCC".
+
+2001-08-21  Richard Henderson  <rth@redhat.com>
+
+	* fibheap.h: Tidy formatting.
+	(fibnode_t): Limit degree to 31 bits to avoid warning.
+
+2001-08-20  Andrew Cagney  <ac131313@redhat.com>
+
+	* floatformat.h (floatformat_arm_ext): Document as deprecated.
+	(floatformat_arm_ext_big, floatformat_arm_ext_littlebyte_bigword)
+	(floatformat_ia64_spill_little, floatformat_ia64_quad_little)
+	(floatformat_ia64_spill_big, floatformat_ia64_quad_big)
+	(floatformat_m88110_harris_ext): Declare.
+
+2001-08-20  Daniel Berlin  <dan@cgsoftware.com>
+
+	* fibheap.h: New file. Fibonacci heap.
+
+2001-08-18  Zack Weinberg  <zackw@panix.com>
+
+	* ansidecl.h: Reorganize for readability, remove documentation
+	of obsolete macros, document PARAMS and VPARAMS.  Add new
+	macros VA_OPEN, VA_CLOSE, and VA_FIXEDARG for nicer variadic
+	function implementation.
+
+2001-08-16  Richard Henderson  <rth@redhat.com>
+
+	* hashtab.h (htab_hash_string): Declare.
+
+2001-08-10  Andrew Cagney  <ac131313@redhat.com>
+
+	* libiberty.h (lbasename): Change function declaration to return a
+	const char pointer.
+
+2001-08-02  Mark Kettenis  <kettenis@gnu.org>
+
+	* xregex.h (_REGEX_RE_COMP): Define.
+	(re_comp): Define to xre_comp.
+	(re_exec): Define to xre_exec.
+
+2001-07-18  Andreas Jaeger  <aj@suse.de>
+
+	* xregex2.h: Place under LGPL version 2.1.
+
+2001-07-10  Jeff Johnston  <jjohnstn@redhat.com>
+
+	* xregex.h: New file to support libiberty regex.
+	* xregex2.h: Ditto.
+
+2001-05-16  Matt Kraai  <kraai@alumni.carnegiemellon.edu>
+
+	* partition.h: Fix misspelling of `implementation'.
+
+2001-05-10  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* ansidecl.h (NULL_PTR): Delete.
+
+2001-05-07  Zack Weinberg  <zackw@stanford.edu>
+
+	* demangle.h: Use PARAMS for all prototypes.
+	* ternary.h: Use PARAMS for all prototypes.  Use PTR, not void *.
+	Make arguments constant where possible.
+
+2001-05-07  Mark Mitchell  <mark@codesourcery.com>
+
+	* splay-tree.h (splay_tree_max): New function.
+	(splay_tree_min): Likewise.
+
+2001-04-15  Daniel Berlin  <dan@cgsoftware.com>
+
+	* ternary.h: New file - Ternary search tree header.
+
+2001-04-03  Zack Weinberg  <zackw@stanford.edu>
+
+	* ansidecl.h: All logic from gcc/gansidecl.h moved here.
+
+2001-03-31  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h (alloca): Handle setting C_ALLOCA.
+
+2001-03-20  Jim Blandy  <jimb@redhat.com>
+
+	* demangle.h (enum gnu_v3_constructor_kinds,
+	is_gnu_v3_mangled_ctor, enum gnu_v3_destructor_kinds,
+	is_gnu_v3_mangled_dtor): New declarations.
+
+2001-03-14  Nick Clifton  <nickc@redhat.com>
+
+	* ansidecl.h: Fix copyright dates.
+	* demangle.h: Fix copyright dates.
+	* floatformat.h: Fix copyright dates.
+	* fnmatch.h: Fix copyright dates.
+	* getopt.h: Fix copyright dates.
+	* libiberty.h: Add FSF copyright notice.
+	* md5.h: Fix copyright dates.
+	* obstack.h: Fix copyright dates.
+	* splay-tree.h: Fix copyright dates.
+
+2001-03-10  Neil Booth  <neil@daikokuya.demon.co.uk>
+	    John David Anglin  <dave@hiauly1.hia.nrc.ca>
+
+	* libiberty.h: Add lbasename.
+
+2001-03-06  Zack Weinberg  <zackw@stanford.edu>
+
+	* libiberty.h: Prototype C_alloca; define alloca to either
+	__builtin_alloca or C_alloca as appropriate.
+
+2001-03-01  John David Anglin  <dave@hiauly1.hia.nrc.ca>
+
+	* safe-ctype.h (_sch_test): Cast enum bit to unsigned short int for pcc
+	compatibility.
+
+2000-12-18  Joseph S. Myers  <jsm28@cam.ac.uk>
+
+	* COPYING: Update to current
+	ftp://ftp.gnu.org/pub/gnu/Licenses/COPYING-2.0 (fixes references
+	to 19yy as example year in copyright notice).
+
+2000-12-16  Herman A.J. ten Brugge  <Haj.Ten.Brugge@net.HCC.nl>
+
+	* safe-ctype.h: Make code work on all targets and not just on
+	targets where a char is 8 bits.
+
+2000-12-07  Zack Weinberg  <zack@wolery.stanford.edu>
+
+	* safe-ctype.h: New file.
+
+2000-12-06  Rodney Brown  <RodneyBrown@mynd.com>
+
+	* getopt.h obstack.h: Standarize copyright statement.
+
+2000-12-04  Richard Henderson  <rth@redhat.com>
+
+	* demangle.h: Change "new_abi" to "v3" everywhere.
+
+2000-11-22  Zack Weinberg  <zack@wolery.stanford.edu>
+
+	* libiberty.h: Move #includes to top.  Prototype xmalloc_failed.
+
+2000-11-15  Kenneth Block  <kenneth.block@compaq.com>
+
+	* demangle.h: Add gnat and java demangle styles.
+
+2000-11-04  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* hashtab.h (struct htab): Add member return_allocation_failure.
+	(htab_try_create): New prototype.  Mention which functions may
+	return NULL when this is used.
+
+2000-11-03  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* hashtab.h: Change void * to PTR where necessary.
+
+2000-09-10  Mark Mitchell  <mark@codesourcery.com>
+
+	* splay-tree.h (splay_tree_predecessor): Declare.
+
+2000-09-05  John David Anglin <dave@hiauly1.hia.nrc.ca>
+
+	* md5.h (md5_uint32): Choose via INT_MAX instead of UINT_MAX.
+
+2000-09-04  Alex Samuel  <samuel@codesourcery.com>
+
+	* dyn-string.h: Adjust formatting. 
+	(dyn_string_insert_char): New macro.  New declaration.
+
+2000-08-28  Jason Merrill  <jason@redhat.com>
+
+	* md5.h: New file.
+
+2000-08-24  Greg McGary  <greg@mcgary.org>
+
+	* libiberty.h (ARRAY_SIZE): New macro.
+
+2000-06-21  Alex Samuel  <samuel@codesourcery.com>
+
+	* dyn-string.h (dyn_string_init, dyn_string_new,
+	dyn_string_delete, dyn_string_release, dyn_string_resize,
+	dyn_string_clear, dyn_string_copy, dyn_string_copy_cstr,
+	dyn_string_prepend, dyn_string_prepend_cstr, dyn_string_insert,
+	dyn_string_insert_cstr, dyn_string_append, dyn_string_append_cstr,
+	dyn_string_append_char, dyn_string_substring_dyn_string_eq):
+	Define as same name with __cxa_ prepended, if IN_LIBGCC2.
+	(dyn_string_init, dyn_string_copy, dyn_string_copy_cstr,
+	dyn_string_prepend, dyn_string_prepend_cstr, dyn_string_insert,
+	dyn_string_insert_cstr, dyn_string_append, dyn_string_append_cstr,
+	dyn_string_append_char, dyn_string_substring): Change return type
+	to int.
+	
+2000-06-07  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* demangle.h (demangling_styles): Remove trailing comma in enum.
+
+	* dyn-string.h (dyn_string_append_char): Change parameter from
+	char to int.
+
+2000-06-04  Alex Samuel  <samuel@codesourcery.com>
+
+	* dyn-string.h: Move here from gcc/dyn-string.h.  Add new functions.
+
+	* demangle.h (DMGL_GNU_NEW_ABI): New macro.
+	(DMGL_STYLE_MASK): Or in DMGL_GNU_NEW_ABI. 
+	(current_demangling_style): Add gnu_new_abi_demangling.
+	(GNU_NEW_ABI_DEMANGLING_STYLE_STRING): New macro.
+	(GNU_NEW_ABI_DEMANGLING): Likewise.
+	(cplus_demangle_new_abi): New declaration.
+	
+Tue May 30 16:53:34 2000  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* floatformat.h (struct floatformat): Add field name.
+
+2000-05-23  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* getopt.h (getopt): Also check HAVE_DECL_* when prototyping.
+
+	* libiberty.h (basename): Likewise.
+
+2000-05-06  Zack Weinberg  <zack@wolery.cumb.org>
+
+ 	* ansidecl.h: #define __extension__ to nothing if
+ 	GCC_VERSION < 2008.
+
+2000-05-04  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* demangle.h (demangler_engine): Constify.
+
+Thu May  4 17:15:26 2000  Philippe De Muyter  <phdm@macqel.be>
+
+	* sort.h (sys/types.h): File included unconditionnaly.
+	(stddef.h): File include only #ifdef __STDC__.
+
+2000-05-03  Zack Weinberg  <zack@wolery.cumb.org>
+
+	* symcat.h: Remove #endif label.
+
+2000-04-28  Kenneth Block  <block@zk3.dec.com>
+	    Jason Merrill  <jason@casey.cygnus.com>
+
+        * demangle.h (libiberty_demanglers): new table for different styles.
+        (cplus_demangle_set_style): New function for setting style.
+        (cplus_demangle_name_to_style): New function to translate name.
+
+2000-04-24  Mark Mitchell  <mark@codesourcery.com>
+
+	* hashtab.h (hash_pointer): Declare.
+	(eq_pointer): Likewise.
+
+2000-04-23  Mark Mitchell  <mark@codesourcery.com>
+
+	* sort.h: New file.
+
+Tue Apr 18 16:22:30 2000  Richard Kenner  <kenner@vlsi1.ultra.nyu.edu>
+
+	* hashtab.h (enum insert_option): New type.
+	(htab_find_slot, htab_find_slot_with_hash): Use it.
+
+2000-04-17  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* symcat.h: Honor autoconf macro HAVE_STRINGIZE.  Add
+	comments/caveats with regard to traditional C behavior.
+
+2000-04-05  Richard Henderson  <rth@cygnus.com>
+
+	* splay-tree.h (splay_tree_remove): Declare.
+
+2000-03-30  Mark Mitchell  <mark@codesourcery.com>
+
+	* hashtab.h (hashval_t): New type.
+	(htab_find_with_hash): Use it as an argument.
+	(htab_find_slot_with_hash): Likewise.
+
+2000-03-14  Bernd Schmidt  <bernds@cygnus.co.uk>
+
+	* hashtab.h (htab_trav): Modify type so that first arg is of type
+	void **.
+	(htab_find_with_hash, htab_find_slot_with_hash): Declare new
+	functions.
+
+2000-03-09  Alex Samuel  <samuel@codesourcery.com>
+
+	* partition.h: New file.
+
+2000-03-09  Zack Weinberg  <zack@wolery.cumb.org>
+
+	* hashtab.h (struct htab): Add del_f.
+	(htab_del): New type.
+	(htab_create): Add fourth argument.
+
+2000-03-08  Zack Weinberg  <zack@wolery.cumb.org>
+
+	* hashtab.h (hash_table_t): Rename to htab_t.
+	(struct hash_table): Rename to struct htab.  Shorten element
+	names.  Reorder elements by size.
+	(htab_hash, htab_eq, htab_trav): New typedefs for the callback
+	function pointers.
+	(hash_table_entry_t): Discard; just use void * for element
+	type.
+
+Sat Jan  1 19:06:52 2000  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* symcat.h (STRINGX) [!__STDC__ || ALMOST_STDC]: Change "?" to "s"
+	to stringify argument s.
+
+1999-12-05  Mark Mitchell  <mark@codesourcery.com>
+
+	* splay-tree.h (struct splay_tree_node): Rename to ...
+	(struct splay_tree_node_s): ... this.
+	(struct splay_tree): Rename to ...
+	(struct splay_tree_s): ... this.
+
+1999-11-30  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* ansidecl.h (ATTRIBUTE_MALLOC): New macro.
+
+	* libiberty.h (buildargv, dupargv, concat, choose_temp_base,
+	make_temp_file, xmalloc, xcalloc, xstrdup, xmemdup): Add
+	ATTRIBUTE_MALLOC.
+	(xatexit): Remove __GNUC__ check, add ATTRIBUTE_NORETURN.
+
+1999-11-28  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h: Include stdarg.h when ANSI_PROTOTYPES is defined.
+	(asprintf, vasprintf): Provide declarations.
+
+Wed Nov 10 12:43:21 1999  Philippe De Muyter  <phdm@macqel.be>
+			  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* ansidecl.h: Define and test `GCC_VERSION', not `HAVE_GCC_VERSION'.
+
+1999-10-23 08:51 -0700  Zack Weinberg  <zack@bitmover.com>
+
+	* hashtab.h: Give hash_table_t a struct tag.  Add prototypes
+	for clear_hash_table_slot and traverse_hash_table.  Correct
+	prototype of all_hash_table_collisions.
+
+Fri Oct 15 01:47:51 1999  Vladimir Makarov  <vmakarov@loony.cygnus.com>
+
+	* hashtab.h: New file.
+
+1999-10-10  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* ansidecl.h (HAVE_GCC_VERSION): New macro.  Use it instead of
+	explicitly testing __GNUC__ and __GNUC_MINOR__.
+
+	(ATTRIBUTE_PRINTF): Use `__format__', not `format'.
+
+1999-09-25  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h (make_temp_file):  Add a prototype.
+
+Tue Sep 14 00:35:02 1999  Marc Espie <espie@cvs.openbsd.org>
+
+	* libiberty.h (basename):  OpenBSD has a correct prototype.
+	(xrealloc):  Remove outdated comment.
+
+1999-09-07  Jeff Garzik  <jgarzik@pobox.com>
+
+	* libiberty.h (xmemdup): Add prototype for new function.
+
+1999-09-01  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* obstack.h (obstack_grow, obstack_grow0): Move (char*) casts
+	in calls to `_obstack_memcpy' from here ...
+
+	(_obstack_memcpy): ... to here, except in the __STDC__ case which
+	doesn't need it.
+
+1999-08-30  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* libiberty.h (getpwd): Prototype.
+
+1999-08-01  Mark Mitchell  <mark@codesourcery.com>
+
+	* splay-tree.h (splay_tree_insert): Return the new node.
+
+1999-07-11  Ian Lance Taylor  <ian@zembu.com>
+
+	* ansidecl.h: Copy attribute support macros from egcs.
 
 1999-04-02  Mark Mitchell  <mark@codesourcery.com>
 
@@ -31,20 +605,19 @@ Mon Dec 14 09:53:31 1998  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
 	* demangle.h: Don't check IN_GCC anymore.
 	* splay-tree.h: Likewise.
 
-Tue Dec  8 00:30:31 1998  Elena Zannoni  <ezannoni@kwikemart.cygnus.com> 
+Tue Dec  8 00:30:31 1998  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
 
-        * demangle.h: (DMGL_EDG): new macro for Kuck and Associates
-        (DMGL_STYLE_MASK): modify to include Kuck and Assoc style
-        (demangling_styles): add new edg_demangling style
-        (EDG_DEMANGLING_STYLE_STRING): new macro
-        (EDG_DEMANGLING): new macro
-
-        * demangle.h (DMGL_HP): new macro, for HP/aCC compiler.
-        (DMGL_STYLE_MASK): modify to include new HP's style.
-        (demangling_styles): add new hp_demangling value.
-        (HP_DEMANGLING_STYLE_STRING): new macro.
-        (ARM_DEMANGLING): coerce to int.
-        (HP_DEMANGLING): new macro.
+	* demangle.h: (DMGL_EDG): new macro for Kuck and Associates
+	(DMGL_STYLE_MASK): modify to include Kuck and Assoc style
+	(demangling_styles): add new edg_demangling style
+	(EDG_DEMANGLING_STYLE_STRING): new macro
+	(EDG_DEMANGLING): new macro
+	(DMGL_HP): new macro, for HP/aCC compiler.
+	(DMGL_STYLE_MASK): modify to include new HP's style.
+	(demangling_styles): add new hp_demangling value.
+	(HP_DEMANGLING_STYLE_STRING): new macro.
+	(ARM_DEMANGLING): coerce to int.
+	(HP_DEMANGLING): new macro.
 
 Fri Nov 20 13:14:00 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
@@ -741,8 +1314,8 @@ Thu Apr 28 19:06:50 1994  Ken Raeburn  (raeburn@cujo.cygnus.com)
 
 Fri Apr  1 00:38:17 1994  Jim Wilson  (wilson@mole.gnu.ai.mit.edu)
 
-        * obstack.h: Delete use of IN_GCC to control whether
-        stddef.h or gstddef.h is included.
+	* obstack.h: Delete use of IN_GCC to control whether
+	stddef.h or gstddef.h is included.
 
 Tue Mar 22 13:06:02 1994  Ian Lance Taylor  (ian@tweedledumb.cygnus.com)
 

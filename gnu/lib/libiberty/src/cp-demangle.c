@@ -1,5 +1,5 @@
 /* Demangler for IA64 / g++ V3 ABI.
-   Copyright (C) 2000 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001, 2002 Free Software Foundation, Inc.
    Written by Alex Samuel <samuel@codesourcery.com>. 
 
    This file is part of GNU CC.
@@ -8,6 +8,15 @@
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
+
+   In addition to the permissions in the GNU General Public License, the
+   Free Software Foundation gives you unlimited permission to link the
+   compiled version of this file into combinations with other programs,
+   and to distribute those combinations without any restriction coming
+   from the use of this file.  (The General Public License restrictions
+   do apply in other respects; for example, they cover modification of
+   the file, and distribution when not linked into a combined
+   executable.)
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -42,6 +51,8 @@
 #include <string.h>
 #endif
 
+#include <ctype.h>
+
 #include "ansidecl.h"
 #include "libiberty.h"
 #include "dyn-string.h"
@@ -67,6 +78,9 @@
 /* The prefix prepended by GCC to an identifier represnting the
    anonymous namespace.  */
 #define ANONYMOUS_NAMESPACE_PREFIX "_GLOBAL_"
+
+/* Character(s) to use for namespace separation in demangled output */
+#define NAMESPACE_SEPARATOR (dm->style == DMGL_JAVA ? "." : "::")
 
 /* If flag_verbose is zero, some simplifications will be made to the
    output to make it easier to read and supress details that are
@@ -166,6 +180,18 @@ struct demangling_def
 
   /* The most recently demangled source-name.  */
   dyn_string_t last_source_name;
+  
+  /* Language style to use for demangled output. */
+  int style;
+
+  /* Set to non-zero iff this name is a constructor.  The actual value
+     indicates what sort of constructor this is; see demangle.h.  */
+  enum gnu_v3_ctor_kinds is_constructor;
+
+  /* Set to non-zero iff this name is a destructor.  The actual value
+     indicates what sort of destructor this is; see demangle.h.  */
+  enum gnu_v3_dtor_kinds is_destructor;
+
 };
 
 typedef struct demangling_def *demangling_t;
@@ -240,7 +266,7 @@ static void template_arg_list_print
 static template_arg_list_t current_template_arg_list
   PARAMS ((demangling_t));
 static demangling_t demangling_new
-  PARAMS ((const char *));
+  PARAMS ((const char *, int));
 static void demangling_delete 
   PARAMS ((demangling_t));
 
@@ -409,7 +435,7 @@ string_list_delete (node)
   while (node != NULL)
     {
       string_list_t next = node->next;
-      free (node);
+      dyn_string_delete ((dyn_string_t) node);
       node = next;
     }
 }
@@ -783,8 +809,9 @@ current_template_arg_list (dm)
    Returns NULL if allocation fails.  */
 
 static demangling_t
-demangling_new (name)
+demangling_new (name, style)
      const char *name;
+     int style;
 {
   demangling_t dm;
   dm = (demangling_t) malloc (sizeof (struct demangling_def));
@@ -807,6 +834,9 @@ demangling_new (name)
       dyn_string_delete (dm->last_source_name);
       return NULL;
     }
+  dm->style = style;
+  dm->is_constructor = (enum gnu_v3_ctor_kinds) 0;
+  dm->is_destructor = (enum gnu_v3_dtor_kinds) 0;
 
   return dm;
 }
@@ -870,7 +900,7 @@ static status_t demangle_number_literally
 static status_t demangle_identifier
   PARAMS ((demangling_t, int, dyn_string_t));
 static status_t demangle_operator_name
-  PARAMS ((demangling_t, int, int *));
+  PARAMS ((demangling_t, int, int *, int *));
 static status_t demangle_nv_offset
   PARAMS ((demangling_t));
 static status_t demangle_v_offset
@@ -918,11 +948,9 @@ static status_t demangle_local_name
 static status_t demangle_discriminator 
   PARAMS ((demangling_t, int));
 static status_t cp_demangle
-  PARAMS ((const char *, dyn_string_t));
-#ifdef IN_LIBGCC2
+  PARAMS ((const char *, dyn_string_t, int));
 static status_t cp_demangle_type
   PARAMS ((const char*, dyn_string_t));
-#endif
 
 /* When passed to demangle_bare_function_type, indicates that the
    function's return type is not encoded before its parameter types.  */
@@ -946,7 +974,7 @@ demangle_char (dm, c)
   else
     {
       if (error_message == NULL)
-	error_message = strdup ("Expected ?");
+	error_message = (char *) strdup ("Expected ?");
       error_message[9] = c;
       return error_message;
     }
@@ -1222,7 +1250,7 @@ demangle_prefix (dm, encode_return_type)
 	{
 	  /* We have another level of scope qualification.  */
 	  if (nested)
-	    RETURN_IF_ERROR (result_add (dm, "::"));
+	    RETURN_IF_ERROR (result_add (dm, NAMESPACE_SEPARATOR));
 	  else
 	    nested = 1;
 
@@ -1299,7 +1327,7 @@ demangle_unqualified_name (dm, suppress_return_type)
       if (peek == 'c' && peek_char_next (dm) == 'v')
 	*suppress_return_type = 1;
 
-      RETURN_IF_ERROR (demangle_operator_name (dm, 0, &num_args));
+      RETURN_IF_ERROR (demangle_operator_name (dm, 0, &num_args, NULL));
     }
   else if (peek == 'C' || peek == 'D')
     {
@@ -1440,9 +1468,45 @@ demangle_identifier (dm, length, identifier)
 
   while (length-- > 0)
     {
+      int ch;
       if (end_of_name_p (dm))
 	return "Unexpected end of name in <identifier>.";
-      if (!dyn_string_append_char (identifier, next_char (dm)))
+      ch = next_char (dm);
+
+      /* Handle extended Unicode characters.  We encode them as __U{hex}_,
+         where {hex} omits leading 0's.  For instance, '$' is encoded as
+         "__U24_".  */
+      if (ch == '_'
+	  && peek_char (dm) == '_'
+	  && peek_char_next (dm) == 'U')
+	{
+	  char buf[10];
+	  int pos = 0;
+	  advance_char (dm); advance_char (dm); length -= 2;
+	  while (length-- > 0)
+	    {
+	      ch = next_char (dm);
+	      if (!isxdigit (ch))
+		break;
+	      buf[pos++] = ch;
+	    }
+	  if (ch != '_' || length < 0)
+	    return STATUS_ERROR;
+	  if (pos == 0)
+	    {
+	      /* __U_ just means __U.  */
+	      if (!dyn_string_append_cstr (identifier, "__U"))
+		return STATUS_ALLOCATION_FAILED;
+	      continue;
+	    }
+	  else
+	    {
+	      buf[pos] = '\0';
+	      ch = strtol (buf, 0, 16);
+	    }
+	}
+
+      if (!dyn_string_append_char (identifier, ch))
 	return STATUS_ALLOCATION_FAILED;
     }
 
@@ -1475,7 +1539,9 @@ demangle_identifier (dm, length, identifier)
 /* Demangles and emits an <operator-name>.  If SHORT_NAME is non-zero,
    the short form is emitted; otherwise the full source form
    (`operator +' etc.) is emitted.  *NUM_ARGS is set to the number of
-   operands that the operator takes.  
+   operands that the operator takes.  If TYPE_ARG is non-NULL,
+   *TYPE_ARG is set to 1 if the first argument is a type and 0
+   otherwise.
 
     <operator-name>
                   ::= nw        # new           
@@ -1525,24 +1591,26 @@ demangle_identifier (dm, length, identifier)
                   ::= cl        # ()            
                   ::= ix        # []            
                   ::= qu        # ?
-                  ::= sz        # sizeof 
+		  ::= st        # sizeof (a type)
+                  ::= sz        # sizeof (an expression)
                   ::= cv <type> # cast        
 		  ::= v [0-9] <source-name>  # vendor extended operator  */
 
 static status_t
-demangle_operator_name (dm, short_name, num_args)
+demangle_operator_name (dm, short_name, num_args, type_arg)
      demangling_t dm;
      int short_name;
      int *num_args;
+     int *type_arg;
 {
   struct operator_code
   {
     /* The mangled code for this operator.  */
-    const char *code;
+    const char *const code;
     /* The source name of this operator.  */
-    const char *name;
+    const char *const name;
     /* The number of arguments this operator takes.  */
-    int num_args;
+    const int num_args;
   };
 
   static const struct operator_code operators[] = 
@@ -1607,6 +1675,10 @@ demangle_operator_name (dm, short_name, num_args)
 
   DEMANGLE_TRACE ("operator-name", dm);
 
+  /* Assume the first argument is not a type.  */
+  if (type_arg)
+    *type_arg = 0;
+
   /* Is this a vendor-extended operator?  */
   if (c0 == 'v' && IS_DIGIT (c1))
     {
@@ -1623,6 +1695,16 @@ demangle_operator_name (dm, short_name, num_args)
       /* Demangle the converted-to type.  */
       RETURN_IF_ERROR (demangle_type (dm));
       *num_args = 0;
+      return STATUS_OK;
+    }
+
+  /* Is it the sizeof variant that takes a type?  */
+  if (c0 == 's' && c1 == 't')
+    {
+      RETURN_IF_ERROR (result_add (dm, " sizeof"));
+      *num_args = 1;
+      if (type_arg)
+	*type_arg = 1;
       return STATUS_OK;
     }
 
@@ -1823,11 +1905,27 @@ demangle_special_name (dm)
 
   if (peek == 'G')
     {
-      /* A guard variable name.  Consume the G.  */
+      /* Consume the G.  */
       advance_char (dm);
-      RETURN_IF_ERROR (demangle_char (dm, 'V'));
-      RETURN_IF_ERROR (result_add (dm, "guard variable for "));
-      RETURN_IF_ERROR (demangle_name (dm, &unused));
+      switch (peek_char (dm))
+	{
+	case 'V':
+	  /* A guard variable name.  */
+	  advance_char (dm);
+	  RETURN_IF_ERROR (result_add (dm, "guard variable for "));
+	  RETURN_IF_ERROR (demangle_name (dm, &unused));
+	  break;
+
+	case 'R':
+	  /* A reference temporary.  */
+	  advance_char (dm);
+	  RETURN_IF_ERROR (result_add (dm, "reference temporary for "));
+	  RETURN_IF_ERROR (demangle_name (dm, &unused));
+	  break;
+	  
+	default:
+	  return "Unrecognized <special-name>.";
+	}
     }
   else if (peek == 'T')
     {
@@ -2010,15 +2108,24 @@ demangle_ctor_dtor_name (dm)
     {
       /* A constructor name.  Consume the C.  */
       advance_char (dm);
-      if (peek_char (dm) < '1' || peek_char (dm) > '3')
+      flavor = next_char (dm);
+      if (flavor < '1' || flavor > '3')
 	return "Unrecognized constructor.";
       RETURN_IF_ERROR (result_add_string (dm, dm->last_source_name));
+      switch (flavor)
+	{
+	case '1': dm->is_constructor = gnu_v3_complete_object_ctor;
+	  break;
+	case '2': dm->is_constructor = gnu_v3_base_object_ctor;
+	  break;
+	case '3': dm->is_constructor = gnu_v3_complete_object_allocating_ctor;
+	  break;
+	}
       /* Print the flavor of the constructor if in verbose mode.  */
-      flavor = next_char (dm) - '1';
       if (flag_verbose)
 	{
 	  RETURN_IF_ERROR (result_add (dm, "["));
-	  RETURN_IF_ERROR (result_add (dm, ctor_flavors[flavor]));
+	  RETURN_IF_ERROR (result_add (dm, ctor_flavors[flavor - '1']));
 	  RETURN_IF_ERROR (result_add_char (dm, ']'));
 	}
     }
@@ -2026,16 +2133,25 @@ demangle_ctor_dtor_name (dm)
     {
       /* A destructor name.  Consume the D.  */
       advance_char (dm);
-      if (peek_char (dm) < '0' || peek_char (dm) > '2')
+      flavor = next_char (dm);
+      if (flavor < '0' || flavor > '2')
 	return "Unrecognized destructor.";
       RETURN_IF_ERROR (result_add_char (dm, '~'));
       RETURN_IF_ERROR (result_add_string (dm, dm->last_source_name));
+      switch (flavor)
+	{
+	case '0': dm->is_destructor = gnu_v3_deleting_dtor;
+	  break;
+	case '1': dm->is_destructor = gnu_v3_complete_object_dtor;
+	  break;
+	case '2': dm->is_destructor = gnu_v3_base_object_dtor;
+	  break;
+	}
       /* Print the flavor of the destructor if in verbose mode.  */
-      flavor = next_char (dm) - '0';
       if (flag_verbose)
 	{
 	  RETURN_IF_ERROR (result_add (dm, " ["));
-	  RETURN_IF_ERROR (result_add (dm, dtor_flavors[flavor]));
+	  RETURN_IF_ERROR (result_add (dm, dtor_flavors[flavor - '0']));
 	  RETURN_IF_ERROR (result_add_char (dm, ']'));
 	}
     }
@@ -2093,8 +2209,10 @@ demangle_type_ptr (dm, insert_pos, substitution_start)
       RETURN_IF_ERROR (demangle_type_ptr (dm, insert_pos, 
 					  substitution_start));
       /* Insert an asterisk where we're told to; it doesn't
-	 necessarily go at the end.  */
-      RETURN_IF_ERROR (result_insert_char (dm, *insert_pos, '*'));
+	 necessarily go at the end.  If we're doing Java style output, 
+	 there is no pointer symbol.  */
+      if (dm->style != DMGL_JAVA)
+	RETURN_IF_ERROR (result_insert_char (dm, *insert_pos, '*'));
       /* The next (outermost) pointer or reference character should go
 	 after this one.  */
       ++(*insert_pos);
@@ -2469,6 +2587,39 @@ static const char *const builtin_type_names[26] =
   "..."                       /* z */
 };
 
+/* Java source names of builtin types.  Types that arn't valid in Java
+   are also included here - we don't fail if someone attempts to demangle a 
+   C++ symbol in Java style. */
+static const char *const java_builtin_type_names[26] = 
+{
+  "signed char",                /* a */
+  "boolean", /* C++ "bool" */   /* b */
+  "byte", /* C++ "char" */      /* c */
+  "double",                     /* d */
+  "long double",                /* e */
+  "float",                      /* f */
+  "__float128",                 /* g */
+  "unsigned char",              /* h */
+  "int",                        /* i */
+  "unsigned",                   /* j */
+  NULL,                         /* k */
+  "long",                       /* l */
+  "unsigned long",              /* m */
+  "__int128",                   /* n */
+  "unsigned __int128",          /* o */
+  NULL,                         /* p */
+  NULL,                         /* q */
+  NULL,                         /* r */
+  "short",                      /* s */
+  "unsigned short",             /* t */
+  NULL,                         /* u */
+  "void",                       /* v */
+  "char", /* C++ "wchar_t" */   /* w */
+  "long", /* C++ "long long" */ /* x */
+  "unsigned long long",         /* y */
+  "..."                         /* z */
+};
+
 /* Demangles and emits a <builtin-type>.  
 
     <builtin-type> ::= v  # void
@@ -2511,7 +2662,12 @@ demangle_builtin_type (dm)
     }
   else if (code >= 'a' && code <= 'z')
     {
-      const char *type_name = builtin_type_names[code - 'a'];
+      const char *type_name;
+      /* Java uses different names for some built-in types. */
+      if (dm->style == DMGL_JAVA)
+        type_name = java_builtin_type_names[code - 'a'];
+      else
+        type_name = builtin_type_names[code - 'a'];
       if (type_name == NULL)
 	return "Unrecognized <builtin-type> code.";
 
@@ -3054,6 +3210,7 @@ demangle_expression (dm)
     /* An operator expression.  */
     {
       int num_args;
+      int type_arg;
       status_t status = STATUS_OK;
       dyn_string_t operator_name;
 
@@ -3061,7 +3218,8 @@ demangle_expression (dm)
 	 operations in infix notation, capture the operator name
 	 first.  */
       RETURN_IF_ERROR (result_push (dm));
-      RETURN_IF_ERROR (demangle_operator_name (dm, 1, &num_args));
+      RETURN_IF_ERROR (demangle_operator_name (dm, 1, &num_args,
+					       &type_arg));
       operator_name = (dyn_string_t) result_pop (dm);
 
       /* If it's binary, do an operand first.  */
@@ -3082,7 +3240,10 @@ demangle_expression (dm)
       
       /* Emit its second (if binary) or only (if unary) operand.  */
       RETURN_IF_ERROR (result_add_char (dm, '('));
-      RETURN_IF_ERROR (demangle_expression (dm));
+      if (type_arg)
+	RETURN_IF_ERROR (demangle_type (dm));
+      else
+	RETURN_IF_ERROR (demangle_expression (dm));
       RETURN_IF_ERROR (result_add_char (dm, ')'));
 
       /* The ternary operator takes a third operand.  */
@@ -3237,7 +3398,7 @@ demangle_substitution (dm, template_p)
 	    }
 	  else
 	    {
-	      RETURN_IF_ERROR (result_add (dm, "std::basic_istream<char, std::char_traints<char> >"));
+	      RETURN_IF_ERROR (result_add (dm, "std::basic_istream<char, std::char_traits<char> >"));
 	      new_last_source_name = "basic_istream";
 	    }
 	  *template_p = 0;
@@ -3369,15 +3530,11 @@ demangle_discriminator (dm, suppress_first)
 	    /* Write the discriminator.  The mangled number is two
 	       less than the discriminator ordinal, counting from
 	       zero.  */
-	    RETURN_IF_ERROR (int_to_dyn_string (discriminator + 2, 
+	    RETURN_IF_ERROR (int_to_dyn_string (discriminator + 1,
 						(dyn_string_t) dm->result));
 	}
       else
-	{
-	  if (flag_verbose)
-	    /* A missing digit correspond to one.  */
-	    RETURN_IF_ERROR (result_add_char (dm, '1'));
-	}
+	return STATUS_ERROR;
       if (flag_verbose)
 	RETURN_IF_ERROR (result_add_char (dm, ']'));
     }
@@ -3395,16 +3552,17 @@ demangle_discriminator (dm, suppress_first)
    an error message, and the contents of RESULT are unchanged.  */
 
 static status_t
-cp_demangle (name, result)
+cp_demangle (name, result, style)
      const char *name;
      dyn_string_t result;
+     int style;
 {
   status_t status;
   int length = strlen (name);
 
   if (length > 2 && name[0] == '_' && name[1] == 'Z')
     {
-      demangling_t dm = demangling_new (name);
+      demangling_t dm = demangling_new (name, style);
       if (dm == NULL)
 	return STATUS_ALLOCATION_FAILED;
 
@@ -3443,14 +3601,13 @@ cp_demangle (name, result)
    dyn_string_t.  On success, returns STATUS_OK.  On failiure, returns
    an error message, and the contents of RESULT are unchanged.  */
 
-#ifdef IN_LIBGCC2
 static status_t
 cp_demangle_type (type_name, result)
      const char* type_name;
      dyn_string_t result;
 {
   status_t status;
-  demangling_t dm = demangling_new (type_name);
+  demangling_t dm = demangling_new (type_name, DMGL_GNU_V3);
   
   if (dm == NULL)
     return STATUS_ALLOCATION_FAILED;
@@ -3481,6 +3638,7 @@ cp_demangle_type (type_name, result)
   return status;
 }
 
+#if defined(IN_LIBGCC2) || defined(IN_GLIBCPP_V3)
 extern char *__cxa_demangle PARAMS ((const char *, char *, size_t *, int *));
 
 /* ia64 ABI-mandated entry point in the C++ runtime library for performing
@@ -3551,7 +3709,7 @@ __cxa_demangle (mangled_name, output_buffer, length, status)
   if (mangled_name[0] == '_' && mangled_name[1] == 'Z')
     /* MANGLED_NAME apprears to be a function or variable name.
        Demangle it accordingly.  */
-    result = cp_demangle (mangled_name, &demangled_name);
+    result = cp_demangle (mangled_name, &demangled_name, 0);
   else
     /* Try to demangled MANGLED_NAME as the name of a type.  */
     result = cp_demangle_type (mangled_name, &demangled_name);
@@ -3588,7 +3746,7 @@ __cxa_demangle (mangled_name, output_buffer, length, status)
     }
 }
 
-#else /* !IN_LIBGCC2 */
+#else /* ! (IN_LIBGCC2 || IN_GLIBCPP_V3) */
 
 /* Variant entry point for integration with the existing cplus-dem
    demangler.  Attempts to demangle MANGLED.  If the demangling
@@ -3597,20 +3755,35 @@ __cxa_demangle (mangled_name, output_buffer, length, status)
    If the demangling failes, returns NULL.  */
 
 char *
-cplus_demangle_v3 (mangled)
+cplus_demangle_v3 (mangled, options)
      const char* mangled;
+     int options;
 {
   dyn_string_t demangled;
   status_t status;
+  int type = !!(options & DMGL_TYPES);
 
-  /* If this isn't a mangled name, don't pretend to demangle it.  */
-  if (strncmp (mangled, "_Z", 2) != 0)
-    return NULL;
+  if (mangled[0] == '_' && mangled[1] == 'Z')
+    /* It is not a type.  */
+    type = 0;
+  else
+    {
+      /* It is a type. Stop if we don't want to demangle types. */
+      if (!type)
+	return NULL;
+    }
+
+  flag_verbose = !!(options & DMGL_VERBOSE);
 
   /* Create a dyn_string to hold the demangled name.  */
   demangled = dyn_string_new (0);
   /* Attempt the demangling.  */
-  status = cp_demangle ((char *) mangled, demangled);
+  if (!type)
+    /* Appears to be a function or variable name.  */
+    status = cp_demangle (mangled, demangled, 0);
+  else
+    /* Try to demangle it as the name of a type.  */
+    status = cp_demangle_type (mangled, demangled);
 
   if (STATUS_NO_ERROR (status))
     /* Demangling succeeded.  */
@@ -3634,7 +3807,199 @@ cplus_demangle_v3 (mangled)
     }
 }
 
-#endif /* IN_LIBGCC2 */
+/* Demangle a Java symbol.  Java uses a subset of the V3 ABI C++ mangling 
+   conventions, but the output formatting is a little different.
+   This instructs the C++ demangler not to emit pointer characters ("*"), and 
+   to use Java's namespace separator symbol ("." instead of "::").  It then 
+   does an additional pass over the demangled output to replace instances 
+   of JArray<TYPE> with TYPE[].  */
+
+char *
+java_demangle_v3 (mangled)
+     const char* mangled;
+{
+  dyn_string_t demangled;
+  char *next;
+  char *end;
+  int len;
+  status_t status;
+  int nesting = 0;
+  char *cplus_demangled;
+  char *return_value;
+    
+  /* Create a dyn_string to hold the demangled name.  */
+  demangled = dyn_string_new (0);
+
+  /* Attempt the demangling.  */
+  status = cp_demangle ((char *) mangled, demangled, DMGL_JAVA);
+
+  if (STATUS_NO_ERROR (status))
+    /* Demangling succeeded.  */
+    {
+      /* Grab the demangled result from the dyn_string. */
+      cplus_demangled = dyn_string_release (demangled);
+    }
+  else if (status == STATUS_ALLOCATION_FAILED)
+    {
+      fprintf (stderr, "Memory allocation failed.\n");
+      abort ();
+    }
+  else
+    /* Demangling failed.  */
+    {
+      dyn_string_delete (demangled);
+      return NULL;
+    }
+  
+  len = strlen (cplus_demangled);
+  next = cplus_demangled;
+  end = next + len;
+  demangled = NULL;
+
+  /* Replace occurances of JArray<TYPE> with TYPE[]. */
+  while (next < end)
+    {
+      char *open_str = strstr (next, "JArray<");
+      char *close_str = NULL;
+      if (nesting > 0)
+	close_str = strchr (next, '>');
+    
+      if (open_str != NULL && (close_str == NULL || close_str > open_str))
+        {
+	  ++nesting;
+	  
+	  if (!demangled)
+	    demangled = dyn_string_new(len);
+
+          /* Copy prepending symbols, if any. */
+	  if (open_str > next)
+	    {
+	      open_str[0] = 0;
+	      dyn_string_append_cstr (demangled, next);
+	    }	  
+	  next = open_str + 7;
+	}
+      else if (close_str != NULL)
+        {
+	  --nesting;
+	  
+          /* Copy prepending type symbol, if any. Squash any spurious 
+	     whitespace. */
+	  if (close_str > next && next[0] != ' ')
+	    {
+	      close_str[0] = 0;
+	      dyn_string_append_cstr (demangled, next);
+	    }
+	  dyn_string_append_cstr (demangled, "[]");	  
+	  next = close_str + 1;
+	}
+      else
+        {
+	  /* There are no more arrays. Copy the rest of the symbol, or
+	     simply return the original symbol if no changes were made. */
+	  if (next == cplus_demangled)
+	    return cplus_demangled;
+
+          dyn_string_append_cstr (demangled, next);
+	  next = end;
+	}
+    }
+
+  free (cplus_demangled);
+  
+  if (demangled)
+    return_value = dyn_string_release (demangled);
+  else
+    return_value = NULL;
+
+  return return_value;
+}
+
+#endif /* IN_LIBGCC2 || IN_GLIBCPP_V3 */
+
+
+#ifndef IN_GLIBCPP_V3
+/* Demangle NAME in the G++ V3 ABI demangling style, and return either
+   zero, indicating that some error occurred, or a demangling_t
+   holding the results.  */
+static demangling_t
+demangle_v3_with_details (name)
+     const char *name;
+{
+  demangling_t dm;
+  status_t status;
+
+  if (strncmp (name, "_Z", 2))
+    return 0;
+
+  dm = demangling_new (name, DMGL_GNU_V3);
+  if (dm == NULL)
+    {
+      fprintf (stderr, "Memory allocation failed.\n");
+      abort ();
+    }
+
+  status = result_push (dm);
+  if (! STATUS_NO_ERROR (status))
+    {
+      demangling_delete (dm);
+      fprintf (stderr, "%s\n", status);
+      abort ();
+    }
+
+  status = demangle_mangled_name (dm);
+  if (STATUS_NO_ERROR (status))
+    return dm;
+
+  demangling_delete (dm);
+  return 0;
+}
+
+
+/* Return non-zero iff NAME is the mangled form of a constructor name
+   in the G++ V3 ABI demangling style.  Specifically, return:
+   - '1' if NAME is a complete object constructor,
+   - '2' if NAME is a base object constructor, or
+   - '3' if NAME is a complete object allocating constructor.  */
+enum gnu_v3_ctor_kinds
+is_gnu_v3_mangled_ctor (name)
+     const char *name;
+{
+  demangling_t dm = demangle_v3_with_details (name);
+
+  if (dm)
+    {
+      enum gnu_v3_ctor_kinds result = dm->is_constructor;
+      demangling_delete (dm);
+      return result;
+    }
+  else
+    return (enum gnu_v3_ctor_kinds) 0;
+}
+
+
+/* Return non-zero iff NAME is the mangled form of a destructor name
+   in the G++ V3 ABI demangling style.  Specifically, return:
+   - '0' if NAME is a deleting destructor,
+   - '1' if NAME is a complete object destructor, or
+   - '2' if NAME is a base object destructor.  */
+enum gnu_v3_dtor_kinds
+is_gnu_v3_mangled_dtor (name)
+     const char *name;
+{
+  demangling_t dm = demangle_v3_with_details (name);
+
+  if (dm)
+    {
+      enum gnu_v3_dtor_kinds result = dm->is_destructor;
+      demangling_delete (dm);
+      return result;
+    }
+  else
+    return (enum gnu_v3_dtor_kinds) 0;
+}
+#endif /* IN_GLIBCPP_V3 */
+
 
 #ifdef STANDALONE_DEMANGLER
 
@@ -3669,7 +4034,7 @@ print_usage (fp, exit_value)
 }
 
 /* Option specification for getopt_long.  */
-static struct option long_options[] = 
+static const struct option long_options[] = 
 {
   { "help",    no_argument, NULL, 'h' },
   { "strict",  no_argument, NULL, 's' },
@@ -3771,7 +4136,7 @@ main (argc, argv)
 	    }
 
 	  /* Attempt to demangle the name.  */
-	  status = cp_demangle (dyn_string_buf (mangled), demangled);
+	  status = cp_demangle (dyn_string_buf (mangled), demangled, 0);
 
 	  /* If the demangling succeeded, great!  Print out the
 	     demangled version.  */
@@ -3810,7 +4175,7 @@ main (argc, argv)
       for (i = optind; i < argc; ++i)
 	{
 	  /* Attempt to demangle.  */
-	  status = cp_demangle (argv[i], result);
+	  status = cp_demangle (argv[i], result, 0);
 
 	  /* If it worked, print the demangled name.  */
 	  if (STATUS_NO_ERROR (status))
@@ -3818,7 +4183,7 @@ main (argc, argv)
 	  /* Abort on allocaiton failures.  */
 	  else if (status == STATUS_ALLOCATION_FAILED)
 	    {
-	      fprintf (stderr, "Memory allocaiton failed.\n");
+	      fprintf (stderr, "Memory allocation failed.\n");
 	      abort ();
 	    }
 	  /* If not, print the error message to stderr instead.  */

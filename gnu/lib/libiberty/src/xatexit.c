@@ -5,6 +5,20 @@
  * %sccs.include.redist.c%
  */
 
+
+/*
+
+@deftypefun int xatexit (void (*@var{fn}) (void))
+
+Behaves as the standard @code{atexit} function, but with no limit on
+the number of registered functions.  Returns 0 on success, or @minus{}1 on
+failure.  If you use @code{xatexit} to register functions, you must use
+@code{xexit} to terminate your program.
+
+@end deftypefun
+
+*/
+
 /* Adapted from newlib/libc/stdlib/{,at}exit.[ch].
    If you use xatexit, you must call xexit instead of exit.  */
 
@@ -19,8 +33,13 @@
 #define size_t unsigned long
 #endif
 
+#if VMS
+#include <stdlib.h>
+#include <unixlib.h>
+#else
 /* For systems with larger pointers than ints, this must be declared.  */
 PTR malloc PARAMS ((size_t));
+#endif
 
 static void xatexit_cleanup PARAMS ((void));
 

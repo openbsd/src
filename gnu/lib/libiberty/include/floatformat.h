@@ -1,5 +1,5 @@
 /* IEEE floating point support declarations, for GDB, the GNU Debugger.
-   Copyright (C) 1991 Free Software Foundation, Inc.
+   Copyright 1991, 1994, 1995, 1997, 2000 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -73,6 +73,9 @@ struct floatformat
 
   /* Is the integer bit explicit or implicit?  */
   enum floatformat_intbit intbit;
+
+  /* Internal name for debugging. */
+  const char *name;
 };
 
 /* floatformats for IEEE single and double, big and little endian.  */
@@ -92,7 +95,14 @@ extern const struct floatformat floatformat_i387_ext;
 extern const struct floatformat floatformat_m68881_ext;
 extern const struct floatformat floatformat_i960_ext;
 extern const struct floatformat floatformat_m88110_ext;
-extern const struct floatformat floatformat_arm_ext;
+extern const struct floatformat floatformat_m88110_harris_ext;
+extern const struct floatformat floatformat_arm_ext_big;
+extern const struct floatformat floatformat_arm_ext_littlebyte_bigword;
+/* IA-64 Floating Point register spilt into memory.  */
+extern const struct floatformat floatformat_ia64_spill_big;
+extern const struct floatformat floatformat_ia64_spill_little;
+extern const struct floatformat floatformat_ia64_quad_big;
+extern const struct floatformat floatformat_ia64_quad_little;
 
 /* Convert from FMT to a double.
    FROM is the address of the extended float.

@@ -3,7 +3,7 @@
    implementations of stdio; newer ones should already have vsprintf.
    Written by Per Bothner of Cygnus Support.
    Based on libg++'s "form" (written by Doug Lea; dl@rocky.oswego.edu).
-   Copyright (C) 1991, 1995 Free Software Foundation, Inc.
+   Copyright (C) 1991, 1995, 2002 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.  This library is free
 software; you can redistribute it and/or modify it under the
@@ -26,10 +26,16 @@ the resulting executable to be covered by the GNU General Public License.
 This exception does not however invalidate any other reasons why
 the executable file might be covered by the GNU General Public License. */
 
-#include <varargs.h>
-#include <stdio.h>
 #include <ansidecl.h>
+#ifdef ANSI_PROTOTYPES
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+#include <stdio.h>
 #undef vsprintf
+
+#if defined _IOSTRG && defined _IOWRT
 
 int
 vsprintf (buf, format, ap)
@@ -53,3 +59,5 @@ vsprintf (buf, format, ap)
   return ret;
 
 }
+
+#endif
