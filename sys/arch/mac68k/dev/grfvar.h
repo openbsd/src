@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.7 1997/03/29 23:47:13 briggs Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.8 1997/05/01 03:36:51 briggs Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ struct grfbus_softc {
 	u_int32_t	card_id;	/* DrHW value for nubus cards	*/
 	u_int32_t	cli_offset;	/* Offset of byte to clear intr */
 					/* for cards where that's suff.  */
+	unsigned char	cli_value;	/* Value to write at cli_offset */
 	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
 };
 
