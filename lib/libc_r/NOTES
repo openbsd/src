@@ -1,0 +1,125 @@
+
+Notes on the OpenBSD threaded C library  (-lc_r)
+================================================
+
+Sources
+
+  The main bulk of this library came from:
+   . FreeBSD's libc_r (John Birrell)
+     - The scheduler and locking code in the uthread directory.
+     - Some of the manual pages in the man directory.
+     - <pthreads.h>
+   . MIT pthreads (Chris Provenzano)
+     - The test code in the TEST directory
+
+  I'm mainly tracking changes in FreeBSD's libc_r and integrating them
+  as I can. The major changes to Birrell's code involved making the
+  context switching a bit more architecture-independent.
+
+Standards
+
+  This implementation has also been mindful of:
+   . Posix Threads[1]
+   . Single Unix Specification[2]
+
+Header files
+
+  Only the absolutely required re-entrant functions have been added to
+  the C library interface headers in /usr/src/include. 
+
+  The new functions are:
+	readdir_r()		<dirent.h>
+	sigwait()		<signal.h>
+	flockfile()		<stdio.h>
+	ftrylockfile()		<stdio.h>
+	funclockfile()		<stdio.h>
+	getc_unlocked()		<stdio.h>
+	getchar_unlocked()	<stdio.h>
+	putc_unlocked()		<stdio.h>
+	putchar_unlocked()	<stdio.h>
+	rand_r()		<stdlib.h>
+	strtok_r()		<string.h>
+	asctime_r()		<time.h>
+	ctime_r()		<time.h>
+	gmtime_r()		<time.h>
+	localtime_r()		<time.h>
+
+  The widely used, but non-standard, gethostbyname_r() needs thought.
+
+  These functions are available even when not using the thread package;
+  i.e., they are also in the non-threaded libc.a. 
+
+  See below why <sys/errno.h> has not been changed.
+
+Changes to libc sources
+
+  The approach taken to making the libc functions re-entrant was to
+  develop some macros that handle:
+	. file locking
+	. monitors (thread-shared data structure locking)
+	. per-thread private data structure allocation
+
+  Macros were used to avoid copious amounts of #ifdef statements[3].
+
+  In the non-threaded libc, file locking and the monitors are no-ops;
+  the per-thread private data structures were previously declared static
+  and the macros maintain this.
+
+  In the threaded libc_r, file locking is as per the FreeBSD file
+  descriptor locking, and the monitors are pthread_mutex operations.
+  Per-thread private data structures use the pthread_specific functions
+  to dynamically allocate memory on their first use, initialising
+  them from the static (and hidden) per-compilation-unit data structures.
+
+Errno
+
+  Unlike the FreeBSD and MIT pthreads package, errno is not a macro;
+  instead it is part of the per-thread context and saved and restored like
+  a register. This has several advantages over the errno-as-a-macro method:
+
+    - The syscall/cerror code does not have to be re-written
+    - Libraries compiled without thread support will still work
+    - Easier to port packages that use errno, but don't include <errno.h>
+
+  The overhead of saving and restoring an integer was considered too tiny
+  to worry about in comparison to the huge penalty hit of handling a
+  signal and restoring the rest of a thread's context.
+
+Compiler Support
+
+  The in-tree gcc had its config/openbsd.h modified to support a
+  `-pthread' switch. Using this switch defines _POSIX_THREADS for cpp, and
+  replaces the normal -lc linker option with -lc_r. 
+
+  The objective-C component was also made aware of posix threads, via
+  the configure switch --enable-threads=posix.
+
+Caveats
+
+  Not everything above is working right now: read the TODO file.
+
+Standard disclaimer
+
+   This software is made available by the author to the public for free
+   and "as is".  All users of this free software are solely and entirely
+   responsible for their own choice and use of this software for their
+   own purposes.  By using this software, each user agrees that the
+   author shall not be liable for damages of any kind in relation to
+   its use or performance.
+
+   Some parts of this software bear a copyright.
+
+References
+
+   [1] P1003.1c/D10 IEEE Draft Standard for Information Technology--
+       Portable Operating System Interface (POSIX) -- Part 1: System
+       Application Program Interface (API) -- Ammendment 2: Threads
+       Extension [C Language]. IEEE Standards, September 1994.
+   [2] T912, The Single UNIX(R) Specification, Version 2. The Open 
+       Group, February 1997. http://www.opengroup.org/pubs/catalog/t912.htm
+   [3] #ifdef Considered Harmful, or Portability Experience with C News.
+       H. Spencer and G. Collyer, Proc. of the Summer 1992 USENIX Conference,
+       San Antionio, Texas, 1992. pp. 185-198
+
+David Leonard <leonard@csee.uq.edu.au>
+$OpenBSD: NOTES,v 1.1 1998/08/27 09:00:32 d Exp $

@@ -1,0 +1,56 @@
+
+This is a list of things that still need to be done:
+
+* Add thread stuff to the other archs in libc/arch/; ie change
+  some usages of ENTRY to SYSENTRY in some .S files and add
+  the new macros to their SYS.h. Only the i386 arch is working.
+
+* Find a better way of doing the _sys_aliases stuff; ideally by
+  using the linker. jmp's (current implementation) are ugly, but
+  I don't want to have to hack ../libc/sys/Makefile.inc just to
+  partition the syscalls into wrapped and non-wrapped. The `.set'
+  assembler directive just doesn't work as I thought it would.
+
+* Fix the bug where _thread_init() isn't called when libc_r.so is used
+  instead of libc_r.a ... some kind of shlib common problem? may
+  need to use crt0 instead? __CTOR_LIST__ is just not being updated by ld.
+  Frankly this one is driving me nuts. Maybe <bsd.lib.mk> is wrong.
+
+* Signals seem to cause busy-hangs. SIGINFO especially. test_sock_2
+  fails because of its use of signals. still dumps /tmp/uthread.dump
+  though - needs debugging.
+
+* gethostbyname_r is not standard ... but is important - decide what to 
+  do about this. The POSIX 'system databases' style of extra parameters is
+  probably the best way to go.
+
+* Modify gcc (or configure it) so that it understands a -thread option
+  and uses -lc_r automatically. I think the _PTHREADS flag is wrong,
+  and need to check the posix draft.
+
+* Test the objective-C compiler to see if it can use threads.
+
+* Find all the static buffers in libc and make them per-thread. This
+  is not absolutely necessary but incurs no penalty for single-threaded
+  operation, and makes life easier & safer for when threads are used.
+  
+* Look into how netbsd are going with their kernel threads
+
+* Look into how asynchronous I/O can help us. In particular, the
+  (unimplemented) aio*() functions.
+
+* Write manual pages for all the pthread functions.
+
+* Update the libc manual pages to describe the posix re-entrant functions.
+  Although this is actually trivial to do, I have to decide on a
+  consistent way of adding them - maybe `.Sh THREAD-SAFE FUNCTIONS' ?
+  Should look into standards to see what they suggest/did..
+  May also need to document "This is not thread-safe" for some library
+  functions (yet to be identified).
+
+* Talk to Birrell about what he wants to do with the _np extensions,
+  since the SUSv2 mentions extra standards to support things like
+  scheduling policy and so forth.
+
+$OpenBSD: TODO,v 1.1 1998/08/27 09:00:32 d Exp $
+

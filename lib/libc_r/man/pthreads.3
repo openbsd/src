@@ -1,0 +1,91 @@
+.Dd August 17, 1998
+.Dt PTHREADS 3
+.Os BSD 4
+.Sh NAME
+.Nm pthreads
+.Nd POSIX 1003.1c thread interface
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft int
+.Fn pthread_create "pthread_t *thread" "const pthread_attr_t *attr" "void *(*start_routine)(void *)" "void *arg"
+.Ft void
+.Fn pthread_cleanup_pop "int execute"
+.Ft void
+.Fn pthread_cleanup_push "void (*cleanup_routine)(void *)" "void *arg"
+.Ft int
+.Fn pthread_cond_broadcast "pthread_cond_t *cond"
+.Ft int
+.Fn pthread_cond_destroy "pthread_cond_t *cond"
+.Ft int
+.Fn pthread_cond_init "pthread_cond_t *cond" "const pthread_condattr_t *attr"
+.Ft int
+.Fn pthread_cond_signal "pthread_cond_t *cond"
+.Ft int
+.Fn pthread_cond_timedwait "pthread_cond_t *cond" "pthread_mutex_t *mutex" "const struct timespec *abstime"
+.Ft int
+.Fn pthread_cond_wait "pthread_cond_t *cond" "pthread_mutex_t *mutex"
+.Ft int
+.Fn pthread_create "pthread_t *thread" "const pthread_attr_t *attr" "void *(*start_routine)(void *)" "void *arg"
+.Fn pthread_exit
+.Ft int
+.Fn pthread_detach "pthread_t thread"
+.Ft int
+.Fn pthread_equal "pthread_t t1" "pthread_t t2"
+.Ft void
+.Fn pthread_exit "void *value_ptr"
+.Ft void *
+.Fn pthread_getspecific "pthread_key_t key"
+.Ft int
+.Fn pthread_join "pthread_t thread" "void **value_ptr"
+.Ft int
+.Fn pthread_key_create "pthread_key_t *key" "void (*destructor)(void *)"
+.Ft int
+.Fn pthread_key_delete "pthread_key_t key"
+.Ft int
+.Fn pthread_mutex_destroy "pthread_mutex_t *mutex"
+.Ft int
+.Fn pthread_mutex_init "pthread_mutex_t *mutex" "const pthread_mutexattr_t *attr"
+.Ft int
+.Fn pthread_mutex_lock "pthread_mutex_t *mutex"
+.Ft int
+.Fn pthread_mutex_trylock "pthread_mutex_t *mutex"
+.Ft int
+.Fn pthread_mutex_unlock "pthread_mutex_t *mutex"
+.Ft int
+.Fn pthread_once "pthread_once_t *once_control" "void (*init_routine)(void)"
+.Ft pthread_t
+.Fn pthread_self "void"
+.Ft int
+.Fn pthread_setspecific "pthread_key_t key" "const void *value"
+.Sh DESCRIPTION
+Steal something from the posix specs to describe what a thread is.
+.Sh SEE ALSO
+.Xr pthread_cleanup_pop 3 ,
+.Xr pthread_cleanup_push 3 ,
+.Xr pthread_cond_broadcast 3 ,
+.Xr pthread_cond_destroy 3 ,
+.Xr pthread_cond_init 3 ,
+.Xr pthread_cond_signal 3 ,
+.Xr pthread_cond_timedwait 3 ,
+.Xr pthread_cond_wait 3 ,
+.Xr pthread_create 3 ,
+.Xr pthread_detach 3 ,
+.Xr pthread_equal 3 ,
+.Xr pthread_exit 3 ,
+.Xr pthread_getspecific 3 ,
+.Xr pthread_join 3 ,
+.Xr pthread_key_create 3 ,
+.Xr pthread_key_delete 3 ,
+.Xr pthread_mutex_destroy 3 ,
+.Xr pthread_mutex_init 3 ,
+.Xr pthread_mutex_lock 3 ,
+.Xr pthread_mutex_trylock 3 ,
+.Xr pthread_mutex_unlock 3 ,
+.Xr pthread_once 3 ,
+.Xr pthread_self 3 ,
+.Xr pthread_setspecific 3 
+.Sh STANDARDS
+.Fn pthread_create
+conforms to ISO/IEC 9945-1 ANSI/IEEE
+.Pq Dq Tn POSIX
+Std 1003.1 Second Edition 1996-07-12.
