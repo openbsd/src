@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.45 2003/09/24 01:14:59 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.46 2003/09/26 01:58:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -138,8 +138,7 @@ grow_obuf(struct con *cp, int off)
 		cp->obuf = NULL;
 	tmp = realloc(cp->obuf, cp->osize + 8192);
 	if (tmp == NULL) {
-		if (cp->obuf)
-			free(cp->obuf);
+		free(cp->obuf);
 		cp->obuf = NULL;
 		cp->osize = 0;
 		cp->obufalloc = 0;
@@ -208,8 +207,7 @@ parse_configline(char *line)
 
 			tmp = realloc(av, (ac + 2048) * sizeof(char *));
 			if (tmp == NULL) {
-				if (av)
-					free(av);
+				free(av);
 				av = NULL;
 				ac = 0;
 				return (-1);
