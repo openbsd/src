@@ -1,0 +1,117 @@
+#
+# This configuration file contains all possible options
+#
+
+machine mvme88k
+
+maxusers 64
+
+options		TIMEZONE=300, DST=1
+
+# processors this kernel should support
+
+options		"M88000"	# support for 88K
+options		MVME187		# support for 187
+
+options		SWAPPAGER	# Pager for processes (Required)
+options		VNODEPAGER	# Pager for vnodes (Required)
+options		DEVPAGER	# Pager for devices (Required)
+
+options		SYSVSHM
+options		SYSVSEM
+options		SYSVMSG
+
+# File system related options
+
+#options		QUOTA		# Disk quotas for local disks
+options		NFSSERVER	# Network File System server side code
+options		NFSCLIENT	# Network File System client side code
+
+# File systems
+
+options		FFS		# Berkeley fast file system
+options		MFS		# Memory based filesystem
+options		FIFO		# FIFO operations on vnodes (Recommended)
+options		CD9660		# ISO 9660 + Rock Ridge file system
+#options		MSDOSFS		# MS-DOS file system
+options		FDESC		# /dev/fd
+options		KERNFS		# /kern
+options		NULLFS		# loopback file system
+#options		PORTAL		# ?
+options		PROCFS		# /proc
+#options		UMAPFS		# NULLFS + uid and gid remapping
+#options		UNION		# union file system
+
+# Networking options
+
+option		NTP		# hooks supporting the Network Time Protocol
+option		IPFILTER	# IP packet filter for security
+option		IPFILTER_LOG	# use /dev/ipl to log IPF
+options		INET
+options		GATEWAY		# IP packet forwarding
+#options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+#options		ISO		# OSI networking
+#options		TPIP
+#options		EON
+#options		COMPAT_43
+#options		EXEC_COFF
+#options		LKM
+
+# Support for various kernel options
+
+#options		DIAGNOSTIC	# Add additional error checking code
+#options		"NKMEMCLUSTERS=512"	# Size of kernel malloc area
+
+# Misc. debuging options
+
+options		PANICWAIT	# Require keystroke to dump/reboot
+#options		DEBUG		# Add debugging statements
+options		DDB		# Kernel debugger
+#options		SYSCALL_DEBUG	# debug all syscalls.
+options		KTRACE		# debug all syscalls.
+
+# devices
+
+mainbus0 at root
+# ------------------------------ mainbus devices ------------------------
+#bugtty0 at mainbus0
+#sram0	at mainbus0 addr 0xffe00000
+#vme0	at mainbus0 addr 0xfff40000
+pcctwo0 at mainbus0 addr 0xfff00000
+# ------------------------------ pcctwo devices -------------------------
+clock0	at pcctwo0 ipl 5
+nvram0	at pcctwo0 offset 0xc0000
+ie0	at pcctwo0 offset 0x46000 ipl 3
+siop0	at pcctwo0 offset 0x47000 ipl 2
+cl0	at pcctwo0 offset 0x45000 ipl 3
+#vme0	at pcctwo0 offset 0x40000
+#lptwo0	at pcctwo0 addr 0xfff45000 ipl 1 size
+#mcecc0	at pcctwo0 addr 0xfff43000
+#mcecc1	at pcctwo0 addr 0xfff43100
+#memc0	at pcctwo0 addr 0xfff43000
+#memc1	at pcctwo0 addr 0xfff43100
+# ------------------------------ vme0 devices --------------------------
+#vmes0	at vme0
+#vmel0	at vme0
+# ------------------------------ siop0 devices -------------------------
+scsibus* at siop?
+# ------------------------------ scsibus0 devices ----------------------
+#sd0	at scsibus? target 0 lun 0
+#sd1	at scsibus? target 2 lun 0
+sd*	at scsibus? target ? lun ?
+st*	at scsibus? target ? lun ?
+#cd*	at scsibus? target ? lun ?
+# ------------------------------ pseudo devices ------------------------
+pseudo-device	vnd	4	# paging to files
+pseudo-device	bpfilter 8	# packet filter
+pseudo-device	sl 	2	# CSLIP
+pseudo-device	tun	2	# network tunneling over tty
+pseudo-device	ppp 	2	# PPP
+pseudo-device	pty	64	# pseudo-terminals
+pseudo-device	loop	2	# network loopback
+pseudo-device	tb	1	# tablet line discipline
+#pseudo-device	enc	1	# encryption device
+pseudo-device	ccd	4	# concatenated disk devices
+pseudo-device	rd 	2	# ram disk drives
+
+config	bsd swap on generic
