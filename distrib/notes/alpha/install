@@ -22,27 +22,39 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-	Boot your machine using the floppy.fs floppy.  When
-	presented with the SRM console prompt, type "boot dva0"
-	and hit return.  You should see about the primary and
-	secondary boot and then the kernel should start to load.
+	If you are using the floppy.fs floppy, type "boot dva0"
+	and hit return when presented with the SRM console prompt.
+	You should see info about the primary and secondary boot
+	and then the kernel should start to load.  It will take a
+	while to load the kernel from the floppy, most likely more
+	than a minute.  If some action doesn't eventually happen,
+	or the spinning cursor has stopped and nothing further has
+	happened, either your boot floppy is bad or you are having
+	hardware problems.  Either you have a bad boot floppy (in
+	which case you should try another) or your alpha is not
+	currently supported by OpenBSD.
 
-	It will take a while to load the kernel from the floppy,
-	most likely more than a minute.  If some action doesn't
-	eventually happen, or the spinning cursor has stopped and
-	nothing further has happened, either your boot floppy is
-	bad or you are having hardware problems.  Either you have
-	a bad boot floppy (in which case you should try another)
-	or your alpha is not currently supported by OpenBSD.
+	If you are booting from the CD-ROM, type "show device" and
+	hit return when presented with the SRM console prompt.
+	You should see a list of devices; the SCSI devices will
+	start with "DKA".  Find the SCSI device that is your CD-ROM
+	and enter "boot dka4 -fi 2.3/alpha/bsd", assuming that your
+	CD-ROM was listed as DKA4* (substitute the SCSI id of your
+	CD-ROM for the "4").  You should see info about the primary
+	and secondary boot and then the kernel should start to
+	load.  If the kernel fails to load or the spinning cursor
+	has stopped and nothing further has happened, you either
+	have a hardware problem or your alpha is not currently
+	supported by OpenBSD; try booting from a floppy instead.
 
-	You will then be presented with the OpenBSD kernel boot
-	messages.  You will want to read them to determine your
-	disk's name and geometry.  Its name will be something like
-	"sd0" or "wd0" and the geometry will be printed on a line that
-	begins with its name.  As mentioned above, you will need your
-	disk's geometry when creating OpenBSD partitions.  You will
-	also need to know the device name to tell the install tools
-	what disk to install on.
+	Once the kernel has loaded, you will be presented with the
+	OpenBSD kernel boot messages.  You will want to read them
+	to determine your disk's name and geometry.  Its name will
+	be something like "sd0" or "wd0" and the geometry will be
+	printed on a line that begins with its name.  As mentioned
+	above, you will need your disk's geometry when creating
+	OpenBSD partitions.  You will also need to know the device
+	name to tell the install tools what disk to install on.
 
 	While booting, you will probably see several warnings.  You
 	should be warned that the kernel can't figure out what device
@@ -57,13 +69,17 @@ process again from scratch.
 	if correct.  If you are installing from a serial console
 	you should choose the terminal type from amongst those listed.
 	(If your terminal type is xterm, just use vt100).  After
-	entering the terminal type you will be greeted by a welcome
-	message and asked if you really want to continue.
+	entering the terminal type you will be asked whether you
+	wish to do an "install" or an "upgrade".  Enter 'i' for a
+	fresh install or 'u' to upgrade an existing installation.
 
-	Assuming you answered yes, the install program will then tell
-	you which disks of that type it can install on, and ask you
-	which it should use.  The name of the disk is typically "sd0".
-	Reply with the name of your disk.
+	You will be presented with a welcome message and asked if
+	you really wish to install (or upgrade).  Assuming you
+	answered yes, the install program will then tell you which
+	disks of that type it can install on, and ask you which it
+	should use.  The name of the disk is typically "sd0" for
+	SCSI drives or "wd0" for IDE drives.  Reply with the name
+	of your disk.
 
 	Next the disk label which defines the layout of the OpenBSD
 	file systems must be set up.  The installation script will
@@ -140,7 +156,7 @@ process again from scratch.
 	or a local disk partition.  To install from a tape, the distrib-
 	ution sets must have been written to tape prior to running the
 	installation program, either as tar images or as gzipped tar
-	images.  Note that installation from floppy is not currently
+	images.  Note that installation from floppies is not currently
 	supported.
 
 	To install via FTP:
@@ -152,13 +168,13 @@ process again from scratch.
 		       You need to define a proxy if you are behind a
 		       firewall that blocks outgoing ftp (assuming you
 		       have a proxy available to use).
-		    2) Do you need to use passive mode ftp?  Most modern
-		       ftp servers are capable of dealing with passive
-		       ftp connections.  You only need to enable this
-		       option if you are behind a firewall that allows
-		       outgoing ftp but blocks incoming tcp ports > 1023.
-		       If in doubt say yes to this option.
-		       Note that you will not be asked about passive
+		    2) Do you need to use active mode ftp?  By default,
+		       ftp will attempt to use passive mode and fall
+		       back to an active connection if the server does
+		       not support passive mode.  You only need to enable
+		       this option if you are connecting to a buggy ftp
+		       daemon that implements passive ftp incorrectly.
+		       Note that you will not be asked about active
 		       ftp if you are using a proxy.
 		    3) The IP address (or hostname if you enabled
 		       DNS earlier in the install) of an ftp server
@@ -169,8 +185,8 @@ process again from scratch.
 		       The default value of pub/OpenBSD/2.3/alpha
 		       is almost always correct.
 		    5) The login and password for the ftp account.
-		       The default will be correct unless you are
-		       doing non-anonymous ftp.
+		       You will only be asked for a password for
+		       non-anonymous ftp.
 
 		For instructions on how to complete the installation via
 		ftp, see the section named "Common URL installations" below.
@@ -283,11 +299,22 @@ process again from scratch.
 		from local disk partitions, NFS mounted directories and
 		CD-ROMs.
 
-		A list of available distribution sets will be listed.  If
-		any sets has already been extracted, those will be marked
-		with an X.  Enter the name of one distribution set at a
-		time, until all desired distribution sets has been
-		installed on your system.
+		A list of available distribution sets will be listed.
+		You may individually select distribution sets to install
+		or enter `all' to install all of the sets (which is what
+		most users will want to do).  You may also enter `list'
+		to get a file list or `done' when you are done selecting
+		distribution sets.  You may also use wildcards in place of
+		a file name, eg `*.tar.gz' or even `base*|comp*'.  It is
+		also possible to enter an arbitrary filename and have it
+		treated as a file set.
+
+		Once you have selected the file sets you want to install
+		and entered `done' you will be prompted to verify that
+		you really do want to extract file sets.  Assuming you
+		acquiesce, the files will begin to extract.  If not, you
+		will be given the option of installing sets via one of
+		the other install methods.
 
 	Common URL installations:
 		Once you have entered the required information, the
@@ -296,19 +323,19 @@ process again from scratch.
 		in the specified directory.  (If no valid sets were found,
 		you will be notified and given the option of unpacking
 		any gzipped tar files found or getting a file list if
-		none were found.)  If any sets have already been extracted,
-		those sets will be marked with an X.
+		none were found.)
 
 		At this point you may individually select distribution
-		sets to install or enter "all" to install all of
-		the sets (which is what most users will want to do).
-		You may also enter "list" to get a file list or
-		"done" when you are done selecting distribution sets.
-		(It is also possible to enter an arbitrary filename
-		and have it treated as a file set).
+		sets to install or enter `all' to install all of the
+		sets (which is what most users will want to do).  You
+		may also enter `list' to get a file list or `done' when
+		you are done selecting distribution sets.  You may also
+		use wildcards in place of a file name, eg `*.tar.gz' or
+		even `base*|comp*'.  It is also possible to enter an
+		arbitrary filename and have it treated as a file set.
 
 		Once you have selected the file sets you want to install
-		and entered "done" you will be prompted to verify that
+		and entered `done' you will be prompted to verify that
 		you really do want to download and install the files.
 		Assuming you acquiesce, the files will begin to download
 		and unpack.  If not, you will be given the option of
@@ -320,7 +347,7 @@ process again from scratch.
 	using, all the device nodes needed by the installed system will
 	be created for you and the file systems will be unmounted.  For
 	this to work properly, it is expected that you have installed
-	at least the "base22" and "etc22" distribution sets.
+	at least the "base23" and "etc23" distribution sets.
 
 
 Congratulations, you have successfully installed OpenBSD 2.3. When you

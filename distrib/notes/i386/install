@@ -69,12 +69,14 @@ process again from scratch.
 	completely normal.  When you reach the prompt asking you for a
 	shell name, just hit return.
 
-	You will be presented with a welcome message and a prompt.  At
-	this time you should enter the command "install" to start the
-	installation process.
+	Now you will be asked whether you wish to do an "install"
+	or an "upgrade".  Enter 'i' for a fresh install or 'u' to
+	upgrade an existing installation.
 
-	You will be asked which terminal type to use, you should just
-	hit return to select the default (pc3).
+	You will be presented with a welcome message and asked if
+	you really wish to install (or upgrade).  Assuming you
+	answered yes, you will be asked which terminal type to use.
+	You should just hit return to select the default (pcvt25).
 
 	The install program will then tell you which disks of that
 	type it can install on, and ask you which it should use.  The
@@ -180,7 +182,7 @@ process again from scratch.
 	or a local disk partition.  To install from a tape, the distrib-
 	ution sets must have been written to tape prior to running the
 	installation program, either as tar images or as gzipped tar
-	images.  Note that installation from floppies are not currently
+	images.  Note that installation from floppies is not currently
 	supported.
 
 	To install via FTP:
@@ -306,7 +308,7 @@ process again from scratch.
 		this is a single letter between 'a' and 'p'.
 
 		You will also have to identify the type of file system
-		residing in the partition identified.  Currently you can
+		residing in the partition identified.  Currently, you can
 		install from partitions that has been formatted as fast
 		file system (ffs) or MS-DOS.
 
@@ -371,7 +373,7 @@ process again from scratch.
 	using, all the device nodes needed by the installed system will
 	be created for you and the file systems will be unmounted.  For
 	this to work properly, it is expected that you have installed
-	at least the "base22" and "etc22" distribution sets.
+	at least the "base23" and "etc23" distribution sets.
 
 
 Congratulations, you have successfully installed OpenBSD 2.3.  When you
