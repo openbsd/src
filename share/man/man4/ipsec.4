@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.53 2003/03/20 07:26:33 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.54 2003/03/22 08:55:01 david Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -74,22 +74,22 @@ datagrams.
 There are four main security properties provided by
 .Tn IPsec :
 .Bl -inset -offset indent
-.It	Confidentiality
+.It Confidentiality
 - Ensure it is hard for anyone but the
 receiver to understand what data has been communicated.
 For example, ensuring the secrecy of passwords when logging
 into a remote machine over the Internet.
-.It	Integrity
+.It Integrity
 - Guarantee that the data does not get changed
 in transit.
 If you are on a line carrying invoicing data you
 probably want to know that the amounts and account numbers
 are correct and have not been modified by a third party.
-.It	Authenticity
+.It Authenticity
 - Sign your data so that others can see that it
 is really you that sent it.
 It is clearly nice to know that documents are not forged.
-.It	Replay protection
+.It Replay protection
 - We need ways to ensure a datagram is processed only once, regardless
 of how many times it is received.
 I.e. it should not be possible for an attacker
