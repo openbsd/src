@@ -2,6 +2,7 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- MVME147 - Motorola with 68030 and 68881
 	- MVME162 - Motorola with 68040
 	- MVME167 - Motorola with 68040
+	- MVME177 - Motorola with 68060
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to 
@@ -18,7 +19,7 @@ MVME147:
 
 	ethernet:
 		on-board AMD 7990 Lance ethernet ("le0")
-
+	
 	SCSI:
 		on-board 
 
@@ -31,6 +32,7 @@ MVME162:
 
 	ethernet:
 		on-board Intel 82596CA ethernet ("ie0")
+		MVME376 VME bus ehternet ("le*")
 
 	SCSI:
 		on-board SCSI controller NCR53c710
@@ -61,6 +63,7 @@ MVME167
 		on-board tty00 - tty03 - Cirrus Logic CD2401
 	ethernet: 
 		on-board Intel 82596CA ethernet ("ie0")
+		MVME376 VME bus ehternet ("le*")
 	SCSI: 
 		on-board SCSI controller NCR53c710
 
@@ -69,3 +72,25 @@ MVME167
 
 	SRAM:
 		supported
+	
+	VMEbus:
+		supported
+		
+MVME177
+	serial:
+		on-board tty00 - tty03 - Cirrus Logic CD2401
+	ethernet: 
+		on-board Intel 82596CA ethernet ("ie0")
+		MVME376 VME bus ehternet ("le*")
+	SCSI: 
+		on-board SCSI controller NCR53c710
+
+	Parallel:
+		Not supported
+
+	SRAM:
+		supported
+	
+	VMEbus:
+		supported
+		

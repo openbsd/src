@@ -1,5 +1,5 @@
 OpenBSD/mvme68k OSREV was written under contract for Willowglen Singapore
-for an embedded application.  Theo de Raadt, Dale Rahn, and Chuck Cranor
-were involved in working on this port which runs on the MVME147, MVME162,
-MVME167 and perhaps other models also.
+for an embedded application.  Theo de Raadt, Dale Rahn, Chuck Cranor, 
+and Steve Murphree were involved in working on this port which runs on 
+the MVME147, MVME162, MVME167, MVME177 and perhaps other models also.
 

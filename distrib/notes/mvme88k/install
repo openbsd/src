@@ -30,6 +30,10 @@ If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) is a
 good start).
 
+Second, you must configure the netboot parameters in the mvme88k Bug 
+using the NIOT command.  The Load Address should be 0xAF0000.  The 
+Execution Address should be 0xAF0008.
+
 Your mvme88k expects to be able to download a second stage bootstrap
 program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". It will look for a filename composed of

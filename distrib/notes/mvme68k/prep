@@ -7,9 +7,9 @@ MVME162:
 	Be sure to use the SET command to set the date before trying
 	to use the ethernet support in the 162-Bug.
 
-MVME162/167:
+MVME162/167/177:
 
-162Bug> env
+162-Bug> env
 Local SCSI Bus Reset on Debugger Startup [Y/N] = N? y
 Network Auto Boot Enable [Y/N]   = N? y
 Network Auto Boot at power-up only [Y/N] = Y? n
@@ -22,3 +22,4 @@ Reset Local System (CPU) (Y/N)? y
 MVME147:
 
 	May need to set the ethernet address using the LSAD 147-Bug command.
+

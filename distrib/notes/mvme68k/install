@@ -2,25 +2,22 @@ Installing OpenBSD is a relatively complex process, but if you have
 this document in hand it shouldn't be too much trouble.
 
 There are several ways to install OpenBSD onto a disk. The easiest way
-in terms of preliminary setup is to use the OpenBSD miniroot that can
-be booted off your local disk's swap partition. Alternatively, if your
-Sparcstation is hooked up in a network you can find a server and arrange
-for a diskless setup which is a convenient way to install on a machine
-whose disk does not currently hold a usable operating system (see the
-section `Installing using a diskless setup' below).
+in terms of preliminary setup is to use the OpenBSD ramdisk kernel that can
+be booted from tape. Alternatively, if your mvme68k is hooked up in a 
+network you can find a server and arrange for a diskless setup which is a 
+convenient way to install on a machine whose disk does not currently hold 
+a usable operating system (see the section `Installing using a diskless 
+setup' below).
 
 
-Installing using the OpenBSD miniroot.
+Installing using the OpenBSD ramdisk kernel.
 
-The miniroot is a self-contained OpenBSD filesystem holding all utilities
-necessary to install OpenBSD on a local disk. It is distributed as a plain
-file designed to be transferred to a raw disk partition from which it can
-be booted using the appropriate PROM command. Usually, the miniroot will
-be loaded into the swap partition of a disk. If needed, you can use any
-other unused partition, but remember that the partition will then not
-available during the installation process.
+The ramdisk kernel is a kernel that containes an OpenBSD filesystem holding 
+all utilities necessary to install OpenBSD on a local disk. It is distributed 
+as a binary file with the name bsd.rd.  The ramdisk kernel can be loaded via 
+a network boot-server.  This is the fastest installation method.  It also may 
+loaded via tape. 
 
-This will cause the kernel contained in the miniroot to be booted.
 After the initial probe messages you'll asked to start the install
 or upgrade procedure. Proceed to the section `Running the installation
 scripts' below.
@@ -35,37 +32,21 @@ If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) is a
 good start).
 
-Your Sparcstation expects to be able to download a second stage bootstrap
+Second, you must configure the netboot parameters in the mvme68k Bug 
+using the NIOT command.  The Load Address should be 0x3F0000.  The 
+Execution Address should be 0x3F0000.
+
+Your mvme68k expects to be able to download a second stage bootstrap
 program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". It will look for a filename composed of
 the machine's IP address followed by the machine's architecture, separated
 by a period. For example, a sun4c machine which has been assigned IP
-address 130.115.144.11, will make an TFTP request for `8273900B.SUN4C'.
-Normally, this file is a symbolic link to an appropriate second-stage
+address 130.115.144.11, will make an TFTP request for a file that has 
+been named in the nvram.  Normally, this file is a second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
-You can find the boot program in `/usr/mdec/boot' in the OpenBSD/sparc
-distribution. Unfortunately, it is necessary to install this file
-differently for sun4 and sun4c clients: the sun4 version needs to have its
-`a.out' header stripped off (otherwise the machine will crash), while the
-sun4c version must retain it (otherwise the PROM will complain).
-
-Here's an example to illustrate this whole mess:
-
-    server# cd /<client-root-dir>/usr/mdec
-    if client is a sun4:
-	server# set SKIP=1
-	server# set KARCH=SUN4
-    else
-	server# set SKIP=0
-	server# set KARCH=SUN4C
-    server# dd if=boot of=/tftpboot/boot.sparc.OpenBSD.$KARCH skip=$SKIP bs=32
-    server# cd /tftpboot
-    server# ln -s boot.sparc.OpenBSD.$KARCH 8273900B.$KARCH
-
-Note: some versions of Openboot ROMs (sun4c/sun4m) seem to require that the
-boot program size is nicely rounded. Therefore it may be necessary to
-strip(8) off the symbol table.
+You can find the boot program in `/usr/mdec/netboot' in the OpenBSD/mvme68k
+distribution. 
 
 After the boot program has been loaded into memory and given control by
 the PROM, it starts locating the machine's remote root directory through
@@ -125,21 +106,13 @@ Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the PROM version in your machine,
 this command takes one of the following forms:
 
-	> b le()bsd -s		# for sun4 monitors
-	ok boot le()bsd -s		# for version 1 OpenBOOT ROMs
-	ok boot net bsd -s		# for version 2 OpenBOOT ROMs
+	167-bug> nbo 00 00 bsd -s
 
 This will boot the OpenBSD kernel in single-user mode.
+	
+	167-bug> nbo 00 00 bsd.rd
 
-[[
-NOTE: the latter two examples assume you operate the OpenBOOT ROM in
-"new command mode". If your machine comes up and gives you a `>' prompt
-instead of `ok', type:
-
-    >n					# enter native OpenBOOT mode
-    ok setenv sunmon-compat? false	# make it permanent
-    ok
-]]
+This will boot the OpenBSD ramdisk kernel.
 
 If you use a diskless setup with a separately NFS-mounted /usr filesystem,
 mount /usr by hand now:
@@ -243,30 +216,16 @@ The installation script goes through the following phases:
 
 
 Now try a reboot.  (If needed, swap your scsi id's first).  Initially
-I'd suggest you "boot sd()bsd -bs", then try multiuser after that.
+I'd suggest you "bo bsd -bs", then try multiuser after that.
 if you boot single-user the OpenBSD incantation to make the root
 filesystem writable is
 
     OpenBSD# mount -u /dev/sd0a /
 
-The Sun monitor normally tries to load a file called "vmunix". On
-OpenBOOT ROM systems you can change it to load OpenBSD instead using
-the following commands:
-
-On version 1 OpenBOOT ROMs:
-    >n
-    ok setenv boot-from sd(0,0,0)bsd
-    ok
-
-On version 2 OpenBOOT ROMs:
-    ok setenv boot-file bsd
-    ok setenv boot-device /sbus/esp/sd@0,0
-
-
 Congratulations, you have successfully installed OpenBSD OSREV.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 You should create yourself an account and protect it and the "root" account 
-with good passwords.
+with good passwords. 
 
 Some of the files in the OpenBSD OSREV distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
@@ -275,86 +234,3 @@ probably need to be modified.  If you are unfamiliar with UN*X-like
 system administration, it's recommended that you buy a book that
 discusses it.
 
-
-
-Installing from SunOS.
-
-You need a SunOS machine to install OpenBSD.  You also need at
-least the following pieces:
-
-    the *.tar.gz files you want to install (as a minimum, base.tar.gz)
-    gzip (GNU gzip) SunOS binary
-    gtar (GNU tar) SunOS binary
-    the "install.sh" script
-    a "/boot" file from a SunOS machine that matches your machine type
-	(e.g. sun or sun4c)
-    a kernel, most likely "/bsd"
-
-All these pieces, except "/boot", are supplied in the OpenBSD/sparc
-distribution.
-
-You need to format and partition the disk using SunOS (since
-OpenBSD/sparc uses SunOS disk labels.)  Give yourself adequate
-partition sizes.  Here is an example layout:
-
-    partition    size   offset	  will be..
-    sd2a        28140        0	  /
-    sd2b        16170    28140	  swap
-    sd2c       204540        0	  `whole disk'
-    sd2g       160230    44310	  /usr
-
-BTW, These are not recommended sizes.  They simply match the first
-(tiny) disk that OpenBSD/sparc ran on.
-
-Use SunOS to newfs the partitions which will have filesystems on them.
-(OpenBSD's filesystem format is identical to SunOS).
-
-    sunos# newfs /dev/rsd2a
-    [... lots of output]
-    sunos# newfs /dev/rsd2g
-    [... lots of output]
-
-NOTE: If you are able to, there is a performance benefit from
-newfs'ing using OpenBSD.  If you newfs using the OpenBSD newfs command,
-be sure to use the -O flag for your / partition, so that newfs will
-use the 4.3BSD filesystem format, rather than the new 4.4BSD filesystem
-format.  If you forget, you will not be able to boot -- the SunOS boot
-blocks do not understand the extended 4.4BSD filesystem format.
-
-Mount those partitions in a tree formation, under /mnt; ie:
-
-    sunos# df
-    Filesystem            kbytes    used   avail capacity  Mounted on
-    [...]
-    /dev/sd2a              11501       0   11501     0%    /mnt
-    /dev/sd2g             179529       0  179529     0%    /mnt/usr
-
-Place a standard SunOS "/boot" program in /mnt (your new root
-partition), and use the SunOS command "installboot" to make it work.
-The installboot man page says to do something like this:
-
-    sunos# cp /boot /mnt/boot
-    sunos# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootsd /dev/rsd2a
-
-You can now extract the provided "*.tar.gz files onto your disk.  The
-provided script, "install_from_sunos.sh" will help you:
-
-    sunos# ls -FC
-    base.tar.gz      etc.tar.gz       man.tar.gz       secr.tar.gz
-    comp.tar.gz      games.tar.gz     misc.tar.gz      
-    install.sh       bsd.id3_scsi
-    sunos# ./install_from_sunos.sh
-    [...]
-
-This script NEEDS gzip and gtar (GNU gzip and GNU tar) on your
-execution path!  The tar files are in a "new format" that includes
-directory information, and SunOS tar will not read them.  Statically
-linked versions of these programs for SunOS are supplied in the
-distribution.
-
-After the files have been extracted, repair /mnt/etc/fstab to match
-your actual disk layout.  (Minus the "/mnt" component of each path, of
-course :-)
-
-Now proceed to reboot the machine as described above in "Installing
-using a diskless setup".
