@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.67 2001/06/08 02:56:47 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.68 2001/06/08 21:29:58 angelos Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1325,14 +1325,15 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	case SADB_X_ADDFLOW:
 	{
 	    union sockaddr_union *src, *dst, *srcmask, *dstmask, *ssrc;
+	    struct sadb_protocol *sab;
 	    struct route_enc re;
 	    u_int8_t transproto = 0;
-	    u_int8_t direction;
 	    int exists = 0;
 
-	    direction = (((struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE])->sadb_protocol_direction);
-            if ((direction != IPSP_DIRECTION_IN) &&
-                (direction != IPSP_DIRECTION_OUT))
+	    sab = (struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE];
+
+            if ((sab->sadb_protocol_direction != IPSP_DIRECTION_IN) &&
+                (sab->sadb_protocol_direction != IPSP_DIRECTION_OUT))
             {
 		rval = EINVAL;
 		goto ret;
@@ -1398,7 +1399,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 #ifdef INET
 		case AF_INET:
 		    encapdst.sen_type = SENT_IP4;
-		    encapdst.sen_direction = direction;
+		    encapdst.sen_direction = sab->sadb_protocol_direction;
 		    encapdst.sen_ip_src = src->sin.sin_addr;
 		    encapdst.sen_ip_dst = dst->sin.sin_addr;
 		    encapdst.sen_proto = transproto;
@@ -1419,7 +1420,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 #ifdef INET6
 		case AF_INET6:
 		    encapdst.sen_type = SENT_IP6;
-		    encapdst.sen_ip6_direction = direction;
+		    encapdst.sen_ip6_direction = sab->sadb_protocol_direction;
 		    encapdst.sen_ip6_src = src->sin6.sin6_addr;
 		    encapdst.sen_ip6_dst = dst->sin6.sin6_addr;
 		    encapdst.sen_ip6_proto = transproto;
@@ -1441,8 +1442,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    /* Determine whether the exact same SPD entry already exists. */
             bzero(&re, sizeof(struct route_enc));
 	    bcopy(&encapdst, &re.re_dst, sizeof(struct sockaddr_encap));
-	    rtalloc((struct route *) &re);
 
+	    s = spltdb();
+
+	    rtalloc((struct route *) &re);
 	    if (re.re_rt != NULL)
 	    {
 		ipo = ((struct sockaddr_encap *) re.re_rt->rt_gateway)->sen_ipsp;
@@ -1460,18 +1463,31 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
             else
               ipo = NULL;
 
+	    /*
+	     * If the existing policy is static, only delete or update
+	     * it if the new one is also static.
+	     */
+	    if (exists && (ipo->ipo_flags & IPSP_POLICY_STATIC))
+	    {
+		if (!(sab->sadb_protocol_flags & SADB_X_POLICYFLAGS_POLICY))
+		{
+		    splx(s);
+		    goto ret;
+		}
+	    }
+
 	    /* Delete ? */
 	    if (delflag)
 	    {
 		if (exists)
 		{
-		    s = spltdb();
 		    rval = ipsec_delete_policy(ipo);
 		    splx(s);
 		    goto ret;
 		}
 
 		/* If we were asked to delete something non-existant, error */
+		splx(s);
 		rval = ESRCH;
 		break;
 	    }
@@ -1483,6 +1499,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		       M_IPSEC_POLICY, M_NOWAIT);
 		if (ipo == NULL)
 		{
+		    splx(s);
 		    rval = ENOMEM;
 		    goto ret;
 		}
@@ -1532,15 +1549,15 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
                     if (!exists)
 		      FREE(ipo, M_IPSEC_POLICY);
                     else
-		    {
-			s = spltdb();
-			ipsec_delete_policy(ipo);
-			splx(s);
-		    }
+		      ipsec_delete_policy(ipo);
 
+		    splx(s);
 		    rval = EINVAL;
 		    goto ret;
 	    }
+
+	    if (sab->sadb_protocol_flags & SADB_X_POLICYFLAGS_POLICY)
+	      ipo->ipo_flags |= IPSP_POLICY_STATIC;
 
             if (sunionp)
 	      bcopy(sunionp, &ipo->ipo_dst, sizeof(union sockaddr_union));
@@ -1575,7 +1592,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    if ((sid = headers[SADB_EXT_IDENTITY_SRC]) != NULL)
 	    {
-	        int clen =  (sid->sadb_ident_len * sizeof(u_int64_t)) - sizeof(struct sadb_ident);
+	        int clen =  (sid->sadb_ident_len * sizeof(u_int64_t)) -
+		  sizeof(struct sadb_ident);
+
 		MALLOC(ipo->ipo_srcid, struct ipsec_ref *, clen +
 		       sizeof(struct ipsec_ref), M_CREDENTIALS, M_DONTWAIT);
 		ipo->ipo_srcid->ref_type = sid->sadb_ident_type;
@@ -1586,13 +1605,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		if (ipo->ipo_srcid == NULL)
 		{
 		    if (exists)
-		    {
-			s = spltdb();
-			ipsec_delete_policy(ipo);
-			splx(s);
-		    }
+		      ipsec_delete_policy(ipo);
 		    else
 		      FREE(ipo, M_IPSEC_POLICY);
+		    splx(s);
 		    rval = ENOBUFS;
 		    goto ret;
 		}
@@ -1602,7 +1618,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    if ((sid = headers[SADB_EXT_IDENTITY_DST]) != NULL)
 	    {
-	        int clen =  (sid->sadb_ident_len * sizeof(u_int64_t)) - sizeof(struct sadb_ident);
+	        int clen =  (sid->sadb_ident_len * sizeof(u_int64_t)) -
+		  sizeof(struct sadb_ident);
 
 		MALLOC(ipo->ipo_dstid, struct ipsec_ref *, clen +
 		       sizeof(struct ipsec_ref), M_CREDENTIALS, M_DONTWAIT);
@@ -1614,11 +1631,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		if (ipo->ipo_dstid == NULL)
 		{
 		    if (exists)
-		    {
-			s = spltdb();
-			ipsec_delete_policy(ipo);
-			splx(s);
-		    }
+		      ipsec_delete_policy(ipo);
 		    else
 		    {
 			if (ipo->ipo_dstid)
@@ -1626,6 +1639,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			FREE(ipo, M_IPSEC_POLICY);
 		    }
 
+		    splx(s);
 		    rval = ENOBUFS;
 		    goto ret;
 		}
@@ -1645,32 +1659,29 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		{
 		    /* Remove from linked list of policies on TDB */
 		    if (ipo->ipo_tdb)
-		    {
-			s = spltdb();
-			TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
-				     ipo_tdb_next);
-			splx(s);
-		    }
+		      TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
+				   ipo_tdb_next);
 
 		    if (ipo->ipo_srcid)
 		      ipsp_reffree(ipo->ipo_srcid);
 		    if (ipo->ipo_dstid)
 		      ipsp_reffree(ipo->ipo_dstid);
 		    FREE(ipo, M_IPSEC_POLICY); /* Free policy entry */
+
+		    splx(s);
 		    goto ret;
 		}
 
-		s = spltdb();
 		TAILQ_INSERT_HEAD(&ipsec_policy_head, ipo, ipo_list);
-		splx(s);
-
 		ipsec_in_use++;
 	    }
 	    else
 	    {
 		ipo->ipo_last_searched = ipo->ipo_flags = 0;
 	    }
-         }
+
+	    splx(s);
+	 }
 	 break;
 
 	case SADB_X_PROMISC:
