@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.15 2001/02/12 23:42:42 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.16 2001/03/02 08:58:09 deraadt Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -311,7 +311,7 @@ isp_pci_attach(parent, self, aux)
 #ifdef	DEBUG
 	static char oneshot = 1;
 #endif
-	static const char nomem[] = "%s: no mem for sdparam table\n";
+	static const char nomem[] = ": no mem for sdparam table\n";
 	u_int32_t data, rev, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
@@ -380,7 +380,9 @@ isp_pci_attach(parent, self, aux)
 		printf(": unable to map device registers\n");
 		return;
 	}
+#if 0
 	printf("\n");
+#endif
 
 	pcs->pci_st = st;
 	pcs->pci_sh = sh;
@@ -399,7 +401,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_SCSI_UNKNOWN;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf(nomem, isp->isp_name);
+			printf(nomem);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -411,7 +413,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_SCSI_1080;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf(nomem, isp->isp_name);
+			printf(nomem);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -424,7 +426,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_param = malloc(2 * sizeof (sdparam),
 		    M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf(nomem, isp->isp_name);
+			printf(nomem);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -437,7 +439,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_param = malloc(2 * sizeof (sdparam),
 		    M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf(nomem, isp->isp_name);
+			printf(nomem);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -452,7 +454,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_param = malloc(2 * sizeof (sdparam),
 		    M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf(nomem, isp->isp_name);
+			printf(nomem);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (sdparam));
@@ -466,7 +468,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_FC_2100;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf(nomem, isp->isp_name);
+			printf(nomem);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (fcparam));
@@ -489,7 +491,7 @@ isp_pci_attach(parent, self, aux)
 		isp->isp_type = ISP_HA_FC_2200;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
-			printf(nomem, isp->isp_name);
+			printf(nomem);
 			return;
 		}
 		bzero(isp->isp_param, sizeof (fcparam));
@@ -554,7 +556,7 @@ isp_pci_attach(parent, self, aux)
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", isp->isp_name);
+		printf(": couldn't map interrupt\n");
 		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
@@ -564,13 +566,13 @@ isp_pci_attach(parent, self, aux)
 	pcs->pci_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, isp_pci_intr,
 	    isp, isp->isp_name);
 	if (pcs->pci_ih == NULL) {
-		printf("%s: couldn't establish interrupt at %s\n",
-			isp->isp_name, intrstr);
+		printf(": couldn't establish interrupt at %s\n",
+			intrstr);
 		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
 
-/*	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);*/
+	printf(": %s\n", intrstr);
 
 	if (IS_FC(isp)) {
 		DEFAULT_NODEWWN(isp) = 0x400000007F000003;
